@@ -24,8 +24,8 @@
 #define strcasecmp _stricmp
 #include <winsock2.h>
 #include <direct.h>
-#ifndef EACCESS
-#define EACCESS 0xfff
+#ifndef EACCES
+#define EACCES 0xfff
 #endif
 #endif
 
@@ -697,7 +697,7 @@ WvString wvgetcwd()
             deletev name;
             return s;
         }
-	if (errno == EACCESS || errno == ENOENT)
+	if (errno == EACCES || errno == ENOENT)
 	    return "."; // can't deal with those errors
         assert(errno == ERANGE); // buffer too small
     }

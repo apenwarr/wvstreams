@@ -2,6 +2,7 @@
 #include "wvencoderstream.h"
 #include "wvloopback.h"
 #include "wvgzip.h"
+#include <ctype.h>
 
 WVTEST_MAIN("gzip")
 {
@@ -381,4 +382,127 @@ WVTEST_MAIN("Base64")
     WvString output = outbuf.getstr();
 //    fprintf(stderr,"We got out: %s\n", output.cstr());
     WVPASS(!strcmp(output, output_stuff));
+}
+
+
+class CountStream : public WvStreamClone
+{
+public:
+    CountStream(IWvStream *s) : WvStreamClone(s)
+        { }
+    
+    virtual size_t uread(void *buf, size_t len)
+    {
+	size_t count = WvStreamClone::uread(buf, len);
+	fprintf(stderr, "uread(%d) == %d\n", (int)len, (int)count);
+	return count;
+    }
+    
+    virtual size_t uwrite(const void *buf, size_t len)
+    {
+	size_t count = WvStreamClone::uwrite(buf, len);
+	fprintf(stderr, "uwrite(%d) == %d\n", (int)len, (int)count);
+	return count;
+    }
+};
+
+
+class LetterPlusEncoder : public WvEncoder
+{
+    int incr;
+    
+public:
+    LetterPlusEncoder(int _incr) { incr = _incr; }
+
+protected:
+    virtual bool _encode(WvBuf &in, WvBuf &out, bool flush)
+    {
+	if (!flush) return true; // don't flush unless we have to
+	size_t count = in.used();
+	unsigned char *c = const_cast<unsigned char *>(in.get(count));
+	for (size_t i = 0; i < count; i++)
+	    if (isalpha(c[i]))
+		c[i] += incr;
+	out.put(c, count);
+	return true;
+    }
+};
+
+#if 0
+# define new_enc() (new LetterPlusEncoder(1))
+# define new_dec() (new LetterPlusEncoder(-1))
+#else
+# define new_enc() (new WvGzipEncoder(WvGzipEncoder::Deflate))
+# define new_dec() (new WvGzipEncoder(WvGzipEncoder::Inflate))
+#endif
+
+// not expected to work if READAHEAD is greater than 1,
+// because WvEncoderStream::inbuf can't be re-encoded if it's nonempty.
+// Eventually, we'll take the extra buffering out of plain WvStream; that
+// should help a bit.  In the meantime, always use a readahead of 1 if you
+// expect to add encoders later.
+#define READAHEAD (1)
+
+WVTEST_MAIN("add filters midstream")
+{
+    WvEncoderStream s(new CountStream(new WvLoopback));
+    
+    // if we don't do this, the flush() commands below should be unnecessary.
+    s.delay_output(true);
+    
+    // this allows big kernel read() calls even though we only read one
+    // byte at a time from the *decoded* input stream.  Enabling this
+    // tests continue_encode() in WvEncoderChain; otherwise, continue_encode()
+    // wouldn't matter.
+    s.min_readsize = 1024; 
+    
+    s.print("First line\n");
+    WVPASS("1");
+    s.print("Second line\n");
+    s.flush(0);
+    WVPASS("2");
+    s.writechain.prepend(new_enc(), true);
+    s.print("Third line\n");
+    WVPASS("3a");
+    s.print("Third line2\n");
+    s.flush(0);
+    WVPASS("3b");
+    s.writechain.prepend(new_enc(), true);
+    s.print("Fourth line\n");
+    WVPASS("4a");
+    s.print("Fourth line2\n");
+    s.flush(0);
+    WVPASS("4b");
+    WVPASSEQ(s.geterr(), 0);
+    
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "First line");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Second line");
+    WVPASS("r2");
+    WVPASSEQ(s.geterr(), 0);
+    s.readchain.append(new_dec(), true);
+    WVPASS("e3");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Third line");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Third line2");
+    WVPASSEQ(s.geterr(), 0);
+    WVPASS("r3");
+    s.readchain.append(new_dec(), true);
+    WVPASS("e4");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Fourth line");
+    WVPASSEQ(s.geterr(), 0);
+    WVPASS("r4a");
+    s.runonce(1000);
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Fourth line2");
+    WVPASSEQ(s.geterr(), 0);
+    WVPASS("r4b");
+    
+    s.nowrite();
+    s.noread();
+    
+    WvDynBuf remainder;
+    s.read(remainder, 1024);
+    WVPASSEQ(remainder.used(), 0);
+    wvcon->print("Remainder: '%s'\n", remainder.getstr());
+    
+    WVPASSEQ(s.geterr(), 0);
+    wvcon->print("Error code: '%s'\n", s.errstr());
 }

@@ -23,7 +23,16 @@
  * each incremental write to the stream would cause the Gzip encoder
  * to flush its dictionary thereby resulting in poor compression.
  * 
- * @see WvStream::auto_flush(bool)
+ * See WvStream::auto_flush(bool).
+ * 
+ * WARNING: it is possible to add to the readchain and/or writechain in the
+ * middle of a session, for example to add gzip compression after first
+ * negotiating it with the remote end.  If you plan to do this, be very
+ * careful with buffering.  Never read() or getline() more bytes than
+ * you're sure will exist with the old encoding.  Even then, only ever
+ * append things to the readchain, not prepend.  (Therefore only prepend
+ * things to the writechain.) Always flush() or flush_write() before
+ * adding to the writechain.  See also min_readsize.
  */
 class WvEncoderStream : public WvStreamClone
 {
@@ -47,7 +56,20 @@ public:
      * to optimize performance of block-oriented protocols.
      * This is not the same as queuemin() which guarantees how much
      * encoded input must be generated before select() returns true.
-     * if 0, the encoder will only whatever is specified in uread()
+     * if 0, the encoder will only read whatever is specified in uread().
+     * 
+     * NOTE: if you plan to append a new encoder to the readchain after
+     * doing read(), you should always use read() with only 1 byte at a
+     * time, or some extra data will end up in inbuf and not pass through
+     * the newly- added encoder.  Remember that getline() also calls
+     * read().  The purpose of min_readsize is to make these one-byte
+     * read() calls more efficient, because the *underlying* stream can
+     * still read lots of bytes, as long as we only pass single bytes down
+     * to the WvEncoderStream.
+     * 
+     * If you don't plan to add new encoders to readchain from now on, you
+     * can give larger sizes to read() or getline(), and thus min_readsize
+     * is unnecessary.
      */
     size_t min_readsize;
 
