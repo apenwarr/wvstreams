@@ -62,8 +62,8 @@ public:
 // parameters are: userdata, section, entry, oldval, newval
 DeclareWvCallback(5, void, WvConfCallback,
 		  void *,
-		  WvStringParm , WvStringParm ,
-		  WvStringParm , WvStringParm );
+		  WvStringParm, WvStringParm,
+		  WvStringParm, WvStringParm);
 
 class WvConfCallbackInfo
 {
@@ -102,10 +102,14 @@ public:
 
     WvConfigSection *operator[] (WvStringParm s);
 
+    int parse_wvconf_request(char *request, char *&section, char *&entry,
+			     char *&value);
+
     int getint(WvStringParm section, WvStringParm entry, int def_val);
     
     const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL);
+    WvString getraw(WvString wvconfstr, int &parse_error);
 
     int fuzzy_getint(WvStringList &sect, WvStringParm entry,
 		  int def_val);
@@ -120,6 +124,7 @@ public:
     void setint(WvStringParm section, WvStringParm entry, int value);
     void set(WvStringParm section, WvStringParm entry,
 	     const char *value);
+    void setraw(WvString wvconfstr, const char *&value, int &parse_error);
     
     void maybesetint(WvStringParm section, WvStringParm entry,
 		     int value);
@@ -152,6 +157,19 @@ public:
     void load_file() // append the contents of the real config file
         { load_file(filename); }
     void load_file(WvStringParm filename); // append any config file
+
+    // Gets a user's password and decrypts it.  This isn't defined in wvconf.cc.
+    WvString get_passwd(WvStringParm sect, WvStringParm user);
+    WvString get_passwd(WvStringParm user)
+        { return get_passwd("Users", user); }
+
+    // Encrypts and sets a user's password.  This isn't defined in wvconf.cc.
+    void set_passwd(WvStringParm sect, WvStringParm user, WvStringParm passwd);
+    void set_passwd(WvStringParm user, WvStringParm passwd)
+        { set_passwd("Users", user, passwd); }
+
+    // Converts all passwords to unencrypted format.  Not defined in wvconf.cc.
+    void convert_to_old_pw();
 
 private:
     bool dirty;			// true if changed since last flush()

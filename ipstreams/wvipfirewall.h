@@ -9,7 +9,7 @@
 #ifndef __WVIPFIREWALL_H
 #define __WVIPFIREWALL_H
 
-#include "wvlinklist.h"
+#include "wvstringlist.h"
 #include "wvaddr.h"
 
 
@@ -17,7 +17,7 @@
 DeclareWvList(WvIPPortAddr);
 
 /**
- * Class to handle Linux 2.3/2.4 IPTables
+ * Class to handle Linux 2.4 IPTables
  */
 class WvIPFirewall
 {
@@ -35,22 +35,27 @@ class WvIPFirewall
 
     RedirList redirs;
     WvIPPortAddrList addrs;
+    WvStringList protos;
     
     WvString port_command(const char *cmd, const char *proto,
 			  const WvIPPortAddr &addr);
     WvString redir_command(const char *cmd,
 			   const WvIPPortAddr &src, int dstport);
+    WvString proto_command(const char *cmd, const char *proto);
+    const char *shutup() const
+        { return ignore_errors ? " >/dev/null 2>/dev/null " : ""; }
     
 public:
     WvIPFirewall();
     ~WvIPFirewall();
     
-    static bool enable;
+    static bool enable, ignore_errors;
     
     void zap();
     void add_port(const WvIPPortAddr &addr);
     void add_redir(const WvIPPortAddr &src, int dstport);
-    void add_proto(const WvString proto);
+    void add_proto(WvStringParm proto);
+    void del_proto(WvStringParm proto);
     void del_port(const WvIPPortAddr &addr);
     void del_redir(const WvIPPortAddr &src, int dstport);
 };

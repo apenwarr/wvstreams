@@ -680,7 +680,7 @@ time_t WvStream::alarm_remaining()
 {
     struct timeval &a = alarm_time;
     
-    if (a.tv_sec)
+    if (a.tv_sec && !running_callback)
     {
 	struct timeval tv;
 	struct timezone tz;

@@ -1,43 +1,65 @@
-/*                                                   
- * Insert Appropriate Copyright header here....      
- * Also, the license should specify that it is LGPL ;)                      
- * ppatterson@carillonis.com
- */
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ * 
+ * X.509 certificate management classes.
+ */ 
+#ifndef __WVX509_H
+#define __WVX509_H
 
-#ifndef __WVX509
-#define __WVX509
-
-#include "wvcrypto.h"
 #include "wvlog.h"
-#include "wvstringlist.h"
-#include "strutils.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
 typedef struct x509_st X509;
 
+class WvRSAKey;
+
+// workaround for the fact that OpenSSL initialization stuff must be called
+// only once.
+void wvssl_init();
+void wvssl_free();
+WvString wvssl_errstr();
+
+
 /**
- * X509 Class to Handle certificates and their related
+ * X509 Class to handle certificates and their related
  * functions
  */
 class WvX509Mgr
 {
 public:
+    WvString dname;
+
+   /**
+    * Type for the dump() method, which can output the information
+    * in this class in a variety of formats
+    */
+    enum DumpMode { CertPEM = 0, RsaPEM, RsaRaw };
+   
+   /**
+    * Initialize a blank X509 Object with the certificate *cert
+    * (used for client side operations...)
+    * 
+    * This either initializes a completely empty object, or takes _cert, and extracts
+    * the distinguished name into dname, and the the RSA public key into rsa. rsa->prv is empty.
+    */
+    WvX509Mgr(X509 *_cert = NULL);
 
     /**
-     * Initialize a blank X509 Object with the certificate *cert
-     * (used for client side operations...)
+     * Constructor to initialize this object with a pre-existing certificate and key
      */
-    WvX509Mgr(X509 *cert = NULL);
+    WvX509Mgr(WvStringParm hexcert, WvStringParm hexrsa);
 
     /**
-     * Constructor to create a selfsigned certificate for dn dName
+     * Constructor to create a selfsigned certificate for dn dname
      * NOTE: If you already have an RSAKey, then you can shove it
-     * in here in the third parameter (i.e.: If you wanted to generate a
-     * cert for an existing TunnelVision connection).
+     * in here in the second parameter (i.e.: If you wanted to generate a
+     * cert for an existing TunnelVision connection), or if you don't have an RSA Key
+     * yet, you can just give it a number of bits, and it will create one for you.
      *
      * Also: For SSL Servers:
-     * the dName MUST be in the form: cn=FQDN,o=foo,c=CA
+     * the dname MUST be in the form: cn=FQDN,o=foo,c=CA
      * (actually, any part after the cn=FQDN is up to you... dc= works as well..)
      *
      * But the important bit is to use the Fully Qualified Domain Name in 
@@ -47,16 +69,21 @@ public:
      * valid without this... If you want to generate invalid certs, that's up
      * to you.
      */
-    WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair = NULL);
+    WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa);
+    WvX509Mgr(WvStringParm _dname, int bits);
+    
+    /**
+     * Placeholder: this doesn't exist yet.
+     */
+    WvX509Mgr(const WvX509Mgr &mgr);
 
     /**
      * Destructor
      */
     virtual ~WvX509Mgr();
 
-    
     /**
-     * Certificate - this is why this class exists
+     * X.509v3 Certificate - this is why this class exists
      */
     X509     *cert;
 
@@ -65,107 +92,112 @@ public:
      * Make sure that you save this somewhere!!! If you don't, then you won't
      * really be able to use the certificate for anything...
      */
-    WvRSAKey *keypair;
+    WvRSAKey *rsa;
     
     /**
-     * A hexified encoding of cert for use in getting it in and out of WvConf
-     * objects. I don't provide a similar entry for that for keypair, because
-     * you can always call keypair->private_str() and keypair->public_str()
-     * for that information.
+     * Given the Distinguished Name dname and an already generated keypair in 
+     * rsa, return a Self Signed Certificate in cert.
      */
-    WvString enccert;
-
-    /**
-     * Given the Distinguished Name dName and the number of bits for the
-     * Private key in keysize, return a Self Signed Certificate, and the RSA
-     * Private/Public Keypair in keypair
-     */
-    void createSScert(WvString dName, int keysize);
+    void create_selfsigned();
 
     /**
      * Create a certificate request (PKCS#10) using this function.. this 
      * request is what you would send off to Verisign, or Entrust.net (or any
      * other CA), to get your real certificate. It leaves the RSA key pair
-     * in keypair, where you MUST save it for the certificate to be AT ALL
+     * in rsa, where you MUST save it for the certificate to be AT ALL
      * valid when you get it back. Returns a PEM Encoded PKCS#10 certificate
-     * request.
+     * request, and leaves the RSA keypair in rsa, and a self-signed temporary
+     * certificate in cert.
      */    
-    WvString createcertreq(WvString dName, int keysize);
+    WvString certreq();
     
     /**
-     * Given a hexified encodedcert, fill the cert member
+     * test to make sure that a certificate and a keypair go together.
+     * called internally by unhexify() although you can call it if 
+     * you want to test a certificate yourself
      */
-    void decodecert(WvString encodedcert);
+    bool test();
+
+    /**
+     * Given a hexified certificate, fill the cert member NOTE: ALWAYS load
+     * your RSA Keys before calling this! It is best if you have hexify()'d
+     * keys to simply use the proper constructor. 
+     */
+    void unhexify(WvString encodedcert);
     
     /**
      * Given the X509 certificate object cert, return a hexified string
-     * (in enccert) - Suitable for inclusion in a WvConf object ;)
+     * useful in a WvConf file.
+     * 
+     * I don't provide a similar function for that for the rsa key, because
+     * you can always call rsa->private_str() and rsa->public_str()
+     * for that information.
      */
-    void encodecert();
+    WvString hexify();
 
     /**
-     * Function to verify the validity of a certificate that has been placed 
-     * in cert. Currently, this only outputs some information about the certificate
-     * but eventually, it should be used to verify that the certificate is valid 
-     * (has not expired, and was issued by a valid and trusted CA)
+     * Function to verify the validity of a certificate that has been
+     * placed in cert. Currently, this only outputs some information about
+     * the certificate but eventually, it should be used to verify that the
+     * certificate is valid (has not expired, and was issued by a valid and
+     * trusted CA) 
      */
     bool validate();
-
+   
     /**
      * Check the certificate in cert against the CA certificates in
-     * certfile - returns true if cert was signed by one of the CA certificates.
+     * certfile - returns true if cert was signed by one of the CA
+     * certificates.
      */
     bool signedbyCAindir(WvString certdir);
-
+   
     /**
-     * Check the certificate in cert against the CA certificates in
-     * certdir - returns true if cert was signed by one of the CA certificates.
+     * Check the certificate in cert against the CA certificates in certdir
+     * - returns true if cert was signed by one of the CA certificates. 
      */
-    bool signedbyCAinfile(WvString certfile);
+   bool signedbyCAinfile(WvString certfile);
 
     /**
      * Sign the X509 certificate in cert with CAKeypair
+     *
+     * NOT IMPLEMENTED
      */
-    void signcert(WvRSAKey CAKeypair);
-
+    void sign(WvRSAKey CAKeypair);
+   
     /**
      * Check and see if the certificate in cert has been revoked... currently
      * relies on the CRL Distribution Point X509v3 extension...
      * returns true if it has expired
+     * 
+     * NOT IMPLEMENTED
      */
     bool isinCRL();
-        
-    /**
-     * Dump the X509 Certificate in Cert to outfile in PEM
-     */
-    void dumpcert(WvString outfile, bool append = false);
-    
-    /**
-     * Dump RSA Keypair to outfile in PEM format 
-     */
-    void dumpkeypair(WvString outfile, bool append = false);
 
     /**
-     * Dump RSA Keypair to outfile in RAW format (suitable for FreeS/WAN)
+     * Return the information requested by mode as a WvString.
      */
-    void dumprawkeypair(WvString outfile, bool append = false);
+    WvString encode(DumpMode mode);
+
+    /**
+     * Return a hexified certificate out of the file
+     *
+     * NOT IMPLEMENTED
+     */
+    WvString pem2hex(WvStringParm filename);
 
     WvLog debug;
     
-    /**
-     * Error Handling - if true, there was an error... check errstr for a description...
-     */
-    bool  err;
-    WvString errstr;
+    WvString errstring;
+    
+    bool isok() const
+        { return cert && rsa && !errstring; }
+    const WvString &errstr()
+        { return errstring; }
     
     void seterr(WvStringParm s)
-        { err = true; errstr = s; }
-    
-protected:
-    
-private:
-
-
+        { errstring = s; }
+    void seterr(WVSTRING_FORMAT_DECL)
+        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
 };
 
-#endif // __WVX509
+#endif // __WVX509_H

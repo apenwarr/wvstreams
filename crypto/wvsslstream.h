@@ -1,13 +1,13 @@
 /*
- * Insert Appropriate Copyright header here....
- * I really don't care just mention me in a changelog somewhere ;) ppatters.
- */
-
-#ifndef __WVSSLSTREAM
-#define __WVSSLSTREAM
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ * 
+ * SSL (Socket Security Layer) communications via WvStreams.
+ */ 
+#ifndef __WVSSLSTREAM_H
+#define __WVSSLSTREAM_H
 
 #include "wvstreamclone.h"
-#include "wvx509.h"
 #include "wvlog.h"
  
 struct ssl_st;
@@ -18,6 +18,8 @@ typedef struct ssl_ctx_st SSL_CTX;
 typedef struct ssl_st SSL;
 typedef struct ssl_method_st SSL_METHOD;
 
+class WvX509Mgr;
+
 /**
  * SSL Stream, handles SSLv2, SSLv3, and TLS
  * Methods - If you want it to be a server, then you must feed the constructor
@@ -27,12 +29,8 @@ class WvSSLStream : public WvStreamClone
 {
 public:
     /**  
-     * Start an SSL Connection on the stream _slave - if the x509 structure
-     * is passed to the wvsslstream, then the stream will assume it is a 
-     * server. This is a temporary hack, since a client can also have a 
-     * certificate(for client side validation - SSLv3, TLS). Eventually, 
-     * this constructor will have a third parameter, bool _is_server, which
-     * will be used to decide between server and client mode.
+     * Start an SSL connection on the stream _slave.  The x509 structure
+     * is optional for a client, and mandatory for a server.
      */
     WvSSLStream(WvStream *_slave, WvX509Mgr *x509 = NULL, 
     		bool _verify = false, bool _is_server = false);
@@ -123,4 +121,5 @@ private:
 
 };
 
-#endif
+#endif // __WVSSLSTREAM_H
+

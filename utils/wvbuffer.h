@@ -165,6 +165,12 @@ public:
     void put(WvStringParm str);
     
     /*
+     * add a single character to the buffer.
+     */
+    void putch(int ch)
+        { *alloc(1) = ch; }
+    
+    /*
      * _move_ (not copy) the contents of another WvBuffer into this buffer.
      * This is done by physically taking the WvMiniBuffer objects from one
      * buffer and adding them at the end of this one.

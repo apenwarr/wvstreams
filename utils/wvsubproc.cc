@@ -131,7 +131,7 @@ void WvSubProc::kill_primary(int sig)
 }
 
 
-void WvSubProc::stop(time_t msec_delay)
+void WvSubProc::stop(time_t msec_delay, bool kill_children = true)
 {
     if (!running) return;
     
@@ -139,19 +139,27 @@ void WvSubProc::stop(time_t msec_delay)
     
     if (running)
     {
-	kill(SIGTERM);
-	wait(msec_delay);
+	if (kill_children)
+	    kill(SIGTERM);
+	else
+	    kill_primary(SIGTERM);
+
+	wait(msec_delay, kill_children);
     }
     
     if (running)
     {
-	kill(SIGKILL);
-	wait(-1);
+	if (kill_children)
+	    kill(SIGKILL);
+	else
+	    kill_primary(SIGKILL);
+
+	wait(-1, kill_children);
     }
 }
 
 
-void WvSubProc::wait(time_t msec_delay)
+void WvSubProc::wait(time_t msec_delay, bool wait_children = true)
 {
     int status;
     pid_t dead_pid;
@@ -185,17 +193,25 @@ void WvSubProc::wait(time_t msec_delay)
 	//	msecdiff(tv2, tv1), dead_pid, pid);
 	if (dead_pid < 0)
 	{
-	    // all relevant children are dead!
-	    if (errno == ECHILD)
+	    if (!wait_children)
 	    {
-		if (::kill(-pid, 0) && errno == ESRCH)
-		{
-		    running = false;
-		    pid = -1;
-		}
+		running = false;
+		pid = -1;
 	    }
 	    else
-		perror("WvSubProc::wait");
+	    {
+		// all relevant children are dead!
+		if (errno == ECHILD)
+		{
+		    if (::kill(-pid, 0) && errno == ESRCH)
+		    {
+			running = false;
+			pid = -1;
+		    }
+		}
+		else
+		    perror("WvSubProc::wait");
+	    }
 	}
 	else if (dead_pid == pid)
 	{
@@ -211,6 +227,8 @@ void WvSubProc::wait(time_t msec_delay)
 	
 	gettimeofday(&tv2, &tz);
 	
-    } while (running && msec_delay 
-	     && (msec_delay < 0 || msecdiff(tv2, tv1) < msec_delay));
+    } while (running 
+	     && (dead_pid > 0
+		 || (msec_delay 
+		     && (msec_delay < 0 || msecdiff(tv2, tv1) < msec_delay))));
 }

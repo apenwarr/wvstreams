@@ -5,12 +5,13 @@
  * Streams with built-in cryptography on read/write.  See wvcrypto.h.
  */
 #include "wvcrypto.h"
+#include "wvsslhacks.h"
 #include "strutils.h"
 #include <assert.h>
 #include <blowfish.h>
 #include <rsa.h>
 #include <md5.h>
-
+#include <pem.h>
 
 ////////////////////////// WvCryptoStream
 
@@ -26,7 +27,8 @@ WvCryptoStream::WvCryptoStream(WvStream *_slave) : WvStreamClone(&slave)
 
 WvCryptoStream::~WvCryptoStream()
 {
-    // nothing special
+    if (my_cryptbuf)
+	delete[] my_cryptbuf;
 }
 
 
@@ -137,8 +139,18 @@ WvBlowfishStream::~WvBlowfishStream()
 
 
 
-WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
+void WvRSAKey::init(const char *_keystr, bool priv)
 {
+    errnum = 0;
+    rsa = NULL;
+    pub = prv = NULL;
+    
+    if (!_keystr)
+    {
+	seterr("RSA keystring is null!");
+	return;
+    }
+
     // the ssl library segfaults if the buffer isn't big enough and our key
     // is unexpectedly short... sigh.  There's probably a security hole
     // somewhere in the fact that an invalid key can segfault the library.
@@ -146,7 +158,8 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
     int bufsize = ((hexbytes < 2048) ? 2048 : hexbytes) + 16;
     //int bufsize = hexbytes/2;
     
-    unsigned char *keybuf = new unsigned char[bufsize], *bufp;
+    unsigned char *keybuf = new unsigned char[bufsize];
+    const unsigned char *bufp;
     char *keystr;
     RSA *rp;
     
@@ -159,47 +172,63 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
     
     if (priv)
     {
-	rsa = d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
-	prv = keystr;
+	rsa = wv_d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
+
+	if (!rsa)
+	{
+	    seterr("RSA Key is invalid!");
+	    free(keystr);
+	}
+	else
+	{
+	    prv = keystr;
 	
-	size_t size;
-	unsigned char *iend = keybuf;
-	size = i2d_RSAPublicKey(rsa, &iend);
-	pub = (char *)malloc(size * 2 + 1);
-	hexify(pub, keybuf, size);
+	    size_t size;
+	    unsigned char *iend = keybuf;
+	    size = i2d_RSAPublicKey(rsa, &iend);
+	    pub = (char *)malloc(size * 2 + 1);
+	    ::hexify(pub, keybuf, size);
+	}
     }
     else
     {
-	rsa = d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
-	prv = NULL;
-	pub = keystr;
+	rsa = wv_d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
+	if (!rsa)
+	{
+	    seterr("RSA Key is invalid!");
+	    free(keystr);
+	}
+	else
+	{
+	    prv = NULL;
+	    pub = keystr;
+	}
     }
     
     delete[] keybuf;
 }
 
 
+WvRSAKey::WvRSAKey(const WvRSAKey &k)
+{
+    if (k.prv)
+	init(k.private_str(), true);
+    else
+	init(k.public_str(), false);
+}
+
+
+WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
+{
+    init(_keystr, priv);
+}
+
+
 WvRSAKey::WvRSAKey(int bits)
 {
-    size_t size;
-    unsigned char *keybuf, *iend;
-    
     rsa = RSA_generate_key(bits, 3, NULL, NULL);
     
-    size = i2d_RSAPrivateKey(rsa, NULL);
-    iend = keybuf = new unsigned char[size];
-    i2d_RSAPrivateKey(rsa, &iend);
-    
-    prv = (char *)malloc(size * 2 + 1);
-    hexify(prv, keybuf, size);
-    
-    iend = keybuf;
-    size = i2d_RSAPublicKey(rsa, &iend);
-    
-    pub = (char *)malloc(size * 2 + 1);
-    hexify(pub, keybuf, size);
-    
-    delete[] keybuf;
+    hexify(rsa);
 }
 
 
@@ -213,6 +242,57 @@ WvRSAKey::~WvRSAKey()
 	RSA_free(rsa);
 }
 
+
+void WvRSAKey::pem2hex(WvStringParm filename)
+{
+    RSA *rsa = NULL;
+    FILE *fp;
+
+    fp = fopen(filename, "r");
+
+    if (!fp)
+    {
+	seterr("Unable to open %s!",filename);
+	return;
+    }
+
+    rsa = PEM_read_RSAPrivateKey(fp,NULL,NULL,NULL);
+
+    fclose(fp);
+
+    if (!rsa)
+    {
+	seterr("Unable to decode PEM File!");
+	return;
+    }
+    else
+    {
+	hexify(rsa);
+	return;
+    }
+}
+
+
+void WvRSAKey::hexify(RSA *rsa)
+{
+    size_t size;
+    unsigned char *keybuf, *iend;
+
+    size = i2d_RSAPrivateKey(rsa, NULL);
+    iend = keybuf = new unsigned char[size];
+    i2d_RSAPrivateKey(rsa, &iend);
+    
+    prv = (char *)malloc(size * 2 + 1);
+    ::hexify(prv, keybuf, size);
+    
+    iend = keybuf;
+    size = i2d_RSAPublicKey(rsa, &iend);
+    
+    pub = (char *)malloc(size * 2 + 1);
+    ::hexify(pub, keybuf, size);
+
+    delete[] keybuf;
+}
 
 
 /////////////////////////// WvRSAStream
