@@ -40,7 +40,6 @@ int main()
     log("Test2b: '%s'\n", cfg.get("Users", "Zebmaster", NULL));
 
     log("Single section dump:\n");
-#ifndef USE_WVCONFEMU    
     WvConfigSection *sect = cfg["tunnel vision routes"];
     if (sect)
     {
@@ -48,11 +47,9 @@ int main()
 	for (i.rewind(); i.next(); )
 	    log("  Found: '%s' = '%s'\n", i->name, i->value);
     }
-#endif
     log("Section dump done.\n");
     
     log("All-section dump:\n");
-#ifndef USE_WVCONFEMU    
     WvConfigSectionList::Iter i(cfg);
     for (i.rewind(); i.next(); )
     {
@@ -63,30 +60,34 @@ int main()
 	if (i2.cur())
 	    log("   First entry: '%s'='%s'\n", i2->name, i2->value);
     }
-#endif
     log("All-section dump done.\n");
 
     // not interesting
+    log("setting [Neener]Bobber=50\n");
     cfg.setint("Neener", "Bobber", 50);
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(!c1 && !c2 && !c3);
     
     // set to same value - no change event
+    log("setting [Users]webmaster=NOLOGIN\n");
     cfg.set("Users", "webmaster", "NOLOGIN");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(!c1 && !c2 && !c3);
     
     // should set c1
+    log("setting [users]Wimp=hello\n");
     cfg.set("users", "Wimp", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(c1 && !c2 && !c3);
     
     // should set c2
+    log("setting [groups]bob=hello\n");
     cfg.set("groups", "bob", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(c1 && c2 && !c3);
     
     // should set c3
+    log("setting [users]bob=hello\n");
     cfg.set("users", "bob", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(c1 && c2 && c3);

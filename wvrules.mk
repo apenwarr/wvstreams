@@ -183,7 +183,7 @@ define wvcc_base
 	@rm -f "$1"
 	$(COMPILE_MSG)$4 $5 $2 -o $1
 	$(DEPEND_MSG)$4 -M -E $< \
-		| sed -e 's|^$(notdir $1)|$1|' >$(DEPFILE)
+		| sed -e 's|^[^:]*:|$1:|' >$(DEPFILE)
 endef
 wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
 wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
@@ -204,7 +204,7 @@ define wvlink_so
 	$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
 	$(if $(filter-out $(call wvsoname,$1),$1),ln -sf $1 $(call wvsoname,$1))
 endef
-	
+
 wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
 
 %.o: %.c;	$(call wvcc ,$@,$<,$*)

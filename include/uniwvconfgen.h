@@ -9,7 +9,6 @@
 #define __UNICONFWVGEN_H
 
 #include "uniconfgen.h"
-#include "wvconf.h"
 
 class UniWvConfGen : public UniConfGen
 {

@@ -18,6 +18,17 @@
 #include "wvstringlist.h"
 #include "wvcallback.h"
 
+
+#ifdef __WVCONFEMU_H
+#warning "disabling wvconfemu transparent emulation"
+#undef WvConf
+#undef WvConfigSection
+#undef WvConfigSectionList
+#undef WvConfigEntry
+#undef WvConfigEntryList
+#endif
+
+
 class WvConf;
 
 
@@ -31,7 +42,8 @@ public:
     void set(WvStringParm _value)
         { value = _value; }
     
-    WvString name, value;
+    WvString name;
+    WvString value;
 };
 
 
