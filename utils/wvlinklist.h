@@ -114,7 +114,7 @@ public:
 	}
 
     _type_ *last() const
-        { return (_type_*)last->data; }
+        { return (_type_*)tail->data; }
 
     void add_after(WvLink *after, _type_ *data, bool auto_free,
 			char *id = NULL )
