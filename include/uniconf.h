@@ -17,6 +17,7 @@
 #include "uniconfiter.h"
 #include "uniconfgen.h"
 #include "wvstringtable.h"
+#include "wvvector.h"
 
 class WvStream;
 class UniConfGen;
@@ -332,16 +333,17 @@ public:
 
     // internal base class for all of the key iterators
     class KeyIterBase;
-    // internal class for pattern-matching iterators
-    class PatternIter;
-    
     // iterates over direct children
     class Iter;
     // iterates over all descendents in preorder traversal
     class RecursiveIter;
     // iterates over children matching a wildcard
     class XIter;
+    // internal class for pattern-matching iterators
+    class PatternIter;
 
+    // internal base class for sorted key iterators
+    class SortedKeyIterBase;
     // sorted variant of Iter
     class SortedIter;
     // sorted variant of RecursiveIter
@@ -466,6 +468,10 @@ public:
 };
 
 
+/**
+ * @internal
+ * An implementation base class for key iterators.
+ */
 class UniConf::KeyIterBase
 {
 protected:
@@ -609,5 +615,119 @@ public:
     void rewind();
     bool next();
 };
+
+
+/**
+ * @internal
+ * An implementation base class for sorted key iterators.
+ * 
+ * Unfortunately WvSorter is too strongly tied down to lists
+ * and pointers to be of use here.  The main problem is that
+ * UniConf::Iter and company return pointers to temporary objects
+ * whereas WvSorter assumes that the pointers will remain valid
+ * for the lifetime of the iterator.
+ */
+class UniConf::SortedKeyIterBase : public UniConf::KeyIterBase
+{
+public:
+    typedef int (*Comparator)(const UniConf &a, const UniConf &b);
+
+    /**
+     * Default comparator.
+     * Sorts lexicographically by full key.
+     */
+    static int defcomparator(const UniConf &a, const UniConf &b);
+
+    SortedKeyIterBase(const UniConf &root,
+        Comparator comparator = defcomparator);
+    ~SortedKeyIterBase();
+
+    bool next();
+
+private:
+    Comparator xcomparator;
+    int index;
+    int count;
+    
+    void _purge();
+    void _rewind();
+    
+    static int wrapcomparator(const UniConf **a, const UniConf **b);
+    static Comparator innercomparator;
+
+protected:
+    typedef WvVector<UniConf*, ShallowBlockOps<UniConf*> > Vector;
+    Vector xkeys;
+    
+    template<class Iter>
+    inline void populate(Iter &it)
+    {
+        _purge();
+        for (it.rewind(); it.next(); )
+            xkeys.pushback(new UniConf(it()));
+        _rewind();
+    }
+};
+
+
+/**
+ * A sorted variant of UniConf::Iter.
+ */
+class UniConf::SortedIter : public UniConf::SortedKeyIterBase
+{
+    UniConf::Iter it;
+
+public:
+    SortedIter(const UniConf &root,
+        Comparator comparator = defcomparator) :
+        SortedKeyIterBase(root, comparator),
+        it(root) { }
+
+    void rewind()
+    {
+        populate(it);
+    }
+};
+
+
+/**
+ * A sorted variant of UniConf::RecursiveIter.
+ */
+class UniConf::SortedRecursiveIter : public UniConf::SortedKeyIterBase
+{
+    UniConf::RecursiveIter it;
+
+public:
+    SortedRecursiveIter(const UniConf &root, UniConfDepth::Type depth,
+        Comparator comparator = defcomparator) :
+        SortedKeyIterBase(root, comparator),
+        it(root, depth) { }
+
+    void rewind()
+    {
+        populate(it);
+    }
+};
+
+
+/**
+ * A sorted variant of UniConf::XIter.
+ */
+class UniConf::SortedXIter : public UniConf::SortedKeyIterBase
+{
+    UniConf::XIter it;
+
+public:
+    SortedXIter(const UniConf &root, const UniConfKey &pattern,
+        Comparator comparator = defcomparator) :
+        SortedKeyIterBase(root, comparator),
+        it(root, pattern) { }
+
+    void rewind()
+    {
+        populate(it);
+    }
+};
+
 
 #endif // __UNICONF_H

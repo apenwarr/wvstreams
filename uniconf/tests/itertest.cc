@@ -44,6 +44,10 @@ int main()
 	log("Iter dump of /HTTPD:\n");
 	UniConf::Iter it(h["/httpd"]);
         dump(log, it);
+
+	log("SortedIter dump of /HTTPD:\n");
+	UniConf::SortedIter sit(h["/httpd"]);
+        dump(log, sit);
     }
     
     {
@@ -68,9 +72,9 @@ int main()
 	UniConf::RecursiveIter it5(r, UniConfDepth::DESCENDENTS);
         dump(log, it5);
         
-	log("RecursiveIter dump of %s Depth = INFINITE:\n", h.fullkey());
-	UniConf::RecursiveIter it6(h, UniConfDepth::INFINITE);
-        dump(log, it6);
+	log("SortedRecursiveIter dump of %s Depth = INFINITE:\n", h.fullkey());
+	UniConf::SortedRecursiveIter sit(h, UniConfDepth::INFINITE);
+        dump(log, sit);
     }
 
     {
@@ -111,22 +115,10 @@ int main()
         log("XIter dump of /*/*/monkey/*/2/*:\n");
         UniConf::XIter it6(h, "/*/*/monkey/*/2/*");
         dump(log, it6);
+        
+        log("SortedXIter dump of /*/*/monkey/*/2/*:\n");
+        UniConf::XIter sit(h, "/*/*/monkey/*/2/*");
+        dump(log, sit);
     }
-    
-#if 0
-    {
-	log("Sorted non-recursive dump of /HTTPD:\n");
-	UniConf::Sorter i(h["/HTTPD"], hconfcmp);
-	for (i.rewind(); i.next(); )
-	    log("  '%s' = '%s'\n", i->full_key(), i->value());
-    }
-    
-    {
-	log("Sorted recursive dump:\n");
-	UniConf::RecursiveSorter i(h, rhconfcmp);
-	for (i.rewind(); i.next(); )
-	    log("  '%s' = '%s'\n", i->full_key(), i->value());
-    }
-#endif
     return 0;
 }

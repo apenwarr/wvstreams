@@ -348,6 +348,71 @@ bool UniConf::XIter::next()
 
 
 
+/***** UniConf::SortedKeyIterBase *****/
+
+UniConf::SortedKeyIterBase::SortedKeyIterBase(const UniConf &root,
+    UniConf::SortedKeyIterBase::Comparator comparator) :
+    KeyIterBase(root),
+    xcomparator(comparator)
+{
+}
+
+
+UniConf::SortedKeyIterBase::~SortedKeyIterBase()
+{
+    _purge();
+}
+
+
+int UniConf::SortedKeyIterBase::defcomparator(const UniConf &a,
+    const UniConf &b)
+{
+    return a.fullkey().compareto(b.fullkey());
+}
+
+
+UniConf::SortedKeyIterBase::Comparator
+    UniConf::SortedKeyIterBase::innercomparator = NULL;
+
+int UniConf::SortedKeyIterBase::wrapcomparator(const UniConf **a,
+    const UniConf **b)
+{
+    return innercomparator(**a, **b);
+}
+
+
+void UniConf::SortedKeyIterBase::_purge()
+{
+    count = xkeys.size();
+    for (int i = 0; i < count; ++i)
+        delete xkeys[i];
+    xkeys.zap();
+}
+
+
+void UniConf::SortedKeyIterBase::_rewind()
+{
+    index = 0;
+    count = xkeys.size();
+    
+    // This code is NOT reentrant because qsort makes it too hard
+    innercomparator = xcomparator;
+    qsort(xkeys.ptr(), count, sizeof(UniConf*),
+        (int (*)(const void *, const void *))wrapcomparator);
+}
+
+
+bool UniConf::SortedKeyIterBase::next()
+{
+    if (index >= count)
+        return false;
+    xcurrent = *xkeys[index];
+    index += 1;
+    return true;
+}
+
+
+
 /***** UniConfMount *****/
 
 bool UniConfMount::isok() const
