@@ -16,13 +16,18 @@
 #include "wvaddr.h"
 #include <assert.h>
 
+#ifndef ARPHRD_IPSEC
+// From ipsec_tunnel
+#define ARPHRD_IPSEC 31
+#endif
+
 // workaround for functions called sockaddr() -- oops.
 typedef struct sockaddr sockaddr_bin;
 
 /* A list of Linux ARPHRD_* types, one for each element of CapType. */
 int WvEncap::extypes[] = {
 #ifdef _WIN32
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #else
     // hardware encapsulation
     0, // Unknown
@@ -33,6 +38,7 @@ int WvEncap::extypes[] = {
     ARPHRD_SLIP,
     ARPHRD_CSLIP,
     ARPHRD_PPP,
+    ARPHRD_IPSEC,
     
     // protocol encapsulation
     AF_INET, // IPv4
@@ -52,6 +58,7 @@ const char WvEncap::strings[][20] = {
     "SLIP",
     "CSLIP",
     "PPP",
+    "IPsec",
     
     // protocol encapsulation
     "IP", // IPv4
@@ -104,6 +111,9 @@ WvAddr *WvAddr::gen(struct sockaddr *addr)
     case WvEncap::Ethertap:
     case WvEncap::Ethernet:
 	return new WvEtherAddr(addr);
+
+    case WvEncap::IPsec:
+	return new WvStringAddr("IPsec", WvEncap::IPsec);
 #endif
     default:
 	return new WvStringAddr("Unknown", WvEncap::Unknown);
@@ -231,8 +241,8 @@ void WvEtherAddr::string_init(char const string[])
     char *endptr = NULL;
     unsigned char *cptr = binaddr;
     
-    memset(binaddr, 0, ETH_ALEN);
-    for (int count=0; count < ETH_ALEN; count++)
+    memset(binaddr, 0, ETHER_ADDR_LEN);
+    for (unsigned int count=0; count < ETHER_ADDR_LEN; count++)
     {
 	*cptr++ = strtoul(endptr ? endptr : string, &endptr, 16);
 	if (!endptr || endptr==string) break;
@@ -250,9 +260,9 @@ WvEtherAddr::~WvEtherAddr()
 /* Generate a printable version of an ethernet address. */
 WvString WvEtherAddr::printable() const
 {
-    char s[ETH_ALEN*3], *cptr = s;
+    char s[ETHER_ADDR_LEN*3], *cptr = s;
     
-    for (int count = 0; count < ETH_ALEN; count++)
+    for (unsigned int count = 0; count < ETHER_ADDR_LEN; count++)
     {
 	if (cptr > s)
 	    *cptr++ = ':';
@@ -274,7 +284,7 @@ WvEncap WvEtherAddr::encap() const
 // FF:FF:FF:FF:FF:FF is the ethernet broadcast address.
 bool WvEtherAddr::isbroadcast() const
 {
-    for (int count = 0; count < ETH_ALEN; count++)
+    for (unsigned int count = 0; count < ETHER_ADDR_LEN; count++)
 	if (binaddr[count] != 0xFF)
 	    return false;
     return true;
@@ -289,7 +299,7 @@ const unsigned char *WvEtherAddr::rawdata() const
 
 size_t WvEtherAddr::rawdata_len() const
 {
-    return ETH_ALEN;
+    return ETHER_ADDR_LEN;
 }
 
 
@@ -298,7 +308,7 @@ sockaddr_bin *WvEtherAddr::sockaddr() const
     sockaddr_bin *sa = new sockaddr_bin;
     memset(sa, 0, sizeof(*sa));
     sa->sa_family = ARPHRD_ETHER;
-    memcpy(sa->sa_data, binaddr, ETH_ALEN);
+    memcpy(sa->sa_data, binaddr, ETHER_ADDR_LEN);
     return sa;
 }
 
@@ -466,14 +476,14 @@ WvIPAddr WvIPAddr::operator~ () const
  */
 WvIPAddr WvIPAddr::operator+ (int n) const
 {
-    __u32 newad = htonl(ntohl(addr()) + n);
+    uint32_t newad = htonl(ntohl(addr()) + n);
     return WvIPAddr((unsigned char *)&newad);
 }
 
 
 WvIPAddr WvIPAddr::operator- (int n) const
 {
-    __u32 newad = htonl(ntohl(addr()) - n);
+    uint32_t newad = htonl(ntohl(addr()) - n);
     return WvIPAddr((unsigned char *)&newad);
 }
 
@@ -529,7 +539,7 @@ void WvIPNet::string_init(const char string[])
 {
     char *maskptr;
     int bits;
-    __u32 imask;
+    uint32_t imask;
 
     maskptr = strchr(string, '/');
     if (!maskptr)
@@ -546,7 +556,7 @@ void WvIPNet::string_init(const char string[])
     {
 	bits = atoi(maskptr);
 	if (bits > 0)
-	    imask = htonl(~(((__u32)1 << (32-bits)) - 1)); // see below
+	    imask = htonl(~(((uint32_t)1 << (32-bits)) - 1)); // see below
 	else
 	    imask = 0;
 	mask = WvIPAddr((unsigned char *)&imask);
@@ -561,9 +571,9 @@ WvIPNet::WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask)
 WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
 	: WvIPAddr(base)
 {
-    __u32 imask;
+    uint32_t imask;
     if (bits > 0) // <<32 is a bad idea!
-	imask = htonl(~(((__u32)1 << (32-bits)) - 1));
+	imask = htonl(~(((uint32_t)1 << (32-bits)) - 1));
     else
 	imask = 0;
     mask = WvIPAddr((unsigned char *)&imask);
@@ -618,7 +628,7 @@ bool WvIPNet::includes(const WvIPNet &addr) const
 int WvIPNet::bits() const
 {
     int bits = 0;
-    __u32 val = ntohl(mask.addr());
+    uint32_t val = ntohl(mask.addr());
     
     do
     {
@@ -633,7 +643,7 @@ void WvIPNet::normalize()
 {
     if (bits() > 0)
     {
-	__u32 val = htonl(~(((__u32)1 << (32-bits())) - 1));
+	uint32_t val = htonl(~(((uint32_t)1 << (32-bits())) - 1));
 	mask = WvIPAddr((unsigned char *)&val);
     }
     else
@@ -647,7 +657,7 @@ WvIPPortAddr::WvIPPortAddr()
 }
 
 
-WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port)
+WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, uint16_t _port)
 			: WvIPAddr(_ipaddr)
 {
     port = _port;
@@ -682,14 +692,14 @@ void WvIPPortAddr::string_init(const char string[])
 }
 
 
-WvIPPortAddr::WvIPPortAddr(__u16 _port)
+WvIPPortAddr::WvIPPortAddr(uint16_t _port)
                               : WvIPAddr("0.0.0.0")
 {
     port = _port;
 }
 
 
-WvIPPortAddr::WvIPPortAddr(const char string[], __u16 _port)
+WvIPPortAddr::WvIPPortAddr(const char string[], uint16_t _port)
                               : WvIPAddr(string)
 {
     port = _port;
@@ -780,15 +790,15 @@ WvEncap WvUnixAddr::encap() const
 /* don't forget to delete the returned object when you're done! */
 sockaddr_bin *WvUnixAddr::sockaddr() const
 {
-    sockaddr_un *sun = new sockaddr_un;
+    sockaddr_un *addr = new sockaddr_un;
     
-    memset(sun, 0, sizeof(*sun));
-    sun->sun_family = AF_UNIX;
+    memset(addr, 0, sizeof(*addr));
+    addr->sun_family = AF_UNIX;
     size_t max = strlen(sockname);
-    if (max > sizeof(sun->sun_path) - 2) // appease valgrind
-	max = sizeof(sun->sun_path) - 2;
-    strncpy(sun->sun_path, sockname, max);
-    return (sockaddr_bin *)sun;
+    if (max > sizeof(addr->sun_path) - 2) // appease valgrind
+	max = sizeof(addr->sun_path) - 2;
+    strncpy(addr->sun_path, sockname, max);
+    return (sockaddr_bin *)addr;
 }
 
 

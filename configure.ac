@@ -94,7 +94,7 @@ AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
-AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL (required)]))
+AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
 AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(popt, AC_HELP_STRING([--with-popt], [popt]))
@@ -120,6 +120,179 @@ AC_PROG_CPP
 AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
+
+# Detect target build environment
+AC_CANONICAL_TARGET
+case "$target" in
+    *-linux*)
+        ARCH_SUBDIRS="linuxstreams"
+	;;
+    *-sunos*|*-solaris*)
+    	ARCH_SUBDIRS=""
+	ac_libs="-lstdc++ -lgcc_s -ldl -lm -lc"
+	;;
+    *)
+    	ARCH_SUBDIRS=""
+	;;
+esac
+AC_SUBST(target)
+AC_SUBST(ARCH_SUBDIRS)
+
+# Detect endianness
+AC_C_BIGENDIAN
+
+# Function checks
+AC_FUNC_ALLOCA
+
+# Check for error_t
+AC_CHECK_HEADERS([argz.h errno.h])
+AC_CHECK_TYPE(error_t,, AC_DEFINE([error_t], [int],
+				  [Define to a type to use for `error_t' if it is not otherwise available.]),dnl `
+[#if HAVE_ARGZ_H
+# include <argz.h>
+#else
+# if HAVE_ERRNO_H
+#  include <errno.h>
+# endif
+#endif])
+
+# Check for size of ethernet addresses
+AC_CHECK_HEADERS([sys/socket.h])
+AC_CHECK_HEADERS([net/if.h], [], [],
+[#include <stdio.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+])
+AC_CHECK_HEADERS([net/ethernet.h], [], [],
+[#include <stdio.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+])
+AC_CHECK_HEADERS([netinet/if_ether.h], [], [],
+[#include <stdio.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+])
+AC_CHECK_DECL(ETHER_ADDR_LEN,,
+	      AC_CHECK_TYPE(ether_addr_t,
+	      		    AC_DEFINE([ETHER_ADDR_LEN], [sizeof(ether_addr_t)],
+			    	      [Size of ethernet address]),
+			    AC_DEFINE([ETHER_ADDR_LEN], [6]),
+[#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NET_ETHERNET_H
+# include <net/ethernet.h>
+#endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+#if HAVE_NETINET_IF_ETHER_H
+# include <netinet/if_ether.h>
+#endif
+]),
+[#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NET_ETHERNET_H
+# include <net/ethernet.h>
+#endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+#if HAVE_NETINET_IF_ETHER_H
+# include <netinet/if_ether.h>
+#endif
+])
+
+# Check for basic Internet support
+AC_CHECK_HEADERS([netdb.h])
+AC_CHECK_HEADERS([netinet/in.h])
+AC_CHECK_HEADERS([netinet/in_systm.h])
+AC_CHECK_HEADERS([netinet/ip.h], [], [],
+[#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+])
+AC_CHECK_HEADERS([netinet/tcp.h])
+
+# Check for advanced Linux-style modem support
+AC_CHECK_HEADERS([linux/serial.h])
+
+# Look for getopt
+AC_CHECK_FUNCS([getopt],,[getopt=no])
+if test "$getopt" = "no"; then
+    AC_CHECK_HEADERS([getopt.h])
+fi
 
 # Detect hard-linking based on LN_S's behaviour
 AC_MSG_CHECKING([whether ln works...])
@@ -265,18 +438,48 @@ if test "$with_openslp" != "no"; then
     fi 
 fi
 
+# BSD sockets, if you're on Solaris
+AC_CHECK_LIB(socket, bind)
+
 # openssl
 if test "$with_openssl" != "no"; then
     AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
                      [#define OPENSSL_NO_KRB5])
-    AC_CHECK_LIB(crypto, CRYPTO_malloc,, )
-    AC_CHECK_LIB(ssl, SSL_CTX_new,, [with_openssl=no])
+    AC_CHECK_LIB(crypto, X509_free)
+    AC_CHECK_LIB(ssl, SSL_has_matching_session_id,, [with_openssl=no])
 fi
 
 # pam
 if test "$with_pam" != "no"; then
     AC_CHECK_HEADERS(security/pam_appl.h,, [with_pam=no])
     AC_CHECK_LIB(pam, pam_start,, [with_pam=no])
+    AC_MSG_CHECKING(for sane PAM implementation)
+    AC_COMPILE_IFELSE(
+[#include "confdefs.h"
+#if HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+#endif
+
+/* noconv: null PAM conversation function */
+int noconv(int num_msg, const struct pam_message **msgm,
+        struct pam_response **response, void *userdata)
+{
+    // if you need to ask things, it won't work
+    return PAM_CONV_ERR;
+}
+
+int main()
+{
+    struct pam_conv c;
+    c.conv = noconv;
+    return 0;
+}
+],
+		      [AC_MSG_RESULT([yes])
+		       AC_DEFINE([HAVE_BROKEN_PAM], [0])],
+		      [AC_MSG_RESULT([no])
+		       AC_DEFINE([HAVE_BROKEN_PAM], [1],
+				 [Solaris has a broken PAM implementation])])
 fi
 
 # tcl
@@ -443,7 +646,7 @@ if test "$with_openslp" = "no"; then
 fi
 if test "$with_openssl" = "no"; then
     AC_MSG_WARN([OpenSSL is missing.])
-    missing_required="$missing_required OpenSSL"
+    missing_required="$missing_required OpenSSL>=0.9.7"
 fi
 if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing.])
@@ -497,6 +700,8 @@ AC_SUBST(with_zlib)
 
 AC_SUBST(build_xplc)
 AC_SUBST(xplc_pc)
+
+AC_SUBST(ac_libs)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc

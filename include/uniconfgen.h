@@ -72,7 +72,14 @@ public:
      */
     virtual bool refresh() = 0;
 
-    
+    /** 
+     * Flushes any commitment/notification buffers . 
+     *
+     * The default implementation always returns true.
+     *  NOTE: This method should be 'protected'
+     */
+    virtual void flush_buffers() = 0;
+
     /***** Key Retrieval API *****/
     
     /**
@@ -272,6 +279,8 @@ public:
 
     /***** Key Storage API *****/
     virtual void set(const UniConfKey &key, WvStringParm value) = 0;
+
+    virtual void flush_buffers() = 0;
 
     /***** Key Enumeration API *****/
     virtual bool haschildren(const UniConfKey &key);

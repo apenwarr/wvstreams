@@ -147,11 +147,19 @@ WvString local_date(time_t _when = -1);
 #ifndef _WIN32
 /**
  * Similar to crypt(), but this randomly selects its own salt.
- * This function is defined in strcrypt.cc.
+ * This function is defined in strcrypt.cc.  It chooses to use the DES
+ * engine.
  */
 WvString passwd_crypt(const char *str);
 
 #endif
+/**
+ * Similar to crypt(), but this randomly selects its own salt.
+ * This function is defined in strcrypt.cc.  It chooses to use the MD5
+ * engine.
+ */
+WvString passwd_md5(const char *str);
+
 /**
  * Returns a string with a backslash in front of every non alphanumeric
  * character in s1.

@@ -43,13 +43,19 @@ endif
 dist-hack-clean:
 	@rm -f stamp-h.in
 
+# Comment this assignment out for a release.
+ifdef PKGSNAPSHOT
+PKGVER=+$(shell date +%Y%m%d)
+endif
+
 dist-hook: dist-hack-clean configure
 	@rm -rf autom4te.cache
 	@if test -d .xplc; then \
-	    echo '--> Preparing XPLC for dist...' \
-	    $(MAKE) -C .xplc clean patch; \
+	    echo '--> Preparing XPLC for dist...'; \
+	    $(MAKE) -C .xplc clean patch && \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
+	@sed -e "s/Version\:\ 4\.0/Version\:\ \$(PKGVER)/" redhat/wvstreams.spec.in > redhat/wvstreams.spec
 
 runconfigure: config.mk include/wvautoconf.h
 
@@ -126,6 +132,8 @@ install-shared: $(TARGETS_SO)
 	for i in $(TARGETS_SO); do \
 	    $(INSTALL_PROGRAM) $$i.$(RELEASE) $(DESTDIR)$(libdir)/ ; \
 	done
+	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
+	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
 
 install-dev: $(TARGETS_SO) $(TARGETS_A)
 	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams
@@ -149,8 +157,6 @@ install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
 	$(INSTALL_PROGRAM) uniconf/tests/uni $(DESTDIR)$(bindir)/
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL_PROGRAM) uniconf/daemon/uniconfd $(DESTDIR)$(sbindir)/
-	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
-	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -d $(DESTDIR)$(localstatedir)/lib/uniconf
 	touch $(DESTDIR)$(localstatedir)/lib/uniconf/uniconfd.ini
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8

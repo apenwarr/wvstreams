@@ -110,8 +110,13 @@ public:
 
 
 /** noconv: null PAM conversation function */
+#if HAVE_BROKEN_PAM
+int noconv(int num_msg, struct pam_message **msgm,
+        struct pam_response **response, void *userdata)
+#else
 int noconv(int num_msg, const struct pam_message **msgm,
         struct pam_response **response, void *userdata)
+#endif
 {
     // if you need to ask things, it won't work
     return PAM_CONV_ERR;
@@ -178,7 +183,12 @@ bool WvPamStream::authenticate(WvStringParm name,
     d->status = pam_open_session(d->pamh, 0);
     if (!check_pam_status("session open")) return false;
 
-    const void *x = NULL;
+#if HAVE_BROKEN_PAM
+    void *x;
+#else
+    const void *x;
+#endif
+    x = NULL;
     d->status = pam_get_item(d->pamh, PAM_USER, &x);
     if (!check_pam_status("get username")) return false;
     d->user = (const char *)x;

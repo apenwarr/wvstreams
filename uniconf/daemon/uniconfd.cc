@@ -1,3 +1,21 @@
+#include "wvautoconf.h"
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
+
+#ifndef _WIN32
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
+#ifdef WITH_SLP
+#include "wvslp.h"
+#endif
+
 #include "wvlogrcv.h"
 #include "uniconfdaemon.h"
 #include "uniclientconn.h"
@@ -8,11 +26,6 @@
 #include "wvstrutils.h"
 #include "wvfileutils.h"
 #include "wvcrash.h"
-
-#ifndef _WIN32
-#include <getopt.h>
-#include <signal.h>
-#endif
 
 #ifdef WITH_SLP
 #include "slp.h"
@@ -55,12 +68,13 @@ static void usage(WvStringParm argv0)
 	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
 	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
 	"     -u   Listen on given Unix socket filename (default=disabled)\n"
+	"     -m   Set the Unix socket to 'mode' (default to uniconfd users umask)\n"
 	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
 	argv0);
 #else
     wverr->print(
 	"\n"
-	"Usage: %s [-dV] [-p port] [-s sslport] "
+	"Usage: %s [-dV] [-l moniker] [-p port] [-s sslport] "
 		 "<mounts...>\n"
 	"     -d   Print debug messages\n"
         "     -dd  Print lots of debug messages\n"
@@ -72,14 +86,6 @@ static void usage(WvStringParm argv0)
 #endif
     exit(1);
 }
-
-#ifdef WITH_SLP
-static void sillyslpcb(SLPHandle hslp, SLPError errcode, void* cookie) 
-{ 
-    /* return the error code in the cookie */ 
-    *(SLPError*)cookie = errcode; 
-}
-#endif
 
 #ifndef _WIN32
 extern char *optarg;
@@ -133,9 +139,9 @@ int main(int argc, char **argv)
     bool dontfork = false, needauth = false;
     unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
     unsigned int sslport = DEFAULT_UNICONF_DAEMON_SSL_PORT;
-    WvString unixport, permmon;
+    WvString unixport, permmon, unix_mode;
 
-    while ((c = getopt(argc, argv, "fdVaA:p:s:u:h?")) >= 0)
+    while ((c = getopt(argc, argv, "fdVam:A:p:s:u:h?")) >= 0)
     {
 	switch (c)
 	{
@@ -160,7 +166,6 @@ int main(int argc, char **argv)
 	    // needauth = true; // sometimes it makes sense to skip auth...
 	    permmon = optarg;
 	    break;
-	    
 	case 'p':
 	    port = atoi(optarg);
 	    break;
@@ -169,6 +174,9 @@ int main(int argc, char **argv)
 	    break;
 	case 'u':
 	    unixport = optarg;
+	    break;
+	case 'm':
+	    unix_mode = optarg;
 	    break;
 	    
 	case 'h':
@@ -225,6 +233,13 @@ int main(int argc, char **argv)
 	::unlink(unixport);
 	if (!daemon.setupunixsocket(unixport))
 	    exit(3);
+	if (!!unix_mode && unix_mode.num())
+	{
+	    log("Setting mode on %s to: %s\n", unixport, unix_mode);
+	    mode_t mode;
+	    sscanf(unix_mode.edit(), "%o", &mode);
+	    chmod(unixport, mode);
+	}
     }
 #endif
 
@@ -260,43 +275,15 @@ int main(int argc, char **argv)
     
 #ifdef WITH_SLP
     // Now that we're this far...
-    SLPError slperr; 
-    SLPError callbackerr; 
-    SLPHandle hslp; 
-
-    slperr = SLPOpen("en", SLP_FALSE, &hslp); 
-    if(slperr != SLP_OK)
-    { 
-        log(WvLog::Critical, "Error opening SLP handle\n"); 
-	exit(7);
-    } 
+    WvSlp slp;
     
     // Register UniConf service with SLP 
     if (port)
-    {
-	svc = WvString("service:uniconf.niti://%s:%s", fqdomainname(), port);
-	slperr = SLPReg(hslp, svc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
-			sillyslpcb, &callbackerr);
-	
-	if(slperr != SLP_OK)
-	{ 
-	    log(WvLog::Notice, "Error registering UniConf Daemon with SLP Service\n"); 
-	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
-	}
-    }
+	slp.add_service("uniconf.niti", fqdomainname(), port);
 
     // Register UniConf SSL service with SLP 
     if (sslport)
-    {
-	sslsvc = WvString("service:uniconfs.niti://%s:%s", fqdomainname(), sslport);
-	slperr = SLPReg(hslp, sslsvc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
-			sillyslpcb, &callbackerr);
-	if(slperr != SLP_OK)
-	{ 
-	    log(WvLog::Notice, "Error registering UniConf SSL Daemon with SLP Service\n");
-	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
-	}
-    }
+	slp.add_service("uniconfs.niti", fqdomainname(), sslport);
 #endif
     
     // main loop
@@ -318,14 +305,5 @@ int main(int argc, char **argv)
     
     WvIStreamList::globallist.unlink(&daemon);
 
-#ifdef WITH_SLP
-    if (!!sslsvc)
-	SLPDereg(hslp, sslsvc, sillyslpcb, &callbackerr);
-    if (!!svc)
-	SLPDereg(hslp, svc, sillyslpcb, &callbackerr);
-    
-    SLPClose(hslp);
-#endif
-    
     return 0;
 }

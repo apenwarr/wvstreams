@@ -42,7 +42,6 @@ class UniClientGen : public UniConfGen
     };
     DeclareWvList(KeyVal);
 
-    //WvStringList set_queue;
     WvLog log;
 
     WvString result_key;        /*!< the key that the current result is from */
@@ -70,6 +69,7 @@ public:
     virtual bool isok();
 
     virtual bool refresh();
+    virtual void flush_buffers();
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);

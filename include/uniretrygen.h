@@ -29,19 +29,30 @@
  * The connection is created through the underlying
  * backend's moniker and destroyed by delete.
  *
+ * If UniRetryGen's constructor is used directly, a callback of type
+ * UniRetryGen::ReconnectCallback can be specified, which will be called
+ * whenever the UniRetryGen reconnects to the underlying moniker.  This allows
+ * for any necessary resynchronisation, such as a call to refresh().
+ *
  * UniRetryGen can be used in combination with UniReplicateGen to create
  * a connection to a UniConf daemon that is robust against network
  * failures through a moniker such as replicate:{retry:tcp:192.168.0.1 tmp:}
  */
 class UniRetryGen : public UniFilterGen
 {
+public:
+
+    typedef WvCallback<void, UniRetryGen &> ReconnectCallback;
+    
 private:
 
     WvLog log;
 
     WvString moniker;
+
+    ReconnectCallback reconnect_callback; 
+
     time_t retry_interval_ms;
-    
     WvTime next_reconnect_attempt;
     
     void maybe_disconnect();
@@ -49,13 +60,16 @@ private:
 
 public:
 
-    UniRetryGen(WvStringParm _moniker, time_t _retry_internal_ms = 5000);
+    UniRetryGen(WvStringParm _moniker,
+            ReconnectCallback _reconect_callback = ReconnectCallback(),
+            time_t _retry_internal_ms = 5000);
 
     /***** Overridden methods *****/
 
     virtual void commit();
     virtual bool refresh();
     virtual void prefetch(const UniConfKey &key, bool recursive);
+    virtual void flush_buffers() { }
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool exists(const UniConfKey &key);

@@ -164,7 +164,7 @@ WvString UniConfFileTreeGen::get(const UniConfKey &key)
         line = NULL;
         if (!file.isok())
             break;
-	line = file.getline(-1);
+	line = file.blocking_getline(-1);
 	if (!line)
             break;
 	line = trim_string(line);

@@ -12,16 +12,15 @@
 #include "wvstringlist.h"
 
 #ifndef _WIN32
-# include <stdint.h>
-# include <netinet/in.h>
-# include <endian.h>
-#else // windows
-# ifdef __GNUC__
-#  include <stdint.h>
+# if HAVE_INTTYPES_H
+#  include <inttypes.h>
 # else
-#  include <winsock2.h>
-#  define __BYTE_ORDER 1234
-#  define __BIG_ENDIAN 4321
+#  if HAVE_STDINT_H
+#   include <stdint.h>
+#  endif
+# endif
+#include <netinet/in.h>
+#else
 typedef __int8 int8_t;
 typedef unsigned __int8 uint8_t;
 typedef __int16 int16_t;
@@ -30,7 +29,7 @@ typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
-# endif
+#include <winsock2.h>
 #endif
 
 /**
@@ -64,7 +63,7 @@ inline int16_t _wv_htons(int16_t i)
  */
 inline uint64_t ntohll(uint64_t n)
 {
-#if __BYTE_ORDER == __BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
     return n;
 #else
     return (((uint64_t)ntohl(n)) << 32) | ntohl(n >> 32);
@@ -73,7 +72,7 @@ inline uint64_t ntohll(uint64_t n)
 
 inline uint64_t htonll(uint64_t n)
 {
-#if __BYTE_ORDER == __BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
     return n;
 #else
     return (((uint64_t)htonl(n)) << 32) | htonl(n >> 32);

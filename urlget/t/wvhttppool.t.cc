@@ -63,7 +63,7 @@ void tcp_callback(WvStream &s, void*)
     char *line;
     do
     {
-        line = s.getline(0);
+        line = s.getline();
         if (line && (strncmp(line, "GET", 3) == 0 ||
                      strncmp(line, "HEAD", 4) == 0))
         {
