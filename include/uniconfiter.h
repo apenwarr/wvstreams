@@ -24,8 +24,7 @@
  * flat, recursive and filtered queries but the instantiation method
  * may differ for each.
  * </p><p>
- * UniConf supports concurrent modifications to the same tree
- * so long as they occur in distinct subtrees.
+ * FIXME: Should UniConf support concurrent modifications??
  * </p>
  */
 class UniConfAbstractIter

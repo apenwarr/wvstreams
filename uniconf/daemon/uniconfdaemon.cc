@@ -43,7 +43,7 @@ UniConf UniConfDaemon::domount(const UniConfKey &mountpoint,
 
     dolog(WvLog::Error, "domount", WvString("Could not mount "
         "\"%s\" from \"%s\"\n", mountpoint, location));
-    return NULL;
+    return UniConf(NULL);
 }
 
 void UniConfDaemon::errorcheck(WvStream *s, WvString type)

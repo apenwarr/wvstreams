@@ -28,7 +28,12 @@ class UniConfIniFileGen : public UniConfTempGen
     WvLog log;
     
 public:
-    UniConfIniFileGen(WvStringParm _filename);
+    /**
+     * Creates a generator which can load/modify/save a .ini file.
+     * @param filename the local path of the .ini file
+     */
+    UniConfIniFileGen(WvStringParm filename);
+
     virtual ~UniConfIniFileGen();
     
     /***** Overridden members *****/

@@ -108,9 +108,9 @@ void UniConf::mountgen(UniConfGen *gen, bool refresh) const
 }
 
 
-void UniConf::unmount() const
+void UniConf::unmount(bool commit) const
 {
-    xmanager->unmount(xfullkey);
+    xmanager->unmount(xfullkey, commit);
 }
 
 
@@ -345,10 +345,13 @@ UniConfRoot::UniConfRoot() :
 
 UniConfRoot::~UniConfRoot()
 {
+    if (streamlist)
+        detach(streamlist);
+    // allow all generators to be destroyed
 }
 
 
-WvString UniConfRoot::get(const UniConfKey &key, WvStringParm defvalue)
+WvString UniConfRoot::get(const UniConfKey &key)
 {
     UniConfInfoTree::GenIter it(root, key);
     for (it.rewind(); it.next(); )
@@ -358,7 +361,7 @@ WvString UniConfRoot::get(const UniConfKey &key, WvStringParm defvalue)
         if (! result.isnull())
             return result;
     }
-    return defvalue;
+    return WvString::null;
 }
 
 
@@ -529,7 +532,18 @@ void UniConfRoot::attach(WvStreamList *_streamlist)
     assert(streamlist == NULL);
     assert(_streamlist != NULL);
     streamlist = _streamlist;
-    // FIXME: must iterator over all existing generators
+    recursiveattach(& root);
+}
+
+
+void UniConfRoot::recursiveattach(UniConfInfoTree *node)
+{
+    UniConfGen *gen = node->generator;
+    if (gen)
+        gen->attach(streamlist);
+    UniConfInfoTree::Iter it(*node);
+    for (it.rewind(); it.next(); )
+        recursiveattach(it.ptr());
 }
 
 
@@ -537,8 +551,19 @@ void UniConfRoot::detach(WvStreamList *_streamlist)
 {
     assert(streamlist != NULL);
     assert(streamlist == _streamlist);
+    recursivedetach(& root);
     streamlist = NULL;
-    // FIXME: must iterator over all existing generators
+}
+
+
+void UniConfRoot::recursivedetach(UniConfInfoTree *node)
+{
+    UniConfGen *gen = node->generator;
+    if (gen)
+        gen->detach(streamlist);
+    UniConfInfoTree::Iter it(*node);
+    for (it.rewind(); it.next(); )
+        recursivedetach(it.ptr());
 }
 
 
@@ -555,22 +580,31 @@ UniConfGen *UniConfRoot::mount(const UniConfKey &key,
 void UniConfRoot::mountgen(const UniConfKey &key,
     UniConfGen *gen, bool refresh)
 {
-    unmount(key);
+    unmount(key, true); // FIXME: this will be deleted when multimounts go in
     UniConfInfoTree *node = root.findormake(key);
     node->generator = gen;
+    if (streamlist)
+        gen->attach(streamlist);
     if (refresh)
         gen->refresh(UniConfKey::EMPTY, UniConf::INFINITE);
 }
 
 
-void UniConfRoot::unmount(const UniConfKey &key)
+void UniConfRoot::unmount(const UniConfKey &key, bool commit)
 {
     UniConfInfoTree *node = root.find(key);
-    if (node)
-    {
-        delete node->generator;
-        node->generator = NULL;
-    }
+    if (! node)
+        return;
+    UniConfGen *gen = node->generator;
+    if (! gen)
+        return;
+
+    if (commit)
+        gen->commit(UniConfKey::EMPTY, UniConf::INFINITE);
+    node->generator = NULL;
+    if (streamlist)
+        gen->detach(streamlist);
+    delete gen;
 }
 
 

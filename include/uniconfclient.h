@@ -36,6 +36,7 @@ class UniConfClientGen : public UniConfGen
     UniConfConn *conn;
     WvLog log;
     UniConfPairDict waiting;
+    WvString streamid;
 
     bool inprogress; /*!< true while a command is in progress */
     bool success; /*!< true when a command completed successfully */
@@ -43,8 +44,15 @@ class UniConfClientGen : public UniConfGen
         rather than an extended response */
 
 public:
+    /**
+     * Creates a generator which can communicate with a daemon using
+     * the specified stream.
+     * @param location the location of the daemon
+     * @param stream the raw connection
+     */
     UniConfClientGen(const UniConfLocation &location,
         WvStream *stream);
+
     virtual ~UniConfClientGen();
 
     /***** Overridden members *****/

@@ -49,7 +49,7 @@ public:
     virtual UniConfLocation location() const = 0;
         
     /**
-     * Commits information about the specified key recursively.
+     * Commits information about a key recursively.
      * <p>
      * The default implementation always returns true.
      * </p>
@@ -61,7 +61,7 @@ public:
     virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
     
     /**
-     * Refreshes information about the specified key recursively.
+     * Refreshes information about a key recursively.
      * <p>
      * May discard uncommitted data.
      * </p><p>
@@ -70,19 +70,19 @@ public:
      * @param key the key
      * @param depth the recursion depth
      * @return true on success
-     * @see uniconf::depth
+     * @see UniConf::Depth
      */
     virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
 
     /**
-     * Fetches a string value from the registry.
+     * Fetches a string value for a key from the registry.
      * @param key the key
      * @return the value, or WvString::null if the key does not exist
      */
     virtual WvString get(const UniConfKey &key) = 0;
     
     /**
-     * Stores a string value into the registry.
+     * Stores a string value for a key into the registry.
      * @param key the key
      * @param value the value, if WvString::null deletes the key
      *        and all of its children
@@ -91,7 +91,7 @@ public:
     virtual bool set(const UniConfKey &key, WvStringParm value) = 0;
 
     /**
-     * Removes a key.
+     * Removes a key and all of its children from the registry.
      * <p>
      * Non-virtual synonym for set(key, WvString::null).
      * </p>
@@ -101,7 +101,7 @@ public:
     bool remove(const UniConfKey &key);
 
     /**
-     * Removes the children of the specified key.
+     * Removes the children of a key from the registry.
      * @param key the key
      * @return true on success
      */

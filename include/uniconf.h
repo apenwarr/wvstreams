@@ -31,6 +31,22 @@ DeclareWvCallback(2, void, UniConfCallback, const UniConf &, void *);
 /**
  * UniConf instances function as handles to subtrees of a UniConf
  * tree and expose a high-level interface for clients.
+ * <p>
+ * All operations are marked "const" unless they modify the target
+ * of the handle.  In effect, this grants UniConf handles the
+ * same semantics as pointers where a const pointer may point
+ * to a non-const object, which simply means that the pointer
+ * cannot be reassigned.
+ * </p><p>
+ * When handles are returned from functions, they are always marked
+ * const to guard against accidentally assigning to a temporary by
+ * an expression such as <code>cfg["foo"] = cfg["bar"]</code>.
+ * Instead this must be written as
+ * <code>cfg["foo"].set(cfg["bar"].get())</code> which is slightly
+ * less elegant but avoids many subtle mistakes.  Also for this
+ * reason, unusual cast operators, assignment operators,
+ * or copy constructors are not provided.  Please do not add any.
+ * </p>
  */
 class UniConf
 {
@@ -53,10 +69,11 @@ public:
 
     /**
      * Creates a handle to the specified subtree.
-     * @param manager the UniConfRoot that manages the subtree
+     * @param manager the UniConfRoot that manages the subtree,
+     *        may be NULL to signal an invalid handle
      * @param fullkey the path of the subtree
      */
-    UniConf(UniConfRoot *manager,
+    explicit UniConf(UniConfRoot *manager,
         const UniConfKey &fullkey = UniConfKey::EMPTY) :
         xmanager(manager), xfullkey(fullkey)
     {
@@ -98,11 +115,20 @@ public:
 
     /**
      * Returns a pointer to the UniConfRoot that manages this node.
-     * @return the manager
+     * @return the manager, may be NULL to signal an invalid handle
      */
     inline UniConfRoot *manager() const
     {
         return xmanager;
+    }
+
+    /**
+     * Returns true if the handle is invalid (NULL).
+     * @return true in that case
+     */
+    inline bool isnull() const
+    {
+        return xmanager == NULL;
     }
 
     /**
@@ -123,52 +149,163 @@ public:
         return xfullkey.last();
     }
 
-    bool haschildren() const;
 
-    bool exists() const;
-
-    WvString get(WvStringParm defvalue = WvString::null) const;
-    
-    int getint(int defvalue = 0) const;
-
-    bool set(WvStringParm value) const;
-
-    inline bool set(WVSTRING_FORMAT_DECL) const
-    {
-        return set(WvString(WVSTRING_FORMAT_CALL));
-    }
-
-    bool setint(int value) const;
-
-    inline bool remove() const
-    {
-        return set(WvString::null);
-    }
-
-    bool zap() const;
-
+    /**
+     * Returns a handle over a subtree below this key.
+     * @param key the path of the subtree to be appended to the full
+     *        path of this handle to obtain the full path of
+     *        the new handle
+     * @return the handle
+     */
     const UniConf operator[] (const UniConfKey &key) const
     {
         return UniConf(xmanager, UniConfKey(xfullkey, key));
     }
 
+    /**
+     * Changes the target of the handle.
+     * @param other the new target
+     * @return a reference to self
+     */
     UniConf &operator= (const UniConf &other)
     {
         xmanager = other.xmanager;
         xfullkey = other.xfullkey;
         return *this;
     }
+
+    /**
+     * Returns true if this key exists without fetching its value.
+     * <p>
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the value.
+     * </p>
+     * @return true if the key exists
+     */
+    bool exists() const;
+
+    /**
+     * Returns true if this key has children.
+     * <p>
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the keys.
+     * </p>
+     * @return true if the key has children
+     */
+    bool haschildren() const;
+
+    /**
+     * Fetches the string value for this key from the registry.
+     * @param defvalue the default value, defaults to WvString::null
+     * @return the value, or defvalue if the key does not exist
+     */
+    WvString get(WvStringParm defvalue = WvString::null) const;
     
+    /**
+     * Fetches the integer value for this key from the registry.
+     * @param defvalue the default value, defaults to 0
+     * @return the value, or defvalue if the key does not exist
+     */
+    int getint(int defvalue = 0) const;
+
+    /**
+     * Stores a string value for this key into the registry.
+     * @param value the value, if WvString::null deletes the key
+     *        and all of its children
+     * @return true on success
+     */
+    bool set(WvStringParm value) const;
+
+    /**
+     * Stores a string value for this key into the registry.
+     * @return true on success
+     */
+    inline bool set(WVSTRING_FORMAT_DECL) const
+    {
+        return set(WvString(WVSTRING_FORMAT_CALL));
+    }
+
+    /**
+     * Stores an integer value for this key into the registry.
+     * @param value the value
+     * @return true on success
+     */
+    bool setint(int value) const;
+
+    /**
+     * Removes this key and all of its children from the registry.
+     * @return true on success
+     */
+    inline bool remove() const
+    {
+        return set(WvString::null);
+    }
+
+    /**
+     * Removes the children of this key from the registry.
+     * @return true on success
+     */
+    bool zap() const;
+
+    /**
+     * Refreshes information about this key recursively.
+     * <p>
+     * May discard uncommitted data.
+     * </p>
+     * @param depth the recursion depth, default is INFINITE
+     * @return true on success
+     * @see UniConf::Depth
+     */
     bool refresh(Depth depth = INFINITE) const;
     
+    /**
+     * Commits information about this key recursively.
+     * @param depth the recursion depth, default is INFINITE
+     * @return true on success
+     * @see UniConf::Depth
+     */
     bool commit(Depth depth = INFINITE) const;
 
+    /**
+     * Requests notification when any the keys covered by the
+     * recursive depth specification changes.
+     * @param depth the recursion depth identifying keys of interest
+     * @param callback the callback
+     * @param userdata the user data
+     */
     void addwatch(UniConf::Depth depth,
-        const UniConfCallback &cb, void *userdata) const { }
+        const UniConfCallback &callback, void *userdata) const { }
 
+    /**
+     * Cancels a previously registered notification request.
+     * @param depth the recursion depth identifying keys of interest
+     * @param callback the callback
+     * @param userdata the user data
+     */
     void delwatch(UniConf::Depth depth,
-        const UniConfCallback &cb, void *userdata) const { }
-
+        const UniConfCallback &callback, void *userdata) const { }
+    
+    /**
+     * Mounts a generator at this key using a moniker.
+     * @param location the generator moniker
+     * @param refresh if true, automatically refreshes the
+     *        generator after mounting, defaults to true
+     * @return the generator instance pointer, or NULL on failure
+     */
+    UniConfGen *mount(const UniConfLocation &location,
+        bool refresh = true) const;
+    
+    /**
+     * Mounts a generator at this key.
+     * <p>
+     * Takes ownership of the supplied generator instance.
+     * </p>
+     * @param generator the generator instance
+     * @param refresh if true, automatically refreshes the
+     *        generator after mounting, defaults to true
+     */
+    void mountgen(UniConfGen *gen, bool refresh = true) const;
+    
     /**
      * @internal
      * Prints the entire contents of this subtree to a stream
@@ -179,10 +316,7 @@ public:
     void dump(WvStream &stream, bool everything = false) const;
 
     // FIXME: temporary placeholders
-    UniConfGen *mount(const UniConfLocation &location,
-        bool refresh = true) const;
-    void mountgen(UniConfGen *gen, bool refresh = true) const;
-    void unmount() const;
+    void unmount(bool commit = true) const;
     bool ismountpoint() const;
     bool isok() const;
 
@@ -211,6 +345,9 @@ public:
     UniConfInfoTree(UniConfInfoTree *parent, const UniConfKey &key);
     ~UniConfInfoTree();
 
+    /**
+     * Returns true if the node should not be pruned.
+     */
     bool isessential()
     {
         return haschildren() || generator;
@@ -324,38 +461,21 @@ class UniConfRoot
     UniConfInfoTree root;
     WvStreamList *streamlist;
 
+    /**
+     * undefined.
+     */
+    UniConfRoot(const UniConfRoot &other);
+
 public:
     /**
      * Creates an empty UniConf tree with no mounted stores.
      */
     UniConfRoot();
 
+    /**
+     * Destroys the UniConf tree along with all uncommitted data.
+     */
     ~UniConfRoot();
-
-    /**
-     * Fetches a string value from the registry.
-     * @param key the key
-     * @param defvalue the default value, defaults to WvString::null
-     * @return the value, or defvalue if the key does not exist
-     */
-    WvString get(const UniConfKey &key,
-        WvStringParm defvalue = WvString::null);
-    
-    /**
-     * Stores a string value into the registry.
-     * @param key the key
-     * @param value the value, if WvString::null deletes the key
-     *        and all of its children
-     * @return true on success
-     */
-    bool set(const UniConfKey &key, WvStringParm value);
-    
-    /**
-     * Removes the children of the specified key.
-     * @param key the key
-     * @return true on success
-     */
-    bool zap(const UniConfKey &key);
 
     /**
      * Returns true if a key exists without fetching its value.
@@ -380,20 +500,43 @@ public:
     bool haschildren(const UniConfKey &key);
 
     /**
-     * Refreshes information about the specified key recursively.
+     * Fetches a string value for a key from the registry.
+     * @param key the key
+     * @return the value, or WvString::null if the key does not exist
+     */
+    WvString get(const UniConfKey &key);
+    
+    /**
+     * Stores a string value for a key into the registry.
+     * @param key the key
+     * @param value the value, if WvString::null deletes the key
+     *        and all of its children
+     * @return true on success
+     */
+    bool set(const UniConfKey &key, WvStringParm value);
+    
+    /**
+     * Removes the children of a key from the registry.
+     * @param key the key
+     * @return true on success
+     */
+    bool zap(const UniConfKey &key);
+
+    /**
+     * Refreshes information about a key recursively.
      * <p>
      * May discard uncommitted data.
      * </p>
      * @param key the key
      * @param depth the recursion depth, default is INFINITE
      * @return true on success
-     * @see uniconf::depth
+     * @see UniConf::Depth
      */
     bool refresh(const UniConfKey &key = UniConfKey::EMPTY,
         UniConf::Depth depth = UniConf::INFINITE);
 
     /**
-     * Commits information about the specified key recursively.
+     * Commits information about a key recursively.
      * @param key the key
      * @param depth the recursion depth, default is INFINITE
      * @return true on success
@@ -422,13 +565,33 @@ public:
      * @see attach(WvStreamList*)
      */
     void detach(WvStreamList *streamlist);
-     
-    // FIXME: need a better interface for mount point stuff
+    
+    /**
+     * Mounts a generator at a key using a moniker.
+     * @param key the key
+     * @param location the generator moniker
+     * @param refresh if true, automatically refreshes the
+     *        generator after mounting
+     * @return the generator instance pointer, or NULL on failure
+     */
     UniConfGen *mount(const UniConfKey &key,
         const UniConfLocation &location, bool refresh);
+    
+    /**
+     * Mounts a generator at a key.
+     * <p>
+     * Takes ownership of the supplied generator instance.
+     * </p>
+     * @param key the key
+     * @param generator the generator instance
+     * @param refresh if true, automatically refreshes the
+     *        generator after mounting
+     */
     void mountgen(const UniConfKey &key, UniConfGen *gen,
         bool refresh);
-    void unmount(const UniConfKey &key);
+     
+    // FIXME: need a better interface for mount point stuff
+    void unmount(const UniConfKey &key, bool commit);
     bool ismountpoint(const UniConfKey &key);
     bool isok(const UniConfKey &key);
 
@@ -454,6 +617,9 @@ private:
         const UniConfKey &key, UniConf::Depth depth);
     static bool gencommitfunc(UniConfGen *gen,
         const UniConfKey &key, UniConf::Depth depth);
+
+    void recursiveattach(UniConfInfoTree *node);
+    void recursivedetach(UniConfInfoTree *node);
 };
 
 

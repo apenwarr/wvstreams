@@ -1,7 +1,7 @@
 /** \file
  * A WvPipe example.
  */
-/** \example wvstringlistex.cc
+/** \example wvstreamlistex.cc
  * Some text about this example...
  */
 

@@ -21,6 +21,7 @@ UniConfClientGen::UniConfClientGen(const UniConfLocation &location,
     WvStream *stream) :
     xlocation(location), conn(NULL),
     log("UniConfClientGen"), waiting(13),
+    streamid("UniConfClient: %s", location),
     inprogress(false), success(false)
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
@@ -58,7 +59,7 @@ bool UniConfClientGen::isok()
 
 void UniConfClientGen::attach(WvStreamList *streamlist)
 {
-    streamlist->append(conn, false, "uniconf client conn");
+    streamlist->append(conn, false, streamid.edit());
 }
 
 
@@ -71,6 +72,7 @@ void UniConfClientGen::detach(WvStreamList *streamlist)
 bool UniConfClientGen::refresh(const UniConfKey &key,
     UniConf::Depth depth)
 {
+    // TODO: no caching so nothing to be done here right now
     if (! isok())
     {
         log(WvLog::Error, "Connection died; refresh aborted.\n");
@@ -83,6 +85,7 @@ bool UniConfClientGen::refresh(const UniConfKey &key,
 bool UniConfClientGen::commit(const UniConfKey &key,
     UniConf::Depth depth)
 {
+    // TODO: no caching so nothing to be done here right now
     if (! isok())
     {
         log(WvLog::Error, "Connection died; commit aborted.\n");
@@ -372,6 +375,9 @@ UniConfKey UniConfClientGen::RemoteKeyIter::key() const
 UniConfGen *UniConfClientGenFactory::newgen(
     const UniConfLocation &location)
 {
+    // TODO: move the slow parts of this code into UniConfClientGen so
+    //       that they can happen in the background
+
     if (location.proto() == "unix")
     {
         WvUnixAddr addr(location.payload());
@@ -385,9 +391,11 @@ UniConfGen *UniConfClientGenFactory::newgen(
         int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
         WvStringList::Iter it(hostport);
         it.rewind();
+        // if there is a hostname, use it (otherwise localhost)
         if (it.next())
         {
             hostname = it();
+            // if there is a port, use it (otherwise default port)
             if (it.next())
                 port = it().num();
         }
@@ -399,6 +407,11 @@ UniConfGen *UniConfClientGenFactory::newgen(
             WvIPPortAddr addr(*hostaddr, port);
             return new UniConfClientGen(location, new WvTCPConn(addr));
         }
+
+        // TODO: log an error message that we could not connect?
+        //       probably better if we created the generator and returned
+        //       immediately since we already have error notification
+        //       support there
         return NULL;
     }
 }
