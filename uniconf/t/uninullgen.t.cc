@@ -7,10 +7,10 @@ WVTEST_MAIN("nullgen basics")
     UniConfRoot cfg("null:");
     WVFAIL(cfg.haschildren());
     
-    cfg.set("blah");
+    cfg.setme("blah");
     WVFAIL(cfg.haschildren());
     
-    cfg["x"].set("pah");
+    cfg["x"].setme("pah");
     WVFAIL(cfg.haschildren());
     WVFAIL(cfg["x"].exists());
     WVFAIL(cfg["x"].haschildren());

@@ -90,11 +90,11 @@ WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
     {
 	if (!entry)
 	{
-	    entry = new WvConfigEntryEmu(s, uniconf[s].get());
+	    entry = new WvConfigEntryEmu(s, uniconf[s].getme());
 	    entries.add(entry, true);
 	}
 	else
-	    entry->value = uniconf[s].get();
+	    entry->value = uniconf[s].getme();
     }
     else
 	entry = NULL;
@@ -105,7 +105,7 @@ WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
 
 const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 {
-    WvString *value = new WvString(uniconf[entry].get(def_val));
+    WvString *value = new WvString(uniconf[entry].getme(def_val));
     values.add(value, true);
     return value->cstr();
 }
@@ -116,16 +116,16 @@ void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
     if (!!entry)
     {
         if (!!value)
-            uniconf[entry].set(value);
+            uniconf[entry].setme(value);
         else
-            uniconf[entry].set(WvString::null);
+            uniconf[entry].setme(WvString::null);
     }
 }
 
 
 void WvConfigSectionEmu::quick_set(WvStringParm entry, WvStringParm value)
 {
-    uniconf[entry].set(value);
+    uniconf[entry].setme(value);
 }
 
 
@@ -150,7 +150,7 @@ void WvConfigSectionEmu::Iter::rewind()
 WvLink *WvConfigSectionEmu::Iter::next()
 {
     while (iter.next())
-	if (!!iter->get())
+	if (!!iter->getme())
 	{
 	    /*
 	     * FIXME: if the WvConfEmu is not at the root of the
@@ -192,7 +192,7 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
     if (hold)
 	return;
 
-    WvString value = uniconf[section][key].get("");
+    WvString value = uniconf[section][key].getme("");
     
     WvList<CallbackInfo>::Iter i(callbacks);
     for (i.rewind(); i.next(); )
@@ -396,14 +396,14 @@ WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 
 int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
 {
-    return uniconf[section][entry].getint(def_val);
+    return uniconf[section][entry].getmeint(def_val);
 }
 
 
 const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
 			   const char *def_val)
 {
-    WvString *value = new WvString(uniconf[section][entry].get(def_val));
+    WvString *value = new WvString(uniconf[section][entry].getme(def_val));
     values.add(value, true);
     return value->cstr();
 }
@@ -457,7 +457,7 @@ void WvConfEmu::setraw(WvString wvconfstr, const char *&_value,
 void WvConfEmu::setint(WvStringParm section, WvStringParm entry, int value)
 {
     if (!!entry)
-        uniconf[section][entry].setint(value);
+        uniconf[section][entry].setmeint(value);
 }
 
 
@@ -467,9 +467,9 @@ void WvConfEmu::set(WvStringParm section, WvStringParm entry,
     if (!!entry)
     {
         if (value && value[0] != 0)
-            uniconf[section][entry].set(value);
+            uniconf[section][entry].setme(value);
         else
-            uniconf[section][entry].set(WvString::null);
+            uniconf[section][entry].setme(WvString::null);
     }
 }
 

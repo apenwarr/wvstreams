@@ -27,7 +27,7 @@ public:
 
     bool check(WvString test, WvString expected)
     {
-        WvString value(uniconf[test].get()); 
+        WvString value(uniconf[test].getme()); 
         if (value == expected)
         {
             wvcon->print("OK - %s: got \"%s\"\n", test, value);

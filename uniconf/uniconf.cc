@@ -68,7 +68,7 @@ void UniConf::prefetch(bool recursive) const
 }
 
 
-WvString UniConf::get(WvStringParm defvalue) const
+WvString UniConf::getme(WvStringParm defvalue) const
 {
     WvString value = xroot->mounts.get(xfullkey);
     if (value.isnull())
@@ -77,21 +77,21 @@ WvString UniConf::get(WvStringParm defvalue) const
 }
 
 
-int UniConf::getint(int defvalue) const
+int UniConf::getmeint(int defvalue) const
 {
-    return xroot->mounts.str2int(get(), defvalue);
+    return xroot->mounts.str2int(getme(), defvalue);
 }
 
 
-void UniConf::set(WvStringParm value) const
+void UniConf::setme(WvStringParm value) const
 {
     xroot->mounts.set(xfullkey, value);
 }
 
 
-void UniConf::setint(int value) const
+void UniConf::setmeint(int value) const
 {
-    set(WvString(value));
+    setme(WvString(value));
 }
 
 
@@ -100,12 +100,12 @@ void UniConf::move(const UniConf &dst)
     dst.remove();
     
     // do the main key first
-    dst.set(get());
+    dst.setme(getme());
 
     // now all the children
     RecursiveIter i(*this);
     for (i.rewind(); i.next(); )
-	dst[i->fullkey(*this)].set(i->get());
+	dst[i->fullkey(*this)].setme(i->getme());
     
     remove();
 }
@@ -114,15 +114,15 @@ void UniConf::move(const UniConf &dst)
 void UniConf::copy(const UniConf &dst, bool force) const
 {
     // do the main key first
-    dst.set(get());
+    dst.setme(getme());
 
     // now all the children
     RecursiveIter i(*this);
     for (i.rewind(); i.next(); )
     {
 	UniConf dst2 = dst[i->fullkey(*this)];
-	if (force || dst2.get().isnull())
-	    dst2.set(i->get());
+	if (force || dst2.getme().isnull())
+	    dst2.setme(i->getme());
     }
 }
 
@@ -223,7 +223,7 @@ void UniConf::dump(WvStream &stream, bool everything) const
     UniConf::RecursiveIter it(*this);
     for (it.rewind(); it.next(); )
     {
-        WvString value(it->get());
+        WvString value(it->getme());
         if (everything || !!value)
             stream.print("%s = %s\n", it->fullkey(), value);
     }

@@ -24,10 +24,10 @@ WVTEST_MAIN("basics")
     UniConfRoot cfg("temp:");
     WVFAIL(cfg.haschildren());
     
-    cfg.set("blah");
+    cfg.setme("blah");
     WVFAIL(cfg.haschildren());
     
-    cfg["x"].set("pah");
+    cfg["x"].setme("pah");
     WVPASS(cfg.haschildren());
     WVFAIL(cfg["x"].haschildren());
     

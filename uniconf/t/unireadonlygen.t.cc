@@ -17,14 +17,14 @@ WVTEST_MAIN("reading and (not)writing")
            "e=f\n");
     UniConfRoot cfg("readonly:ini:tmp.ini");
 
-    WVPASSEQ(cfg["S1/a"].get(), "b");
-    WVPASSEQ(cfg["S2/c"].get(), "d");
-    WVPASSEQ(cfg["S\n3/e"].get(), "f");
+    WVPASSEQ(cfg["S1/a"].getme(), "b");
+    WVPASSEQ(cfg["S2/c"].getme(), "d");
+    WVPASSEQ(cfg["S\n3/e"].getme(), "f");
 
-    cfg["S1/a"].set("y");
-    cfg["S2/c"].set("z");
+    cfg["S1/a"].setme("y");
+    cfg["S2/c"].setme("z");
 
     // values shouldn't have changed
-    WVPASSEQ(cfg["S1/a"].get(), "b");
-    WVPASSEQ(cfg["S2/c"].get(), "d");
+    WVPASSEQ(cfg["S1/a"].getme(), "b");
+    WVPASSEQ(cfg["S2/c"].getme(), "d");
 }

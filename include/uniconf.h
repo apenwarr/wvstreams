@@ -41,7 +41,7 @@ typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
  * const to guard against accidentally assigning to a temporary by
  * an expression such as cfg["foo"] = cfg["bar"].
  * Instead this must be written as
- *     cfg["foo"].set(cfg["bar"].get())
+ *     cfg["foo"].setme(cfg["bar"].getme())
  * which is slightly
  * less elegant but avoids many subtle mistakes.  Also for this
  * reason, unusual cast operators, assignment operators,
@@ -138,20 +138,20 @@ public:
      * Fetches the string value for this key from the registry.  If the
      * key is not found, returns 'defvalue' instead.
      */
-    WvString get(WvStringParm defvalue = WvString::null) const;
+    WvString getme(WvStringParm defvalue = WvString::null) const;
 
-    /** A different way to say cfg.get(): use *cfg instead. */
+    /** A different way to say cfg.getme(): use *cfg instead. */
     WvString operator* () const
-        { return get(); }
+        { return getme(); }
 
-    /** A different way to say cfg.get().num(): use cfg->num() instead. */
+    /** A different way to say cfg.getme().num(): use cfg->num() instead. */
     WvStringStar operator -> () const
-        { return get(); }
+        { return getme(); }
     
-    /** A different way to say cfg[x].get(y). */
+    /** A different way to say cfg[x].getme(y). */
     WvString xget(WvStringParm key,
 		  WvStringParm defvalue = WvString::null) const
-        { return (*this)[key].get(defvalue); }
+        { return (*this)[key].getme(defvalue); }
 
     /**
      * Fetches the integer value for this key from the registry.  If the
@@ -160,11 +160,11 @@ public:
      * 1, 'false', 'no', 'off' and 'disabled' as 0.  Note that a nonexistant
      * key is false by default.)
      */
-    int getint(int defvalue = 0) const;
+    int getmeint(int defvalue = 0) const;
 
-    /** A different way to say cfg[x].getint(y). */
+    /** A different way to say cfg[x].getmeint(y). */
     int xgetint(WvStringParm key, int defvalue = 0) const
-        { return (*this)[key].getint(defvalue); }
+        { return (*this)[key].getmeint(defvalue); }
 
     /**
      * Without fetching its value, returns true if this key exists.
@@ -182,28 +182,28 @@ public:
      * is WvString::null, deletes the key and all of its children.
      * Returns true on success.
      */
-    void set(WvStringParm value) const;
+    void setme(WvStringParm value) const;
 
     /**
      * Stores a string value for this key into the registry.
      * Returns true on success.
      */
-    void set(WVSTRING_FORMAT_DECL) const
-        { return set(WvString(WVSTRING_FORMAT_CALL)); }
+    void setme(WVSTRING_FORMAT_DECL) const
+        { return setme(WvString(WVSTRING_FORMAT_CALL)); }
 
-    /** A different way to say cfg[x].set(y). */
+    /** A different way to say cfg[x].setme(y). */
     void xset(WvStringParm key, WvStringParm value) const
-        { (*this)[key].set(value); }
+        { (*this)[key].setme(value); }
 
     /**
      * Stores an integer value for this key into the registry.
      * Returns true on success.
      */
-    void setint(int value) const;
+    void setmeint(int value) const;
 
-    /** A different way to say cfg[x].set(y). */
+    /** A different way to say cfg[x].setme(y). */
     void xsetint(WvStringParm key, int value) const
-        { (*this)[key].setint(value); }
+        { (*this)[key].setmeint(value); }
 
 
     /***** Key Handling API *****/
@@ -228,7 +228,7 @@ public:
      * Returns true on success.
      */
     void remove() const
-        { set(WvString::null); }
+        { setme(WvString::null); }
 
     /**
      * Equivalent to "cp -r" in a standard unix filesystem. This

@@ -28,7 +28,7 @@ template<class Iter>
 void dump(WvLog &log, Iter &i)
 {
     for (i.rewind(); i.next(); )
-	log("  '%s' = '%s'\n", i->fullkey(), i->get());
+	log("  '%s' = '%s'\n", i->fullkey(), i->getme());
 }
 
 int main()
