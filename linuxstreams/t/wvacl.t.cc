@@ -32,7 +32,7 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 	case WvSimpleAclEntry::AclUser:
             printf("user entry for %s\n", i().name.cstr());
 	    WVPASS(!u_chk);
-	    WVPASS(i().name == username);
+	    WVPASSEQ(i().name, username);
 	    WVPASS(i().read);
 	    WVPASS(i().write);
 	    WVPASS(i().execute);
@@ -43,7 +43,7 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 	case WvSimpleAclEntry::AclGroup:
             printf("group entry for %s\n", i().name.cstr());
 	    WVPASS(!g_chk);
-	    WVPASS(i().name == groupname);
+	    WVPASSEQ(i().name, groupname);
 	    WVPASS(i().read);
 	    WVPASS(!i().write);
 	    WVPASS(i().execute);
