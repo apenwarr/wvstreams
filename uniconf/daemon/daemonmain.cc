@@ -167,11 +167,7 @@ int main(int argc, char **argv)
 
     if (sslport)
     {
-        // FIXME: copied from sslsrvtest.cc, this looks too simple
-        WvString hname = hostname();
-        WvString domname = domainname();
-        WvString fqdn("%s.%s", hname, domname);
-        WvString dName = encode_hostname_as_DN(fqdn);
+        WvString dName = encode_hostname_as_DN(fqdomainname());
         WvX509Mgr *x509cert = new WvX509Mgr(dName, 1024);
         if (!x509cert->isok())
         {

@@ -58,10 +58,7 @@ int main(int argc, char *argv[])
     // Or, from the actual settings of the server...
     // this tests the case where the domainname() ends up 
     // being (none)
-    WvString hname = hostname();
-    WvString domname = domainname();
-    WvString fqdn("%s.%s", hname, domname);
-    dName = encode_hostname_as_DN(fqdn);
+    dName = encode_hostname_as_DN(fqdomainname());
 
     test(dName);
 

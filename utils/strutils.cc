@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <netdb.h>
 #include <time.h>
 #include <unistd.h>
 #include <errno.h>
@@ -488,20 +489,13 @@ WvString hostname()
     }
 }
 
-WvString domainname() 
+WvString fqdomainname() 
 {
-    int maxlen = 0;
-    for(;;)
-    {
-        maxlen += 128;
-        char *name = new char[maxlen];
-        int result = getdomainname(name, maxlen);
-        if (result == 0)
-        {
-            WvString domainname(name);
-            delete [] name;
-            return domainname;
-        }
-        assert(errno == EINVAL);
-    }
+    struct hostent *myhost;
+
+    myhost = gethostbyname(hostname());
+    if (myhost)
+	return myhost->h_name;
+    else
+	return WvString::null;
 }

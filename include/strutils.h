@@ -232,6 +232,6 @@ WvString undupe(WvStringParm s, char c);
 
 WvString hostname();
 
-WvString domainname();
+WvString fqdomainname();
 
 #endif // __STRUTILS_H
