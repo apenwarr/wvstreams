@@ -42,15 +42,9 @@ UniConfRoot::~UniConfRoot()
     delete mounts;
 }
 
-#if 0
-const UniConf UniConfRoot::operator[] (const UniConfKey &key)
-{
-    return UniConf(this, "/");
-}
-#endif
-
 WvString UniConfRoot::_get(const UniConfKey &key)
 {
+    // consult the generators
     UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
@@ -60,6 +54,11 @@ WvString UniConfRoot::_get(const UniConfKey &key)
             return result;
     }
     
+    // ensure key exists if it is in the path of a mountpoint
+    UniConfMountTree *node = mounts->find(key);
+    if (node)
+        return ""; // fake read-only key not provided by anyone
+
     // no matches
     return WvString::null;
 }
@@ -86,16 +85,20 @@ bool UniConfRoot::_zap(const UniConfKey &key)
         if (!gen->zap(it.tail()))
             success = false;
     }
+    // FIXME: need to recurse over generators of descendent keys
+    //        to zap all of their contents also
     return success;
 }
 
 
 bool UniConfRoot::_exists(const UniConfKey &key)
 {
+    // ensure key exists if it is in the path of a mountpoint
     UniConfMountTree *node = mounts->find(key);
     if (node)
         return true;
-        
+    
+    // otherwise consult the generators
     UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
@@ -103,6 +106,8 @@ bool UniConfRoot::_exists(const UniConfKey &key)
         if (gen->exists(it.tail()))
             return true;
     }
+
+    // no match
     return false;
 }
 
@@ -216,20 +221,40 @@ bool UniConfRoot::dorecursivehelper(GenFunc func,
 }
  
  
+void UniConfRoot::_addwatch(const UniConfKey &key,
+    UniConfDepth::Type depth, UniConfWatch *watch)
+{
+}
+
+
+void UniConfRoot::_delwatch(const UniConfKey &key,
+    UniConfDepth::Type depth, UniConfWatch *watch)
+{
+}
+
+
+void UniConfRoot::delta(const UniConfKey &key, UniConfDepth::Type depth)
+{
+}
+
+
 UniConfGen *UniConfRoot::_mount(const UniConfKey &key,
-			       WvStringParm moniker, bool refresh)
+    WvStringParm moniker, bool refresh)
 {
     UniConfGen *gen = wvcreate<UniConfGen>(moniker);
-    _mountgen(key, gen, refresh); // assume always succeeds for now
+    if (gen)
+        _mountgen(key, gen, refresh); // assume always succeeds for now
     return gen;
 }
 
 
 UniConfGen *UniConfRoot::_mountgen(const UniConfKey &key,
-				  UniConfGen *gen, bool refresh)
+    UniConfGen *gen, bool refresh)
 {
     UniConfMountTree *node = mounts->findormake(key);
     node->generator = gen;
+    gen->setcallback(wvcallback(UniConfGenCallback, *this,
+        UniConfRoot::gencallback), node);
     if (gen && refresh)
         gen->refresh(UniConfKey::EMPTY, UniConfDepth::INFINITE);
     return gen;
@@ -246,8 +271,8 @@ void UniConfRoot::_unmount(const UniConfKey &key, bool commit)
         return;
     if (commit)
         gen->commit(UniConfKey::EMPTY, UniConfDepth::INFINITE);
-
     node->generator = NULL;
+    gen->setcallback(NULL, NULL);
     delete gen;
 }
 
@@ -283,6 +308,14 @@ void UniConfRoot::prune(UniConfMountTree *node)
         delete node;
         node = next;
     }
+}
+
+
+void UniConfRoot::gencallback(const UniConfGen &gen,
+    const UniConfKey &key, UniConfDepth::Type depth, void *userdata)
+{
+    UniConfMountTree *node = static_cast<UniConfMountTree*>(userdata);
+    delta(UniConfKey(node->fullkey(), key), depth);
 }
 
 
@@ -351,6 +384,7 @@ UniConfMountTree::UniConfMountTree(UniConfMountTree *parent,
 
 UniConfMountTree::~UniConfMountTree()
 {
+    delete generator;
 }
 
 

@@ -1,29 +1,39 @@
-#include "uniconfdaemon.h"
+
 #include <signal.h>
+
 #include "wvcrash.h"
 #include "wvlog.h"
+#include "wvlogrcv.h"
+#include "uniconf.h"
+#include "uniconfdaemon.h"
+#include "uniconfconn.h"
 
-UniConfDaemon *daem;
+#define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
+
+static UniConfDaemon *globdaemon = NULL;
+
 // we now want execution to stop
-void sighandler_die(int sig)
+static void sighandler_die(int sig)
 {
-    daem->log(WvLog::Info, "Dying on signal %s\n", sig);    
-    daem->want_to_die = true;
+    globdaemon->close();
     signal(sig, SIG_DFL);
 }
 
-void usage()
-{
-    wvcon->print("uniconfdaemon usage:  uniconfdaemon "
-        "[-mount mountpoint moniker] [-d level]\n");
-    wvcon->print("    mountpoint:   is the point to mount the config keys under\n");
-    wvcon->print("    moniker:      is the moniker, eg. ini:myfile\n");
-    wvcon->print("    level:        is one of:  Critical, Error, Warning, Notice, Info, or Debug[1-5]\n");
 
+static void usage()
+{
+    wverr->print(
+        "uniconfdaemon usage:  uniconfdaemon "
+            "[-mount mountpoint moniker] [-d level]\n"
+        "    mountpoint - the point to mount the config keys under\n"
+        "    moniker    - the moniker, eg. ini:myfile\n"
+        "    level      - the debug level\n"
+        "                 Critical, Error, Warning, Notice, Info, or Debug[1-5]\n");
     exit(2);
 }
 
-WvLog::LogLevel findloglevel(char *arg)
+
+static WvLog::LogLevel findloglevel(char *arg)
 {
     if (!strcasecmp(arg, "Critical"))
         return WvLog::Critical;
@@ -49,6 +59,20 @@ WvLog::LogLevel findloglevel(char *arg)
         return WvLog::Info;
 }
 
+
+static void trymount(const UniConf &cfg, const UniConfKey &key,
+    WvStringParm location)
+{
+    UniConfGen *gen = cfg[key].mount(location);
+    if (! gen || ! gen->isok())
+    {
+        wverr->print("Unable to mount at \"%s\" from \"%s\"\n",
+            key, location);
+        exit(1);
+    }
+}
+   
+
 int main(int argc, char **argv)
 {
     signal(SIGINT,  sighandler_die);
@@ -56,23 +80,23 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
     wvcrash_setup(argv[0]);
 
-    WvStringList strings;
-    WvLog::LogLevel level = WvLog::Info;
+    WvLogConsole logcons(2, WvLog::Info);
     
-    for (int i=1; i < argc; i++)
+    UniConfRoot root;
+    UniConf cfg(root);
+    bool mountattempt = false;
+    
+    for (int i = 1; i < argc; i++)
     {
         if (!strcmp(argv[i],"-mount") && i + 2 < argc)
         {
-            WvString *mp = new WvString(argv[i + 1]);
-            WvString *location = new WvString(argv[i + 2]);
-
-            strings.append(mp, true);
-            strings.append(location, true);
+            mountattempt = true;
+            trymount(cfg, argv[i + 1], argv[i + 2]);
             i += 2;
         }
         else if (!strcmp(argv[i], "-d"))
         {
-            level = findloglevel(argv[i + 1]);
+            logcons.level(findloglevel(argv[i + 1]));
             i += 1;
         }
         else
@@ -81,18 +105,26 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-   
-    daem = new UniConfDaemon(level);
-    WvStringList::Iter i(strings);
-    i.rewind();
+    if (! mountattempt)
+        trymount(cfg, UniConfKey::EMPTY, DEFAULT_CONFIG_FILE);
 
-    while (i.next())
-    {
-        UniConfKey mp(*i);
-        if (!i.next()) break;
-        daem->domount(mp, *i);
-    }
-    daem->run();
+    globdaemon = new UniConfDaemon(cfg);
     
+    // FIXME: THIS IS NOT SAFE!
+    system("mkdir -p /tmp/uniconf");
+    system("rm -f /tmp/uniconf/uniconfsocket");
+    if (! globdaemon->setupunixsocket("/tmp/uniconf/uniconfsocket"))
+        exit(1);
+    if (! globdaemon->setuptcpsocket(WvIPPortAddr("0.0.0.0",
+        DEFAULT_UNICONF_DAEMON_TCP_PORT)))
+        exit(1);
+    
+    while (globdaemon->isok())
+    {
+        if (globdaemon->select(1000))
+            globdaemon->callback();
+    }
+    globdaemon->close();
+    delete globdaemon;
     return 0;
 }

@@ -10,9 +10,14 @@
 #include "uniconfdefs.h"
 #include "uniconfkey.h"
 #include "uniconfiter.h"
+#include "wvcallback.h"
 #include "wvxplc.h"
 
 class WvStreamList;
+class UniConfGen;
+
+DeclareWvCallback(4, void, UniConfGenCallback, const UniConfGen &,
+    const UniConfKey &, UniConfDepth::Type, void *);
 
 /**
  * An abstract data container that backs a UniConf tree.
@@ -24,8 +29,16 @@ class WvStreamList;
 class UniConfGen : public GenericComponent<IObject>
 {
 protected:
+    UniConfGenCallback cb;
+    void *cbdata;
+
     /** Creates a UniConfGen object. */
     UniConfGen();
+
+    /**
+     * Sends notification that a key has changed value.
+     */
+    void delta(const UniConfKey &key, UniConfDepth::Type depth);
 
 public:
     /** Destroys the UniConfGen and may discard uncommitted data. */
@@ -104,6 +117,11 @@ public:
      */
     virtual bool isok();
 
+    /**
+     * Sets the callback for change notification.
+     */
+    void setcallback(const UniConfGenCallback &callback, void *userdata);
+    
     /** Base type for all UniConfGen iterators. */
     typedef UniConfAbstractIter Iter;
 
@@ -151,6 +169,11 @@ protected:
     UniConfFilterGen(UniConfGen *inner);
     virtual ~UniConfFilterGen();
 
+    /**
+     * Rebinds the inner generator.
+     */
+    void setinner(UniConfGen *inner);
+
 public:
     inline UniConfGen *inner() const
         { return xinner; }
@@ -166,9 +189,14 @@ public:
     virtual bool haschildren(const UniConfKey &key);
     virtual bool isok();
     virtual Iter *iterator(const UniConfKey &key);
+
+protected:
+    /**
+     * Called by inner generator when a key changes.
+     * The default implementation calls delta(key, depth).
+     */
+    virtual void gencallback(const UniConfGen &gen, const UniConfKey &key,
+        UniConfDepth::Type depth, void *userdata);
 };
-
-
-
 
 #endif // UNICONFGEN_H

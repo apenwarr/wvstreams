@@ -48,11 +48,10 @@ static WvMoniker<UniConfGen> tcpreg("tcp", tcpcreator);
 static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 
-UniConfClientGen::UniConfClientGen(IWvStream *stream)
-    : conn(NULL),
-    log("UniConfClientGen"), waiting(13),
-    streamid("UniConfClient"),
-    inprogress(false), success(false)
+UniConfClientGen::UniConfClientGen(IWvStream *stream) :
+    conn(NULL), values(71),
+    streamid("UniConfClientGen to %s", *stream->src()),
+    log(streamid), cmdinprogress(false), cmdsuccess(false)
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
     // actually try to finish connecting until in the first pre_select.
@@ -60,22 +59,17 @@ UniConfClientGen::UniConfClientGen(IWvStream *stream)
     conn->force_select(true, false, false);
     conn->select(15000);
     conn->setcallback(wvcallback(WvStreamCallback, *this,
-        UniConfClientGen::execute), NULL);
-    
+        UniConfClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, streamid.edit());
 }
 
 
 UniConfClientGen::~UniConfClientGen()
 {
+    conn->writecmd(UniConfConn::REQ_QUIT, "");
+    conn->close();
     WvIStreamList::globallist.unlink(conn);
-    
-    if (conn)
-    {
-        if (conn->isok())
-            conn->write(WvString("%s\n", UniConfConn::UNICONF_QUIT));
-        delete conn;
-    }
+    delete conn;
 }
 
 
@@ -112,66 +106,41 @@ bool UniConfClientGen::commit(const UniConfKey &key,
 
 WvString UniConfClientGen::get(const UniConfKey &key)
 {
-    if (! isok())
-        return WvString::null;
-
-    waiting.zap();
-    conn->print("%s %s\n", UniConfConn::UNICONF_GET,
-        wvtcl_escape(key));
-
+    prepare();
+    conn->writecmd(UniConfConn::REQ_GET, wvtcl_escape(key));
     bool success = wait();
-    WvString result;
     if (success)
     {
-        UniConfPair *data = waiting[key];
-        assert(data != NULL);
-        result = data->value();
+        UniConfPair *v = values[key];
+        if (v)
+            return v->value();
     }
-    waiting.zap();
-    return result;
+    return WvString::null;
 }
 
 
 bool UniConfClientGen::set(const UniConfKey &key, WvStringParm value)
 {
-    if (! isok())
-        return false;
-        
-    // FIXME: this clearly does not distinguish between removing
-    //        a key and setting it to an empty value
-    WvString command("%s %s", UniConfConn::UNICONF_SET,
-        wvtcl_escape(key));
-    if (! value.isnull())
-        command.append(" %s", wvtcl_escape(value));
-    conn->print("%s\n", command);
-
-    bool success = wait(true /*justneedok*/);
-    return success;
+    prepare();
+    if (value.isnull())
+        conn->writecmd(UniConfConn::REQ_REMOVE, wvtcl_escape(key));
+    else
+        conn->writecmd(UniConfConn::REQ_SET,
+            WvString("%s %s", wvtcl_escape(key), wvtcl_escape(value)));
+    return wait();
 }
 
 
 bool UniConfClientGen::zap(const UniConfKey &key)
 {
-    if (! isok())
-        return false;
-
-    // FIXME: need a more efficient way to do this
-    bool success = true;
-    Iter *it = iterator(key);
-    for (it->rewind(); isok() && it->next(); )
-    {
-        success = remove(UniConfKey(key, it->key())) && success;
-    }
-    delete it;
-    return success;
+    prepare();
+    conn->writecmd(UniConfConn::REQ_ZAP, wvtcl_escape(key));
+    return wait();
 }
 
 
 bool UniConfClientGen::haschildren(const UniConfKey &key)
 {
-    if (! isok())
-        return false;
-
     // FIXME: need a more efficient way to do this
     Iter *it = iterator(key);
     it->rewind();
@@ -183,20 +152,14 @@ bool UniConfClientGen::haschildren(const UniConfKey &key)
 
 UniConfClientGen::Iter *UniConfClientGen::iterator(const UniConfKey &key)
 {
-    if (! isok())
+    prepare();
+    conn->writecmd(UniConfConn::REQ_SUBTREE, wvtcl_escape(key));
+    if (! wait() || values.isempty())
         return new NullIter();
 
-    // FIXME: need a more efficient way to do this (incrementally?)
-    waiting.zap();
-    conn->print("%s %s\n", UniConfConn::UNICONF_SUBTREE,
-        wvtcl_escape(key));
-
-    bool success = wait();
-    if (! success || waiting.isempty())
-        return new NullIter();
-
+    // FIXME: eventually we should do this incrementally
     WvStringList *keylist = new WvStringList();
-    UniConfPairDict::Iter it(waiting);
+    UniConfPairDict::Iter it(values);
     int trimsegments = key.numsegments();
     for (it.rewind(); it.next(); )
     {
@@ -207,138 +170,102 @@ UniConfClientGen::Iter *UniConfClientGen::iterator(const UniConfKey &key)
 }
 
 
-void UniConfClientGen::executereturn(UniConfKey &key,
-    WvBuffer &fromline)
+void UniConfClientGen::conncallback(WvStream &stream, void *userdata)
 {
-    WvString value = wvtcl_getword(fromline);
-    UniConfPair *data = waiting[key];
-    if (data == NULL)
-    {
-        data = new UniConfPair(key, value);
-        waiting.add(data, true);
-    }
-    else
-        data->setvalue(value);
-    inprogress = false;
-    success = true;
-}
-
-
-void UniConfClientGen::executeforget(UniConfKey &key)
-{
-    // FIXME: not currently used because we don't cache
-}
-
-
-void UniConfClientGen::executesubtree(UniConfKey &key,
-    WvBuffer &fromline)
-{
-    time_t ticks_left = conn->alarm_remaining();
-    conn->alarm(-1);
-    while (fromline.used() > 0)
-    {
-        WvString pair = wvtcl_getword(fromline);
-        WvConstStringBuffer temp(pair);
-        
-        UniConfKey newkey(wvtcl_getword(temp));
-        WvString newval(wvtcl_getword(temp));
-        
-        waiting.add(new UniConfPair(newkey, newval), true);
-    }
-    conn->alarm(ticks_left);
-    inprogress = false;
-    success = true;
-}
-
-
-void UniConfClientGen::executeok(WvBuffer &fromline)
-{
-    fromline.zap();
-    if (justneedok)
-    {
-        inprogress = false;
-        success = true;
-    }
-}
-
-
-void UniConfClientGen::executefail(WvBuffer &fromline)
-{
-    fromline.zap();
-    inprogress = false;
-    success = false;
-}
-
-
-void UniConfClientGen::execute(WvStream &stream, void *userdata)
-{
-    UniConfConn *s = (UniConfConn *) &stream;
-    s->fillbuffer();
-    for (;;)
-    {
-        WvString line = s->gettclline();
-        if (line.isnull())
-            break;
-        WvConstStringBuffer fromline(line);
-        for (;;)
-        {
-            WvString cmd = wvtcl_getword(fromline);
-            WvString k = wvtcl_getword(fromline);
-//            wvcon->print("Got:  %s with key %s.\n", cmd, k);
-            if (cmd.isnull() || k.isnull())
-                break;
-
-            UniConfKey key(k);
-
-           
-            // Value from a get is incoming
-            if (cmd == UniConfConn::UNICONF_RETURN)
-            {
-                executereturn(key, fromline);
-            }
-            // This will be for when an entire subtree has become outdated
-            // but for now is used when:  
-            //
-            // A set has happened on a key we requested.
-            else if (cmd == UniConfConn::UNICONF_FORGET)
-            {
-                executeforget(key);
-            }
-            else if (cmd == UniConfConn::UNICONF_SUBTREE_RETURN)
-            {
-                executesubtree(key, fromline);
-            }
-            else if (cmd == UniConfConn::UNICONF_OK)
-            {
-                executeok(fromline);
-            }
-            else if (cmd == UniConfConn::UNICONF_FAIL)
-            {
-                executefail(fromline);
-            }
-        }
-    }
-    if (stream.alarm_remaining() <= 0 && stream.alarm_was_ticking)
+    if (conn->alarm_was_ticking)
     {
         // command response took too long!
-        inprogress = false;
+        log(WvLog::Error, "Command timeout; connection closed.\n");
+        cmdinprogress = false;
+        cmdsuccess = false;
         conn->close();
+        return;
     }
+    bool didone = false;
+    for (;;)
+    {
+        UniConfConn::Command command = conn->readcmd();
+        if (command == UniConfConn::NONE)
+            break;
+        didone = true;
+
+        switch (command)
+        {
+            case UniConfConn::REPLY_OK:
+                cmdsuccess = true;
+                cmdinprogress = false;
+                break;
+                
+            case UniConfConn::REPLY_FAIL:
+                cmdsuccess = false;
+                cmdinprogress = false;
+                break;
+
+            case UniConfConn::PART_VALUE:
+            {
+                WvString key(wvtcl_getword(conn->payloadbuf, " "));
+                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                if (key.isnull() || value.isnull())
+                    break; // malformed message!
+                
+                UniConfPair *v = values[key];
+                if (v)
+                    v->setvalue(value);
+                else
+                    values.add(new UniConfPair(key, value), true);
+                break;
+            }
+
+            case UniConfConn::PART_TEXT:
+                // don't care about text messages
+                break;
+
+            case UniConfConn::EVENT_HELLO:
+                // discard server information
+                break;
+
+            case UniConfConn::EVENT_CHANGED:
+            {
+                WvString key(wvtcl_getword(conn->payloadbuf, " "));
+                WvString depthstr(wvtcl_getword(conn->payloadbuf, " "));
+                if (key.isnull() || depthstr.isnull())
+                    break; // malformed message!
+                
+                UniConfDepth::Type depth = UniConfDepth::fromname(depthstr);
+                if (depth == -1)
+                    depth = UniConfDepth::INFINITE; // fwd compatibility
+                delta(key, depth);
+                break;
+            }
+
+            default:
+                // discard unrecognized commands
+                break;
+        }
+    }
+    if (didone)
+        conn->alarm(TIMEOUT);
 }
 
 
-bool UniConfClientGen::wait(bool _justneedok)
+void UniConfClientGen::prepare()
 {
-    conn->alarm(15000);
-    inprogress = true;
-    success = false;
-    justneedok = _justneedok;
-    while (inprogress)
+    values.zap();
+    cmdinprogress = true;
+    cmdsuccess = false;
+}
+
+
+bool UniConfClientGen::wait()
+{
+    conn->alarm(TIMEOUT);
+    while (conn->isok() && cmdinprogress)
     {
         if (conn->select(-1))
             conn->callback();
     }
-    return success;
+    conn->alarm(-1);
+    return cmdsuccess;
 }
 
 

@@ -91,21 +91,27 @@ public:
 
     /** Destroys the vector and all of its contents. */
     ~WvVector()
-        { zap(); setcapacity(0); }
+        { zap(); }
 
     /** Dereferences a particular slot of the vector. */
     T *operator[] (int slot)
-        { return reinterpret_cast<T**>(xseq)[slot]; }
+        { return ptr()[slot]; }
 
     /** Removes all elements from the vector. */
     void zap()
     { 
+        // guard against potential side-effects
+        T **oldarray = ptr();
+        int oldcount = xcount;
+        xcount = 0;
+        xslots = 0;
+        xseq = NULL;
 	if (auto_free)
 	{
-	    for (--xcount; xcount >= 0; xcount--)
-		delete ptr()[xcount];
+            while (oldcount > 0)
+		delete oldarray[--oldcount];
 	}
-	xcount = 0;
+        delete[] oldarray;
     }
 
     void remove(int slot, bool never_delete = false)

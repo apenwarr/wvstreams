@@ -108,6 +108,11 @@ public:
     bool isempty() const;
 
     /**
+     * Returns true if the key contains a wildcard.
+     */
+    bool iswild() const;
+
+    /**
      * Returns the number of segments in this path.
      * 
      * The number of segments is equal to the number of slashes
@@ -199,6 +204,16 @@ public:
      * @return 0 if *this == other, < 0 if *this < other, else > 0
      */
     int compareto(const UniConfKey &other) const;
+
+    /**
+     * Determines if the key matches a pattern.
+     * Patterns are simply keys that may have path segments consiting
+     * entirely of "*".  Using wildcards to represent part of a
+     * segment or optional segments is not currently supported.
+     * @param pattern the pattern
+     * @return true if the key matches, false otherwise
+     */
+    bool matches(const UniConfKey &pattern) const;
 
     /**
      * Determines if two paths are equal.

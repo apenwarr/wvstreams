@@ -98,6 +98,12 @@ bool UniConfKey::isempty() const
 }
 
 
+bool UniConfKey::iswild() const
+{
+    return strchr(path.cstr(), '*') != NULL;
+}
+
+
 int UniConfKey::numsegments() const
 {
     const char *str = path + 1; // ignore leading '/'
@@ -221,4 +227,16 @@ UniConfKey &UniConfKey::operator= (const UniConfKey &other)
 int UniConfKey::compareto(const UniConfKey &other) const
 {
     return strcasecmp(path, other.path);
+}
+
+
+bool UniConfKey::matches(const UniConfKey &other) const
+{
+    // could be optimized a bit
+    if (*this == other)
+        return true;
+    if (other.first() == UniConfKey::ANY)
+        return removefirst().matches(other.removefirst());
+    // no other wildcard arrangements currently supported
+    return false;
 }

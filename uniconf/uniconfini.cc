@@ -5,6 +5,7 @@
  * A generator for .ini files.
  */
 #include "uniconfini.h"
+#include "uniconftemp.h"
 #include "wvtclstring.h"
 #include "strutils.h"
 #include "wvfile.h"
@@ -61,14 +62,11 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
         log("Cannot open config file for reading: \"%s\"\n",
             file.errstr());
         file.close();
-        dirty = true;
         return false;
     }
-
-    /** wipe out all known data **/
-    UniConfTempGen::remove(UniConfKey::EMPTY);
     
     /** loop over all Tcl words in the file **/
+    UniConfTempGen *newgen = new UniConfTempGen();
     UniConfKey section;
     WvDynamicBuffer buf;
     for (bool eof = false; ! eof; )
@@ -134,7 +132,7 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
                     key.prepend(section);
                     temp = line.getstr();
                     WvString value(wvtcl_unescape(trim_string(temp.edit())));
-                    UniConfTempGen::set(key, value.unique());
+                    newgen->set(key, value.unique());
                     log(WvLog::Debug5, "Set: (\"%s\", \"%s\")\n",
                         key, value);
                     continue;
@@ -149,9 +147,9 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
     if (file.geterr())
     {
         log("Error reading from config file: \"%s\"\n", file.errstr());
+        delete newgen;
         return false;
     }
-    dirty = false;
 
     /** handle unparsed input **/
     size_t avail = buf.used();
@@ -160,15 +158,60 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
         buf.unalloc(1); // strip off uninteresting trailing newlines
         avail -= 1;
     }
-
     if (avail > 0)
     {
         // last line must have contained junk
         log("XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
     }
 
+    /** switch the trees send notifications **/
+    UniConfValueTree *oldtree = root;
+    UniConfValueTree *newtree = newgen->root;
+    root = newtree;
+    newgen->root = NULL;
+    dirty = false;
+    if (oldtree && newtree)
+    {
+        oldtree->compare(newtree,
+            wvcallback(UniConfValueTree::Comparator, *this,
+            UniConfIniFileGen::refreshcomparator), NULL);
+        delete oldtree;
+    }
+    else
+    {
+        delta(UniConfKey::EMPTY, UniConfDepth::INFINITE);
+    }
+
     /** done **/
     return true;
+}
+
+
+bool UniConfIniFileGen::refreshcomparator(const UniConfValueTree *a,
+    const UniConfValueTree *b, void *userdata)
+{
+    if (a != NULL)
+    {
+        if (b != NULL)
+        {
+            if (a->value() != b->value())
+                delta(a->fullkey(), UniConfDepth::ONE);
+            return true;
+        }
+        else
+        {
+            // key removed
+            delta(a->fullkey(), UniConfDepth::INFINITE);
+            return false;
+        }
+    }
+    else
+    {
+        assert(b != NULL);
+        // key added
+        delta(a->fullkey(), UniConfDepth::INFINITE);
+        return false;
+    }
 }
 
 
@@ -190,7 +233,8 @@ bool UniConfIniFileGen::commit(const UniConfKey &key,
     }
 
     /** iterate over all keys **/
-    save(file, root);
+    if (root)
+        save(file, *root);
 
     /** close the file **/
     file.close();

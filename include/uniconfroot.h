@@ -17,6 +17,8 @@
 #include "wvstringtable.h"
 
 class UniConfGen;
+class UniConfWatch;
+class WvStreamList;
 class UniConfMountTree;
 
 /**
@@ -62,8 +64,6 @@ public:
     ~UniConfRoot();
     
     /** Returns a UniConf object that points into this tree somewhere. */
-//    const UniConf operator[] (const UniConfKey &key);
-    
 
     /* the following bits used to be public, but it causes API confusion
      * because there are several functions with the same names but different
@@ -147,7 +147,7 @@ protected:
      * Returns the generator instance pointer, or NULL on failure.
      */
     UniConfGen *_mount(const UniConfKey &key, WvStringParm moniker,
-		      bool refresh);
+        bool refresh);
     
     /**
      * Mounts a generator at a key.
@@ -159,7 +159,7 @@ protected:
      * @return the generator instance pointer, or NULL on failure
      */
     UniConfGen *_mountgen(const UniConfKey &key, UniConfGen *gen,
-			  bool refresh);
+        bool refresh);
 
     /**
      * Unmounts the generator at a key and destroys it.
@@ -179,11 +179,35 @@ protected:
      * @return the handle, or a null handle if none
      */
     UniConfGen *_whichmount(const UniConfKey &key, UniConfKey *mountpoint);
+    
+    /**
+     * Requests notification when any the keys covered by the
+     * recursive depth specification changes.
+     * @param depth the recursion depth identifying keys of interest
+     * @param watch the observer to notify
+     */
+    void _addwatch(const UniConfKey &key, UniConfDepth::Type depth,
+        UniConfWatch *watch);
+
+    /**
+     * Cancels a previously registered notification request.
+     * @param depth the recursion depth identifying keys of interest
+     * @param watch the observer to notify
+     */
+    void _delwatch(const UniConfKey &key, UniConfDepth::Type depth,
+        UniConfWatch *watch);
 
     class BasicIter;
     friend class BasicIter;
 
 private:
+    /**
+     * Causes an explicit change notification.
+     * @param key the key that was changed
+     * @param depth the depth of the change
+     */
+    void delta(const UniConfKey &key, UniConfDepth::Type depth);
+
     /**
      * Prunes a branch of the tree beginning at the specified node
      * and moving towards the root.
@@ -202,6 +226,12 @@ private:
         const UniConfKey &key, UniConfDepth::Type depth);
     static bool gencommitfunc(UniConfGen *gen,
         const UniConfKey &key, UniConfDepth::Type depth);
+
+    /**
+     * Called by generators when a key changes.
+     */
+    void gencallback(const UniConfGen &gen, const UniConfKey &key,
+        UniConfDepth::Type depth, void *userdata);
 };
 
 

@@ -113,6 +113,8 @@ void UniConf::unmount(bool commit) const
 
 bool UniConf::ismountpoint() const
 {
+    // FIXME: this test does not work if the key is not provided by
+    //        the root of a mountpoint
     UniConfKey mountpoint;
     
     UniConfGen *gen = whichmount(&mountpoint);
@@ -126,6 +128,18 @@ bool UniConf::ismountpoint() const
 UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 {
     return xroot->_whichmount(xfullkey, mountpoint);
+}
+
+
+void UniConf::addwatch(UniConfDepth::Type depth, UniConfWatch *watch) const
+{
+    return xroot->_addwatch(xfullkey, depth, watch);
+}
+
+
+void UniConf::delwatch(UniConfDepth::Type depth, UniConfWatch *watch) const
+{
+    return xroot->_delwatch(xfullkey, depth, watch);
 }
 
 
@@ -255,7 +269,7 @@ UniConf::PatternIter::~PatternIter()
 void UniConf::PatternIter::rewind()
 {
     done = false;
-    if (xpattern == UniConfKey::ANY)
+    if (xpattern.iswild())
     {
         if (! it)
             it = new UniConf::Iter(root());
@@ -266,15 +280,18 @@ void UniConf::PatternIter::rewind()
 
 bool UniConf::PatternIter::next()
 {
-    // handle "*" wildcard
+    // handle wildcards
     if (it)
     {
-        if (! it->next())
-            return false;
-        xcurrent = **it;
-        return true;
+        while (it->next())
+        {
+            xcurrent = **it;
+            if (xcurrent.key().matches(xpattern))
+                return true;
+        }
+        return false;
     }
-    // handle isolated elements
+    // handle isolated elements quickly
     if (done)
         return false;
     done = true;

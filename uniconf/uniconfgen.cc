@@ -8,13 +8,23 @@
 #include "uniconfiter.h"
 
 
-UniConfGen::UniConfGen()
+/***** UniConfGen *****/
+
+UniConfGen::UniConfGen() :
+    cb(NULL), cbdata(NULL)
 {
 }
 
 
 UniConfGen::~UniConfGen()
 {
+}
+
+
+void UniConfGen::delta(const UniConfKey &key, UniConfDepth::Type depth)
+{
+    if (cb)
+        cb(*this, key, depth, cbdata);
 }
 
 
@@ -48,18 +58,38 @@ bool UniConfGen::isok()
 }
 
 
+void UniConfGen::setcallback(const UniConfGenCallback &callback,
+    void *userdata)
+{
+    cb = callback;
+    cbdata = userdata;
+}
+
+
 
 /***** UniConfFilterGen *****/
 
 UniConfFilterGen::UniConfFilterGen(UniConfGen *inner) :
-    xinner(inner)
+    xinner(NULL)
 {
+    setinner(inner);
 }
 
 
 UniConfFilterGen::~UniConfFilterGen()
 {
     delete xinner;
+}
+
+
+void UniConfFilterGen::setinner(UniConfGen *inner)
+{
+    if (xinner)
+        xinner->setcallback(NULL, NULL);
+    xinner = inner;
+    if (xinner)
+        xinner->setcallback(wvcallback(UniConfGenCallback, *this,
+            UniConfFilterGen::gencallback), NULL);
 }
 
 
@@ -117,6 +147,11 @@ UniConfGen::Iter *UniConfFilterGen::iterator(const UniConfKey &key)
 }
 
 
+void UniConfFilterGen::gencallback(const UniConfGen &gen,
+    const UniConfKey &key, UniConfDepth::Type depth, void *userdata)
+{
+    delta(key, depth);
+}
 #if 0
 
 /****** Registry Hack *****/

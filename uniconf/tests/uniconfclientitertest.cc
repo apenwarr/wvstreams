@@ -9,6 +9,7 @@
 #include "uniconf.h"
 #include "uniconfclient.h"
 #include "wvtcp.h"
+#include "wvlogrcv.h"
 
 void printheader(WvString h, WvString mountpoint)
 {
@@ -47,6 +48,7 @@ int main(int argc, char **argv)
 {
     WvString mountpoint("/");
     WvString location("tcp:localhost:4111");
+    WvLogConsole cons(2, WvLog::Debug4);
     
     for (int i = 0; i < 2; i++)
     {

@@ -30,20 +30,19 @@
 class UniConfClientGen : public UniConfGen
 {
     UniConfConn *conn;
-    WvLog log;
-    UniConfPairDict waiting;
+    UniConfPairDict values;
     WvString streamid;
+    WvLog log;
 
-    bool inprogress; /*!< true while a command is in progress */
-    bool success; /*!< true when a command completed successfully */
-    bool justneedok; /*!< true when a command just needs okay
-        rather than an extended response */
+    bool cmdinprogress; /*!< true while a command is in progress */
+    bool cmdsuccess; /*!< true when a command completed successfully */
+
+    static const int TIMEOUT = 2000; // 2 sec timeout
 
 public:
     /**
      * Creates a generator which can communicate with a daemon using
      * the specified stream.
-     * @param location the location of the daemon
      * @param stream the raw connection
      */
     UniConfClientGen(IWvStream *stream);
@@ -54,10 +53,8 @@ public:
 
     virtual bool isok();
 
-    virtual bool refresh(const UniConfKey &key,
-        UniConfDepth::Type depth);
-    virtual bool commit(const UniConfKey &key,
-        UniConfDepth::Type depth);
+    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
+    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
     virtual WvString get(const UniConfKey &key);
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);
@@ -67,14 +64,9 @@ public:
     class RemoteKeyIter;
 
 protected:
-    void execute(WvStream &s, void *userdata);
-    void executereturn(UniConfKey &key, WvBuffer &fromline);
-    void executeforget(UniConfKey &key);
-    void executesubtree(UniConfKey &key, WvBuffer &fromline);
-    void executeok(WvBuffer &fromline);
-    void executefail(WvBuffer &fromline);
-    
-    bool wait(bool justneedok = false);
+    void conncallback(WvStream &s, void *userdata);
+    void prepare();
+    bool wait();
 };
 
 

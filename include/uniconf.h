@@ -8,6 +8,8 @@
 #define __UNICONF_H
 
 #include "uniconfiter.h"
+#include "uniconfgen.h"
+#include "uniconfwatch.h"
 #include "wvvector.h"
 
 class WvStream;
@@ -256,21 +258,37 @@ public:
     UniConfGen *whichmount(UniConfKey *mountpoint = NULL) const;
 
     /**
-     * Calls 'callback' when any of the keys covered by the recursive
-     * depth specification changes.
-     * 
-     * 'depth' is the recursion depth identifying keys of interest.
+     * Requests notification when any the keys covered by the
+     * recursive depth specification change.
      */
-    void addwatch(UniConfDepth::Type depth,
-		  const UniConfCallback &callback, void *userdata) const 
-        { } // FIXME
+    void addwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
 
     /**
      * Cancels a previously registered notification request.
      */
-    void delwatch(UniConfDepth::Type depth,
-		  const UniConfCallback &callback, void *userdata) const
-        { } // FIXME
+    void delwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
+
+    /**
+     * Shortcut for registering a callback-style watch.
+     */
+    void addwatchcallback(UniConfDepth::Type depth,
+        const UniConfCallback &callback, void *userdata) const { }
+    
+    /**
+     * Shortcut for canceling a watch added with addwatchcallback().
+     */
+    void delwatchcallback(UniConfDepth::Type depth,
+        const UniConfCallback &callback, void *userdata) const { }
+
+    /**
+     * Shortcut for adding a setbool-style watch.
+     */
+    void addwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
+    
+    /**
+     * Shortcut for canceling a watch added with addwatchsetbool().
+     */
+    void delwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
     
     /**
      * Prints the entire contents of this subtree to a stream.
@@ -304,9 +322,6 @@ public:
     // sorted variant of XIter
     class SortedXIter;
     
-    // iterates over mounts at this location
-    class MountIter;
-
     // lists of iterators
     class IterList;
     class PatternIterList;
@@ -431,10 +446,7 @@ DeclareWvList4(UniConf::PatternIter, PatternIterList,
  * This iterator walks over all children that match a wildcard
  * pattern.
  * 
- * Patterns are simply keys that may have path segments consiting of "*",
- * also known as UniConf::ANY.  It is not currently possible to use
- * wildcards to represent part of a path segment or to indicate optional
- * segments.
+ * See UniConfKey::matches(const UniConfKey&) for information about patterns.
  * 
  * Example patterns: (where STAR is the asterisk character, '*')
  *

@@ -22,10 +22,10 @@ protected:
     class NodeIter;
     friend class NodeIter;
 
-    UniConfValueTree root; /*!< the root of the tree */
+public:
+    UniConfValueTree *root; /*!< the root of the tree */
     bool dirty; /*!< set whenever the tree actually changes */
 
-public:
     UniConfTempGen();
     virtual ~UniConfTempGen();
 

@@ -9,8 +9,8 @@
 
 
 UniConfTreeBase::UniConfTreeBase(UniConfTreeBase *parent, 
-				 const UniConfKey &key) 
-    : xkey(key)
+    const UniConfKey &key) :
+    xkey(key)
 {
     xparent = parent;
     xchildren = NULL;
@@ -22,9 +22,10 @@ UniConfTreeBase::UniConfTreeBase(UniConfTreeBase *parent,
 
 UniConfTreeBase::~UniConfTreeBase()
 {
-    // this happens only after the children are deleted by our
-    // subclass's zap().  This ensures that we do not confuse them
+    // This happens only after the children are deleted by our
+    // subclass.  This ensures that we do not confuse them
     // about their parentage as their destructors are invoked
+    // The xchildren vector is destroyed by the subclass!
     if (xparent)
         xparent->unlink(this);
 }
@@ -143,7 +144,7 @@ void UniConfTreeBase::unlink(UniConfTreeBase *node)
     bool found = false;
     int slot = bsearch(node->key(), found);
     if (found)
-	xchildren->remove(slot, true);
+	xchildren->remove(slot, true /*never_delete*/);
 }
 
 
@@ -168,4 +169,62 @@ int UniConfTreeBase::bsearch(const UniConfKey &key, bool &found) const
         }
     }
     return low;
+}
+
+
+void UniConfTreeBase::_recursivecompare(
+    const UniConfTreeBase *a, const UniConfTreeBase *b,
+    const UniConfTreeBaseComparator &comparator, void *userdata)
+{
+    // don't bother comparing subtree if this returns false
+    if (! comparator(a, b, userdata))
+        return;
+
+    // begin iteration sequence
+    Iter ait(*const_cast<UniConfTreeBase*>(a));
+    if (a != NULL)
+    {
+        ait.rewind();
+        if (ait.next())
+            a = ait.ptr();
+    }
+    Iter bit(*const_cast<UniConfTreeBase*>(b));
+    if (b != NULL)
+    {
+        bit.rewind();
+        if (bit.next())
+            b = bit.ptr();
+    }
+
+    // loop
+    while (a != NULL && b != NULL)
+    {
+        int order = a->key().compareto(b->key());
+        if (order < 0)
+        {
+            _recursivecompare(a, NULL, comparator, userdata);
+            a = ait.next() ? ait.ptr() : NULL;
+        }
+        else if (order == 0)
+        {
+            _recursivecompare(a, b, comparator, userdata);
+            a = ait.next() ? ait.ptr() : NULL;
+            b = bit.next() ? bit.ptr() : NULL;
+        }
+        else
+        {
+            _recursivecompare(NULL, b, comparator, userdata);
+            b = bit.next() ? bit.ptr() : NULL;
+        }
+    }
+    while (a != NULL)
+    {
+        _recursivecompare(a, NULL, comparator, userdata);
+        a = ait.next() ? ait.ptr() : NULL;
+    }
+    while (b != NULL)
+    {
+        _recursivecompare(NULL, b, comparator, userdata);
+        b = bit.next() ? bit.ptr() : NULL;
+    }
 }

@@ -7,10 +7,6 @@
 #ifndef __UNICONFDEFS_H
 #define __UNICONFDEFS_H
 
-#include "wvcallback.h"
-
-class UniConf;
-
 namespace UniConfDepth
 {
     /**
@@ -25,9 +21,17 @@ namespace UniConfDepth
         CHILDREN = 3, /*!< considers all direct children */
         DESCENDENTS = 4 /*!< considers all descendents */
     };
-};
+    static const int NUM_DEPTHS = DESCENDENTS + 1;
+        
+    /**
+     * Returns a (non-localized) string corresponding to a depth type.
+     */
+    const char *nameof(Type depth);
 
-// parameters are: UniConf object, userdata
-DeclareWvCallback(2, void, UniConfCallback, const UniConf &, void *);
+    /**
+     * Returns a depth given its (non-localized) name, -1 if unrecognized.
+     */
+    Type fromname(const char *name);
+};
 
 #endif //__UNICONFDEFS_H

@@ -9,6 +9,13 @@
 
 #include "uniconfkey.h"
 #include "wvvector.h"
+#include "wvcallback.h"
+
+class UniConfTreeBase;
+
+// parameters: 1st node (may be NULL), 2nd node (may be NULL), userdata
+DeclareWvCallback(3, bool, UniConfTreeBaseComparator,
+    const UniConfTreeBase *, const UniConfTreeBase *, void *);
 
 /**
  * UniConfTreeBase the common base implementation for UniConfTree.
@@ -36,13 +43,16 @@ protected:
     UniConfTreeBase *_find(const UniConfKey &key) const;
     UniConfTreeBase *_findchild(const UniConfKey &key) const;
 
-    class Iter : public Vector::Iter
+    static void _recursivecompare(
+        const UniConfTreeBase *a, const UniConfTreeBase *b,
+        const UniConfTreeBaseComparator &comparator, void *userdata);
+    
+    friend class Iter : public Vector::Iter
     {
     public:
 	Iter(UniConfTreeBase &b) : Vector::Iter(b.xchildren)
 	    { }
     };
-    friend class Iter;
     
 public:
     /** Returns the key field. */
@@ -85,14 +95,22 @@ private:
  * use of a vector keeps down memory footprint.
  *
  * Someday this could be further abstracted into a generic WvTreeDict.
+ *
+ * @param Sub the name of the concrete subclass of UniConfTree
  */
-template<class T>
+template<class Sub>
 class UniConfTree : public UniConfTreeBase
 {
+protected:
+    typedef WvVector<Sub> SubVector;
+    
 public:
-    /** Creates a node (and links it to a subtree, if parent is non-NULL) */
-    UniConfTree(T *parent, const UniConfKey &key)
-        : UniConfTreeBase(parent, key)
+    DeclareWvCallback(3, bool, Comparator,
+        const Sub *, const Sub *, void *);
+
+    /** Creates a node and links it to a subtree, if parent is non-NULL */
+    UniConfTree(Sub *parent, const UniConfKey &key) :
+        UniConfTreeBase(parent, key)
         { }
 
     /** Destroy this node's contents and children. */
@@ -100,30 +118,30 @@ public:
         { zap(); }
 
     /** Returns a pointer to the parent node, or NULL if there is none. */
-    T *parent() const
-        { return static_cast<T*>(xparent); }
+    Sub *parent() const
+        { return static_cast<Sub*>(xparent); }
 
     /** Reparents this node. */
-    void setparent(T *parent)
+    void setparent(Sub *parent)
         { UniConfTreeBase::_setparent(parent); }
     
     /** Returns a pointer to the root node of the tree. */
-    T *root() const
-        { return static_cast<T*>(UniConfTreeBase::_root()); }
+    Sub *root() const
+        { return static_cast<Sub*>(UniConfTreeBase::_root()); }
     
     /**
-     * Returns full path of this node relative to an ancestor
-     * (or the root, if ancestor is NULL).
+     * Returns full path of this node relative to an ancestor.
+     * If ancestor is NULL, returns the root.
      */
-    UniConfKey fullkey(const T *ancestor = NULL) const
+    UniConfKey fullkey(const Sub *ancestor = NULL) const
         { return UniConfTreeBase::_fullkey(ancestor); }
 
     /**
      * Finds the sub-node with the specified key.
      * If key.isempty(), returns this node.
      */
-    T *find(const UniConfKey &key) const
-        { return static_cast<T*>(UniConfTreeBase::_find(key)); }
+    Sub *find(const UniConfKey &key) const
+        { return static_cast<Sub*>(UniConfTreeBase::_find(key)); }
     
     /**
      * Finds the direct child node with the specified key.
@@ -131,8 +149,8 @@ public:
      * If key.numsegments() == 1, then performs the same task
      * as find(key), but a little faster.  Otherwise returns NULL.
      */
-    T *findchild(const UniConfKey &key) const
-        { return static_cast<T*>(UniConfTreeBase::_findchild(key)); }
+    Sub *findchild(const UniConfKey &key) const
+        { return static_cast<Sub*>(UniConfTreeBase::_findchild(key)); }
 
     /**
      * Removes the node for the specified key from the tree
@@ -148,9 +166,26 @@ public:
     {
         if (!xchildren)
             return;
-	xchildren->zap();
-        delete xchildren;
-	xchildren = NULL;
+        // set xchildren to NULL so that the zap() will happen faster
+        // otherwise, each child will attempt to unlink itself uselessly
+        SubVector *oldchildren = reinterpret_cast<SubVector*>(xchildren);
+        xchildren = NULL;
+        delete oldchildren; // deletes all children
+    }
+
+    /**
+     * Compares this tree with another using the specified comparator
+     * function.
+     * Comparison of a subtree ends when the comparator returns false.
+     * @param comparator the value compare function
+     * @param userdata userdata for the compare function
+     * @return true if the comparison function returned true each time
+     */
+    void compare(const Sub *other, const Comparator &comparator,
+        void *userdata)
+    {
+        _recursivecompare(this, other, reinterpret_cast<
+            const UniConfTreeBaseComparator&>(comparator), userdata);
     }
 
     /**
@@ -161,13 +196,13 @@ public:
     {
     public:
         /** Creates an iterator over the specified tree. */
-        Iter(T &tree) : UniConfTreeBase::Iter(tree)
+        Iter(Sub &tree) : UniConfTreeBase::Iter(tree)
 	    { }
 
         /** Returns a pointer to the current node. */
-        T *ptr() const
-            { return static_cast<T*>(UniConfTreeBase::Iter::ptr()); }
-        WvIterStuff(T);
+        Sub *ptr() const
+            { return static_cast<Sub*>(UniConfTreeBase::Iter::ptr()); }
+        WvIterStuff(Sub);
     };
 };
 
@@ -187,7 +222,7 @@ public:
     }
     
     /** Returns the value field. */
-    const WvString &value()
+    const WvString &value() const
         { return xvalue; }
 
     /** Sets the value field. */
