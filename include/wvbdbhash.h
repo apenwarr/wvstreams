@@ -229,12 +229,9 @@ public:
                 d = undatumize<D *>(data);
                 return true;
             }
-            else
-            {
-                k = NULL;
-                d = NULL;
-                return false;
-            }
+            k = NULL;
+            d = NULL;
+            return false;
         }
     
         void unlink()
