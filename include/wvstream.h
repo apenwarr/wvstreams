@@ -611,12 +611,10 @@ public:
      * define the callback function for this stream, called whenever
      * the callback() member is run, and passed the 'userdata' pointer.
      */
-    void setcallback(WvStreamCallback _callfunc, void *_userdata)
-        { callfunc = _callfunc; userdata = _userdata; }
+    void setcallback(WvStreamCallback _callfunc, void *_userdata);
         
     /** Sets a callback to be invoked on close().  */
-    void setclosecallback(WvStreamCallback _callfunc, void *_userdata)
-       { closecb_func = _callfunc; closecb_data = _userdata; }
+    void setclosecallback(WvStreamCallback _callfunc, void *_userdata);
 
     /**
      * set the callback function for this stream to an internal routine

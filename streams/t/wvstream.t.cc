@@ -8,6 +8,7 @@
 #undef protected
 
 #include "wvistreamlist.h"
+#include "wvcont.h"
 
 class CountStream : public WvStream
 {
@@ -344,6 +345,7 @@ static void cont_cb(WvStream &s, void *userdata)
     }
 }
 
+
 // continue_select()
 WVTEST_MAIN("continue_select")
 {
@@ -370,6 +372,62 @@ WVTEST_MAIN("continue_select")
     WVPASS(aval == -4);
     
     a.terminate_continue_select();
+}
+
+
+static void *wvcont_cb(WvStream &s, void *userdata)
+{
+    int next = 1, sgn = 1;
+    int *val = (int *)userdata;
+    
+    while (s.isok())
+    {
+	*val = sgn * next;
+	next *= 2;
+	sgn = WvCont::yield() ? 1 : -1;
+	printf("...returned from yield()\n");
+    }
+    
+    *val = 4242;
+    return NULL;
+}
+
+
+static void call_wvcont_cb(void *context, WvStream &s, void *userdata)
+{
+    WvCont *cb = (WvCont *)context;
+    (*cb)(userdata);
+}
+
+
+WVTEST_MAIN("continue_select compatibility with WvCont")
+{
+    WvStream s;
+    int sval = 0;
+    
+    s.uses_continue_select = true;
+    
+    {
+	WvCont cont1(WvBoundCallback<WvCallback<void*,void*>, WvStream&>
+		     (wvcont_cb, s));
+	WvCont cont2(cont1), cont3(cont2);
+	s.setcallback(WvBoundCallback<WvStreamCallback, void* >
+		      (call_wvcont_cb, &cont3), &sval);
+	
+	s.inbuf.putstr("gak");
+	WVPASS(sval == 0);
+	s.runonce(0);
+	WVPASS(sval == 1);
+	s.runonce(0);
+	WVPASS(sval == 2);
+	s.close();
+	WVPASS(!s.isok());
+	s.runonce(0);
+	s.setcallback(0, 0);
+    }
+    
+    // the WvCont should have now been destroyed!
+    WVPASS(sval == 4242);
 }
 
 

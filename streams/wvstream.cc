@@ -1009,6 +1009,20 @@ const WvAddr *WvStream::src() const
 }
 
 
+void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
+{ 
+    callfunc = _callfunc;
+    userdata = _userdata; 
+}
+
+
+void WvStream::setclosecallback(WvStreamCallback _callfunc, void *_userdata)
+{
+    closecb_func = _callfunc;
+    closecb_data = _userdata;
+}
+
+
 void WvStream::unread(WvBuf &unreadbuf, size_t count)
 {
     WvDynBuf tmp;
