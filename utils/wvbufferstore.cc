@@ -8,6 +8,7 @@
  */
 #include "wvbufstore.h"
 #include <string.h>
+#include <sys/types.h>
 
 /**
  * An abstraction for memory transfer operations.
@@ -1046,7 +1047,7 @@ WvBufStore *WvLinkedBufferStore::coalesce(
         // much as possible to ensure it does not get discarded
         // during the coalescing phase
         size_t mustskip = 0;
-        if (buf == list.first())
+        if (buf == list.first() && totalused != 0)
         {
             // use ungettable() instead of buf->ungettable() because we might
             // have reset it to 0
