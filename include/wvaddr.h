@@ -81,6 +81,7 @@ public:
 	SLIP,
 	CSLIP,
 	PPP,
+	IPsec,
 	
 	// protocol encapsulation
 	IPv4,
