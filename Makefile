@@ -43,7 +43,7 @@ dist-hack-clean:
 
 # Comment this assignment out for a release.
 ifdef PKGSNAPSHOT
-PKGVER=+$(shell date +%Y%m%d)
+SNAPDATE=+$(shell date +%Y%m%d)
 endif
 
 dist-hook: dist-hack-clean configure
@@ -53,7 +53,8 @@ dist-hook: dist-hack-clean configure
 	    $(MAKE) -C .xplc clean patch && \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
-	@sed -e "s/Version\:\ 4\.0/Version\:\ \$(PKGVER)/" redhat/wvstreams.spec.in > redhat/wvstreams.spec
+	@sed -e "s/@PKGVER@/$(PKGVER)$(SNAPDATE)/g" \
+	 redhat/wvstreams.spec.in > redhat/wvstreams.spec
 
 runconfigure: config.mk include/wvautoconf.h
 
