@@ -13,6 +13,9 @@
 
 class UniHashTreeBase;
 
+// parameters: a node (won't be NULL), userdata
+typedef WvCallback<void, const UniHashTreeBase *,
+        void *> UniHashTreeBaseVisitor;
 // parameters: 1st node (may be NULL), 2nd node (may be NULL), userdata
 typedef WvCallback<bool, const UniHashTreeBase *, 
         const UniHashTreeBase *, void *> UniHashTreeBaseComparator;
@@ -30,6 +33,7 @@ protected:
     };
 
     typedef WvScatterHash<UniHashTreeBase, UniConfKey, Accessor> Container;
+    typedef UniHashTreeBaseVisitor BaseVisitor;
     typedef UniHashTreeBaseComparator BaseComparator;
     Container *xchildren; /*!< the hash table of children */
 
@@ -49,6 +53,11 @@ protected:
     static bool _recursivecompare(
         const UniHashTreeBase *a, const UniHashTreeBase *b,
         const UniHashTreeBaseComparator &comparator, void *userdata);
+
+    static void _recursive_unsorted_visit(
+        const UniHashTreeBase *a,
+        const UniHashTreeBaseVisitor &visitor, void *userdata,
+	bool preorder, bool postorder);
 
 public:
     class Iter : public Container::Iter

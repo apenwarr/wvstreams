@@ -59,7 +59,7 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 WvString WvIPFirewall::forward_command(const char *cmd, 
 				       const char *proto,
 				       const WvIPPortAddr &src,
-				       const WvIPPortAddr &dst)
+				       const WvIPPortAddr &dst, bool snat)
 {
     WvIPAddr srcaddr(src), dstaddr(dst), zero;
     WvString haveiface(""), haveoface("");
@@ -82,28 +82,27 @@ WvString WvIPFirewall::forward_command(const char *cmd,
 	haveoface.append("-d ");
 	haveoface.append((WvString)dstaddr);
     
-        retval.append("iptables -t nat %s OFASTFORWARD -p %s "
-                    "-m mark --mark 0xBEEF "
-                    "--dport %s %s -j MASQUERADE %s \n", 
-                    cmd, proto, dst.port, haveoface, shutup());
-
         retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
                   "-j DNAT --to-destination %s "
                   "%s \n", cmd, proto, src.port, haveiface,  dst, shutup());
     }
 
     // FA57 is leet-speak for FAST, which is short for FASTFORWARD --adewhurst
+    // FA58 is FA57+1. Nothing creative sprang to mind. --adewhurst
+    // 
     // We need this to mark the packet as it comes in so that we allow the
-    // FastForward-ed packets to bypass the firewall
+    // FastForward-ed packets to bypass the firewall (FA57).
+    // 
+    // If we mark the packet with FA58, that means it gets masqueraded before
+    // leaving, which may be useful to work around some network configuratios.
     retval.append("iptables -t mangle %s FASTFORWARD -p %s --dport %s "
-	          "-j MARK --set-mark 0xFA57 %s %s\n", cmd, proto, src.port,
-		  haveiface, shutup());
+	          "-j MARK --set-mark %s %s %s\n", cmd, proto, src.port,
+		  snat ? "0xFA58" : "0xFA57", haveiface, shutup());
 
     // Don't open the port completely; just open it for the forwarded packets
     retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
-		  "--dport %s -m mark --mark 0xFA57 %s "
-		  "%s\n", cmd, proto, dst.port,
-		  haveoface, shutup());
+		  "--dport %s -m mark --mark %s %s %s\n", cmd, proto, dst.port,
+		  snat ? "0xFA58" : "0xFA57", haveoface, shutup());
     
     return retval;
 }
@@ -178,10 +177,10 @@ void WvIPFirewall::del_port(const WvIPPortAddr &addr)
 }
 
 void WvIPFirewall::add_forward(const WvIPPortAddr &src,
-			       const WvIPPortAddr &dst)
+			       const WvIPPortAddr &dst, bool snat)
 {
-    WvString s(forward_command("-A", "tcp", src, dst)),
-    	    s2(forward_command("-A", "udp", src, dst));
+    WvString s(forward_command("-A", "tcp", src, dst, snat)),
+    	    s2(forward_command("-A", "udp", src, dst, snat));
 
     log("Add Forwards (%s):\n%s\n%s\n", enable, s, s2);
     
@@ -193,10 +192,10 @@ void WvIPFirewall::add_forward(const WvIPPortAddr &src,
 }
 
 void WvIPFirewall::del_forward(const WvIPPortAddr &src,
-			       const WvIPPortAddr &dst)
+			       const WvIPPortAddr &dst, bool snat)
 {
-    WvString s(forward_command("-D", "tcp", src, dst)),
-	    s2(forward_command("-D", "udp", src, dst));
+    WvString s(forward_command("-D", "tcp", src, dst, snat)),
+	    s2(forward_command("-D", "udp", src, dst, snat));
 
     log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
 

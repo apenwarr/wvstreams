@@ -142,6 +142,8 @@ install-arch:
 
 	# Install UniConf daemon
 	$(MAKE) install-uniconfd DESTDIR=`pwd`/debian/tmp
+	install -d `pwd`/debian/tmp/etc/default
+	install -m644 debian/uniconfd.default debian/tmp/etc/default/uniconfd
 
 	dh_install -s
 

@@ -1,6 +1,7 @@
 #include "wvtest.h"
 #include "wvhttppool.h"
 #include <stdio.h>
+#include <netdb.h>
 
 static void close_callback(WvStream& s, void* userdata)
 {
@@ -10,45 +11,55 @@ static void close_callback(WvStream& s, void* userdata)
 
 WVTEST_MAIN("WvHttpPool GET")
 {
-    WvHttpPool pool;
+    if (gethostbyname("www.google.com"))
+    {
+	WvHttpPool pool;
 
-    WvIStreamList l;
-    l.append(&pool, false);
+	WvIStreamList l;
+	l.append(&pool, false);
 
-    WvStream *buf;
-    WVPASS(buf = pool.addurl("http://www.google.ca"));
-    WVPASS(buf->isok());
-    buf->autoforward(*wvcon);
-    buf->setclosecallback(close_callback, NULL);
-    l.append(buf, true);
-    while (buf->isok() && (wvcon->isok() || !pool.idle()))
-	l.runonce();
-    WVPASS(!(buf->isok()));
-    
-    WVPASSEQ(l.count(), 2);
+	WvStream *buf;
+	WVPASS(buf = pool.addurl("http://www.google.com"));
+	WVPASS(buf->isok());
+	buf->autoforward(*wvcon);
+	buf->setclosecallback(close_callback, NULL);
+	l.append(buf, true);
+	while (buf->isok() && (wvcon->isok() || !pool.idle()))
+	    l.runonce();
+	WVPASS(!(buf->isok()));
+
+	WVPASSEQ(l.count(), 2);
+    }
+    else
+	printf("Can't find www.google.com.  SKIPPED.\n");
 }
 
 WVTEST_MAIN("WvHttpPool HEAD")
 {
-    WvHttpPool pool;
-
-    WvIStreamList l;
-    l.append(&pool, false);
-
-    WvStream *buf;
-    WVPASS(buf = pool.addurl("http://www.google.ca", "HEAD"));
-    WVPASS(buf->isok());
-    buf->autoforward(*wvcon);
-    buf->setclosecallback(close_callback, NULL);
-    l.append(buf, true);
-    while (buf->isok() && (wvcon->isok() || !pool.idle()))
+    if (gethostbyname("www.google.com"))
     {
-	if (l.select(-1))
+	WvHttpPool pool;
+
+	WvIStreamList l;
+	l.append(&pool, false);
+
+	WvStream *buf;
+	WVPASS(buf = pool.addurl("http://www.google.com", "HEAD"));
+	WVPASS(buf->isok());
+	buf->autoforward(*wvcon);
+	buf->setclosecallback(close_callback, NULL);
+	l.append(buf, true);
+	while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	{
-	    l.callback();
+	    if (l.select(-1))
+	    {
+		l.callback();
+	    }
 	}
+	WVPASS(!(buf->isok()));
     }
-    WVPASS(!(buf->isok()));
+    else
+	printf("Can't find www.google.com.  SKIPPED.\n");
 }
 
 bool pipelining_enabled = true;
@@ -124,7 +135,8 @@ void listener_callback(WvStream &s, void *userdata)
 }
 
 
-static void do_test(WvIStreamList &l, unsigned int num_requests)
+static void do_test(WvIStreamList &l, unsigned int port,
+		    unsigned int num_requests)
 {
     printf("pipelining [%d] requusts [%u]\n", pipelining_enabled,
            num_requests);
@@ -137,7 +149,8 @@ static void do_test(WvIStreamList &l, unsigned int num_requests)
     WvStream *buf;
     for (unsigned int i = 0; i < num_requests; i++)
     {
-        WVPASS(buf = pool.addurl(WvString("http://localhost:4200/%s.html", i)));
+        WVPASS(buf = pool.addurl(WvString("http://localhost:%s/%s.html", port,
+									 i)));
         WVPASS(buf->isok());
         buf->autoforward(*wvcon);
         buf->setclosecallback(close_callback, NULL);
@@ -170,38 +183,51 @@ WVTEST_MAIN("WvHttpPool pipelining")
 {
     WvIStreamList l;
     
-    WvTCPListener listener(4200);
-    listener.setcallback(listener_callback, &l);
-    l.append(&listener, false, "http listener");
+    unsigned int port = 4200;
+    WvTCPListener *listener;
+    bool search = true;
+    while (search)
+    {
+	listener = new WvTCPListener(port);
+	if (listener->isok())
+	    search = false;
+	else
+	{
+	    WVRELEASE(listener);
+	    ++port;
+	}
+    }
+    listener->setcallback(listener_callback, &l);
+    l.append(listener, true, "http listener");
 
     // Pipelining-enabled tests share one connection for the pipeline test
     // and actual requests.
-    do_test(l, 1);
+    do_test(l, port, 1);
     WVPASSEQ(http_conns, 1);
-    do_test(l, 5);
+    do_test(l, port, 5);
     WVPASSEQ(http_conns, 1);
 
     break_connection = true;
-    do_test(l, 1);
+    do_test(l, port, 1);
     WVPASSEQ(http_conns, 2);
     break_connection = true;
-    do_test(l, 5);
+    do_test(l, port, 5);
     WVPASSEQ(http_conns, 2);
 
     // All pipelining-disabled tests should have one connection for the
     // pipeline test and one for the real connection.
     pipelining_enabled = false;
-    do_test(l, 1);
+    do_test(l, port, 1);
     WVPASSEQ(http_conns, 2);
-    do_test(l, 5);
+    do_test(l, port, 5);
     WVPASSEQ(http_conns, 2);
 
     break_connection = true;
-    do_test(l, 1);
+    do_test(l, port, 1);
     WVPASSEQ(http_conns, 3);
     break_connection = true;
-    do_test(l, 5);
+    do_test(l, port, 5);
     WVPASSEQ(http_conns, 3);
 
-    WVPASS(listener.isok());
+    WVPASS(listener->isok());
 }

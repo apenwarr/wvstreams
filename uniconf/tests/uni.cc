@@ -22,8 +22,8 @@ void usage()
 	    "   xkeys - list keys that match a wildcard\n"
 	    "   dump  - list the subkeys/values of a key (key=value)\n"
 	    "   hdump - list the subkeys/values recursively\n"
-	    "   xdump - list keys/values that match a wildcard\n",
-	    "   del   - delete all subkeys\n",
+	    "   xdump - list keys/values that match a wildcard\n"
+	    "   del   - delete all subkeys\n"
 	    "   help  - this text\n");
 }
 

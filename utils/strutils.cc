@@ -194,7 +194,7 @@ char *snip_string(char *haystack, char *needle)
 char *strlwr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
     	*p = tolower(*p);
     	p++;
@@ -207,7 +207,7 @@ char *strlwr(char *string)
 char *strupr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
 	*p = toupper(*p);
 	p++;
@@ -220,6 +220,8 @@ char *strupr(char *string)
 // true if all the characters in "string" are isalnum().
 bool is_word(const char *p)
 {
+    assert(p);
+
     while (*p)
     {
     	if(!isalnum(*p++))
@@ -587,6 +589,53 @@ WvString sizektoa(unsigned int kbytes)
         return WvString("%s KB", kbytes);
 
     return _sizetoa(kbytes, 2);
+}
+
+WvString secondstoa(unsigned int total_seconds)
+{
+    WvString result("");
+
+    unsigned int days = total_seconds / (3600*24);
+    total_seconds %= (3600*24);
+    unsigned int hours = total_seconds / 3600;
+    total_seconds %= 3600;
+    unsigned int mins = total_seconds / 60;
+    unsigned int secs = total_seconds % 60; 
+
+    int num_elements = (days > 0) + (hours > 0) + (mins > 0);
+
+    if (days > 0)
+    {
+        result.append(days);
+        result.append(days > 1 ? " days" : " day");
+        num_elements--;
+        if (num_elements > 1)
+            result.append(", ");
+        else if (num_elements == 1)
+            result.append(" and ");
+    }
+    if (hours > 0)
+    {
+        result.append(hours);
+        result.append(hours > 1 ? " hours" : " hour");
+        num_elements--;
+        if (num_elements > 1)
+            result.append(", ");
+        else if (num_elements == 1)
+            result.append(" and ");
+    }
+    if (mins > 0)
+    {
+        result.append(mins);
+        result.append(mins > 1 ? " minutes" : " minute");
+    }
+    if (days == 0 && hours == 0 && mins == 0)
+    {
+        result.append(secs);
+        result.append(secs != 1 ? " seconds" : " second");
+    }
+
+    return result;
 }
 
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)

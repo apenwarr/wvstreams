@@ -12,6 +12,7 @@
 #include "wvbuf.h"
 #include "wvbase64.h"
 #include "strutils.h"
+#include <execinfo.h>
 
 #ifdef _WIN32
 #define ETIMEDOUT WSAETIMEDOUT
@@ -45,7 +46,6 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 
 WvHttpStream::~WvHttpStream()
 {
-    log(WvLog::Debug2, "Deleting.\n");
     if (geterr())
         log("Error was: %s\n", errstr());
     close();
@@ -75,7 +75,8 @@ void WvHttpStream::close()
         if (!msgurl && !waiting_urls.isempty())
             msgurl = waiting_urls.first();
         if (msgurl)
-            log("URL '%s' is FAILED\n", msgurl->url);
+            log("URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
+                errstr());
     }
     waiting_urls.zap();
     if (curl)
@@ -571,6 +572,9 @@ void WvHttpStream::execute()
         // well.  It sucks, but there's no way to tell if all the data arrived
         // okay... that's why Chunked or ContentLength encoding is better.
         len = read(buf, sizeof(buf));
+	if (!isok())
+	    return;
+
         if (len)
             log(WvLog::Debug5, "Infinity: read %s bytes.\n", len);
         if (curl && curl->outstream)
@@ -588,6 +592,9 @@ void WvHttpStream::execute()
             len = read(buf, sizeof(buf));
         else
             len = read(buf, bytes_remaining);
+	if (!isok())
+	    return;
+
         bytes_remaining -= len;
         if (len)
             log(WvLog::Debug5, 
@@ -600,6 +607,9 @@ void WvHttpStream::execute()
 
 	if (bytes_remaining && !isok())
 	    seterr("connection interrupted");
+
+        if (!isok())
+            doneurl();
     }
 
     if (urls.isempty())

@@ -3,6 +3,8 @@ WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
 include wvrules.mk
 override enable_efence=no
 
+export WVSTREAMS
+
 XPATH=include
 
 include vars.mk
@@ -114,6 +116,8 @@ install-shared: $(TARGETS_SO)
 	for i in $(TARGETS_SO); do \
 	    $(INSTALL_PROGRAM) $$i.$(RELEASE) $(DESTDIR)$(libdir)/ ; \
 	done
+	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
+	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
 
 install-dev: $(TARGETS_SO) $(TARGETS_A)
 	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams
@@ -137,8 +141,6 @@ install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
 	$(INSTALL_PROGRAM) uniconf/tests/uni $(DESTDIR)$(bindir)/
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL_PROGRAM) uniconf/daemon/uniconfd $(DESTDIR)$(sbindir)/
-	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
-	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -d $(DESTDIR)$(localstatedir)/lib/uniconf
 	touch $(DESTDIR)$(localstatedir)/lib/uniconf/uniconfd.ini
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
@@ -160,7 +162,7 @@ test: runconfigure all tests wvtestmain
 	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
-	$(VALGRIND) ./wvtestmain $(TESTNAME)
+	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
 ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=0 ./unitest.sh
 	cd uniconf/tests && DAEMON=1 ./unitest.sh

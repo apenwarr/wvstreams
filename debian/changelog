@@ -1,11 +1,25 @@
-wvstreams (4.0.1-1) unstable; urgency=low
+wvstreams (4.0.2-1) unstable; urgency=low
 
   * New upstream version.  (Closes: Bug#276571)
     - Fixes OpenSSL FTBFS.  (Closes: Bug#281772)
   * Depend on a newer version of BDB.  (Closes: Bug#248522)
   * We now depend on XPLC 0.3.10.
+  * Moved /etc/uniconf.conf to libuniconf4.0.
+  * Added /etc/default/uniconfd to uniconfd's init script.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 26 Nov 2004 22:20:07 -0500
+
+wvstreams (4.0.1-1) unstable; urgency=low
+
+  * New upstream version.
 
  -- Simon Law <sfllaw@debian.org>  Wed, 17 Nov 2004 15:17:09 -0500
+
+wvstreams (4.0.0-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Simon Law <sfllaw@debian.org>  Thu,  7 Oct 2004 19:54:24 +0000
 
 wvstreams (4.0+20040924-1) unstable; urgency=low
 

@@ -76,7 +76,7 @@ class WvIPFirewall
     WvString proto_command(const char *cmd, const char *proto);
     WvString forward_command(const char *cmd, const char *proto,
 			     const WvIPPortAddr &src,
-			     const WvIPPortAddr &dst);
+			     const WvIPPortAddr &dst, bool snat);
     WvLog log;
     const char *shutup() const
         { return ignore_errors ? " >/dev/null 2>/dev/null " : ""; }
@@ -94,11 +94,13 @@ public:
     void add_redir_port_range(const WvIPPortAddr &src_min,
     	    const WvIPPortAddr &src_max, int dstport);
     void add_proto(WvStringParm proto);
-    void add_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst);
+    void add_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst,
+	    bool snat);
     void del_proto(WvStringParm proto);
     void del_port(const WvIPPortAddr &addr);
     void del_redir(const WvIPPortAddr &src, int dstport);
-    void del_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst);
+    void del_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst,
+	    bool snat);
     void del_redir_all(int dstport);
     void del_redir_port_range(const WvIPPortAddr &src_min,
     	    const WvIPPortAddr &src_max, int dstport);

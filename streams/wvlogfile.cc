@@ -11,6 +11,8 @@
 #include "wvdailyevent.h"
 #include "wvfork.h"
 #include <time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 
@@ -112,21 +114,28 @@ void WvLogFile::start_log()
     pid_t forky = wvfork();
     if (!forky)
     {
-	// Child will Look for old logs and purge them
-	WvDirIter i(getdirname(filename), false);
-	i.rewind();
-	while (i.next() && keep_for)
+	// In child
+	if (!wvfork())
 	{
-	    // if it begins with the base name
-	    if (!strncmp(i.ptr()->name, base, strlen(base)))
-		// and it's older than 'keep_for' days
-		if (i.ptr()->st_mtime <
+	    // Child will Look for old logs and purge them
+	    WvDirIter i(getdirname(filename), false);
+	    i.rewind();
+	    while (i.next() && keep_for)
+	    {
+		// if it begins with the base name
+		if (!strncmp(i.ptr()->name, base, strlen(base)))
+		    // and it's older than 'keep_for' days
+		    if (i.ptr()->st_mtime <
                     wvtime().tv_sec - keep_for*86400)
-		{
-		    //delete it
-		    unlink(i.ptr()->fullname);
-		}
+		    {
+			//delete it
+			unlink(i.ptr()->fullname);
+		    }
+	    }
+	    _exit(0);
 	}
 	_exit(0);
     }
+    int status;
+    waitpid(forky, &status, 0);
 }

@@ -153,6 +153,8 @@ WVTEST_MAIN("strlwr")
             printf("   because [%s] != [%s]\n", result, desired[i]);
         deletev input[i];
     }
+
+    WVPASS(strlwr(NULL) == NULL);
 }
 
 /** Tests strupr().
@@ -172,6 +174,7 @@ WVTEST_MAIN("strupr")
             printf("   because [%s] != [%s]\n", result, desired[i]);
         deletev input[i];
     }
+    WVPASS(strupr(NULL) == NULL);
 }
 
 /** Tests is_word().
@@ -747,4 +750,86 @@ WVTEST_MAIN("spacecat")
     WVPASSEQ(spacecat("", "yy"), " yy");
     WVPASSEQ(spacecat("", "yy", ';', true), ";yy");
     WVPASSEQ(spacecat("", ";;yy", ';', true), ";yy");
+}
+
+void foo(WvStringParm s)
+{
+    wvcon->print("foo: s is `%s'\n", s);
+    WvString str(s);
+    str = trim_string(str.edit());
+    wvcon->print("foo: str is `%s'\n", str);
+}
+
+WVTEST_MAIN("WvString: circular reference")
+{
+    {
+	char cstr[] = "Hello";
+	WvString CStr(cstr);
+	CStr = CStr.cstr();
+	wvcon->print("cstr is `%s'\n", CStr);
+    }
+
+    {
+	WvString s("Law");
+	s = s.cstr();
+	wvcon->print("s is `%s'\n", s);
+    }
+
+    {
+	WvString str("  abc ");
+	str = trim_string(str.edit());
+	wvcon->print("str is `%s'\n", str);
+	str.append("a");
+	wvcon->print("str is `%s'\n", str);
+	str.append("lalalalala");
+	wvcon->print("str is `%s'\n", str);
+    }
+
+    foo("def ");
+
+    foo("     ");
+}
+
+WVTEST_MAIN("secondstoa")
+{
+    WVPASSEQ(secondstoa(0), "0 seconds");
+    WVPASSEQ(secondstoa(1), "1 second");
+    WVPASSEQ(secondstoa(2), "2 seconds");
+    WVPASSEQ(secondstoa(59), "59 seconds");
+    WVPASSEQ(secondstoa(60), "1 minute");
+    WVPASSEQ(secondstoa(2*60), "2 minutes");
+    WVPASSEQ(secondstoa(59*60+1), "59 minutes");
+    WVPASSEQ(secondstoa(3600), "1 hour");
+    WVPASSEQ(secondstoa(3600 + 60), "1 hour and 1 minute");
+    WVPASSEQ(secondstoa(3600 + 2*60), "1 hour and 2 minutes");
+    WVPASSEQ(secondstoa(2*3600), "2 hours");
+    WVPASSEQ(secondstoa(2*3600 + 60), "2 hours and 1 minute");
+    WVPASSEQ(secondstoa(2*3600 + 2*60), "2 hours and 2 minutes");
+    WVPASSEQ(secondstoa(23*3600 + 59*60), "23 hours and 59 minutes");
+    WVPASSEQ(secondstoa(23*3600 + 59*60 + 59), "23 hours and 59 minutes");
+    WVPASSEQ(secondstoa(24*3600), "1 day");
+    WVPASSEQ(secondstoa(24*3600 + 59), "1 day");
+    WVPASSEQ(secondstoa(24*3600 + 3600), "1 day and 1 hour");
+    WVPASSEQ(secondstoa(24*3600 + 3600 + 59), "1 day and 1 hour");
+    WVPASSEQ(secondstoa(24*3600 + 2*3600), "1 day and 2 hours");
+    WVPASSEQ(secondstoa(24*3600 + 3600 + 60), "1 day, 1 hour and 1 minute");
+    WVPASSEQ(secondstoa(24*3600 + 3600 + 2*60), "1 day, 1 hour and 2 minutes");
+    WVPASSEQ(secondstoa(24*3600 + 2*3600 + 60), "1 day, 2 hours and 1 minute");
+    WVPASSEQ(secondstoa(24*3600 + 2*3600 + 2*60), 
+            "1 day, 2 hours and 2 minutes");
+    WVPASSEQ(secondstoa(24*3600 + 23*3600 + 59*60 + 59), 
+            "1 day, 23 hours and 59 minutes");
+    WVPASSEQ(secondstoa(2*24*3600), "2 days");
+    WVPASSEQ(secondstoa(2*24*3600 + 3600), "2 days and 1 hour");
+    WVPASSEQ(secondstoa(2*24*3600 + 2*3600), "2 days and 2 hours");
+    WVPASSEQ(secondstoa(2*24*3600 + 3600 + 60), "2 days, 1 hour and 1 minute");
+    WVPASSEQ(secondstoa(2*24*3600 + 3600 + 2*60), 
+            "2 days, 1 hour and 2 minutes");
+    WVPASSEQ(secondstoa(2*24*3600 + 2*3600 + 60), 
+            "2 days, 2 hours and 1 minute");
+    WVPASSEQ(secondstoa(2*24*3600 + 2*3600 + 2*60), 
+            "2 days, 2 hours and 2 minutes");
+    WVPASSEQ(secondstoa(2*24*3600 + 23*3600 + 59*60 + 59), 
+            "2 days, 23 hours and 59 minutes");
+    WVPASSEQ(secondstoa(10*24*3600), "10 days");
 }
