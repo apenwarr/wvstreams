@@ -311,10 +311,65 @@ char *WvConf::parse_value(char *s)
 }
 
 
-void WvConf::save(const WvString &xfilename)
+static WvString follow_links(WvString fname)
 {
-    if (error || !xfilename)
+    struct stat st;
+    WvString cwd;
+    WvString tmp, tmp2;
+    char *cptr;
+    
+    cwd.setsize(10240);
+    getcwd(cwd.edit(), 10240-5);
+    
+    if (fname[0] != '/')
+	fname = WvString("%s/%s", cwd, fname);
+    
+    if (lstat(fname, &st))
+	return fname; // nonexistent file or something... stop here.
+	
+    for (;;)
+    {
+	// fprintf(stderr, "follow_links: trying '%s'\n", (const char*)fname);
+	
+	if (!S_ISLNK(st.st_mode))
+	    return fname;
+	
+	tmp.setsize(st.st_size + 2);
+	cptr = tmp.edit();
+	
+	// read the link data into tmp
+	readlink(fname, cptr, st.st_size + 2);
+	cptr[st.st_size] = 0;
+	
+	if (cptr[0] != '/')
+	{
+	    // need to copy the current directory name from fname
+	    tmp2 = fname;
+	    cptr = tmp2.edit();
+	    
+	    cptr = strrchr(cptr, '/');
+	    if (cptr)
+		*cptr++ = 0;
+	    
+	    WvString x(tmp);
+	    tmp = WvString("%s/%s", tmp2, tmp);
+	}
+	
+	if (lstat(tmp, &st))
+	    return fname; // can't read target file... don't use it!
+	
+	fname = tmp;
+    }
+    
+    return tmp;
+}
+
+void WvConf::save(const WvString &_filename)
+{
+    if (error || !_filename)
 	return;
+    
+    WvString xfilename(follow_links(_filename));
     
     WvString tmpfilename(xfilename);
     char *cptr = strchr(tmpfilename.edit(), 0);
