@@ -1,8 +1,7 @@
-/* -*- Mode: C++ -*-
- *
+/*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ *
  * A class for reliably starting/stopping subprocesses.
  *
  * We want to avoid calling system(), since it uses the shell (and
@@ -23,6 +22,7 @@
 
 #include "wvstringlist.h"
 
+#include <stdarg.h>
 #include <signal.h>
 #include <time.h>
 
@@ -52,7 +52,7 @@ public:
     void prepare(const char cmd[], ...);
     void preparev(const char cmd[], va_list ap);
     void preparev(const char cmd[], const char * const *argv);
-    
+    void preparev(const char cmd[], WvStringList &);
     
     // launch a subprocess, which will be owned by this object.
     int start(const char cmd[], ...);
