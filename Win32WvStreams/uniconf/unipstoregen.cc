@@ -189,11 +189,11 @@ UniConfGen::Iter *UniPStoreGen::iterator(const UniConfKey &key)
     return new NullIter();
 }
 
-static UniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 {
     return new UniPStoreGen(s);
 }
 
 #pragma warning(disable : 4073)
 #pragma init_seg(lib)
-WvMoniker<UniConfGen> UniPStoreGenMoniker("pstore", creator);
+WvMoniker<IUniConfGen> UniPStoreGenMoniker("pstore", creator);
