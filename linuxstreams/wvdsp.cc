@@ -128,13 +128,15 @@ bool WvDsp::pre_select(SelectInfo &si)
 {
     bool ret = false;
     size_t rleft = rbuf.used(), wleft = wbuf.used();
-    
+
+/*
     if (rleft > 2*frag_size)
 	log("read circle is filling! (%s = %s)\n", rleft, rleft/frag_size);
     if (wleft > 3*frag_size)
 	log("write circle is filling! (%s = %s; %s)\n", 
 	    wleft, wleft/frag_size, ospace());
-    
+*/
+
     if (si.wants.readable)
     {
 	rloop.drain();
@@ -345,7 +347,7 @@ size_t WvDsp::do_uread(void *buf, size_t len)
                 char buf2[frag_size];
                 ::read(fd, buf2, frag_size);
             }
-            log("inbuf is filling up! (%s waiting)\n", i);
+            //log("inbuf is filling up! (%s waiting)\n", i);
         }
     }
     
@@ -358,7 +360,7 @@ size_t WvDsp::do_uread(void *buf, size_t len)
 	    seterr(errno);
 	return 0;
     }
-    
+
     if (ret && ret < (int)len && ret < (int)frag_size)
 	log("inbuf underflow (%s/%s)!\n", ret, len);
 
@@ -382,12 +384,12 @@ size_t WvDsp::do_uwrite(const void *buf, size_t len)
 	    memset(buf2, 0, sizeof(buf2));
 	    ::write(fd, buf2, frag_size);
 	}
-	log("outbuf is almost empty! (%s waiting)\n", o);
+	//log("outbuf is almost empty! (%s waiting)\n", o);
     }
-    
+
     if (o >= (int)num_frags-1)
     {
-	log("outbuf overflowing (%s): skipping write.\n", o);
+	//log("outbuf overflowing (%s): skipping write.\n", o);
 	return len;
     }
     
@@ -401,7 +403,7 @@ size_t WvDsp::do_uwrite(const void *buf, size_t len)
     }
     
     if (ret < len)
-	log("outbuf overflow (%s/%s)!\n", ret, len);
+	//log("outbuf overflow (%s/%s)!\n", ret, len);
     
     return len; // avoid using WvStreams buffer
 }
