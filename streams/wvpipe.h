@@ -108,6 +108,9 @@ public:
      *   if child_killed()==false, the return code of the program.
      */
     int exit_status() const;
+    
+    // returns pid
+    int getpid() const { return pid; };
 };
 
 #endif // __WVPIPE_H

@@ -83,6 +83,6 @@ void WvConfigSection::dump(WvStream &fp)
 	if (e.value && e.value[0])
 	    fp.print("%s = %s\n", e.name, e.value);
 	else
-	    fp.print("%s\n", e.name);
+	    fp.print("%s =\n", e.name);
     }
 }

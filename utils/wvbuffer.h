@@ -9,6 +9,7 @@
 #ifndef __WVBUFFER_H
 #define __WVBUFFER_H
 
+#include <string.h>
 #include "wvlinklist.h"
 #include "wvstring.h"
 #include <string.h>
