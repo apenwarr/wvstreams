@@ -1,14 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.80, wvstreams-dev@nit.ca, wvstreams)
 
-# Run the xplc configure script first, if we discover that xplc is shipped
-# in this tarball.
-if test -d xplc; then
-    cd xplc
-    ./configure "$@" || exit $?
-    cd ..
-fi
-
 save_args() {
     ARGS=""
 
