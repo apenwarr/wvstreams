@@ -6,6 +6,7 @@
  */
 #include "unimountgen.h"
 #include "wvmoniker.h"
+#include <assert.h>
 
 /***** UniMountGen *****/
 
