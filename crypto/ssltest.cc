@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     // For this test, we connect to bond.net's POP3-SSL server...
     WvString target(argc >= 2 ? argv[1] : "mail.bond.net:995");
     log("Connecting to %s...\n", target);
-    WvSSLStream cli(new WvTCPConn(target),NULL,false);
+    WvSSLStream cli(new WvTCPConn(target),NULL,true);
     WvStreamList l;
     
     l.append(&cli, false);

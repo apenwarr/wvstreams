@@ -188,7 +188,7 @@ bool WvSSLStream::test_set(SelectInfo &si)
     // initialize itself, and we mustn't block in the constructor, so keep
     // trying here... it is also turning into a rather cool place
     // to do the validation of the connection ;)
-    if (!sslconnected && slave && result)
+    if (!sslconnected && slave && slave->isok() && result)
     {
 	slave->force_select(false, false, false);
 	
