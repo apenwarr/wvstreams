@@ -81,7 +81,7 @@ int main()
         log("[Silly] has children!\n");
 
     log("Removing [Silly]\n");
-    root["Silly"].zap();
+    root["Silly"].remove();
 
     if (root["Silly"].haschildren())
         log("[Silly] has children!\n");
