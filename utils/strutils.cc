@@ -6,6 +6,7 @@
  *
  */
 #include "strutils.h"
+#include "wvbuffer.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -83,14 +84,15 @@ char * non_breaking(char * string)
     if (string == NULL)
         return (NULL);
 
-    WvString s("");
+    WvBuffer buf;
 
     while (*string) {
-        if (isspace(*string)) s = WvString("%s&nbsp;", s);
-        else  s = WvString("%s%c", s, *string);
+        if (isspace(*string)) buf.put("&nbsp;");
+        else  buf.putch(*string);
         string++;
     }
 
+    WvString s(buf.getstr());
     return s.edit();
 }
 
