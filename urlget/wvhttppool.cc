@@ -17,11 +17,12 @@ int WvHttpStream::max_requests = 100;
 
 
 WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
-			   bool _pipeline_test)
+			   bool _pipeline_test, bool _headers_only)
     : url(_url), headers(_headers)
 { 
     instream = NULL;
     pipeline_test = _pipeline_test;
+    headers_only = _headers_only;
     
     if (pipeline_test)
 	outstream = NULL;
@@ -72,11 +73,12 @@ static WvString fixnl(WvStringParm nonl)
 
 WvString WvUrlRequest::request_str(bool keepalive)
 {
-    return fixnl(WvString("GET %s HTTP/1.1\n"
+    return fixnl(WvString("%s %s HTTP/1.1\n"
 			  "Host: %s:%s\n"
 			  "Connection: %s\n"
 			  "%s%s"
 			  "\n",
+			  headers_only ? "HEAD" : "GET",
 			  url.getfile(),
 			  url.gethost(), url.getport(),
 			  keepalive ? "keep-alive" : "close",
@@ -193,6 +195,7 @@ void WvHttpStream::doneurl()
     http_response = "";
     encoding = Unknown;
     in_chunk_trailer = false;
+    remaining = 0;
     urls.unlink_first();
     request_next();
 }
@@ -213,7 +216,7 @@ void WvHttpStream::start_pipeline_test(WvUrl *url)
     WvUrl location(WvString(
 		    "%s://%s:%s/wvhttp-pipeline-check-should-not-exist/",
 		    url->getproto(), url->gethost(), url->getport()));
-    WvUrlRequest *testurl = new WvUrlRequest(location, "", true);
+    WvUrlRequest *testurl = new WvUrlRequest(location, "", true, true);
     testurl->instream = this;
     send_request(testurl, true);
 }
@@ -321,6 +324,7 @@ void WvHttpStream::execute()
 	    
 	    if (urls.isempty())
 	    {
+		log("got unsolicited data.\n");
 		seterr("unsolicited data from server!");
 		return;
 	    }
@@ -373,6 +377,13 @@ void WvHttpStream::execute()
 		
 		if (encoding == Unknown)
 		    encoding = Infinity; // go until connection closes itself
+
+		if (curl->headers_only)
+		{
+		    log("Got all headers.\n");
+//		    getline(0);
+		    doneurl();
+		}
 	    }
 	}
     }
@@ -570,10 +581,11 @@ void WvHttpPool::execute()
 }
 
 
-WvBufHttpStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers)
+WvBufHttpStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
+				    bool headers_only = false)
 {
     log(WvLog::Debug4, "Adding a new url to pool: '%s'\n", _url);
-    WvUrlRequest *url = new WvUrlRequest(_url, _headers, false);
+    WvUrlRequest *url = new WvUrlRequest(_url, _headers, false, headers_only);
     urls.append(url, true);
     
     return url->outstream;
