@@ -51,7 +51,7 @@ void WvStream::init()
     
     // magic multitasking support
     uses_continue_select = false;
-    personal_stack_size = 8192;
+    personal_stack_size = 65536;
     task = NULL;
 }
 
