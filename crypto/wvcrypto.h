@@ -90,7 +90,9 @@ struct rsa_st;
 class WvRSAKey
 {
     char *pub, *prv;
-    
+    int errnum;
+    void seterr(WvStringParm _errstring);
+        
 public:
     struct rsa_st *rsa;
 
@@ -102,6 +104,12 @@ public:
         { return prv; }
     char *public_str() const
         { return pub; }
+        
+    volatile bool isok()
+    	{ return (errnum == 0 ? true : false); }
+    
+    WvString errstring;
+
 };
 
 
