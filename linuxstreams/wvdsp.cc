@@ -127,9 +127,10 @@ WvDsp::~WvDsp()
 bool WvDsp::pre_select(SelectInfo &si)
 {
     bool ret = false;
-    size_t rleft = rbuf.used(), wleft = wbuf.used();
 
 /*
+    size_t rleft = rbuf.used(), wleft = wbuf.used();
+
     if (rleft > 2*frag_size)
 	log("read circle is filling! (%s = %s)\n", rleft, rleft/frag_size);
     if (wleft > 3*frag_size)
@@ -401,10 +402,12 @@ size_t WvDsp::do_uwrite(const void *buf, size_t len)
 	    seterr(errno);
 	return len; // avoid using WvStreams buffer
     }
-    
+
+/*
     if (ret < len)
-	//log("outbuf overflow (%s/%s)!\n", ret, len);
-    
+	log("outbuf overflow (%s/%s)!\n", ret, len);
+*/
+
     return len; // avoid using WvStreams buffer
 }
 
