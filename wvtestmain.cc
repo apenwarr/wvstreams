@@ -26,7 +26,8 @@ static int fd_count(const char *when)
 
 int main(int argc, char **argv)
 {
-    //test wvtest
+    // test wvtest itself.  Not very thorough, but you have to draw the
+    // line somewhere :)
     WVPASS(true);
     WVPASS(1);
     WVFAIL(false);

@@ -10,6 +10,8 @@
 #include <string.h>
 #include <malloc.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <signal.h>
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 # include <valgrind/memcheck.h>
@@ -19,6 +21,9 @@
 # define VALGRIND_DO_LEAK_CHECK
 # define VALGRIND_COUNT_LEAKS(a,b,c,d) (a=b=c=d=0)
 #endif
+
+#define MAX_TEST_TIME 20     // max seconds for a single test to run
+#define MAX_TOTAL_TIME 120*60 // max seconds for the entire suite to run
 
 static int memerrs()
 {
@@ -41,6 +46,15 @@ static int memleaks()
 
 WvTest *WvTest::first, *WvTest::last;
 int WvTest::fails, WvTest::runs;
+time_t WvTest::start_time;
+
+
+void WvTest::alarm_handler(int)
+{
+    printf("\n! WvTest  Current test took longer than %d seconds!  FAILED\n",
+	   MAX_TEST_TIME);
+    abort();
+}
 
 
 WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
@@ -65,6 +79,10 @@ int WvTest::run_all(const char *prefix)
 {
     int old_valgrind_errs = 0, new_valgrind_errs;
     int old_valgrind_leaks = 0, new_valgrind_leaks;
+    
+    signal(SIGALRM, alarm_handler);
+    alarm(MAX_TEST_TIME);
+    start_time = time(NULL);
     
     fails = runs = 0;
     for (WvTest *cur = first; cur; cur = cur->next)
@@ -125,6 +143,16 @@ void WvTest::start(const char *file, int line, const char *condstr)
 
 void WvTest::check(bool cond)
 {
+    alarm(MAX_TEST_TIME); // restart per-test timeout
+    if (!start_time) start_time = time(NULL);
+    
+    if (time(NULL) - start_time > MAX_TOTAL_TIME)
+    {
+	printf("\n! WvTest   Total run time exceeded %d seconds!  FAILED\n",
+	       MAX_TOTAL_TIME);
+	abort();
+    }
+    
     runs++;
     
     if (cond)
