@@ -871,18 +871,17 @@ bool WvX509Mgr::isok() const
 
 WvString WvX509Mgr::errstr() const
 {
-    WvString ret = WvError::errstr();
-    if (!ret)
+    if (WvError::geterr() == 0)
     {
         // only use a custom string if there's not an error set
         if (!cert && !rsa)
-            ret = "No certificate or RSA key assigned";
+            return "No certificate or RSA key assigned";
         else if (!cert)
-            ret = "No certificate assigned";
+            return "No certificate assigned";
         else if (!rsa)
-            ret = "No RSA key assigned";
+            return "No RSA key assigned";
     }
-    return ret;
+    return WvError::errstr();
 }
 
 
