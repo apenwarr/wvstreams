@@ -47,7 +47,7 @@ void WvLogFile::_make_prefix()
     time_t timenow = wvtime().tv_sec;
 
     // Check if it's tomorrow yet, and start logging to a different file
-    if (last_day != timenow%86400)
+    if (last_day != timenow/86400)
         start_log();
     
     WvLogFileBase::_make_prefix();
@@ -59,14 +59,23 @@ void WvLogFile::start_log()
     WvFile::close();
 
     time_t timenow = wvtime().tv_sec;
-    last_day = timenow%86400;
+    last_day = timenow/86400;
     struct tm* tmstamp = localtime(&timenow);
-    char suffix[20];
-    strftime(&suffix[0], 20, "%Y-%m-%d", tmstamp);
-    WvString fullname("%s.%s", filename, suffix);
+    char buf[20];
+    strftime(buf, 20, "%Y-%m-%d", tmstamp);
+    WvString fullname("%s.%s", filename, buf);
+    WvString curname("%s.current", filename);
     WvString base = basename(WvString(filename).edit());
 
     WvFile::open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0644);
+
+    // Don't delete the file, unless it's a symlink!
+    int sym = readlink(curname, buf, 20);
+    if (sym > 0 || errno == ENOENT)
+    {
+        unlink(curname);
+        symlink(fullname, curname);
+    }
 
     // Look for old logs and purge them
     WvDirIter i(dirname(WvString(filename).edit()), false);
