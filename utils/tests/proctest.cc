@@ -84,7 +84,7 @@ int main()
     fprintf(stderr, "wait done (%d/%d/%d)...\n",
 	    proc.running, proc.estatus, proc.old_pids.count());
     fprintf(stderr, "stopping process...\n");
-//    proc.stop(10000, true);
+    proc.stop(1000, true);
     fprintf(stderr, "stop done (%d/%d/%d)...\n",
 	    proc.running, proc.estatus, proc.old_pids.count());
     fprintf(stderr, "\n\n");

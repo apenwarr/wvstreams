@@ -36,6 +36,7 @@ int main()
     gman = man;
     
     WvTask *t = NULL, *last_t = NULL;
+    WvTaskList tasks;
     
     // simple test
     for (int x = 0; x < 100; x++)
@@ -43,6 +44,7 @@ int main()
 	printf("starting %d:\n", x);
 	last_t = t;
 	t = man->start("task", gentask, last_t);
+        tasks.append(t, true);
 	man->run(*t);
     }
     

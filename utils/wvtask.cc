@@ -193,6 +193,8 @@ int WvTaskMan::run(WvTask &task, int val)
     }
     else
     {
+        // need to make state readable to see if we need to make more readable..
+        VALGRIND_MAKE_READABLE(&state, sizeof(state));
 	// someone did yield() (if toplevel) or run() on our old task; done.
 	if (state != &toplevel)
 	    valgrind_fix(stacktop);
