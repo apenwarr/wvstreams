@@ -46,6 +46,10 @@ bool WvStreamList::select_setup(SelectInfo &si)
     
     sure_thing.zap();
     
+    time_t alarmleft = alarm_remaining();
+    if (alarmleft == 0 && !select_ignores_buffer)
+	return true; // alarm has rung
+    
     oldrd = si.readable;
     oldwr = si.writable;
     oldex = si.isexception;
