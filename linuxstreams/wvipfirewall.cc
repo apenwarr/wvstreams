@@ -205,7 +205,6 @@ void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
 	{
 	    WvString s(redir_command("-D", src, dstport));
 	    if (enable) system(s);
-	    i.unlink();
 	    return;
 	}
     }
