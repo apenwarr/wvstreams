@@ -18,6 +18,7 @@ TARGETS += xplc-stamp
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
+TARGETS += libuniconfdaemon.so libuniconfdaemon.a
 TARGETS += wvtestmain.o
 GARBAGE += wvtestmain.o
 
