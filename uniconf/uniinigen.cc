@@ -34,11 +34,20 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     : filename(_filename), create_mode(_create_mode), log(_filename)
 {
+    // Create the root, since this generator can't handle it not existing.
+    UniTempGen::set(UniConfKey::EMPTY, WvString::empty);
     //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
 }
 
+void UniIniGen::set(const UniConfKey &key, WvStringParm value)
+{
+    // Don't allow people to delete the root, since this generator can't
+    // handle it not existing.
+    if (!(value.isnull() && key.isempty()))
+        UniTempGen::set(key, value);
+}
 
 UniIniGen::~UniIniGen()
 {
@@ -76,6 +85,7 @@ bool UniIniGen::refresh()
     
     // loop over all Tcl words in the file
     UniTempGen *newgen = new UniTempGen();
+    newgen->set(UniConfKey::EMPTY, WvString::empty);
     UniConfKey section;
     WvDynBuf buf;
     for (bool eof = false; !eof; )
@@ -189,15 +199,8 @@ bool UniIniGen::refresh()
     root = newtree;
     newgen->root = NULL;
     dirty = false;
-    if (oldtree && newtree)
-    {
-        oldtree->compare(newtree, UniConfValueTree::Comparator
-            (this, &UniIniGen::refreshcomparator), NULL);
-    }
-    else
-    {
-        delta(UniConfKey::EMPTY, WvString::null); // REMOVED
-    }
+    oldtree->compare(newtree, UniConfValueTree::Comparator
+        (this, &UniIniGen::refreshcomparator), NULL);
     delete oldtree;
     unhold_delta();
 
@@ -226,7 +229,9 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
         else
         {
             // key removed
-            delta(a->fullkey(), WvString::null); // REMOVED
+	    // Issue notifications for every that is missing.
+            a->visit(UniConfValueTree::Visitor(this,
+                &UniTempGen::notify_deleted), NULL, false, true);
             return false;
         }
     }

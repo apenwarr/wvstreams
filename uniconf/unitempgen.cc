@@ -40,6 +40,10 @@ WvString UniTempGen::get(const UniConfKey &key)
     return WvString::null;
 }
 
+void UniTempGen::notify_deleted(const UniConfValueTree *node, void *)
+{
+    delta(node->fullkey(), WvString::null);
+}
 
 void UniTempGen::set(const UniConfKey &key, WvStringParm value)
 {
@@ -52,11 +56,15 @@ void UniTempGen::set(const UniConfKey &key, WvStringParm value)
             UniConfValueTree *node = root->find(key);
             if (node)
             {
+                hold_delta();
+                // Issue notifications for every key that gets deleted.
+                node->visit(UniConfValueTree::Visitor(this,
+                    &UniTempGen::notify_deleted), NULL, false, true);
                 delete node;
                 if (node == root)
                     root = NULL;
                 dirty = true;
-                delta(key, WvString::null); // REMOVED
+                unhold_delta();
             }
         }
     }

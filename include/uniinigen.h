@@ -40,6 +40,7 @@ public:
 
     virtual void commit();
     virtual bool refresh();
+    virtual void set(const UniConfKey &key, WvStringParm value);
 
 private:
     // helper methods for commit
