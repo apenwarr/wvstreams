@@ -16,12 +16,12 @@
 #endif
 
 #ifdef ISBSD
-#include <netinet/in_systm.h>
-#include <net/ethernet.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if_arp.h>
-#include ETH_ALEN ETHER_ADDR_LEN
+#include <netinet/in_systm.h>
+#include <net/ethernet.h>
+#define ETH_ALEN ETHER_ADDR_LEN
 #endif
 
 #include <netinet/in.h>
