@@ -57,12 +57,12 @@ public:
      * by select().
      */
     struct SelectInfo {
-	fd_set read, write, except;  // set by pre_select, read by post_select
-	SelectRequest wants;         // what is the user looking for?
-	int max_fd;                  // largest fd in read, write, or except
-	time_t msec_timeout;         // max time to wait, or -1 for forever
-	bool inherit_request;        // 'wants' values passed to child streams
-	bool global_sure;            // should we run the globalstream callback
+	fd_set read, write, except; // set by pre_select, read by post_select
+	SelectRequest wants;        // what is the user looking for?
+	int max_fd;                 // largest fd in read, write, or except
+	time_t msec_timeout;        // max time to wait, or -1 for forever
+	bool inherit_request;       // 'wants' values passed to child streams
+	bool global_sure;           // should we run the globalstream callback
     };
     
     IWvStream();
@@ -106,6 +106,12 @@ public:
      */
     virtual void nowrite() = 0;
     
+    /** Returns true if the stream is readable. */
+    virtual bool isreadable() = 0;
+    
+    /** Returns true if the stream is writable (without using the outbuf). */
+    virtual bool iswritable() = 0;
+    
     /**
      * flush the output buffer, if we can do it without delaying more than
      * msec_timeout milliseconds at a time.  (-1 means wait forever)
@@ -117,7 +123,17 @@ public:
      */
     virtual bool flush(time_t msec_timeout) = 0;
 
+    /**
+     * Returns true if we want to flush the output buffer right now.  This
+     * allows us to implement delayed_flush(), flush_then_close(), etc, but
+     * it's still super-ugly and probably needs to go away.  (In fact, all
+     * our buffer flushing is super-ugly right now.)
+     */
     virtual bool should_flush() = 0;
+
+    /** Sets a callback to be invoked on close().  */
+    virtual void setclosecallback(WvStreamCallback _callfunc,
+				  void *_userdata) = 0;
     
     // IObject
     static const XUUID XIID;
@@ -166,8 +182,7 @@ public:
      */
     bool alarm_was_ticking;
     
-   
-    /* Basic constructor for just a do-nothing WvStream */ 
+    /** Basic constructor for just a do-nothing WvStream */
     WvStream();
     virtual ~WvStream();
 
@@ -194,40 +209,51 @@ public:
     virtual size_t read(void *buf, size_t count);
 
     /**
-     * Read exactly count bytes from the stream
+     * Read exactly count bytes from the stream.
      *
      * Notes:
-     *      must be using continue_select to use this function
-     *      uses the alarm if wait_msec >= 0
-     *      if timeout strikes before count bytes could be read,
-     *          nothing is read and 0 is returned 
-     *      resets queuemin to 0
+     *      must be using continue_select to use this function.
+     *      if timeout strikes or !isok() before count bytes could be read,
+     *          nothing is read and 0 is returned.
+     *      resets queuemin to 0.
+     * 
+     * FIXME: yes, that means if the stream closes, continue_read might not
+     * read the last bit of data.  You can use read() for that if you want.
      */
     virtual size_t continue_read(time_t wait_msec, void *buf, size_t count);
 
+    /** Read exactly count bytes from the stream, using continue_select(). */
+    virtual size_t continue_read(time_t wait_msec, WvBuf &outbuf,
+				 size_t count);
+
     /**
-     * Reads a data block from the stream into the buffer.
+     * Reads up to 'count' bytes of data from the stream into the buffer.
      * Returns the actual amount read.
      *
-     * If count is greater than the amount of free space available
+     * If 'count' is greater than the amount of free space available
      * in the buffer, only reads at most that amount.  You should
      * specify a reasonable upper bound on how much data should
      * be read at once.
      */
     virtual size_t read(WvBuf &outbuf, size_t count);
 
-    /**
-     * Read exactly count bytes from the stream
-     *
-     * Notes from the two functions above also apply
+    /** 
+     * Puts data back into the stream's internal buffer.  We cheat so that
+     * there's no restriction on how much (or what) data can be unread().
+     * This is different from WvBuf::unget() (which is rather restrictive).
      */
-    virtual size_t continue_read(time_t wait_msec, WvBuf &outbuf, size_t count);
+    virtual void unread(WvBuf &outbuf, size_t count);
 
-    /** write a data block on the stream.  Returns the actual amount written. */
+    /**
+     * Write data to the stream.  Returns the actual amount written.
+     * Since WvStream has an output buffer, it *always* successfully "writes"
+     * the full amount (but you might have to flush the buffers later so it
+     * actually gets sent).
+     */
     virtual size_t write(const void *buf, size_t count);
 
     /**
-     * Writes a data block to the stream from the buffer.
+     * Writes data to the stream from the given buffer.
      * Returns the actual amount written.
      *
      * If count is greater than the amount of data available in
@@ -239,49 +265,62 @@ public:
      * set the maximum size of outbuf, beyond which a call to write() will
      * return 0.  I need to do this for tape backups, since all I can do
      * is write to the loopback as fast as I can, which causes us to run 
-     * out of memory and get SIGABRT'd.  (DLC: 12/15/2000)
+     * out of memory and get SIGABRT'd.  (dcoombs: 12/15/2000)
+     * 
+     * FIXME: there must be a better way.  This confuses the semantics of
+     * write(); can you trust it to always write all the bytes, or not?
      */
     void outbuf_limit(size_t size)
         { max_outbuf_size = size; }
 
-    virtual void noread() {}
+    virtual void noread();
     virtual void nowrite();
+    
+    virtual bool isreadable();
+    virtual bool iswritable();
     
     /**
      * unbuffered I/O functions; these ignore the buffer, which is
-     * handled by read().  Don't call these functions unless
+     * handled by read().  Don't call these functions explicitly unless
      * you have a _really_ good reason.
+     * 
+     * This is what you would override in a derived class.
      */ 
     virtual size_t uread(void *buf, size_t count)
-        { return 0; }
+        { return 0; /* basic WvStream doesn't actually do anything! */ }
 
     /**
      * unbuffered I/O functions; these ignore the buffer, which is
-     * handled by write().  Don't call these functions unless
+     * handled by write().  Don't call these functions explicitly unless
      * you have a _really_ good reason.
+     * 
+     * This is what you would override in a derived class.
      */ 
     virtual size_t uwrite(const void *buf, size_t count)
-        { return 0; }
+        { return 0; /* basic WvStream doesn't actually do anything! */ }
     
     /**
      * read up to one line of data from the stream and return a pointer
-     * to the internal buffer containing this line.  If the end-of-line \n
-     * is encountered, it is removed from the string.  If wait_msec times
-     * out before the end of line is found, returns NULL and the line may
-     * be returned later.
+     * to the internal buffer containing this line.  If the end-of-line
+     * 'separator' is encountered, it is removed from the string.  If
+     * wait_msec times out before the end of line is found, returns NULL and
+     * the line may be returned next time, or you can read what we have so
+     * far by calling read().
      *
-     * If wait_msec < 0, waits forever for a newline (bad idea!)
+     * If wait_msec < 0, waits forever for a newline (often a bad idea!)
      * If wait_msec=0, never waits.  Otherwise, waits up to wait_msec
      * milliseconds until a newline appears.
      *
-     * Readahead specified the maximum amount of data that the stream is
-     * allowed to read in
+     * Readahead specifies the maximum amount of data that the stream is
+     * allowed to read in one shot.
      *
-     * This now uses the dynamic-sized WvBuf.  It is expected that there
-     * will be no NULL characters on the line.
+     * It is expected that there will be no NULL characters on the line.
+     * 
+     * If uses_continue_select is true, getline() will use continue_select()
+     * rather than select() to wait for its timeout.
      */
     char *getline(time_t wait_msec, char separator = '\n',
-        int readahead = 1024);
+		  int readahead = 1024);
     
     /**
      * force read() to not return any bytes unless 'count' bytes can be
@@ -432,9 +471,26 @@ public:
      * 
      * If you want to read/write the stream in question, try using the other
      * variant of select().
+     * 
+     * DEPRECATED.  Call runonce() instead.
      */
     bool select(time_t msec_timeout)
         { return _select(msec_timeout, false, false, false, true); }
+    
+    /**
+     * Exactly the same as:
+     *     if (select(timeout)) callback();
+     * 
+     * ...except that the above is deprecated, because it assumes callbacks
+     * aren't called automatically and that the return value of one-parameter
+     * select() is actually meaningful.
+     * 
+     * Update your main loop to call runonce() instead of the above.
+     * 
+     * Almost all modern programs should use msec_timeout = -1.
+     */
+    void runonce(time_t msec_timeout = -1)
+        { if (select(msec_timeout)) callback(); }
     
      /**
       * This version of select() sets forceable==false, so we use the exact
@@ -448,6 +504,14 @@ public:
       * 
       * This variant of select() is probably not what you want with
       * most WvStreamLists, unless you know exactly what you're doing.
+      * 
+      * WARNING: the difference between the one-parameter and multi-parameter
+      * versions of select() is *incredibly* confusing.  Make sure you use the
+      * right one!
+      * 
+      * DEPRECATED.  Call isreadable() or iswritable() instead, if
+      * msec_timeout was going to be zero.  Other values of msec_timeout are
+      * not really recommended anyway.
       */
     bool select(time_t msec_timeout,
 		bool readable, bool writable, bool isex = false)
@@ -551,12 +615,12 @@ public:
         { return write(s.cstr(), s.len()); }
     size_t print(WvStringParm s)
         { return write(s); }
-
-    /** preformat and print a string. */
-    size_t print(WVSTRING_FORMAT_DECL)
-	{ return write(WvString(WVSTRING_FORMAT_CALL)); }
     size_t operator() (WvStringParm s)
         { return write(s); }
+
+    /** preformat and write() a string. */
+    size_t print(WVSTRING_FORMAT_DECL)
+	{ return write(WvString(WVSTRING_FORMAT_CALL)); }
     size_t operator() (WVSTRING_FORMAT_DECL)
         { return write(WvString(WVSTRING_FORMAT_CALL)); }
 
@@ -629,7 +693,7 @@ protected:
     bool wvstream_execute_called;
     
     WvTask *task;
-    
+
     /** Prevent accidental copying of WvStreams. */
     WvStream(const WvStream &s) { }
     WvStream& operator= (const WvStream &s) { return *this; }

@@ -4,6 +4,7 @@
  * 
  * A generator to make a UniConf object out of a WvConf.
  */
+#include "wvconf.h"
 #include "uniwvconfgen.h"
 #include "wvmoniker.h"
 
@@ -20,15 +21,33 @@ static UniConfGen *creator(WvStringParm s, IObject *, void *obj)
 static WvMoniker<UniConfGen> reg("wvconf", creator);
 
 
-UniWvConfGen::UniWvConfGen(WvConf &_cfg)
-    : cfg(_cfg)
+void UniWvConfGen::notify(void *userdata, WvStringParm section,
+			  WvStringParm entry, WvStringParm oldval,
+			  WvStringParm newval)
 {
+    UniConfKey key(section, entry);
+
+    tempvalue = newval;
+    tempkey = &key;
+    delta(key, newval);
+    tempkey = NULL;
+}
+
+
+UniWvConfGen::UniWvConfGen(WvConf &_cfg):
+    tempkey(NULL), tempvalue(), cfg(_cfg)
+{
+    cfg.add_callback(WvConfCallback(this, &UniWvConfGen::notify), NULL,
+		     "", "", this);
 }
 
 
 WvString UniWvConfGen::get(const UniConfKey &key)
 {
-    return cfg.get(key.first(), key.last(key.numsegments() - 1));
+    if (tempkey && key == *tempkey)
+	return tempvalue;
+    else
+	return cfg.get(key.first(), key.last(key.numsegments() - 1));
 }
 
 

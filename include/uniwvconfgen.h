@@ -1,4 +1,4 @@
-/*  
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
@@ -9,10 +9,16 @@
 #define __UNICONFWVGEN_H
 
 #include "uniconfgen.h"
-#include "wvconf.h"
 
 class UniWvConfGen : public UniConfGen
 {
+private:
+    UniConfKey* tempkey;
+    WvString tempvalue;
+
+    void notify(void *userdata, WvStringParm section, WvStringParm entry,
+		WvStringParm oldval, WvStringParm newval);
+
 protected:
     WvConf &cfg;
 

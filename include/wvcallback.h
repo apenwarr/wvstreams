@@ -20,7 +20,25 @@ template<typename R,
 class WvCallbackImpl
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4, const P5 &p5, const P6 &p6, const P7 &p7, const P8 &p8)
+            : p1(p1), p2(p2), p3(p3), p4(p4), p5(p5), p6(p6), p7(p7), p8(p8)
+        { }
+
+        P1 p1;
+        P2 p2;
+        P3 p3;
+        P4 p4;
+        P5 p5;
+        P6 p6;
+        P7 p7;
+        P8 p8;
+    };
+
     typedef R(*type)(P1, P2, P3, P4, P5, P6, P7, P8);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1, frozen.p2, frozen.p3, frozen.p4, frozen.p5, frozen.p6, frozen.p7, frozen.p8); }
     virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -38,7 +56,24 @@ template<typename R,
 class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4, const P5 &p5, const P6 &p6, const P7 &p7)
+            : p1(p1), p2(p2), p3(p3), p4(p4), p5(p5), p6(p6), p7(p7)
+        { }
+
+        P1 p1;
+        P2 p2;
+        P3 p3;
+        P4 p4;
+        P5 p5;
+        P6 p6;
+        P7 p7;
+    };
+
     typedef R(*type)(P1, P2, P3, P4, P5, P6, P7);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1, frozen.p2, frozen.p3, frozen.p4, frozen.p5, frozen.p6, frozen.p7); }
     virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -55,7 +90,23 @@ template<typename R,
 class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, EmptyType, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4, const P5 &p5, const P6 &p6)
+            : p1(p1), p2(p2), p3(p3), p4(p4), p5(p5), p6(p6)
+        { }
+
+        P1 p1;
+        P2 p2;
+        P3 p3;
+        P4 p4;
+        P5 p5;
+        P6 p6;
+    };
+
     typedef R(*type)(P1, P2, P3, P4, P5, P6);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1, frozen.p2, frozen.p3, frozen.p4, frozen.p5, frozen.p6); }
     virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -71,7 +122,22 @@ template<typename R,
 class WvCallbackImpl<R, P1, P2, P3, P4, P5, EmptyType, EmptyType, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4, const P5 &p5)
+            : p1(p1), p2(p2), p3(p3), p4(p4), p5(p5)
+        { }
+
+        P1 p1;
+        P2 p2;
+        P3 p3;
+        P4 p4;
+        P5 p5;
+    };
+
     typedef R(*type)(P1, P2, P3, P4, P5);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1, frozen.p2, frozen.p3, frozen.p4, frozen.p5); }
     virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -86,7 +152,21 @@ template<typename R,
 class WvCallbackImpl<R, P1, P2, P3, P4, EmptyType, EmptyType, EmptyType, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4)
+            : p1(p1), p2(p2), p3(p3), p4(p4)
+        { }
+
+        P1 p1;
+        P2 p2;
+        P3 p3;
+        P4 p4;
+    };
+
     typedef R(*type)(P1, P2, P3, P4);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1, frozen.p2, frozen.p3, frozen.p4); }
     virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -100,7 +180,20 @@ template<typename R,
 class WvCallbackImpl<R, P1, P2, P3, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1, const P2 &p2, const P3 &p3)
+            : p1(p1), p2(p2), p3(p3)
+        { }
+
+        P1 p1;
+        P2 p2;
+        P3 p3;
+    };
+
     typedef R(*type)(P1, P2, P3);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1, frozen.p2, frozen.p3); }
     virtual R operator()(P1 p1, P2 p2, P3 p3) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -113,7 +206,19 @@ template<typename R,
 class WvCallbackImpl<R, P1, P2, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1, const P2 &p2)
+            : p1(p1), p2(p2)
+        { }
+
+        P1 p1;
+        P2 p2;
+    };
+
     typedef R(*type)(P1, P2);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1, frozen.p2); }
     virtual R operator()(P1 p1, P2 p2) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -125,7 +230,18 @@ template<typename R,
 class WvCallbackImpl<R, P1, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+        FrozenParams(const P1 &p1)
+            : p1(p1)
+        { }
+
+        P1 p1;
+    };
+
     typedef R(*type)(P1);
+    R thaw(const FrozenParams &frozen)
+        { return operator()(frozen.p1); }
     virtual R operator()(P1 p1) = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -136,7 +252,13 @@ template<typename R>
 class WvCallbackImpl<R, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
 {
 public:
+    struct FrozenParams
+    {
+    };
+
     typedef R(*type)();
+    R thaw(const FrozenParams &frozen)
+        { return operator()(); }
     virtual R operator()() = 0;
     virtual WvCallbackImpl* clone() const = 0;
     virtual ~WvCallbackImpl()
@@ -254,8 +376,10 @@ template<typename R,
 class WvCallback
 {
 private:
-    WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, P8>* impl;
+    typedef WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, P8> Impl;
+    Impl *impl;
 public:
+    typedef typename Impl::FrozenParams FrozenParams;
     typedef R ReturnType;
     typedef P1 Parm1;
     typedef P2 Parm2;
@@ -283,24 +407,23 @@ public:
         { impl = new WvCallbackMember<WvCallback, PtrToObject, PtrToMember>
 		(obj, member); }
     ~WvCallback()
-        { if(impl) delete impl; }
+        { delete impl; }
     
     WvCallback& operator=(const WvCallback& cb)
     {
-	if(impl)
-	{
+        if (this != &cb)
+        {
 	    delete impl;
-	    impl = 0;
+	    if (cb.impl)
+	        impl = cb.impl->clone();
+	    else
+	        impl = 0;
 	}
-
-	if(cb.impl)
-	    impl = cb.impl->clone();
-
 	return *this;
     }
     
     operator bool() const
-        { return impl; }
+        { return impl != 0; }
     R operator()() const
         { return (*impl)(); }
     R operator()(P1 p1) const
@@ -319,6 +442,8 @@ public:
         { return (*impl)(p1, p2, p3, p4, p5, p6, p7); }
     R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) const
         { return (*impl)(p1, p2, p3, p4, p5, p6, p7, p8); }
+    R thaw(const FrozenParams &frozen) const
+        { return impl->thaw(frozen); }
     
 protected:
     // explicitly not defined: these callbacks are way to complex to
@@ -339,17 +464,19 @@ private:
     typedef typename InnerCallback::Parm5 P5;
     typedef typename InnerCallback::Parm6 P6;
     typedef typename InnerCallback::Parm7 P7;
-    WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7> cb;
+    typedef WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7> ComposedCallback;
+    ComposedCallback cb;
     B param;
 public:
+    typedef typename ComposedCallback::FrozenParams FrozenParams;
     template<typename PtrToObject, typename PtrToMember>
-    WvBoundCallback(PtrToObject obj, PtrToMember member, const B _param)
-        : cb(WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7>(obj, member)),
+    WvBoundCallback(PtrToObject obj, PtrToMember member, B _param)
+        : cb(ComposedCallback(obj, member)),
           param(_param)
     { }
     template<typename Functor>
-    WvBoundCallback(const Functor& func, const B _param)
-        : cb(WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7>(func)),
+    WvBoundCallback(const Functor& func, B _param)
+        : cb(ComposedCallback(func)),
           param(_param)
     { }
     R operator()() const
@@ -368,6 +495,8 @@ public:
         { return cb(param, p1, p2, p3, p4, p5, p6); }
     R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) const
         { return cb(param, p1, p2, p3, p4, p5, p6, p7); }
+    R thaw(const FrozenParams &frozen) const
+        { return cb.thaw(frozen); }
 };
 
 #endif /* __WVCALLBACK_H */

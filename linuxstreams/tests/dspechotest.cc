@@ -1,5 +1,5 @@
 #include "wvdsp.h"
-#include "wvtest.h"
+#include "wvlog.h"
 #include "wvtimeutils.h"
 
 #define RATE (8192)
@@ -49,7 +49,7 @@ long power(const unsigned char *iptr, size_t len, long avg)
 
 int main(int argc, char **argv)
 {
-    WvTest test;
+    WvLog test("dspechotest", WvLog::Info);
     WvLog log("x", WvLog::Info);
     
     log("Opening dsp...");

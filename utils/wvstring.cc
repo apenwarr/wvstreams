@@ -87,11 +87,13 @@ WvFastString::WvFastString(short i)
     sprintf(str, "%hd", i);
 }
 
+
 WvFastString::WvFastString(unsigned short i)
 {
     newbuf(32);
     sprintf(str, "%hu", i);
 }
+
 
 WvFastString::WvFastString(int i)
 {
@@ -99,11 +101,13 @@ WvFastString::WvFastString(int i)
     sprintf(str, "%d", i);
 }
 
+
 WvFastString::WvFastString(unsigned int i)
 {
     newbuf(32);
     sprintf(str, "%u", i);
 }
+
 
 WvFastString::WvFastString(long i)
 {
@@ -111,11 +115,13 @@ WvFastString::WvFastString(long i)
     sprintf(str, "%ld", i);
 }
 
+
 WvFastString::WvFastString(unsigned long i)
 {
     newbuf(32);
     sprintf(str, "%lu", i);
 }
+
 
 WvFastString::WvFastString(long long i)
 {
@@ -123,16 +129,18 @@ WvFastString::WvFastString(long long i)
     sprintf(str, "%lld", i);
 }
 
+
 WvFastString::WvFastString(unsigned long long i)
 {
     newbuf(32);
     sprintf(str, "%llu", i);
 }
 
+
 WvFastString::WvFastString(double i)
 {
-   newbuf(32);
-   sprintf(str, "%.2f", i);
+    newbuf(32);
+    sprintf(str, "%g", i);
 }
 
 
@@ -271,6 +279,15 @@ bool WvFastString::operator!= (WvStringParm s2) const
 }
 
 
+bool WvFastString::operator< (WvStringParm s2) const
+{
+    if (str == s2.str) return false;
+    if (str == 0) return true;
+    if (s2.str == 0) return false;
+    return strcmp(str, s2.str) < 0;
+}
+
+
 bool WvFastString::operator== (const char *s2) const
 {
     return (str==s2) || (str && s2 && !strcmp(str, s2));
@@ -280,6 +297,15 @@ bool WvFastString::operator== (const char *s2) const
 bool WvFastString::operator!= (const char *s2) const
 {
     return (str!=s2) && (!str || !s2 || strcmp(str, s2));
+}
+
+
+bool WvFastString::operator< (const char *s2) const
+{
+    if (str == s2) return false;
+    if (str == 0) return true;
+    if (s2 == 0) return false;
+    return strcmp(str, s2) < 0;
 }
 
 

@@ -488,7 +488,7 @@ bool WvX509Mgr::test()
             seterr("Error setting RSA keys");
 	    bad = true;
     	}
-	else
+	else if (!bad)
 	{
 	    int verify_return = X509_verify(cert, pk);
 	    if (verify_return != 1) // only '1' means okay
@@ -857,7 +857,74 @@ void WvX509Mgr::read_p12(WvStringParm filename)
     }
 }
 
+
 WvString WvX509Mgr::get_issuer()
 { 
     return WvString(X509_NAME_oneline(X509_get_issuer_name(cert),0,0)); 
 }
+
+
+WvString WvX509Mgr::get_subject()
+{
+    return WvString(X509_NAME_oneline(X509_get_subject_name(cert),0,0));
+}
+
+
+WvString WvX509Mgr::get_crl_dp()
+{
+    WvDynBuf *buf = get_extension(NID_crl_distribution_points);
+    if (buf)
+    {
+	WvString retval(buf->getstr());
+	delete buf;
+	return retval;
+    }
+    else
+	return WvString::null;
+}
+
+
+WvString WvX509Mgr::get_cp_oid()
+{
+    WvDynBuf *buf = get_extension(NID_certificate_policies);
+    if (buf)
+    {
+	WvString retval(buf->getstr());
+	delete buf;
+	return retval;
+    }
+    else
+	return WvString::null;
+}
+
+
+WvString WvX509Mgr::get_altsubject()
+{
+    WvDynBuf *buf = get_extension(NID_subject_alt_name);
+    if (buf)
+    {
+	WvString retval(buf->getstr());
+	delete buf;
+	return retval;
+    }
+    else
+	return WvString::null;
+
+}
+
+WvDynBuf *WvX509Mgr::get_extension(int nid)
+{
+    int index = X509_get_ext_by_NID(cert, nid, -1);
+    if (index >= 0)
+    {
+	X509_EXTENSION *ext = X509_get_ext(cert, index);
+	if (ext)
+	{
+	    WvDynBuf *buf = new WvDynBuf();
+	    buf->put(ext->value->data, ext->value->length);
+	    return buf;
+	}
+    }
+    return NULL;
+}
+

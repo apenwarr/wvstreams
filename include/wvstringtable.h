@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -20,6 +20,8 @@ public:
     WvStringTable(unsigned _numslots = 0) : WvStringTableBase(_numslots) {};
     WvString join(const char *joinchars = " \t") const;
     void split(WvStringParm s, const char *splitchars = " \t\r\n",
+	       int limit = 0);
+    void splitstrict(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
 };
 

@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -58,7 +58,7 @@ public:
      * can be used in place of that callback, and stored in a callback of
      * the same data type.
      */
-    WvCont(const Callback &cb);
+    WvCont(const Callback &cb, unsigned long stacksize = 64*1024);
     
     /** Copy constructor. */
     WvCont(const WvCont &cb);
@@ -86,7 +86,7 @@ public:
      * had returned, and the parameter to the callback is the value of
      * yield().
      */
-    static P1 yield(R ret);
+    static P1 yield(R ret = 0);
     
     /**
      * Tell us if the current context is "okay", that is, not trying to

@@ -62,10 +62,17 @@ static void wrn(int fd, int num)
 void wvcrash_real(int sig, int fd)
 {
     static void *trace[64];
+    static char *signame = strsignal(sig);
     
     wr(fd, argv0);
     wr(fd, " dying on signal ");
     wrn(fd, sig);
+    if (signame)
+    {
+	wr(fd, " (");
+	wr(fd, signame);
+	wr(fd, ")");
+    }
     wr(fd, "\n\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
@@ -73,13 +80,13 @@ void wvcrash_real(int sig, int fd)
     // we want to create a coredump, and the kernel seems to not want to do
     // that if we send ourselves the same signal that we're already in.
     // Whatever... just send a different one :)
-    if (sig == SIGSEGV)
+    if (sig == SIGABRT)
 	sig = SIGBUS;
     else if (sig != 0)
-	sig = SIGSEGV;
+	sig = SIGABRT;
     
     signal(sig, SIG_DFL);
-    kill(getpid(), sig);
+    raise(sig);
 }
 
 

@@ -121,6 +121,20 @@ void replace_char(void *_string, char c1, char c2, int length)
     	    *(string+i) = c2;
 }
 
+// Snip off the first part of 'haystack' if it consists of 'needle'.
+char *snip_string(char *haystack, char *needle)
+{
+    if(!haystack)
+        return NULL;
+    if(!needle)
+        return haystack;
+    char *p = strstr(haystack, needle);
+    if(!p || p != haystack)
+        return haystack;
+    else
+        return haystack + strlen(needle);
+}
+
 #ifndef _WIN32
 char *strlwr(char *string)
 {
@@ -256,6 +270,29 @@ WvString web_unescape(const char *str)
     *optr = 0;
 
     return out;
+}
+
+
+// And it's magic companion: url_encode
+WvString url_encode(WvStringParm stuff)
+{
+    unsigned int i;
+    WvDynBuf retval;
+
+    for (i=0; i < stuff.len(); i++)
+    {
+        if (isalnum(stuff[i]) || strchr("/_.-~", stuff[i]))
+        {
+            retval.put(&stuff[i], 1);
+        }               
+        else            
+        {               
+            char buf[3];
+            sprintf(buf, "%%%02x", stuff[i] & 0xff);
+            retval.put(&buf, 3);
+        }
+    }
+    return retval.getstr();
 }
 
 

@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -33,9 +33,9 @@ public:
     ~WvSorterBase()
     	{ if (array) delete[] array; }
     bool next()
-	{ return *(++lptr); }
+	{ return *(++lptr) != 0; }
     bool cur()
-    	{ return *lptr; }
+    	{ return *lptr != 0; }
     
 protected:
     template <class _list_,class _iter_> void rewind(CompareFunc *cmp);

@@ -19,16 +19,19 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\include;&quot;$(ProjectDir)&quot;;&quot;C:\cygwin\home\jdcormie\dev-local\wvpackages\zlib&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;UTILS_EXPORTS"
+				AdditionalIncludeDirectories="..\..\include;$(ProjectDir)"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;UTILS_EXPORTS;ZLIB_DLL"
 				MinimalRebuild="TRUE"
 				ExceptionHandling="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="3"
+				TreatWChar_tAsBuiltInType="TRUE"
+				ForceConformanceInForLoopScope="TRUE"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="4"
+				DisableSpecificWarnings="4355;4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -57,28 +60,24 @@
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
-			ConfigurationType="2"
+			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;UTILS_EXPORTS"
-				RuntimeLibrary="0"
-				UsePrecompiledHeader="3"
+				AdditionalIncludeDirectories="..\..\include;$(ProjectDir)"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;UTILS_EXPORTS;ZLIB_DLL"
+				RuntimeLibrary="2"
+				TreatWChar_tAsBuiltInType="TRUE"
+				ForceConformanceInForLoopScope="TRUE"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355;4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/utils.dll"
-				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/utils.lib"
-				TargetMachine="1"/>
+				Name="VCLibrarianTool"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -93,8 +92,6 @@
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
 			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
@@ -111,256 +108,88 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\stdafx.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\utils\strutils.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\utils.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\verstring.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvaudioencoder.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvbackslash.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvbase64.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvbuffer.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvbufferstore.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\utils\wvcont.cc">
 			</File>
 			<File
 				RelativePath="..\..\utils\wvcrash.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvdiriter.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvencoder.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wverror.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvgzip.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvhashtable.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvhex.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvlinklist.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvmoniker.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvscatterhash.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvsorter.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvstring.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvstringlist.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvstringtable.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvtclstring.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvtimeutils.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvvector.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\wvwin32task.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvwordwrap.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -371,13 +200,436 @@
 				RelativePath=".\dirent.h">
 			</File>
 			<File
-				RelativePath=".\stdafx.h">
+				RelativePath="..\..\include\fileutils.h">
+			</File>
+			<File
+				RelativePath="..\..\include\ftpparse.h">
+			</File>
+			<File
+				RelativePath="..\..\include\if_arp.h">
+			</File>
+			<File
+				RelativePath="..\..\include\strutils.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unicachegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniclientconn.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniclientgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconf.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfkey.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfpair.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfroot.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconftree.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unidefgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unifiletreegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unifiltergen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unihashtree.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniinigen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniinitreegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unilistgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unimountgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unimounttreegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uninullgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unipermgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unipstoregen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unireadonlygen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniregistrygen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unisecuregen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unitempgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniwatch.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniwvconfgen.h">
 			</File>
 			<File
 				RelativePath=".\utils.h">
 			</File>
 			<File
-				RelativePath=".\wvwin32task.h">
+				RelativePath="..\..\include\verstring.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvaddr.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvaudioencoder.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvbackslash.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvbase64.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvbdbhash.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvblowfish.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvbuf.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvbufbase.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvbufstore.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvbufstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvcallback.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvconf.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvconfemu.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvcont.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvcountermode.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvcrash.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvcrypto.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvdailyevent.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvdiffiehellman.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvdigest.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvdiriter.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvdsp.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvencoder.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvencoderstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wverror.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvfam.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvfdstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvfft.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvfile.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvfork.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvfunctorencoder.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvgdbmhash.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvgdbmlist.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvgzip.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvgzipstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvhashtable.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvhex.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvhttp.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvhttppool.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvinterface.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvipaddrtable.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvipaliaser.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvipfirewall.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvipnetlist.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvipraw.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wviproute.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvistreamlist.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlink.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlinklist.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlockdev.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlockfile.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlog.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlogbuffer.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlogfile.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvlogrcv.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvloopback.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvmagiccircle.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvmatrix.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvmodem.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvmoniker.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvmonikerregistry.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvoakley.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvoggspeex.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvoggvorbis.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvpam.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvpcmutils.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvpipe.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvprotostream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvqthook.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvqtstreamclone.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvrateadjust.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvresolver.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvrsa.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvscatterhash.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvserialize.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvshmzone.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvsorter.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvspeex.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvsslhacks.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvsslstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvstreamclone.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvstreamlist.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvstring.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvstringlist.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvstringtable.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvsubproc.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvsyncstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvsyslog.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtask.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtclstring.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtcp.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtest.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtimeoutstream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtimestream.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtimeutils.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtripledes.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtundev.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtypedencoder.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvudp.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvunixsocket.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvurl.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvvector.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvwatcher.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvwin32task.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvwindebuglog.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvwinstreamclone.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvwordwrap.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvx509.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvxor.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvxplc.h">
 			</File>
 		</Filter>
 		<Filter
@@ -385,10 +637,10 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
-		<File
-			RelativePath=".\ReadMe.txt">
-		</File>
 	</Files>
 	<Globals>
+		<Global
+			Name="DevPartner_IsInstrumented"
+			Value="0"/>
 	</Globals>
 </VisualStudioProject>

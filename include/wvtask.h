@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -8,7 +8,7 @@
  * another when you know exactly what you want to do.
  * 
  * This is mainly intended for use by WvStream, but that's probably not the
- * only possible use...
+ * only possible use... see also WvCont.
  */
 #ifndef __WVTASK_H
 #define __WVTASK_H
@@ -77,21 +77,22 @@ class WvTaskMan
     static WvTaskMan *singleton;
     static int links;
     
-    int magic_number;
-    WvTaskList free_tasks;
+    static int magic_number;
+    static WvTaskList free_tasks;
     
-    void get_stack(WvTask &task, size_t size);
-    void stackmaster();
-    void _stackmaster();
-    void do_task();
+    static void get_stack(WvTask &task, size_t size);
+    static void stackmaster();
+    static void _stackmaster();
+    static void do_task();
+
+    static char *stacktop;
+    static jmp_buf stackmaster_task;
     
-    jmp_buf stackmaster_task;
+    static WvTask *stack_target;
+    static jmp_buf get_stack_return;
     
-    WvTask *stack_target;
-    jmp_buf get_stack_return;
-    
-    WvTask *current_task;
-    jmp_buf toplevel;
+    static WvTask *current_task;
+    static jmp_buf toplevel;
     
     WvTaskMan();
     virtual ~WvTaskMan();
@@ -107,10 +108,10 @@ public:
     
     // run() and yield() return the 'val' passed to run() when this task
     // was started.
-    int run(WvTask &task, int val = 1);
-    int yield(int val = 1);
+    static int run(WvTask &task, int val = 1);
+    static int yield(int val = 1);
     
-    WvTask *whoami() const
+    static WvTask *whoami()
         { return current_task; }
 };
 

@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -100,8 +100,8 @@ protected:
         { /* default: do nothing */ }
     void shutdown()
         { /* default: do nothing */ }
-    WvLink *prevlink(WvListBase *slots, const void *data, unsigned hash);
-    void *genfind(WvListBase *slots, const void *data, unsigned hash);
+    WvLink *prevlink(WvListBase *slots, const void *data, unsigned hash) const;
+    void *genfind(WvListBase *slots, const void *data, unsigned hash) const;
 
     virtual bool compare(const void *key, const void *elem) const = 0;
 public:
@@ -201,7 +201,7 @@ public:
     WvLink *getlink(const K &key)
         { return prevlink(wvslots, &key, WvHash(key))->next; }
 
-    T *operator[] (const K &key)
+    T *operator[] (const K &key) const
         { return (T *)genfind(wvslots, &key, WvHash(key)); }
 
     void remove(const T *data)
@@ -335,8 +335,8 @@ protected:
 
     // We need this last_accessed thing to make sure exists()/operator[]
     //      does not cost us two hash lookups
-    MyPair* last_accessed;
-    MyPair* find_helper(const TKey &key)
+    mutable MyPair* last_accessed;
+    MyPair* find_helper(const TKey &key) const
     {
         if (last_accessed &&
                 Comparator<TKey>::compare(&last_accessed->key, &key))
@@ -345,23 +345,23 @@ protected:
     }
 
 public:
-    // accessor mothod for WvHashTable to use
+    // accessor method for WvHashTable to use
     static const TKey *get_key(const MyPair *obj)
         { return &obj->key; }
 
     WvMap(int s) : MyHashTable(s), last_accessed(NULL)  { };
-    TData *find(const TKey &key)
+    TData *find(const TKey &key) const
     {
         MyPair* p = find_helper(key);
         return p ? &p->data : (TData*)NULL;
     }
-    TData &operator[](const TKey &key)
+    TData &operator[](const TKey &key) const
     {
         MyPair* p = find_helper(key);
         assert(p && "WvMap: operator[] called with a non-existent key");
         return p->data;
     }
-    bool exists(const TKey &key)
+    bool exists(const TKey &key) const
         { return find_helper(key); }
     void set(const TKey &key, const TData &data, bool auto_free = false)
     {

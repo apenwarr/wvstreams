@@ -35,7 +35,9 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="ssleay32.lib libeay32.lib dirent.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="C:\local\openssl\lib;../../../wvstreams/Win32WvStreams/winstreams/Debug"
 				IgnoreAllDefaultLibraries="FALSE"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"

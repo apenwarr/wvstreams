@@ -17,7 +17,16 @@ int main(int argc, char **argv)
     
     if (argc < 3)
     {
-	fprintf(stderr, "Usage: %s <cmd> <key> [extra stuff...]\n",
+	fprintf(stderr,
+		"Usage: %s <cmd> <key> [extra stuff...]\n"
+		" where <cmd> is one of:\n"
+		"   get - get the value of a key, with optional default\n"
+		"   set - set a key to the given value from the command line\n"
+		"   xset - set a key to the given value from stdin\n"
+		"   keys - list the subkeys of a key\n"
+		"   hkeys - list the subkeys of a key, their subkeys, etc\n"
+		"   dump - list the subkeys/values of a key (key=value)\n"
+		"   hdump - list the subkeys/values recursively\n",
 		argv[0]);
 	return 3;
     }
@@ -27,7 +36,8 @@ int main(int argc, char **argv)
     // note: we know cmd and arg1 are non-NULL, but arg2 may be the argv
     // terminator, which is a NULL.  That has a special meaning for some
     // commands, like 'set', and is different from the empty string.
-    const char *_cmd = argv[1], *arg1 = argv[2], *arg2 = argv[3];
+    const char *_cmd = argv[1], *arg1 = argv[2],
+	       *arg2 = argc > 3 ? argv[3] : NULL;
     WvString cmd(_cmd);
     strlwr(cmd.edit());
     
@@ -37,6 +47,7 @@ int main(int argc, char **argv)
 	if (!val.isnull())
 	{
 	    fputs(val, stdout);
+	    //fflush(stdout); // shouldn't be necessary!
 	    return 0; // okay
 	}
 	else

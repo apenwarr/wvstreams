@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
@@ -105,6 +105,8 @@ public:
         typename Base::Container::Iter i(*oldchildren);
         for (i.rewind(); i.next();)
             delete static_cast<Sub*>(i.ptr());
+
+        delete oldchildren;
     }
 
     /**

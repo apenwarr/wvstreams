@@ -1,3 +1,4 @@
+/* -*- Mode: C++ -*- */
 #pragma once
 #include "wvstring.h"
 #include "wvlinklist.h"
@@ -46,6 +47,10 @@ DeclareWvList(WvTask);
 class WvTaskMan
 {
     friend class WvTask;
+
+    static WvTaskMan *singleton;
+    static int links;
+
     int magic_number;
     WvTask *current_task;
     WvTaskList free_tasks;
@@ -59,13 +64,17 @@ class WvTaskMan
     
     LPVOID toplevel;
     
-public:
     WvTaskMan();
     virtual ~WvTaskMan();
-    
+   
+public:
+    /// get/dereference the singleton global WvTaskMan
+    static WvTaskMan *get();
+    static void unlink();
+  
     WvTask *start(WvStringParm name,
 		  WvTask::TaskFunc *func, void *userdata,
-		  size_t stacksize = 64*1024);
+		  size_t stacksize = 256*1024);
     
     // run() and yield() return the 'val' passed to run() when this task
     // was started.

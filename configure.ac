@@ -1,9 +1,10 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.15.2.3.2.5 2003/09/18 02:50:05 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.15.2.3.2.5.4.1 2003/11/20 16:24:39 pphaneuf Exp $)
 
-echo $0 "$*" > reconfigure
+rm -f reconfigure
+echo $0 "$@" '"$@"' >reconfigure
 chmod +x reconfigure
 
 # append to a variable without introducing superfluous white space
@@ -74,10 +75,11 @@ AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(gdbm, AC_HELP_STRING([--with-gdbm], [GDBM]))
-AC_ARG_WITH(gtk, AC_HELP_STRING([--with-gtk], [GTK+]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
+AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
+AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
@@ -158,6 +160,10 @@ if test "$with_bdb" != "no"; then
     if test "$with_bdb" = "no"; then
         CPPFLAGS="$CPPFLAGS_save"
         LDFLAGS="$LDFLAGS_save"
+    else
+        AC_DEFINE(WITH_BDB,,
+                  [Define to enable Berkeley DB support.])
+
     fi
 fi
 
@@ -168,14 +174,14 @@ if test "$with_gdbm" != "no"; then
 fi
 
 # gtk
-if test "$with_gtk" != "no"; then
-    CPPFLAGS_save="$CPPFLAGS"
-    WV_APPEND(CPPFLAGS,`pkg-config --cflags gtk+ 2>/dev/null`)
-    AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
-    AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
-    AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
-    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
-fi
+#if test "$with_gtk" != "no"; then
+#    CPPFLAGS_save="$CPPFLAGS"
+#    WV_APPEND(CPPFLAGS,`pkg-config --cflags gtk+ 2>/dev/null`)
+#    AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
+#    AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
+#    AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
+#    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
+#fi
 
 # ogg
 if test "$with_ogg" != "no"; then
@@ -185,7 +191,8 @@ fi
 
 # openssl
 if test "$with_openssl" != "no"; then
-    AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no])
+    AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
+                     [#define OPENSSL_NO_KRB5])
     AC_CHECK_LIB(ssl, SSL_CTX_new,, [with_openssl=no])
 fi
 
@@ -193,6 +200,27 @@ fi
 if test "$with_pam" != "no"; then
     AC_CHECK_HEADERS(security/pam_appl.h,, [with_pam=no])
     AC_CHECK_LIB(pam, pam_start,, [with_pam=no])
+fi
+
+# tcl
+if test "$with_tcl" != "no"; then
+    CPPFLAGS_save="$CPPFLAGS"
+    WV_APPEND(CPPFLAGS, -I/usr/include/tcl8.3)
+    AC_CHECK_HEADERS(tcl.h,, [with_tcl=no])
+    AC_CHECK_LIB(tcl8.3, TclInterpInit,, [with_tcl=no])
+    if test "$with_tcl" != "no"; then
+        CPPFLAGS="$CPPFLAGS_save"
+    fi
+fi
+
+# swig
+if test "$with_swig" != "no"; then
+    AC_CHECK_PROG(SWIG, swig, yes, no)
+    if test "$with_swig" != "no"; then
+        SWIG=swig
+    else
+        with_swig=no
+    fi
 fi
 
 # qt
@@ -214,7 +242,7 @@ if test "$with_qt" != "no"; then
         WV_APPEND(CPPFLAGS, -I$with_qt/include)
         WV_APPEND(LDFLAGS, -L$with_qt/lib)
     fi
-    AC_PATH_PROG(MOC, moc, ["moc not found"], $with_qt/bin)
+    AC_PATH_PROG(MOC, moc, [moc not found], $with_qt/bin)
 fi
 
 # speex
@@ -222,6 +250,10 @@ if test "$with_speex" != "no"; then
     AC_CHECK_HEADERS(speex.h speex_header.h,, [with_speex=no])
     AC_CHECK_LIB(speex, speex_encoder_init,, [with_speex=no])
 fi
+
+# valgrind
+AC_CHECK_PROG(VALGRIND, valgrind, yes)
+AC_CHECK_HEADERS(valgrind/memcheck.h)
 
 # vorbis
 if test "$with_vorbis" != "no"; then
@@ -255,10 +287,6 @@ if test "$with_fftw" = "no"; then
 fi
 if test "$with_gdbm" = "no"; then
     AC_MSG_WARN([GDBM is missing.])
-    missing_devel=yes
-fi
-if test "$with_gtk" = "no"; then
-    AC_MSG_WARN([GTK+ is missing.])
     missing_devel=yes
 fi
 if test "$with_ogg" = "no"; then
@@ -303,6 +331,12 @@ if test "$enable_devel" = "yes"; then
     fi
 fi
 
+if test "$VALGRIND" = "yes"; then
+    VALGRIND="valgrind --leak-check=yes"
+else
+    VALGRIND=
+fi
+
 AC_SUBST(enable_debug)
 AC_SUBST(enable_devel)
 AC_SUBST(enable_efence)
@@ -324,6 +358,8 @@ AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
 AC_SUBST(with_qt)
 AC_SUBST(with_speex)
+AC_SUBST(with_swig)
+AC_SUBST(with_tcl)
 AC_SUBST(with_vorbis)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)

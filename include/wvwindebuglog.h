@@ -1,3 +1,4 @@
+/* -*- Mode: C++ -*- */
 #include "wvlogrcv.h"
 
 class WvWinDebugLog :

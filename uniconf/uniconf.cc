@@ -77,7 +77,7 @@ void UniConf::move(const UniConf &dst)
 }
 
 
-void UniConf::copy(const UniConf &dst, bool force)
+void UniConf::copy(const UniConf &dst, bool force) const
 {
     // do the main key first
     dst.set(get());

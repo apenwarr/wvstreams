@@ -59,28 +59,42 @@ int socketpair (int family, int type, int protocol, int *sb)
     SOCKET insock, outsock, newsock;
     struct sockaddr_in sock_in;
 
-    assert(type == SOCK_STREAM);
+    if (type != SOCK_STREAM)
+	return -1;
+
     newsock = socket (AF_INET, type, 0);
-    assert(newsock != INVALID_SOCKET);
+    if (newsock == INVALID_SOCKET)
+	return -1;
+
     sock_in.sin_family = AF_INET;
     sock_in.sin_port = 0;
     sock_in.sin_addr.s_addr = INADDR_ANY;
-    assert(bind (newsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) >= 0);
+    if (bind (newsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) < 0)
+	return -1;
+
     int len = sizeof (sock_in);
-    assert(getsockname (newsock, (struct sockaddr *) &sock_in, &len) >= 0);
-    if (type == SOCK_STREAM)
-	listen (newsock, 2);
+    if (getsockname (newsock, (struct sockaddr *) &sock_in, &len) < 0)
+	return -1;
+
+    if (listen (newsock, 2) < 0)
+	return -1;
+
     outsock = socket (AF_INET, type, 0);
-    assert(outsock != INVALID_SOCKET);
+    if (outsock == INVALID_SOCKET)
+	return -1;
+
     sock_in.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
-    assert(connect(outsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) >= 0);
+    if (connect(outsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) < 0)
+	return -1;
 
     /* For stream sockets, accept the connection and close the listener */
     len = sizeof (sock_in);
     insock = accept (newsock, (struct sockaddr *) &sock_in, &len);
-    assert(insock != INVALID_SOCKET);
+    if (insock == INVALID_SOCKET)
+	return -1;
 
-    closesocket (newsock);
+    if (closesocket(newsock) < 0)
+	return -1;
 
     sb[0] = insock;
     sb[1] = outsock;

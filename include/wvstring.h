@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -219,8 +219,10 @@ public:
     // string comparison
     bool operator== (WvStringParm s2) const;
     bool operator!= (WvStringParm s2) const;
+    bool operator< (WvStringParm s2) const;
     bool operator== (const char *s2) const;
     bool operator!= (const char *s2) const;
+    bool operator< (const char *s2) const;
     
     /** the not operator is 'true' if string is empty */
     bool operator! () const;

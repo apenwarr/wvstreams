@@ -1,10 +1,11 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
  * Various little string functions...
  *
  */
+
 
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
@@ -57,6 +58,11 @@ char *non_breaking(char *string);
  */
 void replace_char(void *string, char c1, char c2, int length);
 
+/**
+ * Snip off the first part of 'haystack' if it consists of 'needle'.
+ */
+char *snip_string(char *haystack, char *needle);
+
 #ifndef _WIN32
 /**
  * In-place modify a character string so that all contained letters are 
@@ -96,6 +102,14 @@ bool isnewline(char c);
  * normal ASCII representations.
  */
 WvString web_unescape(const char *str);
+
+
+/**
+ * Converts all those pesky spaces, colons, and other nasties into nice unreadable
+ * Quasi-Unicode codes
+ */
+WvString url_encode(WvStringParm stuff);
+ 
 
 /**
  * Returns an RFC822-compatible date made out of _when, or, if _when < 0, out of
@@ -192,6 +206,60 @@ void strcoll_split(StringCollection &coll, WvStringParm _s,
 	
 	*eptr = oldc;
 	sptr = eptr;
+    }
+}
+
+/**
+ * Splits a string and adds each substring to a collection.
+ *   this behaves differently in that it actually delimits the 
+ *   pieces as fields and returns them, it doesn't treat multiple
+ *   delimeters as one and skip them.
+ *
+ *   ie., parm1::parm2 -> 'parm1','','parm2' when delimited with ':'
+ *
+ *   coll       : the collection of strings to add to
+ *   _s         : the string to split
+ *   splitchars : the set of delimiter characters
+ *   limit      : the maximum number of elements to split
+ */
+template<class StringCollection>
+void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
+    const char *splitchars = " \t", int limit = 0)
+{
+    WvString s(_s);
+    char *sptr = s.edit(), *eptr, oldc;
+
+	bool start = true;
+    while (sptr && *sptr)
+	{
+	  int len = strspn(sptr,splitchars);
+	    sptr += len;
+
+	  --limit;
+
+	  for (bool unseen = true; len > 0 && limit; (len -= strlen(splitchars)),--limit)
+	  {
+		if ((!start) && (unseen))
+		  { unseen = false; continue; }
+
+		coll.add(new WvString(""), true);
+	  }
+
+	  start = false;
+
+	  if (limit)
+        eptr = sptr + strcspn(sptr,splitchars);
+      else
+		eptr = sptr + strlen(sptr);
+
+      oldc = *eptr;
+      *eptr = '\0';
+
+      if (limit)
+		coll.add(new WvString(sptr), true);
+
+      *eptr = oldc;
+      sptr = eptr;
     }
 }
 

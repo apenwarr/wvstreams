@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -197,24 +197,67 @@ public:
     void setPkcs12Password(WvStringParm passwd)
     	{ pkcs12pass = passwd; }
 
+    /** 
+     * Return the Certificate Issuer (usually the CA who issued 
+     * the certificate)
+     */
     WvString get_issuer();
 
-    WvLog debug;
-    
-    WvString errstring;
-    
+    /**
+     * Return the Subject field of the certificate
+     */
+    WvString get_subject();
+
+    /**
+     * Return the CRL Distribution points if they exist, WvString::null
+     * if they don't.
+     */
+    WvString get_crl_dp();
+
+    /**
+     * Return the Certificate Policy OID if it exists, and WvString::null
+     * it if doesn't.
+     */
+    WvString get_cp_oid();
+
+    /**
+     * Return the Subject alt name if it exists, and WvString::null if
+     * it doesn't.
+     */
+    WvString get_altsubject();
+
+    /**
+     * Is this certificate Object valid, and in a non-error state
+     */
     bool isok() const
         { return cert && rsa && !errstring; }
+
+    /**
+     * Accessor for the error string if !isok()
+     */
     const WvString &errstr()
         { return errstring; }
 
+private:
+    WvLog debug;
+    WvString errstring;
+
+   /** 
+    * Password for PKCS12 dump - we don't handle this entirely correctly 
+    * since we should erase it from memory as soon as we are done with it
+    */
+    WvString pkcs12pass;
+
     void seterr(WvStringParm s)
-        { errstring = s; }
+        { if (!errstring) errstring = s; }
+
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
-private:
-   /** Password for PKCS12 dump */
-    WvString pkcs12pass;
+
+    /**
+     * Get the Extension information - returns NULL if extension doesn't exist
+     */
+    WvDynBuf *get_extension(int nid);
 };
 
 #endif // __WVX509_H

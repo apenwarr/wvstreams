@@ -5,6 +5,11 @@
  * A hash table container backed by a Berkeley DB (libdb) database.
  * See wvbdbhash.h.
  */
+
+#include "wvautoconf.h"
+
+#ifdef WITH_BDB
+
 #include "wvbdbhash.h"
 #include <fcntl.h>
 #include <errno.h>
@@ -196,8 +201,11 @@ void WvBdbHashBase::IterBase::xunlink(const datum &curkey)
     bdbhash.remove(curkey);
 }
 
+
 void WvBdbHashBase::IterBase::update(const datum &curkey, const datum &data)
 {
     int r = bdbhash.add(curkey, data, true);
     assert(!r && "Weird: database add failed during save?");
 }
+
+#endif /* WITH_BDB */

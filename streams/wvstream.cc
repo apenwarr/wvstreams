@@ -19,8 +19,6 @@
 #define ENOBUFS WSAENOBUFS
 #undef errno
 #define errno GetLastError()
-class RunWinSockInitialize;
-extern RunWinSockInitialize __runinitialize;
 #else
 #include <errno.h>
 #endif
@@ -47,7 +45,9 @@ XUUID_MAP_BEGIN(IWvStream)
 WvStream::WvStream()
 {
 #ifdef _WIN32
-    void *addy = &__runinitialize; // this ensures WSAStartup() is run
+    WSAData wsaData;
+    int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
+    assert(result == 0);
 #endif
     wvstream_execute_called = false;
     userdata = closecb_data = NULL;
@@ -282,9 +282,12 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
     size_t free = outbuf.free();
     if (count > free)
         count = free;
-    unsigned char *buf = outbuf.alloc(count);
+
+    WvDynBuf tmp;
+    unsigned char *buf = tmp.alloc(count);
     size_t len = read(buf, count);
-    outbuf.unalloc(count - len);
+    tmp.unalloc(count - len);
+    outbuf.merge(tmp);
     return len;
 }
 
@@ -296,7 +299,10 @@ size_t WvStream::continue_read(time_t wait_msec, WvBuf &outbuf, size_t count)
     if (count > free)
         count = free;
     unsigned char *buf = outbuf.alloc(count);
+    
+    // call the non-WvBuf continue_read
     size_t len = continue_read(wait_msec, buf, count);
+    
     outbuf.unalloc(count - len);
     return len;
 }
@@ -345,7 +351,7 @@ size_t WvStream::read(void *buf, size_t count)
 	memcpy(buf, inbuf.get(bufu), bufu);
     }
     
-    TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
+    TRACE("read  obj 0x%p, bytes %d/%d\n", this, bufu, count);
     return bufu;
 }
 
@@ -357,6 +363,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
     if (!count)
         return 0;
 
+    // FIXME: continue_select also uses the alarm, so this doesn't work.
     if (wait_msec >= 0)
         alarm(wait_msec);
 
@@ -419,12 +426,31 @@ size_t WvStream::write(const void *buf, size_t count)
 }
 
 
+void WvStream::noread()
+{
+    // FIXME: this really ought to be symmetrical with nowrite(), but instead
+    // it's empty for some reason.
+}
+
+
 void WvStream::nowrite()
 {
     if (getwfd() < 0)
         return;
 
     want_nowrite = true;
+}
+
+
+bool WvStream::isreadable()
+{
+    return isok() && select(0, true, false, false);
+}
+
+
+bool WvStream::iswritable()
+{
+    return isok() && select(0, false, true, false);
 }
 
 
@@ -512,7 +538,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 void WvStream::drain()
 {
     char buf[1024];
-    while (select(0, true, false, false))
+    while (isreadable())
 	read(buf, sizeof(buf));
 }
 
@@ -547,8 +573,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     // flush outbuf
     while (isok() && outbuf.used())
     {
-	//fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
-	//	this, getrfd(), getwfd(), outbuf.used());
+//	fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
+//		this, getrfd(), getwfd(), outbuf.used());
 	
 	size_t attempt = outbuf.used();
 	size_t real = uwrite(outbuf.get(attempt), attempt);
@@ -576,8 +602,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     if (isok() && autoclose_time)
     {
 	time_t now = time(NULL);
-	TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
-	      (unsigned int)this, now - autoclose_time, outbuf.used());
+	TRACE("Autoclose enabled for 0x%p - now-time=%ld, buf %d bytes\n", 
+	      this, now - autoclose_time, outbuf.used());
 	if ((flush_internal(0) && !outbuf.used()) || now > autoclose_time)
 	{
 	    autoclose_time = 0; // avoid infinite recursion!
@@ -624,8 +650,8 @@ void WvStream::flush_then_close(int msec_timeout)
     time_t now = time(NULL);
     autoclose_time = now + (msec_timeout + 999) / 1000;
     
-    TRACE("Autoclose SETUP for 0x%08X - buf %d bytes, timeout %ld sec\n", 
-	    (unsigned int)this, outbuf.used(), autoclose_time - now);
+    TRACE("Autoclose SETUP for 0x%p - buf %d bytes, timeout %ld sec\n", 
+	    this, outbuf.used(), autoclose_time - now);
 
     // as a fast track, we _could_ close here: but that's not a good idea,
     // since flush_then_close() deals with obscure situations, and we don't
@@ -834,9 +860,8 @@ bool WvStream::continue_select(time_t msec_timeout)
     
     running_callback = false;
     taskman->yield();
+    running_callback = true; // and we're back!
     alarm(-1);
-    
-    // FIXME: shouldn't we set running_callback = true here?
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 
@@ -844,6 +869,9 @@ bool WvStream::continue_select(time_t msec_timeout)
     // msec_delay was zero.  Note that running select() here isn't
     // inefficient, because if the alarm was expired then pre_select()
     // returned true anyway and short-circuited the previous select().
+    // 
+    // FIXME: we should probably be using select(t,r,w,x) here instead, but
+    // I'm not sure.
     TRACE("hello-%p\n", this);
     return !alarm_was_ticking || select(0);
 }
@@ -867,3 +895,12 @@ const WvAddr *WvStream::src() const
     return NULL;
 }
 
+
+void WvStream::unread(WvBuf &unreadbuf, size_t count)
+{
+    WvDynBuf tmp;
+    tmp.merge(unreadbuf, count);
+    tmp.merge(inbuf);
+    inbuf.zap();
+    inbuf.merge(tmp);
+}

@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
@@ -42,6 +42,7 @@ public:
     IWvStream *cloned;
     bool disassociate_on_close; // defaults to false
     
+    virtual void setclone(IWvStream *clone);
     virtual void close();
     virtual bool flush_internal(time_t msec_timeout);
     virtual size_t uread(void *buf, size_t size);
@@ -53,6 +54,7 @@ public:
     virtual bool post_select(SelectInfo &si);
     virtual const WvAddr *src() const;
     virtual void execute();
+    virtual void nowrite();
 };
 
 #endif // __WVSTREAMCLONE_H

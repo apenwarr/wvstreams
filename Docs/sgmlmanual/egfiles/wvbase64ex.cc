@@ -18,15 +18,13 @@ int main()
    WvInPlaceBuf encoded(100);
 
    to_encode.put("123",3);
-   //to_encode contains the string to be encoded in base64
+   // to_encode contains the string to be encoded in base64
 
    if (enc->encode(to_encode, encoded, true,true))
      printf ("This is the result: %s\n", (char *) encoded.get(1));
 
-   //it will display on screen:
-   //This is the result: MTIz
-
-
+   // Displayed on screen:
+   // This is the result: MTIz
 
 
    WvEncoder *dec;
@@ -36,13 +34,13 @@ int main()
    WvInPlaceBuf decoded(100);
 
    to_decode.put("MTIz",4);
-   //to_encode contains the string to be encoded in base64
+   // to_encode contains the string to be encoded in base64
 
    if (dec->encode(to_decode, decoded, true))
      printf ("This is the result: %s\n", (char *) decoded.get(1));
 
-   //it will display on screen:
-   //This is the result: 123
+   // Displayed on screen:
+   // This is the result: 123
 
    return 0;
 }

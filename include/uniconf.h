@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
@@ -6,6 +6,8 @@
  */
 #ifndef __UNICONF_H
 #define __UNICONF_H
+
+#ifdef	__cplusplus
 
 #include "uniconfkey.h"
 #include "uniconfgen.h"
@@ -76,7 +78,7 @@ public:
         : xroot(other.xroot), xfullkey(other.xfullkey) { }
     
     /** Destroys the UniConf handle. */
-    ~UniConf() { }
+    virtual ~UniConf() { }
 
     
     /***** Handle Manipulation API *****/
@@ -215,7 +217,7 @@ public:
      * Don't try to do dumb stuff like making dst a subkey of this one,
      * or vice versa, because we won't try to save you.
      */
-    void copy(const UniConf &dst, bool force);
+    void copy(const UniConf &dst, bool force) const;
 
 
     
@@ -577,5 +579,43 @@ public:
     void rewind()
         { populate(i); }
 };
+
+extern "C" {
+#endif /* __cplusplus */
+
+
+#ifdef SWIG
+%module UniConf
+
+%{
+#include "uniconf.h"
+%}
+
+//%newobject uniconf_get;
+#endif
+
+/* FIXME: put the C binding here. */
+typedef void* uniconf_t;
+
+
+/* Initialize and destroy UniConf. */
+uniconf_t uniconf_init(const char* _moniker);
+
+
+void uniconf_free(uniconf_t _uniconf);
+
+
+/* The string returned has been allocated with malloc() and should
+ * thus be free()d. */
+const char* uniconf_get(uniconf_t _uniconf, const char* _key);
+
+
+void uniconf_set(uniconf_t _uniconf,
+		 const char* _key, const char* _value);
+
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif // __UNICONF_H

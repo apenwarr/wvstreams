@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -972,16 +972,6 @@ public:
         WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _minalloc * sizeof(Elem),
             _maxalloc * sizeof(Elem)) { }
-
-    /**
-     * Returns the number of subbuffers currently in use.
-     *
-     * Returns: the number of buffers
-     */
-    size_t numsubbuffers()
-    {
-        return mystore.numsubbuffers();
-    }
 };
 
 

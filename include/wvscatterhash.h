@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
  *
@@ -58,6 +58,7 @@ public:
             if (!table)
                 return false;
 
+	    /* FIXME: Couldn't this be a *little* clearer? */
             while (++index <= table->numslots &&
                    !IS_OCCUPIED(table->xslots[index-1])) { }
 
@@ -88,7 +89,7 @@ protected:
     int prime_index;
     unsigned numslots;
 
-    pair *genfind(const void *data, unsigned hash);
+    pair *genfind(const void *data, unsigned hash) const;
     void _add(void *data, bool auto_free);
     void _add(void *data, unsigned hash, bool auto_free);
     void _remove(const void *data, unsigned hash);
@@ -101,9 +102,9 @@ protected:
 
 private:
     void rebuild();
-    unsigned second_hash(unsigned hash)
+    unsigned second_hash(unsigned hash) const
         { return (hash % (numslots - 1)) + 1; }
-    unsigned curhash(unsigned hash, unsigned hash2, unsigned attempt)
+    unsigned curhash(unsigned hash, unsigned hash2, unsigned attempt) const
         //{ return (hash + attempt * attempt) % numslots; }
         { return (hash + attempt*hash2) % numslots; }
 
@@ -140,7 +141,7 @@ public:
     WvScatterHash(unsigned _numslots = 0) : WvScatterHashBase(_numslots) { }
     virtual ~WvScatterHash() { _zap(); }
 
-    T *operator[] (const K &key)
+    T *operator[] (const K &key) const
         { return (T *)(genfind(&key, WvHash(key))->data); }
 
     void add(const T *data, bool auto_free = false)

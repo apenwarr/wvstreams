@@ -3,11 +3,6 @@
 showvar = @echo \"'$(1)'\" =\> \"'$($(1))'\"
 tbd = $(error "$@" not implemented yet)
 
-# expands to the object files in the directories
-objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
-objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
-objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
-
 # initialization
 TARGETS:=
 GARBAGE:=
@@ -19,34 +14,33 @@ NO_CONFIGURE_TARGETS:=
 NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist \
 		distclean realclean
 
-ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
--include config.mk
-endif
-
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libuniconf.so libuniconf.a
-TARGETS += uniconf/daemon/uniconfdaemon
+GARBAGE += wvtestmain.o
+
+ifneq ("$(with_swig)", "no")
+  ifneq ("$(with_tcl)", "no")
+    TARGETS += libuniconf_tcl.so
+    CPPFLAGS += -I/usr/include/tcl8.3
+  endif
+endif
 
 ifneq ("$(with_ogg)", "no")
-ifneq ("$(with_vorbis)", "no")
-TARGETS += libwvoggvorbis.so libwvoggvorbis.a
-endif
-ifneq ("$(with_speex)", "no")
-TARGETS += libwvoggspeex.so libwvoggspeex.a
-endif
+  ifneq ("$(with_vorbis)", "no")
+    TARGETS += libwvoggvorbis.so libwvoggvorbis.a
+  endif
+  ifneq ("$(with_speex)", "no")
+    TARGETS += libwvoggspeex.so libwvoggspeex.a
+  endif
 endif
 
 ifneq ("$(with_fftw)", "no")
-TARGETS += libwvfft.so libwvfft.a
+  TARGETS += libwvfft.so libwvfft.a
 endif
 
 ifneq ("$(with_qt)", "no")
-TARGETS += libwvqt.so libwvqt.a
-endif
-
-ifneq ("$(with_gtk)", "no")
-TARGETS += libwvgtk.so libwvgtk.a
+  TARGETS += libwvqt.so libwvqt.a
 endif
 
 TARGETS_SO := $(filter %.so,$(TARGETS))
@@ -55,7 +49,7 @@ TARGETS_A := $(filter %.a,$(TARGETS))
 GARBAGE += ChangeLog $(wildcard lib*.so.*)
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
-		include/wvautoconf.h config.cache
+		include/wvautoconf.h config.cache reconfigure
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
@@ -65,8 +59,8 @@ ARFLAGS = rs
 DEBUG:=$(filter-out no,$(enable_debug))
 
 # for O_LARGEFILE
-CXXFLAGS=${CXXOPTS}
-CFLAGS=${COPTS}
+CXXFLAGS+=${CXXOPTS}
+CFLAGS+=${COPTS}
 CXXFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 
@@ -118,37 +112,33 @@ LDLIBS+=-lefence
 endif
 
 ifneq ("$(with_fam)", "no")
-libwvstreams.so: -lfam
+  libwvstreams.so: -lfam
 endif
 
 ifneq ("$(with_gdbm)", "no")
-libwvutils.so: -lgdbm
+  libwvutils.so: -lgdbm
 endif
 
 ifneq ("$(with_bdb)", "no")
-libwvutils.so: LDLIBS+=-ldb
-endif
-
-ifeq ("$(enable_verbose)", "yes")
-VERBOSE:=yes
+  libwvutils.so-LIBS+=-ldb
 endif
 
 ifneq ("$(with_xplc)", "no")
-CPPFLAGS+=-DUNSTABLE
-ifneq ("$(with_xplc)", "yes")
-VPATH+=$(with_xplc)
-LDFLAGS+=-L$(with_xplc)
-CPPFLAGS+=-I$(with_xplc)/include
-libwvstreams.so: -lxplc -lxplc-cxx
-endif
+  CPPFLAGS+=-DUNSTABLE
+  ifneq ("$(with_xplc)", "yes")
+    VPATH+=$(with_xplc)
+    LDFLAGS+=-L$(with_xplc)
+    CPPFLAGS+=-I$(with_xplc)/include
+    libwvstreams.so: -lxplc -lxplc-cxx
+  endif
 endif
 
 ifneq ("$(with_fam)", "no")
-libwvstreams.so: -lfam
+  libwvstreams.so: -lfam
 endif
 
 ifneq ("$(with_pam)", "no")
-libwvstreams.so: -lpam
+  libwvstreams.so: -lpam
 endif
 
 LDLIBS := -lgcc $(LDLIBS) \
@@ -159,6 +149,15 @@ RELEASE?=$(PACKAGE_VERSION)
 
 include $(wildcard */vars.mk */*/vars.mk) /dev/null
 
+libwvutils.a libwvutils.so: $(call objects,utils)
+libwvutils.so: -lz -lcrypt
+
+libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams urlget)
+libwvstreams.so: libwvutils.so -lssl -lcrypto
+
+libuniconf.a libuniconf.so: $(call objects,uniconf)
+libuniconf.so: libwvstreams.so libwvutils.so
+
 libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
 libwvoggvorbis.so: -logg -lvorbis -lvorbisenc libwvutils.so
 
@@ -168,18 +167,16 @@ libwvoggspeex.so: -logg -lspeex libwvutils.so
 libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: -lfftw -lrfftw libwvutils.so
 
+ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
+  libwvqt.so-LIBS+=-lqt-mt
+else
+  libwvqt.so-LIBS+=-lqt
+endif
 libwvqt.a libwvqt.so: $(call objects,qt)
 libwvqt.so: libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
-libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams urlget)
-libwvstreams.so: libwvutils.so -lssl
-
-libuniconf.a libuniconf.so: $(call objects,uniconf)
-libuniconf.so: libwvstreams.so
-
-libwvutils.a libwvutils.so: $(call objects,utils)
-libwvutils.so: -lz -lcrypt
+libuniconf_tcl.so: bindings/uniconf_tcl.o -ltcl8.3 -luniconf
 

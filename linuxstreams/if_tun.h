@@ -12,7 +12,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
  *
- *  $Id: if_tun.h,v 1.1.2.2.2.1 2003/08/05 18:32:48 pphaneuf Exp $
+ *  $Id: if_tun.h,v 1.1.2.2.2.1.4.1 2003/11/20 16:24:45 pphaneuf Exp $
  */
 
 #ifndef __IF_TUN_H

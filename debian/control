@@ -74,7 +74,10 @@ Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}
 Description: WvStreams wrapper for libfftw
- This package contains the library necessary to tie WvStreams and libfftw.
+ This package contains the library necessary for the WvStreams to libfftw
+ wrapper. It enables WvStreams programs to easily handle Fast-Fourier
+ transforms, instead of forcing the programmer to use the much harder to use
+ libfftw interface.
 
 Package: libwvstreams3-gtk
 Architecture: any

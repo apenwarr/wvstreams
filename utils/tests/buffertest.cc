@@ -153,8 +153,8 @@ int main()
 	if (bb.used() > max)
 	{
 	    max = bb.used();
-	    printf("New max: %u bytes in %d InPlaceBuffer(s) after %u bytes\n",
-		   max, bb.numsubbuffers(), total);
+	    printf("New max: %u bytes in subbuffers after %u bytes\n",
+		   max, total);
 	}
 #ifdef DEBUG_STRESS
 	fprintf(stderr, "[%6d]", in);

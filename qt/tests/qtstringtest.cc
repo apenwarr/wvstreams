@@ -3,7 +3,7 @@
  */
 #include <qstring.h>
 #include "wvstring.h"
-#include "wvtest.h"
+#include "wvlog.h"
 
 WvString qf(const QString &q)
 {
@@ -19,7 +19,7 @@ QString wf(WvStringParm w)
 
 int main()
 {
-    WvTest test;
+    WvLog test("qtstringtest", WvLog::Info);
     
     WvString a("hello a\n");
     WvFastString b("bellow b\n");

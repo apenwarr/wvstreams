@@ -4,20 +4,24 @@
  *
  * Test program for the WvConf emulation in UniConf.
  */
-#if 1
-# include "wvconf.h"
-#else
-# include "wvconfemu.h"
-#endif
 
+#define WVCONFEMU
+
+#include "uniconfroot.h"
+#include "wvconfemu.h"
 #include "wvlog.h"
 
 int main()
 {
     bool c1 = false, c2 = false, c3 = false;
     WvLog log("emutest", WvLog::Info);
-    WvConf cfg("test2.ini");
-    
+#ifdef WVCONFEMU
+    UniConfRoot uniconf("ini:test2.ini.new");
+    WvConf cfg(uniconf);
+#else
+    WvConf cfg("test2.ini.new");
+#endif
+
     cfg.zap();
     cfg.load_file("test2.ini");
     
@@ -54,24 +58,36 @@ int main()
     log("All-section dump done.\n");
 
     // not interesting
+    log("setting [Neener]Bobber=50\n");
     cfg.setint("Neener", "Bobber", 50);
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
+    assert(!c1 && !c2 && !c3);
     
     // set to same value - no change event
+    log("setting [Users]webmaster=NOLOGIN\n");
     cfg.set("Users", "webmaster", "NOLOGIN");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
+    assert(!c1 && !c2 && !c3);
     
     // should set c1
+    log("setting [users]Wimp=hello\n");
     cfg.set("users", "Wimp", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
+    assert(c1 && !c2 && !c3);
     
     // should set c2
+    log("setting [groups]bob=hello\n");
     cfg.set("groups", "bob", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
+    assert(c1 && c2 && !c3);
     
     // should set c3
+    log("setting [users]bob=hello\n");
     cfg.set("users", "bob", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
+    assert(c1 && c2 && c3);
+
+    //log("Number of entries in [Global]: %s\n", cfg["Global"]->count());
   
     return 0;
 }

@@ -58,6 +58,7 @@ WvConf::WvConf(WvStringParm _filename, int _create_mode)
 {
     create_mode = _create_mode;
     dirty = error = loaded_once = false;
+    wvauthd = NULL;
     load_file();
 }
 
@@ -180,10 +181,15 @@ void WvConf::load_file(WvStringParm filename)
     char *from_file;
     WvConfigSection *sect = &globalsection;
     bool quick_mode = false;
-    struct stat statbuf;
 
     file.open(filename, O_RDONLY);
 
+    #ifdef _WIN32
+    //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that
+    //  the file is being written to. Just be careful :).
+    #else
+    // check the sticky bit and fail if set
+    struct stat statbuf;
     if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
     {
 	log(WvLog::Warning, "Can't stat config file %s\n", filename);
@@ -195,6 +201,7 @@ void WvConf::load_file(WvStringParm filename)
 	file.close();
 	file.seterr(EAGAIN);
     }
+    #endif
 
     if (!file.isok())
     {
@@ -460,8 +467,6 @@ char *WvConf::parse_value(char *s)
 
 void WvConf::save(WvStringParm _filename)
 {
-    struct stat statbuf;
-
     if (error || !_filename)
 	return;
     
@@ -475,6 +480,11 @@ void WvConf::save(WvStringParm _filename)
 	return;
     }
 
+    #ifdef _WIN32
+    //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that
+    //  the file is being written to. Just be careful :).
+    #else
+    struct stat statbuf;
     if (fstat(fp.getwfd(), &statbuf) == -1)
     {
 	log(WvLog::Error, "Can't stat config file %s: %s\n",
@@ -484,6 +494,7 @@ void WvConf::save(WvStringParm _filename)
     }
 
     fchmod(fp.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
+    #endif
 
     globalsection.dump(fp);
     
@@ -495,7 +506,12 @@ void WvConf::save(WvStringParm _filename)
 	sect.dump(fp);
     }
 
+    #ifdef _WIN32
+    //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that
+    //  the file is being written to. Just be careful :).
+    #else
     fchmod(fp.getwfd(), statbuf.st_mode & 07777);
+    #endif
 }
 
 
