@@ -112,10 +112,9 @@ void WvStream::_callback(void *stream)
     
     s->running_callback = true;
     
+    s->execute();
     if (s->callfunc)
 	s->callfunc(*s, s->userdata);
-    else
-	s->execute();
     
     s->running_callback = false;
 }
