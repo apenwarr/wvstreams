@@ -12,12 +12,18 @@
  */
 
 #include "wvfile.h"
+#include "wvconf.h"
+#include "wvinterface.h"
+#include "wvaddr.h"
 
 class WvTunDev : public WvFile
 {
     public:
-        WvTunDev();
-        WvString ifc_name;
+        WvTunDev(WvConf &cfg);
+        WvTunDev(const WvIPNet &addr);
+        WvString ifcname;
+    private:
+        void init(const WvIPNet &addr);
 };
 
 

@@ -263,6 +263,9 @@ public:
     WvIPAddr operator- (int n) const;
     __u32 s_addr() const
         { return *(__u32 *)binaddr; }
+
+    bool is_zero() const
+        { return s_addr() == 0; }
     
     virtual WvEncap encap() const;
 

@@ -29,13 +29,7 @@ public:
      * happen, set cloned to NULL before destroying the WvStreamClone
      * (for example, in your destructor if you derive WvStreamClone).
      */
-    WvStreamClone():
-	cloned(0)
-    {
-	force_select(false, false, false);
-    }
-
-    WvStreamClone(WvStream *_cloned):
+    WvStreamClone(WvStream *_cloned = NULL):
 	cloned(_cloned)
     {
 	force_select(false, false, false);

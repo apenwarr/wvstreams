@@ -4,13 +4,27 @@
 #include <linux/if.h>
 #include <string.h> 
 
-#include "wvtundev.h"
 #include "wvlog.h"
 
+#include "wvtundev.h"
 
-WvTunDev::WvTunDev() : WvFile("/dev/net/tun", O_RDWR)
+
+WvTunDev::WvTunDev(WvConf &cfg)
+    : WvFile("/dev/net/tun", O_RDWR)
 {
-    WvLog log("New tunnel", WvLog::Critical);
+    const WvIPNet addr(cfg.get("Global", "IPAddr", "192.168.42.42"), 32);
+    init(addr);
+}
+
+WvTunDev::WvTunDev(const WvIPNet &addr)
+    : WvFile("/dev/net/tun", O_RDWR)
+{
+    init(addr);
+}
+
+void WvTunDev::init(const WvIPNet &addr)
+{
+    WvLog log("New tundev", WvLog::Debug2);
     if (rwfd < 0)
     {
         log("Could not open /dev/net/tun: %s\n", strerror(errno)); 
@@ -30,9 +44,12 @@ WvTunDev::WvTunDev() : WvFile("/dev/net/tun", O_RDWR)
         seterr(errno);
         return;
     }
+    
+    WvInterface iface(ifr.ifr_name);
+    iface.setipaddr(addr);
+    iface.up(true);
+    ifcname = ifr.ifr_name;
+    log.app = ifcname;
 
-    ifc_name = ifr.ifr_name;
-    log.app = ifc_name;
-
-    log(WvLog::Debug2, "Initialized successfully.\n");
+    log(WvLog::Debug2, "Now up (%s).\n", addr);
 }    

@@ -36,7 +36,7 @@ int main()
     WvIPAddr justip2("7.2.3.4");
     WvIPNet ipnet1("1.2.3.4", 24);
     WvIPNet ipnet2("7.2.3.4", 24);
-    WvIPNet ipnet3("7.2.3.4", 42);
+    WvIPNet ipnet3("7.2.3.4", 32);
     WvIPNet ipport1("1.2.3.4", 75);
     WvIPNet ipport2("7.2.3.4", 75);
     WvIPNet ipport3("7.2.3.4", 57);

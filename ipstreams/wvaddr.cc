@@ -369,7 +369,6 @@ void WvIPAddr::string_init(const char string[])
     }
 }
 
-
 WvIPAddr::~WvIPAddr()
 {
     // nothing to do

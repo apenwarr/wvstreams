@@ -24,7 +24,7 @@ public:
     WvMiniBuffer(size_t _size)
 	{ buffer = head = tail = new unsigned char[(size = _size) + 16]; }
     ~WvMiniBuffer()
-        { delete buffer; }
+        { delete[] buffer; }
     
     /*
      * return number of bytes total/used/left in minibuffer. Note that

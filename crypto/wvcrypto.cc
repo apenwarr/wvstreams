@@ -28,6 +28,10 @@ WvCryptoStream::~WvCryptoStream()
 {
     if (my_cryptbuf)
 	delete[] my_cryptbuf;
+
+    // Preserve the old WvStreamClone semantics, TunnelVision expects
+    // it.
+    cloned = NULL;
 }
 
 
