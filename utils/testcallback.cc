@@ -6,6 +6,19 @@
 DeclareWvCallback(0, void, Cb0);
 DeclareWvCallback(1, int, Cb1, int);
 
+void glob0()
+{
+    printf("glob0 called\n");
+}
+
+
+int glob1(int x)
+{
+    printf("glob1 called\n");
+    return 42*x;
+}
+
+
 class EventProducer
 {
 public:
@@ -17,11 +30,34 @@ public:
 		  WvCallback1<int, int> _chevent)
 	: pushevent(_pushevent), pullevent(_pullevent), chevent(_chevent)
 	    { }
-    void push() { printf("push: "); pushevent(); }
-    void pull() { printf("pull: "); pullevent(); }
-    void change(int x) { printf("change: "); printf("changed: %d\n", 
-						    chevent(x)); }
+    void push();
+    void pull();
+    void change(int x);
+    
 };
+
+void EventProducer::push()
+{
+    printf("push: ");
+    if (pushevent)
+	pushevent(); 
+}
+
+
+void EventProducer::pull() 
+{
+    printf("pull: ");
+    if (pullevent)
+	pullevent();
+}
+
+
+void EventProducer::change(int x)
+{
+    printf("change: ");
+    if (chevent)
+	printf("changed: %d\n", chevent(x)); 
+}
 
 
 class A
@@ -107,6 +143,13 @@ int main()
 	ev.chevent = wvcallback(Cb1, a, A::g);
 	ev.pull();
 	ev.change(5);
+	ev.pushevent = NULL;
+	ev.push();
+	ev.pushevent = glob0;
+	ev.push();
+	ev.chevent = glob1;
+	ev.push();
+	ev.change(10);
     }
     
     return 0;

@@ -81,7 +81,7 @@ WvTCPConn::~WvTCPConn()
 // keepalive)
 void WvTCPConn::nice_tcpopts()
 {
-    fcntl(fd, F_SETFD, 1);
+    fcntl(fd, F_SETFD, FD_CLOEXEC);
     fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
 
     int value = 1;

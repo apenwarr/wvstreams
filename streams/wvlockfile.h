@@ -24,7 +24,7 @@ public:
     
     bool lock();
     void unlock();
-    bool islocked()
+    bool islocked() const
        { return lock_count != 0; }
 };
 
