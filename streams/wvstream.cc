@@ -919,10 +919,6 @@ bool WvStream::continue_select(time_t msec_timeout)
 {
     assert(WvCont::isok());
     
-    // if this assertion triggers, you probably tried to do continue_select()
-    // while inside terminate_continue_select().
-    assert(call_ctx);
-    
     if (msec_timeout >= 0)
 	alarm(msec_timeout);
 
