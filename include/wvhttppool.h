@@ -32,6 +32,8 @@ public:
     WvString headers;
     WvUrlStream *instream;
     WvBufUrlStream *outstream;
+    WvStream *putstream;
+
     bool pipeline_test;
     bool headers_only;
     bool inuse;
@@ -39,6 +41,7 @@ public:
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 		 bool _pipeline_test, bool _headers_only);
+    WvUrlRequest(WvStringParm _url, WvStringParm _headers, WvStream *s);
     ~WvUrlRequest();
     
     WvString request_str(bool keepalive);
@@ -211,6 +214,8 @@ public:
     
     WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _headers,
                             bool headers_only = false);
+    WvBufUrlStream *addputurl(WvStringParm _url, WvStringParm _headers,
+			      WvStream *s);
 private:
     void unconnect(WvUrlStream *s);
     

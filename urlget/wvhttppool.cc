@@ -29,6 +29,7 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
     : url(_url), headers(_headers)
 { 
     instream = NULL;
+    putstream = NULL;
     pipeline_test = _pipeline_test;
     headers_only = _headers_only;
     is_dir = false;    // for ftp primarily; set later
@@ -44,6 +45,24 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
     }
     inuse = false;
 }
+
+
+WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
+			   WvStream *s)
+    : url(_url), headers(_headers), putstream(s)
+{
+    instream = NULL;
+    pipeline_test = false;
+    headers_only = false;
+    is_dir = false;
+
+    WvBufUrlStream *x = new WvBufUrlStream;
+    outstream = x;
+    x->death_notify = (WvStream **)&outstream;
+    x->url = url;
+    inuse = false;
+}
+
 
 
 WvUrlRequest::~WvUrlRequest()
@@ -609,6 +628,9 @@ bool WvFtpStream::pre_select(SelectInfo &si)
     if (data && data->select(0))
 	return true;
 
+    if (curl && curl->putstream && curl->putstream->select(0))
+	return true;
+
     return WvUrlStream::pre_select(si);
 }
 
@@ -728,35 +750,50 @@ void WvFtpStream::execute()
 
 	if (curl->is_dir)
 	{
-	    write(WvString("LIST %s\r\n", curl->url.getfile()));
-	    if (curl->outstream)
+	    if (!curl->putstream)
 	    {
-		WvString url_no_pw("ftp://%s%s%s%s", curl->url.getuser(),
-				   !!curl->url.getuser() ? "@" : "", 
-				   curl->url.gethost(), curl->url.getfile());
-		curl->outstream->write(WvString(
-		    "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\">\n"
-		    "<html>\n<head>\n<title>%s</title>\n"
-		    "<meta http-equiv=\"Content-Type\" content=\"text/html; "
-		    "charset=ISO-8859-1\">\n"
-		    "<base href=\"%s\"/>\n</head>\n"
-		    "<style type=\"text/css\">\n"
-		    "img { border: 0; padding: 0 2px; vertical-align: "
-		    "text-bottom; }\n"
-		    "td  { font-family: monospace; padding: 2px 3px; "
-		    "text-align: right; vertical-align: bottom; }\n"
-		    "td:first-child { text-align: left; padding: "
-		    "2px 10px 2px 3px; }\n"
-		    "table { border: 0; }\n"
-		    "a.symlink { font-style: italic; }\n"
-		    "</style>\n<body>\n"
-		    "<h1>Index of %s</h1>\n"
-		    "<hr/><table>\n", url_no_pw, curl->url, url_no_pw 
-					   ));
+		write(WvString("LIST %s\r\n", curl->url.getfile()));
+		if (curl->outstream)
+		{
+		    WvString url_no_pw("ftp://%s%s%s%s", curl->url.getuser(),
+				       !!curl->url.getuser() ? "@" : "", 
+				       curl->url.gethost(),
+				       curl->url.getfile());
+		    curl->outstream->write(
+			WvString(
+			    "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML "
+			    "4.01//EN\">\n"
+			    "<html>\n<head>\n<title>%s</title>\n"
+			    "<meta http-equiv=\"Content-Type\" "
+			    "content=\"text/html; "
+			    "charset=ISO-8859-1\">\n"
+			    "<base href=\"%s\"/>\n</head>\n"
+			    "<style type=\"text/css\">\n"
+			    "img { border: 0; padding: 0 2px; vertical-align: "
+			    "text-bottom; }\n"
+			    "td  { font-family: monospace; padding: 2px 3px; "
+			    "text-align: right; vertical-align: bottom; }\n"
+			    "td:first-child { text-align: left; padding: "
+			    "2px 10px 2px 3px; }\n"
+			    "table { border: 0; }\n"
+			    "a.symlink { font-style: italic; }\n"
+			    "</style>\n<body>\n"
+			    "<h1>Index of %s</h1>\n"
+			    "<hr/><table>\n", url_no_pw, curl->url, url_no_pw 
+			    ));
+		}
+	    }
+	    else
+	    {
+		log("Target is a directory.\n");
+		seterr("target is a directory");
+		doneurl();
 	    }
 	}
-	else
+	else if (!curl->putstream)
 	    write(WvString("RETR %s\r\n", curl->url.getfile()));
+	else
+	    write(WvString("STOR %s\r\n", curl->url.getfile()));
 
 	log(WvLog::Debug5, "Waiting for response to RETR/LIST\n");
 	line = get_important_line(60000);
@@ -764,8 +801,10 @@ void WvFtpStream::execute()
 	    doneurl();
 	else if (strncmp(line, "150", 3))
 	{
-	    log("Strange response to RETR command: %s\n", line);
-	    seterr("strange response to RETR command");
+	    log("Strange response to %s command: %s\n", line,
+		curl->putstream ? "STOR" : "RETR");
+	    seterr(WvString("strange response to %s command",
+			    curl->putstream ? "STOR" : "RETR"));
 	    doneurl();
 	}
 
@@ -788,21 +827,35 @@ void WvFtpStream::execute()
 	}
 	else
 	{
-	    int len = data->read(buf, sizeof(buf));
-	    log(WvLog::Debug5, "Read %s bytes.\n", len);
-
-	    if (len)
+	    if (curl->putstream)
 	    {
-		if (curl->outstream)
+		int len = curl->putstream->read(buf, sizeof(buf));
+		log(WvLog::Debug5, "Read %s bytes.\n", len);
+
+		if (len)
+		    data->write(buf, len);
+	    }
+	    else
+	    {
+		int len = data->read(buf, sizeof(buf));
+		log(WvLog::Debug5, "Read %s bytes.\n", len);
+
+		if (len && curl->outstream)
 		    curl->outstream->write(buf, len);
 	    }
 	}
 
-	if (!data->isok())
+	if (!data->isok() || (curl->putstream && !curl->putstream->isok()))
 	{
+	    if (curl->putstream && data->isok())
+		data->close();
+
 	    line = get_important_line(60000);
 	    if (!line)
+	    {
+		doneurl();
 		return;
+	    }
 
 	    if (strncmp(line, "226", 3))
 		log("Unexpected message: %s\n", line);
@@ -1088,6 +1141,17 @@ WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
     WvUrlRequest *url = new WvUrlRequest(_url, _headers, false, headers_only);
     urls.append(url, true);
     
+    return url->outstream;
+}
+
+
+WvBufUrlStream *WvHttpPool::addputurl(WvStringParm _url,
+				      WvStringParm _headers, WvStream *s)
+{
+    log(WvLog::Debug4, "Adding a new put url to pool: '%s'\n", _url);
+    WvUrlRequest *url = new WvUrlRequest(_url, _headers, s);
+    urls.append(url, true);
+
     return url->outstream;
 }
 

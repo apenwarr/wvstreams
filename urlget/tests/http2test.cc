@@ -55,8 +55,22 @@ int main(int argc, char **argv)
 		    headers = WvString("%s%s\n", headers, line);
 		    continue;
 		}
+
+		WvStream *s;
+		if (line[0] != '>')
+		    s = p.addurl(line, headers);
+		else
+		{
+		    char *ptr = strchr(line, ' ');
+		    if (!ptr)
+			continue;
+		    *ptr = 0;
+		    printf("sending file %s to url %s.\n", &line[1], ptr+1);
+		    WvFile *sendfile = new WvFile(&line[1], O_RDONLY);
+		    s = p.addputurl(ptr+1, headers, sendfile);
+		    l.append(sendfile, true);
+		}
 		
-		WvStream *s = p.addurl(line, headers);
 		if (s)
 		{
 		    static int num = 0;
