@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.13 2003/01/08 21:17:40 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.14 2003/01/12 21:46:08 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -76,6 +76,11 @@ AC_ARG_WITH(qt,
             AC_HELP_STRING([--with-qt],
                            [Qt]))
 
+AC_ARG_WITH(xplc,
+            AC_HELP_STRING([--with-xplc],
+                           [XPLC]),
+            LDFLAGS="$CXXFLAGS -L$withval" CPPFLAGS="$CPPFLAGS -I$withval/include")
+
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
@@ -149,6 +154,12 @@ CPPFLAGS="$CPPFLAGS -I$QTINCLUDE"
 AC_CHECK_HEADERS(qt/qobject.h,, [with_qt=no])
 fi
 
+# xplc
+if test "$with_xplc" != "no"; then
+AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no], -lxplc-cxx)
+AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no])
+fi
+
 # resolver fork
 if test "$enable_resolver_fork" == no; then
 AC_DEFINE(WVRESOLVER_SKIP_FORK,,
@@ -183,6 +194,10 @@ if test "$with_qt" == "no"; then
     AC_MSG_WARN([Qt is missing.])
     missing_devel=yes
 fi
+if test "$with_xplc" == "no"; then
+    AC_MSG_WARN([XPLC is missing.])
+#    missing_devel=yes
+fi
 
 if test "$enable_devel" == "yes"; then
     enable_debug=yes
@@ -209,6 +224,7 @@ AC_SUBST(with_vorbis)
 AC_SUBST(with_speex)
 AC_SUBST(with_fftw)
 AC_SUBST(with_qt)
+AC_SUBST(with_xplc)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)

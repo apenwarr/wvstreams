@@ -126,6 +126,13 @@ ifeq ("$(enable_verbose)", "yes")
 VERBOSE:=yes
 endif
 
+ifneq ("$(with_xplc)", "no")
+ifneq ("$(with_xplc)", "yes")
+LDFLAGS+=-L$(with_xplc)
+CPPFLAGS+=-I$(with_xplc)/include
+endif
+endif
+
 # Some other generally useful optimizations
 CXXFLAGS+=-fnonnull-objects
 
