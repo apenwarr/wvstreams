@@ -43,12 +43,8 @@ void UniConfKey::init(WvStringParm key)
 		iptr += strspn(iptr, "/") - 1;
 		
 		// if there's nothing after the slash, it's a terminating
-		// slash.  copy the terminating slash and then stop.
-		if (!iptr[1])
-		{
-		    *optr++ = *iptr++;
-		    break;
-		}
+		// slash; stop now.
+		if (!iptr[1]) break;
 		
 		// if we get here, it's exactly one intermediate slash.
 	    }
@@ -72,8 +68,10 @@ UniConfKey::UniConfKey(const UniConfKey &_path, const UniConfKey &_key)
 {
     if (!_path.path)
 	path = _key;
+    else if (!_key.path)
+	path = _path;
     else
-	path = spacecat(_path, _key, '/', true);
+	path = spacecat(_path, _key, '/');
 }
 
 
@@ -81,8 +79,8 @@ void UniConfKey::append(const UniConfKey &_key)
 {
     if (!path)
         path = _key.path;
-    else
-	path = spacecat(path, _key.path, '/', true);
+    else if (!!_key.path)
+	path = spacecat(path, _key.path, '/');
 }
 
 
@@ -91,7 +89,7 @@ void UniConfKey::prepend(const UniConfKey &_key)
     if (!path)
         path = _key.path;
     else if (!!_key.path)
-        path = spacecat(_key.path, path, '/', true);
+        path = spacecat(_key.path, path, '/');
 }
 
 
