@@ -6,6 +6,7 @@
  */
 #include "wvsubprocqueue.h"
 #include <unistd.h>
+#include <assert.h>
 
 
 WvSubProcQueue::WvSubProcQueue(unsigned _maxrunning)

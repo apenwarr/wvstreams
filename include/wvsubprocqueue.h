@@ -119,7 +119,6 @@ private:
 	    cookie = _cookie;
 	    proc = _proc;
 	    redo = false;
-	    assert(proc);
 	}
 	
 	~Ent()
