@@ -1,6 +1,14 @@
 # valgrind suppressions file for known and unfixable errors caused by 
 # wvstreams' interactions with other libraries.
 {
+   zlib_deflate_error
+   Memcheck:Cond
+   fun:_tr_flush_block
+   obj:/usr/lib/libz.so.1.2.1.1
+   fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
    stupid_libdl_error
    Memcheck:Cond
    fun:_dl_relocate_object
