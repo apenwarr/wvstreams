@@ -33,8 +33,24 @@ int comparefunc(const DBT *a, const DBT *b)
 }
 
 
-WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile)
+WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile) :
+    dbf(NULL)
 {
+    opendb(dbfile);
+}
+
+
+WvBdbHashBase::~WvBdbHashBase()
+{
+    if (dbf)
+	dbf->close(dbf);
+}
+
+
+void WvBdbHashBase::opendb(WvStringParm dbfile)
+{
+    if (dbf) dbf->close(dbf);
+    
     BTREEINFO info;
     memset(&info, 0, sizeof(info));
     info.compare = comparefunc;
@@ -43,13 +59,6 @@ WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile)
     if (!dbf)
         fprintf(stderr, "Could not open database '%s': %s\n",
                 dbfile.cstr(), strerror(errno));
-}
-
-
-WvBdbHashBase::~WvBdbHashBase()
-{
-    if (dbf)
-	dbf->close(dbf);
 }
 
 
