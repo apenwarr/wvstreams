@@ -75,6 +75,12 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	errnum = EINVAL;
 	return;
     }
+
+    if (access(program, X_OK))
+    {
+	errnum = errno;
+	return;
+    }
     
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, socks))
     {
