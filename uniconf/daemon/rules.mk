@@ -1,5 +1,5 @@
 
-libuniconfdaemon.so: $(filter-out uniconf/daemon/daemonmain.o,$(call objects,uniconf/daemon)) -luniconf
+libuniconfdaemon.so: $(filter-out uniconf/daemon/daemonmain.o,$(call objects,uniconf/daemon)) libwvstreams.so libwvutils.so libuniconf.so
 
-uniconf/daemon/uniconfdaemon: libwvstreams.so libwvutils.so libuniconf.so libuniconfdaemon.so uniconf/daemon/daemonmain.o
+uniconf/daemon/uniconfdaemon: libuniconfdaemon.so uniconf/daemon/daemonmain.o
 

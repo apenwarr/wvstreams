@@ -68,23 +68,24 @@ static WvLog::LogLevel findloglevel(char *arg)
 
 
 static void trymount(const UniConf &cfg, const UniConfKey &key,
-    WvStringParm location, WvStringParm perms = WvString::null)
+		     WvStringParm location,
+		     WvStringParm perms = WvString::null)
 {
-    UniConfGen *gen;
+    IUniConfGen *gen;
     WvString errormsg;
     if (perms.isnull())
     {
         errormsg = WvString("Unable to mount \"%s\" at \"%s\"\n",
-                location, key);
+			    location, key);
         gen = cfg[key].mount(location);
     }
     else
     {
         errormsg = WvString("Unable to mount \"%s\" at \"%s\","
-                "with permissions source \"%s\"\n", 
-                location, key, perms);
+			    "with permissions source \"%s\"\n", 
+			    location, key, perms);
         gen = cfg[key].mountgen(new UniSecureGen(location,
-                    new UniPermGen(perms)));
+						 new UniPermGen(perms)));
     }
 
     if (! gen || ! gen->isok())
