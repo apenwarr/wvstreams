@@ -64,7 +64,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\;..\..\include"
 				PreprocessorDefinitions="strncasecmp=_strnicmp;strcasecmp=_stricmp;WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="4"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
