@@ -148,7 +148,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
         
         return;
     }
-        
+
     UniClientConn::Command command = conn->readcmd();
 
     switch (command)
@@ -248,11 +248,14 @@ bool UniClientGen::do_select()
     cmdinprogress = true;
     cmdsuccess = false;
 
+    conn->alarm(TIMEOUT);
     while (conn->isok() && cmdinprogress)
     {
-        conn->alarm(TIMEOUT);
         if (conn->select(-1))
+        {
             conn->callback();
+            conn->alarm(TIMEOUT);
+        }
     }
     conn->alarm(-1);
 

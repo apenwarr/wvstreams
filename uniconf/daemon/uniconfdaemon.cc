@@ -16,6 +16,7 @@
 UniConfDaemon::UniConfDaemon(const UniConf &_cfg) :
     cfg(_cfg), log("UniConfDaemon"), closed(false)
 {
+    debug("Starting\n");
 }
 
 UniConfDaemon::~UniConfDaemon()
@@ -81,6 +82,7 @@ bool UniConfDaemon::setupunixsocket(WvStringParm path)
     listener->setcallback(wvcallback(WvStreamCallback, *this,
         UniConfDaemon::unixcallback), NULL);
     append(listener, true, "WvUnixListener");
+    debug("Unix listener started\n");
     return true;
 }
 
@@ -98,5 +100,6 @@ bool UniConfDaemon::setuptcpsocket(const WvIPPortAddr &addr)
     listener->setcallback(wvcallback(WvStreamCallback, *this,
         UniConfDaemon::tcpcallback), NULL);
     append(listener, true, "WvTCPListener");
+    debug("TCP listener started\n");
     return true;
 }
