@@ -24,8 +24,10 @@ class WvStreamClone : public WvStream
 {
 public:
     /**
-     * NOTE: we must NOT use *cloned at this point since the caller may
-     *  not have had a chance to initialize it yet!
+     * NOTE: we must NOT use *cloned at this point since the caller
+     * may not have had a chance to initialize it yet!
+     *
+     * *cloned is still owned by the caller.
      */
     WvStreamClone(WvStream **_cloned)
         { cloned = _cloned; }
