@@ -176,12 +176,13 @@ size_t WvStream::uwrite(const void *buf, size_t count)
     
     // usually people ignore the return value of write(), so we make
     // a feeble attempt to continue even if interrupted.
+    select(5000, false, true);
     int out;
     do
 	out = ::write(getfd(), buf, count);
     while (out < 0 && errno==EINTR);
     
-    if (errno == ENOBUFS) // buffer full - data not written
+    if (errno == ENOBUFS || errno==EAGAIN) // buffer full - data not written
 	return 0;
     
     if (out < 0 || (count && out==0))
