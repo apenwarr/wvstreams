@@ -97,9 +97,6 @@ fileevent stdin readable {
 
     gets stdin line
     
-    puts $line
-    flush stdout
-    
     if [regexp {^Testing "(.*)" in (.*):$} $line junk sub file] {
         addend [format "%-25s %-45s\n" $file $sub]
     } elseif [regexp {^! } $line] {
