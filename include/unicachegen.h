@@ -15,9 +15,9 @@
  * A UniConf generator that adds a cache layer on top of another generator
  *
  * This cache implementation preloads the entire uniconf tree and then keeps up
- * to date by making changes whenever notifications are recieved. This means
- * that a uniconfclient when cached will never actively contact the
- * uniconfdaemon.
+ * to date by making changes whenever notifications are received. This means
+ * that a read-only uniconfclient, when cached, will never actively contact
+ * the uniconfdaemon.
  *
  * **WARNING**
  * The cache *will* go out of date if used with a uniconfclient/daemon without
