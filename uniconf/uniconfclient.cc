@@ -9,8 +9,8 @@
 
 #include <uniconfclient.h>
 
-UniConfClient::UniConfClient(UniConf *_top, UniConfConnFactory *_fctry/*WvStream *conn*/) : /*UniConfConn(conn),*/
-    top(_top), fctry(_fctry), log("UniConfClient"), dict(5)
+UniConfClient::UniConfClient(UniConf *_top, UniConfConnFactory *_fctry) :
+    top(_top), fctry(_fctry), log("UniConfClient"), dict(5), references(0)
 {
     conn = fctry->open();
     waitforsubt = false;
@@ -91,7 +91,7 @@ void UniConfClient::enumerate_subtrees(const UniConfKey &key)
 {
     if (conn->select(0, true, false, false))
         execute();
-    conn->print(WvString("subt %s\n", key));
+    conn->print(WvString("subt %s\n", wvtcl_escape(key)));
     waitforsubt = true;
     while (waitforsubt)
     {
@@ -124,6 +124,11 @@ void UniConfClient::update(UniConf *&h)
     h->dirty = false;
 }
 
+bool UniConfClient::deleteable()
+{
+    references--;
+    return 0 == references;
+}
 
 void UniConfClient::execute()
 {
@@ -183,6 +188,8 @@ void UniConfClient::execute()
                     dict.add(new waitingdata(newkey->unique(), newval->unique()), false);
                     UniConf *narf = &top->get(*key);
                     narf = &narf->get(*newkey);
+                    narf->generator = this;
+                    references++;
                 }
             }
 

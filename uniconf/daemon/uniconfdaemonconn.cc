@@ -70,7 +70,7 @@ void UniConfDaemonConn::execute()
                 UniConf *nerf = &source->mainconf[*key];
                 if (nerf)
                 {
-                    WvString send("SUBT %s ", *key);
+                    WvString send("SUBT %s ", wvtcl_escape(*key));
                     UniConf::Iter i(*nerf);
                     for (i.rewind(); i.next();)
                     {

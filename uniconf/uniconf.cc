@@ -56,7 +56,7 @@ UniConf::~UniConf()
 {
     if (children)
 	delete children;
-    if (generator)
+    if (generator && generator->deleteable())
 	delete generator;
 }
 
@@ -115,7 +115,9 @@ UniConfKey UniConf::gen_full_key()
 bool UniConf::check_children()
 {
     if (this->generator)
+    {
         this->generator->enumerate_subtrees(gen_full_key());
+    }
     return (children != NULL);
 }
 

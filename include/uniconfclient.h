@@ -24,7 +24,7 @@ struct waitingdata
 DeclareWvDict(waitingdata, UniConfString, key);
 
 
-class UniConfClient : public UniConfGen//, UniConfConn
+class UniConfClient : public UniConfGen
 {
 public:
     UniConf *top;
@@ -33,18 +33,20 @@ public:
     WvLog log;
     waitingdataDict dict;
     
-    UniConfClient(UniConf *_top, UniConfConnFactory *_fctry);//WvStream *conn);
+    UniConfClient(UniConf *_top, UniConfConnFactory *_fctry);
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
     virtual void enumerate_subtrees(const UniConfKey &key);
     virtual void update(UniConf *&h);
-
+    virtual bool deleteable();
     virtual void save();
 protected:
     void execute();
     void savesubtree(UniConf *tree, UniConfKey key);
     bool waitforsubt;
+private:
+    unsigned long references;
 };
 
 

@@ -56,7 +56,8 @@ int main(int argc, char **argv)
 
             // just test getting a few keys
             {
-                wvcon->print("--- TEST GETTING KEYS ---\n");
+                wvcon->print("=========================\n");
+                wvcon->print("|   TEST GETTING KEYS   |\n");
                 wvcon->print("=========================\n\n");
                 WvString key("/chickens/bob");
                 WvString result("goof");
@@ -74,7 +75,8 @@ int main(int argc, char **argv)
 
             // Test getting & setting a key
             {
-                wvcon->print("--- TEST SETTING KEYS ---\n");
+                wvcon->print("\n=========================\n");
+                wvcon->print("|   TEST SETTING KEYS   |\n");
                 wvcon->print("=========================\n\n");
                 WvString key("/chickens/bob");
                 WvString result("goof");
@@ -90,7 +92,8 @@ int main(int argc, char **argv)
 
             // Test a normal iterator
             {
-                wvcon->print("--- TEST NORMAL ITERATORS ---\n");
+                wvcon->print("\n=============================\n");
+                wvcon->print("|   TEST NORMAL ITERATORS   |\n");
                 wvcon->print("=============================\n\n");
                 UniConf *nerf = &mainconf["/"];
                 UniConf::Iter i(*nerf);
@@ -102,20 +105,22 @@ int main(int argc, char **argv)
 
             // Test a recursive iterator
             {
-                wvcon->print("--- TEST RECURSIVE ITERATORS ---\n");
+                wvcon->print("\n================================\n");
+                wvcon->print("|   TEST RECURSIVE ITERATORS   |\n");
                 wvcon->print("================================\n\n");
                 UniConf *nerf = &mainconf["/"];
                 UniConf::RecursiveIter i(*nerf);
                 for (i.rewind(); i._next();)
                 {
-                    wvcon->print("Key:%s has value:%s.\n", i->name, *i);
+                    wvcon->print("Key:%s has value:%s.\n", i->gen_full_key(), *i);
                 }
             }
 
             // Test an XIter
             {
-                wvcon->print("--- TEST X ITERATORS ---\n");
-                wvcon->print("================================\n\n");
+                wvcon->print("\n========================\n");
+                wvcon->print("|   TEST X ITERATORS   |\n");
+                wvcon->print("========================\n\n");
                 UniConf *nerf = &mainconf["/"];
                 UniConf::XIter i(*nerf, "/");
                 for (i.rewind(); i._next();)

@@ -81,6 +81,7 @@ public:
     // need them to.
     virtual void load();
     virtual void save();
+    virtual bool deleteable() { return true; }
 };
 
 
