@@ -378,7 +378,8 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (ioctl(sock, SIOCADDRT, &rte))
     {
-	if (errno != EACCES && errno != EPERM && errno != EEXIST)
+	if (errno != EACCES && errno != EPERM && errno != EEXIST
+	  && errno != ENOENT)
 	    err.perror(WvString("AddRoute %s %s (up=%s)",
 				name, dest, isup()));
 	close(sock);

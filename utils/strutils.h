@@ -107,4 +107,6 @@ WvString rfc822_date(time_t when = -1);
 WvString passwd_crypt(const char *str);
 WvString backslash_escape(const WvString &s1);
 
+extern int strcount(const WvString &s, const char c);
+
 #endif // __STRUTILS_H

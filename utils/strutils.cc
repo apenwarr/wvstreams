@@ -295,3 +295,15 @@ WvString backslash_escape(const WvString &s1)
 
     return s2;
 }
+
+
+// how many times does 'c' occur in "s"?
+int strcount(const WvString &s, const char c)
+{
+    int n=0;
+    const char *p = s;
+    while ((p=strchr(p, c)) != NULL && p++)
+        n++;
+
+    return n;
+}
