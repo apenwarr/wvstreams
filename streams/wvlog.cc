@@ -9,6 +9,8 @@
 #include "wvlogrcv.h"
 #include "wvstringlist.h"
 #include "strutils.h"
+#include "wvfork.h"
+
 #include <ctype.h>
 
 #ifdef _WIN32
@@ -125,6 +127,7 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
 
 WvLogRcvBase::WvLogRcvBase()
 {
+    static_init();
     WvLog::receivers.append(this, false);
     WvLog::num_receivers++;
 }
@@ -140,6 +143,30 @@ WvLogRcvBase::~WvLogRcvBase()
 const char *WvLogRcvBase::appname(const WvLog *log) const
 {
     return log->app;
+}
+
+
+void WvLogRcvBase::static_init()
+{
+    static bool init = false;
+    if (!init)
+    {
+#ifndef _WIN32
+        add_wvfork_callback(WvLogRcvBase::cleanup_on_fork);
+#endif
+        init = true;
+    }
+}
+
+
+void WvLogRcvBase::cleanup_on_fork(pid_t p)
+{
+    if (p) return;      // parent: do nothing
+
+    WvLog::receivers.zap();
+    delete WvLog::default_receiver;
+    WvLog::default_receiver = NULL;
+    WvLog::num_receivers = 0;
 }
 
 

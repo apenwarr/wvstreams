@@ -30,6 +30,11 @@ protected:
     const char *appname(const WvLog *log) const;
     virtual void log(const WvLog *source, int loglevel,
 		     const char *_buf, size_t len) = 0;
+
+private:
+    static void cleanup_on_fork(pid_t p);
+    static void static_init();
+
 public:
     WvLogRcvBase();
     virtual ~WvLogRcvBase();
