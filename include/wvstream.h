@@ -11,6 +11,7 @@
 #include "wverror.h"
 #include "wvbuf.h"
 #include "wvcallback.h"
+#include "wvtimeutils.h"
 #include <errno.h>
 #include <limits.h>
 
@@ -686,7 +687,8 @@ protected:
 
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
-    struct timeval alarm_time;	// select() returns true at this time
+    WvTime alarm_time;          // select() returns true at this time
+    WvTime last_alarm_check;    // last time we checked the alarm_remaining
     bool running_callback;	// already in the callback() function
     bool wvstream_execute_called;
     

@@ -298,9 +298,15 @@ void WvHttpStream::execute()
         {
             seterr(ETIMEDOUT);
 
-            WvUrlRequest *url = urls.first();
-            if (url->outstream)
-                url->outstream->seterr(ETIMEDOUT);
+	    // Must check again here since seterr()
+	    // will close our stream and if we only 
+	    // had one url then it'll be gone.
+	    if (!urls.isempty())
+	    {
+                WvUrlRequest *url = urls.first();
+                if (url->outstream)
+                    url->outstream->seterr(ETIMEDOUT);
+	    }
         }
         else
             close(); // timed out, but not really an error

@@ -139,6 +139,8 @@ void wvcrash_setup(const char *_argv0)
     signal(SIGSEGV, wvcrash);
     signal(SIGBUS,  wvcrash);
     signal(SIGABRT, wvcrash);
+    signal(SIGFPE,  wvcrash);
+    signal(SIGILL,  wvcrash);
 }
 
 #else // Not Linux

@@ -65,16 +65,14 @@ WvStream::WvStream()
     want_nowrite = false;
     queue_min = 0;
     autoclose_time = 0;
-    alarm_time.tv_sec = alarm_time.tv_usec = 0;
+    alarm_time = wvtime_zero;
+    last_alarm_check = wvtime_zero;
     taskman = 0;
     
     // magic multitasking support
     uses_continue_select = false;
     personal_stack_size = 65536;
     task = NULL;
-
-    alarm_time.tv_sec = 0;
-    alarm_time.tv_usec = 0;
 }
 
 
@@ -186,7 +184,7 @@ void WvStream::callback()
     // if the alarm has gone off and we're calling callback... good!
     if (alarm_remaining() == 0)
     {
-	alarm_time.tv_sec = alarm_time.tv_usec = 0;
+	alarm_time = wvtime_zero;
 	alarm_was_ticking = true;
     }
     else
@@ -799,7 +797,7 @@ void WvStream::alarm(time_t msec_timeout)
     if (msec_timeout >= 0)
         alarm_time = msecadd(wvtime(), msec_timeout);
     else
-	alarm_time.tv_sec = alarm_time.tv_usec = 0;
+	alarm_time = wvtime_zero;
 }
 
 
@@ -807,7 +805,15 @@ time_t WvStream::alarm_remaining()
 {
     if (alarm_time.tv_sec && !running_callback)
     {
-        time_t remaining = msecdiff(alarm_time, wvtime());
+	WvTime now = wvtime();
+
+	/* Time is going backward! */
+	if (now < last_alarm_check)
+	    alarm_time = tvdiff(alarm_time, tvdiff(last_alarm_check, now));
+
+	last_alarm_check = now;
+
+        time_t remaining = msecdiff(alarm_time, now);
         if (remaining < 0)
             remaining = 0;
         return remaining;
