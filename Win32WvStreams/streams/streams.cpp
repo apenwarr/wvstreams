@@ -1,7 +1,6 @@
 // streams.cpp : Defines the entry point for the DLL application.
 //
 
-#include "stdafx.h"
 #include "streams.h"
 #include <assert.h>
 #include <wvstring.h>
