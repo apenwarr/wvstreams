@@ -68,10 +68,7 @@ int main(int argc, char **argv)
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
             if (!automount)
-            {
-                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), automount);
-                mounted->generator->load();     // This should do nothing.
-            }
+                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
             else
                 new UniConfClient(mounted, new WvTCPConn(addr), automount);
 
@@ -86,10 +83,7 @@ int main(int argc, char **argv)
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
             if (!automount)
-            {
-                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), automount);
-                mounted->generator->load();     // This should do nothing.
-            }
+                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
             else
                 new UniConfClient(mounted, new WvTCPConn(addr), automount);
             
@@ -106,10 +100,7 @@ int main(int argc, char **argv)
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
             if (!automount)
-            {
-                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), automount);//conn);
-                mounted->generator->load();     // This should do nothing.
-            }
+                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
             else
                 new UniConfClient(mounted, new WvTCPConn(addr), automount);
             printheader("TEST X ITERATORS", mountpoint, automount);

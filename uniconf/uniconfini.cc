@@ -222,7 +222,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
     // section unless there are _really_ nodes directly in that section.
     // (ie. single-entry subsections should still get their own subsections
     // in the file, for compatibility with the old WvConf).
-    bool top_special = (h->generator==this);
+    bool top_special = h->comparegen(this); //(h->generator==this);
     
     // dump the "root level" of this tree into one section
     if (any_interesting_children(h))
@@ -234,8 +234,9 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
-	    if (i->generator && i->generator != this) continue;
-	    
+	    if (!i->comparegen(this))//i->generator && i->generator != this) continue;
+	        continue;
+                
 	    if (!!*i)
 		out("%s = %s\n", inicode(i->name), inicode(*i));
 	    
@@ -255,7 +256,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
-	    if (i->generator && i->generator != this)
+	    if (!i->comparegen(this))//i->generator && i->generator != this)
 		i->save();
 	    else if (i->has_children()
 		     && (top_special

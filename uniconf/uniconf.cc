@@ -330,9 +330,15 @@ void UniConf::dump(WvStream &s, bool everything)
 
 void UniConf::mount(UniConfGen *gen)
 {
-    if (this->generator)
-        delete this->generator;
-    
+    this->unmount();
+
     this->generator = gen;
     this->generator->load();
-}   
+}
+
+void UniConf::unmount()
+{
+    if (generator)
+        delete generator;
+    generator = NULL;
+}

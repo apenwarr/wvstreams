@@ -168,8 +168,10 @@ int main(int argc, char **argv)
                 automount = !automount;
                 UniConf mainconf;
                 UniConf *mounted = &mainconf[mountpoint];
-                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), automount);
-                mounted->generator->load();     // This should do nothing.
+                if (!automount)
+                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                else
+                    new UniConfClient(mounted, new WvTCPConn(addr), automount);
 
                 h = printheader("TEST GETTING KEYS", mountpoint, automount);
                 printresult(testgetkeys(mainconf, mountpoint), h);
@@ -185,8 +187,10 @@ int main(int argc, char **argv)
                 automount = !automount;
                 UniConf mainconf;
                 UniConf *mounted = &mainconf[mountpoint];
-                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), automount);
-                mounted->generator->load();     // This should do nothing.
+                if (!automount)
+                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                else
+                    new UniConfClient(mounted, new WvTCPConn(addr), automount);
 
                 h = printheader("TEST GETTING FROM A SECTION", mountpoint, automount);
                 printresult(testgetfromsections(mainconf,mountpoint), h);
@@ -203,8 +207,10 @@ int main(int argc, char **argv)
                 automount = !automount;
                 UniConf mainconf;
                 UniConf *mounted = &mainconf[mountpoint];
-                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), automount);
-                mounted->generator->load();     // This should do nothing.
+                if (!automount)
+                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                else
+                    new UniConfClient(mounted, new WvTCPConn(addr), automount);
 
                 h = printheader("TEST SETTING KEYS", mountpoint, automount);
                 printresult(testgetsetkey(mainconf,mountpoint), h);

@@ -172,8 +172,8 @@ int main()
 	
 	UniConf cfg;
 	
-	cfg["/hello"].generator = new HelloGen("Hello world!");
-	cfg["/bonjour"].generator = new HelloGen("Bonjour tout le monde!");
+        cfg["/hello"].mount(new HelloGen("Hello world"));
+        cfg["/bonjour"].mount(new HelloGen("Bonjour tout le monde!"));
 	
 	cfg.get("/bonjour/1");
 	cfg.get("/bonjour/2");
@@ -191,9 +191,7 @@ int main()
 	log("-- FileTree test begins\n");
 	
 	UniConf cfg;
-	
-	cfg.generator = new UniConfFileTree(&cfg, "/etc/modutils");
-	cfg.generator->load();
+        cfg.mount(new UniConfFileTree(&cfg, "/etc/modutils"));
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -207,13 +205,11 @@ int main()
 	UniConf *cfg2 = &cfg["/weaver ini test"];
 	UniConfIniFile *ini;
 	
-	cfg.generator = ini = new UniConfIniFile(&cfg, "test.ini", false);
+	ini = new UniConfIniFile(&cfg, "test.ini", true); //false);
 	ini->save_test = true;
-	cfg.generator->load();
 	
-	cfg2->generator = ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini", false);
+	ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini",true);// false);
 	ini->save_test = true;
-	cfg2->generator->load();
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -227,13 +223,12 @@ int main()
 	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
 	UniConfIniFile *ini;
 	
-	h1.generator = ini = new UniConfIniFile(&h1, "test.ini", false);
+	ini = new UniConfIniFile(&h1, "test.ini",true);// false);
 	ini->save_test = true;
-	h1.generator->load();
 	
-	h2.generator = ini = new UniConfIniFile(&h2, "test2.ini", false);
+        ini = new UniConfIniFile(&h2, "test2.ini", false);
 	ini->save_test = true;
-	h2.generator->load();
+        h2.mount(ini);
 	
 	log("Partial config dump (branch 1 only):\n");
 	h1.dump(quiet);

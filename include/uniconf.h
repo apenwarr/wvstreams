@@ -102,9 +102,9 @@ public:
 private:
     WvString value;        // the contents of this entry
     UniConfDict *children; // list of all child nodes of this node (subkeys)
+    UniConfGen *generator; // subtree generator for this tree
 public:    
     UniConf *defaults;     // a tree possibly containing default values
-    UniConfGen *generator; // subtree generator for this tree
     
 public:
     bool 
@@ -192,8 +192,12 @@ public:
     void _dump(WvStream &s, bool everything, WvStringTable &keytable);
     void dump(WvStream &s, bool everything = false);
 
+    // Functions to enable the masking of generators
     // Set my generator to be gen, then run load.
+    bool checkgen() { return generator && generator->isok(); }
+    bool comparegen(UniConfGen *gen) { return gen == generator; }
     void mount(UniConfGen *gen);
+    void unmount();
 
     class Iter;
     class RecursiveIter;
