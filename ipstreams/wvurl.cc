@@ -39,6 +39,8 @@ int get_default_port(WvString proto)
 }
 
 // Look up the protocol and decide whether it uses slashes (http) or not (sip)
+// A check of rfc2396 shows that the URI standard actually distinguishes
+// these: 'hierarchical' vs. 'opaque'.
 bool protocol_uses_slashes(WvString proto)
 {
     DefaultPort *p = portmap;
@@ -76,8 +78,9 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     }
     *cptr = 0;
     proto = wptr;
-    
-    wptr = cptr + (protocol_uses_slashes(proto) ? 3 : 1);
+
+    bool use_slashes = protocol_uses_slashes(proto);
+    wptr = cptr + (use_slashes ? 3 : 1);
 
     cptr = strchr(wptr, '@');
     if (!cptr) // no user given
@@ -91,7 +94,7 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     
     cptr = strchr(wptr, '/');
     if (!cptr) // no path given
-	file = "/";
+	file = use_slashes ? "/" : "";
     else
     {
 	file = cptr;
