@@ -12,7 +12,6 @@
 
 #define WVCRYPTO_BUFSIZE  2048     // max bytes to encrypt at once
 
-
 /**
  * a very simple stream that returns randomness from /dev/urandom
  */
@@ -92,14 +91,18 @@ class WvRSAKey
     char *pub, *prv;
     int errnum;
     void seterr(WvStringParm _errstring);
+    
+    void init(const char *_keystr, bool priv);
         
 public:
     struct rsa_st *rsa;
 
+    WvRSAKey(const WvRSAKey &k);
     WvRSAKey(const char *_keystr, bool priv);
     WvRSAKey(int bits);
+    
     ~WvRSAKey();
-
+    
     char *private_str() const
         { return prv; }
     char *public_str() const
@@ -109,7 +112,6 @@ public:
     	{ return (errnum == 0 ? true : false); }
     
     WvString errstring;
-
 };
 
 

@@ -1,46 +1,82 @@
 /*
- * Insert Appropriate Copyright header here....
- * Also, the license should specify that it is LGPL ;)
- * ppatterson@carillonis.com
- */
-
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ * 
+ * X.509 certificate management classes.
+ */ 
 #include "wvx509.h"
 #include "wvdiriter.h"
+#include "wvcrypto.h"
+#include "wvstringlist.h"
+#include "strutils.h"
 
-#include "pem.h"
-#include "x509v3.h"
-#include "err.h"
+#include <pem.h>
+#include <x509v3.h>
+#include <err.h>
 
-WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : debug("X509",WvLog::Debug5), errstr("")
+static int ssl_init_count = 0;
+
+void wvssl_init()
 {
-    err = false;
-    cert = _cert;
-    keypair = NULL;
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
+    if (!ssl_init_count)
+    {
+	OpenSSL_add_all_algorithms();
+	ERR_load_crypto_strings();
+    }
+    
+    ssl_init_count++;
 }
 
-WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair)
-    : debug("X509",WvLog::Debug5), errstr("")
+
+void wvssl_free()
+{
+    ssl_init_count--;
+    
+    if (!ssl_init_count)
+    {
+	ERR_free_strings();
+	EVP_cleanup();
+    }
+}
+
+
+WvString wvssl_errstr()
+{
+    char buf[256];
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    buf[sizeof(buf)-1] = 0;
+    return buf;
+}
+
+
+WvX509Mgr::WvX509Mgr(X509 *_cert)
+    : debug("X509",WvLog::Debug5)
+{
+    cert = _cert;
+    rsa = NULL;
+    wvssl_init();
+}
+
+
+WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_rsa)
+    : debug("X509",WvLog::Debug5)
 {
     debug("Creating New Certificate for %s\n",dName);
-    keypair = _keypair;
+    rsa = _rsa;
     cert = NULL;
-    err = false;
-    ERR_load_crypto_strings();
+    wvssl_init();
     createSScert(dName, bits);
-
 }
 
 
 WvX509Mgr::~WvX509Mgr()
 {
-    if (keypair)
-	delete keypair;
+    if (rsa)
+	delete rsa;
     X509_free(cert);
-    ERR_free_strings();
+    wvssl_free();
 }
+
 
 // The people who designed this garbage should be shot!
 // Support old versions of openssl...
@@ -51,6 +87,7 @@ WvX509Mgr::~WvX509Mgr()
 #ifndef NID_Domain
 #define NID_Domain 392
 #endif
+
 
 // returns some approximation of the server's fqdn, or an empty string.
 static WvString set_name_entry(X509_NAME *name, WvString dn)
@@ -141,10 +178,10 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
 
     WvString serverfqdn;
 
-    if (keypair == NULL)
+    if (rsa == NULL)
     {
 	debug("Need a new RSA key, so generating it...\n");
-	keypair = new WvRSAKey(keysize);
+	rsa = new WvRSAKey(keysize);
 	debug("Ok, I've got a new RSA keypair\n");
     }
 
@@ -158,7 +195,7 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
 	seterr("Error creating new X509 object");
 	return;
     }
-    if (!EVP_PKEY_assign_RSA(pk, keypair->rsa))
+    if (!EVP_PKEY_assign_RSA(pk, rsa->rsa))
     {
 	seterr("Error adding RSA keys to certificate");
 	return;
@@ -226,6 +263,7 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
     encodecert();
 }
 
+
 WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
 {
     EVP_PKEY *pk;
@@ -238,26 +276,27 @@ WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
 
     // First thing to do is to generate an RSA Keypair if the
     // Manager doesn't already have one:
-    if (keypair == NULL)
-    {
-	keypair = new WvRSAKey(keysize);
-    }
+    if (rsa == NULL)
+	rsa = new WvRSAKey(keysize);
+    
     if ((pk=EVP_PKEY_new()) == NULL)
     {
         seterr("Error creating key handler for new certificate");
         return pkcs10;
     }
+    
     if ((certreq=X509_REQ_new()) == NULL)
     {
         seterr("Error creating new PKCS#10 object");
         return pkcs10;
     }
 
-    if (!EVP_PKEY_assign_RSA(pk, keypair->rsa))
+    if (!EVP_PKEY_assign_RSA(pk, rsa->rsa))
     {
         seterr("Error adding RSA keys to certificate");
         return pkcs10;
     }
+    
     X509_REQ_set_pubkey(certreq, pk);
     name = X509_REQ_get_subject_name(certreq);   
 
@@ -288,40 +327,44 @@ WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
     return pkcs10;
 }
 
-bool WvX509Mgr::testcert(X509 *newcert)
-{
-    EVP_PKEY *pk;
 
-    if (keypair != NULL && ((pk=EVP_PKEY_new()) != NULL))
+bool WvX509Mgr::testcert()
+{
+    bool bad = false;
+    
+    EVP_PKEY *pk = EVP_PKEY_new();
+    
+    if (rsa && pk)
     {
-	if (!EVP_PKEY_assign_RSA(pk, keypair->rsa))
+	WvRSAKey tmpkey(*rsa);
+	
+	if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
     	{
             seterr("Error setting RSA keys");
-            return false;
+	    bad = true;
     	}
 	else
 	{
-	    int verify_return = X509_verify(newcert, pk);
-	    switch (verify_return)
+	    int verify_return = X509_verify(cert, pk);
+	    if (verify_return != 1) // only '1' means okay
 	    {
-		case 1:
-		    return true;
-		// This looks wierd, but it works... 0 is an error, as is
-		// -1, as is any other result...
-		default:
-		    debug(WvLog::Error, "Result was: %s\n",verify_return);
-		    ERR_print_errors_fp(stderr);
-		    seterr("Certificate does not match RSA keypair\n");
-		    return false;
+		seterr("Certificate test failed: %s\n", wvssl_errstr());
+		bad = true;
 	    }
 	}
+	
+	tmpkey.rsa = NULL;
     }
     else
     {
-	debug("Must load RSA Key before setting X509 key\n");
-	seterr("No RSA Key");
-	return false;
+	seterr("no RSA keypair in X509 manager");
+	bad = true;
     }
+    
+    if (pk)
+	EVP_PKEY_free(pk);
+    
+    return !bad;
 }
 
 
@@ -330,18 +373,22 @@ void WvX509Mgr::decodecert(WvString encodedcert)
     int hexbytes = strlen((const char *)encodedcert);
     int bufsize = hexbytes/2;
     unsigned char *certbuf = new unsigned char[bufsize], *cp = certbuf;
-    X509 *ct;
+    X509 *tmpcert;
 
     unhexify(certbuf,encodedcert);
-    ct = cert = X509_new();
-    cert = d2i_X509(&ct, &cp, hexbytes/2);
+    tmpcert = cert = X509_new();
+    cert = d2i_X509(&tmpcert, &cp, hexbytes/2);
 
     // make sure that the cert is valid
-    if (!testcert(cert))
+    if (cert && !testcert())
     {
 	X509_free(cert);
 	cert = NULL;
     }
+    
+    if (!cert)
+	seterr("certificate decode failed!");
+    
     delete[] certbuf;
 }
 
@@ -378,6 +425,7 @@ bool WvX509Mgr::validate()
 	    seterr("Peer certificate has expired!");
 	    return false;
 	}
+	
 	// Kind of a placeholder thing right now...
 	// Later on, do CRL, and certificate validity checks here..
         // Actually, break these out in signedbyvalidCA(), and isinCRL()
@@ -389,6 +437,7 @@ bool WvX509Mgr::validate()
     
     return true;
 }
+
 
 bool WvX509Mgr::signedbyCAinfile(WvString certfile)
 {
@@ -408,9 +457,7 @@ bool WvX509Mgr::signedbyCAinfile(WvString certfile)
     if (lookup == NULL) abort();  
 
     if (!X509_LOOKUP_load_file(lookup,certfile,X509_FILETYPE_PEM))
-    {
         X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
-    }
 
     X509_STORE_CTX_init(&csc,cert_ctx,cert,NULL);
     result = X509_verify_cert(&csc);
@@ -419,14 +466,11 @@ bool WvX509Mgr::signedbyCAinfile(WvString certfile)
     X509_STORE_free(cert_ctx);
 
     if (result == 1)
-    {
     	return true;
-    }
     else
-    {
 	return false;
-    }
 }
+
 
 bool WvX509Mgr::signedbyCAindir(WvString certdir)
 {
@@ -434,17 +478,17 @@ bool WvX509Mgr::signedbyCAindir(WvString certdir)
     for (i.rewind(); i.next() ; )
     {
 	if (!signedbyCAinfile(i->fullname))
-	{
 	    return false;
-	}
     }    
     return true;
 }
+
 
 bool WvX509Mgr::isinCRL()
 {
     return true;
 }
+
 
 void WvX509Mgr::dumpcert(WvString outfile, bool append)
 {
@@ -452,89 +496,76 @@ void WvX509Mgr::dumpcert(WvString outfile, bool append)
 
     if (append)
     {
-	certout = fopen(outfile,"a");
-        debug("Opening %s for append\n",outfile);
+        debug("Opening %s for append.\n", outfile);
+	certout = fopen(outfile, "a");
     }
     else
     {
-	certout = fopen(outfile,"w");
-        debug("Opening %s for write\n",outfile);
+        debug("Opening %s for write.\n", outfile);
+	certout = fopen(outfile, "w");
     }
 
     if (certout != NULL)
     {
-	debug("Dumping X509 Certificate...\n");
-    	PEM_write_X509(certout,cert);
+	debug("Dumping X509 Certificate.\n");
+    	PEM_write_X509(certout, cert);
+	fclose(certout);
     }
     else
-    {
-	seterr("Cannot open file for writing");
-    }
-
-    fclose(certout);
-
-    return;
+        seterr("fopen: %s", strerror(errno));
 }
+
 
 void WvX509Mgr::dumpkeypair(WvString outfile, bool append)
 {
     FILE *keyout;
-    EVP_CIPHER *enc = NULL;
+    const EVP_CIPHER *enc;
 
     if (append)
     {
-        keyout = fopen(outfile,"a");
-        debug("Opening %s for append\n",outfile);
+        debug("Opening %s for append.\n", outfile);
+        keyout = fopen(outfile, "a");
     }
     else
-    {
         keyout = fopen(outfile,"w");
-    }
-    if (keyout != NULL)
+    
+    if (keyout)
     {
-	debug("Printing keypair...\n");
-	(const EVP_CIPHER *)enc = EVP_get_cipherbyname("rsa");
-	PEM_write_RSAPrivateKey(keyout,keypair->rsa, enc, NULL, 0, NULL, NULL);
+	debug("Printing keypair.\n");
+	enc = EVP_get_cipherbyname("rsa");
+	PEM_write_RSAPrivateKey(keyout, rsa->rsa, enc, NULL, 0, NULL, NULL);
+	fclose(keyout);
     }
     else
-    {   
-        seterr("Cannot open file for writing");
-    }
-
-    fclose(keyout);
-
-    return;
+        seterr("fopen: %s", strerror(errno));
 }
+
 
 void WvX509Mgr::dumprawkeypair(WvString outfile, bool append)
 {
     FILE *keyout;
-    int offset;
+    int offset = 0;
     struct stat filestat;
 
     if (append)
     {
-        keyout = fopen(outfile,"a");
-        fstat(fileno(keyout),&filestat);
-	offset = filestat.st_size;
-        debug("Opening %s for append\n",outfile);
+        debug("Opening %s for append.\n", outfile);
+        keyout = fopen(outfile, "a");
+	if (keyout)
+	{
+	    fstat(fileno(keyout), &filestat);
+	    offset = filestat.st_size;
+	}
     }
     else
+        keyout = fopen(outfile, "w");
+    
+    if (keyout)
     {
-        keyout = fopen(outfile,"w");
-	offset = 0;
-    }
-    if (keyout != NULL)
-    {
-	debug("Printing keypair...\n");
-	RSA_print_fp(keyout,keypair->rsa, offset);
+	debug("Printing keypair.\n");
+	RSA_print_fp(keyout, rsa->rsa, offset);
+	fclose(keyout);
     }
     else
-    {   
-        seterr("Cannot open file for writing");
-    }
-
-    fclose(keyout);
-
-    return;
+        seterr("fopen: %s", strerror(errno));
 }

@@ -3,10 +3,10 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
  * A simple class that can trigger an event on a timed basis.
- *   - if given an hour, triggers once per day, on that hour.
- *   - if given a number of times per day, triggers that many times per
- *     day, evenly, starting at midnight.  (Needed to get a Microbackup
- *     going every 15 minutes.)  
+ *   a) if given an hour, triggers once per day, on that hour.
+ *   b) if given a number of times per day, triggers that many times per
+ *      day, evenly, starting at the hour given in (a).  (Needed to get a
+ *      Microbackup going every 15 minutes.)  
  *
  * Presently has a one-hour granularity in the first case, but that can be
  * extended one day when someone cares.

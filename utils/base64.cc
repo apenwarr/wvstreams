@@ -85,7 +85,7 @@ static inline char ofs( char p )
     return( strchr( alphabet, p ) - alphabet );
 }
 
-char * base64_decode( char * str, int length )
+char * base64_decode( const char * str, int length )
 /********************************/
 // No error checking is performed!  Assume str really is a Base64 stream!
 {

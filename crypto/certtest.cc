@@ -21,14 +21,15 @@ int main()
 	// Create a new certificate
 	WvX509Mgr x509cert(dN,1024);
 	
-	if (!x509cert.err)
+	if (x509cert.isok())
 	{
 	    WvString filename("testcert.pem");
 	    x509cert.dumpkeypair(filename,false);
 	    x509cert.dumpcert(filename,true);
+	    x509cert.dumprawkeypair(filename,true);
 	}
 	else
-		log("Error: %s",x509cert.errstr);
+		log("Error: %s",x509cert.errstr());
 
 	log("Done...\n");
 }

@@ -26,7 +26,8 @@ WvCryptoStream::WvCryptoStream(WvStream *_slave) : WvStreamClone(&slave)
 
 WvCryptoStream::~WvCryptoStream()
 {
-    // nothing special
+    if (my_cryptbuf)
+	delete[] my_cryptbuf;
 }
 
 
@@ -137,7 +138,7 @@ WvBlowfishStream::~WvBlowfishStream()
 
 
 
-WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
+void WvRSAKey::init(const char *_keystr, bool priv)
 {
     errnum = 0;
 
@@ -164,9 +165,7 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
 	rsa = d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
 
 	if (!rsa)
-	{
 	    seterr("RSA Key is invalid!");
-	}
 	else
 	{
 	    prv = keystr;
@@ -182,9 +181,7 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
     {
 	rsa = d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
 	if (!rsa)
-	{
 	    seterr("RSA Key is invalid!");
-	}
 	else
 	{
 	    prv = NULL;
@@ -193,6 +190,21 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
     }
     
     delete[] keybuf;
+}
+
+
+WvRSAKey::WvRSAKey(const WvRSAKey &k)
+{
+    if (k.prv)
+	init(k.private_str(), true);
+    else
+	init(k.public_str(), false);
+}
+
+
+WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
+{
+    init(_keystr, priv);
 }
 
 
