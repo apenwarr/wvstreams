@@ -737,3 +737,14 @@ WVTEST_MAIN("substr")
     WVPASS(substr(big, 10, 1) == "");
 }
 
+WVTEST_MAIN("spacecat")
+{
+    WVPASSEQ(spacecat("xx", "yy"), "xx yy");
+    WVPASSEQ(spacecat("xx", "yy", ';'), "xx;yy");
+    WVPASSEQ(spacecat("xx;;", "yy", ';'), "xx;;;yy");
+    WVPASSEQ(spacecat("xx;;;", "yy", ';', true), "xx;yy");
+    WVPASSEQ(spacecat("xx;;;", ";yy", ';', true), "xx;yy");
+    WVPASSEQ(spacecat("", "yy"), " yy");
+    WVPASSEQ(spacecat("", "yy", ';', true), ";yy");
+    WVPASSEQ(spacecat("", ";;yy", ';', true), ";yy");
+}

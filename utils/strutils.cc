@@ -97,22 +97,48 @@ char *trim_string(char *string, char c)
 // return the string formed by concatenating string 'a' and string 'b' with
 // the 'sep' character between them.  For example,
 //    spacecat("xx", "yy", ";")
+// returns "xx;yy", and
+//    spacecat("xx;;", "yy", ";")
+// returns "xx;;;yy", and
+//    spacecat("xx;;", "yy", ";", true)
 // returns "xx;yy".
-// 
+//
 // This function is much faster than the more obvious WvString("%s;%s", a, b),
 // so it's useful when you're producing a *lot* of string data.
-WvString spacecat(WvStringParm a, WvStringParm b, char sep)
+WvString spacecat(WvStringParm a, WvStringParm b, char sep, bool onesep)
 {
-    int alen = strlen(a), blen = strlen(b);
+    size_t alen = strlen(a);
+    size_t blen = strlen(b);
+
+    // If we only want one separator, eat away at the back of string a
+    if (onesep && alen)
+    {
+	while (a[alen-1] == sep)
+	    --alen;
+    }
+
+    // Create the destination string, and give it an appropriate size.
+    // Then, fill it with string a.
     WvString s;
     s.setsize(alen+blen+2);
     char *cptr = s.edit();
-    
     memcpy(cptr, a, alen);
+
+    // Write the separator in the appropriate spot.
     cptr[alen] = sep;
-    memcpy(cptr+alen+1, b, blen);
-    cptr[alen+1+blen] = 0;
-    
+
+    // If we only want one separator, eat away at the from of string b.
+    size_t boffset = 0;
+    if (onesep)
+    {
+	while (b[boffset] == sep)
+	    ++boffset;
+    }
+
+    // Now copy the second half of the string in and terminate with a NUL.
+    memcpy(cptr+alen+1, b+boffset, blen-boffset);
+    cptr[alen+1+blen-boffset] = 0;
+
     return s;
 }
 
