@@ -94,8 +94,11 @@ protected:
     static WvStringBuf nullbuf;
     
 public:
-    // just an empty (NULL) string
+    // a null string, converted to char* as "(nil)"
     static const WvFastString null;
+
+    // an empty string, converted to char* as ""
+    static const WvFastString empty;
     
     /**
      * Create an empty, NULL string.  In the past, these were dangerous
