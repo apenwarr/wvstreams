@@ -73,8 +73,6 @@ WVTEST_MAIN("tempgen/cachegen basics")
         uniconf["cfg"].mountgen(unigen);
         uniconf["tmp"].mount("temp:");
 
-        UniConf defcfg(uniconf["default"]);
-
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname, 0777);
 
@@ -105,7 +103,6 @@ WVTEST_MAIN("tempgen/cachegen basics")
     
     int initial_value = cfg["eth0"].xgetint("dhcpd", 0);
     cfg["eth0"].xsetint("dhcpd", !initial_value);
-    //usleep(50); // compensate for latency in propogation
     cfg.commit();
     int new_value = cfg["eth0"].xgetint("dhcpd", 0);
 

@@ -30,7 +30,14 @@ WVTEST_MAIN("wvsubprocqueuestream")
     // more than 25 passes or so.  But we'll give it more, just in case the
     // system is loaded down.  (Hint: if the alarm() is too short or infinite,
     // we'll have too many passes or the test will freeze.)
-    for (int i = 0; i < 50 && !q.isempty(); i++)
+    int i;
+    for (i = 0; i < 55 && !q.isempty(); i++)
+    {
+	printf("#%d %ld: running with %d total, %d waiting.\n",
+	       i, (long)time(NULL), q.remaining(), q.running());
 	l.runonce(-1);
+    }
+    printf("Done looping with i=%d.\n", i);
+    WVPASS(i < 50);
     WVPASSEQ(q.remaining(), 0);
 }
