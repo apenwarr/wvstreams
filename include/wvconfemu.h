@@ -14,6 +14,8 @@
 #define WvConfigSectionList WvConfigSectionListEmu
 #define WvConfigEntry WvConfigEntryEmu
 #define WvConfigEntryList WvConfigEntryListEmu
+#else
+#warning "disabling wvconfemu transparent emulation"
 #endif
 
 
@@ -49,6 +51,12 @@ public:
     WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name):
 	uniconf(_uniconf), name(_name)
     {}
+
+    void set(WvStringParm entry, WvStringParm value);
+
+    bool isempty() const;
+    size_t count() const;
+
     class Iter;
     friend class Iter;
 };
@@ -91,8 +99,14 @@ public:
     {
 	return entry;
     }
+    void unlink();
+    void xunlink();
     WvIterStuff(WvConfigEntryEmu);
 };
+
+
+// parameters are: userdata, section, entry, oldval, newval
+typedef WvCallback<void, void*, WvStringParm, WvStringParm, WvStringParm, WvStringParm> WvConfCallback;
 
 
 class WvConfEmu
@@ -117,16 +131,57 @@ private:
 public:
     WvConfEmu(const UniConf& _uniconf);
     void zap();
+    bool isclean() const;
     void load_file(WvStringParm filename);
+    void save(WvStringParm filename);
+    void flush();
+
     WvConfigSectionEmu *operator[] (WvStringParm sect);
+
+    void add_callback(WvConfCallback callback, void *userdata,
+		      WvStringParm section, WvStringParm entry, void *cookie);
+    void del_callback(WvStringParm section, WvStringParm entry, void *cookie);
+
     void add_setbool(bool *b, WvStringParm _section, WvStringParm _key);
+
+    void add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);
+    void del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);
+
+    void add_addfile(WvString *filename, WvStringParm sect, WvStringParm ent);
+
+    int getint(WvStringParm section, WvStringParm entry, int def_val);
     const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL);
+
     void setint(WvStringParm section, WvStringParm entry, int value);
     void set(WvStringParm section, WvStringParm entry,
 	     const char *value);
+
+    void maybesetint(WvStringParm section, WvStringParm entry,
+		     int value);
     void maybeset(WvStringParm section, WvStringParm entry,
 		  const char *value);
+
+    void delete_section(WvStringParm section);
+
+    size_t count() const;
+
+    // Gets a user's password and decrypts it.  This isn't defined in wvconf.cc.
+    WvString get_passwd(WvStringParm sect, WvStringParm user);
+    WvString get_passwd(WvStringParm user)
+        { return get_passwd("Users", user); }
+    WvString get_passwd2(WvString pwenc);
+
+    // Encrypts and sets a user's password.  This isn't defined in wvconf.cc.
+    void set_passwd(WvStringParm sect, WvStringParm user, WvStringParm passwd);
+    void set_passwd(WvStringParm user, WvStringParm passwd)
+        { set_passwd("Users", user, passwd); }
+    WvString set_passwd2(WvStringParm passwd);
+
+    // Converts all passwords to unencrypted format.  Not defined in wvconf.cc.
+    void convert_to_old_pw();
+
+    static int check_for_bool_string(const char *s);
 
     class Iter;
     friend class Iter;
