@@ -372,7 +372,7 @@ WVTEST_MAIN("Base64")
     {
         read = input_stream.read_until(buf, sizeof(buf), 0, '\n');
 
-        if (buf[read-1] == '\n')
+        if (read && buf[read-1] == '\n')
             buf[--read] = '\0'; 
         if (read == 0)
             break;
