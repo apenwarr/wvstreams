@@ -73,6 +73,9 @@ public:
      * to running the event once a day). 
      */
     void configure( int _first_hour, int _num_per_day=0 );
+
+    /// Set number of times per day the event should occur - ONLY FOR TESTING!
+    void set_num_per_day(int _num_per_day);
     
     /** 
      * Modifies the first hour in which the event should occur and leaves the 
@@ -86,7 +89,7 @@ private:
     int     num_per_day;
     bool    need_reset;
     int     last_hour;
-    int     last_minute;
+    int     last_second;
     
     time_t  not_until;
 };

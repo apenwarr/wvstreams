@@ -1,4 +1,4 @@
-#if 0
+
 #include "wvtest.h"
 #include "wvdailyevent.h"
 
@@ -17,6 +17,14 @@ void wait(int num_seconds)
     }
 }
 
+bool within_range(int numbertocheck, int numberneeded, int range) 
+{
+    if (numbertocheck - numberneeded < range / 2 || numberneeded - numbertocheck < range / 2)
+        return true;
+    else
+        return false;
+}
+
 const int NUM_MINUTES_IN_DAY = 1440;
     
 WVTEST_MAIN("WvDailyEvent-waits-for-one-time-period Test")
@@ -29,24 +37,16 @@ WVTEST_MAIN("WvDailyEvent-waits-for-one-time-period Test")
     tnow = localtime(&now);
     
     WvDailyEvent devent(tnow->tm_hour, NUM_MINUTES_IN_DAY);
-    
-    printf("immediately after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
+    devent.set_num_per_day(NUM_MINUTES_IN_DAY * 20); // every 3 seconds
 
-    wait(30);
-    
-    printf("\n30 seconds after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
-    
-    wait(30);
-    
-    printf("\n1 minute after object is created\n");
-    WVPASS(devent.isok());
-    WVPASS(devent.select(1));
-    devent.runonce(1);
-    WVFAIL(devent.select(1));
+    int seconds_passed = 0;
+    while(!devent.select(0))
+    {
+        if (now != time(NULL))
+            seconds_passed += time(NULL) - now;
+        now = time(NULL);
+    }
+    WVPASS(within_range(seconds_passed, 3, 2));
 }
 
 WVTEST_MAIN("configure()-causes-wait-for-one-time-period test")
@@ -59,37 +59,23 @@ WVTEST_MAIN("configure()-causes-wait-for-one-time-period test")
     tnow = localtime(&now);
     
     WvDailyEvent devent(tnow->tm_hour, NUM_MINUTES_IN_DAY);
+    devent.set_num_per_day(NUM_MINUTES_IN_DAY * 20); // every 3 seconds
     
-    printf("immediately after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
-
-    wait(30);
+    wait(1);
     
-    printf("\n30 seconds after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
-    
-    printf("\nReconfiguring granularity to once every 2 mins\n");
-    devent.configure(tnow->tm_hour, NUM_MINUTES_IN_DAY/2);
-    
-    wait(30);
+    printf("\nReconfiguring granularity to once every 5 seconds");
+    devent.set_num_per_day(NUM_MINUTES_IN_DAY * 12);
 
-    printf("\n30 seconds after reconfiguration\n");
-    WVFAIL(devent.select(1));
-
-    wait(60);
-
-    printf("\n90 seconds after reconfiguration\n");
-    WVFAIL(devent.select(1));
-
-    wait(30);
-    
-    printf("\n120 seconds after reconfiguration\n");
-    WVPASS(devent.select(1));
-    devent.runonce(1);
-    WVFAIL(devent.select(1));
+    int seconds_passed = 0;
+    while(!devent.select(0))
+    {
+        if (now != time(NULL))
+            seconds_passed += time(NULL) - now;
+        now = time(NULL);
+    }
+    WVPASS(within_range(seconds_passed, 6, 2));
 }
+
 
 WVTEST_MAIN("Ridiculous values (num_per_day) test") 
 {
@@ -100,55 +86,15 @@ WVTEST_MAIN("Ridiculous values (num_per_day) test")
     now = time(NULL);
     tnow = localtime(&now);
     
-    WvDailyEvent devent(tnow->tm_hour + 24, NUM_MINUTES_IN_DAY + 10000);
+    WvDailyEvent devent(tnow->tm_hour + 24, NUM_MINUTES_IN_DAY * 10000);
+    devent.set_num_per_day(NUM_MINUTES_IN_DAY * 4933);
     
-    printf("immediately after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
-
-    wait(30);
-    
-    printf("\n30 seconds after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
-    
-    wait(30);
-    
-    printf("\n1 minute after object is created\n");
-    WVPASS(devent.isok());
-    devent.runonce(1);
-    WVFAIL(devent.select(1));
-}
-
-WVTEST_MAIN("Ridiculous values (first_hour) test") 
-{
-    printf("At the moment, this test will take one day so it has been commented out\n");
-
-/*
-    // Get localtime
-    time_t now;
-    struct tm *tnow;
-
-    now = time(NULL);
-    tnow = localtime(&now);
-    
-    WvDailyEvent devent(tnow->tm_hour + 24, 0);
-    
-    printf("immediately after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
-
-    wait(30);
-    
-    printf("\n30 seconds after object is created\n");
-    WVPASS(devent.isok());
-    WVFAIL(devent.select(1));
-    
-    wait(30);
-    
-    printf("\n1 minute after object is created\n");
-    WVPASS(devent.isok());
-*/
-}
-
-#endif
+    int seconds_passed = 0;
+    while(!devent.select(0))
+    {
+        if (now != time(NULL))
+            seconds_passed += time(NULL) - now;
+        now = time(NULL);
+    }
+    WVPASS(within_range(seconds_passed, 1, 2));
+} 
