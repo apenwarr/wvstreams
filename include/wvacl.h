@@ -27,7 +27,8 @@ DeclareWvList(WvSimpleAclEntry);
 int wvsimpleaclentry_sort(const WvSimpleAclEntry *a, const WvSimpleAclEntry *b);
 
 /// Prints log messages indicating if we have library and/or kernel support.
-void acl_check();
+/// Returns true if both are okay.
+bool acl_check();
 
 /** Returns a NITI-compliant ACL short text form of 'oldacl'.
  * This involves ensuring that the mask is "rwx".  If it isn't, change user
