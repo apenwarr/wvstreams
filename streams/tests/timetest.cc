@@ -47,7 +47,7 @@ int main()
 
     while (!want_to_quit)
     {
-	if(t.select(-1))
+	if (t.select(-1))
 	    t.callback();
 
 	/*
