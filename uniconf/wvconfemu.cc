@@ -99,9 +99,6 @@ static void do_addfile(void* userdata,
 
 WvConfigEntry *WvConfigSectionEmu::operator[] (WvStringParm s)
 {
-    assert(false && "not implemented");
-    return NULL;
-
     WvConfigEntryEmu* entry = entries[s];
 
     if (!entry && uniconf[s].exists())
@@ -433,7 +430,7 @@ void WvConfEmu::maybeset(WvStringParm section, WvStringParm entry,
 
 void WvConfEmu::delete_section(WvStringParm section)
 {
-    assert(false && "not implemented");
+    uniconf[section].set(WvString::null);
 }
 
 
