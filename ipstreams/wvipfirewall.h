@@ -26,6 +26,8 @@ public:
     WvIPFirewall();
     ~WvIPFirewall();
     
+    static bool enable;
+    
     void zap();
     void add(const WvIPPortAddr &addr);
 };

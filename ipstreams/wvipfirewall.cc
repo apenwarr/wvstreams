@@ -11,6 +11,9 @@
 #include <unistd.h>
 
 
+bool WvIPFirewall::enable = false;
+
+
 WvIPFirewall::WvIPFirewall()
 {
 }
@@ -35,7 +38,7 @@ void WvIPFirewall::add(const WvIPPortAddr &addr)
 {
     addrs.append(new WvIPPortAddr(addr), true);
     WvString s(command("-I", addr));
-    system(s.str);
+    if (enable) system(s.str);
 }
 
 
@@ -43,7 +46,7 @@ void WvIPFirewall::add(const WvIPPortAddr &addr)
 void WvIPFirewall::del(const WvIPPortAddr &addr)
 {
     WvString s(command("-D", addr));
-    system(s.str);
+    if (enable) system(s.str);
 }
 
 
