@@ -30,5 +30,3 @@ UniWatch::~UniWatch()
 {
     cfg.del_callback(this, recurse);
 }
-
-

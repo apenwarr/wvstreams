@@ -82,41 +82,24 @@ class UniConfRoot : public UniConf
 
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
-    UniConfRoot() : UniConf(this), watchroot(NULL)
-    {
-        mounts.setcallback(UniConfGenCallback(this,
-            &UniConfRoot::gen_callback), NULL);
-    }
-
-    /** Destroys the UniConf tree along with all uncommitted data. */
-    ~UniConfRoot()
-        { mounts.setcallback(UniConfGenCallback(), NULL); }
+    UniConfRoot();
 
     /** 
      * Creates a new UniConf tree and mounts the given moniker at the root.
      * Since most people only want to mount one generator, this should save
      * a line of code here and there.
      */
-    UniConfRoot(WvStringParm moniker, bool refresh = true)
-        : UniConf(this), watchroot(NULL)
-    {
-        mounts.mount("/", moniker, refresh);
-        mounts.setcallback(UniConfGenCallback(this,
-            &UniConfRoot::gen_callback), NULL);
-    }
+    UniConfRoot(WvStringParm moniker, bool refresh = true);
 
     /** 
      * Creates a new UniConf tree and mounts the given generator at the root.
      * Since most people only want to mount one generator, this should save
      * a line of code here and there.
      */
-    UniConfRoot(UniConfGen *gen, bool refresh = true)
-        : UniConf(this), watchroot(NULL)
-    {
-	mounts.mountgen("/", gen, refresh);
-        mounts.setcallback(UniConfGenCallback(this,
-            &UniConfRoot::gen_callback), NULL);
-    }
+    UniConfRoot(UniConfGen *gen, bool refresh = true);
+    
+    /** Destroys the UniConf tree along with all uncommitted data. */
+    ~UniConfRoot();
 
     /**
      * Requests notification when any of the keys covered by the

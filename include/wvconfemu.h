@@ -122,7 +122,8 @@ private:
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
-    WvConfEmu(const UniConf& _uniconf);
+    WvConfEmu(const UniConf &_uniconf);
+    ~WvConfEmu();
     void zap();
     bool isok() const;
     void load_file(WvStringParm filename);

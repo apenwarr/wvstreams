@@ -195,15 +195,19 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
     if (hold)
 	return;
 
+    WvString value = uniconf[section][key].get("");
+    
     WvList<CallbackInfo>::Iter i(callbacks);
     for (i.rewind(); i.next(); )
     {
 	if ((!i->section || !strcasecmp(i->section, section))
-	    && (!i->key || !strcasecmp(i->key, key)))
+	    && (!i->key || !strcasecmp(i->key, key))
+	    && (i->last != value))
 	{
-	    WvString value = uniconf[section][key].get("");
-	    i->callback(i->userdata, section, key, i->last, value);
+	    WvString old(i->last);
 	    i->last = value;
+	    i->callback(i->userdata, section, key, old, value);
+	    i.rewind();
 	}
     }
 }
@@ -216,6 +220,18 @@ WvConfEmu::WvConfEmu(const UniConf &_uniconf)
     uniconf.add_callback(this,
 			 UniConfCallback(this, &WvConfEmu::notify),
 			 true);
+}
+
+
+WvConfEmu::~WvConfEmu()
+{
+    // things will "work" if you don't empty the callback list before
+    // deleting the WvConfEmu, but they probably won't work the way you
+    // think they will. (ie. someone might be using a temporary WvConfEmu
+    // and think his callbacks will stick around; they won't!)
+    //assert(callbacks.isempty());
+    
+    uniconf.del_callback(this);
 }
 
 
@@ -281,11 +297,10 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
 			     WvStringParm section, WvStringParm key,
 			     void *cookie)
 {
-    WvList<CallbackInfo>::Iter i(callbacks);
-
     if (!callback)
 	return;
 
+    WvList<CallbackInfo>::Iter i(callbacks);
     for (i.rewind(); i.next(); )
     {
 	if (i->cookie == cookie
@@ -449,7 +464,7 @@ void WvConfEmu::maybeset(WvStringParm section, WvStringParm entry,
 
 void WvConfEmu::delete_section(WvStringParm section)
 {
-    uniconf[section].set(WvString::null);
+    uniconf[section].remove();
 }
 
 
