@@ -142,4 +142,82 @@ WvString nice_hostname(WvStringParm name);
 WvString getfilename(WvStringParm fullname);
 WvString getdirname(WvStringParm fullname);
 
+/**
+ * Splits a string and adds each substring to a collection.
+ *   coll       : the collection of strings to add to
+ *   _s         : the string to split
+ *   splitchars : the set of delimiter characters
+ *   limit      : the maximum number of elements to split
+ */
+template<class StringCollection>
+void strcoll_split(StringCollection &coll, WvStringParm _s,
+    const char *splitchars = " \t", int limit = 0)
+{
+    WvString s(_s);
+    char *sptr = s.edit(), *eptr, oldc;
+
+    while (sptr && *sptr)
+    {
+	--limit;
+	if (limit)
+	{
+	    sptr += strspn(sptr, splitchars);
+	    eptr = sptr + strcspn(sptr, splitchars);
+	}
+	else
+	{
+	    sptr += strspn(sptr, splitchars);
+	    eptr = sptr + strlen(sptr);
+	}
+	
+	oldc = *eptr;
+	*eptr = 0;
+	
+	WvString *newstr = new WvString(sptr);
+        coll.add(newstr, true);
+	
+	*eptr = oldc;
+	sptr = eptr;
+    }
+}
+
+/**
+ * Concatenates all strings in a collection and returns the result.
+ *   coll      : the collection of strings to read from
+ *   joinchars : the delimiter string to insert between strings
+ */
+template<class StringCollection>
+WvString strcoll_join(const StringCollection &coll,
+    const char *joinchars = " \t")
+{
+    size_t joinlen = strlen(joinchars);
+    size_t totlen = 1;
+    typename StringCollection::Iter s(
+        const_cast<StringCollection&>(coll));
+    for (s.rewind(); s.next(); )
+    {
+        if (s->cstr())
+            totlen += strlen(s->cstr());
+        totlen += joinlen;
+    }
+    totlen -= joinlen; // no join chars at tail
+    
+    WvString total;
+    total.setsize(totlen);
+
+    char *te = total.edit();
+    te[0] = 0;
+    bool first = true;
+    for (s.rewind(); s.next(); )
+    {
+        if (first)
+            first = false;
+        else
+            strcat(te, joinchars);
+        if (s->cstr()) 
+            strcat(te, s->cstr());
+    }
+    return total;
+}
+
 #endif // __STRUTILS_H

@@ -123,6 +123,9 @@ public:
     void append(_type_ *data, bool auto_free, char *id = NULL)
 	{ add_after(tail, data, auto_free, id); }
 
+    inline void add(_type_ *data, bool auto_free, char *id = NULL)
+        { append(data, auto_free, id); }
+
     void prepend(_type_ *data, bool auto_free, char *id = NULL)
 	{ add_after(&head, data, auto_free, id); }
 

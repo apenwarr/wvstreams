@@ -8,52 +8,14 @@
 #include "strutils.h"
 
 
-WvString WvStringTable::join(const char *joinchars)
+WvString WvStringTable::join(const char *joinchars) const
 {
-    WvStringTable::Iter s(*this);
-    size_t totlen;
-    WvString total;
-    char *te;
-    int x;
-    
-    totlen = 1;
-    for (s.rewind(); s.next(); )
-	totlen += strlen(s()) + strlen(joinchars);
-    
-    total.setsize(totlen);
-    te = total.edit();
-    
-    te[0] = 0;
-    x = 0;
-    for (s.rewind(); s.next(); )
-    {
-	if (x++)
-	    strcat(te, joinchars);
-	strcat(te, s());
-    }
-    
-    return total;
+    return ::strcoll_join(*this, joinchars);
 }
 
 
-void WvStringTable::split(WvStringParm _s, const char *splitchars)
+void WvStringTable::split(WvStringParm s, const char *splitchars,
+    int limit)
 {
-    WvString s(_s);
-    char *sptr = s.edit(), *eptr, oldc;
-    
-    while (sptr && *sptr)
-    {
-	sptr += strspn(sptr, splitchars);
-	eptr = sptr + strcspn(sptr, splitchars);
-	
-	oldc = *eptr;
-	*eptr = 0;
-	
-	WvString *newstr = new WvString(sptr);
-	add(newstr, true);
-	
-	*eptr = oldc;
-	sptr = eptr;
-    }
+    return ::strcoll_split(*this, s, splitchars, limit);
 }
-

@@ -13,11 +13,11 @@
 #include "wvlinklist.h"
 
 DeclareWvList2(WvString, 
-	       WvString join(const char *joinchars = " \t") const;
-	       void split(WvStringParm s, const char *splitchars = " \t",
-			  int limit = 0);
-	       void fill(const char * const *array);
-	       WvString popstr();
-	       );
+    WvString join(const char *joinchars = " \t") const;
+    void split(WvStringParm s, const char *splitchars = " \t",
+        int limit = 0);
+    void fill(const char * const *array);
+    WvString popstr();
+);
 
 #endif // __WVSTRINGLIST_H
