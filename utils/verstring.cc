@@ -13,26 +13,6 @@
 #include <ctype.h>
 #include <string.h>
 
-unsigned int wvversion_watershed = 0;
-
-char *trim_verstr(char *verstr)
-{
-    // trim off trailing zeroes
-    char *cptr;
-
-    for (cptr = strchr(verstr, 0); --cptr >= verstr; )
-    {
-	if (*cptr != '0')
-	    break;
-	
-	if (cptr <= verstr  ||  *(cptr - 1) == '.')
-	    break;
-	
-	*cptr = 0;
-    }
-    return verstr;
-}
-
 const char *old_ver_to_string(unsigned int ver)
 {
     static char str[10];
@@ -45,18 +25,24 @@ const char *old_ver_to_string(unsigned int ver)
 }
 
 
-const char *ver_to_string(unsigned int ver, unsigned int my_watershed)
+const char *new_ver_to_string(unsigned int ver)
 {
     static char str[11];
     unsigned int maj = (ver & 0xFF000000) >> 24, min = (ver & 0x00FF0000) >> 16,
                  rev = (ver & 0x0000FFFF);
 
-    if ((my_watershed && ver < my_watershed) || (!my_watershed && ver < wvversion_watershed))
-	return old_ver_to_string(ver);
-
     sprintf(str, "%x.%02x.%04x", maj, min, rev);
 
     return str;
+}
+
+
+const char *ver_to_string(unsigned int ver)
+{
+    if (is_new_ver(ver))
+        return new_ver_to_string(ver);
+
+    return old_ver_to_string(ver);
 }
 
 
@@ -93,7 +79,7 @@ unsigned int string_to_old_ver(const char *str)
 }
 
 
-unsigned int string_to_ver(const char *str, unsigned int my_watershed)
+unsigned int string_to_new_ver(const char *str)
 {
     static char lookup[] = "0123456789abcdef";
     unsigned int maj = 0, min = 0, rev = 0, ver;
@@ -140,8 +126,49 @@ unsigned int string_to_ver(const char *str, unsigned int my_watershed)
 
     ver = (maj << 24) | (min << 16) | (rev << (4*bits));
 
-    if ((my_watershed && ver < my_watershed) || (!my_watershed && ver < wvversion_watershed))
-	return string_to_old_ver(str);
-
     return ver;
+}
+
+
+unsigned int string_to_ver(const char *str)
+{
+    if (is_new_verstr(str))
+        return string_to_new_ver(str);
+
+    return string_to_old_ver(str);
+}
+
+
+bool is_new_ver(unsigned int ver)
+{
+    return (ver & 0xff000000);
+}
+
+
+bool is_new_verstr(const char *str)
+{
+    char *p = strchr(str, '.');
+    if (p && strchr(p+1, '.'))
+        return true;
+
+    return false;
+}
+
+
+char *trim_verstr(char *verstr)
+{
+    // trim off trailing zeroes
+    char *cptr;
+
+    for (cptr = strchr(verstr, 0); --cptr >= verstr; )
+    {
+	if (*cptr != '0')
+	    break;
+	
+	if (cptr <= verstr  ||  *(cptr - 1) == '.')
+	    break;
+	
+	*cptr = 0;
+    }
+    return verstr;
 }
