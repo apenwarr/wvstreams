@@ -22,6 +22,7 @@
 #endif
 #endif
 
+#include "wvlog.h"
 
 int comparefunc(const DBT *a, const DBT *b)
 {
@@ -107,9 +108,12 @@ void WvBdbHashBase::remove(const datum &key)
     
     int ret = dbf->seq(dbf, (DBT *)&newkey, (DBT *)&data, R_CURSOR);
     if (!ret)
+    {
 	ret = dbf->del(dbf, (DBT *)&newkey, R_CURSOR);
-
-    if (!ret) seterr(errno);
+    }
+    
+    if (ret == 1) seterr("Strange: seq found a key that del didn't recognize");
+    else if (ret) seterr(errno);
 }
 
 
