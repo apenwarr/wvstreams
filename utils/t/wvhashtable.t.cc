@@ -284,3 +284,21 @@ WVTEST_MAIN("WvMap zapping")
 
 }
 
+WVTEST_MAIN("WvMap removing")
+{
+    WvMap<WvString, WvString> remmap(5);
+    remmap.add("ruff", "This is the sound a dog makes");
+    WVPASS(remmap.exists("ruff"));
+    remmap.remove("ruff");
+    WVFAIL(remmap.exists("ruff"));
+
+    /*** FAILURE: This doesn't pass as of 2004-07-15.  See BUGZID: 6281 ***/
+    /*
+    WvMap<WvString, WvString*> remmap2(5);
+    remmap2.add("moo", new WvString("This is the sound a dog makes"));
+    WVPASS(remmap2.exists("moo"));
+    remmap.remove("moo");
+    WVFAIL(remmap.exists("moo"));
+    */
+}
+
