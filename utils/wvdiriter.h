@@ -60,6 +60,8 @@ public:
     const WvDirEnt *ptr() const { return &info; }
     WvIterStuff(const WvDirEnt);
     
+    int depth() const
+        { return( dirs.count() ); }
 };
 
 #endif
