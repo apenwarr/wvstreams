@@ -18,20 +18,20 @@
 
 DeclareWvList(WvStringList);
 
-class UniConfDaemonClientConn : public WvStreamClone
+class UniConfDaemonTestConn : public WvStreamClone
 {
 public:
-    UniConfDaemonClientConn(IWvStream *s, WvStringList *_commands, 
+    UniConfDaemonTestConn(IWvStream *s, WvStringList *_commands, 
                             WvStringListList *_expected_responses) :        
         WvStreamClone(s),
         commands(_commands),
         expected_responses(_expected_responses),
-        log("UniConfDaemonClientConn", WvLog::Debug)      
+        log("UniConfDaemonTestConn", WvLog::Debug)      
         {
             setclone(s);
             uses_continue_select = true;
         }
-    virtual ~UniConfDaemonClientConn() 
+    virtual ~UniConfDaemonTestConn() 
         {
             log("Destructing\n");
             terminate_continue_select();            
@@ -82,6 +82,7 @@ private:
     WvLog log;
 };
 
+
 /**** Daemon surprise close test and helpers ****/
 #if 0
 static void spin(WvIStreamList &l)
@@ -96,6 +97,7 @@ static void spin(WvIStreamList &l)
     WVPASS(max < 100);
     
 }
+
 
 static void appendbuf(WvStream &s, void *_buf)
 {
@@ -170,8 +172,6 @@ WVTEST_MAIN("daemon surprise close")
 
 /**** Daemon multimount test ****/
 
-// FIXME: Disabled due to BUGZID:10341
-#if 0
 WVTEST_MAIN("daemon multimount")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -202,11 +202,12 @@ WVTEST_MAIN("daemon multimount")
     expected_quit_response.append("OK ");
     expected_responses.add(&expected_quit_response, false);
 
-    WvString pipename("/tmp/tmpfile1");
+    WvString pipename("/tmp/uniconfd-t-%s", getpid());
+    unlink(pipename);
     WVPASS(daemon.setupunixsocket(pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
-    UniConfDaemonClientConn conn(sock, &commands, &expected_responses);
+    UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
 
     WvIStreamList::globallist.append(&conn, false);
     WvIStreamList::globallist.append(&daemon, false);
@@ -222,7 +223,7 @@ WVTEST_MAIN("daemon multimount")
     WVPASS(daemon.isok());
     WvIStreamList::globallist.zap();
 }
-#endif
+
 
 /**** Daemon quit test ****/
 
@@ -231,8 +232,6 @@ WVTEST_MAIN("daemon multimount")
 // test that the server responds with 'OK' upon close (rather than
 // actually testing whether or not it closed). leaving this
 // here as a simple (generic) example to write future tests
-// FIXME: Disabled due to BUGZID:10341
-#if 0
 WVTEST_MAIN("daemon quit")
 {
     UniConfRoot cfg("temp:");
@@ -253,11 +252,12 @@ WVTEST_MAIN("daemon quit")
     expected_quit_response.append("OK ");
     expected_responses.add(&expected_quit_response, false);
 
-    WvString pipename("/tmp/tmpfile1");
+    WvString pipename("/tmp/uniconfd-t-%s", getpid());
+    unlink(pipename);
     WVPASS(daemon.setupunixsocket(pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
-    UniConfDaemonClientConn conn(sock, &commands, &expected_responses);
+    UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
 
     WvIStreamList::globallist.append(&conn, false);
     WvIStreamList::globallist.append(&daemon, false);
@@ -273,96 +273,129 @@ WVTEST_MAIN("daemon quit")
     WVPASS(daemon.isok());
     WvIStreamList::globallist.zap();
 }
-#endif
+
 
 /**** Daemon proxying test ****/
 
 // test that proxying between two uniconf daemons works
-// e.g.: client -> uniconfd -> uniconfd 519-496-0675
+// e.g.: client -> uniconfd -> uniconfd
 
-const char * const uniconfd1_args[] = {
-    "uniconf/daemon/uniconfd",
-    "-f",
-    "-p",
-    "0",
-    "-s"
-    "0",
-    "-u",
-    "/tmp/tmpfile1",
-    "/cfg=ini:/tmp/dumb.ini",
-    NULL
-};
-
-const char * const uniconfd1_2_args[] = {
-    "uniconf/daemon/uniconfd",
-    "-f",
-    "-p",
-    "0",
-    "-s"
-    "0",
-    "-u",
-    "/tmp/tmpfile1",
-    "/=temp:",
-    "/cfg=ini:/tmp/dumb.ini",
-    NULL
-};
-
-WvPipe * setup_master_daemon(bool implicit)
+static WvPipe * setup_master_daemon(bool implicit_root, WvString &masterpipename, WvString &ininame)
 {
-    WvFile stuff("/tmp/dumb.ini", O_CREAT|O_WRONLY|O_TRUNC);
+    int fd;
+
+    ininame = "/tmp/iniXXXXXX";
+    if ((fd = mkstemp(ininame.edit())) == (-1))
+        return NULL;
+    close(fd);
+
+    WvFile stuff(ininame, O_CREAT|O_WRONLY|O_TRUNC);
     stuff.print("pickles/apples/foo=1\n");
     stuff.print("pickles/mangos/bar=1\n");
     stuff.close();
 
-    return new WvPipe(uniconfd1_args[0], 
-                      implicit ? uniconfd1_args : uniconfd1_2_args,
-                      false, false, false);
+    masterpipename = "/tmp/sockXXXXXX";
+    if ((fd = mkstemp(masterpipename.edit())) == (-1))
+        return NULL;
+    close(fd);
+
+    WvString inimount("/cfg=ini:%s", ininame);    
+    WvString mount1, mount2;
+    if (implicit_root)
+        mount1 = inimount;
+    else
+    {
+        mount1 = "/=temp:";
+        mount2 = inimount;
+    }
+
+    const char * const uniconfd_args[] = {
+        "uniconf/daemon/uniconfd",
+        "-d",
+        "-f",
+        "-p",
+        "0",
+        "-s"
+        "0",
+        "-u",
+        masterpipename.cstr(),
+        mount1.cstr(),
+        mount2.cstr(),
+        NULL
+    };
+
+    return new WvPipe(uniconfd_args[0], uniconfd_args, false, true, false);
 }
 
-const char * const uniconfd2_args[] = {
-    "uniconf/daemon/uniconfd",
-    "-f",
-    "-p",
-    "0",
-    "-s"
-    "0",
-    "-u",
-    "/tmp/tmpfile2",
-    "/=retry:unix:/tmp/tmpfile1",
-    NULL
-};
 
-const char * const uniconfd2_2_args[] = {
-    "uniconf/daemon/uniconfd",
-    "-f",
-    "-p",
-    "0",
-    "-s"
-    "0",
-    "-u",
-    "/tmp/tmpfile2",
-    "/=retry:cache:unix:/tmp/tmpfile1",
-    NULL
-};
-
-static void daemon_proxy_test(bool implicit)
+static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipename, 
+                            WvString &slavepipename)
 {
-    WvString pipename = "/tmp/tmpfile2";
+    int fd;
+    slavepipename = "/tmp/sockXXXXXX";
+    if ((fd = mkstemp(slavepipename.edit())) == (-1))
+        return NULL;    
+    close(fd);
 
-    WvPipe *master = setup_master_daemon(implicit);
+    WvString rootmount;
+    if (implicit_root)
+        rootmount.append("/=retry:unix:%s", masterpipename);
+    else
+        rootmount.append("/=retry:cache:unix:%s", masterpipename);
+
+    const char * const uniconfd_args[] = {
+        "uniconf/daemon/uniconfd",
+        "-d",
+        "-f",
+        "-p",
+        "0",
+        "-s"
+        "0",
+        "-u",
+        slavepipename.cstr(),
+        rootmount.cstr(),
+        NULL
+    };
+
+    return new WvPipe(uniconfd_args[0], uniconfd_args, false, false, false); 
+    
+}
+
+
+static void wait_for_pipe_ready(WvStringParm pipename)
+{
+    // If we can't get a connection in 100ms, something is seriously wrong..
+
+    WvUnixAddr addr(pipename);
+    WvUnixConn *sock = new WvUnixConn(addr);
+
+    WvString line;
+    line = sock->getline(100);
+    while (!line)
+    {
+        WVRELEASE(sock);
+        sock = new WvUnixConn(addr);
+        line = sock->getline(100);
+    }
+    WVRELEASE(sock);
+    fprintf(stderr, "Pipe ready! (%s)\n", line.cstr());
+}
+
+
+static void daemon_proxy_test(bool implicit_root)
+{
+    WvString masterpipename, ininame;
+    WvPipe *master = setup_master_daemon(implicit_root, masterpipename, ininame);
     master->setcallback(WvPipe::ignore_read, NULL);
     master->nowrite();
-    sleep(1);
-    fprintf(stderr, "Got here (1)\n");
-
-    WvPipe *slave = new WvPipe(uniconfd2_args[0], 
-                               implicit ? uniconfd2_args : uniconfd2_2_args, 
-                               false, false, false); 
+    wait_for_pipe_ready(masterpipename);
+    
+    WvString slavepipename;
+    WvPipe *slave = setup_slave_daemon(implicit_root, masterpipename, slavepipename);
     slave->setcallback(WvPipe::ignore_read, NULL);
     slave->nowrite();
-    sleep(1);
+    wait_for_pipe_ready(slavepipename);
 
-    fprintf(stderr, "Got here (2)\n");
     WvStringList commands;
     commands.append("get /cfg/pickles/apples/foo");
     commands.append("subt /");
@@ -377,11 +410,9 @@ static void daemon_proxy_test(bool implicit)
     expected_subt_response.append("VAL cfg {}");
     expected_responses.add(&expected_subt_response, false);
 
-    fprintf(stderr, "Got here (3)\n");
-
-    WvUnixAddr addr(pipename);
+    WvUnixAddr addr(slavepipename);
     WvUnixConn *sock = new WvUnixConn(addr);
-    UniConfDaemonClientConn conn(sock, &commands, &expected_responses);
+    UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
     
     WvIStreamList::globallist.append(&conn, false);
 
@@ -398,7 +429,12 @@ static void daemon_proxy_test(bool implicit)
     WvIStreamList::globallist.zap();
     WVRELEASE(master);
     WVRELEASE(slave);
+
+    unlink(slavepipename.cstr());
+    unlink(masterpipename.cstr());
+    unlink(ininame.cstr());
 }
+
 
 WVTEST_MAIN("daemon proxying - with cache")
 {
@@ -406,6 +442,7 @@ WVTEST_MAIN("daemon proxying - with cache")
 
     daemon_proxy_test(false);
 }
+
 
 WVTEST_MAIN("daemon proxying - cfg the only mount")
 {
