@@ -9,19 +9,17 @@
 #include "pem.h"
 #include "x509v3.h"
 
- 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-	: debug("X509",WvLog::Debug5),
-	  errstr("")
+    : debug("X509",WvLog::Debug5), errstr("")
 {
-   err = false;
-   cert = _cert;
-   keypair = NULL;
+    err = false;
+    cert = _cert;
+    keypair = NULL;
 }
 
+
 WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair)
-	: debug("X509",WvLog::Debug5),
-	  errstr("")
+    : debug("X509",WvLog::Debug5), errstr("")
 {
     debug("Creating New Certificate for %s\n",dName);
     keypair = _keypair;
@@ -30,231 +28,242 @@ WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair)
     createSScert(dName, bits);
 }
 
+
 WvX509Mgr::~WvX509Mgr()
 {
     X509_free(cert);
 }
 
-void WvX509Mgr::createSScert(WvString dName, int keysize)
+
+// returns some approximation of the server's fqdn, or an empty string.
+static WvString set_name_entry(X509_NAME *name, WvString dn)
 {
-        EVP_PKEY *pk;
-        X509_NAME *name=NULL;
-        X509_EXTENSION *ex=NULL;
-	int	serial = 12345; // RFC2459 says that this number
-				// must be unique for each certificate
-				// issued by a CA - since this is a
-				// self-signed cert, we'll take a shortcut,
-				// and give a fixed value... saves a couple
-				// of cycles rather than get a random number.
-	WvString serverfqdn;	
-	int	name_err;
-
-	if (keypair == NULL)
+    WvString fqdn(""), force_fqdn("");
+    X509_NAME_ENTRY *ne = NULL;
+    int count = 0, nid;
+    
+    WvStringList l;
+    l.split(dn, ",");
+    
+    // dn is of the form: c=ca,o=foo organization,dc=foo,dc=com
+    // (ie. name=value pairs separated by commas)
+    WvStringList::Iter i(l);
+    for (i.rewind(); i.next(); )
+    {
+	WvString s(*i), sid;
+	char *cptr, *value;
+	
+	cptr = s.edit();
+	value = strchr(cptr, '=');
+	if (value)
+	    *value++ = 0;
+	else
+	    value = "NULL";
+	
+	sid = strlwr(trim_string(cptr));
+	
+	if (sid == "c")
+	    nid = NID_countryName;
+	else if (sid == "st")
+	    nid = NID_stateOrProvinceName;
+	else if (sid == "o")
+	    nid = NID_organizationName;
+	else if (sid == "ou")
+	    nid = NID_organizationalUnitName;
+	else if (sid == "cn")
 	{
-	    debug("Need a new RSA Key, so generating it...\n");
-	    keypair = new WvRSAKey(keysize);
-	    debug("Ok, I've got a new RSA Keypair\n");
+	    nid = NID_commonName;
+	    force_fqdn = value;
+	    force_fqdn.unique();
 	}
-
-	if ((pk=EVP_PKEY_new()) == NULL)
-        {
-	    err = true;
-            errstr = "Error Creating Key Handler for new Certificate";  
-            return;
-        }
-        if ((cert=X509_new()) == NULL)
-        {
-	    err = true;
-	    errstr = "Error Creating new X509 object";
-	    return;
-        }
-	if (!EVP_PKEY_assign_RSA(pk,keypair->rsa))
-        {
-	    err = true;
-            errstr = "Error Adding RSA Keys to Certificate";
-            return;
-        }
-
-	// Completely broken in my mind - this sets the version
-	// string to '3'  (I guess version starts at 0)
-	X509_set_version(cert,0x2);
-
-	// Set the Serial Number for the certificate
-        ASN1_INTEGER_set(X509_get_serialNumber(cert),serial);
-
-	// Set the NotBefore time to now.
-        X509_gmtime_adj(X509_get_notBefore(cert),0);
-
-	// Now + 10 years... should be shorter, but since we don't currently
-	// Have a set of routines to refresh the certificates, make it
-	// REALLY long.
-        X509_gmtime_adj(X509_get_notAfter(cert),(long)60*60*24*3650);
-        X509_set_pubkey(cert,pk);
-
-        name=X509_get_subject_name(cert);
-
-	WvStringList list;
-	WvStringList::Iter i(list);
-	list.zap();
-	list.split(dName,",");
-	for (i.rewind() ; i.next() ; )
+	else if (sid == "dc")
 	{
-		WvString data;
-		char *servname;
-		// This entire conditional serves no purpose other than
-		// set up serverfqdn for an extension entry later....
-		// There's probably a way to do this without needing the
-		// extra logic here, but this was the part of the day
-		// "Where Patrick learns WvStrings, and gets to practice
-		// with the neat ways to assign things to them" :)
-		if (strncmp(*i,"cn=",3) == 0)
-		{
-		    if ((servname = strchr(*i,'=')) != NULL)
-		    {
-			serverfqdn = servname+1;
-			serverfqdn.unique();
-		    }
-		    else
-		    {
-			// Theoretically, we should never get here...
-			err = true;
-			errstr = "Malformed CN Entry... Aborting...";
-		    	X509_free(cert);
-		    	EVP_PKEY_free(pk);
-			return;
-		    }	
-		}
-		else
-		{
-		   if (!serverfqdn)
-			serverfqdn = "null.weavernet.null";
-		}
-		char *cptr = strchr(i->edit(),'=');
-		if (cptr)
-		{
-		    data = cptr + 1;
-		    *cptr = 0;
-		}
-		else
-		{
-		    err = true;
-		    errstr =  "Illegal DN During Certificate Creation";
-		    X509_free(cert);
-		    EVP_PKEY_free(pk);
-		    return;
-		}
-		// The strupr() calls here are to workaround some REALLY
-		// stupid bits in the OpenSSL code that make it so that
-		// the add_entry_by_txt call fails if the contents of both
-		// data and the iterator are not upper case... Why they
-		// chose this arbitrary restriction is beyond me. 
-		unsigned char *temp = (unsigned char *)strupr(data.edit());
-		name_err = X509_NAME_add_entry_by_txt(name, strupr(i->edit()), 
-				MBSTRING_ASC,temp, -1 , -1 , 0);
-
-		if (name_err == 0)
-		{
-		    err = true;
-		    errstr = "Error creating Name entry... aborting Certificate Creation";
-		    X509_free(cert);
-		    EVP_PKEY_free(pk);
-		    return;
-		}
+	    nid = NID_domainComponent;
+	    if (!!fqdn)
+		fqdn.append(".");
+	    fqdn.append(value);
 	}
-
-	X509_set_issuer_name(cert,name);
-	X509_set_subject_name(cert,name);
-
-	// Add in the Netscape specific Server Extension
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_cert_type, "server");
-        X509_add_ext(cert,ex,-1);
-        X509_EXTENSION_free(ex);
-
-	debug("Setting Netscape SSL Server Name Extension to %s\n",serverfqdn);
-
-	// Set the Netscape Server Name Extension to our server name
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_ssl_server_name, serverfqdn.edit());
-        X509_add_ext(cert,ex,-1);
-        X509_EXTENSION_free(ex);
-
-	// Set the RFC2459 Mandated keyUsage field to critical, and restrict
-	// the usage of this cert to Digital Signature, and Key Encipherment.
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage, "critical,digitalSignature,keyEncipherment");
-	X509_add_ext(cert,ex,-1);
-	X509_EXTENSION_free(ex);
-
-	// Sign the Certificate with our own key ("Self Sign")
-        if (!X509_sign(cert,pk,EVP_md5()))
-        {
-	    err = true;
-	    errstr = "Could not self sign the certificate";
-	    X509_free(cert);
-	    EVP_PKEY_free(pk);
-	    return;
+	else if (sid == "domain")
+	{
+	    nid = NID_Domain;
+	    force_fqdn = value;
+	    force_fqdn.unique();
 	}
-	debug("Certificate for %s created\n",dName);
-
-	// Now that we have the certificate created,
-	// be nice and leave it in enccert, so if someone needs it, they
-	// don't have to do that step... I'm not sure that this is going 
-	// to stay... it's really not that hard to call encodecert() ;) 
-	encodecert();
-
-	return;
+	else
+	    nid = NID_domainComponent;
+	
+	if (!ne)
+	    ne = X509_NAME_ENTRY_create_by_NID(NULL, nid,
+			       V_ASN1_APP_CHOOSE, (unsigned char *)value, -1);
+	else
+	    X509_NAME_ENTRY_create_by_NID(&ne, nid,
+			       V_ASN1_APP_CHOOSE, (unsigned char *)value, -1);
+	if (!ne)
+	    continue;
+	X509_NAME_add_entry(name, ne, count++, 0);
+    }
+    
+    X509_NAME_ENTRY_free(ne);
+    
+    if (!!force_fqdn)
+	return force_fqdn;
+    else
+	return fqdn;
 }
+
+
+void WvX509Mgr::createSScert(WvString dn, int keysize)
+{
+    EVP_PKEY *pk;
+    X509_NAME *name = NULL;
+    X509_EXTENSION *ex = NULL;
+
+    // RFC2459 says that this number must be unique for each certificate
+    // issued by a CA - since this is a self-signed cert, we'll take a
+    // shortcut, and give a fixed value... saves a couple of cycles rather
+    // than get a random number.
+    int	serial = 12345;
+
+    WvString serverfqdn;
+
+    if (keypair == NULL)
+    {
+	debug("Need a new RSA key, so generating it...\n");
+	keypair = new WvRSAKey(keysize);
+	debug("Ok, I've got a new RSA keypair\n");
+    }
+
+    if ((pk=EVP_PKEY_new()) == NULL)
+    {
+	seterr("Error creating key handler for new certificate");
+	return;
+    }
+    if ((cert=X509_new()) == NULL)
+    {
+	seterr("Error creating new X509 object");
+	return;
+    }
+    if (!EVP_PKEY_assign_RSA(pk, keypair->rsa))
+    {
+	seterr("Error adding RSA keys to certificate");
+	return;
+    }
+
+    // Completely broken in my mind - this sets the version
+    // string to '3'  (I guess version starts at 0)
+    X509_set_version(cert, 0x2);
+
+    // Set the Serial Number for the certificate
+    ASN1_INTEGER_set(X509_get_serialNumber(cert), serial);
+
+    // Set the NotBefore time to now.
+    X509_gmtime_adj(X509_get_notBefore(cert), 0);
+
+    // Now + 10 years... should be shorter, but since we don't currently
+    // Have a set of routines to refresh the certificates, make it
+    // REALLY long.
+    X509_gmtime_adj(X509_get_notAfter(cert), (long)60*60*24*3650);
+    X509_set_pubkey(cert, pk);
+
+    name = X509_get_subject_name(cert);
+    serverfqdn = set_name_entry(name, dn);
+    
+    if (!serverfqdn)
+	serverfqdn = "null.noname.null";
+				       
+    X509_set_issuer_name(cert, name);
+    X509_set_subject_name(cert, name);
+
+    // Add in the netscape-specific server extension
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_cert_type, "server");
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+
+    debug("Setting netscape SSL server name extension to %s\n", serverfqdn);
+
+    // Set the netscape server name extension to our server name
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_ssl_server_name,
+			     serverfqdn.edit());
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+
+    // Set the RFC2459-mandated keyUsage field to critical, and restrict
+    // the usage of this cert to digital signature and key encipherment.
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
+			     "critical,digitalSignature,keyEncipherment");
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+
+    // Sign the certificate with our own key ("Self Sign")
+    if (!X509_sign(cert, pk, EVP_md5()))
+    {
+	seterr("Could not self sign the certificate");
+	X509_free(cert);
+	EVP_PKEY_free(pk);
+	return;
+    }
+    debug("Certificate for %s created\n", dn);
+
+    // Now that we have the certificate created,
+    // be nice and leave it in enccert, so if someone needs it, they
+    // don't have to do that step... I'm not sure that this is going
+    // to stay... it's really not that hard to call encodecert() ;)
+    encodecert();
+}
+
 
 void WvX509Mgr::decodecert(WvString *encodedcert)
 {
-    	int hexbytes = strlen((const char *)encodedcert);
-    	int bufsize = hexbytes/2;
-	unsigned char *certbuf = new unsigned char[bufsize];
-	X509 *ct;
+    int hexbytes = strlen((const char *)encodedcert);
+    int bufsize = hexbytes/2;
+    unsigned char *certbuf = new unsigned char[bufsize];
+    X509 *ct;
 
-	unhexify(certbuf,(char *)encodedcert);
-	ct = cert = X509_new();
-	cert = d2i_X509(&ct, &certbuf, hexbytes/2);
+    unhexify(certbuf,(char *)encodedcert);
+    ct = cert = X509_new();
+    cert = d2i_X509(&ct, &certbuf, hexbytes/2);
 
-	delete[] certbuf;
+    delete[] certbuf;
 }
+
 
 void WvX509Mgr::encodecert()
 {
-	size_t size;
-	unsigned char *keybuf, *iend;
+    size_t size;
+    unsigned char *keybuf, *iend;
 
-	size = i2d_X509(cert, NULL);
-    	iend = keybuf = new unsigned char[size];
-    	i2d_X509(cert, &iend);
-    
-	enccert.setsize(size * 2 +1);
-    	hexify(enccert.edit(), keybuf, size);
+    size = i2d_X509(cert, NULL);
+    iend = keybuf = new unsigned char[size];
+    i2d_X509(cert, &iend);
 
-	delete[] keybuf;
+    enccert.setsize(size * 2 +1);
+    hexify(enccert.edit(), keybuf, size);
 
-	return;
+    delete[] keybuf;
 }
+
 
 bool WvX509Mgr::validate()
 {
-	if (cert != NULL)
-	{
-	    debug("Peer Certificate:\n");
-	    debug("SubjectDN: %s\n",
-		X509_NAME_oneline(X509_get_subject_name(cert),0,0));
-	    debug("Issuer: %s\n",
-		X509_NAME_oneline(X509_get_issuer_name(cert),0,0));
+    if (cert != NULL)
+    {
+	debug("Peer Certificate:\n");
+	debug("SubjectDN: %s\n",
+	      X509_NAME_oneline(X509_get_subject_name(cert),0,0));
+	debug("Issuer: %s\n",
+	      X509_NAME_oneline(X509_get_issuer_name(cert),0,0));
 
-	    // Check and make sure that the certificate is still valid
-	    if (X509_cmp_current_time(X509_get_notAfter(cert)) == -1)
-	    {
-		err = true;
-		errstr = "Certificate past it's validity period";
-		return false;
-	    }
-	    // Kind of a placeholder thing right now...
-	    // Later on, do CRL, and certificate validity checks here..
-	} else {
-	    debug("Connection Peer not using a certificate\n");
+	// Check and make sure that the certificate is still valid
+	if (X509_cmp_current_time(X509_get_notAfter(cert)) == -1)
+	{
+	    seterr("Peer certificate has expired!");
+	    return false;
 	}
-	return true;	
+	// Kind of a placeholder thing right now...
+	// Later on, do CRL, and certificate validity checks here..
+    }
+    else
+	debug("Peer doesn't have a certificate.\n");
+    
+    return true;
 }

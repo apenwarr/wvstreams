@@ -114,6 +114,9 @@ public:
     bool  err;
     WvString errstr;
     
+    void seterr(const WvString &s)
+        { err = true; errstr = s; }
+    
 protected:
     
 private:
