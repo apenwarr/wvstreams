@@ -11,6 +11,7 @@
 
 WvStringBuf WvFastString::nullbuf = { 0, 1 };
 const WvFastString WvFastString::null;
+const WvString WvString::empty("");
 
 
 // always a handy function
@@ -95,7 +96,10 @@ WvFastString::~WvFastString()
 void WvFastString::unlink()
 { 
     if (buf && ! --buf->links)
+    {
 	free(buf);
+        buf = NULL;
+    }
 }
     
 void WvFastString::link(WvStringBuf *_buf, const char *_str)

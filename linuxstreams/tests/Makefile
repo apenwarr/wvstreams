@@ -5,7 +5,7 @@ CXXFLAGS += -I../../include
 
 XPATH=../.. ../../utils ../../streams ../../ipstreams
 
-TESTS=aliastest routetest
+TESTS=aliastest routetest ifctest
 
 default: all
 

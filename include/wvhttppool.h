@@ -1,7 +1,7 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ *
  * A fast, easy-to-use, parallelizing, pipelining HTTP/1.1 file retriever.
  * 
  * Just create a WvHttpPool object, add it to your list, and use pool.addurl()
@@ -10,6 +10,7 @@
 #ifndef __WVHTTPPOOL_H
 #define __WVHTTPPOOL_H
 
+#include "ftpparse.h"
 #include "wvurl.h"
 #include "wvstreamlist.h"
 #include "wvstreamclone.h"
@@ -17,96 +18,203 @@
 #include "wvhashtable.h"
 #include "wvhttp.h"
 #include "wvbufstream.h"
+#include "wvbuffer.h"
 
-class WvBufHttpStream;
+class WvBufUrlStream;
+class WvUrlStream;
 class WvHttpStream;
 
+static WvString DEFAULT_ANON_PW("weasels@");
 
 class WvUrlRequest
 {
 public:
     WvUrl url;
     WvString headers;
-    WvHttpStream *instream;
-    WvBufHttpStream *outstream;
+    WvUrlStream *instream;
+    WvBufUrlStream *outstream;
+    WvStream *putstream;
+
     bool pipeline_test;
-    bool headers_only;
     bool inuse;
+    bool is_dir;
+    bool create_dirs;
+    WvString method;
     
-    WvUrlRequest(WvStringParm _url, WvStringParm _headers,
-		 bool _pipeline_test, bool _headers_only);
+    WvUrlRequest(WvStringParm _url, WvStringParm _method, WvStringParm _headers,
+		 WvStream *content_source, bool _create_dirs, bool _pipeline_test);
     ~WvUrlRequest();
     
-    WvString request_str(bool keepalive);
     void done();
 };
 
 DeclareWvList(WvUrlRequest);
 
 
-class WvBufHttpStream : public WvBufStream
+struct WvUrlLink
+{
+    WvString linkname;
+    WvUrl url;
+
+    WvUrlLink::WvUrlLink(WvStringParm _linkname, WvStringParm _url)
+	: linkname(_linkname), url(_url)
+    {}
+};
+DeclareWvList(WvUrlLink);
+
+
+class WvBufUrlStream : public WvBufStream
 {
 public:
     WvString url;
+    WvString proto;
+    WvUrlLinkList links;  // HTML links or FTP directory listing
+
+    // HTTP stuff...
     WvString version;
     int status;
     WvHTTPHeaderDict headers; 
 
-    WvBufHttpStream() : status(0), headers(10)
+    WvBufUrlStream() : status(0), headers(10)
         {}
-    virtual ~WvBufHttpStream()
+    virtual ~WvBufUrlStream()
         {}
 };
 
 DeclareWvTable(WvIPPortAddr);
 
-class WvHttpStream : public WvStreamClone
+
+class WvUrlStream : public WvStreamClone
 {
 public:
-    WvIPPortAddr remaddr;
-    
+    class Target
+    {
+    public:
+	WvIPPortAddr remaddr;
+	WvString username;
+
+	Target(const WvIPPortAddr &_remaddr, WvStringParm _username)
+	    : remaddr(_remaddr), username(_username) {}
+
+	~Target() {}
+
+	bool operator== (const Target &n2) const
+        { return (username == n2.username && remaddr == n2.remaddr); }
+    };
+    Target target;
     static int max_requests;
+
+protected:
+    WvLog log;
+    WvStream *clone;
+    WvUrlRequestList urls, waiting_urls;
+    int request_count;
+    WvUrlRequest *curl; // current url
+    virtual void doneurl() = 0;
+    virtual void request_next() = 0;
+    
+public:
+    WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm _username, 
+        WvStringParm logname)
+	: WvStreamClone(&clone), target(_remaddr, _username),
+	  log(logname, WvLog::Debug)
+    {
+	clone = new WvTCPConn(_remaddr);
+    	request_count = 0;
+    	curl = NULL;
+    }
+
+    virtual ~WvUrlStream() 
+        { if (clone) delete clone; }
+
+    virtual void close() = 0;
+    void addurl(WvUrlRequest *url);
+    void delurl(WvUrlRequest *url);
+    
+    virtual void execute() = 0;
+};
+
+unsigned WvHash(const WvUrlStream::Target &n);
+
+DeclareWvDict(WvUrlStream, WvUrlStream::Target, target);
+
+
+class WvHttpStream : public WvUrlStream
+{
+public:
     static bool global_enable_pipelining;
     bool enable_pipelining;
     
 private:
-    WvLog log;
-    WvUrlRequestList urls, waiting_urls;
-    int request_count, pipeline_test_count;
+    int pipeline_test_count;
     bool ssl;
+    bool sent_url_request;      // Have we sent a request to the server yet?
     WvIPPortAddrTable &pipeline_incompatible;
     WvString http_response, pipeline_test_response;
-    WvStream *tcpconn;
+    WvDynBuf putstream_data;
     
-    WvUrlRequest *curl; // current url
     enum { Unknown, Chunked, ContentLength, Infinity } encoding;
     size_t remaining;
     bool in_chunk_trailer, last_was_pipeline_test;
-    
-    void doneurl();
+
+    virtual void doneurl();
+    virtual void request_next();
     void start_pipeline_test(WvUrl *url);
-    void send_request(WvUrlRequest *url, bool auto_free);
-    void request_next();
+    WvString request_str(WvUrlRequest *url, bool keep_alive);
+    void send_request(WvUrlRequest *url);
     void pipelining_is_broken(int why);
     
 public:
-    WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl,
-		 WvIPPortAddrTable &_pipeline_incompatible);
+    WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
+         bool ssl, WvIPPortAddrTable &_pipeline_incompatible);
     virtual ~WvHttpStream();
+
     virtual void close();
-    
-    void addurl(WvUrlRequest *url);
-    
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     virtual void execute();
 };
 
-DeclareWvDict(WvHttpStream, WvIPPortAddr, remaddr);
 
+class WvFtpStream : public WvUrlStream
+{
+    bool logged_in, pasv_acked;
+    WvString password;
+    WvTCPConn *data;
+    time_t last_request_time;
+
+    virtual void doneurl();
+    virtual void request_next();
+
+    // Disregard all lines that are of the form "xxx-", meaning that another
+    // line follows.  Only the last line is important for us.
+    char *get_important_line(int timeout);
+
+    // Parse response to "PASV" command and returns a pointer to the address
+    // of the data port (or NULL if it can't parse the response)..
+    // This mucks about with line.
+    WvIPPortAddr *parse_pasv_response(char *line);
+
+    WvString parse_for_links(char *line);
+
+public:
+    WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
+		WvStringParm _password);
+    virtual ~WvFtpStream();
+
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
+    virtual void close();
+    virtual void execute();
+};
+
+
+// FIXME: Rename this to WvUrlPool someday.
 class WvHttpPool : public WvStreamList
 {
     WvLog log;
     WvResolver dns;
-    WvHttpStreamDict conns;
+    WvUrlStreamDict conns;
     WvUrlRequestList urls;
     int num_streams_created;
     
@@ -119,10 +227,17 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual void execute();
     
-    WvBufHttpStream *addurl(WvStringParm _url, WvStringParm _headers,
-                            bool headers_only = false);
+    WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _method = "GET",
+                            WvStringParm _headers = "",
+                            WvStream *content_source = NULL,
+                            bool create_dirs = false);
+
+    // For URL uploads.  create_dirs should be true if you want all
+    // non-existent directories in _url to be created.
+//    WvBufUrlStream *addputurl(WvStringParm _url, WvStringParm _headers,
+//			      WvStream *s, bool create_dirs = false);
 private:
-    void unconnect(WvHttpStream *s);
+    void unconnect(WvUrlStream *s);
     
 public:
     bool idle() const 

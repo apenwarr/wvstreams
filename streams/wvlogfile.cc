@@ -88,7 +88,7 @@ void WvLogFile::start_log()
     if (sym > 0 || errno == ENOENT)
     {
         unlink(curname);
-        symlink(fullname, curname);
+        symlink(getfilename(fullname), curname);
     }
 
     // Look for old logs and purge them

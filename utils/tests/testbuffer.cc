@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * WvBuffer test program.  Comments below indicate correct results.
+ * WvDynBuf test program.  Comments below indicate correct results.
  *
  */
 
@@ -13,7 +13,7 @@
 int main()
 {
     WvMiniBuffer b(1024);
-    WvBuffer bb;
+    WvDynBuf bb;
     char *s, xx[1024];
     size_t in, i, max, total;
     

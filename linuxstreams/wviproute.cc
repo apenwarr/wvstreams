@@ -20,7 +20,7 @@
 WvIPRoute::WvIPRoute(WvStringParm _ifc, const WvIPNet &_net,
 		     const WvIPAddr &_gate, int _metric,
 		     WvStringParm _table)
-	: ifc(_ifc), ip(_net), gateway(_gate), table(_table)
+	: ifc(_ifc), ip(_net), gateway(_gate), table(_table), src()
 {
     metric = _metric;
 }
@@ -28,8 +28,11 @@ WvIPRoute::WvIPRoute(WvStringParm _ifc, const WvIPNet &_net,
 
 WvIPRoute::operator WvString() const
 {
-    return WvString("%s via %s %s metric %s%s",
-		    ip, ifc, gateway, metric,
+    WvIPAddr zero;
+    return WvString("%s via %s %s %s metric %s%s",
+		    ip, ifc, gateway, 
+                    (src != zero ? WvString("src %s", src) : WvString("")),
+                    metric,
 		    (table != "default") 
 		      ? WvString(" (table %s)", table) : WvString(""));
 }
@@ -60,7 +63,7 @@ WvIPRouteList::WvIPRouteList() : log("Route Table", WvLog::Debug)
 void WvIPRouteList::get_kernel()
 {
     char *line;
-    WvString ifc, table, gate, addr, mask;
+    WvString ifc, table, gate, addr, mask, src;
     int metric, flags;
     bool invalid;
     WvIPRoute *r;
@@ -160,7 +163,7 @@ void WvIPRouteList::get_kernel()
 	    else if (word1 == "proto" && word2 == "kernel")
 		; // ignore
 	    else if (word1 == "src")
-		; // ignore
+                src = word2;
 	    else
 		log(WvLog::Debug, "Unknown keyvalue: '%s' '%s' in (%s)\n",
 		    word1, word2, line);
@@ -181,9 +184,20 @@ void WvIPRouteList::get_kernel()
 	
 	r = new WvIPRoute(ifc, net, gate ? WvIPAddr(gate) : WvIPAddr(),
 			  metric, table);
+        if (!!src)
+                r->src = src;
 	append(r, true);
 	//log(WvLog::Debug2, "get_kern2:  out: %s\n", *r);
     }
+}
+
+
+static WvString realtable(WvIPRoute &r)
+{
+    if (!r.ip.is_default() && r.table == "default")
+    	return "main";
+    else
+    	return r.table;
 }
 
 
@@ -218,7 +232,7 @@ void WvIPRouteList::set_kernel()
 	{
 	    WvInterface i(oi->ifc);
 	    log("Del %s\n", *oi);
-	    i.delroute(oi->ip, oi->gateway, oi->metric, oi->table);
+	    i.delroute(oi->ip, oi->gateway, oi->metric, realtable(*oi));
 	}
     }
 
@@ -232,7 +246,8 @@ void WvIPRouteList::set_kernel()
 	{
 	    WvInterface i(ni->ifc);
 	    log("Add %s\n", *ni);
-	    i.addroute(ni->ip, ni->gateway, ni->metric, ni->table);
+	    i.addroute(ni->ip, ni->gateway, ni->src, ni->metric, 
+	    		realtable(*ni));
 	}
     }
 }

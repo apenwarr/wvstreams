@@ -1,7 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ *
  * WvURL is a simple URL-parsing class with built-in (though still somewhat
  * inconvenient) DNS resolution.
  */ 
@@ -35,8 +35,8 @@ public:
         { return proto; }
     
     // this one is ONLY valid if resolve() returns true!
-    const WvIPPortAddr &getaddr() const
-        { return *addr; }
+    const WvIPPortAddr getaddr() const
+        { return addr ? *addr : WvIPPortAddr(); }
     
     WvStringParm getfile() const
         { return file; }
@@ -46,9 +46,11 @@ public:
         { return port; }
     WvStringParm getuser() const
         { return user; }
+    WvStringParm getpassword() const
+        { return password; }
 
 protected:
-    WvString proto, hostname, user;
+    WvString proto, hostname, user, password;
     int port;
     bool resolving;
     WvResolver dns;

@@ -9,7 +9,8 @@ default: all
 
 all: urlget.libs
 
-urlget.libs: wvhttppool.o ../crypto/crypto.libs
+urlget.libs: wvhttppool.o wvhttpstream.o wvftpstream.o ftpparse.o \
+	../crypto/crypto.libs
 
 LIBS=-lssl
 

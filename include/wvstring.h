@@ -274,6 +274,9 @@ public:
 class WvString : public WvFastString
 {
 public:
+    // an empty string, converted to char* as ""
+    static const WvString empty;
+
     WvString() {} // nothing special needed
     WvString(int i) : WvFastString(i) { } // nothing special
     
