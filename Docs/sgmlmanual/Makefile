@@ -6,6 +6,7 @@ all: includes wvstreams.verify wvstreams.html wvstreams.ps wvstreams.pdf
 html: wvstreams.sgml wvstreams.html
 ps: wvstreams.ps
 pdf: wvstreams.pdf
+rtf: wvstreams.rtf
 
 IMGFILES=$(shell [ -d img ] && find img -type f)
 
@@ -87,14 +88,14 @@ ALL_WVSGML=$(shell /bin/ls *.wvsgml 2>/dev/null)
 	$(MAKE) dirimages htmlimages
 	rm -f $@
 	jade -t rtf -o $*.rtf.tmp \
-		-d /usr/lib/dsssl/stylesheets/docbook/print/docbook.dsl $<
+		-d /usr/lib/sgml/stylesheet/dsssl/docbook/nwalsh/print/docbook.dsl $<
 	cat $*.rtf.tmp | sed 's,"img/\(.*\)\.[^.]*","img.tmp/\1.gif",g' >$@
 	rm -f $*.rtf.tmp
 
 %.tex: %.sgml
 	rm -f $@
 	jade -t tex -o $*.tex.tmp \
-		-d /usr/lib/dsssl/stylesheets/docbook/print/docbook.dsl $<
+		-d /usr/lib/sgml/stylesheet/dsssl/docbook/nwalsh/print/docbook.dsl $<
 	cat $*.tex.tmp | sed 's,{img/\(.*\)\.[^.]*},{img.tmp/\1.eps},g' >$@
 	rm -f $*.tex.tmp
 
