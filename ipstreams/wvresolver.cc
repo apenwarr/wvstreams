@@ -229,15 +229,14 @@ int WvResolver::findname(int msec_timeout, WvIPAddr *ipaddr, char **name)
 
 
 bool WvResolver::select_setup(const WvString &hostname,
-			      fd_set &fds, int &max_fd)
+			      WvStream::SelectInfo &si)
 {
     WvResolverHost *host = (*hostmap)[hostname];
     
     if (host)
     {
 	if (host->loop)
-	    return host->loop->select_setup(fds, fds, fds, max_fd,
-					    true, false, false);
+	    return host->loop->select_setup(si);
 	else
 	    return true; // sure thing: already looked up this name!
     }

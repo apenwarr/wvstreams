@@ -36,9 +36,8 @@ public:
     void set_timer(int msec, int max_backlog = 10);
 
     virtual bool isok() const;
-    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception);
-    virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
+    virtual bool select_setup(SelectInfo &si);
+    virtual bool test_set(SelectInfo &si);
     
     // notify timestream that we have "ticked" once
     void WvTimeStream::tick();

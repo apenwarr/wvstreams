@@ -96,31 +96,30 @@ size_t WvFileWatcher::uwrite(const void *buf, size_t size)
 // or you want to write to it.  Otherwise the file is "not ready."
 // Because this happens in select_setup, the file will only be checked as
 // often as your select() delay.  So infinite delays are a bad idea!
-bool WvFileWatcher::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception)
+bool WvFileWatcher::select_setup(SelectInfo &si)
 {
     struct stat st;
     
     if (!once_ok) return false;
     
-    if (writable)
+    if (si.writable)
 	return true; // always writable
     
-    if (!readable)
+    if (!si.readable)
 	return false; // what are you asking?
     
     // readable if the current location pointer is < size
-    if (fd >= 0 && readable && !fstat(fd, &st) && fpos < st.st_size)
+    if (fd >= 0 && si.readable && !fstat(fd, &st) && fpos < st.st_size)
 	return true;
 	    
     // get the file open, at least
     if (make_ok(false))
     {
 	// writable as long as file is open
-	if (writable)
+	if (si.writable)
 	    return true;
 	
-	if (readable && fpos < last_st.st_size)
+	if (si.readable && fpos < last_st.st_size)
 	    return true;
     }
     

@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
-    char *av[] = {
+    const char *av[] = {
 	argc==2 ? argv[1] : "/bin/bash",
 	NULL
     };

@@ -32,12 +32,11 @@ public:
     virtual int getfd() const;
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
-    virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
     virtual bool isok() const;
     virtual int geterr() const;
     virtual const char *errstr() const;
-    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception);
+    virtual bool select_setup(SelectInfo &si);
+    virtual bool test_set(SelectInfo &si);
     virtual const WvAddr *src() const;
     virtual void execute();
 

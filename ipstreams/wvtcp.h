@@ -49,12 +49,11 @@ public:
         { return connected; }
     
     // override select_setup() to cause select() results when resolving names.
-    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception);
+    virtual bool select_setup(SelectInfo &si);
     
     // override test_set() to set the 'connected' variable as soon as we
     // are connected.
-    virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
+    virtual bool test_set(SelectInfo &si);
     
     // isok() will always be true if !resolved, even though fd==-1.
     virtual bool isok() const;

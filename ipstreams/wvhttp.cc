@@ -156,8 +156,7 @@ const char *WvHTTPStream::errstr() const
 }
 
 
-bool WvHTTPStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception)
+bool WvHTTPStream::select_setup(SelectInfo &si)
 {
     if (!isok()) return false;
     
@@ -186,8 +185,7 @@ bool WvHTTPStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 	
     default:
 	return WvStreamClone::isok()
-	    && WvStreamClone::select_setup(r, w, x, max_fd,
-					   readable, writable, isexception);
+	    && WvStreamClone::select_setup(si);
     }
 }
 

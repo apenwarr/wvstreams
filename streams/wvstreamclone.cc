@@ -49,14 +49,6 @@ size_t WvStreamClone::uwrite(const void *buf, size_t size)
 }
 
 
-bool WvStreamClone::test_set(fd_set &r, fd_set &w, fd_set &x)
-{
-    if (s())
-	return s()->test_set(r, w, x);
-    return false;
-}
-
-
 bool WvStreamClone::isok() const
 {
     if (errnum)
@@ -87,16 +79,22 @@ const char *WvStreamClone::errstr() const
 }
 
 
-bool WvStreamClone::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-				 bool readable, bool writable, bool isexcept)
+bool WvStreamClone::select_setup(SelectInfo &si)
 {
-    if (readable && !select_ignores_buffer && inbuf.used() 
+    if (si.readable && !select_ignores_buffer && inbuf.used() 
 	   && inbuf.used() >= queue_min)
 	return true;   // sure_thing if anything in WvStream buffer
 
     if (s())
-	return s()->select_setup(r, w, x, max_fd,
-				 readable, writable, isexcept);
+	return s()->select_setup(si);
+    return false;
+}
+
+
+bool WvStreamClone::test_set(SelectInfo &si)
+{
+    if (s())
+	return s()->test_set(si);
     return false;
 }
 

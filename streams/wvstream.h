@@ -92,12 +92,17 @@ public:
     // be ready for one of the requested operations, in which case the
     // caller should not do an actual select().  This function is only
     // called for a stream where isok() returns true.
-    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception);
+    struct SelectInfo {
+	fd_set read, write, except;
+	bool readable, writable, isexception;
+	int max_fd;
+	time_t msec_timeout;
+    };
+    virtual bool select_setup(SelectInfo &si);
     
     // return 'true' if this object is in the sets r, w, or x.  Called
     // from within select() to see if the object matches.
-    virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
+    virtual bool test_set(SelectInfo &si);
 
     // return true if any of the requested features are true on the stream.
     // If msec_timeout < 0, waits forever (bad idea!).  ==0, does not wait.

@@ -19,8 +19,7 @@ bool WvStreamList::isok() const
 }
 
 
-bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-				bool readable, bool writable, bool isexcept)
+bool WvStreamList::select_setup(SelectInfo &si)
 {
     bool one_dead = false;
 	
@@ -38,30 +37,27 @@ bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 	    continue;
 	}
 	
-	if (readable && !select_ignores_buffer
+	if (si.readable && !select_ignores_buffer
 	    && inbuf.used() && inbuf.used() > queue_min)
 	{
 	    sure_thing.append(&s, false);
 	}
 	
-	if (s.isok() 
-	    && s.select_setup(r, w, x, max_fd, readable, writable, isexcept))
-	{
+	if (s.isok() && s.select_setup(si))
 	    sure_thing.append(&s, false);
-	}
     }
     
     return one_dead || !sure_thing.isempty();
 }
 
 
-bool WvStreamList::test_set(fd_set &r, fd_set &w, fd_set &x)
+bool WvStreamList::test_set(SelectInfo &si)
 {
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
 	WvStream &s(i);
-	if (s.isok() && s.test_set(r, w, x))
+	if (s.isok() && s.test_set(si))
 	    sure_thing.append(&s, false);
     }
     return !sure_thing.isempty();

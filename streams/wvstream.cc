@@ -64,11 +64,11 @@ int WvStream::getfd() const
 }
 
 
-bool WvStream::test_set(fd_set &r, fd_set &w, fd_set &x)
+bool WvStream::test_set(SelectInfo &si)
 {
-    return (FD_ISSET(getfd(), &r)
-	    || FD_ISSET(getfd(), &w)
-	    || FD_ISSET(getfd(), &x));
+    return (FD_ISSET(getfd(), &si.read)
+	    || FD_ISSET(getfd(), &si.write)
+	    || FD_ISSET(getfd(), &si.except));
 }
 
 
@@ -261,21 +261,20 @@ void WvStream::drain()
 }
 
 
-bool WvStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			    bool readable, bool writable, bool isexception)
+bool WvStream::select_setup(SelectInfo &si)
 {
     int fd;
-    if (readable && !select_ignores_buffer && inbuf.used()
+    if (si.readable && !select_ignores_buffer && inbuf.used()
 	  && inbuf.used() >= queue_min )
 	return true; // already ready
     
     fd = getfd();
     if (fd < 0) return false;
     
-    if (readable)    FD_SET(fd, &r);
-    if (writable)    FD_SET(fd, &w);
-    if (isexception) FD_SET(fd, &x);
-    if (max_fd < fd) max_fd = fd;
+    if (si.readable)    FD_SET(fd, &si.read);
+    if (si.writable)    FD_SET(fd, &si.write);
+    if (si.isexception) FD_SET(fd, &si.except);
+    if (si.max_fd < fd) si.max_fd = fd;
     
     return false;
 }
@@ -285,32 +284,36 @@ bool WvStream::select(time_t msec_timeout,
 		      bool readable, bool writable, bool isexcept)
 {
     bool sure;
-    int max_fd, sel;
-    fd_set r, w, x;
+    int sel;
     timeval tv;
+    SelectInfo si;
     
     if (!readable && !writable && !isexcept)
 	return false;  // why are you asking ME?
     
     if (!isok()) return false;
 
-    max_fd = -1;
-    FD_ZERO(&r);
-    FD_ZERO(&w);
-    FD_ZERO(&x);
-
-    sure = select_setup(r, w, x, max_fd, readable, writable, isexcept);
+    FD_ZERO(&si.read);
+    FD_ZERO(&si.write);
+    FD_ZERO(&si.except);
+    si.readable = readable;
+    si.writable = writable;
+    si.isexception = isexcept;
+    si.max_fd = -1;
+    si.msec_timeout = msec_timeout;
+    
+    sure = select_setup(si);
     
     if (sure)
 	tv.tv_sec = tv.tv_usec = 0; // never wait: already have a sure thing!
     else
     {
-	tv.tv_sec = msec_timeout / 1000;
-	tv.tv_usec = (msec_timeout % 1000) * 1000;
+	tv.tv_sec = si.msec_timeout / 1000;
+	tv.tv_usec = (si.msec_timeout % 1000) * 1000;
     }
     
-    sel = ::select(max_fd+1, &r, &w, &x,
-		   msec_timeout >= 0 ? &tv : (timeval*)NULL);
+    sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
+		   si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
     
     if (sel < 0)
     {
@@ -322,7 +325,7 @@ bool WvStream::select(time_t msec_timeout,
     if (!sel)
 	return sure;	// timed out
     
-    return isok() && test_set(r, w, x);
+    return isok() && test_set(si);
 }
 
 

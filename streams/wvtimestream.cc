@@ -32,8 +32,7 @@ bool WvTimeStream::isok() const
 }
 
 
-bool WvTimeStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			     bool readable, bool writable, bool isexception)
+bool WvTimeStream::select_setup(SelectInfo &si)
 {
     struct timeval tv;
     struct timezone tz;
@@ -56,9 +55,9 @@ bool WvTimeStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 }
 
 
-bool WvTimeStream::test_set(fd_set &r, fd_set &w, fd_set &x)
+bool WvTimeStream::test_set(SelectInfo &si)
 {
-    return false; // if you have to ask, then never mind.
+    return false; // if you have to ask, then just forget it.
 }
 
 

@@ -8,6 +8,7 @@
 #define __WVRESOLVER_H
 
 #include "wvaddr.h"
+#include "wvstream.h"
 
 class WvResolverHostDict;
 class WvResolverAddrDict;
@@ -28,7 +29,7 @@ public:
     int findname(int msec_timeout, WvIPAddr *ipaddr, char **name);
     
     // add all of our waiting fds to an fd_set for use with select().
-    bool select_setup(const WvString &hostname, fd_set &fds, int &max_fd);
+    bool select_setup(const WvString &hostname, WvStream::SelectInfo &si);
 };
 
 #endif // __WVRESOLVER_H

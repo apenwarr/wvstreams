@@ -105,25 +105,27 @@ const WvAddr *WvTCPConn::src() const
 }
 
 
-bool WvTCPConn::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			     bool readable, bool writable, bool isexception)
+bool WvTCPConn::select_setup(SelectInfo &si)
 {
     if (!resolved)
     {
-	if (dns.select_setup(hostname, r, max_fd))
+	if (dns.select_setup(hostname, si))
 	    check_resolver();
     }
 
     if (resolved && isok()) // name might be resolved now.
-	return WvStream::select_setup(r, w, x, max_fd,
-				      readable,
-				      isconnected() ? writable : true,
-				      isexception);
+    {
+	bool oldw = si.writable, retval;
+	if (!isconnected()) si.writable = true;
+	retval = WvStream::select_setup(si);
+	si.writable = oldw;
+	return retval;
+    }
     else
 	return false;
 }
 			  
-bool WvTCPConn::test_set(fd_set &r, fd_set &w, fd_set &x)
+bool WvTCPConn::test_set(SelectInfo &si)
 {
     bool result = false;
 
@@ -131,7 +133,7 @@ bool WvTCPConn::test_set(fd_set &r, fd_set &w, fd_set &x)
 	check_resolver();
     else
     {
-	result = WvStream::test_set(r, w, x);
+	result = WvStream::test_set(si);
 
 	if (result && !connected)
 	{

@@ -90,13 +90,6 @@ void WvSplitStream::nowrite()
 }
 
 
-bool WvSplitStream::test_set(fd_set &r, fd_set &w, fd_set &x)
-{
-    return (FD_ISSET(rfd, &r) || FD_ISSET(wfd, &w)
-	    || FD_ISSET(rfd, &x) || FD_ISSET(wfd, &x));
-}
-
-
 bool WvSplitStream::isok() const
 {
     if (in_progress)
@@ -106,27 +99,33 @@ bool WvSplitStream::isok() const
 }
 
 
-bool WvSplitStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-				 bool readable, bool writable, bool isexcept)
+bool WvSplitStream::select_setup(SelectInfo &si)
 {
-    if (readable)
+    if (si.readable)
     {
 	if (!select_ignores_buffer && inbuf.used())
 	    return true; // already ready
-	FD_SET(rfd, &r);
+	FD_SET(rfd, &si.read);
     }
-    if (writable)
-	FD_SET(wfd, &w);
-    if (isexcept)
+    if (si.writable)
+	FD_SET(wfd, &si.write);
+    if (si.isexception)
     {
-	FD_SET(rfd, &x);
-	FD_SET(wfd, &x);
+	FD_SET(rfd, &si.except);
+	FD_SET(wfd, &si.except);
     }
     
-    if (max_fd < rfd) max_fd = rfd;
-    if (max_fd < wfd) max_fd = wfd;
+    if (si.max_fd < rfd) si.max_fd = rfd;
+    if (si.max_fd < wfd) si.max_fd = wfd;
     
     return false;
+}
+
+
+bool WvSplitStream::test_set(SelectInfo &si)
+{
+    return (FD_ISSET(rfd, &si.read) || FD_ISSET(wfd, &si.write)
+	    || FD_ISSET(rfd, &si.except) || FD_ISSET(wfd, &si.except));
 }
 
 

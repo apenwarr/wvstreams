@@ -21,10 +21,9 @@ public:
     
     virtual void close();
     virtual int getfd() const;
-    virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
     virtual bool isok() const;
-    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception);
+    virtual bool select_setup(SelectInfo &si);
+    virtual bool test_set(SelectInfo &si);
     int getrfd() const
         { return rfd; }
     int getwfd() const
