@@ -441,6 +441,11 @@ public:
      */
     void seterr(int _errnum);
     void seterr(WvStringParm specialerr);
+    void seterr(WVSTRING_FORMAT_DECL)
+        { return seterr(WvString(WVSTRING_FORMAT_CALL)); }
+    
+    void setfd(int fd)
+        { rwfd = fd; }
     
 private:
     void init();
