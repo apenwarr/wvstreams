@@ -26,6 +26,7 @@ class UniConfTreeBase
 {
 protected:
     typedef WvVector<UniConfTreeBase> Container;
+    typedef UniConfTreeBaseComparator BaseComparator;
 
     UniConfTreeBase *xparent; /*!< the parent of this subtree */
     Container *xchildren; /*!< the ordered vector of children */
@@ -100,7 +101,7 @@ private:
  * "Sub" is the name of the concrete subclass of UniConfTree
  */
 
-template<class Sub, class Base = UniConfTreeBase>
+template<class Sub, class Base = UniHashTreeBase>
 class UniConfTree : public Base
 {
    
@@ -190,7 +191,7 @@ public:
         void *userdata)
     {
         _recursivecompare(this, other, reinterpret_cast<
-            const UniConfTreeBaseComparator&>(comparator), userdata);
+            const typename Base::BaseComparator&>(comparator), userdata);
     }
 
     /**

@@ -11,6 +11,12 @@
 #include "wvcallback.h"
 #include "wvscatterhash.h"
 
+class UniHashTreeBase;
+
+// parameters: 1st node (may be NULL), 2nd node (may be NULL), userdata
+DeclareWvCallback(3, bool, UniHashTreeBaseComparator,
+    const UniHashTreeBase *, const UniHashTreeBase *, void *);
+
 class UniHashTreeBase
 {
 protected:
@@ -24,6 +30,7 @@ protected:
     };
 
     typedef WvScatterHash<UniHashTreeBase, UniConfKey, Accessor> Container;
+    typedef UniHashTreeBaseComparator BaseComparator;
     Container *xchildren; /*!< the hash table of children */
 
     UniHashTreeBase(UniHashTreeBase *parent, const UniConfKey &key);
@@ -38,6 +45,10 @@ protected:
     UniConfKey _fullkey(const UniHashTreeBase *ancestor = NULL) const;
     UniHashTreeBase *_find(const UniConfKey &key) const;
     UniHashTreeBase *_findchild(const UniConfKey &key) const;
+
+    static void _recursivecompare(
+        const UniHashTreeBase *a, const UniHashTreeBase *b,
+        const UniHashTreeBaseComparator &comparator, void *userdata);
 
     friend class Iter : public Container::Iter
     {
