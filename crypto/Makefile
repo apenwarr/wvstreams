@@ -1,4 +1,4 @@
-TOPDIR=../..
+TOPDIR=..
 include ${TOPDIR}/rules.mk
 
 # if you compile SSLeay yourself, change this to the base directory of the

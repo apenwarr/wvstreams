@@ -1,4 +1,4 @@
-TOPDIR=../..
+TOPDIR=..
 include $(TOPDIR)/rules.mk
 
 TESTS=teststr testlist testhash stresshash testbuffer testbase64 testver \
