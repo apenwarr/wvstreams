@@ -144,7 +144,7 @@ void UniConfClient::pre_get(UniConf *&h)
 {
     WvString lookfor("%s", h->gen_full_key());
     if (conn && conn->isok())
-        conn->print("%s %s\n", UniConfConn::UNICONF_GET, lookfor);
+        conn->print("%s %s\n", UniConfConn::UNICONF_GET, wvtcl_escape(lookfor));
 }
 
 void UniConfClient::update_all()
@@ -158,7 +158,7 @@ void UniConfClient::update_all()
     {
         UniConf *toupdate = top->find(i->key);
         //wvcon->print("About to update:  %s\n", i->key);
-        if (toupdate)
+        if (toupdate && !toupdate->dirty)
             update(toupdate);
     }
     dict.zap();
@@ -180,17 +180,14 @@ void UniConfClient::update(UniConf *&h)
     
     if (!data)
     {
-        conn->print("%s %s\n", UniConfConn::UNICONF_GET, wvtcl_escape(lookfor));
+        pre_get(h);
         while (!data && conn->isok())
         {
-            if (conn->select(5000, true, false, false))
-            {
+            if (conn->select(0, true, false, false))
                 conn->callback();
-            }
-            else
             data = dict[lookfor];
-//            wvcon->print("Waiting.\n");
         }
+
         if (!conn->isok())
             h->waiting = false;
     }
@@ -212,18 +209,10 @@ void UniConfClient::executereturn(UniConfKey &key, WvConstStringBuffer &fromline
 {
     WvString value = wvtcl_getword(fromline);
     waitingdata *data = dict[key.printable()];
-//    wvcon->print("RETN:%s;%s.\n",key,value);
     if (data == NULL)
-    {
-//        wvcon->print("DATA WAS NULL!\n");
-        dict.add(new waitingdata(key.printable(), value.unique()),
-                true);
-    }
+        dict.add(new waitingdata(key.printable(), value.unique()),true);
     else
-    {
-//        wvcon->print("DATA WASN'T NULL!Key:%s.Value:%s.\n",data->key, data->value);
         data->value = value.unique();
-    }
 
     UniConf *temp = top->find(key);
     if (temp && !temp->dirty)
@@ -256,6 +245,8 @@ void UniConfClient::executeforget(UniConfKey &key)
 void UniConfClient::executesubtree(UniConfKey &key, WvConstStringBuffer &fromline)
 {
     waitforsubt = false;
+    time_t ticks_left = conn->alarm_remaining();
+    conn->alarm(-1);
     while (fromline.used() > 0)
     {
         WvString pair = wvtcl_getword(fromline);
@@ -263,13 +254,13 @@ void UniConfClient::executesubtree(UniConfKey &key, WvConstStringBuffer &fromlin
         temp.putstr(pair);
         WvString newkey = wvtcl_getword(temp);
         WvString newval = wvtcl_getword(temp);
-//        wvcon->print("Adding %s with value %s.\n", newkey, newval);
         dict.add(new waitingdata(newkey.unique(),
                     newval.unique()), true);
         UniConf *narf = top->find(key);
         if (narf)
             narf = narf->find_make(newkey);
     }
+    conn->alarm(ticks_left);
 }
 
 void UniConfClient::executeok(WvConstStringBuffer &fromline)
@@ -335,7 +326,8 @@ void UniConfClient::execute(WvStream &stream, void *userdata)
     }
     if (stream.alarm_remaining() <= 0 && stream.alarm_was_ticking)
     {
-        update_all();
+        if (dict.count())
+            update_all();
         stream.alarm(15000);
     }
 }

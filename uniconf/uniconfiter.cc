@@ -5,15 +5,19 @@
  * Several kinds of UniConf iterators.
  */
 #include "uniconfiter.h"
-
+#include "wvstream.h"
 WvLink *UniConf::RecursiveIter::_next()
 { 
-    if (i.ptr() && i->generator)
+    if (i.ptr() && i->generator && !recursed_children)
+    {
+        wvcon->print("Recursively checking children for %s.\n", (int)i.ptr());
         i->check_children(true);
+        recursed_children = true;
+    }
 
     if (!subiter && i.ptr() && i->children)
     {
-	subiter = new RecursiveIter(*i);
+	subiter = new RecursiveIter(*i->children);
 	subiter->rewind();
     }
     

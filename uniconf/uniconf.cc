@@ -49,6 +49,7 @@ void UniConf::init()
     notify = child_notify = false;
     waiting = child_waiting = false;
     obsolete = child_obsolete = false;
+    have_all_children = parent ? parent->have_all_children : false;
 }
 
 
