@@ -387,8 +387,8 @@ void UniConfGremlin::test()
         {
             WvString rand = rand_str(i);
             printf("Adding %s\n", rand.cstr());
-            cfg[WvString(count)].set(rand);
-            cfg[WvString(count)].commit();
+            cfg[count].set(rand);
+            cfg[count].commit();
             count ++;
         }
     }
@@ -397,8 +397,8 @@ void UniConfGremlin::test()
     {
         int randint = rand();
         printf("Adding %i\n", randint);
-        cfg[WvString(count)].setint(randint);
-        cfg[WvString(count)].commit();
+        cfg[count].setint(randint);
+        cfg[count].commit();
         count ++;
     }
     printf("Testing Find Victims\n");

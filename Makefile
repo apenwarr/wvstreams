@@ -22,7 +22,7 @@ endif
 
 %.so: SONAME=$@.$(RELEASE)
 
-.PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean test
+.PHONY: clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean test
 
 # FIXME: little trick to ensure that the wvautoconf.h.in file is there
 .PHONY: dist-hack-clean
@@ -52,10 +52,6 @@ configure: configure.ac
 include/wvautoconf.h.in:
 	autoheader
 endif
-
-ChangeLog:
-	rm -f ChangeLog ChangeLog.bak
-	cvs2cl --utc
 
 define wild_clean
 	@list=`echo $(wildcard $(1))`; \

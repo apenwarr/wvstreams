@@ -138,10 +138,6 @@ public:
      */
     const UniConf operator[] (const UniConfKey &key) const
         { return UniConf(xroot, UniConfKey(xfullkey, key)); }
-    const UniConf operator[] (WvStringParm key) const
-        { return (*this)[UniConfKey(key)]; }
-    const UniConf operator[] (const char *key) const
-        { return (*this)[UniConfKey(key)]; }
 #endif  // SWIG
 
     /**
@@ -152,10 +148,6 @@ public:
     %name(u_should_be_ignored)
 #endif
     const UniConf u(const UniConfKey &key) const
-        { return (*this)[key]; }
-    const UniConf u(WvStringParm key) const
-        { return (*this)[key]; }
-    const UniConf u(const char *key) const
         { return (*this)[key]; }
 
     /** Reassigns the target of this handle to match a different one. */
@@ -177,14 +169,19 @@ public:
      * key is not found, returns 'defvalue' instead.
      */
     WvString get(WvStringParm defvalue = WvString::null) const;
+
+    /** A different way to say cfg.get(): use *cfg instead. */
+    WvString operator* () const
+        { return get(); }
+
+    /** A different way to say cfg.get().num(): use cfg->num() instead. */
+    WvStringStar operator -> () const
+        { return get(); }
     
-    /**
-     * Without fetching its value, returns true if this key exists.
-     * 
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the value.
-     */
-    bool exists() const;
+    /** A different way to say cfg[x].get(y). */
+    WvString xget(WvStringParm key,
+		  WvStringParm defvalue = WvString::null) const
+        { return (*this)[key].get(defvalue); }
 
     /**
      * Fetches the integer value for this key from the registry.  If the
@@ -194,6 +191,18 @@ public:
      * key is false by default.)
      */
     int getint(int defvalue = 0) const;
+
+    /** A different way to say cfg[x].getint(y). */
+    int xgetint(WvStringParm key, int defvalue = 0) const
+        { return (*this)[key].getint(defvalue); }
+
+    /**
+     * Without fetching its value, returns true if this key exists.
+     * 
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the value.
+     */
+    bool exists() const;
 
 
     /***** Key Storage API *****/
@@ -212,11 +221,19 @@ public:
     void set(WVSTRING_FORMAT_DECL) const
         { return set(WvString(WVSTRING_FORMAT_CALL)); }
 
+    /** A different way to say cfg[x].set(y). */
+    void xset(WvStringParm key, WvStringParm value) const
+        { (*this)[key].set(value); }
+
     /**
      * Stores an integer value for this key into the registry.
      * Returns true on success.
      */
     void setint(int value) const;
+
+    /** A different way to say cfg[x].set(y). */
+    void xsetint(WvStringParm key, int value) const
+        { (*this)[key].setint(value); }
 
 
     /***** Key Handling API *****/

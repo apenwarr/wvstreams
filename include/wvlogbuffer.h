@@ -58,6 +58,8 @@ protected:
     MsgCounterDict counters;
     WvDynBuf current;
     int max_lines;
+
+    void handle_msg(Msg *lastmsg);
     
     virtual void _begin_line() {};
     virtual void _mid_line(const char *str, size_t len);

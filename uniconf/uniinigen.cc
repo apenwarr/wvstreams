@@ -44,6 +44,21 @@ UniIniGen::~UniIniGen()
 bool UniIniGen::refresh()
 {
     WvFile file(filename, O_RDONLY);
+    struct stat statbuf;
+
+    if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
+    {
+	log(WvLog::Warning, "Can't stat '%s': %s\n",
+	    filename, strerror(errno));
+	file.close();
+    }
+
+    if (file.isok() && (statbuf.st_mode & S_ISVTX))
+    {
+	file.close();
+	file.seterr(EAGAIN);
+    }
+
     if (!file.isok())
     {
         log(WvLog::Warning, 
@@ -223,7 +238,29 @@ void UniIniGen::commit()
 {
     if (!dirty) return;
 
-    WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+    WvString alt_filename(".%s.pid%s", filename, getpid());
+    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+    struct stat statbuf;
+
+    if (file.geterr()
+	|| lstat(filename, &statbuf) == -1
+	|| !S_ISREG(statbuf.st_mode))
+    {
+	log(WvLog::Warning, "couldn't create %s\n", alt_filename);
+	unlink(alt_filename);
+	alt_filename = WvString::null;
+
+	file.open(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+
+	if (fstat(file.getwfd(), &statbuf) == -1)
+	{
+	    log(WvLog::Warning, "Can't write '%s': %s\n",
+		filename, strerror(errno));
+	    return;
+	}
+
+	fchmod(file.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
+    }
     
     if (root) // the tree may be empty, so NULL root is okay
     {
@@ -237,12 +274,41 @@ void UniIniGen::commit()
 	save(file, *root);
     }
 
+    if (alt_filename.isnull())
+    {
+	if (!file.geterr())
+	{
+	    /* We only reset the sticky bit if all went well, but before
+	     * we close it, because we need the file descriptor. */
+	    statbuf.st_mode = statbuf.st_mode & ~S_ISVTX;
+	    fchmod(file.getwfd(), statbuf.st_mode & 07777);
+	}
+	else
+	    log(WvLog::Warning, "Error writing '%s': %s\n",
+		filename, file.errstr());
+    }
+
     file.close();
+
     if (file.geterr())
-        log(WvLog::Warning,
-	    "Can't write '%s': %s\n", filename, file.errstr());
-    else
-	dirty = false;
+    {
+        log(WvLog::Warning, "Can't write '%s': %s\n",
+	    filename, file.errstr());
+	return;
+    }
+
+    if (!alt_filename.isnull())
+    {
+	if (rename(alt_filename, filename) == -1)
+	{
+	    log(WvLog::Warning, "Can't write '%s': %s\n",
+		filename, strerror(errno));
+	    unlink(alt_filename);
+	    return;
+	}
+    }
+
+    dirty = false;
 }
 
 

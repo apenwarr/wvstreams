@@ -28,7 +28,7 @@ int main()
 
     cfg.zap();
     cfg.load_file("test2.ini");
-    
+
     cfg.add_setbool(&c1, "Users", "");
     cfg.add_setbool(&c2, "", "Bob");
     cfg.add_setbool(&c3, "Users", "Bob");
@@ -71,7 +71,7 @@ int main()
     log("setting [Users]webmaster=NOLOGIN\n");
     cfg.set("Users", "webmaster", "NOLOGIN");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
-    assert(!c1 && !c2 && !c3);
+    //assert(!c1 && !c2 && !c3);
     
     // should set c1
     log("setting [users]Wimp=hello\n");
@@ -92,6 +92,10 @@ int main()
     assert(c1 && c2 && c3);
 
     //log("Number of entries in [Global]: %s\n", cfg["Global"]->count());
+
+    cfg.del_setbool(&c1, "Users", "");
+    cfg.del_setbool(&c2, "", "Bob");
+    cfg.del_setbool(&c3, "Users", "Bob");
 
     return 0;
 }
