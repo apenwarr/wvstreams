@@ -587,7 +587,8 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
 	WvInterface &ifc(i);
 	if (!ifc.valid) continue;
 	
-	if (ifc.ipaddr() == addr || ifc.ipaddr().broadcast() == addr)
+	if (ifc.ipaddr() == addr || ifc.ipaddr().base() == addr
+	  || ifc.ipaddr().broadcast() == addr)
 	    return true;
 
 	if (ifc.hwaddr() == addr)
