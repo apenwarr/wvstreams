@@ -212,9 +212,11 @@ bool WvFdStream::post_select(SelectInfo &si)
 	    (wfd >= 0 && FD_ISSET(wfd, &si.except)));
     
     if (val && si.wants.readable && read_requires_writable
+      && read_requires_writable->isok()
       && !read_requires_writable->select(0, false, true))
 	return result;
     if (val && si.wants.writable && write_requires_readable
+      && write_requires_readable->isok()
       && !write_requires_readable->select(0, true, false))
 	return result;
     return val || result;
