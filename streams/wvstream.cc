@@ -342,9 +342,9 @@ char *WvStream::getline(time_t wait_msec, char separator)
 	}
 
 	// read a few bytes
-	buf = inbuf.alloc(100);
-	i = uread(buf, 100);
-	inbuf.unalloc(100 - i);
+	buf = inbuf.alloc(1024);
+	i = uread(buf, 1024);
+	inbuf.unalloc(1024 - i);
     }
     
     // we timed out or had a socket error
