@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.23 2003/03/30 00:03:34 jim Exp $)
+AC_REVISION($Id: configure.ac,v 1.24 2003/04/16 22:13:41 mag Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -59,6 +59,10 @@ AC_ARG_WITH(speex,
 AC_ARG_WITH(fam,
             AC_HELP_STRING([--with-fam],
                            [FAM]))
+
+AC_ARG_WITH(gdbm,
+            AC_HELP_STRING([--with-gdbm],
+                           [GDBM]))
 
 AC_ARG_WITH(fftw,
             AC_HELP_STRING([--with-fftw],
@@ -147,6 +151,16 @@ fi
 if test "$with_fam" != "no"; then
     AC_DEFINE(WITH_FAM,,
               [File Alteration Monitor])
+fi
+
+# gdbm
+if test "$with_gdbm" != "no"; then
+    AC_CHECK_LIB(gdbm, gdbm_open,, [with_gdbm=no])
+    AC_CHECK_HEADERS(gdbm.h,, [with_gdbm=no])
+fi
+if test "$with_gdbm" != "no"; then
+    AC_DEFINE(WITH_GDBM,,
+              [GDBM Hash])
 fi
 
 # ogg
