@@ -124,6 +124,10 @@ CPPFLAGS+=-I$(with_xplc)/include
 endif
 endif
 
+LDLIBS := $(LDLIBS) \
+	$(shell gcc -lsupc++ 2>&1 | grep -q "undefined reference" \
+		&& echo " -lsupc++")
+
 RELEASE?=$(PACKAGE_VERSION)
 
 include $(wildcard */vars.mk */*/vars.mk) /dev/null

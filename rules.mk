@@ -37,7 +37,8 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %.so: SONAME=$@
 %.so:
-	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SOFLAGS) $^ -o $@
+	$(LINK_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) \
+		$(SOFLAGS) $^ -o $@
 
 %.moc: %.h
 	$(COMPILE_MSG)moc $< -o $@
