@@ -10,7 +10,8 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
     slave = _slave;
     verify = _verify;
     is_server = _is_server;
-    read_again = write_again = false;
+    read_again = false;
+    writeonly = 1400;
     
     if (is_server && (x509 == NULL))
     {
@@ -134,7 +135,11 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 	return 0;
     }
 
-    int result = SSL_write(ssl, (char *)buf, len);
+    // copy buf into the bounce buffer...
+
+    memcpy(bouncebuffer,buf,(writeonly < len) ? writeonly : len); 
+
+    int result = SSL_write(ssl, bouncebuffer, (writeonly < len) ? writeonly : len);
 
     if (len > 0 && result == 0)
 	close();
@@ -144,28 +149,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 	{
 	   case SSL_ERROR_WANT_WRITE:
 		debug(">> ERROR: SSL_write() cannot complete at this time...retry!\n");
-
-        /* FIXME:
-	   Ok, this is ugly... as a matter of fact, it's probably so ugly
-	   that it's going to have to change... but, because the SSL authors
-	   don't give me a choice, I have to do this... from the SSL man
-	   page:
-
-	WARNING
-
-	When an SSL_write() operation has to be repeated because of
-	SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated 
-	with the same arguments.
-
-	   So, wvstreams usual "Back off and try again with a smaller chunk",
-	   which is perfectly sane, and usual, causes SSL to blow up...
-	*/
-		do 
-		{
-		    result = SSL_write(ssl, (char *)buf, len);
-		    debug(">> Retrying SSL Write...\n");
-		} while ( result <= 0 );
-		debug(">> SSL_write() finally wrote %s bytes!\n",result);
+		writeonly = len;
 		break;
 	   case SSL_ERROR_NONE:
 		debug(">> Hmmm... something got confused... no SSL Errors!\n");
@@ -175,7 +159,11 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 		seterr("SSL Write failed - bailing out of the SSL Session");
 		break;
 	}
-	return result;
+	return 0;
+    }
+    else
+    {
+        writeonly = 1400;
     }
 
     debug(">> SSL wrote %s bytes \t WvStreams wanted to write %s bytes\n", 

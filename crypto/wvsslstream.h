@@ -103,16 +103,24 @@ private:
     bool	verify;
     
     /**
-     * SSL may keep its own internal read/write buffers, so we need to
+     * SSL may keep its own internal read buffers, so we need to
      * avoid doing a real select() until these are definitely empty (SSL_read
-     * or SSL_write returns EAGAIN).
+     * returns EAGAIN).
      */
-    bool read_again, write_again;
+    bool       read_again;
     
     /**
      * Internal Log Object
      */
     WvLog      debug;
+
+    /**
+     * Buffer to handle SSL_write() stupidity... if you're really curious, 
+     * read the SSL_write() man page, and you'll know why.
+     */
+    char       bouncebuffer[1400];
+    size_t     writeonly;
+
 };
 
 #endif
