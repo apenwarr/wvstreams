@@ -85,9 +85,9 @@ install: install-shared install-dev
 
 # FIXME: these should be built with their suffix, and the rule automated
 install-shared: libwvstreams.so libwvutils.so
-	$(INSTALL) -d $(libdir)
-	$(INSTALL_PROGRAM) libwvstreams.so $(libdir)/libwvstreams.so.$(RELEASE)
-	$(INSTALL_PROGRAM) libwvutils.so $(libdir)/libwvutils.so.$(RELEASE)
+	$(INSTALL) -d $(DESTDIR)$(libdir)
+	$(INSTALL_PROGRAM) libwvstreams.so $(DESTDIR)$(libdir)/libwvstreams.so.$(RELEASE)
+	$(INSTALL_PROGRAM) libwvutils.so $(DESTDIR)$(libdir)/libwvutils.so.$(RELEASE)
 
 install-dev: libwvstreams.a libwvutils.a
 	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams
