@@ -6,7 +6,7 @@
  * It only becomes readable at periodic intervals.
  */
 #include "wvsyncstream.h"
-
+#include "wvtimeutils.h"
 
 WvSyncStream::WvSyncStream(WvStream *_cloned, size_t _bps,
     size_t _chunksize) : WvStreamClone(_cloned),
@@ -21,7 +21,8 @@ WvSyncStream::WvSyncStream(WvStream *_cloned, bool _owner, int _srate,
     closecb_func(NULL), closecb_data(NULL)
 {
     size_t _bps = _srate * _bits / 8;
-    init(_bps, _bps * _msec / 1000);
+    size_t _chunksize = _bps * _msec / 1000;
+    init(_bps, _chunksize);
     disassociate_on_close = ! _owner;
 }
 
@@ -65,7 +66,6 @@ size_t WvSyncStream::uread(void *buf, size_t count)
         return 0; // try again later
 
     size_t len = WvStreamClone::uread(buf, count);
-    wvcon->print("read %s bytes\n", len);
     availchunk -= len;
     return len;
 }
@@ -74,6 +74,7 @@ size_t WvSyncStream::uread(void *buf, size_t count)
 bool WvSyncStream::post_select(SelectInfo &si)
 {
     bool havedata = WvStreamClone::post_select(si);
+    havedata = true;
     if (si.wants.readable)
     {
         poll();
@@ -93,13 +94,13 @@ void WvSyncStream::poll()
     // how long has it been?
     struct timeval now;
     gettimeofday(& now, NULL);
-    unsigned long sec = now.tv_sec - lastpoll.tv_sec;
-    unsigned long usec = now.tv_usec - lastpoll.tv_usec;
+    time_t msec = msecdiff(now, lastpoll);
+    if (msec < 5)
+        return; // not precise enough to care yet
     lastpoll = now;
 
     // how much can we read?
-    size_t chunk = size_t(bps * sec) +
-        size_t((long long)bps * (long long)usec / 1000000LL);
+    size_t chunk = bps * msec / 1000;
     availchunk += chunk;
     if (availchunk > chunksize)
         availchunk = chunksize; // must have gotten behind in reading
