@@ -197,9 +197,15 @@ bool WvTestFileTree::fill_in_dir(WvStringParm dirname, WvStringParm dirnum,
 	// create files and symlinks
 	if (j % 3 == 1)
 	{
-	    if (!create_symlink(WvString("%s/file%s.%s", dirname, dirnum,
-					 last_file),
-				WvString("%s/file%s.%s", dirname, dirnum, j)))
+	    // Second symlink (if present) is broken on purpose.
+	    WvString target;
+	    if (j == 4)
+		target = "this_is_a_broken_link";
+	    else
+		target = WvString("%s/file%s.%s", dirname, dirnum, last_file);
+
+	    if (!create_symlink(target, WvString("%s/file%s.%s", dirname,
+						 dirnum, j)))
 		created_files = false;
 	}
 	else
