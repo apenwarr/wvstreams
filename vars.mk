@@ -130,10 +130,6 @@ ifeq ("$(enable_efence)", "yes")
 LDLIBS+=-lefence
 endif
 
-ifneq ("$(with_fam)", "no")
-  libwvstreams.so: -lfam
-endif
-
 ifneq ("$(with_bdb)", "no")
   libwvutils.so-LIBS+=-ldb
 endif
@@ -143,10 +139,6 @@ ifneq ("$(with_qdbm)", "no")
 endif
 
 libwvbase.so: LIBS+=-lxplc-cxx
-
-ifneq ("$(with_fam)", "no")
-  libwvstreams.so: -lfam
-endif
 
 ifneq ("$(with_openslp)", "no")
   libwvstreams.so: -lslp

@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 4.0, wvstreams-dev@nit.ca, wvstreams)
+AC_INIT(WvStreams, 4.1, wvstreams-dev@nit.ca, wvstreams)
 
 save_args() {
     ARGS=""
@@ -89,7 +89,6 @@ AC_ARG_ENABLE(testgui,
               AC_HELP_STRING([--disable-testgui],
                              [GUI for unit tests]))
 
-AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
@@ -355,15 +354,6 @@ if test "$enable_rtti" = "no"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
-# fam
-if test "$with_fam" != "no"; then
-    AC_CHECK_HEADERS(fam.h,, [with_fam=no])
-    AC_CHECK_LIB(fam, FAMOpen,, [with_fam=no])
-    if test "$with_fam" != "no"; then
-        AC_DEFINE(WITH_FAM,, [Define to enable FAM support.])
-    fi 
-fi
-
 # fftw
 if test "$with_fftw" != "no"; then
     AC_CHECK_HEADERS(rfftw.h,, [with_fftw=no])
@@ -598,10 +588,6 @@ fi
 # check for missing packages
 missing_required=
 missing_devel=
-if test "$with_fam" = "no"; then
-    AC_MSG_WARN([FAM is missing.])
-    missing_devel=yes
-fi
 if test "$with_fftw" = "no"; then
     AC_MSG_WARN([FFTW is missing.])
     missing_devel=yes
@@ -685,7 +671,6 @@ AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
 
 AC_SUBST(with_bdb)
-AC_SUBST(with_fam)
 AC_SUBST(with_fftw)
 AC_SUBST(with_qdbm)
 AC_SUBST(with_gtk)
