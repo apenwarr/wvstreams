@@ -476,7 +476,12 @@ public:
             return false;
         current = top[it->key()];
         return true;
-    }   
+    }
+    
+    // FIXME: this is a speed optimization only.  Don't use this unless
+    // you're apenwarr.  It will change.
+    WvString _value() const
+        { return it->value(); }
 };
 
 
