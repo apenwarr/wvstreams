@@ -179,16 +179,19 @@ bool WvString::operator! () const
 
 
 // parse a 'percent' operator from a format string.  For example:
-//        cptr      out:  justify   maxlen  return pointer
-//        "%s"               0         0    "s"
-//        "%-15s"          -15         0    "s"
-//        "%15.5s"          15         5    "s"
+//        cptr      out:  zeropad  justify   maxlen  return pointer
+//        "%s"             false      0         0    "s"
+//        "%-15s"          false    -15         0    "s"
+//        "%15.5s"         false     15         5    "s"
+//        "%015.5s"        true      15         5    "s"
 // and so on.  On entry, cptr should _always_ point at a percent '%' char.
 //
-static char *pparse(char *cptr, int &justify, int &maxlen)
+static char *pparse(char *cptr, bool &zeropad, int &justify, int &maxlen)
 {
     assert(*cptr == '%');
     cptr++;
+
+    zeropad = (*cptr == '0');
 
     justify = atoi(cptr);
     
@@ -226,6 +229,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
     const WvString **aptr = a;
     char *iptr = format, *optr;
     int total = 0, aplen, ladd, justify, maxlen;
+    bool zeropad;
     
     while (*iptr)
     {
@@ -237,7 +241,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	}
 	
 	// otherwise, iptr is at a percent expression
-	iptr = pparse(iptr, justify, maxlen);
+	iptr = pparse(iptr, zeropad, justify, maxlen);
 	if (*iptr == '%') // literal percent
 	{
 	    total++;
@@ -273,7 +277,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	}
 	
 	// otherwise, iptr is at a percent expression
-	iptr = pparse(iptr, justify, maxlen);
+	iptr = pparse(iptr, zeropad, justify, maxlen);
 	if (*iptr == '%')
 	{
 	    *optr++ = *iptr++;
@@ -287,7 +291,10 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	
 	    if (justify > aplen)
 	    {
-		memset(optr, ' ', justify-aplen);
+	        if (zeropad)
+		    memset(optr, '0', justify-aplen);
+		else
+		    memset(optr, ' ', justify-aplen);
 		optr += justify-aplen;
 	    }
 	
@@ -296,7 +303,10 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	
 	    if (justify < 0 && -justify > aplen)
 	    {
-		memset(optr, ' ', -justify - aplen);
+	        if (zeropad)
+		    memset(optr, '0', justify-aplen);
+		else
+		    memset(optr, ' ', justify-aplen);
 		optr += -justify - aplen;
 	    }
 	    
