@@ -132,8 +132,8 @@ WvString WvDSAKey::getpem(bool privkey)
     }
     else
     {
-	// We should write out the Public Key, whatever that means
-	// in a DSA context
+	// We should write out the Public Key, which is the DSA Public
+	// key, as well as the DH generator information.
 //	PEM_write_DSAPublicKey(fp, dsa);
     }
     

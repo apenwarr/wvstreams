@@ -128,6 +128,8 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
         }
     }
     
+    SSL_CTX_set_read_ahead(ctx, 1);
+
     ERR_clear_error();
     ssl = SSL_new(ctx);
     if (!ssl)
@@ -139,6 +141,8 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
     if (!!vcb)
 	SSL_set_verify(ssl, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, 
                        wv_verify_cb);
+
+
 
     debug("SSL stream initialized.\n");
 

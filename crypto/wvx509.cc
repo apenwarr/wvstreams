@@ -346,27 +346,42 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
     X509_EXTENSION_free(ex);
 
     // Set the RFC2459-mandated keyUsage field to critical, and restrict
-    // the usage of this cert to digital signature and key encipherment.
-    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
-	     "critical, digitalSignature, keyEncipherment, keyCertSign");
+    // the usage of this cert to digital signature, key agreement, and 
+    // key encipherment.
+    if (is_ca)
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
+				 "critical, keyCertSign, cRLSign");
+    else
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
+				 "critical, digitalSignature, "
+				 "keyEncipherment, keyAgreement");
+    
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     
-    // This could cause Netscape to barf because if we set basicConstraints 
-    // to critical, we break RFC2459 compliance. Why they chose to enforce 
-    // that bit, and not the rest is beyond me... but oh well...
+    // This could cause Netscape to barf for non-CA types because if we set 
+    // basicConstraints to critical, we break RFC3280 compliance. 
+    // Why they chose to enforce that bit, and not the rest is beyond me... 
+    // but oh well...
     if (is_ca)
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
 				 "critical, CA:TRUE");
     else
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
 				 "CA:FALSE");
-	
+    
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     
-    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
+    // At some point, we should put in the policyConstraints extension
+    // since it is required to be RFC3280 compliant.
+    
+    if (is_ca)
+	; // Extended Key Usage is not allowed for CA's
+    else
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
 	     "TLS Web Server Authentication, TLS Web Client Authentication");
+	
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
@@ -518,21 +533,23 @@ WvString WvX509Mgr::signcert(WvStringParm pkcs10req)
 {
     assert(rsa);
     
+    // Break this next part out into a de-pemify section, since that is what
+    // this part up until the FIXME: is about.
     WvString pkcs10(pkcs10req);
     
-    char *begin = strstr(pkcs10.edit(), "\nMII") + 1;
+    char *begin = strstr(pkcs10.edit(), "\nMII");
     if (!begin)
     {
 	debug("This doesn't look like PEM Encoded information...\n");
 	return WvString::null;
     }
-    char *end = strstr(begin, "=\n---") + 1 ;
+    char *end = strstr(begin + 1, "=\n---");
     if (!end)
     {
 	debug("Is this a complete certificate request?\n");
 	return WvString::null;
     }
-    *end = '\0';
+    *++end = '\0';
     WvString body(begin); // just the PKCS#10 request, 
                           // without the ---BEGIN and ---END
     
