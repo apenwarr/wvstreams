@@ -207,7 +207,7 @@ WVTEST_MAIN("callbacks")
     
     WvStream s;
     s.setcallback(val_cb, &val);
-    s.setclosecallback(WvBoundCallback<IWvStreamCallback, int&>(val_icb, closeval));
+    s.setclosecallback(WvBoundCallback<IWvStreamCallback, int&>(&val_icb, closeval));
     
     WVPASS(!val);
     WVPASS(!closeval);
