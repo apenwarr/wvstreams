@@ -204,6 +204,39 @@ static int func(int x)
 }
 
 
+class Honk
+{
+public:
+    const char *id;
+    RealCallback cb;
+    
+    Honk(const char *_id)
+        { id = _id; }
+    
+    void honk_at(Honk &a)
+    {
+	cb = WvCont(BoundCallback<RealCallback, Honk &>
+		    (this, &Honk::honker, a));
+    }
+
+private:
+    int honker(Honk &h, int x)
+    {
+	printf("%s: STARTING (%d)\n", id, x);
+	
+	for (x--; WvCont::isok() && x > 0; x--)
+	{
+	    printf("%s: --> Honking in (%d)\n", id, x);
+	    h.cb(x);
+	    printf("%s: <-- Honking out (%d)\n", id, x);
+	}
+	
+	printf("%s: DONE\n", id);
+	return x;
+    }
+};
+
+
 int main()
 {
     // basic functionality (including nested tasks)
@@ -230,6 +263,35 @@ int main()
 	printf("zot4: %d\n", cb1(1000));
 	printf("zot4: %d\n", cb2(1100));
 	printf("zot4: %d\n", cb3(1200));
+    }
+    
+    // fun with recursive continuations.  If this doesn't do something
+    // predictable, we'll get screwy bugs when we use this in WvStreams - just
+    // like we did with the pre-WvCont continue_select() implementation.
+    // 
+    // The *desired* behaviour here is the same as with real recursive
+    // function calls: if a calls b who calls c, and then c calls a again,
+    // then a should do its thing, return (or yield), when c will finish,
+    // yield, then b will finish, yield, and then a will have a chance to run
+    // again.
+    // 
+    // In old wvstreams, we would short-circuit the recursion (the inner a
+    // would yield immediately without doing anything).  This is easy to
+    // implement, but causes problems if c actually expects a to do something.
+    // 
+    // Unfortunately, the semantics of this are tricky with continuations:
+    // when we call the inner a, we re-enter its context, but that context
+    // is waiting for b to return.  It can't do anything unless b returns,
+    // so what can we do?  I guess we can pretend that b *did* return,
+    // let a run, then rewind and *actually* run b, and then... run a again?
+    // Or leave it out?
+    {
+	Honk h1("honk1"), h2("honk2"), h3("honk3");
+	h1.honk_at(h2);
+	h2.honk_at(h3);
+	h3.honk_at(h1);
+	
+	h1.cb(5);
     }
     
     return 0;
