@@ -262,7 +262,7 @@ void WvStream::execute()
 
 bool WvStream::isok() const
 {
-    return WvError::isok();
+    return WvErrorBase::isok();
 }
 
 
@@ -270,7 +270,7 @@ void WvStream::seterr(int _errnum)
 {
     if (!errnum)
     {
-        WvError::seterr(_errnum);
+        WvErrorBase::seterr(_errnum);
         close();
     }
 }

@@ -15,17 +15,21 @@
  * It can have either a system error value, like those defined
  * in errno.h, or an arbitrary error string.  In either case, it
  * can return a string representation of the error message.
+ * 
+ * This object is most useful for using as a base class of your own class,
+ * for historical/backwards compatibility reasons.  Consider using a WvError
+ * instead, and making it a member of your class instead of a parent.
  */
-class WvError
+class WvErrorBase
 {
 protected:
     int errnum;
     WvString errstring;
     
 public:
-    WvError()
+    WvErrorBase()
         { noerr(); }
-    virtual ~WvError();
+    virtual ~WvErrorBase();
 
     /**
      * By default, returns true if geterr() == 0.
@@ -59,11 +63,39 @@ public:
     void seterr(WvStringParm specialerr);
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
-    void seterr(const WvError &err);
+    void seterr(const WvErrorBase &err);
     
     /** Reset our error state - there's no error condition anymore. */
     void noerr()
         { errnum = 0; }
+};
+
+
+/**
+ * A variant of WvErrorBase suitable for embedding as a member of your own
+ * object, preferably called 'err'.  It adds some extra convenience functions
+ * to remove function name redundancy, so you can say "obj.err.get()" instead
+ * of "obj.err.geterr()", for example.
+ */
+class WvError : public WvErrorBase
+{
+public:
+    int get() const
+        { return geterr(); }
+    WvString str() const
+        { return errstr(); }
+    
+    void set(int _errnum)
+        { seterr(_errnum); }
+    void set(WvStringParm specialerr)
+        { seterr(specialerr); }
+    void set(WVSTRING_FORMAT_DECL)
+        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
+    void set(const WvErrorBase &err)
+        { seterr(err); }
+
+    void reset()
+        { noerr(); }
 };
 
 

@@ -32,7 +32,7 @@ class WvStream;
 // parameters are: owning-stream, userdata
 typedef WvCallback<void, WvStream&, void*> WvStreamCallback;
 
-class IWvStream : public IObject, public WvError
+class IWvStream : public IObject, public WvErrorBase
 {
 public:
     /**
@@ -198,7 +198,7 @@ public:
     /** Override seterr() from WvError so that it auto-closes the stream. */
     virtual void seterr(int _errnum);
     void seterr(WvStringParm specialerr)
-        { WvError::seterr(specialerr); }
+        { WvErrorBase::seterr(specialerr); }
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
     

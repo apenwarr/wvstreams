@@ -11,7 +11,7 @@
 
 
 /** A circular queue that can be accessed across fork(). */
-class WvMagicCircle : public WvError
+class WvMagicCircle : public WvErrorBase
 {
 public:
     /**
