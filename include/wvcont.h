@@ -86,7 +86,7 @@ public:
      * had returned, and the parameter to the callback is the value of
      * yield().
      */
-    static P1 yield(R ret);
+    static P1 yield(R ret = 0);
     
     /**
      * Tell us if the current context is "okay", that is, not trying to
