@@ -160,7 +160,7 @@ void UniConfClient::update(UniConf *&h)
         if (conn && conn->isok())
         {
             conn->print(WvString("%s %s\n", UniConfConn::UNICONF_GET, wvtcl_escape(lookfor)));
-            wvcon->print("DOING A GET!\n");
+//            wvcon->print("DOING A GET!\n");
         }
         else
         {
@@ -175,7 +175,7 @@ void UniConfClient::update(UniConf *&h)
         conn->select(-1, true, false, false);
 
         conn->callback();
-        wvcon->print("Looking for:  %s.\n", lookfor);
+//        wvcon->print("Looking for:  %s.\n", lookfor);
         data = dict[lookfor];
     }
     
@@ -188,8 +188,8 @@ void UniConfClient::update(UniConf *&h)
         h->waiting = false;
         h->obsolete = false;
     }
-    else
-        wvcon->print("NO DATA!\n");
+//    else
+//        wvcon->print("NO DATA!\n");
     h->dirty = false;
 
 }
@@ -198,16 +198,16 @@ void UniConfClient::executereturn(UniConfKey &key, WvConstStringBuffer &fromline
 {
     WvString value = wvtcl_getword(fromline);
     waitingdata *data = dict[key.printable()];
-    wvcon->print("GOT:RETN;%s;%s.\n",key,value);
+//    wvcon->print("GOT:RETN;%s;%s.\n",key,value);
     if (data == NULL)
     {
-        wvcon->print("DATA WAS NULL!\n");
+//        wvcon->print("DATA WAS NULL!\n");
         dict.add(new waitingdata(key.printable(), value.unique()),
                 true);
     }
     else
     {
-        wvcon->print("DATA WASN'T NULL!Key:%s.Value:%s.\n",data->key, data->value);
+//        wvcon->print("DATA WASN'T NULL!Key:%s.Value:%s.\n",data->key, data->value);
         data->value = value.unique();
     }
 
