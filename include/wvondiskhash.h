@@ -253,7 +253,9 @@ protected:
 
 #ifdef WITH_BDB
 
-// Base class for the template to save space
+/**
+ * Base class for the template to save space
+ */
 class WvBdbHash : public WvErrorBase
 {
     WvString dbfile;

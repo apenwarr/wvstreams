@@ -2,24 +2,26 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * WvCont provides "continuations", which are apparently also known as
- * semi-coroutines.  You can wrap any WvCallback<void*,void*> in a WvCont
- * and make it a "continuable" callback - that is, you can yield() from it
- * and return a value.  Next time someone calls your callback, it will be
- * as if yield() has returned (and the parameter to your function is returned
- * from yield()).
- * 
  * FIXME: I was too lazy to templatize this properly, so we only support
  * WvCallback<void*,void*>.  It should be possible to work with any kind
  * of return value and parameter, although it makes sense to limit things
  * to just one parameter (since it currently has to be returned by yield()
  * somehow).
  */
+
 #ifndef __WVCONT_H
 #define __WVCONT_H
 
 #include "wvcallback.h"
 
+/**
+ * WvCont provides "continuations", which are apparently also known as
+ * semi-coroutines.  You can wrap any WvCallback<void*,void*> in a WvCont
+ * and make it a "continuable" callback - that is, you can yield() from it
+ * and return a value.  Next time someone calls your callback, it will be
+ * as if yield() has returned (and the parameter to your function is returned
+ * from yield()).
+ */
 class WvCont
 {
 public:
