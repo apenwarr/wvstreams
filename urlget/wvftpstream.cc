@@ -404,7 +404,6 @@ void WvFtpStream::execute()
 			log(WvLog::Debug5, "Wrote %s bytes to local.\n", wrote);
 		    }
 		}
-		data->close();
             }
         }
 
