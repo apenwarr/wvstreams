@@ -1,4 +1,6 @@
 
+default: $(TARGETS)
+
 libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
 libwvoggvorbis.so: libwvstreams.so
 
@@ -131,6 +133,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
+$(TESTS): libwvstreams.a libwvutils.a
 $(TESTS): LDLIBS+=libwvstreams.a libwvutils.a
 tests: $(TESTS)
 
