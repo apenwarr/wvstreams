@@ -521,8 +521,8 @@ bool WvHttpPool::pre_select(SelectInfo &si)
 	}
     }
     
-    log(WvLog::Debug4, "pre_select: main:%s conns:%s urls:%s\n",
-         count(), conns.count(), urls.count());
+//    log(WvLog::Debug5, "pre_select: main:%s conns:%s urls:%s\n",
+//         count(), conns.count(), urls.count());
     
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )

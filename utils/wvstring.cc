@@ -131,7 +131,7 @@ void WvString::append(WvStringParm s)
 
 size_t WvFastString::len() const
 {
-    return (buf && buf->size) ? buf->size-1 : (str ? strlen(str) : 0);
+    return str ? strlen(str) : 0;
 }
 
 
