@@ -20,7 +20,7 @@ SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 	-L/usr/local/ssl -L/usr/local/ssl/lib -L/usr/local/ssleay
 
 default: all tests
-all: crypto.libs crypto.a ssltest
+all: crypto.libs crypto.a
 
 .PHONY: ssltest
 ssltest:
