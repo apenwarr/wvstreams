@@ -181,7 +181,10 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             len -= amount;
             total += amount;
             if (len == 0)
+	    {
+		read_pending = false;
                 break;
+	    }
             buf = (unsigned char *)buf + amount;
         }
 
