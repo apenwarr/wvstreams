@@ -34,8 +34,7 @@ public:
      * This is used by create_test_files() but can also be called on its own.
      * @return True if file was created successfully
      */
-    bool create_random_file(WvStringParm filename, off_t size,
-                            WvStringParm acl = WvString::null);
+    bool create_random_file(WvStringParm filename, off_t size);
 
     /** Creates a symlink.
      * Used by create_test_files() but can be called on its own.  Essentially
@@ -58,9 +57,6 @@ public:
      * to calculate the MD5 sum as we create the file.
      */
     WvString get_md5_str(WvStringParm filename);
-
-    /// Return a sample ACL generated from the given number
-    WvString sample_acl(unsigned int num);
 
 private:
     WvLog log;

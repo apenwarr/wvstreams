@@ -53,21 +53,12 @@ void get_simple_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
 
 /// Set one or more ACL entries through standard short or long text form.
 bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
-			 bool set_default_too = false);
-
-/// Set one or more ACL entries through standard short or long text form.
-bool set_default_acl_permissions(WvStringParm filename,
-                                 WvStringParm text_form);
+			 bool set_default_too);
 
 /// Set one ACL entry with individual parameters.
 bool set_acl_permission(WvStringParm filename, WvStringParm type,
                         WvString qualifier,
 			bool read, bool write, bool execute,
 			bool kill = false, bool set_default_too = false);
-
-/// Set one ACL entry with individual parameters.
-bool set_default_acl_permission(WvStringParm filename, WvStringParm type,
-                                WvString qualifier, bool read, bool write,
-                                bool execute, bool kill = false);
 
 #endif // __WVACL_H
