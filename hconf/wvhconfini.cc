@@ -8,6 +8,7 @@
  * See wvhconfini.h.
  */
 #include "wvhconfini.h"
+#include "wvhconfiter.h"
 #include "wvtclstring.h"
 #include "strutils.h"
 #include "wvfile.h"

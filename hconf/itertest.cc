@@ -5,6 +5,7 @@
  * Test for the WvHConf::Iter object.
  */
 #include "wvhconfini.h"
+#include "wvhconfiter.h"
 #include <assert.h>
 
 
@@ -60,6 +61,13 @@ int main()
     {
 	log("Sorted recursive dump:\n");
 	WvHConf::RecursiveSorter i(h, rhconfcmp);
+	for (i.rewind(); i.next(); )
+	    log("  '%s' = '%s'\n", i->full_key(), *i);
+    }
+    
+    {
+	log("Extended iter:\n");
+	WvHConf::XIter i(h, "*/*/monkey/*/2/*");
 	for (i.rewind(); i.next(); )
 	    log("  '%s' = '%s'\n", i->full_key(), *i);
     }

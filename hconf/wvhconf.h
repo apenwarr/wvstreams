@@ -45,13 +45,15 @@ public:
     WvHConfKey(const char *key);
     WvHConfKey(WvStringParm key);
     WvHConfKey(WvStringParm section, WvStringParm entry);
-    WvHConfKey(const WvHConfKey &key, int offset = 0);
+    WvHConfKey(const WvHConfKey &key, int offset = 0, int max = -1);
     
     WvHConfString printable() const;
     operator WvString () const { return printable(); }
     
     WvHConfKey skip(int offset) const
         { return WvHConfKey(*this, offset); }
+    WvHConfKey header(int max) const
+        { return WvHConfKey(*this, 0, max); }
 };
 
 
@@ -171,131 +173,21 @@ public:
     
     class Iter;
     class RecursiveIter;
+    class XIter;
     class Sorter;
     class RecursiveSorter;
     
     friend class Iter;
     friend class RecursiveIter;
+    friend class XIter;
     friend class Sorter;
     friend class RecursiveSorter;
+    
     friend class WvHConfGen;
 };
 
 
 DeclareWvDict(WvHConf, WvHConfString, name);
-
-
-// this iterator walks through all the immediate children of a
-// WvHConf node.
-class WvHConf::Iter : public WvHConfDict::Iter
-{
-public:
-    Iter(WvHConf &h)
-	: WvHConfDict::Iter(h.children ? *h.children : null_wvhconfdict)
-	{ }
-    Iter(WvHConfDict &children)
-	: WvHConfDict::Iter(children)
-	{ }
-    
-    // we want to skip empty-valued elements in the list, even if
-    // they exist.
-    WvLink *next()
-    {
-	WvLink *l;
-	while ((l = WvHConfDict::Iter::next()) != NULL 
-	       && !*ptr() && !ptr()->children)
-	    ;
-	return l;
-    }
-};
-
-
-// this iterator recursively walks through _all_ children, direct and indirect,
-// of this node.
-class WvHConf::RecursiveIter
-{
-public:
-    WvHConfDict::Iter i;
-    RecursiveIter *subiter;
-    
-    RecursiveIter(WvHConf &h)
-	: i(h.children ? *h.children : null_wvhconfdict)
-	{ subiter = NULL; }
-    RecursiveIter(WvHConfDict &children)
-	: i(children)
-	{ subiter = NULL; }
-    ~RecursiveIter()
-        { unsub(); }
-    
-    void unsub()
-        { if (subiter) delete subiter; subiter = NULL; }
-    
-    void rewind()
-        { unsub(); i.rewind(); }
-    
-    WvLink *cur()
-        { return subiter ? subiter->cur() : i.cur(); }
-    
-    // return the next element, either from subiter or, if subiter is done,
-    // the next immediate child of our own.
-    WvLink *_next()
-    { 
-	if (!subiter && i.ptr() && i->children)
-	{
-	    subiter = new RecursiveIter(*i);
-	    subiter->rewind();
-	}
-	
-	if (subiter)
-	{
-	    WvLink *l = subiter->next();
-	    if (l) return l;
-	    unsub();
-	}
-	
-	return i.next();
-    }
-    
-    // like _next(), but skip elements with empty values.
-    WvLink *next()
-    { 
-	WvLink *l;
-	while ((l = _next()) != NULL && !*ptr())
-	    ;
-	return l;
-    }
-    
-    WvHConf *ptr() const
-        { return subiter ? subiter->ptr() : i.ptr(); }
-    
-    WvIterStuff(WvHConf);
-};
-
-
-// WvHConf::Sorter is like WvHConf::Iter, but allows you to sort the list.
-typedef WvSorter<WvHConf, WvHConfDict, WvHConf::Iter>
-    _WvHConfSorter;
-class WvHConf::Sorter : public _WvHConfSorter
-{
-public:
-    Sorter(WvHConf &h, RealCompareFunc *cmp)
-	: _WvHConfSorter(h.children ? *h.children : null_wvhconfdict,
-			 cmp)
-	{ }
-};
-
-
-// WvHConf::RecursiveSorter is the recursive version of WvHConf::Sorter.
-typedef WvSorter<WvHConf, WvHConfDict, WvHConf::RecursiveIter> 
-    _WvHConfRecursiveSorter;
-class WvHConf::RecursiveSorter : public _WvHConfRecursiveSorter
-{
-public:
-    RecursiveSorter(WvHConf &h, RealCompareFunc *cmp)
-	: _WvHConfRecursiveSorter(h.children ? *h.children : null_wvhconfdict,
-				  cmp)
-	{ }
-};
 
 
 #endif // __WVHCONF_H

@@ -11,7 +11,7 @@ all: hconf.a
 
 $(TESTS): hconf.a
 
-hconf.libs: wvhconfkey.o wvhconf.o wvhconfgen.o wvhconfini.o \
+hconf.libs: wvhconfkey.o wvhconf.o wvhconfgen.o wvhconfiter.o wvhconfini.o \
 	../configfile/configfile.libs
 
 hconf.a: hconf.libs

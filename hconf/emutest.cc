@@ -10,6 +10,7 @@
 
 //# include "wvconfemu.h"
 #include "wvhconfini.h"
+#include "wvhconfiter.h"
 
 class WvConfigEntryEmu;
 class WvConfigSectionEmu;

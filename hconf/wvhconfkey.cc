@@ -46,7 +46,7 @@ WvHConfKey::WvHConfKey(WvStringParm section, WvStringParm entry)
 
 // copy an old key to this key, stripping the leading components.
 // This isn't a very efficient copy operation, but maybe that's okay...
-WvHConfKey::WvHConfKey(const WvHConfKey &key, int offset)
+WvHConfKey::WvHConfKey(const WvHConfKey &key, int offset, int max)
 {
     int count = 0;
     Iter i(key);
@@ -55,7 +55,10 @@ WvHConfKey::WvHConfKey(const WvHConfKey &key, int offset)
 	; // do nothing; just skipping stuff.
     if (!i.cur())
 	return;
-    while (i.next())
+    
+    // note: if 'max' is negative, this loop won't terminate because of
+    // max.  (ie. max will never reach zero).  That's the right behaviour!
+    while (i.next() && max--)
 	append(new WvString(*i), true);
 }
 
