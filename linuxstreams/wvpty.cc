@@ -41,7 +41,7 @@ bool WvPty::open_master()
             }
             else
             {
-                rfd = wfd = fd;
+                setfd(fd);
 
                 _master = pty;
                 _master.unique();
@@ -63,50 +63,44 @@ bool WvPty::open_slave()
     // try to change owner and permissions.  this will only work if we 
     // are root; if we're not root, we don't care.
     struct group *gr = ::getgrnam("tty");
-    if (gr)
-    {
-        ::chown(_slave, ::getuid(), gr->gr_gid);
-    }
-    else
-        ::chown(_slave, ::getuid(), (gid_t)-1);
+    ::chown(_slave, ::getuid(), gr? gr->gr_gid: (gid_t)-1);
 
     ::chmod(_slave, S_IRUSR | S_IWUSR | S_IWGRP);
 
-    rfd = wfd = ::open(_slave, O_RDWR);
+    setfd(::open(_slave, O_RDWR));
     
-    return rfd != -1;
+    return getfd() != -1;
 }
 
 WvPty::WvPty(const char *program, const char * const *argv)
         : _pid(-1), _exit_status(242)
 {
-    if (!open_master()) return;
-
     if (!open_master()
             || (_pid = ::fork()) < 0)
     {
         // error
         _pid = -1;
-        rfd = wfd = -1;
+        setfd(-1);
     }
     else if (_pid == 0)
     {
         // child
-        int fd = rfd;
+        int fd = getfd();
         if (::close(fd) < 0
                 || ::setsid() < 0
                 || !open_slave()
-                || ::ioctl(rfd, TIOCSCTTY, NULL)
-                || ::dup2(rfd, STDIN_FILENO) < 0
-                || ::dup2(wfd, STDOUT_FILENO) < 0
-                || ::dup2(wfd, STDERR_FILENO) < 0
-                || (rfd > STDERR_FILENO && ::close(rfd) < 0))
+                || ::ioctl(getrfd(), TIOCSCTTY, NULL)
+                || ::dup2(getrfd(), STDIN_FILENO) < 0
+                || ::dup2(getwfd(), STDOUT_FILENO) < 0
+                || ::dup2(getwfd(), STDERR_FILENO) < 0
+                || (getfd() > STDERR_FILENO && ::close(getfd()) < 0))
             goto _error;
-        
+       
+        setfd(-1);
         execvp(program, (char * const *)argv);
 
 _error:
-        rfd = wfd = -1;
+        setfd(-1);
         _exit(242);
     }
 }
