@@ -45,7 +45,7 @@ WvDirIter::~WvDirIter()
 bool WvDirIter::isok() const
 /**************************/
 {
-    return( dirs.count() > 0 );
+    return( !dirs.isempty() );
 }
 
 bool WvDirIter::isdir() const
