@@ -97,7 +97,7 @@ AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
 AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
-AC_ARG_WITH(popt, AC_HELP_STRING([--with-popt], [popt]))
+AC_ARG_WITH(popt, AC_HELP_STRING([--with-popt], [popt (required)]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
@@ -608,7 +608,7 @@ if test "$with_qdbm" = "no"; then
 fi
 if test "$with_popt" = "no"; then
     AC_MSG_WARN([Popt is missing.])
-    missing_devel=yes
+    missing_required="$missing_required popt"
 fi
 if test "$with_ogg" = "no"; then
     AC_MSG_WARN([Ogg is missing.])
@@ -712,6 +712,7 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/libwvqt.pc
 		 pkgconfig/libwvstreams.pc
 		 pkgconfig/libwvutils.pc])
+
 if test "$xplc_pc" = "wvxplc"; then
     AC_CONFIG_FILES([pkgconfig/wvxplc.pc])
 fi

@@ -4,8 +4,6 @@
  *
  * WvStreams interface for popt argument processing
  */
-#include "wvautoconf.h"
-#ifdef WITH_POPT
 
 #include "wvargs.h"
 
@@ -674,5 +672,3 @@ void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
     if (multiple)
 	args_desc.append("...");
 }
-
-#endif // WITH_POPT

@@ -9,11 +9,6 @@
 #ifndef __WVDAEMON_H
 #define __WVDAEMON_H
 
-#include "wvautoconf.h"
-#ifndef WITH_POPT
-#error WvDaemon is only availible when WvStreams is compiled with popt support
-#else
-
 #include "wvstring.h"
 #include "wvargs.h"
 #include "wvlog.h"
@@ -104,7 +99,5 @@ class WvDaemon
             return !_want_to_die && !_want_to_restart;
         }
 };
-
-#endif //WITH_POPT
 
 #endif // __WVDAEMON_H

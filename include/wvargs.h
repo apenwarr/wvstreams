@@ -7,11 +7,6 @@
 #ifndef __WVARGS_H
 #define __WVARGS_H
 
-#include "wvautoconf.h"
-#ifndef WITH_POPT
-#error WvArgs is only availible when WvStreams is compiled with popt support
-#else
-
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvcallback.h"
@@ -76,7 +71,5 @@ class WvArgs
         void remove_option(WvStringParm long_option);
         void remove_all_options();
 };
-
-#endif // WITH_POPT
 
 #endif // __WVARGS_H
