@@ -43,12 +43,8 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 WvTask::~WvTask()
 {
     numtasks--;
-    
     if (running)
-    {
 	numrunning--;
-    }
-    
     magic_number = 42;
 }
 

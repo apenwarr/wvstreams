@@ -65,7 +65,8 @@ int main()
 	printf("main2:\n");
 	man.run(*gb, 400);
 	
-	gb->recycle();
+	// it's still running; can't recycle it yet!
+	//gb->recycle();
 	
 	if (!gb->isrunning())
 	    gb = man.start("bbtask", gentask, (void *)"bb");
