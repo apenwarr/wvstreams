@@ -8,9 +8,9 @@ default: all $(TESTS)
 
 all: utils.a
 
-utils.a: base64.o verstring.o strutils.o wvfork.o \
+utils.a: base64.o verstring.o strutils.o \
 		wvstring.o wvstringlist.o wvstringtable.o \
-		wvlinklist.o wvhashtable.o wvbuffer.o wvtask.o wvsubproc.o
+		wvlinklist.o wvhashtable.o wvbuffer.o wvtask.o wvfork.o wvsubproc.o
 
 
 LIBS=${EFENCE}

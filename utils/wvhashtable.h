@@ -190,14 +190,16 @@ public:									\
     public:								\
 	Iter(_classname_ &_tbl) : IterBase(_tbl)			\
 	    { }								\
-	_type_ &data() const						\
-	    { return *(_type_ *)link->data; }				\
+	_type_ *ptr() const						\
+	    { return (_type_ *)link->data; }				\
 	operator _type_& () const					\
-	    { return data(); }						\
+	    { return *ptr(); }						\
 	_type_ &operator () () const					\
-	    { return data(); }						\
+	    { return *ptr(); }						\
 	_type_ *operator -> () const					\
-	    { return &data(); }						\
+	    { return ptr(); }						\
+        _type_ &operator* () const                                      \
+            { return *ptr(); }                                          \
     };									\
                                                                         \
     class Sorter : public WvHashTable::SorterBase                       \
@@ -209,14 +211,16 @@ public:									\
                int (*_cmp)(const _type_ **, const _type_ **))           \
             : SorterBase(_tbl), cmp(_cmp)                               \
             { }                                                         \
-        _type_ &data() const                                            \
-            { return *(_type_ *)(*lptr)->data; }                        \
+        _type_ *ptr() const                                             \
+            { return (_type_ *)(*lptr)->data; }                         \
         operator _type_& () const                                       \
-            { return data(); }                                          \
+            { return *ptr(); }                                          \
         _type_ &operator () () const                                    \
-            { return data(); }                                          \
+            { return *ptr(); }                                          \
         _type_ *operator -> () const                                    \
-            { return &data(); }                                         \
+            { return ptr(); }                                           \
+        _type_ &operator* () const                                      \
+            { return *ptr(); }                                          \
         void rewind()                                                   \
             { SorterBase::rewind((int (*)(const void *, const void *))  \
                                  ((void *)cmp)); }                      \

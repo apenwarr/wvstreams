@@ -95,7 +95,7 @@ void WvIPAliaser::start_edit()
     
     for (i.rewind(); i.next(); )
     {
-	assert(i_all.find(&i.data()));
+	assert(i_all.find(i.ptr()));
 	
 	// the global alias entry goes down by one
 	i().link_count--;
@@ -113,8 +113,8 @@ WvIPAliaser::Alias *WvIPAliaser::ipsearch(WvIPAliaser::AliasList &l,
     
     for (i.rewind(); i.next(); )
     {
-	if (i.data().ip == WvIPAddr(ip))
-	    return &i.data();
+	if (i->ip == WvIPAddr(ip))
+	    return i.ptr();
     }
     
     return NULL;

@@ -201,7 +201,13 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 
 	begin_line();
 
-	if (!isascii(buf[0]) || !isprint(buf[0]))
+	if (buf[0] == '\t')
+	{
+	    mid_line(" ", 1);
+	    buf++;
+	    continue;
+	}
+	else if (!isascii(buf[0]) || !isprint(buf[0]))
 	{
 	    snprintf(hex, 5, "[%02x]", *(unsigned char *)buf);
 	    mid_line(hex, 4);
