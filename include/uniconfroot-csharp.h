@@ -13,7 +13,7 @@ uniconfroot_t uniconfroot_init();
 
 uniconfroot_t uniconfroot_moniker(const char *, int);
 
-void uniconfroot_free();
+void uniconfroot_free(uniconfroot_t ur);
 
 void uniconfroot_setcb(uniconfroot_cb cb);
 
