@@ -403,6 +403,56 @@ WVPART(streams, The Streams Library,
    WVSECT1(wvtimestream, WvTimeStream - timed events, x)
    WVSECT1(wvprotostream, WvProtoStream - a protocol state machine, x)
  )
- 
-)
 
+ WVCHAPTER(wvcallback, The Magic of WvCallBack,
+   WVSECT1(wvcallback2, WvCallback - What does it do?,
+	   WvCallback calls a member function inside a class when certain event has
+           happened or when certain task has been finished. The key point of WvCallback 
+           is that it can be used in a function that is not in the same class as the 
+           function that will be invoked after the event has occurred. WvCallback can
+           operate as:
+
+     1. a function pointer when the invoked function is not part of any class or as
+
+     2. a member function pointer when the invoked function belongs to a class
+  
+  ) 
+  WVSECT1(wvcallback3,  WvCallback - How to create your own WvCallback?,
+	   First, you have to declare a new type of WvCallback using  DeclareWvCallback. 
+           DeclareWvCallback is a macro that helps to create a new type of WvCallback.
+
+	   Note: The macro of DeclareWvCallback is written in ~src/niti/src/wvstreams/include/wvcallback.h
+           
+           The syntax of DeclareWvCallback is as follows:
+
+		DeclareWvCallback (n, ret, type, parms...)
+ 
+     WVSECT2(declarewvcallback, The input parameters of DeclareWvCallback are explained as follows:,
+           Reminder: WvCallback = function pointer or member function pointer
+
+                n - the number of parameters that the function pointed to by the WvCallback takes.
+
+                ret - the return type of the function pointed to by the WvCallback (e.g.: int, void, ...)
+
+                type - the name of the callback type (e.g.: WvConfCallback). This is the type with which you will declare your WvCallback with.                     
+
+		parms... - the types of the parameters that the function pointed to by the WvCallback.
+
+           To create your own WvCallback, you need to include wvcallback.h. 
+           Then you need to declare your own WvCallback type at the top level. 
+           You cannot run DeclareWvCallback inside a class; otherwise, it causes an internal compiler error (g++ 2.95.4).
+           See the following simple example:
+
+    WVSECT3(funcptr, WvCallback - As a function pointer  - function not inside any class,
+
+           WVEXAMPLE(wvcallbackex.cc)
+    )
+
+    WVSECT3(functptr2, WvCallback - As a member function pointer - function inside a class,
+
+           WVEXAMPLE(wvcallbackex2.cc) 
+    )
+       )
+    )
+  )
+)

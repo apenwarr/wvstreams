@@ -137,7 +137,7 @@ WvString encode_hostname_as_DN(WvStringParm hostname);
 WvString nice_hostname(WvStringParm name);
 
 /**
- * Seperates the filename and directory name within a path.
+ * Separates the filename and directory name within a path.
  */
 WvString getfilename(WvStringParm fullname);
 WvString getdirname(WvStringParm fullname);
@@ -226,5 +226,11 @@ WvString strcoll_join(const StringCollection &coll,
     }
     return total;
 }
+
+/**
+ * Replace any instances of "a" with "b" in "s".  Kind of like sed, only
+ * much dumber.
+ */
+WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
 
 #endif // __STRUTILS_H

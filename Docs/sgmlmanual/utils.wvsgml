@@ -366,6 +366,63 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
 
    WvHashTable usage is described more fully, along with examples, in
    wvhashtable.h.
+
+   WVSECT1(declarewvtable, How to create a WvHashTable?,
+      You can create a WvHashTable of any data type you want. For example,
+      a WvHashTable of WvString data type can be create like this:
+
+      DeclareWvTable(WvString);
+
+      This will create a hashtable that will contain data of WvString type.
+      It actually instantiates a WvStringTable class that inherits from
+      a WvHashTable class that handles WvString data types.
+
+      You can set the size of your dictionary by invoking the constructor of 
+      the WvStringTable class, like this:
+
+      WvStringTable t(100);
+
+      The WvString hashtable now has 100 slots. 
+
+      You can create some data of type WvString and put them in the dictionary like this:
+
+      t.add(address of data, false);
+
+      Here the second parameter 'false' means that you don't want the data to be automatically destroyed at the end of the program. This is used because some data types like WvString already has the automatic self-destroy feature.
+      For some other data types, you may need to set the second parameter to 'true'.
+      
+      You can use the iterator to go through the hashtable and print it out if you like.
+
+      WvStringTable::Iter i(t);
+
+      You can also count the number of words in the dictionary with:
+
+      t.count();
+
+      To find out if a word is already in the dictionary, you can invoke the comparison by using the [] operator. For example, you want to know if the word 'bijoux' exists in the dictionary. So you declare a WvString variable that contains the string 'bijoux', like this:
+ 
+      WvString sample("bijoux");
+
+      Then you can compare it like this:
+
+      t[sample] returns NULL if 'bijoux' is NOT in the dictionary.
+
+      t[sample] returns the word that matches 'bijoux' in the dictionary if 'bijoux is in the dictionary.
+
+      To remove a word from the dictionary, do this:
+
+      t.remove(address of data);
+
+      To empty the entire dictionary, do this:
+
+      t.zap();
+
+      The following example shows all the mentioned features of a hashtable.
+      Please take a look and try compile and run it to see for yourself.
+
+      WVEXAMPLE(wvhashtableex.cc)
+   )
+      
  )
  
  WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers,

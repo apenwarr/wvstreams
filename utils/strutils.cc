@@ -357,16 +357,57 @@ WvString nice_hostname(WvStringParm name)
     return nice;
 }
 
-WvString getfilename (WvStringParm fullname)
+WvString getfilename(WvStringParm fullname)
 {
-    return WvString(strrchr(fullname, '/') + 1);
+    WvString tmp(fullname);
+    char *cptr = strrchr(tmp.edit(), '/');
+    
+    if (!cptr) // no slash at all
+	return fullname;
+    else if (!cptr[1]) // terminating slash
+    {
+	*cptr = 0;
+	return getfilename(tmp);
+    }
+    else // no terminating slash
+	return cptr+1;
 }
 
-WvString getdirname (WvStringParm fullname)
+WvString getdirname(WvStringParm fullname)
 {
-    WvString dirname(fullname);
-    *strrchr(dirname.edit(), '/') = '\0';
-    return dirname;
+    WvString tmp(fullname);
+    char *cptr = strrchr(tmp.edit(), '/');
+    
+    if (!cptr) // no slash at all
+	return ".";
+    else if (!cptr[1]) // terminating slash
+    {
+	*cptr = 0;
+	return getdirname(tmp);
+    }
+    else // no terminating slash
+    {
+	*cptr = 0;
+	return !tmp ? WvString("/") : tmp;
+    }
+}
+
+
+WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
+{
+    WvDynamicBuffer buf;
+    const char *sptr = s, *eptr;
+    
+    while ((eptr = strstr(sptr, a)) != NULL)
+    {
+	buf.put(sptr, eptr-sptr);
+	buf.putstr(b);
+	sptr = eptr + strlen(a);
+    }
+    
+    buf.put(sptr, strlen(sptr));
+    
+    return buf.getstr();
 }
 
 WvString rfc1123_date(time_t t)

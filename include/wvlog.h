@@ -81,6 +81,9 @@ public:
      */
     virtual bool isok() const;
     
+    /* always writable */
+    virtual bool pre_select(SelectInfo &si);
+
     /**
      * change the loglevel.  This returns the object again, so you can
      * make convenient statements like log.lvl(WvLog::Warning).print(...)
