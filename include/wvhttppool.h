@@ -34,6 +34,7 @@ public:
     bool pipeline_test;
     bool headers_only;
     bool inuse;
+    bool is_dir;
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 		 bool _pipeline_test, bool _headers_only);

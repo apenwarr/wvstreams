@@ -31,6 +31,7 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
     instream = NULL;
     pipeline_test = _pipeline_test;
     headers_only = _headers_only;
+    is_dir = false;    // for ftp primarily; set later
     
     if (pipeline_test)
 	outstream = NULL;
@@ -580,6 +581,7 @@ char *WvFtpStream::get_important_line(int timeout)
 	line = getline(timeout);
 	if (!line)
 	    return NULL;
+	log("line: %s\n", line);
     }
     while (line[3] == '-');
     return line;
@@ -675,6 +677,19 @@ void WvFtpStream::execute()
 
     if (!curl && !urls.isempty())
     {
+	curl = urls.first();
+
+	write(WvString("CWD %s\r\n", curl->url.getfile()));
+	line = get_important_line(60000);
+	if (!line)
+	    return;
+
+	if (!strncmp(line, "250", 3))
+	{
+	    log("This is a directory.\n");
+	    curl->is_dir = true;
+	}
+
 	write("PASV\r\n");
 	line = get_important_line(60000);
 	if (!line)
@@ -695,8 +710,12 @@ void WvFtpStream::execute()
 	    return;
 	}
 
-	curl = urls.first();
-	write(WvString("RETR %s\r\n", curl->url.getfile()));
+	if (curl->is_dir)
+	    write(WvString("LIST %s\r\n", curl->url.getfile()));
+	else
+	    write(WvString("RETR %s\r\n", curl->url.getfile()));
+
+	log("Waiting for response to RETR/LIST\n");
 	line = get_important_line(60000);
 	if (!line)
 	    doneurl();
@@ -707,6 +726,7 @@ void WvFtpStream::execute()
 	    seterr("strange response to RETR command");
 	    doneurl();
 	}
+
     }
 
     if (curl)
@@ -727,6 +747,19 @@ void WvFtpStream::execute()
 
 	    if (strncmp(line, "226", 3))
 		log("Unexpected message: %s\n", line);
+
+	    if (curl->is_dir)
+	    {
+		write("CWD /\r\n");
+		log("Waiting for response to CWD /\n");
+		line = get_important_line(60000);
+		if (!line)
+		    return;
+		
+		if (strncmp(line, "250", 3))
+		    log("Strange resonse to \"CWD /\": %s\n", line);
+                    // Don't bother failing here.
+	    }
 
 	    doneurl();
 	}
