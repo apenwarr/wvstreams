@@ -119,7 +119,7 @@ void UniConfIniFile::load()
 	inisplit(line, key, value);
 	if (!!key && !!value)
 	{
-	    h = make_tree(top, WvString("%s/%s", section, key));
+	    h = make_tree(top, UniConfKey(section, key));
 	    
 	    bool d1 = h->dirty, d2 = h->child_dirty;
 	    h->set_without_notify(value);
@@ -146,7 +146,7 @@ void UniConfIniFile::save()
     WvFile out(WvString("%s", newfile), O_WRONLY|O_CREAT|O_TRUNC);
     if (out.isok())
     {
-        save_subtree(out, top, "/");
+        save_subtree(out, top, UniConfKey::EMPTY);
         out("\n");
     }
     else
@@ -226,7 +226,8 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
     {
 	// we could use inicode here, but then section names containing
 	// '=' signs get quoted unnecessarily.
-	out("\n[%s]\n", wvtcl_escape(key, " \t\r\n[]"));
+        /** note: we strip off leading slashes here **/
+	out("\n[%s]\n", wvtcl_escape(key.strip(), " \t\r\n[]"));
     
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
@@ -235,14 +236,17 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 	        continue;
                 
 	    if (!!*i)
-		out("%s = %s\n", inicode(i->name), inicode(*i));
+            {
+		out("%s = %s\n", inicode(i->name.strip()), inicode(*i));
+            }
 	    
 	    if (!top_special && count_children(i.ptr(), interesting) == 1)
 	    {
 		// exactly one interesting child: don't bother with a
 		// subsection.
-		UniConfKey deepkey(interesting->full_key(h));
-                out("%s = %s\n", inicode(deepkey), inicode(*interesting));
+                out("%s = %s\n",
+                    inicode(interesting->full_key(h).strip()),
+                    inicode(*interesting));
 	    }
 	}
     }
@@ -259,9 +263,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 		     && (top_special
 			 || count_children(i.ptr(), interesting) > 1))
 	    {
-		UniConfKey key2(key);
-		key2.append(&i->name, false);
-		save_subtree(out, i.ptr(), key2);
+		save_subtree(out, i.ptr(), UniConfKey(key, i->name));
 	    }
 	}
     }

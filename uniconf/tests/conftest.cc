@@ -61,7 +61,7 @@ UniConfFileTree::UniConfFileTree(UniConf *_top, WvStringParm _basedir)
 void UniConfFileTree::update(UniConf *&h)
 {
     char *line;
-    WvString name("/%s", h->gen_full_key());
+    WvString name(h->gen_full_key());
     WvFile f(name, O_RDONLY);
     
     if (!f.isok())
@@ -111,7 +111,9 @@ int main()
 	log("-- Key test begins\n");
 	
 	UniConfKey key("/a/b/c/d/e/f/ghij////k/l/m");
-	UniConfKey key2(key), key3(key, 5), key4(key, 900);
+	UniConfKey key2(key);
+        UniConfKey key3(key.removefirst(5));
+        UniConfKey key4(key.removefirst(900));
 	log("key : %s\nkey2: %s\nkey3: %s\nkey4: %s\n", key, key2, key3, key4);
     }
     

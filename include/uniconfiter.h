@@ -12,34 +12,36 @@
 #include "uniconf.h"
 
 
-// this iterator walks through all the immediate children of a
-// UniConf node.
+/**
+ * This iterator walks through all the immediate children of a
+ * UniConf node.
+ */
 class UniConf::Iter : public UniConfDict::Iter
 {
 public:
-    Iter(UniConf &h)
-	: UniConfDict::Iter(h.check_children() ? *h.children : null_wvhconfdict)
+    Iter(UniConf &h) :
+        UniConfDict::Iter(
+            h.check_children() ? *h.children : null_wvhconfdict)
 	{ }
-    Iter(UniConfDict &children)
-	: UniConfDict::Iter(children)
+    Iter(UniConfDict &children) :
+	UniConfDict::Iter(children)
 	{ }
     
-    // we want to skip empty-valued elements in the list, even if
-    // they exist.
     WvLink *next()
     {
 	WvLink *l;
-	while ((l = UniConfDict::Iter::next()) != NULL 
-	       && !*ptr() && !ptr()->children)
-	    ;
+	while ((l = UniConfDict::Iter::next()) != NULL &&
+            ptr() == NULL);
 	return l;
     }
 
 };
 
 
-// this iterator recursively walks through _all_ children, direct and indirect,
-// of this node.
+/**
+ * This iterator recursively walks through _all_ children, direct
+ * and indirect, of this node.
+ */
 class UniConf::RecursiveIter
 {
 public:
@@ -69,12 +71,10 @@ public:
     // the next immediate child of our own.
     WvLink *_next();
     
-    // like _next(), but skip elements with empty values that are not mountpoints for generators.
     WvLink *next()
-    { 
+    {
 	WvLink *l;
-	while ((l = _next()) != NULL && !*ptr() && !ptr()->hasgen());
-	    ;
+	while ((l = _next()) != NULL && ptr() == NULL);
 	return l;
     }
     
@@ -85,6 +85,9 @@ public:
 };
 
 
+/**
+ * FIXME: WHAT DOES THIS DO?
+ */
 class UniConf::XIter
 {
 public:
@@ -111,18 +114,18 @@ public:
     
     WvLink *_next();
     
-    // we want to skip empty-valued elements in the list, even if
-    // they exist.
     WvLink *next()
     {
 	WvLink *l;
-	while ((l = _next()) != NULL && !*ptr())
-	    ;
+	while ((l = _next()) != NULL && ptr() == NULL);
 	return l;
     }
     
     UniConf *ptr() const
-        { return key.isempty() ? top : (subiter ? subiter->ptr() : NULL); }
+    {
+        return key.isempty() ?
+            top : (subiter ? subiter->ptr() : NULL);
+    }
     
     WvIterStuff(UniConf);
 };

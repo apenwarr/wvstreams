@@ -11,14 +11,13 @@
 
 static int hconfcmp(const UniConf *a, const UniConf *b)
 {
-    return strcasecmp(a->name, b->name);
+    return a->name == b->name;
 }
 
 
 static int rhconfcmp(const UniConf *a, const UniConf *b)
 {
-    return strcasecmp(a->full_key().printable(),
-		      b->full_key().printable());
+    return a->full_key() == b->full_key();
 }
 
 

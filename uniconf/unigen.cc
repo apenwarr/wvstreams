@@ -17,16 +17,22 @@ UniConfGen::~UniConfGen()
 
 UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
 {
-    UniConfKey::Iter i(key);
-    for (i.rewind(); i.next(); )
+    int segments = key.numsegments();
+    for (int i = 0; i < segments; ++i)
     {
+        UniConf *child;
 	if (!parent->children)
-	    parent->children = new UniConfDict(10);
-	
-	UniConf *child = (*parent->children)[*i];
-	if (!child)
+        {
+            // FIXME: BAD SIZE ASSUMPTION!
+	    parent->children = new UniConfDict(11);
+            child = NULL;
+        }
+	else
+            child = (*parent->children)[key.segment(i)];
+
+        if (!child)
 	{
-	    child = new UniConf(parent, *i);
+	    child = new UniConf(parent, key.segment(i));
 	    parent->children->add(child, true);
             child->waiting = true;
 	    pre_get(child);

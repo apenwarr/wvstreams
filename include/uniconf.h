@@ -12,6 +12,7 @@
 
 #include "wvhashtable.h"
 #include "wvstringlist.h"
+#include "uniconfkey.h"
 
 class WvStream;
 class WvStringTable;
@@ -20,45 +21,6 @@ class UniConf;
 class UniConfDict;
 
 extern UniConfDict null_wvhconfdict;
-
-
-/**
- * A class to allow case-insensitive string comparisons.  Without this,
- * UniConf keys are case-sensitive, which is undesirable.
- */
-class UniConfString : public WvString
-{
-public:
-    UniConfString(WvStringParm s) : WvString(s)
-        { }
-    UniConfString(const char *s) : WvString(s)
-        { }
-    
-    bool operator== (WvStringParm s2) const;
-};
-
-
-/**
- * a UniConfKey is a convenient structure that uniquely identifies a point
- * in the HConf tree and can be converted to/from a WvString.
- */
-class UniConfKey : public WvStringList
-{
-public:
-    UniConfKey();
-    UniConfKey(const char *key);
-    UniConfKey(WvStringParm key);
-    UniConfKey(WvStringParm section, WvStringParm entry);
-    UniConfKey(const UniConfKey &key, int offset = 0, int max = -1);
-    
-    UniConfString printable() const;
-    operator WvString () const { return printable(); }
-    
-    UniConfKey skip(int offset) const
-        { return UniConfKey(*this, offset); }
-    UniConfKey header(int max) const
-        { return UniConfKey(*this, 0, max); }
-};
 
 
 /**
@@ -104,7 +66,8 @@ class UniConf
 {
 public:
     UniConf *parent;       // the 'parent' of this subtree
-    UniConfString name;    // the name of this entry
+    UniConfKey name;       // the name of this entry
+
 private:
     WvString value;        // the contents of this entry
     UniConfDict *children; // list of all child nodes of this node (subkeys)
@@ -139,7 +102,7 @@ public:
         waiting:1;         // need to actually retrieve data before next use.
 
     UniConf();
-    UniConf(UniConf *_parent, WvStringParm _name);
+    UniConf(UniConf *_parent, const UniConfKey &_name);
     ~UniConf();
     void init();
     
@@ -159,13 +122,14 @@ public:
     bool check_children(bool recursive = false);
     UniConf *find(const UniConfKey &key);
     UniConf *find_make(const UniConfKey &key);
-    UniConf &operator[](const UniConfKey &key) { return *find_make(key); }
+    UniConf &operator[](const UniConfKey &key)
+        { return *find_make(key); }
 
     // Updates me
     void update();
-    void remove(const UniConfKey &key = "");
+    void remove(const UniConfKey &key = UniConfKey::EMPTY);
     
-    UniConf *find_default(UniConfKey *_k = NULL) const;
+    UniConf *find_default(const UniConfKey &key = UniConfKey::EMPTY) const;
     
     // exactly the same as find_make() and operator[]... hmm.
     // Unnecessary?
@@ -226,7 +190,7 @@ public:
 };
 
 
-DeclareWvDict(UniConf, UniConfString, name);
+DeclareWvDict(UniConf, UniConfKey, name);
 
 
 #endif // __UNICONF_H

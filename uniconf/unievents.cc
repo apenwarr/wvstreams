@@ -39,15 +39,15 @@ static UniConf *find_match(UniConf *h, const UniConfKey &key)
 {
     UniConf *h2;
     
-    UniConfKey::Iter ki(key);
-    for (ki.rewind(); h && ki.next(); )
+    int segments = key.numsegments();
+    for (int s = 0; h && s < segments; ++s)
     {
-	if (*ki == "*") // wildcard
+	if (key.segment(s) == UniConfKey::ANY) // wildcard
 	{
 	    UniConf::Iter i(*h);
 	    for (i.rewind(); i.next(); )
 	    {
-		h2 = find_match(i.ptr(), key.skip(1));
+		h2 = find_match(i.ptr(), key.removefirst(1));
 		if (h2)
 		    return h2; // found a match somewhere inside the wildcard
 	    }
@@ -56,7 +56,7 @@ static UniConf *find_match(UniConf *h, const UniConfKey &key)
 	{
 	    if (!h->child_notify)
 		return NULL; // no matches below this level
-	    h = h->find(*ki);
+	    h = h->find(key.segment(s));
 	}
     }
     

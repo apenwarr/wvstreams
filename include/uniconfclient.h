@@ -19,11 +19,13 @@
 
 struct waitingdata
 {
-    WvString key, value;
-    waitingdata(WvString _key, WvString _value) : key(_key), value(_value) {};
+    UniConfKey key;
+    WvString value;
+    waitingdata(UniConfKey _key, WvString _value) :
+        key(_key), value(_value) { }
 };
 
-DeclareWvDict(waitingdata, UniConfString, key);
+DeclareWvDict(waitingdata, UniConfKey, key);
 
 
 class UniConfClient : public UniConfGen

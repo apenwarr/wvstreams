@@ -6,6 +6,7 @@
  */
 #include "uniconfiter.h"
 #include "wvstream.h"
+
 WvLink *UniConf::RecursiveIter::_next()
 { 
     if (i.ptr() && i->generator && !recursed_children)
@@ -35,11 +36,11 @@ WvLink *UniConf::RecursiveIter::_next()
 static int find_wildcard_depth(const UniConfKey &k)
 {
     int depth = 0;
-    UniConfKey::Iter ki(k);
-    for (ki.rewind(); ki.next(); )
+    int segments = k.numsegments();
+    while (depth < segments)
     {
-	if (*ki == "*") // wildcard element found!
-	    break;
+        if (k.segment(depth) == UniConfKey::ANY)
+            break;
 	depth++;
     }
     return depth;
@@ -47,12 +48,14 @@ static int find_wildcard_depth(const UniConfKey &k)
     
 
 // I hate constructors.
-UniConf::XIter::XIter(UniConf &_top, const UniConfKey &_key) 
-	: skiplevel(find_wildcard_depth(_key)),
-          top(_top.find(_key.header(skiplevel))),
-          key(_key.skip(skiplevel)),
-          _toplink(top, false), toplink(top ? &_toplink : NULL),
-          i((top && top->check_children()) ? *top->children : null_wvhconfdict)
+UniConf::XIter::XIter(UniConf &_top, const UniConfKey &_key) :
+    skiplevel(find_wildcard_depth(_key)),
+    top(_top.find(_key.first(skiplevel))),
+    key(_key.removefirst(skiplevel)),
+    _toplink(top, false),
+    toplink(top ? &_toplink : NULL),
+    i((top && top->check_children()) ?
+        *top->children : null_wvhconfdict)
 {
     subiter = NULL; 
 }
@@ -72,7 +75,7 @@ WvLink *UniConf::XIter::_next()
     {
 	if (!subiter && i.ptr())
 	{
-	    subiter = new XIter(*i, key.skip(1));
+	    subiter = new XIter(*i, key.removefirst(1));
 	    subiter->rewind();
 	}
 	

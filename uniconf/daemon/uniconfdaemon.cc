@@ -235,13 +235,10 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata, UniConf &conf)
         response.append(create_return_string(key.printable()));
 
     WvStringList::Iter i(modifiedkeys);
-    WvStringList::Iter i1(key);
-
-    WvString final_string("/");
 
     for (i.rewind(); i.next();)
     {
-        if (key.printable() == i()) // This case has already been handled
+        if (key == i()) // This case has already been handled
             continue;
         
         UniConfKey modkey(i());
@@ -249,25 +246,21 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata, UniConf &conf)
         bool match = true;
        
         // only have to do the loop if we have a key that's not root. 
-        if (key.printable() != final_string)
+        if (! key.isempty())
         {
-            WvStringList::Iter i2(modkey);
+            UniConfKey::Iter i1(key);
+            UniConfKey::Iter i2(modkey);
             for (i1.rewind(), i2.rewind(); i1.next() && i2.next() && match; )
             {
                 match = (i1() == i2());
             }
             // Ok, we should have ONE link, then a NULL for this key to matter
-            WvLink *temp = i2.next();
-            if (temp != NULL )
-                temp = i2.next();
-            else
+            if (! i2.next() || i2.next())
                 match = false;
-
-            match &= temp == NULL;
         }
         else // Make sure we're an IMMEDIATE subchild of /
         {
-            match = modkey.skip(1).printable() == final_string;
+            match = modkey.numsegments() == 1;
         }
 
         if (match && mainconf[i()].notify)
@@ -299,13 +292,10 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
         response.append(create_return_string(key.printable()));
 
     WvStringList::Iter i(modifiedkeys);
-    WvStringList::Iter i1(key);
-
-    WvString final_string("/");
 
     for (i.rewind(); i.next();)
     {
-        if (key.printable() == i())
+        if (key == i())
             continue;
 
         UniConfKey modkey(i());
@@ -313,9 +303,10 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
         bool match = true;
        
         // only have to do the loop if we have a key that's not root. 
-        if (key.printable() != final_string)
+        if (! key.isempty())
         {
-            WvStringList::Iter i2(modkey);
+            UniConfKey::Iter i1(key);
+            UniConfKey::Iter i2(modkey);
             for (i1.rewind(), i2.rewind(); i1.next() && i2.next() && match; )
             {
                 match = (i1() == i2());
@@ -525,7 +516,8 @@ void UniConfDaemon::run()
     // Make sure that everything was cleaned up nicely before.
     dolog(WvLog::Debug3,myname,"Housecleaning");
     system("mkdir -p /tmp/uniconf");
-    system("rm -fr /tmp/uniconf/uniconfsocket");
+    // FIXME: THIS IS NOT VERY SAFE!
+    system("rm -f /tmp/uniconf/uniconfsocket");
     
     // Now listen on our unix socket.
     WvUnixListener *list = new WvUnixListener(WvUnixAddr("/tmp/uniconf/uniconfsocket"), 0755);

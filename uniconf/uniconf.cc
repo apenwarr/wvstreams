@@ -16,13 +16,6 @@
 UniConfDict null_wvhconfdict(1);
 
 
-bool UniConfString::operator== (WvStringParm s2) const
-{
-    return (cstr()==s2.cstr())
-	|| (cstr() && s2.cstr() && !strcasecmp(cstr(), s2.cstr()));
-}
-
-
 // basic constructor, generally used for toplevel config file
 UniConf::UniConf()
     : name("")
@@ -32,7 +25,7 @@ UniConf::UniConf()
 }
 
 
-UniConf::UniConf(UniConf *_parent, WvStringParm _name)
+UniConf::UniConf(UniConf *_parent, const UniConfKey &_name)
     : name(_name)
 {
     parent = _parent;
@@ -81,24 +74,21 @@ UniConfKey UniConf::full_key(UniConf *top) const
     UniConfKey k;
     const UniConf *h = this;
     
-    do
+    while (h && h != top)
     {
-	k.prepend(new WvString(h->name), true);
+	k.prepend(h->name);
 	h = h->parent;
-    } while (h && h != top);
-    
+    }
     return k;
 }
 
 
-// find the topmost UniConf object in the tree that's still owned by the
-// same UniConfGen object.
+// Find the controlling generator instance
 UniConf *UniConf::gen_top()
 {
     UniConf *h = this;
-    while (h->parent && !h->generator)
+    while (h->parent && ! h->hasgen())
 	h = h->parent;
-    
     return h; // we reached the top of the tree without finding a generator.
 }
 
@@ -130,11 +120,11 @@ UniConf *UniConf::find(const UniConfKey &key)
     if (!children)
 	return NULL;
     
-    UniConf *h = (*children)[*key.first()];
+    UniConf *h = (*children)[key.first(1)];
     if (!h)
 	return NULL;
     else
-	return h->find(key.skip(1));
+	return h->find(key.removefirst(1));
 }
 
 void UniConf::remove(const UniConfKey &key)
@@ -175,9 +165,9 @@ UniConf *UniConf::find_make(const UniConfKey &key)
 
     if (children)
     {
-	UniConf *h = (*children)[*key.first()];
+	UniConf *h = (*children)[key.first(1)];
 	if (h)
-	    return h->find_make(key.skip(1));
+	    return h->find_make(key.removefirst(1));
     }
 	
     // we need to actually create the key
@@ -214,18 +204,14 @@ void UniConf::update()
 // 
 // If there's no available default value for this key, return NULL.
 // 
-UniConf *UniConf::find_default(UniConfKey *_k) const
+UniConf *UniConf::find_default(const UniConfKey &k) const
 {
-    UniConfKey tmp_key;
-    UniConfKey &k = (_k ? *_k : tmp_key);
-    UniConf *def;
-    
     //wvcon->print("find_default for '%s'\n", full_key());
 	
     if (defaults)
     {
 	//wvcon->print("  find key '%s' in '%s'\n", k, defaults->full_key());
-	def = defaults->find(k);
+	UniConf *def = defaults->find(k);
 	if (def)
 	    return def;
     }
@@ -233,18 +219,12 @@ UniConf *UniConf::find_default(UniConfKey *_k) const
     if (parent)
     {
 	// go up a level and try again
-	WvString s1(name);
-	k.prepend(&s1, false);
-	def = parent->find_default(&k);
-	k.unlink_first();
+	UniConf *def = parent->find_default(UniConfKey(name, k));
 	if (def)
 	    return def;
 	
 	// try with a wildcard instead
-	WvString s2("*");
-	k.prepend(&s2, false);
-	def = parent->find_default(&k);
-	k.unlink_first();
+	def = parent->find_default(UniConfKey(UniConfKey::ANY, k));
 	if (def)
 	    return def;
     }
