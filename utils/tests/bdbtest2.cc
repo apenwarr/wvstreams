@@ -27,11 +27,11 @@ bool cmptest(WvStringParm wantkey, WvStringParm wantval, WvStringParm gotkey,
         WvStringParm gotval)
 {
     if (wantkey != gotkey || wantval != gotval) {
-        wvcon->print("rewind(%s) (expect '%s') got '%s'/'%s' - FAILED\n",
+        wvcon->print("expect '%s'/'%s', got '%s'/'%s' - FAILED\n",
                 wantkey, wantval, gotkey, gotval);
         return false;
     } else {
-        wvcon->print("rewind(%s) got '%s' - PASSED\n", wantkey, gotval); 
+        wvcon->print("expect '%s'/'%s' - PASSED\n", wantkey, gotval); 
         return true;
     }
 }
@@ -69,6 +69,24 @@ bool runtests(StrStrMap &ss)
 
     {
         wvcon->print("\nSimple iter:\n");
+        StrStrMap::Iter i1(ss);
+        KeyValDict::Sorter i2(keyvals, alpha);
+        i1.rewind(); i2.rewind();
+        for (;;)
+        {
+            bool i1ok = i1.next();
+            bool i2ok = i2.next();
+            if (i1ok != i2ok)
+                wvcon->print("\nnext() return value out of sync: "
+                        "expected %s, got %s - FAILED\n", i2ok, i1ok);
+            if (!i1ok || !i2ok) break;
+
+            good = cmptest(i2->key, i2->val, i1.key(), i1()) && good;
+        }
+    }
+
+    {
+        wvcon->print("\nMultiple rewinds:\n");
         StrStrMap::Iter i(ss);
         KeyValDict::Iter i2(keyvals);
         for (i2.rewind(); i2.next(); )
@@ -174,10 +192,11 @@ bool runtests(StrStrMap &ss)
 int main()
 {
     keyvals.add(new KeyVal("hello", "world"), true);
-    keyvals.add(new KeyVal("foo", "bar"), true);
     keyvals.add(new KeyVal("i like", "muffins"), true);
-    keyvals.add(new KeyVal("a", "b"), true);
-
+    keyvals.add(new KeyVal("/foo/bar", "baz"), true);
+    keyvals.add(new KeyVal("/", "slash"), true);
+    keyvals.add(new KeyVal("/foo", "kung foo!"), true);
+    
     {
         // named db
         StrStrMap ss("rewindfile");
