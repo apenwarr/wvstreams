@@ -24,6 +24,50 @@ bool WvEncoder::isok() const
 }
 
 
+bool WvEncoder::encode(WvStringParm in, WvBuffer &out)
+{
+    WvBuffer inbuf;
+    inbuf.put(in);
+    bool success = encode(inbuf, out, true);
+    return success;
+}
+
+
+bool WvEncoder::encode(WvStringParm in, WvString &out)
+{
+    WvBuffer inbuf, outbuf;
+    inbuf.put(in);
+    bool success = encode(inbuf, outbuf, true);
+    out.append(outbuf.getstr());
+    return success;
+}
+
+
+bool WvEncoder::encode(WvBuffer &in, WvString &out, bool flush)
+{
+    WvBuffer outbuf;
+    bool success = encode(in, outbuf, flush);
+    out.append(outbuf.getstr());
+    return success;
+}
+
+
+WvString WvEncoder::strencode(WvStringParm in)
+{
+    WvString out;
+    bool success = encode(in, out);
+    return success ? out : WvString(WvString::null);
+}
+
+
+WvString WvEncoder::strencode(WvBuffer &in)
+{
+    WvString out;
+    bool success = encode(in, out);
+    return success ? out : WvString(WvString::null);
+}
+
+
 /***** WvNullEncoder *****/
 
 bool WvNullEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)

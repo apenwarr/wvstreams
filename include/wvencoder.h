@@ -77,6 +77,26 @@ public:
      */
     bool flush(WvBuffer &in, WvBuffer &out)
         { return encode(in, out, true); }
+
+    /**
+     * Helper functions, encodes strings to buffers, strings to strings,
+     * and buffers to strings.  The functions that take strings as input
+     * or return them force false to true because incremental processing
+     * of strings would require extra state.
+     */
+    bool encode(WvStringParm in, WvBuffer &out);
+    bool encode(WvStringParm in, WvString &out);
+    bool encode(WvBuffer &in, WvString &out, bool flush = false);
+
+    inline bool flush(WvStringParm in, WvBuffer &out)
+        { return encode(in, out); }
+    inline bool flush(WvStringParm in, WvString &out)
+        { return encode(in, out); }
+    inline bool flush(WvBuffer &in, WvString &out)
+        { return encode(in, out, true); }
+    
+    WvString strencode(WvStringParm in);
+    WvString strencode(WvBuffer &in);
 };
 
 
