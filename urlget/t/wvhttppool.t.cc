@@ -22,13 +22,10 @@ WVTEST_MAIN("WvHttpPool GET")
     buf->setclosecallback(close_callback, NULL);
     l.append(buf, true);
     while (buf->isok() && (wvcon->isok() || !pool.idle()))
-    {
-	if (l.select(-1))
-	{
-	    l.callback();
-	}
-    }
+	l.runonce();
     WVPASS(!(buf->isok()));
+    
+    WVPASSEQ(l.count(), 2);
 }
 
 WVTEST_MAIN("WvHttpPool HEAD")
@@ -88,21 +85,22 @@ void tcp_callback(WvStream &s, void*)
 }
 
 
-void listener_callback(WvStream &s, void*)
+void listener_callback(WvStream &s, void *userdata)
 {
+    WvIStreamList &list = *(WvIStreamList *)userdata;
     WvTCPListener &l = (WvTCPListener &)s;
     http_conns++;
     wvcon->write("Incoming connection (%s)\n", http_conns);
     WvTCPConn *newconn = l.accept();
     newconn->setcallback(tcp_callback, NULL);
-    WvIStreamList::globallist.append(newconn, true);
+    list.append(newconn, true, "incoming http conn");
 }
 
 
-void do_test()
+static void do_test(WvIStreamList &l)
 {
     WvHttpPool pool;
-    WvIStreamList::globallist.append(&pool, false);
+    l.append(&pool, false, "pool");
 
     http_conns = 0;
     got_first_pipeline_test = false;
@@ -111,26 +109,33 @@ void do_test()
     WVPASS(buf->isok());
     buf->autoforward(*wvcon);
     buf->setclosecallback(close_callback, NULL);
-    WvIStreamList::globallist.append(buf, true);
+    l.append(buf, true, "poolbuf");
     while (buf->isok() && (wvcon->isok() || !pool.idle()))
-    {
-	if (WvIStreamList::globallist.select(-1))
-	    WvIStreamList::globallist.callback();
-    }
+	l.runonce();
     WVPASS(!(buf->isok()));
+    l.unlink(&pool);
 }
 
 
 WVTEST_MAIN("WvHttpPool pipelining")
 {
+    WvIStreamList l;
+    
     WvTCPListener listener(4200);
-    listener.setcallback(listener_callback, NULL);
-    WvIStreamList::globallist.append(&listener, false);
+    listener.setcallback(listener_callback, &l);
+    l.append(&listener, false, "http listener");
 
-    do_test();
-    WVPASS(http_conns == 1);
+    do_test(l);
+    WVPASSEQ(http_conns, 1);
 
     pipelining_enabled = false;
-    do_test();
-    WVPASS(http_conns == 2);
+    do_test(l);
+    WVPASSEQ(http_conns, 2);
+    
+    l.unlink(&listener);
+    l.runonce(10);
+    l.runonce(10);
+    
+    // list should now be empty
+    WVPASSEQ(l.count(), 0);
 }
