@@ -469,9 +469,8 @@ int lookup(const char *str, const char * const *table,
 }
 
 
-WvString metriculate(off_t i)
+WvString metriculate(const off_t i)
 {
-    // this function turns "9876543210" into "9 876 543 210"
     WvString res;
     int digits=0;
     int digit=0;
@@ -485,8 +484,9 @@ WvString metriculate(off_t i)
     }
 
     j=i;
-    res.setsize(digits + (digits-1)/3);
-    p=res.edit()+digits+((digits-1)/3)-1;
+    res.setsize(digits + (digits-1)/3 + 1);
+    p=res.edit()+digits+((digits-1)/3);
+    *p-- = '\0';
 
     for (digit=0; digit<digits; digit++)
     {
