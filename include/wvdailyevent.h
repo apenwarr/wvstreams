@@ -49,6 +49,8 @@ private:
     bool    need_reset;
     int     last_hour;
     int     last_minute;
+    
+    time_t  not_until;
 };
 
 #endif
