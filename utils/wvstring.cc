@@ -97,7 +97,10 @@ WvFastString::~WvFastString()
 void WvFastString::unlink()
 { 
     if (buf && ! --buf->links)
+    {
 	free(buf);
+        buf = NULL;
+    }
 }
     
 
