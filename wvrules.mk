@@ -191,19 +191,29 @@ CFLAGS+=$(CPPFLAGS)
 CXXFLAGS+=$(CPPFLAGS)
 
 ifeq ($(VERBOSE),1)
-  COMPILE_MSG = 
-  LINK_MSG =
-  DEPEND_MSG=
+  COMPILE_MSG :=
+  LINK_MSG :=
+  DEPEND_MSG :=
+  SYMLINK_MSG :=
 else
   COMPILE_MSG = @echo compiling $@...;
   LINK_MSG = @echo linking $@...;
   #DEPEND_MSG = @echo "   depending $@...";
-  DEPEND_MSG = @
+  DEPEND_MSG := @
+  SYMLINK_MSG := @
 endif
 
 # any rule that depends on FORCE will always run
 .PHONY: FORCE
 FORCE:
+
+# Create symbolic links
+# usage: $(wvlns,source,dest)
+wvlns=$(SYMLINK_MSG)$(LN_S) -f $1 $2
+
+# Create hard links
+# usage: $(wvln,source,dest)
+wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 
 # usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
 #    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
@@ -245,7 +255,7 @@ endef
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
 	$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
-	$(if $(filter-out $(call wvsoname,$1),$1),ln -sf $1 $(call wvsoname,$1))
+	$(if $(filter-out $(call wvsoname,$1),$1),$(call wvlns,$1,$(call wvsoname,$1)))
 endef
 
 wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)

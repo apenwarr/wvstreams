@@ -1,3 +1,9 @@
+wvstreams (4.0+20040924-1) unstable; urgency=low
+
+  * New upstream snapshot.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 24 Sep 2004 10:44:55 -0400
+
 wvstreams (4.0+20040827-1) unstable; urgency=low
 
   * New upstream snapshot.
@@ -29,6 +35,20 @@ wvstreams (3.80+20040623-1) unstable; urgency=low
   * New upstream snapshot.
 
  -- Simon Law <sfllaw@debian.org>  Tue, 23 Jun 2004 12:20:21 -0400
+
+wvstreams (3.75.0-1) unstable; urgency=low
+
+  * New Upstream release.
+
+ -- James Morrison <phython@debian.org>  Sat, 13 Mar 2004 14:33:44 -0500
+
+wvstreams (3.75+20040221-1) unstable; urgency=low
+
+  * Expand on libwvstreams-fft description.  (Closes: #210130)
+  * Check the file descriptor status in wvfile.cc. (Closes: #194336)
+  * Use new void * instead of new (void*) .
+
+ -- James Morrison <phython@debian.org>  Sat, 21 Feb 2004 20:55:39 -0500
 
 wvstreams (3.74+20031017-1) unstable; urgency=low
 

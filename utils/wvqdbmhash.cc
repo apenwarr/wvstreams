@@ -34,7 +34,6 @@ WvQdbmHash::WvQdbmHash(WvStringParm dbfile, bool persist) : dbf(0)
 
 WvQdbmHash::~WvQdbmHash()
 {
-    free((void*)saveddata.dptr);
     closedb();
 }
 
@@ -56,6 +55,8 @@ void WvQdbmHash::closedb()
         free(dbfile);
         dbf = 0;
     }
+    free((void*)saveddata.dptr);
+    saveddata.dptr = 0;
     seterr("The db is closed.");    // this won't overwrite an earlier err
 }
 
@@ -72,7 +73,9 @@ void WvQdbmHash::opendb(WvStringParm dbfile, bool _persist)
     if (!persist_dbfile) mode |= VL_OTRUNC;
     
     // VL_CMPLEX = lexigraphic comparison
-    dbf = vlopen(dbfile.cstr(), mode, VL_CMPLEX);
+    static char tmpbuf[L_tmpnam];
+    const char *fname = dbfile.isnull() ? tmpnam(tmpbuf) : dbfile.cstr();
+    dbf = vlopen(fname, mode, VL_CMPLEX);
     if (dbf == NULL) dperr();
 }
 

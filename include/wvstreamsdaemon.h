@@ -9,6 +9,9 @@
 #ifndef __WVSTREAMSDAEMON_H
 #define __WVSTREAMSDAEMON_H
 
+#include "wvautoconf.h"
+#ifdef WITH_POPT
+
 #include "wvdaemon.h"
 #include "iwvstream.h"
 #include "wvistreamlist.h"
@@ -48,5 +51,7 @@ public:
 
     void close_existing_connections_on_restart();
 };
+
+#endif //WITH_POPT
 
 #endif // __WVSTREAMSDAEMON_H
