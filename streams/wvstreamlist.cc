@@ -107,7 +107,10 @@ bool WvStreamList::post_select(SelectInfo &si)
 	if (s.isok())
 	{
 	    if (s.post_select(si))
+	    {
+		sure_thing.unlink(&s); // don't add it twice!
 		sure_thing.append(&s, false, i.link->id);
+	    }
 	}
 	else
 	    one_dead = true;

@@ -44,9 +44,9 @@ WVTEST_MAIN("parsing1")
 	   "e=f\n");
     UniConfRoot cfg("ini:tmp.ini");
     
-    WVPASSEQ(cfg["S1/a"].get(), "b");
-    WVPASSEQ(cfg["S2/c"].get(), "d");
-    WVPASSEQ(cfg["S\n3/e"].get(), "f");
+    WVPASSEQ(cfg["S1/a"].getme(), "b");
+    WVPASSEQ(cfg["S2/c"].getme(), "d");
+    WVPASSEQ(cfg["S\n3/e"].getme(), "f");
     WVPASSEQ(childcount(cfg), 3);
 }
 
@@ -60,9 +60,9 @@ WVTEST_MAIN("parsing2")
 	   "apenwarr = {OBFU}scation!");
     UniConfRoot cfg("ini:tmp.ini");
     
-    WVPASSEQ(cfg["a"].get(), "b c");
-    WVPASSEQ(cfg[" a\n  b}  {c  "].get(), "  a\n  b2}  {c  ");
-    WVPASSEQ(cfg["apenwarr"].get(), "{OBFU}scation!");
+    WVPASSEQ(cfg["a"].getme(), "b c");
+    WVPASSEQ(cfg[" a\n  b}  {c  "].getme(), "  a\n  b2}  {c  ");
+    WVPASSEQ(cfg["apenwarr"].getme(), "{OBFU}scation!");
 }
 
 
@@ -70,7 +70,7 @@ WVTEST_MAIN("parsing3")
 {
     inigen("/ = foo\n");
     UniConfRoot cfg("ini:tmp.ini");
-    WVPASSEQ(cfg.get(), "foo");
+    WVPASSEQ(cfg.getme(), "foo");
     WVFAIL(cfg.haschildren());
 }
 
@@ -79,7 +79,7 @@ static void inicmp(WvStringParm key, WvStringParm val, WvStringParm content)
 {
     inigen("");
     UniConfRoot cfg("ini:tmp.ini");
-    cfg[key].set(val);
+    cfg[key].setme(val);
     cfg.commit();
     
     WvFile f("tmp.ini", O_RDONLY);
@@ -108,5 +108,11 @@ WVTEST_MAIN("writing")
     
     inicmp("/users/ apenwarr", "pbc ",
 	   "\n[users]\n{ apenwarr} = {pbc }\n");
+    
+    // FIXME: empty-string keys probably *should* be printed, but we don't,
+    // for compatibility with WvConf.  This test makes sure it stays that
+    // way (until we think of something better?)
+    inicmp("/foo/blah", "",
+	   "");
 }
 

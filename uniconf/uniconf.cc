@@ -11,6 +11,34 @@
 #include <assert.h>
 
 
+UniConf::UniConf(UniConfRoot *root, const UniConfKey &fullkey)
+    : xroot(root), xfullkey(fullkey)
+{ 
+    // nothing special
+}
+    
+
+UniConf::UniConf() : xroot(NULL), xfullkey(UniConfKey::EMPTY)
+{ 
+    // nothing special
+}
+
+
+UniConf::UniConf(const UniConf &other)
+    : xroot(other.xroot), xfullkey(other.xfullkey)
+{ 
+    // nothing special
+}
+
+
+UniConf::~UniConf()
+{ 
+    // nothing special
+}
+
+
+
+
 UniConfKey UniConf::fullkey(const UniConfKey &k) const
 {
     int n = k.numsegments();
@@ -34,7 +62,13 @@ bool UniConf::haschildren() const
 }
 
 
-WvString UniConf::get(WvStringParm defvalue) const
+void UniConf::prefetch(bool recursive) const
+{
+    xroot->mounts.prefetch(xfullkey, recursive);
+}
+
+
+WvString UniConf::getme(WvStringParm defvalue) const
 {
     WvString value = xroot->mounts.get(xfullkey);
     if (value.isnull())
@@ -43,21 +77,21 @@ WvString UniConf::get(WvStringParm defvalue) const
 }
 
 
-int UniConf::getint(int defvalue) const
+int UniConf::getmeint(int defvalue) const
 {
-    return xroot->mounts.str2int(get(), defvalue);
+    return xroot->mounts.str2int(getme(), defvalue);
 }
 
 
-void UniConf::set(WvStringParm value) const
+void UniConf::setme(WvStringParm value) const
 {
     xroot->mounts.set(xfullkey, value);
 }
 
 
-void UniConf::setint(int value) const
+void UniConf::setmeint(int value) const
 {
-    set(WvString(value));
+    setme(WvString(value));
 }
 
 
@@ -66,12 +100,12 @@ void UniConf::move(const UniConf &dst)
     dst.remove();
     
     // do the main key first
-    dst.set(get());
+    dst.setme(getme());
 
     // now all the children
     RecursiveIter i(*this);
     for (i.rewind(); i.next(); )
-	dst[i->fullkey(*this)].set(i->get());
+	dst[i->fullkey(*this)].setme(i->getme());
     
     remove();
 }
@@ -80,15 +114,15 @@ void UniConf::move(const UniConf &dst)
 void UniConf::copy(const UniConf &dst, bool force) const
 {
     // do the main key first
-    dst.set(get());
+    dst.setme(getme());
 
     // now all the children
     RecursiveIter i(*this);
     for (i.rewind(); i.next(); )
     {
 	UniConf dst2 = dst[i->fullkey(*this)];
-	if (force || dst2.get().isnull())
-	    dst2.set(i->get());
+	if (force || dst2.getme().isnull())
+	    dst2.setme(i->getme());
     }
 }
 
@@ -189,7 +223,7 @@ void UniConf::dump(WvStream &stream, bool everything) const
     UniConf::RecursiveIter it(*this);
     for (it.rewind(); it.next(); )
     {
-        WvString value(it->get());
+        WvString value(it->getme());
         if (everything || !!value)
             stream.print("%s = %s\n", it->fullkey(), value);
     }
@@ -200,60 +234,22 @@ void UniConf::dump(WvStream &stream, bool everything) const
 /***** UniConf::Iter *****/
 
 UniConf::Iter::Iter(const UniConf &_top)
-    : IterBase(_top), it(_top.rootobj()->mounts.iterator(top.fullkey()))
+    : IterBase(_top)
 {
+    it = _top.rootobj()->mounts.iterator(top.fullkey());
+    if (!it) it = new UniConfGen::NullIter;
 }
 
 
 
 /***** UniConf::RecursiveIter *****/
 
-UniConf::RecursiveIter::RecursiveIter(const UniConf &root)
-    : IterBase(root)
+UniConf::RecursiveIter::RecursiveIter(const UniConf &_top)
+    : IterBase(_top)
 {
+    it = _top.rootobj()->mounts.recursiveiterator(top.fullkey());
+    if (!it) it = new UniConfGen::NullIter;
 }
-
-
-void UniConf::RecursiveIter::rewind()
-{
-    itlist.zap();
-    UniConf::Iter *subi = new UniConf::Iter(top);
-    subi->rewind();
-    itlist.prepend(subi, true);
-}
-
-
-bool UniConf::RecursiveIter::next()
-{
-    assert(!itlist.isempty()); // trying to seek past the end is illegal!
-    
-    UniConf::IterList::Iter i(itlist);
-    for (i.rewind(); i.next(); )
-    {
-        if (i->next()) // NOTE: not the same as i.next()
-        {
-            // return the item first
-            current = **i;
-            
-            // set up so next time, we go into its subtree
-            if (current.haschildren())
-            {
-                UniConf::Iter *subi = new UniConf::Iter(current);
-                subi->rewind();
-                itlist.prepend(subi, true);
-            }
-            
-            return true;
-        }
-        
-        // otherwise, this iterator is empty; move up the tree
-        i.xunlink();
-    }
-    
-    // all done!
-    return false;
-}
-
 
 
 /***** UniConf::XIter *****/

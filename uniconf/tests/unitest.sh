@@ -243,6 +243,8 @@ xx uni set /section/entry "string"
 xx uni get /section/entry  # FIXME: this fails if DAEMON=0
 rm -f "$FILE"
 
+fi  # disable failing tests
+
 # FIXME: the cache needs much more thorough testing than these simple tests;
 #   especially consider what happens on 'set' and if someone else writes to
 #   the daemon you're using.
@@ -256,7 +258,7 @@ xx uni get /section3/a3/bog
 xx uni keys /
  s \* a3 a3/bog
 xx uni hkeys /section3
-RECONFIG "cache:list: ini:simple2.ini ini2:simple.ini"
+RECONFIG "cache:list: ini:simple2.ini ini:simple.ini"
  s 1
 xx uni get /section1/a
 xx uni get /section1/xa
@@ -279,7 +281,6 @@ xx uni keys /
 xx uni hkeys /section3
 
 
-fi  # disable failing tests
 
 
 DAEMON=
@@ -287,9 +288,9 @@ RECONFIG "null:"
 
 echo
 if [ "$FAILS" = 0 ]; then
-    echo "All tests passed."
+    echo "All uniconf tests passed."
     exit 0
 else
-    echo "$FAILS tests failed!"
+    echo "$FAILS uniconf tests failed!"
     exit 1
 fi

@@ -52,9 +52,9 @@ int main()
 
     UniConfRoot root(new UniWvConfGen(cfg));
 
-    log("[intl]sLanguage = %s\n", root["intl"]["sLanguage"].get());
-    log("[blah]bork = %s\n", root["blah"]["bork"].get());
-    log("[blah]default = %s\n", root["blah"]["default"].get(
+    log("[intl]sLanguage = %s\n", root["intl"]["sLanguage"].getme());
+    log("[blah]bork = %s\n", root["blah"]["bork"].getme());
+    log("[blah]default = %s\n", root["blah"]["default"].getme(
             "Nothing to see here... move on along..."));
 
     wvcon->print("\n");
@@ -71,7 +71,7 @@ int main()
     wvcon->print("\n");
 
 
-    root["Silly"]["Rabbit"].set("Trix are for kids!");
+    root["Silly"]["Rabbit"].setme("Trix are for kids!");
     log("Setting: [Silly]Rabbit = Trix are for kids!\n");
     log("Reading: [Silly]Rabbit = %s\n", cfg.get("Silly", "Rabbit"));
 

@@ -27,7 +27,7 @@ const char* uniconf_get(uniconf_t _uniconf, const char* _key)
 {
     UniConfRoot* uniconf = static_cast<UniConfRoot*>(_uniconf);
 
-    return strdup((*uniconf)[WvString(_key)].get());
+    return strdup((*uniconf)[WvString(_key)].getme());
 }
 
 
@@ -36,6 +36,6 @@ void uniconf_set(uniconf_t _uniconf,
 {
     UniConfRoot* uniconf = static_cast<UniConfRoot*>(_uniconf);
 
-    return (*uniconf)[_key].set(_value);
+    return (*uniconf)[_key].setme(_value);
 }
 

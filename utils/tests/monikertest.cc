@@ -6,22 +6,14 @@ class ITest : public IObject
 {
 public:
     virtual void f() = 0;
-    
-    // IObject
-    static const XUUID XIID;
 };
 
-DEFINE_XIID(ITest, {0xcd3239a7, 0x0ea1, 0x4e1a,
+DEFINE_IID(ITest, {0xcd3239a7, 0x0ea1, 0x4e1a,
   {0xba, 0x08, 0xb8, 0x5e, 0xe4, 0xda, 0xad, 0x69}});
   
-XUUID_MAP_BEGIN(ITest)
-  XUUID_MAP_ENTRY(IObject)
-  XUUID_MAP_ENTRY(ITest)
-  XUUID_MAP_END
-
-
-class Test : public GenericComponent<ITest>
+class Test : public ITest
 {
+    IMPLEMENT_IOBJECT(Test)
 public:
     WvString s;
     
@@ -33,6 +25,12 @@ public:
     virtual void f()
         { printf("%p(\"%s\"): f() called!\n", this, s.cstr()); }
 };
+
+
+UUID_MAP_BEGIN(Test)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_ENTRY(ITest)
+  UUID_MAP_END
 
 
 static IObject *createfunc(WvStringParm s, IObject *obj, void *userdata)
@@ -59,7 +57,7 @@ int main()
     WvMoniker<IObject> bunk("obj2", createfunc2);
     WvMoniker<ITest> stunk("test", createfunc3);
     
-    WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(XIID<IObject>::get());
+    WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(IObject_IID);
     IObject *a = (IObject *)reg->create("obj:obj-a");
     IObject *b = (IObject *)reg->create("obj2:obj2-b");
     reg->release();

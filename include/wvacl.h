@@ -27,7 +27,8 @@ DeclareWvList(WvSimpleAclEntry);
 int wvsimpleaclentry_sort(const WvSimpleAclEntry *a, const WvSimpleAclEntry *b);
 
 /// Prints log messages indicating if we have library and/or kernel support.
-void acl_check();
+/// Returns true if both are okay.
+bool acl_check();
 
 /** Returns a NITI-compliant ACL short text form of 'oldacl'.
  * This involves ensuring that the mask is "rwx".  If it isn't, change user
@@ -41,6 +42,8 @@ WvString build_default_acl(mode_t mode);
 /** Returns the short form of the ACL for 'filename'.
  * If 'default' is true, returns the ACL_TYPE_DEFAULT list.
  * If false, returns ACL_TYPE_ACCESS list.
+ * Note that this function calls fix_acl(), which means that the returned
+ * ACL's mask, if present, will always be "rwx".
  */
 WvString get_acl_short_form(WvStringParm filename, bool get_default = false);
 
@@ -50,12 +53,21 @@ void get_simple_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
 
 /// Set one or more ACL entries through standard short or long text form.
 bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
-			 bool set_default_too);
+			 bool set_default_too = false);
+
+/// Set one or more ACL entries through standard short or long text form.
+bool set_default_acl_permissions(WvStringParm filename,
+                                 WvStringParm text_form);
 
 /// Set one ACL entry with individual parameters.
 bool set_acl_permission(WvStringParm filename, WvStringParm type,
                         WvString qualifier,
 			bool read, bool write, bool execute,
 			bool kill = false, bool set_default_too = false);
+
+/// Set one ACL entry with individual parameters.
+bool set_default_acl_permission(WvStringParm filename, WvStringParm type,
+                                WvString qualifier, bool read, bool write,
+                                bool execute, bool kill = false);
 
 #endif // __WVACL_H

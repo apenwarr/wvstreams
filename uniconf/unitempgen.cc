@@ -8,6 +8,26 @@
 #include "wvmoniker.h"
 #include "wvlog.h"
 
+/** An iterator over keys stored in a UniTempGen. */
+class UniTempGen::NodeIter : public UniTempGen::Iter
+{
+protected:
+    UniTempGen *xgen;
+    UniConfValueTree::Iter xit;
+
+public:
+    NodeIter(UniTempGen *gen, const UniConfValueTree::Iter &it);
+    virtual ~NodeIter();
+
+    /***** Overridden methods *****/
+
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
+    virtual WvString value() const;
+};
+
+
 static IUniConfGen *creator(WvStringParm, IObject *, void *)
 {
     return new UniTempGen();
@@ -139,7 +159,7 @@ UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
         if (node)
             return new NodeIter(this, UniConfValueTree::Iter(*node));
     }
-    return new NullIter();
+    return NULL;
 }
 
 
@@ -174,3 +194,11 @@ UniConfKey UniTempGen::NodeIter::key() const
 {
     return xit->key();
 }
+
+
+WvString UniTempGen::NodeIter::value() const
+{
+    return xit->value();
+}
+
+

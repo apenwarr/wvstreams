@@ -20,7 +20,7 @@
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
-      pipeline_incompatible(_pipeline_incompatible)
+      pipeline_incompatible(_pipeline_incompatible), in_doneurl(false)
 {
     log("Opening server connection.\n");
     http_response = "";
@@ -85,6 +85,15 @@ void WvHttpStream::close()
 
 void WvHttpStream::doneurl()
 {
+    // There is a slight chance that we might receive an error during or just before
+    // this function is called, which means that the write occuring during
+    // start_pipeline_test() would be called, which would call close() because of the
+    // error, which would call doneurl() again.  We don't want to execute doneurl()
+    // a second time when we're already in the middle.
+    if (in_doneurl)
+        return;
+    in_doneurl = true;
+
     assert(curl != NULL);
     log("Done URL: %s\n", curl->url);
 
@@ -121,6 +130,7 @@ void WvHttpStream::doneurl()
         close();
 
     request_next();
+    in_doneurl = false;
 }
 
 
@@ -418,9 +428,11 @@ void WvHttpStream::execute()
                 {
                     *p = 0;
                     p = trim_string(p+1);
-                    struct WvHTTPHeader *h = new struct WvHTTPHeader(line, p);
-                    if (outstream)
+                    if (outstream) {
+			struct WvHTTPHeader *h;
+			h = new struct WvHTTPHeader(line, p);
                         outstream->headers.add(h, true);
+		    }
                 }
                 else if (strncasecmp(line, "HTTP/", 5) == 0)
                 {

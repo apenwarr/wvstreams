@@ -44,6 +44,12 @@ bool UniFilterGen::refresh()
 }
 
 
+void UniFilterGen::prefetch(const UniConfKey &key, bool recursive)
+{
+    xinner->prefetch(key, recursive);
+}
+
+
 WvString UniFilterGen::get(const UniConfKey &key)
 {
     return xinner->get(key);
@@ -77,6 +83,12 @@ bool UniFilterGen::isok()
 UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 {
     return xinner->iterator(key);
+}
+
+
+UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
+{
+    return xinner->recursiveiterator(key);
 }
 
 

@@ -108,8 +108,7 @@ int main(int argc, char **argv)
     UniConfRoot root;
     UniConf cfg(root);
 
-    bool mountattempt = false;
-    bool needauth = false;
+    bool mountattempt = false, needauth = false, dontfork = false;
     unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
     unsigned int sslport = DEFAULT_UNICONF_DAEMON_SSL_PORT;
 
@@ -150,6 +149,8 @@ int main(int argc, char **argv)
             logcons.level(findloglevel(argv[i + 1]));
             i += 1;
         }
+	else if (!strcmp(argv[i], "-f"))
+	    dontfork = true;
         else
             usage();
     }
@@ -180,11 +181,14 @@ int main(int argc, char **argv)
 				WvIPPortAddr("0.0.0.0", sslport), x509cert))
             exit(1);
     }
-    
-    // since we're a daemon, we should now background ourselves.
-    pid_t pid = fork();
-    if (pid > 0) // parent
-	_exit(0);
+
+    if (!dontfork)
+    {
+	// since we're a daemon, we should now background ourselves.
+	pid_t pid = fork();
+	if (pid > 0) // parent
+	    _exit(0);
+    }
     
     time_t now, last = 0;
 	

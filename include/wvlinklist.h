@@ -7,6 +7,7 @@
 #ifndef __WVLINKLIST_H
 #define __WVLINKLIST_H
 
+#include "wvmagic.h"
 #include "wvsorter.h"
 
 /**
@@ -135,6 +136,7 @@ public:
     };
 };
 
+
 /**
  * A linked list container class.
  * 
@@ -185,6 +187,7 @@ class WvList : public WvListBase
 {
     // copy constructor: not defined anywhere!
     WvList(const WvList &list);
+
 public:
     /** Creates an empty linked list. */
     WvList()
@@ -248,7 +251,9 @@ public:
      */
     void add_after(WvLink *after, T *data, bool auto_free,
 			char *id = NULL )
-        { (void)new WvLink((void *)data, after, tail, auto_free, id); }
+    {
+	(void)new WvLink((void *)data, after, tail, auto_free, id);
+    }
 
     /**
      * Appends the element to the end of the list.
@@ -311,7 +316,8 @@ public:
             static_cast<T*>(next->data) : NULL;
         if (next == tail) tail = after;
         next->unlink(after);
-        delete obj;
+	if (obj)
+	    Magic<T>::destroy(obj);
     }
 
     /**

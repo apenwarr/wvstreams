@@ -28,11 +28,19 @@ public:
     UniWatch(const UniConf &_cfg, bool *b, bool _recurse = true);
     
     ~UniWatch();
-    
-    void update();
 };
 
-DeclareWvList(UniWatch);
+DeclareWvList2(UniWatchListBase, UniWatch);
+
+class UniWatchList : public UniWatchListBase
+{
+public:
+    void add(const UniConf &_cfg, const UniConfCallback &_cb,
+	     bool _recurse = true)
+        { append(new UniWatch(_cfg, _cb, _recurse), true); }
+    void add(const UniConf &_cfg, bool *b, bool _recurse = true)
+        { append(new UniWatch(_cfg, b, _recurse), true); }
+};
 
 
 #endif // __UNIWATCH_H

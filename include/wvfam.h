@@ -1,10 +1,10 @@
 /* -*- Mode: C++ -*- */
-#include "wvautoconf.h"
-
-#ifdef HAVE_FAM_H
-
 #ifndef __WVFAM_H
 #define __WVFAM_H
+
+#include "wvautoconf.h"
+
+#ifdef WITH_FAM
 
 #include "wvfdstream.h"
 #include "wvlog.h"
@@ -103,5 +103,5 @@ protected:
 };
 
 
-#endif //__WVFAM_H
-#endif //__HAVE_FAM_H
+#endif /* WITH_FAM */
+#endif /*__WVFAM_H */

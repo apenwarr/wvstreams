@@ -130,14 +130,14 @@ vwait done
 
 addend "\nAll tests complete: $total total, $pass passes, $fail failures.\n"
 
-set f [open $totalfile w]
-puts $f $total
-close $f
-
 catch {
     if {$fail > 0} {
         .b.closebutton config -background red -relief raised
     } else {
+        set f [open $totalfile w]
+	puts $f $total
+	close $f    
+	
         .b.closebutton config -background green -relief raised
     }
 }

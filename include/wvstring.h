@@ -257,10 +257,14 @@ public:
      */
     int num() const
         { return str ? atoi(str) : 0; }
-
+    
     /** returns true if this string is null */
     bool isnull() const
         { return str == NULL; }
+    
+    /** returns either this string, or, if isnull(), the given string. */
+    const WvFastString &ifnull(WvStringParm defval) const
+        { return isnull() ? defval : *this; }
 };
 
 
@@ -359,6 +363,22 @@ public:
 protected:
     void copy_constructor(const WvFastString &s);
 
+};
+
+
+/**
+ * A ridiculous class needed because UniConf::operator->() needs to return
+ * a pointer, even though that pointer is going to be dereferenced
+ * immediately anyway.  We can instantiate a temporary WvStringStar, which
+ * can then return its 'this' pointer.
+ */
+class WvStringStar : public WvFastString
+{
+public:
+    WvStringStar(WvStringParm s) : WvFastString(s)
+        { }
+    WvFastString *operator -> ()
+        { return this; }
 };
 
 

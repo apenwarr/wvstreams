@@ -18,7 +18,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "get", "get <key>: get the value of a key" },
     { "set", "set <key> <value>: sets the value of a key" },
     { "del", "del <key>: deletes the key" },
-    { "subt", "subt <key>: enumerates the children of a key" },
+    { "subt", "subt <key> <recurse?>: enumerates the children of a key" },
     { "hchild", "hchild <key>: returns whether a key has children" },
     { "quit", "quit: kills the session nicely" },
     { "help", "help: returns this help text" },
@@ -70,7 +70,7 @@ bool UniClientConn::isok() const
 
 void UniClientConn::close()
 {
-    if (! closed)
+    if (!closed)
     {
         closed = true;
         WvStreamClone::close();
