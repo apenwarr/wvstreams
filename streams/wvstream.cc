@@ -285,7 +285,12 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
         count = free;
     unsigned char *buf = outbuf.alloc(count);
     size_t len = read(buf, count);
-    outbuf.unalloc(count - len);
+    size_t amt = outbuf.unallocable();
+    if (count - len < amt )
+    {
+	amt = count - len;
+    }
+    outbuf.unalloc(amt);
     return len;
 }
 

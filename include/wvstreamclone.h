@@ -42,6 +42,7 @@ public:
     IWvStream *cloned;
     bool disassociate_on_close; // defaults to false
     
+    virtual void setclone(IWvStream *clone);
     virtual void close();
     virtual bool flush_internal(time_t msec_timeout);
     virtual size_t uread(void *buf, size_t size);

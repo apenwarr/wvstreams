@@ -24,8 +24,9 @@ static WvMoniker<IWvStream> reg("clone", creator);
 
 
 WvStreamClone::WvStreamClone(IWvStream *_cloned) 
-    : cloned(_cloned), disassociate_on_close(false)
+    : cloned(0), disassociate_on_close(false)
 {
+    setclone(_cloned);
     // the sub-stream will force its own values, if it really wants.
     force_select(false, false, false);
 }
@@ -42,7 +43,7 @@ WvStreamClone::~WvStreamClone()
 
 void WvStreamClone::close()
 {
-    flush(2000); // FIXME: should not hardcode this stuff
+    WvStream::close();
     if (disassociate_on_close)
         cloned = NULL;
     if (cloned)
@@ -108,6 +109,28 @@ WvString WvStreamClone::errstr() const
     if (cloned)
 	return cloned->errstr();
     return "No child stream!";
+}
+
+static void close_callback(WvStream &s, void *userdata)
+{
+    WvStreamClone *_this = (WvStreamClone *) userdata;
+    if (_this->cloned == &s)
+    {
+	_this->close();
+    }
+}
+
+void WvStreamClone::setclone(IWvStream *newclone)
+{
+    if (cloned)
+    {
+	cloned->setclosecallback(0, 0);
+    }
+    cloned = newclone;
+    if (cloned)
+    {
+	cloned->setclosecallback( close_callback, this);
+    }
 }
 
 

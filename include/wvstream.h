@@ -117,7 +117,9 @@ public:
     virtual bool flush(time_t msec_timeout) = 0;
 
     virtual bool should_flush() = 0;
-    
+
+    /** Sets a callback to be invoked on close().  */
+    virtual void setclosecallback(WvStreamCallback _callfunc, void *_userdata) = 0;
     // IObject
     static const XUUID XIID;
 };
