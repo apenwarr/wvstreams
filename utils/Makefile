@@ -6,7 +6,7 @@ default: all teststr testlist testhash stresshash testbuffer \
 all: utils.a
 
 utils.a: base64.o verstring.o strutils.o wvstring.o \
-		wvlinklist.o wvhashtable.o wvbuffer.o
+		wvlinklist.o wvhashtable.o wvbuffer.o wvtask.o
 
 
 LIBS=${EFENCE}
