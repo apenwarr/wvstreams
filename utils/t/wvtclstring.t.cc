@@ -1,8 +1,9 @@
 #include "wvtest.h"
 #include "wvtclstring.h"
 #include "wvstring.h"
+#include "wvstringlist.h"
+#include "wvstream.h"
 
-DeclareWvList(WvString);
 WVTEST_MAIN("escaping and unescaping")
 {
     WvString a, b(""), c("jabba"), d("crab poody-doo"), e("\"quote this!\""), 
@@ -224,4 +225,18 @@ WVTEST_MAIN("getword with dynamic buffer")
     do_word(buf, "", 2);
     do_word(buf, "[S2]", 1);
     do_word(buf, "Enable = 0", 1);
+}
+
+WVTEST_MAIN("wvtcl_encode specific failures")
+{
+    WvStringList words;
+    wvout->print(wvtcl_encode(words));
+    words.append("{{2304 5816322} var} 1102878961 DIR");
+    words.append("{{2304 5816323} lib} 1098721377 DIR");
+    words.append("{{2304 5852807} defoma} 1098721283 DIR");
+    words.append("{{2304 5852904} gs.d} 1098721283 DIR");
+    words.append("{{2304 5852905} dirs} 1098721269 DIR");
+    words.append("{{2304 5852906} fonts} 1098721283 DIR");
+    words.append("{{2304 5853099} Fontmap} 1098721283 REG");
+    wvout->print(wvtcl_encode(words));
 }
