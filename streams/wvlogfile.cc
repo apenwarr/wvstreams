@@ -1,7 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ *
  * A "Log Receiver" that logs messages to a file
  */
 
@@ -28,7 +28,7 @@ void WvLogFileBase::_make_prefix()
     struct tm* tmstamp = localtime(&timenow);
     char timestr[30];
     strftime(&timestr[0], 30, "%b %d %T %Z", tmstamp);
-     
+
     prefix = WvString("%s: %s<%s>: ", timestr, appname(last_source),
         loglevels[last_level]);
     prelen = prefix.len();
@@ -52,10 +52,9 @@ void WvLogFile::_make_prefix()
     if (fstat(getfd(), &statbuf) == -1)
         statbuf.st_size = 0;
 
-    // Check if it's tomorrow yet, and start logging to a different file
-    if (last_day != timenow/86400 || statbuf.st_size > MAX_LOGFILE_SZ)
+    if ( last_day < timenow/86400 || statbuf.st_size > MAX_LOGFILE_SZ)
         start_log();
-    
+
     WvLogFileBase::_make_prefix();
 }
 
@@ -100,7 +99,7 @@ void WvLogFile::start_log()
         if (!strncmp(i.ptr()->name, base, strlen(base)))
             // and it's older than 'keep_for' days
             if (i.ptr()->st_mtime <
-                    wvtime().tv_sec - keep_for*86400) 
+                    wvtime().tv_sec - keep_for*86400)
             {
                 //delete it
                 unlink(i.ptr()->fullname);
