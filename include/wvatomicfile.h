@@ -25,10 +25,12 @@ private:
     WvString tmp_file;
 
 public:
-    WvAtomicFile(WvStringParm filename, mode_t create_mode = 0666);
+    WvAtomicFile(WvStringParm filename, int flags = O_TRUNC | O_CREAT, 
+                    mode_t create_mode = 0666);
     ~WvAtomicFile();
 
-    bool open(WvStringParm filename, mode_t create_mode = 0666);
+    bool open(WvStringParm filename, int flags = O_TRUNC | O_CREAT, 
+                mode_t create_mode = 0666);
     void close();
     
     // Like chmod(2), does *not* respect umask

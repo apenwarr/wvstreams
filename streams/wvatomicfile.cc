@@ -11,10 +11,10 @@
 #include "wvfileutils.h"
 #include "wvstrutils.h"
 
-WvAtomicFile::WvAtomicFile(WvStringParm filename, mode_t create_mode)
+WvAtomicFile::WvAtomicFile(WvStringParm filename, int flags, mode_t create_mode)
     : tmp_file(WvString::null)
 {
-    open(filename, create_mode);
+    open(filename, flags, create_mode);
 }
 
 WvAtomicFile::~WvAtomicFile()
@@ -25,7 +25,7 @@ WvAtomicFile::~WvAtomicFile()
 
 /* Mimics behaviour of wvfile except that it uses a tmp file and stores the
    real name */
-bool WvAtomicFile::open(WvStringParm filename, mode_t create_mode)
+bool WvAtomicFile::open(WvStringParm filename, int flags, mode_t create_mode)
 {
     close();
 
