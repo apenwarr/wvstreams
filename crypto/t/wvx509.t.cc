@@ -3,8 +3,6 @@
 #include "wvx509.h"
 #include "wvrsa.h"
 
-#if 0
-
 void basic_test(WvX509Mgr *t509, WvStringParm dname)
 {
     WVPASS(t509->test());
@@ -153,4 +151,3 @@ WVTEST_MAIN("X509 Basic sanity tests")
     
 }
 
-#endif
