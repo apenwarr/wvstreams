@@ -1038,7 +1038,7 @@ WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
 void WvHttpPool::unconnect(WvUrlStream *s)
 {
     if (!s->info.username)
-	log("Unconnecting stream to %s%s.\n", s->info.remaddr);
+	log("Unconnecting stream to %s.\n", s->info.remaddr);
     else
 	log("Unconnecting stream to %s@%s.\n", s->info.username,
 	    s->info.remaddr);

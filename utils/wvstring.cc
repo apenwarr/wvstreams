@@ -317,7 +317,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	    if (!*argptr || !(**argptr).cstr())
 		arg = blank;
 	    else
-		arg = **argptr;
+		arg = (**argptr).cstr();
 	    ladd = _max(abs(justify), strlen(arg));
 	    if (maxlen && maxlen < ladd)
 		ladd = maxlen;
@@ -360,7 +360,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	    if (!*argptr || !(**argptr).cstr())
 		arg = blank;
 	    else
-		arg = **argptr;
+		arg = (**argptr).cstr();
 	    aplen = strlen(arg);
 	    if (maxlen && maxlen < aplen)
 		aplen = maxlen;

@@ -31,7 +31,7 @@ void WvLogFileBase::_make_prefix()
      
     prefix = WvString("%s: %s<%s>: ", timestr, appname(last_source),
         loglevels[last_level]);
-    prelen = strlen(prefix);
+    prelen = prefix.len();
 }
 
 //----------------------------------- WvLogFile ----------------------

@@ -319,61 +319,59 @@ size_t WvStream::write(const void *buf, size_t count)
 char *WvStream::getline(time_t wait_msec, char separator,
     int readahead)
 {
-    size_t i;
-    unsigned char *buf;
-    
     // if we get here, we either want to wait a bit or there is data
     // available.
     while (isok())
     {
-	queuemin(0);
+        queuemin(0);
     
-	// if there is a newline already, return its string.
-	if ((i = inbuf.strchr(separator)) > 0)
-	{
+        // if there is a newline already, return its string.
+        size_t i = inbuf.strchr(separator);
+        if (i > 0)
+        {
             // the following cast is of dubious quality...
-	    buf = const_cast<unsigned char*>(inbuf.get(i));
-	    buf[i-1] = 0;
-	    return (char *)buf;
-	}
-	else if (!isok())    // uh oh, stream is in trouble.
-	{
-	    if (inbuf.used())
-	    {
-		// handle "EOF without newline" condition
-		inbuf.alloc(1)[0] = 0; // null-terminate it
-		return (char *)inbuf.get(inbuf.used());
-	    }
-	    else
-		return NULL;   // nothing else to do!
-	}
+            char *buf = const_cast<char*>((const char*)inbuf.get(i));
+            buf[i - 1] = '\0';
+            return buf;
+        }
+        else if (! isok())    // uh oh, stream is in trouble.
+        {
+            if (inbuf.used())
+            {
+                // handle "EOF without newline" condition
+                inbuf.alloc(1)[0] = '\0'; // null-terminate it
+                return const_cast<char*>(
+                    (const char*)inbuf.get(inbuf.used()));
+            }
+            else
+                break; // nothing else to do!
+        }
 
-	// make select not return true until more data is available
-	if (inbuf.used())
-	    queuemin(inbuf.used() + 1);
-	
-	// note: this _always_ does the select, even if wait_msec < 0.
-	// That's good, because the fd might be nonblocking!
-	if (uses_continue_select)
-	{
-	    if (!continue_select(wait_msec) && isok() && wait_msec >= 0)
-		return NULL;
-	}
-	else
-	{
-	    if (!select(wait_msec) && isok() && wait_msec >= 0)
-		return NULL;
-	}
-	
-	if (!isok())
-	    return NULL;
+        // make select not return true until more data is available
+        queuemin(inbuf.used() + 1);
+        
+        // note: this _always_ does the select, even if wait_msec < 0.
+        // That's good, because the fd might be nonblocking!
+        bool hasdata;
+        if (uses_continue_select)
+            hasdata = continue_select(wait_msec);
+        else
+            hasdata = select(wait_msec);
+        if (! isok())
+            break;
 
-	// read a few bytes
-	buf = inbuf.alloc(readahead);
-	i = uread(buf, readahead);
-	inbuf.unalloc(readahead - i);
+        if (hasdata)
+        {
+            // read a few bytes
+            unsigned char *buf = inbuf.alloc(readahead);
+            size_t len = uread(buf, readahead);
+            inbuf.unalloc(readahead - len);
+            hasdata = len != 0; // did we actually read anything?
+        }
+
+        if (! hasdata && wait_msec >= 0)
+            break; // handle non wait forever case
     }
-    
     // we timed out or had a socket error
     return NULL;
 }
