@@ -22,7 +22,7 @@ static inline int _max(int x, int y)
 
 WvStringBuf *WvString::alloc(size_t size)
 { 
-    WvStringBuf *buf = (WvStringBuf *)malloc(sizeof(WvStringBuf) 
+    WvStringBuf *buf = (WvStringBuf *)malloc(WVSTRINGBUF_SIZE(buf)
 					     + size + WVSTRING_EXTRA);
     buf->links = 0;
     buf->size = size;

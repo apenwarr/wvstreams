@@ -57,8 +57,12 @@ struct WvStringBuf
 {
     size_t size;        // string length - if zero, use strlen!!
     unsigned links;	// number of WvStrings using this buf.
-    char data[0];	// optional room for extra string data
+    char data[1];	// optional room for extra string data
 };
+
+// the _actual_ space taken by a WvStringBuf, without the data[] array
+// (which is variable-sized, not really 1 byte)
+#define WVSTRINGBUF_SIZE(s) (s->data - (char *)s)
 
 
 class WvString
@@ -92,8 +96,11 @@ public:
         { link(s.buf, s.str); }
     WvString(const char *_str)
         { if (_str) link(&__wvs_nb, _str); else { buf = NULL; str = NULL; } }
+
+    // NOTE: make sure that 32 bytes is big enough for your longest int.
+    // This is true up to at least 64 bits.
     WvString(int i) // auto-render int 'i' into a string
-        { newbuf(16); snprintf(str, 16, "%d", i); }
+        { newbuf(32); sprintf(str, "%d", i); }
 
     // when this is called, we assume output.str == NULL; it will be filled.
     static void do_format(WvString &output, char *format, const WvString **a);
