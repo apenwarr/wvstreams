@@ -49,7 +49,6 @@ void acl_check()
 
 WvString fix_acl(WvStringParm shortform)
 {
-    WvLog log("ACL", WvLog::Debug2);
     bool mask_found = false, mask_read = false, mask_write = false,
          mask_execute = false;
 
@@ -71,9 +70,6 @@ WvString fix_acl(WvStringParm shortform)
 	    mask_write = true;
 	if (strchr(i(), 'x'))
 	    mask_execute = true;
-
-	log("mask: read %s write %s execute %s\n", mask_read, mask_write,
-	    mask_execute);
 	break;
     }
 
@@ -130,7 +126,7 @@ WvString fix_acl(WvStringParm shortform)
 void get_simple_acl_permissions(WvStringParm filename,
 				WvSimpleAclEntryList &acl_entries)
 {
-    WvLog log("ACL", WvLog::Debug2);
+    WvLog log("ACL", WvLog::Debug5);
 
     struct stat st;
     if (stat(filename, &st) != 0)
@@ -277,8 +273,7 @@ WvString build_default_acl(mode_t mode)
  */
 WvString get_acl_short_form(WvStringParm filename, bool get_default)
 {
-    WvLog log("ACL", WvLog::Debug2);
-    log("Getting short form ACL for %s\n", filename);
+    WvLog log("ACL", WvLog::Debug5);
     WvString short_form;
 
 #ifdef WITH_ACL
@@ -319,7 +314,7 @@ WvString get_acl_short_form(WvStringParm filename, bool get_default)
 bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
 			 bool set_default_too)
 {
-    WvLog log("ACL", WvLog::Debug2);
+    WvLog log("ACL", WvLog::Debug5);
     struct stat st;
     if (stat(filename, &st) != 0)
     {
@@ -338,12 +333,12 @@ bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
 
 	if (res == 0)
 	{
-	    log(WvLog::Debug, "Access permissions successfully changed.\n");
+	    log("Access permissions successfully changed.\n");
 	    if (set_default_too)
 	    {
 		res = acl_set_file(filename, ACL_TYPE_DEFAULT, acl);
 		if (res == 0)
-		    log(WvLog::Debug, "Default permissions successfully changed.\n");
+		    log("Default permissions successfully changed.\n");
 	    }
 	}
 	else
@@ -370,7 +365,7 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
 			bool read, bool write, bool execute, bool kill,
 			bool set_default_too)
 {
-    WvLog log("ACL", WvLog::Debug2);
+    WvLog log("ACL", WvLog::Debug5);
     struct stat st;
     if (stat(filename, &st) != 0)
     {
@@ -406,8 +401,6 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
     WvString initacl_str(get_acl_short_form(filename));
     if (initacl_str)
     {
-	log("Current ACL is %s\n", initacl_str);
-
 	WvStringList acl_entries;
 	acl_entries.split(initacl_str, ",");
 
