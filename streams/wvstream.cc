@@ -496,20 +496,21 @@ bool WvStream::select_setup(SelectInfo &si)
 bool WvStream::test_set(SelectInfo &si)
 {
     size_t outbuf_used = outbuf.used();
+    int fd = getfd();
     
     // flush the output buffer if possible
-    if (getfd() >= 0 
+    if (fd >= 0 
 	&& (outbuf_used || autoclose_time)
-	&& FD_ISSET(getfd(), &si.write))
+	&& FD_ISSET(fd, &si.write))
     {
 	flush(0);
     }
     
-    return getfd() >= 0  // flush() might have closed the file!
-	&&  (FD_ISSET(getfd(), &si.read)
-	 || (FD_ISSET(getfd(), &si.write)
+    return fd >= 0  // flush() might have closed the file!
+	&&  (FD_ISSET(fd, &si.read)
+	 || (FD_ISSET(fd, &si.write)
 	     && (!outbuf_used || si.writable))
-	 ||  FD_ISSET(getfd(), &si.except));
+	 ||  FD_ISSET(fd, &si.except));
 }
 
 
@@ -520,9 +521,6 @@ bool WvStream::select(time_t msec_timeout,
     int sel;
     timeval tv;
     SelectInfo si;
-    
-    if (!readable && !writable && !isexcept)
-	return false;  // why are you asking ME?
     
     if (!isok()) return false;
 
@@ -644,7 +642,4 @@ const WvAddr *WvStream::src() const
 {
     return NULL;
 }
-
-
-
 
