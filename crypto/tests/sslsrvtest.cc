@@ -51,19 +51,19 @@ void setupcert()
 {
     char hname[32];
     char domname[128];
-    char fqdn[160];   
-    gethostname(hname,32);
-    getdomainname(domname,128);
-    strcpy(fqdn,hname);
-    strcat(fqdn,".");  
-    strcat(fqdn,domname);
-    WvString dName("cn=%s,dc=%s",fqdn,domname);
-    x509cert = new WvX509Mgr(dName,1024);
+    WvString fqdn = "";   
+    gethostname(hname, 32);
+    getdomainname(domname, 128);
+    fqdn.append(hname);
+    fqdn.append(".");  
+    fqdn.append(domname);
+    WvString dName("cn=%s,dc=%s", fqdn, domname);
+    x509cert = new WvX509Mgr(dName, 1024);
     if (!x509cert->isok())
     {
 	fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr());
 	want_to_die = true;
-    }	
+    }
 }
 
 
