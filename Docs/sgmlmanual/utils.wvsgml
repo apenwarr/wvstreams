@@ -542,8 +542,8 @@ void prepend(T *data, bool auto_free, char *id = NULL))
 
      The result is:
 
-     WVCMD( bork bork
-blah blah
+     WVCMD( blah blah
+bork bork
 Is the list empty? No
 The first element is: blah blah
 The last element is: bork bork)
