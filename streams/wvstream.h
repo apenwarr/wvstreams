@@ -403,6 +403,12 @@ public:
      * The alarm is cleared when callback() is called.
      */
     void alarm(time_t msec_timeout);
+
+    /**
+     * alarm_was_ticking is true during callback execution if the
+     * callback was triggered by the alarm going off.
+     */
+    bool alarm_was_ticking;
     
     /**
      * return the number of milliseconds remaining before the alarm will go
@@ -448,7 +454,7 @@ protected:
     WvString errstring;
     WvBuffer inbuf, outbuf;
     size_t max_outbuf_size;
-    bool outbuf_delayed_flush, alarm_was_ticking;
+    bool outbuf_delayed_flush;
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time
