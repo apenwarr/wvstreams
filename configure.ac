@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.32 2003/05/08 04:57:21 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.33 2003/05/08 18:18:16 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -144,10 +144,12 @@ fi
 
 # gtk
 if test "$with_gtk" != "no"; then
-    WV_APPEND(CPPFLAGS,`pkg-config --cflags gtk+`)
+    CPPFLAGS_save="$CPPFLAGS"
+    WV_APPEND(CPPFLAGS,`pkg-config --cflags gtk+ 2>/dev/null`)
     AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
     AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
     AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
+    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
 fi
 
 # ogg
