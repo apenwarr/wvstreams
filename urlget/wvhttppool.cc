@@ -627,13 +627,39 @@ char *WvFtpStream::get_important_line(int timeout)
 
 bool WvFtpStream::pre_select(SelectInfo &si)
 {
-    if (data && data->select(0))
-	return true;
+    SelectRequest oldwant = si.wants;
 
-    if (curl && curl->putstream && curl->putstream->select(0))
-	return true;
+    if (WvUrlStream::pre_select(si))
+        return true;
 
-    return WvUrlStream::pre_select(si);
+    if (data && data->pre_select(si))
+        return true;
+
+    if (curl && curl->putstream && curl->putstream->pre_select(si))
+        return true;
+
+    si.wants = oldwant;
+
+    return false;
+}
+
+
+bool WvFtpStream::post_select(SelectInfo &si)
+{
+    SelectRequest oldwant = si.wants;
+
+    if (WvUrlStream::post_select(si))
+        return true;
+
+    if (data && data->post_select(si))
+        return true;
+
+    if (curl && curl->putstream && curl->putstream->post_select(si))
+        return true;
+
+    si.wants = oldwant;
+
+    return false;
 }
 
 

@@ -193,6 +193,7 @@ public:
     virtual ~WvFtpStream();
 
     virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     virtual void close();
     virtual void execute();
 };
