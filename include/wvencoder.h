@@ -45,7 +45,9 @@ public:
         { return okay && _isok(); }
 
     /**
-     * Returns true if finish has been called on this encoder.
+     * Returns true if the encoder can no longer process data
+     * because it has found an end-of-data mark in its input,
+     * or finish() has been called.
      */
     bool isfinished() const
         { return finished || _isfinished(); }
@@ -177,7 +179,7 @@ protected:
 protected:
     /**
      * Template method implementation of isok().
-     * Not be called if any of the following cases are true:
+     * Not called if any of the following cases are true:
      *   okay == false
      *
      * Most implementations do not need to override this.
@@ -188,7 +190,7 @@ protected:
 
     /**
      * Template method implementation of isfinished().
-     * Not be called if any of the following cases are true:
+     * Not called if any of the following cases are true:
      *   finished == true
      *
      * Most implementations do not need to override this.
@@ -199,7 +201,7 @@ protected:
 
     /**
      * Template method implementation of geterror().
-     * Not be called if any of the following cases are true:
+     * Not called if any of the following cases are true:
      *
      * Most implementations do not need to override this.
      * See seterror().
@@ -209,23 +211,33 @@ protected:
 
     /**
      * Template method implementation of encode().
-     * Not be called if any of the following cases are true:
-     *   isok() == false
-     *   isfinished() == true
+     * Not called if any of the following cases are true:
+     *   okay == false       // NOTE: not same as isok()
+     *   finished == true    // NOTE: not same as isfinished()
      *   in.used() == 0 && flush == false
      *
      * All implementations MUST define this.
+     *
+     * If you also override _isok() or _isfinished(), note that they
+     * will NOT be consulted when determining whether or not to
+     * invoke this function.  This allows finer control over the
+     * semantics of isok() and isfinished() with respect to encode().
      */
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush) = 0;
 
     /**
      * Template method implementation of finish().
-     * Not be called if any of the following cases are true:
-     *   isok() == false
-     *   isfinished() == true
+     * Not called if any of the following cases are true:
+     *   okay == false       // NOTE: not same as isok()
+     *   finished == true    // NOTE: not same as isfinished()
      * The encoder is marked finished AFTER this function exits.
      *
      * Many implementations do not need to override this.
+     *
+     * If you also override _isok() or _isfinished(), note that they
+     * will NOT be consulted when determining whether or not to
+     * invoke this function.  This allows finer control over the
+     * semantics of isok() and isfinished() with respect to finish().
      */
     virtual bool _finish(WvBuffer &out)
         { return true; }
@@ -304,7 +316,7 @@ public:
 
 protected:
     /**
-     * Returns true if and only if all encoders return true.
+     * Returns true iff all encoders return isok() == true.
      *
      * WvEncoderChain is special in that it may transition from
      * isok() == false to isok() == true if the offending encoders
@@ -313,7 +325,7 @@ protected:
     virtual bool _isok() const;
     
     /**
-     * Returns false if and only if all encoders return false.
+     * Returns false iff all encoders return isfinished() == false.
      *
      * WvEncoderChain is special in that it may transition from
      * isfinished() == true to isfinished() == false if the offending
@@ -334,7 +346,7 @@ protected:
     /**
      * Passes the data through the entire chain of encoders.
      *
-     * Returns true if and only if all encoders return true.
+     * Returns true iff all encoders return true.
      */
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
     
@@ -345,7 +357,7 @@ protected:
      * encoders have been flushed and finished (assuming the first
      * encoder had already been flushed).
      *
-     * Returns true if and only if all encoders return true.
+     * Returns true iff all encoders return true.
      */
     virtual bool _finish(WvBuffer & out);
 };

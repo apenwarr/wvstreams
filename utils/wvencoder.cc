@@ -33,8 +33,8 @@ WvString WvEncoder::geterror() const
 
 bool WvEncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 {
-    bool success = isok() && ! isfinished() &&
-        (inbuf.used() != 0 || flush);
+    // deliberately not using isok() and isfinished() here
+    bool success = okay && ! finished && (inbuf.used() != 0 || flush);
     if (success)
         success = _encode(inbuf, outbuf, flush);
     return success;
@@ -43,7 +43,8 @@ bool WvEncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 
 bool WvEncoder::finish(WvBuffer &outbuf)
 {
-    bool success = isok() && ! isfinished();
+    // deliberately not using isok() and isfinished() here
+    bool success = okay && ! finished;
     if (success)
         success = _finish(outbuf);
     setfinished();
@@ -222,6 +223,10 @@ WvString WvEncoderChain::_geterror() const
 }
 
 
+// NOTE: In this function we deliberately ignore deep isok() and
+//       isfinished() results to allow addition/removal of
+//       individual broken encoders while still processing data
+//       through as much of the chain as possible.
 bool WvEncoderChain::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     if (encoders.isempty())
@@ -258,6 +263,10 @@ bool WvEncoderChain::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 }
 
 
+// NOTE: In this function we deliberately ignore deep isok() and
+//       isfinished() results to allow addition/removal of
+//       individual broken encoders while still processing data
+//       through as much of the chain as possible.
 bool WvEncoderChain::_finish(WvBuffer &out)
 {
     if (encoders.isempty())
