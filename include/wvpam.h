@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
  *
  * A WvStream that authenticates with PAM.  If WvStreams is compiled without
  * PAM, it just fails.  Note that if you don't check isok, you can still read
@@ -34,9 +34,6 @@ public:
 		WvStringParm success = WvString::null,
 		WvStringParm fail = WvString::null);
     virtual ~WvPamStream();
-
-    /** Goes not ok if authentication fails */
-    // virtual bool isok() const;
 
     /** Return the user */
     WvString getuser() const;
