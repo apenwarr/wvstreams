@@ -9,3 +9,4 @@ stamp-h.in
 wvtestmain
 .*.d
 *.libs
+*.ii
