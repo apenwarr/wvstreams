@@ -42,7 +42,8 @@ bool WvStreamList::pre_select(SelectInfo &si)
 {
     bool one_dead = false;
     SelectRequest oldwant;
-    
+
+#if 0 // WvCont should fix this...
     // usually because of WvTask, we might get here without having finished
     // the _last_ set of sure_thing streams...
     // 
@@ -56,6 +57,7 @@ bool WvStreamList::pre_select(SelectInfo &si)
     // this hack inside WvStreamClone.
     if (running_callback)
 	return true;
+#endif
     
     sure_thing.zap();
     

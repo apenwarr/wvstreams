@@ -9,8 +9,8 @@
  * for each stream.
  */
 #include "wvstream.h"
-#include "wvtask.h"
 #include "wvtimeutils.h"
+#include "wvcont.h"
 #include <time.h>
 #include <sys/types.h>
 #include <assert.h>
@@ -61,7 +61,6 @@ WvStream::WvStream()
     force.readable = true;
     force.writable = force.isexception = false;
     read_requires_writable = write_requires_readable = NULL;
-    running_callback = false;
     stop_read = stop_write = closed = false;
     queue_min = 0;
     autoclose_time = 0;
@@ -71,8 +70,6 @@ WvStream::WvStream()
     // magic multitasking support
     uses_continue_select = false;
     personal_stack_size = 65536;
-    task = NULL;
-    taskman = NULL;
 }
 
 
@@ -89,24 +86,15 @@ IWvStream::~IWvStream()
 WvStream::~WvStream()
 {
     TRACE("destroying %p\n", this);
-    if (running_callback)
-    {
-	// user should have called terminate_continue_select()...
-	TRACE("eek! destroying while running_callback!\n");
-	assert(!running_callback);
-    }
     close();
     
-    if (task)
-    {
-	while (task->isrunning())
-	    taskman->run(*task);
-	task->recycle();
-	task = NULL;
-    }
+    // if this assertion fails, then uses_continue_select is true, but you
+    // didn't call terminate_continue_select() or close() before destroying
+    // your object.  Shame on you!
+    assert(!uses_continue_select || !call_ctx);
+    
+    call_ctx = 0; // finish running the suspended callback, if any
     TRACE("done destroying %p\n", this);
-    if (taskman)
-	taskman->unlink();
 }
 
 
@@ -121,6 +109,10 @@ void WvStream::close()
     }
     
     closed = true;
+    
+    // I would like to delete call_ctx here, but then if someone calls
+    // close() from *inside* a continuable callback, we explode.  Oops!
+    //call_ctx = 0; // destroy the context, if necessary
 }
 
 
@@ -149,39 +141,32 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
 }
 
 
-// this is run in the subtask owned by 'stream', if any; NOT necessarily
-// the task that runs WvStream::callback().  That's why this needs to be
-// a separate function.
-void WvStream::_callback(void *stream)
+void WvStream::_callback()
 {
-    WvStream *s = (WvStream *)stream;
-    
-    s->running_callback = true;
-    
-    s->wvstream_execute_called = false;
-    s->execute();
-    if (!! s->callfunc)
-	s->callfunc(*s, s->userdata);
-    
+    wvstream_execute_called = false;
+    execute();
+    if (!! callfunc)
+	callfunc(*this, userdata);
+
     // if this assertion fails, a derived class's virtual execute() function
     // didn't call its parent's execute() function, and we didn't make it
     // all the way back up to WvStream::execute().  This doesn't always
     // matter right now, but it could lead to obscure bugs later, so we'll
     // enforce it.
-    assert(s->wvstream_execute_called);
-    
-    s->running_callback = false;
+    assert(wvstream_execute_called);
+}
+
+
+void *WvStream::_callwrap(void *)
+{
+    _callback();
+    return NULL;
 }
 
 
 void WvStream::callback()
 {
     TRACE("(?)");
-    
-    // callback is already running -- don't try to start it again, or we
-    // could end up in an infinite loop!
-    if (running_callback)
-	return;
     
     // if the alarm has gone off and we're calling callback... good!
     if (alarm_remaining() == 0)
@@ -193,65 +178,26 @@ void WvStream::callback()
 	alarm_was_ticking = false;
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
-    
-//    if (1)
+
+#define TEST_CONTINUES_HARSHLY 1
+#if TEST_CONTINUES_HARSHLY
+# warning "Using WvCont for *all* streams for testing!"
+    if (1)
+#else
     if (uses_continue_select && personal_stack_size >= 1024)
+#endif
     {
-	if (!taskman)
-	    taskman = WvTaskMan::get();
-    
-	if (!task)
+	if (!call_ctx) // no context exists yet!
 	{
-	    TRACE("(!)");
-	    task = taskman->start("streamexec", _callback, this,
-				  personal_stack_size);
-	}
-	else if (!task->isrunning())
-	{
-	    TRACE("(.)");
-	    task->start("streamexec2", _callback, this);
+	    call_ctx = WvCont(WvCallback<void*,void*>
+			      (this, &WvStream::_callwrap),
+			      personal_stack_size);
 	}
 	
-	// This loop is much more subtle than it looks.
-	// By implementing it this way, we provide something that works
-	// like a typical callback() stack: that is, a child callback
-	// must return before the parent's callback does.
-	// 
-	// What _actually_ happens is a child will call yield() upon returning
-	// from its callback function, which exits the taskman and returns to
-	// the top level.  The top level, though, is running this loop, which
-	// re-executes taskman->run() since its child (which is eventually
-	// the parent of the child that called yield()) hasn't finished yet.
-	// We build our way all the way back up to the first-level parent of
-	// the child calling yield(), which now notices its child has finished
-	// and continues on in its execute() function.
-	// 
-	// continue_select() will set running_callback to false, even though
-	// it doesn't actually return from the callback function.  That
-	// causes this loop to terminate, and the callback will get resumed
-	// later when select() returns true.
-	do
-	{
-	    taskman->run(*task);
-	} while (task && task->isrunning() && running_callback);
+	call_ctx(NULL);
     }
     else
-	_callback(this);
-    
-    /* DON'T PUT ANY CODE HERE!
-     * 
-     * WvStreamList calls its child streams above via taskman->run().
-     * If a child is deleted, it waits for its callback task to finish the
-     * current iteration, then recycles its WvTask object and allows the
-     * "delete" call to finish, so the object no longer exists.
-     * 
-     * The catch: the callback() function is actually running in
-     * the WvStreamList's task (if any), which hasn't had a chance to
-     * exit yet.  Next time we jump into the WvStreamList, we will arrive
-     * immediately after the taskman->run() line, ie. right here in the
-     * code.  In that case, the 'this' pointer could be pointing at an
-     * invalid object, so we should just exit before we do something stupid.
-     */
+	_callback();
 }
 
 
@@ -379,6 +325,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
     while (isok())
     {
+	WvStream::execute();
         if (continue_select(-1))
         {
 	    if ((got = read(buf, count)) != 0)
@@ -393,6 +340,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
     queuemin(0);
     
+    WvStream::execute();
     return got;
 }
 
@@ -942,7 +890,7 @@ void WvStream::alarm(time_t msec_timeout)
 
 time_t WvStream::alarm_remaining()
 {
-    if (alarm_time.tv_sec && !running_callback)
+    if (alarm_time.tv_sec)
     {
 	WvTime now = wvtime();
 
@@ -964,17 +912,13 @@ time_t WvStream::alarm_remaining()
 bool WvStream::continue_select(time_t msec_timeout)
 {
     assert(uses_continue_select);
-    assert(task);
-    assert(taskman);
-    assert(taskman->whoami() == task);
+    assert(call_ctx);
     
     if (msec_timeout >= 0)
 	alarm(msec_timeout);
-    
-    running_callback = false;
-    taskman->yield();
-    running_callback = true; // and we're back!
-    alarm(-1);
+
+    alarm(msec_timeout);
+    WvCont::yield();
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 
@@ -993,13 +937,7 @@ bool WvStream::continue_select(time_t msec_timeout)
 void WvStream::terminate_continue_select()
 {
     close();
-    if (task)
-    {
-	while (task->isrunning())
-	    taskman->run(*task);
-	task->recycle();
-	task = NULL;
-    }
+    call_ctx = 0; // destroy the context, if necessary
 }
 
 
@@ -1012,7 +950,8 @@ const WvAddr *WvStream::src() const
 void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
 { 
     callfunc = _callfunc;
-    userdata = _userdata; 
+    userdata = _userdata;
+    call_ctx = 0; // delete any in-progress WvCont
 }
 
 

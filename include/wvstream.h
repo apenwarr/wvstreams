@@ -25,8 +25,6 @@
 #endif
 
 class WvAddr;
-class WvTask;
-class WvTaskMan;
 class WvStream;
 
 // parameters are: owning-stream, userdata
@@ -345,20 +343,21 @@ public:
 		  int readahead = 1024);
     
     /**
-     * read up to count characters into buf, up to and including the first instance
-     * of separator.
-     *
-     * if separator is not found on input before timeout (usual symantics) or
-     * stream close or error, or if count is 0, nothing is placed in buf and 0
-     * is returned.
-     *
-     * if your buffer is not large enough for line, call multiple times until
-     * seperator is found at end of buffer to retrieve the entire line.
-     *
+     * read up to count characters into buf, up to and including the first
+     * instance of separator.
+     * 
+     * if separator is not found on input before timeout (usual symantics)
+     * or stream close or error, or if count is 0, nothing is placed in buf
+     * and 0 is returned.
+     * 
+     * if your buffer is not large enough for line, call multiple times
+     * until seperator is found at end of buffer to retrieve the entire
+     * line.
+     * 
      * Returns the number of characters that were put in buf.
-     *
-     * If uses_continue_select is true, getline() will use continue_select()
-     * rather than select() to wait for its timeout.
+     * 
+     * If uses_continue_select is true, getline() will use
+     * continue_select() rather than select() to wait for its timeout.
      */
     size_t read_until(void *buf, size_t count, time_t wait_msec,
                       char separator);
@@ -577,7 +576,7 @@ public:
     
     /**
      * return to the caller from execute(), but don't really return exactly;
-     * this uses WvTaskMan::yield() to return to the caller of callback()
+     * this uses WvCont::yield() to return to the caller of callback()
      * without losing our place in execute() itself.  So, next time someone
      * calls callback(), it will be as if continue_select() returned.
      * 
@@ -588,7 +587,7 @@ public:
      * 
      * NOTE 2: if you're going to call continue_select(), you should set
      * uses_continue_select=true before the first call to callback().
-     * Otherwise your WvTask struct won't get created.
+     * Otherwise your WvCont won't get created.
      * 
      * NOTE 3: if msec_timeout >= 0, this uses WvStream::alarm().
      */
@@ -626,6 +625,16 @@ public:
     /** Stops autoforwarding. */
     void noautoforward();
     static void autoforward_callback(WvStream &s, void *userdata);
+    
+    /**
+     * A wrapper that's compatible with WvCont, but calls the "real" callback.
+     */
+    void *_callwrap(void *);
+    
+    /**
+     * Actually call the registered callfunc and execute().
+     */
+    void _callback();
     
     /**
      * if the stream has a callback function defined, call it now.
@@ -706,11 +715,9 @@ private:
 
 
 protected:
-    WvTaskMan *taskman;
-
     WvDynBuf inbuf, outbuf;
-    WvStreamCallback callfunc;
-    WvStreamCallback closecb_func;
+    WvStreamCallback callfunc, closecb_func;
+    WvCallback<void*,void*> call_ctx;
     void *userdata;
     void *closecb_data;
     size_t max_outbuf_size;
@@ -727,22 +734,12 @@ protected:
     time_t autoclose_time;	// close eventually, even if output is queued
     WvTime alarm_time;          // select() returns true at this time
     WvTime last_alarm_check;    // last time we checked the alarm_remaining
-    bool running_callback;	// already in the callback() function
     bool wvstream_execute_called;
     
-    WvTask *task;
-
     /** Prevent accidental copying of WvStreams. */
     WvStream(const WvStream &s) { }
     WvStream& operator= (const WvStream &s) { return *this; }
 
-    /**
-     * actually do the callback for an arbitrary stream.
-     * This is a static function so we can pass it as a function pointer
-     * to WvTask functions.
-     */
-    static void _callback(void *stream);
-    
     /**
      * The callback() function calls execute(), and then calls the user-
      * specified callback if one is defined.  Do not call execute() directly;

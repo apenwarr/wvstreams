@@ -375,6 +375,27 @@ WVTEST_MAIN("continue_select")
 }
 
 
+static void seterr_cb(WvStream &s, void *userdata)
+{
+    s.seterr("my seterr_cb error");
+}
+
+
+WVTEST_MAIN("seterr() inside a continuable callback")
+{
+    WvStream s;
+    s.setcallback(seterr_cb, NULL);
+    WVPASS(s.isok());
+    s.runonce(0);
+    WVPASS(s.isok());
+    s.alarm(0);
+    s.runonce(5);
+    WVFAIL(s.isok());
+    WVPASS(s.geterr() == -1);
+    s.terminate_continue_select();
+}
+
+
 static void *wvcont_cb(WvStream &s, void *userdata)
 {
     int next = 1, sgn = 1;
@@ -478,6 +499,7 @@ WVTEST_MAIN("continue_read and continuing getline")
     s.inbuf.putstr("00");
     s.runonce(0);
     WVPASS(s.inbuf.used() == 1);
+    s.terminate_continue_select();
 }
 
 

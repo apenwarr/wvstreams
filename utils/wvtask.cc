@@ -40,10 +40,7 @@ static void valgrind_fix(char *stacktop)
 {
     char val;
     //printf("valgrind fix: %p-%p\n", &val, stacktop);
-    /* FIXME: this assert is commented out because of a bug that
-     * apparently doesn't mess things up too much, but should be
-     * uncommented sometimes (and the bug fixed!). */
-    //assert(stacktop > &val);
+    assert(stacktop > &val);
     VALGRIND_MAKE_READABLE(&val, stacktop - &val);
 }
 
@@ -264,7 +261,8 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
     }
     else
     {
-	valgrind_fix(stacktop);
+	if (current_task)
+	    valgrind_fix(stacktop);
 	assert(magic_number == -WVTASK_MAGIC);
 	assert(task.magic_number == WVTASK_MAGIC);
 	
