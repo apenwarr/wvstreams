@@ -62,9 +62,6 @@ public:
     protected:
 	datumize(datumize<T> &); // not defined
 
-	friend class WvOnDiskHash<K, D, Backend>;
-	friend class WvOnDiskHash<K, D, Backend>::Iter;
-
     public:
 	WvDynBuf buf;
 
@@ -230,6 +227,8 @@ public:
 
 	WvIterStuff(D);
     };
+
+    friend class WvOnDiskHash<K, D, Backend>::Iter;
 
 };
 
