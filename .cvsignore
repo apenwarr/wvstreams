@@ -17,4 +17,5 @@ wvtestmain
 xplc
 *.tmp
 
+ChangeLog
 wvver.h
