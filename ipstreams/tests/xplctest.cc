@@ -8,6 +8,7 @@
 
 class Hello : public IObject
 {
+    IMPLEMENT_IOBJECT(Hello);
 public:
     Hello()
         { printf("Hello!\n"); }
@@ -15,22 +16,23 @@ public:
         { printf("Goodbye!\n"); }
 };
 
-XUUID_MAP_BEGIN(Hello)
-  XUUID_MAP_ENTRY(IObject)
-XUUID_MAP_END
+UUID_MAP_BEGIN(Hello)
+  UUID_MAP_ENTRY(IObject)
+UUID_MAP_END
 
 
 class HelloFactory : public IMoniker
 {
+    IMPLEMENT_IOBJECT(HelloFactory);
 public:
     virtual IObject *resolve(const char *s)
-        { return new GenericComponent<Hello>; }
+        { return new Hello; }
 };
 
-XUUID_MAP_BEGIN(HelloFactory)
-  XUUID_MAP_ENTRY(IObject)
-  XUUID_MAP_ENTRY(IMoniker)
-XUUID_MAP_END
+UUID_MAP_BEGIN(HelloFactory)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_ENTRY(IMoniker)
+UUID_MAP_END
 
 
 
@@ -53,7 +55,7 @@ int main()
 		       servmgr->getObject(XPLC_staticServiceHandler));
     assert(handler);
     
-    handler->addObject(_hellouuid, new GenericComponent<HelloFactory>);
+    handler->addObject(_hellouuid, new HelloFactory);
     
     IMonikerService *monikers = mutate<IMonikerService>(
 					servmgr->getObject(XPLC_monikers));

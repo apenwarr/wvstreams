@@ -7,16 +7,16 @@ XPATH=include
 include vars.mk
 
 ifeq ("$(build_xplc)", "yes")
-  TARGETS:=xplc $(TARGETS)
+  MYXPLC:=xplc
 endif
 
-all: config.mk $(TARGETS)
+all: config.mk $(MYXPLC) $(TARGETS)
 
 ifeq ("$(build_xplc)", "yes")
 
 .PHONY: xplc
 xplc:
-	make -C xplc
+	$(MAKE) -C xplc
 
 endif
 
