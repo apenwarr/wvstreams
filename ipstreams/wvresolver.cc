@@ -8,7 +8,6 @@
 #include "wvloopback.h"
 #include "wvaddr.h"
 #include "wvtcp.h"
-#include "wvautoconf.h"
 #include <sys/types.h>
 #include <signal.h>
 #include <time.h>
@@ -20,6 +19,7 @@ typedef int pid_t;
 #define waitpid(a,b,c) (0)
 #define alarm(a)
 #else
+#include "wvautoconf.h"
 #include "wvfork.h"
 #include <netdb.h>
 #include <sys/wait.h>
@@ -204,11 +204,13 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	    namelookup(name, host->loop);
 	    _exit(1);
 	}
+#endif
 	
 	// parent process
 	host->loop->nowrite();
-#endif
     }
+
+#ifndef WVRESOLVER_SKIP_FORK
     
     // if we get here, we are the parent task waiting for the child.
     
@@ -237,7 +239,8 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	else
 	    break;
     } while (host->pid && msec_timeout < 0); // repeat if unlimited timeout!
-    
+#endif
+
     // data coming in!
     char *line;
     
