@@ -30,10 +30,12 @@
 class WvEncoderStream : public WvStreamClone
 {
     bool is_closing;
+    bool is_eof;
     WvDynamicBuffer readinbuf;
     WvDynamicBuffer readoutbuf;
     WvDynamicBuffer writeinbuf;
     WvDynamicBuffer writeoutbuf;
+
 public:
     /**
      * Encoder chain through which input data is passed.

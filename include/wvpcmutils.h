@@ -12,14 +12,14 @@
 #include "wvencoder.h"
 #include "wvfunctorencoder.h"
 
-struct WvPCMSigned16ToFloatFunctor
+struct WvPCMSigned16ToNormFloatFunctor
 {
     inline float operator()(signed short int pcm) const
     {
         return float(pcm) / 32768;
     }
 };
-struct WvPCMFloatToSigned16Functor
+struct WvPCMNormFloatToSigned16Functor
 {
     inline signed short int operator()(float pcm) const
     {
@@ -27,14 +27,29 @@ struct WvPCMFloatToSigned16Functor
             (signed short int)(pcm * 32768);
     }
 };
-struct WvPCMSigned16ToDoubleFunctor
+struct WvPCMSigned16ToUnnormFloatFunctor
+{
+    inline float operator()(signed short int pcm) const
+    {
+        return float(pcm);
+    }
+};
+struct WvPCMUnnormFloatToSigned16Functor
+{
+    inline signed short int operator()(float pcm) const
+    {
+        return (pcm < -32768.0f) ? -32768 : (pcm >= 32767.0f) ? 32767 :
+            (signed short int)(pcm);
+    }
+};
+struct WvPCMSigned16ToNormDoubleFunctor
 {
     inline double operator()(signed short int pcm) const
     {
         return double(pcm) / 32768;
     }
 };
-struct WvPCMDoubleToSigned16Functor
+struct WvPCMNormDoubleToSigned16Functor
 {
     inline signed short int operator()(double pcm) const
     {
@@ -45,52 +60,77 @@ struct WvPCMDoubleToSigned16Functor
 
 
 /**
- * An encoder that converts PCM audio from normalized floats to 
- * 16 bit signed short ints.
+ * An encoder that converts PCM audio from <em>normalized</em>
+ * floats to 16 bit signed short ints.
  */
-class WvPCMFloatToSigned16Encoder : public WvFunctorEncoder
-    <float, signed short int, WvPCMFloatToSigned16Functor>
+class WvPCMNormFloatToSigned16Encoder : public WvFunctorEncoder
+    <float, signed short int, WvPCMNormFloatToSigned16Functor>
 {
 public:
-    WvPCMFloatToSigned16Encoder() :
+    WvPCMNormFloatToSigned16Encoder() :
         WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 
 
 /**
  * An encoder that converts PCM audio from 16 bit signed short ints
- * to normalized floats.
+ * to <em>normalized</em> floats.
  */
-class WvPCMSigned16ToFloatEncoder : public WvFunctorEncoder
-    <signed short int, float, WvPCMSigned16ToFloatFunctor>
+class WvPCMSigned16ToNormFloatEncoder : public WvFunctorEncoder
+    <signed short int, float, WvPCMSigned16ToNormFloatFunctor>
 {
 public:
-    WvPCMSigned16ToFloatEncoder() :
+    WvPCMSigned16ToNormFloatEncoder() :
         WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 
 /**
- * An encoder that converts PCM audio from normalized doubles to
- * 16 bit signed short ints.
+ * An encoder that converts PCM audio from <em>unnormalized</em>
+ * floats to 16 bit signed short ints.
  */
-class WvPCMDoubleToSigned16Encoder : public WvFunctorEncoder
-    <double, signed short int, WvPCMDoubleToSigned16Functor>
+class WvPCMUnnormFloatToSigned16Encoder : public WvFunctorEncoder
+    <float, signed short int, WvPCMUnnormFloatToSigned16Functor>
 {
 public:
-    WvPCMDoubleToSigned16Encoder() :
+    WvPCMUnnormFloatToSigned16Encoder() :
         WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 
 
 /**
  * An encoder that converts PCM audio from 16 bit signed short ints
- * to normalized doubles.
+ * to <em>unnormalized</em> floats.
  */
-class WvPCMSigned16ToDoubleEncoder : public WvFunctorEncoder
-    <signed short int, double, WvPCMSigned16ToDoubleFunctor>
+class WvPCMSigned16ToUnnormFloatEncoder : public WvFunctorEncoder
+    <signed short int, float, WvPCMSigned16ToUnnormFloatFunctor>
 {
 public:
-    WvPCMSigned16ToDoubleEncoder() :
+    WvPCMSigned16ToUnnormFloatEncoder() :
+        WvFunctorEncoder<IType, OType, FType>(FType()) { }
+};
+
+/**
+ * An encoder that converts PCM audio from <em>normalized</em>
+ * doubles to 16 bit signed short ints.
+ */
+class WvPCMNormDoubleToSigned16Encoder : public WvFunctorEncoder
+    <double, signed short int, WvPCMNormDoubleToSigned16Functor>
+{
+public:
+    WvPCMNormDoubleToSigned16Encoder() :
+        WvFunctorEncoder<IType, OType, FType>(FType()) { }
+};
+
+
+/**
+ * An encoder that converts PCM audio from 16 bit signed short ints
+ * to <em>normalized</em> doubles.
+ */
+class WvPCMSigned16ToNormDoubleEncoder : public WvFunctorEncoder
+    <signed short int, double, WvPCMSigned16ToNormDoubleFunctor>
+{
+public:
+    WvPCMSigned16ToNormDoubleEncoder() :
         WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 

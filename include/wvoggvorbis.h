@@ -105,7 +105,7 @@ public:
     };
     
     /**
-     * Creates an Ogg Encoder.
+     * Creates an Ogg Vorbis Encoder.
      * <p>
      * The special constant RANDOM_SERIALNO may be specified as the
      * serial number to let the encoder choose one at random.  The
@@ -114,11 +114,13 @@ public:
      * </p>
      * @param bitrate the bitrate specification
      * @param samplingrate the number of samples per second
-     * @param channels number of channels (must be 1 for now)
-     * @param serialno the Ogg bitstream serial number
+     * @param channels number of channels (must be 1 for now),
+     *        defaults to 1
+     * @param serialno the Ogg bitstream serial number,
+     *        defaults to RANDOM_SERIALNO
      */
     WvOggVorbisEncoder(const BitrateSpec &bitratespec,
-        int samplingrate = 44100, int channels = 1,
+        int samplingrate, int channels = 1,
         long serialno = RANDOM_SERIALNO);
 
     virtual ~WvOggVorbisEncoder();
@@ -138,7 +140,8 @@ public:
      * Do not call after the first invocation of encode().
      * </p>
      */
-    void add_comment(WVSTRING_FORMAT_DECL) { add_comment(WvString(WVSTRING_FORMAT_CALL)); }
+    void add_comment(WVSTRING_FORMAT_DECL)
+        { add_comment(WvString(WVSTRING_FORMAT_CALL)); }
     
     /**
      * Adds a tag to the Ogg Vorbis stream.
@@ -149,6 +152,8 @@ public:
      * </p><p>
      * Do not call after the first invocation of encode().
      * </p>
+     * @param tag the tag name
+     * @param value the value
      */
     void add_tag(WvStringParm tag, WvStringParm value);
 
@@ -178,6 +183,11 @@ private:
  * </p><p>
  * Output buffer will contain a sequence of signed 'float' type
  * values in machine order representing normalized PCM audio data.
+ * </p><p>
+ * If flush == false, then encode() will return true immediately
+ * after isheaderok() becomes true without outputting any audio
+ * data.  This allows the client to examine the header and to
+ * tailor the actual decoding process based on that information.
  * </p>
  */
 class WvOggVorbisDecoder :
@@ -187,7 +197,7 @@ class WvOggVorbisDecoder :
 
 public:
     /**
-     * Creates a new Ogg Decoder.
+     * Creates a new Ogg Vorbis Decoder.
      * <p>
      * For now, if the input bitstream is stereo, outputs the left
      * channel only.  This behaviour may change later on.
@@ -211,7 +221,8 @@ public:
      *
      * @return the vendor comment
      */
-    WvString vendor() const { return ovcomment->vendor; }
+    WvString vendor() const
+        { return ovcomment->vendor; }
 
     /**
      * Returns the Ogg Vorbis list of user comments.
@@ -220,30 +231,26 @@ public:
      * </p>
      * @return the list of comments
      */
-    WvStringList &comments() { return comment_list; }
+    WvStringList &comments()
+        { return comment_list; }
 
     /**
      * Returns the number of channels in the stream.
      *
      * @return the number of channels, non-negative
      */
-    int channels() const { return ovinfo->channels; }
+    int channels() const
+        { return ovinfo->channels; }
 
     /**
      * Returns the sampling rate of the stream.
      *
      * @return the sampling rate
      */
-    int samplingrate() const { return ovinfo->rate; }
+    int samplingrate() const
+        { return ovinfo->rate; }
     
 protected:
-    /**
-     * Notes:
-     *   If flush == false, returns true immediately after isheaderok()
-     *   becomes true without outputting any audio data.  This allows
-     *   the client to examine the header and to tailor the decoding
-     *   process based on that information.
-     */
     virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf,
         bool flush);
     virtual bool _typedfinish(OBuffer &outbuf);

@@ -21,6 +21,8 @@ WvOggVorbisEncoder::WvOggVorbisEncoder(
     oggstream(NULL), ovinfo(NULL), ovcomment(NULL),
     ovdsp(NULL), ovblock(NULL), wrote_header(false)
 {
+    assert(channels == 1 || ! "stereo not supported yet");
+
     // pick a serial number
     if (serialno == RANDOM_SERIALNO)
     {
@@ -168,10 +170,8 @@ bool WvOggVorbisEncoder::_typedencode(IBuffer &inbuf, OBuffer &outbuf,
             seterror("error allocating vorbis analysis buffer");
             return false;
         }
-        const float *indata = inbuf.get(ovsamples);
-        memcpy(ovbuf[0], indata, ovsamples * sizeof(float));
+        inbuf.move(ovbuf[0], ovsamples);
         vorbis_analysis_wrote(ovdsp, ovsamples);
-
         process_audio(outbuf);
     }
 }
@@ -352,7 +352,25 @@ bool WvOggVorbisDecoder::_typedencode(IBuffer &inbuf, OBuffer &outbuf,
     bool checkheaderok = ! isheaderok() && ! flush;
     for (;;)
     {
-        //while (ogg_sync_pageout(oggsync, oggpage) != 1)
+        if (oggstream)
+        {
+            // extract packets from the bitstream
+            ogg_packet oggpacket;
+            while (ogg_stream_packetout(oggstream, & oggpacket) > 0)
+            {
+                if (! process_packet(& oggpacket, outbuf))
+                    return false;
+            }
+            
+            // detect end of stream
+            if (oggstream->e_o_s)
+            {
+                setfinished();
+                return true;
+            }
+        }
+
+        // get more pages
         while (ogg_sync_pageseek(oggsync, oggpage) <= 0)
         {
             // read in more data
@@ -373,20 +391,12 @@ bool WvOggVorbisDecoder::_typedencode(IBuffer &inbuf, OBuffer &outbuf,
                 seterror("error allocating ogg sync buffer");
                 return false;
             }
-            const unsigned char *indata = inbuf.get(oggbufsize);
-            memcpy(oggbuf, indata, oggbufsize);
+            inbuf.move(oggbuf, oggbufsize);
             ogg_sync_wrote(oggsync, oggbufsize);
         }
         // we got a page!
         if (! process_page(oggpage, outbuf))
             return false;
-            
-        // detect end of stream
-        if (oggstream->e_o_s)
-        {
-            setfinished();
-            return true;
-        }
         
         // return immediately after we see the header if not flushing
         // guarantee no data has been decoded yet since Ogg Vorbis
@@ -402,7 +412,7 @@ bool WvOggVorbisDecoder::_typedfinish(OBuffer &outbuf)
 {
     if (! isheaderok())
     {
-        seterror("failed to detect a vorbis stream");
+        seterror("failed to detect an Ogg Vorbis stream");
         return false;
     }
     return true;
@@ -426,13 +436,6 @@ bool WvOggVorbisDecoder::process_page(ogg_page *oggpage,
         // this page was bad, or did not match the stream's
         // serial number exactly, skip it
         return true;
-    }
-    // extract packets from the bitstream
-    ogg_packet oggpacket;
-    while (ogg_stream_packetout(oggstream, & oggpacket) > 0)
-    {
-        if (! process_packet(& oggpacket, outbuf))
-            return false;
     }
     return true;
 }
@@ -464,15 +467,14 @@ bool WvOggVorbisDecoder::process_packet(ogg_packet *oggpacket,
             return true;
         }
         vorbis_synthesis_blockin(ovdsp, ovblock);
-    
+
         // synthesize PCM audio
         for (;;) {
             float **pcm;
             long samples = vorbis_synthesis_pcmout(ovdsp, &pcm);
             if (samples == 0) break;
             
-            float *out = outbuf.alloc(samples);
-            memcpy(out, pcm[0], samples * sizeof(float));
+            outbuf.put(pcm[0], samples);
             vorbis_synthesis_read(ovdsp, samples);
         }
     }

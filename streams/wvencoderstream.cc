@@ -9,7 +9,8 @@
 #include "wvencoderstream.h"
 
 WvEncoderStream::WvEncoderStream(WvStream *_cloned) :
-    WvStreamClone(_cloned), is_closing(false), min_readsize(0)
+    WvStreamClone(_cloned), is_closing(false), is_eof(false),
+    min_readsize(0)
 {
 }
 
@@ -44,14 +45,13 @@ bool WvEncoderStream::isok() const
         return false;
 
     // handle substream error conditions
+    // we don't check substream isok() because that is handled
+    // during read operations to distinguish EOF from errors
     if (! cloned || cloned->geterr() != 0)
         return false;
         
     // handle deferred EOF condition
-    // if (! cloned->isok()) the readchain will be finished at
-    //   the next uread() or pre_select().
-
-    return ! readchain.isfinished() && writechain.isok();
+    return ! is_eof;
 }
 
 
@@ -95,6 +95,7 @@ bool WvEncoderStream::finish_read()
         success = false;
     checkreadisok();
     inbuf.merge(readoutbuf);
+    is_eof = true;
     return success;
 }
 
@@ -107,24 +108,34 @@ bool WvEncoderStream::finish_write()
 
 void WvEncoderStream::pull(size_t size)
 {
+    if (is_eof)
+        return;
+
     // pull a chunk of unencoded input
     bool finish = false;
     if (! readchain.isfinished() && cloned)
     {
         if (size != 0)
-        {
-            unsigned char *readin = readinbuf.alloc(size);
-            size_t len = cloned->read(readin, size);
-            readinbuf.unalloc(size - len);
-        }
+            cloned->read(readinbuf, size);
         if (! cloned->isok())
-            finish = true;
+            finish = true; // underlying stream hit EOF or error
     }
 
     // encode the input
-    readchain.encode(readinbuf, readoutbuf, finish);
+    readchain.encode(readinbuf, readoutbuf, finish /* flush*/);
     if (finish)
+    {
         readchain.finish(readoutbuf);
+        if (readoutbuf.used() == 0)
+            is_eof = true;
+        // otherwise defer EOF until the buffered data has been read
+    }
+    else if (readoutbuf.used() == 0 && readchain.isfinished())
+    {
+        // only get EOF when the chain is finished and we have no
+        // more data
+        is_eof = true;
+    }
     checkreadisok();
 }
 
@@ -155,9 +166,10 @@ bool WvEncoderStream::push(bool flush, bool finish)
 size_t WvEncoderStream::uread(void *buf, size_t size)
 {
     pull(min_readsize > size ? min_readsize : size);
-    if (size > readoutbuf.used())
-        size = readoutbuf.used();
-    memcpy(buf, readoutbuf.get(size), size);
+    size_t avail = readoutbuf.used();
+    if (size > avail)
+        size = avail;
+    readoutbuf.move(buf, size);
     return size;
 }
 
@@ -172,24 +184,36 @@ size_t WvEncoderStream::uwrite(const void *buf, size_t size)
 
 bool WvEncoderStream::pre_select(SelectInfo &si)
 {
-    // detect EOF and cause read chain to be finished if needed
-    pull(0);
+    bool surething = false;
 
-    // merge encoded input into stream input buffer
-    inbuf.merge(readoutbuf);
+    // if we have buffered input data and we want to check for
+    // readability, then cause a callback to occur that will
+    // hopefully ask us for more data via uread()
+    if (si.wants.readable)
+    {
+        pull(0); // try an encode
+        if (readoutbuf.used() != 0)
+            surething = true;
+    }
 
     // try to push pending encoded output to cloned stream
     // outbuf_delayed_flush condition already handled by uwrite()
     push(false /*flush*/, false /*finish*/);
 
-    return WvStreamClone::pre_select(si);
+    // consult the underlying stream
+    if (WvStreamClone::pre_select(si))
+        surething = true;
+    return surething;
 }
 
 
 void WvEncoderStream::checkreadisok()
 {
     if (! readchain.isok())
+    {
         seterr(WvString("read chain: %s", readchain.geterror()));
+        is_eof = true;
+    }
 }
 
 

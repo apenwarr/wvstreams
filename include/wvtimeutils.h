@@ -36,4 +36,14 @@ inline void normalize(struct timeval &tv)
     tv.tv_usec %= 1000000;
 }
 
+/**
+ * Compares two time values.
+ */
+inline bool operator< (const struct timeval &a,
+    const struct timeval &b)
+{
+    return a.tv_sec < b.tv_sec || (a.tv_sec == b.tv_sec
+        && a.tv_usec < b.tv_usec);
+}
+
 #endif // __WVTIMEUTILS_H

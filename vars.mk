@@ -27,8 +27,13 @@ TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += uniconf/daemon/uniconfdaemon
 
-ifneq ("$(with_oggvorbis)", "no")
+ifneq ("$(with_ogg)", "no")
+ifneq ("$(with_vorbis)", "no")
 TARGETS += libwvoggvorbis.so libwvoggvorbis.a
+endif
+ifneq ("$(with_speex)", "no")
+TARGETS += libwvoggspeex.so libwvoggspeex.a
+endif
 endif
 
 ifneq ("$(with_fftw)", "no")
@@ -57,6 +62,8 @@ libwvstreams.so: LDFLAGS+=-lssl
 libwvutils.so: LDFLAGS+=-lz -lcrypto
 
 libwvoggvorbis.so: LDFLAGS+=-logg -lvorbis -lvorbisenc
+
+libwvoggspeex.so: LDFLAGS+=-logg -lspeex
 
 libwvfft.so: LDFLAGS+=-lfftw -lrfftw
 

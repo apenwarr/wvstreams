@@ -4,6 +4,9 @@ default: $(TARGETS)
 libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
 libwvoggvorbis.so: libwvstreams.so
 
+libwvoggspeex.a libwvoggspeex.so: $(call objects,oggspeex)
+libwvoggspeex.so: libwvstreams.so
+
 libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: libwvstreams.so
 

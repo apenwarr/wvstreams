@@ -1,7 +1,7 @@
 /**
- * Tests Ogg Vorbis decoding.
+ * Tests Ogg Speex encoding and decoding.
  */
-#include "wvoggvorbis.h"
+#include "wvoggspeex.h"
 #include "wvstreamlist.h"
 #include "wvencoderstream.h"
 #include "wvfile.h"
@@ -57,18 +57,24 @@ void usage(const char *prog)
         "Common options\n"
         "  -i file     : specifies input file\n"
         "  -o file     : specifies output file\n"
-        "  -d          : decode Ogg Vorbis from stdin or input file\n"
-        "  -e          : encode Ogg Vorbis to stdout or output file\n"
+        "  -d          : decode Ogg Speex from stdin or input file\n"
+        "  -e          : encode Ogg Speex to stdout or output file\n"
         "  -r          : reencode (equivalent to both -d and -e)\n"
         "\n"
         "Encoder options\n"
-        "  -mnM bps    : minimum/nominal/maximum bitrate\n"
+        "  -b bps      : nominal bitrate\n"
         "  -q quality  : quality range 0.0 (low) to 1.0 (high)\n"
+        "  -v          : enables VBR\n"
+        "  -C complex  : complexity range 0 to 10\n"
+        "  -M modeid   : force codec mode id, 0 = narrow, 1 = wide, 2 = ultrawide\n"
         "  -s rate     : sampling rate\n"
         "  -S serialno : bitstream serial number\n"
         "  -c comment  : adds comment tag to output Ogg Vorbis stream\n"
         "\n"
-        "  The -q and the -mnM group of options are mutually exclusive\n"
+        "Decoder options\n"
+        "  -p          : enable perceptual enhancement post-filter\n"
+        "\n"
+        "  The -q and the -b options are mutually exclusive\n"
         "  The -c option may be specified multiple times\n");
 }
 
@@ -78,18 +84,22 @@ int main(int argc, char **argv)
     /*** Parse options ***/
     WvStream *in = wvin, *out = wvout;
     bool decoding = false, encoding = false;
-    long min_bitrate = -1, max_bitrate = -1, nominal_bitrate = -1;
-    int samplingrate = 44100;
-    long serialno = WvOggVorbisEncoder::RANDOM_SERIALNO;
+    long nominal_bitrate = -1;
+    int samplingrate = 8000;
+    long serialno = WvOggSpeexEncoder::RANDOM_SERIALNO;
     double quality = -1.0;
     bool bitrate_set = false;
+    bool vbr_enabled = false;
+    bool postfilter = false;
+    int complexity = WvSpeex::DEFAULT_COMPLEXITY;
+    WvSpeex::CodecMode mode = WvSpeex::DEFAULT_MODE;
     WvStringList comments;
     const int channels = 1;
     
     srand(time(NULL));
     
     int c;
-    while ((c = getopt(argc, argv, "?i:o:m:M:n:q:derc:v:s:S:")) >= 0)
+    while ((c = getopt(argc, argv, "?i:o:b:q:dervM:C:c:s:S:")) >= 0)
     {
         switch (c)
         {
@@ -108,17 +118,7 @@ int main(int argc, char **argv)
             out = new WvFile(optarg, O_WRONLY | O_TRUNC | O_CREAT);
             break;
 
-        case 'm':
-            min_bitrate = atoi(optarg);
-            bitrate_set = true;
-            break;
-
-        case 'M':
-            max_bitrate = atoi(optarg);
-            bitrate_set = true;
-            break;
-
-        case 'n':
+        case 'b':
             nominal_bitrate = atoi(optarg);
             bitrate_set = true;
             break;
@@ -126,6 +126,10 @@ int main(int argc, char **argv)
         case 'q':
             quality = atof(optarg);
             bitrate_set = true;
+            break;
+
+        case 'v':
+            vbr_enabled = true;
             break;
 
         case 'd':
@@ -139,6 +143,14 @@ int main(int argc, char **argv)
         case 'r':
             decoding = true;
             encoding = true;
+            break;
+
+        case 'M':
+            mode = WvSpeex::CodecMode(atoi(optarg));
+            break;
+
+        case 'C':
+            complexity = atoi(optarg);
             break;
 
         case 'c':
@@ -158,8 +170,8 @@ int main(int argc, char **argv)
         quality = 0.5;
 
     /*** Initialize encoder and decoder ***/
-    WvOggVorbisDecoder *oggdec = NULL;
-    WvOggVorbisEncoder *oggenc = NULL;
+    WvOggSpeexDecoder *oggdec = NULL;
+    WvOggSpeexEncoder *oggenc = NULL;
     WvEncoderStream *iencstream = new WvEncoderStream(in);
     iencstream->disassociate_on_close = true;
     iencstream->auto_flush(false);
@@ -172,10 +184,11 @@ int main(int argc, char **argv)
     
     if (decoding)
     {
-        oggdec = new WvOggVorbisDecoder();
+        oggdec = new WvOggSpeexDecoder();
+        oggdec->setpostfilter(postfilter);
         iencstream->readchain.append(oggdec, true);
         iencstream->readchain.append(
-            new WvPCMNormFloatToSigned16Encoder(), true);
+            new WvPCMUnnormFloatToSigned16Encoder(), true);
     }
     
     WvPassthroughEncoder *passmid = new WvPassthroughEncoder();
@@ -183,30 +196,50 @@ int main(int argc, char **argv)
     
     if (encoding)
     {
-        wverr->print("Target Ogg Vorbis Stream Info:\n");
+        wverr->print("Target Ogg Speex Stream Info:\n");
         wverr->print("  Channels: %s\n", channels);
         wverr->print("  Rate    : %s Hz\n", samplingrate);
         
-        WvOggVorbisEncoder::BitrateSpec bitratespec;
-        if (quality >= 0.0)
+        WvSpeex::BitrateSpec bitratespec;
+        if (vbr_enabled)
         {
-            bitratespec = WvOggVorbisEncoder::VBRQuality(quality);
-            wverr->print("  Quality : %s\n", tostring(quality));
+            if (quality >= 0.0)
+            {
+                bitratespec = WvSpeex::VBRQuality(quality);
+                wverr->print("  Quality : %s (vbr)\n", tostring(quality));
+            }
+            else
+            {
+                wverr->print("VBR requires a quality index\n");
+                exit(1);
+            }
         }
         else
         {
-            bitratespec = WvOggVorbisEncoder::VBRBitrate(
-                max_bitrate, nominal_bitrate, min_bitrate);
-            wverr->print("  MaxBPS  : %s\n", max_bitrate > 0 ?
-                WvString(max_bitrate) : WvString("unset"));
-            wverr->print("  NomBPS  : %s\n", nominal_bitrate > 0 ?
-                WvString(nominal_bitrate) : WvString("unset"));
-            wverr->print("  MinBPS  : %s\n", min_bitrate > 0 ?
-                WvString(min_bitrate) : WvString("unset"));
+            if (quality >= 0.0)
+            {
+                bitratespec = WvSpeex::CBRQuality(quality);
+                wverr->print("  Quality : %s (cbr)\n", tostring(quality));
+            }
+            else if (nominal_bitrate > 0)
+            {
+                bitratespec = WvSpeex::CBRBitrate(nominal_bitrate);
+                wverr->print("  Bitrate : %s bps (cbr)\n",
+                    nominal_bitrate);
+            }
+            else
+            {
+                wverr->print("Must specify a bitrate or quality index\n");
+                exit(1);
+            }
         }
     
-        oggenc = new WvOggVorbisEncoder(bitratespec,
-            samplingrate, channels, serialno);
+        oggenc = new WvOggSpeexEncoder(bitratespec,
+            samplingrate, channels, mode, complexity, serialno);
+        wverr->print("  Bitrate : %s bps (returned by encoder)\n",
+            oggenc->nominalbitrate());
+        wverr->print("  Mode Id : %s\n", oggenc->mode());
+        wverr->print("  Smpl/Frm: %s\n", oggenc->samplesperframe());
         WvStringList::Iter it(comments);
         for (it.rewind(); it.next(); )
         {
@@ -215,14 +248,14 @@ int main(int argc, char **argv)
         }
             
         oencstream->writechain.append(
-            new WvPCMSigned16ToNormFloatEncoder(), true);
+            new WvPCMSigned16ToUnnormFloatEncoder(), true);
         oencstream->writechain.append(oggenc, true);
         wverr->print("\n");
     }
     WvPassthroughEncoder *passout = new WvPassthroughEncoder();
     oencstream->writechain.append(passout, true);
 
-    /*** Print out header of source Ogg Vorbis file ***/
+    /*** Print out header of source Ogg Speex file ***/
     time_t elapsed_time = time(NULL);
     if (decoding)
     {
@@ -230,14 +263,25 @@ int main(int argc, char **argv)
         //       read the header without actually processing any
         //       audio data if, for instance, we wanted to tailor
         //       the encoder chain to the stream.
-        //       See WvOggVorbisDecoder::_encode().
+        //       See WvOggSpeexDecoder::_encode().
         while (iencstream->isok() && oencstream->isok())
         {
             if (oggdec->isheaderok())
             {
                 wverr->print("Source Ogg Vorbis Stream Info:\n");
                 wverr->print("  Channels: %s\n", oggdec->channels());
-                wverr->print("  Rate    : %s Hz\n", oggdec->samplingrate());
+                wverr->print("  Rate    : %s Hz\n",
+                    oggdec->samplingrate());
+                wverr->print("  Bitrate : %s\n",
+                    oggdec->nominalbitrate() > 0 ?
+                    WvString("%s bps (nominal)",
+                        oggdec->nominalbitrate()) :
+                    WvString("unknown"));
+                wverr->print("  VBR     : %s\n",
+                    oggdec->vbr() ? "enabled" : "disabled");
+                wverr->print("  Mode Id : %s\n", oggdec->mode());
+                wverr->print("  Smpl/Frm: %s\n",
+                    oggdec->samplesperframe());
                 wverr->print("  Vendor  : %s\n", oggdec->vendor());
                 WvStringList::Iter it(oggdec->comments());
                 for (it.rewind(); it.next(); )

@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.9 2002/11/08 06:26:26 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.10 2002/12/10 16:46:37 jbrown Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -48,9 +48,17 @@ AC_ARG_WITH(zlib,
             AC_HELP_STRING([--with-zlib],
                            [zlib]))
 
-AC_ARG_WITH(oggvorbis,
-            AC_HELP_STRING([--with-oggvorbis],
-                           [Ogg Vorbis]))
+AC_ARG_WITH(ogg,
+            AC_HELP_STRING([--with-ogg],
+                           [Ogg]))
+
+AC_ARG_WITH(vorbis,
+            AC_HELP_STRING([--with-vorbis],
+                           [Vorbis]))
+
+AC_ARG_WITH(speex,
+            AC_HELP_STRING([--with-speex],
+                           [Speex]))
 
 AC_ARG_WITH(fftw,
             AC_HELP_STRING([--with-fftw],
@@ -89,14 +97,33 @@ if test "$with_zlib" == "no"; then
     AC_MSG_ERROR([zlib is missing and required.])
 fi
 
-# ogg vorbis
-if test "$with_oggvorbis" != "no"; then
-AC_CHECK_LIB(ogg, ogg_stream_init,, [with_oggvorbis=no])
-AC_CHECK_LIB(vorbis, vorbis_info_init,, [with_oggvorbis=no])
-AC_CHECK_LIB(vorbisenc, vorbis_encode_init,, [with_oggvorbis=no])
-AC_CHECK_HEADERS(ogg/ogg.h vorbis/codec.h,, [with_oggvorbis=no])
+# ogg
+if test "$with_ogg" != "no"; then
+AC_CHECK_LIB(ogg, ogg_stream_init,, [with_ogg=no])
+AC_CHECK_HEADERS(ogg/ogg.h,, [with_ogg=no])
+fi
+
+# vorbis
+if test "$with_ogg" != "no"; then
+if test "$with_vorbis" != "no"; then
+AC_CHECK_LIB(vorbis, vorbis_info_init,, [with_vorbis=no])
+AC_CHECK_LIB(vorbisenc, vorbis_encode_init,, [with_vorbis=no])
+AC_CHECK_HEADERS(vorbis/codec.h vorbis/vorbisenc.h,, [with_vorbis=no])
+fi
+else
+with_vorbis="no"
 fi
     
+# speex
+if test "$with_ogg" != "no"; then
+if test "$with_speex" != "no"; then
+AC_CHECK_LIB(speex, speex_encoder_init,, [with_speex=no])
+AC_CHECK_HEADERS(speex.h speex_header.h,, [with_speex=no])
+fi
+else
+with_speex="no"
+fi
+
 # fftw
 if test "$with_fftw" != "no"; then
 AC_CHECK_LIB(fftw, fftw,, [with_fftw=no])
@@ -129,7 +156,9 @@ AC_SUBST(enable_exceptions)
 AC_SUBST(enable_efence)
 AC_SUBST(with_openssl)
 AC_SUBST(with_zlib)
-AC_SUBST(with_oggvorbis)
+AC_SUBST(with_ogg)
+AC_SUBST(with_vorbis)
+AC_SUBST(with_speex)
 AC_SUBST(with_fftw)
 AC_SUBST(with_qt)
 
