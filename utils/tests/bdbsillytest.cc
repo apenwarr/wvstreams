@@ -11,14 +11,18 @@ int main()
     MyHash h("/tmp/blahdb");
     int num;
     
+    fprintf(stderr, "Zapping...");
     h.zap();
+    fprintf(stderr, "done\n");
     
-    for (int count = 0; count < 100000; count++)
+    fprintf(stderr, "Adding...");
+    for (int count = 0; count < 1000000; count++)
     {
 	h.add(count, WvString("String number %s", count), false);
-	fprintf(stderr, ".");
+	//fprintf(stderr, ".");
     }
-    
+    fprintf(stderr, "done\n");
+#if 0    
     num = 0;
     MyHash::Iter i(h);
     for (i.rewind(), num = 0; i.next(); num++)
@@ -36,4 +40,5 @@ int main()
 	
 	fprintf(stderr, "!");
     }
+#endif
 }

@@ -20,6 +20,8 @@
 // Base class for the template to save space
 class WvBdbHashBase
 {
+    WvString dbfile;
+    
 public:
     // a very ugly way to avoid #including the db.h from here.  This has
     // to be binary-compatible with the DBT structure.
@@ -29,15 +31,18 @@ public:
 	size_t dsize;
     };
     
-    WvBdbHashBase(WvStringParm dbfile = WvString::null);
+    WvBdbHashBase(WvStringParm _dbfile);
     ~WvBdbHashBase();
 
     /**
      * Open a new db file.  This will instantly change the contents of the
-     * db, and probably mess up all your iterators.  Best used just aftter
+     * db, and probably mess up all your iterators.  Best used just after
      * creation.
+     * 
+     * if dbfile is NULL, bdb will create an "anonymous" database.  It'll
+     * still take up disk space, but it disappears when closed.
      */
-    void opendb(WvStringParm dbfile = WvString::null);
+    void opendb(WvStringParm _dbfile);
     
     bool isok() const
         { return dbf; }
