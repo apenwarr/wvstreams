@@ -69,8 +69,7 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
     {
         UniConfValueTree *node = & root;
         UniConfKey::Iter it(key);
-        it.rewind();
-        while (it.next())
+        for (it.rewind(); it.next(); )
         {
             UniConfValueTree *prev = node;
             node = node->findchild(it());

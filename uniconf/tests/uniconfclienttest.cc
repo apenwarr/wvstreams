@@ -1,5 +1,13 @@
 // Test client for the uniconf daemon
 
+/**
+ * FIXME: This test case is not as useful at it could be because:
+ *   1) it only tests a very small subset of features
+ *   2) it does not setup / teardown its environment explicitly
+ *   3) it's a mess... there's only about 20 useful lines
+ *      of code in here, but many are duplicated
+ */
+
 #include <signal.h>
 #include <strutils.h>
 
@@ -29,6 +37,7 @@ void printresult(bool pass, WvString header)
         wvcon->print("\n///// %s: FAILED /////\n\n", header);
 }
 
+
 bool compareresults(WvString expected, WvString actual)
 {
     return expected == actual;
@@ -45,16 +54,18 @@ bool testgetkeys(UniConf &mainconf, WvString prefix)
     
     pass &= compareresults(result, narf->value());
     
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
-        key, result, (result == narf->value() ? "Yes" : "No"));
-    key = WvString("%s/wacky\ntest\nsection/  goose  ", prefix);
+    wvcon->print("\"%s\" should be:%s.Is it?  %s.  Real Value: %s\n",
+        key, result, (result == narf->value() ? "Yes" : "No"),
+        narf->value());
+    key = WvString("%s/wacky test section/  goose  ", prefix);
     result = "bluebayou";
     narf = &mainconf[key];
 
     pass &= compareresults(result, narf->value());
     
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
-        key, result, (result == narf->value() ? "Yes" : "No"));
+    wvcon->print("\"%s\" should be:%s.Is it?  %s.  Real Value: %s\n",
+        key, result, (result == narf->value() ? "Yes" : "No"),
+        narf->value());
     key = WvString("%s/this key should not exist/ bcscso ", prefix);
     narf = &mainconf[key];
     result = WvString();

@@ -34,7 +34,6 @@ UniConfIniFileGen::UniConfIniFileGen(
     filename(_filename), log(filename)
 {
     log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
-    refresh(UniConfKey::EMPTY, UniConf::INFINITE);
 }
 
 

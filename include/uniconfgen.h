@@ -61,11 +61,11 @@ public:
     virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
     
     /**
-     * refreshes information about the specified key recursively.
+     * Refreshes information about the specified key recursively.
      * <p>
-     * may discard uncommitted data.
+     * May discard uncommitted data.
      * </p><p>
-     * the default implementation always returns true.
+     * The default implementation always returns true.
      * </p>
      * @param key the key
      * @param depth the recursion depth
@@ -101,7 +101,7 @@ public:
     bool remove(const UniConfKey &key);
 
     /**
-     * Removes the children of the specified key registry.
+     * Removes the children of the specified key.
      * @param key the key
      * @return true on success
      */
@@ -124,7 +124,7 @@ public:
      * Returns true if a key has children.
      * <p>
      * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the keys or values.
+     * test existance than to actually retrieve the keys.
      * </p>
      * @param key the key
      * @return true if the key has children
@@ -141,11 +141,9 @@ public:
     virtual bool isok();
 
     /**
-     * Gives the generator an opportunity to append its streams
-     * to a streamlist.
+     * Gives UniConf an opportunity to append streams to a streamlist.
      * <p>
-     * This method will be called at most once until the next
-     * detach().
+     * This method must be called at most once until the next detach().
      * </p><p>
      * The default implementation does nothing.
      * </p>
@@ -155,11 +153,9 @@ public:
     virtual void attach(WvStreamList *streamlist);
 
     /**
-     * Gives the generator an opportunity to unlink its streams
-     * from a streamlist.
+     * Gives UniConf an opportunity to unlink streams from a streamlist.
      * <p>
-     * This method will be called exactly once after the last
-     * attach().
+     * This method must be called exactly once for each attach().
      * </p>
      * @param streamlist the stream list, non-NULL
      * @see attach(WvStreamList*)

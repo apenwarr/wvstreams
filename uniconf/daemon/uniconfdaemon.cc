@@ -637,6 +637,6 @@ void UniConfDaemon::run()
     
     // Save any changes
     dolog(WvLog::Info, myname, "Saving changes");
-    mainconf.save();
+    mainconf.commit();
     dolog(WvLog::Debug1, myname, LEAVING);
 }

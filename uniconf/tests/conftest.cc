@@ -121,7 +121,6 @@ UniConfFileTreeGen::UniConfFileTreeGen(WvStringParm _basedir) :
 {
     log(WvLog::Notice,
 	"Creating a new FileTree based on '%s'.\n", basedir);
-    refresh(UniConfKey::EMPTY, UniConf::INFINITE);
 }
 
 
