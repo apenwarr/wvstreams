@@ -232,14 +232,24 @@ WVTEST_MAIN("permgen + defaultgen")
     innerdef->set("cfg/*/world-exec", "false"); 
     
     UniSecureGen *sec = new UniSecureGen(tempgen, &permgen);
-    fprintf(stderr, "Mounting securegen\n");
     WVPASS(root.mountgen(sec));
-    fprintf(stderr, "Done\n");
 
-    permgen.setowner("/", "notroot");
-    sec->setcredentials("notroot", defgroups);
+    permgen.setowner("/", "root");
+    sec->setcredentials("root", defgroups);
     permgen.chmod(UniConfKey("/"), 7, 7, 7);
-    root["/cfg/users/foo"].setme("scs");
-    printf("About to try getting '/cfg/users/foo'\n");
-    WVPASS(root["/cfg/users/foo"].getme() == "scs");
+
+    // test that readable/writable stuff works as expected (default does
+    // not override root)
+    root["/cfg/users/foo"].setme("123");
+    WVPASS(root["/cfg/users/foo"].getme() == "123");
+
+    // test execute permission denial by default, and test override
+    root["cfg/exec/read"].setmeint(1);
+    sec->setcredentials("notroot", defgroups);
+    WVPASS(root["cfg/exec/read"].getme() == WvString::null);
+    innerdef->set("cfg/exec/world-exec", "true"); 
+    WVPASS(root["cfg/exec/read"].getme() == "1");
+
+    // probably don't need to test read, write explicitly as those cases
+    // are mostly covered by the above tests
 }
