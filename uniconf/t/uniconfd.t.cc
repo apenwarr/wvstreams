@@ -346,6 +346,7 @@ void daemon_proxy_test(bool implicit)
     WvPipe *master = setup_master_daemon(implicit);
     master->setcallback(WvPipe::ignore_read, NULL);
     master->nowrite();
+    sleep(1);
     fprintf(stderr, "Got here (1)\n");
 
     WvPipe *slave = new WvPipe(uniconfd2_args[0], 
@@ -353,13 +354,9 @@ void daemon_proxy_test(bool implicit)
                                false, false, false); 
     slave->setcallback(WvPipe::ignore_read, NULL);
     slave->nowrite();
+    sleep(1);
 
-    sleep(2); // wait for the uniconf daemons to wake up
     fprintf(stderr, "Got here (2)\n");
-
-    UniConfRoot cfg("unix:/tmp/tmpfile2");
-    WVPASS(cfg["cfg/pickles/apples/foo"].getmeint() == 1);
-
     WvStringList commands;
     commands.append("get /cfg/pickles/apples/foo");
     commands.append("subt /");
@@ -404,12 +401,9 @@ WVTEST_MAIN("daemon proxying - with cache")
     daemon_proxy_test(false);
 }
 
-#if 0
-// FIXME: BUGZID: 7625
 WVTEST_MAIN("daemon proxying - cfg the only mount")
 {
     signal(SIGPIPE, SIG_IGN);
     
     daemon_proxy_test(true);
 }
-#endif

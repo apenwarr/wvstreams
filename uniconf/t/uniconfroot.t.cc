@@ -247,3 +247,41 @@ WVTEST_MAIN("Deleting while iterating")
     deletev foo;
     deletev foo2;
 }
+
+void verify_recursive_iter(UniConfRoot &root)
+{
+    // verify that recursive iteration works as expected
+    UniConf::RecursiveIter i(root);
+    i.rewind(); 
+    WVPASS(i.next());
+    WVPASS(strcmp(i().key().cstr(), "subt") == 0);
+    WVPASS(strcmp(i().getme().cstr(), "") == 0);
+    WVPASS(i.next());
+    WVPASS(strcmp(i().key().cstr(), "mayo") == 0);
+    WVPASS(strcmp(i().getme().cstr(), "baz") == 0);
+    WVFAIL(i.next());
+
+    // verify that non-recursive iteration doesn't go over keys
+    // it's not supposed to
+    UniConf::Iter j(root);
+    j.rewind(); 
+    WVPASS(j.next());
+    WVPASS(strcmp(j().key().cstr(), "subt") == 0);
+    WVPASS(strcmp(j().getme().cstr(), "") == 0);
+    WVFAIL(j.next());
+}
+
+WVTEST_MAIN("Recursive iteration with no generator at root")
+{       
+    // distance of "2" between first mount and unmounted root
+    UniConfRoot root1;
+    root1["subt/mayo"].mount("temp:");
+    root1["subt/mayo"].setme("baz");        
+    verify_recursive_iter(root1);
+
+    // distance of "1" between first mount and unmounted root
+    UniConfRoot root2;
+    root2["subt"].mount("temp:");
+    root2["subt/mayo"].setme("baz");
+    verify_recursive_iter(root2);
+}
