@@ -203,46 +203,4 @@ private:
     bool prepare_stream(long serialno);
 };
 
-
-/**
- * Data type conversion and renormalization functors.
- */
-struct WvSigned16ToFloatFunctor
-{
-    inline float operator()(signed short int pcm) const
-    {
-        return float(pcm) / 32768;
-    }
-};
-struct WvFloatToSigned16Functor
-{
-    inline signed short int operator()(float pcm) const
-    {
-        return (signed short int)(pcm * 32768);
-    }
-};
-
-
-/**
- * Instantiate some useful types for renormalizing data for Ogg Vorbis.
- * Use WvFloatToSigned16 on the decoder output and
- *     WvSigned16ToFloat on the encoder input.
- */
-class WvFloatToSigned16 : public WvFunctorEncoder
-    <signed short int, float, WvFloatToSigned16Functor>
-{
-public:
-    WvFloatToSigned16() :
-        WvFunctorEncoder<OT, IT, FT>(FT()) { }
-};
-
-
-class WvSigned16ToFloat : public WvFunctorEncoder
-    <float, signed short int, WvSigned16ToFloatFunctor>
-{
-public:
-    WvSigned16ToFloat() :
-        WvFunctorEncoder<OT, IT, FT>(FT()) { }
-};
-
 #endif // __WVOGGVORBIS

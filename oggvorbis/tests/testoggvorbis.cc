@@ -5,6 +5,7 @@
 #include "wvstreamlist.h"
 #include "wvencoderstream.h"
 #include "wvfile.h"
+#include "wvpcmutils.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
@@ -181,7 +182,7 @@ int main(int argc, char **argv)
     {
         oggdec = new WvOggVorbisDecoder();
         iencstream->readchain.append(oggdec, true);
-        iencstream->readchain.append(new WvFloatToSigned16(), true);
+        iencstream->readchain.append(new WvPCMFloatToSigned16(), true);
     }
     
     WvPassthroughEncoder *passmid = new WvPassthroughEncoder();
@@ -220,7 +221,7 @@ int main(int argc, char **argv)
             wverr->print("  Comment : %s\n", it());
         }
             
-        oencstream->writechain.append(new WvSigned16ToFloat(), true);
+        oencstream->writechain.append(new WvPCMSigned16ToFloat(), true);
         oencstream->writechain.append(oggenc, true);
         wverr->print("\n");
     }

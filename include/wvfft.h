@@ -34,7 +34,7 @@ struct fftw_plan_struct;
 class WvRealToComplexFFTEncoder : public WvEncoder
 {
     struct fftw_plan_struct *plan;
-    size_t n;
+    size_t n, nbytes;
     
 public:
     WvRealToComplexFFTEncoder(size_t _n);
@@ -59,12 +59,42 @@ protected:
 class WvComplexToRealFFTEncoder : public WvEncoder
 {
     struct fftw_plan_struct *plan;
-    size_t n;
+    size_t n, nbytes;
     WvInPlaceBuffer tmpbuf;
     
 public:
     WvComplexToRealFFTEncoder(size_t _n);
     virtual ~WvComplexToRealFFTEncoder();
+
+protected:
+    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _reset();
+};
+
+
+/**
+ * Computes a power spectrum from complex values input.
+ * Input buffer must contain a sequence of 'double' type
+ *   values in machine order representing data in the frequency domain.
+ *   The data must be organized in the same fashion as that returned
+ *   by WvRealToComplexFFTEncoder.
+ * Output buffer will contain a sequence of 'double' type
+ *   values in machine order representing the power spectrum.
+ *   Only the power coefficients for (n/2)+1 bands are output.
+ *
+ *   The data is ordered as follows:
+ *     Let 'n' be the total number of values.
+ *     Let 'i' be an index into the buffer.
+ *
+ *     buf[0] : the squared DC coefficient
+ *     buf[i] : the squared power of the i'th band
+ */
+class WvPowerSpectrumEncoder : public WvEncoder
+{
+    size_t n, half, mid, nbytes, halfbytes;
+
+public:
+    WvPowerSpectrumEncoder(size_t _n);
 
 protected:
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
