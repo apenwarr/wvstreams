@@ -38,36 +38,36 @@ inline bool isselectable(int s)
 #endif // _WIN32
 
 
-/***** WvFDStream *****/
+/***** WvFdStream *****/
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)
 {
-    return new WvFDStream(s.num());
+    return new WvFdStream(s.num());
 }
 
 static WvMoniker<IWvStream> reg("fd", creator);
 
-WvFDStream::WvFDStream(int _rwfd)
+WvFdStream::WvFdStream(int _rwfd)
     : rfd(_rwfd), wfd(_rwfd)
 {
     shutdown_read = shutdown_write = false;
 }
 
 
-WvFDStream::WvFDStream(int _rfd, int _wfd)
+WvFdStream::WvFdStream(int _rfd, int _wfd)
     : rfd(_rfd), wfd(_wfd)
 {
     shutdown_read = shutdown_write = false;
 }
 
 
-WvFDStream::~WvFDStream()
+WvFdStream::~WvFdStream()
 {
     close();
 }
 
 
-void WvFDStream::close()
+void WvFdStream::close()
 {
     if (!closed)
     {
@@ -82,13 +82,13 @@ void WvFDStream::close()
 }
 
 
-bool WvFDStream::isok() const
+bool WvFdStream::isok() const
 {
     return WvStream::isok() && (rfd != -1 || wfd != -1);
 }
 
 
-size_t WvFDStream::uread(void *buf, size_t count)
+size_t WvFdStream::uread(void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
@@ -108,7 +108,7 @@ size_t WvFDStream::uread(void *buf, size_t count)
 }
 
 
-size_t WvFDStream::uwrite(const void *buf, size_t count)
+size_t WvFdStream::uwrite(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
@@ -128,7 +128,7 @@ size_t WvFDStream::uwrite(const void *buf, size_t count)
 }
 
 
-void WvFDStream::maybe_autoclose()
+void WvFdStream::maybe_autoclose()
 {
     if (stop_write && !shutdown_write && !outbuf.used())
     {
@@ -156,7 +156,7 @@ void WvFDStream::maybe_autoclose()
 }
 
 
-bool WvFDStream::pre_select(SelectInfo &si)
+bool WvFdStream::pre_select(SelectInfo &si)
 {
     bool result = WvStream::pre_select(si);
     
@@ -190,7 +190,7 @@ bool WvFDStream::pre_select(SelectInfo &si)
 }
 
 
-bool WvFDStream::post_select(SelectInfo &si)
+bool WvFdStream::post_select(SelectInfo &si)
 {
     bool result = WvStream::post_select(si);
     
