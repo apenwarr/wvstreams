@@ -36,7 +36,7 @@ build-stamp-indep: configure-stamp
 	dh_testdir
 
 	$(MAKE) doxygen
-	$(MAKE) -C src/Docs/sgmlmanual html ps pdf
+	$(MAKE) -C Docs/sgmlmanual html ps pdf
 
 	touch build-stamp-indep
 
@@ -47,7 +47,7 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
-	-$(MAKE) -C src/Docs/sgmlmanual clean
+	-$(MAKE) -C Docs/sgmlmanual clean
 	-rm -rf dox
 	dh_clean
 
@@ -82,10 +82,10 @@ install-indep: build-indep
 	install -d $(DOCDIR)/html-api
 	install -d $(DOCDIR)/html-manual
 	install -m644 dox/html/* $(DOCDIR)/html-api/
-	install -m644 src/Docs/sgmlmanual/wvstreams.html/*.html \
+	install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
 		$(DOCDIR)/html-manual/
-	install -m644 src/Docs/sgmlmanual/wvstreams.ps \
-		src/Docs/sgmlmanual/wvstreams.pdf \
+	install -m644 Docs/sgmlmanual/wvstreams.ps \
+		Docs/sgmlmanual/wvstreams.pdf \
 		$(DOCDIR)
 
 
