@@ -61,7 +61,7 @@ ifneq ("$(with_gdbm)", "no")
 endif
 
 ifneq ("$(with_bdb)", "no")
-  libwvutils.so: -ldb
+  libwvutils.so-LIBS+=-ldb
 endif
 
 ifeq ("$(enable_verbose)", "yes")
@@ -118,3 +118,4 @@ libwvqt.so: libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
+
