@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../include;\local\openssl\include;../utils"
+				AdditionalIncludeDirectories="../../include;c:\local\openssl\include;../utils"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
