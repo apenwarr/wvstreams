@@ -7,6 +7,7 @@
 #include "wvhex.h"
 #include <ctype.h>
 
+
 static inline char tohex(int digit, char alphabase)
 {
     return (digit < 10 ? '0' : alphabase) + digit;

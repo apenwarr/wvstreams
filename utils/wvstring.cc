@@ -316,14 +316,15 @@ bool WvFastString::operator! () const
 }
 
 
-// parse a 'percent' operator from a format string.  For example:
-//        cptr      out:  zeropad  justify   maxlen  return pointer
-//        "%s"             false      0         0    "s"
-//        "%-15s"          false    -15         0    "s"
-//        "%15.5s"         false     15         5    "s"
-//        "%015.5s"        true      15         5    "s"
-// and so on.  On entry, cptr should _always_ point at a percent '%' char.
-//
+/** 
+ * parse a 'percent' operator from a format string.  For example:
+ *        cptr      out:  zeropad  justify   maxlen  return pointer
+ *        "%s"             false      0         0    "s"
+ *        "%-15s"          false    -15         0    "s"
+ *        "%15.5s"         false     15         5    "s"
+ *        "%015.5s"        true      15         5    "s"
+ * and so on.  On entry, cptr should _always_ point at a percent '%' char.
+ */
 static const char *pparse(const char *cptr,
 			  bool &zeropad, int &justify, int &maxlen)
 {
@@ -350,18 +351,19 @@ static const char *pparse(const char *cptr,
 }
 
 
-// Accept a printf-like format specifier (but more limited) and an array
-// of WvStrings, and render them into another WvString.  For example:
-//          WvString x[] = {"foo", "blue", 1234};
-//          WvString ret = WvString::do_format("%s%10.2s%-10s", x);
-//
-// The 'ret' string will be:  "foo        bl1234      "
-// Note that only '%s' is supported, though integers can be rendered
-// automatically into WvStrings.  %d, %f, etc are not allowed!
-//
-// This function is usually called from some other function which allocates
-// the array automatically.
-//
+/**
+ * Accept a printf-like format specifier (but more limited) and an array
+ * of WvStrings, and render them into another WvString.  For example:
+ *          WvString x[] = {"foo", "blue", 1234};
+ *          WvString ret = WvString::do_format("%s%10.2s%-10s", x);
+ *
+ * The 'ret' string will be:  "foo        bl1234      "
+ * Note that only '%s' is supported, though integers can be rendered
+ * automatically into WvStrings.  %d, %f, etc are not allowed!
+ *
+ * This function is usually called from some other function which allocates
+ * the array automatically.
+ */
 void WvFastString::do_format(WvFastString &output, const char *format,
 			     const WvFastString * const *a)
 {

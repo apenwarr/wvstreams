@@ -4,6 +4,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+/**.
+ * Before calling this function, you should call srandom().
+ * When 2 identical strings are encrypted, they will not return the same
+ * encryption. Also, str does not need to be less than 8 chars as UNIX crypt
+ * says.
+ */
 WvString passwd_crypt(const char *str)
 {
     static char saltchars[] = 

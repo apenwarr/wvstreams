@@ -65,7 +65,9 @@ protected:
     virtual bool _reset(); // supported
 };
 
-/*** For compatibility with older code. ***/
+/** \file
+ * Hex functions for compatibility with older code
+ */
 
 /**
  * Write the contents of the binary string of length 'len' pointed to by 'ibuf' 

@@ -21,6 +21,11 @@
 #define strcasecmp _stricmp
 #endif
 
+/** \file
+ * Various little string functions
+ */
+
+
 /**
  * Add character c to the end of a string after removing 
  * terminating carriage returns/linefeeds if any.
