@@ -44,8 +44,9 @@ UniIniGen::~UniIniGen()
 bool UniIniGen::refresh()
 {
     WvFile file(filename, O_RDONLY);
-    struct stat statbuf;
 
+    #ifndef _WIN32
+    struct stat statbuf;
     if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
     {
 	log(WvLog::Warning, "Can't stat '%s': %s\n",
@@ -58,6 +59,7 @@ bool UniIniGen::refresh()
 	file.close();
 	file.seterr(EAGAIN);
     }
+    #endif
 
     if (!file.isok())
     {
@@ -238,6 +240,11 @@ void UniIniGen::commit()
 {
     if (!dirty) return;
 
+#ifdef _WIN32
+    // Windows doesn't support all that fancy stuff, just open the file
+    //   and be done with it
+    WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+#else
     char resolved_path[PATH_MAX];
     WvString real_filename(filename);
 
@@ -269,6 +276,7 @@ void UniIniGen::commit()
 
 	fchmod(file.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
     }
+#endif
     
     if (root) // the tree may be empty, so NULL root is okay
     {
@@ -282,6 +290,7 @@ void UniIniGen::commit()
 	save(file, *root);
     }
 
+#ifndef _WIN32
     if (alt_filename.isnull())
     {
 	if (!file.geterr())
@@ -295,6 +304,7 @@ void UniIniGen::commit()
 	    log(WvLog::Warning, "Error writing '%s' ('%s'): %s\n",
 		filename, real_filename, file.errstr());
     }
+#endif
 
     file.close();
 
@@ -305,6 +315,7 @@ void UniIniGen::commit()
 	return;
     }
 
+#ifndef _WIN32
     if (!alt_filename.isnull())
     {
 	if (rename(alt_filename, real_filename) == -1)
@@ -315,6 +326,7 @@ void UniIniGen::commit()
 	    return;
 	}
     }
+#endif
 
     dirty = false;
 }
