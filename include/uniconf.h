@@ -215,7 +215,7 @@ public:
      * Don't try to do dumb stuff like making dst a subkey of this one,
      * or vice versa, because we won't try to save you.
      */
-    void copy(const UniConf &dst, bool force);
+    void copy(const UniConf &dst, bool force) const;
 
 
     
