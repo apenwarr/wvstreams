@@ -246,6 +246,8 @@ void WvConfEmu::save(WvStringParm filename)
     UniConfRoot tmp_uniconf(WvString("ini:%s", filename), false);
 
     uniconf.copy(tmp_uniconf, true);
+
+    tmp_uniconf.commit();
 }
 
 
