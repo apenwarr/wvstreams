@@ -32,7 +32,7 @@ streams.libs: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvloopback.o wvmodem.o wvtimestream.o wvprotostream.o \
 	wvlockfile.o wvdailyevent.o $(LOCKDEV) ../utils/utils.libs
 
-streams.a: streams.libs
+streams.a: streams.libs $(LOCKDEV)
 
 watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
 	looptest timetest prototest: streams.a
