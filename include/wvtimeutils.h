@@ -2,13 +2,8 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */
-/** \file
- * Various little time functions...
- *
- */
 #ifndef __WVTIMEUTILS_H
 #define __WVTIMEUTILS_H
-
 
 #ifdef _WIN32
 #include "winsock2.h"
@@ -18,13 +13,26 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 #include <sys/time.h>
 #endif
 
-
-/** Renaming of struct timeval. */
-typedef struct timeval WvTime;
-
-static const WvTime wvtime_zero = {
-    0, 0
+/** Based on (and interchangeable with) struct timeval. */
+class WvTime : public timeval
+{
+public:
+    WvTime()
+        { } // WARNING: leaves members uninitialized, like timeval would do!
+    WvTime(long long t)
+        { tv_sec = t/1000000L; tv_usec = t%1000000L; }
+    WvTime(time_t sec, time_t usec)
+        { tv_sec = sec; tv_usec = usec; }
+    WvTime(const struct timeval &tv)
+        { tv_sec = tv.tv_sec; tv_usec = tv.tv_usec; }
+    WvTime(const WvTime &tv)
+        { tv_sec = tv.tv_sec; tv_usec = tv.tv_usec; }
+    
+    operator long long() const
+        { return ((long long)tv_sec)*1000000LL + tv_usec; }
 };
+
+static const WvTime wvtime_zero(0, 0);
 
 /** Returns the number of milliseconds between times a and b (ie a-b).
  * Value returned is not rounded, it is chopped via integer division

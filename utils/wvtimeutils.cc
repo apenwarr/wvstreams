@@ -6,7 +6,7 @@
  */
 #include "wvtimeutils.h"
 
-time_t msecdiff(const struct timeval &a, const struct timeval &b)
+time_t msecdiff(const WvTime &a, const WvTime &b)
 {
     time_t secdiff = a.tv_sec - b.tv_sec;
     time_t usecdiff = a.tv_usec - b.tv_usec;
@@ -14,7 +14,7 @@ time_t msecdiff(const struct timeval &a, const struct timeval &b)
 }
 
 
-struct timeval wvtime()
+WvTime wvtime()
 {
     struct timeval tv;
     gettimeofday(&tv, 0);
@@ -22,9 +22,9 @@ struct timeval wvtime()
 }
 
 
-struct timeval msecadd(const struct timeval &a, time_t msec)
+WvTime msecadd(const WvTime &a, time_t msec)
 {
-    struct timeval b;
+    WvTime b;
     b.tv_sec = a.tv_sec + msec / 1000;
     b.tv_usec = a.tv_usec + (msec % 1000) * 1000;
     normalize(b);
@@ -32,10 +32,9 @@ struct timeval msecadd(const struct timeval &a, time_t msec)
 }
 
 
-struct timeval tvdiff(const struct timeval &a,
-		      const struct timeval &b)
+WvTime tvdiff(const WvTime &a, const WvTime &b)
 {
-    struct timeval c;
+    WvTime c;
     c.tv_sec = a.tv_sec - b.tv_sec;
     c.tv_usec = a.tv_usec;
 
