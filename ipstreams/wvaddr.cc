@@ -6,11 +6,13 @@
  * classes that can store themselves efficiently as well as create a
  * printable string version of themselves.
  */
+#include <netdb.h>
 #include "wvaddr.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <net/if_arp.h>
 #include <assert.h>
+#include <ctype.h>
 
 // workaround for functions called sockaddr() -- oops.
 typedef struct sockaddr sockaddr_bin;
@@ -361,6 +363,10 @@ size_t WvARCnetAddr::sockaddr_len() const
 
 /* create an IP address from a dotted-quad string.  Maybe someday we'll
  * support hostnames too with gethostbyname, but not yet.
+ * If a partial address is given, this sets WvIPAddr the missing quarter
+ * to 0 (i.e. 192.4 becomes 192.4.0.0).  An invalid character in the string
+ * sets the object to 0.0.0.0, unless a colon, slash, space, or tab is
+ * encountered, which ends the address.
  */
 void WvIPAddr::string_init(const char string[])
 {
@@ -372,8 +378,20 @@ void WvIPAddr::string_init(const char string[])
     for (int count=0; count < 4 && nptr; count++)
     {
 	iptr = nptr;
-	nptr = strchr(iptr, '.');
-	if (nptr) nptr++;
+        while (nptr && (*nptr != '.') && (*nptr != ' ') && (*nptr != '\t') &&
+            (*nptr != ':') && (*nptr != '/'))
+        {
+            if (*nptr == '\0')
+                nptr = NULL;
+            else if (!isdigit(*nptr))
+            {
+                memset(binaddr, 0, 4);
+                return;
+            }
+            else
+                nptr++;
+        }    
+	if (nptr && (*nptr == '.')) nptr++;
 	*cptr++ = strtol(iptr, NULL, 10);
 	if (!nptr) break;
     }
@@ -655,14 +673,21 @@ WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port)
 // If no port is specified (after a ':' or a space or a tab) it defaults to 0.
 void WvIPPortAddr::string_init(const char string[]) 
 {
+    struct servent* serv;
+
     const char *cptr = strchr(string, ':');
     if (!cptr)
 	cptr = strchr(string, ' ');
     if (!cptr)
 	cptr = strchr(string, '\t');
-    
-    port = cptr ? atoi(cptr+1) : 0;
-    
+
+    if (cptr) {
+        serv = getservbyname(cptr+1, NULL);
+        port = serv ? ntohs(serv->s_port) : atoi(cptr+1);
+    } else {
+        port = 0;
+    }
+
     addrtype = wvipportaddr;
 }
 
