@@ -22,11 +22,11 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.o
 	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
-	
+
 %: %.cc
 	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
-		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
+		sed -e 's|^$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
 
 %.o: %.cc
 	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
