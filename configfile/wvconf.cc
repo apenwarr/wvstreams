@@ -280,12 +280,12 @@ WvConfigSection *WvConf::operator[] (const WvString &section)
 {
     Iter i(*this);
 
-    // otherwise, search the whole list.
-    for (i.rewind(); i.next(); )
-    {
-	if (strcasecmp(i().name, section) == 0)
-	    return &i();
-    }
+    if( section )
+	for (i.rewind(); i.next(); )
+	{
+	    if (strcasecmp(i().name, section) == 0)
+		return &i();
+	}
 
     return NULL;
 }
