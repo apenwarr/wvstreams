@@ -1,3 +1,12 @@
+/* 
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc. 
+ * 
+ * WvTunDev provides a convenient way of using Linux tunnel devices.
+ *
+ * If you don't have the /dev/net/tun device, try doing: 
+ *          mknod /dev/net/tun c 10 200
+ */
 #include <sys/ioctl.h>
 #include <sys/socket.h> 
 #include <linux/if_tun.h> 
@@ -5,24 +14,15 @@
 #include <string.h> 
 
 #include "wvlog.h"
-
 #include "wvtundev.h"
 
-
-WvTunDev::WvTunDev(WvConf &cfg)
+WvTunDev::WvTunDev(const WvIPNet &addr, int mtu)
     : WvFile("/dev/net/tun", O_RDWR)
 {
-    const WvIPNet addr(cfg.get("Global", "IPAddr", "192.168.42.42"), 32);
-    init(addr);
+    init(addr, mtu);
 }
 
-WvTunDev::WvTunDev(const WvIPNet &addr)
-    : WvFile("/dev/net/tun", O_RDWR)
-{
-    init(addr);
-}
-
-void WvTunDev::init(const WvIPNet &addr)
+void WvTunDev::init(const WvIPNet &addr, int mtu)
 {
     WvLog log("New tundev", WvLog::Debug2);
     if (rwfd < 0)
@@ -47,6 +47,7 @@ void WvTunDev::init(const WvIPNet &addr)
     
     WvInterface iface(ifr.ifr_name);
     iface.setipaddr(addr);
+    iface.setmtu(mtu);
     iface.up(true);
     ifcname = ifr.ifr_name;
     log.app = ifcname;
