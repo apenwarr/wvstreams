@@ -26,23 +26,20 @@ protected:
             : gen(gen), key(key) 
 	    { }
 
-        ~UniGenMount()
-            { RELEASE(gen); }
-
-        IUniConfGen *gen;
+        xplc_ptr<IUniConfGen> gen;
         UniConfKey key;
     };
 
     typedef class WvList<UniGenMount> MountList;
     MountList mounts;
 
+    /** undefined. */
+    UniMountGen(const UniMountGen &other);
+
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
     UniMountGen() 
         { }
-
-    /** undefined. */
-    UniMountGen(const UniMountGen &other);
 
     /** Destroys the UniConf tree along with all uncommitted data. */
     virtual ~UniMountGen()
@@ -53,8 +50,9 @@ public:
      
      * Returns the generator instance pointer, or NULL on failure.
      */
-    virtual IUniConfGen *mount(const UniConfKey &key, WvStringParm moniker,
-        bool refresh);
+    virtual IUniConfGen *mount(const UniConfKey &key,
+			       WvStringParm moniker,
+			       bool refresh);
     
     /**
      * Mounts a generator at a key.
@@ -65,8 +63,9 @@ public:
      * "refresh" is if true, refreshes the generator after mount
      * Returns: the generator instance pointer, or NULL on failure
      */
-    virtual IUniConfGen *mountgen(const UniConfKey &key, IUniConfGen *gen,
-        bool refresh);
+    virtual IUniConfGen *mountgen(const UniConfKey &key,
+				  IUniConfGen *gen,
+				  bool refresh);
 
     /**
      * Unmounts the generator at a key and destroys it.
