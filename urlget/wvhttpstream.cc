@@ -25,7 +25,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
     log("Opening server connection.\n");
     http_response = "";
     encoding = Unknown;
-    remaining = 0;
+    bytes_remaining = 0;
     in_chunk_trailer = false;
     pipeline_test_count = 0;
     last_was_pipeline_test = false;
@@ -91,7 +91,7 @@ void WvHttpStream::doneurl()
     http_response = "";
     encoding = Unknown;
     in_chunk_trailer = false;
-    remaining = 0;
+    bytes_remaining = 0;
 
     last_was_pipeline_test = curl->pipeline_test;
     bool broken = false;
@@ -400,7 +400,7 @@ void WvHttpStream::execute()
 
             if (!strncasecmp(line, "Content-length: ", 16))
             {
-                remaining = atoi(line+16);
+                bytes_remaining = atoi(line+16);
                 encoding = ContentLength;
             }
             else if (!strncasecmp(line, "Transfer-Encoding: ", 19)
@@ -442,7 +442,7 @@ void WvHttpStream::execute()
                 curl = urls.first();
                 in_chunk_trailer = false;
                 log(WvLog::Debug4,
-                        "Starting data: %s (enc=%s)\n", remaining, encoding);
+                        "Starting data: %s (enc=%s)\n", bytes_remaining, encoding);
 
                 if (encoding == Unknown)
                     encoding = Infinity; // go until connection closes itself
@@ -456,7 +456,7 @@ void WvHttpStream::execute()
             }
         }
     }
-    else if (encoding == Chunked && !remaining)
+    else if (encoding == Chunked && !bytes_remaining)
     {
         line = getline(0);
         if (line)
@@ -477,11 +477,11 @@ void WvHttpStream::execute()
                 // in the "length line" section of a chunked encoding
                 if (line[0])
                 {
-                    remaining = (size_t)strtoul(line, NULL, 16);
-                    if (!remaining)
+                    bytes_remaining = (size_t)strtoul(line, NULL, 16);
+                    if (!bytes_remaining)
                         in_chunk_trailer = true;
                     log(WvLog::Debug4, "Chunk length is %s ('%s').\n",
-                            remaining, line);
+                            bytes_remaining, line);
                 }
             }
         }
@@ -500,23 +500,23 @@ void WvHttpStream::execute()
         if (!isok())
             doneurl();
     }
-    else // not chunked or currently in a chunk - read 'remaining' bytes.
+    else // not chunked or currently in a chunk - read 'bytes_remaining' bytes.
     {
         // in the data section of a chunked or content-length encoding,
-        // with 'remaining' bytes of data left.
+        // with 'bytes_remaining' bytes of data left.
 
-        if (remaining > sizeof(buf))
+        if (bytes_remaining > sizeof(buf))
             len = read(buf, sizeof(buf));
         else
-            len = read(buf, remaining);
-        remaining -= len;
+            len = read(buf, bytes_remaining);
+        bytes_remaining -= len;
         if (len)
             log(WvLog::Debug5, 
-                    "Read %s bytes (%s bytes left).\n", len, remaining);
+                    "Read %s bytes (%s bytes left).\n", len, bytes_remaining);
         if (curl->outstream)
             curl->outstream->write(buf, len);
 
-        if (!remaining && encoding == ContentLength)
+        if (!bytes_remaining && encoding == ContentLength)
             doneurl();
     }
 
