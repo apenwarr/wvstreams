@@ -10,10 +10,10 @@ WvFAM::~WvFAM()
     WvIStreamList::globallist.unlink(s);
 
     if (FAMClose(&fc) == -1)
-        log(WvLog::Critical, "Could not disconnect from FAM...? Huh...?\n");
+        log(WvLog::Error, "%s\n", FamErrlist[FAMErrno]);
 }
 
-bool WvFAM::isok()
+bool WvFAM::isok() const
 {
     if (s && s->isok())
         return true;
@@ -71,12 +71,12 @@ void WvFAM::monitor(WvStringParm path)
         monitorfile(path);
 }
 
-void WvFAM::unmonitordir(WvStringParm dir)
+void WvFAM::unmonitor(WvStringParm path)
 {
     if (!isok())
         return;
 
-    WvFAMReq *req = reqs[dir];
+    WvFAMReq *req = reqs[path];
     if (!req)
         return;
 
@@ -85,11 +85,8 @@ void WvFAM::unmonitordir(WvStringParm dir)
     reqs.remove(req);
 }
 
-void WvFAM::Callback()
+void WvFAM::callback()
 {
-    if (on_hold || !isok())
-        return;
-
     int famstatus;
 
     while((famstatus = FAMPending(&fc)) && famstatus != -1
@@ -111,24 +108,39 @@ void WvFAM::Callback()
     }
 
     if (famstatus == -1)
-        log(WvLog::Error, "FAM error: (%s)\n", FAMErrno);
+        log(WvLog::Error, "%s\n", FamErrlist[FAMErrno]);
+}
+
+bool WvFAM::fam_ok()
+{
+    FAMConnection fc;
+
+    if (FAMOpen(&fc) == -1)
+    {
+        fprintf(stderr, "Error connecting to FAM: %s\n", FamErrlist[FAMErrno]);
+        return false;
+    }
+    if (FAMClose(&fc) == -1)
+    {
+        fprintf(stderr, "Error diconnecting from FAM: %s\n",
+                FamErrlist[FAMErrno]);
+        return false;
+    }
+    return true;
 }
 
 void WvFAM::setup()
 {
-    on_hold = false;
-
     if (FAMOpen(&fc) == -1)
     {
-        log(WvLog::Critical, "Could not connect to FAM!\n", fc.fd);
-        log(WvLog::Error, "FAM error: (%s)\n", FAMErrno);
+        log(WvLog::Error, "Could not connect to FAM: %s\n",
+                FamErrlist[FAMErrno]);
     }
     else
     {
         s = new WvFDStream(fc.fd);
 
-        s->setcallback(wvcallback(WvStreamCallback,
-            *this, WvFAM::Callback), 0);
+        s->setcallback(wvcallback(WvStreamCallback, *this, WvFAM::callback), 0);
 
         WvIStreamList::globallist.append(s, true);
     }

@@ -27,10 +27,9 @@ public:
     WvFAM(FAMCallback _cb) : cb(_cb), s(0), log("WvFAM"), reqs(0) { setup(); }
     ~WvFAM();
 
-    bool isok();
+    static bool fam_ok();
 
-    void hold() { on_hold = true; }
-    void unhold() { on_hold = false; Callback(); }
+    bool isok() const;
 
     void setcallback(FAMCallback _cb)
         { cb = _cb; }
@@ -39,10 +38,7 @@ public:
     void monitorfile(WvStringParm file);
     void monitor(WvStringParm path);
 
-    void unmonitordir(WvStringParm dir);
-    void unmonitorfile(WvStringParm file)
-        { unmonitordir(file); }
-
+    void unmonitor(WvStringParm path);
 
 protected:
     FAMConnection fc;
@@ -52,14 +48,13 @@ protected:
 
     WvFDStream *s;
     WvLog log;
-    bool on_hold;
 
     typedef WvMapPair<WvString, int> WvFAMReq;
     DeclareWvScatterDict2(WvFAMReqDict, WvFAMReq, WvString, key);
     WvFAMReqDict reqs;
 
-    void Callback(WvStream &, void *) { Callback(); }
-    void Callback();
+    void callback(WvStream &, void *) { callback(); }
+    void callback();
 
     void setup();
 };
