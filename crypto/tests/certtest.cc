@@ -9,6 +9,13 @@
 // and run it through:
 // openssl x509 -text
 // (The part between ----BEGIN CERTIFICATE---- and ----END CERTIFICATE---- )
+// 
+// To test the PKCS12 routines: 
+// openssl  pkcs12 -in /tmp/test.p12 -nodes
+// 
+// Which should give you a PEM Encoded Certificate, a PEM Encoded RSA Private Key,
+// and a bunch of other crap ;)
+// 
 
 int main()
 {
@@ -22,17 +29,21 @@ int main()
     
     // Create a new certificate
     WvX509Mgr x509cert(dN, 1024);
+    x509cert.setPkcs12Password("Foo");
     
+    log("Consistancy Test result: %s\n", x509cert.test());
+
     if (x509cert.isok())
     {
 	wvcon->write(x509cert.encode(WvX509Mgr::CertPEM));
 	wvcon->write(x509cert.encode(WvX509Mgr::RsaPEM));
 	wvcon->write(x509cert.encode(WvX509Mgr::RsaRaw));
+	x509cert.write_p12("/tmp/test.p12");
     }
     else
 	log("Error: %s\n", x509cert.errstr());
     
-    log("Test result: %s\n", x509cert.test());
-    
+    log("Errors after the write: %s\n", x509cert.errstr());
+
     log("Done...\n");
 }

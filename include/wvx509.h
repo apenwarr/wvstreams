@@ -30,6 +30,9 @@ WvString wvssl_errstr();
 class WvX509Mgr
 {
 public:
+   /**
+    * Distinguished Name to be used in the certificate.
+    */
     WvString dname;
 
    /**
@@ -37,7 +40,7 @@ public:
     * in this class in a variety of formats
     */
     enum DumpMode { CertPEM = 0, RsaPEM, RsaRaw };
-   
+
    /**
     * Initialize a blank X509 Object with the certificate *cert
     * (used for client side operations...)
@@ -181,11 +184,34 @@ public:
     WvString encode(DumpMode mode);
 
     /**
-     * Return a hexified certificate out of the file
-     *
-     * NOT IMPLEMENTED
+     * Load the information from the format requested by mode into
+     * the class - this overwrites the certificate, and possibly the
+     * key - and to enable two stage loading (the certificate first, then the
+     * key), it DOES NOT call test() - that will be up to the programmer
      */
-    WvString pem2hex(WvStringParm filename);
+    void decode(DumpMode mode);
+
+    /**
+     * And of course, since PKCS12 files are in the rediculous DER encoding 
+     * format, which is binary, we can't use the encode/decode functions, so
+     * we deal straight with files... *sigh*
+     *  
+     * As should be obvious, this writes the certificate and RSA keys in PKCS12
+     * format to the file specified by filename.
+     */
+    void write_p12(WvStringParm filename);
+    
+    /**
+     * And this reads from the file specified in filename, and fills the RSA and
+     * cert members with the decoded information.
+     */
+    void read_p12(WvStringParm filename);
+
+    /**
+     * Sets the PKCS12 password
+     */
+    void setPkcs12Password(WvStringParm passwd)
+    	{ pkcs12pass = passwd; }
 
     WvLog debug;
     
@@ -200,6 +226,11 @@ public:
         { errstring = s; }
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
+private:
+   /**
+    * Password for PKCS12 dump
+    */
+    WvString pkcs12pass;
 };
 
 #endif // __WVX509_H

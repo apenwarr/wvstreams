@@ -15,6 +15,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
+#include <openssl/pkcs12.h>
 
 static int ssl_init_count = 0;
 
@@ -56,7 +57,7 @@ WvString wvssl_errstr()
 
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : debug("X509", WvLog::Debug5)
+    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
 {
     wvssl_init();
     cert = _cert;
@@ -94,7 +95,7 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
 
 WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
 		     WvStringParm hexified_rsa)
-    : debug("X509", WvLog::Debug5)
+    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
 {
     wvssl_init();
     
@@ -120,7 +121,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
 
 
 WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa)
-    : dname(_dname), debug("X509", WvLog::Debug5)
+    : dname(_dname), debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
 {
     assert(_rsa);
     
@@ -659,10 +660,10 @@ WvString WvX509Mgr::encode(DumpMode mode)
 	    debug("Dumping raw RSA keypair.\n");
 	    RSA_print_fp(stupid, rsa->rsa, 0);
 	    break;
-	    
+
 	default:
 	    seterr("Unknown Mode\n");
-	    break;
+	    return nil;
 	}
 	
 	return file_hack_end(stupid);
@@ -671,5 +672,124 @@ WvString WvX509Mgr::encode(DumpMode mode)
     {
 	debug(WvLog::Error, "Can't create temp file in WvX509Mgr::encode!\n");
 	return nil;
+    }
+}
+
+void WvX509Mgr::decode(DumpMode mode)
+{
+    // Let the fun begin... ;)
+
+}
+
+void WvX509Mgr::write_p12(WvStringParm filename)
+{
+    debug("Dumping RSA Key and X509 Cert to PKCS12 structure\n");
+
+    FILE *fp = fopen(filename, "w");
+    
+    if (!fp)
+    {
+	seterr("Unable to create: %s\n", filename);
+	return;
+    }
+    
+    if (!!pkcs12pass)
+    {
+	EVP_PKEY *pk = EVP_PKEY_new();
+	if (!pk)
+	{
+	    seterr("Unable to create PKEY object\n");
+	    return;
+	}
+	
+	if (rsa && cert)
+	{
+	    WvRSAKey tmpkey(*rsa);
+	    
+	    if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
+	    {
+		seterr("Error setting RSA keys");
+		return;
+	    }
+	    else
+	    {
+		PKCS12 *pkg = PKCS12_create(pkcs12pass.edit(), "foo", pk, 
+					    cert, NULL, 0, 0, 0, 0, 0);
+		if (pkg)
+		{
+		    debug("Write the PKCS12 object out...\n");
+		    i2d_PKCS12_fp(fp, pkg);
+		    PKCS12_free(pkg);
+		}
+		else
+		{
+		    seterr("Unable to create PKCS12 object\n");
+		    return;
+		}
+	    }
+	}
+	else
+	{
+	    seterr("Either the RSA key or the Certificate is not present\n");
+	    return;
+	}
+    }
+    else
+    {
+	seterr("No Password specified for PKCS12 dump\n");
+	return;
+    }
+}
+
+void WvX509Mgr::read_p12(WvStringParm filename)
+{
+    debug("Reading Certificate and Private Key from PKCS12 file: %s\n", filename);
+    
+    FILE *fp = fopen(filename, "r");
+    
+    if (!fp)
+    {
+	seterr("Unable to read from: %s\n", filename);
+	return;
+    }
+    
+    if (!!pkcs12pass)
+    {
+	PKCS12 *pkg = d2i_PKCS12_fp(fp, NULL);
+	if (pkg)
+	{
+	    EVP_PKEY *pk = EVP_PKEY_new();
+	    if (!pk)
+	    {
+		seterr("Unable to create PKEY object\n");
+		return;
+	    }
+	    
+	    // Parse out the bits out the PKCS12 package.
+	    PKCS12_parse(pkg, pkcs12pass, &pk, &cert, NULL);
+	    PKCS12_free(pkg);
+	    
+	    // Now, cert should be OK, let's try and set up the RSA stuff
+	    // since we've essentially got a PKEY, and not a WvRSAKey
+	    // We need to create a new WvRSAKey from the PKEY...
+	    rsa = new WvRSAKey(pk->pkey.rsa, true);
+	    
+	    // Now that we have both, check to make sure that they match
+	    if (!rsa || !cert || test())
+	    {
+		seterr("Could not fill in RSA and Cert with matching values... \n");
+		return;
+	    }
+	}
+	else
+	{
+	    seterr("Read in of PKCS12 file '%s' failed - aborting\n", filename);
+	    return;
+	}
+    }
+    else
+    {
+	seterr("No Password specified for PKCS12 file - aborting\n");
+	return;	
     }
 }
