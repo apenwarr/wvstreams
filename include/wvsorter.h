@@ -9,6 +9,7 @@
 #ifndef __WVSORTER_H
 #define __WVSORTER_H
 
+#include "wvxplc.h"
 #include "wvlink.h"
 
 // the base class for sorted list iterators.
@@ -31,7 +32,7 @@ public:
     WvSorterBase(void *_list)
     	{ list = _list; array = lptr = NULL; }
     ~WvSorterBase()
-    	{ if (array) delete[] array; }
+    	{ if (array) deletev array; }
     bool next()
 	{ return *(++lptr) != 0; }
     bool cur()
@@ -80,7 +81,7 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     int n, remaining;
     
     if (array)
-        delete[] array;
+        deletev array;
     array = lptr = NULL;
 
     _iter_ i(*(_list_ *)list);

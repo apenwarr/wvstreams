@@ -66,7 +66,7 @@ struct MemOps
     /** Deletes an uninitialized array. */
     inline void deletearray(void *buf)
     {
-        delete[] (unsigned char*)buf;
+        deletev (unsigned char*)buf;
     }
 } memops;
 

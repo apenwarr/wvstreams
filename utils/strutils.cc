@@ -624,7 +624,7 @@ WvString hostname()
         if (result == 0)
         {
             WvString hostname(name);
-            delete[] name;         
+            deletev name;
             return hostname;
         }
 #ifdef _WIN32

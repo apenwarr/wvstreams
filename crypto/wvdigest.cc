@@ -111,7 +111,7 @@ WvHMACDigest::~WvHMACDigest()
 {
     cleanup();
     delete hmacctx;
-    delete[] key;
+    deletev key;
     delete digest;
 }
 

@@ -78,5 +78,5 @@ void WvVectorBase::setcapacity(int newslots)
     }
     else
 	xseq = NULL;
-    delete[] oldseq;
+    deletev oldseq;
 }

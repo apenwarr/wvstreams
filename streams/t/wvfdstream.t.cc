@@ -1,3 +1,8 @@
+#include <fcntl.h>
+#include <unistd.h>
+#include <iostream>
+#include <string.h>
+
 #include "wvtest.h"
 #include "wvstreamclone.h"
 #include "wvfdstream.h"
@@ -82,11 +87,6 @@ WVTEST_MAIN("open and close with null FDs")
     WVFAIL(fdstream.isreadable());
 }
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <iostream>
-#include <string.h>
-
 WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 {
     // create temporary and empty file for testing
@@ -128,7 +128,7 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     buf[33] = '\0';
     WVPASS(strcmp((const char*)buf, "Bonjour, je m'appelle writestream") == 0);
    
-    delete[] buf;
+    deletev buf;
     close(file1);
     close(file2);
 }

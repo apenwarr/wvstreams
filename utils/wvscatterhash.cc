@@ -67,7 +67,7 @@ void WvScatterHashBase::rebuild()
             _add(tmpslots[i].data, IS_AUTO_FREE(tmpslots[i]));
     }
 
-    delete[] tmpslots;
+    deletev tmpslots;
 }
 
 void WvScatterHashBase::_add(void *data, bool auto_free)

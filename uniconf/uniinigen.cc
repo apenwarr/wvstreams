@@ -160,7 +160,7 @@ bool UniIniGen::refresh()
     {
         log(WvLog::Warning, 
 	    "Error reading from config file: \"%s\"\n", file.errstr());
-        delete newgen;
+        newgen->release();
         return false;
     }
 
@@ -197,7 +197,7 @@ bool UniIniGen::refresh()
     }
     unhold_delta();
 
-    delete newgen;
+    newgen->release();
 
     return true;
 }

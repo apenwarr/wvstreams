@@ -11,7 +11,12 @@
 #define UNSTABLE
 #endif
 
+#if 0
 #include <xplc/IObject.h>
+#define deletev delete[]
+#else
+#include <xplc/delete.h>
+#endif
 
 #include <xplc/xplc.h>
 

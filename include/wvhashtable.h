@@ -195,7 +195,7 @@ public:
 	{ return (WvList<T> *)wvslots; }
 
     virtual ~WvHashTable()
-        { shutdown(); delete[] sl(); }
+        { shutdown(); deletev sl(); }
 
     void add(T *data, bool auto_free)
         { sl()[hash(data) % numslots].append(data, auto_free); }
@@ -215,7 +215,7 @@ public:
 
     void zap()
     {
-	delete[] sl();
+	deletev sl();
 	wvslots = new WvList<T>[numslots];
     }
 

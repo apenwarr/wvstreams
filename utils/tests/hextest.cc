@@ -52,8 +52,8 @@ int main(int argc, char **argv)
             slist->callback();
     }
     stream->flush(0);
-    delete stream;
-    delete slist;
+    stream->release();
+    slist->release();
     
     return 0;
 }

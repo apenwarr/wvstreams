@@ -21,7 +21,7 @@ WvBlowfishEncoder::WvBlowfishEncoder(Mode _mode,
 
 WvBlowfishEncoder::~WvBlowfishEncoder()
 {
-    delete[] key;
+    deletev key;
     delete bfkey;
 }
 
@@ -35,7 +35,7 @@ bool WvBlowfishEncoder::_reset()
 
 void WvBlowfishEncoder::setkey(const void *_key, size_t _keysize)
 {
-    delete[] key;
+    deletev key;
     keysize = _keysize;
     key = new unsigned char[keysize];
     memcpy(key, _key, keysize);

@@ -7,6 +7,7 @@
 #ifndef __WVVECTOR_H
 #define __WVVECTOR_H
 
+#include "wvxplc.h"
 #include "wvlink.h"
 #include <string.h>
 
@@ -109,7 +110,7 @@ public:
             while (oldcount > 0)
 		delete oldarray[--oldcount];
 	}
-        delete[] oldarray;
+        deletev oldarray;
     }
 
     void remove(int slot, bool never_delete = false)

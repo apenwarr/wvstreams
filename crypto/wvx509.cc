@@ -565,7 +565,7 @@ void WvX509Mgr::unhexify(WvStringParm encodedcert)
     if (!cert)
 	seterr("X.509 certificate decode failed!");
     
-    delete[] certbuf;
+    deletev certbuf;
 }
 
 
@@ -582,7 +582,7 @@ WvString WvX509Mgr::hexify()
     enccert.setsize(size * 2 +1);
     ::hexify(enccert.edit(), keybuf, size);
 
-    delete[] keybuf;
+    deletev keybuf;
     return enccert;
 }
 

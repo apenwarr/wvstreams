@@ -42,7 +42,7 @@ void WvFtpStream::doneurl()
     curl = NULL;
     if (data)
     {
-        delete data;
+        data->release();
         data = NULL;
     }
     urls.unlink_first();

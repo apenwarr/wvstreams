@@ -8,13 +8,13 @@
  * We provide typical read and write routines, as well as a select() function
  * for each stream.
  */
-#include "wvstream.h"
-#include "wvtimeutils.h"
-#include "wvcont.h"
 #include <time.h>
 #include <sys/types.h>
 #include <assert.h>
 #include <algorithm>
+#include "wvstream.h"
+#include "wvtimeutils.h"
+#include "wvcont.h"
 
 using std::min;
 using std::max;

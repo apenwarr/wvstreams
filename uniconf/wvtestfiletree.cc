@@ -142,7 +142,7 @@ bool WvTestFileTree::record_fileinfo(WvStringParm filename, bool set_md5)
 	{
 //	    printf("symlink to %s\n", linkto);
 	    info["wvstats/linkto"].setme(linkto);
-	    delete[] linkto;
+	    deletev linkto;
 	}
     }
     else if (S_ISREG(st.st_mode))

@@ -23,7 +23,7 @@ class WvScatterHashBase
 {
 public:
     WvScatterHashBase(unsigned _numslots);
-    virtual ~WvScatterHashBase() { delete[] xslots; }
+    virtual ~WvScatterHashBase() { deletev xslots; }
 
     struct pair
     {

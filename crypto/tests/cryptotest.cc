@@ -177,12 +177,12 @@ int main(int argc, char **argv)
 	    break;
             
         case 'i':
-            delete in;
+            in->release();
             in = new WvFile(optarg, O_RDONLY);
             break;
             
         case 'o':
-            delete out;
+            out->release();
             out = new WvFile(optarg, O_WRONLY | O_CREAT);
             break;
 	}
@@ -341,11 +341,11 @@ int main(int argc, char **argv)
         total = copy(crypto, out);
     }
     crypto->close();
-    delete crypto;
+    crypto->release();
     if (in != base && in != wvin)
-        delete in;
+        in->release();
     if (out != base && out != wvout)
-        delete out;
+        out->release();
     
     gettimeofday(&stop, &tz);
     long tdiff = msecdiff(stop, start);
@@ -357,5 +357,5 @@ int main(int argc, char **argv)
     if (rsakey)
         delete rsakey;
     if (blowkey)
-	delete[] blowkey;
+	deletev blowkey;
 }

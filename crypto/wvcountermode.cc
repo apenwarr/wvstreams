@@ -18,13 +18,13 @@ WvCounterModeEncoder::WvCounterModeEncoder(WvEncoder *_keycrypt,
 WvCounterModeEncoder::~WvCounterModeEncoder()
 {
     delete keycrypt;
-    delete[] counter;
+    deletev counter;
 }
 
 
 void WvCounterModeEncoder::setcounter(const void *_counter, size_t _countersize)
 {
-    delete[] counter;
+    deletev counter;
     counter = new unsigned char[_countersize];
     countersize = _countersize;
     memcpy(counter, _counter, countersize);

@@ -96,6 +96,7 @@ class WvTaskMan
     
     WvTaskMan();
     virtual ~WvTaskMan();
+    friend void operator &&<WvTaskMan>(CheckIObject, const WvTaskMan *);
     
 public:
     /// get/dereference the singleton global WvTaskMan

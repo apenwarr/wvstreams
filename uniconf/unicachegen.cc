@@ -38,7 +38,7 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
 
 UniCacheGen::~UniCacheGen()
 {
-    delete inner;
+    inner->release();
 }
 
 

@@ -32,7 +32,7 @@ WVTEST_MAIN("terminate_string")
         char *result = terminate_string(input[i], '!');
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
-        delete[] input[i];
+        deletev input[i];
     }
 }
 
@@ -54,7 +54,7 @@ WVTEST_MAIN("trim")
         char *result = trim_string(input[i]);
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
-        delete[] input[i];
+        deletev input[i];
     } 
 }
 
@@ -75,7 +75,7 @@ WVTEST_MAIN("trimtest2.cc")
         char *result = trim_string(input[i], 'x');
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
-        delete[] input[i];
+        deletev input[i];
     }
 }
 
@@ -93,7 +93,7 @@ WVTEST_MAIN("nbsp")
         char *result = non_breaking(input[i]);
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
-        delete[] result;
+        deletev result;
     }
 }
 
@@ -115,7 +115,7 @@ WVTEST_MAIN("replace_char")
         replace_char((void *)input[i], 'r', 'x', len[i]);
         if (!WVFAIL(strcmp(input[i], desired[i])))
             printf("   because [%s] != [%s]\n", input[i], desired[i]);
-        delete[] input[i];
+        deletev input[i];
     }
 }
 
@@ -151,7 +151,7 @@ WVTEST_MAIN("strlwr")
         char *result = strlwr(input[i]);
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
-        delete[] input[i];
+        deletev input[i];
     }
 }
 
@@ -170,7 +170,7 @@ WVTEST_MAIN("strupr")
         char *result = strupr(input[i]);
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
-        delete[] input[i];
+        deletev input[i];
     }
 }
 

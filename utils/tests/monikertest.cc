@@ -70,8 +70,8 @@ int main()
 
     if (a)
 	a->release();
-    delete b;
-    delete c;
+    b->release();
+    c->release();
     if (d)
 	d->release();
 }

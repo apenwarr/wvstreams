@@ -152,7 +152,7 @@ int WvSubProc::start_again()
     retval = _startv(last_cmd, argv);
     
     // clean up
-    delete[] argv;
+    deletev argv;
     
     return retval;
 }
