@@ -4,6 +4,9 @@
  * 
  * Provides a C binding for UniConf.
  */
+
+#ifdef ASHLEY
+
 #include "uniconf.h"
 #include "uniconfroot.h"
 #include <assert.h>
@@ -38,3 +41,4 @@ void uniconf_set(uniconf_t _uniconf,
     return (*uniconf)[_key].setme(_value);
 }
 
+#endif

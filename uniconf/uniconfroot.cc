@@ -85,6 +85,7 @@ void UniConfRoot::add_callback(void *cookie, const UniConfKey &key,
     UniWatchInfo *w = new UniWatchInfo(cookie, recurse, callback);
 
     UniWatchInfoTree *node = &watchroot;
+    
     UniConfKey::Iter i(key);
     for (i.rewind(); i.next(); )
     {
