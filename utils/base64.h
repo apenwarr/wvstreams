@@ -9,7 +9,13 @@
 #ifndef __BASE64_H
 #define __BASE64_h
 
+/**
+ * Base 64 encode str
+ */
 extern char * base64_encode( char * str );
+/**
+ * Decode Base64 encoded str
+ */
 extern char * base64_decode( char * str );
 
 #endif __BASE64_H

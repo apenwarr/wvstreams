@@ -1,18 +1,18 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
- * A WvSplitStream uses two different file descriptors: one for input
- * and another for output.
- * 
- * This is primarily used for the combined stdin/stdout stream.
  */
 #ifndef __WVSPLITSTREAM_H
 #define __WVSPLITSTREAM_H
 
 #include "wvstream.h"
 
-
+/**
+ * A WvSplitStream uses two different file descriptors: one for input
+ * and another for output.
+ * 
+ * This is primarily used for the combined stdin/stdout stream.
+ */
 class WvSplitStream : public WvStream
 {
 public:
@@ -29,10 +29,16 @@ public:
     int getwfd() const
         { return wfd; }
     
-    // noread() closes the rfd and makes this stream no longer valid for
-    // reading.  nowrite() closes wfd and makes it no longer valid for
-    // writing.
+    /**
+     * noread() closes the rfd and makes this stream no longer valid for
+     * reading. 
+     */
     void noread();
+
+    /**
+     * nowrite() closes wfd and makes it no longer valid for
+     * writing.
+     */
     void nowrite();
     
 protected:

@@ -19,8 +19,10 @@
 
 #include "wvlog.h"
 
-// WvLogRcv adds some intelligence to WvLogRcvBase, to keep
-// track of line-prefix-printing and other formatting information.
+/**
+ * WvLogRcv adds some intelligence to WvLogRcvBase, to keep
+ * track of line-prefix-printing and other formatting information.
+ */
 class WvLogRcv : public WvLogRcvBase
 {
 protected:
@@ -33,13 +35,26 @@ protected:
     virtual void log(const WvLog *source, int loglevel,
 		     const char *_buf, size_t len);
 
-    virtual void _make_prefix(); // set prefix and prelen
-    virtual void _begin_line();  // start a new log line (print prefix)
-    virtual void _end_line();    // end this (guaranteed nonempty) log line
+    /**
+     * Set the Prefix and Prefix Length (size_t prelen)
+     */
+    virtual void _make_prefix();
+    
+    /**
+     * Start a new log line (print prefix)
+     */
+    virtual void _begin_line();
+    
+    /**
+     * End this (Guaranteed NonEmpty) log line
+     */
+    virtual void _end_line();
 
-    // add text to the current log line.  'str' may contain only
-    // one '\n' optional character at str[len-1] (the end); if it does,
-    // end_line will be called immediately after this function.
+    /**
+     * add text to the current log line.  'str' may contain only
+     * one '\n' optional character at str[len-1] (the end); if it does,
+     * end_line will be called immediately after this function.
+     */
     virtual void _mid_line(const char *str, size_t len) = 0;
 
 private:

@@ -12,7 +12,9 @@
 #include "wvlinklist.h"
 #include "wvlog.h"
 
-
+/**
+ * Manipulate the kernel routing table in strange and interesting ways ;)
+ */
 class WvIPRoute
 {
 public:
@@ -31,6 +33,9 @@ public:
 
 DeclareWvList3(WvIPRoute, WvIPRouteListBase, );
 
+/**
+ * List of IP Routes currently in effect
+ */
 class WvIPRouteList : public WvIPRouteListBase
 {
 public:
@@ -38,13 +43,19 @@ public:
     
     WvIPRouteList();
     
-    // automatically fill the list with appropriate data from the kernel
+    /**
+     * automatically fill the list with appropriate data from the kernel
+     */
     void get_kernel();
     
-    // automatically set the kernel to the values in the RouteList
+    /**
+     * automatically set the kernel to the values in the RouteList
+     */
     void set_kernel();
 	       
-    // find the routing entry that matches 'addr'
+    /**
+     * find the routing entry that matches 'addr'
+     */
     WvIPRoute *find(const WvIPAddr &addr);
 };
 

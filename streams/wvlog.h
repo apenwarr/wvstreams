@@ -39,8 +39,10 @@ public:
 DeclareWvList(WvLogRcvBase);
 
 
-// a WvLog stream accepts log messages from applications and forwards them
-// to all registered WvLogRcv's.
+/**
+ * A WvLog stream accepts log messages from applications and forwards them
+ * to all registered WvLogRcv's.
+ */
 class WvLog : public WvStream
 {
     friend WvLogRcvBase;
@@ -74,15 +76,21 @@ public:
     WvLog(const WvLog &l);
     virtual ~WvLog();
 
-    // fd==-1, but this stream is always ok
+    /**
+     * fd==-1, but this stream is always ok
+     */
     virtual bool isok() const;
     
-    // change the loglevel.  This returns the object again, so you can
-    // make convenient statements like log.lvl(WvLog::Warning).print(...)
+    /**
+     * change the loglevel.  This returns the object again, so you can
+     * make convenient statements like log.lvl(WvLog::Warning).print(...)
+     */
     WvLog &lvl(LogLevel _loglevel)
         { loglevel = _loglevel; return *this; }
     
-    // change the loglevel and then print a message.
+    /**
+     * change the loglevel and then print a message.
+     */
     size_t operator() (LogLevel _loglevel, const WvString &s)
     { 
 	LogLevel l = loglevel; 
@@ -91,7 +99,9 @@ public:
 	return x;
     }
     
-    // change the loglevel and then print a formatted message
+    /**
+     * change the loglevel and then print a formatted message
+     */
     inline size_t operator() (LogLevel _loglevel, WVSTRING_FORMAT_DECL)
     { 
 	LogLevel l = loglevel;
@@ -100,24 +110,32 @@ public:
 	return x;
     }
     
-    // although these appear in WvStream, they need to be re-listed for
-    // some reason.
+    /**
+     * although these appear in WvStream, they need to be re-listed for
+     * some reason.
+     */
     size_t operator() (const WvString &s)
         { return WvStream::operator()(s); }
     inline size_t operator() (WVSTRING_FORMAT_DECL)
         { return WvStream::operator()(WVSTRING_FORMAT_CALL); }
     
-    // split off a new WvLog object with the requested loglevel.  This way
-    // you can have log at two or more levels without having to retype
-    // log.lvl(WvLog::blahblah) all the time.
+    /**
+     * split off a new WvLog object with the requested loglevel.  This way
+     * you can have log at two or more levels without having to retype
+     * log.lvl(WvLog::blahblah) all the time.
+     */
     WvLog split(LogLevel _loglevel) const
         { return WvLog(app, _loglevel, this); }
     
-    // we override the unbuffered write function, so lines also include the
-    // application and log level.
+    /**
+     * we override the unbuffered write function, so lines also include the
+     * application and log level.
+     */
     virtual size_t uwrite(const void *buf, size_t len);
     
-    // a useful substitute for the normal C perror() function
+    /**
+     * a useful substitute for the normal C perror() function
+     */
     void perror(const WvString &s)
         { print("%s: %s\n", s, strerror(errno)); }
 };

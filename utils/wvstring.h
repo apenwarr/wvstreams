@@ -65,7 +65,31 @@ struct WvStringBuf
 // (which is variable-sized, not really 1 byte)
 #define WVSTRINGBUF_SIZE(s) (s->data - (char *)s)
 
-
+/**
+ * WvString is an implementation of a simple and efficient printable-string 
+ * class. It leaves out many of the notational conveniences provided by other 
+ * string classes, because they waste too much CPU time and space.
+ *
+ * It does the one thing really missing from char* strings, that is, dynamic 
+ * buffer management.
+ *
+ * When you copy one WvString to another, it does _not_ duplicate the buffer; 
+ * it just creates another pointer to it. To really duplicate the buffer, call 
+ * the unique() member function.
+ *
+ * To change the contents of a WvString, you need to run its edit() member function, 
+ * which executes unique() and then returns a char* pointer to the WvString contents.
+ *
+ * The most annoying side-effect of this implementation is that if you construct a 
+ * WvString from a char* buffer or static string, WvString won't duplicate it. Usually 
+ * this is okay and much faster (for example, if you just want to print a static string). 
+ * However, if you construct a WvString from a dynamic variable, changing the dynamic 
+ * variable will change the WvString unless you run unique() or edit(). Worse still, 
+ * deleting the dynamic variable will make WvString act unpredictably.
+ *
+ * But it does cut out extra dynamic memory allocation for the most common cases, and 
+ * it almost always avoids manual 'new' and 'delete' of string objects.
+ */
 class WvString
 {
     WvStringBuf *buf;
@@ -78,32 +102,48 @@ class WvString
     void newbuf(size_t size);
 
 public:
-    WvString();      // fill blank strings later with operator= or setsize()
+    /**
+     * Fill black strings later with operator= or setsize()
+     */
+    WvString();  
     void setsize(size_t i);
-    WvString(const WvString &s); // Copy constructor
+
+    /**
+     * Copy Constructor
+     */
+    WvString(const WvString &s);
+
+    /**
+     * Create a WvString out of the char * _str
+     */
     WvString(const char *_str);
 
-    // NOTE: make sure that 32 bytes is big enough for your longest int.
-    // This is true up to at least 64 bits.
+    /**
+     * NOTE: make sure that 32 bytes is big enough for your longest int.
+     * This is true up to at least 64 bits.
+     */
     WvString(int i); // auto-render int 'i' into a string
 
-    // when this is called, we assume output.str == NULL; it will be filled.
+    /**
+     * when this is called, we assume output.str == NULL; it will be filled.
+     */
     static void do_format(WvString &output, char *format, const WvString **a);
     
-    // Now, you are probably thinking to yourself: Boy, does this ever look
-    // ridiculous.  And indeed it does.  However, it is completely type-safe
-    // and when inline functions are enabled, it reduces automatically to its
-    // minimum possible implementation.  (ie. all extra comparisons with
-    // wv_null go away if the parameter really _is_ wv_null,
-    // and that is the default!)
-    //
-    // I failed to find a way to optimize out the comparisons for parameters
-    // that _are_ provided, however.
-    //
-    // There is a small problem, which is that only up to 20 (numbers 0 to
-    // 19) additional arguments are allowed.  Luckily, no one has ever used
-    // that many on one "printf"-type line in the history of the world.
-    //
+    /**
+     * Now, you are probably thinking to yourself: Boy, does this ever look
+     * ridiculous.  And indeed it does.  However, it is completely type-safe
+     * and when inline functions are enabled, it reduces automatically to its
+     * minimum possible implementation.  (ie. all extra comparisons with
+     * wv_null go away if the parameter really _is_ wv_null,
+     * and that is the default!)
+     *
+     * I failed to find a way to optimize out the comparisons for parameters
+     * that _are_ provided, however.
+     *
+     * There is a small problem, which is that only up to 20 (numbers 0 to
+     * 19) additional arguments are allowed.  Luckily, no one has ever used
+     * that many on one "printf"-type line in the history of the world.
+     */
     WvString(WVSTRING_FORMAT_DECL)
     {
 	const WvString *x[20];
@@ -141,7 +181,9 @@ public:
 
     WvString &operator= (const WvString &s2);
     
-    // make the buf and str pointers owned only by this WvString.
+    /** 
+     * make the buf and str pointers owned only by this WvString.
+     */
     WvString &unique();
 
     // string comparison
@@ -150,7 +192,9 @@ public:
     bool operator== (const char *s2) const;
     bool operator!= (const char *s2) const;
     
-    // not operator is 'true' if string is empty
+    /**
+     *not operator is 'true' if string is empty
+     */
     bool operator! () const;
 
     // pointer arithmetic
@@ -159,16 +203,22 @@ public:
     const char *operator- (int i) const
         { return str - i; }
     
-    // auto-convert WvString to (const char *), when needed.
+    /**
+     * auto-convert WvString to (const char *), when needed.
+     */
     operator const char*() const
         { return str; }
     
-    // make the string editable, and return a non-const (char*)
+    /**
+     * make the string editable, and return a non-const (char*)
+     */
     char *edit()
         { return unique().str; }
     
-    // used to convert WvString to int, when needed.
-    // we no longer provide a typecast, because it causes annoyance.
+    /**
+     * used to convert WvString to int, when needed.
+     * we no longer provide a typecast, because it causes annoyance.
+     */
     int num() const
         { return atoi(str); }
     

@@ -16,7 +16,8 @@
 typedef unsigned int __u32;
 typedef short unsigned int __u16;
 
-/* Common packet encapsulation types, with the ability to convert a Linux
+/**
+ * Common packet encapsulation types, with the ability to convert a Linux
  * ARPHRD_* value or (struct sockaddr) sa_family value.  (Those two use the
  * same set of values.)
  */
@@ -60,7 +61,8 @@ public:
 };
 
 
-/* Base class for different address types, each of which will have
+/**
+ * Base class for different address types, each of which will have
  * the ability to convert itself to/from a printable string, as well
  * as other type-specific abilities.
  */
@@ -100,7 +102,8 @@ public:
 unsigned WvHash(const WvAddr &addr);
 
 
-/* A WvAddr that simply contains a printable string with a user-defined
+/**
+ * A WvAddr that simply contains a printable string with a user-defined
  * encapsulation type.
  */
 class WvStringAddr : public WvAddr
@@ -123,7 +126,8 @@ public:
 };
 
 
-/* An ethernet address is made up of a string of hex numbers, in the form
+/**
+ * An ethernet address is made up of a string of hex numbers, in the form
  *     AA:BB:CC:DD:EE:FF
  */
 class WvEtherAddr : public WvAddr
@@ -154,7 +158,9 @@ public:
 };
 
 
-/* An ARCnet address is made up of a single hex number. */
+/**
+ * An ARCnet address is made up of a single hex number. 
+ */
 class WvARCnetAddr : public WvAddr
 {
     unsigned char binaddr;
@@ -181,7 +187,8 @@ public:
 };
 
 
-/* An IP address is made up of a "dotted quad" -- four decimal numbers in
+/**
+ * An IP address is made up of a "dotted quad" -- four decimal numbers in
  * the form
  *     www.xxx.yyy.zzz
  * 
@@ -229,7 +236,8 @@ public:
 };
 
 
-/* An IP network comprises two WvIPAddr structures: an address and a
+/**
+ * An IP network comprises two WvIPAddr structures: an address and a
  * netmask. The two ANDed together comprise the "network address",
  * which, if it is correct, can be ORed with any IP address on the
  * network without changing the address.  Together, a network address
@@ -257,21 +265,29 @@ public:
     void string_init(const char string[]);
     WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask);
     
-    // construct an IPNet from a base address and a number of bits in
-    // the netmask.  The default of 32 gives a one-host network,
-    // (netmask 255.255.255.255).
+    /**
+     * construct an IPNet from a base address and a number of bits in
+     * the netmask.  The default of 32 gives a one-host network,
+     * (netmask 255.255.255.255).
+     */
     WvIPNet(const WvIPAddr &base, int bits = 32);
     
-    // construct an empty IPNet for later copying (probably by operator=)
+    /**
+     * construct an empty IPNet for later copying (probably by operator=)
+     */
     WvIPNet();
     
     virtual ~WvIPNet();
     
-    // Override the hash and comparison functions
+    /**
+     * Override the hash and comparison functions
+     */
     virtual unsigned WvHash() const;
     virtual bool comparator(const WvAddr *a2) const;
     
-    // Get the 'base IP address' component, netmask, network, and broadcast
+    /** 
+     * Get the 'base IP address' component, netmask, network, and broadcast
+     */
     WvIPAddr base() const
         { return WvIPAddr(binaddr); }
     const WvIPAddr &netmask() const
@@ -281,35 +297,46 @@ public:
     WvIPAddr broadcast() const
         { return *this | ~mask; }
     
-    // adjust the netmask so that 'addr' would be included in this network
+    /**
+     * adjust the netmask so that 'addr' would be included in this network
+     */
     void include(const WvIPNet &addr);
     
-    // determine whether the given address is already included in this net
+    /**
+     * determine whether the given address is already included in this net
+     */
     bool includes(const WvIPNet &addr) const;
     
-    // weird netmasks such as 255.0.255.0 (easy example) are almost never
-    // used -- they have '0' bits in the middle.  However, using the
-    // include() function will result in odd netmasks like this, since
-    // it will not eliminate a '1' bit unless absolutely necessary.
-    // normalize() would convert the above netmask into 255.0.0.0, which
-    // is probably the netmask _really_ in use.  bits() calculates
-    // the number of leading '1' bits in the normalized netmask, without
-    // actually doing the normalization.
+    /**
+     * weird netmasks such as 255.0.255.0 (easy example) are almost never
+     * used -- they have '0' bits in the middle.  However, using the
+     * include() function will result in odd netmasks like this, since
+     * it will not eliminate a '1' bit unless absolutely necessary.
+     * normalize() would convert the above netmask into 255.0.0.0, which
+     * is probably the netmask _really_ in use.  bits() calculates
+     * the number of leading '1' bits in the normalized netmask, without
+     * actually doing the normalization.
+     */
     int bits() const;
     void normalize();
     
-    // is this net the default gateway? (0.0.0.0/0)
+    /**
+     * is this net the default gateway? (0.0.0.0/0)
+     */
     bool is_default() const
         { return mask.binaddr[0] == 0; }
     
-    // is it a plain host? (x.x.x.x/32)
+    /**
+     * is it a plain host? (x.x.x.x/32)
+     */
     bool is_host() const
         { return mask.binaddr[3] == 255; }
 };
 
 
 
-/* An IP+Port address also includes a port number, with the resulting form
+/**
+ * An IP+Port address also includes a port number, with the resulting form
  *     www.xxx.yyy.zzz:pppp
  * 
  * Note that the rawdata() function is inherited from WvIPAddr, so it does
@@ -345,7 +372,9 @@ public:
 };
 
 
-/* A Unix domain socket address is really just a filename. */
+/**
+ * A Unix domain socket address is really just a filename. 
+ */
 class WvUnixAddr : public WvAddr
 {
 protected:

@@ -16,7 +16,9 @@
 
 DeclareWvList(WvIPPortAddr);
 
-
+/**
+ * Class to handle Linux 2.3/2.4 IPTables
+ */
 class WvIPFirewall
 {
     class Redir

@@ -2,12 +2,8 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
  * 
- * WvStream-based TCP connection class.
- * 
- * WvTCPConn tries to make all outgoing connections asynchronously (in
- * the background).  You can tell the connection has been established
- * when a select() call returns 'true' with writable==true.
- */
+ * WvStream-based TCP connection and server classes.
+ */ 
 #ifndef __WVTCP_H
 #define __WVTCP_H
 
@@ -18,6 +14,11 @@
 class WvStreamList;
 class WvTCPListener;
 
+/**
+ * WvTCPConn tries to make all outgoing connections asynchronously (in
+ * the background).  You can tell the connection has been established
+ * when a select() call returns 'true' with writable==true.
+ */
 class WvTCPConn : public WvStream
 {
     friend class WvTCPListener;
@@ -29,80 +30,141 @@ protected:
     WvIPPortAddr remaddr;
     WvResolver dns;
     
-    // connect an already-open socket (used by WvTCPListener)
+    /**
+     * Start a WvTCPConn on an already-open socket (used by WvTCPListener)
+     */
     WvTCPConn(int _fd, const WvIPPortAddr &_remaddr);
     
+    /**
+     * Connect to the remote end - note the "Protected" above ;)
+     */
     void do_connect();
+    
+    /**
+     * Resolve the remote address, if it was fed in non-IP form
+     */
     void check_resolver();
     
 public:
-    // connect a new socket
+   /**
+    * WvTCPConn tries to make all outgoing connections asynchronously (in
+    * the background).  You can tell the connection has been established
+    * when a select() call returns 'true' with writable==true.
+    */
     WvTCPConn(const WvIPPortAddr &_remaddr);
     
-    // resolve the hostname, then connect a new socket
+    /**
+     * Resolve the hostname, then connect a new socket
+     */
     WvTCPConn(const WvString &_hostname, __u16 _port = 0);
 
+    /**
+     * Destructor - rarely do you need to call this - close()
+     * is a much better way to tear down a TCP Stream ;)
+     */
     virtual ~WvTCPConn();
     
-    // some functions to set of a TCP socket the way we like
+    /**
+     * function to set up a TCP socket the way we like
+     * (Read/Write, Non-Blocking, KeepAlive)
+     */
     void nice_tcpopts();
+    
+    /**
+     * function to set up a TCP socket the way we like
+     * In addition to the nice_tcpopts(), set TCP_NODELAY
+     */
     void low_delay();
     
-    // the local address of this socket (ie. from getsockname())
-    // really useful only for transparent proxies, but always available.
-    // may be 0.0.0.0 if we did not bind explicitly!
+    /**
+     * the local address of this socket (ie. from getsockname())
+     * really useful only for transparent proxies, but always available.
+     * may be 0.0.0.0 if we did not bind explicitly!
+     */
     WvIPPortAddr localaddr();
     
-    // return the remote address (source of all incoming packets),
-    // which is a constant for any given TCP connection.
+    /**
+     * return the remote address (source of all incoming packets),
+     * which is a constant for any given TCP connection.
+     */
     virtual const WvIPPortAddr *src() const;
 
-    // has the connection been completed yet?
+    /**
+     * has the connection been completed yet?
+     */
     bool isconnected() const
         { return connected; }
     
-    // override select_setup() to cause select() results when resolving names.
+    /**
+     * override select_setup() to cause select() results when resolving names.
+     */
     virtual bool select_setup(SelectInfo &si);
     
-    // override test_set() to set the 'connected' variable as soon as we
-    // are connected.
+    /**
+     * override test_set() to set the 'connected' variable as soon as we
+     * are connected.
+     */
     virtual bool test_set(SelectInfo &si);
     
-    // isok() will always be true if !resolved, even though fd==-1.
+    /**
+     * Is this connection OK? 
+     * Note: isok() will always be true if !resolved, even though fd==-1.
+     */
     virtual bool isok() const;
 };
 
-
+/**
+ * Class to easily create the Server side of a TCPConn...
+ */
 class WvTCPListener : public WvStream
 {
 public:
+    /**
+     * Create a WvStream that listens on _listenport of the current machine
+     * This is how you set up a TCP Server.
+     */
     WvTCPListener(const WvIPPortAddr &_listenport);
+
+    /**
+     * Destructor - remember - close() is your friend ;)
+     */
     virtual ~WvTCPListener();
     
+    /**
+     * Shut down the server, and disconnect from the port
+     */
     virtual void close();
     
-    // return a new WvTCPConn socket corresponding to a newly-accepted
-    // connection.  If no connection is ready immediately, we wait for
-    // one indefinitely.  You can use select(read=true) to check for a
-    // waiting connection.
+    /**
+     * return a new WvTCPConn socket corresponding to a newly-accepted
+     * connection.  If no connection is ready immediately, we wait for
+     * one indefinitely.  You can use select(read=true) to check for a
+     * waiting connection.
+     */
     WvTCPConn *accept();
     
-    // set a callback() function that automatically accepts new WvTCPConn
-    // connections, assigning them their own callback function 'callfunc'
-    // with parameter 'userdata.'  Pass list==NULL or define your own
-    // own callback function to disable auto-accepting.
-    //
-    // Be careful not to accept() connections yourself if you do this,
-    // or we may end up accept()ing twice, causing a hang the second time.
+    /**
+     * set a callback() function that automatically accepts new WvTCPConn
+     * connections, assigning them their own callback function 'callfunc'
+     * with parameter 'userdata.'  Pass list==NULL or define your own
+     * own callback function to disable auto-accepting.
+     *
+     * Be careful not to accept() connections yourself if you do this,
+     * or we may end up accept()ing twice, causing a hang the second time.
+     */
     void auto_accept(WvStreamList *list,
 		     Callback *callfunc = NULL, void *userdata = NULL);
 
-    // these don't do anything, but they confuse the socket, so we'll
-    // ignore them on purpose.
+    /**
+     * these don't do anything, but they confuse the socket, so we'll
+     * ignore them on purpose.
+     */
     virtual size_t uread(void *buf, size_t len);
     virtual size_t uwrite(const void *buf, size_t len);
     
-    // src() is a bit of a misnomer, but it returns the listener port.
+    /**
+     * src() is a bit of a misnomer, but it returns the listener port.
+     */
     virtual const WvIPPortAddr *src() const;
     
 protected:

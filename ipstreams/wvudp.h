@@ -1,7 +1,14 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
+ */
+#ifndef __WVUDP_H
+#define __WVUDP_H
+
+#include "wvstream.h"
+#include "wvaddr.h"
+
+/**
  * WvUDPStream can send and receive packets on a connectionless UDP socket.
  * 
  * In the constructor, the socket is attached using bind() to the given
@@ -20,25 +27,22 @@
  * limited usefulness.  Buffering will cause particular confusion if the
  * socket is not connect()ed.
  */
-#ifndef __WVUDP_H
-#define __WVUDP_H
-
-#include "wvstream.h"
-#include "wvaddr.h"
-
-
 class WvUDPStream : public WvStream
 {
 public:
-    // connect a new socket
+    /**
+     * connect a new socket
+     */
     WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem);
     virtual ~WvUDPStream();
     
     const WvAddr *local() const;
     
-    // return the remote address (source of incoming packets, target of
-    // outgoing packets).  This is the last host sent to or received from,
-    // whichever was more recent.
+    /**
+     * return the remote address (source of incoming packets, target of
+     * outgoing packets).  This is the last host sent to or received from,
+     * whichever was more recent.
+     */
     virtual const WvAddr *src() const;
     void setdest(const WvIPPortAddr &_remaddr)
         { remaddr = _remaddr; }

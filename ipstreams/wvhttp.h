@@ -1,10 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
- * WvHTTPStream connects to an HTTP server and allows the requested file
- * to be retrieved using the usual WvStream-style calls.
- */
+ */ 
 #ifndef __WVHTTP_H
 #define __WVHTTP_H
 
@@ -55,7 +52,10 @@ struct WvHTTPHeader
 
 DeclareWvDict(WvHTTPHeader, WvString, name);
 
-
+/** 
+ * WvHTTPStream connects to an HTTP server and allows the requested file
+ * to be retrieved using the usual WvStream-style calls.
+ */
 class WvHTTPStream : public WvStreamClone
 {
 public:
@@ -65,7 +65,9 @@ public:
     WvHTTPHeaderDict client_headers;
     size_t num_received;
 
-    // do not delete '_url' before you delete this stream!
+    /**
+     * do not delete '_url' before you delete this stream!
+     */
     WvHTTPStream(WvURL &_url);
     ~WvHTTPStream();
 

@@ -1,7 +1,17 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
+ */ 
+#ifndef __WVUNIXSOCKET_H
+#define __WVUNIXSOCKET_H
+
+#include "wvstream.h"
+#include "wvaddr.h"
+
+class WvStreamList;
+class WvUnixListener;
+
+/**
  * WvStream-based Unix domain socket connection class.
  * 
  * Unlike WvTCPConn, WvUnixConn makes connections synchronously because either
@@ -16,43 +26,44 @@
  * with the remote end of the socket.  See the unix(7) man page.  This would
  * be very cool for authentication purposes.
  */
-#ifndef __WVUNIXSOCKET_H
-#define __WVUNIXSOCKET_H
-
-#include "wvstream.h"
-#include "wvaddr.h"
-
-class WvStreamList;
-class WvUnixListener;
-
 class WvUnixConn : public WvStream
 {
     friend class WvUnixListener;
 protected:
     WvUnixAddr addr;
     
-    // connect an already-open socket (used by WvUnixListener)
+    /**
+     * connect an already-open socket (used by WvUnixListener)
+     */
     WvUnixConn(int _fd, const WvUnixAddr &_addr);
     
 public:
-    // connect a new socket
+    /**
+     * connect a new socket
+     */
     WvUnixConn(const WvUnixAddr &_addr);
 
     virtual ~WvUnixConn();
     
-    // the local address of this socket (ie. from getsockname())
-    // really useful only for transparent proxies, but always available.
-    // may be 0.0.0.0 if we did not bind explicitly!
+    /**
+     * the local address of this socket (ie. from getsockname())
+     * really useful only for transparent proxies, but always available.
+     * may be 0.0.0.0 if we did not bind explicitly!
+     */
     const WvUnixAddr &localaddr() { return addr; }
     
-    // return the remote address (source of all incoming packets),
-    // which is a constant for any given connection.
-    // This doesn't make much sense in Unix domain sockets, so we just
-    // return localaddr() instead.
+    /**
+     * return the remote address (source of all incoming packets),
+     * which is a constant for any given connection.
+     * This doesn't make much sense in Unix domain sockets, so we just
+     * return localaddr() instead.
+     */
     virtual const WvUnixAddr *src() const;
 };
 
-
+/**
+ * Server end of a Unix Sockets stream
+ */
 class WvUnixListener : public WvStream
 {
 public:
@@ -61,28 +72,36 @@ public:
     
     virtual void close();
     
-    // return a new WvUnixConn socket corresponding to a newly-accepted
-    // connection.  If no connection is ready immediately, we wait for
-    // one indefinitely.  You can use select(read=true) to check for a
-    // waiting connection.
+    /**
+     * return a new WvUnixConn socket corresponding to a newly-accepted
+     * connection.  If no connection is ready immediately, we wait for
+     * one indefinitely.  You can use select(read=true) to check for a
+     * waiting connection.
+     */
     WvUnixConn *accept();
     
-    // set a callback() function that automatically accepts new WvUnixConn
-    // connections, assigning them their own callback function 'callfunc'
-    // with parameter 'userdata.'  Pass list==NULL or define your own
-    // own callback function to disable auto-accepting.
-    //
-    // Be careful not to accept() connections yourself if you do this,
-    // or we may end up accept()ing twice, causing a hang the second time.
+    /**
+     * set a callback() function that automatically accepts new WvUnixConn
+     * connections, assigning them their own callback function 'callfunc'
+     * with parameter 'userdata.'  Pass list==NULL or define your own
+     * own callback function to disable auto-accepting.
+     *
+     * Be careful not to accept() connections yourself if you do this,
+     * or we may end up accept()ing twice, causing a hang the second time.
+     */
     void auto_accept(WvStreamList *list,
 		     Callback *callfunc = NULL, void *userdata = NULL);
 
-    // these don't do anything, but they confuse the socket, so we'll
-    // ignore them on purpose.
+    /**
+     * these don't do anything, but they confuse the socket, so we'll
+     * ignore them on purpose.
+     */
     virtual size_t uread(void *buf, size_t len);
     virtual size_t uwrite(const void *buf, size_t len);
     
-    // src() is a bit of a misnomer, but it returns the socket address.
+    /**
+     * src() is a bit of a misnomer, but it returns the socket address.
+     */
     virtual const WvUnixAddr *src() const;
     
 protected:

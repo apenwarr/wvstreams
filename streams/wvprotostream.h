@@ -1,11 +1,6 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
- * WvProtoStream is a framework that makes it easy to communicate using
- * common command-response driven protocols.  This is supposed to be
- * flexible enough to handle FTP, HTTP, SMTP, tunnelv, Weaver rcmd, and
- * many others.
  */
 #ifndef __WVPROTOSTREAM_H
 #define __WVPROTOSTREAM_H
@@ -14,7 +9,12 @@
 
 class WvLog;
 
-
+/**
+ * WvProtoStream is a framework that makes it easy to communicate using
+ * common command-response driven protocols.  This is supposed to be
+ * flexible enough to handle FTP, HTTP, SMTP, tunnelv, Weaver rcmd, and
+ * many others.
+ */
 class WvProtoStream : public WvStreamClone
 {
 public:
@@ -24,7 +24,9 @@ public:
     class Token;
     class TokenList;
     
-    // override uwrite() so we can log all output
+    /**
+     * override uwrite() so we can log all output
+     */
     virtual size_t uwrite(const void *buffer, size_t size);
 
     // Routines to convert an input line into a set of Tokens.
@@ -35,7 +37,9 @@ public:
     size_t list_to_array(TokenList *tl, Token **array);
     Token *tokline(const char *line);
     
-    // Convert token strings to enum values
+    /**
+     * Convert token strings to enum values
+     */
     int tokanal(const Token &t, char **lookup,
 		bool case_sensitive = false);
     
@@ -44,7 +48,9 @@ public:
     virtual void do_state(Token &t1);
     virtual void switch_state(int newstate);
     
-    // pass input through to the state machine, one line at a time
+    /**
+     * pass input through to the state machine, one line at a time
+     */
     virtual void execute();
     
 protected:

@@ -11,13 +11,15 @@
 #include <fcntl.h>
 
 
-// WvFile implements a stream connected to a file or Unix device.  We
-// include no support for operations like seek().  Since files are not
-// really streams, you probably do not need WvStream support for seekable
-// files; just use standard C I/O functions in that case.
-//
-// WvFile is primarily useful for Unix device files, which have defined
-// select() behaviour for example.
+/**
+ * WvFile implements a stream connected to a file or Unix device.  We
+ * include no support for operations like seek().  Since files are not
+ * really streams, you probably do not need WvStream support for seekable
+ * files; just use standard C I/O functions in that case.
+ *
+ * WvFile is primarily useful for Unix device files, which have defined
+ * select() behaviour for example.
+ */
 class WvFile : public WvStream
 {
 public:

@@ -1,7 +1,13 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
+ */ 
+#ifndef __WVSTREAMCLONE_H
+#define __WVSTREAMCLONE_H
+
+#include "wvstream.h"
+
+/**
  * WvStreamClone simply forwards all requests to the "cloned" stream.
  * 
  * A class derived from WvStreamClone can contain a WvStream as a
@@ -14,16 +20,13 @@
  * WvStreamClone does _not_ attempt to close the cloned stream in the
  * destructor.
  */
-#ifndef __WVSTREAMCLONE_H
-#define __WVSTREAMCLONE_H
-
-#include "wvstream.h"
-
 class WvStreamClone : public WvStream
 {
 public:
-    // NOTE: we must NOT use *cloned at this point since the caller may
-    //  not have had a chance to initialize it yet!
+    /**
+     * NOTE: we must NOT use *cloned at this point since the caller may
+     *  not have had a chance to initialize it yet!
+     */
     WvStreamClone(WvStream **_cloned)
         { cloned = _cloned; }
     virtual ~WvStreamClone();

@@ -1,7 +1,14 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
+ */ 
+#ifndef __WVTIMESTREAM_H
+#define __WVTIMESTREAM_H
+
+#include "wvstream.h"
+#include <sys/time.h>
+
+/**
  * WvTimeStream causes select() to be true after a configurable number
  * of milliseconds.  Because programs using WvStream make no guarantees
  * about how often select() will be called, WvTimeStream tries to adjust
@@ -17,12 +24,6 @@
  * will tick about 10 times (all at once) every second. select(-1)
  * (wait forever) may never tick at all -- be careful.
  */
-#ifndef __WVTIMESTREAM_H
-#define __WVTIMESTREAM_H
-
-#include "wvstream.h"
-#include <sys/time.h>
-
 class WvTimeStream : public WvStream
 {
     struct timeval last_tv;
@@ -31,15 +32,19 @@ class WvTimeStream : public WvStream
 public:
     WvTimeStream();
     
-    // every 'msec' milliseconds, select() will return true on this stream.
-    // if 'msec' is 0, the timer is disabled.
+    /**
+     * every 'msec' milliseconds, select() will return true on this stream.
+     * if 'msec' is 0, the timer is disabled.
+     */
     void set_timer(int msec, int max_backlog = 10);
 
     virtual bool isok() const;
     virtual bool select_setup(SelectInfo &si);
     virtual bool test_set(SelectInfo &si);
     
-    // notify timestream that we have "ticked" once
+    /**
+     * notify timestream that we have "ticked" once
+     */
     void WvTimeStream::tick();
     virtual void execute();
 };

@@ -17,10 +17,12 @@
 #include <termios.h>
 
 
-// WvModemBase provides the methods used to control a modem, but
-// without real implementation for most of them, so that they can
-// be used in contexts where modem control is undesirable without
-// reimplementing calling code for such uses.
+/**
+ * WvModemBase provides the methods used to control a modem, but
+ * without real implementation for most of them, so that they can
+ * be used in contexts where modem control is undesirable without
+ * reimplementing calling code for such uses.
+ */
 class WvModemBase : public WvFile
 {
 protected:
@@ -37,22 +39,38 @@ public:
     WvModemBase(int _fd);
     virtual ~WvModemBase();
     
-    // do-nothing methods that are not needed in WvModemBase
+    /**
+     * do-nothing method that is not needed in WvModemBase
+     */
     virtual void close();
+
+    /**
+     * do-nothing method that is not needed in WvModemBase
+     */
     virtual bool carrier();
+
+    /**
+     * do-nothing method that is not needed in WvModemBase
+     */
     virtual int speed(int _baud);
 
-    // this one really is needed
+    /**
+     * this one really is needed
+     */
     int getspeed()
 	{ return baud; }
 
-    // may need to hangup for redial reasons
+    /**
+     * may need to hangup for redial reasons
+     */
     virtual void hangup();
 };
 
 
-// WvModem implements a named modem that really needs to be opened,
-// closed, and manipulated in lots of ways
+/**
+ * WvModem implements a named modem that really needs to be opened,
+ * closed, and manipulated in lots of ways
+ */
 class WvModem : public WvModemBase
 {
 private:
@@ -60,15 +78,35 @@ private:
     struct termios	old_t;
     bool		closing;
 
+    /**
+     * Setup all of the terminal characteristics, and leave the modem in CLOCAL
+     * mode to make sure that we can communicate easily with the modem later.
+     */
     void setup_modem( bool rtscts );
+    
+    /**
+     * Check the status of the modem
+     */
     int getstatus();
     
 public:
     WvModem( const char * filename, int _baud, bool rtscts = true );
     virtual ~WvModem();
     
+    /**
+     * Close the connection to the modem
+     */
     virtual void close();
+    
+    /**
+     * Is there a carrier present?
+     */
     virtual bool carrier();
+    
+    /**
+     * _baud is the desired speed, that you wish the modem to communicate with,
+     * and this method returns the actual speed that the modem managed to achieve.
+     */
     virtual int speed(int _baud);
 };
 

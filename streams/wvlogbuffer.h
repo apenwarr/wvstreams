@@ -1,16 +1,17 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
- * WvLogBuffer is a descendant of WvLogRcv that buffers log messages for
- * later use.  It only keeps up to max_lines log entries of max_level debug
- * level or lower.
- */
+ */ 
 #ifndef __WVLOGBUFFER_H
 #define __WVLOGBUFFER_H
 
 #include "wvlogrcv.h"
 
+/**
+ * WvLogBuffer is a descendant of WvLogRcv that buffers log messages for
+ * later use.  It only keeps up to max_lines log entries of max_level debug
+ * level or lower.
+ */
 class WvLogBuffer : public WvLogRcv
 {
 public:

@@ -1,15 +1,16 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
- * 
- * WvSyslog is a descendant of WvLogRcv that sends messages to the syslogd
- * daemon.
- */
+ */ 
 #ifndef __WVSYSLOG_H
 #define __WVSYSLOG_H
 
 #include "wvlogrcv.h"
 
+/**
+ * WvSyslog is a descendant of WvLogRcv that sends messages to the syslogd
+ * daemon.
+ */
 class WvSyslog : public WvLogRcv
 {
 public:
