@@ -53,6 +53,7 @@ WVTEST_MAIN("WvHttpPool HEAD")
 
 bool pipelining_enabled = true;
 bool expecting_request = false;
+bool break_connection = false;
 unsigned int http_conns = 0;
 
 void tcp_callback(WvStream &s, void*)
@@ -82,6 +83,11 @@ void tcp_callback(WvStream &s, void*)
                                "Content-Type: text/html\n\n"
                                "Foo!\n");
                     last_was_pipeline_check = false;
+                    if (break_connection)
+                    {
+                        break_connection = false;
+                        s.close();
+                    }
                 }
                 if (!pipelining_enabled)
                     expecting_request = false;
@@ -175,6 +181,13 @@ WVTEST_MAIN("WvHttpPool pipelining")
     do_test(l, 5);
     WVPASSEQ(http_conns, 1);
 
+    break_connection = true;
+    do_test(l, 1);
+    WVPASSEQ(http_conns, 2);
+    break_connection = true;
+    do_test(l, 5);
+    WVPASSEQ(http_conns, 2);
+
     // All pipelining-disabled tests should have one connection for the
     // pipeline test and one for the real connection.
     pipelining_enabled = false;
@@ -182,6 +195,13 @@ WVTEST_MAIN("WvHttpPool pipelining")
     WVPASSEQ(http_conns, 2);
     do_test(l, 5);
     WVPASSEQ(http_conns, 2);
+
+    break_connection = true;
+    do_test(l, 1);
+    WVPASSEQ(http_conns, 3);
+    break_connection = true;
+    do_test(l, 5);
+    WVPASSEQ(http_conns, 3);
 
     WVPASS(listener.isok());
 }
