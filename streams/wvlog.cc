@@ -294,20 +294,20 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 		break;
 	}
 	
-	if (*cptr == '\n') // end of line
+	if (cptr >= bufend) // end of buffer
+	{
+	    mid_line(buf, bufend - buf);
+	    buf = bufend;
+	}
+	else if (*cptr == '\n') // end of line
 	{
 	    mid_line((const char *)buf, cptr - buf);
 	    buf = cptr;
 	}
-	else if (!my_isprint(*cptr))
+	else // therefore (!my_isprint(*cptr))
 	{
 	    mid_line(buf, cptr - buf);
 	    buf = cptr;
-	}
-	else // end of buffer
-	{
-	    mid_line(buf, bufend - buf);
-	    buf = bufend;
 	}
     }
 }

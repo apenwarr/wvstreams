@@ -35,6 +35,7 @@ UniConfDaemon::UniConfDaemon(const UniConf &_cfg,
 UniConfDaemon::~UniConfDaemon()
 {
     close();
+    RELEASE(permgen);
 }
 
 
