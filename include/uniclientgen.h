@@ -30,7 +30,7 @@ class UniClientGen : public UniConfGen
     class RemoteKeyIter;
 
     UniClientConn *conn;
-    WvStringList set_queue;
+    //WvStringList set_queue;
     WvLog log;
 
     WvString result_key;        /*!< the key that the current result is from */

@@ -113,7 +113,7 @@ WvString UniClientGen::get(const UniConfKey &key)
 
 void UniClientGen::set(const UniConfKey &key, WvStringParm newvalue)
 {
-    set_queue.append(new WvString(key), true);
+    //set_queue.append(new WvString(key), true);
 
     if (newvalue.isnull())
         conn->writecmd(UniClientConn::REQ_REMOVE, wvtcl_escape(key));
