@@ -82,8 +82,8 @@ void UniConfDaemon::run()
     WvTCPListener *tlist = new WvTCPListener(WvIPPortAddr("0.0.0.0", 4111));
     if (!tlist->isok())
     {
-        log(WvLog::Error,"ERROR:  WvTCPListener could not be created.\n");
-        log(WvLog::Error,"Error Reason:  %s\n", tlist->errstr());
+        log(WvLog::Error, "ERROR:  WvTCPListener could not be created.\n");
+        log(WvLog::Error, "Error Reason:  %s\n", tlist->errstr());
         exit(2);
     }
     l.append(tlist, true);
@@ -92,18 +92,22 @@ void UniConfDaemon::run()
     log(WvLog::Debug2, "Uniconf Daemon starting.\n");
     while (!want_to_die)
     {
-        if (list->select(0, true, false))
+        if (list->select(0))
         {
-            wvcon->print("Incoming Connection on list.\n");
-            l.append(new UniConfDaemonConn(list->accept(), this), true);
+            log("Incoming Connection on unix domain listener.\n");
+	    WvStream *s = list->accept();
+	    if (s)
+		l.append(new UniConfDaemonConn(s, this), true);
         }
-        if (tlist->select(0, true, false))
+        if (tlist->select(0))
         {
-            wvcon->print("Incoming Connection on tlist.\n");
-            l.append(new UniConfDaemonConn(tlist->accept(), this), true);
+            log("Incoming connection on TCP listener.\n");
+	    WvStream *s = tlist->accept();
+	    if (s)
+		l.append(new UniConfDaemonConn(s, this), true);
         }
         
-        if (l.select(5000, true, false))
+        if (l.select(5000))
             l.callback();
         if (keymodified)
 	    notifier.run();
@@ -112,6 +116,7 @@ void UniConfDaemon::run()
     // Make sure all of our listeners are closed
     list->close();
     tlist->close();
+    
     // Save any changes
     mainconf.save();
 }

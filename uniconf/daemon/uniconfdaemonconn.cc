@@ -4,10 +4,14 @@
 #include "uniconfiter.h"
 #include "wvtclstring.h"
 
+
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, UniConfDaemon *_source)
-    : UniConfConn(_s), source(_source)
+    : UniConfConn(_s), 
+      log(WvString("UniConf to %s", *_s->src()), WvLog::Debug)
 {
+    source = _source;
 }
+
 
 UniConfDaemonConn::~UniConfDaemonConn()
 {
@@ -20,24 +24,22 @@ UniConfDaemonConn::~UniConfDaemonConn()
     }
 }
 
+
 void UniConfDaemonConn::execute()
 {
+    WvString line, cmd;
+    
     UniConfConn::execute();
     fillbuffer();
 
-    for (;;)
+    while (!(line = gettclline()).isnull())
     {
-        WvString line = gettclline();
-        if (line.isnull())
-            break;
         WvConstStringBuffer fromline(line);
 
-        for (;;)
-        {
-            WvString cmd = wvtcl_getword(fromline);
-            if (cmd.isnull())
-                break;
+	log(WvLog::Debug5, "Got command: '%s'\n", line);
 
+        while (!(cmd = wvtcl_getword(fromline)).isnull())
+        {
             // check the command
             if (cmd == "quit")
             {

@@ -3,7 +3,7 @@
 
 #include "uniconfconn.h"
 #include "wvstringlist.h"
-#include "unievents.h"
+#include "wvlog.h"
 
 class UniConfDaemon;
 
@@ -14,6 +14,7 @@ public:
     virtual ~UniConfDaemonConn();
     virtual void execute();
 protected:
+    WvLog log;
     UniConfDaemon *source;
     WvStringList keys;
 };

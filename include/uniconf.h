@@ -117,22 +117,27 @@ public:
 	child_notify:1,    // some data in the subtree has notify=1
 	notify:1,	   // this data changed - notify interested parties
 	
-	// the 'obsolete' flags can be set true by the generator, if it cares.
-	// In that case the generator should also clear them upon request.
+	// the 'obsolete' flags can be set true by the generator, if it
+	// cares. In that case the generator should also clear them upon
+	// request.
 	child_obsolete:1,  // some data in the subtree has obsolete=1
 	obsolete:1,        // need to re-autogen this data before next use
 
-        // The 'waiting' flags can be set to true by the generator, if it cares.
-        // In the case of a waiting flag being set, it means the generator is
-        // waiting for data to be returned to it, and the uniconf value is unstable
-        // at best, unusable at worst.. so don't use it until the bit is removed.
+        // The 'waiting' flags can be set to true by the generator, if it
+        // cares. In the case of a waiting flag being set, it means the
+        // generator is waiting for data to be returned to it, and the
+        // uniconf value is unstable at best, unusable at worst.. so don't
+        // use it until the bit is removed.
         child_waiting:1,   // some data in the subtree has waiting=1
-        waiting:1;         // need to actually retrieve that data before next use.
+        waiting:1;         // need to actually retrieve data before next use.
 
     UniConf();
     UniConf(UniConf *_parent, WvStringParm _name);
     ~UniConf();
     void init();
+    
+    // fake copy constructor to prevent you from hurting yourself
+    UniConf(const UniConf &);
     
     UniConf *top();
     UniConfKey full_key(UniConf *top = NULL) const;
