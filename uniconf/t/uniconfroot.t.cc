@@ -178,7 +178,7 @@ WVTEST_MAIN("iterators")
 // bug 6869
 static int compare(const UniConf &_a, const UniConf &_b)
 {
-    return strcmp(_a.key().printable().cstr(), _b.key().printable().cstr());
+    return strcmp(_a.key().cstr(), _b.key().cstr());
 }
 WVTEST_MAIN("sorted iterators")
 {
