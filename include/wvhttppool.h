@@ -112,6 +112,7 @@ protected:
     WvUrlRequest *curl; // current url
     virtual void doneurl() = 0;
     virtual void request_next() = 0;
+    void log_urls();
 
 public:
     WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm _username, 
