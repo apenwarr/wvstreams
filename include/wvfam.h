@@ -29,6 +29,9 @@ public:
 
     bool isok();
 
+    void hold() { on_hold = true; }
+    void unhold() { on_hold = false; Callback(); }
+
     void setcallback(FAMCallback _cb)
         { cb = _cb; }
 
@@ -49,12 +52,15 @@ protected:
 
     WvFDStream *s;
     WvLog log;
+    bool on_hold;
 
     typedef WvMapPair<WvString, int> WvFAMReq;
     DeclareWvScatterDict2(WvFAMReqDict, WvFAMReq, WvString, key);
     WvFAMReqDict reqs;
 
-    void Callback(WvStream &, void *);
+    void Callback(WvStream &, void *) { Callback(); }
+    void Callback();
+
     void setup();
 };
 

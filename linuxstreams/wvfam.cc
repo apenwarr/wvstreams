@@ -23,7 +23,7 @@ bool WvFAM::isok()
 
 void WvFAM::monitordir(WvStringParm dir)
 {
-    if (!isok())
+    if (!isok() || reqs[dir])
         return;
 
     WvFAMReq *req = new WvFAMReq(dir, 0, true);
@@ -42,12 +42,12 @@ void WvFAM::monitordir(WvStringParm dir)
 
 void WvFAM::monitorfile(WvStringParm file)
 {
-    if (!isok())
+    if (!isok() || reqs[file])
         return;
 
     WvFAMReq *req = new WvFAMReq(file, 0, true);
 
-    if (!FAMMonitorFile(&fc, file, &fr, &req->key))
+    if (!FAMMonitorFile(&fc, file, &fr, NULL))
     {
         req->data = fr.reqnum;
         reqs.add(req, true);
@@ -85,8 +85,11 @@ void WvFAM::unmonitordir(WvStringParm dir)
     reqs.remove(req);
 }
 
-void WvFAM::Callback(WvStream &, void *)
+void WvFAM::Callback()
 {
+    if (on_hold || !isok())
+        return;
+
     int famstatus;
 
     while((famstatus = FAMPending(&fc)) && famstatus != -1
@@ -113,6 +116,8 @@ void WvFAM::Callback(WvStream &, void *)
 
 void WvFAM::setup()
 {
+    on_hold = false;
+
     if (FAMOpen(&fc) == -1)
     {
         log(WvLog::Critical, "Could not connect to FAM!\n", fc.fd);
