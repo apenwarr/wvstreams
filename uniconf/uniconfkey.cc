@@ -158,7 +158,6 @@ UniConfKey UniConfKey::range(int i, int j) const
 {
     if (i < 0)
         i = 0;
-    bool abs = !i;
     int n = j - i;
     if (n <= 0)
         return EMPTY;
@@ -172,9 +171,6 @@ UniConfKey UniConfKey::range(int i, int j) const
             return EMPTY;
     }
  
-    if (!abs)
-        first++;  // get rid of the first '/' if the path isn't absolute
-
     // find end of range
     int len = 1; // number of characters in range
     for (;;)
