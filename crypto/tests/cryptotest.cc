@@ -8,6 +8,7 @@
 #include "wvcrypto.h"
 #include "wvlog.h"
 #include "wvtimeutils.h"
+#include "wvstreamlist.h"
 #include <assert.h>
 
 #define PRIVATE_KEY "3082025b02010002818100b0873b623907cffea3aebca4815e579d06" \
@@ -50,6 +51,29 @@ static void usage(WvLog &log, const char *progname)
 }
 
 
+size_t copy(WvStream *in, WvStream *out)
+{
+    size_t total = 0;
+    char buf[10240];
+
+    WvStreamList slist;
+    slist.append(in, false);
+    slist.append(out, false);
+    while (in->isok())
+    {
+        if (slist.select(-1))
+            slist.callback();
+        size_t len = in->read(buf, sizeof(buf));
+        if (len != 0)
+        {
+            total += len;
+            out->write(buf, len);
+        }
+    }
+    return total;
+}
+
+
 int main(int argc, char **argv)
 {
     WvLog log(argv[0], WvLog::Info);
@@ -60,10 +84,11 @@ int main(int argc, char **argv)
     unsigned char *blowkey = NULL;
     WvStreamClone *crypto;
     int numbits = 0;
-    char buf[10240];
-    size_t len, total;
     struct timeval start, stop;
     struct timezone tz;
+
+    WvStream *wvin = new WvStream(0);
+    WvStream *wvout = new WvStream(1);
     
     if (argc < 2)
     {
@@ -120,13 +145,20 @@ int main(int argc, char **argv)
 	log(WvLog::Error, "Invalid key size: %s bits.\n", numbits);
 	return 5;
     }
+
+    WvStream *base;
+    if (direction == Encrypt)
+        base = wvout;
+    else
+        base = wvin;
     
     switch (crypt_type)
     {
     case XOR: {
 	log("Using 8-bit XOR encryption.\n");
         char key = 1;
-	crypto = new WvXORStream(wvcon, &key, 1);
+	crypto = new WvXORStream(base, &key, 1);
+        crypto->disassociate_on_close = true;
 	break;
     }
 	
@@ -137,20 +169,18 @@ int main(int argc, char **argv)
         //rsakey = new WvRSAKey(numbits);
         rsakey = &my_rsa_key;
 	log("ok.\n");
-	crypto = new WvRSAStream(wvcon, *rsakey, *rsakey);
+	crypto = new WvRSAStream(base, *rsakey, *rsakey);
+        crypto->disassociate_on_close = true;
 	break;
 	
     case Blowfish:
-	{
-	    int count;
-	    
-	    log("Using %s-bit Blowfish encryption.\n", numbits);
-	    blowkey = new unsigned char[numbits/8];
-	    for (count = 0; count < numbits/8; count++)
-		blowkey[count] = count;
-	    
-	    crypto = new WvBlowfishStream(wvcon, blowkey, numbits/8);
-	}
+        log("Using %s-bit Blowfish encryption.\n", numbits);
+        blowkey = new unsigned char[numbits/8];
+        for (int count = 0; count < numbits/8; count++)
+            blowkey[count] = count;
+        
+        crypto = new WvBlowfishStream(base, blowkey, numbits/8);
+        crypto->disassociate_on_close = true;
 	break;
 	
     default:
@@ -158,48 +188,25 @@ int main(int argc, char **argv)
 	break;
     }
     
-    
-    total = 0;
     gettimeofday(&start, &tz);
     
+    size_t total;
     if (direction == Encrypt)
     {
 	log("Encrypting stdin to stdout.\n");
-	
-	while (wvcon->isok() && crypto->isok())
-	{
-	    if (crypto->select(-1))
-	    {
-		len = wvcon->read(buf, sizeof(buf));
-		crypto->write(buf, len);
-		total += len;
-	    }
-	}
+        total = copy(wvin, crypto);
     }
-    else // direction == Decrypt
+    else
     {
 	log("Decrypting stdin to stdout.\n");
-
-	while (wvcon->isok() && crypto->isok())
-	{
-	    if (crypto->select(-1))
-	    {
-		len = crypto->read(buf, sizeof(buf));
-		wvcon->write(buf, len);
-		total += len;
-	    }
-	}
+        total = copy(crypto, wvout);
     }
-    if (crypto)
-    {
-        crypto->close();
-        crypto->cloned = NULL;
-	delete crypto;
-    }
+    delete crypto;
+    delete wvin;
+    delete wvout;
     
     gettimeofday(&stop, &tz);
     long tdiff = msecdiff(stop, start);
-    
     
     log("Processed %s bytes in %s.%03s seconds.\n"
 	"Transfer rate: %s kbytes/sec.\n",
@@ -210,3 +217,5 @@ int main(int argc, char **argv)
     if (blowkey)
 	delete [] blowkey;
 }
+
+

@@ -5,40 +5,43 @@
  * Test program for base64 functions...
  */
 
-#include "base64.h"
-#include <stdio.h>
+#include "wvbase64.h"
+#include "wvstream.h"
+#include "wvstreamlist.h"
+#include "wvencoderstream.h"
 
 int main(int argc, char **argv)
 {
-    char *str;
-    bool dec = false;
+    bool encode = true;
+    if (argc > 1 && strcmp(argv[1], "-d") == 0)
+        encode = false;
 
-    if (argc == 3 && !strcmp(argv[1], "-d"))
-    {
-        str = argv[2];
-        dec = true;
-    }
-    else if (argc == 2)
-        str = argv[1];
+    WvEncoder *enc;
+    if (encode)
+        enc = new WvBase64Encoder();
     else
-        str = "<insert secret message here>";
+        enc = new WvBase64Decoder();
 
-    if (!dec)
+    WvStream *wvin = new WvStream(0);
+    WvStream *wvout = new WvStream(1);
+    WvEncoderStream *stream = new WvEncoderStream(wvout);
+    stream->auto_flush(false);
+    stream->writechain.append(enc, true);
+
+    WvStreamList *slist = new WvStreamList();
+    slist->append(stream, false);
+    slist->append(wvin, false);
+    wvin->autoforward(*stream);
+    
+    while (wvin->isok())
     {
-	WvBuffer b;
-        WvString enc = base64_encode(str, strlen(str));
-	base64_decode(enc, b);
-        printf("before:  %s\n"
-	       "encoded: %s\n"
-	       "decoded: %s\n",
-	       str, enc.cstr(), b.getstr().cstr());
+        if (slist->select(-1))
+            slist->callback();
     }
-    else
-    {
-	WvBuffer b;
-        base64_decode(str, b);
-        printf("encoded: %s\n"
-	       "decoded: %s\n", str, base64_decode(str, b).getstr().cstr());
-    }
-    return( 0 );
+    stream->flush(0);
+    delete stream;
+    delete wvin;
+    delete slist;
+    
+    return 0;
 }
