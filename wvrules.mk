@@ -119,6 +119,9 @@ objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
 objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
 objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
 
+# macro that expands to the subdir.mk files to include
+xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
+
 # we need a default rule, since the 'includes' below causes trouble
 .PHONY: default all
 default: all
@@ -359,6 +362,6 @@ ChangeLog: FORCE
 #
 # Make 'tags' file using the ctags program - useful for editing
 #
-tags: $(shell find -name '*.cc' -o -name '*.[ch]')
-	@echo '(creating "tags")'
-	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
+#tags: $(shell find -name '*.cc' -o -name '*.[ch]')
+#	@echo '(creating "tags")'
+#	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
