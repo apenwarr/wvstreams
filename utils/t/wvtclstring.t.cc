@@ -15,77 +15,97 @@ WVTEST_MAIN("escaping and unescaping")
     result = wvtcl_escape(a);
     WVFAIL(result);
     result = wvtcl_unescape(result);
-    WVPASS(result == a);
+    if (!WVPASS(result == a))
+        printf("   because [%s] != [%s]", result, a);
     
     result = wvtcl_escape(b);
     desired = WvString("{}");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
-    WVPASS(result == b);
+    if (!WVPASS(result == b))
+        printf("   because [%s] != [%s]", result, b);
     
     
     //no escape required
     result = wvtcl_escape(c);
-    WVPASS(result == c);
+    if (!WVPASS(result == c))
+        printf("   because [%s] != [%s]", result, c);
     result = wvtcl_unescape(result);
-    WVPASS(result == c);
+    if (!WVPASS(result == c))
+        printf("   because [%s] != [%s]", result, c);
     
     
     //bracket escape required
     result = wvtcl_escape(d);
     desired = WvString("{%s}", d.cstr());
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
     WVPASS(result == d);
     
     result = wvtcl_escape(e);
     desired = WvString("{\"quote this!\"}");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(WvString("\"quote this!\""));
     desired = WvString("quote this!");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
         
     result = wvtcl_escape(i);
     desired = WvString("{shameless{frog}parts}");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
-    WVPASS(result == i);
+    if (!WVPASS(result == i))
+        printf("   because [%s] != [%s]", result, i);
     
     result = wvtcl_escape(h);
     desired = WvString("{hammer\\}time}");
     printf("%s\n", result.cstr());
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
-    WVPASS(result == h);
+    if (!WVPASS(result == h))
+        printf("   because [%s] != [%s]", result, h);
 
 
     //\ escaping required
     result = wvtcl_escape(f);
     desired = WvString("pooky\\{doo");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
-    WVPASS(result == f);
+    if (!WVPASS(result == f))
+        printf("   because [%s] != [%s]", result, f);
 
     result = wvtcl_escape(g);
     desired = WvString("big\\}monkey\\ \\{potatoes");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
-    WVPASS(result == g);
+    if (!WVPASS(result == g))
+        printf("   because [%s] != [%s]", result, g);
 
 
     //escaping with our own nasties
     result = wvtcl_escape(j, "o-\nu");
     desired = WvString("{wagloo-mas\nuffle}");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
-    WVPASS(result == j);
+    if (!WVPASS(result == j))
+        printf("   because [%s] != [%s]", result, j);
 
     result = wvtcl_escape(k, "$ky");
     desired = WvString("nast\\y\\{bad\\{\\}\\}\\}\\$brea\\k");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = wvtcl_unescape(result);
     printf("%s\n", result.cstr());
-    WVPASS(result == k);
+    if (!WVPASS(result == k))
+        printf("   because [%s] != [%s]", result, k);
 }
 
 WVTEST_MAIN("encoding and decoding")
@@ -98,20 +118,24 @@ WVTEST_MAIN("encoding and decoding")
     list.append(new WvString(), true);
     result = wvtcl_encode(list, " ", " ");
     desired = WvString("%s {%s} pooky\\{doo ", a, b);
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     
     wvtcl_decode(list, result);
     result = *list.first();
     list.unlink_first();
-    WVPASS(result == a);
+    if (!WVPASS(result == a))
+        printf("   because [%s] != [%s]", result, a);
 
     result = *list.first();
     list.unlink_first();
-    WVPASS(result == b);    
+    if (!WVPASS(result == b))  
+        printf("   because [%s] != [%s]", result, b);
 
     result = *list.first();
     list.unlink_first();
-    WVPASS(result == c);
+    if (!WVPASS(result == c))
+        printf("   because [%s] != [%s]", result, c);
     
     result = *list.first();
     WVFAIL(result);
@@ -128,25 +152,30 @@ WVTEST_MAIN("getword")
     // don't unescape
     result = wvtcl_getword(buf, " ", false);
     desired = WvString("jabba");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     // buffer should be updated properly
     result = buf.getstr();
     desired = WvString("{crab poody-doo} pooky\\{doo");
-    WVPASS(result == desired); 
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     
     // reset buffer
     buf.putstr(test);
     // unescape
     result = wvtcl_getword(buf, " ");
     desired = WvString("jabba");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     // buffer should be updated properly
     result = wvtcl_getword(buf, " ");
     desired = WvString("crab poody-doo");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
     result = buf.getstr();
     desired = WvString("pooky\\{doo");
-    WVPASS(result == desired);
+    if (!WVPASS(result == desired))
+        printf("   because [%s] != [%s]", result, desired);
 
     // test no word possible
     test = WvString("---{incomplete-");
@@ -155,7 +184,8 @@ WVTEST_MAIN("getword")
     // should return null
     WVFAIL(result);
     result = buf.getstr();
-    WVPASS(result == test);
+    if (!WVPASS(result == test))
+        printf("   because [%s] != [%s]", result, test);
     // test no word possible and whitespace eating
     test = WvString("    ");
     buf.putstr(test);
@@ -164,5 +194,6 @@ WVTEST_MAIN("getword")
     WVFAIL(result);
     result = buf.getstr();
     // buffer should be reset to original state, ie unchanged
-    WVPASS(result == test);
+    if (!WVPASS(result == test))
+        printf("   because [%s] != [%s]", result, test);
 }

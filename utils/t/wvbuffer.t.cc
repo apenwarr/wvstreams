@@ -7,6 +7,7 @@
 
 WVTEST_MAIN("old-style test")
 {
+    // from "buffertest.cc"
     // InPlaceBuffer Test
     {
         WvInPlaceBuf b(1024);
@@ -55,20 +56,23 @@ WVTEST_MAIN("old-style test")
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));    
         
         s = (char *)b.get(8);
-        WVFAIL(strcmp(s, "frogs on ice"));
+        if (WVFAIL(strcmp(s, "frogs on ice")))
+            printf("   because [%s] != [frogs on ice]", s);
     
         WVPASS(b.used() == 19);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));    
         
         b.put("frogs on bryce", 15);
         s = (char *)b.get(5);
-        WVFAIL(strcmp(s, " ice"));
+        if (WVFAIL(strcmp(s, " ice")))
+            printf("   because [%s] != [ ice]", s);
 
         WVPASS(b.used() == 29);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));    
         
         s = (char *)b.get(16);
-        WVFAIL(strcmp(s, "frogs on rice"));
+        if (WVFAIL(strcmp(s, "frogs on rice")))
+            printf("   because [%s] != [frogs on rice]", s);
     
         WVPASS(b.used() == 13);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));
@@ -78,10 +82,12 @@ WVTEST_MAIN("old-style test")
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));    
         
         s = (char *)b.get(11);
-        WVFAIL(strcmp(s, "s on rice"));
+        if (WVFAIL(strcmp(s, "s on rice")))
+            printf("   because [%s] != [s on rice]", s);
     
         s = (char *)b.get(14);
-        WVFAIL(strcmp(s, "rogs on bryce"));
+        if (WVFAIL(strcmp(s, "rogs on bryce")))
+            printf("   because [%s] != [rogs on bryce]", s);
     
         WVPASS(b.used() == 0);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));

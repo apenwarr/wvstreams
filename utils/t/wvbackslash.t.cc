@@ -10,6 +10,7 @@
 
 WVTEST_MAIN("old-style")
 {
+    // from "backslashtest.cc"
     // Test encoding
     {
         WvEncoder *enc = new WvBackslashEncoder();
