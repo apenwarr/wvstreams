@@ -166,7 +166,9 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	
 	if (!si.inherit_request)
 	{
-	    si.wants |= force;
+	    si.wants.readable |= readcb;
+	    si.wants.writable |= writecb;
+	    si.wants.isexception |= exceptcb;
 	    // si.wants |= cloned->force; // why would this be necessary?
 	}
 	
@@ -197,7 +199,9 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	oldwant = si.wants;
 	if (!si.inherit_request)
 	{
-	    si.wants |= force;
+	    si.wants.readable |= readcb;
+	    si.wants.writable |= writecb;
+	    si.wants.isexception |= exceptcb;
 	    // si.wants |= cloned->force; // why would this be needed?
 	}
 

@@ -37,12 +37,6 @@ class WvStream: public IWvStream
     IMPLEMENT_IOBJECT(WvStream);
 public:
     /**
-     * 'force' is the list of default SelectRequest values when you use the
-     * variant of select() that doesn't override them.
-     */
-    SelectRequest force;
-    
-    /**
      * If this is set, select() doesn't return true for read unless the
      * given stream also returns true for write.
      */
@@ -459,17 +453,17 @@ public:
     void setcallback(WvStreamCallback _callfunc, void *_userdata);
         
     /** Sets a callback to be invoked when the stream is readable. */
-    void setreadcallback();
+    IWvStreamCallback setreadcallback(IWvStreamCallback _callback);
 
     /** Sets a callback to be invoked when the stream is writable. */
-    void setwritecallback();
+    IWvStreamCallback setwritecallback(IWvStreamCallback _callback);
 
     /** Sets a callback to be invoked when the stream is in exception
      * state. */
-    void setexceptcallback();
+    IWvStreamCallback setexceptcallback(IWvStreamCallback _callback);
 
     /** Sets a callback to be invoked on close().  */
-    void setclosecallback(IWvStreamCallback _callfunc);
+    IWvStreamCallback setclosecallback(IWvStreamCallback _callback);
 
     /**
      * set the callback function for this stream to an internal routine
@@ -569,6 +563,7 @@ private:
 		 bool readable, bool writable, bool isexcept,
 		 bool forceable);
 
+    void legacy_callback(IWvStream& s);
 
 protected:
     // FIXME: this one is so bad, I'm not touching it. Quick hack to
@@ -576,10 +571,13 @@ protected:
     friend class WvHTTPClientProxyStream;
 
     WvDynBuf inbuf, outbuf;
+
     WvStreamCallback callfunc;
     void *userdata;
-    IWvStreamCallback closecb_func;
     WvCallback<void*,void*> call_ctx;
+
+    IWvStreamCallback readcb, writecb, exceptcb, closecb;
+
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;

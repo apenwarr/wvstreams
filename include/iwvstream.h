@@ -144,17 +144,17 @@ public:
     virtual bool should_flush() = 0;
 
     /** Sets a callback to be invoked when the stream is readable. */
-    virtual void setreadcallback() = 0;
+    virtual IWvStreamCallback setreadcallback(IWvStreamCallback _callfunc) = 0;
 
     /** Sets a callback to be invoked when the stream is writable. */
-    virtual void setwritecallback() = 0;
+    virtual IWvStreamCallback setwritecallback(IWvStreamCallback _callfunc) = 0;
 
     /** Sets a callback to be invoked when the stream is in exception
      * state. */
-    virtual void setexceptcallback() = 0;
+    virtual IWvStreamCallback setexceptcallback(IWvStreamCallback _callfunc) = 0;
 
     /** Sets a callback to be invoked on close().  */
-    virtual void setclosecallback(IWvStreamCallback _callfunc) = 0;
+    virtual IWvStreamCallback setclosecallback(IWvStreamCallback _callfunc) = 0;
 };
 
 
