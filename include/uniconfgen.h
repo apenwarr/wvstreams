@@ -17,8 +17,7 @@
 class WvStreamList;
 class UniConfGen;
 
-DeclareWvCallback(4, void, UniConfGenCallback, const UniConfGen &,
-    const UniConfKey &, UniConfDepth::Type, void *);
+typedef WvCallback<void, const UniConfGen &, const UniConfKey &, UniConfDepth::Type, void *> UniConfGenCallback;
 
 /**
  * An abstract data container that backs a UniConf tree.

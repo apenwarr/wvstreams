@@ -216,8 +216,8 @@ UniConfGen *UniMountTreeGen::mountgen(const UniConfKey &key,
 {
     UniMountTree *node = mounts->findormake(key);
     node->generators.append(gen, true);
-    gen->setcallback(wvcallback(UniConfGenCallback, *this,
-        UniMountTreeGen::gencallback), node);
+    gen->setcallback(UniConfGenCallback(this,
+        &UniMountTreeGen::gencallback), node);
     if (gen && refresh)
         gen->refresh(UniConfKey::EMPTY, UniConfDepth::INFINITE);
     return gen;
@@ -237,7 +237,7 @@ void UniMountTreeGen::unmount(const UniConfKey &key,
 
     if (commit)
         gen->commit(UniConfKey::EMPTY, UniConfDepth::INFINITE);
-    gen->setcallback(NULL, NULL);
+    gen->setcallback(UniConfGenCallback(), NULL);
 
     node->generators.unlink(gen);
 }

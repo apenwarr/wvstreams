@@ -173,8 +173,8 @@ bool UniIniGen::refresh(const UniConfKey &key,
     if (oldtree && newtree)
     {
         oldtree->compare(newtree,
-            wvcallback(UniConfValueTree::Comparator, *this,
-            UniIniGen::refreshcomparator), NULL);
+            UniConfValueTree::Comparator(this,
+            &UniIniGen::refreshcomparator), NULL);
         delete oldtree;
     }
     else

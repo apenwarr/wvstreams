@@ -16,8 +16,7 @@
 class UniConf;
 
 // parameters are: UniConf object, depth, userdata
-DeclareWvCallback(3, void, UniConfCallback, const UniConf &,
-    UniConfDepth::Type, void *);
+typedef WvCallback<void, const UniConf &, UniConfDepth::Type, void *> UniConfCallback;
 
 /** Observes a particular key. */
 class UniConfWatch

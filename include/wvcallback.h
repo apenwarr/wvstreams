@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -6,195 +6,446 @@
 #ifndef __WVCALLBACK_H
 #define __WVCALLBACK_H
 
-// the templated base class for WvCallback.  All the other callback classes
-// come from this somehow.
+class EmptyType;
 
-// Fake is a boring object type that we use for calling our "generic"
-// member function pointers.  Strangely, it crashes if Fake doesn't
-// have a virtual table, so we have an empty virtual function to make it
-// happy.  (This is all a bit evil, but only because C++ sucks.  When
-// they pass me a callback, they _know_ which function I want to call; I
-// don't need to resolve it at runtime...)
-struct Fake { virtual void silly() {} };
-
-template <class RET>
-class WvCallbackBase
+template<typename R,
+	 typename P1 = EmptyType,
+	 typename P2 = EmptyType,
+	 typename P3 = EmptyType,
+	 typename P4 = EmptyType,
+	 typename P5 = EmptyType,
+	 typename P6 = EmptyType,
+	 typename P7 = EmptyType,
+	 typename P8 = EmptyType>
+class WvCallbackImpl
 {
-protected:
 public:
-    // FakeFunc is a completely generic member-function pointer.  Actually the
-    // functions we _really_ call aren't part of the Fake class and probably
-    // have different parameters, but some hideous typecasts should fix that
-    // right up.
-    typedef RET (Fake::*FakeFunc)();
-    typedef RET (*FakeGlobalFunc)();
-    
-    Fake *obj;
-    
-    union {
-	FakeFunc func;
-	FakeGlobalFunc globalfunc;
-    };
-    
-    WvCallbackBase(void *_obj, FakeFunc _func)
-	: obj((Fake *)_obj), func(_func)
-	{ }
-    
-    WvCallbackBase(FakeGlobalFunc _func)
-	: obj(0), globalfunc(_func)
-	{ }
-    
-    bool operator== (const WvCallbackBase &cb) const
-        { if (obj)
-	    return obj==cb.obj && func==cb.func;
-	  else
-	    return !cb.obj && globalfunc == cb.globalfunc;
-	}
-    
-    operator bool () const
-        { return obj || globalfunc; }
+    typedef R(*type)(P1, P2, P3, P4, P5, P6, P7, P8);
+    virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
+    }
 };
 
-
-// Declare WvCallback#, an object derived from WvCallbackBase that takes
-// n parameters.  This macro is mainly for use later in this header
-// file, to avoid duplicated code.  It's supposed to be part of a template
-// declaration - be careful!
-#define __MakeWvCallback(n, decls, parms) \
-    class WvCallback##n : public WvCallbackBase<RET> \
-    { \
-    protected: \
-    public: \
-        typedef typename WvCallbackBase<RET>::FakeFunc FakeFunc; \
-        typedef typename WvCallbackBase<RET>::FakeGlobalFunc FakeGlobalFunc; \
-	typedef RET (Fake::*Func) decls; \
-	typedef RET (*GlobalFunc) decls; \
-	WvCallback##n(Fake *_obj, Func _func) \
-	    : WvCallbackBase<RET>(_obj, (FakeFunc)_func) { } \
-	WvCallback##n(GlobalFunc _func) \
-	    : WvCallbackBase<RET>((FakeGlobalFunc)_func) { } \
-    public: \
-	RET operator() decls const \
-	    { \
-	      if (obj) \
-		return ((*obj).*(Func)func) parms; \
-	      else \
-		return ((GlobalFunc)globalfunc) parms; \
-	    } \
+template<typename R,
+	 typename P1,
+	 typename P2,
+	 typename P3,
+	 typename P4,
+	 typename P5,
+	 typename P6,
+	 typename P7>
+class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, EmptyType>
+{
+public:
+    typedef R(*type)(P1, P2, P3, P4, P5, P6, P7);
+    virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
     }
+};
 
-// Derive WvCallback#_bound, an actual instance of WvCallback# that has a
-// particular object type.  This macro is mainly for use later in this header
-// file, to avoid duplicated code.
-// 
-// Note: normally I don't like the silly C++ casting operators, but
-// changing a normal typecast to reinterpret_cast<Func> below makes a _huge_
-// improvement in code size.  (g++ 2.95.4)
-#define __MakeWvBoundCallback(n, decls, basetype...) \
-    class WvCallback##n##_bound : public basetype \
-    { \
-    public: \
-        typedef typename basetype::Func Func; \
-	typedef RET (T::*BoundFunc) decls; \
-	WvCallback##n##_bound(T &_obj, BoundFunc _func) \
-	    : basetype((Fake *)&_obj, reinterpret_cast<Func>(_func)) { } \
+template<typename R,
+	 typename P1,
+	 typename P2,
+	 typename P3,
+	 typename P4,
+	 typename P5,
+	 typename P6>
+class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, EmptyType, EmptyType>
+{
+public:
+    typedef R(*type)(P1, P2, P3, P4, P5, P6);
+    virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
     }
+};
 
+template<typename R,
+	 typename P1,
+	 typename P2,
+	 typename P3,
+	 typename P4,
+	 typename P5>
+class WvCallbackImpl<R, P1, P2, P3, P4, P5, EmptyType, EmptyType, EmptyType>
+{
+public:
+    typedef R(*type)(P1, P2, P3, P4, P5);
+    virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
+    }
+};
 
-// declare WvCallback# and WvCallback#_bound classes for 0 through 6
-// parameters (we can add more parameters later, if necessary, by adding
-// more declarations below)
+template<typename R,
+	 typename P1,
+	 typename P2,
+	 typename P3,
+	 typename P4>
+class WvCallbackImpl<R, P1, P2, P3, P4, EmptyType, EmptyType, EmptyType, EmptyType>
+{
+public:
+    typedef R(*type)(P1, P2, P3, P4);
+    virtual R operator()(P1 p1, P2 p2, P3 p3, P4 p4) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
+    }
+};
 
-template <class RET>
-    __MakeWvCallback(0, (), ());
-template <class RET, class T>
-    __MakeWvBoundCallback(0, (), WvCallback0<RET>);
+template<typename R,
+	 typename P1,
+	 typename P2,
+	 typename P3>
+class WvCallbackImpl<R, P1, P2, P3, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+{
+public:
+    typedef R(*type)(P1, P2, P3);
+    virtual R operator()(P1 p1, P2 p2, P3 p3) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
+    }
+};
 
-template <class RET, class P1>
-    __MakeWvCallback(1, (P1 p1), (p1));
-template <class RET, class T, class P1>
-    __MakeWvBoundCallback(1, (P1 p1), WvCallback1<RET, P1>);
+template<typename R,
+	 typename P1,
+	 typename P2>
+class WvCallbackImpl<R, P1, P2, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+{
+public:
+    typedef R(*type)(P1, P2);
+    virtual R operator()(P1 p1, P2 p2) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
+    }
+};
 
-template <class RET, class P1, class P2>
-    __MakeWvCallback(2, (P1 p1, P2 p2), (p1, p2));
-template <class RET, class T, class P1, class P2>
-    __MakeWvBoundCallback(2, (P1 p1, P2 p2), WvCallback2<RET, P1, P2>);
+template<typename R,
+	 typename P1>
+class WvCallbackImpl<R, P1, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+{
+public:
+    typedef R(*type)(P1);
+    virtual R operator()(P1 p1) = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
+    }
+};
 
-template <class RET, class P1, class P2, class P3>
-    __MakeWvCallback(3, (P1 p1, P2 p2, P3 p3), (p1, p2, p3));
-template <class RET, class T, class P1, class P2, class P3>
-    __MakeWvBoundCallback(3, (P1 p1, P2 p2, P3 p3),
-			  WvCallback3<RET, P1, P2, P3>);
+template<typename R>
+class WvCallbackImpl<R, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+{
+public:
+    typedef R(*type)();
+    virtual R operator()() = 0;
+    virtual WvCallbackImpl* clone() const = 0;
+    virtual ~WvCallbackImpl()
+    {
+    }
+};
 
-template <class RET, class P1, class P2, class P3, class P4>
-    __MakeWvCallback(4, (P1 p1, P2 p2, P3 p3, P4 p4), (p1, p2, p3, p4));
-template <class RET, class T, class P1, class P2, class P3, class P4>
-    __MakeWvBoundCallback(4, (P1 p1, P2 p2, P3 p3, P4 p4),
-			  WvCallback4<RET, P1, P2, P3, P4>);
+template<class ParentCallback,
+	 typename Functor>
+class WvCallbackFunctor:
+    public WvCallbackImpl<typename ParentCallback::ReturnType,
+			  typename ParentCallback::Parm1,
+			  typename ParentCallback::Parm2,
+			  typename ParentCallback::Parm3,
+			  typename ParentCallback::Parm4,
+			  typename ParentCallback::Parm5,
+			  typename ParentCallback::Parm6,
+			  typename ParentCallback::Parm7,
+			  typename ParentCallback::Parm8>
+{
+    typedef typename ParentCallback::ReturnType R;
+    typedef typename ParentCallback::Parm1 P1;
+    typedef typename ParentCallback::Parm2 P2;
+    typedef typename ParentCallback::Parm3 P3;
+    typedef typename ParentCallback::Parm4 P4;
+    typedef typename ParentCallback::Parm5 P5;
+    typedef typename ParentCallback::Parm6 P6;
+    typedef typename ParentCallback::Parm7 P7;
+    typedef typename ParentCallback::Parm8 P8;
+    Functor func;
+public:
+    WvCallbackFunctor(const Functor& _func): func(_func)
+    {
+    }
+    WvCallbackFunctor* clone() const
+    {
+	return new WvCallbackFunctor(*this);
+    }
+    R operator()()
+    {
+	return func();
+    }
+    R operator()(P1 p1)
+    {
+	return func(p1);
+    }
+    R operator()(P1 p1, P2 p2)
+    {
+	return func(p1, p2);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3)
+    {
+	return func(p1, p2, p3);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4)
+    {
+	return func(p1, p2, p3, p4);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
+    {
+	return func(p1, p2, p3, p4, p5);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)
+    {
+	return func(p1, p2, p3, p4, p5, p6);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)
+    {
+	return func(p1, p2, p3, p4, p5, p6, p7);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8)
+    {
+	return func(p1, p2, p3, p4, p5, p6, p7, p8);
+    }
+};
 
-template <class RET, class P1, class P2, class P3, class P4, class P5>
-    __MakeWvCallback(5, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5),
-		     (p1, p2, p3, p4, p5));
-template <class RET, class T, class P1, class P2, class P3, class P4, class P5>
-    __MakeWvBoundCallback(5, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5),
-			  WvCallback5<RET, P1, P2, P3, P4, P5>);
+template<class ParentCallback,
+	 typename PtrToObject,
+	 typename PtrToMember>
+class WvCallbackMember:
+    public WvCallbackImpl<typename ParentCallback::ReturnType,
+			  typename ParentCallback::Parm1,
+			  typename ParentCallback::Parm2,
+			  typename ParentCallback::Parm3,
+			  typename ParentCallback::Parm4,
+			  typename ParentCallback::Parm5,
+			  typename ParentCallback::Parm6,
+			  typename ParentCallback::Parm7,
+			  typename ParentCallback::Parm8>
+{
+    typedef typename ParentCallback::ReturnType R;
+    typedef typename ParentCallback::Parm1 P1;
+    typedef typename ParentCallback::Parm2 P2;
+    typedef typename ParentCallback::Parm3 P3;
+    typedef typename ParentCallback::Parm4 P4;
+    typedef typename ParentCallback::Parm5 P5;
+    typedef typename ParentCallback::Parm6 P6;
+    typedef typename ParentCallback::Parm7 P7;
+    typedef typename ParentCallback::Parm8 P8;
+    PtrToObject obj;
+    PtrToMember member;
+public:
+    WvCallbackMember(PtrToObject _obj, PtrToMember _member):
+	obj(_obj), member(_member)
+    {
+    }
+    WvCallbackMember* clone() const
+    {
+	return new WvCallbackMember(*this);
+    }
+    R operator()()
+    {
+	return ((*obj).*member)();
+    }
+    R operator()(P1 p1)
+    {
+	return ((*obj).*member)(p1);
+    }
+    R operator()(P1 p1, P2 p2)
+    {
+	return ((*obj).*member)(p1, p2);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3)
+    {
+	return ((*obj).*member)(p1, p2, p3);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4)
+    {
+	return ((*obj).*member)(p1, p2, p3, p4);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
+    {
+	return ((*obj).*member)(p1, p2, p3, p4, p5);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)
+    {
+	return ((*obj).*member)(p1, p2, p3, p4, p5, p6);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)
+    {
+	return ((*obj).*member)(p1, p2, p3, p4, p5, p6, p7);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8)
+    {
+	return ((*obj).*member)(p1, p2, p3, p4, p5, p6, p7, p8);
+    }
+};
 
-template <class RET, class P1, class P2, class P3, class P4, class P5, class P6>
-    __MakeWvCallback(6, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6),
-		     (p1, p2, p3, p4, p5, p6));
-template <class RET, class T, class P1, class P2, class P3, class P4, class P5,
-    		class P6>
-    __MakeWvBoundCallback(6, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6),
-			  WvCallback6<RET, P1, P2, P3, P4, P5, P6>);
-
-
-// DeclareWvCallback is how you create a new type of callback.  The options
-// are:
-//    n - the number of parameters the callback takes (only 0..4 are allowed)
-//    ret - the return value of the callback
-//    type - the name of the callback type
-//    parms... - the types of the parameters.  There are 'n' of these.
-// 
-// Example:
-//     DeclareWvCallback(3, void, TriCallback, Object*, Blob&, bool);
-//     
-// NOTE!!
-// 
-// For some reason, running this inside a class definition causes an internal
-// compiler error (g++ 2.95.4).  So you'll have to declare your callbacks
-// at the top level, rather than inside your class where it might seem to
-// make more sense.  Oh well, at least it's less typing that way...
-// 
-#define DeclareWvCallback(n, ret, type, parms...) \
-    typedef WvCallback##n<ret , ## parms> type; \
-    \
-    template <class T> \
-	class type##_bound : public WvCallback##n##_bound<ret,T , ## parms> \
-	{ \
-	public: \
-            typedef typename \
-                WvCallback##n##_bound<ret,T , ## parms>::BoundFunc BoundFunc; \
-	    type##_bound(T &_obj, BoundFunc _func) \
-		: WvCallback##n##_bound<ret,T , ## parms>(_obj, _func) {} \
+template<typename R,
+	 typename P1 = EmptyType,
+	 typename P2 = EmptyType,
+	 typename P3 = EmptyType,
+	 typename P4 = EmptyType,
+	 typename P5 = EmptyType,
+	 typename P6 = EmptyType,
+	 typename P7 = EmptyType,
+	 typename P8 = EmptyType>
+class WvCallback
+{
+private:
+    WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, P8>* impl;
+public:
+    typedef R ReturnType;
+    typedef P1 Parm1;
+    typedef P2 Parm2;
+    typedef P3 Parm3;
+    typedef P4 Parm4;
+    typedef P5 Parm5;
+    typedef P6 Parm6;
+    typedef P7 Parm7;
+    typedef P8 Parm8;
+    WvCallback(): impl(0)
+    {
+    }
+    WvCallback(const WvCallback& cb): impl(0)
+    {
+	if(cb.impl)
+	    impl = cb.impl->clone();
+    }
+    template<typename Functor>
+    WvCallback(const Functor& func)
+    {
+	impl = new WvCallbackFunctor<WvCallback, Functor>(func);
+    }
+    WvCallback(const typename WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, P8>::type func)
+    {
+	impl = new WvCallbackFunctor<WvCallback, typename WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, P8>::type>(func);
+    }
+    template<typename PtrToObject, typename PtrToMember>
+    WvCallback(PtrToObject obj, PtrToMember member)
+    {
+	impl = new WvCallbackMember<WvCallback, PtrToObject, PtrToMember>(obj, member);
+    }
+    ~WvCallback()
+    {
+	if(impl)
+	    delete impl;
+    }
+    WvCallback& operator=(const WvCallback& cb)
+    {
+	if(impl)
+	{
+	    delete impl;
+	    impl = 0;
 	}
 
-// Use wvcallback() to actually generate a new callback object, given the
-// callback type, object type, and member function.  The callback type needs
-// to have been declared earlier with DeclareWvCallback.
-// 
-// Example:
-//     CallBackType cb = wvcallback(CallbackType, myobject, MyObject::Func);
-//     
-// You can pass the result of this call to anything that's expecting a
-// callback of the appropriate type; you don't need to actually create the
-// object first.
-// 
-#define wvcallback(cbname, instance, func) \
-    cbname##_bound<typeof(instance)>(instance, &func)
+	if(cb.impl)
+	    impl = cb.impl->clone();
 
+	return *this;
+    }
+    operator bool() const
+    {
+	return impl;
+    }
+    R operator()() const
+    {
+	return (*impl)();
+    }
+    R operator()(P1 p1) const
+    {
+	return (*impl)(p1);
+    }
+    R operator()(P1 p1, P2 p2) const
+    {
+	return (*impl)(p1, p2);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3) const
+    {
+	return (*impl)(p1, p2, p3);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4) const
+    {
+	return (*impl)(p1, p2, p3, p4);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) const
+    {
+	return (*impl)(p1, p2, p3, p4, p5);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) const
+    {
+	return (*impl)(p1, p2, p3, p4, p5, p6);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) const
+    {
+	return (*impl)(p1, p2, p3, p4, p5, p6, p7);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) const
+    {
+	return (*impl)(p1, p2, p3, p4, p5, p6, p7, p8);
+    }
+};
 
-// Some types of callbacks are so common we'll just declare them here.
+template<class InnerCallback>
+class BoundCallback
+{
+private:
+    typedef typename InnerCallback::ReturnType R;
+    typedef typename InnerCallback::Parm1 P1;
+    typedef typename InnerCallback::Parm2 P2;
+    typedef typename InnerCallback::Parm3 P3;
+    typedef typename InnerCallback::Parm4 P4;
+    typedef typename InnerCallback::Parm5 P5;
+    typedef typename InnerCallback::Parm6 P6;
+    typedef typename InnerCallback::Parm7 P7;
+    typedef typename InnerCallback::Parm8 P8;
+    InnerCallback cb;
+    P1 param;
+public:
+    BoundCallback(const InnerCallback& _cb, const P1 _param):
+	cb(_cb), param(_param)
+    {
+    }
+    R operator()() const
+    {
+	return cb(param);
+    }
+    R operator()(P2 p2) const
+    {
+	return cb(param, p2);
+    }
+    R operator()(P2 p2, P3 p3) const
+    {
+	return cb(param, p2, p3);
+    }
+    R operator()(P2 p2, P3 p3, P4 p4) const
+    {
+	return cb(param, p2, p3, p4);
+    }
+    R operator()(P2 p2, P3 p3, P4 p4, P5 p5) const
+    {
+	return cb(param, p2, p3, p4, p5);
+    }
+    R operator()(P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) const
+    {
+	return cb(param, p2, p3, p4, p5, p6);
+    }
+    R operator()(P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) const
+    {
+	return cb(param, p2, p3, p4, p5, p6, p7);
+    }
+};
 
-DeclareWvCallback(0, void, VoidCallback);
-
-#endif // __WVCALLBACK_H
+#endif /* __WVCALLBACK_H */

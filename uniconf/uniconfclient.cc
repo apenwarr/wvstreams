@@ -63,8 +63,8 @@ UniClientGen::UniClientGen(IWvStream *stream) :
     conn = new UniClientConn(stream);
     conn->force_select(true, false, false);
     conn->select(15000);
-    conn->setcallback(wvcallback(WvStreamCallback, *this,
-        UniClientGen::conncallback), NULL);
+    conn->setcallback(WvStreamCallback(this,
+        &UniClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, streamid.edit());
 }
 

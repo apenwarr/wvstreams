@@ -78,7 +78,7 @@ const WvUnixAddr *WvUnixConn::src() const
 
 
 WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
-	: addr(_addr), auto_callback(0)
+	: addr(_addr)
 {
     mode_t oldmask;
     
