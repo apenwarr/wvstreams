@@ -10,11 +10,25 @@
 #include "wvtimeutils.h"
 #include "wvdiriter.h"
 #include "strutils.h"
+#include "wvfork.h"
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 
 
 //----------------------------------- WvLogFileBase ------------------
+
+void WvLogFileBase::init()
+{
+#ifndef _WIN32
+    add_wvfork_callback(WvForkCallback(this, &WvLogFileBase::cleanup_on_fork));
+#endif
+}
+
+void WvLogFileBase::cleanup_on_fork(pid_t p)
+{
+    // in the child the file descriptors have been closed by the fork anyway
+    if (p == 0) close();
+}
 
 void WvLogFileBase::_mid_line(const char *str, size_t len)
 {

@@ -20,12 +20,18 @@ class WvLogFileBase : public WvLogRcv, public WvFile
     public:
         WvLogFileBase(WvStringParm _filename, WvLog::LogLevel _max_level
              = WvLog::NUM_LOGLEVELS) : WvLogRcv(_max_level),
-             WvFile(_filename, O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0644) {};
+             WvFile(_filename, O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0644)
+             { init(); }
 
     protected:
-        WvLogFileBase(WvLog::LogLevel _max_level) : WvLogRcv(_max_level) {};
+        WvLogFileBase(WvLog::LogLevel _max_level) : WvLogRcv(_max_level)
+        { init(); }
         virtual void _make_prefix(); 
         virtual void _mid_line(const char *str, size_t len);
+
+    private:
+        void init();
+        void cleanup_on_fork(pid_t p);
 };
 
 // A more advanced LogFile. Logs <filename>.<date>
@@ -36,6 +42,7 @@ class WvLogFile : public WvLogFileBase
     public:
         WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level
             = WvLog::NUM_LOGLEVELS, int _keep_for = 7);
+
     private:
         virtual void _make_prefix(); 
         void start_log();
