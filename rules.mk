@@ -90,18 +90,22 @@ doxygen:
 install: install-shared install-dev
 
 # FIXME: these should be built with their suffix, and the rule automated
-install-shared: libwvstreams.so libwvutils.so
+install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
-	$(INSTALL_PROGRAM) libwvstreams.so $(DESTDIR)$(libdir)/libwvstreams.so.$(RELEASE)
-	$(INSTALL_PROGRAM) libwvutils.so $(DESTDIR)$(libdir)/libwvutils.so.$(RELEASE)
+	for i in $(TARGETS_SO); do \
+	    $(INSTALL_PROGRAM) $$i $(DESTDIR)$(libdir)/$$i.$(RELEASE); \
+	done
 
-install-dev: libwvstreams.a libwvutils.a
+install-dev: $(TARGETS_SO) $(TARGETS_A)
 	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams
 	$(INSTALL_DATA) $(wildcard include/*.h) $(DESTDIR)$(includedir)/wvstreams
 	$(INSTALL) -d $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) libwvstreams.a libwvutils.a $(DESTDIR)$(libdir)
-	cd $(DESTDIR)$(libdir) && $(LN_S) libwvstreams.so.$(RELEASE) libwvstreams.so
-	cd $(DESTDIR)$(libdir) && $(LN_S) libwvutils.so.$(RELEASE) libwvutils.so
+	for i in $(TARGETS_A); do \
+	    $(INSTALL_DATA) $$i $(DESTDIR)$(libdir); \
+	done
+	for i in $(TARGETS_SO); do \
+	    cd $(DESTDIR)$(libdir) && $(LN_S) $$i.$(RELEASE) $$i; \
+	done
 
 uninstall:
 	$(tbd)
