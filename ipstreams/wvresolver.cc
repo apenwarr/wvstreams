@@ -25,7 +25,7 @@ public:
     time_t last_tried;
     
     WvResolverHost(const WvString &_name) : name(_name)
-        { init(); addr = NULL; }
+        { init(); name.unique(); addr = NULL; }
     ~WvResolverHost()
         {   
 	    if (addr) delete addr;
@@ -206,9 +206,7 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
 	    *addr = host->addr;
     }
     else
-    {
 	host->negative = true;
-    }
 
     if (host->pid && waitpid(host->pid, NULL, 0) == host->pid)
 	host->pid = 0;

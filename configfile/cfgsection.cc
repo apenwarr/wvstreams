@@ -13,6 +13,7 @@
 WvConfigSection::WvConfigSection(const WvString &_name)
 	: name(_name)
 {
+    name.unique();
 }
 
 
@@ -57,7 +58,10 @@ void WvConfigSection::set(const WvString &entry, const WvString &value)
 
     // otherwise, add the entry requested
     if (e)
+    {
 	e->set(value);
+	e->value.unique();
+    }
     else
 	append(new WvConfigEntry(entry, value), true);
 }

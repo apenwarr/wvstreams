@@ -9,9 +9,8 @@
  * It does the one thing really missing from char* strings, that is,
  * dynamic buffer management.
  * 
- * The '_st' member is the actual (char*) string.  Modify it at will.  You
- * can pass a 'maxlen' parameter to the constructor to make the '_st' buffer
- * larger than it initially needs to be.
+ * The 'str' member is the actual (char*) string.  You should never need
+ * to access it directly.
  */
 #ifndef __WVSTRING_H
 #define __WVSTRING_H
@@ -28,7 +27,7 @@
 #define WVSTRING_EXTRA 5
 
 
-#define __WVS_FORM(n) const WvString &__wvs_##n = WvString::wv_null
+#define __WVS_FORM(n) const WvString &__wvs_##n = __wvs_n
 #define WVSTRING_FORMAT_DECL const WvString &__wvs_format, \
 		const WvString &__wvs_a0, \
 		__WVS_FORM( a1), __WVS_FORM( a2), __WVS_FORM( a3), \
@@ -44,35 +43,60 @@
 		__wvs_a11, __wvs_a12, __wvs_a13, __wvs_a14, __wvs_a15, \
 		__wvs_a16, __wvs_a17, __wvs_a18, __wvs_a19
 
+class WvStringBuf;
+class WvString;
+
+// WvStringBuf used for char* strings that have not been cloned.
+extern WvStringBuf __wvs_nb;
+
+// just an empty string
+extern const WvString __wvs_n;
+
+
+struct WvStringBuf
+{
+    size_t size;        // string length - if zero, use strlen!!
+    unsigned links;	// number of WvStrings using this buf.
+    char data[0];	// optional room for extra string data
+};
+
+
 class WvString
 {
-    void fillme(const char *__st)
+    WvStringBuf *buf;
+    char *str;
+    
+    void unlink()
     { 
-	if (__st == NULL) { _st = NULL; return; }
-	_st = new char[strlen(__st) + WVSTRING_EXTRA];
-	strcpy(_st, __st); 
+	if (!buf) return;
+	if (! --buf->links)
+	    free(buf);
     }
-
-    // when this is called, we assume output._st == NULL; it will be filled.
-    static void do_format(WvString &output, char *format, const WvString **a);
+    
+    void link(WvStringBuf *_buf, const char *_str)
+    {
+	buf = _buf;
+	if (buf) buf->links++;
+	str = (char *)_str; // I promise not to change it without asking!
+    }
+    
+    WvStringBuf *alloc(size_t size);
+    void newbuf(size_t size);
 
 public:
-    char *_st;
-
-    // just an empty string
-    static const WvString wv_null;
-
-    WvString()      // fill blank strings ASAP by operator= or setsize()
-        { _st = NULL; }
+    WvString()      // fill blank strings later with operator= or setsize()
+        { buf = NULL; }
     void setsize(size_t i)
-        { if (_st) delete[] _st; _st = new char[i]; }
+        { unlink(); newbuf(i); }
     WvString(const WvString &s) // Copy constructor
-        { fillme(s._st); }
-    WvString(const char *__st)
-        { fillme(__st); }
+        { link(s.buf, s.str); }
+    WvString(const char *_str)
+        { if (_str) link(&__wvs_nb, _str); else buf = NULL; }
     WvString(int i) // auto-render int 'i' into a string
-        { _st = new char[16]; snprintf(_st, 16, "%d", i); }
+        { newbuf(16); snprintf(str, 16, "%d", i); }
 
+    // when this is called, we assume output.str == NULL; it will be filled.
+    static void do_format(WvString &output, char *format, const WvString **a);
     // Now, you are probably thinking to yourself: Boy, does this ever look
     // ridiculous.  And indeed it does.  However, it is completely type-safe
     // and when inline functions are enabled, it reduces automatically to its
@@ -88,88 +112,79 @@ public:
     // that many on one "printf"-type line in the history of the world.
     //
     WvString(WVSTRING_FORMAT_DECL)
-        {
-	    const WvString *x[20];
-	    
-	    if (&__wvs_a0  != &wv_null) x[ 0] = &__wvs_a0;
-	    if (&__wvs_a1  != &wv_null) x[ 1] = &__wvs_a1;
-	    if (&__wvs_a2  != &wv_null) x[ 2] = &__wvs_a2;
-	    if (&__wvs_a3  != &wv_null) x[ 3] = &__wvs_a3;
-	    if (&__wvs_a4  != &wv_null) x[ 4] = &__wvs_a4;
-	    if (&__wvs_a5  != &wv_null) x[ 5] = &__wvs_a5;
-	    if (&__wvs_a6  != &wv_null) x[ 6] = &__wvs_a6;
-	    if (&__wvs_a7  != &wv_null) x[ 7] = &__wvs_a7;
-	    if (&__wvs_a8  != &wv_null) x[ 8] = &__wvs_a8;
-	    if (&__wvs_a9  != &wv_null) x[ 9] = &__wvs_a9;
-	    if (&__wvs_a10 != &wv_null) x[10] = &__wvs_a10;
-	    if (&__wvs_a11 != &wv_null) x[11] = &__wvs_a11;
-	    if (&__wvs_a12 != &wv_null) x[12] = &__wvs_a12;
-	    if (&__wvs_a13 != &wv_null) x[13] = &__wvs_a13;
-	    if (&__wvs_a14 != &wv_null) x[14] = &__wvs_a14;
-	    if (&__wvs_a15 != &wv_null) x[15] = &__wvs_a15;
-	    if (&__wvs_a16 != &wv_null) x[16] = &__wvs_a16;
-	    if (&__wvs_a17 != &wv_null) x[17] = &__wvs_a17;
-	    if (&__wvs_a18 != &wv_null) x[18] = &__wvs_a18;
-	    if (&__wvs_a19 != &wv_null) x[19] = &__wvs_a19;
-	    
-	    _st = NULL;
-	    do_format(*this, __wvs_format._st, x);
-	}
-
-    ~WvString()
-        { if (_st) delete[] _st; }
-
-    // we need to be able to concatenate strings
-    WvString operator+(const WvString &s2) const
     {
-	WvString e;
-	e._st = new char[strlen(_st) + strlen(s2._st) + WVSTRING_EXTRA];
-	strcpy(e._st, _st);
-	strcat(e._st, s2._st);
-	return e;
+	const WvString *x[20];
+	
+	if (&__wvs_a0  != &__wvs_n) x[ 0] = &__wvs_a0;
+	if (&__wvs_a1  != &__wvs_n) x[ 1] = &__wvs_a1;
+	if (&__wvs_a2  != &__wvs_n) x[ 2] = &__wvs_a2;
+	if (&__wvs_a3  != &__wvs_n) x[ 3] = &__wvs_a3;
+	if (&__wvs_a4  != &__wvs_n) x[ 4] = &__wvs_a4;
+	if (&__wvs_a5  != &__wvs_n) x[ 5] = &__wvs_a5;
+	if (&__wvs_a6  != &__wvs_n) x[ 6] = &__wvs_a6;
+	if (&__wvs_a7  != &__wvs_n) x[ 7] = &__wvs_a7;
+	if (&__wvs_a8  != &__wvs_n) x[ 8] = &__wvs_a8;
+	if (&__wvs_a9  != &__wvs_n) x[ 9] = &__wvs_a9;
+	if (&__wvs_a10 != &__wvs_n) x[10] = &__wvs_a10;
+	if (&__wvs_a11 != &__wvs_n) x[11] = &__wvs_a11;
+	if (&__wvs_a12 != &__wvs_n) x[12] = &__wvs_a12;
+	if (&__wvs_a13 != &__wvs_n) x[13] = &__wvs_a13;
+	if (&__wvs_a14 != &__wvs_n) x[14] = &__wvs_a14;
+	if (&__wvs_a15 != &__wvs_n) x[15] = &__wvs_a15;
+	if (&__wvs_a16 != &__wvs_n) x[16] = &__wvs_a16;
+	if (&__wvs_a17 != &__wvs_n) x[17] = &__wvs_a17;
+	if (&__wvs_a18 != &__wvs_n) x[18] = &__wvs_a18;
+	if (&__wvs_a19 != &__wvs_n) x[19] = &__wvs_a19;
+	
+	buf = NULL;
+	do_format(*this, __wvs_format.str, x);
     }
     
-    WvString& operator= (const WvString &s2)
-    {
-	if (_st) delete[] _st;
-	if (s2._st != _st)
-	    fillme(s2._st);
-	else
-	    _st = NULL;
-	return *this;
-    }
+    ~WvString()
+        { unlink(); }
+    
+    size_t len() const
+        { return buf->size ? buf->size-1 : strlen(str); }
+
+    WvString &operator= (const WvString &s2);
+    
+    // make the buf and str pointers owned only by this WvString.
+    WvString &unique();
 
     // string comparison
     bool operator== (const WvString &s2) const
-	{ return (_st==s2._st) || (_st && s2._st && !strcmp(_st, s2._st)); }
+	{ return (str==s2.str) || (str && s2.str && !strcmp(str, s2.str)); }
     bool operator!= (const WvString &s2) const
-	{ return (_st!=s2._st) && (!_st || !s2._st || strcmp(_st, s2._st)); }
+	{ return (str!=s2.str) && (!str || !s2.str || strcmp(str, s2.str)); }
 
     bool operator== (const char *s2) const
-        { return (_st==s2) || (_st && s2 && !strcmp(_st, s2)); }
+        { return (str==s2) || (str && s2 && !strcmp(str, s2)); }
     bool operator!= (const char *s2) const
-	{ return (_st!=s2) && (!_st || !s2 || strcmp(_st, s2)); }
+	{ return (str!=s2) && (!str || !s2 || strcmp(str, s2)); }
     
     // not operator is 'true' if string is empty
     bool operator! () const
-        { return !_st || !_st[0]; }
+        { return !buf || !str[0]; }
 
     // pointer arithmetic
     bool operator+ (int i) const
-        { return _st + i; }
+        { return str + i; }
     bool operator- (int i) const
-        { return _st - i; }
+        { return str - i; }
     
     // auto-convert WvString to (char *), when needed.
     operator const char*() const
-        { return _st; }
+        { return str; }
+    
+    // make the string editable, and return a non-const (char*)
     char *edit()
-        { return _st; }
+        { return unique().str; }
     
     // used to convert WvString to int, when needed.
     // we no longer provide a typecast, because it causes annoyance.
     int num() const
-        { return atoi(_st); }
+        { return atoi(str); }
+    
 };
 
 

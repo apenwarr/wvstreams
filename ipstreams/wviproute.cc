@@ -17,12 +17,13 @@
 
 
 
-WvIPRoute::WvIPRoute(const char *_ifc, const char *_addr, const char *_mask,
-		     const char *_gate)
+WvIPRoute::WvIPRoute(const WvString &_ifc, const WvString &_addr,
+		     const WvString &_mask,const WvString &_gate)
 {
     __u32 addr, mask, gate;
     
     ifc = _ifc;
+    ifc.edit();
     
     addr = strtoul(_addr, NULL, 16);
     mask = strtoul(_mask, NULL, 16);
@@ -69,7 +70,7 @@ static char *next_col(char *str)
 void WvIPRouteList::setup()
 {
     WvFile kinfo("/proc/net/route", O_RDONLY);
-    char *line, *end, *addr, *mask, *gate, *flags;
+    char *line, *addr, *gate, *mask, *flags, *end;
     bool last_white;
     
     // skip header

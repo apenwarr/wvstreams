@@ -15,8 +15,8 @@
 class WvIPRoute
 {
 public:
-    WvIPRoute(const char *_ifc, const char *addr, const char *mask,
-	      const char *_gate);
+    WvIPRoute(const WvString &_ifc, const WvString &_addr,
+	      const WvString &_mask,const WvString &_gate);
     operator WvString() const;
     
     WvString ifc;

@@ -18,37 +18,30 @@ int main(int argc, char *argv[])
     const char *test_str;
 
     if (!cfg.isok())
-    {
-	return (-1);
-    }
+	return -1;
 
     if (argc != 3)
     {
 	printf("Usage: %s section name\n", argv[0]);
-	return (-1);
+	return -1;
     }
 
     test_str = cfg.get(argv[1], argv[2], "not there");
     printf("%d\n", cfg.get("intl", "icountry", 5));
     printf("%s\n\n", test_str);
     if (!cfg.isok())
-    {
-	return (-1);
-    }
+	return -1;
 
     cfg.set("Windows", "FooPort", "testywesty\n\n\n        \n");
     if (!cfg.isok())
-    {
-	return (-1);
-    }
+	return -1;
 
     WvConfigSection *sect = cfg["fontsubSTitUtES"];
     if (sect)
-    {
 	sect->dump(stdout);
-    }
+    
     puts("");
     sect = cfg["should_not_exist"];
 
-    return (0);
+    return 0;
 }

@@ -9,13 +9,56 @@
 #include <ctype.h>
 #include <assert.h>
 
-const WvString WvString::wv_null;
+WvStringBuf __wvs_nb = { 0, 1 };
+const WvString __wvs_n;
 
 
 // always a handy function
 static inline int _max(int x, int y)
 {
     return x>y ? x : y;
+}
+
+
+WvStringBuf *WvString::alloc(size_t size)
+{ 
+    WvStringBuf *buf = (WvStringBuf *)malloc(sizeof(WvStringBuf) 
+					     + size + WVSTRING_EXTRA);
+    buf->links = 0;
+    buf->size = size;
+    return buf;
+}
+    
+
+void WvString::newbuf(size_t size)
+{
+    buf = alloc(size);
+    buf->links = 1;
+    str = buf->data;
+}
+
+
+WvString &WvString::unique()
+{
+    if (buf->links > 1)
+    {
+	WvStringBuf *newb = alloc(len() + 1);
+	memcpy(newb->data, str, newb->size);
+	unlink();
+	link(newb, newb->data);
+    }
+	    
+    return *this; 
+}
+
+
+WvString& WvString::operator= (const WvString &s2)
+{
+    if (s2.buf == buf)
+	return *this;
+    unlink();
+    link(s2.buf, s2.str);
+    return *this;
 }
 
 

@@ -15,29 +15,34 @@
 
 WvURL::WvURL(const WvString &url) : err("No error")
 {
-    char *cptr;
+    WvString work(url);
+    char *cptr, *wptr = work.edit();
     
     port = 0; // error condition by default
     addr = NULL;
     resolving = true;
     
-    if (strncmp(url, "http://", 7)) // NOT equal
+    if (strncmp(wptr, "http://", 7)) // NOT equal
     {
 	err = "WvURL can only handle HTTP URLs.";
 	return;
     }
-    hostname = (const char *)url + 7;
+    wptr += 7;
     
-    cptr = strchr(hostname, '/');
+    hostname = wptr;
+    hostname.unique();
+    
+    cptr = strchr(wptr, '/');
     if (!cptr) // no path given
 	file = "/";
     else
     {
 	file = cptr;
+	file.unique();
 	*cptr = 0;
     }
     
-    cptr = strchr(hostname, ':');
+    cptr = strchr(wptr, ':');
     if (!cptr)
 	port = 80;
     else
@@ -45,6 +50,9 @@ WvURL::WvURL(const WvString &url) : err("No error")
 	port = atoi(cptr+1);
 	*cptr = 0;
     }
+
+    hostname = wptr;
+    hostname.unique();
     
     resolve();
 }

@@ -16,6 +16,7 @@
 WvConf::WvConf(const WvString &_filename)
 	: filename(_filename), log(filename), globalsection("")
 {
+    filename.unique();
     dirty = error = false;
     load_file();
 }

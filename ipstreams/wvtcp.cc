@@ -32,13 +32,13 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
 WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
 	: hostname(_hostname)
 {
-    char *cptr;
+    char *hnstr = hostname.edit(), *cptr;
     
-    cptr = strchr(hostname, ':');
+    cptr = strchr(hnstr, ':');
     if (!cptr)
-	cptr = strchr(hostname, '\t');
+	cptr = strchr(hnstr, '\t');
     if (!cptr)
-	cptr = strchr(hostname, ' ');
+	cptr = strchr(hnstr, ' ');
     if (cptr)
     {
 	*cptr++ = 0;

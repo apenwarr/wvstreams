@@ -241,8 +241,8 @@ WvString WvEtherAddr::printable() const
 	cptr += 2;
     }
     *cptr = 0;
-    
-    return s;
+
+    return WvString("%s", s); // create a dynamic WvString
 }
 
 
@@ -355,11 +355,8 @@ WvIPAddr::WvIPAddr(const char string[])
 /* Generate a printable version of an IP address. */
 WvString WvIPAddr::printable() const
 {
-    char out[4*4];
-    
-    snprintf(out, 4*4, "%u.%u.%u.%u", 
-	     binaddr[0], binaddr[1], binaddr[2], binaddr[3]);
-    return out;
+    return WvString("%s.%s.%s.%s",
+		    binaddr[0], binaddr[1], binaddr[2], binaddr[3]);
 }
 
 
@@ -492,7 +489,7 @@ WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
 
 WvString WvIPNet::printable() const
 {
-    return WvIPAddr::printable() + WvString("/") + mask;
+    return WvString("%s/%s", WvIPAddr::printable(), mask);
 }
 
 
@@ -602,7 +599,7 @@ WvIPPortAddr::WvIPPortAddr(const char string[], __u16 _port)
 /* Generate a printable version of an IP+Port Address. */
 WvString WvIPPortAddr::printable() const
 {
-    return WvIPAddr::printable() + WvString(":") + WvString(port);
+    return WvString("%s:%s", WvIPAddr::printable(), WvString(port));
 }
 
 

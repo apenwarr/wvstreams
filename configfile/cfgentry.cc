@@ -16,6 +16,8 @@ WvConfigEntry::WvConfigEntry()
 WvConfigEntry::WvConfigEntry(const WvString &_name, const WvString &_value)
 	: name(_name), value(_value)
 {
+    name.unique();
+    value.unique();
 }
 
 WvConfigEntry::~WvConfigEntry()

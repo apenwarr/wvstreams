@@ -9,9 +9,19 @@ WvString test1(WvString s)
 
 int main()
 {
+    printf("A WvString is %d bytes long.\n", sizeof(WvString));
+
     WvString a, b("Foo"), c("Foo"), d("Blue"), e;
     char *ca = "Fork", *cb = "Foo", *cd = NULL;
-
+    
+    {
+	WvString *x = new WvString(a);
+	WvString *y = new WvString(b);
+	printf("%s %s\n", (const char *)b, (const char *)*y);
+	delete y;
+	delete x;
+    }
+    
     // 0 1 0 0 1
     printf("%d %d %d %d %d\n", a == b, b == c, c == d, d == e, e == a);
 
@@ -47,7 +57,7 @@ int main()
     printf("%s\n", (const char *)s);
     WvString t;
     t = test1(s);
-    printf("%s -- %s\n", (const char *)s, (const char *)t);
+    printf("%s .. %s\n", (const char *)s, (const char *)t);
     
     return 0;
 }

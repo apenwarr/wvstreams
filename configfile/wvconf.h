@@ -28,7 +28,7 @@ public:
     ~WvConfigEntry();
     
     void set(const WvString &_value)
-        { value = _value; }
+        { value = _value; value.unique(); }
     
     WvString name, value;
 };
