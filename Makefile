@@ -117,9 +117,10 @@ test: runconfigure all tests wvtestmain
 	$(WVTESTRUN) $(MAKE) runtests
 
 runtests:
+	mkdir -p tmp-test
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
 	cd uniconf/tests && ./unitest.sh
-	rm -f tmp.ini
+	rm -rf tmp.ini tmp-test
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \
