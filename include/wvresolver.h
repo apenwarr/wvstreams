@@ -32,6 +32,7 @@ public:
      * Return -1 on timeout, or the number of addresses found, which may
      * be 0 if the address does not exist.
      * addrlist, if present, has to be an initialized list.
+     * addr points to an internal WvIPAddr and will be deleted automatically.
      */
     int findaddr(int msec_timeout, WvStringParm name,
 		 WvIPAddr const **addr, WvIPAddrList *addrlist = NULL);
