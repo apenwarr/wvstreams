@@ -38,7 +38,7 @@ dist: dist-hack-clean configure distclean
 	rm -rf autom4te.cache
 	if test -d .xplc; then \
 	    make -C .xplc patch; \
-	    cp -ar .xplc/build/xplc .; \
+	    cp -Lpr .xplc/build/xplc .; \
 	fi
 
 runconfigure: config.mk include/wvautoconf.h
