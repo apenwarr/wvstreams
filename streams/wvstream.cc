@@ -509,33 +509,14 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
     {
         queuemin(0);
     
-        // if there is a newline already, return its string.
-        size_t i = inbuf.strchr(separator);
-        if (i > 0)
-        {
-	    char *eol = (char *)inbuf.mutablepeek(i - 1, 1);
-	    assert(eol);
-	    *eol = 0;
-            return (char *)inbuf.get(i);
-        }
-        else if (!isok() || stop_read)    // uh oh, stream is in trouble.
-        {
-            if (inbuf.used())
-            {
-                // handle "EOF without newline" condition
-		// FIXME: it's very silly that buffers can't return editable
-		// char* arrays.
-                inbuf.alloc(1)[0] = 0; // null-terminate it
-                return const_cast<char *>(
-                    (const char *)inbuf.get(inbuf.used()));
-            }
-            else
-                break; // nothing else to do!
-        }
+        // if there is a newline already, we have enough data.
+        if (inbuf.strchr(separator) > 0)
+	    break;
+	else if (!isok() || stop_read)    // uh oh, stream is in trouble.
+	    break;
 
         // make select not return true until more data is available
-        size_t needed = inbuf.used() + 1;
-        queuemin(needed);
+        queuemin(inbuf.used() + 1);
 
         // compute remaining timeout
         if (wait_msec > 0)
@@ -550,7 +531,8 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
-        if (!isok())
+        
+	if (!isok())
             break;
 
         if (hasdata)
@@ -559,22 +541,33 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
             unsigned char *buf = inbuf.alloc(readahead);
             size_t len = uread(buf, readahead);
             inbuf.unalloc(readahead - len);
-            hasdata = inbuf.used() >= needed; // enough?
+            hasdata = len > 0; // enough?
         }
 
+	if (!isok())
+	    break;
+	
         if (!hasdata && wait_msec == 0)
-            break; // handle timeout
+	    return NULL; // handle timeout
     }
-    
-    // we timed out or had a socket error
-    if (!isok() && inbuf.used())
-    {
-	// if the stream has closed, dump the entire buffer as the last line
-	inbuf.put("", 1);
-	return (char *)inbuf.get(inbuf.used());
-    }
-    else
+    if (!inbuf.used())
 	return NULL;
+
+    // return the appropriate data
+    size_t i = 0;
+    i = inbuf.strchr(separator);
+    if (i > 0) {
+	char *eol = (char *)inbuf.mutablepeek(i - 1, 1);
+	assert(eol);
+	*eol = 0;
+	return const_cast<char*>((const char *)inbuf.get(i));
+    } else {
+	// handle "EOF without newline" condition
+	// FIXME: it's very silly that buffers can't return editable
+	// char* arrays.
+	inbuf.alloc(1)[0] = 0; // null-terminate it
+	return const_cast<char *>((const char *)inbuf.get(inbuf.used()));
+    }
 }
 
 

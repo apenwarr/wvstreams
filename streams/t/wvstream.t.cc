@@ -153,7 +153,17 @@ WVTEST_MAIN("getline")
     WvTime t2 = wvtime();
     WVPASS(msecdiff(t2, t1) >= 0);
     WVPASS(msecdiff(t2, t1) < 400); // noread().  shouldn't actually wait!
-    
+   
+    WvStream t;
+    t.inbuf.putstr("tremfodls\nd\ndopple");
+    line = t.getline(0, '\n', 20);
+    WVPASS(line && !strcmp(line, "tremfodls"));
+    t.close();
+    line = t.getline(0, '\n', 20);
+    WVPASS(line && !strcmp(line, "d"));
+    line = t.getline(0, '\n', 20);
+    WVPASS(line && !strcmp(line, "dopple"));
+
     // FIXME: avoid aborting the entire test here on a freezeup!
     ::alarm(5); // crash after 5 seconds
     WVPASS(!s.getline(-1));
