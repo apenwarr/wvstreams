@@ -71,6 +71,11 @@ void WvEVPMDDigest::cleanup()
     }
 }
 
+size_t WvEVPMDDigest::digestsize() const
+{
+    return EVP_MD_size(evpmd);
+}
+
 
 /***** WvMD5Digest *****/
 
@@ -150,4 +155,10 @@ void WvHMACDigest::cleanup()
         HMAC_Final(hmacctx, digest, NULL);
         active = false;
     }
+}
+
+
+size_t WvHMACDigest::digestsize() const
+{
+    return digest->digestsize();
 }

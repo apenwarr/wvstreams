@@ -14,6 +14,7 @@ template WvInPlaceBufferBase<unsigned char>;
 template WvConstInPlaceBufferBase<unsigned char>;
 template WvDynamicBufferBase<unsigned char>;
 template WvEmptyBufferBase<unsigned char>;
+template WvBufferCursorBase<unsigned char>;
 
 void WvBufferBase<unsigned char>::putstr(WvStringParm str)
 {

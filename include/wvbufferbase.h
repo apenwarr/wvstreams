@@ -14,11 +14,11 @@
 #include <assert.h>
 #include <limits.h>
 
-// This value is used internally to signal unlimited free space.
+// This value is used internally to signal unlimited space.
 // It is merely meant to be as large as possible yet leave enough
 // room to accomodate simple arithmetic operations without overflow.
 // Clients should NOT check for the presence of this value explicitly.
-#define UNLIMITED_FREE_SPACE (INT_MAX/2)
+#define UNLIMITED_SPACE (INT_MAX/2)
 
 /**
  * An abstract generic buffer template.
@@ -154,14 +154,15 @@ public:
     /**
      * Peeks the specified element from the buffer.
      * It is an error to invoke this method if used() == 0.
-     * See peek(...) for further contraints on offset.
+     * See peek(...) for information about offset.
      */
     T peek(int offset)
         { return *peek(offset, NULL); }
 
     /**
      * Efficiently copies the specified number of elements from the
-     *   buffer to the specified UNINITIALIZED storage location.
+     *   buffer to the specified UNINITIALIZED storage location
+     *   and removes the elements from the buffer.
      * It is an error for count to be greater than used().
      * For best results, call move(...) with a large count.
      * The pointer buf may be NULL only if count == 0.
@@ -174,13 +175,40 @@ public:
         while (count > 0)
         {
             size_t amount = usedopt();
-            assert(amount != 0 || !"attempted to move() more than used()");
+            assert(amount != 0 ||
+                !"attempted to move() more than used()");
             if (amount > count)
                 amount = count;
             const T *data = get(amount);
             ElemMemOps::uninit_copy(buf, data, amount);
             buf += amount;
             count -= amount;
+        }
+    }
+    
+    /**
+     * Efficiently copies the specified number of elements from the
+     *   buffer to the specified UNINITIALIZED storage location
+     *   but does not remove the elements from the buffer.
+     * It is an error for count to be greater than used().
+     * For best results, call copy(...) with a large count.
+     * The pointer buf may be NULL only if count == 0.
+     * See peek(...) for information about offset.
+     */
+    void copy(T *buf, size_t count, int offset = 0)
+    {
+        while (count > 0)
+        {
+            size_t amount;
+            const T *data = peek(offset, & amount);
+            assert(amount != 0 ||
+                !"attempted to copy() with invalid offset");
+            if (amount > count)
+                amount = count;
+            ElemMemOps::uninit_copy(buf, data, amount);
+            buf += amount;
+            count -= amount;
+            offset += amount;
         }
     }
     
@@ -1034,13 +1062,13 @@ public:
     /*** Overridden Members ***/
     virtual size_t free() const
     {
-        return UNLIMITED_FREE_SPACE;
+        return UNLIMITED_SPACE;
     }
     virtual size_t freeopt() const
     {
         size_t avail = Super::freeopt();
         if (avail == 0)
-            avail = UNLIMITED_FREE_SPACE;
+            avail = UNLIMITED_SPACE;
         return avail;
     }
     virtual T *alloc(size_t count)
@@ -1102,6 +1130,125 @@ template<class T>
 class WvEmptyBufferBase : public WvWriteOnlyBufferMixin<
     WvReadOnlyBufferMixin<WvBufferBase<T> > >
 {
+};
+
+
+/**
+ * A buffer that provides a view over a window of another buffer.
+ * The underlying buffer's get() position is not affected by
+ * reading from this buffer.
+ */
+template<class T>
+class WvBufferCursorBase : public WvBufferBase<T>
+{
+protected:
+    Buffer *buf;
+    int start;
+    int end;
+    int offset;
+    WvDynamicBufferBase<T> tmpbuf;
+
+public:
+    WvBufferCursorBase(Buffer *_buf, int _start, size_t _length) :
+        buf(_buf), start(_start), end(_start + _length), offset(0)
+    {
+    }
+
+    /*** Overridden Members ***/
+    virtual size_t used() const
+    {
+        int pos = getpos();
+        return end - pos;
+    }
+    virtual size_t usedopt() const
+    {
+        int pos = getpos();
+        size_t avail;
+        if (pos == 0)
+            avail = buf->usedopt();
+        else if (pos >= end)
+            avail = 0;
+        else
+            buf->peek(pos, & avail);
+        size_t maxavail = size_t(end - start);
+        if (avail > maxavail)
+            avail = maxavail;
+        return avail;
+    }
+    virtual const T *get(size_t count)
+    {
+        if (count == 0)
+            return NULL;
+        tmpbuf.zap();
+        int pos = getpos();
+        size_t avail;
+        const T *ptr = buf->peek(pos, & avail);
+        if (avail < count)
+        {
+            T *nptr = tmpbuf.alloc(count);
+            buf->copy(nptr, count, pos);
+            ptr = nptr;
+        }
+        offset += count;
+        return ptr;
+    }
+    virtual void unget(size_t count)
+    {
+        assert(count <= size_t(offset) ||
+            !"attempted to unget() more than ungettable()");
+        offset -= count;
+    }
+    virtual size_t ungettable() const
+    {
+        return offset;
+    }
+    virtual void zap()
+    {
+        start = end = offset = 0;
+    }
+    virtual size_t free() const
+    {
+        return 0;
+    }
+    virtual T *alloc(size_t count)
+    {
+        assert(count == 0 ||
+            !"attempted to alloc() more than free()");
+        return NULL;
+    }
+    virtual void unalloc(size_t count)
+    {
+        assert(count == 0 ||
+            !"attempted to unalloc() more than unallocable()");
+    }
+    virtual size_t unallocable() const
+    {
+        return 0;
+    }
+    virtual T *mutablepeek(int offset, size_t *count)
+    {
+        int pos = getpos();
+        size_t avail;
+        T *ptr = buf->mutablepeek(pos, & avail);
+        if (count)
+        {
+            size_t maxavail = size_t(end - start);
+            if (avail > maxavail)
+                avail = maxavail;
+            *count = avail;
+        }
+        return ptr;
+    }
+
+protected:
+    int getpos() const
+    {
+        int pos = start + offset;
+        assert(pos >= 0 && size_t(pos) <= buf->used() ||
+            size_t(pos) >= buf->ungettable() ||
+            !"attempted to operate on buffer cursor over invalid region");
+        return pos;
+    }
 };
 
 #endif // __WVBUFFERBASE_H

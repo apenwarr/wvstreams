@@ -128,6 +128,8 @@ typedef WvDynamicBufferBase<unsigned char> WvDynamicBuffer;
 
 typedef WvEmptyBufferBase<unsigned char> WvEmptyBuffer;
 
+typedef WvBufferCursorBase<unsigned char> WvBufferCursor;
+
 
 /***** A read-only buffer backed by a constant WvString *****/
 

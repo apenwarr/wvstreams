@@ -19,10 +19,14 @@
 
 /**
  * Superclass for all digests.
- * Does not add anything right now, but could come in handy later on.
  */
 class WvDigest : public WvEncoder
 {
+public:
+    /**
+     * Returns the number of bytes in the message digest.
+     */
+    virtual size_t digestsize() const = 0;
 };
 
 // internal implementation class do not reference this directly
@@ -37,6 +41,7 @@ class WvEVPMDDigest : public WvDigest
 
 public:
     virtual ~WvEVPMDDigest();
+    virtual size_t digestsize() const;
 
 protected:
     WvEVPMDDigest(env_md_st *_evpmd);
@@ -108,6 +113,7 @@ public:
     WvHMACDigest(WvEVPMDDigest *_digest, const void *_key,
         size_t _keysize);
     virtual ~WvHMACDigest();
+    virtual size_t digestsize() const;
 
 protected:
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
