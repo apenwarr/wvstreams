@@ -175,12 +175,7 @@ bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm pas
         if (!check_pam_status("password setup")) return false;   
     }
      
-    const void *x = NULL;
-    d->status = pam_get_item(d->pamh, PAM_USER, &x);
-    if (!check_pam_status("get username")) return false;
-    d->user = (const char *)x;
-
-    log("Starting Authentication for %s\n", d->user);
+    log("Starting Authentication for %s@%s\n", d->user, rhost);
     
     d->status = pam_authenticate(d->pamh, PAM_DISALLOW_NULL_AUTHTOK | PAM_SILENT);
     if (!check_pam_status("authentication")) return false;
@@ -193,7 +188,15 @@ bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm pas
 
     d->status = pam_open_session(d->pamh, 0);
     if (!check_pam_status("session open")) return false;
-    
+
+    // Grab the current user name (now that we've authenticated)
+    if (!d->user)
+    {
+        const void *x = NULL;
+        d->status = pam_get_item(d->pamh, PAM_USER, &x);
+        if (!check_pam_status("get username")) return false;
+        d->user = (const char *)x;        
+    }
     log("Session open as user '%s'\n", d->user);
     
     // If we made it here, we're clear of everything, and we can go

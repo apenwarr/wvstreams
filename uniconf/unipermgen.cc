@@ -54,7 +54,7 @@ void UniPermGen::setgroup(const UniConfKey &path, WvStringParm group)
 WvString UniPermGen::getgroup(const UniConfKey &path)
 {
     WvString group = inner()->get(WvString("%s/group", path));
-    if (group.isnull() && !path.isempty())
+    if (!group && !path.isempty())
         group = getgroup(path.removelast());
     return group;
 }
@@ -80,9 +80,9 @@ bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred,
     else level = WORLD;
 
     bool perm = getoneperm(path, level, type);
-//     wverr->print("getperm(%s/%s,%s,%s-%s) = %s\n",
-//                cred.user, cred.groups.count(),
-//     		 path, level2str(level), type2str(type), perm);
+//     wverr->print("getperm(%s/%s, %s/%s, %s,%s-%s) = %s\n",
+//                  cred.user, cred.groups.count(), owner, group,
+//       		 path, level2str(level), type2str(type), perm);
     return perm;
 }
 
