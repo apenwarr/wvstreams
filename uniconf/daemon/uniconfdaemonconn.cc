@@ -21,7 +21,7 @@ UniConfDaemonConn::~UniConfDaemonConn()
     {
         WvString key = *i;
         if (!key) key = "/";
-        del_callback(key);
+        del_callback(key, this);
     }
 }
 
@@ -32,34 +32,38 @@ void UniConfDaemonConn::keychanged(void *userdata, UniConf &conf)
     if (!userdata)
         return;
     
-    WvStream *s = (WvStream *)userdata;
+    UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
     WvString keyname(conf.gen_full_key()); 
 //    log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
+
+    WvString response("%s %s %s\n", UNICONF_RETURN, wvtcl_escape(keyname),
+            !!source->mainconf.get(keyname) ? wvtcl_escape(source->mainconf.get(keyname)) :
+            WvString("\\0"));
     if (s->isok())
-        s->write(WvString("%s %s\n", UNICONF_FORGET, wvtcl_escape(keyname)));
+        s->print(response);
 }
 
 /* Functions to look after UniEvents callback setting / removing */
 
-void UniConfDaemonConn::update_callbacks(WvString key, bool one_shot)
+void UniConfDaemonConn::update_callbacks(WvString key, WvStream *s, bool one_shot)
 {
-    del_callback(key);
-    add_callback(key, one_shot);
+    del_callback(key, s);
+    add_callback(key, one_shot, s);
 }
 
-void UniConfDaemonConn::del_callback(WvString key)
+void UniConfDaemonConn::del_callback(WvString key, WvStream *s)
 {
 //    log("About to delete callbacks for %s.\n", key);
-    source->events.del(wvcallback(UniConfCallback, *this,
-                UniConfDaemonConn::keychanged), this, key);
+    source->events.del(wvcallback(UniConfCallback, *s,
+                UniConfDaemonConn::keychanged), s, key);
 
 }
 
-void UniConfDaemonConn::add_callback(WvString key, bool one_shot)
+void UniConfDaemonConn::add_callback(WvString key, bool one_shot, WvStream *s)
 {
 //    log("About to add callbacks for %s.\n", key);
-    source->events.add(wvcallback(UniConfCallback,
-                *this, UniConfDaemonConn::keychanged), this, key, one_shot);
+    source->events.add(wvcallback(UniConfCallback, *s, 
+                UniConfDaemonConn::keychanged), s, key, one_shot);
 
     // Now track what keys I know of.
 //    log("Now adding key:%s, to the list of keys.\n",key);
@@ -68,36 +72,36 @@ void UniConfDaemonConn::add_callback(WvString key, bool one_shot)
 
 /* End of functions to look after UniEvents callback setting / removing */
 
-void UniConfDaemonConn::dook(const WvString cmd, const WvString key)
+void UniConfDaemonConn::dook(const WvString cmd, const WvString key, WvStream *s)
 {
-    if (this->isok())
-        print("%s %s %s\n", UNICONF_OK, cmd, key); 
+    if (s->isok())
+        s->print("%s %s %s\n", UNICONF_OK, cmd, key); 
 }
 
-void UniConfDaemonConn::doget(WvString key)
+void UniConfDaemonConn::doget(WvString key, WvStream *s)
 {
-    dook("get", key);
+    dook(UNICONF_GET, key, s);
     WvString response("%s %s ", UNICONF_RETURN, wvtcl_escape(key));
     if (!!source->mainconf.get(key))
         response.append("%s\n",wvtcl_escape(source->mainconf.get(key)));
     else
         response.append("\\0\n");
 
-    if (this->isok())
+    if (s->isok())
     {
-        print(response);
+        s->print(response);
 
         // Ensure no duplication of events.
-        update_callbacks(key);
+        update_callbacks(key, s);
     }
 }
 
-void UniConfDaemonConn::dosubtree(WvString key)
+void UniConfDaemonConn::dosubtree(WvString key, WvStream *s)
 {
     UniConf *nerf = &source->mainconf[key];
     WvString send("%s %s ", UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
     
-    dook(UNICONF_SUBTREE, key);
+    dook(UNICONF_SUBTREE, key, s);
     
     if (nerf)
     {
@@ -107,7 +111,7 @@ void UniConfDaemonConn::dosubtree(WvString key)
             send.append("{%s %s} ", wvtcl_escape(i->name),
                     wvtcl_escape(*i));
             
-            update_callbacks(key);
+            update_callbacks(key, s);
        }
     }
    
@@ -116,12 +120,12 @@ void UniConfDaemonConn::dosubtree(WvString key)
         print(send);
 }
 
-void UniConfDaemonConn::dorecursivesubtree(WvString key)
+void UniConfDaemonConn::dorecursivesubtree(WvString key, WvStream *s)
 {
     UniConf *nerf = &source->mainconf[key];
     WvString send("%s %s ", UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
     
-    dook(UNICONF_RECURSIVESUBTREE, key);
+    dook(UNICONF_RECURSIVESUBTREE, key, s);
     
     if (nerf)
     {
@@ -131,7 +135,7 @@ void UniConfDaemonConn::dorecursivesubtree(WvString key)
             send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)),
                     wvtcl_escape(*i));
             
-            update_callbacks(key);
+            update_callbacks(key, s);
         }
     }
     send.append("\n");
@@ -139,18 +143,18 @@ void UniConfDaemonConn::dorecursivesubtree(WvString key)
         print(send);
 }
 
-void UniConfDaemonConn::doset(WvString key, WvConstStringBuffer &fromline)
+void UniConfDaemonConn::doset(WvString key, WvConstStringBuffer &fromline, WvStream *s)
 {
     WvString newvalue = wvtcl_getword(fromline);
     source->mainconf[key] = wvtcl_unescape(newvalue);
     source->keymodified = true;
-    dook(UNICONF_SET, key);
+    dook(UNICONF_SET, key, s);
 }
 
 void UniConfDaemonConn::registerforchange(WvString key)
 {
-    log("Registering to listen to any changes on or below %s.\n", key);
-    update_callbacks(key);
+    dook(UNICONF_REGISTER, key, this);
+    update_callbacks(key, this);
 }
 
 void UniConfDaemonConn::execute()
@@ -177,7 +181,7 @@ void UniConfDaemonConn::execute()
 	    }
             if (cmd == UNICONF_QUIT)//"quit")
             {
-                dook(cmd, "<null>");
+                dook(cmd, "<null>", this);
                 close();
                 return;
             }
@@ -187,19 +191,19 @@ void UniConfDaemonConn::execute()
 
             if (cmd == UNICONF_GET)//"get") // return the specified value
             {
-                doget(key);
+                doget(key, this);
             }
             else if (cmd == UNICONF_SUBTREE)//"subt") // return the subtree(s) of this key
             {
-                dosubtree(key);
+                dosubtree(key, this);
             }
             else if (cmd == UNICONF_RECURSIVESUBTREE)//"rsub")
             {
-                dorecursivesubtree(key);
+                dorecursivesubtree(key, this);
             }
             else if (cmd == UNICONF_SET) // set the specified value
             {
-                doset(key, fromline);
+                doset(key, fromline, this);
             }
             else if (cmd == UNICONF_REGISTER)
             {
