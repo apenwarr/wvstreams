@@ -14,7 +14,7 @@
 WvStreamList WvTCPListener::all_listeners;
 
 
-static void nice_tcpopts(int fd)
+void nice_tcpopts(int fd)
 {
     int value;
     
