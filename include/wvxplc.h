@@ -11,7 +11,9 @@
 #define UNSTABLE
 #endif
 
-#if 0
+#include "wvautoconf.h"
+
+#ifndef ENABLE_DELETE_DETECTOR
 #include <xplc/IObject.h>
 #define deletev delete[]
 #else
