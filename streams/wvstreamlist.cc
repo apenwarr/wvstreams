@@ -29,8 +29,11 @@ bool WvStreamList::isok() const
 bool WvStreamList::select_setup(SelectInfo &si)
 {
     bool one_dead = false;
-	
-    sure_thing.zap();
+    
+    // usually because of WvTask, we might get here without having finished
+    // the _last_ set of sure_thing streams...
+    if (!sure_thing.isempty())
+	return true;
 
     Iter i(*this);
     for (i.rewind(), i.next(); i.cur(); )
@@ -42,6 +45,8 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	    one_dead = true;
 	    if (auto_prune)
 		i.unlink();
+	    else
+		i.next();
 	    continue;
 	}
 	
@@ -63,14 +68,20 @@ bool WvStreamList::select_setup(SelectInfo &si)
 
 bool WvStreamList::test_set(SelectInfo &si)
 {
+    bool one_dead = false;
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
 	WvStream &s(i);
-	if (s.isok() && s.test_set(si))
-	    sure_thing.append(&s, false);
+	if (s.isok())
+	{
+	    if (s.test_set(si))
+		sure_thing.append(&s, false);
+	}
+	else
+	    one_dead = true;
     }
-    return !sure_thing.isempty();
+    return one_dead || !sure_thing.isempty();
 }
 
 
