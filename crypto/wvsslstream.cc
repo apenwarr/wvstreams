@@ -46,6 +46,10 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 	// Allow SSL Writes to only write part of a request...
 	SSL_CTX_set_mode(ctx,SSL_MODE_ENABLE_PARTIAL_WRITE);
 
+	// Enable the workarounds for broken clients and servers
+	// and disable the insecure SSLv2 protocol
+        SSL_CTX_set_options(ctx, SSL_OP_ALL|SSL_OP_NO_SSLv2);
+
 	if (SSL_CTX_use_certificate(ctx, x509->cert) <= 0)
 	{
 	    seterr("Error loading certificate!");
