@@ -414,22 +414,22 @@ if test "$with_vorbis" = "no"; then
 fi
 if test "$with_xplc" = "no"; then
     AC_MSG_WARN([XPLC is missing.])
-    missing_required=yes
+    missing_required="$missing_required XPLC"
 fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
 fi
 if test "$with_openssl" = "no"; then
-    AC_MSG_WARN([OpenSSL is missing and is required.])
-    missing_required=yes
+    AC_MSG_WARN([OpenSSL is missing.])
+    missing_required="$missing_required OpenSSL"
 fi
 if test "$with_zlib" = "no"; then
-    AC_MSG_WARN([zlib is missing and is required.])
-    missing_required=yes
+    AC_MSG_WARN([zlib is missing.])
+    missing_required="$missing_required zlib"
 fi
 
 if test -n "$missing_required"; then
-    AC_MSG_ERROR([Required dependencies missing.])
+    AC_MSG_ERROR([Required dependencies missing:$missing_required])
 fi
 
 if test "$enable_devel" = "yes"; then

@@ -349,7 +349,11 @@ _wvclean: FORCE
 # default dist rules.
 distclean: clean
 
-dist: distclean
+dist: distclean ChangeLog
+
+ChangeLog: FORCE
+	rm -f ChangeLog ChangeLog.bak
+	cvs2cl --utc
 
 #
 # Make 'tags' file using the ctags program - useful for editing
