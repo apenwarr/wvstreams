@@ -15,7 +15,8 @@ struct x509_st;
 typedef struct x509_st X509;
 struct ssl_ctx_st;
 typedef struct ssl_ctx_st SSL_CTX;
-
+struct X509_crl_st;
+typedef struct X509_crl_st X509_CRL;
 class WvRSAKey;
 
 // workaround for the fact that OpenSSL initialization stuff must be called
@@ -33,7 +34,7 @@ class WvX509Mgr : public WvError
 {
 public:
    /**
-    * Type for the @ref encode() and decode() methods.
+    * Type for the @ref encode() and @ref decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
     * RsaPEM    = PEM Encoded RSA Private Key
     * RsaPubPEM = PEM Encoded RSA Public Key
@@ -153,13 +154,13 @@ public:
 
     /**
      * Function to verify the validity of a certificate that has been
-     * placed in cert. Currently, this only outputs some information about
-     * the certificate but eventually, it should be used to verify that the
-     * certificate is valid (has not expired, and was issued by a valid and
-     * trusted CA) 
+     * placed in cert. It can check and make sure that it was signed by
+     * the CA certificate cacert, and is not in the CRL crl, but at the
+     * very least, it checks and makes sure that your certificate is not 
+     * expired
      */
-    bool validate();
-   
+    bool validate(WvX509Mgr *cacert = NULL, X509_CRL *crl = NULL);
+
     /**
      * Check the certificate in cert against the CA certificates in
      * certdir - returns true if cert was signed by one of the CA
@@ -172,6 +173,12 @@ public:
      * - returns true if cert was signed by that CA certificate. 
      */
    bool signedbyCAinfile(WvStringParm certfile);
+
+   /**
+    * Check the certificate in cert against the CA certificate in cacert
+    * - returns true if cert was signed by that CA certificate.
+    */
+   bool signedbyCA(WvX509Mgr *cacert);
 
     /**
      * Sign the contents of data and return the signature as a BASE64
@@ -232,6 +239,11 @@ public:
      * Return the Subject field of the certificate
      */
     WvString get_subject();
+
+    /**
+     * Return the serialNumber field of the certificate
+     */
+    WvString get_serial();
 
     /**
      * Return the CRL Distribution points if they exist, WvString::null

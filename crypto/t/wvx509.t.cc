@@ -106,6 +106,7 @@ WVTEST_MAIN("X509 Basic sanity tests")
     }
     {
         WvX509Mgr t509(strcert, strrsa);
+	WVPASS(t509.get_serial() == "1621957333");
 	basic_test(&t509, dName2);
 	WVPASS(t509.hexify() == strcert);
     }

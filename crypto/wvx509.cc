@@ -616,21 +616,22 @@ WvString WvX509Mgr::hexify()
 }
 
 
-bool WvX509Mgr::validate()
+bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
 {
+    bool retval = true;
+    
     if (cert != NULL)
     {
-	debug("Peer Certificate:\n");
-	debug("Issuer: %s\n",
-	      X509_NAME_oneline(X509_get_issuer_name(cert),0,0));
-
 	// Check and make sure that the certificate is still valid
 	if (X509_cmp_current_time(X509_get_notAfter(cert)) == -1)
 	{
-	    seterr("Peer certificate has expired!");
-	    return false;
+	    seterr("Certificate has expired!");
+	    retval = false;
 	}
 	
+	if (cacert)
+	    retval &= signedbyCA(cacert);
+
 	// Kind of a placeholder thing right now...
 	// Later on, do CRL, and certificate validity checks here..
         // Actually, break these out in signedbyvalidCA(), and isinCRL()
@@ -640,7 +641,7 @@ bool WvX509Mgr::validate()
     else
 	debug("Peer doesn't have a certificate.\n");
     
-    return true;
+    return retval;
 }
 
 
@@ -690,6 +691,16 @@ bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
 	    return false;
     }    
     return true;
+}
+
+
+bool WvX509Mgr::signedbyCA(WvX509Mgr *cacert)
+{
+    int ret = X509_check_issued(cacert->cert, cert);
+    if (ret == X509_V_OK)
+	return true;
+    else
+	return false;
 }
 
 
@@ -977,6 +988,16 @@ WvString WvX509Mgr::get_subject()
 	WvString retval(name);
 	OPENSSL_free(name);
 	return retval;
+    }
+    else
+	return WvString::null;
+}
+
+WvString WvX509Mgr::get_serial()
+{
+    if (cert)
+    {
+	return WvString(ASN1_INTEGER_get(X509_get_serialNumber(cert)));
     }
     else
 	return WvString::null;
