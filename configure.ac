@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.18 2003/03/03 08:57:34 ilguiz Exp $)
+AC_REVISION($Id: configure.ac,v 1.19 2003/03/03 10:04:00 ilguiz Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -12,17 +12,9 @@ AC_ARG_ENABLE(devel,
               AC_HELP_STRING([--enable-devel],
                              [developer options]))
 
-AC_ARG_ENABLE(debug,
-              AC_HELP_STRING([--enable-debug],
-                             [debugging options]))
-
 AC_ARG_ENABLE(fatal-warnings,
               AC_HELP_STRING([--enable-fatal-warnings],
                              [turn warnings into errors]))
-
-AC_ARG_ENABLE(verbose,
-              AC_HELP_STRING([--enable-verbose],
-                             [verbose compilation output]))
 
 AC_ARG_ENABLE(optimization,
               AC_HELP_STRING([--disable-optimization],
@@ -39,10 +31,6 @@ AC_ARG_ENABLE(rtti,
 AC_ARG_ENABLE(exceptions,
               AC_HELP_STRING([--enable-exceptions],
                              [C++ exceptions (compiler)]))
-
-AC_ARG_ENABLE(efence,
-              AC_HELP_STRING([--enable-efence],
-                             [Electric Fence]))
 
 AC_ARG_ENABLE(resolver-fork,
               AC_HELP_STRING([--disable-resolver-fork],
@@ -76,6 +64,35 @@ AC_ARG_WITH(xplc,
             AC_HELP_STRING([--with-xplc],
                            [XPLC]),
             LDFLAGS="$CXXFLAGS -L$withval" CPPFLAGS="$CPPFLAGS -I$withval/include")
+
+AC_ARG_ENABLE(debug,
+              AC_HELP_STRING([--disable-debug],
+                             [strip debug information]),
+              [],
+              [enable_debug="yes"])
+AC_SUBST(enable_debug)
+AC_MSG_CHECKING([for --enable-debug])
+AC_MSG_RESULT([$enable_debug])
+
+
+AC_ARG_ENABLE(efence,
+              AC_HELP_STRING([--enable-efence],
+                             [link against Electric Fence]),
+              [],
+              [enable_efence="$enable_debug"])
+AC_SUBST(enable_efence)
+AC_MSG_CHECKING([for --enable-efence])
+AC_MSG_RESULT([$enable_efence])
+
+
+AC_ARG_ENABLE(verbose,
+              AC_HELP_STRING([--enable-verbose],
+                             [verbose compilation output]),
+              [],
+              [enable_verbose="no"])
+AC_SUBST(enable_verbose)
+AC_MSG_CHECKING([for --enable-verbose])
+AC_MSG_RESULT([$enable_verbose])
 
 AC_PROG_CXX
 AC_PROG_CC
