@@ -36,6 +36,8 @@ WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair)
 
 WvX509Mgr::~WvX509Mgr()
 {
+    if (keypair)
+	delete keypair;
     X509_free(cert);
     ERR_free_strings();
 }

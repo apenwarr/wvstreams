@@ -139,6 +139,8 @@ WvBlowfishStream::~WvBlowfishStream()
 
 WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
 {
+    errnum = 0;
+
     // the ssl library segfaults if the buffer isn't big enough and our key
     // is unexpectedly short... sigh.  There's probably a security hole
     // somewhere in the fact that an invalid key can segfault the library.
@@ -160,19 +162,34 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
     if (priv)
     {
 	rsa = d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
-	prv = keystr;
+
+	if (!rsa)
+	{
+	    seterr("RSA Key is invalid!");
+	}
+	else
+	{
+	    prv = keystr;
 	
-	size_t size;
-	unsigned char *iend = keybuf;
-	size = i2d_RSAPublicKey(rsa, &iend);
-	pub = (char *)malloc(size * 2 + 1);
-	hexify(pub, keybuf, size);
+	    size_t size;
+	    unsigned char *iend = keybuf;
+	    size = i2d_RSAPublicKey(rsa, &iend);
+	    pub = (char *)malloc(size * 2 + 1);
+	    hexify(pub, keybuf, size);
+	}
     }
     else
     {
 	rsa = d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
-	prv = NULL;
-	pub = keystr;
+	if (!rsa)
+	{
+	    seterr("RSA Key is invalid!");
+	}
+	else
+	{
+	    prv = NULL;
+	    pub = keystr;
+	}
     }
     
     delete[] keybuf;
@@ -181,6 +198,7 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
 
 WvRSAKey::WvRSAKey(int bits)
 {
+    errnum = 0;
     size_t size;
     unsigned char *keybuf, *iend;
     
@@ -211,6 +229,13 @@ WvRSAKey::~WvRSAKey()
 	free(pub);
     if (rsa)
 	RSA_free(rsa);
+}
+
+
+void WvRSAKey::seterr(WvStringParm _errstring)
+{
+    errstring = _errstring;
+    errnum = -1;
 }
 
 

@@ -361,8 +361,13 @@ void WvConf::setraw(WvString wvconfstr, const char *&xvalue, int &parse_error)
     char *section, *entry, *value;
     parse_error = parse_wvconf_request(wvconfstr.edit(),
 				       section, entry, value);
-    set(section, entry, value);
-    xvalue = get(section, entry, value);
+    if (!parse_error)
+    {
+	set(section, entry, value);
+	xvalue = get(section, entry, value);
+    }
+    else
+	xvalue = NULL;
 }
 
 
@@ -428,63 +433,6 @@ char *WvConf::parse_value(char *s)
     return (trim_string(q));
 }
 
-
-static WvString follow_links(WvString fname)
-{
-    struct stat st;
-    WvString cwd;
-    WvString tmp, tmpdir;
-    char *cptr;
-    int linksize;
-    
-    cwd.setsize(10240);
-    getcwd(cwd.edit(), 10240-5);
-    
-    if (fname[0] != '/')
-	fname = WvString("%s/%s", cwd, fname);
-    
-    if (lstat(fname, &st))
-	return fname; // nonexistent file or something... stop here.
-	
-    for (;;)
-    {
-	// fprintf(stderr, "follow_links: trying '%s'\n", (const char*)fname);
-	
-	// not a symlink - done
-	if (!S_ISLNK(st.st_mode))
-	    return fname;
-	
-	// read the link data into tmp
-	tmp.setsize(st.st_size + 2);
-	cptr = tmp.edit();
-	linksize = readlink(fname, cptr, st.st_size + 2);
-	if (linksize < 1)
-	    return fname; // ugly, but not sure what else to do...
-	cptr[st.st_size] = 0;
-	cptr[linksize] = 0;
-	
-	// not an absolute link - need to merge current path and new one
-	if (cptr[0] != '/')
-	{
-	    // need to copy the current directory name from fname
-	    tmpdir = fname;
-	    cptr = tmpdir.edit();
-	    cptr = strrchr(cptr, '/');
-	    if (cptr)
-		*cptr++ = 0;
-	    
-	    WvString x(tmp);
-	    tmp = WvString("%s/%s", tmpdir, x);
-	}
-	
-	if (lstat(tmp, &st))
-	    return fname; // can't read target file... don't use it!
-	
-	fname = tmp;
-    }
-    
-    return tmp;
-}
 
 void WvConf::save(WvStringParm _filename)
 {
