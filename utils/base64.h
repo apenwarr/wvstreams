@@ -12,7 +12,7 @@
 /**
  * Base 64 encode str
  */
-extern char * base64_encode( char * str, int length);
+extern char * base64_encode( const char * str, int length);
 /**
  * Decode Base64 encoded str
  */

@@ -19,7 +19,7 @@
 static char * alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 			 "0123456789+/=";
 
-char * base64_encode( char * str, int length )
+char * base64_encode( const char * str, int length )
 /********************************/
 {
     int    out_length = ( ( length - 1 ) / 3 + 1 ) * 4;
