@@ -68,7 +68,7 @@ public:
     static const CommandInfo cmdinfos[NUM_COMMANDS];
 
     /** Create a wrapper around the supplied WvStream. */
-    UniClientConn(IWvStream *_s);
+    UniClientConn(IWvStream *_s, WvStringParm dst = WvString::null);
     virtual ~UniClientConn();
 
     virtual bool pre_select(SelectInfo &si);

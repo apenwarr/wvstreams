@@ -27,7 +27,7 @@ static UniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_TCP_PORT);
     
-    return new UniClientGen(new WvTCPConn(s));
+    return new UniClientGen(new WvTCPConn(s), _s);
 }
 
 // if 'obj' is a WvStream, build the uniconf connection around that;
@@ -50,11 +50,12 @@ static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 /***** UniClientGen *****/
 
-UniClientGen::UniClientGen(IWvStream *stream) :
-    conn(NULL), log(WvString("UniClientGen to %s", *stream->src())),
+UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
+    conn(NULL), log(WvString("UniClientGen to %s",
+    dst.isnull() ? WvString(*stream->src()) : dst)),
     cmdinprogress(false), cmdsuccess(false)
 {
-    conn = new UniClientConn(stream);
+    conn = new UniClientConn(stream, dst);
     conn->setcallback(wvcallback(WvStreamCallback, *this,
         UniClientGen::conncallback), NULL);
 }

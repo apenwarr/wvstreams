@@ -48,7 +48,7 @@ public:
      * the specified stream.
      * "stream" is the raw connection
      */
-    UniClientGen(IWvStream *stream);
+    UniClientGen(IWvStream *stream, WvStringParm dst = WvString::null);
 
     virtual ~UniClientGen();
 

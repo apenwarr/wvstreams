@@ -40,10 +40,10 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
 };
 
 
-UniClientConn::UniClientConn(IWvStream *_s) :
+UniClientConn::UniClientConn(IWvStream *_s, WvStringParm dst) :
     WvStreamClone(_s),
-    log(WvString("UniConf to %s", *_s->src()), WvLog::Debug5),
-    closed(false), payloadbuf("")
+    log(WvString("UniConf to %s", dst.isnull() ? WvString(*_s->src()) : dst),
+    WvLog::Debug5), closed(false), payloadbuf("")
 {
     WvIStreamList::globallist.append(this, false);
     log("Opened\n");
