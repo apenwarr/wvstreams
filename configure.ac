@@ -141,7 +141,11 @@ AC_LANG(C++)
 # Detect pkg-config
 AC_PATH_PROG([PKGCONFIG], [pkg-config], [no])
 if test "$PKGCONFIG" = "no"; then
-    AC_MSG_ERROR([pkg-config is not installed])
+    if test "$with_xplc" = ""; then
+	AC_MSG_ERROR([pkg-config is not installed])
+    else
+	AC_MSG_WARN([pkg-config is not installed])
+    fi
 fi
 
 # devel
