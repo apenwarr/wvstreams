@@ -370,15 +370,15 @@ inline WvString beforestr(WvStringParm line, WvStringParm a)
  */
 inline WvString substr(WvString line, unsigned int pos, unsigned int len)
 {
-    char *tmp = line.edit();
+    const char *tmp = line.cstr();
     if (pos > line.len()-1)
 	return "";
     tmp += pos;
 
     WvString ret = tmp;
-    tmp = ret.edit();
+    char *tmp2 = ret.edit();
     if (pos + len < line.len())
-	tmp[len] = '\0';
+	tmp2[len] = '\0';
 
     return ret;
 }
