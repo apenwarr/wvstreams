@@ -162,12 +162,14 @@ bool WvAddr::comparator(const WvAddr *a2) const
 WvStringAddr::WvStringAddr(const WvString &s, const WvEncap &_cap)
 	: addr(s), cap(_cap)
 {
+    addr.unique();
 }
 
 
 WvStringAddr::WvStringAddr(const sockaddr_bin *_addr)
 	: addr((char *)_addr->sa_data), cap(_addr->sa_family)
 {
+    addr.unique();
 }
 
 
