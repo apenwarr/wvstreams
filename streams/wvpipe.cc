@@ -181,6 +181,8 @@ int WvPipe::finish()
 
 bool WvPipe::child_exited()
 {
+    /* FIXME: bug in WvSubProc? */
+    proc.wait(0);
     proc.wait(0);
     return !proc.running;
 }
