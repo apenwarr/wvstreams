@@ -36,7 +36,6 @@ public:
     
     // pass false to automount if you don't want to automatically set _top's generator to this.
     UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l = NULL);
-    UniConfClient(UniConf *_top, WvStream *stream, bool automount = false);
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);

@@ -30,7 +30,8 @@ UniConfClient::~UniConfClient()
     {
         if (conn->isok())
             conn->write(WvString("%s\n", UniConfConn::UNICONF_QUIT));
-        list->unlink(conn);
+	if (list)
+	    list->unlink(conn);
         delete conn;
      }
 }
