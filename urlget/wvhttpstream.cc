@@ -362,11 +362,16 @@ void WvHttpStream::execute()
     // our next url request can start downloading immediately.
     if (curl && !curl->outstream)
     {
-        // don't complain about pipelining failures
-        pipeline_test_count++;
-        last_was_pipeline_test = false;
+	if (!(encoding == PostHeadInfinity
+	      || encoding == PostHeadChunked
+	      || encoding == PostHeadStream))
+	{
+	    // don't complain about pipelining failures
+	    pipeline_test_count++;
+	    last_was_pipeline_test = false;
+	    close();
+	}
 
-        close();
         if (curl)
             doneurl();
         return;
@@ -496,11 +501,72 @@ void WvHttpStream::execute()
                 if (curl->method == "HEAD")
                 {
                     log("Got all headers.\n");
-                    //		    getline();
-                    doneurl();
+		    if (!enable_pipelining)
+			doneurl();
+
+		    if (encoding == Infinity)
+			encoding = PostHeadInfinity;
+		    else if (encoding == Chunked)
+			encoding = PostHeadChunked;
+		    else
+			encoding = PostHeadStream;
                 }
             }
         }
+    }
+    else if (encoding == PostHeadInfinity
+	     || encoding == PostHeadChunked
+	     || encoding == PostHeadStream)
+    {
+	WvDynBuf chkbuf;
+	len = read(chkbuf, 5);
+
+	// If there is more data available right away, and it isn't an
+	// HTTP header from another request, then it's a stupid web
+	// server that likes to send bodies with HEAD requests.
+	if (len && strncmp(reinterpret_cast<const char *>(chkbuf.peek(0, 5)),
+			   "HTTP/", 5))
+	{
+	    if (encoding == PostHeadInfinity)
+		encoding = ChuckInfinity;
+	    else if (encoding == PostHeadChunked)
+		encoding = ChuckChunked;
+	    else if (encoding == PostHeadStream)
+		encoding = ChuckStream;
+	    else
+		log(WvLog::Warning, "WvHttpStream: inconsistent state.\n");
+	}
+	else
+	    doneurl();
+
+	unread(chkbuf, len);
+    }
+    else if (encoding == ChuckInfinity)
+    {
+	len = read(buf, sizeof(buf));
+	if (len)
+	    log(WvLog::Debug5, "Chucking %s bytes.\n", len);
+	if (!isok())
+	    doneurl();
+    }
+    else if (encoding == ChuckChunked && !bytes_remaining)
+    {
+	encoding = Chunked;
+    }
+    else if (encoding == ChuckChunked || encoding == ChuckStream)
+    {
+	if (bytes_remaining > sizeof(buf))
+	    len = read(buf, sizeof(buf));
+	else
+	    len = read(buf, bytes_remaining);
+	bytes_remaining -= len;
+	if (len)
+	    log(WvLog::Debug5,
+		"Chucked %s bytes (%s bytes left).\n", len, bytes_remaining);
+	if (!bytes_remaining && encoding == ContentLength)
+	    doneurl();
+	if (bytes_remaining && !isok())
+	    seterr("connection interrupted");
     }
     else if (encoding == Chunked && !bytes_remaining)
     {
@@ -543,8 +609,11 @@ void WvHttpStream::execute()
 
         if (len)
             log(WvLog::Debug5, "Infinity: read %s bytes.\n", len);
-        if (curl->outstream)
+        if (curl && curl->outstream)
             curl->outstream->write(buf, len);
+
+        if (!isok() && curl)
+            doneurl();
     }
     else // not chunked or currently in a chunk - read 'bytes_remaining' bytes.
     {
@@ -562,10 +631,10 @@ void WvHttpStream::execute()
         if (len)
             log(WvLog::Debug5, 
                     "Read %s bytes (%s bytes left).\n", len, bytes_remaining);
-        if (curl->outstream)
+        if (curl && curl->outstream)
             curl->outstream->write(buf, len);
 
-        if (!bytes_remaining && encoding == ContentLength)
+        if (!bytes_remaining && encoding == ContentLength && curl)
             doneurl();
 
 	if (bytes_remaining && !isok())

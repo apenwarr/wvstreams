@@ -9,6 +9,7 @@
 
 #include "wvistreamlist.h"
 #include "wvfile.h"
+#include "wvunixsocket.h"
 #include "wvtest.h"
 
 #include <sys/types.h>
@@ -100,7 +101,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
     }
 
     /* Setup subtree root */
-    WvString root("cache:subtree:unix:%s cfg", sockname);
+    WvString root("subtree:unix:%s cfg", sockname);
     UniConfRoot cfg(root);
     
     int initial_value = cfg["eth0"].xgetint("dhcpd", 0);
@@ -109,6 +110,73 @@ WVTEST_MAIN("tempgen/cachegen basics")
     int new_value = cfg["eth0"].xgetint("dhcpd", 0);
 
     WVPASS(initial_value != new_value);
+   
+    // kill off the daemon
+    kill(cfg_handler, 15);
+    unlink(ininame.cstr());
+    unlink(sockname.cstr());
+}
+
+
+WVTEST_MAIN("cache:subtree:unix assertion failure")
+{
+    signal(SIGPIPE, SIG_IGN);
+
+    WvString ininame;
+    if (!write_ini(ininame))
+    {
+        WVFAIL(true || "Could not write ini file");
+        exit(1); 
+    }
+
+    WvString sockname = get_sockname();
+    if (!sockname)
+    {
+        WVFAIL(true || "Could not get socket filename");
+        exit(1); 
+    }
+
+    pid_t cfg_handler = fork();
+    if (!cfg_handler) // child only
+    {
+        UniIniGen *unigen = new UniIniGen(ininame, 0666);
+
+        UniConfRoot uniconf;
+        uniconf["cfg"].mountgen(unigen);
+        uniconf["tmp"].mount("temp:");
+
+        UniConf defcfg(uniconf["default"]);
+
+        UniConfDaemon daemon(uniconf, false, NULL);
+        daemon.setupunixsocket(sockname, 0777);
+
+        WvIStreamList::globallist.append(&daemon, false);
+        while (daemon.isok())
+        {
+            WvIStreamList::globallist.runonce(5000);
+            uniconf.commit();
+        }
+        WVFAIL("uniconfd exited unexpectedly");
+    }
+
+    // Wait for child to become responsive
+    {
+        WvString root("retry:unix:%s", sockname);
+        UniConfRoot cfg_ok(root);
+        for (;;)
+        {
+            cfg_ok.xset("/tmp/dummy", "foo");
+            if (cfg_ok.xget("/tmp/dummy") == "foo") break;
+            sleep(1);
+        }
+    }
+
+    /* Setup subtree root */
+    WvString root("cache:subtree:unix:%s cfg", sockname);
+    UniConfRoot cfg(root);
+    
+    WvUnixConn unixconn(sockname);
+    WVPASS(unixconn.isok());
    
     // kill off the daemon
     kill(cfg_handler, 15);
