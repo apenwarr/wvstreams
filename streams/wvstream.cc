@@ -521,6 +521,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 
     if (!outbuf.used() && outbuf_delayed_flush)
         want_to_flush = false;
+
+    return !outbuf.used();
 }
 
 
