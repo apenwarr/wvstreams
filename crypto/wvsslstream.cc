@@ -169,7 +169,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-                    debug("<< SSL_read() needs to wait for readable.\n");
+//                    debug("<< SSL_read() needs to wait for readable.\n");
                     break; // wait for later
                     
                 case SSL_ERROR_NONE:
@@ -190,7 +190,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         read_bouncebuf.unalloc(avail - size_t(result));
     }
 
-    debug("<< read %s bytes\n", total);
+//    debug("<< read %s bytes\n", total);
     return total;
 }
 
@@ -204,7 +204,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
     }
     if (len == 0) return 0;
 
-    debug(">> I want to write %s bytes.\n", len);
+//    debug(">> I want to write %s bytes.\n", len);
 
     size_t total = 0;
     
@@ -252,7 +252,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-                    debug(">> SSL_write() needs to wait for writable.\n");
+//                    debug(">> SSL_write() needs to wait for writable.\n");
                     break; // wait for later
                     
                 case SSL_ERROR_NONE:
@@ -289,7 +289,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         (const unsigned char *)buf += size_t(result);
     }
     
-    debug(">> wrote %s bytes\n", total);
+//    debug(">> wrote %s bytes\n", total);
     return total;
 }
  
@@ -326,12 +326,12 @@ bool WvSSLStream::pre_select(SelectInfo &si)
     // or we might have left buffered data behind deliberately
     if (si.wants.readable && (read_pending || read_bouncebuf.used()))
     {
-	debug("pre_select: try reading again immediately.\n");
+//	debug("pre_select: try reading again immediately.\n");
 	return true;
     }
 
     bool result = WvStreamClone::pre_select(si);
-    debug("in pre_select (%s)\n", result);
+//    debug("in pre_select (%s)\n", result);
     return result;
 }
 
@@ -340,7 +340,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 {
     bool result = WvStreamClone::post_select(si);
     
-    debug("in post_select (%s)\n", result);
+//    debug("in post_select (%s)\n", result);
 
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep
@@ -348,7 +348,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
     // to do the validation of the connection ;)
     if (!sslconnected && cloned && cloned->isok() && result)
     {
-	debug("!sslconnected in post_select\n");
+//	debug("!sslconnected in post_select\n");
 	
 	undo_force_select(false, true, false);
 	
@@ -358,7 +358,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
         int fd = fdstream->getfd();
         assert(fd >= 0);
 	SSL_set_fd(ssl, fd);
-	debug("SSL connected on fd %s.\n", fd);
+//	debug("SSL connected on fd %s.\n", fd);
 	
 	int err;
     
