@@ -211,6 +211,7 @@ void WvSubProc::kill(int sig)
     {
 	// if the process group has disappeared, kill the main process
 	// instead.
+	assert(pid != 1);  // make sure we don't kill -1
 	if (::kill(-pid, sig) < 0 && errno == ESRCH)
 	    kill_primary(sig);
     }
@@ -220,6 +221,7 @@ void WvSubProc::kill(int sig)
     for (i.rewind(); i.next(); )
     {
 	pid_t subpid = *i;
+	assert(subpid != 1 && subpid != -1); // make sure we don't kill -1
 	if (::kill(-subpid, sig) < 0 && errno == ESRCH)
 	    ::kill(subpid, sig);
     }

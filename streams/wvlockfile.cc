@@ -65,7 +65,7 @@ int WvLockFile::readpid()
 	if (line)
 	{
 	    pid = atoi(line);
-	    if (kill(pid, 0) < 0 && errno == ESRCH) // no such process
+	    if (pid != -1 && kill(pid, 0) < 0 && errno == ESRCH) // no such process
 	    {
 		// previous lock owner is dead; clean it up.
 		::unlink(lockname);

@@ -112,7 +112,7 @@ bool WvLockDev::lock()
 	
 	//fprintf(stderr, "pid: '%d'\n", pid);
 	
- 	if (pid && kill(pid, 0) == -1 && errno == ESRCH)
+ 	if (pid && pid != -1 && kill(pid, 0) == -1 && errno == ESRCH)
 	{
  	    // we can create a lockfile now
 	    fd.close();
