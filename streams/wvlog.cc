@@ -7,6 +7,8 @@
  * See wvlog.h for more information.
  */
 #include "wvlogrcv.h"
+#include "wvstringlist.h"
+#include "strutils.h"
 #include <ctype.h>
 
 WvLogRcvBaseList WvLog::receivers;
@@ -131,7 +133,7 @@ const char *WvLogRcvBase::appname(const WvLog *log) const
 
 
 
-WvLogRcv::WvLogRcv(WvLog::LogLevel _max_level)
+WvLogRcv::WvLogRcv(WvLog::LogLevel _max_level) : custom_levels(5)
 {
     last_source = NULL;
     last_level = WvLog::NUM_LOGLEVELS;
@@ -182,8 +184,24 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 {
     WvLog::LogLevel loglevel = (WvLog::LogLevel)_loglevel;
     char hex[5];
-    
-    if (loglevel > max_level)
+    WvLog::LogLevel threshold = max_level;
+    WvString srcname = source->app;
+    strlwr(srcname.edit());
+
+    Src_LvlDict::Iter i(custom_levels);
+    i.rewind(); 
+
+    // Check if the debug level for the source has been overridden
+    while (i.next())
+    {
+        if (strstr(srcname, i->src))
+        {
+            threshold = i->lvl;
+            break;
+        }
+    }
+     
+    if (loglevel > threshold)
 	return;
 
     // only need to start a new line with new headers if they headers have
@@ -251,6 +269,42 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
     }
 }
 
+bool WvLogRcv::set_custom_levels(WvString descr)
+{
+    custom_levels.zap();
+
+    // Parse the filter line into individual rules
+    WvStringList lst;
+    WvStringList::Iter i(lst);
+    lst.split(descr, ",=");
+    if (!lst.count())
+        return true;
+    i.rewind();
+    WvString src("");
+
+    while(i.next())
+    {
+        if (src != "")
+        {
+            if (atoi(*i) > 0 && atoi(*i) <= WvLog::NUM_LOGLEVELS)
+            {
+                custom_levels.add(new Src_Lvl(src, atoi(*i)), true);
+                src = "";
+            }
+            else
+                return false;
+        }
+        else
+        {
+            src = *i;
+            strlwr(trim_string(src.edit()));
+        }
+    }
+    if (src != "")
+        return false;
+
+    return true;
+}
 
 
 ///////////////////////////////////// WvLogConsole

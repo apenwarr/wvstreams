@@ -18,6 +18,7 @@
 #define __WVLOGRCV_H
 
 #include "wvlog.h"
+#include "wvhashtable.h"
 
 /**
  * WvLogRcv adds some intelligence to WvLogRcvBase, to keep
@@ -25,70 +26,92 @@
  */
 class WvLogRcv : public WvLogRcvBase
 {
-protected:
-    const WvLog *last_source;
-    WvLog::LogLevel max_level, last_level;
-    bool at_newline;
-    WvString prefix;
-    size_t prelen;
+    protected:  
+        const WvLog *last_source;
+        WvLog::LogLevel max_level, last_level;
+        bool at_newline;
+        WvString prefix;
+        size_t prelen;
 
-    virtual void log(const WvLog *source, int loglevel,
-		     const char *_buf, size_t len);
+        class Src_Lvl
+        {
+            public:
+                WvString src;
+                WvLog::LogLevel lvl;
+                Src_Lvl(WvString _src, int _lvl) : src(_src),
+                    lvl((WvLog::LogLevel)_lvl) {};
+        };
 
-    /**
-     * Set the Prefix and Prefix Length (size_t prelen)
-     */
-    virtual void _make_prefix();
-    
-    /**
-     * Start a new log line (print prefix)
-     */
-    virtual void _begin_line();
-    
-    /**
-     * End this (Guaranteed NonEmpty) log line
-     */
-    virtual void _end_line();
+        DeclareWvDict(Src_Lvl, WvString, src);
 
-    /**
-     * add text to the current log line.  'str' may contain only
-     * one '\n' optional character at str[len-1] (the end); if it does,
-     * end_line will be called immediately after this function.
-     */
-    virtual void _mid_line(const char *str, size_t len) = 0;
+        Src_LvlDict custom_levels;
 
-private:
-    void begin_line()
+        virtual void log(const WvLog *source, int loglevel,
+                const char *_buf, size_t len);
+
+        /**
+         * Set the Prefix and Prefix Length (size_t prelen)
+         */
+        virtual void _make_prefix();
+
+        /**
+         * Start a new log line (print prefix)
+         */
+        virtual void _begin_line();
+
+        /**
+         * End this (Guaranteed NonEmpty) log line
+         */
+        virtual void _end_line();
+
+        /**
+         * add text to the current log line.  'str' may contain only
+         * one '\n' optional character at str[len-1] (the end); if it does,
+         * end_line will be called immediately after this function.
+         */
+        virtual void _mid_line(const char *str, size_t len) = 0;
+
+    private:
+        void begin_line()
         { if (!at_newline) return; _begin_line(); at_newline = false; }
-    void mid_line(const char *str, size_t len)
+        void mid_line(const char *str, size_t len)
         { _mid_line(str, len); 
-	  if (len>0 && str[len-1] == '\n') at_newline = true; }
+            if (len>0 && str[len-1] == '\n') at_newline = true; }
 
-public:
-    static char *loglevels[WvLog::NUM_LOGLEVELS];
-    
-    WvLogRcv(WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
-    virtual ~WvLogRcv();
+    public:
+        static char *loglevels[WvLog::NUM_LOGLEVELS];
 
-    void end_line()
+        WvLogRcv(WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
+        virtual ~WvLogRcv();
+
+        void end_line()
         { if (at_newline) return;
-	  _mid_line("\n", 1); _end_line(); at_newline = true; }
-    
-    WvLog::LogLevel level() const
+            _mid_line("\n", 1); _end_line(); at_newline = true; };
+
+        WvLog::LogLevel level() const
         { return max_level; }
-    void level(WvLog::LogLevel lvl)
+        void level(WvLog::LogLevel lvl)
         { max_level = lvl; }
+
+        /*
+         * Allows you to override debug levels for specific sources
+         *  example: mysql=9,Service Manager=9
+         *  will get all the debug output from all the sources that
+         *  contain (case insensitively) "mysql" or "Service Manager"
+         *  in the source name regardless of the current debug level.
+         */
+        bool set_custom_levels(WvString descr);
 };
 
 
 class WvLogConsole : public WvStream, public WvLogRcv
 {
-public:
-    WvLogConsole(int _fd,
-		 WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
-    virtual ~WvLogConsole();
-protected:
-    virtual void _mid_line(const char *str, size_t len);
+    public:
+        WvLogConsole(int _fd,
+                WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
+        virtual ~WvLogConsole();
+    protected:
+        virtual void _mid_line(const char *str, size_t len);
 };
 
 #endif // __WVLOGRCV_H
