@@ -53,7 +53,7 @@ bool fcopy(WvStringParm src, WvStringParm dst)
     in.autoforward(out);
     while (in.isok() && out.isok())
     {
-        if (in.select(0))
+        if (in.select(0, true, false))
             in.callback();
     }
     if (!out.isok())

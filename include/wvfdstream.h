@@ -81,18 +81,6 @@ public:
         return rfd;
     }
 
-    /**
-     * Shuts down the reading side of this stream.
-     * Subsequent calls to read() will fail.
-     */
-    void noread();
-
-    /**
-     * Shuts down the reading side of this stream.
-     * Subsequent calls to write() will fail.
-     */
-    void nowrite();
-
     /***** Overridden members *****/
     
     /**
@@ -109,6 +97,8 @@ public:
     virtual size_t uwrite(const void *buf, size_t count);
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
+    virtual void noread();
+    virtual void nowrite();
 };
 
 #endif // __WVFDSTREAM_H

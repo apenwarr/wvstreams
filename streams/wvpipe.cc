@@ -258,3 +258,14 @@ WvPipe::~WvPipe()
 {
     close();
 }
+
+
+// this is necessary when putting, say, sendmail through a WvPipe on the
+// globallist so we can forget about it.  We call nowrite() so that it'll
+// get the EOF and then go away when it's done, but we need to read from it
+// for it the WvPipe stop selecting true and get deleted.
+void WvPipe::ignore_read(WvStream& s, void *userdata)
+{
+    char c;
+    s.read(&c, 1);
+}

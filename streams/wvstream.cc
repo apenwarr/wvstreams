@@ -46,6 +46,7 @@ WvStream::WvStream()
     force.writable = force.isexception = false;
     read_requires_writable = write_requires_readable = NULL;
     running_callback = false;
+    want_nowrite = false;
     queue_min = 0;
     autoclose_time = 0;
     alarm_time.tv_sec = alarm_time.tv_usec = 0;
@@ -397,6 +398,15 @@ size_t WvStream::write(const void *buf, size_t count)
     }
 
     return wrote;
+}
+
+
+void WvStream::nowrite()
+{
+    if (getwfd() < 0)
+        return;
+
+    want_nowrite = true;
 }
 
 

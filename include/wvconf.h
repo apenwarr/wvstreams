@@ -151,6 +151,15 @@ public:
 		 WvStringParm section, WvStringParm entry,
 		 WvStringParm oldval, WvStringParm newval);
 
+    // generic callback to create a file with a one-line backup string
+    void addfile(void *userdata,
+                 WvStringParm section, WvStringParm entry,
+                 WvStringParm oldval, WvStringParm newval);
+
+    void add_addfile(WvString *filename, WvStringParm section, WvStringParm entry)
+	{ add_callback(WvConfCallback(this, &WvConf::addfile),
+		       filename, section, entry); }
+
     void add_addname(WvStringList *list, WvStringParm section, WvStringParm entry)
 	{ add_callback(WvConfCallback(this, &WvConf::addname),
 		       list, section, entry); }
