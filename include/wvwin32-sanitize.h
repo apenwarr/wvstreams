@@ -21,6 +21,10 @@
 #define ECONNREFUSED WSAECONNREFUSED
 #endif
 
+#ifndef EWOULDBLOCK
+#define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
+
 
 typedef int socklen_t;
 

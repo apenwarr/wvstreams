@@ -1,6 +1,7 @@
 WVSTREAMS=.
 #%: %.cc
 #	$(error "barf!")
+
 include $(WVSTREAMS)/wvrules.mk
 include vars.mk
 
@@ -58,9 +59,11 @@ OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	
 OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
 
-$(TESTS): $(shell cat libwvwin32.libs)
+$(TESTS): libwvwin32.a
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
+
+$(patsubst %.t.cc,%.t,$(wildcard */t/*.cc)): libwvwin32.a
 
 W=$(WVSTREAMS)/Win32WvStreams
 libwvwin32.a: \

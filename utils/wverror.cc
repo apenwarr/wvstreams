@@ -57,6 +57,10 @@ void WvErrorBase::seterr(int _errnum)
     {
         assert(_errnum != -1 || !!errstring
 	    && "attempt to set errnum to -1 without also setting errstring");
+#ifdef _WIN32
+	if (_errnum == WSAECONNABORTED)
+	    _errnum = WSAECONNREFUSED; // work around WINE bug
+#endif
 	errnum = _errnum;
     }
 }
