@@ -85,8 +85,9 @@ public:
     void chmod(const UniConfKey &path, int owner, int group, int world);
     void chmod(const UniConfKey &path, int mode);
 
-    /** Return the default permission for a given type */ 
-    bool defaultperm(Type type);
+private:
+
+    bool getoneperm(const UniConfKey &path, Level level, Type type); 
 };
 
 

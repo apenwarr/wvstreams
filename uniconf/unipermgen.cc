@@ -37,7 +37,10 @@ void UniPermGen::setowner(const UniConfKey &path, WvStringParm owner)
 
 WvString UniPermGen::getowner(const UniConfKey &path)
 {
-    return inner()->get(WvString("%s/owner", path));
+    WvString owner = inner()->get(WvString("%s/owner", path));
+    if (owner.isnull() && !path.isempty())
+        owner = getowner(path.removelast());
+    return owner;
 }
 
 
@@ -49,7 +52,10 @@ void UniPermGen::setgroup(const UniConfKey &path, WvStringParm group)
 
 WvString UniPermGen::getgroup(const UniConfKey &path)
 {
-    return inner()->get(WvString("%s/group", path));
+    WvString group = inner()->get(WvString("%s/group", path));
+    if (group.isnull() && !path.isempty())
+        group = getgroup(path.removelast());
+    return group;
 }
 
 
@@ -61,23 +67,37 @@ void UniPermGen::setperm(const UniConfKey &path, Level level, Type type, bool va
 
 bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred, Type type)
 {
-    WvString owner = inner()->get(WvString("%s/owner", path));
-    WvString group = inner()->get(WvString("%s/group", path));
+    WvString owner = getowner(path);
+    WvString group = getgroup(path);
 
-    bool def;
-    switch (type)
-    {
-    case READ: def = true; break;
-    case WRITE: def = false; break;
-    case EXEC: def = true; break;
-    default: assert(false && "Something in the Type enum wasn't covered"); break;
-    }
-
-    bool w = str2int(inner()->get(WvString("%s/world-%s", path, type2str(type))), def);
-    bool g = str2int(inner()->get(WvString("%s/group-%s", path, type2str(type))), def);
-    bool u = str2int(inner()->get(WvString("%s/user-%s", path, type2str(type))), def);
+    bool w = getoneperm(path, WORLD, type);
+    bool g = getoneperm(path, GROUP, type);
+    bool u = getoneperm(path, USER, type);
 
     return (w || (g && cred.groups[group]) || (u && cred.user == owner));
+}
+
+
+bool UniPermGen::getoneperm(const UniConfKey &path, Level level, Type type)
+{
+    int val = str2int(inner()->get(WvString("%s/%s-%s", path, level2str(level),
+                type2str(type))), -1);
+    if (val == -1)
+    {
+        if (path.isempty())
+        {
+            switch (type)
+            {
+                case READ: return true;
+                case WRITE: return false;
+                case EXEC: return true; 
+                default: assert(false && "Something in the Type enum wasn't covered");
+            }
+        }
+        else
+            return getoneperm(path.removelast(), level, type);
+    }
+    return val;
 }
 
 

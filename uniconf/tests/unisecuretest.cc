@@ -47,7 +47,7 @@ Objects *setup(WvStringParm perms)
 
         u["nondef/*"].set("*1");
         u["defaults/*/*"].set("*1");
-
+        u["inherited/*"].set("*1");
         u.commit();
     }
 
@@ -55,10 +55,21 @@ Objects *setup(WvStringParm perms)
     UniPermGen *p = new UniPermGen(perms);
     UniSecureGen *s = new UniSecureGen("default:ini:secure.ini", p);
 
+    // defaults tree has owner group set with a pattern
     p->setowner("defaults/*/*", "clampy");
     p->setgroup("defaults/*/*", "cloggers");
+
+    // inherited tree inherits everything 
+    p->setowner("inherited", "clampy");
+    p->setgroup("inherited", "cloggers");
+    p->chmod("inherited", 0777);
+
+    // now chmod each key in nondef/NNN and defaults/*/NNN to 0NNN, and set
+    // the owner/group of nondef/* directly 
     for (int user = 0; user < 8; user++)
+    {
         for (int group = 0; group < 8; group++)
+        {
             for (int world = 0; world < 8; world++)
             {
                 WvString key("%s%s%s", user, group, world);
@@ -69,6 +80,8 @@ Objects *setup(WvStringParm perms)
                 p->chmod(nondef, user, group, world);
                 p->chmod(defaults, user, group, world);
             }
+        }
+    }
 
     // all access to the defaults/2 tree should fail due to missing exec
     p->setexec("defaults/2", UniPermGen::USER, false);
@@ -153,8 +166,8 @@ bool testaset(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expe
 
 
 /**
- * Test get/set of a single key in 3 branches (nondef / foo, defaults / 1 /
- * foo, defaults / 2 / foo
+ * Test get/set of a single key in 4 branches (nondef / foo, defaults / 1 /
+ * foo, defaults / 2 / foo, inherited / foo)
  */
 
 
@@ -169,6 +182,8 @@ bool testget(const UniConf &u, WvStringParm key, bool expectsucc, bool noperms)
         pass = testaget(u, "defaults/1", key, expectsucc) && pass;
         // drilldown
         pass = testaget(u, "defaults/2", key, false) && pass;
+        // inherited
+        pass = testaget(u, "inherited", key, true) && pass;
     }
     return pass;
 }
@@ -185,6 +200,8 @@ bool testset(const UniConf &u, WvStringParm key, bool expectsucc, bool noperms)
         pass = testaset(u, "defaults/1", key, expectsucc) && pass;
         // drilldown
         pass = testaset(u, "defaults/2", key, false) && pass;
+        // inherited
+        pass = testaset(u, "inherited", key, true) && pass;
     }
     return pass;
 }
