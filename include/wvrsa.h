@@ -17,7 +17,6 @@
  * digits for easy transport.
  */
 struct rsa_st;
-
 class WvRSAKey : public WvError
 {
     int errnum;
