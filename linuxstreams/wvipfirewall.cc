@@ -13,7 +13,7 @@
 bool WvIPFirewall::enable = false, WvIPFirewall::ignore_errors = true;
 
 
-WvIPFirewall::WvIPFirewall() : log("Firewall", WvLog::Debug)
+WvIPFirewall::WvIPFirewall() : log("Firewall", WvLog::Debug2)
 {
     // don't change any firewall rules here!  Remember that there may be
     // more than one instance of the firewall object.
@@ -164,18 +164,17 @@ void WvIPFirewall::add_forward(const WvIPPortAddr &src,
     }
 }
 
-void WvIPFirewall::del_forward(const WvIPPortAddr &src,
-			       const WvIPPortAddr &dst)
+void WvIPFirewall::del_forward(const WvIPPortAddr &src)
 {
      FastForwardList::Iter i(forwards);
-     log("Find this Forward %s, %s\n", (WvString)src, (WvString)dst);
+     log("Find this Forward %s\n", (WvString)src);
      for (i.rewind(); i.next(); )
      {
 	 log("Find Forward %s, %s\n", (WvString)i->src, (WvString)i->dst);
-	 if (i->src == src && i->dst == dst)
+	 if (i->src == src)
 	 {
-	     WvString s(forward_command("-D", "tcp", src, dst)),
-	     s2(forward_command("-D", "udp", src, dst));
+	     WvString s(forward_command("-D", "tcp", src, i->dst)),
+	     s2(forward_command("-D", "udp", src, i->dst));
 	     log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
 	     if (enable) 
 	     {
