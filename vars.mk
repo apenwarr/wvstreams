@@ -19,6 +19,7 @@ TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
 TARGETS += libuniconfdaemon.so libuniconfdaemon.a
 TARGETS += wvtestmain.o
+TARGETS += uniconf/daemon/uniconfdaemon uniconf/tests/uni
 GARBAGE += wvtestmain.o
 
 ifneq ("$(with_swig)", "no")

@@ -16,6 +16,7 @@ AC_DEFUN(WV_APPEND,
 
 QT_SEARCH_PATH="
 $prefix
+/usr
 $libdir/qt3
 $libdir/qt
 $datadir/qt3
@@ -287,7 +288,7 @@ if test "$with_qt" != "no"; then
         LDFLAGS_save="$LDFLAGS"
         for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
             eval wv_qtdir="$wv_qtdir"
-            CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include"
+            CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include -I$wv_qtdir/include/qt3"
             LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib -lqt-mt"
             AC_TRY_LINK([#include <qstring.h>],
                         [QString x("hello"); return 0; ],
@@ -298,7 +299,7 @@ if test "$with_qt" != "no"; then
     ])
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
-        WV_APPEND(CPPFLAGS, -I$with_qt/include)
+        WV_APPEND(CPPFLAGS, -I$with_qt/include -I$with_qt/include/qt3)
         WV_APPEND(LDFLAGS, -L$with_qt/lib)
     fi
     AC_PATH_PROG(MOC, moc, [moc not found], $with_qt/bin)

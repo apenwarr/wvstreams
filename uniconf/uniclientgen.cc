@@ -265,6 +265,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 }
 
 
+// FIXME: horribly horribly evil!!
 bool UniClientGen::do_select()
 {
     cmdinprogress = true;
@@ -273,7 +274,7 @@ bool UniClientGen::do_select()
     conn->alarm(TIMEOUT);
     while (conn->isok() && cmdinprogress)
     {
-        if (conn->select(-1))
+        if (conn->select(-1, true, false))
         {
             conn->callback();
             conn->alarm(TIMEOUT);
