@@ -335,8 +335,8 @@ protected:
 
     // We need this last_accessed thing to make sure exists()/operator[]
     //      does not cost us two hash lookups
-    MyPair* last_accessed;
-    MyPair* find_helper(const TKey &key)
+    mutable MyPair* last_accessed;
+    MyPair* find_helper(const TKey &key) const
     {
         if (last_accessed &&
                 Comparator<TKey>::compare(&last_accessed->key, &key))
@@ -345,23 +345,23 @@ protected:
     }
 
 public:
-    // accessor mothod for WvHashTable to use
+    // accessor method for WvHashTable to use
     static const TKey *get_key(const MyPair *obj)
         { return &obj->key; }
 
     WvMap(int s) : MyHashTable(s), last_accessed(NULL)  { };
-    TData *find(const TKey &key)
+    TData *find(const TKey &key) const
     {
         MyPair* p = find_helper(key);
         return p ? &p->data : (TData*)NULL;
     }
-    TData &operator[](const TKey &key)
+    TData &operator[](const TKey &key) const
     {
         MyPair* p = find_helper(key);
         assert(p && "WvMap: operator[] called with a non-existent key");
         return p->data;
     }
-    bool exists(const TKey &key)
+    bool exists(const TKey &key) const
         { return find_helper(key); }
     void set(const TKey &key, const TData &data, bool auto_free = false)
     {

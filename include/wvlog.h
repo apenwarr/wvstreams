@@ -108,8 +108,8 @@ public:
     }
     
     /**
-     * although these appear in WvStream, they need to be re-listed for
-     * some reason.
+     * although these appear in WvStream, they need to be re-listed here
+     * since the above operator()s caused them to be hidden
      */
     size_t operator() (WvStringParm s)
         { return WvStream::operator()(s); }
