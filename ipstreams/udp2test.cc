@@ -6,33 +6,130 @@
 #include "wvlog.h"
 #include "wvudp.h"
 #include "wvhashtable.h"
+#include <time.h>
 
-DeclareWvTable(WvIPPortAddr);
+class WvUDPListener;
 
-class WvUDPListener : public WvUDPStream
+class WvUDPConn : public WvStream
 {
+    friend WvUDPListener;
+    
 public:
-    WvUDPListener(const WvIPPortAddr &_localaddr);
+    WvUDPConn(WvUDPListener *_parent, const WvIPPortAddr &_remaddr);
+
+    WvIPPortAddr remaddr;
     
 protected:
+    WvUDPListener *parent;
+    time_t last_receive;
+    WvMiniBufferList buflist;
     
+    virtual bool isok() const;
+    virtual size_t uread(void *buf, size_t size);
+    virtual size_t uwrite(const void *buf, size_t size);
+    
+    void push(const void *buf, size_t size);
 };
 
 
-WvUDPListener::WvUDPListener(const WvIPPortAddr &_localaddr)
-	: WvUDPStream(_localaddr, WvIPPortAddr())
+DeclareWvDict(WvUDPConn, WvIPPortAddr, remaddr);
+
+
+class WvUDPListener : public WvUDPStream
 {
+    friend WvUDPConn;
+    WvUDPConnDict connlist;
+    
+public:
+    WvUDPListener(const WvIPPortAddr &_localaddr);
+    
+    virtual void execute();
+};
+
+
+
+WvUDPConn::WvUDPConn(WvUDPListener *_parent, const WvIPPortAddr &_remaddr)
+			: remaddr(_remaddr)
+{
+    parent = _parent;
+    time(&last_receive);
+}
+
+
+bool WvUDPConn::isok() const
+{
+    return parent->connlist[remaddr] == this;
+}
+
+
+size_t WvUDPConn::uread(void *buf, size_t size)
+{
+    if (!buflist.count()) return 0;
+
+    WvMiniBufferList::Iter i(buflist);
+    i.rewind(); i.next();
+    WvMiniBuffer &b = *i.data();
+    if (b.used() < size)
+	size = b.used();
+    memcpy(buf, b.get(size), size);
+    i.unlink();
+    
+    return size;
+}
+
+
+size_t WvUDPConn::uwrite(const void *buf, size_t size)
+{
+    parent->setdest(remaddr);
+    return parent->write(buf, size);
+}
+
+
+void WvUDPConn::push(const void *buf, size_t size)
+{
+    time(&last_receive);
+    
+    WvMiniBuffer *b = new WvMiniBuffer(size);
+    b->put(buf, size);
+    buflist.append(b, true);
+}
+
+
+WvUDPListener::WvUDPListener(const WvIPPortAddr &_localaddr)
+	: WvUDPStream(_localaddr, WvIPPortAddr()), connlist(7)
+{
+}
+
+
+void WvUDPListener::execute()
+{
+    unsigned char buf[2048]; // larger than an expected UDP packet
+    size_t len;
+    
+    while (select(0))
+    {
+	len = read(buf, sizeof(buf));
+	if (!len) continue;
+	
+	WvUDPConn *conn = connlist[*(WvIPPortAddr *)src()];
+	if (!conn)
+	{
+	    conn = new WvUDPConn(this, *(WvIPPortAddr *)src());
+	    connlist.add(conn, true);
+	}
+	
+	conn->push(buf, len);
+    }
 }
 
 
 int main(int argc, char **argv)
 {
     WvLog err("udptest", WvLog::Error);
-    WvIPPortAddr nothing;
-    WvIPPortAddr remaddr(argc > 1 ? argv[1] : "127.0.0.1:19");
-    WvUDPStream sock(nothing, nothing);
+    WvIPPortAddr localaddr(argc > 1 ? argv[1] : "0.0.0.0:2222");
+    WvUDPListener sock(localaddr);
     
-    err(WvLog::Info, "Local address is %s.\n", *sock.local());
+    err(WvLog::Info, "Local address is %s.\n", localaddr);
     
     wvcon->autoforward(sock);
     sock.autoforward(err);
@@ -40,7 +137,7 @@ int main(int argc, char **argv)
     WvStreamList l;
     l.add_after(l.tail, wvcon, false);
     l.add_after(l.tail, &sock, false);
-    
+#if 0    // not done yet
     while (wvcon->isok() && sock.isok())
     {
 	sock.setdest(remaddr);
@@ -55,7 +152,7 @@ int main(int argc, char **argv)
 	    }
 	}
     }
-    
+#endif
     if (!wvcon->isok() && wvcon->geterr())
 	err("stdin: %s\n", strerror(wvcon->geterr()));
     else if (!sock.isok() && sock.geterr())
