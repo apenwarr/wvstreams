@@ -12,7 +12,7 @@
 #ifndef __WVSPEEX_H
 #define __WVSPEEX_H
 
-#include "wvtypedencoder.h"
+#include "wvaudioencoder.h"
 
 struct SpeexMode;
 struct SpeexBits;
@@ -148,14 +148,13 @@ namespace WvSpeex
  * WvOggVorbisEncoder.
  * </p>
  */
-class WvSpeexEncoder :
-    public WvTypedEncoder<float, unsigned char>
+class WvSpeexEncoder : public WvAudioEncoder
 {
     void *spxstate;
     SpeexBits *spxbits;
     SpeexMode *spxmode;
-    int _channels;
-    int _samplesperframe;
+    unsigned int _channels;
+    size_t _samplesperframe;
     
 public:
 
@@ -176,7 +175,7 @@ public:
      *        the encoder default, this is the default
      */
     WvSpeexEncoder(const WvSpeex::BitrateSpec &bitratespec,
-        int samplingrate, int channels = 1,
+        int samplingrate, unsigned int channels = 1,
         WvSpeex::CodecMode mode = WvSpeex::DEFAULT_MODE,
         int complexity = WvSpeex::DEFAULT_COMPLEXITY);
         
@@ -192,14 +191,14 @@ public:
      * Returns the number of channels.
      * @return the number of channels
      */
-    int channels() const
+    virtual unsigned int channels() const
         { return _channels; }
 
     /**
      * Returns the number of samples per frame.
      * @return the frame size
      */
-    int samplesperframe() const
+    virtual size_t samplesperframe() const
         { return _samplesperframe; }
 
     /**
@@ -262,16 +261,15 @@ private:
  * For encoding music or other non-speech audio, consider using
  * WvOggVorbisDecoder.
  */
-class WvSpeexDecoder :
-    public WvTypedEncoder<unsigned char, float>
+class WvSpeexDecoder : public WvAudioDecoder
 {
     int _samplingrate;
-    int _channels;
+    unsigned int _channels;
     
     void *spxstate;
     SpeexBits *spxbits;
     SpeexMode *spxmode;
-    int _samplesperframe;
+    size_t _samplesperframe;
 
 public:
     /**
@@ -288,7 +286,7 @@ public:
      *        WvSpeex::DEFAULT_MODE to select one automatically
      *        based on the sampling rate, this is the default
      */
-    WvSpeexDecoder(int samplingrate, int channels = 1,
+    WvSpeexDecoder(int samplingrate, unsigned int channels = 1,
         WvSpeex::CodecMode mode = WvSpeex::DEFAULT_MODE);
 
     virtual ~WvSpeexDecoder();
@@ -299,13 +297,13 @@ public:
      * @return true on success
      * @see encode
      */
-    bool missing(OBuffer &outbuf);
+    virtual bool missing(OBuffer &outbuf);
 
     /**
      * Returns the number of channels in the stream.
      * @return the number of channels, non-negative
      */
-    int channels() const
+    virtual unsigned int channels() const
         { return _channels; }
 
     /**
@@ -319,7 +317,7 @@ public:
      * Returns the number of samples per frame.
      * @return the frame size
      */
-    int samplesperframe() const
+    virtual size_t samplesperframe() const
         { return _samplesperframe; }
 
     /**

@@ -44,7 +44,7 @@ static SpeexMode *get_speex_mode(WvSpeex::CodecMode modeid,
 
 WvSpeexEncoder::WvSpeexEncoder(
     const WvSpeex::BitrateSpec &bitratespec,
-    int samplingrate, int channels, WvSpeex::CodecMode modeid,
+    int samplingrate, unsigned int channels, WvSpeex::CodecMode modeid,
     int complexity) :
     spxstate(NULL), spxbits(NULL), spxmode(NULL),
     _channels(channels), _samplesperframe(0)
@@ -198,7 +198,7 @@ int WvSpeexEncoder::nominalbitrate() const
 
 /***** WvSpeexDecoder *****/
 
-WvSpeexDecoder::WvSpeexDecoder(int samplingrate, int channels,
+WvSpeexDecoder::WvSpeexDecoder(int samplingrate, unsigned int channels,
     WvSpeex::CodecMode modeid) :
     _samplingrate(samplingrate), _channels(channels),
     spxstate(NULL), spxbits(NULL), spxmode(NULL),
