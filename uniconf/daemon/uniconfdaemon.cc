@@ -131,7 +131,7 @@ void UniConfDaemon::dosubtree(const UniConfKey &key,
                     WvString("Sending Key:%s.With val:%s.\n",
                     it->key(), it->value()));
                 send.append("{%s %s} ",
-                    wvtcl_escape(it->full_key(nerf)),
+                    wvtcl_escape(it->fullkey(nerf)),
                     wvtcl_escape(it->value()));
             }
         }
@@ -170,7 +170,7 @@ void UniConfDaemon::dorecursivesubtree(const UniConfKey &key,
                     WvString("Sending Key:%s.With val:%s.\n",
                     it->key(), it->value()));
                 send.append("{%s %s} ",
-                    wvtcl_escape(it->full_key(nerf)),
+                    wvtcl_escape(it->fullkey(nerf)),
                     wvtcl_escape(it->value()));
             }
         }

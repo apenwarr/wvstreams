@@ -33,14 +33,14 @@ int main()
 	log("Non-recursive dump of /HTTPD:\n");
 	UniConf::Iter i(h["/httpd"]);
 	for (i.rewind(); i.next(); )
-	    log("  '%s' = '%s'\n", i->full_key(), i->value());
+	    log("  '%s' = '%s'\n", i->fullkey(), i->value());
     }
     
     {
 	log("Recursive dump:\n");
 	UniConf::RecursiveIter i(h);
 	for (i.rewind(); i.next(); )
-	    log("  '%s' = '%s'\n", i->full_key(), i->value());
+	    log("  '%s' = '%s'\n", i->fullkey(), i->value());
     }
     
 #if 0

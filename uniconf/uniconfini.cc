@@ -71,7 +71,7 @@ UniConfIniFileGen::UniConfIniFileGen(
     filename(_filename), log(filename)
 {
     top = _top;
-    log(WvLog::Debug1, "Using IniFile '%s' at location '%s'.\n", filename, top->full_key());
+    log(WvLog::Debug1, "Using IniFile '%s' at location '%s'.\n", filename, top->fullkey());
 }
 
 
@@ -241,7 +241,7 @@ void UniConfIniFileGen::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 		// exactly one interesting child: don't bother with a
 		// subsection.
                 out("%s = %s\n",
-                    inicode(interesting->full_key(h).strip()),
+                    inicode(interesting->fullkey(h).strip()),
                     inicode(interesting->value()));
 	    }
 	}

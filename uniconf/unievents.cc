@@ -149,7 +149,7 @@ void UniConfEvents::setbool(void *userdata, UniConf &h)
     if (!*(bool *)userdata)
     {
 	WvLog log(label, WvLog::Debug);
-	log("Changed: '%s' = '%s'\n", h.full_key(&cfg), h.value());
+	log("Changed: '%s' = '%s'\n", h.fullkey(&cfg), h.value());
     }
     
     *(bool *)userdata = true;

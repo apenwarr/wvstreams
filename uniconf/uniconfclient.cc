@@ -132,7 +132,7 @@ void UniConfClientGen::enumerate_subtrees(UniConf *conf, bool recursive)
     WvString cmd("%s %s\n",
         recursive ? UniConfConn::UNICONF_RECURSIVESUBTREE : 
             UniConfConn::UNICONF_SUBTREE,
-        wvtcl_escape(conf->full_key(top)));
+        wvtcl_escape(conf->fullkey(top)));
     conn->print(cmd);
 
     waitforsubt = true;
@@ -176,13 +176,13 @@ void UniConfClientGen::update(UniConf *&h)
 {
     assert(h != NULL);
 
-    if ( h->full_key(top).printable().isnull() )
+    if ( h->fullkey(top).printable().isnull() )
         return;
 
     if (conn->select(0,true,false,false))
         conn->callback();
 
-    UniConfKey lookfor(h->full_key(top));
+    UniConfKey lookfor(h->fullkey(top));
     UniConfPair *data = waiting[lookfor];
     
     if (!data)

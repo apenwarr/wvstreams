@@ -31,7 +31,7 @@ public:
 
 void HelloGen::update(UniConf *&h)
 {
-    wvcon->print("Hello: updating %s\n", h->full_key());
+    wvcon->print("Hello: updating %s\n", h->fullkey());
     h->setvalue(WvString("%s #%s", defstr, ++count));
     h->dirty = false;
     h->obsolete = false;
@@ -59,7 +59,7 @@ UniConfFileTree::UniConfFileTree(UniConf *_top, WvStringParm _basedir) :
     top = _top;
     log(WvLog::Notice,
 	"Creating a new FileTree based on '%s' at location '%s'.\n",
-	basedir, top->full_key());
+	basedir, top->fullkey());
 }
 
 
@@ -159,7 +159,7 @@ int main()
 	// should be defuser comment
 	h = cfg["/users/randomperson/comment"].find_default();
 	log("Default for randomperson(%s): '%s'\n",
-            h ? h->full_key() : "",
+            h ? h->fullkey() : "",
 	    h ? h->value() : WvString("NONE"));
 	
 	// should be defbob comment

@@ -30,7 +30,7 @@ void testnormaliter(UniConf &mainconf)
     for (i.rewind(); i.next();)
     {
         wvcon->print("Key:%s has value:%s.\n",
-            i().full_key(), i->value());
+            i().fullkey(), i->value());
     }
 }
 
@@ -41,7 +41,7 @@ void testrecursiveiter(UniConf &mainconf)
     for (i.rewind(); i.next();)
     {
         wvcon->print("Key:%s has value:%s.\n",
-            i().full_key(), i->value());
+            i().fullkey(), i->value());
     }
 }
 #if 0

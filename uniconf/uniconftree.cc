@@ -9,9 +9,10 @@
 #include "uniconftree.h"
 #include "assert.h"
 
-/***** UniConfTree *****/
 
-UniConfTree::UniConfTree(UniConfTree *parent,
+/***** UniConfTreeBase *****/
+
+UniConfTreeBase::UniConfTreeBase(UniConfTreeBase *parent,
     const UniConfKey &key, WvStringParm value) :
     UniConfPair(key, value),
     xparent(parent), xchildren(NULL)
@@ -21,36 +22,75 @@ UniConfTree::UniConfTree(UniConfTree *parent,
 }
 
 
-UniConfTree::~UniConfTree()
+UniConfTreeBase::~UniConfTreeBase()
 {
-    delete xchildren;
+    // this happens only after the children are deleted
+    // by our subclass, which ensures that we do not confuse
+    // them about their parentage
+    if (xparent)
+        xparent->unlink(this);
 }
 
 
-void UniConfTree::link(UniConfTree *node)
+void UniConfTreeBase::_setparent(UniConfTreeBase *parent)
 {
-    if (! xchildren)
-        xchildren = new UniConfPairDict(13); // FIXME: should not fix size
-    xchildren->add(node, true);
+    if (xparent == parent)
+        return;
+    if (xparent)
+        xparent->unlink(this);
+    xparent = parent;
+    if (xparent)
+        xparent->link(this);
 }
 
 
-void UniConfTree::unlink(UniConfTree *node)
+UniConfTreeBase *UniConfTreeBase::_root() const
 {
-    assert(xchildren != NULL && node != NULL);
-    xchildren->remove(node);
+    const UniConfTreeBase *node = this;
+    while (node->xparent)
+        node = node->xparent;
+    return const_cast<UniConfTreeBase*>(node);
 }
 
 
-bool UniConfTree::haschildren() const
+bool UniConfTreeBase::haschildren() const
 {
     return xchildren && ! xchildren->isempty();
 }
 
 
-UniConfTree *UniConfTree::find(const UniConfKey &key)
+UniConfKey UniConfTreeBase::_fullkey(
+    const UniConfTreeBase *ancestor) const
 {
-    UniConfTree *node = this;
+    UniConfKey result;
+    if (ancestor)
+    {
+        const UniConfTreeBase *node = this;
+        while (node != ancestor)
+        {
+            result.prepend(node->key());
+            node = node->xparent;
+            assert(node != NULL ||
+                ! "ancestor was not a node in the tree");
+        }
+    }
+    else
+    {
+        const UniConfTreeBase *node = this;
+        while (node->xparent)
+        {
+            result.prepend(node->key());
+            node = node->xparent;
+        }
+    }
+    return result;
+}
+
+
+UniConfTreeBase *UniConfTreeBase::_find(
+    const UniConfKey &key) const
+{
+    const UniConfTreeBase *node = this;
     UniConfKey::Iter it(key);
     it.rewind();
     while (it.next())
@@ -59,66 +99,65 @@ UniConfTree *UniConfTree::find(const UniConfKey &key)
         if (! node)
             break;
     }
-    return node;
+    return const_cast<UniConfTreeBase*>(node);
 }
 
 
-void UniConfTree::remove(const UniConfKey &key)
+UniConfTreeBase *UniConfTreeBase::_findormake(const UniConfKey &key,
+    _MakeNodeFunc func)
 {
-    UniConfTree *node = this;
+    UniConfTreeBase *node = this;
     UniConfKey::Iter it(key);
     it.rewind();
     while (it.next())
     {
+        UniConfTreeBase *prev = node;
         node = node->findchild(it());
         if (! node)
-            return;
-    }
-    UniConfTree *prev = node->parent();
-    if (prev)
-        prev->unlink(node);
-    else
-        delete node;
-}
-
-
-UniConfTree *UniConfTree::findormake(const UniConfKey &key)
-{
-    UniConfTree *node = this;
-    UniConfKey::Iter it(key);
-    it.rewind();
-    while (it.next())
-    {
-        UniConfTree *prev = node;
-        node = node->findchild(it());
-        if (! node)
-            node = new UniConfTree(prev, it(), WvString::null);
+            node = func(prev, it());
     }
     return node;
 }
 
 
-UniConfTree *UniConfTree::findchild(const UniConfKey &key) const
+UniConfTreeBase *UniConfTreeBase::findchild(
+    const UniConfKey &key) const
 {
     if (! xchildren)
         return NULL;
-    return static_cast<UniConfTree*>((*xchildren)[key]);
+    return (*xchildren)[key];
+}
+
+void UniConfTreeBase::link(UniConfTreeBase *node)
+{
+    if (! xchildren)
+        xchildren = new UniConfTreeBaseDict(13); // FIXME: should not fix size
+    xchildren->add(node, true);
+}
+
+
+void UniConfTreeBase::unlink(UniConfTreeBase *node)
+{
+    if (xchildren)
+        xchildren->remove(node);
 }
 
 
 
-/***** UniConfTree::Iter *****/
+/***** UniConfTreeBase::Iter *****/
 
-UniConfTree::Iter::Iter(UniConfTree &_tree) :
-    tree(_tree), it(null_UniConfPairDict)
+UniConfTreeBase::Iter::Iter(UniConfTreeBase &_tree) :
+    tree(_tree), it(* reinterpret_cast<UniConfTreeBaseDict*>(
+        & null_UniConfPairDict))
 {
 }
 
 
-void UniConfTree::Iter::rewind()
+void UniConfTreeBase::Iter::rewind()
 {
     // an awful hack so that we can rewind an iterator after
     // things have been added to a tree and discover new children
-    it.tbl = tree.xchildren ? tree.xchildren : & null_UniConfPairDict;
+    it.tbl = tree.xchildren ? tree.xchildren :
+        reinterpret_cast<UniConfTreeBaseDict*>(& null_UniConfPairDict);
     it.rewind();
 }

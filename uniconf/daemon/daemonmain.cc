@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         }
         else if (!strcmp(argv[i], "-d"))
         {
-            level = findloglevel(argv[i]);
+            level = findloglevel(argv[i + 1]);
             i += 1;
         }
         else

@@ -25,23 +25,22 @@ class UniConfDict;
 
 #include "uniconfgen.h"
 
-
 /**
- * UniConf objects are the root, branches, and leaves of the configuration
- * tree.  Each one has a parent, name=value, and children, all of which are
- * optional (although the name is usually useful).
- * 
- * The nice thing about this is you can write classes that use a UniConf
- * configuration tree, and then instead hand them a subtree if you want.
+ * Temporary move of notification support
  */
-class UniConf : private UniConfTree
+class UniConfNotifyTree : public UniConfTree<UniConfNotifyTree>
 {
-    UniConfGen *generator; // subtree generator for this tree
-
-public:    
-    UniConf *defaults;     // a tree possibly containing default values
-    
 public:
+    UniConfNotifyTree(UniConfNotifyTree *parent,
+        const UniConfKey &key,
+        WvStringParm value = WvString::null) :
+        UniConfTree<UniConfNotifyTree>(parent, key, value),
+        child_dirty(false), dirty(false),
+        child_notify(false), notify(false),
+        child_obsolete(false), obsolete(false),
+        child_waiting(false), waiting(false) { }
+    virtual ~UniConfNotifyTree() { }
+
     bool 
 	// the 'dirty' flags are set true by set() and can be cleared by
 	// the tree's generator object, if it cares.
@@ -67,6 +66,43 @@ public:
         child_waiting:1,   // some data in the subtree has waiting=1
         waiting:1;         // need to actually retrieve data before next use.
 
+    void marknotify()
+    {
+        if (dirty && notify)
+            return;
+
+        // set the dirty and notify flags on this object, and inform all parent
+        // objects that their child is dirty.
+        UniConfNotifyTree *h;
+        
+        dirty = notify = true;
+        
+        h = parent();
+        while (h && (!h->child_dirty || !h->child_notify))
+        {
+            h->child_dirty = h->child_notify = true;
+            h = h->parent();
+        }
+    }
+};
+
+
+/**
+ * UniConf objects are the root, branches, and leaves of the configuration
+ * tree.  Each one has a parent, name=value, and children, all of which are
+ * optional (although the name is usually useful).
+ * 
+ * The nice thing about this is you can write classes that use a UniConf
+ * configuration tree, and then instead hand them a subtree if you want.
+ */
+class UniConf : public UniConfNotifyTree
+{
+    UniConfGen *generator; // subtree generator for this tree
+
+public:    
+    UniConf *defaults;     // a tree possibly containing default values
+    
+public:
     UniConf();
     UniConf(UniConf *_parent, const UniConfKey &_name);
     ~UniConf();
@@ -74,28 +110,29 @@ public:
     
     // fake copy constructor to prevent you from hurting yourself
     UniConf(const UniConf &);
-    
-    UniConf *top();
-    UniConfKey full_key(UniConf *top = NULL) const;
-    
+
     UniConf *gen_top();
     UniConfKey gen_full_key();
 
     /* overridden from UniConfTree */
+    UniConf *root() const
+    {
+        return static_cast<UniConf*>(UniConfNotifyTree::root());
+    }
     UniConf *parent() const
     {
-        return static_cast<UniConf*>(UniConfTree::parent());
+        return static_cast<UniConf*>(UniConfNotifyTree::parent());
     }
-    UniConf *find(const UniConfKey &key)
+    UniConf *find(const UniConfKey &key) const
     {
-        return static_cast<UniConf*>(UniConfTree::find(key));
+        return static_cast<UniConf*>(UniConfNotifyTree::find(key));
     }
     UniConf *findormake(const UniConfKey &key);
 
-    using UniConfTree::value;
-    using UniConfTree::key;
-    using UniConfTree::setvalue;
-    using UniConfTree::haschildren;
+    using UniConfNotifyTree::value;
+    using UniConfNotifyTree::key;
+    using UniConfNotifyTree::setvalue;
+    using UniConfNotifyTree::haschildren;
 
     // checks generator, then returns children != NULL
     // Needed for iterator over client connection
@@ -134,19 +171,20 @@ public:
     }
 
 
-private:
-    void mark_notify();
-    
 public:
     // load/save the entire tree (including subtrees).
     // Only save if the data is marked 'dirty'.
     void load();
     void save();
     
-    // a handy function to print a copy of this subtree to a stream.
-    // if everything=true, also prints objects with null values.
-    void _dump(WvStream &s, bool everything, WvStringTable &keytable);
-    void dump(WvStream &s, bool everything = false);
+    /**
+     * @internal
+     * Prints the entire contents of this subtree to a stream
+     * for debugging purposes.
+     * @param stream the stream
+     * @param everything if true, also prints empty values
+     */
+    void dump(WvStream &stream, bool everything = false);
 
     bool hasgen()   { return generator != NULL; }
     bool checkgen() { return hasgen() && generator->isok(); }

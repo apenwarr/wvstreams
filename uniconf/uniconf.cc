@@ -18,14 +18,14 @@
 
 // basic constructor, generally used for toplevel config file
 UniConf::UniConf() :
-    UniConfTree(NULL, UniConfKey::EMPTY, WvString::null)
+    UniConfNotifyTree(NULL, UniConfKey::EMPTY, WvString::null)
 {
     init();
 }
 
 
 UniConf::UniConf(UniConf *_parent, const UniConfKey &_name) :
-    UniConfTree(_parent, _name, WvString::null)
+    UniConfNotifyTree(_parent, _name, WvString::null)
 {
     init();
 }
@@ -35,11 +35,6 @@ void UniConf::init()
 {
     defaults = NULL;
     generator = NULL;
-    
-    dirty  = child_dirty  = false;
-    notify = child_notify = false;
-    waiting = child_waiting = false;
-    obsolete = child_obsolete = false;
 }
 
 
@@ -47,34 +42,6 @@ UniConf::~UniConf()
 {
     if (generator)
 	delete generator;
-}
-
-
-// find the topmost UniConf object in this tree.  Using this too often might
-// upset the clever transparency of hierarchical nesting, but sometimes it's
-// a good idea (particularly if you need to use full_key()).
-UniConf *UniConf::top()
-{
-    UniConf *h = this;
-    while (h->parent())
-	h = h->parent();
-    return h;
-}
-
-
-// this method of returning the object is pretty inefficient - lots of extra
-// copying stuff around.
-UniConfKey UniConf::full_key(UniConf *top) const
-{
-    UniConfKey k;
-    const UniConf *h = this;
-    
-    while (h && h != top)
-    {
-	k.prepend(h->key());
-	h = h->parent();
-    }
-    return k;
 }
 
 
@@ -95,7 +62,7 @@ UniConf *UniConf::gen_top()
 // inefficient - lots of extra copying stuff around.
 UniConfKey UniConf::gen_full_key()
 {
-    return full_key(gen_top());
+    return fullkey(gen_top());
 }
 
 bool UniConf::check_children()
@@ -146,7 +113,7 @@ void UniConf::remove(const UniConfKey &key)
 // find a key in the subtree.  If it doesn't already exist, create it.
 UniConf *UniConf::findormake(const UniConfKey &key)
 {
-    UniConf *tree = static_cast<UniConf*>(UniConfTree::find(key));
+    UniConf *tree = static_cast<UniConf*>(UniConfNotifyTree::find(key));
     if (tree)
         return tree;
 
@@ -239,27 +206,8 @@ void UniConf::set(const UniConfKey &key, WvStringParm _value)
     if (value() == _value)
 	return; // nothing to change - no notifications needed
     setvalue(_value);
-    
-    if (dirty && notify)
-	return; // nothing more needed
-    mark_notify();
-}
 
-
-// set the dirty and notify flags on this object, and inform all parent
-// objects that their child is dirty.
-void UniConf::mark_notify()
-{
-    UniConf *h;
-    
-    dirty = notify = true;
-    
-    h = parent();
-    while (h && (!h->child_dirty || !h->child_notify))
-    {
-	h->child_dirty = h->child_notify = true;
-	h = h->parent();
-    }
+    marknotify();
 }
 
 
@@ -292,37 +240,14 @@ void UniConf::save()
 }
 
 
-void UniConf::_dump(WvStream &s, bool everything, WvStringTable &keytable)
+void UniConf::dump(WvStream &stream, bool everything)
 {
-    WvString key(full_key());
-    
-    if (everything || !!value() || keytable[key])
+    UniConf::RecursiveIter it(*this);
+    for (it.rewind(); it.next(); )
     {
-	s.print("  %s%s%s%s%s%s %s = %s\n",
-	        child_dirty, dirty,
-		child_notify, notify,
-		child_obsolete, obsolete,
-		key, value());
+        if (everything || !! it->value())
+            stream.print("%s = %s\n", it->fullkey(), it->value());
     }
-
-    // this key better not exist yet!
-    assert(!keytable[key]);
-    
-    keytable.add(new WvString(key), true);
-    
-    if (haschildren())
-    {
-	UniConf::Iter it(*this);
-	for (it.rewind(); it.next(); )
-	    it->_dump(s, everything, keytable);
-    }
-}
-
-
-void UniConf::dump(WvStream &s, bool everything)
-{
-    WvStringTable keytable(100);
-    _dump(s, everything, keytable);
 }
 
 bool UniConf::mount(const UniConfLocation &location)

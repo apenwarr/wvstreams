@@ -171,7 +171,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	hostmap->add(host, true);
 	
 	host->loop = new WvLoopback();
-#define SKIP_FORK_FOR_DEBUGGING 0 // this does NOT work on a real weaver!!
+#define SKIP_FORK_FOR_DEBUGGING 1 // this does NOT work on a real weaver!!
 #if SKIP_FORK_FOR_DEBUGGING
 	namelookup(name, host->loop);
 #else

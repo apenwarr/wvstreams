@@ -20,7 +20,7 @@
 class UniConf::Iter
 {
     UniConf &root;
-    UniConfTree::Iter it;
+    UniConfNotifyTree::Iter it;
 
 public:
     Iter(UniConf &root);
