@@ -289,7 +289,11 @@ void UniIniGen::commit()
 
     if (realpath(filename, resolved_path) != NULL)
 	real_filename = resolved_path;
-    
+
+    WvString alt_filename("%s.tmp%s", real_filename, getpid());
+    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
+    struct stat statbuf;
+
     // first try to overwrite the file atomically
     if (!commit_atomic(real_filename))
     {
@@ -314,15 +318,32 @@ void UniIniGen::commit()
 	    statbuf.st_mode = statbuf.st_mode & ~S_ISVTX;
 	    fchmod(file.getwfd(), statbuf.st_mode & 07777);
 	}
-        
-        file.close();
-        
-        if (file.geterr())
-        {
-            log(WvLog::Warning, "Can't write '%s': %s\n",
-	        filename, file.errstr());
-            return;
-        }
+	else
+	    log(WvLog::Warning, "Error writing '%s' ('%s'): %s\n",
+		filename, real_filename, file.errstr());
+    }
+#endif
+
+    file.close();
+
+    if (file.geterr())
+    {
+        log(WvLog::Warning, "Can't write '%s': %s\n",
+	    filename, file.errstr());
+	return;
+    }
+
+#ifndef _WIN32
+    if (!alt_filename.isnull())
+    {
+	chmod(alt_filename, create_mode);
+	if (rename(alt_filename, real_filename) == -1)
+	{
+	    log(WvLog::Warning, "Can't write '%s': %s\n",
+		filename, strerror(errno));
+	    unlink(alt_filename);
+	    return;
+	}
     }
 #endif
 

@@ -506,13 +506,13 @@ void WvHttpStream::execute()
         // well.  It sucks, but there's no way to tell if all the data arrived
         // okay... that's why Chunked or ContentLength encoding is better.
         len = read(buf, sizeof(buf));
+	if (!isok())
+	    return;
+
         if (len)
             log(WvLog::Debug5, "Infinity: read %s bytes.\n", len);
         if (curl->outstream)
             curl->outstream->write(buf, len);
-
-        if (!isok())
-            doneurl();
     }
     else // not chunked or currently in a chunk - read 'bytes_remaining' bytes.
     {
@@ -523,6 +523,9 @@ void WvHttpStream::execute()
             len = read(buf, sizeof(buf));
         else
             len = read(buf, bytes_remaining);
+	if (!isok())
+	    return;
+
         bytes_remaining -= len;
         if (len)
             log(WvLog::Debug5, 

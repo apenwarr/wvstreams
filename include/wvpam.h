@@ -13,7 +13,6 @@
 #ifndef __WVPAM_H
 #define __WVPAM_H
 
-#include "wvstreamclone.h"
 #include "wvstringlist.h"
 #include "wvlog.h"
 
@@ -73,41 +72,6 @@ public:
      * Check here to see if the user is validated or not
      */
     WvError err;
-};
-
-class WvPamStream : public WvStreamClone
-{
-    WvPamData *d;
-    WvLog log;
-    
-public:
-    /**
-     * Require PAM authentication for the cloned stream.  name is the PAM
-     * service name.  success and fail are optional messages to write to the
-     * cloned stream on success or failure.
-     */
-    WvPamStream(WvStream *cloned, WvStringParm name,
-		WvStringParm success = WvString::null,
-		WvStringParm fail = WvString::null);
-    virtual ~WvPamStream();
-    
-    /** Return the user */
-    WvString getuser() const;
-    
-    /** Return the list of groups */
-    void getgroups(WvStringList &l) const;
-    
-private:
-    /**
-     * Log the result of the last PAM step, based on the pam_status flag,and
-     * write a failure message to the cloned stream on error.  step is the
-     * name to use in the log message.  Returns true if the last step
-     * succeeded, false if it failed.
-     */
-    bool check_pam_status(WvStringParm step);
-    
-    bool authenticate(WvStringParm name,
-		      WvStringParm successmsg, WvStringParm failmsg);
 };
 
 #endif // __WVPAM_H
