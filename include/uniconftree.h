@@ -38,7 +38,7 @@ public:
 
     /** Returns a pointer to the parent node, or NULL if there is none. */
     Sub *parent() const
-        { return static_cast<Sub*>(xparent); }
+        { return static_cast<Sub*>(this->xparent); }
 
     /** Reparents this node. */
     void setparent(Sub *parent)
@@ -83,13 +83,13 @@ public:
     /** Removes and deletes all children of this node. */
     void zap()
     {
-        if (!xchildren)
+        if (!(this->xchildren))
             return;
         // set xchildren to NULL first so that the zap() will happen faster
         // otherwise, each child will attempt to unlink itself uselessly
 
-        typename Base::Container *oldchildren = xchildren;
-        xchildren = NULL;
+        typename Base::Container *oldchildren = this->xchildren;
+        this->xchildren = NULL;
 
         // delete all children
         typename Base::Container::Iter i(*oldchildren);
