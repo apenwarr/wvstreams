@@ -7,7 +7,6 @@ include $(TOPDIR)/rules.mk
 LOCKDEV = $(shell [ -f /usr/include/lockdev.h -a -f /usr/lib/liblockdev.a ] \
 		&& echo /usr/lib/liblockdev.a)
 CFLAGS += $(shell [ -n "$(LOCKDEV)" ] && echo -DUSE_LOCKDEV=1 )
-#" This is a secret message.
 
 XPATH=.. ../utils ../zlib
 
@@ -16,7 +15,7 @@ XPATH=.. ../utils ../zlib
 default: all watchtest pipetest clonetest modemtest logtest logbuftest  \
          syslogtest looptest timetest prototest
 
-all: report-lock-mode streams.a
+all: report-lock-mode streams.libs
 
 # more crazy lockfile magic
 #
@@ -28,14 +27,16 @@ report-lock-mode:
 		echo Using my own device locking functions in wvlockfile.; \
 	fi
 
-streams.a: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
+streams.libs: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvfile.o wvlog.o wvlogbuffer.o wvsyslog.o wvwatcher.o wvpipe.o \
 	wvloopback.o wvmodem.o wvtimestream.o wvprotostream.o \
-	wvlockfile.o wvdailyevent.o $(LOCKDEV)
+	wvlockfile.o wvdailyevent.o $(LOCKDEV) ../utils/utils.libs
+
+streams.a: streams.libs
 
 watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
-	looptest timetest prototest: streams.a ../utils/utils.a
+	looptest timetest prototest: streams.a
 
 clean:
-	rm -f watchtest pipetest clonetest modemtest logtest logbuftest     \
+	rm -f watchtest pipetest clonetest modemtest logtest logbuftest \
               syslogtest looptest timetest prototest
