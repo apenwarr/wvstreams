@@ -46,14 +46,14 @@ public:
     class IterBase
     {
     public:
-        IterBase(WvBdbHashBase &_bdbhash);
+        IterBase(const WvBdbHashBase &_bdbhash);
         ~IterBase();
         void rewind();
 	void rewind(const datum &firstkey);
         void next();
         
     protected:
-        WvBdbHashBase &bdbhash;
+        const WvBdbHashBase &bdbhash;
         datum curkey;
         datum curdata;
 	bool empty;
@@ -143,7 +143,7 @@ public:
 	K *k;
 	D *d;
     public:
-        Iter(WvBdbHash &_bdbhash) : IterBase(_bdbhash) 
+        Iter(const WvBdbHash &_bdbhash) : IterBase(_bdbhash) 
 	    { k = NULL; d = NULL; }
 	~Iter()
 	{

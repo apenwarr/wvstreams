@@ -70,7 +70,7 @@ void WvBdbHashBase::zap()
 }
 
 
-WvBdbHashBase::IterBase::IterBase(WvBdbHashBase &_bdbhash)
+WvBdbHashBase::IterBase::IterBase(const WvBdbHashBase &_bdbhash)
     : bdbhash(_bdbhash)
 {
     curkey.dptr = curdata.dptr = NULL;
