@@ -24,11 +24,12 @@ static void usage()
 {
     wverr->print(
         "uniconfdaemon usage:  uniconfdaemon "
-            "[-mount mountpoint moniker] [-d level]\n"
+            "[-mount mountpoint moniker] [-d level] [-p port]\n"
         "    mountpoint - the point to mount the config keys under\n"
         "    moniker    - the moniker, eg. ini:myfile\n"
         "    level      - the debug level\n"
-        "                 Critical, Error, Warning, Notice, Info, or Debug[1-5]\n");
+        "                 Critical, Error, Warning, Notice, Info, or Debug[1-5]\n"
+        "    port       - the port to listen on\n");
     exit(2);
 }
 
@@ -86,6 +87,8 @@ int main(int argc, char **argv)
     UniConf cfg(root);
     bool mountattempt = false;
     
+    unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
+
     for (int i = 1; i < argc; i++)
     {
         if (!strcmp(argv[i],"-mount") && i + 2 < argc)
@@ -101,6 +104,13 @@ int main(int argc, char **argv)
             logcons.level(findloglevel(argv[i + 1]));
             i += 1;
         }
+        else if (!strcmp(argv[i], "-p"))
+        {
+            if (argc < i + 2) usage();
+            port = WvString(argv[i + 1]).num();
+            if (!port) usage();
+            i += 1;
+        }
         else
             usage();
     }
@@ -114,8 +124,7 @@ int main(int argc, char **argv)
     system("rm -f /tmp/uniconf/uniconfsocket");
     if (! globdaemon->setupunixsocket("/tmp/uniconf/uniconfsocket"))
         exit(1);
-    if (! globdaemon->setuptcpsocket(WvIPPortAddr("0.0.0.0",
-        DEFAULT_UNICONF_DAEMON_TCP_PORT)))
+    if (! globdaemon->setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
         exit(1);
     
     while (globdaemon->isok())
