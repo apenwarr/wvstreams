@@ -181,7 +181,7 @@ int main(int argc, char **argv)
             exit(1);
     }
 
-#if 0
+#if 1
     // since we're a daemon, we should now background ourselves.
     pid_t pid = fork();
     if (pid > 0) // parent
