@@ -1,11 +1,13 @@
-wvstreams (3.73) unstable; urgency=high
+wvstreams (3.73+20030321-1) unstable; urgency=high
 
-  * Synchronised with Upstream version
+  * Synchronised with Upstream CVS.
 
-  * Applied patch for WvStream description (Closes: #184829)
-
+  * Acknowledge NMU. (Closes: #141409)
+  
+  * Add Debian revision number. (Closes: #141456)
+  
   * Additional packaging fixes to move libwvstreams-dev into the devel
-    section, and libwvstreams-docs into the docs section, also fixed a
+    section, and libwvstreams-doc into the doc section, also fixed a
     problem with the installer. (Closes: #166208, #166210)
 
   * Added a WvQT class to enable WvStreams and QT programs to play nice
@@ -24,6 +26,8 @@ wvstreams (3.73) unstable; urgency=high
 
   * Fixes to build the documentation properly (Closes: #158326)
 
+  * Clarify package descriptions. (Closes: #184829)
+  
  -- Patrick Patterson <ppatters@debian.org>  Tue, 28 Jan 2003 14:35:49 -0500
 
 wvstreams (3.70.1) unstable; urgency=low

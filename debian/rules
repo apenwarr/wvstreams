@@ -12,10 +12,10 @@ major=3
 base=libwvstreams
 # This is used the wvstreams makefile to set the .so links
 PKG=`pwd`/debian/${base}${major}
-PKG-OGG=`pwd`/debian/${base}-ogg
-PKG-QT=`pwd`/debian/${base}-qt
-PKG-SPEEX=`pwd`/debian/${base}-speex
-PKG-FFT=`pwd`/debian/${base}-fft
+PKG_OGG=`pwd`/debian/${base}-ogg
+PKG_QT=`pwd`/debian/${base}-qt
+PKG_SPEEX=`pwd`/debian/${base}-speex
+PKG_FFT=`pwd`/debian/${base}-fft
 PKGDEV=`pwd`/debian/${base}-dev
 PKGDOC=`pwd`/debian/${base}-doc
 DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc
@@ -26,7 +26,7 @@ configure-stamp:
         # Add here commands to configure the package.
         # There is no configuration necessary to build WvStreams
 	$(MAKE) dist
-	cd src; ./configure
+	./configure --prefix=/usr --disable-debug
 	touch configure-stamp
 
 build: build-stamp
@@ -52,7 +52,7 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 	-$(MAKE) -C Docs/sgmlmanual clean
-	-rm -rf dox
+	-rm -rf Docs/doxy-html
 	dh_clean
 
 
@@ -67,12 +67,12 @@ install: build
 
 #	$(MAKE) installshared PREFIX=$(PKG)/usr
 	# Temporary Fix to work around a bug in Debhelper
-	$(MAKE) install-shared DESTDIR=`pwd`/debian/tmp prefix=/usr
+	$(MAKE) install-shared DESTDIR=`pwd`/debian/tmp
 
 	# Install development package
-	$(MAKE) install-dev DESTDIR=$(PKGDEV) prefix=/usr
+	$(MAKE) install-dev DESTDIR=$(PKGDEV)
 
-	dh_install
+	dh_install --autodest
 
 install-indep: build-indep
 
@@ -85,7 +85,7 @@ install-indep: build-indep
 	install -d $(DOCDIR)
 	install -d $(DOCDIR)/html-api
 	install -d $(DOCDIR)/html-manual
-	install -m644 dox/html/* $(DOCDIR)/html-api/
+	install -m644 Docs/doxy-html/* $(DOCDIR)/html-api/
 	install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
 		$(DOCDIR)/html-manual/
 	install -m644 Docs/sgmlmanual/wvstreams.ps \
@@ -121,7 +121,9 @@ binary-arch: build install
 	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
-	dh_makeshlibs -a -V
+	dh_makeshlibs -a -plibwvstreams3-base -V -plibwvstreams3-gtk -V \
+                         -plibwvstreams3-qt -V -plibwvstreams3-fft -V \
+                         -plibwvstreams3-vorbis -V -plibwvstreams3-speex -V
 	dh_installdeb -a   
 	dh_shlibdeps -a
 	dh_gencontrol -a
