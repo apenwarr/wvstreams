@@ -26,9 +26,12 @@ public:
     {
 	if (rwfd > -1)
 	{
+	    /* We have to do it this way since O_RDONLY is defined as 0
+	       in linux. */
 	    mode_t xmode = fcntl (rwfd, F_GETFL);
-	    readable = xmode & (O_RDONLY | O_RDWR);
-	    writable = xmode & (O_WRONLY | O_RDWR);
+	    xmode = xmode & (O_RDONLY | O_WRONLY | O_RDWR);
+	    readable = (xmode == O_RDONLY) || (xmode == O_RDWR);
+	    writable = (xmode == O_WRONLY) || (xmode == O_RDWR);
 	}
 	else
 	{
