@@ -2,6 +2,10 @@
  * Insert Appropriate Copyright header here....
  * I really don't care just mention me in a changelog somewhere ;) ppatters.
  */
+
+#ifndef __WVSSLSTREAM
+#define __WVSSLSTREAM
+
 #include "wvstreamclone.h"
 #include "wvx509.h"
 #include "wvlog.h"
@@ -111,3 +115,4 @@ private:
     WvLog      debug;
 };
 
+#endif

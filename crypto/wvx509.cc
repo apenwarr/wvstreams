@@ -281,14 +281,14 @@ WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
     return pkcs10;
 }
 
-void WvX509Mgr::decodecert(WvString *encodedcert)
+void WvX509Mgr::decodecert(WvString encodedcert)
 {
     int hexbytes = strlen((const char *)encodedcert);
     int bufsize = hexbytes/2;
     unsigned char *certbuf = new unsigned char[bufsize];
     X509 *ct;
 
-    unhexify(certbuf,(char *)encodedcert);
+    unhexify(certbuf,encodedcert);
     ct = cert = X509_new();
     cert = d2i_X509(&ct, &certbuf, hexbytes/2);
 
@@ -336,3 +336,4 @@ bool WvX509Mgr::validate()
     
     return true;
 }
+

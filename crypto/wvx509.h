@@ -4,6 +4,9 @@
  * ppatterson@carillonis.com
  */
 
+#ifndef __WVX509
+#define __WVX509
+
 #include "wvcrypto.h"
 #include "wvlog.h"
 #include "wvstringlist.h"
@@ -93,7 +96,7 @@ public:
     /**
      * Given a hexified encodedcert, fill the cert member
      */
-    void decodecert(WvString *encodedcert);
+    void decodecert(WvString encodedcert);
     
     /**
      * Given the X509 certificate object cert, return a hexified string
@@ -126,3 +129,5 @@ private:
 
 
 };
+
+#endif // __WVX509
