@@ -125,6 +125,10 @@ public:
      */
     const UniConf operator[] (const UniConfKey &key) const
         { return UniConf(xroot, UniConfKey(xfullkey, key)); }
+    const UniConf operator[] (WvStringParm key) const
+        { return (*this)[UniConfKey(key)]; }
+    const UniConf operator[] (const char *key) const
+        { return (*this)[UniConfKey(key)]; }
 
     /** Reassigns the target of this handle to match a different one. */
     UniConf &operator= (const UniConf &other)
