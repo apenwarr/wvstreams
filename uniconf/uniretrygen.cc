@@ -37,7 +37,8 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
     time_t retry_interval_ms = retry_interval_ms_str.num();
     if (retry_interval_ms < 0)
     	retry_interval_ms = 0;
-    return new UniRetryGen(moniker, retry_interval_ms);
+    return new UniRetryGen(moniker, UniRetryGen::ReconnectCallback(),
+            retry_interval_ms);
 }
 
 static WvMoniker<IUniConfGen> reg("retry", creator);
@@ -46,10 +47,12 @@ static WvMoniker<IUniConfGen> reg("retry", creator);
 /***** UniRetryGen *****/
 
 UniRetryGen::UniRetryGen(WvStringParm _moniker,
+        ReconnectCallback _reconnect_callback,
     	time_t _retry_interval_ms) 
     : UniFilterGen(NULL),
     	log(WvString("UniRetryGen %s", _moniker), WvLog::Debug1),
     	moniker(_moniker),
+        reconnect_callback(_reconnect_callback),
     	retry_interval_ms(_retry_interval_ms),
     	next_reconnect_attempt(wvtime())
 {
@@ -81,6 +84,8 @@ void UniRetryGen::maybe_reconnect()
     	    	log("Connected\n");
     	    	
     	    	setinner(gen);
+
+                if (!!reconnect_callback) reconnect_callback(*this);
     	    }
     	    else
     	    {
@@ -201,7 +206,17 @@ bool UniRetryGen::exists(const UniConfKey &key)
     else
     {
     	DPRINTF("UniRetryGen::exists: !isok()\n");
-    	result = false;
+        if (key == "")
+        {
+            // here we assume that at least the mount point exists
+            // see void UniMountGen::makemount() that create all the keys with
+            // an empty string
+            result = true;
+        }
+        else 
+        {
+            result = false;
+        }
     }
     
     maybe_disconnect();

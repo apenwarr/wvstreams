@@ -332,6 +332,10 @@ public:
     /**
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
+     *
+     * As a programmer, you probably DO NOT want to use this.  Use
+     * UniWatchList.add() instead.  Otherwise, make sure you call
+     * del_callback at the appropriate time.
      */
     void add_callback(void *cookie, const UniConfCallback &callback,
 		      bool recurse = true) const;

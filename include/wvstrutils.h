@@ -146,9 +146,17 @@ WvString local_date(time_t _when = -1);
 
 /**
  * Similar to crypt(), but this randomly selects its own salt.
- * This function is defined in strcrypt.cc.
+ * This function is defined in strcrypt.cc.  It chooses to use the DES
+ * engine.
  */
 WvString passwd_crypt(const char *str);
+
+/**
+ * Similar to crypt(), but this randomly selects its own salt.
+ * This function is defined in strcrypt.cc.  It chooses to use the MD5
+ * engine.
+ */
+WvString passwd_md5(const char *str);
 
 /**
  * Returns a string with a backslash in front of every non alphanumeric
@@ -189,6 +197,11 @@ WvString sizetoa(unsigned long long blocks, unsigned int blocksize=1);
 
 /** Give a size in Kilobyes gives a human readable size */
 WvString sizektoa(unsigned int kbytes);
+
+/** Given a number of seconds, returns a formatted human-readable string
+ * saying how long the period is.
+ */
+WvString secondstoa(unsigned int total_seconds);
 
 /**
  * Finds a string in an array and returns its index.

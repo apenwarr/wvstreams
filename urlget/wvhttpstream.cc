@@ -46,16 +46,6 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 
 WvHttpStream::~WvHttpStream()
 {
-    log(WvLog::Debug2, "Deleting.\n");
-    void* trace[10];
-    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
-    char** tracedump = backtrace_symbols(trace, count);
-    log(WvLog::Debug, "TRACE");
-    for (int i = 0; i < count; ++i)
-        log(WvLog::Debug, ":%s", tracedump[i]);
-    log(WvLog::Debug, "\n");
-    free(tracedump);
-
     if (geterr())
         log("Error was: %s\n", errstr());
     close();
@@ -64,17 +54,6 @@ WvHttpStream::~WvHttpStream()
 
 void WvHttpStream::close()
 {
-    log("close called\n");
-    void* trace[10];
-    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
-    char** tracedump = backtrace_symbols(trace, count);
-    log(WvLog::Debug, "TRACE");
-    for (int i = 0; i < count; ++i)
-        log(WvLog::Debug, ":%s", tracedump[i]);
-    log(WvLog::Debug, "\n");
-    free(tracedump);
-
-    log_urls();
     // assume pipelining is broken if we're closing without doing at least
     // one successful pipelining test and a following non-test request.
     if (enable_pipelining && max_requests > 1
@@ -102,7 +81,6 @@ void WvHttpStream::close()
     waiting_urls.zap();
     if (curl)
         doneurl();
-    log("close done\n");
 }
 
 
@@ -120,7 +98,6 @@ void WvHttpStream::doneurl()
     assert(curl != NULL);
     WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
-    log_urls();
 
     http_response = "";
     encoding = Unknown;
@@ -156,7 +133,6 @@ void WvHttpStream::doneurl()
 
     request_next();
     in_doneurl = false;
-    log("done doneurl()\n");
 }
 
 
@@ -530,13 +506,13 @@ void WvHttpStream::execute()
         // well.  It sucks, but there's no way to tell if all the data arrived
         // okay... that's why Chunked or ContentLength encoding is better.
         len = read(buf, sizeof(buf));
+	if (!isok())
+	    return;
+
         if (len)
             log(WvLog::Debug5, "Infinity: read %s bytes.\n", len);
         if (curl->outstream)
             curl->outstream->write(buf, len);
-
-        if (!isok())
-            doneurl();
     }
     else // not chunked or currently in a chunk - read 'bytes_remaining' bytes.
     {
@@ -547,6 +523,9 @@ void WvHttpStream::execute()
             len = read(buf, sizeof(buf));
         else
             len = read(buf, bytes_remaining);
+	if (!isok())
+	    return;
+
         bytes_remaining -= len;
         if (len)
             log(WvLog::Debug5, 
@@ -559,6 +538,9 @@ void WvHttpStream::execute()
 
 	if (bytes_remaining && !isok())
 	    seterr("connection interrupted");
+
+        if (!isok())
+            doneurl();
     }
 
     if (urls.isempty())

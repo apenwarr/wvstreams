@@ -38,7 +38,7 @@ int main( int argc, char * argv[] )
     for( i.rewind(); i.next(); ) {
         printf( "%s -- (filename = [%s]) -- mode %u -- size %" PRIu64 "\n", 
 		(const char *) i->fullname, i->name.cstr(), i->st_mode, 
-		u_int64_t(i->st_size) );
+		uint64_t(i->st_size) );
     }
 
     return( 0 );

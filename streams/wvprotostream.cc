@@ -92,7 +92,7 @@ WvProtoStream::TokenList *WvProtoStream::tokenize()
     while ((t = next_token()) != NULL)
 	tl->append(t, true);
 #if 0 
-    if (logp && log_enable && tl->count())
+    if (logp && log_enable && !tl->isempty())
     {
 	(*logp)("Read: ");
 	TokenList::Iter i(*tl);

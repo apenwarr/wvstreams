@@ -106,6 +106,7 @@ WvString UniDefGen::replacewildcard(const UniConfKey &key,
         }
     }
 
+
     // pull the literal from that segment num of the key
     return key.segment(loc-1);
 }
@@ -123,7 +124,7 @@ UniConfKey UniDefGen::keymap(const UniConfKey &key)
     UniConfKey result = finddefault(key, p, q);
     if (!result.numsegments())
 	result = key;
-    // wvcon->print("mapping '%s' -> '%s'\n", key, result);
+    // fprintf(stderr, "mapping '%s' -> '%s'\n", key.cstr(), result.cstr());
     return result;
 }
 
@@ -131,8 +132,9 @@ UniConfKey UniDefGen::keymap(const UniConfKey &key)
 WvString UniDefGen::get(const UniConfKey &key)
 {
     UniConfKey defkey = keymap(key);
+
     return replacewildcard(key, defkey,
-			   inner() ? inner()->get(defkey) : WvString());
+ 			   inner() ? inner()->get(defkey) : WvString());
 }
 
 

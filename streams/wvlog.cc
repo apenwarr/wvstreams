@@ -143,7 +143,10 @@ WvLogRcvBase::~WvLogRcvBase()
 
 const char *WvLogRcvBase::appname(const WvLog *log) const
 {
-    return log->app;
+    if (log)
+	return log->app;
+    else
+	return WvString("unknown");
 }
 
 
@@ -323,7 +326,7 @@ bool WvLogRcv::set_custom_levels(WvString descr)
     WvStringList lst;
     WvStringList::Iter i(lst);
     lst.split(descr, ",= ");
-    if (!lst.count())
+    if (lst.isempty())
         return true;
     WvString src("");
 
