@@ -49,7 +49,7 @@ bool matrix_sum(WvMatrix &in1, WvMatrix &in2, WvMatrix &out)
 bool matrix_product(WvMatrix &in1, WvMatrix &in2, WvMatrix &out)
 {
     int c, n = 0;
-    int *result = alloca(in1.m * in2.n * sizeof(int));
+    int *result = (int *) alloca(in1.m * in2.n * sizeof(int));
     bool matches = true;
     // calculate our own results
     for (int i = 0; i < in1.m; i++)
