@@ -8,139 +8,14 @@
 #include "wvsslhacks.h"
 #include "strutils.h"
 #include <assert.h>
+#include <rand.h>
 #include <blowfish.h>
 #include <rsa.h>
 #include <evp.h>
 #include <pem.h>
 
-////////////////////////// WvCryptoStream
-
-
-
-WvCryptoStream::WvCryptoStream(WvStream *_slave) : WvStreamClone(_slave)
-{
-    my_cryptbuf = NULL;
-    cryptbuf_size = 0;
-}
-
-
-WvCryptoStream::~WvCryptoStream()
-{
-    if (my_cryptbuf)
-	delete[] my_cryptbuf;
-
-    // Preserve the old WvStreamClone semantics, TunnelVision expects
-    // it.
-    cloned = NULL;
-}
-
-
-unsigned char *WvCryptoStream::cryptbuf(size_t size)
-{
-    if (size > cryptbuf_size)
-    {
-	if (my_cryptbuf)
-	    delete[] my_cryptbuf;
-	cryptbuf_size = size;
-	my_cryptbuf = new unsigned char[size];
-    }
-    
-    return my_cryptbuf;
-}
-
-
-/////////////////////// WvXORStream
-
-
-
-WvXORStream::WvXORStream(WvStream *_slave, unsigned char _xorvalue)
-		: WvCryptoStream(_slave)
-{
-    xorvalue = _xorvalue;
-}
-
-
-size_t WvXORStream::uwrite(const void *buf, size_t size)
-{
-    unsigned char *out = cryptbuf(size);
-    const unsigned char *i = (const unsigned char *)buf;
-    unsigned char *o = out;
-    size_t count;
-    
-    for (count = 0; count < size; count++)
-	*o++ = (*i++) ^ xorvalue;
-    
-    return WvCryptoStream::uwrite(out, size);
-}
-
-
-size_t WvXORStream::uread(void *buf, size_t size)
-{
-    unsigned char *in = cryptbuf(size);
-    const unsigned char *i = (const unsigned char *)in;
-    unsigned char *o = (unsigned char *)buf;
-    size_t count;
-    
-    size = WvCryptoStream::uread(in, size);
-    
-    for (count = 0; count < size; count++)
-	*o++ = (*i++) ^ xorvalue;
-    return size;
-}
-
-
-
-////////////////////////// WvBlowfishStream
-
-
-
-WvBlowfishStream::WvBlowfishStream(WvStream *_slave, const void *_key,
-				   size_t keysize)
-		: WvCryptoStream(_slave)
-{
-    key = new BF_KEY;
-    BF_set_key(key, keysize, (unsigned char *)_key);
-    ennum = denum = 0;
-    memset(envec, 0, sizeof(envec));
-    memset(devec, 0, sizeof(devec));
-}
-
-
-size_t WvBlowfishStream::uwrite(const void *buf, size_t size)
-{
-    void *out = cryptbuf(size);
-    
-    BF_cfb64_encrypt((unsigned char *)buf,
-		     (unsigned char *)out, size, key,
-		     envec, &ennum, BF_ENCRYPT);
-    
-    return WvCryptoStream::uwrite(out, size);
-}
-
-
-size_t WvBlowfishStream::uread(void *buf, size_t size)
-{
-    void *in = cryptbuf(size);
-    size = WvCryptoStream::uread(in, size);
-    
-    BF_cfb64_encrypt((unsigned char *)in,
-		     (unsigned char *)buf, size, key,
-		     devec, &denum, BF_DECRYPT);
-    
-    return size;
-}
-
-
-WvBlowfishStream::~WvBlowfishStream()
-{
-    delete key;
-}
-
-
 
 ////////////////////////////// WvRSAKey
-
-
 
 void WvRSAKey::init(const char *_keystr, bool priv)
 {
@@ -298,109 +173,7 @@ void WvRSAKey::hexify(RSA *rsa)
 }
 
 
-/////////////////////////// WvRSAStream
-
-
-
-WvRSAStream::WvRSAStream(WvStream *_slave,
-    const WvRSAKey &_my_key, const WvRSAKey &_their_key) :
-    WvCryptoStream(_slave),
-    my_key(_my_key.private_str(), true),
-    their_key(_their_key.public_str(), false)
-{
-    // we always want to read encrypted data in multiples of RSA_size.
-    if (my_key.rsa)
-	cloned->queuemin(RSA_size(my_key.rsa));
-}
-
-
-WvRSAStream::~WvRSAStream()
-{
-    // remove our strange queuing requirements
-    cloned->queuemin(0);
-}
-
-
-// this function has _way_ too many confusing temporary buffers... but RSA
-// can only deal with big chunks of data, and wvstreams doesn't expect that.
-size_t WvRSAStream::uread(void *buf, size_t size)
-{
-    unsigned char *in = cryptbuf(size);
-    
-    if (!my_key.rsa)
-    {
-	// make sure we read the data, even if we'll discard it
-	WvStreamClone::uread(buf, size);
-	return 0;
-    }
-    
-    size_t len, decode_len, rsa_size = RSA_size(my_key.rsa);
-    
-    if (size > rsa_size)
-	size = rsa_size;
-    
-    len = WvStreamClone::uread(in, rsa_size);
-    if (len < rsa_size)
-    {
-	// didn't get a full packet - should never really happen, since
-	// we use queuemin()...
-	return 0;
-    }
-    
-    // decrypt the data
-    unsigned char *decoded = new unsigned char[rsa_size];
-    decode_len = RSA_private_decrypt(len, in, decoded,
-				     my_key.rsa, RSA_PKCS1_PADDING);
-    
-    if (decode_len == (size_t)-1)
-	return 0; // error in decoding!
-    
-    // return up to "size" bytes in the main buffer
-    if (decode_len < size)
-	size = decode_len;
-    memcpy(buf, decoded, size);
-    
-    // save the remainder in inbuf
-    inbuf.put(decoded+size, decode_len - size);
-    
-    delete decoded;
-    return size;
-}
-
-
-size_t WvRSAStream::uwrite(const void *buf, size_t size)
-{
-    if (!their_key.rsa)
-    {
-	// invalid key; just pretend to write so we don't get stuff stuck
-	// in the buffer.
-	return size; 
-    }
-    
-    size_t off, len, totalwrite = 0, rsa_size = RSA_size(my_key.rsa), outsz;
-    unsigned char *out = cryptbuf(rsa_size);
-    
-    // break it into blocks of no more than rsa_size each
-    for (off = 0; off < size; off += rsa_size/2)
-    {
-	if (size-off < rsa_size/2)
-	    len = size-off;
-	else
-	    len = rsa_size/2;
-	
-	outsz = RSA_public_encrypt(len, (unsigned char *)buf+off, out,
-				   their_key.rsa, RSA_PKCS1_PADDING);
-	assert(outsz == rsa_size);
-	
-	// FIXME: this isn't really correct.  If uwrite() doesn't manage to
-	// write the _entire_ blob at once, we throw out the rest but
-	// claim it got written...
-	if (WvStreamClone::uwrite(out, outsz))
-	    totalwrite += len;
-    }
-    
-    return totalwrite;
-}
+////////////////////////////// WvMD5
 
 WvMD5::WvMD5(WvStringParm string_or_filename, bool isfile)
 {
@@ -471,6 +244,8 @@ WvString WvMD5::md5_hash() const
     return hash_value;
 }
 
+////////////////////////////// WvMessageDigest
+
 WvMessageDigest::WvMessageDigest(WvStringParm string, DigestMode _mode)
 {
     mode = _mode;
@@ -530,4 +305,300 @@ void WvMessageDigest::init()
     }
 
 //    EVP_DigestInit_ex(mdctx, md, NULL);
+}
+
+////////////////////////////// WvXOREncoder
+
+WvXOREncoder::WvXOREncoder(const void *_key, size_t _keylen) :
+    keylen(_keylen), keyoff(0)
+{
+    key = new unsigned char[keylen];
+    memcpy(key, _key, keylen);
+}
+
+WvXOREncoder::~WvXOREncoder()
+{
+    delete[] key;
+}
+
+bool WvXOREncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+{
+    size_t len = inbuf.used();
+    unsigned char *data = inbuf.get(len);
+    unsigned char *out = outbuf.alloc(len);
+
+    // FIXME: this loop is SLOW! (believe it or not)
+    while (len-- > 0)
+    {
+        *out++ = (*data++) ^ key[keyoff++];
+        keyoff %= keylen;
+    }
+    return true;
+}
+
+
+////////////////////////////// WvRSAEncoder
+
+WvRSAEncoder::WvRSAEncoder(bool _encrypt, const WvRSAKey & _key) :
+    encrypt(_encrypt), key(_key)
+{
+    if (key.isok() && key.rsa != NULL)
+        rsasize = RSA_size(key.rsa);
+    else
+        rsasize = 0; // BAD KEY! (should assert but would break compatibility)
+}
+
+
+WvRSAEncoder::~WvRSAEncoder()
+{
+}
+
+
+bool WvRSAEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+{
+    if (rsasize == 0)
+    {
+        // IGNORE BAD KEY!
+        in.zap();
+        return false;
+    }
+        
+    bool success = true;
+    if (encrypt)
+    {
+        // reserve space for PKCS1_PADDING
+        const size_t maxchunklen = rsasize - 12;
+        while (in.used() != 0)
+        {
+            size_t chunklen = in.used();
+            if (chunklen >= maxchunklen)
+                chunklen = maxchunklen;
+            else if (! flush)
+                break;
+
+            // encrypt a chunk
+            unsigned char *data = in.get(chunklen);
+            unsigned char *crypt = out.alloc(rsasize);
+            size_t cryptlen = RSA_public_encrypt(chunklen, data, crypt,
+                key.rsa, RSA_PKCS1_PADDING);
+            if (cryptlen != rsasize)
+            {
+                out.unalloc(rsasize);
+                success = false;
+            }
+        }
+    } else {
+        const size_t chunklen = rsasize;
+        while (in.used() >= chunklen)
+        {
+            // decrypt a chunk
+            unsigned char *crypt = in.get(chunklen);
+            unsigned char *data = out.alloc(rsasize);
+            int cryptlen = RSA_private_decrypt(chunklen, crypt, data,
+                key.rsa, RSA_PKCS1_PADDING);
+            if (cryptlen == -1)
+            {
+                out.unalloc(rsasize);
+                success = false;
+            }
+            else
+                out.unalloc(rsasize - cryptlen);
+        }
+        // flush does not make sense for us here
+        if (flush && in.used() != 0)
+            success = false;
+    }
+    return success;
+}
+
+
+////////////////////////////// WvBlowfishEncoder
+
+WvBlowfishEncoder::WvBlowfishEncoder(Mode _mode, bool _encrypt,
+    const void *_key, size_t _keysize) :
+    mode(_mode), encrypt(_encrypt), key(NULL)
+{
+    setkey(_key, _keysize);
+}
+
+
+WvBlowfishEncoder::~WvBlowfishEncoder()
+{
+    delete key;
+}
+
+
+void WvBlowfishEncoder::setkey(const void *_key, size_t _keysize)
+{
+    delete key;
+    key = new BF_KEY;
+    keysize = _keysize;
+    BF_set_key(key, _keysize, (unsigned char *)_key);
+    memset(ivec, 0, sizeof(ivec));
+    ivecoff = 0;
+}
+
+
+bool WvBlowfishEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+{
+    size_t len = in.used();
+    bool success = true;
+    if (mode == ECB)
+    {
+        size_t remainder = len & 7;
+        len -= remainder;
+        if (remainder != 0 && flush)
+        {
+            if (encrypt)
+            {
+                // if flushing on encryption, add some randomized padding
+                size_t padlen = 8 - remainder;
+                unsigned char *pad = in.alloc(padlen);
+                RAND_pseudo_bytes(pad, padlen);
+                len += 8;
+            }
+            else // nothing we can do here, flushing does not make sense!
+                success = false;
+        }
+    }
+    if (len == 0) return success;
+    
+    unsigned char *data = in.get(len);
+    unsigned char *crypt = out.alloc(len);
+    
+    switch (mode)
+    {
+        case ECB:
+            // ECB works 64bits at a time
+            while (len >= 8)
+            {
+                BF_ecb_encrypt(data, crypt, key,
+                    encrypt ? BF_ENCRYPT : BF_DECRYPT);
+                len -= 8;
+                data += 8;
+                crypt += 8;
+            }
+            break;
+
+        case CFB:
+            // CFB simulates a stream
+            BF_cfb64_encrypt(data, crypt, len, key, ivec,
+                &ivecoff, encrypt ? BF_ENCRYPT : BF_DECRYPT);
+            break;
+    }
+    return success;
+}
+
+
+////////////////////////////// WvCounterModeEncoder
+
+WvCounterModeEncoder::WvCounterModeEncoder(WvEncoder *_keycrypt,
+    const void *_counter, size_t _countersize) :
+    keycrypt(_keycrypt), counter(NULL)
+{
+    setcounter(_counter, _countersize);
+}
+
+
+WvCounterModeEncoder::~WvCounterModeEncoder()
+{
+    delete keycrypt;
+    delete[] counter;
+}
+
+
+void WvCounterModeEncoder::setcounter(const void *_counter, size_t _countersize)
+{
+    delete counter;
+    counter = new unsigned char[_countersize];
+    countersize = _countersize;
+    memcpy(counter, _counter, countersize);
+}
+
+
+void WvCounterModeEncoder::getcounter(void *_counter) const
+{
+    memcpy(_counter, counter, countersize);
+}
+
+
+void WvCounterModeEncoder::incrcounter()
+{
+    for (size_t i = 0; i < countersize && ! ++counter[i]; ++i);
+}
+
+
+bool WvCounterModeEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+{
+    size_t len = in.used() % countersize;
+    if (len == 0) return true;
+
+    while (len >= 0)
+    {
+        // generate a key stream
+        counterbuf.zap();
+        counterbuf.put(counter, countersize);
+        unsigned char *crypt = out.alloc(0);
+        size_t keylen = out.used();
+        bool success = keycrypt->encode(counterbuf, out, true);
+        keylen = out.used() - keylen;
+        if (! success)
+        {
+            out.unalloc(keylen);
+            return false;
+        }
+
+        // XOR it with the data
+        if (len < keylen)
+        {
+            out.unalloc(keylen - len);
+            keylen = len;
+        }
+        unsigned char *data = in.get(keylen);
+        while (keylen-- > 0)
+            *(crypt++) ^= *(data++);
+            
+        // update the counter
+        incrcounter();
+    }
+    return true;
+}
+
+
+////////////////////////////// WvRSAStream
+
+WvRSAStream::WvRSAStream(WvStream *_cloned,
+    const WvRSAKey &_my_private_key, const WvRSAKey &_their_public_key) :
+    WvEncoderStream(_cloned)
+{
+    readchain.append(new WvRSAEncoder(false /*encrypt*/,
+        _my_private_key), true);
+    writechain.append(new WvRSAEncoder(true /*encrypt*/,
+        _their_public_key), true);
+    if (_my_private_key.isok() && _my_private_key.rsa)
+        min_readsize = RSA_size(_my_private_key.rsa);
+}
+
+
+////////////////////////////// WvBlowfishStream
+
+WvBlowfishStream::WvBlowfishStream(WvStream *_cloned,
+    const void *_key, size_t _keysize) :
+    WvEncoderStream(_cloned)
+{
+    readchain.append(new WvBlowfishEncoder(WvBlowfishEncoder::CFB,
+        false /*encrypt*/, _key, _keysize), true);
+    writechain.append(new WvBlowfishEncoder(WvBlowfishEncoder::CFB,
+        true /*encrypt*/, _key, _keysize), true);
+}
+
+
+////////////////////////////// WvXORStream
+
+WvXORStream::WvXORStream(WvStream *_cloned,
+    const void *_key, size_t _keysize) :
+    WvEncoderStream(_cloned)
+{
+    readchain.append(new WvXOREncoder(_key, _keysize), true);
+    writechain.append(new WvXOREncoder(_key, _keysize), true);
 }

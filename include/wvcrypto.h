@@ -9,8 +9,8 @@
 
 #include "wvfile.h"
 #include "wvstreamclone.h"
-
-#define WVCRYPTO_BUFSIZE  2048     // max bytes to encrypt at once
+#include "wvencoder.h"
+#include "wvencoderstream.h"
 
 /**
  * a very simple stream that returns randomness from /dev/urandom
@@ -19,63 +19,6 @@ class WvRandomStream : public WvFile
 {
 public:
     WvRandomStream() : WvFile("/dev/urandom", O_RDONLY) {}
-};
-
-
-/**
- * base class for other cryptographic streams.  Presumably subclasses will
- * want to redefine uread/uwrite.
- */
-class WvCryptoStream : public WvStreamClone
-{
-    unsigned char *my_cryptbuf;
-    size_t cryptbuf_size;
-    
-protected:
-    WvStream *slave;
-    unsigned char *cryptbuf(size_t size);
-    
-public:
-    WvCryptoStream(WvStream *_slave);
-    virtual ~WvCryptoStream();
-};
-
-
-/**
- * a CryptoStream implementing completely braindead 8-bit XOR encryption.
- * Mainly useful for testing.
- */
-class WvXORStream : public WvCryptoStream
-{
-    unsigned char xorvalue;
-public:
-    WvXORStream(WvStream *_slave, unsigned char _xorvalue);
-    
-protected:
-    virtual size_t uread(void *buf, size_t size);
-    virtual size_t uwrite(const void *buf, size_t size);
-};
-
-
-/**
- * A CryptoStream implementing the fast, symmetric Blowfish encryption via
- * the SSLeay library.  They key is an arbitrary-length sequence of bytes.
- */
-struct bf_key_st;
-
-class WvBlowfishStream : public WvCryptoStream
-{
-    struct bf_key_st *key;
-    unsigned char envec[WVCRYPTO_BUFSIZE], devec[WVCRYPTO_BUFSIZE];
-    int ennum, denum;
-    
-public:
-    WvBlowfishStream(WvStream *_slave, const void *_key, size_t keysize);
-    virtual ~WvBlowfishStream();
-
-protected:
-    virtual size_t uread(void *buf, size_t size);
-    virtual size_t uwrite(const void *buf, size_t size);
 };
 
 
@@ -115,34 +58,12 @@ public:
         
     void pem2hex(WvStringParm filename);
     
-    volatile bool isok()
-    	{ return (errnum == 0 ? true : false); }
+    volatile bool isok() const
+        { return (errnum == 0 ? true : false); }
     
     WvString errstring;
 };
 
-
-/**
- * A CryptoStream implementing RSA public/private key encryption.  This is
- * really slow, so should only be used to exchange information about a faster
- * symmetric key (like Blowfish).  RSA needs to know the public key from
- * the remote end (to send data) and the private key on this end (to
- * receive data).
- */
-class WvRSAStream : public WvCryptoStream
-{
-    WvRSAKey my_key, their_key;
-    size_t decrypt_silly;
-    
-protected:
-    virtual size_t uread(void *buf, size_t size);
-    virtual size_t uwrite(const void *buf, size_t size);
-    
-public:
-    WvRSAStream(WvStream *_slave,
-        const WvRSAKey &_my_key, const WvRSAKey &_their_key);
-    virtual ~WvRSAStream();
-};
 
 /**
  * MD5 Hash of either a string or a File 
@@ -228,5 +149,182 @@ private:
     */
    void init();
 };
+
+
+/**
+ * An encoder implementing simple XOR encryption.
+ * Mainly useful for testing.
+ */
+class WvXOREncoder : public WvEncoder
+{
+public:
+    /**
+     * Creates a new XOR encoder / decoder.
+     *   _key    : the key
+     *   _keylen : the length of the key in bytes
+     */
+    WvXOREncoder(const void *_key, size_t _keylen);
+    virtual ~WvXOREncoder();
+    
+    bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+
+private:
+    unsigned char *key;
+    size_t keylen;
+    int keyoff;
+};
+
+
+/**
+ * An encoder implementing RSA public/private key encryption.
+ * This is really slow, so should only be used to exchange information
+ * about a faster symmetric key (like Blowfish).
+ *
+ * RSA needs to know the public key from the remote end (to encrypt data) and
+ * the private key on this end (to decrypt data).
+ */
+class WvRSAEncoder : public WvEncoder
+{
+public:
+    /**
+     * Creates a new RSA encoder / decoder.
+     *   _encrypt : if true, encrypts else decrypts
+     *   _key     : the public key for encryption if _encrypt == true,
+     *              otherwise the private key for decryption
+     */
+    WvRSAEncoder(bool _encrypt, const WvRSAKey &_key);
+    virtual ~WvRSAEncoder();
+
+    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+
+private:
+    bool encrypt;
+    WvRSAKey key;
+    size_t rsasize;
+};
+
+
+/**
+ * A Blowfish encoder.
+ */
+struct bf_key_st;
+class WvBlowfishEncoder : public WvEncoder
+{
+public:
+    enum Mode {
+        ECB, // electronic code book mode (avoid!)
+        CFB  // cipher feedback mode (simulates a stream)
+    };
+
+    /**
+     * Creates a new Blowfish encoder / decoder.
+     *   _mode    : the encryption mode
+     *   _encrypt : if true, encrypts else decrypts
+     *   _key     : the initial key data
+     *   _keysize : the initial key size
+     */
+    WvBlowfishEncoder(Mode _mode, bool _encrypt,
+        const void *_key, size_t _keysize);
+    virtual ~WvBlowfishEncoder();
+
+    /**
+     * Sets the current Blowfish key and resets the initialization
+     * vector to all nulls.
+     */
+    void setkey(const void *_key, size_t _keysize);
+
+    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+
+private:
+    Mode mode;
+    bool encrypt;
+    size_t keysize;
+    struct bf_key_st *key;
+    unsigned char ivec[8]; // initialization vector
+    int ivecoff; // current offset into initvec
+};
+
+
+/**
+ * A counter mode encryption encoder.
+ */
+class WvCounterModeEncoder
+{
+public:
+    WvEncoder *keycrypt;
+
+    /**
+     * Create a new counter mode encoder / decoder.
+     *   _keycrypt    : the underlying encoder for generating the keystream
+     *                  (note: takes ownership of this encoder)
+     *   _counter     : the initial counter value
+     *   _countersize : the counter size, must equal crypto block size
+     */
+    WvCounterModeEncoder(WvEncoder *_keycrypt,
+        const void *_counter, size_t _countersize);
+    virtual ~WvCounterModeEncoder();
+
+    /**
+     * Sets the Counter mode auto-incrementing counter.
+     *   counter     : the counter
+     *   countersize : the new counter size, must equal crypto block size
+     */
+    void setcounter(const void *counter, size_t countersize);
+
+    /**
+     * Stores the current counter in the supplied buffer.
+     *   counter : the array that receives the counter
+     */
+    void getcounter(void *counter) const;
+    
+    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+    
+private:
+    WvBuffer counterbuf;
+
+protected:
+    unsigned char *counter; // auto-incrementing counter
+    size_t countersize; // counter size in bytes
+    
+    virtual void incrcounter();    
+};
+
+
+/**
+ * A crypto stream implementing RSA public/private key encryption.
+ * See WvRSAEncoder for details.
+ */
+class WvRSAStream : public WvEncoderStream
+{
+public:
+    WvRSAStream(WvStream *_cloned,
+        const WvRSAKey &_my_private_key, const WvRSAKey &_their_public_key);
+    virtual ~WvRSAStream() { }
+};
+
+
+/**
+ * A crypto stream implementing Blowfish CFB encryption.
+ * See WvBlowfishEncoder for details.
+ */
+class WvBlowfishStream : public WvEncoderStream
+{
+public:
+    WvBlowfishStream(WvStream *_cloned, const void *key, size_t _keysize);
+    virtual ~WvBlowfishStream() { }
+};
+
+
+/**
+ * A crypto stream implementing XOR encryption.
+ * See WvXOREncoder for details.
+ */
+class WvXORStream : public WvEncoderStream
+{
+public:
+    WvXORStream(WvStream *_cloned, const void *key, size_t _keysize);
+    virtual ~WvXORStream() { }
+};
+
 
 #endif // __WVCRYPTO_H

@@ -10,6 +10,30 @@
 #include "wvtimeutils.h"
 #include <assert.h>
 
+#define PRIVATE_KEY "3082025b02010002818100b0873b623907cffea3aebca4815e579d06" \
+                    "217f8c79f4992776a0efcd4223df678266c03936af92282b0b8233a0" \
+                    "0d538a36b8b02800cbb5908e47af45b378091fd51b8c36f78372526d" \
+                    "149d621ba2b538d5ad21b5523c36801f6735f504ee068da5821b13f1" \
+                    "3ca4966503a9712792a77dfe80cd8b9cc35efc2aae2033605aeb1b02" \
+                    "010302818075af7cec260535546d1f286dab943a68aec0ffb2fbf866" \
+                    "1a4f15f533816d3f9a56ef2ad0cf1fb6c57207ac226ab38d06cf25ca" \
+                    "c555dd23b5b42fca2e77a55b697142efd8b9ce56d244162ed7c16cfc" \
+                    "65b77cd0386beac17a77bfb9f1a51db5b64981c6b238032213790ba1" \
+                    "f9b76ab3c65d6674d2b9a1c3ef0ba05f855f6cfdeb024100ea833de9" \
+                    "b8b6ed75f76c151fc1fe3462944ff5f081dbd5f8c7d17b6c52cb3359" \
+                    "2b92921c7a736db8d2a7cc57e86da6885206dfe06b72fcc6efd57398" \
+                    "3dd893b1024100c0b3e688281702a10f8741feb781063dae21f3702e" \
+                    "803e4fa3f6239e3a7642a30bacdeec22c483c05cca6a22ac04f34c20" \
+                    "603e6f1addbc4ea9681d53135eda8b0241009c577e9bd079f3a3fa48" \
+                    "0e152bfecd970d8aa3f5abe7e3fb2fe0fcf2e1dccce61d0c616851a2" \
+                    "4925e1c532e5459e6f058c04954047a1fdd9f538f7bad3e5b7cb0241" \
+                    "008077ef05700f57160a5a2bff2500aed3c96bf7a01f00298a6d4ec2" \
+                    "697c4ed7175d1de9f2c1d857d593319c171d58a232c040299f673e7d" \
+                    "89c64568e20ce9e70702406fb58e17541b988269c2e739063bfa836f" \
+                    "98493c0d43791cf3ee8374e51c6d519ec08194e5c482362126a8b805" \
+                    "758ea0ee40f3a36c947bb4d957b51ac56430ab"
+WvRSAKey my_rsa_key( PRIVATE_KEY, true );
+
 extern char *optarg;
 
 static void usage(WvLog &log, const char *progname)
@@ -34,7 +58,7 @@ int main(int argc, char **argv)
     enum { Encrypt, Decrypt } direction = Encrypt;
     WvRSAKey *rsakey = NULL;
     unsigned char *blowkey = NULL;
-    WvStream *crypto;
+    WvStreamClone *crypto;
     int numbits = 0;
     char buf[10240];
     size_t len, total;
@@ -99,15 +123,19 @@ int main(int argc, char **argv)
     
     switch (crypt_type)
     {
-    case XOR:
+    case XOR: {
 	log("Using 8-bit XOR encryption.\n");
-	crypto = new WvXORStream(wvcon, 1);
+        char key = 1;
+	crypto = new WvXORStream(wvcon, &key, 1);
 	break;
+    }
 	
     case RSA:
+        numbits = 1024;
 	log("Using %s-bit RSA encryption.\n", numbits);
-	log("Generating key...");
-        rsakey = new WvRSAKey(numbits);
+	//log("Generating key...");
+        //rsakey = new WvRSAKey(numbits);
+        rsakey = &my_rsa_key;
 	log("ok.\n");
 	crypto = new WvRSAStream(wvcon, *rsakey, *rsakey);
 	break;
@@ -140,21 +168,18 @@ int main(int argc, char **argv)
 	
 	while (wvcon->isok() && crypto->isok())
 	{
-	    if (wvcon->select(-1))
+	    if (crypto->select(-1))
 	    {
 		len = wvcon->read(buf, sizeof(buf));
 		crypto->write(buf, len);
 		total += len;
 	    }
-	    
-	    if (crypto->select(0))
-		crypto->callback();
 	}
     }
     else // direction == Decrypt
     {
 	log("Decrypting stdin to stdout.\n");
-	
+
 	while (wvcon->isok() && crypto->isok())
 	{
 	    if (crypto->select(-1))
@@ -163,10 +188,13 @@ int main(int argc, char **argv)
 		wvcon->write(buf, len);
 		total += len;
 	    }
-	    
-	    if (wvcon->select(0))
-		wvcon->callback();
 	}
+    }
+    if (crypto)
+    {
+        crypto->close();
+        crypto->cloned = NULL;
+	delete crypto;
     }
     
     gettimeofday(&stop, &tz);
@@ -177,10 +205,8 @@ int main(int argc, char **argv)
 	"Transfer rate: %s kbytes/sec.\n",
 	total, tdiff/1000, tdiff % 1000, (int)(1000.0 * total / tdiff / 1024));
     
-    if (crypto)
-	delete crypto;
-    if (rsakey)
-	delete rsakey;
+    //if (rsakey)
+    //  delete rsakey;
     if (blowkey)
 	delete [] blowkey;
 }
