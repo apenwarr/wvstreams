@@ -16,12 +16,11 @@
  *  fqdomainname
  */
 
-
 WVTEST_MAIN("terminate_stringtest.cc")
 {
-    char *input[] = {new char[6], new char[7], new char[2], new char[3]};
+    char *input[] = {new char[6], new char[7], new char[2], new char[4]};
     strcpy(input[0], "blah"); strcpy(input[1], "blah\n");
-    strcpy(input[2], "");     strcpy(input[3], "\n");
+    strcpy(input[2], "");     strcpy(input[3], "\r\n");
     const char *desired[] = {"blah!", "blah!", "!", "!"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -77,6 +76,7 @@ WVTEST_MAIN("nbsptest.cc")
         char *result = non_breaking(input[i]);
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
+        delete[] result;
     }
 }
 
@@ -94,6 +94,7 @@ WVTEST_MAIN("replace_chartest.cc")
         replace_char((void *)input[i], 'r', 'x', len[i]);
         if (!WVFAIL(strcmp(input[i], desired[i])))
             printf("   because [%s] != [%s]\n", input[i], desired[i]);
+        delete[] input[i];
     }
 }
 
@@ -443,7 +444,6 @@ WVTEST_MAIN("metriculatetest.cc")
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
     {
         WvString result = metriculate(input[i]);
-        printf("%s FAIL\n", result.cstr());
         if (!WVPASS(result == desired[i]))
             printf("   because [%s] != [%s]\n", result.cstr(), desired[i]);
     }

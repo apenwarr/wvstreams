@@ -35,8 +35,13 @@ char *terminate_string(char *string, char c)
     	return NULL;
 
     p = string + strlen(string) - 1;
-    while (*p == '\r' || *p == '\n')
-    	p--;
+    while (p >= string)
+    {
+        if (*p == '\r' || *p == '\n')
+            --p;
+        else
+            break;
+    }
 
     *(++p) = c;
     *(++p) = 0;
@@ -107,7 +112,8 @@ char *non_breaking(char * string)
     }
 
     WvString s(buf.getstr());
-    return s.edit();
+    char *nbstr = new char[s.len() + 1];
+    return strcpy(nbstr, s.edit());
 }
 
 
@@ -582,7 +588,6 @@ WvString metriculate(const off_t i)
     WvString res;
     int digits=0;
     int digit=0;
-    int neg = 0;
     long long int j=i;
     char *p;
 
@@ -593,22 +598,22 @@ WvString metriculate(const off_t i)
     }
 
     j=i;
-    res.setsize(digits + ((digits - 1) / 3) + 1 + (j < 0) ? 1 : 0);
+    // setsize says it takes care of the terminating NULL char
+    res.setsize(digits + ((digits - 1) / 3) + ((j < 0) ? 1 : 0));
     p = res.edit();
     if (j < 0)
     {
-        *p = '-';
+        *p++ = '-';
         j = -j;
-        neg = 1;
     }
 
-    p += digits + ((digits - 1) / 3) + neg;
+    p += digits + ((digits - 1) / 3);
     *p-- = '\0';
 
     for (digit=0; digit<digits; digit++)
     {
         *p-- = '0' + ( j%10 );
-        if (((digit+1) % 3) == 0 && digit != digits - 1)
+        if (((digit+1) % 3) == 0 && digit < digits - 1)
             *p-- = ' ';
         j /= 10;
     }
