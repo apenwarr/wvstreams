@@ -111,6 +111,8 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	for i in $(TARGETS_SO); do \
 	    cd $(DESTDIR)$(libdir) && $(LN_S) $$i.$(RELEASE) $$i; \
 	done
+	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
+	$(INSTALL_DATA) $(wildcard pkgconfig/*.pc) $(DESTDIR)$(libdir)/pkgconfig
 
 ifeq ("$(build_xplc)", "yes")
 
