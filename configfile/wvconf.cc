@@ -22,9 +22,10 @@ void WvConf::setbool(WvConf &, void *userdata,
 		     
 
 
-WvConf::WvConf(const WvString &_filename)
+WvConf::WvConf(const WvString &_filename, int _create_mode)
 	: filename(_filename), log(filename), globalsection("")
 {
+    create_mode = _create_mode;
     filename.unique();
     dirty = error = false;
     load_file();
@@ -275,32 +276,31 @@ char *WvConf::parse_value(char *s)
 
 void WvConf::flush()
 {
-    FILE *fp;
 
-    if (dirty && !error)
+    if (!dirty || error)
+	return;
+    
+    WvFile fp(filename, O_WRONLY, create_mode);
+
+    if (!fp.isok())
     {
-	fp = fopen(filename, "w");
-	if (!fp)
-	{
-	    log(WvLog::Error, "Can't write to config file: %s\n",
-		strerror(errno));
-	    error = true;
-	    return;
-	}
-
-	globalsection.dump(fp);
-
-        Iter i(*this);
-	for (i.rewind(); i.next();)
-	{
-	    WvConfigSection & sect = i;
-	    fprintf(fp, "\n[%s]\n", (const char *)sect.name);
-	    sect.dump(fp);
-	}
-
-	fclose(fp);
-	dirty = false;
+	log(WvLog::Error, "Can't write to config file: %s\n",
+	    strerror(errno));
+	error = true;
+	return;
     }
+    
+    globalsection.dump(fp);
+    
+    Iter i(*this);
+    for (i.rewind(); i.next();)
+    {
+	WvConfigSection & sect = i;
+	fp.print("\n[%s]\n", sect.name);
+	sect.dump(fp);
+    }
+    
+    dirty = false;
 }
 
 

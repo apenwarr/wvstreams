@@ -51,7 +51,7 @@ public:
     void set(const WvString &entry, const WvString &value);
     void set(WvConfigEntry *e, const WvString &value);
 
-    void dump(FILE * fp);
+    void dump(WvStream &fp);
 
     WvString name;
 };
@@ -82,7 +82,7 @@ DeclareWvList(WvConfigSection);
 class WvConf : public WvConfigSectionList
 {
 public:
-    WvConf(const WvString &_filename);
+    WvConf(const WvString &_filename, int _create_mode = 0666);
     ~WvConf();
     
     bool isok() const
@@ -133,6 +133,7 @@ public:
 private:
     bool dirty;			// true if changed since last flush()
     bool error;			// true if something has gone wrong
+    int create_mode;		// if we must create config file
 
     WvString filename;
     WvLog log;

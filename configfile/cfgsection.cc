@@ -67,7 +67,7 @@ void WvConfigSection::set(const WvString &entry, const WvString &value)
 }
 
 
-void WvConfigSection::dump(FILE *fp)
+void WvConfigSection::dump(WvStream &fp)
 {
     Iter i(*this);
 
@@ -75,9 +75,8 @@ void WvConfigSection::dump(FILE *fp)
     {
 	WvConfigEntry &e = i;
 	if (e.value && e.value[0])
-	    fprintf(fp, "%s = %s\n",
-		    (const char *)e.name, (const char *)e.value);
+	    fp.print("%s = %s\n", e.name, e.value);
 	else
-	    fprintf(fp, "%s\n", (const char *)e.name);
+	    fp.print("%s\n", e.name);
     }
 }
