@@ -10,7 +10,7 @@
 #include "wvfile.h"
 #include "strutils.h"
 
-//#define DEBUG_DEL_CALLBACK
+//#define DEBUG_DEL_CALLBACK 1
 #ifdef DEBUG_DEL_CALLBACK
 #include <execinfo.h>
 #endif
