@@ -19,7 +19,7 @@
 #define UNICONFD_INI "/tmp/unitempgen-uniconfd.ini"
 
 // write out a temporary ini file for use, saves flushing entries
-bool write_ini()
+static bool write_ini()
 {
     WvFile outfile(UNICONFD_INI, O_CREAT | O_WRONLY | O_TRUNC);
     if (outfile.isok())
@@ -31,7 +31,7 @@ bool write_ini()
     return false;
 }
 
-WVTEST_MAIN("tempgen/cachgen basics")
+WVTEST_MAIN("tempgen/cachegen basics")
 {
     signal(SIGPIPE, SIG_IGN);
 
