@@ -1,6 +1,6 @@
 #include "wvtest.h"
 #include "wverror.h"
-
+#include <errno.h>
 
 void testnoerr(const WvErrorBase &e)
 {
@@ -142,4 +142,18 @@ WVTEST_MAIN("set to -1")
     e.seterr(-1);
     testnoerr(e);
 #endif
+}
+
+WVTEST_MAIN("seterr_both")
+{
+    WvError e;
+    e.set_both(EEXIST, "blah blah");
+    WVFAIL(e.isok());
+    WVPASSEQ(e.get(), EEXIST);
+    WVPASSEQ(e.str(), "blah blah");
+    
+    WvError e2 = e;
+    WVFAIL(e2.isok());
+    WVPASSEQ(e2.get(), EEXIST);
+    WVPASSEQ(e2.str(), "blah blah");
 }

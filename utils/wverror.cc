@@ -28,6 +28,7 @@ WvString WvErrorBase::errstr() const
     }
     else
     {
+	if (!!errstring) return errstring;
 #ifndef _WIN32
 	return strerror(errnum);
 #else
@@ -83,4 +84,15 @@ void WvErrorBase::seterr(const WvErrorBase &err)
 	seterr(err.geterr());
     else if (err.geterr() < 0)
 	seterr(err.errstr());
+}
+
+
+void WvErrorBase::seterr_both(int _errnum, WvStringParm specialerr)
+{
+    assert(!!specialerr);
+    if (!errnum)
+    {
+	errstring = specialerr;
+	seterr(_errnum);
+    }
 }

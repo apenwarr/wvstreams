@@ -18,7 +18,7 @@ WV_LINK(UniReplicateGen);
 #if 0
 #define DPRINTF(format, args...) fprintf(stderr, format ,##args);
 #else
-#define DPRINTF if (0)
+#define DPRINTF if (0) printf
 #endif
 
 
