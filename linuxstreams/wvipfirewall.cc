@@ -13,7 +13,7 @@
 bool WvIPFirewall::enable = false, WvIPFirewall::ignore_errors = true;
 
 
-WvIPFirewall::WvIPFirewall()
+WvIPFirewall::WvIPFirewall() : log("Firewall", WvLog::Debug)
 {
     // don't change any firewall rules here!  Remember that there may be
     // more than one instance of the firewall object.
@@ -56,6 +56,46 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 		    shutup());
 }
 
+WvString WvIPFirewall::forward_command(const char *cmd, 
+				       const char *proto,
+				       const WvIPPortAddr &src,
+				       const WvIPPortAddr &dst)
+{
+    WvIPAddr srcaddr(src), dstaddr(dst), zero;
+    WvString haveiface(""), haveoface("");
+    if (!(srcaddr == zero))
+    {
+	haveiface.append("-d ");
+	haveiface.append((WvString)srcaddr);
+    }
+
+    if (!(dstaddr == zero))
+    {
+	haveoface.append("-d ");
+	haveoface.append((WvString)dstaddr);
+    }
+
+    WvString retval("iptables -t nat %s OFASTFORWARD -p %s -m mark --mark 0xBEEF "
+                    "--dport %s %s -j MASQUERADE %s \n", 
+                    cmd, proto, dst.port, haveoface, shutup());
+
+    retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
+                  "-j DNAT --to-destination %s "
+                  "%s \n", cmd, proto, src.port, haveiface,  dst, shutup());
+    
+    retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
+		  "--dport %s %s \n "
+		  "%s\n", cmd, proto, src.port,
+		  haveiface, shutup());
+
+    retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
+		  "--dport %s %s "
+		  "%s\n", cmd, proto, dst.port,
+		  haveoface, shutup());
+    
+    return retval;
+}
+
 WvString WvIPFirewall::redir_all_command(const char *cmd, int dstport)
 {
     return WvString("iptables -t nat %s TProxy "
@@ -66,7 +106,6 @@ WvString WvIPFirewall::redir_all_command(const char *cmd, int dstport)
 		    dstport,
 		    shutup());
 }
-
 
 WvString WvIPFirewall::proto_command(const char *cmd, const char *proto)
 {
@@ -109,6 +148,45 @@ void WvIPFirewall::del_port(const WvIPPortAddr &addr)
     }
 }
 
+void WvIPFirewall::add_forward(const WvIPPortAddr &src,
+			       const WvIPPortAddr &dst)
+{
+    forwards.append(new FastForward(src, dst), true);
+    WvString s(forward_command("-A", "tcp", src, dst)),
+    	    s2(forward_command("-A", "udp", src, dst));
+
+    log("Add Forwards (%s):\n%s\n%s\n", enable, s, s2);
+    
+    if (enable)
+    {
+	system(s);
+	system(s2);
+    }
+}
+
+void WvIPFirewall::del_forward(const WvIPPortAddr &src,
+			       const WvIPPortAddr &dst)
+{
+     FastForwardList::Iter i(forwards);
+     log("Find this Forward %s, %s\n", (WvString)src, (WvString)dst);
+     for (i.rewind(); i.next(); )
+     {
+	 log("Find Forward %s, %s\n", (WvString)i->src, (WvString)i->dst);
+	 if (i->src == src && i->dst == dst)
+	 {
+	     WvString s(forward_command("-D", "tcp", src, dst)),
+	     s2(forward_command("-D", "udp", src, dst));
+	     log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
+	     if (enable) 
+	     {
+		 system(s);
+		 system(s2);
+	     }
+	     i.unlink();
+	    return;
+	 }
+     }
+}
 
 void WvIPFirewall::add_redir(const WvIPPortAddr &src, int dstport)
 {
@@ -127,6 +205,7 @@ void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
 	{
 	    WvString s(redir_command("-D", src, dstport));
 	    if (enable) system(s);
+	    i.unlink();
 	    return;
 	}
     }
