@@ -261,6 +261,7 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
     // be nice and leave it in enccert, so if someone needs it, they
     // don't have to do that step... I'm not sure that this is going
     // to stay... it's really not that hard to call encodecert() ;)
+    // It's staying... no need to make things harder than necessary ;)
     encodecert();
 }
 
@@ -492,81 +493,66 @@ bool WvX509Mgr::isinCRL()
 }
 
 
-void WvX509Mgr::dumpcert(WvString outfile, bool append)
+void WvX509Mgr::load(WvString hexified_cert, WvString hexified_rsa)
 {
-    FILE *certout;
+    if (rsa)
+        delete rsa;
+    if (cert)
+	delete cert;
 
-    if (append)
+    rsa = new WvRSAKey(hexified_rsa, true);
+    if (!rsa->isok())
     {
-        debug("Opening %s for append.\n", outfile);
-	certout = fopen(outfile, "a");
-    }
-    else
-    {
-        debug("Opening %s for write.\n", outfile);
-	certout = fopen(outfile, "w");
+	seterr("RSA Error: %s\n", rsa->errstring);
+	return;
     }
 
-    if (certout != NULL)
-    {
-	debug("Dumping X509 Certificate.\n");
-    	PEM_write_X509(certout, cert);
-	fclose(certout);
-    }
-    else
-        seterr("fopen: %s", strerror(errno));
+    decodecert(hexified_cert);
+
+    // Don't handle errors here, because the caller should just check 
+    // isok() when load is finished anyways.
+
+    return;
 }
 
 
-void WvX509Mgr::dumpkeypair(WvString outfile, bool append)
+void WvX509Mgr::dump(WvString filename, DumpMode mode, bool append)
 {
-    FILE *keyout;
+    FILE *outfile;
     const EVP_CIPHER *enc;
-
-    if (append)
-    {
-        debug("Opening %s for append.\n", outfile);
-        keyout = fopen(outfile, "a");
-    }
-    else
-        keyout = fopen(outfile,"w");
     
-    if (keyout)
-    {
-	debug("Printing keypair.\n");
-	enc = EVP_get_cipherbyname("rsa");
-	PEM_write_RSAPrivateKey(keyout, rsa->rsa, enc, NULL, 0, NULL, NULL);
-	fclose(keyout);
-    }
-    else
-        seterr("fopen: %s", strerror(errno));
-}
-
-
-void WvX509Mgr::dumprawkeypair(WvString outfile, bool append)
-{
-    FILE *keyout;
-    int offset = 0;
-    struct stat filestat;
-
     if (append)
     {
-        debug("Opening %s for append.\n", outfile);
-        keyout = fopen(outfile, "a");
-	if (keyout)
+	debug("Opening %s for append.\n", filename);
+	outfile = fopen(filename, "a");
+    }
+    else
+    {
+	debug("Opening %s for write.\n", filename);
+	outfile = fopen(filename, "w");
+    }
+    
+    if (outfile)
+    {
+	switch(mode)
 	{
-	    fstat(fileno(keyout), &filestat);
-	    offset = filestat.st_size;
+	case CertPEM:
+	    debug("Dumping X509 Certificate.\n");
+	    PEM_write_X509(outfile, cert);
+	    break;
+	case RsaPEM:
+	    debug("Dumping RSA keypair.\n");
+	    enc = EVP_get_cipherbyname("rsa");
+	    PEM_write_RSAPrivateKey(outfile, rsa->rsa, enc, NULL, 0, NULL, NULL);
+	    break;
+	case RsaRaw:
+	    debug("Dumping raw RSA keypair.\n");
+	    RSA_print_fp(outfile, rsa->rsa, 0);
+	    break;
+	default:
+	    seterr("Unknown Mode\n");
 	}
-    }
-    else
-        keyout = fopen(outfile, "w");
-    
-    if (keyout)
-    {
-	debug("Printing keypair.\n");
-	RSA_print_fp(keyout, rsa->rsa, offset);
-	fclose(keyout);
+	fclose(outfile);
     }
     else
         seterr("fopen: %s", strerror(errno));

@@ -23,7 +23,7 @@ int main()
 	request = x509mgr->createcertreq(dN,1024);
 	
 	if (!!request)
-		log(request);
+		wvcon->print(request);
 	else
 		log("Failed to generate certificate");
 

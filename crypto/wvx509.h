@@ -15,7 +15,6 @@ typedef struct x509_st X509;
 
 class WvRSAKey;
 
-
 // workaround for the fact that OpenSSL initialization stuff must be called
 // only once.
 void wvssl_init();
@@ -24,16 +23,23 @@ WvString wvssl_errstr();
 
 
 /**
- * X509 Class to Handle certificates and their related
+ * X509 Class to handle certificates and their related
  * functions
  */
 class WvX509Mgr
 {
 public:
-    /**
-     * Initialize a blank X509 Object with the certificate *cert
-     * (used for client side operations...)
-     */
+
+   /**
+    * Type for the dump() method, which can output the information
+    * in this class in a variety of formats
+    */
+    enum DumpMode { CertPEM = 0, RsaPEM, RsaRaw };
+   
+   /**
+    * Initialize a blank X509 Object with the certificate *cert
+    * (used for client side operations...)
+    */
     WvX509Mgr(X509 *_cert = NULL);
 
     /**
@@ -83,7 +89,7 @@ public:
     /**
      * Given the Distinguished Name dName and the number of bits for the
      * Private key in keysize, return a Self Signed Certificate, and the RSA
-     * Private/Public Keypair in rsa
+     * Private/Public Keypair in rsa, as well as a hexify()'d string in enccert;
      */
     void createSScert(WvString dName, int keysize);
 
@@ -107,6 +113,8 @@ public:
     /**
      * Given a hexified encodedcert, fill the cert member
      * NOTE: ALWAYS load your RSA Keys before calling this!
+     * It is best if you have hexify()'d keys to simply use the load()
+     * method.
      */
     void decodecert(WvString encodedcert);
     
@@ -124,25 +132,25 @@ public:
      * trusted CA) 
      */
     bool validate();
-
+   
     /**
      * Check the certificate in cert against the CA certificates in
      * certfile - returns true if cert was signed by one of the CA
      * certificates.
      */
     bool signedbyCAindir(WvString certdir);
-
+   
     /**
      * Check the certificate in cert against the CA certificates in certdir
      * - returns true if cert was signed by one of the CA certificates. 
      */
-    bool signedbyCAinfile(WvString certfile);
+   bool signedbyCAinfile(WvString certfile);
 
     /**
      * Sign the X509 certificate in cert with CAKeypair
      */
     void signcert(WvRSAKey CAKeypair);
-
+   
     /**
      * Check and see if the certificate in cert has been revoked... currently
      * relies on the CRL Distribution Point X509v3 extension...
@@ -151,21 +159,20 @@ public:
      * NOT IMPLEMENTED
      */
     bool isinCRL();
-        
-    /**
-     * Dump the X509 Certificate in cert to outfile in PEM
-     */
-    void dumpcert(WvString outfile, bool append = false);
-    
-    /**
-     * Dump RSA Keypair to outfile in PEM format 
-     */
-    void dumpkeypair(WvString outfile, bool append = false);
 
     /**
-     * Dump RSA Keypair to outfile in RAW format (suitable for FreeS/WAN)
+     * Initialize cert and rsa from two hexified strings
+     * 
+     * NOTE: Always check isok() after calling ... or else
+     * you take a wild chance that either your certificate or key
+     * is invalid or missing, and bad things could happen.
      */
-    void dumprawkeypair(WvString outfile, bool append = false);
+    void load(WvString hexified_cert, WvString hexified_rsa);
+        
+    /**
+     * Dump the information requested by mode into filename.
+     */
+    void dump(WvString filename, DumpMode mode = CertPEM, bool append = false);
 
     WvLog debug;
     
