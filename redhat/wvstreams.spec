@@ -114,15 +114,36 @@ C++ network libraries for rapid application development.
 This package contains header files and development libraries needed to
 develop programs using the WvStreams networking library.
 
+%package -n uniconfd
+Summary: Server that manages UniConf elements
+Group: System Environment/Libraries
+Requires: libuniconf4.0
+
+%description -n uniconfd
+UniConf is a configuration system that can serve as the centrepiece among
+many other, existing configuration systems.
+
+UniConf can also be accessed over the network, with authentication, allowing
+easy replication of configuration data via the UniReplicateGen.
+
+This package contains the server that accepts incoming TCP or Unix
+connections, and gets or sets UniConf elements at the request of a
+UniConf client.
+
+%post -n uniconfd
+/sbin/chkconfig --add uniconfd
+
+%preun
+if [ $1 = 0 ]; then
+    service uniconfd stop > /dev/null 2>&1
+    /sbin/chkconfig --del uniconfd
+fi
+
 %prep
 %setup -q -n wvstreams-%{version}
 
 %build
 %configure \
-    --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
-    --prefix=/usr --mandir=\$${prefix}/share/man \
-    --infodir=\$${prefix}/share/info \
-    --sysconfdir=/etc --localstatedir=/var \
     --disable-debug --disable-verbose \
     --with-qt --with-vorbis --with-speex --with-openslp \
     --with-fam --with-fftw \
@@ -133,7 +154,12 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
+install -d 644 $RPM_BUILD_ROOT/etc/rc.d/init.d/
+install -m 755 redhat/uniconfd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/uniconfd
 chmod 755 $RPM_BUILD_ROOT/usr/lib/*.so.*
+install -d 644 $RPM_BUILD_ROOT/usr/share/man/man8
+gzip $RPM_BUILD_ROOT/usr/share/man/uniconfd.8
+mv $RPM_BUILD_ROOT/usr/share/man/uniconfd.8.gz $RPM_BUILD_ROOT/usr/share/man/man8
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -170,8 +196,8 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/libwvoggvorbis.so.4.0
 
 %files -n libuniconf4.0
-%doc COPYING.LIB
 %defattr(-,root,root,-)
+%doc COPYING.LIB
 /usr/lib/libuniconf.so.4.0
 
 %files -n libwvstreams4.0-devel
@@ -180,7 +206,16 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/*.a
 /usr/lib/*.so
 /usr/lib/pkgconfig/*pc
-%doc 
+
+%files -n uniconfd
+%defattr(-,root,root)
+%doc COPYING.LIB
+%doc uniconf/daemon/sample.ini
+/etc/uniconf.conf
+%config /etc/rc.d/init.d/uniconfd
+/usr/sbin/uniconfd
+/usr/share/man/man8/uniconfd.8.gz
+/var/lib/uniconf/uniconfd.ini
 
 %changelog
 * Tue Sep  7 2004 William Lachance <wlach@nit.ca>
