@@ -18,6 +18,11 @@
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
+
+WvInterfaceDictBase WvInterfaceDict::slist(15);
+int WvInterfaceDict::links = 0;
+
+
 WvInterface::WvInterface(const WvString &_name) 
 	: err("Net Interface", WvLog::Error), name(_name)
 {
@@ -421,7 +426,7 @@ bool WvInterface::isarp()
 }
 
 
-char *find_ifname(char *line)
+static char *find_ifname(char *line)
 {
     if (!line) return NULL;
     
@@ -437,6 +442,25 @@ char *find_ifname(char *line)
 }
 
 
+////////////////////////////////////////////// WvInterfaceDict
+
+
+WvInterfaceDict::WvInterfaceDict() : log("Net Interface", WvLog::Info)
+{
+    links++;
+    update();
+}
+
+
+WvInterfaceDict::~WvInterfaceDict()
+{
+    links--;
+    
+    if (!links)
+	slist.zap();
+}
+
+
 // auto-fill the list of interfaces using the list from /proc/net/dev.
 //
 // I wish there was a better way to do this, but the SIOCGIFCONF ioctl
@@ -447,7 +471,7 @@ void WvInterfaceDict::update()
     int sock;
     struct ifconf ifconf;
     char buf[sizeof(ifconf.ifc_req) * 100]; // room for 100 interfaces
-    WvLog err(log->split(WvLog::Error));
+    WvLog err(log.split(WvLog::Error));
     WvFile procdev("/proc/net/dev", O_RDONLY);
     char *ifname;
 
@@ -455,7 +479,7 @@ void WvInterfaceDict::update()
     // mark all interfaces in list invalid for now
     Iter i(*this);
     for (i.rewind(); i.next(); )
-	i.data().valid = false;
+	i().valid = false;
     
 
     // get list of all non-aliased interfaces from /proc/net/dev
@@ -473,9 +497,8 @@ void WvInterfaceDict::update()
 	if (!ifc)
 	{
 	    ifc = new WvInterface(ifname);
-	    add(ifc, true);
-	    log->lvl(WvLog::Debug3);
-	    log->print("Found %-16s  [%s]\n", ifname, ifc->hwaddr());
+	    slist.add(ifc, true);
+	    log(WvLog::Debug3, "Found %-16s  [%s]\n", ifname, ifc->hwaddr());
 	}
 	else
 	    ifc->rescan();
@@ -502,7 +525,7 @@ void WvInterfaceDict::update()
 	    if (!ifc)
 	    {
 		ifc = new WvInterface(ifr.ifr_name);
-		add(ifc, true);
+		slist.add(ifc, true);
 	    }
 	    else
 		ifc->rescan();

@@ -62,7 +62,7 @@ WvIPAliaser::Alias::~Alias()
 
 
 
-WvIPAliaser::WvIPAliaser() : interfaces(7)
+WvIPAliaser::WvIPAliaser() : interfaces()
 {
     // nothing to do
 }

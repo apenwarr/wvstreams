@@ -180,9 +180,10 @@ public:
 class WvIPAddr : public WvAddr
 {
 protected:
-    unsigned char binaddr[4];
     virtual WvString printable() const;
 public:
+    unsigned char binaddr[4];
+
     WvIPAddr(const unsigned char _binaddr[4])
         { if (_binaddr) memcpy(binaddr, _binaddr, 4); }
     WvIPAddr(const __u32 _binaddr = 0)

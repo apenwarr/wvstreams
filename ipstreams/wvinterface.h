@@ -81,16 +81,35 @@ public:
     int addarp(const WvIPNet &proto, const WvAddr &hw, bool proxy);
 };
 
-DeclareWvDict2(WvInterface, WvString, name,
-	       WvLog *log;
-	       void setup()
-	           { log = new WvLog("Net Interface", WvLog::Info);
-		       update(); }
-	       void shutdown()
-	           { delete log; }
-	       void update();
-	       bool islocal(const WvAddr &addr);
-	       bool on_local_net(const WvIPNet &addr);
-	       );
+DeclareWvDict3(WvInterface, WvInterfaceDictBase, WvString, name, );
+
+class WvInterfaceDict
+{
+public:
+    WvLog log;
+    static WvInterfaceDictBase slist;
+    static int links;
+    
+    class Iter : public WvInterfaceDictBase::Iter
+    {
+    public:
+	Iter(WvInterfaceDict &l) 
+	    : WvInterfaceDictBase::Iter(l.slist)
+	    { }
+    };
+    
+    WvInterfaceDict();
+    ~WvInterfaceDict();
+    
+    void update();
+    bool islocal(const WvAddr &addr);
+    bool on_local_net(const WvIPNet &addr);
+
+    WvInterface *operator[] (const WvString &str)
+        { return slist[str]; }
+    
+    operator WvInterfaceDictBase ()
+        { return slist; }
+};
 
 #endif // __WVINTERFACE_H

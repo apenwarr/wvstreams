@@ -155,6 +155,12 @@ public:									\
 	if (l && l->next) sl()[h % numslots].unlink_after(l);		\
     }									\
 									\
+    void zap()								\
+    {									\
+	delete[] sl();							\
+	slots = new _type_##List[numslots];				\
+    }									\
+									\
     class Iter : public IterBase					\
     {									\
     public:								\
@@ -173,13 +179,17 @@ public:									\
 };
 
 
+#define DeclareWvDict3(_type_, _newname_, _ftype_, _field_, _extra_) \
+	__WvDict_base(_newname_, _type_, _ftype_, . _field_, _extra_)
 #define DeclareWvDict2(_type_, _ftype_, _field_, _extra_) \
-	__WvDict_base(_type_##Dict, _type_, _ftype_, . _field_, _extra_)
+        DeclareWvDict3(_type_, _type_##Dict, _ftype_, _field_, _extra_)
 #define DeclareWvDict(_type_, _ftype_, _field_) \
 	DeclareWvDict2(_type_, _ftype_, _field_, )
 
+#define DeclareWvTable3(_type_, _newname_, _extra_) \
+	__WvDict_base(_newname_, _type_, _type_, , _extra_)
 #define DeclareWvTable2(_type_, _extra_) \
-	__WvDict_base(_type_##Table, _type_, _type_, , _extra_)
+	DeclareWvTable3(_type_, _type_##Table, _extra_)
 #define DeclareWvTable(_type_) DeclareWvTable2(_type_, )
 
 
