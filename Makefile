@@ -19,7 +19,7 @@ LIBFILES=libwvutils.a libwvutils.so libwvstreams.a libwvstreams.so \
 
 export DEBUG
 
-CC=${CXX}
+#CC=${CXX}
 #CXXOPTS += -fno-implement-inlines
 
 export CC CXX CXXOPTS
