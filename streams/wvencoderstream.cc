@@ -129,11 +129,11 @@ void WvEncoderStream::pull(size_t size)
     if (finish)
     {
         readchain.finish(readoutbuf);
-        if (readoutbuf.used() == 0)
+        if (readoutbuf.used() == 0 && inbuf.used() == 0)
             is_eof = true;
         // otherwise defer EOF until the buffered data has been read
     }
-    else if (readoutbuf.used() == 0 && readchain.isfinished())
+    else if (readoutbuf.used() == 0 && inbuf.used() == 0 && readchain.isfinished())
     {
         // only get EOF when the chain is finished and we have no
         // more data
