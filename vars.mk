@@ -57,17 +57,17 @@ REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 CPPFLAGS += -Iinclude -pipe
 ARFLAGS = rs
 
-libwvstreams.so: LDFLAGS+=-lssl
+libwvstreams.so: -lssl
 
-libwvutils.so: LDFLAGS+=-lz -lcrypto
+libwvutils.so: -lz -lcrypto
 
-libwvoggvorbis.so: LDFLAGS+=-logg -lvorbis -lvorbisenc
+libwvoggvorbis.so: -logg -lvorbis -lvorbisenc
 
-libwvoggspeex.so: LDFLAGS+=-logg -lspeex
+libwvoggspeex.so: -logg -lspeex
 
-libwvfft.so: LDFLAGS+=-lfftw -lrfftw
+libwvfft.so: -lfftw -lrfftw
 
-libwvqt.so: LDFLAGS+=-lqt
+libwvqt.so: -lqt
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
