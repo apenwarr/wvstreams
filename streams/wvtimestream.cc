@@ -33,15 +33,18 @@ bool WvTimeStream::pre_select(SelectInfo &si)
     WvTime now;
     time_t diff;
     bool ready = WvStream::pre_select(si);
+    
+    //fprintf(stderr, "%p: timestream pre_select ready=%d mspt=%ld msto=%ld\n",
+    //     this, ready, ms_per_tick, si.msec_timeout);
 
     if (ms_per_tick)
     {
 	now = wvtime();
-
+	
 	/* Are we going back in time? If so, adjust the due time. */
 	if (now < last)
 	    next = tvdiff(next, tvdiff(last, now));
-
+	
 	last = now;
 
 	if (next < now || next == now)
@@ -62,7 +65,7 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 
 bool WvTimeStream::post_select(SelectInfo &si)
 {
-    return WvStream::post_select(si) || (next < wvtime());
+    return WvStream::post_select(si) || (ms_per_tick && next < wvtime());
 }
 
 
@@ -74,5 +77,12 @@ void WvTimeStream::execute()
      * would mean that we're here because someone used alarm() rather
      * than because our timer expired. */
     if (!alarm_was_ticking)
+    {
+	WvTime now = wvtime();
 	next = msecadd(next, ms_per_tick);
+	
+	// compensate if we fall behind too excessively
+	if (msecdiff(next, now) > ms_per_tick*10)
+	    next = msecadd(now, ms_per_tick);
+    }
 }
