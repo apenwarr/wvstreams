@@ -1,0 +1,7 @@
+Name: libwvstreams
+Description: C++ network libraries for rapid application development
+Version: 4.0
+Requires: xplc >= 0.3.7, libwvbase = 4.0, libwvutils = 4.0
+Libs: -L@prefix@/lib -lwvstreams
+Cflags: -I@prefix@/include/wvstreams
+

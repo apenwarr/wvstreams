@@ -440,6 +440,7 @@ AC_SUBST(with_zlib)
 AC_SUBST(build_xplc)
 
 AC_CONFIG_FILES(config.mk)
+AC_CONFIG_FILES(libwvbase.pc libwvutils.pc libwvstreams.pc libuniconf.pc)
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 AC_OUTPUT
 
