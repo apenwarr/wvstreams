@@ -21,8 +21,8 @@ class WvMiniBuffer
     size_t size;
     
 public:
-    WvMiniBuffer(size_t _size)
-	{ buffer = head = tail = new unsigned char[(size = _size) + 16]; }
+    WvMiniBuffer(size_t _size) : size(_size)
+	{ head = tail = buffer = new unsigned char[size]; }
     ~WvMiniBuffer()
         { delete[] buffer; }
     

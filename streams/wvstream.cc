@@ -581,8 +581,6 @@ bool WvStream::post_select(SelectInfo &si)
 bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     bool readable, bool writable, bool isexcept, bool forceable)
 {
-    if (!isok()) return false;
-
     FD_ZERO(&si.read);
     FD_ZERO(&si.write);
     FD_ZERO(&si.except);
@@ -599,6 +597,8 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     si.max_fd = -1;
     si.msec_timeout = msec_timeout;
     si.inherit_request = ! forceable;
+
+    if (!isok()) return false;
 
     bool sure = pre_select(si);
     if (sure)

@@ -16,13 +16,17 @@
 #include <stdlib.h>
 #endif
 
-int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
+int WvTask::taskcount = 0;
+int WvTask::numtasks = 0;
+int WvTask::numrunning = 0;
 
 
 WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 {
     stacksize = _stacksize;
     running = recycled = false;
+    func = NULL;
+    userdata = NULL;
     
     tid = ++taskcount;
     numtasks++;
@@ -68,6 +72,7 @@ void WvTask::recycle()
 
 WvTaskMan::WvTaskMan()
 {
+    stack_target = NULL;
     current_task = NULL;
     magic_number = -WVTASK_MAGIC;
     

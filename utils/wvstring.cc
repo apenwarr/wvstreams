@@ -163,17 +163,8 @@ WvFastString &WvFastString::operator= (const WvFastString &s2)
 {
     if (s2.buf == buf && s2.str == str)
 	return *this; // no change
-    else if (!s2.buf)
-    {
-	// we can avoid making a copy here, if it's just two WvFastString
-	// objects copying around.
-    	unlink();
-	buf = NULL;
-	str = s2.str;
-    }
     else
     {
-	// just a normal string link
 	unlink();
 	link(s2.buf, s2.str);
     }
