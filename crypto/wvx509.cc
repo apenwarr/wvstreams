@@ -511,7 +511,7 @@ void WvX509Mgr::unhexify(WvString encodedcert)
     int hexbytes = strlen((const char *)encodedcert);
     int bufsize = hexbytes/2;
     unsigned char *certbuf = new unsigned char[bufsize];
-    const unsigned char *cp = certbuf;
+    unsigned char *cp = certbuf;
     X509 *tmpcert;
     
     if (cert)
