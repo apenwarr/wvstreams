@@ -8,6 +8,8 @@
 
 #ifndef _WIN32
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 
 #ifdef WITH_SLP
@@ -66,12 +68,13 @@ static void usage(WvStringParm argv0)
 	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
 	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
 	"     -u   Listen on given Unix socket filename (default=disabled)\n"
+	"     -m   Set the Unix socket to 'mode' (default to uniconfd users umask)\n"
 	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
 	argv0);
 #else
     wverr->print(
 	"\n"
-	"Usage: %s [-dV] [-p port] [-s sslport] "
+	"Usage: %s [-dV] [-l moniker] [-p port] [-s sslport] "
 		 "<mounts...>\n"
 	"     -d   Print debug messages\n"
         "     -dd  Print lots of debug messages\n"
@@ -136,9 +139,9 @@ int main(int argc, char **argv)
     bool dontfork = false, needauth = false;
     unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
     unsigned int sslport = DEFAULT_UNICONF_DAEMON_SSL_PORT;
-    WvString unixport, permmon;
+    WvString unixport, permmon, unix_mode;
 
-    while ((c = getopt(argc, argv, "fdVaA:p:s:u:h?")) >= 0)
+    while ((c = getopt(argc, argv, "fdVam:A:p:s:u:h?")) >= 0)
     {
 	switch (c)
 	{
@@ -163,7 +166,6 @@ int main(int argc, char **argv)
 	    // needauth = true; // sometimes it makes sense to skip auth...
 	    permmon = optarg;
 	    break;
-	    
 	case 'p':
 	    port = atoi(optarg);
 	    break;
@@ -172,6 +174,9 @@ int main(int argc, char **argv)
 	    break;
 	case 'u':
 	    unixport = optarg;
+	    break;
+	case 'm':
+	    unix_mode = optarg;
 	    break;
 	    
 	case 'h':
@@ -228,6 +233,13 @@ int main(int argc, char **argv)
 	::unlink(unixport);
 	if (!daemon.setupunixsocket(unixport))
 	    exit(3);
+	if (!!unix_mode && unix_mode.num())
+	{
+	    log("Setting mode on %s to: %s\n", unixport, unix_mode);
+	    mode_t mode;
+	    sscanf(unix_mode.edit(), "%o", &mode);
+	    chmod(unixport, mode);
+	}
     }
 #endif
 

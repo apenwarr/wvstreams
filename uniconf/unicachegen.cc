@@ -103,5 +103,7 @@ void UniCacheGen::set(const UniConfKey &key, WvStringParm value)
 
 WvString UniCacheGen::get(const UniConfKey &key)
 {
+    //inner->get(key);
+    inner->flush_buffers(); // update all pending notifications
     return UniTempGen::get(key);
 }

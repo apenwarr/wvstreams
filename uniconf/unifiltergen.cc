@@ -77,6 +77,13 @@ WvString UniFilterGen::get(const UniConfKey &key)
 }
 
 
+void UniFilterGen::flush_buffers()
+{
+    if (xinner)
+    	xinner->flush_buffers();
+}
+
+
 void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 {
     if (xinner)
