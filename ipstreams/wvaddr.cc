@@ -42,7 +42,7 @@ int WvEncap::extypes[] = {
 
 
 /* Printable strings corresponding to each element of CapType */
-char WvEncap::strings[][20] = {
+const char WvEncap::strings[][20] = {
     // hardware encapsulation
     "Unknown",
     "Loopback",

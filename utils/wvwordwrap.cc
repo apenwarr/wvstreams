@@ -16,7 +16,7 @@ WvWordWrapEncoder::WvWordWrapEncoder(int _maxwidth) :
 
 WvWordWrapEncoder::~WvWordWrapEncoder()
 {
-    delete[] line;
+    deletev line;
 }
 
 

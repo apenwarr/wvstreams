@@ -5,6 +5,7 @@
  * Basic WvConf emulation layer for UniConf.
  */
 #include "wvconfemu.h"
+#include "uniinigen.h"
 #include "wvstringtable.h"
 #include "wvfile.h"
 #include "strutils.h"
@@ -105,9 +106,15 @@ WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
 
 const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 {
-    WvString *value = new WvString(uniconf[entry].getme(def_val));
-    values.add(value, true);
-    return value->cstr();
+    if (!entry)
+	return def_val;
+
+    WvString s(uniconf[entry].getme(def_val));
+    
+    // look it up in the cache
+    WvString *sp = values[s];
+    if (!sp) values.add(sp = new WvString(s), true);
+    return sp->cstr();
 }
 
 
@@ -156,7 +163,7 @@ WvLink *WvConfigSectionEmu::Iter::next()
 	     * FIXME: if the WvConfEmu is not at the root of the
 	     * UniConf tree, this will give an incorrect result.
 	     */
-	    entry = sect[iter->fullkey().removefirst()];
+	    entry = sect[iter->fullkey(sect.uniconf)];
 	    link.data = static_cast<void*>(entry);
 	    assert(entry);
 	    return &link;
@@ -207,7 +214,7 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 
 
 WvConfEmu::WvConfEmu(const UniConf &_uniconf)
-    : sections(42), hold(false), uniconf(_uniconf)
+    : sections(42), hold(false), values(420), uniconf(_uniconf)
 {
     wvauthd = NULL;
     uniconf.add_callback(this,
@@ -232,7 +239,8 @@ WvConfEmu::~WvConfEmu()
 	fprintf(stderr, " *** leftover callbacks in WvConfEmu ***\n");
 	for (i.rewind(); i.next(); )
 	{
-	    fprintf(stderr, "     - [%s]%s (%p)\n", i->section.cstr(), i->key.cstr(), i->cookie);
+	    fprintf(stderr, "     - [%s]%s (%p)\n", i->section.cstr(), 
+                    i->key.cstr(), i->cookie);
 	}
     }
 #endif
@@ -263,9 +271,9 @@ void WvConfEmu::load_file(WvStringParm filename)
 }
 
 
-void WvConfEmu::save(WvStringParm filename)
+void WvConfEmu::save(WvStringParm filename, int _create_mode)
 {
-    UniConfRoot tmp_uniconf(WvString("ini:%s", filename), false);
+    UniConfRoot tmp_uniconf(new UniIniGen(filename, _create_mode), false);
 
     uniconf.copy(tmp_uniconf, true);
 
@@ -294,7 +302,7 @@ WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 
     if (!section && uniconf[sect].exists())
     {
-	section = new WvConfigSectionEmu(uniconf[sect], sect);
+	section = new WvConfigSectionEmu(uniconf[sect], sect, &values);
 	sections.add(section, true);
     }
 
@@ -396,6 +404,9 @@ WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 
 int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
 {
+    if (!section || !entry)
+	return def_val;
+
     return uniconf[section][entry].getmeint(def_val);
 }
 
@@ -403,9 +414,15 @@ int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
 const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
 			   const char *def_val)
 {
-    WvString *value = new WvString(uniconf[section][entry].getme(def_val));
-    values.add(value, true);
-    return value->cstr();
+    if (!section || !entry)
+	return def_val;
+
+    WvString s(uniconf[section][entry].getme(def_val));
+    
+    // look it up in the cache
+    WvString *sp = values[s];
+    if (!sp) values.add(sp = new WvString(s), true);
+    return sp->cstr();
 }
 
 int WvConfEmu::fuzzy_getint(WvStringList &sect, WvStringParm entry,

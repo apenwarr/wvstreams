@@ -9,6 +9,7 @@
 
 
 #include "uniconfroot.h"
+#include "wvstringtable.h"
 #include "wvsorter.h"
 
 #define WvConf WvConfEmu
@@ -47,11 +48,12 @@ class WvConfigSectionEmu
 private:
     const UniConf uniconf;
     WvConfigEntryEmuDict entries;
-    WvStringList values;
+    WvStringTable &values;
 public:
     const WvString name;
-    WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name):
-	uniconf(_uniconf), entries(42), name(_name)
+    WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name,
+		       WvStringTable *_values):
+	uniconf(_uniconf), entries(42), values(*_values), name(_name)
     {}
     WvConfigEntryEmu *operator[] (WvStringParm s);
     const char *get(WvStringParm entry, const char *def_val = NULL);
@@ -80,7 +82,9 @@ private:
 public:
     Iter(WvConfigSectionEmu& _sect):
 	sect(_sect), iter(_sect.uniconf), link(NULL, false), entry(NULL)
-    {}
+    { 
+        assert(&_sect);
+    }
     ~Iter();
     void rewind();
     WvLink *next();
@@ -116,7 +120,7 @@ private:
     WvConfigSectionEmuDict sections;
     bool hold;
     WvList<CallbackInfo> callbacks;
-    WvStringList values;
+    WvStringTable values;
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
@@ -127,7 +131,7 @@ public:
     void zap();
     bool isok() const;
     void load_file(WvStringParm filename);
-    void save(WvStringParm filename);
+    void save(WvStringParm filename, int _create_mode = 0666);
     void save();
     void flush();
 

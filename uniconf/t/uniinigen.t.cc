@@ -108,5 +108,11 @@ WVTEST_MAIN("writing")
     
     inicmp("/users/ apenwarr", "pbc ",
 	   "\n[users]\n{ apenwarr} = {pbc }\n");
+    
+    // FIXME: empty-string keys probably *should* be printed, but we don't,
+    // for compatibility with WvConf.  This test makes sure it stays that
+    // way (until we think of something better?)
+    inicmp("/foo/blah", "",
+	   "");
 }
 

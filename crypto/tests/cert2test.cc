@@ -1,5 +1,6 @@
 #include "wvconf.h"
 #include "wvx509.h"
+#include "wvrsa.h"
 #include <assert.h>
 
 int main()

@@ -1,9 +1,9 @@
 
-#include "wvtest.h"
-#include "wvdailyevent.h"
-
 #include <time.h>
 #include <iostream.h>
+
+#include "wvtest.h"
+#include "wvdailyevent.h"
 
 // Wait a number of seconds
 void wait(int num_seconds)

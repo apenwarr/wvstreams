@@ -19,7 +19,7 @@ WvXOREncoder::WvXOREncoder(const void *_key, size_t _keylen) :
 
 WvXOREncoder::~WvXOREncoder()
 {
-    delete[] key;
+    deletev key;
 }
 
 

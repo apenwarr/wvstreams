@@ -65,7 +65,9 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 
 bool WvTimeStream::post_select(SelectInfo &si)
 {
-    return WvStream::post_select(si) || (ms_per_tick && next < wvtime());
+    WvTime now = wvtime();
+
+    return WvStream::post_select(si) || (ms_per_tick && next < now);
 }
 
 
@@ -79,10 +81,19 @@ void WvTimeStream::execute()
     if (!alarm_was_ticking)
     {
 	WvTime now = wvtime();
-	next = msecadd(next, ms_per_tick);
-	
-	// compensate if we fall behind too excessively
-	if (msecdiff(next, now) > ms_per_tick*10)
+
+        next = msecadd(next, ms_per_tick);
+        
+        if (msecdiff(next, now) > ms_per_tick * 100
+    	    	|| msecdiff(now, next) > ms_per_tick * 100)
+        {
+            // reset if we fall forward or behind WAY too excessively
+            // This is usually due to a change in system time
+            last = now;
+            next = msecadd(last, ms_per_tick);
+        }
+        else if (msecdiff(next, now) > ms_per_tick * 10)
+	    // compensate if we fall behind too excessively
 	    next = msecadd(now, ms_per_tick);
     }
 }

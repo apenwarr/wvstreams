@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
     WvString key = argv[2];
     UniConfGremlin g(moniker, key, 5);
     printf("Gremlin created\n");
+    //g.test();
     g.start();
     printf("%s", g.status().cstr());
     return 0;

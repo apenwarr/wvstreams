@@ -66,7 +66,7 @@ struct MemOps
     /** Deletes an uninitialized array. */
     inline void deletearray(void *buf)
     {
-        delete[] (unsigned char*)buf;
+        deletev (unsigned char*)buf;
     }
 } memops;
 
@@ -112,7 +112,7 @@ void WvBufStore::move(void *buf, size_t count)
 {
     while (count > 0)
     {
-        size_t amount = optgettable();
+        size_t amount = count;
         assert(amount != 0 ||
             !"attempted to move() more than used()");
         if (amount > count)

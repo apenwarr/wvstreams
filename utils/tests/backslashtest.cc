@@ -40,8 +40,8 @@ int main(int argc, char **argv)
             slist->callback();
     }
     stream->flush(0);
-    delete stream;
-    delete slist;
+    RELEASE(stream);
+    RELEASE(slist);
     
     return 0;
 }

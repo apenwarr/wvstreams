@@ -46,6 +46,8 @@ private:
     WvString rand_str(int type);
     WvString type_name(int type); 
     WvString curr_runlevel();
+    // commits for n iterations
+    void spin_commit(int n); 
     
     UniConfRoot cfg;
     UniConfKey key;

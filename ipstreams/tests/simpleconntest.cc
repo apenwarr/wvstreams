@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 	    
 	    if (!f->isok())
 	    {
-		delete f;
+		RELEASE(f);
 		f = new WvFile(argv[count], O_RDONLY);
 		if (!f->isok())
 		{

@@ -25,7 +25,7 @@ static void sighandler_die(int signum)
 static void close_callback(WvStream& s, void* userdata)
 {
     if (!s.isok())
-	log(WvLog::Error, "%s", s.geterr());
+	log(WvLog::Error, "%s\n", s.geterr());
 }
 
 

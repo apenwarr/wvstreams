@@ -8,15 +8,6 @@
 
 /***** Specialization for raw memory buffers *****/
 
-// Instantiate some commonly used templates
-template WvBufBaseCommonImpl<unsigned char>;
-template WvInPlaceBufBase<unsigned char>;
-template WvConstInPlaceBufBase<unsigned char>;
-template WvCircularBufBase<unsigned char>;
-template WvDynBufBase<unsigned char>;
-template WvNullBufBase<unsigned char>;
-template WvBufCursorBase<unsigned char>;
-
 void WvBufBase<unsigned char>::putstr(WvStringParm str)
 {
     put((const unsigned char*)str.cstr(), str.len());

@@ -41,8 +41,7 @@ WvStreamClone::~WvStreamClone()
 {
     //fprintf(stderr, "%p destroying: clone is %p\n", this, cloned);
     close();
-    if (cloned)
-	delete cloned;
+    RELEASE(cloned);
 }
 
 

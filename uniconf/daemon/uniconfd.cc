@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 	}
     }
     globdaemon->close();
-    delete globdaemon;
+    RELEASE(globdaemon);
     
     return 0;
 }

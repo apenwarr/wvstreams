@@ -38,7 +38,13 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
 
 UniCacheGen::~UniCacheGen()
 {
-    delete inner;
+    RELEASE(inner);
+}
+
+
+bool UniCacheGen::isok()
+{
+    return inner->isok();
 }
 
 

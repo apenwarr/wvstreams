@@ -73,6 +73,11 @@ install: build
 	# Install development package
 	$(MAKE) install-dev DESTDIR=$(PKGDEV)
 
+	# Install a minimal XPLC
+	$(MAKE) install-xplc DESTDIR=$(PKGDEV)
+	rm -f $(PKGDEV)/usr/lib/libxplc.so
+	rm -f $(PKGDEV)/usr/lib/libxplc.so.0.3.5
+
 	dh_install --autodest
 
 install-indep: build-indep

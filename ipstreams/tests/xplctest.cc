@@ -1,4 +1,4 @@
-#include <xplc/xplc.h>
+#include "wvxplc.h"
 #include <xplc/IServiceManager.h>
 #include <xplc/IStaticServiceHandler.h>
 #include <xplc/IMonikerService.h>
@@ -66,7 +66,7 @@ int main()
     fprintf(stderr, "About to create...\n");
     IObject *obj = xplc.create<IObject>("hello:");
     assert(obj);
-    obj->release();
+    RELEASE(obj);
     
     fprintf(stderr, "Done.\n");
     return 0;

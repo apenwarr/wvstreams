@@ -110,3 +110,53 @@ WVTEST_MAIN("iterators")
     i.next();
     WVPASSEQ(i->fullkey(sub).printable(), "b/1");
 }
+
+WVTEST_MAIN("nested iterators")
+{
+    UniConfRoot root("temp:");
+    UniConf cfg(root);
+    UniConf::Iter i1(cfg);
+    cfg["foo"].setmeint(1);
+    cfg["/foo/bar"].setmeint(1);
+    cfg["/foo/car/bar"].setmeint(1);
+    WVPASS(cfg["foo"].getmeint());
+    
+    for (i1.rewind(); i1.next();)
+    {
+        UniConf::RecursiveIter i2(cfg);
+        for (i2.rewind(); i2.next();)
+        {
+            i2->getme();
+        }
+    }
+    WVPASS(cfg["foo"].getmeint());
+    WVPASS(cfg["/foo/bar"].getmeint());
+}
+
+WVTEST_MAIN("mounting with paths prefixed by /")
+{
+    UniConfRoot root("temp:");
+    UniConf cfg1(root["/config"]);
+    UniConf cfg2(root["config"]);
+    int i = 0;
+    
+    for (i = 0; i < 5; i++)
+        root.xsetint(WvString("/config/bloing%s", i), 1);
+    
+    for (i = 0; i < 5; i++)
+    {
+        WVPASS(cfg1.xgetint(WvString("/bloing%s", i)));
+        WVPASS(cfg2.xgetint(WvString("/bloing%s", i)));
+    }
+                
+    UniConf::Iter iter1(cfg1); 
+    UniConf::Iter iter2(cfg1); 
+    i = 0;
+    for (iter1.rewind(); iter1.next(); i++)
+        WVPASS(iter1->getmeint());
+    
+    i = 0;
+    for (iter2.rewind(); iter2.next(); i++)
+        WVPASS(iter2->getmeint());
+
+}

@@ -38,6 +38,7 @@ public:
     virtual ~UniCacheGen();
 
     /***** Overridden members *****/
+    virtual bool isok();
     virtual bool refresh();
     virtual void commit();
     virtual void set(const UniConfKey &key, WvStringParm value);

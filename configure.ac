@@ -69,6 +69,10 @@ AC_ARG_ENABLE(resolver-fork,
               AC_HELP_STRING([--disable-resolver-fork],
                              [WvResolver background name resolution (debugging)]))
 
+AC_ARG_ENABLE(delete-detector,
+              AC_HELP_STRING([--enable-delete-detector],
+                             [Delete detector (reference counting)]))
+
 AC_ARG_ENABLE(rtti,
               AC_HELP_STRING([--enable-rtti],
                              [C++ run-time type identification (compiler)]))
@@ -134,6 +138,12 @@ fi
 if test "$enable_resolver_fork" = "no"; then
     AC_DEFINE(WVRESOLVER_SKIP_FORK,,
               [Define to disable WvResolver forking for debugging with gdb.])
+fi
+
+# resolver-fork
+if test "$enable_delete_detector" = "yes"; then
+    AC_DEFINE(ENABLE_DELETE_DETECTOR,,
+              [Define to enable the XPLC delete detector.])
 fi
 
 # rtti
@@ -389,6 +399,7 @@ AC_SUBST(enable_exceptions)
 AC_SUBST(enable_fatal_warnings)
 AC_SUBST(enable_optimization)
 AC_SUBST(enable_resolver_fork)
+AC_SUBST(enable_delete_detector)
 AC_SUBST(enable_rtti)
 AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)

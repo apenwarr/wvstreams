@@ -40,11 +40,7 @@ void WvFtpStream::doneurl()
 
     curl->done();
     curl = NULL;
-    if (data)
-    {
-        delete data;
-        data = NULL;
-    }
+    RELEASE(data);
     urls.unlink_first();
     last_request_time = time(0);
     alarm(60000);
@@ -408,7 +404,6 @@ void WvFtpStream::execute()
 			log(WvLog::Debug5, "Wrote %s bytes to local.\n", wrote);
 		    }
 		}
-		data->close();
             }
         }
 

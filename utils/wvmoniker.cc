@@ -177,7 +177,7 @@ WvMonikerBase::~WvMonikerBase()
     if (reg)
     {
 	reg->del(id);
-	reg->release();
+	RELEASE(reg);
     }
 }
 
@@ -189,7 +189,7 @@ void *wvcreate(const UUID &iid,
     if (reg)
     {
 	void *ret = reg->create(s, obj, userdata);
-	reg->release();
+	RELEASE(reg);
 	return ret;
     }
     else

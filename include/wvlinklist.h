@@ -7,7 +7,7 @@
 #ifndef __WVLINKLIST_H
 #define __WVLINKLIST_H
 
-#include "wvmagic.h"
+#include "wvtypetraits.h"
 #include "wvsorter.h"
 
 /**
@@ -317,7 +317,7 @@ public:
         if (next == tail) tail = after;
         next->unlink(after);
 	if (obj)
-	    Magic<T>::destroy(obj);
+	    WvTraits<T>::release(obj);
     }
 
     /**

@@ -5,15 +5,18 @@
  * X.509 certificate management classes.
  */ 
 #include "wvx509.h"
+#include "wvrsa.h"
 #include "wvsslhacks.h"
 #include "wvdiriter.h"
 #include "wvcrypto.h"
 #include "wvstringlist.h"
+#include "wvbase64.h"
 #include "strutils.h"
 
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 #include <openssl/sha.h>
 #include <openssl/pkcs12.h>
 
@@ -138,13 +141,38 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
 
 WvX509Mgr::~WvX509Mgr()
 {
-    if (rsa)
-	delete rsa;
+    delete rsa;
+
     if (cert)
 	X509_free(cert);
+
     wvssl_free();
 }
 
+
+bool WvX509Mgr::bind_ssl(SSL_CTX *ctx)
+{
+    if (SSL_CTX_use_certificate(ctx, cert) <= 0)
+    {
+	return false;
+    }
+    debug("Certificate activated.\n");
+    
+    if (SSL_CTX_use_RSAPrivateKey(ctx, rsa->rsa) <= 0)
+    {
+	return false;
+    }
+    debug("RSA private key activated.\n");
+    return true;
+}
+
+
+const WvRSAKey &WvX509Mgr::get_rsa()
+{
+    assert(rsa);
+
+    return *rsa;
+}
 
 // The people who designed this garbage should be shot!
 // Support old versions of openssl...
@@ -260,12 +288,12 @@ void WvX509Mgr::create_selfsigned()
 	return;
     }
 
-    if ((pk=EVP_PKEY_new()) == NULL)
+    if ((pk = EVP_PKEY_new()) == NULL)
     {
 	seterr("Error creating key handler for new certificate");
 	return;
     }
-    if ((cert=X509_new()) == NULL)
+    if ((cert = X509_new()) == NULL)
     {
 	seterr("Error creating new X509 object");
 	return;
@@ -323,13 +351,13 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     
-#if 0
-    // This still causes Netscape to barf... 
+    // This could cause Netscape to barf because if we set basicConstraints 
+    // to critical, we break RFC2459 compliance. Why they chose to enforce 
+    // that bit, and not the rest is beyond me... but oh well...
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
-			     "critical,CA:FALSE");
+			     "CA:FALSE");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
-#endif
     
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
 	     "TLS Web Server Authentication,TLS Web Client Authentication");
@@ -355,13 +383,13 @@ void WvX509Mgr::filldname()
 {
     assert(cert);
     
-    char buffer[1024];
-    X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
-    buffer[sizeof(buffer)-1] = 0;
-    dname = buffer; 
+    char *name = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
+    dname = name;
+    OPENSSL_free(name);
 }
 
 
+// FIXME: This is EVIL!!!
 WvRSAKey *WvX509Mgr::fillRSAPubKey()
 {
     EVP_PKEY *pkcert = X509_get_pubkey(cert);
@@ -394,9 +422,9 @@ static WvString file_hack_end(FILE *f)
 
 WvString WvX509Mgr::certreq()
 {
-    EVP_PKEY *pk;
+    EVP_PKEY *pk = NULL;
     X509_NAME *name = NULL;
-    X509_REQ *certreq;
+    X509_REQ *certreq = NULL;
 
     FILE *stupid = file_hack_start();
     
@@ -442,9 +470,11 @@ WvString WvX509Mgr::certreq()
     debug("Creating Certificate request for %s\n", dname);
     set_name_entry(name, dname);
     X509_REQ_set_subject_name(certreq, name);
-    char *sub_name = X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 0, 0);
+    char *sub_name = X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 
+				       0, 0);
+
     debug("SubjectDN: %s\n", sub_name);
-    free(sub_name);
+    OPENSSL_free(sub_name);
     
     if (!X509_REQ_sign(certreq, pk, EVP_sha1()))
     {
@@ -564,7 +594,7 @@ void WvX509Mgr::unhexify(WvStringParm encodedcert)
     if (!cert)
 	seterr("X.509 certificate decode failed!");
     
-    delete[] certbuf;
+    deletev certbuf;
 }
 
 
@@ -581,7 +611,7 @@ WvString WvX509Mgr::hexify()
     enccert.setsize(size * 2 +1);
     ::hexify(enccert.edit(), keybuf, size);
 
-    delete[] keybuf;
+    deletev keybuf;
     return enccert;
 }
 
@@ -628,7 +658,7 @@ bool WvX509Mgr::signedbyCAinfile(WvStringParm certfile)
 	return false;
     }
 
-    lookup=X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
+    lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
     if (lookup == NULL)
     {
 	seterr("Can't add lookup method...\n");
@@ -663,15 +693,9 @@ bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
 }
 
 
-bool WvX509Mgr::isinCRL()
-{
-    return false;
-}
-
-
 WvString WvX509Mgr::encode(const DumpMode mode)
 {
-    FILE *stupid;
+    FILE *stupid = NULL;
     WvString nil;
     
     stupid = file_hack_start();
@@ -722,10 +746,9 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	debug(WvLog::Error, "Not decoding an empty string. - Sorry!\n");
 	return;
     }
-
     
     // Let the fun begin... ;)
-    FILE *stupid;
+    FILE *stupid = NULL;
     WvString outstring = pemEncoded;
     
     stupid = file_hack_start();
@@ -805,16 +828,16 @@ public:
         if (fp)
             fclose(fp);
     }
-
-	operator FILE *() const
-	{
-		return fp;
-	}
-
+    
+    operator FILE *() const
+    {
+	return fp;
+    }
+    
 private:
     FILE *fp;
 };
-}
+} // anomymous namespace...
 
 void WvX509Mgr::write_p12(WvStringParm filename)
 {
@@ -938,7 +961,7 @@ WvString WvX509Mgr::get_issuer()
     {
 	char *name = X509_NAME_oneline(X509_get_issuer_name(cert),0,0);
         WvString retval(name);
-        free(name);
+        OPENSSL_free(name);
 	return retval;
     }
     else
@@ -952,7 +975,7 @@ WvString WvX509Mgr::get_subject()
     {
 	char *name = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
 	WvString retval(name);
-	free(name);
+	OPENSSL_free(name);
 	return retval;
     }
     else
@@ -962,48 +985,25 @@ WvString WvX509Mgr::get_subject()
 
 WvString WvX509Mgr::get_crl_dp()
 {
-    WvDynBuf *buf = get_extension(NID_crl_distribution_points);
-    if (buf)
-    {
-	WvString retval(buf->getstr());
-	delete buf;
-	return retval;
-    }
-    else
-	return WvString::null;
+    return get_extension(NID_crl_distribution_points);
 }
 
 
 WvString WvX509Mgr::get_cp_oid()
 {
-    WvDynBuf *buf = get_extension(NID_certificate_policies);
-    if (buf)
-    {
-	WvString retval(buf->getstr());
-	delete buf;
-	return retval;
-    }
-    else
-	return WvString::null;
+    return get_extension(NID_certificate_policies);
 }
 
 
 WvString WvX509Mgr::get_altsubject()
 {
-    WvDynBuf *buf = get_extension(NID_subject_alt_name);
-    if (buf)
-    {
-	WvString retval(buf->getstr());
-	delete buf;
-	return retval;
-    }
-    else
-	return WvString::null;
-
+    return get_extension(NID_subject_alt_name);
 }
 
-WvDynBuf *WvX509Mgr::get_extension(int nid)
+WvString WvX509Mgr::get_extension(int nid)
 {
+    WvString retval = WvString::null;
+    
     if (cert)
     {
 	int index = X509_get_ext_by_NID(cert, nid, -1);
@@ -1012,16 +1012,47 @@ WvDynBuf *WvX509Mgr::get_extension(int nid)
 	    X509_EXTENSION *ext = X509_get_ext(cert, index);
 	    if (ext)
 	    {
-		WvDynBuf *buf = new WvDynBuf();
-		buf->put(ext->value->data, ext->value->length);
-		return buf;
+		X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
+		if (!method)
+		{
+		    WvDynBuf buf;
+		    buf.put(ext->value->data, ext->value->length);
+		    retval = buf.getstr();
+		}
+		else
+		{
+		    void *ext_data = NULL;
+		    if (method->it) 
+			ext_data = ASN1_item_d2i(NULL, &ext->value->data, 
+						ext->value->length, 
+						ASN1_ITEM_ptr(method->it));
+		    else
+			ext_data = method->d2i(NULL, &ext->value->data, 
+					      ext->value->length);
+		    
+		    if (method->i2s)
+		    {
+			retval = method->i2s(method, ext_data);
+			if (method->it)
+			    ASN1_item_free((ASN1_VALUE *)ext_data, ASN1_ITEM_ptr(method->it));
+			else
+			    method->ext_free(ext_data);
+		    }
+		    else if (method->i2v)
+			retval = "Stack type!";
+		    else if (method->i2r)
+			retval = "Guess what - it's raw..!";
+		}
 	    }
 	}
-	return NULL;
     }
+
+    if (!!retval)
+	return retval;
     else
-	return NULL;
+	return WvString::null;
 }
+
 
 bool WvX509Mgr::isok() const
 {
@@ -1055,4 +1086,89 @@ int WvX509Mgr::geterr() const
         ret = -1;
     }
     return ret;
+}
+
+WvString WvX509Mgr::sign(WvStringParm data)
+{
+    WvDynBuf buf;
+    buf.putstr(data);
+    return sign(buf);
+}
+
+WvString WvX509Mgr::sign(WvBuf &data)
+{
+    assert(rsa);
+
+    EVP_MD_CTX sig_ctx;
+    unsigned char sig_buf[4096];
+    
+    EVP_PKEY *pk = EVP_PKEY_new();
+    if (!pk)
+    {
+	seterr("Unable to create PKEY object.\n");
+	return WvString::null;
+    }
+    
+    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
+    {
+	seterr("Error setting RSA keys.\n");
+	EVP_PKEY_free(pk);
+	return WvString::null;
+    }
+    
+    EVP_SignInit(&sig_ctx, EVP_sha1());
+    EVP_SignUpdate(&sig_ctx, data.peek(0, data.used()), data.used());
+    unsigned int sig_len = sizeof(sig_buf);
+    int sig_err = EVP_SignFinal(&sig_ctx, sig_buf, 
+				&sig_len, pk);
+    if (sig_err != 1)
+    {
+	seterr("Error while signing!\n");
+	EVP_PKEY_free(pk);
+	return WvString::null;
+    }
+
+    EVP_PKEY_free(pk);
+    EVP_MD_CTX_cleanup(&sig_ctx); // this isn't my fault ://
+    WvDynBuf buf;
+    buf.put(sig_buf, sig_len);
+    debug("Signature size: %s\n", buf.used());
+    return WvBase64Encoder().strflushbuf(buf, true);
+}
+
+bool WvX509Mgr::verify(WvStringParm original, WvStringParm signature)
+{
+    WvDynBuf buf;
+    buf.putstr(original);
+    return verify(buf, signature);
+}
+
+bool WvX509Mgr::verify(WvBuf &original, WvStringParm signature)
+{
+    
+    unsigned char sig_buf[4096];
+    size_t sig_size = sizeof(sig_buf);
+    WvBase64Decoder().flushstrmem(signature, sig_buf, &sig_size, true);
+    
+    EVP_PKEY *pk = X509_get_pubkey(cert);
+    if (!pk) 
+    {
+        seterr("Couldn't allocate PKEY for verify()\n");
+        return false;
+    }
+    
+    /* Verify the signature */
+    EVP_MD_CTX sig_ctx;
+    EVP_VerifyInit(&sig_ctx, EVP_sha1());
+    EVP_VerifyUpdate(&sig_ctx, original.peek(0, original.used()), original.used());
+    int sig_err = EVP_VerifyFinal(&sig_ctx, sig_buf, sig_size, pk);
+    EVP_PKEY_free(pk);
+    EVP_MD_CTX_cleanup(&sig_ctx); // Again, not my fault... 
+    if (sig_err != 1) 
+    {
+        debug("Verify failed!\n");
+        return false;
+    }
+    else
+	return true;
 }

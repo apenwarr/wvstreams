@@ -6,11 +6,12 @@
 #ifndef __WVQTSTREAMCLONE_H
 #define __WVQTSTREAMCLONE_H
 
-#include "wvstreamclone.h"
 #include <qobject.h>
 #include <qintdict.h>
 #include <qsocketnotifier.h>
 #include <qtimer.h>
+#include <qmetaobject.h>
+#include "wvstreamclone.h"
 
 /**
  * Wraps another WvStream and attaches it to the normal Qt event loop.

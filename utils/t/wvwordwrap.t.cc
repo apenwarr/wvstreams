@@ -35,6 +35,6 @@ WVTEST_MAIN("wordwraptest.cc")
     }
 
     stream->flush(0);
-    delete stream;
-    delete ostream;
+    RELEASE(stream);
+    RELEASE(ostream);
 }

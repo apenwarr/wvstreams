@@ -70,7 +70,13 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
  
 static WvMoniker<IUniConfGen> reg("list", creator);
 
-
+UniListGen::UniListGen(UniConfGenList *_l) : l(_l), i(*_l) 
+{
+    i.rewind();
+    if (i.next())
+        i->setcallback(UniConfGenCallback(this, &UniListGen::gencallback), cbdata);
+}
+    
 void UniListGen::commit()
 {
     for (i.rewind(); i.next();)
@@ -97,10 +103,14 @@ WvString UniListGen::get(const UniConfKey &key)
     return WvString::null;
 }
 
+//FIXME: We want to attemt to set only until we succeed, since we don't
+//       know if the set succeeds we assume the first generator is writeable
+//       (and therefore succeeds)
 void UniListGen::set(const UniConfKey &key, WvStringParm value)
 {
-    for (i.rewind(); i.next();)
-        i().set(key, value);
+    i.rewind();
+    i.next();
+    i().set(key, value);
 }
 
 bool UniListGen::exists(const UniConfKey &key)
@@ -131,6 +141,11 @@ bool UniListGen::isok()
             return false;
     }
     return true;
+}
+
+void UniListGen::gencallback(const UniConfKey &key, WvStringParm value, void *userdata)
+{
+    delta(key, value);
 }
 
 UniConfGen::Iter *UniListGen::iterator(const UniConfKey &key)
@@ -168,6 +183,11 @@ void UniListGen::IterIter::rewind()
 
 bool UniListGen::IterIter::next()
 {
+    //FIXME: There has to be a nicer way of stopping iterators from crashing 
+    //FIXME: than this if statement
+    if (l.isempty())
+        return false;
+
     if ((*i)->next())
     {
         // When iterating, make sure each key value is only returned once (from
@@ -185,6 +205,19 @@ bool UniListGen::IterIter::next()
         return false;
 
     return next();
+/*    
+    //iterative!
+    if (!l.isempty())
+        while (i->next())
+            while((*i)->next())
+                if (!d[(*i)->key()])
+                {
+                    d.add(new UniConfKey((*i)->key()), true);
+                    return true;
+                }
+
+    return false;
+*/
 }
 
 

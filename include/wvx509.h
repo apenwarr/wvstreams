@@ -7,13 +7,16 @@
 #ifndef __WVX509_H
 #define __WVX509_H
 
-#include "wvrsa.h"
 #include "wvlog.h"
 #include "wverror.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
 typedef struct x509_st X509;
+struct ssl_ctx_st;
+typedef struct ssl_ctx_st SSL_CTX;
+
+class WvRSAKey;
 
 // workaround for the fact that OpenSSL initialization stuff must be called
 // only once.
@@ -29,9 +32,6 @@ WvString wvssl_errstr();
 class WvX509Mgr : public WvError
 {
 public:
-   /** Distinguished Name to be used in the certificate. */
-    WvString dname;
-
    /**
     * Type for the @ref encode() and decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
@@ -85,22 +85,27 @@ public:
     WvX509Mgr(WvStringParm _dname, int bits);
 
 private:
-    /** Placeholder: this doesn't exist yet. */
+    /** 
+     * Placeholder for Copy Constructor: this doesn't exist yet, but it keeps
+     * us out of trouble :) 
+     */
     WvX509Mgr(const WvX509Mgr &mgr);
 
 public:
     /** Destructor */
     virtual ~WvX509Mgr();
-
-    /** X.509v3 Certificate - this is why this class exists */
-    X509     *cert;
-
+    
     /**
-     * The Public and Private RSA keypair associated with this certificate
-     * Make sure that you save this somewhere!!! If you don't, then you won't
-     * really be able to use the certificate for anything...
+     * Avoid a lot of ugliness by having it so that we are binding to the SSL
+     * context, and not the other way around, since that would make ownership
+     * of the cert and rsa keys ambiguous.
      */
-    WvRSAKey *rsa;
+    bool bind_ssl(SSL_CTX *ctx);
+ 
+    /**
+     * Accessor for the RSA Keys
+     */
+    const WvRSAKey &get_rsa();
     
     /**
      * Given the Distinguished Name dname and an already generated keypair in 
@@ -141,7 +146,7 @@ public:
      * useful in a WvConf or UniConf file.
      * 
      * I don't provide a similar function for that for the rsa key, because
-     * you can always call rsa->private_str() and rsa->public_str()
+     * you can always call get_rsa().private_str() and get_rsa().public_str()
      * for that information.
      */
     WvString hexify();
@@ -169,22 +174,24 @@ public:
    bool signedbyCAinfile(WvStringParm certfile);
 
     /**
-     * Sign the X509 certificate in cert with CAKeypair
-     *
-     * NOT IMPLEMENTED
+     * Sign the contents of data and return the signature as a BASE64
+     * string.
      */
-    void sign(WvRSAKey CAKeypair);
-   
-    /**
-     * Check and see if the certificate in cert has been revoked... currently
-     * relies on the CRL Distribution Point X509v3 extension...
-     * returns true if it has expired
-     * 
-     * NOT IMPLEMENTED
-     */
-    bool isinCRL();
+    WvString sign(WvBuf &data);
+    WvString sign(WvStringParm data);
 
-    /** Return the information requested by mode as a WvString. */
+    /**
+     * Verify that the contents of data were signed
+     * by the certificate currently in cert. This only
+     * checks the signature, it doesn't check the validity
+     * of the certificate.
+     */
+    bool verify(WvBuf &original, WvStringParm signature);
+    bool verify(WvStringParm original, WvStringParm signature);
+    
+    /** 
+     * Return the information requested by mode as a WvString. 
+     */
     WvString encode(const DumpMode mode);
 
     /**
@@ -254,9 +261,22 @@ public:
     virtual int geterr() const;
 
 private:
-    WvLog debug;
+    /** X.509v3 Certificate - this is why this class exists */
+    X509     *cert;
 
-   /** 
+    /**
+     * The Public and Private RSA keypair associated with this certificate
+     * Make sure that you save this somewhere!!! If you don't, then you won't
+     * really be able to use the certificate for anything...
+     */
+    WvRSAKey *rsa;
+    
+    /** Distinguished Name to be used in the certificate. */
+    WvString dname;
+
+    WvLog debug;
+    
+    /** 
     * Password for PKCS12 dump - we don't handle this entirely correctly 
     * since we should erase it from memory as soon as we are done with it
     */
@@ -264,8 +284,9 @@ private:
 
     /**
      * Get the Extension information - returns NULL if extension doesn't exist
+     * Used internally by all of the get_??? functions (crl_dp, cp_oid, etc.).
      */
-    WvDynBuf *get_extension(int nid);
+    WvString get_extension(int nid);
 
     /**
      * Populate dname (the distinguished name);
