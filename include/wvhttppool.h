@@ -27,6 +27,7 @@ public:
     WvString headers;
     WvHttpStream *instream;
     WvBufStream *outstream;
+    bool inuse;
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 		 WvHttpStream *_instream);
@@ -52,6 +53,7 @@ private:
     WvLog log;
     WvUrlRequestList urls, waiting_urls;
     int request_count;
+    bool ssl;
     
     WvUrlRequest *curl; // current url
     size_t remaining;

@@ -24,6 +24,7 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
     WvBufStream *x = new WvBufStream;
     outstream = x;
     x->death_notify = (WvStream **)&outstream;
+    inuse = false;
 }
 
 
@@ -40,6 +41,7 @@ void WvUrlRequest::done()
 	outstream->seteof();
 	outstream->death_notify = NULL;
     }
+    inuse = false;
     outstream = NULL; 
 }
 
@@ -76,7 +78,7 @@ WvString WvUrlRequest::request_str(bool keepalive)
 }
 
 
-WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl)
+WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl)
     : WvStreamClone(&cloned), remaddr(_remaddr),
 	log(WvString("HTTP %s", remaddr), WvLog::Debug)
 {
@@ -85,6 +87,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl)
     remaining = 0;
     chunked = in_chunk_trailer = false;
     request_count = 0;
+    ssl = _ssl;
     
     cloned = new WvTCPConn(remaddr);
     if (ssl)
@@ -199,7 +202,22 @@ void WvHttpStream::execute()
 	    close(); // timed out, but not really an error
 	return;
     }
-    
+
+    // Die if somebody closed our outstream
+    if (curl && !curl->outstream)
+    {
+	close();
+	if (cloned)
+	    delete cloned;
+	cloned = new WvTCPConn(remaddr);
+        if (ssl)
+	    cloned = new WvSSLStream(cloned);
+	doneurl();
+	return;
+    }
+    else if (curl)
+	curl->inuse = true;
+
     if (!curl)
     {
 	// in the header section
@@ -314,7 +332,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
     WvHttpStreamDict::Iter ci(conns);
     for (ci.rewind(); ci.next(); )
     {
-	if (!ci->isok())
+	if (!ci->isok() || urls.isempty())
 	{
 	    unconnect(ci.ptr());
 	    ci.rewind();
@@ -329,7 +347,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )
     {
-	if (!i->outstream || !i->url.isok())
+	if ((!i->outstream && !i->inuse) || !i->url.isok())
 	{
 	    //log("'%s' is dead: %s/%s\n", 
 	    //	i->url, i->url.isok(), i.outstream->isok());
@@ -366,7 +384,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
 void WvHttpPool::execute()
 {
     WvStreamList::execute();
-    
+
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )
     {
