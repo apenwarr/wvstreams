@@ -27,11 +27,11 @@
 pid_t wvfork(int dontclose1, int dontclose2)
 {
     WvIntTable t(1);
-    if(dontclose1 >= 0)
-        t.add(&dontclose1, false);
-    if(dontclose2 >= 0)
-        t.add( &dontclose2, false );
-    return(wvfork(t));
+    if (dontclose1 >= 0)
+	t.add(&dontclose1, false);
+    if (dontclose2 >= 0)
+	t.add(&dontclose2, false);
+    return (wvfork(t));
 }
 
 pid_t wvfork_start(int *waitfd)
@@ -39,51 +39,52 @@ pid_t wvfork_start(int *waitfd)
     int waitpipe[2];
 
     if (pipe(waitpipe) < 0)
-        return -1;
+	return -1;
 
     pid_t pid = fork();
 
     if (pid < 0)
-        return pid;
+	return pid;
     else if (pid > 0)
     {
-        // parent process. close its writing end of the pipe and wait
-        // for its reading end to close.
-        char buf;
-        close(waitpipe[1]);
-        read(waitpipe[0], &buf, 1);
-        close(waitpipe[0]);
+	// parent process. close its writing end of the pipe and wait
+	// for its reading end to close.
+	char buf;
+	close(waitpipe[1]);
+	read(waitpipe[0], &buf, 1);
+	close(waitpipe[0]);
     }
     else
     {
-        // child process. close its reading end of the pipe.
-        close(waitpipe[0]);
-        *waitfd = waitpipe[1];
+	// child process. close its reading end of the pipe.
+	close(waitpipe[0]);
+	*waitfd = waitpipe[1];
     }
 
     return pid;
 }
 
-pid_t wvfork(WvIntTable& dontclose)
+pid_t wvfork(WvIntTable &dontclose)
 {
     int waitfd = -1;
     pid_t pid = wvfork_start(&waitfd);
 
     if (pid != 0)
     {
-        // parent or error
-        return pid;
+	// parent or error
+	return pid;
     }
 
     // child process
     // check the close-on-exec flag of all file descriptors
-    for(int fd=0; fd<MAX_FD; fd++) {
-        if(!dontclose[ fd ] && fd != waitfd &&
-		(fcntl( fd, F_GETFD ) & FD_CLOEXEC) > 0)
-            close(fd);
+    for (int fd = 0; fd < MAX_FD; fd++)
+    {
+	if (!dontclose[fd] && fd != waitfd &&
+	    (fcntl(fd, F_GETFD) & FD_CLOEXEC) > 0)
+	    close(fd);
     }
 
     close(waitfd);
 
-    return pid ;
+    return pid;
 }
