@@ -117,7 +117,7 @@ bool UniIniGen::refresh(const UniConfKey &key,
                 str[len - 1] = '\0';
                 WvString name(wvtcl_unescape(trim_string(str + 1)));
                 section = UniConfKey(name.unique());
-                log(WvLog::Debug5, "Section: \"%s\"\n", section);
+                log(WvLog::Debug5, "Refresh section: \"%s\"\n", section);
                 continue;
             }
             // we possibly have a key = value line
@@ -133,8 +133,8 @@ bool UniIniGen::refresh(const UniConfKey &key,
                     temp = line.getstr();
                     WvString value(wvtcl_unescape(trim_string(temp.edit())));
                     newgen->set(key, value.unique());
-                    log(WvLog::Debug5, "Set: (\"%s\", \"%s\")\n",
-                        key, value);
+                    //log(WvLog::Debug5, "Refresh: (\"%s\", \"%s\")\n",
+                    //    key, value);
                     continue;
                 }
             }
@@ -189,17 +189,19 @@ bool UniIniGen::refresh(const UniConfKey &key,
 }
 
 
+// returns: true if a==b
 bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
     const UniConfValueTree *b, void *userdata)
 {
-    if (a != NULL)
+    if (a)
     {
-        if (b != NULL)
+        if (b)
         {
             if (a->value() != b->value())
             {
                 // key changed
                 delta(a->fullkey()); // CHANGED
+		return false;
             }
             return true;
         }
@@ -210,9 +212,9 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
             return false;
         }
     }
-    else
+    else // a didn't exist
     {
-        assert(b != NULL);
+        assert(b);
         // key added
         delta(a->fullkey()); // ADDED
         return false;

@@ -175,17 +175,17 @@ public:
  * The const in place raw memory buffer type.
  * Refines the interface to add support for untyped pointers.
  */
-class WvConstInPlaceBuffer : public WvConstInPlaceBufferBase<unsigned char>
+class WvConstInPlaceBuf : public WvConstInPlaceBufBase<unsigned char>
 {
 public:
-    WvConstInPlaceBuffer(const void *_data, size_t _avail) :
-        WvConstInPlaceBufferBase<unsigned char>(
+    WvConstInPlaceBuf(const void *_data, size_t _avail) :
+        WvConstInPlaceBufBase<unsigned char>(
             (const unsigned char*)_data, _avail) { }
-    WvConstInPlaceBuffer() :
-        WvConstInPlaceBufferBase<unsigned char>() { }
+    WvConstInPlaceBuf() :
+        WvConstInPlaceBufBase<unsigned char>() { }
     void reset(const void *_data, size_t _avail)
     {
-        WvConstInPlaceBufferBase<unsigned char>::reset(
+        WvConstInPlaceBufBase<unsigned char>::reset(
             (const unsigned char*)_data, _avail);
     }
 };
@@ -229,7 +229,7 @@ typedef WvBufCursorBase<unsigned char> WvBufCursor;
 typedef WvBufViewBase<unsigned char> WvBufView;
 
 /** A raw memory read-only buffer backed by a constant WvString */
-class WvConstStringBuffer : public WvConstInPlaceBuffer
+class WvConstStringBuffer : public WvConstInPlaceBuf
 {
     WvString xstr;
 

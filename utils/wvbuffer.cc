@@ -11,7 +11,7 @@
 // Instantiate some commonly used templates
 template WvBufBaseCommonImpl<unsigned char>;
 template WvInPlaceBufBase<unsigned char>;
-template WvConstInPlaceBufferBase<unsigned char>;
+template WvConstInPlaceBufBase<unsigned char>;
 template WvCircularBufBase<unsigned char>;
 template WvDynBufBase<unsigned char>;
 template WvNullBufBase<unsigned char>;
@@ -109,5 +109,5 @@ WvConstStringBuffer::WvConstStringBuffer()
 void WvConstStringBuffer::reset(WvStringParm _str)
 {
     xstr = _str;
-    WvConstInPlaceBuffer::reset(xstr.cstr(), xstr.len());
+    WvConstInPlaceBuf::reset(xstr.cstr(), xstr.len());
 }

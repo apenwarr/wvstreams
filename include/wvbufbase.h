@@ -725,12 +725,12 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvConstInPlaceBufferBase : public WvBufBase<T>
+class WvConstInPlaceBufBase : public WvBufBase<T>
 {
 protected:
     typedef T Elem;
 
-    WvConstInPlaceBufferStore mystore;
+    WvConstInPlaceBufStore mystore;
 
 public:
     /**
@@ -739,12 +739,12 @@ public:
      * "_data" is the array of data to wrap
      * "_avail" is the amount of data available for reading
      */
-    WvConstInPlaceBufferBase(const T *_data, size_t _avail) :
+    WvConstInPlaceBufBase(const T *_data, size_t _avail) :
         WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _data, _avail * sizeof(Elem)) { }
 
     /** Creates a new empty buffer with no backing array. */
-    WvConstInPlaceBufferBase() :
+    WvConstInPlaceBufBase() :
         WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), NULL, 0) { }
 
@@ -754,7 +754,7 @@ public:
      * Never frees the underlying array.
      * 
      */
-    virtual ~WvConstInPlaceBufferBase() { }
+    virtual ~WvConstInPlaceBufBase() { }
 
     /**
      * Returns the underlying array pointer.

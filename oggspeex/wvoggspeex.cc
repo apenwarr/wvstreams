@@ -428,7 +428,7 @@ bool WvOggSpeexDecoder::process_packet(ogg_packet *oggpacket,
     }
 
     // decode audio
-    WvConstInPlaceBuffer buf(oggpacket->packet, oggpacket->bytes);
+    WvConstInPlaceBuf buf(oggpacket->packet, oggpacket->bytes);
     return speexdec->flush(buf, outbuf);
 }
 
@@ -466,7 +466,7 @@ bool WvOggSpeexDecoder::process_comment_header(ogg_packet *header)
 {
     if (! header->b_o_s && header->bytes >= 8)
     {
-        WvConstInPlaceBuffer cbuf(header->packet, header->bytes);
+        WvConstInPlaceBuf cbuf(header->packet, header->bytes);
         unsigned long int length = getint_le(cbuf);
         if (length <= cbuf.used() - 4)
         {
