@@ -57,7 +57,7 @@ void WvLogFile::start_log()
     strftime(&suffix[0], 20, "%Y-%m-%d", tmstamp);
     WvString fullname("%s%s.%s", dirpath, basefname, suffix);
 
-    logfile.open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0640);
+    logfile.open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0644);
 
     // Look for old logs and purge them
     WvDirIter i(dirpath, false);
