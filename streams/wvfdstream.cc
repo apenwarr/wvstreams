@@ -10,7 +10,10 @@
 #ifndef _WIN32
 #include <sys/socket.h>
 
-#define isselectable(fd) (true)
+inline bool isselectable(fd)
+{
+    return true;
+}
 
 #else // _WIN32
 
@@ -21,10 +24,7 @@
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
 
-// streams.cpp
-int close(int fd);
-int read(int fd, void *buf, size_t count);
-int write(int fd, const void *buf, size_t count);
+#include "streams.h"
 
 #undef errno
 #define errno GetLastError()
@@ -33,7 +33,7 @@ int write(int fd, const void *buf, size_t count);
 inline bool isselectable(int s)
 {
     static u_long crap;
-    return (ioctlsocket(s, FIONREAD, &crap) == 0) ? true : (GetLastError() != WSAENOTSOCK);
+    return ioctlsocket(s, FIONREAD, &crap) == 0 ? true : GetLastError() != WSAENOTSOCK;
 }
 
 #endif // _WIN32

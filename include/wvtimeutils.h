@@ -20,9 +20,9 @@ public:
     WvTime()
         { } // WARNING: leaves members uninitialized, like timeval would do!
     WvTime(long long t)
-        { tv_sec = t/1000000L; tv_usec = t%1000000L; }
+        { tv_sec = long(t/1000000L); tv_usec = long(t%1000000L); }
     WvTime(time_t sec, time_t usec)
-        { tv_sec = sec; tv_usec = usec; }
+        { tv_sec = long(sec); tv_usec = long(usec); }
     WvTime(const struct timeval &tv)
         { tv_sec = tv.tv_sec; tv_usec = tv.tv_usec; }
     WvTime(const WvTime &tv)

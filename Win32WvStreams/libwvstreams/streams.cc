@@ -5,11 +5,6 @@
 #include <assert.h>
 #include <wvstring.h>
 
-// this little trick allows us to define our own close/read/write  
-// (in streams.cpp) that optionally call _close/_read/_write (defined in <io.h>)
-#define __STDC__ 1 // prevents io.h from dllimporting close/read/write
-#include <io.h>
-
 // these versions of close/read/write try to work with bot sockets and msvcrt 
 // file descriptors! (I hope we never get a socket with the same VALUE
 // as a file descriptor!)
@@ -52,7 +47,7 @@ int write(int fd, const void *buf, size_t count)
     return retval;
 }
 
-int socketpair (int family, int type, int protocol, int *sb)
+int socketpair(int family, int type, int protocol, int *sb)
 {
     int res = -1;
     SOCKET insock, outsock, newsock;

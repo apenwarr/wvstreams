@@ -146,9 +146,6 @@
 				RelativePath="..\..\uniconf\uniinigen.cc">
 			</File>
 			<File
-				RelativePath="..\..\uniconf\uniinitreegen.cc">
-			</File>
-			<File
 				RelativePath="..\..\uniconf\unilistgen.cc">
 			</File>
 			<File
