@@ -23,5 +23,5 @@ void WvStringTable::split(WvStringParm s, const char *splitchars,
 void WvStringTable::splitstrict(WvStringParm s, const char *splitchars,
     int limit)
 {
-    return ::strcoll_split(*this, s, splitchars, limit);
+    return ::strcoll_splitstrict(*this, s, splitchars, limit);
 }
