@@ -45,7 +45,6 @@ bool WvEncoderStream::isok() const
 {
     //fprintf(stderr, "encoderstream isok: %d %p %d %d\n",
     //	    WvStream::isok(), cloned, cloned->isok(), cloned->geterr());
-	    
     
     // handle encoder error conditions
     if (!WvStream::isok())
@@ -64,7 +63,9 @@ bool WvEncoderStream::isok() const
 bool WvEncoderStream::flush_internal(time_t msec_timeout)
 {
     flush_write();
-
+    return WvStreamClone::flush_internal(msec_timeout);
+    
+#if 0 // somebody else's job!!
     // flush underlying stream
     while (isok() && writeoutbuf.used())
     {
@@ -75,8 +76,8 @@ bool WvEncoderStream::flush_internal(time_t msec_timeout)
                 break;
         }
     }
-    
     return !writeoutbuf.used();
+#endif
 }
 
 
@@ -141,14 +142,16 @@ void WvEncoderStream::pull(size_t size)
     {
         readchain.finish(readoutbuf);
         // if (readoutbuf.used() == 0 && inbuf.used() == 0)
-	//   noread();
+	//    noread();
+	close();
         // otherwise defer EOF until the buffered data has been read
     }
     else if (!readoutbuf.used() && !inbuf.used() && readchain.isfinished())
     {
         // only get EOF when the chain is finished and we have no
         // more data
-	// noread();
+	//noread();
+	close();
     }
     checkreadisok();
 }
@@ -156,6 +159,8 @@ void WvEncoderStream::pull(size_t size)
 
 bool WvEncoderStream::push(bool flush, bool finish)
 {
+    WvDynBuf writeoutbuf;
+    
     // encode the output
     if (flush)
         writeinbuf.merge(outbuf);
@@ -165,6 +170,7 @@ bool WvEncoderStream::push(bool flush, bool finish)
             success = false;
     checkwriteisok();
 
+#if 0
     // push encoded output to cloned stream
     size_t size = writeoutbuf.used();
     if (size != 0)
@@ -173,6 +179,10 @@ bool WvEncoderStream::push(bool flush, bool finish)
         size_t len = WvStreamClone::uwrite(writeout, size);
         writeoutbuf.unget(size - len);
     }
+#endif
+    if (cloned)
+	cloned->write(writeoutbuf, writeoutbuf.used());
+    
     return success;
 }
 

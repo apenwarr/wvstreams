@@ -155,7 +155,7 @@ WvSSLStream::~WvSSLStream()
 {
     close();
     
-    debug("Shutting down SSL connection.\n");
+    debug("Deleting SSL connection.\n");
     if (geterr())
 	debug("Error was: %s\n", errstr());
     
@@ -258,9 +258,13 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 			    // don't do this if we're returning nonzero!
 			    if (!total) noread();
 			}
-	                break; 
 		    }
-		    debug("<< SSL_read() %s\n", strerror(errno));
+		    else
+		    {
+			debug("<< SSL_read() %s\n", strerror(errno));
+			seterr(err);
+		    }
+		    break;
                     
                 default:
                     printerr("SSL_read");
@@ -395,13 +399,13 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         buf = (const unsigned char *)buf + size_t(result);
     }
     
-    // debug(">> wrote %s bytes\n", total);
+    //debug(">> wrote %s bytes\n", total);
     return total;
 }
 
 void WvSSLStream::close()
 {
-    // debug("(closing)\n");
+    debug("Closing SSL connection.\n");
     
     if (ssl)
     {

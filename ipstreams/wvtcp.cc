@@ -114,33 +114,12 @@ WvTCPConn::~WvTCPConn()
 }
 
 
-static int cloexec(int fd)
-{
-#ifndef _WIN32
-    return fcntl(fd, F_SETFD, FD_CLOEXEC);
-#else
-    return 0;
-#endif
-}
-
-
-static int nonblock(int fd)
-{
-#ifndef _WIN32
-    return fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
-#else
-    u_long arg = 1;
-    return ioctlsocket(fd, FIONBIO, &arg); // non-blocking
-#endif    
-}
-
-
 // Set a few "nice" options on our socket... (read/write, non-blocking, 
 // keepalive)
 void WvTCPConn::nice_tcpopts()
 {
-    cloexec(getfd());
-    nonblock(getfd());
+    set_close_on_exec(true);
+    set_nonblock(true);
     
     int value = 1;
     setsockopt(getfd(), SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
@@ -371,9 +350,10 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     int x = 1;
 
     setfd(socket(PF_INET, SOCK_STREAM, 0));
+    set_close_on_exec(true);
+    set_nonblock(true);
     if (getfd() < 0
 	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
-	|| cloexec(getfd()) || nonblock(getfd())
 	|| bind(getfd(), sa, listenport.sockaddr_len())
 	|| listen(getfd(), 5))
     {

@@ -6,6 +6,7 @@
  */
 #include "wvfdstream.h"
 #include "wvmoniker.h"
+#include <fcntl.h>
 
 #ifndef _WIN32
 #include <sys/socket.h>
@@ -67,6 +68,49 @@ WvFdStream::WvFdStream(int _rfd, int _wfd)
 WvFdStream::~WvFdStream()
 {
     close();
+}
+
+
+static int _cloexec(int fd, bool close_on_exec)
+{
+#ifndef _WIN32 // there is no exec() in win32, so this is meaningless there
+    return fcntl(fd, F_SETFD, close_on_exec ? FD_CLOEXEC : 0);
+#else
+    return 0;
+#endif
+}
+
+
+static int _nonblock(int fd, bool nonblock)
+{
+#ifndef _WIN32
+    int flag = fcntl(fd, F_GETFL);
+    return fcntl(fd, F_SETFL,
+		 (flag & ~O_NONBLOCK) | (nonblock ? O_NONBLOCK : 0));
+#else
+    u_long arg = nonblock ? 1 : 0;
+    return ioctlsocket(fd, FIONBIO, &arg);
+#endif    
+}
+
+
+void WvFdStream::set_nonblock(bool nonblock)
+{
+    int rfd = getrfd(), wfd = getwfd();
+    if (rfd >= 0)
+	_nonblock(rfd, nonblock);
+    if (wfd >= 0 && rfd != wfd)
+	_nonblock(wfd, nonblock);
+}
+    
+
+void WvFdStream::set_close_on_exec(bool close_on_exec)
+{
+    int rfd = getrfd(), wfd = getwfd();
+    if (rfd >= 0)
+	_cloexec(rfd, close_on_exec);
+    if (wfd >= 0 && rfd != wfd)
+	_cloexec(wfd, close_on_exec);
 }
 
 

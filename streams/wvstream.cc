@@ -425,9 +425,11 @@ char *WvStream::blocking_getline(time_t wait_msec, int separator,
         if (hasdata)
         {
             // read a few bytes
-            unsigned char *buf = inbuf.alloc(readahead);
+	    WvDynBuf tmp;
+            unsigned char *buf = tmp.alloc(readahead);
             size_t len = uread(buf, readahead);
-            inbuf.unalloc(readahead - len);
+            tmp.unalloc(readahead - len);
+	    inbuf.merge(tmp);
             hasdata = len > 0; // enough?
         }
 
@@ -927,9 +929,15 @@ IWvStreamCallback WvStream::setexceptcallback(IWvStreamCallback _callback)
 IWvStreamCallback WvStream::setclosecallback(IWvStreamCallback _callback)
 {
     IWvStreamCallback tmp = closecb;
-
-    closecb = _callback;
-
+    if (isok())
+	closecb = _callback;
+    else
+    {
+	// already closed?  notify immediately!
+	closecb = 0;
+	if (!!_callback)
+	    _callback(*this);
+    }
     return tmp;
 }
 

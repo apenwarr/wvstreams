@@ -98,7 +98,14 @@ size_t WvStreamClone::uread(void *buf, size_t size)
     // we use cloned->read() here, not uread(), since we want the _clone_
     // to own the input buffer, not the main stream.
     if (cloned)
-	return cloned->read(buf, size);
+    {
+	size_t len = 0;
+	if (cloned->isok())
+	    len = cloned->read(buf, size);
+	if (len == 0 && !cloned->isok())
+	    close();
+	return len;
+    }
     else
 	return 0;
 }
@@ -119,9 +126,12 @@ bool WvStreamClone::isok() const
 {
     if (geterr())
 	return false;
-    if (cloned)
-	return cloned->isok();
-    return false;
+    if (!cloned)
+	return false;
+    return WvStream::isok();
+    
+    // don't do this: cloned's closecallback will close us when needed.
+    // return cloned->isok();
 }
 
 
@@ -148,7 +158,15 @@ WvString WvStreamClone::errstr() const
 void WvStreamClone::close_callback(WvStream &s)
 {
     if (cloned == &s)
-	close();
+    {
+	//fprintf(stderr, "streamclone-closecb: %d/%d/%d/%d/%d\n",
+	//	stop_read, stop_write, outbuf.used(), inbuf.used(), closed);
+	nowrite();
+	noread();
+	// close();
+	//fprintf(stderr, "streamclone-closecb2: %d/%d/%d/%d/%d\n",
+	//	stop_read, stop_write, outbuf.used(), inbuf.used(), closed);
+    }
 }
 
 

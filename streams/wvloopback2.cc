@@ -5,23 +5,13 @@
  * Implementation of a two-way version of WvLoopback.  See wvloopback2.h.
  */
 #include "wvloopback2.h"
-#include <fcntl.h>
+#include "wvsocketpair.h"
 
-#ifndef _WIN32
-# include <sys/socket.h>
-#else
-# include <io.h>
-#endif
-
-#ifdef _WIN32
-int socketpair(int family, int type, int protocol, int *sb);
-#endif
-
-void wv_loopback2(IWvStream *&s1, IWvStream *&s2)
+void wvloopback2(IWvStream *&s1, IWvStream *&s2)
 {
     int socks[2];
     
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, socks))
+    if (wvsocketpair(SOCK_STREAM, socks))
     {
 	int errnum = errno;
 	s1 = new WvStream;
@@ -31,17 +21,14 @@ void wv_loopback2(IWvStream *&s1, IWvStream *&s2)
 	return;
     }
     
-#ifndef _WIN32
-    fcntl(socks[0], F_SETFD, 1);
-    fcntl(socks[0], F_SETFL, O_RDONLY|O_NONBLOCK);
-    fcntl(socks[1], F_SETFD, 1);
-    fcntl(socks[1], F_SETFL, O_WRONLY|O_NONBLOCK);
-#else
-    u_long arg = 1;
-    ioctlsocket(socks[0], FIONBIO, &arg); // non-blocking
-    ioctlsocket(socks[1], FIONBIO, &arg); // non-blocking
-#endif
+    WvFdStream *f1 = new WvFdStream(socks[0], socks[0]);
+    WvFdStream *f2 = new WvFdStream(socks[1], socks[1]);
     
-    s1 = new WvFdStream(socks[0], socks[0]);
-    s2 = new WvFdStream(socks[1], socks[1]);
+    f1->set_close_on_exec(true);
+    f2->set_close_on_exec(true);
+    f1->set_nonblock(true);
+    f2->set_nonblock(true);
+    
+    s1 = f1;
+    s2 = f2;
 }

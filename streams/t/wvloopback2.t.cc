@@ -5,7 +5,7 @@
 WVTEST_MAIN("loopback2")
 {
     IWvStream *_s1, *_s2;
-    wv_loopback2(_s1, _s2);
+    wvloopback2(_s1, _s2);
     WvStreamClone s1(_s1), s2(_s2);
     
     WVPASS(s1.isok());
@@ -19,3 +19,5 @@ WVTEST_MAIN("loopback2")
     s2.nowrite(); // EOF finishes that last line
     WVPASSEQ(s1.blocking_getline(1000), "s2 line2");
 }
+
+

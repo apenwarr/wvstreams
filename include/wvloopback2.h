@@ -24,6 +24,6 @@
  * 
  * See also WvLoopback, WvBufStream.
  */
-void wv_loopback2(IWvStream *&s1, IWvStream *&s2);
+void wvloopback2(IWvStream *&s1, IWvStream *&s2);
 
 #endif // __WVLOOPBACK2_H

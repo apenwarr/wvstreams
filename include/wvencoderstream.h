@@ -40,7 +40,7 @@ class WvEncoderStream : public WvStreamClone
     WvDynBuf readinbuf;
     WvDynBuf readoutbuf;
     WvDynBuf writeinbuf;
-    WvDynBuf writeoutbuf;
+    //WvDynBuf writeoutbuf;
 
 public:
     /** Encoder chain through which input data is passed. */
@@ -143,10 +143,11 @@ public:
      */
     virtual bool isok() const;
 
-protected:
-    bool pre_select(SelectInfo &si);
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
+    
+protected:
+    bool pre_select(SelectInfo &si);
     virtual bool flush_internal(time_t msec_timeout);
 
 private:

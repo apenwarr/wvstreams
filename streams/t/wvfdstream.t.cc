@@ -10,6 +10,7 @@
 #include "wvstreamclone.h"
 #include "wvfdstream.h"
 #include "wvlog.h"
+#include "wvsocketpair.h"
 
 //FIXME: absolutely simple simple test right now, built from closeflushtest
 // BEGIN closeflushtest.cc definition
@@ -231,3 +232,22 @@ WVTEST_MAIN("closecallback")
     WVFAIL(s.isok());
     WVPASSEQ(i, 1);
 }
+
+
+WVTEST_MAIN("inbuf after read error")
+{
+    int socks[2];
+    WVPASS(!wvsocketpair(SOCK_STREAM, socks));
+    WvFdStream s1(socks[0]), s2(socks[1]);
+    s1.print("1\n2\n3\n4\n");
+    WVPASSEQ(s2.blocking_getline(1000, '\n', 1024), "1");
+    s1.close();
+    WVPASSEQ(s2.blocking_getline(1000, '\n', 1024), "2");
+    WVPASSEQ(s2.blocking_getline(1000, '\n', 1024), "3");
+    WVPASS(s2.isok());
+    WVPASSEQ(s2.blocking_getline(1000, '\n', 1024), "4");
+    WVFAIL(s2.blocking_getline(1000, '\n', 1024));
+    WVFAIL(s2.isok());
+}
+
+
