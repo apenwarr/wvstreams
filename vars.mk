@@ -94,10 +94,10 @@ libwvutils.a libwvutils.so: $(call objects,utils)
 libwvutils.so: -lz -lcrypt
 
 libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams urlget)
-libwvstreams.so: libwvutils.so -lssl
+libwvstreams.so: libwvutils.so -lssl -lcrypto
 
 libuniconf.a libuniconf.so: $(call objects,uniconf)
-libuniconf.so: libwvstreams.so
+libuniconf.so: libwvstreams.so libwvutils.so
 
 libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
 libwvoggvorbis.so: -logg -lvorbis -lvorbisenc libwvutils.so
@@ -109,7 +109,7 @@ libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: -lfftw -lrfftw libwvutils.so
 
 libwvqt.a libwvqt.so: $(call objects,qt)
-libwvqt.so: libwvutils.so libwvstreams.so
+libwvqt.so: libwvutils.so libwvstreams.so -lqt
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
