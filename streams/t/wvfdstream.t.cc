@@ -114,8 +114,8 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     WVFAIL(readstream.iswritable());
 
     // Writing to file
-    WVPASS(writestream.write("Bonjour, j'me appellez writestream\n") == 35);
-    WVPASS(writestream.write("Bonjour, j'me appellez writestream") == 34);
+    WVPASS(writestream.write("Bonjour, je m'appelle writestream\n") == 35);
+    WVPASS(writestream.write("Bonjour, je m'appelle writestream") == 34);
     WVPASS(writestream.iswritable());
     WVPASS(readstream.isreadable());
 
@@ -123,11 +123,11 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     
     // Reading from file
     writestream.select(0, false, true);
-    WVPASS(strcmp(readstream.getline(-1), "Bonjour, j'me appellez writestream") == 0);
+    WVPASS(strcmp(readstream.getline(-1), "Bonjour, je m'appelle writestream") == 0);
     WVPASS(readstream.read(buf, 256) == 34);
     // read() is not supposed to insert the null terminator at the end of the char string, so do it manually
     buf[34] = '\0';
-    WVPASS(strcmp((const char*)buf, "Bonjour, j'me appellez writestream") == 0);
+    WVPASS(strcmp((const char*)buf, "Bonjour, je m'appelle writestream") == 0);
    
     delete[] buf;
     close(file1);
