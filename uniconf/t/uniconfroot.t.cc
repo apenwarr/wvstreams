@@ -225,11 +225,10 @@ WVTEST_MAIN("mounting with paths prefixed by /")
 
 }
 
-#if 0 && BUG_5512_IS_RESOLVED
 WVTEST_MAIN("Deleting while iterating")
 {
     UniConfRoot root("temp:");
-    char *foo = new char[250];
+    char *foo = new char[250]; //to make sure the hash moves in memory
     for (int i = 0; i < 10; i++)
     {
         root.xsetint(i, i);
@@ -240,15 +239,11 @@ WVTEST_MAIN("Deleting while iterating")
     char *foo2 = new char[250];
     for (i.rewind(); i.next(); )
     {
-/*        if (i->getmeint() < 15 && i->getmeint() > 8)
-            for (int i2 = 0; i2 < 200; i2++)
-                root.xset(WvString("foo%s",i2), "blargseshs");
-*/
-        fprintf(stderr, "%s\n", i->getme().cstr());
+//        fprintf(stderr, "%s\n", i->getme().cstr());
         root[i->key()].setme(WvString::null);
-        i.rewind();
+        if (i->getme() != WvString::null)
+            i.rewind();
     }
     deletev foo;
     deletev foo2;
 }
-#endif
