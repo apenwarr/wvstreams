@@ -307,7 +307,7 @@ const char * const uniconfd1_2_args[] = {
 
 WvPipe * setup_master_daemon(bool implicit)
 {
-    WvFile stuff("/tmp/dumb.ini", O_WRONLY|O_TRUNC);
+    WvFile stuff("/tmp/dumb.ini", O_CREAT|O_WRONLY|O_TRUNC);
     stuff.print("pickles/apples/foo=1\n");
     stuff.print("pickles/mangos/bar=1\n");
     stuff.close();
@@ -343,7 +343,7 @@ const char * const uniconfd2_2_args[] = {
     NULL
 };
 
-void daemon_proxy_test(bool implicit)
+static void daemon_proxy_test(bool implicit)
 {
     WvString pipename = "/tmp/tmpfile2";
 
@@ -411,3 +411,4 @@ WVTEST_MAIN("daemon proxying - cfg the only mount")
     
     daemon_proxy_test(true);
 }
+

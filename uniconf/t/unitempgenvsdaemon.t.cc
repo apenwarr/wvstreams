@@ -19,7 +19,7 @@
 #define UNICONFD_INI "/tmp/unitempgen-uniconfd.ini"
 
 // write out a temporary ini file for use, saves flushing entries
-bool write_ini()
+static bool write_ini()
 {
     WvFile outfile(UNICONFD_INI, O_CREAT | O_WRONLY | O_TRUNC);
     if (outfile.isok())
@@ -31,7 +31,7 @@ bool write_ini()
     return false;
 }
 
-WVTEST_MAIN("tempgen/cachgen basics")
+WVTEST_MAIN("tempgen/cachegen basics")
 {
     signal(SIGPIPE, SIG_IGN);
 
@@ -80,7 +80,8 @@ WVTEST_MAIN("tempgen/cachgen basics")
     
     int initial_value = cfg["eth0"].xgetint("dhcpd", 0);
     cfg["eth0"].xsetint("dhcpd", !initial_value);
-    usleep(50); // compensate for latency in propogation
+    //usleep(50); // compensate for latency in propogation
+    cfg.commit();
     int new_value = cfg["eth0"].xgetint("dhcpd", 0);
 
     WVPASS(initial_value != new_value);
