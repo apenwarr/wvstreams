@@ -153,7 +153,7 @@ void WvTCPConn::check_resolver()
 WvIPPortAddr WvTCPConn::localaddr()
 {
     sockaddr_in sin;
-    size_t sl = sizeof(sin);
+    socklen_t sl = sizeof(sin);
     
     if (!isok())
 	return WvIPPortAddr();
@@ -257,7 +257,7 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     
     if (listenport.port == 0) // auto-select a port number
     {
-	size_t namelen = listenport.sockaddr_len();
+	socklen_t namelen = listenport.sockaddr_len();
 	
 	if (getsockname(fd, sa, &namelen) != 0)
 	    seterr(errno);
@@ -289,7 +289,7 @@ void WvTCPListener::close()
 WvTCPConn *WvTCPListener::accept()
 {
     struct sockaddr_in sin;
-    size_t len = sizeof(sin);
+    socklen_t len = sizeof(sin);
     int newfd;
     WvTCPConn *ret;
 

@@ -33,7 +33,7 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
     delete sa;
     
     struct sockaddr_in nsa;
-    size_t nsalen = sizeof(nsa);
+    socklen_t nsalen = sizeof(nsa);
     if (getsockname(fd, (sockaddr *)&nsa, &nsalen) < 0)
     {
 	seterr(errno);
@@ -77,7 +77,7 @@ size_t WvUDPStream::uread(void *buf, size_t count)
     if (!isok() || !buf || !count) return 0;
     
     struct sockaddr_in from;
-    size_t fromlen = sizeof(from);
+    socklen_t fromlen = sizeof(from);
     int in = recvfrom(getfd(), buf, count, 0, (sockaddr *)&from, &fromlen);
     
     if (in >= 0)

@@ -8,6 +8,8 @@
 #include "wvunixsocket.h"
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -128,7 +130,7 @@ void WvUnixListener::close()
 WvUnixConn *WvUnixListener::accept()
 {
     struct sockaddr_un sun;
-    size_t len = sizeof(sun);
+    socklen_t len = sizeof(sun);
     int newfd;
     WvUnixConn *ret;
 
