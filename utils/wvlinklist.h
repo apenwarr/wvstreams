@@ -174,7 +174,7 @@ public:
     public: 						\
         _newname_() { setup(); }			\
         						\
-        ~##_newname_() { shutdown(); }			\
+        ~_newname_() { shutdown(); }			\
 	_extra_ 					\
     };
 
