@@ -60,14 +60,14 @@ void WvFamBase::_callback()
                 || fe.code == FAMCreated)
         {
             if (!fe.userdata)
-                cb(WvString(fe.filename), WvFAMEvent(fe.code), false);
+                cb(WvString(fe.filename), WvFamEvent(fe.code), false);
 
             // If the void * points to something this is a directory callback.
             // We'll prepend the path to the returned filename.
             else
                 cb(WvString("%s/%s",
                     *reinterpret_cast<WvString *>(fe.userdata),
-                    fe.filename), WvFAMEvent(fe.code), true);
+                    fe.filename), WvFamEvent(fe.code), true);
         }
     }
 
