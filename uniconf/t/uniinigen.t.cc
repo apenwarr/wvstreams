@@ -45,6 +45,8 @@ WVTEST_MAIN("ini file permissions")
     struct stat statbuf;
     WVPASS(stat("perm.ini", &statbuf) == 0);
     WVPASSEQ(statbuf.st_mode, 0100666); //file and permissions 0666
+
+    system("rm -f perm.ini");
 }
 
 WVTEST_MAIN("parsing1")
