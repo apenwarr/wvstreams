@@ -101,3 +101,8 @@ void UniCacheGen::set(const UniConfKey &key, WvStringParm value)
     inner->set(key, value);
 }
 
+WvString UniCacheGen::get(const UniConfKey &key)
+{
+    inner->get(key);
+    return UniTempGen::get(key);
+}
