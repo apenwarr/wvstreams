@@ -414,21 +414,25 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 
 WvString undupe(WvStringParm s, char c)
 {
-    WvDynBuf buf;
-    const char *sptr = s, *eptr;
-    
-    while ((eptr = strchr(sptr, c)) != NULL)
+    WvDynBuf out;
+
+    bool last = false;
+
+    for (int i = 0; s[i] != '\0'; i++)
     {
-	buf.put(sptr, eptr-sptr);
-	buf.putch(c);
-        sptr = eptr;
-        while (sptr[0] == c)
-            sptr++;
+        if (s[i] != c)
+        {
+            out.putch(s[i]);
+            last = false;
+        }
+        else if (!last)
+        {
+            out.putch(c);
+            last = true;
+        }
     }
     
-    buf.put(sptr, strlen(sptr));
-    
-    return buf.getstr();
+    return out.getstr();
 }
 
 
