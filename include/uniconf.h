@@ -417,7 +417,7 @@ public:
         { it->rewind(); }
     bool next()
     {
-        if (! it->next())
+        if (!it->next())
             return false;
         current = top[it->key()];
         return true;
@@ -430,14 +430,24 @@ public:
  */
 class UniConf::RecursiveIter : public UniConf::IterBase
 {
-    UniConf::IterList itlist;
+    UniConfGen::Iter *it;
 
 public:
     /** Creates a recursive iterator over a branch. */
     RecursiveIter(const UniConf &_top);
 
-    void rewind();
-    bool next();
+    ~RecursiveIter()
+        { delete it; }
+
+    void rewind()
+        { it->rewind(); }
+    bool next()
+    {
+        if (!it->next())
+            return false;
+        current = top[it->key()];
+        return true;
+    }   
 };
 
 

@@ -62,10 +62,10 @@ void UniConfPamConn::do_remove(const UniConfKey &key)
 }
 
 
-void UniConfPamConn::do_subtree(const UniConfKey &key)
+void UniConfPamConn::do_subtree(const UniConfKey &key, bool recursive)
 {
     updatecred(root[key]);
-    UniConfDaemonConn::do_subtree(key);
+    UniConfDaemonConn::do_subtree(key, recursive);
 }
 
 

@@ -58,19 +58,18 @@ void UniCacheGen::commit()
 
 void UniCacheGen::loadtree(const UniConfKey &key)
 {
-    UniConfGen::Iter *i = inner->iterator(key);
-
+    UniConfGen::Iter *i = inner->recursiveiterator(key);
     if (!i) return;
 
     for (i->rewind(); i->next(); )
     {
-        WvString newkey("%s/%s", key, (*i).key());
-        WvString value(inner->get(newkey));
+        WvString value(inner->get(i->key()));
+	
+	//fprintf(stderr, "Key: '%s'\n", i->key().printable().cstr());
+	//fprintf(stderr, "  Val: '%s'\n", value.cstr());
 
         if (!!value)
-            UniTempGen::set(newkey, value);
-
-	loadtree(newkey);
+            UniTempGen::set(i->key(), value);
     }
 
     delete i;

@@ -96,7 +96,7 @@ void UniConfDaemonConn::execute()
 	    if (arg1.isnull())
 		do_malformed();
 	    else
-		do_subtree(arg1);
+		do_subtree(arg1, arg2.num() == 1);
 	    break;
 	    
 	case UniClientConn::REQ_HASCHILDREN:
@@ -162,15 +162,24 @@ void UniConfDaemonConn::do_remove(const UniConfKey &key)
 }
 
 
-void UniConfDaemonConn::do_subtree(const UniConfKey &key)
+void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 {
     UniConf cfg(root[key]);
     if (cfg.exists())
     {
-        UniConf::Iter it(cfg);
-        for (it.rewind(); it.next(); )
-            writevalue(it->fullkey(), it->get());
-        writeok();
+	if (recursive)
+	{
+	    UniConf::RecursiveIter it(cfg);
+	    for (it.rewind(); it.next(); )
+		writevalue(it->fullkey(), it->get());
+	}
+	else
+	{
+	    UniConf::Iter it(cfg);
+	    for (it.rewind(); it.next(); )
+		writevalue(it->fullkey(), it->get());
+	}
+	writeok();
     }
     else
         writefail();

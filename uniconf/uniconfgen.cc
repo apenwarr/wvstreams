@@ -154,3 +154,93 @@ void UniConfGen::setcallback(const UniConfGenCallback &callback,
     cb = callback;
     cbdata = userdata;
 }
+
+
+
+class _UniConfGenRecursiveIter : public IUniConfGen::Iter
+{
+    WvList<IUniConfGen::Iter> itlist;
+    IUniConfGen *gen;
+    UniConfKey top, current;
+    bool sub_next;
+    
+public:
+    _UniConfGenRecursiveIter(IUniConfGen *_gen, const UniConfKey &_top)
+	: top(_top)
+    {
+	gen = _gen;
+	sub_next = false;
+    }
+    
+    virtual ~_UniConfGenRecursiveIter() { }
+
+    virtual void rewind()
+    {
+	current = "";
+	sub_next = false;
+	itlist.zap();
+	
+	Iter *subi = gen->iterator(top);
+	if (subi)
+	{
+	    subi->rewind();
+	    itlist.prepend(subi, true);
+	}
+    }
+
+    virtual bool next()
+    {
+	//assert(!itlist.isempty()); // trying to seek past the end is illegal!
+	
+	if (sub_next)
+	{
+	    sub_next = false;
+	    
+	    UniConfKey subkey(itlist.first()->key());
+	    UniConfKey newkey(current, subkey);
+	    //fprintf(stderr, "subiter: '%s'\n", newkey.cstr());
+	    Iter *newsub = gen->iterator(UniConfKey(top, newkey));
+	    if (newsub)
+	    {
+		current.append(subkey);
+		//fprintf(stderr, "current is now: '%s'\n", current.cstr());
+		newsub->rewind();
+		itlist.prepend(newsub, true);
+	    }
+	}
+	
+	WvList<IUniConfGen::Iter>::Iter i(itlist);
+	for (i.rewind(); i.next(); )
+	{
+	    if (i->next()) // NOTE: not the same as i.next()
+	    {
+		// set up so next time, we go into its subtree
+		sub_next = true;
+		return true;
+	    }
+	    
+	    // otherwise, this iterator is empty; move up the tree
+	    current = current.removelast();
+	    //fprintf(stderr, "current is now: '%s'\n", current.cstr());
+	    i.xunlink();
+	}
+	
+	// all done!
+	return false;
+    }
+
+    virtual UniConfKey key() const
+    {
+	//fprintf(stderr, "current is now: '%s'\n", current.cstr());
+	if (!itlist.isempty())
+	    return UniConfKey(current, itlist.first()->key());
+	else
+	    return current;
+    }
+};
+
+
+UniConfGen::Iter *UniConfGen::recursiveiterator(const UniConfKey &key)
+{
+    return new _UniConfGenRecursiveIter(this, key);
+}

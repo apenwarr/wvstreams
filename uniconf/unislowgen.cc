@@ -81,6 +81,13 @@ UniConfGen::Iter *UniSlowGen::iterator(const UniConfKey &key)
 }
 
 
+UniConfGen::Iter *UniSlowGen::recursiveiterator(const UniConfKey &key)
+{
+    be_slow("recursiveiterator(%s)", key);
+    return UniFilterGen::recursiveiterator(key);
+}
+
+
 void UniSlowGen::be_slow(WvStringParm what)
 {
     fprintf(stderr, "%p: UniSlowGen: slow operation: %s!\n",

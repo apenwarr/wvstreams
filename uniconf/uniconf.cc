@@ -244,52 +244,12 @@ UniConf::Iter::Iter(const UniConf &_top)
 
 /***** UniConf::RecursiveIter *****/
 
-UniConf::RecursiveIter::RecursiveIter(const UniConf &root)
-    : IterBase(root)
+UniConf::RecursiveIter::RecursiveIter(const UniConf &_top)
+    : IterBase(_top)
 {
+    it = _top.rootobj()->mounts.recursiveiterator(top.fullkey());
+    if (!it) it = new UniConfGen::NullIter;
 }
-
-
-void UniConf::RecursiveIter::rewind()
-{
-    itlist.zap();
-    UniConf::Iter *subi = new UniConf::Iter(top);
-    subi->rewind();
-    itlist.prepend(subi, true);
-}
-
-
-bool UniConf::RecursiveIter::next()
-{
-    assert(!itlist.isempty()); // trying to seek past the end is illegal!
-    
-    UniConf::IterList::Iter i(itlist);
-    for (i.rewind(); i.next(); )
-    {
-        if (i->next()) // NOTE: not the same as i.next()
-        {
-            // return the item first
-            current = **i;
-            
-            // set up so next time, we go into its subtree
-            if (current.haschildren())
-            {
-                UniConf::Iter *subi = new UniConf::Iter(current);
-                subi->rewind();
-                itlist.prepend(subi, true);
-            }
-            
-            return true;
-        }
-        
-        // otherwise, this iterator is empty; move up the tree
-        i.xunlink();
-    }
-    
-    // all done!
-    return false;
-}
-
 
 
 /***** UniConf::XIter *****/

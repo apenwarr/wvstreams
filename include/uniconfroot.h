@@ -73,6 +73,7 @@ class UniConfRoot : public UniConf
 {
     friend class UniConf;
     friend class UniConf::Iter;
+    friend class UniConf::RecursiveIter;
 
     UniWatchInfoTree watchroot;
     

@@ -154,6 +154,22 @@ public:
      * for deleting it when finished.
      */
     virtual Iter *iterator(const UniConfKey &key) = 0;
+    
+    /**
+     * Like iterator(), but the returned iterator is recursive, that is,
+     * it will return children of the immediate children, not just the
+     * immediate children themselves.
+     * 
+     * May return NULL if the key has no immediate children (since that means
+     * there are also no indirect children).
+     * 
+     * Note that UniConfGen::recursiveiterator() is a default
+     * implementation that just calls iterator() recursively, so it'll work
+     * in any derived class without you overriding this function.  However,
+     * you might want to do it anyway if it would be more efficient in your
+     * particular case.
+     */
+    virtual Iter *recursiveiterator(const UniConfKey &key) = 0;
 };
 
 DEFINE_IID(IUniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
@@ -257,6 +273,9 @@ public:
     /***** Key Enumeration API *****/
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key) = 0;
+    
+    // a helpful default that just calls iterator() recursively
+    virtual Iter *recursiveiterator(const UniConfKey &key);
 };
 
 DeclareWvList(IUniConfGen);
