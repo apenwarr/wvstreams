@@ -19,6 +19,13 @@ TARGETS += libwvutils.so libwvutils.a
 TARGETS += libuniconf.so libuniconf.a
 GARBAGE += wvtestmain.o
 
+ifneq ("$(with_swig)", "no")
+  ifneq ("$(with_tcl)", "no")
+    TARGETS += libuniconf_tcl.so
+    CPPFLAGS += -I/usr/include/tcl8.3
+  endif
+endif
+
 ifneq ("$(with_ogg)", "no")
   ifneq ("$(with_vorbis)", "no")
     TARGETS += libwvoggvorbis.so libwvoggvorbis.a
@@ -117,4 +124,6 @@ libwvqt.so: libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
+
+libuniconf_tcl.so: bindings/uniconf_tcl.o -ltcl8.3 -luniconf
 

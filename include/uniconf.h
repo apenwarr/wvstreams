@@ -588,8 +588,10 @@ extern "C" {
 %module UniConf
 
 %{
-typedef void* uniconf_t;
+#include "uniconf.h"
 %}
+
+%newobject uniconf_get;
 #endif
 
 /* FIXME: put the C binding here. */

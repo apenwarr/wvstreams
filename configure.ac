@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.40 2003/09/24 21:13:28 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.41 2003/10/31 21:01:25 pphaneuf Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -78,6 +78,8 @@ AC_ARG_WITH(gdbm, AC_HELP_STRING([--with-gdbm], [GDBM]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
+AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
+AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
@@ -199,6 +201,27 @@ fi
 if test "$with_pam" != "no"; then
     AC_CHECK_HEADERS(security/pam_appl.h,, [with_pam=no])
     AC_CHECK_LIB(pam, pam_start,, [with_pam=no])
+fi
+
+# tcl
+if test "$with_tcl" != "no"; then
+    CPPFLAGS_save="$CPPFLAGS"
+    WV_APPEND(CPPFLAGS, -I/usr/include/tcl8.3)
+    AC_CHECK_HEADERS(tcl.h,, [with_tcl=no])
+    AC_CHECK_LIB(tcl8.3, TclInterpInit,, [with_tcl=no])
+    if test "$with_tcl" != "no"; then
+        CPPFLAGS="$CPPFLAGS_save"
+    fi
+fi
+
+# swig
+if test "$with_swig" != "no"; then
+    AC_CHECK_PROG(SWIG, swig, yes, no)
+    if test "$with_swig" != "no"; then
+        SWIG=swig
+    else
+        with_swig=no
+    fi
 fi
 
 # qt
@@ -332,6 +355,8 @@ AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
 AC_SUBST(with_qt)
 AC_SUBST(with_speex)
+AC_SUBST(with_swig)
+AC_SUBST(with_tcl)
 AC_SUBST(with_vorbis)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
