@@ -9,7 +9,7 @@
 
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
-#define STREAMTRACE 1
+#define STREAMTRACE 0
 #if STREAMTRACE
 # define TRACE(x, y...) fprintf(stderr, x, ## y)
 #else

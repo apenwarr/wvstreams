@@ -433,17 +433,14 @@ void WvStream::drain()
 }
 
 
-void WvStream::flush(time_t msec_timeout)
+bool WvStream::flush(time_t msec_timeout)
 {
-    // flush any other internal buffers a stream might have
-    flush_internal(msec_timeout);
-
-    // flush outbuf
-    flush_outbuf(msec_timeout);
+    return flush_internal(msec_timeout) // any other internal buffers
+	&& flush_outbuf(msec_timeout);  // our own outbuf
 }
 
 
-void WvStream::flush_outbuf(time_t msec_timeout)
+bool WvStream::flush_outbuf(time_t msec_timeout)
 {
     // flush outbuf
     while (isok() && outbuf.used())
@@ -462,27 +459,27 @@ void WvStream::flush_outbuf(time_t msec_timeout)
         }
     }
 
-    if (isok())
+    // handle autoclose
+    if (isok() && autoclose_time)
     {
-        // handle autoclose
-        if (autoclose_time)
-        {
-            time_t now = time(NULL);
-            TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
-                    (unsigned int)this, now - autoclose_time, outbuf.used());
-            if (!outbuf.used() || now > autoclose_time)
-            {
-                autoclose_time = 0; // avoid infinite recursion!
-                close();
-            }
-        }
+	time_t now = time(NULL);
+	TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
+	      (unsigned int)this, now - autoclose_time, outbuf.used());
+	if ((flush_internal(0) && !outbuf.used()) || now > autoclose_time)
+	{
+	    autoclose_time = 0; // avoid infinite recursion!
+	    close();
+	}
     }
+    
+    return !outbuf.used();
 }
 
 
-void WvStream::flush_internal(time_t msec_timeout)
+bool WvStream::flush_internal(time_t msec_timeout)
 {
     // once outbuf emptied, that's it for most streams
+    return true;
 }
 
 
@@ -591,9 +588,14 @@ int WvStream::_do_select(SelectInfo &si)
     int sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
         si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
 
-    // handle errors
-    if (sel < 0 &&
-        errno != EAGAIN && errno != EINTR && errno != ENOBUFS)
+    // handle errors.
+    //   EAGAIN and EINTR don't matter because they're totally normal.
+    //   ENOBUFS is hopefully transient.
+    //   EBADF is kind of gross and might imply that something is wrong,
+    //      but it happens sometimes...
+    if (sel < 0 
+      && errno != EAGAIN && errno != EINTR && errno != ENOBUFS
+      && errno != EBADF)
         seterr(errno);
     return sel;
 }
@@ -623,6 +625,14 @@ bool WvStream::_select(time_t msec_timeout,
 				  readable, writable, isexcept, forceable);
     
     if (!isok()) return false;
+    
+    // the eternal question: if 'sure' is true already, do we need to do the
+    // rest of this stuff?  If we do, it might increase fairness a bit, but
+    // it encourages select()ing when we know something fishy has happened -
+    // when a stream is !isok() in a list, for example, pre_select() returns
+    // true.  If that's the case, our SelectInfo structure might not be
+    // quite right (eg. it might be selecting on invalid fds).  That doesn't
+    // sound *too* bad, so let's go for the fairness.
 
     int sel = _do_select(si);
     if (sel > 0)

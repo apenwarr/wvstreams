@@ -28,14 +28,14 @@ static IWvStream *creator(WvStringParm s, IObject *, void *)
 
 static WvMoniker<IWvStream> reg("fd", creator);
 
-WvFDStream::WvFDStream(int _rwfd) :
-    rfd(_rwfd), wfd(_rwfd)
+WvFDStream::WvFDStream(int _rwfd)
+    : rfd(_rwfd), wfd(_rwfd)
 {
 }
 
 
-WvFDStream::WvFDStream(int _rfd, int _wfd) :
-    rfd(_rfd), wfd(_wfd)
+WvFDStream::WvFDStream(int _rfd, int _wfd)
+    : rfd(_rfd), wfd(_wfd)
 {
 }
 
@@ -49,6 +49,7 @@ WvFDStream::~WvFDStream()
 void WvFDStream::close()
 {
     WvStream::close();
+    //fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
     if (rfd >= 0)
 	::close(rfd);
     if (wfd >= 0 && wfd != rfd)
@@ -96,6 +97,7 @@ size_t WvFDStream::uread(void *buf, size_t count)
     if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
 	return 0; // interrupted
 
+    // a read that returns zero bytes signifies end-of-file (EOF).
     if (in < 0 || (count && in==0))
     {
 	seterr(in < 0 ? errno : 0);
@@ -152,9 +154,8 @@ bool WvFDStream::post_select(SelectInfo &si)
     bool result = WvStream::post_select(si);
     
     // flush the output buffer if possible
-    size_t outbuf_used = outbuf.used();
     if (wfd >= 0 
-	&& (outbuf_used || autoclose_time)
+	&& (outbuf.used() || autoclose_time)
 	&& FD_ISSET(wfd, &si.write))
     {
         flush_outbuf(0);

@@ -43,7 +43,7 @@ public:
     bool disassociate_on_close; // defaults to false
     
     virtual void close();
-    virtual void flush_internal(time_t msec_timeout);
+    virtual bool flush_internal(time_t msec_timeout);
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
     virtual bool isok() const;

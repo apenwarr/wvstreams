@@ -88,9 +88,6 @@ public:
      * available for reading.
      * 
      * This function could also be called gettable().
-     * 
-     *
-     * Returns: the number of elements
      */
     size_t used() const
     {
@@ -112,10 +109,6 @@ public:
      * with count no greater than optgettable() each time.
      * 
      * After this operation, at least count elements may be ungotten.
-     * 
-     *
-     * "count" is the number of elements
-     * Returns: the element storage pointer
      */
     const T *get(size_t count)
     {

@@ -89,10 +89,12 @@ public:
      * flush the output buffer, if we can do it without delaying more than
      * msec_timeout milliseconds at a time.  (-1 means wait forever)
      * 
+     * Returns true if it finished flushing (ie. the outbuf is empty).
+     * 
      * FIXME: Something like this probably belongs in IWvStream, but
      * probably not exactly this.
      */
-    virtual void flush(time_t msec_timeout) = 0;
+    virtual bool flush(time_t msec_timeout) = 0;
     
     // IObject
     static const UUID IID;
@@ -264,7 +266,7 @@ public:
         { outbuf_delayed_flush = is_delayed; }
 
     /**
-     * if true, force write() to call flush() each time, the default behavour
+     * if true, force write() to call flush() each time, the default behavour.
      * otherwise, flush() is granted special meaning when explicitly invoked
      * by the client and write() may empty the output buffer, but will not
      * explicitly flush().
@@ -275,8 +277,10 @@ public:
     /**
      * flush the output buffer, if we can do it without delaying more than
      * msec_timeout milliseconds at a time.  (-1 means wait forever)
+     * 
+     * Returns true if the flushing finished (the output buffer is empty).
      */
-    virtual void flush(time_t msec_timeout);
+    virtual bool flush(time_t msec_timeout);
     
     /**
      * flush the output buffer automatically as select() is called.  If
@@ -519,11 +523,11 @@ protected:
     // not quite the same as flush() since it merely empties the output
     // buffer asynchronously whereas flush() might have other semantics
     // also handles autoclose (eg. after flush)
-    void flush_outbuf(time_t msec_timeout);
+    bool flush_outbuf(time_t msec_timeout);
 
     // called once flush() has emptied outbuf to ensure that any other
     // internal stream buffers actually do get flushed before it returns
-    virtual void flush_internal(time_t msec_timeout);
+    virtual bool flush_internal(time_t msec_timeout);
     
     // the real implementations for these are actually in WvFDStream, which
     // is where they belong.  By IWvStream needs them to exist for now, so
