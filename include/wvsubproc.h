@@ -52,7 +52,7 @@ public:
     void prepare(const char cmd[], ...);
     void preparev(const char cmd[], va_list ap);
     void preparev(const char cmd[], const char * const *argv);
-    
+    void preparev(const char cmd[], WvStringList &);
     
     // launch a subprocess, which will be owned by this object.
     int start(const char cmd[], ...);
