@@ -61,7 +61,7 @@ public:
 	}
 
     protected:
-	datumize(datumize<T> &); // not defined
+	datumize(const datumize<T> &); // not defined
 
 #if defined __GNUC__ && __GNUC__ < 3
 	// The following code doesn't work with GCC 2.95, since it ICEs
