@@ -117,6 +117,10 @@ ifeq ("$(enable_efence)", "yes")
 LDFLAGS+=-lefence
 endif
 
+ifneq ("$(enable_fam)", "no")
+LDFLAGS+=-lfam
+endif
+
 ifeq ("$(enable_verbose)", "yes")
 VERBOSE:=yes
 endif

@@ -19,6 +19,7 @@ with_pam:=@with_pam@
 with_glib:=@with_glib@
 with_gtk:=@with_gtk@
 with_xplc:=@with_xplc@
+with_fam:=@with_fam@
 
 INSTALL:=@INSTALL@
 INSTALL_PROGRAM:=@INSTALL_PROGRAM@

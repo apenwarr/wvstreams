@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.21 2003/03/24 19:57:31 jnc Exp $)
+AC_REVISION($Id: configure.ac,v 1.22 2003/03/28 23:55:35 drheld Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -55,6 +55,10 @@ AC_ARG_WITH(vorbis,
 AC_ARG_WITH(speex,
             AC_HELP_STRING([--with-speex],
                            [Speex]))
+
+AC_ARG_WITH(fam,
+            AC_HELP_STRING([--with-fam],
+                           [FAM]))
 
 AC_ARG_WITH(fftw,
             AC_HELP_STRING([--with-fftw],
@@ -133,6 +137,16 @@ if test "$with_zlib" != "no"; then
 fi
 if test "$with_zlib" == "no"; then
     AC_MSG_ERROR([zlib is missing and required.])
+fi
+
+# fam
+if test "$with_fam" != "no"; then
+    AC_CHECK_LIB(fam, FAMOpen,, [with_fam=no])
+    AC_CHECK_HEADERS(fam.h,, [with_fam=no])
+fi
+if test "$with_fam" != "no"; then
+    AC_DEFINE(WITH_FAM,,
+              [File Alteration Monitor])
 fi
 
 # ogg
@@ -403,6 +417,7 @@ AC_SUBST(QTLIB)
 AC_SUBST(with_glib)
 AC_SUBST(with_gtk)
 AC_SUBST(with_xplc)
+AC_SUBST(with_fam)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)
