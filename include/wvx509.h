@@ -32,9 +32,6 @@ WvString wvssl_errstr();
 class WvX509Mgr : public WvError
 {
 public:
-   /** Distinguished Name to be used in the certificate. */
-    WvString dname;
-
    /**
     * Type for the @ref encode() and decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
@@ -149,7 +146,7 @@ public:
      * useful in a WvConf or UniConf file.
      * 
      * I don't provide a similar function for that for the rsa key, because
-     * you can always call rsa->private_str() and rsa->public_str()
+     * you can always call get_rsa().private_str() and get_rsa().public_str()
      * for that information.
      */
     WvString hexify();
@@ -177,7 +174,8 @@ public:
    bool signedbyCAinfile(WvStringParm certfile);
 
     /**
-     * Sign the contents of data and return the signature.
+     * Sign the contents of data and return the signature as a BASE64
+     * string.
      */
     WvString sign(WvBuf &data);
     WvString sign(WvStringParm data);
@@ -191,7 +189,9 @@ public:
     bool verify(WvBuf &original, WvStringParm signature);
     bool verify(WvStringParm original, WvStringParm signature);
     
-    /** Return the information requested by mode as a WvString. */
+    /** 
+     * Return the information requested by mode as a WvString. 
+     */
     WvString encode(const DumpMode mode);
 
     /**
@@ -270,11 +270,13 @@ private:
      * really be able to use the certificate for anything...
      */
     WvRSAKey *rsa;
-
     
-    WvLog debug;
+    /** Distinguished Name to be used in the certificate. */
+    WvString dname;
 
-   /** 
+    WvLog debug;
+    
+    /** 
     * Password for PKCS12 dump - we don't handle this entirely correctly 
     * since we should erase it from memory as soon as we are done with it
     */
@@ -282,6 +284,7 @@ private:
 
     /**
      * Get the Extension information - returns NULL if extension doesn't exist
+     * Used internally by all of the get_??? functions (crl_dp, cp_oid, etc.).
      */
     WvString get_extension(int nid);
 
