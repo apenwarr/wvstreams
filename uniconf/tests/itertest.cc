@@ -26,8 +26,7 @@ int main()
 {
     WvLog log("itertest", WvLog::Info);
     UniConf h;
-    /*h.generator =*/h.mount(new UniConfIniFile(&h, "test2.ini", false));
-//    h.load();
+    h.mount(new UniConfIniFile(&h, "test2.ini", false));
     
     {
 	// make sure iterators don't create the 'children' array

@@ -64,7 +64,7 @@ void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
 
         for (i.rewind(); i.next();)
         {
-            if (!i->comparegen(this))//i->generator && this != i->generator)
+            if (i->hasgen() && !i->comparegen(this))//i->generator && this != i->generator)
                 continue;
 
             if (i->dirty || i->child_dirty)

@@ -205,10 +205,10 @@ int main()
 	UniConf *cfg2 = &cfg["/weaver ini test"];
 	UniConfIniFile *ini;
 	
-	ini = new UniConfIniFile(&cfg, "test.ini", true); //false);
+	ini = new UniConfIniFile(&cfg, "test.ini", true);
 	ini->save_test = true;
 	
-	ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini",true);// false);
+	ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini",true);
 	ini->save_test = true;
 	
 	log("Config dump:\n");
@@ -223,7 +223,7 @@ int main()
 	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
 	UniConfIniFile *ini;
 	
-	ini = new UniConfIniFile(&h1, "test.ini",true);// false);
+	ini = new UniConfIniFile(&h1, "test.ini",true);
 	ini->save_test = true;
 	
         ini = new UniConfIniFile(&h2, "test2.ini", false);

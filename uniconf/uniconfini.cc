@@ -234,7 +234,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
-	    if (!i->comparegen(this))//i->generator && i->generator != this) continue;
+	    if (i->hasgen() && !i->comparegen(this))//i->generator && i->generator != this) continue;
 	        continue;
                 
 	    if (!!*i)
@@ -256,7 +256,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
-	    if (!i->comparegen(this))//i->generator && i->generator != this)
+	    if (i->hasgen() && !i->comparegen(this))//i->generator && i->generator != this)
 		i->save();
 	    else if (i->has_children()
 		     && (top_special
