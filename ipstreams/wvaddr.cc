@@ -536,8 +536,11 @@ int WvIPNet::bits() const
 
 void WvIPNet::normalize()
 {
-    __u32 val = htonl(~(((__u32)1 << (32-bits())) - 1));
-    mask = WvIPAddr((unsigned char *)&val);
+    if (bits() > 0)
+    {
+	__u32 val = htonl(~(((__u32)1 << (32-bits())) - 1));
+	mask = WvIPAddr((unsigned char *)&val);
+    }
 }
 
 
