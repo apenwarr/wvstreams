@@ -43,7 +43,8 @@ ifneq ("$(with_xplc)", "no")
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
-LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBXPLC)
+LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
+LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
@@ -127,8 +128,9 @@ xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
 default: all
 
 # default "test" rule does nothing...
-.PHONY: test
+.PHONY: test runtests
 test:
+runtests:
 
 %/test:
 	$(MAKE) -C $(dir $@) test

@@ -15,10 +15,10 @@
 typedef int pid_t;
 #endif
 
-#include "wvhashtable.h"
+#include "wvscatterhash.h"
 #include "wvcallback.h"
 
-DeclareWvTable(int);
+DeclareWvScatterTable(int);
 typedef WvCallback<void, pid_t> WvForkCallback;
 
 /**

@@ -170,6 +170,21 @@
 				RelativePath="..\..\streams\wvfdstream.cc">
 			</File>
 			<File
+				RelativePath="..\..\fft\wvfft.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\streams\wvfile.cc">
 			</File>
 			<File
@@ -260,6 +275,9 @@
 				RelativePath="..\..\streams\wvloopback.cc">
 			</File>
 			<File
+				RelativePath="..\..\streams\wvmagicloopback.cc">
+			</File>
+			<File
 				RelativePath="..\..\streams\wvmodem.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -302,6 +320,9 @@
 				RelativePath="..\..\crypto\wvrsa.cc">
 			</File>
 			<File
+				RelativePath="..\..\ipstreams\wvslp.cc">
+			</File>
+			<File
 				RelativePath="..\..\crypto\wvsslhacks.c">
 			</File>
 			<File
@@ -312,9 +333,6 @@
 			</File>
 			<File
 				RelativePath="..\..\streams\wvstreamclone.cc">
-			</File>
-			<File
-				RelativePath="..\..\streams\wvstreamlist.cc">
 			</File>
 			<File
 				RelativePath="..\..\streams\wvsyncstream.cc">

@@ -1,4 +1,5 @@
 WVSTREAMS=.
+WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
 include wvrules.mk
 override enable_efence=no
 
@@ -138,8 +139,10 @@ test: runconfigure all tests wvtestmain
 
 runtests:
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
+ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=0 ./unitest.sh
 	cd uniconf/tests && DAEMON=1 ./unitest.sh
+endif
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

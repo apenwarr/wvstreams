@@ -2,7 +2,8 @@
 #include "uniconfroot.h"
 #include "unidefgen.h"
 
-WVTEST_MAIN("defgen_single")
+
+WVTEST_MAIN("single")
 {
     UniConfRoot cfg("default:temp:");
 
@@ -12,6 +13,13 @@ WVTEST_MAIN("defgen_single")
     cfg["/*/foo"].setme("*3");
     cfg["/baz/foo"].setme("foobaz");
 
+    WVPASS(cfg["/snooper/pooper"].exists());
+    WVPASS(cfg["/snooper"].exists());
+    WVPASS(cfg["/snooper"].haschildren());
+    WVPASS(cfg["users/blah"].exists());
+    WVFAIL(cfg["/users/blah"].haschildren());
+    WVFAIL(cfg["/definitely/not/here"].exists());
+    WVPASS(cfg["/definitely/not/here"].getme().isnull());
     WVPASSEQ(cfg["/snooper/pooper"].getme(), "snooper");
     WVPASSEQ(cfg["/bob/wonker"].getme(), "bonker");
 
@@ -25,7 +33,8 @@ WVTEST_MAIN("defgen_single")
     WVPASSEQ(cfg["/users/pooper"].getme(), "smarch");
 }
 
-WVTEST_MAIN("defgen_multi")
+
+WVTEST_MAIN("multi")
 {
     UniConfRoot cfg("default:temp:");
 
@@ -46,7 +55,10 @@ WVTEST_MAIN("defgen_multi")
 #if 0
 //FIXME:I don't know whether this is supposed to work or not. (pcolijn)
 //      It doesn't right now; if it's supposed to, uncomment and fix!
-WVTEST_MAIN("defgen_phrases")
+//      
+// apenwarr 2004/08/04: it's not supposed to work right now, but it's probably
+// a good idea.
+WVTEST_MAIN("phrases")
 {
     UniConfRoot cfg("default:temp:");
 

@@ -481,7 +481,7 @@ static bool listcmp(const WvList<T>& lhs, const WvList<T>& rhs)
     if (lhs.count() != rhs.count())
         return false;
 
-    WvList<T>::Iter l(lhs), r(rhs);
+    typename WvList<T>::Iter l(lhs), r(rhs);
     for (l.rewind(), r.rewind(); l.next() && r.next(); )
     {
         if (*l.ptr() != *r.ptr())

@@ -113,8 +113,8 @@ IUniConfGen *UniMountGen::mount(const UniConfKey &key,
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
 
-    assert(gen && "Moniker doesn't get us a generator!");
-    if (!gen->exists("/"))
+    // assert(gen && "Moniker doesn't get us a generator!");
+    if (gen && !gen->exists("/"))
         gen->set("/", "");
     return gen;
 }

@@ -42,17 +42,18 @@
  */
 class UniDefGen : public UniFilterGen
 {
-    void finddefault(const UniConfKey &key, char *p, char *q,
-            WvString &result);
-    void replacewildcard(const UniConfKey &key, char *p,
-            WvString &result);
+    UniConfKey finddefault(const UniConfKey &key, char *p, char *q);
+    WvString replacewildcard(const UniConfKey &key,
+			     const UniConfKey &defkey, WvStringParm in);
 
 public:
     UniDefGen(IUniConfGen *gen) : UniFilterGen(gen) { }
 
     /***** Overridden members *****/
 
+    virtual UniConfKey keymap(const UniConfKey &key);
     virtual WvString get(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
 };
 
 #endif // __UNIDEFGEN_H

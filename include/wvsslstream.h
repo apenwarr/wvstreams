@@ -10,7 +10,8 @@
 #include "wvstreamclone.h"
 #include "wvfdstream.h"
 #include "wvlog.h"
- 
+#include "wvcallback.h"
+
 struct ssl_st;
 struct ssl_ctx_st;
 struct ssl_method_st;
@@ -20,6 +21,8 @@ typedef struct ssl_st SSL;
 typedef struct ssl_method_st SSL_METHOD;
 
 class WvX509Mgr;
+
+typedef WvCallback<bool, WvX509Mgr*> WvSSLValidateCallback;
 
 /**
  * SSL Stream, handles SSLv2, SSLv3, and TLS
@@ -35,7 +38,7 @@ public:
      * keep the X509 object around for the entire life of this object!
      */
     WvSSLStream(IWvStream *_slave, WvX509Mgr *x509 = NULL, 
-    		bool _verify = false, bool _is_server = false);
+    		WvSSLValidateCallback _vcb = 0, bool _is_server = false);
     
     /** Cleans up everything (calls close + frees up the SSL Objects used) */
     virtual ~WvSSLStream();
@@ -89,7 +92,7 @@ private:
     bool is_server;
     
     /** Keep track of whether we want to check the peer who connects to us */
-    bool verify;
+    WvSSLValidateCallback vcb;
     
     /** Internal Log Object */
     WvLog debug;
@@ -114,6 +117,7 @@ private:
 
     /** Prints out the entire SSL error queue */
     void printerr(WvStringParm func);
+    
 };
 
 #endif // __WVSSLSTREAM_H
