@@ -49,7 +49,7 @@ bool WvLockFile::unlock()
 }
 
 
-int WvLockFile::readpid()
+pid_t WvLockFile::readpid()
 {
     char *line;
     pid_t pid = 0;

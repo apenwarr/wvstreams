@@ -11,7 +11,19 @@
 
 #include "wvmodem.h"
 #include <sys/ioctl.h>
-#include <linux/serial.h>
+
+#if HAVE_LINUX_SERIAL_H
+# include <linux/serial.h>
+#else
+static inline void cfmakeraw(struct termios *termios_p)
+{
+    termios_p->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+    termios_p->c_oflag &= ~OPOST;
+    termios_p->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+    termios_p->c_cflag &= ~(CSIZE|PARENB);
+    termios_p->c_cflag |= CS8;
+}
+#endif
 
 struct SpeedLookup {
     int baud;
@@ -177,6 +189,7 @@ void WvModem::setup_modem(bool rtscts)
     
     drain();
     
+#if HAVE_LINUX_SERIAL_H
     struct serial_struct old_sinfo, sinfo;
     sinfo.reserved_char[0] = 0;
     if (ioctl(getrfd(), TIOCGSERIAL, &old_sinfo) < 0) 
@@ -196,6 +209,7 @@ void WvModem::setup_modem(bool rtscts)
 	seterr("Cannot set information for serial port.");
 	return;
     }
+#endif
 
     // set up the terminal characteristics.
     // see "man tcsetattr" for more information about these options.
