@@ -21,8 +21,9 @@ struct WvDirEnt : public stat
 /***************************/
 {
     // we already have everything from struct stat, but we also want the
-    // fullname, since it's useful
+    // fullname (dir/dir/file) and name (file), since they're useful
     WvString        fullname;
+    WvString        name;
 };
 
 class WvDirIter
