@@ -12,7 +12,7 @@
 
 #include "ftpparse.h"
 #include "wvurl.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvstreamclone.h"
 #include "wvlog.h"
 #include "wvhashtable.h"
@@ -215,7 +215,7 @@ public:
 
 
 // FIXME: Rename this to WvUrlPool someday.
-class WvHttpPool : public WvStreamList
+class WvHttpPool : public WvIStreamList
 {
     WvLog log;
     WvResolver dns;

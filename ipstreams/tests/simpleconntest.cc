@@ -7,7 +7,7 @@
  * etc).  If a file is named '-', it refers to stdin/stdout.
  */
 #include "wvfile.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvtcp.h"
 #include "wvlog.h"
 #include <signal.h>
@@ -15,8 +15,8 @@
 
 static void bouncer(WvStream &s, void *userdata)
 {
-    WvStreamList &l = *(WvStreamList *)userdata;
-    WvStreamList::Iter i(l);
+    WvIStreamList &l = *(WvIStreamList *)userdata;
+    WvIStreamList::Iter i(l);
     char buf[1024];
     size_t len;
     
@@ -28,15 +28,16 @@ static void bouncer(WvStream &s, void *userdata)
     
     for (i.rewind(); i.next(); )
     {
-	WvStream &out = *i;
+	IWvStream &out = i();
 	
 	if (&s == &out)
 	    continue;
 	
 	if (!out.isok())
 	    continue;
-	
-	out.delay_output(true);
+        
+	//delay_output wasn't really useful, and isn't in IWvStream
+	//out.delay_output(true);
 	out.write(buf, len);
     }
 }
@@ -44,7 +45,7 @@ static void bouncer(WvStream &s, void *userdata)
 
 int main(int argc, char **argv)
 {
-    WvStreamList biglist, l;
+    WvIStreamList biglist, l;
     int count;
     char *cptr;
     WvLog log("simpleconn", WvLog::Info);

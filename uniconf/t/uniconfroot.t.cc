@@ -160,3 +160,20 @@ WVTEST_MAIN("mounting with paths prefixed by /")
         WVPASS(iter2->getmeint());
 
 }
+
+#if BUG_5512_IS_RESOLVED
+WVTEST_MAIN("Deleting while iterating")
+{
+    UniConfRoot root("temp:");
+    for (int i = 0; i < 10; i++)
+        root.xsetint(i, i);
+    
+    UniConf::Iter i(root);
+    for (i.rewind(); i.next(); )
+    {
+        i().setme(WvString());
+        i.rewind();
+    }
+    WVPASS("If not crashed && no valgrind errors");
+}
+#endif

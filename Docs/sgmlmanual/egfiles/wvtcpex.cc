@@ -6,7 +6,7 @@
  */
 
 #include "wvtcp.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
 
 int main(int argc, char **argv)
@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     wvcon->autoforward(sock);
     sock.autoforward(*wvcon);
 
-    WvStreamList l;
+    WvIStreamList l;
     l.add_after(l.tail, wvcon, false);
     l.add_after(l.tail, &sock, false);
 

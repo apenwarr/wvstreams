@@ -3,7 +3,7 @@
 #include "wvsslstream.h"
 #include "wvx509.h"
 #include "wvrsa.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "strutils.h"
 #include "wvcrash.h"
 #include <signal.h>
@@ -46,8 +46,8 @@ void bounce_to_list(WvStream &s, void *_list)
     
     len = s.read(buf, sizeof(buf));
     
-    WvStreamList &list = *(WvStreamList *)_list;
-    WvStreamList::Iter i(list);
+    WvIStreamList &list = *(WvIStreamList *)_list;
+    WvIStreamList::Iter i(list);
     for (i.rewind(); i.next(); )
     {
 	if (i.ptr() != &s) i->write(buf, len);
@@ -58,7 +58,7 @@ void bounce_to_list(WvStream &s, void *_list)
 void tcp_incoming(WvStream &_listener, void *userdata)
 {
     WvTCPListener *listener = (WvTCPListener *)&_listener;
-    WvStreamList *l = (WvStreamList *)userdata;
+    WvIStreamList *l = (WvIStreamList *)userdata;
     WvTCPConn *s = listener->accept();
     
     if (s)
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
     free(malloc(1));
 
     WvLog log("SSL-Server", WvLog::Info);
-    WvStreamList l;
+    WvIStreamList l;
     
     signal(SIGINT,  sighandler_die);
     signal(SIGTERM, sighandler_die);

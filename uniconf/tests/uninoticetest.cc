@@ -1,6 +1,6 @@
 #include "uniconfroot.h"
 #include "wvcallback.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 
 /**
  * This test is mostly for using with the uniconf daemon to see what
@@ -42,7 +42,7 @@ int main()
 		  WvBoundCallback<UniConfCallback, int>(&thing, &foo::cb, 3));
 
  
-    WvStreamList l;
+    WvIStreamList l;
 
     while (true)
     {

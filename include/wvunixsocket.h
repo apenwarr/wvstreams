@@ -9,7 +9,7 @@
 #include "wvfdstream.h"
 #include "wvaddr.h"
 
-class WvStreamList;
+class WvIStreamList;
 class WvUnixListener;
 
 /**
@@ -84,7 +84,7 @@ public:
      * Be careful not to accept() connections yourself if you do this,
      * or we may end up accept()ing twice, causing a hang the second time.
      */
-    void auto_accept(WvStreamList *list,
+    void auto_accept(WvIStreamList *list,
 		     WvStreamCallback callfunc = NULL, void *userdata = NULL);
 
     /**
@@ -100,7 +100,7 @@ public:
 protected:
     WvUnixAddr addr;
     bool bound_okay;
-    WvStreamList *auto_list;
+    WvIStreamList *auto_list;
 
     WvStreamCallback auto_callback;
     void *auto_userdata;

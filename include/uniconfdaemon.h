@@ -8,13 +8,13 @@
 #define __UNICONFDAEMON_H
 
 #include "wvlog.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "uniconf.h"
 #include "wvaddr.h"
 
 class WvX509Mgr;
 
-class UniConfDaemon : public WvStreamList
+class UniConfDaemon : public WvIStreamList
 {
     UniConf cfg;
     WvLog log, debug;

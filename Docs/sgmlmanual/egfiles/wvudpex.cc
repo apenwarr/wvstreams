@@ -6,7 +6,7 @@
  * udp<Info>: Local address is 0.0.0.0:33234 , and waits
  */
 
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
 #include "wvudp.h"
 
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     wvcon->autoforward(sock);
     sock.autoforward(err);
 
-    WvStreamList l;
+    WvIStreamList l;
     l.add_after(l.tail, wvcon, false);
     l.add_after(l.tail, &sock, false);
 

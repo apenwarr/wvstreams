@@ -1,5 +1,5 @@
 #include "wvsslstream.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvtcp.h"
 #include <signal.h>
 
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     WvString target(argc >= 2 ? argv[1] : "mars.net-itech.com:995");
     log("Connecting to %s...\n", target);
     WvSSLStream cli(new WvTCPConn(target),NULL,true);
-    WvStreamList l;
+    WvIStreamList l;
     
     l.append(&cli, false);
     l.append(wvin, false);

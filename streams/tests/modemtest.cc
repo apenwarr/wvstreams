@@ -7,7 +7,7 @@
  * commands.
  */
 #include "wvmodem.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
 #include "strutils.h"
 
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     size_t len;
     bool last_carrier = false, carrier;
     
-    WvStreamList l;
+    WvIStreamList l;
     l.append(wvcon, false);
     l.append(&modem, false);
     

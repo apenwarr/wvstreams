@@ -39,7 +39,7 @@ void UniConfDaemon::close()
 
 bool UniConfDaemon::isok() const
 {
-    return !closed && WvStreamList::isok();
+    return !closed && WvIStreamList::isok();
 }
 
 

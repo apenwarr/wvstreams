@@ -73,6 +73,17 @@ WVTEST_MAIN("parsing3")
     WVPASSEQ(cfg.getme(), "foo");
     WVFAIL(cfg.haschildren());
 }
+WVTEST_MAIN("Setting and getting (bug 6090)")
+{
+    UniConfRoot cfg("ini:tmp.ini");
+    cfg["mrwise"].setme("{{bork!");
+    
+    WVPASSEQ(cfg["mrwise"].getme(), "{{bork!");
+
+    cfg.commit();
+    UniConfRoot cfg2("ini:tmp.ini");
+//    WVPASSEQ(cfg2["mrwise"].getme(), "{{bork!");
+}
 
 
 static void inicmp(WvStringParm key, WvStringParm val, WvStringParm content)

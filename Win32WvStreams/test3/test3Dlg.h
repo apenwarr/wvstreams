@@ -4,7 +4,7 @@
 #pragma once
 #include "afxcmn.h"
 #include "afxwin.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvwinstreamclone.h"
 
 // Ctest3Dlg dialog
@@ -43,7 +43,7 @@ public:
     CRichEditCtrl m_response;
     CEdit m_url;
 private:
-    WvStreamList *m_streamlist;
+    WvIStreamList *m_streamlist;
     WvWinStreamClone *m_winstream;
 public:
     afx_msg void OnBnClickedOk();

@@ -1,7 +1,7 @@
 #include "wvtest.h"
 #include "wvstring.h"
 #include "wvconfemu.h"
-#include "unitempgen.h"
+#include "uniinigen.h"
 #include <stdio.h>
 
 WVTEST_MAIN("delete with empty key name")
@@ -122,4 +122,39 @@ WVTEST_MAIN("Iterating while not mounted at root of UniConf tree")
     fprintf(stderr, "from root: %s\n", myconf.fullkey().cstr());
     fprintf(stderr, "from myroot: %s\n", myconf.fullkey(myroot).cstr());
     assert(false);*/
+}
+/*
+WVTEST_MAIN("Multiple Generators mounted on the Uniconf")
+{
+    {                       
+    UniTempGen *tmp1 = new UniTempGen();
+    UniTempGen *tmp2 = new UniTempGen();
+    UniConfRoot cfg1(tmp1), cfg2(tmp2);
+    UniConf uniconf(cfg1);
+    WvConfEmu cfg(uniconf);
+
+    uniconf["foo"].mountgen(tmp1);
+    uniconf["foo/bar"].mountgen(tmp2);
+    cfg2.setmeint(1);
+    WVPASS(uniconf.xgetint("foo/bar", 0));
+    WvConfigSectionEmu *sect = cfg["foo/bar"];
+    WVPASS(sect);
+    }
+}*/
+
+WVTEST_MAIN("Editing while iterating")
+{
+    UniIniGen *unigen = new UniIniGen("weaver.ini", 0600);
+    UniConfRoot uniconf(unigen);
+    WvConfEmu cfg(uniconf);
+
+    WvConfigSection *sect = cfg["Network Routes"];
+    WvConfigEntryList::Iter ent(*sect);
+    for (ent.rewind(); ent.next();)
+    {
+        WVPASS(cfg.get("Network Routes", ent->name, ""));
+        cfg.set("Network Routes", ent->name, NULL);
+        ent.rewind();
+    }
+    WVPASS("Didn't crash, or cause valgrind errors?");
 }

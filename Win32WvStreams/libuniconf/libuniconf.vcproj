@@ -433,7 +433,7 @@
 				RelativePath="..\..\include\wviproute.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvistreamlist.h">
+				RelativePath="..\..\include\wvstreamlist.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvlink.h">
@@ -547,7 +547,7 @@
 				RelativePath="..\..\include\wvstreamclone.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvstreamlist.h">
+				RelativePath="..\..\include\wvistreamlist.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvstring.h">

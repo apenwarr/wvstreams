@@ -6,7 +6,7 @@
  * because there are more fun and stressful streams to test here.
  */
 #include "wvtcp.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
 #include "strutils.h"
 
@@ -46,7 +46,7 @@ static void stream_call(WvStream &s, void *userdata)
 int main()
 {
     WvLog log("conttest"), err = log.split(WvLog::Error);
-    WvStreamList l;
+    WvIStreamList l;
     
     WvTCPListener listen(WvIPPortAddr("0.0.0.0:1129"));
     listen.auto_accept(&l, stream_call, NULL);
