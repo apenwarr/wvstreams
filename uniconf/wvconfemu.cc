@@ -125,7 +125,10 @@ const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 
 void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 {
-    uniconf[entry].set(value);
+    if (!!value)
+	uniconf[entry].set(value);
+    else
+	uniconf[entry].set(WvString::null);
 }
 
 
@@ -419,7 +422,10 @@ void WvConfEmu::setint(WvStringParm section, WvStringParm entry, int value)
 void WvConfEmu::set(WvStringParm section, WvStringParm entry,
 		    const char *value)
 {
-    uniconf[section][entry].set(value);
+    if (value && value[0] != 0)
+	uniconf[section][entry].set(value);
+    else
+	uniconf[section][entry].set(WvString::null);
 }
 
 
