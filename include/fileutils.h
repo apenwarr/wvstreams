@@ -10,6 +10,7 @@
 #define __FILEUTILS_H
 
 #include "wvstring.h"
+#include "wvstringlist.h"
 
 
 /**
@@ -43,5 +44,11 @@ bool fcopy(WvStringParm srcdir, WvStringParm dstdir, WvStringParm relname);
  */
 bool samedate(WvStringParm file1, WvStringParm file2);
 bool samedate(WvStringParm dir1, WvStringParm dir2, WvStringParm relname);
+
+/**
+ * Runs fnmatch against everything in the patterns list.  We also interpret
+ * .cvsignore-style '!' patterns, which makes us very fancy.
+ */
+bool wvfnmatch(WvStringList& patterns, WvStringParm name, int flags = 0);
 
 #endif // __FILEUTILS_H
