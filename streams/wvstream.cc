@@ -801,9 +801,8 @@ bool WvStream::continue_select(time_t msec_timeout)
     
     running_callback = false;
     taskman->yield();
+    running_callback = true; // and we're back!
     alarm(-1);
-    
-    // FIXME: shouldn't we set running_callback = true here?
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 

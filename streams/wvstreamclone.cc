@@ -111,26 +111,22 @@ WvString WvStreamClone::errstr() const
     return "No child stream!";
 }
 
+
 static void close_callback(WvStream &s, void *userdata)
 {
-    WvStreamClone *_this = (WvStreamClone *) userdata;
+    WvStreamClone *_this = (WvStreamClone *)userdata;
     if (_this->cloned == &s)
-    {
 	_this->close();
-    }
 }
+
 
 void WvStreamClone::setclone(IWvStream *newclone)
 {
     if (cloned)
-    {
 	cloned->setclosecallback(0, 0);
-    }
     cloned = newclone;
     if (cloned)
-    {
-	cloned->setclosecallback( close_callback, this);
-    }
+	cloned->setclosecallback(close_callback, this);
 }
 
 
