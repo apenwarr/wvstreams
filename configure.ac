@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.16 2003/02/26 00:01:22 ilguiz Exp $)
+AC_REVISION($Id: configure.ac,v 1.17 2003/02/26 00:54:32 ilguiz Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -147,10 +147,10 @@ fi
 # qt
 if test "$with_qt" != "no"; then
   AC_CHECK_LIB(qt-mt, main, 
-    [QTLIB="-lqt-mt" ; QTVER="qt3"], 
+    [QTLIB="-lqt-mt"], 
     [
       AC_CHECK_LIB(qt, main, 
-        [QTLIB="-lqt" ; QTVER="qt"], 
+        [QTLIB="-lqt"], 
 	[with_qt=no])
     ])
 fi
@@ -158,6 +158,8 @@ if test "$with_qt" != "no"; then
   if test -n "${QTDIR}"; then
     QTINCLUDE="-I${QTDIR}/include"
   else
+    QTVER="qt3"
+    test -d /usr/include/${QTVER} || QTVER="qt"
     QTINCLUDE="-I/usr/include/${QTVER}"
   fi
   save_CPPFLAGS="$CPPFLAGS"
