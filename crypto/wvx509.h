@@ -113,10 +113,20 @@ public:
 
     /**
      * Check the certificate in cert against the CA certificates in
+     * certfile - returns true if cert was signed by one of the CA certificates.
+     */
+    bool signedbyCAindir(WvString certdir);
+
+    /**
+     * Check the certificate in cert against the CA certificates in
      * certdir - returns true if cert was signed by one of the CA certificates.
      */
-    bool signedbyvalidCA(WvString certdir);
+    bool signedbyCAinfile(WvString certfile);
 
+    /**
+     * Sign the X509 certificate in cert with CAKeypair
+     */
+    void signcert(WvRSAKey CAKeypair);
 
     /**
      * Check and see if the certificate in cert has been revoked... currently

@@ -341,22 +341,50 @@ bool WvX509Mgr::validate()
     return true;
 }
 
-bool signedbyCA(WvString fullname, struct X509 *cert)
+bool WvX509Mgr::signedbyCAinfile(WvString certfile)
 {
-/*
-    struct X509 *CAcert;
+    X509_STORE *cert_ctx = NULL;
+    X509_STORE_CTX csc;
+    X509_LOOKUP *lookup = NULL;
+    int result = 0;
 
-    PEM_read_X509(fullname, CAcert);
-*/
-    return true;
+    cert_ctx = X509_STORE_new();
+    if (cert_ctx == NULL)
+    {
+	seterr("Unable to create Certificate Store Context");
+	return false;
+    }
+
+    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
+    if (lookup == NULL) abort();  
+
+    if (!X509_LOOKUP_load_file(lookup,certfile,X509_FILETYPE_PEM))
+    {
+        X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
+    }
+
+    X509_STORE_CTX_init(&csc,cert_ctx,cert,NULL);
+    result = X509_verify_cert(&csc);
+    X509_STORE_CTX_cleanup(&csc);
+    
+    X509_STORE_free(cert_ctx);
+
+    if (result == 1)
+    {
+    	return true;
+    }
+    else
+    {
+	return false;
+    }
 }
 
-bool WvX509Mgr::signedbyvalidCA(WvString certdir)
+bool WvX509Mgr::signedbyCAindir(WvString certdir)
 {
     WvDirIter i(certdir,false);
     for (i.rewind(); i.next() ; )
     {
-	if (!signedbyCA(i->fullname, cert))
+	if (!signedbyCAinfile(i->fullname))
 	{
 	    return false;
 	}
