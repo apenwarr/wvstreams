@@ -125,6 +125,7 @@ public:
 
     virtual ~WvUrlStream() {};
 
+    void log_urls();
     virtual void close() = 0;
     void addurl(WvUrlRequest *url);
     void delurl(WvUrlRequest *url);
@@ -156,7 +157,7 @@ private:
     
     enum { Unknown, Chunked, ContentLength, Infinity } encoding;
     size_t bytes_remaining;
-    bool in_chunk_trailer, last_was_pipeline_test;
+    bool in_chunk_trailer, last_was_pipeline_test, in_doneurl;
 
     virtual void doneurl();
     virtual void request_next();

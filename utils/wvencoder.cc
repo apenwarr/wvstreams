@@ -377,43 +377,43 @@ void WvEncoderChain::prepend(WvEncoder *enc, bool autofree)
 
 bool WvEncoderChain::get_autofree(WvEncoder *enc)
 {
-//    WvEncoderChainElemListBase::Iter i(encoders);
-//    for (i.rewind(); i.next(); )
-//    {
-//	if ((i.ptr()->enc == enc) && (i.get_autofree()))
-//	    return true;
-//    }
-//    return false;
+    WvEncoderChainElemListBase::Iter i(encoders);
+    for (i.rewind(); i.next(); )
+    {
+	if ((i.ptr()->enc == enc) && (i.cur()->auto_free))
+	    return true;
+    }
+    return false;
 }
 
 void WvEncoderChain::set_autofree(WvEncoder *enc, bool autofree)
 {
-//    WvEncoderChainElemListBase::Iter i(encoders);
-//    if (autofree)
-//    {
-//	// Ensure only the first encoder has autofree set
-//	bool first = true;
-//	for (i.rewind(); i.next(); )
-//	{
-//	    if (i.ptr()->enc == enc)
-//	    {
-//		if (first)
-//		{
-//		    i.set_autofree(true);
-//		    first = false;
-//		}
-//		else
-//		    i.set_autofree(false);
-//	    }
-//	}
-//    }
-//    else
-//    {
-//	// Clear autofree for all encoders
-//	for (i.rewind(); i.next(); )
-//	    if (i.ptr()->enc == enc)
-//		i.set_autofree(false);
-//    }
+    WvEncoderChainElemListBase::Iter i(encoders);
+    if (autofree)
+    {
+	// Ensure only the first encoder has autofree set
+	bool first = true;
+	for (i.rewind(); i.next(); )
+	{
+	    if (i.ptr()->enc == enc)
+	    {
+		if (first)
+		{
+		    i.cur()->auto_free = true;
+		    first = false;
+		}
+		else
+		    i.cur()->auto_free = false;
+	    }
+	}
+    }
+    else
+    {
+	// Clear autofree for all encoders
+	for (i.rewind(); i.next(); )
+	    if (i.ptr()->enc == enc)
+		i.cur()->auto_free = false;
+    }
 }
 
 void WvEncoderChain::unlink(WvEncoder *enc)

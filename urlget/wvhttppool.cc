@@ -72,6 +72,27 @@ void WvUrlRequest::done()
 }
 
 
+void WvUrlStream::log_urls() 	 
+{ 	 
+    unsigned int count = 0;
+    log("curl: ");
+    if (curl)
+        log("%s\n", curl->url);
+    else
+        log("null\n");
+    log("urls:\n");
+    WvUrlRequestList::Iter i(urls); 	 
+    for (i.rewind(); i.next(); ) 	 
+        log("%s: %s\n", ++count, i().url); 	 
+    count = 0; 	 
+    log("waiting urls:\n"); 	 
+    WvUrlRequestList::Iter j(waiting_urls); 	 
+    for (j.rewind(); j.next(); ) 	 
+        log("%s: %s\n", ++count, j().url); 	 
+    log("end of urls\n"); 	 
+}
+
+
 void WvUrlStream::addurl(WvUrlRequest *url)
 {
     log(WvLog::Debug4, "Adding a new url: '%s'\n", url->url);

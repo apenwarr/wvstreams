@@ -94,6 +94,29 @@ char *trim_string(char *string, char c)
 }
 
 
+// return the string formed by concatenating string 'a' and string 'b' with
+// the 'sep' character between them.  For example,
+//    spacecat("xx", "yy", ";")
+// returns "xx;yy".
+// 
+// This function is much faster than the more obvious WvString("%s;%s", a, b),
+// so it's useful when you're producing a *lot* of string data.
+WvString spacecat(WvStringParm a, WvStringParm b, char sep)
+{
+    int alen = strlen(a), blen = strlen(b);
+    WvString s;
+    s.setsize(alen+blen+2);
+    char *cptr = s.edit();
+    
+    memcpy(cptr, a, alen);
+    cptr[alen] = sep;
+    memcpy(cptr+alen+1, b, blen);
+    cptr[alen+1+blen] = 0;
+    
+    return s;
+}
+
+
 // Replaces whitespace characters with nonbreaking spaces.
 char *non_breaking(char * string)
 {
@@ -145,7 +168,7 @@ char *snip_string(char *haystack, char *needle)
 char *strlwr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
     	*p = tolower(*p);
     	p++;
@@ -158,7 +181,7 @@ char *strlwr(char *string)
 char *strupr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
 	*p = toupper(*p);
 	p++;
@@ -171,6 +194,8 @@ char *strupr(char *string)
 // true if all the characters in "string" are isalnum().
 bool is_word(const char *p)
 {
+    assert(p);
+
     while (*p)
     {
     	if(!isalnum(*p++))
@@ -517,7 +542,7 @@ WvString _sizetoa(unsigned long long digits, int size = 0)
     return WvString("%s.%s %s", units, tenths, size_name[size]);
 }
 
-WvString sizetoa(long long blocks, int blocksize)
+WvString sizetoa(unsigned long long blocks, unsigned int blocksize)
 {
     unsigned long long bytes = blocks * blocksize;
 

@@ -8,7 +8,7 @@
 #ifndef __WVCRASH_H
 #define __WVCRASH_H
 
-void wvcrash_setup(const char *_argv0);
+void wvcrash_setup(const char *_argv0, const char *_desc = 0);
 void wvcrash(int sig);
 
 #endif // __WVCRASH_H

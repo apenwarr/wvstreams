@@ -72,7 +72,14 @@ public:
      */
     virtual bool refresh() = 0;
 
-    
+    /** 
+     * Flushes any commitment/notification buffers . 
+     *
+     * The default implementation always returns true.
+     *  NOTE: This method should be 'protected'
+     */
+    virtual void flush_buffers() = 0;
+
     /***** Key Retrieval API *****/
     
     /**
@@ -145,6 +152,9 @@ public:
 
     /** A concrete null iterator type (see below) */
     class NullIter;
+    
+    /** An iterator over a constant list of keys (see below) */
+    class ListIter;
 
     /**
      * Returns an iterator over the children of the specified key.
@@ -270,6 +280,8 @@ public:
     /***** Key Storage API *****/
     virtual void set(const UniConfKey &key, WvStringParm value) = 0;
 
+    virtual void flush_buffers() = 0;
+
     /***** Key Enumeration API *****/
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key) = 0;
@@ -341,4 +353,32 @@ public:
     virtual WvString value() const { return WvString(); }
 };
 
-#endif // UNICONFGEN_H
+
+/**
+ * An iterator that iterates through a constant list of keys.  This is
+ * handy if you know the list of keys is relatively short, and you don't
+ * want to write your own iterator and/or you know your own object state
+ * might change during iteration, so you would have to pregenerate the list
+ * of keys anyway.
+ * 
+ * The creator of the iter is responsible for filling the 'keys' and 'values'
+ * lists.  If the 'values' list runs out of values before 'keys', the
+ * remaining values will be retrieved from the given generator instead.
+ */
+class UniConfGen::ListIter : public UniConfGen::Iter
+{
+public:
+    IUniConfGen *gen;
+    WvList<WvString> keys, values;
+    WvList<WvString>::Iter ki, vi;
+    
+    ListIter(IUniConfGen *_gen);
+
+    /***** Overridden members *****/
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
+    virtual WvString value() const;
+};
+
+#endif // __UNICONFGEN_H

@@ -1,9 +1,26 @@
+#ifdef __GNUC__
+# define alloca __builtin_alloca
+#else
+# ifdef _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
+# else
+#  if HAVE_ALLOCA_H
+#   include <alloca.h>
+#  else
+#   ifdef _AIX
+#pragma alloca
+#   else
+#    ifndef alloca /* predefined by HP cc +Olibcalls */
+char *alloca ();
+#    endif
+#   endif
+#  endif
+# endif
+#endif
+
 #include "wvtest.h"
 #include "wvmatrix.h"
-#include <malloc.h>
-#ifdef _WIN32
-#define alloca _alloca
-#endif
 
 // BEGIN matrixtest.cc definition
 // test that creation matches intended data

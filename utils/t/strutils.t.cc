@@ -153,6 +153,8 @@ WVTEST_MAIN("strlwr")
             printf("   because [%s] != [%s]\n", result, desired[i]);
         deletev input[i];
     }
+
+    WVPASS(strlwr(NULL) == NULL);
 }
 
 /** Tests strupr().
@@ -172,6 +174,7 @@ WVTEST_MAIN("strupr")
             printf("   because [%s] != [%s]\n", result, desired[i]);
         deletev input[i];
     }
+    WVPASS(strupr(NULL) == NULL);
 }
 
 /** Tests is_word().

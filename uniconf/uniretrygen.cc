@@ -86,7 +86,7 @@ void UniRetryGen::maybe_reconnect()
     	    {
     	    	DPRINTF("UniRetryGen::maybe_reconnect: !gen->isok()\n");
     	    	
-    	    	RELEASE(gen);
+    	    	WVRELEASE(gen);
             	
     	    	next_reconnect_attempt =
     	    	    	msecadd(next_reconnect_attempt, retry_interval_ms);
@@ -108,7 +108,7 @@ void UniRetryGen::maybe_disconnect()
     	
     	setinner(NULL);
     	
-    	RELEASE(old_inner);
+    	WVRELEASE(old_inner);
 
         next_reconnect_attempt = msecadd(wvtime(), retry_interval_ms);
     }

@@ -7,9 +7,12 @@
 
 WVTEST_MAIN("WvMagicLoopback Sanity") 
 {
+    signal(SIGPIPE, SIG_IGN);
+
     WvMagicLoopback ml(1024);
     
-    pid_t pid = wvfork();
+    pid_t pid = fork();
+    WVFAIL(pid < 0 && "fork() failed");
     if (pid == 0)
     {
     	int i;
@@ -41,7 +44,7 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
     	}
     }
     
-    WVPASS(wait(NULL) == pid);
+    WVPASS(waitpid(pid, NULL, 0) == pid);
 }
 
 WVTEST_MAIN("WvMagicLoopback Non-Blocking Writes") 

@@ -45,8 +45,7 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *v)
     for (int i = appname.numsegments(); i >= 0; i--)
     {
 	UniConfKey prefix(appname.first(i)), suffix(appname.removefirst(i));
-	//wvcon->print("trying: '%s' '%s' ('%s')\n",
-	//	     prefix, suffix, cfg[prefix].getme());
+
 	if (!!cfg.xget(prefix))
 	{
 	    IUniConfGen *gen = wvcreate<IUniConfGen>(cfg.xget(prefix),

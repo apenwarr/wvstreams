@@ -57,10 +57,16 @@ public:
      *
      * If that was too confusing, just remember: call these functions in
      * the order they appear below, always.
+     *
+     * If add() returns true, then an interface was just created. If it returns
+     * false, then that call made no changes.
+     *
+     * If done_edit() returns true, then one or more interfaces were just
+     * destroyed. If it returns false, then that call made no changes.
      */
     void start_edit();
-    void add(const WvIPAddr &ip);
-    void done_edit();
+    bool add(const WvIPAddr &ip);
+    bool done_edit();
 };
 
 
