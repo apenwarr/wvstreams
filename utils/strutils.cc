@@ -195,9 +195,8 @@ WvString hexdump_buffer(const void *_buf, size_t len)
 	
 	// dump character representation
 	for (count2 = 0; count2 < top; count2++)
-	    cptr += sprintf(cptr, "%c",
-			    (isprint(buf[count+count2])
-			     ? buf[count+count2] : '.'));
+	    *cptr++ = (isprint(buf[count+count2])
+			     ? buf[count+count2] : '.');
 	*cptr++ = '\n';
     }
     *cptr = 0;
