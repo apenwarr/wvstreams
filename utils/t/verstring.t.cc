@@ -20,7 +20,8 @@
  * Similarly, given a string of the form "abcd.efgh", string_to_ver
  * should return a hex number of the form 0xabcdefgh, with implicit
  * meaningless zeros inserted.  string_to_new_ver would translate
- * "ab.cd.efgh" as 0xabcdefgh.
+ * "ab.cd.efgh" as 0xabcdefgh.  string_to_new_ver should also translate
+ * "ab.c.defg" as 0xab0cdefg.
  */
 WVTEST_MAIN("version functions")
 {
