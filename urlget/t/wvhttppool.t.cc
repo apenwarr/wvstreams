@@ -51,37 +51,57 @@ WVTEST_MAIN("WvHttpPool HEAD")
     WVPASS(!(buf->isok()));
 }
 
-
-bool got_first_pipeline_test = false;
 bool pipelining_enabled = true;
+bool expecting_request = false;
 unsigned int http_conns = 0;
 
 void tcp_callback(WvStream &s, void*)
 {
-    WvLog log("tcp_callback", WvLog::Info);
-    char *line = s.getline(0);
-    if (line && (strncmp(line, "GET", 3) == 0 || strncmp(line, "HEAD", 4) == 0))
+    bool last_was_pipeline_check = false;
+    WvString buf("");
+    char *line;
+    do
     {
-        if (strstr(line, "wvhttp-pipeline-check-should-not-exist"))
+        line = s.getline(0);
+        if (line && (strncmp(line, "GET", 3) == 0 ||
+                     strncmp(line, "HEAD", 4) == 0))
         {
-            log("Sending 404\n");
-            s.print("HTTP/1.1 404 Not Found\n\n");
-            got_first_pipeline_test = true;
+            if (expecting_request)
+            {
+                if (strstr(line, "wvhttp-pipeline-check-should-not-exist"))
+                {
+                    printf("Sending 404\n");
+                    buf.append("HTTP/1.1 404 Not Found\n\n");
+                    last_was_pipeline_check = true;
+                }
+                else
+                {
+                    printf("Sending 200\n");
+                    buf.append("HTTP/1.1 200 OK\n"
+                               "Content-Length: 5\n"
+                               "Content-Type: text/html\n\n"
+                               "Foo!\n");
+                    last_was_pipeline_check = false;
+                }
+                if (!pipelining_enabled)
+                    expecting_request = false;
+            }
+            else
+            {
+                printf("Sending 400\n");
+                buf.append("HTTP/1.1 400 Invalid Request\n"
+                           "Content-Length: 5\n"
+                           "Content-Type: text/html\n\n"
+                           "Bar!\n");
+                // we should only be returning a 400 during the pipeling test;
+                // otherwise, it means that WvHttpPool didn't detect broken
+                // pipelining correctly.
+                WVPASS(last_was_pipeline_check);
+            }
         }
-        else if (got_first_pipeline_test && !pipelining_enabled)
-            s.print("HTTP/1.1 400 Invalid Request\n"
-                    "Content-Length: 5\n"
-                    "Content-Type: text/html\n\n"
-                    "Bar!\n");
-        else
-        {
-            log("Sending 200\n");
-            s.print("HTTP/1.1 200 OK\n"
-                    "Content-Length: 5\n"
-                    "Content-Type: text/html\n\n"
-                    "Foo!\n");
-        }
-    }
+    } while (line);
+    s.print(buf);
+    expecting_request = true;
 }
 
 
@@ -90,29 +110,52 @@ void listener_callback(WvStream &s, void *userdata)
     WvIStreamList &list = *(WvIStreamList *)userdata;
     WvTCPListener &l = (WvTCPListener &)s;
     http_conns++;
-    wvcon->write("Incoming connection (%s)\n", http_conns);
     WvTCPConn *newconn = l.accept();
+    printf("Incoming connection (%u)\n", http_conns);
     newconn->setcallback(tcp_callback, NULL);
-    list.append(newconn, true, "incoming http conn");
+    list.append(newconn, false, "incoming http conn");
+    expecting_request = true;
 }
 
 
-static void do_test(WvIStreamList &l)
+static void do_test(WvIStreamList &l, unsigned int num_requests)
 {
+    printf("pipelining [%d] requusts [%u]\n", pipelining_enabled,
+           num_requests);
     WvHttpPool pool;
-    l.append(&pool, false, "pool");
+    WvIStreamList bufs;
+    l.append(&pool, false);
+    l.append(&bufs, false);
 
     http_conns = 0;
-    got_first_pipeline_test = false;
     WvStream *buf;
-    WVPASS(buf = pool.addurl("http://localhost:4200"));
-    WVPASS(buf->isok());
-    buf->autoforward(*wvcon);
-    buf->setclosecallback(close_callback, NULL);
-    l.append(buf, true, "poolbuf");
-    while (buf->isok() && (wvcon->isok() || !pool.idle()))
+    for (unsigned int i = 0; i < num_requests; i++)
+    {
+        WVPASS(buf = pool.addurl(WvString("http://localhost:4200/%s.html", i)));
+        WVPASS(buf->isok());
+        buf->autoforward(*wvcon);
+        buf->setclosecallback(close_callback, NULL);
+        bufs.append(buf, true, "poolbuf");
+    }
+
+    WvIStreamList::Iter j(bufs);
+    while (wvcon->isok() || !pool.idle())
+    {
+        bool buf_ok = false;
+        for (j.rewind(); j.next(); )
+            if (j().isok())
+                buf_ok = true;
+
+        if (!buf_ok)
+            break;
+
 	l.runonce();
-    WVPASS(!(buf->isok()));
+    }
+
+    l.runonce(10);
+    l.runonce(10);
+    WVPASSEQ(bufs.count(), 0);
+    l.unlink(&bufs);
     l.unlink(&pool);
 }
 
@@ -125,17 +168,20 @@ WVTEST_MAIN("WvHttpPool pipelining")
     listener.setcallback(listener_callback, &l);
     l.append(&listener, false, "http listener");
 
-    do_test(l);
+    // Pipelining-enabled tests share one connection for the pipeline test
+    // and actual requests.
+    do_test(l, 1);
+    WVPASSEQ(http_conns, 1);
+    do_test(l, 5);
     WVPASSEQ(http_conns, 1);
 
+    // All pipelining-disabled tests should have one connection for the
+    // pipeline test and one for the real connection.
     pipelining_enabled = false;
-    do_test(l);
+    do_test(l, 1);
     WVPASSEQ(http_conns, 2);
-    
-    l.unlink(&listener);
-    l.runonce(10);
-    l.runonce(10);
-    
-    // list should now be empty
-    WVPASSEQ(l.count(), 0);
+    do_test(l, 5);
+    WVPASSEQ(http_conns, 2);
+
+    WVPASS(listener.isok());
 }
