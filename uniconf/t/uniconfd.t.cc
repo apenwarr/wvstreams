@@ -167,6 +167,60 @@ WVTEST_MAIN("daemon surprise close")
     //linecmp(l, buf, "NOTICE", "x/y", "z");
 }
 #endif
+
+/**** Daemon multimount test ****/
+
+WVTEST_MAIN("daemon multimount")
+{
+    signal(SIGPIPE, SIG_IGN);
+
+    UniConfRoot cfg("temp:");
+
+    cfg["pickles"].setme("foo");
+    cfg["subtree/fries"].setme("bar1");
+    cfg["subtree/ketchup"].setme("bar2");
+    cfg["subt"].mount("temp:");
+    cfg["subt/mayo"].setme("baz");
+
+    UniConfDaemon daemon(cfg, false, NULL);
+
+    WvStringList commands;
+    commands.append("subt / 1");
+    WvStringListList expected_responses;
+    WvStringList hello_response;
+    hello_response.append("HELLO {UniConf Server ready.}");
+    expected_responses.add(&hello_response, false);
+    WvStringList expected_quit_response;
+    expected_quit_response.append("VAL subtree {}");
+    expected_quit_response.append("VAL subtree/fries bar1");
+    expected_quit_response.append("VAL subtree/ketchup bar2");
+    expected_quit_response.append("VAL subt {}");
+    expected_quit_response.append("VAL subt/mayo baz");
+    expected_quit_response.append("VAL pickles foo");
+    expected_quit_response.append("OK ");
+    expected_responses.add(&expected_quit_response, false);
+
+    WvString pipename("/tmp/tmpfile1");
+    WVPASS(daemon.setupunixsocket(pipename));
+    WvUnixAddr addr(pipename);
+    WvUnixConn *sock = new WvUnixConn(addr);
+    UniConfDaemonClientConn conn(sock, &commands, &expected_responses);
+
+    WvIStreamList::globallist.append(&conn, false);
+    WvIStreamList::globallist.append(&daemon, false);
+    printf("You are about to enter the no spin zone\n");
+    while (!WvIStreamList::globallist.isempty() && 
+           conn.isok() && daemon.isok())
+    {
+        printf("Spinning: streams left: %i\n", 
+               WvIStreamList::globallist.count());
+        WvIStreamList::globallist.runonce();
+    }
+
+    WVPASS(daemon.isok());
+    WvIStreamList::globallist.zap();
+}
+
 /**** Daemon quit test ****/
 
 // sort of useless: this functionality already exists in
@@ -174,7 +228,6 @@ WVTEST_MAIN("daemon surprise close")
 // test that the server responds with 'OK' upon close (rather than
 // actually testing whether or not it closed). leaving this
 // here as a simple (generic) example to write future tests
-#if 0
 WVTEST_MAIN("daemon quit")
 {
     UniConfRoot cfg("temp:");
@@ -257,7 +310,7 @@ WvPipe * setup_master_daemon(bool implicit)
 
     return new WvPipe(uniconfd1_args[0], 
                       implicit ? uniconfd1_args : uniconfd1_2_args,
-                      false, true, false);
+                      false, false, false);
 }
 
 const char * const uniconfd2_args[] = {
@@ -301,9 +354,10 @@ void daemon_proxy_test(bool implicit)
     slave->setcallback(WvPipe::ignore_read, NULL);
     slave->nowrite();
 
+    sleep(2); // wait for the uniconf daemons to wake up
     fprintf(stderr, "Got here (2)\n");
 
-    UniConfRoot cfg("unix:/tmp/tmpfile1");
+    UniConfRoot cfg("unix:/tmp/tmpfile2");
     WVPASS(cfg["cfg/pickles/apples/foo"].getmeint() == 1);
 
     WvStringList commands;
@@ -327,8 +381,6 @@ void daemon_proxy_test(bool implicit)
     UniConfDaemonClientConn conn(sock, &commands, &expected_responses);
     
     WvIStreamList::globallist.append(&conn, false);
-    WvIStreamList::globallist.append(master, false);
-    WvIStreamList::globallist.append(slave, false);
 
     printf("Spinning: streams left: %i\n", 
            WvIStreamList::globallist.count());
@@ -352,6 +404,8 @@ WVTEST_MAIN("daemon proxying - with cache")
     daemon_proxy_test(false);
 }
 
+#if 0
+// FIXME: BUGZID: 7625
 WVTEST_MAIN("daemon proxying - cfg the only mount")
 {
     signal(SIGPIPE, SIG_IGN);

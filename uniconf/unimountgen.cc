@@ -249,11 +249,12 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 }
 
 
-// FIXME: doesn't work correctly when something is mounted somewhere
-// underneath 'key' itself, because we don't recurse into sub-iterators.
+// FIXME: this function will be rather slow if you try to iterate over multiple
+// generators and the latency level is high (as is the case with e.g.: the tcp generator). 
+// the fast path will only kick in if you iterate over a single generator.
 UniMountGen::Iter *UniMountGen::recursiveiterator(const UniConfKey &key)
 {
-    UniGenMount *found = findmount(key);
+    UniGenMount *found = findmountunder(key);
     if (found)
         return found->gen->recursiveiterator(trimkey(found->key, key));
     else
@@ -270,6 +271,34 @@ UniMountGen::UniGenMount *UniMountGen::findmount(const UniConfKey &key)
         if (i->key.suborsame(key))
 	    return i.ptr();
     } 
+
+    return NULL;
+}
+
+
+UniMountGen::UniGenMount *UniMountGen::findmountunder(const UniConfKey &key)
+{
+    UniMountGen::UniGenMount * foundmount = NULL;
+    int num_found_mounts = 0;
+
+    // Find the needed generator and keep it as a lastfound
+    MountList::Iter i(mounts);
+    for (i.rewind(); i.next(); )
+    {
+        // key lies beneath mount
+        if (i->key.suborsame(key))
+        {
+            if (!foundmount)
+                foundmount = i.ptr();
+            num_found_mounts++;
+        }
+        // mount lies beneath key
+        else if (key.suborsame(i->key))
+            num_found_mounts++;
+    }
+
+    if (num_found_mounts == 1 && foundmount)
+        return foundmount;
 
     return NULL;
 }
