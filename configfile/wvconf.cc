@@ -85,6 +85,15 @@ void WvConf::setint(const WvString &section, const WvString &entry, int value)
     set(section, entry, def_str);
 }
 
+
+// only set the value if it isn't already in the config file
+void WvConf::maybesetint(const WvString &section, const WvString &entry,
+			 int value)
+{
+    if (!get(section, entry, NULL))
+	setint(section, entry, value);
+}
+
  
 void WvConf::load_file(const WvString &filename)
 {
@@ -255,6 +264,15 @@ void WvConf::set(const WvString &section, const WvString &entry,
     
     s->set(entry, value);
     dirty = true;
+}
+
+
+// only set the value if it isn't already in the config file
+void WvConf::maybeset(const WvString &section, const WvString &entry,
+		      const char *value)
+{
+    if (value && !get(section, entry, NULL))
+	set(section, entry, value);
 }
 
 

@@ -116,6 +116,11 @@ public:
     void setint(const WvString &section, const WvString &entry, int value);
     void set(const WvString &section, const WvString &entry,
 	     const char *value);
+    
+    void maybesetint(const WvString &section, const WvString &entry,
+		     int value);
+    void maybeset(const WvString &section, const WvString &entry,
+		  const char *value);
 
     void delete_section(const WvString &section);
 
