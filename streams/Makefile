@@ -31,7 +31,7 @@ report-lock-mode:
 streams.a: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvfile.o wvlog.o wvlogbuffer.o wvsyslog.o wvwatcher.o wvpipe.o \
 	wvloopback.o wvmodem.o wvtimestream.o wvprotostream.o \
-	wvlockfile.o $(LOCKDEV)
+	wvlockfile.o wvdailyevent.o $(LOCKDEV)
 
 watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
 	looptest timetest prototest: streams.a ../utils/utils.a
