@@ -20,7 +20,7 @@
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
-      pipeline_incompatible(_pipeline_incompatible)
+      pipeline_incompatible(_pipeline_incompatible), in_doneurl(false)
 {
     log("Opening server connection.\n");
     http_response = "";
