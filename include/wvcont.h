@@ -14,6 +14,8 @@
 
 #include "wvcallback.h"
 
+typedef WvCallback<void*, void*> WvContCallback;
+
 /**
  * WvCont provides "continuations", which are apparently also known as
  * semi-coroutines.  You can wrap any WvCallback<void*,void*> in a WvCont
@@ -26,16 +28,6 @@ class WvCont
 {
     struct Data;
     friend struct Data;
-    
-public:
-    /**
-     * These are hardcoded because I'm too lazy to templatize this.
-     * Most people will ignore the return and parameter values anyhow.
-     */
-    typedef void *R;
-    typedef void *P1;
-
-    typedef WvCallback<R, P1> Callback;
     
 private:
     /**
@@ -75,7 +67,7 @@ public:
      * can be used in place of that callback, and stored in a callback of
      * the same data type.
      */
-    WvCont(const Callback &cb, unsigned long stacksize = 64*1024);
+    WvCont(const WvContCallback &cb, unsigned long stacksize = 64*1024);
     
     /** Copy constructor. */
     WvCont(const WvCont &cb);
@@ -88,7 +80,7 @@ public:
      * parameter to the function, and returning Ret, the argument of yield()
      * or the return value of the function.
      */
-    R operator() (P1 p1 = 0);
+    void *operator() (void *p1 = 0);
     
     // the following are static because a function doesn't really know
     // which WvCont it belongs to, and only one WvCont can be the "current"
@@ -108,7 +100,7 @@ public:
      * had returned, and the parameter to the callback is the value of
      * yield().
      */
-    static P1 yield(R ret = 0);
+    static void *yield(void *ret = 0);
     
     /**
      * Tell us if the current context is "okay", that is, not trying to
