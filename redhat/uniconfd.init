@@ -2,7 +2,7 @@
 #
 # uniconfd: Server that manages UniConf elements
 #
-# chkconfig 345 97 03
+# chkconfig: 345 97 03
 # description: Server that manages UniConf elements
 # processname: uniconf-daemon-1
 # pidfile: /var/run/uniconfd.pid
