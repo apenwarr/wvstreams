@@ -45,6 +45,10 @@ WvString wvtcl_escape(WvStringParm s, const char *nasties)
 	    inescape = false;
     }
     
+    // if the braces aren't balanced, backslashify
+    if (bracecount != 0)
+        backslashify = true;
+
     if (!backslashify && !unprintables)
 	return s; // no work needed!
     
@@ -131,12 +135,15 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     int len = 0;
 
     // skip leading whitespace/separators
-    while (strchr(splitchars, *sptr))
+    while (strchr(splitchars, *sptr) && origsize > 0)
     {
         sptr++;
         origsize--;
     }
-    
+
+    if (origsize == 0)
+        return WvString::null;
+
     // detect initial quote
     if (*sptr == '"')
     {
