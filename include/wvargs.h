@@ -246,8 +246,7 @@ class WvArgs
     	//! \param val The string list to which the argument is appended
     	//! 
     	void add_option(char short_option, WvStringParm long_option,
-    	    	WvStringParm desc, WvStringParm arg_desc, WvStringList &val);
-    	    	
+    	    	WvStringParm desc, WvStringParm arg_desc, WvStringList &val);    	    	
     	//!
     	//! Add a switch which does not take an argument which invokes a
     	//! callback when it is specified.
@@ -284,7 +283,18 @@ class WvArgs
     	    	WvStringParm desc, WvStringParm arg_desc,
     	    	ArgCallback cb, void *ud = NULL);
     	
+    	//!
+    	//! Add a required argument to the list of parameters. WvArgs will
+    	//! return an error when run if it is not specified.
+    	//!
+    	//! \param The description of the parameter
+    	//!
         void add_required_arg(WvStringParm desc);
+    	//!
+    	//! Add an optional argument to the list of parameters.
+    	//!
+    	//! \param The description of the parameter
+    	//!
         void add_optional_arg(WvStringParm desc, bool multiple = false);
 
     	//!
@@ -301,6 +311,7 @@ class WvArgs
     	//! both be removed with two seperate calls to 
     	//! 
         void remove_option(WvStringParm long_option);
+
     	//!
     	//! Remove all options
     	//! 
