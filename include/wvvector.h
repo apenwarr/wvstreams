@@ -148,8 +148,8 @@ public:
 	 */
 	void rewind()
 	{
-	    i = 0;
-	    link = (vec.xcount >= 0) ? vec.xseq[i] : NULL;
+	    i = -1;
+	    link = (vec.xcount >= 0) ? vec.xseq[0] : NULL;
 	}
 
 	/**
@@ -176,7 +176,10 @@ public:
 	    if (++i > vec.xcount - 1)
 		return NULL;
 	    else
-		return vec.xseq[i];
+	    {
+		link = vec.xseq[i];
+		return link;
+	    }
 	}
 
 	/**

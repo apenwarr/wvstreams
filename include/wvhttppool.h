@@ -125,7 +125,6 @@ public:
 
     virtual ~WvUrlStream() {};
 
-    void log_urls();
     virtual void close() = 0;
     void addurl(WvUrlRequest *url);
     void delurl(WvUrlRequest *url);
@@ -155,7 +154,9 @@ private:
     WvString http_response, pipeline_test_response;
     WvDynBuf putstream_data;
     
-    enum { Unknown, Chunked, ContentLength, Infinity } encoding;
+    enum { Unknown, Chunked, ContentLength, Infinity,
+	   PostHeadInfinity, PostHeadChunked, PostHeadStream,
+	   ChuckInfinity, ChuckChunked, ChuckStream } encoding;
     size_t bytes_remaining;
     bool in_chunk_trailer, last_was_pipeline_test, in_doneurl;
 

@@ -122,8 +122,9 @@ IUniConfGen *UniMountGen::mount(const UniConfKey &key,
     IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
-
-    // assert(gen && "Moniker doesn't get us a generator!");
+#if DEBUG
+    assert(gen && "Moniker doesn't get us a generator!");
+#endif
     if (gen && !gen->exists("/"))
         gen->set("/", "");
     return gen;

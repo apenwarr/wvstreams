@@ -26,8 +26,10 @@
 
 WvIStreamList WvIStreamList::globallist;
 
-WvIStreamList::WvIStreamList()
+WvIStreamList::WvIStreamList():
+    in_select(false)
 {
+    readcb = writecb = exceptcb = 0;
     auto_prune = true;
     if (this == &globallist)
     {
@@ -51,8 +53,27 @@ bool WvIStreamList::isok() const
 }
 
 
+class BoolGuard
+{
+public:
+    BoolGuard(bool &_guard_bool):
+	guard_bool(_guard_bool)
+    {
+	assert(!guard_bool);
+	guard_bool = true;
+    }
+    ~BoolGuard()
+    {
+	guard_bool = false;
+    }
+private:
+    bool &guard_bool;
+};
+
+
 bool WvIStreamList::pre_select(SelectInfo &si)
 {
+    //BoolGuard guard(in_select);
     bool one_dead = false;
     SelectRequest oldwant;
     
@@ -69,6 +90,8 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     {
 	IWvStream &s(*i);
 	
+        si.wants = oldwant;
+
 	if (!s.isok())
 	{
 	    one_dead = true;
@@ -90,6 +113,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 
 bool WvIStreamList::post_select(SelectInfo &si)
 {
+    //BoolGuard guard(in_select);
     bool one_dead = false;
     SelectRequest oldwant = si.wants;
     

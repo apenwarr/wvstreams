@@ -10,7 +10,7 @@ void mycallback(WvStream &s, void *userdata)
 {
     WvStream *outstream = (WvStream *)userdata;
     
-    char *str = s.getline(0);
+    char *str = s.getline();
     if (str)
 	outstream->print("You said: %s\n", str);
 }

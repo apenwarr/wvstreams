@@ -48,6 +48,7 @@ class WvDaemon
 
         WvLog::LogLevel log_level;
         bool daemonize;
+        bool syslog;
 
         void dec_log_level(void *)
         {

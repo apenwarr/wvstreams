@@ -70,6 +70,8 @@ public:
     void fill(const char * const *array);
 
     void append(WvStringParm str);
+    void append(WVSTRING_FORMAT_DECL)
+        { append(WvString(WVSTRING_FORMAT_CALL)); }
     void append(WvString *strp, bool autofree, char *id = NULL);
 
     /** 

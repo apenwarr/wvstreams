@@ -10,10 +10,11 @@
 
 #include "wvautoconf.h"
 
-    
-#ifdef WITH_SLP
-#include "wvstring.h"
-class WvStringList;
+#include "wvstringlist.h"
+#include "wvlog.h"
+#include "wverror.h"
+
+typedef void* SLPHandle;
 
 /**
  * Get a list of servers that provide the requested service
@@ -22,5 +23,40 @@ class WvStringList;
  */
 bool slp_get_servs(WvStringParm service, WvStringList &list);
 
-#endif /* WITH_SLP */
+/**
+ * Get a list of servers that provide the requested service
+ * and the requested attribute
+ */
+bool slp_get_attrs(WvStringParm service, WvStringParm attribute, WvStringList &servlist);
+
+/**
+ * Advertise yourself as an SLP Service
+ */
+class WvSlp 
+{
+public:
+    /**
+     * Start up the necessary SLP Service bits
+     */
+    WvSlp();
+    
+    /**
+     * Shutdown and deregister all SLP Services
+     */
+    ~WvSlp();
+    
+    /**
+     * Start advertising an SLP Service
+     */
+    void add_service(WvStringParm servicename, WvStringParm hostname, 
+		     WvStringParm port);
+
+private:
+    SLPHandle hslp;
+
+    WvLog log;
+    WvError err;
+    WvStringList services;
+};
+
 #endif /* WVSLP_H */

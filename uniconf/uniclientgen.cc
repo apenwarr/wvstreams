@@ -120,10 +120,23 @@ bool UniClientGen::isok()
 
 bool UniClientGen::refresh()
 {
-    // FIXME: This should make sure everything in the queue has been flushed
+    // make sure everything in the queue has been flushed
+    get("");
     return true;
 }
 
+void UniClientGen::flush_buffers()
+{
+    // this ensures that all keys pending notifications are dealt with
+    while (conn->isok() && conn->isreadable())
+        conn->callback();
+}
+
+void UniClientGen::commit()
+{
+   UniConfKey tempkey("dummykey");
+   get(tempkey); // NOOP command, to ensure that all requests are flushed
+}
 
 WvString UniClientGen::get(const UniConfKey &key)
 {

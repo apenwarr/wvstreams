@@ -9,5 +9,5 @@
 int main()
 {
     while (wvcon->isok())
-	wvcon->print("You said: %s\n", wvcon->getline(-1));
+	wvcon->print("You said: %s\n", wvcon->blocking_getline(-1));
 }

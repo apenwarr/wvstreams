@@ -1,5 +1,4 @@
 
-#include <stdint.h>
 #include <time.h>
 #include <wvautoconf.h>
 #if defined(WITH_QDBM) || defined(WITH_BDB)

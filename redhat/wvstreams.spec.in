@@ -1,6 +1,6 @@
 Summary: C++ network libraries for rapid application development.
 Name: wvstreams4.0
-Version: 4.0
+Version: @PKGVER@
 Release: 1
 Source: http://open.nit.ca/download/wvstreams-%{version}.tar.gz
 URL: http://open.nit.ca/wvstreams
@@ -166,7 +166,7 @@ export CXXFLAGS=-I/usr/kerberos/include # stupid redhat 9 kerberos..
     --disable-debug --disable-verbose \
     --with-qt --with-vorbis --with-speex --with-openslp \
     --with-fam --with-fftw \
-    --with-xplc=/usr
+#    --with-xplc-0.3.10
 make
 
 %install

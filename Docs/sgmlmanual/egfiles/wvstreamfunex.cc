@@ -13,7 +13,7 @@ void concallback(WvStream &con, void *userdata)
 {
     WvStream &modem = *(WvStream *)userdata;
     
-    char *str = con.getline(0);
+    char *str = con.getline();
     if (str)
 	modem.print("%s\r", str); // modems like CR, not newline
 }
