@@ -59,4 +59,6 @@ public:
         { kill(SIGCONT); }
 };
 
+DeclareWvList(WvSubProc);
+
 #endif // __WVSUBPROC_H

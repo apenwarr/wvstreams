@@ -12,15 +12,25 @@ int main( int argc, char ** argv )
 /********************************/
 {
     char * str;
+    bool dec = false;
 
-    if( argc > 1 )
+    if( argc == 3 && !strcmp( argv[1], "-d" ) ) {
+        str = argv[2];
+        dec = true;
+    } else if( argc == 2 )
         str = argv[1];
     else
         str = "<insert secret message here>";
 
-    char * enc = base64_encode( str );
-    printf( "before:  %s\n"
-            "encoded: %s\n"
-            "decoded: %s\n", str, enc, base64_decode( enc ) );
+    if( !dec ) {
+        char * enc = base64_encode( str );
+        printf( "before:  %s\n"
+                "encoded: %s\n"
+                "decoded: %s\n", str, enc, base64_decode( enc ) );
+    } else {
+        char * decoded = base64_decode( str );
+        printf( "encoded: %s\n"
+                "decoded: %s\n", str, decoded );
+    }
     return( 0 );
 }
