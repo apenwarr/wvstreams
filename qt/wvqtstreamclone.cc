@@ -25,7 +25,7 @@
 // note: can store more than this number of elements in the table
 #define NUM_SLOTS 41 // must be prime
 
-WvQtStreamClone::WvQtStreamClone(WvStream* _cloned, int msec_timeout) :
+WvQtStreamClone::WvQtStreamClone(IWvStream *_cloned, int msec_timeout) :
     WvStreamClone(_cloned), msec_timeout(msec_timeout),
     pending_callback(false), first_time(true), select_in_progress(false),
     last_max_fd(-1),
@@ -33,6 +33,8 @@ WvQtStreamClone::WvQtStreamClone(WvStream* _cloned, int msec_timeout) :
     notify_writable(NUM_SLOTS),
     notify_exception(NUM_SLOTS)
 {
+    setclone(_cloned);
+    disassociate_on_close = true;
     notify_readable.setAutoDelete(true);
     notify_writable.setAutoDelete(true);
     notify_exception.setAutoDelete(true);

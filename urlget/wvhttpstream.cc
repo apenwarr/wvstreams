@@ -12,6 +12,7 @@
 #include "wvbuf.h"
 #include "wvbase64.h"
 #include "strutils.h"
+#include <execinfo.h>
 
 #ifdef _WIN32
 #define ETIMEDOUT WSAETIMEDOUT
@@ -20,7 +21,7 @@
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
-      pipeline_incompatible(_pipeline_incompatible)
+      pipeline_incompatible(_pipeline_incompatible), in_doneurl(false)
 {
     log("Opening server connection.\n");
     http_response = "";
@@ -45,7 +46,6 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 
 WvHttpStream::~WvHttpStream()
 {
-    log(WvLog::Debug2, "Deleting.\n");
     if (geterr())
         log("Error was: %s\n", errstr());
     close();
@@ -54,8 +54,6 @@ WvHttpStream::~WvHttpStream()
 
 void WvHttpStream::close()
 {
-    log("close called\n");
-    log_urls();
     // assume pipelining is broken if we're closing without doing at least
     // one successful pipelining test and a following non-test request.
     if (enable_pipelining && max_requests > 1
@@ -82,20 +80,24 @@ void WvHttpStream::close()
     }
     waiting_urls.zap();
     if (curl)
-    {
-        log("curl is %s\n", curl->url);
         doneurl();
-    }
-    log("close done\n");
 }
 
 
 void WvHttpStream::doneurl()
 {
+    // There is a slight chance that we might receive an error during or just before
+    // this function is called, which means that the write occuring during
+    // start_pipeline_test() would be called, which would call close() because of the
+    // error, which would call doneurl() again.  We don't want to execute doneurl()
+    // a second time when we're already in the middle.
+    if (in_doneurl)
+        return;
+    in_doneurl = true;
+
     assert(curl != NULL);
     WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
-    log_urls();
 
     http_response = "";
     encoding = Unknown;
@@ -130,7 +132,7 @@ void WvHttpStream::doneurl()
         close();
 
     request_next();
-    log("done doneurl()\n");
+    in_doneurl = false;
 }
 
 
@@ -504,13 +506,13 @@ void WvHttpStream::execute()
         // well.  It sucks, but there's no way to tell if all the data arrived
         // okay... that's why Chunked or ContentLength encoding is better.
         len = read(buf, sizeof(buf));
+	if (!isok())
+	    return;
+
         if (len)
             log(WvLog::Debug5, "Infinity: read %s bytes.\n", len);
         if (curl->outstream)
             curl->outstream->write(buf, len);
-
-        if (!isok())
-            doneurl();
     }
     else // not chunked or currently in a chunk - read 'bytes_remaining' bytes.
     {
@@ -521,6 +523,9 @@ void WvHttpStream::execute()
             len = read(buf, sizeof(buf));
         else
             len = read(buf, bytes_remaining);
+	if (!isok())
+	    return;
+
         bytes_remaining -= len;
         if (len)
             log(WvLog::Debug5, 
@@ -533,6 +538,9 @@ void WvHttpStream::execute()
 
 	if (bytes_remaining && !isok())
 	    seterr("connection interrupted");
+
+        if (!isok())
+            doneurl();
     }
 
     if (urls.isempty())

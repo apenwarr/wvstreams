@@ -1,3 +1,2 @@
 debian/tmp/usr/sbin/uniconfd
-debian/tmp/etc/uniconf.conf
 debian/tmp/var/lib/uniconf/uniconfd.ini

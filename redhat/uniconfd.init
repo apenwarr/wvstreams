@@ -2,16 +2,12 @@
 #
 # uniconfd: Server that manages UniConf elements
 #
-# chkconfig 345 97 03
+# chkconfig: 345 97 03
 # description: Server that manages UniConf elements
 # processname: uniconf-daemon-1
 # pidfile: /var/run/uniconfd.pid
 #
 # modelled after the D-BUS initscript
-
-
-# Sanity checks.
-[ -x /usr/bin/dbus-daemon-1 ] || exit 0
 
 # Source function library.
 . /etc/rc.d/init.d/functions

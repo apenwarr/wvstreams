@@ -124,6 +124,18 @@ bool UniClientGen::refresh()
     return true;
 }
 
+void UniClientGen::flush_buffers()
+{
+    // this ensures that all keys pending notifications are dealt with
+    while (conn->isok() && conn->isreadable())
+        conn->callback();
+}
+
+void UniClientGen::commit()
+{
+   UniConfKey tempkey("dummykey");
+   get(tempkey); // NOOP command, to ensure that all requests are flushed
+}
 
 WvString UniClientGen::get(const UniConfKey &key)
 {

@@ -50,8 +50,7 @@ config.status: configure
 		--sysconfdir=/etc --localstatedir=/var \
 		--disable-debug --disable-verbose \
 		--with-qt --with-vorbis --with-speex --with-openslp \
-		--with-fam --with-fftw \
-		--with-xplc=/usr
+		--with-fam --with-fftw
 
 
 #Architecture
@@ -62,6 +61,7 @@ build-arch-stamp: config.status
 
 	# Add here commands to compile the arch part of the package.
 	$(MAKE) VERBOSE=1 CXXOPTS="-fPIC -DPIC" COPTS="-fPIC -DPIC"
+	$(MAKE) VERBOSE=1 CXXOPTS="-fPIC -DPIC" COPTS="-fPIC -DPIC" uniconf/tests/uni
 	touch build-arch-stamp
 
 build-indep: build-stamp-indep
@@ -142,6 +142,8 @@ install-arch:
 
 	# Install UniConf daemon
 	$(MAKE) install-uniconfd DESTDIR=`pwd`/debian/tmp
+	install -d `pwd`/debian/tmp/etc/default
+	install -m644 debian/uniconfd.default debian/tmp/etc/default/uniconfd
 
 	dh_install -s
 

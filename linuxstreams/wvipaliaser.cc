@@ -121,12 +121,12 @@ WvIPAliaser::Alias *WvIPAliaser::ipsearch(WvIPAliaser::AliasList &l,
 }
 
 
-void WvIPAliaser::add(const WvIPAddr &ip)
+bool WvIPAliaser::add(const WvIPAddr &ip)
 {
     Alias *a;
 
     if (WvIPAddr(ip) == WvIPAddr() || ipsearch(aliases, ip))
-	return;     // already done.
+	return false;     // already done.
     
     a = ipsearch(all_aliases, ip);
     if (a)			    // already in global list?
@@ -134,6 +134,7 @@ void WvIPAliaser::add(const WvIPAddr &ip)
 	// add global entry to our list and increase link count
 	aliases.append(a, false);
 	a->link_count++;
+	return false;
     }
     else if (!interfaces.islocal(WvIPAddr(ip)))
     {
@@ -143,23 +144,29 @@ void WvIPAliaser::add(const WvIPAddr &ip)
 	aliases.append(a, false);
 	all_aliases.append(a, true);
 	a->link_count++;
+	return true;
     }
+    return false;
 }
 
 
-void WvIPAliaser::done_edit()
+bool WvIPAliaser::done_edit()
 {
+    bool any_change=false;
     AliasList::Iter i(all_aliases);
     
     i.rewind(); i.next();
     while (i.cur())
     {
 	Alias &a = *i;
-	if (!a.link_count)
+	if (!a.link_count) {
 	    i.unlink();
-	else
+	    any_change = true;
+	} else
 	    i.next();
     } 
+
+    return any_change;
 }
 
 

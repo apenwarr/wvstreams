@@ -28,11 +28,6 @@ install-xplc: xplc
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) xplc/libxplc-cxx.a $(DESTDIR)$(libdir)
 
-# Prevent complaints that Make can't find these two linker options.
--lxplc-cxx: ;
-
--lxplc: ;
-
 endif
 
 %.so: SONAME=$@.$(RELEASE)
@@ -53,10 +48,17 @@ dist-hook: dist-hack-clean configure
 
 runconfigure: config.mk include/wvautoconf.h
 
-config.mk: configure config.mk.in include/wvautoconf.h.in
 ifndef CONFIGURING
-	$(error Please run the "configure" script)
+configure=$(error Please run the "configure" script)
+else
+configure:=
 endif
+
+config.mk: configure config.mk.in
+	$(call configure)
+
+include/wvautoconf.h: include/wvautoconf.h.in
+	$(call configure)
 
 # FIXME: there is some confusion here
 ifdef WE_ARE_DIST
@@ -85,6 +87,7 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
+	@rm -f pkgconfig/*.pc
 	@rm -f .xplc
 
 clean: depend dust xplc/clean
@@ -111,6 +114,8 @@ install-shared: $(TARGETS_SO)
 	for i in $(TARGETS_SO); do \
 	    $(INSTALL_PROGRAM) $$i.$(RELEASE) $(DESTDIR)$(libdir)/ ; \
 	done
+	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
+	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
 
 install-dev: $(TARGETS_SO) $(TARGETS_A)
 	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams
@@ -129,15 +134,16 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
 
-install-uniconfd: uniconfd
+install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) uniconf/tests/uni $(DESTDIR)$(bindir)/
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL_PROGRAM) uniconf/daemon/uniconfd $(DESTDIR)$(sbindir)/
-	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
-	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -d $(DESTDIR)$(localstatedir)/lib/uniconf
 	touch $(DESTDIR)$(localstatedir)/lib/uniconf/uniconfd.ini
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
 	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/man8
+	$(INSTALL_DATA) uniconf/tests/uni.8 $(DESTDIR)$(mandir)/man8
 
 uninstall:
 	$(tbd)
@@ -162,5 +168,5 @@ endif
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \
-	$(LIBUNICONF)
+	$(LIBUNICONF) $(LIBWVSTREAMS)
 

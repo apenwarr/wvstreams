@@ -168,7 +168,7 @@ char *snip_string(char *haystack, char *needle)
 char *strlwr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
     	*p = tolower(*p);
     	p++;
@@ -181,7 +181,7 @@ char *strlwr(char *string)
 char *strupr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
 	*p = toupper(*p);
 	p++;
@@ -194,6 +194,8 @@ char *strupr(char *string)
 // true if all the characters in "string" are isalnum().
 bool is_word(const char *p)
 {
+    assert(p);
+
     while (*p)
     {
     	if(!isalnum(*p++))
@@ -540,7 +542,7 @@ WvString _sizetoa(unsigned long long digits, int size = 0)
     return WvString("%s.%s %s", units, tenths, size_name[size]);
 }
 
-WvString sizetoa(long long blocks, int blocksize)
+WvString sizetoa(unsigned long long blocks, unsigned int blocksize)
 {
     unsigned long long bytes = blocks * blocksize;
 

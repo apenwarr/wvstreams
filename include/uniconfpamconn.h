@@ -7,11 +7,10 @@
 #ifndef __UNICONFPAMCONN_H
 #define __UNICONFPAMCONN_H
 
-#include "uniconfdaemonconn.h"
-#include "unisecuregen.h"
 #include "uniconfroot.h"
+#include "wvstreamclone.h"
 
-class WvPamStream;
+class UniPermGen;
 
 class UniConfPamConn : public WvStreamClone
 {
@@ -19,7 +18,6 @@ public:
     UniConfPamConn(WvStream *s, const UniConf &root, UniPermGen *perms);
 
 protected:
-    WvPamStream *pam;
     UniConfRoot newroot;
 };
 

@@ -1,3 +1,32 @@
+wvstreams (4.0.2-1) unstable; urgency=low
+
+  * New upstream version.  (Closes: Bug#276571)
+    - Fixes OpenSSL FTBFS.  (Closes: Bug#281772)
+  * Depend on a newer version of BDB.  (Closes: Bug#248522)
+  * We now depend on XPLC 0.3.10.
+  * Moved /etc/uniconf.conf to libuniconf4.0.
+  * Added /etc/default/uniconfd to uniconfd's init script.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 26 Nov 2004 22:20:07 -0500
+
+wvstreams (4.0.1-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Simon Law <sfllaw@debian.org>  Wed, 17 Nov 2004 15:17:09 -0500
+
+wvstreams (4.0.0-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Simon Law <sfllaw@debian.org>  Thu,  7 Oct 2004 19:54:24 +0000
+
+wvstreams (4.0+20040924-1) unstable; urgency=low
+
+  * New upstream snapshot.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 24 Sep 2004 10:44:55 -0400
+
 wvstreams (4.0+20040827-1) unstable; urgency=low
 
   * New upstream snapshot.
@@ -29,6 +58,20 @@ wvstreams (3.80+20040623-1) unstable; urgency=low
   * New upstream snapshot.
 
  -- Simon Law <sfllaw@debian.org>  Tue, 23 Jun 2004 12:20:21 -0400
+
+wvstreams (3.75.0-1) unstable; urgency=low
+
+  * New Upstream release.
+
+ -- James Morrison <phython@debian.org>  Sat, 13 Mar 2004 14:33:44 -0500
+
+wvstreams (3.75+20040221-1) unstable; urgency=low
+
+  * Expand on libwvstreams-fft description.  (Closes: #210130)
+  * Check the file descriptor status in wvfile.cc. (Closes: #194336)
+  * Use new void * instead of new (void*) .
+
+ -- James Morrison <phython@debian.org>  Sat, 21 Feb 2004 20:55:39 -0500
 
 wvstreams (3.74+20031017-1) unstable; urgency=low
 

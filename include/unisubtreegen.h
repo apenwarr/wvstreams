@@ -23,6 +23,7 @@ public:
     UniSubtreeGen(IUniConfGen *gen, const UniConfKey &_subkey);
     
     virtual UniConfKey keymap(const UniConfKey &key);
+    virtual UniConfKey reversekeymap(const UniConfKey &key);
 };
 
 

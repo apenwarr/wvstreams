@@ -5,7 +5,7 @@ Release: 1
 Source: http://open.nit.ca/download/wvstreams-%{version}.tar.gz
 URL: http://open.nit.ca/wvstreams
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: fam-devel, fftw-devel, libogg-devel, libvorbis-devel, openssl-devel, openslp-devel, pam-devel, qdbm-devel, speex-devel, xplc-devel >= 0.3.7
+BuildRequires: fam-devel, fftw-devel, libogg-devel, libvorbis-devel, openssl-devel, openslp-devel, pam-devel, qdbm-devel, speex-devel, xplc = 0.3.10
 Group: None
 License: LGPL
 
@@ -85,6 +85,14 @@ Requires: libwvstreams4.0-base, libwvstreams4.0-extras, libogg, libvorbis
 This library contains the WvOggEncoder and WvOggDecoder to enable quick and
 painless creation of audio streams using the OggVorbis CODEC
 
+%package -n libwvstreams4.0-telephony
+Summary: C++ network libraries for rapid application development.
+Group: System Environment/Libraries
+Requires: libwvstreams4.0-base
+
+%description -n libwvstreams4.0-telephony
+This library provides adaptive echo cancellation for 16-bit PCM samples.
+
 %package -n libuniconf4.0
 Summary: C++ network libraries for rapid application development.
 Group: System Environment/Libraries
@@ -113,6 +121,16 @@ C++ network libraries for rapid application development.
 
 This package contains header files and development libraries needed to
 develop programs using the WvStreams networking library.
+
+%package -n uniconf-tools
+Summary: Tools to interface with UniConf
+Group: Applications/Utilities
+Requires: libuniconf4.0
+
+%description -n uniconf-tools
+UniConf is a configuration system that can serve as the centrepiece among many other, existing configuration systems.
+
+This package contains utilities that allow users to interface with UniConf manually.
 
 %package -n uniconfd
 Summary: Server that manages UniConf elements
@@ -148,7 +166,7 @@ export CXXFLAGS=-I/usr/kerberos/include # stupid redhat 9 kerberos..
     --disable-debug --disable-verbose \
     --with-qt --with-vorbis --with-speex --with-openslp \
     --with-fam --with-fftw \
-    --with-xplc=/usr
+    --with-xplc=/usr/lib/xplc-0.3.10
 make
 
 %install
@@ -158,8 +176,8 @@ install -d 644 $RPM_BUILD_ROOT/etc/rc.d/init.d/
 install -m 755 redhat/uniconfd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/uniconfd
 chmod 755 $RPM_BUILD_ROOT/usr/lib/*.so.*
 install -d 644 $RPM_BUILD_ROOT/usr/share/man/man8
-gzip $RPM_BUILD_ROOT/usr/share/man/uniconfd.8
-mv $RPM_BUILD_ROOT/usr/share/man/uniconfd.8.gz $RPM_BUILD_ROOT/usr/share/man/man8
+gzip $RPM_BUILD_ROOT/usr/share/man/man8/uniconfd.8
+#mv $RPM_BUILD_ROOT/usr/share/man/man8/uniconfd.8.gz $RPM_BUILD_ROOT/usr/share/man/man8
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -200,12 +218,23 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING.LIB
 /usr/lib/libuniconf.so.4.0
 
+%files -n libwvstreams4.0-telephony
+%defattr(-,root,root,-)
+%doc COPYING.LIB README
+/usr/lib/libwvtelephony.so.4.0
+
 %files -n libwvstreams4.0-devel
 %defattr(-,root,root)
 /usr/include/wvstreams
 /usr/lib/*.a
 /usr/lib/*.so
 /usr/lib/pkgconfig/*pc
+
+%files -n uniconf-tools
+%defattr(-,root,root)
+%doc COPYING.LIB
+/usr/bin/uni
+/usr/share/man/man8/uni.8.gz
 
 %files -n uniconfd
 %defattr(-,root,root)
@@ -218,6 +247,10 @@ rm -rf $RPM_BUILD_ROOT
 /var/lib/uniconf/uniconfd.ini
 
 %changelog
+* Thu Sep 30 2004 Steven Di Rocco <dirocco@nit.ca>
+- Updated to package things that have appeared in current snapshots, namely
+  libwvstreams4.0-telephony and uniconf-tools.
+
 * Tue Sep  7 2004 William Lachance <wlach@nit.ca>
 - New upstream release, split into seperate packages.
 

@@ -253,7 +253,7 @@ void UniIniGen::commit()
 	real_filename = resolved_path;
 	
     WvString alt_filename("%s.tmp%s", real_filename, getpid());
-    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
     struct stat statbuf;
 
     if (file.geterr()
@@ -319,6 +319,7 @@ void UniIniGen::commit()
 #ifndef _WIN32
     if (!alt_filename.isnull())
     {
+	chmod(alt_filename, create_mode);
 	if (rename(alt_filename, real_filename) == -1)
 	{
 	    log(WvLog::Warning, "Can't write '%s': %s\n",

@@ -96,8 +96,14 @@ void UniCacheGen::deltacallback(const UniConfKey &key, WvStringParm value,
     UniTempGen::set(key, value);
 }
 
-
 void UniCacheGen::set(const UniConfKey &key, WvStringParm value)
 {
     inner->set(key, value);
+}
+
+WvString UniCacheGen::get(const UniConfKey &key)
+{
+    //inner->get(key);
+    inner->flush_buffers(); // update all pending notifications
+    return UniTempGen::get(key);
 }

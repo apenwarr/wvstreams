@@ -112,7 +112,6 @@ protected:
     WvUrlRequest *curl; // current url
     virtual void doneurl() = 0;
     virtual void request_next() = 0;
-    void log_urls();
 
 public:
     WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm _username, 
@@ -157,7 +156,7 @@ private:
     
     enum { Unknown, Chunked, ContentLength, Infinity } encoding;
     size_t bytes_remaining;
-    bool in_chunk_trailer, last_was_pipeline_test;
+    bool in_chunk_trailer, last_was_pipeline_test, in_doneurl;
 
     virtual void doneurl();
     virtual void request_next();

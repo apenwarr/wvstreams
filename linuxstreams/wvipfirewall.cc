@@ -59,7 +59,7 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 WvString WvIPFirewall::forward_command(const char *cmd, 
 				       const char *proto,
 				       const WvIPPortAddr &src,
-				       const WvIPPortAddr &dst)
+				       const WvIPPortAddr &dst, bool snat)
 {
     WvIPAddr srcaddr(src), dstaddr(dst), zero;
     WvString haveiface(""), haveoface("");
@@ -71,7 +71,7 @@ WvString WvIPFirewall::forward_command(const char *cmd,
     
     WvString retval;
 
-    if (dst == WvIPAddr("127.0.0.1"))
+    if ((dst == WvIPAddr("127.0.0.1")) || (dst == zero))
     {
         retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
                   "-j REDIRECT --to-port %s %s \n",
@@ -79,34 +79,49 @@ WvString WvIPFirewall::forward_command(const char *cmd,
     }
     else
     {
-
-        if (!(dstaddr == zero))
-        {
-    	    haveoface.append("-d ");
-	    haveoface.append((WvString)dstaddr);
-        }
+	haveoface.append("-d ");
+	haveoface.append((WvString)dstaddr);
     
-        retval.append("iptables -t nat %s OFASTFORWARD -p %s "
-                    "-m mark --mark 0xBEEF "
-                    "--dport %s %s -j MASQUERADE %s \n", 
-                    cmd, proto, dst.port, haveoface, shutup());
-
         retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
                   "-j DNAT --to-destination %s "
                   "%s \n", cmd, proto, src.port, haveiface,  dst, shutup());
     }
 
-    retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
-		  "--dport %s %s \n "
-		  "%s\n", cmd, proto, src.port,
-		  haveiface, shutup());
+    // FA57 is leet-speak for FAST, which is short for FASTFORWARD --adewhurst
+    // FA58 is FA57+1. Nothing creative sprang to mind. --adewhurst
+    // 
+    // We need this to mark the packet as it comes in so that we allow the
+    // FastForward-ed packets to bypass the firewall (FA57).
+    // 
+    // If we mark the packet with FA58, that means it gets masqueraded before
+    // leaving, which may be useful to work around some network configuratios.
+    retval.append("iptables -t mangle %s FASTFORWARD -p %s --dport %s "
+	          "-j MARK --set-mark %s %s %s\n", cmd, proto, src.port,
+		  snat ? "0xFA58" : "0xFA57", haveiface, shutup());
 
+    // Don't open the port completely; just open it for the forwarded packets
     retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
-		  "--dport %s %s "
-		  "%s\n", cmd, proto, dst.port,
-		  haveoface, shutup());
+		  "--dport %s -m mark --mark %s %s %s\n", cmd, proto, dst.port,
+		  snat ? "0xFA58" : "0xFA57", haveoface, shutup());
     
     return retval;
+}
+
+WvString WvIPFirewall::redir_port_range_command(const char *cmd,
+    	const WvIPPortAddr &src_min, const WvIPPortAddr &src_max, int dstport)
+{
+    WvIPAddr ad(src_min), none;
+    
+    return WvString("iptables -t nat %s TProxy "
+		    "-p tcp %s --dport %s:%s "
+		    "-j REDIRECT --to-ports %s "
+		    "%s",
+		    cmd,
+		    ad == none ? WvString("") : WvString("-d %s", ad),
+		    src_min.port == 0? WvString(""): WvString(src_min.port),
+		    src_max.port == 0? WvString(""): WvString(src_max.port),
+		    dstport,
+		    shutup());
 }
 
 WvString WvIPFirewall::redir_all_command(const char *cmd, int dstport)
@@ -162,11 +177,10 @@ void WvIPFirewall::del_port(const WvIPPortAddr &addr)
 }
 
 void WvIPFirewall::add_forward(const WvIPPortAddr &src,
-			       const WvIPPortAddr &dst)
+			       const WvIPPortAddr &dst, bool snat)
 {
-    forwards.append(new FastForward(src, dst), true);
-    WvString s(forward_command("-A", "tcp", src, dst)),
-    	    s2(forward_command("-A", "udp", src, dst));
+    WvString s(forward_command("-A", "tcp", src, dst, snat)),
+    	    s2(forward_command("-A", "udp", src, dst, snat));
 
     log("Add Forwards (%s):\n%s\n%s\n", enable, s, s2);
     
@@ -177,27 +191,19 @@ void WvIPFirewall::add_forward(const WvIPPortAddr &src,
     }
 }
 
-void WvIPFirewall::del_forward(const WvIPPortAddr &src)
+void WvIPFirewall::del_forward(const WvIPPortAddr &src,
+			       const WvIPPortAddr &dst, bool snat)
 {
-     FastForwardList::Iter i(forwards);
-     log("Find this Forward %s\n", (WvString)src);
-     for (i.rewind(); i.next(); )
-     {
-	 log("Find Forward %s, %s\n", (WvString)i->src, (WvString)i->dst);
-	 if (i->src == src)
-	 {
-	     WvString s(forward_command("-D", "tcp", src, i->dst)),
-	     s2(forward_command("-D", "udp", src, i->dst));
-	     log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
-	     if (enable) 
-	     {
-		 system(s);
-		 system(s2);
-	     }
-	     i.unlink();
-	    return;
-	 }
-     }
+    WvString s(forward_command("-D", "tcp", src, dst, snat)),
+	    s2(forward_command("-D", "udp", src, dst, snat));
+
+    log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
+
+    if (enable) 
+    {
+	system(s);
+	system(s2);
+    }
 }
 
 void WvIPFirewall::add_redir(const WvIPPortAddr &src, int dstport)
@@ -238,6 +244,31 @@ void WvIPFirewall::del_redir_all(int dstport)
 	if (i->dstport == dstport)
 	{
 	    WvString s(redir_all_command("-D", dstport));
+	    if (enable) system(s);
+	    return;
+	}
+    }
+}
+
+void WvIPFirewall::add_redir_port_range(const WvIPPortAddr &src_min,
+    	const WvIPPortAddr &src_max, int dstport)
+{
+    redir_port_ranges.append(new RedirPortRange(src_min, src_max, dstport), true);
+    WvString s(redir_port_range_command("-A", src_min, src_max, dstport));
+    if (enable) system(s);
+}
+
+
+void WvIPFirewall::del_redir_port_range(const WvIPPortAddr &src_min,
+    	const WvIPPortAddr &src_max, int dstport)
+{
+    RedirPortRangeList::Iter i(redir_port_ranges);
+    for (i.rewind(); i.next(); )
+    {
+	if (i->src_min == src_min && i->src_max == src_max
+	    	&& i->dstport == dstport)
+	{
+	    WvString s(redir_port_range_command("-D", src_min, src_max, dstport));
 	    if (enable) system(s);
 	    return;
 	}
@@ -290,6 +321,14 @@ void WvIPFirewall::zap()
     {
 	del_redir_all(i2_5->dstport);
 	i2_5.xunlink();
+    }
+    
+    RedirPortRangeList::Iter port_range(redir_port_ranges);
+    for (port_range.rewind(); port_range.next(); )
+    {
+	del_redir_port_range(port_range->src_min, port_range->src_max,
+	    	port_range->dstport);
+	port_range.xunlink();
     }
     
     WvStringList::Iter i3(protos);

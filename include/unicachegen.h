@@ -43,6 +43,7 @@ public:
     virtual bool refresh();
     virtual void commit();
     virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual WvString get(const UniConfKey &key);
 };
 
 #endif // __UNICACHEGEN_H

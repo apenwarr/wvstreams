@@ -7,25 +7,26 @@
 #ifndef __WVTCP_H
 #define __WVTCP_H
 
+#include "wvautoconf.h"
+#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+
 #include "wvfdstream.h"
 #include "wvaddr.h"
 #include "wvresolver.h"
-
-
-#if 0
-// FIXME: this is needed on BSD
-#include <netinet/in_systm.h>
-#define SOL_TCP 6
-#define SOL_IP 4
-#endif
-
-#ifdef ISBSD
-#define socklen_t unsigned int
-#endif
-
-#ifdef ISDARWIN
-#define socklen_t int
-#endif
 
 
 class WvIStreamList;
@@ -64,7 +65,7 @@ public:
     WvTCPConn(const WvIPPortAddr &_remaddr);
     
     /** Resolve the hostname, then connect a new socket */
-    WvTCPConn(WvStringParm _hostname, __u16 _port = 0);
+    WvTCPConn(WvStringParm _hostname, uint16_t _port = 0);
 
     /**
      * Destructor - rarely do you need to call this - close()

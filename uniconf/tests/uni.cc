@@ -9,6 +9,24 @@
 #pragma comment(linker, "/include:?UniIniGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
 #endif
 
+void usage()
+{
+    fprintf(stderr,
+	    "Usage: uni <cmd> <key> [extra stuff...]\n"
+	    " where <cmd> is one of:\n"
+	    "   get   - get the value of a key, with optional default\n"
+	    "   set   - set a key to the given value from the command line\n"
+	    "   xset  - set a key to the given value from stdin\n"
+	    "   keys  - list the subkeys of a key\n"
+	    "   hkeys - list the subkeys of a key, their subkeys, etc\n"
+	    "   xkeys - list keys that match a wildcard\n"
+	    "   dump  - list the subkeys/values of a key (key=value)\n"
+	    "   hdump - list the subkeys/values recursively\n"
+	    "   xdump - list keys/values that match a wildcard\n"
+	    "   del   - delete all subkeys\n"
+	    "   help  - this text\n");
+}
+
 int main(int argc, char **argv)
 {
     WvLogConsole logcon(2, WvLog::Info);
@@ -23,19 +41,7 @@ int main(int argc, char **argv)
     
     if (argc < 3)
     {
-	fprintf(stderr,
-	    "Usage: %s <cmd> <key> [extra stuff...]\n"
-	    " where <cmd> is one of:\n"
-	    "   get   - get the value of a key, with optional default\n"
-	    "   set   - set a key to the given value from the command line\n"
-	    "   xset  - set a key to the given value from stdin\n"
-	    "   keys  - list the subkeys of a key\n"
-	    "   hkeys - list the subkeys of a key, their subkeys, etc\n"
-	    "   xkeys - list keys that match a wildcard\n"
-	    "   dump  - list the subkeys/values of a key (key=value)\n"
-	    "   hdump - list the subkeys/values recursively\n"
-	    "   xdump - list keys/values that match a wildcard\n",
-		argv[0]);
+	usage();
 	return 3;
     }
     
@@ -139,6 +145,17 @@ int main(int argc, char **argv)
 	    wvcon->print("%s = %s\n",
 			 wvtcl_escape(i->fullkey(cfg), "\r\n[]="),
 			 wvtcl_escape(i->getme(""), "\r\n[]="));
+    }
+    else if (cmd == "del")
+    {
+	UniConf sub(cfg[arg1]);
+	sub.remove();
+	cfg.commit();
+    }
+    else if (cmd == "help")
+    {
+	usage();
+	return 5;
     }
     else
     {
