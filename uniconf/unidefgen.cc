@@ -24,7 +24,11 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
     return new UniDefGen(gen);
 }
 
+// this name is too confusing.  We should deprecate it.
 static WvMoniker<IUniConfGen> reg("default", creator);
+
+// a better name for the same thing.
+static WvMoniker<IUniConfGen> reg2("wildcard", creator);
 
 
 UniConfKey UniDefGen::finddefault(const UniConfKey &key, char *p, char *q)

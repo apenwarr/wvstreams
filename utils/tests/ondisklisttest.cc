@@ -1,3 +1,5 @@
+#include "wvautoconf.h"
+#if defined(WITH_QDBM) || defined(WITH_BDB)
 #include "wvondisklist.h"
 
 int main()
@@ -57,4 +59,8 @@ int main()
     
     return 0;
 }
-
+#else
+int main() {
+  return 0;
+}
+#endif

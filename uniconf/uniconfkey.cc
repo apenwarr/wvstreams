@@ -71,7 +71,7 @@ UniConfKey::UniConfKey(const UniConfKey &_path, const UniConfKey &_key)
     else if (!_key.path)
 	path = _path;
     else
-	path = WvString("%s/%s", _path, _key.path);
+	path = spacecat(_path, _key, '/');
 }
 
 
@@ -80,7 +80,7 @@ void UniConfKey::append(const UniConfKey &_key)
     if (!path)
         path = _key.path;
     else if (!!_key.path)
-	path = WvString("%s/%s", path, _key.path);
+	path = spacecat(path, _key.path, '/');
 }
 
 
@@ -89,7 +89,7 @@ void UniConfKey::prepend(const UniConfKey &_key)
     if (!path)
         path = _key.path;
     else if (!!_key.path)
-        path = WvString("%s/%s", _key.path, path);
+        path = spacecat(_key.path, path, '/');
 }
 
 

@@ -43,6 +43,13 @@ public:
      * The default implementation of this function doesn't change the key.
      */
     virtual UniConfKey keymap(const UniConfKey &key);
+
+    /**
+     * A mapping function for filters that unmap a keyspace.
+     *
+     * The default implementation of this function doesn't change the key.
+     */
+    virtual UniConfKey reversekeymap(const UniConfKey &key);
     
 
     /***** Overridden methods *****/

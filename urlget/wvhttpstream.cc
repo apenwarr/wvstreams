@@ -20,7 +20,7 @@
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
-      pipeline_incompatible(_pipeline_incompatible)
+      pipeline_incompatible(_pipeline_incompatible), in_doneurl(false)
 {
     log("Opening server connection.\n");
     http_response = "";
@@ -85,7 +85,17 @@ void WvHttpStream::close()
 
 void WvHttpStream::doneurl()
 {
+    // There is a slight chance that we might receive an error during or just before
+    // this function is called, which means that the write occuring during
+    // start_pipeline_test() would be called, which would call close() because of the
+    // error, which would call doneurl() again.  We don't want to execute doneurl()
+    // a second time when we're already in the middle.
+    if (in_doneurl)
+        return;
+    in_doneurl = true;
+
     assert(curl != NULL);
+    WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
 
     http_response = "";
@@ -100,7 +110,7 @@ void WvHttpStream::doneurl()
         pipeline_test_count++;
         if (pipeline_test_count == 1)
             start_pipeline_test(&curl->url);
-        else if (pipeline_test_response != http_response)
+        else if (pipeline_test_response != last_response)
         {
             // getting a bit late in the game to be detecting brokenness :(
             // However, if the response code isn't the same for both tests,
@@ -108,7 +118,7 @@ void WvHttpStream::doneurl()
             pipelining_is_broken(4);
             broken = true;
         }
-        pipeline_test_response = http_response;
+        pipeline_test_response = last_response;
     }
 
     assert(curl == urls.first());
@@ -121,6 +131,7 @@ void WvHttpStream::doneurl()
         close();
 
     request_next();
+    in_doneurl = false;
 }
 
 

@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#if 0 
+#if 0
 # define DEBUGLOG(fmt, args...) fprintf(stderr, fmt, ## args)
 #else
 #ifndef _MSC_VER
@@ -180,7 +180,7 @@ WvMonikerBase::~WvMonikerBase()
     if (reg)
     {
 	reg->del(id);
-	RELEASE(reg);
+	WVRELEASE(reg);
     }
 }
 
@@ -193,7 +193,7 @@ void *wvcreate(const UUID &iid,
     if (reg)
     {
 	void *ret = reg->create(moniker, obj, userdata);
-	RELEASE(reg);
+	WVRELEASE(reg);
 	return ret;
     }
     else
