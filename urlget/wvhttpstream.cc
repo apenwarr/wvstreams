@@ -86,6 +86,7 @@ void WvHttpStream::close()
 void WvHttpStream::doneurl()
 {
     assert(curl != NULL);
+    WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
 
     http_response = "";
@@ -100,7 +101,7 @@ void WvHttpStream::doneurl()
         pipeline_test_count++;
         if (pipeline_test_count == 1)
             start_pipeline_test(&curl->url);
-        else if (pipeline_test_response != http_response)
+        else if (pipeline_test_response != last_response)
         {
             // getting a bit late in the game to be detecting brokenness :(
             // However, if the response code isn't the same for both tests,
@@ -108,7 +109,7 @@ void WvHttpStream::doneurl()
             pipelining_is_broken(4);
             broken = true;
         }
-        pipeline_test_response = http_response;
+        pipeline_test_response = last_response;
     }
 
     assert(curl == urls.first());
