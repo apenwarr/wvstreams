@@ -74,55 +74,84 @@ WVTEST_MAIN("open and close with null FDs")
     WVPASS(fdstream.getfd() == -1);
 
     WVFAIL(fdstream.isok());
+    WVFAIL(fdstream.select(1, true, false));
+    WVFAIL(fdstream.select(1, false, true));
     WVFAIL(fdstream.select(1, true, true));
+
+    WVFAIL(fdstream.iswritable());
+    WVFAIL(fdstream.isreadable());
 }
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <iostream>
+#include <string.h>
 
 WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 {
     // create temporary and empty file for testing
-    int file = open("/tmp/wvfdstream.t", O_CREAT | O_TRUNC | O_RDWR, 0666); 
-    WvFDStream writestream(-1, file);
-    WvFDStream readstream(file, -1);
+    printf("Trying to open /tmp/wvfdstream.t to write\n");
+    int file1 = open("/tmp/wvfdstream.t", O_CREAT | O_TRUNC | O_WRONLY, 0666); 
+    if (!WVPASS(file1 > 2))
+    {
+        printf("Are you sure we can write to /tmp/wvfdstream.t?\n");
+    }
+    printf("Trying to open /tmp/wvfdstream.t to read\n");
+    int file2 = open("/tmp/wvfdstream.t", O_CREAT | O_TRUNC | O_RDONLY, 0666); 
+    if (!WVPASS(file2 > 2))
+    {
+        printf("Are you sure we can read from /tmp/wvfdstream.t?\n");
+    }
+    
+    WvFDStream writestream(-1, file1);
+    WvFDStream readstream(file2, -1);
 
     // writestream is not-readable and writeable
     WVPASS(writestream.iswritable());
+    WVFAIL(writestream.isreadable());
     // readstream is readable and not-writeable
+    WVPASS(readstream.isreadable());
+    WVFAIL(readstream.iswritable());
+
+    // Writing to file
+    WVPASS(writestream.write("Bonjour, j'me appellez writestream\n") == 35);
+    WVPASS(writestream.write("Bonjour, j'me appellez writestream") == 34);
+    WVPASS(writestream.iswritable());
     WVPASS(readstream.isreadable());
 
     char *buf = new char[256];
     
-    // Writing to readstream
-    writestream.write("Bonjour, j'me appellez writestream\n");
-    WVPASS(writestream.iswritable());
-    WVPASS(readstream.isreadable());
-
-    // It's not reading for some odd reason...
-//    WVPASS(readstream.read(buf, 256) == 35);
-    printf("%d\n", readstream.read(buf, 256));
-    
-    
+    // Reading from file
+    writestream.select(0, false, true);
+    WVPASS(strcmp(readstream.getline(-1), "Bonjour, j'me appellez writestream") == 0);
+    WVPASS(readstream.read(buf, 256) == 34);
+    // read() is not supposed to insert the null terminator at the end of the char string, so do it manually
+    buf[34] = '\0';
+    WVPASS(strcmp((const char*)buf, "Bonjour, j'me appellez writestream") == 0);
+   
     delete[] buf;
-    close(file);
+    close(file1);
+    close(file2);
 }
 
 WVTEST_MAIN("outbuf_limit")
 {
     int fd = open("/dev/null", O_WRONLY);
-    WVPASS(fd > 2);
+    printf("Trying to open /tmp/wvfdstream.t to read/write\n");
+    if(!WVPASS(fd > 2))
+    {
+        printf("Are you sure we can write to /tmp/wvfdstream.t?\n");
+    }
     WvFDStream fdstream1(dup(0), fd);
     
     fdstream1.outbuf_limit(10);
-    fdstream1.delay_output(true);
+    fdstream1.delay_output(true); // call flush explicitly
     
-    // empty buffer - should be writeable
+    // empty buffer
     WVPASS(fdstream1.isok());
     WVPASS(fdstream1.iswritable());
 
-    // one character in buffer - still writeable
+    // one character in buffer
     fdstream1.write("d");
     WVPASS(fdstream1.isok());
     WVPASS(fdstream1.iswritable());
@@ -130,16 +159,16 @@ WVTEST_MAIN("outbuf_limit")
     // string is too long - write only (10 - 1) chars
     WVPASS(fdstream1.write("Hello terminal!\n") == 9);
     WVPASS(fdstream1.isok());
-    
+
     // you might expect fdstream to return false here, but it doesn't; the
     // stream *is* writable (if you were to allow it to flush), but you
     // don't, so writes will fail even if it's writable.  You have to be
     // prepared for writes to fail even if a stream is writable anyway,
-    //WVFAIL(fdstream1.iswritable());
+    WVPASS(fdstream1.iswritable());
 
-    // full buffer - not writeable and write() returns 0
+    // full buffer - write() returns 0 (i.e. it fails);
     WVPASS(fdstream1.isok());
     WVPASS(fdstream1.write("Hello terminal, again!\n") == 0);
-    //WVFAIL(fdstream1.iswritable());
+    WVPASS(fdstream1.iswritable());
 }
 
