@@ -37,6 +37,8 @@ protected:
     WvIStreamListBase sure_thing;
 
 private:
+    bool in_select;
+
 #ifndef _WIN32
     static void onfork(pid_t p);
 #endif

@@ -29,7 +29,7 @@ WvProtoStream::WvProtoStream(WvStream *_cloned, WvLog *_debuglog)
 WvProtoStream::~WvProtoStream()
 {
     close();
-    RELEASE(logp);
+    WVRELEASE(logp);
 }
 
 

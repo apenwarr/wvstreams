@@ -77,7 +77,18 @@ WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
 }
 
 
-int WvTest::run_all(const char *prefix)
+static bool prefix_match(const char *s, const char * const *prefixes)
+{
+    for (const char * const *prefix = prefixes; prefix && *prefix; prefix++)
+    {
+	if (!strncasecmp(s, *prefix, strlen(*prefix)))
+	    return true;
+    }
+    return false;
+}
+
+
+int WvTest::run_all(const char * const *prefixes)
 {
     int old_valgrind_errs = 0, new_valgrind_errs;
     int old_valgrind_leaks = 0, new_valgrind_leaks;
@@ -90,9 +101,9 @@ int WvTest::run_all(const char *prefix)
     fails = runs = 0;
     for (WvTest *cur = first; cur; cur = cur->next)
     {
-	if (!prefix
-	    || !strncasecmp(cur->idstr, prefix, strlen(prefix))
-	    || !strncasecmp(cur->descr, prefix, strlen(prefix)))
+	if (!prefixes
+	    || prefix_match(cur->idstr, prefixes)
+	    || prefix_match(cur->descr, prefixes))
 	{
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    cur->main();
@@ -109,8 +120,9 @@ int WvTest::run_all(const char *prefix)
 	}
     }
     
-    if (prefix && prefix[0])
-	printf("WvTest: only ran tests starting with '%s'.\n", prefix);
+    if (prefixes && *prefixes)
+	printf("WvTest: WARNING: only ran tests starting with "
+	       "specifed prefix(es).\n");
     else
 	printf("WvTest: ran all tests.\n");
     printf("WvTest: %d test%s, %d failure%s.\n",

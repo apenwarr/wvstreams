@@ -1,12 +1,2 @@
-
-#Package: uniconfd
-#Architecture: any
-#Section: admin
-#Depends: ${shlibs:Depends}
-#Description: Configuration daemon for progams using WvStreams
-# This daemon can be used to configure multiple instances of programs
-# based off WvStreams.
-
-
-debian/tmp/usr/sbin/uniconfdaemon
-debian/tmp/etc/uniconf.ini
+debian/tmp/usr/sbin/uniconfd
+debian/tmp/var/lib/uniconf/uniconfd.ini

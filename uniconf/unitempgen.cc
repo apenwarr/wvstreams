@@ -8,26 +8,6 @@
 #include "wvmoniker.h"
 #include "wvlog.h"
 
-/** An iterator over keys stored in a UniTempGen. */
-class UniTempGen::NodeIter : public UniTempGen::Iter
-{
-protected:
-    UniTempGen *xgen;
-    UniConfValueTree::Iter xit;
-
-public:
-    NodeIter(UniTempGen *gen, const UniConfValueTree::Iter &it);
-    virtual ~NodeIter();
-
-    /***** Overridden methods *****/
-
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-    virtual WvString value() const;
-};
-
-
 static IUniConfGen *creator(WvStringParm, IObject *, void *)
 {
     return new UniTempGen();
@@ -53,7 +33,10 @@ WvString UniTempGen::get(const UniConfKey &key)
 {
     if (root)
     {
-        UniConfValueTree *node = root->find(key);
+	// Look for an empty section at the end.
+	if (!key.isempty() && key.last().isempty())
+	    return WvString::null;
+	UniConfValueTree *node = root->find(key);
         if (node)
             return node->value();
     }
@@ -61,9 +44,22 @@ WvString UniTempGen::get(const UniConfKey &key)
 }
 
 
-void UniTempGen::set(const UniConfKey &key, WvStringParm value)
+void UniTempGen::set(const UniConfKey &_key, WvStringParm value)
 {
     hold_delta();
+    UniConfKey key = _key;
+    bool trailing_slash = false;
+    if (!key.isempty())
+    {
+	// Look for an empty section at the end.
+	UniConfKey last = key;
+	key = last.pop(last.numsegments() - 1);
+	if (last.isempty())
+	    trailing_slash = true;
+	else
+	    key = _key;
+    }
+
     if (value.isnull())
     {
         // remove a subtree
@@ -80,7 +76,7 @@ void UniTempGen::set(const UniConfKey &key, WvStringParm value)
             }
         }
     }
-    else
+    else if (!trailing_slash)
     {
         UniConfValueTree *node = root;
         UniConfValueTree *prev = NULL;
@@ -157,48 +153,17 @@ UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
     {
         UniConfValueTree *node = root->find(key);
         if (node)
-            return new NodeIter(this, UniConfValueTree::Iter(*node));
+	{
+	    ListIter *it = new ListIter(this);
+	    UniConfValueTree::Iter i(*node);
+	    for (i.rewind(); i.next(); )
+	    {
+		it->keys.append(new WvString(i->key()), true);
+		it->values.append(new WvString(i->value()), true);
+	    }
+            return it;
+	}
     }
     return NULL;
 }
-
-
-
-/***** UniTempGen::NodeIter *****/
-
-UniTempGen::NodeIter::NodeIter(UniTempGen *gen,
-    const UniConfValueTree::Iter &it) :
-    xgen(gen), xit(it)
-{
-}
-
-
-UniTempGen::NodeIter::~NodeIter()
-{
-}
-
-
-void UniTempGen::NodeIter::rewind()
-{
-    xit.rewind();
-}
-
-
-bool UniTempGen::NodeIter::next()
-{
-    return xit.next();
-}
-
-
-UniConfKey UniTempGen::NodeIter::key() const
-{
-    return xit->key();
-}
-
-
-WvString UniTempGen::NodeIter::value() const
-{
-    return xit->value();
-}
-
 

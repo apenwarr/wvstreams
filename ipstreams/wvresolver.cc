@@ -40,7 +40,7 @@ public:
         { init(); addr = NULL; }
     ~WvResolverHost()
         {
-	    RELEASE(loop);
+	    WVRELEASE(loop);
             if (pid && pid != -1)
             {
                 kill(pid, SIGKILL);
@@ -77,7 +77,7 @@ static void namelookup(const char *name, WvLoopback *loop)
     // wait up to one minute...
     alarm(60);
     
-    for (;;)
+    for (int count = 0; count < 10; count++)
     {
 	he = gethostbyname(name);
 	if (he)
@@ -100,6 +100,15 @@ static void namelookup(const char *name, WvLoopback *loop)
 	    alarm(0);
 	    return; // not found; blank output
 	}
+	
+	// avoid spinning in a tight loop.
+	//
+	// sleep() is documented to possibly mess with the alarm(), so we
+	// have to make sure to reset the alarm here.  That's a shame,
+	// because otherwise it would timeout nicely after 60 seconds
+	// overall, not 60 seconds per request.
+	sleep(1);
+	alarm(60);
     }
 }
 
@@ -230,7 +239,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	    else
 	    {
 		// the child is dead.  Clean up our stream, too.
-		RELEASE(host->loop);
+		WVRELEASE(host->loop);
 		host->loop = NULL;
 		host->negative = true;
 		return 0; // exited while doing search
@@ -281,7 +290,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 
     if (host->pid && waitpid(host->pid, NULL, 0) == host->pid)
 	host->pid = 0;
-    RELEASE(host->loop);
+    WVRELEASE(host->loop);
     host->loop = NULL;
     
     // Return as many addresses as we find.

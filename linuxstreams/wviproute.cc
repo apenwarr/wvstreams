@@ -98,8 +98,8 @@ void WvIPRouteList::get_kernel()
 	
 	// the addresses in /proc/net/route are in hex.  This here is some
 	// pretty sicky type-munging...
-	__u32 a = strtoul(addr, NULL, 16), m = strtoul(mask, NULL, 16);
-	__u32 g = strtoul(gate, NULL, 16);
+	uint32_t a = strtoul(addr, NULL, 16), m = strtoul(mask, NULL, 16);
+	uint32_t g = strtoul(gate, NULL, 16);
 	WvIPAddr aa(a), mm(m);
 	WvIPNet net(aa, mm);
 	WvIPAddr gw(g);

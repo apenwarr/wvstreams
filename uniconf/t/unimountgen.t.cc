@@ -1,4 +1,5 @@
 #include "wvtest.h"
+#include "wvstream.h"
 #include "unimountgen.h"
 #include "uniconf.h"
 #include "unitempgen.h"
@@ -14,7 +15,7 @@ WVTEST_MAIN("mountgen basics")
 
 WVTEST_MAIN("mounting multiple generators")
 {
-    //basic stuff
+    // basic stuff
     UniMountGen g;
     IUniConfGen *t1 = g.mount("/foo", "temp:", true);
     IUniConfGen *t2 = g.mount("/bar", "temp:", true);
@@ -24,7 +25,7 @@ WVTEST_MAIN("mounting multiple generators")
     WVPASSEQ(g.get("/foo/bum"), "boo");
     WVPASSEQ(g.get("/bar/dum"), "far");
     
-    //nested generators
+    // nested generators
     g.set("/foo/gah", "goop");
     WVPASSEQ(t1->get("gah"), "goop");
 
@@ -33,7 +34,7 @@ WVTEST_MAIN("mounting multiple generators")
     WVPASSEQ(g.get("/foo/mink/moo"), "foo");
     WVFAIL(t1->get("mink/moo"));
 
-    //generator t3 should take precedence
+    // generator t3 should take precedence
     t1->set("mink/moo", "cabbage");
     WVPASSEQ(g.get("/foo/mink/moo"), "foo");
     
@@ -44,12 +45,15 @@ WVTEST_MAIN("mounting multiple generators")
     t3 = g.mount("/", "temp:", true);
     t3->set("moo", "foo");
     WVPASSEQ(g.get("/moo"), "foo");
-    /*FIXME: t3 should *not* take precedence, innermost generators should be first
+    
+    /* FIXME: t3 should *not* take precedence, innermost generators should be first
      * since the generators should be sorted deepest first.
+     */
+#if 0
     WVPASSEQ(g.get("/foo/bum"), "boo");
     t3->set("/foo/bum", "fools");
     WVPASSEQ(g.get("/foo/bum"), "boo");
-    */
+#endif
 }
 
 WVTEST_MAIN("multiple generators - iterators")
@@ -60,10 +64,12 @@ WVTEST_MAIN("multiple generators - iterators")
     IUniConfGen *t2 = g.mount("/bar", "temp:", true);
         
 
+    t1->set("/", "bung");
     t1->set("bum", "foo");
     t1->set("bum/bum", "foo");
     t1->set("bim", "foo");
     t1->set("bam", "foo");
+    t2->set("/", "bung");
     t2->set("dum", "bar");
     t2->set("bum", "bar");
     t2->set("bum/gum", "bar");
@@ -99,8 +105,8 @@ WVTEST_MAIN("multiple generators - iterators")
         }
         WVPASSEQ(num_values, 2);
     }
-//FIXME: iterator on / producing 2 null results.
-/*
+
+#if 0 // FIXME: unimountgen iterates badly through nested mounts
     delete i; 
     i = g.iterator("/");
     if (WVPASS(i))
@@ -111,8 +117,9 @@ WVTEST_MAIN("multiple generators - iterators")
             WVPASSEQ(i->value(), "bung");
             num_values++;
         }
-        WVPASSEQ(num_values, 1);
-    }*/
+        WVPASSEQ(num_values, 3);
+    }
+#endif
     
     delete i; 
     i = g.recursiveiterator("/foo");
@@ -139,52 +146,52 @@ WVTEST_MAIN("multiple generators - iterators")
         }
         WVPASSEQ(num_values, 5);
     }
-//FIXME: recursive iterator not working here at all
-/*
+
+#if 0 // FIXME: unimountgen deals badly with nested mounts
     delete i; 
     i = g.recursiveiterator("/");
     if (WVPASS(i))
     {
         int num_values = 0;
         for (i->rewind(); i->next(); )
-        {
-            WVPASSEQ(i->value(), "");
             num_values++;
-        }
         WVPASSEQ(num_values, 10);
-    }*/
+    }
+#endif
+
+    delete i;
 }
-//FIXME: iterators can't get past areas where no generator is mounted
-/*
+
 WVTEST_MAIN("multiple generators - iterating with gaps")
 {
-    UniMountGen g;
+    UniMountGen g; // nothing mounted on '/'
     IUniConfGen *t1 = g.mount("/foo", "temp:", true);
     IUniConfGen *t2 = g.mount("/bar", "temp:", true);
         
+    t1->set("/", "foo");
     t1->set("bum", "foo");
     t1->set("bum/bum", "foo");
     t1->set("bim", "foo");
     t1->set("bam", "foo");
+    t2->set("/", "bar");
     t2->set("dum", "bar");
     t2->set("bum", "bar");
     t2->set("bum/gum", "bar");
     t2->set("bum/scum", "bar");
     t2->set("bum/scum/flum", "bar");
    
-    //should be disregarding the fact that nothing is mounted on / and iterating
+    // should be disregarding the fact that nothing is mounted on / and
+    // iterating anyway
     UniMountGen::Iter *i = g.iterator("/");
     if (WVPASS(i))
     {
         int num_values = 0;
         for (i->rewind(); i->next(); )
         {
-            if (num_values < 4)
-                WVPASSEQ(i->value(), "foo");
-            else
-                WVPASSEQ(i->value(), "bar");
+	    if (!WVPASS(i->value() == "foo" || i->value() == "bar"))
+		wvcon->print("...value was '%s'\n", i->value());
             num_values++;
         }
-        WVPASSEQ(num_values, 9);
+        WVPASSEQ(num_values, 2);
     }
-}*/
+}

@@ -121,7 +121,7 @@ WVTEST_MAIN("basics")
     
     return 0;
 #else
-#warning "Assertion failure test not converted"
+//#warning "Assertion failure test not converted"
 #endif
 }
 
@@ -156,4 +156,26 @@ WVTEST_MAIN("self-redirection")
     rcallback = WvCont(rfunc1);
     rcallback(0);
     rcallback(0);
+}
+
+
+static void *twice(void *userdata)
+{
+    WVPASS(WvCont::isok());
+    WVPASS(userdata);
+    userdata = WvCont::yield();
+    WVPASS(WvCont::isok());
+    WVPASS(userdata);
+    userdata = WvCont::yield();
+    WVFAIL(WvCont::isok());
+    WVFAIL(userdata);
+    return NULL;
+}
+
+
+WVTEST_MAIN("isok timeliness")
+{
+    WvCont cont(twice);
+    cont((void *)1);
+    cont((void *)2);
 }

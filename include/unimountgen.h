@@ -102,14 +102,18 @@ public:
     virtual bool haschildren(const UniConfKey &key);
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
-    virtual bool refresh();
     virtual void commit();
+    virtual bool refresh();
+    virtual void flush_buffers() { }
     virtual Iter *iterator(const UniConfKey &key);
     virtual Iter *recursiveiterator(const UniConfKey &key);
 
 private:
     /** Find the active generator for a given key. */
     UniGenMount *findmount(const UniConfKey &key);
+    /** Find a unique active generator a given key, will return NULL if
+     *  there are other generators beneath that key. */
+    UniGenMount *findmountunder(const UniConfKey &key);
 
     // Trim the key so it matches the generator starting point
     UniConfKey trimkey(const UniConfKey &foundkey, const UniConfKey &key)

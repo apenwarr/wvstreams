@@ -39,7 +39,9 @@ ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
 endif
 
 ifneq ("$(with_xplc)", "no")
-  LDFLAGS+=-L$(with_xplc)
+ifneq ("$(with_xplc)", "")
+  LDFLAGS:=-L$(with_xplc) $(LDFLAGS)
+endif
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
@@ -135,6 +137,8 @@ runtests:
 %/test:
 	$(MAKE) -C $(dir $@) test
 
+$(LIBXPLC):
+
 $(WVSTREAMS_SRC)/rules.local.mk:
 	@true
 
@@ -189,19 +193,36 @@ CFLAGS+=$(CPPFLAGS)
 CXXFLAGS+=$(CPPFLAGS)
 
 ifeq ($(VERBOSE),1)
-  COMPILE_MSG = 
-  LINK_MSG =
-  DEPEND_MSG=
+  COMPILE_MSG :=
+  LINK_MSG :=
+  DEPEND_MSG :=
+  SYMLINK_MSG :=
 else
   COMPILE_MSG = @echo compiling $@...;
   LINK_MSG = @echo linking $@...;
   #DEPEND_MSG = @echo "   depending $@...";
-  DEPEND_MSG = @
+  DEPEND_MSG := @
+  SYMLINK_MSG := @
 endif
 
 # any rule that depends on FORCE will always run
 .PHONY: FORCE
 FORCE:
+
+ifeq ($(LN_S),)
+LN_S := ln -s
+endif
+ifeq ($(LN),)
+LN := ln
+endif
+
+# Create symbolic links
+# usage: $(wvlns,source,dest)
+wvlns=$(SYMLINK_MSG)$(LN_S) -f $1 $2
+
+# Create hard links
+# usage: $(wvln,source,dest)
+wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 
 # usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
 #    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
@@ -209,8 +230,22 @@ DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
 define wvcc_base
 	@rm -f "$1"
 	$(COMPILE_MSG)$4 $5 $2 -o $1
+	@# The Perl script here generates the proper dependencies, including
+	@# null dependencies so Make doesn't complain
 	$(DEPEND_MSG)$4 -M -E $< \
-		| sed -e 's|^[^:]*:|$1:|' >$(DEPFILE)
+                | perl -we \
+                '$$a = '"'"'$1'"'"'; \
+                $$\ = $$/; \
+                local $$/; \
+                while (<>) { \
+                    for (split(/(?<!\\)$$/m)) { \
+                        s/^[^:]+:\s*/$$a: /; \
+                        print; \
+                        if (s/^$$a: //) { \
+			    map {print "$$_:" unless m/^\\$$/} (split(/\s+/));\
+                        } \
+                    } \
+                }' >$(DEPFILE)
 endef
 wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
 wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
@@ -219,17 +254,19 @@ define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
 	echo $2 >$(patsubst %.a,%.libs,$1); \
 	ar q $1 $(filter %.o,$2); \
-	for d in $(filter %.libs,$2); do \
-		cd $$(dirname "$$d"); \
-		ar q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
-		cd $(shell pwd); \
+	for d in "" $(filter %.libs,$2); do \
+	    if [ "$$d" != "" ]; then \
+			cd `dirname "$$d"`; \
+			ar q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
+			cd $(shell pwd); \
+		fi; \
 	done; \
 	ranlib $1
 endef
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
 	$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
-	$(if $(filter-out $(call wvsoname,$1),$1),ln -sf $1 $(call wvsoname,$1))
+	$(if $(filter-out $(call wvsoname,$1),$1),$(call wvlns,$1,$(call wvsoname,$1)))
 endef
 
 wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
@@ -349,17 +386,20 @@ _wvclean: FORCE
 		.tcl_paths pkgIndex.tcl gmon.out core build-stamp wvtestmain
 	rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
+	rm -f semantic.cache tags
 	rm -rf debian/tmp
 
 #
 # default dist rules.
 distclean: clean
 
-dist: distclean ChangeLog
+dist-hook:
+
+dist: dist-hook distclean ChangeLog
 
 ChangeLog: FORCE
-	rm -f ChangeLog ChangeLog.bak
-	cvs2cl --utc
+	-cvs2cl --utc
+	@rm -f ChangeLog.bak
 
 #
 # Make 'tags' file using the ctags program - useful for editing
