@@ -12,7 +12,7 @@
 #include "unifiletreegen.h"
 
 UniConfFileTreeGen::UniConfFileTreeGen(WvStringParm _basedir, WvStringParm _moniker) :
-    basedir(_basedir), log(_basedir, WvLog::Info), moniker(_moniker)
+    basedir(_basedir), moniker(_moniker), log(_basedir, WvLog::Info)
 {
     log(WvLog::Notice,
 	"Creating a new FileTree based on '%s'.\n", basedir);
