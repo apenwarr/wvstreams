@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.15 2003/01/16 21:09:10 ppatters Exp $)
+AC_REVISION($Id: configure.ac,v 1.15.2.1 2003/03/19 18:40:53 sharvil Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -75,6 +75,14 @@ AC_ARG_WITH(fftw,
 AC_ARG_WITH(qt,
             AC_HELP_STRING([--with-qt],
                            [Qt]))
+
+AC_ARG_WITH(gtk,
+            AC_HELP_STRING([--with-gtk],
+                           [GTK]))
+
+AC_ARG_WITH(glib,
+            AC_HELP_STRING([--with-glib],
+                           [Location of Glib headers]))
 
 AC_ARG_WITH(xplc,
             AC_HELP_STRING([--with-xplc],
@@ -154,6 +162,33 @@ CPPFLAGS="$CPPFLAGS -I$QTINCLUDE"
 AC_CHECK_HEADERS(qt/qobject.h,, [with_qt=no])
 fi
 
+#gtk
+if test "$with_gtk" != "no"; then
+
+AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
+AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
+
+if test -n "$with_glib"; then
+    GLIBDIR=$with_glib
+fi
+if test -n "$GLIBDIR"; then
+    GLIBINCLUDE="$GLIBDIR/include"
+else
+    GLIBINCLUDE="/usr/include/glib-1.2"
+fi
+
+if test -n "$with_gtk"; then
+    GTKDIR=$with_gtk
+fi
+if test -n "$GTKDIR"; then
+    GTKINCLUDE="$GTKDIR/include"
+else
+    GTKINCLUDE="/usr/include/gtk-1.2"
+fi
+CPPFLAGS="$CPPFLAGS -I$GTKINCLUDE -I$GLIBINCLUDE -I/usr/lib/glib/include"
+AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
+fi
+
 # xplc
 if test "$with_xplc" != "no"; then
 AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no], -lxplc-cxx)
@@ -194,6 +229,10 @@ if test "$with_qt" == "no"; then
     AC_MSG_WARN([Qt is missing.])
     missing_devel=yes
 fi
+if test "$with_gtk" == "no"; then
+    AC_MSG_WARN([Gtk is missing.])
+    missing_devel=yes
+fi
 if test "$with_xplc" == "no"; then
     AC_MSG_WARN([XPLC is missing.])
 #    missing_devel=yes
@@ -224,6 +263,8 @@ AC_SUBST(with_vorbis)
 AC_SUBST(with_speex)
 AC_SUBST(with_fftw)
 AC_SUBST(with_qt)
+AC_SUBST(with_glib)
+AC_SUBST(with_gtk)
 AC_SUBST(with_xplc)
 
 AC_CONFIG_FILES(config.mk)
