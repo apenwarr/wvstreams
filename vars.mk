@@ -145,15 +145,9 @@ ifneq ("$(with_qdbm)", "no")
   libwvutils.so-LIBS+=-L. -lqdbm
 endif
 
-ifneq ("$(with_xplc)", "no")
-  # CPPFLAGS+=-DUNSTABLE
-  ifneq ("$(with_xplc)", "yes")
-    VPATH+=$(with_xplc)
-    LDFLAGS+=-L$(with_xplc)
-    CPPFLAGS+=-I$(with_xplc)/include
-    libwvstreams.so: LIBS+=-lxplc-cxx
-  endif
-endif
+
+CPPFLAGS+=-DUNSTABLE
+libwvstreams.so: LIBS+=-lxplc-cxx
 
 ifneq ("$(with_fam)", "no")
   libwvstreams.so: -lfam

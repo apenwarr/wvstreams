@@ -144,22 +144,9 @@ fi
 
 # acl
 if test "$with_acl" != "no"; then
-    test "$with_acl" = yes && with_acl=
-    CPPFLAGS_save="$CPPFLAGS"
-    LDFLAGS_save="$LDFLAGS"
-    if test "$with_acl"; then
-        WV_APPEND(CPPFLAGS, [-I$with_acl/include])
-        WV_APPEND(LDFLAGS, [-L$with_acl/libacl/.libs])
-    fi
-    # check for the acl headers
     AC_CHECK_HEADERS(acl.h,, [with_acl=no])
-    # check for acl library
     AC_CHECK_LIB(acl, acl_set_file,, [with_acl=no])
-
-    if test "$with_acl" = "no"; then
-        CPPFLAGS="$CPPFLAGS_save"
-        LDFLAGS="$LDFLAGS_save"
-    else
+    if test "$with_acl" != "no"; then
         AC_DEFINE(WITH_ACL,,
                   [Define to enable ACL support.])
     fi
@@ -183,14 +170,6 @@ fi
 
 # bdb
 if test "$with_bdb" != "no"; then
-    test "$with_bdb" = yes && with_bdb=
-    CPPFLAGS_save="$CPPFLAGS"
-    LDFLAGS_save="$LDFLAGS"
-    if test "$with_bdb"; then
-        WV_APPEND(CPPFLAGS, [-I$with_bdb/include])
-        WV_APPEND(LDFLAGS, [-L$with_bdb])
-    fi
-    # check for the bdb headers
     AC_CHECK_HEADERS(db.h,, [with_bdb_header=no],
                      [#include <db.h>
                       #ifdef DB_VERSION_MAJOR
@@ -199,7 +178,6 @@ if test "$with_bdb" != "no"; then
     if test "$with_bdb_header" = "no"; then
         AC_CHECK_HEADERS(db_185.h,, [with_bdb=no])
     fi
-    # check for bdb library
     AC_CHECK_LIB(db, dbopen,, [with_bdb_lib=no])
     if test "$with_bdb_lib" = "no"; then
         AC_CHECK_LIB(db1, dbopen, [with_bdb_lib=yes],)
@@ -207,11 +185,7 @@ if test "$with_bdb" != "no"; then
     if test "$with_bdb_lib" = "no"; then
         with_bdb=no
     fi
-
-    if test "$with_bdb" = "no"; then
-        CPPFLAGS="$CPPFLAGS_save"
-        LDFLAGS="$LDFLAGS_save"
-    else
+    if test "$with_bdb" != "no"; then
         AC_DEFINE(WITH_BDB,,
                   [Define to enable Berkeley DB support.])
     fi
@@ -219,22 +193,10 @@ fi
 
 # qdbm
 if test "$with_qdbm" != "no"; then
-    test "$with_qdbm" = yes && with_qdbm=
-    CPPFLAGS_save="$CPPFLAGS"
-    LDFLAGS_save="$LDFLAGS"
-    if test "$with_qdbm"; then
-        WV_APPEND(CPPFLAGS, [-I$with_qdbm])
-        WV_APPEND(LDFLAGS, [-L$with_qdbm])
-    fi
-    # check for the qdbm headers
     AC_CHECK_HEADERS(villa.h,, [with_qdbm=no])
-    # check for qdbm library
     AC_CHECK_LIB(qdbm, vlopen,, [with_qdbm=no])
 
-    if test "$with_qdbm" = "no"; then
-        CPPFLAGS="$CPPFLAGS_save"
-        LDFLAGS="$LDFLAGS_save"
-    else
+    if test "$with_qdbm" != "no"; then
         AC_DEFINE(WITH_QDBM,,
                   [Define to enable QDBM support.])
     fi
@@ -351,13 +313,6 @@ if test "$with_xplc" != "no"; then
         build_xplc=yes
         with_xplc='$(WVSTREAMS)/xplc'
     else
-        test "$with_xplc" = yes && with_xplc=
-        CPPFLAGS_save="$CPPFLAGS"
-        LDFLAGS_save="$LDFLAGS"
-        if test "$with_xplc"; then
-            WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
-            WV_APPEND(LDFLAGS, [-L$with_xplc])
-        fi
         AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
         AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
     fi

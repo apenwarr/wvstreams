@@ -38,7 +38,8 @@ ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
 endif
 
 ifneq ("$(with_xplc)", "no")
-  LIBXPLC=$(with_xplc)/libxplc-cxx.a $(with_xplc)/libxplc.so
+  LDFLAGS+=-L$(with_xplc)
+  LIBXPLC=-lxplc-cxx -lxplc
 endif
 
 LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBXPLC)
