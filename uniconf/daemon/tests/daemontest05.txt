@@ -1,0 +1,2 @@
+# Test getting a non-recursive subtree of /
+subt /

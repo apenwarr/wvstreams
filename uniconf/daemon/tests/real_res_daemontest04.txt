@@ -1,0 +1,7 @@
+HELLO UniConf Server ready
+OK get /chickens/bob
+RETN /chickens/bob nerf
+OK set /chickens/bob
+OK get /chickens/bob
+RETN /chickens/bob goof
+OK quit <null>
