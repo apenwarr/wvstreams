@@ -21,7 +21,7 @@ static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 WvString base64_encode(const void *buf, size_t length)
 {
-    WvBuffer in, out;
+    WvDynBuf in, out;
     size_t out_length = length * 4/3 + ((length%3) != 0);
     size_t out_pos = 0, in_pos = 0;
     
@@ -84,7 +84,7 @@ static inline char ofs(char p)
 
 
 // No error checking is performed!  Assume str really is a Base64 stream!
-WvBuffer &base64_decode(WvStringParm str, WvBuffer &out)
+WvBuf &base64_decode(WvStringParm str, WvBuf &out)
 {
     size_t length = strlen(str);
     int	out_length, out_pos = 0, in_pos = 0;

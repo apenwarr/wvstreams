@@ -19,6 +19,7 @@ int main(int argc, char **argv)
     signal(SIGINT,  sighandler_die);
     signal(SIGTERM, sighandler_die);
     signal(SIGPIPE, SIG_IGN);
+    WvStream wvin(0), wvout(1);
     
     WvLog log("ssltest", WvLog::Info);
     log("SSL Test Starting...\n");
@@ -30,12 +31,12 @@ int main(int argc, char **argv)
     WvStreamList l;
     
     l.append(&cli, false);
-    l.append(wvcon, false);
+    l.append(&wvin, false);
     
-    cli.autoforward(*wvcon);
-    wvcon->autoforward(cli);
+    cli.autoforward(wvout);
+    wvin.autoforward(cli);
     
-    while (cli.isok() && wvcon->isok() && !want_to_die)
+    while (cli.isok() && !want_to_die)
     {
 	if (l.select(-1))
 	    l.callback();

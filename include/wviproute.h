@@ -28,6 +28,7 @@ public:
     WvIPAddr gateway;
     int metric;
     WvString table; // "advanced ip routing" table name
+    WvIPAddr src;
 };
 
 

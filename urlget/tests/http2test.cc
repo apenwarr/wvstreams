@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 		    continue;
 		}
 		
-		WvStream *s = p.addurl(line, headers);
+		WvStream *s = p.addurl(line, "GET", headers);
 		if (s)
 		{
 		    static int num = 0;

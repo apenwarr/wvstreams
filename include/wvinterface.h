@@ -37,6 +37,9 @@ class WvInterface
 		  const WvIPNet &dest, const WvIPAddr &gw,
 		  int metric);
     
+    int really_addroute(const WvIPNet &dest, const WvIPAddr &gw, 
+			const WvIPAddr &src, int metric,
+			WvStringParm table, bool shutup);
 public:
     WvString name;
     bool valid;
@@ -113,7 +116,8 @@ public:
      */
     int addroute(const WvIPNet &dest, int metric = 0,
 		 WvStringParm table = "default");
-    int addroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0,
+    int addroute(const WvIPNet &dest, const WvIPAddr &gw, 
+                 const WvIPAddr &src, int metric = 0,
 		 WvStringParm table = "default");
 
     /**

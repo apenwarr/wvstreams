@@ -85,7 +85,7 @@ char *non_breaking(char * string)
     if (string == NULL)
         return (NULL);
 
-    WvBuffer buf;
+    WvDynBuf buf;
 
     while (*string)
     {
@@ -431,7 +431,7 @@ WvString getdirname(WvStringParm fullname)
 
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
-    WvBuffer buf;
+    WvDynBuf buf;
     const char *sptr = s, *eptr;
     
     while ((eptr = strstr(sptr, a)) != NULL)
