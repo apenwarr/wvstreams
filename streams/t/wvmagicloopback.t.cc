@@ -1,3 +1,4 @@
+#include <sys/wait.h>
 #include "wvtest.h"
 #include "wvmagicloopback.h"
 #include "wvfork.h"
@@ -8,7 +9,8 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
 {
     WvMagicLoopback ml(1024);
     
-    if (wvfork() == 0)
+    pid_t pid = wvfork();
+    if (pid == 0)
     {
     	int i;
     	
@@ -39,7 +41,7 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
     	}
     }
     
-    wait();
+    WVPASS(wait(NULL) == pid);
 }
 
 WVTEST_MAIN("WvMagicLoopback Non-Blocking Writes") 

@@ -44,6 +44,7 @@ WVTEST_MAIN("loopback non-blocking")
     for (i=0; i<(1<<8); ++i)
     {
         char buf[1024];
+	memset(buf, 0, sizeof(buf));
         loop->write(buf, 1024);
     }
 
