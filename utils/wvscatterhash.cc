@@ -7,14 +7,13 @@
 
 #include "wvscatterhash.h"
 
-
 // Prime numbers close to powers of 2
 const unsigned WvScatterHashBase::prime_numbers[] = {2u, 5u, 11u, 17u, 31u, 67u, 127u, 251u, 509u, 1021u, 2039u, 4093u, 8191u, 16381u, 32749u, 65521u, 131071u, 262139u, 524287u, 1048573u, 2097143u, 4194301u, 8388593u, 16777213u, 33554393u, 67108859u, 134217689u, 268435399u, 536870909u, 1073741789u, 2147483647u, 4294967281u};
 
 WvScatterHashBase::pair WvScatterHashBase::null_pair;
 
 // we do not accept the _numslots value directly.  Instead, we find the
-// next number of slots which is >= _numslots and take the closest prime number
+// next number of xslots which is >= _numslots and take the closest prime number
 WvScatterHashBase::WvScatterHashBase(unsigned _numslots)
 {
     num = 0;
@@ -30,8 +29,8 @@ WvScatterHashBase::WvScatterHashBase(unsigned _numslots)
     }
 
     numslots = prime_numbers[prime_index];
-    slots = new pair[numslots];
-    memset(slots, 0, numslots * sizeof(pair));
+    xslots = new pair[numslots];
+    memset(xslots, 0, numslots * sizeof(pair));
 }
 
 size_t WvScatterHashBase::slowcount() const 
@@ -39,7 +38,7 @@ size_t WvScatterHashBase::slowcount() const
     unsigned count = 0;
     for (unsigned index = 0; index < numslots; index++)
     {
-        if (IS_OCCUPIED(slots[index]))
+        if (IS_OCCUPIED(xslots[index]))
             count++;
     }
 
@@ -56,9 +55,9 @@ void WvScatterHashBase::rebuild()
     if (numslots * RESIZE_LOAD_FACTOR <= num + 1) 
         numslots = prime_numbers[++prime_index];
 
-    pair *tmpslots = slots;
-    slots = new pair[numslots];
-    memset(slots, 0, numslots * sizeof(pair));
+    pair *tmpslots = xslots;
+    xslots = new pair[numslots];
+    memset(xslots, 0, numslots * sizeof(pair));
     used = num = 0;
 
     for (unsigned i = 0; i < oldnumslots; i++)
@@ -80,21 +79,21 @@ void WvScatterHashBase::_add(void *data, unsigned hash, bool auto_free)
     rebuild();
     unsigned slot = hash % numslots;
 
-    if (IS_OCCUPIED(slots[slot]))
+    if (IS_OCCUPIED(xslots[slot]))
     {
         unsigned attempt = 0;
         unsigned hash2 = second_hash(hash);
 
-        while (IS_OCCUPIED(slots[slot]))
+        while (IS_OCCUPIED(xslots[slot]))
             slot = curhash(hash, hash2, ++attempt);
     }
 
     num++;
-    if (!IS_DELETED(slots[slot]))
+    if (!IS_DELETED(xslots[slot]))
         used++;
 
-    slots[slot].data = data;
-    slots[slot].status = auto_free ? 3 : 2;
+    xslots[slot].data = data;
+    xslots[slot].status = auto_free ? 3 : 2;
 }
 
 void WvScatterHashBase::_remove(const void *data, unsigned hash)
@@ -114,10 +113,10 @@ void WvScatterHashBase::_zap()
 {
     for (unsigned i = 0; i < numslots; i++)
     {
-        if (IS_AUTO_FREE(slots[i]))
-            do_delete(slots[i].data);
+        if (IS_AUTO_FREE(xslots[i]))
+            do_delete(xslots[i].data);
 
-        slots[i].status = 0;
+        xslots[i].status = 0;
     }
 }
 
@@ -146,18 +145,18 @@ struct WvScatterHashBase::pair *WvScatterHashBase::genfind
 {
     unsigned slot = hash % numslots;
 
-    if (IS_OCCUPIED(slots[slot]) && compare(data, slots[slot].data))
-        return &slots[slot];
+    if (IS_OCCUPIED(xslots[slot]) && compare(data, xslots[slot].data))
+        return &xslots[slot];
 
     unsigned attempt = 0;
     unsigned hash2 = second_hash(hash);
 
-    while (slots[slot].status)
+    while (xslots[slot].status)
     {
         slot = curhash(hash, hash2, ++attempt);
 
-        if (IS_OCCUPIED(slots[slot]) && compare(data, slots[slot].data))
-            return &slots[slot];
+        if (IS_OCCUPIED(xslots[slot]) && compare(data, xslots[slot].data))
+            return &xslots[slot];
     } 
 
     return &null_pair;

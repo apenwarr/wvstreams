@@ -21,13 +21,12 @@
 #define IS_AUTO_FREE(x) (x.status == 3)
 #define IS_DELETED(x) (x.status == 1)
 
-
 class WvScatterHashBase
 {
 public:
 
     WvScatterHashBase(unsigned _numslots);
-    virtual ~WvScatterHashBase() { delete[] slots; }
+    virtual ~WvScatterHashBase() { delete[] xslots; }
 
     struct pair
     {
@@ -58,20 +57,20 @@ public:
                 return false;
 
             while (++index <= table->numslots &&
-                   !IS_OCCUPIED(table->slots[index-1])) { }
+                   !IS_OCCUPIED(table->xslots[index-1])) { }
 
             if (index <= table->numslots) return true;
             return false;
         }
 
         bool get_autofree()
-            { return IS_AUTO_FREE(table->slots[index-1]); }
+            { return IS_AUTO_FREE(table->xslots[index-1]); }
 
         void set_autofree(bool auto_free)
-            { table->slots[index-1].status = auto_free ? 3 : 2; }
+            { table->xslots[index-1].status = auto_free ? 3 : 2; }
 
     protected:
-        void *get() const { return table->slots[index-1].data; }
+        void *get() const { return table->xslots[index-1].data; }
 
         WvScatterHashBase *table;
         unsigned index;
@@ -84,7 +83,7 @@ protected:
 
     friend class IterBase;
 
-    pair *slots;
+    pair *xslots;
     int prime_index;
     unsigned numslots;
 
@@ -165,7 +164,7 @@ public:
         Iter(WvScatterHash &_table) : IterBase(_table) { }
         Iter(const Iter &other) : IterBase(other) { }
 
-        int *getstatus() { return &slots[index-1].status; }
+        int *getstatus() { return &xslots[index-1].status; }
 
         T *ptr() const
             { return (T *)(get()); }
@@ -198,5 +197,6 @@ public:
                                                                           \
     typedef WvScatterHash<_type_, _ftype_,                                \
              _classname_##Accessor<_type_, _ftype_> > _classname_
+
 
 #endif //_WVSCATTERHASH_H
