@@ -211,42 +211,6 @@ bool isnewline(char c)
     return c=='\n' || c=='\r';
 }
 
-
-// eg: hexify(foo, "ABCDEF", 4) will set foo to "41424344".
-void hexify(char *obuf, const void *_ibuf, size_t len)
-{
-    const unsigned char *ibuf = (const unsigned char *)_ibuf;
-    
-    while (len > 0)
-    {
-	sprintf(obuf, "%02x", *ibuf++);
-	obuf += 2;
-	len--;
-    }
-}
-
-
-// eg: unhexify(foo, "41424344") sets foo to "ABCD".
-void unhexify(void *_obuf, const char *ibuf)
-{
-    unsigned char *obuf = (unsigned char *)_obuf;
-    char lookup[] = "0123456789abcdef", *c, *c2;
-    
-    if (strlen(ibuf) % 1)  // odd number of bytes in a hex string?  No.
-	return;
-    
-    while (*ibuf != 0)
-    {
-	c = strchr(lookup, *ibuf);
-	c2 = strchr(lookup, *(ibuf+1));
-	if (!c || !c2) return;
-	
-	*obuf++ = ((c - lookup) << 4) | (c2 - lookup);
-	ibuf += 2;
-    }
-}
-
-
 // ex: WvString foo = web_unescape("I+am+text.%0D%0A");
 WvString web_unescape(const char *str)
 {

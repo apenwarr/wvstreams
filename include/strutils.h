@@ -16,6 +16,7 @@
 
 #include "wvstring.h"
 #include "wvstringlist.h"
+#include "wvhex.h"
 
 /**
  * Add character c to the end of a string after removing 
@@ -86,28 +87,6 @@ WvString hexdump_buffer(const void *buf, size_t len);
  * Increases code readability a bit.
  */
 bool isnewline(char c);
-
-/**
- * Write the contents of the binary string of length 'len' pointed to by 'ibuf' 
- * into the output buffer 'obuf' in hexadecimal format.
- * 
- * For example, if len==4, ibuf=="ABCDEF", then obuf will contain "41424344"
- * with a terminating NULL character.
- * 
- * This is useful to turn arbitrary binary into a simple printable format, so
- * that it can (for example) be written to a WvConf configuration file.
- * 
- * obuf must be a buffer with at least (len * 2) + 1 bytes available. (two
- * digits for each byte of ibuf, plus a terminating NULL).
- */
-void hexify(char *obuf, const void *ibuf, size_t len);
-
-/**
- * Reverse the operation performed by hexify(). obuf must be a buffer large
- * enough to contain the entire binary output string; you can calculate this
- * size with (strlen(ibuf) / 2). obuf will NOT be automatically NULL-terminated.
- */
-void unhexify(void *obuf, const char *ibuf);
 
 /**
  * Converts escaped characters (things like %20 etc.) from web URLS into their
