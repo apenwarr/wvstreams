@@ -5,6 +5,7 @@
  * Streams with built-in cryptography on read/write.  See wvcrypto.h.
  */
 #include "wvcrypto.h"
+#include "wvsslhacks.h"
 #include "strutils.h"
 #include <assert.h>
 #include <blowfish.h>
@@ -149,7 +150,8 @@ void WvRSAKey::init(const char *_keystr, bool priv)
     int bufsize = ((hexbytes < 2048) ? 2048 : hexbytes) + 16;
     //int bufsize = hexbytes/2;
     
-    unsigned char *keybuf = new unsigned char[bufsize], *bufp;
+    unsigned char *keybuf = new unsigned char[bufsize];
+    const unsigned char *bufp;
     char *keystr;
     RSA *rp;
     
@@ -162,7 +164,7 @@ void WvRSAKey::init(const char *_keystr, bool priv)
     
     if (priv)
     {
-	rsa = d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
+	rsa = wv_d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
 
 	if (!rsa)
 	    seterr("RSA Key is invalid!");
@@ -179,7 +181,7 @@ void WvRSAKey::init(const char *_keystr, bool priv)
     }
     else
     {
-	rsa = d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
+	rsa = wv_d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
 	if (!rsa)
 	    seterr("RSA Key is invalid!");
 	else

@@ -24,7 +24,7 @@ LIBS += ${EFENCE}
 XPATH=.. ../utils ../streams ../configfile ../ipstreams \
 	${SSLDIR}/include ${SSLINC}
 
-crypto.libs: wvcrypto.o wvsslstream.o wvx509.o
+crypto.libs: wvcrypto.o wvsslhacks.o wvsslstream.o wvx509.o
 
 crypto.a: crypto.libs
 

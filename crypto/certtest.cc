@@ -24,9 +24,9 @@ int main()
 	if (x509cert.isok())
 	{
 	    WvString filename("testcert.pem");
-	    x509cert.dumpkeypair(filename,false);
-	    x509cert.dumpcert(filename,true);
-	    x509cert.dumprawkeypair(filename,true);
+	    x509cert.dump(filename, WvX509Mgr::CertPEM, false);
+	    x509cert.dump(filename, WvX509Mgr::RsaPEM, true);
+	    x509cert.dump(filename, WvX509Mgr::RsaRaw, true);
 	}
 	else
 		log("Error: %s",x509cert.errstr());
