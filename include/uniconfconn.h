@@ -28,6 +28,7 @@ public:
     static const WvString UNICONF_FAIL;
 
     static const WvString UNICONF_QUIT;
+    static const WvString UNICONF_HELP;
 protected:
 
     WvDynamicBuffer incomingbuff;

@@ -14,6 +14,7 @@ const WvString UniConfConn::UNICONF_OK("OK");
 const WvString UniConfConn::UNICONF_FAIL("FAIL");
 
 const WvString UniConfConn::UNICONF_QUIT("quit");
+const WvString UniConfConn::UNICONF_HELP("help");
 
 UniConfConn::UniConfConn(WvStream *_s) : WvStreamClone(_s)
 {
