@@ -15,49 +15,42 @@ WVPREFACE(Introduction,
   Short paragraph.
 )
 
-WVPART(first, This Part Is First,
+WVPART(tutorial, Getting Started Really Fast,
+ WVPARTINTRO(Introducing This Part,x)
 
-WVPARTINTRO(Introducing This Part,
-  This Part is like no other Part.
+ WVCHAPTER(bork, A Bork Chapter,x)
 )
 
-WVCHAPTER(bork, A Bork Chapter,
-  This is a fun para
-  
-  This too
-  
-  Whee!
+WVPART(utils, The Utilities Library,
+ WVCHAPTER(stuff1, stuff, x)
 )
 
-WVCHAPTER(chappy, A Chapter,
-  Short paragraph.
+WVPART(streams, The Streams Library,
+ WVCHAPTER(stuff2, stuff, x)
 )
 
-WVCHAPTER(wappy, Another Chapter,
-  Short paragraph.
+WVPART(ipstreams, The IPStreams (TCP/IP sockets interface) Library,
+ WVCHAPTER(stuff3, stuff, x)
 )
 
+WVPART(configfile, The ConfigFile (.ini manager) Library,
+ WVCHAPTER(stuff4, stuff, x)
 )
 
-<part>
-<title>This Part Is Second</title>
+WVPART(netmap, Network Mapping and Intelligence - the NetMap Library,
+ WVCHAPTER(stuff5, stuff, x)
+)
 
-<chapter id="snappy">
-<title>Yet Another Chapter</title>
+WVPART(wvapps, Weaver Applications,
+ WVCHAPTER(webconfig, WebConfig,x)
+ WVCHAPTER(lcdconfig, LCDConfig,x)
+ WVCHAPTER(wvdial, The WvDial API,x)
+ WVCHAPTER(tunnelv, The Tunnel Vision API,x)
+ WVCHAPTER(fastforward, The Fast Forward API,x)
+)
 
-Short paragraph.
-
-</chapter>
-
-<chapter>
-<title>Still Yet Another Chapter</title>
-
-Short paragraph.
-
-</chapter>
-
-</part>
-
-<index></index>
+WVPART(weaver, The Main Weaver Application,
+ WVCHAPTER(stuff6, stuff, x)
+)
 
 </book>
