@@ -63,9 +63,21 @@ int main(int argc, char **argv)
     {
         if (!strcmp(argv[i],"-mount"))
         {
-            strings.append(new WvString(argv[i+1]), true);
-            strings.append(new WvString(argv[i+2]), true);
-            strings.append(new WvString(argv[i+3]), true);
+            WvString *mode = new WvString(argv[i+1]);
+            WvString *location = new WvString(argv[i+2]);
+            WvString *mp = new WvString(argv[i+3]);
+
+            if (!*mode || !*location || !*mp)
+            {
+                delete mode;
+                delete location;
+                delete mp;
+                usage();
+            }
+            
+            strings.append(mode, true);
+            strings.append(location, true);
+            strings.append(mp, true);
             i += 3;
         }
         else if (!strcmp(argv[i], "-d"))
