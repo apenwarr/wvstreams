@@ -3,6 +3,7 @@
 #ifdef WITH_FAM
 
 #include "wvistreamlist.h"
+#include <sys/stat.h>
 
 WvFAM::~WvFAM()
 {
@@ -25,10 +26,18 @@ void WvFAM::monitordir(WvStringParm dir)
     if (!isok())
         return;
 
-    if (!FAMMonitorDirectory(&fc, dir, &fr, NULL))
-        reqs.add(dir, fr.reqnum);
+    WvFAMReq *req = new WvFAMReq(dir, 0, true);
+
+    if (!FAMMonitorDirectory(&fc, dir, &fr, &req->key))
+    {
+        req->data = fr.reqnum;
+        reqs.add(req, true);
+    }
     else
+    {
+        delete req;
         log(WvLog::Error, "Could not monitor directory '%s'.\n", dir);
+    }
 }
 
 void WvFAM::monitorfile(WvStringParm file)
@@ -36,10 +45,30 @@ void WvFAM::monitorfile(WvStringParm file)
     if (!isok())
         return;
 
-    if (!FAMMonitorFile(&fc, file, &fr, NULL))
-        reqs.add(file, fr.reqnum);
+    WvFAMReq *req = new WvFAMReq(file, 0, true);
+
+    if (!FAMMonitorFile(&fc, file, &fr, &req->key))
+    {
+        req->data = fr.reqnum;
+        reqs.add(req, true);
+    }
     else
+    {
+        delete req;
         log(WvLog::Error, "Could not monitor file '%s'.\n", file);
+    }
+}
+
+void WvFAM::monitor(WvStringParm path)
+{
+    struct stat buf;
+    if (stat(path, &buf))
+        return;
+
+    if (S_ISDIR(buf.st_mode))
+        monitordir(path);
+    else
+        monitorfile(path);
 }
 
 void WvFAM::unmonitordir(WvStringParm dir)
@@ -47,28 +76,35 @@ void WvFAM::unmonitordir(WvStringParm dir)
     if (!isok())
         return;
 
-    if (!reqs.exists(dir))
+    WvFAMReq *req = reqs[dir];
+    if (!req)
         return;
 
-    fr.reqnum = reqs[dir];    
+    fr.reqnum = req->data;
     FAMCancelMonitor(&fc, &fr);
-    reqs.remove(dir);
+    reqs.remove(req);
 }
 
 void WvFAM::Callback(WvStream &, void *)
 {
     int famstatus;
 
-    while((famstatus = FAMPending(&fc)) && famstatus != -1)
+    while((famstatus = FAMPending(&fc)) && famstatus != -1
+        && FAMNextEvent(&fc, &fe) > 0)
     {
-        if (FAMNextEvent(&fc, &fe) == 1)
+        if (fe.code == FAMChanged || fe.code == FAMDeleted
+                || fe.code == FAMCreated)
         {
-            if (fe.code == FAMChanged || fe.code == FAMDeleted
-                    || fe.code == FAMCreated)
+            if (!fe.userdata)
                 cb(WvString(fe.filename), WvFAMEvent(fe.code));
+
+            // If the void * points to something this is a directory callback.
+            // We'll prepend the path to the returned filename.
+            else
+                cb(WvString("%s/%s",
+                    *reinterpret_cast<WvString *>(fe.userdata),
+                    fe.filename), WvFAMEvent(fe.code));
         }
-        else
-            log("Odd... recieved event pending but no event.\n");
     }
 
     if (famstatus == -1)

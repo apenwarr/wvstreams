@@ -20,7 +20,6 @@ enum WvFAMEvent
 
 DeclareWvCallback(2, void, FAMCallback, WvStringParm, WvFAMEvent);
 
-
 class WvFAM
 {
 public:
@@ -35,6 +34,7 @@ public:
 
     void monitordir(WvStringParm dir);
     void monitorfile(WvStringParm file);
+    void monitor(WvStringParm path);
 
     void unmonitordir(WvStringParm dir);
     void unmonitorfile(WvStringParm file)
@@ -50,7 +50,9 @@ protected:
     WvFDStream *s;
     WvLog log;
 
-    WvMap<WvString, int, OpEqComp, WvScatterHash> reqs;
+    typedef WvMapPair<WvString, int> WvFAMReq;
+    DeclareWvScatterDict2(WvFAMReqDict, WvFAMReq, WvString, key);
+    WvFAMReqDict reqs;
 
     void Callback(WvStream &, void *);
     void setup();
