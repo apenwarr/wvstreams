@@ -427,3 +427,21 @@ WvString getdirname(WvStringParm fullname)
 	return !tmp ? WvString("/") : tmp;
     }
 }
+
+
+WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
+{
+    WvBuffer buf;
+    const char *sptr = s, *eptr;
+    
+    while ((eptr = strstr(sptr, a)) != NULL)
+    {
+	buf.put(sptr, eptr-sptr);
+	buf.put(b);
+	sptr = eptr + strlen(a);
+    }
+    
+    buf.put(sptr, strlen(sptr));
+    
+    return buf.getstr();
+}

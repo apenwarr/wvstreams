@@ -41,6 +41,15 @@ bool WvStreamList::pre_select(SelectInfo &si)
     
     // usually because of WvTask, we might get here without having finished
     // the _last_ set of sure_thing streams...
+    // 
+    // FIXME: this isn't really a good fix.  It doesn't deal properly with
+    // the case where a continue_selectable callback is called by someone
+    // *other* than WvStreamList... eg. WvStreamClone calling its cloned
+    // callback().
+    // 
+    // FIXME: this hack makes it so calling select() on this object from
+    // its own callback always returns true.  This is why we can't apply
+    // this hack inside WvStreamClone.
     if (running_callback)
 	return true;
     
