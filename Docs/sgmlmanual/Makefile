@@ -43,7 +43,7 @@ IMGFILES=$(shell [ -d img ] && find img -type f)
 		}					\
 							\
 		{ print; }				\
-		' >$@
+		' | cat -s >$@
 
 %.html: %.sgml HTML.dsl ${IMGFILES}
 	${MAKE} dirimages

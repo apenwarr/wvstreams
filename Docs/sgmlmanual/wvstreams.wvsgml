@@ -1,23 +1,16 @@
 <!doctype book public "-//Davenport//DTD DocBook V3.0//EN">
-
 <book id="index">
 
 
-<title>My Short SGML Book</title>
+<title>Programmer's Guide to the WvStreams Library</title>
 
 <bookinfo>
 <bookbiblio>
 <authorgroup>
-<author>
-<firstname>George</firstname>
-<surname>Tirebiter</surname>
-</author>
+<corpauthor>Worldvisions Computer Technology, Inc.</corpauthor>
 </authorgroup>
 </bookbiblio>
 </bookinfo>
-
-<toc></toc>
-<lot></lot>
 
 <preface>
 <title>Introduction</title>
@@ -26,41 +19,28 @@ Short paragraph.
 
 </preface>
 
-<part>
-<title>This Part Is First</title>
-
-<partintro>
-<title>Introducing This Part</title>
-
+WVPART(first, This Part Is First,
+WVPARTINTRO(Introducing This Part,
 This Part is like no other Part.
-
-</partintro>
+)
 
 WVCHAPTER(bork, A Bork Chapter,
-
   This is a fun para
   
   This too
   
   Whee!
-  
 )
 
-<chapter id="chappy">
-<title>A Chapter</title>
-
+WVCHAPTER(chappy, A Chapter,
 Short paragraph.
+)
 
-</chapter>
-
-<chapter id="wappy">
-<title>Another Chapter</title>
-
+WVCHAPTER(wappy, Another Chapter,
 Short paragraph.
+)
 
-</chapter>
-
-</part>
+)
 
 <part>
 <title>This Part Is Second</title>
