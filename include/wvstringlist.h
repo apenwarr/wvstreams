@@ -14,11 +14,22 @@
 
 DeclareWvList2(WvStringListBase, WvString);
 
+/**
+ * This is a WvList of WvStrings, and is a really handy way to parse
+ * strings. If you ever find yourself using strtok(3) or strpbrk(3), 
+ * or find yourself needing to parse a line of input, WvStringList, 
+ * WvStringList::split(), and WvStringList::popstr() are probably what you 
+ * want, and avoid all sorts of nasty security bugs caused by doing it any 
+ * other way.
+ */
 class WvStringList : public WvStringListBase
 {
     // copy constructor: not defined anywhere!
     WvStringList(const WvStringList &l);
 public:
+    /**
+     * Instatiate a new WvStringList()
+     */
     WvStringList() {}
     
     /**
