@@ -7,8 +7,8 @@
 #ifndef __WVTYPEDENCODER_H
 #define __WVTYPEDENCODER_H
 
-#include "wvbufbase.h"
 #include "wvencoder.h"
+#include "wvbufbase.h"
 
 /**
  * This template facilitates the creation and use of encoders

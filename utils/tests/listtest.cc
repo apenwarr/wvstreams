@@ -10,7 +10,6 @@
  * 	Dingy: 5
  */
 
-#include "wvlinklist.h"
 #include "wvstringlist.h"
 #include <stdio.h>
 

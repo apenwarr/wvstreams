@@ -247,6 +247,20 @@ WVTEST_MAIN("callbacks")
 }
 
 
+static void ccb_isok(WvStream &s)
+{
+    WVPASS(!s.isok());
+}
+
+
+WVTEST_MAIN("closecallback-isok")
+{
+    WvStream s;
+    s.setclosecallback(ccb_isok);
+    s.close();
+}
+
+
 // autoforward and various buffer-related tests
 WVTEST_MAIN("autoforward and buffers")
 {

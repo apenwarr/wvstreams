@@ -7,8 +7,8 @@
 #ifndef __WVBUFFER_H
 #define __WVBUFFER_H
  
-#include "wvbufbase.h"
 #include "wvstring.h"
+#include "wvbufbase.h"
 
 /***** Specialization for 'unsigned char' buffers *****/
 

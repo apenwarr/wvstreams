@@ -7,9 +7,9 @@
 #ifndef __WVSCATTERHASH_H
 #define __WVSCATTERHASH_H
 
-#include "wvxplc.h"   // for deletev.  ick.
 #include "wvhash.h"
 #include "wvsorter.h"
+#include "wvxplc.h"   // for deletev.  ick.
 #include <sys/types.h>
 
 #define REBUILD_LOAD_FACTOR 0.45
