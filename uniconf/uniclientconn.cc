@@ -93,7 +93,7 @@ WvString UniClientConn::readmsg()
         }
         else
         {
-            if (! isok())
+            if (!isok())
             {
                 // possibly left some incomplete command behind
                 msgbuf.zap();
@@ -101,7 +101,8 @@ WvString UniClientConn::readmsg()
             return WvString::null;
         }
     }
-    log("Read: %s\n", word);
+    if (!!word)
+	log("Read: %s\n", word);
     return word;
 }
 

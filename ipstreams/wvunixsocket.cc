@@ -6,6 +6,7 @@
  */
 #include "wvstreamlist.h"
 #include "wvunixsocket.h"
+#include "wvmoniker.h"
 
 #if 0
 // FIXME: this is needed on BSD
@@ -25,6 +26,14 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <errno.h>
+
+
+static IWvStream *creator(WvStringParm s, IObject *, void *)
+{
+    return new WvUnixConn(s);
+}
+
+static WvMoniker<IWvStream> reg("unix", creator);
 
 
 WvUnixConn::WvUnixConn(int _fd, const WvUnixAddr &_addr) :

@@ -13,8 +13,10 @@
 #include "wvstreamclone.h"
 #include "wvmoniker.h"
 
-static IWvStream *creator(WvStringParm, IObject *obj, void *)
+static IWvStream *creator(WvStringParm s, IObject *obj, void *)
 {
+    if (!obj)
+	obj = wvcreate<IWvStream>(s);
     return new WvStreamClone(mutate<IWvStream>(obj));
 }
 
