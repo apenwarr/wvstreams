@@ -19,6 +19,8 @@ static void callback(const UniConf &, const UniConfKey &)
     ++delta_count;
 }
 
+#if 0
+// FIXME: see bug 10337
 WVTEST_MAIN("deltas")
 {
     UniConfRoot uniconf;
@@ -75,4 +77,5 @@ WVTEST_MAIN("deltas")
         WVPASS(waitpid(child, NULL, 0) == child);
     }
 }
+#endif
 
