@@ -22,7 +22,7 @@ class WvTaskMan;
 class WvTask
 {
     friend WvTaskMan;
-    typedef void TaskFunc(WvTaskMan &man, void *userdata);
+    typedef void TaskFunc(void *userdata);
     
     static int taskcount, numtasks, numrunning;
     WvString name;
@@ -48,8 +48,6 @@ public:
     void recycle();
 };
 
-
-int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 
 DeclareWvList(WvTask);
 

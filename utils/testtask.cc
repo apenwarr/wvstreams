@@ -7,11 +7,11 @@
 #include "wvtask.h"
 #include <unistd.h> // for sleep()
 
-
 WvTask *ga, *gb;
 
+WvTaskMan *gman;
 
-void gentask(WvTaskMan &man, void *userdata)
+void gentask(void *userdata)
 {
     char *str = (char *)userdata;
     int count = 0, delay = 0;
@@ -24,12 +24,12 @@ void gentask(WvTaskMan &man, void *userdata)
 	usleep(delay*1000);
 	if (count % 2)
 	{
-	    if (man.whoami() == ga)
+	    if (gman->whoami() == ga)
 	    {
 		if (gb)
 		{
 		    printf("Doing gb:\n");
-		    man.run(*gb, 400);
+		    gman->run(*gb, 400);
 		}
 	    }
 	    else
@@ -37,12 +37,12 @@ void gentask(WvTaskMan &man, void *userdata)
 		if (ga)
 		{
 		    printf("Doing ga:\n");
-		    man.run(*ga, 400);
+		    gman->run(*ga, 400);
 		}
 	    }
 	}
 	
-	delay = man.yield();
+	delay = gman->yield();
     }
     
     printf("Gentask ending %s\n", str);
@@ -53,6 +53,7 @@ int main()
 {
     WvTaskMan man;
     
+    gman = &man;
     ga = man.start("atask", gentask, (void *)"a");
     gb = man.start("btask", gentask, (void *)"b");
     

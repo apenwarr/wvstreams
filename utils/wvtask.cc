@@ -17,10 +17,14 @@
 # define Dprintf(fmt, args...)
 #endif
 
+
+int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
+
+
 WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 {
     stacksize = _stacksize;
-    running = false;
+    running = recycled = false;
     
     tid = ++taskcount;
     numtasks++;
@@ -252,7 +256,7 @@ void WvTaskMan::do_task()
 	    Dprintf("stackmaster 6\n");
 	    if (task->func && task->running)
 	    {
-		task->func(*this, task->userdata);
+		task->func(task->userdata);
 		task->name = "DEAD";
 		task->running = false;
 		task->numrunning--;

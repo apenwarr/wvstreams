@@ -14,9 +14,12 @@
 #include "wvstring.h"
 #include "wvbuffer.h"
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
+#include <sys/time.h>
 #include <errno.h>
 
 class WvAddr;
+class WvTask;
+class WvTaskMan;
 
 class WvStream
 {
@@ -26,6 +29,7 @@ public:
     // constructor to create a WvStream from an existing file descriptor.
     // The file descriptor is closed automatically by the destructor.  If
     // this is undesirable, duplicate it first using dup().
+    //
     WvStream(int _fd);
     virtual ~WvStream();
     
@@ -34,6 +38,7 @@ public:
     //   call it yourself from your destructor.  WvStream::~WvStream()
     //   can only call WvStream::close() because of the way virtual
     //   functions work in C++.
+    // 
     virtual void close();
     
     // return the Unix file descriptor associated with this stream
@@ -46,6 +51,7 @@ public:
     // the error, -1 for a special error string (which you can obtain with
     // errstr()) or 0 on end of file.  If isok() is true, returns an
     // undefined number.
+    // 
     virtual int geterr() const;
     virtual const char *errstr() const;
     
@@ -57,6 +63,7 @@ public:
     // unbuffered I/O functions; these ignore the buffer, which is
     // handled by read() and write().  Don't call these functions unless
     // you have a _really_ good reason.
+    // 
     virtual size_t uread(void *buf, size_t count);
     virtual size_t uwrite(const void *buf, size_t count);
     
@@ -79,6 +86,7 @@ public:
     // read at once.  (Useful for processing Content-Length headers,
     // etc.)  Use count==0 to disable this feature.  getline() sets it to 0
     // automatically.
+    // 
     void queuemin(size_t count)
         { queue_min = count; }
     
@@ -89,6 +97,7 @@ public:
     // force write() to always buffer output.  This can be more efficient
     // if you write a lot of small segments and want to "coagulate" them
     // automatically.  To flush the output buffer, use flush() or select().
+    // 
     void delay_output(bool is_delayed)
         { outbuf_delayed_flush = is_delayed; }
     
@@ -100,6 +109,7 @@ public:
     // the buffer empties, close the stream.  If msec_timeout seconds pass,
     // close the stream.  After the stream closes, it will become !isok()
     // (and a WvStreamList can delete it automatically)
+    // 
     void flush_then_close(int msec_timeout);
     
     // add appropriate fd to rfd, wfd, and efd sets if this stream can be
@@ -107,6 +117,7 @@ public:
     // be ready for one of the requested operations, in which case the
     // caller should not do an actual select().  This function is only
     // called for a stream where isok() returns true.
+    // 
     struct SelectInfo {
 	fd_set read, write, except;
 	bool readable, writable, isexception;
@@ -117,6 +128,7 @@ public:
     
     // return 'true' if this object is in the sets r, w, or x.  Called
     // from within select() to see if the object matches.
+    // 
     virtual bool test_set(SelectInfo &si);
 
     // return true if any of the requested features are true on the stream.
@@ -128,13 +140,35 @@ public:
     bool select(time_t msec_timeout,
 		bool readable = true, bool writable = false,
 		bool isexception = false);
+    
+    // return to the caller from execute(), but don't really return exactly;
+    // this uses WvTaskMan::yield() to return to the caller of callback()
+    // without losing our place in execute() itself.  So, next time someone
+    // calls callback(), it will be as if continue_select() returned.
+    // 
+    // NOTE: execute() will won't be called recursively this way, but any
+    // other member function might get called, or member variables changed,
+    // or the state of the world updated while continue_select() runs.  Don't
+    // assume that nothing has changed after a call to continue_select().
+    // 
+    // NOTE 2: if you're going to call continue_select(), you should set
+    // uses_continue_select=true before the first call to callback().
+    // Otherwise your WvTask struct won't get created.
+    // 
+    // NOTE 3: if msec_timeout >= 0, this uses WvStream::alarm().
+    // 
+    bool uses_continue_select;
+    size_t personal_stack_size;	// stack size to reserve for continue_select()
+    void continue_select(time_t msec_timeout);
 
     // get the remote address from which the last data block was received.
     // May be NULL.  The pointer becomes invalid upon the next call to read().
+    // 
     virtual const WvAddr *src() const;
     
     // define the callback function for this stream, called whenever
     // the callback() member is run, and passed the 'userdata' pointer.
+    // 
     void setcallback(Callback *_callfunc, void *_userdata)
         { callfunc = _callfunc; userdata = _userdata; }
     
@@ -146,8 +180,13 @@ public:
     static void autoforward_callback(WvStream &s, void *userdata);
     
     // if the stream has a callback function defined, call it now.
-    void callback()
-        { if (callfunc) callfunc(*this, userdata); else execute(); }
+    // otherwise call execute().
+    // 
+    void callback();
+    
+    // set an alarm, ie. select() will return true after this many ms.
+    // The alarm is cleared when callback() is called.
+    void alarm(time_t msec_timeout);
     
     // print a preformatted WvString to the stream.
     // see the simple version of write() way up above.
@@ -157,11 +196,11 @@ public:
     // preformat and print a string.
     size_t print(const WvString &s)
         { return write(s); }
-    inline size_t print(WVSTRING_FORMAT_DECL)
+    size_t print(WVSTRING_FORMAT_DECL)
 	{ return write(WvString(WVSTRING_FORMAT_CALL)); }
     size_t operator() (const WvString &s)
         { return write(s); }
-    inline size_t operator() (WVSTRING_FORMAT_DECL)
+    size_t operator() (WVSTRING_FORMAT_DECL)
         { return write(WvString(WVSTRING_FORMAT_CALL)); }
 
 private:
@@ -174,9 +213,12 @@ protected:
     WvString errstring;
     WvBuffer inbuf, outbuf;
     bool select_ignores_buffer, outbuf_delayed_flush;
-    size_t queue_min;
+    size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
-    time_t alarm_time;		// select() returns true at this time
+    struct timeval alarm_time;	// select() returns true at this time
+    
+    static WvTaskMan *taskman;
+    WvTask *task;
 
     // plain internal constructor to just set up internal variables.
     WvStream()
@@ -185,6 +227,11 @@ protected:
     // set the errnum variable and close the stream -- we have an error.
     void seterr(int _errnum);
     void seterr(const WvString &specialerr);
+    
+    // actually do the callback for an arbitrary stream.
+    // This is a static function so we can pass it as a function pointer
+    // to WvTask functions.
+    static void _callback(void *stream);
     
     // if no callback function is defined, we call execute() instead.
     // the default execute() function does nothing.

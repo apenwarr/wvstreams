@@ -6,6 +6,7 @@
  * arbitrary set of given files (which are usually devices, named pipes,
  * etc).  If a file is named '-', it refers to stdin/stdout.
  */
+#include "wvfile.h"
 #include "wvstreamlist.h"
 #include "wvtcp.h"
 #include "wvlog.h"
