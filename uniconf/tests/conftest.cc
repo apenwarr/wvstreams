@@ -472,6 +472,28 @@ int main()
     }
 
     {
+        wvcon->print("\n\n");
+        log("-- Generator List test begins\n");
+        
+        UniConfRoot root("list: readonly:ini:test.ini ini:test2.ini");
+        root["chickens"]["boob"].set("not_frank");
+
+        log("[chickens][bob] = %s\n", root["chickens"]["bob"].get());
+        log("[chickens][boob] = %s\n", root["chickens"]["boob"].get());
+
+        root["chickens"]["bob"].set("gooooblefish");
+        root["chickens"]["boob"].set("I like to wear funny hats");
+        log("Setting [chickens][bob] = gooooblefish  **(read only on top)\n");
+        log("Setting [chickens][boob] = I like to wear funny hats\n");
+
+        log("[chickens][bob] = %s\n", root["chickens"]["bob"].get());
+        log("[chickens][boob] = %s\n", root["chickens"]["boob"].get());
+
+        root.commit();
+
+    }
+
+    {
 	wvcon->print("\n\n");
 	log("-- IniFile test2 begins\n");
 	
