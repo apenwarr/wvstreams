@@ -14,37 +14,69 @@ protected:
 public:
     // Fake is a boring object type that we use for calling our "generic"
     // member function pointers.  Strangely, it crashes if Fake doesn't
-    // have a virtual table, so we have an empty virtual function make it
-    // happy.  (This is all a bit evil, but only because C++ sucks...)
+    // have a virtual table, so we have an empty virtual function to make it
+    // happy.  (This is all a bit evil, but only because C++ sucks.  When
+    // they pass me a callback, they _know_ which function I want to call; I
+    // don't need to resolve it at runtime...)
     struct Fake { virtual void silly() {} };
+    
+    // FakeFunc is a completely generic member-function pointer.  Actually the
+    // functions we _really_ call aren't part of the Fake class and probably
+    // have different parameters, but some hideous typecasts should fix that
+    // right up.
     typedef RET (Fake::*FakeFunc)();
+    typedef RET (*FakeGlobalFunc)();
     
     Fake *obj;
-    FakeFunc func;
+    
+    union {
+	FakeFunc func;
+	FakeGlobalFunc globalfunc;
+    };
     
     WvCallbackBase::WvCallbackBase(void *_obj, FakeFunc _func)
 	: obj((Fake *)_obj), func(_func)
 	{ }
     
+    WvCallbackBase::WvCallbackBase(FakeGlobalFunc _func)
+	: obj(0), globalfunc(_func)
+	{ }
+    
     bool operator== (const WvCallbackBase &cb) const
-        { return obj==cb.obj && func==cb.func; }
+        { if (obj)
+	    return obj==cb.obj && func==cb.func;
+	  else
+	    return !cb.obj && globalfunc == cb.globalfunc;
+	}
+    
+    operator bool () const
+        { return obj || globalfunc; }
 };
 
 
 // Declare WvCallback#, an object derived from WvCallbackBase that takes
 // n parameters.  This macro is mainly for use later in this header
-// file, to avoid duplicated code.
+// file, to avoid duplicated code.  It's supposed to be part of a template
+// declaration - be careful!
 #define __MakeWvCallback(n, decls, parms) \
     class WvCallback##n : public WvCallbackBase<RET> \
     { \
     protected: \
     public: \
 	typedef RET (Fake::*Func) decls; \
+	typedef RET (*GlobalFunc) decls; \
 	WvCallback##n(Fake *_obj, Func _func) \
 	    : WvCallbackBase<RET>(_obj, (FakeFunc)_func) { } \
+	WvCallback##n(GlobalFunc _func) \
+	    : WvCallbackBase<RET>((FakeGlobalFunc)_func) { } \
     public: \
 	RET operator() decls  \
-	    { return ((*obj).*(Func)func) parms; } \
+	    { \
+	      if (obj) \
+		return ((*obj).*(Func)func) parms; \
+	      else \
+		return ((GlobalFunc)globalfunc) parms; \
+	    } \
     }
 
 // Derive WvCallback#_bound, an actual instance of WvCallback# that has a
@@ -64,8 +96,9 @@ public:
     }
 
 
-// declare WvCallback# and WvCallback#_bound classes for 0, 1, 2, 3,
-// and 4 parameters (we can add more parameters later, if necessary)...
+// declare WvCallback# and WvCallback#_bound classes for 0 through 6
+// parameters (we can add more parameters later, if necessary, by adding
+// more declarations below)
 
 template <class RET>
     __MakeWvCallback(0, (), ());
