@@ -266,7 +266,101 @@ WVPART(streams, The Streams Library,
   WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
  )
  
- WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams, x)
+ WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams,
+  
+  WvStreamList is one of the most important parts of the WvStreams library.
+  Almost every real WvStreams program (in contrast with all the preceding
+  examples) involves at least one WvStreamList.  We would have mentioned it
+  much sooner, but we thought it would be nice to have a few different kinds
+  of streams to play with before we started creating lots of them at a time.
+
+  Fundamentally, what WvStreamList does is allow you to select() on more
+  than one stream at a time.  That way you can, for example, wait for
+  multiple TCP connections to send you data, and wake up immediately as soon
+  as any one of them is available.  Without the magic of WvStreamList, there
+  is no good way to wait for multiple streams simultaneously.  There are,
+  however, a couple of bad ways, which we will mention shortly just so you
+  don't try them.
+  
+  WVSECT1(wvstreamlistbadidea, Don't do this,
+  
+  Don't try this:
+  
+  WVEXAMPLE(wvstreamlistex.cc)
+  
+  It will fail in three different ways depending on the value of X.
+  
+  If X==-1, each select() statement waits forever for data.  That means in
+  order to print a snorkle (which should appear once per second), you must
+  first print a foo (which only happens once every three seconds).  That's
+  bad enough, but some streams might be almost completely idle, so you
+  certainly can't get away with doing that.
+  
+  If X==0, we never wait at all.  This will appear to work properly -- if
+  you run the program, the snorkles and foos will show up at the right time.
+  But unfortunately, your program will spin in the main loop, and take 100%
+  of the CPU unnecessarily.
+  
+  We can compromise by making X==1000 instead.  That way, each select()
+  statement will give up after 1 second.  Since the snorkles only happen
+  once per second, that should be okay.  However, it's not perfect -- the
+  snorkles should appear _exactly_ one second apart, but you can't guarantee
+  that using this technique.  It'll be somewhere between zero and one
+  seconds, depending on random luck.  Besides, the whole point of this
+  chapter is there's a better way, so don't write programs like the one above.
+  
+  )
+  
+  WVSECT1(wvstreamlistgood, Do this instead,
+  
+    Here's a better way to choose between two lists, using WvStreamList.  As
+    you might have guessed, WvStreamList is a type of WvLinkList that
+    contains WvStreams.  It's also a stream itself, so (among other things)
+    you can select() on a WvStreamList and include one WvStreamList inside
+    another.
+    
+    But let's keep it simple for now:
+    
+    WVEXAMPLE(wvstreamlistex2.cc)
+    
+    A streamlist is always okay (isok() == true) because you can always add
+    and remove streams from it.  That's why our main loop is checking
+    for "okayness" of the two main streams, rather of the list.
+  
+    But also notice the contents of the main loop.  We select() on the list,
+    and if it returns true, we then callback() the list.  What's happening
+    there?
+    
+    What happens is this.  WvStreamList::select() will return true if the
+    select() of any of its member streams would return true.  (It doesn't
+    actually _call_ the select() function of each of its member streams, but
+    the idea is the same.  That's why WvStreamList is magic.)  When you run
+    WvStreamList::callback(), it calls back all the member streams that
+    would have returned true to a select() call.
+    
+    If you give select() a delay (in this case, infinity), it will wait
+    until any one of the member streams is ready.
+
+    This mechanism increases fairness between streams, in case you have a
+    lot of high-bandwidth streams and you're having trouble keeping up.  If
+    more than one stream is ready, callback() will call each one
+    sequentially before it returns.  That way, no one stream will get
+    priority over the others.
+    
+  )
+  
+  WVSECT1(wvstreamlistfun, An Interesting Example,
+
+    Now that we've introduced all the pieces, we can have our first
+    interesting WvStream example by throwing several pieces together. Here's
+    a program that prints messages every once in a while through a WvPipe
+    and using timeouts, while you talk to your modem device via the console.
+
+    WVEXAMPLE(wvstreamfunex.cc)
+    
+  )
+
+ )
  
  WVCHAPTER(magicstreams, Some Magical Streams,
   WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream, x)
@@ -275,14 +369,8 @@ WVPART(streams, The Streams Library,
  )
  
  WVCHAPTER(unusualstreams, Some Unusual Streams,
- 
-   WVSECT1(wvtimestream, WvTimeStream - timed events,
-     Not written yet.
-   )
-   
-   WVSECT1(wvprotostream, WvProtoStream - a protocol state machine,
-     Not written yet.
-   )
+   WVSECT1(wvtimestream, WvTimeStream - timed events, x)
+   WVSECT1(wvprotostream, WvProtoStream - a protocol state machine, x)
  )
  
 )

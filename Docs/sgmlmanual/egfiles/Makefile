@@ -1,3 +1,4 @@
+TOPDIR=$(shell pwd)/../../weaver
 include $(TOPDIR)/rules.mk
 
 W = ../../weaver/src

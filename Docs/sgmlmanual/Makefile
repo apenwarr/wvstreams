@@ -9,12 +9,14 @@ pdf: wvstreams.pdf
 
 IMGFILES=$(shell [ -d img ] && find img -type f)
 
+ALL_WVSGML=$(shell /bin/ls *.wvsgml 2>/dev/null)
+
 %.verify: %.sgml
 	# Syntax check
 	nsgmls $< >/dev/null
 	# Syntax check passed
 
-%.sgml: %.wvsgml *.m4 *.wvsgml Makefile
+%.sgml: %.wvsgml *.m4 $(ALL_WVSGML) Makefile
 	@echo Preprocessing $< to $@...
 	@M4PATH=egfiles:../weaver/src m4 sgmlmacros.m4 $< | awk '			\
 		BEGIN {					\
@@ -81,6 +83,14 @@ IMGFILES=$(shell [ -d img ] && find img -type f)
 	cd $*.html.tmp && jade -t sgml -d ../HTML.dsl ../$*.sgml
 	mv $*.html.tmp $@
 
+%.rtf: %.sgml ${IMGFILES}
+	$(MAKE) dirimages htmlimages
+	rm -f $@
+	jade -t rtf -o $*.rtf.tmp \
+		-d /usr/lib/dsssl/stylesheets/docbook/print/docbook.dsl $<
+	cat $*.rtf.tmp | sed 's,"img/\(.*\)\.[^.]*","img.tmp/\1.gif",g' >$@
+	rm -f $*.rtf.tmp
+
 %.tex: %.sgml
 	rm -f $@
 	jade -t tex -o $*.tex.tmp \
@@ -122,7 +132,7 @@ img.tmp/%.gif: img.tmp/%.ppm
 img.tmp/%.ppm: img.tmp/%.ps
 	gs -q -dNOPAUSE -sDEVICE=ppm -r75x75 -sOutputFile=$@ $< -c quit
 
-includes: $(shell grep 'include(.*)' *.wvsgml </dev/null | sed 's/^.*include(\(.*\)).*$$/\1/')
+includes: $(shell grep 'include(.*)' $(ALL_WVSGML) </dev/null | sed 's/^.*include(\(.*\)).*$$/\1/')
 	
 images: htmlimages teximages
 
@@ -147,6 +157,6 @@ jadetex.fmt:
 
 clean:
 	$(MAKE) -C egfiles clean
-	rm -f *~ *.fmt *.tex *.ps *.pdf *.dvi *.aux *.log HTML.manifest
+	rm -f *~ *.fmt *.tex *.ps *.pdf *.dvi *.aux *.log *.rtf HTML.manifest
 	rm -rf *.html *.tmp
-	rm -f $$(/bin/ls *.wvsgml | sed 's/\.wvsgml/.sgml/')
+	rm -f $$(echo "$(ALL_WVSGML)" | sed 's/\.wvsgml/.sgml/g')
