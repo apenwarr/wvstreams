@@ -376,10 +376,10 @@ void WvConf::set(WvStringParm section, WvStringParm entry,
 	/* fprintf(stderr, "cfg.set: set [%s]%s = %s\n",
 		(const char *)section, (const char *)entry,
 		(const char *)value ?: "!!!"); */
-    }
     
-    s->set(entry, value);
-    dirty = true;
+	s->set(entry, value);
+	dirty = true;
+    }
 }
 
 
@@ -430,8 +430,10 @@ void WvConf::delete_section(WvStringParm section)
 {
     WvConfigSection *s = (*this)[section];
     if (s)
+    {
 	unlink(s);
-    dirty = true;
+	dirty = true;
+    }
 }
 
 
