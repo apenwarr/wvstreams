@@ -7,7 +7,9 @@
 #ifndef __WVXPLC_H
 #define __WVXPLC_H
 
+#ifndef UNSTABLE
 #define UNSTABLE
+#endif
 
 #include <xplc/IObject.h>
 
