@@ -151,6 +151,8 @@ void WvIPRouteList::set_kernel()
     // now delete outdated routes.
     for (oi.rewind(); oi.next(); )
     {
+	if (oi().metric == 99) continue; // "magic" metric for manual override
+	
 	for (ni.rewind(); ni.next(); )
 	    if (ni() == oi()) break;
 	
