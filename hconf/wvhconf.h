@@ -169,7 +169,8 @@ public:
     void save();
     
     // a handy function to print a copy of this subtree to a stream.
-    void dump(WvStream &s);
+    // if everything=true, also prints objects with null values.
+    void dump(WvStream &s, bool everything = false);
     
     class Iter;
     class RecursiveIter;

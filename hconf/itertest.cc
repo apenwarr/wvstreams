@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Test for the WvHConf::Iter object.
+ * Test for the WvHConf::Iter objects.
  */
 #include "wvhconfini.h"
 #include "wvhconfiter.h"

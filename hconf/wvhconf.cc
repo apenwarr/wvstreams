@@ -275,9 +275,9 @@ void WvHConf::save()
 }
 
 
-void WvHConf::dump(WvStream &s)
+void WvHConf::dump(WvStream &s, bool everything)
 {
-    if (!!value)
+    if (everything || !!value)
     {
 	s.print("  %s%s%s%s%s%s %s = %s\n",
 	        child_dirty, dirty,
@@ -290,7 +290,7 @@ void WvHConf::dump(WvStream &s)
     {
 	WvHConfDict::Iter i(*children);
 	for (i.rewind(); i.next(); )
-	    i->dump(s);
+	    i->dump(s, everything);
     }
 }
 
