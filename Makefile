@@ -8,4 +8,3 @@ include vars.mk
 include rules.mk
 
 all: $(TARGETS)
-

@@ -6,9 +6,7 @@
  */
 
 #include "wvinterface.h"
-
-#if 1
-// FIXME: this file doesn't compile on anything else than Linux.
+#ifdef ISLINUX
 
 #include "wvsubproc.h"
 #include "wvfile.h"
@@ -679,8 +677,6 @@ bool WvInterfaceDict::on_local_net(const WvIPNet &addr)
 
 #else
 
-WvInterfaceDictBase WvInterfaceDict::slist(15);
-
 int WvInterface::getinfo(struct ifreq *ifr, int ioctl_num) { return 0; }
 void WvInterface::fill_rte(struct rtentry *rte, char *ifname,
                   const WvIPNet &dest, const WvIPAddr &gw,
@@ -719,4 +715,4 @@ void WvInterfaceDict::update() {}
 bool WvInterfaceDict::islocal(const WvAddr &addr) { return true; }
 bool WvInterfaceDict::on_local_net(const WvIPNet &addr) { return true; }
 
-#endif //
+#endif
