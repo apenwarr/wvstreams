@@ -1,9 +1,11 @@
 #Remember to set TOPDIR to a directory containing wvrules.mk!
 ifeq ($(TOPDIR),)
 TOPDIR=../../..
+WVSTREAMS_SRC=$(TOPDIR)
 endif
 
 STATIC=1
+
 include $(TOPDIR)/wvrules.mk
 
 LIBS=-L$(TOPDIR) -lwvstreams -lwvutils -lcrypto 
