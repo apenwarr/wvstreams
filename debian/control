@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Simon Law <sfllaw@debian.org>
 Uploaders: James Morrison <phython@debian.org>, Patrick Patterson <ppatters@debian.org>
-Build-Depends: debhelper (>> 4.0.0), fftw-dev, libdb4.2-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, libxplc0.3.10-dev, zlib1g-dev
+Build-Depends: debhelper (>> 4.0.0), fftw-dev, libdb4.2-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, libxplc0.3.11-dev, zlib1g-dev
 Build-Depends-Indep: doxygen
 Standards-Version: 3.6.1
 
