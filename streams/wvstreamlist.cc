@@ -27,7 +27,7 @@ bool WvStreamList::select_setup(SelectInfo &si)
     sure_thing.zap();
 
     Iter i(*this);
-    for (i.rewind(); i.cur() && i.next(); )
+    for (i.rewind(), i.next(); i.cur(); )
     {
 	WvStream &s = i;
 	
@@ -47,6 +47,8 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	
 	if (s.isok() && s.select_setup(si))
 	    sure_thing.append(&s, false);
+	
+	i.next();
     }
     
     return one_dead || !sure_thing.isempty();

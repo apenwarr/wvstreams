@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <linux/sockios.h>
 #include <errno.h>
+#include <assert.h>
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
@@ -48,7 +49,6 @@ int WvInterface::getinfo(struct ifreq *ifr, int ioctl_num)
     ifr->ifr_addr.sa_family = AF_INET;
     
     retval = ioctl(sock, ioctl_num, ifr);
-    valid = retval ? false : true;
     close(sock);
     return retval;
 }
@@ -625,6 +625,8 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
 	    return true;
     }
     
+    assert((*this)["eth0"]->valid);
+
     return false;
 }
 
