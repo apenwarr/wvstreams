@@ -12,7 +12,12 @@
 UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, bool automount) :
     top(_top), log("UniConfClient"), dict(5)
 {
-    conn = new UniConfConn(stream);
+    // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
+    // actually try to finish connecting until in the first pre_select.
+     if (stream->select(0, true, true, false) && stream->isok())
+        conn = new UniConfConn(stream);
+    else
+        conn = NULL;
     waitforsubt = false;
     if (automount)
         top->mount(this);
@@ -20,9 +25,10 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, bool automount) :
 
 UniConfClient::~UniConfClient()
 {
-    if (conn && conn->isok())
+    if (conn)
     {
-        conn->print("quit\n");   
+        if (conn->isok())
+            conn->print("quit\n");   
         delete conn;
     }
 }
@@ -161,10 +167,9 @@ void UniConfClient::update(UniConf *&h)
 
     // If we're waiting, we KNOW the value is coming if we don't have it yet.
     if (h->waiting && !data && conn->isok())
-        conn->select(-1, true, false, false);
-    
-    if (conn->select(0,true, false, false))
     {
+        conn->select(-1, true, false, false);
+
         execute();
         data = dict[lookfor];
     }
