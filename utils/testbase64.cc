@@ -8,29 +8,37 @@
 #include "base64.h"
 #include <stdio.h>
 
-int main( int argc, char ** argv )
-/********************************/
+int main(int argc, char **argv)
 {
-    char * str;
+    char *str;
     bool dec = false;
 
-    if( argc == 3 && !strcmp( argv[1], "-d" ) ) {
+    if (argc == 3 && !strcmp(argv[1], "-d"))
+    {
         str = argv[2];
         dec = true;
-    } else if( argc == 2 )
+    }
+    else if (argc == 2)
         str = argv[1];
     else
         str = "<insert secret message here>";
 
-    if( !dec ) {
-        char * enc = base64_encode( str, strlen(str) );
-        printf( "before:  %s\n"
-                "encoded: %s\n"
-                "decoded: %s\n", str, enc, base64_decode( enc, strlen(enc) ) );
-    } else {
-        char * decoded = base64_decode( str, strlen(str) );
-        printf( "encoded: %s\n"
-                "decoded: %s\n", str, decoded );
+    if (!dec)
+    {
+	WvBuffer b;
+        WvString enc = base64_encode(str, strlen(str));
+	base64_decode(enc, b);
+        printf("before:  %s\n"
+	       "encoded: %s\n"
+	       "decoded: %s\n",
+	       str, enc.cstr(), b.getstr().cstr());
+    }
+    else
+    {
+	WvBuffer b;
+        base64_decode(str, b);
+        printf("encoded: %s\n"
+	       "decoded: %s\n", str, base64_decode(str, b).getstr().cstr());
     }
     return( 0 );
 }
