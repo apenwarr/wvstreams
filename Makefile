@@ -134,8 +134,8 @@ install-uniconfd: uniconfd
 	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -d $(DESTDIR)$(localstatedir)/lib/uniconf
 	touch $(DESTDIR)$(localstatedir)/lib/uniconf/uniconfd.ini
-	$(INSTALL) -d $(DESTDIR)$(mandir)
-	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
+	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/man8
 
 uninstall:
 	$(tbd)
