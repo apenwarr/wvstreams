@@ -23,7 +23,7 @@ class WvTaskMan;
 
 class WvTask
 {
-    friend WvTaskMan;
+    friend class WvTaskMan;
     typedef void TaskFunc(void *userdata);
     
     static int taskcount, numtasks, numrunning;
@@ -56,7 +56,7 @@ DeclareWvList(WvTask);
 
 class WvTaskMan
 {
-    friend WvTask;
+    friend class WvTask;
     int magic_number;
     WvTaskList free_tasks;
     

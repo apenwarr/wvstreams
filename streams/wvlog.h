@@ -25,7 +25,7 @@ class WvLog;
 // or transmits log messages.
 class WvLogRcvBase
 {
-    friend WvLog;
+    friend class WvLog;
 protected:
     const char *appname(const WvLog *log) const;
     virtual void log(const WvLog *source, int loglevel,
@@ -45,7 +45,7 @@ DeclareWvList(WvLogRcvBase);
  */
 class WvLog : public WvStream
 {
-    friend WvLogRcvBase;
+    friend class WvLogRcvBase;
 public:
     enum LogLevel {
 	Critical = 0,

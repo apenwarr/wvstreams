@@ -14,7 +14,7 @@ class WvUDPListener;
 
 class WvUDPConn : public WvStream
 {
-    friend WvUDPListener;
+    friend class WvUDPListener;
     
 public:
     WvUDPConn(WvUDPListener *_parent, const WvIPPortAddr &_remaddr);
@@ -39,7 +39,7 @@ DeclareWvDict(WvUDPConn, WvIPPortAddr, remaddr);
 
 class WvUDPListener : public WvUDPStream
 {
-    friend WvUDPConn;
+    friend class WvUDPConn;
     WvUDPConnDict connlist;
     
 public:
