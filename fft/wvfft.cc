@@ -62,7 +62,7 @@ bool WvRealToComplexFFTEncoder::_reset()
 
 WvComplexToRealFFTEncoder::WvComplexToRealFFTEncoder(size_t _n) :
     n(_n), nbytes(n * sizeof(double)),
-    tmpbuf(nbytes),
+    tmpbuf(nbytes)
 {
     plan = rfftw_create_plan(_n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
 }
@@ -104,7 +104,7 @@ bool WvComplexToRealFFTEncoder::_reset()
 /***** WvPowerSpectrumEncoder *****/
 
 WvPowerSpectrumEncoder::WvPowerSpectrumEncoder(size_t _n) :
-    n(_n), half(_n / 2 + 1), mid((_n + 1) / 2)
+    n(_n), half(_n / 2 + 1), mid((_n + 1) / 2),
     nbytes(n * sizeof(double)), halfbytes(half * sizeof(double))
 {
 }
@@ -120,7 +120,7 @@ bool WvPowerSpectrumEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
             return ! flush;
         if (outbuf.free() < halfbytes)
             return ! flush;
-        double *datain = reinterpret_cast<double*>(
+        const double *datain = reinterpret_cast<const double*>(
             inbuf.get(nbytes));
         double *dataout = reinterpret_cast<double*>(
             outbuf.alloc(nbytes));
