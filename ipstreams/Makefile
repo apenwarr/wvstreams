@@ -11,13 +11,14 @@ default: all $(TESTS)
 
 all: ipstreams.libs
 
-ipstreams.libs: wvaddr.o wvtcp.o wvudp.o wvresolver.o wvhttp.o wvinterface.o \
+ipstreams.libs: wvaddr.o wvtcp.o wvudp.o wvresolver.o \
+		wvurl.o wvhttp.o wvhttppool.o wvinterface.o \
 		wviproute.o wvipaliaser.o wvipfirewall.o wvunixsocket.o \
 		../uniconf/uniconf.libs
 
 ipstreams.a: ipstreams.libs
 
-LIBS=$(EFENCE)
+#LIBS=$(EFENCE)
 $(TESTS): ipstreams.a
 
 clean:

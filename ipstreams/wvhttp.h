@@ -5,47 +5,11 @@
 #ifndef __WVHTTP_H
 #define __WVHTTP_H
 
+#include "wvurl.h"
 #include "wvtcp.h"
 #include "wvstreamclone.h"
 #include "wvresolver.h"
 #include "wvhashtable.h"
-
-class WvURL
-{
-public:
-    WvURL(WvStringParm url);
-    WvURL(const WvURL &url);
-    ~WvURL();
-    
-    bool isok() const
-        { return port != 0 && (resolving || addr != NULL); }
-    WvStringParm errstr() const
-        { return err; }
-    bool resolve(); // dns-resolve the hostname (returns true if done)
-
-    operator WvString () const;
-    
-    // not actually defined - this just prevents accidental copying
-    const WvURL &operator= (const WvURL &);
-    
-    // ONLY valid if resolve() returns true!
-    const WvIPPortAddr &getaddr() const
-        { return *addr; }
-    WvStringParm getfile() const
-        { return file; }
-    WvStringParm gethost() const
-        { return hostname; }
-    int getport() const
-        { return port; }
-    
-protected:
-    WvString hostname;
-    int port;
-    bool resolving;
-    WvResolver dns;
-    WvIPPortAddr *addr;
-    WvString file, err;
-};
 
 
 struct WvHTTPHeader
