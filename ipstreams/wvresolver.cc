@@ -77,7 +77,7 @@ static void namelookup(const char *name, WvLoopback *loop)
     // wait up to one minute...
     alarm(60);
     
-    for (;;)
+    for (int count = 0; count < 10; count++)
     {
 	he = gethostbyname(name);
 	if (he)
@@ -100,6 +100,15 @@ static void namelookup(const char *name, WvLoopback *loop)
 	    alarm(0);
 	    return; // not found; blank output
 	}
+	
+	// avoid spinning in a tight loop.
+	//
+	// sleep() is documented to possibly mess with the alarm(), so we
+	// have to make sure to reset the alarm here.  That's a shame,
+	// because otherwise it would timeout nicely after 60 seconds
+	// overall, not 60 seconds per request.
+	sleep(1);
+	alarm(60);
     }
 }
 
