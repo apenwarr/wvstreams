@@ -11,7 +11,7 @@
 
 WvDirIter::WvDirIter( WvString _dirname )
 /***************************************/
-: fname( "" ), dirname( _dirname )
+: dirname( _dirname )
 {
     dent = NULL;
     child = NULL;
@@ -46,14 +46,14 @@ void WvDirIter::rewind()
         rewinddir( d );
 }
 
-const struct stat& WvDirIter::operator () () const
-/************************************************/
-// if we have a child, call ITS operator ()... otherwise use st.
+const WvDirEnt& WvDirIter::operator () () const
+/*********************************************/
+// if we have a child, call ITS operator ()... otherwise use 'info'.
 {
     if( child )
         return( (*child) () );
     else
-        return( st );
+        return( info );
 }
 
 bool WvDirIter::next()
@@ -63,7 +63,6 @@ bool WvDirIter::next()
 {
     if( child ) {
         if( child->next() ) {
-            fname = child->fname;
             return true;
         } else {
             delete child;
@@ -73,6 +72,8 @@ bool WvDirIter::next()
 
     if( d ) {
         bool ok = false;
+        struct stat st;
+        WvString fname;
         do {
             dent = readdir( d );
             if( dent ) {
@@ -83,16 +84,39 @@ bool WvDirIter::next()
             }
         } while( dent && !ok );
 
-        // recurse next time?
-        if( dent && S_ISDIR( st.st_mode ) )
-            child = new WvDirIter( fname );
+        if( dent ) {
+            fill_info( fname, st );
+
+            // recurse next time?
+            if( S_ISDIR( info.mode ) )
+                child = new WvDirIter( info.fullname );
+        } else {
+            closedir( d );
+            d = NULL;
+        }
 
     } else
         dent = NULL;
 
-    if( dent == NULL )
-        fname = "";
-
     return( dent != NULL );
 }
 
+void WvDirIter::fill_info( WvString& fullname, struct stat& st )
+/**************************************************************/
+{
+    info.dev        = st.st_dev;
+    info.ino        = st.st_ino;
+    info.mode       = st.st_mode;
+    info.nlink      = st.st_nlink;
+    info.uid        = st.st_uid;
+    info.gid        = st.st_gid;
+    info.rdev       = st.st_rdev;
+    info.size       = st.st_size;
+    info.blksize    = st.st_blksize;
+    info.blocks     = st.st_blocks;
+    info.atime      = st.st_atime;
+    info.mtime      = st.st_mtime;
+    info.ctime      = st.st_ctime;
+
+    info.fullname   = fullname;
+}

@@ -16,6 +16,28 @@
 
 #include "wvstring.h"
 
+struct WvDirEnt
+/*************/
+{
+    // copied directly from struct stat
+    dev_t           dev;
+    ino_t           ino;
+    mode_t          mode;
+    nlink_t         nlink;
+    uid_t           uid;
+    gid_t           gid;
+    dev_t           rdev;
+    off_t           size;
+    unsigned long   blksize;
+    unsigned long   blocks;
+    time_t          atime;
+    time_t          mtime;
+    time_t          ctime;
+
+    // and, since it's useful
+    WvString        fullname;
+};
+
 class WvDirIter
 /*************/
 {
@@ -27,8 +49,7 @@ public:
     void rewind();
     bool next();
 
-    const struct stat& operator () () const;
-    WvString fname;     // updated by next()
+    const WvDirEnt& operator () () const;
 
 private:
     WvString dirname;
@@ -36,8 +57,11 @@ private:
     WvDirIter * child;
 
     struct dirent * dent;
-    struct stat st;
     DIR * d;
+
+    WvDirEnt        info;
+
+    void fill_info( WvString& fullname, struct stat& st );
 };
 
 #endif

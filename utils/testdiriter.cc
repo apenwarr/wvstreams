@@ -19,8 +19,8 @@ int main( int argc, char * argv[] )
 
     WvDirIter i( argv[1] );
     for( i.rewind(); i.next(); ) {
-        printf( "%s -- mode %u -- size %lu\n", (const char *) i.fname,
-                                               i().st_mode, i().st_size );
+        printf( "%s -- mode %u -- size %lu\n", (const char *) i().fullname,
+                                               i().mode, i().size );
     }
 
     return( 0 );
