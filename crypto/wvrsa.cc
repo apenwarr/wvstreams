@@ -53,16 +53,20 @@ WvRSAKey::~WvRSAKey()
 
 void WvRSAKey::init(WvStringParm keystr, bool priv)
 {
+    // Start out with everything nulled out...
     rsa = NULL;
+    pub = WvString::null;
+    prv = WvString::null;
     
     // unhexify the supplied key
     WvDynBuf keybuf;
-    if (! WvHexDecoder().flushstrbuf(keystr, keybuf, true) ||
-        keybuf.used() == 0)
+    if (!WvHexDecoder().flushstrbuf(keystr, keybuf, true) ||
+	keybuf.used() == 0)
     {
         seterr("RSA key is not a valid hex string");
         return;
     }
+    
     size_t keylen = keybuf.used();
     const unsigned char *key = keybuf.get(keylen);
     const unsigned char *p = key;
@@ -105,7 +109,7 @@ void WvRSAKey::pem2hex(WvStringParm filename)
 	return;
     }
 
-    rsa = PEM_read_RSAPrivateKey(fp,NULL,NULL,NULL);
+    rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
 
     fclose(fp);
 
