@@ -13,6 +13,7 @@
 #include "wvlog.h"
 
 struct ifreq;
+struct iwreq;
 struct rtentry;
 
 /** 
@@ -29,6 +30,9 @@ class WvInterface
     
     /** get/set information about an interface */
     int req(int ioctl_num, struct ifreq *ifr);
+
+    /** get/set information about a wireless interface */
+    int req(int ioctl_num, struct iwreq *ifr);
     
     /** used by addroute()/delroute() */
     void fill_rte(struct rtentry *rte, char ifname[17],
