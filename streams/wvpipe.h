@@ -56,7 +56,7 @@ public:
     // bool is false; otherwise, we redirect to the pipe.
     //
     // It is okay for the same WvStream to occur more than once.  Also,
-    // you must naturally make sure that the stream does not disappear
+    // you must naturally make sure that the stream doesn't disappear
     // before WvPipe does!
     WvPipe(const char *program, const char **argv,
 	   bool writable, bool readable, bool catch_stderr,
