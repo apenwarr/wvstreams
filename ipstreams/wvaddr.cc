@@ -586,6 +586,8 @@ void WvIPNet::normalize()
 	__u32 val = htonl(~(((__u32)1 << (32-bits())) - 1));
 	mask = WvIPAddr((unsigned char *)&val);
     }
+    else
+	mask = WvIPAddr(); // empty netmask
 }
 
 
