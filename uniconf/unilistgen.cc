@@ -10,6 +10,11 @@
 #include "wvmoniker.h"
 #include "wvtclstring.h"
 #include "wvstringlist.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniListGen);
+
+
 
 class UniListGen::IterIter : public UniConfGen::Iter
 {

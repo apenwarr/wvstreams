@@ -8,6 +8,10 @@
 #include "wvbuf.h"
 #include "wvtclstring.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniSubtreeGen);
+
 
 static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
 {

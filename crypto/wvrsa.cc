@@ -10,6 +10,7 @@
 #include "wvsslhacks.h"
 #include "wvrsa.h"
 #include "wvhex.h"
+#include "wvfileutils.h"
 
 /***** WvRSAKey *****/
 
@@ -114,7 +115,7 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
 
 WvString WvRSAKey::getpem(bool privkey)
 {
-    FILE *fp = tmpfile();
+    FILE *fp = wvtmpfile();
     const EVP_CIPHER *enc;
     
     if (!fp)

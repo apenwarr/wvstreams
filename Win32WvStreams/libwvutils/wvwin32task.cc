@@ -5,7 +5,9 @@
  */
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
+#endif
 #include <windows.h>
 #include <winbase.h>
 
@@ -49,12 +51,8 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 WvTask::~WvTask()
 {
     numtasks--;
-    
     if (running)
-    {
 	numrunning--;
-    }
-    
     magic_number = 42;
 }
 
@@ -125,7 +123,6 @@ WvTaskMan::WvTaskMan()
     
     toplevel = ::ConvertThreadToFiber(0);
     assert(toplevel);
-
 }
 
 
@@ -179,7 +176,9 @@ int WvTaskMan::run(WvTask &task, int val)
     else
 	state = &old_task->mystate;
     
+    //fprintf(stderr, "taskman: switching from %p to %p\n", old_task, &task);
     ::SwitchToFiber(task.mystate);
+    //fprintf(stderr, "taskman: back in %p\n", old_task);
     
     // someone did yield() (if toplevel) or run() on our task; exit
     current_task = old_task;
@@ -193,7 +192,12 @@ int WvTaskMan::yield(int val)
     if (!current_task)
 	return 0; // weird...
     
+    WvTask *task = current_task;
+    //fprintf(stderr, "taskman: yielding from %p to toplevel\n", task);
+    current_task = 0; // toplevel
     ::SwitchToFiber(toplevel);
+    //fprintf(stderr, "taskman: return from yield in %p (%p)\n", current_task, task);
+    assert(current_task == task);
 
     int newval = 0;
     return newval;

@@ -83,6 +83,12 @@ public:
         assert(rfd == wfd);
         return rfd;
     }
+    
+    /** Make the fds on this stream blocking or non-blocking. */
+    void set_nonblock(bool nonblock);
+    
+    /** Make the fds on this stream close-on-exec or not. */
+    void set_close_on_exec(bool close_on_exec);
 
     /***** Overridden members *****/
     

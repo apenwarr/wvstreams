@@ -7,7 +7,12 @@
 
 WVTEST_MAIN("passwd_crypttest.cc")
 {
+#ifdef WIN32
+    srand(time(0));
+#else
     srandom(time(0));
+#endif
+
 
     char *blank, *word, *longword;
     WvString blank_result1, blank_result2, word_result, longword_result;
@@ -27,4 +32,5 @@ WVTEST_MAIN("passwd_crypttest.cc")
     WVFAIL(blank_result1 == blank_result2);
     WVPASS(!!word_result && word_result != "*");
     WVPASS(!!longword_result && longword_result != "*");
+    
 }

@@ -12,7 +12,9 @@
 #include "wvbuf.h"
 #include "wvbase64.h"
 #include "strutils.h"
-#include <execinfo.h>
+#ifndef _WIN32
+#include <execinfo.h> // FIXME: add a WvCrash feature for explicit dumps
+#endif
 
 #ifdef _WIN32
 #define ETIMEDOUT WSAETIMEDOUT
@@ -47,6 +49,8 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug2, "Deleting.\n");
+
+#ifndef _WIN32
     void* trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
@@ -55,6 +59,7 @@ WvHttpStream::~WvHttpStream()
         log(WvLog::Debug, ":%s", tracedump[i]);
     log(WvLog::Debug, "\n");
     free(tracedump);
+#endif
 
     if (geterr())
         log("Error was: %s\n", errstr());
@@ -65,7 +70,9 @@ WvHttpStream::~WvHttpStream()
 void WvHttpStream::close()
 {
     log("close called\n");
-    void* trace[10];
+    
+#ifndef _WIN32
+    void *trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
     log(WvLog::Debug, "TRACE");
@@ -73,8 +80,10 @@ void WvHttpStream::close()
         log(WvLog::Debug, ":%s", tracedump[i]);
     log(WvLog::Debug, "\n");
     free(tracedump);
+#endif
 
     log_urls();
+
     // assume pipelining is broken if we're closing without doing at least
     // one successful pipelining test and a following non-test request.
     if (enable_pipelining && max_requests > 1

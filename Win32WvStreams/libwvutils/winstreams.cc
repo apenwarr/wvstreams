@@ -17,3 +17,4 @@ public:
 };
 
 RunWinSockInitialize __runinitialize;
+void *_wvinitialize = &__runinitialize;

@@ -7,6 +7,10 @@
 #include "uniconf.h"
 #include "unicachegen.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniCacheGen);
+
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.

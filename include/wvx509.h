@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
  *
  * X.509 certificate management classes.
  */ 
@@ -36,12 +36,15 @@ public:
    /**
     * Type for the @ref encode() and @ref decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
+    * CertDER   = DER Encoded X.509 Certificate returned in Base64
+    * CertSMIME = SMIME "Certificate" usable for userSMIMECertificate ldap entry 
+    *             again in Base64
     * RsaPEM    = PEM Encoded RSA Private Key
     * RsaPubPEM = PEM Encoded RSA Public Key
     * RsaRaw    = Raw form of RSA Key (unused by most programs, FreeS/WAN
     * being the notable exception)
     */
-    enum DumpMode { CertPEM = 0, RsaPEM, RsaPubPEM, RsaRaw };
+    enum DumpMode { CertPEM = 0, CertDER, RsaPEM, RsaPubPEM, RsaRaw };
 
    /**
     * Initialize a blank X509 Object with the certificate *cert

@@ -11,18 +11,19 @@
 #include <time.h>
 #include <sys/types.h>
 #include <assert.h>
-#include <algorithm>
+#define __WVSTREAM_UNIT_TEST 1
 #include "wvstream.h"
 #include "wvtimeutils.h"
 #include "wvcont.h"
-
-using std::min;
-using std::max;
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
 #undef errno
 #define errno GetLastError()
+#ifdef __GNUC__
+#include <sys/socket.h>
+#endif
+#include "streams.h"
 #else
 #include <errno.h>
 #endif
@@ -30,13 +31,17 @@ using std::max;
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #if 0
-# define TRACE(x, y...) fprintf(stderr, x, ## y); fflush(stderr);
+# ifndef _MSC_VER
+#  define TRACE(x, y...) fprintf(stderr, x, ## y); fflush(stderr);
+# else
+#  define TRACE printf
+# endif
 #else
-#ifndef _MSC_VER
-# define TRACE(x, y...)
-#else
-# define TRACE
-#endif
+# ifndef _MSC_VER
+#  define TRACE(x, y...)
+# else
+#  define TRACE
+# endif
 #endif
 
 WvStream *WvStream::globalstream = NULL;
@@ -106,8 +111,10 @@ WvStream::~WvStream()
 
 void WvStream::close()
 {
+    TRACE("flushing in wvstream...\n");
     flush(2000); // fixme: should not hardcode this stuff
-    if (!! closecb)
+    TRACE("(flushed)\n");
+    if (!!closecb)
     {
         IWvStreamCallback cb = closecb;
         closecb = 0; // ensure callback is only called once
@@ -143,6 +150,7 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
     size_t len;
     
     len = s.read(buf, sizeof(buf));
+    // fprintf(stderr, "autoforward read %d bytes\n", (int)len);
     s2.write(buf, len);
 }
 
@@ -343,7 +351,7 @@ void WvStream::nowrite()
 
 void WvStream::maybe_autoclose()
 {
-    if (stop_read && stop_write && !outbuf.used() && !inbuf.used() && isok())
+    if (stop_read && stop_write && !outbuf.used() && !inbuf.used() && !closed)
 	close();
 }
 
@@ -360,9 +368,17 @@ bool WvStream::iswritable()
 }
 
 
-char *WvStream::blocking_getline(time_t wait_msec, char separator,
+char *WvStream::blocking_getline(time_t wait_msec, int separator,
 				 int readahead)
 {
+    // in fact, a separator of 0 would probably work fine.  Unfortunately,
+    // the parameters of getline() changed recently to not include
+    // wait_msec, so people keep trying to pass 0/-1 wait_msec in as the
+    // separator.  Stop them now, before they get confused.
+    assert(separator != 0);
+    assert(separator > 0);
+    assert(separator <= 255);
+    
     //assert(uses_continue_select || wait_msec == 0);
 
     struct timeval timeout_time;
@@ -375,6 +391,7 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
     // available.
     while (isok())
     {
+	// fprintf(stderr, "(inbuf used = %d)\n", inbuf.used()); fflush(stderr);
         queuemin(0);
     
         // if there is a newline already, we have enough data.
@@ -393,7 +410,9 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
             if (wait_msec < 0)
                 wait_msec = 0;
         }
-        
+	
+	// FIXME: this is blocking_getline.  It shouldn't
+	// call continue_select()!
         bool hasdata;
         if (wait_msec != 0 && uses_continue_select)
             hasdata = continue_select(wait_msec);
@@ -406,9 +425,11 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
         if (hasdata)
         {
             // read a few bytes
-            unsigned char *buf = inbuf.alloc(readahead);
+	    WvDynBuf tmp;
+            unsigned char *buf = tmp.alloc(readahead);
             size_t len = uread(buf, readahead);
-            inbuf.unalloc(readahead - len);
+            tmp.unalloc(readahead - len);
+	    inbuf.merge(tmp);
             hasdata = len > 0; // enough?
         }
 
@@ -439,7 +460,7 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
 }
 
 
-char *WvStream::continue_getline(time_t wait_msec, char separator,
+char *WvStream::continue_getline(time_t wait_msec, int separator,
 				 int readahead)
 {
     assert(false && "not implemented, come back later!");
@@ -493,6 +514,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	return true;
     }
     
+    WvTime stoptime = msecadd(wvtime(), msec_timeout);
+    
     // flush outbuf
     while (outbuf_was_used && isok())
     {
@@ -514,11 +537,13 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	
 	// since post_select() can call us, and select() calls post_select(),
 	// we need to be careful not to call select() if we don't need to!
-	if (!msec_timeout || !select(msec_timeout, false, true))
-        {
-            if (msec_timeout >= 0)
-                break;
-        }
+	// post_select() will only call us with msec_timeout==0, and we don't
+	// need to do select() in that case anyway.
+	if (!msec_timeout)
+	    break;
+	if (msec_timeout >= 0 
+	  && (stoptime < wvtime() || !select(msec_timeout, false, true)))
+	    break;
 	
 	outbuf_was_used = outbuf.used();
     }
@@ -620,6 +645,9 @@ bool WvStream::post_select(SelectInfo &si)
     // FIXME: need sane buffer flush support for non FD-based streams
     // FIXME: need read_requires_writable and write_requires_readable
     //        support for non FD-based streams
+    
+    // note: flush(nonzero) might call select(), but flush(0) never does,
+    // so this is safe.
     if (should_flush())
 	flush(0);
     if (!si.inherit_request && alarm_remaining() == 0)
@@ -676,6 +704,12 @@ int WvStream::_do_select(SelectInfo &si)
     tv.tv_sec = si.msec_timeout / 1000;
     tv.tv_usec = (si.msec_timeout % 1000) * 1000;
     
+#ifdef _WIN32
+    // selecting on an empty set of sockets doesn't cause a delay in win32.
+    SOCKET fakefd = socket(PF_INET, SOCK_STREAM, 0);
+    FD_SET(fakefd, &si.except);
+#endif    
+    
     // block
     int sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
         si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
@@ -689,13 +723,14 @@ int WvStream::_do_select(SelectInfo &si)
       && errno != EAGAIN && errno != EINTR 
       && errno != EBADF
       && errno != ENOBUFS
-#ifdef _WIN32
-      && errno != WSAEINVAL // the sets might be empty
-#endif
       )
     {
         seterr(errno);
     }
+#ifdef _WIN32
+    ::close(fakefd);
+#endif
+    TRACE("select() returned %d\n", sel);
     return sel;
 }
 
@@ -894,9 +929,15 @@ IWvStreamCallback WvStream::setexceptcallback(IWvStreamCallback _callback)
 IWvStreamCallback WvStream::setclosecallback(IWvStreamCallback _callback)
 {
     IWvStreamCallback tmp = closecb;
-
-    closecb = _callback;
-
+    if (isok())
+	closecb = _callback;
+    else
+    {
+	// already closed?  notify immediately!
+	closecb = 0;
+	if (!!_callback)
+	    _callback(*this);
+    }
     return tmp;
 }
 

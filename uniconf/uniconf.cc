@@ -161,6 +161,13 @@ IUniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 }
 
 
+bool UniConf::isok() const
+{
+    IUniConfGen *gen = whichmount();
+    return gen && gen->isok();
+}
+
+
 void UniConf::add_callback(void *cookie, const UniConfCallback &callback,
                            bool recurse) const
 {

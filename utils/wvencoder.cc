@@ -8,8 +8,10 @@
 
 /***** WvEncoder *****/
 
-WvEncoder::WvEncoder() : okay(true), finished(false)
+WvEncoder::WvEncoder()
 {
+    okay = true;
+    finished = false;
 }
 
 
@@ -22,20 +24,20 @@ WvString WvEncoder::geterror() const
 {
     if (isok())
         return WvString::null;
-    if (!! errstr)
+    if (!!errstr)
         return errstr;
     WvString message = _geterror();
-    if (!! message)
+    if (!!message)
         return message;
     return "unknown encoder error";
 }
 
 
 bool WvEncoder::encode(WvBuf &inbuf, WvBuf &outbuf,
-    bool flush, bool _finish)
+		       bool flush, bool _finish)
 {
     // deliberately not using isok() and isfinished() here
-    bool success = okay && ! finished && (inbuf.used() != 0 || flush);
+    bool success = okay && !finished && (inbuf.used() != 0 || flush);
     if (success)
         success = _encode(inbuf, outbuf, flush);
     if (_finish)
@@ -47,7 +49,7 @@ bool WvEncoder::encode(WvBuf &inbuf, WvBuf &outbuf,
 bool WvEncoder::finish(WvBuf &outbuf)
 {
     // deliberately not using isok() and isfinished() here
-    bool success = okay && ! finished;
+    bool success = okay && !finished;
     if (success)
         success = _finish(outbuf);
     setfinished();
@@ -63,7 +65,7 @@ bool WvEncoder::reset()
     errstr = WvString::null;
     // attempt to reset the encoder
     bool success = _reset();
-    if (! success)
+    if (!success)
     {
         if (okay)
             seterror("reset not supported by encoder");
@@ -204,6 +206,7 @@ bool WvPassthroughEncoder::_reset()
 
 WvEncoderChain::WvEncoderChain()
 {
+    last_run = NULL;
 }
 
 
@@ -214,42 +217,31 @@ WvEncoderChain::~WvEncoderChain()
 
 bool WvEncoderChain::_isok() const
 {
-    WvEncoderChainElemListBase::Iter it(
-        const_cast<WvEncoderChainElemListBase&>(encoders));
+    ChainElemList::Iter it(const_cast<ChainElemList&>(encoders));
     for (it.rewind(); it.next(); )
-    {
-        WvEncoderChainElem *encelem = it.ptr();
-        if (! encelem->enc->isok())
+        if (!it->enc->isok())
             return false;
-    }
     return true;
 }
 
 
 bool WvEncoderChain::_isfinished() const
 {
-    WvEncoderChainElemListBase::Iter it(
-        const_cast<WvEncoderChainElemListBase&>(encoders));
+    ChainElemList::Iter it(const_cast<ChainElemList&>(encoders));
     for (it.rewind(); it.next(); )
-    {
-        WvEncoderChainElem *encelem = it.ptr();
-        if (encelem->enc->isfinished())
+        if (it->enc->isfinished())
             return true;
-    }
     return false;
 }
 
 
 WvString WvEncoderChain::_geterror() const
 {
-    WvEncoderChainElemListBase::Iter it(
-        const_cast<WvEncoderChainElemListBase&>(encoders));
+    ChainElemList::Iter it(const_cast<ChainElemList&>(encoders));
     for (it.rewind(); it.next(); )
     {
-        WvEncoderChainElem *encelem = it.ptr();
-        WvString message = encelem->enc->geterror();
-        if (!! message)
-            return message;
+        WvString message = it->enc->geterror();
+        if (!!message) return message;
     }
     return WvString::null;
 }
@@ -259,105 +251,58 @@ WvString WvEncoderChain::_geterror() const
 //       isfinished() results to allow addition/removal of
 //       individual broken encoders while still processing data
 //       through as much of the chain as possible.
-bool WvEncoderChain::_encode(WvBuf &in, WvBuf &out, bool flush)
+bool WvEncoderChain::do_encode(WvBuf &in, WvBuf &out, ChainElem *start_after,
+			       bool flush, bool finish)
 {
-    if (encoders.isempty())
-        return passthrough.encode(in, out, flush);
-
-    // iterate over all encoders in the list
     bool success = true;
-    WvEncoderChainElemListBase::Iter it(encoders);
+    WvBuf *tmpin = &in;
+    ChainElemList::Iter it(encoders);
     it.rewind();
-    it.next();
-    for (WvBuf *tmpin = & in;;)
+    if (start_after) it.find(start_after);
+    last_run = start_after;
+    for (; it.cur() && it.next(); )
     {
-        // merge pending output and select an output buffer
-        WvEncoderChainElem *encelem = it.ptr();
-        bool hasnext = it.next();
-        WvBuf *tmpout;
-        if (! hasnext)
-        {
-            out.merge(encelem->out);
-            tmpout = & out;
-        }
-        else
-            tmpout = & encelem->out;
-
-        // encode
-        if (! encelem->enc->encode(*tmpin, *tmpout, flush))
+        if (!it->enc->encode(*tmpin, it->out, flush))
             success = false;
-
-        if (! hasnext)
-            break;
-        tmpin = & encelem->out;
+        if (finish && !it->enc->finish(it->out))
+            success = false;
+	last_run = it.ptr();
+        tmpin = &it->out;
     }
+    out.merge(*tmpin);
     return success;
 }
 
 
-// NOTE: In this function we deliberately ignore deep isok() and
-//       isfinished() results to allow addition/removal of
-//       individual broken encoders while still processing data
-//       through as much of the chain as possible.
+bool WvEncoderChain::_encode(WvBuf &in, WvBuf &out, bool flush)
+{
+    return do_encode(in, out, NULL, flush, false);
+}
+
+
 bool WvEncoderChain::_finish(WvBuf &out)
 {
-    if (encoders.isempty())
-        return true;
-    
-    // iterate over all encoders in the list
-    bool success = true;
-    WvEncoderChainElemListBase::Iter it(encoders);
-    it.rewind();
-    it.next();
-    bool needs_flush = false;
-    for (WvBuf *tmpin = NULL;;)
-    {
-        // merge pending output and select an output buffer
-        WvEncoderChainElem *encelem = it.ptr();
-        bool hasnext = it.next();
-        WvBuf *tmpout;
-        if (! hasnext)
-        {
-            out.merge(encelem->out);
-            tmpout = & out;
-        }
-        else
-            tmpout = & encelem->out;
+    WvNullBuf empty;
+    return do_encode(empty, out, NULL, true, true);
+}
 
-        // do we need to flush first due to new input?
-        size_t oldused = tmpout->used();
-        if (needs_flush)
-        {
-            if (! encelem->enc->flush(*tmpin, *tmpout))
-                success = false;
-            needs_flush = true;
-        }
-        
-        // tell the encoder to finish
-        if (! encelem->enc->finish(*tmpout))
-            success = false;
-            
-        // check whether any new data was generated
-        if (oldused != tmpout->used())
-            needs_flush = true;
 
-        if (! hasnext)
-            break;
-        tmpin = & encelem->out;
-    }
-    return success;
+bool WvEncoderChain::continue_encode(WvBuf &in, WvBuf &out)
+{
+    //fprintf(stderr, "continue_encode(%d,%d,%p)\n",
+    //	    in.used(), out.used(), last_run);
+    return do_encode(in, out, last_run, false, false);
 }
 
 
 bool WvEncoderChain::_reset()
 {
     bool success = true;
-    WvEncoderChainElemListBase::Iter it(encoders);
+    ChainElemList::Iter it(encoders);
     for (it.rewind(); it.next(); )
     {
-        WvEncoderChainElem *encelem = it.ptr();
-        encelem->out.zap();
-        if (! encelem->enc->reset())
+        it->out.zap();
+        if (!it->enc->reset())
             success = false;
     }
     return success;
@@ -366,36 +311,36 @@ bool WvEncoderChain::_reset()
 
 void WvEncoderChain::append(WvEncoder *enc, bool autofree)
 {
-    encoders.append(new WvEncoderChainElem(enc, autofree), true);
+    encoders.append(new ChainElem(enc, autofree), true);
 }
 
 
 void WvEncoderChain::prepend(WvEncoder *enc, bool autofree)
 {
-    encoders.prepend(new WvEncoderChainElem(enc, autofree), true);
+    encoders.prepend(new ChainElem(enc, autofree), true);
 }
+
 
 bool WvEncoderChain::get_autofree(WvEncoder *enc) const
 {
-    WvEncoderChainElemListBase::Iter i(encoders);
+    ChainElemList::Iter i(encoders);
     for (i.rewind(); i.next(); )
-    {
-	if ((i.ptr()->enc == enc) && (i.get_autofree()))
+	if (i->enc == enc && i.get_autofree())
 	    return true;
-    }
     return false;
 }
 
+
 void WvEncoderChain::set_autofree(WvEncoder *enc, bool autofree)
 {
-    WvEncoderChainElemListBase::Iter i(encoders);
+    ChainElemList::Iter i(encoders);
     if (autofree)
     {
-	// Ensure only the first encoder has autofree set
+	// Ensure only the first matching encoder has autofree set
 	bool first = true;
 	for (i.rewind(); i.next(); )
 	{
-	    if (i.ptr()->enc == enc)
+	    if (i->enc == enc)
 	    {
 		if (first)
 		{
@@ -409,23 +354,22 @@ void WvEncoderChain::set_autofree(WvEncoder *enc, bool autofree)
     }
     else
     {
-	// Clear autofree for all encoders
+	// Clear autofree for all matching encoders
 	for (i.rewind(); i.next(); )
-	    if (i.ptr()->enc == enc)
+	    if (i->enc == enc)
 		i.set_autofree(false);
     }
 }
 
+
 void WvEncoderChain::unlink(WvEncoder *enc)
 {
-    WvEncoderChainElemListBase::Iter it(encoders);
+    ChainElemList::Iter it(encoders);
     for (it.rewind(); it.next(); )
-    {
-        WvEncoderChainElem *encelem = it.ptr();
-        if (encelem->enc == enc)
+        if (it->enc == enc)
             it.xunlink();
-    }
 }
+
 
 void WvEncoderChain::zap()
 {

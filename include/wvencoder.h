@@ -122,7 +122,7 @@ public:
      * data in the buffer.
      * 
      * If flush == false, the encoder will read and encode as much data
-     * as possible (or as it convenient) from the input buffer and store
+     * as possible (or as is convenient) from the input buffer and store
      * the results in the output buffer.  Partial results may be buffered
      * internally by the encoder to be written to the output buffer later
      * when the encoder is flushed.
@@ -548,46 +548,38 @@ protected:
  */
 class WvEncoderChain : public WvEncoder
 {
-    class WvEncoderChainElem
+    class ChainElem
     {
     public:
         WvEncoder *enc;
         WvDynBuf out;
         bool autofree;
 
-        WvEncoderChainElem(WvEncoder *enc, bool autofree) :
-            enc(enc), autofree(autofree) { }
-        ~WvEncoderChainElem() { if (autofree) delete enc; }
+        ChainElem(WvEncoder *enc, bool autofree)
+	    : enc(enc), autofree(autofree) { }
+        ~ChainElem() { if (autofree) delete enc; }
     };
-    DeclareWvList2(WvEncoderChainElemListBase, WvEncoderChainElem);
+    DeclareWvList(ChainElem);
 
-    WvEncoderChainElemListBase encoders;
-    WvPassthroughEncoder passthrough;
+    ChainElemList encoders;
+    ChainElem *last_run;
+    
 public:
     /** Creates an initially empty chain of encoders. */
     WvEncoderChain();
 
-    /**
-     * Destroys the encoder chain.
-     *
-     * Destroys any encoders that were added with autofree == true.
-     *
-     */
+    /** Destroys the encoder chain.  Calls zap(). */
     virtual ~WvEncoderChain();
 
     /**
      * Appends an encoder to the tail of the chain.
-     *
-     * "enc" is the encoder
-     * "autofree" is if true, takes ownership of the encoder
+     * if "autofree" is true, takes ownership of the encoder
      */
     void append(WvEncoder *enc, bool autofree);
 
     /**
      * Prepends an encoder to the head of the chain.
-     *
-     * "enc" is the encoder
-     * "autofree" is if true, takes ownership of the encoder
+     * if "autofree" is true, takes ownership of the encoder
      */
     void prepend(WvEncoder *enc, bool autofree);
 
@@ -596,17 +588,13 @@ public:
      *
      * If an encoder is in the chain multiple times, this will return
      * true if at least one instance is set to autofree.
-     *
-     * "enc" is the encoder
      */
     bool get_autofree(WvEncoder *enc) const;
 
     /**
      * Sets the autofree state of a particular encoder in the chain.
      *
-     * "enc" is the encoder
-     *
-     * "autofree" is if true, takes ownership of the encoder, by ensuring
+     * if "autofree" is true, takes ownership of the encoder, by ensuring
      * only one of the encoders has autofree set.  If it is false, then
      * all encoders have their autofree cleared.
      */
@@ -614,20 +602,30 @@ public:
 
     /**
      * Unlinks the encoder from the chain.
-     *
-     * Destroys the encoder if it was added with autofree == true.
-     *
-     * "enc" is the encoder
+     * Deletes the encoder if it was added with autofree == true.
      */
     void unlink(WvEncoder *enc);
 
     /**
      * Clears the encoder chain.
-     *
-     * Destroys any encoders that were added with autofree == true.
-     *
+     * Deletes any encoders that were added with autofree == true.
      */
     void zap();
+    
+    /**
+     * "Continues" encoding a buffer.  Runs all data in the buffer through
+     * any encoders that have been added to the chain since the last encode.
+     * 
+     * This is only useful once, immediately after you add one or more new
+     * encoders to the chain.  However, you can call it whenever you want,
+     * and if no new encoders have been added, the given data will simply
+     * be (perhaps) copied unchanged into outbuf.  Note that this call
+     * never does flush() or finish(), so outbuf may or may not be used.
+     * 
+     * The supplied inbuf is guaranteed to be empty when this function
+     * returns.
+     */
+    bool continue_encode(WvBuf &inbuf, WvBuf &outbuf);
 
 protected:
     /**
@@ -667,8 +665,7 @@ protected:
     
     /**
      * Passes the data through the entire chain of encoders.
-     *
-     * Returns: true iff all encoders return true.
+     * Returns true iff all encoders return true.
      */
     virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
     
@@ -681,7 +678,7 @@ protected:
      * encoders have been flushed and finished (assuming the first
      * encoder had already been flushed).
      * 
-     * Returns: true iff all encoders return true.
+     * Returns true iff all encoders return true.
      */
     virtual bool _finish(WvBuf & out);
 
@@ -694,6 +691,11 @@ protected:
      * Returns: true iff all encoders return true.
      */
     virtual bool _reset();
+    
+private:
+    /** Used by _encode() and _finish() */
+    bool do_encode(WvBuf &in, WvBuf &out, ChainElem *start_after,
+		   bool flush, bool finish);
 };
 
 #endif // __WVENCODER_H

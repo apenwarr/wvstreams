@@ -3,6 +3,10 @@ WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
 include wvrules.mk
 override enable_efence=no
 
+ifneq (${_WIN32},)
+  $(error "Use 'make -f Makefile-win32' instead!")
+endif
+
 XPATH=include
 
 include vars.mk
@@ -175,6 +179,7 @@ ifeq ("$(TESTNAME)", "unitest")
 endif
 
 wvtestmain: wvtestmain.o \
-	$(call objects, $(shell find . -type d -name t)) \
-	$(LIBUNICONF)
+	$(call objects, $(filter-out ./Win32WvStreams/%, \
+		$(shell find . -type d -name t))) \
+	$(LIBUNICONF) $(LIBWVSTREAMS)
 

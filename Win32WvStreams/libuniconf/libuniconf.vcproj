@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\;..\;..\..\include"
+				AdditionalIncludeDirectories="..\;..\..\include;..\..\..\..\ports\xplc\build\xplc\include;..\..\..\..\ports\zlib\build\zlib"
 				PreprocessorDefinitions="strcasecmp=_stricmp;strncasecmp=_strnicmp;WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -107,6 +107,9 @@
 				RelativePath=".\fake.cpp">
 			</File>
 			<File
+				RelativePath="..\..\uniconf\uniautogen.cc">
+			</File>
+			<File
 				RelativePath="..\..\uniconf\unicachegen.cc">
 			</File>
 			<File
@@ -122,10 +125,19 @@
 				RelativePath="..\..\uniconf\uniconf_c.cc">
 			</File>
 			<File
+				RelativePath="..\..\uniconf\daemon\uniconfdaemon.cc">
+			</File>
+			<File
+				RelativePath="..\..\uniconf\daemon\uniconfdaemonconn.cc">
+			</File>
+			<File
 				RelativePath="..\..\uniconf\uniconfgen.cc">
 			</File>
 			<File
 				RelativePath="..\..\uniconf\uniconfkey.cc">
+			</File>
+			<File
+				RelativePath="..\..\uniconf\daemon\uniconfpamconn.cc">
 			</File>
 			<File
 				RelativePath="..\..\uniconf\uniconfroot.cc">
@@ -171,33 +183,9 @@
 			</File>
 			<File
 				RelativePath="..\..\uniconf\unireplicategen.cc">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\uniconf\uniretrygen.cc">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\uniconf\unisecuregen.cc">
@@ -216,6 +204,9 @@
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\uniconf\unisubtreegen.cc">
 			</File>
 			<File
 				RelativePath="..\..\uniconf\unitempgen.cc">

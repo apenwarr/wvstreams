@@ -94,7 +94,6 @@ WvSHA1Digest::WvSHA1Digest() : WvEVPMDDigest(EVP_sha1())
 {
 }
 
-
 /***** WvHMACDigest *****/
 
 WvHMACDigest::WvHMACDigest(WvEVPMDDigest *_digest,

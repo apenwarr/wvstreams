@@ -2,6 +2,9 @@
 #include "wvencoderstream.h"
 #include "wvloopback.h"
 #include "wvgzip.h"
+#include <ctype.h>
+
+#if 1
 
 WVTEST_MAIN("gzip")
 {
@@ -26,13 +29,16 @@ WVTEST_MAIN("gzip")
     gzip.disassociate_on_close = true; 
     
     gzip.write(in_data);
-    line = gzip.getline();
-    WVPASS(line && !strcmp(line, "a line of text"));
+    line = gzip.blocking_getline(1000);
+    WVPASSEQ(line, "a line of text");
+    WVFAIL(gzip.isreadable());
     WvGzipEncoder *inflater = new WvGzipEncoder(WvGzipEncoder::Inflate);
     gzip.readchain.append(inflater, true);
+    WVFAIL(gzip.isreadable());
     gzip.write(zin_data);
-    line = gzip.getline();
-    WVPASS(line && !strcmp(line, "a compressed line"));
+    line = gzip.blocking_getline(1000);
+    WVFAIL(gzip.isreadable());
+    WVPASSEQ(line, "a compressed line");
     
     WvLoopback loopy2;
     WvEncoderStream gzip2(&loopy);
@@ -40,14 +46,14 @@ WVTEST_MAIN("gzip")
     
     gzip2.write(in_data);
     gzip2.write(zin_data);
-    line = gzip2.getline();
-    WVPASS(line && !strcmp(line, "a line of text"));
+    line = gzip2.blocking_getline(1000, '\n', 1);
+    WVPASSEQ(line, "a line of text");
     WvGzipEncoder *inflater2 = new WvGzipEncoder(WvGzipEncoder::Inflate);
     gzip2.readchain.append(inflater2, true);
-    line = gzip2.getline();
-//    WVPASS(line && !strcmp(line, "a compressed line"));
-    
+    line = gzip2.blocking_getline(1000);
+    WVPASSEQ(line, "a compressed line");
 }
+
 
 #include "wvbufstream.h"
 #include "wvbase64.h"
@@ -365,9 +371,11 @@ WVTEST_MAIN("Base64")
     b64_stream.writechain.append(new WvBase64Decoder, true);
     b64_stream.auto_flush(false);
 
+    time_t timeout = 1000;
     while (true)
     {
-	WvString s(input_stream.getline());
+	WvString s(input_stream.blocking_getline(timeout));
+	timeout = 10; // only allow a _long_ delay once
 	if (!s) break;
 	b64_stream.write(s);
     }
@@ -378,3 +386,196 @@ WVTEST_MAIN("Base64")
 //    fprintf(stderr,"We got out: %s\n", output.cstr());
     WVPASS(!strcmp(output, output_stuff));
 }
+
+
+WVTEST_MAIN("encoderstream eof1")
+{
+    WvEncoderStream s(new WvLoopback);
+    s.nowrite(); // done sending
+    s.blocking_getline(1000);
+    WVFAIL(s.isok()); // should be eof now
+}
+
+
+WVTEST_MAIN("encoderstream eof2")
+{
+    WvEncoderStream s(new WvLoopback);
+    s.write("Hello\n");
+    s.write("nonewline");
+    s.nowrite();
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(1000), "Hello");
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(1000), "nonewline");
+    WVFAIL(s.isok());
+}
+
+
+class ECountStream : public WvStreamClone
+{
+public:
+    ECountStream(IWvStream *s) : WvStreamClone(s)
+        { }
+    
+    virtual size_t uread(void *buf, size_t len)
+    {
+	size_t count = WvStreamClone::uread(buf, len);
+	fprintf(stderr, "uread(%d) == %d\n", (int)len, (int)count);
+	return count;
+    }
+    
+    virtual size_t uwrite(const void *buf, size_t len)
+    {
+	size_t count = WvStreamClone::uwrite(buf, len);
+	fprintf(stderr, "uwrite(%d) == %d\n", (int)len, (int)count);
+	return count;
+    }
+};
+
+
+class LetterPlusEncoder : public WvEncoder
+{
+    int incr;
+    
+public:
+    LetterPlusEncoder(int _incr) { incr = _incr; }
+
+protected:
+    virtual bool _encode(WvBuf &in, WvBuf &out, bool flush)
+    {
+	if (!flush) return true; // don't flush unless we have to
+	size_t count = in.used();
+	unsigned char *c = const_cast<unsigned char *>(in.get(count));
+	for (size_t i = 0; i < count; i++)
+	    if (isalpha(c[i]))
+		c[i] += incr;
+	out.put(c, count);
+	return true;
+    }
+};
+
+#if 0
+# define new_enc() (new LetterPlusEncoder(1))
+# define new_dec() (new LetterPlusEncoder(-1))
+#else
+# define new_enc() (new WvGzipEncoder(WvGzipEncoder::Deflate))
+# define new_dec() (new WvGzipEncoder(WvGzipEncoder::Inflate))
+#endif
+
+// not expected to work if READAHEAD is greater than 1,
+// because WvEncoderStream::inbuf can't be re-encoded if it's nonempty.
+// Eventually, we'll take the extra buffering out of plain WvStream; that
+// should help a bit.  In the meantime, always use a readahead of 1 if you
+// expect to add encoders later.
+#define READAHEAD (1)
+
+
+
+static void closecb(int *i, WvStream &s)
+{
+    (*i)++;
+}
+
+
+WVTEST_MAIN("encoderstream eof3")
+{
+    int closed = 0;
+    
+    {
+	WvLoopback *l = new WvLoopback;
+	WvEncoderStream s(l);
+	s.writechain.append(new_enc(), true);
+	s.readchain.append(new_dec(), true);
+	s.setclosecallback
+	    (WvBoundCallback<IWvStreamCallback, int *>(&closecb, &closed));
+	
+	s.write("Hello\n");
+	s.write("nonewline");
+	WVPASS(s.isok());
+	WVPASSEQ(s.blocking_getline(1000), "Hello");
+	WVPASS(s.isok());
+	l->nowrite();
+	WVPASSEQ(s.blocking_getline(1000), "nonewline");
+	l->close();
+	s.runonce(100);
+	WVFAIL(s.isok());
+	WVPASSEQ(closed, 1);
+    }
+    WVPASSEQ(closed, 1);
+}
+
+
+WVTEST_MAIN("encoderstream eof4")
+{
+    WvStream *x = new WvStream;
+    WvEncoderStream s(x);
+    WVPASS(s.isok());
+    x->close();
+    WVFAIL(s.isok());
+}
+
+
+WVTEST_MAIN("add filters midstream")
+{
+    WvEncoderStream s(new ECountStream(new WvLoopback));
+    
+    // if we don't do this, the flush() commands below should be unnecessary.
+    s.delay_output(true);
+    
+    // this allows big kernel read() calls even though we only read one
+    // byte at a time from the *decoded* input stream.  Enabling this
+    // tests continue_encode() in WvEncoderChain; otherwise, continue_encode()
+    // wouldn't matter.
+    s.min_readsize = 1024; 
+    
+    s.print("First line\n");
+    WVPASS("1");
+    s.print("Second line\n");
+    s.flush(0);
+    WVPASS("2");
+    s.writechain.prepend(new_enc(), true);
+    s.print("Third line\n");
+    WVPASS("3a");
+    s.print("Third line2\n");
+    s.flush(0);
+    WVPASS("3b");
+    s.writechain.prepend(new_enc(), true);
+    s.print("Fourth line\n");
+    WVPASS("4a");
+    s.print("Fourth line2\n");
+    s.flush(0);
+    WVPASS("4b");
+    WVPASSEQ(s.geterr(), 0);
+    
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "First line");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Second line");
+    WVPASS("r2");
+    WVPASSEQ(s.geterr(), 0);
+    s.readchain.append(new_dec(), true);
+    WVPASS("e3");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Third line");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Third line2");
+    WVPASSEQ(s.geterr(), 0);
+    WVPASS("r3");
+    s.readchain.append(new_dec(), true);
+    WVPASS("e4");
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Fourth line");
+    WVPASSEQ(s.geterr(), 0);
+    WVPASS("r4a");
+    s.runonce(1000);
+    WVPASSEQ(s.blocking_getline(1000, '\n', READAHEAD), "Fourth line2");
+    WVPASSEQ(s.geterr(), 0);
+    WVPASS("r4b");
+    
+    s.nowrite();
+    s.noread();
+    
+    WvDynBuf remainder;
+    s.read(remainder, 1024);
+    WVPASSEQ(remainder.used(), 0);
+    wvcon->print("Remainder: '%s'\n", remainder.getstr());
+    
+    WVPASSEQ(s.geterr(), 0);
+    wvcon->print("Error code: '%s'\n", s.errstr());
+}
+#endif

@@ -6,6 +6,10 @@
  */
 #include "unireadonlygen.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniReadOnlyGen);
+
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.

@@ -6,6 +6,9 @@
  */
 #include "wvfdstream.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(WvConStream);
 
 // just like WvFDStream, but doesn't close the fd
 class _WvConStream : public WvFDStream
@@ -74,14 +77,14 @@ bool _WvConStream::isok() const
 #ifdef _WIN32
 
 #include "streams.h"
-SocketFromFDMaker _zero(0, fd2socket_fwd);
-SocketFromFDMaker _one(1, socket2fd_fwd);
-SocketFromFDMaker _two(2, socket2fd_fwd);
+SocketFromFDMaker _zero(_dup(0), fd2socket_fwd, false);
+SocketFromFDMaker _one(1, socket2fd_fwd, true);
+SocketFromFDMaker _two(2, socket2fd_fwd, true);
 
-static WvFDStream _wvcon(_zero.GetSocket(), _one.GetSocket());
-static WvFDStream _wvin(_zero.GetSocket(), -1);
-static WvFDStream _wvout(-1, _one.GetSocket());
-static WvFDStream _wverr(-1, _two.GetSocket());
+static _WvConStream _wvcon(_zero.GetSocket(), _one.GetSocket());
+static _WvConStream _wvin(_zero.GetSocket(), -1);
+static _WvConStream _wvout(-1, _one.GetSocket());
+static _WvConStream _wverr(-1, _two.GetSocket());
 
 #else // _WIN32
 

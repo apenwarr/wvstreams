@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string> // no code is actually used from here
 
 
 /*
@@ -129,6 +130,12 @@ public:
      */
     WvFastString(const QString &s);
     WvFastString(const QCString &s);
+    
+    /**
+     * Create a string out of a stdc++ string.  To use this, #include
+     * wvstdstring.h.
+     */
+    inline WvFastString(const std::string &s);
 
     /**
      * NOTE: make sure that 32 bytes is big enough for your longest
@@ -202,6 +209,8 @@ public:
     size_t len() const;
 
 protected:
+    void construct(const char *_str);
+
     // this doesn't exist - it's just here to keep it from being auto-created
     // by stupid C++.
     WvFastString &operator= (const WvFastString &s2);
@@ -250,6 +259,12 @@ public:
      * You need to link to libwvqt.so if you use this.
      */
     operator QString() const;
+    
+    /**
+     * Return a stdc++ string with the contents of this string.  To use
+     * this, #include wvstdstring.h.
+     */
+    //inline operator std::string() const;
     
     /**
      * used to convert WvString to int, when needed.
@@ -341,6 +356,12 @@ public:
     WvString(const QString &);
     WvString(const QCString &);
 
+    /**
+     * Create a string out of a stdc++ string.  To use this, #include
+     * wvstdstring.h.
+     */
+    inline WvString(const std::string &s);
+
     WvString(WVSTRING_FORMAT_DECL) : WvFastString(WVSTRING_FORMAT_CALL)
         { }
     
@@ -362,7 +383,7 @@ public:
     
 protected:
     void copy_constructor(const WvFastString &s);
-
+    void construct(const char *_str);
 };
 
 

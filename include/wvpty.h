@@ -11,10 +11,10 @@
 #define __WVPTY_H
 
 #include "wvfdstream.h"
+#include "wvcallback.h"
 
 class WvPty : public WvFDStream
 {
-
     private:
 
         WvString _master;
@@ -26,10 +26,19 @@ class WvPty : public WvFDStream
         bool open_slave();
 
         void monitor_child(bool wait);
+        
+    public:
+    
+    	typedef WvCallback<bool, WvPty &> Callback;
+
+        Callback pre_exec_cb;
+        Callback post_exec_cb; // This can only be called if exec() fails
 
     public:
 
-        WvPty(const char *program, const char * const *argv);
+        WvPty(const char *program, const char * const *argv,
+                Callback _pre_exec_cb = Callback(),
+                Callback _post_exec_cb = Callback());
 
         void kill(int signum);
         bool child_exited();
@@ -43,6 +52,9 @@ class WvPty : public WvFDStream
             { return _slave; }
         pid_t pid() const
             { return _pid; }
+            
+        bool isok() const { return true; }        
+        
 };
 
 #endif // __WVPTY_H

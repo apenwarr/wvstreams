@@ -14,8 +14,9 @@
 
 #ifdef _WIN32
 #include <time.h>
-#include <Winsock2.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
+#include "wvwin32-sanitize.h"
 #else
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
 #include <sys/time.h>
@@ -176,7 +177,7 @@ public:
      * It is expected that there will be no NULL characters on the
      * line.
      */
-    char *getline(char separator = '\n', int readahead = 1024)
+    char *getline(int separator = '\n', int readahead = 1024)
     {
 	return blocking_getline(0, separator, readahead);
     }
@@ -192,14 +193,14 @@ public:
      * (often a bad idea!).  If wait_msed == 0, this is the equivalent
      * of getline().
      */
-    char *blocking_getline(time_t wait_msec, char separator = '\n',
+    char *blocking_getline(time_t wait_msec, int separator = '\n',
 			   int readahead = 1024);
 
     /**
      * This is a version of blocking_getline() that uses
      * continue_select to avoid blocking other streams.
      */
-    char *continue_getline(time_t wait_msec, char separator = '\n',
+    char *continue_getline(time_t wait_msec, int separator = '\n',
 			   int readahead = 1024);
 
     /**
@@ -593,10 +594,6 @@ protected:
     WvTime alarm_time;          // select() returns true at this time
     WvTime last_alarm_check;    // last time we checked the alarm_remaining
     
-    /** Prevent accidental copying of WvStreams. */
-    WvStream(const WvStream &s);
-    WvStream& operator= (const WvStream &s);
-
     /**
      * The callback() function calls execute(), and then calls the user-
      * specified callback if one is defined.  Do not call execute() directly;
@@ -608,10 +605,28 @@ protected:
      * call the parent execute() yourself from the derived class.
      */
     virtual void execute()
-    {}
+        { }
     
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
+    
+    // ridiculous hackery for now so that the wvstream unit test can poke
+    // around in the insides of WvStream.  Eventually, inbuf will go away
+    // from the base WvStream class, so nothing like this will be needed.
+#ifdef __WVSTREAM_UNIT_TEST
+public:
+    size_t outbuf_used() 
+        { return outbuf.used(); }
+    size_t inbuf_used()
+        { return inbuf.used(); }
+    void inbuf_putstr(WvStringParm t)
+        { inbuf.putstr(t); }
+#endif
+    
+private:
+    /** Prevent accidental copying of WvStream.  These don't actually exist. */
+    WvStream(const WvStream &s);
+    WvStream& operator= (const WvStream &s);
 };
 
 /**

@@ -58,10 +58,8 @@ void WvListBase::reverse()
 WvLink *WvListBase::IterBase::find(const void *data)
 {
     for (rewind(); next(); )
-    {
 	if (link->data == data)
 	    break;
-    }
     return link;
 }
 
@@ -73,10 +71,8 @@ WvLink *WvListBase::IterBase::find_next(const void *data)
 	    return link;
 
 	for (rewind(); next(); )
-	{
 	    if (link->data == data)
 		break;
-	}
     }
     return link;
 }

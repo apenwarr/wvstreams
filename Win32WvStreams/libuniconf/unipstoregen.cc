@@ -7,6 +7,10 @@
 #include "unipstoregen.h"
 #include "wvmoniker.h"
 #include <string>
+#include "wvlinkerhack.h"
+
+WV_LINK(UniPStoreGen);
+
 
 static const int MAX = 1024;
 

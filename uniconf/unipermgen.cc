@@ -7,11 +7,14 @@
  */
 #include "unipermgen.h"
 #include "unidefgen.h"
-
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
 #include "wvstream.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniPermGen);
+
 
 
 UniPermGen::UniPermGen(IUniConfGen *_gen)

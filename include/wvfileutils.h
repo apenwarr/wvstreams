@@ -51,4 +51,9 @@ bool samedate(WvStringParm dir1, WvStringParm dir2, WvStringParm relname);
  */
 bool wvfnmatch(WvStringList &patterns, WvStringParm name, int flags = 0);
 
+/**
+ * Replacement for tmpfile() that works correctly in win32 as well as Unix.
+ */
+FILE *wvtmpfile();
+
 #endif // __WVFILEUTILS_H

@@ -11,6 +11,10 @@
 #include "wvfile.h"
 #include "wvmoniker.h"
 #include <ctype.h>
+#include "wvlinkerhack.h"
+
+WV_LINK(UniIniGen);
+
 
 static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 {

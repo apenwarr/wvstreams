@@ -47,35 +47,27 @@ public:
     virtual bool post_select(SelectInfo &si);
     
     virtual void close();
-    
     virtual bool isok() const;
+    virtual void noread();
+    virtual void nowrite();
     
 protected:
     /** SSL Context - used to create SSL Object */
     SSL_CTX *ctx;
     
     /**
-     * Main SSL Object - after SSL_set_fd() we make all calls through the connection
-     * through here
+     * Main SSL Object - after SSL_set_fd() we make all calls through the
+     * connection through here
      */
     SSL *ssl;
     
     /**
-     * Again, used to setup the SSL Object - The Method is set so that this client can
-     * Connect to, and understand SSLv2, SSLv3, and TLS servers
+     * Again, used to setup the SSL Object - The Method is set so that this
+     * client can Connect to, and understand SSLv2, SSLv3, and TLS servers
      */
     SSL_METHOD *meth;
     
-    /**
-     * Overrides the standard write function, and use
-     * SSL_write() instead...
-     */
     virtual size_t uwrite(const void *buf, size_t len);
-    
-    /**
-     * Overrides for the standard read function, so that SSL_read() will
-     * get called...
-     */
     virtual size_t uread(void *buf, size_t len);
     
 private:
@@ -90,6 +82,9 @@ private:
     
     /** Keep track of whether we are a client or a server */
     bool is_server;
+    
+    /** We have to override the WvStream noread/nowrite implementation... */
+    bool ssl_stop_read, ssl_stop_write;
     
     /** Keep track of whether we want to check the peer who connects to us */
     WvSSLValidateCallback vcb;

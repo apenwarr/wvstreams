@@ -52,10 +52,21 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, const WvLog *par)
 
 WvLog::WvLog(const WvLog &l)
 {
-    parent = l.parent ? l.parent : &l;
-    app = parent->app;
-    loglevel = parent->loglevel;
+    parent = l.parent ? l.parent : NULL;
+    app = l.app;
+    loglevel = l.loglevel;
     num_logs++;
+}
+
+
+WvLog &WvLog::operator= (const WvLog &l)
+{
+    if (&l == this) return *this; // already done!
+    parent = l.parent ? l.parent : NULL;
+    app = l.app;
+    loglevel = l.loglevel;
+    // don't increment num_logs, because we already existed before
+    return *this;
 }
 
 
@@ -94,7 +105,8 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
 	if (!default_receiver)
 	{
 	    // nobody's listening -- create a receiver on the console
-	    default_receiver = new WvLogConsole(dup(2));
+	    int xfd = dup(2);
+	    default_receiver = new WvLogConsole(xfd);
 	    num_receivers--; // default does not qualify!
 	}
 	default_receiver->log(parent ? parent : this, loglevel,

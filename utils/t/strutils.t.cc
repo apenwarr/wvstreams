@@ -2,7 +2,11 @@
 #include "wvlinklist.h"
 #include "wvfile.h"
 #include "strutils.h"
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 
 /**
  * Functions in strutils.h left untested:
@@ -207,8 +211,8 @@ WVTEST_MAIN("url_encode")
 {
     char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
     const char *desired = "http%3a//www.free_email-account.com/~ponyman/mail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
-
     WVPASS(url_encode(input) == desired);
+
 }
 
 /** Tests backslash_escape().
@@ -651,8 +655,10 @@ WVTEST_MAIN("undupe")
 WVTEST_MAIN("hostname")
 {
     char host[1024];
+    printf("running gethostname...\n"); fflush(stdout);
     gethostname(host, sizeof(host));
-    WVPASS(hostname() == host);
+    printf("got it.\n"); fflush(stdout);
+    WVPASSEQ(hostname(), host);
 }
 
 /** Tests fqdomainname().
@@ -680,7 +686,7 @@ WVTEST_MAIN("fqdomainname")
         gethostname(host, sizeof(host));
 
         printf("host='%s'  fqdomainname().host='%s'\n", host, n.cstr());
-        WVPASS(n == host);
+        WVPASSEQ(n, host);
     } 
     else
         printf("Work around for Segfault");
@@ -735,5 +741,76 @@ WVTEST_MAIN("substr")
     WVPASS(substr(big, 0, 6) == "foobar");
     WVPASS(substr(big, 5, 0) == "");
     WVPASS(substr(big, 10, 1) == "");
+}
+
+WVTEST_MAIN("cstr_escape")
+{
+    WVPASS(cstr_escape(NULL, 0).isnull());
+    WVPASS(cstr_escape("", 0) == "\"\"");
+    WVPASS(cstr_escape("\"", 1) == "\"\\\"\"");
+    WVPASS(cstr_escape("\\", 1) == "\"\\\\\"");
+    WVPASS(cstr_escape("\a", 1) == "\"\\a\"");
+    WVPASS(cstr_escape("\b", 1) == "\"\\b\"");
+    WVPASS(cstr_escape("\r", 1) == "\"\\r\"");
+    WVPASS(cstr_escape("\t", 1) == "\"\\t\"");
+    WVPASS(cstr_escape("\n", 1) == "\"\\n\"");
+    WVPASS(cstr_escape("\v", 1) == "\"\\v\"");
+    WVPASS(cstr_escape("\0", 1) == "\"\\0\"");
+    WVPASS(cstr_escape("a", 1) == "\"a\"");
+    WVPASS(cstr_escape("\xFF", 1) == "\"\\xFF\"");
+}
+
+WVTEST_MAIN("cstr_escape_unescape")
+{
+    int i;
+    const size_t max_size = 256;
+    char orig_data[max_size], data[max_size];
+    size_t size;
+   
+    for (i=0; i<256; ++i)
+        orig_data[i] = (char)i;
+   
+    // Regular escapes
+    WVPASS(cstr_unescape(cstr_escape(orig_data, max_size), data, max_size, size)
+            && size == max_size && memcmp(orig_data, data, size) == 0);
+   
+    // With TCL escapes
+    WVPASS(cstr_unescape(cstr_escape(orig_data, max_size, CSTR_TCLSTR_ESCAPES),
+                data, max_size, size, CSTR_TCLSTR_ESCAPES)
+            && size == max_size && memcmp(orig_data, data, size) == 0);
+}
+
+WVTEST_MAIN("cstr_unescape")
+{
+    const size_t max_size = 16;
+    char data[max_size];
+    size_t size;
+   
+    // Tests for detection of misformatting
+    WVFAIL(cstr_unescape(WvString::null, data, max_size, size) || size);
+    WVPASS(cstr_unescape("", data, max_size, size) && size == 0);
+    WVFAIL(cstr_unescape("garbage", data, max_size, size) || size);
+    WVFAIL(cstr_unescape("\"", data, max_size, size) || size);
+    WVPASS(cstr_unescape(" \"\" ", data, max_size, size) && size == 0);
+    WVPASS(cstr_unescape("\"\" ", data, max_size, size) && size == 0);
+    WVFAIL(cstr_unescape("\"\" \"", data, max_size, size) || size);
+
+    // Tests for correcly formatted strings with enough space
+    WVPASS(cstr_unescape("\"\"", data, max_size, size) && size == 0);
+    WVPASS(cstr_unescape("\"four\"", data, max_size, size)
+            && size == 4 && memcmp(data, "four", size) == 0);
+    WVPASS(cstr_unescape("\"sixteencharacter\"", data, max_size, size)
+            && size == 16 && memcmp(data, "sixteencharacter", size) == 0);
+
+    // Test for correctly formatted string without enough space
+    WVPASS(!cstr_unescape("\"nsixteencharacter\"", data, max_size, size)
+            && size == 17 && memcmp(data, "nsixteencharacter", max_size) == 0);
+    
+    // Test for passing data as a NULL
+    WVPASS(cstr_unescape("\"four\"", NULL, max_size, size) && size == 4);
+
+    // Tests for concatenation
+    WVPASS(cstr_unescape(" \r\"one\" \t\"two\"\v\n", data, max_size, size)
+            && size == 6 && memcmp(data, "onetwo", size) == 0);
 }
 

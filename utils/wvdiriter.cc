@@ -9,8 +9,10 @@
 
 #include "wvdiriter.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(S_ISDIR)
 #define S_ISDIR(x) (_S_IFDIR | (x))
+#endif
+#ifdef _WIN32
 #define lstat stat
 #endif
 

@@ -21,14 +21,14 @@ WvIPRawStream::WvIPRawStream(const WvIPAddr &_local,
     int x = 1;
     setfd(socket(PF_INET, SOCK_RAW, ip_protocol));
     if (getfd() < 0 
-	|| fcntl(getfd(), F_SETFD, 1)
-	|| fcntl(getfd(), F_SETFL, O_RDWR | O_NONBLOCK)
-        || setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x)) < 0
-	)
+        || setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x)) < 0)
     {
 	seterr(errno);
 	return;
     }
+    
+    set_close_on_exec(true);
+    set_nonblock(true);
 
     struct sockaddr *sa = _local.sockaddr();
     if (bind(getfd(), sa, _local.sockaddr_len()))

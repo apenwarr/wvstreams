@@ -6,6 +6,7 @@
  */
 #include "wvfdstream.h"
 #include "wvmoniker.h"
+#include <fcntl.h>
 
 #ifndef _WIN32
 #include <sys/socket.h>
@@ -30,10 +31,12 @@ inline bool isselectable(int fd)
 #define errno GetLastError()
 
 // in win32, only sockets can be in the FD_SET for select()
-inline bool isselectable(int s)
+static inline bool isselectable(int s)
 {
-    static u_long crap;
-    return ioctlsocket(s, FIONREAD, &crap) == 0 ? true : GetLastError() != WSAENOTSOCK;
+    // if _get_osfhandle() works, it's a msvcrt fd, not a winsock handle.
+    // msvcrt fds can't be select()ed on correctly.
+    return ((HANDLE)_get_osfhandle(s) == INVALID_HANDLE_VALUE) 
+	? true : false;
 }
 
 #endif // _WIN32
@@ -68,17 +71,62 @@ WvFdStream::~WvFdStream()
 }
 
 
+static int _cloexec(int fd, bool close_on_exec)
+{
+#ifndef _WIN32 // there is no exec() in win32, so this is meaningless there
+    return fcntl(fd, F_SETFD, close_on_exec ? FD_CLOEXEC : 0);
+#else
+    return 0;
+#endif
+}
+
+
+static int _nonblock(int fd, bool nonblock)
+{
+#ifndef _WIN32
+    int flag = fcntl(fd, F_GETFL);
+    return fcntl(fd, F_SETFL,
+		 (flag & ~O_NONBLOCK) | (nonblock ? O_NONBLOCK : 0));
+#else
+    u_long arg = nonblock ? 1 : 0;
+    return ioctlsocket(fd, FIONBIO, &arg);
+#endif    
+}
+
+
+void WvFdStream::set_nonblock(bool nonblock)
+{
+    int rfd = getrfd(), wfd = getwfd();
+    if (rfd >= 0)
+	_nonblock(rfd, nonblock);
+    if (wfd >= 0 && rfd != wfd)
+	_nonblock(wfd, nonblock);
+}
+    
+
+void WvFdStream::set_close_on_exec(bool close_on_exec)
+{
+    int rfd = getrfd(), wfd = getwfd();
+    if (rfd >= 0)
+	_cloexec(rfd, close_on_exec);
+    if (wfd >= 0 && rfd != wfd)
+	_cloexec(wfd, close_on_exec);
+}
+
+
 void WvFdStream::close()
 {
+    // fprintf(stderr, "closing fdstream!\n");
     if (!closed)
     {
 	WvStream::close();
-	//fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
+	//fprintf(stderr, "closing%d:%d/%d\n", (int)this, rfd, wfd);
 	if (rfd >= 0)
 	    ::close(rfd);
 	if (wfd >= 0 && wfd != rfd)
 	    ::close(wfd);
 	rfd = wfd = -1;
+	//fprintf(stderr, "closed!\n");
     }
 }
 
@@ -105,6 +153,7 @@ size_t WvFdStream::uread(void *buf, size_t count)
 	return 0;
     }
 
+    // fprintf(stderr, "read %d bytes\n", in);
     return in;
 }
 
@@ -112,15 +161,18 @@ size_t WvFdStream::uread(void *buf, size_t count)
 size_t WvFdStream::uwrite(const void *buf, size_t count)
 {
     if (!buf || !count || !isok()) return 0;
+    // fprintf(stderr, "write %d bytes\n", count);
     
     int out = ::write(wfd, buf, count);
     
     if (out <= 0)
     {
-	if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
+	int err = errno;
+	// fprintf(stderr, "(fd%d-err-%d)", wfd, err);
+	if (out < 0 && (err == ENOBUFS || err==EAGAIN))
 	    return 0; // kernel buffer full - data not written (yet!)
     
-	seterr(out < 0 ? errno : 0); // a more critical error
+	seterr(out < 0 ? err : 0); // a more critical error
 	return 0;
     }
 
@@ -161,6 +213,11 @@ bool WvFdStream::pre_select(SelectInfo &si)
 {
     bool result = WvStream::pre_select(si);
     
+#if 0
+    fprintf(stderr, "%d/%d wr:%d ww:%d wx:%d inh:%d\n", rfd, wfd,
+	    si.wants.readable, si.wants.writable, si.wants.isexception,
+	    si.inherit_request);
+#endif
     if (isselectable(rfd))
     {
 	if (si.wants.readable && (rfd >= 0))
@@ -169,6 +226,8 @@ bool WvFdStream::pre_select(SelectInfo &si)
     else
 	result |= si.wants.readable;
     
+    // FIXME: outbuf flushing should really be in WvStream::pre_select()
+    // instead!  But it's hard to get the equivalent behaviour there.
     if (isselectable(wfd))
     {
 	if ((si.wants.writable || outbuf.used() || autoclose_time) 

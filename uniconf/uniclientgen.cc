@@ -13,6 +13,9 @@
 #include "wvresolver.h"
 #include "wvmoniker.h"
 #include "wvsslstream.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniClientGen);
 
 
 #ifndef _WIN32

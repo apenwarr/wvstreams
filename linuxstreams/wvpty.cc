@@ -75,8 +75,10 @@ bool WvPty::open_slave()
     return getfd() != -1;
 }
 
-WvPty::WvPty(const char *program, const char * const *argv)
-        : _pid(-1), _exit_status(242)
+WvPty::WvPty(const char *program, const char * const *argv,
+        Callback _pre_exec_cb, Callback _post_exec_cb)
+        : _pid(-1), _exit_status(242),
+          pre_exec_cb(_pre_exec_cb), post_exec_cb(_post_exec_cb)
 {
     if (!open_master()
             || (_pid = ::fork()) < 0)
@@ -127,9 +129,30 @@ WvPty::WvPty(const char *program, const char * const *argv)
             DPRINTF("close(getfd()) failed: %s\n", strerror(errno));
             goto _error;
         }
+        
+	if (::fcntl(STDIN_FILENO, F_SETFL,
+	    	fcntl(STDIN_FILENO, F_GETFL) & (O_APPEND|O_ASYNC)))
+	{
+            DPRINTF("fcntl(0) failed: %s\n", strerror(errno));
+            goto _error;
+	}
+	if (::fcntl(STDOUT_FILENO, F_SETFL,
+	    	fcntl(STDOUT_FILENO, F_GETFL) & (O_APPEND|O_ASYNC)))
+	{
+            DPRINTF("fcntl(1) failed: %s\n", strerror(errno));
+            goto _error;
+	}
+	if (::fcntl(STDERR_FILENO, F_SETFL,
+	    	fcntl(STDERR_FILENO, F_GETFL) & (O_APPEND|O_ASYNC)))
+	{
+            DPRINTF("fcntl(2) failed: %s\n", strerror(errno));
+            goto _error;
+	}
        
         setfd(-1);
+        if (pre_exec_cb && !pre_exec_cb(*this)) goto _error;
         execvp(program, (char * const *)argv);
+        if (post_exec_cb) post_exec_cb(*this);
 
 _error:
         setfd(-1);

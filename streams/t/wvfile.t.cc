@@ -4,10 +4,10 @@
 
 WVTEST_MAIN("basics")
 {
-    WvFile f("/dev/zero", O_RDONLY);
+    WvFile f("wvfile.t.tmp", O_WRONLY | O_CREAT);
     WVPASS(f.isok());
     if (!f.isok())
 	printf("file error code: '%s'\n", f.errstr().cstr());
-    WVPASS(f.isreadable());
-    WVFAIL(f.iswritable());
+    WVFAIL(f.isreadable());
+    WVPASS(f.iswritable());
 }
