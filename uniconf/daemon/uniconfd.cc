@@ -8,16 +8,27 @@
 #include "wvstrutils.h"
 #include "wvfileutils.h"
 #include "wvcrash.h"
+
+#ifndef _WIN32
 #include <getopt.h>
 #include <signal.h>
+#endif
 
 #ifdef WITH_SLP
 #include "slp.h"
 #endif
 
+#ifdef _WIN32
+#pragma comment(linker, "/include:?UniRegistryGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#pragma comment(linker, "/include:?UniPStoreGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#pragma comment(linker, "/include:?UniIniGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#endif
+
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
 static volatile bool want_to_die = false;
+
+#ifndef _WIN32
 void signal_handler(int signum)
 {
     fprintf(stderr, "\nCaught signal %d; cleaning up and terminating.\n",
@@ -25,10 +36,12 @@ void signal_handler(int signum)
     want_to_die = true;
     signal(signum, SIG_DFL);
 }
+#endif
 
 
 static void usage(WvStringParm argv0)
 {
+#ifndef _WIN32
     wverr->print(
 	"\n"
         "Usage: %s [-fdVa] [-A moniker] [-p port] [-s sslport] [-u unixsocket] "
@@ -44,6 +57,19 @@ static void usage(WvStringParm argv0)
 	"     -u   Listen on given Unix socket filename (default=disabled)\n"
 	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
 	argv0);
+#else
+    wverr->print(
+	"\n"
+	"Usage: %s [-dV] [-p port] [-s sslport] "
+		 "<mounts...>\n"
+	"     -d   Print debug messages\n"
+        "     -dd  Print lots of debug messages\n"
+	"     -V   Print version number and exit\n"
+	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
+	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
+	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
+	argv0);
+#endif
     exit(1);
 }
 
@@ -55,14 +81,52 @@ static void sillyslpcb(SLPHandle hslp, SLPError errcode, void* cookie)
 }
 #endif
 
+#ifndef _WIN32
 extern char *optarg;
 extern int optind;
+#else
+char *optarg;
+int optind = 1;
+
+int getopt(int argc, char *argv[], const char *opts)
+{
+    static int i = 1;
+    for (char *p = argv[optind] + i; optind < argc && argv[optind][0] == '-'; )
+    {
+	if (!*p)
+	{
+	    ++optind;
+	    i = 1;
+	    p = argv[optind] + i;
+	    continue;
+	}
+	char *opt = strchr(opts, *p);
+	if (!opt)
+	    return -1;
+	switch (opt[1])
+	{
+	case ':':
+	    optarg = argv[optind + 1];
+	    optind += 2;
+	    i = 1;
+	    return *p;
+	default:
+	    optarg = 0;
+	    ++i;
+	    return *p;
+	}
+    }
+    return -1;
+}
+#endif
 
 int main(int argc, char **argv)
 {
+#ifndef _WIN32
     signal(SIGINT,  signal_handler);
     signal(SIGTERM, signal_handler);
     signal(SIGPIPE, SIG_IGN);
+#endif
     wvcrash_setup(argv[0]);
 
     int c, buglevel = 0;
@@ -152,7 +216,8 @@ int main(int argc, char **argv)
     IUniConfGen *permgen = !!permmon ? wvcreate<IUniConfGen>(permmon) : NULL;
     UniConfDaemon daemon(cfg, needauth, permgen);
     WvIStreamList::globallist.append(&daemon, false);
-    
+
+#ifndef _WIN32
     if (!!unixport)
     {
 	// FIXME: THIS IS NOT SAFE!
@@ -161,6 +226,8 @@ int main(int argc, char **argv)
 	if (!daemon.setupunixsocket(unixport))
 	    exit(3);
     }
+#endif
+
     if (port && !daemon.setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
 	exit(4);
 
@@ -179,6 +246,7 @@ int main(int argc, char **argv)
             exit(6);
     }
 
+#ifndef _WIN32
     if (!dontfork)
     {
 	// since we're a daemon, we should now background ourselves.
@@ -186,6 +254,7 @@ int main(int argc, char **argv)
 	if (pid > 0) // parent
 	    _exit(0);
     }
+#endif
 
     WvString svc, sslsvc;
     

@@ -7,6 +7,10 @@
 #ifndef __IWVSTREAM_H
 #define __IWVSTREAM_H
 
+#ifdef _WIN32
+#include "winsock2.h"
+#include "time.h"
+#endif
 
 #include "wvxplc.h"
 #include "wverror.h"
