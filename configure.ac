@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.42 2003/11/03 19:46:06 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.43 2003/12/01 22:42:49 pphaneuf Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -231,9 +231,9 @@ if test "$with_qt" != "no"; then
         CPPFLAGS_save="$CPPFLAGS"
         for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
             CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include"
-            AC_TRY_COMPILE([#include <qapplication.h>],
-                           [QApplication app(0, 0); return app.exec()],
-                           [wv_cv_with_qt=$wv_qtdir; break])
+            AC_TRY_LINK([#include <qstring.h>],
+                        [QString x("hello"); return 0; ],
+                        [wv_cv_with_qt=$wv_qtdir; break])
         done
         CPPFLAGS="$CPPFLAGS_save"
     ])
@@ -262,17 +262,30 @@ if test "$with_vorbis" != "no"; then
     AC_CHECK_LIB(vorbisenc, vorbis_encode_init,, [with_vorbis=no])
 fi
 
-# xplc
-if test "$with_xplc" != "no"; then
-    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no])
-    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no], -lxplc-cxx)
-fi
-
 # zlib
 if test "$with_zlib" != "no"; then
     AC_CHECK_HEADERS(zlib.h,, [with_zlib=no])
     AC_CHECK_LIB(z, compress,, [with_zlib=no])
 fi
+
+# xplc
+if test "$with_xplc" != "no"; then
+    test "$with_xplc" = yes && with_xplc=
+    CPPFLAGS_save="$CPPFLAGS"
+    LDFLAGS_save="$LDFLAGS"
+    WV_APPEND(CPPFLAGS, [-DUNSTABLE])
+    if test "$with_xplc"; then
+        WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
+        WV_APPEND(LDFLAGS, [-L$with_xplc -lxplc -lxplc-cxx])
+    fi
+    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no])
+    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no], -lxplc-cxx)
+    if test "$with_xplc" = no; then
+        CPPFLAGS="$CPPFLAGS_save"
+        LDFLAGS="$LDFLAGS_save"
+    fi
+fi
+
 
 # check for missing packages
 missing_required=
