@@ -2,6 +2,9 @@
  * Do some repetitive stuff that *shouldn't* stress bdbhash very much, so
  * that somebody can strace it and see if it does.
  */
+#include "wvautoconf.h"
+
+#if defined(WITH_QDBM) || defined(WITH_BDB)
 #include "wvondiskhash.h"
 #include "wvstring.h"
 
@@ -42,3 +45,9 @@ int main()
     }
 #endif
 }
+#else
+int main(int argc, char *argv[])
+{
+  return 0;
+}
+#endif

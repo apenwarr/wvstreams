@@ -2,6 +2,8 @@
  * Note: this test program should be exactly the same as the one in
  * qdbmtest.cc, because the APIs should be identical.
  */
+#include "wvautoconf.h"
+#if defined(WITH_QDBM) || defined(WITH_BDB)
 #include "wvondiskhash.h"
 #include "wvstringlist.h"
 
@@ -170,3 +172,9 @@ int main()
         if (guard == 5) printf("FAILED\n");
     }
 }
+#else
+int main(int argc, char *argv[])
+{
+  return 0;
+}
+#endif
