@@ -14,10 +14,10 @@ void concallback(WvStream &con, void *userdata)
 
 int main()
 {
-    const char *argv1[] = { "sh", "-c", 
-				"while :; do echo foo; sleep 3; done" };
-    const char *argv2[] = { "sh", "-c", 
-				"while :; do echo snorkle; sleep 2; done" };
+    const char *argv1[] = { "sh", "-c",
+			    "while :; do echo foo; sleep 3; done", NULL };
+    const char *argv2[] = { "sh", "-c",
+			    "while :; do echo snorkle; sleep 2; done", NULL };
 
     WvLog log("logger", WvLog::Info);
     WvLog modemlog("modem", WvLog::Info);

@@ -4,9 +4,9 @@
 int main()
 {
     const char *argv1[] = { "sh", "-c", 
-				"while :; do echo foo; sleep 3; done" };
+			    "while :; do echo foo; sleep 3; done", NULL };
     const char *argv2[] = { "sh", "-c", 
-				"while :; do echo snorkle; sleep 1; done" };
+			    "while :; do echo snorkle; sleep 1; done", NULL };
 
     WvPipe stream1(argv1[0], argv1, false, true, false);
     WvPipe stream2(argv2[0], argv2, false, true, false);
