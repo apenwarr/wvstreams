@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.46 2003/12/04 05:23:58 kenrose Exp $)
+AC_REVISION($Id: configure.ac,v 1.47 2003/12/11 03:40:41 pzion Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -79,6 +79,7 @@ AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
+AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
@@ -238,6 +239,13 @@ if test "$with_tcl" != "no"; then
     fi
 fi
 
+# telephony
+if test "$with_telephony" != "no"; then
+    with_telephony=yes
+else
+    with_telephony=no
+fi
+
 # swig
 if test "$with_swig" != "no"; then
     AC_CHECK_PROG(SWIG, swig, yes, no)
@@ -338,6 +346,10 @@ if test "$with_pam" = "no"; then
     AC_MSG_WARN([PAM is missing.])
     missing_devel=yes
 fi
+if test "$with_telephony" = "no"; then
+    AC_MSG_WARN([Telephony is missing.])
+    missing_devel=yes
+fi
 if test "$with_qt" = "no"; then
     AC_MSG_WARN([Qt is missing.])
     missing_devel=yes
@@ -393,6 +405,7 @@ AC_SUBST(with_gtk)
 AC_SUBST(with_ogg)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
+AC_SUBST(with_telephony)
 AC_SUBST(with_qt)
 AC_SUBST(with_speex)
 AC_SUBST(with_swig)

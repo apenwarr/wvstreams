@@ -58,6 +58,7 @@ with_pam=@with_pam@
 with_tcl=@with_tcl@
 with_swig=@with_swig@
 with_qt=@with_qt@
+with_telephony=@with_telephony@
 with_speex=@with_speex@
 with_vorbis=@with_vorbis@
 with_xplc=@with_xplc@

@@ -43,6 +43,10 @@ ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so libwvqt.a
 endif
 
+ifneq ("$(with_telephony)", "no")
+  TARGETS += libwvtelephony.so libwvtelephony.a
+endif
+
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
@@ -166,6 +170,9 @@ libwvoggspeex.so: -logg -lspeex libwvutils.so
 
 libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: -lfftw -lrfftw libwvutils.so
+
+libwvtelephony.a libwvtelephony.so: $(call objects,telephony)
+libwvtelephony.so: 
 
 ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
   libwvqt.so-LIBS+=-lqt-mt
