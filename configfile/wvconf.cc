@@ -11,6 +11,7 @@
 #include "wvfile.h"
 #include "wvstringtable.h"
 #include <string.h>
+#include <sys/stat.h>
 
 
 void WvConf::setbool(WvConf &, void *userdata,
