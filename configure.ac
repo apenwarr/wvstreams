@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.29 2003/04/29 15:37:29 jim Exp $)
+AC_REVISION($Id: configure.ac,v 1.30 2003/05/06 23:16:15 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -460,6 +460,7 @@ if test "$enable_devel" == "yes"; then
 fi
 
 AC_SUBST(enable_debug)
+AC_SUBST(enable_devel)
 AC_SUBST(enable_fatal_warnings)
 AC_SUBST(enable_verbose)
 AC_SUBST(enable_optimization)
