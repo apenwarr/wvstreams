@@ -33,9 +33,7 @@ all: subdirs $(LIBFILES)
 subdirs:
 	$(subdirs)
 
-$(LIBFILES) : subdirs
-
-libwvcrypto.so : libwvstreams.so
+libwvcrypto.so: libwvstreams.so
 
 $(wildcard *.so) $(wildcard *.a): Makefile
 
