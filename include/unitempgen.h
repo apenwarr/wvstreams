@@ -18,10 +18,6 @@
  */
 class UniTempGen : public UniConfGen
 {
-protected:
-    class NodeIter;
-    friend class NodeIter;
-
 public:
     UniConfValueTree *root; /*!< the root of the tree */
     bool dirty; /*!< set whenever the tree actually changes */
@@ -33,9 +29,12 @@ public:
 
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void flush_buffers() { };
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
+
+protected:
 };
 
 

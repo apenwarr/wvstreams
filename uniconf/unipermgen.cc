@@ -97,11 +97,12 @@ bool UniPermGen::getoneperm(const UniConfKey &path, Level level, Type type)
     {
         if (path.isempty())
         {
+	    // nothing found: use default
             switch (type)
             {
-                case READ: return true;
+                case READ: return false;
                 case WRITE: return false;
-                case EXEC: return true; 
+                case EXEC: return false; 
             }
         }
         else

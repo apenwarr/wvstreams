@@ -82,6 +82,8 @@ public:
             unsigned int world);
     void chmod(const UniConfKey &path, unsigned int mode);
 
+    virtual void flush_buffers() { }
+
 private:
     bool getoneperm(const UniConfKey &path, Level level, Type type); 
 };

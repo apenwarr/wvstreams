@@ -1,10 +1,14 @@
-#include <stdint.h>
+
 #include <time.h>
+#include <wvautoconf.h>
+#if defined(WITH_QDBM) || defined(WITH_BDB)
 #include <wvondiskhash.h>
+#endif
 #include <wvlog.h>
 #include <wvstring.h>
 #include <wvtimeutils.h>
 
+#if defined(WITH_QDBM) || defined(WITH_BDB)
 template <class HashType>
 void SpeedDemon(WvStringParm name, int max)
 {
@@ -60,6 +64,7 @@ void SpeedDemon(WvStringParm name, int max)
     log("    full iteration:      %s ms\n",
             msecdiff(wvtime(), start));
 }
+#endif
 
 int main(int argc, char **argv)
 {

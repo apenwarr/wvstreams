@@ -8,3 +8,6 @@ ifneq ("$(with_openslp)", "no")
   uniconf/daemon/uniconfd-LIBS+=-lslp
 endif
 uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.o $(LIBUNICONF)
+
+%: %.in
+	@sed -e "s/#VERSION#/$(RELEASE)/g" < $< > $@

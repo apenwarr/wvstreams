@@ -251,7 +251,7 @@ public:
      * Unlike unix mv(), this is *not* currently atomic.  It's more like
      * cp-then-rm.
      */
-    void move(const UniConf &dst);
+    void move(const UniConf &dst) const;
 
     /**
      * Removes this key and all of its children from the registry.
@@ -476,7 +476,12 @@ public:
             return false;
         current = top[it->key()];
         return true;
-    }   
+    }
+    
+    // FIXME: this is a speed optimization only.  Don't use this unless
+    // you're apenwarr.  It will change.
+    WvString _value() const
+        { return it->value(); }
 };
 
 
@@ -503,6 +508,11 @@ public:
         current = top[it->key()];
         return true;
     }   
+
+    // FIXME: this is a speed optimization only.  Don't use this unless
+    // you're apenwarr.  It will change.
+    WvString _value() const
+        { return it->value(); }
 };
 
 

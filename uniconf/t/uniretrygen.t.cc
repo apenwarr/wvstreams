@@ -5,7 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/signal.h>
+#include <signal.h>
 
 #define UNICONFD_SOCK "/tmp/uniretrygen-uniconfd"
 #define UNICONFD_INI "/tmp/uniretrygen-uniconfd.ini"
@@ -29,7 +29,7 @@ WVTEST_MAIN("uniconfd")
     
     unlink(UNICONFD_INI);
     
-    UniConfRoot cfg("retry:{unix:" UNICONFD_SOCK " 500}");
+    UniConfRoot cfg("retry:{unix:" UNICONFD_SOCK " 100}");
     cfg["/key"].setme("value");
     WVPASS(!cfg["/key"].exists());
 
@@ -40,14 +40,16 @@ WVTEST_MAIN("uniconfd")
     	_exit(1);
     }
     
-    sleep(1);
+    sleep(1); // Wait for reconnect
     
     cfg["/key"].setme("value");
+    WVPASS(cfg["/key"].getme() == "value");
+    
     cfg.commit();
-    WVPASS(cfg["/key"].getme() == "value");
-    
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
+    
+    sleep(1); // Wait for UDS to go bad
     
     WVPASS(!cfg["/key"].exists());
     
@@ -58,14 +60,15 @@ WVTEST_MAIN("uniconfd")
     	_exit(1);
     }
 
-    WVPASS(!cfg["/key"].exists());
-
-    sleep(1);
+    sleep(1); // Wait for reconnect
     
     WVPASS(cfg["/key"].getme() == "value");
     
+    cfg.commit();
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
+    
+    sleep(1); // Wait for UDS to go bad
 
     WVPASS(!cfg["/key"].exists());
 }

@@ -3,7 +3,21 @@
 
 WVTEST_MAIN("no generator")
 {
-    UniConfRoot root;
+    UniConfRoot root1;
+    WVPASS(root1.getme() == WvString::null);
+
+    // verify that setting keys in unmounted space does not actually
+    // set their values (or more likely, cause a segfault)
+    UniConfRoot root2;
+    root2["subt/mayo/baz"].mount("temp:");
+    root2["/"].setme("foo");
+    root2["subt"].setme("bar");
+    root2["subt/mayo"].setme("moo");
+    WVPASS(strcmp(root2["/"].getme().cstr(), "") == 0);
+    WVPASS(strcmp(root2["subt"].getme().cstr(), "") == 0);
+    WVPASS(strcmp(root2["subt/mayo"].getme().cstr(), "") == 0);        
+    WVFAIL(root2["dialer 2"].exists());
+
 }
 
 
@@ -225,19 +239,63 @@ WVTEST_MAIN("mounting with paths prefixed by /")
 
 }
 
-#if BUG_5512_IS_RESOLVED
 WVTEST_MAIN("Deleting while iterating")
 {
     UniConfRoot root("temp:");
+    char *foo = new char[250]; //to make sure the hash moves in memory
     for (int i = 0; i < 10; i++)
+    {
         root.xsetint(i, i);
+        root[i].xsetint(i, i);
+    }
     
     UniConf::Iter i(root);
+    char *foo2 = new char[250];
     for (i.rewind(); i.next(); )
     {
-        i().setme(WvString());
-        i.rewind();
+//        fprintf(stderr, "%s\n", i->getme().cstr());
+        root[i->key()].setme(WvString::null);
+        if (i->getme() != WvString::null)
+            i.rewind();
     }
-    WVPASS("If not crashed && no valgrind errors");
+    deletev foo;
+    deletev foo2;
 }
-#endif
+
+void verify_recursive_iter(UniConfRoot &root)
+{
+    // verify that recursive iteration works as expected
+    UniConf::RecursiveIter i(root);
+    i.rewind(); 
+    WVPASS(i.next());
+    WVPASS(strcmp(i().key().cstr(), "subt") == 0);
+    WVPASS(strcmp(i().getme().cstr(), "") == 0);
+    WVPASS(i.next());
+    WVPASS(strcmp(i().key().cstr(), "mayo") == 0);
+    WVPASS(strcmp(i().getme().cstr(), "baz") == 0);
+    WVFAIL(i.next());
+
+    // verify that non-recursive iteration doesn't go over keys
+    // it's not supposed to
+    UniConf::Iter j(root);
+    j.rewind(); 
+    WVPASS(j.next());
+    WVPASS(strcmp(j().key().cstr(), "subt") == 0);
+    WVPASS(strcmp(j().getme().cstr(), "") == 0);
+    WVFAIL(j.next());
+}
+
+WVTEST_MAIN("Recursive iteration with no generator at root")
+{       
+    // distance of "2" between first mount and unmounted root
+    UniConfRoot root1;
+    root1["subt/mayo"].mount("temp:");
+    root1["subt/mayo"].setme("baz");        
+    verify_recursive_iter(root1);
+
+    // distance of "1" between first mount and unmounted root
+    UniConfRoot root2;
+    root2["subt"].mount("temp:");
+    root2["subt/mayo"].setme("baz");
+    verify_recursive_iter(root2);
+}

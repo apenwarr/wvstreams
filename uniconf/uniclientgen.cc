@@ -89,35 +89,6 @@ static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 
 
-/***** UniClientGen::RemoteKeyIter *****/
-
-class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
-{
-protected:
-    int topcount;
-    KeyValList *list;
-    KeyValList::Iter i;
-
-public:
-    RemoteKeyIter(const UniConfKey &_top, KeyValList *_list) 
-	: list(_list), i(*_list)
-	{ topcount = _top.numsegments(); }
-    virtual ~RemoteKeyIter() 
-        { delete list; }
-
-    /***** Overridden methods *****/
-
-    virtual void rewind()
-        { i.rewind(); }
-    virtual bool next()
-        { return i.next(); }
-    virtual UniConfKey key() const
-        { return i->key; }
-    virtual WvString value() const
-        { return i->val; }
-};
-
-
 /***** UniClientGen *****/
 
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) 
@@ -131,18 +102,13 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
     conn = new UniClientConn(stream, dst);
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
-
-    deltastream.setcallback(WvStreamCallback(this, &UniClientGen::deltacb), 0);
-    WvIStreamList::globallist.append(&deltastream, false);    
 }
 
 
 UniClientGen::~UniClientGen()
 {
-    WvIStreamList::globallist.unlink(&deltastream);
-
     conn->writecmd(UniClientConn::REQ_QUIT, "");
-    RELEASE(conn);
+    WVRELEASE(conn);
 }
 
 
@@ -158,6 +124,18 @@ bool UniClientGen::refresh()
     return true;
 }
 
+void UniClientGen::flush_buffers()
+{
+    // this ensures that all keys pending notifications are dealt with
+    while (conn->isok() && conn->isreadable())
+        conn->callback();
+}
+
+void UniClientGen::commit()
+{
+   UniConfKey tempkey("dummykey");
+   get(tempkey); // NOOP command, to ensure that all requests are flushed
+}
 
 WvString UniClientGen::get(const UniConfKey &key)
 {
@@ -214,7 +192,15 @@ UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
 
     if (do_select())
     {
-	Iter *it = new RemoteKeyIter(key, result_list);
+	ListIter *it = new ListIter(this);
+	KeyValList::Iter i(*result_list);
+	for (i.rewind(); i.next(); )
+	{
+	    it->keys.append(new WvString(i->key), true);
+	    it->values.append(new WvString(i->val), true);
+	}
+	
+	delete result_list;
 	result_list = NULL;
         return it;
     }
@@ -224,7 +210,6 @@ UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
 	result_list = NULL;
 	return NULL;
     }
-
 }
 
 
@@ -336,7 +321,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
-                clientdelta(key, value);
+                delta(key, value);
             }   
 
         default:
@@ -349,6 +334,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 // FIXME: horribly horribly evil!!
 bool UniClientGen::do_select()
 {
+    hold_delta();
+    
     cmdinprogress = true;
     cmdsuccess = false;
 
@@ -370,26 +357,7 @@ bool UniClientGen::do_select()
 //    if (!cmdsuccess)
 //        seterror("Error: server timed out on response.");
 
-    return cmdsuccess;
-}
-
-
-
-void UniClientGen::clientdelta(const UniConfKey &key, WvStringParm value)
-{
-    deltas.append(new UniConfPair(key, value), true);
-    deltastream.alarm(0);
-}
-
-
-void UniClientGen::deltacb(WvStream &, void *)
-{
-    hold_delta();
-    UniConfPairList::Iter i(deltas);
-
-    for (i.rewind(); i.next(); )
-        delta(i->key(), i->value());
-
-    deltas.zap();
     unhold_delta();
+    
+    return cmdsuccess;
 }

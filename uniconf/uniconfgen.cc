@@ -249,3 +249,40 @@ UniConfGen::Iter *UniConfGen::recursiveiterator(const UniConfKey &key)
 {
     return new _UniConfGenRecursiveIter(this, key);
 }
+
+
+UniConfGen::ListIter::ListIter(IUniConfGen *_gen)
+    : ki(keys), vi(values)
+{
+    gen = _gen;
+}
+
+
+void UniConfGen::ListIter::rewind()
+{
+    ki.rewind();
+    vi.rewind();
+}
+
+
+bool UniConfGen::ListIter::next()
+{
+    if (vi.cur())
+	vi.next();
+    return ki.next();
+}
+
+
+UniConfKey UniConfGen::ListIter::key() const
+{
+    return *ki;
+}
+
+
+WvString UniConfGen::ListIter::value() const
+{
+    if (vi.cur())
+	return *vi;
+    else
+	return gen->get(*ki);
+}

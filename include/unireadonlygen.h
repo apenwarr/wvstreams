@@ -23,6 +23,7 @@ public:
 
     /***** Overridden members *****/
 
+    virtual void flush_buffers() { }
     virtual void set(const UniConfKey &key, WvStringParm value) { };
 };
 

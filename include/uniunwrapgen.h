@@ -47,6 +47,7 @@ public:
     /***** Overridden methods *****/
     virtual void commit();
     virtual bool refresh();
+    virtual void flush_buffers() { }
     virtual void prefetch(const UniConfKey &key, bool recursive);
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
