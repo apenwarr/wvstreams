@@ -250,7 +250,7 @@ bool WvStream::isok() const
 
 void WvStream::seterr(int _errnum)
 {
-    if (! errnum)
+    if (!errnum)
     {
         WvError::seterr(_errnum);
         close();

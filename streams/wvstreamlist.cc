@@ -30,7 +30,7 @@ WvStreamList::~WvStreamList()
 
 bool WvStreamList::isok() const
 {
-    return true;  // "error" condition on a list is undefined
+    return WvError::isok();  // only !isok() if we explicitly set an error
 }
 
 
