@@ -900,9 +900,12 @@ time_t WvStream::alarm_remaining()
 	// Time is going backward!
 	if (now < last_alarm_check)
 	{
-	    fprintf(stderr, " ************* TIME WENT BACKWARDS! (%ld:%ld %ld:%ld)\n",
-		    last_alarm_check.tv_sec, last_alarm_check.tv_usec,
-		    now.tv_sec, now.tv_usec);
+	    // warn only if it's a "big" difference (sigh...)
+	    if (msecdiff(last_alarm_check, now) > 200)
+		fprintf(stderr, " ************* TIME WENT BACKWARDS! "
+			"(%ld:%ld %ld:%ld)\n",
+			last_alarm_check.tv_sec, last_alarm_check.tv_usec,
+			now.tv_sec, now.tv_usec);
 	    alarm_time = tvdiff(alarm_time, tvdiff(last_alarm_check, now));
 	}
 

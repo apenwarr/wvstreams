@@ -245,6 +245,7 @@ void UniIniGen::commit()
     //   and be done with it
     WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
 #else
+    // try to overwrite the file atomically
     char resolved_path[PATH_MAX];
     WvString real_filename(filename);
 
@@ -417,7 +418,17 @@ static void save_sect(WvStream &file, UniConfValueTree &toplevel,
     for (it.rewind(); it.next(); )
     {
         UniConfValueTree &node = *it;
-        if (!!node.value() || !node.haschildren())
+	
+	// FIXME: we never print empty-string ("") keys, for compatibility
+	// with WvConf.  Example: set x/y = 1; delete x/y; now x = "", because
+	// it couldn't be NULL while x/y existed, and nobody auto-deleted it
+	// when x/y went away.  Therefore we would try to write x = "" to the
+	// config file, but that's not what WvConf would do.
+	// 
+	// The correct fix would be to auto-delete x if the only reason it
+	// exists is for x/y.  But since that's hard, we'll just *never*
+	// write lines for "" entries.  Icky, but it works.
+        if (!!node.value())// || !node.haschildren())
         {
             if (!printedsection)
             {

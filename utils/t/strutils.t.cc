@@ -302,18 +302,19 @@ WVTEST_MAIN("getdirname")
  */
 WVTEST_MAIN("sizetoa")
 {
+    // Check various blocksizes
     {
         long blocks = 987654321;
         long blocksize = 1000000;
-        char *desired[15] = {"987.6 TB", "98.7 TB", "9.8 TB", "987.6 GB", 
-            "98.7 GB", "9.8 GB", "987.6 MB", "98.7 MB", "9.8 MB", "987.6 KB",
-            "98.7 KB", "9.8 KB", "987 bytes", "98 bytes", "9 bytes"};
+        char *desired[15] = {"987.7 TB", "98.8 TB", "9.9 TB", "987.7 GB",
+            "98.8 GB", "9.9 GB", "987.7 MB", "98.8 MB", "9.9 MB", "987.7 KB",
+            "98.8 KB", "9.9 KB", "987 bytes", "98 bytes", "9 bytes"};
         int i = 0;
 
         while(blocksize != 1)
         {
             if (!WVPASS(sizetoa(blocks, blocksize) == desired[i]))
-                printf("   because [%s] != [%s]\n", 
+                printf("   because [%s] != [%s]\n",
                         sizetoa(blocks, blocksize).cstr(), desired[i]);
             blocksize /= 10;
             i++;
@@ -328,6 +329,130 @@ WVTEST_MAIN("sizetoa")
             i++;
         }
     }
+
+    // Now check rounding
+    WVPASS(sizetoa(0) == "0 bytes");
+    WVPASS(sizetoa(1) == "1 bytes");
+    WVPASS(sizetoa(42) == "42 bytes");
+    WVPASS(sizetoa(666) == "666 bytes");
+    WVPASS(sizetoa(949) == "949 bytes");
+    WVPASS(sizetoa(999) == "999 bytes");
+    WVPASS(sizetoa(1000) == "1.0 KB");
+    WVPASS(sizetoa(1049) == "1.0 KB");
+    WVPASS(sizetoa(1050) == "1.1 KB");
+    WVPASS(sizetoa(1051) == "1.1 KB");
+    WVPASS(sizetoa(1099) == "1.1 KB");
+    WVPASS(sizetoa(1999) == "2.0 KB");
+    WVPASS(sizetoa(949999) == "950.0 KB");
+    WVPASS(sizetoa(999999) == "1.0 MB");
+    WVPASS(sizetoa(1000000) == "1.0 MB");
+    WVPASS(sizetoa(1049999) == "1.0 MB");
+    WVPASS(sizetoa(1050000) == "1.1 MB");
+    WVPASS(sizetoa(1050001) == "1.1 MB");
+    WVPASS(sizetoa(1099999) == "1.1 MB");
+    WVPASS(sizetoa(1999999) == "2.0 MB");
+    WVPASS(sizetoa(949999999) == "950.0 MB");
+    WVPASS(sizetoa(999999999) == "1.0 GB");
+    WVPASS(sizetoa(1000000000) == "1.0 GB");
+    WVPASS(sizetoa(1049999999) == "1.0 GB");
+    WVPASS(sizetoa(1050000000) == "1.1 GB");
+    WVPASS(sizetoa(1050000001) == "1.1 GB");
+    WVPASS(sizetoa(1099999999) == "1.1 GB");
+    WVPASS(sizetoa(1999999999) == "2.0 GB");
+    WVPASS(sizetoa(2147483647) == "2.1 GB");
+    WVPASS(sizetoa(0, 1000) == "0 bytes");
+    WVPASS(sizetoa(1, 1000) == "1.0 KB");
+    WVPASS(sizetoa(42, 1000) == "42.0 KB");
+    WVPASS(sizetoa(666, 1000) == "666.0 KB");
+    WVPASS(sizetoa(949, 1000) == "949.0 KB");
+    WVPASS(sizetoa(999, 1000) == "999.0 KB");
+    WVPASS(sizetoa(949999999, 1000) == "950.0 GB");
+    WVPASS(sizetoa(999999999, 1000) == "1.0 TB");
+    WVPASS(sizetoa(1000000000, 1000) == "1.0 TB");
+    WVPASS(sizetoa(1049999999, 1000) == "1.0 TB");
+    WVPASS(sizetoa(1050000000, 1000) == "1.1 TB");
+    WVPASS(sizetoa(1050000001, 1000) == "1.1 TB");
+    WVPASS(sizetoa(1099999999, 1000) == "1.1 TB");
+    WVPASS(sizetoa(1999999999, 1000) == "2.0 TB");
+    WVPASS(sizetoa(2147483647, 1000) == "2.1 TB");
+    WVPASS(sizetoa(949999999, 1000000) == "950.0 TB");
+    WVPASS(sizetoa(999999999, 1000000) == "1.0 PB");
+    WVPASS(sizetoa(1000000000, 1000000) == "1.0 PB");
+    WVPASS(sizetoa(1049999999, 1000000) == "1.0 PB");
+    WVPASS(sizetoa(1050000000, 1000000) == "1.1 PB");
+    WVPASS(sizetoa(1050000001, 1000000) == "1.1 PB");
+    WVPASS(sizetoa(1099999999, 1000000) == "1.1 PB");
+    WVPASS(sizetoa(1999999999, 1000000) == "2.0 PB");
+    WVPASS(sizetoa(2147483647, 1000000) == "2.1 PB");
+    WVPASS(sizetoa(949999999, 1000000000) == "950.0 PB");
+    WVPASS(sizetoa(999999999, 1000000000) == "1.0 EB");
+    WVPASS(sizetoa(1000000000, 1000000000) == "1.0 EB");
+    WVPASS(sizetoa(1049999999, 1000000000) == "1.0 EB");
+    WVPASS(sizetoa(1050000000, 1000000000) == "1.1 EB");
+    WVPASS(sizetoa(1050000001, 1000000000) == "1.1 EB");
+    WVPASS(sizetoa(1099999999, 1000000000) == "1.1 EB");
+    WVPASS(sizetoa(1999999999, 1000000000) == "2.0 EB");
+    WVPASS(sizetoa(2147483647, 1000000000) == "2.1 EB");
+/* Since sizetoa only currently takes signed long longs, then we will not be
+   able to test more than 2.1 exabytes.
+    WVPASS(sizetoa(949999999, 1000000000000) == "950.0 EB");
+    WVPASS(sizetoa(999999999, 1000000000000) == "1.0 EB");
+    WVPASS(sizetoa(1000000000, 1000000000000) == "1.0 EB");
+    WVPASS(sizetoa(1049999999, 1000000000000) == "1.0 EB");
+    WVPASS(sizetoa(1050000000, 1000000000000) == "1.1 EB");
+    WVPASS(sizetoa(1050000001, 1000000000000) == "1.1 EB");
+    WVPASS(sizetoa(1099999999, 1000000000000) == "1.1 EB");
+    WVPASS(sizetoa(1999999999, 1000000000000) == "2.0 EB");
+    WVPASS(sizetoa(2147483647, 1000000000000) == "2.1 EB");
+    WVPASS(sizetoa(949999999, 1000000000000000) == "950.0 EB");
+    WVPASS(sizetoa(999999999, 1000000000000000) == "1000.0 YB");
+    WVPASS(sizetoa(1000000000, 1000000000000000) == "1000.0 YB");
+    WVPASS(sizetoa(1049999999, 1000000000000000) == "1050.0 YB");
+    WVPASS(sizetoa(1050000000, 1000000000000000) == "1050.0 YB");
+    WVPASS(sizetoa(1050000001, 1000000000000000) == "1050.0 YB");
+    WVPASS(sizetoa(1099999999, 1000000000000000) == "1100.0 YB");
+    WVPASS(sizetoa(1999999999, 1000000000000000) == "2000.0 YB");
+    WVPASS(sizetoa(2147483647, 1000000000000000) == "2147.5 YB");
+    WVPASS(sizetoa(949999999, 10000000000000000) == "9500.0 YB");
+    WVPASS(sizetoa(999999999, 10000000000000000) == "10000.0 YB");
+*/
+}
+
+/** Tests sizektoa(),
+ * sizektoa() should convert an integer of kilobytes
+ * into a string that describes how big it is, in a human-readable format.
+ */
+WVTEST_MAIN("sizektoa")
+{
+    WVPASS(sizektoa(0) == "0 KB");
+    WVPASS(sizektoa(1) == "1 KB");
+    WVPASS(sizektoa(42) == "42 KB");
+    WVPASS(sizektoa(666) == "666 KB");
+    WVPASS(sizektoa(949) == "949 KB");
+    WVPASS(sizektoa(999) == "999 KB");
+    WVPASS(sizektoa(1000) == "1.0 MB");
+    WVPASS(sizektoa(1049) == "1.0 MB");
+    WVPASS(sizektoa(1050) == "1.1 MB");
+    WVPASS(sizektoa(1051) == "1.1 MB");
+    WVPASS(sizektoa(1099) == "1.1 MB");
+    WVPASS(sizektoa(1999) == "2.0 MB");
+    WVPASS(sizektoa(949999) == "950.0 MB");
+    WVPASS(sizektoa(999999) == "1.0 GB");
+    WVPASS(sizektoa(1000000) == "1.0 GB");
+    WVPASS(sizektoa(1049999) == "1.0 GB");
+    WVPASS(sizektoa(1050000) == "1.1 GB");
+    WVPASS(sizektoa(1050001) == "1.1 GB");
+    WVPASS(sizektoa(1099999) == "1.1 GB");
+    WVPASS(sizektoa(1999999) == "2.0 GB");
+    WVPASS(sizektoa(949999999) == "950.0 GB");
+    WVPASS(sizektoa(999999999) == "1.0 TB");
+    WVPASS(sizektoa(1000000000) == "1.0 TB");
+    WVPASS(sizektoa(1049999999) == "1.0 TB");
+    WVPASS(sizektoa(1050000000) == "1.1 TB");
+    WVPASS(sizektoa(1050000001) == "1.1 TB");
+    WVPASS(sizektoa(1099999999) == "1.1 TB");
+    WVPASS(sizektoa(1999999999) == "2.0 TB");
+    WVPASS(sizektoa(2147483647) == "2.1 TB");
 }
 
 /** Tests lookup().
@@ -611,3 +736,4 @@ WVTEST_MAIN("substr")
     WVPASS(substr(big, 5, 0) == "");
     WVPASS(substr(big, 10, 1) == "");
 }
+

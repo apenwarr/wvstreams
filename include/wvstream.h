@@ -7,7 +7,7 @@
 #ifndef __WVSTREAM_H
 #define __WVSTREAM_H
 
-#include <xplc/utils.h>
+#include "wvxplc.h"
 #include "wverror.h"
 #include "wvbuf.h"
 #include "wvcallback.h"

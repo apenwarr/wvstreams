@@ -418,9 +418,11 @@ void WvHttpStream::execute()
                 {
                     *p = 0;
                     p = trim_string(p+1);
-                    struct WvHTTPHeader *h = new struct WvHTTPHeader(line, p);
-                    if (outstream)
+                    if (outstream) {
+			struct WvHTTPHeader *h;
+			h = new struct WvHTTPHeader(line, p);
                         outstream->headers.add(h, true);
+		    }
                 }
                 else if (strncasecmp(line, "HTTP/", 5) == 0)
                 {

@@ -141,8 +141,6 @@ ifneq ("$(with_qdbm)", "no")
   libwvutils.so-LIBS+=-L. -lqdbm
 endif
 
-
-CPPFLAGS+=-DUNSTABLE
 libwvstreams.so: LIBS+=-lxplc-cxx
 
 ifneq ("$(with_fam)", "no")

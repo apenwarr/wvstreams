@@ -7,7 +7,7 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
-#include <xplc/utils.h>
+#include "wvxplc.h"
 #include "uniconfkey.h"
 #include "wvcallback.h"
 #include "wvlinklist.h"

@@ -100,7 +100,9 @@ void WvModemBase::hangup()
     // so that WvModemScan can run faster.
     drain();
     write( "\r", 1 );
-    for (i = 0; !select(200) && i < 10; i++)
+    // FIXME: should be iswritable, but based on the numer of msec params
+    // tossed around I assume modems are very timing-sensitive
+    for (i = 0; !select(200, false, true) && i < 10; i++)
 	write( "\r", 1 );
     drain();
 
