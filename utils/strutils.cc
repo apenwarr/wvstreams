@@ -121,6 +121,20 @@ void replace_char(void *_string, char c1, char c2, int length)
     	    *(string+i) = c2;
 }
 
+// Snip off the first part of 'haystack' if it consists of 'needle'.
+char *snip_string(char *haystack, char *needle)
+{
+    if(!haystack)
+        return NULL;
+    if(!needle)
+        return haystack;
+    char *p = strstr(haystack, needle);
+    if(!p || p != haystack)
+        return haystack;
+    else
+        return haystack + strlen(needle);
+}
+
 #ifndef _WIN32
 char *strlwr(char *string)
 {

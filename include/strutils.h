@@ -57,6 +57,11 @@ char *non_breaking(char *string);
  */
 void replace_char(void *string, char c1, char c2, int length);
 
+/**
+ * Snip off the first part of 'haystack' if it consists of 'needle'.
+ */
+char *snip_string(char *haystack, char *needle);
+
 #ifndef _WIN32
 /**
  * In-place modify a character string so that all contained letters are 
