@@ -8,7 +8,7 @@ all: configfile.a
 
 configfile.a: wvconf.o cfgsection.o cfgentry.o
 
-LIBS = ${EFENCE}
+#LIBS = ${EFENCE}
 initest: initest.o configfile.a ../streams/streams.a ../utils/utils.a
 
 delsection: delsection.o configfile.a ../streams/streams.a ../utils/utils.a
