@@ -88,8 +88,34 @@ void WvBdbHashBase::IterBase::rewind()
 }
 
 
+void WvBdbHashBase::IterBase::rewind(const datum &firstkey)
+{
+    curkey.dptr = NULL;
+    if (!bdbhash.dbf) return;
+    
+    curkey = firstkey;
+    if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+			 R_CURSOR))
+    {
+	// no key >= requested one?  start at the beginning.
+	curkey.dptr = NULL;
+    }
+    else if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+			      R_PREV))
+    {
+	// no key < requested one?  start at the beginning.
+	curkey.dptr = NULL;
+    }
+    
+    // otherwise, curkey is now the key right before the requested one.
+    // That makes next() go to the first requested key, following standard
+    // WvUtils semantics.
+}
+
+
 void WvBdbHashBase::IterBase::next()
 {
+    if (!bdbhash.dbf) return;
     if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
 			 curkey.dptr ? R_NEXT : R_FIRST))
 	curkey.dptr = curdata.dptr = NULL;

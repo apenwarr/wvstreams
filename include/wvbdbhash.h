@@ -49,6 +49,7 @@ public:
         IterBase(WvBdbHashBase &_bdbhash);
         ~IterBase();
         void rewind();
+	void rewind(const datum &firstkey);
         void next();
         
     protected:
@@ -67,7 +68,7 @@ private:
  * This hashtable is different from normal WvStreams hashtables in that it
  * stores the data on disk.
  * 
- * This affects memory managment for objects stored in it.
+ * This affects memory management for objects stored in it.
  * 
  * For find and operator[], the returned object is only guaranteed to be
  * around until the next find/or next() for iterators. 
@@ -145,6 +146,11 @@ public:
 	    if (k) delete k;
 	    if (d) delete d;
 	}
+	
+	void rewind()
+	    { IterBase::rewind(); }
+	void rewind(const K &firstkey)
+	    { IterBase::rewind(WvBdbHash::datumize<K>(firstkey)); }
 
         bool next()
         {
