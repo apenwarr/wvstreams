@@ -716,7 +716,7 @@ void WvFtpStream::execute()
 	if (!dataip)
 	    return;
 
-	log("Data port is %s.\n", *dataip);
+	log(WvLog::Debug4, "Data port is %s.\n", *dataip);
 	// Open data connection.
 	data = new WvTCPConn(*dataip);
 	if (!data)
@@ -727,7 +727,34 @@ void WvFtpStream::execute()
 	}
 
 	if (curl->is_dir)
+	{
 	    write(WvString("LIST %s\r\n", curl->url.getfile()));
+	    if (curl->outstream)
+	    {
+		WvString url_no_pw("ftp://%s%s%s%s", curl->url.getuser(),
+				   !!curl->url.getuser() ? "@" : "", 
+				   curl->url.gethost(), curl->url.getfile());
+		curl->outstream->write(WvString(
+		    "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\">\n"
+		    "<html>\n<head>\n<title>%s</title>\n"
+		    "<meta http-equiv=\"Content-Type\" content=\"text/html; "
+		    "charset=ISO-8859-1\">\n"
+		    "<base href=\"%s\"/>\n</head>\n"
+		    "<style type=\"text/css\">\n"
+		    "img { border: 0; padding: 0 2px; vertical-align: "
+		    "text-bottom; }\n"
+		    "td  { font-family: monospace; padding: 2px 3px; "
+		    "text-align: right; vertical-align: bottom; }\n"
+		    "td:first-child { text-align: left; padding: "
+		    "2px 10px 2px 3px; }\n"
+		    "table { border: 0; }\n"
+		    "a.symlink { font-style: italic; }\n"
+		    "</style>\n<body>\n"
+		    "<h1>Index of %s</h1>\n"
+		    "<hr/><table>\n", url_no_pw, curl->url, url_no_pw 
+					   ));
+	    }
+	}
 	else
 	    write(WvString("RETR %s\r\n", curl->url.getfile()));
 
@@ -735,8 +762,7 @@ void WvFtpStream::execute()
 	line = get_important_line(60000);
 	if (!line)
 	    doneurl();
-
-	if (strncmp(line, "150", 3))
+	else if (strncmp(line, "150", 3))
 	{
 	    log("Strange response to RETR command: %s\n", line);
 	    seterr("strange response to RETR command");
@@ -783,6 +809,9 @@ void WvFtpStream::execute()
 
 	    if (curl->is_dir)
 	    {
+		if (curl->outstream)
+		    curl->outstream->write(WvString(
+					       "</table><hr/></body></html>\n"));
 		write("CWD /\r\n");
 		log(WvLog::Debug5, "Waiting for response to CWD /\n");
 		line = get_important_line(60000);
@@ -805,7 +834,7 @@ WvString WvFtpStream::parse_for_links(char *line)
     WvString output_line("");
     trim_string(line);
 
-    if (curl->is_dir)
+    if (curl->is_dir && curl->outstream)
     {
 	struct ftpparse fp;
 	int res = ftpparse(&fp, line, strlen(line));
@@ -830,25 +859,28 @@ WvString WvFtpStream::parse_for_links(char *line)
 	    linkurl.append(linkname);
 	    WvUrlLink *link = new WvUrlLink(linkname, linkurl);
 	    curl->outstream->links.append(link, true);
-	    output_line.append(WvString("%-30s", linkname));
-	    if (fp.sizetype > 0)
-		output_line.append(WvString("%-12s", fp.size));
-	    else
-		output_line.append("%-12s", "?");
-	    if (fp.mtimetype > 0)
-		output_line.append(WvString("%-12s", fp.mtime));
-	    else
-		output_line.append("%-12s", "?");
-	    if (fp.idtype > 0)
+
+	    output_line.append("<tr>\n");
+
+	    output_line.append(WvString(" <td>%s%s</td>\n", linkname,
+					fp.flagtrycwd ? "/" : ""));
+
+	    if (fp.flagtryretr)
 	    {
-		char id[fp.idlen+2];
-		memcpy(id, fp.id, fp.idlen);
-		id[fp.idlen] = 0;
-		id[fp.idlen-1] = '\n';
-		output_line.append(id);
+		if (!fp.sizetype)
+		    output_line.append(" <td>? bytes</td>\n");
+		else
+		    output_line.append(WvString(" <td>%s bytes</td>\n",
+						fp.size));
+		if (fp.mtimetype > 0)
+		    output_line.append(WvString(" <td>%s</td>\n", (fp.mtime)));
+		else
+		    output_line.append(" <td>?</td>\n");
 	    }
 	    else
-		output_line.append("?\n");
+		output_line.append(" <td></td>\n");
+
+	    output_line.append("</tr>\n");
 	}
     }
     return output_line;
