@@ -16,9 +16,9 @@ WvProtoStream::WvProtoStream(WvStream **_cloned, WvLog *_debuglog)
 		: WvStreamClone(_cloned)
 {
     if (_debuglog)
-	log = new WvLog(_debuglog->split(WvLog::Debug2));
+	logp = new WvLog(_debuglog->split(WvLog::Debug2));
     else
-	log = NULL;
+	logp = NULL;
     
     log_enable = true;
     state = 0;
@@ -27,7 +27,7 @@ WvProtoStream::WvProtoStream(WvStream **_cloned, WvLog *_debuglog)
 
 WvProtoStream::~WvProtoStream()
 {
-    if (log) delete log;
+    if (logp) delete logp;
 }
 
 
@@ -36,11 +36,11 @@ WvProtoStream::~WvProtoStream()
  */
 size_t WvProtoStream::uwrite(const void *buf, size_t size)
 {
-    if (log && log_enable)
+    if (logp && log_enable)
     {
-	(*log)("Sent: ");
-	log->write(buf, size);
-	(*log)("\n");
+	(*logp)("Sent: ");
+	logp->write(buf, size);
+	(*logp)("\n");
     }
     
     return WvStreamClone::uwrite(buf, size);
@@ -61,30 +61,44 @@ WvProtoStream::Token *WvProtoStream::next_token()
 }
 
 
+WvString WvProtoStream::next_token_str()
+{
+    Token *t = next_token();
+    if (!t) return WvString("");
+    
+    WvString s(t->data);
+    delete t;
+    return s;
+}
+
+
+WvString WvProtoStream::token_remaining()
+{
+    tokbuf.put("", 1);
+    return (char *)tokbuf.get(tokbuf.used());
+}
+
+
 /* Default input tokenizer.  "line" is NULL-terminated, and individual string
  * tokens are separated by any amount of whitespace.
  */
-WvProtoStream::TokenList *WvProtoStream::tokenize(const unsigned char *line,
-						  size_t length)
+WvProtoStream::TokenList *WvProtoStream::tokenize()
 {
     TokenList *tl = new TokenList;
     Token *t;
 
-    tokbuf.zap();
-    tokbuf.put(line, length);
-    
     while ((t = next_token()) != NULL)
 	tl->append(t, true);
-    
-    if (log && log_enable && tl->count())
+#if 0 
+    if (logp && log_enable && tl->count())
     {
-	(*log)("Read: ");
+	(*logp)("Read: ");
 	TokenList::Iter i(*tl);
 	for (i.rewind(); i.next(); )
-	    (*log)("(%s) ", i.data()->data);
-	(*log)("\n");
+	    (*logp)("(%s) ", i.data()->data);
+	(*logp)("\n");
     }
-    
+#endif
     return tl;
 }
 
@@ -112,16 +126,21 @@ size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
 }
 
 
-/* Retrieve an input line and convert it to an array of tokens.  This is the
- * usual high-level interface to the input tokenizer.
- * Remember to free the array afterwards!
+/* Retrieve an input line and parse its first token.
+ * This is the usual high-level interface to the input tokenizer. Remember
+ * to free the array afterwards!
  */
-size_t WvProtoStream::tokline(Token **array)
+WvProtoStream::Token *WvProtoStream::tokline()
 { 
     char *line = getline(0);
     if (!line) return 0;
-    return list_to_array(tokenize((unsigned char *)line, strlen(line)),
-			 array);
+    
+    tokbuf.zap();
+    tokbuf.put(line, strlen(line));
+
+    (*logp)("Read: %s\n", line);
+    
+    return next_token();
 }
 
 
@@ -146,7 +165,7 @@ int WvProtoStream::tokanal(const Token &t, char **lookup,
 }
 
 
-void WvProtoStream::do_state(Token *, size_t)
+void WvProtoStream::do_state(Token &)
 {
 }
 
@@ -162,13 +181,13 @@ void WvProtoStream::switch_state(int newstate)
  */
 void WvProtoStream::execute()
 {
-    Token *t;
-    size_t nt = tokline(&t);
+    Token *t1 = tokline();
     
-    if (nt > 0)
-	do_state(t, nt);
-    
-    if (nt) delete[] t;
+    if (t1)
+    {
+	do_state(*t1);
+	delete t1;
+    }
 }
 
 
@@ -204,5 +223,3 @@ WvProtoStream::Token::~Token()
 {
     // 'data' member is freed automatically
 }
-
-

@@ -27,11 +27,13 @@ public:
     // override uwrite() so we can log all output
     virtual size_t uwrite(const void *buffer, size_t size);
 
-    // Routines to convert an input line into a list of Tokens.
+    // Routines to convert an input line into a set of Tokens.
     virtual Token *next_token();
-    virtual TokenList *tokenize(const unsigned char *line, size_t length);
+    WvString next_token_str();
+    WvString token_remaining();
+    virtual TokenList *tokenize();
     size_t list_to_array(TokenList *tl, Token **array);
-    size_t tokline(Token **array);
+    Token *tokline();
     
     // Convert token strings to enum values
     int tokanal(const Token &t, char **lookup,
@@ -39,16 +41,15 @@ public:
     
     // finite state machine
     int state;
-    virtual void do_state(Token *t, size_t nt);
+    virtual void do_state(Token &t1);
     virtual void switch_state(int newstate);
     
     // pass input through to the state machine, one line at a time
     virtual void execute();
     
 protected:
-    WvLog *log;
+    WvLog *logp;
     bool log_enable;
-    WvBuffer tokbuf;
     
 public:
     class Token
@@ -64,6 +65,8 @@ public:
     };
     
     DeclareWvList(Token);
+
+    WvBuffer tokbuf;
 };
 
 

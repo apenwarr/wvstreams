@@ -6,7 +6,7 @@ class ProtoTest : public WvProtoStream
 {
 public:
     ProtoTest(WvStream **_cloned, WvLog *_debuglog);
-    virtual void do_state(Token *t, size_t nt);
+    virtual void do_state(Token &t1);
     virtual void switch_state(int newstate);
 };
 
@@ -37,12 +37,12 @@ ProtoTest::ProtoTest(WvStream **_cloned, WvLog *_debuglog)
 }
 
 
-void ProtoTest::do_state(Token *t, size_t nt)
+void ProtoTest::do_state(Token &t1)
 {
-    enum States tok = (States)tokanal(t[0], toks, false);
+    enum States tok = (States)tokanal(t1, toks, false);
 
     if (tok < 0)
-	print("ERROR Unknown command (%s)\n", t->data);
+	print("ERROR Unknown command (%s)\n", t1.data);
     else
 	switch_state(tok);
 }
