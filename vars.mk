@@ -17,8 +17,7 @@ NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist \
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libuniconf.so libuniconf.a
-TARGETS += wvtestmain.o
-TARGETS += uniconf/daemon/uniconfdaemon crypto/tests/ssltest
+GARBAGE += wvtestmain.o
 
 ifneq ("$(with_ogg)", "no")
   ifneq ("$(with_vorbis)", "no")

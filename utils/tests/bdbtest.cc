@@ -77,7 +77,8 @@ int main()
     }
 
     {
-	StrTimeMap st("dbmfile2");
+	StrTimeMap st;
+        st.opendb("dbmfile2");
 	printf("\nList of times:\n");
 	{
 	    StrTimeMap::Iter i(st);
