@@ -36,7 +36,8 @@ int main(int argc, char **argv)
     // note: we know cmd and arg1 are non-NULL, but arg2 may be the argv
     // terminator, which is a NULL.  That has a special meaning for some
     // commands, like 'set', and is different from the empty string.
-    const char *_cmd = argv[1], *arg1 = argv[2], *arg2 = argv[3];
+    const char *_cmd = argv[1], *arg1 = argv[2],
+	       *arg2 = argc > 3 ? argv[3] : NULL;
     WvString cmd(_cmd);
     strlwr(cmd.edit());
     
@@ -46,6 +47,7 @@ int main(int argc, char **argv)
 	if (!val.isnull())
 	{
 	    fputs(val, stdout);
+	    //fflush(stdout); // shouldn't be necessary!
 	    return 0; // okay
 	}
 	else
