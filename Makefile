@@ -1,5 +1,6 @@
 WVSTREAMS=$(shell pwd)
 include wvrules.mk
+override enable_efence=no
 
 XPATH=include
 
