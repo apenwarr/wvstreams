@@ -131,7 +131,7 @@ void WvUrlStream::addurl(WvUrlRequest *url)
     if (!url->url.isok())
 	return;
     
-    waiting_urls.append(url, false);
+    waiting_urls.append(url, false, "waiting_url");
     request_next();
 }
 
@@ -257,7 +257,7 @@ void WvHttpStream::send_request(WvUrlRequest *url, bool auto_free)
     log("Request #%s: %s\n", request_count, url->url);
     write(url->request_str(url->pipeline_test
 			   || request_count < max_requests));
-    urls.append(url, auto_free);
+    urls.append(url, auto_free, "sent_running_url");
 }
 
 
@@ -578,7 +578,7 @@ void WvFtpStream::request_next()
 
     request_count++;
     log("Request #%s: %s\n", request_count, url->url);
-    urls.append(url, false);
+    urls.append(url, false, "request_url");
     alarm(0);
 }
 
@@ -1171,7 +1171,7 @@ void WvHttpPool::execute()
 	    conns.add(s, true);
 	    
 	    // add it to the streamlist, so it can do things
-	    append(s, false);
+	    append(s, false, "http/ftp stream");
 	}
 	
 	if (!i->instream)
@@ -1188,7 +1188,7 @@ WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
 {
     log(WvLog::Debug4, "Adding a new url to pool: '%s'\n", _url);
     WvUrlRequest *url = new WvUrlRequest(_url, _headers, false, headers_only);
-    urls.append(url, true);
+    urls.append(url, true, "addurl");
     
     return url->outstream;
 }
@@ -1200,7 +1200,7 @@ WvBufUrlStream *WvHttpPool::addputurl(WvStringParm _url,
 {
     log(WvLog::Debug4, "Adding a new put url to pool: '%s'\n", _url);
     WvUrlRequest *url = new WvUrlRequest(_url, _headers, s, create_dirs);
-    urls.append(url, true);
+    urls.append(url, true, "addputurl");
 
     return url->outstream;
 }

@@ -34,8 +34,8 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sighandler_die);
     
-    l.append(wvcon, false);
-    l.append(&p, false);
+    l.append(wvcon, false, "wvcon");
+    l.append(&p, false, "pool");
     
     while (!want_to_die && p.isok() && (wvcon->isok() || !p.idle()))
     {
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 		    printf("sending file %s to url %s.\n", &line[1], ptr+1);
 		    WvFile *sendfile = new WvFile(&line[1], O_RDONLY);
 		    s = p.addputurl(ptr+1, headers, sendfile, true);
-		    l.append(sendfile, true);
+		    l.append(sendfile, true, "sendfile");
 		}
 		
 		if (s)
@@ -77,9 +77,10 @@ int main(int argc, char **argv)
 		    WvFile *f = new WvFile(WvString("/tmp/url_%s", ++num), 
 					   O_CREAT|O_WRONLY|O_TRUNC);
 		    assert(!f->readable);
+		    assert(f->writable);
 		    s->autoforward(*f);
-		    l.append(s, true);
-		    l.append(f, true);
+		    l.append(s, true, "url");
+		    l.append(f, true, "outfile");
 		}
 	    }
 	}

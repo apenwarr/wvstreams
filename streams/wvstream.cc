@@ -352,8 +352,7 @@ size_t WvStream::write(const void *buf, size_t count)
 }
 
 
-char *WvStream::getline(time_t wait_msec, char separator,
-    int readahead)
+char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 {
     struct timeval timeout_time;
     if (wait_msec > 0)
@@ -369,17 +368,19 @@ char *WvStream::getline(time_t wait_msec, char separator,
         size_t i = inbuf.strchr(separator);
         if (i > 0)
         {
-            // the following cast is of dubious quality...
-            char *buf = const_cast<char*>((const char*)inbuf.get(i));
-            buf[i - 1] = '\0';
-            return buf;
+	    char *eol = (char *)inbuf.mutablepeek(i - 1, 1);
+	    assert(eol);
+	    *eol = 0;
+            return (char *)inbuf.get(i);
         }
-        else if (! isok())    // uh oh, stream is in trouble.
+        else if (!isok())    // uh oh, stream is in trouble.
         {
             if (inbuf.used())
             {
                 // handle "EOF without newline" condition
-                inbuf.alloc(1)[0] = '\0'; // null-terminate it
+		// FIXME: it's very silly that buffers can't return editable
+		// char* arrays.
+                inbuf.alloc(1)[0] = 0; // null-terminate it
                 return const_cast<char*>(
                     (const char*)inbuf.get(inbuf.used()));
             }
@@ -404,7 +405,7 @@ char *WvStream::getline(time_t wait_msec, char separator,
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
-        if (! isok())
+        if (!isok())
             break;
 
         if (hasdata)
@@ -416,7 +417,7 @@ char *WvStream::getline(time_t wait_msec, char separator,
             hasdata = inbuf.used() >= needed; // enough?
         }
 
-        if (! hasdata && wait_msec == 0)
+        if (!hasdata && wait_msec == 0)
             break; // handle timeout
     }
     // we timed out or had a socket error

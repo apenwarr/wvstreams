@@ -9,7 +9,7 @@
 
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
-#define STREAMTRACE 0
+#define STREAMTRACE 1
 #if STREAMTRACE
 # define TRACE(x, y...) fprintf(stderr, x, ## y)
 #else
@@ -101,7 +101,7 @@ bool WvStreamList::post_select(SelectInfo &si)
 	if (s.isok())
 	{
 	    if (s.post_select(si))
-		sure_thing.append(&s, false);
+		sure_thing.append(&s, false, i.link->id);
 	}
 	else
 	    one_dead = true;
@@ -135,7 +135,7 @@ void WvStreamList::execute()
 	WvStream &s(*i);
 	
 	id = i.link->id;
-	TRACE("[%p:%s]", s, id);
+	TRACE("[%p:%s]", &s, id);
 	
 	i.xunlink();
 	
