@@ -90,7 +90,7 @@ WvPty::WvPty(const char *program, const char * const *argv,
     else if (_pid == 0)
     {
         // child
-        int std_fds[] = {
+        static const int std_fds[] = {
     	    STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO, -1
     	};
     	const int *std_fd;
