@@ -20,7 +20,7 @@ static void bounce_to_list(WvStream &s, void *userdata)
     char buf[4096];
     size_t len;
     
-    for (int i = 0; i < 100000; i++)
+    for (int i = 0; i < 1000; i++)
     {
 	len = s.read(buf, sizeof(buf));
 	if (!len) break;

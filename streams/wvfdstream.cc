@@ -90,16 +90,16 @@ bool WvFdStream::isok() const
 
 size_t WvFdStream::uread(void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!count || !buf || !isok()) return 0;
     
     int in = ::read(rfd, buf, count);
     
-    if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
-	return 0; // interrupted
-
     // a read that returns zero bytes signifies end-of-file (EOF).
-    if (in < 0 || (count && in==0))
+    if (in <= 0)
     {
+	if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
+	    return 0; // interrupted
+
 	seterr(in < 0 ? errno : 0);
 	return 0;
     }
@@ -110,15 +110,15 @@ size_t WvFdStream::uread(void *buf, size_t count)
 
 size_t WvFdStream::uwrite(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!buf || !count || !isok()) return 0;
     
     int out = ::write(wfd, buf, count);
     
-    if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
-	return 0; // kernel buffer full - data not written
-    
-    if (out < 0 || (count && out==0))
+    if (out <= 0)
     {
+	if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
+	    return 0; // kernel buffer full - data not written (yet!)
+    
 	seterr(out < 0 ? errno : 0); // a more critical error
 	return 0;
     }
