@@ -360,7 +360,7 @@ bool WvStream::iswritable()
 }
 
 
-char *WvStream::blocking_getline(time_t wait_msec, char separator,
+char *WvStream::blocking_getline(time_t wait_msec, int separator,
 				 int readahead)
 {
     // in fact, a separator of 0 would probably work fine.  Unfortunately,
@@ -381,6 +381,7 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
     // available.
     while (isok())
     {
+	// fprintf(stderr, "(inbuf used = %d)\n", inbuf.used()); fflush(stderr);
         queuemin(0);
     
         // if there is a newline already, we have enough data.
@@ -399,7 +400,9 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
             if (wait_msec < 0)
                 wait_msec = 0;
         }
-        
+	
+	// FIXME: this is blocking_getline.  It shouldn't
+	// call continue_select()!
         bool hasdata;
         if (wait_msec != 0 && uses_continue_select)
             hasdata = continue_select(wait_msec);
@@ -445,7 +448,7 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
 }
 
 
-char *WvStream::continue_getline(time_t wait_msec, char separator,
+char *WvStream::continue_getline(time_t wait_msec, int separator,
 				 int readahead)
 {
     assert(false && "not implemented, come back later!");

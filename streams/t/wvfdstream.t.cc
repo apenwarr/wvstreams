@@ -148,6 +148,7 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     
     // Reading from file
     writestream.select(0, false, true);
+    WVPASS(1);
     WvString line(readstream.blocking_getline(-1));
     WVPASSEQ(line, "Bonjour, je m'appelle writestream");
     
@@ -163,11 +164,12 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 
 WVTEST_MAIN("outbuf_limit")
 {
-    int fd = open("/dev/null", O_WRONLY);
-    printf("Trying to open wvfdstream.t.tmp to read/write\n");
-    if(!WVPASS(fd > 2))
+    int fd = open("wvfdstream.t.tmp", O_WRONLY);
+    printf("Trying to open wvfdstream.t.tmp to write\n");
+    if (!WVPASS(fd > 2))
     {
-        printf("Are you sure we can write to wvfdstream.t.tmp?\n");
+        printf("(fd==%d) Are you sure we can write to wvfdstream.t.tmp?\n",
+	       fd);
     }
     WvFDStream fdstream1(dup(0), fd);
     

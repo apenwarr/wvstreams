@@ -176,7 +176,7 @@ public:
      * It is expected that there will be no NULL characters on the
      * line.
      */
-    char *getline(char separator = '\n', int readahead = 1024)
+    char *getline(int separator = '\n', int readahead = 1024)
     {
 	return blocking_getline(0, separator, readahead);
     }
@@ -192,14 +192,14 @@ public:
      * (often a bad idea!).  If wait_msed == 0, this is the equivalent
      * of getline().
      */
-    char *blocking_getline(time_t wait_msec, char separator = '\n',
+    char *blocking_getline(time_t wait_msec, int separator = '\n',
 			   int readahead = 1024);
 
     /**
      * This is a version of blocking_getline() that uses
      * continue_select to avoid blocking other streams.
      */
-    char *continue_getline(time_t wait_msec, char separator = '\n',
+    char *continue_getline(time_t wait_msec, int separator = '\n',
 			   int readahead = 1024);
 
     /**

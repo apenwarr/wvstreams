@@ -1,5 +1,3 @@
-// streams.cpp : Defines the entry point for the DLL application.
-//
 #include "streams.h"
 #include "wvstring.h"
 #include <assert.h>
@@ -9,52 +7,73 @@
 // these versions of close/read/write try to work with both sockets and
 // msvcrt file descriptors! (I hope we never get a socket with the same
 // VALUE as a file descriptor!)
+ 
+
+static void errcode(int err)
+{
+    if (err == EIO)
+	err = EBADF; // sometimes we get EIO when Unix would be EBADF
+    SetLastError(err);
+    errno = err;
+}
+
+
+static bool is_socket(int fd)
+{
+    // if _get_osfhandle doesn't work, it must not be a fd, so assume it's
+    // a socket.
+    return (HANDLE)_get_osfhandle(fd) == INVALID_HANDLE_VALUE;
+}
 
 
 int close(int fd)
 {
-    // fprintf(stderr, "(closing %d)\n", fd); fflush(stderr);
-    int retval = _close(fd), err = errno;
-    if (retval < 0 && err == EBADF)
-    { 
-	// fd is not a normal fd; perhaps it's a socket?
-	retval = closesocket(fd);
-	if (retval < 0 && GetLastError() == WSAENOTSOCK)
-	    SetLastError(err); // save the original errno
-    } 
-    return retval;
+    int ret;
+    if (is_socket(fd))
+    {
+	ret = closesocket(fd);
+	errcode(GetLastError());
+    }
+    else
+    {
+	ret = _close(fd);
+	errcode(errno);
+    }
+    return ret;
 }
 
 
 int read(int fd, void *buf, size_t count)
 {
-    int retval = recv(fd, (char *)buf, count, 0), err = GetLastError();
-    if (retval < 0 && (err == WSAENOTSOCK || err == EIO))
+    int ret;
+    if (is_socket(fd))
     {
-	// fd is not a socket; perhaps it's a file descriptor?
-	retval = _read(fd, buf, count);
-	if (retval < 0) 
-	    SetLastError(errno); // save the "real" errno
+	ret = recv(fd, (char *)buf, count, 0);
+	errcode(GetLastError());
     }
     else
-	errno = err;
-    return retval;
+    {
+	ret = _read(fd, buf, count);
+	errcode(errno);
+    }
+    return ret;
 }
 
 
 int write(int fd, const void *buf, size_t count)
 {
-    int retval = send(fd, (char *)buf, count, 0), err = GetLastError();
-    if (retval < 0 && (err == WSAENOTSOCK || err == EIO))
+    int ret;
+    if (is_socket(fd))
     {
-	// fd is not a socket; perhaps it's a file descriptor?
-	retval = _write(fd, buf, count);
-	if (retval < 0) 
-	    SetLastError(errno); // save the "real" errno
+	ret = send(fd, (char *)buf, count, 0);
+	errcode(GetLastError());
     }
     else
-	errno = err;
-    return retval;
+    {
+	ret = _write(fd, buf, count);
+	errcode(errno);
+    }
+    return ret;
 }
 
 

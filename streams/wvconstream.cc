@@ -74,7 +74,7 @@ bool _WvConStream::isok() const
 #ifdef _WIN32
 
 #include "streams.h"
-SocketFromFDMaker _zero(0, fd2socket_fwd, false);
+SocketFromFDMaker _zero(_dup(0), fd2socket_fwd, false);
 SocketFromFDMaker _one(1, socket2fd_fwd, true);
 SocketFromFDMaker _two(2, socket2fd_fwd, true);
 
