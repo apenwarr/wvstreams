@@ -23,6 +23,22 @@ endif
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 
+ifdef INCLUDE_CRYPTO
+#TARGETS += libwvcrypto.so libwvcrypto.a
+endif
+ifdef INCLUDE_GZIP
+#TARGETS += libwvgzip.so libwvgzip.a
+endif
+ifdef INCLUDE_OGGVORBIS
+TARGETS += libwvoggvorbis.so libwvoggvorbis.a
+endif
+ifdef INCLUDE_FFT
+TARGETS += libwvfft.so libwvfft.a
+endif
+ifdef INCLUDE_QT
+TARGETS += libwvqt.so libwvqt.a
+endif
+
 GARBAGES += ChangeLog
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status include/wvautoconf.h
@@ -33,10 +49,19 @@ CPPFLAGS += -MD -Iinclude -pipe
 ARFLAGS = rs
 
 libwvstreams.so-OBJECTS:=
-libwvutils.so-OBJECTS:=
-
 libwvstreams.so-LIBS:=-lssl
+
+libwvutils.so-OBJECTS:=
 libwvutils.so-LIBS:=-lz -lcrypto
+
+libwvoggvorbis.so-OBJECTS:=
+libwvoggvorbis.so-LIBS:=-logg -lvorbis -lvorbisenc
+
+libwvfft.so-OBJECTS:=
+libwvfft.so-LIBS:=-lrfftw
+
+libwvqt.so-OBJECTS:=
+libwvqt.so-LIBS:=-lqt
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
