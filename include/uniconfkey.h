@@ -131,6 +131,12 @@ public:
     UniConfKey segment(int i) const;
 
     /**
+     * Returns the path formed by the first n segments of this path and 
+     * removes them from the key.
+     * Returns: the path
+     */
+    UniConfKey pop(int n = 1);
+    /**
      * Returns the path formed by the n first segments of this path.
      * "n" is the number of segments
      * Returns: the path

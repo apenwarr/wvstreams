@@ -110,6 +110,16 @@ WVTEST_MAIN("haschildren() and exists()")
     }
 }
 
+/* Commented out until fullkey is fixed
+WVTEST_MAIN("fullkey()")
+{
+    UniConfRoot root;
+    root.mount("temp:");
+    UniConf cfg(root["bleep"]);
+    cfg["/foo/bar/blah"].setme("mink");
+    WVPASSEQ(cfg["mink"].fullkey(cfg).cstr(), "/foo/bar/blah/mink");
+}*/
+
 static int itcount(const UniConf &cfg)
 {
     int count = 0;
