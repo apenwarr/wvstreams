@@ -128,7 +128,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
-$(TESTS): libwvstreams.so libwvutils.so
+$(TESTS): libwvstreams.so libwvutils.so libuniconf.so
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
