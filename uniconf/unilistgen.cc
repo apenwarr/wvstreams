@@ -88,7 +88,7 @@ bool UniListGen::refresh()
     bool result = true;
 
     for (i.rewind(); i.next();)
-        result = result && i().refresh();
+        result = i().refresh() && result;
     return result;
 }
 

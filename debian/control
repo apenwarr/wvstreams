@@ -2,15 +2,15 @@ Source: wvstreams
 Section: libs
 Priority: optional
 Maintainer: Patrick Patterson <ppatters@debian.org>
-Uploaders: James Morrison <phython@debian.org>
+Uploaders: James Morrison <phython@debian.org>, Simon Law <sfllaw@debian.org>
 Build-Depends: debhelper (>> 4.0.0), libssl-dev, zlib1g-dev, qt3-dev-tools, libvorbis-dev, fftw-dev, libgtk1.2-dev, libpam0g-dev, libspeex-dev, libfam-dev, autoconf, gs-common, libqt3-mt-dev, libdb2-dev, libgdbm-dev
 Build-Depends-Indep: doxygen, sp, jade, jadetex, docbook-defguide, docbook, docbook-dsssl
-Standards-Version: 3.5.9.0
+Standards-Version: 3.6.1
 
-Package: libwvstreams3
+Package: libwvstreams3.80
 Architecture: all
 Section: libs
-Depends: libwvstreams3-base
+Depends: libwvstreams3.80-base
 Description: C++ network libraries for rapid application development
  WvStreams is a library suite that is comprised of several parts.  Among 
  them are:
@@ -25,9 +25,9 @@ Description: C++ network libraries for rapid application development
  WvDial, TunnelVision, FastForward, KWvDial, retchmail, and many more yet 
  to come.  ;) 
  .
- This package is a dependency package, which depends on libwvstreams3-base.
+ This package is a dependency package, which depends on libwvstreams3.80-base.
 
-Package: libwvstreams3-base
+Package: libwvstreams3.80-base
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}
@@ -46,11 +46,11 @@ Description: C++ network libraries for rapid application development
  WvDial, TunnelVision, FastForward, KWvDial, retchmail, and many more yet 
  to come.  ;) 
 
-Package: libwvstreams-dev
+Package: libwvstreams3.80-dev
 Architecture: any
 Section: libdevel
-Depends: libwvstreams3-base, libwvstreams3-fft, libwvstreams3-gtk, libwvstreams3-qt, libwvstreams3-vorbis, libwvstreams3-speex
-Description: Development libraries and header files for libwvstreams3
+Depends: libwvstreams3.80-base, libwvstreams3.80-fft, libwvstreams3.80-gtk, libwvstreams3.80-qt, libwvstreams3.80-vorbis, libwvstreams3.80-speex
+Description: Development libraries and header files for libwvstreams3.80
  Contains the header files and static libraries for use in rapid 
  application development using the WvStreams set of libraries.  It 
  includes everything that is needed to compile a program that needs 
@@ -59,17 +59,17 @@ Description: Development libraries and header files for libwvstreams3
  The WvStreams library suite is a set of C++ network libraries that
  make it fast and simple to develop network applications.
 
-Package: libwvstreams-doc
+Package: libwvstreams3.80-doc
 Architecture: all
 Section: doc
-Suggests: libwvstreams3 (= ${Source-Version}), libwvstreams-dev (= ${Source-Version})
+Suggests: libwvstreams3.80 (= ${Source-Version}), libwvstreams3.80-dev (= ${Source-Version})
 Description: Documentation for WvStreams
  Contains all the documentation available to program with WvStreams.
   .
  The WvStreams library suite is a set of C++ network libraries that
  make it fast and simple to develop network applications.
 
-Package: libwvstreams3-fft
+Package: libwvstreams3.80-fft
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}
@@ -79,7 +79,7 @@ Description: WvStreams wrapper for libfftw
  transforms, instead of forcing the programmer to use the much harder to use
  libfftw interface.
 
-Package: libwvstreams3-gtk
+Package: libwvstreams3.80-gtk
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}
@@ -88,7 +88,7 @@ Description: WvStreams and GTK+ Event Integration Library
  event loops together to enable WvStreams to act as the I/O and configuration
  back end for GTK+ and GNOME.
 
-Package: libwvstreams3-speex
+Package: libwvstreams3.80-speex
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}
@@ -96,7 +96,7 @@ Description: WvStreams Speex Encoder/Decoder Library
  This library contains the WvSpeexEncoder and WvSpexxDecoder to enable quick 
  and painless creation of audio streams using the Speex Voice over IP CODEC
 
-Package: libwvstreams3-qt
+Package: libwvstreams3.80-qt
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}
@@ -105,7 +105,7 @@ Description: WvStreams and Qt Event Integration Library
  event loops together to enable WvStreams to act as the I/O and configuration
  back end for Qt and KDE.
 
-Package: libwvstreams3-vorbis
+Package: libwvstreams3.80-vorbis
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}

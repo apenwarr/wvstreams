@@ -1,82 +1,93 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ *
  * Provides a dynamic array data structure.
  */
 #include "wvvector.h"
 #include <assert.h>
 
-
-WvVectorBase::WvVectorBase(bool _auto_free)
+WvVectorBase::WvVectorBase(int slots)
+    : xseq(NULL), xcount(0), xslots(0)
 {
-    xseq = NULL;
-    xcount = xslots = 0;
-    auto_free = _auto_free;
+    set_capacity(slots);
 }
-
-
-int WvVectorBase::growcapacity(int minslots)
-{
-    int newslots = xslots != 0 || minslots == 0 ?
-        xslots : MINALLOC;
-    while (newslots < minslots)
-        newslots *= 2;
-    return newslots;
-}
-
-
-int WvVectorBase::shrinkcapacity(int maxslots)
-{
-    maxslots *= 2;
-    int newslots = xslots;
-    while (newslots > maxslots)
-        newslots /= 2;
-    return newslots;
-}
-
 
 void WvVectorBase::remove(int slot)
 {
-    xcount--;
-    moveelems(xseq + slot, xseq + slot + 1, xcount - slot);
-    setcapacity(shrinkcapacity(xcount));
+    --xcount;
+    if (xcount - slot)
+	memmove(xseq + slot, xseq + slot + 1,
+		(xcount - slot) * sizeof(WvLink *));
 }
 
-
-void WvVectorBase::insert(int slot, void *elem)
+void WvVectorBase::insert(int slot, WvLink *elem)
 {
-    setcapacity(growcapacity(xcount + 1));
-    moveelems(xseq + slot + 1, xseq + slot, xcount - slot);
-    xseq[slot] = elem;
-    xcount++;
-}
-
-
-void WvVectorBase::append(void *elem)
-{
-    setcapacity(growcapacity(xcount + 1));
-    xseq[xcount] = elem;
-    xcount++;
-}
-
-
-void WvVectorBase::setcapacity(int newslots)
-{
-    if (newslots == xslots)
-	return;
-    
-    assert(newslots >= xcount);
-    if (newslots < xcount)
-	xcount = newslots;
-    void **oldseq = xseq;
-    xslots = newslots;
-    if (newslots != 0)
+    if (++xcount > xslots)
     {
-	xseq = new void *[newslots];
-	moveelems(xseq, oldseq, xcount);
+	xslots *= 2;
+	set_capacity(xslots);
     }
-    else
+    memmove(xseq + slot + 1, xseq + slot,
+	    (xcount - slot - 1) * sizeof(WvLink *));
+    xseq[slot] = elem;
+}
+
+void WvVectorBase::append(WvLink *elem)
+{
+    if (++xcount > xslots)
+    {
+	xslots *= 2;
+	set_capacity(xslots);
+    }
+    xseq[xcount - 1] = elem;
+}
+
+void WvVectorBase::set_capacity(int newslots)
+{
+    // Ensure we don't eliminate data when we shrink
+    if (newslots < xcount)
+	newslots = xcount;
+
+    // Free the memory if we don't want any.
+    if (newslots <= 0)
+    {
+	xslots = 0;
+	free(xseq);
 	xseq = NULL;
-    deletev oldseq;
+	return;
+    }
+
+    // Allocate memory, if we want it
+    xslots = newslots;
+    void *newseq = realloc(xseq, xslots * sizeof(WvLink *));
+    assert(newseq != NULL || xslots == 0);
+    if (newseq != NULL || xslots == 0)
+	xseq = static_cast<WvLink **>(newseq);
+}
+
+WvLink *WvVectorBase::IterBase::find(const void *data)
+{
+    for (rewind(); next(); )
+    {
+	if (link->data == data)
+	    break;
+    }
+    return link;
+}
+
+WvLink *WvVectorBase::IterBase::find_next(const void *data)
+{
+    if (link)
+    {
+	if (link->data == data)
+	    return link;
+
+	for (; next(); )
+	{
+	    if (link->data == data)
+		break;
+	}
+    }
+    return link;
 }

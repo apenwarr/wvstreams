@@ -6,18 +6,13 @@
  * because there are more fun and stressful streams to test here.
  */
 #include "wvtcp.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
 #include "strutils.h"
+#include "wvcont.h"
 
-static void stream_call(WvStream &s, void *userdata)
+static void *stream_call(WvStream& s, void* contdata = 0)
 {
-    if (!s.uses_continue_select)
-    {
-	s.uses_continue_select = true;
-	return;
-    }
-    
     char *line;
     static int sc_count = 0;
     int mynum = ++sc_count, count = 0;
@@ -40,19 +35,35 @@ static void stream_call(WvStream &s, void *userdata)
 	count++;
 	s.continue_select(100*mynum);
     }
+
+    return 0;
+}
+
+
+static void cont_call(WvCont cont, WvStream &s, void* userdata)
+{
+    cont();
+}
+
+
+static void setupcont_call(WvStream &s, void* userdata)
+{
+    WvCont cont(WvBoundCallback<WvCallback<void*, void*>, WvStream&>(&stream_call, s));
+
+    s.setcallback(WvBoundCallback<WvStreamCallback, WvCont>(&cont_call, cont), NULL);
 }
 
 
 int main()
 {
     WvLog log("conttest"), err = log.split(WvLog::Error);
-    WvStreamList l;
+    WvIStreamList l;
     
     WvTCPListener listen(WvIPPortAddr("0.0.0.0:1129"));
-    listen.auto_accept(&l, stream_call, NULL);
-    
-    wvcon->setcallback(stream_call, NULL);
-    
+    listen.auto_accept(&l, setupcont_call, NULL);
+
+    wvcon->setcallback(setupcont_call, NULL);
+
     log("Listening on port %s\n", *listen.src());
     
     l.append(&listen, false);

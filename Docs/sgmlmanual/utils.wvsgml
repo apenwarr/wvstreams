@@ -464,13 +464,13 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
      WVCMD(l.prepend(address of data, false);)
      which prepends the element to the beginning of the list.
 
-     The false as the second argument is "auto_free". If it is true, the list
+     The false as the second argument is "autofree". If it is true, the list
      takes ownership of the element.
 
      The actual prototype of these functions are:
-     WVCMD(void append(T *data, bool auto_free, char *id = NULL)
-void add(T *data, bool auto_free, char *id = NULL)
-void prepend(T *data, bool auto_free, char *id = NULL))
+     WVCMD(void append(T *data, bool autofree, char *id = NULL)
+void add(T *data, bool autofree, char *id = NULL)
+void prepend(T *data, bool autofree, char *id = NULL))
 
      To quickly determines if the list is empty,
      WVCMD(t.isempty();)
@@ -504,7 +504,7 @@ void prepend(T *data, bool auto_free, char *id = NULL))
      destroys the list.
 
      WVCMD(l.zap(true))
-     destroys any elements that were added with auto_free == true.
+     destroys any elements that were added with autofree == true.
 
      WVCMD(l.first())
      returns a pointer to the first element in the linked list, possibly null
@@ -514,13 +514,13 @@ void prepend(T *data, bool auto_free, char *id = NULL))
      returns a pointer to the last element in the linked list, possibly null
      if it is empty.
 
-     WVCMD(l.add_after(WvLink *after, T *data, bool auto_free, char *id = NULL ))
+     WVCMD(l.add_after(WvLink *after, T *data, bool autofree, char *id = NULL ))
      adds the element after the specified link in the list.
 
      - "link" is the link preceeding the desired location of the element
         to be inserted, non-null
      - "data" is the element pointer, may be null
-     - "auto_free" is if true, takes ownership of the element
+     - "autofree" is if true, takes ownership of the element
      - "id" is an optional string to associate with the element, or null
 
      WVCMD(l.unlink(address to data))

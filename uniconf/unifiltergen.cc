@@ -17,7 +17,7 @@ UniFilterGen::UniFilterGen(IUniConfGen *inner)
 
 UniFilterGen::~UniFilterGen()
 {
-    RELEASE(xinner);
+    WVRELEASE(xinner);
 }
 
 
@@ -32,68 +32,99 @@ void UniFilterGen::setinner(IUniConfGen *inner)
 }
 
 
+UniConfKey UniFilterGen::keymap(const UniConfKey &key)
+{
+    // by default, don't rename the key
+    return key;
+}
+
+
 void UniFilterGen::commit()
 {
-    xinner->commit();
+    if (xinner)
+    	xinner->commit();
 }
 
 
 bool UniFilterGen::refresh()
 {
-    return xinner->refresh();
+    if (xinner)
+    	return xinner->refresh();
+    else
+    	return false;
 }
 
 
 void UniFilterGen::prefetch(const UniConfKey &key, bool recursive)
 {
-    xinner->prefetch(key, recursive);
+    if (xinner)
+    	xinner->prefetch(keymap(key), recursive);
 }
 
 
 WvString UniFilterGen::get(const UniConfKey &key)
 {
-    return xinner->get(key);
+    if (xinner)
+    	return xinner->get(keymap(key));
+    else
+    	return WvString::null;
 }
 
 
 void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 {
-    xinner->set(key, value);
+    if (xinner)
+    	xinner->set(keymap(key), value);
 }
 
 
 bool UniFilterGen::exists(const UniConfKey &key)
 {
-    return xinner->exists(key);
+    if (xinner)
+    	return xinner->exists(keymap(key));
+    else
+    	return false;
 }
 
 
 bool UniFilterGen::haschildren(const UniConfKey &key)
 {
-    return xinner->haschildren(key);
+    if (xinner)
+    	return xinner->haschildren(keymap(key));
+    else
+    	return false;
 }
 
 
 bool UniFilterGen::isok()
 {
-    return xinner->isok();
+    if (xinner)
+    	return xinner->isok();
+    else
+    	return false;
 }
 
 
 UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 {
-    return xinner->iterator(key);
+    if (xinner)
+    	return xinner->iterator(keymap(key));
+    else
+    	return NULL;
 }
 
 
 UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 {
-    return xinner->recursiveiterator(key);
+    if (xinner)
+    	return xinner->recursiveiterator(keymap(key));
+    else
+    	return NULL;
 }
 
 
 void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value,
                                void *userdata)
 {
-    delta(key, value);
+    delta(keymap(key), value);
 }

@@ -171,7 +171,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
         }
     }
 
-    if (WvStreamList::pre_select(si))
+    if (WvIStreamList::pre_select(si))
     {
         //log("Selecting true because of list members.\n");
         sure = true;
@@ -183,7 +183,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
 
 void WvHttpPool::execute()
 {
-    WvStreamList::execute();
+    WvIStreamList::execute();
 
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )

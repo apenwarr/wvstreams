@@ -28,7 +28,7 @@
 #endif
 
 
-class WvStreamList;
+class WvIStreamList;
 class WvTCPListener;
 
 /**
@@ -159,8 +159,19 @@ public:
      * Be careful not to accept() connections yourself if you do this,
      * or we may end up accept()ing twice, causing a hang the second time.
      */
-    void auto_accept(WvStreamList *list,
+    void auto_accept(WvIStreamList *list,
 		     WvStreamCallback callfunc = NULL, void *userdata = NULL);
+
+    /**
+     * set a callback() function that automatically accepts new WvTCPConn
+     * connections, assigning them their own callback function 'callfunc'
+     * with parameter 'userdata.' and add them to the global list.
+     * Note the absence of the initial WvStreamList * parameter.
+     *
+     * Be careful not to accept() connections yourself if you do this,
+     * or we may end up accept()ing twice, causing a hang the second time.
+     */
+    void auto_accept(WvStreamCallback callfunc = NULL, void *userdata = NULL);
 
     /**
      * these don't do anything, but they confuse the socket, so we'll
@@ -174,11 +185,12 @@ public:
     
 protected:
     WvIPPortAddr listenport;
-    WvStreamList *auto_list;
+    WvIStreamList *auto_list;
     WvStreamCallback auto_callback;
     void *auto_userdata;
     
     static void accept_callback(WvStream &s, void *userdata);
+    static void accept_global_callback(WvStream &s, void *userdata);
 };
 
 

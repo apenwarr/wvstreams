@@ -41,14 +41,27 @@ WvStreamClone::~WvStreamClone()
 {
     //fprintf(stderr, "%p destroying: clone is %p\n", this, cloned);
     close();
-    RELEASE(cloned);
+    WVRELEASE(cloned);
+}
+
+
+void WvStreamClone::noread()
+{
+#if 0 
+    if (cloned)
+	cloned->noread();
+#endif
+    WvStream::noread();
 }
 
 
 void WvStreamClone::nowrite()
 {
+#if 0 // this clone may have an unflushed buffer, so don't nowrite() now!
     if (cloned)
 	cloned->nowrite();
+#endif
+    WvStream::nowrite();
 }
 
 

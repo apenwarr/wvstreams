@@ -96,7 +96,10 @@ class WvTaskMan
     
     WvTaskMan();
     virtual ~WvTaskMan();
+
+#ifdef ENABLE_DELETE_DETECTOR
     friend void operator &&<WvTaskMan>(CheckIObject, const WvTaskMan *);
+#endif
     
 public:
     /// get/dereference the singleton global WvTaskMan

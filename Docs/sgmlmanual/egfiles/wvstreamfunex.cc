@@ -4,7 +4,7 @@
  * Some text about this example...
  */
 
-#include <wvstreamlist.h>
+#include <wvistreamlist.h>
 #include <wvpipe.h>
 #include <wvlog.h>
 #include <wvmodem.h>
@@ -36,7 +36,7 @@ int main()
     wvcon->setcallback(concallback, &modem);
     modem.autoforward(modemlog);
     
-    WvStreamList l;
+    WvIStreamList l;
     l.append(&pipe1, false);
     l.append(&pipe2, false);
     l.append(&modem, false);

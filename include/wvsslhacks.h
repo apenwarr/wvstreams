@@ -21,7 +21,9 @@ extern "C" {
     
 RSA *wv_d2i_RSAPublicKey(RSA **a, const unsigned char **pp, long length);
 RSA *wv_d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length);
-    
+DSA *wv_d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
+DSA *wv_d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
+X509_REQ *wv_d2i_X509_REQ(X509_REQ **a, const unsigned char **pp, long length);    
 X509 *wv_d2i_X509(X509 **a, unsigned char **pp, long length);
 
 

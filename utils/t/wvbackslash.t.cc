@@ -3,7 +3,7 @@
 #include "wvstream.h"
 #include "wvbufstream.h"
 #include "wvfile.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvencoderstream.h"
 
 #define BSLASH_NUM_INPUT 5
@@ -37,8 +37,8 @@ WVTEST_MAIN("backslashtest.cc")
         }
        
         stream->flush(0);
-        RELEASE(stream);
-        RELEASE(ostream);
+        WVRELEASE(stream);
+        WVRELEASE(ostream);
     }
     
     // Test decoding
@@ -68,7 +68,7 @@ WVTEST_MAIN("backslashtest.cc")
         }
        
         stream->flush(0);
-        RELEASE(stream);
-        RELEASE(ostream);
+        WVRELEASE(stream);
+        WVRELEASE(ostream);
     }
 }

@@ -17,7 +17,7 @@
 #include "wvhex.h"
 #include "wvlog.h"
 #include "wvtimeutils.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include <assert.h>
 
 #define PRIVATE_KEY "3082025b02010002818100b0873b623907cffea3aebca4815e579d06"\
@@ -70,7 +70,7 @@ size_t copy(WvStream *in, WvStream *out)
     size_t total = 0;
     char buf[10240];
 
-    WvStreamList slist;
+    WvIStreamList slist;
     slist.append(in, false);
     slist.append(out, false);
     while (in->isok() && out->isok())
@@ -177,12 +177,12 @@ int main(int argc, char **argv)
 	    break;
             
         case 'i':
-            RELEASE(in);
+            WVRELEASE(in);
             in = new WvFile(optarg, O_RDONLY);
             break;
             
         case 'o':
-            RELEASE(out);
+            WVRELEASE(out);
             out = new WvFile(optarg, O_WRONLY | O_CREAT);
             break;
 	}
@@ -341,11 +341,11 @@ int main(int argc, char **argv)
         total = copy(crypto, out);
     }
     crypto->close();
-    RELEASE(crypto);
+    WVRELEASE(crypto);
     if (in != base && in != wvin)
-        RELEASE(in);
+        WVRELEASE(in);
     if (out != base && out != wvout)
-        RELEASE(out);
+        WVRELEASE(out);
     
     gettimeofday(&stop, &tz);
     long tdiff = msecdiff(stop, start);

@@ -19,7 +19,7 @@
 
 #include "wvlog.h"
 #include "wvfdstream.h"
-#include "wvhashtable.h"
+#include "wvscatterhash.h"
 
 /**
  * WvLogRcv adds some intelligence to WvLogRcvBase, to keep
@@ -43,7 +43,7 @@ protected:
 	lvl((WvLog::LogLevel)_lvl) {};
     };
     
-    DeclareWvDict(Src_Lvl, WvString, src);
+    DeclareWvScatterDict(Src_Lvl, WvString, src);
     
     Src_LvlDict custom_levels;
     

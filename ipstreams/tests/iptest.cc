@@ -7,7 +7,7 @@
 
 #include <netinet/in.h>
 
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
 #include "wvipraw.h"
 
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     wvcon->autoforward(sock);
     sock.autoforward(err);
     
-    WvStreamList l;
+    WvIStreamList l;
     l.add_after(l.tail, wvcon, false);
     l.add_after(l.tail, &sock, false);
     

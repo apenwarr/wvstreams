@@ -1,172 +1,235 @@
-#include <signal.h>
-
-#include "wvcrash.h"
-#include "wvlog.h"
 #include "wvlogrcv.h"
-#include "uniconf.h"
 #include "uniconfdaemon.h"
 #include "uniclientconn.h"
 #include "unisecuregen.h"
 #include "unipermgen.h"
 #include "wvx509.h"
 #include "uniconfroot.h"
-#include "strutils.h"
+#include "wvstrutils.h"
 #include "wvfileutils.h"
+#include "wvcrash.h"
+
+#ifndef _WIN32
+#include <getopt.h>
+#include <signal.h>
+#endif
+
+#ifdef WITH_SLP
+#include "slp.h"
+#endif
+
+#ifdef _WIN32
+#pragma comment(linker, "/include:?UniRegistryGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#pragma comment(linker, "/include:?UniPStoreGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#pragma comment(linker, "/include:?UniIniGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#endif
 
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
-static UniConfDaemon *globdaemon = NULL;
+static volatile bool want_to_die = false;
 
-// we now want execution to stop
-static void sighandler_die(int sig)
+#ifndef _WIN32
+void signal_handler(int signum)
 {
-    globdaemon->close();
-    signal(sig, SIG_DFL);
+    fprintf(stderr, "\nCaught signal %d; cleaning up and terminating.\n",
+	    signum);
+    want_to_die = true;
+    signal(signum, SIG_DFL);
 }
+#endif
 
 
-static void usage()
+static void usage(WvStringParm argv0)
 {
+#ifndef _WIN32
     wverr->print(
-        "uniconfdaemon usage:  uniconfdaemon "
-            "[-mount mountpoint moniker perms] [-p port] [-ssl sslport] [-d level]\n"
-        "    mountpoint - the point to mount the config keys under\n"
-        "    moniker    - the moniker, eg. ini:myfile\n"
-        "    perms      - moniker to get permissions from (optional)\n"
-        "    level      - the debug level\n"
-        "                 Critical, Error, Warning, Notice, Info, or Debug[1-5]\n"
-        "    port       - the port to listen on for TCP connections (use 0 to disallow)\n"
-        "    sslport    - the port to listen on for SSL-encrypted TCP connections (use 0 to disallow)\n");
-    exit(2);
+	"\n"
+        "Usage: %s [-fdVa] [-A moniker] [-p port] [-s sslport] [-u unixsocket] "
+		 "<mounts...>\n"
+	"     -f   Run in foreground (non-forking)\n"
+	"     -d   Print debug messages\n"
+        "     -dd  Print lots of debug messages\n"
+	"     -V   Print version number and exit\n"
+	"     -a   Require authentication on incoming connections\n"
+	"     -A   Require authentication and check perms against moniker\n"
+	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
+	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
+	"     -u   Listen on given Unix socket filename (default=disabled)\n"
+	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
+	argv0);
+#else
+    wverr->print(
+	"\n"
+	"Usage: %s [-dV] [-p port] [-s sslport] "
+		 "<mounts...>\n"
+	"     -d   Print debug messages\n"
+        "     -dd  Print lots of debug messages\n"
+	"     -V   Print version number and exit\n"
+	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
+	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
+	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
+	argv0);
+#endif
+    exit(1);
 }
 
+#ifdef WITH_SLP
+static void sillyslpcb(SLPHandle hslp, SLPError errcode, void* cookie) 
+{ 
+    /* return the error code in the cookie */ 
+    *(SLPError*)cookie = errcode; 
+}
+#endif
 
-static WvLog::LogLevel findloglevel(char *arg)
+#ifndef _WIN32
+extern char *optarg;
+extern int optind;
+#else
+char *optarg;
+int optind = 1;
+
+int getopt(int argc, char *argv[], const char *opts)
 {
-    if (!strcasecmp(arg, "Critical"))
-        return WvLog::Critical;
-    else if (!strcasecmp(arg, "Error"))
-        return WvLog::Error;
-    else if (!strcasecmp(arg, "Warning"))
-        return WvLog::Warning;
-    else if (!strcasecmp(arg, "Notice"))
-        return WvLog::Notice;
-    else if (!strcasecmp(arg, "Info"))
-        return WvLog::Info;
-    else if (!strcasecmp(arg, "Debug1"))
-        return WvLog::Debug1;
-    else if (!strcasecmp(arg, "Debug2"))
-        return WvLog::Debug2;
-    else if (!strcasecmp(arg, "Debug3"))
-        return WvLog::Debug3;
-    else if (!strcasecmp(arg, "Debug4"))
-        return WvLog::Debug4;
-    else if (!strcasecmp(arg, "Debug5"))
-        return WvLog::Debug5;
-    else
-        return WvLog::Info;
+    static int i = 1;
+    for (char *p = argv[optind] + i; optind < argc && argv[optind][0] == '-'; )
+    {
+	if (!*p)
+	{
+	    ++optind;
+	    i = 1;
+	    p = argv[optind] + i;
+	    continue;
+	}
+	char *opt = strchr(opts, *p);
+	if (!opt)
+	    return -1;
+	switch (opt[1])
+	{
+	case ':':
+	    optarg = argv[optind + 1];
+	    optind += 2;
+	    i = 1;
+	    return *p;
+	default:
+	    optarg = 0;
+	    ++i;
+	    return *p;
+	}
+    }
+    return -1;
 }
-
-
-static void trymount(const UniConf &cfg, const UniConfKey &key,
-		     WvStringParm location,
-		     WvStringParm perms = WvString::null)
-{
-    IUniConfGen *gen;
-    WvString errormsg;
-    if (perms.isnull())
-    {
-        errormsg = WvString("Unable to mount \"%s\" at \"%s\"\n",
-			    location, key);
-        gen = cfg[key].mount(location);
-    }
-    else
-    {
-        errormsg = WvString("Unable to mount \"%s\" at \"%s\","
-			    "with permissions source \"%s\"\n", 
-			    location, key, perms);
-        gen = cfg[key].mountgen(new UniSecureGen(location,
-						 new UniPermGen(perms)));
-    }
-
-    if (! gen || ! gen->isok())
-    {
-        wverr->print(errormsg);
-        exit(1);
-    }
-}
+#endif
 
 int main(int argc, char **argv)
 {
-    signal(SIGINT,  sighandler_die);
-    signal(SIGTERM, sighandler_die);
+#ifndef _WIN32
+    signal(SIGINT,  signal_handler);
+    signal(SIGTERM, signal_handler);
     signal(SIGPIPE, SIG_IGN);
+#endif
     wvcrash_setup(argv[0]);
 
-    WvLogConsole logcons(2, WvLog::Info);
-    
-    UniConfRoot root;
-    UniConf cfg(root);
-
-    bool mountattempt = false, needauth = false, dontfork = false;
+    int c, buglevel = 0;
+    bool dontfork = false, needauth = false;
     unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
     unsigned int sslport = DEFAULT_UNICONF_DAEMON_SSL_PORT;
+    WvString unixport, permmon;
 
-    for (int i = 1; i < argc; i++)
+    while ((c = getopt(argc, argv, "fdVaA:p:s:u:h?")) >= 0)
     {
-        if (!strcmp(argv[i],"-mount"))
-        {
-            if (argc < i + 3) usage();
-            WvString mountpoint = argv[i + 1];
-            WvString mountloc = argv[i + 2];
-            WvString perms;
-            if (argc < i + 4 || argv[i + 3][0] == '-')
-                i += 2;
-            else
-            {
-                perms = argv[i + 3];
-                i += 3;
-                needauth = true;
-            }
-            trymount(cfg, mountpoint, mountloc, perms);
-            mountattempt = true;
-        }
-        else if (!strcmp(argv[i], "-p"))
-        {
-            if (argc < i + 2) usage();
-            port = WvString(argv[i + 1]).num();
-            i += 1;
-        }
-        else if (!strcmp(argv[i], "-ssl"))
-        {
-            if (argc < i + 2) usage();
-            sslport = WvString(argv[i + 1]).num();
-            i += 1;
-        }
-        else if (!strcmp(argv[i], "-d"))
-        {
-            if (argc < i + 2) usage();
-            logcons.level(findloglevel(argv[i + 1]));
-            i += 1;
-        }
-	else if (!strcmp(argv[i], "-f"))
+	switch (c)
+	{
+	case 'f':
 	    dontfork = true;
-        else
-            usage();
+	    break;
+	    
+	case 'd':
+	    buglevel++;
+	    break;
+	    
+	case 'V':
+	    wverr->print("UniConfDaemon %s\n", WVSTREAMS_RELEASE);
+	    exit(0);
+	    break;
+	    
+	case 'a':
+	    needauth = true;
+	    break;
+	    
+	case 'A':
+	    needauth = true;
+	    permmon = optarg;
+	    break;
+	    
+	case 'p':
+	    port = atoi(optarg);
+	    break;
+	case 's':
+	    sslport = atoi(optarg);
+	    break;
+	case 'u':
+	    unixport = optarg;
+	    break;
+	    
+	case 'h':
+	case '?':
+	default:
+	    usage(argv[0]);
+	    break;
+	}
     }
-
-    if (!mountattempt)
-        trymount(cfg, UniConfKey::EMPTY, DEFAULT_CONFIG_FILE);
-
-    globdaemon = new UniConfDaemon(cfg, needauth);
     
-    // FIXME: THIS IS NOT SAFE!
-    mkdirp("/tmp/uniconf");
-    ::unlink("/tmp/uniconf/uniconfsocket");
-    if (!globdaemon->setupunixsocket("/tmp/uniconf/uniconfsocket"))
-        exit(1);
-    if (port && !globdaemon->setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
-        exit(1);
+    // start log output to stderr
+    WvLogConsole logcons(2,
+			 buglevel >= 2 ? WvLog::Debug5
+			 : buglevel == 1 ? WvLog::Debug1
+			 : WvLog::Info);
+    WvLog log(argv[0], WvLog::Debug);
+    
+    UniConfRoot cfg;
+
+    for (int i = optind; i < argc; i++)
+    {
+	WvString path = argv[i], moniker;
+	char *cptr = strchr(path.edit(), '=');
+	if (!cptr)
+	{
+	    moniker = path;
+	    path = "/";
+	}
+	else
+	{
+	    *cptr = 0;
+	    moniker = cptr+1;
+	}
+	
+	log("Mounting '%s' on '%s': ", moniker, path);
+	IUniConfGen *gen = cfg[path].mount(moniker, false);
+	if (gen && gen->isok())
+	    log("ok.\n");
+	else
+	    log("FAILED!\n");
+    }
+    
+    cfg.refresh();
+    
+    IUniConfGen *permgen = !!permmon ? wvcreate<IUniConfGen>(permmon) : NULL;
+    UniConfDaemon daemon(cfg, needauth, permgen);
+    WvIStreamList::globallist.append(&daemon, false);
+
+#ifndef _WIN32
+    if (!!unixport)
+    {
+	// FIXME: THIS IS NOT SAFE!
+	mkdirp(getdirname(unixport));
+	::unlink(unixport);
+	if (!daemon.setupunixsocket(unixport))
+	    exit(3);
+    }
+#endif
+
+    if (port && !daemon.setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
+	exit(4);
 
     if (sslport)
     {
@@ -174,14 +237,16 @@ int main(int argc, char **argv)
         WvX509Mgr *x509cert = new WvX509Mgr(dName, 1024);
         if (!x509cert->isok())
         {
-            WvLog log("uniconfdaemon", WvLog::Error);
-            log("Couldn't generate X509 certificate: SSL not available.\n");
+            log(WvLog::Critical,
+		"Couldn't generate X509 certificate: SSL not available.\n");
+	    exit(5);
         }
-        else if (sslport && !globdaemon->setupsslsocket(
-				WvIPPortAddr("0.0.0.0", sslport), x509cert))
-            exit(1);
+        else if (!daemon.setupsslsocket(
+		     WvIPPortAddr("0.0.0.0", sslport), x509cert))
+            exit(6);
     }
 
+#ifndef _WIN32
     if (!dontfork)
     {
 	// since we're a daemon, we should now background ourselves.
@@ -189,24 +254,78 @@ int main(int argc, char **argv)
 	if (pid > 0) // parent
 	    _exit(0);
     }
+#endif
+
+    WvString svc, sslsvc;
     
-    time_t now, last = 0;
-	
-    // otherwise, fork failed or we're the child
-    while (globdaemon->isok())
+#ifdef WITH_SLP
+    // Now that we're this far...
+    SLPError slperr; 
+    SLPError callbackerr; 
+    SLPHandle hslp; 
+
+    slperr = SLPOpen("en", SLP_FALSE, &hslp); 
+    if(slperr != SLP_OK)
+    { 
+        log(WvLog::Critical, "Error opening SLP handle\n"); 
+	exit(7);
+    } 
+    
+    // Register UniConf service with SLP 
+    if (port)
     {
-	globdaemon->runonce(5000);
+	svc = WvString("service:uniconf.niti://%s:%s", fqdomainname(), port);
+	slperr = SLPReg(hslp, svc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
+			sillyslpcb, &callbackerr);
 	
+	if(slperr != SLP_OK)
+	{ 
+	    log(WvLog::Notice, "Error registering UniConf Daemon with SLP Service\n"); 
+	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
+	}
+    }
+
+    // Register UniConf SSL service with SLP 
+    if (sslport)
+    {
+	sslsvc = WvString("service:uniconfs.niti://%s:%s", fqdomainname(), sslport);
+	slperr = SLPReg(hslp, sslsvc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
+			sillyslpcb, &callbackerr);
+	if(slperr != SLP_OK)
+	{ 
+	    log(WvLog::Notice, "Error registering UniConf SSL Daemon with SLP Service\n");
+	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
+	}
+    }
+#endif
+    
+    // main loop
+    time_t now, last = 0;
+    while (!want_to_die && daemon.isok())
+    {
+	WvIStreamList::globallist.runonce(5000);
+	
+	// only commit every five seconds or so
 	now = time(NULL);
 	if (now - last >= 5)
 	{
 	    cfg.commit();
 	    cfg.refresh();
+	    if (permgen) permgen->refresh();
 	    last = now;
 	}
     }
-    globdaemon->close();
-    RELEASE(globdaemon);
+    
+    WvIStreamList::globallist.unlink(&daemon);
+
+#ifdef WITH_SLP
+    if (!!sslsvc)
+	SLPDereg(hslp, sslsvc, sillyslpcb, &callbackerr);
+    if (!!svc)
+	SLPDereg(hslp, svc, sillyslpcb, &callbackerr);
+    
+    SLPClose(hslp);
+#endif
     
     return 0;
 }

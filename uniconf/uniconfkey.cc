@@ -127,6 +127,14 @@ UniConfKey UniConfKey::segment(int n) const
 }
 
 
+UniConfKey UniConfKey::pop(int n)
+{
+    UniConfKey res = range(0,n);
+    *this = range(n, INT_MAX);
+    return res;
+}
+
+
 UniConfKey UniConfKey::first(int n) const
 {
     return range(0, n);

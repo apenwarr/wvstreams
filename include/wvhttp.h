@@ -25,6 +25,8 @@ struct WvHTTPHeader
 
 DeclareWvDict(WvHTTPHeader, WvString, name);
 
+class WvSSLStream;
+
 /** 
  * WvHTTPStream connects to an HTTP server and allows the requested file
  * to be retrieved using the usual WvStream-style calls.
@@ -38,6 +40,8 @@ public:
     WvHTTPHeaderDict client_headers;
     size_t num_received;
     WvTCPConn *tcp;
+    WvSSLStream *ssl;
+    WvStream *conn;  // Can't use 'cloned' since it has no select()
 
     /**
      * Changed: now we copy _url in the constructor, so you can (and must)

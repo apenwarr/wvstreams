@@ -207,7 +207,7 @@ public:
 	return saved.data();
     }
     
-    void add_after(Index after, const T *data, bool auto_free = false,
+    void add_after(Index after, const T *data, bool autofree = false,
 		   void *id = NULL)
     {
 	Index i = alloc.alloc();
@@ -218,19 +218,19 @@ public:
 	
 	if (next == HEAD)
 	    save(TAIL, i, NULL);
-	if (auto_free)
+	if (autofree)
 	    delete data; // already done with it!
     }
     
-    void append(const T &data, bool auto_free = false, void *id = NULL)
-	{ add_after(retrieve(TAIL), &data, auto_free, id); }
-    void prepend(const T &data, bool auto_free = false, void *id = NULL)
-        { add_after(HEAD, &data, auto_free, id); }
+    void append(const T &data, bool autofree = false, void *id = NULL)
+	{ add_after(retrieve(TAIL), &data, autofree, id); }
+    void prepend(const T &data, bool autofree = false, void *id = NULL)
+        { add_after(HEAD, &data, autofree, id); }
 
-    void append(const T *data, bool auto_free = false, void *id = NULL)
-	{ add_after(retrieve(TAIL), data, auto_free, id); }
-    void prepend(const T *data, bool auto_free = false, void *id = NULL)
-        { add_after(HEAD, data, auto_free, id); }
+    void append(const T *data, bool autofree = false, void *id = NULL)
+	{ add_after(retrieve(TAIL), data, autofree, id); }
+    void prepend(const T *data, bool autofree = false, void *id = NULL)
+        { add_after(HEAD, data, autofree, id); }
 
 private:
     // this works in a WvList, but it's kind of hard in a OnDiskList.  So we
@@ -255,7 +255,7 @@ public:
     
     class Iter
     {
-	typedef WvOnDiskList::Index Index;
+	typedef typename WvOnDiskList::Index Index;
     public:
 	WvOnDiskList &list;
 	Index prev, xcur, xnext;

@@ -8,6 +8,7 @@
 
 #include "wvfdstream.h"
 #include "wvlog.h"
+#include "wvhashtable.h"
 #include "wvscatterhash.h"
 
 #include <fam.h>

@@ -1,4 +1,5 @@
 WVSTREAMS=.
+WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
 include wvrules.mk
 override enable_efence=no
 
@@ -18,19 +19,29 @@ ifeq ("$(build_xplc)", "yes")
 xplc:
 	$(MAKE) -C xplc
 
+# Prevent complaints that Make can't find these two linker options.
+-lxplc-cxx: ;
+
+-lxplc: ;
+
 endif
 
 %.so: SONAME=$@.$(RELEASE)
 
-.PHONY: clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean test
+.PHONY: clean depend dust kdoc doxygen install install-shared install-dev install-xplc uninstall tests dishes dist distclean realclean test
 
 # FIXME: little trick to ensure that the wvautoconf.h.in file is there
 .PHONY: dist-hack-clean
 dist-hack-clean:
-	rm -f stamp-h.in
+	@rm -f stamp-h.in
 
-dist: dist-hack-clean configure distclean
-	rm -rf autom4te.cache
+dist-hook: dist-hack-clean configure
+	@rm -rf autom4te.cache
+	@if test -d .xplc; then \
+	    echo '--> Preparing XPLC for dist...' \
+	    $(MAKE) -C .xplc clean patch; \
+	    cp -Lpr .xplc/build/xplc .; \
+	fi
 
 runconfigure: config.mk include/wvautoconf.h
 
@@ -53,10 +64,17 @@ include/wvautoconf.h.in:
 	autoheader
 endif
 
+ifeq ($(VERBOSE),)
+define wild_clean
+	@list=`echo $(wildcard $(1))`; \
+		test -z "$${list}" || sh -c "rm -rf $${list}"
+endef
+else
 define wild_clean
 	@list=`echo $(wildcard $(1))`; \
 		test -z "$${list}" || sh -cx "rm -rf $${list}"
 endef
+endif
 
 realclean: distclean
 	$(call wild_clean,$(REALCLEAN))
@@ -66,6 +84,7 @@ distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
 
 clean: depend dust
+	@rm -f .wvtest-total
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
@@ -82,7 +101,7 @@ kdoc:
 doxygen:
 	doxygen
 
-install: install-shared install-dev
+install: install-shared install-dev install-xplc
 #FIXME: We need to install uniconfd somewhere.
 
 install-shared: $(TARGETS_SO)
@@ -102,6 +121,17 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	    cd $(DESTDIR)$(libdir) && $(LN_S) $$i.$(RELEASE) $$i; \
 	done
 
+ifeq ("$(build_xplc)", "yes")
+
+install-xplc: xplc
+	$(MAKE) -C xplc install
+
+else
+
+install-xplc: ;
+
+endif
+
 uninstall:
 	$(tbd)
 
@@ -118,7 +148,10 @@ test: runconfigure all tests wvtestmain
 
 runtests:
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
-	cd uniconf/tests && ./unitest.sh
+ifeq ("$(TESTNAME)", "unitest")
+	cd uniconf/tests && DAEMON=0 ./unitest.sh
+	cd uniconf/tests && DAEMON=1 ./unitest.sh
+endif
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

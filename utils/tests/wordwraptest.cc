@@ -6,7 +6,7 @@
  */
 #include "wvwordwrap.h"
 #include "wvstream.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvencoderstream.h"
 
 int main(int argc, char **argv)
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     stream->auto_flush(false);
     stream->writechain.append(enc, true);
 
-    WvStreamList *slist = new WvStreamList();
+    WvIStreamList *slist = new WvIStreamList();
     slist->append(stream, false);
     slist->append(wvin, false);
     wvin->autoforward(*stream);
@@ -33,8 +33,8 @@ int main(int argc, char **argv)
             slist->callback();
     }
     stream->flush(0);
-    RELEASE(stream);
-    RELEASE(slist);
+    WVRELEASE(stream);
+    WVRELEASE(slist);
     
     return 0;
 }
