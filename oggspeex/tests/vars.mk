@@ -1,6 +1,8 @@
 
-ifneq ("$(with_speex)", "no")
-TESTS+=$(patsubst %.cc,%,$(wildcard oggspeex/tests/*.cc))
+ifneq ("$(with_ogg)", "no")
+  ifneq ("$(with_speex)", "no")
+    TESTS+=$(patsubst %.cc,%,$(wildcard oggspeex/tests/*.cc))
+  endif
 endif
 
 oggspeex/tests/oggspeextest: LDLIBS+=libwvoggspeex.a
