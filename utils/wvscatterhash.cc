@@ -118,6 +118,8 @@ void WvScatterHashBase::_zap()
 
         xslots[i].status = 0;
     }
+    
+    used = num = 0;
 }
 
 void WvScatterHashBase::_set_autofree(const void *data,
