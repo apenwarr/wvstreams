@@ -12,12 +12,11 @@
 #include "wvlog.h"
 #include "unimounttreegen.h"
 
-class UniConfFileTreeGen : public UniMountTreeGen//UniConfGen
+class UniConfFileTreeGen : public UniMountTreeGen
 {
 public:
     WvString basedir, moniker;
     WvLog log;
-//    UniConfValueTree root;
     
     UniConfFileTreeGen(WvStringParm _basedir, WvStringParm _moniker);
     virtual ~UniConfFileTreeGen() { }
@@ -25,19 +24,11 @@ public:
     /***** Overridden members *****/
 
     virtual bool refresh();
-/*    virtual WvString get(const UniConfKey &key);
-    virtual bool exists(const UniConfKey &key);
-    virtual bool haschildren(const UniConfKey &key);
-    virtual void set(const UniConfKey &key, WvStringParm) { }
 
-    virtual Iter *iterator(const UniConfKey &key);
-*/
 private:
-//    UniConfValueTree *maketree(const UniConfKey &key);
-    class NodeIter;
+//    class NodeIter;
 };
-
-
+#if 0
 class UniConfFileTreeGen::NodeIter : public UniConfFileTreeGen::Iter
 {
 protected:
@@ -56,5 +47,5 @@ public:
     virtual UniConfKey key() const
         { return xit->key(); }
 };
-
+#endif
 #endif // __UNICONFFILETREEGEN_H
