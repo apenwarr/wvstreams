@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
-#include <sys/stat.h>
 
 
 char *terminate_string(char *string, char c)
@@ -359,41 +357,6 @@ WvString nice_hostname(WvStringParm name)
     return nice;
 }
 
-WvString getfilename(WvStringParm fullname)
-{
-    WvString tmp(fullname);
-    char *cptr = strrchr(tmp.edit(), '/');
-    
-    if (!cptr) // no slash at all
-	return fullname;
-    else if (!cptr[1]) // terminating slash
-    {
-	*cptr = 0;
-	return getfilename(tmp);
-    }
-    else // no terminating slash
-	return cptr+1;
-}
-
-WvString getdirname(WvStringParm fullname)
-{
-    WvString tmp(fullname);
-    char *cptr = strrchr(tmp.edit(), '/');
-    
-    if (!cptr) // no slash at all
-	return ".";
-    else if (!cptr[1]) // terminating slash
-    {
-	*cptr = 0;
-	return getdirname(tmp);
-    }
-    else // no terminating slash
-    {
-	*cptr = 0;
-	return !tmp ? WvString("/") : tmp;
-    }
-}
-
 
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
@@ -442,30 +405,4 @@ int lookup(const char *str, const char * const *table,
         return i;
     }
     return -1;
-}
-
-
-bool mkdirp(WvStringParm _dir, int create_mode)
-{
-    if (!access(_dir, X_OK))
-        return true;
-
-    WvString dir(_dir);
-    char *p = dir.edit();
-
-    while ((p = strchr(++p, '/')))
-    {
-        *p = '\0';
-        if (access(dir.cstr(), X_OK) && mkdir(dir.cstr(), create_mode))
-            return false;
-        *p = '/';
-    }
-
-
-    // You're probably creating the directory to write to it? Perhaps the
-    // permissions we're looking for should be changed.
-    if (access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr(), create_mode))
-        return false;
-
-    return true;
 }

@@ -6,7 +6,7 @@
  */
 
 #include "wvlockfile.h"
-#include "strutils.h"
+#include "fileutils.h"
 #include <signal.h>
 
 
