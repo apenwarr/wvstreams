@@ -135,7 +135,11 @@ protected:
 public:
     WvEtherAddr(const unsigned char _binaddr[ETH_ALEN] = NULL)
         { if (_binaddr) memcpy(binaddr, _binaddr, ETH_ALEN); }
-    WvEtherAddr(const char string[]);
+    WvEtherAddr(const char string[])
+        { string_init(string); }
+    WvEtherAddr(const WvString &string)
+        { string_init(string); }
+    void string_init(const char string[]);
     WvEtherAddr(const struct sockaddr *addr)
         { memcpy(binaddr, (void *)addr->sa_data, ETH_ALEN); }
     virtual ~WvEtherAddr();
@@ -162,6 +166,8 @@ public:
         { if (_binaddr) binaddr = _binaddr[0]; }
     WvARCnetAddr(const char string[])
         { binaddr = strtoul(string, NULL, 16); }
+    WvARCnetAddr(const WvString &string)
+    	{ binaddr = strtoul(string, NULL, 16); }
     WvARCnetAddr(const struct sockaddr *addr)
         { binaddr = ((unsigned char *)addr->sa_data)[0]; }
     virtual ~WvARCnetAddr();
@@ -192,7 +198,11 @@ public:
         { if (_binaddr) memcpy(binaddr, _binaddr, 4); }
     WvIPAddr(const __u32 _binaddr = 0)
         { memcpy(binaddr, &_binaddr, 4); }
-    WvIPAddr(const char string[]);
+    WvIPAddr(const char string[])
+    	{ string_init(string); }
+    WvIPAddr(const WvString &string)
+        { string_init(string); }
+    void string_init(const char string[]);
     WvIPAddr(const struct sockaddr *addr)
         { memcpy(binaddr,
 		 (void *)&((struct sockaddr_in *)addr)->sin_addr.s_addr, 4); }
@@ -239,7 +249,11 @@ protected:
 
 public:
     WvIPNet(const WvIPNet &_net);
-    WvIPNet(const char string[]);
+    WvIPNet(const char string[]) : WvIPAddr(string)
+        { string_init(string); }
+    WvIPNet(const WvString &string) : WvIPAddr(string)
+        { string_init(string); }
+    void string_init(const char string[]);
     WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask);
     
     // construct an IPNet from a base address and a number of bits in
@@ -302,7 +316,11 @@ public:
     WvIPPortAddr();
     WvIPPortAddr(const unsigned char _ipaddr[4], __u16 _port = 0);
     WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port = 0);
-    WvIPPortAddr(const char string[]);
+    WvIPPortAddr(const char string[]) : WvIPAddr(string)
+        { string_init(string); }
+    WvIPPortAddr(const WvString &string) : WvIPAddr(string)
+        { string_init(string); }
+    void string_init(const char string[]);
     WvIPPortAddr(__u16 _port);          // assumes address 0.0.0.0, (ie local)
     WvIPPortAddr(const char string[], __u16 _port);
     
