@@ -42,6 +42,16 @@ public:
     size_t count() const;
 
     /**
+     * Reverses the order of elements in the list.
+     *
+     * This function traverses the list and rearranges the pointers
+     * and updates the pointers to head & tail appropriately.
+     *
+     * It does nothing for lists of count<2
+     */
+    void reverse();
+
+    /**
      * Quickly determines if the list is empty.
      * 
      * This is much faster than checking count() == 0.
@@ -79,6 +89,7 @@ public:
 	void rewind() // dropping a const pointer here!  Danger!
             { prev = NULL; link = &((WvListBase *)list)->head; }
 
+	
         /**
          * Moves the iterator along the list to point to the next element.
          * 
