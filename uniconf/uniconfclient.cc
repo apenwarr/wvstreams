@@ -18,7 +18,10 @@ UniConfClient::UniConfClient(UniConf *_top, UniConfConnFactory *_fctry) :
 
 UniConfClient::~UniConfClient()
 {
-    conn->close();
+    if (conn->isok())
+    {
+        conn->print("quit\n");   
+    }
     delete conn;
 }
 
