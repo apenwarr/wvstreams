@@ -212,8 +212,9 @@ void WvDsp::close()
 	::close(fd);
     fd = -1;
 
-    // wake up subprocess
-    wloop.write("", 1);
+    // this should wake up the subprocess(es) and ask them to die.
+    rloop.close();
+    wloop.close();
 }
 
 
