@@ -169,9 +169,9 @@ int main(int argc, char **argv)
                 UniConf mainconf;
                 UniConf *mounted = &mainconf[mountpoint];
                 if (!automount)
-                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
                 else
-                    new UniConfClient(mounted, new WvTCPConn(addr), automount);
+                    new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
 
                 h = printheader("TEST GETTING KEYS", mountpoint, automount);
                 printresult(testgetkeys(mainconf, mountpoint), h);
@@ -188,9 +188,9 @@ int main(int argc, char **argv)
                 UniConf mainconf;
                 UniConf *mounted = &mainconf[mountpoint];
                 if (!automount)
-                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
                 else
-                    new UniConfClient(mounted, new WvTCPConn(addr), automount);
+                    new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
 
                 h = printheader("TEST GETTING FROM A SECTION", mountpoint, automount);
                 printresult(testgetfromsections(mainconf,mountpoint), h);
@@ -208,9 +208,9 @@ int main(int argc, char **argv)
                 UniConf mainconf;
                 UniConf *mounted = &mainconf[mountpoint];
                 if (!automount)
-                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                    mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
                 else
-                    new UniConfClient(mounted, new WvTCPConn(addr), automount);
+                    new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
 
                 h = printheader("TEST SETTING KEYS", mountpoint, automount);
                 printresult(testgetsetkey(mainconf,mountpoint), h);

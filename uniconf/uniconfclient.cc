@@ -18,7 +18,8 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l, b
     conn->select(15000, true, false, false);
     conn->setcallback(wvcallback(WvStreamCallback, *this, UniConfClient::execute), NULL);
 
-    list->append(conn, true);
+    if (list)
+        list->append(conn, true);
 
     waitforsubt = false;
     if (automount)

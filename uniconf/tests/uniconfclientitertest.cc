@@ -68,9 +68,9 @@ int main(int argc, char **argv)
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
             if (!automount)
-                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
             else
-                new UniConfClient(mounted, new WvTCPConn(addr), automount);
+                new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
 
             printheader("TEST NORMAL ITERATORS", mountpoint, automount);
             testnormaliter(mainconf);
@@ -83,9 +83,9 @@ int main(int argc, char **argv)
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
             if (!automount)
-                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
             else
-                new UniConfClient(mounted, new WvTCPConn(addr), automount);
+                new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
             
             printheader("TEST RECURSIVE ITERATORS", mountpoint, automount);
             testrecursiveiter(mainconf);
@@ -100,9 +100,9 @@ int main(int argc, char **argv)
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
             if (!automount)
-                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), automount));
+                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
             else
-                new UniConfClient(mounted, new WvTCPConn(addr), automount);
+                new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
             printheader("TEST X ITERATORS", mountpoint, automount);
             testxiter(mainconf);
 

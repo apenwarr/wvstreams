@@ -13,9 +13,9 @@
 const WvString UniConfDaemon::DEFAULT_CONFIG_FILE = "uniconf.ini";
 // Daemon
 
-UniConfDaemon::UniConfDaemon() 
-    : log("UniConfDaemon"), 
-	notifier(mainconf), events(mainconf, "UniConfDaemon")
+UniConfDaemon::UniConfDaemon(WvLog::LogLevel level) 
+    : log("UniConfDaemon"),
+	notifier(mainconf), events(mainconf, "UniConfDaemon"), logcons(1, level)
 {
     want_to_die = false;
     keymodified = false;

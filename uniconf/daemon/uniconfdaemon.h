@@ -4,6 +4,7 @@
 
 #include "strutils.h"
 
+#include "wvlogrcv.h"
 #include "wvlog.h"
 #include "wvunixsocket.h"
 #include "wvstreamlist.h"
@@ -16,7 +17,7 @@ class UniConfDaemonConn;
 class UniConfDaemon
 {
 public:
-    UniConfDaemon();
+    UniConfDaemon(WvLog::LogLevel level=WvLog::Info);
     ~UniConfDaemon();
     UniConf *domount(WvString mode, WvString file, WvString mp);
 
@@ -54,6 +55,7 @@ protected:
 
 private:
     void errorcheck(WvStream *s, WvString type);
+    WvLogConsole logcons;
     
     WvStreamList l;
     WvStringList modifiedkeys;
