@@ -83,8 +83,8 @@ DeclareWvList(WvConfCallbackInfo);
 DeclareWvList(WvConfigSection);
 
 /**
- * WvConf configuration file management class.. used to write configuration files
- * that are set up in a fashion similar to Windows .INI file.
+ * WvConf configuration file management class: used to read/write config
+ * files that are formatted in the style of Windows .ini files.
  */
 class WvConf : public WvConfigSectionList
 {
