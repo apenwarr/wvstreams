@@ -802,6 +802,7 @@ size_t WvLinkedBufferStore::used() const
 
 size_t WvLinkedBufferStore::optgettable() const
 {
+    // find the first buffer with an optgettable() and return that
     size_t count;
     WvBufStoreList::Iter it(list);
     for (it.rewind(); it.next(); )
@@ -815,7 +816,10 @@ const void *WvLinkedBufferStore::get(size_t count)
 {
     if (count == 0)
         return NULL;
+
+    assert(count <= totalused);
     totalused -= count;
+    
     // search for first non-empty buffer
     WvBufStore *buf;
     size_t availused;
@@ -824,19 +828,21 @@ const void *WvLinkedBufferStore::get(size_t count)
     {
         it.rewind(); it.next();
         buf = it.ptr();
-        assert(buf ||
-            !"attempted to get() more than used()");
+        assert(buf && "attempted to get() more than used()" &&
+                "totalused is wrong!");
+
         availused = buf->used();
         if (availused != 0)
             break;
+
         // unlink the leading empty buffer
         do_xunlink(it);
-        maxungettable = 0;
     }
 
     // return the data
     if (availused < count)
         buf = coalesce(it, count);
+
     maxungettable += count;
     return buf->get(count);
 }
@@ -846,8 +852,8 @@ void WvLinkedBufferStore::unget(size_t count)
 {
     if (count == 0)
         return;
-    assert(! list.isempty() || count > maxungettable ||
-        !"attempted to unget() more than ungettable()");
+    assert(!list.isempty() && count <= maxungettable && 
+        "attempted to unget() more than ungettable()");
     totalused += count;
     maxungettable -= count;
     list.first()->unget(count);
@@ -857,7 +863,19 @@ void WvLinkedBufferStore::unget(size_t count)
 size_t WvLinkedBufferStore::ungettable() const
 {
     if (list.isempty())
+    {
+        assert(maxungettable == 0);
         return 0;
+    }
+
+    // maxungettable and list.first()->ungettable() can get out of sync in two ways:
+    // - coalescing moves data from later buffers to the first one, which
+    // leaves it as ungettable in those buffers.  So when we first start to
+    // use a buffer, its ungettable() count may be too high.  (This is the
+    // reason maxungettable exists.) 
+    // - some calls (ie. alloc) may clear all ungettable data from the first
+    // buffer without telling us.  So there might be less data to unget than we
+    // think.
     size_t avail = list.first()->ungettable();
     if (avail > maxungettable)
         avail = maxungettable;
@@ -877,7 +895,7 @@ void WvLinkedBufferStore::zap()
 
 size_t WvLinkedBufferStore::free() const
 {
-    if (! list.isempty())
+    if (!list.isempty())
         return list.last()->free();
     return 0;
 }
@@ -885,7 +903,7 @@ size_t WvLinkedBufferStore::free() const
 
 size_t WvLinkedBufferStore::optallocable() const
 {
-    if (! list.isempty())
+    if (!list.isempty())
         return list.last()->optallocable();
     return 0;
 }
@@ -895,8 +913,7 @@ void *WvLinkedBufferStore::alloc(size_t count)
 {
     if (count == 0)
         return NULL;
-    assert(! list.isempty() ||
-        !"attempted to alloc() more than free()");
+    assert(!list.isempty() && "attempted to alloc() more than free()");
     totalused += count;
     return list.last()->alloc(count);
 }
@@ -904,11 +921,14 @@ void *WvLinkedBufferStore::alloc(size_t count)
 
 void WvLinkedBufferStore::unalloc(size_t count)
 {
+    assert(count <= totalused);
+
     totalused -= count;
     while (count > 0)
     {
-        assert(! list.isempty() ||
-            !"attempted to unalloc() more than unallocable()");
+        assert(!list.isempty() &&
+                "attempted to unalloc() more than unallocable()" &&
+                "totalused is wrong");
         WvBufStore *buf = list.last();
         size_t avail = buf->unallocable();
         if (count < avail)
@@ -916,9 +936,11 @@ void WvLinkedBufferStore::unalloc(size_t count)
             buf->unalloc(count);
             break;
         }
+        
         WvBufStoreList::Iter it(list);
         it.find(buf);
         do_xunlink(it);
+        
         count -= avail;
     }
 }
@@ -936,7 +958,7 @@ size_t WvLinkedBufferStore::optpeekable(int offset) const
     WvBufStoreList::Iter it(list);
     offset = search(it, offset);
     WvBufStore *buf = it.ptr();
-    if (! buf)
+    if (!buf)
         return 0; // out of bounds
     return buf->optpeekable(offset);
 }
@@ -951,26 +973,12 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
     WvBufStoreList::Iter it(list);
     offset = search(it, offset);
     WvBufStore *buf = it.ptr();
-    assert(buf ||
-        ! "attempted to peek() with invalid offset or count");
+    assert(buf && "attempted to peek() with invalid offset or count");
     
     // return data if we have enough
     size_t availpeek = buf->peekable(offset);
     if (availpeek < count)
-    {
-        // if this is the first buffer, then we need to unget as
-        // much as possible to ensure it does not get discarded
-        // during the coalescing phase
-        size_t mustskip = 0;
-        if (buf == list.first())
-        {
-            mustskip = ungettable();
-            buf->unget(mustskip);
-        }
         buf = coalesce(it, count);
-        if (mustskip != 0)
-            buf->skip(mustskip);
-    }
     return buf->mutablepeek(offset, count);
 }
 
@@ -1034,9 +1042,25 @@ WvBufStore *WvLinkedBufferStore::coalesce(
     size_t availfree = buf->free();
     if (availfree < needed)
     {
-        needed = count;
+        // if this is the first buffer, then we need to unget as
+        // much as possible to ensure it does not get discarded
+        // during the coalescing phase
+        size_t mustskip = 0;
+        if (buf == list.first())
+        {
+            // use ungettable() instead of buf->ungettable() because we might
+            // have reset it to 0
+            mustskip = ungettable();
+            buf->unget(mustskip);
+        }
+
+        needed = count + mustskip;
         buf = newbuffer(needed);
-        
+
+        // make the new buffer ready for unget 
+        if (mustskip != 0)
+            buf->skip(mustskip);
+
         // insert the buffer before the previous link
         list.add_after(it.prev, buf, true);
         it.find(buf);
@@ -1058,7 +1082,7 @@ WvBufStore *WvLinkedBufferStore::coalesce(
         }
         do_xunlink(it); // buffer is now empty
     }
-    assert(! "invalid count during get() or peek()");
+    assert(false && "invalid count during get() or peek()");
     return NULL;
 }
 
@@ -1066,6 +1090,9 @@ WvBufStore *WvLinkedBufferStore::coalesce(
 void WvLinkedBufferStore::do_xunlink(WvBufStoreList::Iter &it)
 {
     WvBufStore *buf = it.ptr();
+    if (buf == list.first())
+        maxungettable = 0;
+
     bool autofree = it.link->auto_free;
     it.link->auto_free = false;
     it.xunlink();

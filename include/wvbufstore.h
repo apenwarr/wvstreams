@@ -87,6 +87,7 @@ public:
     // default implementation
     void basicmerge(WvBufStore &instore, size_t count);
 
+protected:
     /*** Support for buffers with subbuffers ***/
 
     /** Returns true if the buffer uses subbuffers for storage. */
@@ -420,6 +421,7 @@ public:
     virtual size_t optpeekable(int offset) const;
     virtual void *mutablepeek(int offset, size_t count);
 
+protected:
     virtual bool usessubbuffers() const;
     virtual size_t numsubbuffers() const;
     virtual WvBufStore *firstsubbuffer() const;
