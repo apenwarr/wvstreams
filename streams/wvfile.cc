@@ -39,6 +39,14 @@ bool WvFile::pre_select(SelectInfo &si)
     ret = WvStream::pre_select(si);
     
     si.wants = oldwant;
+
+    // Force select() to always return true by causing it to not wait and
+    // setting our pre_select() return value to true.
+    if (skip_select)
+    {
+	si.msec_timeout = 0;
+	ret = true;
+    }
     
     return ret;
 }

@@ -32,6 +32,9 @@ public:
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
     
     bool readable, writable;
+
+    // Force select to always return true
+    bool skip_select;
     
     virtual bool pre_select(SelectInfo &si);
 };
