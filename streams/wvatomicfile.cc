@@ -34,7 +34,7 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
     { 
         struct stat old_file;
         int fexists = lstat(atomic_file, &old_file);
-        if (!S_ISREG(old_file.st_mode))
+        if (!fexists && !S_ISREG(old_file.st_mode))
         {
             close();
             unlink(tmp_file);
@@ -45,6 +45,8 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
         tmp_file = WvString(tmptemplate(nitix));
         tmpfd = mkstemp(tmp_file.edit());
         fcntl(tmpfd, F_SETFL, mode);
+
+
 
         if (!WvFile::open(tmpfd))
             return false;
