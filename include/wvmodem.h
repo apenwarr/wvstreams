@@ -15,6 +15,7 @@
 
 #include "wvlockdev.h"
 #include "wvfile.h"
+#include "wvlog.h"
 #include <termios.h>
 
 #ifndef IUCLC
@@ -77,6 +78,7 @@ class WvModem : public WvModemBase
 {
 private:
     WvLockDev		lock;
+    WvLog               log;
     struct termios	old_t;
     bool		closing;
     bool                no_reset;

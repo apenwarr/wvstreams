@@ -11,7 +11,7 @@
 
 #include "wvmodem.h"
 #include <sys/ioctl.h>
-    	
+#include <linux/serial.h>
 
 struct SpeedLookup {
     int baud;
@@ -131,7 +131,7 @@ void WvModemBase::hangup()
 
 
 WvModem::WvModem(WvStringParm filename, int _baud, bool rtscts, bool _no_reset)
-	: WvModemBase(), lock(filename)
+    : WvModemBase(), lock(filename), log("WvModem", WvLog::Debug1)
 {
     closing = false;
     baud = _baud;
@@ -166,7 +166,7 @@ void WvModem::setup_modem(bool rtscts)
 {
     if (!isok()) return;
 
-    if (tcgetattr( getrfd(), &t ) || tcgetattr( getrfd(), &old_t ))
+    if (tcgetattr(getrfd(), &t) || tcgetattr(getrfd(), &old_t))
     {
 	closing = true;
 	seterr(errno);
@@ -175,6 +175,26 @@ void WvModem::setup_modem(bool rtscts)
     
     drain();
     
+    struct serial_struct old_sinfo, sinfo;
+    sinfo.reserved_char[0] = 0;
+    if (ioctl(getrfd(), TIOCGSERIAL, &old_sinfo) < 0) 
+    {
+	seterr("Cannot get information for serial port.");
+	return;
+    }
+    sinfo = old_sinfo;
+    // Why there are two closing wait timeouts, is beyond me
+    // but there are... apparently the second one is deprecated
+    // but why take a chance...
+    sinfo.closing_wait = ASYNC_CLOSING_WAIT_NONE;
+    sinfo.closing_wait2 = ASYNC_CLOSING_WAIT_NONE;
+
+    if (ioctl(getrfd(), TIOCSSERIAL, &sinfo) < 0) 
+    {
+	seterr("Cannot set information for serial port.");
+	return;
+    }
+
     // set up the terminal characteristics.
     // see "man tcsetattr" for more information about these options.
     t.c_iflag &= ~(BRKINT | ISTRIP | IUCLC | IXON | IXANY | IXOFF | IMAXBEL);
@@ -182,37 +202,35 @@ void WvModem::setup_modem(bool rtscts)
     t.c_oflag &= ~(OLCUC);
     t.c_cflag &= ~(CSIZE | CSTOPB | PARENB | PARODD);
     t.c_cflag |= (CS8 | CREAD | HUPCL | CLOCAL);
-    if( rtscts )
+    if(rtscts)
         t.c_cflag |= CRTSCTS;
     t.c_lflag &= ~(ISIG | XCASE | ECHO);
-    tcsetattr( getrfd(), TCSANOW, &t );
+    tcsetattr(getrfd(), TCSANOW, &t);
     
     // make sure we leave the modem in CLOCAL when we exit, so normal user
     // tasks can open the modem without using nonblocking.
     old_t.c_cflag |= CLOCAL;
     
     // Send a few returns to make sure the modem is "good and zonked".
-    // but only if we care enough to reset... sometimes we dont... 
-    // like when this "modem" is really a UPS
     if (cfgetospeed(&t) != B0 && !no_reset)
     {
-	for( int i=0; i<5; i++ ) 
+	for(int i=0; i<5; i++) 
 	{
-	    write( "\r", 1 );
-	    usleep( 10 * 1000 );
+	    write("\r", 1);
+	    usleep(10 * 1000);
 	}
     }
     
     // Set the baud rate to 0 for half a second to drop DTR...
-    cfsetispeed( &t, B0 );
-    cfsetospeed( &t, B0 );
-    cfmakeraw( &t );
-    tcsetattr( getrfd(), TCSANOW, &t );
+    cfsetispeed(&t, B0);
+    cfsetospeed(&t, B0);
+    cfmakeraw(&t);
+    tcsetattr(getrfd(), TCSANOW, &t);
     if (carrier())
-	usleep( 500 * 1000 );
+	usleep(500 * 1000);
     
     speed(baud);
-    usleep( 10 * 1000 );
+    usleep(10 * 1000);
     
     drain();
 }
@@ -222,16 +240,30 @@ void WvModem::close()
 {
     if (isok())
     {
+	log("WvModem is OK!\n");
 	if (!closing)
 	{
 	    closing = true;
 	    if (!no_reset)
 		hangup();
+	    else
+	    {
+		drain();
+		cfsetospeed(&t, B0);
+		// If this works??
+		write("\r");
+	    }
 	}
+    
 	closing = true;
+	log("WvModem closing with no_reset: %s\n", 
+		no_reset ? "true" : "false");
 	tcflush(getrfd(), TCIOFLUSH);
+	log("WvModem called tcflush().\n");
 	tcsetattr(getrfd(), TCSANOW, &old_t);
+	log("WvModem called tcsetattr().\n");
 	WvFile::close();
+	log("WvModem called WvFile::close()\n");
 	closing = false;
     }
 }
@@ -250,9 +282,9 @@ int WvModem::speed(int _baud)
 	}
     }
 
-    cfsetispeed(&t, B0 ); // auto-match to output speed
-    cfsetospeed(&t, s );
-    tcsetattr(getrfd(), TCSANOW, &t );
+    cfsetispeed(&t, B0); // auto-match to output speed
+    cfsetospeed(&t, s);
+    tcsetattr(getrfd(), TCSANOW, &t);
 
     return get_real_speed();
 }
