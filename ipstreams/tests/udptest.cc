@@ -17,7 +17,8 @@ int main(int argc, char **argv)
     
     sock.enable_broadcasts();
     
-    err(WvLog::Info, "Local address is %s.\n", *sock.local());
+    err(WvLog::Info, " Local address is %s.\n", *sock.local());
+    err(WvLog::Info, "Remote address is %s.\n", remaddr);
     
     wvcon->autoforward(sock);
     sock.autoforward(err);
