@@ -1,6 +1,8 @@
 TOPDIR=..
 include $(TOPDIR)/wvrules.mk
 
+CXXFLAGS += -I../include
+
 TESTS=teststr testlist testhash stresshash testbuffer testbase64 testver \
 		testtask testsort testproc testfork testencoder testdiriter \
 		testcallback testcrash testtcl

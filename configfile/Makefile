@@ -1,6 +1,8 @@
 TOPDIR=..
 include $(TOPDIR)/wvrules.mk
 
+CXXFLAGS += -I../include
+
 XPATH=../utils ../streams
 
 default: all initest delsection

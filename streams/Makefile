@@ -1,6 +1,8 @@
 TOPDIR=..
 include $(TOPDIR)/wvrules.mk
 
+CXXFLAGS += -I../include
+
 # some crazy magic for WvLockFile to use the liblockdev library if it's
 # available, or our simpler method otherwise.
 #

@@ -28,20 +28,14 @@ export CC CXX CXXOPTS
 
 SUBDIRS=utils streams configfile uniconf ipstreams crypto urlget Docs
 
-all: include subdirs $(LIBFILES)
+all: subdirs $(LIBFILES)
 
-subdirs: include
+subdirs:
 	$(subdirs)
 
 $(LIBFILES) : subdirs
 
 libwvcrypto.so : libwvstreams.so
-
-include:
-	rm -rf $@
-	mkdir $@.new
-	ln -s $(addprefix ../,$(foreach d,$(SUBDIRS),$(wildcard $(d)/*.h))) $@.new
-	mv $@.new $@
 
 $(wildcard *.so) $(wildcard *.a): Makefile
 
@@ -84,7 +78,7 @@ uninstall:
 	-rmdir ${INCDIR}
 
 clean:
-	rm -rf include Docs/doxy-html Docs/kdoc-html
+	rm -rf Docs/doxy-html Docs/kdoc-html
 	$(subdirs)
 	-[ -L wvrules.mk ]     && rm -f wvrules.mk
 	-[ -L rules.local.mk ] && rm -f rules.local.mk

@@ -1,6 +1,9 @@
 TOPDIR=..
 include ${TOPDIR}/wvrules.mk
 
+CFLAGS += -I../include
+CXXFLAGS += -I../include
+
 # if you compile SSLeay yourself, change this to the base directory of the
 # package (e.g. /usr/src/SSLeay)
 SSLDIR=SILLY/ssleay
