@@ -19,9 +19,6 @@ WvStream::WvStream(int _fd)
 {
     init();
     fd = _fd;
-
-    fcntl(fd, F_SETFD, 1);
-    fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
 }
 
 void WvStream::init()

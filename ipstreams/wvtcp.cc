@@ -6,9 +6,28 @@
  */
 #include "wvstreamlist.h"
 #include "wvtcp.h"
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <errno.h>
 
 WvStreamList WvTCPListener::all_listeners;
+
+
+static void nice_tcpopts(int fd)
+{
+    int value;
+    
+    fcntl(fd, F_SETFD, 1);
+    fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
+
+    value = 1;
+    setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+    setsockopt(fd, SOL_TCP, TCP_NODELAY, &value, sizeof(value));
+    
+    value = IPTOS_LOWDELAY;
+    setsockopt(fd, SOL_IP, IP_TOS, &value, sizeof(value));
+}
 
 
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
@@ -16,6 +35,7 @@ WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
     remaddr = _remaddr;
     resolved = true;
     connected = false;
+    
     do_connect();
 }
 
@@ -26,6 +46,8 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
     remaddr = _remaddr;
     resolved = true;
     connected = true;
+    
+    nice_tcpopts(fd);
 
     if (fd < 0)
 	seterr(errno);
@@ -61,13 +83,13 @@ void WvTCPConn::do_connect()
     sockaddr *sa;
 
     fd = socket(PF_INET, SOCK_STREAM, 0);
-    if (fd < 0
-	|| fcntl(fd, F_SETFD, 1)
-	|| fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK) < 0)
+    if (fd < 0)
     {
 	seterr(errno);
 	return;
     }
+    
+    nice_tcpopts(fd);
     
     sa = remaddr.sockaddr();
     if (connect(fd, sa, remaddr.sockaddr_len()) < 0
