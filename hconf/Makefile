@@ -5,7 +5,7 @@ XPATH=../utils ../streams ../configfile
 
 default: all hconftest
 
-all:
+all: hconf.a
 
 hconftest: hconftest.o hconf.a
 

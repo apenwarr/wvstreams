@@ -37,7 +37,6 @@ void WvHConf::init()
     dirty  = child_dirty  = false;
     notify = child_notify = false;
     
-    autogen = false;
     obsolete = child_obsolete = false;
 }
 
@@ -194,12 +193,42 @@ WvHConf *WvHConf::find_default(WvHConfKey *_k) const
 }
 
 
+void WvHConf::set_without_notify(const WvString &s)
+{
+    value = s;
+    value.unique();
+}
+
+
 void WvHConf::set(const WvString &s)
 {
     WvHConf *h;
     
-    value = s;
-    value.unique();
+    if (s == value)
+	return; // nothing to change - no notifications needed
+    
+    set_without_notify(s);
+    
+    if (dirty && notify)
+	return; // nothing more needed
+    
+    dirty = notify = true;
+    
+    // also notify all parents that a child has changed.  We can stop this
+    // if we reach a parent that already has child_notify AND child_dirty
+    // set to true.
+    h = parent;
+    while (h && (!h->child_dirty || !h->child_notify))
+    {
+	h->child_dirty = h->child_notify = true;
+	h = h->parent;
+    }
+}
+
+
+void WvHConf::do_notify()
+{
+    WvHConf *h;
     
     dirty = notify = true;
     
@@ -228,14 +257,42 @@ const WvString &WvHConf::printable() const
 }
 
 
+void WvHConf::load()
+{
+    if (generator)
+	generator->load();
+    else if (children)
+    {
+	WvHConfDict::Iter i(*children);
+	for (i.rewind(); i.next(); )
+	    i->load();
+    }
+}
+
+
+void WvHConf::save()
+{
+    if (!dirty && !child_dirty)
+	return; // done!
+    
+    if (generator)
+	generator->save();
+    else if (children && child_dirty)
+    {
+	WvHConfDict::Iter i(*children);
+	for (i.rewind(); i.next(); )
+	    i->save();
+    }
+}
+
+
 void WvHConf::dump(WvStream &s)
 {
     if (!!value)
     {
-	s.print("  %s%s%s%s%s%s%s %s = %s\n",
+	s.print("  %s%s%s%s%s%s %s = %s\n",
 	        child_dirty, dirty,
 		child_notify, notify,
-		autogen,
 		child_obsolete, obsolete,
 		full_key(), value);
     }

@@ -102,6 +102,9 @@ public:
     
     WvHConfIniFile(WvHConf *_top, const WvString &_filename);
     virtual void load();
+    virtual void save();
+    
+    void save_subtree(WvStream &out, WvHConf *h, WvHConfKey key);
 };
 
 
@@ -148,7 +151,76 @@ void WvHConfIniFile::load()
 	    line = trim_string(line);
 	    cptr = trim_string(cptr);
 	    h = make_tree(top, WvString("%s/%s", section, line));
-	    *h = cptr;
+	    
+	    bool d1 = h->dirty, d2 = h->child_dirty;
+	    h->set_without_notify(cptr);
+	    
+	    // loaded _from_ the config file, so that didn't make it dirty!
+	    h->dirty = d1;
+	    h->child_dirty = d2;
+	}
+    }
+}
+
+
+void WvHConfIniFile::save()
+{
+    if (!top->dirty && !top->child_dirty)
+	return; // no need to rewrite!
+    
+    log("Saving %s...", filename);
+    
+    WvFile out(WvString("%s.new", filename), O_WRONLY|O_CREAT|O_TRUNC);
+    save_subtree(out, top, "/");
+    out("\n");
+}
+
+
+static bool any_direct_children(WvHConf *h)
+{
+    if (!h->children)
+	return false;
+    
+    WvHConfDict::Iter i(*h->children);
+    for (i.rewind(); i.next(); )
+    {
+	if (!!*i)
+	    return true;
+    }
+    
+    return false;
+}
+
+void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
+{
+    // dump the "root level" of this tree into one section
+    if (any_direct_children(h))
+    {
+	out("\n[%s]\n", key);
+	WvHConfDict::Iter i(*h->children);
+	for (i.rewind(); i.next(); )
+	{
+	    if (i->generator && i->generator != this) continue;
+	    
+	    if (!!*i)
+		out("%s = %s\n", i->name, *i);
+	}
+    }
+    
+    // dump subtrees into their own sections
+    if (h->children)
+    {
+	WvHConfDict::Iter i(*h->children);
+	for (i.rewind(); i.next(); )
+	{
+	    if (i->generator && i->generator != this)
+		i->save();
+	    else if (i->children)
+	    {
+		WvHConfKey key2(key);
+		key2.append(&i->name, false);
+		save_subtree(out, i.ptr(), key2);
+	    }
 	}
     }
 }
@@ -267,6 +339,35 @@ int main()
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
+    }
+    
+    {
+	wvcon->print("\n\n");
+	log("-- IniFile test2 begins\n");
+	
+	WvHConf cfg;
+	WvHConf &h1 = cfg["/1"], &h2 = cfg["/"];
+	
+	h1.generator = new WvHConfIniFile(&h1, "test.ini");
+	h1.generator->load();
+	
+	h2.generator = new WvHConfIniFile(&h2, "test2.ini");
+	h2.generator->load();
+	
+	log("Partial config dump (branch 1 only):\n");
+	h1.dump(quiet);
+	
+	log("Trying to save unchanged branches:\n");
+	cfg.save();
+	
+	log("Changing some data:\n");
+	if (!h1["big/fat/bob"])
+	    h1["big/fat/bob"] = 0;
+	h1["big/fat/bob"] = h1["big/fat/bob"].num() + 1;
+	h1.dump(quiet);
+	
+	log("Saving changed data:\n");
+	cfg.save();
     }
     
     return 0;
