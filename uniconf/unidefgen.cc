@@ -41,7 +41,8 @@ WvString UniDefGen::finddefault(UniConfKey key, UniConfKey keypart)
     key = key.removefirst();
 
     cur = finddefault(key, WvString("%s/%s", keypart, cur));
-    if (!!cur)
+
+    if (!cur.isnull())
         return cur;
     else if (cur != "*")
         return finddefault(key, WvString("%s/*", keypart));
