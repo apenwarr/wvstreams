@@ -329,4 +329,71 @@ WvString fqdomainname();
  */
 WvString metriculate(const off_t i);
 
+/**
+ * Finds a in line
+ * returns 0 if not found
+ */
+inline char *locatestr(WvStringParm line, WvStringParm a)
+{
+    if (line.len() == 0 || a.len() == 0)
+	return 0;
+    return strstr(line, a);
+}
+
+/**
+ * Returns everything in line (exclusively) after a
+ * If a is not in line, "" is returned
+ */
+inline WvString afterstr(WvStringParm line, WvStringParm a)
+{
+    char *loc = locatestr(line, a);
+    if (loc == 0)
+	return "";
+
+    loc += a.len();
+    WvString ret = loc;
+    ret.unique();
+    return ret;
+}
+
+/**
+ * Returns everything in line (exclusively) before a
+ * If a is not in line, line is returned
+ */
+inline WvString beforestr(WvStringParm line, WvStringParm a)
+{
+    WvString ret = line;
+    ret.unique();    
+    char *loc = locatestr(ret, a);
+
+    if (loc == 0)
+	return line;
+
+    loc[0] = '\0';
+    return ret;
+}
+
+/*
+ * Returns the string od length len starting at pos in line
+ * Error checking prevents seg fault.
+ * If pos > line.len()-1 return ""
+ * if pos+len > line.len() simply return from pos to end of line
+ */
+inline WvString substr(WvStringParm line, unsigned int pos, unsigned int len)
+{
+    char *tmp = (char *)line.cstr();
+    if (pos > line.len()-1)
+	return "";
+    tmp += pos;
+
+    WvString ret = tmp;
+    ret.unique();
+    tmp = (char *)ret.cstr();
+    if (pos + len < line.len())
+	tmp[len] = '\0';
+
+    return ret;
+}
+
+
 #endif // __WVSTRUTILS_H
