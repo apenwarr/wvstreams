@@ -1,3 +1,4 @@
+#include <time.h>
 
 #include "wvdailyevent.h"
 #include "wvconfemu.h"
