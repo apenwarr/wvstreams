@@ -4,6 +4,7 @@
  * 
  * A generator to make a UniConf object out of a WvConf.
  */
+#include "wvconf.h"
 #include "uniwvconfgen.h"
 #include "wvmoniker.h"
 

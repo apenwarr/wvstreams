@@ -52,6 +52,7 @@ public:
 	uniconf(_uniconf), name(_name)
     {}
 
+    const char *get(WvStringParm entry, const char *def_val = NULL);
     void set(WvStringParm entry, WvStringParm value);
 
     bool isempty() const;
@@ -132,8 +133,10 @@ public:
     WvConfEmu(const UniConf& _uniconf);
     void zap();
     bool isclean() const;
+    bool isok() const;
     void load_file(WvStringParm filename);
     void save(WvStringParm filename);
+    void save();
     void flush();
 
     WvConfigSectionEmu *operator[] (WvStringParm sect);
@@ -149,10 +152,12 @@ public:
 
     void add_addfile(WvString *filename, WvStringParm sect, WvStringParm ent);
 
+    WvString getraw(WvString wvconfstr, int &parse_error);
     int getint(WvStringParm section, WvStringParm entry, int def_val);
     const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL);
 
+    void setraw(WvString wvconfstr, const char *&value, int &parse_error);
     void setint(WvStringParm section, WvStringParm entry, int value);
     void set(WvStringParm section, WvStringParm entry,
 	     const char *value);
