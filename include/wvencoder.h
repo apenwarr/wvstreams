@@ -553,11 +553,11 @@ class WvEncoderChain : public WvEncoder
     public:
         WvEncoder *enc;
         WvDynBuf out;
-        bool auto_free;
+        bool autofree;
 
-        WvEncoderChainElem(WvEncoder *enc, bool auto_free) :
-            enc(enc), auto_free(auto_free) { }
-        ~WvEncoderChainElem() { if (auto_free) delete enc; }
+        WvEncoderChainElem(WvEncoder *enc, bool autofree) :
+            enc(enc), autofree(autofree) { }
+        ~WvEncoderChainElem() { if (autofree) delete enc; }
     };
     DeclareWvList2(WvEncoderChainElemListBase, WvEncoderChainElem);
 
@@ -569,9 +569,9 @@ public:
 
     /**
      * Destroys the encoder chain.
-     * 
-     * Destroys any encoders that were added with auto_free == true.
-     * 
+     *
+     * Destroys any encoders that were added with autofree == true.
+     *
      */
     virtual ~WvEncoderChain();
 
@@ -579,32 +579,54 @@ public:
      * Appends an encoder to the tail of the chain.
      *
      * "enc" is the encoder
-     * "auto_free" is if true, takes ownership of the encoder
+     * "autofree" is if true, takes ownership of the encoder
      */
-    void append(WvEncoder *enc, bool auto_free);
+    void append(WvEncoder *enc, bool autofree);
 
     /**
      * Prepends an encoder to the head of the chain.
      *
      * "enc" is the encoder
-     * "auto_free" is if true, takes ownership of the encoder
+     * "autofree" is if true, takes ownership of the encoder
      */
-    void prepend(WvEncoder *enc, bool auto_free);
+    void prepend(WvEncoder *enc, bool autofree);
+
+    /**
+     * Gets the autofree state of a particular encoder in the chain.
+     *
+     * If an encoder is in the chain multiple times, this will return
+     * true if at least one instance is set to autofree.
+     * chain.
+     *
+     * "enc" is the encoder
+     */
+    bool get_autofree(WvEncoder *enc);
+
+    /**
+     * Sets the autofree state of a particular encoder in the chain.
+     *
+     * "enc" is the encoder
+     *
+     * "autofree" is if true, takes ownership of the encoder, by ensuring
+     * only one of the encoders has autofree set.  If it is false, then
+     * all encoders have their autofree cleared.
+     */
+    void set_autofree(WvEncoder *enc, bool autofree);
 
     /**
      * Unlinks the encoder from the chain.
-     * 
-     * Destroys the encoder if it was added with auto_free == true.
-     * 
+     *
+     * Destroys the encoder if it was added with autofree == true.
+     *
      * "enc" is the encoder
      */
     void unlink(WvEncoder *enc);
 
     /**
      * Clears the encoder chain.
-     * 
-     * Destroys any encoders that were added with auto_free == true.
-     * 
+     *
+     * Destroys any encoders that were added with autofree == true.
+     *
      */
     void zap();
 

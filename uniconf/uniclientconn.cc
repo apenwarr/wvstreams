@@ -58,8 +58,8 @@ UniClientConn::~UniClientConn()
 
 bool UniClientConn::pre_select(SelectInfo &si)
 {
-    if (si.wants.readable && msgbuf.used() != 0)
-    	return true;
+//    if (si.wants.readable && msgbuf.used() != 0)
+//    	return true;
     	
     return WvStreamClone::pre_select(si);
 }
