@@ -1,6 +1,6 @@
 /** Tests Ogg Speex encoding and decoding. */
 #include "wvoggspeex.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "wvencoderstream.h"
 #include "wvfile.h"
 #include "wvpcmutils.h"
@@ -14,7 +14,7 @@ size_t copy(WvStream *in, WvStream *out, size_t maxbytes = 0)
     size_t total = 0;
     char buf[10240];
 
-    WvIStreamList slist;
+    WvStreamList slist;
     slist.append(in, false);
     slist.append(out, false);
     while (in->isok() && out->isok())

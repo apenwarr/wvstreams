@@ -8,7 +8,7 @@
 #define __WVMONIKERREGISTRY_H
 
 #include "wvmoniker.h"
-#include "wvscatterhash.h"
+#include "wvhashtable.h"
 
 /**
  * A dictionary for holding moniker-prefix to factory-function mappings.
@@ -27,7 +27,7 @@ class WvMonikerRegistry //: public GenericComponent<IObject>
 	    { func = _func; }
     };
     
-    DeclareWvScatterDict(Registration, WvString, id);
+    DeclareWvDict(Registration, WvString, id);
 
     unsigned refcount;
     

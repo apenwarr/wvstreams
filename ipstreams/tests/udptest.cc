@@ -4,7 +4,7 @@
  *
  * WvUDPStream test.  Waits for data on port 19.
  */
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "wvlog.h"
 #include "wvudp.h"
 
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     wvcon->autoforward(sock);
     sock.autoforward(err);
     
-    WvIStreamList l;
+    WvStreamList l;
     l.add_after(l.tail, wvcon, false);
     l.add_after(l.tail, &sock, false);
     

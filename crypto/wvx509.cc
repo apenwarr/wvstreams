@@ -141,8 +141,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
 
 WvX509Mgr::~WvX509Mgr()
 {
-    if (rsa)
-	delete rsa;
+    delete rsa;
 
     if (cert)
 	X509_free(cert);
@@ -263,7 +262,7 @@ static WvString set_name_entry(X509_NAME *name, WvStringParm dn)
 }
 
 
-void WvX509Mgr::create_selfsigned(bool is_ca)
+void WvX509Mgr::create_selfsigned()
 {
     EVP_PKEY *pk = NULL;
     X509_NAME *name = NULL;
@@ -348,25 +347,20 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
     // Set the RFC2459-mandated keyUsage field to critical, and restrict
     // the usage of this cert to digital signature and key encipherment.
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
-	     "critical, digitalSignature, keyEncipherment, keyCertSign");
+	     "critical,digitalSignature,keyEncipherment,keyCertSign");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     
     // This could cause Netscape to barf because if we set basicConstraints 
     // to critical, we break RFC2459 compliance. Why they chose to enforce 
     // that bit, and not the rest is beyond me... but oh well...
-    if (is_ca)
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
-				 "critical, CA:TRUE");
-    else
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
-				 "CA:FALSE");
-	
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
+			     "CA:FALSE");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
-	     "TLS Web Server Authentication, TLS Web Client Authentication");
+	     "TLS Web Server Authentication,TLS Web Client Authentication");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
@@ -514,119 +508,6 @@ WvString WvX509Mgr::certreq()
 }
 
 
-WvString WvX509Mgr::signcert(WvStringParm pkcs10req)
-{
-    assert(rsa);
-    
-    WvString pkcs10(pkcs10req);
-    
-    char *begin = strstr(pkcs10.edit(), "\nMII") + 1;
-    if (!begin)
-    {
-	debug("This doesn't look like PEM Encoded information...\n");
-	return WvString::null;
-    }
-    char *end = strstr(begin, "=\n---") + 1 ;
-    if (!end)
-    {
-	debug("Is this a complete certificate request?\n");
-	return WvString::null;
-    }
-    *end = '\0';
-    WvString body(begin); // just the PKCS#10 request, 
-                          // without the ---BEGIN and ---END
-    
-    WvDynBuf reqbuf;
-    WvBase64Decoder dec;
-    dec.flushstrbuf(body, reqbuf, true);
-    
-    // FIXME: Duplicates code from cert_selfsign
-    size_t reqlen = reqbuf.used();
-    const unsigned char *req = reqbuf.get(reqlen);
-    X509_REQ *certreq = wv_d2i_X509_REQ(NULL, &req, reqlen);
-    if (certreq)
-    {
-	X509 *newcert = X509_new();
-
-	// Set the subject name of the new certificate to be 
-	// exactly the subject name of the request.
-	X509_set_subject_name(newcert, X509_REQ_get_subject_name(certreq));
-
-	// Completely broken in my mind - this sets the version
-	// string to '3'  (I guess version starts at 0)
-	X509_set_version(newcert, 0x2);
-	
-	// Set the Serial Number for the certificate
-	srand(time(NULL));
-	int serial = rand();
-	ASN1_INTEGER_set(X509_get_serialNumber(newcert), serial);
-	
-	// Set the NotBefore time to now.
-	X509_gmtime_adj(X509_get_notBefore(newcert), 0);
-	
-	// Now + 10 years... should be shorter, but since we don't currently
-	// have a set of routines to refresh the certificates, make it
-	// REALLY long.
-	X509_gmtime_adj(X509_get_notAfter(newcert), (long)60*60*24*3650);
-
-	// The public key of the new cert should be the same as that from 
-	// the request.
-	EVP_PKEY *pk = X509_REQ_get_pubkey(certreq);
-	X509_set_pubkey(newcert, pk);
-	EVP_PKEY_free(pk);
-	
-	// The Issuer name is the subject name of the current cert
-	X509_set_issuer_name(newcert, X509_get_subject_name(cert));
-	
-	X509_EXTENSION *ex = NULL;
-	// Set the RFC2459-mandated keyUsage field to critical, and restrict
-	// the usage of this cert to digital signature and key encipherment.
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
-				 "critical, digitalSignature, keyEncipherment");
-	X509_add_ext(newcert, ex, -1);
-	X509_EXTENSION_free(ex);
-    
-	// This could cause Netscape to barf because if we set basicConstraints 
-	// to critical, we break RFC2459 compliance. Why they chose to enforce 
-	// that bit, and not the rest is beyond me... but oh well...
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
-				 "CA:FALSE");
-	
-	X509_add_ext(newcert, ex, -1);
-	X509_EXTENSION_free(ex);
-
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
-				 "critical, TLS Web Client Authentication");
-	X509_add_ext(newcert, ex, -1);
-	X509_EXTENSION_free(ex);
-
-	// Ok, now sign the new cert with the current RSA key
-	EVP_PKEY *certkey = EVP_PKEY_new();
-	bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);
-	if (newcert && cakeyok)
-	    X509_sign(newcert, certkey, EVP_sha1());
-	else
-	{
-	    debug("No keys??\n");
-	    return WvString::null;
-	}
-	
-	EVP_PKEY_free(certkey);
-	
-        // Note - takes ownership of newcert, and will delete it for us.
-	WvX509Mgr nmgr(newcert);
-	
-	X509_REQ_free(certreq);
-	return WvString(nmgr.encode(CertPEM));
-    }
-    else
-    {
-	debug("Can't decode Certificate Request\n");
-	return WvString::null;
-    }
-}
-
-
 bool WvX509Mgr::test()
 {
     bool bad = false;
@@ -735,22 +616,21 @@ WvString WvX509Mgr::hexify()
 }
 
 
-bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
+bool WvX509Mgr::validate()
 {
-    bool retval = true;
-    
     if (cert != NULL)
     {
+	debug("Peer Certificate:\n");
+	debug("Issuer: %s\n",
+	      X509_NAME_oneline(X509_get_issuer_name(cert),0,0));
+
 	// Check and make sure that the certificate is still valid
 	if (X509_cmp_current_time(X509_get_notAfter(cert)) == -1)
 	{
-	    seterr("Certificate has expired!");
-	    retval = false;
+	    seterr("Peer certificate has expired!");
+	    return false;
 	}
 	
-	if (cacert)
-	    retval &= signedbyCA(cacert);
-
 	// Kind of a placeholder thing right now...
 	// Later on, do CRL, and certificate validity checks here..
         // Actually, break these out in signedbyvalidCA(), and isinCRL()
@@ -760,7 +640,7 @@ bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
     else
 	debug("Peer doesn't have a certificate.\n");
     
-    return retval;
+    return true;
 }
 
 
@@ -810,16 +690,6 @@ bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
 	    return false;
     }    
     return true;
-}
-
-
-bool WvX509Mgr::signedbyCA(WvX509Mgr *cacert)
-{
-    int ret = X509_check_issued(cacert->cert, cert);
-    if (ret == X509_V_OK)
-	return true;
-    else
-	return false;
 }
 
 
@@ -1107,16 +977,6 @@ WvString WvX509Mgr::get_subject()
 	WvString retval(name);
 	OPENSSL_free(name);
 	return retval;
-    }
-    else
-	return WvString::null;
-}
-
-WvString WvX509Mgr::get_serial()
-{
-    if (cert)
-    {
-	return WvString(ASN1_INTEGER_get(X509_get_serialNumber(cert)));
     }
     else
 	return WvString::null;

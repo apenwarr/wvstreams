@@ -635,9 +635,9 @@ public:
 
     /**
      * Destroys the buffer.
-     *
+     * 
      * Frees the underlying array if autofree().
-     *
+     * 
      */
     virtual ~WvInPlaceBufBase() { }
 
@@ -666,27 +666,27 @@ public:
      *
      * Returns: the autofree flag
      */
-    bool get_autofree() const
+    bool autofree() const
     {
-        return mystore.get_autofree();
+        return mystore.autofree();
     }
 
     /**
-     * Sets or clears the autofree flag.
+     * Sets or clears the auto_free flag.
      *
      * "_autofree" is if true, the array will be freed when discarded
      */
-    void set_autofree(bool _autofree)
+    void setautofree(bool _autofree)
     {
-        mystore.set_autofree(_autofree);
+        mystore.setautofree(_autofree);
     }
 
     /**
      * Resets the underlying buffer pointer and properties.
-     *
+     * 
      * If the old and new buffer pointers differ and the old buffer
-     * was specified as autofree, the old buffer is destroyed.
-     *
+     * was specified as auto_free, the old buffer is destroyed.
+     * 
      * "_data" is the array of data to wrap
      * "_avail" is the amount of data available for reading
      * "_size" is the size of the array
@@ -877,29 +877,29 @@ public:
      *
      * Returns: the autofree flag
      */
-    bool get_autofree() const
+    bool autofree() const
     {
-        return mystore.get_autofree();
+        return mystore.autofree();
     }
 
     /**
-     * Sets or clears the autofree flag.
+     * Sets or clears the auto_free flag.
      *
      * "_autofree" is if true, the array will be freed when discarded
      */
-    void set_autofree(bool _autofree)
+    void setautofree(bool _autofree)
     {
-        mystore.set_autofree(_autofree);
+        mystore.setautofree(_autofree);
     }
 
     /**
      * Resets the underlying buffer pointer and properties.
-     *
+     * 
      * If the old and new buffer pointers differ and the old buffer
-     * was specified as autofree, the old buffer is destroyed.
-     *
+     * was specified as auto_free, the old buffer is destroyed.
+     * 
      * "_data" is the array of data to wrap
-     * "_avail" is the amount of data available for reading
+     * "_avail" is the amount of data available for reading 
      *               at the beginning of the buffer
      * "_size" is the size of the array
      * "_autofree" is if true, the array will be freed when discarded

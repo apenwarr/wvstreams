@@ -3,6 +3,7 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  */
+
 #ifndef __UNISECUREGEN_H
 #define __UNISECUREGEN_H
 
@@ -15,7 +16,7 @@
  * UniSecureGen wraps a given generator and checks permissions (using a
  * Unix-style scheme) before responding to requests.  The permissions for
  * generator gen are stored in a parallel tree, perms.
- * 
+ *
  * It is up to the caller to ensure that the UniPermGen is itself secure.
  * (The easiest way is probably to back it with an ini file in a secure
  * directory.)  Note that there is a race condition here: there is no locking
@@ -23,11 +24,9 @@
  * up.  This could come into play, for instance, if the exec permission is
  * removed from a subtree while the UniSecureGen is in the middle of
  * drilldown().
- * 
- * UniSecureGen can be created with a moniker, but only if the particular
- * implementation of file permissions you want is UniPermGen. Otherwise,
- * create a different kind of UniPermGen yourself, pass it to the
- * constructor of this class, and mount it in your UniConf by hand.
+ *
+ * UniSecureGen cannot be created with a moniker due to its extra methods.
+ * Instead, just create one with new and mount it with UniConf::mountgen.
  */
 class UniSecureGen : public UniFilterGen
 {
@@ -35,8 +34,8 @@ class UniSecureGen : public UniFilterGen
     UniPermGen::Credentials cred;
 
 public:
-    UniSecureGen(IUniConfGen *_gen, UniPermGen *_perms);
-    UniSecureGen(WvStringParm moniker, UniPermGen *_perms = NULL);
+    UniSecureGen(UniConfGen *_gen, UniPermGen *_perms);
+    UniSecureGen(WvStringParm moniker, UniPermGen *_perms);
 
     void setcredentials(const UniPermGen::Credentials &_cred);
     void setcredentials(WvStringParm user, const WvStringList &groups);
@@ -47,9 +46,6 @@ public:
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
-    virtual Iter *recursiveiterator(const UniConfKey &key);
-    virtual bool refresh();
-    virtual void commit();
 
 private:
 

@@ -47,7 +47,6 @@ int main()
     c.alarm(1*1000);
     
     // create a list of them (in fact, we could use a WvStreamList here...)
-    // -- but we want to get rid of WvStreamLists and move over to WvIStreamList
     WvIStreamList l;
     WvIStreamList::globallist.append(&a, false);
     l.append(&b, false);

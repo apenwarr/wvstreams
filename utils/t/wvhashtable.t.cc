@@ -116,9 +116,8 @@ WVTEST_MAIN("stresshash")
     WVPASS(slow_iter_passed);
 }
 
-// some things are commented out here because I believe the memory
-// addresses are not absolute.. I'll admit I can be wrong, so modify
-// if you wish
+// some things are commented out here because I believe the memory addresses are
+// not absolute.. I'll admit I can be wrong, so modify if you wish
 WVTEST_MAIN("hashtest.cc")
 {
     WvString x("foo"), y("blue"), z("true");
@@ -261,38 +260,5 @@ WVTEST_MAIN("WvMap auto_free and sorting")
     for (j.rewind(); j.next(); i++)
 	WVPASS(strlen(j->key) == 3 || strlen(j->key) == 4);
     WVPASS(i == 4);
-}
-
-WVTEST_MAIN("WvMap zapping")
-{
-    WvMap<WvString, WvString> zapmap(5);
-    zapmap.add("Febtober", "Months that start with 'Feb'");
-    zapmap.add("Febturday", "Months that start with 'Feb'");
-
-    WVPASS(zapmap.exists("Febtober"));
-    zapmap.zap();
-    WVFAIL(zapmap.exists("Febtober"));
-
-    WvMap<WvString, WvString*> ptrmap(5);
-
-    ptrmap.set("Smarch", new WvString("Mapril"), true);
-    WVPASS(ptrmap.exists("Smarch"));
-    ptrmap.zap();
-    WVFAIL(ptrmap.exists("Smarch"));
-}
-
-WVTEST_MAIN("WvMap removing")
-{
-    WvMap<WvString, WvString> remmap(5);
-    remmap.add("ruff", "This is the sound a dog makes");
-    WVPASS(remmap.exists("ruff"));
-    remmap.remove("ruff");
-    WVFAIL(remmap.exists("ruff"));
-
-    WvMap<WvString, WvString*> remmap2(5);
-    remmap2.add("moo", new WvString("This is the sound a dog makes"), true);
-    WVPASS(remmap2.exists("moo"));
-    remmap2.remove("moo");
-    WVFAIL(remmap2.exists("moo"));
 }
 

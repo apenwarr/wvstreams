@@ -3,6 +3,7 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  */
+
 #ifndef __UNIPERMGEN_H
 #define __UNIPERMGEN_H
 
@@ -20,13 +21,16 @@
  * and key/user-read through key/world-write.  owner and group store arbitrary
  * text strings, and the remainder are boolean values.
  *
- * If you want to use monikers, UniPermGen can only be via UniSecureGen (see
- * unisecuregen.h) since it provides its own API beyond just UniConfGen.
+ * UniPermGen cannot be created with a moniker due to all the extra methods.
+ * Instead, just create one with new and mount it with UniConf::mountgen.  (Of
+ * course, in most cases it will be passed to a UniSecureGen's constructor
+ * anyway.)
  */
 class UniPermGen : public UniFilterGen
 {
+
 public:
-    UniPermGen(IUniConfGen *_gen);
+    UniPermGen(UniConfGen *_gen);
     UniPermGen(WvStringParm moniker);
 
     enum Level { USER = 0, GROUP, WORLD };
@@ -83,6 +87,7 @@ public:
     void chmod(const UniConfKey &path, unsigned int mode);
 
 private:
+
     bool getoneperm(const UniConfKey &path, Level level, Type type); 
 };
 

@@ -7,7 +7,7 @@
 
 #include "wvbackslash.h"
 #include "wvstream.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "wvencoderstream.h"
 #include <assert.h>
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     stream->auto_flush(false);
     stream->writechain.append(enc, true);
 
-    WvIStreamList *slist = new WvIStreamList();
+    WvStreamList *slist = new WvStreamList();
     slist->append(stream, false);
     slist->append(wvin, false);
     wvin->autoforward(*stream);

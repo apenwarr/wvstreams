@@ -5,7 +5,7 @@
  * WvStream-based TCP connection class.
  */
 #include "wvtcp.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "wvmoniker.h"
 
 #include <fcntl.h>
@@ -378,7 +378,7 @@ WvTCPConn *WvTCPListener::accept()
 }
 
 
-void WvTCPListener::auto_accept(WvIStreamList *list,
+void WvTCPListener::auto_accept(WvStreamList *list,
 				WvStreamCallback callfunc, void *userdata)
 {
     auto_list = list;
@@ -387,24 +387,8 @@ void WvTCPListener::auto_accept(WvIStreamList *list,
     setcallback(accept_callback, this);
 }
 
-void WvTCPListener::auto_accept(WvStreamCallback callfunc, void *userdata)
-{
-    auto_callback = callfunc;
-    auto_userdata = userdata;
-    setcallback(accept_global_callback, this);
-}
 
-
-void WvTCPListener::accept_global_callback(WvStream &s, void *userdata)
-{
-    WvTCPListener &l = *(WvTCPListener *)userdata; 
-    WvTCPConn *connection = l.accept();
-    connection->setcallback(l.auto_callback, l.auto_userdata);
-    WvIStreamList::globallist.append(connection, true);
-}
-
-
-void WvTCPListener::accept_callback(WvStream &s, void *userdata)
+void WvTCPListener::accept_callback(WvStream &, void *userdata)
 {
     WvTCPListener &l = *(WvTCPListener *)userdata;
 

@@ -54,7 +54,7 @@ WVTEST_MAIN("daemon surprise close")
     WvIPPortAddr addr("0.0.0.0:4113");
     
     UniConfRoot cfg("temp:");
-    UniConfDaemon daemon(cfg, false, NULL);
+    UniConfDaemon daemon(cfg, false);
     
     WVPASS(daemon.isok());
     daemon.setuptcpsocket(addr);

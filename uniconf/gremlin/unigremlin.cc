@@ -4,50 +4,43 @@
 #include <ctype.h>
 #include "unigremlin.h"
 
+#define MAX_DEPTH       5
+#define TYPE_STRING     0
+#define TYPE_IP         1
+#define TYPE_IP_NETWORK 2
+#define TYPE_HOSTNAME   3
+#define TYPE_BOOL       4
+#define TYPE_INT        5
+#define TYPE_FLOAT      6
+#define NUM_TYPES       7
 
-UniConfGremlin::UniConfGremlin(WvString moniker, const UniConfKey _key)
-    : root(moniker), victims(500), num_victims(0)
-{
-    cfg = UniConf(root[_key]);
-    for (int i = 0; i < NUM_TYPES; i++)
-        harvested[i] = new HarvestedDict(500);
-}
+VictimDict UniConfGremlin::victims(500);
 
-UniConfGremlin::~UniConfGremlin()
+UniConfGremlin::UniConfGremlin(WvString moniker, const UniConfKey _key,
+        int _max_runlevel)
+    : cfg(moniker), key(_key), max_runlevel(_max_runlevel)
 {
-    for (int i = 0; i < NUM_TYPES; i++)
-        delete harvested[i];
+    runlevel = 1;
+    num_victims = 0;
+    if (max_runlevel > 5 || max_runlevel < 1)
+        max_runlevel = 4;
 }
 
 /* start(unsigned int seed)
  * Starts the gremlin out using the specified seed to seed the random numbers,
  * or if no seed is specified, uses the current time to seed them.
  */
-void UniConfGremlin::start(unsigned int seed, int _flags, int _ratio_create,
-        int _ratio_valid, int _ratio_correct)
+void UniConfGremlin::start(unsigned int seed)
 {
-    ratio_create = _ratio_create;
-    ratio_valid = _ratio_valid;
-    ratio_correct = _ratio_correct;
-
-    //harvest out bit flags
-    if (_flags & Create)
-    {
-        modify_valid = _flags & Valid;
-        modify_invalid = _flags & Invalid;
-    }
-    add_values = _flags & Create;
-    delete_values = _flags & Delete;
-    
     if (seed == 0)
         seed = time(0);
     
     srand(seed);
-    printf("Using seed %i\n", seed); //perhaps save this to a file?
-//    printf("Finding Victims\n");
-    find_victims();
-//    printf("Starting Trouble\n");
-    start_trouble(1000);
+    printf("Using seed %i\n", seed);
+    find_victims(key);
+    for (runlevel = 1; runlevel <= max_runlevel; runlevel ++)
+        start_trouble(runlevel);
+    runlevel = max_runlevel;
 }
 
 /* find_victims(UniConfKey _key)
@@ -55,17 +48,19 @@ void UniConfGremlin::start(unsigned int seed, int _flags, int _ratio_create,
  * victims with the element's key and a guess at what type of data should be
  * stored there.
  */
-void UniConfGremlin::find_victims()
+void UniConfGremlin::find_victims(UniConfKey _key)
 {
-    UniConf::RecursiveIter i(cfg);
+    UniConf::Iter i(cfg[_key]);
     Victim *victim;
     for (i.rewind(); i.next(); )
     {   
-        if (i().getme() != "")
+        if (i().getme() == "")
+            find_victims(i().fullkey());
+        else
         {
-            victim = new Victim(num_victims++, inspect(i().getme()), 
-                    i().fullkey(cfg.fullkey()));
+            victim = new Victim(num_victims, inspect(i().getme()), i().fullkey());
             victims.add(victim, true);
+            num_victims ++;
         }
     }
 }
@@ -73,20 +68,15 @@ void UniConfGremlin::find_victims()
 /* inspect(WvString element)
  * Inspects the string element in an attempt to guess what type of data should
  * be stored there.  Returns an integer representing what type the gremlin
- * thinks it is, and stores the value as an example of that type.
+ * thinks it is.
  */
 int UniConfGremlin::inspect(WvString element)
 {
     char *elem = element.edit();
-    Harvested * harvest;
     // rough expression for an ip network
     char *ipNetExp = "[0-9].*\\.[0-9].*\\.[0-9].*\\.[0-9].*";
     if (is_bool(elem))
-    {
-        harvest = new Harvested(num_harvested[TYPE_BOOL]++, element);
-        harvested[TYPE_BOOL]->add(harvest, true);
         return TYPE_BOOL;
-    }
     
     if (isdigit(elem[0]))
     {
@@ -98,29 +88,17 @@ int UniConfGremlin::inspect(WvString element)
         {
             if (elem[element.len() - 2] == '/' || 
                 elem[element.len() - 3] == '/')
-            {
-                harvest = new Harvested(num_harvested[TYPE_IP_NETWORK]++, element);
-                harvested[TYPE_IP_NETWORK]->add(harvest, true);
                 return TYPE_IP_NETWORK;
-            }
             else
-            {
-                harvest = new Harvested(num_harvested[TYPE_IP]++, element);
-                harvested[TYPE_IP]->add(harvest, true);
                 return TYPE_IP;
-            }
         }
     }
     // now we just brute force the rest of the string
     for (size_t i = 1; i < element.len(); i++)
     {
         if (!isdigit(elem[i]))
-        // either string or hostvalue, return string for now
-        {
-            harvest = new Harvested(num_harvested[TYPE_STRING]++, element);
-            harvested[TYPE_STRING]->add(harvest, true);
+        // either string or hostname, return string for now
             return TYPE_STRING;
-        }
     }
     // either int or float, return int for now
     return TYPE_INT;
@@ -150,51 +128,48 @@ bool UniConfGremlin::is_bool(char *elem)
  */
 void UniConfGremlin::change_value(bool use_valid_data)
 {
-    if (num_victims > 0)
+    int r = num_victims + 1;
+    while (r >= num_victims)
     {
-        int r = num_victims + 1;
-        while (r >= num_victims)
+        r = (int)(((double)rand() / (double)RAND_MAX) * (num_victims));
+    }
+    last_change = WvString("Changed %s to be the value", victims[r]->name);
+    WvString new_value;
+    if (use_valid_data)
+    {
+        if (victims[r]->type == TYPE_INT)
         {
-            r = randInt(num_victims);
+            int new_value = rand();
+            cfg[victims[r]->name].setmeint(new_value);
+            last_change = WvString("%s %s\n", last_change, new_value);
         }
-        if (victims[r]->value == "")
-            printf("Fuck, why are we changing the empty value?\n");
-        last_change = WvString("Changed %s to be the value", victims[r]->value);
-        WvString new_value;
-        if (use_valid_data)
+        else 
         {
-            if (victims[r]->type == TYPE_INT)
-            {
-                int new_value = rand();
-                cfg.xsetint(victims[r]->value, new_value);
-                last_change = WvString("%s %s\n", last_change, new_value);
-            }
-            else 
-            {
-                WvString new_value = rand_str(victims[r]->type);
-                cfg.xset(victims[r]->value, new_value);
-                last_change = WvString("%s %s\n", last_change, new_value);
-            }
+            WvString new_value = rand_str(victims[r]->type);
+            cfg[victims[r]->name].setme(new_value);
+            last_change = WvString("%s %s\n", last_change, new_value);
+        }
+    }
+    else
+    {
+        int s = (int)(((double)rand() / (double)RAND_MAX) * 2);
+        if (s)
+        {
+            int new_value = rand();
+            cfg[victims[r]->name].setmeint(rand());
+            last_change = WvString("%s %s\n", last_change, new_value);
         }
         else
         {
-            int s = randInt(4);
-            if (s)
-            {
-                WvString new_value = rand_str(victims[r]->type);
-                int t = randInt(NUM_TYPES);
-                cfg.xset(victims[r]->value, rand_str(t));
-                last_change = WvString("%s %s\n", last_change, new_value);
-            }
-            else
-            {
-                int new_value = rand();
-                cfg.xsetint(victims[r]->value, new_value);
-                last_change = WvString("%s %s\n", last_change, new_value);
-            }
+            WvString new_value = rand_str(victims[r]->type);
+            int t = (int)(((double)rand() / (double)RAND_MAX) * NUM_TYPES);
+            cfg[victims[r]->name].setme(rand_str(t));
+            last_change = WvString("%s %s\n", last_change, new_value);
         }
-        cfg[victims[r]->value].commit();
+            
     }
+    cfg[victims[r]->name].commit();
+            
 }
 
 /* add_value()
@@ -203,82 +178,87 @@ void UniConfGremlin::change_value(bool use_valid_data)
  */
 void UniConfGremlin::add_value()
 {
-    int depth = randInt(MAX_DEPTH);
-    WvString key_value = "", elem;
+    int depth = (int)(((double)rand() / (double)RAND_MAX) * MAX_DEPTH);
+    WvString key_name = "", elem;
     
-    // generate a key
-    for (int i = 0; i < depth || !key_value; i++)
+    // generate a key name 32 characters or less
+    for (int i = 0; i < depth; i++)
     {
         elem = "";
-        int length = randInt(8);
+        int length = (int)(((double)rand() / (double)RAND_MAX) * 8);
         for (int j = 0; j < length; j++)
         {
             // generate a valid written character (lower case right now)
-            int num = randInt(122, 97);
+            int num = (int)((((double)rand() / (double)RAND_MAX) * 25)
+                     + 97);
             char c[2];
             c[0] = (char)num;
             c[1] = '\0';
             elem = WvString("%s%s", elem, c);
         }
         if (i > 0)
-            key_value = WvString("%s/%s", key_value, elem);
+            key_name = WvString("%s/%s", key_name, elem);
+        else
+            key_name = elem;
     }
-    key_value = WvString("/%s", key_value);
-    last_change = WvString("Added the key %s with the new value", key_value);
-
+    key_name = WvString("%s/%s", key, key_name);
     
+    last_change = WvString("Added the key %s with the new value", key_name);
     // generate a value
-    int num = randInt(1);
+    int num = (int)((double)rand() / (double)RAND_MAX);
     Victim *victim;
     if (num)
     // generate number
     {
         int new_value = rand();
-        cfg.xsetint(key_value, new_value);
-        victim = new Victim(num_victims, TYPE_INT, key_value);
+        cfg[key_name].setmeint(new_value);
+        victim = new Victim(num_victims, TYPE_INT, key_name);
         last_change = WvString("%s %s\n", last_change, new_value);
     }
     else
     // generate string
     {
-        int type = randInt(5 + TYPE_STRING, TYPE_STRING);
+        int type = (int)(((double)rand() / (double)RAND_MAX) * 5 
+                   + TYPE_STRING);
         WvString new_value = rand_str(type);
-        cfg.xset(key_value, new_value);
-        victim = new Victim(num_victims, TYPE_STRING, key_value);
+        cfg[key_name].setme(new_value);
+        victim = new Victim(num_victims, TYPE_STRING, key_name);
         last_change = WvString("%s %s\n", last_change, new_value);
     }
     victims.add(victim, true);
     num_victims ++;
-    cfg.commit();
+    cfg[key_name].commit();
 }
 
-/* start_trouble()
- * Performs howmany actions, range of action controlled by initial bitflags.
+/* start_trouble(int curr_runlevel)
+ * This is where it makes the calls for 1000 actions on the specified runlevel
+ * and calls the appropriate method.
  */
-void UniConfGremlin::start_trouble(int howmany)
+void UniConfGremlin::start_trouble(int curr_runlevel)
 {
-    int r = randInt(5);
-    for (int i = 0; i < howmany; i ++)
+    printf("%s\n", UniConfGremlin::curr_runlevel().cstr());
+    int r = curr_runlevel;
+    for (int i = 0; i < 1000; i ++)
     {
-        r = randInt(5);
+        if (curr_runlevel == 5)
+            r = (int)(((double)rand() / (double)RAND_MAX) * 5);
         
         if (r < 1)
             spin_commit(500);
-        else if (r == 1 && modify_valid)
+        else if (r == 1)
             change_value(true);
-        else if (r == 2 && modify_invalid)
+        else if (r == 2)
             change_value(false);
-        else if (r == 3 && add_values)
+        else if (r == 3)
             add_value();
-        else if (r >= 4  && num_victims > 0 && delete_values)
+        else if (r >= 4)
         // randomly delete value, but always remember as a victim for fun
         {
-            r = randInt(num_victims);
-            cfg[victims[r]->value].remove();
-            cfg[victims[r]->value].commit();
-            last_change = WvString("Deleted the key %s\n", victims[r]->value);
+            int r = (int)(((double)rand() / (double)RAND_MAX) * (num_victims));
+            cfg[victims[r]->name].remove();
+            cfg[victims[r]->name].commit();
+            last_change = WvString("Deleted the key %s\n", victims[r]->name);
         }
-        //printf("%s", status().cstr());
     }
 }
 
@@ -295,20 +275,20 @@ void UniConfGremlin::spin_commit(int n)
 
 /* rand_str(int type)
  * Returns a random string of the specified format(by type)
- * - not great random numbers since there's a very low probability of
- *   getting rand() = RAND_MAX but it will happen from time to time.  
- *   had to increase the range to 1 above the max range I wanted, 
- *   just since when casting back to int it chops off the fractional part
+ * - not great random numbers, had to increase the range to 1 above the max 
+ *  range I wanted, just since when casting back to int it chops off the 
+ *  fractional part, and there is very low probability of getting 
+ *  rand() = RAND_MAX but it will happen from time to time.
  */
 WvString UniConfGremlin::rand_str(int type)
 {
     if (type == TYPE_STRING || type == TYPE_HOSTNAME)
     {
-        int a = randInt(50);
+        int a = (int)(((double)rand() / (double)RAND_MAX) * 200);
         WvString result = "";
         for (int i = 0; i < a; i++)
         {
-            int b = randInt(124, 97); 
+            int b = (int)((((double)rand() / (double)RAND_MAX) * 26) + 97); 
             char c[2];
             c[0] = (char)b;
             c[1] = '\0';
@@ -322,18 +302,18 @@ WvString UniConfGremlin::rand_str(int type)
             "true", "yes", "on", "enabled", "1",
             "false", "no", "off", "disabled", "0"
         };
-        int a = randInt(10);
+        int a = (int)(((double)rand() / (double)RAND_MAX) * 10);
         return WvString("%s", strs[a]);
     }
     else if (type == TYPE_IP || type == TYPE_IP_NETWORK)
     {
-        int a = randInt(256),
-            b = randInt(256), 
-            c = randInt(256),
-            d = randInt(256);
+        int a = (int)(((double)rand() / (double)RAND_MAX) * 256), 
+            b = (int)(((double)rand() / (double)RAND_MAX) * 256), 
+            c = (int)(((double)rand() / (double)RAND_MAX) * 256),
+            d = (int)(((double)rand() / (double)RAND_MAX) * 256);
         if (type == TYPE_IP_NETWORK)
         {
-            int e = randInt(33);
+            int e = (int)(((double)rand() / (double)RAND_MAX) * 33);
             return WvString("%s.%s.%s.%s/%s", a, b, c, d, e);
         }
         else
@@ -347,10 +327,10 @@ WvString UniConfGremlin::rand_str(int type)
         return "";
 }
 
-/* type_value(int type)
+/* type_name(int type)
  * Returns a string representation of the type passed to it.
  */
-WvString UniConfGremlin::type_value(int type)
+WvString UniConfGremlin::type_name(int type)
 {
     if (type == TYPE_STRING)
         return "String";
@@ -359,7 +339,7 @@ WvString UniConfGremlin::type_value(int type)
     else if (type == TYPE_IP_NETWORK)
         return "IP Network";
     else if (type == TYPE_HOSTNAME)
-        return "Hostvalue";
+        return "Hostname";
     else if (type == TYPE_BOOL)
         return "Boolean";
     else if (type == TYPE_INT)
@@ -370,18 +350,10 @@ WvString UniConfGremlin::type_value(int type)
         return "Unknown";
 }
 
-/* randInt(int max, int min)
- * generate a random integer between max and min
- */
-int UniConfGremlin::randInt(int max, int min = 0)
-{
-    return (int)(((double)rand() / (double)RAND_MAX) * (max - min)) + min;
-}
-
 /* curr_runlevel()
  * Returns a string describing the current runlevel.
  */
-/*WvString UniConfGremlin::curr_runlevel()
+WvString UniConfGremlin::curr_runlevel()
 {
     if (runlevel == 1)
         return "1 - Change keys with valid data.";
@@ -395,14 +367,15 @@ int UniConfGremlin::randInt(int max, int min = 0)
         return "5 - Add/Remove keys, change keys with valid/invalid data.";
     else
         return WvString("Apparently I'm on runlevel %s", runlevel);
-}*/
+}
 
 /* status()
- * Displays the most recent action.
+ * Displays the most recent runlevel and action.
  */
 WvString UniConfGremlin::status()
 {
-    return WvString("Last Action was : %s", last_change);
+    return WvString("Last Runlevel was : %s\nLast Action was : %s", 
+            curr_runlevel(), last_change);
 }
 
 /* test()
@@ -422,13 +395,13 @@ void UniConfGremlin::test()
     int count = 0;
     for (int i = 0; i < 5; i ++)
     {
-        printf("Adding 5 random strings of type %s\n", type_value(i).cstr());
+        printf("Adding 5 random strings of type %s\n", type_name(i).cstr());
         for (int j = 0; j < 5; j ++)
         {
             WvString rand = rand_str(i);
             printf("Adding %s\n", rand.cstr());
-            cfg.xset(count, rand);
-            cfg.commit();
+            cfg[count].setme(rand);
+            cfg[count].commit();
             count ++;
         }
     }
@@ -437,19 +410,19 @@ void UniConfGremlin::test()
     {
         int randint = rand();
         printf("Adding %i\n", randint);
-        cfg.xsetint(count, randint);
-        cfg.commit();
+        cfg[count].setmeint(randint);
+        cfg[count].commit();
         count ++;
     }
     printf("Testing Find Victims\n");
-    find_victims();
+    find_victims(key);
     for (int i = 0; i < num_victims; i ++)
     {
-       printf("%s:", victims[i]->value.cstr());
-       printf("%s:", type_value(victims[i]->type).cstr());
-       printf("%s\n", cfg[victims[i]->value].getme().cstr());
+       printf("%s:", victims[i]->name.cstr());
+       printf("%s:", type_name(victims[i]->type).cstr());
+       printf("%s\n", cfg[victims[i]->name].getme().cstr());
     }
     
     printf("Testing Start Trouble\n");
-    start_trouble(1000);
+    start_trouble(1);
 }

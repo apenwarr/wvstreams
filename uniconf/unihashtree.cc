@@ -157,27 +157,32 @@ bool UniHashTreeBase::_recursivecompare(
     // have their comparator function get called for *all* keys, because
     // it has side effects.  Gross, but whatever.  If that's the case, then
     // short-circuiting here is a bad idea.
-    if (!comparator(a, b, userdata))
+    if (! comparator(a, b, userdata))
         equal = false;
 
     // begin iteration sequence
-    Container::Sorter *ait = NULL, *bit = NULL;
+    Container::Sorter ait(*const_cast<Container*>(a->xchildren),
+			  keysorter);
     if (a != NULL)
     {
-	ait = new Container::Sorter(*const_cast<Container*>(a->xchildren),
-				    keysorter);
-        ait->rewind();
-        a = ait->next() ? ait->ptr() : NULL;
+        ait.rewind();
+        if (ait.next())
+            a = ait.ptr();
+        else
+            a = NULL;
     }
+    Container::Sorter bit(*const_cast<Container*>(b->xchildren),
+			  keysorter);
     if (b != NULL)
     {
-	bit = new Container::Sorter(*const_cast<Container*>(b->xchildren),
-				    keysorter);
-        bit->rewind();
-        b = bit->next() ? bit->ptr() : NULL;
+        bit.rewind();
+        if (bit.next())
+            b = bit.ptr();
+        else
+            b = NULL;
     }
 
-    // compare each key
+    // loop
     while (a != NULL && b != NULL)
     {
         int order = a->key().compareto(b->key());
@@ -185,39 +190,35 @@ bool UniHashTreeBase::_recursivecompare(
         {
 	    equal = false;
 	    _recursivecompare(a, NULL, comparator, userdata);
-            a = ait->next() ? ait->ptr() : NULL;
+            a = ait.next() ? ait.ptr() : NULL;
         }
-        else if (order > 0)
+        else if (order == 0)
+        {
+            // keys are equal
+	    if (!_recursivecompare(a, b, comparator, userdata))
+		equal = false;
+            a = ait.next() ? ait.ptr() : NULL;
+            b = bit.next() ? bit.ptr() : NULL;
+        }
+        else
         {
 	    equal = false;
             _recursivecompare(NULL, b, comparator, userdata);
-            b = bit->next() ? bit->ptr() : NULL;
-        }
-        else // keys are equal 
-        {
-	    if (!_recursivecompare(a, b, comparator, userdata))
-		equal = false;
-            a = ait->next() ? ait->ptr() : NULL;
-            b = bit->next() ? bit->ptr() : NULL;
+            b = bit.next() ? bit.ptr() : NULL;
         }
     }
-    
-    // finish up if one side is bigger than the other
     while (a != NULL)
     {
 	equal = false;
         _recursivecompare(a, NULL, comparator, userdata);
-        a = ait->next() ? ait->ptr() : NULL;
+        a = ait.next() ? ait.ptr() : NULL;
     }
     while (b != NULL)
     {
 	equal = false;
         _recursivecompare(NULL, b, comparator, userdata);
-        b = bit->next() ? bit->ptr() : NULL;
+        b = bit.next() ? bit.ptr() : NULL;
     }
-    
-    delete ait;
-    delete bit;
     
     return equal;
 }

@@ -3,13 +3,13 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */
 #include "wvunixsocket.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "wvlog.h"
 
 static void stream_bounce_to_list(WvStream &s, void *userdata)
 {
-    WvIStreamList &l = *(WvIStreamList *)userdata;
-    WvIStreamList::Iter out(l);
+    WvStreamList &l = *(WvStreamList *)userdata;
+    WvStreamList::Iter out(l);
     char *line;
 
     while ((line = s.getline(0)) != NULL)
@@ -22,9 +22,9 @@ static void stream_bounce_to_list(WvStream &s, void *userdata)
 	
 	for (out.rewind(); out.next(); )
 	{
-	    if (&out() != &s && out->iswritable())
+	    if (&out() != &s && out().select(0, false, true))
 	    {
-		static_cast<WvStream*>(&out())->print("%s> %s\n", 
+		out().print("%s> %s\n", 
 			    s.src() ? (WvString)*s.src() : WvString("stdin"),
 			    line);
 		if (s.src())
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 {
     {
 	WvLog log("testlisten"), err = log.split(WvLog::Error);
-	WvIStreamList l;
+	WvStreamList l;
 
 	WvUnixListener sock(argc==2 ? argv[1] : "/tmp/fuzzy",
 			    0777);

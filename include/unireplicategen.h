@@ -12,24 +12,52 @@
 
 /**
  * A UniConf generator that replicates generators between an ordered list
- * of generators, with the priority given by the list.
+ * of inner generators, with the priority given by the list.
+ *
+ * Replication of the data occurs when the generator is contructed, whenever
+ * prepend() or append() is called, or whenever any of the generators in the
+ * list goes from !isok() to isok().  If two inner generators contain different
+ * values for the same before replication, then they will both have the value
+ * of the earlier generator (as ordered in the moniker) after replication.
+ *
+ * If an asynchronous change occurs in any of the inner generators, the
+ * new value will be set in all generators irrespective of priority.
  */
 class UniReplicateGen : public UniConfGen
 {
-protected:
-    IUniConfGenList gens;
+private:
+    struct Gen
+    {
+    	IUniConfGen *gen;
+    	bool was_ok;
+    	bool auto_free;
+    	
+    	Gen(IUniConfGen *_gen, bool _auto_free)
+    	    	: gen(_gen), was_ok(gen->isok()), auto_free(_auto_free) {}
+    	~Gen() { if (auto_free) WVRELEASE(gen); }
+    	
+    	bool isok() { return was_ok = gen->isok(); }
+    };
+    DeclareWvList(Gen);
+    GenList gens;
+    
+    bool processing_callback;
 
-    IUniConfGen *first_ok() const;
-    void replicate(const UniConfKey &key = "");
+    Gen *first_ok() const;
+    
+    void replicate_if_any_have_become_ok();
+    
+protected:
+    void replicate(const UniConfKey &key = "/");
     void deltacallback(const UniConfKey &key, WvStringParm value,
                        void *userdata);
 
 public:
     UniReplicateGen();
-    UniReplicateGen(const IUniConfGenList &_gens, bool auto_free = true);
+    UniReplicateGen(const IUniConfGenList &_gens, bool autofree = true);
     
-    void prepend(IUniConfGen *gen, bool auto_free = true);
-    void append(IUniConfGen *gen, bool auto_free = true);
+    void prepend(IUniConfGen *gen, bool autofree = true);
+    void append(IUniConfGen *gen, bool autofree = true);
 
     /***** Overridden members *****/
     virtual bool isok();

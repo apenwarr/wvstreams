@@ -17,7 +17,7 @@
 #include "wvhex.h"
 #include "wvlog.h"
 #include "wvtimeutils.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include <assert.h>
 
 #define PRIVATE_KEY "3082025b02010002818100b0873b623907cffea3aebca4815e579d06"\
@@ -70,7 +70,7 @@ size_t copy(WvStream *in, WvStream *out)
     size_t total = 0;
     char buf[10240];
 
-    WvIStreamList slist;
+    WvStreamList slist;
     slist.append(in, false);
     slist.append(out, false);
     while (in->isok() && out->isok())

@@ -180,9 +180,6 @@ SocketFromFDMaker::~SocketFromFDMaker()
     if (m_socket != INVALID_SOCKET)
     {
 	result = shutdown(m_socket, SD_BOTH);
-	// ugly ugly ugly workaround for bug 5449
-	for (int i = 0; i != 10; ++i)
-	    Sleep(50);
 //	assert(result == 0);
 	// wait for thread to terminate
 	// if (m_wait)

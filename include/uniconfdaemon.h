@@ -8,27 +8,28 @@
 #define __UNICONFDAEMON_H
 
 #include "wvlog.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "uniconf.h"
 #include "wvaddr.h"
 
 class WvX509Mgr;
 
-class UniConfDaemon : public WvIStreamList
+class UniConfDaemon : public WvStreamList
 {
     UniConf cfg;
     WvLog log, debug;
+    bool closed;
     bool authenticate;
-    IUniConfGen *permgen;
 
 public:
     /**
      * Create a UniConfDaemon to serve the Uniconf tree cfg.  If auth is
      * true, require authentication through PAM before accepting connections.
      */
-    UniConfDaemon(const UniConf &cfg, bool auth, IUniConfGen *permgen);
+    UniConfDaemon(const UniConf &cfg, bool auth);
     virtual ~UniConfDaemon();
 
+    virtual bool isok() const;
     virtual void close();
 
     void accept(WvStream *stream);

@@ -9,7 +9,6 @@
 
 
 #include "uniconfroot.h"
-#include "wvstringtable.h"
 #include "wvsorter.h"
 
 #define WvConf WvConfEmu
@@ -48,12 +47,11 @@ class WvConfigSectionEmu
 private:
     const UniConf uniconf;
     WvConfigEntryEmuDict entries;
-    WvStringTable &values;
+    WvStringList values;
 public:
     const WvString name;
-    WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name,
-		       WvStringTable *_values):
-	uniconf(_uniconf), entries(42), values(*_values), name(_name)
+    WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name):
+	uniconf(_uniconf), entries(42), name(_name)
     {}
     WvConfigEntryEmu *operator[] (WvStringParm s);
     const char *get(WvStringParm entry, const char *def_val = NULL);
@@ -120,7 +118,7 @@ private:
     WvConfigSectionEmuDict sections;
     bool hold;
     WvList<CallbackInfo> callbacks;
-    WvStringTable values;
+    WvStringList values;
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
@@ -136,8 +134,6 @@ public:
     void flush();
 
     WvConfigSectionEmu *operator[] (WvStringParm sect);
-    operator const UniConf &()
-        { return uniconf; }
 
     void add_callback(WvConfCallback callback, void *userdata,
 		      WvStringParm section, WvStringParm key, void *cookie);

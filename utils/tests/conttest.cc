@@ -28,14 +28,14 @@ class Honk
 public:
     const char *id;
     
-    WvContCallback cb;
+    WvCont::Callback cb;
     
     Honk(const char *_id)
         { id = _id; }
     
     void honk_at(Honk &a)
     {
-	cb = WvCont(WvBoundCallback<WvContCallback, Honk &>
+	cb = WvCont(WvBoundCallback<WvCont::Callback, Honk &>
 		    (this, &Honk::honker, a));
     }
 

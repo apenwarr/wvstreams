@@ -5,7 +5,7 @@
 
 #include "wvbase64.h"
 #include "wvstream.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "wvencoderstream.h"
 #include "wvbufbase.h"
 

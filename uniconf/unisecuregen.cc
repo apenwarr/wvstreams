@@ -2,53 +2,31 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
- * UniSecureGen is a UniConfGen for checking permissions before allowing
- * access to a UniConf tree.  See unisecuregen.h and unipermgen.h.
+ * UniSecureGen is a UniConfGen for checking security on data 
+ *
  */
+
 #include "unisecuregen.h"
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
 #include "wvlog.h"
-#include "wvbuf.h"
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+UniSecureGen::UniSecureGen(UniConfGen *_gen, UniPermGen *_perms) :
+    UniFilterGen(_gen),
+    perms(_perms)
 {
-    return new UniSecureGen(s);
-}
-
-static WvMoniker<IUniConfGen> reg("perm", creator);
-
-
-UniSecureGen::UniSecureGen(WvStringParm moniker, UniPermGen *_perms)
-    : UniFilterGen(NULL)
-{
-    WvString mainmon(moniker), permmon;
-
-    if (!_perms)
-    {
-	WvConstInPlaceBuf buf(moniker, moniker.len());
-	permmon = wvtcl_getword(buf);
-	mainmon = wvtcl_getword(buf);
-    
-	IUniConfGen *_perms = wvcreate<IUniConfGen>(permmon);
-	assert(_perms);
-	perms = new UniPermGen(_perms);
-	perms->refresh();
-    }
-    
-    IUniConfGen *main = wvcreate<IUniConfGen>(mainmon);
-    setinner(main);
 }
 
 
-UniSecureGen::UniSecureGen(IUniConfGen *_gen, UniPermGen *_perms)
-    : UniFilterGen(_gen)
+UniSecureGen::UniSecureGen(WvStringParm moniker, UniPermGen *_perms) :
+    UniFilterGen(NULL)
 {
-    assert(_perms);
+    IUniConfGen *_gen = wvcreate<IUniConfGen>(moniker);
+    assert(_gen && "Moniker doesn't get us a generator!");
+    setinner(_gen);
     perms = _perms;
-    perms->refresh();
 }
 
 
@@ -69,20 +47,6 @@ void UniSecureGen::setcredentials(WvStringParm user, const WvStringList &groups)
     WvStringList::Iter i(groups);
     for (i.rewind(); i.next(); )
         cred.groups.add(new WvString(*i), true);
-}
-
-
-bool UniSecureGen::refresh()
-{
-    perms->refresh();
-    return UniFilterGen::refresh();
-}
-
-
-void UniSecureGen::commit()
-{
-    perms->commit();
-    UniFilterGen::commit();
 }
 
 
@@ -122,27 +86,8 @@ bool UniSecureGen::haschildren(const UniConfKey &key)
 
 UniConfGen::Iter *UniSecureGen::iterator(const UniConfKey &key)
 {
-    // we don't check the permissions on keys returned by the iterator, but
-    // that's okay: since this iterator is non-recursive, and we've checked
-    // permissions on the parent key, we know we're allowed to at least read
-    // the *names* of all child keys (even if the value itself is unreadable)
     if (findperm(key, UniPermGen::EXEC))
         return UniFilterGen::iterator(key);
-    return NULL;
-}
-
-
-UniConfGen::Iter *UniSecureGen::recursiveiterator(const UniConfKey &key)
-{
-    // FIXME: this needs to check permissions on *every* key, not just the
-    // top one, so we'll cheat: use the default UniConfGen recursiveiterator
-    // instead, which just calls the non-recursive iterator recursively.
-    // This can be bad for performance, but not in any of the situations
-    // we currently need. (ie. security is usually done on the server side,
-    // but it's the client-to-server connection that needs a fast recursive
-    // iterator, so it'll be fine.)
-    if (findperm(key, UniPermGen::EXEC))
-	return UniConfGen::recursiveiterator(key);
     return NULL;
 }
 

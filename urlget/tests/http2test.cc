@@ -25,13 +25,13 @@ static void sighandler_die(int signum)
 static void close_callback(WvStream& s, void* userdata)
 {
     if (!s.isok())
-	log(WvLog::Error, "%s\n", s.geterr());
+	log(WvLog::Error, "%s", s.geterr());
 }
 
 
 int main(int argc, char **argv)
 {
-    WvIStreamList l;
+    WvStreamList l;
     WvHttpPool p;
     WvString headers("");
     char *line;

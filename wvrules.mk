@@ -43,8 +43,7 @@ ifneq ("$(with_xplc)", "no")
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
-LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
-LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
+LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBXPLC)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
@@ -66,7 +65,7 @@ XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
 else
-  DEBUG:=0
+  DEBUG:=
 endif
 
 ifeq ("$(enable_fatal_warnings)", "yes")
@@ -128,9 +127,8 @@ xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
 default: all
 
 # default "test" rule does nothing...
-.PHONY: test runtests
+.PHONY: test
 test:
-runtests:
 
 %/test:
 	$(MAKE) -C $(dir $@) test

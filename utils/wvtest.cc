@@ -24,7 +24,7 @@
 # define VALGRIND_COUNT_LEAKS(a,b,c,d) (a=b=c=d=0)
 #endif
 
-#define MAX_TEST_TIME 40     // max seconds for a single test to run
+#define MAX_TEST_TIME 20     // max seconds for a single test to run
 #define MAX_TOTAL_TIME 120*60 // max seconds for the entire suite to run
 
 static int memerrs()
@@ -83,7 +83,6 @@ int WvTest::run_all(const char *prefix)
     int old_valgrind_leaks = 0, new_valgrind_leaks;
     
     signal(SIGALRM, alarm_handler);
-    // signal(SIGALRM, SIG_IGN);
     alarm(MAX_TEST_TIME);
     start_time = time(NULL);
     

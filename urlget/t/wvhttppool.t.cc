@@ -12,7 +12,7 @@ WVTEST_MAIN("WvHttpPool GET")
 {
     WvHttpPool pool;
 
-    WvIStreamList l;
+    WvStreamList l;
     l.append(&pool, false);
 
     WvStream *buf;
@@ -35,7 +35,7 @@ WVTEST_MAIN("WvHttpPool HEAD")
 {
     WvHttpPool pool;
 
-    WvIStreamList l;
+    WvStreamList l;
     l.append(&pool, false);
 
     WvStream *buf;

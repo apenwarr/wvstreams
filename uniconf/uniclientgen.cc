@@ -5,7 +5,6 @@
  * UniClientGen is a UniConfGen for retrieving data from the
  * UniConfDaemon.
  */
-#include "wvfile.h"
 #include "uniclientgen.h"
 #include "wvtclstring.h"
 #include "wvtcp.h"
@@ -45,7 +44,7 @@ static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_SSL_PORT);
     
-    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), _s);
+    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL, true), _s);
 }
 
 
@@ -60,27 +59,6 @@ static IUniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
 	stream = wvcreate<IWvStream>(s);
     return new UniClientGen(stream);
 }
-
-#ifdef WITH_SLP
-#include "wvslp.h"
-
-// FIXME: Only gets the first
-static IUniConfGen *slpcreator(WvStringParm s, IObject *obj, void *)
-{
-    WvStringList serverlist;
-    
-    if (slp_get_servs("uniconf.niti", serverlist))
-    {
-	WvString server = serverlist.popstr();
-	printf("Creating connection to: %s\n", server.cstr());
-	return new UniClientGen(new WvTCPConn(server), s);
-    }
-    else
-        return NULL;
-}
-
-static WvMoniker<IUniConfGen> slpreg("slp", slpcreator);
-#endif
 
 static WvMoniker<IUniConfGen> tcpreg("tcp", tcpcreator);
 static WvMoniker<IUniConfGen> sslreg("ssl", sslcreator);
@@ -112,7 +90,7 @@ public:
     virtual bool next()
         { return i.next(); }
     virtual UniConfKey key() const
-        { return i->key; }
+        { return i->key.removefirst(topcount); }
     virtual WvString value() const
         { return i->val; }
 };
@@ -224,7 +202,6 @@ UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
 	result_list = NULL;
 	return NULL;
     }
-
 }
 
 
@@ -245,7 +222,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
     if (conn->alarm_was_ticking)
     {
         // command response took too long!
-        log(WvLog::Warning, "Command timeout; connection closed.\n");
+        log(WvLog::Error, "Command timeout; connection closed.\n");
         cmdinprogress = false;
         cmdsuccess = false;
         conn->close();
@@ -254,6 +231,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
     }
 
     UniClientConn::Command command = conn->readcmd();
+
     switch (command)
     {
         case UniClientConn::NONE:

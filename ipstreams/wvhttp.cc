@@ -6,7 +6,6 @@
  * to be retrieved using the usual WvStream-style calls.
  */
 #include "wvhttp.h"
-#include "wvsslstream.h"
 #include "strutils.h"
 #include <assert.h>
 
@@ -19,7 +18,6 @@ WvHTTPStream::WvHTTPStream(const WvURL &_url)
     state = Resolving;
     num_received = 0;
     tcp = NULL;
-    ssl = NULL;
     
     // we need this: if the URL tried to dns-resolve before, but failed,
     // this might make isok() true again if the name has turned up.
@@ -68,22 +66,15 @@ bool WvHTTPStream::pre_select(SelectInfo &si)
 	else if (url.resolve())
 	{
 	    state = Connecting;
-	    tcp = new WvTCPConn(url.getaddr());
-	    if (url.getproto() == "https")
-	    {
-		ssl = new WvSSLStream(tcp, NULL, 0);
-		cloned = conn = ssl;
-	    }
-	    else
-		cloned = conn = tcp;
+	    cloned = tcp = new WvTCPConn(url.getaddr());
 	}
 	return false;
 
     case Connecting:
-	conn->select(0, false, true, false);
+	tcp->select(0, false, true, false);
 	if (!tcp->isconnected())
 	    return false;
-	if (conn->geterr())
+	if (tcp->geterr())
 	    return false;
 
 	// otherwise, we just finished connecting:  start transfer.
@@ -123,7 +114,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader1:
-	line = trim_string(conn->getline(0));
+	line = trim_string(tcp->getline(0));
 	if (line) // got response code line
 	{
 	    if (strncmp(line, "HTTP/", 5))
@@ -145,7 +136,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader:
-	line = trim_string(conn->getline(0));
+	line = trim_string(tcp->getline(0));
 	if (line)
 	{
 	    if (!line[0])
@@ -167,7 +158,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadData:
-	len = conn->read(buf, count);
+	len = tcp->read(buf, count);
 	num_received += len;
 	return len;
 	

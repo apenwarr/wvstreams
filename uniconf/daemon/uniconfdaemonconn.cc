@@ -171,13 +171,13 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 	{
 	    UniConf::RecursiveIter it(cfg);
 	    for (it.rewind(); it.next(); )
-		writevalue(it->fullkey(cfg), it->getme());
+		writevalue(it->fullkey(), it->getme());
 	}
 	else
 	{
 	    UniConf::Iter it(cfg);
 	    for (it.rewind(); it.next(); )
-		writevalue(it->fullkey(cfg), it->getme());
+		writevalue(it->fullkey(), it->getme());
 	}
 	writeok();
     }
@@ -217,7 +217,7 @@ void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
     WvString value(cfg[key].getme());
     WvString msg;
 
-    UniConfKey fullkey(cfg.fullkey(cfg));
+    UniConfKey fullkey(cfg.fullkey());
     fullkey.append(key);
 
     if (value.isnull())

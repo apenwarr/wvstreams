@@ -2,30 +2,30 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
- * UniPermGen is a UniConfGen for holding Unix-style permissions.  See
- * unipermgen.h.
+ * UniPermGen is a UniConfGen for holding Unix-style permissions
+ *
  */
+
 #include "unipermgen.h"
 #include "unidefgen.h"
 
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
-#include "wvstream.h"
 
 
-UniPermGen::UniPermGen(IUniConfGen *_gen)
-    : UniFilterGen(_gen)
+UniPermGen::UniPermGen(UniConfGen *_gen) :
+    UniFilterGen(new UniDefGen(_gen))
 {
 }
 
 
-UniPermGen::UniPermGen(WvStringParm moniker)
-    : UniFilterGen(NULL)
+UniPermGen::UniPermGen(WvStringParm moniker) :
+    UniFilterGen(NULL)
 {
     IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
     assert(gen && "Moniker doesn't get us a generator!");
-    setinner(gen);
+    setinner(new UniDefGen(gen));
 }
 
 
@@ -59,40 +59,31 @@ WvString UniPermGen::getgroup(const UniConfKey &path)
 }
 
 
-void UniPermGen::setperm(const UniConfKey &path, Level level,
-			 Type type, bool val)
+void UniPermGen::setperm(const UniConfKey &path, Level level, Type type, bool val)
 {
-    inner()->set(WvString("%s/%s-%s", path, level2str(level),
-			  type2str(type)), val);
+    inner()->set(WvString("%s/%s-%s", path, level2str(level), type2str(type)), val);
 }
 
 
-bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred,
-			 Type type)
+bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred, Type type)
 {
     WvString owner = getowner(path);
     WvString group = getgroup(path);
 
     Level level;
-    if (!!owner && cred.user == owner) level = USER;
-    else if (!!group && cred.groups[group]) level = GROUP;
+    if (cred.user == owner) level = USER;
+    else if (cred.groups[group]) level = GROUP;
     else level = WORLD;
 
     bool perm = getoneperm(path, level, type);
-    //wverr->print("getperm(%s/%s,%s,%s-%s) = %s\n",
-    //           cred.user, cred.groups.count(),
-    //		 path, level2str(level), type2str(type), perm);
     return perm;
 }
 
 
-/// retrieve an individual permission.  If there's no explicit permission
-/// of that type set for that object, proceed up the tree so that children
-/// can inherit permissions from their parents.
 bool UniPermGen::getoneperm(const UniConfKey &path, Level level, Type type)
 {
     int val = str2int(inner()->get(WvString("%s/%s-%s", path, level2str(level),
-					    type2str(type))), -1);
+                type2str(type))), -1);
     if (val == -1)
     {
         if (path.isempty())
@@ -102,6 +93,7 @@ bool UniPermGen::getoneperm(const UniConfKey &path, Level level, Type type)
                 case READ: return true;
                 case WRITE: return false;
                 case EXEC: return true; 
+                default: assert(false && "Something in the Type enum wasn't covered");
             }
         }
         else
@@ -111,9 +103,8 @@ bool UniPermGen::getoneperm(const UniConfKey &path, Level level, Type type)
 }
 
 
-void UniPermGen::chmod(const UniConfKey &path,
-		       unsigned int user, unsigned int group,
-		       unsigned int world)
+void UniPermGen::chmod(const UniConfKey &path, unsigned int user, unsigned int group,
+        unsigned int world)
 {
     static const int r = 4;
     static const int w = 2;

@@ -255,7 +255,7 @@ public:
     
     class Iter
     {
-	typedef typename WvOnDiskList::Index Index;
+	typedef WvOnDiskList::Index Index;
     public:
 	WvOnDiskList &list;
 	Index prev, xcur, xnext;

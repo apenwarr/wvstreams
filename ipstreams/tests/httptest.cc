@@ -5,7 +5,7 @@
  * WvHTTPStream test.  Downloads a file via http.
  */
 #include "wvhttp.h"
-#include "wvistreamlist.h"
+#include "wvstreamlist.h"
 #include "wvlog.h"
 #include "wvfile.h"
 
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     static char buf[10240];
     size_t len;
     
-    WvIStreamList l;
+    WvStreamList l;
     l.add_after(l.tail, &http, false);
     
     while (http.isok() && out.isok())

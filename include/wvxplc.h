@@ -11,9 +11,7 @@
 #define UNSTABLE
 #endif
 
-#include "wvautoconf.h"
-
-#ifndef ENABLE_DELETE_DETECTOR
+#if 0
 #include <xplc/IObject.h>
 #define deletev delete[]
 #else
@@ -22,7 +20,6 @@
 
 #include <xplc/xplc.h>
 #include <xplc/ptr.h>
-#include <xplc/uuidops.h>
 
 /*
  * There is another definition of DELETE in <arpa/nameser_compat.h>,

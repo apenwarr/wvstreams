@@ -4,7 +4,7 @@
  * Some text about this example...
  */
 
-#include <wvistreamlist.h>
+#include <wvstreamlist.h>
 #include <wvpipe.h>
 
 int main()
@@ -19,7 +19,7 @@ int main()
     stream1.autoforward(*wvcon);
     stream2.autoforward(*wvcon);
     
-    WvIStreamList l;
+    WvStreamList l;
     l.append(&stream1, false);
     l.append(&stream2, false);
     

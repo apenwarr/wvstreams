@@ -54,7 +54,7 @@ AC_ARG_ENABLE(efence,
                              [link against Electric Fence]))
 
 AC_ARG_ENABLE(exceptions,
-              AC_HELP_STRING([--disable-exceptions],
+              AC_HELP_STRING([--enable-exceptions],
                              [C++ exceptions (compiler)]))
 
 AC_ARG_ENABLE(fatal-warnings,
@@ -69,12 +69,8 @@ AC_ARG_ENABLE(resolver-fork,
               AC_HELP_STRING([--disable-resolver-fork],
                              [WvResolver background name resolution (debugging)]))
 
-AC_ARG_ENABLE(delete-detector,
-              AC_HELP_STRING([--enable-delete-detector],
-                             [Delete detector (reference counting)]))
-
 AC_ARG_ENABLE(rtti,
-              AC_HELP_STRING([--disable-rtti],
+              AC_HELP_STRING([--enable-rtti],
                              [C++ run-time type identification (compiler)]))
 
 AC_ARG_ENABLE(verbose,
@@ -95,7 +91,6 @@ AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)])
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL (required)]))
-AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
@@ -131,7 +126,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 # exceptions
-if test "$enable_exceptions" = "no"; then
+if test "$enable_exceptions" != "yes"; then
     WV_APPEND(CXXFLAGS, -fno-exceptions)
 fi
 
@@ -141,14 +136,8 @@ if test "$enable_resolver_fork" = "no"; then
               [Define to disable WvResolver forking for debugging with gdb.])
 fi
 
-# resolver-fork
-if test "$enable_delete_detector" = "yes"; then
-    AC_DEFINE(ENABLE_DELETE_DETECTOR,,
-              [Define to enable the XPLC delete detector.])
-fi
-
 # rtti
-if test "$enable_rtti" = "no"; then
+if test "$enable_rtti" != "yes"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
@@ -158,7 +147,7 @@ if test "$with_fam" != "no"; then
     AC_CHECK_LIB(fam, FAMOpen,, [with_fam=no])
     if test "$with_fam" != "no"; then
         AC_DEFINE(WITH_FAM,, [Define to enable FAM support.])
-    fi 
+    fi
 fi
 
 # fftw
@@ -216,16 +205,6 @@ fi
 if test "$with_ogg" != "no"; then
     AC_CHECK_HEADERS(ogg/ogg.h,, [with_ogg=no])
     AC_CHECK_LIB(ogg, ogg_stream_init,, [with_ogg=no])
-fi
-
-
-# openslp
-if test "$with_openslp" != "no"; then
-    AC_CHECK_HEADERS(slp.h,, [with_openslp=no])
-    AC_CHECK_LIB(slp, SLPGetRefreshInterval,, [with_openslp=no])
-    if test "$with_openslp" != "no"; then
-        AC_DEFINE(WITH_SLP,, [Define to enable SLP support.])
-    fi 
 fi
 
 # openssl
@@ -380,9 +359,6 @@ fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
 fi
-if test "$with_openslp" = "no"; then
-    AC_MSG_WARN([OpenSLP is missing.])
-fi
 if test "$with_openssl" = "no"; then
     AC_MSG_WARN([OpenSSL is missing.])
     missing_required="$missing_required OpenSSL"
@@ -413,7 +389,6 @@ AC_SUBST(enable_exceptions)
 AC_SUBST(enable_fatal_warnings)
 AC_SUBST(enable_optimization)
 AC_SUBST(enable_resolver_fork)
-AC_SUBST(enable_delete_detector)
 AC_SUBST(enable_rtti)
 AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
@@ -425,7 +400,6 @@ AC_SUBST(with_fftw)
 AC_SUBST(with_qdbm)
 AC_SUBST(with_gtk)
 AC_SUBST(with_ogg)
-AC_SUBST(with_openslp)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
 AC_SUBST(with_telephony)

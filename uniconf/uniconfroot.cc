@@ -62,11 +62,6 @@ static bool watchout(UniWatchInfoTree *t)
 
 UniConfRoot::~UniConfRoot()
 {
-    // first, unmount everything.  Some of the mounts might have waiting
-    // callbacks.  (I hope not, but... things like UniUnwrapGen might get
-    // confusing.)
-    mounts.zap();
-    
     // if the list of callbacks is non-empty, someone is either very buggy
     // (they disappeared without deleting their callback, so they could cause
     // crashes), or they're not getting what they expected (we disappeared

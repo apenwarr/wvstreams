@@ -117,7 +117,7 @@ BOOL Ctest3Dlg::OnInitDialog()
 	m_listenport.SetWindowText("6969");
 	m_csaddr.SetWindowText("127.0.0.1:7070");
 
-	m_winstream = new WvWinStreamClone( m_streamlist = new WvIStreamList() );
+	m_winstream = new WvWinStreamClone( m_streamlist = new WvStreamList() );
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }

@@ -7,10 +7,10 @@
 #ifndef __WVSCATTERHASH_H
 #define __WVSCATTERHASH_H
 
-#include "wvxplc.h"   // for deletev.  ick.
-#include "wvhash.h"
-#include "wvsorter.h"
 #include <sys/types.h>
+
+// Some standard WvHash functions are useful from wvhashtable.h
+#include "wvhashtable.h"
 
 #define REBUILD_LOAD_FACTOR 0.45
 #define RESIZE_LOAD_FACTOR 0.4

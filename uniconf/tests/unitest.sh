@@ -24,7 +24,6 @@ RECONFIG()
 {
     killall -q uniconfd
     killall -q -9 uniconfd
-    rm -f $PWD/unisocket
     
     XDAEMON="$DAEMON"
     if [ "$1" = "--daemon" ]; then
@@ -36,8 +35,8 @@ RECONFIG()
         UNICONF="$@"
     else
         echo "Starting UniConfDaemon."
-	../daemon/uniconfd -p0 -s0 -u$PWD/unisocket "$@"
-	UNICONF="unix:$PWD/unisocket"
+	../daemon/uniconfd -ssl 0 -mount / "$@"
+	UNICONF="tcp:localhost:4111"
     fi
 }
 
@@ -183,7 +182,7 @@ if false; then
 SECTION default "Default (*/*) generator tests"
 RECONFIG "default: null:"
  s
-xx uni get /anything
+xx uni get /anything  # FIXME: this one segfaults uni (URI contains a space)
 RECONFIG default:ini:simple.ini
  s 1
 xx uni get /section1/a

@@ -10,7 +10,7 @@
 #include "wvfile.h"
 #include "strutils.h"
 
-//#define DEBUG_DEL_CALLBACK 1
+//#define DEBUG_DEL_CALLBACK
 #ifdef DEBUG_DEL_CALLBACK
 #include <execinfo.h>
 #endif
@@ -109,12 +109,9 @@ const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
     if (!entry)
 	return def_val;
 
-    WvString s(uniconf[entry].getme(def_val));
-    
-    // look it up in the cache
-    WvString *sp = values[s];
-    if (!sp) values.add(sp = new WvString(s), true);
-    return sp->cstr();
+    WvString *value = new WvString(uniconf[entry].getme(def_val));
+    values.add(value, true);
+    return value->cstr();
 }
 
 
@@ -214,7 +211,7 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 
 
 WvConfEmu::WvConfEmu(const UniConf &_uniconf)
-    : sections(42), hold(false), values(420), uniconf(_uniconf)
+    : sections(42), hold(false), uniconf(_uniconf)
 {
     wvauthd = NULL;
     uniconf.add_callback(this,
@@ -229,9 +226,9 @@ WvConfEmu::~WvConfEmu()
     // deleting the WvConfEmu, but they probably won't work the way you
     // think they will. (ie. someone might be using a temporary WvConfEmu
     // and think his callbacks will stick around; they won't!)
-#ifndef DEBUG_DEL_CALLBACK
     assert(callbacks.isempty());
-#else
+
+#ifdef DEBUG_DEL_CALLBACK
     if (!callbacks.isempty())
     {
 	WvList<CallbackInfo>::Iter i(callbacks);
@@ -302,7 +299,7 @@ WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 
     if (!section && uniconf[sect].exists())
     {
-	section = new WvConfigSectionEmu(uniconf[sect], sect, &values);
+	section = new WvConfigSectionEmu(uniconf[sect], sect);
 	sections.add(section, true);
     }
 
@@ -417,12 +414,9 @@ const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
     if (!section || !entry)
 	return def_val;
 
-    WvString s(uniconf[section][entry].getme(def_val));
-    
-    // look it up in the cache
-    WvString *sp = values[s];
-    if (!sp) values.add(sp = new WvString(s), true);
-    return sp->cstr();
+    WvString *value = new WvString(uniconf[section][entry].getme(def_val));
+    values.add(value, true);
+    return value->cstr();
 }
 
 int WvConfEmu::fuzzy_getint(WvStringList &sect, WvStringParm entry,

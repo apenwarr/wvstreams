@@ -25,8 +25,6 @@
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day)
 {
     need_reset = false;
-    skip_event = true;
-    needs_event = false;
     prev = time(NULL);
     configure(_first_hour, _num_per_day);
 }
@@ -38,7 +36,6 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
     if (num_per_day && !need_reset)
     {
 	time_t now = time(NULL), next = next_event();
-
 	assert(prev);
 	assert(next);
 	assert(prev > 100000);
@@ -46,7 +43,6 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
 	if (now >= next)
 	{
 	    need_reset = true;
-            needs_event = false;
 	    prev = next;
 	}
     }
@@ -112,9 +108,10 @@ void WvDailyEvent::configure(int _first_hour, int _num_per_day)
     set_num_per_day(_num_per_day);
 }
 
+
 // the daily event occurs each day at first_hour on the hour, or at
 // some multiple of the interval *after* that hour.
-time_t WvDailyEvent::next_event()
+time_t WvDailyEvent::next_event() const
 {
     if (!num_per_day) // disabled
 	return 0;
@@ -142,17 +139,11 @@ time_t WvDailyEvent::next_event()
     if ((next - start)%interval != 0)
 	next = start + (next - start)/interval * interval + interval;
     
+    // too soon after configuration - skip the event
     assert(next);
     assert(next > 100000);
-
-    double time_till_event = (double)((next - time(NULL)) / (60*60));
-
-    if (!skip_event && time_till_event >= 1.0)
-        needs_event = true;
-
-    if (skip_event || !needs_event)
-        while (next < not_until)
-            { next += interval; }
+    while (next < not_until)
+    	next += interval;
 
     return next;
 }
