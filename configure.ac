@@ -326,7 +326,7 @@ if test "$with_xplc" != "no"; then
     else
         AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
         AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
-	xplc_version=`pkg-config --modversion xplc`
+	xplc_version=`pkg-config --modversion xplc 2>/dev/null`
 	if test "$xplc_version" != ""; then xplc_version=" >= $xplc_version"; fi
 	xplc_pc="xplc${xplc_version}"
     fi
