@@ -780,7 +780,8 @@ bool WvLinkedBufferStore::unlinksubbuffer(WvBufStore *buffer,
     bool allowautofree)
 {
     WvBufStoreList::Iter it(list);
-    assert(it.find(buffer));
+    WvLink *link = it.find(buffer);
+    assert(link);
     
     bool autofree = it.link->auto_free;
     totalused -= buffer->used();
