@@ -187,9 +187,9 @@ bool WvRSAEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
         {
             // reserve space for PKCS1_PADDING
             const size_t maxchunklen = rsasize - 12;
-            while (in.used() != 0)
+            size_t chunklen;
+            while ((chunklen = in.used()) != 0)
             {
-                size_t chunklen = in.used();
                 if (chunklen >= maxchunklen)
                     chunklen = maxchunklen;
                 else if (! flush)

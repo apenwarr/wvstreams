@@ -31,7 +31,7 @@ bool WvEVPMDDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     bool flush)
 {
     size_t len;
-    while ((len = inbuf.used()) != 0)
+    while ((len = inbuf.usedopt()) != 0)
     {
         if (len > EVPMD_BUFFER_SIZE)
             len = EVPMD_BUFFER_SIZE;

@@ -128,7 +128,8 @@ public:
      * It may be necessary to repeatedly invoke this function in order
      *   to scan the entire contents of the buffer.
      */
-    virtual const T *peek(int offset, size_t *count) = 0;
+    virtual const T *peek(int offset, size_t *count)
+        { return mutablepeek(offset, count); }
 
     /**
      * Clears the buffer.
@@ -146,7 +147,6 @@ public:
      * It is an error to invoke this method if used() == 0.
      * 
      * After this operation, at least 1 element may be ungotten.
-     * Note: Implementations may NOT override this method.
      */
     T get()
         { return *get(1); }
@@ -168,7 +168,6 @@ public:
      *
      * After this operation, an indeterminate number of elements
      *   may be ungotten.
-     * Note: Implementations may NOT override this method.
      */
     void move(T *buf, size_t count)
     {
@@ -250,11 +249,18 @@ public:
     virtual size_t unallocable() const = 0;
     
     /**
+     * Returns a non-const pointer at the specified offset into the
+     *   buffer without actually adjusting the current get() index.
+     * Other than the fact that the storage is mutable, functions
+     *   identically to peek().
+     */
+    virtual T *mutablepeek(int offset, size_t *count) = 0;
+    
+    /**
      * Allocates and copies the specified element into the buffer.
      * It is an error to invoke this method if free() == 0.
      * 
      * After this operation, at least 1 element may be unallocated.
-     * Note: Implementations may NOT override this method.
      */
     void put(typename ElemTraits::Param value)
         { ElemMemOps::uninit_copy1(alloc(1), value); }
@@ -267,7 +273,6 @@ public:
      * The pointer buf may be NULL only if count == 0.
      * 
      * After this operation, at least 1 element may be unallocated.
-     * Note: Implementations may NOT override this method.
      */
     void put(const T *data, size_t count)
     {
@@ -283,6 +288,42 @@ public:
             count -= amount;
         }
     }
+
+    /**
+     * Efficiently copies the specified number of elements from the
+     *   specified storage location into a particular offset of
+     *   the buffer.
+     * If offset <= used() and offset + count > used(), the
+     *   remaining data is tacked onto the end of the buffer
+     *   with put().
+     * It is an error for count to be greater than free() - offset.
+     *
+     * See mutablepeek() and peek().
+     */
+    void poke(int offset, const T *data, size_t count)
+    {
+        int limit = int(used());
+        assert(offset <= limit ||
+            !"attempted to poke() beyond end of buffer");
+        int end = offset + count;
+        if (end >= limit)
+        {
+            size_t tail = end - limit;
+            count -= tail;
+            put(data + count, tail);
+        }
+        while (count > 0)
+        {
+            size_t amount;
+            T *buf = mutablepeek(offset, & amount);
+            if (amount > count)
+                amount = count;
+            ElemMemOps::copy(buf, data, amount);
+            data += amount;
+            count -= amount;
+        }
+    }
+    
 
     /*** Buffer to Buffer Transfers ***/
 
@@ -352,8 +393,6 @@ public:
     /**
      * Efficiently merges an entire buffer's contents into this one.
      * This is a convenience method.  See merge(...) for more details.
-     * 
-     * Note: Implementations may NOT override this method.
      */
     void merge(Buffer &inbuf)
     {
@@ -408,6 +447,11 @@ public:
     virtual size_t unallocable() const
     {
         return 0;
+    }
+    virtual typename Super::Elem *mutablepeek(int offset, size_t *count)
+    {
+        assert(! "mutablepeek() called on non-writable buffer");
+        return NULL;
     }
 };
 
@@ -569,18 +613,6 @@ public:
     {
         return readidx;
     }
-    virtual const T *peek(int offset, size_t *count)
-    {
-        if (offset < 0)
-            assert(size_t(-offset) <= readidx ||
-                !"attempted to peek() with invalid offset");
-        else
-            assert(size_t(offset) < writeidx - readidx ||
-                !"attempted to peek() with invalid offset");
-        if (count)
-            *count = writeidx - readidx - offset;
-        return data + readidx + offset;
-    }
     virtual void zap()
     {
         readidx = writeidx = 0;
@@ -606,6 +638,18 @@ public:
     virtual size_t unallocable() const
     {
         return writeidx - readidx;
+    }
+    virtual T *mutablepeek(int offset, size_t *count)
+    {
+        if (offset < 0)
+            assert(size_t(-offset) <= readidx ||
+                !"attempted to peek() with invalid offset");
+        else
+            assert(size_t(offset) < writeidx - readidx ||
+                !"attempted to peek() with invalid offset");
+        if (count)
+            *count = writeidx - readidx - offset;
+        return data + readidx + offset;
     }
 };
 
@@ -841,31 +885,6 @@ public:
             return 0;
         return list.first()->ungettable();
     }
-    virtual const T *peek(int offset, size_t *count)
-    {
-        if (offset < 0)
-        {
-            assert(size_t(-offset) <= ungettable() ||
-                !"attempted to peek() with invalid offset");
-            return list.first()->peek(offset, count);
-        }
-        assert(size_t(offset) < used() ||
-            !"attempted to peek() with invalid offset");
-            
-        // search for the buffer that contains the offset
-        BufferList::Iter it(list);
-        it.rewind();
-        Buffer *buf;
-        for (;;) {
-            assert(it.next());
-            buf = it.ptr();
-            size_t len = buf->used();
-            if (size_t(offset) < len)
-                break;
-            offset -= len;
-        }
-        return buf->peek(offset, count);
-    }
     virtual void zap()
     {
         totalused = 0;
@@ -917,6 +936,31 @@ public:
     virtual size_t unallocable() const
     {
         return totalused;
+    }
+    virtual T *mutablepeek(int offset, size_t *count)
+    {
+        if (offset < 0)
+        {
+            assert(size_t(-offset) <= ungettable() ||
+                !"attempted to peek() with invalid offset");
+            return list.first()->mutablepeek(offset, count);
+        }
+        assert(size_t(offset) < used() ||
+            !"attempted to peek() with invalid offset");
+            
+        // search for the buffer that contains the offset
+        BufferList::Iter it(list);
+        it.rewind();
+        Buffer *buf;
+        for (;;) {
+            assert(it.next());
+            buf = it.ptr();
+            size_t len = buf->used();
+            if (size_t(offset) < len)
+                break;
+            offset -= len;
+        }
+        return buf->mutablepeek(offset, count);
     }
 
 protected:

@@ -53,8 +53,7 @@ public:
     virtual void incrcounter();
     
 private:
-    WvDynamicBuffer counterbuf;
-    WvDynamicBuffer keybuf;
+    WvConstInPlaceBuffer counterbuf;
 
 protected:
     unsigned char *counter; // auto-incrementing counter

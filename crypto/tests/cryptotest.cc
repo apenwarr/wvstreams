@@ -9,6 +9,7 @@
 #include "wvrsa.h"
 #include "wvblowfish.h"
 #include "wvxor.h"
+#include "wvcountermode.h"
 #include "wvlog.h"
 #include "wvtimeutils.h"
 #include "wvstreamlist.h"
@@ -43,9 +44,10 @@ static void usage(WvLog &log, const char *progname)
 {
     log.lvl(WvLog::Error);
     log("Usage: %s -x|-r|-b [-E|-D]\n"
-	"   where -x is for an XORStream test\n"
-	"         -r is for an RSAStream test\n"
-	"         -b is for a BlowfishStream test\n"
+	"   where -x is for an XOREncoder test\n"
+	"         -r is for an RSAEncoder test\n"
+	"         -b is for a BlowfishEncoder test\n"
+        "         -c is for a CounterModeEncoder Blowfish test\n"
 	"         -E encrypts stdin (default)\n"
 	"         -D decrypts stdin\n"
 	"         -B sets the number of bits in the encryption key",
@@ -74,6 +76,7 @@ size_t copy(WvStream *in, WvStream *out)
             out->write(buf, len);
         }
     }
+    out->flush(0);
     return total;
 }
 
@@ -82,7 +85,7 @@ int main(int argc, char **argv)
 {
     WvLog log(argv[0], WvLog::Info);
     int opt;
-    enum { None, XOR, RSA, Blowfish } crypt_type = None;
+    enum { None, XOR, RSA, Blowfish, CounterMode } crypt_type = None;
     enum { Encrypt, Decrypt } direction = Encrypt;
     WvRSAKey *rsakey = NULL;
     unsigned char *blowkey = NULL;
@@ -100,7 +103,7 @@ int main(int argc, char **argv)
 	return 1;
     }
     
-    while ((opt = getopt(argc, argv, "?xrbEDB:i:o:")) >= 0)
+    while ((opt = getopt(argc, argv, "?xrbcEDB:i:o:")) >= 0)
     {
 	switch (opt)
 	{
@@ -122,6 +125,11 @@ int main(int argc, char **argv)
 	    crypt_type = Blowfish;
 	    if (!numbits) numbits = 128;
 	    break;
+
+        case 'c':
+            crypt_type = CounterMode;
+	    if (!numbits) numbits = 128;
+            break;
 	    
 	case 'E':
 	    direction = Encrypt;
@@ -198,6 +206,25 @@ int main(int argc, char **argv)
         crypto = new WvBlowfishStream(base, blowkey, numbits/8);
         crypto->disassociate_on_close = true;
 	break;
+
+    case CounterMode:
+    {
+        log("Using %s-bit Counter Mode Blowfish encryption.\n", numbits);
+        blowkey = new unsigned char[numbits/8];
+        for (int count = 0; count < numbits/8; count++)
+            blowkey[count] = count;
+        
+        WvEncoder *enc = new WvCounterModeEncoder(
+            new WvBlowfishEncoder(WvBlowfishEncoder::ECBEncrypt,
+            blowkey, numbits / 8), "\0\0\0\0\0\0\0\0", 8);
+        WvEncoderStream *encstream = new WvEncoderStream(base);
+        encstream->writechain.append(enc, true);
+        encstream->readchain.append(enc, false);
+        encstream->auto_flush(false);
+        crypto = encstream;
+        crypto->disassociate_on_close = true;
+	break;
+    }
 	
     default:
 	assert(0);

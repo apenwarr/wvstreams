@@ -46,31 +46,49 @@ void WvCounterModeEncoder::incrcounter()
 bool WvCounterModeEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     bool flush)
 {
+    bool success = true;
+    size_t avail = inbuf.used();
+    size_t offset = outbuf.used();
+    
+    // generate a key stream
     size_t len;
-    while ((len = inbuf.used()) > 0)
+    for (len = avail; len >= countersize; len -= countersize)
     {
-        if (len < countersize && ! flush)
-            return true;
-
-        // generate a key stream
-        counterbuf.zap();
-        counterbuf.put(counter, countersize);
-        keybuf.zap();
-        bool success = keycrypt->encode(counterbuf, keybuf, true);
-        if (! success)
-            return false;
-
-        // XOR it with the data
-        if (len > countersize)
-            len = countersize;
-        const unsigned char *crypt = keybuf.get(len);
-        const unsigned char *datain = inbuf.get(len);
-        unsigned char *dataout = outbuf.alloc(len);
-        while (len-- > 0)
-            *(dataout++) = *(datain++) ^ *(crypt++);
-
-        // update the counter
+        counterbuf.reset(counter, countersize);
+        success = keycrypt->encode(counterbuf, outbuf, true);
+        if (! success) break;
         incrcounter();
     }
-    return true;
+    if (flush && len != 0 && success)
+    {
+        counterbuf.zap();
+        success = keycrypt->encode(counterbuf, outbuf, true);
+        if (success)
+            incrcounter();
+    }
+    avail -= len;
+    
+    // XOR in the data
+    while (avail > 0)
+    {
+        unsigned char *dataout = outbuf.mutablepeek(offset, & len);
+        size_t lenopt = inbuf.usedopt();
+        if (len > lenopt)
+            len = lenopt;
+        const unsigned char *datain = inbuf.get(len);
+        
+        if (len > avail)
+        {
+            len = avail;
+            avail = 0;
+        }
+        else
+        {
+            avail -= len;
+            offset += len;
+        }
+        while (len-- > 0)
+            *(dataout++) ^= *(datain++);
+    }
+    return success;
 }
