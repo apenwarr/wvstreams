@@ -404,7 +404,7 @@ WVPART(streams, The Streams Library,
  )
 
  WVCHAPTER(wvcallback, The Magic of WvCallBack,
-   WVSECT1(wvcallback1, WvCallback - What does it do?,
+   WVSECT1(wvcallback2, WvCallback - What does it do?,
 	   WvCallback calls a member function inside a class when certain event has
            happened or when certain task has been finished. The key point of WvCallback 
            is that it can be used in a function that is not in the same class as the 
@@ -416,7 +416,7 @@ WVPART(streams, The Streams Library,
      2. a member function pointer when the invoked function belongs to a class
   
   ) 
-  WVSECT1(wvcallback2,  WvCallback - How to create your own WvCallback?,
+  WVSECT1(wvcallback3,  WvCallback - How to create your own WvCallback?,
 	   First, you have to declare a new type of WvCallback using  DeclareWvCallback. 
            DeclareWvCallback is a macro that helps to create a new type of WvCallback.
 
