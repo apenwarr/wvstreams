@@ -379,16 +379,15 @@ inline WvString beforestr(WvStringParm line, WvStringParm a)
  * If pos > line.len()-1 return ""
  * if pos+len > line.len() simply return from pos to end of line
  */
-inline WvString substr(WvStringParm line, unsigned int pos, unsigned int len)
+inline WvString substr(WvString line, unsigned int pos, unsigned int len)
 {
-    char *tmp = (char *)line.cstr();
+    char *tmp = line.edit();
     if (pos > line.len()-1)
 	return "";
     tmp += pos;
 
     WvString ret = tmp;
-    ret.unique();
-    tmp = (char *)ret.cstr();
+    tmp = ret.edit();
     if (pos + len < line.len())
 	tmp[len] = '\0';
 
