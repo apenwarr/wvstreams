@@ -53,7 +53,7 @@ void get_simple_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
 
 /// Set one or more ACL entries through standard short or long text form.
 bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
-			 bool set_default_too);
+			 bool set_default_too = false);
 
 /// Set one or more ACL entries through standard short or long text form.
 bool set_default_acl_permissions(WvStringParm filename,
