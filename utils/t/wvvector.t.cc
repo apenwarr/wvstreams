@@ -1,7 +1,7 @@
 #include "wvtest.h"
 #include "wvvector.h"
 
-// START first old-style definition
+// BEGIN vectortest.cc definition
 #define DATASET 10000
 
 struct InstrumentedType
@@ -136,9 +136,9 @@ void test(const char *name)
     }
 }
 
-// END first old-style definition
+// END vectortest.cc definition
  
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("vectortest.cc")
 {
     // test vector 
     test("Vector");

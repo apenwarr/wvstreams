@@ -6,7 +6,7 @@
 
 #define WRAP_NUM_INPUT 6
 
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("wordwraptest.cc")
 {    
     int maxwidth = 4;
     WvEncoder *enc = new WvWordWrapEncoder(maxwidth);

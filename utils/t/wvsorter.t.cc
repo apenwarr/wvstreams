@@ -4,7 +4,7 @@
 #include "wvhashtable.h"
 #include "wvscatterhash.h"
 
-// BEGIN first old-style definition
+// BEGIN sorttest.cc definition
 DeclareWvList(WvString);
 DeclareWvTable(WvString);
 DeclareWvScatterTable2(WvStringTable2, WvString);
@@ -18,9 +18,9 @@ int oranges_to_apples(const WvString *a, const WvString *b)
 {
     return -strcmp(*a, *b);
 }
-// END first old-style definition
+// END sorttest.cc definition
 
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("sorttest.cc")
 {
     free(malloc(1));
     char *frontwards[10] = {"eight", "five", "four", "nine", "one", "seven",
@@ -28,11 +28,10 @@ WVTEST_MAIN("old-style")
     char *backwards[10] = {"two", "three", "ten", "six", "seven", "one", 
         "nine", "four", "five", "eight"};
         
-    // sorted linked list
+    // linked list sorter test
     {
         char *unsorted[10] = {"one", "two", "three", "four", "five", "six",
             "seven", "eight", "nine", "ten"};
-	printf("\nLinked list sorter test:\n");
 	WvStringList l;
         for (int i = 0; i < 10; i++)
             l.append(new WvString(unsorted[i]), true);

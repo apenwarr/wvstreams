@@ -2,7 +2,7 @@
 #include "wvcont.h"
 #include <stdio.h>
 
-// START first old-style definitions
+// START conttest.cc definitions
 static void *nonfunc(void *_x)
 {
     int x = (int)_x;
@@ -50,13 +50,13 @@ private:
 //	    printf("%s: <-- Honking out (%d)\n", id, x);
 	}
 	
-	printf("%s: DONE\n", id);
+//	printf("%s: DONE\n", id);
 	return (void *)x;
     }
 };
-// END first old-style definitions
+// END conttest.cc definitions
 
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("conttest.cc")
 {
     typedef WvCallback<void *, void *> CbType;
     

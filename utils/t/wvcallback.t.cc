@@ -2,7 +2,7 @@
 #include "wvcallback.h"
 #include <stdio.h>
 
-// START first old-style definitions
+// START callbacktest.cc definitions
 struct A
 {
     int x, y;
@@ -30,9 +30,9 @@ static A bunk1(const A &a)
 {
     return bunk(a, (void *)1);
 }
-// END first old-style definitions
+// END callbacktest.cc definitions
 
-// START second old-style definitions
+// START cbweirdtest.cc definitions
 typedef WvCallback<void> Cb;
 
 void f()
@@ -47,11 +47,10 @@ public:
     Derived(const Cb &cb) : Cb(cb)
         { }
 };
-// END second old-style definitions
+// END cbweirdtest.cc definitions
 
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("callbacktest.cc")
 {
-    // first old-style test "callbacktest.cc"
     {
         A a(1000, 2000);
         A result;
@@ -77,10 +76,11 @@ WVTEST_MAIN("old-style")
         if (!WVPASS(result.y == 2 * result.x))
             printf("   because [%d] != 2 * [%d]\n", result.y, result.x);
     }
-    
+}
+
 #ifdef CBWEIRD_DOESNT_CRASH        
+WVTEST_MAIN("cbweirdtest.cc")
     //FIXME: Write unittest to correct this bug, once it's known and solved
-    // second old-style test "cbweirdtest.cc"
     {
         Cb cb1(f);
         Cb cb2(cb1);
@@ -88,5 +88,5 @@ WVTEST_MAIN("old-style")
         Derived cb4(cb1);
         Derived cb5(cb3);
     }
-#endif
 }
+#endif

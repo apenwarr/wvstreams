@@ -8,9 +8,8 @@
 
 #define BSLASH_NUM_INPUT 5
 
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("backslashtest.cc")
 {
-    // from "backslashtest.cc"
     // Test encoding
     {
         WvEncoder *enc = new WvBackslashEncoder();

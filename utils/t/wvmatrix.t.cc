@@ -1,7 +1,7 @@
 #include "wvtest.h"
 #include "wvmatrix.h"
 
-// BEGIN first old-style definition
+// BEGIN matrixtest.cc definition
 // test that creation matches intended data
 bool matrix_matches(WvMatrix &in, int data[])
 {
@@ -74,8 +74,9 @@ bool matrix_product(WvMatrix &in1, WvMatrix &in2, WvMatrix &out)
      }
     return matches;
 }
-// END first old-style definition
-WVTEST_MAIN("old-style") 
+// END matrixtest.cc definition
+
+WVTEST_MAIN("matrixtest.cc") 
 {
     // test sum
     {

@@ -5,7 +5,7 @@
 
 //#define DEBUG_STRESS
 
-WVTEST_MAIN("old-style test")
+WVTEST_MAIN("buffertest.cc")
 {
     // from "buffertest.cc"
     // InPlaceBuffer Test
@@ -57,7 +57,7 @@ WVTEST_MAIN("old-style test")
         
         s = (char *)b.get(8);
         if (WVFAIL(strcmp(s, "frogs on ice")))
-            printf("   because [%s] != [frogs on ice]", s);
+            printf("   because [%s] != [frogs on ice]\n", s);
     
         WVPASS(b.used() == 19);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));    
@@ -65,14 +65,14 @@ WVTEST_MAIN("old-style test")
         b.put("frogs on bryce", 15);
         s = (char *)b.get(5);
         if (WVFAIL(strcmp(s, " ice")))
-            printf("   because [%s] != [ ice]", s);
+            printf("   because [%s] != [ ice]\n", s);
 
         WVPASS(b.used() == 29);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));    
         
         s = (char *)b.get(16);
         if (WVFAIL(strcmp(s, "frogs on rice")))
-            printf("   because [%s] != [frogs on rice]", s);
+            printf("   because [%s] != [frogs on rice]\n", s);
     
         WVPASS(b.used() == 13);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));
@@ -83,16 +83,17 @@ WVTEST_MAIN("old-style test")
         
         s = (char *)b.get(11);
         if (WVFAIL(strcmp(s, "s on rice")))
-            printf("   because [%s] != [s on rice]", s);
+            printf("   because [%s] != [s on rice]\n", s);
     
         s = (char *)b.get(14);
         if (WVFAIL(strcmp(s, "rogs on bryce")))
-            printf("   because [%s] != [rogs on bryce]", s);
+            printf("   because [%s] != [rogs on bryce]\n", s);
     
         WVPASS(b.used() == 0);
         WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));
     }
-/* FIXME: find out how we'd know if the buffer failed the stress test.   
+/* FIXME: find out how we'd know if the buffer failed the stress test, if there
+ * are any more hints than just *not crashed*
     // Buffer Stress Test
     {
         WvDynBuf b;

@@ -12,7 +12,7 @@
 #include "verstring.h"
 #include <stdio.h>
 
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("vertest.cc")
 {
     if (!WVFAIL(strcmp(ver_to_string(0x99998888), "9999.8888")))
         printf("   because [%s] != [9999.8888]\n", ver_to_string(0x99998888));

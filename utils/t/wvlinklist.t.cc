@@ -210,8 +210,7 @@ WVTEST_MAIN("basic")
     }
 }
 
-// from listtest.cc
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("listtest.cc")
 {
     WvString x("foo"), y("blue"), z("true"), bob("Foo: bar: baz: bob");
 

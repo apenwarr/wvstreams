@@ -1,9 +1,8 @@
 #include "wvtest.h"
 #include "strutils.h"
 
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("replacetest.cc")
 {
-    // replacetest.cc
     {
         char *input[2] = {"abbababababbba", "abbababababbbablab"};
         char *desired[2] = {"abxaxxaxxaxxaxbbxax", "abxaxxaxxaxxaxbbxaxblab"};
@@ -15,8 +14,10 @@ WVTEST_MAIN("old-style")
                 printf("   because [%s] != [%s]\n", result.cstr(), desired[i]);
         }
     }
+}
 
-    // sizetoatest.cc
+WVTEST_MAIN("sizetoatest.cc")
+{
     {
         long blocks = 987654321;
         long blocksize = 1000000;
