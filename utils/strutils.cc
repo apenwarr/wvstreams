@@ -92,24 +92,26 @@ char * strupr( char * string)
     return( string );
 }
 
-bool is_word( char * string )
-/***************************/
+
 // true if all the characters in "string" are isalnum().
+bool is_word(const char *p)
 {
-    char *	p;
-    for( p = string; *p != 0; p++ ) {
-    	if( isalnum( *p ) == 0 ) {
-    	    return( false );
-    	}
+    while (*p)
+    {
+    	if(!isalnum(*p++))
+    	    return false;
     }
-    return( true );
+    
+    return true;
 }
+
 
 // produce a hexadecimal dump of the data buffer in 'buf' of length 'len'.
 // it is formatted with 16 bytes per line; each line has an address offset,
 // hex representation, and printable representation.
-WvString hexdump_buffer(unsigned char *buf, size_t len)
+WvString hexdump_buffer(const void *_buf, size_t len)
 {
+    const unsigned char *buf = (const unsigned char *)_buf;
     size_t count, count2, top;
     WvString out;
 
@@ -166,8 +168,10 @@ bool isnewline(char c)
 
 
 // eg: hexify(foo, "ABCDEF", 4) will set foo to "41424344".
-void hexify(char *obuf, unsigned char *ibuf, size_t len)
+void hexify(char *obuf, const void *_ibuf, size_t len)
 {
+    const unsigned char *ibuf = (const unsigned char *)_ibuf;
+    
     while (len > 0)
     {
 	sprintf(obuf, "%02x", *ibuf++);
@@ -178,8 +182,9 @@ void hexify(char *obuf, unsigned char *ibuf, size_t len)
 
 
 // eg: unhexify(foo, "41424344") sets foo to "ABCD".
-void unhexify(unsigned char *obuf, char *ibuf)
+void unhexify(void *_obuf, const char *ibuf)
 {
+    unsigned char *obuf = (unsigned char *)_obuf;
     char lookup[] = "0123456789abcdef", *c, *c2;
     
     if (strlen(ibuf) % 1)  // odd number of bytes in a hex string?  No.
