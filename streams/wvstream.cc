@@ -303,8 +303,7 @@ void WvStream::flush(time_t msec_timeout)
     if (autoclose_time)
     {
 	time_t now = time(NULL);
-	fprintf(stderr,
-		"Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
+	TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
 		(unsigned int)this, now - autoclose_time, outbuf.used());
 	if (!outbuf.used() || now > autoclose_time)
 	{
@@ -320,8 +319,7 @@ void WvStream::flush_then_close(int msec_timeout)
     time_t now = time(NULL);
     autoclose_time = now + (msec_timeout + 999) / 1000;
     
-    fprintf(stderr,
-	    "Autoclose SETUP for 0x%08X - buf %d bytes, timeout %ld sec\n", 
+    TRACE("Autoclose SETUP for 0x%08X - buf %d bytes, timeout %ld sec\n", 
 	    (unsigned int)this, outbuf.used(), autoclose_time - now);
 
     // as a fast track, we _could_ close here: but that's not a good idea,

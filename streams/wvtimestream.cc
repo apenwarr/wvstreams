@@ -41,6 +41,13 @@ bool WvTimeStream::select_setup(SelectInfo &si)
     if (gettimeofday(&tv, &tz) || !ms_per_tick)
 	return false;
     
+    // compensate for "time warps" (someone sets the clock backwards)
+    if (tv.tv_sec < last_tv.tv_sec)
+    {
+	last_tv.tv_sec = tv.tv_sec;
+	last_tv.tv_usec = tv.tv_usec;
+    }
+    
     tdiff = (tv.tv_sec - last_tv.tv_sec) * 1000
 	+ (tv.tv_usec - last_tv.tv_usec) / 1000;
     
