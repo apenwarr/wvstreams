@@ -115,7 +115,7 @@ private:
      * Similar nastiness happens with SSL_read()
      */
     WvMiniBuffer read_bouncebuf;
-    bool read_again;
+    bool read_pending;
 };
 
 #endif // __WVSSLSTREAM_H

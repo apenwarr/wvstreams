@@ -15,7 +15,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509,
     bool _verify, bool _is_server) :
     WvStreamClone(_slave), debug("WvSSLStream",WvLog::Debug5),
     write_bouncebuf(MAX_BOUNCE_AMOUNT), write_eat(0),
-    read_bouncebuf(MAX_BOUNCE_AMOUNT), read_again(false)
+    read_bouncebuf(MAX_BOUNCE_AMOUNT), read_pending(false)
 {
     verify = _verify;
     is_server = _is_server;
@@ -111,8 +111,11 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         return 0;
     if (len == 0) return 0;
 
+    // if SSL buffers stuff on its own, select() may not wake us up
+    // the next time around unless we're sure there is nothing left
+    read_pending = true;
+    
     size_t total = 0;
-    bool read_pending = true;
     for (;;)
     {
         // handle SSL_read quirk
@@ -128,10 +131,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             len -= amount;
             total += amount;
             if (len == 0)
-            {
-                read_again = read_pending;
                 break;
-            }
             (unsigned char *)buf += amount;
         }
 
@@ -139,7 +139,6 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         read_bouncebuf.zap(); // force use of same position in buffer
         size_t avail = read_bouncebuf.free();
         unsigned char *data = read_bouncebuf.alloc(avail);
-        read_again = false;
         
         int result = SSL_read(ssl, data, avail);
         if (result <= 0)
@@ -151,7 +150,6 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
                     debug("<< SSL_read() needs to wait for readable.\n");
-                    read_again = true;
                     break; // wait for later
                     
                 case SSL_ERROR_NONE:
@@ -166,10 +164,10 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                     seterr(WvString("SSL read error #%s", errcode));
                     break;
             }
+            read_pending = false;
             break; // wait for next iteration
         }
         read_bouncebuf.unalloc(avail - size_t(result));
-        read_pending = false;
     }
 
     debug("<< read %s bytes\n", total);
@@ -297,9 +295,9 @@ void WvSSLStream::close()
 
 bool WvSSLStream::pre_select(SelectInfo &si)
 {
-    // the SSL library might be keeping its own internal buffers - try
-    // reading again if we were full the last time.
-    if (si.wants.readable && (read_again || read_bouncebuf.used()))
+    // the SSL library might be keeping its own internal buffers
+    // or we might have left buffered data behind deliberately
+    if (si.wants.readable && (read_pending || read_bouncebuf.used()))
     {
 	debug("pre_select: try reading again immediately.\n");
 	return true;
