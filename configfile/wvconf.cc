@@ -91,6 +91,7 @@ void WvConf::load_file()
     char *p;
     char *from_file;
     WvConfigSection *sect = &globalsection;
+    bool quick_mode = false;
 
     file.open(filename, O_RDONLY);
     if (!file.isok())
@@ -106,6 +107,8 @@ void WvConf::load_file()
     {
 	if ((p = parse_section(from_file)) != NULL)
 	{
+	    quick_mode = false;
+	    
 	    // a new section?
 	    if (!p[0])		// blank name: global section
 		sect = &globalsection;
@@ -116,6 +119,7 @@ void WvConf::load_file()
 		{
 		    sect = new WvConfigSection(p);
 		    append(sect, true);
+		    quick_mode = true;
 		}
 	    }
 	}
@@ -128,7 +132,12 @@ void WvConf::load_file()
 
 	    from_file = trim_string(from_file);
 	    if (from_file[0])	// nonblank option name
-		sect->set(from_file, p);
+	    {
+		if (quick_mode)
+		    sect->quick_set(from_file, p);
+		else
+		    sect->set(from_file, p);
+	    }
 	}
     }
 }
