@@ -8,10 +8,13 @@
  * See uniconf.h.
  */
 #include "uniconf.h"
+#include "uniconfnull.h"
 #include "wvstream.h"
 #include "wvstringtable.h"
 #include "uniconfiter.h"
 #include <assert.h>
+
+/***** UniConf *****/
 
 // basic constructor, generally used for toplevel config file
 UniConf::UniConf() :
@@ -105,7 +108,7 @@ bool UniConf::check_children()
     {
         // quick hack for now
         UniConf *top = gen_top();
-        if (top != this)
+        if (top != this && top->hasgen())
             top->generator->enumerate_subtrees(top, true);
     }
     return haschildren();
@@ -162,7 +165,10 @@ UniConf *UniConf::findormake(const UniConfKey &key)
         return toreturn;
     }
     else
-	return UniConfGen().make_tree(this, key); // generate an empty tree
+    {
+        // generate an empty tree
+	return UniConfNullGen().make_tree(this, key);
+    }
 }
 
 void UniConf::update()
@@ -319,17 +325,28 @@ void UniConf::dump(WvStream &s, bool everything)
     _dump(s, everything, keytable);
 }
 
-void UniConf::mount(UniConfGen *gen)
+bool UniConf::mount(const UniConfLocation &location)
 {
-    this->unmount();
+    unmount();
+    return mount(UniConfGenFactoryRegistry::instance()->
+        newgen(location, this));
+}
 
-    this->generator = gen;
-    this->generator->load();
+
+bool UniConf::mount(UniConfGen *gen)
+{
+    unmount();
+    if (gen)
+    {
+        generator = gen;
+        generator->load();
+        return true;
+    }
+    return false;
 }
 
 void UniConf::unmount()
 {
-    if (generator)
-        delete generator;
+    delete generator;
     generator = NULL;
 }

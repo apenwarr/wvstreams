@@ -10,47 +10,20 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
+#include "uniconflocation.h"
+#include "uniconfkey.h"
 #include "uniconftree.h"
 #include "wvhashtable.h"
 #include "wvstringlist.h"
-#include "uniconfkey.h"
 
 class WvStream;
 class WvStringTable;
 
+class UniConfGen;
 class UniConf;
 class UniConfDict;
 
-
-/**
- * A UniConfGen knows how to generate new UniConf objects in its tree.  It
- * may also know how to load/save its tree using some kind of permanent
- * storage (like a disk file, a central HConf server, or whatever).
- */
-class UniConfGen
-{
-public:
-    UniConfGen() {}
-    virtual ~UniConfGen();
-    
-    // this function may return NULL if the object "shouldn't" exist
-    // (in the opinion of the generator)
-    virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
-   
-    virtual void enumerate_subtrees(UniConf *conf, bool recursive);
-    virtual void update(UniConf *&h);
-    virtual void pre_get(UniConf *&h);
-    virtual bool isok() { return true; }
-
-    // Updates all data I am responsible for
-    virtual void update_all();
-    
-    // the default load/save functions don't do anything... you might not
-    // need them to.
-    virtual void load();
-    virtual void save();
-
-};
+#include "uniconfgen.h"
 
 
 /**
@@ -179,7 +152,8 @@ public:
     bool checkgen() { return hasgen() && generator->isok(); }
     bool comparegen(UniConfGen *gen) { return gen == generator; }
     
-    void mount(UniConfGen *gen);
+    bool mount(const UniConfLocation &location);
+    bool mount(UniConfGen *gen);
     void unmount();
 
     class Iter;

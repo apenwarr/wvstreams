@@ -5,9 +5,10 @@
 #include "wvtclstring.h"
 
 
-UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, UniConfDaemon *_source)
-    : UniConfConn(_s), 
-      log(WvString("UniConf to %s", *_s->src()), WvLog::Debug)
+UniConfDaemonConn::UniConfDaemonConn(WvStream *_s,
+    UniConfDaemon *_source) :
+    UniConfConn(_s), 
+    log(WvString("UniConf to %s", *_s->src()), WvLog::Debug)
 {
     print("HELLO UniConf Server ready\n");
     source = _source;
@@ -24,7 +25,6 @@ UniConfDaemonConn::~UniConfDaemonConn()
         source->del_callback(key, this, 0);
         source->del_callback(key, this, 1);
         source->del_callback(key, this, 2);
-
     }
 }
 

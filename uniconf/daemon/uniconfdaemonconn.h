@@ -5,6 +5,8 @@
 #include "uniconfconn.h"
 #include "wvstringlist.h"
 #include "wvlog.h"
+#include "wvtcp.h"
+#include "wvunixsocket.h"
 
 class UniConfDaemon;
 

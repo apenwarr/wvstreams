@@ -14,10 +14,10 @@ void sighandler_die(int sig)
 
 void usage()
 {
-    wvcon->print("uniconfdaemon usage:  uniconfdaemon [-mount mode file mount-point] [-d level]\n");
-    wvcon->print("    Where:        mode is one of:  ini\n");
-    wvcon->print("    file:         is the file name to mount\n");
-    wvcon->print("    mount-point:  is the point to mount the config keys under\n");
+    wvcon->print("uniconfdaemon usage:  uniconfdaemon "
+        "[-mount mountpoint moniker] [-d level]\n");
+    wvcon->print("    mountpoint:   is the point to mount the config keys under\n");
+    wvcon->print("    moniker:      is the moniker, eg. ini://myfile\n");
     wvcon->print("    level:        is one of:  Critical, Error, Warning, Notice, Info, or Debug[1-5]\n");
 
     exit(2);
@@ -61,31 +61,25 @@ int main(int argc, char **argv)
     
     for (int i=1; i < argc; i++)
     {
-        if (!strcmp(argv[i],"-mount"))
+        if (!strcmp(argv[i],"-mount") && i + 2 < argc)
         {
-            WvString *mode = new WvString(argv[i+1]);
-            WvString *location = new WvString(argv[i+2]);
-            WvString *mp = new WvString(argv[i+3]);
+            WvString *mp = new WvString(argv[i + 1]);
+            WvString *location = new WvString(argv[i + 2]);
 
-            if (!*mode || !*location || !*mp)
-            {
-                delete mode;
-                delete location;
-                delete mp;
-                usage();
-            }
-            
-            strings.append(mode, true);
-            strings.append(location, true);
             strings.append(mp, true);
-            i += 3;
+            strings.append(location, true);
+            i += 2;
         }
         else if (!strcmp(argv[i], "-d"))
         {
-            level = findloglevel(argv[++i]);
+            level = findloglevel(argv[i]);
+            i += 1;
         }
         else
+        {
             usage();
+            return 1;
+        }
     }
    
     daem = new UniConfDaemon(level);
@@ -94,12 +88,10 @@ int main(int argc, char **argv)
 
     while (i.next())
     {
-        WvString mode = i();
+        UniConfKey mp(i());
         i.next();
-        WvString location = i();
-        i.next();
-        WvString mp = i();
-        daem->domount(mode, location, mp);
+        UniConfLocation location(i());
+        daem->domount(mp, location);
     }
     daem->run();
     

@@ -13,9 +13,6 @@
 // Control variable
 bool want_to_die = false;
 
-//WvUnixAddr addr("/tmp/uniconf/uniconfsocket");
-WvIPPortAddr addr("0.0.0.0", 4111);
-
 WvString printheader(WvString h, WvString mountpoint)
 {
     WvString header("%s WITH MOUNTPOINT %s", h, mountpoint);
@@ -147,9 +144,9 @@ void usage()
 
 int main(int argc, char **argv)
 {
-
-    system("clear");
+//    system("clear");
     
+    UniConfLocation location("tcp://");
     WvString mountpoint("");
     WvString h;
 
@@ -172,7 +169,7 @@ int main(int argc, char **argv)
         {
             UniConf mainconf;
             UniConf *mounted = mainconf.findormake(mountpoint);
-            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+            mounted->mount(location);
 
             h = printheader("TEST GETTING KEYS", mountpoint);
             printresult(testgetkeys(mainconf, mountpoint), h);
@@ -183,7 +180,7 @@ int main(int argc, char **argv)
         {
             UniConf mainconf;
             UniConf *mounted = mainconf.findormake(mountpoint);
-            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+            mounted->mount(location);
 
             h = printheader("TEST GETTING FROM A SECTION", mountpoint);
             printresult(testgetfromsections(mainconf, mountpoint), h);
@@ -194,8 +191,7 @@ int main(int argc, char **argv)
         {
                 UniConf mainconf;
                 UniConf *mounted = mainconf.findormake(mountpoint);
-                mounted->mount(new UniConfClient(mounted,
-                    new WvTCPConn(addr), NULL));
+                mounted->mount(location);
 
                 h = printheader("TEST SETTING KEYS", mountpoint);
                 printresult(testgetsetkey(mainconf, mountpoint), h);

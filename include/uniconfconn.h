@@ -12,6 +12,8 @@
 #include "wvstreamclone.h"
 #include "wvbuffer.h"
 
+#define DEFAULT_UNICONF_DAEMON_TCP_PORT 4111
+
 /**
  * Represents a connection to a UniConf daemon.
  */

@@ -13,9 +13,6 @@
 // Control variable
 bool want_to_die = false;
 
-//WvUnixAddr addr("/tmp/uniconf/uniconfsocket");
-WvIPPortAddr addr("0.0.0.0", 4111);
-
 void printheader(WvString h, WvString mountpoint)
 {
     WvString header("%s WITH MOUNTPOINT %s", h, mountpoint);
@@ -58,9 +55,12 @@ void testxiter(UniConf &mainconf)
     }
 }
 #endif
+
 int main(int argc, char **argv)
 {
     WvString mountpoint("/");
+    UniConfLocation location("tcp://");
+    
     for (int i = 0; i < 2; i++)
     {
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
         // Test a normal iterator
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
-            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+            mounted->mount(location);
 
             printheader("TEST NORMAL ITERATORS", mountpoint);
             testnormaliter(mainconf);
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
         // Test a recursive iterator
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
-            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+            mounted->mount(location);
             
             printheader("TEST RECURSIVE ITERATORS", mountpoint);
             testrecursiveiter(mainconf);
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
         {
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
-            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+            mounted->mount(location);
             printheader("TEST X ITERATORS", mountpoint);
             testxiter(mainconf);
         }

@@ -6,7 +6,6 @@
  */
 #include "uniconfdaemon.h"
 #include "uniconfdaemonconn.h"
-#include "wvtcp.h"
 #include "uniconfiter.h"
 #include <signal.h>
 
@@ -29,30 +28,20 @@ UniConfDaemon::~UniConfDaemon()
     // nothing special
 }
 
-// Look after the actual mounting, where mode indicates the type of config file
-// we are using, file is the location of the actual file, and mp is the point
-// where we want to mount the contents into the config tree.
-UniConf *UniConfDaemon::domount(WvStringParm mode,
-    WvStringParm mountfrom, const UniConfKey &mp)
+
+UniConf *UniConfDaemon::domount(const UniConfKey &mountpoint,
+    const UniConfLocation &location)
 {
     dolog(WvLog::Debug1, "domount", ENTERING);
-    UniConf *mounted = mainconf.findormake(mp);
-    if (mode == "ini")
-    {
-        dolog(WvLog::Debug3, "domount", WvString("Attempting to mount the %s file %s to point:  %s->\n",
-                mode, mountfrom, mp));
-        mounted->mount(new UniConfIniFile(mounted, mountfrom));
-        if (!mounted->checkgen())
-        {
-            dolog(WvLog::Error, "domount", WvString("IniFile generator was not successfully created for %s with file %s->\n",
-                    mp, mountfrom));
-            mounted->unmount();
-        }
-        dolog(WvLog::Debug1, "domount", LEAVING);
+    UniConf *mounted = mainconf.findormake(mountpoint);
+    dolog(WvLog::Debug3, "domount", WvString("Mounting "
+        "\"%s\" from \"%s\"\n", mountpoint, location));
+    if (mounted->mount(location))
         return mounted;
-    }
-    else
-        return NULL;
+
+    dolog(WvLog::Error, "domount", WvString("Could not mount "
+        "\"%s\" from \"%s\"\n", mountpoint, location));
+    return NULL;
 }
 
 void UniConfDaemon::errorcheck(WvStream *s, WvString type)
@@ -546,7 +535,7 @@ void UniConfDaemon::run()
     WvStringParm myname("run");
 
     dolog(WvLog::Debug1, myname, ENTERING);
-    domount("ini", DEFAULT_CONFIG_FILE, "/");
+    domount("/", WvString("ini://%s", DEFAULT_CONFIG_FILE));
 
     // Make sure that everything was cleaned up nicely before.
     dolog(WvLog::Debug3,myname,"Housecleaning");
@@ -561,7 +550,8 @@ void UniConfDaemon::run()
     l.append(list, true); 
 
     // Now listen on the correct TCP port
-    WvTCPListener *tlist = new WvTCPListener(WvIPPortAddr("0.0.0.0", 4111));
+    WvTCPListener *tlist = new WvTCPListener(WvIPPortAddr("0.0.0.0",
+        DEFAULT_UNICONF_DAEMON_TCP_PORT));
     errorcheck(tlist, "WvTCPListener");
 
     l.append(tlist, true);

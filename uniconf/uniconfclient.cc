@@ -1,22 +1,33 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
- * UniConfClient is a UniConfGen for retrieving data from the UniConfDaemon.
- *
- * see "uniconfclient.h"
  */
+ 
+/** \file
+ * UniConfClientGen is a UniConfGen for retrieving data from the
+ * UniConfDaemon.
+ */
+#include "uniconfclient.h"
+#include "wvtclstring.h"
+#include "wvtcp.h"
+#include "wvunixsocket.h"
+#include "wvaddr.h"
+#include "wvresolver.h"
 
-#include <uniconfclient.h>
 
-UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l) :
-    top(_top), log("UniConfClient"), waiting(13), list(l)
+/***** UniConfClientGen *****/
+
+UniConfClientGen::UniConfClientGen(
+    const UniConfLocation &_location,
+    UniConf *_top, WvStream *stream, WvStreamList *l) :
+    UniConfGen(_location),
+    top(_top), log("UniConfClientGen"), waiting(13), list(l)
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
     // actually try to finish connecting until in the first pre_select.
     conn = new UniConfConn(stream);
     conn->select(15000, true, false, false);
-    conn->setcallback(wvcallback(WvStreamCallback, *this, UniConfClient::execute), NULL);
+    conn->setcallback(wvcallback(WvStreamCallback, *this, UniConfClientGen::execute), NULL);
 
     if (list)
         list->append(conn, false);
@@ -25,7 +36,7 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l) :
     conn->alarm(15000);
 }
 
-UniConfClient::~UniConfClient()
+UniConfClientGen::~UniConfClientGen()
 {
     if (conn)
     {
@@ -37,7 +48,7 @@ UniConfClient::~UniConfClient()
      }
 }
 
-bool UniConfClient::isok()
+bool UniConfClientGen::isok()
 {
     return (conn && conn->isok());
 }
@@ -45,7 +56,7 @@ bool UniConfClient::isok()
 
 // Saves the current subtree of the uniconf object.  
 // Note:  If conn is not ok, or if conn is NULL, then we just return.
-void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
+void UniConfClientGen::savesubtree(UniConf *tree, UniConfKey key)
 {
     if (!conn || !conn->isok())
     {
@@ -84,7 +95,7 @@ void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
     }
 }
 
-void UniConfClient::save()
+void UniConfClientGen::save()
 {
     // Make sure we actually need to save anything...
     if (!top->dirty && !top->child_dirty)
@@ -104,14 +115,14 @@ void UniConfClient::save()
     savesubtree(top, UniConfKey::EMPTY);
 }
 
-UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
+UniConf *UniConfClientGen::make_tree(UniConf *parent, const UniConfKey &key)
 {
     // Create the node which we're actually going to return...
     UniConf *toreturn = UniConfGen::make_tree(parent, key);
     return toreturn;
 }
 
-void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
+void UniConfClientGen::enumerate_subtrees(UniConf *conf, bool recursive)
 {
     if (!conn || !conn->isok())
         return;
@@ -135,7 +146,7 @@ void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
     }
 }
 
-void UniConfClient::pre_get(UniConf *&h)
+void UniConfClientGen::pre_get(UniConf *&h)
 {
     WvString lookfor("%s", h->gen_full_key());
     if (conn && conn->isok())
@@ -143,7 +154,7 @@ void UniConfClient::pre_get(UniConf *&h)
             wvtcl_escape(lookfor));
 }
 
-void UniConfClient::update_all()
+void UniConfClientGen::update_all()
 {
     if (conn->select(0,true,false,false))
         conn->callback();
@@ -161,7 +172,7 @@ void UniConfClient::update_all()
     //wvcon->print("There are %s items after the zap.\n", dict.count());
 }
 
-void UniConfClient::update(UniConf *&h)
+void UniConfClientGen::update(UniConf *&h)
 {
     assert(h != NULL);
 
@@ -201,7 +212,7 @@ void UniConfClient::update(UniConf *&h)
     h->dirty = false;
 }
 
-void UniConfClient::executereturn(UniConfKey &key, WvConstStringBuffer &fromline)
+void UniConfClientGen::executereturn(UniConfKey &key, WvConstStringBuffer &fromline)
 {
     WvString value = wvtcl_getword(fromline);
     UniConfPair *data = waiting[key];
@@ -223,7 +234,7 @@ void UniConfClient::executereturn(UniConfKey &key, WvConstStringBuffer &fromline
     }
 }
 
-void UniConfClient::executeforget(UniConfKey &key)
+void UniConfClientGen::executeforget(UniConfKey &key)
 {
     UniConfPair *data = waiting[key];
     if (data)
@@ -241,7 +252,7 @@ void UniConfClient::executeforget(UniConfKey &key)
     }
 }
 
-void UniConfClient::executesubtree(UniConfKey &key, WvConstStringBuffer &fromline)
+void UniConfClientGen::executesubtree(UniConfKey &key, WvConstStringBuffer &fromline)
 {
     waitforsubt = false;
     time_t ticks_left = conn->alarm_remaining();
@@ -261,20 +272,20 @@ void UniConfClient::executesubtree(UniConfKey &key, WvConstStringBuffer &fromlin
     conn->alarm(ticks_left);
 }
 
-void UniConfClient::executeok(WvConstStringBuffer &fromline)
+void UniConfClientGen::executeok(WvConstStringBuffer &fromline)
 {
 /*    log(WvLog::Debug3,"Command %s with key %s was executed successfully.\n",
                         cmd, key);*/
     fromline.zap();
 }
 
-void UniConfClient::executefail(WvConstStringBuffer &fromline)
+void UniConfClientGen::executefail(WvConstStringBuffer &fromline)
 {
 //    log(WvLog::Debug3,"Command %s with key %s failed.\n", cmd, key);
     fromline.zap();
 }
 
-void UniConfClient::execute(WvStream &stream, void *userdata)
+void UniConfClientGen::execute(WvStream &stream, void *userdata)
 {
     UniConfConn *s = (UniConfConn *) &stream;
     s->fillbuffer();
@@ -331,3 +342,41 @@ void UniConfClient::execute(WvStream &stream, void *userdata)
 }
 
 
+
+/***** UniConfClientGenFactory *****/
+
+UniConfGen *UniConfClientGenFactory::newgen(
+    const UniConfLocation &location, UniConf *top)
+{
+    if (location.proto() == "unix")
+    {
+        WvUnixAddr addr(location.payload());
+        return new UniConfClientGen(location, top,
+            new WvUnixConn(addr), NULL);
+    }
+    else
+    {
+        WvStringList hostport;
+        hostport.split(location.payload(), ":");
+        WvString hostname("localhost");
+        int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
+        WvStringList::Iter it(hostport);
+        it.rewind();
+        if (it.next())
+        {
+            hostname = it();
+            if (it.next())
+                port = it().num();
+        }
+        const WvIPAddr *hostaddr;
+        WvResolver resolver;
+        // FIXME: timeout does not really belong here!
+        if (resolver.findaddr(500, hostname, & hostaddr) > 0)
+        {
+            WvIPPortAddr addr(*hostaddr, port);
+            return new UniConfClientGen(location, top,
+                new WvTCPConn(addr), NULL);
+        }
+        return NULL;
+    }
+}

@@ -1,27 +1,16 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
- * UniConfIniFile is a UniConfGen for ".ini"-style files like the ones used
- * by Windows and the original WvConf.
- * 
- * See uniconfini.h.
+ */
+ 
+/** \file
+ * A generator for .ini files.
  */
 #include "uniconfini.h"
 #include "uniconfiter.h"
 #include "wvtclstring.h"
 #include "strutils.h"
 #include "wvfile.h"
-
-
-UniConfIniFile::UniConfIniFile(UniConf *_top, WvStringParm _filename)
-    : filename(_filename), log(filename)
-{
-    top = _top;
-    save_test = false;
-    log(WvLog::Debug1, "Using IniFile '%s' at location '%s'.\n", filename, top->full_key());
-}
-
 
 static WvFastString inicode(WvStringParm s)
 {
@@ -74,7 +63,24 @@ static void inisplit(WvStringParm s, WvString &key, WvString &value)
 }
 
 
-void UniConfIniFile::load()
+/***** UniConfIniFileGen *****/
+
+UniConfIniFileGen::UniConfIniFileGen(
+    UniConf *_top, WvStringParm _filename) :
+    UniConfGen(WvString("ini://%s", _filename)),
+    filename(_filename), log(filename)
+{
+    top = _top;
+    log(WvLog::Debug1, "Using IniFile '%s' at location '%s'.\n", filename, top->full_key());
+}
+
+
+UniConfIniFileGen::~UniConfIniFileGen()
+{
+}
+
+
+void UniConfIniFileGen::load()
 {
     char *cptr, *line;
     UniConf *h;
@@ -132,12 +138,9 @@ void UniConfIniFile::load()
 }
 
 
-void UniConfIniFile::save()
+void UniConfIniFileGen::save()
 {
     WvString newfile(filename);
-    if (save_test)
-	newfile = WvString("%s.new", filename);
-    
     if (!top->dirty && !top->child_dirty)
 	return; // no need to rewrite!
     
@@ -203,7 +206,7 @@ static bool any_interesting_children(UniConf *h)
 }
 
 
-void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
+void UniConfIniFileGen::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 {
     UniConf *interesting;
     
@@ -262,3 +265,11 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 }
 
 
+
+/***** UniConfIniFileGenFactory *****/
+
+UniConfGen *UniConfIniFileGenFactory::newgen(
+    const UniConfLocation &location, UniConf *top)
+{
+    return new UniConfIniFileGen(top, location.payload());
+}

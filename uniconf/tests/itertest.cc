@@ -9,6 +9,7 @@
 #include <assert.h>
 
 
+#if 0
 static int hconfcmp(const UniConf *a, const UniConf *b)
 {
     return a->key() == b->key();
@@ -19,13 +20,14 @@ static int rhconfcmp(const UniConf *a, const UniConf *b)
 {
     return a->full_key() == b->full_key();
 }
+#endif
 
 
 int main()
 {
     WvLog log("itertest", WvLog::Info);
     UniConf h;
-    h.mount(new UniConfIniFile(&h, "test2.ini"));
+    h.mount(UniConfLocation("ini://test2.ini"));
     
     {
 	log("Non-recursive dump of /HTTPD:\n");

@@ -4,12 +4,13 @@
  *
  * Test program for the new, hierarchical WvConf.
  */
-#include "uniconfini.h"
 #include "wvlog.h"
-#include "wvconf.h"
 #include "wvdiriter.h"
 #include "wvfile.h"
 #include "wvtclstring.h"
+#include "uniconf.h"
+#include "strutils.h"
+#include "wvconf.h"
 
 
 class HelloGen : public UniConfGen
@@ -18,8 +19,12 @@ public:
     WvString defstr;
     int count;
     
-    HelloGen(WvStringParm _def = "Hello World")
-	: defstr(_def) { count = 0; }
+    HelloGen(WvStringParm _def = "Hello World") :
+        UniConfGen(WvString("hello://%s", _def)),
+        defstr(_def)
+    {
+        count = 0;
+    }
     virtual void update(UniConf *&h);
 };
 
@@ -47,8 +52,9 @@ public:
 };
 
 
-UniConfFileTree::UniConfFileTree(UniConf *_top, WvStringParm _basedir)
-    : basedir(_basedir), log("FileTree", WvLog::Info)
+UniConfFileTree::UniConfFileTree(UniConf *_top, WvStringParm _basedir) :
+    UniConfGen(WvString("tree://%s", _basedir)),
+    basedir(_basedir), log("FileTree", WvLog::Info)
 {
     top = _top;
     log(WvLog::Notice,
@@ -209,15 +215,9 @@ int main()
 	
 	UniConf cfg;
 	UniConf *cfg2 = &cfg["/weaver ini test"];
-	UniConfIniFile *ini;
 	
-	ini = new UniConfIniFile(&cfg, "test.ini");
-        cfg.mount(ini);
-	ini->save_test = true;
-	
-	ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini");
-        cfg2->mount(ini);
-	ini->save_test = true;
+        cfg.mount(UniConfLocation("readonly://ini://test.ini"));
+        cfg2->mount(UniConfLocation("readonly://ini://tmp/weaver.ini"));
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -229,15 +229,15 @@ int main()
 	
 	UniConf cfg;
 	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
-	UniConfIniFile *ini;
 	
-	ini = new UniConfIniFile(&h1, "test.ini");
-	ini->save_test = true;
-	h1.mount(ini);
-        
-        ini = new UniConfIniFile(&h2, "test2.ini");
-	ini->save_test = true;
-        h2.mount(ini);
+	h1.mount(UniConfLocation("readonly://ini://test.ini"));
+        h2.mount(UniConfLocation("readonly://ini://test2.ini"));
+        cfg.load();
+
+        h1.unmount();
+	h1.mount(UniConfLocation("ini://test.ini.new"));
+        h2.unmount();
+        h2.mount(UniConfLocation("ini://test2.ini.new"));
 	
 	log("Partial config dump (branch 1 only):\n");
 	h1.dump(quiet);
