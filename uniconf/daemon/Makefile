@@ -1,6 +1,8 @@
 #TOPDIR = ../..
 include $(TOPDIR)/wvrules.mk
 
+FOOBAR:=$(warning hey, I'm some crazy-ass recursive makefile!)
+
 XPATH=$(TOPDIR)/src/wvstreams/utils $(TOPDIR)/src/wvstreams/streams \
       $(TOPDIR)/src/wvstreams/ipstreams $(TOPDIR)/src/wvstreams/crypto \
       $(TOPDIR)/src/wvstreams/configfile $(TOPDIR)/src/wvstreams/include \
