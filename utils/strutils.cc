@@ -308,6 +308,9 @@ int strcount(const WvString &s, const char c)
     return n;
 }
 
+// Example: encode_hostname_as_DN("www.fizzle.com")
+// will result in cn=www.fizzle.com,dc=www,dc=fizzle,dc=com
+// (I think ;)
 WvString encode_hostname_as_DN(WvString &hostname)
 {
    WvString dn("cn=%s,",hostname);
