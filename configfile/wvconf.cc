@@ -51,7 +51,7 @@ static int check_for_bool_string(const char *s)
 
 // This "int" version of get is smart enough to interpret words like on/off,
 // true/false, and yes/no.
-int WvConf::get(const WvString &section, const WvString &entry, int def_val)
+int WvConf::getint(const WvString &section, const WvString &entry, int def_val)
 {
     WvString def_str(def_val);
     return check_for_bool_string(get(section, entry, def_str));
@@ -60,8 +60,8 @@ int WvConf::get(const WvString &section, const WvString &entry, int def_val)
 
 // This "int" version of fuzzy_get is smart enough to interpret words like 
 // on/off, true/false, and yes/no.
-int WvConf::fuzzy_get(WvStringList &section, WvStringList &entry,
-		      int def_val)
+int WvConf::fuzzy_getint(WvStringList &section, WvStringList &entry,
+			 int def_val)
 {
     WvString def_str(def_val);
     return check_for_bool_string(fuzzy_get(section, entry, def_str));
@@ -70,15 +70,15 @@ int WvConf::fuzzy_get(WvStringList &section, WvStringList &entry,
 
 // This "int" version of fuzzy_get is smart enough to interpret words like 
 // on/off, true/false, and yes/no.
-int WvConf::fuzzy_get(WvStringList &section, const WvString &entry,
-		      int def_val)
+int WvConf::fuzzy_getint(WvStringList &section, const WvString &entry,
+			 int def_val)
 {
     WvString def_str(def_val);
     return check_for_bool_string(fuzzy_get(section, entry, def_str));
 }
 
 
-void WvConf::set(const WvString &section, const WvString &entry, int value)
+void WvConf::setint(const WvString &section, const WvString &entry, int value)
 {
     WvString def_str(value);
     set(section, entry, def_str);

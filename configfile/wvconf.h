@@ -96,24 +96,24 @@ public:
 
     WvConfigSection *operator[] (const WvString &s);
 
-    int get(const WvString &section, const WvString &entry, int def_val);
+    int getint(const WvString &section, const WvString &entry, int def_val);
     
     const char *get(const WvString &section, const WvString &entry,
 		    const char *def_val = NULL);
 
-    int fuzzy_get(WvStringList &sect, const WvString &entry,
+    int fuzzy_getint(WvStringList &sect, const WvString &entry,
 		  int def_val);
     const char *fuzzy_get(WvStringList &sect, const WvString &entry,
 			  const char *def_val = NULL);
 
-    int fuzzy_get(WvStringList &sect, WvStringList &entry,
+    int fuzzy_getint(WvStringList &sect, WvStringList &entry,
 		  int def_val);
     const char *fuzzy_get(WvStringList & sect, WvStringList & ent,
 			  const char *def_val = NULL);
 
+    void setint(const WvString &section, const WvString &entry, int value);
     void set(const WvString &section, const WvString &entry,
 	     const char *value);
-    void set(const WvString &section, const WvString &entry, int value);
 
     void delete_section(const WvString &section);
 
