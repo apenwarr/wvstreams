@@ -51,8 +51,8 @@ libwvcrypto.so: crypto/crypto.libs
 libwvcrypto.a: crypto/crypto.libs
 
 wvrules.mk:
-	[ -e ../../wvrules.mk ] && ln -s ../../wvrules.mk .
-	[ -e ../../rules.local.mk ] && ln -s ../../rules.local.mk .
+	[ ! -e ../../wvrules.mk ] || ln -s ../../wvrules.mk .
+	[ ! -e ../../rules.local.mk ] || ln -s ../../rules.local.mk .
 
 genkdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
