@@ -326,20 +326,19 @@ WVPART(utils, The Utilities Library,
    subclass to redeclare all of the other signatures for
    an overloaded method.
 
-   WVSECT2(wvbase64, WvBase64.cc(),
+   WVSECT2(wvbase64, WvBase64.cc,
 
-    Functions for encoding and decoding strings in MIME Base64 notation.
+    Contains functions for encoding and decoding strings in MIME Base64 notation.
 
     WVSECT3(wvbase64encode, WvBase64Encoder(),
-     Converts a string to base64 encoding and returns a new WvBuffer in
-     result.
+     Converts a string to base64 encoding.
     )
 
     WVSECT3(wvbase64decode, WvBase64Decoder(),
-     Converts a string in from base64 format into a normal format and
-     returns it as a WvBuffer.
+     Converts a string from base64 format into a normal format.
      
-     Insert examples here...
+     An example of WvBase64Encoder:
+     WVEXAMPLE(wvbase64ex.cc)
     )
    )
   )
@@ -427,7 +426,7 @@ c.edit()[1] = 'a';)
      You very seldom want to leave a WvString this way, but if you do, you
      can test for this condition simply by comparing it to NULL:
 	  
-	  WVCMD((nul == NULL))
+     WVCMD((nul == NULL))
      
      A zero-length WvString differs slightly from a null WvString.  You can
      declare one as follows:
@@ -469,6 +468,11 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
    A typical use of WvLinkList would be something like this:
    
    WVEXAMPLE(wvlistex.cc)
+   
+   The result is:
+
+   WVCMD( bork bork
+blah blah)
  )
  
  WVCHAPTER(wvhashtable, WvHashTable - type-safe hash tables and iterators,
@@ -490,7 +494,7 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
       You can create a WvHashTable of any data type you want. For example,
       a WvHashTable of WvString data type can be create like this:
 
-      DeclareWvTable(WvString);
+      WVCMD(DeclareWvTable(WvString);)
 
       This will create a hashtable that will contain data of WvString type.
       It actually instantiates a WvStringTable class that inherits from
@@ -499,47 +503,79 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
       You can set the size of your dictionary by invoking the constructor of 
       the WvStringTable class, like this:
 
-      WvStringTable t(100);
+      WVCMD(WvStringTable t(100);)
 
       The WvString hashtable now has 100 slots. 
 
       You can create some data of type WvString and put them in the dictionary like this:
 
-      t.add(address of data, false);
+      WVCMD(t.add(address of data, false);)
 
-      Here the second parameter 'false' means that you don't want the data to be automatically destroyed at the end of the program. This is used because some data types like WvString already has the automatic self-destroy feature.
+      Here the second parameter 'false' means that you don't want the data to be 
+      automatically destroyed at the end of the program. This is used because some 
+      data types like WvString already has the automatic self-destroy feature.
       For some other data types, you may need to set the second parameter to 'true'.
       
       You can use the iterator to go through the hashtable and print it out if you like.
 
-      WvStringTable::Iter i(t);
+      WVCMD(WvStringTable::Iter i(t);)
 
       You can also count the number of words in the dictionary with:
 
-      t.count();
+      WVCMD(t.count();)
 
-      To find out if a word is already in the dictionary, you can invoke the comparison by using the [] operator. For example, you want to know if the word 'bijoux' exists in the dictionary. So you declare a WvString variable that contains the string 'bijoux', like this:
+      To find out if a word is already in the dictionary, you can invoke the comparison by 
+      using the [] operator. For example, you want to know if the word 'bijoux' exists 
+      in the dictionary. So you declare a WvString variable that contains the string 
+      'bijoux', like this:
  
-      WvString sample("bijoux");
+      WVCMD(WvString sample("bijoux");)
 
       Then you can compare it like this:
 
       t[sample] returns NULL if 'bijoux' is NOT in the dictionary.
-
       t[sample] returns the word that matches 'bijoux' in the dictionary if 'bijoux is in the dictionary.
 
       To remove a word from the dictionary, do this:
 
-      t.remove(address of data);
+      WVCMD(t.remove(address of data);)
 
       To empty the entire dictionary, do this:
 
-      t.zap();
+      WVCMD(t.zap();)
 
       The following example shows all the mentioned features of a hashtable.
       Please take a look and try compile and run it to see for yourself.
 
       WVEXAMPLE(wvhashtableex.cc)
+
+      The result is:
+      WVCMD(What words do we have in the dictionary?
+matin
+oui
+Bonjour
+bonsoir
+demain
+comment
+non
+aussi
+depanneur
+bien
+There are 10 words stored in the dictionary so far.
+Is 'Bonjour' in the dictionary? Yes
+Is 'Salut' in the dictionary? No
+Modified List:
+matin
+oui
+Bonjour
+bonsoir
+demain
+comment
+non
+depanneur
+bien
+Empty List:)
+
    )
       
  )
@@ -574,7 +610,7 @@ printf(buf.get(14));)
    program's functions but also library functions.
 
    Setting up WvCrash involves running wvcrash_setup() and passing it the name
-   of your program (generally you'll want want to pass argv[0]).  When the
+   of your program (generally you'll want to pass argv[0]).  When the
    program dies, it automatically executes the user-defined program "wvcrash",
    if it exists, and pipes the WvCrash stack trace to its stdin.  If there's no
    program called "wvcrash" in the path, it writes the stack trace to a file

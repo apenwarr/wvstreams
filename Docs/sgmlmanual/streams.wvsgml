@@ -271,7 +271,21 @@ WVPART(streams, The Streams Library,
  )
  
  WVCHAPTER(logs, Dealing with Log Messages,
-  WVSECT1(wvlog, WvLog - printing log messages, x)
+  WVSECT1(wvlog, WvLog - printing log messages, 
+   A generic data-logger class with support for multiple receivers.  If
+   no WvLogRcv objects have been created (see wvlogrcv.h) the default is
+   to log to stderr.
+  
+   WvLog supports partial- and multiple-line log messages.  For example,
+   WVCMD(log.print("test ");
+log.print("string\nfoo");)
+   will print:
+   WVCMD(appname(lvl): test string
+appname(lvl): foo)
+
+   An example for WvLog:
+   WVEXAMPLE(wvlogex.cc)
+  )
   WVSECT1(wvlogrcv, WvLogRcv - receiving and disposing of log messages, x)
   WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, x)
   WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
