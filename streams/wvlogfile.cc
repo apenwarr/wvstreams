@@ -18,17 +18,20 @@
 ///////////////////////////////////// WvLogFile
 
 WvLogFile::WvLogFile(WvString _dirpath, WvString _basefname,
-    int _keep_for, WvLog::LogLevel _max_level) : 
-    WvDailyEvent(0, 1), WvLogRcv(_max_level), keep_for(_keep_for),
-    dirpath(_dirpath), basefname(_basefname)
+    int _keep_for, WvLog::LogLevel _max_level) : WvLogRcv(_max_level),
+    keep_for(_keep_for), dirpath(_dirpath), basefname(_basefname)
 {
     start_log();
 }
 
 void WvLogFile::_make_prefix()
 {
-    time_t timenow;
-    time(&timenow);
+    time_t timenow = wvtime().tv_sec;
+
+    // Check if it's tomorrow yet, and start logging to a different file
+    if (last_day != timenow%86400)
+        start_log();
+
     struct tm* tmstamp = localtime(&timenow);
     char timestr[30];
     strftime(&timestr[0], 30, "%b %d %T %Z", tmstamp);
@@ -43,12 +46,18 @@ void WvLogFile::_mid_line(const char *str, size_t len)
     logfile.write(str, len);
 }
 
-void WvLogFile::execute()
+void WvLogFile::start_log()
 {
-    WvDailyEvent::execute();
-    // It's tomorrow. Move logging to a new file.
     logfile.close();
-    start_log();
+
+    time_t timenow = wvtime().tv_sec;
+    last_day = timenow%86400;
+    struct tm* tmstamp = localtime(&timenow);
+    char suffix[20];
+    strftime(&suffix[0], 20, "%Y-%m-%d", tmstamp);
+    WvString fullname("%s%s.%s", dirpath, basefname, suffix);
+
+    logfile.open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0640);
 
     // Look for old logs and purge them
     WvDirIter i(dirpath, false);
@@ -65,15 +74,4 @@ void WvLogFile::execute()
                 unlink(i.ptr()->fullname);
             }
     }
-}
-
-void WvLogFile::start_log()
-{
-    // Open the file and start logging to it
-    time_t timenow = wvtime().tv_sec;
-    struct tm* tmstamp = localtime(&timenow);
-    char suffix[20];
-    strftime(&suffix[0], 20, "%Y-%m-%d", tmstamp);
-    WvString fullname("%s%s.%s", dirpath, basefname, suffix);
-    logfile.open(fullname, O_WRONLY|O_APPEND|O_CREAT|O_SYNC, 0640);
 }
