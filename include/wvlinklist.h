@@ -355,9 +355,9 @@ public:
          * increments the iterator to point to the next element as if
          * next() had been called.
          */
-        void unlink(bool destroy = true)
+        void unlink()
         {
-	    if (prev) ((WvList *)list)->unlink_after(prev, destroy);
+	    if (prev) ((WvList *)list)->unlink_after(prev);
 	    link = prev->next;
         }
 	
@@ -374,9 +374,9 @@ public:
          * Calling xunlink() twice in a row is currently unsupported.
          * 
          */
-	void xunlink(bool destroy = true)
+	void xunlink()
 	{
-	    if (prev) ((WvList *)list)->unlink_after(prev, destroy);
+	    if (prev) ((WvList *)list)->unlink_after(prev);
 	    link = prev;
 	}
     };

@@ -1,7 +1,7 @@
 #include "wvtest.h"
 #include "uniconfroot.h"
 #include "unitempgen.h"
-#include "uniretrygen.h"
+#include "unireplicategen.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -12,7 +12,8 @@ WVTEST_MAIN("uniconfd")
     WvString socket("/tmp/uniretrygen-uniconfd-%s", getpid());
     WvString ini("/tmp/uniretrygen-uniconfd.ini-%s", getpid());
     WvString iniarg("ini:%s", ini);
-    char *argv[] =
+
+    static char *argv[] =
     {
 	"uniconfd",
 	"-f",
@@ -39,26 +40,17 @@ WVTEST_MAIN("uniconfd")
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
-    sleep(1);
     
-    // wait for connect
-    {
-    	UniConfRoot another_cfg(WvString("retry:unix:%s", socket));
-    
-        for (;;)
-        {
-            another_cfg.xset("wait", "ping");
-            if (another_cfg.xget("wait") == "ping") break;
-            sleep(1);
-        }
-    }
+    sleep(1); // Wait for reconnect
     
     cfg["/key"].setme("value");
-    WVPASSEQ(cfg["/key"].getme(), "value");
+    WVPASS(cfg["/key"].getme() == "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
+    
+    sleep(1); // Wait for UDS to go bad
     
     WVPASS(!cfg["/key"].exists());
     
@@ -68,25 +60,16 @@ WVTEST_MAIN("uniconfd")
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
-    sleep(1);
-    
-    // wait for connect
-    {
-    	UniConfRoot another_cfg(WvString("retry:unix:%s", socket));
-    
-        for (;;)
-        {
-            another_cfg.xset("wait", "pong");
-            if (another_cfg.xget("wait") == "pong") break;
-            sleep(1);
-        }
-    }
 
-    WVPASSEQ(cfg["/key"].getme(), "value");
+    sleep(1); // Wait for reconnect
+    
+    WVPASS(cfg["/key"].getme() == "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
     
+    sleep(1); // Wait for UDS to go bad
+
     WVPASS(!cfg["/key"].exists());
 }
