@@ -18,6 +18,7 @@ UniConfIniFile::UniConfIniFile(UniConf *_top, WvStringParm _filename)
     : filename(_filename), log(filename)
 {
     top = _top;
+    save_test = false;
     log(WvLog::Notice, "Using IniFile '%s' at location '%s'.\n", 
 	filename, top->full_key());
 }
@@ -133,12 +134,16 @@ void UniConfIniFile::load()
 
 void UniConfIniFile::save()
 {
+    WvString newfile(filename);
+    if (save_test)
+	newfile = WvString("%s.new", filename);
+    
     if (!top->dirty && !top->child_dirty)
 	return; // no need to rewrite!
     
-    log("Saving %s...\n", filename);
+    log("Saving %s...\n", newfile);
     
-    WvFile out(WvString("%s", filename), O_WRONLY|O_CREAT|O_TRUNC);
+    WvFile out(WvString("%s", newfile), O_WRONLY|O_CREAT|O_TRUNC);
     if (out.isok())
     {
         save_subtree(out, top, "/");

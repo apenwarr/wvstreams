@@ -18,6 +18,7 @@ public:
     WvString filename;
     UniConf *top;
     WvLog log;
+    bool save_test; // test mode: don't actually save over input file
     
     UniConfIniFile(UniConf *_top, WvStringParm _filename);
     virtual void load();

@@ -203,11 +203,14 @@ int main()
 	
 	UniConf cfg;
 	UniConf *cfg2 = &cfg["/weaver ini test"];
+	UniConfIniFile *ini;
 	
-	cfg.generator = new UniConfIniFile(&cfg, "test.ini");
+	cfg.generator = ini = new UniConfIniFile(&cfg, "test.ini");
+	ini->save_test = true;
 	cfg.generator->load();
 	
-	cfg2->generator = new UniConfIniFile(cfg2, "/tmp/weaver.ini");
+	cfg2->generator = ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini");
+	ini->save_test = true;
 	cfg2->generator->load();
 	
 	log("Config dump:\n");
@@ -220,11 +223,14 @@ int main()
 	
 	UniConf cfg;
 	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
+	UniConfIniFile *ini;
 	
-	h1.generator = new UniConfIniFile(&h1, "test.ini");
+	h1.generator = ini = new UniConfIniFile(&h1, "test.ini");
+	ini->save_test = true;
 	h1.generator->load();
 	
-	h2.generator = new UniConfIniFile(&h2, "test2.ini");
+	h2.generator = ini = new UniConfIniFile(&h2, "test2.ini");
+	ini->save_test = true;
 	h2.generator->load();
 	
 	log("Partial config dump (branch 1 only):\n");
