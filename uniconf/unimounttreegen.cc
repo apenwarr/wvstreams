@@ -140,6 +140,7 @@ UniConfGen *UniMountTreeGen::mount(const UniConfKey &key,
     UniConfGen *gen = wvcreate<UniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
+    assert(gen && "Moniker doesn't get us a generator!");
     return gen;
 }
 
