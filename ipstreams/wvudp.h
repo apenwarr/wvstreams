@@ -48,5 +48,7 @@ protected:
     virtual size_t uwrite(const void *buf, size_t count);
 };
 
+DeclareWvList( WvUDPStream );
+
 
 #endif // __WVUDP_H
