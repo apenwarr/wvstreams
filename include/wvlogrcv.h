@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * Enhanced "Log Receiver" classes for WvLog.
  * 
  * WvLogRcv-derived classes support automatic formatting of log lines with

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * Definition of the WvConfigFile, WvConfigSection, and WvConfigEntry classes, 
  * which are used to read and write entries from a Windows-INI-style file.
  *

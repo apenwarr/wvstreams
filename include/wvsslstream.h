@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * SSL (Socket Security Layer) communications via WvStreams.
  */ 
 #ifndef __WVSSLSTREAM_H

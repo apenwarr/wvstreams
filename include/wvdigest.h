@@ -1,9 +1,10 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * MD5, SHA-1 and HMAC digest abstractions.
- *
  */
 #ifndef __WVDIGEST_H
 #define __WVDIGEST_H

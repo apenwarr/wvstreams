@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * WvIPFirewall is an extremely simple hackish class that handles the Linux
  * 2.4 "iptables" firewall.  It's okay to create more than one instance
  * of this class; they'll co-operate.

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * X.509 certificate management classes.
  */ 
 #ifndef __WVX509_H

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * Specializations of the generic buffering API and a few new buffers.
  */
 #ifndef __WVBUFFER_H

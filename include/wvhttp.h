@@ -1,6 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ */
+
+/** \file
  */ 
 #ifndef __WVHTTP_H
 #define __WVHTTP_H

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * A top-level data encoder class and a few useful encoders.
  */
 #ifndef __WVENCODER_H

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * WvLink is one element of a linked list.
  * Used by wvlinklist.h.
  */

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * WvURL is a simple URL-parsing class with built-in (though still somewhat
  * inconvenient) DNS resolution.
  */ 

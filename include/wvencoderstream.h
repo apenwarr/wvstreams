@@ -1,7 +1,9 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * An stream wrapper for encoders.
  */
 #ifndef __WVENCODERSTREAM_H

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * Hex encoder and hex decoder.
  */
 #ifndef __WVHEX_H

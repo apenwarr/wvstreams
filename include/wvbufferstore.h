@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * Defines basic buffer storage classes.
  * These are not intended for use directly by clients.
  * See "wvbufferbase.h" for the public API.

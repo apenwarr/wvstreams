@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * An iterator that can sort anything that has an iterator, includes the
  * right member functions, and uses WvLink objects - at the moment,
  * this includes WvList- and WvHashTable-based objects.

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * XOR cryptography abstractions.
  * Could use this to implement short one time pads.
  */

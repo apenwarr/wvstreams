@@ -1,6 +1,10 @@
-/* -*- Mode: C++ -*-
+/*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ */
+
+/** \file
+ * Provides support for constructing streams that wrap other streams.
  */ 
 #ifndef __WVSTREAMCLONE_H
 #define __WVSTREAMCLONE_H

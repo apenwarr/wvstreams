@@ -1,7 +1,9 @@
 /* 
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc. 
- * 
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ */
+
+/** \file
  * A tun device wrapper.
  */
 #ifndef __WV_TUNDEV_H

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * A generic data-logger class with support for multiple receivers.  If
  * no WvLogRcv objects have been created (see wvlogrcv.h) the default is
  * to log to stderr.

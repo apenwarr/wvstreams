@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * Base class for streams built on Unix file descriptors.
  */ 
 #ifndef __WVFDSTREAM_H

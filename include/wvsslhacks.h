@@ -1,7 +1,9 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * Functions to make us compile with both newer and older versions of openssl.
  * 
  * The trick here is to write C wrappers for functions where different

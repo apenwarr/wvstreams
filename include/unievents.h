@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * UniConfEvents is a class that uses the notify/child_notify fields of
  * UniConf objects to run callback functions automatically.
  */

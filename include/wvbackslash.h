@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * C-style backslash escaping and unescaping of strings.
  */
 #ifndef __WVBACKSLASH_H

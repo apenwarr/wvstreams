@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * UniConf is the new, improved, hierarchical version of WvConf.  It stores
  * strings in a hierarchy and can load/save them from "various places."
  */

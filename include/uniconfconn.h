@@ -1,9 +1,20 @@
+/*
+ * Worldvisions Tunnel Vision Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ */
+
+/** \file
+ * UniConf daemon support.
+ */
 #ifndef __UNICONFCONN_H
 #define __UNICONFCONN_H
 
 #include "wvstreamclone.h"
 #include "wvbuffer.h"
 
+/**
+ * Represents a connection to a UniConf daemon.
+ */
 class UniConfConn : public WvStreamClone
 {
 public:

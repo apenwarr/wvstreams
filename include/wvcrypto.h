@@ -1,7 +1,9 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * Miscellaneous cryptography primitives.
  */
 #ifndef __WVCRYPTO_H
@@ -11,7 +13,7 @@
 
 
 /**
- * a very simple stream that returns randomness from /dev/urandom
+ * A very simple stream that returns randomness from /dev/urandom
  */
 class WvRandomStream : public WvFile
 {

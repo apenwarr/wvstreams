@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * UniConfIniFile is a UniConfGen for ".ini"-style files like the ones used
  * by Windows and the original WvConf.
  */

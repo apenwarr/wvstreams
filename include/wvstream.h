@@ -1,6 +1,10 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ */
+
+/** \file
+ * Provides basic streaming I/O support.
  */ 
 #ifndef __WVSTREAM_H
 #define __WVSTREAM_H

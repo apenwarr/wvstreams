@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * A Qt object that invokes its callback whenever it receives
  * an event.  This is useful for deferring processing to the
  * Qt event loop.  Use it to avoid problems resulting from the

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * An abstraction for encoders that manipulate typed buffers.
  */
 #ifndef __WVTYPEDENCODER_H

@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * One more attempt at making a decent stream for Linux /dev/dsp.  This is
  * apparently much trickier than it looks.
  */

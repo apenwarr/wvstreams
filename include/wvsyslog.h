@@ -1,6 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ */
+
+/** \file
  */ 
 #ifndef __WVSYSLOG_H
 #define __WVSYSLOG_H

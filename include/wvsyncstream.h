@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- *
+ */
+
+/** \file
  * A throttled stream.
  */
 #ifndef __WVSYNCSTREAM_H
