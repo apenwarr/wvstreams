@@ -185,24 +185,23 @@ WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
     int size = 0;
 
     WvList<WvString>::Iter i(l);
-    for (i.rewind(); ; )
+    int count = 0;
+    for (i.rewind(); i.next(); )
     {
         size += wvtcl_escape(NULL, *i, i->len(), nasties);
-        if (i.next())
-            ++size;
-        else break;
+        ++count;
     }
     
     WvString result;
-    result.setsize(size+1);
+    result.setsize(size+(count-1)+1);
 
     char *p = result.edit();
-    for (i.rewind(); ; )
+    int j;
+    for (i.rewind(), j=0; i.next(); ++j)
     {
         p += wvtcl_escape(p, *i, i->len(), nasties);
-        if (i.next())
+        if (j < count - 1)
             *p++ = splitchars[0];
-        else break;
     }
     *p = '\0';
     
