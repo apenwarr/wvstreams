@@ -767,6 +767,10 @@ WVTEST_MAIN("WvString: circular reference")
 	WvString str("  abc ");
 	str = trim_string(str.edit());
 	wvcon->print("str is `%s'\n", str);
+	str.append("a");
+	wvcon->print("str is `%s'\n", str);
+	str.append("lalalalala");
+	wvcon->print("str is `%s'\n", str);
     }
 
     foo("def ");

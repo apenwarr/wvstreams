@@ -255,7 +255,7 @@ WvString &WvString::operator= (int i)
 
 WvString &WvString::operator= (const WvFastString &s2)
 {
-    if (s2.buf == buf && s2.str == str)
+    if (s2.str == str && (!s2.buf || s2.buf == buf))
 	return *this; // no change
     else if (!s2.buf)
     {
@@ -265,18 +265,12 @@ WvString &WvString::operator= (const WvFastString &s2)
 	    // Set buf->size, if we don't already know it.
 	    if (buf->size == 0)
 		buf->size = strlen(str);
-	    // If the two strings overlap, we'll need to copy s2 into
-	    // a new WvStringBuf.
-	    if (str <= s2.str && s2.str <= (str + buf->size))
+
+	    if (str < s2.str && s2.str <= (str + buf->size))
 	    {
-		// We do what unlink(); link(); unique() would do, but
-		// in the right order.
-		WvStringBuf *oldbuf = buf;
-		link(&nullbuf, s2.str);
-		nullbuf.links++; // Force unique to make a copy
-		unique();
-		nullbuf.links--; // Undo the forcing
-		free(oldbuf);
+		// If the two strings overlap, we'll just need to
+		// shift s2.str over to here.
+		memmove(buf->data, s2.str, buf->size);
 		return *this;
 	    }
 	}
