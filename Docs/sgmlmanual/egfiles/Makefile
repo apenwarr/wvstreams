@@ -1,4 +1,4 @@
-TOPDIR=../../..
+#Remember to set TOPDIR to a directory containing wvrules.mk!
 STATIC=1
 include $(TOPDIR)/wvrules.mk
 

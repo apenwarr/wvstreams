@@ -6,19 +6,19 @@
 <bookinfo>
 <bookbiblio>
  <authorgroup>
-  <corpauthor>Worldvisions Weaver Project</corpauthor>
+  <corpauthor>Net Integration Technologies R&D</corpauthor>
  </authorgroup>
  <copyright>
-  <year>1999</year>
-  <holder>Worldvisions Computer Technology, Inc.</holder>
+  <year>2002</year>
+  <holder>Net Integration Technologies, Inc.</holder>
  </copyright>
 </bookbiblio>
 </bookinfo>
 
 WVPREFACE(Introduction,
 
- This book describes the programming libraries used in the Worldvisions
- Weaver, collectively called the "WvStreams" (Weave Streams) set of
+ This book describes the programming libraries used in the Net Integrator and
+ related projects, collectively called the WvStreams ("Weave Streams") set of
  libraries.
 
  This is eternally a work-in-progress.  WvStreams is a fast-moving target
@@ -26,7 +26,7 @@ WVPREFACE(Introduction,
  manual whenever someone has time.  Some parts remain unwritten or don't
  have enough detail; hopefully, someone will correct that problem over time.
  
- The last day someone updated this introduction, it was July 1999.  So, in
+ The last day someone updated this introduction was July 2002.  So, in
  theory, this manual is mostly correct as of that date.
 
  If you aren't sure whether we're lying to you in this book, you had better
