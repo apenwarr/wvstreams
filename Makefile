@@ -18,6 +18,11 @@ ifeq ("$(build_xplc)", "yes")
 xplc:
 	$(MAKE) -C xplc
 
+# Prevent complaints that Make can't find these two linker options.
+-lxplc-cxx: ;
+
+-lxplc: ;
+
 endif
 
 %.so: SONAME=$@.$(RELEASE)
