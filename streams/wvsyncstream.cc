@@ -106,16 +106,20 @@ bool WvSyncStream::post_select(SelectInfo &si)
 
 void WvSyncStream::poll()
 {
+    // we advance the reference time periodically size to avoid
+    // overflows during some integer calculations
+    const int WINDOW = 10;
+
     // how long has it been since we started
     struct timeval now;
     gettimeofday(& now, NULL);
     time_t msec = msecdiff(now, reference);
-    if (msec > 60000)
+    if (msec > WINDOW * 1000 * 2)
     {
         // avoid overflow by adjusting reference time
-        reference.tv_sec -= 30;
-        msec -= 30000;
-        size_t consume = 30 * bps;
+        reference.tv_sec += WINDOW;
+        msec -= WINDOW * 1000;
+        size_t consume = WINDOW * bps;
         if (usedchunk >= consume)
             usedchunk -= consume;
         else
