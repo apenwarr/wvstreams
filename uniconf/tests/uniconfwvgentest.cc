@@ -1,6 +1,6 @@
+#include "wvconf.h"
 #include "uniwvconfgen.h"
 #include "uniconfroot.h"
-#include "wvconf.h"
 #include "wvlog.h"
 
 WvLog log("WvGenTest");
