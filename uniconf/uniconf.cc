@@ -116,7 +116,7 @@ bool UniConf::check_children()
 {
     if (this->generator)
     {
-        this->generator->enumerate_subtrees(gen_full_key());
+        this->generator->enumerate_subtrees(this);
     }
     return (children != NULL);
 }

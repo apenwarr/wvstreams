@@ -74,8 +74,9 @@ public:
     // (in the opinion of the generator)
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
    
-    virtual void enumerate_subtrees(const UniConfKey &key);
+    virtual void enumerate_subtrees(UniConf *conf);
     virtual void update(UniConf *&h);
+    virtual bool isok() { return true; }
     
     // the default load/save functions don't do anything... you might not
     // need them to.

@@ -11,5 +11,9 @@ UniConfTCPFactory::~UniConfTCPFactory()
 
 UniConfConn *UniConfTCPFactory::open()
 {
-    return new UniConfConn(new WvTCPConn(addr));
+    WvTCPConn *conn = new WvTCPConn(addr);
+    if (conn->isok())
+        return new UniConfConn(conn);
+    else
+        return NULL;
 }

@@ -88,7 +88,7 @@ int main(int argc, char **argv)
             WvString subkey("bob");
             WvString result("goof");
             UniConf *narf = &neep->get(subkey);
-            wvcon->print("\"%s/%s\" should be:%s.Is it?  %s.\n", key, subkey, result, (result == *narf ? "Yes" : "No"));
+            wvcon->print("\"%s/%s\" should be:%s.Real Value:%s.\n", key, subkey, result, *narf );
         }
 
         // Test getting & setting a key
@@ -167,5 +167,53 @@ int main(int argc, char **argv)
             }
         }
     }
+
+    {
+        // just test getting a few keys
+        {
+            UniConf mainconf;
+            UniConf *mounted = &mainconf["/orino"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            wvcon->print("=========================\n");
+            wvcon->print("|   TEST GETTING KEYS2  |\n");
+            wvcon->print("=========================\n\n");
+            WvString key("/orino/chickens/bob");
+            WvString result("goof");
+            UniConf *narf = &mainconf[key];
+            wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            key = "/orino/wacky\ntest\nsection/  goose  ";
+            result = "bluebayou";
+            narf = &mainconf[key];
+            wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            key = "/orino/this key should not exist/ bcscso ";
+            narf = &mainconf[key];
+            result = WvString();
+            wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+        }
+        // Test a recursive iterator
+        {
+            UniConf mainconf;
+            UniConf *temp = &mainconf["/"];
+            temp->generator = new UniConfClient(temp, new UniConfTCPFactory(WvIPPortAddr("192.168.12.26", 4111)));
+            UniConf *mounted = &mainconf["/orino"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            wvcon->print("\n================================\n");
+            wvcon->print("|   TEST RECURSIVE ITERATORS   |\n");
+            wvcon->print("================================\n\n");
+            UniConf *nerf = &mainconf["/"];
+            UniConf::RecursiveIter i(*nerf);
+            for (i.rewind(); i._next();)
+            {
+                wvcon->print("Key:%s has value:%s.\n", i->name, *i);
+            }
+        }
+
+
+    }
+    
     return 0;
 }

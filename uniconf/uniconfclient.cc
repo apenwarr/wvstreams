@@ -24,6 +24,9 @@ UniConfClient::~UniConfClient()
 
 void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
 {
+    if (!conn || !conn->isok())
+        return;
+
     if (tree->dirty && !tree->obsolete)
     {
         WvString data("set %s %s\n", wvtcl_escape(key), wvtcl_escape(*tree));
@@ -58,7 +61,7 @@ void UniConfClient::save()
         return;
 
     // check our connection...
-    if (!conn->isok())
+    if (!conn || !conn->isok())
     {
         log(WvLog::Debug2, "Connection was unuseable.  Creating another.\n");
         conn = fctry->open();
@@ -86,7 +89,6 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
             newkey = WvString("%s/%s", par->name, newkey);
         par = par->parent;
     }
-    conn->print(WvString("get %s\n", wvtcl_escape(newkey)));
     // Get the node which we're actually going to return...
     UniConf *toreturn = UniConfGen::make_tree(parent, key);
     // Now wait for the response regarding this key.
@@ -95,13 +97,19 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
     return toreturn;
 }
 
-void UniConfClient::enumerate_subtrees(const UniConfKey &key)
+void UniConfClient::enumerate_subtrees(UniConf *conf)
 {
+    if (!conn || !conn->isok())
+        return;
+    
     if (conn->select(0, true, false, false))
         execute();
-    conn->print(WvString("subt %s\n", wvtcl_escape(key)));
+    if (conf != top)
+        conn->print(WvString("subt %s\n", wvtcl_escape(conf->full_key(top))));
+    else
+        conn->print(WvString("subt /\n"));
     waitforsubt = true;
-    while (waitforsubt)
+    while (waitforsubt && conn->isok())
     {
         if (conn->select(0, true, false, false))
             execute();
@@ -110,12 +118,26 @@ void UniConfClient::enumerate_subtrees(const UniConfKey &key)
 
 void UniConfClient::update(UniConf *&h)
 {
-    waitingdata *data = dict[(WvString)h->gen_full_key()];
+    WvString lookfor(h->full_key(top));
+    if (h->waiting || h->obsolete)
+    {
+        if (conn && conn->isok())
+            conn->print(WvString("get %s\n", wvtcl_escape(lookfor)));
+        else
+        {
+            h->waiting = false;
+            return;
+        }
+    }
+    waitingdata *data = dict[lookfor];
+
+//    wvcon->print("Looking for:  %s.\n", lookfor);
+    
     if (conn->select(0,true, false, false) 
     || (h->waiting && !data && conn->select(-1, true, false, false)))
     {
         execute();
-        data = dict[(WvString)h->gen_full_key()];
+        data = dict[lookfor];
     }
     
     if (data) 
@@ -123,7 +145,7 @@ void UniConfClient::update(UniConf *&h)
         // If we are here, we will not longer be waiting nor will our data be
         // obsolete.
         h->set(data->value.unique());
-        dict.remove(data);
+//        dict.remove(data);
     }
 
     h->waiting = false;
@@ -159,6 +181,7 @@ void UniConfClient::execute()
                 WvString value = wvtcl_getword(fromline);
                 dict.add(new waitingdata(key.unique(), value.unique()),
                     true);
+//                wvcon->print("Added key(%s) to dict with value(%s).\n", key, value);
             }
             // A set has happened on a key we requested.
             else if (cmd == "FGET") 
@@ -196,3 +219,5 @@ void UniConfClient::execute()
         }
     }
 }
+
+

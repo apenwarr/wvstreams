@@ -37,9 +37,10 @@ public:
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
-    virtual void enumerate_subtrees(const UniConfKey &key);
+    virtual void enumerate_subtrees(UniConf *conf);
     virtual void update(UniConf *&h);
     virtual bool deleteable();
+    virtual bool isok() { return conn->isok(); }
     virtual void save();
 protected:
     void execute();
@@ -48,6 +49,16 @@ protected:
 private:
     unsigned long references;
 };
-
-
+/*
+class UniConfViaClient : public UniConf
+{
+public:
+    UniConfViaClient(WvIPPortAddr addr);
+    UniConfViaClient(WvIPAddr addr);
+    UniConfViaClient(WvUnixAddr addr);
+    ~UniConfViaClient();
+protected:
+private:
+};
+*/
 #endif // __UNICONFCLIENT_H

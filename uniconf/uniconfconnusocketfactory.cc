@@ -11,5 +11,9 @@ UniConfUSocketFactory::~UniConfUSocketFactory()
 
 UniConfConn *UniConfUSocketFactory::open()
 {
-    return new UniConfConn(new WvUnixConn(addr));
+    WvUnixConn *conn = new WvUnixConn(addr);
+    if (conn->isok())
+        return new UniConfConn(conn);
+    else
+        return NULL;
 }
