@@ -47,10 +47,10 @@ char * trim_string( char * string )
     p = string;
     q = string + strlen(string) - 1;
 
-    while( isspace( *p ) )
-    	p++;
     while( q >= p && isspace( *q ) )
     	*(q--) = 0;
+    while( q <= q && isspace( *p ) )
+    	p++;
 
     return( p );
 }
@@ -183,3 +183,38 @@ void unhexify(unsigned char *obuf, char *ibuf)
 }
 
 
+// ex: WvString foo = web_unescape("I+am+text.%0D%0A");
+WvString web_unescape(const char *str)
+{
+    const char *iptr;
+    char *optr;
+    char *idx1, *idx2;
+    static char hex[] = "0123456789ABCDEF";
+    WvString in, intmp(str), out;
+ 
+    in = trim_string(intmp.edit());
+    out.setsize(strlen(in) + 1);
+
+    optr = out.edit();
+    for (iptr = in, optr = out.edit(); *iptr; iptr++)
+    {
+        if (*iptr == '+')
+            *optr++ = ' ';
+        else if (*iptr == '%' && iptr[1] && iptr[2])
+        {
+            idx1 = strchr(hex, toupper((unsigned char) iptr[1]));
+            idx2 = strchr(hex, toupper((unsigned char) iptr[2]));
+
+            if (idx1 && idx2)
+                *optr++ = ((idx1 - hex) << 4) | (idx2 - hex);
+
+            iptr += 2;
+        }
+        else
+            *optr++ = *iptr;
+    }
+
+    *optr = 0;
+
+    return out;
+}
