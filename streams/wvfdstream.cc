@@ -109,6 +109,7 @@ size_t WvFdStream::uread(void *buf, size_t count)
 	return 0;
     }
 
+    // fprintf(stderr, "read %d bytes\n", in);
     return in;
 }
 
@@ -116,6 +117,7 @@ size_t WvFdStream::uread(void *buf, size_t count)
 size_t WvFdStream::uwrite(const void *buf, size_t count)
 {
     if (!buf || !count || !isok()) return 0;
+    // fprintf(stderr, "write %d bytes\n", count);
     
     int out = ::write(wfd, buf, count);
     

@@ -17,11 +17,18 @@ WVTEST_MAIN("autoflush")
     gzip.disassociate_on_close = true;
     
     char buf[1024];
+    size_t len;
     
     // since autoflush is enabled, gzip encoder should always be flushed
     // right away.
     gzip.write("x");
-    WVPASS(gzip.read(buf, sizeof(buf)));
+    for (int i = 0; i < 10; i++)
+    {
+	WVPASS(gzip.select(1000));
+	len = gzip.read(buf, sizeof(buf));
+	if (len) break;
+    }
+    WVPASSEQ(len, 1);
     
     // when auto_flush is disabled, expect at least a short delay.
     gzip.auto_flush(false);
