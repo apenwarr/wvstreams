@@ -15,8 +15,7 @@ public:
     WvXOR(const void *_key, size_t _keylen);
     virtual ~WvXOR();
     
-protected:
-    size_t do_encode(const unsigned char *data, size_t len, bool flush);
+    bool encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 
@@ -35,20 +34,20 @@ WvXOR::~WvXOR()
 }
 
 
-size_t WvXOR::do_encode(const unsigned char *data, size_t len, bool flush)
+bool WvXOR::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 {
+    size_t len = inbuf.used();
+    unsigned char *data = inbuf.get(len);
     unsigned char *out = outbuf.alloc(len);
-    size_t done = 0;
-    
+
     while (len > 0)
     {
 	*out++ = (*data++) ^ key[off++];
 	off %= keylen;
 	len--;
-	done++;
     }
     
-    return done;
+    return true;
 }
 
 
@@ -125,14 +124,18 @@ int main(int argc, char **argv)
     
     assert(enc);
     
+    WvBuffer inbuf;
+    WvBuffer outbuf;
+    
     while (enc->isok() && (rlen = read(0, buf, sizeof(buf))) >= 0)
     {
 	fprintf(stderr, "[read %d bytes]\n", rlen);
+        inbuf.put(buf, rlen);
 	
-	enc->encode(buf, rlen, (rlen==0 || flush_often) ? true : false);
+	enc->encode(inbuf, outbuf, (rlen==0 || flush_often));
 	
-	wlen = enc->outbuf.used();
-	write(1, enc->outbuf.get(wlen), wlen);
+	wlen = outbuf.used();
+	write(1, outbuf.get(wlen), wlen);
 	fprintf(stderr, "[wrote %d bytes]\n", wlen);
 	
 	if (!rlen)

@@ -6,38 +6,122 @@
  */
 #include "wvencoder.h"
 
+/***** WvEncoder *****/
+
 WvEncoder::WvEncoder()
 {
-    // nothing special
 }
 
 
 WvEncoder::~WvEncoder()
 {
-    // nothing special
 }
 
 
 bool WvEncoder::isok() const
 {
-    // most encoders will always be okay
     return true;
 }
 
 
-void WvEncoder::encode(const void *in, size_t insize, bool flush)
+/***** WvNullEncoder *****/
+
+bool WvNullEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
-    size_t len = 0;
-    bool go_once = flush;
-    
-    // repeat until the entire buffer is used
-    while (len < insize || go_once)
-    {
-	go_once = false;
-	len += do_encode((const unsigned char *)in, insize, flush);
-	//fprintf(stderr, "encoder: %u/%u bytes (buffer now has %d bytes)\n",
-	//           len, insize, outbuf.used());
-    }
+    in.zap();
+    return true;
 }
 
 
+/***** WvPassthroughEncoder *****/
+
+bool WvPassthroughEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+{
+    out.merge(in);
+    return true;
+}
+
+
+/***** WvEncoderChain *****/
+
+WvEncoderChain::WvEncoderChain()
+{
+}
+
+
+WvEncoderChain::~WvEncoderChain()
+{
+}
+
+
+bool WvEncoderChain::isok() const
+{
+    WvEncoderChainElemListBase::Iter it(
+        const_cast<WvEncoderChainElemListBase&>(encoders));
+    for (it.rewind(); it.next(); )
+    {
+        WvEncoderChainElem *encelem = it.ptr();
+        if (! encelem->enc->isok())
+            return false;
+    }
+    return true;
+}
+
+
+bool WvEncoderChain::encode(WvBuffer &in, WvBuffer &out, bool flush)
+{
+    if (encoders.isempty())
+        return passthrough.encode(in, out, flush);
+
+    // iterate over all encoders in the list
+    bool success = true;
+
+    WvEncoderChainElemListBase::Iter it(encoders);
+    it.rewind();
+    it.next();
+    for (WvBuffer *tmpin = & in;;)
+    {
+        WvEncoderChainElem *encelem = it.ptr();
+        bool hasnext = it.next();
+        WvBuffer *tmpout;
+        if (! hasnext)
+        {
+            out.merge(encelem->out);
+            tmpout = & out;
+        }
+        else
+            tmpout = & encelem->out;
+
+        if (! encelem->enc->encode(*tmpin, *tmpout, flush))
+            success = false;
+
+        if (! hasnext)
+            break;
+        tmpin = & encelem->out;
+    }
+    return success;
+}
+
+
+void WvEncoderChain::append(WvEncoder *enc, bool auto_free)
+{
+    encoders.append(new WvEncoderChainElem(enc, auto_free), true);
+}
+
+
+void WvEncoderChain::prepend(WvEncoder *enc, bool auto_free)
+{
+    encoders.prepend(new WvEncoderChainElem(enc, auto_free), true);
+}
+
+
+void WvEncoderChain::unlink(WvEncoder *enc)
+{
+    WvEncoderChainElemListBase::Iter it(encoders);
+    for (it.rewind(); it.next(); )
+    {
+        WvEncoderChainElem *encelem = it.ptr();
+        if (encelem->enc == enc)
+            it.xunlink();
+    }
+}

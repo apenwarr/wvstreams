@@ -53,51 +53,35 @@ bool WvGzip::isok() const
 }
 
 
-size_t WvGzip::do_encode(const unsigned char *in, size_t insize, bool flush)
+bool WvGzip::encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
-    assert(!zstr->avail_in && (insize || flush));
-    
-    int retval;
-    size_t taken = 0, tmpused;
-    
-    if (in && !zstr->avail_in)
-    {
-	zstr->avail_in = insize;
-	zstr->next_in = (unsigned char *)in;
-    }
+    assert(zstr->avail_in == 0);
+    zstr->avail_in = in.used();
+    zstr->next_in = in.get(in.used());
 
+    int retval;
     do
     {
-	if (!zstr->avail_out)
+	if (zstr->avail_out == 0)
 	{
 	    tmpbuf.zap();
 	    assert(tmpbuf.free() == ZBUFSIZE);
 	    zstr->avail_out = tmpbuf.free();
 	    zstr->next_out = tmpbuf.alloc(tmpbuf.free());
 	}
-	
+
 	tmpbuf.alloc(tmpbuf.free());
 	if (mode == Compress)
 	    retval = deflate(zstr, flush ? Z_SYNC_FLUSH : Z_NO_FLUSH);
 	else
 	    retval = inflate(zstr, flush ? Z_SYNC_FLUSH : Z_NO_FLUSH);
 	tmpbuf.unalloc(zstr->avail_out);
-	
-	//fprintf(stderr, "avail_in: %d, avail_out: %d\n", zstr->avail_in,
-	//            zstr->avail_out);
-	
-	taken = insize - zstr->avail_in;
-	
-	tmpused = tmpbuf.used();
-	outbuf.put(tmpbuf.get(tmpused), tmpused);
-	
-	fprintf(stderr, "obu: %d\n", outbuf.used());
-    } while (retval == Z_OK && !zstr->avail_out);
-	
+        
+	size_t tmpused = tmpbuf.used();
+	out.put(tmpbuf.get(tmpused), tmpused);
+    } while (retval == Z_OK && zstr->avail_out == 0);
+
     if (retval != Z_OK && retval != Z_BUF_ERROR)
-    {
-	fprintf(stderr, "gzip: retval was %d!\n", retval);
-	okay = false;
-    }
-    return taken;
+        okay = false;
+    return okay;
 }
