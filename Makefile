@@ -19,11 +19,16 @@ xplc:
 	$(MAKE) -C xplc
 	/sbin/ldconfig -n xplc
 
+# Prevent complaints that Make can't find these two linker options.
+-lxplc-cxx: ;
+
+-lxplc: ;
+
 endif
 
 %.so: SONAME=$@.$(RELEASE)
 
-.PHONY: clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean test
+.PHONY: clean depend dust kdoc doxygen install install-shared install-dev install-xplc uninstall tests dishes dist distclean realclean test
 
 # FIXME: little trick to ensure that the wvautoconf.h.in file is there
 .PHONY: dist-hack-clean
@@ -32,6 +37,10 @@ dist-hack-clean:
 
 dist: dist-hack-clean configure distclean
 	rm -rf autom4te.cache
+	if test -d .xplc; then \
+	    $(MAKE) -C .xplc clean patch; \
+	    cp -Lpr .xplc/build/xplc .; \
+	fi
 
 runconfigure: config.mk include/wvautoconf.h
 
@@ -83,7 +92,7 @@ kdoc:
 doxygen:
 	doxygen
 
-install: install-shared install-dev
+install: install-shared install-dev install-xplc
 #FIXME: We need to install uniconfd somewhere.
 
 install-shared: $(TARGETS_SO)
@@ -102,6 +111,17 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	for i in $(TARGETS_SO); do \
 	    cd $(DESTDIR)$(libdir) && $(LN_S) $$i.$(RELEASE) $$i; \
 	done
+
+ifeq ("$(build_xplc)", "yes")
+
+install-xplc: xplc
+	$(MAKE) -C xplc install
+
+else
+
+install-xplc: ;
+
+endif
 
 uninstall:
 	$(tbd)
