@@ -1,7 +1,7 @@
 TOPDIR=..
 include $(TOPDIR)/wvrules.mk
 
-XPATH=../utils ../streams
+XPATH=../utils ../streams ../configfile
 
 default: all hconftest
 
@@ -9,7 +9,7 @@ all:
 
 hconftest: hconftest.o hconf.a
 
-hconf.libs: ../streams/streams.libs ../utils/utils.libs
+hconf.libs: wvhconfkey.o wvhconf.o ../streams/streams.libs ../utils/utils.libs
 
 hconf.a: hconf.libs
 
