@@ -56,7 +56,7 @@ WvStream::WvStream()
     int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
     assert(result == 0);
 #endif
-    userdata = closecb_data = NULL;
+    userdata = NULL;
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
     want_to_flush = true;
@@ -109,9 +109,9 @@ void WvStream::close()
     flush(2000); // fixme: should not hardcode this stuff
     if (!! closecb_func)
     {
-        WvStreamCallback cb = closecb_func;
+        IWvStreamCallback cb = closecb_func;
         closecb_func = 0; // ensure callback is only called once
-        cb(*this, closecb_data);
+        cb(*this);
     }
     
     closed = true;
@@ -840,10 +840,27 @@ void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
 }
 
 
-void WvStream::setclosecallback(WvStreamCallback _callfunc, void *_userdata)
+void WvStream::setreadcallback()
+{
+    assert(false);
+}
+
+
+void WvStream::setwritecallback()
+{
+    assert(false);
+}
+
+
+void WvStream::setexceptcallback()
+{
+    assert(false);
+}
+
+
+void WvStream::setclosecallback(IWvStreamCallback _callfunc)
 {
     closecb_func = _callfunc;
-    closecb_data = _userdata;
 }
 
 

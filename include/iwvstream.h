@@ -22,8 +22,8 @@ class WvAddr;
 class WvStream;
 
 
-// parameters are: owning-stream, userdata
-typedef WvCallback<void, WvStream&, void*> WvStreamCallback;
+/* The stream gets passed back as a parameter. */
+typedef WvCallback<void, WvStream&> IWvStreamCallback;
 
 
 class IWvStream : public WvErrorBase, public IObject
@@ -143,9 +143,18 @@ public:
      */
     virtual bool should_flush() = 0;
 
+    /** Sets a callback to be invoked when the stream is readable. */
+    virtual void setreadcallback() = 0;
+
+    /** Sets a callback to be invoked when the stream is writable. */
+    virtual void setwritecallback() = 0;
+
+    /** Sets a callback to be invoked when the stream is in exception
+     * state. */
+    virtual void setexceptcallback() = 0;
+
     /** Sets a callback to be invoked on close().  */
-    virtual void setclosecallback(WvStreamCallback _callfunc,
-				  void *_userdata) = 0;
+    virtual void setclosecallback(IWvStreamCallback _callfunc) = 0;
 };
 
 

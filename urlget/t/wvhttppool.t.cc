@@ -2,7 +2,7 @@
 #include "wvhttppool.h"
 #include <stdio.h>
 
-static void close_callback(WvStream& s, void* userdata)
+static void close_callback(WvStream& s)
 {
     if (!s.isok())
         printf("%d", s.geterr());
@@ -19,7 +19,7 @@ WVTEST_MAIN("WvHttpPool GET")
     WVPASS(buf = pool.addurl("http://www.google.ca"));
     WVPASS(buf->isok());
     buf->autoforward(*wvcon);
-    buf->setclosecallback(close_callback, NULL);
+    buf->setclosecallback(close_callback);
     l.append(buf, true);
     while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	l.runonce();
@@ -39,7 +39,7 @@ WVTEST_MAIN("WvHttpPool HEAD")
     WVPASS(buf = pool.addurl("http://www.google.ca", "HEAD"));
     WVPASS(buf->isok());
     buf->autoforward(*wvcon);
-    buf->setclosecallback(close_callback, NULL);
+    buf->setclosecallback(close_callback);
     l.append(buf, true);
     while (buf->isok() && (wvcon->isok() || !pool.idle()))
     {
@@ -140,7 +140,7 @@ static void do_test(WvIStreamList &l, unsigned int num_requests)
         WVPASS(buf = pool.addurl(WvString("http://localhost:4200/%s.html", i)));
         WVPASS(buf->isok());
         buf->autoforward(*wvcon);
-        buf->setclosecallback(close_callback, NULL);
+        buf->setclosecallback(close_callback);
         bufs.append(buf, true, "poolbuf");
     }
 

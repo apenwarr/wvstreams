@@ -19,34 +19,34 @@ typedef WvCallback<void, WvStreamsDaemon &, void *> WvStreamsDaemonCallback;
 
 class WvStreamsDaemon : public WvDaemon
 {
-    private:
+private:
 
-        WvStreamsDaemonCallback callback;
-        void *userdata;
+    WvStreamsDaemonCallback callback;
+    void *userdata;
 
-        WvIStreamList streams;
+    WvIStreamList streams;
 
-        void start_cb(WvDaemon &daemon, void *);
-        void run_cb(WvDaemon &daemon, void *);
-        void stop_cb(WvDaemon &daemon, void *);
-        void stop_full_close_cb(WvDaemon &daemon, void *);
+    void start_cb(WvDaemon &daemon, void *);
+    void run_cb(WvDaemon &daemon, void *);
+    void stop_cb(WvDaemon &daemon, void *);
+    void stop_full_close_cb(WvDaemon &daemon, void *);
 
-        void restart_close_cb(WvStream &, void *);
-        void die_close_cb(WvStream &, void *);
+    void restart_close_cb(const char *, WvStream &);
+    void die_close_cb(const char *, WvStream &);
 
-    public:
+public:
 
-        WvStreamsDaemon(WvStringParm name, WvStringParm version,
-                WvStreamsDaemonCallback cb, void *ud = NULL);
+    WvStreamsDaemon(WvStringParm name, WvStringParm version,
+		    WvStreamsDaemonCallback cb, void *ud = NULL);
 
-        void add_stream(IWvStream *istream,
-            	bool auto_free, const char *id = NULL);
-        void add_restart_stream(IWvStream *istream,
-            	bool auto_free, const char *id = NULL);
-        void add_die_stream(IWvStream *istream,
-            	bool auto_free, const char *id = NULL);
+    void add_stream(IWvStream *istream,
+		    bool auto_free, const char *id = NULL);
+    void add_restart_stream(IWvStream *istream,
+			    bool auto_free, const char *id = NULL);
+    void add_die_stream(IWvStream *istream,
+			bool auto_free, const char *id = NULL);
 
-        void close_existing_connections_on_restart();
+    void close_existing_connections_on_restart();
 };
 
 #endif // __WVSTREAMSDAEMON_H

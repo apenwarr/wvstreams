@@ -51,30 +51,30 @@ void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *)
 }
 
 void WvStreamsDaemon::add_stream(IWvStream *istream,
-    	bool auto_free, const char *id)
+    	bool autofree, const char *id)
 {
     streams.append(istream, false);
-    WvIStreamList::globallist.append(istream, auto_free);
+    // FIXME: we should pass in "id" here, but things are not happy in
+    // const-correctness-land.
+    WvIStreamList::globallist.append(istream, autofree);
 }
 
 void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
-    	bool auto_free, const char *id)
+    	bool autofree, const char *id)
 {
-    add_stream(istream, auto_free, id);
+    add_stream(istream, autofree, id);
     
     istream->setclosecallback(
-            WvStreamCallback(this, &WvStreamsDaemon::restart_close_cb),
-                    (void *)id);
+	WvBoundCallback<IWvStreamCallback, const char*>(this, &WvStreamsDaemon::restart_close_cb, id));
 }
 
 void WvStreamsDaemon::add_die_stream(IWvStream *istream,
-    	bool auto_free, const char *id)
+    	bool autofree, const char *id)
 {
-    add_stream(istream, auto_free, id);
+    add_stream(istream, autofree, id);
     
     istream->setclosecallback(
-            WvStreamCallback(this, &WvStreamsDaemon::die_close_cb), 
-                    (void *)id);
+	WvBoundCallback<IWvStreamCallback, const char*>(this, &WvStreamsDaemon::die_close_cb, id));
 }
 
 void WvStreamsDaemon::close_existing_connections_on_restart()
@@ -83,24 +83,22 @@ void WvStreamsDaemon::close_existing_connections_on_restart()
         WvDaemonCallback(this, &WvStreamsDaemon::stop_full_close_cb);
 }
 
-void WvStreamsDaemon::restart_close_cb(WvStream &, void *ud)
+void WvStreamsDaemon::restart_close_cb(const char *id, WvStream &)
 {
     if (should_run())
     {
-        const char *id = (const char *)ud;
         log(WvLog::Error, "%s is stale; restarting\n",
-                id? id: "Stream");
+                id ? id : "Stream");
         restart();
     }
 }
 
-void WvStreamsDaemon::die_close_cb(WvStream &, void *ud)
+void WvStreamsDaemon::die_close_cb(const char *id, WvStream &)
 {
     if (should_run())
     {
-        const char *id = (const char *)ud;
         log(WvLog::Error, "%s is stale; dying\n",
-                id? id: "Stream");
+                id ? id : "Stream");
         die();
     }
 }

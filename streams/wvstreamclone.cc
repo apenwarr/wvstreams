@@ -69,7 +69,7 @@ void WvStreamClone::close()
 {
     //fprintf(stderr, "%p closing substream %p\n", this, cloned);
     if (cloned)
-	cloned->setclosecallback(0, 0); // prevent recursion!
+	cloned->setclosecallback(0); // prevent recursion!
     WvStream::close();
     if (disassociate_on_close)
         setclone(NULL);
@@ -139,21 +139,20 @@ WvString WvStreamClone::errstr() const
 }
 
 
-static void close_callback(WvStream &s, void *userdata)
+void WvStreamClone::close_callback(WvStream &s)
 {
-    WvStreamClone *_this = (WvStreamClone *)userdata;
-    if (_this->cloned == &s)
-	_this->close();
+    if (cloned == &s)
+	close();
 }
 
 
 void WvStreamClone::setclone(IWvStream *newclone)
 {
     if (cloned)
-	cloned->setclosecallback(0, 0);
+	cloned->setclosecallback(0);
     cloned = newclone;
     if (cloned)
-	cloned->setclosecallback(close_callback, this);
+	cloned->setclosecallback(IWvStreamCallback(this, &WvStreamClone::close_callback));
 }
 
 

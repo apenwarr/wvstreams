@@ -22,6 +22,9 @@
 #endif
 
 
+// parameters are: owning-stream, userdata
+typedef WvCallback<void, WvStream&, void*> WvStreamCallback;
+
 /**
  * Unified support for streams, that is, sequences of bytes that may or
  * may not be ready for read/write at any given time.
@@ -455,8 +458,18 @@ public:
      */
     void setcallback(WvStreamCallback _callfunc, void *_userdata);
         
+    /** Sets a callback to be invoked when the stream is readable. */
+    void setreadcallback();
+
+    /** Sets a callback to be invoked when the stream is writable. */
+    void setwritecallback();
+
+    /** Sets a callback to be invoked when the stream is in exception
+     * state. */
+    void setexceptcallback();
+
     /** Sets a callback to be invoked on close().  */
-    void setclosecallback(WvStreamCallback _callfunc, void *_userdata);
+    void setclosecallback(IWvStreamCallback _callfunc);
 
     /**
      * set the callback function for this stream to an internal routine
@@ -563,10 +576,11 @@ protected:
     friend class WvHTTPClientProxyStream;
 
     WvDynBuf inbuf, outbuf;
-    WvStreamCallback callfunc, closecb_func;
-    WvCallback<void*,void*> call_ctx;
+    WvStreamCallback callfunc;
     void *userdata;
-    void *closecb_data;
+    IWvStreamCallback closecb_func;
+    void *FIXME_without_this_I_crash;
+    WvCallback<void*,void*> call_ctx;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;

@@ -194,6 +194,12 @@ static void val_cb(WvStream &s, void *userdata)
 }
 
 
+static void val_icb(int &closeval, WvStream &s)
+{
+    ++closeval;
+}
+
+
 // callback tests
 WVTEST_MAIN("callbacks")
 {
@@ -201,7 +207,7 @@ WVTEST_MAIN("callbacks")
     
     WvStream s;
     s.setcallback(val_cb, &val);
-    s.setclosecallback(val_cb, &closeval);
+    s.setclosecallback(WvBoundCallback<IWvStreamCallback, int&>(val_icb, closeval));
     
     WVPASS(!val);
     WVPASS(!closeval);

@@ -22,7 +22,7 @@ static void sighandler_die(int signum)
 }
 
 
-static void close_callback(WvStream& s, void* userdata)
+static void close_callback(WvStream& s)
 {
     if (!s.isok())
 	log(WvLog::Error, "%s\n", s.geterr());
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 					   O_CREAT|O_WRONLY|O_TRUNC);
 		    assert(!f->readable);
 		    s->autoforward(*f);
-		    s->setclosecallback(close_callback, NULL);
+		    s->setclosecallback(close_callback);
 		    l.append(s, true);
 		    l.append(f, true);
 		}
