@@ -47,7 +47,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug2, "Deleting.\n");
-    void* trace[10];
+    void* trace[25];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
     log(WvLog::Debug, "TRACE");
@@ -65,7 +65,7 @@ WvHttpStream::~WvHttpStream()
 void WvHttpStream::close()
 {
     log("close called\n");
-    void* trace[10];
+    void* trace[25];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
     log(WvLog::Debug, "TRACE");
