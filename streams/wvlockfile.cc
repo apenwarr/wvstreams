@@ -50,7 +50,7 @@ bool WvLockFile::lock()
 	return true;
     }
     
-    if (lock_dev(devicename))
+    if (dev_lock(devicename))
 	return false;
 
     lock_count++;
@@ -63,7 +63,7 @@ void WvLockFile::unlock()
     if (!lock_count) return;
 
     if (!--lock_count)
-	unlock_dev(devicename, getpid());
+	dev_unlock(devicename, getpid());
 }
 
 
