@@ -509,7 +509,7 @@ WvCounterModeEncoder::~WvCounterModeEncoder()
 
 void WvCounterModeEncoder::setcounter(const void *_counter, size_t _countersize)
 {
-    delete counter;
+    delete[] counter;
     counter = new unsigned char[_countersize];
     countersize = _countersize;
     memcpy(counter, _counter, countersize);
