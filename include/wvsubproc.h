@@ -35,7 +35,7 @@ public:
     pid_t pid;
     bool running;
     int estatus;
-    WvString pidfile, last_cmd, app;
+    WvString pidfile, last_cmd;
     WvStringList last_args, env;
     
     WvSubProc();
@@ -58,16 +58,16 @@ public:
     int start(const char cmd[], ...);
     
     int startv(const char cmd[], const char * const *argv);
-    virtual int start_again();
+    int start_again();
     
-    virtual int fork(int *waitfd);
+    int fork(int *waitfd);
 
     // stop (kill -TERM or -KILL as necessary) the subprocess and
     // all its children.
-    virtual void stop(time_t msec_delay, bool kill_children = true);
+    void stop(time_t msec_delay, bool kill_children = true);
     
     // wait for the subprocess (and all its children) to die.
-    virtual void wait(time_t msec_delay, bool wait_children = true);
+    void wait(time_t msec_delay, bool wait_children = true);
 
     // figure out the pid from the /var/run pidfile
     pid_t pidfile_pid();
@@ -79,9 +79,9 @@ public:
     void kill_primary(int sig);
     
     // suspend the process temporarily, or resume it.
-    virtual void suspend()
+    void suspend()
         { kill(SIGSTOP); }
-    virtual void resume()
+    void resume()
         { kill(SIGCONT); }
 };
 
