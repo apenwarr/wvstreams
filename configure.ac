@@ -343,8 +343,13 @@ if test "$with_xplc" != "no"; then
     AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
     AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
     if test "$with_xplc" = no; then
-        CPPFLAGS="$CPPFLAGS_save"
-        LDFLAGS="$LDFLAGS_save"
+        if test -d xplc; then
+            CPPFLAGS="-Ixplc/include"
+            LDFLAGS="-Lxplc"
+            AC_CONFIG_SUBDIRS(xplc)
+            build_xplc=yes
+            with_xplc=xplc
+        fi
     fi
 fi
 
@@ -399,6 +404,7 @@ if test "$with_vorbis" = "no"; then
 fi
 if test "$with_xplc" = "no"; then
     AC_MSG_WARN([XPLC is missing.])
+#    missing_required=yes
 fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
@@ -455,6 +461,8 @@ AC_SUBST(with_tcl)
 AC_SUBST(with_vorbis)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
+
+AC_SUBST(build_xplc)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)

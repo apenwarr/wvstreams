@@ -1,9 +1,3 @@
-//#include "wvstream.h"
-//#include "wvstring.h"
-#include "wvxplc.h"
-
-#ifdef HAVE_LIBXPLC
-
 #include <xplc/xplc.h>
 #include <xplc/IServiceManager.h>
 #include <xplc/IStaticServiceHandler.h>
@@ -76,11 +70,3 @@ int main()
     return 0;
 }
 
-#else // not HAVE_LIBXPLC
-
-int main()
-{
-    return 42;
-}
-
-#endif // HAVE_LIBXPLC

@@ -9,7 +9,7 @@
 #ifndef __WVMONIKER_H
 #define __WVMONIKER_H
 
-#include "wvxplc.h"
+#include <xplc/utils.h>
 #include "wvstring.h"
 
 class WvMonikerRegistry;
@@ -32,7 +32,7 @@ typedef void *WvMonikerCreateFunc(WvStringParm parms,
 class WvMonikerBase
 {
 protected:
-    WvMonikerBase(const XUUID &iid, WvStringParm _id,
+    WvMonikerBase(const UUID &iid, WvStringParm _id,
 		  WvMonikerCreateFunc *func);
     ~WvMonikerBase();
     
@@ -86,7 +86,7 @@ public:
  * Most people don't use this function.  See the templated, type-safe version
  * of wvcreate() below.
  */
-void *wvcreate(const XUUID &iid,
+void *wvcreate(const UUID &iid,
 	       WvStringParm s, IObject *obj = NULL, void *userdata = NULL);
 
 

@@ -6,7 +6,19 @@ XPATH=include
 
 include vars.mk
 
+ifeq ("$(build_xplc)", "yes")
+  TARGETS:=xplc $(TARGETS)
+endif
+
 all: config.mk $(TARGETS)
+
+ifeq ("$(build_xplc)", "yes")
+
+.PHONY: xplc
+xplc:
+	make -C xplc
+
+endif
 
 %.so: SONAME=$@.$(RELEASE)
 
@@ -101,7 +113,7 @@ $(TESTS): $(LIBUNICONF)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
-include $(wildcard */rules.mk */*/rules.mk) /dev/null
+include $(filter-out xplc/%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 

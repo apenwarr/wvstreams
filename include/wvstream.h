@@ -7,7 +7,7 @@
 #ifndef __WVSTREAM_H
 #define __WVSTREAM_H
 
-#include "wvxplc.h"
+#include <xplc/utils.h>
 #include "wverror.h"
 #include "wvbuf.h"
 #include "wvcallback.h"
@@ -150,12 +150,9 @@ public:
     /** Sets a callback to be invoked on close().  */
     virtual void setclosecallback(WvStreamCallback _callfunc,
 				  void *_userdata) = 0;
-    
-    // IObject
-    static const XUUID XIID;
 };
 
-DEFINE_XIID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
+DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
 
 /**

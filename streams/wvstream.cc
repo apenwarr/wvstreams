@@ -41,10 +41,10 @@ using std::max;
 
 WvStream *WvStream::globalstream = NULL;
 
-XUUID_MAP_BEGIN(WvStream)
-  XUUID_MAP_ENTRY(IObject)
-  XUUID_MAP_ENTRY(IWvStream)
-  XUUID_MAP_END
+UUID_MAP_BEGIN(WvStream)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_ENTRY(IWvStream)
+  UUID_MAP_END
 
 WvStream::WvStream()
 {
