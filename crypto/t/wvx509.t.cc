@@ -144,5 +144,9 @@ WVTEST_MAIN()
 	WVFAIL(t509.get_subject() == "/CN=test.foo.com/DC=foo/DC=com");
 	WVFAIL(t509.get_issuer() == "/CN=test.foo.com/DC=foo/DC=com");
     }
+    {
+	WvX509Mgr t509(strcert, "");
+	WVFAIL(t509.rsa->isok());
+    }
     
 }

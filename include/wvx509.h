@@ -246,8 +246,18 @@ public:
     /**
      * Accessor for the error string if !isok()
      */
-    const WvString &errstr()
-        { return errstring; }
+    const WvString errstr()
+        { 
+	    if (!!errstring)
+		return errstring; 
+	    else if (!cert && !rsa)
+		return WvString("Not Initialized yet");
+	    else
+	    {
+		assert("Why did you call errstr?");
+		return WvString::null;
+	    }
+	}
 
 private:
     WvLog debug;
@@ -274,6 +284,12 @@ private:
      * Populate dname (the distinguished name);
      */
     void filldname();
+
+    /**
+     * Return a WvRSAKey filled with the public key from the
+     * certificate in cert
+     */
+    WvRSAKey *fillRSAPubKey();
 };
 
 #endif // __WVX509_H

@@ -41,6 +41,8 @@ public:
     
     ~WvRSAKey();
     
+    virtual bool isok() const;
+    
     /**
      * Retrieve the private key as a hexified string
      * returns WvString::null if there is only a public

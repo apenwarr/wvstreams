@@ -65,27 +65,16 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
     if (cert)
     {
 	filldname();
-	
-	EVP_PKEY *pk;
-	pk = X509_get_pubkey(cert);
-
-        if ((pk = X509_get_pubkey(cert)) != NULL)
-	{
- 	    size_t size;
-            unsigned char *keybuf, *iend;
-	    WvString tmppub;
-
-	    size = i2d_RSAPublicKey(pk->pkey.rsa, NULL);
-            iend = keybuf = new unsigned char[size];
-            i2d_RSAPublicKey(pk->pkey.rsa, &iend);
-
-            tmppub.setsize(size * 2 + 1);
-	    ::hexify(tmppub.edit(), keybuf, size);
-	    rsa = new WvRSAKey(tmppub, false);
-
-	    delete[] keybuf;
-	}
+	rsa = fillRSAPubKey();
+	if (!rsa->isok())
+	    seterr("RSA Public Key Error: %s", rsa->errstr());
     }
+    else
+	;
+	// This isn't an error, or a mistake...
+	// so this is one case where 
+	// cert == NULL && rsa == NULL && errstr == NULL
+	// That the programmer should be doing something about.
 }
 
 
@@ -263,7 +252,7 @@ void WvX509Mgr::create_selfsigned()
     assert(rsa);
 
     // double check RSA key
-    if (RSA_check_key(rsa->rsa) == 1)
+    if (rsa->isok())
 	debug("RSA Key is fine.\n");
     else
     {
@@ -283,7 +272,7 @@ void WvX509Mgr::create_selfsigned()
     }
 
     // Assign RSA Key from WvRSAKey into stupid package that OpenSSL needs
-    if (!EVP_PKEY_assign_RSA(pk, rsa->rsa))
+    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
     {
 	seterr("Error adding RSA keys to certificate");
 	return;
@@ -355,7 +344,9 @@ void WvX509Mgr::create_selfsigned()
 	EVP_PKEY_free(pk);
 	return;
     }
-
+    
+    EVP_PKEY_free(pk);
+    
     debug("Certificate for %s created\n", dname);
 }
 
@@ -367,6 +358,16 @@ void WvX509Mgr::filldname()
     X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
     buffer[sizeof(buffer)-1] = 0;
     dname = buffer; 
+}
+
+WvRSAKey *WvX509Mgr::fillRSAPubKey()
+{
+    EVP_PKEY *pkcert = EVP_PKEY_new();
+    pkcert = X509_get_pubkey(cert);
+    RSA *certrsa = RSA_new();
+    certrsa = EVP_PKEY_get1_RSA(pkcert);
+    EVP_PKEY_free(pkcert);
+    return new WvRSAKey(certrsa, false); 
 }
 
 
@@ -403,7 +404,7 @@ WvString WvX509Mgr::certreq()
     assert(dname);
 
     // double check RSA key
-    if (RSA_check_key(rsa->rsa) == 1)
+    if (rsa->isok())
 	debug("RSA Key is fine.\n");
     else
     {
@@ -424,8 +425,7 @@ WvString WvX509Mgr::certreq()
         return WvString::null;
     }
 
-    WvRSAKey rsa2(*rsa);
-    if (!EVP_PKEY_assign_RSA(pk, rsa2.rsa))
+    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
     {
         seterr("Error adding RSA keys to certificate");
 	X509_REQ_free(certreq);
@@ -443,8 +443,8 @@ WvString WvX509Mgr::certreq()
     set_name_entry(name, dname);
     X509_REQ_set_subject_name(certreq, name);
     debug("SubjectDN: %s\n",
-	      X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 0, 0));
-
+	  X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 0, 0));
+    
     if (!X509_REQ_sign(certreq, pk, EVP_sha1()))
     {
 	seterr("Could not self sign the request");
@@ -466,10 +466,6 @@ WvString WvX509Mgr::certreq()
 	debug("Self Signed Certificate Request verifies OK!\n");
     }
 
-    // don't let rsa2 free its own RSA key... the certificate will do that
-    // for us.
-    rsa2.rsa = NULL;
-
     // Horribly involuted hack to get around the fact that the
     // OpenSSL people are too braindead to have a PEM_write function
     // that returns a char *
@@ -479,7 +475,7 @@ WvString WvX509Mgr::certreq()
   
     return file_hack_end(stupid);
 }
- 
+
 
 bool WvX509Mgr::test()
 {
@@ -507,12 +503,9 @@ bool WvX509Mgr::test()
 	    {
 		// However let's double check:
 		WvString rsapub = encode(RsaPubPEM);
-		EVP_PKEY *pkcert = EVP_PKEY_new();
-		pkcert = X509_get_pubkey(cert);
-		RSA *certrsa = RSA_new();
-		certrsa = EVP_PKEY_get1_RSA(pkcert);
-		WvRSAKey tempcertrsa(certrsa, false);
-		WvString certpub = tempcertrsa.getpem(false);
+		WvRSAKey *temprsa = fillRSAPubKey();
+		WvString certpub = temprsa->getpem(false);
+		delete temprsa;
 		// debug("rsapub:\n%s\n", rsapub);
 		// debug("certpub:\n%s\n", certpub);
 		if (certpub == rsapub)
@@ -758,7 +751,10 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 		cert = NULL;
 	    }
 	    cert = PEM_read_X509(stupid, NULL, NULL, NULL);
-	    filldname();
+	    if (cert)
+		filldname();
+	    else
+		seterr("Certificate failed to import!");
 	    break;
 	    
 	case RsaPEM:
@@ -767,8 +763,18 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    if (rsa) delete rsa;
 	    rsa = new WvRSAKey(PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL), 
 			       true);
+	    if (!rsa->isok())
+		seterr("RSA Key failed to import\n");
 	    break;
-	    
+	case RsaPubPEM:
+	    debug("Importing RSA Public Key.\n");
+	    debug("Are you REALLY sure that you want to do this?\n");
+	    if (rsa) delete rsa;
+	    rsa = new WvRSAKey(PEM_read_RSAPublicKey(stupid, NULL, NULL, NULL), 
+			       true);
+	    if (!rsa->isok())
+		seterr("RSA Public Key failed to import\n");
+	    break;
 	case RsaRaw:
 	    debug("Importing raw RSA keypair not supported.\n");
 	    break;
@@ -799,20 +805,19 @@ void WvX509Mgr::write_p12(WvStringParm filename)
     
     if (!!pkcs12pass)
     {
-	EVP_PKEY *pk = EVP_PKEY_new();
-	if (!pk)
-	{
-	    seterr("Unable to create PKEY object.\n");
-	    return;
-	}
-	
 	if (rsa && cert)
 	{
-	    WvRSAKey tmpkey(*rsa);
-	    
-	    if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
+	    EVP_PKEY *pk = EVP_PKEY_new();
+	    if (!pk)
+	    {
+		seterr("Unable to create PKEY object.\n");
+		return;
+	    }
+
+	    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
 	    {
 		seterr("Error setting RSA keys.\n");
+		EVP_PKEY_free(pk);
 		return;
 	    }
 	    else
@@ -824,10 +829,12 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 		    debug("Write the PKCS12 object out...\n");
 		    i2d_PKCS12_fp(fp, pkg);
 		    PKCS12_free(pkg);
+		    EVP_PKEY_free(pk);
 		}
 		else
 		{
 		    seterr("Unable to create PKCS12 object.\n");
+		    EVP_PKEY_free(pk);
 		    return;
 		}
 	    }
@@ -876,7 +883,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	    // Now, cert should be OK, let's try and set up the RSA stuff
 	    // since we've essentially got a PKEY, and not a WvRSAKey
 	    // We need to create a new WvRSAKey from the PKEY...
-	    rsa = new WvRSAKey(pk->pkey.rsa, true);
+	    rsa = new WvRSAKey(EVP_PKEY_get1_RSA(pk), true);
 	    
 	    // Now that we have both, check to make sure that they match
 	    if (!rsa || !cert || test())
@@ -884,8 +891,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 		seterr("Could not fill in RSA and Cert with matching values.\n");
 		return;
 	    }
-	    // We don't free pk here because the WvRSAKey object now 
-	    // owns the key value and should delete it in the constructor.
+	    EVP_PKEY_free(pk);
 	}
 	else
 	{

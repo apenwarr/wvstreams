@@ -61,6 +61,12 @@ WvRSAKey::~WvRSAKey()
 }
 
 
+bool WvRSAKey::isok() const
+{
+   return rsa && (RSA_check_key(rsa) == 1) && !errstring;   
+}
+
+
 void WvRSAKey::init(WvStringParm keystr, bool priv)
 {
     // Start out with everything nulled out...
