@@ -46,7 +46,7 @@ WvConf::WvConf(WvStringParm _filename, int _create_mode)
 }
 
 
-static int check_for_bool_string(const char *s)
+int WvConf::check_for_bool_string(const char *s)
 {
     if (strcasecmp(s, "off") == 0
      || strcasecmp(s, "false") == 0
