@@ -85,10 +85,7 @@
     if ($1.isnull())
         convert_to_null($result);
     else
-    {
-        convert_to_string($result);
-        Z_STRVAL_P($result) = $1.edit();
-    }
+        ZVAL_STRINGL($result, $1.edit(), $1.len(), 1);
 }
 
 // FIXME: this breaks PHP
