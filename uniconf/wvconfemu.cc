@@ -9,6 +9,7 @@
 #endif
 #include "wvconfemu.h"
 #include "wvstringtable.h"
+#include "strutils.h"
 
 
 WvConfigEntry *WvConfigSectionEmu::operator[] (WvStringParm s)
