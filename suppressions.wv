@@ -84,3 +84,8 @@
    sigaction(act)
    fun:__libc_sigaction
 }
+{
+   more_fun_libcrypto_junk
+   Memcheck:Value4
+   fun:BF_encrypt
+}
