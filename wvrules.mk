@@ -267,7 +267,7 @@ pkgIndex.tcl $(wildcard *.tcl): .tcl_paths
 # We automatically generate header dependencies for .c and .cc files.  The
 # dependencies are stored in the file ".filename.d"
 #
-depfiles_sf = $(wildcard .*.d)
+depfiles_sf = $(wildcard .*.d t/.*.d)
 
 ifneq ($(depfiles_sf),)
 -include $(depfiles_sf)
