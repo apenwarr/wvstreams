@@ -34,9 +34,8 @@ DeclareWvCallback(2, void, UniConfCallback, UniConf &, void *);
  * The nice thing about this is you can write classes that use a UniConf
  * configuration tree, and then instead hand them a subtree if you want.
  */
-class UniConf : public UniConfTreeGeneric<UniConf>
+class UniConf : public UniConfTree<UniConf>
 {
-    friend class UniConfTreeBase;
     UniConfGen *generator; // subtree generator for this tree
 
 private:
@@ -44,7 +43,7 @@ private:
     UniConf(const UniConf &);
 
 public:
-    typedef UniConfTreeGeneric<UniConf> Tree;
+    typedef UniConfTree<UniConf> Tree;
     UniConf *defaults;     // a tree possibly containing default values
     
 public:

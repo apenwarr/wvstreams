@@ -198,20 +198,37 @@ public:
     UniConfKey &operator= (const UniConfKey &other);
 
     /**
-     * Determines if two paths are equal.
-     * Uses case-insensitive matching on the path string.
+     * Compares two paths lexicographically.
+     * Uses case-insensitive matching on the path string to produce
+     * a total ordering of all paths.
      * @param other the other path
+     * @return 0 if *this == other, < 0 if *this < other, else > 0
      */
-    bool operator== (const UniConfKey &other) const;
+    int compareto(const UniConfKey &other) const;
+
+    /**
+     * Determines if two paths are equal.
+     * @param other the other path
+     * @return true in that case
+     */
+    inline bool operator== (const UniConfKey &other) const
+        { return compareto(other) == 0; }
+        
+    /**
+     * Determines if two paths are unequal.
+     * @param other the other path
+     * @return true in that case
+     */
     inline bool operator!= (const UniConfKey &other) const
         { return ! (*this == other); }
 
     /**
-     * Produces a total ordering of paths.
-     * Uses case-insensitive matching on the path string.
+     * Determines if this path precedes the other lexicographically.
      * @param other the other path
+     * @return true in that case
      */
-    bool operator< (const UniConfKey &other) const;
+    bool operator< (const UniConfKey &other) const
+        { return compareto(other) < 0; }
 
     class Iter;
 

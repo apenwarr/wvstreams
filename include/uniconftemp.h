@@ -22,7 +22,7 @@ protected:
     class NodeIter;
     friend class NodeIter;
 
-    UniConfTree root; /*!< the root of the tree */
+    UniConfValueTree root; /*!< the root of the tree */
     bool dirty; /*!< set whenever the tree actually changes */
 
 public:
@@ -48,10 +48,10 @@ class UniConfTempGen::NodeIter : public UniConfTempGen::Iter
 {
 protected:
     UniConfTempGen *xgen;
-    UniConfTree::Iter xit;
+    UniConfValueTree::Iter xit;
 
 public:
-    NodeIter(UniConfTempGen *gen, const UniConfTree::Iter &it);
+    NodeIter(UniConfTempGen *gen, const UniConfValueTree::Iter &it);
     NodeIter(const NodeIter &other);
     virtual ~NodeIter();
 

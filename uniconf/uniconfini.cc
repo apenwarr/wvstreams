@@ -59,6 +59,7 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
         log("Cannot open config file for reading: \"%s\"\n",
             file.errstr());
         file.close();
+        dirty = true;
         return false;
     }
 
@@ -140,7 +141,6 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
             log("Ignoring malformed input line: \"%s\"\n", word);
         }
     }
-    dirty = false;
 
     /** close the file **/
     file.close();
@@ -149,6 +149,7 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
         log("Error reading from config file: \"%s\"\n", file.errstr());
         return false;
     }
+    dirty = false;
 
     /** handle unparsed input **/
     size_t avail = buf.used();
@@ -202,9 +203,9 @@ bool UniConfIniFileGen::commit(const UniConfKey &key,
 }
 
 
-void UniConfIniFileGen::save(WvStream &file, UniConfTree &parent)
+void UniConfIniFileGen::save(WvStream &file, UniConfValueTree &parent)
 {
-    UniConfTree::Iter it(parent);
+    UniConfValueTree::Iter it(parent);
     
     /** output values for non-empty direct or barren nodes **/
     // we want to ensure that a key with an empty value will
@@ -213,7 +214,7 @@ void UniConfIniFileGen::save(WvStream &file, UniConfTree &parent)
     bool printedsection = false;
     for (it.rewind(); it.next() && file.isok(); )
     {
-        UniConfTree *node = it.ptr();
+        UniConfValueTree *node = it.ptr();
         if (!! node->value() || ! node->haschildren())
         {
             if (! printedsection)

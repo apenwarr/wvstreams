@@ -17,14 +17,14 @@
 /***** UniConf *****/
 
 UniConf::UniConf() :
-    Tree(NULL, UniConfKey::EMPTY, ""),
+    Tree(NULL, UniConfKey::EMPTY),
     generator(NULL), defaults(NULL)
 {
 }
 
 
 UniConf::UniConf(UniConf *parent, const UniConfKey &name) :
-    Tree(parent, name, ""),
+    Tree(parent, name),
     generator(NULL), defaults(NULL)
 {
 }

@@ -64,7 +64,7 @@ class UniConfFileTreeGen : public UniConfGen
 public:
     WvString basedir;
     WvLog log;
-    UniConfTree root;
+    UniConfValueTree root;
     
     UniConfFileTreeGen(WvStringParm _basedir);
     virtual ~UniConfFileTreeGen() { }
@@ -84,7 +84,7 @@ public:
     virtual Iter *iterator(const UniConfKey &key);
 
 private:
-    UniConfTree *maketree(const UniConfKey &key);
+    UniConfValueTree *maketree(const UniConfKey &key);
     class NodeIter;
 };
 
@@ -92,10 +92,10 @@ private:
 class UniConfFileTreeGen::NodeIter : public UniConfFileTreeGen::Iter
 {
 protected:
-    UniConfTree::Iter xit;
+    UniConfValueTree::Iter xit;
 
 public:
-    NodeIter(UniConfTree &node) : xit(node)
+    NodeIter(UniConfValueTree &node) : xit(node)
         { }
     NodeIter(const NodeIter &other) : xit(other.xit)
         { }
@@ -142,7 +142,7 @@ bool UniConfFileTreeGen::refresh(const UniConfKey &key,
         struct stat statbuf;
         bool exists = lstat(filename.cstr(), & statbuf) == 0;
         
-        UniConfTree *node = root.find(key);
+        UniConfValueTree *node = root.find(key);
         if (! exists)
         {
             if (node != & root)
@@ -183,7 +183,7 @@ bool UniConfFileTreeGen::refresh(const UniConfKey &key,
 WvString UniConfFileTreeGen::get(const UniConfKey &key)
 {
     // check the cache
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     if (node && ! node->value().isnull())
         return node->value();
 
@@ -223,7 +223,7 @@ WvString UniConfFileTreeGen::get(const UniConfKey &key)
 
 bool UniConfFileTreeGen::exists(const UniConfKey &key)
 {
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     if (! node)
     {
         refresh(key, UniConf::ZERO);
@@ -235,7 +235,7 @@ bool UniConfFileTreeGen::exists(const UniConfKey &key)
 
 bool UniConfFileTreeGen::haschildren(const UniConfKey &key)
 {
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     if (! node || ! node->haschildren())
     {
         refresh(key, UniConf::CHILDREN);
@@ -249,7 +249,7 @@ UniConfFileTreeGen::Iter *UniConfFileTreeGen::iterator(const UniConfKey &key)
 {
     if (haschildren(key))
     {
-        UniConfTree *node = root.find(key);
+        UniConfValueTree *node = root.find(key);
         if (node)
             return new NodeIter(*node);
     }
@@ -257,18 +257,18 @@ UniConfFileTreeGen::Iter *UniConfFileTreeGen::iterator(const UniConfKey &key)
 }
 
 
-UniConfTree *UniConfFileTreeGen::maketree(const UniConfKey &key)
+UniConfValueTree *UniConfFileTreeGen::maketree(const UniConfKey &key)
 {
     // construct a node for the file with a null value
-    UniConfTree *node = & root;
+    UniConfValueTree *node = & root;
     UniConfKey::Iter it(key);
     it.rewind();
     while (it.next())
     {
-        UniConfTree *prev = node;
+        UniConfValueTree *prev = node;
         node = node->findchild(it());
         if (! node)
-            node = new UniConfTree(prev, it(), WvString::null);
+            node = new UniConfValueTree(prev, it(), WvString::null);
     }
     return node;
 }
@@ -280,13 +280,13 @@ int main()
     WvLog log("conftest", WvLog::Info);
     WvLog quiet("*", WvLog::Debug1);
     // try Debug5 for lots of messages
-    //WvLogConsole rcv(2, WvLog::Debug5);
     WvLogConsole rcv(2, WvLog::Debug4);
     
-    log("An hconf instance is %s bytes long.\n", sizeof(UniConf));
     log("A wvconf instance is %s/%s/%s bytes long.\n",
 	sizeof(WvConf), sizeof(WvConfigSection), sizeof(WvConfigEntry));
     log("A stringlist is %s bytes long.\n", sizeof(WvStringList));
+    log("A UniConfValueTree instance is %s bytes long.\n", sizeof(UniConfValueTree));
+    log("A UniConfKey instance is %s bytes long.\n", sizeof(UniConfKey));
     
     {
 	wvcon->print("\n\n");

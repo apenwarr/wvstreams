@@ -29,7 +29,7 @@ UniConfLocation UniConfTempGen::location() const
 
 WvString UniConfTempGen::get(const UniConfKey &key)
 {
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     if (node)
         return node->value();
     return WvString::null;
@@ -57,7 +57,7 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
         else
         {
             // remove a non-root subtree
-            UniConfTree *node = root.find(key);
+            UniConfValueTree *node = root.find(key);
             if (node)
             {
                 delete node;
@@ -67,22 +67,27 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
     }
     else
     {
-        UniConfTree *node = & root;
+        UniConfValueTree *node = & root;
         UniConfKey::Iter it(key);
         it.rewind();
         while (it.next())
         {
-            UniConfTree *prev = node;
+            UniConfValueTree *prev = node;
             node = node->findchild(it());
             if (! node)
             {
-                node = new UniConfTree(prev, it(), "");
+                node = new UniConfValueTree(prev, it(), "");
                 dirty = true;
             }
         }
         if (value != node->value())
         {
             node->setvalue(value);
+            dirty = true;
+        }
+        if (root.value().isnull())
+        {
+            root.setvalue("");
             dirty = true;
         }
     }
@@ -92,7 +97,7 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
 
 bool UniConfTempGen::zap(const UniConfKey &key)
 {
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     if (node && node->haschildren())
     {
         node->zap();
@@ -104,14 +109,14 @@ bool UniConfTempGen::zap(const UniConfKey &key)
 
 bool UniConfTempGen::exists(const UniConfKey &key)
 {
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     return node != NULL;
 }
 
 
 bool UniConfTempGen::haschildren(const UniConfKey &key)
 {
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     return node != NULL && node->haschildren();
 }
 
@@ -119,9 +124,9 @@ bool UniConfTempGen::haschildren(const UniConfKey &key)
 UniConfGen::Iter *UniConfTempGen::iterator(
     const UniConfKey &key)
 {
-    UniConfTree *node = root.find(key);
+    UniConfValueTree *node = root.find(key);
     if (node)
-        return new NodeIter(this, UniConfTree::Iter(*node));
+        return new NodeIter(this, UniConfValueTree::Iter(*node));
     return new NullIter();
 }
 
@@ -130,7 +135,7 @@ UniConfGen::Iter *UniConfTempGen::iterator(
 /***** UniConfTempGen::NodeIter *****/
 
 UniConfTempGen::NodeIter::NodeIter(UniConfTempGen *gen,
-    const UniConfTree::Iter &it) :
+    const UniConfValueTree::Iter &it) :
     xgen(gen), xit(it)
 {
 }

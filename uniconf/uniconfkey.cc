@@ -225,13 +225,7 @@ UniConfKey &UniConfKey::operator= (const UniConfKey &other)
 }
 
 
-bool UniConfKey::operator== (const UniConfKey &other) const
+int UniConfKey::compareto(const UniConfKey &other) const
 {
-    return strcasecmp(path, other.path) == 0;
-}
-
-
-bool UniConfKey::operator< (const UniConfKey &other) const
-{
-    return strcasecmp(path, other.path) < 0;
+    return strcasecmp(path, other.path);
 }

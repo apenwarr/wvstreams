@@ -9,23 +9,25 @@
 #ifndef __UNICONFTREE_H
 #define __UNICONFTREE_H
 
-#include "uniconfpair.h"
-#include "wvlink.h"
-
-class UniConfTreeBaseDict;
+#include "uniconfkey.h"
+#include "wvvector.h"
 
 /**
  * UniConfTreeBase the common base implementation for UniConfTree.
+ * @see UniConfTree
  */
-class UniConfTreeBase : public UniConfPair
+class UniConfTreeBase
 {
 protected:
+    typedef WvVector<UniConfTreeBase*,
+        ShallowBlockOps<UniConfTreeBase*> > Vector;
+
     UniConfTreeBase *xparent; /*!< the parent of this subtree */
-    UniConfTreeBaseDict *xchildren; /*!< the children of this node */
+    Vector *xchildren; /*!< the ordered vector of children */
+    UniConfKey xkey;   /*!< the name of this entry */
 
-    UniConfTreeBase(UniConfTreeBase *parent, const UniConfKey &key,
-        WvStringParm value);
-
+    UniConfTreeBase(UniConfTreeBase *parent, const UniConfKey &key);
+    
 public:
     ~UniConfTreeBase();
 
@@ -39,24 +41,50 @@ protected:
     UniConfTreeBase *_find(const UniConfKey &key) const;
     
     UniConfTreeBase *_findchild(const UniConfKey &key) const;
-    
+
     class Iter;
     friend class Iter;
-        
+    
 public:
+    /**
+     * Returns the key field.
+     * @param the key
+     */
+    inline const UniConfKey &key() const
+        { return xkey; }
+
     /**
      * Returns true if the node has children.
      * @return true if the node has children
      */
     bool haschildren() const;
 
+    /**
+     * Compacts the tree storage to minimize its footprint.
+     */
+    void compact();
+
 private:
+    /**
+     * Called by a child to link itself to this node.
+     */
     void link(UniConfTreeBase *node);
+
+    /**
+     * Called by a child to unlink itself from this node.
+     */
     void unlink(UniConfTreeBase *node);
+
+    /**
+     * Performs a binary search to determine the slot in which a
+     * child would reside if it belonged to the sequence.
+     * @param key the key to search for
+     * @param found set to true if the element was found, otherwise
+     *        not changed
+     * @return the slot index
+     */
+    int bsearch(const UniConfKey &key, bool &found) const;
 };
-
-DeclareWvDict(UniConfTreeBase, UniConfKey, key());
-
 
 
 /**
@@ -66,49 +94,48 @@ DeclareWvDict(UniConfTreeBase, UniConfKey, key());
 class UniConfTreeBase::Iter
 {
     UniConfTreeBase &tree;
-    UniConfTreeBaseDict::Iter it;
+    int index;
 
 public:
     Iter(UniConfTreeBase &tree);
-
     Iter(const Iter &other);
 
     void rewind();
-
-    inline bool next()
-    {
-        return it.next();
-    }
-    inline UniConfTreeBase *ptr() const
-    {
-        return it.ptr();
-    }
+    bool next();
+    UniConfTreeBase *ptr() const;
     WvIterStuff(UniConfTreeBase);
 };
 
 
-
 /**
- * UniConfTree serves as a base from which UniConfGen backing
- * store implementations may be constructed.
+ * A recursively composed dictionary for ordered tree-structured
+ * data indexed by UniConfKey with logarithmic lookup time for
+ * each 1-level search, linear insertion and removal.
+ * <p>
+ * This container maintains a sorted vector of children which
+ * greatly facilitates tree comparison and merging.  The
+ * underlying collection guarantees fast lookups, but insertion
+ * and removal may be quite slow.  If this becomes a problem,
+ * then a different (more complex) data structure should be used,
+ * such as a binary search tree.  However, for the moment, the
+ * use of a vector keeps down memory footprint.
+ * </p><p>
+ * Someday this could be further abstracted into a generic WvTreeDict.
+ * </p>
  *
  * @param T the name of the concrete subclass of UniConfTree
  */
 template<class T>
-class UniConfTreeGeneric : public UniConfTreeBase
+class UniConfTree : public UniConfTreeBase
 {
-    DeclareWvDict3(T, Dict, UniConfKey, key(),);
-
 public:
     /**
      * Creates a node and links it to a subtree.
      * @param parent the parent node, or NULL
      * @param key the key
-     * @param value the value
      */
-    inline UniConfTreeGeneric(T *parent, const UniConfKey &key,
-        WvStringParm value) :
-        UniConfTreeBase(parent, key, value)
+    inline UniConfTree(T *parent, const UniConfKey &key) :
+        UniConfTreeBase(parent, key)
     {
     }
 
@@ -116,7 +143,7 @@ public:
      * Unlinks the node from its parent, destroys it along with
      * its contents and children.
      */
-    inline ~UniConfTreeGeneric()
+    inline ~UniConfTree()
     {
         zap();
     }
@@ -202,9 +229,11 @@ public:
     {
         if (! xchildren)
             return;
-        Dict *dict = reinterpret_cast<Dict*>(xchildren);
+        Vector *oldchildren = xchildren;
         xchildren = NULL;
-        delete dict;
+        for (int i = 0; i < oldchildren->size(); ++i)
+            delete static_cast<T*>((*oldchildren)[i]);
+        delete oldchildren;
     }
 
     /**
@@ -242,17 +271,32 @@ public:
 
 
 /**
- * A plain UniConfTree.
+ * A plain UniConfTree that holds keys and values.
  */
-class UniConfTree : public UniConfTreeGeneric<UniConfTree>
+class UniConfValueTree : public UniConfTree<UniConfValueTree>
 {
+    WvString xvalue;  /*!< the value of this entry */
+    
 public:
-    inline UniConfTree(UniConfTree *parent,
-        const UniConfKey &key,
-        WvStringParm value) :
-        UniConfTreeGeneric<UniConfTree>(parent, key, value)
+    UniConfValueTree(UniConfValueTree *parent,
+        const UniConfKey &key, WvStringParm value) :
+        UniConfTree<UniConfValueTree>(parent, key), xvalue(value)
     {
     }
+    
+    /**
+     * Returns the value field.
+     * @param the value
+     */
+    inline const WvString &value()
+        { return xvalue; }
+
+    /**
+     * Sets the value field.
+     * @param value the new value
+     */
+    void setvalue(WvStringParm value)
+        { xvalue = value; }
 };
 
 

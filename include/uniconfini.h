@@ -38,7 +38,7 @@ public:
     virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
 
 private:
-    void save(WvStream &file, UniConfTree &parent);
+    void save(WvStream &file, UniConfValueTree &parent);
 };
 
 

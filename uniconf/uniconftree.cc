@@ -13,9 +13,8 @@
 /***** UniConfTreeBase *****/
 
 UniConfTreeBase::UniConfTreeBase(UniConfTreeBase *parent,
-    const UniConfKey &key, WvStringParm value) :
-    UniConfPair(key, value),
-    xparent(parent), xchildren(NULL)
+    const UniConfKey &key) :
+    xparent(parent), xchildren(NULL), xkey(key)
 {
     if (xparent)
         xparent->link(this);
@@ -24,9 +23,9 @@ UniConfTreeBase::UniConfTreeBase(UniConfTreeBase *parent,
 
 UniConfTreeBase::~UniConfTreeBase()
 {
-    // this happens only after the children are deleted
-    // by our subclass, which ensures that we do not confuse
-    // them about their parentage
+    // this happens only after the children are deleted by our
+    // typed subclass, which ensures that we do not confuse them
+    // about their parentage as their destructors are invoked
     if (xparent)
         xparent->unlink(this);
 }
@@ -50,12 +49,6 @@ UniConfTreeBase *UniConfTreeBase::_root() const
     while (node->xparent)
         node = node->xparent;
     return const_cast<UniConfTreeBase*>(node);
-}
-
-
-bool UniConfTreeBase::haschildren() const
-{
-    return xchildren && ! xchildren->isempty();
 }
 
 
@@ -106,24 +99,79 @@ UniConfTreeBase *UniConfTreeBase::_find(
 UniConfTreeBase *UniConfTreeBase::_findchild(
     const UniConfKey &key) const
 {
-    if (! xchildren)
-        return NULL;
-    return (*xchildren)[key];
+    bool found = false;
+    int slot = bsearch(key, found);
+    return found ? (*xchildren)[slot] : NULL;
+}
+
+
+bool UniConfTreeBase::haschildren() const
+{
+    return xchildren && ! xchildren->isempty();
+}
+
+
+void UniConfTreeBase::compact()
+{
+    if (xchildren)
+    {
+        if (xchildren->isempty())
+        {
+            delete xchildren;
+            xchildren = NULL;
+        }
+        else
+            xchildren->compact();
+    }
 }
 
 
 void UniConfTreeBase::link(UniConfTreeBase *node)
 {
+    bool found = false;
+    int slot = bsearch(node->key(), found);
+    assert (! found);
     if (! xchildren)
-        xchildren = new UniConfTreeBaseDict(13); // FIXME: should not fix size
-    xchildren->add(node, true);
+        xchildren = new Vector();
+    xchildren->insert(slot, node);
 }
 
 
 void UniConfTreeBase::unlink(UniConfTreeBase *node)
 {
-    if (xchildren)
-        xchildren->remove(node);
+    // This case occurs because of a simple optimization in
+    // UniConfTree::zap() to avoid a possible quadratic time bound
+    if (! xchildren)
+        return;
+
+    bool found = false;
+    int slot = bsearch(node->key(), found);
+    assert(found);
+    xchildren->remove(slot);
+}
+
+
+int UniConfTreeBase::bsearch(const UniConfKey &key, bool &found) const
+{
+    if (! xchildren)
+        return 0; // no children!
+    int low = 0;
+    int high = xchildren->size();
+    while (low < high)
+    {
+        int mid = (low + high) / 2;
+        int code = key.compareto((*xchildren)[mid]->key());
+        if (code < 0)
+            high = mid;
+        else if (code > 0)
+            low = mid + 1;
+        else
+        {
+            found = true;
+            return mid;
+        }
+    }
+    return low;
 }
 
 
@@ -131,23 +179,30 @@ void UniConfTreeBase::unlink(UniConfTreeBase *node)
 /***** UniConfTreeBase::Iter *****/
 
 UniConfTreeBase::Iter::Iter(UniConfTreeBase &_tree) :
-    tree(_tree), it(* reinterpret_cast<UniConfTreeBaseDict*>(
-        & null_UniConfPairDict))
+    tree(_tree)
 {
 }
 
 
 UniConfTreeBase::Iter::Iter(const Iter &other) :
-    tree(other.tree), it(other.it)
+    tree(other.tree), index(other.index)
 {
 }
 
 
 void UniConfTreeBase::Iter::rewind()
 {
-    // an awful hack so that we can rewind an iterator after
-    // things have been added to a tree and discover new children
-    it.tbl = tree.xchildren ? tree.xchildren :
-        reinterpret_cast<UniConfTreeBaseDict*>(& null_UniConfPairDict);
-    it.rewind();
+    index = -1;
+}
+
+
+bool UniConfTreeBase::Iter::next()
+{
+    return tree.xchildren && ++index < tree.xchildren->size();
+}
+
+
+UniConfTreeBase *UniConfTreeBase::Iter::ptr() const
+{
+    return (*tree.xchildren)[index];
 }
