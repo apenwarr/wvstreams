@@ -53,7 +53,7 @@ int main()
     total = 0;
     for (count = 0; count < d.numslots; count++)
     {
-	WvLink *head = &d.slots[count].head;
+	WvLink *head = &d.wvslots[count].head;
 	if (!head->next)
 	    total++;
     }
