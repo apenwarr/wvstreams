@@ -48,25 +48,25 @@ void UniConfPamConn::startup()
     c.conv = UniConfPamConn::noconv;
     c.appdata_ptr = NULL;
     pam_status = pam_start(PAM_SERVICE_NAME, NULL, &c, &pamh);
-    if (!check_pam_result("startup")) return;
+    if (!check_pam_status("startup")) return;
 
     pam_status = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
-    if (!check_pam_result("authentication")) return;
+    if (!check_pam_status("authentication")) return;
 
     pam_status = pam_acct_mgmt(pamh, 0);
-    if (!check_pam_result("authorization")) return;
+    if (!check_pam_status("authorization")) return;
         
     pam_status = pam_setcred(pamh, PAM_ESTABLISH_CRED);
-    if (!check_pam_result("credentials")) return;
+    if (!check_pam_status("credentials")) return;
         
     pam_status = pam_open_session(pamh, 0);
-    if (!check_pam_result("session open")) return;
+    if (!check_pam_status("session open")) return;
 
     session_exists = true;
 }
 
 
-bool UniConfPamConn::check_pam_result(WvStringParm s)
+bool UniConfPamConn::check_pam_status(WvStringParm s)
 {
     if (pam_status == PAM_SUCCESS)
     {
