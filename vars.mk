@@ -16,7 +16,8 @@ REALCLEAN:=
 TESTS:=
 NO_CONFIGURE_TARGETS:=
 
-NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist distclean realclean
+NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist \
+		distclean realclean
 
 ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
 include config.mk
@@ -24,6 +25,7 @@ endif
 
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
+TARGETS += uniconf/daemon/uniconfdaemon
 
 ifneq ("$(with_oggvorbis)", "no")
 TARGETS += libwvoggvorbis.so libwvoggvorbis.a
@@ -42,7 +44,8 @@ TARGETS_A := $(filter %.a,$(TARGETS))
 
 GARBAGES += ChangeLog
 
-DISTCLEAN += autom4te.cache config.mk config.log config.status include/wvautoconf.h
+DISTCLEAN += autom4te.cache config.mk config.log config.status \
+		include/wvautoconf.h
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
@@ -123,3 +126,6 @@ RELEASE?=$(PACKAGE_VERSION)
 
 include $(wildcard */vars.mk */*/vars.mk) /dev/null
 
+.PHONY: uniconf/daemon/uniconfdaemon
+uniconf/daemon/uniconfdaemon:
+	$(MAKE) -C uniconf/daemon uniconfdaemon
