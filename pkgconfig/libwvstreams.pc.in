@@ -2,11 +2,11 @@ version=@PACKAGE_VERSION@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includedir=@includedir@
+includedir=@includedir@/wvstreams
 
 Name: WvStreams
 Description: C++ network libraries for rapid application development
 Version: ${version}
 Requires: libwvbase = ${version}, libwvutils = ${version}, @xplc_pc@
 Libs: -L${libdir} -lwvstreams
-Cflags: -I${includedir}/wvstreams
+Cflags: -I${includedir}

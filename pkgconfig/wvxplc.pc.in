@@ -2,10 +2,10 @@ version=@PACKAGE_VERSION@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includedir=@includedir@
+includedir=@includedir@/wvstreams
 
 Name: WvStreams XPLC
 Description: Basic subset of the XPLC library specifically for WvStreams
 Version: ${version}
 Libs: -L${libdir} -lxplc-cxx
-Cflags: -I${includedir}/wvstreams
+Cflags: -I${includedir}

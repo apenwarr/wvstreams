@@ -2,12 +2,12 @@ version=@PACKAGE_VERSION@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includedir=@includedir@
+includedir=@includedir@/wvstreams
 
 Name: WvStreams Ogg Speex
 Description: WvStreams Ogg Speex codec library
 Version: ${version}
 Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
 Libs: -L${libdir} -loggspeex
-Cflags: -I${includedir}/wvstreams
+Cflags: -I${includedir}
 

@@ -2,11 +2,11 @@ version=@PACKAGE_VERSION@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includedir=@includedir@
+includedir=@includedir@/wvstreams
 
 Name: UniConf
 Description: The One True Configuration System
 Version: ${version}
 Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
 Libs: -L${libdir} -luniconf
-Cflags: -I${includedir}/wvstreams
+Cflags: -I${includedir}

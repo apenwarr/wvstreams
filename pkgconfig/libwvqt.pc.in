@@ -2,12 +2,12 @@ version=@PACKAGE_VERSION@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includedir=@includedir@
+includedir=@includedir@/wvstreams
 
 Name: WvStreams Qt
 Description: WvStreams and Qt event integration lbirary
 Version: ${version}
 Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
 Libs: -L${libdir} -lwvqt
-Cflags: -I${includedir}/wvstreams
+Cflags: -I${includedir}
 
