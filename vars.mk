@@ -203,9 +203,7 @@ BASEOBJS_EXTRA= \
 # print the sizes of all object files making up libwvbase, to help find
 # optimization targets.
 basesize:
-	@size $(BASEOBJS)
-	@echo "plus:"
-	@size $(BASEOBJS_EXTRA)
+	size --total $(BASEOBJS)
 
 micro: micro.o libwvbase.so
 
