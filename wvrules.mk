@@ -358,6 +358,6 @@ ChangeLog: FORCE
 #
 # Make 'tags' file using the ctags program - useful for editing
 #
-tags: $(shell find -name '*.cc' -o -name '*.[ch]')
-	@echo '(creating "tags")'
-	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
+#tags: $(shell find -name '*.cc' -o -name '*.[ch]')
+#	@echo '(creating "tags")'
+#	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
