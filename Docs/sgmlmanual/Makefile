@@ -1,7 +1,7 @@
 
-default: wvstreams.verify
+default: includes wvstreams.verify
 
-all: wvstreams.verify wvstreams.html wvstreams.ps wvstreams.pdf
+all: includes wvstreams.verify wvstreams.html wvstreams.ps wvstreams.pdf
 
 html: wvstreams.html
 ps: wvstreams.ps
@@ -102,6 +102,8 @@ img.tmp/%.gif: img.tmp/%.ppm
 
 img.tmp/%.ppm: img.tmp/%.ps
 	gs -q -dNOPAUSE -sDEVICE=ppm -r75x75 -sOutputFile=$@ $< -c quit
+
+includes: $(shell grep 'include(.*)' *.wvsgml </dev/null | sed 's/^.*include(\(.*\)).*$$/\1/')
 	
 images: htmlimages teximages
 
