@@ -435,7 +435,6 @@ WVTEST_MAIN("fqdomainnametest.cc")
     WVPASS(fqdomainname() == host);
 }
 
-/* temporarily disabled (negative numbers fail)
 WVTEST_MAIN("metriculatetest.cc")
 {
     int input[] = {293, 218976, 1896234178, 12837, -28376, -24, -2873, -182736};
@@ -444,8 +443,8 @@ WVTEST_MAIN("metriculatetest.cc")
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
     {
         WvString result = metriculate(input[i]);
+        printf("%s FAIL\n", result.cstr());
         if (!WVPASS(result == desired[i]))
             printf("   because [%s] != [%s]\n", result.cstr(), desired[i]);
     }
 }
-*/
