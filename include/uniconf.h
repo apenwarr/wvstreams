@@ -78,7 +78,7 @@ public:
         : xroot(other.xroot), xfullkey(other.xfullkey) { }
     
     /** Destroys the UniConf handle. */
-    ~UniConf() { }
+    virtual ~UniConf() { }
 
     
     /***** Handle Manipulation API *****/
@@ -580,14 +580,37 @@ public:
         { populate(i); }
 };
 
+extern "C" {
 #endif /* __cplusplus */
 
-#ifdef	__cplusplus
-extern "C" {
+
+#ifdef SWIG
+%module UniConf
+
+%{
+typedef void* uniconf_t;
+%}
 #endif
 
 /* FIXME: put the C binding here. */
 typedef void* uniconf_t;
+
+
+/* Initialize and destroy UniConf. */
+uniconf_t uniconf_init(const char* _moniker);
+
+
+void uniconf_free(uniconf_t _uniconf);
+
+
+/* The string returned has been allocated with malloc() and should
+ * thus be free()d. */
+const char* uniconf_get(uniconf_t _uniconf, const char* _key);
+
+
+void uniconf_set(uniconf_t _uniconf,
+		 const char* _key, const char* _value);
+
 
 #ifdef	__cplusplus
 }
