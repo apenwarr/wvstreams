@@ -150,7 +150,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	    $(LN_S) $$i.$(RELEASE) $$i; \
 	done
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
-	$(INSTALL_DATA) $(wildcard pkgconfig/*.pc) $(DESTDIR)$(libdir)/pkgconfig
+	$(INSTALL_DATA) $(filter-out %-uninstalled.pc, $(wildcard pkgconfig/*.pc)) $(DESTDIR)$(libdir)/pkgconfig
 
 uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8

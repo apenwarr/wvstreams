@@ -705,24 +705,27 @@ AC_SUBST(ac_libs)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc
+                 pkgconfig/libuniconf-uninstalled.pc
 		 pkgconfig/libwvbase.pc
+		 pkgconfig/libwvbase-uninstalled.pc
 		 pkgconfig/libwvfft.pc
+		 pkgconfig/libwvfft-uninstalled.pc
 		 pkgconfig/liboggspeex.pc
+		 pkgconfig/liboggspeex-uninstalled.pc
 		 pkgconfig/liboggvorbis.pc
+		 pkgconfig/liboggvorbis-uninstalled.pc
 		 pkgconfig/libwvqt.pc
+		 pkgconfig/libwvqt-uninstalled.pc
 		 pkgconfig/libwvstreams.pc
+		 pkgconfig/libwvstreams-uninstalled.pc
 		 pkgconfig/libwvutils.pc
-		 pkgconfig/libwvtest.pc])
+		 pkgconfig/libwvutils-uninstalled.pc
+		 pkgconfig/libwvtest.pc
+                 pkgconfig/libwvtest-uninstalled.pc])
 
 if test "$xplc_pc" = "wvxplc"; then
     AC_CONFIG_FILES([pkgconfig/wvxplc.pc])
 fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
-# We wish to tell any sub-configures to install their header files into
-# $includedir/wvstreams/, not the default location.  This prevents clashes
-# with other libraries.
-AC_CONFIG_COMMANDS_POST([ac_configure_args="$ac_configure_args --includedir=\${includedir}/wvstreams --oldincludedir=\${oldincludedir}/wvstreams"])
-
 AC_OUTPUT
-

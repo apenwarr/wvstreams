@@ -2,11 +2,11 @@ version=@PACKAGE_VERSION@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includedir=@includedir@/wvstreams
+includedir=@includedir@
 
 Name: WvStreams Base
 Description: Basic subset of the WvStreams library
 Version: ${version}
 Requires: @xplc_pc@
 Libs: -L${libdir} -lwvbase
-Cflags: -I${includedir}
+Cflags: -I${includedir}/wvstreams
