@@ -187,19 +187,6 @@ size_t WvStream::uwrite(const void *buf, size_t count)
 }
 
 
-// search for a particular character in a buffer.  Like strchr, but ignores
-// NUL bytes.
-inline static char *find_char(unsigned char *buf, size_t count, char c)
-{
-    while (count-- > 0)
-    {
-	if (*(buf++) == c)
-	    return (char *)(buf-1);
-    }
-    return NULL;
-}
-
-
 // NOTE:  wait_msec is implemented wrong, but it has cleaner code this way
 // and can at least handle wait vs wait forever vs wait never.
 char *WvStream::getline(time_t wait_msec, char separator)
