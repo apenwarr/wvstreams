@@ -33,6 +33,11 @@ public:
     WvStringList env;
     
     WvSubProc();
+
+    WvSubProc(const char cmd[], char * const *argv) {
+	startv(cmd, argv);
+    }
+
     virtual ~WvSubProc();
     
     // launch a subprocess, which will be owned by this object.
