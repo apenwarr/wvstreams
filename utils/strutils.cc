@@ -309,13 +309,13 @@ WvString diff_dates(time_t t1, time_t t2)
         diff = -diff;
     if(diff > (60 * 60 * 24))
         //give a touch more granularity then the rest
-        sprintf(out, "%3.1f day(s)", diff / (60 * 60 * 24));
+        sprintf(out, "%.1f day(s)", diff / (60 * 60 * 24));
     else if(diff > (60 * 60)) 
-        sprintf(out, "%3.0f hour(s)", diff / (60 * 60));
+        sprintf(out, "%.0f hour(s)", diff / (60 * 60));
     else if(diff > 60)
-        sprintf(out, "%3.0f minute(s)", diff / 60);
+        sprintf(out, "%.0f minute(s)", diff / 60);
     else
-        sprintf(out, "%3.0f second(s)", diff);
+        sprintf(out, "%.0f second(s)", diff);
     return out;
 }
 
