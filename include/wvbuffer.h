@@ -170,6 +170,12 @@ public:
      */
     void putch(int ch)
         { *alloc(1) = ch; }
+
+    /*
+     * returns a single character from the buffer.
+     */
+    int getch()
+        { return int(*get(1)); }
     
     /*
      * _move_ (not copy) the contents of another WvBuffer into this buffer.
