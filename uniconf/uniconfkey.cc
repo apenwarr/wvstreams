@@ -186,7 +186,6 @@ UniConfKey UniConfKey::range(int i, int j) const
                 break;
 
             // optimization: entire key requested!
-            //wverr->print("\"%s\"\n", *this);
             return *this;
         }
         if (c == '/' && --n == 0)
@@ -201,7 +200,6 @@ UniConfKey UniConfKey::range(int i, int j) const
     memcpy(str, first, len);
     str[len] = '\0';
 
-    wverr->print("\"%s\"\n", result);
     return result;
 }
 
