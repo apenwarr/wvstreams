@@ -223,7 +223,7 @@ size_t WvDsp::uwrite(const void *buf, size_t len)
     
     if (last_dump < time(NULL) - 1)
     {
-	log(WvLog::Info, "writer rates: %s/%s; reader rates: %s/%s\n",
+	log(WvLog::Debug, "writer rates: %s/%s; reader rates: %s/%s\n",
 	    outrate.getirate(), outrate.getorate(),
 	    inrate.getirate(), inrate.getorate());
 	last_dump = time(NULL);
