@@ -70,10 +70,10 @@ protected:
 	    xseq[slot]->set_autofree(autofree);
     }
 
+public:
     class IterBase;
     friend class IterBase;
 
-public:
     /** Returns the number of elements actually stored in the vector. */
     int count() const
     {
