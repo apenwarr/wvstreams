@@ -9,11 +9,7 @@
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
-#if 0 /* Use autoconf for this */
-// FIXME: this is needed on BSD and Win32
 #include <time.h>
-#endif
-
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvhex.h"
