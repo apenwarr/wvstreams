@@ -44,7 +44,7 @@ public:
     RecursiveIter *subiter;
     
     RecursiveIter(UniConf &h)
-	: i(h.children ? *h.children : null_wvhconfdict)
+	: i(h.check_children()/*h.children*/ ? *h.children : null_wvhconfdict)
 	{ subiter = NULL; }
     RecursiveIter(UniConfDict &children)
 	: i(children)
@@ -131,7 +131,7 @@ class UniConf::Sorter : public _UniConfSorter
 {
 public:
     Sorter(UniConf &h, RealCompareFunc *cmp)
-	: _UniConfSorter(h.children ? *h.children : null_wvhconfdict,
+	: _UniConfSorter(h.check_children() ? *h.children : null_wvhconfdict,
 			 cmp)
 	{ }
 };
@@ -144,7 +144,7 @@ class UniConf::RecursiveSorter : public _UniConfRecursiveSorter
 {
 public:
     RecursiveSorter(UniConf &h, RealCompareFunc *cmp)
-	: _UniConfRecursiveSorter(h.children ? *h.children : null_wvhconfdict,
+	: _UniConfRecursiveSorter(h.check_children() ? *h.children : null_wvhconfdict,
 				  cmp)
 	{ }
 };

@@ -9,7 +9,7 @@
 
 WvLink *UniConf::RecursiveIter::_next()
 { 
-    if (!subiter && i.ptr() && i->children)
+    if (!subiter && i.ptr() && i->check_children())
     {
 	subiter = new RecursiveIter(*i);
 	subiter->rewind();
@@ -46,7 +46,7 @@ UniConf::XIter::XIter(UniConf &_top, const UniConfKey &_key)
           top(_top.find(_key.header(skiplevel))),
           key(_key.skip(skiplevel)),
           _toplink(top, false), toplink(top ? &_toplink : NULL),
-          i((top && top->children) ? *top->children : null_wvhconfdict)
+          i((top && top->check_children()) ? *top->children : null_wvhconfdict)
 {
     subiter = NULL; 
 }

@@ -56,6 +56,8 @@ int main(int argc, char **argv)
 
             // just test getting a few keys
             {
+                wvcon->print("--- TEST GETTING KEYS ---\n");
+                wvcon->print("=========================\n\n");
                 WvString key("/chickens/bob");
                 WvString result("goof");
                 UniConf *narf = &mainconf[key];
@@ -72,6 +74,8 @@ int main(int argc, char **argv)
 
             // Test getting & setting a key
             {
+                wvcon->print("--- TEST SETTING KEYS ---\n");
+                wvcon->print("=========================\n\n");
                 WvString key("/chickens/bob");
                 WvString result("goof");
                 UniConf *narf = &mainconf[key];
@@ -84,11 +88,37 @@ int main(int argc, char **argv)
                 wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
             }
 
-            // Test getting a subtree
+            // Test a normal iterator
             {
+                wvcon->print("--- TEST NORMAL ITERATORS ---\n");
+                wvcon->print("=============================\n\n");
                 UniConf *nerf = &mainconf["/"];
                 UniConf::Iter i(*nerf);
                 for (i.rewind(); i.next();)
+                {
+                    wvcon->print("Key:%s has value:%s.\n", i->name, *i);
+                }
+            }
+
+            // Test a recursive iterator
+            {
+                wvcon->print("--- TEST RECURSIVE ITERATORS ---\n");
+                wvcon->print("================================\n\n");
+                UniConf *nerf = &mainconf["/"];
+                UniConf::RecursiveIter i(*nerf);
+                for (i.rewind(); i._next();)
+                {
+                    wvcon->print("Key:%s has value:%s.\n", i->name, *i);
+                }
+            }
+
+            // Test an XIter
+            {
+                wvcon->print("--- TEST X ITERATORS ---\n");
+                wvcon->print("================================\n\n");
+                UniConf *nerf = &mainconf["/"];
+                UniConf::XIter i(*nerf, "/");
+                for (i.rewind(); i._next();)
                 {
                     wvcon->print("Key:%s has value:%s.\n", i->name, *i);
                 }
