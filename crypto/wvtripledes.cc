@@ -64,7 +64,6 @@ void WvTripleDESEncoder::setiv(const void *_iv)
     ivecoff = 0;
 }
 
-
 bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     size_t len = in.used();
