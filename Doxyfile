@@ -7,14 +7,14 @@ PROJECT_NAME           = WvStreams
 PROJECT_NUMBER         = 42
 OUTPUT_DIRECTORY       = Docs
 OUTPUT_LANGUAGE        = English
-# We set this to NO to avoid being deluged in a rain of template
+# We set this to NO to avoid being drowned in a deluge of template
 # instantiations though it also excludes any other undocumented
 # classes.  Well, anything we want in the documentation should be
 # documented anyways, right?
 # Someday we should probably just bug the Doxygen author to add
 # support for excluding template instantiations explicitly.
 EXTRACT_ALL            = NO
-EXTRACT_PRIVATE        = YES
+EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = NO
 HIDE_UNDOC_MEMBERS     = NO
@@ -30,7 +30,10 @@ STRIP_FROM_PATH        =
 # comment blocks.  Maintainers might choose to enable this flag to
 # see more stuff.
 INTERNAL_DOCS          = NO
-CLASS_DIAGRAMS         = YES
+# Turn off the default diagrams too since they tend not to behave
+# very nicely with large hierarchies.  The text messages are more
+# useful.
+CLASS_DIAGRAMS         = NO
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
@@ -171,12 +174,6 @@ MAX_DOT_GRAPH_WIDTH    = 800
 MAX_DOT_GRAPH_HEIGHT   = 3144
 GENERATE_LEGEND        = YES
 DOT_CLEANUP            = YES
-
-# Turn off the default diagrams too since they tend not to behave
-# very nicely with large hierarchies.  The text messages are more
-# useful.
-CLASS_DIAGRAMS         = NO
-
 #---------------------------------------------------------------------------
 # Configuration::addtions related to the search engine   
 #---------------------------------------------------------------------------
