@@ -239,11 +239,6 @@ public:
      * read at once.  (Useful for processing Content-Length headers, etc.)
      * Use count==0 to disable this feature.
      * 
-     * queuemin() mainly affects what happens when you do a read(), not so
-     * much what happens when you do a select().  If you set queuemin != 0,
-     * you might still select true for read, but read() might return 0 bytes
-     * since it's holding back data until enough bytes are ready in inbuf.
-     *
      * WARNING: getline() sets queuemin to 0 automatically!
      */ 
     void queuemin(size_t count)
