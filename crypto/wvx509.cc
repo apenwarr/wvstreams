@@ -488,7 +488,7 @@ bool WvX509Mgr::test()
             seterr("Error setting RSA keys");
 	    bad = true;
     	}
-	else
+	else if (!bad)
 	{
 	    int verify_return = X509_verify(cert, pk);
 	    if (verify_return != 1) // only '1' means okay

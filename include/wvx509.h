@@ -249,7 +249,7 @@ private:
     WvString pkcs12pass;
 
     void seterr(WvStringParm s)
-        { errstring = s; }
+        { if (!errstring) errstring = s; }
 
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
