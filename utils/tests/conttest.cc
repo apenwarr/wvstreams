@@ -1,234 +1,25 @@
-#include "wvtask.h"
-#include "wvcallback.h"
+/*
+ * A test program for WvCont (continuable callbacks).
+ */
+#include "wvcont.h"
 #include <stdio.h>
 
 
-class WvCont
+static void *nonfunc(void *_x)
 {
-public:
-    /**
-     * These are hardcoded to int, because I'm too lazy to templatize this.
-     * Most people won't use the return and parameter values anyhow.
-     */
-    typedef int R;
-    typedef int P1;
-
-    typedef WvCallback<R, P1> Callback;
+    int x = (int)_x;
     
-private:
-    /**
-     * When we copy a WvCont, we increase the reference count of the 'data'
-     * member rather than copying it.  That makes it so every copy of a given
-     * callback object still refers to the same WvTask.
-     */
-    struct Data;
-    Data *data;
-
-    static Data *curdata;
-    static int taskdepth;
-    
-    static void bouncer(void *userdata);
-    
-    /**
-     * Actually call the callback inside its task, and enforce a call stack.
-     * Doesn't do anything with arguments or return values.
-     */
-    void call();
-    
-public:
-    /**
-     * Construct a WvCont using an existing WvCallback.  The WvCont object
-     * can be used in place of that callback, and stored in a callback of
-     * the same data type.
-     */
-    WvCont(const Callback &cb);
-    
-    /** Copy constructor. */
-    WvCont(const WvCont &cb);
-    
-    /** Destructor. */
-    ~WvCont();
-    
-    /**
-     * call the callback, making p1 the return value of yield() or the
-     * parameter to the function, and returning Ret, the argument of yield()
-     * or the return value of the function.
-     */
-    R operator() (P1 p1);
-    
-    // the following are static because a function doesn't really know
-    // which WvCont it belongs to, and only one WvCont can be the "current"
-    // one globally in an application anyway.
-    // 
-    // Unfortunately this prevents us from assert()ing that you're in the
-    // context you think you are.
-    
-    /**
-     * "return" from the current callback, giving value 'ret' to the person
-     * who called us.  Next time this callback is called, it's as if yield()
-     * had returned, and the parameter to the callback is the value of
-     * yield().
-     */
-    static P1 yield(R ret);
-    
-    /**
-     * Tell us if the current context is "okay", that is, not trying to
-     * die. If !isok(), you shouldn't yield(), because the caller is just
-     * going to keep calling you until you die.  Return as soon as you can.
-     */
-    static bool isok();
-};
-
-
-struct WvCont::Data
-{
-    int links;          // the refcount of this Data object
-    int mydepth;        // this task's depth in the call stack
-    bool finishing;     // true if we're trying to terminate this task ASAP
-    WvTaskMan *taskman;
-    WvTask *task;
-    
-    Callback cb;        // the callback we want to call inside our WvTask
-    R ret;
-    P1 p1;
-    
-    Data(const Callback &_cb) : cb(_cb)
-        { links = 1; taskman = WvTaskMan::get(); 
-	     task = NULL; finishing = false; report(); }
-    ~Data()
-        { assert(!links); taskman->unlink(); report(); }
-
-    void link()
-        { links++; report(); }
-    void unlink()
-        { links--; report(); if (!links) delete this; }
-    
-    void report()
-        { /* printf("%p: links=%d\n", this, links); */ }
-};
-
-
-WvCont::Data *WvCont::curdata = NULL;
-int WvCont::taskdepth = 0;
-
-
-WvCont::WvCont(const WvCont &cb)
-{
-    data = cb.data;
-    data->link();
+    return (void *)(1234560000 + x);
 }
 
 
-WvCont::WvCont(const Callback &cb)
+static void *func(void *_x)
 {
-    data = new Data(cb);
-}
-
-
-WvCont::~WvCont()
-{
-    if (data->links == 1)
-    {
-	// run the task until it finishes.  We can't delete it until then!
-	data->finishing = true; // make WvCont::isok() false
-	while (data->task && data->task->isrunning())
-	    call();
-	
-	if (data->task)
-	    data->task->recycle();
-    }
-    data->unlink();
-}
-
-
-// note: assumes data->task is already running!
-void WvCont::call()
-{
-    Data *olddata = curdata;
-    curdata = data;
+    int x = (int)_x;
     
-    // enforce the call stack.  If we didn't do this, a yield() five calls
-    // deep would return to the very top, rather to the second-innermost
-    // context.
-    // 
-    // Note that this implementation has the interesting side-effect of
-    // short-circuiting recursion (a calls b, b calls c, c calls a), since
-    // calling 'a' if it's already running means the same as "yield all the
-    // way back to a", and this loop enforces one-level-at-a-time yielding.
-    // 
-    // Because that behaviour is probably undesirable, we make 'mydepth' into
-    // a member variable instead of just putting it on the stack.  This is
-    // only needed so that we can have the assert().
-    assert(!data->mydepth);
-    data->mydepth = ++taskdepth;
-    do
-    {
-	data->taskman->run(*data->task);
-    } while (taskdepth > data->mydepth);
-    assert(taskdepth == data->mydepth);
-    taskdepth--;
-    data->mydepth = 0;
-
-    curdata = olddata;
-}
-
-
-WvCont::R WvCont::operator() (P1 p1)
-{
-    data->ret = -42;
-    
-    if (!data->task)
-	data->task = data->taskman->start("wvcont", bouncer, data);
-    else if (!data->task->isrunning())
-	data->task->start("wvcont+", bouncer, data);
-
-    data->p1 = p1;
-    call();
-    return data->ret;
-}
-
-
-WvCont::P1 WvCont::yield(R ret)
-{
-    assert(curdata);
-    assert(curdata->task == curdata->taskman->whoami());
-    assert(isok()); // this assertion is a bit aggressive...
-    curdata->ret = ret;
-    curdata->taskman->yield();
-    return curdata->p1;
-}
-
-
-bool WvCont::isok()
-{
-    assert(curdata);
-    assert(curdata->task == curdata->taskman->whoami());
-    return !curdata->finishing;
-}
-
-
-void WvCont::bouncer(void *userdata)
-{
-    Data *data = (Data *)userdata;
-    
-    // DON'T BE FOOLED!
-    // all yield() calls stay inside the inner function; our return value
-    // is only for the final run after data->cb() returns.
-    data->ret = data->cb(data->p1);
-}
-
-    
-static int nonfunc(int x)
-{
-    return 1234560000 + x;
-}
-
-
-static int func(int x)
-{
     for (int count = 0; count < 4 && WvCont::isok(); count++)
-	WvCont::yield(++x);
-    return -(++x);
+	WvCont::yield((void *)++x);
+    return (void *) -(++x);
 }
 
 
@@ -249,26 +40,27 @@ public:
     }
 
 private:
-    int honker(Honk &h, int x)
+    void *honker(Honk &h, void *_x)
     {
+	int x = (int)_x;
 	printf("%s: STARTING (%d)\n", id, x);
 	
 	for (x--; WvCont::isok() && x > 0; x--)
 	{
 	    printf("%s: --> Honking in (%d)\n", id, x);
-	    h.cb(x);
+	    h.cb((void *)x);
 	    printf("%s: <-- Honking out (%d)\n", id, x);
 	}
 	
 	printf("%s: DONE\n", id);
-	return x;
+	return (void *)x;
     }
 };
 
 
 int main()
 {
-    typedef WvCallback<int, int> CbType;
+    typedef WvCallback<void *, void *> CbType;
     
     // basic functionality (including nested tasks)
     {
@@ -280,21 +72,21 @@ int main()
 	// 'func' actually gets called; there are no parallel running 'func's.
 	// cb2's task calls into cb1's task, however.
     
-	printf("zot1: %d\n", cb1(100));
-	printf("zot1: %d\n", cb2(200));
-	printf("zot1: %d\n", cb3(300));
+	printf("zot1: %d\n", (int)cb1((void *)100));
+	printf("zot1: %d\n", (int)cb2((void *)200));
+	printf("zot1: %d\n", (int)cb3((void *)300));
 	cb1 = WvCont(nonfunc);
-	printf("zot2: %d\n", cb1(400));
-	printf("zot2: %d\n", cb2(500));
-	printf("zot2: %d\n", cb3(600));
+	printf("zot2: %d\n", (int)cb1((void *)400));
+	printf("zot2: %d\n", (int)cb2((void *)500));
+	printf("zot2: %d\n", (int)cb3((void *)600));
 	cb2 = nonfunc;
-	printf("zot3: %d\n", cb1(700));
-	printf("zot3: %d\n", cb2(800));
-	printf("zot3: %d\n", cb3(900));
+	printf("zot3: %d\n", (int)cb1((void *)700));
+	printf("zot3: %d\n", (int)cb2((void *)800));
+	printf("zot3: %d\n", (int)cb3((void *)900));
 	cb3 = nonfunc;
-	printf("zot4: %d\n", cb1(1000));
-	printf("zot4: %d\n", cb2(1100));
-	printf("zot4: %d\n", cb3(1200));
+	printf("zot4: %d\n", (int)cb1((void *)1000));
+	printf("zot4: %d\n", (int)cb2((void *)1100));
+	printf("zot4: %d\n", (int)cb3((void *)1200));
     }
     
     // fun with recursive continuations.  If this doesn't do something
@@ -325,7 +117,7 @@ int main()
 	h2.honk_at(h3);
 	h3.honk_at(h1);
 	
-	h1.cb(5);
+	h1.cb((void *)5);
     }
     
     return 0;
