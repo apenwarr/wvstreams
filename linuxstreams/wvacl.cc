@@ -47,10 +47,90 @@ void acl_check()
 }
 
 
+WvString fix_acl(WvStringParm shortform)
+{
+    WvLog log("ACL", WvLog::Debug2);
+    bool mask_found = false, mask_read = false, mask_write = false,
+         mask_execute = false;
+
+    WvStringList acl_text_entries;
+    acl_text_entries.split(shortform, ",");
+    WvStringList::Iter i(acl_text_entries);
+    // search for mask
+    for (i.rewind(); i.next(); )
+    {
+	if (i()[0] != 'm')
+	    continue;
+
+	mask_found = true;
+	// Characters other than the permission will just be 'm' and ':',
+	// so we can search the whole line.
+	if (strchr(i(), 'r'))
+	    mask_read = true;
+	if (strchr(i(), 'w'))
+	    mask_write = true;
+	if (strchr(i(), 'x'))
+	    mask_execute = true;
+
+	log("mask: read %s write %s execute %s\n", mask_read, mask_write,
+	    mask_execute);
+	break;
+    }
+
+    if (!mask_found)
+    {
+	WvString res(shortform);
+	res.append(",m::rwx");
+	return res;
+    }
+
+    if (mask_read && mask_write && mask_execute)
+	return shortform;
+
+    WvString newshortform("m::rwx");
+    // Convert entries to their effective values.  In other words, if
+    // mask_write if false, set all maskable entries' read bit to false.
+    for (i.rewind(); i.next();)
+    {
+	WvStringList parts;
+	parts.splitstrict(i(), ":");
+		
+	WvString this_type(parts.popstr());
+	WvString this_qualifier(parts.popstr());
+	WvString this_perm(parts.popstr());
+
+	if (!this_type.len())
+	    continue;
+
+	if (this_type[0] == 'm')
+	    continue;
+
+	// If "other" entry or owning user, write 'em back as is since they
+	// aren't maskable.
+	if (this_type[0] == 'o' || (this_type[0] == 'u' && !this_qualifier))
+	    newshortform.append(",%s", i());
+	else
+	{
+	    WvString newperm;
+	    if (mask_read && strchr(this_perm, 'r'))
+		newperm.append("r");
+	    if (mask_write && strchr(this_perm, 'w'))
+		newperm.append("w");
+	    if (mask_execute && strchr(this_perm, 'x'))
+		newperm.append("x");
+	    newshortform.append(",%s:%s:%s", this_type, this_qualifier,
+				newperm);
+	}
+    }
+
+    return newshortform;
+}
+
+
 void get_simple_acl_permissions(WvStringParm filename,
 				WvSimpleAclEntryList &acl_entries)
 {
-    WvLog log("ACL", WvLog::Info);
+    WvLog log("ACL", WvLog::Debug2);
 
     struct stat st;
     if (stat(filename, &st) != 0)
@@ -62,7 +142,9 @@ void get_simple_acl_permissions(WvStringParm filename,
     {
         // Library and kernel support.
         acl_free(aclchk);
+	WvSimpleAclEntry *mask_entry;
         WvString short_form(get_acl_short_form(filename));
+	
 	struct passwd *pw;
 	struct group *gr;
 
@@ -103,14 +185,12 @@ void get_simple_acl_permissions(WvStringParm filename,
 	    case 'o':
 		simple_entry->type = WvSimpleAclEntry::AclOther;
 		break;
-	    default:   // don't care about mask
-		delete simple_entry;
-		simple_entry = NULL;
+	    case 'm':
+		mask_entry = simple_entry;
+		break;
+	    default:
 		break;
 	    }
-
-	    if (!simple_entry)
-		continue;
 
 	    if (strchr(this_permission, 'r'))
 		simple_entry->read = true;
@@ -129,7 +209,8 @@ void get_simple_acl_permissions(WvStringParm filename,
 		simple_entry->name, simple_entry->type, simple_entry->read,
 		simple_entry->write, simple_entry->execute);
 
-	    acl_entries.append(simple_entry, true);
+	    if (this_type[0] != 'm')
+		acl_entries.append(simple_entry, true);
 	}
 
         return;
@@ -194,18 +275,19 @@ WvString build_default_acl(mode_t mode)
 /** There is, surprisingly, apparently no library function to actually get the
  * short form of an ACL.  This function creates one.
  */
-WvString get_acl_short_form(WvStringParm filename)
+WvString get_acl_short_form(WvStringParm filename, bool get_default)
 {
-    WvLog log("ACL", WvLog::Debug);
+    WvLog log("ACL", WvLog::Debug2);
     log("Getting short form ACL for %s\n", filename);
     WvString short_form;
 
 #ifdef WITH_ACL
-    acl_t acl = acl_get_file(filename, ACL_TYPE_ACCESS);
+    acl_t acl = acl_get_file(filename, get_default ? ACL_TYPE_DEFAULT :
+			                             ACL_TYPE_ACCESS);
     if (acl != NULL)
     {
 	char *text = acl_to_any_text(acl, NULL, ',', TEXT_ABBREVIATE);
-	short_form = text;
+	short_form = fix_acl(text);
 	acl_free(text);
 	log("Successfully retrieved ACL for %s: %s\n", filename, short_form);
 	return short_form;
@@ -220,8 +302,11 @@ WvString get_acl_short_form(WvStringParm filename)
     struct stat st;
     if (stat(filename, &st) == 0)
     {
-	short_form = build_default_acl(st.st_mode);
-	log("Using constructed ACL for %s: %s\n", filename, short_form);
+	if (!get_default)
+	{
+	    short_form = build_default_acl(st.st_mode);
+	    log("Using constructed ACL for %s: %s\n", filename, short_form);
+	}
     }
     else
 	log(WvLog::Error, "Could not get ACL entry: file %s does not "
@@ -231,29 +316,49 @@ WvString get_acl_short_form(WvStringParm filename)
 }
 
 
-bool set_acl_permissions(WvStringParm filename, WvStringParm text_form)
+bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
+			 bool set_default_too)
 {
-    WvLog log("ACL", WvLog::Debug);
+    WvLog log("ACL", WvLog::Debug2);
+    struct stat st;
+    if (stat(filename, &st) != 0)
+    {
+	log(WvLog::Error, "File %s not found.\n", filename);
+	return false;
+    }
+
+    if (!S_ISDIR(st.st_mode))
+	set_default_too = false;
+
 #ifdef WITH_ACL
     acl_t acl = acl_from_text(text_form);
     if (acl_valid(acl) == 0)
     {
 	int res = acl_set_file(filename, ACL_TYPE_ACCESS, acl);
-	acl_free(acl);
 
 	if (res == 0)
 	{
-	    log(WvLog::Debug, "Permissions successfully changed.\n");
-	    return true;
+	    log(WvLog::Debug, "Access permissions successfully changed.\n");
+	    if (set_default_too)
+	    {
+		res = acl_set_file(filename, ACL_TYPE_DEFAULT, acl);
+		if (res == 0)
+		    log(WvLog::Debug, "Default permissions successfully changed.\n");
+	    }
+	}
+	else
+	{
+	    log(WvLog::Error, 
+		"Can't modify permissions for %s: ACL could not be set.\n",
+		filename);
 	}
 
-	log(WvLog::Error, 
-	    "Can't modify permissions for %s: ACL could not be set.\n",
-	    filename);
+	acl_free(acl);
+	return !res;
     }
     else
-	log(WvLog::Error, "Can't modify permissions for %s: ACL invalid.\n",
-	    filename);
+	log(WvLog::Error, "Can't modify permissions for %s: ACL %s invalid.\n",
+	    filename, text_form);
 #endif
 
     return false;
@@ -262,10 +367,17 @@ bool set_acl_permissions(WvStringParm filename, WvStringParm text_form)
 
 bool set_acl_permission(WvStringParm filename, WvStringParm type,
                         WvString qualifier,
-			bool read, bool write, bool execute, bool kill)
+			bool read, bool write, bool execute, bool kill,
+			bool set_default_too)
 {
-    WvLog log("ACL", WvLog::Debug);
-#ifdef WITH_ACL
+    WvLog log("ACL", WvLog::Debug2);
+    struct stat st;
+    if (stat(filename, &st) != 0)
+    {
+	log(WvLog::Error, "File %s not found.\n", filename);
+	return false;
+    }
+
     WvString rwx("");
 
     if (read)
@@ -275,58 +387,41 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
     if (execute)
 	rwx.append("x");
 
-    acl_t initacl = acl_get_file(filename, ACL_TYPE_ACCESS);
-
-    if (initacl)
+#ifdef WITH_ACL
+    struct passwd *pw = getpwuid(st.st_uid);
+    struct group *gr = getgrgid(st.st_gid);
+    if ((type.cstr()[0] == 'u' && (qualifier == WvString(pw->pw_name)
+				   || qualifier == WvString(st.st_uid))) || 
+	(type.cstr()[0] == 'g' && (qualifier == WvString(gr->gr_name)
+				   || qualifier == WvString(st.st_gid))))
     {
-	struct stat st;
-	if (stat(filename, &st) != 0)
-	{
-	    // Probably not necessary...
-	    log(WvLog::Error, "Found ACL but not stat() for %s.\n", filename);
-	    return false;
-	}
+	log("Setting %s::%s rather than %s:%s:%s.\n", type, rwx, type,
+ 	    qualifier, rwx);
+	qualifier = "";
+    }
 
-	struct passwd *pw = getpwuid(st.st_uid);
-	struct group *gr = getgrgid(st.st_gid);
-	if ((type.cstr()[0] == 'u' && qualifier == WvString(pw->pw_name)) || 
-	    (type.cstr()[0] == 'g' && qualifier == WvString(gr->gr_name)))
-	{
-	    log("Setting %s::%s rather than %s:%s:%s.\n", type, rwx, type,
-		qualifier, rwx);
-	    qualifier = "";
-	}
+    // begin building actual acl, composed of old + new
+    WvString aclString("");
 
-	// begin building actual acl, composed of old + new
-	WvString aclString("");
-
-	char *initacl_text = acl_to_text(initacl, NULL);
-	WvString initacl_str(initacl_text);
-
-	acl_free(initacl_text);
-	acl_free(initacl);
-
-	bool mask_exists = false;
-	if (strcmp("mask", type) == 0)
-	    mask_exists = true;  // don't need to create default mask
+    WvString initacl_str(get_acl_short_form(filename));
+    if (initacl_str)
+    {
+	log("Current ACL is %s\n", initacl_str);
 
 	WvStringList acl_entries;
-	acl_entries.split(initacl_str, "\n");
+	acl_entries.split(initacl_str, ",");
 
 	WvStringList::Iter i(acl_entries);
 	for (i.rewind(); i.next();)
 	{
 	    WvStringList parts;
 	    parts.splitstrict(i(), ":");
-
+		
 	    WvString this_type(parts.popstr());
 	    WvString this_qualifier(parts.popstr());
 
 	    if (!this_type.len())
 		continue;
-
-	    if (!mask_exists && (strcmp("mask", this_type) == 0))
-		mask_exists = true;
 
 	    // Record all the entries we aren't concerned with, and append
 	    // our entry at the end.
@@ -338,15 +433,8 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
 	if (!kill)
 	    aclString.append("%s:%s:%s\n", type, qualifier, rwx);
 	
-	// Add a default mask (max permissions for groups & non-owning users).
-	// This is only required if we set permissions for non-owning users or
-	// groups, but it doesn't hurt.
-	if (!mask_exists)
-	    aclString.append("mask::rwx\n");
-
-	return set_acl_permissions(filename, aclString);
+	return set_acl_permissions(filename, aclString, set_default_too);
     }
-
 #endif
 
     // FIXME? Use chmod() to set basic permissions if possible...
