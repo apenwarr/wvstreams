@@ -90,6 +90,11 @@ proc fix_progbar {} {
     }
 }
 
+bind . <Key-Escape> {destroy .}
+bind . <Key-Return> {destroy .}
+focus .l.s
+update
+
 fileevent stdin readable {
     global fulllog
 
@@ -121,9 +126,6 @@ fileevent stdin readable {
     }
 }
 
-bind . <Key-Escape> {destroy .}
-bind . <Key-Return> {destroy .}
-focus .l.s
 vwait done
 
 addend "\nAll tests complete: $total total, $pass passes, $fail failures.\n"
@@ -134,8 +136,8 @@ close $f
 
 catch {
     if {$fail > 0} {
-        .closebutton config -background red -relief raised
+        .b.closebutton config -background red -relief raised
     } else {
-        .closebutton config -background green -relief raised
+        .b.closebutton config -background green -relief raised
     }
 }
