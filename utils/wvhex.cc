@@ -95,7 +95,7 @@ void hexify(char *obuf, const void *ibuf, size_t len)
 {
     size_t outlen = len * 2 + 1;
     WvHexEncoder(false /*use_uppercase*/).
-        flush(ibuf, len, obuf, & outlen);
+        flushmemmem(ibuf, len, obuf, & outlen);
     obuf[outlen] = '\0';
 }
 
@@ -104,5 +104,5 @@ void unhexify(void *obuf, const char *ibuf)
 {
     size_t inlen = strlen(ibuf);
     size_t outlen = inlen / 2;
-    WvHexDecoder().flush(ibuf, inlen, obuf, & outlen);
+    WvHexDecoder().flushmemmem(ibuf, inlen, obuf, & outlen);
 }

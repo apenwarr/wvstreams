@@ -59,22 +59,25 @@ size_t WvBufferBase<unsigned char>::match(const void *bytelist, size_t numbytes,
         for (size_t i = 0; i < len; ++i)
         {
             int ch = str[i];
+            size_t c;
+            for (c = 0; c < numbytes; ++c)
+                if (chlist[c] == ch)
+                    break;
             if (reverse)
             {
-                for (size_t c = 0; c < numbytes; ++c)
-                    if (chlist[c] == ch)
-                        return offset + i;
+                if (c == numbytes)
+                    continue;
             }
             else
             {
-                for (size_t c = 0; c < numbytes; ++c)
-                    if (chlist[c] != ch)
-                        return offset + i;
+                if (c != numbytes)
+                    continue;
             }
+            return offset + i;
         }
         offset += len;
     }
-    return 0;
+    return reverse ? offset : 0;
 }
 
 

@@ -169,20 +169,25 @@ public:
      * were stored into the output buffer.  If the outbuf buffer
      * is not large enough, the overflow bytes will be discarded
      * and false will be returned.
+     *
+     * The 'mem' suffix has been tacked on to these functions to
+     * resolve ambiguities dealing with 'char *' that should be
+     * promoted to WvString.  For instance, consider the signatures
+     * of strflushmem(const void*, size_t) and strflush(WvStringParm, bool).
      */
-    bool flush(const void *inmem, size_t inlen, WvBuffer &outbuf,
+    bool flushmembuf(const void *inmem, size_t inlen, WvBuffer &outbuf,
         bool finish = false);
-    bool flush(const void *inmem, size_t inlen, void *outmem,
+    bool flushmemmem(const void *inmem, size_t inlen, void *outmem,
         size_t *outlen, bool finish = false);
-    bool encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
+    bool encodebufmem(WvBuffer &inbuf, void *outmem, size_t *outlen,
         bool flush = false, bool finish = false);   
-    inline bool flush(WvBuffer &inbuf, void *outmem, size_t *outlen,
+    inline bool flushbufmem(WvBuffer &inbuf, void *outmem, size_t *outlen,
         bool finish = false)
-        { return encode(inbuf, outmem, outlen, true, finish); }
+        { return encodebufmem(inbuf, outmem, outlen, true, finish); }
 
-    WvString strflush(const void *inmem, size_t inlen, bool finish = false);
-    bool flush(WvStringParm instr, void *outmem, size_t *outlen,
+    bool flushstrmem(WvStringParm instr, void *outmem, size_t *outlen,
         bool finish = false);
+    WvString strflushmem(const void *inmem, size_t inlen, bool finish = false);
 
 protected:
     /**
