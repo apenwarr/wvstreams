@@ -105,7 +105,7 @@ size_t WvEncoderStream::uread(void *buf, size_t size)
 size_t WvEncoderStream::uwrite(const void *buf, size_t size)
 {
     writeinbuf.put(buf, size);
-    push(! outbuf_delayed_flush /*flush*/);
+    push(false /*flush*/);
     return size;
 }
 

@@ -154,8 +154,8 @@ bool WvStreamClone::post_select(SelectInfo &si)
     SelectRequest oldwant;
     bool val, want_write;
     
-    if (cloned && (outbuf.used() || autoclose_time))
-	flush(0);
+    if (cloned)
+	flush_outbuf(0);
 
     if (cloned && cloned->isok())
     {

@@ -6,18 +6,13 @@
  * output ports of the underlying stream to effect on-the-fly data
  * transformations.
  *
- * Notice that the WvEncoderStream's outbuf_delayed_flush flag
- * takes on significant importance when working with encoders that
- * treat explicit buffer flushing in a special manner, eg. as with
- * Gzip encoder.  For Gzip, if this flag were false, each incremental
- * write call would cause the encoder to flush out small poorly
- * compressed chunks.  However, for interactive operation, if the
- * flag were true, output might not be generated until flush() were
- * called (which is seldom used by WvStreams clients since they
- * tend to assume automatic flushing on each write as the default).
+ * Notice that the WvEncoderStream's auto_flush flag takes on significant
+ * importance when working with encoders that treat explicit buffer
+ * flushing in a special manner, such as the Gzip encoder.  For Gzip,
+ * if this flag were true, each incremental write call would cause the
+ * encoder to flush out small poorly compressed chunks.
  *
- * To set the flag, call delay_output(true).
- * Notice that only flush() [not select()] will cause output to be flushed.
+ * For such streams, disable the flag with auto_flush(false).
  */
 #ifndef __WVENCODERSTREAM_H
 #define __WVENCODERSTREAM_H

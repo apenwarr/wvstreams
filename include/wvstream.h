@@ -162,7 +162,16 @@ public:
      */ 
     void delay_output(bool is_delayed)
         { outbuf_delayed_flush = is_delayed; }
-    
+
+    /**
+     * if true, force write() to call flush() each time, the default behavour
+     * otherwise, flush() is granted special meaning when explicitly invoked
+     * by the client and write() may empty the output buffer, but will not
+     * explicitly flush().
+     */
+    void auto_flush(bool is_automatic)
+        { is_auto_flush = is_automatic; }
+
     /**
      * flush the output buffer, if we can do it without delaying more than
      * msec_timeout milliseconds at a time.  (-1 means wait forever)
@@ -457,6 +466,12 @@ protected:
     // returns true if there are callbacks to be dispatched
     bool _process_selectinfo(SelectInfo &si);
 
+    // tries to empty the output buffer if the stream is writable
+    // not quite the same as flush() since it merely empties the output
+    // buffer asynchronously whereas flush() might have other semantics
+    // also handles autoclose (eg. after flush)
+    void flush_outbuf(time_t msec_timeout);
+
     // called once flush() has emptied outbuf to ensure that any other
     // internal stream buffers actually do get flushed before it returns
     virtual void flush_internal(time_t msec_timeout);
@@ -479,6 +494,7 @@ protected:
     WvBuffer inbuf, outbuf;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
+    bool is_auto_flush;
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time

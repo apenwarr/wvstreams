@@ -45,7 +45,9 @@ void WvStream::init()
     userdata = NULL;
     errnum = 0;
     max_outbuf_size = 0;
-    outbuf_delayed_flush = alarm_was_ticking = false;
+    outbuf_delayed_flush = false;
+    is_auto_flush = true;
+    alarm_was_ticking = false;
     force.readable = true;
     force.writable = force.isexception = false;
     read_requires_writable = write_requires_readable = NULL;
@@ -315,21 +317,25 @@ size_t WvStream::write(const void *buf, size_t count)
     if (!isok() || !buf || !count) return 0;
     
     size_t wrote = 0;
-    
-    if (!outbuf_delayed_flush && outbuf.used())
-	flush(0);
-    
-    if (!outbuf_delayed_flush && !outbuf.used())
+    if (! outbuf_delayed_flush && ! outbuf.used())
+    {
 	wrote = uwrite(buf, count);
-    
-    if (max_outbuf_size && (outbuf.used() > max_outbuf_size))
-        return wrote;
-
-    outbuf.put((unsigned char *)buf + wrote, count - wrote);
-
-    //TRACE("queue obj 0x%08x, bytes %d/%d, total %d\n", (unsigned int)this, count - wrote, count, outbuf.used());
-    
-    return count;
+        count -= wrote;
+        (const unsigned char*)buf += count;
+    }
+    if (! max_outbuf_size || (outbuf.used() + count <= max_outbuf_size))
+    {
+        outbuf.put(buf, count);
+        wrote += count;
+    }
+    if (! outbuf_delayed_flush)
+    {
+        if (is_auto_flush)
+            flush(0);
+        else
+            flush_outbuf(0);
+    }
+    return wrote;
 }
 
 
@@ -426,8 +432,16 @@ void WvStream::drain()
 
 void WvStream::flush(time_t msec_timeout)
 {
-    //TRACE("flush obj 0x%08x, time %ld, outbuf length %d\n", (unsigned int)this, msec_timeout, outbuf.used());
-    
+    // flush any other internal buffers a stream might have
+    flush_internal(msec_timeout);
+
+    // flush outbuf
+    flush_outbuf(msec_timeout);
+}
+
+
+void WvStream::flush_outbuf(time_t msec_timeout)
+{
     // flush outbuf
     while (isok() && outbuf.used())
     {
@@ -445,8 +459,6 @@ void WvStream::flush(time_t msec_timeout)
         }
     }
 
-    // flush any other internal buffers a stream might have
-    flush_internal(msec_timeout);
     if (isok())
     {
         // handle autoclose
@@ -538,9 +550,9 @@ bool WvStream::post_select(SelectInfo &si)
 	&& (outbuf_used || autoclose_time)
 	&& FD_ISSET(wfd, &si.write))
     {
-	flush(0);
+        flush_outbuf(0);
 	
-	// flush() might have closed the file!
+	// flush_outbuf() might have closed the file!
 	if (!isok()) return false;
     }
     
