@@ -407,6 +407,31 @@ WvString getdirname(WvStringParm fullname)
 }
 
 
+WvString sizetoa(long blocks, int blocksize)
+{
+    long long kbytes = (long long) blocks * (long long) blocksize / 1000;
+
+    if (kbytes >= 1000*1000*1000)
+        return WvString("%s.%s TB",
+                    (unsigned long) (kbytes/(1000*1000*1000)),
+                    (unsigned long) (kbytes%(1000*1000*1000))/(100*1000*1000));
+    else if (kbytes >= 1000*1000)
+        return WvString("%s.%s GB",
+                    (unsigned long) (kbytes/(1000*1000)),
+                    (unsigned long) (kbytes % (1000*1000))/(100*1000));
+    else if (kbytes >= 1000)
+        return WvString("%s.%s MB",
+                    (unsigned long) (kbytes/(1000)),
+                    (unsigned long) (kbytes % (1000))/(100));
+    else if (kbytes)
+        return WvString("%s.%s KB",
+                    (unsigned long) (blocks*blocksize / 1000),
+                    (unsigned long) ((blocks*blocksize) % 1000)/(100));
+    else
+        return WvString("%s bytes", blocks*blocksize);
+}
+
+
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
     WvDynBuf buf;
