@@ -4,9 +4,6 @@
  * 
  * Various useful string-based utilities.
  *
- * Created:	Sept 12 1997	D. Coombs
- * Modified:	Nov  11 1997	D. Coombs
- * 
  */
 #include "strutils.h"
 #include <ctype.h>
@@ -14,13 +11,13 @@
 #include <string.h>
 
 
-char *	terminate_string( char *	string, char c )
-/******************************************************/
+char * terminate_string( char * string, char c )
+/**********************************************/
 // Add character c to the end of a string after removing crlf's.
 // NOTE: You need a buffer that's at least one character bigger than the
 // current length of the string, including the terminating NULL.
 {
-    char *	p;
+    char * p;
 
     if( string == NULL ) {
     	return( NULL );
@@ -36,14 +33,13 @@ char *	terminate_string( char *	string, char c )
     return( string );
 }
 
-
-char *	trim_string( char *	string )
-/**************************************/
+char * trim_string( char * string )
+/*********************************/
 // Trims spaces off the front and end of strings.  Modifies the string.
 // Specifically DOES allow string==NULL; returns NULL in that case.
 {
-    char *	p;
-    char *	q;
+    char * p;
+    char * q;
 
     if( string == NULL )
     	return( NULL );
