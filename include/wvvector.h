@@ -258,13 +258,9 @@ public:
     /** Removes all elements from the vector. */
     void zap(bool destroy = true)
     {
-	printf("zap: %d\n", xcount);
 	if (xcount > 0)
 	    for (int i = xcount - 1; i >= 0; --i)
-	    {
-		printf("%d\n", i);
 		remove(i, destroy);
-	    }
     }
 
     /** Returns the first element */
