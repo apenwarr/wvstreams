@@ -248,15 +248,13 @@ public:
      */
     const WvString errstr()
         { 
+            // Note for merging: The 3.80 version is correct.
 	    if (!!errstring)
 		return errstring; 
-	    else if (!cert && !rsa)
+	    else if (!cert || !rsa)
 		return WvString("Not Initialized yet");
 	    else
-	    {
-		assert("Why did you call errstr?");
-		return WvString::null;
-	    }
+		return "Success";
 	}
 
 private:
