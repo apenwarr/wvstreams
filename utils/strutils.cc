@@ -301,6 +301,23 @@ WvString url_encode(WvStringParm stuff)
     return retval.getstr();
 }
 
+WvString diff_dates(time_t t1, time_t t2)
+{
+    char out[25]; //Should be more then enough
+    double diff = difftime(t1, t2);
+    if(diff < 0)
+        diff = -diff;
+    if(diff > (60 * 60 * 24))
+        //give a touch more granularity then the rest
+        sprintf(out, "%.1f day(s)", diff / (60 * 60 * 24));
+    else if(diff > (60 * 60)) 
+        sprintf(out, "%.0f hour(s)", diff / (60 * 60));
+    else if(diff > 60)
+        sprintf(out, "%.0f minute(s)", diff / 60);
+    else
+        sprintf(out, "%.0f second(s)", diff);
+    return out;
+}
 
 WvString rfc822_date(time_t when)
 {
@@ -474,6 +491,24 @@ WvString sizetoa(long long blocks, int blocksize)
         return WvString("%s bytes", blocks*blocksize);
 }
 
+
+WvString sizektoa(unsigned int kbytes)
+{
+    if (kbytes >= 1000*1000*1000)
+        return WvString("%s.%s TB",
+                    (unsigned long) (kbytes/(1000*1000*1000)),
+                    (unsigned long) (kbytes%(1000*1000*1000))/(100*1000*1000));
+    else if (kbytes >= 1000*1000)
+        return WvString("%s.%s GB",
+                    (unsigned long) (kbytes/(1000*1000)),
+                    (unsigned long) (kbytes % (1000*1000))/(100*1000));
+    else if (kbytes >= 1000)
+        return WvString("%s.%s MB",
+                    (unsigned long) (kbytes/(1000)),
+                    (unsigned long) (kbytes % (1000))/(100));
+    else
+        return WvString("%s KB", kbytes);
+}
 
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {

@@ -7,7 +7,13 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
-#ifdef	__cplusplus
+
+/**
+ * C++ Interface
+ */
+
+
+#ifdef  __cplusplus
 
 #include "uniconfkey.h"
 #include "uniconfgen.h"
@@ -26,6 +32,11 @@ class UniConfRoot;
  *   relkey - the changed keypath, relative to the config object
  */
 typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
+
+#ifdef SWIG_NO_OVERLOAD
+// FIXME: This directive doesn't work.  Why not?
+%ignore UniConf::u(const UniConfKey &key);
+#endif
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -102,9 +113,16 @@ public:
     
     /** Returns the full path of this node, starting at the given key.
      * Assumes that k is an ancestor of fullkey(). */
+#ifdef SWIG_NO_OVERLOAD
+    %name(fullkey_from_key)
+#endif
     UniConfKey fullkey(const UniConfKey &k) const;
     
     /** Returns the full path of this node, starting at the given handle. */
+#ifdef SWIG_NO_OVERLOAD
+    %name(fullkey_from_handle)
+#endif
+
     UniConfKey fullkey(const UniConf &cfg) const
         { return fullkey(cfg.fullkey()); }
 
@@ -112,6 +130,7 @@ public:
     UniConfKey key() const
         { return xfullkey.last(); }
 
+#ifndef SWIG
     /**
      * Returns a handle for a subtree below this key. 'key' is the path
      * of the subtree to be appended to the full path of this handle to
@@ -119,10 +138,17 @@ public:
      */
     const UniConf operator[] (const UniConfKey &key) const
         { return UniConf(xroot, UniConfKey(xfullkey, key)); }
-    const UniConf operator[] (WvStringParm key) const
-        { return (*this)[UniConfKey(key)]; }
-    const UniConf operator[] (const char *key) const
-        { return (*this)[UniConfKey(key)]; }
+#endif  // SWIG
+
+    /**
+     * Return a subtree handle (see operator[]).  Mainly to support bindings
+     * for languages that can't handle methods named [].
+     */
+#ifdef SWIG_NO_OVERLOAD
+    %name(u_should_be_ignored)
+#endif
+    const UniConf u(const UniConfKey &key) const
+        { return (*this)[key]; }
 
     /** Reassigns the target of this handle to match a different one. */
     UniConf &operator= (const UniConf &other)
@@ -143,14 +169,19 @@ public:
      * key is not found, returns 'defvalue' instead.
      */
     WvString get(WvStringParm defvalue = WvString::null) const;
+
+    /** A different way to say cfg.get(): use *cfg instead. */
+    WvString operator* () const
+        { return get(); }
+
+    /** A different way to say cfg.get().num(): use cfg->num() instead. */
+    WvStringStar operator -> () const
+        { return get(); }
     
-    /**
-     * Without fetching its value, returns true if this key exists.
-     * 
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the value.
-     */
-    bool exists() const;
+    /** A different way to say cfg[x].get(y). */
+    WvString xget(WvStringParm key,
+		  WvStringParm defvalue = WvString::null) const
+        { return (*this)[key].get(defvalue); }
 
     /**
      * Fetches the integer value for this key from the registry.  If the
@@ -160,6 +191,18 @@ public:
      * key is false by default.)
      */
     int getint(int defvalue = 0) const;
+
+    /** A different way to say cfg[x].getint(y). */
+    int xgetint(WvStringParm key, int defvalue = 0) const
+        { return (*this)[key].getint(defvalue); }
+
+    /**
+     * Without fetching its value, returns true if this key exists.
+     * 
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the value.
+     */
+    bool exists() const;
 
 
     /***** Key Storage API *****/
@@ -178,11 +221,19 @@ public:
     void set(WVSTRING_FORMAT_DECL) const
         { return set(WvString(WVSTRING_FORMAT_CALL)); }
 
+    /** A different way to say cfg[x].set(y). */
+    void xset(WvStringParm key, WvStringParm value) const
+        { (*this)[key].set(value); }
+
     /**
      * Stores an integer value for this key into the registry.
      * Returns true on success.
      */
     void setint(int value) const;
+
+    /** A different way to say cfg[x].set(y). */
+    void xsetint(WvStringParm key, int value) const
+        { (*this)[key].setint(value); }
 
 
     /***** Key Handling API *****/
@@ -373,11 +424,15 @@ public:
     class SortedRecursiveIter;
     // sorted variant of XIter
     class SortedXIter;
-    
+
+#ifndef SWIG
     // lists of iterators
     DeclareWvList(Iter);
+#endif  // SWIG
 };
 
+
+#ifndef SWIG
 
 /**
  * An implementation base class for key iterators.
@@ -591,22 +646,23 @@ public:
         { populate(i); }
 };
 
-extern "C" {
+#endif  // SWIG
+
 #endif /* __cplusplus */
 
 
-#ifdef SWIG
-%module UniConf
+/**
+ * C Interface
+ */
 
-%{
-#include "uniconf.h"
-%}
 
-//%newobject uniconf_get;
-#endif
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
 
-/* FIXME: put the C binding here. */
-typedef void* uniconf_t;
+
+/** An opaque handle to a Uniconf object */
+typedef void *uniconf_t;
 
 
 /* Initialize and destroy UniConf. */
@@ -627,6 +683,7 @@ void uniconf_set(uniconf_t _uniconf,
 
 #ifdef	__cplusplus
 }
-#endif
+#endif  // __cplusplus
+
 
 #endif // __UNICONF_H

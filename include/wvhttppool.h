@@ -190,7 +190,7 @@ class WvFtpStream : public WvUrlStream
 
     // Disregard all lines that are of the form "xxx-", meaning that another
     // line follows.  Only the last line is important for us.
-    char *get_important_line(int timeout);
+    char *get_important_line();
 
     // Parse response to "PASV" command and returns a pointer to the address
     // of the data port (or NULL if it can't parse the response)..

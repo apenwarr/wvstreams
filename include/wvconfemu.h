@@ -74,7 +74,7 @@ class WvConfigSectionEmu::Iter
 {
 private:
     WvConfigSectionEmu& sect;
-    UniConf::Iter iter;
+    UniConf::RecursiveIter iter;
     WvLink link;
     WvConfigEntryEmu* entry;
 public:
@@ -138,11 +138,10 @@ public:
     void del_callback(WvStringParm section, WvStringParm key, void *cookie);
 
     void add_setbool(bool *b, WvStringParm _section, WvStringParm _key);
+    void del_setbool(bool *b, WvStringParm _section, WvStringParm _key);
 
     void add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);
     void del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);
-
-    void add_addfile(WvString *filename, WvStringParm sect, WvStringParm ent);
 
     WvString getraw(WvString wvconfstr, int &parse_error);
     int getint(WvStringParm section, WvStringParm entry, int def_val);

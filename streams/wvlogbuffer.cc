@@ -50,6 +50,27 @@ void WvLogBuffer::_mid_line(const char *str, size_t len)
     current.put(str, len);
 }
 
+void WvLogBuffer::handle_msg(Msg *lastmsg)
+{
+    // Stick the msg in the list of all messages
+    msgs.append(lastmsg, true);
+        
+    // Check if we already have any messages of this source/level
+    WvString type(WvString("%s:%s", last_source->app, last_level));
+    MsgCounter* msgcounter = counters[type];
+    // If not create a new tracking list for it
+    if (!msgcounter)
+    {
+	msgcounter = new MsgCounter(type);
+	counters.add(msgcounter, true);
+    }
+    // Now that we are sure the type exists, add the message to it
+    Msg* killme = msgcounter->add(lastmsg, max_lines);
+        
+    // Delete the extra messages if we need to
+    if (killme)
+	msgs.unlink(killme);
+}
 
 void WvLogBuffer::_end_line()
 {
@@ -59,24 +80,7 @@ void WvLogBuffer::_end_line()
         Msg *lastmsg = new Msg(last_level, last_source->app,
             trim_string((char *)current.get(current.used())));
         
-        // Stick the msg in the list of all messages
-        msgs.append(lastmsg, true);
-        
-        // Check if we already have any messages of this source/level
-        WvString type(WvString("%s:%s", last_source->app, last_level));
-        MsgCounter* msgcounter = counters[type];
-        // If not create a new tracking list for it
-        if (!msgcounter)
-        {
-            msgcounter = new MsgCounter(type);
-            counters.add(msgcounter, true);
-        }
-        // Now that we are sure the type exists, add the message to it
-        Msg* killme = msgcounter->add(lastmsg, max_lines);
-        
-        // Delete the extra messages if we need to
-        if (killme)
-            msgs.unlink(killme);
+	handle_msg(lastmsg);
     }
     else 
         current.zap();

@@ -4,17 +4,32 @@
  *
  * A "Log Receiver" that logs messages to a file
  */
-
-#include <time.h>
 #include "wvlogfile.h"
 #include "wvtimeutils.h"
 #include "wvdiriter.h"
 #include "strutils.h"
+#include "wvdailyevent.h"
+#include <time.h>
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 
 
 //----------------------------------- WvLogFileBase ------------------
+
+WvLogFileBase::WvLogFileBase(WvStringParm _filename, WvLog::LogLevel _max_level)
+    : WvLogRcv(_max_level),
+      WvFile(_filename, O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0644)
+{
+    // nothing special
+}
+
+
+WvLogFileBase::WvLogFileBase(WvLog::LogLevel _max_level) 
+    : WvLogRcv(_max_level) 
+{ 
+    // nothing special
+}
+
 
 void WvLogFileBase::_mid_line(const char *str, size_t len)
 {

@@ -9,6 +9,10 @@
 #include "wvfile.h"
 #include "strutils.h"
 
+//#define DEBUG_DEL_CALLBACK
+#ifdef DEBUG_DEL_CALLBACK
+#include <execinfo.h>
+#endif
 
 /*
  * Parse the WvConf string "request"; pointers to the found section,
@@ -75,22 +79,6 @@ static void do_addname(void *userdata,
 		       WvStringParm oldval, WvStringParm newval)
 {
     (*(WvStringList *)userdata).append(new WvString(key), true);
-}
-
-
-static void do_addfile(void *userdata,
-		       WvStringParm section, WvStringParm key,
-		       WvStringParm oldval, WvStringParm newval)
-{
-    WvFile tmp(WvString("/home/%s/%s", key, *(WvString *)userdata), 
-               O_WRONLY | O_CREAT | O_TRUNC, 0600);
-    if(tmp.isok())
-    {
-        if(!!newval)
-            tmp.print("%s\n", newval);
-        else
-            tmp.print("%s\n", key);
-    }
 }
 
 
@@ -161,12 +149,18 @@ void WvConfigSectionEmu::Iter::rewind()
 
 WvLink *WvConfigSectionEmu::Iter::next()
 {
-    if (iter.next())
-    {
-	entry = sect[iter->key()];
-	link.data = static_cast<void*>(entry);
-	return &link;
-    }
+    while (iter.next())
+	if (!!iter->get())
+	{
+	    /*
+	     * FIXME: if the WvConfEmu is not at the root of the
+	     * UniConf tree, this will give an incorrect result.
+	     */
+	    entry = sect[iter->fullkey().removefirst()];
+	    link.data = static_cast<void*>(entry);
+	    assert(entry);
+	    return &link;
+	}
 
     return NULL;
 }
@@ -228,8 +222,21 @@ WvConfEmu::~WvConfEmu()
     // deleting the WvConfEmu, but they probably won't work the way you
     // think they will. (ie. someone might be using a temporary WvConfEmu
     // and think his callbacks will stick around; they won't!)
-    //assert(callbacks.isempty());
-    
+    assert(callbacks.isempty());
+
+#ifdef DEBUG_DEL_CALLBACK
+    if (!callbacks.isempty())
+    {
+	WvList<CallbackInfo>::Iter i(callbacks);
+
+	fprintf(stderr, " *** leftover callbacks in WvConfEmu ***\n");
+	for (i.rewind(); i.next(); )
+	{
+	    fprintf(stderr, "     - [%s]%s (%p)\n", i->section.cstr(), i->key.cstr(), i->cookie);
+	}
+    }
+#endif
+
     uniconf.del_callback(this);
 }
 
@@ -308,6 +315,17 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
 	    return;
     }
 
+#ifdef DEBUG_DEL_CALLBACK
+    void* trace[10];
+    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+    char** tracedump = backtrace_symbols(trace, count);
+    fprintf(stderr, "TRACE:add:%s:%s:%p", section.cstr(), key.cstr(), cookie);
+    for (int i = 0; i < count; ++i)
+	fprintf(stderr, ":%s", tracedump[i]);
+    fprintf(stderr, "\n");
+    free(tracedump);
+#endif
+
     callbacks.append(new CallbackInfo(callback, userdata, section, key,
 				      cookie),
 		     true);
@@ -325,7 +343,12 @@ void WvConfEmu::del_callback(WvStringParm section, WvStringParm key, void *cooki
 	if (i->cookie == cookie
 	    && i->section == section
 	    && i->key == key)
+	{
+#ifdef DEBUG_DEL_CALLBACK
+	    fprintf(stderr, "TRACE:del:%s:%s:%p\n", section.cstr(), key.cstr(), cookie);
+#endif
 	    i.xunlink();
+	}
     }
 }
 
@@ -333,6 +356,12 @@ void WvConfEmu::del_callback(WvStringParm section, WvStringParm key, void *cooki
 void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
 {
     add_callback(do_setbool, b, _section, _key, b);
+}
+
+
+void WvConfEmu::del_setbool(bool *b, WvStringParm _section, WvStringParm _key)
+{
+    del_callback(_section, _key, b);
 }
 
 
@@ -346,13 +375,6 @@ void WvConfEmu::del_addname(WvStringList *list,
 			    WvStringParm sect, WvStringParm ent)
 {
     del_callback(sect, ent, list);
-}
-
-
-void WvConfEmu::add_addfile(WvString *filename,
-			    WvStringParm sect, WvStringParm ent)
-{
-    add_callback(do_addfile, filename, sect, ent, NULL);
 }
 
 

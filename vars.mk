@@ -21,12 +21,20 @@ TARGETS += wvtestmain.o
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
 GARBAGE += wvtestmain.o tmp.ini
 
-ifneq ("$(with_swig)", "no")
-  ifneq ("$(with_tcl)", "no")
-    TARGETS += libuniconf_tcl.so
-    CPPFLAGS += -I/usr/include/tcl8.3
-  endif
-endif
+#ifneq ("$(with_swig)", "no")
+#  ifneq ("$(with_tcl)", "no")
+#    TARGETS += bindings/tcl
+#    CPPFLAGS += -I/usr/include/tcl8.3
+#  endif
+#  ifneq ("$(with_python)", "no")
+#    TARGETS += bindings/python
+#    CPPFLAGS += -I/usr/include/python2.1
+#  endif
+#  ifneq ("$(with_php)", "no")
+#    TARGETS += bindings/php
+#    CPPFLAGS += `php-config --includes`
+#  endif
+#endif
 
 ifneq ("$(with_ogg)", "no")
   ifneq ("$(with_vorbis)", "no")
@@ -137,15 +145,9 @@ ifneq ("$(with_qdbm)", "no")
   libwvutils.so-LIBS+=-L. -lqdbm
 endif
 
-ifneq ("$(with_xplc)", "no")
-  # CPPFLAGS+=-DUNSTABLE
-  ifneq ("$(with_xplc)", "yes")
-    VPATH+=$(with_xplc)
-    LDFLAGS+=-L$(with_xplc)
-    CPPFLAGS+=-I$(with_xplc)/include
-    libwvstreams.so: LIBS+=-lxplc-cxx
-  endif
-endif
+
+CPPFLAGS+=-DUNSTABLE
+libwvstreams.so: LIBS+=-lxplc-cxx
 
 ifneq ("$(with_fam)", "no")
   libwvstreams.so: -lfam
@@ -156,8 +158,8 @@ ifneq ("$(with_pam)", "no")
 endif
 
 LDLIBS := -lgcc $(LDLIBS) \
-	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
-		&& echo " -lsupc++")
+	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
+		&& echo " -lsupc++ -lgcc_eh")
 
 RELEASE?=$(PACKAGE_VERSION)
 
@@ -195,6 +197,3 @@ libwvqt.so: libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
-
-libuniconf_tcl.so: bindings/uniconf_tcl.o libuniconf.so -ltcl8.3
-

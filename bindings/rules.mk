@@ -1,13 +1,26 @@
+bindings/tcl: bindings/tcl/uniconf.so
+bindings/python: bindings/python/_uniconf.so
+bindings/php: bindings/php/php_uniconf.so
 
-GARBAGE+=bindings/uniconf_tcl.c
+GARBAGE+=bindings/tcl/uniconf.cc bindings/python/uniconf.cc bindings/php/uniconf.cc
 
-SWIGPARAMS =
-ifneq ("$(with_swig)x", "x")
-	SWIGPARAMS += -I$(with_swig)/Lib -I$(with_swig)/Lib/tcl
+SWIGOPTS = -c++ -Iinclude
+ifneq ("$(with_swig)", "")
+       SWIGOPTS += -I$(with_swig)/Lib -I$(with_swig)/Lib/tcl -I$(with_swig)/Lib/python \
+       	-I$(with_swig)/Lib/php4
 endif
 
-bindings/libuniconf_tcl.so: bindings/uniconf_tcl.o libuniconf.so -ltcl8.3
+bindings/tcl/uniconf.so: bindings/tcl/uniconf.o libuniconf.so -ltcl8.3
 
-bindings/uniconf_tcl.c: include/uniconf.h
-	$(SWIG) $(SWIGPARAMS) -tcl -o $@ $^
+bindings/python/_uniconf.so: bindings/python/_uniconf.o libuniconf.so -lpython2.1
 
+bindings/php/php_uniconf.so: bindings/php/uniconf.o libuniconf.so
+
+bindings/tcl/uniconf.cc: bindings/uniconf.i
+	$(SWIG) -tcl $(SWIGOPTS) -o $@ $^
+
+bindings/python/_uniconf.cc: bindings/uniconf.i
+	$(SWIG) -python $(SWIGOPTS) -o $@ $^
+
+bindings/php/uniconf.cc: bindings/uniconf.i
+	$(SWIG) -php $(SWIGOPTS) -o $@ $^

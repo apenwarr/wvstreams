@@ -26,7 +26,7 @@ WvString wvssl_errstr();
  * X509 Class to handle certificates and their related
  * functions
  */
-class WvX509Mgr : public WvErrorBase
+class WvX509Mgr : public WvError
 {
 public:
    /** Distinguished Name to be used in the certificate. */

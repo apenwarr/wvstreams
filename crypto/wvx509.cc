@@ -57,7 +57,7 @@ WvString wvssl_errstr()
 
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : WvErrorBase(), debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
+    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
 {
     wvssl_init();
     cert = _cert;
@@ -350,6 +350,7 @@ void WvX509Mgr::create_selfsigned()
     debug("Certificate for %s created\n", dname);
 }
 
+
 void WvX509Mgr::filldname()
 {
     assert(cert);
@@ -360,12 +361,11 @@ void WvX509Mgr::filldname()
     dname = buffer; 
 }
 
+
 WvRSAKey *WvX509Mgr::fillRSAPubKey()
 {
-    EVP_PKEY *pkcert = EVP_PKEY_new();
-    pkcert = X509_get_pubkey(cert);
-    RSA *certrsa = RSA_new();
-    certrsa = EVP_PKEY_get1_RSA(pkcert);
+    EVP_PKEY *pkcert = X509_get_pubkey(cert);
+    RSA *certrsa = EVP_PKEY_get1_RSA(pkcert);
     EVP_PKEY_free(pkcert);
     return new WvRSAKey(certrsa, false); 
 }
@@ -442,8 +442,9 @@ WvString WvX509Mgr::certreq()
     debug("Creating Certificate request for %s\n", dname);
     set_name_entry(name, dname);
     X509_REQ_set_subject_name(certreq, name);
-    debug("SubjectDN: %s\n",
-	  X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 0, 0));
+    char *sub_name = X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 0, 0);
+    debug("SubjectDN: %s\n", sub_name);
+    free(sub_name);
     
     if (!X509_REQ_sign(certreq, pk, EVP_sha1()))
     {
@@ -770,7 +771,6 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    if (!rsa->isok())
 		seterr("RSA Key failed to import\n");
 	    break;
-	    
 	case RsaPubPEM:
 	    debug("Importing RSA Public Key.\n");
 	    debug("Are you REALLY sure that you want to do this?\n");
@@ -780,7 +780,6 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    if (!rsa->isok())
 		seterr("RSA Public Key failed to import\n");
 	    break;
-	    
 	case RsaRaw:
 	    debug("Importing raw RSA keypair not supported.\n");
 	    break;
@@ -936,7 +935,12 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 WvString WvX509Mgr::get_issuer()
 { 
     if (cert)
-	return WvString(X509_NAME_oneline(X509_get_issuer_name(cert),0,0));
+    {
+	char *name = X509_NAME_oneline(X509_get_issuer_name(cert),0,0);
+        WvString retval(name);
+        free(name);
+	return retval;
+    }
     else
 	return WvString::null;
 }
@@ -945,7 +949,12 @@ WvString WvX509Mgr::get_issuer()
 WvString WvX509Mgr::get_subject()
 {
     if (cert)
-	return WvString(X509_NAME_oneline(X509_get_subject_name(cert),0,0));
+    {
+	char *name = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
+	WvString retval(name);
+	free(name);
+	return retval;
+    }
     else
 	return WvString::null;
 }
@@ -1016,30 +1025,29 @@ WvDynBuf *WvX509Mgr::get_extension(int nid)
 
 bool WvX509Mgr::isok() const
 {
-    return cert && rsa && WvErrorBase::isok();
+    return cert && rsa && WvError::isok();
 }
 
 
 WvString WvX509Mgr::errstr() const
 {
-    WvString ret = WvErrorBase::errstr();
-    if (!ret)
+    if (WvError::geterr() == 0)
     {
         // only use a custom string if there's not an error set
         if (!cert && !rsa)
-            ret = "No certificate or RSA key assigned";
+            return "No certificate or RSA key assigned";
         else if (!cert)
-            ret = "No certificate assigned";
+            return "No certificate assigned";
         else if (!rsa)
-            ret = "No RSA key assigned";
+            return "No RSA key assigned";
     }
-    return ret;
+    return WvError::errstr();
 }
 
 
 int WvX509Mgr::geterr() const
 {
-    int ret = WvErrorBase::geterr();
+    int ret = WvError::geterr();
     if (ret == 0 && (!cert || !rsa))
     {
         // unless there's a regular error set, we'll be returning a custom
@@ -1048,5 +1056,3 @@ int WvX509Mgr::geterr() const
     }
     return ret;
 }
-
-
