@@ -286,12 +286,12 @@ void WvX509Mgr::decodecert(WvString encodedcert)
 {
     int hexbytes = strlen((const char *)encodedcert);
     int bufsize = hexbytes/2;
-    unsigned char *certbuf = new unsigned char[bufsize];
+    unsigned char *certbuf = new unsigned char[bufsize], *cp = certbuf;
     X509 *ct;
 
     unhexify(certbuf,encodedcert);
     ct = cert = X509_new();
-    cert = d2i_X509(&ct, &certbuf, hexbytes/2);
+    cert = d2i_X509(&ct, &cp, hexbytes/2);
 
     delete[] certbuf;
 }
