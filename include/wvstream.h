@@ -579,7 +579,6 @@ protected:
     WvStreamCallback callfunc;
     void *userdata;
     IWvStreamCallback closecb_func;
-    void *FIXME_without_this_I_crash;
     WvCallback<void*,void*> call_ctx;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
