@@ -22,6 +22,22 @@ WvTestFileTree::WvTestFileTree(UniConf _files, WvStringList &_dirs,
 }
 
 
+WvString WvTestFileTree::sample_acl(unsigned int num)
+{
+    switch (num)
+    {
+        case 0: return "u::rwx,g::---,o::---"; break;
+        case 1: return "u::rwx,g::---,o::--x"; break;
+        case 2: return "u::rwx,g::---,o::-wx"; break;
+        case 3: return "u::rwx,g::---,o::rwx"; break;
+        case 4: return "u::rwx,g::--x,o::rwx"; break;
+        case 5: return "u::rwx,g::-wx,o::rwx"; break;
+        case 6: return "u::rwx,g::rwx,o::rwx"; break;
+        default: return "u::rwx,g::rwx,o::rwx"; break;
+    }
+}
+
+
 bool WvTestFileTree::create_test_files(unsigned int _num_dirs,
 				       unsigned int _num_files,
 				       off_t _size_of_file,
@@ -40,6 +56,8 @@ bool WvTestFileTree::create_test_files(unsigned int _num_dirs,
     {
       	WvString dirname("%s/dir%s", basedir, i);
 	mkdir(dirname, 0777);
+        set_acl_permissions(dirname, sample_acl(i), false);
+        set_default_acl_permissions(dirname, sample_acl(i+1));
 
 	dirs.append(new WvString(dirname), true);
 	if (!record_fileinfo(dirname))
@@ -61,7 +79,8 @@ bool WvTestFileTree::create_test_files(unsigned int _num_dirs,
 }
 
 
-bool WvTestFileTree::create_random_file(WvStringParm filename, off_t size)
+bool WvTestFileTree::create_random_file(WvStringParm filename, off_t size,
+                                        WvStringParm acl)
 {
     WvDynBuf buf;
     UniConf info(files[filename]);
@@ -91,6 +110,8 @@ bool WvTestFileTree::create_random_file(WvStringParm filename, off_t size)
     hexify(md5string, md5sum.get(md5.digestsize()), md5.digestsize());
 
     info["wvstats/md5sum"].setme(md5string);
+
+    if (!!acl) set_acl_permissions(filename, acl, false);
 
     return (record_fileinfo(filename, false));
 }
@@ -133,6 +154,7 @@ bool WvTestFileTree::record_fileinfo(WvStringParm filename, bool set_md5)
     info["wvstats/mtime"].setmeint(st.st_mtime);
     info["wvstats/ctime"].setmeint(st.st_ctime);
     info["wvstats/acl"].setme(get_acl_short_form(filename));
+    info["wvstats/default_acl"].setme(get_acl_short_form(filename, true));
 
     if (S_ISDIR(st.st_mode))
 	info["wvstats/size"].setmeint(st.st_size);
@@ -195,6 +217,7 @@ bool WvTestFileTree::fill_in_dir(WvStringParm dirname, WvStringParm dirnum,
     int last_file = 0;
     for (unsigned int j = 0; j < num_files; j++)
     {
+        WvString fname("%s/file%s.%s", dirname, dirnum, j);
 	// create files and symlinks
 	if (j % 3 == 1)
 	{
@@ -206,14 +229,12 @@ bool WvTestFileTree::fill_in_dir(WvStringParm dirname, WvStringParm dirnum,
 		target = WvString("%s/file%s.%s", dirname, dirnum, last_file);
 
 
-            if (!create_symlink(target, WvString("%s/file%s.%s", dirname,
-                                                 dirnum, j)))
+            if (!create_symlink(target, fname))
 		created_files = false;
 	}
 	else
 	{
-	    if (!create_random_file(WvString("%s/file%s.%s", dirname, dirnum,
-                                             j), size_of_file))
+	    if (!create_random_file(fname, size_of_file, sample_acl(j)))
 		created_files = false;
 	    else
 		last_file = j;

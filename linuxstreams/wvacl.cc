@@ -376,52 +376,53 @@ WvString get_acl_short_form(WvStringParm filename, bool get_default)
 }
 
 
-bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
-			 bool set_default_too)
+static bool internal_set_acl_permissions(WvStringParm filename,
+                                         WvStringParm text_form,
+                                         bool is_default = false)
 {
     WvLog log("ACL", WvLog::Debug3);
 
     struct stat st;
     if (stat(filename, &st) != 0)
     {
-	log(WvLog::Error, "File %s not found.\n", filename);
-	return false;
+        log(WvLog::Error, "File %s not found.\n", filename);
+        return false;
     }
 
-    if (!S_ISDIR(st.st_mode))
-	set_default_too = false;
+    if (is_default && !S_ISDIR(st.st_mode))
+    {
+        log(WvLog::Error, "Can't set default permissions for %s: not a "
+                          "directory.\n", filename);
+        return false;
+    }
 
 #ifdef WITH_ACL
     acl_t acl = acl_from_text(text_form);
     if (acl_valid(acl) == 0)
     {
-	int res = acl_set_file(filename, ACL_TYPE_ACCESS, acl);
+        int res = acl_set_file(filename, is_default ? ACL_TYPE_DEFAULT :
+                ACL_TYPE_ACCESS, acl);
 
-	if (res == 0)
-	{
-	    log("Access permissions successfully changed for %s.\n",
-		filename);
-	    if (set_default_too)
-	    {
-		res = acl_set_file(filename, ACL_TYPE_DEFAULT, acl);
-		if (res == 0)
-		    log("Default permissions successfully changed for %s.\n",
-			filename);
-	    }
-	}
-	else
-	{
-	    log(WvLog::Error, 
-		"Can't modify permissions for %s: ACL could not be set (%s).\n",
-		filename, strerror(errno));
-	}
+        if (res == 0)
+        {
+            log("%s permissions successfully changed for %s.\n",
+                    is_default ? "Default" : "Access", filename);
+        }
+        else
+        {
+            log(WvLog::Error, "Can't modify %s permissions for %s: ACL "
+                    "could not be set (%s).\n",
+                    is_default ? "default" : "access", filename,
+                    strerror(errno));
+        }
 
-	acl_free(acl);
-	return !res;
+        acl_free(acl);
+        return !res;
     }
     else
-	log(WvLog::Error, "Can't modify permissions for %s: ACL %s invalid "
-	    "(%s).\n", filename, text_form, strerror(errno));
+        log(WvLog::Error, "Can't modify %s permissions for %s: ACL %s "
+                "invalid (%s).\n", is_default ? "default" : "access",
+                filename, text_form, strerror(errno));
 
     if (acl) acl_free(acl);
 
@@ -433,17 +434,46 @@ bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
 }
 
 
-bool set_acl_permission(WvStringParm filename, WvStringParm type,
-                        WvString qualifier,
-			bool read, bool write, bool execute, bool kill,
-			bool set_default_too)
+bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
+			 bool set_default_too)
 {
+    bool res = internal_set_acl_permissions(filename, text_form, false);
+    if (res && set_default_too)
+        res = internal_set_acl_permissions(filename, text_form, true);
+    return res;
+}
+
+
+bool set_default_acl_permissions(WvStringParm filename,
+                                 WvStringParm text_form)
+{
+    return internal_set_acl_permissions(filename, text_form, true);
+}
+
+
+static bool internal_set_acl_permission(WvStringParm filename,
+                                        WvStringParm type,
+                                        WvString qualifier,
+                                        bool read, bool write,
+                                        bool execute, bool kill,
+                                        bool is_default = false,
+                                        bool match_default = false)
+{
+    assert(!(is_default && match_default));
+
     WvLog log("ACL", WvLog::Debug5);
     struct stat st;
     if (stat(filename, &st) != 0)
     {
 	log(WvLog::Error, "File %s not found.\n", filename);
 	return false;
+    }
+
+    if (is_default && !S_ISDIR(st.st_mode))
+    {
+        log(WvLog::Error, "Can't set default permissions for %s: not a "
+                          "directory.\n", filename);
+        return false;
     }
 
     WvString rwx("");
@@ -474,7 +504,7 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
     // begin building actual acl, composed of old + new
     WvStringList new_acl;
 
-    WvString initacl_str(get_acl_short_form(filename));
+    WvString initacl_str(get_acl_short_form(filename, is_default));
     if (initacl_str)
     {
 	WvStringList acl_entries;
@@ -503,7 +533,10 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
 	    new_acl.append(WvString("%s:%s:%s", type, qualifier, rwx));
 
         WvString aclString = fix_acl(new_acl.join(","));
-	return set_acl_permissions(filename, aclString, set_default_too);
+        if (is_default)
+            return set_default_acl_permissions(filename, aclString);
+        else
+            return set_acl_permissions(filename, aclString, match_default);
     }
 #endif
 
@@ -512,3 +545,22 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
     return false;
 }
 
+
+bool set_acl_permission(WvStringParm filename, WvStringParm type,
+                        WvString qualifier,
+			bool read, bool write, bool execute, bool kill,
+			bool set_default_too)
+{
+    return internal_set_acl_permission(filename, type, qualifier, read,
+                                       write, execute, kill, false,
+                                       set_default_too);
+}
+
+
+bool set_default_acl_permission(WvStringParm filename, WvStringParm type,
+                                WvString qualifier, bool read, bool write,
+                                bool execute, bool kill)
+{
+    return internal_set_acl_permission(filename, type, qualifier, read,
+                                       write, execute, kill, true, false);
+}
