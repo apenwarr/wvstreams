@@ -15,13 +15,13 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
     
     if (is_server && (x509 == NULL))
     {
-	seterr("Certificate not available, so server mode not possible");
+	seterr("Certificate not available: server mode not possible!");
 	return;
     }
 
     SSL_load_error_strings();
     SSL_library_init();
-    debug("SSL Library Initialization Finished\n");
+    debug("SSL library initialized.\n");
 
     ctx = NULL;
     ssl = NULL;
@@ -30,7 +30,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
     if (is_server)
     {
 	meth = SSLv23_server_method();
-    	debug("Setting Algorithms, and Methods Complete\n");
+    	debug("Configured algorithms and methods for server mode.\n");
 
 	ctx = SSL_CTX_new(meth);
     	if (!ctx)
@@ -43,23 +43,23 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 
 	if (SSL_CTX_use_certificate(ctx, x509->cert) <= 0)
 	{
-	    seterr("Error loading Certificate!");
+	    seterr("Error loading certificate!");
 	    return;
 	}
-    	debug("Setting Certificate Complete\n");
+    	debug("Certificate activated.\n");
 
 	if (SSL_CTX_use_RSAPrivateKey(ctx, x509->keypair->rsa) <= 0)
 	{
-	    seterr("Error loading RSA Private Key!");
+	    seterr("Error loading RSA private key!");
 	    return;
 	}
-	debug("Setting Private Key Complete\n");
-	debug("Ready to go for Server mode\n");
+	debug("RSA private key activated.\n");
+	debug("Server mode ready.\n");
     }
     else
     {
     	meth = SSLv23_client_method();
-    	debug("Setting Algorithms, and Methods Complete\n");
+    	debug("Configured algorithms and methods for client mode.\n");
     
     	ctx = SSL_CTX_new(meth);
     	if (!ctx)
@@ -67,10 +67,8 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 	    seterr("Can't get SSL context!");
 	    return;
     	}
-
-    	debug("SSL Context Set up\n");
-    
     }
+    
     ssl = SSL_new(ctx);
     if (!ssl)
     {
@@ -78,7 +76,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 	return;
     }
 
-    debug("SSL Connector initialized\n");
+    debug("SSL stream initialized.\n");
 
     // make sure we run the SSL_connect once, after our stream is writable
     slave->force_select(false, true);
@@ -87,8 +85,11 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 
 WvSSLStream::~WvSSLStream()
 {
-    debug("Shutting down SSL Connection\n");
     close();
+    
+    debug("Shutting down SSL connection.\n");
+    if (geterr())
+	debug("Error was: %s\n", errstr());
     
     if (slave)
 	delete slave;
@@ -102,8 +103,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
     
     int result = SSL_read(ssl, (char *)buf, len);
     
-    if (len > 0 && result == 0)
-	close();
+    if (len > 0 && result == 0) // read no bytes, though we wanted some
+	close(); // EOF
     else if (result < 0)
     {
 	if (errno != EAGAIN)
@@ -127,48 +128,48 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 
 size_t WvSSLStream::uwrite(const void *buf, size_t len)
 {
-
     if (!sslconnected)
     {
-	debug(">> Attempting to write to a non-ready SSL Connection/n");
+	debug(">> writing, but not connected yet; enqueue.\n");
 	return 0;
     }
 
-    debug(">> I want to write %s bytes\n",len);
+    debug(">> I want to write %s bytes.\n", len);
 
     // copy buf into the bounce buffer...
 
     memcpy(bouncebuffer,buf,(writeonly < len) ? writeonly : len); 
 
-    int result = SSL_write(ssl, bouncebuffer, (writeonly < len) ? writeonly : len);
+    int result = SSL_write(ssl, bouncebuffer,
+			   (writeonly < len) ? writeonly : len);
 
-    if (len > 0 && result == 0)
-	close();
-    else if (result < 0)
+    if (result < 0)
     {
-        switch(SSL_get_error(ssl,result))
+	int errcode = SSL_get_error(ssl, result);
+	
+        switch (errcode)
 	{
-	   case SSL_ERROR_WANT_WRITE:
-		debug(">> ERROR: SSL_write() cannot complete at this time...retry!\n");
-		writeonly = len;
-		break;
-	   case SSL_ERROR_NONE:
-		// We shouldn't ever get here, but handle it nicely anyway... 
-		debug(">> Hmmm... something got confused... no SSL Errors!\n");
-		break;
-	   default:
-		debug(">> ERROR: SSL_write() call failed\n");
-		seterr("SSL Write failed - bailing out of the SSL Session");
-		break;
+	case SSL_ERROR_WANT_WRITE:
+	    debug(">> SSL_write() needs to wait for writable.\n");
+	    writeonly = len;
+	    break;
+	    
+	case SSL_ERROR_NONE:
+	    // We shouldn't ever get here, but handle it nicely anyway... 
+	    debug(">> SSL_write non-error!\n");
+	    break;
+	    
+	default:
+	    debug(">> ERROR: SSL_write() call failed.\n");
+	    seterr(WvString("SSL write error #%s", errcode));
+	    break;
 	}
 	return 0;
     }
     else
-    {
         writeonly = 1400;
-    }
 
-    debug(">> SSL wrote %s bytes \t WvStreams wanted to write %s bytes\n", 
+    debug(">> SSL wrote %s bytes; wanted to write %s bytes.\n",
 	   result, len);
 
     return result;
@@ -200,12 +201,11 @@ bool WvSSLStream::pre_select(SelectInfo &si)
     // reading again if we were full the last time.
     if (si.wants.readable && read_again)
     {
-	debug("Have to try reading again!\n");
+	debug("pre_select: try reading again immediately.\n");
 	return true;
     }
 
     return WvStreamClone::pre_select(si);
-
 }
 
  
@@ -227,7 +227,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	assert(getwfd() >= 0);
 	assert(getwfd() == getrfd());
 	SSL_set_fd(ssl, getrfd());
-	debug("SSL Connected to WvStream %s\n", getrfd());
+	debug("SSL connected on fd %s.\n", getrfd());
 	
 	int err;
     
@@ -243,33 +243,36 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	if (err < 0)
 	{
 	    if (errno == EAGAIN)
-		debug("Still Waiting for SSL Connection\n");
+		debug("Still waiting for SSL negotiation.\n");
+	    else if (!errno)
+		seterr("SSL negotiation failed (%s)!", err);
 	    else
-		seterr("SSL negotiation failed!");
+		seterr(errno);
 	}
 	else  // We're connected, so let's do some checks ;)
 	{
-	    debug("SSL Connection using %s\n", SSL_get_cipher(ssl));
+	    debug("SSL connection using cipher %s.\n", SSL_get_cipher(ssl));
 	    if (verify)
 	    {
 	    	WvX509Mgr peercert(SSL_get_peer_certificate(ssl));
 	    	if (peercert.validate() && !peercert.err)
 	    	{
 		    sslconnected = true;
-	    	    debug("SSL Connection now running\n");
+	    	    debug("SSL finished negotiating - certificate is valid.\n");
 	    	}
 	    	else
 	    	{
 		    if (peercert.err)
 			seterr(peercert.errstr);
 		    else
-			seterr("Peer Certificate cannot be validated");
+			seterr("Peer certificate is invalid!");
 	    	}
 	    }
 	    else
 	    {
 		sslconnected = true;
-		debug("SSL Connection now running\n");
+		debug("SSL finished negotiating "
+		      "- certificate validation disabled.\n");
 	    }	
 	} 
 	
