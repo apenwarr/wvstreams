@@ -288,12 +288,7 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
     WvDynBuf tmp;
     unsigned char *buf = tmp.alloc(count);
     size_t len = read(buf, count);
-    size_t amt = tmp.unallocable();
-    if (count - len < amt )
-    {
-	amt = count - len;
-    }
-    tmp.unalloc(amt);
+    tmp.unalloc(count - len);
     outbuf.merge(tmp);
     return len;
 }
