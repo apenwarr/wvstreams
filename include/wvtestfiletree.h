@@ -60,7 +60,7 @@ public:
     WvString get_md5_str(WvStringParm filename);
 
     /// Return a sample ACL generated from the given number
-    WvString sample_acl(unsigned int num);
+    WvString sample_acl(unsigned int num, bool def = false);
 
 private:
     WvLog log;

@@ -22,13 +22,15 @@ WvTestFileTree::WvTestFileTree(UniConf _files, WvStringList &_dirs,
 }
 
 
-WvString WvTestFileTree::sample_acl(unsigned int num)
+WvString WvTestFileTree::sample_acl(unsigned int num, bool def)
 {
     switch (num)
     {
         case 0: return "u::rwx,g::---,o::---"; break;
-        case 1: return "u::rwx,g::---,o::--x"; break;
-        case 2: return "u::rwx,g::---,o::-wx"; break;
+        case 1: if (def) return "u::rwx,g::---,o::--x,u:root:r-x,m::r--";
+                else return "u::rwx,g::---,o::--x,u:root:r-x";
+                break;
+        case 2: return "u::rwx,g::---,o::-wx,u:root:r-x"; break;
         case 3: return "u::rwx,g::---,o::rwx"; break;
         case 4: return "u::rwx,g::--x,o::rwx"; break;
         case 5: return "u::rwx,g::-wx,o::rwx"; break;
@@ -57,7 +59,7 @@ bool WvTestFileTree::create_test_files(unsigned int _num_dirs,
       	WvString dirname("%s/dir%s", basedir, i);
 	mkdir(dirname, 0777);
         set_acl_permissions(dirname, sample_acl(i), false);
-        set_default_acl_permissions(dirname, sample_acl(i+1));
+        set_default_acl_permissions(dirname, sample_acl(i+1, true));
 
 	dirs.append(new WvString(dirname), true);
 	if (!record_fileinfo(dirname))
@@ -153,8 +155,8 @@ bool WvTestFileTree::record_fileinfo(WvStringParm filename, bool set_md5)
     info["wvstats/rdev"].setmeint(st.st_rdev);
     info["wvstats/mtime"].setmeint(st.st_mtime);
     info["wvstats/ctime"].setmeint(st.st_ctime);
-    info["wvstats/acl"].setme(get_acl_short_form(filename));
-    info["wvstats/default_acl"].setme(get_acl_short_form(filename, true));
+    info["wvstats/acl"].setme(get_acl_short_form(filename, false, false));
+    info["wvstats/default_acl"].setme(get_acl_short_form(filename, true, false));
 
     if (S_ISDIR(st.st_mode))
 	info["wvstats/size"].setmeint(st.st_size);

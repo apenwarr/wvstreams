@@ -220,6 +220,10 @@ WVTEST_MAIN("default ACL permissions")
     WvString p1("u::rwx,g::rwx,o::rwx"), p2("u::---,g::---,o::---"),
              p3("u::r-x,g::r-x,o::r-x");
 
+    // FIXME: these have to be in the same order to match strings
+    WvString mask("u::r-x,u:root:rwx,g::r-x,m::r--,o::r-x"),
+             mask_fixed("m::rwx,u::r-x,u:root:r--,g::r--,o::r-x");
+
     printf("create file but don't set anything\n");
     create_file(testfn, username, groupname);
     WVPASSEQ(get_acl_short_form(testfn, false), default_acl);
@@ -277,4 +281,10 @@ WVTEST_MAIN("default ACL permissions")
     WVPASS(set_acl_permissions(testfn, p3, true));
     WVPASSEQ(get_acl_short_form(testfn, false), p3);
     WVPASSEQ(get_acl_short_form(testfn, true), p3);
+
+    printf("ACL default mask\n");
+    create_dir(testfn, username, groupname);
+    WVPASS(set_acl_permissions(testfn, mask, true));
+    WVPASSEQ(get_acl_short_form(testfn, true, false), mask);
+    WVPASSEQ(get_acl_short_form(testfn, true, true), mask_fixed);
 }

@@ -42,12 +42,13 @@ WvString build_default_acl(mode_t mode);
 /** Returns the short form of the ACL for 'filename'.
  * If 'default' is true, returns the ACL_TYPE_DEFAULT list.
  * If false, returns ACL_TYPE_ACCESS list.
- * Note that this function calls fix_acl(), which means that the returned
+ * If fix is true, calls fix_acl(), which means that the returned
  * ACL's mask, if present, will always be "rwx".
  */
-WvString get_acl_short_form(WvStringParm filename, bool get_default = false);
+WvString get_acl_short_form(WvStringParm filename, bool get_default = false,
+                            bool fix = true);
 
-/// Populates 'acl_entries' with simple entries.
+/// Populates 'acl_entries' with simple entries.  Will call fix_acl.
 void get_simple_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
 				&acl_entries);
 

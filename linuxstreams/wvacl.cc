@@ -70,12 +70,16 @@ WvString add_mask_to_perm(WvStringParm this_perm, bool mask_read,
     WvString newperm;
     if (mask_read && strchr(this_perm, 'r'))
         newperm.append("r");
+    else
+        newperm.append("-");
     if (mask_write && strchr(this_perm, 'w'))
         newperm.append("w");
+    else
+        newperm.append("-");
     if (mask_execute && strchr(this_perm, 'x'))
         newperm.append("x");
-    if (!newperm)
-        newperm = "---";
+    else
+        newperm.append("-");
     return newperm;
 }
 
@@ -335,7 +339,7 @@ WvString build_default_acl(mode_t mode)
 /** There is, surprisingly, apparently no library function to actually get the
  * short form of an ACL.  This function creates one.
  */
-WvString get_acl_short_form(WvStringParm filename, bool get_default)
+WvString get_acl_short_form(WvStringParm filename, bool get_default, bool fix)
 {
     WvLog log("ACL", WvLog::Debug5);
     WvString short_form;
@@ -346,7 +350,7 @@ WvString get_acl_short_form(WvStringParm filename, bool get_default)
     if (acl != NULL)
     {
 	char *text = acl_to_any_text(acl, NULL, ',', TEXT_ABBREVIATE);
-	short_form = fix_acl(text);
+	short_form = fix ? fix_acl(text) : WvString(text).unique();
 	acl_free(text);
         acl_free(acl);
 	log("Successfully retrieved ACL for %s: %s\n", filename, short_form);
