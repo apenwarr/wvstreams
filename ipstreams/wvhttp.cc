@@ -16,7 +16,6 @@ WvHTTPStream::WvHTTPStream(const WvURL &_url)
           url(_url)
 {
     state = Resolving;
-    cloned = NULL;
     num_received = 0;
     
     // we need this: if the URL tried to dns-resolve before, but failed,
