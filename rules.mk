@@ -15,59 +15,37 @@ libwvutils.a libwvutils.so: $(libwvutils.so-OBJECTS)
 
 DEPFILE = $(notdir $(@:.o=.d))
 
-%: %.o
 ifeq ("$(enable_verbose)", "yes")
-	$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+COMPILE_MSG:=
+LINK_MSG:=
 else
-	@echo linking $@
-	@$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+COMPILE_MSG=@echo compiling $@;
+LINK_MSG=@echo compiling $@;
 endif
 
+%: %.o
+	$(LINK_MSG)$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+
 %.o: %.cc
-ifeq ("$(enable_verbose)", "yes")
-	$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
-else
-	@echo compiling $@
-	@$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
-endif
+	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
 	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
 
 %.o: %.c
-ifeq ("$(enable_verbose)", "yes")
-	$(CC) $(CFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
-else
-	@echo compiling $@
-	@$(CC) $(CFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
-endif
+	$(COMPILE_MSG)$(CC) $(CFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
 	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
 
 %.a:
-ifeq ("$(enable_verbose)", "yes")
-	$(AR) $(ARFLAGS) $@ $^
-else
-	@echo linking $@
-	@$(AR) $(ARFLAGS) $@ $^
-endif
+	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
 %.so:
-ifeq ("$(enable_verbose)", "yes")
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
-else
-	@echo linking $@
-	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
-endif
+	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
 
 %.moc: %.h
-ifeq ("$(enable_verbose)", "yes")
-	moc $< -o $@
-else
-	@echo compiling $@
-	@moc $< -o $@
-endif
+	$(COMPILE_MSG)moc $< -o $@
 
 .PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean
 
