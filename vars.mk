@@ -64,6 +64,8 @@ ARFLAGS = rs
 DEBUG:=$(filter-out no,$(enable_debug))
 
 # for O_LARGEFILE
+CXXFLAGS=${CXXOPTS}
+CFLAGS=${COPTS}
 CXXFLAGS+=-D_GNU_SOURCE
 CFLAGS+=-D_GNU_SOURCE
 

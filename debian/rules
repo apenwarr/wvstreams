@@ -32,7 +32,7 @@ configure-stamp:
 build: build-stamp
 build-stamp: configure-stamp
 	dh_testdir
-	$(MAKE) CXXOPTS="-fPIC -DPIC"
+	$(MAKE) CXXOPTS="-fPIC -DPIC" COPTS="-fPIC -DPIC"
 	touch build-stamp
 
 build-indep: build-stamp-indep
