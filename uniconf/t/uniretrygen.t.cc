@@ -21,7 +21,6 @@ static char *argv[] =
     NULL
 };
 
-#if 0
 WVTEST_MAIN("uniconfd")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -70,5 +69,4 @@ WVTEST_MAIN("uniconfd")
 
     WVPASS(!cfg["/key"].exists());
 }
-#endif
 
