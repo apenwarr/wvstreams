@@ -2,7 +2,7 @@
 #include "wvstring.h"
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("basic")
 {
     WvString a, b, c(""), d(""), e("hello"), f("Hello"), g(0), h(1), i(1.0),
              j(NULL);
@@ -54,7 +54,7 @@ WVTEST_MAIN()
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("copying")
 {
     WvString a1, b1, c1(""), d1(""), e1("hello"), f1("Hello"), g1(0),
     		h1(1), i1(1.0);
@@ -90,7 +90,7 @@ WVTEST_MAIN()
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("append")
 {
     WvString a, b, c(""), d("hello");
     
@@ -106,7 +106,7 @@ WVTEST_MAIN()
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("formatting")
 {
     WvString a, b, c(""), d("hello");
     
@@ -124,7 +124,7 @@ WVTEST_MAIN()
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("fancy formatting")
 {
     // fancy formatter tests
     WVPASS(WvString("%s") == "%s");

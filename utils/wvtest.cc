@@ -14,13 +14,14 @@ WvTest *WvTest::first, *WvTest::last;
 int WvTest::fails, WvTest::runs;
 
 
-WvTest::WvTest(const char *_idstr, MainFunc *_main)
+WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
 {
     const char *cptr = strrchr(_idstr, '/');
     if (cptr)
 	idstr = cptr+1;
     else
 	idstr = _idstr;
+    descr = _descr;
     main = _main;
     next = NULL;
     if (first)
@@ -38,6 +39,7 @@ int WvTest::run_all(const char *prefix)
     {
 	if (!prefix || !strncasecmp(cur->idstr, prefix, strlen(prefix)))
 	{
+	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    cur->main();
 	    printf("\n");
 	}

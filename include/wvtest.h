@@ -15,36 +15,34 @@
 class WvTest
 {
     typedef void MainFunc();
-    const char *idstr;
+    const char *descr, *idstr;
     MainFunc *main;
     WvTest *next;
     static WvTest *first, *last;
     static int fails, runs;
    
 public:
-    WvTest(const char *_idstr, MainFunc *_main);
+    WvTest(const char *_descr, const char *_idstr, MainFunc *_main);
     static int run_all(const char *prefix = "");
     static void start(const char *file, int line, const char *condstr);
     static void check(bool cond);
+    static inline bool start_check(const char *file, int line,
+				   const char *condstr, bool cond)
+        { start(file, line, condstr); check(cond); return cond; }
 };
 
 
-#define WVPASS(cond) do { \
-    WvTest::start(__FILE__, __LINE__, #cond); \
-    WvTest::check((cond)); \
-  } while (0)
+#define WVPASS(cond) \
+    WvTest::start_check(__FILE__, __LINE__, #cond, (cond))
+#define WVFAIL(cond) \
+    WvTest::start_check(__FILE__, __LINE__, "NOT(" #cond ")", !(cond))
 
-#define WVFAIL(cond) do { \
-    WvTest::start(__FILE__, __LINE__, "NOT(" #cond ")"); \
-    WvTest::check(!(cond)); \
-  } while (0)
-
-#define WVTEST_MAIN3(ff, ll) \
+#define WVTEST_MAIN3(descr, ff, ll) \
     static void _wvtest_main_##ll(); \
-    static WvTest _wvtest_##ll(ff, _wvtest_main_##ll); \
-    static void _wvtest_main_##ll
-#define WVTEST_MAIN2(ff, ll) WVTEST_MAIN3(ff, ll)
-#define WVTEST_MAIN WVTEST_MAIN2(__FILE__, __LINE__)
+    static WvTest _wvtest_##ll(descr, ff, _wvtest_main_##ll); \
+    static void _wvtest_main_##ll()
+#define WVTEST_MAIN2(descr, ff, ll) WVTEST_MAIN3(descr, ff, ll)
+#define WVTEST_MAIN(descr) WVTEST_MAIN2(descr, __FILE__, __LINE__)
 
 
 #endif // __WVTEST_H
