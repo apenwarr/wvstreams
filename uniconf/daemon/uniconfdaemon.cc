@@ -457,5 +457,6 @@ void UniConfDaemon::run()
     tlist->close();
     
     // Save any changes
+    log("Saving changes.\n");
     mainconf.save();
 }
