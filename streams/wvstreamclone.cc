@@ -39,7 +39,7 @@ WvStreamClone::WvStreamClone(IWvStream *_cloned)
 
 WvStreamClone::~WvStreamClone()
 {
-    //fprintf(stderr, "clone is %p\n", this);
+    //fprintf(stderr, "%p destroying: clone is %p\n", this, cloned);
     close();
     if (cloned)
 	delete cloned;
@@ -48,13 +48,14 @@ WvStreamClone::~WvStreamClone()
 void WvStreamClone::nowrite()
 {
     if (cloned)
-    {
 	cloned->nowrite();
-    }
 }
 
 void WvStreamClone::close()
 {
+    //fprintf(stderr, "%p closing substream %p\n", this, cloned);
+    if (cloned)
+	cloned->setclosecallback(0, 0); // prevent recursion!
     WvStream::close();
     if (disassociate_on_close)
         cloned = NULL;

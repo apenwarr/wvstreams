@@ -550,7 +550,7 @@ bool WvStream::flush(time_t msec_timeout)
 {
     if (is_flushing) return false;
     
-    TRACE("flush starts\n");
+    TRACE("%p flush starts\n", this);
 
     is_flushing = true;
     want_to_flush = true;
@@ -571,7 +571,7 @@ bool WvStream::should_flush()
 
 bool WvStream::flush_outbuf(time_t msec_timeout)
 {
-    TRACE("flush_outbuf starts (isok=%d)\n", isok());
+    TRACE("%p flush_outbuf starts (isok=%d)\n", this, isok());
     
     // flush outbuf
     while (isok() && outbuf.used())
