@@ -121,6 +121,8 @@ bool UniClientGen::isok()
 bool UniClientGen::refresh()
 {
     // FIXME: This should make sure everything in the queue has been flushed
+    conn->writecmd(UniClientConn::REQ_NOOP);
+    do_select();
     return true;
 }
 
