@@ -11,7 +11,8 @@
 
 
 # Sanity checks.
-[ -x /usr/bin/dbus-daemon-1 ] || exit 0
+#[ -x /usr/bin/dbus-daemon-1 ] || exit 0
+# ^ causes an immediate exit in RH9, so removed it -- Steven Di Rocco
 
 # Source function library.
 . /etc/rc.d/init.d/functions
