@@ -54,6 +54,9 @@ WvBdbHashBase::~WvBdbHashBase()
 void WvBdbHashBase::opendb(WvStringParm _dbfile, bool _persist)
 {
     closedb();
+
+    noerr();
+    
     dbfile = _dbfile;
     persist_dbfile = _persist;
     
@@ -66,9 +69,7 @@ void WvBdbHashBase::opendb(WvStringParm _dbfile, bool _persist)
 
     dbf = dbopen(!!dbfile ? dbfile.cstr() : NULL, mode, 0666, DB_BTREE,
             &info);
-    if (!dbf)
-	fprintf(stderr, "Could not open database '%s': %s\n",
-		dbfile.cstr(), strerror(errno));
+    if (!dbf) seterr(errno);
 }
 
 
@@ -76,69 +77,105 @@ void WvBdbHashBase::closedb()
 {
     if (dbf)
     {
-        dbf->close(dbf);
+        if (!dbf->close(dbf)) seterr(errno);
         if (!persist_dbfile && !!dbfile)
             ::unlink(dbfile);
         dbf = NULL;
     }
+    seterr("The db is closed.");    // this won't overwrite an earlier err
 }
 
 
-int WvBdbHashBase::add(const datum &key, const datum &data, bool replace)
+void WvBdbHashBase::add(const datum &key, const datum &data, bool replace)
 {
-    assert(isok());
-    return dbf->put(dbf, (DBT *)&key, (DBT *)&data,
-		    !replace ? R_NOOVERWRITE : 0);
+    if (!isok()) return;
+    int r = dbf->put(dbf, (DBT *)&key, (DBT *)&data,
+                !replace ? R_NOOVERWRITE : 0);
+    if (r == 1)
+        seterr("Must set the replace flag to replace existing elements.");
+    else if (r != 0)
+        seterr(errno);
 }
 
 
-int WvBdbHashBase::remove(const datum &key)
+void WvBdbHashBase::remove(const datum &key)
 {
-    assert(isok());
+    if (!isok()) return;
+
     datum newkey, data;
     newkey = key;
     
     int ret = dbf->seq(dbf, (DBT *)&newkey, (DBT *)&data, R_CURSOR);
     if (!ret)
-	return dbf->del(dbf, (DBT *)&newkey, R_CURSOR);
-    else
-	return ret;
+	ret = dbf->del(dbf, (DBT *)&newkey, R_CURSOR);
+
+    if (!ret) seterr(errno);
 }
 
 
 WvBdbHashBase::datum WvBdbHashBase::find(const datum &key)
 {
-    assert(isok());
     datum ret = {0, 0};
-    dbf->get(dbf, (DBT *)&key, (DBT *)&ret, 0);
+    if (!isok()) return ret;
+    
+    int r = dbf->get(dbf, (DBT *)&key, (DBT *)&ret, 0);
+    if (r == 1)
+    {
+        // not found - make sure we return an empty datum
+        ret.dptr = NULL;
+    }
+    else if (r != 0)
+    {
+        ret.dptr = NULL;
+        seterr(errno);
+    }
     return ret;
 }
 
 
 bool WvBdbHashBase::exists(const datum &key)
 {
-    assert(isok());
+    if (!isok()) return false;
+
     datum ret = {0, 0};
-    return !dbf->get(dbf, (DBT *)&key, (DBT *)&ret, 0);
+    int r = dbf->get(dbf, (DBT *)&key, (DBT *)&ret, 0);
+
+    // return true on success
+    if (r == 0) return true;
+
+    // return false on 1 (not found) or -1 (error)
+    if (r != 1) seterr(errno);
+    return false;
 }
 
 
 void WvBdbHashBase::zap()
 {
-    assert(isok());
-
     if (!dbfile)
     {
+        // we're broken - nothing we can do
+        if (!isok())
+        {
+            closedb();
+            return;
+        }
+
         // super-slow version
         datum key, value;
-        while (!dbf->seq(dbf, (DBT *)&key, (DBT *)&value, R_FIRST))
-            dbf->del(dbf, (DBT *)&key, R_CURSOR);
+        int r;
+        while ((r = dbf->seq(dbf, (DBT *)&key, (DBT *)&value, R_FIRST)) == 0)
+        {
+            int r2 = dbf->del(dbf, (DBT *)&key, R_CURSOR);
+            if (r2 == 1) seterr("Strange: seq found a key that del didn't recognize");
+            else if (r2 != 0) seterr(errno);
+        }
+        if (r != 1) seterr(errno);  // 1 = not found
     }
     else // delete the database file and reopen - much quicker!
     {
         if (dbf)
         {
-            dbf->close(dbf);
+            dbf->close(dbf);    // don't care if it fails
             dbf = NULL;
         }
         int fd = open(dbfile, O_RDWR | O_TRUNC);
@@ -172,8 +209,6 @@ void WvBdbHashBase::IterBase::rewind()
 void WvBdbHashBase::IterBase::rewind(const datum &firstkey, datum &curkey,
         datum &curdata)
 {
-    assert(bdbhash.isok());
-
     // save the firstkey and clear the current one
     free(rewindto.dptr);
     rewindto.dsize = firstkey.dsize;
@@ -185,7 +220,7 @@ void WvBdbHashBase::IterBase::rewind(const datum &firstkey, datum &curkey,
 
 void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
 {
-    assert(bdbhash.isok());
+    if (!bdbhash.isok()) return;
 
     // check if this is the first next() after a rewind()
     bool first = !curkey.dptr;
@@ -208,12 +243,16 @@ void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
     // always seek for the saved cursor we were just passed, to work around
     // bugs in libdb1's seq with btrees.  (As a bonus, this gives us multiple
     // iterators for free!)
-    if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
-                first ? R_FIRST : R_CURSOR))
+    int r = bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+                first ? R_FIRST : R_CURSOR);
+    if (r == 1)
     {
         // current key gone, and none higher left: done
 	curkey.dptr = curdata.dptr = NULL;
     }
+    else if (r != 0)
+        bdbhash.seterr(errno);
+    
     else if (!first)
     {
 	while (comparefunc((DBT *)&wanted, (DBT *)&curkey) >= 0)
@@ -223,20 +262,25 @@ void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
 	    // the documentation's claims!)
 	    // This algorithm definitely makes it so inserting the same key
 	    // more than once doesn't work at all.
-	    if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
-				 R_NEXT))
+	    r = bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+				 R_NEXT);
+
+            if (r == 1)
 	    {
 		// nothing left?  Fine, we're done
 		curkey.dptr = curdata.dptr = NULL;
 		break;
 	    }
+            else if (r != 0)
+                bdbhash.seterr(errno);
 	}
     }
 
     // otherwise, curkey is now sitting on the key after the requested one (or
     // the very first key), as expected.  (Also, if rewindto is set it should
-    // be either filled in with the matching btree data or cleared.)
-    assert(!rewindto.dptr || curkey.dptr != rewindto.dptr);
+    // be either filled in with the matching btree data or cleared.)  Unless,
+    // of course, the whole db is borked.
+    assert(!bdbhash.isok() || !rewindto.dptr || curkey.dptr != rewindto.dptr);
     free(wanted.dptr);
 }
 
@@ -249,8 +293,7 @@ void WvBdbHashBase::IterBase::xunlink(const datum &curkey)
 
 void WvBdbHashBase::IterBase::update(const datum &curkey, const datum &data)
 {
-    int r = bdbhash.add(curkey, data, true);
-    assert(!r && "Weird: database add failed during save?");
+    bdbhash.add(curkey, data, true);
 }
 
 #endif

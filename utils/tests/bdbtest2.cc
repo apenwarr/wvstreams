@@ -208,6 +208,13 @@ int main()
         wvcon->print("done\n");
 
         runtests(ss);
+
+        // now be sure zap doesn't crash
+        assert(ss.isok());
+        ss.seterr("Fake err");
+        assert(!ss.isok());
+        ss.zap();
+        fprintf(stderr, "After zap, isok is %d (%s)\n", ss.isok(), ss.errstr().cstr());
     }
 
     {
@@ -220,5 +227,12 @@ int main()
         wvcon->print("done\n");
 
         runtests(ss);
+
+        // now be sure zap doesn't crash
+        assert(ss.isok());
+        ss.seterr("Fake err");
+        assert(!ss.isok());
+        ss.zap();
+        fprintf(stderr, "After zap, isok is %d (%s)\n", ss.isok(), ss.errstr().cstr());
     }
 }

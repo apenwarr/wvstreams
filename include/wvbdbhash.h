@@ -16,9 +16,10 @@
 
 #include "wvhashtable.h"
 #include "wvserialize.h"
+#include "wverror.h"
 
 // Base class for the template to save space
-class WvBdbHashBase
+class WvBdbHashBase : public WvError
 {
     WvString dbfile;
     bool persist_dbfile;
@@ -31,7 +32,7 @@ public:
 	void *dptr;
 	size_t dsize;
     };
-    
+
     WvBdbHashBase(WvStringParm _dbfile, bool persist_dbfile = true);
     ~WvBdbHashBase();
 
@@ -44,22 +45,32 @@ public:
      * still take up disk space, but it disappears when closed.  If dbfile is
      * not NULL but persist_dbfile is false, the file will be truncated when
      * opened and deleted when closed.
+     *
+     * It is ok to use this if !isok - in fact, it's the expected way to reset
+     * it.  It may fail and seterr itself, though, so don't get stuck in a
+     * loop.
      */
     void opendb(WvStringParm _dbfile, bool persist_dbfile = true);
 
     /**
      * Close the db file.  Makes isok return false, so you must call opendb()
      * before using it again.  The effect on open iterators is undefined.
+     *
+     * This can be called when !isok.  It will always set the error message to
+     * "The db is closed" if it succeeds; if it sets it to anything else,
+     * there was an error while flushing the db.
      */
     void closedb();
 
-    bool isok() const
-        { return dbf; }
-
-    int add(const datum &key, const datum &data, bool replace);
-    int remove(const datum &key);
+    void add(const datum &key, const datum &data, bool replace);
+    void remove(const datum &key);
     datum find(const datum &key);
     bool exists(const datum &key);
+
+    /**
+     * Wipe the db.  Calling this while !isok is allowed, but not guaranteed
+     * to fix it.
+     */
     void zap();
     
     class IterBase
@@ -73,7 +84,7 @@ public:
         void next(datum &key, datum &data);
         void xunlink(const datum &key);
         void update(const datum &key, const datum &data);
-        
+
     protected:
         WvBdbHashBase &bdbhash;
         datum rewindto;
@@ -148,11 +159,8 @@ public:
 
     void add(const K &key, const D &data, bool replace = false)
     {
-        int r = WvBdbHashBase::add(datumize<K>(key),
+        WvBdbHashBase::add(datumize<K>(key),
 				    datumize<D>(data), replace);
-        assert((!r || replace)
-	       && "Set the replace flag to replace existing elements.");
-	assert(!r && "Weird: database add failed?");
     }
 
     void remove(const K &key)
@@ -244,7 +252,7 @@ public:
             IterBase::next(key, data);
             delete k;
             delete d;
-            if (data.dptr)
+            if (bdbhash.isok() && data.dptr)
             {
                 k = undatumize<K *>(key);
                 d = undatumize<D *>(data);
