@@ -314,11 +314,13 @@ size_t WvStream::write(const void *buf, size_t count)
 }
 
 
-// NOTE:  wait_msec is implemented wrong, but it has cleaner code this way
-// and can at least handle wait vs wait forever vs wait never.
 char *WvStream::getline(time_t wait_msec, char separator,
     int readahead)
 {
+    struct timeval timeout_time;
+    if (wait_msec > 0)
+        timeout_time = msecadd(wvtime(), wait_msec);
+
     // if we get here, we either want to wait a bit or there is data
     // available.
     while (isok())
@@ -350,6 +352,14 @@ char *WvStream::getline(time_t wait_msec, char separator,
         // make select not return true until more data is available
         size_t needed = inbuf.used() + 1;
         queuemin(needed);
+
+        // compute remaining timeout
+        if (wait_msec > 0)
+        {
+            wait_msec = msecdiff(timeout_time, wvtime());
+            if (wait_msec < 0)
+                wait_msec = 0;
+        }
         
         bool hasdata;
         if (uses_continue_select)
@@ -368,8 +378,8 @@ char *WvStream::getline(time_t wait_msec, char separator,
             hasdata = inbuf.used() >= needed; // enough?
         }
 
-        if (! hasdata && wait_msec >= 0)
-            break; // handle non wait forever case
+        if (! hasdata && wait_msec == 0)
+            break; // handle timeout
     }
     // we timed out or had a socket error
     return NULL;
@@ -567,52 +577,22 @@ void WvStream::undo_force_select(bool readable, bool writable, bool isexception)
 
 void WvStream::alarm(time_t msec_timeout)
 {
-    struct timezone tz;
-    
     if (msec_timeout >= 0)
-    {
-	gettimeofday(&alarm_time, &tz);
-	alarm_time.tv_sec += msec_timeout / 1000;
-	alarm_time.tv_usec += (msec_timeout % 1000) * 1000;
-	normalize(alarm_time);
-    }
+        alarm_time = msecadd(wvtime(), msec_timeout);
     else
-    {
-	// cancel alarm
 	alarm_time.tv_sec = alarm_time.tv_usec = 0;
-    }
 }
 
 
 time_t WvStream::alarm_remaining()
 {
-    struct timeval &a = alarm_time;
-    
-    if (a.tv_sec && !running_callback)
+    if (alarm_time.tv_sec && !running_callback)
     {
-	struct timeval tv;
-	struct timezone tz;
-	
-	gettimeofday(&tv, &tz);
-	normalize(tv);
-	
-	if (a.tv_sec < tv.tv_sec
-	    || (   a.tv_sec  == tv.tv_sec 
-		&& a.tv_usec <= tv.tv_usec))
-	{
-	    return 0;
-	}
-	else if (a.tv_sec > tv.tv_sec)
-	{
-	    return ((a.tv_sec - tv.tv_sec) * 1000
-		    + (a.tv_usec - tv.tv_usec) / 1000);
-	}
-	else // a.tv_sec == tv.tv_sec
-	{
-	    return (a.tv_usec - tv.tv_usec) / 1000;
-	}
+        time_t remaining = msecdiff(alarm_time, wvtime());
+        if (remaining < 0)
+            remaining = 0;
+        return remaining;
     }
-    
     return -1;
 }
 
