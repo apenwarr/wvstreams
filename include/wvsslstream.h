@@ -31,7 +31,8 @@ class WvSSLStream : public WvStreamClone
 public:
     /**  
      * Start an SSL connection on the stream _slave.  The x509 structure
-     * is optional for a client, and mandatory for a server.
+     * is optional for a client, and mandatory for a server.  You need to
+     * keep the X509 object around for the entire life of this object!
      */
     WvSSLStream(IWvStream *_slave, WvX509Mgr *x509 = NULL, 
     		bool _verify = false, bool _is_server = false);

@@ -62,7 +62,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
 	return;
     }
 
-    if (is_server && (x509 == NULL))
+    if (is_server && !x509)
     {
 	seterr("Certificate not available: server mode not possible!");
 	return;
