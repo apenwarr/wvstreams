@@ -164,7 +164,7 @@ void WvPipe::setup(const char *program, const char * const *argv,
 // send the child process a signal
 void WvPipe::kill(int signum)
 {
-    if( proc.running )
+    if (proc.running)
 	proc.kill(signum);
 }
 
@@ -172,8 +172,8 @@ void WvPipe::kill(int signum)
 // wait for the child to die
 int WvPipe::finish()
 {
-    while( proc.running )
-	proc.wait(100*1000);
+    while (proc.running)
+	proc.wait(100);
     
     return proc.estatus;
 }
@@ -181,6 +181,7 @@ int WvPipe::finish()
 
 bool WvPipe::child_exited()
 {
+    proc.wait(0);
     return !proc.running;
 }
 
