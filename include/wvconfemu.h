@@ -50,7 +50,7 @@ public:
 	uniconf(_uniconf), name(_name)
     {}
     class Iter;
-    friend Iter;
+    friend class Iter;
 };
 
 
@@ -129,7 +129,7 @@ public:
 		  const char *value);
 
     class Iter;
-    friend Iter;
+    friend class Iter;
 };
 
 

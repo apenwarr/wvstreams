@@ -80,7 +80,7 @@ void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
 
 
 const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
-			   const char *def_val = NULL)
+			   const char *def_val)
 {
     return uniconf[section][entry].get(def_val);
 }
