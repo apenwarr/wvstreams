@@ -4,7 +4,7 @@
 #include "strutils.h"
 #include <unistd.h>
 
-/*
+/**
  * Functions in strutils.h left untested:
  *  hexdump_buffer
  *  isnewline
@@ -16,6 +16,10 @@
  *  fqdomainname
  */
 
+/** Tests terminate_string().
+ * terminate_string() should remove any trailing whitespace on the
+ * incoming string and append the provided char.
+ */
 WVTEST_MAIN("terminate_stringtest.cc")
 {
     char *input[] = {new char[6], new char[7], new char[2], new char[4]};
@@ -32,6 +36,10 @@ WVTEST_MAIN("terminate_stringtest.cc")
     }
 }
 
+/** Tests trim_string().
+ * trim_string() should remove any leading or trailing whitespace from
+ * the incoming string.
+ */
 WVTEST_MAIN("trimtest.cc")
 {
     char *input[] = {new char[7], new char[10],
@@ -50,6 +58,11 @@ WVTEST_MAIN("trimtest.cc")
     } 
 }
 
+/** Tests trim_string().
+ * trim_string(), when provided with a trim character, should return
+ * the portion of the incoming string that is before the first
+ * occurence of that character.
+ */
 WVTEST_MAIN("trimtest2.cc")
 {
     char *input[] = {new char[9], new char[9], new char[9], new char[9]};
@@ -66,6 +79,10 @@ WVTEST_MAIN("trimtest2.cc")
     }
 }
 
+/** Tests non_breaking().
+ * non_breaking() should replace any whitespace character in the
+ * incoming string with "&nbsp;".
+ */
 WVTEST_MAIN("nbsptest.cc")
 {
     char *input[] = {"a b c", "  a", "a\nb\tc ", "ab c\r"};
@@ -80,6 +97,10 @@ WVTEST_MAIN("nbsptest.cc")
     }
 }
 
+/** Tests replace_char().
+ * replace_char() should replace all instances of one given character
+ * with another given character.
+ */
 WVTEST_MAIN("replace_chartest.cc")
 {
     char *input[] = {new char[9], new char[9], new char[9], new char[9]};
@@ -98,6 +119,10 @@ WVTEST_MAIN("replace_chartest.cc")
     }
 }
 
+/** Tests snip_string().
+ * snip_string() should snip a given input string A from another string
+ * B iff A is a prefix of B.
+ */
 WVTEST_MAIN("sniptest.cc")
 {
     char *input[] = {"foomatic", "automatic", "mafootic", "   foobar"};
@@ -111,6 +136,9 @@ WVTEST_MAIN("sniptest.cc")
     }
 }
 
+/** Tests strlwr().
+ * strlwr() should convert all characters in an input string to lower case.
+ */
 WVTEST_MAIN("strlwrtest.cc")
 {
     char *input[] = {new char[6], new char[6], new char[6], new char[6]};
@@ -127,6 +155,9 @@ WVTEST_MAIN("strlwrtest.cc")
     }
 }
 
+/** Tests strupr().
+ * strupr() should convert all characters in an input string to upper case.
+ */
 WVTEST_MAIN("struprtest.cc")
 {
     char *input[] = {new char[6], new char[6], new char[6], new char[6]};
@@ -143,6 +174,10 @@ WVTEST_MAIN("struprtest.cc")
     }
 }
 
+/** Tests is_word().
+ * is_word() should return whether or not all the characters in an
+ * input string are alphanumeric (ie, the string is a 'word').
+ */
 WVTEST_MAIN("is_wordtest.cc")
 {
     char *input[] = {"q1w2e3", "q!w@e#", "Q 86", "\t\n\r52", "hy-phen"};
@@ -152,6 +187,10 @@ WVTEST_MAIN("is_wordtest.cc")
         WVPASS(is_word(input[i]) == desired[i]);
 }
 
+/** Tests web_unescape().
+ * web_unescape() should convert all url-encoded characters in an input
+ * string (%xx) to their corresponding ASCII characters.
+ */
 WVTEST_MAIN("web_unescapetest.cc")
 {
     char *input = "%49+%6c%69%6b%65+%70%69%7a%7a%61%21";
@@ -160,6 +199,10 @@ WVTEST_MAIN("web_unescapetest.cc")
     WVPASS(web_unescape(input) == desired);
 }
 
+/** Tests url_encode().
+ * url_encode() should convert all appropriate ASCII characters to
+ * their url-encoded equivalent.
+ */
 WVTEST_MAIN("url_encodetest.cc")
 {
     char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
@@ -168,6 +211,10 @@ WVTEST_MAIN("url_encodetest.cc")
     WVPASS(url_encode(input) == desired);
 }
 
+/** Tests backslash_escape().
+ * backslash_escape() should escape all non-alphanumeric characters
+ * with a leading backslash.
+ */
 WVTEST_MAIN("backslash_escapetest.cc")
 {
     char *input[] = {"hoopla!", "q!w2e3r$", "_+:\"<>?\\/", "J~0|<3R"};
@@ -181,6 +228,10 @@ WVTEST_MAIN("backslash_escapetest.cc")
     }
 }
 
+/** Tests strcount().
+ * strcount() should return the number of occurences of a given
+ * character in the input string.
+ */
 WVTEST_MAIN("strcounttest.cc")
 {
     char *input[] = {"abj;lewi", "lk327ga", "a87gai783a", "aaaaaaa", "ao8&ATO@a"};
@@ -190,6 +241,11 @@ WVTEST_MAIN("strcounttest.cc")
         WVPASS(strcount(input[i], 'a') == desired[i]);
 }
 
+/** Tests encode_hostname_as_DN().
+ * encode_hostname_as_DN should return a DName with dc components
+ * containing each part of the given URI (host, domain, suffix, etc.)
+ * and a cn component containing the entire URI.
+ */
 WVTEST_MAIN("encode_hostnametest.cc")
 {
     char *input[] = {"www.service.net", "www.you-can-too.com", "happybirthday.org", "www.canada.bigco.co.uk"};
@@ -199,6 +255,12 @@ WVTEST_MAIN("encode_hostnametest.cc")
         WVPASS(encode_hostname_as_DN(input[i]) == desired[i]);
 }
 
+/** Tests nice_hostname().
+ * nice_hostname() should replace underscores with hyphens, removing
+ * duplicates, and remove any invalid (for a URI) characters, unless
+ * they are the first character in the string, in which case they
+ * should be replaced by 'x'.
+ */
 WVTEST_MAIN("nice_hostnametest.cc")
 {
     char *input[] = {"n-i_c-e", "@2COOL", "E\\/1|_.1", "ha--ha__ha"};
@@ -208,6 +270,10 @@ WVTEST_MAIN("nice_hostnametest.cc")
         WVPASS(nice_hostname(input[i]) == desired[i]);
 }
 
+/** Tests getfilename().
+ * getfilename() should return the bottom-most entry in a given
+ * filename.
+ */
 WVTEST_MAIN("getfilenametest.cc")
 {
     char *input[] = {"/tmp/file", "file.ext", "../../.file.wot", "/snick/dir/", "/snick/dira/../dirb/file"};
@@ -217,6 +283,10 @@ WVTEST_MAIN("getfilenametest.cc")
         WVPASS(getfilename(input[i]) == desired[i]);
 }
 
+/** Tests getdirname().
+ * getdirname() should return the directory (hypothetically) containing
+ * the bottom-most entry in a specified filename.
+ */
 WVTEST_MAIN("getdirnametest.cc")
 {
     char *input[] = {"/tmp/file", "file.ext", "../../.file.wot", "/snick/dir/", "/snick/dira/../dirb/file"};
@@ -226,6 +296,10 @@ WVTEST_MAIN("getdirnametest.cc")
         WVPASS(getdirname(input[i]) == desired[i]);
 }
 
+/** Tests sizetoa().
+ * sizetoa() should return an appropriate text description of the size
+ * of a given number of blocks with a given blocksize.
+ */
 WVTEST_MAIN("sizetoatest.cc")
 {
     {
@@ -256,6 +330,11 @@ WVTEST_MAIN("sizetoatest.cc")
     }
 }
 
+/** Tests lookup().
+ * lookup() should return the index into an array of string where
+ * the input string can be found (can be/not be a case sensitive search)
+ * or -1 if the string is not in the array.
+ */
 WVTEST_MAIN("lookuptest.cc")
 {
     char *input[] = {"", "AbC", "a3k3 ", "abc", "ABC", NULL};
@@ -267,6 +346,10 @@ WVTEST_MAIN("lookuptest.cc")
     WVPASS(lookup("abcd", input, false) == -1);
 }
 
+/** Compares all the elements of a WvList.
+ * Returns true iff the elements of lhs and rhs are pairwise equivalent
+ * via the != operator.
+ */
 template <typename T>
 static bool listcmp(const WvList<T>& lhs, const WvList<T>& rhs)
 {
@@ -283,6 +366,12 @@ static bool listcmp(const WvList<T>& lhs, const WvList<T>& rhs)
     return true;
 }
 
+/** Tests strcoll_split().
+ * strcoll_split() should return a list of strings that have been
+ * extracted from an input string with fields separated by an arbitrary
+ * number of given delimiters, with blank strings in the input being
+ * ignored.
+ */
 WVTEST_MAIN("strcoll_splittest.cc")
 {
     char *input[] = {"i:am colon\t:separated::", "i::too:am colon\tseparated"};
@@ -322,6 +411,12 @@ WVTEST_MAIN("strcoll_splittest.cc")
     }
 }
 
+/** Tests strcoll_splitstrict().
+ * strcoll_splitstrict() should return a list of strings that have been
+ * extracted from an input string with fields separated by an arbitrary
+ * number of given delimiters, with blank fields in the input causing
+ * blank strings in the output.
+ */
 WVTEST_MAIN("strcoll_splitstricttest.cc")
 {
     char *input[] = {"i:am colon\t:separated::", "i::too:am colon\tseparated"};
@@ -364,6 +459,11 @@ WVTEST_MAIN("strcoll_splitstricttest.cc")
     }
 }
 
+/** Tests strcoll_join().
+ * strcoll_join() should return a string formed by extracting all
+ * elements from a list and concatenating them, separated by a given
+ * string.
+ */
 WVTEST_MAIN("strcoll_jointest.cc")
 {
     WvList<WvString> input[1];
@@ -384,6 +484,10 @@ WVTEST_MAIN("strcoll_jointest.cc")
         WVPASS(strcoll_join(input[i], "X") == desired_join[i]);
 }
 
+/** Tests strreplace().
+ * strreplace() should replace all instances of a given string A in the
+ * input string with a given string B.
+ */
 WVTEST_MAIN("replacetest.cc")
 {
     {
@@ -399,6 +503,10 @@ WVTEST_MAIN("replacetest.cc")
     }
 }
 
+/** Tests undupe().
+ * undupe() should remove all consecutive instances of a given char in
+ * the input string, replacing them with a single instance.
+ */
 WVTEST_MAIN("undupetest.cc")
 {
     char *input[] = {";alwg8", "aaog8", "absb  rd \raaaa", "aa8eai\na8\tawaa"};
@@ -412,6 +520,9 @@ WVTEST_MAIN("undupetest.cc")
     }
 }
 
+/** Tests hostname().
+ * hostname() should return the hostname of the local computer.
+ */
 WVTEST_MAIN("hostnametest.cc")
 {
     char host[1024];
@@ -419,6 +530,10 @@ WVTEST_MAIN("hostnametest.cc")
     WVPASS(hostname() == host);
 }
 
+/** Tests fqdomainname().
+ * fqdomainname() should return the fully-qualified domain name of the
+ * local computer.
+ */
 WVTEST_MAIN("fqdomainnametest.cc")
 {
     char dom[1024];
@@ -436,6 +551,11 @@ WVTEST_MAIN("fqdomainnametest.cc")
     WVPASS(fqdomainname() == host);
 }
 
+/** Tests metriculate().
+ * metriculate() should convert an input number to a string using
+ * metric spacing conventions (ie. a space every three digits, going
+ * from right to left).
+ */
 WVTEST_MAIN("metriculatetest.cc")
 {
     int input[] = {293, 218976, 1896234178, 12837, -28376, -24, -2873, -182736};

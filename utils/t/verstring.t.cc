@@ -12,6 +12,15 @@
 #include "verstring.h"
 #include <stdio.h>
 
+/** Tests ver_to_string() and string_to_ver().
+ * Given a hex number 0xabcdefgh, where each letter represents a hex
+ * digit, ver_to_string should return a string of the form "abcd.efgh",
+ * with any meaningless zeros removed.
+ *
+ * Similarly, given a string of the form "abcd.efgh", string_to_ver
+ * should return a hex number of the form 0xabcdefgh, with implicit
+ * meaningless zeros inserted.
+ */
 WVTEST_MAIN("vertest.cc")
 {
     if (!WVFAIL(strcmp(ver_to_string(0x99998888), "9999.8888")))
