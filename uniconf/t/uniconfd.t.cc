@@ -203,7 +203,8 @@ WVTEST_MAIN("daemon multimount")
     expected_quit_response.append("OK ");
     expected_responses.add(&expected_quit_response, false);
 
-    WvString pipename("/tmp/tmpfile1");
+    WvString pipename("/tmp/uniconfd-t-%s", getpid());
+    unlink(pipename);
     WVPASS(daemon.setupunixsocket(pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
@@ -252,7 +253,8 @@ WVTEST_MAIN("daemon quit")
     expected_quit_response.append("OK ");
     expected_responses.add(&expected_quit_response, false);
 
-    WvString pipename("/tmp/tmpfile1");
+    WvString pipename("/tmp/uniconfd-t-%s", getpid());
+    unlink(pipename);
     WVPASS(daemon.setupunixsocket(pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
