@@ -7,9 +7,9 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
+#include <xplc/utils.h>
 #include "uniconfkey.h"
 #include "wvcallback.h"
-#include "wvxplc.h"
 #include "wvlinklist.h"
 #include "uniconfpair.h"
 
@@ -146,7 +146,7 @@ public:
     virtual Iter *iterator(const UniConfKey &key) = 0;
 };
 
-DEFINE_XIID(IUniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
+DEFINE_IID(IUniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9f}});
 
 /**

@@ -46,7 +46,7 @@ protected:
     UniHashTreeBase *_find(const UniConfKey &key) const;
     UniHashTreeBase *_findchild(const UniConfKey &key) const;
 
-    static void _recursivecompare(
+    static bool _recursivecompare(
         const UniHashTreeBase *a, const UniHashTreeBase *b,
         const UniHashTreeBaseComparator &comparator, void *userdata);
 

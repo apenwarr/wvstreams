@@ -143,7 +143,6 @@ ifneq ("$(with_xplc)", "no")
     VPATH+=$(with_xplc)
     LDFLAGS+=-L$(with_xplc)
     CPPFLAGS+=-I$(with_xplc)/include
-    libwvstreams.so: -lxplc
     libwvstreams.so: LIBS+=-lxplc-cxx
   endif
 endif
@@ -162,7 +161,7 @@ LDLIBS := -lgcc $(LDLIBS) \
 
 RELEASE?=$(PACKAGE_VERSION)
 
-include $(wildcard */vars.mk */*/vars.mk) /dev/null
+include $(filter-out xplc/%,$(wildcard */vars.mk */*/vars.mk)) /dev/null
 
 libwvutils.a libwvutils.so: $(call objects,utils)
 libwvutils.so: -lz -lcrypt

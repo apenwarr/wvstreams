@@ -15,10 +15,10 @@ IUniConfGen::~IUniConfGen()
 
 /***** UniConfGen *****/
 
-XUUID_MAP_BEGIN(UniConfGen)
-  XUUID_MAP_ENTRY(IObject)
-  XUUID_MAP_ENTRY(IUniConfGen)
-  XUUID_MAP_END
+UUID_MAP_BEGIN(UniConfGen)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_ENTRY(IUniConfGen)
+  UUID_MAP_END
 
 UniConfGen::UniConfGen() :
     cbdata(NULL), hold_nesting(0)

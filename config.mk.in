@@ -66,3 +66,5 @@ with_vorbis=@with_vorbis@
 with_xplc=@with_xplc@
 with_zlib=@with_zlib@
 
+build_xplc=@build_xplc@
+

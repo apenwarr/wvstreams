@@ -117,10 +117,10 @@ public:
      * "userdata" is userdata for the compare function
      * Returns: true if the comparison function returned true each time
      */
-    void compare(const Sub *other, const Comparator &comparator,
+    bool compare(const Sub *other, const Comparator &comparator,
         void *userdata)
     {
-        _recursivecompare(this, other, reinterpret_cast<
+        return _recursivecompare(this, other, reinterpret_cast<
             const typename Base::BaseComparator&>(comparator), userdata);
     }
 

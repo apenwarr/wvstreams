@@ -80,7 +80,7 @@ AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
-AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL]))
+AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL (required)]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
@@ -88,8 +88,8 @@ AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
-AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC]))
-AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib]))
+AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC (required)]))
+AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
 
@@ -333,18 +333,22 @@ fi
 
 # xplc
 if test "$with_xplc" != "no"; then
-    test "$with_xplc" = yes && with_xplc=
-    CPPFLAGS_save="$CPPFLAGS"
-    LDFLAGS_save="$LDFLAGS"
-    if test "$with_xplc"; then
-        WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
-        WV_APPEND(LDFLAGS, [-L$with_xplc])
-    fi
-    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
-    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
-    if test "$with_xplc" = no; then
-        CPPFLAGS="$CPPFLAGS_save"
-        LDFLAGS="$LDFLAGS_save"
+    if test -d xplc; then
+        WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
+        WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
+        AC_CONFIG_SUBDIRS(xplc)
+        build_xplc=yes
+        with_xplc='$(WVSTREAMS)/xplc'
+    else
+        test "$with_xplc" = yes && with_xplc=
+        CPPFLAGS_save="$CPPFLAGS"
+        LDFLAGS_save="$LDFLAGS"
+        if test "$with_xplc"; then
+            WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
+            WV_APPEND(LDFLAGS, [-L$with_xplc])
+        fi
+        AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+        AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
     fi
 fi
 
@@ -399,6 +403,7 @@ if test "$with_vorbis" = "no"; then
 fi
 if test "$with_xplc" = "no"; then
     AC_MSG_WARN([XPLC is missing.])
+    missing_required=yes
 fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
@@ -455,6 +460,8 @@ AC_SUBST(with_tcl)
 AC_SUBST(with_vorbis)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
+
+AC_SUBST(build_xplc)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)

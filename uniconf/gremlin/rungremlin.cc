@@ -4,11 +4,18 @@
 
 int main(int argc, char *argv[])
 {
-    WvString moniker = argv[0];
-    WvString key = argv[1];
+    if (argc < 3)
+    {
+	fprintf(stderr, "Usage: %s <uniconf-moniker> <start-key>\n",
+		argv[0]);
+	return 1;
+    }
+    
+    WvString moniker = argv[1];
+    WvString key = argv[2];
     UniConfGremlin g(moniker, key, 5);
     printf("Gremlin created\n");
     g.start();
-    printf("%s", g.status());
+    printf("%s", g.status().cstr());
     return 0;
 }
