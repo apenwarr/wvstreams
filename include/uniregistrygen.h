@@ -68,7 +68,11 @@ public:
     virtual WvString value() const;
 
 private:
+    LONG next_key();
+    LONG next_value();
+
     HKEY m_hKey;
+    enum Enumerating { KEYS, VALUES } m_enumerating;
     unsigned m_index;
     UniRegistryGen &gen;
     const UniConfKey parent;

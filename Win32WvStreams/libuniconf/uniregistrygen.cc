@@ -212,7 +212,7 @@ UniConfGen::Iter *UniRegistryGen::iterator(const UniConfKey &key)
 
 
 UniRegistryGenIter::UniRegistryGenIter(UniRegistryGen &gen, const UniConfKey &key, HKEY base):
-    m_hKey(0), m_index(0), gen(gen), parent(key), m_dontClose(base)
+    m_hKey(0), m_enumerating(KEYS), m_index(0), gen(gen), parent(key), m_dontClose(base)
 {
     bool isValue;
     HKEY hKey = follow_path(base, key, false, &isValue);
@@ -235,23 +235,35 @@ UniRegistryGenIter::~UniRegistryGenIter()
 
 void UniRegistryGenIter::rewind()
 {
+    m_enumerating = KEYS;
     m_index = 0;
 }
 
 
 bool UniRegistryGenIter::next()
 {
-    FILETIME dontcare;
-    TCHAR data[1024];
-    DWORD size = sizeof(data) / sizeof(data[0]);
-    LONG result = RegEnumKeyEx(m_hKey, m_index++, data, &size, 0, 0, 0, &dontcare);
-    const bool ret = result == ERROR_SUCCESS || result == ERROR_MORE_DATA;
-    current_key = data;
-    return ret;
+    if (m_enumerating == KEYS)
+    {
+	LONG result = next_key();
+	if (result == ERROR_SUCCESS)
+	    return true;
+	if (result == ERROR_NO_MORE_ITEMS)
+	{
+	    // done enumerating keys, now enumerate the values
+	    m_enumerating = VALUES;
+	    m_index = 0;
+	}
+    }
+    LONG result = next_value();
+    if (result == ERROR_SUCCESS)
+	return true;
+    return false;
 }
 
 UniConfKey UniRegistryGenIter::key() const
 {
+    UniConfKey fullpath = parent;
+    fullpath.append(current_key);
     return current_key;
 }
 
@@ -261,6 +273,29 @@ WvString UniRegistryGenIter::value() const
     UniConfKey val = parent;
     val.append(current_key);
     return gen.get(val);
+}
+
+
+LONG UniRegistryGenIter::next_key()
+{
+    FILETIME dontcare;
+    TCHAR data[1024];
+    DWORD size = sizeof(data) / sizeof(data[0]);
+    LONG result = RegEnumKeyEx(m_hKey, m_index++, data, &size, 0, 0, 0, &dontcare);
+    if (result == ERROR_SUCCESS)
+	current_key = data;
+    return result;
+}
+
+
+LONG UniRegistryGenIter::next_value()
+{
+    TCHAR data[1024];
+    DWORD size = sizeof(data) / sizeof(data[0]);
+    LONG result = RegEnumValue(m_hKey, m_index++, data, &size, 0, 0, 0, 0);
+    if (result == ERROR_SUCCESS)
+	current_key = data;
+    return result;
 }
 
 
