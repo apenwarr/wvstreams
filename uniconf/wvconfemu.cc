@@ -144,6 +144,11 @@ WvConfigSectionEmu::Iter::~Iter()
 void WvConfigSectionEmu::Iter::rewind()
 {
     iter.rewind();
+
+    if (entry)
+	delete entry;
+
+    link.data = entry = NULL;
 }
 
 
