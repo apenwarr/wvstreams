@@ -247,9 +247,9 @@ void WvConf::set(const WvString &section, const WvString &entry,
     {
 	run_callbacks(section, entry, oldval, value);
 
-	fprintf(stderr, "cfg.set: set [%s]%s = %s\n",
+	/* fprintf(stderr, "cfg.set: set [%s]%s = %s\n",
 		(const char *)section, (const char *)entry,
-		(const char *)value ?: "!!!");
+		(const char *)value ?: "!!!"); */
     }
     
     s->set(entry, value);
