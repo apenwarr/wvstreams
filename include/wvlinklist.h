@@ -21,7 +21,8 @@
 class WvListBase
 {
     WvListBase(const WvListBase &l); // copy constructor - not actually defined anywhere!
-protected:
+private:
+    //This is private to force people to pass by reference, not by value
     WvListBase& operator= (const WvListBase &l);
     
 public:
