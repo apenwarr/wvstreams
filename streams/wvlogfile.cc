@@ -9,6 +9,7 @@
 #include "wvdiriter.h"
 #include "strutils.h"
 #include "wvdailyevent.h"
+#include "wvfork.h"
 #include <time.h>
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
@@ -52,7 +53,7 @@ void WvLogFileBase::_make_prefix()
 
 WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
      int _keep_for, bool _force_new_line) : WvLogFileBase(_max_level), keep_for(_keep_for),
-     filename(_filename)
+					    filename(_filename)
 {
     WvLogRcv::force_new_line = _force_new_line;
     start_log();
@@ -108,19 +109,25 @@ void WvLogFile::start_log()
         symlink(getfilename(fullname), curname);
     }
 
-    // Look for old logs and purge them
-    WvDirIter i(getdirname(filename), false);
-    i.rewind();
-    while (i.next() && keep_for)
+    // We fork here because this can be really slow when the directory has (oh, say 32,000 files)
+    pid_t forky = wvfork();
+    if (!forky)
     {
-        // if it begins with the base name
-        if (!strncmp(i.ptr()->name, base, strlen(base)))
-            // and it's older than 'keep_for' days
-            if (i.ptr()->st_mtime <
+	// Child will Look for old logs and purge them
+	WvDirIter i(getdirname(filename), false);
+	i.rewind();
+	while (i.next() && keep_for)
+	{
+	    // if it begins with the base name
+	    if (!strncmp(i.ptr()->name, base, strlen(base)))
+		// and it's older than 'keep_for' days
+		if (i.ptr()->st_mtime <
                     wvtime().tv_sec - keep_for*86400)
-            {
-                //delete it
-                unlink(i.ptr()->fullname);
-            }
+		{
+		    //delete it
+		    unlink(i.ptr()->fullname);
+		}
+	}
+	_exit(0);
     }
 }

@@ -39,3 +39,11 @@ UniConfKey UniSubtreeGen::keymap(const UniConfKey &key)
 {
     return UniConfKey(subkey, key);
 }
+
+UniConfKey UniSubtreeGen::reversekeymap(const UniConfKey &key)
+{
+    if (key.numsegments() >= subkey.numsegments())
+        return UniConfKey(key.removefirst(subkey.numsegments()));
+
+    return key;
+}

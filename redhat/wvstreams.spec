@@ -122,6 +122,16 @@ C++ network libraries for rapid application development.
 This package contains header files and development libraries needed to
 develop programs using the WvStreams networking library.
 
+%package -n uniconf-tools
+Summary: Tools to interface with UniConf
+Group: Applications/Utilities
+Requires: libuniconf4.0
+
+%description -n uniconf-tools
+UniConf is a configuration system that can serve as the centrepiece among many other, existing configuration systems.
+
+This package contains utilities that allow users to interface with UniConf manually.
+
 %package -n uniconfd
 Summary: Server that manages UniConf elements
 Group: System Environment/Libraries
@@ -220,6 +230,12 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/*.so
 /usr/lib/pkgconfig/*pc
 
+%files -n uniconf-tools
+%defattr(-,root,root)
+%doc COPYING.LIB
+/usr/bin/uni
+/usr/share/man/man8/uni.8.gz
+
 %files -n uniconfd
 %defattr(-,root,root)
 %doc COPYING.LIB
@@ -231,6 +247,10 @@ rm -rf $RPM_BUILD_ROOT
 /var/lib/uniconf/uniconfd.ini
 
 %changelog
+* Thu Sep 30 2004 Steven Di Rocco <dirocco@nit.ca>
+- Updated to package things that have appeared in current snapshots, namely
+  libwvstreams4.0-telephony and uniconf-tools.
+
 * Tue Sep  7 2004 William Lachance <wlach@nit.ca>
 - New upstream release, split into seperate packages.
 

@@ -32,14 +32,6 @@ class WvIPFirewall
 	Redir(const WvIPPortAddr &_src, int _dstport) : src(_src)
 	    { dstport = _dstport; }
     };
-    class FastForward
-    {
-      public:
-	WvIPPortAddr src, dst;
-	FastForward(const WvIPPortAddr &_src, const WvIPPortAddr &_dst) :
-	src(_src), dst(_dst)
-	{}
-    };
 
     class RedirAll
     {
@@ -64,12 +56,10 @@ class WvIPFirewall
     };
 
     DeclareWvList(Redir);
-    DeclareWvList(FastForward);
     DeclareWvList(RedirAll);
     DeclareWvList(RedirPortRange);
 
     RedirList redirs;
-    FastForwardList forwards;
     RedirAllList redir_alls;
     RedirPortRangeList redir_port_ranges;
 
@@ -108,7 +98,7 @@ public:
     void del_proto(WvStringParm proto);
     void del_port(const WvIPPortAddr &addr);
     void del_redir(const WvIPPortAddr &src, int dstport);
-    void del_forward(const WvIPPortAddr &src);
+    void del_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst);
     void del_redir_all(int dstport);
     void del_redir_port_range(const WvIPPortAddr &src_min,
     	    const WvIPPortAddr &src_max, int dstport);

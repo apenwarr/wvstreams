@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Simon Law <sfllaw@debian.org>
 Uploaders: James Morrison <phython@debian.org>, Patrick Patterson <ppatters@debian.org>
-Build-Depends: debhelper (>> 4.0.0), fftw-dev, libfam-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, libxplc-dev, zlib1g-dev
+Build-Depends: debhelper (>> 4.0.0), fftw-dev, libdb4.2-dev, libfam-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, libxplc0.3.10-dev, zlib1g-dev
 Build-Depends-Indep: doxygen
 Standards-Version: 3.6.1
 
@@ -124,3 +124,14 @@ Description: Server that manages UniConf elements
  This package contains the server that accepts incoming TCP or Unix
  connections, and gets or sets UniConf elements at the request of a
  UniConf client.
+
+Package: uniconf-tools
+Architecture: any
+Section: utils
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Tools to interface with UniConf
+ UniConf is a configuration system that can serve as the centrepiece among
+ many other, existing configuration systems.
+ .
+ This package contains utilities that allow users to interface with 
+ UniConf manually.
