@@ -2,7 +2,8 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
- * 
+ * UniConfDefGen is a UniConfGen for retrieving data with defaults
+ *
  */
 
 #include "uniconfdefgen.h"

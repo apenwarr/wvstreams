@@ -2,8 +2,9 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * UniConfDefGen is a UniConfGen for retrieving data from the
- * UniConfDaemon with defaults.
+ * UniConfListGen is a UniConf generator to allow multiple generators to be
+ * stacked in a priority sequence for get/set/etc.
+ *
  */
 
 #ifndef __UNICONFLISTGEN_H
@@ -11,6 +12,20 @@
 
 #include "uniconfgen.h"
 
+/*
+ * Accepts a list of UniConf generators, and stacks them, treating them as one
+ * uniconf source.
+ *
+ * The standard way of using the list generator would be with a moniker. The
+ * moniker takes the form of list:(tcl style string list).
+ *
+ * For example: list:readonly:ini:admin.ini ini:user.ini
+ *
+ * The list can also contain a list. This still uses tcl style string lists as
+ * follows:
+ *
+ * list:readonly:ini:admin.ini list:{ini:user1.ini ini:user2.ini} ini:def.ini
+ */
 class UniConfListGen : public UniConfGen
 {
 public:

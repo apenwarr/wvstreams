@@ -1,7 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- * 
+ *
+ * UniConfListGen is a UniConf generator to allow multiple generators to be
+ * stacked in a priority sequence for get/set/etc.
  * 
  */
 
@@ -11,15 +13,24 @@
 #include "wvtclstring.h"
 
 
-// if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
-// given moniker.
+// if 'obj' is non-NULL and is a UniConfGen then whoever invoked this is being
+// silly. we'll make a list and add the single generator to it anyways, for the
+// sake of not breaking things
+//
+// otherwise, treat the moniker as a tcl list of monikers and add the generator
+// made by each moniker to the generator list
 static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
 {
     UniConfGenList *l = new UniConfGenList();
     UniConfGen *gen = NULL;
 
     if (obj)
+    {
         gen = mutate<UniConfGen>(obj);
+        if (gen)
+            l->append(gen, true);
+    }
+
     if (!gen)
     {
         WvStringList gens;
