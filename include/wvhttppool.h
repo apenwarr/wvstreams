@@ -30,9 +30,10 @@ public:
     WvHttpStream *instream;
     WvBufHttpStream *outstream;
     bool pipeline_test;
+    bool headers_only;
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
-		 bool _pipeline_test);
+		 bool _pipeline_test, bool _headers_only);
     ~WvUrlRequest();
     
     WvString request_str(bool keepalive);
@@ -115,7 +116,8 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual void execute();
     
-    WvBufHttpStream *addurl(WvStringParm _url, WvStringParm _headers);
+    WvBufHttpStream *addurl(WvStringParm _url, WvStringParm _headers,
+                            bool headers_only);
 private:
     void unconnect(WvHttpStream *s);
     
