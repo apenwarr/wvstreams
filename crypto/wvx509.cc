@@ -780,6 +780,8 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 		seterr("Could not fill in RSA and Cert with matching values... \n");
 		return;
 	    }
+	    // We don't free pk here because the WvRSAKey object now 
+	    // owns the key value and should delete it in the constructor.
 	}
 	else
 	{
