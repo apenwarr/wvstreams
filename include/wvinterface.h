@@ -143,8 +143,8 @@ public:
     WvInterface *operator[] (WvStringParm str)
         { return slist[str]; }
     
-    operator WvInterfaceDictBase ()
-        { return slist; }
+    //operator WvInterfaceDictBase ()
+    //    { return slist; }
 };
 
 #endif // __WVINTERFACE_H

@@ -16,6 +16,8 @@ DeclareWvScatterTable2(WvStringTableBase, WvString);
 
 class WvStringTable : public WvStringTableBase
 {
+    // copy constructor: not defined anywhere!
+    WvStringTable(const WvStringTable &t);
 public:
     WvStringTable(unsigned _numslots = 0) : WvStringTableBase(_numslots) {};
     WvString join(const char *joinchars = " \t") const;

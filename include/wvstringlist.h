@@ -16,7 +16,11 @@ DeclareWvList2(WvStringListBase, WvString);
 
 class WvStringList : public WvStringListBase
 {
+    // copy constructor: not defined anywhere!
+    WvStringList(const WvStringList &l);
 public:
+    WvStringList() {}
+    
     WvString join(const char *joinchars = " ") const;
     void split(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
