@@ -18,10 +18,10 @@ public:
     short public_len();
     short get_public_key(WvBuf &outbuf, short len);
     void create_secret(WvBuf &inbuf, short len);
+    WvDynBuf dh_secret;
 
 private:
     WvDiffieHellman *dh;
-    WvDynBuf dh_secret;
     short pub_len;
     short secret_len;
 };
