@@ -398,7 +398,7 @@ _wvclean:
 distclean: clean
 
 PKGNAME := $(notdir $(shell pwd))
-PPKGNAME := $(shell echo $(PKGNAME) | tr a-z A-Z)
+PPKGNAME := $(shell echo $(PKGNAME) | tr a-z A-Z | tr - _)
 PKGVER := $(shell test -f wvver.h \
 	    && cat wvver.h | sed -ne "s/\#define $(PPKGNAME)_VER_STRING.*\"\([^ ]*\)\"/\1/p")
 ifneq ($(PKGVER),)
