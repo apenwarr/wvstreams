@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.48 2003/12/11 18:13:23 apenwarr Exp $)
+AC_REVISION($Id: configure.ac,v 1.49 2003/12/16 21:52:08 pphaneuf Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -262,13 +262,17 @@ if test "$with_qt" != "no"; then
     AC_CACHE_CHECK([for Qt], [wv_cv_with_qt], [
         wv_cv_with_qt=no
         CPPFLAGS_save="$CPPFLAGS"
+        LDFLAGS_save="$LDFLAGS"
         for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
+            eval wv_qtdir="$wv_qtdir"
             CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include"
+            LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib -lqt-mt"
             AC_TRY_LINK([#include <qstring.h>],
                         [QString x("hello"); return 0; ],
                         [wv_cv_with_qt=$wv_qtdir; break])
         done
         CPPFLAGS="$CPPFLAGS_save"
+        LDFLAGS="$LDFLAGS_save"
     ])
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
