@@ -14,6 +14,8 @@ struct WvCont::Data
     int links;          // the refcount of this Data object
     int mydepth;        // this task's depth in the call stack
     bool finishing;     // true if we're trying to terminate this task ASAP
+                        //     (generally because WvCont is being destroyed)
+    size_t stacksize;
     WvTaskMan *taskman;
     WvTask *task;
     
@@ -21,9 +23,10 @@ struct WvCont::Data
     R ret;
     P1 p1;
     
-    Data(const Callback &_cb) : cb(_cb)
-        { links = 1; taskman = WvTaskMan::get(); 
-	     task = NULL; finishing = false; report(); }
+    Data(const Callback &_cb, size_t _stacksize) : cb(_cb)
+        { links = 1; finishing = false; stacksize = _stacksize;
+	     taskman = WvTaskMan::get(); 
+	     task = NULL; report(); }
     ~Data()
         { assert(!links); taskman->unlink(); report(); }
 
@@ -48,9 +51,9 @@ WvCont::WvCont(const WvCont &cb)
 }
 
 
-WvCont::WvCont(const Callback &cb)
+WvCont::WvCont(const Callback &cb, unsigned long _stacksize)
 {
-    data = new Data(cb);
+    data = new Data(cb, (size_t)_stacksize);
 }
 
 
@@ -107,7 +110,8 @@ WvCont::R WvCont::operator() (P1 p1)
     data->ret = R(-42);
     
     if (!data->task)
-	data->task = data->taskman->start("wvcont", bouncer, data);
+	data->task = data->taskman->start("wvcont", bouncer, data,
+					  data->stacksize);
     else if (!data->task->isrunning())
 	data->task->start("wvcont+", bouncer, data);
 

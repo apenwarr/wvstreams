@@ -58,7 +58,7 @@ public:
      * can be used in place of that callback, and stored in a callback of
      * the same data type.
      */
-    WvCont(const Callback &cb);
+    WvCont(const Callback &cb, unsigned long stacksize = 64*1024);
     
     /** Copy constructor. */
     WvCont(const WvCont &cb);
