@@ -1,72 +1,19 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
  * 
  * A generator that exposes the windows registry.
  */
 #include "uniregistrygen.h"
 #include "wvmoniker.h"
 
-UniRegistryGen::UniRegistryGen(WvString _moniker) :
-    m_log(_moniker), m_hRoot(0)
-{
-    UniConfKey key = _moniker;
-    WvString hive = key.first().printable();
-    if (strcmp("HKEY_CLASSES_ROOT", hive) == 0)
-    {
-	m_hRoot = HKEY_CLASSES_ROOT;
-    } 
-    else if (strcmp("HKEY_CURRENT_USER", hive) == 0)
-    {
-	m_hRoot = HKEY_CURRENT_USER;
-    }
-    else if (strcmp("HKEY_LOCAL_MACHINE", hive) == 0)
-    {
-	m_hRoot = HKEY_LOCAL_MACHINE;
-    }
-    else if (strcmp("HKEY_USERS", hive) == 0)
-    {
-	m_hRoot = HKEY_USERS;
-    }
-
-    m_hRoot = follow_path(key.range(1, key.numsegments()), true, NULL);
-
-#if 0
-    // FIXME: Notifications don't work for external registry changes.
-    //
-    hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    RegNotifyChangeKeyValue(
-	m_hRoot,
-	TRUE,
-	REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_ATTRIBUTES |
-	REG_NOTIFY_CHANGE_LAST_SET | REG_NOTIFY_CHANGE_SECURITY,
-	hEvent,
-	TRUE
-    );
-#endif
-}
-
-UniRegistryGen::~UniRegistryGen()
-{
-    if (m_hRoot)
-    {
-	LONG result = RegCloseKey(m_hRoot);
-	m_hRoot = 0;
-    }
-}
-
-bool UniRegistryGen::isok()
-{
-    return m_hRoot != 0;
-}
-
 // returns a handle to the key specified by key, or, if key specifies a value,
 // a handle to the key containing that value (and setting isValue = true)
-HKEY UniRegistryGen::follow_path(const UniConfKey &key, bool create, bool *isValue)
+static HKEY follow_path(HKEY from, const UniConfKey &key, bool create, bool *isValue)
 {
     const REGSAM samDesired = KEY_READ | KEY_WRITE;
     LONG result;
-    HKEY hLastKey = m_hRoot; // DuplicateHandle() does not work with regkeys
+    HKEY hLastKey = from; // DuplicateHandle() does not work with regkeys
     int n = key.numsegments();
 
     if (isValue) *isValue = false;
@@ -112,22 +59,81 @@ HKEY UniRegistryGen::follow_path(const UniConfKey &key, bool create, bool *isVal
     return hLastKey;
 }
 
+
+UniRegistryGen::UniRegistryGen(WvString _moniker) :
+    m_log(_moniker), m_hRoot(0)
+{
+    UniConfKey key = _moniker;
+    WvString hive = key.first().printable();
+    if (strcmp("HKEY_CLASSES_ROOT", hive) == 0)
+    {
+	m_hRoot = HKEY_CLASSES_ROOT;
+    } 
+    else if (strcmp("HKEY_CURRENT_USER", hive) == 0)
+    {
+	m_hRoot = HKEY_CURRENT_USER;
+    }
+    else if (strcmp("HKEY_LOCAL_MACHINE", hive) == 0)
+    {
+	m_hRoot = HKEY_LOCAL_MACHINE;
+    }
+    else if (strcmp("HKEY_USERS", hive) == 0)
+    {
+	m_hRoot = HKEY_USERS;
+    }
+
+    m_hRoot = follow_path(m_hRoot, key.range(1, key.numsegments()), true, NULL);
+
+#if 0
+    // FIXME: Notifications don't work for external registry changes.
+    //
+    hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    RegNotifyChangeKeyValue(
+	m_hRoot,
+	TRUE,
+	REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_ATTRIBUTES |
+	REG_NOTIFY_CHANGE_LAST_SET | REG_NOTIFY_CHANGE_SECURITY,
+	hEvent,
+	TRUE
+    );
+#endif
+}
+
+UniRegistryGen::~UniRegistryGen()
+{
+    if (m_hRoot)
+    {
+	LONG result = RegCloseKey(m_hRoot);
+	m_hRoot = 0;
+    }
+}
+
+bool UniRegistryGen::isok()
+{
+    return m_hRoot != 0;
+}
+
 WvString UniRegistryGen::get(const UniConfKey &key)
 {
     WvString retval = WvString::null;
     bool isvalue;
-    DWORD type;
-    TCHAR data[1024];
-    DWORD size = sizeof(data);
-    WvString value = key.last().printable();
-    
-    HKEY hKey = follow_path(key, false, &isvalue);
-    if (!isvalue)
+    HKEY hKey = follow_path(m_hRoot, key, false, &isvalue);
+
+    WvString value;
+    if (isvalue)
     {
-	// allow fetching a key's default value
+	// the path ends up at a value so fetch that
+	value = key.last().printable();
+    }
+    else
+    {
+	// the key isn't a value, fetch it's default value instead
 	value = WvString::null;
     }
     
+    DWORD type;
+    TCHAR data[1024];
+    DWORD size = sizeof(data) / sizeof(data[0]);
     LONG result = RegQueryValueEx(
 	hKey, 
 	value.cstr(), 
@@ -160,7 +166,7 @@ WvString UniRegistryGen::get(const UniConfKey &key)
 void UniRegistryGen::set(const UniConfKey &key, WvStringParm value)
 {
     LONG result;
-    HKEY hKey = follow_path(key.first( key.numsegments()-1 ), true, NULL);
+    HKEY hKey = follow_path(m_hRoot, key.first( key.numsegments()-1 ), true, NULL);
     if (hKey)
     {
 	result = RegSetValueEx(
@@ -186,28 +192,70 @@ bool UniRegistryGen::exists(const UniConfKey &key)
 
 bool UniRegistryGen::haschildren(const UniConfKey &key)
 {
-    bool isValue;
-    HKEY hKey = follow_path(key, false, &isValue);
-    bool retval = false;
-    if (hKey && !isValue)
-    {
-	FILETIME dontcare;
-	TCHAR data[1024];
-	DWORD size = sizeof(data);
-	LONG result = RegEnumKeyEx(hKey, 0, data, &size, 0, 
-	    NULL, NULL, &dontcare);
-	retval = ((result == ERROR_SUCCESS) || (result == ERROR_MORE_DATA));
-    }
-    
-    if (hKey != m_hRoot) RegCloseKey(hKey);
-
-    return retval;
+    UniRegistryGenIter iter(*this, key, m_hRoot);
+    iter.rewind();
+    return iter.next();
 }
+
 
 UniConfGen::Iter *UniRegistryGen::iterator(const UniConfKey &key)
 {
-    return new NullIter();
+    return new UniRegistryGenIter(*this, key, m_hRoot);
 }
+
+
+UniRegistryGenIter::UniRegistryGenIter(UniRegistryGen &gen, const UniConfKey &key, HKEY base):
+    m_hKey(0), m_index(0), gen(gen), parent(key), m_dontClose(base)
+{
+    bool isValue;
+    HKEY hKey = follow_path(base, key, false, &isValue);
+    if (isValue)
+    {
+	// a value doesn't have subkeys
+	if (hKey != m_dontClose) RegCloseKey(hKey);
+    }
+    else
+	m_hKey = hKey;
+}
+
+
+UniRegistryGenIter::~UniRegistryGenIter()
+{
+    if (m_hKey && m_hKey != m_dontClose)
+	RegCloseKey(m_hKey);
+}
+
+
+void UniRegistryGenIter::rewind()
+{
+    m_index = 0;
+}
+
+
+bool UniRegistryGenIter::next()
+{
+    FILETIME dontcare;
+    TCHAR data[1024];
+    DWORD size = sizeof(data) / sizeof(data[0]);
+    LONG result = RegEnumKeyEx(m_hKey, m_index++, data, &size, 0, 0, 0, &dontcare);
+    const bool ret = result == ERROR_SUCCESS || result == ERROR_MORE_DATA;
+    current_key = data;
+    return ret;
+}
+
+UniConfKey UniRegistryGenIter::key() const
+{
+    return current_key;
+}
+
+
+WvString UniRegistryGenIter::value() const
+{
+    UniConfKey val = parent;
+    val.append(current_key);
+    return gen.get(val);
+}
+
 
 static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 {
