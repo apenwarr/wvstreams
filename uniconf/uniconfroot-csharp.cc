@@ -7,7 +7,6 @@ static bool cc;
 
 void uniconf_notify(const UniConf &uni, const UniConfKey &key)
 {
-    printf("calling the callback.\n");
     if (cc)
     {
         callback(key.cstr());
@@ -29,7 +28,6 @@ uniconfroot_t uniconfroot_moniker(const char *mon, int refresh)
 {
    UniConfRoot *root = new UniConfRoot(mon, (bool)refresh);
 
-   printf("callback created.\n");
     // Register a callback on all the keys
     root->add_callback(root, UniConfKey::EMPTY, uniconf_notify, true);
         
@@ -47,7 +45,6 @@ void uniconfroot_free(uniconfroot_t ur)
 
 void uniconfroot_setcb(uniconfroot_cb cb)
 {
-    printf("Foofoo\n");
     callback = cb;
     cc = true;
 }

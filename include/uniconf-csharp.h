@@ -31,6 +31,10 @@ uniconfkey_t uniconf_fullkey(uniconf_t uni) ;
 
 uniconfkey_t uniconf_key(uniconf_t uni) ;
 
+const char * uniconf_key_str(uniconf_t uni);
+
+const char * uniconf_fullkey_str(uniconf_t uni);
+
 const uniconf_t uniconf_u(uniconf_t uni, const uniconfkey_t) ;
 
 const uniconf_t uniconf_us(uniconf_t uni, const char *);
