@@ -84,19 +84,19 @@ public:
      * or return them force false to true because incremental processing
      * of strings would require extra state.
      */
-    bool encode(WvStringParm in, WvBuffer &out);
-    bool encode(WvStringParm in, WvString &out);
-    bool encode(WvBuffer &in, WvString &out, bool flush = false);
+    bool encode(WvStringParm instr, WvBuffer &outbuf);
+    bool encode(WvStringParm instr, WvString &outbuf);
+    bool encode(WvBuffer &inbuf, WvString &outstr, bool flush = false);
 
-    inline bool flush(WvStringParm in, WvBuffer &out)
-        { return encode(in, out); }
-    inline bool flush(WvStringParm in, WvString &out)
-        { return encode(in, out); }
-    inline bool flush(WvBuffer &in, WvString &out)
-        { return encode(in, out, true); }
+    inline bool flush(WvStringParm instr, WvBuffer &outbuf)
+        { return encode(instr, outbuf); }
+    inline bool flush(WvStringParm instr, WvString &outstr)
+        { return encode(instr, outstr); }
+    inline bool flush(WvBuffer &inbuf, WvString &outstr)
+        { return encode(inbuf, outstr, true); }
     
-    WvString strencode(WvStringParm in);
-    WvString strencode(WvBuffer &in);
+    WvString strencode(WvStringParm instr, bool ignore_errors = true);
+    WvString strencode(WvBuffer &inbuf, bool ignore_errors = true);
 };
 
 

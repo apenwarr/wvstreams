@@ -24,47 +24,49 @@ bool WvEncoder::isok() const
 }
 
 
-bool WvEncoder::encode(WvStringParm in, WvBuffer &out)
+bool WvEncoder::encode(WvStringParm instr, WvBuffer &outbuf)
 {
     WvBuffer inbuf;
-    inbuf.put(in);
-    bool success = encode(inbuf, out, true);
+    inbuf.put(instr);
+    bool success = encode(inbuf, outbuf, true);
     return success;
 }
 
 
-bool WvEncoder::encode(WvStringParm in, WvString &out)
+bool WvEncoder::encode(WvStringParm instr, WvString &outstr)
 {
     WvBuffer inbuf, outbuf;
-    inbuf.put(in);
+    inbuf.put(instr);
     bool success = encode(inbuf, outbuf, true);
-    out.append(outbuf.getstr());
+    outstr.append(outbuf.getstr());
     return success;
 }
 
 
-bool WvEncoder::encode(WvBuffer &in, WvString &out, bool flush)
+bool WvEncoder::encode(WvBuffer &inbuf, WvString &outstr, bool flush)
 {
     WvBuffer outbuf;
-    bool success = encode(in, outbuf, flush);
-    out.append(outbuf.getstr());
+    bool success = encode(inbuf, outbuf, flush);
+    outstr.append(outbuf.getstr());
     return success;
 }
 
 
-WvString WvEncoder::strencode(WvStringParm in)
+WvString WvEncoder::strencode(WvStringParm instr, bool ignore_errors)
 {
-    WvString out;
-    bool success = encode(in, out);
-    return success ? out : WvString(WvString::null);
+    WvString outstr;
+    bool success = encode(instr, outstr);
+    return ignore_errors || success ?
+        outstr : WvString(WvString::null);
 }
 
 
-WvString WvEncoder::strencode(WvBuffer &in)
+WvString WvEncoder::strencode(WvBuffer &inbuf, bool ignore_errors)
 {
-    WvString out;
-    bool success = encode(in, out);
-    return success ? out : WvString(WvString::null);
+    WvString outstr;
+    bool success = encode(inbuf, outstr);
+    return ignore_errors || success ?
+        outstr : WvString(WvString::null);
 }
 
 
