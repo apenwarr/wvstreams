@@ -9,9 +9,12 @@
 
 #include "wvaddr.h"
 #include "wvstream.h"
+#include "wvlinklist.h"
 
 class WvResolverHostDict;
 class WvResolverAddrDict;
+
+DeclareWvList(WvIPAddr);
 
 /**
  * ASynchronous DNS resolver functions, so that we can do non-blocking lookups
@@ -28,9 +31,10 @@ public:
     /**
      * Return -1 on timeout, or the number of addresses found, which may
      * be 0 if the address does not exist.
+     * addrlist, if present, has to be an initialized list.
      */
     int findaddr(int msec_timeout, const WvString &name,
-		 WvIPAddr const **addr);
+		 WvIPAddr const **addr, WvIPAddrList *addrlist = NULL);
     int findname(int msec_timeout, WvIPAddr *ipaddr, char **name);
     
     /**

@@ -21,6 +21,7 @@ class WvResolverHost
 public:
     WvString name;
     WvIPAddr *addr;
+    WvIPAddrList addrlist;
     bool done, negative;
     pid_t pid;
     WvLoopback *loop;
@@ -30,7 +31,9 @@ public:
         { init(); name.unique(); addr = NULL; }
     ~WvResolverHost()
         {   
-	    if (addr) delete addr;
+            // Don't need to delete addr, as deleting the list will take care
+            // of it.
+	    // if (addr) delete addr;
 	    if (loop) delete loop; 
 	    if (pid)
 	    {
@@ -76,7 +79,13 @@ static void namelookup(const char *name, WvLoopback *loop)
 	he = gethostbyname(name);
 	if (he)
 	{
-	    loop->print("%s\n", WvIPAddr((unsigned char *)he->h_addr));
+            char **addr = he->h_addr_list;
+            while (*addr != NULL)
+            {
+  	        loop->print("%s ", WvIPAddr((unsigned char *)(*addr)));
+                addr++;
+            }
+            loop->print("\n");
 	    alarm(0);
 	    return;
 	}
@@ -118,10 +127,12 @@ WvResolver::~WvResolver()
 // returns >0 on success, 0 on not found, -1 on timeout
 // If addr==NULL, this just tests to see if the name exists.
 int WvResolver::findaddr(int msec_timeout, const WvString &name,
-			 WvIPAddr const **addr)
+			 WvIPAddr const **addr,
+                         WvIPAddrList *addrlist = NULL)
 {
     WvResolverHost *host;
     time_t now = time(NULL);
+    int res = 0;
 
     host = (*hostmap)[name];
     if (host)
@@ -137,7 +148,18 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
 	{
 	    if (addr)
 		*addr = host->addr;
-	    return 1;
+            if (addrlist)
+            {
+                WvIPAddrList::Iter i(host->addrlist);
+                for (i.rewind(); i.next(); )
+                {
+                    addrlist->append(i.ptr(), false);
+                    res++;
+                }
+            }
+            else
+                res = 1;
+	    return res;
 	}
 	else if (host->negative)
 	    return 0;
@@ -203,11 +225,30 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
     
     if (line && line[0] != 0)
     {
-	host->addr = new WvIPAddr(line);
+        res = 1;
+        WvIPAddr *resolvedaddr;
+        char *p;
+        p = strtok(line, " \n");
+	resolvedaddr = new WvIPAddr(p);
+	host->addr = resolvedaddr;
+        host->addrlist.append(resolvedaddr, true);
+        if (addr)
+            *addr = host->addr;
+        if (addrlist)
+            addrlist->append(host->addr, false);
+        do
+        {
+            p = strtok(NULL, " \n");
+            if(p)
+            {
+                res++;
+                resolvedaddr = new WvIPAddr(p);
+                host->addrlist.append(resolvedaddr, true);
+                if (addrlist)
+                    addrlist->append(resolvedaddr, false);
+            }
+        } while (p);
 	host->done = true;
-    
-	if (addr)
-	    *addr = host->addr;
     }
     else
 	host->negative = true;
@@ -217,8 +258,8 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
     delete host->loop;
     host->loop = NULL;
     
-    // laziness: we always assume just one address.
-    return host->negative ? 0 : 1;
+    // Not lazy anymore!  Return as many addresses as we find.
+    return host->negative ? 0 : res;
 }
 
 /*
