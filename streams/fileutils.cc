@@ -147,6 +147,19 @@ int wvchmod(const char *path, mode_t mode)
 
     int filedes = open(path, O_RDONLY);
     if (filedes == -1) {
+	// if we're not running as root, this file/dir may have 0
+	// perms and open() fails, so let's try again
+	//
+	// NOTE: This is not as secure as the proper way, since
+	// it's conceivable that someone swaps out the dir/file
+	// for a symlink between our check and the chmod() call
+	//
+        struct stat sst;
+	if (getuid() != 0)
+	    if (stat(path, &sst) != -1)
+		if (st.st_ino == sst.st_ino)
+		    return chmod(path, mode);
+	
 	return -1;
     }
 

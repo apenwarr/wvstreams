@@ -34,6 +34,18 @@ WVTEST_MAIN("commit-without-refresh")
     WVFAIL(cfg.haschildren());
 }
 
+WVTEST_MAIN("ini file permissions")
+{
+    system("rm -f perm.ini");
+    system("touch perm.ini");
+    UniConfRoot cfg("ini:perm.ini");
+    cfg["foo"].setme("bar");
+    cfg.commit();
+    
+    struct stat statbuf;
+    WVPASS(stat("perm.ini", &statbuf) == 0);
+    WVPASSEQ(statbuf.st_mode, 0100666); //file and permissions 0666
+}
 
 WVTEST_MAIN("parsing1")
 {
