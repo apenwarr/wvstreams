@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.24 2003/04/16 22:13:41 mag Exp $)
+AC_REVISION($Id: configure.ac,v 1.25 2003/04/17 21:02:38 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -432,6 +432,7 @@ AC_SUBST(with_glib)
 AC_SUBST(with_gtk)
 AC_SUBST(with_xplc)
 AC_SUBST(with_fam)
+AC_SUBST(with_gdbm)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)

@@ -116,11 +116,11 @@ ifeq ("$(enable_efence)", "yes")
 LDFLAGS+=-lefence
 endif
 
-ifneq ("$(enable_fam)", "no")
+ifneq ("$(with_fam)", "no")
 LDFLAGS+=-lfam
 endif
 
-ifneq ("$(enable_gdbm)", "no")
+ifneq ("$(with_gdbm)", "no")
 LDFLAGS+=-lgdbm
 endif
 

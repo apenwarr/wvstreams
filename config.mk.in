@@ -20,6 +20,7 @@ with_glib:=@with_glib@
 with_gtk:=@with_gtk@
 with_xplc:=@with_xplc@
 with_fam:=@with_fam@
+with_gdbm:=@with_gdbm@
 
 INSTALL:=@INSTALL@
 INSTALL_PROGRAM:=@INSTALL_PROGRAM@
