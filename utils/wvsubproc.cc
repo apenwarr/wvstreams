@@ -162,13 +162,12 @@ void WvSubProc::wait(time_t msec_delay)
     int status;
     pid_t dead_pid;
     struct timeval tv1, tv2;
-    struct timezone tz;
     
     assert(!running || pid > 1);
     
     if (!running) return;
     
-    gettimeofday(&tv1, &tz);
+    gettimeofday(&tv1, 0);
     tv2 = tv1;
     
     do
@@ -215,7 +214,7 @@ void WvSubProc::wait(time_t msec_delay)
 	    usleep(50*1000);
 	}
 	
-	gettimeofday(&tv2, &tz);
+	gettimeofday(&tv2, 0);
 	
     } while (running && msec_delay 
 	     && (msec_delay < 0 || msecdiff(tv2, tv1) < msec_delay));
