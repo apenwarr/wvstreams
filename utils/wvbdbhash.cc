@@ -15,7 +15,7 @@
 
 WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile)
 {
-    dbf = dbopen(dbfile, O_CREAT|O_RDWR, 0777, DB_BTREE, NULL);
+    dbf = dbopen(dbfile, O_CREAT|O_RDWR, 0666, DB_BTREE, NULL);
     if (!dbf)
         fprintf(stderr, "Could not open database '%s': %s\n",
                 dbfile.cstr(), strerror(errno));

@@ -25,12 +25,11 @@
 struct WvDirEnt : public stat
 /***************************/
 {
-    // we already have everything from struct stat, but we also want the
-    // fullname (dir/dir/file) and name (file), since they're useful
-    // and now we also get a string relative to the starting directory
-    WvString        fullname;
-    WvString        name;
-    WvString        relname;
+    // we already have everything from struct stat, but let's also include
+    // some variations on the filename for convenience.
+    WvString        fullname; // contains: startdir/path/file
+    WvString        name;     // contains: file
+    WvString        relname;  // contains: path/file
 };
 
 class WvDirIter
