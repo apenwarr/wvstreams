@@ -928,3 +928,15 @@ WvDynBuf *WvX509Mgr::get_extension(int nid)
     return NULL;
 }
 
+
+WvString WvX509Mgr::errstr() const
+{
+    if (!cert)
+	return "No certificate!";
+    else if (!rsa)
+	return "No RSA keys!";
+    else if (!!errstring)
+	return errstring;
+    else
+	return "WVX509 COMPLETELY BROKEN!";
+}

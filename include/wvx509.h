@@ -232,11 +232,8 @@ public:
     bool isok() const
         { return cert && rsa && !errstring; }
 
-    /**
-     * Accessor for the error string if !isok()
-     */
-    const WvString &errstr()
-        { return errstring; }
+    /// Accessor for the error string if !isok()
+    WvString errstr() const;
 
 private:
     WvLog debug;

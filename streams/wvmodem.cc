@@ -139,7 +139,7 @@ WvModem::WvModem(const char * filename, int _baud, bool rtscts)
     
     if (!lock.lock())
     {
-	errnum = EBUSY;
+	seterr(EBUSY);
 	return;
     }
     

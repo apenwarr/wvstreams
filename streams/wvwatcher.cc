@@ -24,7 +24,7 @@ WvFileWatcher::WvFileWatcher(const char *_filename, int _mode)
     fpos = 0;
     if (stat(filename, &last_st) && WvFile::isok())
     {
-	errnum = errno;
+	seterr(errno);
 	close();
 	once_ok = false;
     }

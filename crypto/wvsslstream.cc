@@ -49,18 +49,24 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
 {
     verify = _verify;
     is_server = _is_server;
+    ctx = NULL;
+    ssl = NULL;
+    meth = NULL;
+    sslconnected = false;
     
     wvssl_init();
+    
+    if (x509 && !x509->isok())
+    {
+	seterr("Cert: %s", x509->errstr());
+	return;
+    }
 
     if (is_server && (x509 == NULL))
     {
 	seterr("Certificate not available: server mode not possible!");
 	return;
     }
-
-    ctx = NULL;
-    ssl = NULL;
-    sslconnected = false;
 
     if (is_server)
     {
@@ -468,7 +474,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    	else
 	    	{
 		    if (!peercert.isok())
-			seterr(peercert.errstr());
+			seterr("Peer cert: %s", peercert.errstr());
 		    else
 			seterr("Peer certificate is invalid!");
 	    	}

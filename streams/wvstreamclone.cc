@@ -97,7 +97,7 @@ size_t WvStreamClone::uwrite(const void *buf, size_t size)
 
 bool WvStreamClone::isok() const
 {
-    if (errnum)
+    if (geterr())
 	return false;
     if (cloned)
 	return cloned->isok();
@@ -107,8 +107,8 @@ bool WvStreamClone::isok() const
 
 int WvStreamClone::geterr() const
 {
-    if (errnum)
-	return errnum;
+    if (WvStream::geterr())
+	return WvStream::geterr();
     if (cloned)
 	return cloned->geterr();
     return EIO;
@@ -117,7 +117,7 @@ int WvStreamClone::geterr() const
 
 WvString WvStreamClone::errstr() const
 {
-    if (errnum)
+    if (WvStream::geterr())
 	return WvStream::errstr();
     if (cloned)
 	return cloned->errstr();

@@ -106,13 +106,13 @@ void WvPipe::setup(const char *program, const char * const *argv,
 
     if (!program || !argv)
     {
-	errnum = EINVAL;
+	seterr(EINVAL);
 	return;
     }
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, socks))
     {
-	errnum = errno;
+	seterr(errno);
 	return;
     }
 

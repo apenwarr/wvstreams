@@ -53,7 +53,6 @@ WvStream::WvStream()
 #endif
     wvstream_execute_called = false;
     userdata = closecb_data = NULL;
-    errnum = 0;
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
     want_to_flush = true;
@@ -272,7 +271,7 @@ bool WvStream::isok() const
 
 void WvStream::seterr(int _errnum)
 {
-    if (!errnum)
+    if (!geterr()) // no pre-existing error
     {
         WvErrorBase::seterr(_errnum);
         close();

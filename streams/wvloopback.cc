@@ -25,7 +25,7 @@ WvLoopback::WvLoopback()
     
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, socks))
     {
-	errnum = errno;
+	seterr(errno);
 	return;
     }
     
