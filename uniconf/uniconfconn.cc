@@ -34,7 +34,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
 
     // events
     { "HELLO", "HELLO <message>: sent by server on connection" },
-    { "CHG", "CHG <key> <depth>: event on changed key" }
+    { "FGET", "FGET <key>: forget key and its children" }
 };
 
 

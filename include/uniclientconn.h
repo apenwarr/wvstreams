@@ -57,9 +57,9 @@ public:
 
         // events
         EVENT_HELLO, /*!< HELLO <message> */
-        EVENT_CHANGED, /*!< CHG <key> <depth> */
+        EVENT_FORGET, /*!< FGET <key> */
     };
-    static const int NUM_COMMANDS = EVENT_CHANGED + 1;
+    static const int NUM_COMMANDS = EVENT_FORGET + 1;
     struct CommandInfo
     {
         const char *name;

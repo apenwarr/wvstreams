@@ -130,15 +130,31 @@ UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 }
 
 
-void UniConf::addwatch(UniConfDepth::Type depth, UniConfWatch *watch) const
+void UniConf::add_callback(const UniConfCallback &callback, void *userdata,
+    UniConfDepth::Type depth) const
 {
-    return xroot->addwatch(xfullkey, depth, watch);
+    xroot->add_callback(xfullkey, callback, userdata, depth);
 }
 
 
-void UniConf::delwatch(UniConfDepth::Type depth, UniConfWatch *watch) const
+void UniConf::del_callback(const UniConfCallback &callback, void *userdata,
+    UniConfDepth::Type depth) const
 {
-    return xroot->delwatch(xfullkey, depth, watch);
+    xroot->del_callback(xfullkey, callback, userdata, depth);
+}
+
+
+void UniConf::add_setbool(bool *flag,
+    UniConfDepth::Type depth) const
+{
+    xroot->add_setbool(xfullkey, flag, depth);
+}
+
+
+void UniConf::del_setbool(bool *flag,
+    UniConfDepth::Type depth) const
+{
+    xroot->del_setbool(xfullkey, flag, depth);
 }
 
 

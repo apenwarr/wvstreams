@@ -166,11 +166,12 @@ public:
     {
         if (!xchildren)
             return;
-        // set xchildren to NULL so that the zap() will happen faster
+        // set xchildren to NULL first so that the zap() will happen faster
         // otherwise, each child will attempt to unlink itself uselessly
         SubVector *oldchildren = reinterpret_cast<SubVector*>(xchildren);
         xchildren = NULL;
-        delete oldchildren; // deletes all children
+        // delete all children
+        delete oldchildren;
     }
 
     /**

@@ -11,27 +11,20 @@
 
 UniConfRootImpl::UniConfRootImpl()
 {
+    setcallback(wvcallback(UniConfGenCallback, *this,
+        UniConfRootImpl::deltacallback), NULL);
 }
 
 
 UniConfRootImpl::~UniConfRootImpl()
 {
+    // clear callback before superclasses are destroyed
+    setcallback(NULL, NULL);
 }
 
 
-void UniConfRootImpl::addwatch(const UniConfKey &key,
-    UniConfDepth::Type depth, UniConfWatch *watch)
+void UniConfRootImpl::deltacallback(UniConfGen *gen,
+    const UniConfKey &key, void *userdata)
 {
-}
-
-
-void UniConfRootImpl::delwatch(const UniConfKey &key,
-    UniConfDepth::Type depth, UniConfWatch *watch)
-{
-}
-
-
-void UniConfRootImpl::deltacallback(const UniConfGen &gen,
-    const UniConfKey &key, UniConfDepth::Type depth, void *userdata)
-{
+    UniWatchManager::delta(key);
 }

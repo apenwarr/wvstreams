@@ -8,9 +8,20 @@
 #include "uniconfdaemon.h"
 #include "wvtclstring.h"
 
+/***** UniConfDaemonWatch ****/
+
+unsigned WvHash(const UniConfDaemonWatch &watch)
+{
+    return WvHash(watch.key) ^ unsigned(watch.depth);
+}
+
+
+
+/***** UniConfDaemonConn *****/
+
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
     UniClientConn(_s),
-    root(_root)
+    root(_root), watches(113) /*FIXME: embedded tuning parameter */
 {
     writecmd(EVENT_HELLO, "{UniConf Server ready}");
 }
@@ -18,6 +29,15 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
 
 UniConfDaemonConn::~UniConfDaemonConn()
 {
+    // clear all watches
+    UniConfDaemonWatchTable::Iter i(watches);
+    for (i.rewind(); i.next();)
+    {
+        log(WvLog::Debug5, "Removing a watch for \"%s\" depth %s\n",
+            i->key, UniConfDepth::nameof(i->depth));
+        root[i->key].del_callback(wvcallback(UniConfCallback, *this,
+            UniConfDaemonConn::deltacallback), NULL, i->depth);
+    }
 }
 
 
@@ -192,14 +212,34 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key)
 void UniConfDaemonConn::do_addwatch(const UniConfKey &key,
     UniConfDepth::Type depth)
 {
-    // FIXME: not implemented
+    UniConfDaemonWatch *watch = new UniConfDaemonWatch(key, depth);
+    if (watches[*watch])
+    {
+        delete watch;
+    }
+    else
+    {
+        log(WvLog::Debug5, "Adding a watch for \"%s\" depth %s\n",
+            key, UniConfDepth::nameof(depth));
+        watches.add(watch, true);
+        root[key].add_callback(wvcallback(UniConfCallback, *this,
+            UniConfDaemonConn::deltacallback), NULL, depth);
+    }
 }
 
 
 void UniConfDaemonConn::do_delwatch(const UniConfKey &key,
     UniConfDepth::Type depth)
 {
-    // FIXME: not implemented
+    UniConfDaemonWatch watch(key, depth);
+    if (watches[watch])
+    {
+        log(WvLog::Debug5, "Removing a watch for \"%s\" depth %s\n",
+            key, UniConfDepth::nameof(depth));
+        watches.remove(& watch);
+        root[key].del_callback(wvcallback(UniConfCallback, *this,
+            UniConfDaemonConn::deltacallback), NULL, depth);
+    }
 }
 
 
@@ -215,4 +255,10 @@ void UniConfDaemonConn::do_help()
     for (int i = 0; i < UniClientConn::NUM_COMMANDS; ++i)
         writetext(UniClientConn::cmdinfos[i].description);
     writeok();
+}
+
+
+void UniConfDaemonConn::deltacallback(const UniConf &key, void *userdata)
+{
+    writecmd(UniClientConn::EVENT_FORGET, key.fullkey());
 }

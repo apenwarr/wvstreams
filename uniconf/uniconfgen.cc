@@ -21,10 +21,10 @@ UniConfGen::~UniConfGen()
 }
 
 
-void UniConfGen::delta(const UniConfKey &key, UniConfDepth::Type depth)
+void UniConfGen::delta(const UniConfKey &key)
 {
     if (cb)
-        cb(*this, key, depth, cbdata);
+        cb(this, key, cbdata);
 }
 
 
@@ -40,9 +40,28 @@ bool UniConfGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 }
 
 
-bool UniConfGen::remove(const UniConfKey &key)
+bool UniConfGen::zap(const UniConfKey &key)
 {
-    return set(key, WvString::null);
+    bool success = true;
+    
+    Iter *it = iterator(key);
+    for (it->rewind(); it->next();)
+    {
+        if (! set(it->key(), WvString::null))
+            success = false;
+    }
+    delete it;
+    return success;
+}
+
+
+bool UniConfGen::haschildren(const UniConfKey &key)
+{
+    Iter *it = iterator(key);
+    it->rewind();
+    bool children = it->next();
+    delete it;
+    return children;
 }
 
 
@@ -147,43 +166,8 @@ UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 }
 
 
-void UniFilterGen::gencallback(const UniConfGen &gen,
-    const UniConfKey &key, UniConfDepth::Type depth, void *userdata)
+void UniFilterGen::gencallback(UniConfGen *gen,
+    const UniConfKey &key, void *userdata)
 {
-    delta(key, depth);
+    delta(key);
 }
-#if 0
-
-/****** Registry Hack *****/
-
-/**
- * This is  a quick hack to ensure that all standard generators
- * are always available.  Unless explicitly referenced by the
- * program, some generators may not be linked with the executable
- * and therefore would not be registered if their static initializers
- * resided in their respective modules only.  This hack should be
- * removed if ever dynamic loading of generators is provided.
- */
-#include "uninullgen.h"
-static UniConfGenFactoryRegistration nullreg("null",
-    new UniNullGenFactory(), true);
-
-#include "unitempgen.h"
-static UniConfGenFactoryRegistration tempreg("temp",
-    new UniTempGenFactory(), true);
-
-#include "unireadonlygen.h"
-static UniConfGenFactoryRegistration readonlyreg("readonly",
-    new UniReadOnlyGenFactory(), true);
-    
-#include "uniinigen.h"
-static UniConfGenFactoryRegistration filereg("ini",
-    new UniIniGenFactory(), true);
-    
-#include "uniclientgen.h"
-static UniConfGenFactoryRegistration unixreg("unix",
-    new UniClientGenFactory(), true);
-static UniConfGenFactoryRegistration tcpreg("tcp",
-    new UniClientGenFactory(), true);
-
-#endif

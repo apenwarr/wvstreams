@@ -10,18 +10,23 @@
 
 /***** UniConfDepth *****/
 
-static const char *depthnames[UniConfDepth::NUM_DEPTHS] = {
-    "zero", "one", "infinite", "children", "descendents"
+namespace UniConfDepth
+{
+
+static const char *names[NUM_DEPTHS + 1] = {
+    "zero", "one", "infinite", "children", "descendents", NULL
 };
 
 
-const char *UniConfDepth::nameof(UniConfDepth::Type depth)
+const char *nameof(Type depth)
 {
-    return depthnames[depth];
+    return names[depth];
 }
 
 
-UniConfDepth::Type UniConfDepth::fromname(const char *name)
+Type fromname(const char *name)
 {
-    return Type(lookup(name, depthnames));
+    return Type(::lookup(name, names));
 }
+
+}; // namespace

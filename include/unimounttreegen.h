@@ -228,8 +228,7 @@ private:
         const UniConfKey &key, UniConfDepth::Type depth);
 
     /** Called by generators when a key changes. */
-    void gencallback(const UniConfGen &gen, const UniConfKey &key,
-        UniConfDepth::Type depth, void *userdata);
+    void gencallback(UniConfGen *gen, const UniConfKey &key, void *userdata);
 };
 
 #endif //__UNICONFMOUNTTREE_H

@@ -17,8 +17,8 @@
 class WvStreamList;
 class UniConfGen;
 
-DeclareWvCallback(4, void, UniConfGenCallback, const UniConfGen &,
-    const UniConfKey &, UniConfDepth::Type, void *);
+DeclareWvCallback(3, void, UniConfGenCallback, UniConfGen *,
+    const UniConfKey &, void *);
 
 /**
  * An abstract data container that backs a UniConf tree.
@@ -39,10 +39,10 @@ protected:
     UniConfGen();
 
     /**
-     * Sends notification that a key has changed value.
+     * Sends notification that a key has possibly changed.
      * This takes care of the details of invoking the callback.
      */
-    void delta(const UniConfKey &key, UniConfDepth::Type depth);
+    void delta(const UniConfKey &key);
 
     /** Raises an error condition. */
     void seterror(WvStringParm error)
@@ -87,18 +87,14 @@ public:
     virtual bool set(const UniConfKey &key, WvStringParm value) = 0;
 
     /**
-     * Removes a key and all of its children from the registry.  Returns
-     * true on success.
-     *
-     * Non-virtual synonym for set(key, WvString::null).
-     */
-    bool remove(const UniConfKey &key);
-
-    /**
      * Removes all children of a key from the registry. Returns true on
      * success.
+     *
+     * The default implementation iterates over all children using
+     * iterator() removing them using set(key, WvString::null).
+     * Subclasses are strongly encouraged to provide a better implementation.
      */
-    virtual bool zap(const UniConfKey &key) = 0;
+    virtual bool zap(const UniConfKey &key);
 
     /**
      * Without fetching its value, returns true if a key exists.
@@ -115,8 +111,12 @@ public:
      *
      * This is provided because it is often more efficient to
      * test existance than to actually retrieve the keys.
+     * 
+     * The default implementation uses the iterator returned by iterator()
+     * to test whether the child has any keys.
+     * Subclasses are strongly encouraged to provide a better implementation.
      */
-    virtual bool haschildren(const UniConfKey &key) = 0;
+    virtual bool haschildren(const UniConfKey &key);
 
     /**
      * Determines if the generator is usable and working properly.
@@ -197,10 +197,10 @@ public:
 protected:
     /**
      * Called by inner generator when a key changes.
-     * The default implementation calls delta(key, depth).
+     * The default implementation calls delta(key).
      */
-    virtual void gencallback(const UniConfGen &gen, const UniConfKey &key,
-        UniConfDepth::Type depth, void *userdata);
+    virtual void gencallback(UniConfGen *gen, const UniConfKey &key,
+        void *userdata);
 };
 
 #endif // UNICONFGEN_H

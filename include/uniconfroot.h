@@ -10,8 +10,18 @@
 #include "unimounttreegen.h"
 #include "uniconfwatch.h"
 
-/** The UniConfRoot implementation. */
-class UniConfRootImpl : public UniMountTreeGen
+/**
+ * The UniConfRoot implementation.
+ *
+ * Wires together all of the bits and pieces that make up the core structure
+ * of a UniConf tree.  These pieces are factored to make them easier to
+ * understand as independent units.  They may also be used independently
+ * to achieve a variety of interesting effects.
+ * 
+ * For tree contents and mounting support see UniMountTreeGen.
+ * For notification support see UniWatchManager.
+ */
+class UniConfRootImpl : public UniMountTreeGen, public UniWatchManager
 {
     /** undefined. */
     UniConfRootImpl(const UniConfRootImpl &other);
@@ -22,27 +32,10 @@ public:
 
     /** Destroys the UniConf tree along with all uncommitted data. */
     ~UniConfRootImpl();
-    
-    /**
-     * Requests notification when any the keys covered by the
-     * recursive depth specification changes.
-     * "depth" is the recursion depth identifying keys of interest
-     * "watch" is the observer to notify
-     */
-    void addwatch(const UniConfKey &key, UniConfDepth::Type depth,
-        UniConfWatch *watch);
 
-    /**
-     * Cancels a previously registered notification request.
-     * "depth" is the recursion depth identifying keys of interest
-     * "watch" is the observer to notify
-     */
-    void delwatch(const UniConfKey &key, UniConfDepth::Type depth,
-        UniConfWatch *watch);
-        
 private:
-    void deltacallback(const UniConfGen &gen, const UniConfKey &key,
-        UniConfDepth::Type depth, void *userdata);
+    void deltacallback(UniConfGen *gen, const UniConfKey &key,
+        void *userdata);
 };
 
 #endif //__UNICONFROOT_H

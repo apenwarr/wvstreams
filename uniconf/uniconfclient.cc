@@ -66,6 +66,13 @@ UniClientGen::UniClientGen(IWvStream *stream) :
     conn->setcallback(wvcallback(WvStreamCallback, *this,
         UniClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, streamid.edit());
+
+    // FIXME: We currently registry for notifications over all keys
+    //        which places undue burden on the server.
+    //        This could be alleviated if UniConfGen supplied an advisory
+    //        add_watch() / del_watch() interface in addition to asking for
+    //        notification about keys that are currently cached.
+    conn->writecmd(UniClientConn::REQ_ADDWATCH, "/ infinite");
 }
 
 
@@ -313,23 +320,13 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 // discard server information
                 break;
 
-            case UniClientConn::EVENT_CHANGED:
+            case UniClientConn::EVENT_FORGET:
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString depthstr(wvtcl_getword(conn->payloadbuf, " "));
-                if (key.isnull() || depthstr.isnull())
+                if (key.isnull())
                     break; // malformed message!
-                
-                UniConfDepth::Type depth = UniConfDepth::fromname(depthstr);
-                if (depth == -1)
-                    depth = UniConfDepth::INFINITE; // fwd compatibility
-
-                // FIXME: it is probably not safe to update the cache
-                //        immediately while a command is in progress
-                //        we should defer event processing until after a
-                //        command has been completely executed
-                cache->mark_change(key, depth);
-                delta(key, depth);
+                cache->mark_change(key, UniConfDepth::INFINITE);
+                delta(key);
                 break;
             }
 

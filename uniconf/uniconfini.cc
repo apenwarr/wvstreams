@@ -179,7 +179,7 @@ bool UniIniGen::refresh(const UniConfKey &key,
     }
     else
     {
-        delta(UniConfKey::EMPTY, UniConfDepth::INFINITE);
+        delta(UniConfKey::EMPTY); // REMOVED
     }
 
     /** done **/
@@ -195,13 +195,16 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
         if (b != NULL)
         {
             if (a->value() != b->value())
-                delta(a->fullkey(), UniConfDepth::ONE);
+            {
+                // key changed
+                delta(a->fullkey()); // CHANGED
+            }
             return true;
         }
         else
         {
             // key removed
-            delta(a->fullkey(), UniConfDepth::INFINITE);
+            delta(a->fullkey()); // REMOVED
             return false;
         }
     }
@@ -209,7 +212,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
     {
         assert(b != NULL);
         // key added
-        delta(a->fullkey(), UniConfDepth::INFINITE);
+        delta(a->fullkey()); // ADDED
         return false;
     }
 }

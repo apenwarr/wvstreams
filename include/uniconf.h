@@ -244,38 +244,36 @@ public:
     UniConfGen *whichmount(UniConfKey *mountpoint = NULL) const;
 
     /**
-     * Requests notification when any the keys covered by the
-     * recursive depth specification change.
+     * Requests notification when any of the keys covered by the
+     * recursive depth specification change by invoking a callback.
      */
-    void addwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
-
-    /** Cancels a previously registered notification request. */
-    void delwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
-
-    /** Shortcut for registering a callback-style watch. */
-    void addwatchcallback(UniConfDepth::Type depth,
-        const UniConfCallback &callback, void *userdata) const { }
+    void add_callback(const UniConfCallback &callback, void *userdata,
+        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
     
-    /** Shortcut for canceling a watch added with addwatchcallback(). */
-    void delwatchcallback(UniConfDepth::Type depth,
-        const UniConfCallback &callback, void *userdata) const { }
+    /**
+     * Cancels notification requested using add_callback().
+     */
+    void del_callback(const UniConfCallback &callback, void *userdata,
+        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
 
     /**
+     * Requests notification when any of the keys covered by the
+     * recursive depth specification change by setting a flag.
      */
-    void addwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
-    
-    /** Shortcut for canceling a watch added with addwatchsetbool(). */
-    void delwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
+    void add_setbool(bool *flag,
+        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
+
+    /**
+     * Cancels notification requested using add_setbool().
+     */
+    void del_setbool(bool *flag,
+        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
     
     /**
      * Prints the entire contents of this subtree to a stream.
      * If 'everything' is true, also prints empty values.
      */
     void dump(WvStream &stream, bool everything = false) const;
-
-    // FIXME: not final API!
-    void setdefaults(const UniConf &subtree) const { }
-
     
     /*** Iterators (see comments in class declaration) ***/
 
@@ -366,7 +364,9 @@ public:
 };
 
 
-/** This iterator walks through all immediate children of a UniConf node. */
+/**
+ * This iterator walks through all immediate children of a UniConf node.
+ */
 class UniConf::Iter : public UniConf::IterBase
 {
     UniConfAbstractIter *it;
@@ -392,7 +392,9 @@ public:
 };
 
 
-/** This iterator performs depth-first traversal of a subtree. */
+/**
+ * This iterator performs depth-first traversal of a subtree.
+ */
 class UniConf::RecursiveIter : public UniConf::IterBase
 {
     UniConf::IterList itlist;
@@ -495,7 +497,9 @@ protected:
 };
 
 
-/** A sorted variant of UniConf::Iter. */
+/**
+ * A sorted variant of UniConf::Iter.
+ */
 class UniConf::SortedIter : public UniConf::SortedIterBase
 {
     UniConf::Iter i;
@@ -510,7 +514,9 @@ public:
 };
 
 
-/** A sorted variant of UniConf::RecursiveIter. */
+/**
+ * A sorted variant of UniConf::RecursiveIter.
+ */
 class UniConf::SortedRecursiveIter : public UniConf::SortedIterBase
 {
     UniConf::RecursiveIter i;
@@ -526,7 +532,9 @@ public:
 };
 
 
-/** A sorted variant of UniConf::XIter. */
+/**
+ * A sorted variant of UniConf::XIter.
+ */
 class UniConf::SortedXIter : public UniConf::SortedIterBase
 {
     UniConf::XIter i;

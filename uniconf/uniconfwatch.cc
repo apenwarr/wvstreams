@@ -7,51 +7,44 @@
 #include "uniconfwatch.h"
 #include "uniconf.h"
 
-/***** UniConfWatch *****/
+/***** UniWatchManager *****/
 
-
-
-/***** UniConfWatchSetBool *****/
-
-UniConfWatchSetBool::UniConfWatchSetBool(bool *flag) :
-    xflag(flag)
+UniWatchManager::UniWatchManager()
 {
 }
 
 
-void UniConfWatchSetBool::notify(const UniConf &key, UniConfDepth::Type depth)
-{
-    *xflag = true;
-}
-
-
-
-/***** UniConfWatchLog *****/
-
-UniConfWatchLog::UniConfWatchLog(WvLog &log) :
-    log(log)
+UniWatchManager::~UniWatchManager()
 {
 }
 
 
-void UniConfWatchLog::notify(const UniConf &key, UniConfDepth::Type depth)
-{
-    log("key changed: %s (depth %s)\n", key.fullkey(),
-        UniConfDepth::nameof(depth));
-}
-
-
-
-/***** UniConfWatchCallback *****/
-
-UniConfWatchCallback::UniConfWatchCallback(
-    const UniConfCallback &callback, void *userdata) :
-    xcallback(callback), xuserdata(userdata)
+void UniWatchManager::add_callback(const UniConfKey &key,
+    const UniConfCallback &callback, void *userdata,
+    UniConfDepth::Type depth)
 {
 }
 
 
-void UniConfWatchCallback::notify(const UniConf &key, UniConfDepth::Type depth)
+void UniWatchManager::del_callback(const UniConfKey &key,
+    const UniConfCallback &callback, void *userdata,
+    UniConfDepth::Type depth)
 {
-    xcallback(key, depth, xuserdata);
+}
+
+
+void UniWatchManager::add_setbool(const UniConfKey &key, bool *flag,
+    UniConfDepth::Type depth)
+{
+}
+
+
+void UniWatchManager::del_setbool(const UniConfKey &key, bool *flag,
+    UniConfDepth::Type depth)
+{
+}
+
+
+void UniWatchManager::delta(const UniConfKey &key)
+{
 }
