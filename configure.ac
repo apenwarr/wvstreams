@@ -70,6 +70,10 @@ AC_ARG_ENABLE(warnings,
               AC_HELP_STRING([--disable-warnings],
                              [extra warnings]))
 
+AC_ARG_ENABLE(testgui,
+              AC_HELP_STRING([--disable-testgui],
+                             [GUI for unit tests]))
+
 AC_ARG_WITH(acl, AC_HELP_STRING([--with-acl], [ACL]))
 AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
@@ -427,6 +431,7 @@ AC_SUBST(enable_resolver_fork)
 AC_SUBST(enable_rtti)
 AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
+AC_SUBST(enable_testgui)
 
 AC_SUBST(with_acl)
 AC_SUBST(with_bdb)

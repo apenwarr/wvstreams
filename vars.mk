@@ -105,6 +105,10 @@ CXXFLAGS+=-Wall -Woverloaded-virtual
 CFLAGS+=-Wall
 endif
 
+ifeq ("$(enable_testgui)", "no")
+WVTESTRUN=env
+endif
+
 ifneq ("$(enable_rtti)", "yes")
 CXXFLAGS+=-fno-rtti
 endif
