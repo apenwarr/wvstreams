@@ -83,6 +83,7 @@ void WvPipe::setup(const char *program, const char **argv,
     }
 
     // Fork.  The child process will run the program we're piping.
+    // we don't need wvfork() because the child runs exec().
     pid = fork();
     if (pid < 0)
     {

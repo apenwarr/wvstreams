@@ -77,6 +77,7 @@ class WvString;
 // predefined hashing functions (note: string hashes are case-insensitive)
 unsigned WvHash(const WvString &s);
 unsigned WvHash(const char *s);
+unsigned WvHash(const int &i);
 
 // this base class has some non-inlined functions that work for all
 // data types.

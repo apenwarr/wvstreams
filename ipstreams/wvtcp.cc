@@ -13,8 +13,6 @@
 #include <netinet/tcp.h>
 #include <errno.h>
 
-WvStreamList WvTCPListener::all_listeners;
-
 
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 {
@@ -259,15 +257,12 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     }
     
     delete sa;
-    
-    all_listeners.append(this, false);
 }
 
 
 WvTCPListener::~WvTCPListener()
 {
     close();
-    all_listeners.unlink(this);
 }
 
 
@@ -332,10 +327,3 @@ const WvIPPortAddr *WvTCPListener::src() const
     return &listenport;
 }
 
-
-void WvTCPListener::close_all_listeners()
-{
-    WvStreamList::Iter i(all_listeners);
-    for (i.rewind(); i.next(); )
-	i().close();
-}

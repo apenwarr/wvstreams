@@ -28,6 +28,12 @@ unsigned WvHash(const WvString &s)
     return !s ? 0 : WvHash((const char *)s);
 }
 
+// FIXME: does this suck?
+unsigned WvHash(const int &i)
+{
+    return i;
+}
+
 
 // we do not accept the _numslots value directly.  Instead, we find the
 // next number of slots which is >= _numslots and one less then a power

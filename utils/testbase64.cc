@@ -8,11 +8,19 @@
 #include "base64.h"
 #include <stdio.h>
 
-int main()
-/********/
+int main( int argc, char ** argv )
+/********************************/
 {
-    char * str = "Aladdin:open sesame";
+    char * str;
+
+    if( argc > 1 )
+        str = argv[1];
+    else
+        str = "<insert secret message here>";
+
     char * enc = base64_encode( str );
-    printf( "%s\n%s\n%s\n", str, enc, base64_decode( enc ) );
+    printf( "before:  %s\n"
+            "encoded: %s\n"
+            "decoded: %s\n", str, enc, base64_decode( enc ) );
     return( 0 );
 }

@@ -103,16 +103,12 @@ public:
     // src() is a bit of a misnomer, but it returns the listener port.
     virtual const WvIPPortAddr *src() const;
     
-    // when we fork(), we want the child not to have any of our listeners!
-    static void close_all_listeners();
-
 protected:
     WvIPPortAddr listenport;
     WvStreamList *auto_list;
     static Callback accept_callback;
     Callback *auto_callback;
     void *auto_userdata;
-    static WvStreamList all_listeners;
 };
 
 

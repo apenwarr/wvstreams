@@ -68,7 +68,7 @@ int WvSubProc::startv(const char cmd[], char * const *argv)
     running = false;
     estatus = 0;
     
-    pid = fork();
+    pid = fork();   // don't need wvfork(), since we call exec().
     //fprintf(stderr, "pid for '%s' is %d\n", cmd, pid);
     
     if (!pid)

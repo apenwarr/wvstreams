@@ -1,20 +1,20 @@
 TOPDIR=../..
 include $(TOPDIR)/rules.mk
 
-default: all teststr testlist testhash stresshash testbuffer \
-		testbase64 testver testtask testsort testproc
+TESTS=teststr testlist testhash stresshash testbuffer testbase64 testver \
+		testtask testsort testproc testfork
+
+default: all $(TESTS)
 
 all: utils.a
 
-utils.a: base64.o verstring.o strutils.o \
+utils.a: base64.o verstring.o strutils.o wvfork.o \
 		wvstring.o wvstringlist.o wvstringtable.o \
 		wvlinklist.o wvhashtable.o wvbuffer.o wvtask.o wvsubproc.o
 
 
 LIBS=${EFENCE}
-teststr testlist testhash stresshash testbuffer testbase64 \
-	testver testtask testsort testproc: utils.a
+$(TESTS): utils.a
 
 clean:
-	rm -f teststr testlist testhash stresshash testbuffer \
-		testbase64 testver testtask testsort testproc
+	rm -f $(TESTS)
