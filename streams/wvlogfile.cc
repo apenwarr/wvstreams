@@ -11,7 +11,6 @@
 #include "wvtimeutils.h"
 #include "wvdiriter.h"
 #include "strutils.h"
-#include "fileutils.h"
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 

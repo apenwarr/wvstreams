@@ -21,7 +21,6 @@
 #include "wvstring.h"
 #include "wvlinklist.h"
 #include "strutils.h"
-#include "fileutils.h"
 
 struct WvDirEnt : public stat
 /***************************/

@@ -13,7 +13,6 @@
 #include "wvtcp.h"
 #include "wvsslstream.h"
 #include "strutils.h"
-#include "fileutils.h"
 
 bool WvHttpStream::global_enable_pipelining = true;
 int WvUrlStream::max_requests = 100;
