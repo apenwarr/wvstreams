@@ -33,7 +33,7 @@ WvPam::~WvPam()
 
 bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm password)
 {
-    return fail;
+    return false;
 }
 
 WvString WvPam::getuser() const
