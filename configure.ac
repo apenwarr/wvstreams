@@ -1,7 +1,10 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.7 2002/10/23 23:15:51 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.8 2002/10/31 23:00:27 pphaneuf Exp $)
+
+echo $0 "$*" > reconfigure
+chmod +x reconfigure
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
 

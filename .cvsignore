@@ -1,5 +1,6 @@
 autom4te.cache
 configure
+reconfigure
 config.log
 config.status
 config.mk
