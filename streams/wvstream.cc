@@ -321,9 +321,15 @@ size_t WvStream::write(const void *buf, size_t count)
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
-        (const unsigned char*)buf += count;
+        (const unsigned char*)buf += wrote;
     }
-    if (! max_outbuf_size || (outbuf.used() + count <= max_outbuf_size))
+    if (max_outbuf_size != 0)
+    {
+        size_t canbuffer = max_outbuf_size - outbuf.used();
+        if (count > canbuffer)
+            count = canbuffer; // can't write the whole amount
+    }
+    if (count != 0)
     {
         outbuf.put(buf, count);
         wrote += count;
