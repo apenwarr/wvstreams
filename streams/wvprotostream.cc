@@ -17,7 +17,7 @@ WvProtoStream::WvProtoStream(WvStream **_cloned, WvLog *_debuglog)
 		: WvStreamClone(_cloned)
 {
     if (_debuglog)
-	logp = new WvLog(_debuglog->split(WvLog::Debug2));
+	logp = new WvLog(_debuglog->split(WvLog::Debug3));
     else
 	logp = NULL;
     

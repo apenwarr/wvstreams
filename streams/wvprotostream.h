@@ -49,7 +49,6 @@ public:
     
 protected:
     WvLog *logp;
-    bool log_enable;
     
 public:
     class Token
@@ -67,6 +66,7 @@ public:
     DeclareWvList(Token);
 
     WvBuffer tokbuf;
+    bool log_enable;
 };
 
 

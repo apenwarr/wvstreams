@@ -26,20 +26,23 @@
 class WvTimeStream : public WvStream
 {
     struct timeval last_tv;
-    int ms_per_tick;
-    bool this_is_a_tick;
+    int ms_per_tick, max_backlog;
 
 public:
     WvTimeStream();
     
     // every 'msec' milliseconds, select() will return true on this stream.
     // if 'msec' is 0, the timer is disabled.
-    void set_timer(int msec);
+    void set_timer(int msec, int max_backlog = 10);
 
     virtual bool isok() const;
     virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 			      bool readable, bool writable, bool isexception);
     virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
+    
+    // notify timestream that we have "ticked" once
+    void WvTimeStream::tick();
+    virtual void execute();
 };
 
 

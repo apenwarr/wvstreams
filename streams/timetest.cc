@@ -25,6 +25,7 @@ int main()
 	
 	while (!t.select(5*(100-count))) 
 	    ;
+	t.callback();
 	
 	log("%02s ", count);
     }
