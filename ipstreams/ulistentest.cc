@@ -43,7 +43,8 @@ int main(int argc, char **argv)
 	WvStream wvin(0), wvout(1);
 	WvStreamList l;
 
-	WvUnixListener sock(WvString(argc==2 ? argv[1] : "/tmp/fuzzy"));
+	WvUnixListener sock(argc==2 ? argv[1] : "/tmp/fuzzy",
+			    0777);
 	
 	wvin.setcallback(stream_bounce_to_list, &l);
 	sock.auto_accept(&l, stream_bounce_to_list, &l);

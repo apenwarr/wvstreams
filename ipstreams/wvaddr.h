@@ -353,6 +353,7 @@ protected:
     virtual WvString printable() const;
     
 public:
+    WvUnixAddr(const char *_sockname);
     WvUnixAddr(const WvString &_sockname);
     WvUnixAddr(const WvUnixAddr &_addr);
     virtual ~WvUnixAddr();

@@ -56,7 +56,7 @@ public:
 class WvUnixListener : public WvStream
 {
 public:
-    WvUnixListener(const WvUnixAddr &_addr, int create_mode = 0770);
+    WvUnixListener(const WvUnixAddr &_addr, int create_mode);
     virtual ~WvUnixListener();
     
     virtual void close();

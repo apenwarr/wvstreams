@@ -81,7 +81,12 @@ WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
     
     sockaddr *sa = addr.sockaddr();
     
-    oldmask = umask((~create_mode) & 0x0777);
+    // unfortunately we have to change the umask here to make the create_mode
+    // work, because bind() doesn't take extra arguments like open() does.
+    // However, we don't actually want to _cancel_ the effects of umask,
+    // only add to them; so the original umask is or'ed into ~create_mode.
+    oldmask = umask(0777); // really just reading the old umask here
+    umask(oldmask | ((~create_mode) & 0777));
     
     fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0

@@ -719,6 +719,14 @@ bool WvIPPortAddr::comparator(const WvAddr *a2) const
 }
 
 
+WvUnixAddr::WvUnixAddr(const char *_sockname)
+    : sockname(_sockname)
+{
+    assert(!!sockname);
+    sockname.unique();
+}
+
+
 WvUnixAddr::WvUnixAddr(const WvString &_sockname)
     : sockname(_sockname)
 {

@@ -13,7 +13,7 @@
 int main(int argc, char **argv)
 {
     WvLog err("unixtest", WvLog::Error);
-    WvUnixConn sock(WvString(argc==2 ? argv[1] : "/tmp/fuzzy"));
+    WvUnixConn sock(argc==2 ? argv[1] : "/tmp/fuzzy");
     
     wvcon->autoforward(sock);
     sock.autoforward(*wvcon);
