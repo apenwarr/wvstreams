@@ -98,7 +98,7 @@ WvString hexdump_buffer(unsigned char *buf, size_t len)
     WvString out;
 
     out.setsize(len / 16 * 80 + 80);
-    char *cptr = out;
+    char *cptr = out.edit();
     
     for (count = 0; count < len; count+=16)
     {

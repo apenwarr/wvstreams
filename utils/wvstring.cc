@@ -90,7 +90,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 
 	if (*iptr++ == 's')
 	{
-	    if (!*aptr || !(char *)**aptr)
+	    if (!*aptr || !(const char *)**aptr)
 		*aptr = &blank;
 	    ladd = _max(abs(justify), strlen(**aptr));
 	    if (maxlen && maxlen < ladd)
@@ -103,7 +103,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
     output.setsize(total + 1);
     
     iptr = format;
-    optr = output;
+    optr = output.edit();
     aptr = a;
     while (*iptr)
     {

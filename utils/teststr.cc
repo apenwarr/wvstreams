@@ -2,7 +2,7 @@
 
 WvString test1(WvString s)
 {
-    s[0]++;
+    s.edit()[0]++;
     return s;
 }
 
@@ -36,18 +36,18 @@ int main()
     
     // formatting test
     WvString ft0("%s", "hello");
-    printf("%s\n", (char *)ft0);
+    printf("%s\n", (const char *)ft0);
     WvString ft("%s %-40s %s %10s", "xyzzi", 5, "hello", "b");
-    printf("%s\n", (char *)ft);
+    printf("%s\n", (const char *)ft);
     
     // parameter passing test
     WvString s(test1("test string"));
-    printf("%s\n", (char *)s);
+    printf("%s\n", (const char *)s);
     s = test1(s);
-    printf("%s\n", (char *)s);
+    printf("%s\n", (const char *)s);
     WvString t;
     t = test1(s);
-    printf("%s -- %s\n", (char *)s, (char *)t);
+    printf("%s -- %s\n", (const char *)s, (const char *)t);
     
     return 0;
 }

@@ -280,7 +280,7 @@ void WvConf::flush()
 	for (i.rewind(); i.next();)
 	{
 	    WvConfigSection & sect = i;
-	    fprintf(fp, "\n[%s]\n", (char *)sect.name);
+	    fprintf(fp, "\n[%s]\n", (const char *)sect.name);
 	    sect.dump(fp);
 	}
 

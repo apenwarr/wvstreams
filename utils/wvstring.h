@@ -161,7 +161,9 @@ public:
         { return _st - i; }
     
     // auto-convert WvString to (char *), when needed.
-    operator char*() const
+    operator const char*() const
+        { return _st; }
+    char *edit()
         { return _st; }
     
     // used to convert WvString to int, when needed.

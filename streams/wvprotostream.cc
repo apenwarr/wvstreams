@@ -119,7 +119,7 @@ size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
     for (count = 0, i.rewind(); i.next(); count++)
     {
 	Token &t = i;
-	(*array)[count].fill((unsigned char *)(char *)t.data, t.length);
+	(*array)[count].fill((unsigned char *)(const char *)t.data, t.length);
     }
     
     delete tl;
@@ -221,8 +221,8 @@ void WvProtoStream::Token::fill(const unsigned char *_data,
     length = _length;
     
     data.setsize(length + 1);
-    memcpy(data, _data, length);
-    data[length] = 0;
+    memcpy(data.edit(), _data, length);
+    data.edit()[length] = 0;
 }
 
 

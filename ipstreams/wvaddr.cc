@@ -179,7 +179,7 @@ WvEncap WvStringAddr::encap() const
 
 const unsigned char *WvStringAddr::rawdata() const
 {
-    return (const unsigned char *)(char *)addr;
+    return (const unsigned char *)(const char *)addr;
 }
 
 
@@ -292,7 +292,7 @@ size_t WvEtherAddr::sockaddr_len() const
 WvString WvARCnetAddr::printable() const
 {
     WvString s("  ");
-    sprintf(s, "%02X", binaddr);
+    sprintf(s.edit(), "%02X", binaddr);
     return s;
 }
 

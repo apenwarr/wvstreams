@@ -18,7 +18,7 @@
 #include <assert.h>
 
 
-WvPipe::WvPipe(const char *program, char **argv,
+WvPipe::WvPipe(const char *program, const char **argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       int stdin_fd, int stdout_fd, int stderr_fd)
 {
@@ -27,7 +27,7 @@ WvPipe::WvPipe(const char *program, char **argv,
 }
 
 
-WvPipe::WvPipe(const char *program, char **argv,
+WvPipe::WvPipe(const char *program, const char **argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       WvStream *stdin_str, WvStream *stdout_str,
 	       WvStream *stderr_str)
@@ -43,7 +43,7 @@ WvPipe::WvPipe(const char *program, char **argv,
 }
 
 
-WvPipe::WvPipe(const char *program, char **argv,
+WvPipe::WvPipe(const char *program, const char **argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       WvSplitStream *stdio_str)
 {
@@ -58,7 +58,7 @@ WvPipe::WvPipe(const char *program, char **argv,
 }
 
 
-void WvPipe::setup(const char *program, char **argv,
+void WvPipe::setup(const char *program, const char **argv,
 	      bool writable, bool readable, bool catch_stderr,
 	      int stdin_fd, int stdout_fd, int stderr_fd)
 {
@@ -126,7 +126,7 @@ void WvPipe::setup(const char *program, char **argv,
 	
 	// now run the program.  If it fails, use _exit() so no destructors
 	// get called and make a mess.
-	if (execvp(program, argv))
+	if (execvp(program, (char **)argv))
 	    _exit(242);
     }
 

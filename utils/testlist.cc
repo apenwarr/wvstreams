@@ -18,7 +18,7 @@ int main()
     l.append(&z, false);
 
     for (i.rewind(); i.next();)
-	printf("Thingy: %s\n", (char *)(WvString&)i);
+	printf("Thingy: %s\n", (const char *)(WvString&)i);
 
     int a=5, b=6;
     intList il;

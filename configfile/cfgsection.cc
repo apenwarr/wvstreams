@@ -40,7 +40,7 @@ WvConfigEntry *WvConfigSection::operator[] (const WvString &ename)
 const char *WvConfigSection::get(const WvString &entry, const char *def_val)
 {
     WvConfigEntry *e = (*this)[entry];
-    return e ? (char *)e->value : def_val;
+    return e ? (const char *)e->value : def_val;
 }
 
 
@@ -71,8 +71,9 @@ void WvConfigSection::dump(FILE *fp)
     {
 	WvConfigEntry &e = i;
 	if (e.value && e.value[0])
-	    fprintf(fp, "%s = %s\n", (char *)e.name, (char *)e.value);
+	    fprintf(fp, "%s = %s\n",
+		    (const char *)e.name, (const char *)e.value);
 	else
-	    fprintf(fp, "%s\n", (char *)e.name);
+	    fprintf(fp, "%s\n", (const char *)e.name);
     }
 }

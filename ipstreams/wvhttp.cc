@@ -26,7 +26,7 @@ WvURL::WvURL(const WvString &url) : err("No error")
 	err = "WvURL can only handle HTTP URLs.";
 	return;
     }
-    hostname = (char *)url + 7;
+    hostname = (const char *)url + 7;
     
     cptr = strchr(hostname, '/');
     if (!cptr) // no path given
