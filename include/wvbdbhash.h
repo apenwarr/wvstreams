@@ -131,6 +131,12 @@ protected:
 public:
     WvBdbHash(WvStringParm dbfile = WvString::null) : WvBdbHashBase(dbfile)
         { saveddata = NULL; }
+    
+    ~WvBdbHash()
+    {
+        if (saveddata)
+            delete saveddata;
+    }
 
     void add(const K &key, const D &data, bool replace = false)
     {
