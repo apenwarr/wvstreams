@@ -11,8 +11,16 @@
 
 class WvBackslashEncoder : public WvEncoder
 {
+    WvString nasties;
+
 public:
-    WvBackslashEncoder();
+    /**
+     * Creates a C-style backslash encoder.
+     *   nasties - the set of printable characters to escape
+     *             in addition to the non-printable ones
+     *             (should always contain at least backslash)
+     */
+    WvBackslashEncoder(WvStringParm _nasties = "\\\"");
     virtual ~WvBackslashEncoder() { }
 
 protected:

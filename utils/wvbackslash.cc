@@ -7,8 +7,8 @@
 #include <ctype.h>
 #include "wvbackslash.h"
 
-static const char *escapein = "\\\"\a\b\f\n\r\t\v";
-static const char *escapeout = "\\\"abfnrtv";
+static const char *escapein = "\a\b\f\n\r\t\v";
+static const char *escapeout = "abfnrtv";
 
 static inline char tohex(int digit, char alphabase = ('a' - 10))
 {
@@ -36,7 +36,8 @@ static inline int fromoctal(char digit)
 
 /***** WvBackslashEncoder *****/
 
-WvBackslashEncoder::WvBackslashEncoder()
+WvBackslashEncoder::WvBackslashEncoder(WvStringParm _nasties) :
+    nasties(_nasties)
 {
 }
 
@@ -56,23 +57,37 @@ bool WvBackslashEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
             // handle 1 character escape sequences
             if (avail < 1)
                 { outbuf.unget(len - i); return ! flush; }
-            const char *found = NULL;
+            const char *foundnasty = NULL;
+            const char *foundspecial = NULL;
             if (c != '\0')
-                found = strchr(escapein, c);
-            if (isprint(c) && found == NULL)
             {
-                outbuf.putch(c);
-                avail -= 1;
-                continue;
+                foundnasty = strchr(nasties.cstr(), c);
+                if (! foundnasty)
+                {
+                    foundspecial = strchr(escapein, c);
+                    if (! foundspecial && isprint(c))
+                    {
+                        outbuf.putch(c);
+                        avail -= 1;
+                        continue;
+                    }
+                }
             }
             
             // handle 2 character escape sequences
             if (avail < 2)
                 { outbuf.unget(len - i); return ! flush; }
-            if (found != NULL)
+            if (foundnasty != NULL)
             {
                 outbuf.putch('\\');
-                outbuf.putch(escapeout[found - escapein]);
+                outbuf.putch(c);
+                avail -= 2;
+                continue;
+            }
+            if (foundspecial != NULL)
+            {
+                outbuf.putch('\\');
+                outbuf.putch(escapeout[foundspecial - escapein]);
                 avail -= 2;
                 continue;
             }
@@ -143,11 +158,10 @@ bool WvBackslashDecoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
                     else
                     {
                         const char *found = strchr(escapeout, c);
+                        tmpbuf.unalloc(1);
                         if (found != NULL)
-                        {
-                            tmpbuf.unalloc(1);
                             c = escapein[found - escapeout];
-                        }
+                        // else we just drop the backslash
                         tmpbuf.putch(c);
                         state = Initial;
                     }

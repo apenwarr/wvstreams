@@ -3,11 +3,15 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */
 #include "wvtclstring.h"
+#include "wvbackslash.h"
 #include "wvbuffer.h"
 #include <wvstream.h>
 
 WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
 {
+    WvString allnasties(WVTCL_ALWAYS_NASTY);
+    allnasties.append(nasties);
+    
     bool backslashify = false, inescape = false;
     int unprintables = 0, bracecount = 0;
     const char *cptr;
@@ -32,7 +36,7 @@ WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
 	if (bracecount < 0)
 	    backslashify = true;
 	
-	if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
+	if (strchr(allnasties.cstr(), *cptr))
 	    unprintables++;
 
 	if (*cptr == '\\')
@@ -47,19 +51,7 @@ WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
     if (backslashify)
     {
 	// the backslashify method: backslash-escape _all_ suspicious chars.
-	WvString out;
-	out.setsize(strlen(s) + unprintables + 1);
-	char *optr = out.edit();
-	
-	for (cptr = s; *cptr; cptr++)
-	{
-	    if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
-		*optr++ = '\\';
-	    *optr++ = *cptr;
-	}
-	*optr = 0;
-	
-	return out;
+        return WvBackslashEncoder(allnasties).strflush(s, true);
     }
     else
     {
@@ -77,7 +69,7 @@ WvFastString wvtcl_unescape(WvStringParm s)
     if (!s)
 	return s;
     
-    int slen = strlen(s);
+    int slen = s.len();
     bool skipquotes = false;
     
     // deal with embraced strings by simply removing the braces
@@ -101,45 +93,9 @@ WvFastString wvtcl_unescape(WvStringParm s)
 	return s;
     
     // otherwise, unbackslashify it.
-    WvString out;
-    out.setsize(slen);
-    
-    const char *cptr, *end = s + slen - skipquotes;
-    char *optr = out.edit();
-    for (cptr = s + (int)skipquotes; cptr < end; cptr++)
-    {
-	if (*cptr == '\\')
-	{
-	    cptr++;
-	    if (!*cptr || cptr >= end)
-		break; // weird - ends in a backslash!
-	    
-	    // FIXME: support \x## and \### notation, perhaps?
-	    switch (*cptr)
-	    {
-	    case 'n':
-		*optr++ = '\n';
-		break;
-	    case 'r':
-		*optr++ = '\r';
-		break;
-	    case 't':
-		*optr++ = '\t';
-		break;
-	    case '0':
-		*optr++ = 0;
-		break;
-	    default:
-		*optr++ = *cptr;
-		break;
-	    }
-	}
-	else
-	    *optr++ = *cptr;
-    }
-    *optr = 0;
-    
-    return out;
+    return WvBackslashDecoder().strflushmem(
+        s.cstr() + int(skipquotes),
+        slen - int(skipquotes) * 2, true);
 }
 
 
