@@ -25,6 +25,8 @@ class WvHConfString : public WvString
 public:
     WvHConfString(WvStringParm s) : WvString(s)
         { }
+    WvHConfString(const char *s) : WvString(s)
+        { }
     
     bool operator== (WvStringParm s2) const;
 };
@@ -43,7 +45,7 @@ public:
     WvHConfKey(WvStringParm section, WvStringParm entry);
     WvHConfKey(const WvHConfKey &key, int offset = 0);
     
-    WvString printable() const;
+    WvHConfString printable() const;
     operator WvString () const { return printable(); }
     
     WvHConfKey skip(int offset) const
@@ -191,7 +193,8 @@ public:
     WvLink *next()
     {
 	WvLink *l;
-	while ((l = WvHConfDict::Iter::next()) != NULL && !*ptr())
+	while ((l = WvHConfDict::Iter::next()) != NULL 
+	       && !*ptr() && !ptr()->children)
 	    ;
 	return l;
     }

@@ -60,7 +60,7 @@ WvHConfKey::WvHConfKey(const WvHConfKey &key, int offset)
 }
 
 
-WvString WvHConfKey::printable() const
+WvHConfString WvHConfKey::printable() const
 {
     if (isempty() || (count()==1 && !*first()))
 	return "/";

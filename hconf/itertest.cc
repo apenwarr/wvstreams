@@ -29,7 +29,7 @@ int main()
     
     {
 	log("Non-recursive dump of /HTTPD:\n");
-	WvHConf::Iter i(h["HTTPD"]);
+	WvHConf::Iter i(h["/HTTPD"]);
 	for (i.rewind(); i.next(); )
 	    log("  '%s' = '%s'\n", i->full_key(), *i);
     }
