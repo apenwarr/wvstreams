@@ -1,8 +1,8 @@
 Summary: C++ network libraries for rapid application development.
 Name: wvstreams4.0
-Version: 4.0
+Version: @PKGVER@
 Release: 1
-Source: http://open.nit.ca/download/wvstreams%{version}.tar.gz
+Source: http://open.nit.ca/download/wvstreams-%{version}.tar.gz
 URL: http://open.nit.ca/wvstreams
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: fam-devel, fftw-devel, libogg-devel, libvorbis-devel, openssl-devel, openslp-devel, pam-devel, qdbm-devel, speex-devel, xplc-devel >= 0.3.7
@@ -158,7 +158,7 @@ if [ $1 = 0 ]; then
 fi
 
 %prep
-%setup -q -n wvstreams%{version}
+%setup -q -n wvstreams-%{version}
 
 %build
 export CXXFLAGS=-I/usr/kerberos/include # stupid redhat 9 kerberos..

@@ -267,10 +267,25 @@ WvString &WvString::operator= (int i)
 
 WvString &WvString::operator= (const WvFastString &s2)
 {
-    if (s2.buf == buf && s2.str == str)
+    if (s2.str == str && (!s2.buf || s2.buf == buf))
 	return *this; // no change
     else if (!s2.buf)
     {
+	// We have a string, and we're about to free() it.
+	if (str && buf && buf->links == 1)
+	{
+	    // Set buf->size, if we don't already know it.
+	    if (buf->size == 0)
+		buf->size = strlen(str);
+
+	    if (str < s2.str && s2.str <= (str + buf->size))
+	    {
+		// If the two strings overlap, we'll just need to
+		// shift s2.str over to here.
+		memmove(buf->data, s2.str, buf->size);
+		return *this;
+	    }
+	}
 	// assigning from a non-copied string - copy data if needed.
 	unlink();
 	link(&nullbuf, s2.str);

@@ -52,6 +52,22 @@ static SLPBoolean slpcb(SLPHandle hslp, const char *srvurl,
     return SLP_TRUE;
 }
 
+static SLPBoolean slpacb(SLPHandle hslp, const char* pcAttrList, 
+			 SLPError errcode, void *cookie)
+{
+    if (errcode == SLP_OK)
+    {
+    	WvString attrval = *(WvString *)cookie;
+    	if (pcAttrList)
+    	{
+    	    attrval = pcAttrList;
+    	    printf("Found: %s\n", attrval.cstr());
+    	}
+    	return SLP_TRUE;
+    }
+    return SLP_FALSE;
+}
+
 bool slp_get_servs(WvStringParm service, WvStringList &servlist)
 {
     SLPError slperr; 
@@ -59,7 +75,7 @@ bool slp_get_servs(WvStringParm service, WvStringList &servlist)
 
     servlist.zap();
     
-    slperr = SLPOpen("en",SLP_FALSE, &hslp); 
+    slperr = SLPOpen("en", SLP_FALSE, &hslp); 
     if(slperr != SLP_OK) 
     { 
         printf("Error opening slp handle\n");
@@ -73,6 +89,44 @@ bool slp_get_servs(WvStringParm service, WvStringList &servlist)
 	printf("You may have an incomplete list!");
     }
     
+    SLPClose(hslp);
+    printf("Ok - got %d servers, returning...\n", servlist.count());
+    return true;
+}
+
+bool slp_get_attrs(WvStringParm service, WvStringParm attribute, 
+		   WvStringList &servlist)
+{
+    SLPError slperr;
+    SLPHandle hslp;
+
+    servlist.zap();
+
+    slperr = SLPOpen("en", SLP_FALSE, &hslp); 
+    if(slperr != SLP_OK) 
+    { 
+        printf("Error opening slp handle\n");
+        return false; 
+    }
+    
+    WvStringList possibleservers;
+    slperr = slp_get_servs(service, possibleservers);
+    
+    WvStringList::Iter i(possibleservers);
+    for (i.rewind(); i.next(); )
+    {
+	WvString attrval;
+	slperr = SLPFindAttrs(hslp, WvString("service:%s://%s", service, *i), 
+			      NULL, attribute, slpacb, &attrval);
+    	if (slperr == SLP_OK)
+	{
+	    WvString value = strrchr(attrval.edit(), '=');
+	    servlist.append(new WvString("%s,%s", *i, value), true);
+	}
+	else
+	    continue;
+    }
+
     SLPClose(hslp);
     printf("Ok - got %d servers, returning...\n", servlist.count());
     return true;
@@ -130,6 +184,12 @@ void WvSlp::add_service(WvStringParm name, WvStringParm hostname, WvStringParm p
 #else
 bool slp_get_servs(WvStringParm service, WvStringList &servlist)
 { 
+    return true;
+}
+
+bool slp_get_attrs(WvStringParm service, WvStringParm attribute, 
+		   WvStringList &servlist)
+{
     return true;
 }
 

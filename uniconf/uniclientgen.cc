@@ -123,7 +123,8 @@ bool UniClientGen::isok()
 
 bool UniClientGen::refresh()
 {
-    // FIXME: This should make sure everything in the queue has been flushed
+    // make sure everything in the queue has been flushed
+    get("");
     return true;
 }
 

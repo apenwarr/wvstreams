@@ -24,6 +24,12 @@ typedef void* SLPHandle;
 bool slp_get_servs(WvStringParm service, WvStringList &list);
 
 /**
+ * Get a list of servers that provide the requested service
+ * and the requested attribute
+ */
+bool slp_get_attrs(WvStringParm service, WvStringParm attribute, WvStringList &servlist);
+
+/**
  * Advertise yourself as an SLP Service
  */
 class WvSlp 
