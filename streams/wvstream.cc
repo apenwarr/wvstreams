@@ -46,6 +46,7 @@ WvStream::WvStream()
     force.writable = force.isexception = false;
     read_requires_writable = write_requires_readable = NULL;
     running_callback = false;
+    want_nowrite = false;
     queue_min = 0;
     autoclose_time = 0;
     alarm_time.tv_sec = alarm_time.tv_usec = 0;
@@ -367,7 +368,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
 size_t WvStream::write(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count || getwfd() < 0) return 0;
+    if (!isok() || !buf || !count) return 0;
     
     size_t wrote = 0;
     if (!outbuf_delayed_flush && !outbuf.used())

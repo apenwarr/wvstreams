@@ -86,7 +86,7 @@ size_t WvFDStream::uread(void *buf, size_t count)
 
 size_t WvFDStream::uwrite(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count || wfd < 0) return 0;
+    if (!isok() || !buf || !count) return 0;
     
     int out = ::write(wfd, buf, count);
     
@@ -99,13 +99,13 @@ size_t WvFDStream::uwrite(const void *buf, size_t count)
 	return 0;
     }
 
-    if (!outbuf.used() && want_nowrite)
+    if (!outbuf.used() && want_nowrite && wfd < 0)
     {
         // copied from nowrite()
         if (rfd != wfd)
             ::close(wfd);
         else
-            ::shutdown(wfd, SHUT_WR); // might be a socket
+            ::shutdown(rfd, SHUT_WR); // might be a socket
 
         want_nowrite = false;
         wfd = -1;
@@ -135,7 +135,7 @@ void WvFDStream::nowrite()
         if (rfd != wfd)
             ::close(wfd);
         else
-            ::shutdown(wfd, SHUT_WR); // might be a socket
+            ::shutdown(rfd, SHUT_WR); // might be a socket
 
         want_nowrite = false;
         wfd = -1;
