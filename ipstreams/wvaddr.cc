@@ -6,6 +6,7 @@
  * classes that can store themselves efficiently as well as create a
  * printable string version of themselves.
  */
+#include <netdb.h>
 #include "wvaddr.h"
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -655,14 +656,21 @@ WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port)
 // If no port is specified (after a ':' or a space or a tab) it defaults to 0.
 void WvIPPortAddr::string_init(const char string[]) 
 {
+    struct servent* serv;
+
     const char *cptr = strchr(string, ':');
     if (!cptr)
 	cptr = strchr(string, ' ');
     if (!cptr)
 	cptr = strchr(string, '\t');
-    
-    port = cptr ? atoi(cptr+1) : 0;
-    
+
+    if (cptr) {
+        serv = getservbyname(cptr+1, NULL);
+        port = serv ? ntohs(serv->s_port) : atoi(cptr+1);
+    } else {
+        port = 0;
+    }
+
     addrtype = wvipportaddr;
 }
 
