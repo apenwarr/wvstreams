@@ -9,7 +9,7 @@
 static void stream_bounce_to_list(WvStream &s, void *userdata)
 {
     WvStreamList &l = *(WvStreamList *)userdata;
-    WvStreamList::Iter i(l);
+    WvStreamList::Iter out(l);
     char *line;
 
     while ((line = s.getline(0)) != NULL)
@@ -20,13 +20,17 @@ static void stream_bounce_to_list(WvStream &s, void *userdata)
 	    continue;
 	}
 	
-	for (i.rewind(); i.next(); )
+	for (out.rewind(); out.next(); )
 	{
-	    WvStream &out(i);
-	    if (&out != &s && out.select(0, false, true))
-		out.print("%s> %s\n", 
-			   s.src() ? (WvString)*s.src() : WvString("stdin"),
-			   line);
+	    if (&out() != &s && out().select(0, false, true))
+	    {
+		out().print("%s> %s\n", 
+			    s.src() ? (WvString)*s.src() : WvString("stdin"),
+			    line);
+		if (s.src())
+		    wvcon->print("Local address of source was %s\n",
+				 ((WvTCPConn *)&s)->localaddr());
+	    }
 	}
     }
 }

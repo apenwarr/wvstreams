@@ -99,6 +99,18 @@ void WvTCPConn::check_resolver()
 }
 
 
+WvIPPortAddr WvTCPConn::localaddr()
+{
+    sockaddr_in sin;
+    size_t sl = sizeof(sin);
+    
+    if (!isok() || getsockname(getfd(), (sockaddr *)&sin, &sl))
+	return WvIPPortAddr();
+    
+    return WvIPPortAddr(&sin);
+}
+
+
 const WvAddr *WvTCPConn::src() const
 {
     return &remaddr;

@@ -40,6 +40,11 @@ public:
     // resolve the hostname, then connect a new socket
     WvTCPConn(const WvString &_hostname, __u16 _port = 0);
     
+    // the local address of this socket (ie. from getsockname())
+    // really useful only for transparent proxies, but always available.
+    // may be 0.0.0.0 if we did not bind explicitly!
+    WvIPPortAddr localaddr();
+    
     // return the remote address (source of all incoming packets),
     // which is a constant for any given TCP connection.
     virtual const WvAddr *src() const;
