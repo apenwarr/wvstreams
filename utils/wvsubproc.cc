@@ -29,59 +29,20 @@ WvSubProc::WvSubProc()
 WvSubProc::~WvSubProc()
 {
     // we need to kill the process here, or else we could leave
-    // Zombies lying around...
+    // zombies lying around...
     stop(100);
 }
 
 
-int WvSubProc::start(const char cmd[], ...)
-{
-    va_list ap;
-    int nargs, count, retval;
-    char *cptr;
-    char **argv;
-    
-    assert(!running);
-    
-    // count the number of arguments
-    va_start(ap, cmd);
-    for (nargs = 0; (cptr = va_arg(ap, char *)) != NULL; nargs++)
-	;
-    va_end(ap);
-    
-    // allocate enough space for all the args, plus NULL.
-    argv = new char* [nargs+1];
-    
-    // copy the arguments into the array
-    va_start(ap, cmd);
-    for (count = 0; count < nargs; count++)
-	argv[count] = va_arg(ap, char *);
-    argv[nargs] = NULL;
-    
-    retval = startv(cmd, argv);
-    
-    delete[] argv;
-    
-    return retval;
-}
-
-
-int WvSubProc::startv(const char cmd[],
-		      const char * const *argv,
-		      const WvSubProcCallback& cb)
+int WvSubProc::_startv(const char cmd[], const char * const *argv)
 {
     int waitfd = -1;
     
     pid = fork(&waitfd);
     //fprintf(stderr, "pid for '%s' is %d\n", cmd, pid);
     
-    if (!pid)
+    if (!pid) // child process
     {
-	// child process
-	 
-	if (cb)
-	    cb();
-
 	// unblock the parent.
 	close(waitfd);
 	
@@ -93,15 +54,87 @@ int WvSubProc::startv(const char cmd[],
 	// process so we know something is up.
 	_exit(242);
     }
-    else if (pid > 0)
-    {
-	// parent process
+    else if (pid > 0) // parent process
 	running = true;
-    }
     else if (pid < 0)
 	return pid;
     
     return 0; // ok
+}
+
+
+void WvSubProc::prepare(const char cmd[], ...)
+{
+    va_list ap;
+    va_start(ap, cmd);
+    preparev(cmd, ap);
+    va_end(ap);
+}
+
+
+void WvSubProc::preparev(const char cmd[], va_list ap)
+{
+    const char *argptr;
+    
+    // remember the command so start_again() will work
+    last_cmd = cmd;
+    last_args.zap();
+    while ((argptr = va_arg(ap, const char *)) != NULL)
+	last_args.append(new WvString(argptr), true);
+}
+
+
+void WvSubProc::preparev(const char cmd[], const char * const *argv)
+{
+    const char * const *argptr;
+    
+    // remember the command so start_again() will work
+    last_cmd = cmd;
+    last_args.zap();
+    for (argptr = argv; argptr && *argptr; argptr++)
+	last_args.append(new WvString(*argptr), true);
+}
+
+
+int WvSubProc::start(const char cmd[], ...)
+{
+    va_list ap;
+    va_start(ap, cmd);
+    preparev(cmd, ap);
+    va_end(ap);
+    
+    return start_again();
+}
+
+
+int WvSubProc::startv(const char cmd[], const char * const *argv)
+{
+    preparev(cmd, argv);
+    return start_again();
+}
+
+
+int WvSubProc::start_again()
+{
+    int retval;
+    const char **argptr;
+    
+    assert(!!last_cmd);
+    
+    // create a new argv array from our stored values
+    const char **argv = new const char*[last_args.count() + 1];
+    WvStringList::Iter i(last_args);
+    for (argptr = argv, i.rewind(); i.next(); argptr++)
+	*argptr = *i;
+    *argptr = NULL;
+    
+    // run the program
+    retval = _startv(last_cmd, argv);
+    
+    // clean up
+    delete[] argv;
+    
+    return retval;
 }
 
 
@@ -140,31 +173,38 @@ int WvSubProc::fork(int *waitfd)
 
 void WvSubProc::kill(int sig)
 {
-    assert(!running || pid > 1);
+    assert(!running || pid > 0 || !old_pids.isempty());
     
-    if (running)
+    if (pid > 0)
     {
 	// if the process group has disappeared, kill the main process
-	// instead
+	// instead.
 	if (::kill(-pid, sig) < 0 && errno == ESRCH)
 	    kill_primary(sig);
+    }
+    
+    // kill leftover subprocesses too.
+    pid_tList::Iter i(old_pids);
+    for (i.rewind(); i.next(); )
+    {
+	pid_t subpid = *i;
+	if (::kill(-subpid, sig) < 0 && errno == ESRCH)
+	    ::kill(subpid, sig);
     }
 }
 
 
 void WvSubProc::kill_primary(int sig)
 {
-    assert(!running || pid > 1);
+    assert(!running || pid > 0 || !old_pids.isempty());
     
-    if (running)
+    if (running && pid > 0)
 	::kill(pid, sig);
 }
 
 
 void WvSubProc::stop(time_t msec_delay, bool kill_children)
 {
-    if (!running) return;
-    
     wait(0);
     
     if (running)
@@ -191,74 +231,76 @@ void WvSubProc::stop(time_t msec_delay, bool kill_children)
 
 void WvSubProc::wait(time_t msec_delay, bool wait_children)
 {
+    bool xrunning;
     int status;
     pid_t dead_pid;
     struct timeval tv1, tv2;
     struct timezone tz;
     
-    assert(!running || pid > 1);
+    assert(!running || pid > 0 || !old_pids.isempty());
+
+    // running might be false if the parent process is dead and you called
+    // wait(x, false) before.  However, if we're now doing wait(x, true),
+    // we want to keep going until the children are dead too.
+    xrunning = (running || (wait_children && !old_pids.isempty()));
     
-    if (!running) return;
+    if (!xrunning) return;
     
     gettimeofday(&tv1, &tz);
     tv2 = tv1;
     
     do
     {
-	// note: there's a small chance that the child process hasn't
-	// run setpgrp() yet, so no processes will be available for
-	// "-pid".  Wait on pid if it fails.
-	// 
-	// also note: waiting on a process group is actually useless
-	// since you can only get notifications for your direct
-	// descendants.  We have to "kill" with a zero signal instead
-	// to try to detect whether they've died or not.
-	dead_pid = waitpid(-pid, &status, 
-			   (msec_delay >= 0) ? WNOHANG : 0);
-	if (dead_pid < 0 && errno == ECHILD)
-	    dead_pid = waitpid(pid, &status, 
-			       (msec_delay >= 0) ? WNOHANG : 0);
-	
-	//fprintf(stderr, "%ld: dead_pid=%d; pid=%d\n",
-	//	msecdiff(tv2, tv1), dead_pid, pid);
-	if (dead_pid < 0)
+	if (pid > 0)
 	{
-	    if (!wait_children)
+	    // waiting on a process group is unfortunately useless
+	    // since you can only get notifications for your direct
+	    // descendants.  We have to "kill" with a zero signal instead
+	    // to try to detect whether they've died or not.
+	    dead_pid = waitpid(pid, &status, (msec_delay >= 0) ? WNOHANG : 0);
+	
+	    //fprintf(stderr, "%ld: dead_pid=%d; pid=%d\n",
+	    //	msecdiff(tv2, tv1), dead_pid, pid);
+	    
+	    if (dead_pid == pid 
+		|| (dead_pid < 0 && (errno == ECHILD || errno == ESRCH)))
 	    {
-		running = false;
+		// the main process is dead - save its status.
+		estatus = status;
+		old_pids.append(new pid_t(pid), true);
 		pid = -1;
 	    }
-	    else
-	    {
-		// all relevant children are dead!
-		if (errno == ECHILD)
-		{
-		    if (::kill(-pid, 0) && errno == ESRCH)
-		    {
-			running = false;
-			pid = -1;
-		    }
-		}
-		else
-		    perror("WvSubProc::wait");
-	    }
-	}
-	else if (dead_pid == pid)
-	{
-	    // it's the main process - save its status.
-	    estatus = status;
+	    else if (dead_pid < 0)
+		perror("WvSubProc::waitpid");
 	}
 	
-	if (running && msec_delay != 0)
+	// no need to do this next part if the primary subproc isn't dead yet
+	if (pid < 0)
 	{
-	    // wait a while, so we're not spinning _too_ fast in a loop
-	    usleep(50*1000);
+	    pid_tList::Iter i(old_pids);
+	    for (i.rewind(); i.next(); )
+	    {
+		pid_t subpid = *i;
+		if (::kill(-subpid, 0) && errno == ESRCH)
+		    i.xunlink();
+	    }
+	    
+	    // if the primary is dead _and_ we either don't care about
+	    // children or all our children are dead, then the subproc
+	    // isn't actually running.
+	    if (!wait_children || old_pids.isempty())
+		xrunning = false;
 	}
+
+	// wait a while, so we're not spinning _too_ fast in a loop
+	if (xrunning && msec_delay != 0)
+	    usleep(50*1000);
 	
 	gettimeofday(&tv2, &tz);
 	
-    } while (running 
-	     && (dead_pid > 0
-		 || (msec_delay 
-		     && (msec_delay < 0 || msecdiff(tv2, tv1) < msec_delay))));
+    } while (xrunning && msec_delay
+	     && (msec_delay < 0 || msecdiff(tv2, tv1) < msec_delay));
+
+    if (!xrunning)
+	running = false;
 }

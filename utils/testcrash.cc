@@ -1,7 +1,12 @@
 #include "wvcrash.h"
 #include <unistd.h>
-#include <malloc.h>
 #include <stdio.h>
+
+#ifndef  ISDARWIN
+# include <malloc.h>
+#else
+# include <stdlib.h>
+#endif
 
 int glob = 5;
 

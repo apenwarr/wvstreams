@@ -9,6 +9,9 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
+#ifdef ISDARWIN
+# define socklen_t int
+#endif
 
 WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
 	: localaddr(), remaddr(_rem)

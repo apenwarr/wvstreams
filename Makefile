@@ -33,9 +33,7 @@ all: include subdirs $(LIBFILES)
 subdirs: include
 	$(subdirs)
 
-$(LIBFILES) : subdirs
-
-libwvcrypto.so : libwvstreams.so
+libwvcrypto.so: libwvstreams.so
 
 include:
 	rm -rf $@
@@ -53,7 +51,7 @@ libwvstreams.so-LIBS=-lcrypto -lz
 libwvstreams.so: ipstreams/ipstreams.libs
 libwvstreams.a: ipstreams/ipstreams.libs
 
-libwvcrypto.so-LIBS=libwvstreams.so -lssl
+libwvcrypto.so-LIBS=libwvstreams.so -lssl -lcrypto
 libwvcrypto.so: urlget/urlget.libs
 libwvcrypto.a: urlget/urlget.libs
 

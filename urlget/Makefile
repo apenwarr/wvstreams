@@ -13,7 +13,7 @@ urlget.a: urlget.libs ../ipstreams/ipstreams.libs
 
 urlget.libs: wvhttppool.o ../crypto/crypto.libs
 
-LIBS=-lssl
+LIBS=-lssl -lcrypto
 #LIBS+=$(EFENCE)
 $(TESTS): wvhttppool.o urlget.a
 

@@ -11,23 +11,22 @@
 
 #include "wvstring.h"
 
-#ifndef ISLINUX
-#ifndef ISBSD
-#define ISLINUX
-#endif
-#endif
-
 #ifdef ISLINUX
 #include <linux/if_ether.h>
 #endif
 
-#ifdef ISBSD
+#if defined(ISBSD) || defined(ISDARWIN)
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if_arp.h>
 #include <netinet/in_systm.h>
 #include <net/ethernet.h>
 #define ETH_ALEN ETHER_ADDR_LEN
+#endif
+
+#if defined(ISBSD) || defined(ISDARWIN)
+#include <arpa/inet.h>
+#include "if_arp.h"
 #endif
 
 #include <netinet/in.h>

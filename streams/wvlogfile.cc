@@ -7,11 +7,10 @@
 
 
 #include <time.h>
-#include <libgen.h>
-
 #include "wvlogfile.h"
 #include "wvtimeutils.h"
 #include "wvdiriter.h"
+#include "strutils.h"
 
 
 //----------------------------------- WvLogFileBase ------------------
@@ -65,7 +64,7 @@ void WvLogFile::start_log()
     strftime(buf, 20, "%Y-%m-%d", tmstamp);
     WvString fullname("%s.%s", filename, buf);
     WvString curname("%s.current", filename);
-    WvString base = basename(WvString(filename).edit());
+    WvString base = getfilename(filename);
 
     WvFile::open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0644);
 
@@ -78,7 +77,7 @@ void WvLogFile::start_log()
     }
 
     // Look for old logs and purge them
-    WvDirIter i(dirname(WvString(filename).edit()), false);
+    WvDirIter i(getdirname(filename), false);
     i.rewind();
     while (i.next() && keep_for)
     {

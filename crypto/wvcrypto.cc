@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <blowfish.h>
 #include <rsa.h>
-#include <md5.h>
+#include <evp.h>
 #include <pem.h>
 
 ////////////////////////// WvCryptoStream
@@ -460,10 +460,71 @@ WvString WvMD5::md5_hash() const
     temp = md5_hash_value;
     for (count = 0; count < 16; count++)
     {
-	char buf[2];
-	snprintf(buf,2,"%02x", *temp++);
+	char buf[3];
+	snprintf(buf,3,"%02x", *temp++);
 	hash_value.append(buf);
     }
     
     return hash_value;
+}
+
+WvMessageDigest::WvMessageDigest(WvStringParm string, DigestMode _mode)
+{
+    mode = _mode;
+    init();
+    if (!!string)
+	EVP_DigestUpdate(mdctx, string, strlen(string));
+}
+
+WvMessageDigest::WvMessageDigest(WvStream *s, DigestMode _mode)
+{
+    mode = _mode;
+    init();
+    // FIXME: !!!
+}
+
+WvMessageDigest::~WvMessageDigest()
+{
+//    EVP_MD_CTX_cleanup(mdctx);
+}
+
+void WvMessageDigest::add(WvStringParm string)
+{
+    EVP_DigestUpdate(mdctx, string, strlen(string));
+}
+
+WvString WvMessageDigest::printable() const
+{
+    int len, i;
+    WvString digest_value("");
+
+//    EVP_DigestFinal_ex(mdctx, raw_digest_value, &len);
+    len = 0;
+
+    for(i = 0; i < len; i++) 
+    {
+	char buf[2];
+	snprintf(buf,2,"%02x", raw_digest_value[i]);
+	digest_value.append(buf);
+    }
+
+    return digest_value;
+}
+
+void WvMessageDigest::init()
+{
+    const EVP_MD *md;
+
+    OpenSSL_add_all_digests();
+//    EVP_MD_CTX_init(mdctx);
+
+    switch(mode)
+    {
+	case MD5:
+	    md = EVP_get_digestbyname("MD5");
+	case SHA1:
+	    md = EVP_get_digestbyname("SHA1");
+    }
+
+//    EVP_DigestInit_ex(mdctx, md, NULL);
 }

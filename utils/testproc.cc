@@ -1,14 +1,20 @@
 #include "wvsubproc.h"
 #include <stdio.h>
+#include <sys/wait.h>
 
 
 int main()
 {
     WvSubProc proc;
-#if 0
+    
+#if 1
     // ls should die by itself.
     fprintf(stderr, "starting ls...\n");
     proc.start("ls", "ls", "-F", "/", NULL);
+    fprintf(stderr, "started (%d/%d)...\n", proc.running, proc.pid);
+    proc.wait(10*1000);
+    fprintf(stderr, "done (%d/%d)...\n", proc.running, proc.estatus);
+    proc.start_again();
     fprintf(stderr, "started (%d/%d)...\n", proc.running, proc.pid);
     proc.wait(10*1000);
     fprintf(stderr, "done (%d/%d)...\n", proc.running, proc.estatus);
@@ -48,7 +54,7 @@ int main()
     proc.stop(2400);
     fprintf(stderr, "stop done (%d/%d)...\n", proc.running, proc.estatus);
     fprintf(stderr, "\n\n");
-#endif
+    
     // a process that backgrounds itself
     fprintf(stderr, "starting bash -c 'sleep 100 &'...\n");
     proc.start("bash", "bash", "-c", "sleep 100 &", NULL);
@@ -59,7 +65,35 @@ int main()
     proc.stop(2400);
     fprintf(stderr, "stop done (%d/%d)...\n", proc.running, proc.estatus);
     fprintf(stderr, "\n\n");
+#endif
     
+    // a fancier process with subprocesses and helpful debug messages
+    fprintf(stderr, "starting ./complex-proc.sh...\n");
+    proc.start("./complex-proc.sh", "./complex-prox.sh", "XYZ", NULL);
+    fprintf(stderr, "started (%d/%d)...\n", proc.running, proc.pid);
+    proc.wait(4000);
+    fprintf(stderr, "wait done (%d/%d/%d)...\n",
+	    proc.running, proc.estatus, proc.old_pids.count());
+    fprintf(stderr, "stopping process...\n");
+    proc.stop(2000, false);
+    fprintf(stderr, "stop done (%d/%d/%d)...\n",
+	    proc.running, proc.estatus, proc.old_pids.count());
+    fprintf(stderr, "start again...\n");
+    proc.start_again();
+    proc.wait(4000);
+    fprintf(stderr, "wait done (%d/%d/%d)...\n",
+	    proc.running, proc.estatus, proc.old_pids.count());
+    fprintf(stderr, "stopping process...\n");
+//    proc.stop(10000, true);
+    fprintf(stderr, "stop done (%d/%d/%d)...\n",
+	    proc.running, proc.estatus, proc.old_pids.count());
+    fprintf(stderr, "\n\n");
+    
+    fprintf(stderr, "Checking for leftover subprocesses...\n");
+    pid_t pid;
+    int status;
+    while ((pid = ::waitpid(-1, &status, 0)) > 0)
+	fprintf(stderr, "LEFTOVER!!  pid=%d, status=%d\n", pid, status);
     
     return 0;
 }
