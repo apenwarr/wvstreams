@@ -317,7 +317,7 @@ WvString get_acl_short_form(WvStringParm filename, bool get_default)
 bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
 			 bool set_default_too)
 {
-    WvLog log("ACL", WvLog::Debug5);
+    WvLog log("ACL", WvLog::Debug3);
     struct stat st;
     if (stat(filename, &st) != 0)
     {
@@ -336,27 +336,31 @@ bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
 
 	if (res == 0)
 	{
-	    log("Access permissions successfully changed.\n");
+	    log("Access permissions successfully changed for %s.\n",
+		filename);
 	    if (set_default_too)
 	    {
 		res = acl_set_file(filename, ACL_TYPE_DEFAULT, acl);
 		if (res == 0)
-		    log("Default permissions successfully changed.\n");
+		    log("Default permissions successfully changed for %s.\n",
+			filename);
 	    }
 	}
 	else
 	{
 	    log(WvLog::Error, 
-		"Can't modify permissions for %s: ACL could not be set.\n",
-		filename);
+		"Can't modify permissions for %s: ACL could not be set (%s).\n",
+		filename, strerror(errno));
 	}
 
 	acl_free(acl);
 	return !res;
     }
     else
-	log(WvLog::Error, "Can't modify permissions for %s: ACL %s invalid.\n",
-	    filename, text_form);
+	log(WvLog::Error, "Can't modify permissions for %s: ACL %s invalid "
+	    "(%s).\n", filename, text_form, strerror(errno));
+#else
+    log(WvLog::Warning, "ACL library not found.\n");
 #endif
 
     return false;
