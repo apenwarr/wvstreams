@@ -13,6 +13,12 @@
 #ifndef __WVTASK_H
 #define __WVTASK_H
 
+#ifdef _WIN32
+
+#include "wvwin32task.h"
+
+#else
+
 #include "wvstring.h"
 #include "wvlinklist.h"
 #include "setjmp.h"
@@ -92,5 +98,5 @@ public:
 };
 
 
-
+#endif // ifdef _WIN32
 #endif // __WVTASK_H

@@ -7,7 +7,7 @@
 #include "uniclientconn.h"
 #include "wvaddr.h"
 #include "wvtclstring.h"
-
+#include "strutils.h"
 
 /***** UniClientConn *****/
 

@@ -32,10 +32,10 @@ class WvMonikerRegistry : public IObject
     unsigned refcount;
     
 public:
-    UUID reg_iid;
+    XUUID reg_iid;
     RegistrationDict dict;
     
-    WvMonikerRegistry(const UUID &iid);
+    WvMonikerRegistry(const XUUID &iid);
     virtual ~WvMonikerRegistry();
     
     virtual void add(WvStringParm id, WvMonikerCreateFunc *func);
@@ -45,10 +45,10 @@ public:
 			    IObject *obj = NULL, void *userdata = NULL);
     
     // find a registry for objects of the given interface UUID
-    static WvMonikerRegistry *find_reg(const UUID &iid);
+    static WvMonikerRegistry *find_reg(const XUUID &iid);
     
     // IObject stuff
-    virtual IObject *getInterface(const UUID &uuid);
+    virtual IObject *getInterface(const XUUID &uuid);
     
     // we can't use GenericComponent, since we have to unregister ourselves
     // on the second-last release().

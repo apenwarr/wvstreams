@@ -8,13 +8,22 @@
 #include "wvloopback.h"
 #include "wvaddr.h"
 #include "wvtcp.h"
-#include "wvfork.h"
 #include "wvautoconf.h"
-#include <netdb.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
+
+#ifdef _WIN32
+#define WVRESOLVER_SKIP_FORK
+typedef int pid_t;
+#define kill(a,b)
+#define waitpid(a,b,c) (0)
+#define alarm(a)
+#else
+#include "wvfork.h"
+#include <netdb.h>
+#include <sys/wait.h>
+#endif
 
 class WvResolverHost
 {

@@ -8,16 +8,19 @@
 #include "uniclientgen.h"
 #include "wvtclstring.h"
 #include "wvtcp.h"
-#include "wvunixsocket.h"
 #include "wvaddr.h"
 #include "wvresolver.h"
 #include "wvmoniker.h"
 #include "wvsslstream.h"
 
+#ifndef _WIN32
+#include "wvunixsocket.h"
 static UniConfGen *unixcreator(WvStringParm s, IObject *, void *)
 {
     return new UniClientGen(new WvUnixConn(s));
 }
+static WvMoniker<UniConfGen> unixreg("unix", unixcreator);
+#endif
 
 static UniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
 {
@@ -53,7 +56,6 @@ static UniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
     return new UniClientGen(stream);
 }
 
-static WvMoniker<UniConfGen> unixreg("unix", unixcreator);
 static WvMoniker<UniConfGen> tcpreg("tcp", tcpcreator);
 static WvMoniker<UniConfGen> sslreg("ssl", sslcreator);
 static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);

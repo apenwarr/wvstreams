@@ -10,10 +10,18 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <netdb.h>
 #include <time.h>
-#include <unistd.h>
+
+#ifndef _WIN32
 #include <errno.h>
+#include <netdb.h>
+#include <unistd.h>
+#else
+#undef errno
+#define errno GetLastError()
+#define strcasecmp _stricmp
+#include <winsock2.h>
+#endif
 
 char *terminate_string(char *string, char c)
 /**********************************************/
@@ -113,7 +121,7 @@ void replace_char(void *_string, char c1, char c2, int length)
     	    *(string+i) = c2;
 }
 
-
+#ifndef _WIN32
 char *strlwr(char *string)
 {
     char *p = string;
@@ -138,7 +146,7 @@ char *strupr(char *string)
 
     return string;
 }
-
+#endif
 
 // true if all the characters in "string" are isalnum().
 bool is_word(const char *p)
@@ -486,7 +494,11 @@ WvString hostname()
             delete [] name;         
             return hostname;
         }
+#ifdef _WIN32
+	assert(errno == WSAEFAULT);
+#else
         assert(errno == EINVAL);
+#endif
     }
 }
 

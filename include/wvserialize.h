@@ -10,7 +10,9 @@
 
 #include "wvbuf.h"
 #include <stdint.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 
 /**
  * Encode an object as an array of bytes and put it into a WvBuf.  This

@@ -13,27 +13,43 @@
 #include "wvtimeutils.h"
 #include <time.h>
 #include <sys/types.h>
-#include <errno.h>
 #include <assert.h>
+
+#ifdef _WIN32
+#define ENOBUFS WSAENOBUFS
+#undef errno
+#define errno GetLastError()
+class RunWinSockInitialize;
+extern RunWinSockInitialize __runinitialize;
+#else
+#include <errno.h>
+#endif
 
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #if 0
 # define TRACE(x, y...) fprintf(stderr, x, ## y); fflush(stderr);
 #else
+#ifndef _MSC_VER
 # define TRACE(x, y...)
+#else
+# define TRACE
+#endif
 #endif
 
 WvTaskMan *WvStream::taskman;
 WvStream *WvStream::globalstream = NULL;
 
-UUID_MAP_BEGIN(IWvStream)
-  UUID_MAP_ENTRY(IObject)
-  UUID_MAP_ENTRY(IWvStream)
-  UUID_MAP_END
+XUUID_MAP_BEGIN(IWvStream)
+  XUUID_MAP_ENTRY(IObject)
+  XUUID_MAP_ENTRY(IWvStream)
+  XUUID_MAP_END
 
 WvStream::WvStream()
 {
+#ifdef _WIN32
+    void *addy = &__runinitialize; // this ensures WSAStartup() is run
+#endif
     wvstream_execute_called = false;
     userdata = closecb_data = NULL;
     errnum = 0;
@@ -376,7 +392,7 @@ size_t WvStream::write(const void *buf, size_t count)
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
-        (const unsigned char*)buf += wrote;
+        buf = (const unsigned char*)buf + wrote;
     }
     if (max_outbuf_size != 0)
     {
@@ -671,9 +687,16 @@ int WvStream::_do_select(SelectInfo &si)
     //   EBADF is kind of gross and might imply that something is wrong,
     //      but it happens sometimes...
     if (sel < 0 
-      && errno != EAGAIN && errno != EINTR && errno != ENOBUFS
-      && errno != EBADF)
+      && errno != EAGAIN && errno != EINTR 
+      && errno != EBADF
+      && errno != ENOBUFS
+#ifdef _WIN32
+      && errno != WSAEINVAL // the sets might be empty
+#endif
+      )
+    {
         seterr(errno);
+    }
     return sel;
 }
 

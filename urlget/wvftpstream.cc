@@ -436,7 +436,7 @@ WvString WvFtpStream::parse_for_links(char *line)
         int res = ftpparse(&fp, line, strlen(line));
         if (res)
         {
-            char linkname[fp.namelen+1];
+            char *linkname = (char *) alloca(fp.namelen+1);
             int i;
             for (i = 0; i < fp.namelen; i++)
             {

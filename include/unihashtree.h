@@ -51,11 +51,12 @@ protected:
         const UniHashTreeBaseComparator &comparator, void *userdata);
 
 public:
-    friend class Iter : public Container::Iter
+    class Iter : public Container::Iter
     {
     public:
         Iter(UniHashTreeBase &b) : Container::Iter(*b.xchildren) { }
     };
+    friend class Iter;
 
     /** Returns the key field. */
     const UniConfKey &key() const

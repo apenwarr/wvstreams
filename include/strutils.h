@@ -9,10 +9,16 @@
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
+#include <sys/types.h> // off_t
 #include <time.h>
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvhex.h"
+
+#ifdef _WIN32
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
 
 /**
  * Add character c to the end of a string after removing 
@@ -51,6 +57,7 @@ char *non_breaking(char *string);
  */
 void replace_char(void *string, char c1, char c2, int length);
 
+#ifndef _WIN32
 /**
  * In-place modify a character string so that all contained letters are 
  * in lower case. Returns 'string'.
@@ -62,6 +69,8 @@ char *strlwr(char *string);
  * in upper case. Returns 'string'.
  */
 char *strupr(char *string);
+
+#endif
 
 /** Returns true if all characters in 'string' are isalnum() (alphanumeric). */
 bool is_word(const char *string);

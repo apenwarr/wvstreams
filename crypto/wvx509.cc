@@ -252,7 +252,7 @@ void WvX509Mgr::create_selfsigned()
     // more than one cert with the same name has the same serial number, so
     // let's be careful.
     srand(time(NULL));
-    int	serial = random();
+    int	serial = rand();
 
     WvString serverfqdn;
 

@@ -11,10 +11,17 @@
 #include "wverror.h"
 #include "wvbuf.h"
 #include "wvcallback.h"
-#include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
-#include <sys/time.h>
 #include <errno.h>
 #include <limits.h>
+
+#ifdef _WIN32
+#include <time.h>
+#include <Winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
+#include <sys/time.h>
+#endif
 
 class WvAddr;
 class WvTask;
@@ -112,10 +119,10 @@ public:
     virtual bool should_flush() = 0;
     
     // IObject
-    static const UUID IID;
+    static const XUUID XIID;
 };
 
-DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
+DEFINE_XIID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
 
 /**

@@ -11,6 +11,11 @@
 #include "strutils.h"
 #include <ctype.h>
 
+#ifdef _WIN32
+#include <io.h>
+#define snprintf _snprintf
+#endif
+
 WvLogRcvBaseList WvLog::receivers;
 int WvLog::num_receivers = 0, WvLog::num_logs = 0;
 WvLogRcvBase *WvLog::default_receiver = NULL;

@@ -217,7 +217,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     return WvString::null;
 
 returnstring:
-    char str[len + 1];
+    char *str = (char*) alloca(len + 1);
     memcpy(str, sptr, len);
     str[len] = '\0';
     buf.unget(origsize - len);

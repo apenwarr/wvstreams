@@ -47,15 +47,15 @@ int main(int argc, char **argv)
 
 	WvTCPListener sock(WvIPPortAddr(argc==2 ? argv[1] : "0.0.0.0:0"));
 	
-	wvin->setcallback(stream_bounce_to_list, &l);
+	wvcon->setcallback(stream_bounce_to_list, &l);
 	sock.auto_accept(&l, stream_bounce_to_list, &l);
 	
 	log("Listening on port %s\n", *sock.src());
 	
 	l.append(&sock, false);
-	l.append(wvin, false);
+	l.append(wvcon, false);
 	
-	while (sock.isok() && wvin->isok())
+	while (sock.isok() && wvcon->isok())
 	{
 	    if (l.select(-1))
 		l.callback();
@@ -63,6 +63,8 @@ int main(int argc, char **argv)
 	
 	if (!sock.isok() && sock.geterr())
 	    err("%s\n", strerror(sock.geterr()));
+	if (!wvcon->isok() && wvcon->geterr())
+	    err("%s\n", strerror(wvcon->geterr()));
     }
     // all variables should now be freed
 	

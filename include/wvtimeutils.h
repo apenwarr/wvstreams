@@ -8,7 +8,13 @@
 #ifndef __WVTIMEUTILS_H
 #define __WVTIMEUTILS_H
 
+
+#ifdef _WIN32
+#include "winsock2.h"
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 
 typedef struct timeval WvTime;
 

@@ -5,6 +5,7 @@
  * A UniConf key management abstraction.
  */
 #include "uniconfgen.h"
+#include "strutils.h"
 
 /***** UniConfGen *****/
 

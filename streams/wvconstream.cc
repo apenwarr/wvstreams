@@ -46,10 +46,26 @@ bool _WvConStream::isok() const
 
 
 // console streams
+#ifdef _WIN32
+
+#include "../Win32WvStreams/streams/streams.h"
+SocketFromFDMaker _zero(0, fd2socket_fwd);
+SocketFromFDMaker _one(1, socket2fd_fwd);
+SocketFromFDMaker _two(2, socket2fd_fwd);
+
+static WvFDStream _wvcon(_zero.GetSocket(), _one.GetSocket());
+static WvFDStream _wvin(_zero.GetSocket(), -1);
+static WvFDStream _wvout(-1, _one.GetSocket());
+static WvFDStream _wverr(-1, _two.GetSocket());
+
+#else // _WIN32
+
 static _WvConStream _wvcon(0, 1);
 static _WvConStream _wvin(0, -1);
 static _WvConStream _wvout(-1, 1);
 static _WvConStream _wverr(-1, 2);
+
+#endif // !_WIN32
 
 WvStream *wvcon = &_wvcon;
 WvStream *wvin = &_wvin;

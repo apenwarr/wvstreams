@@ -13,7 +13,7 @@
 int main(int argc, char **argv)
 {
     WvLog err("tcptest", WvLog::Error);
-    WvTCPConn sock(WvString(argc==2 ? argv[1] : "0.0.0.0:25"));
+    WvTCPConn sock(WvString(argc==2 ? argv[1] : "127.0.0.1:25"));
     
     wvcon->autoforward(sock);
     sock.autoforward(*wvcon);
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     
     if (!wvcon->isok() && wvcon->geterr())
 	err("stdin: %s\n", wvcon->errstr());
-    else if (!sock.isok() && sock.geterr())
+    if (!sock.isok() && sock.geterr())
 	err("socket: %s\n", sock.errstr());
     
     return 0;

@@ -6,6 +6,13 @@
  */
 #include "wvfile.h"
 
+#ifdef _WIN32
+#include <io.h>
+#define O_NONBLOCK 0
+#define O_LARGEFILE 0
+#define fcntl(a,b,c)
+#endif
+
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
     errnum = 0;
