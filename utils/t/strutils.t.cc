@@ -763,8 +763,14 @@ WVTEST_MAIN("cstr_escape_unescape")
    
     for (i=0; i<256; ++i)
         orig_data[i] = (char)i;
-    
+   
+    // Regular escapes
     WVPASS(cstr_unescape(cstr_escape(orig_data, max_size), data, max_size, size)
+            && size == max_size && memcmp(orig_data, data, size) == 0);
+   
+    // With TCL escapes
+    WVPASS(cstr_unescape(cstr_escape(orig_data, max_size, CSTR_TCLSTR_ESCAPES),
+                data, max_size, size, CSTR_TCLSTR_ESCAPES)
             && size == max_size && memcmp(orig_data, data, size) == 0);
 }
 

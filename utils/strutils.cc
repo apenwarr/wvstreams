@@ -758,6 +758,13 @@ WvString substr(WvString line, unsigned int pos, unsigned int len)
     return ret;
 }
 
+const CStrExtraEscape CSTR_TCLSTR_ESCAPES[3] =
+{
+    { '{', "\\<" },
+    { '}', "\\>" },
+    { 0, NULL }
+};
+
 static inline const char *cstr_escape_char(char ch)
 {
     static const char *xlat[256] =
@@ -881,7 +888,8 @@ static inline bool cstr_unescape_char(const char *&cstr, char &ch)
     }
 }
 
-WvString cstr_escape(const void *data, size_t size)
+WvString cstr_escape(const void *data, size_t size,
+        const CStrExtraEscape extra_escapes[])
 {
     if (!data) return WvString::null;
 
@@ -894,7 +902,23 @@ WvString cstr_escape(const void *data, size_t size)
     *cstr++ = '\"';
     while (size-- > 0)
     {
-    	const char *esc = cstr_escape_char(*cdata++);
+    	const char *esc = NULL;
+        if (extra_escapes)
+        {
+            const CStrExtraEscape *extra = &extra_escapes[0];
+            while (extra->ch && extra->esc)
+            {
+                if (*cdata == extra->ch)
+                {
+                    esc = extra->esc;
+                    break;
+                }
+                
+                ++extra;
+            }
+        }
+        if (!esc) esc = cstr_escape_char(*cdata);
+        ++cdata;
         while (*esc) *cstr++ = *esc++;
     }
     *cstr++ = '\"';
@@ -903,7 +927,8 @@ WvString cstr_escape(const void *data, size_t size)
     return result;
 }
 
-bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size)
+bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size,
+        const CStrExtraEscape extra_escapes[])
 {
     const char *q = cstr;
     char *cdata = (char *)data;
@@ -919,8 +944,26 @@ bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size)
         if (*q++ != '\"') goto misformatted;
         while (*q && *q != '\"')
         {
+            bool found = false;
             char unesc;
-            if (!cstr_unescape_char(q, unesc)) goto misformatted;
+            if (extra_escapes)
+            {
+                const CStrExtraEscape *extra = &extra_escapes[0];
+                while (extra->ch && extra->esc)
+                {
+                    size_t len = strlen(extra->esc);
+                    if (strncmp(extra->esc, q, len) == 0)
+                    {
+                        unesc = extra->ch;
+                        q += len;
+                        found = true;
+                        break;
+                    }
+                    
+                    ++extra;
+                }
+            }
+            if (!found && !cstr_unescape_char(q, unesc)) goto misformatted;
             if (size++ < max_size && cdata) *cdata++ = unesc;
         }
         if (*q++ != '\"') goto misformatted;

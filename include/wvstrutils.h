@@ -407,6 +407,13 @@ bool wvstring_to_num(WvStringParm str, T &n)
  * lists of strings.
  */
 
+struct CStrExtraEscape
+{
+    char ch;
+    const char *esc;
+};
+extern const CStrExtraEscape CSTR_TCLSTR_ESCAPES[];
+
 // Converts data into a C-style string constant.
 //
 // If data is NULL, returns WvString::null; otherwise, returns an allocated
@@ -418,8 +425,14 @@ bool wvstring_to_num(WvStringParm str, T &n)
 // The usual C escapes are performed, such as \n, \r, \", \\ and \0.
 //
 // All other characters are escaped in uppercase hex form, eg. \x9E
-// 
-WvString cstr_escape(const void *data, size_t size);
+//
+// The extra_escapes parameter allows for additional characters beyond
+// the usual ones escaped in C; setting it to CSTR_TCLSTR_ESCAPES will
+// escape { and } as \< and \>, which allows the resulting strings to be
+// TCL-string coded without ridiculous double-escaping.
+//
+WvString cstr_escape(const void *data, size_t size,
+        const CStrExtraEscape extra_escapes[] = NULL);
 
 // Converts a C-style string constant into data.
 // 
@@ -444,6 +457,10 @@ WvString cstr_escape(const void *data, size_t size);
 // to a valid data block of length zero; however, a null string still returns
 // an error.
 //
-bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size);
+// The extra_escapes parameter must match that used in the call to 
+// cstr_escape used to produce the escaped strings.
+//
+bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size,
+        const CStrExtraEscape extra_escapes[] = NULL);
 
 #endif // __WVSTRUTILS_H
