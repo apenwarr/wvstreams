@@ -337,7 +337,7 @@ class WvArgsArgCallbackOption : public WvArgsArgOption
     	    
     	WvArgs::ArgCallback cb;
     	void *ud;
-    	    	
+     	    	
     public:
     	    
      	WvArgsArgCallbackOption(char _short_option,
@@ -358,7 +358,8 @@ class WvArgsArgCallbackOption : public WvArgsArgOption
 
 typedef WvVector<WvArgsOption> WvArgsOptionVector;
 
-WvArgs::WvArgs()
+WvArgs::WvArgs() :
+    num_required_args(0)
 {
     options = new WvArgsOptionVector();
 }
@@ -367,11 +368,14 @@ WvArgs::~WvArgs()
 {
     delete options;
 }    	
-    	    	    	
-bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
+
+static bool create_popt_context(int argc, char **argv, 
+				WvVector<WvArgsOption> *options, 
+				WvStringParm args_desc,
+				poptContext &popt_context, 
+				struct poptOption **popt_options)
 {
-    struct poptOption *popt_options =
-    	    new struct poptOption[options->count() + 2];
+    (*popt_options) = new struct poptOption[options->count() + 2];
     if (!popt_options)
     	return false;
     
@@ -382,20 +386,39 @@ bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
     	if (!option) break;
    
         if (option->short_option || option->long_option)
-            option->fill_popt_table(&popt_options[j], j+1);
+            option->fill_popt_table(&(*popt_options)[j], j+1);
     }
     
     const struct poptOption extras[2] = {
     	POPT_AUTOHELP
     	POPT_TABLEEND
     };
-    memcpy(&popt_options[j++], &extras[0], sizeof(struct poptOption));
-    memcpy(&popt_options[j++], &extras[1], sizeof(struct poptOption));
-    
+
+    memcpy(&(*popt_options)[j++], &extras[0], sizeof(struct poptOption));
+    memcpy(&(*popt_options)[j++], &extras[1], sizeof(struct poptOption));
+        
+    popt_context = poptGetContext(argv[0], argc, (const char **)argv, 
+				  (*popt_options), 0);
+
+    WvString usage_desc;
+    if (options->count() > 0)
+	usage_desc = "[OPTION...] ";
+    usage_desc.append(args_desc);
+
+    poptSetOtherOptionHelp(popt_context, usage_desc.cstr());
+
+    return true;
+}
+    	    	    	
+bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
+{
+    poptContext popt_context;
+    struct poptOption *popt_options;
+    if (!create_popt_context(argc, argv, options, args_desc, popt_context, &popt_options))
+	return false;
+
     bool result = true;
-    
-    poptContext popt_context = poptGetContext("WvStreams",
-    	    argc, (const char **)argv, popt_options, 0);
+
     for (;;)
     {
     	int opt = poptGetNextOpt(popt_context);
@@ -431,12 +454,44 @@ bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
     	    if (!leftover_arg) break;
     	    remaining_args->append(leftover_arg);
     	}
+
+	if (remaining_args->count() < num_required_args)
+	{
+	    result = false;
+
+    	    poptPrintUsage(popt_context, stdout, 0);	    
+	}
     }
+
     poptFreeContext(popt_context);
-    
     deletev popt_options;
     
     return result;
+}
+
+void WvArgs::print_usage(int argc, char **argv)
+{
+    poptContext popt_context;
+    struct poptOption *popt_options;
+
+    create_popt_context(argc, argv, options, args_desc, popt_context, &popt_options);
+
+    poptPrintUsage(popt_context, stdout, 0);
+
+    poptFreeContext(popt_context);
+    deletev popt_options;
+}
+
+void WvArgs::print_help(int argc, char **argv)
+{
+    poptContext popt_context;
+    struct poptOption *popt_options;
+    create_popt_context(argc, argv, options, args_desc, popt_context, &popt_options);
+
+    poptPrintHelp(popt_context, stdout, 0);
+
+    poptFreeContext(popt_context);
+    deletev popt_options;
 }
 
 void WvArgs::add_set_bool_option(char short_option, const char *long_option,
@@ -573,6 +628,22 @@ void WvArgs::remove_option(const char *long_option)
         if (i->long_option && strcmp(i->long_option, long_option) == 0)
             i->long_option = NULL;
     }
+}
+
+void WvArgs::add_required_arg(WvStringParm desc)
+{
+    num_required_args++;
+    add_optional_arg(desc); 
+}
+
+void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
+{
+    // an optional arg is a required arg without the requirement :-)
+    if (args_desc.len() > 0)
+	args_desc.append(" ");
+    args_desc.append("[%s]", desc);
+    if (multiple)
+	args_desc.append("...");
 }
 
 #endif // WITH_POPT
