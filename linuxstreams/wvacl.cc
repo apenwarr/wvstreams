@@ -17,9 +17,20 @@
 #include <acl/libacl.h>
 #endif
 
+int wvsimpleaclentry_sort(const WvSimpleAclEntry *a, const WvSimpleAclEntry *b)
+{
+    if (a->type == b->type)
+	return strcasecmp(a->name, b->name);
+
+    return a->type - b->type;
+}
+
+
 void get_simple_acl_permissions(WvStringParm filename,
 				WvSimpleAclEntryList &acl_entries)
 {
+    WvLog log("ACL", WvLog::Info);
+
     struct stat st;
     if (stat(filename, &st) != 0)
 	return;
@@ -46,6 +57,7 @@ void get_simple_acl_permissions(WvStringParm filename,
 	    WvString this_permission(this_entry.popstr());
 
 	    WvSimpleAclEntry *simple_entry = new WvSimpleAclEntry;
+	    simple_entry->owner = false;
 	    if (!!this_qualifier)
 		simple_entry->name = this_qualifier;
 
@@ -54,26 +66,47 @@ void get_simple_acl_permissions(WvStringParm filename,
 	    case 'u':
 		simple_entry->type = WvSimpleAclEntry::AclUser;
 		if (!this_qualifier && (pw = getpwuid(st.st_uid))) // owner
+		{
+		    simple_entry->owner = true;
        		    simple_entry->name = pw->pw_name;
+		}
 		break;
 	    case 'g':
 		simple_entry->type = WvSimpleAclEntry::AclGroup;
 		if (!this_qualifier && (gr = getgrgid(st.st_gid))) // owner
+		{
+		    simple_entry->owner = true;
 		    simple_entry->name = gr->gr_name;
+		}
 		break;
 	    case 'o':
 		simple_entry->type = WvSimpleAclEntry::AclOther;
 		break;
 	    default:   // don't care about mask
+		delete simple_entry;
+		simple_entry = NULL;
 		break;
 	    }
 
+	    if (!simple_entry)
+		continue;
+
 	    if (strchr(this_permission, 'r'))
 		simple_entry->read = true;
+	    else
+		simple_entry->read = false;
 	    if (strchr(this_permission, 'w'))
 		simple_entry->write = true;
+	    else
+		simple_entry->write = false;
 	    if (strchr(this_permission, 'x'))
 		simple_entry->execute = true;
+	    else
+		simple_entry->execute = false;
+
+	    log("name %s type %s read %s write %s execute %s\n",
+		simple_entry->name, simple_entry->type, simple_entry->read,
+		simple_entry->write, simple_entry->execute);
 
 	    acl_entries.append(simple_entry, true);
 	}
@@ -154,7 +187,7 @@ WvString get_acl_short_form(WvStringParm filename)
 
     // a) the file doesn't exist or
     // b) ACL libraries are missing or
-    // b) ACL isn't in the kernel.
+    // c) ACL isn't in the kernel.
     // Return empty string if a) or default if b) or c).
 
     struct stat st;
@@ -201,8 +234,8 @@ bool set_acl_permissions(WvStringParm filename, WvStringParm text_form)
 
 
 bool set_acl_permission(WvStringParm filename, WvStringParm type,
-                        WvStringParm qualifier,
-			bool read, bool write, bool execute)
+                        WvString qualifier,
+			bool read, bool write, bool execute, bool kill)
 {
     WvLog log("ACL", WvLog::Debug);
 #ifdef WITH_ACL
@@ -215,13 +248,28 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
     if (execute)
 	rwx.append("x");
 
-    log("Trying to set permission %s, type %s, qualifier %s, on file %s.\n",
-	rwx, type, qualifier, filename);
-
     acl_t initacl = acl_get_file(filename, ACL_TYPE_ACCESS);
 
     if (initacl)
     {
+	struct stat st;
+	if (stat(filename, &st) != 0)
+	{
+	    // Probably not necessary...
+	    log(WvLog::Error, "Found ACL but not stat() for %s.\n", filename);
+	    return false;
+	}
+
+	struct passwd *pw = getpwuid(st.st_uid);
+	struct group *gr = getgrgid(st.st_gid);
+	if ((type.cstr()[0] == 'u' && qualifier == WvString(pw->pw_name)) || 
+	    (type.cstr()[0] == 'g' && qualifier == WvString(gr->gr_name)))
+	{
+	    log("Setting %s::%s rather than %s:%s:%s.\n", type, rwx, type,
+		qualifier, rwx);
+	    qualifier = "";
+	}
+
 	// begin building actual acl, composed of old + new
 	WvString aclString("");
 
@@ -260,7 +308,8 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
 		aclString.append("%s\n", i());
 	}
 	
-	aclString.append("%s:%s:%s\n", type, qualifier, rwx);
+	if (!kill)
+	    aclString.append("%s:%s:%s\n", type, qualifier, rwx);
 	
 	// Add a default mask (max permissions for groups & non-owning users).
 	// This is only required if we set permissions for non-owning users or
@@ -271,9 +320,9 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
 	return set_acl_permissions(filename, aclString);
     }
 
-    log(WvLog::Error,
-	"Can't modify permissions for %s: could not get ACL entry.\n", filename);
 #endif
+
+    // FIXME? Use chmod() to set basic permissions if possible...
 
     return false;
 }

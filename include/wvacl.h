@@ -13,15 +13,19 @@
 /// Abstraction for ACL stuff.
 struct WvSimpleAclEntry
 {
-    enum WvSimpleAclEntryType { AclUser, AclGroup, AclOther } type;
+    enum WvSimpleAclEntryType { AclUser = 0, AclGroup, AclOther } type;
     bool read;
     bool write;
     bool execute;
+    bool owner;  /// true if owning group or user
 
     /// For type user or group, this is the username/groupname; otherwise blank.
     WvString name;
 };
 DeclareWvList(WvSimpleAclEntry);
+
+int wvsimpleaclentry_sort(const WvSimpleAclEntry *a, const WvSimpleAclEntry *b);
+
 
 /// Assemble a default, short-form ACL from 'mode'.
 WvString build_default_acl(mode_t mode);
@@ -38,7 +42,8 @@ bool set_acl_permissions(WvStringParm filename, WvStringParm text_form);
 
 /// Set one ACL entry with individual parameters.
 bool set_acl_permission(WvStringParm filename, WvStringParm type,
-                        WvStringParm qualifier,
-			bool read, bool write, bool execute);
+                        WvString qualifier,
+			bool read, bool write, bool execute,
+			bool kill = false);
 
 #endif // __WVACL_H
