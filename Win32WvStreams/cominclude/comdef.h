@@ -1,7 +1,7 @@
 #ifndef __COMDEF_H
 #define __COMDEF_H
 
-#warning "Using hideously broken fake comdef.h"
+//#warning "Using hideously broken fake comdef.h"
 
 class WvComSmartBase
 {
