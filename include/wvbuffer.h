@@ -163,6 +163,10 @@ public:
      * copy a WvString into the buffer, not including the terminating nul.
      */
     void put(WvStringParm str);
+    void putstr(WvStringParm str)
+        { put(str); }
+    void putstr(WVSTRING_FORMAT_DECL)
+        { put(WvString(WVSTRING_FORMAT_CALL)); }
     
     /*
      * add a single character to the buffer.
@@ -206,6 +210,11 @@ public:
     int num_of_bufs()
         { return list.count(); }
 };
+
+
+// compatibility with the new WvStreams
+class WvBuf : public WvBuffer {};
+class WvDynBuf : public WvBuf {};
 
 
 #endif // __WVBUFFER_H
