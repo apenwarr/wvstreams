@@ -10,7 +10,7 @@
 #ifndef _WIN32
 #include <sys/socket.h>
 
-inline bool isselectable(fd)
+inline bool isselectable(int fd)
 {
     return true;
 }
