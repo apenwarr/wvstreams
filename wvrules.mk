@@ -187,8 +187,8 @@ FORCE:
 DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
 define wvcc_base
 	rm -f "$1"
-	$4 $5 $2 -o $1
-	$4 -M -E $< \
+	$(COMPILE_MSG)$4 $5 $2 -o $1
+	$(DEPEND_MSG)$4 -M -E $< \
 		| sed -e 's|^[^:]*:|$1:|' >$(DEPFILE)
 endef
 wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
