@@ -28,7 +28,14 @@ export CC CXX CXXOPTS
 
 SUBDIRS=utils streams configfile uniconf ipstreams crypto urlget Docs
 
-all: include $(SUBDIRS) $(LIBFILES)
+all: include subdirs $(LIBFILES)
+
+subdirs: include
+	$(subdirs)
+
+$(LIBFILES) : subdirs
+
+libwvcrypto.so : libwvstreams.so
 
 include:
 	rm -rf $@

@@ -22,7 +22,7 @@ WvConf::~WvConf()
 
 
 const char *WvConf::get(WvStringParm section, WvStringParm entry,
-			const char *def_val = NULL)
+			const char *def_val)
 {
     UniConf *res = h.find(UniConfKey(section, entry));
     if (!res || !*res)

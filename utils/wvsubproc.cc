@@ -161,7 +161,7 @@ void WvSubProc::kill_primary(int sig)
 }
 
 
-void WvSubProc::stop(time_t msec_delay, bool kill_children = true)
+void WvSubProc::stop(time_t msec_delay, bool kill_children)
 {
     if (!running) return;
     
@@ -189,7 +189,7 @@ void WvSubProc::stop(time_t msec_delay, bool kill_children = true)
 }
 
 
-void WvSubProc::wait(time_t msec_delay, bool wait_children = true)
+void WvSubProc::wait(time_t msec_delay, bool wait_children)
 {
     int status;
     pid_t dead_pid;
