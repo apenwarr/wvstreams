@@ -4,7 +4,7 @@
 
 WVTEST_MAIN("defgen_single")
 {
-    UniConfRoot cfg("default:temp");
+    UniConfRoot cfg("default:temp:");
 
     cfg["/users/*"].setme("*1");
     cfg["/*/pooper"].setme("*1");
