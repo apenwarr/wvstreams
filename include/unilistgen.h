@@ -30,7 +30,7 @@
 class UniListGen : public UniConfGen
 {
 public:
-    UniListGen(UniConfGenList *_l) : l(_l), i(*_l) { }
+    UniListGen(UniConfGenList *_l);
     virtual UniListGen::~UniListGen() { delete l; }
 
     UniConfGenList *l;
@@ -48,6 +48,14 @@ public:
     virtual Iter *iterator(const UniConfKey &key);
 
     class IterIter;
+
+protected:
+    /**
+     * Called by first generator when a key changes.
+     * The default implementation calls delta(key).
+     */
+    virtual void gencallback(const UniConfKey &key, WvStringParm value, 
+                                void *userdata);
 };
 
 

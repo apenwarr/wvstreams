@@ -159,7 +159,7 @@ WvLink *WvConfigSectionEmu::Iter::next()
 	     * FIXME: if the WvConfEmu is not at the root of the
 	     * UniConf tree, this will give an incorrect result.
 	     */
-	    entry = sect[iter->fullkey().removefirst()];
+	    entry = sect[iter->fullkey(sect.uniconf)];
 	    link.data = static_cast<void*>(entry);
 	    assert(entry);
 	    return &link;
@@ -235,7 +235,8 @@ WvConfEmu::~WvConfEmu()
 	fprintf(stderr, " *** leftover callbacks in WvConfEmu ***\n");
 	for (i.rewind(); i.next(); )
 	{
-	    fprintf(stderr, "     - [%s]%s (%p)\n", i->section.cstr(), i->key.cstr(), i->cookie);
+	    fprintf(stderr, "     - [%s]%s (%p)\n", i->section.cstr(), 
+                    i->key.cstr(), i->cookie);
 	}
     }
 #endif

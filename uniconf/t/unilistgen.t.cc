@@ -2,33 +2,31 @@
 #include "uniconfroot.h"
 #include "unilistgen.h"
 #include "unitempgen.h"
-#include "uniinigen.h"
+#include "wvstringlist.h"
 #include <stdio.h>
 
 WVTEST_MAIN("Testing for use with weaver")
 {
-    UniIniGen *inigen = new UniIniGen("./listgen.ini", 0600);
-//    UniTempGen *inigen = new UniTempGen();
-    UniTempGen *tmpgen = new UniTempGen();
+    UniTempGen *tmp1 = new UniTempGen();
+    UniTempGen *tmp2 = new UniTempGen();
     UniConfGenList *l = new UniConfGenList();
-    l->append(inigen, false);
-    l->append(tmpgen, false);
+    l->append(tmp1, false);
+    l->append(tmp2, false);
     UniListGen *unigen = new UniListGen(l);
     
     UniConfRoot uniconf(unigen);
-    UniConfRoot front(inigen);
-    UniConfRoot back(tmpgen);
+    UniConfRoot front(tmp1);
+    UniConfRoot back(tmp2);
 
-    //should work as a normal generator(saving to ini)
+    //should work as a normal generator
     uniconf.xsetint("Monkey", 1);
     WVPASS(uniconf.xgetint("Monkey"));
     WVPASS(front.xgetint("Monkey"));
     WVFAIL(back.xgetint("Monkey"));
     
     WVFAIL(uniconf.xgetint("Banana"));
-    //should read from tmpgen in background
+    //should read from tmp2 in background
     back.xsetint("Banana", 1);
-    printf("%i\n", back.xgetint("Banana"));
     WVPASS(uniconf.xgetint("Banana"));
     WVPASS(back.xgetint("Banana"));
     
@@ -36,8 +34,82 @@ WVTEST_MAIN("Testing for use with weaver")
     WVFAIL(uniconf.xgetint("Banana"));
     WVFAIL(front.xgetint("Banana"));
     // back should still be as it was
-    printf("%i\n", back.xgetint("Banana"));
     WVPASS(back.xgetint("Banana"));
     
+    // testing when both are set to same
     WVFAIL(uniconf.xgetint("Manana"));
+    uniconf.xsetint("Manana", 1);
+    WVPASS(uniconf.xgetint("Manana"));
+    back.xsetint("Manana", 0);
+    WVPASS(uniconf.xgetint("Manana"));
+}
+
+WVTEST_MAIN("Testing iterator")
+{
+    UniTempGen *tmp1 = new UniTempGen();
+    UniTempGen *tmp2 = new UniTempGen();
+    UniConfGenList *l = new UniConfGenList();
+    l->append(tmp1, true);
+    l->append(tmp2, true);
+    UniListGen *unigen = new UniListGen(l);
+    UniConfRoot uniconf(unigen);
+    UniConfKey key("key");
+    
+    uniconf.xset("section/key", "value");
+    printf("%s\n", uniconf.xget("section/key", "DONG").cstr());
+    UniConf::Iter i1(uniconf["section"]);
+    for (i1.rewind(); i1.next(); )
+    {
+        WVPASS(i1().key() == key);
+    }
+
+    WvString a[5] = {"foo/goose","foo/moose","foo/garoose","foo/setme!","foo/bloing"}, 
+        expected[5] = {"bloing", "setme!", "goose", "garoose", "moose"};
+    int i;
+    bool iterated_properly = true, iter_didnt_mangle = true;
+        
+    for (i = 0; i < 5; i++)
+        uniconf.xsetint(a[i], 1);
+    
+    UniConf::Iter i2(uniconf["foo"]);
+    i = 0;
+    for (i2.rewind(); i2.next(); i++)
+    {
+        //printf("iterated over: %s\n", i2->fullkey().cstr());
+        if (!(i2->fullkey().removefirst() == expected[i]))
+            iterated_properly = false;
+    }
+    WVPASS(iterated_properly);
+
+    //verify iterating didn't destroy
+    for (int i = 0; i < 5; i++)
+        if (!(uniconf.xgetint(a[i]) == 1))
+            iter_didnt_mangle = false;
+    WVPASS(iter_didnt_mangle);
+
+    
+    WvString expected2[15] = {"bloing", "bloing/foo", "bloing/foo/bloing", "setme!", 
+        "setme!/foo", "setme!/foo/setme!", "goose", "goose/foo", "goose/foo/goose",
+        "garoose", "garoose/foo", "garoose/foo/garoose", "moose", "moose/foo",
+        "moose/foo/moose"};
+    for (i = 0; i < 5; i++)
+        uniconf.xsetint(WvString("%s/%s", a[i] , a[i]), 1);
+    
+    UniConf::RecursiveIter i3(uniconf["foo"]);
+    i = 0;
+    iterated_properly = true;
+    for (i3.rewind(); i3.next(); i++)
+    {
+        //printf("iterated over: %s\n", i3->fullkey().cstr());
+        if (!(i3->fullkey().removefirst() == expected2[i]))
+            iterated_properly = false;
+    }
+    WVPASS(iterated_properly);
+    
+    //verify iterating didn't destroy
+    iter_didnt_mangle = true;
+    for (int i = 0; i < 5; i++)
+        if (!(uniconf.xgetint(a[i]) == 1))
+            iter_didnt_mangle = false;
+    WVPASS(iter_didnt_mangle);
 }
