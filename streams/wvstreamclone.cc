@@ -33,6 +33,7 @@ WvStreamClone::WvStreamClone(IWvStream *_cloned)
 
 WvStreamClone::~WvStreamClone()
 {
+    //fprintf(stderr, "clone is %p\n", this);
     close();
     if (cloned)
 	delete cloned;

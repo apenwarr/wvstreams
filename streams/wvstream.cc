@@ -500,6 +500,9 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     // flush outbuf
     while (isok() && outbuf.used())
     {
+	//fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
+	//	this, getrfd(), getwfd(), outbuf.used());
+	
 	size_t attempt = outbuf.used();
 	size_t real = uwrite(outbuf.get(attempt), attempt);
 	if (real < attempt)
@@ -529,6 +532,10 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 
     if (!outbuf.used() && outbuf_delayed_flush)
         want_to_flush = false;
+
+    // if we can't flush the outbuf, at least empty it!
+    if (!isok())
+	outbuf.zap();
 
     return !outbuf.used();
 }

@@ -186,7 +186,11 @@ bool WvTCPConn::pre_select(SelectInfo &si)
     if (!resolved)
     {
 	if (dns.pre_select(hostname, si))
+	{
 	    check_resolver();
+	    if (!isok())
+		return true; // oops, failed to resolve the name!
+	}
     }
 
     if (resolved && isok()) // name might be resolved now.

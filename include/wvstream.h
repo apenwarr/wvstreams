@@ -350,6 +350,13 @@ public:
     }
     
     /**
+     * Like pre_select(), but still exists even if you override the other
+     * pre_select() in a subclass.  Sigh.
+     */
+    bool xpre_select(SelectInfo &si, const SelectRequest &r)
+        { return pre_select(si, r); }
+    
+    /**
      * post_select() is called after ::select(), and returns true if this
      * object is now ready.  Usually this is done by checking for this object
      * in the read, write, and except lists in the SelectInfo structure.  If
@@ -364,6 +371,13 @@ public:
      */
     virtual bool post_select(SelectInfo &si);
 
+    /**
+     * Like post_select(), but still exists even if you override the other
+     * post_select() in a subclass.  Sigh.
+     */
+    bool xpost_select(SelectInfo &si, const SelectRequest &r)
+        { return post_select(si, r); }
+    
     /**
      * A more convenient version of post_select() usable for overriding the
      * 'want' value temporarily.

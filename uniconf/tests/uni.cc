@@ -4,7 +4,7 @@
 
 int main(int argc, char **argv)
 {
-    WvLogConsole logcon(2, WvLog::Warning);
+    WvLogConsole logcon(2, WvLog::Info);
     
     const char *confuri = getenv("UNICONF");
     if (!confuri)
@@ -46,20 +46,32 @@ int main(int argc, char **argv)
 	cfg[arg1].set(arg2);
 	return 0; // always works
     }
+    else if (cmd == "xset")
+    {
+	// like set, but read from stdin
+	WvDynBuf buf;
+	size_t len;
+	char *cptr;
+	while (wvcon->isok())
+	{
+	    cptr = (char *)buf.alloc(10240);
+	    len = wvcon->read(cptr, 10240);
+	    buf.unalloc(10240 - len);
+	}
+	cfg[arg1].set(buf.getstr());
+    }
     else if (cmd == "sect")
     {
 	UniConf::Iter i(cfg[arg1]);
 	for (i.rewind(); i.next(); )
-	    fprintf(stdout, "%s = %s\n", i->key().printable().cstr(),
-		    i->get("").cstr());
+	    wvcon->print("%s = %s\n", i->key(), i->get(""));
     }
     else if (cmd == "hsect")
     {
 	UniConf sub(cfg[arg1]);
 	UniConf::RecursiveIter i(sub);
 	for (i.rewind(); i.next(); )
-	    fprintf(stdout, "%s = %s\n", i->fullkey(sub).printable().cstr(),
-		    i->get("").cstr());
+	    wvcon->print("%s = %s\n", i->fullkey(sub), i->get(""));
     }
     else
     {
