@@ -104,6 +104,6 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 test: runconfigure wvtestmain
 	$(VALGRIND) ./wvtestmain
 
-wvtestmain: wvtestmain.o $(call objects, $(shell find -type d -name t)) \
+wvtestmain: wvtestmain.o $(call objects, $(shell find . -type d -name t)) \
 	libwvstreams.so libwvutils.so
 
