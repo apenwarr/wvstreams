@@ -449,9 +449,7 @@ public:
         { callfunc = _callfunc; userdata = _userdata; }
         
     /**
-     * Sets a callback to be invoked on close().  Probably will not work if
-     * set on a WvStreamClone.
-     * @deprecated
+     * Sets a callback to be invoked on close(). 
      */
     void setclosecallback(WvStreamCallback _callfunc, void *_userdata)
        { closecb_func = _callfunc; closecb_data = _userdata; }
