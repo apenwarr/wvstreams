@@ -33,7 +33,6 @@
                     "89c64568e20ce9e70702406fb58e17541b988269c2e739063bfa836f" \
                     "98493c0d43791cf3ee8374e51c6d519ec08194e5c482362126a8b805" \
                     "758ea0ee40f3a36c947bb4d957b51ac56430ab"
-WvRSAKey my_rsa_key( PRIVATE_KEY, true );
 
 extern char *optarg;
 
@@ -47,6 +46,8 @@ static void usage(WvLog &log, const char *progname)
 	"         -E encrypts stdin (default)\n"
 	"         -D decrypts stdin\n"
 	"         -B sets the number of bits in the encryption key",
+        "         -i XXX sets the input file",
+        "         -o XXX sets the output file",
 	progname);
 }
 
@@ -87,8 +88,8 @@ int main(int argc, char **argv)
     struct timeval start, stop;
     struct timezone tz;
 
-    WvStream *wvin = new WvStream(0);
-    WvStream *wvout = new WvStream(1);
+    WvStream *wvin = NULL;
+    WvStream *wvout = NULL;
     
     if (argc < 2)
     {
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
 	return 1;
     }
     
-    while ((opt = getopt(argc, argv, "?xrbEDB:")) >= 0)
+    while ((opt = getopt(argc, argv, "?xrbEDB:i:o:")) >= 0)
     {
 	switch (opt)
 	{
@@ -130,8 +131,20 @@ int main(int argc, char **argv)
 	case 'B':
 	    numbits = atoi(optarg);
 	    break;
+            
+        case 'i':
+            delete wvin;
+            wvin = new WvFile(optarg, O_RDONLY);
+            break;
+            
+        case 'o':
+            delete wvout;
+            wvout = new WvFile(optarg, O_WRONLY | O_CREAT);
+            break;
 	}
     }
+    if (! wvin) wvin = new WvStream(0);
+    if (! wvout) wvout = new WvStream(1);
     
     if (crypt_type == None)
     {
@@ -167,8 +180,8 @@ int main(int argc, char **argv)
 	log("Using %s-bit RSA encryption.\n", numbits);
 	//log("Generating key...");
         //rsakey = new WvRSAKey(numbits);
-        rsakey = &my_rsa_key;
-	log("ok.\n");
+	//log("ok.\n");
+        rsakey = new WvRSAKey(PRIVATE_KEY, true);
 	crypto = new WvRSAStream(base, *rsakey, *rsakey);
         crypto->disassociate_on_close = true;
 	break;
@@ -212,10 +225,8 @@ int main(int argc, char **argv)
 	"Transfer rate: %s kbytes/sec.\n",
 	total, tdiff/1000, tdiff % 1000, (int)(1000.0 * total / tdiff / 1024));
     
-    //if (rsakey)
-    //  delete rsakey;
+    if (rsakey)
+        delete rsakey;
     if (blowkey)
-	delete [] blowkey;
+	delete[] blowkey;
 }
-
-

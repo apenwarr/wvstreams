@@ -8,9 +8,10 @@
 #define __WVCRYPTO_H
 
 #include "wvfile.h"
-#include "wvstreamclone.h"
 #include "wvencoder.h"
 #include "wvencoderstream.h"
+#include "wvrsa.h"
+#include "wvblowfish.h"
 
 /**
  * a very simple stream that returns randomness from /dev/urandom
@@ -19,49 +20,6 @@ class WvRandomStream : public WvFile
 {
 public:
     WvRandomStream() : WvFile("/dev/urandom", O_RDONLY) {}
-};
-
-
-/**
- * An RSA public key (or public/private key pair) that can be used for
- * encryption.  Knows how to encode/decode itself into a stream of hex
- * digits for easy transport.
- */
-struct rsa_st;
-
-class WvRSAKey
-{
-    int errnum;
-
-    void seterr(WvStringParm s)
-            { errstring = s; }
-    void seterr(WVSTRING_FORMAT_DECL)
-            { seterr(WvString(WVSTRING_FORMAT_CALL)); }    
-
-    void init(const char *_keystr, bool priv);
-    void hexify(struct rsa_st *rsa);
-        
-public:
-    struct rsa_st *rsa;
-    char *pub, *prv;
-
-    WvRSAKey(const WvRSAKey &k);
-    WvRSAKey(const char *_keystr, bool priv);
-    WvRSAKey(int bits);
-    
-    ~WvRSAKey();
-    
-    char *private_str() const
-        { return prv; }
-    char *public_str() const
-        { return pub; }
-        
-    void pem2hex(WvStringParm filename);
-    
-    volatile bool isok() const
-        { return (errnum == 0 ? true : false); }
-    
-    WvString errstring;
 };
 
 
@@ -176,76 +134,6 @@ private:
 
 
 /**
- * An encoder implementing RSA public/private key encryption.
- * This is really slow, so should only be used to exchange information
- * about a faster symmetric key (like Blowfish).
- *
- * RSA needs to know the public key from the remote end (to encrypt data) and
- * the private key on this end (to decrypt data).
- */
-class WvRSAEncoder : public WvEncoder
-{
-public:
-    /**
-     * Creates a new RSA encoder / decoder.
-     *   _encrypt : if true, encrypts else decrypts
-     *   _key     : the public key for encryption if _encrypt == true,
-     *              otherwise the private key for decryption
-     */
-    WvRSAEncoder(bool _encrypt, const WvRSAKey &_key);
-    virtual ~WvRSAEncoder();
-
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
-
-private:
-    bool encrypt;
-    WvRSAKey key;
-    size_t rsasize;
-};
-
-
-/**
- * A Blowfish encoder.
- */
-struct bf_key_st;
-class WvBlowfishEncoder : public WvEncoder
-{
-public:
-    enum Mode {
-        ECB, // electronic code book mode (avoid!)
-        CFB  // cipher feedback mode (simulates a stream)
-    };
-
-    /**
-     * Creates a new Blowfish encoder / decoder.
-     *   _mode    : the encryption mode
-     *   _encrypt : if true, encrypts else decrypts
-     *   _key     : the initial key data
-     *   _keysize : the initial key size
-     */
-    WvBlowfishEncoder(Mode _mode, bool _encrypt,
-        const void *_key, size_t _keysize);
-    virtual ~WvBlowfishEncoder();
-
-    /**
-     * Sets the current Blowfish key and resets the initialization
-     * vector to all nulls.
-     */
-    void setkey(const void *_key, size_t _keysize);
-
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
-
-private:
-    Mode mode;
-    bool encrypt;
-    size_t keysize;
-    struct bf_key_st *key;
-    unsigned char ivec[8]; // initialization vector
-    int ivecoff; // current offset into initvec
-};
-
-
-/**
  * A counter mode encryption encoder.
  */
 class WvCounterModeEncoder
@@ -287,31 +175,6 @@ protected:
     size_t countersize; // counter size in bytes
     
     virtual void incrcounter();    
-};
-
-
-/**
- * A crypto stream implementing RSA public/private key encryption.
- * See WvRSAEncoder for details.
- */
-class WvRSAStream : public WvEncoderStream
-{
-public:
-    WvRSAStream(WvStream *_cloned,
-        const WvRSAKey &_my_private_key, const WvRSAKey &_their_public_key);
-    virtual ~WvRSAStream() { }
-};
-
-
-/**
- * A crypto stream implementing Blowfish CFB encryption.
- * See WvBlowfishEncoder for details.
- */
-class WvBlowfishStream : public WvEncoderStream
-{
-public:
-    WvBlowfishStream(WvStream *_cloned, const void *key, size_t _keysize);
-    virtual ~WvBlowfishStream() { }
 };
 
 

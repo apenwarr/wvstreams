@@ -102,7 +102,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
     rsa = new WvRSAKey(hexified_rsa, true);
     if (!rsa->isok())
     {
-	seterr("RSA Error: %s\n", rsa->errstring);
+	seterr("RSA Error: %s\n", rsa->errstr());
 	return;
     }
 
