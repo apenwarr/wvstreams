@@ -88,6 +88,27 @@ void WvTask::recycle()
     }
 }
 
+WvTaskMan *WvTaskMan::singleton = NULL;
+int WvTaskMan::links = 1; // never delete singleton
+
+WvTaskMan *WvTaskMan::get()
+{
+    if (!singleton)
+	singleton = new WvTaskMan;
+    links++;
+    return singleton;
+}
+
+
+void WvTaskMan::unlink()
+{
+    links--;
+    if (links == 0)
+    {
+	delete singleton;
+	singleton = NULL;
+    }
+}
 
 WvTaskMan::WvTaskMan()
 {
