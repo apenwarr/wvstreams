@@ -622,10 +622,10 @@ void WvInterfaceDict::update()
     
     
     // skip the two header lines
-    procdev.getline(-1); procdev.getline(-1);
+    procdev.blocking_getline(-1); procdev.blocking_getline(-1);
     
     // add/validate existing interfaces
-    while ((ifname = find_ifname(procdev.getline(-1))) != NULL)
+    while ((ifname = find_ifname(procdev.blocking_getline(-1))) != NULL)
     {
 	WvString s(ifname);
 	WvInterface *ifc = (*this)[s];

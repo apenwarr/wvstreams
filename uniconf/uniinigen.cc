@@ -79,7 +79,7 @@ bool UniIniGen::refresh()
         if (file.isok())
         {
             // read entire lines to ensure that we get whole values
-            char *line = file.getline(-1);
+            char *line = file.blocking_getline(-1);
             if (line)
                 buf.putstr(line);
             else

@@ -140,33 +140,33 @@ WVTEST_MAIN("getline")
     WVPASS(s.isreadable());
     
     WVPASS(s.read(buf, 2) == 2);
-    char *line = s.getline(0);
+    char *line = s.getline();
     WVPASS(line);
     WVPASS(line && !strcmp(line, " b \r"));
-    line = s.getline(0);
+    line = s.getline();
     WVPASS(line);
     WVPASS(line && !strcmp(line, "line"));
-    WVPASS(!s.getline(0));
+    WVPASS(!s.getline());
     
     WvTime t1 = wvtime();
-    WVPASS(!s.getline(500));
+    WVPASS(!s.blocking_getline(500));
     WvTime t2 = wvtime();
     WVPASS(msecdiff(t2, t1) >= 0);
     WVPASS(msecdiff(t2, t1) < 400); // noread().  shouldn't actually wait!
    
     WvStream t;
     t.inbuf.putstr("tremfodls\nd\ndopple");
-    line = t.getline(0, '\n', 20);
+    line = t.getline('\n', 20);
     WVPASS(line && !strcmp(line, "tremfodls"));
     t.close();
-    line = t.getline(0, '\n', 20);
+    line = t.getline('\n', 20);
     WVPASS(line && !strcmp(line, "d"));
-    line = t.getline(0, '\n', 20);
+    line = t.getline('\n', 20);
     WVPASS(line && !strcmp(line, "dopple"));
 
     // FIXME: avoid aborting the entire test here on a freezeup!
     ::alarm(5); // crash after 5 seconds
-    WVPASS(!s.getline(-1));
+    WVPASS(!s.blocking_getline(-1));
     ::alarm(0);
 }
 
@@ -182,8 +182,8 @@ WVTEST_MAIN("more noread/nowrite")
     WVPASS(s.isok());
     s.noread();
     WVPASS(s.isok());
-    WVPASS(s.getline(0));
-    WVFAIL(s.getline(-1));
+    WVPASS(s.getline());
+    WVFAIL(s.blocking_getline(-1));
     WVPASS(!s.isok());
 }
 
@@ -212,7 +212,7 @@ WVTEST_MAIN("callbacks")
     WVPASS(val == 1); // callback works?
     s.runonce(0);
     WVPASS(val == 2); // level triggered?
-    s.getline(0);
+    s.getline();
     WVPASS(val == 2); // but not by getline
     WVPASS(!closeval);
     s.inbuf.putstr("blah!");
@@ -220,7 +220,7 @@ WVTEST_MAIN("callbacks")
     s.noread();
     s.runonce(0);
     WVPASS(val == 3);
-    WVPASS(s.getline(0));
+    WVPASS(s.getline());
     s.runonce(0);
     WVPASS(val == 3);
     WVPASS(closeval == 1);
@@ -283,7 +283,7 @@ WVTEST_MAIN("autoforward and buffers")
     a.queuemin(6);
     WVFAIL(a.isreadable());
     a.drain();
-    WVFAIL(a.getline(0));
+    WVFAIL(a.getline());
     WVFAIL(a.isreadable());
     WVFAIL(!a.inbuf.used());
     a.inbuf.putstr("x");

@@ -26,7 +26,7 @@ WVTEST_MAIN("loopback")
     WVPASS(loop.isok());
     loop.select(1000, true, false);
     WVPASS(loop.isok());
-    const char *line = loop.getline(10000);
+    const char *line = loop.blocking_getline(10000);
     WVPASS(line);
     printf("line is '%s'\n", line);
     WVPASS(waitpid(pid, NULL, 0) == pid);

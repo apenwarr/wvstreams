@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 	{
 	    l.callback();
 	    
-	    line = wvcon->getline(0);
+	    line = wvcon->getline();
 	    if (line)
 	    {
 		line = trim_string(line);

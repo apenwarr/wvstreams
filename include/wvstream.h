@@ -165,34 +165,42 @@ public:
      */ 
     virtual size_t uwrite(const void *buf, size_t count)
         { return count; /* basic WvStream doesn't actually do anything! */ }
-    
-    /**
-     * read up to one line of data from the stream and return a pointer
-     * to the internal buffer containing this line.  If the end-of-line
-     * 'separator' is encountered, it is removed from the string.  If
-     * wait_msec times out before the end of line is found, returns NULL and
-     * the line may be returned next time, or you can read what we have so
-     * far by calling read().
-     *
-     * If wait_msec < 0, waits forever for a newline (often a bad idea!)
-     * If wait_msec=0, never waits.  Otherwise, waits up to wait_msec
-     * milliseconds until a newline appears.
-     *
-     * Readahead specifies the maximum amount of data that the stream is
-     * allowed to read in one shot.
-     *
-     * It is expected that there will be no NULL characters on the line.
-     * 
-     * If uses_continue_select is true, getline() will use continue_select()
-     * rather than select() to wait for its timeout.
-     */
-    char *getline(time_t wait_msec, char separator = '\n',
-		  int readahead = 1024);
 
     /**
-     * This is a version of getline that uses continue_select to allow
-     * using a larger timeout (possibly infinite) without blocking
-     * other streams.
+     * Read up to one line of data from the stream and return a
+     * pointer to the internal buffer containing this line.  If the
+     * end-of-line 'separator' is encountered, it is removed from the
+     * string.  If there is not a full line available, returns
+     * NULL. You can read what we have so far by calling read().
+     *
+     * Readahead specifies the maximum amount of data that the stream
+     * is allowed to read in one shot.
+     *
+     * It is expected that there will be no NULL characters on the
+     * line.
+     */
+    char *getline(char separator = '\n', int readahead = 1024)
+    {
+	return blocking_getline(0, separator, readahead);
+    }
+
+    /**
+     * This is a version of getline() that allows you to block for
+     * more data to arrive.
+     *
+     * This should be used carefully, as blocking is generally
+     * unexpected in WvStreams programs.
+     *
+     * If wait_msec < 0, it will wait forever for the 'separator'
+     * (often a bad idea!).  If wait_msed == 0, this is the equivalent
+     * of getline().
+     */
+    char *blocking_getline(time_t wait_msec, char separator = '\n',
+			   int readahead = 1024);
+
+    /**
+     * This is a version of blocking_getline() that uses
+     * continue_select to avoid blocking other streams.
      */
     char *continue_getline(time_t wait_msec, char separator = '\n',
 			   int readahead = 1024);

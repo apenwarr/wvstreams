@@ -213,7 +213,7 @@ void WvConf::load_file(WvStringParm filename)
 	return;
     }
 
-    while ((from_file = trim_string(file.getline(0))) != NULL)
+    while ((from_file = trim_string(file.getline())) != NULL)
     {
 
 	if ((p = parse_section(from_file)) != NULL)

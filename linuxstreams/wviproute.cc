@@ -71,8 +71,8 @@ void WvIPRouteList::get_kernel()
     // "ip route list table all" returns all the same information plus more,
     // there's no guarantee that the ip command is available on all systems.
     WvFile kinfo("/proc/net/route", O_RDONLY);
-    kinfo.getline(0);
-    while ((line = kinfo.getline(0)) != NULL)
+    kinfo.getline();
+    while ((line = kinfo.getline()) != NULL)
     {
 	//log(WvLog::Debug2, "get_kern1: line: %s\n", line);
 	
@@ -112,7 +112,7 @@ void WvIPRouteList::get_kernel()
     // add more data from the kernel "policy routing" default table
     const char *argv[] = { "ip", "route", "list", "table", "all", NULL };
     WvPipe defaults(argv[0], argv, false, true, false);
-    while (defaults.isok() && (line = defaults.getline(-1)) != NULL)
+    while (defaults.isok() && (line = defaults.blocking_getline(-1)) != NULL)
     {
 	//log(WvLog::Debug2, "get_kern2: line: %s\n", line);
 	

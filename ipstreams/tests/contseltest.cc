@@ -20,7 +20,7 @@ static void *stream_call(WvStream& s, void* contdata = 0)
     
     while (s.isok())
     {
-	if ((line = s.getline(0)) != NULL)
+	if ((line = s.getline()) != NULL)
 	{
 	    line = trim_string(line);
 	    s.print("%s/%s: You said: '%s'\n", mynum, count, line);

@@ -120,7 +120,7 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     
     // Reading from file
     writestream.select(0, false, true);
-    WvString line(readstream.getline(-1));
+    WvString line(readstream.blocking_getline(-1));
     WVPASSEQ(line, "Bonjour, je m'appelle writestream");
     
     WVPASSEQ(readstream.read(buf, 256), 33);

@@ -61,7 +61,7 @@ int WvLockFile::readpid()
     else
     {
         WvFile lock(lockname, O_RDONLY);
-	line = lock.getline(-1);
+	line = lock.blocking_getline(-1);
 	if (line)
 	{
 	    pid = atoi(line);

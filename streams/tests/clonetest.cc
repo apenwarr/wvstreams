@@ -17,7 +17,7 @@ int main()
     {
 	char *line = NULL;
 	if (c.select(-1))
-	    line = wvcon->getline(-1);
+	    line = wvcon->blocking_getline(-1);
 	if (line)
 	    c.print("%s\n", line);
     }

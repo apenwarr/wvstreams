@@ -72,7 +72,7 @@ WvString UniClientConn::readmsg()
     WvString word;
     while ((word = wvtcl_getword(msgbuf, "\r\n", false)).isnull())
     {
-        char *line = getline(0);
+        char *line = getline();
         if (line)
         {
             msgbuf.putstr(line);

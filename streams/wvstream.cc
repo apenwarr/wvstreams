@@ -360,10 +360,9 @@ bool WvStream::iswritable()
 }
 
 
-char *WvStream::getline(time_t wait_msec, char separator, int readahead)
+char *WvStream::blocking_getline(time_t wait_msec, char separator,
+				 int readahead)
 {
-    // FIXME: this should probably use read_until now that it exists
-
     //assert(uses_continue_select || wait_msec == 0);
 
     struct timeval timeout_time;

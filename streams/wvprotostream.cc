@@ -194,7 +194,7 @@ void WvProtoStream::execute()
 {
     WvStreamClone::execute();
     
-    Token *t1 = tokline(getline(0));
+    Token *t1 = tokline(getline());
     
     if (t1)
     {

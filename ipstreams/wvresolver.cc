@@ -246,7 +246,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
     
     do
     {
-	line = host->loop->getline(-1);
+	line = host->loop->blocking_getline(-1);
     } while (!line && host->loop->isok());
     
     if (line && line[0] != 0)

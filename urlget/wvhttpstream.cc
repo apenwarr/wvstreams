@@ -353,7 +353,7 @@ void WvHttpStream::execute()
     if (!curl)
     {
         // in the header section
-        line = getline(0);
+        line = getline();
         if (line)
         {
             line = trim_string(line);
@@ -452,7 +452,7 @@ void WvHttpStream::execute()
                 if (curl->method == "HEAD")
                 {
                     log("Got all headers.\n");
-                    //		    getline(0);
+                    //		    getline();
                     doneurl();
                 }
             }
@@ -460,7 +460,7 @@ void WvHttpStream::execute()
     }
     else if (encoding == Chunked && !bytes_remaining)
     {
-        line = getline(0);
+        line = getline();
         if (line)
         {
             line = trim_string(line);

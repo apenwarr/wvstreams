@@ -26,12 +26,12 @@ WVTEST_MAIN("gzip")
     gzip.disassociate_on_close = true; 
     
     gzip.write(in_data);
-    line = gzip.getline(0);
+    line = gzip.getline();
     WVPASS(line && !strcmp(line, "a line of text"));
     WvGzipEncoder *inflater = new WvGzipEncoder(WvGzipEncoder::Inflate);
     gzip.readchain.append(inflater, true);
     gzip.write(zin_data);
-    line = gzip.getline(0);
+    line = gzip.getline();
     WVPASS(line && !strcmp(line, "a compressed line"));
     
     WvLoopback loopy2;
@@ -40,11 +40,11 @@ WVTEST_MAIN("gzip")
     
     gzip2.write(in_data);
     gzip2.write(zin_data);
-    line = gzip2.getline(0);
+    line = gzip2.getline();
     WVPASS(line && !strcmp(line, "a line of text"));
     WvGzipEncoder *inflater2 = new WvGzipEncoder(WvGzipEncoder::Inflate);
     gzip2.readchain.append(inflater2, true);
-    line = gzip2.getline(0);
+    line = gzip2.getline();
 //    WVPASS(line && !strcmp(line, "a compressed line"));
     
 }
@@ -367,7 +367,7 @@ WVTEST_MAIN("Base64")
 
     while (true)
     {
-	WvString s(input_stream.getline(0));
+	WvString s(input_stream.getline());
 	if (!s) break;
 	b64_stream.write(s);
     }
