@@ -81,16 +81,19 @@ WVTEST_MAIN("numerics") \
     WVFAIL(args.process(2, argv)); \
     WVFAIL(val == 0); \
 \
+/* This leaks memory in popt: \
     val = 1; \
     sprintf(arg, "-s-"); \
     WVFAIL(args.process(2, argv)); \
     WVFAIL(val == 0); \
+*/ \
 \
+/* This leaks memory in popt: \
     val = 1; \
     sprintf(arg, "-s0"); \
     if (strcmp(S, "float") == 0) \
     { \
-        /* Bug in popt */ \
+        WVPASS("Bug in popt"); \
     	WVFAIL(args.process(2, argv)); \
     	WVFAIL(val == 0); \
     } \
@@ -99,6 +102,7 @@ WVTEST_MAIN("numerics") \
     	WVPASS(args.process(2, argv)); \
     	WVPASS(val == 0); \
     } \
+*/ \
 \
     val = 1; \
     sprintf(arg, "--set"); \
@@ -115,11 +119,12 @@ WVTEST_MAIN("numerics") \
     WVFAIL(args.process(2, argv)); \
     WVFAIL(val == 0); \
 \
+/* This leaks memory in popt: \
     val = 1; \
     sprintf(arg, "--set=0"); \
     if (strcmp(S, "float") == 0) \
     { \
-        /* Bug in popt */ \
+        WVPASS("Bug in popt"); \
     	WVFAIL(args.process(2, argv)); \
     	WVFAIL(val == 0); \
     } \
@@ -128,14 +133,13 @@ WVTEST_MAIN("numerics") \
     	WVPASS(args.process(2, argv)); \
     	WVPASS(val == 0); \
     } \
+*/ \
 \
 }
 
-#if 0 /* these leak.. */
 NUMERIC_TEST(int, "int")
 NUMERIC_TEST(long, "long")
 NUMERIC_TEST(float, "float")
 NUMERIC_TEST(double, "double")
-#endif
 
 #endif // WITH_POPT
