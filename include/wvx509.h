@@ -249,19 +249,12 @@ public:
 
 private:
     WvLog debug;
-    WvString errstring;
 
    /** 
     * Password for PKCS12 dump - we don't handle this entirely correctly 
     * since we should erase it from memory as soon as we are done with it
     */
     WvString pkcs12pass;
-
-    void seterr(WvStringParm s)
-        { if (!errstring) errstring = s; }
-
-    void seterr(WVSTRING_FORMAT_DECL)
-        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
 
     /**
      * Get the Extension information - returns NULL if extension doesn't exist
