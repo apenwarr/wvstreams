@@ -22,6 +22,7 @@
 
 #include <xplc/xplc.h>
 #include <xplc/ptr.h>
+#include <xplc/uuidops.h>
 
 /*
  * There is another definition of DELETE in <arpa/nameser_compat.h>,
