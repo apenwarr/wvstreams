@@ -8,6 +8,7 @@
  * See wvurl.h.
  */ 
 #include "wvurl.h"
+#include "strutils.h"
 
 // A static list of the default ports for each protocol.
 struct DefaultPort
@@ -19,7 +20,7 @@ struct DefaultPort
 
 // The protocols must be arranged from longest to shortest because they're
 // compared with strncmp, so "https://" will also match http.
-DefaultPort portmap[] = {
+static DefaultPort portmap[] = {
     { "https", 443, true },
     { "http", 80, true },
     { "sip", 5060, false },
@@ -27,7 +28,7 @@ DefaultPort portmap[] = {
 };
 
 // Look up the protocol and return the default port.
-int get_default_port(WvString proto)
+static int get_default_port(WvString proto)
 {
     DefaultPort *p = portmap;
     for (p = portmap; p->proto != NULL; p++)
@@ -41,7 +42,7 @@ int get_default_port(WvString proto)
 // Look up the protocol and decide whether it uses slashes (http) or not (sip)
 // A check of rfc2396 shows that the URI standard actually distinguishes
 // these: 'hierarchical' vs. 'opaque'.
-bool protocol_uses_slashes(WvString proto)
+static bool protocol_uses_slashes(WvString proto)
 {
     DefaultPort *p = portmap;
     for (p = portmap; p->proto != NULL; p++)
@@ -61,6 +62,11 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     port = 0; // error condition by default
     addr = NULL;
     resolving = true;
+    
+    // deal with extra whitespace.
+    wptr = trim_string(wptr);
+    cptr = wptr + strcspn(wptr, " \t\r\n");
+    *cptr = 0;
 
     // if it's not one of these easy prefixes, give up.  Our URL parser is
     // pretty dumb.

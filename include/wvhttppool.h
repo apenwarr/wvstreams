@@ -70,8 +70,9 @@ private:
     int request_count;
     
     WvUrlRequest *curl; // current url
+    enum { Unknown, Chunked, ContentLength, Infinity } encoding;
     size_t remaining;
-    bool chunked, in_chunk_trailer;
+    bool in_chunk_trailer;
 
 public:
     WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl);

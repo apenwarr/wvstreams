@@ -46,24 +46,38 @@ int main(int argc, char **argv)
 	    {
 		line = trim_string(line);
 		if (!line[0])
-		    continue;
+		    ;
 		else if (strstr(line, ": "))
 		{
 		    // an extra http header
 		    headers = WvString("%s%s\n", headers, line);
-		    continue;
+		    log("New header: %s\n", line);
 		}
-		
-		WvStream *s = p.addurl(line, headers);
-		if (s)
+		else if (!strncasecmp(line, "pipelining=", 11))
 		{
-		    static int num = 0;
-		    WvFile *f = new WvFile(WvString("/tmp/url_%s", ++num), 
-					   O_CREAT|O_WRONLY|O_TRUNC);
-		    assert(!f->readable);
-		    s->autoforward(*f);
-		    l.append(s, true);
-		    l.append(f, true);
+		    WvHttpStream::enable_pipelining = atoi(line+11);
+		    log("Pipelining is now %s\n", 
+			WvHttpStream::enable_pipelining);
+		}
+		else if (!strncasecmp(line, "max=", 4))
+		{
+		    WvHttpStream::max_requests = atoi(line+4);
+		    log("Max requests per connection is now %s.\n",
+			WvHttpStream::max_requests);
+		}
+		else
+		{
+		    WvStream *s = p.addurl(line, headers);
+		    if (s)
+		    {
+			static int num = 0;
+			WvFile *f = new WvFile(WvString("/tmp/url_%s", ++num), 
+					       O_CREAT|O_WRONLY|O_TRUNC);
+			assert(!f->readable);
+			s->autoforward(*f);
+			l.append(s, true);
+			l.append(f, true);
+		    }
 		}
 	    }
 	}

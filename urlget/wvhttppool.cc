@@ -83,8 +83,9 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl)
 {
     log("Opening server connection.\n");
     curl = NULL;
+    encoding = Unknown;
     remaining = 0;
-    chunked = in_chunk_trailer = false;
+    in_chunk_trailer = false;
     request_count = 0;
     
     if (ssl)
@@ -150,7 +151,8 @@ void WvHttpStream::doneurl()
     
     curl->done();
     curl = NULL;
-    chunked = in_chunk_trailer = false;
+    encoding = Unknown;
+    in_chunk_trailer = false;
     urls.unlink_first();
     
     if (urls.isempty())
@@ -213,10 +215,15 @@ void WvHttpStream::execute()
 	    }
 	    
 	    if (!strncasecmp(line, "Content-length: ", 16))
+	    {
 		remaining = atoi(line+16);
-	    if (!strncasecmp(line, "Transfer-Encoding: ", 19)
+		encoding = ContentLength;
+	    }
+	    else if (!strncasecmp(line, "Transfer-Encoding: ", 19)
 		    && strstr(line+19, "chunked"))
-		chunked = true;
+	    {
+		encoding = Chunked;
+	    }
 
             if (line[0])
             {
@@ -244,11 +251,14 @@ void WvHttpStream::execute()
 		// blank line is the beginning of data section
 		curl = urls.first();
 		in_chunk_trailer = false;
-		log("Starting data: %s/%s\n", remaining, chunked);
+		log("Starting data: %s (enc=%s)\n", remaining, encoding);
+		
+		if (encoding == Unknown)
+		    encoding = Infinity; // go until connection closes itself
 	    }
 	}
     }
-    else if (chunked && !remaining)
+    else if (encoding == Chunked && !remaining)
     {
 	line = getline(0);
 	if (line)
@@ -277,6 +287,21 @@ void WvHttpStream::execute()
 	    }
 	}
     }
+    else if (encoding == Infinity)
+    {
+	// just read data until the connection closes, and assume all was
+	// well.  It sucks, but there's no way to tell if all the data arrived
+	// okay... that's why Chunked or ContentLength encoding is better.
+	len = read(buf, sizeof(buf));
+	if (len)
+	    log(WvLog::Debug5, 
+		"Infinity: read %s bytes.\n", len);
+	if (curl->outstream)
+	    curl->outstream->write(buf, len);
+	
+	if (!isok())
+	    doneurl();
+    }
     else // not chunked or currently in a chunk - read 'remaining' bytes.
     {
 	// in the data section of a chunked or content-length encoding,
@@ -293,7 +318,7 @@ void WvHttpStream::execute()
 	if (curl->outstream)
 	    curl->outstream->write(buf, len);
 	
-	if (!remaining && !chunked)
+	if (!remaining && encoding == ContentLength)
 	    doneurl();
     }
     
