@@ -3,7 +3,9 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  */
-#include "StdAfx.h"
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#define _WIN32_WINNT 0x0400
 #include <windows.h>
 #include <winbase.h>
 
