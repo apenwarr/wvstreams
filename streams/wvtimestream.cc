@@ -38,9 +38,9 @@ bool WvTimeStream::pre_select(SelectInfo &si)
     {
 	now = wvtime();
 
-	/* Are we going back in time? If so, assume we're due. */
+	/* Are we going back in time? If so, adjust the due time. */
 	if (now < last)
-	    next = now;
+	    next = tvdiff(next, tvdiff(last, now));
 
 	last = now;
 

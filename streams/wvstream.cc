@@ -783,7 +783,7 @@ time_t WvStream::alarm_remaining()
 
 	/* Time is going backward! */
 	if (now < last_alarm_check)
-	    alarm_time = now;
+	    alarm_time = tvdiff(alarm_time, tvdiff(last_alarm_check, now));
 
 	last_alarm_check = now;
 

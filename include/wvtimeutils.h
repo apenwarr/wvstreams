@@ -31,6 +31,9 @@ WvTime wvtime();
 /** Adds the specified number of milliseconds to a time value. */
 WvTime msecadd(const WvTime &a, time_t msec);
 
+/** Returns the timeval difference between two timevals. */
+WvTime tvdiff(const WvTime &a, const WvTime &b);
+
 /** Normalizes the time value. */
 inline void normalize(WvTime &tv)
 {
