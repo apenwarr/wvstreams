@@ -1,3 +1,4 @@
+TOPDIR=../..
 include $(TOPDIR)/rules.mk
 
 default: all teststr testlist testhash stresshash testbuffer \

@@ -1,3 +1,4 @@
+TOPDIR=../..
 include $(TOPDIR)/rules.mk
 
 LOCKDEV = $(shell [ -f /usr/include/lockdev.h -a -f /usr/lib/liblockdev.a ] \
