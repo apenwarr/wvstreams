@@ -255,7 +255,7 @@ define wvlink_ar
 	echo $2 >$(patsubst %.a,%.libs,$1); \
 	ar q $1 $(filter %.o,$2); \
 	for d in "" $(filter %.libs,$2); do \
-	    if [ "$d" != "" ]; then \
+	    if [ "$$d" != "" ]; then \
 			cd `dirname "$$d"`; \
 			ar q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
 			cd $(shell pwd); \
