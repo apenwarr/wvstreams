@@ -108,8 +108,9 @@ libwvoggspeex.so: -logg -lspeex libwvutils.so
 libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: -lfftw -lrfftw libwvutils.so
 
+libwvqt.so-LIBS+=-lqt
 libwvqt.a libwvqt.so: $(call objects,qt)
-libwvqt.so: libwvutils.so libwvstreams.so -lqt
+libwvqt.so: libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
