@@ -156,7 +156,7 @@ ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
 endif
 
-ifneq ("$(with_ppopt)", "no")
+ifneq ("$(with_popt)", "no")
   libwvutils.so: LIBS+=-lpopt
 endif
 
