@@ -79,7 +79,7 @@ void WvConfigSection::dump(WvStream &fp)
 
     for (i.rewind(); i.next(); )
     {
-	WvConfigEntry &e = i;
+	WvConfigEntry &e = *i;
 	if (e.value && e.value[0])
 	    fp.print("%s = %s\n", e.name, e.value);
 	else

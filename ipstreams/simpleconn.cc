@@ -25,7 +25,7 @@ static void bouncer(WvStream &s, void *userdata)
     
     for (i.rewind(); i.next(); )
     {
-	WvStream &out = i;
+	WvStream &out = *i;
 	
 	if (&s == &out)
 	    continue;

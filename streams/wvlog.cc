@@ -94,7 +94,7 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
     WvLogRcvBaseList::Iter i(receivers);
     for (i.rewind(); i.next(); )
     {
-	WvLogRcvBase &rc = i;
+	WvLogRcvBase &rc = *i;
 	rc.log(parent ? parent : this, loglevel, (const char *)_buf, len);
     }
     

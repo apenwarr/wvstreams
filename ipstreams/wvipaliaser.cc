@@ -154,7 +154,7 @@ void WvIPAliaser::done_edit()
     i.rewind(); i.next();
     while (i.cur())
     {
-	Alias &a = i;
+	Alias &a = *i;
 	if (!a.link_count)
 	    i.unlink();
 	else
@@ -170,7 +170,7 @@ void WvIPAliaser::dump()
 	AliasList::Iter i(aliases);
 	for (i.rewind(); i.next(); )
 	{
-	    Alias &a = i;
+	    Alias &a = *i;
 	    log("#%s = lo:wv%s: %s (%s links)\n",
 		a.index, a.index, a.ip, a.link_count);
 	}
@@ -182,7 +182,7 @@ void WvIPAliaser::dump()
 	AliasList::Iter i(all_aliases);
 	for (i.rewind(); i.next(); )
 	{
-	    Alias &a = i;
+	    Alias &a = *i;
 	    log("#%s = lo:wv%s: %s (%s links)\n",
 		a.index, a.index, a.ip, a.link_count);
 	}

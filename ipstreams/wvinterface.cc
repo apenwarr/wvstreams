@@ -638,7 +638,7 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
-	WvInterface &ifc(i);
+	WvInterface &ifc(*i);
 	if (!ifc.valid) continue;
 	
 	if (ifc.ipaddr() == addr || ifc.ipaddr().base() == addr
@@ -663,7 +663,7 @@ bool WvInterfaceDict::on_local_net(const WvIPNet &addr)
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
-	WvInterface &ifc = i;
+	WvInterface &ifc = *i;
 	if (!ifc.valid) continue;
 	
 	if (ifc.isup() && WvIPAddr(ifc.ipaddr()) != zero

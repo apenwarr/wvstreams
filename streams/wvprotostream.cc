@@ -118,7 +118,7 @@ size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
     TokenList::Iter i(*tl);
     for (count = 0, i.rewind(); i.next(); count++)
     {
-	Token &t = i;
+	Token &t = *i;
 	(*array)[count].fill((unsigned char *)(const char *)t.data, t.length);
     }
     

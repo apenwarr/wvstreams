@@ -198,11 +198,11 @@ const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
     {
 	for (i2.rewind(); i2.next();)
 	{
-	    for(s = (*this)[i];
+	    for(s = (*this)[*i];
 		s && !cache[s->name];
 		s = (*s)["Inherits"] ? (*this)[(*s)["Inherits"]->value] : NULL)
 	    {
-		const char *ret = s->get(i2);
+		const char *ret = s->get(*i2);
 		if (ret) return ret;
 		cache.add(&s->name, false);
 	    }
@@ -222,7 +222,7 @@ const char *WvConf::fuzzy_get(WvStringList &sections, WvStringParm entry,
 
     for (i.rewind(); i.next(); )
     {
-	for(s = (*this)[i];
+	for(s = (*this)[*i];
 	    s && !cache[s->name];
 	    s = (*s)["Inherits"] ? (*this)[(*s)["Inherits"]->value] : NULL)
 	{
@@ -423,7 +423,7 @@ void WvConf::save(WvStringParm _filename)
     Iter i(*this);
     for (i.rewind(); i.next();)
     {
-	WvConfigSection & sect = i;
+	WvConfigSection & sect = *i;
 	fp.print("\n[%s]\n", sect.name);
 	sect.dump(fp);
     }
@@ -467,7 +467,7 @@ void WvConf::del_callback(WvConfCallback callback, void *userdata,
     
     for (i.rewind(); i.next(); )
     {
-	WvConfCallbackInfo &c(i);
+	WvConfCallbackInfo &c(*i);
 	
 	if (c.callback == callback && c.userdata == userdata
 	    && c.section == section && c.entry == entry)

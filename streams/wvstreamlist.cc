@@ -87,7 +87,7 @@ bool WvStreamList::post_select(SelectInfo &si)
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
-	WvStream &s(i);
+	WvStream &s(*i);
 	if (s.isok())
 	{
 	    if (!si.inherit_request)

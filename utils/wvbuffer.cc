@@ -349,7 +349,7 @@ size_t WvBuffer::strchr(unsigned char ch)
     
     for (i.rewind(); i.next(); )
     {
-	WvMiniBuffer &b = i;
+	WvMiniBuffer &b = *i;
 	
 	t = b.strchr(ch);
 	
@@ -371,7 +371,7 @@ size_t WvBuffer::match(const unsigned char chlist[], size_t numch,
     
     for (i.rewind(); i.next(); )
     {
-	WvMiniBuffer &b = i;
+	WvMiniBuffer &b = *i;
 	
 	t = b.match(chlist, numch, reverse);
 	

@@ -39,8 +39,6 @@ public:
 };
 
 #define WvIterStuff(_type_) \
-	operator _type_& () const \
-	    { return *ptr(); } \
 	_type_ &operator () () const \
 	    { return *ptr(); } \
 	_type_ *operator -> () const \
