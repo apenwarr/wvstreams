@@ -31,7 +31,7 @@ WvIPAliaser::Alias::Alias(const WvIPAddr &_ip) : ip(_ip)
 	{
 	    i.setipaddr(ip);
 	    i.up(true);
-	    if (i.ipaddr() != WvIPNet(ip))
+	    if (WvIPAddr(i.ipaddr()) != ip)
 	    {
 		// no permission, most likely.
 		index = -1;
@@ -125,9 +125,10 @@ void WvIPAliaser::add(const WvIPAddr &ip)
 	aliases.append(a, false);
 	a->link_count++;
     }
-    else if (!interfaces.islocal(ip)) // if already local, no need for alias
+    else if (!interfaces.islocal(WvIPAddr(ip)))
     {
-	// create a new entry and add to both lists
+	// if already local, no need for alias
+	// if non-local, create a new entry and add to both lists
         a = new Alias(ip);
 	aliases.append(a, false);
 	all_aliases.append(a, true);
