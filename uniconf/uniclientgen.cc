@@ -224,7 +224,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
     if (conn->alarm_was_ticking)
     {
         // command response took too long!
-        log(WvLog::Error, "Command timeout; connection closed.\n");
+        log(WvLog::Warning, "Command timeout; connection closed.\n");
         cmdinprogress = false;
         cmdsuccess = false;
         conn->close();
@@ -233,12 +233,9 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
     }
 
     UniClientConn::Command command = conn->readcmd();
-    log(WvLog::Error, "Command was %s", command);
-    WvFile tmp("/tmp/mrwise", O_WRONLY | O_CREAT);
     switch (command)
     {
         case UniClientConn::NONE:
-            tmp.print("NONE");
             // do nothing
             break;
 
@@ -248,7 +245,6 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
             break;
 
         case UniClientConn::REPLY_FAIL:
-            tmp.print("REPLY_FAIL");
             result_key = WvString::null;
             cmdsuccess = false;
             cmdinprogress = false;
@@ -256,8 +252,6 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::REPLY_CHILD:
             {
-
-                tmp.print("REPLY_CHILD");
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
 
@@ -274,7 +268,6 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::REPLY_ONEVAL:
             {
-                tmp.print("REPLY_ONEVAL");
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
 
@@ -291,7 +284,6 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::PART_VALUE:
             {
-                tmp.print("PART_VALUE");
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
 
@@ -305,7 +297,6 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::EVENT_HELLO:
             {
-                tmp.print("EVENT_HELLO");
                 WvString server(wvtcl_getword(conn->payloadbuf, " "));
 
                 if (server.isnull() || strncmp(server, "UniConf", 7))
@@ -322,14 +313,12 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::EVENT_NOTICE:
             {
-                tmp.print("EVENT_NOTICE");
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
                 clientdelta(key, value);
             }   
 
         default:
-            tmp.print("default");
             // discard unrecognized commands
             break;
     }
