@@ -11,43 +11,45 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
-WvConduit::WvConduit()
+WvConduit::WvConduit() : slave(false)
 {
-    int rs[2];
-    int ws[2];
+    int socks[2];
 
-    setup_sockpair(rs);
-    setup_sockpair(ws);
-
-    rfd = rs[0];
-    wfd = ws[0];
-
-    slave = new WvFDStream(rs[1], ws[1]);
-}
-
-void WvConduit::setup_sockpair(int *socks)
-{
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, socks))
     {
 	errnum = errno;
 	return;
     }
-    
-    rfd = socks[0];
-    wfd = socks[1];
 
-    fcntl(rfd, F_SETFD, 1);
-    fcntl(rfd, F_SETFL, O_RDONLY|O_NONBLOCK);
-    fcntl(wfd, F_SETFD, 1);
-    fcntl(wfd, F_SETFL, O_WRONLY|O_NONBLOCK);
+    fcntl(socks[0], F_SETFD, 1);
+    fcntl(socks[0], F_SETFL, O_RDONLY|O_NONBLOCK);
+    fcntl(socks[1], F_SETFD, 1);
+    fcntl(socks[1], F_SETFL, O_WRONLY|O_NONBLOCK);
+
+    wfd = rfd = socks[0];
+
+    other = new WvConduit(this, socks[1]);
 }
 
-WvStream *WvConduit::get_slave()
+WvConduit::WvConduit(WvConduit *master, int fd) 
+    : WvFDStream(fd, fd), other(master), slave(true)
 {
-    return slave;
+}
+
+WvConduit *WvConduit::get_slave()
+{
+    return other;
+}
+
+void WvConduit::shutdown()
+{
+    ::shutdown(wfd, SHUT_WR);
 }
 
 WvConduit::~WvConduit()
 {
-    delete slave;
+    if (slave)
+        other->other = NULL;
+    else
+        delete other;
 }
