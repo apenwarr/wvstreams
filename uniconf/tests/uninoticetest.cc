@@ -17,7 +17,8 @@ public:
     UniConfCallback meow;
 
     void cb(int a, const UniConf &moo, const UniConfKey &goo)
-        { fprintf(stderr, "Moo... '%d' - goo = %s\n", a, goo.printable().cstr()); }
+        { fprintf(stderr, "Moo... '%d' - goo = %s (%s)\n", a,
+            goo.printable().cstr(), moo[goo].get().cstr()); }
 };
 
 int main()

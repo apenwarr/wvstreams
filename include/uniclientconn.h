@@ -8,7 +8,9 @@
 #define __UNICONFCONN_H
 
 #include "uniconfkey.h"
+#include "uniconfgen.h"
 #include "wvstreamclone.h"
+#include "wvistreamlist.h"
 #include "wvbuf.h"
 #include "wvlog.h"
 
@@ -135,5 +137,24 @@ private:
     /** Writes a message to the connection. */
     void writemsg(WvStringParm message);
 };
+
+
+class UniDeltaStream : public WvStream
+{
+public:
+    UniDeltaStream(UniConfGen *_gen) : gen(_gen)
+        { WvIStreamList::globallist.append(this, false); }
+
+    virtual ~UniDeltaStream() { WvIStreamList::globallist.unlink(this); }
+
+    void delta(const UniConfKey &key, WvStringParm value);
+
+    virtual void execute();
+
+protected:
+    UniConfPairList deltas;
+    UniConfGen *gen;
+};
+
 
 #endif // __UNICONFCONN_H

@@ -7,7 +7,6 @@
 #include "uniclientconn.h"
 #include "wvaddr.h"
 #include "wvtclstring.h"
-#include "wvistreamlist.h"
 
 
 /***** UniClientConn *****/
@@ -182,3 +181,21 @@ void UniClientConn::writetext(WvStringParm text)
     writecmd(PART_TEXT, wvtcl_escape(text));
 }
 
+
+
+void UniDeltaStream::delta(const UniConfKey &key, WvStringParm value)
+{
+    deltas.append(new UniConfPair(key, value), true);
+    alarm(0);
+}
+
+void UniDeltaStream::execute()
+{
+    gen->dispatch_delta(deltas.first()->key(), deltas.first()->value());
+    deltas.unlink_first();
+
+    if (!deltas.isempty())
+        alarm(0);
+
+    WvStream::execute();
+}

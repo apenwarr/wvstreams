@@ -6,7 +6,6 @@
  * UniConfDaemon.
  */
 #include "uniclientgen.h"
-#include "uniclientconn.h"
 #include "wvtclstring.h"
 #include "wvtcp.h"
 #include "wvunixsocket.h"
@@ -65,7 +64,7 @@ static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 /***** UniClientGen *****/
 
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
-    conn(NULL), log(WvString("UniClientGen to %s",
+    conn(NULL), deltas(this), log(WvString("UniClientGen to %s",
     dst.isnull() ? *stream->src() : WvString(dst))),
     cmdinprogress(false), cmdsuccess(false)
 {
@@ -114,12 +113,15 @@ WvString UniClientGen::get(const UniConfKey &key)
 void UniClientGen::set(const UniConfKey &key, WvStringParm newvalue)
 {
     //set_queue.append(new WvString(key), true);
+    hold_delta();
 
     if (newvalue.isnull())
         conn->writecmd(UniClientConn::REQ_REMOVE, wvtcl_escape(key));
     else
         conn->writecmd(UniClientConn::REQ_SET,
             WvString("%s %s", wvtcl_escape(key), wvtcl_escape(newvalue)));
+
+    unhold_delta();
 }
 
 
@@ -247,7 +249,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
-                delta(key, value);
+                clientdelta(key, value);
             }   
 
         default:
