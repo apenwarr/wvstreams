@@ -118,13 +118,14 @@ int WvDaemon::run(int argc, char **argv)
                     _exit(1);
                 }
                 
-                if (::close(0)
-                        || ::dup2(null_fd, 0) == -1
-                        || ::close(1)
-                        || ::dup2(null_fd, 1) == -1
-                        || ::close(2)
-                        || ::dup2(null_fd, 2) == -1
-                        || ::close(null_fd))
+                if (null_fd != 0 && (::close(0)
+                            || ::dup2(null_fd, 0) == -1)
+                        || null_fd != 1 && (::close(1)
+                                || ::dup2(null_fd, 1) == -1)
+                        || null_fd != 2 && (::close(2)
+                                || ::dup2(null_fd, 2) == -1)
+                        || null_fd != 0 && null_fd != 1 && null_fd != 2
+                                && ::close(null_fd))
                 {
                     // Can no longer write to syslog...
                     log(WvLog::Error, "Failed to close/dup2(0,1,2): %s\n",
