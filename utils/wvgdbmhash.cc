@@ -51,6 +51,14 @@ bool WvGdbmHashBase::exists(const datum &key)
 }
 
 
+void WvGdbmHashBase::zap()
+{
+    datum key;
+    while ((key = gdbm_firstkey(dbf)).dptr != NULL)
+	gdbm_delete(dbf, key);
+}
+
+
 WvGdbmHashBase::IterBase::IterBase(WvGdbmHashBase &_gdbmhash)
     : gdbmhash(_gdbmhash)
 {

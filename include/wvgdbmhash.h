@@ -32,6 +32,7 @@ public:
     int remove(const datum &key);
     datum find(const datum &key);
     bool exists(const datum &key);
+    void zap();
     
     class IterBase
     {
@@ -80,7 +81,7 @@ public:
 	{
 	    wv_serialize(buf, t);
 	    dsize = buf.used();
-	    dptr = (char *)buf.mutablepeek(0, buf.used());
+	    dptr = (char *)buf.peek(0, buf.used());
 	}
     };
     

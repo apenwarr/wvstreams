@@ -94,10 +94,10 @@ inline void _wv_serialize(WvBuf &buf, WvStringParm s)
  * Serialize a WvBuf.  This is handier than it sounds, because then
  * WvGdbmHash's value can be a WvBuf.
  */
-inline void _wv_serialize(WvBuf &buf, WvBuf &inbuf)
+inline void _wv_serialize(WvBuf &buf, const WvBuf &inbuf)
 {
     wv_serialize(buf, inbuf.used());
-    buf.merge(inbuf);
+    buf.put(const_cast<WvBuf *>(&inbuf)->peek(0, inbuf.used()), inbuf.used());
 }
 
 
