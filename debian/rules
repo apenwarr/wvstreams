@@ -12,6 +12,10 @@ major=3
 base=libwvstreams
 # This is used the wvstreams makefile to set the .so links
 PKG=`pwd`/debian/${base}${major}
+PKG-OGG=`pwd`/debian/${base}-ogg
+PKG-QT=`pwd`/debian/${base}-qt
+PKG-SPEEX=`pwd`/debian/${base}-speex
+PKG-FFT=`pwd`/debian/${base}-fft
 PKGDEV=`pwd`/debian/${base}-dev
 PKGDOC=`pwd`/debian/${base}-doc
 DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc

@@ -15,13 +15,38 @@ Description: C++ Network Communications Layer for Rapid Application Development.
  WvStreams is a library set that comprises a number of parts. Among them are
  WvIPStreams (WvTCPStream and WvUDPStream), WvStrings (yet another C++ String
  class), WvCrypto Streams (including a REALLY easy way to add SSL Support to
- applications), WvConf (a configuration file handler), WvLog (nice, simple
+ applications), UniConf (a configuration file handler), WvLog (nice, simple
  handling of log files), and a whole host of other goodness. These are the
  base classes used to build programs such as the ever popular WvDial,
  TunnelVision, FastForward, KWvDial, retchmail, and many more yet to come ;) 
  .
  This package includes everything needed to run programs that use this library
  to compile it you need the libwvstreams-dev package.
+
+Package: libwvstreams3-qt
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Description: WvStreams and Qt Event Integration Library
+ This package contains the library necessary to tie WvStreams and Qt program
+ event loops together to enable WvStreams to act as the I/O and configuration
+ back end for Qt and KDE.
+
+Package: libwvstreams3-vorbis
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Description: WvStreams OggVorbis Encoder/Decoder Library
+ This library contains the WvOggEncoder and WvOggDecoder to enable quick and
+ painless creation of audio streams using the OggVorbis CODEC
+
+Package: libwvstreams3-speex
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Description: WvStreams Speex Encoder/Decoder Library
+ This library contains the WvSpeexEncoder and WvSpexxDecoder to enable quick and
+ painless creation of audio streams using the Speex Voice over IP CODEC
 
 Package: libwvstreams-dev
 Architecture: any
@@ -44,7 +69,7 @@ Description: Documentation for libwvstreams
  WvStreams is a library set that comprises a number of parts. Among them are
  WvIPStreams (WvTCPStream and WvUDPStream), WvStrings (yet another C++ String
  class), WvCrypto Streams (including a REALLY easy way to add SSL Support to 
- applications), WvConf (a configuration file handler), WvLog (nice, simple   
+ applications), UniConf (a configuration file handler), WvLog (nice, simple   
  handling of log files), and a whole host of other goodness.
  .
  This package includes all the documentation available to program this library.
