@@ -24,7 +24,8 @@ struct WvPCMFloatToSigned16Functor
 {
     inline signed short int operator()(float pcm) const
     {
-        return (signed short int)(pcm * 32768);
+        return (pcm < -1.0f) ? -32768 : (pcm >= 1.0f) ? 32767 :
+            (signed short int)(pcm * 32768);
     }
 };
 struct WvPCMSigned16ToDoubleFunctor
@@ -38,7 +39,8 @@ struct WvPCMDoubleToSigned16Functor
 {
     inline signed short int operator()(double pcm) const
     {
-        return (signed short int)(pcm * 32768);
+        return (pcm < -1.0) ? -32768 : (pcm >= 1.0f) ? 32767 :
+            (signed short int)(pcm * 32768);
     }
 };
 
