@@ -5,33 +5,87 @@
 DeclareWvList(WvString);
 WVTEST_MAIN("escaping and unescaping")
 {
-    WvString a, b("jabba"), c("crab poody-doo"), d("pooky{doo"), result, desired;
+    WvString a, b(""), c("jabba"), d("crab poody-doo"), e("\"quote this!\""), 
+        f("pooky{doo"), g("big}monkey {potatoes"), h("hammer\\}time"), 
+        i("shameless{frog}parts"), j("wagloo-mas\nuffle"), 
+        k("nasty{bad{}}}$break"), result, desired;
     
+        
     //null
     result = wvtcl_escape(a);
     WVFAIL(result);
     result = wvtcl_unescape(result);
     WVPASS(result == a);
     
-    //no escape required
     result = wvtcl_escape(b);
-    WVPASS(result == b);
+    desired = WvString("{}");
+    WVPASS(result == desired);
     result = wvtcl_unescape(result);
     WVPASS(result == b);
     
-    //bracket escape required
+    
+    //no escape required
     result = wvtcl_escape(c);
-    desired = WvString("{%s}", c.cstr());
-    WVPASS(result == desired);
+    WVPASS(result == c);
     result = wvtcl_unescape(result);
     WVPASS(result == c);
     
-    //\ escaping required
+    
+    //bracket escape required
     result = wvtcl_escape(d);
-    desired = WvString("pooky\\{doo");
+    desired = WvString("{%s}", d.cstr());
     WVPASS(result == desired);
     result = wvtcl_unescape(result);
     WVPASS(result == d);
+    
+    result = wvtcl_escape(e);
+    desired = WvString("{\"quote this!\"}");
+    WVPASS(result == desired);
+    result = wvtcl_unescape(WvString("\"quote this!\""));
+    desired = WvString("quote this!");
+    WVPASS(result == desired);
+        
+    result = wvtcl_escape(i);
+    desired = WvString("{shameless{frog}parts}");
+    WVPASS(result == desired);
+    result = wvtcl_unescape(result);
+    WVPASS(result == i);
+    
+    result = wvtcl_escape(h);
+    desired = WvString("{hammer\\}time}");
+    printf("%s\n", result.cstr());
+    WVPASS(result == desired);
+    result = wvtcl_unescape(result);
+    WVPASS(result == h);
+
+
+    //\ escaping required
+    result = wvtcl_escape(f);
+    desired = WvString("pooky\\{doo");
+    WVPASS(result == desired);
+    result = wvtcl_unescape(result);
+    WVPASS(result == f);
+
+    result = wvtcl_escape(g);
+    desired = WvString("big\\}monkey\\ \\{potatoes");
+    WVPASS(result == desired);
+    result = wvtcl_unescape(result);
+    WVPASS(result == g);
+
+
+    //escaping with our own nasties
+    result = wvtcl_escape(j, "o-\nu");
+    desired = WvString("{wagloo-mas\nuffle}");
+    WVPASS(result == desired);
+    result = wvtcl_unescape(result);
+    WVPASS(result == j);
+
+    result = wvtcl_escape(k, "$ky");
+    desired = WvString("nast\\y\\{bad\\{\\}\\}\\}\\$brea\\k");
+    WVPASS(result == desired);
+    result = wvtcl_unescape(result);
+    printf("%s\n", result.cstr());
+    WVPASS(result == k);
 }
 
 WVTEST_MAIN("encoding and decoding")
@@ -95,6 +149,14 @@ WVTEST_MAIN("getword")
     WVPASS(result == desired);
 
     // test no word possible
+    test = WvString("---{incomplete-");
+    buf.putstr(test);
+    result = wvtcl_getword(buf, "-");
+    // should return null
+    WVFAIL(result);
+    result = buf.getstr();
+    WVPASS(result == test);
+    // test no word possible and whitespace eating
     test = WvString("    ");
     buf.putstr(test);
     result = wvtcl_getword(buf, " ");
