@@ -47,11 +47,12 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 {
     WvIPAddr ad(src), none;
     
-    return WvString("iptables -t nat %s TProxy -j REDIRECT %s -p tcp "
-		    "%s --dport %s",
-		    cmd, dstport, 
+    return WvString("iptables -t nat %s TProxy "
+		    "-p tcp %s --dport %s "
+		    "-j REDIRECT --to-ports %s",
+		    cmd,
 		    ad == none ? WvString("") : WvString("-d %s", ad),
-		    src.port);
+		    src.port, dstport);
 }
 
 

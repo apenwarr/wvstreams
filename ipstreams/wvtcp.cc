@@ -146,14 +146,23 @@ void WvTCPConn::check_resolver()
     }
 }
 
+#ifndef SO_ORIGINAL_DST
+# define SO_ORIGINAL_DST 80
+#endif
 
 WvIPPortAddr WvTCPConn::localaddr()
 {
     sockaddr_in sin;
     size_t sl = sizeof(sin);
     
-    if (!isok() || getsockname(getfd(), (sockaddr *)&sin, &sl))
+    if (!isok())
 	return WvIPPortAddr();
+    
+    if (getsockopt(getfd(), SOL_IP, SO_ORIGINAL_DST, (char*)&sin, &sl) < 0
+	&& getsockname(getfd(), (sockaddr *)&sin, &sl))
+    {
+	return WvIPPortAddr();
+    }
     
     return WvIPPortAddr(&sin);
 }
