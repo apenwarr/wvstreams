@@ -5,7 +5,7 @@
  * Some handy functions to create/remove /var/lock lockfiles.
  */
 #include "wvlockfile.h"
-#include "wvstream.h"
+#include "wvfile.h"
 #include "strutils.h"
 #include <signal.h>
 #include <string.h>
