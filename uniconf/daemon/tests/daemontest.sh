@@ -13,6 +13,7 @@ function do_help
     echo "     -host <host>:  Test the UniConfDaemon on the specified server."
     echo "     -port <port>:  Use the specified port number"
     echo "     -noless     :  Don't less the difference files on a failed test." 
+    echo "     -stress     :  Run the test files 100 times in succession.  Needed to detect some heisenbugs."
     echo ""
     echo "Note:  To add more tests to this script, simply create a new daemontest*.txt"
     echo "file in this directory, and create an appropriate real_res_daemontest*.txt file."
@@ -20,16 +21,33 @@ function do_help
     exit 0
 }
 
+testfiles=$(ls daemontest*.txt)
+failedfiles=
+nl="-"
+stress="-"
+host="localhost"
+port="4111"
+
+function do_tests
+{
+    for filename in $testfiles; do
+    #    echo $filename
+        $cmd < $filename > res_$filename
+        diff -b real_res_$filename res_$filename > diff_$filename
+        if [ -s diff_$filename ]; then
+            echo "TEST WITH FILE:  $filename FAILED!"
+            failedfiles="$failedfiles $filename"
+        else
+            rm -f diff_$filename res_$filename
+        fi
+    done
+}
+
 if [ "$1" = "-h" ]; then
     do_help
 fi
 
 # Set up the basic variables now
-testfiles=$(ls daemontest*.txt)
-failedfiles=
-nl=
-host="localhost"
-port="4111"
 # Now poll any command line arguments to get specified vars
 
 until [ $# -eq 0 ]; do
@@ -51,7 +69,10 @@ until [ $# -eq 0 ]; do
         fi
     ;;
     "-noless" )
-        nl="-"
+        nl="+"
+    ;;
+    "-stress" )
+        stress="+"
     ;;
     * )
         do_help
@@ -61,21 +82,25 @@ until [ $# -eq 0 ]; do
 done
 
 # Now create our nc command
-cmd="nc -q 100 $host $port"
+cmd="nc -q 1000000 $host $port"
 
-for filename in $testfiles; do
-#    echo $filename
-    $cmd < $filename > res_$filename
-    diff -b real_res_$filename res_$filename > diff_$filename
-    if [ -s diff_$filename ]; then
-        echo "TEST WITH FILE:  $filename FAILED!"
-        failedfiles="$failedfiles $filename"
-    else
-        rm -f diff_$filename res_$filename
+runtimes=1
+
+if [ "$stress" = "+" ] ; then
+    runtimes=100
+fi
+
+count=0
+
+until [ $count -ge $runtimes ]; do
+    do_tests
+    count=$((count + 1))
+    if [ -n $failedfiles ]; then
+        break
     fi
 done
 
-if [ -n "$nl" ]; then
+if [ "$nl" = "+" ]; then
     exit 0
 fi
 
