@@ -79,10 +79,10 @@ public:
     bool passed;
 };
 
-void usage()
+void usage(const char *name)
 {
-    wvcon->print("uniconfclienttest usage:\n");
-    wvcon->print("uniconfclienttest [-h]\n");
+    wvcon->print("%s usage:\n", name);
+    wvcon->print("%s [-h]\n", name);
     wvcon->print("\t-h - display this message\n");
     exit(0);
 }
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 
     if (argc == 2 && !strcasecmp(argv[1], "-h"))
     {
-        usage();
+        usage(argv[0]);
     }
 
     WvLogConsole clog(1, WvLog::Debug5);

@@ -92,10 +92,10 @@ bool testgetints(const UniConf &mainconf)
 }
 
 
-void usage()
+void usage(const char *name)
 {
-    wvcon->print("uniconfclienttest usage:\n");
-    wvcon->print("uniconfclienttest [-h]\n");
+    wvcon->print("%s usage:\n", name);
+    wvcon->print("%s [-h]\n", name);
     wvcon->print("\t-h - display this message\n");
     exit(0);
 }
