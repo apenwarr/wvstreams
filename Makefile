@@ -94,7 +94,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
-$(TESTS): libuniconf.so libwvstreams.so libwvutils.so
+$(TESTS): $(LIBUNICONF)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
@@ -102,7 +102,7 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
-test: runconfigure all wvtestmain
+test: runconfigure all tests wvtestmain
 	$(WVTESTRUN) $(VALGRIND) ./wvtestmain $(TESTNAME)
 
 wvtestmain: wvtestmain.o \

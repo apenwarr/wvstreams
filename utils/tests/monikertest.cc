@@ -6,10 +6,18 @@ class ITest : public IObject
 {
 public:
     virtual void f() = 0;
+    
+    // IObject
+    static const XUUID XIID;
 };
 
 DEFINE_XIID(ITest, {0xcd3239a7, 0x0ea1, 0x4e1a,
   {0xba, 0x08, 0xb8, 0x5e, 0xe4, 0xda, 0xad, 0x69}});
+  
+XUUID_MAP_BEGIN(ITest)
+  XUUID_MAP_ENTRY(IObject)
+  XUUID_MAP_ENTRY(ITest)
+  XUUID_MAP_END
 
 
 class Test : public GenericComponent<ITest>
@@ -52,8 +60,8 @@ int main()
     WvMoniker<ITest> stunk("test", createfunc3);
     
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(XIID<IObject>::get());
-    IObject *a = reg->create("obj:obj-a");
-    IObject *b = reg->create("obj2:obj2-b");
+    IObject *a = (IObject *)reg->create("obj:obj-a");
+    IObject *b = (IObject *)reg->create("obj2:obj2-b");
     reg->release();
     
     IObject *c = wvcreate<IObject>("obj2:obj2-c");
