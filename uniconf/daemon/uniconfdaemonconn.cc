@@ -8,14 +8,6 @@
 #include "uniconfdaemon.h"
 #include "wvtclstring.h"
 
-/***** UniConfDaemonWatch ****/
-
-unsigned WvHash(const UniConfDaemonWatch &watch)
-{
-    return WvHash(watch.key);
-}
-
-
 
 /***** UniConfDaemonConn *****/
 
@@ -24,20 +16,16 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
     root(_root), watches(NUM_WATCHES)
 {
     writecmd(EVENT_HELLO, "{UniConf Server ready}");
+
+    root.add_callback(wvcallback(UniConfCallback, *this,
+            UniConfDaemonConn::deltacallback), NULL, true);
 }
 
 
 UniConfDaemonConn::~UniConfDaemonConn()
 {
-    // clear all watches
-    UniConfDaemonWatchTable::Iter i(watches);
-    for (i.rewind(); i.next();)
-    {
-        log(WvLog::Debug5, "Removing a %s watch for \"%s\"\n",
-            i->recurse ? "recursive" : "nonrecursive", i->key);
-        root[i->key].del_callback(wvcallback(UniConfCallback, *this,
-            UniConfDaemonConn::deltacallback), NULL, i->recurse);
-    }
+    root.del_callback(wvcallback(UniConfCallback, *this,
+            UniConfDaemonConn::deltacallback), NULL, true);
 }
 
 
@@ -98,24 +86,6 @@ void UniConfDaemonConn::execute()
                     do_malformed();
                 else
                     do_haschildren(arg1);
-                break;
-
-            case UniClientConn::REQ_ADDWATCH:
-                if (arg1.isnull() || arg2.isnull())
-                    do_malformed();
-                else
-                {
-                    do_addwatch(arg1, arg2);
-                }
-                break;
-
-            case UniClientConn::REQ_DELWATCH:
-                if (arg1.isnull() || arg2.isnull())
-                    do_malformed();
-                else
-                {
-                    do_delwatch(arg1, arg2);
-                }
                 break;
 
             case UniClientConn::REQ_QUIT:
@@ -191,45 +161,6 @@ void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
 }
 
 
-void UniConfDaemonConn::do_addwatch(const UniConfKey &key, bool recurse)
-{
-    UniConfDaemonWatch *watch = new UniConfDaemonWatch(key, recurse);
-    if (watches[*watch])
-    {
-        delete watch;
-        writefail("already exists");
-    }
-    else
-    {
-        log(WvLog::Debug5, "Adding a %s watch for \"%s\"\n",
-            recurse ? "recursive" : "nonrecursive", key);
-        watches.add(watch, true);
-        root[key].add_callback(wvcallback(UniConfCallback, *this,
-            UniConfDaemonConn::deltacallback), NULL, recurse);
-        writeok();
-    }
-}
-
-
-void UniConfDaemonConn::do_delwatch(const UniConfKey &key, bool recurse)
-{
-    UniConfDaemonWatch watch(key, recurse);
-    if (watches[watch])
-    {
-        log(WvLog::Debug5, "Removing a %s watch for \"%s\"\n",
-            recurse ? "recursive" : "nonrecursive", key);
-        watches.remove(& watch);
-        root[key].del_callback(wvcallback(UniConfCallback, *this,
-            UniConfDaemonConn::deltacallback), NULL, recurse);
-        writeok();
-    }
-    else
-    {
-        writefail("no such watch");
-    }
-}
-
-
 void UniConfDaemonConn::do_quit()
 {
     writeok();
@@ -247,5 +178,7 @@ void UniConfDaemonConn::do_help()
 
 void UniConfDaemonConn::deltacallback(const UniConf &key, void *userdata)
 {
-    writecmd(UniClientConn::EVENT_FORGET, wvtcl_escape(key.fullkey()));
+    WvString msg("%s %s", wvtcl_escape(key.fullkey()),
+                          wvtcl_escape(key.get()));
+    writecmd(UniClientConn::EVENT_NOTICE, msg);
 }

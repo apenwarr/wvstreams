@@ -131,8 +131,8 @@ void UniConfRootImpl::setbool_callback(const UniConf &cfg, void *userdata)
 }
 
 
-void UniConfRootImpl::gen_callback(UniConfGen *gen,
-    const UniConfKey &key, void *userdata)
+void UniConfRootImpl::gen_callback(const UniConfKey &key, WvStringParm value,
+                                   void *userdata)
 {
     hold_delta();
     

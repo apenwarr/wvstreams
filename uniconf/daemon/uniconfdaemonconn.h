@@ -63,8 +63,6 @@ private:
     void do_remove(const UniConfKey &key);
     void do_subtree(const UniConfKey &key);
     void do_haschildren(const UniConfKey &key);
-    void do_addwatch(const UniConfKey &key, bool recurse = true);
-    void do_delwatch(const UniConfKey &key, bool recurse = true);
     void do_quit();
     void do_help();
 

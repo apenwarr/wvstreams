@@ -179,7 +179,7 @@ bool UniIniGen::refresh()
     }
     else
     {
-        delta(UniConfKey::EMPTY); // REMOVED
+        delta(UniConfKey::EMPTY, WvString::null); // REMOVED
     }
     unhold_delta();
 
@@ -199,7 +199,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
             if (a->value() != b->value())
             {
                 // key changed
-                delta(a->fullkey()); // CHANGED
+                delta(b->fullkey(), b->value()); // CHANGED
 		return false;
             }
             return true;
@@ -207,7 +207,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
         else
         {
             // key removed
-            delta(a->fullkey()); // REMOVED
+            delta(a->fullkey(), WvString::null); // REMOVED
             return false;
         }
     }
@@ -215,7 +215,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
     {
         assert(b);
         // key added
-        delta(a->fullkey()); // ADDED
+        delta(b->fullkey(), b->value()); // ADDED
         return false;
     }
 }

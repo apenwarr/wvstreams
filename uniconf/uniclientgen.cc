@@ -162,6 +162,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
             break;
 
         case UniClientConn::REPLY_FAIL:
+            result_key = WvString::null;
             cmdsuccess = false;
             cmdinprogress = false;
             break;
@@ -211,10 +212,28 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 break;
             }
 
-            // FIXME: Check that we're connected to a uniconf daemon
         case UniClientConn::EVENT_HELLO:
-            // discard server information
-            break;
+            {
+                WvString server(wvtcl_getword(conn->payloadbuf, " "));
+
+                if (server.isnull() || strncmp(server, "UniConf", 7))
+                {
+                    // wrong type of server!
+                    log(WvLog::Error, "Connected to a non-UniConf serer!\n");
+
+                    cmdinprogress = false;
+                    cmdsuccess = false;
+                    conn->close();
+                }                    
+                break;
+            }
+
+        case UniClientConn::EVENT_NOTICE:
+            {
+                WvString key(wvtcl_getword(conn->payloadbuf, " "));
+                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                delta(key, value);
+            }   
 
         default:
             // discard unrecognized commands

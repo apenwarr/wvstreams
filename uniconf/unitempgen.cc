@@ -56,7 +56,7 @@ void UniTempGen::set(const UniConfKey &key, WvStringParm value)
                 if (node == root)
                     root = NULL;
                 dirty = true;
-                delta(key); // REMOVED
+                delta(key, WvString::null); // REMOVED
             }
         }
     }
@@ -81,7 +81,7 @@ void UniTempGen::set(const UniConfKey &key, WvStringParm value)
                 dirty = true;
                 if (!prev) // we just created the root
                     root = node;
-                delta(node->fullkey()); // ADDED
+                delta(node->fullkey(), value); // ADDED
                 if (!more)
                     break; // done!
             }
@@ -94,7 +94,7 @@ void UniTempGen::set(const UniConfKey &key, WvStringParm value)
                 {
                     node->setvalue(value);
                     dirty = true;
-                    delta(node->fullkey()); // CHANGED
+                    delta(node->fullkey(), value); // CHANGED
                 }
                 break;
             }

@@ -52,8 +52,8 @@ protected:
      * Called by inner generator when a key changes.
      * The default implementation calls delta(key).
      */
-    virtual void gencallback(UniConfGen *gen, const UniConfKey &key,
-        void *userdata);
+    virtual void gencallback(const UniConfKey &key, WvStringParm value,
+                             void *userdata);
 };
 
 #endif //__UNIFILTERGEN_H

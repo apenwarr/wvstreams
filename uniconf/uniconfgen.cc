@@ -42,37 +42,40 @@ void UniConfGen::clear_delta()
 
 void UniConfGen::flush_delta()
 {
-    UniConfKeyList::Iter it(deltas);
+    UniConfPairList::Iter it(deltas);
     for (;;)
     {
         it.rewind();
         if (! it.next())
             break;
-        UniConfKey key(*it);
+
+        UniConfKey key((*it).key());
+        WvString value((*it).value());
+
         it.xunlink();
-        dispatch_delta(key);
+        dispatch_delta(key, value);
     }
 }
 
 
-void UniConfGen::dispatch_delta(const UniConfKey &key)
+void UniConfGen::dispatch_delta(const UniConfKey &key, WvStringParm value)
 {
     if (cb)
-        cb(this, key, cbdata);
+        cb(key, value, cbdata);
 }
 
 
-void UniConfGen::delta(const UniConfKey &key)
+void UniConfGen::delta(const UniConfKey &key, WvStringParm value)
 {
     if (hold_nesting == 0)
     {
         // not nested, dispatch immediately
-        dispatch_delta(key);
+        dispatch_delta(key, value);
     }
     else
     {
         hold_delta();
-        deltas.add(new UniConfKey(key), true);
+        deltas.add(new UniConfPair(key, value), true);
         unhold_delta();
     }
 }

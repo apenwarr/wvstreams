@@ -80,8 +80,8 @@ UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 }
 
 
-void UniFilterGen::gencallback(UniConfGen *gen,
-    const UniConfKey &key, void *userdata)
+void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value,
+                               void *userdata)
 {
-    delta(key);
+    delta(key, value);
 }

@@ -238,11 +238,11 @@ void UniMountTreeGen::prune(UniMountTree *node)
 }
 
 
-void UniMountTreeGen::gencallback(UniConfGen *gen,
-    const UniConfKey &key, void *userdata)
+void UniMountTreeGen::gencallback(const UniConfKey &key, WvStringParm value,
+                                  void *userdata)
 {
     UniMountTree *node = static_cast<UniMountTree*>(userdata);
-    delta(UniConfKey(node->fullkey(), key));
+    delta(UniConfKey(node->fullkey(), key), value);
 }
 
 

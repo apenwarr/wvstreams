@@ -11,8 +11,10 @@
 #include "wvcallback.h"
 #include "wvxplc.h"
 #include "wvlinklist.h"
+#include "uniconfpair.h"
 
 class UniConfGen;
+
 
 /**
  * The callback type for signalling key changes from a UniConfGen.
@@ -28,8 +30,9 @@ class UniConfGen;
  *   key - the key that has changed
  *   userdata - the userdata supplied during setcallback
  */
-DeclareWvCallback(3, void, UniConfGenCallback, UniConfGen *,
-    const UniConfKey &, void *);
+DeclareWvCallback(3, void, UniConfGenCallback, const UniConfKey &,
+                  WvStringParm, void *);
+
 
 /**
  * An abstract data container that backs a UniConf tree.
@@ -46,7 +49,7 @@ class UniConfGen : public GenericComponent<IObject>
     UniConfGenCallback cb; //!< gets called whenever a key changes its value.
     void *cbdata;
     int hold_nesting;
-    UniConfKeyList deltas;
+    UniConfPairList deltas;
     
 protected:
     /** Creates a UniConfGen object. */
@@ -74,7 +77,7 @@ public:
      *
      * Note: You probably want to be using delta() instead.
      */
-    void dispatch_delta(const UniConfKey &key);
+    void dispatch_delta(const UniConfKey &key, WvStringParm value);
 
     /**
      * Pauses notifications until matched with a call to unhold_delta().
@@ -114,8 +117,7 @@ public:
      * If the hold nesting count is 0, the notification is sent immediately.
      * Otherwise it is added to a pending list for later.
      */
-    void delta(const UniConfKey &key);
-    
+    void delta(const UniConfKey &key, WvStringParm value);   
     
     /***** Status API *****/
     

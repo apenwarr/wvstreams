@@ -133,8 +133,8 @@ private:
     void setbool_callback(const UniConf &cfg, void *userdata);
 
     /** Callback from UniMountTreeGen */
-    void gen_callback(UniConfGen *gen, const UniConfKey &key,
-        void *userdata);
+    void gen_callback(const UniConfKey &key, WvStringParm value,
+                      void *userdata);
 };
 
 #endif //__UNICONFROOT_H

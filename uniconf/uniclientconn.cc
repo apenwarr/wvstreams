@@ -21,8 +21,6 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "del", "del <key>: deletes the key" },
     { "subt", "subt <key>: enumerates the children of a key" },
     { "hchild", "hchild <key>: returns whether a key has children" },
-    { "reg", "reg <key> <depth>: registers for change notification" },
-    { "ureg", "ureg <key> <depth>: unregisters for change notification" },
     { "quit", "quit: kills the session nicely" },
     { "help", "help: returns this help text" },
     
@@ -38,7 +36,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
 
     // events
     { "HELLO", "HELLO <message>: sent by server on connection" },
-    { "FGET", "FGET <key>: forget key and its children" }
+    { "NOTICE", "NOTICE <key> <oldval> <newval>: forget key and its children" }
 };
 
 

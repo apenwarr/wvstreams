@@ -42,8 +42,6 @@ public:
         REQ_REMOVE, /*!< del <key> ==> OK / FAIL */
         REQ_SUBTREE, /*!< subt <key> ==> VAL ... OK / FAIL <*/
         REQ_HASCHILDREN, /*!< hchild <key> => HCHILD <key> TRUE / FALSE */
-        REQ_ADDWATCH, /*!< reg <key> <depth> ==> OK / FAIL */
-        REQ_DELWATCH, /*!< ureg <key> <depth> ==> OK / FAIL */
         REQ_QUIT, /*!< quit ==> OK */
         REQ_HELP, /*!< help ==> TEXT ... OK / FAIL */
 
@@ -59,9 +57,9 @@ public:
 
         // events
         EVENT_HELLO, /*!< HELLO <message> */
-        EVENT_FORGET, /*!< FGET <key> */
+        EVENT_NOTICE, /*!< NOTICE <key> <oldval> <newval> */
     };
-    static const int NUM_COMMANDS = EVENT_FORGET + 1;
+    static const int NUM_COMMANDS = EVENT_NOTICE + 1;
     struct CommandInfo
     {
         const char *name;

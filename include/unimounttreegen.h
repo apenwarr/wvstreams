@@ -198,7 +198,7 @@ private:
     void prune(UniMountTree *node);
 
     /** Called by generators when a key changes. */
-    void gencallback(UniConfGen *gen, const UniConfKey &key, void *userdata);
+    void gencallback(const UniConfKey &key, WvStringParm value, void *userdata);
 };
 
 
