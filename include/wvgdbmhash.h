@@ -14,6 +14,7 @@
 
 #include <wvhashtable.h>
 #include <wvstring.h>
+#include <wvbuf.h>
 
 #include <gdbm.h>
 
@@ -64,10 +65,8 @@ class DatumAdapter : public DatumAdapterBase
 {
 public:
     typedef D* ReturnType;
-    static ReturnType convert(char *data)
-        { return (ReturnType)data; }
-    operator const D& ()
-        { return *((D*)mydatum.dptr); }
+    static ReturnType convert(datum convertme)
+        { return (ReturnType)convertme.dptr; }
     DatumAdapter(const D &d)
         { mydatum.dptr = (char *)&d; mydatum.dsize = sizeof(D); }
     DatumAdapter(const D *d)
@@ -82,8 +81,8 @@ public:
     typedef WvString ReturnType;
     operator WvString ()
         { return WvString(mydatum.dptr); }
-    static ReturnType convert(char *data)
-        { return WvString(data); }
+    static ReturnType convert(datum convertme)
+        { return WvString(convertme.dptr); }
     DatumAdapter(WvStringParm s) 
         { mydatum.dptr = (char *)s.cstr();
           mydatum.dsize = s.len() + 1; }
@@ -121,7 +120,7 @@ public:
 
         saveddata = WvGdbmHashBase::find(key);
 
-        return DatumAdapter<D>::convert(saveddata.dptr);
+        return DatumAdapter<D>::convert(saveddata);
     }
         
     bool exists(DatumAdapter<K> key)
