@@ -42,6 +42,8 @@ public:
     virtual const WvAddr *src() const;
     void setdest(const WvIPPortAddr &_remaddr)
         { remaddr = _remaddr; }
+    
+    void enable_broadcasts();
 
 protected:
     WvIPPortAddr localaddr, remaddr;

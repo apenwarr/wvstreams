@@ -13,6 +13,8 @@ int main(int argc, char **argv)
     WvIPPortAddr remaddr(argc > 1 ? argv[1] : "127.0.0.1:19");
     WvUDPStream sock(nothing, nothing);
     
+    sock.enable_broadcasts();
+    
     err(WvLog::Info, "Local address is %s.\n", *sock.local());
     
     wvcon->autoforward(sock);

@@ -36,7 +36,7 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
     }
     localaddr = WvIPPortAddr(&nsa);
     
-    if (_rem != WvIPAddr())
+    if (WvIPAddr(_rem) != WvIPAddr())
     {
 	struct sockaddr *sa = _rem.sockaddr();
 	if (connect(fd, sa, _rem.sockaddr_len()))
@@ -87,15 +87,27 @@ size_t WvUDPStream::uwrite(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
-    // usually people ignore the return value of write(), so we make
-    // a feeble attempt to continue even if interrupted.
     struct sockaddr *to = remaddr.sockaddr();
     size_t tolen = remaddr.sockaddr_len();
     int out;
     
     out = sendto(getfd(), buf, count, 0, to, tolen);
+    
+    if (out < 0 && errno == EACCES) // permission denied
+	seterr(EACCES);
+    
     free(to);
     
     // errors in UDP are ignored
     return out < 0 ? 0 : out;
+}
+
+
+void WvUDPStream::enable_broadcasts()
+{
+    int value = 1;
+    
+    if (!isok()) return;
+    
+    setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &value, sizeof(value));
 }
