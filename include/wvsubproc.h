@@ -37,23 +37,11 @@ public:
     int estatus;
     WvString pidfile, last_cmd, app;
     WvStringList last_args, env;
-    int stdout_fd, stderr_fd;
     
-    WvSubProc()
-    	    : stdout_fd(-1), stderr_fd(-1)
-        { init(); }
-
-    WvSubProc(int _stdout_fd, int _stderr_fd)
-    	    : stdout_fd(_stdout_fd), stderr_fd(_stderr_fd)
+    WvSubProc() 
         { init(); }
 
     WvSubProc(const char cmd[], const char * const *argv)
-    	    : stdout_fd(-1), stderr_fd(-1)
-        { init(); startv(cmd, argv); }
-
-    WvSubProc(const char cmd[], const char * const *argv,
-    	    int _stdout_fd, int _stderr_fd)
-    	    	: stdout_fd(_stdout_fd), stderr_fd(_stderr_fd)
         { init(); startv(cmd, argv); }
 
     virtual ~WvSubProc();
@@ -103,20 +91,6 @@ public:
         { kill(SIGSTOP); }
     virtual void resume()
         { kill(SIGCONT); }
-        
-    void set_stdout_fd(int _stdout_fd)
-    {
-    	stdout_fd = _stdout_fd;
-    }
-    void set_stderr_fd(int _stderr_fd)
-    {
-    	stderr_fd = _stderr_fd;
-    }
-    
-    WvStringParm get_app() const
-    {
-    	return app;
-    }
 };
 
 DeclareWvList(WvSubProc);
