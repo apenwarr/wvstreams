@@ -309,8 +309,8 @@ WvString get_acl_short_form(WvStringParm filename, bool get_default)
 	}
     }
     else
-	log(WvLog::Error, "Could not get ACL entry: file %s does not "
-	    "exist.\n", filename);
+	log(WvLog::Error, "Could not get ACL entry: file %s (or what it's "
+	    "linked to) does not exist.\n", filename);
 
     return short_form;
 }
@@ -425,7 +425,7 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
 
 	    // Record all the entries we aren't concerned with, and append
 	    // our entry at the end.
-	    if (strcmp(type, this_type) != 0 ||
+	    if (type[0] != this_type[0] ||
 		strcmp(qualifier, this_qualifier) != 0)
 		aclString.append("%s\n", i());
 	}
