@@ -31,13 +31,26 @@ int main()
     printf("uniconfvaluetree: %d bytes\n", sizeof(UniConfValueTree));
     printf("wvstring: %d bytes\n", sizeof(WvString));
     Report r;
-    
-    int mode = -1;
+
+    int mode = 2;
     switch (mode)
     {
     case -1:
 	{
-	    UniConfRoot uni("ini:/tmp/dns.ini");
+	    UniConfRoot uni;
+	    r.go();
+	    uni.mount("ini:/tmp/dns.ini2", true);
+	    r.go();
+	    system("touch /tmp/dns.ini2");
+	    uni.refresh();
+	    r.go();
+	    system("touch /tmp/dns.ini2");
+	    uni.refresh();
+	    r.go();
+	    for (int x = 0; x < 1e8; x++)
+		;
+	    system("touch /tmp/dns.ini2");
+	    uni.refresh();
 	    r.go();
 	}
 	break;
@@ -66,7 +79,18 @@ int main()
 	    r.go();
 	}
 	break;
+    case 2:
+	{
+	    UniConfRoot uni("unix:/tmp/foos");
+	    r.go();
+	    {
+		UniConf::RecursiveIter i(uni);
+		r.go();
+	    }
+	    r.go();
+	}
     }
-    
+
+    r.go();
     return 0;
 }
