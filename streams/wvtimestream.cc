@@ -36,5 +36,7 @@ void WvTimeStream::execute()
     WvStream::execute();
 
     // reset the alarm if it has gone off
-    if (alarm_was_ticking) tick();
+    if (alarm_was_ticking)
+	tick();
 }
+
