@@ -780,6 +780,7 @@ WVTEST_MAIN("WvString: circular reference")
 
 WVTEST_MAIN("secondstoa")
 {
+    WVPASSEQ(secondstoa(0), "0 seconds");
     WVPASSEQ(secondstoa(1), "1 second");
     WVPASSEQ(secondstoa(2), "2 seconds");
     WVPASSEQ(secondstoa(59), "59 seconds");
