@@ -56,7 +56,6 @@ WvStream::WvStream()
     int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
     assert(result == 0);
 #endif
-    wvstream_execute_called = false;
     userdata = closecb_data = NULL;
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
@@ -178,8 +177,6 @@ void WvStream::callback()
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
 
-    wvstream_execute_called = false;
-
 #define TEST_CONTINUES_HARSHLY 0
 #if TEST_CONTINUES_HARSHLY
 #ifndef _WIN32
@@ -207,19 +204,6 @@ void WvStream::callback()
     // all the way back up to WvStream::execute().  This doesn't always
     // matter right now, but it could lead to obscure bugs later, so we'll
     // enforce it.
-
-    // FIXME: disabled at the moment, because it was implemented
-    // incorrectly with regard to uses_continue_select. Many people
-    // call continue_select without calling their parent's execute
-    // method after, which they should.
-    //assert(wvstream_execute_called);
-}
-
-
-void WvStream::execute()
-{
-    // do nothing by default, but notice that we were here.
-    wvstream_execute_called = true;
 }
 
 
@@ -429,8 +413,10 @@ bool WvStream::iswritable()
 }
 
 
-size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char separator)
+size_t WvStream::read_until(void *buf, size_t count, char separator)
 {
+    const time_t wait_msec = 0;
+
     if (count == 0)
         return 0;
 
@@ -439,6 +425,8 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
     struct timeval timeout_time;
     if (wait_msec > 0)
         timeout_time = msecadd(wvtime(), wait_msec);
+
+    maybe_autoclose();
 
     // if we get here, we either want to wait a bit or there is data
     // available.
@@ -457,19 +445,7 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
         // make select not return true until more data is available
         queuemin(needed);
 
-        // compute remaining timeout
-        if (wait_msec > 0)
-        {
-            wait_msec = msecdiff(timeout_time, wvtime());
-            if (wait_msec < 0)
-                wait_msec = 0;
-        }
-        
-        bool hasdata;
-        if (uses_continue_select)
-            hasdata = continue_select(wait_msec);
-        else
-            hasdata = select(wait_msec, true, false);
+        bool hasdata = isreadable();
         if (!isok())
             break;
 
@@ -490,7 +466,7 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
             hasdata = inbuf.used() >= needed; // enough?
         }
 
-        if (!hasdata && wait_msec == 0)
+        if (!hasdata)
             break; // handle timeout
     }
     queuemin(0);
@@ -503,7 +479,9 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
 char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 {
     // FIXME: this should probably use read_until now that it exists
-    
+
+    //assert(uses_continue_select || wait_msec == 0);
+
     struct timeval timeout_time;
     if (wait_msec > 0)
         timeout_time = msecadd(wvtime(), wait_msec);
@@ -575,6 +553,15 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 	inbuf.alloc(1)[0] = 0; // null-terminate it
 	return const_cast<char *>((const char *)inbuf.get(inbuf.used()));
     }
+}
+
+
+char *WvStream::continue_getline(time_t wait_msec, char separator,
+				 int readahead)
+{
+    assert(false && "not implemented, come back later!");
+    assert(uses_continue_select);
+    return NULL;
 }
 
 

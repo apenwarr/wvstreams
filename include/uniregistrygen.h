@@ -26,8 +26,6 @@ class UniRegistryGen : public UniConfGen
     WvLog m_log;
     HKEY m_hRoot;
 
-    HKEY follow_path(const UniConfKey &key, bool create, bool *isValue);
-
 public:
     UniRegistryGen(WvString _base);
     virtual ~UniRegistryGen();
@@ -42,28 +40,44 @@ public:
     virtual Iter *iterator(const UniConfKey &key);
 };
 
-#if 0
-class UniRegistryGen::Iter : public UniRegistryGen::Iter
+class UniRegistryGenIter : public UniConfGen::Iter
 {
 public:
+    UniRegistryGenIter(UniRegistryGen &gen, const UniConfKey &key, HKEY base);
+
     /** Destroys the iterator. */
-    virtual ~Iter() { }
+    virtual ~UniRegistryGenIter();
 
     /**
      * Rewinds the iterator.
      * Must be called prior to the first invocation of next().
      */
-    virtual void rewind() = 0;
+    virtual void rewind();
 
     /**
      * Seeks to the next element in the sequence.
      * Returns true if that element exists.
      * Must be called prior to the first invocation of key().
      */
-    virtual bool next() = 0;
+    virtual bool next();
 
     /** Returns the current key. */
-    virtual UniConfKey key() const = 0;
+    virtual UniConfKey key() const;
+
+    /** Returns the value of the current key. */
+    virtual WvString value() const;
+
+private:
+    LONG next_key();
+    LONG next_value();
+
+    HKEY m_hKey;
+    enum Enumerating { KEYS, VALUES } m_enumerating;
+    unsigned m_index;
+    UniRegistryGen &gen;
+    const UniConfKey parent;
+    UniConfKey current_key;
+    const HKEY m_dontClose;
 };
-#endif
+
 #endif // __UNICONFREGISTRY_H

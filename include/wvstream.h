@@ -206,12 +206,20 @@ public:
      */
     char *getline(time_t wait_msec, char separator = '\n',
 		  int readahead = 1024);
+
+    /**
+     * This is a version of getline that uses continue_select to allow
+     * using a larger timeout (possibly infinite) without blocking
+     * other streams.
+     */
+    char *continue_getline(time_t wait_msec, char separator = '\n',
+			   int readahead = 1024);
     
     /**
      * read up to count characters into buf, up to and including the first
      * instance of separator.
      * 
-     * if separator is not found on input before timeout (usual symantics)
+     * if separator is not found on input before timeout (usual semantics)
      * or stream close or error, or if count is 0, nothing is placed in buf
      * and 0 is returned.
      * 
@@ -220,12 +228,8 @@ public:
      * line.
      * 
      * Returns the number of characters that were put in buf.
-     * 
-     * If uses_continue_select is true, getline() will use
-     * continue_select() rather than select() to wait for its timeout.
      */
-    size_t read_until(void *buf, size_t count, time_t wait_msec,
-                      char separator);
+    size_t read_until(void *buf, size_t count, char separator);
 
     /**
      * force read() to not return any bytes unless 'count' bytes can be
@@ -599,11 +603,10 @@ protected:
     time_t autoclose_time;	// close eventually, even if output is queued
     WvTime alarm_time;          // select() returns true at this time
     WvTime last_alarm_check;    // last time we checked the alarm_remaining
-    bool wvstream_execute_called;
     
     /** Prevent accidental copying of WvStreams. */
-    WvStream(const WvStream &s) { }
-    WvStream& operator= (const WvStream &s) { return *this; }
+    WvStream(const WvStream &s);
+    WvStream& operator= (const WvStream &s);
 
     /**
      * The callback() function calls execute(), and then calls the user-
@@ -615,7 +618,8 @@ protected:
      * Note: If you override this function in a derived class, you must
      * call the parent execute() yourself from the derived class.
      */
-    virtual void execute();
+    virtual void execute()
+    {}
     
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;

@@ -120,19 +120,29 @@ public:
         /**
          * Rewinds the iterator and repositions it over the element that
          * matches the specified value.
-         * 
+         *
          * Uses pointer equality (object identity) as the criteria for
          * finding the matching element.
-         * 
-         * It is not possible to use find(const void*) to locate multiple
-         * matching elements unless the list is altered between invocations
-         * since it always starts searching from the head of the list
-         * rather than from the current location.
-         * 
+         *
+         * In order to locate multiple matching elements, first call find()
+         * and then use find_next().
+         *
          * Returns: the current WvLink pointer, or null if no such element
-         *         was found
+         *          was found
          */
 	WvLink *find(const void *data);
+
+        /**
+         * Repositions the iterator over the element that matches the
+         * specified value.
+         *
+         * Uses pointer equality (object identity) as the criteria for
+         * finding the matching element.
+         *
+         * Returns: the current WvLink pointer, or null if no such element
+         *          was found
+         */
+	WvLink *find_next(const void*data);
     };
 };
 

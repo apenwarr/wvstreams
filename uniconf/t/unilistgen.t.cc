@@ -2,6 +2,7 @@
 #include "wvfile.h"
 #include "wvstringlist.h"
 #include "uniconfroot.h"
+#include "uniinigen.h"
 #include "unilistgen.h"
 #include "unitempgen.h"
 
@@ -124,4 +125,18 @@ WVTEST_MAIN("Testing iterator")
         if (!(uniconf.xgetint(a[i]) == 1))
             iter_didnt_mangle = false;
     WVPASS(iter_didnt_mangle);
+}
+
+
+WVTEST_MAIN("List of inigens bug 6198")
+{
+    ::unlink("tmp.ini");
+    ::unlink("tmp2.ini");
+    WvFile file("tmp2.ini", O_WRONLY|O_TRUNC|O_CREAT);
+    file.write("[foo]\n"
+               "a = b\n");
+    WVPASS(file.isok());
+
+    UniConfRoot uni("list:ini:tmp.ini ini:tmp2.ini");
+    WVPASSEQ(uni["foo"].xget("a", "notb"),"b");
 }

@@ -62,7 +62,22 @@ WvLink *WvListBase::IterBase::find(const void *data)
 	if (link->data == data)
 	    break;
     }
-    
+    return link;
+}
+
+WvLink *WvListBase::IterBase::find_next(const void *data)
+{
+    if (link)
+    {
+	if (link->data == data)
+	    return link;
+
+	for (rewind(); next(); )
+	{
+	    if (link->data == data)
+		break;
+	}
+    }
     return link;
 }
 

@@ -8,26 +8,6 @@
 #include "wvmoniker.h"
 #include "wvlog.h"
 
-/** An iterator over keys stored in a UniTempGen. */
-class UniTempGen::NodeIter : public UniTempGen::Iter
-{
-protected:
-    UniTempGen *xgen;
-    UniConfValueTree::Iter xit;
-
-public:
-    NodeIter(UniTempGen *gen, const UniConfValueTree::Iter &it);
-    virtual ~NodeIter();
-
-    /***** Overridden methods *****/
-
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-    virtual WvString value() const;
-};
-
-
 static IUniConfGen *creator(WvStringParm, IObject *, void *)
 {
     return new UniTempGen();
@@ -157,48 +137,14 @@ UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
     {
         UniConfValueTree *node = root->find(key);
         if (node)
-            return new NodeIter(this, UniConfValueTree::Iter(*node));
+	{
+	    ListIter *it = new ListIter(this);
+	    UniConfValueTree::Iter i(*node);
+	    for (i.rewind(); i.next(); )
+		it->keys.append(new WvString(i->key()), true);
+            return it;
+	}
     }
     return NULL;
 }
-
-
-
-/***** UniTempGen::NodeIter *****/
-
-UniTempGen::NodeIter::NodeIter(UniTempGen *gen,
-    const UniConfValueTree::Iter &it) :
-    xgen(gen), xit(it)
-{
-}
-
-
-UniTempGen::NodeIter::~NodeIter()
-{
-}
-
-
-void UniTempGen::NodeIter::rewind()
-{
-    xit.rewind();
-}
-
-
-bool UniTempGen::NodeIter::next()
-{
-    return xit.next();
-}
-
-
-UniConfKey UniTempGen::NodeIter::key() const
-{
-    return xit->key();
-}
-
-
-WvString UniTempGen::NodeIter::value() const
-{
-    return xit->value();
-}
-
 

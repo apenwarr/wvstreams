@@ -24,11 +24,18 @@ WvFile::WvFile(int rwfd) : WvFDStream(rwfd)
 	writable = (xmode == O_WRONLY) || (xmode == O_RDWR);
     }
     else
-    {
 	readable = writable = false;
-    }
+
+    skip_select = false;
 }
 #endif
+
+
+WvFile::WvFile(WvStringParm filename, int mode, int create_mode)
+{
+    open(filename, mode, create_mode);
+}
+
 
 static IWvStream *increator(WvStringParm s, IObject *, void *)
 {

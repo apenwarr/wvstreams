@@ -1,3 +1,9 @@
+wvstreams (4.0+20040815-1) unstable; urgency=low
+
+  * New upstream snapshot.
+
+ -- Peter Colijn <pcolijn@nit.ca>  Sun, 15 Aug 2004 01:24:31 -0400
+
 wvstreams (3.80+20040623-1) unstable; urgency=low
 
   * New upstream snapshot.

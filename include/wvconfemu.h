@@ -119,6 +119,7 @@ private:
 
     WvConfigSectionEmuDict sections;
     bool hold;
+    bool dirty;
     WvList<CallbackInfo> callbacks;
     WvStringTable values;
 
@@ -129,6 +130,7 @@ public:
     WvConfEmu(const UniConf &_uniconf);
     ~WvConfEmu();
     void zap();
+    bool isclean() const;
     bool isok() const;
     void load_file(WvStringParm filename);
     void save(WvStringParm filename, int _create_mode = 0666);

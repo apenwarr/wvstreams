@@ -31,9 +31,9 @@ private:
     bool autofree : 1;
 
 public:
-    WvLink(void *_data, bool _autofree, char *_id = NULL)
-        { data = _data; next = NULL; autofree = _autofree;
-	    id = _id; }
+    WvLink(void *_data, bool _autofree, char *_id = NULL):
+	data(_data), next(NULL), id(_id), autofree(_autofree)
+    {}
 
     WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _autofree,
 	   char *_id = NULL);

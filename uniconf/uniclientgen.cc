@@ -89,35 +89,6 @@ static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 
 
-/***** UniClientGen::RemoteKeyIter *****/
-
-class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
-{
-protected:
-    int topcount;
-    KeyValList *list;
-    KeyValList::Iter i;
-
-public:
-    RemoteKeyIter(const UniConfKey &_top, KeyValList *_list) 
-	: list(_list), i(*_list)
-	{ topcount = _top.numsegments(); }
-    virtual ~RemoteKeyIter() 
-        { delete list; }
-
-    /***** Overridden methods *****/
-
-    virtual void rewind()
-        { i.rewind(); }
-    virtual bool next()
-        { return i.next(); }
-    virtual UniConfKey key() const
-        { return i->key; }
-    virtual WvString value() const
-        { return i->val; }
-};
-
-
 /***** UniClientGen *****/
 
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) 
@@ -137,7 +108,7 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
 UniClientGen::~UniClientGen()
 {
     conn->writecmd(UniClientConn::REQ_QUIT, "");
-    RELEASE(conn);
+    WVRELEASE(conn);
 }
 
 
@@ -209,7 +180,15 @@ UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
 
     if (do_select())
     {
-	Iter *it = new RemoteKeyIter(key, result_list);
+	ListIter *it = new ListIter(this);
+	KeyValList::Iter i(*result_list);
+	for (i.rewind(); i.next(); )
+	{
+	    it->keys.append(new WvString(i->key), true);
+	    it->values.append(new WvString(i->val), true);
+	}
+	
+	delete result_list;
 	result_list = NULL;
         return it;
     }
@@ -219,7 +198,6 @@ UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
 	result_list = NULL;
 	return NULL;
     }
-
 }
 
 

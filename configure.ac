@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 3.80, wvstreams-dev@nit.ca, wvstreams)
+AC_INIT(WvStreams, 4.0, wvstreams-dev@nit.ca, wvstreams)
 
 save_args() {
     ARGS=""
@@ -97,6 +97,7 @@ AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL (required)]))
 AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
+AC_ARG_WITH(popt, AC_HELP_STRING([--with-popt], [popt]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
@@ -199,6 +200,17 @@ if test "$with_qdbm" != "no"; then
     if test "$with_qdbm" != "no"; then
         AC_DEFINE(WITH_QDBM,,
                   [Define to enable QDBM support.])
+    fi
+fi
+
+# popt
+if test "$with_popt" != "no"; then
+    AC_CHECK_HEADERS(popt.h,, [with_popt=no])
+    AC_CHECK_LIB(popt, poptGetContext,, [with_popt=no])
+
+    if test "$with_popt" != "no"; then
+        AC_DEFINE(WITH_POPT,,
+                  [Define to enable popt support.])
     fi
 fi
 
@@ -347,6 +359,10 @@ if test "$with_fftw" = "no"; then
 fi
 if test "$with_qdbm" = "no"; then
     AC_MSG_WARN([QDBM is missing.])
+    missing_devel=yes
+fi
+if test "$with_popt" = "no"; then
+    AC_MSG_WARN([Popt is missing.])
     missing_devel=yes
 fi
 if test "$with_ogg" = "no"; then

@@ -172,6 +172,33 @@ WVTEST_MAIN("iterators")
     WVPASSEQ(i->fullkey(sub).printable(), "b");
     i.next();
     WVPASSEQ(i->fullkey(sub).printable(), "b/1");
+
+}
+
+// bug 6869
+static int compare(const UniConf &_a, const UniConf &_b)
+{
+    return strcmp(_a.key().cstr(), _b.key().cstr());
+}
+WVTEST_MAIN("sorted iterators")
+{
+    UniConfRoot root("temp:");
+    root["3"].setme("foo1");
+    root["2"].setme("foo2");
+    root["1"].setme("foo3");
+    root["4"].setme("foo4");
+
+    UniConf sub(root);
+    UniConf::SortedIter i(sub, &compare);
+    i.rewind();
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "1");
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "2");
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "3");
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "4");
 }
 
 WVTEST_MAIN("nested iterators")
@@ -225,19 +252,25 @@ WVTEST_MAIN("mounting with paths prefixed by /")
 
 }
 
-#if BUG_5512_IS_RESOLVED
 WVTEST_MAIN("Deleting while iterating")
 {
     UniConfRoot root("temp:");
+    char *foo = new char[250]; //to make sure the hash moves in memory
     for (int i = 0; i < 10; i++)
+    {
         root.xsetint(i, i);
+        root[i].xsetint(i, i);
+    }
     
     UniConf::Iter i(root);
+    char *foo2 = new char[250];
     for (i.rewind(); i.next(); )
     {
-        i().setme(WvString());
-        i.rewind();
+//        fprintf(stderr, "%s\n", i->getme().cstr());
+        root[i->key()].setme(WvString::null);
+        if (i->getme() != WvString::null)
+            i.rewind();
     }
-    WVPASS("If not crashed && no valgrind errors");
+    deletev foo;
+    deletev foo2;
 }
-#endif

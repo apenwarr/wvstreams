@@ -220,6 +220,7 @@ WvConfEmu::WvConfEmu(const UniConf &_uniconf)
     uniconf.add_callback(this,
 			 UniConfCallback(this, &WvConfEmu::notify),
 			 true);
+    dirty = false;
 }
 
 
@@ -252,6 +253,12 @@ WvConfEmu::~WvConfEmu()
 void WvConfEmu::zap()
 {
     uniconf.remove();
+}
+
+
+bool WvConfEmu::isclean() const
+{
+    return isok() && !dirty;
 }
 
 
@@ -290,6 +297,7 @@ void WvConfEmu::save()
 void WvConfEmu::flush()
 {
     uniconf.commit();
+    dirty = false;
 }
 
 
@@ -438,7 +446,7 @@ const char *WvConfEmu::fuzzy_get(WvStringList &sect, WvStringParm entry,
 {
     WvStringList::Iter i(sect);
     WvStringTable cache(5);
-    WvConfigSection *s;
+    WvConfigSectionEmu *s;
 
     for (i.rewind(); i.next(); )
     {
@@ -487,6 +495,7 @@ void WvConfEmu::set(WvStringParm section, WvStringParm entry,
             uniconf[section][entry].setme(value);
         else
             uniconf[section][entry].setme(WvString::null);
+        dirty = true;
     }
 }
 
@@ -510,6 +519,7 @@ void WvConfEmu::maybeset(WvStringParm section, WvStringParm entry,
 void WvConfEmu::delete_section(WvStringParm section)
 {
     uniconf[section].remove();
+    dirty = true;
 }
 
 
