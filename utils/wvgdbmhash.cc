@@ -1,6 +1,9 @@
+#include "wvautoconf.h"
+
+#if HAVE_LIBGDBM
+
 #include "wvgdbmhash.h"
 
-#ifdef WITH_GDBM
 
 WvGdbmHashBase::WvGdbmHashBase(WvStringParm dbfile)
 {
@@ -10,10 +13,12 @@ WvGdbmHashBase::WvGdbmHashBase(WvStringParm dbfile)
                 dbfile.cstr(), gdbm_strerror(gdbm_errno));
 }
 
+
 WvGdbmHashBase::~WvGdbmHashBase()
 {
     gdbm_close(dbf);
 }
+
 
 int WvGdbmHashBase::add(datum key, datum data, bool replace)
 {
@@ -21,45 +26,56 @@ int WvGdbmHashBase::add(datum key, datum data, bool replace)
             replace ? GDBM_REPLACE : GDBM_INSERT);
 }
 
+
 int WvGdbmHashBase::remove(datum key)
 {
     return gdbm_delete(dbf, key);
 }
+
 
 datum WvGdbmHashBase::find(datum key)
 {   
     return gdbm_fetch(dbf, key);
 }
 
+
 bool WvGdbmHashBase::exists(datum key)
 {
     return gdbm_exists(dbf, key);
 }
 
+
 WvGdbmHashBase::IterBase::IterBase(WvGdbmHashBase &_gdbmhash)
     : gdbmhash(_gdbmhash)
 {
-    nextkey.dptr = curdata.dptr = NULL;
+    curkey.dptr = nextkey.dptr = curdata.dptr = NULL;
 }
+
 
 WvGdbmHashBase::IterBase::~IterBase()
 {
+    free(curkey.dptr);
     free(nextkey.dptr);
     free(curdata.dptr);
 }
 
+
 void WvGdbmHashBase::IterBase::rewind()
 {
-    free (nextkey.dptr);
+    free(curkey.dptr);
+    free(nextkey.dptr);
+    curkey.dptr = NULL;
     nextkey = gdbm_firstkey(gdbmhash.dbf);
 }
 
+
 void WvGdbmHashBase::IterBase::next()
 {
-    free (curdata.dptr);
-    curdata = gdbm_fetch(gdbmhash.dbf, nextkey);
-    free (nextkey.dptr);
-    nextkey = gdbm_nextkey(gdbmhash.dbf, nextkey);
+    free(curkey.dptr);
+    free(curdata.dptr);
+    curkey = nextkey;
+    nextkey = gdbm_nextkey(gdbmhash.dbf, curkey);
+    curdata = gdbm_fetch(gdbmhash.dbf, curkey);
 }
 
 #endif
