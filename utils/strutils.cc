@@ -581,12 +581,12 @@ WvString secondstoa(unsigned int total_seconds)
 {
     WvString result("");
 
-    int days = total_seconds / (3600*24);
+    unsigned int days = total_seconds / (3600*24);
     total_seconds %= (3600*24);
-    int hours = total_seconds / 3600;
+    unsigned int hours = total_seconds / 3600;
     total_seconds %= 3600;
-    int mins = total_seconds / 60;
-    int secs = total_seconds % 60; 
+    unsigned int mins = total_seconds / 60;
+    unsigned int secs = total_seconds % 60; 
 
     int num_elements = (days > 0) + (hours > 0) + (mins > 0);
 
@@ -618,7 +618,7 @@ WvString secondstoa(unsigned int total_seconds)
     if (days == 0 && hours == 0 && mins == 0)
     {
         result.append(secs);
-        result.append(secs > 1 ? " seconds" : " second");
+        result.append(secs != 1 ? " seconds" : " second");
     }
 
     return result;

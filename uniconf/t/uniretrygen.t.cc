@@ -7,23 +7,25 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define UNICONFD_SOCK "/tmp/uniretrygen-uniconfd"
-#define UNICONFD_INI "/tmp/uniretrygen-uniconfd.ini"
 
-static char *argv[] =
-{
-    "uniconfd",
-    "-f",
-    "-p", "0",
-    "-s", "0",
-    "-u", UNICONFD_SOCK,
-    "ini:" UNICONFD_INI,
-    NULL
-};
+static WvString socket("/tmp/uniretrygen-uniconfd-%s", getpid());
+static WvString ini("/tmp/uniretrygen-uniconfd.ini-%s", getpid());
+
 
 void start_uniconfd(pid_t &uniconfd_pid)
 {
-    unlink(UNICONFD_SOCK);
+    WvString iniarg("ini:%s", ini);
+    char *argv[] = {
+	"uniconfd",
+	"-f",
+	"-p", "0",
+	"-s", "0",
+	"-u", socket.edit(),
+	iniarg.edit(),
+	NULL
+    };
+
+    unlink(socket);
     if ((uniconfd_pid = fork()) == 0)
     {
     	execv("uniconf/daemon/uniconfd", argv);
@@ -35,7 +37,7 @@ void start_uniconfd(pid_t &uniconfd_pid)
 
 void wait_for_connect()
 {
-    UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    UniConfRoot another_cfg(WvString("retry:unix:%s", socket));
     
     for (;;)
     {
@@ -52,9 +54,9 @@ WVTEST_MAIN("uniconfd")
 
     pid_t uniconfd_pid;
     
-    unlink(UNICONFD_INI);
+    unlink(ini);
     
-    UniConfRoot cfg("retry:{unix:" UNICONFD_SOCK " 100}");
+    UniConfRoot cfg(WvString("retry:{unix:%s 100}", socket));
     cfg["/key"].setme("value");
     WVPASS(!cfg["/key"].exists());
 
@@ -62,7 +64,7 @@ WVTEST_MAIN("uniconfd")
     wait_for_connect();
 
     cfg["/key"].setme("value");
-    WVPASS(cfg["/key"].getme() == "value");
+    WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
@@ -73,7 +75,7 @@ WVTEST_MAIN("uniconfd")
     start_uniconfd(uniconfd_pid);
     wait_for_connect();
     
-    WVPASS(cfg["/key"].getme() == "value");
+    WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
@@ -92,10 +94,10 @@ WVTEST_MAIN("reconnect callback")
 
     pid_t uniconfd_pid;
     
-    unlink(UNICONFD_INI);
+    unlink(ini);
     
     UniConfRoot cfg;
-    cfg.mountgen(new UniRetryGen("unix:" UNICONFD_SOCK,
+    cfg.mountgen(new UniRetryGen(WvString("unix:%s", socket),
                 UniRetryGen::ReconnectCallback(reconnect_cb), 100));
 
     reconnected = false;
@@ -117,16 +119,16 @@ WVTEST_MAIN("immediate reconnect")
 
     pid_t uniconfd_pid;
     
-    unlink(UNICONFD_INI);
+    unlink(ini);
 
     // Need to set the reconnect delay to 0 to read immediately
-    UniConfRoot cfg("retry:{unix:" UNICONFD_SOCK " 0}");
+    UniConfRoot cfg(WvString("retry:{unix:%s 0}", socket));
 
     start_uniconfd(uniconfd_pid);
     wait_for_connect();
 
     cfg["/key"].setme("value");
-    WVPASS(cfg["/key"].getme() == "value");
+    WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
@@ -138,7 +140,7 @@ WVTEST_MAIN("immediate reconnect")
     wait_for_connect();
 
     cfg.getme(); // Do something to reconnect
-    WVPASS(cfg["/key"].getme() == "value");
+    WVPASSEQ(cfg["/key"].getme(), "value");
 
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);

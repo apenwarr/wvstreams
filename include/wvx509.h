@@ -196,13 +196,13 @@ public:
      * Check the certificate in cert against the CA certificate in certfile
      * - returns true if cert was signed by that CA certificate. 
      */
-   bool signedbyCAinfile(WvStringParm certfile);
+    bool signedbyCAinfile(WvStringParm certfile);
 
    /**
     * Check the certificate in cert against the CA certificate in cacert
     * - returns true if cert was signed by that CA certificate.
     */
-   bool signedbyCA(WvX509Mgr *cacert);
+    bool signedbyCA(WvX509Mgr *cacert);
 
     /**
      * Sign the contents of data and return the signature as a BASE64
