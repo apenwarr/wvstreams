@@ -1,8 +1,0 @@
-HELLO UniConf Server ready
-OK get /chickens
-RETN /chickens
-OK set /chickens
-OK subt /chickens
-SUBT /chickens {bob goof} {bill weasel} {nob bon} 
-OK set /chickens
-OK quit <null>

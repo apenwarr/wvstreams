@@ -1,2 +1,0 @@
-get /chickens/bob
-quit

@@ -1,6 +1,0 @@
-
-This is wvstreams, a nominally platform-independent networking and utilities
-library for C++.
-
-Some documentation is in the Docs/ directory.  If that looks empty, try
-doing "make doxygen" to generate it.

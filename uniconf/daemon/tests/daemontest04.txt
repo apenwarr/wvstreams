@@ -1,4 +1,0 @@
-get /chickens/bob
-set /chickens/bob goof
-get /chickens/bob
-quit

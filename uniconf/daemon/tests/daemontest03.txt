@@ -1,3 +1,0 @@
-get /chickens/bob
-set /chickens/bob nerf
-quit

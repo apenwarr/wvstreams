@@ -1,6 +1,0 @@
-get /chickens/bob
-set /chickens/bob nerf
-subt /chickens
-set /chickens/bob goof
-subt /chickens
-quit

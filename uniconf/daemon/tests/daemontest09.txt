@@ -1,5 +1,0 @@
-get /chickens
-set /chickens nerf
-subt /chickens
-set /chickens
-quit
