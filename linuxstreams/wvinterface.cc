@@ -322,14 +322,15 @@ void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
 
 
 int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
-			   int metric, WvStringParm table)
+                          const WvIPAddr &src, int metric, WvStringParm table)
 {
     struct rtentry rte;
     char ifname[17];
     int sock;
-    WvString deststr(dest), gwstr(gw), metr(metric);
+    WvString deststr(dest), gwstr(gw), metr(metric), srcstr(src);
 
-    const char * const argv[] = {
+    // FIXME: There has got to be a better way to do this.
+    const char * const argvnosrc[] = {
 	"ip", "route", "add",
 	deststr,
 	"table", table,
@@ -339,8 +340,27 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 	NULL
     };
 
+    const char * const argvsrc[] = {
+	"ip", "route", "add",
+	deststr,
+	"table", table,
+	"dev", name,
+	"via", gwstr,
+        "src", srcstr,
+	"metric", metr,
+	NULL
+    };
 
-    if (dest.is_default() || table != "default")
+    WvIPAddr zero;
+    const char * const * argv;
+    if (src != zero)
+        argv = argvsrc;
+    else
+        argv = argvnosrc;
+
+    // (dcoombs: 2003/07/11)  I added src!=zero to this condition for
+    // freeswan, but I have no idea whether that's the proper thing to do.
+    if (dest.is_default() || table != "default" || src != zero)
     {
 	err(WvLog::Debug2, "addroute: ");
 	for (int i = 0; argv[i]; i++)
@@ -385,7 +405,7 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 int WvInterface::addroute(const WvIPNet &dest, int metric,
 			  WvStringParm table)
 {
-    return addroute(dest, WvIPAddr(), metric, table);
+    return addroute(dest, WvIPAddr(), WvIPAddr(), metric, table);
 }
 
 
