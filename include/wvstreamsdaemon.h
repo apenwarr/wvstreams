@@ -39,9 +39,12 @@ class WvStreamsDaemon : public WvDaemon
         WvStreamsDaemon(WvStringParm name, WvStringParm version,
                 WvStreamsDaemonCallback cb, void *ud = NULL);
 
-        void add_stream(IWvStream *istream, const char *id = NULL);
-        void add_restart_stream(IWvStream *istream, const char *id = NULL);
-        void add_die_stream(IWvStream *istrea, const char *id = NULL);
+        void add_stream(IWvStream *istream,
+            	bool auto_free, const char *id = NULL);
+        void add_restart_stream(IWvStream *istream,
+            	bool auto_free, const char *id = NULL);
+        void add_die_stream(IWvStream *istream,
+            	bool auto_free, const char *id = NULL);
 
         void close_existing_connections_on_restart();
 };
