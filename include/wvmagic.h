@@ -46,11 +46,13 @@ class Magic
 public:
     static void maybe_addref(From* obj)
     {
-	Magic_Helper<From, (sizeof(test(from)) == sizeof(Yes))>::maybe_addref(obj);
+	const bool is_iobject = (sizeof(test(from)) == sizeof(Yes));
+	Magic_Helper<From, is_iobject>::maybe_addref(obj);
     }
     static void destroy(From* obj)
     {
-	Magic_Helper<From, (sizeof(test(from)) == sizeof(Yes))>::destroy(obj);
+	const bool is_iobject = (sizeof(test(from)) == sizeof(Yes));
+	Magic_Helper<From, is_iobject>::destroy(obj);
     }
 };
 
