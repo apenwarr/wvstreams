@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 
     int int_option;
 
-    args.add_option('i', "integer option", "INT", int_option);
+    args.add_option('i', "iopt", "integer option", "INT", int_option);
     args.add_required_arg("FILE");
     args.add_optional_arg("FILE", true);
     
