@@ -51,14 +51,13 @@ class WvConfigSectionEmu
 private:
     const UniConf uniconf;
     WvConfigEntryEmuDict entries;
+    WvStringList values;
 public:
     const WvString name;
     WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name):
 	uniconf(_uniconf), entries(42), name(_name)
     {}
-
     WvConfigEntryEmu *operator[] (WvStringParm s);
-
     const char *get(WvStringParm entry, const char *def_val = NULL);
     void set(WvStringParm entry, WvStringParm value);
     void quick_set(WvStringParm entry, WvStringParm value);
@@ -121,6 +120,7 @@ private:
     WvConfigSectionEmuDict sections;
     bool hold;
     WvList<CallbackInfo> callbacks;
+    WvStringList values;
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
