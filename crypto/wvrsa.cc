@@ -8,7 +8,7 @@
 #include "wvrsa.h"
 #include "wvhex.h"
 #include <assert.h>
-#include <rsa.h>
+#include <openssl/rsa.h>
 
 /***** WvRSAKey *****/
 

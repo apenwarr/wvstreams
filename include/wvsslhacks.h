@@ -12,8 +12,8 @@
 #ifndef __WVSSLHACKS_H
 #define __WVSSLHACKS_H
 
-#include <rsa.h>
-#include <x509.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
 
 #ifdef __cplusplus
 extern "C" {

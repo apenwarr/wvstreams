@@ -1,9 +1,9 @@
 
 libwvoggvorbis.a libwvoggvorbis.so: $(libwvoggvorbis.so-OBJECTS)
-libwvoggvorbis.so: libwvutils.so
+libwvoggvorbis.so: libwvstreams.so
 
 libwvfft.a libwvfft.so: $(libwvfft.so-OBJECTS)
-libwvfft.so: libwvutils.so
+libwvfft.so: libwvstreams.so
 
 libwvqt.a libwvqt.so: $(libwvqt.so-OBJECTS)
 libwvqt.so: libwvstreams.so
@@ -16,19 +16,19 @@ libwvutils.a libwvutils.so: $(libwvutils.so-OBJECTS)
 DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.cc
-	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+	$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
 	@test -f $(notdir $(@).d)
 	@sed -e 's|^$(notdir $@)|$@|' $(notdir $@).d > $(dir $@).$(notdir $@).d
 	@rm -f $(notdir $@).d
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
 	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
 	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
@@ -38,6 +38,9 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %.so:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
+
+%.moc: %.h
+	moc $< -o $@
 
 .PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean
 
@@ -60,7 +63,7 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac config.mk.in include/wvautoconf.h.in
+configure: configure.ac config.mk.in
 	autoconf
 
 include/wvautoconf.h.in: stamp-h.in
@@ -80,7 +83,7 @@ distclean: clean
 	rm -rf $(wildcard $(DISTCLEAN))
 
 clean: depend dust
-	rm -rf $(wildcard $(TARGETS) $(GARBAGES) $(TESTS)) $(shell find . -name '*.o')
+	rm -rf $(wildcard $(TARGETS) $(GARBAGES) $(TESTS)) $(shell find . -name '*.o' -o -name '*.moc')
 
 depend:
 	rm -rf $(shell find . -name '.*.d')

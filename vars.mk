@@ -23,19 +23,15 @@ endif
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 
-ifdef INCLUDE_CRYPTO
-#TARGETS += libwvcrypto.so libwvcrypto.a
-endif
-ifdef INCLUDE_GZIP
-#TARGETS += libwvgzip.so libwvgzip.a
-endif
-ifdef INCLUDE_OGGVORBIS
+ifneq ("$(with_oggvorbis)", "no")
 TARGETS += libwvoggvorbis.so libwvoggvorbis.a
 endif
-ifdef INCLUDE_FFT
+
+ifneq ("$(with_fftw)", "no")
 TARGETS += libwvfft.so libwvfft.a
 endif
-ifdef INCLUDE_QT
+
+ifneq ("$(with_qt)", "no")
 TARGETS += libwvqt.so libwvqt.a
 endif
 
@@ -48,7 +44,7 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status include/wvautocon
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-CPPFLAGS += -MD -Iinclude -pipe
+CPPFLAGS += -Iinclude -pipe
 ARFLAGS = rs
 
 libwvstreams.so-OBJECTS:=
@@ -61,7 +57,7 @@ libwvoggvorbis.so-OBJECTS:=
 libwvoggvorbis.so-LIBS:=-logg -lvorbis -lvorbisenc
 
 libwvfft.so-OBJECTS:=
-libwvfft.so-LIBS:=-lrfftw
+libwvfft.so-LIBS:=-lfftw -lrfftw
 
 libwvqt.so-OBJECTS:=
 libwvqt.so-LIBS:=-lqt

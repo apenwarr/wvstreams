@@ -39,20 +39,4 @@ private:
 };
 
 
-/**
- * A stream implementing Gzip encryption and decryption.
- * See WvGzipEncoder for details.
- *
- * By default, written data is "deflated", read data is "inflated".
- */
-class WvGzipStream : public WvEncoderStream
-{
-public:
-    WvGzipStream(WvStream *_cloned,
-        WvGzipEncoder::Mode readmode = WvGzipEncoder::Inflate,
-        WvGzipEncoder::Mode writemode = WvGzipEncoder::Deflate);
-    virtual ~WvGzipStream() { }
-};
-
-
 #endif // __WVGZIP_H

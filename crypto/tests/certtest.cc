@@ -1,8 +1,8 @@
 #include "wvx509.h"
 #include "wvlog.h"
 
-#include "pem.h"
-#include "x509v3.h"
+#include <openssl/pem.h>
+#include <openssl/x509v3.h>
 
 // Quick program to test the certificate generation routines
 // from WvX509Mgr. Take the output of .encode(WvX509Mgr::CertPEM), 

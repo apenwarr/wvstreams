@@ -5,8 +5,7 @@
 #include "wvsslstream.h"
 #include "wvx509.h"
 #include "wvcrypto.h"
-#include <ssl.h>
-#include <err.h>
+#include <openssl/ssl.h>
 #include <assert.h>
 
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record

@@ -11,10 +11,10 @@
 #include "wvstringlist.h"
 #include "strutils.h"
 
-#include <pem.h>
-#include <x509v3.h>
-#include <err.h>
-#include <sha.h>
+#include <openssl/pem.h>
+#include <openssl/x509v3.h>
+#include <openssl/err.h>
+#include <openssl/sha.h>
 
 static int ssl_init_count = 0;
 

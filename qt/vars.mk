@@ -1,14 +1,9 @@
 
 libwvqt.so-OBJECTS += $(patsubst %.cc,%.o,$(wildcard qt/*.cc))
 
-qt/wvqtstreamclone.moc: include/wvqtstreamclone.h
-	@echo -n "Creating MOC file from $< ..."
-	@moc $< -o $@
-	@echo "Done."
+$(libwvqt.so-OBJECTS): CPPFLAGS+=-I/usr/include/qt
 
-qt/wvqtstreamclone.o: qt/wvqtstreamclone.moc
-
-CPPFLAGS += -I/usr/include/qt
+qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
 
 include $(call doinclude,vars.mk,qt)
 

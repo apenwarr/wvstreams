@@ -6,8 +6,8 @@
  */
 #include "wvblowfish.h"
 #include <assert.h>
-#include <rand.h>
-#include <blowfish.h>
+#include <openssl/rand.h>
+#include <openssl/blowfish.h>
 
 /***** WvBlowfishEncoder ****/
 

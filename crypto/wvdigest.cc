@@ -5,8 +5,8 @@
  * MD5, SHA-1 and HMAC digest abstractions.
  */
 #include "wvdigest.h"
-#include <evp.h>
-#include <hmac.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <assert.h>
 
 /***** WvEVPMDDigest *****/

@@ -131,13 +131,3 @@ bool WvGzipEncoder::process(WvBuffer &outbuf, bool flush, bool finish)
     return true;
 }
 
-
-/***** GzipStream *****/
-
-WvGzipStream::WvGzipStream(WvStream *_cloned,
-    WvGzipEncoder::Mode readmode, WvGzipEncoder::Mode writemode) :
-    WvEncoderStream(_cloned)
-{
-    readchain.append(new WvGzipEncoder(readmode), true);
-    writechain.append(new WvGzipEncoder(writemode), true);
-}
