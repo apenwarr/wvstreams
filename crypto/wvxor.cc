@@ -25,15 +25,18 @@ WvXOREncoder::~WvXOREncoder()
 
 bool WvXOREncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 {
-    size_t len = inbuf.used();
-    unsigned char *data = inbuf.get(len);
-    unsigned char *out = outbuf.alloc(len);
-
-    // FIXME: this loop is SLOW! (believe it or not)
-    while (len-- > 0)
+    size_t len;
+    while ((len = inbuf.usedopt()) != 0)
     {
-        *out++ = (*data++) ^ key[keyoff++];
-        keyoff %= keylen;
+        const unsigned char *data = inbuf.get(len);
+        unsigned char *out = outbuf.alloc(len);
+
+        // FIXME: this loop is SLOW! (believe it or not)
+        while (len-- > 0)
+        {
+            *out++ = (*data++) ^ key[keyoff++];
+            keyoff %= keylen;
+        }
     }
     return true;
 }

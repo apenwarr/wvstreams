@@ -83,7 +83,7 @@ bool WvBlowfishEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
     }
     if (len == 0) return success;
     
-    unsigned char *data = in.get(len);
+    const unsigned char *data = in.get(len);
     unsigned char *crypt = out.alloc(len);
     
     switch (mode)

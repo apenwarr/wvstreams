@@ -56,7 +56,7 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     rsa = NULL;
     
     // unhexify the supplied key
-    WvBuffer keybuf;
+    WvDynamicBuffer keybuf;
     if (! WvHexDecoder().flush(keystr, keybuf) || keybuf.used() == 0)
     {
         seterr("RSA key is not a valid hex string");
@@ -123,7 +123,7 @@ void WvRSAKey::pem2hex(WvStringParm filename)
 
 WvString WvRSAKey::hexifypub(RSA *rsa)
 {
-    WvBuffer keybuf;
+    WvDynamicBuffer keybuf;
     size_t size = i2d_RSAPublicKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPublicKey(rsa, & key);
@@ -136,7 +136,7 @@ WvString WvRSAKey::hexifypub(RSA *rsa)
 
 WvString WvRSAKey::hexifyprv(RSA *rsa)
 {
-    WvBuffer keybuf;
+    WvDynamicBuffer keybuf;
     size_t size = i2d_RSAPrivateKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPrivateKey(rsa, & key);
@@ -196,12 +196,14 @@ bool WvRSAEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
                     break;
 
                 // encrypt a chunk
-                unsigned char *data = in.get(chunklen);
+                const unsigned char *data = in.get(chunklen);
                 unsigned char *crypt = out.alloc(rsasize);
                 size_t cryptlen = (mode == Encrypt) ?
-                    RSA_public_encrypt(chunklen, data, crypt,
+                    RSA_public_encrypt(chunklen,
+                    const_cast<unsigned char*>(data), crypt,
                     key.rsa, RSA_PKCS1_PADDING) :
-                    RSA_private_encrypt(chunklen, data, crypt,
+                    RSA_private_encrypt(chunklen,
+                    const_cast<unsigned char*>(data), crypt,
                     key.rsa, RSA_PKCS1_PADDING);
                 if (cryptlen != rsasize)
                 {
@@ -218,12 +220,14 @@ bool WvRSAEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
             while (in.used() >= chunklen)
             {
                 // decrypt a chunk
-                unsigned char *crypt = in.get(chunklen);
+                const unsigned char *crypt = in.get(chunklen);
                 unsigned char *data = out.alloc(rsasize);
                 int cryptlen = (mode == Decrypt) ?
-                    RSA_private_decrypt(chunklen, crypt, data,
+                    RSA_private_decrypt(chunklen,
+                    const_cast<unsigned char*>(crypt), data,
                     key.rsa, RSA_PKCS1_PADDING) :
-                    RSA_public_decrypt(chunklen, crypt, data,
+                    RSA_public_decrypt(chunklen,
+                    const_cast<unsigned char*>(crypt), data,
                     key.rsa, RSA_PKCS1_PADDING);
                 if (cryptlen == -1)
                 {

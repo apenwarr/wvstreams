@@ -20,6 +20,7 @@ WvGzipEncoder::WvGzipEncoder(Mode _mode) :
     zstr->zalloc = Z_NULL;
     zstr->zfree = Z_NULL;
     zstr->opaque = NULL;
+    zstr->msg = NULL;
     
     int retval;
     if (mode == Deflate)
@@ -29,8 +30,9 @@ WvGzipEncoder::WvGzipEncoder(Mode _mode) :
     
     if (retval != Z_OK)
     {
-        seterror("error %s initializing gzip %s", retval,
-            mode == Deflate ? "compressor" : "decompressor");
+        seterror("error %s initializing gzip %s: %s", retval,
+            mode == Deflate ? "compressor" : "decompressor",
+            zstr->msg ? zstr->msg : "unknown");
         return;
     }
     zstr->next_in = zstr->next_out = NULL;
@@ -51,15 +53,23 @@ WvGzipEncoder::~WvGzipEncoder()
 
 bool WvGzipEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 {
-    prepare(& inbuf);
-    bool success = process(outbuf, flush, false);
-    if (zstr->avail_in != 0)
+    bool success;
+    for (;;)
     {
-        // unget unused data
-        inbuf.unget(zstr->avail_in);
-        zstr->avail_in = 0;
+        prepare(& inbuf);
+        bool alldata = inbuf.used() == 0;
+        success = process(outbuf, flush && alldata, false);
+        if (zstr->avail_in != 0)
+        {
+            // unget unused data
+            inbuf.unget(zstr->avail_in);
+            zstr->avail_in = 0;
+        }
+        if (! success)
+            return false;
+        if (alldata)
+            return true;
     }
-    return success;
 }
 
 
@@ -75,8 +85,10 @@ void WvGzipEncoder::prepare(WvBuffer *inbuf)
     assert(zstr->avail_in == 0);
     if (inbuf && inbuf->used() != 0)
     {
-        zstr->avail_in = inbuf->used();
-        zstr->next_in = inbuf->get(inbuf->used());
+        size_t avail = inbuf->usedopt();
+        zstr->avail_in = avail;
+        zstr->next_in = const_cast<Bytef*>(
+            (const Bytef*)inbuf->get(avail));
     }
     else
     {
@@ -94,6 +106,7 @@ bool WvGzipEncoder::process(WvBuffer &outbuf, bool flush, bool finish)
     do
     {
         // process the next chunk
+        tmpbuf.zap();
         zstr->avail_out = tmpbuf.free();
 	zstr->next_out = tmpbuf.alloc(tmpbuf.free());
 	if (mode == Deflate)
@@ -103,17 +116,16 @@ bool WvGzipEncoder::process(WvBuffer &outbuf, bool flush, bool finish)
 	tmpbuf.unalloc(zstr->avail_out);
 
         // consume pending output
-	size_t tmpused = tmpbuf.used();
-	outbuf.put(tmpbuf.get(tmpused), tmpused);
-        tmpbuf.zap();
+        outbuf.merge(tmpbuf);
     } while (retval == Z_OK);
 
     if (retval == Z_STREAM_END)
         setfinished();
     else if (retval != Z_OK && retval != Z_BUF_ERROR)
     {
-        seterror("error %s during gzip %s", retval,
-            mode == Deflate ? "compression" : "decompression");
+        seterror("error %s during gzip %s: %s", retval,
+            mode == Deflate ? "compression" : "decompression",
+            zstr->msg ? zstr->msg : "unknown");
         return false;
     }
     return true;

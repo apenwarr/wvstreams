@@ -35,7 +35,7 @@ bool WvEVPMDDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     {
         if (len > EVPMD_BUFFER_SIZE)
             len = EVPMD_BUFFER_SIZE;
-        unsigned char *data = inbuf.get(len);
+        const unsigned char *data = inbuf.get(len);
         EVP_DigestUpdate(evpctx, data, len);
     }
     return true;

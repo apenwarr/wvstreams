@@ -80,7 +80,7 @@ void UniConfIniFile::load()
     char *cptr, *line;
     UniConf *h;
     WvFile f(filename, O_RDONLY);
-    WvBuffer b;
+    WvDynamicBuffer b;
     WvString section = "";
     size_t len;
     

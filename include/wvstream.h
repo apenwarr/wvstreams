@@ -513,7 +513,7 @@ protected:
     WvStreamCallback callfunc;
     void *userdata;
     int rwfd;
-    WvBuffer inbuf, outbuf;
+    WvDynamicBuffer inbuf, outbuf;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;

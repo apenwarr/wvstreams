@@ -15,7 +15,7 @@ public:
     virtual void execute();
 protected:
 
-    WvBuffer incomingbuff;
+    WvDynamicBuffer incomingbuff;
 private:
 };
 

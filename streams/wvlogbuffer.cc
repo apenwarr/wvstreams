@@ -55,7 +55,7 @@ void WvLogBuffer::_end_line()
 {
     if (last_level < WvLog::NUM_LOGLEVELS)
     {
-        current.put("", 1);  // terminating NULL
+        current.put('\0'); // terminating NULL
         Msg *lastmsg = new Msg(last_level, last_source->app,
             trim_string((char *)current.get(current.used())));
         

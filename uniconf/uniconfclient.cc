@@ -125,8 +125,8 @@ void UniConfClient::execute()
     
     if (!line) return;
 
-    WvBuffer fromline;
-    fromline.put(*line);
+    WvDynamicBuffer fromline;
+    fromline.putstr(*line);
     WvString *cmd = NULL;
     WvString *key = NULL;
     while (line)

@@ -14,7 +14,7 @@
  * IType specifies the input data type.
  * Functor specifies the functor type which must have an operator()
  * with a signature compatible with invocations of the form:
- *   IType data = ...;
+ *   const IType data = ...;
  *   OType result = func(data);
  *
  * The best way to use this monster is to subclass with friendly
@@ -40,12 +40,14 @@ protected:
         size_t count = inbuf.used() / sizeof(IType);
         if (count != 0)
         {
-            unsigned char *indataraw = inbuf.get(count * sizeof(IType));
+            const unsigned char *indataraw =
+                inbuf.get(count * sizeof(IType));
             unsigned char *outdataraw = outbuf.alloc(count * sizeof(OType));
             for (;;)
             {
                 // FIXME: possible unaligned data problems on some CPUs
-                IType *indata = reinterpret_cast<IType*>(indataraw);
+                const IType *indata =
+                    reinterpret_cast<const IType*>(indataraw);
                 OType *outdata = reinterpret_cast<OType*>(outdataraw);
                 *outdata = f(*indata);
                 if (--count == 0) break;

@@ -74,8 +74,7 @@ bool WvEncoder::reset()
 
 bool WvEncoder::flush(WvStringParm instr, WvBuffer &outbuf, bool finish)
 {
-    WvBuffer inbuf;
-    inbuf.put(instr);
+    WvConstStringBuffer inbuf(instr);
     bool success = encode(inbuf, outbuf, true, finish);
     return success;
 }
@@ -83,8 +82,8 @@ bool WvEncoder::flush(WvStringParm instr, WvBuffer &outbuf, bool finish)
 
 bool WvEncoder::flush(WvStringParm instr, WvString &outstr, bool finish)
 {
-    WvBuffer inbuf, outbuf;
-    inbuf.put(instr);
+    WvConstStringBuffer inbuf(instr);
+    WvDynamicBuffer outbuf;
     bool success = encode(inbuf, outbuf, true, finish);
     outstr.append(outbuf.getstr());
     return success;
@@ -94,7 +93,7 @@ bool WvEncoder::flush(WvStringParm instr, WvString &outstr, bool finish)
 bool WvEncoder::encode(WvBuffer &inbuf, WvString &outstr,
     bool flush, bool finish)
 {
-    WvBuffer outbuf;
+    WvDynamicBuffer outbuf;
     bool success = encode(inbuf, outbuf, flush, finish);
     outstr.append(outbuf.getstr());
     return success;
@@ -117,12 +116,17 @@ WvString WvEncoder::strflush(WvBuffer &inbuf, bool finish)
 }
 
 
+WvString WvEncoder::strflush(const void *inmem, size_t inlen, bool finish)
+{
+    WvConstInPlaceBuffer inbuf(inmem, inlen);
+    return strflush(inbuf, finish);
+}
+
+
 bool WvEncoder::flush(const void *inmem, size_t inlen,
     WvBuffer &outbuf, bool finish)
 {
-    // FIXME: optimize using in-place buffers someday
-    WvBuffer inbuf;
-    inbuf.put(inmem, inlen);
+    WvConstInPlaceBuffer inbuf(inmem, inlen);
     bool success = encode(inbuf, outbuf, true, finish);
     return success;
 }
@@ -131,9 +135,7 @@ bool WvEncoder::flush(const void *inmem, size_t inlen,
 bool WvEncoder::flush(const void *inmem, size_t inlen,
     void *outmem, size_t *outlen, bool finish)
 {
-    // FIXME: optimize using in-place buffers someday
-    WvBuffer inbuf;
-    inbuf.put(inmem, inlen);
+    WvConstInPlaceBuffer inbuf(inmem, inlen);
     return encode(inbuf, outmem, outlen, true, finish);
 }
 
@@ -141,19 +143,9 @@ bool WvEncoder::flush(const void *inmem, size_t inlen,
 bool WvEncoder::encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
     bool flush, bool finish)
 {
-    // FIXME: optimize using in-place buffers someday
-    WvBuffer outbuf;
+    WvInPlaceBuffer outbuf(outmem, 0, *outlen);
     bool success = encode(inbuf, outbuf, true, finish);
-    size_t used = outbuf.used();
-    if (used > *outlen)
-    {
-        // uhoh, overflow detected!
-        used = *outlen;
-        success = false;
-    }
-    else
-        *outlen = used;
-    memcpy(outmem, outbuf.get(used), used);
+    *outlen = outbuf.used();
     return success;
 }
 
@@ -161,8 +153,7 @@ bool WvEncoder::encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
 bool WvEncoder::flush(WvStringParm instr, void *outmem, size_t *outlen,
     bool finish)
 {
-    WvBuffer inbuf;
-    inbuf.put(instr);
+    WvConstStringBuffer inbuf(instr);
     return flush(inbuf, outmem, outlen, finish);
 }
 

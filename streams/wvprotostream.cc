@@ -75,7 +75,7 @@ WvString WvProtoStream::next_token_str()
 
 WvString WvProtoStream::token_remaining()
 {
-    tokbuf.put("", 1);
+    tokbuf.put('\0');
     return trim_string((char *)tokbuf.get(tokbuf.used()));
 }
 

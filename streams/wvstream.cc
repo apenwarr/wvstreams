@@ -280,7 +280,7 @@ size_t WvStream::write(WvBuffer &inbuf, size_t count)
     // for now, just wrap the older write function
     if (count > inbuf.used())
         count = inbuf.used();
-    unsigned char *buf = inbuf.get(count);
+    const unsigned char *buf = inbuf.get(count);
     size_t len = write(buf, count);
     inbuf.unget(count - len);
     return len;
@@ -396,7 +396,8 @@ size_t WvStream::uwrite(const void *buf, size_t count)
 
 // NOTE:  wait_msec is implemented wrong, but it has cleaner code this way
 // and can at least handle wait vs wait forever vs wait never.
-char *WvStream::getline(time_t wait_msec, char separator, int readahead)
+char *WvStream::getline(time_t wait_msec, char separator,
+    int readahead)
 {
     size_t i;
     unsigned char *buf;
@@ -410,7 +411,8 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 	// if there is a newline already, return its string.
 	if ((i = inbuf.strchr(separator)) > 0)
 	{
-	    buf = inbuf.get(i);
+            // the following cast is of dubious quality...
+	    buf = const_cast<unsigned char*>(inbuf.get(i));
 	    buf[i-1] = 0;
 	    return (char *)buf;
 	}

@@ -146,8 +146,7 @@ WvFastString wvtcl_unescape(WvStringParm s)
 WvString wvtcl_encode(WvStringList &l, const char *nasties,
 		      const char *splitchars)
 {
-    WvBuffer b;
-    
+    WvDynamicBuffer b;
     WvStringList::Iter i(l);
     for (i.rewind(); i.next(); )
     {
@@ -156,7 +155,7 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties,
 	    b.put(splitchars, 1);
 	
 	// escape and add the element
-	b.put(wvtcl_escape(*i, nasties));
+	b.putstr(wvtcl_escape(*i, nasties));
     }
     
     return b.getstr();
@@ -261,8 +260,7 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
     if (!_s)
 	return;
 
-    WvBuffer buf;
-    buf.put(_s);
+    WvConstStringBuffer buf(_s);
     while (buf.used() > 0)
     {
         WvString *appendword = wvtcl_getword(buf, splitchars, do_unescape);

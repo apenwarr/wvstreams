@@ -14,6 +14,7 @@
 
 #include "wvbuffer.h"
 #include "wvlinklist.h"
+#include "wvstring.h"
 
 /**
  * A base encoder class.
@@ -179,6 +180,7 @@ public:
         bool finish = false)
         { return encode(inbuf, outmem, outlen, true, finish); }
 
+    WvString strflush(const void *inmem, size_t inlen, bool finish = false);
     bool flush(WvStringParm instr, void *outmem, size_t *outlen,
         bool finish = false);
 
@@ -331,7 +333,7 @@ class WvEncoderChain : public WvEncoder
     {
     public:
         WvEncoder *enc;
-        WvBuffer out;
+        WvDynamicBuffer out;
         bool auto_free;
 
         WvEncoderChainElem(WvEncoder *enc, bool auto_free) :

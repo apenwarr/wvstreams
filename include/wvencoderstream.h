@@ -24,10 +24,10 @@
 class WvEncoderStream : public WvStreamClone
 {
     bool is_closing;
-    WvBuffer readinbuf;
-    WvBuffer readoutbuf;
-    WvBuffer writeinbuf;
-    WvBuffer writeoutbuf;
+    WvDynamicBuffer readinbuf;
+    WvDynamicBuffer readoutbuf;
+    WvDynamicBuffer writeinbuf;
+    WvDynamicBuffer writeoutbuf;
 public:
     // encoder chains for reading and writing respectively
     WvEncoderChain readchain;

@@ -63,8 +63,8 @@ bool WvCounterModeEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
         // XOR it with the data
         if (len > countersize)
             len = countersize;
-        unsigned char *crypt = keybuf.get(len);
-        unsigned char *datain = inbuf.get(len);
+        const unsigned char *crypt = keybuf.get(len);
+        const unsigned char *datain = inbuf.get(len);
         unsigned char *dataout = outbuf.alloc(len);
         while (len-- > 0)
             *(dataout++) = *(datain++) ^ *(crypt++);

@@ -85,12 +85,12 @@ char *non_breaking(char * string)
     if (string == NULL)
         return (NULL);
 
-    WvBuffer buf;
+    WvDynamicBuffer buf;
 
     while (*string)
     {
         if (isspace(*string))
-	    buf.put("&nbsp;");
+	    buf.putstr("&nbsp;");
         else 
 	    buf.putch(*string);
         string++;

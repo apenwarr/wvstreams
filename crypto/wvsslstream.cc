@@ -124,8 +124,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             // copy out cached data
             size_t amount = len < read_bouncebuf.used() ?
                 len : read_bouncebuf.used();
-            unsigned char *data = read_bouncebuf.get(amount);
-            memcpy(buf, data, amount);
+            read_bouncebuf.move(buf, amount);
 
             // locate next chunk in buffer
             len -= amount;
@@ -221,7 +220,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         
         // attempt to write
         size_t used = write_bouncebuf.used();
-        unsigned char *data = write_bouncebuf.get(used);
+        const unsigned char *data = write_bouncebuf.get(used);
         
         int result = SSL_write(ssl, data, used);
         if (result <= 0)

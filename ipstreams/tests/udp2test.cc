@@ -10,6 +10,8 @@
 #include "wvhashtable.h"
 #include <time.h>
 
+DeclareWvList(WvMiniBuffer);
+
 class WvUDPListener;
 
 class WvUDPConn : public WvStream

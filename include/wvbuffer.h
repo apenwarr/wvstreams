@@ -2,219 +2,148 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Declarations for WvMiniBuffer (a statically-sized data buffer with
- * get/put functions) and WvBuffer (a dynamically-sized buffer made from
- * a list of WvMiniBuffers).
+ * Specializations of the generic buffering API and a few new buffers.
  */
 #ifndef __WVBUFFER_H
 #define __WVBUFFER_H
-
-#include <string.h>
-#include "wvlinklist.h"
+ 
+#include "wvbufferbase.h"
 #include "wvstring.h"
-#include <string.h>
 
+/***** Specialization for 'unsigned char' buffers *****/
 
-class WvMiniBuffer
+class WvBufferBase<unsigned char> :
+    public WvBufferBaseCommonImpl<unsigned char>
 {
-    unsigned char *buffer, *head, *tail;
-    size_t size;
-    
 public:
-    WvMiniBuffer(size_t _size) : size(_size)
-	{ head = tail = buffer = new unsigned char[size]; }
-    ~WvMiniBuffer()
-        { delete[] buffer; }
-    
-    /*
-     * return number of bytes total/used/left in minibuffer. Note that
-     * used+left != total, because bytes cannot be "recycled" until we do a
-     * zap().  That is, the sequence put(15); get(15); causes used() to
-     * return the same value as before, and free() to be reduced by 15 bytes.
+    /**
+     * Copies a WvString into the buffer, excluding the null-terminator.
      */
-    size_t total() const
-        { return size; }
-    size_t used() const
-        { return tail - head; }
-    size_t free() const
-        { return buffer + size - tail; }
-    
-    /*
-     * remove all data from the minibuffer by setting head/tail to buffer
-     * start
-     */
-    void zap()
-       { head = tail = buffer; }
-    
-    
-    /*
-     * NO ERROR CHECKING in any of the following!!
-     */
-   
+    void putstr(WvStringParm str);
+    void putstr(WVSTRING_FORMAT_DECL)
+        { putstr(WvString(WVSTRING_FORMAT_CALL)); }
 
-    /*
-     * return a pointer to the next 'num' bytes in the minibuffer; valid
-     * until buffer is zapped.
-     */
-    unsigned char *get(size_t num)
-        { return (head += num) - num; }
-    
-    /*
-     * Reverse a previous get() operation, making the last 'num' bytes read
-     * available for a subsequent get().
-     */
-    void unget(size_t num)
-        { head -= num; }
-    
-    /*
-     * allocate the next 'num' bytes of the minibuffer (presumably for
-     * writing)
-     */
-    unsigned char *alloc(size_t num)
-        { return (tail += num) - num; }
-
-    /*
-     * Reverse a previous alloc() operation, making the last 'num' bytes
-     * allocated available for a subsequent alloc() or put().
-     */
-    void unalloc(size_t num)
-        { tail -= num; }
-    
-    /*
-     * copy the given data into the next 'num' bytes of the minibuffer.
-     */
-    void put(const void *data, size_t num)
-        { memcpy(alloc(num), data, num); }
-    
-    /*
-     * return the number of bytes that must be retrieved with get() in order
-     * to find the first instance of 'ch'.  A return value of 0 means that
-     * there is no 'ch' in the minibuffer.
-     */
-    size_t strchr(unsigned char ch) const;
-    size_t strchr(char ch) const
-	{ return strchr((unsigned char)ch); }
-    
-    /*
-     * Count the number of leading bytes that match any in chlist.
-     * If reverse==true, match bytes that are _not_ in chlist.
-     */
-    size_t match(const unsigned char chlist[], size_t numch,
-		   bool reverse = false) const;
-    size_t match(const char chlist[], bool reverse = false) const
-        { return match((const unsigned char *)chlist,
-			 strlen(chlist), reverse); }
-};
-
-
-DeclareWvList(WvMiniBuffer);
-
-
-class WvBuffer
-{
-    WvMiniBufferList list;
-    size_t inuse;
-    
-public:
-    WvBuffer()
-        { inuse = 0; }
-    
-    size_t used() const
-        { return inuse; }
-
-    /*
-     * Clear the entire buffer.
-     */
-    void zap();
-    
-    /*
-     * Return the next 'num' bytes in the buffer.  Pointer is valid until
-     * next zap() or get().  Returns NULL if there are not enough bytes
-     * in the buffer.
-     */
-    unsigned char *get(size_t num);
-    
-    /*
-     * Undo all or part of the previous get().  You can unget() up to the
-     * number of bytes you did in the last get(), assuming you have not done
-     * any other buffer operations in the meantime.
-     * Don't try to unget under other circumstances, however.
-     */
-    void unget(size_t num);
-    
-    /*
-     * allocate 'num' bytes in the buffer and return a pointer to its start.
-     * Pointer is valid until next zap() or get().
-     */
-    unsigned char *alloc(size_t num);
-
-    /*
-     * unallocate the last 'num' bytes in the buffer that were previously
-     * allocated using alloc() or put().  They are then available for a
-     * subsequent alloc() or put().
-     */
-    void unalloc(size_t num);
-    
-    /* 
-     * copy 'buf' into the next 'num' bytes of buffer.
-     */
-    void put(const void *buf, size_t num);
-    
-    /*
-     * copy a WvString into the buffer, not including the terminating nul.
-     */
-    void put(WvStringParm str);
-    
-    /*
-     * add a single character to the buffer.
-     */
-    void putch(int ch)
-        { *alloc(1) = ch; }
-
-    /*
-     * returns a single character from the buffer.
-     */
-    int getch()
-        { return int(*get(1)); }
-    
-    /*
-     * _move_ (not copy) the contents of another WvBuffer into this buffer.
-     * This is done by physically taking the WvMiniBuffer objects from one
-     * buffer and adding them at the end of this one.
-     */
-    void merge(WvBuffer &buf);
-    
-    /*
-     * Return the entire buffer as a nul-terminated WvString.  If the buffer
-     * contains nul characters, they'll seem to terinate the string.
-     * 
-     * Warning: this empties the buffer, like get() does!
+    /**
+     * Returns the entire buffer as a null-terminated WvString.
+     * If the buffer contains null characters, they will seem to
+     *   terminate the string.
+     * The returned string is only valid until the next non-const
+     *   buffer member is called.  Copy the string if you need to
+     *   keep it for longer than that.
+     *
+     * After this operation, ungettable() >= length of the string.
      */
     WvFastString getstr();
 
-    /*
-     * return the number of bytes that would have to be read to find the
-     * first character 'ch', or zero if 'ch' is not in the buffer.
+    /**
+     * Get/put characters as integer values.
      */
-    size_t strchr(unsigned char ch);
-    size_t strchr(char ch)
-        { return strchr((unsigned char)ch); }
-
-    /*
-     * return the number of leading bytes that match any in chlist.
-     * If reverse==true, match bytes that are NOT in chlist.
+    inline int getch() { return int(get()); }
+    inline void putch(int ch) { put((unsigned char)ch); }
+    
+    /**
+     * Returns the number of bytes that would have to be read to find
+     * the first character 'ch', or zero if 'ch' is not in the buffer.
      */
-    size_t match(const unsigned char chlist[], size_t numch,
-		   bool reverse = false);
-    size_t match(const char chlist[], bool reverse = false)
-        { return match((const unsigned char *)chlist, strlen(chlist),
-			 reverse); }
+    size_t strchr(int ch);
 
-    size_t num_of_bufs()
-        { return list.count(); }
+    /**
+     * Returns the number of leading bytes that match any in the list.
+     * If reverse == true, returns the number of leading bytes that do NOT match
+     *   any in the list.
+     */
+    size_t match(const void *bytelist, size_t numbytes,
+        bool reverse = false);
+    size_t match(const char *chlist, bool reverse = false)
+        { return match(chlist, strlen(chlist), reverse); }
 
-private:
-    WvMiniBuffer *append_new_buffer(size_t minsize);
+    /**
+     * Overload put() and move() to accept void pointers.
+     */
+    inline void put(unsigned char value)
+        { WvBufferBaseCommonImpl<unsigned char>::put(value); }
+    inline void put(const void *data, size_t count)
+        { WvBufferBaseCommonImpl<unsigned char>::put(
+            (const unsigned char*)data, count); }
+    inline void move(void *data, size_t count)
+        { WvBufferBaseCommonImpl<unsigned char>::move(
+            (unsigned char*)data, count); }
+};
+
+
+/**
+ * Declarations for some commonly used raw byte memory buffers.
+ */
+class WvInPlaceBuffer : public WvInPlaceBufferBase<unsigned char>
+{
+public:
+    inline WvInPlaceBuffer(void *_data, size_t _avail, size_t _size,
+        bool _autofree = false) :
+        WvInPlaceBufferBase<unsigned char>((unsigned char*)_data,
+            _avail, _size, _autofree) { }
+    inline WvInPlaceBuffer(size_t _size) :
+        WvInPlaceBufferBase<unsigned char>(_size) { }
+    inline WvInPlaceBuffer() :
+        WvInPlaceBufferBase<unsigned char>() { }
+    inline void reset(void *_data, size_t _avail, size_t _size,
+        bool _autofree = false)
+    {
+        WvInPlaceBufferBase<unsigned char>::reset(
+            (unsigned char*)_data, _avail, _size, _autofree);
+    }
+};
+typedef WvInPlaceBuffer WvMiniBuffer;
+
+class WvConstInPlaceBuffer : public WvConstInPlaceBufferBase<unsigned char>
+{
+public:
+    inline WvConstInPlaceBuffer(const void *_data, size_t _avail) :
+        WvConstInPlaceBufferBase<unsigned char>(
+            (const unsigned char*)_data, _avail) { }
+    inline WvConstInPlaceBuffer() :
+        WvConstInPlaceBufferBase<unsigned char>() { }
+    inline void reset(const void *_data, size_t _avail)
+    {
+        WvConstInPlaceBufferBase<unsigned char>::reset(
+            (const unsigned char*)_data, _avail);
+    }
+};
+
+typedef WvBufferBase<unsigned char> WvBuffer;
+
+typedef WvDynamicBufferBase<unsigned char> WvDynamicBuffer;
+
+typedef WvEmptyBufferBase<unsigned char> WvEmptyBuffer;
+
+
+/***** A read-only buffer backed by a constant WvString *****/
+
+class WvConstStringBuffer : public WvConstInPlaceBuffer
+{
+    WvString xstr;
+
+public:
+    /**
+     * Creates a new buffer backed by a constant string.
+     *   str - the string to use
+     */
+    WvConstStringBuffer(WvStringParm _str);
+
+    /**
+     * Creates a new empty buffer.
+     */
+    WvConstStringBuffer();
+
+    /**
+     * Resets the buffer contents to a new string.
+     */
+    void reset(WvStringParm _str);
+
+    /**
+     * Returns the string.
+     */
+    WvString str()
+        { return xstr; }
 };
 
 

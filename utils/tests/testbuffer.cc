@@ -10,10 +10,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//#define DEBUG_STRESS
+
 int main()
 {
     WvMiniBuffer b(1024);
-    WvBuffer bb;
+    WvDynamicBuffer bb;
     char *s, xx[1024];
     size_t in, i, max, total;
     
@@ -35,6 +37,10 @@ int main()
     printf("E s: %s\n", s);
     
     printf("F %20u used, %u free, offset %d/%d\n",
+	   b.used(), b.free(), b.strchr('c'), b.strchr((unsigned char)'c'));
+           
+    b.zap();
+    printf("G %20u used, %u free, offset %d/%d\n",
 	   b.used(), b.free(), b.strchr('c'), b.strchr((unsigned char)'c'));
     printf("\n");
     
@@ -91,7 +97,9 @@ int main()
 	i = random() % sizeof(xx);
 	s = (char *)bb.alloc(i);
 	memcpy(s, xx, i);
-        //fprintf(stderr, "alloc(%d)\n", i);
+#ifdef DEBUG_STRESS
+        fprintf(stderr, "alloc(%d)\n", i);
+#endif
 	in += i;
 	total += i;
         size_t lastalloc = i;
@@ -99,19 +107,25 @@ int main()
 	i = random() % sizeof(xx);
 	if (i > lastalloc)
 	    i = lastalloc;
-        //fprintf(stderr, "unalloc(%d)\n", i);
+#ifdef DEBUG_STRESS
+        fprintf(stderr, "unalloc(%d)\n", i);
+#endif
 	bb.unalloc(i);
 	in -= i;
 	
 	i = random() % sizeof(xx);
 	if (i > in)
 	    i = in;
-        //fprintf(stderr, "get(%d)\n", i);
+#ifdef DEBUG_STRESS
+        fprintf(stderr, "get(%d)\n", i);
+#endif
 	bb.get(i);
 	in -= i;
 	
 	i = random() % sizeof(xx);
-        //fprintf(stderr, "put(%d)\n", i);
+#ifdef DEBUG_STRESS
+        fprintf(stderr, "put(%d)\n", i);
+#endif
 	bb.put(xx, i);
 	in += i;
 	total += i;
@@ -119,7 +133,9 @@ int main()
 	i = random() % sizeof(xx);
 	if (i > in)
 	    i = in;
-        //fprintf(stderr, "get(%d)\n", i);
+#ifdef DEBUG_STRESS
+        fprintf(stderr, "get(%d)\n", i);
+#endif
 	bb.get(i);
 	in -= i;
         size_t lastput = i;
@@ -127,7 +143,9 @@ int main()
 	i = random() % sizeof(xx);
 	if (i > lastput)
 	    i = lastput;
-        //fprintf(stderr, "unget(%d)\n", i);
+#ifdef DEBUG_STRESS
+        fprintf(stderr, "unget(%d)\n", i);
+#endif
 	bb.unget(i);
 	in += i;
         
@@ -136,10 +154,11 @@ int main()
 	{
 	    max = bb.used();
 	    printf("New max: %u bytes in %d minibuffer(s) after %u bytes\n",
-		   max, bb.num_of_bufs(), total);
+		   max, bb.numbuffers(), total);
 	}
-	
+#ifdef DEBUG_STRESS
 	fprintf(stderr, "[%6d]", in);
+#endif
     }
 
     return 0;

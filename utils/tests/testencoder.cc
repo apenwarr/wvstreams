@@ -3,54 +3,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
-
-
-class WvXOR : public WvEncoder
-{
-    unsigned char *key;
-    size_t keylen;
-    int off;
-    
-public:
-    WvXOR(const void *_key, size_t _keylen);
-    virtual ~WvXOR();
-    
-protected:
-    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
-};
-
-
-WvXOR::WvXOR(const void *_key, size_t _keylen)
-{
-    keylen = _keylen;
-    key = new unsigned char[keylen];
-    memcpy(key, _key, keylen);
-    off = 0;
-}
-
-
-WvXOR::~WvXOR()
-{
-    delete[] key;
-}
-
-
-bool WvXOR::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
-{
-    size_t len = inbuf.used();
-    unsigned char *data = inbuf.get(len);
-    unsigned char *out = outbuf.alloc(len);
-
-    while (len > 0)
-    {
-	*out++ = (*data++) ^ key[off++];
-	off %= keylen;
-	len--;
-    }
-    
-    return true;
-}
-
+#include "wvxor.h"
 
 extern char *optarg;
 
@@ -113,7 +66,7 @@ int main(int argc, char **argv)
 	enc = new WvGzipEncoder(WvGzipEncoder::Inflate);
 	break;
     case XOR:
-	enc = new WvXOR(xor_key, strlen(xor_key));
+	enc = new WvXOREncoder(xor_key, strlen(xor_key));
 	break;
 	
     case NoMode:
@@ -124,13 +77,13 @@ int main(int argc, char **argv)
     
     assert(enc);
     
-    WvBuffer inbuf;
-    WvBuffer outbuf;
+    WvDynamicBuffer inbuf;
+    WvDynamicBuffer outbuf;
     
     while (enc->isok())
     {
         size_t rlen = read(0, buf, sizeof(buf));
-        fprintf(stderr, "[read %d bytes]\n", rlen);
+        //fprintf(stderr, "[read %d bytes]\n", rlen);
         if (rlen > 0)
         {
             inbuf.put(buf, rlen);
@@ -138,12 +91,13 @@ int main(int argc, char **argv)
         }
         else
         {
+            enc->flush(inbuf, outbuf, true);
             enc->finish(outbuf);
         }
         
 	size_t wlen = outbuf.used();
 	write(1, outbuf.get(wlen), wlen);
-	fprintf(stderr, "[wrote %d bytes]\n", wlen);
+	//fprintf(stderr, "[wrote %d bytes]\n", wlen);
 	
 	if (rlen <= 0)
 	    break;
