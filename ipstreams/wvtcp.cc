@@ -14,22 +14,6 @@
 WvStreamList WvTCPListener::all_listeners;
 
 
-void nice_tcpopts(int fd)
-{
-    int value;
-    
-    fcntl(fd, F_SETFD, 1);
-    fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
-
-    value = 1;
-    setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
-    setsockopt(fd, SOL_TCP, TCP_NODELAY, &value, sizeof(value));
-    
-    value = IPTOS_LOWDELAY;
-    setsockopt(fd, SOL_IP, IP_TOS, &value, sizeof(value));
-}
-
-
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 {
     remaddr = _remaddr;
@@ -47,7 +31,7 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
     resolved = true;
     connected = true;
     
-    nice_tcpopts(fd);
+    nice_tcpopts();
 
     if (fd < 0)
 	seterr(errno);
@@ -78,6 +62,28 @@ WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
 }
 
 
+void WvTCPConn::nice_tcpopts()
+{
+    fcntl(fd, F_SETFD, 1);
+    fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
+
+    int value = 1;
+    setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+}
+
+
+void WvTCPConn::low_delay()
+{
+    int value;
+    
+    value = 1;
+    setsockopt(fd, SOL_TCP, TCP_NODELAY, &value, sizeof(value));
+    
+    value = IPTOS_LOWDELAY;
+    setsockopt(fd, SOL_IP, IP_TOS, &value, sizeof(value));
+}
+
+
 void WvTCPConn::do_connect()
 {
     sockaddr *sa;
@@ -89,7 +95,7 @@ void WvTCPConn::do_connect()
 	return;
     }
     
-    nice_tcpopts(fd);
+    nice_tcpopts();
     
     sa = remaddr.sockaddr();
     if (connect(fd, sa, remaddr.sockaddr_len()) < 0

@@ -40,6 +40,10 @@ public:
     // resolve the hostname, then connect a new socket
     WvTCPConn(const WvString &_hostname, __u16 _port = 0);
     
+    // some functions to set of a TCP socket the way we like
+    void nice_tcpopts();
+    void low_delay();
+    
     // the local address of this socket (ie. from getsockname())
     // really useful only for transparent proxies, but always available.
     // may be 0.0.0.0 if we did not bind explicitly!
