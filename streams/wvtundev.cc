@@ -34,10 +34,10 @@ void WvTunDev::init(const WvIPNet &addr)
 
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(ifr));
-    ifr.ifr_flags = IFF_NO_PI;
-    ifr.ifr_flags |= IFF_TUN;
+    ifr.ifr_flags = IFF_NO_PI | IFF_TUN;
 
-    if (ioctl(rwfd, TUNSETIFF, (void *) &ifr) < 0)
+    if (ioctl(rwfd, TUNSETIFF, (void *) &ifr) < 0 ||
+        ioctl(rwfd, TUNSETNOCSUM, 1) < 0)
     {
         log("Could not initialize the interface: %s\n", strerror(errno));
         rwfd = -1;
