@@ -143,23 +143,7 @@ bool WvBase64Decoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
                 
             case 64: // padding
                 // strip out any remaining padding
-                // we lenient in that we do not track how much padding we skip
-                switch (state)
-                {
-                    case PAD:
-                        continue;
-                    case ATBIT0:
-                        break;
-                    case ATBIT2:
-                        out.putch(bits << 2);
-                        break;
-                    case ATBIT4:
-                        out.putch(bits << 4);
-                        break;
-                    case ATBIT6:
-                        out.putch(bits << 6);
-                        break;
-                }
+                // we are lenient in that we do not track how much padding we skip
                 setfinished();
                 state = PAD;
                 break;
