@@ -15,7 +15,7 @@ IUniConfGen::~IUniConfGen()
 
 /***** UniConfGen *****/
 
-XUUID_MAP_BEGIN(IUniConfGen)
+XUUID_MAP_BEGIN(UniConfGen)
   XUUID_MAP_ENTRY(IObject)
   XUUID_MAP_ENTRY(IUniConfGen)
   XUUID_MAP_END

@@ -156,8 +156,10 @@ DEFINE_XIID(IUniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
  * and storing keys and values using different access methods.
  *
  */
-class UniConfGen : public GenericComponent<IUniConfGen>
+class UniConfGen : public IUniConfGen
 {
+    IMPLEMENT_IOBJECT(UniConfGen);
+
     // These fields are deliberately hidden to encourage use of the
     // special notification members
 

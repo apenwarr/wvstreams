@@ -65,7 +65,7 @@ public:
     typedef T *CreateFunc(WvStringParm parms, IObject *obj, void *userdata);
     
     WvMoniker(WvStringParm _id, CreateFunc *_func)
-	: WvMonikerBase(XIID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
+	: WvMonikerBase(XPLC_IID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
     { 
 	// this looks pointless, but it ensures that T* can be safely,
 	// automatically downcast to IObject*.  That means T is really derived
@@ -104,7 +104,7 @@ void *wvcreate(const XUUID &iid,
 template <class T>
 inline T *wvcreate(WvStringParm s, IObject *obj = NULL, void *userdata = NULL)
 {
-    return (T *)(wvcreate(XIID<T>::get(), s, obj, userdata));
+    return (T *)(wvcreate(XPLC_IID<T>::get(), s, obj, userdata));
 }
 
 

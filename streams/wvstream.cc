@@ -41,7 +41,7 @@ using std::max;
 
 WvStream *WvStream::globalstream = NULL;
 
-XUUID_MAP_BEGIN(IWvStream)
+XUUID_MAP_BEGIN(WvStream)
   XUUID_MAP_ENTRY(IObject)
   XUUID_MAP_ENTRY(IWvStream)
   XUUID_MAP_END
