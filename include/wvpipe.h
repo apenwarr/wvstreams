@@ -103,6 +103,9 @@ public:
 
     // returns pid
     int getpid() const { return proc.pid; };
+
+    // callback to ignore everything.  see comment in wvpipe.cc.
+    static void ignore_read(WvStream& s, void *userdata);
 };
 
 #endif // __WVPIPE_H
