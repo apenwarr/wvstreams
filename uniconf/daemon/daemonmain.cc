@@ -90,20 +90,19 @@ int main(int argc, char **argv)
     {
         if (!strcmp(argv[i],"-mount") && i + 2 < argc)
         {
+            if (argc < i + 3) usage();
             mountattempt = true;
             trymount(cfg, argv[i + 1], argv[i + 2]);
             i += 2;
         }
         else if (!strcmp(argv[i], "-d"))
         {
+            if (argc < i + 2) usage();
             logcons.level(findloglevel(argv[i + 1]));
             i += 1;
         }
         else
-        {
             usage();
-            return 1;
-        }
     }
     if (! mountattempt)
         trymount(cfg, UniConfKey::EMPTY, DEFAULT_CONFIG_FILE);
