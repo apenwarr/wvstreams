@@ -5,7 +5,12 @@
 #
 log()
 {
-	echo wvcrashread: "$@" >&2
+	( echo; echo wvcrashread: "$@" ) >&2
+}
+
+debug()
+{
+	[ -n "$DEBUG" ] && echo "$@" | cat -n >&2
 }
 
 agdb()
@@ -49,6 +54,7 @@ if [ "$line" != "Backtrace:" ]; then
 	exit 3
 fi
 
+log "Stage SIMPLE..."
 SIMPLE=$(perl -ne '
 	# parse the weird-looking output into four simple columns
 	if ($_ =~ /^(.*)\((.*)\+(.*)\)\[(.*)\]/)
@@ -59,10 +65,13 @@ SIMPLE=$(perl -ne '
 	elsif ($_ =~ /^(.*)\[(.*)\]/)
 	{
 		my ($bin, $abs) = ($1, $2);
+		if ($bin eq "") { $bin = "." }
 		print "$bin . 0x0 $abs\n";
 	}
 ')
+debug "$SIMPLE"
 
+log "Stage GDBSCRIPT..."
 GDBSCRIPT=$(echo "$SIMPLE" | (
 	while read bin func ofs abs junk; do
 		echo "echo $bin $func $ofs\n"
@@ -73,28 +82,36 @@ GDBSCRIPT=$(echo "$SIMPLE" | (
 		fi
 	done
 ))
+debug "$GDBSCRIPT"
 
+log "Stage SIMPLE2..."
 SIMPLE2=$(echo "$GDBSCRIPT" | agdb "$binary" |
 perl -ne '
 	# parse the interleaved column/gdb output
 	my ($bin, $func, $ofs) = split;
 	my $addr = "0";
 	$_ = <>;
-	if ($_ =~ /^Symbol "(.*)" is .* (0x[0-9A-Za-z]+)/)
+	if ($_ =~ /^Symbol "(.*)" is .* (0x[0-9A-Fa-f]+)/)
 	{
 		$func = $1;
 		$addr = $2;
+		
+		$func =~ s/\s//g;
 	}
 	print "$bin $func $addr+$ofs\n";
 ')
+debug "$SIMPLE2"
 
+log "Stage GDBSCRIPT2..."
 GDBSCRIPT2=$(echo "$SIMPLE2" | (
 	while read bin func addr; do
 		echo "echo $bin $func $addr\n"
 		echo "info line *$addr"
 	done
 ))
+debug "$GDBSCRIPT2"
 
+log "Stage FINAL..."
 echo "$GDBSCRIPT2" | agdb "$binary" |
 perl -ne '
 	# parse the interleaved column/gdb output
