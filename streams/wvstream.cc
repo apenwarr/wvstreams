@@ -239,22 +239,6 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
 }
 
 
-size_t WvStream::continue_read(time_t wait_msec, WvBuf &outbuf, size_t count)
-{
-    // for now, just wrap the older read function
-    size_t free = outbuf.free();
-    if (count > free)
-        count = free;
-    unsigned char *buf = outbuf.alloc(count);
-    
-    // call the non-WvBuf continue_read
-    size_t len = continue_read(wait_msec, buf, count);
-    
-    outbuf.unalloc(count - len);
-    return len;
-}
-
-
 size_t WvStream::write(WvBuf &inbuf, size_t count)
 {
     // for now, just wrap the older write function
@@ -304,43 +288,6 @@ size_t WvStream::read(void *buf, size_t count)
     TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
     maybe_autoclose();
     return bufu;
-}
-
-
-size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
-{
-    assert(uses_continue_select);
-
-    if (!count)
-        return 0;
-
-    // FIXME: continue_select also uses the alarm, so this doesn't work.
-    if (wait_msec >= 0)
-        alarm(wait_msec);
-
-    queuemin(count);
-
-    int got = 0;
-
-    while (isok())
-    {
-	WvStream::execute();
-        if (continue_select(-1))
-        {
-	    if ((got = read(buf, count)) != 0)
-		break;
-	    if (alarm_was_ticking) 
-		break;
-        }
-    }
-
-    if (wait_msec >= 0)
-        alarm(-1);
-
-    queuemin(0);
-    
-    WvStream::execute();
-    return got;
 }
 
 

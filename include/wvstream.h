@@ -93,24 +93,6 @@ public:
     virtual size_t read(void *buf, size_t count);
 
     /**
-     * Read exactly count bytes from the stream.
-     *
-     * Notes:
-     *      must be using continue_select to use this function.
-     *      if timeout strikes or !isok() before count bytes could be read,
-     *          nothing is read and 0 is returned.
-     *      resets queuemin to 0.
-     * 
-     * FIXME: yes, that means if the stream closes, continue_read might not
-     * read the last bit of data.  You can use read() for that if you want.
-     */
-    virtual size_t continue_read(time_t wait_msec, void *buf, size_t count);
-
-    /** Read exactly count bytes from the stream, using continue_select(). */
-    virtual size_t continue_read(time_t wait_msec, WvBuf &outbuf,
-				 size_t count);
-
-    /**
      * Reads up to 'count' bytes of data from the stream into the buffer.
      * Returns the actual amount read.
      *

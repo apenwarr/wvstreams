@@ -519,57 +519,6 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
 }
 
 
-static void cont_read_cb(WvStream &s, void *userdata)
-{
-    int num = 0;
-    char *line;
-    
-    while (s.isok())
-    {
-	line = s.getline(-1);
-	WVPASS(line);
-	
-	if (!line || !strcmp(line, "end"))
-	    break;
-	WVPASS(++num == atoi(line));
-    }
-    
-    char buf[20];
-    size_t len = s.continue_read(-1, buf, sizeof(buf));
-    WVPASS(len == sizeof(buf));
-}
-
-
-// continue_read() and getline() auto-continuation
-WVTEST_MAIN("continue_read and continuing getline")
-{
-    WvStream s;
-    s.uses_continue_select = true;
-    s.setcallback(cont_read_cb, NULL);
-    
-    s.runonce(0);
-    s.inbuf.putstr("1\n");
-    s.inbuf.putstr("2\n");
-    s.inbuf.putstr("3\n");
-    s.runonce(0);
-    s.runonce(0);
-    s.inbuf.putstr("4");
-    s.runonce(10000);
-    s.inbuf.putstr("\n");
-    s.inbuf.putstr("end\n");
-    s.runonce(0);
-    s.runonce(0);
-    s.inbuf.putstr("1234567890");
-    s.runonce(0);
-    s.inbuf.putstr("123456789");
-    s.runonce(0);
-    s.inbuf.putstr("00");
-    s.runonce(0);
-    WVPASS(s.inbuf.used() == 1);
-    s.terminate_continue_select();
-}
-
-
 static void alarmcall(WvStream &s, void *userdata)
 {
     WVPASS(s.alarm_was_ticking);
