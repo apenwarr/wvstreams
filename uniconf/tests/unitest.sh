@@ -10,7 +10,7 @@ PATH=".:$PATH"
 
 RUNWHICH="$1"
 
-# do you want to test the uniconfdaemon, or just straight ini files?
+# do you want to test the uniconfd, or just straight ini files?
 [ -z "$DAEMON" ] && DAEMON=0
 
 # don't play with these
@@ -22,8 +22,8 @@ IFS="
 
 RECONFIG()
 {
-    killall -q uniconfdaemon
-    killall -q -9 uniconfdaemon
+    killall -q uniconfd
+    killall -q -9 uniconfd
     
     XDAEMON="$DAEMON"
     if [ "$1" = "--daemon" ]; then
@@ -35,7 +35,7 @@ RECONFIG()
         UNICONF="$@"
     else
         echo "Starting UniConfDaemon."
-	../daemon/uniconfdaemon -ssl 0 -mount / "$@"
+	../daemon/uniconfd -ssl 0 -mount / "$@"
 	UNICONF="tcp:localhost:4111"
     fi
 }

@@ -20,6 +20,10 @@ static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 static WvMoniker<IUniConfGen> reg("ini", creator);
 
 
+// forward declarations
+static void printkey(WvStream &file, const UniConfKey &_key,
+		     WvStringParm _value);
+
 
 /***** UniIniGen *****/
 
@@ -109,9 +113,9 @@ bool UniIniGen::refresh()
             {
                 name = wvtcl_unescape(trim_string(name.edit()));
 		
-                UniConfKey key(name);
-                if (!key.isempty())
+                if (!!name)
                 {
+		    UniConfKey key(name);
                     key.prepend(section);
 		    
                     WvString value = line.getstr();
@@ -214,8 +218,18 @@ void UniIniGen::commit()
     if (!dirty) return;
 
     WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
-    assert(root);
-    save(file, *root);
+    
+    if (root) // the tree may be empty, so NULL root is okay
+    {
+	// the root itself is a special case, since it's not in a section,
+	// and it's never NULL (so we don't need to write it if it's just
+	// blank)
+	if (!!root->value())
+	    printkey(file, root->key(), root->value());
+	
+	// do all subkeys
+	save(file, *root);
+    }
 
     file.close();
     if (file.geterr())
@@ -284,6 +298,8 @@ static void printkey(WvStream &file, const UniConfKey &_key,
     
     if (absolutely_needs_escape(_key, "\r\n[]=#\""))
 	key = wvtcl_escape(_key, "\r\n\t []=#");
+    else if (_key == "")
+	key = "/";
     else
 	key = _key;
     

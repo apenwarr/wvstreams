@@ -101,6 +101,7 @@ UniHashTreeBase *UniHashTreeBase::_find(const UniConfKey &key) const
     return const_cast<UniHashTreeBase*>(node);
 }
 
+
 UniHashTreeBase *UniHashTreeBase::_findchild(const UniConfKey &key) const
 {
     if (key.isempty())
@@ -115,6 +116,7 @@ bool UniHashTreeBase::haschildren() const
     return xchildren && !xchildren->isempty();
 }
 
+
 void UniHashTreeBase::link(UniHashTreeBase *node)
 {
     if (!xchildren)
@@ -122,6 +124,7 @@ void UniHashTreeBase::link(UniHashTreeBase *node)
 
     xchildren->add(node);
 }
+
 
 void UniHashTreeBase::unlink(UniHashTreeBase *node)
 {

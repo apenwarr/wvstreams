@@ -46,7 +46,8 @@ ChangeLog:
 	cvs2cl --utc
 
 define wild_clean
-	@list=`echo $(wildcard $(1))` ; test -z "$${list}" || sh -cx "rm -rf $${list}"
+	@list=`echo $(wildcard $(1))`; \
+		test -z "$${list}" || sh -cx "rm -rf $${list}"
 endef
 
 realclean: distclean
@@ -57,7 +58,9 @@ distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
 
 clean: depend dust
-	$(call wild_clean,$(TARGETS) $(GARBAGE) $(TESTS) $(shell find . -name '*.o' -o -name '*.moc'))
+	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
+		$(GARBAGE) $(TESTS) \
+		$(shell find . -name '*.o' -o -name '*.moc'))
 
 depend:
 	$(call wild_clean,$(shell find . -name '.*.d'))

@@ -22,6 +22,16 @@ static int childcount(UniConf cfg)
 }
 
 
+WVTEST_MAIN("commit-without-refresh")
+{
+    UniConfRoot cfg("ini:/dev/does-not-exist");
+    cfg.commit();
+    cfg.refresh();
+    cfg.commit();
+    WVFAIL(cfg.haschildren());
+}
+
+
 WVTEST_MAIN("parsing1")
 {
     inigen("[S1]\n"
@@ -54,6 +64,15 @@ WVTEST_MAIN("parsing2")
 }
 
 
+WVTEST_MAIN("parsing3")
+{
+    inigen("/ = foo\n");
+    UniConfRoot cfg("ini:tmp.ini");
+    WVPASSEQ(cfg.get(), "foo");
+    WVFAIL(cfg.haschildren());
+}
+
+
 static void inicmp(WvStringParm key, WvStringParm val, WvStringParm content)
 {
     inigen("");
@@ -70,6 +89,9 @@ static void inicmp(WvStringParm key, WvStringParm val, WvStringParm content)
 
 WVTEST_MAIN("writing")
 {
+    inicmp("/", "test",
+	   "/ = test\n");
+    
     inicmp("x/y", "z",
 	   "\n[x]\ny = z\n");
     

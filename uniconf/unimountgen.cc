@@ -55,13 +55,13 @@ bool UniMountGen::haschildren(const UniConfKey &key)
     MountList::Iter i(mounts);
     for (i.rewind(); i.next(); )
     {
-        if (key.suborsame(i->key))
-            return true;
-
 	// the list is sorted innermost-first.  So if we find the key
 	// we started with, we've finished searching all children of it.
         if (i->gen == found->gen)
             break;
+
+        if (key.suborsame(i->key))
+            return true;
     }
 
     return false;

@@ -11,6 +11,7 @@
 #include "wvx509.h"
 #include "uniconfroot.h"
 #include "strutils.h"
+#include "wvfileutils.h"
 
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
@@ -159,11 +160,11 @@ int main(int argc, char **argv)
     globdaemon = new UniConfDaemon(cfg, needauth);
     
     // FIXME: THIS IS NOT SAFE!
-    system("mkdir -p /tmp/uniconf");
-    system("rm -f /tmp/uniconf/uniconfsocket");
-    if (! globdaemon->setupunixsocket("/tmp/uniconf/uniconfsocket"))
+    mkdirp("/tmp/uniconf");
+    ::unlink("/tmp/uniconf/uniconfsocket");
+    if (!globdaemon->setupunixsocket("/tmp/uniconf/uniconfsocket"))
         exit(1);
-    if (port && ! globdaemon->setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
+    if (port && !globdaemon->setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
         exit(1);
 
     if (sslport)
@@ -173,34 +174,35 @@ int main(int argc, char **argv)
         if (!x509cert->isok())
         {
             WvLog log("uniconfdaemon", WvLog::Error);
-            log("Couldn't generate X509 certificate: SSL not available\n");
+            log("Couldn't generate X509 certificate: SSL not available.\n");
         }
-        else if (sslport && !globdaemon->setupsslsocket(WvIPPortAddr("0.0.0.0", sslport), x509cert))
+        else if (sslport && !globdaemon->setupsslsocket(
+				WvIPPortAddr("0.0.0.0", sslport), x509cert))
             exit(1);
     }
     
     // since we're a daemon, we should now background ourselves.
     pid_t pid = fork();
-    if (pid <= 0) // child or failed
-    {
-	while (globdaemon->isok())
-	{
-	    if (globdaemon->select(5000))
-		globdaemon->callback();
-	    else
-	    {
-		// FIXME: do this *exactly* every so x seconds
-		cfg.commit();
-		cfg.refresh();
-	    }
-	}
-	globdaemon->close();
-	delete globdaemon;
-    }
-    else // parent
-    {
+    if (pid > 0) // parent
 	_exit(0);
+    
+    time_t now, last = 0;
+	
+    // otherwise, fork failed or we're the child
+    while (globdaemon->isok())
+    {
+	globdaemon->runonce(5000);
+	
+	now = time(NULL);
+	if (now - last >= 5)
+	{
+	    cfg.commit();
+	    cfg.refresh();
+	    last = now;
+	}
     }
+    globdaemon->close();
+    delete globdaemon;
     
     return 0;
 }

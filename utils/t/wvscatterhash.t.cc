@@ -4,7 +4,22 @@
 #include "wvstring.h"
 
 
-DeclareWvScatterTable2 (TestScatter, WvString);
+DeclareWvScatterTable2(TestScatter, WvString);
+
+WVTEST_MAIN("scatterhash basics")
+{
+    TestScatter h;
+    WVPASS(h.isempty());
+    WVFAIL(h.count());
+    
+    WvString s("foo");
+    
+    h.add(new WvString(s), true);
+    WVPASSEQ(h.count(), 1);
+    h.remove(&s); // not the same object we added, but compares equal
+    WVPASS(h.isempty());
+}
+
 
 WVTEST_MAIN("scatter hashing count, add, remove")
 {
