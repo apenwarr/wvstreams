@@ -20,11 +20,11 @@ public:
     
     HelloGen(WvStringParm _def = "Hello World")
 	: defstr(_def) { count = 0; }
-    virtual void update(UniConf *h);
+    virtual void update(UniConf *&h);
 };
 
 
-void HelloGen::update(UniConf *h)
+void HelloGen::update(UniConf *&h)
 {
     wvcon->print("Hello: updating %s\n", h->full_key());
     *h = WvString("%s #%s", defstr, ++count);
@@ -40,7 +40,7 @@ public:
     WvLog log;
     
     UniConfFileTree(UniConf *_top, WvStringParm _basedir);
-    virtual void update(UniConf *h);
+    virtual void update(UniConf *&h);
     virtual void load();
 };
 
@@ -56,7 +56,7 @@ UniConfFileTree::UniConfFileTree(UniConf *_top, WvStringParm _basedir)
 
 
 // use the first nonblank line in the file as the config contents.
-void UniConfFileTree::update(UniConf *h)
+void UniConfFileTree::update(UniConf *&h)
 {
     char *line;
     WvString name("/%s", h->gen_full_key());

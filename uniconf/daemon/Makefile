@@ -15,7 +15,7 @@ dyndnsd-LIBS += -lcrypto
 
 all: uniconfdaemon
 
-uniconfdaemon: uniconfdaemon.o daemonmain.o \
+uniconfdaemon: uniconfdaemon.o daemonmain.o uniconfdaemonconn.o \
 	 $(TOPDIR)/src/tunnelv/tunnelv.a \
          $(TOPDIR)/src/wvstreams/libwvcrypto.a \
          $(TOPDIR)/src/wvstreams/libwvstreams.a

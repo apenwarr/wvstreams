@@ -144,7 +144,16 @@ UniConf *UniConf::find_make(const UniConfKey &key)
     // we need to actually create the key
     UniConf *htop = gen_top();
     if (htop->generator)
-	return htop->generator->make_tree(this, key);
+    {
+        UniConf *toreturn = htop->generator->make_tree(this, key);
+        while (toreturn->waiting)
+        {
+            htop->generator->update(toreturn);
+            wvcon->print("Waiting?:%s\n", toreturn->waiting);
+        }
+	//return htop->generator->make_tree(this, key);
+        return toreturn;
+    }
     else
 	return UniConfGen().make_tree(this, key); // generate an empty tree
 }

@@ -5,6 +5,7 @@
  * Daemon program for the uniconf configuration system.
  */
 #include "uniconfdaemon.h"
+#include "uniconfdaemonconn.h"
 #include "wvtcp.h"
 #include <signal.h>
 
@@ -61,97 +62,16 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
     }
     // now notify.
     log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
-    s->write(WvString("FGET %s\n", keyname));
-    events.del(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), s, keyname);
+    if (s->isok())
+        s->write(WvString("FGET %s\n", keyname));
+//    events.del(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), s, keyname);
 
-}
-
-void UniConfDaemon::handlerequest(WvStream &s, void *userdata)
-{
-    int len = -1;
-    WvBuffer *buf = (WvBuffer *)userdata;
-    char *cptr[1024];
-    
-    while (len != 0 && s.select(0, true, false, false))
-    {
-        len = s.read(cptr, 1023);
-        cptr[len] ='\0';
-        buf->put(cptr, len);
-    }
-
-    WvString *line = wvtcl_getword(*buf, "\n");
-    WvString *cmd = NULL;
-    WvString *key = NULL;
-    while (line)
-    {
-        WvBuffer fromline;
-        fromline.put(*line);
-
-        // get the command
-        if (!cmd)
-            cmd = wvtcl_getword(fromline);
-        while(cmd)
-        {
-            // check the command
-            if (*cmd == "quit")
-            {
-                delete cmd, key;
-                cmd = key = 0;
-                s.close();
-                return;
-            }
-            else
-                key = wvtcl_getword(fromline);
-
-            if (!key)
-                break;
-
-            if (*cmd == "get") // return the specified value
-            {
-                WvString response("RETN %s %s\n", wvtcl_escape(*key), wvtcl_escape(mainconf.get(*key)));
-                s.print(response);
-                delete cmd;
-                events.add(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), &s, *key);
-                cmd = key = 0;
-            }
-            else if (*cmd == "set") // set the specified value
-            {
-                WvString *newvalue = wvtcl_getword(fromline);
-                mainconf[*key] = *newvalue;
-                delete cmd;
-                cmd = key = 0;
-                keymodified = true;
-            }
-            else
-            {
-                log(WvLog::Debug2, "Received unrecognized command:  %s and key: %s.\n", *cmd, *key);
-            }
-
-            // get a new command & key
-            cmd = wvtcl_getword(fromline);
-            key = wvtcl_getword(fromline);
-            
-            // We don't need to unget here, since if we broke on a \n,
-            // that means that we were at the end of a word, and since all
-            // requests are "single line" via tclstrings, no worries.
-        }
-        line = wvtcl_getword(*buf, "\n");
-    }
-
-}
-
-// Add the specified stream to our stream list
-void UniConfDaemon::addstream(WvStream *s)
-{
-    WvBuffer *newbuf = new WvBuffer;
-    s->setcallback(wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf);
-    l.append(s, true);
 }
 
 // Daemon looks after running
 void UniConfDaemon::run()
 {
-    WvBuffer *newbuf = new WvBuffer;
+//    WvBuffer *newbuf = new WvBuffer;
     // Mount our initial config file.
     // FIXME:  When we decide to mount configurations from various locations,
     // the domount command can be used, combined with data read in from the
@@ -170,7 +90,6 @@ void UniConfDaemon::run()
         log(WvLog::Error, "Error Reason:  %s\n", list->errstr());
         exit(2);
     }
-    list->auto_accept(&l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
     l.append(list, true); 
 
     // Now listen on the correct TCP port
@@ -181,13 +100,17 @@ void UniConfDaemon::run()
         log(WvLog::Error,"Error Reason:  %s\n", tlist->errstr());
         exit(2);
     }
-    tlist->auto_accept(&l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
     l.append(tlist, true);
 
     // Now run the actual daemon.
     log(WvLog::Debug2, "Uniconf Daemon starting.\n");
     while (!want_to_die)
     {
+        if (list->select(0, true, false))
+            l.append(new UniConfDaemonConn(list->accept(), this), true);
+        if (tlist->select(0, true, false))
+            l.append(new UniConfDaemonConn(tlist->accept(), this), true);
+        
         if (l.select(5000, true, false))
             l.callback();
         if (keymodified)

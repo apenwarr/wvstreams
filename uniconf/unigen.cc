@@ -38,7 +38,7 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
 }
 
 
-void UniConfGen::update(UniConf *h)
+void UniConfGen::update(UniConf *&h)
 {
     h->dirty = false;
 }
