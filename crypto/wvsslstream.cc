@@ -48,8 +48,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 
 	// Enable the workarounds for broken clients and servers
 	// and disable the insecure SSLv2 protocol
-	// FIXME: This is another thing that causes Mozilla to barf.
-        // SSL_CTX_set_options(ctx, SSL_OP_ALL|SSL_OP_NO_SSLv2);
+        SSL_CTX_set_options(ctx, SSL_OP_ALL|SSL_OP_NO_SSLv2);
 
 	if (SSL_CTX_use_certificate(ctx, x509->cert) <= 0)
 	{
