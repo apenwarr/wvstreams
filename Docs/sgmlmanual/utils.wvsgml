@@ -370,10 +370,8 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
  
  WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers,
    
-   A WvBuffer is a dynamically-sized buffer.  It is pretty simple to use:
-   you use the put() function to write data to it, and you use the get()
-   function to retrieve (and delete) data from the buffer.  It's often
-   perfect for storing streamed data.
+   A WvBuffer is a dynamically-sized buffer.  It's often perfect for storing
+   streamed data.
 
    WvBuffer is pretty simple to use.  You can write data to it using put()
    and retrieve the data using get().  get() effectively deletes the data
