@@ -95,7 +95,6 @@ private:
     bool    need_reset;
     bool    skip_first;
     time_t  prev;
-    time_t  init;
     
     time_t  not_until;
 };

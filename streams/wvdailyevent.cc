@@ -22,20 +22,10 @@
 #include <unistd.h>
 #endif
 
-// This is the minimum amount of time we must wait after a WvDailyEvent
-// has been created before we can start triggering. This is to avoid
-// mass I/O at startup, especially while the RAID is rebuilding. The
-// difference between this and skip_first though is that if we're supposed
-// to trigger before the MIN_DELAY, we will trigger immediately afterwards,
-// but only once, no matter how many times we triggered during the delay.
-//
-#define MIN_DELAY	15*60
-
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 {
     need_reset = false;
     prev = time(NULL);
-    init = prev + MIN_DELAY;
     configure(_first_hour, _num_per_day, _skip_first);
 }
 
@@ -153,10 +143,6 @@ time_t WvDailyEvent::next_event() const
     assert(next > 100000);
     while (skip_first && next < not_until)
 	next += interval;
-
-    // Wait at least until the init time has passed
-    if (next < init)
-	next = init;
 
     return next;
 }
