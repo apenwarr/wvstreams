@@ -46,8 +46,8 @@ size_t WvBufferBase<unsigned char>::strchr(int ch)
 }
 
 
-size_t WvBufferBase<unsigned char>::match(const void *bytelist, size_t numbytes,
-    bool reverse)
+size_t WvBufferBase<unsigned char>::_match(const void *bytelist,
+    size_t numbytes, bool reverse)
 {
     size_t offset = 0;
     size_t avail = used();

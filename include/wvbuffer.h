@@ -49,13 +49,19 @@ public:
 
     /**
      * Returns the number of leading bytes that match any in the list.
-     * If reverse == true, returns the number of leading bytes that do NOT match
-     *   any in the list.
      */
-    size_t match(const void *bytelist, size_t numbytes,
-        bool reverse = false);
-    size_t match(const char *chlist, bool reverse = false)
-        { return match(chlist, strlen(chlist), reverse); }
+    inline size_t match(const void *bytelist, size_t numbytes)
+        { return _match(bytelist, numbytes, false); }
+    size_t match(const char *chlist)
+        { return match(chlist, strlen(chlist)); }
+
+    /**
+     * Returns the number of leading bytes that do not match any in the list.
+     */
+    inline size_t notmatch(const void *bytelist, size_t numbytes)
+        { return _match(bytelist, numbytes, true); }
+    size_t notmatch(const char *chlist)
+        { return notmatch(chlist, strlen(chlist)); }
 
     /**
      * Overload put() and move() to accept void pointers.
@@ -68,6 +74,13 @@ public:
     inline void move(void *data, size_t count)
         { WvBufferBaseCommonImpl<unsigned char>::move(
             (unsigned char*)data, count); }
+    inline void poke(int offset, void *data, size_t count)
+        { WvBufferBaseCommonImpl<unsigned char>::poke(offset,
+            (unsigned char*)data, count); }
+
+private:
+    // moved here to avoid ambiguities between the match variants
+    size_t _match(const void *bytelist, size_t numbytes, bool reverse);
 };
 
 

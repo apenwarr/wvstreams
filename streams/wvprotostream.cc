@@ -57,7 +57,7 @@ WvProtoStream::Token *WvProtoStream::next_token()
     tokbuf.get(tokbuf.match(whitespace, sizeof(whitespace)));
 
     // return a token up to the first whitespace character
-    len = tokbuf.match(whitespace, sizeof(whitespace), true);
+    len = tokbuf.notmatch(whitespace, sizeof(whitespace));
     return len ? new Token(tokbuf.get(len), len) : NULL;
 }
 

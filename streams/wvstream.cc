@@ -268,6 +268,9 @@ void WvStream::seterr(int _errnum)
 size_t WvStream::read(WvBuffer &outbuf, size_t count)
 {
     // for now, just wrap the older read function
+    size_t free = outbuf.free();
+    if (count > free)
+        count = free;
     unsigned char *buf = outbuf.alloc(count);
     size_t len = read(buf, count);
     outbuf.unalloc(count - len);
@@ -278,8 +281,9 @@ size_t WvStream::read(WvBuffer &outbuf, size_t count)
 size_t WvStream::write(WvBuffer &inbuf, size_t count)
 {
     // for now, just wrap the older write function
-    if (count > inbuf.used())
-        count = inbuf.used();
+    size_t avail = inbuf.used();
+    if (count > avail)
+        count = avail;
     const unsigned char *buf = inbuf.get(count);
     size_t len = write(buf, count);
     inbuf.unget(count - len);
