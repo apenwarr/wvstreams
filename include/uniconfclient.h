@@ -41,6 +41,9 @@ public:
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
     virtual void enumerate_subtrees(UniConf *conf, bool recursive);
     virtual void update(UniConf *&h);
+    virtual void pre_get(UniConf *&h);
+    // updates all data I am responsible for.
+    virtual void update_all();
     virtual bool isok();
     virtual void save();
 protected:

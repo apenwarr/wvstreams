@@ -78,7 +78,11 @@ public:
    
     virtual void enumerate_subtrees(UniConf *conf, bool recursive);
     virtual void update(UniConf *&h);
+    virtual void pre_get(UniConf *&h);
     virtual bool isok() { return true; }
+
+    // Updates all data I am responsible for
+    virtual void update_all();
     
     // the default load/save functions don't do anything... you might not
     // need them to.

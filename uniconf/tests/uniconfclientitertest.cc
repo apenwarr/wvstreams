@@ -18,7 +18,7 @@ WvIPPortAddr addr("0.0.0.0", 4111);
 
 void printheader(WvString h, WvString mountpoint)
 {
-    WvString header("%s WITH MOUNTPOINT %s, %s", h, mountpoint, (automount ? "WITH AUTOMOUNT" : "NO AUTOMOUNT"));
+    WvString header("%s WITH MOUNTPOINT %s", h, mountpoint);
     wvcon->print("%s\n",header);
     
     for (size_t i = 0; i < header.len(); i++)
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         {
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
-            Mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
             printheader("TEST X ITERATORS", mountpoint);
             testxiter(mainconf);
         }

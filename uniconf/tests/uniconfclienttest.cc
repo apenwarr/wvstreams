@@ -18,7 +18,7 @@ WvIPPortAddr addr("0.0.0.0", 4111);
 
 WvString printheader(WvString h, WvString mountpoint)
 {
-    WvString header("%s WITH MOUNTPOINT %s, %s", h, mountpoint, (automount ? "WITH AUTOMOUNT" : "NO AUTOMOUNT"));
+    WvString header("%s WITH MOUNTPOINT %s", h, mountpoint);
     wvcon->print("%s\n",header);
     
     for (size_t i = 0; i < header.len(); i++)
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
             UniConf *mounted = &mainconf[mountpoint];
             mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
 
-            h = printheader("TEST GETTING FROM A SECTION", mountpoint, automount);
+            h = printheader("TEST GETTING FROM A SECTION", mountpoint);
             printresult(testgetfromsections(mainconf,mountpoint), h);
         }
         // Test getting & setting a key
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
                 UniConf *mounted = &mainconf[mountpoint];
                 mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
 
-                h = printheader("TEST SETTING KEYS", mountpoint, automount);
+                h = printheader("TEST SETTING KEYS", mountpoint);
                 printresult(testgetsetkey(mainconf,mountpoint), h);
 
         }

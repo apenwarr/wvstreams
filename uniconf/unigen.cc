@@ -29,12 +29,13 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
 	    child = new UniConf(parent, *i);
 	    parent->children->add(child, true);
             child->waiting = true;
-	    update(child);
+	    pre_get(child);
 	}
 	
 	parent = child;
     }
-    
+ 
+    update(parent);
     return parent;
 }
 
@@ -43,8 +44,19 @@ void UniConfGen::enumerate_subtrees(UniConf *conf, bool recursive)
     // do nothing by default.
 }
 
+void UniConfGen::pre_get(UniConf *&h)
+{
+    // do nothing by default.
+}
+
+void UniConfGen::update_all()
+{
+    // do nothing 
+}
+
 void UniConfGen::update(UniConf *&h)
 {
+    // do nothing by default.
     h->dirty = false;
     h->waiting = false;
     h->obsolete = false;
