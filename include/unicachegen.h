@@ -12,10 +12,16 @@
 #include "wvlog.h"
 
 /**
- * A UniConf generator that stores keys in memory.
- * 
- * Maintains a dirtyness indicator that is set whenever the contents
- * are changed.  Also dispatches notifications on such changes.
+ * A UniConf generator that adds a cache layer on top of another generator
+ *
+ * This cache implementation preloads the entire uniconf tree and then keeps up
+ * to date by making changes whenever notifications are recieved. This means
+ * that a uniconfclient when cached will never actively contact the
+ * uniconfdaemon.
+ *
+ * **WARNING**
+ * The cache *will* go out of date if used with a uniconfclient/daemon without
+ * running a select loop.
  */
 class UniCacheGen : public UniTempGen
 {
