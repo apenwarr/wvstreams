@@ -187,6 +187,9 @@ public:
     void add(T *data, bool auto_free)
         { sl()[hash(data) % numslots].append(data, auto_free); }
 
+    WvLink *getlink(const K &key)
+        { return prevlink(wvslots, &key, WvHash(key))->next; }
+
     T *operator[] (const K &key)
         { return (T *)genfind(wvslots, &key, WvHash(key)); }
 

@@ -337,6 +337,9 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 {
     assert(uses_continue_select);
 
+    if (!count)
+        return 0;
+
     if (wait_msec >= 0)
         alarm(wait_msec);
 
@@ -348,6 +351,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
             return count;
         if (alarm_was_ticking) 
             return 0;
+
         continue_select(-1);
     }
 
