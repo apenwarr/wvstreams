@@ -168,7 +168,7 @@ WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
     for (i.rewind(); i.next(); )
     {
         p += wvtcl_escape(p, *i, nasties);
-        *p++ = ' ';
+        *p++ = splitchars[0];
     }
     *--p = '\0';
     
