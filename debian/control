@@ -1,0 +1,49 @@
+Source: wvstreams
+Section: libs
+Priority: optional
+Maintainer: Patrick Patterson <ppatters@debian.org>
+Build-Depends: debhelper (>> 3.0.0), libssl-dev, zlib1g-dev
+Build-Depends-Indep: doxygen, sp, jade, jadetex, docbook-book, docbook, docbook-dsssl
+Standards-Version: 3.5.2
+
+Package: libwvstreams3
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Description: C++ Network Communications Layer for Rapid Application Development.
+ WvStreams is a library set that comprises a number of parts. Among them are
+ WvIPStreams (WvTCPStream and WvUDPStream), WvStrings (yet another C++ String
+ class), WvCrypto Streams (including a REALLY easy way to add SSL Support to
+ applications), WvConf (a configuration file handler), WvLog (nice, simple
+ handling of log files), and a whole host of other goodness. These are the
+ base classes used to build programs such as the ever popular WvDial,
+ TunnelVision, FastForward, KWvDial, retchmail, and many more yet to come ;) 
+ .
+ This package includes everything needed to run programs that use this library
+ to compile it you need the libwvstreams-dev package.
+
+Package: libwvstreams-dev
+Architecture: any
+Section: devel
+Depends: libwvstreams3 (= ${Source-Version}), libc6-dev
+Description: C++ Network Communications Layer (development files)
+ WvStreams is a library set that comprises a number of parts. Among them are
+ WvIPStreams (WvTCPStream and WvUDPStream), WvStrings (yet another C++ String
+ class), WvCrypto Streams (including a REALLY easy way to add SSL Support to 
+ applications), WvConf (a configuration file handler), WvLog (nice, simple   
+ handling of log files), and a whole host of other goodness. 
+ .
+ This is the development package and it includes everything that is needed to
+ compile a program that needs wvstreams.
+
+Package: libwvstreams-doc
+Architecture: all
+Section: docs
+Description: Documentation for libwvstreams
+ WvStreams is a library set that comprises a number of parts. Among them are
+ WvIPStreams (WvTCPStream and WvUDPStream), WvStrings (yet another C++ String
+ class), WvCrypto Streams (including a REALLY easy way to add SSL Support to 
+ applications), WvConf (a configuration file handler), WvLog (nice, simple   
+ handling of log files), and a whole host of other goodness.
+ .
+ This package includes all the documentation available to program this library.

@@ -1,0 +1,50 @@
+wvstreams (3.71) unstable; urgency=low
+
+  * Synchronised with Upstream version
+
+  * Additional packaging fixes to move libwvstreams-dev into the devel
+    section, and libwvstreams-docs into the docs section, also fixed a
+    problem with the installer.
+
+ -- Patrick Patterson <ppatters@debian.org>  Mon, 29 Jul 2002 18:39:51 -0400
+
+wvstreams (3.70.1) unstable; urgency=low
+
+  * NMU
+  * Build shared objects -fPIC.  Closes: #141409
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 23 Apr 2002 23:58:57 -0600
+
+wvstreams (3.70) unstable; urgency=high
+
+  * Fix to WvPipe so that WvDial doesn't crash
+
+  * Fix to WvString formatter to fix retchmail crasher
+
+  * Various other fixes and cleanups. 
+
+ -- Patrick Patterson <ppatters@debian.org>  Fri,  5 Apr 2002 13:39:21 -0500
+
+wvstreams (3.69) unstable; urgency=low
+
+  * Fix to make wvstreams compile without extra effort and environment
+    variables
+
+  * Fix to library includes to avoid linker problem
+
+  * Patch from RedHat to make WvStreams 64 bit clean
+
+  * Fix a buglet in WvLinkList that caused some breakage in WvDialConf
+
+  * Debian Packaging Fixes
+
+  * Initial Debian release (Closes: #134134)
+
+ -- Patrick Patterson <ppatters@nit.ca>  Fri,  5 Apr 2002 13:39:11 -0500
+
+libwvstreams3.60 (3.60f) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Patrick Patterson <ppatters@nit.ca>  Tue,  9 Dec 1997 01:39:45 -0500
+

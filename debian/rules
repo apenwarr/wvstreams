@@ -1,0 +1,129 @@
+#!/usr/bin/make -f
+# debian/rules for WvStreams, using debhelper. 
+#
+# Re-worked completely by Patrick Patterson <ppatters@nit.ca>
+# from a patch sent by Baruch Even <baruch@debian.org>
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+export DH_OPTIONS
+
+major=3
+base=libwvstreams
+# This is used the wvstreams makefile to set the .so links
+PKG=`pwd`/debian/${base}${major}
+PKGDEV=`pwd`/debian/${base}-dev
+PKGDOC=`pwd`/debian/${base}-doc
+DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc
+
+configure: configure-stamp
+configure-stamp: 
+	dh_testdir
+        # Add here commands to configure the package.
+        # There is no configuration necessary to build WvStreams
+	$(MAKE) dist
+	cd src; ./configure
+	touch configure-stamp
+
+build: build-stamp
+build-stamp: configure-stamp
+	dh_testdir
+	$(MAKE) CXXOPTS="-fPIC -DPIC"
+	touch build-stamp
+
+build-indep: build-stamp-indep
+build-stamp-indep: configure-stamp
+	dh_testdir
+
+	$(MAKE) doxygen
+	$(MAKE) -C src/Docs/sgmlmanual html ps pdf
+
+	touch build-stamp-indep
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp build-stamp-indep configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) clean
+	-$(MAKE) -C src/Docs/sgmlmanual clean
+	-rm -rf dox
+	dh_clean
+
+
+install: DH_OPTIONS=
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+        # Install library package
+
+#	$(MAKE) installshared PREFIX=$(PKG)/usr
+	# Temporary Fix to work around a bug in Debhelper
+	$(MAKE) install-shared DESTDIR=`pwd`/debian/tmp prefix=/usr
+
+	# Install development package
+	$(MAKE) install-dev DESTDIR=$(PKGDEV) prefix=/usr
+
+	dh_install
+
+install-indep: build-indep
+
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Install documents package
+	install -d $(DOCDIR)
+	install -d $(DOCDIR)/html-api
+	install -d $(DOCDIR)/html-manual
+	install -m644 dox/html/* $(DOCDIR)/html-api/
+	install -m644 src/Docs/sgmlmanual/wvstreams.html/*.html \
+		$(DOCDIR)/html-manual/
+	install -m644 src/Docs/sgmlmanual/wvstreams.ps \
+		src/Docs/sgmlmanual/wvstreams.pdf \
+		$(DOCDIR)
+
+
+# Build architecture-independent files here.
+binary-indep: build-indep install-indep
+	dh_testdir -i
+	dh_testroot -i
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_link -i
+	dh_strip -i
+	dh_compress -i
+	dh_fixperms -i
+	dh_installdeb -i
+	dh_gencontrol -i
+	dh_md5sums -i   
+	dh_builddeb -i  
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir -a
+	dh_testroot -a
+	dh_installchangelogs -a
+	dh_installdocs -a   
+	dh_installexamples -a
+	dh_installman -a 
+	dh_installinfo -a
+	dh_link -a
+	dh_strip -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_makeshlibs -a -V
+	dh_installdeb -a   
+	dh_shlibdeps -a
+	dh_gencontrol -a
+	dh_md5sums -a   
+	dh_builddeb -a  
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
+
