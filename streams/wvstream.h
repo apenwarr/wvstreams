@@ -221,6 +221,7 @@ protected:
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time
+    bool running_callback;	// already in the callback() function
     
     static WvTaskMan *taskman;
     WvTask *task;

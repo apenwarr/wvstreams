@@ -45,6 +45,7 @@ void WvStream::init()
     userdata = NULL;
     errnum = 0;
     select_ignores_buffer = outbuf_delayed_flush = alarm_was_ticking = false;
+    running_callback = false;
     queue_min = 0;
     autoclose_time = 0;
     alarm_time.tv_sec = alarm_time.tv_usec = 0;
@@ -58,6 +59,9 @@ void WvStream::init()
 
 WvStream::~WvStream()
 {
+    TRACE("destroying %p\n", this);
+    if (running_callback)
+	TRACE("eek! destroying while running_callback!\n");
     close();
     
     if (task)
@@ -67,6 +71,7 @@ WvStream::~WvStream()
 	task->recycle();
 	task = NULL;
     }
+    TRACE("done destroying %p\n", this);
 }
 
 
@@ -92,19 +97,28 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
 }
 
 
+// this is run in the subtask owned by 'stream', if any; NOT necessarily
+// the task that runs WvStream::callback().  That's why this needs to be
+// a separate function.
 void WvStream::_callback(void *stream)
 {
     WvStream *s = (WvStream *)stream;
+    
+    s->running_callback = true;
     
     if (s->callfunc)
 	s->callfunc(*s, s->userdata);
     else
 	s->execute();
+    
+    s->running_callback = false;
 }
 
 
 void WvStream::callback()
 {
+    TRACE("(?)");
+    
     // if the alarm has gone off and we're calling callback... good!
     if (alarm_remaining() == 0)
     {
@@ -122,13 +136,21 @@ void WvStream::callback()
     
 	if (!task)
 	{
+	    TRACE("(!)");
 	    task = taskman->start("streamexec", _callback, this,
 				  personal_stack_size);
 	}
 	else if (!task->isrunning())
+	{
+	    TRACE("(.)");
+	    fflush(stderr);
 	    task->start("streamexec2", _callback, this);
+	}
 	
-	taskman->run(*task);
+	do
+	{
+	    taskman->run(*task);
+	} while (task && task->isrunning() && running_callback);
     }
     else
 	_callback(this);
@@ -273,7 +295,7 @@ size_t WvStream::write(const void *buf, size_t count)
 	wrote = uwrite(buf, count);
     
     outbuf.put((unsigned char *)buf + wrote, count - wrote);
-    TRACE("queue obj 0x%08x, bytes %d/%d, total %d\n", (unsigned int)this, count - wrote, count, outbuf.used());
+    //TRACE("queue obj 0x%08x, bytes %d/%d, total %d\n", (unsigned int)this, count - wrote, count, outbuf.used());
     
     return count;
 }
@@ -294,7 +316,7 @@ size_t WvStream::uwrite(const void *buf, size_t count)
 	return 0;
     }
     
-    TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
+    //TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
     return out;
 }
 
@@ -364,7 +386,7 @@ void WvStream::flush(time_t msec_timeout)
 {
     size_t attempt, real;
     
-    TRACE("flush obj 0x%08x, time %ld, outbuf length %d\n", (unsigned int)this, msec_timeout, outbuf.used());
+    //TRACE("flush obj 0x%08x, time %ld, outbuf length %d\n", (unsigned int)this, msec_timeout, outbuf.used());
     
     if (!isok()) return;
     
@@ -579,6 +601,7 @@ bool WvStream::continue_select(time_t msec_timeout)
     if (msec_timeout >= 0)
 	alarm(msec_timeout);
     
+    running_callback = false;
     taskman->yield();
     
     // when we get here, someone has jumped back into our task

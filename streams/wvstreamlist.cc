@@ -7,6 +7,14 @@
  */
 #include "wvstreamlist.h"
 
+// enable this to add some read/write trace messages (this can be VERY
+// verbose)
+#define STREAMTRACE 0
+#if STREAMTRACE
+# define TRACE(x, y...) fprintf(stderr, x, ## y)
+#else
+# define TRACE(x, y...)
+#endif
 
 WvStreamList::WvStreamList()
 {
@@ -32,7 +40,7 @@ bool WvStreamList::select_setup(SelectInfo &si)
     
     // usually because of WvTask, we might get here without having finished
     // the _last_ set of sure_thing streams...
-    if (!sure_thing.isempty())
+    if (running_callback)
 	return true;
 
     Iter i(*this);
@@ -53,11 +61,11 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	if (si.readable && !select_ignores_buffer
 	    && inbuf.used() && inbuf.used() > queue_min)
 	{
-	    sure_thing.append(&s, false);
+	    sure_thing.append(&s, false, i.link->id);
 	}
 	
 	if (s.isok() && s.select_setup(si))
-	    sure_thing.append(&s, false);
+	    sure_thing.append(&s, false, i.link->id);
 	
 	i.next();
     }
@@ -86,22 +94,26 @@ bool WvStreamList::test_set(SelectInfo &si)
 
 
 // distribute the callback() request to all children that select 'true'
-#define STREAMTRACE 0
 void WvStreamList::execute()
 {
-#if STREAMTRACE
     static int level = 0;
-    fprintf(stderr, "%*sWvStreamList@%p: ", level++, "", this);
-#endif
+    level++;
+    
+    TRACE("\n%*sList@%p: (%d sure) ", level, "", this, sure_thing.count());
     
     WvStreamListBase::Iter i(sure_thing);
     for (i.rewind(), i.next(); i.cur(); )
     {
+#if STREAMTRACE
+	WvStreamListBase::Iter x(*this);
+	if (!x.find(&i()))
+	    TRACE("Yikes! %p in sure_thing, but not in main list!\n",
+		  i.cur());
+#endif
+	
 	WvStream &s(i);
 	
-#if STREAMTRACE
-	fprintf(stderr, "[%p], ", &s);
-#endif
+	TRACE("[%p:%s]", &s, i.link->id);
 	
 	i.unlink();
 	s.callback();
@@ -113,8 +125,6 @@ void WvStreamList::execute()
     
     sure_thing.zap();
 
-#if STREAMTRACE
     level--;
-    fprintf(stderr, "\n");
-#endif
+    TRACE("[DONE %p]\n", this);
 }
