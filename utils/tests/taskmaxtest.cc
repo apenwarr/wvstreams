@@ -8,7 +8,7 @@
 
 WvTaskMan *gman;
 
-int gentask(void *userdata)
+void gentask(void *userdata)
 {
     static int xc = 0;
     
@@ -27,14 +27,13 @@ int gentask(void *userdata)
     }
     
     printf("  Gentask ending %d\n", x);
-    return 0;
 }
 
 
 int main()
 {
-    WvTaskMan man;
-    gman = &man;
+    WvTaskMan *man = WvTaskMan::get();
+    gman = man;
     
     WvTask *t = NULL, *last_t = NULL;
     
@@ -43,11 +42,12 @@ int main()
     {
 	printf("starting %d:\n", x);
 	last_t = t;
-	t = man.start("task", gentask, last_t);
-	man.run(*t);
+	t = man->start("task", gentask, last_t);
+	man->run(*t);
     }
     
-    man.run(*t);
+    man->run(*t);
+    man->unlink();
     
     return 0;
 }

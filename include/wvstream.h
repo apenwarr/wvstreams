@@ -634,7 +634,7 @@ protected:
      * This is a static function so we can pass it as a function pointer
      * to WvTask functions.
      */
-    static int _callback(void *stream);
+    static void _callback(void *stream);
     
     /**
      * The callback() function calls execute(), and then calls the user-

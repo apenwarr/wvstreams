@@ -72,13 +72,31 @@ void WvTask::recycle()
 }
 
 
-static int taskmen = 0;
+WvTaskMan *WvTaskMan::singleton;
+int WvTaskMan::links;
+
+WvTaskMan *WvTaskMan::get()
+{
+    if (!links)
+	singleton = new WvTaskMan;
+    links++;
+    return singleton;
+}
+
+
+void WvTaskMan::unlink()
+{
+    links--;
+    if (!links)
+    {
+	delete singleton;
+	singleton = NULL;
+    }
+}
+
 
 WvTaskMan::WvTaskMan()
 {
-    taskmen++;
-    assert(taskmen == 1);
-    
     stack_target = NULL;
     current_task = NULL;
     magic_number = -WVTASK_MAGIC;
@@ -95,8 +113,6 @@ WvTaskMan::WvTaskMan()
 WvTaskMan::~WvTaskMan()
 {    
     magic_number = -42;
-    taskmen--;
-    assert(taskmen == 0);
 }
 
 
@@ -133,6 +149,9 @@ int WvTaskMan::run(WvTask &task, int val)
     assert(task.magic_number == WVTASK_MAGIC);
     assert(!task.recycled);
     
+    Dprintf("WvTaskMan: running task #%d with value %d (%s)\n",
+	    task.tid, val, (const char *)task.name);
+    
     if (&task == current_task)
 	return val; // that's easy!
         
@@ -153,7 +172,7 @@ int WvTaskMan::run(WvTask &task, int val)
     }
     else
     {
-	// someone did yield() (if toplevel) or run() on our task; exit
+	// someone did yield() (if toplevel) or run() on our old task; done.
 	current_task = old_task;
 	return newval;
     }
@@ -165,8 +184,8 @@ int WvTaskMan::yield(int val)
     if (!current_task)
 	return 0; // weird...
     
-    Dprintf("WvTaskMan: yielding from task #%d (%s)\n",
-	   current_task->tid, (const char *)current_task->name);
+    Dprintf("WvTaskMan: yielding from task #%d with value %d (%s)\n",
+	   current_task->tid, val, (const char *)current_task->name);
     
     assert(current_task->stack_magic);
     
@@ -312,21 +331,19 @@ void WvTaskMan::do_task()
 	    assert(magic_number == -WVTASK_MAGIC);
 	    assert(task->magic_number == WVTASK_MAGIC);
 	    
-	    int retval = -42;
-	
 	    if (task->func && task->running)
 	    {
 		// this is the task's main function.  It can call yield()
 		// to give up its timeslice if it wants.  Either way, it
 		// only returns to *us* if the function actually finishes.
-		retval = task->func(task->userdata);
+		task->func(task->userdata);
 		
 		// the task's function terminated.
 		task->name = "DEAD";
 		task->running = false;
 		task->numrunning--;
 	    }
-	    yield(retval);
+	    yield();
 	}
     }
 }

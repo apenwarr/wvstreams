@@ -106,6 +106,8 @@ WvStream::~WvStream()
 	task = NULL;
     }
     TRACE("done destroying %p\n", this);
+    if (!taskman)
+	taskman->unlink();
 }
 
 
@@ -149,7 +151,7 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
 // this is run in the subtask owned by 'stream', if any; NOT necessarily
 // the task that runs WvStream::callback().  That's why this needs to be
 // a separate function.
-int WvStream::_callback(void *stream)
+void WvStream::_callback(void *stream)
 {
     WvStream *s = (WvStream *)stream;
     
@@ -168,7 +170,6 @@ int WvStream::_callback(void *stream)
     assert(s->wvstream_execute_called);
     
     s->running_callback = false;
-    return 0; // not used
 }
 
 
@@ -196,7 +197,7 @@ void WvStream::callback()
     if (uses_continue_select && personal_stack_size >= 1024)
     {
 	if (!taskman)
-	    taskman = new WvTaskMan;
+	    taskman = WvTaskMan::get();
     
 	if (!task)
 	{
@@ -796,6 +797,8 @@ bool WvStream::continue_select(time_t msec_timeout)
     running_callback = false;
     taskman->yield();
     alarm(-1);
+    
+    // FIXME: shouldn't we set running_callback = true here?
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 
