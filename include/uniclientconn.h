@@ -38,7 +38,6 @@ public:
         
         // requests
         REQ_NOOP, /*!< noop ==> OK */
-        REQ_REPLY, /*! reply <test> ==> OK / FAIL */
         REQ_GET, /*!< get <key> ==> VAL ... OK / FAIL */
         REQ_SET, /*!< set <key> <value> ==> OK / FAIL */
         REQ_REMOVE, /*!< del <key> ==> OK / FAIL */
@@ -59,13 +58,9 @@ public:
 
         // events
         EVENT_HELLO, /*!< HELLO <message> */
-        EVENT_READY, /*!< REAY */
         EVENT_NOTICE, /*!< NOTICE <key> <oldval> <newval> */
-        EVENT_PROMPT, /*!< PROMPT <message> */
-        EVENT_PASSWD, /*!< PASSWD <message> */
-        EVENT_MSG, /*!< MSG <message> */
     };
-    static const int NUM_COMMANDS = EVENT_MSG + 1;
+    static const int NUM_COMMANDS = EVENT_NOTICE + 1;
     struct CommandInfo
     {
         const char *name;

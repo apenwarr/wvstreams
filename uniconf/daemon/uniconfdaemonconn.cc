@@ -31,13 +31,6 @@ UniConfDaemonConn::~UniConfDaemonConn()
 
 void UniConfDaemonConn::startup()
 {
-    banner();
-    writecmd(EVENT_READY);
-}
-
-
-void UniConfDaemonConn::banner()
-{
     writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
 }
 
@@ -116,12 +109,6 @@ void UniConfDaemonConn::execute()
 
             case UniClientConn::REQ_HELP:
                 do_help();
-                break;
-
-            case UniClientConn::REQ_REPLY:
-                if (arg1.isnull())
-                    do_malformed();
-                do_reply(arg1);
                 break;
 
             default:

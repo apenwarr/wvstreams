@@ -243,10 +243,6 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 break;
             }
 
-        case UniClientConn::EVENT_READY:
-            // FIXME: implement me
-            break;
-
         case UniClientConn::EVENT_NOTICE:
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
@@ -254,18 +250,6 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 delta(key, value);
             }   
 
-        case UniClientConn::EVENT_PROMPT:
-            // FIXME: implement me
-            break;
-
-        case UniClientConn::EVENT_PASSWD:
-            // FIXME: implement me
-            break;
-        
-        case UniClientConn::EVENT_MSG:
-            // FIXME: implement me
-            break;
-        
         default:
             // discard unrecognized commands
             break;
