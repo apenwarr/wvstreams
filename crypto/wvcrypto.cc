@@ -459,8 +459,8 @@ WvString WvMD5::md5_hash() const
     temp = md5_hash_value;
     for (count = 0; count < 16; count++)
     {
-	char buf[2];
-	snprintf(buf,2,"%02x", *temp++);
+	char buf[3];
+	snprintf(buf,3,"%02x", *temp++);
 	hash_value.append(buf);
     }
     
