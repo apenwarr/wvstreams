@@ -7,7 +7,7 @@
  */
 #include "uniconfroot.h"
 #include "unisubtreegen.h"
-#include "wvstream.h"
+//#include "wvstream.h"
 
 /**
  * The moniker from which the auto: moniker retrieves its own settings.
@@ -45,8 +45,8 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *v)
     for (int i = appname.numsegments(); i >= 0; i--)
     {
 	UniConfKey prefix(appname.first(i)), suffix(appname.removefirst(i));
-	wvcon->print("trying: '%s' '%s' ('%s')\n",
-		     prefix, suffix, cfg[prefix].getme());
+	//wvcon->print("trying: '%s' '%s' ('%s')\n",
+	//	     prefix, suffix, cfg[prefix].getme());
 	if (!!cfg.xget(prefix))
 	{
 	    IUniConfGen *gen = wvcreate<IUniConfGen>(cfg.xget(prefix),
