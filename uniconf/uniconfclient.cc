@@ -6,6 +6,8 @@
  * UniConfDaemon.
  */
 #include "uniconfclient.h"
+#include "uniconfconn.h"
+#include "uniconfcache.h"
 #include "wvtclstring.h"
 #include "wvtcp.h"
 #include "wvunixsocket.h"
@@ -48,8 +50,11 @@ static WvMoniker<UniConfGen> tcpreg("tcp", tcpcreator);
 static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 
+
+/***** UniConfClientGen *****/
+
 UniConfClientGen::UniConfClientGen(IWvStream *stream) :
-    conn(NULL), values(71),
+    conn(NULL), cache(new UniConfCache()),
     streamid("UniConfClientGen to %s", *stream->src()),
     log(streamid), cmdinprogress(false), cmdsuccess(false)
 {
@@ -70,6 +75,7 @@ UniConfClientGen::~UniConfClientGen()
     conn->close();
     WvIStreamList::globallist.unlink(conn);
     delete conn;
+    delete cache;
 }
 
 
@@ -81,12 +87,8 @@ bool UniConfClientGen::isok()
 
 bool UniConfClientGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
-    // TODO: no caching so nothing to be done here right now
-    if (! isok())
-    {
-        log(WvLog::Error, "Connection died; refresh aborted.\n");
-        return false;
-    }
+    // flush the cache
+    cache->mark_unknown_exist(key);
     return true;
 }
 
@@ -94,77 +96,168 @@ bool UniConfClientGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 bool UniConfClientGen::commit(const UniConfKey &key,
     UniConfDepth::Type depth)
 {
-    // TODO: no caching so nothing to be done here right now
-    if (! isok())
-    {
-        log(WvLog::Error, "Connection died; commit aborted.\n");
-        return false;
-    }
+    // we use write-through caching so nothing to do
     return true;
 }
 
 
 WvString UniConfClientGen::get(const UniConfKey &key)
 {
+    // check the cache
+    WvString value;
+    UniConfCache::TriState state = cache->query_exist(key, & value);
+    if (state == UniConfCache::FALSE)
+        return WvString::null;
+    if (state == UniConfCache::TRUE && ! value.isnull())
+        return value;
+    
+    // fetch the key
     prepare();
     conn->writecmd(UniConfConn::REQ_GET, wvtcl_escape(key));
-    bool success = wait();
-    if (success)
+    if (wait())
     {
-        UniConfPair *v = values[key];
-        if (v)
-            return v->value();
+        state = cache->query_exist(key, & value);
+        if (state == UniConfCache::UNKNOWN)
+            seterror("Protocol error: GET expected a value");
     }
-    return WvString::null;
+    else
+    {
+        cache->mark_not_exist(key);
+    }
+    return value;
 }
 
 
-bool UniConfClientGen::set(const UniConfKey &key, WvStringParm value)
+bool UniConfClientGen::exists(const UniConfKey &key)
 {
+    // check the cache
+    UniConfCache::TriState state = cache->query_exist(key, NULL);
+    if (state == UniConfCache::UNKNOWN)
+    {
+        // fetch the key
+        prepare();
+        conn->writecmd(UniConfConn::REQ_GET, wvtcl_escape(key));
+        if (wait())
+        {
+            state = cache->query_exist(key, NULL);
+            if (state == UniConfCache::UNKNOWN)
+                seterror("Protocol error: EXISTS expected a value");
+        }
+        else
+        {
+            cache->mark_not_exist(key);
+        }
+    }
+    return state == UniConfCache::TRUE;
+}
+
+
+bool UniConfClientGen::set(const UniConfKey &key, WvStringParm newvalue)
+{
+    // check the cache
+    WvString value;
+    UniConfCache::TriState state = cache->query_exist(key, & value);
+    if (state == UniConfCache::TRUE && value == newvalue)
+        return true;
+    
+    // change the key
     prepare();
-    if (value.isnull())
+    if (newvalue.isnull())
+    {
         conn->writecmd(UniConfConn::REQ_REMOVE, wvtcl_escape(key));
+        if (wait())
+        {
+            // FIXME: may remove this when notifications are finished
+            cache->mark_not_exist(key);
+            return true;
+        }
+    }
     else
+    {
         conn->writecmd(UniConfConn::REQ_SET,
-            WvString("%s %s", wvtcl_escape(key), wvtcl_escape(value)));
-    return wait();
+            WvString("%s %s", wvtcl_escape(key), wvtcl_escape(newvalue)));
+        if (wait())
+        {
+            // FIXME: may remove this when notifications are finished
+            cache->mark_exist(key, newvalue);
+            return true;
+        }
+    }
+    return false;
 }
 
 
 bool UniConfClientGen::zap(const UniConfKey &key)
 {
+    // check the cache
+    UniConfCache::TriState state = cache->query_children(key, NULL);
+    if (state == UniConfCache::FALSE)
+        return false;
+    
+    // zap the children
     prepare();
     conn->writecmd(UniConfConn::REQ_ZAP, wvtcl_escape(key));
-    return wait();
+    if (wait())
+    {
+        // FIXME: may remove this when notifications are finished
+        cache->mark_no_children(key);
+        return true;
+    }
+    return false;
 }
 
 
 bool UniConfClientGen::haschildren(const UniConfKey &key)
 {
-    // FIXME: need a more efficient way to do this
-    Iter *it = iterator(key);
-    it->rewind();
-    bool result = it->next();
-    delete it;
-    return result;
+    // check the cache
+    UniConfCache::TriState state = cache->query_children(key, NULL);
+    if (state == UniConfCache::UNKNOWN)
+    {
+        // fetch the list
+        cache->mark_unknown_children(key); // FIXME: flushing too much here!
+        prepare();
+        conn->writecmd(UniConfConn::REQ_SUBTREE, wvtcl_escape(key));
+        if (wait())
+        {
+            cache->mark_exist(key);
+            cache->mark_known_children(key);
+            state = cache->query_children(key, NULL);
+            if (state == UniConfCache::UNKNOWN)
+                seterror("Internal error: HASCHILDREN expected data from cache");
+        }
+        else
+        {
+            cache->mark_not_exist(key);
+        }
+    }
+    return state == UniConfCache::TRUE;
 }
 
 
 UniConfClientGen::Iter *UniConfClientGen::iterator(const UniConfKey &key)
 {
-    prepare();
-    conn->writecmd(UniConfConn::REQ_SUBTREE, wvtcl_escape(key));
-    if (! wait() || values.isempty())
-        return new NullIter();
-
-    // FIXME: eventually we should do this incrementally
+    // check the cache
     WvStringList *keylist = new WvStringList();
-    UniConfPairDict::Iter it(values);
-    int trimsegments = key.numsegments();
-    for (it.rewind(); it.next(); )
+    UniConfCache::TriState state = cache->query_children(key, keylist);
+    if (state == UniConfCache::UNKNOWN ||
+        state == UniConfCache::TRUE && keylist->isempty())
     {
-        UniConfKey subkey(it->key().removefirst(trimsegments));
-        keylist->append(new WvString(subkey), true);
+        // fetch the list
+        cache->mark_unknown_children(key); // FIXME: flushing too much here!
+        prepare();
+        conn->writecmd(UniConfConn::REQ_SUBTREE, wvtcl_escape(key));
+        if (wait())
+        {
+            cache->mark_exist(key);
+            cache->mark_known_children(key);
+            state = cache->query_children(key, keylist);
+            if (state == UniConfCache::UNKNOWN)
+                seterror("Internal error: ITERATOR expected data from cache");
+        }
+        else
+        {
+            cache->mark_not_exist(key);
+        }
     }
     return new RemoteKeyIter(keylist);
 }
@@ -208,11 +301,7 @@ void UniConfClientGen::conncallback(WvStream &stream, void *userdata)
                 if (key.isnull() || value.isnull())
                     break; // malformed message!
                 
-                UniConfPair *v = values[key];
-                if (v)
-                    v->setvalue(value);
-                else
-                    values.add(new UniConfPair(key, value), true);
+                cache->mark_exist(key, value);
                 break;
             }
 
@@ -234,6 +323,12 @@ void UniConfClientGen::conncallback(WvStream &stream, void *userdata)
                 UniConfDepth::Type depth = UniConfDepth::fromname(depthstr);
                 if (depth == -1)
                     depth = UniConfDepth::INFINITE; // fwd compatibility
+
+                // FIXME: it is probably not safe to update the cache
+                //        immediately while a command is in progress
+                //        we should defer event processing until after a
+                //        command has been completely executed
+                cache->mark_change(key, depth);
                 delta(key, depth);
                 break;
             }
@@ -250,7 +345,6 @@ void UniConfClientGen::conncallback(WvStream &stream, void *userdata)
 
 void UniConfClientGen::prepare()
 {
-    values.zap();
     cmdinprogress = true;
     cmdsuccess = false;
 }

@@ -9,12 +9,11 @@
 #define __UNICONFCLIENT_H
 
 #include "uniconfgen.h"
-#include "uniconfconn.h"
-#include "uniconfpair.h"
 #include "wvlog.h"
-#include "wvstreamlist.h"
 #include "wvstringlist.h"
 
+class UniConfConn;
+class UniConfCache;
 
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
@@ -30,7 +29,7 @@
 class UniConfClientGen : public UniConfGen
 {
     UniConfConn *conn;
-    UniConfPairDict values;
+    UniConfCache *cache;
     WvString streamid;
     WvLog log;
 
@@ -56,6 +55,7 @@ public:
     virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
     virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
     virtual WvString get(const UniConfKey &key);
+    virtual bool exists(const UniConfKey &key);
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);

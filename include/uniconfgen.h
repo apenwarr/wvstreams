@@ -40,6 +40,12 @@ protected:
      */
     void delta(const UniConfKey &key, UniConfDepth::Type depth);
 
+    /**
+     * Raises an error condition.
+     */
+    void seterror(WvStringParm error)
+        { } // FIXME: decide on final API for this probably WvError
+
 public:
     /** Destroys the UniConfGen and may discard uncommitted data. */
     virtual ~UniConfGen();
