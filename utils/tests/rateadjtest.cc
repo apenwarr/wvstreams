@@ -1,5 +1,5 @@
 #include "wvrateadjust.h"
-#include "wvtest.h"
+#include "wvlog.h"
 #include "strutils.h"
 
 #define MSEC_SLEEP 1000
@@ -21,7 +21,7 @@ int main()
     size_t total = 0, total2 = 0, used;
     WvTime epoch = wvtime();
     
-    WvTest test;
+    WvLog test("rateadjtest", WvLog::Info);
     WvLog dump("Outbuf", WvLog::Debug2);
     WvRateAdjust adj(SAMPSIZE, INRATE, OUTRATE), adj2(SAMPSIZE, OUTRATE, &adj);
     
