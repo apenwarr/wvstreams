@@ -466,48 +466,78 @@ WvString getdirname(WvStringParm fullname)
     }
 }
 
+// This function helps sizetoa() and sizektoa() below.  It takes a
+// bunch of digits, and the default unit (indexed by size); and turns
+// them into a WvString that's formatted to human-readable rounded
+// sizes, with one decimal place.
+WvString _sizetoa(unsigned long long digits, int size = 0)
+{
+    // Programmatically determine the units.  In order, these are:
+    // bytes, kilobytes, megabytes, gigabytes, terabytes, petabytes,
+    // exabytes, zettabytes, yottabytes.  Note that these are SI
+    // prefixes, not binary ones.
+    static char* size_name[] = { "B", "KB", "MB", "GB", "TB",
+				 "PB", "EB", "ZB", "YB", NULL };
+
+    // Let's loop, until we can get our "units" to less-than 1000.
+    // But we also have to keep enough significant figures for two
+    // decimal places, in order to round properly.  Therefore, we
+    // should stop looping at 1000000.
+    while (digits >= 1000000) {
+	// We'll make an exception for 1000 TB and higher, since we
+	// have no larger unit.  Well, I guess we can use exabytes,
+	// but that's a little futher in the future.
+	if (size_name[size + 1] == NULL)
+	    break;
+
+	// OK.  Let's go up another unit.
+	digits /= 1000;
+	size += 1;
+    }
+
+    // Now we can perform our rounding calculation.  We use the
+    // algorithm derived from grade school.  If it is a 5 or higher,
+    // round up.
+    unsigned long long units = digits / 1000;
+    unsigned tenths = digits % 1000 / 100;
+    unsigned hundredths = digits % 100 / 10;
+    if (hundredths >= 5)
+	tenths += 1;
+    if (tenths >= 10) {
+	tenths = 0;
+	units += 1;
+    }
+    if (units >= 1000 && (size_name[size + 1] != NULL)) {
+	units /= 1000;
+	tenths = 0;
+	size += 1;
+    }
+
+    // Now we can return our result.
+    return WvString("%s.%s %s", units, tenths, size_name[size]);
+}
 
 WvString sizetoa(long long blocks, int blocksize)
 {
-    long long kbytes = blocks * (long long) blocksize / 1000;
+    unsigned long long bytes = blocks * blocksize;
 
-    if (kbytes >= 1000*1000*1000)
-        return WvString("%s.%s TB",
-                    (unsigned long) (kbytes/(1000*1000*1000)),
-                    (unsigned long) (kbytes%(1000*1000*1000))/(100*1000*1000));
-    else if (kbytes >= 1000*1000)
-        return WvString("%s.%s GB",
-                    (unsigned long) (kbytes/(1000*1000)),
-                    (unsigned long) (kbytes % (1000*1000))/(100*1000));
-    else if (kbytes >= 1000)
-        return WvString("%s.%s MB",
-                    (unsigned long) (kbytes/(1000)),
-                    (unsigned long) (kbytes % (1000))/(100));
-    else if (kbytes)
-        return WvString("%s.%s KB",
-                    (unsigned long) (blocks*blocksize / 1000),
-                    (unsigned long) ((blocks*blocksize) % 1000)/(100));
-    else
-        return WvString("%s bytes", blocks*blocksize);
+    // Test if we are dealing in just bytes.  Plus, we should ensure
+    // that we didn't overflow.  (Although that is highly unlikely,
+    // with a 64-bit integer.
+    if ((bytes < 1000) && !(blocks * blocksize / 1000))
+        return WvString("%s bytes", blocks * blocksize);
+
+    return _sizetoa(bytes, 1);
 }
 
 
 WvString sizektoa(unsigned int kbytes)
 {
-    if (kbytes >= 1000*1000*1000)
-        return WvString("%s.%s TB",
-                    (unsigned long) (kbytes/(1000*1000*1000)),
-                    (unsigned long) (kbytes%(1000*1000*1000))/(100*1000*1000));
-    else if (kbytes >= 1000*1000)
-        return WvString("%s.%s GB",
-                    (unsigned long) (kbytes/(1000*1000)),
-                    (unsigned long) (kbytes % (1000*1000))/(100*1000));
-    else if (kbytes >= 1000)
-        return WvString("%s.%s MB",
-                    (unsigned long) (kbytes/(1000)),
-                    (unsigned long) (kbytes % (1000))/(100));
-    else
+    // Test if we are dealing in just kilobytes.
+    if (kbytes < 1000)
         return WvString("%s KB", kbytes);
+
+    return _sizetoa(kbytes, 2);
 }
 
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
