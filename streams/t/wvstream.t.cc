@@ -533,3 +533,40 @@ WVTEST_MAIN("alarm")
     s.runonce(50);
     WVPASS(val == 2);
 }
+
+
+static int rn = 0;
+
+
+static void rcb2(WvStream &s, void *)
+{
+    rn++;
+    WVPASS(rn == 2);
+    s.setcallback(0, 0);
+}
+
+
+static void rcb(WvStream &s, void *)
+{
+    rn++;
+    WVPASS(rn == 1);
+    s.setcallback(rcb2, NULL);
+    WVPASS(rn == 1);
+    //s.continue_select(0);
+    //WVPASS(rn == 1);
+}
+
+
+WVTEST_MAIN("self-redirection")
+{
+    WvStream s;
+    s.uses_continue_select = true;
+    s.setcallback(rcb, NULL);
+    s.inbuf.putstr("x");
+    s.runonce(0);
+    s.runonce(0);
+    s.runonce(0);
+    s.runonce(0);
+    WVPASS(rn == 2);
+    s.terminate_continue_select();
+}

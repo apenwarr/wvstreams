@@ -103,7 +103,11 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 test: runconfigure all tests wvtestmain
-	$(WVTESTRUN) $(VALGRIND) ./wvtestmain $(TESTNAME)
+	$(WVTESTRUN) $(MAKE) runtests
+
+runtests:
+	$(VALGRIND) ./wvtestmain $(TESTNAME)
+	cd uniconf/tests && ./unitest.sh
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

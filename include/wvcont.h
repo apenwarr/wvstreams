@@ -24,6 +24,9 @@
  */
 class WvCont
 {
+    struct Data;
+    friend struct Data;
+    
 public:
     /**
      * These are hardcoded because I'm too lazy to templatize this.
@@ -40,7 +43,6 @@ private:
      * member rather than copying it.  That makes it so every copy of a given
      * callback object still refers to the same WvTask.
      */
-    struct Data;
     Data *data;
 
     static Data *curdata;
@@ -50,10 +52,21 @@ private:
     
     /**
      * Actually call the callback inside its task, and enforce a call stack.
-     * Doesn't do anything with arguments or return values.
+     * Doesn't do anything with arguments.  Returns the return value.
      */
-    void call();
+    void *call()
+	{ return _call(data); }
+    
+    /**
+     * Call the callback inside its task, but don't assume this WvCont will
+     * still be around when we come back.
+     */
+    static void *_call(Data *data);
 
+    /**
+     * Construct a WvCont given a pre-existing Data structure.  This is
+     * basically equivalent to using the copy constructor.
+     */
     WvCont(Data *data);
 
 public:

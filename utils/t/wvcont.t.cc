@@ -56,7 +56,7 @@ private:
 };
 // END conttest.cc definitions
 
-WVTEST_MAIN("conttest.cc")
+WVTEST_MAIN("basics")
 {
     typedef WvCallback<void *, void *> CbType;
     
@@ -123,4 +123,37 @@ WVTEST_MAIN("conttest.cc")
 #else
 #warning "Assertion failure test not converted"
 #endif
+}
+
+
+static WvCallback<void*,void*> rcallback;
+static int rn = 0;
+
+static void *rfunc2(void *)
+{
+    rn++;
+    WVPASS(rn == 3);
+    return 0;
+}
+
+static void *rfunc1(void *)
+{
+    rn++;
+    WVPASS(rn == 1);
+    rcallback = WvCont(rfunc2);
+    WVPASS(WvCont::isok()); // not dead until after we yield once!
+    WVPASS(rn == 1);
+    WvCont::yield();
+    WVPASS(!WvCont::isok());
+    rn++;
+    WVPASS(rn == 2);
+    return 0;
+}
+
+
+WVTEST_MAIN("self-redirection")
+{
+    rcallback = WvCont(rfunc1);
+    rcallback(0);
+    rcallback(0);
 }

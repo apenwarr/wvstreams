@@ -28,8 +28,7 @@ struct WvCont::Data
         { links = 1; finishing = false; stacksize = _stacksize; mydepth = 0;
 	     taskman = WvTaskMan::get(); 
 	     task = NULL; report(); }
-    ~Data()
-        { assert(!links); taskman->unlink(); report(); }
+    ~Data();
 
     void link()
         { links++; report(); }
@@ -58,27 +57,44 @@ WvCont::WvCont(const Callback &cb, unsigned long _stacksize)
 }
 
 
+WvCont::WvCont(Data *data)
+{
+    this->data = data;
+    data->link();
+}
+
+
 WvCont::~WvCont()
 {
-    if (data->links == 1)
+    if (data->links == 1) // I'm the last link, and it's not currently running
     {
-	// run the task until it finishes.  We can't delete it until then!
-	data->finishing = true; // make WvCont::isok() false
+	data->finishing = true;
 	while (data->task && data->task->isrunning())
 	    call();
-	
-	if (data->task)
-	    data->task->recycle();
     }
+    
     data->unlink();
 }
 
 
+WvCont::Data::~Data()
+{
+    assert(!links);
+    
+    if (task)
+	task->recycle();
+    taskman->unlink();
+    //printf("%p: deleting\n", this);
+    report();
+}
+
+
 // note: assumes data->task is already running!
-void WvCont::call()
+void *WvCont::_call(Data *data)
 {
     Data *olddata = curdata;
     curdata = data;
+    data->link(); // don't delete this context while it's running!
     
     // enforce the call stack.  If we didn't do this, a yield() five calls
     // deep would return to the very top, rather to the second-innermost
@@ -96,20 +112,23 @@ void WvCont::call()
     data->mydepth = ++taskdepth;
     do
     {
-	data->taskman->run(*data->task);
+	assert(data->task);
+	do
+	{
+	    data->taskman->run(*data->task);
+	    if (data->links == 1)
+		data->finishing = true; // make WvCont::isok() false
+	} while (data->finishing && data->task && data->task->isrunning());
+	assert(data->links);
     } while (taskdepth > data->mydepth);
     assert(taskdepth == data->mydepth);
     taskdepth--;
     data->mydepth = 0;
 
+    R ret = data->ret;
+    data->unlink();
     curdata = olddata;
-}
-
-
-WvCont::WvCont(Data *data)
-{
-    this->data = data;
-    data->link();
+    return ret;
 }
 
 
@@ -123,9 +142,10 @@ WvCont::R WvCont::operator() (P1 p1)
     else if (!data->task->isrunning())
 	data->task->start("wvcont+", bouncer, data);
 
+    assert(data->task);
+    
     data->p1 = p1;
-    call();
-    return data->ret;
+    return call();
 }
 
 
@@ -142,7 +162,12 @@ WvCont::P1 WvCont::yield(R ret)
 {
     assert(curdata);
     assert(curdata->task == curdata->taskman->whoami());
-    assert(isok()); // this assertion is a bit aggressive...
+    
+    // this assertion is a bit aggressive, but on purpose; a callback that
+    // does yield() instead of returning when its context should be dying
+    // is pretty badly behaved.
+    assert(isok());
+    
     curdata->ret = ret;
     curdata->taskman->yield();
     return curdata->p1;
@@ -166,5 +191,3 @@ void WvCont::bouncer(void *userdata)
     // is only for the final run after data->cb() returns.
     data->ret = data->cb(data->p1);
 }
-
-    
