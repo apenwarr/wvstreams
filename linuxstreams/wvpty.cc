@@ -105,12 +105,6 @@ _error:
     }
 }
 
-WvPty::~WvPty()
-{
-    kill(SIGKILL);
-    finish();
-}
-
 void WvPty::kill(int signum)
 {
     if (_pid != -1)
