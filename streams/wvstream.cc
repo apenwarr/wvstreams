@@ -396,7 +396,7 @@ void WvStream::nowrite()
 
 void WvStream::maybe_autoclose()
 {
-    if (isok() && stop_read && stop_write && !outbuf.used() && !inbuf.used())
+    if (stop_read && stop_write && !outbuf.used() && !inbuf.used() && isok())
 	close();
 }
 
@@ -622,9 +622,19 @@ bool WvStream::should_flush()
 bool WvStream::flush_outbuf(time_t msec_timeout)
 {
     TRACE("flush_outbuf starts (isok=%d)\n", isok());
+    bool outbuf_was_used = outbuf.used();
+    
+    // do-nothing shortcut for speed
+    // FIXME: definitely makes a "measurable" difference...
+    //   but is it worth the risk?
+    if (!outbuf_was_used && !autoclose_time && !outbuf_delayed_flush)
+    {
+	maybe_autoclose();
+	return true;
+    }
     
     // flush outbuf
-    while (isok() && outbuf.used())
+    while (outbuf_was_used && isok())
     {
 //	fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
 //		this, getrfd(), getwfd(), outbuf.used());
@@ -649,10 +659,12 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
             if (msec_timeout >= 0)
                 break;
         }
+	
+	outbuf_was_used = outbuf.used();
     }
 
     // handle autoclose
-    if (isok() && autoclose_time)
+    if (autoclose_time && isok())
     {
 	time_t now = time(NULL);
 	TRACE("Autoclose enabled for 0x%p - now-time=%ld, buf %d bytes\n", 
@@ -664,19 +676,19 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	}
     }
 
-    if (!outbuf.used() && outbuf_delayed_flush)
+    if (outbuf_delayed_flush && !outbuf_was_used)
         want_to_flush = false;
     
     TRACE("flush_outbuf: now isok=%d\n", isok());
 
     // if we can't flush the outbuf, at least empty it!
-    if (!isok())
+    if (outbuf_was_used && !isok())
 	outbuf.zap();
 
     maybe_autoclose();
     TRACE("flush_outbuf stops\n");
     
-    return !outbuf.used();
+    return !outbuf_was_used;
 }
 
 

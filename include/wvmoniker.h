@@ -14,8 +14,8 @@
 
 class WvMonikerRegistry;
 
-typedef IObject *WvMonikerCreateFunc(WvStringParm parms,
-				     IObject *obj, void *userdata);
+typedef void *WvMonikerCreateFunc(WvStringParm parms,
+				  IObject *obj, void *userdata);
 
 /**
  * WvMonikerBase is an auto-registration class for putting things into
@@ -85,8 +85,8 @@ public:
  * Most people don't use this function.  See the templated, type-safe version
  * of wvcreate() below.
  */
-IObject *wvcreate(const XUUID &iid,
-		  WvStringParm s, IObject *obj = NULL, void *userdata = NULL);
+void *wvcreate(const XUUID &iid,
+	       WvStringParm s, IObject *obj = NULL, void *userdata = NULL);
 
 
 /**
@@ -103,7 +103,7 @@ IObject *wvcreate(const XUUID &iid,
 template <class T>
 inline T *wvcreate(WvStringParm s, IObject *obj = NULL, void *userdata = NULL)
 {
-    return mutate<T>(wvcreate(XIID<T>::get(), s, obj, userdata));
+    return (T *)(wvcreate(XIID<T>::get(), s, obj, userdata));
 }
 
 

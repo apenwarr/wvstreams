@@ -2,32 +2,40 @@
 #include "wvlog.h"
 #include "wvmoniker.h"
 #include "wvstreamclone.h"
+#include <signal.h>
+
+volatile bool want_to_die = false;
+
+static void signalhandler(int sig)
+{
+    fprintf(stderr, "Caught signal %d.  Exiting...\n", sig);
+    want_to_die = true;
+    signal(sig, SIG_DFL);
+}
 
 
 static void bounce_to_list(WvStream &s, void *userdata)
 {
     WvIStreamList *list = (WvIStreamList *)userdata;
-    char buf[1024];
+    char buf[4096];
     size_t len;
     
-    len = s.read(buf, sizeof(buf));
-    if (!len) return;
-    
-    WvIStreamList::Iter i(*list);
-    for (i.rewind(); i.next(); )
+    for (int i = 0; i < 100000; i++)
     {
-	if (&s != i.ptr())
+	len = s.read(buf, sizeof(buf));
+	if (!len) break;
+	
+	WvIStreamList::Iter i(*list);
+	for (i.rewind(); i.next(); )
 	{
-	    // you might think this assumes IWvStream has a buffer; but in
-	    // fact, we already know that everything in the list is a
-	    // WvStreamClone, and WvStreamClone *does* have an output
-	    // buffer, so this is safe.
-	    // 
-	    // but FIXME: the iswritable() check breaks everything, but is
-	    // current necessary for 'stdin' to not close itself when
-	    // written to.
-	    if (i->iswritable())
+	    if (&s != i.ptr())
+	    {
+		// you might think this assumes IWvStream has a buffer; but in
+		// fact, we already know that everything in the list is a
+		// WvStreamClone, and WvStreamClone *does* have an output
+		// buffer, so this is safe.
 		i->write(buf, len);
+	    }
 	}
     }
 }
@@ -38,6 +46,10 @@ int main(int argc, char **argv)
     WvIStreamList list;
     WvLog log(argv[0], WvLog::Debug);
     
+    signal(SIGTERM, signalhandler);
+    signal(SIGINT, signalhandler);
+    signal(SIGHUP, signalhandler);
+
     if (argc <= 1)
     {
 	fprintf(stderr, "Usage: %s <stream1> [stream2 [stream3...]]\n",
@@ -69,6 +81,6 @@ int main(int argc, char **argv)
 	list.append(s2, true, argv[count]);
     }
     
-    while (list.count() >= 2)
+    while (!want_to_die && list.count() >= 2)
 	list.runonce();
 }

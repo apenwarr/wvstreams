@@ -30,7 +30,7 @@ class WvStream;
 // parameters are: owning-stream, userdata
 typedef WvCallback<void, WvStream&, void*> WvStreamCallback;
 
-class IWvStream : public IObject, public WvErrorBase
+class IWvStream : public WvErrorBase, public IObject
 {
 public:
     /**
