@@ -34,11 +34,11 @@ public:
 	FakeGlobalFunc globalfunc;
     };
     
-    WvCallbackBase::WvCallbackBase(void *_obj, FakeFunc _func)
+    WvCallbackBase(void *_obj, FakeFunc _func)
 	: obj((Fake *)_obj), func(_func)
 	{ }
     
-    WvCallbackBase::WvCallbackBase(FakeGlobalFunc _func)
+    WvCallbackBase(FakeGlobalFunc _func)
 	: obj(0), globalfunc(_func)
 	{ }
     
