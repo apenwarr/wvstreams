@@ -13,7 +13,7 @@ all: ipstreams.libs
 
 ipstreams.libs: wvaddr.o wvtcp.o wvudp.o wvresolver.o wvhttp.o wvinterface.o \
 		wviproute.o wvipaliaser.o wvipfirewall.o wvunixsocket.o \
-		../configfile/configfile.libs
+		../configfile/configfile.libs ../hconf/hconf.libs
 
 ipstreams.a: ipstreams.libs
 
