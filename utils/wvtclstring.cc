@@ -130,6 +130,13 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     const char *sptr = (const char*)buf.get(origsize);
     int len = 0;
 
+    // skip leading whitespace/separators
+    while (strchr(splitchars, *sptr))
+    {
+        sptr++;
+        origsize--;
+    }
+    
     // detect initial quote
     if (*sptr == '"')
     {
@@ -148,12 +155,12 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
         incontinuation = false;
         if (inescape)
         {
-            inescape = false;
             if (ch == '\n')
-            {
+                // need a char from next line before the escape is done
                 incontinuation = true;
-                continue; // need a character from the next line
-            }
+            else
+                inescape = false;
+            continue; // don't process this char
         }
         else
         {
@@ -195,7 +202,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     }
     
     // finished the string - get the terminating element, if any.
-    if (bracecount == 0 && !inquote && !inescape && !incontinuation)
+    if (bracecount == 0 && len != 0 && !inquote && !inescape && !incontinuation)
         goto returnstring;
 
     // give up
