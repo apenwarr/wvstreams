@@ -774,4 +774,6 @@ WVTEST_MAIN("WvString: circular reference")
     }
 
     foo("def ");
+
+    foo("     ");
 }
