@@ -23,6 +23,7 @@ public:
 protected:
     // on flush, outputs any needed pad characters
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported
 };
 
 
@@ -39,6 +40,7 @@ public:
 
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported
 };
 
 #endif // __WVBASE64_H

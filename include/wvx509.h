@@ -7,13 +7,12 @@
 #ifndef __WVX509_H
 #define __WVX509_H
 
+#include "wvrsa.h"
 #include "wvlog.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
 typedef struct x509_st X509;
-
-class WvRSAKey;
 
 // workaround for the fact that OpenSSL initialization stuff must be called
 // only once.

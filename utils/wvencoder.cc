@@ -27,16 +27,19 @@ WvString WvEncoder::geterror() const
     WvString message = _geterror();
     if (!! message)
         return message;
-    return "unknown error";
+    return "unknown encoder error";
 }
 
 
-bool WvEncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+bool WvEncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush, bool _finish)
 {
     // deliberately not using isok() and isfinished() here
     bool success = okay && ! finished && (inbuf.used() != 0 || flush);
     if (success)
         success = _encode(inbuf, outbuf, flush);
+    if (_finish)
+        success = finish(outbuf) && success;
     return success;
 }
 
@@ -52,78 +55,95 @@ bool WvEncoder::finish(WvBuffer &outbuf)
 }
 
 
-bool WvEncoder::flush(WvStringParm instr, WvBuffer &outbuf)
+bool WvEncoder::reset()
 {
-    WvBuffer inbuf;
-    inbuf.put(instr);
-    bool success = encode(inbuf, outbuf, true);
+    // reset local state
+    okay = true;
+    finished = false;
+    errstr = WvString::null;
+    // attempt to reset the encoder
+    bool success = _reset();
+    if (! success)
+    {
+        if (okay)
+            seterror("reset not supported by encoder");
+    }
     return success;
 }
 
 
-bool WvEncoder::flush(WvStringParm instr, WvString &outstr)
+bool WvEncoder::flush(WvStringParm instr, WvBuffer &outbuf, bool finish)
+{
+    WvBuffer inbuf;
+    inbuf.put(instr);
+    bool success = encode(inbuf, outbuf, true, finish);
+    return success;
+}
+
+
+bool WvEncoder::flush(WvStringParm instr, WvString &outstr, bool finish)
 {
     WvBuffer inbuf, outbuf;
     inbuf.put(instr);
-    bool success = encode(inbuf, outbuf, true);
+    bool success = encode(inbuf, outbuf, true, finish);
     outstr.append(outbuf.getstr());
     return success;
 }
 
 
-bool WvEncoder::encode(WvBuffer &inbuf, WvString &outstr, bool flush)
+bool WvEncoder::encode(WvBuffer &inbuf, WvString &outstr,
+    bool flush, bool finish)
 {
     WvBuffer outbuf;
-    bool success = encode(inbuf, outbuf, flush);
+    bool success = encode(inbuf, outbuf, flush, finish);
     outstr.append(outbuf.getstr());
     return success;
 }
 
 
-WvString WvEncoder::strflush(WvStringParm instr, bool ignore_errors)
+WvString WvEncoder::strflush(WvStringParm instr, bool finish)
 {
     WvString outstr;
-    bool success = flush(instr, outstr);
-    return ignore_errors || success ?
-        outstr : WvString(WvString::null);
+    flush(instr, outstr, finish);
+    return outstr;
 }
 
 
-WvString WvEncoder::strflush(WvBuffer &inbuf, bool ignore_errors)
+WvString WvEncoder::strflush(WvBuffer &inbuf, bool finish)
 {
     WvString outstr;
-    bool success = flush(inbuf, outstr);
-    return ignore_errors || success ?
-        outstr : WvString(WvString::null);
+    flush(inbuf, outstr, finish);
+    return outstr;
 }
 
 
-bool WvEncoder::flush(const void *inmem, size_t inlen, WvBuffer &outbuf)
+bool WvEncoder::flush(const void *inmem, size_t inlen,
+    WvBuffer &outbuf, bool finish)
 {
     // FIXME: optimize using in-place buffers someday
     WvBuffer inbuf;
     inbuf.put(inmem, inlen);
-    bool success = encode(inbuf, outbuf, true);
+    bool success = encode(inbuf, outbuf, true, finish);
     return success;
 }
 
 
-bool WvEncoder::flush(const void *inmem, size_t inlen, void *outmem,
-    size_t *outlen)
+bool WvEncoder::flush(const void *inmem, size_t inlen,
+    void *outmem, size_t *outlen, bool finish)
 {
     // FIXME: optimize using in-place buffers someday
     WvBuffer inbuf;
     inbuf.put(inmem, inlen);
-    return encode(inbuf, outmem, outlen, true);
+    return encode(inbuf, outmem, outlen, true, finish);
 }
 
 
 bool WvEncoder::encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
-    bool flush)
+    bool flush, bool finish)
 {
     // FIXME: optimize using in-place buffers someday
     WvBuffer outbuf;
-    bool success = encode(inbuf, outbuf, true);
+    bool success = encode(inbuf, outbuf, true, finish);
     size_t used = outbuf.used();
     if (used > *outlen)
     {
@@ -138,11 +158,12 @@ bool WvEncoder::encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
 }
 
 
-bool WvEncoder::flush(WvStringParm instr, void *outmem, size_t *outlen)
+bool WvEncoder::flush(WvStringParm instr, void *outmem, size_t *outlen,
+    bool finish)
 {
     WvBuffer inbuf;
     inbuf.put(instr);
-    return flush(inbuf, outmem, outlen);
+    return flush(inbuf, outmem, outlen, finish);
 }
 
 
@@ -156,13 +177,32 @@ bool WvNullEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 }
 
 
+bool WvNullEncoder::_reset()
+{
+    return true;
+}
+
+
 
 /***** WvPassthroughEncoder *****/
+
+WvPassthroughEncoder::WvPassthroughEncoder()
+{
+    _reset();
+}
+
 
 bool WvPassthroughEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     total += in.used();
     out.merge(in);
+    return true;
+}
+
+
+bool WvPassthroughEncoder::_reset()
+{
+    total = 0;
     return true;
 }
 
@@ -312,6 +352,21 @@ bool WvEncoderChain::_finish(WvBuffer &out)
         if (! hasnext)
             break;
         tmpin = & encelem->out;
+    }
+    return success;
+}
+
+
+bool WvEncoderChain::_reset()
+{
+    bool success = true;
+    WvEncoderChainElemListBase::Iter it(encoders);
+    for (it.rewind(); it.next(); )
+    {
+        WvEncoderChainElem *encelem = it.ptr();
+        encelem->out.zap();
+        if (! encelem->enc->reset())
+            success = false;
     }
     return success;
 }

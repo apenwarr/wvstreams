@@ -6,6 +6,9 @@
  * how much latency they introduce.
  */
 #include "wvcrypto.h"
+#include "wvrsa.h"
+#include "wvblowfish.h"
+#include "wvxor.h"
 #include "wvlog.h"
 #include "wvtimeutils.h"
 #include "wvstreamlist.h"

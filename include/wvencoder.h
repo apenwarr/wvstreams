@@ -71,10 +71,14 @@ public:
      * data in the buffer.
      *
      * If flush == false, the encoder will read and encode as much data
-     * as possible (or as it convenient) from the input buffer and store the
-     * results in the output buffer.  Partial results may be buffered
+     * as possible (or as it convenient) from the input buffer and store
+     * the results in the output buffer.  Partial results may be buffered
      * internally by the encoder to be written to the output buffer later
      * when the encoder is flushed.
+     *
+     * If finish = true, the encode() will be followed up by a call to
+     * finish().  The return values will be ANDed together to yield the
+     * final result.  Most useful when flush is also true.
      *
      * If a permanent error occurs, then isok() will return false, this
      * function will return false and the input buffer will be left in an
@@ -93,13 +97,16 @@ public:
      *
      * See _encode() for the actual implementation.
      */
-    bool encode(WvBuffer &in, WvBuffer &out, bool flush = false);
+    bool encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush = false,
+        bool finish = false);
 
     /**
-     * Flushes the encoder (convenience function).
+     * Flushes the encoder and optionally finishes it.
+     * Convenience function.
      */
-    bool flush(WvBuffer &in, WvBuffer &out)
-        { return encode(in, out, true); }
+    inline bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
+        bool finish = false)
+        { return encode(inbuf, outbuf, true, finish); }
 
     /**
      * Tells the encoder that NO MORE DATA will ever be encoded.
@@ -118,22 +125,40 @@ public:
      *
      * See _finish() for the actual implementation.
      */
-    bool finish(WvBuffer &out);
+    bool finish(WvBuffer &outbuf);
+
+    /**
+     * Asks an encoder to reset itself to its initial state at
+     * creation time, if supported.
+     *
+     * This function may be called at any time, even if
+     * isok() == false, or isfinished() == true.
+     *
+     * Returns true if the encoder has successfully been reset.
+     * If the behaviour is not supported or an error occurs,
+     * then afterwards isok() == false.
+     *
+     * See _reset() for the actual implementation.
+     */
+    bool reset();
 
     /**
      * Helper functions for encoding strings.
      * Some variants have no encode(...) equivalent because they must
      * always flush.
      */
-    bool flush(WvStringParm instr, WvBuffer &outbuf);
-    bool flush(WvStringParm instr, WvString &outstr);
-    bool encode(WvBuffer &inbuf, WvString &outstr, bool flush = false);
-
-    inline bool flush(WvBuffer &inbuf, WvString &outstr)
-        { return encode(inbuf, outstr, true); }
+    bool flush(WvStringParm instr, WvBuffer &outbuf,
+        bool finish = false);
+    bool flush(WvStringParm instr, WvString &outstr,
+        bool finish = false);
+    bool encode(WvBuffer &inbuf, WvString &outstr,
+        bool flush = false, bool finish = false);
+    inline bool flush(WvBuffer &inbuf, WvString &outstr,
+        bool finish = false)
+        { return encode(inbuf, outstr, true, finish); }
     
-    WvString strflush(WvStringParm instr, bool ignore_errors = true);
-    WvString strflush(WvBuffer &inbuf, bool ignore_errors = true);
+    WvString strflush(WvStringParm instr, bool finish = false);
+    WvString strflush(WvBuffer &inbuf, bool finish = false);
 
     /**
      * Helper functions for encoder data from plain memory buffers.
@@ -144,16 +169,18 @@ public:
      * is not large enough, the overflow bytes will be discarded
      * and false will be returned.
      */
-    bool flush(const void *inmem, size_t inlen, WvBuffer &outbuf);
+    bool flush(const void *inmem, size_t inlen, WvBuffer &outbuf,
+        bool finish = false);
     bool flush(const void *inmem, size_t inlen, void *outmem,
-        size_t *outlen);
+        size_t *outlen, bool finish = false);
     bool encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
-        bool flush = false);
-        
-    inline bool flush(WvBuffer &inbuf, void *outmem, size_t *outlen)
-        { return encode(inbuf, outmem, outlen, true); }
+        bool flush = false, bool finish = false);   
+    inline bool flush(WvBuffer &inbuf, void *outmem, size_t *outlen,
+        bool finish = false)
+        { return encode(inbuf, outmem, outlen, true, finish); }
 
-    bool flush(WvStringParm instr, void *outmem, size_t *outlen);
+    bool flush(WvStringParm instr, void *outmem, size_t *outlen,
+        bool finish = false);
 
 protected:
     /**
@@ -202,6 +229,8 @@ protected:
     /**
      * Template method implementation of geterror().
      * Not called if any of the following cases are true:
+     *   isok() == true
+     *   errstr is not null
      *
      * Most implementations do not need to override this.
      * See seterror().
@@ -241,6 +270,19 @@ protected:
      */
     virtual bool _finish(WvBuffer &out)
         { return true; }
+
+    /**
+     * Template method implementation of reset().
+     *
+     * When this method is invoked, the current local state will
+     * be okay == true and finished == false.  If false is returned,
+     * then okay will be set to false.
+     *
+     * Returns false on error or if the behaviour is not supported.
+     * May also set a detailed error message if an error occurs.
+     */
+    virtual bool _reset()
+        { return false; }
 };
 
 
@@ -251,6 +293,7 @@ class WvNullEncoder : public WvEncoder
 {
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported: does nothing
 };
 
 
@@ -264,7 +307,8 @@ class WvPassthroughEncoder : public WvEncoder
     size_t total;
     
 public:
-    WvPassthroughEncoder() : total(0) { }
+    WvPassthroughEncoder();
+    virtual ~WvPassthroughEncoder() { }
 
     /**
      * Returns the number of bytes processed so far.
@@ -273,6 +317,7 @@ public:
     
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported: resets the count to zero
 };
 
 
@@ -360,6 +405,14 @@ protected:
      * Returns true iff all encoders return true.
      */
     virtual bool _finish(WvBuffer & out);
+
+    /**
+     * Resets all of the encoders in the chain and discards any
+     * pending buffered input.  Preserves the list of encoders.
+     *
+     * Returns true iff all encoders return true.
+     */
+    virtual bool _reset();
 };
 
 #endif // __WVENCODER_H

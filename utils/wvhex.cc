@@ -26,6 +26,13 @@ static inline int fromhex(char digit)
 WvHexEncoder::WvHexEncoder(bool use_uppercase) 
 {
     alphabase = (use_uppercase ? 'A' : 'a') - 10;
+    _reset();
+}
+
+
+bool WvHexEncoder::_reset()
+{
+    return true;
 }
 
 
@@ -43,9 +50,17 @@ bool WvHexEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 
 /***** WvHexDecoder *****/
 
-WvHexDecoder::WvHexDecoder() :
-    issecond(false), first(0)
+WvHexDecoder::WvHexDecoder()
 {
+    _reset();
+}
+
+
+bool WvHexDecoder::_reset()
+{
+    issecond = false;
+    first = 0;
+    return true;
 }
 
 
@@ -73,6 +88,8 @@ bool WvHexDecoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
     return true;
 }
 
+
+/*** Compatibility ***/
 
 void hexify(char *obuf, const void *ibuf, size_t len)
 {

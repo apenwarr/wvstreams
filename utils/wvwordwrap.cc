@@ -7,16 +7,25 @@
 #include "wvwordwrap.h"
 
 WvWordWrapEncoder::WvWordWrapEncoder(int _maxwidth) :
-    maxwidth(_maxwidth), width(0),
-    curindex(0), wordindex(0), inword(false)
+    maxwidth(_maxwidth)
 {
     line = new char[maxwidth];
+    _reset();
 }
 
 
 WvWordWrapEncoder::~WvWordWrapEncoder()
 {
     delete[] line;
+}
+
+
+bool WvWordWrapEncoder::_reset()
+{
+    width = 0;
+    curindex = wordindex = 0;
+    inword = false;
+    return true;
 }
 
 

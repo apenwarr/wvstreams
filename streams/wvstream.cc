@@ -98,6 +98,13 @@ void WvStream::close()
 }
 
 
+void WvStream::autoforward(WvStream &s)
+{
+    setcallback(autoforward_callback, &s);
+    read_requires_writable = &s;
+}
+
+
 void WvStream::autoforward_callback(WvStream &s, void *userdata)
 {
     WvStream &s2 = *(WvStream *)userdata;
@@ -255,6 +262,28 @@ void WvStream::seterr(int _errnum)
 {
     WvError::seterr(_errnum);
     close();
+}
+
+
+size_t WvStream::read(WvBuffer &outbuf, size_t count)
+{
+    // for now, just wrap the older read function
+    unsigned char *buf = outbuf.alloc(count);
+    size_t len = read(buf, count);
+    outbuf.unalloc(count - len);
+    return len;
+}
+
+
+size_t WvStream::write(WvBuffer &inbuf, size_t count)
+{
+    // for now, just wrap the older write function
+    if (count > inbuf.used())
+        count = inbuf.used();
+    unsigned char *buf = inbuf.get(count);
+    size_t len = write(buf, count);
+    inbuf.unget(count - len);
+    return len;
 }
 
 

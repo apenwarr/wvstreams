@@ -41,13 +41,18 @@ public:
 
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported: restores most recently set
+        // key and initialization vector
 
 private:
     Mode mode;
     size_t keysize;
-    struct bf_key_st *key;
+    unsigned char *key;
+    struct bf_key_st *bfkey;
     unsigned char ivec[8]; // initialization vector
     int ivecoff; // current offset into initvec
+
+    void preparekey();
 };
 
 

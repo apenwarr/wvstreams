@@ -11,6 +11,7 @@
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
 #include <sys/time.h>
 #include <errno.h>
+#include <limits.h>
 
 class WvAddr;
 class WvTask;
@@ -92,6 +93,26 @@ public:
      * write a data block on the stream.  Returns the actual amount written.
      */
     size_t write(const void *buf, size_t count);
+
+    /**
+     * Reads a data block from the stream into the buffer.
+     * Returns the actual amount read.
+     *
+     * If count is greater than the amount of free space available
+     * in the buffer, only reads at most that amount.  You should
+     * specify a reasonable upper bound on how much data should
+     * be read at once.
+     */
+    size_t read(WvBuffer &outbuf, size_t count);
+
+    /**
+     * Writes a data block to the stream from the buffer.
+     * Returns the actual amount written.
+     *
+     * If count is greater than the amount of data available in
+     * the buffer, only writes at most that amount.
+     */
+    size_t write(WvBuffer &inbuf, size_t count = INT_MAX);
 
     /**
      * set the maximum size of outbuf, beyond which a call to write() will
@@ -401,8 +422,7 @@ public:
      * that auto-forwards all incoming stream data to the given output
      * stream.
      */
-    void autoforward(WvStream &s)
-        { setcallback(autoforward_callback, &s); read_requires_writable = &s; }
+    void autoforward(WvStream &s);
     static void autoforward_callback(WvStream &s, void *userdata);
     
     /**

@@ -42,9 +42,17 @@ static int lookup(char ch)
 
 /***** WvBase64Encoder *****/
 
-WvBase64Encoder::WvBase64Encoder() :
-    state(ATBIT0), bits(0)
+WvBase64Encoder::WvBase64Encoder()
 {
+    _reset();
+}
+
+
+bool WvBase64Encoder::_reset()
+{
+    state = ATBIT0;
+    bits = 0;
+    return true;
 }
 
 
@@ -97,11 +105,20 @@ bool WvBase64Encoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 }
 
 
+
 /***** WvBase64Decoder *****/
 
-WvBase64Decoder::WvBase64Decoder() :
-    state(ATBIT0), bits(0)
+WvBase64Decoder::WvBase64Decoder()
 {
+    _reset();
+}
+
+
+bool WvBase64Decoder::_reset()
+{
+    state = ATBIT0;
+    bits = 0;
+    return true;
 }
 
 

@@ -1,0 +1,93 @@
+/*
+ * Worldvisions Tunnel Vision Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ * 
+ * MD5, SHA-1 and HMAC digest abstractions.
+ */
+#include "wvdigest.h"
+#include <evp.h>
+#include <assert.h>
+
+#define EVPMD_BUFFER_SIZE 4096
+
+/***** WvEVPMDDigest *****/
+
+WvEVPMDDigest::WvEVPMDDigest(env_md_st *_evpmd) :
+    evpmd(_evpmd), active(false)
+{
+    evpctx = new EVP_MD_CTX;
+    _reset();
+}
+
+
+WvEVPMDDigest::~WvEVPMDDigest()
+{
+    cleanup();
+    delete evpctx;
+}
+
+
+bool WvEVPMDDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush)
+{
+    size_t len;
+    while ((len = inbuf.used()) != 0)
+    {
+        if (len > EVPMD_BUFFER_SIZE)
+            len = EVPMD_BUFFER_SIZE;
+        unsigned char *data = inbuf.get(len);
+        EVP_DigestUpdate(evpctx, data, len);
+    }
+    return true;
+}
+
+
+bool WvEVPMDDigest::_finish(WvBuffer &outbuf)
+{
+    assert(active);
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    size_t size;
+    EVP_DigestFinal(evpctx, digest, & size);
+    active = false;
+    outbuf.put(digest, size);
+    return true;
+}
+
+
+bool WvEVPMDDigest::_reset()
+{
+    cleanup();
+    EVP_DigestInit(evpctx, evpmd);
+    active = true;
+    return true;
+}
+
+
+void WvEVPMDDigest::cleanup()
+{
+    if (active)
+    {
+        // discard digest
+        unsigned char digest[EVP_MAX_MD_SIZE];
+        EVP_DigestFinal(evpctx, digest, NULL);
+        active = false;
+    }
+}
+
+
+/***** WvMD5Digest *****/
+
+WvMD5Digest::WvMD5Digest() : WvEVPMDDigest(EVP_md5())
+{
+}
+
+
+/***** WvSHA1Digest *****/
+
+WvSHA1Digest::WvSHA1Digest() : WvEVPMDDigest(EVP_sha1())
+{
+}
+
+
+/***** WvHMACDigest *****/
+

@@ -19,6 +19,7 @@ public:
 
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported
 };
 
 
@@ -32,6 +33,7 @@ public:
 
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported
 };
 
 /*** For compatibility with older code. ***/

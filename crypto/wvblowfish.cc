@@ -13,7 +13,7 @@
 
 WvBlowfishEncoder::WvBlowfishEncoder(Mode _mode,
     const void *_key, size_t _keysize) :
-    mode(_mode), key(NULL)
+    mode(_mode), key(NULL), bfkey(NULL)
 {
     setkey(_key, _keysize);
 }
@@ -21,16 +21,33 @@ WvBlowfishEncoder::WvBlowfishEncoder(Mode _mode,
 
 WvBlowfishEncoder::~WvBlowfishEncoder()
 {
-    delete key;
+    delete[] key;
+    delete bfkey;
+}
+
+
+bool WvBlowfishEncoder::_reset()
+{
+    preparekey();
+    return true;
 }
 
 
 void WvBlowfishEncoder::setkey(const void *_key, size_t _keysize)
 {
-    delete key;
-    key = new BF_KEY;
+    delete[] key;
     keysize = _keysize;
-    BF_set_key(key, _keysize, (unsigned char *)_key);
+    key = new unsigned char[keysize];
+    memcpy(key, _key, keysize);
+    preparekey();
+}
+
+
+void WvBlowfishEncoder::preparekey()
+{
+    delete bfkey;
+    bfkey = new BF_KEY;
+    BF_set_key(bfkey, keysize, key);
     memset(ivec, 0, sizeof(ivec));
     ivecoff = 0;
 }
@@ -76,7 +93,7 @@ bool WvBlowfishEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
             // ECB works 64bits at a time
             while (len >= 8)
             {
-                BF_ecb_encrypt(data, crypt, key,
+                BF_ecb_encrypt(data, crypt, bfkey,
                     mode == ECBEncrypt ? BF_ENCRYPT : BF_DECRYPT);
                 len -= 8;
                 data += 8;
@@ -87,7 +104,7 @@ bool WvBlowfishEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
         case CFBEncrypt:
         case CFBDecrypt:
             // CFB simulates a stream
-            BF_cfb64_encrypt(data, crypt, len, key, ivec, &ivecoff,
+            BF_cfb64_encrypt(data, crypt, len, bfkey, ivec, &ivecoff,
                 mode == CFBEncrypt ? BF_ENCRYPT : BF_DECRYPT);
             break;
     }

@@ -73,6 +73,7 @@ public:
 
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _reset(); // supported
 
 private:
     Mode mode;

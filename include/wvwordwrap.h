@@ -33,6 +33,7 @@ public:
 protected:
     // on flush, outputs a partial line with remaining chars
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _reset(); // supported
 
 private:
     void flushline(WvBuffer &outbuf);
