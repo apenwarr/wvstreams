@@ -13,6 +13,8 @@ typedef void * uniconf_t;
 //typedef void * uniconfroot_t;
 //typedef void * uniconfkey_t;
 
+void uniconf_rungloballist(int msec);
+
 uniconf_t uniconf_init();
 
 uniconf_t uniconf_copy_init(uniconf_t uni);
