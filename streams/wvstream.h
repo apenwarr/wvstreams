@@ -142,7 +142,8 @@ public:
 		bool isexception = false);
     
     // use force_select() to force a particular select mode
-    // (readable, writable, or isexception) when selecting this stream.
+    // (readable, writable, or isexception) to true when selecting
+    // on this stream.
     struct ForceSelect {
 	bool readable, writable, isexception;
     } force;
