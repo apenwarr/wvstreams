@@ -13,7 +13,7 @@
 #ifndef __WVWATCHER_H
 #define __WVWATCHER_H
 
-#include "wvstream.h"
+#include "wvfile.h"
 #include <sys/stat.h>
 
 struct stat;

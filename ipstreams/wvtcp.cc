@@ -6,6 +6,7 @@
  */
 #include "wvstreamlist.h"
 #include "wvtcp.h"
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>

@@ -9,6 +9,7 @@
  */
 #include "wvpipe.h"
 #include "wvsplitstream.h"
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <signal.h>

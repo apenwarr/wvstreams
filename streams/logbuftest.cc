@@ -6,9 +6,7 @@
  * portion of the test.
  *
  */
-
 #include "wvlogbuffer.h"
-#include <unistd.h>
 
 int main()
 {

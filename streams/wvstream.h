@@ -13,8 +13,7 @@
 
 #include "wvstring.h"
 #include "wvbuffer.h"
-#include <fcntl.h>
-#include <unistd.h>
+#include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
 #include <errno.h>
 
 class WvAddr;
@@ -139,10 +138,6 @@ public:
     void setcallback(Callback *_callfunc, void *_userdata)
         { callfunc = _callfunc; userdata = _userdata; }
     
-    // if no callback function is defined, we call execute() instead.
-    // the default execute() function does nothing.
-    virtual void execute();
-    
     // set the callback function for this stream to an internal routine
     // that auto-forwards all incoming stream data to the given output
     // stream.
@@ -180,7 +175,8 @@ protected:
     WvBuffer inbuf, outbuf;
     bool select_ignores_buffer, outbuf_delayed_flush;
     size_t queue_min;
-    time_t autoclose_time;
+    time_t autoclose_time;	// close eventually, even if output is queued
+    time_t alarm_time;		// select() returns true at this time
 
     // plain internal constructor to just set up internal variables.
     WvStream()
@@ -189,24 +185,11 @@ protected:
     // set the errnum variable and close the stream -- we have an error.
     void seterr(int _errnum);
     void seterr(const WvString &specialerr);
-};
-
-
-// WvFile implements a stream connected to a file or Unix device.  We
-// include no support for operations like seek().  Since files are not
-// really streams, you probably do not need WvStream support for seekable
-// files; just use standard C I/O functions in that case.
-//
-// WvFile is primarily useful for Unix device files, which have defined
-// select() behaviour for example.
-class WvFile : public WvStream
-{
-public:
-    WvFile()
-        { }
-    WvFile(const WvString &filename, int mode, int create_mode = 0666)
-        { open(filename, mode, create_mode); }
-    bool open(const WvString &filename, int mode, int create_mode = 0666);
+    
+    // if no callback function is defined, we call execute() instead.
+    // the default execute() function does nothing.
+    // To get this function to run, use callback().
+    virtual void execute();
 };
 
 

@@ -17,7 +17,6 @@
  */
 
 #include "wvlogrcv.h"
-#include <unistd.h>
 
 int main()
 {

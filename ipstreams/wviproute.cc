@@ -8,6 +8,8 @@
 #include "wviproute.h"
 #include "wvpipe.h"
 #include "wvinterface.h"
+#include "wvfile.h"
+
 #include <net/route.h>
 #include <ctype.h>
 

@@ -8,6 +8,7 @@
  */
 #include "wvloopback.h"
 #include <sys/socket.h>
+#include <fcntl.h>
 
 WvLoopback::WvLoopback()
 {

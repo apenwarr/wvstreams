@@ -8,10 +8,9 @@
  *
  */
 #include "wvconf.h"
-#include "wvstream.h"
+#include "wvfile.h"
 #include "wvstringtable.h"
 #include <string.h>
-#include <unistd.h>
 
 
 void WvConf::setbool(WvConf &, void *userdata,

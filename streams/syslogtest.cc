@@ -6,7 +6,6 @@
  */
 
 #include "wvsyslog.h"
-#include <unistd.h>
 
 int main()
 {

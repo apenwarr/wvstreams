@@ -6,6 +6,7 @@
  */
 #include "wvinterface.h"
 #include "wvpipe.h"
+#include "wvfile.h"
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>

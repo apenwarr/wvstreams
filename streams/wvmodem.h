@@ -13,7 +13,7 @@
 #define __WVMODEM_H
 
 #include "wvlockfile.h"
-#include "wvstream.h"
+#include "wvfile.h"
 #include <termios.h>
 
 

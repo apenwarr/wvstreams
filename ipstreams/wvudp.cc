@@ -7,6 +7,7 @@
  */
 #include "wvudp.h"
 #include <sys/socket.h>
+#include <fcntl.h>
 
 
 WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
