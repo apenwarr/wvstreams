@@ -16,6 +16,17 @@
 #include "wvfile.h"
 #include <termios.h>
 
+#ifndef IUCLC
+#define IUCLC 0
+#endif
+
+#ifndef OLCUC
+#define OLCUC 0
+#endif
+
+#ifndef XCASE
+#define XCASE 0
+#endif
 
 /**
  * WvModemBase provides the methods used to control a modem, but

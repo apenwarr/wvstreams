@@ -319,20 +319,20 @@ size_t WvRSAStream::uwrite(const void *buf, size_t size)
     return totalwrite;
 }
 
-WvMD5::WvMD5(const WvString &StringToHash)
+WvMD5::WvMD5(const WvString &string_to_hash)
 {
     MD5_CTX ctx;
     unsigned char temp[20];
 
     MD5_Init(&ctx);
-    MD5_Update(&ctx,(const unsigned char *)StringToHash.cstr(),
-		strlen(StringToHash));
+    MD5_Update(&ctx,(const unsigned char *)string_to_hash.cstr(),
+		strlen(string_to_hash));
     MD5_Final(temp, &ctx);
-    MD5HashValue = (unsigned char *)calloc(1,sizeof(temp));
-    memcpy(MD5HashValue,temp,sizeof(temp));
+    md5_hash_value = (unsigned char *)calloc(1,sizeof(temp));
+    memcpy(md5_hash_value,temp,sizeof(temp));
 }
 
-WvMD5::WvMD5(FILE *FileToHash)
+WvMD5::WvMD5(FILE *file_to_hash)
 {
     unsigned char buf[1024];
     unsigned char temp[20];
@@ -340,36 +340,36 @@ WvMD5::WvMD5(FILE *FileToHash)
     int n;
 
     MD5_Init(&ctx);
-    while ((n = fread(buf, 1, sizeof(buf), FileToHash)) > 0)
+    while ((n = fread(buf, 1, sizeof(buf), file_to_hash)) > 0)
             MD5_Update(&ctx, buf, n);
     MD5_Final(temp, &ctx);
-    if (ferror(FileToHash))
-	MD5HashValue = NULL;
+    if (ferror(file_to_hash))
+	md5_hash_value = NULL;
     else
     {
-    	MD5HashValue = (unsigned char *)calloc(1,sizeof(temp));
-    	memcpy(MD5HashValue,temp,sizeof(temp));
+    	md5_hash_value = (unsigned char *)calloc(1,sizeof(temp));
+    	memcpy(md5_hash_value,temp,sizeof(temp));
     }
 }
 
 WvMD5::~WvMD5()
 {
-    free(MD5HashValue);
+    free(md5_hash_value);
 }
 
-WvString WvMD5::MD5Hash() const
+WvString WvMD5::md5_hash() const
 {
     int count;
     unsigned char *temp;
-    WvString hashValue("");
+    WvString hash_value("");
 
-    temp = MD5HashValue;
+    temp = md5_hash_value;
     for (count = 0; count < 16; count++)
     {
 	char buf[2];
 	snprintf(buf,2,"%02x", *temp++);
-	hashValue.append(buf);
+	hash_value.append(buf);
     }
 
-    return hashValue;
+    return hash_value;
 }

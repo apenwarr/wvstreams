@@ -9,6 +9,10 @@
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
+#ifdef ISBSD
+#include <time.h>
+#endif
+
 #include "wvstring.h"
 #include "wvstringlist.h"
 
@@ -104,7 +108,7 @@ extern void unhexify(void *obuf, const char *ibuf);
  */
 extern WvString web_unescape(const char *str);
 
-WvString rfc822_date(time_t when = -1);
+WvString rfc822_date(time_t _when = -1);
 WvString passwd_crypt(const char *str);
 WvString backslash_escape(const WvString &s1);
 

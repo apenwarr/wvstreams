@@ -20,8 +20,12 @@ struct SpeedLookup {
 
 
 static SpeedLookup speeds[] = {
+#ifdef B460800
     {460800, B460800},
+#endif
+#ifdef B230400
     {230400, B230400},
+#endif
     {115200, B115200},
     { 57600, B57600},
     { 38400, B38400},

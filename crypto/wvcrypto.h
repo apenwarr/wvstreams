@@ -131,19 +131,19 @@ public:
  */
 class WvMD5
 {
-   unsigned char *MD5HashValue;
+   unsigned char *md5_hash_value;
 
 public:
 
    /**
     * Create the MD5 Hash of a String
     */
-   WvMD5(const WvString &StringToHash);
+   WvMD5(const WvString &string_to_hash);
 
    /**
     * Create the MD5 Hash of a File
     */
-   WvMD5(FILE *FileToHash);
+   WvMD5(FILE *file_to_hash);
    ~WvMD5();
    
    /**
@@ -152,16 +152,16 @@ public:
     * routines, but you never know ;)
     */
    operator const unsigned char *() const
-   	{ return MD5HashValue; }
+   	{ return md5_hash_value; }
 
    /**
     * Sometimes we just want to easily get the text MD5 hash for whatever
     * Type of object that we're constructing...
     */
    operator const WvString () const
-        { return MD5Hash(); }
+        { return md5_hash(); }
 
-   WvString MD5Hash() const;
+   WvString md5_hash() const;
 };
 
 #endif // __WVCRYPTO_H

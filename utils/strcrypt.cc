@@ -1,5 +1,9 @@
 #include "strutils.h"
+#ifdef ISLINUX
 #include <crypt.h>
+#endif
+
+#include <unistd.h>
 #include <stdlib.h>
 
 WvString passwd_crypt(const char *str)

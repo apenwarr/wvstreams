@@ -10,7 +10,20 @@
 #define __WVADDR_H
 
 #include "wvstring.h"
+
+#ifdef ISLINUX
 #include <linux/if_ether.h>
+#endif
+
+#ifdef ISBSD
+#include <netinet/in_systm.h>
+#include <net/ethernet.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <net/if_arp.h>
+#include ETH_ALEN ETHER_ADDR_LEN
+#endif
+
 #include <netinet/in.h>
 
 typedef unsigned int __u32;

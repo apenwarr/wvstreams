@@ -6,6 +6,11 @@
  */
 #include "wvstreamlist.h"
 #include "wvunixsocket.h"
+
+#ifdef ISBSD
+#include <netinet/in_systm.h>
+#endif
+
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
