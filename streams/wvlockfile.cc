@@ -6,81 +6,73 @@
  */
 
 #include "wvlockfile.h"
+#include "strutils.h"
 #include <signal.h>
+
 
 WvLockFile::WvLockFile(WvStringParm _lockname)
     : lockname(_lockname)
-{ }
+{
+    // nothing special
+}
 
 
 bool WvLockFile::isok()
 {
-    int pid = getpid();
-
-    if ((pid > 0  && kill(pid, 0)) || !pid)
-    {
-        unlink(lockname);
-        return true;
-    }
-
-    return false;
+    pid_t pid = readpid();
+    return !pid || pid == getpid();
 }
 
 
-bool WvLockFile::lock(WvStringParm pid)
+bool WvLockFile::lock()
 {
     if (!isok())
         return false;
 
-    unlink(lockname);
-    lockfile.open(lockname, O_WRONLY|O_CREAT|O_EXCL);
-
-    if (!lockfile.isok())
-    {
-        lockfile.close();
+    WvFile lock(lockname, O_WRONLY|O_CREAT|O_EXCL);
+    if (!lock.isok())
         return false;
-    }
 
-    lockfile.print("%s\n", pid);
-    lockfile.close();
+    lock.print("%s\n", getpid());
     return true;
 }
 
 
 bool WvLockFile::unlock()
 {
+    if (!isok())
+	return false;
+
     unlink(lockname);
 
-    if (!access(lockname, F_OK))
-        return false;
-
-    return true;
+    return readpid() == 0;
 }
 
 
-int WvLockFile::getpid()
+int WvLockFile::readpid()
 {
-    char* line;
-    int pid;
+    char *line;
+    pid_t pid = 0;
+    WvString lockdir(getdirname(lockname));
 
-    if (!access(lockname, W_OK))
-        pid = -1;
+    if (access(lockdir, W_OK) < 0 
+      || (!access(lockname, F_OK) && access(lockname, R_OK) < 0))
+	return -1; // won't be able to create a lock
     else
     {
-        lockfile.open(lockname, O_RDONLY|O_CREAT);
-
-        if (lockfile.isok())
-        {
-            // Get the pid from the file to make sure the process is still alive
-            if ((line = lockfile.getline(0)) != NULL)
-                pid = atoi(line);
-            else
-                pid = 0;
-        }
-        else
-            pid = -1;
-
-        lockfile.close();
+        WvFile lock(lockname, O_RDONLY);
+	line = lock.getline(-1);
+	if (line)
+	{
+	    pid = atoi(line);
+	    if (kill(pid, 0) < 0 && errno == ESRCH) // no such process
+	    {
+		// previous lock owner is dead; clean it up.
+		::unlink(lockname);
+		return 0;
+	    }
+	}
     }
+    
     return pid;
 }
