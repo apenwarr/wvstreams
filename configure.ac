@@ -1,9 +1,20 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.80, wvstreams-dev@nit.ca, wvstreams)
 
-rm -f reconfigure
-echo $0 "$@" '"$@"' >reconfigure
-chmod +x reconfigure
+save_args() {
+    ARGS=""
+
+    while test $# -gt 0; do
+        ARGS="$ARGS \"$1\""
+        shift
+    done
+
+    rm -f reconfigure
+    echo $0 $ARGS '"$@"' >reconfigure
+    chmod +x reconfigure
+}
+
+save_args "$@"
 
 # append to a variable without introducing superfluous white space
 AC_DEFUN(WV_APPEND,
