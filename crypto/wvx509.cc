@@ -22,6 +22,28 @@
 
 static int ssl_init_count = 0;
 
+namespace {
+class AutoClose {
+public:
+    AutoClose(FILE *fp): fp(fp) { }
+    ~AutoClose()
+    {
+        if (fp)
+            fclose(fp);
+    }
+    
+    operator FILE *() const
+    {
+	return fp;
+    }
+    
+private:
+    FILE *fp;
+};
+} // anomymous namespace...
+
+
+
 void wvssl_init()
 {
     if (!ssl_init_count)
@@ -174,6 +196,7 @@ const WvRSAKey &WvX509Mgr::get_rsa()
 
     return *rsa;
 }
+
 
 // The people who designed this garbage should be shot!
 // Support old versions of openssl...
@@ -420,35 +443,12 @@ WvRSAKey *WvX509Mgr::fillRSAPubKey()
 }
 
 
-static FILE *file_hack_start()
-{
-    return tmpfile();
-}
-
-
-static WvString file_hack_end(FILE *f)
-{
-    WvDynBuf b;
-    size_t len;
-    
-    rewind(f);
-    while ((len = fread(b.alloc(1024), 1, 1024, f)) > 0)
-	b.unalloc(1024 - len);
-    b.unalloc(1024 - len);
-    fclose(f);
-
-    return b.getstr();
-}
-
-
 WvString WvX509Mgr::certreq()
 {
     EVP_PKEY *pk = NULL;
     X509_NAME *name = NULL;
     X509_REQ *certreq = NULL;
 
-    FILE *stupid = file_hack_start();
-    
     assert(rsa);
     assert(dname);
 
@@ -493,7 +493,6 @@ WvString WvX509Mgr::certreq()
     X509_REQ_set_subject_name(certreq, name);
     char *sub_name = X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 
 				       0, 0);
-
     debug("SubjectDN: %s\n", sub_name);
     OPENSSL_free(sub_name);
     
@@ -521,11 +520,19 @@ WvString WvX509Mgr::certreq()
     // Horribly involuted hack to get around the fact that the
     // OpenSSL people are too braindead to have a PEM_write function
     // that returns a char *
-    PEM_write_X509_REQ(stupid, certreq);
+    WvDynBuf retval;
+    BIO *bufbio = BIO_new(BIO_s_mem());
+    BUF_MEM *bm;
+    
+    PEM_write_bio_X509_REQ(bufbio, certreq);
+    BIO_get_mem_ptr(bufbio, &bm);
+    retval.put(bm->data, bm->length);
+    
     X509_REQ_free(certreq);
     EVP_PKEY_free(pk);
-  
-    return file_hack_end(stupid);
+    BIO_free(bufbio);
+
+    return retval.getstr();
 }
 
 
@@ -842,48 +849,57 @@ bool WvX509Mgr::signedbyCA(WvX509Mgr *cacert)
 
 WvString WvX509Mgr::encode(const DumpMode mode)
 {
-    FILE *stupid = NULL;
     WvString nil;
+    WvDynBuf retval;
+    BIO *bufbio = BIO_new(BIO_s_mem());
+    BUF_MEM *bm;
     
-    stupid = file_hack_start();
-    
-    if (stupid)
+    switch(mode)
     {
-	switch(mode)
-	{
-	case CertPEM:
-	    debug("Dumping X509 certificate.\n");
-	    PEM_write_X509(stupid, cert);
-	    break;
-	    
-	case RsaPEM:
-	    debug("Dumping RSA keypair.\n");
-	    fclose(stupid);
-	    return rsa->getpem(true);
-	    break;
-	    
-	case RsaPubPEM:
-	    debug("Dumping RSA Public Key!\n");
-	    fclose(stupid);
-	    return rsa->getpem(false);
-	    break;
-	case RsaRaw:
-	    debug("Dumping raw RSA keypair.\n");
-	    RSA_print_fp(stupid, rsa->rsa, 0);
-	    break;
-
-	default:
-	    seterr("Unknown Mode\n");
-	    return nil;
-	}
+    case CertPEM:
+	debug("Dumping X509 certificate.\n");
+	PEM_write_bio_X509(bufbio, cert);
+	break;
 	
-	return file_hack_end(stupid);
-    }
-    else
-    {
-	debug(WvLog::Error, "Can't create temp file in WvX509Mgr::encode!\n");
+    case CertDER:
+	debug("Dumping X509 certificate in DER format\n");
+	i2d_X509_bio(bufbio, cert);
+	break;
+	
+    case RsaPEM:
+	debug("Dumping RSA keypair.\n");
+	BIO_free(bufbio);
+	return rsa->getpem(true);
+	break;
+	
+    case RsaPubPEM:
+	debug("Dumping RSA Public Key!\n");
+	BIO_free(bufbio);
+	return rsa->getpem(false);
+	break;
+
+    case RsaRaw:
+	debug("Dumping raw RSA keypair.\n");
+	RSA_print(bufbio, rsa->rsa, 0);
+	break;
+	
+    default:
+	seterr("Unknown Mode\n");
 	return nil;
     }
+
+    BIO_get_mem_ptr(bufbio, &bm);
+    retval.put(bm->data, bm->length);
+    BIO_free(bufbio);
+    if (mode == CertDER)
+    {
+	WvBase64Encoder enc;
+	WvString output;
+	enc.flushbufstr(retval, output, true);
+	return output;
+    }
+    else
+	return retval.getstr();
 }
 
 void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
@@ -895,96 +911,64 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
     }
     
     // Let the fun begin... ;)
-    FILE *stupid = NULL;
+    AutoClose stupid(tmpfile());
     WvString outstring = pemEncoded;
     
-    stupid = file_hack_start();
-
-    if (stupid)
+    // I HATE OpenSSL... this is SO Stupid!!!
+    rewind(stupid);
+    unsigned int written = fwrite(outstring.edit(), 1, outstring.len(), stupid);
+    if (written != outstring.len())
     {
-	// I HATE OpenSSL... this is SO Stupid!!!
-	rewind(stupid);
-	unsigned int written = fwrite(outstring.edit(), 1, outstring.len(), stupid);
-	if (written != outstring.len())
-	{
-	    debug(WvLog::Error,"Couldn't write full amount to temp file!\n");
-	    fclose(stupid);
-	    return;
-	}
-	rewind(stupid);
-	switch(mode)
-	{
-	case CertPEM:
-	    debug("Importing X509 certificate.\n");
-	    if(cert)
-	    {
-		X509_free(cert);
-		cert = NULL;
-	    }
-	    cert = PEM_read_X509(stupid, NULL, NULL, NULL);
-	    if (cert)
-	    {
-		filldname();
-		if (!rsa)
-		    rsa = fillRSAPubKey();
-	    }
-	    else
-		seterr("Certificate failed to import!");
-	    break;
-	    
-	case RsaPEM:
-	    debug("Importing RSA keypair.\n");
-	    debug("Make sure that you load or generate a new Certificate!\n");
-	    if (rsa) delete rsa;
-	    rsa = new WvRSAKey(PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL), 
-			       true);
-	    if (!rsa->isok())
-		seterr("RSA Key failed to import\n");
-	    break;
-	case RsaPubPEM:
-	    debug("Importing RSA Public Key.\n");
-	    debug("Are you REALLY sure that you want to do this?\n");
-	    if (rsa) delete rsa;
-	    rsa = new WvRSAKey(PEM_read_RSAPublicKey(stupid, NULL, NULL, NULL), 
-			       true);
-	    if (!rsa->isok())
-		seterr("RSA Public Key failed to import\n");
-	    break;
-	case RsaRaw:
-	    debug("Importing raw RSA keypair not supported.\n");
-	    break;
-
-	default:
-	    seterr("Unknown Mode\n");
-	}
-	fclose(stupid);
+	debug(WvLog::Error,"Couldn't write full amount to temp file!\n");
+	return;
     }
-    else
-    {   
-        debug(WvLog::Error, "Can't create temp file in WvX509Mgr::decode!\n");
-        return;
+    rewind(stupid);
+    switch(mode)
+    {
+    case CertPEM:
+	debug("Importing X509 certificate.\n");
+	if(cert)
+	{
+	    X509_free(cert);
+	    cert = NULL;
+	}
+	cert = PEM_read_X509(stupid, NULL, NULL, NULL);
+	if (cert)
+	{
+	    filldname();
+	    if (!rsa)
+		rsa = fillRSAPubKey();
+	}
+	else
+	    seterr("Certificate failed to import!");
+	break;
+    case RsaPEM:
+	debug("Importing RSA keypair.\n");
+	debug("Make sure that you load or generate a new Certificate!\n");
+	if (rsa) delete rsa;
+	rsa = new WvRSAKey(PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL), 
+			   true);
+	if (!rsa->isok())
+	    seterr("RSA Key failed to import\n");
+	break;
+    case RsaPubPEM:
+	debug("Importing RSA Public Key.\n");
+	debug("Are you REALLY sure that you want to do this?\n");
+	if (rsa) delete rsa;
+	rsa = new WvRSAKey(PEM_read_RSAPublicKey(stupid, NULL, NULL, NULL), 
+			   true);
+	if (!rsa->isok())
+	    seterr("RSA Public Key failed to import\n");
+	break;
+    case RsaRaw:
+	debug("Importing raw RSA keypair not supported.\n");
+	break;
+	
+    default:
+	seterr("Unknown Mode\n");
     }
 }
 
-namespace {
-class AutoClose {
-public:
-    AutoClose(FILE *fp): fp(fp) { }
-    ~AutoClose()
-    {
-        if (fp)
-            fclose(fp);
-    }
-    
-    operator FILE *() const
-    {
-	return fp;
-    }
-    
-private:
-    FILE *fp;
-};
-} // anomymous namespace...
 
 void WvX509Mgr::write_p12(WvStringParm filename)
 {
