@@ -48,7 +48,7 @@ public:
     bool recursed_children; // FIXME:  Quick hack to speed up recursive iterators for huge lists.
     
     RecursiveIter(UniConf &h)
-	: i(h.check_children() ? *h.children : null_wvhconfdict), recursed_children(false)
+	: i(h.check_children(true) ? *h.children : null_wvhconfdict), recursed_children(false)
 	{ subiter = NULL; }
     RecursiveIter(UniConfDict &children)
 	: i(children)
