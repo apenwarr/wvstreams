@@ -90,12 +90,12 @@ install-shared: libwvstreams.so libwvutils.so
 	$(INSTALL_PROGRAM) libwvutils.so $(libdir)/libwvutils.so.$(RELEASE)
 
 install-dev: libwvstreams.a libwvutils.a
-	$(INSTALL) -d $(includedir)/wvstreams
-	$(INSTALL_DATA) $(wildcard include/*.h) $(includedir)/wvstreams
-	$(INSTALL) -d $(libdir)
-	$(INSTALL_DATA) libwvstreams.a libwvutils.a $(libdir)
-	cd $(libdir) && $(LN_S) libwvstreams.so.$(RELEASE) libwvstreams.so
-	cd $(libdir) && $(LN_S) libwvutils.so.$(RELEASE) libwvutils.so
+	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams
+	$(INSTALL_DATA) $(wildcard include/*.h) $(DESTDIR)$(includedir)/wvstreams
+	$(INSTALL) -d $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) libwvstreams.a libwvutils.a $(DESTDIR)$(libdir)
+	cd $(DESTDIR)$(libdir) && $(LN_S) libwvstreams.so.$(RELEASE) libwvstreams.so
+	cd $(DESTDIR)$(libdir) && $(LN_S) libwvutils.so.$(RELEASE) libwvutils.so
 
 uninstall:
 	$(tbd)
