@@ -111,6 +111,9 @@ size_t WvUDPStream::uread(void *buf, size_t count)
 size_t WvUDPStream::uwrite(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
+     
+    // pretend everything worked if there is nowhere to send data
+    if (remaddr.is_zero()) return count;
     
     struct sockaddr *to = remaddr.sockaddr();
     size_t tolen = remaddr.sockaddr_len();
