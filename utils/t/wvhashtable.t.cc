@@ -120,6 +120,8 @@ WVTEST_MAIN("stresshashtest.cc")
     WVPASS(slow_iter_passed);
 }
 
+// some things are commented out here because I believe the memory addresses are
+// not absoulte.. I'll admit I can be wrong, so modify if you wish
 WVTEST_MAIN("hashtest.cc")
 {
     WvString x("foo"), y("blue"), z("true");
@@ -133,12 +135,6 @@ WVTEST_MAIN("hashtest.cc")
     t.add(&y, false);
     t.add(&z, false);
     
-/*    printf("String hash test: \n\t %08x %08x %08x %08x \n"
-	   "\t %08x %08x %08x %08x\n",
-	   WvHash(x), WvHash(y), WvHash(z), WvHash((const char *)0),
-	   WvHash("fuzzy wuzzy buzzy foo"), WvHash("FUZZY wuzzy BUZZY foo"),
-	   WvHash("fuzzy wuzzy buzzy woo"),
-	   WvHash("wuzzy wuzzy buzzy foo"));*/
     if (!WVPASS(WvHash(x) == 0x000019ef))
         printf("   because [%08x] != [000019ef]\n", WvHash(x));
     if (!WVPASS(WvHash(y) == 0x000132a5))
@@ -161,8 +157,6 @@ WVTEST_MAIN("hashtest.cc")
         printf("   because [%08x] != [f3ad1fd0]\n", 
                 WvHash("wuzzy wuzzy buzzy foo"));
     
-/*    printf("Correct answers are: %p %p %p (%p)\n\n", &x, &y, &z, &xx);
-    printf("Result: %p %p %p %p\n", t[x2], t[y2], t[z2], t[xx]);*/
     if (!WVPASS(&x == t[x2]))
         printf("   because [%p] != [%p]\n", &x, t[x2]);
     if (!WVPASS(&y == t[y2]))
@@ -189,14 +183,10 @@ WVTEST_MAIN("hashtest.cc")
             printf("   because [%s] != [%s]\n", (const char *)i(),
                     cdesired[j]);
         j++;
-//	printf("%p(%s) ", (const char *)i(), (const char *)i());
     }
-//    printf("\n\n");
     
     t.remove(&x);
     t.remove(&y2);
-/*    printf("Result: %p %p %p %p\n", t[x2], t[y2], t[z2], t[xx]);
-    printf("Full(%d) contents: ", t.count());*/
     if (!WVPASS(t[x2] == 0x00000000))
         printf("   because [%p] != [0x00000000]\n", t[x2]);
     if (!WVPASS(t[y2] == 0x00000000))
@@ -211,9 +201,6 @@ WVTEST_MAIN("hashtest.cc")
     for (i.rewind(); i.next(); )
         if (!WVFAIL(strcmp((const char *)i(), "true")))
             printf("   because [%s] != [true]\n", (const char *)i());
-//	printf("%p(%s) ", (const char *)i(), (const char *)i());
-//    printf("\n\n");
-    
     
     Intstr a(5, "big"), b(6, "whistle"), c(7, "money");
     IntstrDict2 d(10);
@@ -221,7 +208,6 @@ WVTEST_MAIN("hashtest.cc")
     d.add(&a, false);
     d.add(&b, false);
     d.add(&c, false);
-//    printf("Dict Result: %p %p %p %p\n", d[a.i], d[b.i], d[7], d[10]);
 /*    if (!WVPASS((unsigned)d[a.i] == 0xbffffabc))
         printf("   because [%p] != [0xbffffabc]\n", d[a.i]);
     if (!WVPASS((unsigned)d[b.i] == 0xbffffaa8))
@@ -232,7 +218,6 @@ WVTEST_MAIN("hashtest.cc")
         printf("   because [%p] != [0x00000000]\n", d[10]);
 
     d.remove(&b);
-//    printf("Dict Result: %p %p %p %p\n", d[a.i], d[b.i], d[7], d[10]);
 /*    if (!WVPASS((unsigned)d[a.i] == 0xbffffabc))
         printf("   because [%p] != [0xbffffabc]\n", d[a.i]);*/
 /*    if (!WVPASS((unsigned)d[b.i] == 0x00000000))
