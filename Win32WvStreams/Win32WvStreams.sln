@@ -34,6 +34,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wvtest", "wvtest\wvtest.vcp
 		{417DFBB1-F315-4903-9D63-8054A069A9D2} = {417DFBB1-F315-4903-9D63-8054A069A9D2}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libwvtest", "libwvtest\libwvtest.vcproj", "{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -64,6 +68,10 @@ Global
 		{88567BD5-767C-490C-A3FF-A4B27BEBE958}.Debug.Build.0 = Debug|Win32
 		{88567BD5-767C-490C-A3FF-A4B27BEBE958}.Release.ActiveCfg = Release|Win32
 		{88567BD5-767C-490C-A3FF-A4B27BEBE958}.Release.Build.0 = Release|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Debug.ActiveCfg = Debug|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Debug.Build.0 = Debug|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Release.ActiveCfg = Release|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

@@ -123,6 +123,30 @@
 				RelativePath=".\fake.cpp">
 			</File>
 			<File
+				RelativePath="..\..\streams\t\wvdailyevent.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\t\wvencoderstream.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\t\wvfdstream.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\t\wvfile.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\t\wvgzipstream.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\t\wvlog.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\t\wvstream.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\t\wvstreamclone.t.cc">
+			</File>
+			<File
 				RelativePath="..\..\utils\wvtest.cc">
 			</File>
 			<File
