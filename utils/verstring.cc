@@ -116,13 +116,14 @@ unsigned int string_to_new_ver(const char *str)
     }
     
     // do the minor number
-    for (; *cptr && *cptr != '.' && *cptr != '_'; cptr++)
+    for (bits = 2; *cptr && *cptr != '.' && *cptr != '_' && bits > 0; cptr++)
     {
 	idx = (unsigned char *)strchr(lookup, tolower(*cptr));
 	if (!idx)
 	    continue;
 	
 	min = (min << 4) | ((char *)idx - lookup);
+	bits--;
     }
     
     // do the revision number
