@@ -177,6 +177,7 @@ bool WvTCPConn::isok() const
 
 
 WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
+	: listenport(_listenport)
 {
     listenport = _listenport;
     auto_list = NULL;
@@ -197,7 +198,17 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
 	seterr(errno);
     }
     
-    if (sa) delete sa;
+    if (listenport.port == 0) // auto-select a port number
+    {
+	size_t namelen = listenport.sockaddr_len();
+	
+	if (getsockname(fd, sa, &namelen) != 0)
+	    seterr(errno);
+	else
+	    listenport = WvIPPortAddr((sockaddr_in *)sa);
+    }
+    
+    delete sa;
 }
 
 

@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	WvStream wvin(0), wvout(1);
 	WvStreamList l;
 
-	WvTCPListener sock(WvIPPortAddr(argc==2 ? argv[1] : "0.0.0.0:4242"));
+	WvTCPListener sock(WvIPPortAddr(argc==2 ? argv[1] : "0.0.0.0:0"));
 	
 	wvin.setcallback(stream_bounce_to_list, &l);
 	sock.auto_accept(&l, stream_bounce_to_list, &l);
