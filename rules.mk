@@ -15,8 +15,6 @@ libwvstreams.so: libwvutils.so
 
 libwvutils.a libwvutils.so: $(call objects,utils)
 
-DEPFILE = $(notdir $(@:.o=.d))
-
 ifdef VERBOSE
 COMPILE_MSG:=
 LINK_MSG:=
@@ -24,6 +22,11 @@ else
 COMPILE_MSG=@echo compiling $@;
 LINK_MSG=@echo linking $@;
 endif
+
+SONAMEOPT=-Wl,-soname,$(SONAME)
+SOFLAGS=-shared $(if $(SONAME),$(SONAMEOPT))
+
+DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.o
 	$(LINK_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
@@ -49,9 +52,9 @@ endif
 %.a:
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
+%.so: SONAME=$@
 %.so:
-	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared \
-		-Wl,-soname,$@ $^ -o $@
+	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SOFLAGS) $^ -o $@
 
 %.moc: %.h
 	$(COMPILE_MSG)moc $< -o $@
