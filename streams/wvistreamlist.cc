@@ -76,11 +76,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 		i.xunlink();
 	    continue;
 	}
-	
-	//if (si.wants.readable && inbuf.used() && inbuf.used() > queue_min)
-	//    sure_thing.append(&s, false, i.link->id);
-	
-	if (s.isok() && s.pre_select(si))
+	else if (s.pre_select(si))
 	    sure_thing.append(&s, false, i.link->id);
     }
 
