@@ -159,10 +159,6 @@ void WvFdStream::maybe_autoclose()
 
 bool WvFdStream::pre_select(SelectInfo &si)
 {
-    SelectRequest oldwant = si.wants;
-    if (!si.inherit_request)
-	si.wants = force;
-
     bool result = WvStream::pre_select(si);
     
     if (isselectable(rfd))
@@ -191,17 +187,12 @@ bool WvFdStream::pre_select(SelectInfo &si)
 	si.max_fd = rfd;
     if (si.max_fd < wfd)
 	si.max_fd = wfd;
-
-    si.wants = oldwant;
-
     return result;
 }
 
 
 bool WvFdStream::post_select(SelectInfo &si)
 {
-    SelectRequest oldwant = si.wants;
-
     bool result = WvStream::post_select(si);
     
     // flush the output buffer if possible
@@ -220,24 +211,13 @@ bool WvFdStream::post_select(SelectInfo &si)
 	    (rfd >= 0 && FD_ISSET(rfd, &si.except)) ||
 	    (wfd >= 0 && FD_ISSET(wfd, &si.except)));
     
-    if (!si.inherit_request)
-	si.wants = force;
-
     if (val && si.wants.readable && read_requires_writable
       && read_requires_writable->isok()
       && !read_requires_writable->select(0, false, true))
-    {
-	si.wants = oldwant;
 	return result;
-    }
     if (val && si.wants.writable && write_requires_readable
       && write_requires_readable->isok()
       && !write_requires_readable->select(0, true, false))
-    {
-	si.wants = oldwant;
 	return result;
-    }
-
-    si.wants = oldwant;
     return val || result;
 }
