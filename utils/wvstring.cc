@@ -20,6 +20,53 @@ static inline int _max(int x, int y)
 }
 
 
+WvString::WvString()
+{ 
+    buf = NULL;
+    str = NULL;
+}
+
+
+void WvString::setsize(size_t i)
+{
+    unlink();
+    newbuf(i);
+}
+
+
+WvString::WvString(const WvString &s) // Copy constructor
+{
+    link(s.buf, s.str);
+}
+
+
+WvString::WvString(const char *_str)
+{
+    if (_str) 
+	link(&__wvs_nb, _str);
+    else 
+    {
+	buf = NULL;
+	str = NULL;
+    }
+}
+
+
+// NOTE: make sure that 32 bytes is big enough for your longest int.
+// This is true up to at least 64 bits.
+WvString::WvString(int i) // auto-render int 'i' into a string
+{
+    newbuf(32);
+    sprintf(str, "%d", i);
+}
+
+
+WvString::~WvString()
+{
+    unlink();
+}
+
+
 void WvString::unlink()
 { 
     if (!buf) return;
@@ -43,7 +90,25 @@ WvStringBuf *WvString::alloc(size_t size)
     buf->size = size;
     return buf;
 }
-    
+
+
+void WvString::append(const WvString &s)
+{
+    *this = WvString("%s%s", *this, s);
+}
+
+
+void WvString::append(WVSTRING_FORMAT_DECL)
+{ 
+    append(WvString(WVSTRING_FORMAT_CALL));
+}
+
+
+size_t WvString::len() const
+{
+    return buf->size ? buf->size-1 : strlen(str);
+}
+
 
 void WvString::newbuf(size_t size)
 {
@@ -77,6 +142,39 @@ WvString& WvString::operator= (const WvString &s2)
     link(s2.buf, s2.str);
     return *this;
 }
+
+
+// string comparison
+bool WvString::operator== (const WvString &s2) const
+{
+    return (str==s2.str) || (str && s2.str && !strcmp(str, s2.str));
+}
+
+
+bool WvString::operator!= (const WvString &s2) const
+{
+    return (str!=s2.str) && (!str || !s2.str || strcmp(str, s2.str));
+}
+
+
+bool WvString::operator== (const char *s2) const
+{
+    return (str==s2) || (str && s2 && !strcmp(str, s2));
+}
+
+
+bool WvString::operator!= (const char *s2) const
+{
+    return (str!=s2) && (!str || !s2 || strcmp(str, s2));
+}
+
+
+// not operator is 'true' if string is empty
+bool WvString::operator! () const
+{
+    return !buf || !str[0];
+}
+
 
 
 // parse a 'percent' operator from a format string.  For example:

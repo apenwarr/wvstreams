@@ -78,19 +78,14 @@ class WvString
     void newbuf(size_t size);
 
 public:
-    WvString()      // fill blank strings later with operator= or setsize()
-        { buf = NULL; str = NULL; }
-    void setsize(size_t i)
-        { unlink(); newbuf(i); }
-    WvString(const WvString &s) // Copy constructor
-        { link(s.buf, s.str); }
-    WvString(const char *_str)
-        { if (_str) link(&__wvs_nb, _str); else { buf = NULL; str = NULL; } }
+    WvString();      // fill blank strings later with operator= or setsize()
+    void setsize(size_t i);
+    WvString(const WvString &s); // Copy constructor
+    WvString(const char *_str);
 
     // NOTE: make sure that 32 bytes is big enough for your longest int.
     // This is true up to at least 64 bits.
-    WvString(int i) // auto-render int 'i' into a string
-        { newbuf(32); sprintf(str, "%d", i); }
+    WvString(int i); // auto-render int 'i' into a string
 
     // when this is called, we assume output.str == NULL; it will be filled.
     static void do_format(WvString &output, char *format, const WvString **a);
@@ -138,17 +133,11 @@ public:
 	do_format(*this, __wvs_format.str, x);
     }
     
-    ~WvString()
-        { unlink(); }
+    ~WvString();
     
-    void append(const WvString &s)
-        { *this = WvString("%s%s", *this, s); }
-    
-    void append(WVSTRING_FORMAT_DECL)
-        { append(WvString(WVSTRING_FORMAT_CALL)); }
-    
-    size_t len() const
-        { return buf->size ? buf->size-1 : strlen(str); }
+    void append(const WvString &s);
+    void append(WVSTRING_FORMAT_DECL);
+    size_t len() const;
 
     WvString &operator= (const WvString &s2);
     
@@ -156,19 +145,13 @@ public:
     WvString &unique();
 
     // string comparison
-    bool operator== (const WvString &s2) const
-	{ return (str==s2.str) || (str && s2.str && !strcmp(str, s2.str)); }
-    bool operator!= (const WvString &s2) const
-	{ return (str!=s2.str) && (!str || !s2.str || strcmp(str, s2.str)); }
-
-    bool operator== (const char *s2) const
-        { return (str==s2) || (str && s2 && !strcmp(str, s2)); }
-    bool operator!= (const char *s2) const
-	{ return (str!=s2) && (!str || !s2 || strcmp(str, s2)); }
+    bool operator== (const WvString &s2) const;
+    bool operator!= (const WvString &s2) const;
+    bool operator== (const char *s2) const;
+    bool operator!= (const char *s2) const;
     
     // not operator is 'true' if string is empty
-    bool operator! () const
-        { return !buf || !str[0]; }
+    bool operator! () const;
 
     // pointer arithmetic
     const char *operator+ (int i) const
