@@ -11,3 +11,4 @@ wvtestmain
 *.libs
 *.ii
 xplc-stamp
+.wvtest-total

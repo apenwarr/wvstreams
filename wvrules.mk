@@ -1,4 +1,3 @@
-
 # wvrules.mk:  2003 09 09
 #
 # Copyright (C) 1998-2003 by Avery Pennarun <apenwarr@worldvisions.ca>.
@@ -14,8 +13,13 @@
 ifeq ($(WVSTREAMS),)
   $(error The WVSTREAMS variable is not defined)
 endif
+export WVSTREAMS
 
 SHELL=/bin/bash
+
+ifeq (${WVTESTRUN},)
+  WVTESTRUN=$(WVSTREAMS)/wvtesthelper
+endif
 
 #ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
 #  -include config.mk

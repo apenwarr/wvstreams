@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# Try to run the given command in a pipe to the test meter, but if that
+# fails, just dump it to stdout instead.  Also make sure nobody *inside*
+# us runs the testhelper script again.
+#
+export WVTESTRUN="env"
+
+if [ -z "$DISPLAY" ]; then
+    exec "$@"
+else
+    ( "$@" ) | ($WVSTREAMS/wvtestmeter || cat)
+    exit ${PIPESTATUS[0]}
+fi
