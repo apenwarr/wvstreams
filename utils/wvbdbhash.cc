@@ -152,12 +152,16 @@ void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
     // check if this is the first next() after a rewind()
     bool first = !curkey.dptr;
     datum wanted = { 0, 0 };
-    if (first) {
-        if (rewindto.dptr) {
+    if (first)
+    {
+        if (rewindto.dptr)
+	{
             curkey = rewindto;
             first = false;
         }
-    } else {
+    }
+    else
+    {
         wanted.dsize = curkey.dsize;
         wanted.dptr = malloc(wanted.dsize);
         memcpy(wanted.dptr, curkey.dptr, wanted.dsize);
@@ -172,15 +176,23 @@ void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
         // current key gone, and none higher left: done
 	curkey.dptr = curdata.dptr = NULL;
     }
-    else if (wanted.dptr && !comparefunc((DBT *) &curkey, (DBT *) &wanted))
+    else if (!first)
     {
-        // found the exact key requested, so move forward one
-        if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
-                    R_NEXT))
-        {
-            // nothing left?  Fine, we're done
-            curkey.dptr = curdata.dptr = NULL;
-        }
+	while (comparefunc((DBT *)&wanted, (DBT *)&curkey) >= 0)
+	{
+	    // found the exact key or earlier than requested: move forward one
+	    // (yes, libbdb1 can return a key less than requested, despite
+	    // the documentation's claims!)
+	    // This algorithm definitely makes it so inserting the same key
+	    // more than once doesn't work at all.
+	    if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+				 R_NEXT))
+	    {
+		// nothing left?  Fine, we're done
+		curkey.dptr = curdata.dptr = NULL;
+		break;
+	    }
+	}
     }
 
     // otherwise, curkey is now sitting on the key after the requested one (or
@@ -195,6 +207,7 @@ void WvBdbHashBase::IterBase::xunlink(const datum &curkey)
 {
     bdbhash.remove(curkey);
 }
+
 
 void WvBdbHashBase::IterBase::update(const datum &curkey, const datum &data)
 {
