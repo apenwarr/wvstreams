@@ -30,8 +30,7 @@ void WvString::setsize(size_t i)
 
 WvString::WvString()
 {
-    buf = NULL;
-    str = NULL;
+    link(&__wvs_nb, NULL);
 }
 
 
@@ -43,13 +42,7 @@ WvString::WvString(const WvString &s)
 
 WvString::WvString(const char *_str)
 {
-    if (_str)
-	link(&__wvs_nb, _str);
-    else 
-    {
-	buf = NULL;
-	str = NULL;
-    }
+    link(&__wvs_nb, _str);
 }
 
 
@@ -70,7 +63,6 @@ WvString::~WvString()
 
 void WvString::unlink()
 { 
-    if (!buf) return;
     if (! --buf->links)
 	free(buf);
 }
@@ -78,7 +70,7 @@ void WvString::unlink()
 void WvString::link(WvStringBuf *_buf, const char *_str)
 {
     buf = _buf;
-    if (buf) buf->links++;
+    buf->links++;
     str = (char *)_str; // I promise not to change it without asking!
 }
     
@@ -95,20 +87,13 @@ WvStringBuf *WvString::alloc(size_t size)
 
 void WvString::append(const WvString &s)
 {
-    if (buf)
-	*this = WvString("%s%s", *this, s);
-    else
-    {
-	*this = s;
-	unique();
-    }
+    *this = WvString("%s%s", *this, s);
 }
 
 
 size_t WvString::len() const
 {
-    if (!buf) return 0;
-    return buf->size ? buf->size-1 : strlen(str);
+    return buf->size ? buf->size-1 : (str ? strlen(str) : 0);
 }
 
 
@@ -124,7 +109,7 @@ void WvString::newbuf(size_t size)
 // of it.  If it was linked to only once, then it's already "unique".
 WvString &WvString::unique()
 {
-    if (buf->links > 1)
+    if (buf->links > 1 && str)
     {
 	WvStringBuf *newb = alloc(len() + 1);
 	memcpy(newb->data, str, newb->size);
@@ -174,7 +159,7 @@ bool WvString::operator!= (const char *s2) const
 // not operator is 'true' if string is empty
 bool WvString::operator! () const
 {
-    return !buf || !str[0];
+    return !str || !str[0];
 }
 
 

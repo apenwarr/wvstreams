@@ -178,7 +178,7 @@ public:
 	if (&__wvs_a18 != &__wvs_n) x[18] = &__wvs_a18;
 	if (&__wvs_a19 != &__wvs_n) x[19] = &__wvs_a19;
 	
-	buf = NULL;
+	link(&__wvs_nb, NULL);
 	do_format(*this, __wvs_format.str, x);
     }
     
