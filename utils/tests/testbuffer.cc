@@ -91,16 +91,27 @@ int main()
 	i = random() % sizeof(xx);
 	s = (char *)bb.alloc(i);
 	memcpy(s, xx, i);
+        //fprintf(stderr, "alloc(%d)\n", i);
 	in += i;
 	total += i;
+        size_t lastalloc = i;
+        
+	i = random() % sizeof(xx);
+	if (i > lastalloc)
+	    i = lastalloc;
+        //fprintf(stderr, "unalloc(%d)\n", i);
+	bb.unalloc(i);
+	in -= i;
 	
 	i = random() % sizeof(xx);
 	if (i > in)
 	    i = in;
+        //fprintf(stderr, "get(%d)\n", i);
 	bb.get(i);
 	in -= i;
 	
 	i = random() % sizeof(xx);
+        //fprintf(stderr, "put(%d)\n", i);
 	bb.put(xx, i);
 	in += i;
 	total += i;
@@ -108,9 +119,19 @@ int main()
 	i = random() % sizeof(xx);
 	if (i > in)
 	    i = in;
+        //fprintf(stderr, "get(%d)\n", i);
 	bb.get(i);
 	in -= i;
-	
+        size_t lastput = i;
+        
+	i = random() % sizeof(xx);
+	if (i > lastput)
+	    i = lastput;
+        //fprintf(stderr, "unget(%d)\n", i);
+	bb.unget(i);
+	in += i;
+        
+        assert(bb.used() == in);
 	if (bb.used() > max)
 	{
 	    max = bb.used();

@@ -75,231 +75,178 @@ void WvBuffer::zap()
 
 unsigned char *WvBuffer::get(size_t num)
 {
-    WvMiniBufferList::Iter i(list);
-    WvMiniBuffer *firstb, *b, *destb;
-    size_t got, avail;
-
-    if (inuse < num  ||  num == 0)
-	return NULL;
-    
-    assert(inuse >= num); // so there must be enough buffers
-    
+    if (num == 0 || num > inuse)
+        return NULL; // insufficient data
     inuse -= num;
-    
-    i.rewind(); i.next();
-    
-    // if the first minibuffer is empty, delete it.
-    firstb = i.ptr();
-    if (firstb->used() == 0)
+
+    // search for the first non-empty minibuffer
+    WvMiniBuffer *firstb;
+    for (;;)
     {
-	Dprintf("<del-0 MiniBuffer(%d)\n", firstb->total());
-	i.unlink();
+        assert(list.head.next && list.head.next->data); // true if inuse is not 0
+        firstb = (WvMiniBuffer *)list.head.next->data;
+        if (firstb->used() != 0) break;
+        Dprintf("<del-0 MiniBuffer(%d)\n", firstb->total());
+        list.unlink_first();
     }
 
-    // if the (new) first minibuffer has enough data, just use that.
-    firstb = i.ptr();
+    // if we have enough data, return it now
     if (firstb->used() >= num)
-	return firstb->get(num);
-
-    // nope.  Is there enough empty space in this buffer to hold the rest of
-    // the data?
-    if (firstb->free() >= num - firstb->used())
-    {
-	got = firstb->used();
-	destb = firstb;
-    }
-    else
-    {
-	// must allocate a new "first" buffer to hold entire 'num' bytes
-	got = 0;
-	destb = new WvMiniBuffer(num);
-	list.prepend(destb, true);
-	Dprintf("<new-1 MiniBuffer(%d)>\n", num);
-    }
-
-    for (i.rewind(), i.next(); i.cur(); )
-    {
-	b = i.ptr();
-	if (b == destb)
-	{
-	    i.next();
-	    continue;
-	}
-	
-	if (b->used() > num - got)
-	    avail = num - got;
-	else
-	    avail = b->used();
-	got += avail;
-	
-	destb->put(b->get(avail), avail);
-	if (!b->used())
-	{
-	    Dprintf("<del-1 MiniBuffer(%d)\n", b->total());
-	    i.unlink();
-	}
-	else
-	    i.next();
-    }
+        return firstb->get(num);
     
-    return destb->get(num);
+    // is there enough space in this buffer to hold the rest of the data?
+    size_t needed = num - firstb->used();
+    if (firstb->free() < needed)
+    {
+        // must allocate a new "first" buffer to hold entire 'num' bytes
+        firstb = new WvMiniBuffer(num);
+        list.prepend(firstb, true);
+        Dprintf("<new-1 MiniBuffer(%d)>\n", num);
+        needed = num;
+    }
+
+    // grab data from subsequent minibuffers, delete emptied ones
+    WvMiniBufferList::Iter i(list);
+    i.rewind(); i.next();
+    for (;;)
+    {
+        i.next();
+        assert(i.cur() && i.ptr());
+        WvMiniBuffer *b = i.ptr();
+        
+        // move data from current buffer
+        size_t chunk = b->used() < needed ? b->used() : needed;
+        firstb->put(b->get(chunk), chunk);
+        needed -= chunk;
+        if (needed == 0)
+            break;
+
+        // buffer is now empty so delete it
+        Dprintf("<del-1 MiniBuffer(%d)>\n", b->total());
+        i.xunlink();
+    }
+    return firstb->get(num);
 }
 
 
 void WvBuffer::unget(size_t num)
 {
-    WvMiniBuffer *b;
-    WvMiniBufferList::Iter i(list);
-    size_t ungettable;
-    
-    i.rewind(); i.next();
-    b = &i();
-    
-    ungettable = b->total() - b->used() - b->free();
-    
-    if (num > ungettable)
-	num = ungettable;
-    
-    b->unget(num);
+    if (num == 0)
+        return;
     inuse += num;
+
+    // we're asserting here if the unget cannot be performed
+    // to help catch serious bugs that might otherwise result if we just
+    // ungot some smaller amount
+    assert(list.head.next && list.head.next->data); // must have a head
+    WvMiniBuffer *b = (WvMiniBuffer *)list.head.next->data;
+
+    size_t ungettable = b->total() - b->used() - b->free();
+    assert(num <= ungettable);
+    b->unget(num);
 }
 
 
 unsigned char *WvBuffer::alloc(size_t num)
 {
-    WvMiniBuffer *lastb, *b;
-    size_t newsize;
-    
+    if (num == 0)
+        return NULL;
+    inuse += num;
+
+    // check last buffer for enough contiguous space
     if (list.tail && list.tail->data)
     {
-	lastb = (WvMiniBuffer *)list.tail->data;
-	if (lastb->free() >= num)
-	{
-	    inuse += num;
-	    return lastb->alloc(num);
-	}
+        WvMiniBuffer *lastb = (WvMiniBuffer *)list.tail->data;
+        if (lastb->free() >= num)
+            return lastb->alloc(num);
+
+        // if the last buffer was empty, delete it since it will be wasted
+        if (lastb->used() == 0)
+        {
+            WvMiniBufferList::Iter i(list);
+            for (i.rewind(); i.next() && i.cur()->next; ) ;
+            Dprintf("<del-2 MiniBuffer(%d)>\n", lastb->total());
+            i.xunlink();
+        }
     }
-    else
-	lastb = NULL;
-    
-    // otherwise, we need a new MiniBuffer so we can provide contiguous 'num'
-    // bytes.  New buffers grow in size exponentially, and have minimum size
-    // of MINSIZE.
-    newsize = 0;
-    if (lastb)
-    {
-	newsize = lastb->total();
-	if (lastb->used() > lastb->total() / 2)
-	    newsize *= 2;
-    }
-    if (newsize < MINSIZE)
-	newsize = MINSIZE;
-    if (newsize < num)
-	newsize = num;
-    b = new WvMiniBuffer(newsize);
-    Dprintf("<new-2 MiniBuffer(%d)>\n", newsize);
-    
-    list.append(b, true);
-    
-    inuse += num;
-    return b->alloc(num);
+    // otherwise create a new buffer
+    WvMiniBuffer *newb = append_new_buffer(num);
+    return newb->alloc(num);
 }
 
 
-void WvBuffer::unalloc(size_t num)
-{
-    WvMiniBuffer *lastb, *b;
-    
-    assert(inuse >= num);
-    
-    if (inuse < num  ||  num == 0)
-	return; // strange
-    
-    inuse -= num;
-    
-    // fast track:  if enough bytes are in the very last minibuffer (the
-    // usual case) then we can unalloc() it quickly.
-    lastb = (WvMiniBuffer *)list.tail->data;
-    if (lastb->used() >= num)
-    {
-	lastb->unalloc(num);
-	return;
-    }
-	
-    // free up as much as we can from the last buffer, counting backwards
-    // each time.  This is slow because we have only a singly-linked list.
-    WvMiniBufferList::Iter i(list);
-    
-    while (num > 0)
-    {
-	// iterate through to the last element
-	for (i.rewind(); i.next() && i.cur()->next; )
-	    ;
-	
-	b = i.ptr();
-	
-	if (b->used() < num)
-	{
-	    num -= b->used();
-	    Dprintf("<del-2 MiniBuffer(%d)>\n", b->total());
-	    i.unlink();
-	}
-	else
-	{
-	    // only unalloc part of the now-last element
-	    b->unalloc(num);
-	    num = 0;
-	}
-    }
-}
-
-
-/*
- * we could do this with alloc() and memcpy(), but that can waste space. If
- * we know the data already, append whatever fits to the last buffer, then
- * add any remaining data to a new one.
- */
 void WvBuffer::put(const void *data, size_t num)
 {
-    WvMiniBuffer *lastb, *b;
-    size_t newsize;
-    
+    if (num == 0)
+        return;
     inuse += num;
 
     // use up any space in the currently-last minibuffer
     if (list.tail && list.tail->data)
     {
-	lastb = (WvMiniBuffer *)list.tail->data;
-	
-	newsize = lastb->free() >= num ? num : lastb->free();
-	lastb->put(data, newsize);
-	num -= newsize;
-	data = (char *)data + newsize;
+        WvMiniBuffer *lastb = (WvMiniBuffer *)list.tail->data;
+        size_t chunk = lastb->free() < num ? lastb->free() : num;
+        lastb->put(data, chunk);
+        num -= chunk;
+        if (num == 0)
+            return;
+        data = (char *)data + chunk;
     }
-    else
-	lastb = NULL;
-    
-    // otherwise, we need a new MiniBuffer so we can provide contiguous 'num'
-    // bytes.  New buffers grow in size exponentially, and have minimum size
-    // of 10.
-    if (num > 0)
+    // create a new buffer for the remainder
+    WvMiniBuffer *newb = append_new_buffer(num);
+    newb->put(data, num);
+}
+
+
+WvMiniBuffer *WvBuffer::append_new_buffer(size_t minsize)
+{
+    // new buffers grow in size exponentially,
+    size_t newsize = 0;
+    if (list.tail && list.tail->data)
     {
-	newsize = 0;
-	if (lastb)
-	{
-	    newsize = lastb->total();
-	    if (lastb->used() >= lastb->total() / 2)
-		newsize *= 2;
-	}
-	if (newsize < 10)
-	    newsize = 10;
-	if (newsize < num)
-	    newsize = num;
-	b = new WvMiniBuffer(newsize);
-	Dprintf("<new-3 MiniBuffer(%d)>\n", newsize);
-	
-	list.append(b, true);
-	b->put(data, num);
+        WvMiniBuffer *lastb = (WvMiniBuffer *)list.tail->data;
+        newsize = lastb->total();
+        if (lastb->used() > lastb->total() / 2)
+            newsize *= 2;
+    }
+    // minimum size of MINSIZE or minsize, whichever is greater
+    if (newsize < MINSIZE)
+        newsize = MINSIZE;
+    if (newsize < minsize)
+        newsize = minsize;
+
+    WvMiniBuffer *newb = new WvMiniBuffer(newsize);
+    Dprintf("<new-2 MiniBuffer(%d)>\n", newsize);
+    list.append(newb, true);
+    return newb;
+}
+
+
+void WvBuffer::unalloc(size_t num)
+{
+    assert(inuse >= num);
+    if (num == 0)
+        return;
+    inuse -= num;
+    
+    assert(list.tail && list.tail->data); // true if inuse is not 0
+    WvMiniBuffer *lastb = (WvMiniBuffer *)list.tail->data;
+    for (;;)
+    {
+        // unalloc from end of last buffer
+        size_t chunk = lastb->used() < num ? lastb->used() : num;
+        lastb->unalloc(chunk);
+        num -= chunk;
+        if (num == 0)
+            break;
+
+        // last buffer is now empty so delete it and find previous
+        WvMiniBufferList::Iter i(list);
+        for (i.rewind(); i.next() && i.cur()->next; ) ;
+        Dprintf("<del-3 MiniBuffer(%d)>\n", lastb->total());
+        i.xunlink();
+        assert(i.cur() && i.ptr()); // if NULL, then counts were wrong
+        lastb = i.ptr();
     }
 }
 
@@ -315,16 +262,18 @@ void WvBuffer::put(WvStringParm str)
 // WvMiniBuffer objects into our own list.
 void WvBuffer::merge(WvBuffer &buf)
 {
+    // move the buffers
     WvMiniBufferList::Iter i(buf.list);
-    
     for (i.rewind(); i.next(); )
     {
-	i.cur()->auto_free = false;
-	list.append(&i(), true);
+        i.cur()->auto_free = false;
+        list.append(&i(), true);
     }
-    
+    buf.list.zap();
+
+    // adjust the used space counters
     inuse += buf.used();
-    buf.zap();
+    buf.inuse = 0;
 }
 
 

@@ -138,6 +138,7 @@ public:
      * Undo all or part of the previous get().  You can unget() up to the
      * number of bytes you did in the last get(), assuming you have not done
      * any other buffer operations in the meantime.
+     * Don't try to unget under other circumstances, however.
      */
     void unget(size_t num);
     
@@ -205,6 +206,9 @@ public:
     
     int num_of_bufs()
         { return list.count(); }
+
+private:
+    WvMiniBuffer *append_new_buffer(size_t minsize);
 };
 
 
