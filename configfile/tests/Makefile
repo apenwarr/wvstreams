@@ -16,7 +16,3 @@ initest delsection: configfile.a
 clean:
 	rm -f initest delsection
 
-.PHONY: tests
-tests:
-	$(MAKE) -C tests
-
