@@ -32,7 +32,7 @@ public:
     WvString dname;
 
    /**
-    * Type for the @ref dump() method, which can output the information
+    * Type for the dump() method, which can output the information
     * in this class in a variety of formats
     */
     enum DumpMode { CertPEM = 0, RsaPEM, RsaRaw };
@@ -41,39 +41,49 @@ public:
     * Initialize a blank X509 Object with the certificate *cert
     * (used for client side operations...)
     * 
-    * This either initializes a completely empty object, or takes _cert, and extracts
-    * the distinguished name into dname, and the the RSA public key into rsa. rsa->prv is empty.
+    * This either initializes a completely empty object, or takes _cert,
+    * and extracts the distinguished name into dname, and the the RSA
+    * public key into rsa. rsa->prv is empty.
     */
     WvX509Mgr(X509 *_cert = NULL);
 
-    /** Constructor to initialize this object with a pre-existing certificate and key */
+    /**
+     * Constructor to initialize this object with a pre-existing certificate
+     * and key
+     */
     WvX509Mgr(WvStringParm hexcert, WvStringParm hexrsa);
 
     /**
-     * Constructor to create a selfsigned certificate for dn dname
-     * NOTE: If you already have a WvRSAKey, then you can shove it
-     * in here in the second parameter (i.e.: If you wanted to generate a
-     * cert for an existing TunnelVision connection), or if you don't have an 
-     * RSA Key yet, you can just give it a number of bits, and it will create 
-     * one for you.
-     *
-     * Also: For SSL Servers:
-     * the dname MUST be in the form: cn=FQDN,o=foo,c=CA
-     * (actually, any part after the cn=FQDN is up to you... dc= works as well..)
-     *
-     * But the important bit is to use the Fully Qualified Domain Name in 
-     * the cn= part - otherwise Web Clients get confused...(I imagine other
-     * server clients will get equally confused, but I haven't checked).
-     * I don't check for this, since other kinds of certificates are perfectly
-     * valid without this... If you want to generate invalid certs, that's up
-     * to you.
+     * Constructor to create a self-signed certificate for the given dn and
+     * RSA key.  If you don't already have a WvRSAKey, try the other
+     * constructor, below, which creates one automatically.
+     * 
+     * For SSL Servers, the dname must contain a "cn=" section in order to
+     * validate correctly with some clients, particularly web browsers.
+     * For example, if your domain name is nit.ca, you can try this for
+     * _dname: "cn=nit.ca,o=Net Integration,c=CA", or maybe this instead:
+     * "cn=nit.ca,dc=nit,dc=ca"
+     * 
+     * We don't check automatically that your _dname complies with these
+     * restrictions, since non-SSL certificates may be perfectly valid
+     * without this.  If you want to generate invalid certs, that's up to
+     * you.
      */
     WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa);
-    WvX509Mgr(WvStringParm _dname, int bits);
     
+    /**
+     * Constructor to create a new self-signed certificate for the given dn
+     * and number of bits.  See the previous constructor for details on how
+     * to choose _dname.  'bits' is the number of bits in the auto-generated
+     * RSA key; 1024 or 2048 are good values for this.
+     */
+    WvX509Mgr(WvStringParm _dname, int bits);
+
+private:
     /** Placeholder: this doesn't exist yet. */
     WvX509Mgr(const WvX509Mgr &mgr);
 
+public:
     /** Destructor */
     virtual ~WvX509Mgr();
 
