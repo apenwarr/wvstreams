@@ -11,10 +11,39 @@
 #
 # It will only work with GNU make.
 #
-
-ifneq ($(wildcard $(TOPDIR)/config.mk),)
-  include $(TOPDIR)/config.mk
+ifeq ($(WVSTREAMS),)
+  $(error The WVSTREAMS variable is not defined)
 endif
+
+SHELL=/bin/bash
+
+#ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
+#  -include config.mk
+#endif
+
+ifneq ($(wildcard $(WVSTREAMS)/config.mk),)
+  include $(WVSTREAMS)/config.mk
+endif
+
+WVSTREAMS_INC=$(WVSTREAMS)/include
+LIBWVUTILS=$(WVSTREAMS)/libwvutils.so
+LIBWVSTREAMS=$(WVSTREAMS)/libwvstreams.so $(LIBWVUTILS)
+LIBWVOGG=$(WVSTREAMS)/libwvoggvorbis.so $(LIBWVSTREAMS)
+LIBUNICONF=$(WVSTREAMS)/libuniconf.so $(LIBWVSTREAMS)
+LIBWVQT=$(WVSTREAMS)/libwvqt.so $(LIBWVSTREAMS)
+
+#
+# Initial C compilation flags
+#
+CPPFLAGS += $(CPPOPTS)
+C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
+		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS += $(COPTS) $(C_AND_CXX_FLAGS) 
+CXXFLAGS += $(CXXOPTS) $(C_AND_CXX_FLAGS)
+LDFLAGS += $(LDOPTS)
+
+# FIXME: what does this do??
+XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" && echo " -lsupc++")
 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
@@ -22,22 +51,44 @@ else
   DEBUG:=
 endif
 
-ifeq ("$(enable_efence)", "yes")
-  USE_EFENCE:=1
-  EFENCE:=-lefence
-else
-  EFENCE:=
+ifeq ("$(enable_fatal_warnings)", "yes")
+  CXXFLAGS+=-Werror
+  # FIXME: not for C, because our only C file, crypto/wvsslhack.c, has
+  #        a few warnings on purpose.
+  #CFLAGS+=-Werror
 endif
 
-ifeq ("$(enable_verbose)", "yes")
-  VERBOSE:=1
+ifneq ("$(enable_optimization)", "no")
+  CXXFLAGS+=-O2
+  #CXXFLAGS+=-felide-constructors
+  CFLAGS+=-O2
+endif
+
+ifneq ("$(enable_warnings)", "no")
+  CXXFLAGS+=-Wall -Woverloaded-virtual
+  CFLAGS+=-Wall
+endif
+
+ifneq ("$(enable_rtti)", "yes")
+  CXXFLAGS+=-fno-rtti
+endif
+
+ifneq ("$(enable_exceptions)", "yes")
+  CXXFLAGS+=-fno-exceptions
+endif
+
+ifeq ("$(enable_efence)", "yes")
+  EFENCE:=-lefence
+  USE_EFENCE:=1
+endif
+
+ifeq (USE_EFENCE,1)
+  LDLIBS+=$(EFENCE)
 endif
 
 ifdef DONT_LIE
   VERBOSE:=1 $(warning DONT_LIE is deprecated, use VERBOSE instead)
 endif
-
-SHELL=/bin/bash
 
 STRIP=strip --remove-section=.note --remove-section=.comment
 #STRIP=echo
@@ -56,25 +107,27 @@ test:
 %/test:
 	$(MAKE) -C $(dir $@) test
 
-$(TOPDIR)/rules.local.mk:
+$(TOPDIR)/rules.local.mk $(WVSTREAMS)/rules.local.mk:
 	@true
 
 -include $(TOPDIR)/rules.local.mk
+-include $(WVSTREAMS)/rules.local.mk
 
 #
 # Figure out which OS we're running (for now, only picks out Linux or BSD)
 #
-OS=$(shell uname -a | awk '{print $$1}' | sed -e 's/^.*BSD/BSD/g' )
+OS:=$(shell uname -a | awk '{print $$1}' | sed -e 's/^.*BSD/BSD/g' )
 
 #
-# (Just BSD and LINUX clash with other symbols, so us ISLINUX and ISBSD)
+# (Just BSD and LINUX clash with other symbols, so use ISLINUX and ISBSD)
+# This sucks.  Use autoconf for most things!
 #
 ifeq ($(OS),Linux)
-  OSDEFINE=-DISLINUX
+  OSDEFINE:=-DISLINUX
 endif
 
 ifeq ($(OS),BSD)
-  OSDEFINE=-DISBSD
+  OSDEFINE:=-DISBSD
 endif
 
 ifeq ($(CCMALLOC),1)
@@ -83,213 +136,109 @@ ifeq ($(CCMALLOC),1)
  endif
 endif
 
-#
-# C compilation flags (depends on DEBUG setting)
-#
-CPPFLAGS = $(CPPOPTS)
-C_AND_CXX_FLAGS = -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
-		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
-		  -Wall
-CFLAGS = $(COPTS) $(C_AND_CXX_FLAGS) 
-CXXFLAGS = $(CXXOPTS) -Woverloaded-virtual $(C_AND_CXX_FLAGS)
-LDFLAGS = $(LDOPTS)
-XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" && echo " -lsupc++")
-
 ifeq ($(DEBUG),1)
-C_AND_CXX_FLAGS += -ggdb -DDEBUG=1
-CXXFLAGS += -fno-rtti -fno-exceptions
-LDFLAGS += -ggdb
+  C_AND_CXX_FLAGS += -ggdb -DDEBUG=1
+  LDFLAGS += -ggdb
 else
-C_AND_CXX_FLAGS += -g -O -DDEBUG=0
-#CFLAGS += -DNDEBUG    # I don't like disabling assertions...
-#CFLAGS += -fomit-frame-pointer  # really evil
-#CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0
-CXXFLAGS += -fno-rtti -fno-exceptions
-LDFLAGS += -g
+  C_AND_CXX_FLAGS += -g -O -DDEBUG=0
+  #CFLAGS += -DNDEBUG    # I don't like disabling assertions...
+  #CFLAGS += -fomit-frame-pointer  # really evil
+  #CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0
+  LDFLAGS += -g
 endif
 
 ifeq ($(PROFILE),1)
-CFLAGS += -pg
-LDFLAGS += -pg
+  CFLAGS += -pg
+  LDFLAGS += -pg
 endif
 
 ifeq ($(STATIC),1)
-LDFLAGS += -static
+  LDFLAGS += -static
 endif
 
+INCFLAGS = $(addprefix -I,$(XPATH))
+CPPFLAGS += $(INCFLAGS)
+CFLAGS += $(CPPFLAGS)
+CXXFLAGS += $(CPPFLAGS)
+
+ifeq ($(VERBOSE),1)
+  COMPILE_MSG = 
+  LINK_MSG =
+  DEPEND_MSG=
+else
+  COMPILE_MSG = @echo compiling $@...;
+  LINK_MSG = @echo linking $@...;
+  #DEPEND_MSG = @echo "   depending $@...";
+  DEPEND_MSG = @
+endif
 
 # any rule that depends on FORCE will always run
 .PHONY: FORCE
 FORCE:
 
+# usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
+#    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
+DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
+define wvcc_base
+	@rm -f "$1"
+	$(COMPILE_MSG)$4 $5 $2 -o $1
+	$(DEPEND_MSG)$4 -M -E $< \
+		| sed -e 's|^$(notdir $1)|$1|' >$(DEPFILE)
+endef
+wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
+wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+
+define wvlink_ar
+	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
+	echo $2 >$(patsubst %.a,%.libs,$1); \
+	ar q $1 $(filter %.o,$2); \
+	for d in $(filter %.libs,$2); do \
+		cd $$(dirname "$$d"); \
+		ar q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
+		cd $(shell pwd); \
+	done; \
+	ranlib $1
+endef
+wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
+define wvlink_so
+	$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
+	$(if $(filter-out $(call wvsoname,$1),$1),ln -sf $1 $(call wvsoname,$1))
+endef
+	
+wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
+
+%.o: %.c;	$(call wvcc ,$@,$<,$*)
+%.fpic.o: %.c;	$(call wvcc ,$@,$<,$*,-fPIC)
+%.o: %.cc;	$(call wvcxx,$@,$<,$*)
+%.fpic.o: %.cc;	$(call wvcxx,$@,$<,$*,-fPIC)
+%.o: %.cpp;	$(call wvcxx,$@,$<,$*)
+%.fpic.o:%.cpp; $(call wvcxx,$@,$<,$*,-fPIC)
+%.s: %.c;	$(call wvcc ,$@,$<,$*,,-S)
+%.s: %.cc;	$(call wvcxx,$@,$<,$*,,-S)
+%.s: %.cpp;	$(call wvcxx,$@,$<,$*,,-S)
+%.E: %.c;	$(call wvcc,$@,$<,$*,,-E)
+%.E: %.cc;	$(call wvcxx,$@,$<,$*,,-E)
+%.E: %.cpp;	$(call wvcxx,$@,$<,$*,,-E)
+
+%.moc: %.h;	moc -o $@ $<
+
+../%.so:;	@echo "Shared library $@ does not exist!"; exit 1
+../%.a:;	@echo "Library $@ does not exist!"; exit 1
+../%.o:;	@echo "Object $@ does not exist!"; exit 1
+/%.a:;		@echo "Library $@ does not exist!"; exit 1
+
+%: %.o;		$(call wvlink,$@,$^) 
+%.t: %.t.o;	$(call wvlink,$@,../wvstreams/wvtestmain.o $(call reverse,$^) $(LIBWVUTILS))
+%.a %.libs:;	$(call wvlink_ar,$@,$^)
+%.so:;		$(call wvlink_so,$@,$^)
+
+# Force objects to be built before final binaries	
+$(addsuffix .o,$(basename $(wildcard *.c) $(wildcard *.cc) $(wildcard *.cpp))):
+
 %.gz: FORCE %
 	@rm -f $@
 	gzip -f $*
 	@ls -l $@
-
-ALLDIRS = $(XPATH)
-#VPATH = $(shell echo $(ALLDIRS) | sed 's/[ 	][ 	]*/:/g')
-INCFLAGS = $(addprefix -I,$(ALLDIRS))
-
-#
-# Typical compilation rules.
-#
-CPPFLAGS += $(INCFLAGS) -MD
-CFLAGS += $(CPPFLAGS)
-CXXFLAGS += $(CPPFLAGS)
-
-ifeq ($(VERBOSE),1)
-COMPILE_MSG = 
-else
-COMPILE_MSG = @echo compiling $@...;
-endif
-
-%.o: %.c
-	@rm -f .$*.d $@
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -c $<
-	@mv $*.d .$*.d
-
-%.fpic.o: %.c
-	@rm -f .$*.d $@
-	$(COMPILE_MSG)$(CC) -fPIC $(CFLAGS) -c $<
-	@mv $*.d .$*.d
-
-%.o: %.cc
-	@rm -f .$*.d $@
-	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) -c $<
-	@mv $*.d .$*.d
-
-%.fpic.o: %.cc
-	@rm -f .$*.d $@
-	$(COMPILE_MSG)$(CXX) -fPIC $(CXXFLAGS) -c $<
-	@mv $*.d .$*.d
-
-%.o: %.cpp
-	@rm -f .$*.d $@
-	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) -c $<
-	@mv $*.d .$*.d
-
-%.fpic.o: %.cpp
-	@rm -f .$*.d $@
-	$(COMPILE_MSG)$(CXX) -fPIC $(CXXFLAGS) -c $<
-	@mv $*.d .$*.d
-
-%.s: %.c
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -S $<
-
-%.s: %.cc
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -S $<
-
-%.s: %.cpp
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -S $<
-
-%.E: %.c
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -E $< >$@
-
-%.E: %.cc
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -E $< >$@
-
-%.E: %.cpp
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -E $< >$@
-
-%.moc: %.h
-	@echo -n "Creating MOC file from $< ..."
-	@moc $< -o $@
-	@echo "Done."
-
-../%.libs:
-	@echo "Library list $@ does not exist!"; exit 1
-
-../%.so:
-	@echo "Shared library $@ does not exist!"; exit 1
-
-../%.a:
-	@echo "Library $@ does not exist!"; exit 1
-
-../%.o:
-	@echo "Object $@ does not exist!"; exit 1
-
-%.libs:
-	rm -f $@
-	@set -e; \
-	SIMPLE_OBJS="$(filter %.o %.libs,$^)"; \
-	echo "echo $$SIMPLE_OBJS >$@"; \
-	for d in $$SIMPLE_OBJS; do \
-		echo $$d >>$@; \
-	done
-
-# define a shell command "libexpand" to expand out .libs file references.
-# usage: libexpand BASEDIR file file file file
-# eg. libexpand mydir foo.o blah.o weasels.o frogs/silly.libs
-#  If frogs/silly.libs contains "a.o b.o"
-#  Prints the following to stdout:
-#            mydir/foo.o mydir/blah.o mydir/weasels.o 
-#            mydir/frogs/a.o mydir/frogs/b.o
-#
-define define_libexpand
-	libexpand_list() \
-	{ \
-		for d in $$*; do \
-			set -e; \
-			case "$$d" in \
-			    *.o|*.a) echo "$$BASEDIR$$d" ;; \
-			    *.libs)  SUBF=$$(cat "$$BASEDIR$$d") || exit 1; \
-			    	     libexpand $$BASEDIR$$(dirname "$$d") \
-			    			$$SUBF || exit 1 ;; \
-			esac; \
-		done; \
-	}; \
-	\
-	libexpand() \
-	{ \
-		set -e; \
-		true "libexpand: ($$*)" >&2; \
-		BASEDIR="$$1/"; \
-		[ "$$BASEDIR" = "./" ] && BASEDIR=""; \
-		shift; \
-		true "libexpand2: ($$BASEDIR) ($$*)" >&2; \
-		BIGLIST=$$(libexpand_list $$*) || exit 1; \
-		echo "$$BIGLIST" \
-			| sed 's,\(^\|/\)[^.][^/]*/../,\1,g' \
-			| sort | uniq; \
-		true "libexpand3: ($$BASEDIR) ..." >&2; \
-	}
-endef
-
-# we need to do some magic in order to make a .a file that contains another
-# .a file.  Otherwise this would be easy...
-%.a:
-	rm -f $@
-	@set -e; \
-	$(define_libexpand); \
-	EXPAND=$$(libexpand . $(filter %.libs,$^)) || exit 1; \
-	SIMPLE_OBJS="$(filter %.o,$^) $$EXPAND"; \
-	AR_FILES="$(filter %.a,$^)"; \
-	echo "ar q $@ $(filter %.o %.libs,$^)"; \
-	ar q $@ $$SIMPLE_OBJS; \
-	for d in $$AR_FILES; do \
-		echo "ar q $@ $$d (magic library merge)"; \
-		BASE=$$(basename $$d); \
-		for e in $$(ar t $$d); do \
-			OBJNAME="ar_$${BASE}_$$e"; \
-			ar p $$d $$e >$$OBJNAME; \
-			ar q $@ $$OBJNAME; \
-			rm -f $$OBJNAME; \
-		done; \
-	done
-	ranlib $@
-
-%.so:
-	@echo Magic: $(CC) $(LDFLAGS) $($@-LDFLAGS) -shared -o $@ $^ $($@-LIBS) $(LIBS) $(XX_LIBS)
-	@set -e; \
-	$(define_libexpand); \
-	$(CC) $(LDFLAGS) $($@-LDFLAGS) -Wl,-soname,$@ -shared -o $@ $(filter %.o %.a %.so,$^) $$(libexpand . $(filter %.libs,$^)) $($@-LIBS) $(LIBS) $(XX_LIBS)
-
-%: %.o
-	$(CC) $(LDFLAGS) $($@-LDFLAGS) -o $@ $(filter %.o %.a %.so, $^) $($@-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
-
-# Force objects to be built before final binaries	
-$(addsuffix .o,$(basename $(wildcard *.c) $(wildcard *.cc) $(wildcard *.cpp))):
 
 #
 # Header files for tcl/tk packages
@@ -309,10 +258,9 @@ pkgIndex.tcl $(wildcard *.tcl): .tcl_paths
 	@mv $@.tmp $@
 
 #
-# Automatically generate header dependencies for .c and .cc files.  The
-# dependencies are stored in the file ".depend"
+# We automatically generate header dependencies for .c and .cc files.  The
+# dependencies are stored in the file ".filename.d"
 #
-
 depfiles_sf = $(wildcard .*.d)
 
 ifneq ($(depfiles_sf),)
@@ -327,20 +275,19 @@ endif
 #
 define subdirs_func
 	+@OLDDIR="$$(pwd)"; set -e; \
-	for d in __fx__ $(1); do \
+	for d in __fx__ $2; do \
 		if [ "$$d" = "__fx__" ]; then continue; fi; \
 		cd "$$d"; \
 		echo ; \
-		echo "--> Making $(subst subdirs,all,$@) in $$(pwd)..."; \
-		$(MAKE) --no-print-directory $(subst subdirs,all,$@) \
-			|| $(if $(filter-out xkeep,x$(2)),exit 1,:) ; \
+		echo "--> Making $1 in $$(pwd)..."; \
+		$(MAKE) --no-print-directory $1 || exit 1; \
 		cd "$$OLDDIR"; \
 	done
 	@echo
 	@echo "--> Back in $$(pwd)..."
 endef
 
-subdirs = $(call subdirs_func,$(SUBDIRS))
+subdirs = $(call subdirs_func,$(subst subdirs,all,$(if $1,$1,$@)),$(if $2,$2,$(SUBDIRS)))
 
 # # $(call reverse,$(SUBDIRS)) works since GNU make 3.80 only
 # reverse = \
@@ -356,7 +303,7 @@ endef
 
 reverse = $(shell $(call shell_reverse,$(1)))
 
-clean_subdirs = $(call subdirs_func,$(call reverse,$(SUBDIRS)),keep)
+clean_subdirs = $(call subdirs,clean,$(call reverse,$(SUBDIRS)),keep)
 
 %: %/Makefile FORCE
 	@cd "$@"; echo; echo "--> Making all in $$(pwd)..."; \
@@ -368,11 +315,13 @@ subdirs: ${SUBDIRS}
 # Auto-clean rule.  Feel free to append to this in your own directory, by
 # defining your own "clean" rule.
 #
-clean: FORCE cleanrule
+clean: FORCE _wvclean
 
-cleanrule: FORCE
+_wvclean: FORCE
 	rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.moc *.d .*.d .depend .\#* \
 		.tcl_paths pkgIndex.tcl gmon.out core build-stamp wvtestmain
+	rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
+		t/*.o t/*~ t/.*.d t/.\#*
 	rm -rf debian/tmp
 
 #

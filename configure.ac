@@ -1,9 +1,10 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.34 2003/09/09 19:10:21 jim Exp $)
+AC_REVISION($Id: configure.ac,v 1.35 2003/09/10 03:42:20 apenwarr Exp $)
 
-echo $0 "$*" > reconfigure
+rm -f reconfigure
+echo $0 "$@" '"$@"' >reconfigure
 chmod +x reconfigure
 
 # append to a variable without introducing superfluous white space

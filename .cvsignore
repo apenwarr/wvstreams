@@ -8,3 +8,4 @@ reconfigure
 stamp-h.in
 wvtestmain
 .*.d
+*.libs
