@@ -17,7 +17,7 @@
 bool WvHttpStream::global_enable_pipelining = true;
 int WvUrlStream::max_requests = 100;
 
-unsigned WvHash(const WvUrlStreamInfo &n)
+unsigned WvHash(const WvUrlStream::Target &n)
 {
     WvString key("%s%s", n.remaddr, n.username);
     return (WvHash(key));
@@ -149,12 +149,11 @@ void WvUrlStream::delurl(WvUrlRequest *url)
 
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
 			   WvIPPortAddrTable &_pipeline_incompatible)
-    : WvUrlStream(_remaddr, WvString("HTTP %s", _remaddr)),
-	pipeline_incompatible(_pipeline_incompatible)
+    : WvUrlStream(_remaddr, WvString("HTTP %s", _remaddr), ""),
+      pipeline_incompatible(_pipeline_incompatible)
 {
     log("Opening server connection.\n");
     http_response = "";
-    info.username = "";
     encoding = Unknown;
     remaining = 0;
     in_chunk_trailer = false;
@@ -162,7 +161,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
     last_was_pipeline_test = false;
     
     enable_pipelining = global_enable_pipelining 
-		&& !pipeline_incompatible[info.remaddr];
+		&& !pipeline_incompatible[target.remaddr];
     ssl = _ssl;
     
     if (ssl)
@@ -301,9 +300,9 @@ void WvHttpStream::request_next()
 
 void WvHttpStream::pipelining_is_broken(int why)
 {
-    if (!pipeline_incompatible[info.remaddr])
+    if (!pipeline_incompatible[target.remaddr])
     {
-	pipeline_incompatible.add(new WvIPPortAddr(info.remaddr), true);
+	pipeline_incompatible.add(new WvIPPortAddr(target.remaddr), true);
 	log("Pipelining is broken on this server (%s)!  Disabling.\n", why);
     }
 }
@@ -341,7 +340,7 @@ void WvHttpStream::execute()
             doneurl();
 	if (cloned)
 	    delete cloned;
-	cloned = new WvTCPConn(info.remaddr);
+	cloned = new WvTCPConn(target.remaddr);
         if (ssl)
 	    cloned = new WvSSLStream((WvTCPConn*)cloned);
 	return;
@@ -528,11 +527,10 @@ void WvHttpStream::execute()
 
 WvFtpStream::WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 			 WvStringParm _password)
-    : WvUrlStream(_remaddr, WvString("HTTP %s", _remaddr))
+    : WvUrlStream(_remaddr, WvString("HTTP %s", _remaddr), _username)
 {
     data = NULL;
     logged_in = false;
-    info.username = _username;
     password = _password;
     uses_continue_select = true;
     last_request_time = time(0);
@@ -691,7 +689,8 @@ void WvFtpStream::execute()
 
 	log(WvLog::Debug5, "Got greeting: %s\n", line);
 	write(WvString("USER %s\r\n",
-		       !info.username ? "anonymous" : info.username.cstr()));
+		       !target.username ? "anonymous" :
+		       target.username.cstr()));
 	line = get_important_line(60000);
 	if (!line)
 	    return;
@@ -1103,10 +1102,8 @@ bool WvHttpPool::pre_select(SelectInfo &si)
 		i->done();
 	    }
             // nicely delete the url request
-	    WvUrlStreamInfo info;
-            info.remaddr = i->url.getaddr();
-            info.username = i->url.getuser();
-            WvUrlStream *s = conns[info];
+	    WvUrlStream::Target target(i->url.getaddr(), i->url.getuser());
+            WvUrlStream *s = conns[target];
             if (s)
                 s->delurl(i.ptr());
 	    i.xunlink();
@@ -1146,13 +1143,11 @@ void WvHttpPool::execute()
 	if (!i->outstream || !i->url.isok() || !i->url.resolve())
 	    continue; // skip it for now
 
-	WvUrlStreamInfo info;
-	info.remaddr = i->url.getaddr();
-	info.username = i->url.getuser();
+	WvUrlStream::Target target(i->url.getaddr(), i->url.getuser());
 
-	//log(WvLog::Info, "remaddr is %s; username is %s\n", info.remaddr,
-	//    info.username);
-	s = conns[info];
+	//log(WvLog::Info, "remaddr is %s; username is %s\n", target.remaddr,
+	//    target.username);
+	s = conns[target];
 	//if (!s) log("conn for '%s' is not found.\n", ip);
 	
 	if (s && !s->isok())
@@ -1168,11 +1163,11 @@ void WvHttpPool::execute()
 	{
 	    num_streams_created++;
 	    if (!strncasecmp(i->url.getproto(), "http", 4))
-		s = new WvHttpStream(info.remaddr,
+		s = new WvHttpStream(target.remaddr,
 				     i->url.getproto() == "https",
 				     pipeline_incompatible);
 	    else if (!strcasecmp(i->url.getproto(), "ftp"))
-		s = new WvFtpStream(info.remaddr, info.username,
+		s = new WvFtpStream(target.remaddr, target.username,
 				    i->url.getpassword());
 	    conns.add(s, true);
 	    
@@ -1214,11 +1209,11 @@ WvBufUrlStream *WvHttpPool::addputurl(WvStringParm _url,
 
 void WvHttpPool::unconnect(WvUrlStream *s)
 {
-    if (!s->info.username)
-	log("Unconnecting stream to %s.\n", s->info.remaddr);
+    if (!s->target.username)
+	log("Unconnecting stream to %s.\n", s->target.remaddr);
     else
-	log("Unconnecting stream to %s@%s.\n", s->info.username,
-	    s->info.remaddr);
+	log("Unconnecting stream to %s@%s.\n", s->target.username,
+	    s->target.remaddr);
     
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )

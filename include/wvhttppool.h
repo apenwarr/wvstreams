@@ -87,22 +87,25 @@ public:
 
 DeclareWvTable(WvIPPortAddr);
 
-class WvUrlStreamInfo
-{
-public:
-    WvIPPortAddr remaddr;
-    WvString username;
-
-    bool operator== (const WvUrlStreamInfo &n2)
-        { return (username == n2.username && remaddr == n2.remaddr); }
-};
-unsigned WvHash(const WvUrlStreamInfo &n);
-
 
 class WvUrlStream : public WvStreamClone
 {
 public:
-    WvUrlStreamInfo info;
+    class Target
+    {
+    public:
+	WvIPPortAddr remaddr;
+	WvString username;
+
+	Target(const WvIPPortAddr &_remaddr, WvStringParm _username)
+	    : remaddr(_remaddr), username(_username) {}
+
+	~Target() {}
+
+	bool operator== (const Target &n2)
+        { return (username == n2.username && remaddr == n2.remaddr); }
+    };
+    Target target;
     static int max_requests;
 
 protected:
@@ -114,11 +117,12 @@ protected:
     virtual void request_next() = 0;
 
 public:
-    WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm logname)
-	: WvStreamClone(new WvTCPConn(_remaddr)), log(logname, WvLog::Debug)
+    WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm logname,
+		WvStringParm _username)
+	: WvStreamClone(new WvTCPConn(_remaddr)), target(_remaddr, _username),
+	  log(logname, WvLog::Debug)
     {
 	request_count = 0;
-	info.remaddr = _remaddr;
 	curl = NULL;
     }
 
@@ -131,7 +135,9 @@ public:
     virtual void execute() = 0;
 };
 
-DeclareWvDict(WvUrlStream, WvUrlStreamInfo, info);
+unsigned WvHash(const WvUrlStream::Target &n);
+
+DeclareWvDict(WvUrlStream, WvUrlStream::Target, target);
 
 
 class WvHttpStream : public WvUrlStream
