@@ -304,9 +304,9 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	    if (justify < 0 && -justify > aplen)
 	    {
 	        if (zeropad)
-		    memset(optr, '0', justify-aplen);
+		    memset(optr, '0', -justify-aplen);
 		else
-		    memset(optr, ' ', justify-aplen);
+		    memset(optr, ' ', -justify-aplen);
 		optr += -justify - aplen;
 	    }
 	    
