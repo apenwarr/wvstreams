@@ -194,6 +194,8 @@ static WvString set_name_entry(X509_NAME *name, WvString dn)
 	    nid = NID_countryName;
 	else if (sid == "st")
 	    nid = NID_stateOrProvinceName;
+	else if (sid == "l")
+	    nid = NID_localityName;
 	else if (sid == "o")
 	    nid = NID_organizationName;
 	else if (sid == "ou")
