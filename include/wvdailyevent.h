@@ -30,18 +30,54 @@ class WvDailyEvent : public WvStream
 /**********************************/
 {
 public:
+    /**
+     * Constructs WvDailyEvent.
+     * \param _first_hour the first hour of the day in which the event should 
+     * occur.
+     * \param _num_per_day the number of times in a day that the event should
+     * occur.
+     * If _num_per_day is not specified, it defaults to 0 (which is equivalent
+     * to running the event once a day). 
+     */
     WvDailyEvent( int _first_hour, int _num_per_day=0 );
 
+    /** Returns true if the time is right for the event to occur.
+     *  "The time is right" means that it is the first hour in some arbitrary 
+     *  day that the event should occur or it is the first hour + 
+     *  (number-of-minutes-in-a-day mod number of occurrences in a day) minutes
+     *  in some arbitrary day that the event should occur.
+     */
     virtual bool pre_select( SelectInfo& si );
     virtual bool post_select( SelectInfo& si );
 
     // execute() and any overridden versions of it must call reset().
     virtual void execute();
-    void         reset();
+    
+    /** 
+     * Resets the object so that its execute() function will only be called if
+     * it's time for the event to occur.
+     */
+    void reset();
 
+    /// Always returns true.
     virtual bool isok() const;
 
+    /**
+     * Modifies the first hour in which the event should occur and the number of
+     * times the event should occur in a day.
+     * \param _first_hour the first hour of the day in which the event should 
+     * occur.
+     * \param _num_per_day the number of times in a day that the event should
+     * occur.
+     * If _num_per_day is not specified, it defaults to 0 (which is equivalent
+     * to running the event once a day). 
+     */
     void configure( int _first_hour, int _num_per_day=0 );
+    
+    /** 
+     * Modifies the first hour in which the event should occur and leaves the 
+     * number of times per day unmodified.
+     */
     void set_hour( int h )
         { configure( h, num_per_day ); }
 
