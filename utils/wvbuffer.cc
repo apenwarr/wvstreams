@@ -328,17 +328,14 @@ void WvBuffer::merge(WvBuffer &buf)
 }
 
 
-WvString WvBuffer::getstr()
+WvFastString WvBuffer::getstr()
 {
-    WvString s;
-    size_t len = used();
-    s.setsize(len + 1);
+    // add a terminating NUL, in case there isn't one
+    put("", 1);
     
-    char *cptr = s.edit();
-    memcpy(cptr, get(len), len);
-    cptr[len] = 0;
-    
-    return s;
+    // grab the string and return it.  If nobody ever assigns it to a WvString
+    // (as opposed to a WvStringParm), there's no need to ever copy the string!
+    return (const char *)get(used());
 }
 
 

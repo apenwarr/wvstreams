@@ -73,3 +73,14 @@ void WvStringList::split(WvStringParm _s, const char *splitchars,
     }
 }
 
+
+void WvStringList::fill(const char * const *array)
+{
+    while (array && *array)
+    {
+	append(new WvString(*array), true);
+	array++;
+    }
+}
+
+

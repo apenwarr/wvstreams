@@ -190,6 +190,7 @@ static bool any_direct_children(WvHConf *h)
     return false;
 }
 
+
 void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
 {
     // dump the "root level" of this tree into one section

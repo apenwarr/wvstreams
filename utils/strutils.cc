@@ -308,27 +308,26 @@ int strcount(WvStringParm s, const char c)
 }
 
 
-WvString encode_hostname_as_DN(WvString &hostname)
+WvString encode_hostname_as_DN(WvStringParm hostname)
 {
-   WvString dn("cn=%s,",hostname);
-
-   WvStringList fqdnlist;
-   WvStringList::Iter i(fqdnlist);
-   fqdnlist.split(hostname,".");
-   for (i.rewind();i.next();)       
-   {
-       dn.append("dc=");
-       dn.append(*i);   
-       dn.append(",");
-   }
-   char *ptr = dn.edit() + strlen(dn) - 1;
-   *ptr = '\0';
-
-   return dn;
+    WvString dn("cn=%s,", hostname);
+    
+    WvStringList fqdnlist;
+    fqdnlist.split(hostname, ".");
+    
+    WvStringList::Iter i(fqdnlist);
+    for (i.rewind(); i.next(); )
+    {
+	dn.append("dc=");
+	dn.append(*i);   
+	dn.append(",");
+    }
+    
+    return dn;
 }
 
 
-WvString nice_hostname(WvString name)
+WvString nice_hostname(WvStringParm name)
 {
     WvString nice;
     char *optr, *optr_start;

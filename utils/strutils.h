@@ -136,7 +136,7 @@ int strcount(WvStringParm s, const char c);
  * will result in cn=www.fizzle.com,dc=www,dc=fizzle,dc=com
  * (I think ;)
  */
-WvString encode_hostname_as_DN(WvString &hostname);
+WvString encode_hostname_as_DN(WvStringParm hostname);
 
 /**
  * Given a hostname, turn it into a "nice" one.  It has to start with a
@@ -144,6 +144,6 @@ WvString encode_hostname_as_DN(WvString &hostname);
  * hyphens, and have no more than one hyphen in a row.  If we can't do this
  * and have any sort of answer, return "UNKNOWN".
  */
-WvString nice_hostname(WvString name);
+WvString nice_hostname(WvStringParm name);
 
 #endif // __STRUTILS_H

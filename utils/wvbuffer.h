@@ -174,8 +174,10 @@ public:
     /*
      * Return the entire buffer as a nul-terminated WvString.  If the buffer
      * contains nul characters, they'll seem to terinate the string.
+     * 
+     * Warning: this empties the buffer, like get() does!
      */
-    WvString getstr();
+    WvFastString getstr();
 
     /*
      * return the number of bytes that would have to be read to find the
