@@ -33,12 +33,6 @@ static unsigned WvHash(const XUUID &_uuid)
 }
 
 
-static bool operator==(const XUUID &a, const XUUID &b)
-{
-    return a.equals(b);
-}
-
-
 DeclareWvDict(WvMonikerRegistry, XUUID, reg_iid);
 static WvMonikerRegistryDict *regs;
   

@@ -23,9 +23,9 @@
 #define XUUID_MAP_ENTRY UUID_MAP_ENTRY
 #define XUUID_MAP_END   UUID_MAP_END
 
-#include <xplc/xplc.h>
 #include <xplc/utils.h>
-#include <xplc/IServiceManager.h>
+//#include <xplc/xplc.h>
+//#include <xplc/IServiceManager.h>
 
 #else // not HAVE_LIBXPLC, so we'll fake it (badly)
 

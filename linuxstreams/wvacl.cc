@@ -114,6 +114,9 @@ WvString fix_acl(WvStringParm shortform)
 		newperm.append("w");
 	    if (mask_execute && strchr(this_perm, 'x'))
 		newperm.append("x");
+	    if (!newperm)
+		newperm = "---";
+
 	    newshortform.append(",%s:%s:%s", this_type, this_qualifier,
 				newperm);
 	}
