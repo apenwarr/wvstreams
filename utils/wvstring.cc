@@ -318,9 +318,9 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	    continue;
 	}
 	
-	assert(*iptr == 's');
+	assert(*iptr == 's' || *iptr == 'c');
 
-	if (*iptr++ == 's')
+	if (*iptr == 's')
 	{
 	    if (!*argptr || !(**argptr).cstr())
 		arg = blank;
@@ -331,6 +331,14 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 		ladd = maxlen;
 	    total += ladd;
 	    argptr++;
+	    iptr++;
+	    continue;
+	}
+	
+	if (*iptr++ == 'c')
+	{
+	    argptr++;
+	    total++;
 	}
     }
     
@@ -355,7 +363,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	    *optr++ = *iptr++;
 	    continue;
 	}
-	if (*iptr++ == 's')
+	if (*iptr == 's')
 	{
 	    if (!*argptr || !(**argptr).cstr())
 		arg = blank;
@@ -386,6 +394,15 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 		optr += -justify - aplen;
 	    }
 	    
+	    argptr++;
+	    iptr++;
+	    continue;
+	}
+	if (*iptr++ == 'c')
+	{
+	    arg = **argptr++;
+	    *optr++ = (char)atoi(arg);
+	        
 	    argptr++;
 	}
     }
