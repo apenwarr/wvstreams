@@ -79,6 +79,19 @@ char * strlwr( char * string )
     return( string );
 }
 
+char * strupr( char * string)
+/***************************/
+{
+    char *p = string;
+    while ( *p )
+    {
+	*p = toupper( *p);
+	p++;
+    }
+
+    return( string );
+}
+
 bool is_word( char * string )
 /***************************/
 // true if all the characters in "string" are isalnum().

@@ -96,11 +96,8 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
     char buf[1024];
     size_t len;
     
-    while (s.isok() && s.select(0))
-    {
-	len = s.read(buf, sizeof(buf));
-	s2.write(buf, len);
-    }
+    len = s.read(buf, sizeof(buf));
+    s2.write(buf, len);
 }
 
 

@@ -43,6 +43,12 @@ extern void replace_char( void *string, char c1, char c2, int length );
 extern char *strlwr( char * string );
 
 /**
+ * In-place modify a character string so that all contained letters are 
+ * in upper case. Returns 'string'.
+ */
+extern char *strupr( char * string );
+
+/**
  * Returns true if all characters in 'string' are isalnum() (alphanumeric).
  */
 extern bool is_word( char * string );
