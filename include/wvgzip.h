@@ -25,9 +25,7 @@ public:
     virtual ~WvGzip();
     
     virtual bool isok() const;
-    
-    virtual size_t do_encode(const unsigned char *in, size_t insize,
-			     bool flush);
+    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 
