@@ -21,7 +21,7 @@ typedef void *WvMonikerCreateFunc(WvStringParm parms,
  * WvMonikerBase is an auto-registration class for putting things into
  * a WvMonikerRegistry.  When a WvMonikerBase instance is created, it
  * registers a moniker prefix ("test:", "ssl:", "ini:", etc) and a factory
- * function that can be used to create an IObject using that prefix.
+ * function (or CID) that can be used to create an IObject using that prefix.
  * 
  * When the instance is destroyed, it auto-unregisters the moniker prefix
  * from the registry.
@@ -32,8 +32,12 @@ typedef void *WvMonikerCreateFunc(WvStringParm parms,
 class WvMonikerBase
 {
 protected:
+    typedef IObject *FactoryFunc();
+
     WvMonikerBase(const UUID &iid, WvStringParm _id,
 		  WvMonikerCreateFunc *func);
+    WvMonikerBase(const UUID &iid, WvStringParm _id,
+		  const UUID &cid);
     ~WvMonikerBase();
     
 public:
@@ -73,7 +77,18 @@ public:
 	// warning.
 	for(IObject *silly = (T *)NULL; silly; )
             ;
-    };
+    }
+
+    WvMoniker(WvStringParm _id, const UUID &_cid)
+	: WvMonikerBase(XPLC_IID<T>::get(), _id, _cid)
+    { 
+	// this looks pointless, but it ensures that T* can be safely,
+	// automatically downcast to IObject*.  That means T is really derived
+	// from IObject, which is very important. The 'for' avoids a
+	// warning.
+	for(IObject *silly = (T *)NULL; silly; )
+            ;
+    }
 };
 
 

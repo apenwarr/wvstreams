@@ -9,22 +9,32 @@
 
 #include "wvmoniker.h"
 #include "wvscatterhash.h"
+#include <xplc/core.h>
+#include <xplc/IStaticServiceHandler.h>
+
 
 /**
  * A dictionary for holding moniker-prefix to factory-function mappings.
  * 
  * This is used by WvMoniker and wvcreate().  See those for details.
  */
-class WvMonikerRegistry //: public GenericComponent<IObject>
+class WvMonikerRegistry : public IObject
 {
+    IMPLEMENT_IOBJECT(WvMonikerRegistry);
+    
     struct Registration
     {
 	WvString id;
+	const UUID &cid;
 	WvMonikerCreateFunc *func;
 	
 	Registration(WvStringParm _id, WvMonikerCreateFunc *_func) 
-	    : id(_id)
+	    : id(_id), cid(UUID_null)
 	    { func = _func; }
+	
+	Registration(WvStringParm _id, const UUID &_cid)
+	    : id(_id), cid(_cid)
+	    { func = NULL; }
     };
     
     DeclareWvScatterDict(Registration, WvString, id);
@@ -39,22 +49,36 @@ public:
     virtual ~WvMonikerRegistry();
     
     virtual void add(WvStringParm id, WvMonikerCreateFunc *func);
+    virtual void add(WvStringParm id, const UUID &cid);
     virtual void del(WvStringParm id);
     
     virtual void *create(WvStringParm _s,
 			 IObject *obj = NULL, void *userdata = NULL);
     
-    // find a registry for objects of the given interface UUID
-    static WvMonikerRegistry *find_reg(const UUID &iid);
-    
-    // IObject stuff
-    virtual IObject *getInterface(const UUID &uuid);
-    
-    // we can't use GenericComponent's implementation, since we have to
-    // unregister ourselves on the second-last release().
-    virtual unsigned int addRef();
-    virtual unsigned int release();
 };
 
+
+class WvRegistryRegistry : public IObject
+{
+    IMPLEMENT_IOBJECT(WvRegistryRegistry);
+    xplc_ptr<IStaticServiceHandler> handler;
+
+    DeclareWvScatterDict(WvMonikerRegistry, UUID, reg_iid);
+    WvMonikerRegistryDict regs;
+    
+    WvMonikerRegistry *_find_reg(const UUID &iid);
+public:
+    
+    WvRegistryRegistry();
+    virtual ~WvRegistryRegistry();
+    
+    /// find a registry for objects of the given interface UUID
+    static WvMonikerRegistry *find_reg(const UUID &iid);
+};
+
+static const UUID WvRegistryRegistry_CID = {
+    0x33f126c6, 0xaad4, 0x4c54,
+    {0xa2, 0x33, 0xf9, 0x50, 0x3b, 0xa5, 0x2b, 0x12}
+};
 
 #endif // __WVMONIKERREGISTRY_H

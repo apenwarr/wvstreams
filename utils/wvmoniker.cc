@@ -5,8 +5,10 @@
  * Support for monikers, which are strings that you can pass to a magic
  * factory to get objects supporting a particular interface.  See wvmoniker.h.
  */
+#include "wvplugin.h"
 #include "wvmonikerregistry.h"
 #include "strutils.h"
+#include "wvhashtable.h"
 #include <assert.h>
 #include <stdio.h>
 
@@ -21,6 +23,21 @@
 #endif
 
 
+UUID_MAP_BEGIN(WvMonikerRegistry)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_END
+
+UUID_MAP_BEGIN(WvRegistryRegistry)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_END
+
+UUID_MAP_BEGIN(WvMonikerFactory)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_ENTRY(IWvMonikerFactory)
+  UUID_MAP_END
+
+  
+
 static unsigned WvHash(const UUID &_uuid)
 {
     unsigned val = 0;
@@ -34,9 +51,16 @@ static unsigned WvHash(const UUID &_uuid)
 }
 
 
-DeclareWvScatterDict(WvMonikerRegistry, UUID, reg_iid);
-static WvMonikerRegistryDict *regs;
-  
+WvMonikerFactory::WvMonikerFactory(WvMonikerCreateFunc *_func)
+{
+    func = _func;
+}
+
+
+void *WvMonikerFactory::create(WvStringParm s, IObject *obj, void *userdata)
+{
+    return func(s, obj, userdata);
+}
 
 
 WvMonikerRegistry::WvMonikerRegistry(const UUID &iid) 
@@ -61,6 +85,14 @@ void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func)
 }
 
 
+void WvMonikerRegistry::add(WvStringParm id, const UUID &cid)
+{
+    DEBUGLOG("WvMonikerRegistry register(%s).\n", id.cstr());
+    assert(!dict[id] || dict[id]->cid == cid);
+    dict.add(new Registration(id, cid), true);
+}
+
+
 void WvMonikerRegistry::del(WvStringParm id)
 {
     DEBUGLOG("WvMonikerRegistry unregister(%s).\n", id.cstr());
@@ -69,8 +101,7 @@ void WvMonikerRegistry::del(WvStringParm id)
 }
 
 
-void *WvMonikerRegistry::create(WvStringParm _s,
-				IObject *obj, void *userdata)
+void *WvMonikerRegistry::create(WvStringParm _s, IObject *obj, void *userdata)
 {
     WvString t(_s);
     WvString s(trim_string(t.edit()));
@@ -84,27 +115,49 @@ void *WvMonikerRegistry::create(WvStringParm _s,
     DEBUGLOG("WvMonikerRegistry create object ('%s' '%s').\n", s.cstr(), cptr);
     
     Registration *r = dict[s];
-    if (r)
+    if (r && r->func) // registration has a plain function pointer
 	return r->func(cptr, obj, userdata);
+    else if (r) // registration uses an object id
+    {
+	XPLC xplc;
+	xplc_ptr<IWvMonikerFactory> factory(
+			    xplc.get<IWvMonikerFactory>(r->cid));
+	if (factory)
+	    return factory->create(cptr, obj, userdata);
+	else
+	    return NULL;
+    }
     else
 	return NULL;
 }
 
 
-WvMonikerRegistry *WvMonikerRegistry::find_reg(const UUID &iid)
+WvRegistryRegistry::WvRegistryRegistry() : regs(10)
+{
+    XPLC xplc;
+    handler = xplc.get<IStaticServiceHandler>(XPLC_staticServiceHandler);
+    if (handler)
+	handler->addObject(WvRegistryRegistry_CID, this);
+}
+
+
+WvRegistryRegistry::~WvRegistryRegistry()
+{
+    if (handler)
+	handler->removeObject(WvRegistryRegistry_CID);
+}
+
+
+WvMonikerRegistry *WvRegistryRegistry::_find_reg(const UUID &iid)
 {
     DEBUGLOG("WvMonikerRegistry find_reg.\n");
     
-    if (!regs)
-	regs = new WvMonikerRegistryDict(10);
-    
-    WvMonikerRegistry *reg = (*regs)[iid];
-    
+    WvMonikerRegistry *reg = regs[iid];
     if (!reg)
     {
 	// we have to make one!
 	reg = new WvMonikerRegistry(iid);
-	regs->add(reg, true);
+	regs.add(reg, true);
 	reg->addRef(); // one reference for being in the list at all
     }
     
@@ -113,53 +166,18 @@ WvMonikerRegistry *WvMonikerRegistry::find_reg(const UUID &iid)
 }
 
 
-IObject *WvMonikerRegistry::getInterface(const UUID &uuid)
+WvMonikerRegistry *WvRegistryRegistry::find_reg(const UUID &iid)
 {
-#if 0
-    if (uuid.equals(IObject_IID))
+    XPLC xplc;
+    xplc_ptr<WvRegistryRegistry> regs(
+	      (WvRegistryRegistry *)xplc.get(WvRegistryRegistry_CID));
+    if (!regs)
     {
-	addRef();
-	return this;
+	WvRegistryRegistry *r = new WvRegistryRegistry;
+	r->addRef(); // make sure it stays around
+	regs = r;
     }
-#endif
-    
-    // we don't really support any interfaces for now.
-    
-    return 0;
-}
-
-
-unsigned int WvMonikerRegistry::addRef()
-{
-    DEBUGLOG("WvMonikerRegistry addRef.\n");
-    return ++refcount;
-}
-
-
-unsigned int WvMonikerRegistry::release()
-{
-    DEBUGLOG("WvMonikerRegistry release.\n");
-    
-    if (--refcount > 1)
-	return refcount;
-    
-    if (refcount == 1)
-    {
-	// the list has one reference to us, but it's no longer needed.
-	// Note: remove() will delete this object!
-	regs->remove(this);
-	if (regs->isempty())
-	{
-	    delete regs;
-	    regs = NULL;
-	}
-	return 0;
-    }
-    
-    /* protect against re-entering the destructor */
-    refcount = 1;
-    delete this;
-    return 0;
+    return regs->_find_reg(iid);
 }
 
 
@@ -167,10 +185,31 @@ WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm _id,
 			     WvMonikerCreateFunc *func)
     : id(_id)
 {
-    DEBUGLOG("WvMoniker creating(%s).\n", id.cstr());
-    reg = WvMonikerRegistry::find_reg(iid);
+    DEBUGLOG("WvMoniker creating func(%s).\n", id.cstr());
+    reg = WvRegistryRegistry::find_reg(iid);
     if (reg)
 	reg->add(id, func);
+}
+
+
+WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm _id, 
+			     const UUID &cid)
+    : id(_id)
+{
+    DEBUGLOG("WvMoniker creating cid(%s).\n", id.cstr());
+    reg = WvRegistryRegistry::find_reg(iid);
+    if (reg)
+    {
+	reg->add(id, cid);
+	
+	// if we registered a cid, we don't need to unregister later, so 
+	// release the registry right now.  There's always some way to go
+	// get a component by cid, even if a loadable module unloads
+	// temporarily.  So we'll keep the registration around and xplc will
+	// do the work of finding us again later (we hope...)
+	RELEASE(reg);
+	reg = NULL;
+    }
 }
 
 
@@ -185,11 +224,21 @@ WvMonikerBase::~WvMonikerBase()
 }
 
 
+WvPluginEntryBase::WvPluginEntryBase(const UUID &_cid,
+				     IObject* (*_getObject)())
+{
+    // stupid XPLC_ComponentEntry is non-assignable due to uninitialized
+    // references.  Argh.
+    XPLC_ComponentEntry stupid = {_cid, _getObject};
+    memcpy((XPLC_ComponentEntry *)this, &stupid, sizeof(stupid));
+}
+
+
 void *wvcreate(const UUID &iid,
 	       WvStringParm moniker, IObject *obj, void *userdata)
 {
     assert(!moniker.isnull());
-    WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);
+    WvMonikerRegistry *reg = WvRegistryRegistry::find_reg(iid);
     if (reg)
     {
 	void *ret = reg->create(moniker, obj, userdata);

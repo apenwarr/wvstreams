@@ -10,6 +10,7 @@
 #include "wvxplc.h"   // for deletev.  ick.
 #include "wvhash.h"
 #include "wvsorter.h"
+#include "wvtypetraits.h"
 #include <sys/types.h>
 
 #define REBUILD_LOAD_FACTOR 0.45
@@ -135,7 +136,7 @@ protected:
         { return hash((const T *)data); }
 
     virtual void do_delete(void *data)
-        { delete (T *)data; }    
+        { WvTraits<T>::release((T *)data); }
 
 public:
     WvScatterHash(unsigned _numslots = 0) : WvScatterHashBase(_numslots) { }
