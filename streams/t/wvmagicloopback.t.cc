@@ -42,35 +42,17 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
     wait();
 }
 
-WVTEST_MAIN("WvMagicLoopback Race") 
+WVTEST_MAIN("WvMagicLoopback Non-Blocking Writes") 
 {
-    WvMagicLoopback ml(1);
-    const int iter = 1 << 16;
-    
-    if (wvfork() == 0)
-    {
-    	int i;
-    	
-    	for (i=0; i<iter; ++i)
-    	    ml.write("", 1);
-    	
-    	_exit(0);
-    }
-    else
-    {
-    	int i;
-    	
-    	for (i=0; i<iter; ++i)
-        {
-            char tmp;
+    WvMagicLoopback ml(1024);
 
-            if (ml.select(1000))
-                ml.read(&tmp, 1);
-            else break;
-        }
+    WVPASS(ml.isok());
 
-        WVPASS(i == iter);
+    for (int i=0; i<(1<<10); ++i)
+    {
+        char buf[1024] = "WvMagicLoopback Non-Blocking Writes";
+        ml.write(buf, sizeof(buf));
     }
-    
-    wait();
+
+    WVPASS(ml.isok());
 }
