@@ -141,6 +141,12 @@ public:
     ~WvString()
         { unlink(); }
     
+    void append(const WvString &s)
+        { *this = WvString("%s%s", *this, s); }
+    
+    void append(WVSTRING_FORMAT_DECL)
+        { append(WvString(WVSTRING_FORMAT_CALL)); }
+    
     size_t len() const
         { return buf->size ? buf->size-1 : strlen(str); }
 
