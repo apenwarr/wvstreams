@@ -12,6 +12,10 @@
 
 class UniWvConfGen : public UniConfGen
 {
+private:
+    void notify(void *userdata, WvStringParm section, WvStringParm entry,
+		WvStringParm oldval, WvStringParm newval);
+
 protected:
     WvConf &cfg;
 

@@ -29,9 +29,19 @@ static UniConfGen *creator(WvStringParm s, IObject *, void *obj)
 static WvMoniker<UniConfGen> reg("wvconf", creator);
 
 
-UniWvConfGen::UniWvConfGen(WvConf &_cfg)
-    : cfg(_cfg)
+void UniWvConfGen::notify(void *userdata, WvStringParm section,
+			  WvStringParm entry, WvStringParm oldval,
+			  WvStringParm newval)
 {
+    delta(UniConfKey(section, entry), newval);
+}
+
+
+UniWvConfGen::UniWvConfGen(WvConf &_cfg):
+    cfg(_cfg)
+{
+    cfg.add_callback(WvConfCallback(this, &UniWvConfGen::notify), NULL,
+		     "", "", this);
 }
 
 
