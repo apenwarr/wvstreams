@@ -478,7 +478,7 @@ void WvX509Mgr::dumprawkeypair(WvString outfile, bool append)
     if (keyout != NULL)
     {
 	debug("Printing keypair...\n");
-	RSA_print(keyout,keypair->rsa, offset);
+	RSA_print_fp(keyout,keypair->rsa, offset);
     }
     else
     {   
