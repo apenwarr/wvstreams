@@ -16,13 +16,18 @@
 #include "wvaddr.h"
 #include <assert.h>
 
+#ifndef ARPHRD_IPSEC
+// From ipsec_tunnel
+#define ARPHRD_IPSEC 31
+#endif
+
 // workaround for functions called sockaddr() -- oops.
 typedef struct sockaddr sockaddr_bin;
 
 /* A list of Linux ARPHRD_* types, one for each element of CapType. */
 int WvEncap::extypes[] = {
 #ifdef _WIN32
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #else
     // hardware encapsulation
     0, // Unknown
@@ -33,6 +38,7 @@ int WvEncap::extypes[] = {
     ARPHRD_SLIP,
     ARPHRD_CSLIP,
     ARPHRD_PPP,
+    ARPHRD_IPSEC,
     
     // protocol encapsulation
     AF_INET, // IPv4
@@ -52,6 +58,7 @@ const char WvEncap::strings[][20] = {
     "SLIP",
     "CSLIP",
     "PPP",
+    "IPsec",
     
     // protocol encapsulation
     "IP", // IPv4
@@ -104,6 +111,9 @@ WvAddr *WvAddr::gen(struct sockaddr *addr)
     case WvEncap::Ethertap:
     case WvEncap::Ethernet:
 	return new WvEtherAddr(addr);
+
+    case WvEncap::IPsec:
+	return new WvStringAddr("IPsec", WvEncap::IPsec);
 #endif
     default:
 	return new WvStringAddr("Unknown", WvEncap::Unknown);
