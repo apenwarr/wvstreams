@@ -1,6 +1,8 @@
-wvstreams (3.71) unstable; urgency=high
+wvstreams (3.73) unstable; urgency=high
 
   * Synchronised with Upstream version
+
+  * Applied patch for WvStream description (Closes: #184829)
 
   * Additional packaging fixes to move libwvstreams-dev into the devel
     section, and libwvstreams-docs into the docs section, also fixed a
@@ -14,7 +16,7 @@ wvstreams (3.71) unstable; urgency=high
 
   * New WvOggEncoder/WvOggDecoder
 
-  * Lots and Lots of other stuff. 
+  * New WvGtk classes to make WvStreams and Gtk play nice with each other
 
   * Now with new AutoConf goodness ;)
 

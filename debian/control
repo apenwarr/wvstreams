@@ -2,8 +2,7 @@ Source: wvstreams
 Section: libs
 Priority: optional
 Maintainer: Patrick Patterson <ppatters@debian.org>
-Build-Depends: debhelper (>> 3.0.0), libssl-dev, zlib1g-dev, libqt3-dev,
-qt3-tools, libvorbis-dev, libfft-dev
+Build-Depends: debhelper (>> 3.0.0), libssl-dev, zlib1g-dev, libqt3-dev, qt3-tools, libvorbis-dev, libfft-dev
 Build-Depends-Indep: doxygen, sp, jade, jadetex, docbook-book, docbook, docbook-dsssl
 Standards-Version: 3.5.2
 
