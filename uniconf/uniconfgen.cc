@@ -101,6 +101,32 @@ bool UniConfGen::exists(const UniConfKey &key)
 }
 
 
+int UniConfGen::str2int(WvStringParm value, int defvalue) const
+{
+    // also recognize bool strings as integers
+    const char *strs[] = {
+        "true", "yes", "on", "enabled",
+        "false", "no", "off", "disabled"
+    };
+    const size_t numtruestrs = 4;
+
+    if (!value.isnull())
+    {
+        // try to recognize an integer
+        char *end;
+        int num = strtol(value.cstr(), &end, 0);
+        if (end != value.cstr())
+            return num; // was a valid integer
+        
+        // try to recognize a special string
+        for (size_t i = 0; i < sizeof(strs) / sizeof(const char*); ++i)
+            if (strcasecmp(value, strs[i]) == 0)
+                return i < numtruestrs;
+    }
+    return defvalue;
+}
+
+
 bool UniConfGen::isok()
 {
     return true;

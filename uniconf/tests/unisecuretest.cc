@@ -113,14 +113,16 @@ void printheader(WvStringParm h)
 
 void printfooter(bool pass)
 {
-    WvString footer("===   TEST %s   ===", pass ? "PASSED" : "FAILED");
-    wvcon->print("%s\n",footer);
+    if (pass)
+        wvcon->print("\n***** PASSED *****\n\n");
+    else
+        wvcon->print("\n///// FAILED /////\n\n");
 }
 
 
 void printfinal(bool pass)
 {
-    WvString footer("===   ALL TESTS %s   ===", pass ? "PASSED" : "FAILED");
+    WvString footer("===   TEST SUITE %s   ===", pass ? "PASSED" : "FAILED");
     wvcon->print("%s\n",footer);
 }
 
@@ -134,8 +136,10 @@ bool testaget(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expe
 {
     WvString expect = expectsucc ? key : WvString("nothing");
     WvString got = u[prefix][key].get("nothing");
-    if (expect != got)
-        wvcon->print("FAILED: get %s/%s expected %s, got %s\n", prefix, key, expect, got);
+    if (expect == got)
+        wvcon->print("OK - %s/%s: got \"%s\"\n", prefix, key, got);
+    else
+        wvcon->print("FAIL - %s/%s: expected \"%s\", got \"%s\"\n", prefix, key, expect, got);
     return (expect == got);
 }
 
@@ -147,9 +151,10 @@ bool testaset(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expe
     WvString expect = expectsucc ? val : orig;
     u[prefix][key].set(val);
     WvString got = u[prefix][key].get();
-    if (got != expect)
-        wvcon->print("FAILED: set %s/%s expected %s, got %s (orig was %s)\n",
-                prefix, key, expect, got, orig);
+    if (expect == got)
+        wvcon->print("OK - set %s/%s: got \"%s\"\n", prefix, key, got);
+    else
+        wvcon->print("FAIL - set %s/%s: expected \"%s\", got \"%s\"\n", prefix, key, expect, got);
     return (got == expect);
 }
 

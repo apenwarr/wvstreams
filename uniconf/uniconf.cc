@@ -45,28 +45,7 @@ WvString UniConf::get(WvStringParm defvalue) const
 
 int UniConf::getint(int defvalue) const
 {
-    // also recognize bool strings as integers
-    const char *strs[] = {
-        "true", "yes", "on", "enabled",
-        "false", "no", "off", "disabled"
-    };
-    const size_t numtruestrs = 4;
-
-    WvString value = get();
-    if (!value.isnull())
-    {
-        // try to recognize an integer
-        char *end;
-        int num = strtol(value.cstr(), &end, 0);
-        if (end != value.cstr())
-            return num; // was a valid integer
-        
-        // try to recognize a special string
-        for (size_t i = 0; i < sizeof(strs) / sizeof(const char*); ++i)
-            if (strcasecmp(value, strs[i]) == 0)
-                return i < numtruestrs;
-    }
-    return defvalue;
+    return xroot->str2int(get(), defvalue);
 }
 
 

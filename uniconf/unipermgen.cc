@@ -31,69 +31,53 @@ UniPermGen::UniPermGen(WvStringParm moniker) :
 
 void UniPermGen::setowner(const UniConfKey &path, WvStringParm owner)
 {
-    Perms p;
-    parse(inner()->get(path), p);
-    p.owner = owner;
-    inner()->set(path, format(p));
+    inner()->set(WvString("%s/owner", path), owner);
 }
 
 
 WvString UniPermGen::getowner(const UniConfKey &path)
 {
-    Perms p;
-    parse(inner()->get(path), p);
-    return p.owner;
+    return inner()->get(WvString("%s/owner", path));
 }
 
 
 void UniPermGen::setgroup(const UniConfKey &path, WvStringParm group)
 {
-    Perms p;
-    parse(inner()->get(path), p);
-    p.group = group;
-    inner()->set(path, format(p));
+    inner()->set(WvString("%s/group", path), group);
 }
 
 
 WvString UniPermGen::getgroup(const UniConfKey &path)
 {
-    Perms p;
-    parse(inner()->get(path), p);
-    return p.group;
+    return inner()->get(WvString("%s/group", path));
 }
 
 
 void UniPermGen::setperm(const UniConfKey &path, Level level, Type type, bool val)
 {
-    Perms p;
-    parse(inner()->get(path), p);
-    p.mode[level][type] = val;
-    inner()->set(path, format(p));
+    inner()->set(WvString("%s/%s-%s", path, level2str(level), type2str(type)), val);
 }
 
 
 bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred, Type type)
 {
-    Perms p;
-    parse(inner()->get(path), p);
+    WvString owner = inner()->get(WvString("%s/owner", path));
+    WvString group = inner()->get(WvString("%s/group", path));
 
-    if (p.mode[WORLD][type]) return true;
-    if (cred.groups[p.group] && p.mode[GROUP][type]) return true;
-    if (cred.user == p.owner && p.mode[USER][type]) return true;
-    return false;
-}
-
-
-bool UniPermGen::defaultperm(Type type)
-{
+    bool def;
     switch (type)
     {
-    case READ: return true;
-    case WRITE: return false;
-    case EXEC: return true;
+    case READ: def = true; break;
+    case WRITE: def = false; break;
+    case EXEC: def = true; break;
+    default: assert(false && "Something in the Type enum wasn't covered"); break;
     }
-    assert(false && "Something in the Type enum wasn't covered");
-    return true;
+
+    bool w = str2int(inner()->get(WvString("%s/world-%s", path, type2str(type))), def);
+    bool g = str2int(inner()->get(WvString("%s/group-%s", path, type2str(type))), def);
+    bool u = str2int(inner()->get(WvString("%s/user-%s", path, type2str(type))), def);
+
+    return (w || (g && cred.groups[group]) || (u && cred.user == owner));
 }
 
 
@@ -103,18 +87,17 @@ void UniPermGen::chmod(const UniConfKey &path, int user, int group, int world)
     static const int w = 2;
     static const int x = 1;
 
-    Perms p;
-    parse(inner()->get(path), p);
-    p.mode[USER][READ] = (user & r);
-    p.mode[USER][WRITE] = (user & w);
-    p.mode[USER][EXEC] = (user & x);
-    p.mode[GROUP][READ] = (group & r);
-    p.mode[GROUP][WRITE] = (group & w);
-    p.mode[GROUP][EXEC] = (group & x);
-    p.mode[WORLD][READ] = (world & r);
-    p.mode[WORLD][WRITE] = (world & w);
-    p.mode[WORLD][EXEC] = (world & x);
-    inner()->set(path, format(p));
+    inner()->set(WvString("%s/user-read", path), (user & r));
+    inner()->set(WvString("%s/user-write", path), (user & w));
+    inner()->set(WvString("%s/user-exec", path), (user & x));
+
+    inner()->set(WvString("%s/group-read", path), (group & r));
+    inner()->set(WvString("%s/group-write", path), (group & w));
+    inner()->set(WvString("%s/group-exec", path), (group & x));
+
+    inner()->set(WvString("%s/world-read", path), (world & r));
+    inner()->set(WvString("%s/world-write", path), (world & w));
+    inner()->set(WvString("%s/world-exec", path), (world & x));
 }
 
 
@@ -124,50 +107,27 @@ void UniPermGen::chmod(const UniConfKey &path, int mode)
 }
 
 
-WvString checknull(WvStringParm s)
+WvString UniPermGen::level2str(Level level)
 {
-    if (!s) return WvString::null;
-    else return s;
-}
-
-
-void UniPermGen::parse(WvStringParm str, Perms &p)
-{
-    if (!!str)
+    switch (level)
     {
-        WvStringList l;
-        wvtcl_decode(l, str);
-        p.owner = checknull(l.popstr());
-        p.group = checknull(l.popstr());
-        for (int i = USER; i <= WORLD; i++)
-            for (int j = READ; j <= EXEC; j++)
-                p.mode[i][j] = l.popstr().num();
+    case USER: return "user";
+    case GROUP: return "group";
+    case WORLD: return "world";
     }
-    else
+    assert(false && "Something in the Level enum wasn't covered");
+    return WvString::null;
+}
+
+
+WvString UniPermGen::type2str(Type type)
+{
+    switch (type)
     {
-        p.owner = WvString::null;
-        p.group = WvString::null;
-        for (int i = USER; i <= WORLD; i++)
-            for (int j = READ; j <= EXEC; j++)
-                p.mode[i][j] = defaultperm(static_cast<Type>(j));
+    case READ: return "read";
+    case WRITE: return "write";
+    case EXEC: return "exec";
     }
-}
-
-
-WvString *nullconvert(WvStringParm s)
-{
-    if (!s) return new WvString("");
-    return new WvString(s);
-}
-
-
-WvString UniPermGen::format(const Perms &p)
-{
-    WvStringList l;
-    l.append(nullconvert(p.owner), true);
-    l.append(nullconvert(p.group), true);
-    for (int i = USER; i <= WORLD; i++)
-        for (int j = READ; j <= EXEC; j++)
-            l.append(new WvString("%s", p.mode[i][j]), true);
-    return wvtcl_encode(l);
+    assert(false && "Something in the Type enum wasn't covered");
+    return WvString::null;
 }
