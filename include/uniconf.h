@@ -19,11 +19,11 @@ class UniConfRoot;
 /**
  * The callback type for signalling key changes from UniConf.
  * 
- * Parameters: key, userdata
+ * Parameters: cfg, relkey
  *   cfg - the UniConf config object representing the key that has changed
- *   userdata - the userdata supplied during setcallback
+ *   relkey - the changed keypath, relative to the config object
  */
-typedef WvCallback<void, const UniConf &, void *> UniConfCallback;
+typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -272,14 +272,14 @@ public:
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
      */
-    void add_callback(const UniConfCallback &callback, void *userdata,
-                      bool recurse = true) const;
+    void add_callback(const UniConfCallback &callback,
+        bool recurse = true) const;
     
     /**
      * Cancels notification requested using add_callback().
      */
-    void del_callback(const UniConfCallback &callback, void *userdata, 
-                      bool recurse = true) const;
+    void del_callback(const UniConfCallback &callback,
+        bool recurse = true) const;
 
     /**
      * Requests notification when any of the keys covered by the

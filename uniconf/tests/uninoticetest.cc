@@ -16,9 +16,8 @@ class foo
 public:
     UniConfCallback meow;
 
-    foo() : meow(UniConfCallback(this, &foo::cb)) { }
-
-    void cb(const UniConf &moo, void *goo) { fprintf(stderr, "Moo...\n"); }
+    void cb(int a, const UniConf &moo, const UniConfKey &goo)
+        { fprintf(stderr, "Moo... '%d' - goo = %s\n", a, goo.printable().cstr()); }
 };
 
 int main()
@@ -37,10 +36,10 @@ int main()
     r["key"].add_setbool(&nonsilly2, true);
 
     foo thing;
-    UniConfCallback cb(&thing, &foo::cb);
 
-    r["meow"].add_callback(cb, NULL);
-    r["silly"].add_callback(thing.meow, NULL);
+    r["heh"].add_callback(BoundCallback<UniConfCallback, int>
+        (&thing, &foo::cb, 3));
+
  
     WvStreamList l;
 

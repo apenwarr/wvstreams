@@ -11,9 +11,9 @@
 /***** UniConfRoot *****/
 
 void UniConfRoot::add_callback(const UniConfKey &key,
-    const UniConfCallback &callback, void *userdata, bool recurse)
+    const UniConfCallback &callback, bool recurse)
 {
-    UniWatch *w = new UniWatch(recurse, callback, userdata);
+    UniWatch *w = new UniWatch(recurse, callback);
 
     UniWatchTree *node = & watchroot;
     UniConfKey::Iter it(key);
@@ -29,9 +29,9 @@ void UniConfRoot::add_callback(const UniConfKey &key,
 
 
 void UniConfRoot::del_callback(const UniConfKey &key,
-    const UniConfCallback &callback, void *userdata, bool recurse)
+    const UniConfCallback &callback, bool recurse)
 {
-    UniWatch needle(recurse, callback, userdata);
+    UniWatch needle(recurse, callback);
     UniWatchTree *node = watchroot.find(key);
     if (node)
     {
@@ -54,16 +54,16 @@ void UniConfRoot::del_callback(const UniConfKey &key,
 void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag,
                                   bool recurse)
 {
-    add_callback(key, UniConfCallback(this,
-        &UniConfRoot::setbool_callback), flag, recurse);
+    add_callback(key, BoundCallback<UniConfCallback, bool *>(this,
+        &UniConfRoot::setbool_callback, flag), recurse);
 }
 
 
 void UniConfRoot::del_setbool(const UniConfKey &key, bool *flag,
                                   bool recurse)
 {
-    del_callback(key, UniConfCallback(this,
-        &UniConfRoot::setbool_callback), flag, recurse);
+    del_callback(key, BoundCallback<UniConfCallback, bool *>(this,
+        &UniConfRoot::setbool_callback, flag), recurse);
 }
 
 
@@ -77,7 +77,7 @@ void UniConfRoot::check(UniWatchTree *node,
         if (!w->recursive() && segleft > 0)
             continue;
 
-        w->notify(UniConf(this, key));
+        w->notify(UniConf(this, key.removelast(segleft)), key.last(segleft));
     }
 }
 
@@ -108,24 +108,16 @@ void UniConfRoot::prune(UniWatchTree *node)
 }
 
 
-void UniConfRoot::setbool_callback(const UniConf &cfg, void *userdata)
-{
-    bool *flag = static_cast<bool*>(userdata);
-    *flag = true;
-}
-
-
 void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value,
                                    void *userdata)
 {
     hold_delta();
-    
     UniWatchTree *node = & watchroot;
     int segs = key.numsegments();
 
     // check root node
     check(node, key, segs);
-    
+
     // look for watches on key and its ancestors
     for (int s = 0; s < segs;)
     {

@@ -30,14 +30,14 @@ void UniConfDaemonConn::close()
 void UniConfDaemonConn::addcallback()
 {
     root.add_callback(UniConfCallback(this,
-            &UniConfDaemonConn::deltacallback), NULL, true);
+            &UniConfDaemonConn::deltacallback), true);
 }
 
 
 void UniConfDaemonConn::delcallback()
 {
     root.del_callback(UniConfCallback(this,
-            &UniConfDaemonConn::deltacallback), NULL, true);
+            &UniConfDaemonConn::deltacallback), true);
 }
 
 
@@ -195,16 +195,19 @@ void UniConfDaemonConn::do_help()
 }
 
 
-void UniConfDaemonConn::deltacallback(const UniConf &key, void *userdata)
+void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
 {
-    WvString value(key.get());
+    WvString value(cfg[key].get());
     WvString msg;
 
+    UniConfKey fullkey(cfg.fullkey());
+    fullkey.append(key);
+
     if (value.isnull())
-        msg = WvString("%s", wvtcl_escape(key.fullkey()));
+        msg = WvString("%s", wvtcl_escape(fullkey));
     else
-        msg = WvString("%s %s", wvtcl_escape(key.fullkey()),
-                                wvtcl_escape(key.get()));
+        msg = WvString("%s %s", wvtcl_escape(fullkey),
+                                wvtcl_escape(cfg[key].get()));
 
     writecmd(UniClientConn::EVENT_NOTICE, msg);
 }

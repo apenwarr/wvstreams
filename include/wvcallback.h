@@ -401,7 +401,8 @@ public:
     }
 };
 
-template<class InnerCallback>
+
+template<class InnerCallback, typename B>
 class BoundCallback
 {
 private:
@@ -413,41 +414,46 @@ private:
     typedef typename InnerCallback::Parm5 P5;
     typedef typename InnerCallback::Parm6 P6;
     typedef typename InnerCallback::Parm7 P7;
-    typedef typename InnerCallback::Parm8 P8;
-    InnerCallback cb;
-    P1 param;
+    WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7> cb;
+    B param;
 public:
-    BoundCallback(const InnerCallback& _cb, const P1 _param):
-	cb(_cb), param(_param)
+    template<typename PtrToObject, typename PtrToMember>
+    BoundCallback(PtrToObject obj, PtrToMember member, const B _param)
+        : cb(WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7>(obj, member)),
+          param(_param)
     {
     }
     R operator()() const
     {
 	return cb(param);
     }
-    R operator()(P2 p2) const
+    R operator()(P1 p1) const
     {
-	return cb(param, p2);
+	return cb(param, p1);
     }
-    R operator()(P2 p2, P3 p3) const
+    R operator()(P1 p1, P2 p2) const
     {
-	return cb(param, p2, p3);
+	return cb(param, p1, p2);
     }
-    R operator()(P2 p2, P3 p3, P4 p4) const
+    R operator()(P1 p1, P2 p2, P3 p3) const
     {
-	return cb(param, p2, p3, p4);
+	return cb(param, p1, p2, p3);
     }
-    R operator()(P2 p2, P3 p3, P4 p4, P5 p5) const
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4) const
     {
-	return cb(param, p2, p3, p4, p5);
+	return cb(param, p1, p2, p3, p4);
     }
-    R operator()(P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) const
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) const
     {
-	return cb(param, p2, p3, p4, p5, p6);
+	return cb(param, p1, p2, p3, p4, p5);
     }
-    R operator()(P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) const
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) const
     {
-	return cb(param, p2, p3, p4, p5, p6, p7);
+	return cb(param, p1, p2, p3, p4, p5, p6);
+    }
+    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) const
+    {
+        return cb(param, p1, p2, p3, p4, p5, p6, p7);
     }
 };
 

@@ -22,16 +22,16 @@ class UniWatch
     void *cbdata;
 
 public:
-    UniWatch(bool _recurse, UniConfCallback _cb, void *_cbdata)
-        : recurse(_recurse), cb(_cb), cbdata(_cbdata) { }
+    UniWatch(bool _recurse, UniConfCallback _cb)
+        : recurse(_recurse), cb(_cb) { }
 
     /** Returns watch recursion */
     bool recursive()
         { return recurse; }
 
     /** Notifies that a key has changed. */
-    void notify(const UniConf &cfg)
-        { cb(cfg, cbdata); }
+    void notify(const UniConf &cfg, const UniConfKey &key)
+        { cb(cfg, key); }
 
     /** Equality test. */
     bool operator== (const UniWatch &other) const
@@ -122,13 +122,13 @@ public:
      * recursive depth specification change by invoking a callback.
      */
     void add_callback(const UniConfKey &key, const UniConfCallback &callback,
-                      void *userdata, bool recurse = true);
+                      bool recurse = true);
     
     /**
      * Cancels notification requested using add_callback().
      */
     void del_callback(const UniConfKey &key, const UniConfCallback &callback,
-                      void *userdata, bool recurse = true);
+                      bool recurse = true);
 
     /**
      * Requests notification when any of the keys covered by the
@@ -161,11 +161,11 @@ private:
     void prune(UniWatchTree *node);
     
     /** Internal callback for setbool style notifications. */
-    void setbool_callback(const UniConf &cfg, void *userdata);
+    void setbool_callback(bool *flag, const UniConf &, const UniConfKey &)
+        { *flag = true; }
 
     /** Callback from UniMountTreeGen */
-    void gen_callback(const UniConfKey &key, WvStringParm value,
-                      void *userdata);
+    void gen_callback(const UniConfKey &key, WvStringParm value, void *userdata);
 
 protected:
     UniMountGen mounts;

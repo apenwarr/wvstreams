@@ -37,7 +37,7 @@ protected:
     virtual void do_subtree(const UniConfKey &key);
     virtual void do_haschildren(const UniConfKey &key);
 
-    void deltacallback(const UniConf &key, void *userdata);
+    void deltacallback(const UniConf &cfg, const UniConfKey &key);
 
     void updatecred(const UniConf &key);
 };

@@ -73,7 +73,7 @@ protected:
     virtual void addcallback();
     virtual void delcallback();
 
-    void deltacallback(const UniConf &key, void *userdata);
+    void deltacallback(const UniConf &cfg, const UniConfKey &key);
 };
 
 #endif // __UNICONFDAEMONCONN_H
