@@ -1,85 +1,92 @@
 #include "wvtest.h"
 #include "uniconfroot.h"
 #include "unitempgen.h"
-#include "unireplicategen.h"
+#include "uniretrygen.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
 
-#define UNICONFD_SOCK "/tmp/uniretrygen-uniconfd"
-#define UNICONFD_INI "/tmp/uniretrygen-uniconfd.ini"
-
-static char *argv[] =
-{
-    "uniconfd",
-    "-f",
-    "-p", "0",
-    "-s", "0",
-    "-u", UNICONFD_SOCK,
-    "ini:" UNICONFD_INI,
-    NULL
-};
-
 WVTEST_MAIN("uniconfd")
 {
+    WvString socket("/tmp/uniretrygen-uniconfd-%s", getpid());
+    WvString ini("/tmp/uniretrygen-uniconfd.ini-%s", getpid());
+    WvString iniarg("ini:%s", ini);
+    char *argv[] =
+    {
+	"uniconfd",
+	"-f",
+	"-p", "0",
+	"-s", "0",
+	"-u", socket.edit(),
+	iniarg.edit(),
+	NULL
+    };
+
     signal(SIGPIPE, SIG_IGN);
 
     pid_t uniconfd_pid;
     
-    unlink(UNICONFD_INI);
+    unlink(ini);
     
-    UniConfRoot cfg("retry:{unix:" UNICONFD_SOCK " 100}");
+    UniConfRoot cfg(WvString("retry:{unix:%s 100}", socket));
     cfg["/key"].setme("value");
     WVPASS(!cfg["/key"].exists());
 
-    unlink(UNICONFD_SOCK);
+    unlink(socket);
     if ((uniconfd_pid = fork()) == 0)
     {
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
+    sleep(1);
     
-    sleep(1); // Wait for reconnect
+    // wait for connect
+    {
+    	UniConfRoot another_cfg(WvString("retry:unix:%s", socket));
+    
+        for (;;)
+        {
+            another_cfg.xset("wait", "ping");
+            if (another_cfg.xget("wait") == "ping") break;
+            sleep(1);
+        }
+    }
     
     cfg["/key"].setme("value");
-    WVPASS(cfg["/key"].getme() == "value");
+    WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
     
-    sleep(1); // Wait for UDS to go bad
-    
     WVPASS(!cfg["/key"].exists());
     
-    unlink(UNICONFD_SOCK);
+    unlink(socket);
     if ((uniconfd_pid = fork()) == 0)
     {
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
-
-    sleep(1); // Wait for reconnect
+    sleep(1);
     
-    WVPASS(cfg["/key"].getme() == "value");
+    // wait for connect
+    {
+    	UniConfRoot another_cfg(WvString("retry:unix:%s", socket));
+    
+        for (;;)
+        {
+            another_cfg.xset("wait", "pong");
+            if (another_cfg.xget("wait") == "pong") break;
+            sleep(1);
+        }
+    }
+
+    WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
     
-    sleep(1); // Wait for UDS to go bad
-
     WVPASS(!cfg["/key"].exists());
-}
-
-
-WVTEST_MAIN("mount point exists")
-{
-    // bug 9769
-    UniConfRoot uniconf("temp:");
-    
-    WVPASS(uniconf["foo"].mount("retry:unix:/tmp/foobar"));
-
-    WVPASS(uniconf["foo"].exists());
 }

@@ -201,17 +201,7 @@ bool UniRetryGen::exists(const UniConfKey &key)
     else
     {
     	DPRINTF("UniRetryGen::exists: !isok()\n");
-        if (key == "")
-        {
-            // here we assume that at least the mount point exists
-            // see void UniMountGen::makemount() that create all the keys with
-            // an empty string
-            result = true;
-        }
-        else 
-        {
-            result = false;
-        }
+    	result = false;
     }
     
     maybe_disconnect();
