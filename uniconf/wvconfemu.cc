@@ -169,6 +169,12 @@ WvConfigEntryEmu* WvConfigSectionEmu::Iter::ptr() const
 }
 
 
+void* WvConfigSectionEmu::Iter::vptr() const
+{
+    return link.data;
+}
+
+
 void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 {
     WvList<CallbackInfo>::Iter i(callbacks);

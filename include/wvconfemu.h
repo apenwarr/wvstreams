@@ -15,6 +15,7 @@
 #else
 
 #include "uniconfroot.h"
+#include "wvsorter.h"
 
 #define WvConf WvConfEmu
 #define WvConfigSection WvConfigSectionEmu
@@ -66,6 +67,8 @@ public:
 
     class Iter;
     friend class Iter;
+
+    typedef WvSorter<WvConfigEntryEmu, WvConfigSectionEmu, Iter> Sorter;
 };
 
 
@@ -86,6 +89,7 @@ public:
     WvLink *next();
     WvLink *cur();
     WvConfigEntryEmu* ptr() const;
+    void* vptr() const;
     WvIterStuff(WvConfigEntryEmu);
 };
 
