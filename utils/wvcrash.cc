@@ -7,11 +7,14 @@
  */
 #include "wvcrash.h"
 #include <signal.h>
-#include <execinfo.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 #include <string.h>
+
+
+#ifdef ISLINUX
+# include <execinfo.h>
 
 static const char *argv0 = "UNKNOWN";
 
@@ -137,3 +140,10 @@ void wvcrash_setup(const char *_argv0)
     signal(SIGBUS,  wvcrash);
     signal(SIGABRT, wvcrash);
 }
+
+#else // Not Linux
+
+void wvcrash(int sig) {}
+void wvcrash_setup(const char *_argv0) {}
+
+#endif

@@ -112,22 +112,6 @@ public:
     WvString certreq();
     
     /**
-     * Create a PKCS12 Envelope containing the cert and the rsa key, protected
-     * by the PKCS12Passwd. Returns a PEM encoded PKCS12 package.
-     *
-     * NOT IMPLEMENTED
-     */
-    WvString pkcs12();
-    
-    /**
-     * Given the a PEM Encoded pkcs12pkg, protected by PKCS12Passwd, fill 
-     * the cert and rsa members.
-     *
-     * NOT IMPLEMENTED
-     */
-    WvString importpkcs12(WvString pkcs12pkg);     
-
-    /**
      * test to make sure that a certificate and a keypair go together.
      * called internally by unhexify() although you can call it if 
      * you want to test a certificate yourself
@@ -203,8 +187,6 @@ public:
 
     WvLog debug;
     
-    WvString PKCS12Passwd;
-
     WvString errstring;
     
     bool isok() const

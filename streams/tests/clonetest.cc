@@ -23,6 +23,5 @@ int main()
     }
     
     wvcon->print("isok: %s/%s\n", wvcon->isok(), c.isok());
-
     c.cloned = NULL;
 }

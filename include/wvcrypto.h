@@ -32,6 +32,7 @@ class WvCryptoStream : public WvStreamClone
     size_t cryptbuf_size;
     
 protected:
+    WvStream *slave;
     unsigned char *cryptbuf(size_t size);
     
 public:
@@ -87,7 +88,6 @@ struct rsa_st;
 
 class WvRSAKey
 {
-    char *pub, *prv;
     int errnum;
 
     void seterr(WvStringParm s)
@@ -100,6 +100,7 @@ class WvRSAKey
         
 public:
     struct rsa_st *rsa;
+    char *pub, *prv;
 
     WvRSAKey(const WvRSAKey &k);
     WvRSAKey(const char *_keystr, bool priv);
@@ -177,6 +178,54 @@ public:
         { return md5_hash(); }
 
    WvString md5_hash() const;
+};
+
+struct env_md_ctx_st;
+/**
+ * Message Digest (Cryptographic Hash) of either a string or a File 
+ */
+class WvMessageDigest
+{
+public:
+
+   enum DigestMode { MD5 = 0, SHA1 = 1 };
+   
+   /**
+    * Create the _mode Digest of a String 
+    */
+   WvMessageDigest(WvStringParm string, DigestMode _mode = WvMessageDigest::MD5);   
+
+   /**
+    * Create the _mode Digest of a Stream
+    */   
+   WvMessageDigest(WvStream *s, DigestMode _mode = WvMessageDigest::MD5);
+
+   ~WvMessageDigest();
+   
+   /**
+    * Add a string to the buffer_to_digest
+    */
+   void add(WvStringParm string);
+
+   /**
+    * Sometimes we just want to easily get the text digest for whatever
+    * Type of object that we're constructing...
+    */
+   operator const WvString () const
+        { return printable(); }
+
+   WvString printable() const;
+
+private:
+   struct env_md_ctx_st *mdctx;
+   unsigned char *raw_digest_value;
+   WvBuffer buf_to_digest;
+   DigestMode mode;
+
+   /**
+    * Initialize all of the silly OpenSSL Stuff.
+    */
+   void init();
 };
 
 #endif // __WVCRYPTO_H

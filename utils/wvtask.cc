@@ -8,8 +8,12 @@
 #include "wvtask.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h> // for alloca()
 #include <assert.h>
+#ifdef ISLINUX
+# include <malloc.h> // for alloca()
+#else
+# include <stdlib.h>
+#endif
 
 int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 

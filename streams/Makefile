@@ -3,7 +3,7 @@ include $(TOPDIR)/wvrules.mk
 
 CXXFLAGS += -I../include
 
-# some crazy magic for WvLockFile to use the liblockdev library if it's
+# some crazy magic for WvLockDev to use the liblockdev library if it's
 # available, or our simpler method otherwise.
 #
 #LOCKDEV = $(shell [ -f /usr/include/lockdev.h -a -f /usr/lib/liblockdev.a ] \
@@ -23,15 +23,15 @@ all: report-lock-mode streams.libs
 .PHONY: report-lock-mode
 report-lock-mode:
 	@if [ -n "$(LOCKDEV)" ]; then \
-		echo Using liblockdev.a for device locking in wvlockfile.; \
+		echo Using liblockdev.a for device locking in wvlockdev.; \
 	else \
-		echo Using my own device locking functions in wvlockfile.; \
+		echo Using my own device locking functions in wvlockdev.; \
 	fi
 
 streams.libs: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvfile.o wvlog.o wvlogbuffer.o wvsyslog.o wvwatcher.o wvpipe.o \
 	wvloopback.o wvmodem.o wvtimestream.o wvprotostream.o wvbufstream.o \
-	wvlockdev.o wvlockfile.o wvdailyevent.o wvtimeoutstream.o wvlogfile.o \
+	wvlockdev.o wvlockfile.o wvdailyevent.o wvtimeoutstream.o wvlogfile.o wvlockfile.o \
 	wvtundev.o $(LOCKDEV) ../utils/utils.libs
 
 clean:

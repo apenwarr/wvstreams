@@ -4,8 +4,10 @@
  * 
  * A WvInterface stores information about a particular network interface.
  */
+
 #include "wvinterface.h"
-//#include "wvpipe.h"
+#ifdef ISLINUX
+
 #include "wvsubproc.h"
 #include "wvfile.h"
 
@@ -16,8 +18,8 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <unistd.h>
-#include <linux/sockios.h>
 #include <errno.h>
+#include <linux/sockios.h>
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
@@ -672,3 +674,45 @@ bool WvInterfaceDict::on_local_net(const WvIPNet &addr)
     
     return false;
 }
+
+#else
+
+int WvInterface::getinfo(struct ifreq *ifr, int ioctl_num) { return 0; }
+void WvInterface::fill_rte(struct rtentry *rte, char *ifname,
+                  const WvIPNet &dest, const WvIPAddr &gw,
+                  int metric) {}
+
+WvInterface::WvInterface(WvStringParm _name) :err("fake") {}
+WvInterface::~WvInterface() {}
+
+void WvInterface::rescan() {}
+const WvIPNet &WvInterface::ipaddr() { return *(new WvIPNet()); }
+const WvIPAddr WvInterface::dstaddr() { return *(new WvIPAddr()); }
+int WvInterface::getflags() { return 0; }
+int WvInterface::setflags(int clear, int set) { return 0; }
+bool WvInterface::isup() { return true; }
+void WvInterface::up(bool enable) {}
+bool WvInterface::ispromisc() { return true; }
+void WvInterface::promisc(bool enable) {}
+int WvInterface::setipaddr(const WvIPNet &addr) { return 0; }
+int WvInterface::setmtu(int mtu) { return 0; }
+int WvInterface::addroute(const WvIPNet &dest, int metric = 0,
+                 WvStringParm table = "default") { return 0; }
+int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
+                 int metric = 0, WvStringParm table = "default") { return 0; }
+int WvInterface::delroute(const WvIPNet &dest, int metric = 0,
+                 WvStringParm table = "default") { return 0; }
+int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
+                 int metric = 0, WvStringParm table = "default") { return 0; }
+bool WvInterface::isarp() { return true; }
+int WvInterface::addarp(const WvIPNet &proto, const WvAddr &hw, bool proxy)
+                 { return 0; }
+
+WvInterfaceDict::WvInterfaceDict() :log("fake") {}
+WvInterfaceDict::~WvInterfaceDict() {}
+
+void WvInterfaceDict::update() {}
+bool WvInterfaceDict::islocal(const WvAddr &addr) { return true; }
+bool WvInterfaceDict::on_local_net(const WvIPNet &addr) { return true; }
+
+#endif

@@ -14,6 +14,7 @@
 #include <pem.h>
 #include <x509v3.h>
 #include <err.h>
+#include <sha.h>
 
 static int ssl_init_count = 0;
 
@@ -294,6 +295,29 @@ void WvX509Mgr::create_selfsigned()
     X509_set_issuer_name(cert, name);
     X509_set_subject_name(cert, name);
 
+    // Add the Subject Key Identifier to make certain programs happy.
+//    unsigned char shabuffer[20];
+//    char tempbuffer[60];
+
+    // FIXME: GET RID OF THIS AS SOON AS WvMessageDigest is working!!!
+//    int i;
+//    SHA_CTX  sha_ctx;
+//    SHA1_Init(&sha_ctx);
+//    SHA1_Update(&sha_ctx, rsa->pub, sizeof(rsa->pub));
+//    SHA1_Final(shabuffer, &sha_ctx);
+//
+//    for (i=0;i<20;i++)
+//    {
+//	snprintf(tempbuffer+(i*3),4,"%02x:",shabuffer[i]);
+//    }
+//    tempbuffer[59] = 0;
+//    debug("subjectKeyIdentifier will be filled with: %s\n",tempbuffer);
+    // FIXME: End of crap to get rid of
+
+//    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_subject_key_identifier, tempbuffer);
+//    X509_add_ext(cert, ex, -1);
+//    X509_EXTENSION_free(ex);
+
     // Add in the netscape-specific server extension
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_cert_type, "server");
     X509_add_ext(cert, ex, -1);
@@ -314,9 +338,12 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
-    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,"critical, CA:FALSE");
-    X509_add_ext(cert, ex, -1);
-    X509_EXTENSION_free(ex);
+// Don't set this at all (since it appears OpenSSL has problems
+// encoding it properly if you do!! Stupid, broken programmers...)
+// FIXME:
+//    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,"CA:FALSE");
+//    X509_add_ext(cert, ex, -1);
+//    X509_EXTENSION_free(ex);
 
     // Sign the certificate with our own key ("Self Sign")
     if (!X509_sign(cert, pk, EVP_sha1()))

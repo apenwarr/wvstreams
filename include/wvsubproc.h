@@ -22,34 +22,44 @@
 #define __WVSUBPROC_H
 
 #include "wvstringlist.h"
-#include "wvcallback.h"
 
 #include <signal.h>
 #include <time.h>
 
-DeclareWvCallback(0, void, WvSubProcCallback);
-
 class WvSubProc
 {
 public:
+    DeclareWvList(pid_t);
+    pid_tList old_pids;
+    
     pid_t pid;
     bool running;
     int estatus;
-    WvStringList env;
+    WvString last_cmd;
+    WvStringList last_args, env;
     
     WvSubProc();
 
-    WvSubProc(const char cmd[], const char * const *argv) {
-	startv(cmd, argv);
-    }
+    WvSubProc(const char cmd[], const char * const *argv)
+        { startv(cmd, argv); }
 
     virtual ~WvSubProc();
     
+private:
+    int _startv(const char cmd[], const char * const *argv);
+    
+public:
+    void prepare(const char cmd[], ...);
+    void preparev(const char cmd[], va_list ap);
+    void preparev(const char cmd[], const char * const *argv);
+    
+    
     // launch a subprocess, which will be owned by this object.
     int start(const char cmd[], ...);
-    int startv(const char cmd[],
-	       const char * const *argv,
-	       const WvSubProcCallback& cb = 0);
+    
+    int startv(const char cmd[], const char * const *argv);
+    int start_again();
+    
     int fork(int *waitfd);
 
     // stop (kill -TERM or -KILL as necessary) the subprocess and
