@@ -9,9 +9,9 @@ WVPART(streams, The Streams Library,
   WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
  )
  WVCHAPTER(magicstreams, Some Magical Streams,
-  WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream, x),
-  WVSECT1(wvsplitstream, WvSplitStream - separating read/write streams, x),
-  WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), x),
+  WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream, x)
+  WVSECT1(wvsplitstream, WvSplitStream - separating read/write streams, x)
+  WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), x)
  )
  WVCHAPTER(wvtimestream, WvTimeStream - timed events, x)
  WVCHAPTER(wvwatcher, WvFileWatcher - waiting for a file to change, x)

@@ -14,15 +14,21 @@ IMGFILES=$(shell [ -d img ] && find img -type f)
 	nsgmls $< >/dev/null
 	# Syntax check passed
 
-%.sgml: %.wvsgml *.m4
+%.sgml: %.wvsgml *.m4 *.wvsgml
 	@echo Preprocessing $< to $@...
 	@m4 sgmlmacros.m4 $< | awk '			\
 		BEGIN {					\
 			paropen = 0;			\
 			parready = 0;			\
+			disabled = 0;			\
 		}					\
 							\
-		parready && !paropen && /^[ 	]*[-A-Za-z0-9]/ {	\
+		/^[ 	]*--SNIP--[ 	]*$$/ {		\
+			disabled = !disabled;		\
+			next;				\
+		}					\
+							\
+		parready && !disabled && !paropen && /^[ 	]*[-A-Za-z0-9]/ {	\
 			print "<para>";			\
 			print;				\
 			parready = 0;			\
@@ -30,7 +36,7 @@ IMGFILES=$(shell [ -d img ] && find img -type f)
 			next;				\
 		}					\
 							\
-		(paropen) && (!parready) && /^[ 	]*$$/ {	\
+		paropen && !disabled && !parready && /^[ 	]*$$/ {	\
 			print "</para>";		\
 			print;				\
 			parready = 1;			\
