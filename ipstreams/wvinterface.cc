@@ -247,15 +247,18 @@ int WvInterface::setipaddr(const WvIPNet &addr)
 	    return -1;
 	}
 	
-	sa = addr.broadcast().sockaddr();
-	memcpy(&ifr.ifr_broadaddr, sa, len);
-	delete sa;
-	if (ioctl(sock, SIOCSIFBRDADDR, &ifr))
+	if (!strchr(name, ':')) // otherwise, an alias, and no broadcast addr!
 	{
-	    if (errno != EACCES && errno != EPERM)
-		err.perror(WvString("SetBroadcast %s", name));
-	    close(sock);
-	    return -1;
+	    sa = addr.broadcast().sockaddr();
+	    memcpy(&ifr.ifr_broadaddr, sa, len);
+	    delete sa;
+	    if (ioctl(sock, SIOCSIFBRDADDR, &ifr))
+	    {
+		if (errno != EACCES && errno != EPERM)
+		    err.perror(WvString("SetBroadcast %s", name));
+		close(sock);
+		return -1;
+	    }
 	}
     }
     

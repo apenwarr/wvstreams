@@ -17,11 +17,10 @@ WvIPAliaser::AliasList WvIPAliaser::all_aliases;
 
 
 
-WvIPAliaser::Alias::Alias(const WvIPAddr &_ip)
+WvIPAliaser::Alias::Alias(const WvIPAddr &_ip) : ip(_ip)
 {
     WvIPAddr noip;
     WvIPNet nonet(noip, noip);
-    ip = _ip;
     link_count = 0;
     
     for (index = 0; index < 256; index++)
@@ -31,13 +30,13 @@ WvIPAliaser::Alias::Alias(const WvIPAddr &_ip)
 	if (!i.isup() || i.ipaddr() == nonet) // not in use yet!
 	{
 	    i.setipaddr(ip);
-	    if (i.ipaddr() != ip)
+	    i.up(true);
+	    if (i.ipaddr() != WvIPNet(ip))
 	    {
 		// no permission, most likely.
 		index = -1;
+		i.up(false);
 	    }
-	    else
-		i.up(true);   // make sure interface is up
 	    return;
 	}
     }
@@ -52,6 +51,7 @@ WvIPAliaser::Alias::~Alias()
     if (index >= 0)
     {
 	WvInterface i(WvString("lo:wv%s", index));
+	i.setipaddr(WvIPAddr());
 	i.up(false);
     }
 }
