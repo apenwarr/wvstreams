@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.38 2003/09/24 20:19:56 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.39 2003/09/24 21:02:40 pphaneuf Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -186,7 +186,8 @@ fi
 
 # openssl
 if test "$with_openssl" != "no"; then
-    AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no])
+    AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
+                     [#define OPENSSL_NO_KRB5])
     AC_CHECK_LIB(ssl, SSL_CTX_new,, [with_openssl=no])
 fi
 
