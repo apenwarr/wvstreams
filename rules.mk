@@ -80,7 +80,7 @@ ChangeLog:
 	cvs2cl --utc
 
 define wild_clean
-	@list=`echo $(1)` ; test -z "$${list}" || sh -cx "rm -rf $${list}"
+	@list=`echo $(wildcard $(1))` ; test -z "$${list}" || sh -cx "rm -rf $${list}"
 endef
 
 realclean: distclean
