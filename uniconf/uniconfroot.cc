@@ -116,11 +116,11 @@ void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value,
     check(node, key, segs);
 
     // look for watches on key and its ancestors
-    for (int s = 0; s < segs;)
+    for (int s = 0; s < segs; )
     {
         node = node->findchild(key.segment(s));
         s++;
-        if (! node)
+        if (!node)
             goto done; // no descendents so we can stop
         check(node, key, segs - s);
     }

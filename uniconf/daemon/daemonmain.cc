@@ -223,8 +223,14 @@ int main(int argc, char **argv)
     {
 	while (globdaemon->isok())
 	{
-	    if (globdaemon->select(-1))
+	    if (globdaemon->select(5000))
 		globdaemon->callback();
+	    else
+	    {
+		// FIXME: do this *exactly* every so x seconds
+		cfg.commit();
+		cfg.refresh();
+	    }
 	}
 	globdaemon->close();
 	delete globdaemon;
