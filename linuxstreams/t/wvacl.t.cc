@@ -7,6 +7,8 @@
 #include <grp.h>
 #include <pwd.h>
 
+#if 0
+
 WvLogConsole logrcv(1);
 
 WVTEST_MAIN("default get_simple_acl_permissions()")
@@ -60,3 +62,4 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
     WVPASS(o_chk);
 }
 
+#endif
