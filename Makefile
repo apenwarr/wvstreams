@@ -102,7 +102,7 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 test: wvtestmain
-	./wvtestmain
+	$(VALGRIND) ./wvtestmain
 
 wvtestmain: wvtestmain.o $(call objects, $(shell find -type d -name t)) \
 	libwvstreams.so libwvutils.so

@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.37 2003/09/18 05:10:57 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.38 2003/09/24 20:19:56 pphaneuf Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -96,6 +96,7 @@ AC_PROG_CPP
 AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
+AC_CHECK_PROG(VALGRIND, valgrind, yes)
 
 # Setting the default language to C++ means that CXX and CXXCPP will be 
 # used for compile tests.
@@ -297,6 +298,12 @@ if test "$enable_devel" = "yes"; then
     if test -n "$missing_devel"; then
         AC_MSG_ERROR([Some packages required in developer mode are missing.])
     fi
+fi
+
+if test "$VALGRIND" = "yes"; then
+    VALGRIND="valgrind --leak-check=yes"
+else
+    VALGRIND=
 fi
 
 AC_SUBST(enable_debug)
