@@ -50,14 +50,14 @@ char * trim_string( char * string )
 
     while( q >= p && isspace( *q ) )
     	*(q--) = 0;
-    while( q <= q && isspace( *p ) )
+    while( isspace( *p ) )
     	p++;
 
     return( p );
 }
 
 char * trim_string( char * string, char c )
-// Searchs the string for c and removes it plus everything afterwards.
+// Searches the string for c and removes it plus everything afterwards.
 // Modifies the string and returns NULL if string == NULL.
 {
     char * p;
