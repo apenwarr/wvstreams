@@ -25,6 +25,7 @@ class UniConfTree : public Base
 {
    
 public:
+    typedef WvCallback<void, const Sub *, void *> Visitor;
     typedef WvCallback<bool, const Sub *, const Sub *, void *> Comparator;
 
     /** Creates a node and links it to a subtree, if parent is non-NULL */
@@ -97,6 +98,20 @@ public:
             delete static_cast<Sub*>(i.ptr());
 
         delete oldchildren;
+    }
+
+    /**
+     * Performs a traversal on this tree using the specified
+     * visitor function and traversal type(s).
+     * "visitor" is the tree visitor function
+     * "userdata" is userdata for the tree visitor function
+     */
+    void visit(const Visitor &visitor, void *userdata,
+        bool preorder = true, bool postorder = false) const
+    {
+        _recursive_unsorted_visit(this, reinterpret_cast<
+            const typename Base::BaseVisitor&>(visitor), userdata,
+            preorder, postorder);
     }
 
     /**
