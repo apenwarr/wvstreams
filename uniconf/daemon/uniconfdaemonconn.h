@@ -48,6 +48,7 @@ class UniConfDaemonConn : public UniClientConn
 {
     UniConf root;
     UniConfDaemonWatchTable watches;
+    bool started;
 
 public:
     UniConfDaemonConn(WvStream *s, const UniConf &root);
@@ -55,16 +56,21 @@ public:
 
     virtual void execute();
 
-private:
-    void do_malformed();
-    void do_noop();
-    void do_get(const UniConfKey &key);
-    void do_set(const UniConfKey &key, WvStringParm value);
-    void do_remove(const UniConfKey &key);
-    void do_subtree(const UniConfKey &key);
-    void do_haschildren(const UniConfKey &key);
-    void do_quit();
-    void do_help();
+    virtual void startup();
+
+    void banner();
+
+protected:
+    virtual void do_malformed();
+    virtual void do_noop();
+    virtual void do_reply(WvStringParm reply);
+    virtual void do_get(const UniConfKey &key);
+    virtual void do_set(const UniConfKey &key, WvStringParm value);
+    virtual void do_remove(const UniConfKey &key);
+    virtual void do_subtree(const UniConfKey &key);
+    virtual void do_haschildren(const UniConfKey &key);
+    virtual void do_quit();
+    virtual void do_help();
 
     void deltacallback(const UniConf &key, void *userdata);
 };

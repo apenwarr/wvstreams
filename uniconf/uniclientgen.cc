@@ -13,6 +13,7 @@
 #include "wvaddr.h"
 #include "wvresolver.h"
 #include "wvmoniker.h"
+#include "wvsslstream.h"
 
 static UniConfGen *unixcreator(WvStringParm s, IObject *, void *)
 {
@@ -30,6 +31,18 @@ static UniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
     return new UniClientGen(new WvTCPConn(s), _s);
 }
 
+static UniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
+{
+    WvString s(_s);
+    char *cptr = s.edit();
+    
+    if (!strchr(cptr, ':')) // no default port
+	s.append(":%s", DEFAULT_UNICONF_DAEMON_SSL_PORT);
+    
+    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL, true),
+            _s);
+}
+
 // if 'obj' is a WvStream, build the uniconf connection around that;
 // otherwise, create a new WvStream using 's' as the wvstream moniker.
 static UniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
@@ -44,6 +57,7 @@ static UniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
 
 static WvMoniker<UniConfGen> unixreg("unix", unixcreator);
 static WvMoniker<UniConfGen> tcpreg("tcp", tcpcreator);
+static WvMoniker<UniConfGen> sslreg("ssl", sslcreator);
 static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 
@@ -229,6 +243,10 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 break;
             }
 
+        case UniClientConn::EVENT_READY:
+            // FIXME: implement me
+            break;
+
         case UniClientConn::EVENT_NOTICE:
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
@@ -236,6 +254,18 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 delta(key, value);
             }   
 
+        case UniClientConn::EVENT_PROMPT:
+            // FIXME: implement me
+            break;
+
+        case UniClientConn::EVENT_PASSWD:
+            // FIXME: implement me
+            break;
+        
+        case UniClientConn::EVENT_MSG:
+            // FIXME: implement me
+            break;
+        
         default:
             // discard unrecognized commands
             break;

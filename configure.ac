@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.20 2003/03/19 19:47:09 sharvil Exp $)
+AC_REVISION($Id: configure.ac,v 1.21 2003/03/24 19:57:31 jnc Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -59,6 +59,10 @@ AC_ARG_WITH(speex,
 AC_ARG_WITH(fftw,
             AC_HELP_STRING([--with-fftw],
                            [FFTW]))
+
+AC_ARG_WITH(pam,
+            AC_HELP_STRING([--with-pam],
+                           [PAM]))
 
 AC_ARG_WITH(gtk,
             AC_HELP_STRING([--with-gtk],
@@ -158,6 +162,12 @@ if test "$with_fftw" != "no"; then
 AC_CHECK_LIB(fftw, fftw,, [with_fftw=no])
 AC_CHECK_LIB(rfftw, rfftw,, [with_fftw=no])
 AC_CHECK_HEADERS(rfftw.h,, [with_fftw=no])
+fi
+
+# pam
+if test "$with_pam" != "no"; then
+AC_CHECK_LIB([pam], [pam_start], [], [with_pam=no])
+AC_CHECK_HEADERS([security/pam_appl.h], [], [with_pam=no])
 fi
 
 # qt
@@ -345,6 +355,10 @@ if test "$with_fftw" == "no"; then
     AC_MSG_WARN([FFTW is missing.])
     missing_devel=yes
 fi
+if test "$with_pam" == "no"; then
+    AC_MSG_WARN([PAM is missing.])
+    missing_devel=yes
+fi
 if test "$with_qt" == "no"; then
     AC_MSG_WARN([Qt is missing.])
     missing_devel=yes
@@ -382,6 +396,7 @@ AC_SUBST(with_ogg)
 AC_SUBST(with_vorbis)
 AC_SUBST(with_speex)
 AC_SUBST(with_fftw)
+AC_SUBST(with_pam)
 AC_SUBST(with_qt)
 AC_SUBST(QTINCLUDE)
 AC_SUBST(QTLIB)

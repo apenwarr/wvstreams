@@ -12,14 +12,21 @@
 #include "uniconf.h"
 #include "wvaddr.h"
 
+class WvX509Mgr;
+
 class UniConfDaemon : public WvStreamList
 {
     UniConf cfg;
     WvLog log;
     bool closed;
+    bool authenticate;
 
 public:
-    UniConfDaemon(const UniConf &cfg);
+    /**
+     * Create a UniConfDaemon to serve the Uniconf tree cfg.  If auth is
+     * true, require authentication through PAM before accepting connections.
+     */
+    UniConfDaemon(const UniConf &cfg, bool auth);
     virtual ~UniConfDaemon();
 
     virtual bool isok() const;
@@ -29,10 +36,12 @@ public:
     
     bool setupunixsocket(WvStringParm path);
     bool setuptcpsocket(const WvIPPortAddr &addr);
+    bool setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509);
 
 private:
     void unixcallback(WvStream &s, void *userdata);
     void tcpcallback(WvStream &s, void *userdata);
+    void sslcallback(WvStream &s, void *userdata);
 };
 
 #endif // __UNICONFDAEMON_H

@@ -13,12 +13,12 @@
 
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
     UniClientConn(_s),
-    root(_root), watches(NUM_WATCHES)
+    root(_root), watches(NUM_WATCHES), started(false)
 {
-    writecmd(EVENT_HELLO, "{UniConf Server ready}");
-
     root.add_callback(wvcallback(UniConfCallback, *this,
             UniConfDaemonConn::deltacallback), NULL, true);
+    // need to wait for the stream to be writable to send the banner
+    force_select(false, true);
 }
 
 
@@ -29,9 +29,31 @@ UniConfDaemonConn::~UniConfDaemonConn()
 }
 
 
+void UniConfDaemonConn::startup()
+{
+    banner();
+    writecmd(EVENT_READY);
+}
+
+
+void UniConfDaemonConn::banner()
+{
+    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
+}
+
+
 void UniConfDaemonConn::execute()
 {
+    if (!started)
+    {
+        // now start reading
+        force_select(true, false);
+        startup();
+        started = true;
+    }
+
     UniClientConn::execute();
+    
     for (;;)
     {
         UniClientConn::Command command = readcmd();
@@ -96,6 +118,12 @@ void UniConfDaemonConn::execute()
                 do_help();
                 break;
 
+            case UniClientConn::REQ_REPLY:
+                if (arg1.isnull())
+                    do_malformed();
+                do_reply(arg1);
+                break;
+
             default:
                 do_malformed();
                 break;
@@ -113,6 +141,12 @@ void UniConfDaemonConn::do_malformed()
 void UniConfDaemonConn::do_noop()
 {
     writeok();
+}
+
+
+void UniConfDaemonConn::do_reply(WvStringParm reply)
+{
+    writefail("unexpected reply");
 }
 
 

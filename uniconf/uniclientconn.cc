@@ -16,6 +16,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     UniClientConn::NUM_COMMANDS] = {
     // requests
     { "noop", "noop: verify that the connection is active" },
+    { "reply", "reply <text>: respond to a prompt" },
     { "get", "get <key>: get the value of a key" },
     { "set", "set <key> <value>: sets the value of a key" },
     { "del", "del <key>: deletes the key" },
@@ -28,7 +29,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "OK", "OK <payload>: reply on command success" },
     { "FAIL", "FAIL <payload>: reply on command failure" },
     { "CHILD", "CHILD <key> TRUE / FALSE: key has children or not" },
-    { "ONEVAL", "ONEVAL <key> <value>: reply to a gate" },
+    { "ONEVAL", "ONEVAL <key> <value>: reply to a get" },
 
     // partial replies
     { "VAL", "VAL <key> <value>: intermediate reply value of a key" },
@@ -36,7 +37,11 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
 
     // events
     { "HELLO", "HELLO <message>: sent by server on connection" },
-    { "NOTICE", "NOTICE <key> <oldval> <newval>: forget key and its children" }
+    { "READY", "READY: server is ready to answer requests" },
+    { "NOTICE", "NOTICE <key> <oldval> <newval>: forget key and its children" },
+    { "PROMPT", "PROMPT <message>: show message to the user and get a reply" },
+    { "PASSWD", "PASSWD <message>: show message to the user and get a masked reply" },
+    { "MSG", "MSG <message>: show message to the user" }
 };
 
 
@@ -181,3 +186,4 @@ void UniClientConn::writetext(WvStringParm text)
 {
     writecmd(PART_TEXT, wvtcl_escape(text));
 }
+

@@ -13,6 +13,7 @@
 #include "wvlog.h"
 
 #define DEFAULT_UNICONF_DAEMON_TCP_PORT 4111
+#define DEFAULT_UNICONF_DAEMON_SSL_PORT 4112
 
 /**
  * Represents a connection to a UniConf daemon via any WvStream.
@@ -37,6 +38,7 @@ public:
         
         // requests
         REQ_NOOP, /*!< noop ==> OK */
+        REQ_REPLY, /*! reply <test> ==> OK / FAIL */
         REQ_GET, /*!< get <key> ==> VAL ... OK / FAIL */
         REQ_SET, /*!< set <key> <value> ==> OK / FAIL */
         REQ_REMOVE, /*!< del <key> ==> OK / FAIL */
@@ -57,9 +59,13 @@ public:
 
         // events
         EVENT_HELLO, /*!< HELLO <message> */
+        EVENT_READY, /*!< REAY */
         EVENT_NOTICE, /*!< NOTICE <key> <oldval> <newval> */
+        EVENT_PROMPT, /*!< PROMPT <message> */
+        EVENT_PASSWD, /*!< PASSWD <message> */
+        EVENT_MSG, /*!< MSG <message> */
     };
-    static const int NUM_COMMANDS = EVENT_NOTICE + 1;
+    static const int NUM_COMMANDS = EVENT_MSG + 1;
     struct CommandInfo
     {
         const char *name;
@@ -93,7 +99,7 @@ public:
      * "command" is the command
      * "payload" is the payload
      */
-    void writecmd(Command command, WvStringParm payload);
+    void writecmd(Command command, WvStringParm payload = WvString::null);
 
     /**
      * Writes a REPLY_OK message.
