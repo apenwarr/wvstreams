@@ -75,7 +75,7 @@ void WvIPRouteList::get_kernel()
     kinfo.getline(0);
     while ((line = kinfo.getline(0)) != NULL)
     {
-	log(WvLog::Debug2, "get_kern1: line: %s\n", line);
+	//log(WvLog::Debug2, "get_kern1: line: %s\n", line);
 	
 	words.zap();
 	words.split(line);
@@ -107,7 +107,7 @@ void WvIPRouteList::get_kernel()
 	
 	r = new WvIPRoute(ifc, net, gw, metric, "default");
 	append(r, true);
-	log(WvLog::Debug2, "get_kern1:  out: %s\n", *r);
+	//log(WvLog::Debug2, "get_kern1:  out: %s\n", *r);
     }
     
     // add more data from the kernel "policy routing" default table
@@ -115,7 +115,7 @@ void WvIPRouteList::get_kernel()
     WvPipe defaults(argv[0], argv, false, true, false);
     while (defaults.isok() && (line = defaults.getline(-1)) != NULL)
     {
-	log(WvLog::Debug2, "get_kern2: line: %s\n", line);
+	//log(WvLog::Debug2, "get_kern2: line: %s\n", line);
 	
 	invalid = false;
 	ifc = gate = table = "";
@@ -183,7 +183,7 @@ void WvIPRouteList::get_kernel()
 	r = new WvIPRoute(ifc, net, gate ? WvIPAddr(gate) : WvIPAddr(),
 			  metric, table);
 	append(r, true);
-	log(WvLog::Debug2, "get_kern2:  out: %s\n", *r);
+	//log(WvLog::Debug2, "get_kern2:  out: %s\n", *r);
     }
 }
 
