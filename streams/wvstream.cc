@@ -659,9 +659,11 @@ void WvStream::undo_force_select(bool readable, bool writable, bool isexception)
 
 void WvStream::alarm(time_t msec_timeout)
 {
+    struct timezone tz;
+    
     if (msec_timeout >= 0)
     {
-	gettimeofday(&alarm_time, 0);
+	gettimeofday(&alarm_time, &tz);
 	alarm_time.tv_sec += msec_timeout / 1000;
 	alarm_time.tv_usec += (msec_timeout % 1000) * 1000;
 	normalize(alarm_time);
@@ -681,8 +683,9 @@ time_t WvStream::alarm_remaining()
     if (a.tv_sec)
     {
 	struct timeval tv;
+	struct timezone tz;
 	
-	gettimeofday(&tv, 0);
+	gettimeofday(&tv, &tz);
 	normalize(tv);
 	
 	if (a.tv_sec < tv.tv_sec

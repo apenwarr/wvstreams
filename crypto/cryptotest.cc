@@ -49,6 +49,7 @@ int main(int argc, char **argv)
     char buf[10240];
     size_t len, total;
     struct timeval start, stop;
+    struct timezone tz;
     
     if (argc < 2)
     {
@@ -141,7 +142,7 @@ int main(int argc, char **argv)
     
     
     total = 0;
-    gettimeofday(&start, 0);
+    gettimeofday(&start, &tz);
     
     if (direction == Encrypt)
     {
@@ -178,7 +179,7 @@ int main(int argc, char **argv)
 	}
     }
     
-    gettimeofday(&stop, 0);
+    gettimeofday(&stop, &tz);
     long tdiff = msecdiff(stop, start);
     
     

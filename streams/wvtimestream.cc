@@ -8,17 +8,21 @@
 
 WvTimeStream::WvTimeStream()
 {
+    struct timezone tz;
+    
     ms_per_tick = max_backlog = 0;
-    gettimeofday(&last_tv, 0);
+    gettimeofday(&last_tv, &tz);
 }
 
 
 void WvTimeStream::set_timer(int msec, int _max_backlog)
 {
+    struct timezone tz;
+
     ms_per_tick = msec;
     max_backlog = _max_backlog;
     
-    gettimeofday(&last_tv, 0);
+    gettimeofday(&last_tv, &tz);
 }
 
 
@@ -31,9 +35,10 @@ bool WvTimeStream::isok() const
 bool WvTimeStream::pre_select(SelectInfo &si)
 {
     struct timeval tv;
+    struct timezone tz;
     time_t tdiff, tinc;
     
-    if (gettimeofday(&tv, 0) || !ms_per_tick)
+    if (gettimeofday(&tv, &tz) || !ms_per_tick)
 	return false;
     
     // compensate for "time warps" (someone sets the clock backwards)
