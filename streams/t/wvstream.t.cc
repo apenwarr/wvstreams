@@ -1,5 +1,4 @@
 #include "wvtest.h"
-#include "wvtimeutils.h"
 
 #define private public
 #define protected public
@@ -9,6 +8,24 @@
 
 #include "wvistreamlist.h"
 #include "wvcont.h"
+#include "wvtimeutils.h"
+
+class ReadableStream : public WvStream
+{
+public:
+    bool yes_readable;
+    ReadableStream()
+        { yes_readable = false; }
+    
+    virtual bool pre_select(SelectInfo &si)
+    {
+	int ret = WvStream::pre_select(si);
+	if (yes_readable && si.wants.readable)
+	    return true;
+	else
+	    return ret;
+    }
+};
 
 class CountStream : public WvStream
 {
@@ -346,7 +363,6 @@ static void cont_cb(WvStream &s, void *userdata)
 }
 
 
-// continue_select()
 WVTEST_MAIN("continue_select")
 {
     WvStream a;
@@ -372,6 +388,47 @@ WVTEST_MAIN("continue_select")
     WVPASS(aval == -4);
     
     a.terminate_continue_select();
+}
+
+
+static void cont_once(WvStream &s, void *userdata)
+{
+    int *i = (int *)userdata;
+    
+    (*i)++;
+    s.continue_select(10);
+    (*i)++;
+    *i = -*i;
+}
+
+
+WVTEST_MAIN("continue_select and alarm()")
+{
+    int i = 1;
+    ReadableStream s;
+    s.uses_continue_select = true;
+    s.setcallback(cont_once, &i);
+    
+    s.yes_readable = true;
+    WVPASSEQ(i, 1);
+    s.runonce(100);
+    WVPASSEQ(i, 2);
+    s.runonce(100);
+    WVPASSEQ(i, -3);
+
+    s.yes_readable = false;
+    s.runonce(100);
+    WVPASSEQ(i, -3);
+    
+    s.alarm(0);
+    s.runonce(100);
+    WVPASSEQ(i, -2);
+    
+    s.alarm(-1); // disabling the alarm should disable continue_select timeout
+    s.runonce(100);
+    WVPASSEQ(i, -2);
+    
+    s.terminate_continue_select();
 }
 
 

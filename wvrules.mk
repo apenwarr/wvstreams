@@ -65,7 +65,7 @@ XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
 else
-  DEBUG:=
+  DEBUG:=0
 endif
 
 ifeq ("$(enable_fatal_warnings)", "yes")

@@ -363,7 +363,7 @@ size_t WvStream::write(const void *buf, size_t count)
 	wrote = uwrite(buf, count);
         count -= wrote;
         buf = (const unsigned char *)buf + wrote;
-	if (!count) return wrote; // short circuit if no buffering needed
+	// if (!count) return wrote; // short circuit if no buffering needed
     }
     if (max_outbuf_size != 0)
     {
@@ -935,6 +935,7 @@ bool WvStream::continue_select(time_t msec_timeout)
 
     alarm(msec_timeout);
     WvCont::yield();
+    alarm(-1); // cancel the still-pending alarm, or it might go off later!
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 

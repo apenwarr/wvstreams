@@ -83,6 +83,7 @@ int WvTest::run_all(const char *prefix)
     int old_valgrind_leaks = 0, new_valgrind_leaks;
     
     signal(SIGALRM, alarm_handler);
+    // signal(SIGALRM, SIG_IGN);
     alarm(MAX_TEST_TIME);
     start_time = time(NULL);
     
