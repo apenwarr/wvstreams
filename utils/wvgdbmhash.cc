@@ -1,3 +1,9 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
+ *
+ * A hash table container backed by a gdbm database.  See wvgdbmhash.h.
+ */
 #include "wvautoconf.h"
 
 #if HAVE_LIBGDBM
