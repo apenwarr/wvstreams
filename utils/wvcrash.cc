@@ -78,6 +78,7 @@ void wvcrash(int sig)
     pid_t pid;
     
     signal(sig, SIG_DFL);
+    wr(2, "\n\nwvcrash: crashing!\n");
     
     if (pipe(fds))
 	wvcrash_real(sig, 2); // just use stderr instead
@@ -108,6 +109,8 @@ void wvcrash(int sig)
 	    wvcrash_real(sig, fds[1]);
 	}
     }
+    
+    _exit(126);
 }
 
 
@@ -116,4 +119,5 @@ void wvcrash_setup(const char *_argv0)
     argv0 = _argv0;
     signal(SIGSEGV, wvcrash);
     signal(SIGBUS,  wvcrash);
+    signal(SIGABRT, wvcrash);
 }
