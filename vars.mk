@@ -167,7 +167,8 @@ libwvutils.a libwvutils.so: $(call objects,utils)
 libwvutils.so: -lz -lcrypt
 
 libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams urlget)
-libwvstreams.so: libwvutils.so -lssl -lcrypto
+libwvstreams.so: libwvutils.so
+libwvstreams.so: LIBS+=-lssl -lcrypto
 
 libuniconf.a libuniconf.so: $(call objects,uniconf)
 libuniconf.so: libwvstreams.so libwvutils.so

@@ -30,8 +30,6 @@ static WvMoniker<IUniConfGen> reg("cache", creator);
 UniCacheGen::UniCacheGen(IUniConfGen *_inner)
     : log("UniCache", WvLog::Debug1), inner(_inner)
 {
-    loadtree();
-
     if (inner)
         inner->setcallback(UniConfGenCallback(this,
             &UniCacheGen::deltacallback), NULL);
@@ -44,23 +42,34 @@ UniCacheGen::~UniCacheGen()
 }
 
 
+bool UniCacheGen::refresh()
+{
+    bool ret = inner->refresh();
+    loadtree();
+    return ret;
+}
+
+
+void UniCacheGen::commit()
+{
+    inner->commit();
+}
+
+
 void UniCacheGen::loadtree(const UniConfKey &key)
 {
-    UniConfGen::Iter *i = inner->iterator(key);
-
-    if (!i)
-        return;
+    UniConfGen::Iter *i = inner->recursiveiterator(key);
+    if (!i) return;
 
     for (i->rewind(); i->next(); )
     {
-        WvString newkey("%s/%s", key, (*i).key());
-        WvString value(inner->get(newkey));
+        WvString value(i->value());
+	
+	//fprintf(stderr, "Key: '%s'\n", i->key().cstr());
+	//fprintf(stderr, "  Val: '%s'\n", value.cstr());
 
         if (!!value)
-            UniTempGen::set(newkey, value);
-
-        if (inner->haschildren(newkey))
-            loadtree(newkey);
+            UniTempGen::set(i->key(), value);
     }
 
     delete i;

@@ -13,7 +13,7 @@
 class UniWvConfGen : public UniConfGen
 {
 private:
-    UniConfKey* tempkey;
+    UniConfKey *tempkey;
     WvString tempvalue;
 
     void notify(void *userdata, WvStringParm section, WvStringParm entry,
@@ -33,24 +33,6 @@ public:
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
-};
-
-/**
- * A wrapper class for the wvconf iters to provide a UniConfGen iter.
- */
-class UniWvConfGen::WvConfIter : public UniConfGen::Iter
-{
-protected:
-    WvConfigSection::Iter i;
-
-public:
-    WvConfIter(WvConfigSection *sect);
-
-    /***** Overridden members *****/
-
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
 };
 
 #endif //__UNICONFWVGEN_H

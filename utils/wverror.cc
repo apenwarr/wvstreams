@@ -21,7 +21,7 @@ WvString WvErrorBase::errstr() const
 {
     int errnum = geterr();
     
-    if (errnum == -1)
+    if (errnum < 0)
     {
 	assert(!!errstring);
 	return errstring;
@@ -48,9 +48,12 @@ WvString WvErrorBase::errstr() const
 
 void WvErrorBase::seterr(int _errnum)
 {
-    assert(_errnum != -1 || !!errstring);
     if (!errnum)
+    {
+        assert(_errnum != -1 || !!errstring
+	    && "attempt to set errnum to -1 without also setting errstring");
 	errnum = _errnum;
+    }
 }
 
 

@@ -88,7 +88,7 @@ UniConfGen::Iter *UniSecureGen::iterator(const UniConfKey &key)
 {
     if (findperm(key, UniPermGen::EXEC))
         return UniFilterGen::iterator(key);
-    return new UniConfGen::NullIter();
+    return NULL;
 }
 
 

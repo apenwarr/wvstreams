@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
- * A UniConf key management abstraction.
+ * An abstract data container that backs a UniConf tree.
  */
 #include "uniconfgen.h"
 #include "strutils.h"
@@ -12,17 +12,15 @@ IUniConfGen::~IUniConfGen()
 {
 }
 
-
-/***** UniConfGen *****/
-
 UUID_MAP_BEGIN(UniConfGen)
   UUID_MAP_ENTRY(IObject)
   UUID_MAP_ENTRY(IUniConfGen)
   UUID_MAP_END
 
-UniConfGen::UniConfGen() :
-    cbdata(NULL), hold_nesting(0)
+UniConfGen::UniConfGen()
 {
+    cbdata = NULL;
+    hold_nesting = 0;
 }
 
 
@@ -95,12 +93,17 @@ void UniConfGen::delta(const UniConfKey &key, WvStringParm value)
 
 bool UniConfGen::haschildren(const UniConfKey &key)
 {
+    bool children = false;
+    
     hold_delta();
     
     Iter *it = iterator(key);
-    it->rewind();
-    bool children = it->next();
-    delete it;
+    if (it)
+    {
+	it->rewind();
+	if (it->next()) children = true;
+	delete it;
+    }
     
     unhold_delta();
     return children;
@@ -109,7 +112,7 @@ bool UniConfGen::haschildren(const UniConfKey &key)
 
 bool UniConfGen::exists(const UniConfKey &key)
 {
-    return ! get(key).isnull();
+    return !get(key).isnull();
 }
 
 
@@ -146,8 +149,103 @@ bool UniConfGen::isok()
 
 
 void UniConfGen::setcallback(const UniConfGenCallback &callback,
-    void *userdata)
+			     void *userdata)
 {
     cb = callback;
     cbdata = userdata;
+}
+
+
+
+class _UniConfGenRecursiveIter : public IUniConfGen::Iter
+{
+    WvList<IUniConfGen::Iter> itlist;
+    IUniConfGen *gen;
+    UniConfKey top, current;
+    bool sub_next;
+    
+public:
+    _UniConfGenRecursiveIter(IUniConfGen *_gen, const UniConfKey &_top)
+	: top(_top)
+    {
+	gen = _gen;
+	sub_next = false;
+    }
+    
+    virtual ~_UniConfGenRecursiveIter() { }
+
+    virtual void rewind()
+    {
+	current = "";
+	sub_next = false;
+	itlist.zap();
+	
+	Iter *subi = gen->iterator(top);
+	if (subi)
+	{
+	    subi->rewind();
+	    itlist.prepend(subi, true);
+	}
+    }
+
+    virtual bool next()
+    {
+	//assert(!itlist.isempty()); // trying to seek past the end is illegal!
+	
+	if (sub_next)
+	{
+	    sub_next = false;
+	    
+	    UniConfKey subkey(itlist.first()->key());
+	    UniConfKey newkey(current, subkey);
+	    //fprintf(stderr, "subiter: '%s'\n", newkey.cstr());
+	    Iter *newsub = gen->iterator(UniConfKey(top, newkey));
+	    if (newsub)
+	    {
+		current.append(subkey);
+		//fprintf(stderr, "current is now: '%s'\n", current.cstr());
+		newsub->rewind();
+		itlist.prepend(newsub, true);
+	    }
+	}
+	
+	WvList<IUniConfGen::Iter>::Iter i(itlist);
+	for (i.rewind(); i.next(); )
+	{
+	    if (i->next()) // NOTE: not the same as i.next()
+	    {
+		// set up so next time, we go into its subtree
+		sub_next = true;
+		return true;
+	    }
+	    
+	    // otherwise, this iterator is empty; move up the tree
+	    current = current.removelast();
+	    //fprintf(stderr, "current is now: '%s'\n", current.cstr());
+	    i.xunlink();
+	}
+	
+	// all done!
+	return false;
+    }
+
+    virtual UniConfKey key() const
+    {
+	//fprintf(stderr, "current is now: '%s'\n", current.cstr());
+	if (!itlist.isempty())
+	    return UniConfKey(current, itlist.first()->key());
+	else
+	    return current;
+    }
+    
+    virtual WvString value() const
+    {
+	return gen->get(UniConfKey(top, key()));
+    }
+};
+
+
+UniConfGen::Iter *UniConfGen::recursiveiterator(const UniConfKey &key)
+{
+    return new _UniConfGenRecursiveIter(this, key);
 }
