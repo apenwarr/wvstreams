@@ -107,7 +107,7 @@ void WvDailyEvent::configure(int _first_hour, int _num_per_day)
     if (num_per_day > 24*60)
         num_per_day = 24*60;
     
-    time_t max = (24*60*60)/num_per_day;
+    time_t max = num_per_day ? (24*60*60)/num_per_day : 6*60*60;
     if (max > 6*60*60)
 	max = 6*60*60; // unless that's a very long time, 6 hrs
 
