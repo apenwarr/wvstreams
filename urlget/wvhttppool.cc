@@ -21,7 +21,7 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
     : url(_url), headers(_headers)
 { 
     instream = _instream;
-    WvBufStream *x = new WvBufStream;
+    WvBufHttpStream *x = new WvBufHttpStream;
     outstream = x;
     x->death_notify = (WvStream **)&outstream;
 }
@@ -220,8 +220,29 @@ void WvHttpStream::execute()
 	    if (!strncasecmp(line, "Transfer-Encoding: ", 19)
 		    && strstr(line+19, "chunked"))
 		chunked = true;
-	    
-	    if (!line[0])
+
+            if (line[0])
+            {
+                char *p;
+                if ((p = strchr(line, ':')) != NULL)
+                {
+                    *p = 0;
+		    p = trim_string(p+1);
+		    struct WvHTTPHeader *h = new struct WvHTTPHeader(line, p);
+		    urls.first()->outstream->headers.add(h, true);
+                }
+		else if (strncasecmp(line, "HTTP/", 5) == 0)
+		{
+		    char *p = strchr(line, ' ');
+		    if (p)
+		    {
+			*p = 0;
+			urls.first()->outstream->version = line+5;
+			urls.first()->outstream->status = atoi(p+1);
+		    }
+		}
+            }
+            else
 	    {
 		// blank line is the beginning of data section
 		curl = urls.first();
@@ -407,7 +428,7 @@ void WvHttpPool::execute()
 }
 
 
-WvStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers)
+WvBufHttpStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers)
 {
     log("Adding a new url to pool: '%s'\n", _url);
     WvUrlRequest *url = new WvUrlRequest(_url, _headers, NULL);

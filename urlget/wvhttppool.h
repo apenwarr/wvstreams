@@ -15,8 +15,10 @@
 #include "wvstreamclone.h"
 #include "wvlog.h"
 #include "wvhashtable.h"
+#include "wvhttp.h"
+#include "wvbufstream.h"
 
-class WvBufStream;
+class WvBufHttpStream;
 class WvHttpStream;
 
 
@@ -26,7 +28,7 @@ public:
     WvUrl url;
     WvString headers;
     WvHttpStream *instream;
-    WvBufStream *outstream;
+    WvBufHttpStream *outstream;
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 		 WvHttpStream *_instream);
@@ -37,6 +39,20 @@ public:
 };
 
 DeclareWvList(WvUrlRequest);
+
+
+class WvBufHttpStream : public WvBufStream
+{
+public:
+    WvString version;
+    int status;
+    WvHTTPHeaderDict headers; 
+
+    WvBufHttpStream() : status(0), headers(10)
+        {}
+    virtual ~WvBufHttpStream()
+        {}
+};
 
 
 class WvHttpStream : public WvStreamClone
@@ -87,7 +103,7 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual void execute();
     
-    WvStream *addurl(WvStringParm _url, WvStringParm _headers);
+    WvBufHttpStream *addurl(WvStringParm _url, WvStringParm _headers);
 private:
     void unconnect(WvHttpStream *s);
     
