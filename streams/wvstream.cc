@@ -453,9 +453,101 @@ bool WvStream::iswritable()
     return isok() && select(0, false, true, false);
 }
 
+// FIXME: these should be elsewhere...
+template <class T>
+T max(T a, T b)
+{
+    if (a > b)
+        return a;
+    else
+        return b;
+}
+
+template <class T>
+T min(T a, T b)
+{
+    if (a < b)
+        return a;
+    else
+        return b;
+}
+// END FIXME
+
+size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char separator)
+{
+    if (count == 0)
+        return 0;
+
+    size_t result;
+
+    struct timeval timeout_time;
+    if (wait_msec > 0)
+        timeout_time = msecadd(wvtime(), wait_msec);
+
+    // if we get here, we either want to wait a bit or there is data
+    // available.
+    while (isok())
+    {
+        // if there is a newline already, return its string.
+        result = min(count, inbuf.strchr(separator));
+        if (result > 0)
+        {
+            inbuf.move(buf, result);
+            queuemin(0);
+            return result;
+        }
+
+        size_t needed = inbuf.used() + 1;
+        // make select not return true until more data is available
+        queuemin(needed);
+
+        // compute remaining timeout
+        if (wait_msec > 0)
+        {
+            wait_msec = msecdiff(timeout_time, wvtime());
+            if (wait_msec < 0)
+                wait_msec = 0;
+        }
+        
+        bool hasdata;
+        if (uses_continue_select)
+            hasdata = continue_select(wait_msec);
+        else
+            hasdata = select(wait_msec, true, false);
+        if (!isok())
+            break;
+
+        if (hasdata)
+        {
+            // Why doesn't this work?  It blows the heap...
+            //
+            //size_t bytesToGet = max(inbuf.optallocable(), 1U);
+            //inbuf.unalloc(bytesToGet - uread(inbuf.alloc(bytesToGet), bytesToGet));
+
+            // Workaround:
+            //
+            // note that buf is unused until we have the entire line, so
+            // we can use it for temporary storage
+            size_t numread = uread(buf, count);
+            inbuf.put(buf, numread);
+
+            hasdata = inbuf.used() >= needed; // enough?
+        }
+
+        if (!hasdata && wait_msec == 0)
+            break; // handle timeout
+    }
+    queuemin(0);
+    
+    // we timed out or had a socket error
+    return 0;
+}
+
 
 char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 {
+    // FIXME: this should probably use read_until now that it exists
+    
     struct timeval timeout_time;
     if (wait_msec > 0)
         timeout_time = msecadd(wvtime(), wait_msec);

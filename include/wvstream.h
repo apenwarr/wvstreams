@@ -323,6 +323,25 @@ public:
 		  int readahead = 1024);
     
     /**
+     * read up to count characters into buf, up to and including the first instance
+     * of separator.
+     *
+     * if separator is not found on input before timeout (usual symantics) or
+     * stream close or error, or if count is 0, nothing is placed in buf and 0
+     * is returned.
+     *
+     * if your buffer is not large enough for line, call multiple times until
+     * seperator is found at end of buffer to retrieve the entire line.
+     *
+     * Returns the number of characters that were put in buf.
+     *
+     * If uses_continue_select is true, getline() will use continue_select()
+     * rather than select() to wait for its timeout.
+     */
+    size_t read_until(void *buf, size_t count, time_t wait_msec,
+                      char separator);
+
+    /**
      * force read() to not return any bytes unless 'count' bytes can be
      * read at once.  (Useful for processing Content-Length headers, etc.)
      * Use count==0 to disable this feature.
