@@ -147,6 +147,16 @@ int WvConf::fuzzy_getint(WvStringList &section, WvStringList &entry,
 }
 
 
+// This "int" version of fuzzy_get is smart enough to interpret words like 
+// on/off, true/false, and yes/no.
+int WvConf::fuzzy_getint(WvStringList &section, WvStringParm entry,
+			 int def_val)
+{
+    WvString def_str(def_val);
+    return check_for_bool_string(fuzzy_get(section, entry, def_str));
+}
+
+
 void WvConf::setint(WvStringParm section, WvStringParm entry, int value)
 {
     WvString def_str(value);
