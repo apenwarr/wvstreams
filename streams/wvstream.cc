@@ -114,14 +114,15 @@ void WvStream::close()
     TRACE("flushing in wvstream...\n");
     flush(2000); // fixme: should not hardcode this stuff
     TRACE("(flushed)\n");
+
+    closed = true;
+    
     if (!!closecb)
     {
         IWvStreamCallback cb = closecb;
         closecb = 0; // ensure callback is only called once
         cb(*this);
     }
-    
-    closed = true;
     
     // I would like to delete call_ctx here, but then if someone calls
     // close() from *inside* a continuable callback, we explode.  Oops!
