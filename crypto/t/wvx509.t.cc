@@ -13,7 +13,7 @@ void basic_test(WvX509Mgr *t509, WvStringParm dname)
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("X509 Basic sanity tests")
 {
     static const char rsakeytext[] = 
 "-----BEGIN RSA PRIVATE KEY-----\n"
