@@ -85,7 +85,7 @@ distclean: clean
 	rm -rf $(wildcard $(DISTCLEAN))
 
 clean: depend dust
-	rm -rf $(wildcard $(TARGETS) $(GARBAGES) $(TESTS)) $(shell find . -name '*.o' -o -name '*.moc')
+	rm -rf $(wildcard $(TARGETS) $(GARBAGE) $(TESTS)) $(shell find . -name '*.o' -o -name '*.moc')
 
 depend:
 	rm -rf $(shell find . -name '.*.d')

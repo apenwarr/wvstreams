@@ -10,7 +10,7 @@ objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
 
 # initialization
 TARGETS:=
-GARBAGES:=
+GARBAGE:=
 DISTCLEAN:=
 REALCLEAN:=
 TESTS:=
@@ -51,7 +51,7 @@ endif
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
-GARBAGES += ChangeLog
+GARBAGE += ChangeLog $(wildcard libwv*.so.*)
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
 		include/wvautoconf.h
