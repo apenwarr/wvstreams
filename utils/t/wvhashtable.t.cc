@@ -127,35 +127,92 @@ WVTEST_MAIN("hashtest.cc")
     
     WvStringTable t(10);
     
-    printf("Hash table size: %d\n", t.numslots);
+    WVPASS(t.numslots == 15);
     
     t.add(&x, false);
     t.add(&y, false);
     t.add(&z, false);
     
-    printf("String hash test: \n\t %08x %08x %08x %08x \n"
+/*    printf("String hash test: \n\t %08x %08x %08x %08x \n"
 	   "\t %08x %08x %08x %08x\n",
 	   WvHash(x), WvHash(y), WvHash(z), WvHash((const char *)0),
 	   WvHash("fuzzy wuzzy buzzy foo"), WvHash("FUZZY wuzzy BUZZY foo"),
 	   WvHash("fuzzy wuzzy buzzy woo"),
-	   WvHash("wuzzy wuzzy buzzy foo"));
-
-    printf("Correct answers are: %p %p %p (%p)\n\n", &x, &y, &z, &xx);
-    printf("Result: %p %p %p %p\n", t[x2], t[y2], t[z2], t[xx]);
+	   WvHash("wuzzy wuzzy buzzy foo"));*/
+    if (!WVPASS(WvHash(x) == 0x000019ef))
+        printf("   because [%08x] != [000019ef]\n", WvHash(x));
+    if (!WVPASS(WvHash(y) == 0x000132a5))
+        printf("   because [%08x] != [000132a5]\n", WvHash(y));
+    if (!WVPASS(WvHash(z) == 0x000a4aa5))
+        printf("   because [%08x] != [000a4aa5]\n", WvHash(z));
+    if (!WVPASS(WvHash((const char*)0) == 0x0000000))
+        printf("   because [%08x] != [00000000]\n", WvHash(x));
+    
+    if (!WVPASS(WvHash("fuzzy wuzzy buzzy foo") == 0xf3ad1ec0))
+        printf("   because [%08x] != [f3ad1ec0]\n", 
+                WvHash("fuzzy wuzzy buzzy foo"));
+    if (!WVPASS(WvHash("FUZZY wuzzy BUZZY foo") == 0xf3ad1ec0))
+        printf("   because [%08x] != [f3ad1ec0]\n", 
+                WvHash("FUZZY wuzzy BUZZY foo"));
+    if (!WVPASS(WvHash("fuzzy wuzzy buzzy woo") == 0xf3ad5ac0))
+        printf("   because [%08x] != [f3ad5ac0]\n", 
+                WvHash("fuzzy wuzzy buzzy woo"));
+    if (!WVPASS(WvHash("wuzzy wuzzy buzzy foo") == 0xf3ad1fd0))
+        printf("   because [%08x] != [f3ad1fd0]\n", 
+                WvHash("wuzzy wuzzy buzzy foo"));
+    
+/*    printf("Correct answers are: %p %p %p (%p)\n\n", &x, &y, &z, &xx);
+    printf("Result: %p %p %p %p\n", t[x2], t[y2], t[z2], t[xx]);*/
+    if (!WVPASS(&x == t[x2]))
+        printf("   because [%p] != [%p]\n", &x, t[x2]);
+    if (!WVPASS(&y == t[y2]))
+        printf("   because [%p] != [%p]\n", &y, t[y2]);
+    if (!WVPASS(&z == t[z2]))
+        printf("   because [%p] != [%p]\n", &z, t[z2]);
+//    WVPASS(&xx == 0xbffffac0); //why does it forbid this comparison?
+    if (!WVPASS(t[xx] == 0x00000000))
+        printf("   because [%p] != [0x00000000]\n", t[xx]);
     
     WvStringTable::Iter i(t);
-    printf("Full(%d) contents: ", t.count());
+//    unsigned long pdesired[3] = {0x804ca58, 0x804ca40, 0x804ca70};
+    int j = 0;
+    char *cdesired[3] = {"blue", "foo", "true"};
+    
+    if (!WVPASS(t.count() == 3))
+        printf("   because [%d] != [3]\n", t.count());
     for (i.rewind(); i.next(); )
-	printf("%p(%s) ", (const char *)i(), (const char *)i());
-    printf("\n\n");
+    {
+/*        if (!WVPASS((unsigned long)&i() == pdesired[j]))
+            printf("   because [%p] != [0x%08x]\n", (const char *)i(),
+                    pdesired[j]);*/
+        if (!WVFAIL(strcmp((const char *)i(), cdesired[j])))
+            printf("   because [%s] != [%s]\n", (const char *)i(),
+                    cdesired[j]);
+        j++;
+//	printf("%p(%s) ", (const char *)i(), (const char *)i());
+    }
+//    printf("\n\n");
     
     t.remove(&x);
     t.remove(&y2);
-    printf("Result: %p %p %p %p\n", t[x2], t[y2], t[z2], t[xx]);
-    printf("Full(%d) contents: ", t.count());
+/*    printf("Result: %p %p %p %p\n", t[x2], t[y2], t[z2], t[xx]);
+    printf("Full(%d) contents: ", t.count());*/
+    if (!WVPASS(t[x2] == 0x00000000))
+        printf("   because [%p] != [0x00000000]\n", t[x2]);
+    if (!WVPASS(t[y2] == 0x00000000))
+        printf("   because [%p] != [0x00000000]\n", t[y2]);
+/*    if (!WVPASS((unsigned)t[z2] == 0xbffffb00))
+        printf("   because [%p] != [0xbffffb00]\n", t[z2]);*/
+    if (!WVPASS(t[xx] == 0x00000000))
+        printf("   because [%p] != [0x00000000]\n", t[xx]);
+    if (!WVPASS(t.count() == 1))
+        printf("   because [%d] != [1]\n", t.count());
+    
     for (i.rewind(); i.next(); )
-	printf("%p(%s) ", (const char *)i(), (const char *)i());
-    printf("\n\n");
+        if (!WVFAIL(strcmp((const char *)i(), "true")))
+            printf("   because [%s] != [true]\n", (const char *)i());
+//	printf("%p(%s) ", (const char *)i(), (const char *)i());
+//    printf("\n\n");
     
     
     Intstr a(5, "big"), b(6, "whistle"), c(7, "money");
@@ -164,11 +221,26 @@ WVTEST_MAIN("hashtest.cc")
     d.add(&a, false);
     d.add(&b, false);
     d.add(&c, false);
-    printf("Dict Result: %p %p %p %p\n", d[a.i], d[b.i], d[7], d[10]);
+//    printf("Dict Result: %p %p %p %p\n", d[a.i], d[b.i], d[7], d[10]);
+/*    if (!WVPASS((unsigned)d[a.i] == 0xbffffabc))
+        printf("   because [%p] != [0xbffffabc]\n", d[a.i]);
+    if (!WVPASS((unsigned)d[b.i] == 0xbffffaa8))
+        printf("   because [%p] != [0xbffffaa8]\n", d[b.i]);
+    if (!WVPASS((unsigned)d[7] == 0xbffffa9c))
+        printf("   because [%p] != [0xbffffa9c]\n", d[7]);*/
+    if (!WVPASS((unsigned)d[10] == 0x00000000))
+        printf("   because [%p] != [0x00000000]\n", d[10]);
 
     d.remove(&b);
-    printf("Dict Result: %p %p %p %p\n", d[a.i], d[b.i], d[7], d[10]);
-
+//    printf("Dict Result: %p %p %p %p\n", d[a.i], d[b.i], d[7], d[10]);
+/*    if (!WVPASS((unsigned)d[a.i] == 0xbffffabc))
+        printf("   because [%p] != [0xbffffabc]\n", d[a.i]);*/
+/*    if (!WVPASS((unsigned)d[b.i] == 0x00000000))
+        printf("   because [%p] != [0x00000000]\n", d[b.i]);
+    if (!WVPASS((unsigned)d[7] == 0xbffffa9c))
+        printf("   because [%p] != [0xbffffa9c]\n", d[7]);*/
+    if (!WVPASS((unsigned)d[10] == 0x00000000))
+        printf("   because [%p] != [0x00000000]\n", d[10]);
 }
 
 WVTEST_MAIN("maptest.cc")
