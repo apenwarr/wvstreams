@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="libwvutils"
 	ProjectGUID="{14E0E229-BD80-481D-B59D-40512DB4BE90}"
+	RootNamespace="libwvutils"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -19,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\;..\..\include"
+				AdditionalIncludeDirectories="..\;..\..\include;..\..\..\..\ports\xplc\build\xplc\include;..\..\..\..\ports\zlib\build\zlib"
 				PreprocessorDefinitions="strcasecmp=_stricmp;strncasecmp=_strnicmp;WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -315,10 +316,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\utils\dirent.h">
+				RelativePath=".\dirent.h">
 			</File>
 			<File
-				RelativePath=".\dirent.h">
+				RelativePath="..\utils\dirent.h">
 			</File>
 			<File
 				RelativePath="..\..\include\fileutils.h">

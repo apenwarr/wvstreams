@@ -14,8 +14,11 @@
 WV_LINK(UniRetryGen);
 
 
-//#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
-#define DPRINTF(format, args...)
+#if 0
+#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
+#else
+#define DPRINTF if (0)
+#endif
 
 
 // Wrap the given moniker.  For the retry generator, obj is useless since

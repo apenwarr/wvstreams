@@ -23,7 +23,9 @@ using std::max;
 #define ENOBUFS WSAENOBUFS
 #undef errno
 #define errno GetLastError()
+#ifdef __GNUC__
 #include <sys/socket.h>
+#endif
 #include "streams.h"
 #else
 #include <errno.h>
