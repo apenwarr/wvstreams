@@ -100,7 +100,7 @@ bool isnewline(char c);
  * Converts escaped characters (things like %20 etc.) from web URLS
  * into their normal ASCII representations. If you happen to be
  * decoding PEM encoded stuff,or anything that has + signs in it that
- * you don't want encoded as spaces, th en set no_space to true, and
+ * you don't want encoded as spaces, then set no_space to true, and
  * it should "just work" for you.
  */
 WvString web_unescape(const char *str, bool no_space = false);
@@ -165,6 +165,10 @@ WvString getdirname(WvStringParm fullname);
  */
 WvString sizetoa(long long blocks, int blocksize=1);
 
+/**
+ * Give a size in Kilobyes gives a human read able size
+ */
+WvString sizektoa(unsigned int kbytes);
 /**
  * Finds a string in an array and returns its index.
  * Returns -1 if not found.

@@ -475,6 +475,24 @@ WvString sizetoa(long long blocks, int blocksize)
 }
 
 
+WvString sizektoa(unsigned int kbytes)
+{
+    if (kbytes >= 1000*1000*1000)
+        return WvString("%s.%s TB",
+                    (unsigned long) (kbytes/(1000*1000*1000)),
+                    (unsigned long) (kbytes%(1000*1000*1000))/(100*1000*1000));
+    else if (kbytes >= 1000*1000)
+        return WvString("%s.%s GB",
+                    (unsigned long) (kbytes/(1000*1000)),
+                    (unsigned long) (kbytes % (1000*1000))/(100*1000));
+    else if (kbytes >= 1000)
+        return WvString("%s.%s MB",
+                    (unsigned long) (kbytes/(1000)),
+                    (unsigned long) (kbytes % (1000))/(100));
+    else
+        return WvString("%s KB", kbytes);
+}
+
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
     WvDynBuf buf;
