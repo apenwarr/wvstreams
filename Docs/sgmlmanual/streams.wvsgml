@@ -209,8 +209,6 @@ WVPART(streams, The Streams Library,
    
  )
  
- WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams, x)
-
  WVCHAPTER(somesimplestreams, Some Simple Streams,
  
   Let's look at a few streams that are only slightly more complicated than
@@ -251,18 +249,24 @@ WVPART(streams, The Streams Library,
     won't bother to give an example here.
   )
   
-  WVSECT1(wvpipe, WvPipe - talking to subtasks, x)
+  WVSECT1(wvpipe, WvPipe - talking to subtasks,
+    Not written yet.
+  )
   
-  WVSECT1(wvmodem, WvModem - baud rates and terminal modes, x)
+  WVSECT1(wvmodem, WvModem - baud rates and terminal modes,
+    Not written yet.
+  )
   
  )
-
+ 
  WVCHAPTER(logs, Dealing with Log Messages,
   WVSECT1(wvlog, WvLog - printing log messages, x)
   WVSECT1(wvlogrcv, WvLogRcv - receiving and disposing of log messages, x)
   WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, x)
   WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
  )
+ 
+ WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams, x)
  
  WVCHAPTER(magicstreams, Some Magical Streams,
   WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream, x)
@@ -271,9 +275,15 @@ WVPART(streams, The Streams Library,
  )
  
  WVCHAPTER(unusualstreams, Some Unusual Streams,
-   WVSECT1(wvtimestream, WvTimeStream - timed events, x)
-   WVSECT1(wvprotostream, WvProtoStream - a protocol state machine, x)
+ 
+   WVSECT1(wvtimestream, WvTimeStream - timed events,
+     Not written yet.
+   )
+   
+   WVSECT1(wvprotostream, WvProtoStream - a protocol state machine,
+     Not written yet.
+   )
  )
-
+ 
 )
 
