@@ -83,29 +83,6 @@ void UniConfRootImpl::del_setbool(const UniConfKey &key, bool *flag,
 }
 
 
-void UniConfRootImpl::delta(const UniConfKey &key)
-{
-    UniWatchTree *node = & watchroot;
-    int segs = key.numsegments();
-
-    // check root node
-    check(node, key, segs);
-    
-    // look for watches on key and its ancestors
-    for (int s = 0; s < segs;)
-    {
-        node = node->findchild(key.segment(s));
-        s += 1;
-        if (! node)
-            return; // no descendents so we can stop here
-        check(node, key, segs - s);
-    }
-
-    // look for watches on descendents of key
-    recursivecheck(node, key, 0);
-}
-
-
 void UniConfRootImpl::check(UniWatchTree *node,
     const UniConfKey &key, int segleft)
 {
@@ -181,5 +158,27 @@ void UniConfRootImpl::setbool_callback(const UniConf &cfg, void *userdata)
 void UniConfRootImpl::gen_callback(UniConfGen *gen,
     const UniConfKey &key, void *userdata)
 {
-    delta(key);
+    hold_delta();
+    
+    UniWatchTree *node = & watchroot;
+    int segs = key.numsegments();
+
+    // check root node
+    check(node, key, segs);
+    
+    // look for watches on key and its ancestors
+    for (int s = 0; s < segs;)
+    {
+        node = node->findchild(key.segment(s));
+        s += 1;
+        if (! node)
+            goto done; // no descendents so we can stop
+        check(node, key, segs - s);
+    }
+
+    // look for watches on descendents of key
+    recursivecheck(node, key, 0);
+    
+done:
+    unhold_delta();
 }

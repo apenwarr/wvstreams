@@ -42,20 +42,17 @@ DeclareWvCallback(3, void, UniConfGenCallback, UniConfGen *,
 class UniConfGen : public GenericComponent<IObject>
 {
     // These fields are deliberately hidden to encourage use of the
-    // delta() member in case the notification mechanism changes.
+    // special notification members
+
     UniConfGenCallback cb; //!< gets called whenever a key changes its value.
     void *cbdata;
+    int hold_nesting;
+    UniConfKeyList deltas;
     
 protected:
     /** Creates a UniConfGen object. */
     UniConfGen();
-
-    /**
-     * Sends notification that a key has possibly changed.
-     * This takes care of the details of invoking the callback.
-     */
-    void delta(const UniConfKey &key);
-
+    
     /** Raises an error condition. */
     void seterror(WvStringParm error)
         { } // FIXME: decide on final API for this probably WvError
@@ -63,12 +60,75 @@ protected:
 public:
     /** Destroys the UniConfGen and may discard uncommitted data. */
     virtual ~UniConfGen();
+
+    /***** Notification API *****/
     
     /**
      * Sets the callback for change notification.
      * Must not be reimplemented by subclasses.
      */
     void setcallback(const UniConfGenCallback &callback, void *userdata);
+    
+    /**
+     * Immediately sends notification that a key has possibly changed.
+     * Takes care of the details of invoking the callback.
+     *
+     * Note: You probably want to be using delta() instead.
+     */
+    void dispatch_delta(const UniConfKey &key);
+
+    /**
+     * Pauses notifications until matched with a call to unhold().
+     * 
+     * While paused, notification events are placed into a pending list.
+     * Redundant notifications may be discarded.
+     *
+     * Use this to safeguard non-reentrant code.
+     */
+    void hold_delta();
+
+    /**
+     * Resumes notifications when each hold() has been matched.
+     * 
+     * On resumption, dispatches all pending notifications except
+     * those that were destined to watchers that were removed.
+     * 
+     * Use this to safeguard non-reentrant code.
+     */
+    void unhold_delta();
+
+    /**
+     * Clears the list of pending notifications without sending them.
+     * Does not affect the hold nesting count.
+     */
+    void clear_delta();
+
+    /**
+     * Flushes the list of pending notifications by sending them.
+     * Does not affect the hold nesting count.
+     */
+    void flush_delta();
+
+    /**
+     * Call this when a key's value or children have possibly changed.
+     * 
+     * If the hold nesting count is 0, the notification is sent immediately.
+     * Otherwise it is added to a pending list for later.
+     */
+    void delta(const UniConfKey &key);
+    
+    
+    /***** Status API *****/
+    
+    /**
+     * Determines if the generator is usable and working properly.
+     *
+     * The default implementation always returns true.
+     */
+    virtual bool isok();
+
+    
+    /***** Key Persistence API *****/
     
     /**
      * Commits information about a key recursively.
@@ -86,11 +146,27 @@ public:
      */
     virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
 
+    
+    /***** Key Retrieval API *****/
+    
     /**
      * Fetches a string value for a key from the registry.  If the key doesn't
      * exist, the return value is WvString::null.
      */
     virtual WvString get(const UniConfKey &key) = 0;
+    
+    /**
+     * Without fetching its value, returns true if a key exists.
+     *
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the value.
+     *
+     * The default implementation returns !get(key).isnull().
+     */
+    virtual bool exists(const UniConfKey &key);
+
+    
+    /***** Key Storage API *****/
     
     /**
      * Stores a string value for a key into the registry.  If the value is
@@ -110,16 +186,9 @@ public:
      */
     virtual bool zap(const UniConfKey &key);
 
-    /**
-     * Without fetching its value, returns true if a key exists.
-     *
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the value.
-     *
-     * The default implementation returns !get(key).isnull().
-     */
-    virtual bool exists(const UniConfKey &key);
 
+    /***** Key Enumeration API *****/
+    
     /**
      * Returns true if a key has children.
      *
@@ -131,13 +200,6 @@ public:
      * Subclasses are strongly encouraged to provide a better implementation.
      */
     virtual bool haschildren(const UniConfKey &key);
-
-    /**
-     * Determines if the generator is usable and working properly.
-     *
-     * The default implementation always returns true.
-     */
-    virtual bool isok();
 
     /** The abstract iterator type (see below) */
     class Iter;

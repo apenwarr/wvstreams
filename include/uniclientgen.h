@@ -66,7 +66,7 @@ public:
 protected:
     bool addwatch(const UniConfKey &key, UniConfDepth::Type depth);
     bool delwatch(const UniConfKey &key, UniConfDepth::Type depth);
-    
+
     void conncallback(WvStream &s, void *userdata);
     void prepare();
     bool wait();

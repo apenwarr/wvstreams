@@ -112,11 +112,6 @@ public:
     void del_setbool(const UniConfKey &key, bool *flag,
         UniConfDepth::Type depth = UniConfDepth::INFINITE);
 
-    /**
-     * Sends notification that a key has changed.
-     */
-    void delta(const UniConfKey &key);
-
 private:
     /**
      * Checks a branch of the watch tree for notification candidates.

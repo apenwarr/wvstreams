@@ -119,6 +119,7 @@ WvString UniClientGen::get(const UniConfKey &key)
         return value;
     
     // fetch the key
+    hold_delta();
     prepare();
     conn->writecmd(UniClientConn::REQ_GET, wvtcl_escape(key));
     if (wait())
@@ -131,6 +132,7 @@ WvString UniClientGen::get(const UniConfKey &key)
     {
         cache->mark_not_exist(key);
     }
+    unhold_delta();
     return value;
 }
 
@@ -142,6 +144,7 @@ bool UniClientGen::exists(const UniConfKey &key)
     if (state == UniCache::UNKNOWN)
     {
         // fetch the key
+        hold_delta();
         prepare();
         conn->writecmd(UniClientConn::REQ_GET, wvtcl_escape(key));
         if (wait())
@@ -154,6 +157,7 @@ bool UniClientGen::exists(const UniConfKey &key)
         {
             cache->mark_not_exist(key);
         }
+        unhold_delta();
     }
     return state == UniCache::TRUE;
 }
@@ -168,29 +172,32 @@ bool UniClientGen::set(const UniConfKey &key, WvStringParm newvalue)
         return true;
     
     // change the key
+    hold_delta();
     prepare();
+    bool success;
     if (newvalue.isnull())
     {
         conn->writecmd(UniClientConn::REQ_REMOVE, wvtcl_escape(key));
-        if (wait())
+        success = wait();
+        if (success)
         {
             // FIXME: may remove this when notifications are finished
             cache->mark_not_exist(key);
-            return true;
         }
     }
     else
     {
         conn->writecmd(UniClientConn::REQ_SET,
             WvString("%s %s", wvtcl_escape(key), wvtcl_escape(newvalue)));
-        if (wait())
+        success = wait();
+        if (success)
         {
             // FIXME: may remove this when notifications are finished
             cache->mark_exist(key, newvalue);
-            return true;
         }
     }
-    return false;
+    unhold_delta();
+    return success;
 }
 
 
@@ -202,15 +209,17 @@ bool UniClientGen::zap(const UniConfKey &key)
         return false;
     
     // zap the children
+    hold_delta();
     prepare();
     conn->writecmd(UniClientConn::REQ_ZAP, wvtcl_escape(key));
-    if (wait())
+    bool success = wait();
+    if (success)
     {
         // FIXME: may remove this when notifications are finished
         cache->mark_no_children(key);
-        return true;
     }
-    return false;
+    unhold_delta();
+    return success;
 }
 
 
@@ -222,6 +231,7 @@ bool UniClientGen::haschildren(const UniConfKey &key)
     {
         // fetch the list
         cache->mark_unknown_children(key); // FIXME: flushing too much here!
+        hold_delta();
         prepare();
         conn->writecmd(UniClientConn::REQ_SUBTREE, wvtcl_escape(key));
         if (wait())
@@ -236,6 +246,7 @@ bool UniClientGen::haschildren(const UniConfKey &key)
         {
             cache->mark_not_exist(key);
         }
+        unhold_delta();
     }
     return state == UniCache::TRUE;
 }
@@ -252,6 +263,7 @@ UniClientGen::Iter *UniClientGen::iterator(const UniConfKey &key)
         // fetch the list
         cache->mark_unknown_children(key); // FIXME: flushing too much here!
         prepare();
+        hold_delta();
         conn->writecmd(UniClientConn::REQ_SUBTREE, wvtcl_escape(key));
         if (wait())
         {
@@ -265,6 +277,7 @@ UniClientGen::Iter *UniClientGen::iterator(const UniConfKey &key)
         {
             cache->mark_not_exist(key);
         }
+        unhold_delta();
     }
     return new RemoteKeyIter(keylist);
 }
@@ -272,19 +285,25 @@ UniClientGen::Iter *UniClientGen::iterator(const UniConfKey &key)
 
 bool UniClientGen::addwatch(const UniConfKey &key, UniConfDepth::Type depth)
 {
+    hold_delta();
     prepare();
     conn->writecmd(UniClientConn::REQ_ADDWATCH, WvString("%s %s",
         wvtcl_escape(key), UniConfDepth::nameof(depth)));
-    return wait();
+    bool success = wait();
+    unhold_delta();
+    return success;
 }
 
 
 bool UniClientGen::delwatch(const UniConfKey &key, UniConfDepth::Type depth)
 {
+    hold_delta();
     prepare();
     conn->writecmd(UniClientConn::REQ_DELWATCH, WvString("%s %s",
         wvtcl_escape(key), UniConfDepth::nameof(depth)));
-    return wait();
+    bool success = wait();
+    unhold_delta();
+    return success;
 }
 
 

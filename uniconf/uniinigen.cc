@@ -165,6 +165,7 @@ bool UniIniGen::refresh(const UniConfKey &key,
     }
 
     /** switch the trees send notifications **/
+    hold_delta();
     UniConfValueTree *oldtree = root;
     UniConfValueTree *newtree = newgen->root;
     root = newtree;
@@ -181,6 +182,7 @@ bool UniIniGen::refresh(const UniConfKey &key,
     {
         delta(UniConfKey::EMPTY); // REMOVED
     }
+    unhold_delta();
 
     /** done **/
     return true;

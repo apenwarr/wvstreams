@@ -118,14 +118,13 @@ public:
 /** The UniMountTree implementation realized as a UniConfGen. */
 class UniMountTreeGen : public UniConfGen
 {
+    class KeyIter;
+    friend class KeyIter;
+    
     UniMountTree *mounts;
 
     /** undefined. */
     UniMountTreeGen(const UniMountTreeGen &other);
-
-protected:
-    class KeyIter;
-    friend class KeyIter;
 
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
