@@ -35,6 +35,13 @@ int main(int argc, char **argv)
     
     UniConfRoot cfg(confuri);
     
+    if (!cfg.whichmount() || !cfg.whichmount()->isok())
+    {
+	fprintf(stderr, "%s: can't connect to uniconf at '%s'\n",
+		argv[0], confuri);
+	return 5;
+    }
+    
     // note: we know cmd and arg1 are non-NULL, but arg2 may be the argv
     // terminator, which is a NULL.  That has a special meaning for some
     // commands, like 'set', and is different from the empty string.

@@ -25,16 +25,25 @@ protected:
     /**
      * Rebinds the inner generator and prepares its callback.
      * The previous generator is NOT destroyed.
-     * 
      */
     void setinner(IUniConfGen *inner);
 
 public:
-    /**
-     * Returns the inner generator.
-     */
+    /** Returns the inner generator. */
     IUniConfGen *inner() const
         { return xinner; }
+    
+    /**
+     * A mapping function for filters that remap one keyspace onto another.
+     * 
+     * The default implementation of the various functions (get, set,
+     * exists, etc) run their keys through this function before forwarding
+     * the requests on to the inner generator.
+     * 
+     * The default implementation of this function doesn't change the key.
+     */
+    virtual UniConfKey keymap(const UniConfKey &key);
+    
 
     /***** Overridden methods *****/
 

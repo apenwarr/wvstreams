@@ -12,6 +12,7 @@ reconfigure
 stamp-h.in
 tmp-test
 tmp.ini
+tmp?.ini
 wvtestmain
 xplc
 *.tmp

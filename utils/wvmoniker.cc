@@ -186,12 +186,13 @@ WvMonikerBase::~WvMonikerBase()
 
 
 void *wvcreate(const UUID &iid,
-	       WvStringParm s, IObject *obj, void *userdata)
+	       WvStringParm moniker, IObject *obj, void *userdata)
 {
+    assert(!moniker.isnull());
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);
     if (reg)
     {
-	void *ret = reg->create(s, obj, userdata);
+	void *ret = reg->create(moniker, obj, userdata);
 	RELEASE(reg);
 	return ret;
     }
