@@ -13,6 +13,7 @@
 #include <limits.h>
 
 /**
+ * @internal
  * This value is used internally to signal unlimited free space.
  * It is merely meant to be as large as possible yet leave enough
  * room to accomodate simple arithmetic operations without overflow.
@@ -21,6 +22,7 @@
 #define UNLIMITED_FREE_SPACE (INT_MAX/2)
 
 /**
+ * @internal
  * The abstract buffer storage base class.
  */
 class WvBufferStore
@@ -138,6 +140,7 @@ DeclareWvList(WvBufferStore);
 
 
 /**
+ * @internal
  * A statically bound mixin template for buffer implementations that are
  * read-only.  It is an error to attempt to write to a read-only buffer.
  * Note that read-only in this context does not mean the same as "const".
@@ -191,6 +194,7 @@ public:
 
 
 /**
+ * @internal
  * A statically bound mixin template for buffer implementations that are
  * write-only.  It is an error to attempt to read from a write-only buffer.
  */
@@ -255,6 +259,7 @@ public:
 
 
 /**
+ * @internal
  * The WvInPlaceBuffer storage class.
  */
 class WvInPlaceBufferStore : public WvBufferStore
@@ -298,6 +303,7 @@ public:
 
 
 /**
+ * @internal
  * The WvConstInPlaceBuffer storage class.
  */
 class WvConstInPlaceBufferStore :
@@ -328,6 +334,7 @@ public:
 
 
 /**
+ * @internal
  * The WvCircularBuffer storage class.
  */
 class WvCircularBufferStore : public WvBufferStore
@@ -400,15 +407,17 @@ protected:
 
 
 /**
+ * @internal
  * The WvLinkedBuffer storage class.
- *
+ * <p>
  * A buffer store built out of a list of other buffers linked together.
  * Buffers may be appended or prepended to the list at any time, at
  * which point they act as slaves for the master buffer.  Slaves may
  * be expunged from the list at any time when the master buffer
  * determines that they are of no further use.
- *
+ * </p><p>
  * This is mostly useful for building other buffer storage classes.
+ * </p>
  */
 class WvLinkedBufferStore : public WvBufferStore
 {
@@ -446,13 +455,17 @@ public:
 protected:
     /**
      * Called when a new buffer must be allocated to coalesce chunks.
-     *   minsize : the minimum size for the new buffer
+     *
+     * @param minsize the minimum size for the new buffer
+     * @return the new buffer
      */
     virtual WvBufferStore *newbuffer(size_t minsize);
 
     /**
      * Called when a buffer with autofree is removed from the list.
      * This function is not called during object destruction.
+     *
+     * @param buffer the buffer to be destroyed
      */
     virtual void recyclebuffer(WvBufferStore *buffer);
 
@@ -484,6 +497,7 @@ private:
 
 
 /**
+ * @internal
  * The WvDynamicBuffer storage class.
  */
 class WvDynamicBufferStore : public WvLinkedBufferStore
@@ -507,6 +521,7 @@ protected:
 
 
 /**
+ * @internal
  * The WvEmptyBuffer storage class.
  */
 class WvEmptyBufferStore : public WvWriteOnlyBufferStoreMixin<
@@ -519,6 +534,7 @@ public:
 
 
 /**
+ * @internal
  * The WvBufferCursor storage class.
  */
 class WvBufferCursorStore :

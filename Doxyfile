@@ -7,13 +7,7 @@ PROJECT_NAME           = WvStreams
 PROJECT_NUMBER         = 42
 OUTPUT_DIRECTORY       = Docs
 OUTPUT_LANGUAGE        = English
-# We set this to NO to avoid being drowned in a deluge of template
-# instantiations though it also excludes any other undocumented
-# classes.  Well, anything we want in the documentation should be
-# documented anyways, right?
-# Someday we should probably just bug the Doxygen author to add
-# support for excluding template instantiations explicitly.
-EXTRACT_ALL            = NO
+EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = NO
@@ -24,15 +18,13 @@ REPEAT_BRIEF           = YES
 ALWAYS_DETAILED_SEC    = YES
 FULL_PATH_NAMES        = NO
 STRIP_FROM_PATH        = 
-# Also important in our quest to make the generated documentation
-# at least moderately useful for most people.  This way we can exclude 
-# well-documented implementation details by including @internal their
-# comment blocks.  Maintainers might choose to enable this flag to
-# see more stuff.
-INTERNAL_DOCS          = NO
-# Turn off the default diagrams too since they tend not to behave
-# very nicely with large hierarchies.  The text messages are more
-# useful.
+# With EXTRACT_ALL enabled, it makes no sense to try to hide
+# documentation marked @internal.  The classes will still show up
+# in the index, but the internal documentation will have vanished!
+INTERNAL_DOCS          = YES
+# Turn off the default diagrams since they tend not to behave
+# very nicely with large hierarchies.  The text messages are just
+# are informative.
 CLASS_DIAGRAMS         = NO
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
@@ -158,18 +150,26 @@ PERL_PATH              = /usr/bin/perl
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool   
 #---------------------------------------------------------------------------
-# The DOT generated diagrams sort of look pretty but it turns out
-# that they are rather useless.  And consume far too much room on
-# the page.  If they could instead be linked to rather than embedded...
-HAVE_DOT               = NO
+# The DOT generated diagrams tend to repeat a lot of information
+# from the text and are not always well layed out.  Thus we
+# are selective about what we enable.
+HAVE_DOT               = YES
+# This information is more effectively displayed textually
 CLASS_GRAPH            = NO
-COLLABORATION_GRAPH    = NO
-TEMPLATE_RELATIONS     = YES
+# This information is only available graphically
+COLLABORATION_GRAPH    = YES
+# This information is easily inferred, and often just adds clutter
+TEMPLATE_RELATIONS     = NO
+# This information is more effectively displayed textually
 INCLUDE_GRAPH          = NO
-INCLUDED_BY_GRAPH      = NO
+# This information is only available graphically
+INCLUDED_BY_GRAPH      = YES
+# The graphical hierarchy is unwieldly and unusable, the textual
+# one is much more effective
 GRAPHICAL_HIERARCHY    = NO
 HIDE_UNDOC_RELATIONS   = NO
 DOT_PATH               = 
+# Leave this narrow or DOT will always generate a MESS!
 MAX_DOT_GRAPH_WIDTH    = 800
 MAX_DOT_GRAPH_HEIGHT   = 3144
 GENERATE_LEGEND        = YES

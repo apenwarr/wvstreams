@@ -11,7 +11,7 @@
 #include <stdlib.h>  // for 'NULL'
 
 /**
- * WvLink is one elements of a WvList<T>.
+ * WvLink is one element of a WvList<T>.
  * <p>
  * Note that WvLink itself is untyped to minimize the amount of
  * generated code.  This means that WvLink cannot handle the
