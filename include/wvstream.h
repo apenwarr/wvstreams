@@ -599,11 +599,10 @@ protected:
     time_t autoclose_time;	// close eventually, even if output is queued
     WvTime alarm_time;          // select() returns true at this time
     WvTime last_alarm_check;    // last time we checked the alarm_remaining
-    bool wvstream_execute_called;
     
     /** Prevent accidental copying of WvStreams. */
-    WvStream(const WvStream &s) { }
-    WvStream& operator= (const WvStream &s) { return *this; }
+    WvStream(const WvStream &s);
+    WvStream& operator= (const WvStream &s);
 
     /**
      * The callback() function calls execute(), and then calls the user-
@@ -615,7 +614,8 @@ protected:
      * Note: If you override this function in a derived class, you must
      * call the parent execute() yourself from the derived class.
      */
-    virtual void execute();
+    virtual void execute()
+    {}
     
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
