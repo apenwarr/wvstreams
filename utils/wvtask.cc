@@ -19,9 +19,14 @@
 # define Dprintf(fmt, args...)
 #endif
 
-int WvTask::taskcount = 0;
-int WvTask::numtasks = 0;
-int WvTask::numrunning = 0;
+int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
+
+WvTaskMan *WvTaskMan::singleton;
+int WvTaskMan::links, WvTaskMan::magic_number;
+WvTaskList WvTaskMan::free_tasks;
+jmp_buf WvTaskMan::stackmaster_task, WvTaskMan::get_stack_return,
+    WvTaskMan::toplevel;
+WvTask *WvTaskMan::current_task, *WvTaskMan::stack_target;
 
 
 WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
@@ -72,9 +77,6 @@ void WvTask::recycle()
 }
 
 
-WvTaskMan *WvTaskMan::singleton;
-int WvTaskMan::links;
-
 WvTaskMan *WvTaskMan::get()
 {
     if (!links)
@@ -113,6 +115,7 @@ WvTaskMan::WvTaskMan()
 WvTaskMan::~WvTaskMan()
 {    
     magic_number = -42;
+    free_tasks.zap();
 }
 
 
@@ -329,6 +332,7 @@ void WvTaskMan::do_task()
 	for (;;)
 	{
 	    assert(magic_number == -WVTASK_MAGIC);
+	    assert(task);
 	    assert(task->magic_number == WVTASK_MAGIC);
 	    
 	    if (task->func && task->running)

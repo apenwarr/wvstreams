@@ -67,12 +67,12 @@ WvStream::WvStream()
     autoclose_time = 0;
     alarm_time = wvtime_zero;
     last_alarm_check = wvtime_zero;
-    taskman = 0;
     
     // magic multitasking support
     uses_continue_select = false;
     personal_stack_size = 65536;
     task = NULL;
+    taskman = NULL;
 }
 
 
@@ -470,6 +470,8 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
     struct timeval timeout_time;
     if (wait_msec > 0)
         timeout_time = msecadd(wvtime(), wait_msec);
+    
+    maybe_autoclose();
 
     // if we get here, we either want to wait a bit or there is data
     // available.
@@ -651,9 +653,11 @@ void WvStream::flush_then_close(int msec_timeout)
 
 bool WvStream::pre_select(SelectInfo &si)
 {
+    maybe_autoclose();
+    
     time_t alarmleft = alarm_remaining();
     
-    if (alarmleft == 0)
+    if (!si.inherit_request && alarmleft == 0)
 	return true; // alarm has rung
 
     if (!si.inherit_request)
@@ -664,16 +668,20 @@ bool WvStream::pre_select(SelectInfo &si)
 	return true; // already ready
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
-	si.msec_timeout = alarmleft;
+	si.msec_timeout = alarmleft + 10;
     return false;
 }
 
 
 bool WvStream::post_select(SelectInfo &si)
 {
-    // FIXME: need output buffer flush support for non FD-based streams
+    // FIXME: need sane buffer flush support for non FD-based streams
     // FIXME: need read_requires_writable and write_requires_readable
     //        support for non FD-based streams
+    if (should_flush())
+	flush(0);
+    if (!si.inherit_request && alarm_remaining() == 0)
+	return true; // alarm ticked
     return false;
 }
 
@@ -706,7 +714,7 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	si.global_sure = s->pre_select(si);
+	si.global_sure = s->xpre_select(si, SelectRequest(false, false, false));
 	globalstream = s;
     }
     if (sure || si.global_sure)
@@ -755,7 +763,8 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	si.global_sure = s->post_select(si) || si.global_sure;
+	si.global_sure = s->xpost_select(si, SelectRequest(false, false, false))
+					 || si.global_sure;
 	globalstream = s;
     }
     return sure;
@@ -820,7 +829,7 @@ time_t WvStream::alarm_remaining()
     {
 	WvTime now = wvtime();
 
-	/* Time is going backward! */
+	// Time is going backward!
 	if (now < last_alarm_check)
 	    alarm_time = tvdiff(alarm_time, tvdiff(last_alarm_check, now));
 
