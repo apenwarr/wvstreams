@@ -6,11 +6,12 @@
  *
  */
 #include "fileutils.h"
+#include "wvfile.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <utime.h>
-#include <wvfile.h>
+#include <fnmatch.h>
 
 bool mkdirp(WvStringParm _dir, int create_mode)
 {
@@ -98,4 +99,40 @@ bool samedate(WvStringParm dir1, WvStringParm dir2, WvStringParm relname)
 {
     return samedate(WvString("%s/%s", dir1, relname),
         WvString("%s/%s", dir2, relname));
+}
+
+
+// runs fnmatch against everything in patterns.  We also interpret 
+// CVS-style '!' patterns, which makes us very fancy.
+bool wvfnmatch(WvStringList& patterns, WvStringParm name, int flags)
+{
+    WvStringList::Iter i(patterns);
+    bool match = false;
+
+    for (i.rewind(); i.next(); )
+    {
+        // if we hit JUST a '!', reset any matches found so far.
+        if (*i == "!") {
+            match = false;
+            continue;
+        }
+
+        // if we hit something that starts with '!', we unmatch anything
+        // found so far.
+        if (i->cstr()[0] == '!')
+        {
+            if (!match)
+                continue;   // nothing to unmatch, so why try?
+            if (fnmatch(*i+1, name, flags) == 0)    // matches
+                match = false;                      // unmatch it.
+        }
+        else
+        {
+            // just a straightforward matching case.
+            if (fnmatch(*i, name, flags) == 0)  // matches
+                match = true;
+        }
+    }
+
+    return match;
 }

@@ -81,10 +81,58 @@ WvString::WvString(const char *_str)
 
 // NOTE: make sure that 32 bytes is big enough for your longest int.
 // This is true up to at least 64 bits.
-WvFastString::WvFastString(int i) // auto-render int 'i' into a string
+WvFastString::WvFastString(short i)
+{
+    newbuf(32);
+    sprintf(str, "%hd", i);
+}
+
+WvFastString::WvFastString(unsigned short i)
+{
+    newbuf(32);
+    sprintf(str, "%hu", i);
+}
+
+WvFastString::WvFastString(int i)
 {
     newbuf(32);
     sprintf(str, "%d", i);
+}
+
+WvFastString::WvFastString(unsigned int i)
+{
+    newbuf(32);
+    sprintf(str, "%u", i);
+}
+
+WvFastString::WvFastString(long i)
+{
+    newbuf(32);
+    sprintf(str, "%ld", i);
+}
+
+WvFastString::WvFastString(unsigned long i)
+{
+    newbuf(32);
+    sprintf(str, "%lu", i);
+}
+
+WvFastString::WvFastString(long long i)
+{
+    newbuf(32);
+    sprintf(str, "%lld", i);
+}
+
+WvFastString::WvFastString(unsigned long long i)
+{
+    newbuf(32);
+    sprintf(str, "%llu", i);
+}
+
+WvFastString::WvFastString(double i)
+{
+   newbuf(32);
+   sprintf(str, "%.2f", i);
 }
 
 

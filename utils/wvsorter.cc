@@ -9,13 +9,12 @@
  */
 #include "wvsorter.h"
 
-WvLink blank_wvlink(NULL, false, "blank_wvlink");
 WvSorterBase::CompareFunc *WvSorterBase::actual_compare;
 
 int WvSorterBase::magic_compare(const void *_a, const void *_b)
 {
-    WvLink *a = *(WvLink **)_a, *b = *(WvLink **)_b;
-    return actual_compare(a->data, b->data);
+    void *a = *(void **)_a, *b = *(void **)_b;
+    return actual_compare(a, b);
 }
 
 

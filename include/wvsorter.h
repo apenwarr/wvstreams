@@ -18,22 +18,23 @@
 // in the array, and next() increments to the next one.
 // NOTE: we do not keep "prev" because it makes no sense to do so.
 //       I guess Sorter::unlink() will be slow... <sigh>
+//       ...so we didn't implement it.
 class WvSorterBase
 {
 public:
     typedef int (CompareFunc)(const void *a, const void *b);
     
     void *list;
-    WvLink **array;
-    WvLink **lptr;
+    void **array;
+    void **lptr;
     
     WvSorterBase(void *_list)
     	{ list = _list; array = lptr = NULL; }
     ~WvSorterBase()
-    	{ if (array) delete array; }
-    WvLink *next()
+    	{ if (array) delete[] array; }
+    bool next()
 	{ return *(++lptr); }
-    WvLink *cur()
+    bool cur()
     	{ return *lptr; }
     
 protected:
@@ -61,7 +62,7 @@ public:
 	: WvSorterBase(&_list)
 	{ cmp = _cmp; }
     _type_ *ptr() const
-	{ return (_type_ *)(*lptr)->data; }
+	{ return (_type_ *)(*lptr); }
     
     // declare standard iterator accessors
     WvIterStuff(_type_);
@@ -79,7 +80,7 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     int n, remaining;
     
     if (array)
-        delete array;
+        delete[] array;
     array = lptr = NULL;
 
     _iter_ i(*(_list_ *)list);
@@ -89,18 +90,14 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     for (i.rewind(); i.next(); )
 	n++;
     
-    array = new (WvLink *) [n+2];
-    WvLink **aptr = array;
+    array = new (void *) [n+2];
+    void **aptr = array;
 
-    // fill the array with data pointers for sorting, so that the user doesn't
-    // have to deal with the WvLink objects.  Put the WvLink pointers back 
-    // in after sorting.
-    aptr = array;
     *aptr++ = NULL; // initial link is NULL, to act like a normal iterator
     
     for (remaining = n, i.rewind(); i.next() && remaining; remaining--)
     {
-        *aptr = i.cur();
+        *aptr = i.vptr();
         aptr++;
     }
     
@@ -115,7 +112,7 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     // ends up being called recursively or something really weird...)
     CompareFunc *old_compare = actual_compare;
     actual_compare = cmp;
-    qsort(array+1, n, sizeof(WvLink *), magic_compare);
+    qsort(array+1, n, sizeof(void *), magic_compare);
     actual_compare = old_compare;
 
     lptr = array;

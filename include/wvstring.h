@@ -134,7 +134,15 @@ public:
      * NOTE: make sure that 32 bytes is big enough for your longest
      * int.  This is true up to at least 64 bits.
      */
+    WvFastString(short i);
+    WvFastString(unsigned short i);
     WvFastString(int i);
+    WvFastString(unsigned int i);
+    WvFastString(long i);
+    WvFastString(unsigned long i);
+    WvFastString(long long i);
+    WvFastString(unsigned long long i);
+    WvFastString(double i);
     
     /** when this is called, we assume output.str == NULL; it will be filled. */
     static void do_format(WvFastString &output, const char *format,
@@ -291,7 +299,15 @@ public:
     static const WvString empty;
  
     WvString() {} // nothing special needed
+    WvString(short i) : WvFastString(i) { } // nothing special
+    WvString(unsigned short i) : WvFastString(i) { } // nothing special
     WvString(int i) : WvFastString(i) { } // nothing special
+    WvString(unsigned int i) : WvFastString(i) { } // nothing special
+    WvString(long i) : WvFastString(i) { } // nothing special
+    WvString(unsigned long i) : WvFastString(i) { } // nothing special
+    WvString(long long i) : WvFastString(i) { } // nothing special
+    WvString(unsigned long long i) : WvFastString(i) { } // nothing special
+    WvString(double i) : WvFastString(i) { } // nothing special
     
     /**
      * Magic copy constructor for "fast" char* strings.  When we copy from

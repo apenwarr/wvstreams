@@ -138,6 +138,8 @@ public:
 	WvLink *next();
 	WvLink *cur() const
             { return link; }
+	void *vptr() const
+	    { return link->data; }
     };
 };
 

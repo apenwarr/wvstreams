@@ -86,7 +86,6 @@ ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
 endif
 
-
 LDLIBS := -lgcc $(LDLIBS) \
 	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++")

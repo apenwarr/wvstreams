@@ -1,8 +1,20 @@
-wvstreams (3.73+20030404-2) unstable; urgency=low
+wvstreams (3.74+20030926-1) unstable; urgency=low
 
-  * Added -fPIC -DPIC back into the build.
+  * Synchronize with upstream CVS -- compiles with gcc 3.3 (Closes: #202030).
+  * Don't run make dist.  Call autoheader and autoconf directly.
+  * Add autoconf and gs-common to Build-depends. (Closes: #193046)
+  * Remove explicit call to autoconf in debian/rules.
+  * Install libuniconf in libwvstreams3-base.
 
- -- James A. Morrison <jim@debian>  Mon, 14 Apr 2003 11:50:20 -0400
+ -- James A. Morrison <phython@debian.org>  Fri, 26 Sep 2003 12:28:54 -0400
+
+wvstreams (3.74+20030509-1) unstable; urgency=low
+
+  * Added -fPIC -DPIC back into the build. (Closes: #141409)
+  * Synchronize with upstream CVS.
+   - fix int vs size_t issues.  (Closes: #189364)
+
+ -- James A. Morrison <phython@debian.org>  Fri, 19 Sep 2003 12:28:54 -0400
 
 wvstreams (3.73+20030404-1) unstable; urgency=low
 

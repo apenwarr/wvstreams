@@ -4,8 +4,6 @@
  *
  * A hash table container.
  */
-
-
 #ifndef __WVSCATTERHASH_H
 #define __WVSCATTERHASH_H
 
@@ -24,7 +22,6 @@
 class WvScatterHashBase
 {
 public:
-
     WvScatterHashBase(unsigned _numslots);
     virtual ~WvScatterHashBase() { delete[] xslots; }
 
@@ -51,6 +48,11 @@ public:
             : table(other.table), index(other.index) { }
 
         void rewind() { index = 0; }
+	bool cur()
+	    { return index <= table->numslots; }
+	void *vptr()
+	    { return get(); }
+	
         bool next()
         {
             if (!table)
@@ -59,8 +61,7 @@ public:
             while (++index <= table->numslots &&
                    !IS_OCCUPIED(table->xslots[index-1])) { }
 
-            if (index <= table->numslots) return true;
-            return false;
+	    return index <= table->numslots;
         }
 
         bool get_autofree()
@@ -171,6 +172,9 @@ public:
 
         WvIterStuff(T);
     };
+
+    typedef class WvSorter<T, WvScatterHashBase, WvScatterHashBase::IterBase>
+	Sorter;
 };
 
 
