@@ -121,7 +121,9 @@ no circular references.
 xkeys
 List all the sub-keys contained within the provided
 .IR KEY ,
-which can contain wildcards.
+which can contain wildcards.  See the
+.B WILDCARDS
+section.
 .TP
 dump
 List all the sub-keys and their values, contained within the provided
@@ -136,6 +138,38 @@ xdump
 List all the sub-keys and their values, contained within the provided
 .IR KEY ,
 which can contain wildcards.
+.SH WILDCARDS
+A
+.I KEY
+looks just like a normal slash-delimited path.  The root of the
+UniConf tree has a
+.I KEY
+named
+.RB \(lq / \(rq.
+Sub-keys can be accessed by names such as
+.RB \(lq /software/myapp/version \(rq.
+.PP
+With wildcards, you can access more than one key at a time.
+.TP
+*
+To access a sub-key within any one level of keys, use the asterix like
+so:
+.RB \(lq /software/*/version \(rq.
+This retrieves all keys of 
+.RB \(lq version \(rq
+that are one level beneath
+.RB \(lq /software \(rq.
+.TP
+.RB ...
+To access a sub-key anywhere beneath a key, use the ellipsis like so:
+.RB \(lq /.../version \(rq.
+This retrieves all keys of
+.RB \(lq version \(rq
+that are zero or more levels beneath the root
+.RI ( i.e.
+any appearance of
+.RB \(lq version \(rq
+within the database.
 .SH "SEE ALSO"
 .BR uniconfd (8)
 .SH AUTHORS
