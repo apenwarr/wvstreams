@@ -14,10 +14,18 @@
 #define lstat stat
 #endif
 
-WvDirIter::WvDirIter( WvStringParm dirname, bool _recurse, bool _skip_mounts )
+WvDirIter::WvDirIter( WvStringParm dirname,
+		      bool _recurse, bool _skip_mounts, size_t sizeof_stat )
+    : relpath(""), dir(dirs)
 /****************************************************************************/
-: relpath( "" ), dir( dirs )
 {
+    struct stat st;
+    
+    // if this assertion fails, then you probably used different compiler
+    // options for the wvstreams library and the calling program.  Check
+    // for defines like _FILE_OFFSET_BITS=64 and _LARGEFILE_SOURCE.
+    assert(sizeof_stat == sizeof(st));
+    
     recurse = _recurse;
     go_up   = false;
     skip_mounts = _skip_mounts;
