@@ -9,7 +9,6 @@
 #define __WVSERIALIZE_H
 
 #include "wvbuf.h"
-
 #include <stdint.h>
 #ifndef _WIN32
 #include <netinet/in.h>
@@ -70,7 +69,7 @@ void wv_serialize_scalar(WvBuf &buf, const T t)
     else if (sizeof(T) == 1)
 	buf.put(&t, 1);
     else
-        assert(0);
+	assert(0);
 }
 
 inline void _wv_serialize(WvBuf &buf, long long i)
@@ -88,8 +87,6 @@ inline void _wv_serialize(WvBuf &buf, unsigned int i)
 inline void _wv_serialize(WvBuf &buf, short i)
     { wv_serialize_scalar(buf, i); }
 inline void _wv_serialize(WvBuf &buf, unsigned short i)
-    { wv_serialize_scalar(buf, i); }
-inline void _wv_serialize(WvBuf &buf, bool i)
     { wv_serialize_scalar(buf, i); }
 
 /** Note: char != signed char for purposes of function overloading! */
@@ -283,9 +280,6 @@ template <>
 template <> 
     inline unsigned short _wv_deserialize<unsigned short>(WvBuf &buf)
     { return wv_deserialize_scalar<unsigned short>(buf); }
-template <> 
-    inline bool _wv_deserialize<bool>(WvBuf &buf)
-    { return wv_deserialize_scalar<bool>(buf); }
 template <>
     inline char _wv_deserialize<char>(WvBuf &buf)
     { return wv_deserialize_scalar<char>(buf); }
