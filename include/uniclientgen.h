@@ -81,7 +81,6 @@ public:
 
     /***** Overridden methods *****/
 
-    virtual RemoteKeyIter *clone() const;
     virtual void rewind();
     virtual bool next();
     virtual UniConfKey key() const;

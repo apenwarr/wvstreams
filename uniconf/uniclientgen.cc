@@ -265,15 +265,6 @@ bool UniClientGen::do_select()
 
 /***** UniClientGen::RemoteKeyIter *****/
 
-UniClientGen::RemoteKeyIter *UniClientGen::
-    RemoteKeyIter::clone() const
-{
-    // FIXME: this iterator is just a hack anyways
-    assert(false || ! "not implemented");
-    return NULL;
-}
-
-
 void UniClientGen::RemoteKeyIter::rewind()
 {
     i.rewind();
