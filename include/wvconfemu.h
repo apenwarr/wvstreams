@@ -113,7 +113,6 @@ private:
 	{}
     };
 
-    const UniConf uniconf;
     WvConfigSectionEmuDict sections;
     bool hold;
     WvList<CallbackInfo> callbacks;
@@ -121,6 +120,8 @@ private:
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
+    const UniConf uniconf;
+
     WvConfEmu(const UniConf &_uniconf);
     ~WvConfEmu();
     void zap();

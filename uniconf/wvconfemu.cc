@@ -213,7 +213,7 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 
 
 WvConfEmu::WvConfEmu(const UniConf &_uniconf)
-    : uniconf(_uniconf), sections(42), hold(false)
+    : sections(42), hold(false), uniconf(_uniconf)
 {
     wvauthd = NULL;
     uniconf.add_callback(this,
