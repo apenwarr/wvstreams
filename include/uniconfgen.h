@@ -163,6 +163,18 @@ public:
      */
     virtual bool exists(const UniConfKey &key);
 
+
+    /**
+     * Converts a string to an integer.  If the string is null or not
+     * recognized, return defvalue. 
+     *
+     * This is here to support the common str2int(get(key)).
+     *
+     * The default implementation recognizes the booleans 'true', 'yes', 'on'
+     * and 'enabled' as 1, and 'false', 'no', 'off' and 'disabled' as 0.
+     */
+    virtual int str2int(WvStringParm s, int defvalue) const;
+
     
     /***** Key Storage API *****/
     

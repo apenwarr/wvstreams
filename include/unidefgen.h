@@ -32,10 +32,20 @@
  * If a more absolute path exists, then it will be returned instead of the
  * defaults. Precedence is given to matches existing closer to the end of
  * the key.
+ *
+ * If the key is set to '*n', it will return the n'th element from the end of
+ * the absolute path that was passed in.  For instance, if
+ * /twister/ * / * / reality is set to *1, then a search for
+ * /twister/expression/bob/reality will return 'bob'.  If it is set to *2, the
+ * search will return 'expression'.  If it were set to *3 (or *0), the result is
+ * undefined.
  */
 class UniDefGen : public UniFilterGen
 {
-    void finddefault(char *p, char *q, WvString &result);
+    void finddefault(const UniConfKey &key, char *p, char *q,
+            WvString &result);
+    void replacewildcard(const UniConfKey &key, char *p,
+            WvString &result);
 
 public:
     UniDefGen(UniConfGen *gen) : UniFilterGen(gen) { }

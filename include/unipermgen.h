@@ -17,6 +17,10 @@
  * subkeys.  You cannot iterate on a key unless you have exec permission.
  * (This is badly named, but it's inherited from Unix.)
  *
+ * Permissions for 'key' are stored in the subkeys key/owner, key/group,
+ * and key/user-read through key/world-write.  owner and group store arbitrary
+ * text strings, and the remainder are boolean values.
+ *
  * UniPermGen cannot be created with a moniker due to all the extra methods.
  * Instead, just create one with new and mount it with UniConf::mountgen.  (Of
  * course, in most cases it will be passed to a UniSecureGen's constructor
@@ -30,7 +34,10 @@ public:
     UniPermGen(WvStringParm moniker);
 
     enum Level { USER = 0, GROUP, WORLD };
+    static WvString level2str(Level l);
+    
     enum Type { READ = 0, WRITE, EXEC };
+    static WvString type2str(Type t);
 
     struct Credentials
     {
@@ -80,18 +87,6 @@ public:
 
     /** Return the default permission for a given type */ 
     bool defaultperm(Type type);
-
-private:
-
-    struct Perms
-    {
-        WvString owner;
-        WvString group;
-        bool mode[3][3];
-    };
-
-    void parse(WvStringParm str, Perms &perms);
-    WvString format(const Perms &perms);
 };
 
 
