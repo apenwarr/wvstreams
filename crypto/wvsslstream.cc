@@ -127,13 +127,14 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 
 size_t WvSSLStream::uwrite(const void *buf, size_t len)
 {
-    debug(">> I want to write %s bytes\n",len);
 
     if (!sslconnected)
     {
-	debug(">> EEEEP! I can't find my sslconnection!\n");
+	debug(">> Attempting to write to a non-ready SSL Connection/n");
 	return 0;
     }
+
+    debug(">> I want to write %s bytes\n",len);
 
     // copy buf into the bounce buffer...
 
@@ -152,6 +153,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 		writeonly = len;
 		break;
 	   case SSL_ERROR_NONE:
+		// We shouldn't ever get here, but handle it nicely anyway... 
 		debug(">> Hmmm... something got confused... no SSL Errors!\n");
 		break;
 	   default:
