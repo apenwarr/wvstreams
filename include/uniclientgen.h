@@ -52,7 +52,7 @@ class UniClientGen : public UniConfGen
     bool cmdinprogress;     /*!< true while a command is in progress */
     bool cmdsuccess;        /*!< true when a command completed successfully */
 
-    static const int TIMEOUT = 30000; // command timeout in ms
+    static const int TIMEOUT = 60000; // command timeout in ms
 
 public:
     /**

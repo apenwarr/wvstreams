@@ -59,6 +59,17 @@ bool UniIniGen::refresh()
 	file.close();
 	file.seterr(EAGAIN);
     }
+    
+    if (statbuf.st_ctime == old_st.st_ctime
+	&& statbuf.st_dev == old_st.st_dev
+	&& statbuf.st_ino == old_st.st_ino
+	&& statbuf.st_blocks == old_st.st_blocks
+	&& statbuf.st_size == old_st.st_size)
+    {
+	log(WvLog::Debug, "refresh: file hasn't changed; do nothing.\n");
+	return true;
+    }
+    memcpy(&old_st, &statbuf, sizeof(statbuf));
     #endif
 
     if (!file.isok())

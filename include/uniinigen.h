@@ -9,6 +9,7 @@
 
 #include "unitempgen.h"
 #include "wvlog.h"
+#include <sys/stat.h>
 
 /**
  * Loads and saves ".ini"-style files similar to those used by
@@ -24,6 +25,7 @@ class UniIniGen : public UniTempGen
     WvString filename;
     int create_mode;
     WvLog log;
+    struct stat old_st;
     
 public:
     /**
