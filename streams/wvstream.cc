@@ -10,7 +10,7 @@
  */
 #include "wvstream.h"
 #include "wvtask.h"
-#include <sys/time.h>
+#include <time.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <assert.h>
