@@ -279,6 +279,9 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
     }
 }
 
+// input format: name=number, name=number, name=number, etc.
+//    'name' is the name of a log service
+//    'number' is the number of the log level to use.
 bool WvLogRcv::set_custom_levels(WvString descr)
 {
     custom_levels.zap();
@@ -286,13 +289,12 @@ bool WvLogRcv::set_custom_levels(WvString descr)
     // Parse the filter line into individual rules
     WvStringList lst;
     WvStringList::Iter i(lst);
-    lst.split(descr, ",=");
+    lst.split(descr, ",= ");
     if (!lst.count())
         return true;
-    i.rewind();
     WvString src("");
 
-    while(i.next())
+    for (i.rewind(); i.next(); )
     {
         if (src != "")
         {
