@@ -113,7 +113,7 @@ size_t WvUDPStream::uwrite(const void *buf, size_t count)
     // pretend that the write always succeeds even if the kernel
     // complains since we don't want datagrams backing up in the
     // buffer and forming merged datagrams as a result
-    return out;
+    return out < 0 ? 0 : out;
 }
 
 
