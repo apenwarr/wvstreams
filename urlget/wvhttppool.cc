@@ -581,7 +581,6 @@ char *WvFtpStream::get_important_line(int timeout)
 	line = getline(timeout);
 	if (!line)
 	    return NULL;
-	log("line: %s\n", line);
     }
     while (line[3] == '-');
     return line;
@@ -623,7 +622,7 @@ void WvFtpStream::execute()
 	    return;
 	}
 
-	log("Got greeting: %s\n", line);
+	log(WvLog::Debug5, "Got greeting: %s\n", line);
 	write(WvString("USER %s\r\n",
 		       !info.username ? "anonymous" : info.username.cstr()));
 	line = get_important_line(60000);
@@ -632,7 +631,7 @@ void WvFtpStream::execute()
 
 	if (!strncmp(line, "230", 3))
 	{
-	    log("Server doesn't need password.\n");
+	    log(WvLog::Debug5, "Server doesn't need password.\n");
 	    logged_in = true;        // No password needed;
 	}
 	else if (!strncmp(line, "33", 2))
@@ -645,7 +644,7 @@ void WvFtpStream::execute()
 	    
 	    if (line[0] == '2')
 	    {
-		log("Authenticated.\n");
+		log(WvLog::Debug5, "Authenticated.\n");
 		logged_in = true;
 	    }
 	    else
@@ -686,7 +685,7 @@ void WvFtpStream::execute()
 
 	if (!strncmp(line, "250", 3))
 	{
-	    log("This is a directory.\n");
+	    log(WvLog::Debug5, "This is a directory.\n");
 	    curl->is_dir = true;
 	}
 
@@ -715,7 +714,7 @@ void WvFtpStream::execute()
 	else
 	    write(WvString("RETR %s\r\n", curl->url.getfile()));
 
-	log("Waiting for response to RETR/LIST\n");
+	log(WvLog::Debug5, "Waiting for response to RETR/LIST\n");
 	line = get_important_line(60000);
 	if (!line)
 	    doneurl();
@@ -731,14 +730,31 @@ void WvFtpStream::execute()
 
     if (curl)
     {
-	int len = data->read(buf, sizeof(buf));
-	log(WvLog::Debug5, "Read %s bytes.\n", len);
-
-	if (len)
+	if (curl->is_dir)
 	{
-	    if (curl->outstream)
-		curl->outstream->write(buf, len);
+	    line = data->getline(0);
+	    if (line && curl->outstream)
+	    {
+		WvString output_line(parse_for_links(line));
+		if (!!output_line)
+		    curl->outstream->write(output_line);
+		else
+		    curl->outstream->write("Unknown format of LIST "
+					   "response\n");
+	    }
 	}
+	else
+	{
+	    int len = data->read(buf, sizeof(buf));
+	    log(WvLog::Debug5, "Read %s bytes.\n", len);
+
+	    if (len)
+	    {
+		if (curl->outstream)
+		    curl->outstream->write(buf, len);
+	    }
+	}
+
 	if (!data->isok())
 	{
 	    line = get_important_line(60000);
@@ -751,7 +767,7 @@ void WvFtpStream::execute()
 	    if (curl->is_dir)
 	    {
 		write("CWD /\r\n");
-		log("Waiting for response to CWD /\n");
+		log(WvLog::Debug5, "Waiting for response to CWD /\n");
 		line = get_important_line(60000);
 		if (!line)
 		    return;
@@ -764,6 +780,61 @@ void WvFtpStream::execute()
 	    doneurl();
 	}
     }
+}
+
+
+WvString WvFtpStream::parse_for_links(char *line)
+{
+    WvString output_line("");
+    trim_string(line);
+
+    if (curl->is_dir)
+    {
+	struct ftpparse fp;
+	int res = ftpparse(&fp, line, strlen(line));
+	if (res)
+	{
+	    char linkname[fp.namelen+1];
+	    int i;
+	    for (i = 0; i < fp.namelen; i++)
+	    {
+		if (fp.name[i] >= 32)
+		    linkname[i] = fp.name[i];
+		else
+		{
+		    linkname[i] = '?';
+		}
+	    }
+	    linkname[i] = 0;
+
+	    WvString linkurl(curl->url);
+	    if (linkurl.cstr()[linkurl.len()-1] != '/')
+		linkurl.append("/");
+	    linkurl.append(linkname);
+	    WvUrlLink *link = new WvUrlLink(linkname, linkurl);
+	    curl->outstream->links.append(link, true);
+	    output_line.append(WvString("%-30s", linkname));
+	    if (fp.sizetype > 0)
+		output_line.append(WvString("%-12s", fp.size));
+	    else
+		output_line.append("%-12s", "?");
+	    if (fp.mtimetype > 0)
+		output_line.append(WvString("%-12s", fp.mtime));
+	    else
+		output_line.append("%-12s", "?");
+	    if (fp.idtype > 0)
+	    {
+		char id[fp.idlen+2];
+		memcpy(id, fp.id, fp.idlen);
+		id[fp.idlen] = 0;
+		id[fp.idlen-1] = '\n';
+		output_line.append(id);
+	    }
+	    else
+		output_line.append("?\n");
+	}
+    }
+    return output_line;
 }
 
 

@@ -10,6 +10,7 @@
 #ifndef __WVHTTPPOOL_H
 #define __WVHTTPPOOL_H
 
+#include "ftpparse.h"
 #include "wvurl.h"
 #include "wvstreamlist.h"
 #include "wvstreamclone.h"
@@ -47,11 +48,24 @@ public:
 DeclareWvList(WvUrlRequest);
 
 
+struct WvUrlLink
+{
+    WvString linkname;
+    WvUrl url;
+
+    WvUrlLink::WvUrlLink(WvStringParm _linkname, WvStringParm _url)
+	: linkname(_linkname), url(_url)
+    {}
+};
+DeclareWvList(WvUrlLink);
+
+
 class WvBufUrlStream : public WvBufStream
 {
 public:
     WvString url;
     WvString proto;
+    WvUrlLinkList links;  // HTML links or FTP directory listing
 
     // HTTP stuff...
     WvString version;
@@ -162,6 +176,8 @@ class WvFtpStream : public WvUrlStream
     // of the data port (or NULL if it can't parse the response)..
     // This mucks about with line.
     WvIPPortAddr *parse_pasv_response(char *line);
+
+    WvString parse_for_links(char *line);
 
 public:
     WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
