@@ -471,9 +471,26 @@ public:
      * 
      * If you want to read/write the stream in question, try using the other
      * variant of select().
+     * 
+     * DEPRECATED.  Call runonce() instead.
      */
     bool select(time_t msec_timeout)
         { return _select(msec_timeout, false, false, false, true); }
+    
+    /**
+     * Exactly the same as:
+     *     if (select(timeout)) callback();
+     * 
+     * ...except that the above is deprecated, because it assumes callbacks
+     * aren't called automatically and that the return value of one-parameter
+     * select() is actually meaningful.
+     * 
+     * Update your main loop to call runonce() instead of the above.
+     * 
+     * Almost all modern programs should use msec_timeout = -1.
+     */
+    void runonce(time_t msec_timeout = -1)
+        { if (select(msec_timeout)) callback(); }
     
      /**
       * This version of select() sets forceable==false, so we use the exact
@@ -487,6 +504,14 @@ public:
       * 
       * This variant of select() is probably not what you want with
       * most WvStreamLists, unless you know exactly what you're doing.
+      * 
+      * WARNING: the difference between the one-parameter and multi-parameter
+      * versions of select() is *incredibly* confusing.  Make sure you use the
+      * right one!
+      * 
+      * DEPRECATED.  Call isreadable() or iswritable() instead, if
+      * msec_timeout was going to be zero.  Other values of msec_timeout are
+      * not really recommended anyway.
       */
     bool select(time_t msec_timeout,
 		bool readable, bool writable, bool isex = false)
