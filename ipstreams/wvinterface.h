@@ -41,7 +41,7 @@ public:
     WvString name;
     bool valid;
     
-    WvInterface(const WvString &_name);
+    WvInterface(WvStringParm _name);
     ~WvInterface();
     
     /**
@@ -101,17 +101,17 @@ public:
      * add a route to the given network through this interface.
      */
     int addroute(const WvIPNet &dest, int metric = 0,
-		 const WvString &table = "default");
+		 WvStringParm table = "default");
     int addroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0,
-		 const WvString &table = "default");
+		 WvStringParm table = "default");
 
     /**
      * delete a route to the given network through this interface.
      */
     int delroute(const WvIPNet &dest, int metric = 0,
-		 const WvString &table = "default");
+		 WvStringParm table = "default");
     int delroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0,
-		 const WvString &table = "default");
+		 WvStringParm table = "default");
     
     /**
      * add an ARP entry on this interface
@@ -144,7 +144,7 @@ public:
     bool islocal(const WvAddr &addr);
     bool on_local_net(const WvIPNet &addr);
 
-    WvInterface *operator[] (const WvString &str)
+    WvInterface *operator[] (WvStringParm str)
         { return slist[str]; }
     
     operator WvInterfaceDictBase ()

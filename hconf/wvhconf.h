@@ -24,8 +24,8 @@ class WvHConfKey : public WvStringList
 public:
     WvHConfKey();
     WvHConfKey(const char *key);
-    WvHConfKey(const WvString &key);
-    WvHConfKey(const WvString &section, const WvString &entry);
+    WvHConfKey(WvStringParm key);
+    WvHConfKey(WvStringParm section, WvStringParm entry);
     WvHConfKey(const WvHConfKey &key, int offset = 0);
     
     WvString printable() const;
@@ -50,7 +50,7 @@ public:
     // both of these functions may return NULL if the object "shouldn't"
     // exist.
     virtual WvHConf *make_tree(WvHConf *parent, const WvHConfKey &key);
-    virtual WvHConf *make_obj(WvHConf *parent, const WvString &name);
+    virtual WvHConf *make_obj(WvHConf *parent, WvStringParm name);
     
     virtual void update(WvHConf *h);
     
@@ -100,7 +100,7 @@ public:
 	
     
     WvHConf();
-    WvHConf(WvHConf *_parent, const WvString &_name);
+    WvHConf(WvHConf *_parent, WvStringParm _name);
     ~WvHConf();
     void init();
     
@@ -123,19 +123,19 @@ public:
     
     // another convenience function, suspiciously similar to cfg[key] = v.
     // Also unnecessary?
-    void set(const WvHConfKey &key, const WvString &v)
+    void set(const WvHConfKey &key, WvStringParm v)
         { get(key).set(v); }
     
     // Reassign the 'value' of this object to something.
-    void set_without_notify(const WvString &s);
-    void set(const WvString &s);
+    void set_without_notify(WvStringParm s);
+    void set(WvStringParm s);
     void do_notify();
-    const WvHConf &operator= (const WvString &s) { set(s); return *this; }
+    const WvHConf &operator= (WvStringParm s) { set(s); return *this; }
     const WvHConf &operator= (const WvHConf &s) { set(s); return *this; }
     
     // retrieve the value.  Normally you don't need to call printable()
     // explicitly, since the WvString cast operator does it for you.
-    const WvString& printable() const;
+    const WvString &printable() const;
     operator const WvString& () const { return printable(); }
     bool operator! () const { return !printable(); }
     int num() const { return printable().num(); }

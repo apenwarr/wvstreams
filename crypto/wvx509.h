@@ -158,7 +158,7 @@ public:
     bool  err;
     WvString errstr;
     
-    void seterr(const WvString &s)
+    void seterr(WvStringParm s)
         { err = true; errstr = s; }
     
 protected:

@@ -71,7 +71,7 @@ protected:
     static WvLogRcvBase *default_receiver;
 
 public:
-    WvLog(const WvString &_app, LogLevel _loglevel = Info,
+    WvLog(WvStringParm _app, LogLevel _loglevel = Info,
 	  const WvLog *par = NULL);
     WvLog(const WvLog &l);
     virtual ~WvLog();
@@ -91,7 +91,7 @@ public:
     /**
      * change the loglevel and then print a message.
      */
-    size_t operator() (LogLevel _loglevel, const WvString &s)
+    size_t operator() (LogLevel _loglevel, WvStringParm s)
     { 
 	LogLevel l = loglevel; 
 	size_t x = lvl(_loglevel).write(s);
@@ -114,7 +114,7 @@ public:
      * although these appear in WvStream, they need to be re-listed for
      * some reason.
      */
-    size_t operator() (const WvString &s)
+    size_t operator() (WvStringParm s)
         { return WvStream::operator()(s); }
     inline size_t operator() (WVSTRING_FORMAT_DECL)
         { return WvStream::operator()(WVSTRING_FORMAT_CALL); }
@@ -136,7 +136,7 @@ public:
     /**
      * a useful substitute for the normal C perror() function
      */
-    void perror(const WvString &s)
+    void perror(WvStringParm s)
         { print("%s: %s\n", s, strerror(errno)); }
 };
 

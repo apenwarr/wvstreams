@@ -15,15 +15,15 @@
 
 
 void WvConf::setbool(void *userdata,
-		     const WvString &, const WvString &,
-		     const WvString &, const WvString &)
+		     WvStringParm , WvStringParm ,
+		     WvStringParm , WvStringParm )
 {
     *(bool *)userdata = true;
 }
 		     
 
 
-WvConf::WvConf(const WvString &_filename, int _create_mode)
+WvConf::WvConf(WvStringParm _filename, int _create_mode)
 	: filename(_filename), log(filename), globalsection("")
 {
     create_mode = _create_mode;
@@ -52,7 +52,7 @@ static int check_for_bool_string(const char *s)
 
 // This "int" version of get is smart enough to interpret words like on/off,
 // true/false, and yes/no.
-int WvConf::getint(const WvString &section, const WvString &entry, int def_val)
+int WvConf::getint(WvStringParm section, WvStringParm entry, int def_val)
 {
     WvString def_str(def_val);
     return check_for_bool_string(get(section, entry, def_str));
@@ -71,7 +71,7 @@ int WvConf::fuzzy_getint(WvStringList &section, WvStringList &entry,
 
 // This "int" version of fuzzy_get is smart enough to interpret words like 
 // on/off, true/false, and yes/no.
-int WvConf::fuzzy_getint(WvStringList &section, const WvString &entry,
+int WvConf::fuzzy_getint(WvStringList &section, WvStringParm entry,
 			 int def_val)
 {
     WvString def_str(def_val);
@@ -79,7 +79,7 @@ int WvConf::fuzzy_getint(WvStringList &section, const WvString &entry,
 }
 
 
-void WvConf::setint(const WvString &section, const WvString &entry, int value)
+void WvConf::setint(WvStringParm section, WvStringParm entry, int value)
 {
     WvString def_str(value);
     set(section, entry, def_str);
@@ -87,7 +87,7 @@ void WvConf::setint(const WvString &section, const WvString &entry, int value)
 
 
 // only set the value if it isn't already in the config file
-void WvConf::maybesetint(const WvString &section, const WvString &entry,
+void WvConf::maybesetint(WvStringParm section, WvStringParm entry,
 			 int value)
 {
     if (!get(section, entry, NULL))
@@ -95,7 +95,7 @@ void WvConf::maybesetint(const WvString &section, const WvString &entry,
 }
 
  
-void WvConf::load_file(const WvString &filename)
+void WvConf::load_file(WvStringParm filename)
 {
     WvFile file;
     char *p;
@@ -168,7 +168,7 @@ WvConf::~WvConf()
 }
 
 
-const char *WvConf::get(const WvString &section, const WvString &entry,
+const char *WvConf::get(WvStringParm section, WvStringParm entry,
 			const char *def_val)
 {
     WvStringTable cache(5);
@@ -213,7 +213,7 @@ const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
 }
 
 
-const char *WvConf::fuzzy_get(WvStringList &sections, const WvString &entry,
+const char *WvConf::fuzzy_get(WvStringList &sections, WvStringParm entry,
 			      const char *def_val)
 {
     WvStringList::Iter i(sections);
@@ -236,7 +236,7 @@ const char *WvConf::fuzzy_get(WvStringList &sections, const WvString &entry,
 }
 
 
-void WvConf::set(const WvString &section, const WvString &entry,
+void WvConf::set(WvStringParm section, WvStringParm entry,
 		 const char *value)
 {
     WvConfigSection *s = (*this)[section];
@@ -268,7 +268,7 @@ void WvConf::set(const WvString &section, const WvString &entry,
 
 
 // only set the value if it isn't already in the config file
-void WvConf::maybeset(const WvString &section, const WvString &entry,
+void WvConf::maybeset(WvStringParm section, WvStringParm entry,
 		      const char *value)
 {
     if (value && !get(section, entry, NULL))
@@ -276,7 +276,7 @@ void WvConf::maybeset(const WvString &section, const WvString &entry,
 }
 
 
-WvConfigSection *WvConf::operator[] (const WvString &section)
+WvConfigSection *WvConf::operator[] (WvStringParm section)
 {
     Iter i(*this);
 
@@ -291,7 +291,7 @@ WvConfigSection *WvConf::operator[] (const WvString &section)
 }
 
 
-void WvConf::delete_section(const WvString &section)
+void WvConf::delete_section(WvStringParm section)
 {
     WvConfigSection *s = (*this)[section];
     if (s)
@@ -387,7 +387,7 @@ static WvString follow_links(WvString fname)
     return tmp;
 }
 
-void WvConf::save(const WvString &_filename)
+void WvConf::save(WvStringParm _filename)
 {
     if (error || !_filename)
 	return;
@@ -453,7 +453,7 @@ void WvConf::flush()
 
 
 void WvConf::add_callback(WvConfCallback callback, void *userdata,
-			  const WvString &section, const WvString &entry)
+			  WvStringParm section, WvStringParm entry)
 {
     callbacks.append(new WvConfCallbackInfo(callback, userdata,
 					    section, entry), true);
@@ -461,7 +461,7 @@ void WvConf::add_callback(WvConfCallback callback, void *userdata,
 
 
 void WvConf::del_callback(WvConfCallback callback, void *userdata,
-			  const WvString &section, const WvString &entry)
+			  WvStringParm section, WvStringParm entry)
 {
     WvConfCallbackInfoList::Iter i(callbacks);
     
@@ -479,8 +479,8 @@ void WvConf::del_callback(WvConfCallback callback, void *userdata,
 }
 
 
-void WvConf::run_callbacks(const WvString &section, const WvString &entry,
-			   const WvString &oldvalue, const WvString &newvalue)
+void WvConf::run_callbacks(WvStringParm section, WvStringParm entry,
+			   WvStringParm oldvalue, WvStringParm newvalue)
 {
     WvConfCallbackInfoList::Iter i(callbacks);
     

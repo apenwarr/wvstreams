@@ -110,9 +110,9 @@ extern WvString web_unescape(const char *str);
 
 WvString rfc822_date(time_t _when = -1);
 WvString passwd_crypt(const char *str);
-WvString backslash_escape(const WvString &s1);
+WvString backslash_escape(WvStringParm s1);
 
-extern int strcount(const WvString &s, const char c);
+extern int strcount(WvStringParm s, const char c);
 
 WvString encode_hostname_as_DN(WvString &hostname);
 

@@ -52,7 +52,7 @@ WvTask::~WvTask()
 }
 
 
-void WvTask::start(const WvString &_name, TaskFunc *_func, void *_userdata)
+void WvTask::start(WvStringParm _name, TaskFunc *_func, void *_userdata)
 {
     assert(!recycled);
     name = _name;
@@ -100,7 +100,7 @@ WvTaskMan::~WvTaskMan()
 }
 
 
-WvTask *WvTaskMan::start(const WvString &name, 
+WvTask *WvTaskMan::start(WvStringParm name, 
 			 WvTask::TaskFunc *func, void *userdata,
 			 size_t stacksize)
 {

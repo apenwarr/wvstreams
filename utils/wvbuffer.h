@@ -162,7 +162,7 @@ public:
     /*
      * copy a WvString into the buffer, not including the terminating nul.
      */
-    void put(const WvString &str);
+    void put(WvStringParm str);
     
     /*
      * _move_ (not copy) the contents of another WvBuffer into this buffer.

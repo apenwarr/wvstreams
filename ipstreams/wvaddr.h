@@ -134,7 +134,7 @@ protected:
     virtual WvString printable() const;
 
 public:
-    WvStringAddr(const WvString &s, const WvEncap &_cap);
+    WvStringAddr(WvStringParm s, const WvEncap &_cap);
     WvStringAddr(const struct sockaddr *_addr);
     virtual ~WvStringAddr();
     virtual WvEncap encap() const;
@@ -161,7 +161,7 @@ public:
         { if (_binaddr) memcpy(binaddr, _binaddr, ETH_ALEN); }
     WvEtherAddr(const char string[])
         { string_init(string); }
-    WvEtherAddr(const WvString &string)
+    WvEtherAddr(WvStringParm string)
         { string_init(string); }
     void string_init(const char string[]);
     WvEtherAddr(const struct sockaddr *addr)
@@ -192,7 +192,7 @@ public:
         { if (_binaddr) binaddr = _binaddr[0]; }
     WvARCnetAddr(const char string[])
         { binaddr = strtoul(string, NULL, 16); }
-    WvARCnetAddr(const WvString &string)
+    WvARCnetAddr(WvStringParm string)
     	{ binaddr = strtoul(string, NULL, 16); }
     WvARCnetAddr(const struct sockaddr *addr)
         { binaddr = ((unsigned char *)addr->sa_data)[0]; }
@@ -227,7 +227,7 @@ public:
         { memcpy(binaddr, &_binaddr, 4); }
     WvIPAddr(const char string[])
     	{ string_init(string); }
-    WvIPAddr(const WvString &string)
+    WvIPAddr(WvStringParm string)
         { string_init(string); }
     void string_init(const char string[]);
     WvIPAddr(const struct sockaddr *addr)
@@ -279,7 +279,7 @@ public:
     WvIPNet(const WvIPNet &_net);
     WvIPNet(const char string[]) : WvIPAddr(string)
         { string_init(string); }
-    WvIPNet(const WvString &string) : WvIPAddr(string)
+    WvIPNet(WvStringParm string) : WvIPAddr(string)
         { string_init(string); }
     void string_init(const char string[]);
     WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask);
@@ -373,7 +373,7 @@ public:
     WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port = 0);
     WvIPPortAddr(const char string[]) : WvIPAddr(string)
         { string_init(string); }
-    WvIPPortAddr(const WvString &string) : WvIPAddr(string)
+    WvIPPortAddr(WvStringParm string) : WvIPAddr(string)
         { string_init(string); }
     void string_init(const char string[]);
     WvIPPortAddr(__u16 _port);          // assumes address 0.0.0.0, (ie local)
@@ -402,7 +402,7 @@ protected:
     
 public:
     WvUnixAddr(const char *_sockname);
-    WvUnixAddr(const WvString &_sockname);
+    WvUnixAddr(WvStringParm _sockname);
     WvUnixAddr(const WvUnixAddr &_addr);
     virtual ~WvUnixAddr();
     

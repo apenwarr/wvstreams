@@ -25,7 +25,7 @@ WvInterfaceDictBase WvInterfaceDict::slist(15);
 int WvInterfaceDict::links = 0;
 
 
-WvInterface::WvInterface(const WvString &_name) 
+WvInterface::WvInterface(WvStringParm _name) 
 	: err("Net Interface", WvLog::Error), name(_name)
 {
     name.unique();
@@ -341,7 +341,7 @@ void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
 
 
 int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
-			   int metric, const WvString &table)
+			   int metric, WvStringParm table)
 {
     struct rtentry rte;
     char ifname[17];
@@ -402,14 +402,14 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 
 // add a route with no gateway, ie. direct to interface
 int WvInterface::addroute(const WvIPNet &dest, int metric,
-			  const WvString &table)
+			  WvStringParm table)
 {
     return addroute(dest, WvIPAddr(), metric, table);
 }
 
 
 int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
-			  int metric, const WvString &table)
+			  int metric, WvStringParm table)
 {
     struct rtentry rte;
     char ifname[17];
@@ -461,7 +461,7 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
 
 
 // delete a route with no gateway, ie. direct to interface
-int WvInterface::delroute(const WvIPNet &dest, int metric, const WvString &table)
+int WvInterface::delroute(const WvIPNet &dest, int metric, WvStringParm table)
 {
     return delroute(dest, WvIPAddr(), metric, table);
 }

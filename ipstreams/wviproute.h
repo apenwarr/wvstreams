@@ -18,8 +18,8 @@
 class WvIPRoute
 {
 public:
-    WvIPRoute(const WvString &_ifc, const WvIPNet &_net, const WvIPAddr &_gate,
-	      int _metric, const WvString &_table);
+    WvIPRoute(WvStringParm _ifc, const WvIPNet &_net, const WvIPAddr &_gate,
+	      int _metric, WvStringParm _table);
     operator WvString() const;
     bool operator== (const WvIPRoute &r2) const;
     

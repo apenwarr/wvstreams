@@ -257,7 +257,7 @@ void WvStream::seterr(int _errnum)
 }
 
 
-void WvStream::seterr(const WvString &specialerr)
+void WvStream::seterr(WvStringParm specialerr)
 {
     if (!errnum)
     {

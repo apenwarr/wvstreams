@@ -27,7 +27,7 @@ public:
     WvLoopback *loop;
     time_t last_tried;
     
-    WvResolverHost(const WvString &_name) : name(_name)
+    WvResolverHost(WvStringParm _name) : name(_name)
         { init(); name.unique(); addr = NULL; }
     ~WvResolverHost()
         {   
@@ -126,7 +126,7 @@ WvResolver::~WvResolver()
 
 // returns >0 on success, 0 on not found, -1 on timeout
 // If addr==NULL, this just tests to see if the name exists.
-int WvResolver::findaddr(int msec_timeout, const WvString &name,
+int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 			 WvIPAddr const **addr,
                          WvIPAddrList *addrlist = NULL)
 {
@@ -262,7 +262,7 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
     return host->negative ? 0 : res;
 }
 
-void WvResolver::clearhost(const WvString &hostname)
+void WvResolver::clearhost(WvStringParm hostname)
 {
     WvResolverHost *host = (*hostmap)[hostname];
     if (host)
@@ -278,7 +278,7 @@ int WvResolver::findname(int msec_timeout, WvIPAddr *ipaddr, char **name)
 */
 
 
-bool WvResolver::pre_select(const WvString &hostname,
+bool WvResolver::pre_select(WvStringParm hostname,
 			      WvStream::SelectInfo &si)
 {
     WvResolverHost *host = (*hostmap)[hostname];

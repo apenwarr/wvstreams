@@ -39,7 +39,7 @@ WvString WvStringTable::join(const char *joinchars)
 }
 
 
-void WvStringTable::split(const WvString &_s, const char *splitchars)
+void WvStringTable::split(WvStringParm _s, const char *splitchars)
 {
     WvString s(_s);
     char *sptr = s.edit(), *eptr, oldc;

@@ -68,12 +68,10 @@
 #define __WVHASHTABLE_H
 
 #include "wvlinklist.h"
-
-// no need to #include wvstring.h just for this
-class WvString;
+#include "wvstring.h"
 
 // predefined hashing functions (note: string hashes are case-insensitive)
-unsigned WvHash(const WvString &s);
+unsigned WvHash(WvStringParm s);
 unsigned WvHash(const char *s);
 unsigned WvHash(const int &i);
 

@@ -33,16 +33,16 @@ public:
      * be 0 if the address does not exist.
      * addrlist, if present, has to be an initialized list.
      */
-    int findaddr(int msec_timeout, const WvString &name,
+    int findaddr(int msec_timeout, WvStringParm name,
 		 WvIPAddr const **addr, WvIPAddrList *addrlist = NULL);
     int findname(int msec_timeout, WvIPAddr *ipaddr, char **name);
 
-    void clearhost(const WvString &hostname);
+    void clearhost(WvStringParm hostname);
     
     /**
      * add all of our waiting fds to an fd_set for use with select().
      */
-    bool pre_select(const WvString &hostname, WvStream::SelectInfo &si);
+    bool pre_select(WvStringParm hostname, WvStream::SelectInfo &si);
 };
 
 #endif // __WVRESOLVER_H

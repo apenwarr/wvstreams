@@ -14,7 +14,7 @@
 
 
 // Split up the URL into a hostname, a port, and the rest of it.
-WvURL::WvURL(const WvString &url) : err("No error")
+WvURL::WvURL(WvStringParm url) : err("No error")
 {
     WvString work(url);
     char *cptr, *wptr = work.edit();

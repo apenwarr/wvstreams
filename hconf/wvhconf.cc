@@ -20,7 +20,7 @@ WvHConf::WvHConf()
 }
 
 
-WvHConf::WvHConf(WvHConf *_parent, const WvString &_name)
+WvHConf::WvHConf(WvHConf *_parent, WvStringParm _name)
     : name(_name)
 {
     parent = _parent;
@@ -193,14 +193,14 @@ WvHConf *WvHConf::find_default(WvHConfKey *_k) const
 }
 
 
-void WvHConf::set_without_notify(const WvString &s)
+void WvHConf::set_without_notify(WvStringParm s)
 {
     value = s;
     value.unique();
 }
 
 
-void WvHConf::set(const WvString &s)
+void WvHConf::set(WvStringParm s)
 {
     WvHConf *h;
     

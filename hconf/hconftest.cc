@@ -17,7 +17,7 @@ public:
     WvString defstr;
     int count;
     
-    HelloGen(const WvString &_def = "Hello World")
+    HelloGen(WvStringParm _def = "Hello World")
 	: defstr(_def) { count = 0; }
     virtual void update(WvHConf *h);
 };
@@ -38,13 +38,13 @@ public:
     WvHConf *top;
     WvLog log;
     
-    WvHConfFileTree(WvHConf *_top, const WvString &_basedir);
+    WvHConfFileTree(WvHConf *_top, WvStringParm _basedir);
     virtual void update(WvHConf *h);
     virtual void load();
 };
 
 
-WvHConfFileTree::WvHConfFileTree(WvHConf *_top, const WvString &_basedir)
+WvHConfFileTree::WvHConfFileTree(WvHConf *_top, WvStringParm _basedir)
     : basedir(_basedir), log("FileTree", WvLog::Info)
 {
     top = _top;
@@ -100,7 +100,7 @@ public:
     WvHConf *top;
     WvLog log;
     
-    WvHConfIniFile(WvHConf *_top, const WvString &_filename);
+    WvHConfIniFile(WvHConf *_top, WvStringParm _filename);
     virtual void load();
     virtual void save();
     
@@ -108,7 +108,7 @@ public:
 };
 
 
-WvHConfIniFile::WvHConfIniFile(WvHConf *_top, const WvString &_filename)
+WvHConfIniFile::WvHConfIniFile(WvHConf *_top, WvStringParm _filename)
     : filename(_filename), log(filename)
 {
     top = _top;

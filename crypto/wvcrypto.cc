@@ -319,7 +319,7 @@ size_t WvRSAStream::uwrite(const void *buf, size_t size)
     return totalwrite;
 }
 
-WvMD5::WvMD5(const WvString &string_to_hash)
+WvMD5::WvMD5(WvStringParm string_to_hash)
 {
     MD5_CTX ctx;
     unsigned char temp[20];

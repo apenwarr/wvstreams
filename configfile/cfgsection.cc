@@ -10,7 +10,7 @@
 #include "wvconf.h"
 
 
-WvConfigSection::WvConfigSection(const WvString &_name)
+WvConfigSection::WvConfigSection(WvStringParm _name)
 	: name(_name)
 {
     name.unique();
@@ -24,7 +24,7 @@ WvConfigSection::~WvConfigSection()
 }
 
 
-WvConfigEntry *WvConfigSection::operator[] (const WvString &ename)
+WvConfigEntry *WvConfigSection::operator[] (WvStringParm ename)
 {
     Iter i(*this);
 
@@ -38,14 +38,14 @@ WvConfigEntry *WvConfigSection::operator[] (const WvString &ename)
 }
 
 
-const char *WvConfigSection::get(const WvString &entry, const char *def_val)
+const char *WvConfigSection::get(WvStringParm entry, const char *def_val)
 {
     WvConfigEntry *e = (*this)[entry];
     return e ? (const char *)e->value : def_val;
 }
 
 
-void WvConfigSection::set(const WvString &entry, const WvString &value)
+void WvConfigSection::set(WvStringParm entry, WvStringParm value)
 {
     WvConfigEntry *e = (*this)[entry];
     
@@ -67,7 +67,7 @@ void WvConfigSection::set(const WvString &entry, const WvString &value)
 }
 
 
-void WvConfigSection::quick_set(const WvString &entry, const WvString &value)
+void WvConfigSection::quick_set(WvStringParm entry, WvStringParm value)
 {
     append(new WvConfigEntry(entry, value), true);
 }

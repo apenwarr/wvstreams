@@ -138,7 +138,7 @@ public:
    /**
     * Create the MD5 Hash of a String
     */
-   WvMD5(const WvString &string_to_hash);
+   WvMD5(WvStringParm string_to_hash);
 
    /**
     * Create the MD5 Hash of a File

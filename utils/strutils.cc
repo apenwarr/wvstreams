@@ -274,7 +274,7 @@ WvString rfc822_date(time_t when)
 }
 
 
-WvString backslash_escape(const WvString &s1)
+WvString backslash_escape(WvStringParm s1)
 {
     // stick a backslash in front of every !isalnum() character in s1
     if (!s1)
@@ -298,7 +298,7 @@ WvString backslash_escape(const WvString &s1)
 
 
 // how many times does 'c' occur in "s"?
-int strcount(const WvString &s, const char c)
+int strcount(WvStringParm s, const char c)
 {
     int n=0;
     const char *p = s;

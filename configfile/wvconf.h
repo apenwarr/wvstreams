@@ -25,10 +25,10 @@ class WvConfigEntry
 {
 public:
     WvConfigEntry();
-    WvConfigEntry(const WvString &_name, const WvString &_value);
+    WvConfigEntry(WvStringParm _name, WvStringParm _value);
     ~WvConfigEntry();
     
-    void set(const WvString &_value)
+    void set(WvStringParm _value)
         { value = _value; value.unique(); }
     
     WvString name, value;
@@ -41,17 +41,17 @@ DeclareWvList(WvConfigEntry);
 class WvConfigSection : public WvConfigEntryList
 {
 public:
-    WvConfigSection(const WvString &name);
+    WvConfigSection(WvStringParm name);
     ~WvConfigSection();
     
-    WvConfigEntry *operator[] (const WvString &s);
+    WvConfigEntry *operator[] (WvStringParm s);
 
-    const char *get(const WvString &entry, const char *def_val = NULL);
-    void set(const WvString &entry, const WvString &value);
-    void set(WvConfigEntry *e, const WvString &value);
+    const char *get(WvStringParm entry, const char *def_val = NULL);
+    void set(WvStringParm entry, WvStringParm value);
+    void set(WvConfigEntry *e, WvStringParm value);
     
     // add an entry to the end of the section, _assuming_ no duplicates exist
-    void quick_set(const WvString &entry, const WvString &value);
+    void quick_set(WvStringParm entry, WvStringParm value);
 
     void dump(WvStream &fp);
 
@@ -62,8 +62,8 @@ public:
 // parameters are: userdata, section, entry, oldval, newval
 DeclareWvCallback(5, void, WvConfCallback,
 		  void *,
-		  const WvString &, const WvString &,
-		  const WvString &, const WvString &);
+		  WvStringParm , WvStringParm ,
+		  WvStringParm , WvStringParm );
 
 class WvConfCallbackInfo
 {
@@ -73,7 +73,7 @@ public:
     const WvString section, entry;
     
     WvConfCallbackInfo(WvConfCallback _callback, void *_userdata,
-		       const WvString &_section, const WvString &_entry)
+		       WvStringParm _section, WvStringParm _entry)
 	: callback(_callback), section(_section), entry(_entry)
         { userdata = _userdata; }
 };
@@ -89,27 +89,27 @@ DeclareWvList(WvConfigSection);
 class WvConf : public WvConfigSectionList
 {
 public:
-    WvConf(const WvString &_filename, int _create_mode = 0666);
+    WvConf(WvStringParm _filename, int _create_mode = 0666);
     ~WvConf();
     
     bool isok() const
     	{ return !error; }
     bool isclean() const
     	{ return isok() && !dirty; }
-    void save(const WvString &filename);
+    void save(WvStringParm filename);
     void save();
     void flush();
 
-    WvConfigSection *operator[] (const WvString &s);
+    WvConfigSection *operator[] (WvStringParm s);
 
-    int getint(const WvString &section, const WvString &entry, int def_val);
+    int getint(WvStringParm section, WvStringParm entry, int def_val);
     
-    const char *get(const WvString &section, const WvString &entry,
+    const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL);
 
-    int fuzzy_getint(WvStringList &sect, const WvString &entry,
+    int fuzzy_getint(WvStringList &sect, WvStringParm entry,
 		  int def_val);
-    const char *fuzzy_get(WvStringList &sect, const WvString &entry,
+    const char *fuzzy_get(WvStringList &sect, WvStringParm entry,
 			  const char *def_val = NULL);
 
     int fuzzy_getint(WvStringList &sect, WvStringList &entry,
@@ -117,41 +117,41 @@ public:
     const char *fuzzy_get(WvStringList & sect, WvStringList & ent,
 			  const char *def_val = NULL);
 
-    void setint(const WvString &section, const WvString &entry, int value);
-    void set(const WvString &section, const WvString &entry,
+    void setint(WvStringParm section, WvStringParm entry, int value);
+    void set(WvStringParm section, WvStringParm entry,
 	     const char *value);
     
-    void maybesetint(const WvString &section, const WvString &entry,
+    void maybesetint(WvStringParm section, WvStringParm entry,
 		     int value);
-    void maybeset(const WvString &section, const WvString &entry,
+    void maybeset(WvStringParm section, WvStringParm entry,
 		  const char *value);
 
-    void delete_section(const WvString &section);
+    void delete_section(WvStringParm section);
 
     // section and entry may be blank -- that means _all_ sections/entries!
     void add_callback(WvConfCallback callback, void *userdata,
-		      const WvString &section, const WvString &entry);
+		      WvStringParm section, WvStringParm entry);
     void del_callback(WvConfCallback callback, void *userdata,
-		      const WvString &section, const WvString &entry);
-    void run_callbacks(const WvString &section, const WvString &entry,
-		       const WvString &oldvalue, const WvString &newvalue);
+		      WvStringParm section, WvStringParm entry);
+    void run_callbacks(WvStringParm section, WvStringParm entry,
+		       WvStringParm oldvalue, WvStringParm newvalue);
     void run_all_callbacks();
     
     // generic callback function for setting a bool to "true" when changed
     void setbool(void *userdata,
-		 const WvString &section, const WvString &entry,
-		 const WvString &oldval, const WvString &newval);
+		 WvStringParm section, WvStringParm entry,
+		 WvStringParm oldval, WvStringParm newval);
     
-    void add_setbool(bool *b, const WvString &section, const WvString &entry)
+    void add_setbool(bool *b, WvStringParm section, WvStringParm entry)
         { add_callback(wvcallback(WvConfCallback, *this, WvConf::setbool),
 		       b, section, entry); }
-    void del_setbool(bool *b, const WvString &section, const WvString &entry)
+    void del_setbool(bool *b, WvStringParm section, WvStringParm entry)
         { del_callback(wvcallback(WvConfCallback, *this, WvConf::setbool),
 		       b, section, entry); }
 		    
     void load_file() // append the contents of the real config file
         { load_file(filename); }
-    void load_file(const WvString &filename); // append any config file
+    void load_file(WvStringParm filename); // append any config file
 
 private:
     bool dirty;			// true if changed since last flush()

@@ -14,7 +14,7 @@
 class WvSyslog : public WvLogRcv
 {
 public:
-    WvSyslog(const WvString &_prefix, bool _include_appname,
+    WvSyslog(WvStringParm _prefix, bool _include_appname,
 	     WvLog::LogLevel _first_debug = WvLog::Debug,
 	     WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
     virtual ~WvSyslog();

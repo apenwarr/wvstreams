@@ -6,7 +6,7 @@
  */
 #include "wvfile.h"
 
-bool WvFile::open(const WvString &filename, int mode, int create_mode)
+bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
     if (rwfd >= 0)
 	close();

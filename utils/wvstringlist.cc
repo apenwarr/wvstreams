@@ -42,7 +42,7 @@ WvString WvStringList::join(const char *joinchars) const
 }
 
 
-void WvStringList::split(const WvString &_s, const char *splitchars,
+void WvStringList::split(WvStringParm _s, const char *splitchars,
 			 int limit)
 {
     WvString s(_s);

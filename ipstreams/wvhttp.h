@@ -13,13 +13,13 @@
 class WvURL
 {
 public:
-    WvURL(const WvString &url);
+    WvURL(WvStringParm url);
     WvURL(const WvURL &url);
     ~WvURL();
     
     bool isok() const
         { return port != 0 && (resolving || addr != NULL); }
-    const WvString &errstr() const
+    WvStringParm errstr() const
         { return err; }
     bool resolve(); // dns-resolve the hostname (returns true if done)
 
@@ -31,9 +31,9 @@ public:
     // ONLY valid if resolve() returns true!
     const WvIPPortAddr &getaddr() const
         { return *addr; }
-    const WvString &getfile() const
+    WvStringParm getfile() const
         { return file; }
-    const WvString &gethost() const
+    WvStringParm gethost() const
         { return hostname; }
     int getport() const
         { return port; }
@@ -52,7 +52,7 @@ struct WvHTTPHeader
 {
     WvString name, value;
     
-    WvHTTPHeader(const WvString &_name, const WvString &_value)
+    WvHTTPHeader(WvStringParm _name, WvStringParm _value)
 	: name(_name), value(_value) 
     		{ name.unique(); value.unique(); }
 };

@@ -13,7 +13,7 @@ WvConfigEntry::WvConfigEntry()
 {
 }
 
-WvConfigEntry::WvConfigEntry(const WvString &_name, const WvString &_value)
+WvConfigEntry::WvConfigEntry(WvStringParm _name, WvStringParm _value)
 	: name(_name), value(_value)
 {
     name.unique();

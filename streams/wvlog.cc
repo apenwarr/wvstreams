@@ -32,7 +32,7 @@ char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
 
 
 
-WvLog::WvLog(const WvString &_app, LogLevel _loglevel, const WvLog *par)
+WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, const WvLog *par)
 	: app(_app)
 {
     app.unique();

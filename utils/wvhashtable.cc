@@ -23,7 +23,7 @@ unsigned WvHash(const char *s)
     return hash;
 }
 
-unsigned WvHash(const WvString &s)
+unsigned WvHash(WvStringParm s)
 {
     return !s ? 0 : WvHash((const char *)s);
 }

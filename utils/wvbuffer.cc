@@ -304,7 +304,7 @@ void WvBuffer::put(const void *data, size_t num)
 }
 
 
-void WvBuffer::put(const WvString &str)
+void WvBuffer::put(WvStringParm str)
 {
     if (!!str)
 	put(str, strlen(str));

@@ -45,7 +45,7 @@ class WvTask
 public:
     virtual ~WvTask();
     
-    void start(const WvString &_name, TaskFunc *_func, void *_userdata);
+    void start(WvStringParm _name, TaskFunc *_func, void *_userdata);
     bool isrunning() const
         { return running; }
     void recycle();
@@ -76,7 +76,7 @@ public:
     WvTaskMan();
     virtual ~WvTaskMan();
     
-    WvTask *start(const WvString &name,
+    WvTask *start(WvStringParm name,
 		  WvTask::TaskFunc *func, void *userdata,
 		  size_t stacksize = 64*1024);
     

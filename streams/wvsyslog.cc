@@ -10,7 +10,7 @@
 #include <time.h>
 #include <syslog.h>
 
-WvSyslog::WvSyslog(const WvString &_prefix, bool _include_appname,
+WvSyslog::WvSyslog(WvStringParm _prefix, bool _include_appname,
 		   WvLog::LogLevel _first_debug,
 		   WvLog::LogLevel _max_level)
 	: WvLogRcv(_max_level), syslog_prefix(_prefix)

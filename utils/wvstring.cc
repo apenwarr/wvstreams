@@ -9,8 +9,8 @@
 #include <ctype.h>
 #include <assert.h>
 
-WvStringBuf __wvs_nb = { 0, 1 };
-const WvString __wvs_n;
+WvStringBuf WvFastString::nullbuf = { 0, 1 };
+const WvFastString WvFastString::null;
 
 
 // always a handy function
@@ -20,7 +20,7 @@ static inline int _max(int x, int y)
 }
 
 
-void WvString::setsize(size_t i)
+void WvFastString::setsize(size_t i)
 {
     unlink();
     newbuf(i);
@@ -28,54 +28,86 @@ void WvString::setsize(size_t i)
 
 
 
-WvString::WvString()
+WvFastString::WvFastString()
 {
-    link(&__wvs_nb, NULL);
+    link(&nullbuf, NULL);
 }
 
 
-WvString::WvString(const WvString &s)
+WvFastString::WvFastString(const WvFastString &s)
 {
     link(s.buf, s.str);
 }
 
 
+WvFastString::WvFastString(const WvString &s)
+{
+    link(s.buf, s.str);
+}
+
+
+WvFastString::WvFastString(const char *_str)
+{
+    // just copy the pointer - no need to allocate memory!
+    str = (char *)_str; // I promise not to change anything!
+    buf = NULL;
+}
+
+
+void WvString::copy_constructor(const WvFastString &s)
+{
+    if (!s.buf)
+    {
+	link(&nullbuf, s.str);
+	unique();
+    }
+    else
+	link(s.buf, s.str); // already in a nice, safe WvStreamBuf
+}
+
+
 WvString::WvString(const char *_str)
 {
-    link(&__wvs_nb, _str);
+    link(&nullbuf, _str);
+    
+    // apenwarr (2002/04/24): from now on, all WvString objects are created
+    // with unique(), so you should _never_ have to call it explicitly.  We
+    // still can (and should!) use fast parameter passing via WvFString.
+    unique();
 }
 
 
 // NOTE: make sure that 32 bytes is big enough for your longest int.
 // This is true up to at least 64 bits.
-WvString::WvString(int i) // auto-render int 'i' into a string
+WvFastString::WvFastString(int i) // auto-render int 'i' into a string
 {
     newbuf(32);
     sprintf(str, "%d", i);
 }
 
 
-WvString::~WvString()
+WvFastString::~WvFastString()
 {
     unlink();
 }
 
 
-void WvString::unlink()
+void WvFastString::unlink()
 { 
-    if (! --buf->links)
+    if (buf && ! --buf->links)
 	free(buf);
 }
     
-void WvString::link(WvStringBuf *_buf, const char *_str)
+void WvFastString::link(WvStringBuf *_buf, const char *_str)
 {
     buf = _buf;
-    buf->links++;
+    if (buf)
+	buf->links++;
     str = (char *)_str; // I promise not to change it without asking!
 }
     
 
-WvStringBuf *WvString::alloc(size_t size)
+WvStringBuf *WvFastString::alloc(size_t size)
 { 
     WvStringBuf *buf = (WvStringBuf *)malloc(WVSTRINGBUF_SIZE(buf)
 					     + size + WVSTRING_EXTRA);
@@ -85,7 +117,7 @@ WvStringBuf *WvString::alloc(size_t size)
 }
 
 
-void WvString::append(const WvString &s)
+void WvString::append(WvStringParm s)
 {
     if( s )
     {
@@ -97,13 +129,13 @@ void WvString::append(const WvString &s)
 }
 
 
-size_t WvString::len() const
+size_t WvFastString::len() const
 {
-    return buf->size ? buf->size-1 : (str ? strlen(str) : 0);
+    return (buf && buf->size) ? buf->size-1 : (str ? strlen(str) : 0);
 }
 
 
-void WvString::newbuf(size_t size)
+void WvFastString::newbuf(size_t size)
 {
     buf = alloc(size);
     buf->links = 1;
@@ -127,43 +159,85 @@ WvString &WvString::unique()
 }
 
 
-WvString& WvString::operator= (const WvString &s2)
+WvFastString &WvFastString::operator= (const WvFastString &s2)
 {
     if (s2.buf == buf && s2.str == str)
-	return *this;
+	return *this; // no change
+    else if (!s2.buf)
+    {
+	// we can avoid making a copy here, if it's just two WvFastString
+	// objects copying around.
+    	unlink();
+	buf = NULL;
+	str = s2.str;
+    }
+    else
+    {
+	// just a normal string link
+	unlink();
+	link(s2.buf, s2.str);
+    }
+    return *this;
+}
+
+
+WvString &WvString::operator= (int i)
+{
     unlink();
-    link(s2.buf, s2.str);
+    newbuf(32);
+    sprintf(str, "%d", i);
+    return *this;
+}
+
+
+WvString &WvString::operator= (const WvFastString &s2)
+{
+    if (s2.buf == buf && s2.str == str)
+	return *this; // no change
+    else if (!s2.buf)
+    {
+	// assigning from a non-copied string - copy data if needed.
+	unlink();
+	link(&nullbuf, s2.str);
+	unique();
+    }
+    else
+    {
+	// just a normal string link
+	unlink();
+	link(s2.buf, s2.str);
+    }
     return *this;
 }
 
 
 // string comparison
-bool WvString::operator== (const WvString &s2) const
+bool WvFastString::operator== (WvStringParm s2) const
 {
     return (str==s2.str) || (str && s2.str && !strcmp(str, s2.str));
 }
 
 
-bool WvString::operator!= (const WvString &s2) const
+bool WvFastString::operator!= (WvStringParm s2) const
 {
     return (str!=s2.str) && (!str || !s2.str || strcmp(str, s2.str));
 }
 
 
-bool WvString::operator== (const char *s2) const
+bool WvFastString::operator== (const char *s2) const
 {
     return (str==s2) || (str && s2 && !strcmp(str, s2));
 }
 
 
-bool WvString::operator!= (const char *s2) const
+bool WvFastString::operator!= (const char *s2) const
 {
     return (str!=s2) && (!str || !s2 || strcmp(str, s2));
 }
 
 
 // not operator is 'true' if string is empty
-bool WvString::operator! () const
+bool WvFastString::operator! () const
 {
     return !str || !str[0];
 }
@@ -177,7 +251,8 @@ bool WvString::operator! () const
 //        "%015.5s"        true      15         5    "s"
 // and so on.  On entry, cptr should _always_ point at a percent '%' char.
 //
-static char *pparse(char *cptr, bool &zeropad, int &justify, int &maxlen)
+static const char *pparse(const char *cptr,
+			  bool &zeropad, int &justify, int &maxlen)
 {
     assert(*cptr == '%');
     cptr++;
@@ -214,14 +289,17 @@ static char *pparse(char *cptr, bool &zeropad, int &justify, int &maxlen)
 // This function is usually called from some other function which allocates
 // the array automatically.
 //
-void WvString::do_format(WvString &output, char *format, const WvString **a)
+void WvFastString::do_format(WvFastString &output, const char *format,
+			     const WvFastString * const *a)
 {
-    static WvString blank("(nil)");
-    const WvString **aptr = a;
-    char *iptr = format, *optr;
+    static const char blank[] = "(nil)";
+    const WvFastString * const *argptr = a;
+    const char *iptr = format, *arg;
+    char *optr;
     int total = 0, aplen, ladd, justify, maxlen;
     bool zeropad;
     
+    // count the number of bytes we'll need
     while (*iptr)
     {
 	if (*iptr != '%')
@@ -244,21 +322,24 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 
 	if (*iptr++ == 's')
 	{
-	    if (!*aptr || !(const char *)**aptr)
-		*aptr = &blank;
-	    ladd = _max(abs(justify), strlen(**aptr));
+	    if (!*argptr || !(**argptr).cstr())
+		arg = blank;
+	    else
+		arg = **argptr;
+	    ladd = _max(abs(justify), strlen(arg));
 	    if (maxlen && maxlen < ladd)
 		ladd = maxlen;
 	    total += ladd;
-	    aptr++;
+	    argptr++;
 	}
     }
     
     output.setsize(total + 1);
     
+    // actually render the final string
     iptr = format;
-    optr = output.edit();
-    aptr = a;
+    optr = output.str;
+    argptr = a;
     while (*iptr)
     {
 	if (*iptr != '%')
@@ -267,7 +348,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	    continue;
 	}
 	
-	// otherwise, iptr is at a percent expression
+	// otherwise, iptr is at a "percent expression"
 	iptr = pparse(iptr, zeropad, justify, maxlen);
 	if (*iptr == '%')
 	{
@@ -276,7 +357,11 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	}
 	if (*iptr++ == 's')
 	{
-	    aplen = strlen(**aptr);
+	    if (!*argptr || !(**argptr).cstr())
+		arg = blank;
+	    else
+		arg = **argptr;
+	    aplen = strlen(arg);
 	    if (maxlen && maxlen < aplen)
 		aplen = maxlen;
 	
@@ -289,7 +374,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 		optr += justify-aplen;
 	    }
 	
-	    strncpy(optr, **aptr, aplen);
+	    strncpy(optr, arg, aplen);
 	    optr += aplen;
 	
 	    if (justify < 0 && -justify > aplen)
@@ -301,8 +386,10 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 		optr += -justify - aplen;
 	    }
 	    
-	    aptr++;
+	    argptr++;
 	}
     }
     *optr = 0;
 }
+
+

@@ -31,7 +31,7 @@ struct Intstr
     int i;
     WvString s;
     
-    Intstr(int _i, const WvString &_s)
+    Intstr(int _i, WvStringParm _s)
         { i = _i; s = _s; }
 };
 

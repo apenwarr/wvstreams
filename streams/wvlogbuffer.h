@@ -22,7 +22,7 @@ public:
 	WvLog::LogLevel level;
 	WvString source, message;
 	
-	Msg(WvLog::LogLevel _level, const WvString &_source);
+	Msg(WvLog::LogLevel _level, WvStringParm _source);
     };
     
     DeclareWvList(Msg);

@@ -24,6 +24,7 @@
 #include "wvstring.h"
 
 WvString t1, t2, t3, t4, t5, t6;
+char globuf[1024];
 
 /* this function is mainly for looking at the assembly output */
 void format_test()
@@ -36,6 +37,17 @@ WvString test1(WvString s)
 {
     s.edit()[0]++;
     return s;
+}
+
+
+void fptestfunc(WvStringParm fp1, WvStringParm fpf1,
+		WvStringParm fp2, WvStringParm fpf2)
+{
+    WvString a(fp1), b(fpf1), c(fp2), d(fpf2);
+    
+    printf("before: %s/%s/%s/%s\n", a.cstr(), b.cstr(), c.cstr(), d.cstr());
+    strcpy(globuf, "ZOT!");
+    printf("after: %s/%s/%s/%s\n", a.cstr(), b.cstr(), c.cstr(), d.cstr());
 }
 
 
@@ -111,6 +123,17 @@ int main()
     printf("null: %d %d %d %d %d\n", n1==n6, !n1, !n6, n1==NULL, n6==NULL);
     WvString ns("%s %s %s %s %s %s\n", n1, n2, n3, n4, n5, n6);
     printf("null: %s\n", ns.cstr());
+    
+    // fast parameter passing test
+    strcpy(globuf, "TestOne");
+    WvString fp1(globuf);
+    WvFastString fpf1(globuf);
+    strcpy(globuf, "Bonk2");
+    WvString fp2(globuf);
+    WvFastString fpf2(globuf);
+    printf("%s/%s/%s/%s\n", fp1.cstr(), fpf1.cstr(), fp2.cstr(), fpf2.cstr());
+    fptestfunc(fp1, fpf1, fp2, fpf2);
+    fptestfunc(fp1, fpf1, fp2, fpf2);
     
     return 0;
 }

@@ -60,7 +60,7 @@ public:
     /**
      * Resolve the hostname, then connect a new socket
      */
-    WvTCPConn(const WvString &_hostname, __u16 _port = 0);
+    WvTCPConn(WvStringParm _hostname, __u16 _port = 0);
 
     /**
      * Destructor - rarely do you need to call this - close()

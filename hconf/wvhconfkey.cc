@@ -18,7 +18,7 @@ WvHConfKey::WvHConfKey()
 
 // string-style hierarchical key (separated by '/' characters)
 // ...maybe I'll extend this later to support old-style [section]entry syntax.
-WvHConfKey::WvHConfKey(const WvString &key)
+WvHConfKey::WvHConfKey(WvStringParm key)
 {
     split(key, "/");
     if (count() == 1 && !*first())
@@ -37,7 +37,7 @@ WvHConfKey::WvHConfKey(const char *key)
 
 
 // old-style 2-level key: /section/entry.
-WvHConfKey::WvHConfKey(const WvString &section, const WvString &entry)
+WvHConfKey::WvHConfKey(WvStringParm section, WvStringParm entry)
 {
     append(new WvString(section), true);
     append(new WvString(entry), true);

@@ -39,7 +39,7 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
 }
 
 
-WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
+WvTCPConn::WvTCPConn(WvStringParm _hostname, __u16 _port)
 	: hostname(_hostname)
 {
     struct servent* serv;

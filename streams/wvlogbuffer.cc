@@ -10,7 +10,7 @@
 #include "strutils.h"
 #include <time.h>
 
-WvLogBuffer::Msg::Msg(WvLog::LogLevel _level, const WvString &_source)
+WvLogBuffer::Msg::Msg(WvLog::LogLevel _level, WvStringParm _source)
 		: level(_level), source(_source)
 {
     time(&timestamp);

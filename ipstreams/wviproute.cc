@@ -17,9 +17,9 @@
 
 
 
-WvIPRoute::WvIPRoute(const WvString &_ifc, const WvIPNet &_net,
+WvIPRoute::WvIPRoute(WvStringParm _ifc, const WvIPNet &_net,
 		     const WvIPAddr &_gate, int _metric,
-		     const WvString &_table)
+		     WvStringParm _table)
 	: ifc(_ifc), ip(_net), gateway(_gate), table(_table)
 {
     ifc.unique();
