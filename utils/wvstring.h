@@ -205,7 +205,7 @@ public:
     /**
      * the not operator is 'true' if string is empty
      */
-    bool operator! ();
+    bool operator! () const;
 
     // pointer arithmetic
     const char *operator+ (int i) const
