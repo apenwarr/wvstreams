@@ -7,6 +7,7 @@
  */
 #include "wviproute.h"
 #include "wvstream.h"
+#include "wvinterface.h"
 #include <net/route.h>
 #include <ctype.h>
 
@@ -18,12 +19,13 @@
 
 
 WvIPRoute::WvIPRoute(const WvString &_ifc, const WvString &_addr,
-		     const WvString &_mask,const WvString &_gate)
+		     const WvString &_mask,const WvString &_gate, 
+		     int _metric)
 {
     __u32 addr, mask, gate;
     
     ifc = _ifc;
-    ifc.edit();
+    ifc.unique();
     
     addr = strtoul(_addr, NULL, 16);
     mask = strtoul(_mask, NULL, 16);
@@ -31,12 +33,32 @@ WvIPRoute::WvIPRoute(const WvString &_ifc, const WvString &_addr,
     
     gate = strtoul(_gate, NULL, 16);
     gateway = WvIPAddr(gate);
+    
+    metric = _metric;
+}
+
+
+WvIPRoute::WvIPRoute(const WvString &_ifc, const WvIPNet &_net,
+		     const WvIPAddr &_gate, int _metric)
+	: ifc(_ifc), ip(_net), gateway(_gate)
+{
+    ifc.unique();
+    metric = _metric;
 }
 
 
 WvIPRoute::operator WvString() const
 {
-    return WvString("%s via %s on interface %s", ip, gateway, ifc);
+    return WvString("%s via %s %s metric %s",
+		    ip, ifc, gateway, metric);
+}
+
+
+bool WvIPRoute::operator== (const WvIPRoute &r2) const
+{
+    return (ip.network() == r2.ip.network() && ip.netmask() == r2.ip.netmask()
+	    && gateway == r2.gateway 
+  	    && ifc == r2.ifc && metric == r2.metric);
 }
 
 
@@ -66,11 +88,16 @@ static char *next_col(char *str)
 /////////////////////////////////////// WvIPRouteList
 
 
+WvIPRouteList::WvIPRouteList() : log("Routing Table")
+{
+    // nothing else to do
+}
 
-void WvIPRouteList::setup()
+
+void WvIPRouteList::get_kernel()
 {
     WvFile kinfo("/proc/net/route", O_RDONLY);
-    char *line, *addr, *gate, *mask, *flags, *end;
+    char *line, *addr, *gate, *mask, *flags, *metric, *end;
     bool last_white;
     
     // skip header
@@ -83,9 +110,10 @@ void WvIPRouteList::setup()
 	addr = next_col(line);
 	gate = next_col(addr);
 	flags = next_col(gate);
-	mask = next_col(next_col(next_col(next_col(flags))));
+	metric = next_col(next_col(next_col(flags)));
+	mask = next_col(metric);
 
-	// routes appear even when not "up" -- strange.
+	// routes appear in the list even when not "up" -- strange.
 	if (! (strtoul(flags, NULL, 16) & RTF_UP))
 	    continue;
 	
@@ -93,7 +121,45 @@ void WvIPRouteList::setup()
 	end = find_space(line);
 	*end = 0;
 	
-	append(new WvIPRoute(line, addr, mask, gate), true);
+	append(new WvIPRoute(line, addr, mask, gate, atoi(metric)), true);
+    }
+}
+
+
+// we use an n-squared algorithm here, for no better reason than readability.
+void WvIPRouteList::set_kernel()
+{
+    WvIPRouteList old_kern;
+    old_kern.get_kernel();
+    
+    Iter oi(old_kern), ni(*this);
+
+    // first, add any brand new routes.
+    for (ni.rewind(); ni.next(); )
+    {
+	for (oi.rewind(); oi.next(); )
+	    if (oi() == ni()) break;
+	
+	if (!oi.cur()) // hit end of list without finding a match
+	{
+	    WvInterface i(ni().ifc);
+	    log("Add %s\n", ni());
+	    i.addroute(ni().ip, ni().gateway, ni().metric);
+	}
+    }
+
+    // now delete outdated routes.
+    for (oi.rewind(); oi.next(); )
+    {
+	for (ni.rewind(); ni.next(); )
+	    if (ni() == oi()) break;
+	
+	if (!ni.cur()) // hit end of list without finding a match
+	{
+	    WvInterface i(oi().ifc);
+	    log("Del %s\n", oi());
+	    i.delroute(oi().ip, oi().gateway, oi().metric);
+	}
     }
 }
 
