@@ -146,6 +146,8 @@ public:
     bool alarm_was_ticking;
     
     
+    /** Basic constructor for just a do-nothing WvStream */
+    WvStream();
     virtual ~WvStream();
 
     /**
@@ -586,9 +588,6 @@ protected:
     
     WvTask *task;
 
-    /** plain internal constructor to just set up internal variables. */
-    WvStream();
-    
     /** Prevent accidental copying of WvStreams. */
     WvStream(const WvStream &s) : callfunc(0), closecb_func(0) { }
     WvStream& operator= (const WvStream &s) { return *this; }

@@ -102,7 +102,11 @@ public:
      */
     UniConfRoot(WvStringParm moniker, bool refresh = true)
         : UniConf(this), watchroot(NULL)
-        { mounts.mount("/", moniker, refresh); }
+    {
+        mounts.mount("/", moniker, refresh);
+        mounts.setcallback(wvcallback(UniConfGenCallback, *this,
+            UniConfRoot::gen_callback), NULL);
+    }
 
     /** 
      * Creates a new UniConf tree and mounts the given generator at the root.

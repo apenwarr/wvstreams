@@ -6,7 +6,6 @@
  * UniConfDaemon.
  */
 #include "uniclientgen.h"
-#include "uniclientconn.h"
 #include "wvtclstring.h"
 #include "wvtcp.h"
 #include "wvunixsocket.h"
@@ -14,6 +13,7 @@
 #include "wvresolver.h"
 #include "wvmoniker.h"
 #include "wvsslstream.h"
+#include "wvistreamlist.h"
 
 static UniConfGen *unixcreator(WvStringParm s, IObject *, void *)
 {
@@ -65,18 +65,25 @@ static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 /***** UniClientGen *****/
 
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
-    conn(NULL), log(WvString("UniClientGen to %s",
-    dst.isnull() ? *stream->src() : WvString(dst))),
+    conn(NULL),
+    log(WvString("UniClientGen to %s", dst.isnull() ? *stream->src() :
+                WvString(dst))),
     cmdinprogress(false), cmdsuccess(false)
 {
     conn = new UniClientConn(stream, dst);
     conn->setcallback(wvcallback(WvStreamCallback, *this,
-        UniClientGen::conncallback), NULL);
+                UniClientGen::conncallback), NULL);
+
+    deltastream.setcallback(wvcallback(WvStreamCallback, *this, 
+                UniClientGen::deltacb), 0);
+    WvIStreamList::globallist.append(&deltastream, false);
 }
 
 
 UniClientGen::~UniClientGen()
 {
+    WvIStreamList::globallist.unlink(&deltastream);
+
     conn->writecmd(UniClientConn::REQ_QUIT, "");
     delete conn;
 }
@@ -114,12 +121,15 @@ WvString UniClientGen::get(const UniConfKey &key)
 void UniClientGen::set(const UniConfKey &key, WvStringParm newvalue)
 {
     //set_queue.append(new WvString(key), true);
+    hold_delta();
 
     if (newvalue.isnull())
         conn->writecmd(UniClientConn::REQ_REMOVE, wvtcl_escape(key));
     else
         conn->writecmd(UniClientConn::REQ_SET,
             WvString("%s %s", wvtcl_escape(key), wvtcl_escape(newvalue)));
+
+    unhold_delta();
 }
 
 
@@ -247,7 +257,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
-                delta(key, value);
+                clientdelta(key, value);
             }   
 
         default:
@@ -279,6 +289,24 @@ bool UniClientGen::do_select()
     return cmdsuccess;
 }
 
+
+void UniClientGen::clientdelta(const UniConfKey &key, WvStringParm value)
+{
+    deltas.append(new UniConfPair(key, value), true);
+    deltastream.alarm(0);
+}
+
+void UniClientGen::deltacb(WvStream &, void *)
+{
+    hold_delta();
+    UniConfPairList::Iter i(deltas);
+
+    for (i.rewind(); i.next(); )
+        delta(i->key(), i->value());
+
+    deltas.zap();
+    unhold_delta();
+}
 
 
 /***** UniClientGen::RemoteKeyIter *****/

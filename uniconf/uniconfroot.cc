@@ -139,8 +139,6 @@ void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value,
     // look for watches on descendents of key if node was deleted
     if (value.isnull())
         deletioncheck(node, key);
-    else
-        check(node, key, 0);
     
 done:
     unhold_delta();
