@@ -28,15 +28,14 @@ void UniConfDaemonConn::close()
 
 void UniConfDaemonConn::addcallback()
 {
-    root.add_callback(UniConfCallback(this,
-            &UniConfDaemonConn::deltacallback), true);
+    root.add_callback(this, UniConfCallback(this,
+		    &UniConfDaemonConn::deltacallback), true);
 }
 
 
 void UniConfDaemonConn::delcallback()
 {
-    root.del_callback(UniConfCallback(this,
-            &UniConfDaemonConn::deltacallback), true);
+    root.del_callback(this, true);
 }
 
 

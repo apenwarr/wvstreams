@@ -115,17 +115,16 @@ UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 }
 
 
-void UniConf::add_callback(const UniConfCallback &callback,
+void UniConf::add_callback(void *cookie, const UniConfCallback &callback,
                            bool recurse) const
 {
-    xroot->add_callback(xfullkey, callback, recurse);
+    xroot->add_callback(cookie, xfullkey, callback, recurse);
 }
 
 
-void UniConf::del_callback(const UniConfCallback &callback,
-                           bool recurse) const
+void UniConf::del_callback(void *cookie, bool recurse) const
 {
-    xroot->del_callback(xfullkey, callback, recurse);
+    xroot->del_callback(cookie, xfullkey, recurse);
 }
 
 

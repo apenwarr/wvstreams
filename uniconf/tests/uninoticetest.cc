@@ -4,9 +4,9 @@
 
 /**
  * This test is mostly for using with the uniconf daemon to see what
- * recursive/nonrecursive notifications do under different settings. Just netcat
- * the uniconf server and run sets / deletes by hand and see what notifications
- * pop up.
+ * recursive/nonrecursive notifications do under different settings. Just
+ * netcat the uniconf server and run sets / deletes by hand and see what
+ * notifications pop up.
  *
  * Fun for the whole family!
  */
@@ -38,8 +38,8 @@ int main()
 
     foo thing;
 
-    r["heh"].add_callback(BoundCallback<UniConfCallback, int>
-        (&thing, &foo::cb, 3));
+    r["heh"].add_callback(0,
+		  BoundCallback<UniConfCallback, int>(&thing, &foo::cb, 3));
 
  
     WvStreamList l;

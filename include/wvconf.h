@@ -67,13 +67,14 @@ class WvConfCallbackInfo
 {
 public:
     WvConfCallback callback;
-    void *userdata;
+    void *userdata, *cookie;
     const WvString section, entry;
     
     WvConfCallbackInfo(WvConfCallback _callback, void *_userdata,
-		       WvStringParm _section, WvStringParm _entry)
+		       WvStringParm _section, WvStringParm _entry,
+		       void *_cookie)
 	: callback(_callback), section(_section), entry(_entry)
-        { userdata = _userdata; }
+        { userdata = _userdata; cookie = _cookie; }
 };
 
 
@@ -133,10 +134,12 @@ public:
     void delete_section(WvStringParm section);
 
     // section and entry may be blank -- that means _all_ sections/entries!
+    // the 'cookie' is a random value that must be unique between all
+    // registered callbacks on a particular key.  (Hint: maybe you should
+    // use your 'this' pointer.)
     void add_callback(WvConfCallback callback, void *userdata,
-		      WvStringParm section, WvStringParm entry);
-    void del_callback(WvConfCallback callback, void *userdata,
-		      WvStringParm section, WvStringParm entry);
+		      WvStringParm section, WvStringParm entry, void *cookie);
+    void del_callback(WvStringParm section, WvStringParm entry, void *cookie);
     void run_callbacks(WvStringParm section, WvStringParm entry,
 		       WvStringParm oldvalue, WvStringParm newvalue);
     void run_all_callbacks();
@@ -151,16 +154,17 @@ public:
 		 WvStringParm section, WvStringParm entry,
 		 WvStringParm oldval, WvStringParm newval);
 
-    void add_addname(WvStringList *list, WvStringParm section, WvStringParm entry)
+    void add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
 	{ add_callback(WvConfCallback(this, &WvConf::addname),
-		       list, section, entry); }
+		       list, sect, ent, list); }
+    void del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
+	{ del_callback(sect, ent, list); }
     
     void add_setbool(bool *b, WvStringParm section, WvStringParm entry)
         { add_callback(WvConfCallback(this, &WvConf::setbool),
-		       b, section, entry); }
+		       b, section, entry, b); }
     void del_setbool(bool *b, WvStringParm section, WvStringParm entry)
-        { del_callback(WvConfCallback(this, &WvConf::setbool),
-		       b, section, entry); }
+        { del_callback(section, entry, b); }
 		    
     void load_file() // append the contents of the real config file
         { load_file(filename); }

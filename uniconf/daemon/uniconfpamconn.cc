@@ -30,15 +30,14 @@ UniConfPamConn::UniConfPamConn(WvStream *_s, const UniConf &_root) :
 
 void UniConfPamConn::addcallback()
 {
-    root.add_callback(UniConfCallback(this,
+    root.add_callback(this, UniConfCallback(this,
             &UniConfPamConn::deltacallback), true);
 }
 
 
 void UniConfPamConn::delcallback()
 {
-    root.del_callback(UniConfCallback(this,
-            &UniConfPamConn::deltacallback), true);
+    root.del_callback(this, true);
 }
 
 

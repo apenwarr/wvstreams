@@ -272,14 +272,13 @@ public:
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
      */
-    void add_callback(const UniConfCallback &callback,
-        bool recurse = true) const;
+    void add_callback(void *cookie, const UniConfCallback &callback,
+		      bool recurse = true) const;
     
     /**
      * Cancels notification requested using add_callback().
      */
-    void del_callback(const UniConfCallback &callback,
-        bool recurse = true) const;
+    void del_callback(void *cookie, bool recurse = true) const;
 
     /**
      * Requests notification when any of the keys covered by the

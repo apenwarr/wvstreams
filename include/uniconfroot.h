@@ -15,14 +15,15 @@
  * @internal
  * Holds information about a single watch.
  */
-class UniWatch
+class UniWatchInfo
 {
+public:
+    void *cookie;
     bool recurse;
     UniConfCallback cb;
 
-public:
-    UniWatch(bool _recurse, UniConfCallback _cb)
-        : recurse(_recurse), cb(_cb) { }
+    UniWatchInfo(void *_cookie, bool _recurse, UniConfCallback _cb)
+        : cookie(_cookie), recurse(_recurse), cb(_cb) { }
 
     /** Returns watch recursion */
     bool recursive()
@@ -33,27 +34,24 @@ public:
         { cb(cfg, key); }
 
     /** Equality test. */
-    bool operator== (const UniWatch &other) const
-    {
-        return recurse == other.recurse &&
-            cb == other.cb;
-    }
+    bool operator== (const UniWatchInfo &other) const
+        { return other.cookie == cookie; }
 };
-DeclareWvList(UniWatch);
+DeclareWvList(UniWatchInfo);
 
 
 /**
  * @internal
  * Data structure to track requested watches.
  */
-class UniWatchTree : public UniConfTree<UniWatchTree>
+class UniWatchInfoTree : public UniConfTree<UniWatchInfoTree>
 {
 public:
-    UniWatchList watches;
+    UniWatchInfoList watches;
     
-    UniWatchTree(UniWatchTree *parent,
-        const UniConfKey &key = UniConfKey::EMPTY)
-        : UniConfTree<UniWatchTree>(parent, key) { }
+    UniWatchInfoTree(UniWatchInfoTree *parent,
+		 const UniConfKey &key = UniConfKey::EMPTY)
+        : UniConfTree<UniWatchInfoTree>(parent, key) { }
 
     /** Returns true if the node should not be pruned. */
     bool isessential()
@@ -77,7 +75,7 @@ class UniConfRoot : public UniConf
     friend class UniConf;
     friend class UniConf::Iter;
 
-    UniWatchTree watchroot;
+    UniWatchInfoTree watchroot;
     
     /** undefined. */
     UniConfRoot(const UniConfRoot &other);
@@ -120,14 +118,14 @@ public:
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
      */
-    void add_callback(const UniConfKey &key, const UniConfCallback &callback,
-                      bool recurse = true);
+    void add_callback(void *cookie, const UniConfKey &key,
+		      const UniConfCallback &callback, bool recurse = true);
     
     /**
      * Cancels notification requested using add_callback().
      */
-    void del_callback(const UniConfKey &key, const UniConfCallback &callback,
-                      bool recurse = true);
+    void del_callback(void *cookie, const UniConfKey &key,
+		      bool recurse = true);
 
     /**
      * Requests notification when any of the keys covered by the
@@ -147,17 +145,17 @@ private:
      *   key - the key that changed
      *   segleft - the number of segments left in the key (possibly negative)
      */
-    void check(UniWatchTree *node, const UniConfKey &key, int segleft);
+    void check(UniWatchInfoTree *node, const UniConfKey &key, int segleft);
 
     /**
      * Recursively checks a branch of the watch tree for notification candidates.
      *   node - the current node
      *   key - the key that changed
      */
-    void deletioncheck(UniWatchTree *node, const UniConfKey &key);
+    void deletioncheck(UniWatchInfoTree *node, const UniConfKey &key);
 
     /** Prunes a branch of the watch tree. */
-    void prune(UniWatchTree *node);
+    void prune(UniWatchInfoTree *node);
     
     /** Internal callback for setbool style notifications. */
     void setbool_callback(bool *flag, const UniConf &, const UniConfKey &)
