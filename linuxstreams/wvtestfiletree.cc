@@ -134,7 +134,7 @@ bool WvTestFileTree::record_fileinfo(WvStringParm filename, bool set_md5)
     info["wvstats/acl"].set(get_acl_short_form(filename));
 
     if (S_ISDIR(st.st_mode))
-	info["wvstats/size"].setint(0);
+	info["wvstats/size"].setint(st.st_size);
     else if (S_ISLNK(st.st_mode))
     {
 	info["wvstats/size"].setint(st.st_size);
