@@ -6,22 +6,17 @@ XPATH=$(TOPDIR)/src/wvstreams/utils $(TOPDIR)/src/wvstreams/streams \
       $(TOPDIR)/src/wvstreams/configfile $(TOPDIR)/src/wvstreams/include \
       $(TOPDIR)/src/weaver/ $(TOPDIR)/src/ $(TOPDIR)/src/wvstreams/uniconf
 
+LIBS=-L$(TOPDIR)/src/wvstreams
+
 ifeq ($(XOR),)
   XOR=0
 endif
 CXXFLAGS += -DXOR=$(XOR)
 
-dyndnsd-LIBS += -lcrypto
-
 all: uniconfdaemon
 
-uniconfdaemon: uniconfdaemon.o daemonmain.o uniconfdaemonconn.o \
-	 /lib/libwvstreams.so
-#	 $(TOPDIR)/src/tunnelv/tunnelv.a \
-#         $(TOPDIR)/src/wvstreams/libwvcrypto.a \
-#         $(TOPDIR)/src/wvstreams/libwvstreams.a
-
-convert_owners: convert_owners.o ../wvstreams/libwvstreams.a
+uniconfdaemon-LIBS+=-lwvstreams
+uniconfdaemon: uniconfdaemon.o daemonmain.o uniconfdaemonconn.o
 
 clean:
 	rm -f core uniconfdaemon *.o

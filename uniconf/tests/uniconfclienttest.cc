@@ -40,7 +40,6 @@ void wvconcallback(WvStream &s, void *userdata)
 
 int main(int argc, char **argv)
 {
-    UniConf mainconf;
 
     UniConfConnFactory *fctry = NULL;
     
@@ -49,89 +48,124 @@ int main(int argc, char **argv)
         fctry = new UniConfTCPFactory(addr);
 
         // Test data setting / retrieval from a mount at /
+
+        // just test getting a few keys
         {
+            UniConf mainconf;
             UniConf *mounted = &mainconf["/"];
             mounted->generator = new UniConfClient(mounted, fctry);//conn);
             mounted->generator->load();     // This should do nothing.
 
-            // just test getting a few keys
-            {
-                wvcon->print("=========================\n");
-                wvcon->print("|   TEST GETTING KEYS   |\n");
-                wvcon->print("=========================\n\n");
-                WvString key("/chickens/bob");
-                WvString result("goof");
-                UniConf *narf = &mainconf[key];
-                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
-                key = "/wacky\ntest\nsection/  goose  ";
-                result = "bluebayou";
-                narf = &mainconf[key];
-                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
-                key = "/this key should not exist/ bcscso ";
-                narf = &mainconf[key];
-                result = WvString();
-                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
-            }
-
-            // Test getting & setting a key
-            {
-                wvcon->print("\n=========================\n");
-                wvcon->print("|   TEST SETTING KEYS   |\n");
-                wvcon->print("=========================\n\n");
-                WvString key("/chickens/bob");
-                WvString result("goof");
-                UniConf *narf = &mainconf[key];
-                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
-                result = "Well isn't this just DANDY!";
-                narf->set(result);
-                wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
-                result = "goof";
-                narf->set(wvtcl_escape(result));
-                wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
-            }
-
-            // Test a normal iterator
-            {
-                wvcon->print("\n=============================\n");
-                wvcon->print("|   TEST NORMAL ITERATORS   |\n");
-                wvcon->print("=============================\n\n");
-                UniConf *nerf = &mainconf["/"];
-                UniConf::Iter i(*nerf);
-                for (i.rewind(); i.next();)
-                {
-                    wvcon->print("Key:%s has value:%s.\n", i->name, *i);
-                }
-            }
-
-            // Test a recursive iterator
-            {
-                wvcon->print("\n================================\n");
-                wvcon->print("|   TEST RECURSIVE ITERATORS   |\n");
-                wvcon->print("================================\n\n");
-                UniConf *nerf = &mainconf["/"];
-                UniConf::RecursiveIter i(*nerf);
-                for (i.rewind(); i._next();)
-                {
-                    wvcon->print("Key:%s has value:%s.\n", i->gen_full_key(), *i);
-                }
-            }
-
-            // Test an XIter
-            {
-                wvcon->print("\n========================\n");
-                wvcon->print("|   TEST X ITERATORS   |\n");
-                wvcon->print("========================\n\n");
-                UniConf *nerf = &mainconf["/"];
-                UniConf::XIter i(*nerf, "/");
-                for (i.rewind(); i._next();)
-                {
-                    wvcon->print("Key:%s has value:%s.\n", i->name, *i);
-                }
-            }
-
-            mounted->save();
+            wvcon->print("=========================\n");
+            wvcon->print("|   TEST GETTING KEYS   |\n");
+            wvcon->print("=========================\n\n");
+            WvString key("/chickens/bob");
+            WvString result("goof");
+            UniConf *narf = &mainconf[key];
+            wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            key = "/wacky\ntest\nsection/  goose  ";
+            result = "bluebayou";
+            narf = &mainconf[key];
+            wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            key = "/this key should not exist/ bcscso ";
+            narf = &mainconf[key];
+            result = WvString();
+            wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
         }
 
+        // Test getting a section and then a key
+        {
+            UniConf mainconf;
+            UniConf *mounted = &mainconf["/"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            wvcon->print("=======================================\n");
+            wvcon->print("|   TEST GETTING KEYS FROM A SECTION  |\n");
+            wvcon->print("=======================================\n\n");
+            WvString key("/chickens");
+            UniConf *neep = &mainconf[key];
+            WvString subkey("bob");
+            WvString result("goof");
+            UniConf *narf = &neep->get(subkey);
+            wvcon->print("\"%s/%s\" should be:%s.Is it?  %s.\n", key, subkey, result, (result == *narf ? "Yes" : "No"));
+        }
+
+        // Test getting & setting a key
+        {
+            UniConf mainconf;
+            UniConf *mounted = &mainconf["/"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            wvcon->print("\n=========================\n");
+            wvcon->print("|   TEST SETTING KEYS   |\n");
+            wvcon->print("=========================\n\n");
+            WvString key("/chickens/bob");
+            WvString result("goof");
+            UniConf *narf = &mainconf[key];
+            wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            result = "Well isn't this just DANDY!";
+            narf->set(result);
+            wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            result = "goof";
+            narf->set(wvtcl_escape(result));
+            wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+        }
+
+        // Test a normal iterator
+        {
+            UniConf mainconf;
+            UniConf *mounted = &mainconf["/"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            wvcon->print("\n=============================\n");
+            wvcon->print("|   TEST NORMAL ITERATORS   |\n");
+            wvcon->print("=============================\n\n");
+            UniConf *nerf = &mainconf["/"];
+            UniConf::Iter i(*nerf);
+            for (i.rewind(); i.next();)
+            {
+                wvcon->print("Key:%s has value:%s.\n", i->name, *i);
+            }
+        }
+
+        // Test a recursive iterator
+        {
+            UniConf mainconf;
+            UniConf *mounted = &mainconf["/"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            wvcon->print("\n================================\n");
+            wvcon->print("|   TEST RECURSIVE ITERATORS   |\n");
+            wvcon->print("================================\n\n");
+            UniConf *nerf = &mainconf["/"];
+            UniConf::RecursiveIter i(*nerf);
+            for (i.rewind(); i._next();)
+            {
+                wvcon->print("Key:%s has value:%s.\n", i->gen_full_key(), *i);
+            }
+        }
+
+        // Test an XIter
+        {
+            UniConf mainconf;
+            UniConf *mounted = &mainconf["/"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            wvcon->print("\n========================\n");
+            wvcon->print("|   TEST X ITERATORS   |\n");
+            wvcon->print("========================\n\n");
+            UniConf *nerf = &mainconf["/"];
+            UniConf::XIter i(*nerf, "/");
+            for (i.rewind(); i._next();)
+            {
+                wvcon->print("Key:%s has value:%s.\n", i->name, *i);
+            }
+        }
     }
     return 0;
 }
