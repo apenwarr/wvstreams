@@ -13,7 +13,8 @@ const WvString UniConfDaemon::DEFAULT_CONFIG_FILE = "uniconf.ini";
 // Daemon
 
 UniConfDaemon::UniConfDaemon() : 
-    want_to_die(false), log("UniConfDaemon")
+    want_to_die(false), log("UniConfDaemon"), events(NULL),
+    keymodified(false)
 {
     l = new WvStreamList;
 }
@@ -39,6 +40,30 @@ UniConf *UniConfDaemon::domount(WvString mode, WvString file, WvString mp)
     }
     else
         return NULL;
+}
+
+void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
+{
+    // All the following is irrelevant if we have a null pointer, so check
+    // it first.
+    if (!userdata)
+        return;
+    
+    WvStream *s = (WvStream *)userdata;
+    // Ok, now compile the complete keyname.
+    WvString keyname("/%s", conf.name);
+    UniConf *f = conf.parent;
+    while (f)
+    {
+        if (f->name.len() > 0)
+            keyname = WvString("/%s%s", f->name, keyname);
+        f = f->parent;
+    }
+    // now notify.
+    log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
+    s->write(WvString("FGET %s\n", keyname));
+    events->del(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), s, keyname);
+
 }
 
 void UniConfDaemon::handlerequest(WvStream &s, void *userdata)
@@ -83,17 +108,19 @@ void UniConfDaemon::handlerequest(WvStream &s, void *userdata)
 
             if (*cmd == "get") // return the specified value
             {
-                WvString response("RETN %s %s\n", wvtcl_escape(*key), wvtcl_escape(mainconf[*key]));
+                WvString response("RETN %s %s\n", wvtcl_escape(*key), wvtcl_escape(mainconf.get(*key)));
                 s.print(response);
-                delete cmd, key;
+                delete cmd;
+                events->add(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), &s, *key);
                 cmd = key = 0;
             }
             else if (*cmd == "set") // set the specified value
             {
                 WvString *newvalue = wvtcl_getword(fromline);
                 mainconf[*key] = *newvalue;
-                delete cmd, key;
+                delete cmd;
                 cmd = key = 0;
+                keymodified = true;
             }
             else
             {
@@ -113,9 +140,7 @@ void UniConfDaemon::handlerequest(WvStream &s, void *userdata)
 
 }
 
-// Add the specified stream to our stream list, after wrapping it
-// as a UniConfConn(ection), and setting it's queuemin value to the
-// OPCODE_LENGTH
+// Add the specified stream to our stream list
 void UniConfDaemon::addstream(WvStream *s)
 {
     WvBuffer *newbuf = new WvBuffer;
@@ -126,12 +151,13 @@ void UniConfDaemon::addstream(WvStream *s)
 // Daemon looks after running
 void UniConfDaemon::run()
 {
-    WvBuffer *newbuf = new WvBuffer; 
+    WvBuffer *newbuf = new WvBuffer;
     // Mount our initial config file.
     // FIXME:  When we decide to mount configurations from various locations,
     // the domount command can be used, combined with data read in from the
     // configuration file which tells us where to find information.
     domount("ini", DEFAULT_CONFIG_FILE, "/");
+    events = new UniConfEvents(mainconf);
 
     // Make sure that everything was cleaned up nicely before.
     system("mkdir -p /tmp/uniconf");
@@ -163,8 +189,13 @@ void UniConfDaemon::run()
     log(WvLog::Debug2, "Uniconf Daemon starting.\n");
     while (!want_to_die)
     {
-        if(l->select(250, true, false))
+        if (l->select(5000, true, false))
             l->callback();
+        if (keymodified)
+        {
+            events->do_callbacks();
+            events->clear_notify();
+        }
     }
 
     // Make sure all of our listeners are closed
