@@ -102,15 +102,15 @@ public:
      * <p>
      * Invariants:
      * <ul>
-     * <li>usedopt() <= used()</li>
-     * <li>usedopt() != 0 if used() != 0</li>
+     * <li>optgettable() <= used()</li>
+     * <li>optgettable() != 0 if used() != 0</li>
      * </ul></p>
      *
      * @return the number of elements
      */
-    size_t usedopt() const
+    size_t optgettable() const
     {
-        size_t avail = store->usedopt();
+        size_t avail = store->optgettable();
         size_t elems = avail / sizeof(Elem);
         if (elems != 0) return elems;
         return avail != 0 && store->used() >= sizeof(Elem) ? 1 : 0;
@@ -128,7 +128,7 @@ public:
      * It is an error for count to be greater than used().
      * </p><p>
      * For best results, call this function multiple times with
-     * count no greater than usedopt() each time.
+     * count no greater than optgettable() each time.
      * </p><p>
      * After this operation, at least count elements may be ungotten.
      * </p>
@@ -340,15 +340,15 @@ public:
      * <p>
      * Invariants:
      * <ul>
-     * <li>freeopt() <= free()</li>
-     * <li>freeopt() != 0 if free() != 0</li>
+     * <li>optallocable() <= free()</li>
+     * <li>optallocable() != 0 if free() != 0</li>
      * </ul></p>
      *
      * @return the number of elements
      */
-    size_t freeopt() const
+    size_t optallocable() const
     {
-        size_t avail = store->freeopt();
+        size_t avail = store->optallocable();
         size_t elems = avail / sizeof(Elem);
         if (elems != 0) return elems;
         return avail != 0 && store->free() >= sizeof(Elem) ? 1 : 0;
@@ -367,7 +367,7 @@ public:
      * It is an error for count to be greater than free().
      * </p><p>
      * For best results, call this function multiple times with
-     * count no greater than freeopt() each time.
+     * count no greater than optallocable() each time.
      * </p><p>
      * After this operation, at least count elements may be unallocated.
      * </p>

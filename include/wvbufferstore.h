@@ -48,7 +48,7 @@ public:
     virtual bool isreadable() const
         { return true; }
     virtual size_t used() const = 0;
-    virtual size_t usedopt() const
+    virtual size_t optgettable() const
         { return used(); }
     virtual const void *get(size_t count) = 0;
     virtual void unget(size_t count) = 0;
@@ -66,7 +66,7 @@ public:
     virtual bool iswritable() const
         { return true; }
     virtual size_t free() const = 0;
-    virtual size_t freeopt() const
+    virtual size_t optallocable() const
         { return free(); }
     virtual void *alloc(size_t count) = 0;
     virtual void unalloc(size_t count) = 0;
@@ -114,7 +114,7 @@ public:
     {
         return 0;
     }
-    virtual size_t freeopt() const
+    virtual size_t optallocable() const
     {
         return 0;
     }
@@ -165,7 +165,7 @@ public:
     {
         return 0;
     }
-    virtual size_t usedopt() const
+    virtual size_t optgettable() const
     {
         return 0;
     }
@@ -300,13 +300,13 @@ public:
 
     /*** Overridden Members ***/
     virtual size_t used() const;
-    virtual size_t usedopt() const;
+    virtual size_t optgettable() const;
     virtual const void *get(size_t count);
     virtual void unget(size_t count);
     virtual size_t ungettable() const;
     virtual void zap();
     virtual size_t free() const;
-    virtual size_t freeopt() const;
+    virtual size_t optallocable() const;
     virtual void *alloc(size_t count);
     virtual void unalloc(size_t count);
     virtual size_t unallocable() const;
@@ -349,7 +349,7 @@ public:
 
     /*** Overridden Members ***/
     virtual size_t free() const;
-    virtual size_t freeopt() const;
+    virtual size_t optallocable() const;
     virtual void *alloc(size_t count);
 
 protected:
@@ -393,7 +393,7 @@ public:
 
     /*** Overridden Members ***/
     virtual size_t used() const;
-    virtual size_t usedopt() const;
+    virtual size_t optgettable() const;
     virtual const void *get(size_t count);
     virtual void unget(size_t count);
     virtual size_t ungettable() const;

@@ -85,7 +85,7 @@ void WvGzipEncoder::prepare(WvBuffer *inbuf)
     assert(zstr->avail_in == 0);
     if (inbuf && inbuf->used() != 0)
     {
-        size_t avail = inbuf->usedopt();
+        size_t avail = inbuf->optgettable();
         zstr->avail_in = avail;
         zstr->next_in = const_cast<Bytef*>(
             (const Bytef*)inbuf->get(avail));

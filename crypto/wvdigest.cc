@@ -30,7 +30,7 @@ bool WvEVPMDDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     bool flush)
 {
     size_t len;
-    while ((len = inbuf.usedopt()) != 0)
+    while ((len = inbuf.optgettable()) != 0)
     {
         const unsigned char *data = inbuf.get(len);
         EVP_DigestUpdate(evpctx, data, len);
@@ -116,7 +116,7 @@ bool WvHMACDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     bool flush)
 {
     size_t len;
-    while ((len = inbuf.usedopt()) != 0)
+    while ((len = inbuf.optgettable()) != 0)
     {
         const unsigned char *data = inbuf.get(len);
         HMAC_Update(hmacctx, data, len);

@@ -27,7 +27,7 @@ bool WvRealToComplexFFTEncoder::_encode(WvBuffer &inbuf,
     WvBuffer &outbuf, bool flush)
 {
     size_t len;
-    while ((len = inbuf.usedopt()) != 0)
+    while ((len = inbuf.optgettable()) != 0)
     {
         if (len < nbytes)
         {

@@ -47,7 +47,7 @@ bool WvBackslashEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
 {
     size_t avail = outbuf.free();
     size_t len;
-    while ((len = inbuf.usedopt()) != 0)
+    while ((len = inbuf.optgettable()) != 0)
     {
         const unsigned char *datain = inbuf.get(len);
         for (size_t i = 0; i < len; ++i)
@@ -128,7 +128,7 @@ bool WvBackslashDecoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
         return false;
 
     size_t len;
-    while ((len = inbuf.usedopt()) != 0)
+    while ((len = inbuf.optgettable()) != 0)
     {
         const unsigned char *datain = inbuf.get(len);
         for (size_t i = 0; i < len; ++i)

@@ -48,7 +48,7 @@ void WvBufferStore::move(void *buf, size_t count)
 {
     while (count > 0)
     {
-        size_t amount = usedopt();
+        size_t amount = optgettable();
         assert(amount != 0 ||
             !"attempted to move() more than used()");
         if (amount > count)
@@ -83,7 +83,7 @@ void WvBufferStore::put(const void *data, size_t count)
 {
     while (count > 0)
     {
-        size_t amount = freeopt();
+        size_t amount = optallocable();
         assert(amount != 0 ||
             !"attempted to put() more than free()");
         if (amount > count)
@@ -141,7 +141,7 @@ void WvBufferStore::basicmerge(WvBufferStore &instore, size_t count)
     {
         if (inavail == 0)
         {
-            inavail = instore.usedopt();
+            inavail = instore.optgettable();
             assert(inavail != 0 ||
                 !"attempted to merge() more than instore.used()");
             if (inavail > count)
@@ -150,7 +150,7 @@ void WvBufferStore::basicmerge(WvBufferStore &instore, size_t count)
         }
         if (outavail == 0)
         {
-            outavail = freeopt();
+            outavail = optallocable();
             assert(outavail != 0 ||
                 !"attempted to merge() more than free()");
             if (outavail > count)
@@ -433,12 +433,12 @@ size_t WvLinkedBufferStore::used() const
 }
 
 
-size_t WvLinkedBufferStore::usedopt() const
+size_t WvLinkedBufferStore::optgettable() const
 {
     size_t count;
     WvBufferStoreList::Iter it(list);
     for (it.rewind(); it.next(); )
-        if ((count = it->usedopt()) != 0)
+        if ((count = it->optgettable()) != 0)
             return count;
     return 0;
 }
@@ -534,10 +534,10 @@ size_t WvLinkedBufferStore::free() const
 }
 
 
-size_t WvLinkedBufferStore::freeopt() const
+size_t WvLinkedBufferStore::optallocable() const
 {
     if (! list.isempty())
-        return list.last()->freeopt();
+        return list.last()->optallocable();
     return 0;
 }
 
@@ -652,9 +652,9 @@ size_t WvDynamicBufferStore::free() const
 }
 
 
-size_t WvDynamicBufferStore::freeopt() const
+size_t WvDynamicBufferStore::optallocable() const
 {
-    size_t avail = WvLinkedBufferStore::freeopt();
+    size_t avail = WvLinkedBufferStore::optallocable();
     if (avail == 0)
         avail = UNLIMITED_FREE_SPACE;
     return avail;
@@ -743,12 +743,12 @@ size_t WvBufferCursorStore::used() const
 }
 
 
-size_t WvBufferCursorStore::usedopt() const
+size_t WvBufferCursorStore::optgettable() const
 {
     int pos = getpos();
     size_t avail;
     if (pos == 0)
-        avail = buf->usedopt();
+        avail = buf->optgettable();
     else if (pos >= end)
         avail = 0;
     else
