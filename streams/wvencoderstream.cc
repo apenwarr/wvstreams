@@ -168,7 +168,10 @@ bool WvEncoderStream::push(bool flush, bool finish)
 
 size_t WvEncoderStream::uread(void *buf, size_t size)
 {
-    pull(min_readsize > size ? min_readsize : size);
+    if (size && readoutbuf.used() == 0)
+    {
+	pull(min_readsize > size ? min_readsize : size);
+    }
     size_t avail = readoutbuf.used();
     if (size > avail)
         size = avail;
