@@ -1,7 +1,7 @@
 /* -*- Mode: C++ -*- */
 #include "wvautoconf.h"
 
-#ifdef WITH_FAM
+#ifdef HAVE_FAM_H
 
 #ifndef __WVFAM_H
 #define __WVFAM_H
@@ -104,4 +104,4 @@ protected:
 
 
 #endif //__WVFAM_H
-#endif //__WITH_FAM
+#endif //__HAVE_FAM_H

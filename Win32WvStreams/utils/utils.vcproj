@@ -192,7 +192,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvgdbmhash.cc">
+				RelativePath="..\..\utils\wvqdbmhash.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -455,9 +455,6 @@
 				RelativePath="..\..\include\wvbase64.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvbdbhash.h">
-			</File>
-			<File
 				RelativePath="..\..\include\wvblowfish.h">
 			</File>
 			<File
@@ -539,10 +536,10 @@
 				RelativePath="..\..\include\wvfunctorencoder.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvgdbmhash.h">
+				RelativePath="..\..\include\wvondiskhash.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvgdbmlist.h">
+				RelativePath="..\..\include\wvondisklist.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvgzip.h">

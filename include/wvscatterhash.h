@@ -154,7 +154,7 @@ public:
         { _set_autofree(Accessor::get_key(data), hash(data), auto_free); }
 
     bool get_autofree(const T *data)
-        { _get_autofree(Accessor::get_key(data), hash(data)); }
+        { return _get_autofree(Accessor::get_key(data), hash(data)); }
 
     void zap()
         { _zap(); }

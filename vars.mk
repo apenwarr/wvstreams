@@ -115,12 +115,12 @@ ifneq ("$(with_fam)", "no")
   libwvstreams.so: -lfam
 endif
 
-ifneq ("$(with_gdbm)", "no")
-  libwvutils.so: -lgdbm
-endif
-
 ifneq ("$(with_bdb)", "no")
   libwvutils.so-LIBS+=-ldb
+endif
+
+ifneq ("$(with_qdbm)", "no")
+  libwvutils.so-LIBS+=-lqdbm
 endif
 
 ifneq ("$(with_xplc)", "no")

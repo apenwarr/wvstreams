@@ -38,8 +38,10 @@ char *WvTaskMan::stacktop;
 
 static void valgrind_fix(char *stacktop)
 {
+#ifdef HAVE_VALGRIND_MEMCHECK_H
     char val;
     //printf("valgrind fix: %p-%p\n", &val, stacktop);
+#endif
     /* FIXME: this assert is commented out because of a bug that
      * apparently doesn't mess things up too much, but should be
      * uncommented sometimes (and the bug fixed!). */

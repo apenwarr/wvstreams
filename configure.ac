@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.45 2003/12/03 22:50:46 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.46 2003/12/04 05:23:58 kenrose Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -74,7 +74,7 @@ AC_ARG_ENABLE(warnings,
 AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
-AC_ARG_WITH(gdbm, AC_HELP_STRING([--with-gdbm], [GDBM]))
+AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
@@ -148,29 +148,54 @@ if test "$with_bdb" != "no"; then
         WV_APPEND(CPPFLAGS, [-I$with_bdb/include])
         WV_APPEND(LDFLAGS, [-L$with_bdb])
     fi
-    AC_CHECK_HEADERS(db.h,, [with_bdb_1=no],
+    # check for the bdb headers
+    AC_CHECK_HEADERS(db.h,, [with_bdb_header=no],
                      [#include <db.h>
                       #ifdef DB_VERSION_MAJOR
                       #error "this is Berkeley DB 2.x or newer"
                       #endif])
-    if test "$with_bdb_1" = "no"; then
+    if test "$with_bdb_header" = "no"; then
         AC_CHECK_HEADERS(db_185.h,, [with_bdb=no])
     fi
-    AC_CHECK_LIB(db, dbopen,, [with_bdb=no])
+    # check for bdb library
+    AC_CHECK_LIB(db, dbopen,, [with_bdb_lib=no])
+    if test "$with_bdb_lib" = "no"; then
+        AC_CHECK_LIB(db1, dbopen, [with_bdb_lib=yes],)
+    fi
+    if test "$with_bdb_lib" = "no"; then
+        with_bdb=no
+    fi
+
     if test "$with_bdb" = "no"; then
         CPPFLAGS="$CPPFLAGS_save"
         LDFLAGS="$LDFLAGS_save"
     else
         AC_DEFINE(WITH_BDB,,
                   [Define to enable Berkeley DB support.])
-
     fi
 fi
 
-# gdbm
-if test "$with_gdbm" != "no"; then
-    AC_CHECK_HEADERS(gdbm.h,, [with_gdbm=no])
-    AC_CHECK_LIB(gdbm, gdbm_open,, [with_gdbm=no])
+# qdbm
+if test "$with_qdbm" != "no"; then
+    test "$with_qdbm" = yes && with_qdbm=
+    CPPFLAGS_save="$CPPFLAGS"
+    LDFLAGS_save="$LDFLAGS"
+    if test "$with_qdbm"; then
+        WV_APPEND(CPPFLAGS, [-I$with_qdbm])
+        WV_APPEND(LDFLAGS, [-L$with_qdbm])
+    fi
+    # check for the qdbm headers
+    AC_CHECK_HEADERS(villa.h,, [with_qdbm=no])
+    # check for qdbm library
+    AC_CHECK_LIB(qdbm, vlopen,, [with_qdbm=no])
+
+    if test "$with_qdbm" = "no"; then
+        CPPFLAGS="$CPPFLAGS_save"
+        LDFLAGS="$LDFLAGS_save"
+    else
+        AC_DEFINE(WITH_QDBM,,
+                  [Define to enable QDBM support.])
+    fi
 fi
 
 # gtk
@@ -297,8 +322,8 @@ if test "$with_fftw" = "no"; then
     AC_MSG_WARN([FFTW is missing.])
     missing_devel=yes
 fi
-if test "$with_gdbm" = "no"; then
-    AC_MSG_WARN([GDBM is missing.])
+if test "$with_qdbm" = "no"; then
+    AC_MSG_WARN([QDBM is missing.])
     missing_devel=yes
 fi
 if test "$with_ogg" = "no"; then
@@ -363,7 +388,7 @@ AC_SUBST(enable_warnings)
 AC_SUBST(with_bdb)
 AC_SUBST(with_fam)
 AC_SUBST(with_fftw)
-AC_SUBST(with_gdbm)
+AC_SUBST(with_qdbm)
 AC_SUBST(with_gtk)
 AC_SUBST(with_ogg)
 AC_SUBST(with_openssl)

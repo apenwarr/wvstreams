@@ -2,34 +2,35 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
  *
- * A linked list container backed by a gdbm database.
+ * A linked list container backed by a on disk database.
  */
-#ifndef __WVGDBMLIST_H
-#define __WVGDBMLIST_H
+#ifndef __WVONDISKLIST_H
+#define __WVONDISKLIST_H
 
-#include "wvgdbmhash.h"
+#include "wvondiskhash.h"
 
 /**
- * A class based on WvGdbmHash that lets you store WvBufs and auto-assign
+ * A class based on WvOnDiskHash that lets you store WvBufs and auto-assign
  * them Index values as keys.  This is convenient for implementing various
  * data structures in the on-disk hash, since you can use Index values
  * wherever an in-memory structure would use a pointer.
  * 
  * NOTE: Index values <= 0 have a special meaning, and will never be
- * assigned automatically.  WvGdbmAlloc uses Index # -1 itself as the
+ * assigned automatically.  WvOnDiskAlloc uses Index # -1 itself as the
  * beginning of the FREELIST.  The others you can use as you wish.
  */
-class WvGdbmAlloc
+template <class Backend>
+class WvOnDiskAlloc
 {
 public:
     enum { FREELIST = -1 };
     
     typedef int32_t Index;
-    typedef WvGdbmHash<Index, WvBuf> LinkHash;
+    typedef WvOnDiskHash<Index, WvBuf, Backend> LinkHash;
     
     LinkHash hash;
     
-    WvGdbmAlloc(WvStringParm filename) : hash(filename)
+    WvOnDiskAlloc(WvStringParm filename) : hash(filename)
         { }
     
 private:
@@ -79,28 +80,30 @@ public:
 
 
 /**
- * A class similar to WvList, but storing its values on disk in a WvGdbmHash.
+ * A class similar to WvList, but storing its values on disk in a WvOnDiskHash.
  * 
- * FIXME: I have no idea if this is fast, slow, stupid, or ingenious.  I
- * suspect it's probably quite inefficient - doing it entirely without gdbm
- * and writing our own space allocator would probably make more sense.
+ * FIXME: I have no idea if this is fast, slow, stupid, or ingenious.
+ * I suspect it's probably quite inefficient - doing it entirely without
+ * the hash and writing our own space allocator would probably make more
+ * sense.
  * 
  * FIXME: we should use a common non-templated base class rather than
  * implementing everything inline.
  * 
  * FIXME: if HEAD and TAIL weren't hardcoded, we could put more than one
- * list in the same WvGdbmHash.  This would probably be pretty useful.
+ * list in the same WvOnDiskHash.  This would probably be pretty useful.
  */
-template <typename T>
-class WvGdbmList
+template <typename T, typename Backend = DefaultHash>
+class WvOnDiskList
 {
-    typedef WvGdbmAlloc::Index Index;
-    WvGdbmAlloc alloc;
-    WvGdbmAlloc::LinkHash &hash;
+    typedef WvOnDiskAlloc<Backend> MyAlloc;
+    typedef typename MyAlloc::Index Index;
+    MyAlloc alloc;
+    typename MyAlloc::LinkHash &hash;
     
 public:
     class Iter;
-    friend class WvGdbmList::Iter;
+    friend class WvOnDiskList::Iter;
     
     enum { HEAD = 0, TAIL = -1000 };
     
@@ -154,7 +157,7 @@ public:
     }
 
 public:    
-    WvGdbmList(WvStringParm filename) : alloc(filename), hash(alloc.hash)
+    WvOnDiskList(WvStringParm filename) : alloc(filename), hash(alloc.hash)
     { 
 	init();
     }
@@ -230,7 +233,7 @@ public:
         { add_after(HEAD, data, auto_free, id); }
 
 private:
-    // this works in a WvList, but it's kind of hard in a GdbmList.  So we
+    // this works in a WvList, but it's kind of hard in a OnDiskList.  So we
     // won't implement it.
     void unlink(T *data);
 
@@ -252,12 +255,12 @@ public:
     
     class Iter
     {
-	typedef WvGdbmList::Index Index;
+	typedef WvOnDiskList::Index Index;
     public:
-	WvGdbmList &list;
+	WvOnDiskList &list;
 	Index prev, xcur, xnext;
 	
-	Iter(WvGdbmList &_list) : list(_list)
+	Iter(WvOnDiskList &_list) : list(_list)
 	    { }
 	
 	void rewind()
@@ -293,14 +296,14 @@ public:
 
 
 // DeclareWvList-compatible macro for people who want to hackily see what
-// happens if they replace their WvList with a WvGdbmList.
-#define DeclareWvGdbmList(__type__) \
-    class __type__##List : public WvGdbmList<__type__> \
+// happens if they replace their WvList with a WvOnDiskList.
+#define DeclareWvOnDiskList(__type__) \
+    class __type__##List : public WvOnDiskList<__type__> \
     { \
     public: \
-	__type__##List() : WvGdbmList<__type__>((srand(time(NULL)), \
+	__type__##List() : WvOnDiskList<__type__>((srand(time(NULL)), \
 						     random())) {} \
     }
 
 
-#endif // __WVGDBMLIST_H
+#endif // __WVONDISKLIST_H

@@ -23,6 +23,8 @@ public:
     void splitstrict(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
     void fill(const char * const *array);
+    void append(WvStringParm str);
+    void append(const WvString *strp, bool autofree, char *id = NULL);
     WvString popstr();
 };
 

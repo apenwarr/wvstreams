@@ -1,6 +1,6 @@
 #include "wvfam.h"
 
-#ifdef WITH_FAM
+#ifdef HAVE_FAM_H
 
 #include "wvistreamlist.h"
 #include <sys/stat.h>

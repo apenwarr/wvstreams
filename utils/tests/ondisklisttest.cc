@@ -1,8 +1,8 @@
-#include "wvgdbmlist.h"
+#include "wvondisklist.h"
 
 int main()
 {
-    WvGdbmList<WvString> list("dbmlist");
+    WvOnDiskList<WvString> list("dbmlist");
     list.zap();
     printf("empty:%d\n", list.isempty());
     printf("count:%d\n", list.count());
@@ -20,7 +20,7 @@ int main()
     
     bool odd = false;
     printf("\nIterator test:\n");
-    WvGdbmList<WvString>::Iter i(list);
+    WvOnDiskList<WvString>::Iter i(list);
     for (i.rewind(); i.next(); )
     {
 	printf("    %5d = ", i.cur());

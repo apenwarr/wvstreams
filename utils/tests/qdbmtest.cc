@@ -1,13 +1,13 @@
-#include "wvgdbmhash.h"
+#include "wvondiskhash.h"
 #include "wvstringlist.h"
 
-typedef WvGdbmHash<WvString,WvString> StrStrMap;
-typedef WvGdbmHash<WvString,int> StrTimeMap;
+typedef WvOnDiskHash<WvString,WvString,WvQdbmHash> StrStrMap;
+typedef WvOnDiskHash<WvString,int,WvQdbmHash> StrTimeMap;
 
 DeclareWvList(int);
 
 // yes, I *am* crazy.
-typedef WvGdbmHash<WvList<WvString>,intList> ListMap;
+typedef WvOnDiskHash<WvList<WvString>,intList,WvQdbmHash> ListMap;
 
 int main()
 {
