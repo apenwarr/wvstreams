@@ -27,7 +27,7 @@ protected:
 	    { }
 
         ~UniGenMount()
-            { gen->release(); }
+            { RELEASE(gen); }
 
         IUniConfGen *gen;
         UniConfKey key;

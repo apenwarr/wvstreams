@@ -120,7 +120,7 @@ UniClientGen::~UniClientGen()
     WvIStreamList::globallist.unlink(&deltastream);
 
     conn->writecmd(UniClientConn::REQ_QUIT, "");
-    conn->release();
+    RELEASE(conn);
 }
 
 

@@ -97,12 +97,14 @@ int main(int argc, char **argv)
             return 1;
 
         case 'i':
-            if (in != wvin) delete in;
+            if (in != wvin)
+		RELEASE(in);
             in = new WvFile(optarg, O_RDONLY);
             break;
         
         case 'o':
-            if (out != wvout) delete out;
+            if (out != wvout)
+		RELEASE(out);
             out = new WvFile(optarg, O_WRONLY | O_TRUNC | O_CREAT);
             break;
 
@@ -293,11 +295,11 @@ int main(int argc, char **argv)
             "geterror()=%s\n",
             oggenc->isok(), oggenc->isfinished(), oggenc->geterror());
 
-    delete iencstream;
-    delete oencstream;
+    RELEASE(iencstream);
+    RELEASE(oencstream);
     if (in != wvin)
-        delete in;
+        RELEASE(in);
     if (out != wvout)
-        delete out;
+        RELEASE(out);
     return 0;
 }

@@ -40,11 +40,7 @@ void WvFtpStream::doneurl()
 
     curl->done();
     curl = NULL;
-    if (data)
-    {
-        data->release();
-        data = NULL;
-    }
+    RELEASE(data);
     urls.unlink_first();
     last_request_time = time(0);
     alarm(60000);

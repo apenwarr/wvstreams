@@ -17,7 +17,7 @@ UniFilterGen::UniFilterGen(IUniConfGen *inner)
 
 UniFilterGen::~UniFilterGen()
 {
-    xinner->release();
+    RELEASE(xinner);
 }
 
 

@@ -33,10 +33,10 @@ int main()
     a("a message\n");
     rc2 = new WvLogConsole(dup(2));
     b("b message\n"); // prints twice -- once for rc, once for rc2
-    rc->release();
+    RELEASE(rc);
     c("c message with extra newline\n\n"); // extra newline discarded
     c2("c2 message\n");
-    rc2->release();
+    RELEASE(rc2);
     
     // the second line should be back at WvLog::Debug
     a(WvLog::Info, "a info message\n");

@@ -12,10 +12,10 @@
 template<class T, bool b>
 struct WvTraits_Helper
 {
-    static void maybe_addref(T* obj)
+    static inline void maybe_addref(T* obj)
     {
     }
-    static void release(T* obj)
+    static inline void release(T* obj)
     {
 	delete obj;
     }
@@ -25,13 +25,14 @@ struct WvTraits_Helper
 template<class T>
 struct WvTraits_Helper<T, true>
 {
-    static void maybe_addref(T* obj)
+    static inline void maybe_addref(T* obj)
     {
 	obj->addRef();
     }
-    static void release(T* obj)
+    static inline void release(T* obj)
     {
-	obj->release();
+	if (obj)
+	    obj->release();
     }
 };
 
@@ -45,12 +46,12 @@ class WvTraits
     static Yes test(IObject*);
     static No test(...);
 public:
-    static void maybe_addref(From* obj)
+    static inline void maybe_addref(From* obj)
     {
 	const bool is_iobject = (sizeof(test(from)) == sizeof(Yes));
 	WvTraits_Helper<From, is_iobject>::maybe_addref(obj);
     }
-    static void release(From* obj)
+    static inline void release(From* obj)
     {
 	const bool is_iobject = (sizeof(test(from)) == sizeof(Yes));
 	WvTraits_Helper<From, is_iobject>::release(obj);

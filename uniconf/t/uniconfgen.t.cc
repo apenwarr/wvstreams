@@ -13,5 +13,5 @@ WVTEST_MAIN("null generator, setcallback, delete")
     WVPASS(gen);
     if (gen)
 	gen->setcallback(cb, NULL);
-    gen->release();
+    RELEASE(gen);
 }
