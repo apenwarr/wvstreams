@@ -31,11 +31,27 @@ WVPART(utils, The Utilities Library,
     "www.fizzle.com" will return "dc=www,dc=fizzle,dc=com,cn=www.fizzle.com".
    )
 
+   WVSECT2(getfilename, getfilename(),
+    WVCMD(WvString getfilename(WvStringParm fullname))
+
+    Returns the filename from a path.
+    Together with getdirname(), separates the filename and directory name 
+    within a path.
+   )
+
+   WVSECT2(getdirname, getdirname(),
+    WVCMD(WvString getfilename(WvStringParm fullname))
+
+    Returns the directory name from a path.
+   )
+
+
+
    WVSECT2(hexdumpbuffer, hexdump_buffer(),
-    WVCMD(WvString hexdump_buffer(unsigned char *buf, size_t len))
+    WVCMD(WvString hexdump_buffer(const void *_buf, size_t len))
     
     Produce a hexadecimal dump of the data buffer in 'buf' of length 'len'.
-    it is formatted with 16 bytes per line; each line has an address offset,
+    It is formatted with 16 bytes per line; each line has an address offset,
     hex representation, and printable representation.
     
     This is used mostly for debugging purposes.  You can send the returned
@@ -76,6 +92,13 @@ WVPART(utils, The Utilities Library,
     Returns true if all characters in 'string' are isalnum() (alphanumeric).
    )
 
+   WVSECT2(lookup, lookup(),
+    WVCMD(int lookup(const char *str, const char * const *table,
+    bool case_sensitive = false);)
+
+    Finds a string in an array and returns its index. Returns -1 if not found.
+   )
+
    WVSECT2(nicehostname, nice_hostname(),
     WVCMD(WvString nice_hostname(WvStringParm name))
 
@@ -85,6 +108,14 @@ WVPART(utils, The Utilities Library,
 
     If nice_hostname() can't convert name to a proper hostname, it returns
     the string "UNKNOWN".
+   )
+
+  WVSECT2(nonbreaking, non_breaking(),
+    WVCMD(char *non_breaking(char * string))
+
+    Replaces whitespace characters with nonbreaking spaces, for use with web
+    stuff.
+
    )
 
    WVSECT2(passwdcrypt, passwd_crypt(),
@@ -102,11 +133,37 @@ WVPART(utils, The Utilities Library,
     correctly.
    )
 
+   WVSECT2(rfc1123date, rf1123_date(),
+    WVCMD(WvString rfc1123_date(time_t _when);)
+
+    Returns an RFC1123-compatible date made out of _when
+   )
+  
    WVSECT2(rfc822date, rfc822_date(),
     WVCMD(WvString rfc822_date(time_t _when = -1))
 
     Returns an RFC822-compatible date ("Mon, Thu 18 71 14:55:12 EST") made
     from _when or, if _when < 0, from the current time.
+   )
+
+   WVSECT2(strcollsplit, strcoll_split(),
+    WVCMD(void strcoll_split(StringCollection &coll, WvStringParm _s,
+    const char *splitchars = " \t", int limit = 0))
+
+    Splits a string and adds each substring to a collection.
+    coll       : the collection of strings to add to
+    _s         : the string to split
+    splitchars : the set of delimiter characters
+    limit      : the maximum number of elements to split
+   )
+
+   WVSECT2(strcolljoin, strcoll_join(),
+    WVCMD(WvString strcoll_join(const StringCollection &coll,
+    const char *joinchars = " \t"))
+
+    Concatenates all strings in a collection and returns the result.
+    * coll      : the collection of strings to read from
+    * joinchars : the delimiter string to insert between strings
    )
 
    WVSECT2(strcount, strcount(),
@@ -122,6 +179,13 @@ WVPART(utils, The Utilities Library,
     in lower case.  Returns 'string'.
    )
 
+   WVSECT2(strreplace, strreplace(),
+    WVCMD(WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm
+    b);)
+ 
+    Replace any instances of 'a' with 'b' in 's'.
+   )
+   
    WVSECT2(strupr, strupr(),
     WVCMD(char *strupr(char *string))
 
