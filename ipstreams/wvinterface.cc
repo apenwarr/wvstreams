@@ -208,6 +208,7 @@ int WvInterface::setipaddr(const WvIPNet &addr)
     struct sockaddr *sa;
     size_t len;
     int sock;
+    WvIPAddr none;
     
     if (addr != ipaddr())
 	err(WvLog::Info, "Changing %s address to %s (%s bits)\n", name,
@@ -233,7 +234,7 @@ int WvInterface::setipaddr(const WvIPNet &addr)
     
     // 2.1 kernels error when we try to change netmask/broadcast for
     // a 0.0.0.0 address.
-    if (addr != WvIPNet(WvIPAddr()))
+    if (addr.base() != none)
     {
 	sa = addr.netmask().sockaddr();
 	memcpy(&ifr.ifr_netmask, sa, len);
