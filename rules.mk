@@ -74,8 +74,6 @@ ChangeLog:
 	rm -f ChangeLog ChangeLog.bak
 	cvs2cl --utc
 
-.NOTPARALLEL: clean distclean realclean dust depend install
-
 realclean: distclean
 	rm -rf $(wildcard $(REALCLEAN))
 
