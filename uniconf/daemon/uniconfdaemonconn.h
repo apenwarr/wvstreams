@@ -49,6 +49,8 @@ class UniConfDaemonConn : public UniClientConn
 {
 public:
     UniConfDaemonConn(WvStream *s, const UniConf &root);
+    virtual ~UniConfDaemonConn() { close(); }
+
     virtual void close();
 
     virtual void execute();
