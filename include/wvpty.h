@@ -17,14 +17,12 @@ class WvPty : public WvFDStream
 {
     private:
 
-        WvString _master;
-        WvString _slave;
+    	WvString _master, _slave;
         pid_t _pid;
         int _exit_status;
-	int _sfd;
 
-        bool open_master();
-        bool open_slave();
+        static bool open_pty(WvString &master, int &master_fd,
+            	WvString &slave, int &slave_fd);
 
         void monitor_child(bool wait);
         
