@@ -176,7 +176,7 @@ public:
 	    if (++i > vec.xcount - 1)
 		return NULL;
 	    else
-		return link;	// FIXME = next element of vec
+		return vec.xseq[i];
 	}
 
 	/**
@@ -190,7 +190,7 @@ public:
 	    if (--i < 0)
 		return NULL;
 	    else
-		return link;	// FIXME = next element of vec
+		return vec.xseq[i];
 	}
 
 	/**
@@ -406,5 +406,10 @@ public:
 	}
     };
 };
+
+#define DeclareWvVector2(_classname_, _type_)  \
+    typedef class WvVector<_type_> _classname_
+
+#define DeclareWvVector(_type_) DeclareWvVector2(_type_##Vector, _type_)
 
 #endif // __WVVECTOR_H

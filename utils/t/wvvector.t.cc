@@ -226,3 +226,24 @@ WVTEST_MAIN("wvvector - sorting")
     WVPASSEQ(*v[4], 15);
     WVPASSEQ(v.count(), 5);
 }
+
+WVTEST_MAIN("wvvector - iter")
+{
+    DeclareWvVector(int);
+    intVector v;
+
+    int i;
+    for (i = 0; i < 10; i++)
+	v.append(new int(i), true);
+    WVPASSEQ(v.count(), 10);
+
+    i = 0;
+    intVector::Iter j(v);
+    j.rewind();
+    j.next();
+    WVPASSEQ(*j.ptr(), i++);
+//     for (j.rewind(); j.next(); )
+//     {
+// 	WVPASSEQ(*j, i++);
+//     }
+}
