@@ -6,6 +6,9 @@
  */
 #include "wvfdstream.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(WvConStream);
 
 // just like WvFDStream, but doesn't close the fd
 class _WvConStream : public WvFDStream

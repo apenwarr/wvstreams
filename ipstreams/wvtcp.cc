@@ -7,7 +7,7 @@
 #include "wvtcp.h"
 #include "wvistreamlist.h"
 #include "wvmoniker.h"
-
+#include "wvlinkerhack.h"
 #include <fcntl.h>
 
 #ifdef _WIN32
@@ -36,6 +36,8 @@
 #ifndef FORCE_NONZERO
 #define FORCE_NONZERO 0
 #endif
+
+WV_LINK(WvTCPConn);
 
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)

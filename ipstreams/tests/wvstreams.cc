@@ -2,7 +2,11 @@
 #include "wvlog.h"
 #include "wvmoniker.h"
 #include "wvstreamclone.h"
+#include "wvlinkerhack.h"
 #include <signal.h>
+
+WV_LINK_TO(WvConStream);
+WV_LINK_TO(WvTCPConn);
 
 volatile bool want_to_die = false;
 
@@ -48,7 +52,6 @@ int main(int argc, char **argv)
     
     signal(SIGTERM, signalhandler);
     signal(SIGINT, signalhandler);
-    signal(SIGHUP, signalhandler);
 
     if (argc <= 1)
     {
