@@ -23,8 +23,6 @@ DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc
 configure: configure-stamp
 configure-stamp: 
 	dh_testdir
-	autoheader
-	autoconf
         # Add here commands to configure the package.
         # There is no configuration necessary to build WvStreams
 	./configure --prefix=/usr --disable-debug --disable-verbose \
