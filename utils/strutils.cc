@@ -655,3 +655,46 @@ WvString metriculate(const off_t i)
 
     return res;
 }
+
+
+WvString afterstr(WvStringParm line, WvStringParm a)
+{
+    char *loc = strstr(line, a);
+    if (loc == 0)
+	return "";
+
+    loc += a.len();
+    WvString ret = loc;
+    ret.unique();
+    return ret;
+}
+
+
+WvString beforestr(WvStringParm line, WvStringParm a)
+{
+    WvString ret = line;
+    ret.unique();    
+    char *loc = strstr(ret, a);
+
+    if (loc == 0)
+	return line;
+
+    loc[0] = '\0';
+    return ret;
+}
+
+
+WvString substr(WvString line, unsigned int pos, unsigned int len)
+{
+    const char *tmp = line.cstr();
+    if (pos > line.len()-1)
+	return "";
+    tmp += pos;
+
+    WvString ret = tmp;
+    char *tmp2 = ret.edit();
+    if (pos + len < line.len())
+	tmp2[len] = '\0';
+
+    return ret;
+}

@@ -171,10 +171,9 @@ WvString getdirname(WvStringParm fullname);
  */
 WvString sizetoa(long long blocks, int blocksize=1);
 
-/**
- * Give a size in Kilobyes gives a human read able size
- */
+/** Give a size in Kilobyes gives a human readable size */
 WvString sizektoa(unsigned int kbytes);
+
 /**
  * Finds a string in an array and returns its index.
  * Returns -1 if not found.
@@ -239,6 +238,7 @@ void strcoll_split(StringCollection &coll, WvStringParm _s,
     }
 }
 
+
 /**
  * Splits a string and adds each substring to a collection.
  *   this behaves differently in that it actually delimits the 
@@ -281,6 +281,7 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
         cur += len + 1;
     }
 }
+
 
 /**
  * Concatenates all strings in a collection and returns the result.
@@ -327,13 +328,10 @@ WvString strcoll_join(const StringCollection &coll,
  */
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
 
-/**
- * Replace any consecutive instances of character c with a single one
- */
+/** Replace any consecutive instances of character c with a single one */
 WvString undupe(WvStringParm s, char c);
 
 WvString hostname();
-
 WvString fqdomainname();
 
 /**
@@ -343,58 +341,24 @@ WvString fqdomainname();
 WvString metriculate(const off_t i);
 
 /**
- * Returns everything in line (exclusively) after a
- * If a is not in line, "" is returned
+ * Returns everything in line (exclusively) after a.
+ * If a is not in line, "" is returned.
  */
-inline WvString afterstr(WvStringParm line, WvStringParm a)
-{
-    char *loc = strstr(line, a);
-    if (loc == 0)
-	return "";
-
-    loc += a.len();
-    WvString ret = loc;
-    ret.unique();
-    return ret;
-}
+WvString afterstr(WvStringParm line, WvStringParm a);
 
 /**
- * Returns everything in line (exclusively) before a
- * If a is not in line, line is returned
+ * Returns everything in line (exclusively) before 'a'.
+ * If a is not in line, line is returned.
  */
-inline WvString beforestr(WvStringParm line, WvStringParm a)
-{
-    WvString ret = line;
-    ret.unique();    
-    char *loc = strstr(ret, a);
+WvString beforestr(WvStringParm line, WvStringParm a);
 
-    if (loc == 0)
-	return line;
-
-    loc[0] = '\0';
-    return ret;
-}
-
-/*
- * Returns the string od length len starting at pos in line
+/**
+ * Returns the string of length len starting at pos in line.
  * Error checking prevents seg fault.
  * If pos > line.len()-1 return ""
  * if pos+len > line.len() simply return from pos to end of line
  */
-inline WvString substr(WvString line, unsigned int pos, unsigned int len)
-{
-    const char *tmp = line.cstr();
-    if (pos > line.len()-1)
-	return "";
-    tmp += pos;
-
-    WvString ret = tmp;
-    char *tmp2 = ret.edit();
-    if (pos + len < line.len())
-	tmp2[len] = '\0';
-
-    return ret;
-}
+WvString substr(WvString line, unsigned int pos, unsigned int len);
 
 
 #endif // __WVSTRUTILS_H
