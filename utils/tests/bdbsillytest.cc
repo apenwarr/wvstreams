@@ -9,7 +9,6 @@ typedef WvBdbHash<int, WvString> MyHash;
 int main()
 {
     MyHash h("/tmp/blahdb");
-    int num;
     
     fprintf(stderr, "Zapping...");
     h.zap();
@@ -23,7 +22,7 @@ int main()
     }
     fprintf(stderr, "done\n");
 #if 0    
-    num = 0;
+    int num = 0;
     MyHash::Iter i(h);
     for (i.rewind(), num = 0; i.next(); num++)
     {

@@ -38,34 +38,49 @@ int comparefunc(const DBT *a, const DBT *b)
 }
 
 
-WvBdbHashBase::WvBdbHashBase(WvStringParm _dbfile)
-    : dbfile(_dbfile)
+WvBdbHashBase::WvBdbHashBase(WvStringParm _dbfile, bool _persist)
 {
     dbf = NULL;
-    opendb(dbfile);
+    opendb(_dbfile, _persist);
 }
 
 
 WvBdbHashBase::~WvBdbHashBase()
 {
-    if (dbf)
-	dbf->close(dbf);
+    closedb();
 }
 
 
-void WvBdbHashBase::opendb(WvStringParm _dbfile)
+void WvBdbHashBase::opendb(WvStringParm _dbfile, bool _persist)
 {
-    if (dbf) dbf->close(dbf);
+    closedb();
     dbfile = _dbfile;
+    persist_dbfile = _persist;
     
     BTREEINFO info;
     memset(&info, 0, sizeof(info));
     info.compare = comparefunc;
-    dbf = dbopen(!!dbfile ? dbfile.cstr() : NULL,
-		 O_CREAT|O_RDWR, 0666, DB_BTREE, &info);
+
+    int mode = O_CREAT | O_RDWR;
+    if (!persist_dbfile) mode |= O_TRUNC;
+
+    dbf = dbopen(!!dbfile ? dbfile.cstr() : NULL, mode, 0666, DB_BTREE,
+            &info);
     if (!dbf)
 	fprintf(stderr, "Could not open database '%s': %s\n",
 		dbfile.cstr(), strerror(errno));
+}
+
+
+void WvBdbHashBase::closedb()
+{
+    if (dbf)
+    {
+        dbf->close(dbf);
+        if (!persist_dbfile && !!dbfile)
+            ::unlink(dbfile);
+        dbf = NULL;
+    }
 }
 
 
@@ -111,21 +126,25 @@ bool WvBdbHashBase::exists(const datum &key)
 void WvBdbHashBase::zap()
 {
     assert(isok());
-#if 0 // super-slow version
-    datum key, value;
-    while (!dbf->seq(dbf, (DBT *)&key, (DBT *)&value, R_FIRST))
-	dbf->del(dbf, (DBT *)&key, R_CURSOR);
-#else // delete the database file and reopen - much quicker!
-    if (dbf)
+
+    if (!dbfile)
     {
-	dbf->close(dbf);
-	dbf = NULL;
+        // super-slow version
+        datum key, value;
+        while (!dbf->seq(dbf, (DBT *)&key, (DBT *)&value, R_FIRST))
+            dbf->del(dbf, (DBT *)&key, R_CURSOR);
     }
-    
-    int fd = open(dbfile, O_RDWR|O_TRUNC);
-    if (fd >= 0) ::close(fd);
-    opendb(dbfile);
-#endif
+    else // delete the database file and reopen - much quicker!
+    {
+        if (dbf)
+        {
+            dbf->close(dbf);
+            dbf = NULL;
+        }
+        int fd = open(dbfile, O_RDWR | O_TRUNC);
+        if (fd >= 0) ::close(fd);
+        opendb(dbfile, persist_dbfile);
+    }
 }
 
 

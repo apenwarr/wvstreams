@@ -21,7 +21,8 @@
 class WvBdbHashBase
 {
     WvString dbfile;
-    
+    bool persist_dbfile;
+
 public:
     // a very ugly way to avoid #including the db.h from here.  This has
     // to be binary-compatible with the DBT structure.
@@ -31,7 +32,7 @@ public:
 	size_t dsize;
     };
     
-    WvBdbHashBase(WvStringParm _dbfile);
+    WvBdbHashBase(WvStringParm _dbfile, bool persist_dbfile = true);
     ~WvBdbHashBase();
 
     /**
@@ -40,10 +41,18 @@ public:
      * creation.
      * 
      * if dbfile is NULL, bdb will create an "anonymous" database.  It'll
-     * still take up disk space, but it disappears when closed.
+     * still take up disk space, but it disappears when closed.  If dbfile is
+     * not NULL but persist_dbfile is false, the file will be truncated when
+     * opened and deleted when closed.
      */
-    void opendb(WvStringParm _dbfile);
-    
+    void opendb(WvStringParm _dbfile, bool persist_dbfile = true);
+
+    /**
+     * Close the db file.  Makes isok return false, so you must call opendb()
+     * before using it again.  The effect on open iterators is undefined.
+     */
+    void closedb();
+
     bool isok() const
         { return dbf; }
 
@@ -134,8 +143,8 @@ protected:
     D *saveddata;
 
 public:
-    WvBdbHash(WvStringParm dbfile = WvString::null) : WvBdbHashBase(dbfile)
-        { saveddata = NULL; }
+    WvBdbHash(WvStringParm dbfile = WvString::null, bool persist = true) :
+        WvBdbHashBase(dbfile, persist) { saveddata = NULL; }
 
     void add(const K &key, const D &data, bool replace = false)
     {
