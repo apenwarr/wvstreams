@@ -55,6 +55,12 @@ public:
     size_t read(void *buf, size_t count);
     size_t write(const void *buf, size_t count);
     
+    // unbuffered I/O functions; these ignore the buffer, which is
+    // handled by read() and write().  Don't call these functions unless
+    // you have a _really_ good reason.
+    virtual size_t uread(void *buf, size_t count);
+    virtual size_t uwrite(const void *buf, size_t count);
+    
     // read up to one line of data from the stream and return a pointer
     // to the internal buffer containing this line.  If the end-of-line \n
     // is encountered, it is removed from the string.  If wait_msec times
@@ -91,10 +97,12 @@ public:
     // msec_timeout milliseconds at a time.  (-1 means wait forever)
     void flush(time_t msec_timeout);
     
-    // print a preformatted WvString to the stream
-    size_t write(const WvString &s)
-        { return write(s, strlen(s)); }
-
+    // flush the output buffer automatically as select() is called.  If
+    // the buffer empties, close the stream.  If msec_timeout seconds pass,
+    // close the stream.  After the stream closes, it will become !isok()
+    // (and a WvStreamList can delete it automatically)
+    void flush_then_close(int msec_timeout);
+    
     // add appropriate fd to rfd, wfd, and efd sets if this stream can be
     // group-select()ed; returns true if the stream is known to _already_
     // be ready for one of the requested operations, in which case the
@@ -146,6 +154,11 @@ public:
     void callback()
         { if (callfunc) callfunc(*this, userdata); else execute(); }
     
+    // print a preformatted WvString to the stream.
+    // see the simple version of write() way up above.
+    size_t write(const WvString &s)
+        { return write(s, strlen(s)); }
+
     // preformat and print a string.
     size_t print(const WvString &s)
         { return write(s); }
@@ -167,15 +180,11 @@ protected:
     WvBuffer inbuf, outbuf;
     bool select_ignores_buffer, outbuf_delayed_flush;
     size_t queue_min;
+    time_t autoclose_time;
 
     // plain internal constructor to just set up internal variables.
     WvStream()
         { init(); fd = -1; }
-    
-    // unbuffered I/O functions; these can ignore the buffer, which is
-    // handled better by read() and write().
-    virtual size_t uread(void *buf, size_t count);
-    virtual size_t uwrite(const void *buf, size_t count);
     
     // set the errnum variable and close the stream -- we have an error.
     void seterr(int _errnum);

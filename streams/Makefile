@@ -6,7 +6,7 @@ CFLAGS += $(shell [ -n "$(LOCKDEV)" ] && echo -DUSE_LOCKDEV=1 )
 
 XPATH=.. ../utils
 
-LIBS=$(EFENCE)
+#LIBS=$(EFENCE)
 
 default: all watchtest pipetest clonetest modemtest \
 		logtest logbuftest syslogtest looptest timetest prototest

@@ -14,6 +14,13 @@
 #include <errno.h>
 #include <assert.h>
 
+// enable this to add some read/write trace messages (this can be VERY
+// verbose)
+#if 0
+# define TRACE(x, y...) fprintf(stderr, x, ## y)
+#else
+# define TRACE(x, y...)
+#endif
 
 WvStream::WvStream(int _fd)
 {
@@ -28,6 +35,7 @@ void WvStream::init()
     errnum = 0;
     select_ignores_buffer = outbuf_delayed_flush = false;
     queue_min = 0;
+    autoclose_time = 0;
 }
 
 
@@ -51,7 +59,7 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
     char buf[1024];
     size_t len;
     
-    while (s.isok() && s2.isok() && s.select(0))
+    while (s.isok() && s.select(0))
     {
 	len = s.read(buf, sizeof(buf));
 	s2.write(buf, len);
@@ -134,13 +142,17 @@ size_t WvStream::read(void *buf, size_t count)
         
     // if buffer is empty, do a hard read
     if (!bufu)
-	return uread(buf, count);
-
-    // otherwise just read from the buffer
-    if (bufu > count)
-	bufu = count;
+	bufu = uread(buf, count);
+    else
+    {
+	// otherwise just read from the buffer
+	if (bufu > count)
+	    bufu = count;
     
-    memcpy(buf, inbuf.get(bufu), bufu);
+	memcpy(buf, inbuf.get(bufu), bufu);
+    }
+    
+    TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
     return bufu;
 }
 
@@ -178,6 +190,7 @@ size_t WvStream::write(const void *buf, size_t count)
 	wrote = uwrite(buf, count);
     
     outbuf.put((unsigned char *)buf + wrote, count - wrote);
+    TRACE("queue obj 0x%08x, bytes %d/%d, total %d\n", (unsigned int)this, count - wrote, count, outbuf.used());
     
     return count;
 }
@@ -198,6 +211,7 @@ size_t WvStream::uwrite(const void *buf, size_t count)
 	return 0;
     }
     
+    TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
     return out;
 }
 
@@ -267,6 +281,8 @@ void WvStream::flush(time_t msec_timeout)
 {
     size_t attempt, real;
     
+    TRACE("flush obj 0x%08x, time %ld, outbuf length %d\n", (unsigned int)this, msec_timeout, outbuf.used());
+    
     if (!isok()) return;
     
     while (outbuf.used())
@@ -283,6 +299,37 @@ void WvStream::flush(time_t msec_timeout)
 	if (!msec_timeout || !select(msec_timeout, false, true))
 	    break;
     }
+
+    if (autoclose_time)
+    {
+	time_t now = time(NULL);
+	fprintf(stderr,
+		"Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
+		(unsigned int)this, now - autoclose_time, outbuf.used());
+	if (!outbuf.used() || now > autoclose_time)
+	{
+	    autoclose_time = 0; // avoid infinite recursion!
+	    close();
+	}
+    }
+}
+
+
+void WvStream::flush_then_close(int msec_timeout)
+{
+    time_t now = time(NULL);
+    autoclose_time = now + (msec_timeout + 999) / 1000;
+    
+    fprintf(stderr,
+	    "Autoclose SETUP for 0x%08X - buf %d bytes, timeout %ld sec\n", 
+	    (unsigned int)this, outbuf.used(), autoclose_time - now);
+
+    // as a fast track, we _could_ close here: but that's not a good idea,
+    // since flush_then_close() deals with obscure situations, and we don't
+    // want the caller to use it incorrectly.  So we make things _always_
+    // break when the caller forgets to call select() later.
+    
+    flush(0);
 }
 
 
@@ -298,7 +345,7 @@ bool WvStream::select_setup(SelectInfo &si)
     
     if (si.readable)
 	FD_SET(fd, &si.read);
-    if (si.writable || outbuf.used())
+    if (si.writable || outbuf.used() || autoclose_time)
 	FD_SET(fd, &si.write);
     if (si.isexception)
 	FD_SET(fd, &si.except);
@@ -315,8 +362,12 @@ bool WvStream::test_set(SelectInfo &si)
     size_t outbuf_used = outbuf.used();
     
     // flush the output buffer if possible
-    if (fd >= 0 && outbuf_used && FD_ISSET(getfd(), &si.write))
+    if (getfd() >= 0 
+	&& (outbuf_used || autoclose_time)
+	&& FD_ISSET(getfd(), &si.write))
+    {
 	flush(0);
+    }
     
     return fd >= 0  // flush() might have closed the file!
 	&&  (FD_ISSET(getfd(), &si.read)

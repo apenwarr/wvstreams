@@ -21,4 +21,9 @@ WvLoopback::WvLoopback()
     
     rfd = socks[0];
     wfd = socks[1];
+
+    fcntl(rfd, F_SETFD, 1);
+    fcntl(rfd, F_SETFL, O_RDONLY|O_NONBLOCK);
+    fcntl(wfd, F_SETFD, 1);
+    fcntl(wfd, F_SETFL, O_WRONLY|O_NONBLOCK);
 }

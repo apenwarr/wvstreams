@@ -8,6 +8,7 @@
  */
 #include "wvstreamclone.h"
 #include <errno.h>
+#include <time.h>
 
 
 WvStreamClone::~WvStreamClone()
@@ -42,8 +43,10 @@ size_t WvStreamClone::uread(void *buf, size_t size)
 
 size_t WvStreamClone::uwrite(const void *buf, size_t size)
 {
+    // we use s()->uwrite() here, not write(), since we want the _clone_
+    // to own the output buffer, not the main stream.
     if (s())
-	return s()->write(buf, size);
+	return s()->uwrite(buf, size);
     else
 	return 0;
 }
@@ -81,19 +84,31 @@ const char *WvStreamClone::errstr() const
 
 bool WvStreamClone::select_setup(SelectInfo &si)
 {
+    bool oldwr, result;
+    
     if (si.readable && !select_ignores_buffer && inbuf.used() 
 	   && inbuf.used() >= queue_min)
 	return true;   // sure_thing if anything in WvStream buffer
     
     if (s() && s()->isok())
-	return s()->select_setup(si);
+    {
+	oldwr = si.writable;
+	if (outbuf.used() || autoclose_time)
+	    si.writable = true;
+	
+	result = s()->select_setup(si);
+	
+	si.writable = oldwr;
+	return result;
+	
+    }
     return false;
 }
 
 
 bool WvStreamClone::test_set(SelectInfo &si)
 {
-    if (s() && outbuf.used())
+    if (s() && (outbuf.used() || autoclose_time))
 	flush(0);
 
     if (s() && s()->isok())

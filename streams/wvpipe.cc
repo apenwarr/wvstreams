@@ -129,11 +129,15 @@ void WvPipe::setup(const char *program, const char **argv,
 	
 	// now run the program.  If it fails, use _exit() so no destructors
 	// get called and make a mess.
-	if (execvp(program, (char **)argv))
-	    _exit(242);
+	execvp(program, (char **)argv);
+	_exit(242);
     }
 
     // otherwise, parent process
+
+    // set non-blocking
+    fcntl(socks[0], F_SETFL, O_RDWR|O_NONBLOCK);
+
     fd = socks[0];
     ::close(socks[1]);
 }
