@@ -34,7 +34,7 @@ public:
 
     void accept(WvStream *stream);
     
-    bool setupunixsocket(WvStringParm path);
+    bool setupunixsocket(WvStringParm path, int create_mode = 0755);
     bool setuptcpsocket(const WvIPPortAddr &addr);
     bool setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509);
 

@@ -81,9 +81,9 @@ void UniConfDaemon::sslcallback(WvStream &l, void *userdata)
 }
 
 
-bool UniConfDaemon::setupunixsocket(WvStringParm path)
+bool UniConfDaemon::setupunixsocket(WvStringParm path, int create_mode)
 {
-    WvUnixListener *listener = new WvUnixListener(path, 0755);
+    WvUnixListener *listener = new WvUnixListener(path, create_mode);
     if (! listener->isok())
     {
         log(WvLog::Error, "Could not create Unix domain socket: %s\n",
