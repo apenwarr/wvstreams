@@ -247,9 +247,9 @@ bool UniClientGen::do_select()
     cmdinprogress = true;
     cmdsuccess = false;
 
-    conn->alarm(TIMEOUT);
     while (conn->isok() && cmdinprogress)
     {
+        conn->alarm(TIMEOUT);
         if (conn->select(-1))
             conn->callback();
     }
