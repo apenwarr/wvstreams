@@ -255,4 +255,10 @@ WvString fqdomainname();
  */
 WvString metriculate(const off_t i);
 
+/**
+ * Convert an integer number of bytes to a number of GB, MB, kB,
+ * or bytes.
+ */
+WvString get_bytestring(const off_t i);
+
 #endif // __STRUTILS_H

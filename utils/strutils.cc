@@ -569,3 +569,20 @@ WvString metriculate(const off_t i)
 
     return res;
 }
+
+WvString get_bytestring(const off_t i)
+{
+    static const int GB = 1000000000;
+    static const int MB = 1000000;
+    static const int kB = 1000;
+
+    if (i/GB > 0)
+	return WvString("%s GB", i/GB);
+    else if (i/MB > 0)
+	return WvString("%s MB", i/MB);
+    else if (i/kB > 0)
+	return WvString("%s kB", i/kB);
+
+    return WvString("%s bytes", i);
+}
+
