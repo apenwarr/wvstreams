@@ -1,0 +1,4 @@
+*.libs
+*.exe
+*test
+.*.d

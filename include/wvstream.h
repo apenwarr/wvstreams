@@ -14,7 +14,7 @@
 
 #ifdef _WIN32
 #include <time.h>
-#include <Winsock2.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #else
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...

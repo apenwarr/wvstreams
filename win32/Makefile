@@ -1,0 +1,34 @@
+WVSTREAMS=..
+include $(WVSTREAMS)/win32/wvrules-win32.mk
+
+all: mytest.exe tcptest.exe
+
+%.exe: %
+	rm -f $@
+	ln -s $^ $@
+	
+LIBS+=-lwsock32 $(with_xplc)/libxplc.a -lsupc++
+
+-lxplc -lxplc-cxx:
+
+mytest: mytest.o libwvutils.a
+
+tcptest: tcptest.o libwvutils.a
+
+resolvertest: libwvutils.a
+
+DIRS=utils streams ipstreams uniconf crypto urlget configfile
+
+_OBJFILES=$(call objects,$(addprefix ../,$(DIRS)))
+OBJSKIP=fileutils.o strcrypt.o wvbdbhash.o wvdaemon.o wvdiriter.o \
+	wvfork.o wvgzip.o wvipraw.o wvlockdev.o wvlockfile.o \
+	wvlogfile.o wvmodem.o wvpipe.o wvqdbmhash.o wvshmzone.o \
+	wvstreamsdaemon.o wvsubproc.o wvsyslog.o wvtask.o wvtest.o \
+	wvunixsocket.o wvwatcher.o 
+OBJFILES=$(filter-out $(addprefix %/,$(OBJSKIP)),$(_OBJFILES))
+
+W=$(WVSTREAMS)/Win32WvStreams
+libwvutils.a: $(call objects,$W/libwvutils $W/libwvstreams,../) $(OBJFILES)
+
+clean:
+	rm -f *test *.exe
