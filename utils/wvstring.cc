@@ -12,7 +12,7 @@
 WvStringBuf WvFastString::nullbuf = { 0, 1 };
 const WvFastString WvFastString::null;
 
-const WvFastString WvFastString::empty("");
+const WvString WvString::empty("");
 
 
 // always a handy function
