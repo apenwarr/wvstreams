@@ -60,6 +60,8 @@ public:
     virtual void seterr(int _errnum);
     void seterr(WvStringParm specialerr)
         { WvError::seterr(specialerr); }
+    void seterr(WVSTRING_FORMAT_DECL)
+        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
     
     /**
      * return the Unix file descriptor for reading from this stream

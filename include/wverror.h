@@ -54,6 +54,8 @@ public:
      */
     virtual void seterr(int _errnum);
     void seterr(WvStringParm specialerr);
+    void seterr(WVSTRING_FORMAT_DECL)
+        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
     void seterr(const WvError &err);
     
     /**
