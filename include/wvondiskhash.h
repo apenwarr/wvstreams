@@ -46,12 +46,18 @@ class WvOnDiskHash : public Backend
     typedef typename Backend::Datum datum;
 
 public:
+    class Iter;
+
     // this class is interchangeable with datum, but includes a WvDynBuf
     // object that datum.dptr points to.  So when this object goes away,
     // it frees its dptr automatically.
     template <typename T>
     class datumize : public datum
     {
+    public:
+	WvDynBuf buf;
+
+    private:
 	void init(const T &t)
 	{
 	    wv_serialize(buf, t);
@@ -62,9 +68,10 @@ public:
     protected:
 	datumize(datumize<T> &); // not defined
 
-    public:
-	WvDynBuf buf;
+	friend class WvOnDiskHash<K, D, Backend>;
+	friend class WvOnDiskHash<K, D, Backend>::Iter;
 
+    public:
 	datumize(const T &t)
             { init(t); }
 
@@ -227,8 +234,6 @@ public:
 
 	WvIterStuff(D);
     };
-
-    friend class WvOnDiskHash<K, D, Backend>::Iter;
 
 };
 
