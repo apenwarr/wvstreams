@@ -178,7 +178,7 @@ const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
 
 	for (i2.rewind(); i2.next();)
 	{
-	    WvConfigEntry *e = (*s)[i];
+	    WvConfigEntry *e = (*s)[i2];
 	    if (e) return e->value;
 	}
     }
