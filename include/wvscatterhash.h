@@ -14,7 +14,7 @@
 // Some standard WvHash functions are useful from wvhashtable.h
 #include "wvhashtable.h"
 
-#define REBUILD_LOAD_FACTOR 0.5
+#define REBUILD_LOAD_FACTOR 0.45
 #define RESIZE_LOAD_FACTOR 0.4
 
 #define IS_OCCUPIED(x) (x.status >> 1)
