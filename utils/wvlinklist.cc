@@ -32,6 +32,29 @@ size_t WvListBase::count() const
 }
 
 
+void WvListBase::reverse()
+{
+    WvLink *prev, *curr, *next;
+
+    if (!head.next || !head.next->next)
+        return;
+    
+    prev = head.next;
+    curr = prev->next; 
+   
+    do {
+        next = curr->next;
+	curr->next = prev;
+	prev = curr;
+	curr = next;
+    } while(curr);
+    
+    tail = head.next;
+    tail->next = NULL;
+    head.next = prev;
+}
+
+
 WvLink *WvListBase::IterBase::find(const void *data)
 {
     for (rewind(); next(); )

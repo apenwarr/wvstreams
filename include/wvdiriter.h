@@ -59,9 +59,13 @@ private:
     DeclareWvList( Dir );
     DirList       dirs;
     DirList::Iter dir;
-
+    
 public:
-    WvDirIter( WvStringParm dirname, bool _recurse=true, bool _skip_mounts=false );
+    // the sizeof(stat) helps an assert() in wvdiriter.cc.
+    WvDirIter( WvStringParm dirname,
+	       bool _recurse = true, bool _skip_mounts = false,
+	       size_t sizeof_stat = sizeof(struct stat) );
+    
     ~WvDirIter();
 
     bool isok() const;

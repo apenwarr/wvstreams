@@ -186,7 +186,7 @@ FORCE:
 #    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
 DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
 define wvcc_base
-	rm -f "$1"
+	@rm -f "$1"
 	$(COMPILE_MSG)$4 $5 $2 -o $1
 	$(DEPEND_MSG)$4 -M -E $< \
 		| sed -e 's|^[^:]*:|$1:|' >$(DEPFILE)

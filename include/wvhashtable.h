@@ -337,7 +337,7 @@ protected:
     // We need this last_accessed thing to make sure exists()/operator[]
     //      does not cost us two hash lookups
     mutable MyPair* last_accessed;
-    inline MyPair* find_helper(const TKey &key) const
+    MyPair* find_helper(const TKey &key) const
     {
         if (last_accessed &&
                 Comparator<TKey>::compare(&last_accessed->key, &key))

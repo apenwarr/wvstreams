@@ -5,7 +5,6 @@
  * A hash table container backed by a Berkeley DB (libdb) database.
  * See wvondiskhash.h.
  */
-
 #include "wvautoconf.h"
 
 #ifdef WITH_BDB

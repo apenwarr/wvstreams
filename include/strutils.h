@@ -161,7 +161,7 @@ WvString getdirname(WvStringParm fullname);
  * Given a number of blocks and a blocksize (default==1 byte), return a 
  * WvString containing a human-readable representation of blocks*blocksize.
  */
-WvString sizetoa(long blocks, int blocksize=1);
+WvString sizetoa(long long blocks, int blocksize=1);
 
 /**
  * Finds a string in an array and returns its index.
@@ -229,38 +229,38 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
     WvString s(_s);
     char *sptr = s.edit(), *eptr, oldc;
 
-    bool start = true;
+	bool start = true;
     while (sptr && *sptr)
-    {
-	int len = strspn(sptr,splitchars);
-	sptr += len;
-
-	--limit;
-
-	for (bool unseen = true; len > 0 && limit; 
-			(len -= strlen(splitchars)),--limit)
 	{
-	    if ((!start) && (unseen))
-		{ unseen = false; continue; }
+	  int len = strspn(sptr,splitchars);
+	    sptr += len;
 
-	    coll.add(new WvString(""), true);
-	}
+	  --limit;
 
-	start = false;
+	  for (bool unseen = true; len > 0 && limit;
+	       	(len -= strlen(splitchars)), --limit)
+	  {
+		if ((!start) && (unseen))
+		  { unseen = false; continue; }
 
-	if (limit)
-	    eptr = sptr + strcspn(sptr,splitchars);
-	else
-	    eptr = sptr + strlen(sptr);
+		coll.add(new WvString(""), true);
+	  }
 
-	oldc = *eptr;
-	*eptr = '\0';
+	  start = false;
 
-	if (limit)
-	    coll.add(new WvString(sptr), true);
+	  if (limit)
+        eptr = sptr + strcspn(sptr,splitchars);
+      else
+		eptr = sptr + strlen(sptr);
 
-	*eptr = oldc;
-	sptr = eptr;
+      oldc = *eptr;
+      *eptr = '\0';
+
+      if (limit)
+		coll.add(new WvString(sptr), true);
+
+      *eptr = oldc;
+      sptr = eptr;
     }
 }
 
