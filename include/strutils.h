@@ -102,6 +102,14 @@ bool isnewline(char c);
  */
 WvString web_unescape(const char *str);
 
+
+/**
+ * Converts all those pesky spaces, colons, and other nasties into nice unreadable
+ * Quasi-Unicode codes
+ */
+WvString url_encode(WvStringParm stuff);
+ 
+
 /**
  * Returns an RFC822-compatible date made out of _when, or, if _when < 0, out of
  * the current time.

@@ -273,6 +273,29 @@ WvString web_unescape(const char *str)
 }
 
 
+// And it's magic companion: url_encode
+WvString url_encode(WvStringParm stuff)
+{
+    unsigned int i;
+    WvDynBuf retval;
+
+    for (i=0; i < stuff.len(); i++)
+    {
+        if (isalnum(stuff[i]) || strchr("/_.-~", stuff[i]))
+        {
+            retval.put(&stuff[i], 1);
+        }               
+        else            
+        {               
+            char buf[3];
+            sprintf(buf, "%%%02x", stuff[i] & 0xff);
+            retval.put(&buf, 3);
+        }
+    }
+    return retval.getstr();
+}
+
+
 WvString rfc822_date(time_t when)
 {
     WvString out;
