@@ -617,6 +617,9 @@ protected:
     // Used to guard against excessive flushing when using delay_flush
     bool want_to_flush;
 
+    // Used to ensure we don't flush recursively.
+    bool is_flushing;
+
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time
