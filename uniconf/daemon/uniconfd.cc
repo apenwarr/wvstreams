@@ -11,6 +11,10 @@
 #include <getopt.h>
 #include <signal.h>
 
+#ifdef WITH_SLP
+#include "slp.h"
+#endif
+
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
 static volatile bool want_to_die = false;
@@ -43,6 +47,13 @@ static void usage(WvStringParm argv0)
     exit(1);
 }
 
+#ifdef WITH_SLP
+static void sillyslpcb(SLPHandle hslp, SLPError errcode, void* cookie) 
+{ 
+    /* return the error code in the cookie */ 
+    *(SLPError*)cookie = errcode; 
+}
+#endif
 
 extern char *optarg;
 extern int optind;
@@ -175,6 +186,49 @@ int main(int argc, char **argv)
 	if (pid > 0) // parent
 	    _exit(0);
     }
+
+    WvString svc, sslsvc;
+    
+#ifdef WITH_SLP
+    // Now that we're this far...
+    SLPError slperr; 
+    SLPError callbackerr; 
+    SLPHandle hslp; 
+
+    slperr = SLPOpen("en", SLP_FALSE, &hslp); 
+    if(slperr != SLP_OK)
+    { 
+        log(WvLog::Critical, "Error opening SLP handle\n"); 
+	exit(7);
+    } 
+    
+    // Register UniConf service with SLP 
+    if (port)
+    {
+	svc = WvString("service:uniconf.niti://%s:%s", fqdomainname(), port);
+	slperr = SLPReg(hslp, svc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
+			sillyslpcb, &callbackerr);
+	
+	if(slperr != SLP_OK)
+	{ 
+	    log(WvLog::Notice, "Error registering UniConf Daemon with SLP Service\n"); 
+	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
+	}
+    }
+
+    // Register UniConf SSL service with SLP 
+    if (sslport)
+    {
+	sslsvc = WvString("service:uniconfs.niti://%s:%s", fqdomainname(), sslport);
+	slperr = SLPReg(hslp, sslsvc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
+			sillyslpcb, &callbackerr);
+	if(slperr != SLP_OK)
+	{ 
+	    log(WvLog::Notice, "Error registering UniConf SSL Daemon with SLP Service\n");
+	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
+	}
+    }
+#endif
     
     // main loop
     time_t now, last = 0;
@@ -194,5 +248,15 @@ int main(int argc, char **argv)
     }
     
     WvIStreamList::globallist.unlink(&daemon);
+
+#ifdef WITH_SLP
+    if (!!sslsvc)
+	SLPDereg(hslp, sslsvc, sillyslpcb, &callbackerr);
+    if (!!svc)
+	SLPDereg(hslp, svc, sillyslpcb, &callbackerr);
+    
+    SLPClose(hslp);
+#endif
+    
     return 0;
 }

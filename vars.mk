@@ -147,6 +147,10 @@ ifneq ("$(with_fam)", "no")
   libwvstreams.so: -lfam
 endif
 
+ifneq ("$(with_openslp)", "no")
+  libwvstreams.so: -lslp
+endif
+
 ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
 endif

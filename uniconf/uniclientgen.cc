@@ -61,6 +61,27 @@ static IUniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
     return new UniClientGen(stream);
 }
 
+#ifdef WITH_SLP
+#include "wvslp.h"
+
+// FIXME: Only gets the first
+static IUniConfGen *slpcreator(WvStringParm s, IObject *obj, void *)
+{
+    WvStringList serverlist;
+    
+    if (slp_get_servs("uniconf.niti", serverlist))
+    {
+	WvString server = serverlist.popstr();
+	printf("Creating connection to: %s\n", server.cstr());
+	return new UniClientGen(new WvTCPConn(server), s);
+    }
+    else
+        return NULL;
+}
+
+static WvMoniker<IUniConfGen> slpreg("slp", slpcreator);
+#endif
+
 static WvMoniker<IUniConfGen> tcpreg("tcp", tcpcreator);
 static WvMoniker<IUniConfGen> sslreg("ssl", sslcreator);
 static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
