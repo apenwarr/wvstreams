@@ -26,6 +26,11 @@ static int fd_count(const char *when)
 
 int main(int argc, char **argv)
 {
+    //test wvtest
+    WVPASS(true);
+    WVPASS(1);
+    WVFAIL(false);
+    WVFAIL(0);
     int startfd, endfd;
     const char *prefix = "";
     
