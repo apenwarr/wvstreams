@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "wvstringlist.h"
+#include "wvslp.h"
 #include "slp.h"
 
 #ifdef WITH_SLP
