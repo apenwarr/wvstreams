@@ -24,12 +24,14 @@
 
 #define MAX_FD  256     // FIXME: is this enough?
 
-pid_t wvfork( int dontclose )
+pid_t wvfork( int dontclose1, int dontclose2 )
 /***************************/
 {
     WvIntTable t( 1 );
-    if( dontclose >= 0 )
-        t.add( &dontclose, false );
+    if( dontclose1 >= 0 )
+        t.add( &dontclose1, false );
+    if( dontclose2 >= 0 )
+        t.add( &dontclose2, false );
     return( wvfork( t ) );
 }
 

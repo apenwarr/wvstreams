@@ -19,7 +19,7 @@
 
 DeclareWvTable3( int, WvIntTable, );
 
-extern pid_t wvfork( int dontclose=-1 );
+extern pid_t wvfork( int dontclose1=-1, int dontclose2=-1 );
 extern pid_t wvfork( WvIntTable& dontclose );
 
 #endif

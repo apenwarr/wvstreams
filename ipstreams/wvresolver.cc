@@ -153,7 +153,9 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
 #if SKIP_FORK_FOR_DEBUGGING
 	namelookup(name, host->loop);
 #else
-	host->pid = wvfork(host->loop->getfd());    // don't close host->loop!
+	
+	// don't close host->loop!
+	host->pid = wvfork(host->loop->getrfd(), host->loop->getwfd());
 	
 	if (!host->pid) // child process
 	{
