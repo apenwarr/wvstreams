@@ -46,6 +46,8 @@ WvHConf::~WvHConf()
 {
     if (children)
 	delete children;
+    if (generator)
+	delete generator;
 }
 
 
@@ -83,12 +85,8 @@ WvHConfKey WvHConf::full_key() const
 WvHConf *WvHConf::gen_top()
 {
     WvHConf *h = this;
-    wvcon->print("in gen_top for '%s'\n", (int)h);
     while (h->parent && !h->generator)
-    {
-	wvcon->print("gen_top searching '%s'\n", h->full_key());
 	h = h->parent;
-    }
     
     return h; // we reached the top of the tree without finding a generator.
 }

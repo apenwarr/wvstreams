@@ -7,6 +7,8 @@
 #include "wvhconf.h"
 #include "wvlog.h"
 #include "wvconf.h"
+#include "wvdiriter.h"
+#include "wvfile.h"
 
 
 class HelloGen : public WvHConfGen
@@ -28,9 +30,132 @@ void HelloGen::update(WvHConf *h)
 }
 
 
+class WvHConfFileTree : public WvHConfGen
+{
+public:
+    WvString basedir;
+    WvHConf *top;
+    WvLog log;
+    
+    WvHConfFileTree(WvHConf *_top, const WvString &_basedir);
+    virtual void update(WvHConf *h);
+    virtual void load();
+};
+
+
+WvHConfFileTree::WvHConfFileTree(WvHConf *_top, const WvString &_basedir)
+    : basedir(_basedir), log("FileTree", WvLog::Info)
+{
+    top = _top;
+    log(WvLog::Notice,
+	"Creating a new FileTree based on '%s' at location '%s'.\n",
+	basedir, top->full_key());
+}
+
+
+// use the first nonblank line in the file as the config contents.
+void WvHConfFileTree::update(WvHConf *h)
+{
+    char *line;
+    WvString name("/%s", h->gen_full_key());
+    WvFile f(name, O_RDONLY);
+    
+    if (!f.isok())
+	log(WvLog::Warning, "Error reading %s: %s\n", name, f.errstr());
+    
+    while (f.isok())
+    {
+	line = f.getline(-1);
+	if (!line)
+	    continue;
+	line = trim_string(line);
+	if (!line[0])
+	    continue;
+	
+	*h = line;
+	return;
+    }
+}
+
+
+void WvHConfFileTree::load()
+{
+    WvHConf *h;
+    WvDirIter i(basedir, true);
+    
+    for (i.rewind(); i.next(); )
+    {
+	log(WvLog::Debug2, ".");
+	h = make_tree(top, i->fullname);
+    }
+}
+
+
+class WvHConfIniFile : public WvHConfGen
+{
+public:
+    WvString filename;
+    WvHConf *top;
+    WvLog log;
+    
+    WvHConfIniFile(WvHConf *_top, const WvString &_filename);
+    virtual void load();
+};
+
+
+WvHConfIniFile::WvHConfIniFile(WvHConf *_top, const WvString &_filename)
+    : filename(_filename), log(filename)
+{
+    top = _top;
+    log(WvLog::Notice, "Using IniFile '%s' at location '%s'.\n", 
+	filename, top->full_key());
+}
+
+
+void WvHConfIniFile::load()
+{
+    char *line, *cptr;
+    WvHConf *h;
+    WvFile f(filename, O_RDONLY);
+    WvString section = "";
+    
+    if (!f.isok())
+    {
+	log("Can't open config file: %s\n", f.errstr());
+	return;
+    }
+    
+    while ((line = f.getline(-1)) != NULL)
+    {
+	line = trim_string(line);
+	
+	// beginning of a new section?
+	if (line[0] == '[' && line[strlen(line)-1] == ']')
+	{
+	    line[strlen(line)-1] = 0;
+	    section = line+1;
+	    section.unique();
+	    continue;
+	}
+	
+	// name = value setting?
+	cptr = strchr(line, '=');
+	if (cptr)
+	{
+	    *cptr++ = 0;
+	    line = trim_string(line);
+	    cptr = trim_string(cptr);
+	    h = make_tree(top, WvString("%s/%s", section, line));
+	    *h = cptr;
+	}
+    }
+}
+
+
 int main()
 {
     WvLog log("hconftest", WvLog::Info);
+    WvLog quiet("*", WvLog::Debug1);
     
     log("An hconf instance is %s bytes long.\n", sizeof(WvHConf));
     log("A wvconf instance is %s/%s/%s bytes long.\n",
@@ -38,6 +163,7 @@ int main()
     log("A stringlist is %s bytes long.\n", sizeof(WvStringList));
     
     {
+	wvcon->print("\n\n");
 	log("-- Key test begins\n");
 	
 	WvHConfKey key("/a/b/c/d/e/f/ghij////k/l/m");
@@ -46,6 +172,7 @@ int main()
     }
     
     {
+	wvcon->print("\n\n");
 	log("-- Basic config test begins\n");
 	
 	WvHConf cfg;
@@ -58,10 +185,11 @@ int main()
 	x["foo"] = x["blue"] = x["true"] = "sneeze";
 	
 	log("Config dump:\n");
-	cfg.dump(*wvcon);
+	cfg.dump(quiet);
     }
     
     {
+	wvcon->print("\n\n");
 	log("-- Inheritence test begins\n");
 	
 	WvHConf cfg, *h;
@@ -86,11 +214,12 @@ int main()
 	cfg["/users/bob/someone/comment"] = "fork";
 	
 	log("Config dump 2:\n");
-	cfg.dump(*wvcon);
+	cfg.dump(quiet);
     }
     
     {
-	log("-- Generator test begins\n");
+	wvcon->print("\n\n");
+	log("-- Hello Generator test begins\n");
 	
 	WvHConf cfg;
 	
@@ -105,7 +234,37 @@ int main()
 	cfg.get("/hello/1");
 	
 	log("Config dump:\n");
-	cfg.dump(*wvcon);
+	cfg.dump(quiet);
+    }
+    
+    {
+	wvcon->print("\n\n");
+	log("-- FileTree test begins\n");
+	
+	WvHConf cfg;
+	
+	cfg.generator = new WvHConfFileTree(&cfg, "/etc/modutils");
+	cfg.generator->load();
+	
+	log("Config dump:\n");
+	cfg.dump(quiet);
+    }
+    
+    {
+	wvcon->print("\n\n");
+	log("-- IniFile test begins\n");
+	
+	WvHConf cfg;
+	WvHConf *cfg2 = &cfg["/weaver ini test"];
+	
+	cfg.generator = new WvHConfIniFile(&cfg, "test.ini");
+	cfg.generator->load();
+	
+	cfg2->generator = new WvHConfIniFile(cfg2, "/tmp/weaver.ini");
+	cfg2->generator->load();
+	
+	log("Config dump:\n");
+	cfg.dump(quiet);
     }
     
     return 0;

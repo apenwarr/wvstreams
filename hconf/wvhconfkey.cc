@@ -21,6 +21,8 @@ WvHConfKey::WvHConfKey()
 WvHConfKey::WvHConfKey(const WvString &key)
 {
     split(key, "/");
+    if (count() == 1 && !*first())
+	zap();
 }
 
 
@@ -29,6 +31,8 @@ WvHConfKey::WvHConfKey(const WvString &key)
 WvHConfKey::WvHConfKey(const char *key)
 {
     split(key, "/");
+    if (count() == 1 && !*first())
+	zap();
 }
 
 
@@ -58,7 +62,10 @@ WvHConfKey::WvHConfKey(const WvHConfKey &key, int offset)
 
 WvString WvHConfKey::printable() const
 {
-    return join("/");
+    if (isempty() || (count()==1 && !*first()))
+	return "/";
+    else
+	return join("/");
 }
 
 
