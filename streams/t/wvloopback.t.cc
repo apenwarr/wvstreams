@@ -29,7 +29,7 @@ WVTEST_MAIN("loopback")
     const char *line = loop.getline(10000);
     WVPASS(line);
     printf("line is '%s'\n", line);
-    WVPASS(wait(NULL) == pid);
+    WVPASS(waitpid(pid, NULL, 0) == pid);
 
     loop.nowrite();
 }
