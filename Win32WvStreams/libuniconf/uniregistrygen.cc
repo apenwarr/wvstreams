@@ -13,7 +13,8 @@ WV_LINK(UniRegistryGen);
 
 // returns a handle to the key specified by key, or, if key specifies a value,
 // a handle to the key containing that value (and setting isValue = true)
-static HKEY follow_path(HKEY from, const UniConfKey &key, bool create, bool *isValue)
+static HKEY follow_path(HKEY from, const UniConfKey &key,
+			bool create, bool *isValue)
 {
     const REGSAM samDesired = KEY_READ | KEY_WRITE;
     LONG result;
@@ -39,8 +40,10 @@ static HKEY follow_path(HKEY from, const UniConfKey &key, bool create, bool *isV
 
 	if ((result == ERROR_FILE_NOT_FOUND) && (i == n-1))
 	{
+	    WvString xsub(subkey=="." ? WvString::null : subkey);
+	    
 	    // maybe the last segment is a value name
-	    if (RegQueryValueEx(hLastKey, subkey, 0, NULL, NULL, NULL) == ERROR_SUCCESS)
+	    if (RegQueryValueEx(hLastKey, xsub, 0, NULL, NULL, NULL) == ERROR_SUCCESS)
 	    {
 		// ... it is a value
 		if (isValue) *isValue = true;
@@ -107,7 +110,7 @@ UniRegistryGen::~UniRegistryGen()
 {
     if (m_hRoot)
     {
-	LONG result = RegCloseKey(m_hRoot);
+	RegCloseKey(m_hRoot);
 	m_hRoot = 0;
     }
 }
@@ -127,11 +130,12 @@ WvString UniRegistryGen::get(const UniConfKey &key)
     if (isvalue)
     {
 	// the path ends up at a value so fetch that
-	value = key.last().printable();
+	value = key.last();
+	if (value == ".") value = WvString::null;
     }
     else
     {
-	// the key isn't a value, fetch it's default value instead
+	// the key isn't a value, fetch its default value instead
 	value = WvString::null;
     }
     
@@ -179,9 +183,11 @@ void UniRegistryGen::set(const UniConfKey &key, WvStringParm value)
 	}
 	else
 	{
+	    WvString last = key.last();
+	    if (last == ".") last = WvString::null;
 	    result = RegSetValueEx(
 		hKey,
-		key.last().printable(),
+		last,
 		0,
 		REG_SZ,
 		(BYTE *) value.cstr(),
@@ -215,15 +221,22 @@ UniConfGen::Iter *UniRegistryGen::iterator(const UniConfKey &key)
 }
 
 
-UniRegistryGenIter::UniRegistryGenIter(UniRegistryGen &gen, const UniConfKey &key, HKEY base):
-    m_hKey(0), m_enumerating(KEYS), m_index(0), gen(gen), parent(key), m_dontClose(base)
+UniRegistryGenIter::UniRegistryGenIter(UniRegistryGen &gen,
+				       const UniConfKey &key, HKEY base)
+    : m_hKey(0), m_enumerating(KEYS), m_index(0), gen(gen), parent(key),
+      m_dontClose(base)
 {
     bool isValue;
     HKEY hKey = follow_path(base, key, false, &isValue);
+    
+    // fprintf(stderr, "(iter:%s:%d:%p)\n",
+    //	    key.printable().cstr(), isValue, hKey); fflush(stderr);
+	    
     if (isValue)
     {
 	// a value doesn't have subkeys
 	if (hKey != m_dontClose) RegCloseKey(hKey);
+	m_enumerating = VALUES;
     }
     else
 	m_hKey = hKey;
@@ -239,6 +252,7 @@ UniRegistryGenIter::~UniRegistryGenIter()
 
 void UniRegistryGenIter::rewind()
 {
+    current_key = "YOU HAVE TO REWIND, DUMMY!";
     m_enumerating = KEYS;
     m_index = 0;
 }
@@ -251,13 +265,20 @@ bool UniRegistryGenIter::next()
 	LONG result = next_key();
 	if (result == ERROR_SUCCESS)
 	    return true;
-	if (result == ERROR_NO_MORE_ITEMS)
+	else if (result == ERROR_NO_MORE_ITEMS)
 	{
 	    // done enumerating keys, now enumerate the values
 	    m_enumerating = VALUES;
 	    m_index = 0;
 	}
+	else
+	{
+	    fprintf(stderr, "KEY_ENUM result: %d\n", result);
+	    fflush(stderr);
+	    return false; // give up
+	}
     }
+    assert(m_enumerating == VALUES);
     LONG result = next_value();
     if (result == ERROR_SUCCESS)
 	return true;
@@ -266,22 +287,22 @@ bool UniRegistryGenIter::next()
 
 UniConfKey UniRegistryGenIter::key() const
 {
-    UniConfKey fullpath = parent;
-    fullpath.append(current_key);
     return current_key;
 }
 
 
 WvString UniRegistryGenIter::value() const
 {
-    UniConfKey val = parent;
-    val.append(current_key);
+    UniConfKey val(parent, current_key);
     return gen.get(val);
 }
 
 
 LONG UniRegistryGenIter::next_key()
 {
+    if (!m_hKey)
+	return ERROR_NO_MORE_ITEMS;
+    
     FILETIME dontcare;
     TCHAR data[1024];
     DWORD size = sizeof(data) / sizeof(data[0]);
@@ -294,12 +315,19 @@ LONG UniRegistryGenIter::next_key()
 
 LONG UniRegistryGenIter::next_value()
 {
-    TCHAR data[1024];
+    if (!m_hKey)
+	return ERROR_NO_MORE_ITEMS;
+    
+    TCHAR data[1024] = "";
     DWORD size = sizeof(data) / sizeof(data[0]);
-    LONG result = RegEnumValue(m_hKey, m_index++, data, &size, 0, 0, 0, 0);
-    if (result == ERROR_SUCCESS)
-	current_key = data;
-    return result;
+    while (!*data)
+    {
+	LONG result = RegEnumValue(m_hKey, m_index++, data, &size, 0, 0, 0, 0);
+	if (result != ERROR_SUCCESS)
+	    return result;
+    }
+    current_key = data;
+    return ERROR_SUCCESS;
 }
 
 
