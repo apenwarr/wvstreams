@@ -484,15 +484,6 @@ WvString WvX509Mgr::certreq()
 bool WvX509Mgr::test()
 {
     bool bad = false;
-    // EVIL - but necessary for the moment...
-    // Since the stupid OpenSSL library can't manage
-    // to validate certificates without having a properly initialized
-    // "Certificate Store" - for some reason, it keeps barfing with:
-    // error:0407006A:rsa routines:RSA_padding_check_PKCS1_type_1:block type is not 01
-    // the X509_verify() routine has no problem with self signed certificates
-    // but appears to have a great deal of difficulty with one's signed by a proper CA
-    // GRUMBLE!
-    return true;
     
     EVP_PKEY *pk = EVP_PKEY_new();
     
@@ -504,28 +495,36 @@ bool WvX509Mgr::test()
     
     if (rsa && pk)
     {
-	WvRSAKey tmpkey(*rsa);
-	
-	if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
+	if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
     	{
             seterr("Error setting RSA keys");
 	    bad = true;
     	}
 	else if (!bad)
 	{
-#if 0   
 	    int verify_return = X509_verify(cert, pk);
 	    if (verify_return != 1) // only '1' means okay
 	    {
-		seterr("Certificate test failed: %s\n", wvssl_errstr());
-		bad = true;
+		// However let's double check:
+		WvString rsapub = encode(RsaPubPEM);
+		EVP_PKEY *pkcert = EVP_PKEY_new();
+		pkcert = X509_get_pubkey(cert);
+		RSA *certrsa = RSA_new();
+		certrsa = EVP_PKEY_get1_RSA(pkcert);
+		WvRSAKey tempcertrsa(certrsa, false);
+		WvString certpub = tempcertrsa.getpem(false);
+		// debug("rsapub:\n%s\n", rsapub);
+		// debug("certpub:\n%s\n", certpub);
+		if (certpub == rsapub)
+		    ; // do nothing, since OpenSSL is lying
+		else
+		{
+		    // I guess that it really did fail.
+		    seterr("Certificate test failed: %s\n", wvssl_errstr());
+		    bad = true;
+		}
 	    }
-#endif
-	    // We should do a verification here, but it's broken...
-	    bad = false;
 	}
-	
-	tmpkey.rsa = NULL;
     }
     else
     {
@@ -679,7 +678,6 @@ bool WvX509Mgr::isinCRL()
 WvString WvX509Mgr::encode(const DumpMode mode)
 {
     FILE *stupid;
-    const EVP_CIPHER *enc;
     WvString nil;
     
     stupid = file_hack_start();
@@ -695,11 +693,15 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 	    
 	case RsaPEM:
 	    debug("Dumping RSA keypair.\n");
-	    enc = EVP_get_cipherbyname("rsa");
-	    PEM_write_RSAPrivateKey(stupid, rsa->rsa, enc,
-				    NULL, 0, NULL, NULL);
+	    fclose(stupid);
+	    return rsa->getpem(true);
 	    break;
 	    
+	case RsaPubPEM:
+	    debug("Dumping RSA Public Key!\n");
+	    fclose(stupid);
+	    return rsa->getpem(false);
+	    break;
 	case RsaRaw:
 	    debug("Dumping raw RSA keypair.\n");
 	    RSA_print_fp(stupid, rsa->rsa, 0);
@@ -732,7 +734,6 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
     FILE *stupid;
     WvString outstring = pemEncoded;
     
-
     stupid = file_hack_start();
 
     if (stupid)

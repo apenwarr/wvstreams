@@ -35,7 +35,7 @@ public:
     * Type for the @ref dump() method, which can output the information
     * in this class in a variety of formats
     */
-    enum DumpMode { CertPEM = 0, RsaPEM, RsaRaw };
+    enum DumpMode { CertPEM = 0, RsaPEM, RsaPubPEM, RsaRaw };
 
    /**
     * Initialize a blank X509 Object with the certificate *cert

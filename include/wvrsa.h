@@ -45,6 +45,9 @@ public:
         { return prv; }
     WvString public_str() const
         { return pub; }
+    
+    WvString getpem(bool privkey);
+
 };
 
 

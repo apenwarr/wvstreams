@@ -9,6 +9,7 @@
 #include "wvhex.h"
 #include <assert.h>
 #include <openssl/rsa.h>
+#include <openssl/pem.h>
 
 /***** WvRSAKey *****/
 
@@ -103,36 +104,42 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
 }
 
 
-#if 0
-void WvRSAKey::pem2hex(WvStringParm filename)
+
+WvString WvRSAKey::getpem(bool privkey)
 {
-    RSA *rsa = NULL;
-    FILE *fp;
-
-    fp = fopen(filename, "r");
-
+    FILE *fp = tmpfile();
+    const EVP_CIPHER *enc;
+    
     if (!fp)
     {
-	seterr("Unable to open %s!",filename);
-	return;
+	seterr("Unable to open temporary file!");
+	return WvString::null;
     }
 
-    rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
-
-    fclose(fp);
-
-    if (!rsa)
+    if (privkey)
     {
-	seterr("Unable to decode PEM File!");
-	return;
+	enc = EVP_get_cipherbyname("rsa");
+	PEM_write_RSAPrivateKey(fp, rsa, enc,
+			       NULL, 0, NULL, NULL);
     }
     else
     {
-	hexify(rsa);
-	return;
+	enc = EVP_get_cipherbyname("rsa");
+	PEM_write_RSAPublicKey(fp, rsa);
     }
+    
+    WvDynBuf b;
+    size_t len;
+    
+    rewind(fp);
+    while ((len = fread(b.alloc(1024), 1, 1024, fp)) > 0)
+	b.unalloc(1024 - len);
+    b.unalloc(1024 - len);
+    fclose(fp);
+
+    return b.getstr();
 }
-#endif
+
 
 
 WvString WvRSAKey::hexifypub(struct rsa_st *rsa)

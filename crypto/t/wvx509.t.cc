@@ -121,6 +121,11 @@ WVTEST_MAIN()
 	WVPASS(t509.isok());
 	WVPASS(t509.get_subject() == "/C=CA/ST=Quebec/L=Montreal/O=Testy One/CN=aria2.weavernet.null");
 	WVPASS(t509.get_issuer() == "/O=NITI-TEST");
+	// The certificate in x509certtext has a different public/private key
+	// and so, this SHOULD fail.
+	t509.decode(WvX509Mgr::CertPEM, x509certtext);
+	WVFAIL(t509.test());
+	WVFAIL(t509.isok());
     }
     {
 	// Now we stress test it to make sure that it fails predictably...
@@ -139,4 +144,5 @@ WVTEST_MAIN()
 	WVFAIL(t509.get_subject() == "/CN=test.foo.com/DC=foo/DC=com");
 	WVFAIL(t509.get_issuer() == "/CN=test.foo.com/DC=foo/DC=com");
     }
+    
 }
