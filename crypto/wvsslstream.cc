@@ -228,8 +228,10 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             switch (errcode)
             {
                 case SSL_ERROR_WANT_READ:
+		    debug("<< SSL_read() needs to wait for writable.\n");
+                    break; // wait for later
                 case SSL_ERROR_WANT_WRITE:
-		    // debug("<< SSL_read() needs to wait for readable.\n");
+		    debug("<< SSL_read() needs to wait for readable.\n");
                     break; // wait for later
                     
                 case SSL_ERROR_NONE:
@@ -351,6 +353,8 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
             switch (errcode)
             {
                 case SSL_ERROR_WANT_READ:
+                    debug(">> SSL_write() needs to wait for readable.\n");
+                    break; // wait for later
                 case SSL_ERROR_WANT_WRITE:
                     debug(">> SSL_write() needs to wait for writable.\n");
                     break; // wait for later
@@ -382,6 +386,8 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
             }
             break; // wait for next iteration
         }
+	else
+	    assert((size_t)result == used);
         write_bouncebuf.zap(); // force use of same position in buffer
         
         // locate next chunk to be written
