@@ -70,47 +70,56 @@ public:
     }
     R operator()()
     {
+        delete frozen;
         frozen = new FrozenParams;
         stream->alarm(0);
         // you can't delay a callback that has a non-void return type, sorry
     }
     R operator()(P1 p1)
     {
+        delete frozen;
         frozen = new FrozenParams(p1);
         stream->alarm(0);
     }
     R operator()(P1 p1, P2 p2)
     {
+        delete frozen;
         frozen = new FrozenParams(p1, p2);
         stream->alarm(0);
     }
     R operator()(P1 p1, P2 p2, P3 p3)
     {
+        delete frozen;
         frozen = new FrozenParams(p1, p2, p3);
         stream->alarm(0);
     }
     R operator()(P1 p1, P2 p2, P3 p3, P4 p4)
     {
+        delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4);
         stream->alarm(0);
     }
     R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
     {
+        delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5);
         stream->alarm(0);
     }
     R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)
     {
+        delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5, p6);
         stream->alarm(0);
     }
     R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)
     {
+        delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5, p6, p7);
         stream->alarm(0);
     }
     R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8)
     {
+        delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5, p6, p7, p8);
         stream->alarm(0);
     }
