@@ -15,6 +15,15 @@
 #include <assert.h>
 
 
+WvStream::WvStream(int _fd)
+{
+    init();
+    fd = _fd;
+
+    fcntl(fd, F_SETFD, 1);
+    fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
+}
+
 void WvStream::init()
 {
     callfunc = NULL;
@@ -173,7 +182,7 @@ size_t WvStream::uwrite(const void *buf, size_t count)
     int out;
     do
 	out = ::write(getfd(), buf, count);
-    while (out < 0 && (errno==EINTR || errno==EAGAIN));
+    while (out < 0 && errno==EINTR);
     
     if (errno == ENOBUFS) // buffer full - data not written
 	return 0;

@@ -27,8 +27,7 @@ public:
     // constructor to create a WvStream from an existing file descriptor.
     // The file descriptor is closed automatically by the destructor.  If
     // this is undesirable, duplicate it first using dup().
-    WvStream(int _fd)
-        { init(); fd = _fd; }
+    WvStream(int _fd);
     virtual ~WvStream();
     
     // close the stream if it is open; isok() becomes false from now on.

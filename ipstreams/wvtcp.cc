@@ -26,7 +26,7 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
     remaddr = _remaddr;
     resolved = true;
     connected = true;
-    
+
     if (fd < 0)
 	seterr(errno);
 }
