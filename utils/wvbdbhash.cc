@@ -14,6 +14,7 @@
 
 
 WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile)
+    : itercount(0)
 {
     dbf = dbopen(dbfile, O_CREAT|O_RDWR, 0666, DB_BTREE, NULL);
     if (!dbf)
@@ -74,11 +75,13 @@ WvBdbHashBase::IterBase::IterBase(WvBdbHashBase &_bdbhash)
     : bdbhash(_bdbhash)
 {
     curkey.dptr = curdata.dptr = NULL;
+    assert(++bdbhash.itercount == 1);
 }
 
 
 WvBdbHashBase::IterBase::~IterBase()
 {
+    bdbhash.itercount--;
 }
 
 

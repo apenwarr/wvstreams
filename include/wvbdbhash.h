@@ -62,6 +62,7 @@ public:
 private:
     friend class IterBase;
     struct __db *dbf;
+    int itercount;
 };
 
 
@@ -74,6 +75,11 @@ private:
  * For find and operator[], the returned object is only guaranteed to be
  * around until the next find() (or next(), for iterators).  Remember that
  * you may not be the only person to do a next() or find() on this database.
+ *
+ * You may only have one iterator at a time for a given WvBdbHash (for the
+ * moment at least).  This is due to the strange way in which the database
+ * handles iteration (with its own internal cursor).  Note that first()
+ * and count() also use iterators!
  */
 template <class K, class D>
 class WvBdbHash : public WvBdbHashBase
@@ -137,7 +143,23 @@ public:
         
     bool exists(const K &key)
         { return WvBdbHashBase::exists(datumize<K>(key)); }
-    
+
+    int count()
+    {
+	int res = 0;
+	Iter i(*this);
+	for (i.rewind(); i.next(); )
+	    res++;
+	return res;
+    }
+
+    D &first()
+    {
+	Iter i(*this);
+	i.rewind(); i.next();
+	return i();
+    }
+
     class Iter : public WvBdbHashBase::IterBase
     {
 	K *k;
@@ -186,6 +208,7 @@ public:
 	    { return d; }
 	WvIterStuff(D);
     };
+
 };
 
 #endif // __WVBDBHASH_H
