@@ -51,7 +51,7 @@ int WvInterface::req(int ioctl_num, struct ifreq *ifr)
     ifr->ifr_name[IFNAMSIZ-1] = 0;
     
     retval = ioctl(sock, ioctl_num, ifr);
-    if (retval)
+    if (retval == -1)
         retval = errno;
     close(sock);
     return retval;

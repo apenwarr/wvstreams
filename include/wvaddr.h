@@ -66,7 +66,7 @@ static const char * type_wvipportaddr = "WvIPPortAddr";
  */
 class WvEncap
 {
-    static char strings[][20];	       // printable-string names per type
+    static const char strings[][20];   // printable-string names per type
     static int extypes[];	       // external types (ARPHRD_*, etc)
 public:
     // NOTE:  if you change enum CapType, don't forget to change extypes[]
