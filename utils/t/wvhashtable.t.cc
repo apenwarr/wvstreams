@@ -274,5 +274,16 @@ WVTEST_MAIN("WvMap zapping")
     /*
     WVFAIL(zapmap.exists("Febtober"));
     */
+
+    WvMap<WvString, WvString*> ptrmap(5);
+
+    ptrmap.set("Smarch", new WvString("Mapril"));
+    WVPASS(ptrmap.exists("Smarch"));
+    ptrmap.zap();
+    /*** FAILURE: This doesn't pass as of 2004-07-13.  See BUGZID: 6281 ***/
+    /*
+    WVFAIL(listmap.exists("Smarch"));
+    */
+
 }
 
