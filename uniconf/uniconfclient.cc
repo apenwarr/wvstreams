@@ -9,7 +9,7 @@
 
 #include <uniconfclient.h>
 
-UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l, bool automount) :
+UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l) :
     top(_top), log("UniConfClient"), dict(5), list(l)
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
@@ -22,8 +22,6 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l, b
         list->append(conn, false);
 
     waitforsubt = false;
-    if (automount)
-        top->mount(this);
 }
 
 UniConfClient::~UniConfClient()

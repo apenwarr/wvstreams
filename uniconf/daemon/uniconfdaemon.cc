@@ -39,7 +39,7 @@ UniConf *UniConfDaemon::domount(WvString mode, WvString mountfrom, WvString mp)
     {
         dolog(WvLog::Debug3, "domount", WvString("Attempting to mount the %s file %s to point:  %s->\n",
                 mode, mountfrom, mp));
-        new UniConfIniFile(mounted, mountfrom, true);
+        mounted->mount(new UniConfIniFile(mounted, mountfrom));
         if (!mounted->checkgen())
         {
             dolog(WvLog::Error, "domount", WvString("IniFile generator was not successfully created for %s with file %s->\n",

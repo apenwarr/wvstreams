@@ -10,8 +10,7 @@
 WvConf::WvConf(WvStringParm _filename, int _create_mode)
     : notifier(h), ev(h), filename(_filename)
 {
-    //h.generator = new UniConfIniFile(&h, filename, false);
-    new UniConfIniFile(&h, filename, true);
+    h.mount(new UniConfIniFile(&h, filename));
     h.load();
 }
 

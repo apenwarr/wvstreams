@@ -16,7 +16,7 @@ bool want_to_die = false;
 //WvUnixAddr addr("/tmp/uniconf/uniconfsocket");
 WvIPPortAddr addr("0.0.0.0", 4111);
 
-void printheader(WvString h, WvString mountpoint, bool automount)
+void printheader(WvString h, WvString mountpoint)
 {
     WvString header("%s WITH MOUNTPOINT %s, %s", h, mountpoint, (automount ? "WITH AUTOMOUNT" : "NO AUTOMOUNT"));
     wvcon->print("%s\n",header);
@@ -57,58 +57,38 @@ void testxiter(UniConf &mainconf)
 int main(int argc, char **argv)
 {
     WvString mountpoint("/");
-    bool automount = true;
     for (int i = 0; i < 2; i++)
     {
 
+        {
         // Test a normal iterator
-        do
-        {
-            automount = !automount;
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
-            if (!automount)
-                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
-            else
-                new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
+            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
 
-            printheader("TEST NORMAL ITERATORS", mountpoint, automount);
+            printheader("TEST NORMAL ITERATORS", mountpoint);
             testnormaliter(mainconf);
-        }while(!automount);
+        }
 
-        // Test a recursive iterator
-        do
         {
-            automount = !automount;
+        // Test a recursive iterator
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
-            if (!automount)
-                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
-            else
-                new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
+            mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
             
-            printheader("TEST RECURSIVE ITERATORS", mountpoint, automount);
+            printheader("TEST RECURSIVE ITERATORS", mountpoint);
             testrecursiveiter(mainconf);
         }
-        while(!automount);
 
         // Test an XIter
-        do
+        
         {
-            automount = !automount;
-            
             UniConf mainconf;
             UniConf *mounted = &mainconf[mountpoint];
-            if (!automount)
-                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount));
-            else
-                new UniConfClient(mounted, new WvTCPConn(addr), NULL, automount);
-            printheader("TEST X ITERATORS", mountpoint, automount);
+            Mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+            printheader("TEST X ITERATORS", mountpoint);
             testxiter(mainconf);
-
         }
-        while(!automount);
-
         mountpoint = "/orino";
     }
     return 0;

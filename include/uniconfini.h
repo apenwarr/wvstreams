@@ -22,7 +22,7 @@ public:
     
     // Pass false to the automount parameter if you don't want to automatically set
     // _top's generator to this.
-    UniConfIniFile(UniConf *_top, WvStringParm _filename, bool automount);
+    UniConfIniFile(UniConf *_top, WvStringParm _filename);
     virtual void load();
     virtual void save();
     
