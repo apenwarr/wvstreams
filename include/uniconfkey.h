@@ -136,6 +136,7 @@ public:
      * Returns: the path
      */
     UniConfKey pop(int n = 1);
+    
     /**
      * Returns the path formed by the n first segments of this path.
      * "n" is the number of segments
