@@ -499,6 +499,7 @@ WvString WvMessageDigest::printable() const
     WvString digest_value("");
 
 //    EVP_DigestFinal_ex(mdctx, raw_digest_value, &len);
+    len = 0;
 
     for(i = 0; i < len; i++) 
     {
