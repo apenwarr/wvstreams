@@ -1,5 +1,6 @@
 #include "uniconfdaemon.h"
 #include <signal.h>
+#include "wvcrash.h"
 
 UniConfDaemon *daem;
 // we now want execution to stop
@@ -24,7 +25,7 @@ int main(int argc, char **argv)
 {
     signal(SIGINT,  sighandler_die);
     signal(SIGTERM, sighandler_die);
-
+    wvcrash_setup(argv[0]);
     daem = new UniConfDaemon();
 
     if (argc == 4)

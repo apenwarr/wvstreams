@@ -17,7 +17,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.cc
 	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
-	@test -f $(DEPFILE)
+	@test -f $(notdir $(@).d)
 	@sed -e 's|^$(notdir $@)|$@|' $(notdir $@).d > $(dir $@).$(notdir $@).d
 	@rm -f $(notdir $@).d
 

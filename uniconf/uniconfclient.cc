@@ -13,6 +13,7 @@ UniConfClient::UniConfClient(UniConf *_top, UniConfConnFactory *_fctry/*WvStream
     top(_top), fctry(_fctry), log("UniConfClient"), dict(5)
 {
     conn = fctry->open();
+    waitforsubt = false;
 }
 
 UniConfClient::~UniConfClient()
@@ -86,10 +87,17 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
     return toreturn;
 }
 
-void UniConfClient::update_tree()
+void UniConfClient::enumerate_subtrees(const UniConfKey &key)
 {
     if (conn->select(0, true, false, false))
-        conn->callback();
+        execute();
+    conn->print(WvString("subt %s\n", key));
+    waitforsubt = true;
+    while (waitforsubt)
+    {
+        conn->select(-1, true, false, false);
+        execute();
+    }
 }
 
 void UniConfClient::update(UniConf *&h)
@@ -159,6 +167,22 @@ void UniConfClient::execute()
                         par->child_obsolete = true;
                         par = par->parent;
                     }
+                }
+            }
+            else if (*cmd == "SUBT")  // This is so inefficient it scares me.
+            {
+                waitforsubt = false;
+                while (fromline.used() > 0)
+                {
+                    WvString *pair = wvtcl_getword(fromline);
+                    WvDynamicBuffer temp;
+                    temp.put(*pair, pair->len());
+                    WvString *newkey = wvtcl_getword(temp);
+                    WvString *newval = wvtcl_getword(temp);
+                    if (!newval) newval = new WvString;
+                    dict.add(new waitingdata(newkey->unique(), newval->unique()), false);
+                    UniConf *narf = &top->get(*key);
+                    narf = &narf->get(*newkey);
                 }
             }
 

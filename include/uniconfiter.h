@@ -16,7 +16,7 @@ class UniConf::Iter : public UniConfDict::Iter
 {
 public:
     Iter(UniConf &h)
-	: UniConfDict::Iter(h.children ? *h.children : null_wvhconfdict)
+	: UniConfDict::Iter(h.check_children() ? *h.children : null_wvhconfdict)
 	{ }
     Iter(UniConfDict &children)
 	: UniConfDict::Iter(children)

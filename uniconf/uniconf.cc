@@ -47,7 +47,7 @@ void UniConf::init()
     
     dirty  = child_dirty  = false;
     notify = child_notify = false;
-    
+    waiting = child_waiting = false;
     obsolete = child_obsolete = false;
 }
 
@@ -112,6 +112,12 @@ UniConfKey UniConf::gen_full_key()
     return full_key(gen_top());
 }
 
+bool UniConf::check_children()
+{
+    if (this->generator)
+        this->generator->enumerate_subtrees(gen_full_key());
+    return (children != NULL);
+}
 
 // find a key in the subtree.  If it doesn't already exist, return NULL.
 UniConf *UniConf::find(const UniConfKey &key)

@@ -1,6 +1,7 @@
 
 #include "uniconfdaemonconn.h"
 #include "uniconfdaemon.h"
+#include "uniconfiter.h"
 #include "wvtclstring.h"
 
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, UniConfDaemon *_source)
@@ -28,8 +29,8 @@ void UniConfDaemonConn::execute()
     WvString *key = NULL;
     while (line)
     {
-        WvBuffer fromline;
-        fromline.put(*line);
+        WvDynamicBuffer fromline;
+        fromline.put(*line, line->len());
 
         // get the command
         if (!cmd)
@@ -64,6 +65,26 @@ void UniConfDaemonConn::execute()
                 keys.append(key, false);
                 cmd = key = 0;
             }
+            else if (*cmd == "subt") // return the subtree(s) of this key
+            {
+                UniConf *nerf = &source->mainconf[*key];
+                if (nerf)
+                {
+                    WvString send("SUBT %s ", *key);
+                    UniConf::Iter i(*nerf);
+                    for (i.rewind(); i.next();)
+                    {
+                        send.append("{%s %s} ", wvtcl_escape(i->name), wvtcl_escape(*i));
+                    }
+                    send.append("\n");
+                    print(send);
+                }
+                else
+                {
+                    print(WvString("SUBT %s\n"));
+                }
+                    
+           }
             else if (*cmd == "set") // set the specified value
             {
                 WvString *newvalue = wvtcl_getword(fromline);

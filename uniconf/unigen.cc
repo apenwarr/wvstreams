@@ -38,7 +38,7 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
     return parent;
 }
 
-void UniConfGen::update_tree()
+void UniConfGen::enumerate_subtrees(const UniConfKey &key)
 {
     // do nothing by default.
 }
@@ -61,4 +61,3 @@ void UniConfGen::save()
 {
     // do nothing by default
 }
-

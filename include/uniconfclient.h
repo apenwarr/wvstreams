@@ -37,13 +37,14 @@ public:
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
-    virtual void update_tree();
+    virtual void enumerate_subtrees(const UniConfKey &key);
     virtual void update(UniConf *&h);
 
     virtual void save();
 protected:
     void execute();
     void savesubtree(UniConf *tree, UniConfKey key);
+    bool waitforsubt;
 };
 
 

@@ -13,7 +13,7 @@ public:
     UniConfDaemonConn(WvStream *_s, UniConfDaemon *_source);
     virtual ~UniConfDaemonConn();
     virtual void execute();
-private:
+protected:
     UniConfDaemon *source;
     WvStringList keys;
 };

@@ -84,6 +84,16 @@ int main(int argc, char **argv)
                 wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
             }
 
+            // Test getting a subtree
+            {
+                UniConf *nerf = &mainconf["/"];
+                UniConf::Iter i(*nerf);
+                for (i.rewind(); i.next();)
+                {
+                    wvcon->print("Key:%s has value:%s.\n", i->name, *i);
+                }
+            }
+
             mounted->save();
         }
 

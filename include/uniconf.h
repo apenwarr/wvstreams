@@ -74,7 +74,7 @@ public:
     // (in the opinion of the generator)
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
    
-    virtual void update_tree();
+    virtual void enumerate_subtrees(const UniConfKey &key);
     virtual void update(UniConf *&h);
     
     // the default load/save functions don't do anything... you might not
@@ -141,7 +141,9 @@ public:
     
     bool has_children() const
         { return (children != NULL); }
-    
+    // checks generator, then returns children != NULL
+    // Needed for iterator over client connection
+    bool check_children();
     UniConf *find(const UniConfKey &key);
     UniConf *find_make(const UniConfKey &key);
     UniConf &operator[](const UniConfKey &key) { return *find_make(key); }
