@@ -61,6 +61,10 @@ bool WvDirIter::next()
 // use readdir... and if that returns a directory, make a child and recurse
 // into it.  If there's already a child, call ITS next() instead of ours.
 {
+    // recurse?
+    if( !child && dent && S_ISDIR( info.mode ) )
+        child = new WvDirIter( info.fullname );
+
     if( child ) {
         if( child->next() ) {
             return true;
@@ -84,13 +88,9 @@ bool WvDirIter::next()
             }
         } while( dent && !ok );
 
-        if( dent ) {
+        if( dent )
             fill_info( fname, st );
-
-            // recurse next time?
-            if( S_ISDIR( info.mode ) )
-                child = new WvDirIter( info.fullname );
-        } else {
+        else {
             closedir( d );
             d = NULL;
         }
