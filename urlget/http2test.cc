@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     
     while (!want_to_die && p.isok() && (wvcon->isok() || !p.idle()))
     {
-	if (l.select(1000))
+	if (l.select(-1))
 	{
 	    l.callback();
 	    
