@@ -5,7 +5,7 @@
 #include "wvistreamlist.h"
 #include <sys/stat.h>
 
-WvFAMBase::~WvFAMBase()
+WvFamBase::~WvFamBase()
 {
     WvIStreamList::globallist.unlink(s);
 
@@ -13,7 +13,7 @@ WvFAMBase::~WvFAMBase()
         log(WvLog::Error, "%s\n", FamErrlist[FAMErrno]);
 }
 
-bool WvFAMBase::isok() const
+bool WvFamBase::isok() const
 {
     if (s && s->isok())
         return true;
@@ -21,7 +21,7 @@ bool WvFAMBase::isok() const
     return false;
 }
 
-int WvFAMBase::_monitordir(WvString *dir)
+int WvFamBase::_monitordir(WvString *dir)
 {
     if (isok() && !FAMMonitorDirectory(&fc, *dir, &fr, dir))
         return fr.reqnum;
@@ -30,7 +30,7 @@ int WvFAMBase::_monitordir(WvString *dir)
     return -1;
 }
 
-int WvFAMBase::_monitorfile(WvString *file)
+int WvFamBase::_monitorfile(WvString *file)
 {
     if (isok() && !FAMMonitorFile(&fc, *file, &fr, 0))
         return fr.reqnum;
@@ -39,7 +39,7 @@ int WvFAMBase::_monitorfile(WvString *file)
     return -1;
 }
 
-void WvFAMBase::_unmonitor(int reqid)
+void WvFamBase::_unmonitor(int reqid)
 {
     if (!isok())
         return;
@@ -48,7 +48,7 @@ void WvFAMBase::_unmonitor(int reqid)
     FAMCancelMonitor(&fc, &fr);
 }
 
-void WvFAMBase::_callback()
+void WvFamBase::_callback()
 {
     int famstatus;
 
@@ -59,14 +59,14 @@ void WvFAMBase::_callback()
                 || fe.code == FAMCreated)
         {
             if (!fe.userdata)
-                cb(WvString(fe.filename), WvFAMEvent(fe.code));
+                cb(WvString(fe.filename), WvFamEvent(fe.code));
 
             // If the void * points to something this is a directory callback.
             // We'll prepend the path to the returned filename.
             else
                 cb(WvString("%s/%s",
                     *reinterpret_cast<WvString *>(fe.userdata),
-                    fe.filename), WvFAMEvent(fe.code));
+                    fe.filename), WvFamEvent(fe.code));
         }
     }
 
@@ -74,7 +74,7 @@ void WvFAMBase::_callback()
         log(WvLog::Error, "%s\n", FamErrlist[FAMErrno]);
 }
 
-bool WvFAMBase::fam_ok()
+bool WvFamBase::fam_ok()
 {
     FAMConnection fc;
 
@@ -92,7 +92,7 @@ bool WvFAMBase::fam_ok()
     return true;
 }
 
-void WvFAMBase::setup()
+void WvFamBase::setup()
 {
     if (FAMOpen(&fc) == -1)
     {
@@ -103,18 +103,18 @@ void WvFAMBase::setup()
     {
         s = new WvFDStream(fc.fd);
 
-        s->setcallback(WvStreamCallback(this, &WvFAMBase::callback), 0);
+        s->setcallback(WvStreamCallback(this, &WvFamBase::callback), 0);
 
         WvIStreamList::globallist.append(s, true);
     }
 }
 
-void WvFAM::monitordir(WvStringParm dir)
+void WvFam::monitordir(WvStringParm dir)
 {
     if (reqs[dir])
         return;
 
-    WvFAMReq *req = new WvFAMReq(dir, 0, true);
+    WvFamReq *req = new WvFamReq(dir, 0, true);
     req->data = _monitordir(&req->key);
 
     if (req->data <= 0)
@@ -126,12 +126,12 @@ void WvFAM::monitordir(WvStringParm dir)
     reqs.add(req, true);
 }
 
-void WvFAM::monitorfile(WvStringParm file)
+void WvFam::monitorfile(WvStringParm file)
 {
     if (reqs[file])
         return;
 
-    WvFAMReq *req = new WvFAMReq(file, 0, true);
+    WvFamReq *req = new WvFamReq(file, 0, true);
     req->data = _monitorfile(&req->key);
 
     if (req->data <= 0)
@@ -143,7 +143,7 @@ void WvFAM::monitorfile(WvStringParm file)
     reqs.add(req, true);
 }
 
-void WvFAM::monitor(WvStringParm path)
+void WvFam::monitor(WvStringParm path)
 {
     struct stat buf;
     if (stat(path, &buf))
@@ -155,9 +155,14 @@ void WvFAM::monitor(WvStringParm path)
         monitorfile(path);
 }
 
-void WvFAM::unmonitor(WvStringParm path)
+void WvFam::unmonitor(WvStringParm path)
 {
+    WvFamReq *req = reqs[path];
+    if (!req)
+        return;
 
+    _unmonitor(req->data);
+    reqs.remove(req);
 }
 
 #endif

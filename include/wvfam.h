@@ -11,26 +11,26 @@
 
 #include <fam.h>
 
-enum WvFAMEvent
+enum WvFamEvent
 {
-    WvFAMChanged = 1,
-    WvFAMDeleted = 2,
-    WvFAMCreated = 5,
+    WvFamChanged = 1,
+    WvFamDeleted = 2,
+    WvFamCreated = 5,
 };
 
-typedef WvCallback<void, WvStringParm, WvFAMEvent> FAMCallback;
+typedef WvCallback<void, WvStringParm, WvFamEvent> WvFamCallback;
 
 
 /*
- * The WvFAMBase class is provided for efficiency. If you're going to be keeping
+ * The WvFamBase class is provided for efficiency. If you're going to be keeping
  * track of the stuff you're monitoring anyways then there's no reason to have
  * duplicate wvstrings/hashes. This class accepts a pointer to a wvstring and
  * returns the request id number (which is needed to unmonitor).
  *
  * If you're not keeping a list of stuff you're monitoring around for other
- * reasons just ignore this and use the main WvFAM class.
+ * reasons just ignore this and use the main WvFam class.
  */
-class WvFAMBase
+class WvFamBase
 {
 protected:
 
@@ -46,7 +46,7 @@ protected:
     FAMConnection fc;
     FAMRequest fr;
     FAMEvent fe;
-    FAMCallback cb;
+    WvFamCallback cb;
 
     WvFDStream *s;
     WvLog log;
@@ -57,24 +57,24 @@ protected:
     void setup();
 
 public:
-    WvFAMBase() : s(0), log("WvFAM") { setup(); }
-    WvFAMBase(FAMCallback _cb) : cb(_cb), s(0), log("WvFAM") { setup(); }
-    ~WvFAMBase();
+    WvFamBase() : s(0), log("WvFAM") { setup(); }
+    WvFamBase(WvFamCallback _cb) : cb(_cb), s(0), log("WvFam") { setup(); }
+    ~WvFamBase();
 
     static bool fam_ok();
 
     bool isok() const;
 
-    void setcallback(FAMCallback _cb)
+    void setcallback(WvFamCallback _cb)
         { cb = _cb; }
 };
 
 
-class WvFAM : public WvFAMBase
+class WvFam : public WvFamBase
 {
 public:
-    WvFAM() { }
-    WvFAM(FAMCallback _cb) : WvFAMBase(_cb) { }
+    WvFam() { }
+    WvFam(WvFamCallback _cb) : WvFamBase(_cb) { }
 
     void monitordir(WvStringParm dir);
     void monitorfile(WvStringParm file);
@@ -82,9 +82,9 @@ public:
     void unmonitor(WvStringParm path);
 
 protected:
-    typedef WvMapPair<WvString, int> WvFAMReq;
-    DeclareWvScatterDict2(WvFAMReqDict, WvFAMReq, WvString, key);
-    WvFAMReqDict reqs;
+    typedef WvMapPair<WvString, int> WvFamReq;
+    DeclareWvScatterDict2(WvFamReqDict, WvFamReq, WvString, key);
+    WvFamReqDict reqs;
 };
 
 
