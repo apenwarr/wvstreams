@@ -17,7 +17,16 @@ int main(int argc, char **argv)
     
     if (argc < 3)
     {
-	fprintf(stderr, "Usage: %s <cmd> <key> [extra stuff...]\n",
+	fprintf(stderr,
+		"Usage: %s <cmd> <key> [extra stuff...]\n"
+		" where <cmd> is one of:\n"
+		"   get - get the value of a key, with optional default\n"
+		"   set - set a key to the given value from the command line\n"
+		"   xset - set a key to the given value from stdin\n"
+		"   keys - list the subkeys of a key\n"
+		"   hkeys - list the subkeys of a key, their subkeys, etc\n"
+		"   dump - list the subkeys/values of a key (key=value)\n"
+		"   hdump - list the subkeys/values recursively\n",
 		argv[0]);
 	return 3;
     }
