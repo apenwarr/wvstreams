@@ -123,7 +123,7 @@ bool UniConfClientGen::set(const UniConfKey &key, WvStringParm value)
     //        a key and setting it to an empty value
     WvString command("%s %s", UniConfConn::UNICONF_SET,
         wvtcl_escape(key));
-    if (!! value)
+    if (! value.isnull())
         command.append(" %s", wvtcl_escape(value));
     conn->print("%s\n", command);
 

@@ -20,38 +20,28 @@ void printheader(WvString h, WvString mountpoint)
     wvcon->print("\n\n");
 }
 
-void testnormaliter(UniConf &mainconf)
+
+void testnormaliter(const UniConf &mainconf)
 {
-    UniConf *nerf = &mainconf["/"];
-    UniConf::Iter i(*nerf);
+    UniConf::Iter i(mainconf);
     for (i.rewind(); i.next();)
     {
         wvcon->print("Key:%s has value:%s.\n",
-            i().fullkey(), i->value());
+            i->fullkey(), i->get());
     }
 }
 
-void testrecursiveiter(UniConf &mainconf)
+
+void testrecursiveiter(const UniConf &mainconf)
 {
-    UniConf *nerf = &mainconf["/"];
-    UniConf::RecursiveIter i(*nerf);
+    UniConf::RecursiveIter i(mainconf);
     for (i.rewind(); i.next();)
     {
         wvcon->print("Key:%s has value:%s.\n",
-            i().fullkey(), i->value());
+            i->fullkey(), i->get());
     }
 }
-#if 0
-void testxiter(UniConf &mainconf)
-{
-    UniConf *nerf = &mainconf["/"];
-    UniConf::XIter i(*nerf, "/*/chickens");
-    for (i.rewind(); i._next();)
-    {
-        wvcon->print("Key:%s has value:%s.\n", i().full_key(), *i);
-    }
-}
-#endif
+
 
 int main(int argc, char **argv)
 {
@@ -60,37 +50,27 @@ int main(int argc, char **argv)
     
     for (int i = 0; i < 2; i++)
     {
-
-        {
         // Test a normal iterator
-            UniConf mainconf;
-            UniConf *mounted = &mainconf[mountpoint];
-            mounted->mount(location);
+        {
+            UniConfRoot root;
+            UniConf mainconf(& root);
+            UniConf mounted(mainconf[mountpoint]);
+            mounted.mount(location);
 
             printheader("TEST NORMAL ITERATORS", mountpoint);
             testnormaliter(mainconf);
         }
 
-        {
         // Test a recursive iterator
-            UniConf mainconf;
-            UniConf *mounted = &mainconf[mountpoint];
-            mounted->mount(location);
+        {
+            UniConfRoot root;
+            UniConf mainconf(& root);
+            UniConf mounted(mainconf[mountpoint]);
+            mounted.mount(location);
             
             printheader("TEST RECURSIVE ITERATORS", mountpoint);
             testrecursiveiter(mainconf);
         }
-#if 0
-        // Test an XIter
-        
-        {
-            UniConf mainconf;
-            UniConf *mounted = &mainconf[mountpoint];
-            mounted->mount(location);
-            printheader("TEST X ITERATORS", mountpoint);
-            testxiter(mainconf);
-        }
-#endif
         mountpoint = "/orino";
     }
     return 0;

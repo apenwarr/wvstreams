@@ -4,8 +4,6 @@
  * FIXME: This test case is not as useful at it could be because:
  *   1) it only tests a very small subset of features
  *   2) it does not setup / teardown its environment explicitly
- *   3) it's a mess... there's only about 20 useful lines
- *      of code in here, but many are duplicated
  */
 
 #include <signal.h>
@@ -18,7 +16,7 @@
 #include "uniconfclient.h"
 #include "wvtcp.h"
 
-WvString printheader(WvString h, WvString mountpoint)
+void printheader(WvString h, WvString mountpoint)
 {
     WvString header("%s WITH MOUNTPOINT %s", h, mountpoint);
     wvcon->print("%s\n",header);
@@ -26,118 +24,90 @@ WvString printheader(WvString h, WvString mountpoint)
     for (size_t i = 0; i < header.len(); i++)
         wvcon->print("=");
     wvcon->print("\n\n");
-    return header;
 }
 
-void printresult(bool pass, WvString header)
+void printresult(bool pass)
 {
     if (pass)
-        wvcon->print("\n***** %s: PASSED *****\n\n", header);
+        wvcon->print("\n***** PASSED *****\n\n");
     else
-        wvcon->print("\n///// %s: FAILED /////\n\n", header);
+        wvcon->print("\n///// FAILED /////\n\n");
 }
 
 
-bool compareresults(WvString expected, WvString actual)
+bool check(WvString test, WvString value, WvString expected)
 {
-    return expected == actual;
+    if (value == expected)
+    {
+        wvcon->print("OK - %s: got \"%s\"\n", test, value);
+        return true;
+    }
+    else
+    {
+        wvcon->print("FAIL - %s: expected \"%s\", got \"%s\"\n",
+            test, expected, value);
+        return false;
+    }
 }
 
-bool testgetkeys(UniConf &mainconf, WvString prefix)
+
+bool testgetkeys(const UniConf &mainconf)
 {
     bool pass = true;
 
+    UniConf narf(mainconf["chickens/bob"]);
+    pass = check(narf.fullkey(), narf.get(), "goof") && pass;
+  
+    narf = mainconf["wacky test section/  goose  "];
+    pass = check(narf.fullkey(), narf.get(), "bluebayou") && pass;
 
-    WvString key("%s/chickens/bob", prefix);
-    WvString result("goof");
-    UniConf *narf = &mainconf[key];
+    narf = mainconf["this key should not exist/ bcscso "];
+    pass = check(narf.fullkey(), narf.get(), WvString::null) && pass;
     
-    pass &= compareresults(result, narf->value());
-    
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.  Real Value: %s\n",
-        key, result, (result == narf->value() ? "Yes" : "No"),
-        narf->value());
-    key = WvString("%s/wacky test section/  goose  ", prefix);
-    result = "bluebayou";
-    narf = &mainconf[key];
-
-    pass &= compareresults(result, narf->value());
-    
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.  Real Value: %s\n",
-        key, result, (result == narf->value() ? "Yes" : "No"),
-        narf->value());
-    key = WvString("%s/this key should not exist/ bcscso ", prefix);
-    narf = &mainconf[key];
-    result = WvString();
-    
-    pass &= compareresults(result, narf->value());
-    
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
-        key, result, (result == narf->value() ? "Yes" : "No"));
-
     return pass;
- 
 }
 
-bool testgetfromsections(UniConf &mainconf, WvString prefix)
+bool testgetfromsections(const UniConf &mainconf)
 {
     bool pass = true;
-    WvString key("%s/chickens", prefix);
-    UniConf *neep = & mainconf[key];
-    WvString subkey("bob");
-    WvString result("goof");
-    UniConf *narf = & (*neep)[subkey];
-    pass &= compareresults(result, narf->value());
-    wvcon->print("\"%s/%s\" should be:%s.Real Value:%s.\n",
-        key, subkey, result, narf->value());
 
-    key = WvString("%s/users", prefix);
-    neep = &mainconf[key];
-    subkey = "apenwarr";
-    WvString sub_subkey("ftp");
-    result = "1";
-    narf = & (*neep)[subkey];
-    narf = & (*narf)[sub_subkey];
-    pass &= compareresults(result, narf->value());
-    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n",
-        key, subkey, sub_subkey, result, narf->value());
+    UniConf neep(mainconf["chickens"]);
+    UniConf sub(neep["bob"]);
+    pass = check(sub.fullkey(), sub.get(), "goof") && pass;
 
-    sub_subkey = "pptp";
-    result = "0";
-    narf = &mainconf[key][subkey][sub_subkey];
-    pass &= compareresults(result, narf->value());
-    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n",
-        key, subkey, sub_subkey, result, narf->value());
+    neep = mainconf["users"];
+    sub = neep["apenwarr"];
+    UniConf subsub(sub["ftp"]);
+    pass = check(subsub.fullkey(), subsub.get(), "1") && pass;
+
+    subsub = sub["pptp"];
+    pass = check(subsub.fullkey(), subsub.get(), "0") && pass;
 
     return pass;
 }
 
-bool testgetsetkey(UniConf &mainconf, WvString prefix)
+bool testgetsetkey(const UniConf &mainconf)
 {
     bool pass = true;
+
+    UniConf narf(mainconf["chickens/bob"]);
+    pass = check(narf.fullkey(), narf.get(), "goof") && pass;
+
+    narf.set("troop");
+    pass = check(narf.fullkey(), narf.get(), "troop") && pass;
+
+    narf.remove();
+    pass = check(narf.fullkey(), narf.get(), WvString::null) && pass;
+
+#if 1
+    // FIXME: UniConf daemon handling of empty string broken
+    narf.set("");
+    pass = check(narf.fullkey(), narf.get(), "") && pass;
+#endif
+
+    narf.set("goof");
+    pass = check(narf.fullkey(), narf.get(), "goof") && pass;
     
-    WvString key("%s/chickens/bob", prefix);
-    WvString result("goof");
-    UniConf *narf = & mainconf[key];
-
-    pass &= compareresults(result, narf->value());
-    
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
-        key, result, (result == narf->value() ? "Yes" : "No"));
-    result = "Well isn't this just DANDY!";
-    narf->set(UniConfKey::EMPTY, result);
-
-    pass &= compareresults(result, narf->value());
-    
-    wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n",
-        key, result, (result == narf->value() ? "Yes" : "No"));
-    result = "goof";
-    narf->set(UniConfKey::EMPTY, wvtcl_escape(result));
-    wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n",
-        key, result, (result == narf->value() ? "Yes" : "No"));
-
-    pass &= compareresults(result, narf->value());
-
     return pass;
 }
 
@@ -156,8 +126,6 @@ int main(int argc, char **argv)
     
     UniConfLocation location("tcp://");
     WvString mountpoint("");
-    WvString h;
-
     WvString totest = "all";
 
     if (argc == 2 && !strcasecmp(argv[1], "-h"))
@@ -172,40 +140,45 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < 2; i++)
     {
-        // just test getting a few keys
+        // Test getting a few keys
         if ("all" == totest || "get" == totest)
         {
-            UniConf mainconf;
-            UniConf *mounted = & mainconf[mountpoint];
-            mounted->mount(location);
+            UniConfRoot root;
+            UniConf mainconf(& root);
+            UniConf mounted(mainconf[mountpoint]);
+            mounted.mount(location);
 
-            h = printheader("TEST GETTING KEYS", mountpoint);
-            printresult(testgetkeys(mainconf, mountpoint), h);
-
+            printheader("TEST GETTING KEYS", mountpoint);
+            printresult(testgetkeys(mounted));
         }
+        
         // Test getting a section and then a key
         if ("all" == totest || "section" == totest) 
         {
-            UniConf mainconf;
-            UniConf *mounted = & mainconf[mountpoint];
-            mounted->mount(location);
+            UniConfRoot root;
+            UniConf mainconf(& root);
+            UniConf mounted(mainconf[mountpoint]);
+            mounted.mount(location);
 
-            h = printheader("TEST GETTING FROM A SECTION", mountpoint);
-            printresult(testgetfromsections(mainconf, mountpoint), h);
+            printheader("TEST GETTING FROM A SECTION", mountpoint);
+            printresult(testgetfromsections(mounted));
         }
-        // Test getting & setting a key
         
+        // Test getting & setting a key
         if ("all" == totest || "set" == totest) 
         {
-                UniConf mainconf;
-                UniConf *mounted = & mainconf[mountpoint];
-                mounted->mount(location);
+            UniConfRoot root;
+            UniConf mainconf(& root);
+            UniConf mounted(mainconf[mountpoint]);
+            mounted.mount(location);
 
-                h = printheader("TEST SETTING KEYS", mountpoint);
-                printresult(testgetsetkey(mainconf, mountpoint), h);
-
+            printheader("TEST SETTING KEYS", mountpoint);
+            printresult(testgetsetkey(mounted));
         }
+
+        mountpoint = "orino";
     }
+    
 /*    WvTCPConn conn(addr);
     conn.select(0, true,true,false);
     conn.print("|******************************|\n");

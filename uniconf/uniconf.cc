@@ -16,102 +16,124 @@
 
 /***** UniConf *****/
 
-UniConf::UniConf() :
-    Tree(NULL, UniConfKey::EMPTY),
-    prefix(UniConfKey::EMPTY), uniconfroot(NULL), defaults(NULL)
+bool UniConf::haschildren() const
 {
-    uniconfroot = new UniConfRoot();
+    return xmanager->haschildren(xfullkey);
 }
 
 
-UniConf::UniConf(UniConf *parent, const UniConfKey &name) :
-    Tree(parent, name),
-    prefix(UniConfKey(parent->prefix, name)),
-    uniconfroot(parent->uniconfroot), defaults(NULL)
+bool UniConf::exists() const
 {
+    return xmanager->exists(xfullkey);
 }
 
 
-UniConf::~UniConf()
+WvString UniConf::get(WvStringParm defvalue) const
 {
-    if (prefix.isempty())
-        delete uniconfroot;
+    WvString value = xmanager->get(xfullkey);
+    if (value.isnull())
+        return defvalue;
+    return value;
 }
 
 
-bool UniConf::haschildren()
+int UniConf::getint(int defvalue) const
 {
-    return uniconfroot->haschildren(prefix);
+    // also recognize bool strings as integers
+    const char *strs[] = {
+        "true", "yes", "on", "enabled",
+        "false", "no", "off", "disabled"
+    };
+    const size_t numtruestrs = 4;
+
+    WvString value = get();
+    if (! value)
+    {
+        // only if non-null and non-empty
+        char *end;
+        int num = strtol(value.cstr(), & end, 0);
+        if (*end)
+            return num; // was a valid integer
+    }
+
+    // try to recognize a special string
+    for (size_t i = 0; i < sizeof(strs) / sizeof(const char*); ++i)
+        if (strcasecmp(value, strs[i]) == 0)
+            return i < numtruestrs;
+
+    return defvalue;
 }
 
 
-WvString UniConf::get(const UniConfKey &key)
+bool UniConf::set(WvStringParm value) const
 {
-    return uniconfroot->get(UniConfKey(prefix, key));
+    return xmanager->set(xfullkey, value);
 }
 
 
-bool UniConf::set(const UniConfKey &key, WvStringParm value)
+bool UniConf::setint(int value) const
 {
-    return uniconfroot->set(UniConfKey(prefix, key), value);
+    return xmanager->set(xfullkey, WvString(value));
 }
 
 
-bool UniConf::zap(const UniConfKey &key)
+bool UniConf::zap() const
 {
-    return uniconfroot->zap(UniConfKey(prefix, key));
+    return xmanager->zap(xfullkey);
 }
 
 
-bool UniConf::commit(const UniConfKey &key, UniConf::Depth depth)
+bool UniConf::refresh(UniConf::Depth depth) const
 {
-    return uniconfroot->commit(UniConfKey(prefix, key), depth);
+    return xmanager->refresh(xfullkey, depth);
 }
 
 
-bool UniConf::refresh(const UniConfKey &key, UniConf::Depth depth)
+bool UniConf::commit(UniConf::Depth depth) const
 {
-    return uniconfroot->refresh(UniConfKey(prefix, key), depth);
+    return xmanager->commit(xfullkey, depth);
 }
 
 
-UniConfGen *UniConf::mount(const UniConfLocation &location)
+UniConfGen *UniConf::mount(const UniConfLocation &location,
+    bool refresh) const
 {
-    return uniconfroot->mount(prefix, location, true);
+    return xmanager->mount(xfullkey, location, refresh);
 }
 
 
-void UniConf::mountgen(UniConfGen *gen)
+void UniConf::mountgen(UniConfGen *gen, bool refresh) const
 {
-    uniconfroot->mountgen(prefix, gen, true);
+    xmanager->mountgen(xfullkey, gen, refresh);
 }
 
 
-void UniConf::unmount()
+void UniConf::unmount() const
 {
-    uniconfroot->unmount(prefix);
+    xmanager->unmount(xfullkey);
 }
 
 
-bool UniConf::isok()
+bool UniConf::isok() const
 {
-    return uniconfroot->isok(prefix);
+    return xmanager->isok(xfullkey);
 }
 
 
-bool UniConf::ismountpoint()
+bool UniConf::ismountpoint() const
 {
-    return uniconfroot->ismountpoint(prefix);
+    return xmanager->ismountpoint(xfullkey);
 }
 
 
-void UniConf::dump(WvStream &stream, bool everything)
+void UniConf::dump(WvStream &stream, bool everything) const
 {
     UniConf::RecursiveIter it(*this);
     for (it.rewind(); it.next(); )
     {
-        if (everything || !! it->value())
-            stream.print("%s = %s\n", it->fullkey(), it->value());
+        WvString value(it->get());
+        if (everything || !! value)
+            stream.print("%s = %s\n", it->fullkey(), value);
     }
 }
 
@@ -119,25 +141,30 @@ void UniConf::dump(WvStream &stream, bool everything)
 
 /***** UniConf::Iter *****/
 
-UniConf::Iter::Iter(UniConf &root) :
-    UniConfRoot::Iter(*root.uniconfroot, root.prefix),
-    xroot(& root)
+UniConf::Iter::Iter(const UniConf &root) :
+    UniConfRoot::Iter(*root.xmanager, root.xfullkey),
+    xroot(root), current(NULL)
 {
 }
 
 
-UniConf *UniConf::Iter::ptr() const
+bool UniConf::Iter::next()
 {
-    return xroot->findormake(key());
+    if (UniConfRoot::Iter::next())
+    {
+        current = xroot[key()];
+        return true;
+    }
+    return false;
 }
 
 
 
 /***** UniConf::RecursiveIter *****/
 
-UniConf::RecursiveIter::RecursiveIter(UniConf &_root,
-    UniConf::Depth _depth) :
-    top(_root), depth(_depth)
+UniConf::RecursiveIter::RecursiveIter(const UniConf &root,
+    UniConf::Depth depth) :
+    xroot(root), top(root), depth(depth), current(NULL)
 {
 }
 
@@ -171,7 +198,7 @@ bool UniConf::RecursiveIter::next()
     if (first)
     {
         first = false;
-        current = root();
+        current = xroot;
         return true;
     }
 
@@ -181,12 +208,12 @@ bool UniConf::RecursiveIter::next()
         UniConf::Iter &it = itlistit();
         if (it.next())
         {
-            current = it.ptr();
+            current = *it;
             if ((depth == UniConf::INFINITE ||
                 depth == UniConf::DESCENDENTS) &&
-                current->haschildren())
+                current.haschildren())
             {
-                UniConf::Iter *subit = new UniConf::Iter(*current);
+                UniConf::Iter *subit = new UniConf::Iter(current);
                 subit->rewind();
                 itlist.prepend(subit, true);
             }
@@ -196,67 +223,6 @@ bool UniConf::RecursiveIter::next()
     }
     return false;
 }
-
-
-
-#if 0
-static int find_wildcard_depth(const UniConfKey &k)
-{
-    int depth = 0;
-    int segments = k.numsegments();
-    while (depth < segments)
-    {
-        if (k.segment(depth) == UniConfKey::ANY)
-            break;
-	depth++;
-    }
-    return depth;
-}
-    
-
-// I hate constructors.
-UniConf::XIter::XIter(UniConf &_top, const UniConfKey &_key) :
-    skiplevel(find_wildcard_depth(_key)),
-    top(_top.find(_key.first(skiplevel))),
-    key(_key.removefirst(skiplevel)),
-    _toplink(top, false),
-    toplink(top ? &_toplink : NULL),
-    i((top && top->check_children()) ?
-        *top->children : null_wvhconfdict)
-{
-    subiter = NULL; 
-}
-
-
-WvLink *UniConf::XIter::_next()
-{
-    if (key.isempty()) // we're the innermost object
-    {
-	if (++going == 1)
-	    return toplink;
-	else
-	    return NULL;
-    }
-    
-    do
-    {
-	if (!subiter && i.ptr())
-	{
-	    subiter = new XIter(*i, key.removefirst(1));
-	    subiter->rewind();
-	}
-	
-	if (subiter)
-	{
-	    WvLink *l = subiter->next();
-	    if (l) return l;
-	    unsub();
-	}
-    } while (i.next());
-    
-    return NULL;
-}
-#endif
 
 
 
@@ -468,34 +434,96 @@ bool UniConfRoot::haschildren(const UniConfKey &key)
 
 bool UniConfRoot::refresh(const UniConfKey &key, UniConf::Depth depth)
 {
-    // FIXME: need to handle recursion depth correctly
-    bool success = true;
-    UniConfInfoTree::GenIter it(root, key);
-    for (it.rewind(); it.next(); )
-    {
-        UniConfGen *gen = it.ptr();
-        if (! gen->refresh(it.tail(), UniConf::INFINITE))
-            success = false;
-    }
-    return success;
+    return dorecursive(genrefreshfunc, key, depth);
 }
- 
- 
+
+
+bool UniConfRoot::genrefreshfunc(UniConfGen *gen,
+    const UniConfKey &key, UniConf::Depth depth)
+{
+    return gen->refresh(key, depth);
+}
+
+
 bool UniConfRoot::commit(const UniConfKey &key, UniConf::Depth depth)
 {
-    // FIXME: need to handle recursion depth correctly
+    return dorecursive(gencommitfunc, key, depth);
+}
+
+
+bool UniConfRoot::gencommitfunc(UniConfGen *gen,
+    const UniConfKey &key, UniConf::Depth depth)
+{
+    return gen->commit(key, depth);
+}
+
+
+bool UniConfRoot::dorecursive(GenFunc func, const UniConfKey &key,
+    UniConf::Depth depth)
+{
+    // do containing generators
     bool success = true;
     UniConfInfoTree::GenIter it(root, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
-        if (! gen->commit(it.tail(), UniConf::INFINITE))
+        if (! func(gen, it.tail(), depth))
+            success = false;
+    }
+
+    // do recursive
+    if (depth != UniConf::ZERO)
+    {
+        UniConfInfoTree *node = root.find(key);
+        if (node && ! dorecursivehelper(func, node, depth))
             success = false;
     }
     return success;
 }
 
 
+bool UniConfRoot::dorecursivehelper(GenFunc func,
+    UniConfInfoTree *node, UniConf::Depth depth)
+{
+    // determine depth for next step
+    switch (depth)
+    {
+        case UniConf::ZERO:
+            assert(false);
+            return true;
+
+        case UniConf::ONE:
+        case UniConf::CHILDREN:
+            depth = UniConf::ZERO;
+            break;
+
+        case UniConf::DESCENDENTS:
+            depth = UniConf::INFINITE;
+        case UniConf::INFINITE:
+            break;
+    }
+
+    // process nodes and recurse if needed
+    bool success = true;
+    UniConfInfoTree::Iter it(*node);
+    for (it.rewind(); it.next(); )
+    {
+        UniConfGen *gen = it->generator;
+        if (gen)
+        {
+            if (! func(gen, UniConfKey::EMPTY, depth))
+                success = false;
+        }
+        if (depth != UniConf::ZERO)
+        {
+            if (! dorecursivehelper(func, it.ptr(), depth))
+                success = false;
+        }
+    }
+    return success;
+}
+ 
+ 
 void UniConfRoot::attach(WvStreamList *_streamlist)
 {
     assert(streamlist == NULL);

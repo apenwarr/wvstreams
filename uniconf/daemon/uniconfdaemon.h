@@ -16,7 +16,7 @@ class UniConfDaemon
 public:
     UniConfDaemon(WvLog::LogLevel level = WvLog::Info);
     ~UniConfDaemon();
-    UniConf *domount(const UniConfKey &mountpoint,
+    UniConf domount(const UniConfKey &mountpoint,
         const UniConfLocation &location);
 
     WvString create_return_string(const UniConfKey &key);
@@ -36,9 +36,9 @@ public:
     void registerforchange(const UniConfKey &,
         UniConfDaemonConn *s);
     void deletesubtree(const UniConfKey &, UniConfDaemonConn *s);
-    void myvaluechanged(UniConf &conf, void *userdata);
-    void me_or_imm_child_changed(UniConf &conf, void *userdata);
-    void me_or_any_child_changed(UniConf &conf, void *userdata);
+    void myvaluechanged(const UniConf &conf, void *userdata);
+    void me_or_imm_child_changed(const UniConf &conf, void *userdata);
+    void me_or_any_child_changed(const UniConf &conf, void *userdata);
 
     // The depth parameter is for:  
     // 0 - notify me only if my value has changed
@@ -53,6 +53,7 @@ public:
 
     bool want_to_die;
     WvLog log;
+    UniConfRoot confroot;
     UniConf mainconf;
     bool keymodified;
 

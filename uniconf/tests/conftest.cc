@@ -22,11 +22,12 @@ static void copyall(UniConf &src, UniConf &dest)
     UniConf::RecursiveIter it(src);
     for (it.rewind(); it.next(); )
     {
-        if (it->value().isnull())
+        WvString value(it->get());
+        if (value.isnull())
             continue;
-        //wverr->print("set: \"%s\" = \"%s\"\n", it->fullkey(), it->value());
-        dest.set(it->fullkey(), it->value());
-        //wverr->print("get: \"%s\"\n", dest.get(it->fullkey()));
+        //wverr->print("set: \"%s\" = \"%s\"\n", it->fullkey(), value);
+        dest[it->fullkey()].set(value);
+        //wverr->print("get: \"%s\"\n", dest[it->fullkey()].get());
     }
 }
 
@@ -295,6 +296,7 @@ int main()
 	UniConfKey key2(key);
         UniConfKey key3(key.removefirst(5));
         UniConfKey key4(key.removefirst(900));
+        // FIXME: we're just barely scratching the surface here!
 	log("key : %s\nkey2: %s\nkey3: %s\nkey4: %s\n", key, key2, key3, key4);
     }
     
@@ -302,15 +304,18 @@ int main()
 	wvcon->print("\n\n");
 	log("-- Basic config test begins\n");
 	
-	UniConf cfg;
+        UniConfRoot root;
+	UniConf cfg(& root);
         cfg.mount(UniConfLocation("temp://"));
-	cfg.set("/foo/blah/weasels", "chickens");
+	cfg["/foo/blah/weasels"].set("chickens");
 	
-	cfg["foo"]["pah"]["meatballs"] = 6;
+	cfg["foo"]["pah"]["meatballs"].setint(6);
 	
-	UniConf &x = cfg["snort/fish/munchkins"];
-	x.set("big/bad/weasels", 7);
-	x["foo"] = x["blue"] = x["true"] = "sneeze";
+	UniConf x(cfg["snort/fish/munchkins"]);
+	x["big/bad/weasels"].setint(7);
+	x["foo"].set("sneeze");
+        x["blue"].set("sneeze");
+        x["true"].set("sneeze");
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -337,12 +342,12 @@ int main()
 	h = cfg["/users/randomperson/comment"].find_default();
 	log("Default for randomperson(%s): '%s'\n",
             h ? h->fullkey() : "",
-	    h ? h->value() : WvString("NONE"));
+	    h ? h->get() : WvString("NONE"));
 	
 	// should be defbob comment
 	h = cfg["/users/bob/comment"].find_default();
 	log("Default for bob: '%s'\n",
-            h ? h->value() : WvString("NONE"));
+            h ? h->get() : WvString("NONE"));
 	
 	// should be defuser comment/defbob comment
 	log("New comment settings are: %s/%s\n",
@@ -382,7 +387,8 @@ int main()
 	wvcon->print("\n\n");
 	log("-- FileTree test begins\n");
 	
-	UniConf cfg;
+        UniConfRoot root;
+	UniConf cfg(& root);
         cfg.mountgen(new UniConfFileTreeGen("/etc/modutils"));
 	
 	log("Config dump:\n");
@@ -393,11 +399,12 @@ int main()
 	wvcon->print("\n\n");
 	log("-- IniFile test begins\n");
 	
-	UniConf cfg;
-	UniConf *cfg2 = &cfg["/weaver ini test"];
+        UniConfRoot root;
+	UniConf cfg(& root);
+	UniConf cfg2(cfg["/weaver ini test"]);
 	
         cfg.mount(UniConfLocation("readonly://ini://test.ini"));
-        cfg2->mount(UniConfLocation("readonly://ini://tmp/weaver.ini"));
+        cfg2.mount(UniConfLocation("readonly://ini://tmp/weaver.ini"));
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -407,26 +414,28 @@ int main()
 	wvcon->print("\n\n");
 	log("-- IniFile test2 begins\n");
 	
-	UniConf cfg;
-	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
+        UniConfRoot root;
+	UniConf cfg(& root);
+	UniConf h1(cfg["/1"]);
+        UniConf h2(cfg["/"]);
 	
-	h1.mount(UniConfLocation("ini://test.ini"));
-        h2.mount(UniConfLocation("ini://test2.ini"));
-        cfg.refresh();
-
-        UniConf newcfg;
-        UniConf &newh1 = newcfg["/1"], &newh2 = newcfg["/"];
+	h1.mount(UniConfLocation("ini://test.ini"), true);
+        h2.mount(UniConfLocation("ini://test2.ini"), true);
         
-	newh1.mount(UniConfLocation("ini://test.ini.new"));
-        newh2.mount(UniConfLocation("ini://test2.ini.new"));
-        newcfg.zap();
-	
 	log("Partial config dump (branch 1 only):\n");
 	h1.dump(quiet);
         
 	log("Trying to save unchanged branches:\n");
 	cfg.commit();
 
+        UniConfRoot newroot;
+        UniConf newcfg(& newroot);
+        UniConf newh1(newcfg["/1"]);
+        UniConf newh2(newcfg["/"]);
+        
+	newh1.mount(UniConfLocation("ini://test.ini.new"), false);
+        newh2.mount(UniConfLocation("ini://test2.ini.new"), false);
+	
         copyall(cfg, newcfg);
         newh1.dump(quiet);
 
@@ -434,11 +443,12 @@ int main()
 	newcfg.commit();
 	
 	log("Changing some data:\n");
-	if (! newh1.exists("big/fat/bob"))
-	    newh1.setint("big/fat/bob", 0);
-	newh1["big/fat/bob"] = newh1.getint("big/fat/bob") + 1;
-	newh1["chicken/hammer\ndesign"] = "simple test";
-	newh1["chicken/whammer/designer\\/code\nweasel"] = "this\n\tis a test  ";
+	if (! newh1["big/fat/bob"].exists())
+	    newh1["big/fat/bob"].setint(0);
+	newh1["big/fat/bob"].setint(newh1["big/fat/bob"].getint() + 1);
+	newh1["chicken/hammer\ndesign"].set("simple test");
+	newh1["chicken/whammer/designer\\/code\nweasel"].set(
+            "this\n\tis a test  ");
 
         log("Full config dump:\n");
 	newcfg.dump(quiet);

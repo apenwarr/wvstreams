@@ -26,21 +26,22 @@ static int rhconfcmp(const UniConf *a, const UniConf *b)
 int main()
 {
     WvLog log("itertest", WvLog::Info);
-    UniConf h;
+    UniConfRoot uniconfroot;
+    UniConf h(& uniconfroot);
     h.mount(UniConfLocation("ini://test2.ini"));
     
     {
 	log("Non-recursive dump of /HTTPD:\n");
 	UniConf::Iter i(h["/httpd"]);
 	for (i.rewind(); i.next(); )
-	    log("  '%s' = '%s'\n", i->fullkey(), i->value());
+	    log("  '%s' = '%s'\n", i->fullkey(), i->get());
     }
     
     {
 	log("Recursive dump:\n");
 	UniConf::RecursiveIter i(h);
 	for (i.rewind(); i.next(); )
-	    log("  '%s' = '%s'\n", i->fullkey(), i->value());
+	    log("  '%s' = '%s'\n", i->fullkey(), i->get());
     }
     
 #if 0

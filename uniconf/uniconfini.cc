@@ -34,6 +34,8 @@ UniConfIniFileGen::UniConfIniFileGen(
     filename(_filename), log(filename)
 {
     log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
+    // consider the generator dirty until it is first refreshed
+    dirty = true;
 }
 
 

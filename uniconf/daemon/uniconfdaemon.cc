@@ -16,28 +16,29 @@ const WvString UniConfDaemon::LEAVING = "Leaving";
 
 UniConfDaemon::UniConfDaemon(WvLog::LogLevel level) :
     log("UniConfDaemon"),
+    mainconf(& confroot),
     logcons(1, level)
 {
     want_to_die = false;
     keymodified = false;
-    mainconf.attach(& l);
+    confroot.attach(& l);
 }
 
 
 UniConfDaemon::~UniConfDaemon()
 {
-    mainconf.detach(& l);
+    confroot.detach(& l);
 }
 
 
-UniConf *UniConfDaemon::domount(const UniConfKey &mountpoint,
+UniConf UniConfDaemon::domount(const UniConfKey &mountpoint,
     const UniConfLocation &location)
 {
     dolog(WvLog::Debug1, "domount", ENTERING);
-    UniConf *mounted = & mainconf[mountpoint];
+    UniConf mounted(mainconf[mountpoint]);
     dolog(WvLog::Debug3, "domount", WvString("Mounting "
         "\"%s\" from \"%s\"\n", mountpoint, location));
-    if (mounted->mount(location))
+    if (mounted.mount(location))
         return mounted;
 
     dolog(WvLog::Error, "domount", WvString("Could not mount "
@@ -67,7 +68,7 @@ WvString UniConfDaemon::create_return_string(const UniConfKey &key)
 
     WvString result("%s %s", UniConfConn::UNICONF_RETURN,
         wvtcl_escape(key));
-    WvString value = mainconf.get(key);
+    WvString value = mainconf[key].get();
     if (! value.isnull())
         result.append(" %s", wvtcl_escape(value));
     result.append("\n");
@@ -131,30 +132,29 @@ void UniConfDaemon::dosubtree(const UniConfKey &key,
     dolog(WvLog::Debug1, "dosubtree", ENTERING);
     dolog(WvLog::Debug2, "dosubtree",
         WvString("Connection:  %s", *s->src()));
-    UniConf *nerf = mainconf.find(key);
+    UniConf nerf(mainconf[key]);
     WvString send("%s %s ", UniConfConn::UNICONF_SUBTREE_RETURN,
         wvtcl_escape(key));
     update_callbacks(key, s, false, 1);
     
     dook(UniConfConn::UNICONF_SUBTREE, key, s);
     
-    if (nerf)
+    UniConf::Iter it(nerf);
+    for (it.rewind(); it.next();)
     {
-        UniConf::Iter it(*nerf);
-        for (it.rewind(); it.next();)
+        WvString value(it->get());
+        if (! value.isnull())
         {
-            if (! it->value().isnull())
-            {
-                dolog(WvLog::Debug3, "dosubtree",
-                    WvString("Sending Key:%s.With val:%s.\n",
-                    it->fullkey(), it->value()));
-                send.append("{%s %s} ",
-                    wvtcl_escape(it->fullkey()),
-                    wvtcl_escape(it->value()));
-            }
+            dolog(WvLog::Debug3, "dosubtree",
+                WvString("Sending Key:%s.With val:%s.\n",
+                it->fullkey(), value));
+            send.append("{%s %s} ",
+                wvtcl_escape(it->fullkey()),
+                wvtcl_escape(value));
         }
     }
-    dolog(WvLog::Debug3, "dosubtree", WvString("Sending:%s TO:%s.", send,  *s->src()));
+    dolog(WvLog::Debug3, "dosubtree",
+        WvString("Sending:%s TO:%s.", send,  *s->src()));
    
     send.append("\n");
     if (s->isok())
@@ -171,33 +171,32 @@ void UniConfDaemon::dorecursivesubtree(const UniConfKey &key,
     dolog(WvLog::Debug1, "dorecursivesubtree", ENTERING);
     dolog(WvLog::Debug2, "dorecursivesubtree",
         WvString("Connection:  %s", *s->src()));
-    UniConf *nerf = mainconf.find(key);
+    UniConf nerf(mainconf[key]);
     WvString send("%s %s ", UniConfConn::UNICONF_SUBTREE_RETURN,
         wvtcl_escape(key));
     
     dook(UniConfConn::UNICONF_RECURSIVESUBTREE, key, s);
     update_callbacks(key, s, false, 2);
     
-    if (nerf)
+    UniConf::RecursiveIter it(nerf);
+    for (it.rewind(); it.next();)
     {
-        UniConf::RecursiveIter it(*nerf);
-        for (it.rewind(); it.next();)
+        WvString value(it->get());
+        if (! value.isnull())
         {
-            if (! it->value().isnull())
-            {
-                dolog(WvLog::Debug3, "dorecursivesubtree",
-                    WvString("Sending Key:%s.With val:%s.\n",
-                    it->key(), it->value()));
-                send.append("{%s %s} ",
-                    wvtcl_escape(it->fullkey(nerf)),
-                    wvtcl_escape(it->value()));
-            }
+            dolog(WvLog::Debug3, "dorecursivesubtree",
+                WvString("Sending Key:%s.With val:%s.\n",
+                it->fullkey(), value));
+            send.append("{%s %s} ",
+                wvtcl_escape(it->fullkey()),
+                wvtcl_escape(value));
         }
     }
     send.append("\n");
     if (s->isok())
     {
-        dolog(WvLog::Debug3, "dorecursivesubtree", WvString("Sending:%s TO:%s",send, *s->src()));
+        dolog(WvLog::Debug3, "dorecursivesubtree",
+            WvString("Sending:%s TO:%s",send, *s->src()));
         s->print(send);
     }
     dolog(WvLog::Debug1, "dorecursivesubtree", LEAVING);
@@ -211,12 +210,12 @@ void UniConfDaemon::doset(const UniConfKey &key,
     dolog(WvLog::Debug2, "doset", WvString("Connection:  %s", *s->src()));
    
     WvString newvalue = wvtcl_getword(fromline);
-    bool success = mainconf.set(key, wvtcl_unescape(newvalue));
+    bool success = mainconf[key].set(wvtcl_unescape(newvalue));
     
     if (success)
     {
         dolog(WvLog::Debug3, "doset",
-            WvString("New value for %s %s", key, mainconf.get(key)));
+            WvString("New value for %s %s", key, mainconf[key].get()));
         keymodified = true;
         modifiedkeys.append(new UniConfKey(key), true);
         dook(UniConfConn::UNICONF_SET, key, s);
@@ -237,7 +236,7 @@ void UniConfDaemon::doset(const UniConfKey &key,
 /*
  * Callback related methods for UniConfKeys begin here
  */
-void UniConfDaemon::myvaluechanged(UniConf &conf, void *userdata)
+void UniConfDaemon::myvaluechanged(const UniConf &conf, void *userdata)
 {
     dolog(WvLog::Debug1, "myvaluechanged", ENTERING);
     // All the following is irrelevant if we have a null pointer, so check
@@ -262,7 +261,7 @@ void UniConfDaemon::myvaluechanged(UniConf &conf, void *userdata)
 }
 
 
-void UniConfDaemon::me_or_imm_child_changed(UniConf &conf,
+void UniConfDaemon::me_or_imm_child_changed(const UniConf &conf,
     void *userdata)
 {
     dolog(WvLog::Debug1, "me_or_imm_child_changed", ENTERING);
@@ -293,7 +292,8 @@ void UniConfDaemon::me_or_imm_child_changed(UniConf &conf,
         {
             UniConfKey::Iter i1(key);
             UniConfKey::Iter i2(modkey);
-            for (i1.rewind(), i2.rewind(); i1.next() && i2.next() && match; )
+            for (i1.rewind(), i2.rewind();
+                i1.next() && i2.next() && match; )
             {
                 match = (i1() == i2());
             }
@@ -308,9 +308,8 @@ void UniConfDaemon::me_or_imm_child_changed(UniConf &conf,
 
         if (match)
         {
-            UniConf *subtree = mainconf.find(i());
             // FIXME: sending spurious notifications
-            if (subtree)
+            if (mainconf[i()].exists())
                 response.append(create_return_string(i()));
         }   
     }
@@ -324,7 +323,7 @@ void UniConfDaemon::me_or_imm_child_changed(UniConf &conf,
 }
 
 
-void UniConfDaemon::me_or_any_child_changed(UniConf &conf,
+void UniConfDaemon::me_or_any_child_changed(const UniConf &conf,
     void *userdata)
 {
     dolog(WvLog::Debug1, "me_or_any_child_changed", ENTERING);
@@ -363,9 +362,8 @@ void UniConfDaemon::me_or_any_child_changed(UniConf &conf,
     
         if (match)
         {
-            UniConf *subtree = mainconf.find(i());
             // FIXME: sending spurious notifications
-            if (subtree)
+            if (mainconf[i()].exists())
                 response.append(create_return_string(i()));
         }
     }
@@ -396,17 +394,17 @@ void UniConfDaemon::del_callback(const UniConfKey &key,
     switch (depth)
     {
         case 0:
-            mainconf.delwatch(key, UniConf::ZERO,
+            mainconf[key].delwatch(UniConf::ZERO,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::myvaluechanged), s);
             break;
         case 1:
-            mainconf.delwatch(key, UniConf::ONE,
+            mainconf[key].delwatch(UniConf::ONE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_imm_child_changed), s);
             break;
         case 2:
-            mainconf.delwatch(key, UniConf::INFINITE,
+            mainconf[key].delwatch(UniConf::INFINITE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_any_child_changed), s);
             break;
@@ -425,17 +423,17 @@ void UniConfDaemon::add_callback(const UniConfKey &key,
     switch (depth)
     {
         case 0:
-            mainconf.addwatch(key, UniConf::ZERO,
+            mainconf[key].addwatch(UniConf::ZERO,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::myvaluechanged), s);
             break;
         case 1:
-            mainconf.addwatch(key, UniConf::ONE,
+            mainconf[key].addwatch(UniConf::ONE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_imm_child_changed), s);
             break;
         case 2:
-            mainconf.addwatch(key, UniConf::INFINITE,
+            mainconf[key].addwatch(UniConf::INFINITE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_any_child_changed), s);
             break;
@@ -465,7 +463,7 @@ void UniConfDaemon::deletesubtree(const UniConfKey &key,
     dook(UniConfConn::UNICONF_DEL, key, s);
     dolog(WvLog::Debug2, "deletesubtree", WvString("Executing delete command from %s.\n", *s->src()));
     dolog(WvLog::Debug3, "deletesubtree", WvString("Deleting key:  %s.\n", key));
-    mainconf.remove(key);
+    mainconf[key].remove();
     dolog(WvLog::Debug1, "deletesubtree", LEAVING);
 }
 

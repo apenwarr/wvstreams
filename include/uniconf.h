@@ -25,31 +25,18 @@ class UniConf;
 class UniConfRoot;
 
 // parameters are: UniConf object, userdata
-DeclareWvCallback(2, void, UniConfCallback, UniConf &, void *);
+DeclareWvCallback(2, void, UniConfCallback, const UniConf &, void *);
 
 
 /**
- * UniConf objects are the root, branches, and leaves of the configuration
- * tree.  Each one has a parent, name=value, and children, all of which are
- * optional (although the name is usually useful).
- * 
- * The nice thing about this is you can write classes that use a UniConf
- * configuration tree, and then instead hand them a subtree if you want.
+ * UniConf instances function as handles to subtrees of a UniConf
+ * tree and expose a high-level interface for clients.
  */
-class UniConf : public UniConfTree<UniConf>
+class UniConf
 {
-    // fake copy constructor to prevent you from hurting yourself
-    UniConf(const UniConf &);
+    UniConfRoot *xmanager;
+    UniConfKey xfullkey;
 
-    UniConfKey prefix;
-    UniConfRoot *uniconfroot;
-
-    UniConf(UniConf *_parent, const UniConfKey &_name);
-
-public:
-    typedef UniConfTree<UniConf> Tree;
-    UniConf *defaults;     // a tree possibly containing default values
-    
 public:
     /**
      * An enumeration that represents the traversal depth for recursive
@@ -65,93 +52,123 @@ public:
     };
 
     /**
-     * Creates an empty UniConf tree with nothing mounted.
+     * Creates a handle to the specified subtree.
+     * @param manager the UniConfRoot that manages the subtree
+     * @param fullkey the path of the subtree
      */
-    UniConf();
+    UniConf(UniConfRoot *manager,
+        const UniConfKey &fullkey = UniConfKey::EMPTY) :
+        xmanager(manager), xfullkey(fullkey)
+    {
+    }
     
     /**
-     * Destroys the tree and possibly discards uncommitted data.
+     * Copies a UniConf handle.
+     * @param other the handle to copy
      */
-    ~UniConf();
-    
-    using Tree::parent;
-    using Tree::root;
-    using Tree::key;
-    using Tree::fullkey;
-
-private:
-    using Tree::setparent;
-    using Tree::find;
-    using Tree::findchild;
-    
-private:
-    UniConf *findormake(const UniConfKey &key)
+    UniConf(const UniConf &other) :
+        xmanager(other.xmanager), xfullkey(other.xfullkey)
     {
-        UniConf *node = this;
-        UniConfKey::Iter it(key);
-        it.rewind();
-        while (it.next())
-        {
-            UniConf *prev = node;
-            node = prev->findchild(it());
-            if (! node)
-                node = new UniConf(prev, it());
-        }
-        return node;
-    }
-
-public:
-    bool haschildren();
-
-    WvString get(const UniConfKey &key);
-    
-    int getint(const UniConfKey &key)
-    {
-        return get(key).num();
-    }
-
-    WvString value()
-    {
-        return get(UniConfKey::EMPTY);
-    }
-
-    bool exists(const UniConfKey &key)
-    {
-        return ! get(key).isnull();
     }
     
-    bool set(const UniConfKey &key, WvStringParm value);
-
-    bool setint(const UniConfKey &key, int value)
+    /**
+     * Destroys the UniConf handle.
+     */
+    ~UniConf()
     {
-        return set(key, WvString(value));
     }
 
-    void remove(const UniConfKey &key)
+    /**
+     * Returns a handle to the root of the tree.
+     * @return the handle
+     */
+    UniConf root() const
     {
-        set(key, WvString::null);
+        return UniConf(xmanager, UniConfKey::EMPTY);
     }
 
-    bool zap(const UniConfKey &key = UniConfKey::EMPTY);
-
-    // can't quite remove this yet
-    UniConf &operator[] (const UniConfKey &key)
+    /**
+     * Returns a handle to the parent of this node.
+     * @return the handle
+     */
+    UniConf parent() const
     {
-        return *findormake(key);
+        return UniConf(xmanager, xfullkey.removelast());
     }
 
-    WvStringParm operator= (WvStringParm value)
+    /**
+     * Returns a pointer to the UniConfRoot that manages this node.
+     * @return the manager
+     */
+    inline UniConfRoot *manager() const
     {
-        set(UniConfKey::EMPTY, value);
-        return value;
+        return xmanager;
     }
 
-    bool commit(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConf::Depth depth = INFINITE);
+    /**
+     * Returns the full path of this node.
+     * @return the path
+     */
+    inline UniConfKey fullkey() const
+    {
+        return xfullkey;
+    }
+
+    /**
+     * Returns the path of this node relative to its parent.
+     * @return the path
+     */
+    inline UniConfKey key() const
+    {
+        return xfullkey.last();
+    }
+
+    bool haschildren() const;
+
+    bool exists() const;
+
+    WvString get(WvStringParm defvalue = WvString::null) const;
     
-    bool refresh(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConf::Depth depth = INFINITE);
+    int getint(int defvalue = 0) const;
+
+    bool set(WvStringParm value) const;
+
+    inline bool set(WVSTRING_FORMAT_DECL) const
+    {
+        return set(WvString(WVSTRING_FORMAT_CALL));
+    }
+
+    bool setint(int value) const;
+
+    inline bool remove() const
+    {
+        return set(WvString::null);
+    }
+
+    bool zap() const;
+
+    const UniConf operator[] (const UniConfKey &key) const
+    {
+        return UniConf(xmanager, UniConfKey(xfullkey, key));
+    }
+
+    UniConf &operator= (const UniConf &other)
+    {
+        xmanager = other.xmanager;
+        xfullkey = other.xfullkey;
+        return *this;
+    }
     
+    bool refresh(Depth depth = INFINITE) const;
+    
+    bool commit(Depth depth = INFINITE) const;
+
+    void addwatch(UniConf::Depth depth,
+        const UniConfCallback &cb, void *userdata) const { }
+
+    void delwatch(UniConf::Depth depth,
+        const UniConfCallback &cb, void *userdata) const { }
+
     /**
      * @internal
      * Prints the entire contents of this subtree to a stream
@@ -159,22 +176,18 @@ public:
      * @param stream the stream
      * @param everything if true, also prints empty values
      */
-    void dump(WvStream &stream, bool everything = false);
+    void dump(WvStream &stream, bool everything = false) const;
 
     // FIXME: temporary placeholders
-    UniConfGen *mount(const UniConfLocation &location);
-    void mountgen(UniConfGen *gen);
-    void unmount();
-    bool ismountpoint();
-    bool isok();
+    UniConfGen *mount(const UniConfLocation &location,
+        bool refresh = true) const;
+    void mountgen(UniConfGen *gen, bool refresh = true) const;
+    void unmount() const;
+    bool ismountpoint() const;
+    bool isok() const;
 
-    void addwatch(const UniConfKey &key, UniConf::Depth depth,
-        const UniConfCallback &cb, void *userdata) { }
-    void delwatch(const UniConfKey &key, UniConf::Depth depth,
-        const UniConfCallback &cb, void *userdata) { }
-
-    void attach(WvStreamList *streamlist) { }
-    void detach(WvStreamList *streamlist) { }
+    // FIXME: not final API!
+    void setdefaults(const UniConf &subtree) const { }
 
     class Iter;
     class RecursiveIter;
@@ -182,6 +195,7 @@ public:
     friend class Iter;
     friend class RecursiveIter;
 };
+
 
 
 /**
@@ -428,6 +442,18 @@ private:
      * @param node the node
      */
     void prune(UniConfInfoTree *node);
+
+    typedef bool (*GenFunc)(UniConfGen*, const UniConfKey&,
+        UniConf::Depth);
+    bool dorecursive(GenFunc func,
+        const UniConfKey &key, UniConf::Depth depth);
+    bool dorecursivehelper(GenFunc func,
+        UniConfInfoTree *node, UniConf::Depth depth);
+
+    static bool genrefreshfunc(UniConfGen *gen,
+        const UniConfKey &key, UniConf::Depth depth);
+    static bool gencommitfunc(UniConfGen *gen,
+        const UniConfKey &key, UniConf::Depth depth);
 };
 
 
@@ -459,22 +485,22 @@ public:
  */
 class UniConf::Iter : private UniConfRoot::Iter
 {
-    UniConf *xroot;
+    UniConf xroot;
+    UniConf current;
 
 public:
-    Iter(UniConf &root);
+    Iter(const UniConf &root);
 
     using UniConfRoot::Iter::rewind;
-    using UniConfRoot::Iter::next;
     using UniConfRoot::Iter::key;
     
-    inline UniConf *root() const
-    {
-        return xroot;
-    }
+    bool next();
 
-    UniConf *ptr() const;
-    WvIterStuff(UniConf);
+    inline const UniConf *ptr() const
+    {
+        return & current;
+    }
+    WvIterStuff(const UniConf);
 };
 
 
@@ -485,106 +511,26 @@ public:
 class UniConf::RecursiveIter
 {
     DeclareWvList3(UniConf::Iter, IterList, )
+    UniConf xroot;
     UniConf::Iter top;
     UniConf::Depth depth;
-    UniConf *current;
+    UniConf current;
     IterList itlist;
     bool first;
 
 public:
-    RecursiveIter(UniConf &root,
+    RecursiveIter(const UniConf &root,
         UniConf::Depth depth = UniConf::INFINITE);
 
     void rewind();
     bool next();
 
-    inline UniConf *ptr() const
+    inline const UniConf *ptr() const
     {
-        return current;
+        return & current;
     }
-    inline UniConf *root() const
-    {
-        return top.root();
-    }
-
-    WvIterStuff(UniConf);
+    WvIterStuff(const UniConf);
 };
-
-
-#if 0
-/**
- * FIXME: WHAT DOES THIS DO?
- */
-class UniConf::XIter
-{
-public:
-    int skiplevel;
-    UniConf *top;
-    UniConfKey key;
-    WvLink _toplink, *toplink;
-    UniConfDict::Iter i;
-    XIter *subiter;
-    int going;
-    
-    XIter(UniConf &_top, const UniConfKey &_key);
-    ~XIter()
-        { unsub(); }
-    
-    void unsub()
-        { if (subiter) delete subiter; subiter = NULL; }
-    
-    void rewind()
-        { unsub(); i.rewind(); going = 0; }
-    
-    WvLink *cur()
-        { return subiter ? subiter->cur() : (going==1 ? toplink : NULL); }
-    
-    WvLink *_next();
-    
-    WvLink *next()
-    {
-	WvLink *l;
-	while ((l = _next()) != NULL && ptr() == NULL);
-	return l;
-    }
-    
-    UniConf *ptr() const
-    {
-        return key.isempty() ?
-            top : (subiter ? subiter->ptr() : NULL);
-    }
-    
-    WvIterStuff(UniConf);
-};
-#endif
-
-
-#if 0
-// UniConf::Sorter is like UniConf::Iter, but allows you to sort the list.
-typedef WvSorter<UniConf, UniConfDict, UniConf::Iter>
-    _UniConfSorter;
-class UniConf::Sorter : public _UniConfSorter
-{
-public:
-    Sorter(UniConf &h, RealCompareFunc *cmp)
-	: _UniConfSorter(h.check_children() ? *h.children : null_wvhconfdict,
-			 cmp)
-	{ }
-};
-
-
-// UniConf::RecursiveSorter is the recursive version of UniConf::Sorter.
-typedef WvSorter<UniConf, UniConfDict, UniConf::RecursiveIter> 
-    _UniConfRecursiveSorter;
-class UniConf::RecursiveSorter : public _UniConfRecursiveSorter
-{
-public:
-    RecursiveSorter(UniConf &h, RealCompareFunc *cmp)
-	: _UniConfRecursiveSorter(h.check_children() ? *h.children : null_wvhconfdict,
-				  cmp)
-	{ }
-};
-#endif
 
 
 #endif // __UNICONF_H
