@@ -18,8 +18,7 @@ public:
      */
     WvLogRotator(WvStringParm _filenames, int _keep_for = 7);
     
-    void set_keep_for(int _keep_for) 
-        { keep_for = _keep_for; }
+    void set_keep_for(int _keep_for);
 private:
     virtual void execute();
     
