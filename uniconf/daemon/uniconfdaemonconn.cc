@@ -202,6 +202,9 @@ void UniConfDaemonConn::do_help()
 
 void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
 {
+    // for now, we just send notifications for *any* key that changes.
+    // Eventually we probably want to do something about having each
+    // connection specify exactly which keys it cares about.
     WvString value(cfg[key].get());
     WvString msg;
 
