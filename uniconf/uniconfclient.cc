@@ -103,7 +103,7 @@ void UniConfClient::enumerate_subtrees(const UniConfKey &key)
     waitforsubt = true;
     while (waitforsubt)
     {
-        if (!waitforsubt || conn->select(-1, true, false, false))
+        if (conn->select(0, true, false, false))
             execute();
     }
 }
@@ -114,7 +114,6 @@ void UniConfClient::update(UniConf *&h)
     if (conn->select(0,true, false, false) 
     || (h->waiting && !data && conn->select(-1, true, false, false)))
     {
-        //conn->callback();
         execute();
         data = dict[(WvString)h->gen_full_key()];
     }
