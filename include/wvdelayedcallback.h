@@ -21,7 +21,6 @@ template<class InnerCallback>
 class WvDelayedCallback
 {
 private:
-    typedef typename InnerCallback::ReturnType R;
     typedef typename InnerCallback::Parm1 P1;
     typedef typename InnerCallback::Parm2 P2;
     typedef typename InnerCallback::Parm3 P3;
@@ -30,7 +29,7 @@ private:
     typedef typename InnerCallback::Parm6 P6;
     typedef typename InnerCallback::Parm7 P7;
     typedef typename InnerCallback::Parm8 P8;
-    typedef WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, P8> Impl;
+    typedef WvCallbackImpl<void, P1, P2, P3, P4, P5, P6, P7, P8> Impl;
     typedef typename Impl::FrozenParams FrozenParams;
     InnerCallback cb;
     FrozenParams *frozen;
@@ -68,56 +67,56 @@ public:
         stream->close();
         delete frozen;
     }
-    R operator()()
+    void operator()()
     {
         delete frozen;
         frozen = new FrozenParams;
         stream->alarm(0);
         // you can't delay a callback that has a non-void return type, sorry
     }
-    R operator()(P1 p1)
+    void operator()(P1 p1)
     {
         delete frozen;
         frozen = new FrozenParams(p1);
         stream->alarm(0);
     }
-    R operator()(P1 p1, P2 p2)
+    void operator()(P1 p1, P2 p2)
     {
         delete frozen;
         frozen = new FrozenParams(p1, p2);
         stream->alarm(0);
     }
-    R operator()(P1 p1, P2 p2, P3 p3)
+    void operator()(P1 p1, P2 p2, P3 p3)
     {
         delete frozen;
         frozen = new FrozenParams(p1, p2, p3);
         stream->alarm(0);
     }
-    R operator()(P1 p1, P2 p2, P3 p3, P4 p4)
+    void operator()(P1 p1, P2 p2, P3 p3, P4 p4)
     {
         delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4);
         stream->alarm(0);
     }
-    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
+    void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
     {
         delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5);
         stream->alarm(0);
     }
-    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)
+    void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)
     {
         delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5, p6);
         stream->alarm(0);
     }
-    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)
+    void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)
     {
         delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5, p6, p7);
         stream->alarm(0);
     }
-    R operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8)
+    void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8)
     {
         delete frozen;
         frozen = new FrozenParams(p1, p2, p3, p4, p5, p6, p7, p8);
