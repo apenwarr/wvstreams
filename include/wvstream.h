@@ -216,6 +216,11 @@ public:
     virtual size_t read(WvBuf &outbuf, size_t count);
 
     /**
+     * Puts data back into the stream's internal buffer
+     */
+    virtual void unread(WvBuf &outbuf, size_t count);
+
+    /**
      * Read exactly count bytes from the stream
      *
      * Notes from the two functions above also apply

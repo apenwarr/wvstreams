@@ -19,8 +19,6 @@
 #define ENOBUFS WSAENOBUFS
 #undef errno
 #define errno GetLastError()
-class RunWinSockInitialize;
-extern RunWinSockInitialize __runinitialize;
 #else
 #include <errno.h>
 #endif
@@ -47,7 +45,9 @@ XUUID_MAP_BEGIN(IWvStream)
 WvStream::WvStream()
 {
 #ifdef _WIN32
-    void *addy = &__runinitialize; // this ensures WSAStartup() is run
+    WSAData wsaData;
+    int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
+    assert(result == 0);
 #endif
     wvstream_execute_called = false;
     userdata = closecb_data = NULL;
@@ -829,3 +829,11 @@ const WvAddr *WvStream::src() const
     return NULL;
 }
 
+void WvStream::unread(WvBuf &unreadbuf, size_t count)
+{
+    WvDynBuf tmp;
+    tmp.merge(unreadbuf, count);
+    tmp.merge(inbuf);
+    inbuf.zap();
+    inbuf.merge(tmp);
+}
