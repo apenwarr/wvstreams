@@ -15,7 +15,6 @@ static bool fd_is_valid(int fd)
 	close(nfd);
 	return true;
     }
-    
     return false;
 }
 

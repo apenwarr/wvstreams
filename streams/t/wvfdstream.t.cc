@@ -117,6 +117,8 @@ WVTEST_MAIN("stdout clone")
 
 WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 {
+    ::unlink("wvfdstream.t.tmp");
+    
     // create temporary and empty file for testing
     printf("Trying to open wvfdstream.t.tmp to write\n");
     int file1 = open("wvfdstream.t.tmp", O_CREAT | O_TRUNC | O_WRONLY, 0666); 
@@ -139,7 +141,7 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 
     // Writing to file
     WVPASSEQ(writestream.write("Bonjour, je m'appelle writestream\n"), 34);
-    WVPASSEQ(writestream.write("Bonjour, je m'appelle writestream"), 33);
+    WVPASSEQ(writestream.write("Bonjour! Je m'appelle writestream"), 33);
     WVPASS(writestream.iswritable());
     WVPASS(readstream.isreadable());
 
@@ -147,15 +149,17 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     memset(buf, 0, 256);
     
     // Reading from file
-    writestream.select(0, false, true);
+    WVPASS(writestream.select(0, false, true));
     WVPASS(1);
     WvString line(readstream.blocking_getline(-1));
     WVPASSEQ(line, "Bonjour, je m'appelle writestream");
+    WVPASS(readstream.isreadable());
     
     WVPASSEQ(readstream.read(buf, 256), 33);
-    // read() is not supposed to insert the null terminator at the end of the char string, so do it manually
+    // read() is not supposed to insert the null terminator at the end of
+    // the char string, so do it manually
     buf[33] = '\0';
-    WVPASS(strcmp((const char*)buf, "Bonjour, je m'appelle writestream") == 0);
+    WVPASSEQ(buf, "Bonjour! Je m'appelle writestream");
    
     deletev buf;
     close(file1);

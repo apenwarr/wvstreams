@@ -651,8 +651,10 @@ WVTEST_MAIN("undupe")
 WVTEST_MAIN("hostname")
 {
     char host[1024];
+    printf("running gethostname...\n"); fflush(stdout);
     gethostname(host, sizeof(host));
-    WVPASS(hostname() == host);
+    printf("got it.\n"); fflush(stdout);
+    WVPASSEQ(hostname(), host);
 }
 
 /** Tests fqdomainname().
@@ -680,7 +682,7 @@ WVTEST_MAIN("fqdomainname")
         gethostname(host, sizeof(host));
 
         printf("host='%s'  fqdomainname().host='%s'\n", host, n.cstr());
-        WVPASS(n == host);
+        WVPASSEQ(n, host);
     } 
     else
         printf("Work around for Segfault");

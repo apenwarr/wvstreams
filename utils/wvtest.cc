@@ -39,6 +39,7 @@ static int memleaks()
     VALGRIND_COUNT_LEAKS(leaked, dubious, reachable, suppressed);
     printf("memleaks: sure:%d dubious:%d reachable:%d suppress:%d\n",
 	   leaked, dubious, reachable, suppressed);
+    fflush(stdout);
     
     // dubious+reachable are normally non-zero because of globals...
     // return leaked+dubious+reachable;
@@ -55,6 +56,7 @@ void WvTest::alarm_handler(int)
 {
     printf("\n! WvTest  Current test took longer than %d seconds!  FAILED\n",
 	   MAX_TEST_TIME);
+    fflush(stdout);
     abort();
 }
 
@@ -106,6 +108,7 @@ int WvTest::run_all(const char * const *prefixes)
 	    || prefix_match(cur->descr, prefixes))
 	{
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
+	    fflush(stdout);
 	    cur->main();
 	    
 	    new_valgrind_errs = memerrs();
@@ -130,6 +133,7 @@ int WvTest::run_all(const char * const *prefixes)
     printf("WvTest: %d test%s, %d failure%s.\n",
 	   runs, runs==1 ? "" : "s",
 	   fails, fails==1 ? "": "s");
+    fflush(stdout);
     
     return fails != 0;
 }
@@ -167,6 +171,7 @@ void WvTest::check(bool cond)
     {
 	printf("\n! WvTest   Total run time exceeded %d seconds!  FAILED\n",
 	       MAX_TOTAL_TIME);
+	fflush(stdout);
 	abort();
     }
     

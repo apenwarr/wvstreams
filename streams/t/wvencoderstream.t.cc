@@ -26,13 +26,16 @@ WVTEST_MAIN("gzip")
     gzip.disassociate_on_close = true; 
     
     gzip.write(in_data);
-    line = gzip.getline();
-    WVPASS(line && !strcmp(line, "a line of text"));
+    line = gzip.blocking_getline(1000);
+    WVPASSEQ(line, "a line of text");
+    WVFAIL(gzip.isreadable());
     WvGzipEncoder *inflater = new WvGzipEncoder(WvGzipEncoder::Inflate);
     gzip.readchain.append(inflater, true);
+    WVFAIL(gzip.isreadable());
     gzip.write(zin_data);
-    line = gzip.getline();
-    WVPASS(line && !strcmp(line, "a compressed line"));
+    line = gzip.blocking_getline(1000);
+    WVFAIL(gzip.isreadable());
+    WVPASSEQ(line, "a compressed line");
     
     WvLoopback loopy2;
     WvEncoderStream gzip2(&loopy);
@@ -40,13 +43,12 @@ WVTEST_MAIN("gzip")
     
     gzip2.write(in_data);
     gzip2.write(zin_data);
-    line = gzip2.getline();
-    WVPASS(line && !strcmp(line, "a line of text"));
+    line = gzip2.blocking_getline(1000, '\n', 1);
+    WVPASSEQ(line, "a line of text");
     WvGzipEncoder *inflater2 = new WvGzipEncoder(WvGzipEncoder::Inflate);
     gzip2.readchain.append(inflater2, true);
-    line = gzip2.getline();
-//    WVPASS(line && !strcmp(line, "a compressed line"));
-    
+    line = gzip2.blocking_getline(1000);
+    WVPASSEQ(line, "a compressed line");
 }
 
 #include "wvbufstream.h"
@@ -365,9 +367,11 @@ WVTEST_MAIN("Base64")
     b64_stream.writechain.append(new WvBase64Decoder, true);
     b64_stream.auto_flush(false);
 
+    time_t timeout = 1000;
     while (true)
     {
-	WvString s(input_stream.getline());
+	WvString s(input_stream.blocking_getline(timeout));
+	timeout = 10; // only allow a _long_ delay once
 	if (!s) break;
 	b64_stream.write(s);
     }

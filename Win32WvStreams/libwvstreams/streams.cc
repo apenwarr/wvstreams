@@ -13,6 +13,8 @@ static void errcode(int err)
 {
     if (err == EIO)
 	err = EBADF; // sometimes we get EIO when Unix would be EBADF
+    if (err == WSAENOTSOCK)
+	err = EBADF; // if it's not a socket, it's also not a fd
     SetLastError(err);
     errno = err;
 }
@@ -127,6 +129,7 @@ int socketpair(int family, int type, int protocol, int *sb)
 
 DWORD WINAPI fd2socket_fwd(LPVOID lpThreadParameter)
 {
+//    return 0;
     DWORD retval = 0;
     const int BUFSIZE = 512;
     socket_fd_pair *pair = (socket_fd_pair *)lpThreadParameter;

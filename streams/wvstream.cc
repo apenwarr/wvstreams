@@ -23,6 +23,8 @@ using std::max;
 #define ENOBUFS WSAENOBUFS
 #undef errno
 #define errno GetLastError()
+#include <sys/socket.h>
+#include "streams.h"
 #else
 #include <errno.h>
 #endif
@@ -685,6 +687,12 @@ int WvStream::_do_select(SelectInfo &si)
     tv.tv_sec = si.msec_timeout / 1000;
     tv.tv_usec = (si.msec_timeout % 1000) * 1000;
     
+#ifdef _WIN32
+    // selecting on an empty set of sockets doesn't cause a delay in win32.
+    SOCKET fakefd = socket(PF_INET, SOCK_STREAM, 0);
+    FD_SET(fakefd, &si.except);
+#endif    
+    
     // block
     int sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
         si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
@@ -698,13 +706,13 @@ int WvStream::_do_select(SelectInfo &si)
       && errno != EAGAIN && errno != EINTR 
       && errno != EBADF
       && errno != ENOBUFS
-#ifdef _WIN32
-      && errno != WSAEINVAL // the sets might be empty
-#endif
       )
     {
         seterr(errno);
     }
+#ifdef _WIN32
+    ::close(fakefd);
+#endif    
     return sel;
 }
 

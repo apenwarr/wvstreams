@@ -34,7 +34,11 @@ public:
     bool yes_writable, block_writes;
     
     CountStream()
-    	{ rcount = wcount = 0; yes_writable = block_writes = false; }
+    { 
+	printf("countstream initializing.\n");
+	rcount = wcount = 0; yes_writable = block_writes = false;
+    }
+    
     virtual ~CountStream()
     	{ close(); }
     
@@ -56,6 +60,7 @@ public:
     
     virtual bool post_select(SelectInfo &si)
     {
+	printf("countstream post_select\n");
 	int ret = WvStream::post_select(si);
 	if (yes_writable 
 	  && (si.wants.writable || (outbuf.used() && want_to_flush)))
@@ -307,21 +312,21 @@ WVTEST_MAIN("flush_then_close")
     
     s.block_writes = true;
     s.write("abcdefg");
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf.used(), 7);
     s.flush(0);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf.used(), 7);
     s.runonce(0);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf.used(), 7);
     s.flush_then_close(20000);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf.used(), 7);
     s.runonce(0);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf.used(), 7);
     WVPASS(s.isok());
     s.yes_writable = true;
     s.block_writes = false;
     s.runonce(0);
     s.runonce(0);
-    WVPASS(s.outbuf.used() == 0);
+    WVPASSEQ(s.outbuf.used(), 0);
     WVFAIL(s.isok());
 }
 
@@ -558,10 +563,12 @@ WVTEST_MAIN("alarm")
     WVPASSEQ(val, 1);
     s.runonce(10000);
     WVPASSEQ(val, 2);
+    WVPASSEQ(s.geterr(), 0);
     printf("alarm remaining: %d\n", (int)s.alarm_remaining());
     s.runonce(50);
     WVPASSEQ(val, 2);
-
+    printf("alarm remaining: %d\n", (int)s.alarm_remaining());
+ 
     WvIStreamList l;
     l.append(&s, false, "alarmer");
     
