@@ -716,7 +716,14 @@ printf(buf.get(14));)
  )
 
  WVCHAPTER(wvdiriter, WvDirIter,
-  x
+   WvDirIter is a directory iterator. It basically implements WVCMD(find).
+
+   WVCMD(WvDirIter( WvString dirname, bool _recurse=true );)
+   where dirname is the directory name.
+
+   A simple example:
+   WVEXAMPLE(wvdiriterex.cc)
+
  )
 
  WVCHAPTER(wvencoder, WvEncoder - A top-level data encoder class,
@@ -726,69 +733,23 @@ printf(buf.get(14));)
    write the results to an output buffer. The resulting data may be of a
    different size or data type, and may or may not depend on previous data.
 
-   Encoders may or may not possess the following characteristics:
-
-   - Statefulness: encoding of successive input elements may depend on
-     previous one
-
-   - Error states: encoding may enter an error state indicated by isok() ==
-     false due to problems detected in the in encoder has been used
-
-   - Minimum input block size: data will not be drawn from the input buffer
-     until enough is available or the encoder is flushed
-
-   - Minimum output block size: data will not be written to the output
-     buffer until enough free space is available
-
-   - Synchronization boundaries: data is process or generated in chunks which
-     can be manipulated independently of any others, in which case flush() may
-     cause the encoder to produce such a boundary in its output
-
-   - Recognition of end-of-data mark: a special sequence marks the end of
-     input, after which the encoder transitions to isfinished() == true
-
-   - Generation of end-of-data mark: a special sequence marks the end of
-     output when the encoder transitions to isfinished() == true, usually by an
-     explicit call to finish()
-
-   - Reset support: the encoder may be reset to its initial state and thereby
-     recycled at minimum cost
 
 
-   Helper functions are provided for encoding data from plain
-   memory buffers and from strings.  Some have no encode(...)
-   equivalent because they cannot incrementally encode from
-   the input, hence they always use the flush option.
+   WVSECT1(wvbase64, An encoding tool (WvBase64.cc),
 
+    Contains functions for encoding and decoding strings in MIME Base64 notation.
 
-   The 'mem' suffix has been tacked on to these functions to
-   resolve ambiguities dealing with 'char *' that should be
-   promoted to WvString.  For instance, consider the signatures
-   of strflushmem(const void*, size_t) and strflushstr(WvStringParm,
-   bool).
+    WVSECT2(wvbase64encode, WvBase64Encoder(),
+     Converts a string to base64 encoding.
+    )
 
+    WVSECT2(wvbase64decode, WvBase64Decoder(),
+     Converts a string from base64 format into a normal string format.
 
-   Another reason for these suffixes is to simplify overloading
-   the basic methods in subclasses since C++ would require the
-   subclass to redeclare all of the other signatures for
-   an overloaded method.
-
-
-  WVSECT1(wvbase64, An encoding tool (WvBase64.cc),
-
-   Contains functions for encoding and decoding strings in MIME Base64 notation.
-
-   WVSECT2(wvbase64encode, WvBase64Encoder(),
-    Converts a string to base64 encoding.
+     An example of WvBase64Encoder:
+     WVEXAMPLE(wvbase64ex.cc)
+    )
    )
-
-   WVSECT2(wvbase64decode, WvBase64Decoder(),
-    Converts a string from base64 format into a normal string format.
-
-    An example of WvBase64Encoder:
-    WVEXAMPLE(wvbase64ex.cc)
-   )
-  )
 
   WVSECT1(wvbackslash, Another encoding tool (WvBackSlash.cc),
    You almost never use this, but it's there if you need it.
@@ -796,8 +757,6 @@ printf(buf.get(14));)
 
    WVEXAMPLE(backslashex.cc)
 
-   It will display on screen:
-   WVCMD(This is the result: Test \a\b\c\defg)
   )
  )
 
@@ -815,6 +774,10 @@ printf(buf.get(14));)
    program called "wvcrash" in the path, it writes the stack trace to a file
    named "wvcrash.txt" in the current directory.
 
+ )
+
+ WVCHAPTER(wvtclstring, WvTclString,
+  x
  )
 
 )
