@@ -83,7 +83,7 @@ static char *argv[] =
 
 static int callback_count = 0;
 
-void callback(const UniConf &uniconf, const UniConfKey &key)
+static void callback(const UniConf &uniconf, const UniConfKey &key)
 {
     ++callback_count;
 }
@@ -175,3 +175,4 @@ WVTEST_MAIN("retry:uniconfd")
 
     WVPASS(cfg["/key"].getme() == "value four");
 }
+
