@@ -10,7 +10,9 @@
 #define __WVSTREAMSDAEMON_H
 
 #include "wvautoconf.h"
-#ifdef WITH_POPT
+#ifndef WITH_POPT
+#error WvStreamsDaemon is only availible when WvStreams is compiled with popt support
+#else
 
 #include "wvdaemon.h"
 #include "iwvstream.h"
