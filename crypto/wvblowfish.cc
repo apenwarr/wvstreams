@@ -43,6 +43,13 @@ void WvBlowfishEncoder::setkey(const void *_key, size_t _keysize)
 }
 
 
+void WvBlowfishEncoder::setiv(const void *_iv)
+{
+    memcpy(ivec, _iv, sizeof(ivec));
+    ivecoff = 0;
+}
+
+
 void WvBlowfishEncoder::preparekey()
 {
     delete bfkey;

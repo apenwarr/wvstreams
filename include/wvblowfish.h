@@ -46,6 +46,13 @@ public:
      * @param keysize the key size in bytes
      */
     void setkey(const void *key, size_t keysize);
+    
+    /**
+     * Sets the current Blowfish initialization vector.
+     *
+     * @param iv the new IV must be 8 bytes
+     */
+    void setiv(const void *iv);
 
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
