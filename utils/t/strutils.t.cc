@@ -821,3 +821,18 @@ WVTEST_MAIN("secondstoa")
             "2 days, 23 hours and 59 minutes");
     WVPASSEQ(secondstoa(10*24*3600), "10 days");
 }
+
+WVTEST_MAIN("depunctuate")
+{
+    WVPASSEQ(depunctuate(""), "");
+    WVPASSEQ(depunctuate("."), "");
+    WVPASSEQ(depunctuate("?"), "");
+    WVPASSEQ(depunctuate("!"), "");
+    WVPASSEQ(depunctuate("a"), "a");
+    WVPASSEQ(depunctuate("a."), "a");
+    WVPASSEQ(depunctuate("a?"), "a");
+    WVPASSEQ(depunctuate("a!"), "a");
+    WVPASSEQ(depunctuate("a.."), "a.");
+    WVPASSEQ(depunctuate("a. "), "a. ");
+}
+
