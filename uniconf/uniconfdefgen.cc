@@ -7,7 +7,6 @@
 
 #include "uniconfdefgen.h"
 #include "wvmoniker.h"
-#include "wvbuffer.h"
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
