@@ -87,7 +87,13 @@ WvStringBuf *WvString::alloc(size_t size)
 
 void WvString::append(const WvString &s)
 {
-    *this = WvString("%s%s", *this, s);
+    if( s )
+    {
+	if( *this )
+	    *this = WvString("%s%s", *this, s);
+	else
+	    *this = s;
+    }
 }
 
 
