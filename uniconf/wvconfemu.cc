@@ -8,58 +8,80 @@
 #define USE_WVCONFEMU
 #endif
 #include "wvconfemu.h"
+#include "wvstringtable.h"
 
 
 WvConfigEntry *WvConfigSectionEmu::operator[] (WvStringParm s)
 {
     assert(false);
     return NULL;
+
+    WvConfigEntryEmu* entry = entries[s];
+
+    if (!entry && uniconf[s].exists())
+    {
+	entry = new WvConfigEntryEmu(s, uniconf[s].get());
+	entries.add(entry, true);
+    }
+
+    return entry;
 }
 
 
 const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 {
-    assert(false);
-    return false;
+    return uniconf[entry].get(def_val);
 }
 
 
+#if 1
 void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 void WvConfigSectionEmu::quick_set(WvStringParm entry, WvStringParm value)
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 bool WvConfigSectionEmu::isempty() const
 {
     assert(false);
     return false;
 }
+#endif
 
 
+#if 1
 size_t WvConfigSectionEmu::count() const
 {
     assert(false);
     return 0;
 }
+#endif
 
 
+#if 1
 void WvConfigSectionEmu::Iter::unlink()
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 void WvConfigSectionEmu::Iter::xunlink()
 {
     assert(false);
 }
+#endif
 
 
 void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
@@ -94,17 +116,22 @@ void WvConfEmu::zap()
 }
 
 
+#if 1
 bool WvConfEmu::isclean() const
 {
     assert(false);
     return false;
 }
+#endif
 
+
+#if 1
 bool WvConfEmu::isok() const
 {
     assert(false);
     return false;
 }
+#endif
 
 
 void WvConfEmu::load_file(WvStringParm filename)
@@ -117,22 +144,28 @@ void WvConfEmu::load_file(WvStringParm filename)
 }
 
 
+#if 1
 void WvConfEmu::save(WvStringParm filename)
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 void WvConfEmu::save()
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 void WvConfEmu::flush()
 {
     assert(false);
 }
+#endif
 
 
 WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
@@ -156,10 +189,12 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
 }
 
 
+#if 1
 void WvConfEmu::del_callback(WvStringParm section, WvStringParm entry, void *cookie)
 {
     assert(false);
 }
+#endif
 
 
 void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
@@ -179,29 +214,37 @@ void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
 }
 
 
+#if 1
 void WvConfEmu::add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 void WvConfEmu::del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 void WvConfEmu::add_addfile(WvString *filename, WvStringParm sect, WvStringParm ent)
 {
     assert(false);
 }
+#endif
 
 
+#if 1
 WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 {
     assert(false);
     return "";
 }
+#endif
 
 
 int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
@@ -220,23 +263,40 @@ const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
 int WvConfEmu::fuzzy_getint(WvStringList &sect, WvStringParm entry,
 			    int def_val)
 {
-    assert(false);
-    return 0;
+    WvString def_str(def_val);
+    return check_for_bool_string(fuzzy_get(sect, entry, def_str));
 }
 
 
 const char *WvConfEmu::fuzzy_get(WvStringList &sect, WvStringParm entry,
 				 const char *def_val)
 {
-    assert(false);
-    return NULL;
+    WvStringList::Iter i(sect);
+    WvStringTable cache(5);
+    WvConfigSection *s;
+
+    for (i.rewind(); i.next(); )
+    {
+	for(s = (*this)[*i];
+	    s && !cache[s->name];
+	    s = (*s)["Inherits"] ? (*this)[(*s)["Inherits"]->value] : NULL)
+	{
+	    const char *ret = s->get(entry);
+	    if (ret) return ret;
+	    cache.add(&s->name, false);
+	}
+    }
+
+    return def_val;
 }
 
 
+#if 1
 void WvConfEmu::setraw(WvString wvconfstr, const char *&value, int &parse_error)
 {
     assert(false);
 }
+#endif
 
 
 void WvConfEmu::setint(WvStringParm section, WvStringParm entry, int value)
@@ -255,7 +315,8 @@ void WvConfEmu::set(WvStringParm section, WvStringParm entry,
 void WvConfEmu::maybesetint(WvStringParm section, WvStringParm entry,
 			    int value)
 {
-    assert(false);
+    if (!get(section, entry, NULL))
+	setint(section, entry, value);
 }
 
 
@@ -273,16 +334,28 @@ void WvConfEmu::delete_section(WvStringParm section)
 }
 
 
+#if 0
 size_t WvConfEmu::count() const
 {
     assert(false);
     return 0;
 }
+#endif
 
 
 int WvConfEmu::check_for_bool_string(const char *s)
 {
-    assert(false);
-    return 0;
+    if (strcasecmp(s, "off") == 0
+	|| strcasecmp(s, "false") == 0
+	|| strncasecmp(s, "no", 2) == 0)   // also handles "none"
+	return (0);
+
+    if (strcasecmp(s, "on") == 0
+	|| strcasecmp(s, "true") == 0
+	|| strcasecmp(s, "yes") == 0)
+	return (1);
+
+    // not a special bool case, so just return the number
+    return (atoi(s));
 }
 
