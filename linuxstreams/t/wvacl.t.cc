@@ -9,12 +9,21 @@
 
 WvLogConsole logrcv(1);
 
-void create_file(WvStringParm testfn, WvString &username, WvString &groupname)
+static mode_t default_mode = 0754;
+static WvString default_acl = "u::rwx,g::r-x,o::r--";
+
+void create_foo(WvStringParm testfn, WvString &username, WvString &groupname,
+                bool dir)
 {
     acl_check();
     ::chmod(testfn, 0777);
-    ::unlink(testfn);
-    WvFile tmp(testfn, O_WRONLY | O_CREAT | O_TRUNC, 0754);
+    if (::unlink(testfn) != 0 && errno == EISDIR)
+        ::rmdir(testfn);
+
+    if (dir)
+        ::mkdir(testfn, default_mode);
+    else
+        WvFile tmp(testfn, O_WRONLY | O_CREAT | O_TRUNC, default_mode);
 
     // On some filesystems (notably reiserfs), a new file's group is inherited
     // from its directory.  We use chown() here to set it to a known value.
@@ -34,6 +43,19 @@ void create_file(WvStringParm testfn, WvString &username, WvString &groupname)
     else
 	groupname = gr->gr_name;
 }
+
+
+void create_file(WvStringParm testfn, WvString &username, WvString &groupname)
+{
+    create_foo(testfn, username, groupname, false);
+}
+
+
+void create_dir(WvStringParm testfn, WvString &username, WvString &groupname)
+{
+    create_foo(testfn, username, groupname, true);
+}
+
 
 WVTEST_MAIN("default get_simple_acl_permissions()")
 {
@@ -187,4 +209,70 @@ WVTEST_MAIN("add another user and read it back")
     WVPASS(u_chk2);
     WVPASS(g_chk);
     WVPASS(o_chk);
+}
+
+
+WVTEST_MAIN("default ACL permissions")
+{
+    WvString testfn("wvacltest.tmp"), username, groupname;
+    WvString p1("u::rwx,g::rwx,o::rwx"), p2("u::---,g::---,o::---"),
+             p3("u::r-x,g::r-x,o::r-x");
+
+    printf("create file but don't set anything\n");
+    create_file(testfn, username, groupname);
+    WVPASSEQ(get_acl_short_form(testfn, false), default_acl);
+    WVPASSEQ(get_acl_short_form(testfn, true), WvString::null);
+
+    printf("create dir but don't set anything\n");
+    create_dir(testfn, username, groupname);
+    WVPASSEQ(get_acl_short_form(testfn, false), default_acl);
+    WVPASSEQ(get_acl_short_form(testfn, true), WvString::null);
+
+    printf("default on non-dir\n");
+    create_file(testfn, username, groupname);
+    WVFAIL(set_default_acl_permissions(testfn, p1));
+    WVPASSEQ(get_acl_short_form(testfn, false), default_acl);
+    WVPASSEQ(get_acl_short_form(testfn, true), WvString::null);
+
+    printf("set ACL w/no default\n");
+    create_dir(testfn, username, groupname);
+    WVPASS(set_acl_permissions(testfn, p1, false));
+    WVPASSEQ(get_acl_short_form(testfn, false), p1);
+    WVPASSEQ(get_acl_short_form(testfn, true), WvString::null);
+ 
+    printf("set ACL + same default\n");
+    create_dir(testfn, username, groupname);
+    WVPASS(set_acl_permissions(testfn, p1, true));
+    WVPASSEQ(get_acl_short_form(testfn, false), p1);
+    WVPASSEQ(get_acl_short_form(testfn, true), p1);
+  
+    printf("default w/no ACL\n");
+    create_dir(testfn, username, groupname);
+    WVPASS(set_default_acl_permissions(testfn, p1));
+    WVPASSEQ(get_acl_short_form(testfn, false), default_acl);
+    WVPASSEQ(get_acl_short_form(testfn, true), p1);
+
+    printf("ACL then different default\n");
+    create_dir(testfn, username, groupname);
+    WVPASS(set_acl_permissions(testfn, p1, false));
+    WVPASS(set_default_acl_permissions(testfn, p2));
+    WVPASSEQ(get_acl_short_form(testfn, false), p1);
+    WVPASSEQ(get_acl_short_form(testfn, true), p2);
+
+    printf("ACL + same default, then overwrite default\n");
+    create_dir(testfn, username, groupname);
+    WVPASS(set_acl_permissions(testfn, p1, true));
+    WVPASS(set_default_acl_permissions(testfn, p2));
+    WVPASSEQ(get_acl_short_form(testfn, false), p1);
+    WVPASSEQ(get_acl_short_form(testfn, true), p2);
+
+    printf("ACL w/different default, then overwrite ACL and default\n");
+    create_dir(testfn, username, groupname);
+    WVPASS(set_acl_permissions(testfn, p1, false));
+    WVPASS(set_default_acl_permissions(testfn, p2));
+    WVPASSEQ(get_acl_short_form(testfn, false), p1);
+    WVPASSEQ(get_acl_short_form(testfn, true), p2);
+    WVPASS(set_acl_permissions(testfn, p3, true));
+    WVPASSEQ(get_acl_short_form(testfn, false), p3);
+    WVPASSEQ(get_acl_short_form(testfn, true), p3);
 }
