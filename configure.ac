@@ -353,7 +353,7 @@ if test "$with_xplc" != "no"; then
 	fi
     else
         WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
-	WV_APPEND(LDFLAGS, [-I$with_xplc])
+	WV_APPEND(LDFLAGS, [-L$with_xplc])
 	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
 	xplc_pc="xplc-${xplc_version}"
