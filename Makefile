@@ -29,9 +29,9 @@ install-xplc: xplc
 	$(INSTALL_DATA) xplc/libxplc-cxx.a $(DESTDIR)$(libdir)
 
 # Prevent complaints that Make can't find these two linker options.
--lxplc-cxx: xplc/libxplc-cxx.a
+-lxplc-cxx: ;
 
--lxplc: xplc/libxplc.a
+-lxplc: ;
 
 endif
 
