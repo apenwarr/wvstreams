@@ -100,13 +100,12 @@ public:
     GenIter(UniMountTree &root, const UniConfKey &key);
     ~GenIter();
 
-    typedef UniMountTree::MountIter ParentClass;
-    using ParentClass::split;
-    using ParentClass::key;
-    using ParentClass::head;
-    using ParentClass::tail;
-    using ParentClass::node;
-
+    using UniMountTree::MountIter::split;
+    using UniMountTree::MountIter::key;
+    using UniMountTree::MountIter::head;
+    using UniMountTree::MountIter::tail;
+    using UniMountTree::MountIter::node;
+    
     void rewind();
     bool next();
 

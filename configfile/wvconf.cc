@@ -21,10 +21,8 @@ void WvConf::setbool(void *userdata,
     if (!*(bool *)userdata)
     {
 	WvLog log("Config Event", WvLog::Debug);
-	if(sect == "Tunnel Vision" && ent == "Magic Password")
-  	    log("Changed:[%s]%s\n",sect, ent);
-	else
-	    log("Changed: [%s]%s = '%s' -> '%s'\n", sect, ent, oldval, newval);
+	log("Changed: [%s]%s = '%s' -> '%s'\n",
+	    sect, ent, oldval, newval);
     }
     
     *(bool *)userdata = true;
@@ -519,22 +517,23 @@ void WvConf::flush()
 
 
 void WvConf::add_callback(WvConfCallback callback, void *userdata,
-			  WvStringParm section, WvStringParm entry,
-			  void *cookie)
+			  WvStringParm section, WvStringParm entry)
 {
     callbacks.append(new WvConfCallbackInfo(callback, userdata,
-					    section, entry, cookie), true);
+					    section, entry), true);
 }
 
-
-void WvConf::del_callback(WvStringParm section, WvStringParm entry,
-			  void *cookie)
+void WvConf::del_callback(WvConfCallback callback, void *userdata,
+			  WvStringParm section, WvStringParm entry)
 {
     WvConfCallbackInfoList::Iter i(callbacks);
     
     for (i.rewind(); i.next(); )
     {
-	if (i->cookie == cookie && i->section == section && i->entry == entry)
+	WvConfCallbackInfo &c(*i);
+	
+	if (c.callback == callback && c.userdata == userdata
+	    && c.section == section && c.entry == entry)
 	{
 	    i.unlink();
 	    return;

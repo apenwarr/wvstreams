@@ -8,22 +8,13 @@
 #include "wvloopback.h"
 #include "wvaddr.h"
 #include "wvtcp.h"
+#include "wvfork.h"
 #include "wvautoconf.h"
+#include <netdb.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
-
-#ifdef _WIN32
-#define WVRESOLVER_SKIP_FORK
-typedef int pid_t;
-#define kill(a,b)
-#define waitpid(a,b,c) (0)
-#define alarm(a)
-#else
-#include "wvfork.h"
-#include <netdb.h>
-#include <sys/wait.h>
-#endif
 
 class WvResolverHost
 {
@@ -141,7 +132,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 
     if (host)
     {
-	// refresh successes after 5 minutes, retry failures every 1 minute
+	// refresh successes after 5 minutes, retry failures every 1 minute	    
 	if ((host->done && host->last_tried + 60*5 < now)
 	    || (!host->done && host->last_tried + 60 < now))
 	{
@@ -309,8 +300,7 @@ bool WvResolver::pre_select(WvStringParm hostname,
     if (host)
     {
 	if (host->loop)
-	    return host->loop->xpre_select(si,
-			  WvStream::SelectRequest(true, false, false));
+	    return host->loop->pre_select(si);
 	else
 	    return true; // sure thing: already looked up this name!
     }

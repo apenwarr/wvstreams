@@ -12,9 +12,7 @@
 #include "wvstring.h"
 
 // FIXME: this is not needed on platforms other than Linux
-#ifdef __linux
 #include <linux/if_ether.h>
-#endif
 
 #if 0
 // FIXME: this is needed on BSD and Darwin
@@ -31,14 +29,7 @@
 #include "if_arp.h"
 #endif
 
-#ifndef _WIN32
 #include <netinet/in.h>
-#else
-
-#include <winsock2.h>
-#define ETH_ALEN		6
-#define IP_ALEN			4
-#endif
 
 typedef unsigned int __u32;
 typedef short unsigned int __u16;
@@ -168,7 +159,6 @@ public:
 };
 
 
-#ifndef _WIN32
 /**
  * An ethernet address is made up of a string of hex numbers, in the form
  *     AA:BB:CC:DD:EE:FF
@@ -226,7 +216,7 @@ public:
     virtual const unsigned char *rawdata() const;
     virtual size_t rawdata_len() const;
 };
-#endif // !_WIN32
+
 
 /**
  * An IP address is made up of a "dotted quad" -- four decimal numbers in
@@ -269,13 +259,12 @@ public:
     WvIPAddr operator~ () const;
     WvIPAddr operator+ (int n) const;
     WvIPAddr operator- (int n) const;
-
-    __u32 addr() const
+    __u32 s_addr() const
         { return *(__u32 *)binaddr; }
 
     bool is_zero() const
-        { return addr() == 0; }
-
+        { return s_addr() == 0; }
+    
     virtual WvEncap encap() const;
 
     virtual struct sockaddr *sockaddr() const;
@@ -389,8 +378,8 @@ public:
     __u16 port;
     
     WvIPPortAddr();
-    WvIPPortAddr(const unsigned char _ipaddr[4], __u16 _port = 0) 
-	  : WvIPAddr(_ipaddr), port(_port) { };
+    WvIPPortAddr(const unsigned char _ipaddr[4], __u16 _port = 0)
+        : WvIPAddr(_ipaddr), port(_port) { };
     WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port = 0);
     WvIPPortAddr(const char string[]) : WvIPAddr(string)
         { string_init(string); }
@@ -414,7 +403,7 @@ public:
     virtual unsigned WvHash() const;
 };
 
-#ifndef _WIN32
+
 /** A Unix domain socket address is really just a filename.  */
 class WvUnixAddr : public WvAddr
 {
@@ -436,5 +425,5 @@ public:
     virtual size_t rawdata_len() const;
 };
 
-#endif //windows
+
 #endif // __WVADDR_H

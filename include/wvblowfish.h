@@ -54,16 +54,12 @@ public:
      */
     void setiv(const void *iv);
 
-    /** Return true if mode is encrypting or false if decrypting. */
-    bool is_encrypting() const {
-        return (mode == ECBEncrypt || mode == CFBEncrypt);
-    }
-    
 protected:
     virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
     virtual bool _reset(); // supported: restores most recently set
         // key and initialization vector
 
+private:
     Mode mode;
     size_t keysize;
     unsigned char *key;

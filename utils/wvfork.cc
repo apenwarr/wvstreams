@@ -28,26 +28,21 @@
 DeclareWvList(WvForkCallback);
 WvForkCallbackList callbacks;
 
-
 void add_wvfork_callback(WvForkCallback cb)
 {
-#if 0
     // be sure we don't add this twice
     WvForkCallbackList::Iter i(callbacks);
     for (i.rewind(); i.next(); )
         if (*i == cb) return;
-#endif
     callbacks.append(new WvForkCallback(cb), true);
 }
 
-#if 0
 void remove_wvfork_callback(WvForkCallback cb)
 {
     WvForkCallbackList::Iter i(callbacks);
     for (i.rewind(); i.next(); )
         if (*i == cb) i.xunlink();
 }
-#endif
 
 pid_t wvfork(int dontclose1, int dontclose2)
 {

@@ -13,11 +13,7 @@
 #if STREAMTRACE
 # define TRACE(x, y...) fprintf(stderr, x, ## y)
 #else
-#ifndef _MSC_VER
 # define TRACE(x, y...)
-#else
-# define TRACE
-#endif
 #endif
 
 WvStreamList::WvStreamList()

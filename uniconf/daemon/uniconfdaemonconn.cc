@@ -12,10 +12,11 @@
 /***** UniConfDaemonConn *****/
 
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
-    UniClientConn(_s), root(_root)
+    UniClientConn(_s),
+    root(_root), watches(NUM_WATCHES)
 {
     addcallback();
-    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready."));
+    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
 }
 
 
@@ -28,14 +29,15 @@ void UniConfDaemonConn::close()
 
 void UniConfDaemonConn::addcallback()
 {
-    root.add_callback(this, UniConfCallback(this,
-		    &UniConfDaemonConn::deltacallback), true);
+    root.add_callback(UniConfCallback(this,
+            &UniConfDaemonConn::deltacallback), NULL, true);
 }
 
 
 void UniConfDaemonConn::delcallback()
 {
-    root.del_callback(this, true);
+    root.del_callback(UniConfCallback(this,
+            &UniConfDaemonConn::deltacallback), NULL, true);
 }
 
 
@@ -54,63 +56,62 @@ void UniConfDaemonConn::execute()
         WvString arg2(readarg());
         switch (command)
         {
-	case UniClientConn::NONE:
-	    break;
-	    
-	case UniClientConn::INVALID:
-	    do_malformed();
-	    break;
+            case UniClientConn::INVALID:
+                do_malformed();
+                break;
             
-	case UniClientConn::REQ_NOOP:
-	    do_noop();
-	    break;
-	    
-	case UniClientConn::REQ_GET:
-	    if (arg1.isnull())
-		do_malformed();
-	    else
-		do_get(arg1);
-	    break;
+            case UniClientConn::REQ_NOOP:
+                do_noop();
+                break;
+
+            case UniClientConn::REQ_GET:
+            {
+                if (arg1.isnull())
+                    do_malformed();
+                else
+                    do_get(arg1);
+                break;
+            }
             
-	case UniClientConn::REQ_SET:
-	    if (arg1.isnull() || arg2.isnull())
-		do_malformed();
-	    else
-		do_set(arg1, arg2);
-	    break;
-	    
-	case UniClientConn::REQ_REMOVE:
-	    if (arg1.isnull())
-		do_malformed();
-	    else
-		do_remove(arg1);
-	    break;
-	    
-	case UniClientConn::REQ_SUBTREE:
-	    if (arg1.isnull())
-		do_malformed();
-	    else
-		do_subtree(arg1);
-	    break;
-	    
-	case UniClientConn::REQ_HASCHILDREN:
-	    if (arg1.isnull())
-		do_malformed();
-	    else
-		do_haschildren(arg1);
-	    break;
-	    
-	case UniClientConn::REQ_QUIT:
-	    do_quit();
-	    break;
-	    
-	case UniClientConn::REQ_HELP:
-	    do_help();
-	    break;
-	    
-	default:
-	    do_malformed();
-	    break;
+            case UniClientConn::REQ_SET:
+                if (arg1.isnull() || arg2.isnull())
+                    do_malformed();
+                else
+                    do_set(arg1, arg2);
+                break;
+
+            case UniClientConn::REQ_REMOVE:
+                if (arg1.isnull())
+                    do_malformed();
+                else
+                    do_remove(arg1);
+                break;
+
+            case UniClientConn::REQ_SUBTREE:
+                if (arg1.isnull())
+                    do_malformed();
+                else
+                    do_subtree(arg1);
+                break;
+
+            case UniClientConn::REQ_HASCHILDREN:
+                if (arg1.isnull())
+                    do_malformed();
+                else
+                    do_haschildren(arg1);
+                break;
+
+            case UniClientConn::REQ_QUIT:
+                do_quit();
+                break;
+
+            case UniClientConn::REQ_HELP:
+                do_help();
+                break;
+
+            default:
+                do_malformed();
+                break;
         }
     }
 }
@@ -194,19 +195,16 @@ void UniConfDaemonConn::do_help()
 }
 
 
-void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
+void UniConfDaemonConn::deltacallback(const UniConf &key, void *userdata)
 {
-    WvString value(cfg[key].get());
+    WvString value(key.get());
     WvString msg;
 
-    UniConfKey fullkey(cfg.fullkey());
-    fullkey.append(key);
-
     if (value.isnull())
-        msg = WvString("%s", wvtcl_escape(fullkey));
+        msg = WvString("%s", wvtcl_escape(key.fullkey()));
     else
-        msg = WvString("%s %s", wvtcl_escape(fullkey),
-                                wvtcl_escape(cfg[key].get()));
+        msg = WvString("%s %s", wvtcl_escape(key.fullkey()),
+                                wvtcl_escape(key.get()));
 
     writecmd(UniClientConn::EVENT_NOTICE, msg);
 }

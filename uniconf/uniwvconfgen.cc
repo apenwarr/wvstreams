@@ -4,21 +4,10 @@
  * 
  * A generator to make a UniConf object out of a WvConf.
  */
+
 #include "uniwvconfgen.h"
-#include "wvmoniker.h"
 
-
-static UniConfGen *creator(WvStringParm s, IObject *, void *obj)
-{
-    if (!obj)
-	obj = new WvConf(s);
-    
-    // FIXME EEK!  This never deletes the WvConf object!
-    return new UniWvConfGen(*(WvConf *)obj);
-}
-
-static WvMoniker<UniConfGen> reg("wvconf", creator);
-
+/***** UniWvConfGen *****/
 
 UniWvConfGen::UniWvConfGen(WvConf &_cfg)
     : cfg(_cfg)

@@ -32,7 +32,7 @@ typedef IObject *WvMonikerCreateFunc(WvStringParm parms,
 class WvMonikerBase
 {
 protected:
-    WvMonikerBase(const XUUID &iid, WvStringParm _id,
+    WvMonikerBase(const UUID &iid, WvStringParm _id,
 		  WvMonikerCreateFunc *func);
     ~WvMonikerBase();
     
@@ -66,7 +66,7 @@ public:
     IObject *silly;
     
     WvMoniker(WvStringParm _id, CreateFunc *_func)
-	: WvMonikerBase(XIID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
+	: WvMonikerBase(IID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
     { 
 	// this looks pointless, but it ensures that T* can be safely,
 	// automatically downcast to IObject*.  That means T is really derived
@@ -85,7 +85,7 @@ public:
  * Most people don't use this function.  See the templated, type-safe version
  * of wvcreate() below.
  */
-IObject *wvcreate(const XUUID &iid,
+IObject *wvcreate(const UUID &iid,
 		  WvStringParm s, IObject *obj = NULL, void *userdata = NULL);
 
 
@@ -103,7 +103,7 @@ IObject *wvcreate(const XUUID &iid,
 template <class T>
 inline T *wvcreate(WvStringParm s, IObject *obj = NULL, void *userdata = NULL)
 {
-    return mutate<T>(wvcreate(XIID<T>::get(), s, obj, userdata));
+    return mutate<T>(wvcreate(IID<T>::get(), s, obj, userdata));
 }
 
 

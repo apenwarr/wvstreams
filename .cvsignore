@@ -1,8 +1,7 @@
 autom4te.cache
-config.cache
-config.log
-config.mk
-config.status
 configure
 reconfigure
+config.log
+config.status
+config.mk
 stamp-h.in

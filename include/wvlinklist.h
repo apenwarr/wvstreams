@@ -1,4 +1,4 @@
-/* -*- Mode: C++ -*-
+/*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -20,8 +20,8 @@
  */
 class WvListBase
 {
-    WvListBase(const WvListBase &l); // copy constructor - not actually defined anywhere!
 protected:
+    WvListBase(const WvListBase &l); // copy constructor - not actually defined anywhere!
     WvListBase& operator= (const WvListBase &l);
     
 public:

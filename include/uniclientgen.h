@@ -11,9 +11,8 @@
 #include "uniconfgen.h"
 #include "wvlog.h"
 #include "wvstringlist.h"
-#include "uniclientconn.h"
-#include "wvtimestream.h"
 
+class UniClientConn;
 
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
@@ -31,15 +30,6 @@ class UniClientGen : public UniConfGen
     class RemoteKeyIter;
 
     UniClientConn *conn;
-
-    /*
-     * To make sure we don't deliver notifications while we're already in the
-     * callback (as this could result in trying to call it again before
-     * completion), we instead have an empty stream handle this using alarm(0).
-     */
-    UniConfPairList deltas;
-    WvStream deltastream;
-
     //WvStringList set_queue;
     WvLog log;
 
@@ -75,8 +65,6 @@ public:
 protected:
     void conncallback(WvStream &s, void *userdata);
     bool do_select();
-    void clientdelta(const UniConfKey &key, WvStringParm value);
-    void deltacb(WvStream &, void *);
 };
 
 

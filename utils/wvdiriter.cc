@@ -9,19 +9,12 @@
 
 #include "wvdiriter.h"
 
-#ifdef _WIN32
-#define S_ISDIR(x) (_S_IFDIR | (x))
-#define lstat stat
-#endif
-
-WvDirIter::WvDirIter( WvStringParm dirname, bool _recurse, bool _skip_mounts )
-/****************************************************************************/
+WvDirIter::WvDirIter( WvString dirname, bool _recurse )
+/*****************************************************/
 : relpath( "" ), dir( dirs )
 {
     recurse = _recurse;
     go_up   = false;
-    skip_mounts = _skip_mounts;
-    found_top = false;
 
     DIR * d = opendir( dirname );
     if( d ) {
@@ -107,22 +100,12 @@ bool WvDirIter::next()
                 ok = ( lstat( info.fullname, &info ) == 0
                             && strcmp( dent->d_name, "." )
                             && strcmp( dent->d_name, ".." ) );
-
-                if (ok && !found_top)
-                {
-                    lstat(info.fullname, &topdir);
-                    topdir.fullname = info.fullname;
-                    topdir.name = info.name;
-                    topdir.relname = info.relname;
-                    found_top = true;
-                }
             }
         } while( dent && !ok );
 
         if( dent ) {
             // recurse?
-            if( recurse && S_ISDIR( info.st_mode ) &&
-                    ( !skip_mounts || info.st_dev == topdir.st_dev) ) {
+            if( recurse && S_ISDIR( info.st_mode ) ) {
                 DIR * d = opendir( info.fullname );
                 if( d ) {
                     relpath = WvString( "%s%s/", relpath, info.name );

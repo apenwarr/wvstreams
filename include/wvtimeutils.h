@@ -1,4 +1,4 @@
-/* -*- Mode: C++ -*-
+/*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -8,13 +8,7 @@
 #ifndef __WVTIMEUTILS_H
 #define __WVTIMEUTILS_H
 
-
-#ifdef _WIN32
-#include "winsock2.h"
-#include <time.h>
-#else
 #include <sys/time.h>
-#endif
 
 typedef struct timeval WvTime;
 
@@ -25,7 +19,7 @@ time_t msecdiff(const WvTime &a, const WvTime &b);
 WvTime wvtime();
 
 /** Adds the specified number of milliseconds to a time value. */
-WvTime msecadd(const WvTime &a, time_t msec);
+struct timeval msecadd(const WvTime &a, time_t msec);
 
 /** Normalizes the time value. */
 inline void normalize(WvTime &tv)

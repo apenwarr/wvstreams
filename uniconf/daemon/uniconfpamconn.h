@@ -10,11 +10,6 @@
 #include "uniconfdaemonconn.h"
 #include "unisecuregen.h"
 
-/**
- * Get around the lack of RTTI by keeping a mapping of UniConfGen's to
- * UniSecureGen's.  That way we can convert a UniConfGen to the derived class
- * by just looking it up.  If it's not there, it can't be downcasted.
- */
 unsigned int WvHash(const UniConfGen *);
 
 struct SecureGen
@@ -42,7 +37,7 @@ protected:
     virtual void do_subtree(const UniConfKey &key);
     virtual void do_haschildren(const UniConfKey &key);
 
-    void deltacallback(const UniConf &cfg, const UniConfKey &key);
+    void deltacallback(const UniConf &key, void *userdata);
 
     void updatecred(const UniConf &key);
 };

@@ -11,55 +11,48 @@
 
 WvString UniMountGen::get(const UniConfKey &key)
 {
-    UniGenMount *found = findmount(key);
-    if (!found)
+    if (!findgen(key))
         return WvString::null;
 
-    return found->gen->get(trimkey(found->key, key));
+    return foundgen->get(trimkey(key));
 }
 
 
 void UniMountGen::set(const UniConfKey &key, WvStringParm value)
 {
-    UniGenMount *found = findmount(key);
-    if (!found)
+    if (!findgen(key))
         return;
 
-    found->gen->set(trimkey(found->key, key), value);
+    foundgen->set(trimkey(key), value);
 }
 
 
 bool UniMountGen::exists(const UniConfKey &key)
 {
-    UniGenMount *found = findmount(key);
-    if (!found)
+    if (!findgen(key))
         return false;
 
-    return found->gen->exists(trimkey(found->key, key));
+    return foundgen->exists(trimkey(key));
 }
 
 
 bool UniMountGen::haschildren(const UniConfKey &key)
 {
-    UniGenMount *found = findmount(key);
-    if (!found)
+    if (!findgen(key))
         return false;
 
-    if (found->gen->haschildren(trimkey(found->key, key)))
+    if (foundgen->haschildren(trimkey(key)));
         return true;
 
-    // if we get here, the generator we used didn't have a subkey.  We want
-    // to see if there's anyone mounted at a subkey of the requested key; if
-    // so, then we definitely have a subkey.
+    //FIXME: Perhaps this should be optimized later
     MountList::Iter i(mounts);
+
     for (i.rewind(); i.next(); )
     {
         if (key.suborsame(i->key))
             return true;
 
-	// the list is sorted innermost-first.  So if we find the key
-	// we started with, we've finished searching all children of it.
-        if (i->gen == found->gen)
+        if (i->gen == foundgen)
             break;
     }
 
@@ -74,7 +67,8 @@ bool UniMountGen::refresh()
     bool result = true;
 
     MountList::Iter i(mounts);
-    for (i.rewind(); i.next(); )
+
+    for (i.rewind(); i.next();)
         result = result && i->gen->refresh();
 
     unhold_delta();
@@ -95,8 +89,9 @@ void UniMountGen::commit()
 
 
 UniConfGen *UniMountGen::mount(const UniConfKey &key,
-			       WvStringParm moniker, bool refresh)
+    WvStringParm moniker, bool refresh)
 {
+
     UniConfGen *gen = wvcreate<UniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
@@ -107,17 +102,13 @@ UniConfGen *UniMountGen::mount(const UniConfKey &key,
 
 
 UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
-				  UniConfGen *gen, bool refresh)
+    UniConfGen *gen, bool refresh)
 {
-    if (!gen)
-	return NULL;
-    
     UniGenMount *newgen = new UniGenMount(gen, key);
     gen->setcallback(UniConfGenCallback(this,
-				&UniMountGen::gencallback), &newgen->key);
+        &UniMountGen::gencallback), &newgen->key);
 
     hold_delta();
-    delta(key, WvString());
 
     makemount(key);
 
@@ -126,7 +117,6 @@ UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 
     mounts.prepend(newgen, true);
     
-    delta(key, get(key));
     unhold_delta();
     return gen;
 }
@@ -134,13 +124,10 @@ UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 
 void UniMountGen::unmount(UniConfGen *gen, bool commit)
 {
-    if (!gen)
-	return;
-    
     MountList::Iter i(mounts);
 
-    for (i.rewind(); i.next() && i->gen != gen; )
-	;
+    i.rewind();
+    while (i.next() && i->gen != gen);
 
     if (i->gen != gen)
         return;
@@ -154,23 +141,18 @@ void UniMountGen::unmount(UniConfGen *gen, bool commit)
     UniConfKey key(i->key);
     UniConfGen *next = NULL;
 
-    delta(key, WvString());
-
-    // Find the first generator mounted past the one we're removing (if
-    // any). This way we can make sure that each generator still has keys
-    // leading up to it (in case they lost their mountpoint due to the
-    // unmounted generator)
+    // Find the first generator mounted past the one we're removing (if any).
+    // This way we can make sure that each generator still has keys leading up
+    // to it (in case they lost their mountpoint due to the unmounted generator)
     i.xunlink();
     if (i.next())
         next = i->gen;
 
-    for (i.rewind(); i.next() && i->gen != next; )
+    i.rewind();
+    while (i.next() && i->gen != next)
     {
         if (key.suborsame(i->key) && key != i->key)
-	{
             makemount(i->key);
-	    delta(i->key, get(i->key));
-	}
     } 
 
     unhold_delta();
@@ -178,7 +160,7 @@ void UniMountGen::unmount(UniConfGen *gen, bool commit)
 
 
 UniConfGen *UniMountGen::whichmount(const UniConfKey &key,
-				    UniConfKey *mountpoint)
+    UniConfKey *mountpoint)
 {
     MountList::Iter i(mounts);
 
@@ -212,24 +194,28 @@ bool UniMountGen::ismountpoint(const UniConfKey &key)
 
 UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 {
-    UniGenMount *found = findmount(key);
-    if (found)
-        return found->gen->iterator(trimkey(found->key, key));
+    if (findgen(key))
+        return foundgen->iterator(trimkey(key));
     return new NullIter;
 }
 
 
-UniMountGen::UniGenMount *UniMountGen::findmount(const UniConfKey &key)
+bool UniMountGen::findgen(const UniConfKey &key)
 {
-    // Find the needed generator and keep it as a lastfound
     MountList::Iter i(mounts);
+
+    // Find the needed generator and keep it as a lastfound
     for (i.rewind(); i.next(); )
     {
         if (i->key.suborsame(key))
-	    return i.ptr();
+        {
+            foundgen = i->gen;
+            foundkey = i->key;
+            return true;
+        }
     } 
 
-    return NULL;
+    return false;
 }
 
 
@@ -258,10 +244,9 @@ void UniMountGen::makemount(const UniConfKey &key)
     // Set the mountpoint in the sub generator instead of on the generator
     // itself (since set will set it on the generator, instead of making the
     // mountpoint)
-    UniGenMount *found = findmount(points.removelast());
-    if (!found)
+    if (!findgen(points.removelast()))
         return;
 
-    if (found->gen->get(trimkey(found->key, key)).isnull())
-        found->gen->set(trimkey(found->key, key), "");
+    if (foundgen->get(trimkey(key)).isnull())
+        foundgen->set(trimkey(key), "");
 }

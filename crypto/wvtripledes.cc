@@ -8,12 +8,6 @@
 #include <assert.h>
 #include <openssl/rand.h>
 
-/* As of openssl 0.9.7 the des_* functions have been renamed to DES_* .
-   Don't as me why, but they have, so eventually, when resonance is upgraded
-   to sarge, about the GNU Hurd 1.0 is released, these functions should be
-   changed.
-*/
-
 /***** WvTripleDESEncoder ****/
 
 WvTripleDESEncoder::WvTripleDESEncoder(Mode _mode, const void *_key1, 
@@ -64,6 +58,7 @@ void WvTripleDESEncoder::setiv(const void *_iv)
     ivecoff = 0;
 }
 
+
 bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     size_t len = in.used();
@@ -71,14 +66,12 @@ bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
     switch (mode) {
     case ECBEncrypt:
     case ECBDecrypt:
-    case CBCEncrypt: // The caller should ensure the padding is correct or
-    case CBCDecrypt: // we do it for them, in probably the wrong way.
     {
-	size_t remainder = len & 7; // conviently this is the same as len % 8
+	size_t remainder = len & 7;
 	len -= remainder;
 	if (remainder != 0 && flush)
 	{
-	    if (mode == ECBEncrypt || mode == CBCEncrypt)
+	    if (mode == ECBEncrypt)
 	    {
 		// if flushing on encryption, add some randomized padding
 		size_t padlen = 8 - remainder;
@@ -95,8 +88,7 @@ bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 	break;
     }
 
-    if (len == 0) 
-	return success;
+    if (len == 0) return success;
     
     const unsigned char *data = in.get(len);
     unsigned char *crypt = out.alloc(len);
@@ -125,13 +117,7 @@ bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 			       &ivec, &ivecoff,
 			       mode == CFBEncrypt ? DES_ENCRYPT : DES_DECRYPT);
         break;
-    case CBCEncrypt:
-	des_ede3_cbc_encrypt(data, crypt, len, deskey1, deskey2, deskey3,
-			     &ivec, DES_ENCRYPT);
-	break;
-    case CBCDecrypt:
-	des_ede3_cbc_encrypt(data, crypt, len, deskey1, deskey2, deskey3,
-			     &ivec, DES_DECRYPT);
+    default:
 	break;
     }
     return success;

@@ -24,7 +24,7 @@ class WvBufUrlStream;
 class WvUrlStream;
 class WvHttpStream;
 
-static const WvString DEFAULT_ANON_PW("weasels@");
+static WvString DEFAULT_ANON_PW("weasels@");
 
 class WvUrlRequest
 {

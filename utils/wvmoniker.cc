@@ -12,19 +12,14 @@
 #if 0
 # define DEBUGLOG(fmt, args...) fprintf(stderr, fmt, ## args)
 #else
-#ifndef _MSC_VER
 # define DEBUGLOG(fmt, args...)
-#else  // MS Visual C++ doesn't support varags preproc macros
-# define DEBUGLOG
-#endif
 #endif
 
-
-static unsigned WvHash(const XUUID &_uuid)
+static unsigned WvHash(const UUID &_uuid)
 {
     unsigned val = 0;
     unsigned int *uuid = (unsigned int *)&_uuid;
-    int max = sizeof(XUUID)/sizeof(*uuid);
+    int max = sizeof(UUID)/sizeof(*uuid);
     
     for (int count = 0; count < max; count++)
 	val += uuid[count];
@@ -32,12 +27,12 @@ static unsigned WvHash(const XUUID &_uuid)
     return val;
 }
 
-DeclareWvDict(WvMonikerRegistry, XUUID, reg_iid);
+DeclareWvDict(WvMonikerRegistry, UUID, reg_iid);
 static WvMonikerRegistryDict *regs;
   
 
 
-WvMonikerRegistry::WvMonikerRegistry(const XUUID &iid) 
+WvMonikerRegistry::WvMonikerRegistry(const UUID &iid) 
     : reg_iid(iid), dict(10)
 {
     DEBUGLOG("WvMonikerRegistry creating.\n");
@@ -91,7 +86,7 @@ IObject *WvMonikerRegistry::create(WvStringParm _s,
 }
 
 
-WvMonikerRegistry *WvMonikerRegistry::find_reg(const XUUID &iid)
+WvMonikerRegistry *WvMonikerRegistry::find_reg(const UUID &iid)
 {
     DEBUGLOG("WvMonikerRegistry find_reg.\n");
     
@@ -113,7 +108,7 @@ WvMonikerRegistry *WvMonikerRegistry::find_reg(const XUUID &iid)
 }
 
 
-IObject *WvMonikerRegistry::getInterface(const XUUID &uuid)
+IObject *WvMonikerRegistry::getInterface(const UUID &uuid)
 {
 #if 0
     if (uuid.equals(IObject_IID))
@@ -163,7 +158,7 @@ unsigned int WvMonikerRegistry::release()
 }
 
 
-WvMonikerBase::WvMonikerBase(const XUUID &iid, WvStringParm _id, 
+WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm _id, 
 			     WvMonikerCreateFunc *func)
     : id(_id)
 {
@@ -185,7 +180,7 @@ WvMonikerBase::~WvMonikerBase()
 }
 
 
-IObject *wvcreate(const XUUID &iid,
+IObject *wvcreate(const UUID &iid,
 		  WvStringParm s, IObject *obj, void *userdata)
 {
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);

@@ -23,8 +23,7 @@ protected:
     {
     public:
         UniGenMount(UniConfGen *gen, const UniConfKey &key)
-            : gen(gen), key(key) 
-	    { }
+            : gen(gen), key(key) { }
 
         ~UniGenMount()
             { delete gen; }
@@ -38,15 +37,13 @@ protected:
 
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
-    UniMountGen() 
-        { }
+    UniMountGen() { }
 
     /** undefined. */
     UniMountGen(const UniMountGen &other);
 
     /** Destroys the UniConf tree along with all uncommitted data. */
-    virtual ~UniMountGen()
-        { }
+    ~UniMountGen() { }
     
     /**
      * Mounts a generator at a key using a moniker.
@@ -88,8 +85,7 @@ public:
      *        path on success
      * Returns: the handle, or a null handle if none
      */
-    virtual UniConfGen *whichmount(const UniConfKey &key,
-				   UniConfKey *mountpoint);
+    virtual UniConfGen *whichmount(const UniConfKey &key, UniConfKey *mountpoint);
 
     /** Determines if a key is a mountpoint. */
     virtual bool ismountpoint(const UniConfKey &key);
@@ -105,16 +101,24 @@ public:
     virtual Iter *iterator(const UniConfKey &key);
 
 private:
-    /** Find the active generator for a given key. */
-    UniGenMount *findmount(const UniConfKey &key);
+    /**
+     * Find the active generator for a given key. Becase people will often work
+     * in the same section for a while, these are cached. The resulting
+     * generator and the key it's mounted at are stored in laskey/lastgen.
+     *
+     * Returns true if a generator is found, false otherwise.
+     */
+    bool findgen(const UniConfKey &key); //FIXME: Make this actually cache ;)
+
+    UniConfGen *foundgen;
+    UniConfKey foundkey;
 
     // Trim the key so it matches the generator starting point
-    UniConfKey trimkey(const UniConfKey &foundkey, const UniConfKey &key)
+    UniConfKey trimkey(const UniConfKey &key)
         { return key.removefirst(foundkey.numsegments()); }
 
     /** Called by generators when a key changes. */
-    void gencallback(const UniConfKey &key, WvStringParm value,
-		     void *userdata);
+    void gencallback(const UniConfKey &key, WvStringParm value, void *userdata);
 
     void makemount(const UniConfKey &key);
 };

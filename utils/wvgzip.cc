@@ -15,18 +15,6 @@
 WvGzipEncoder::WvGzipEncoder(Mode _mode) :
     tmpbuf(ZBUFSIZE), mode(_mode)
 {
-    init();
-}
-
-
-WvGzipEncoder::~WvGzipEncoder()
-{
-    close();
-}
-
-
-void WvGzipEncoder::init()
-{
     zstr = new z_stream;
     memset(zstr, 0, sizeof(*zstr));
     zstr->zalloc = Z_NULL;
@@ -51,7 +39,8 @@ void WvGzipEncoder::init()
     zstr->avail_in = zstr->avail_out = 0;
 }
 
-void WvGzipEncoder::close()
+
+WvGzipEncoder::~WvGzipEncoder()
 {
     if (mode == Deflate)
         deflateEnd(zstr);
@@ -59,8 +48,8 @@ void WvGzipEncoder::close()
         inflateEnd(zstr);
 
     delete zstr;
-
 }
+
 
 bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 {
@@ -88,14 +77,6 @@ bool WvGzipEncoder::_finish(WvBuf &outbuf)
 {
     prepare(NULL);
     return process(outbuf, false, true);
-}
-
-
-bool WvGzipEncoder::_reset()
-{
-    close();
-    init();
-    return true;
 }
 
 

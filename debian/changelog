@@ -1,10 +1,4 @@
-wvstreams (3.73+20030404-2) unstable; urgency=low
-
-  * Added -fPIC -DPIC back into the build.
-
- -- James A. Morrison <jim@debian>  Mon, 14 Apr 2003 11:50:20 -0400
-
-wvstreams (3.73+20030404-1) unstable; urgency=low
+wvstreams (3.73+20030321-1) unstable; urgency=high
 
   * Synchronised with Upstream CVS.
 
@@ -36,7 +30,7 @@ wvstreams (3.73+20030404-1) unstable; urgency=low
 
   * Clarify package descriptions. (Closes: #184829)
   
- -- James Morrison <phython@debian.org>  Sat, 05 Apr 2003 19:35:49 -0500
+ -- Patrick Patterson <ppatters@debian.org>  Tue, 28 Jan 2003 14:35:49 -0500
 
 wvstreams (3.70.1) unstable; urgency=low
 

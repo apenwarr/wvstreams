@@ -22,7 +22,7 @@ RSA *wv_d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length)
 }
 
 
-X509 *wv_d2i_X509(X509 **a, unsigned char **pp, long length)
+X509 *wv_d2i_X509(X509 **a, const unsigned char **pp, long length)
 {
     return d2i_X509(a, pp, length);
 }

@@ -12,6 +12,76 @@
 #include "wvcallback.h"
 #include "unihashtree.h"
 
+class UniConfTreeBase;
+
+// parameters: 1st node (may be NULL), 2nd node (may be NULL), userdata
+typedef WvCallback<bool, const UniConfTreeBase *, const UniConfTreeBase *, void *> UniConfTreeBaseComparator;
+
+/**
+ * UniConfTreeBase the common base implementation for UniConfTree.
+ * @see UniConfTree
+ */
+class UniConfTreeBase
+{
+protected:
+    typedef WvVector<UniConfTreeBase> Container;
+    typedef UniConfTreeBaseComparator BaseComparator;
+
+    UniConfTreeBase *xparent; /*!< the parent of this subtree */
+    Container *xchildren; /*!< the ordered vector of children */
+    UniConfKey xkey;   /*!< the name of this entry */
+
+    UniConfTreeBase(UniConfTreeBase *parent, const UniConfKey &key);
+    
+public:
+    ~UniConfTreeBase();
+
+protected:
+    void _setparent(UniConfTreeBase *parent);
+    
+    UniConfTreeBase *_root() const;
+    UniConfKey _fullkey(const UniConfTreeBase *ancestor = NULL) const;
+    UniConfTreeBase *_find(const UniConfKey &key) const;
+    UniConfTreeBase *_findchild(const UniConfKey &key) const;
+
+    static void _recursivecompare(
+        const UniConfTreeBase *a, const UniConfTreeBase *b,
+        const UniConfTreeBaseComparator &comparator, void *userdata);
+    
+    friend class Iter : public Container::Iter
+    {
+    public:
+	Iter(UniConfTreeBase &b) : Container::Iter(b.xchildren)
+	    { }
+    };
+    
+public:
+    /** Returns the key field. */
+    const UniConfKey &key() const
+        { return xkey; }
+
+    /** Returns true if the node has children. */
+    bool haschildren() const;
+
+    /** Compacts the tree storage to minimize its footprint. */
+    void compact();
+
+private:
+    /** Called by a child to link itself to this node. */
+    void link(UniConfTreeBase *node);
+
+    /** Called by a child to unlink itself from this node. */
+    void unlink(UniConfTreeBase *node);
+
+    /**
+     * Performs a binary search and returns the slot in which a
+     * child would reside if it belonged to the sequence.  Returns a negative
+     * number if not found.
+     */
+    int bsearch(const UniConfKey &key, bool &found) const;
+};
+
+
 /**
  * A recursively composed dictionary for ordered tree-structured
  * data indexed by UniConfKey with logarithmic lookup time for

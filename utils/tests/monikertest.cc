@@ -8,7 +8,7 @@ public:
     virtual void f() = 0;
 };
 
-DEFINE_XIID(ITest, {0xcd3239a7, 0x0ea1, 0x4e1a,
+DEFINE_IID(ITest, {0xcd3239a7, 0x0ea1, 0x4e1a,
   {0xba, 0x08, 0xb8, 0x5e, 0xe4, 0xda, 0xad, 0x69}});
 
 
@@ -51,7 +51,7 @@ int main()
     WvMoniker<IObject> bunk("obj2", createfunc2);
     WvMoniker<ITest> stunk("test", createfunc3);
     
-    WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(XIID<IObject>::get());
+    WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(IID<IObject>::get());
     IObject *a = reg->create("obj:obj-a");
     IObject *b = reg->create("obj2:obj2-b");
     reg->release();

@@ -6,7 +6,6 @@
  */
 #include "wvstreamlist.h"
 #include "wvunixsocket.h"
-#include "wvmoniker.h"
 
 #if 0
 // FIXME: this is needed on BSD
@@ -28,20 +27,14 @@
 #include <errno.h>
 
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
-{
-    return new WvUnixConn(s);
-}
-
-static WvMoniker<IWvStream> reg("unix", creator);
-
-
 WvUnixConn::WvUnixConn(int _fd, const WvUnixAddr &_addr) :
     WvFDStream(_fd), addr(_addr)
 {
+    // already connected...
+    
     // all is well and we're connected.  Make it non-blocking 
     // and close-on-exec.
-    fcntl(getfd(), F_SETFD, FD_CLOEXEC);
+    fcntl(getfd(), F_SETFD, 1);
     fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
 }
 
@@ -68,7 +61,7 @@ WvUnixConn::WvUnixConn(const WvUnixAddr &_addr) :
     
     // all is well and we're connected.  Make it non-blocking 
     // and close-on-exec.
-    fcntl(getfd(), F_SETFD, FD_CLOEXEC);
+    fcntl(getfd(), F_SETFD, 1);
     fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
 }
 

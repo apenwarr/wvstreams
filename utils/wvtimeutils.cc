@@ -6,10 +6,6 @@
  */
 #include "wvtimeutils.h"
 
-#ifdef _WIN32
-int gettimeofday(struct timeval *tv, struct timezone *tz);
-#endif
-
 time_t msecdiff(const struct timeval &a, const struct timeval &b)
 {
     time_t secdiff = a.tv_sec - b.tv_sec;

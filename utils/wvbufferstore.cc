@@ -118,7 +118,7 @@ void WvBufStore::move(void *buf, size_t count)
             amount = count;
         const void *data = get(amount);
         memops.uninit_copy(buf, data, amount);
-        buf = (unsigned char*)buf + amount;
+        (unsigned char*)buf += amount;
         count -= amount;
     }
 }
@@ -135,7 +135,7 @@ void WvBufStore::copy(void *buf, int offset, size_t count)
             amount = count;
         const void *data = peek(offset, amount);
         memops.uninit_copy(buf, data, amount);
-        buf = (unsigned char*)buf + amount;
+        (unsigned char*)buf += amount;
         count -= amount;
         offset += amount;
     }
@@ -153,7 +153,7 @@ void WvBufStore::put(const void *data, size_t count)
             amount = count;
         void *buf = alloc(amount);
         memops.uninit_copy(buf, data, amount);
-        data = (const unsigned char*)data + amount;
+        (const unsigned char*)data += amount;
         count -= amount;
     }
 }
@@ -187,7 +187,7 @@ void WvBufStore::poke(const void *data, int offset, size_t count)
             amount = count;
         void *buf = mutablepeek(offset, amount);
         memops.copy(buf, data, amount);
-        data = (const unsigned char*)data + amount;
+        (const unsigned char*)data += amount;
         count -= amount;
         offset += amount;
     }
@@ -264,7 +264,7 @@ void WvBufStore::basicmerge(WvBufStore &instore, size_t count)
                 unalloc(outavail);
                 return;
             }
-            outdata = (unsigned char*)outdata + inavail;
+            (unsigned char*)outdata += inavail;
             inavail = 0;
         }
         else
@@ -273,7 +273,7 @@ void WvBufStore::basicmerge(WvBufStore &instore, size_t count)
             count -= outavail;
             if (count == 0) return;
             inavail -= outavail;
-            indata = (const unsigned char*)indata + outavail;
+            (const unsigned char*)indata += outavail;
             outavail = 0;
         }
     }

@@ -29,10 +29,8 @@ int main(int argc, char **argv)
     WvString headers("");
     char *line;
     
-#ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sighandler_die);
-#endif
     
     l.append(wvcon, false);
     l.append(&p, false);

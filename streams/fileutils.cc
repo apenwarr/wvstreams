@@ -53,11 +53,7 @@ bool fcopy(WvStringParm src, WvStringParm dst)
     in.autoforward(out);
     while (in.isok() && out.isok())
     {
-	/* This used to be a select(0), but really, if select() returns
-	 * false, it'll keep doing it until the end of time. If you're
-	 * going into an infinite loop, better save the CPU a bit, since
-	 * you can still find out about it with strace... */
-        if (in.select(-1, true, false))
+        if (in.select(0, true, false))
             in.callback();
     }
     if (!out.isok())

@@ -11,7 +11,8 @@
 
 unsigned int WvHash(const UniConfGen *u)
 {
-    return WvHash((int) u);
+    int i = reinterpret_cast<int>(u);
+    return WvHash(i);
 }
 
 
@@ -30,14 +31,15 @@ UniConfPamConn::UniConfPamConn(WvStream *_s, const UniConf &_root) :
 
 void UniConfPamConn::addcallback()
 {
-    root.add_callback(this, UniConfCallback(this,
-            &UniConfPamConn::deltacallback), true);
+    root.add_callback(UniConfCallback(this,
+            &UniConfPamConn::deltacallback), NULL, true);
 }
 
 
 void UniConfPamConn::delcallback()
 {
-    root.del_callback(this, true);
+    root.del_callback(UniConfCallback(this,
+            &UniConfPamConn::deltacallback), NULL, true);
 }
 
 
@@ -76,10 +78,10 @@ void UniConfPamConn::do_haschildren(const UniConfKey &key)
 }
 
 
-void UniConfPamConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
+void UniConfPamConn::deltacallback(const UniConf &key, void *userdata)
 {
-    updatecred(cfg[key]);
-    UniConfDaemonConn::deltacallback(cfg, key);
+    updatecred(key);
+    UniConfDaemonConn::deltacallback(key, userdata);
 
     // FIXME: looks like if there's no permission to read, pamconn will tell
     // the client that it's been deleted instead of just staying silent.

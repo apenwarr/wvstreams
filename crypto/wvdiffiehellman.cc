@@ -8,14 +8,11 @@
 #include <openssl/bn.h>
 #include "wvdiffiehellman.h"
 
-#include "strutils.h"
-
 WvDiffieHellman::WvDiffieHellman(const unsigned char *_key, int _keylen, 
 				 BN_ULONG _generator) :
-    generator(_generator), log("Diffie-Hellman", WvLog::Debug)
+    generator(_generator)
 {
     int problems;
-    int check;
     {
 	info = DH_new();
 	info->p = BN_bin2bn(_key, _keylen, NULL);
@@ -27,23 +24,21 @@ WvDiffieHellman::WvDiffieHellman(const unsigned char *_key, int _keylen,
 	info->g = BN_new();
 	BN_set_word(info->g, generator);
 // 	info->g->d = &generator;
-//  	info->g->top = 0;
-//  	info->g->dmax = 1;
-//  	info->g->neg = 0;
-//  	info->g->flags = 0;
+// 	info->g->top = 0;
+// 	info->g->dmax = 1;
+// 	info->g->neg = 0;
+// 	info->p->flags = 0;
     }
 
-    check = BN_mod_word(info->p, 24);
     DH_check(info, &problems);
-    if (problems & DH_CHECK_P_NOT_PRIME)
- 	log(WvLog::Error, "Using a composite number for authentication.\n");
-    if (problems & DH_CHECK_P_NOT_SAFE_PRIME)
-	log(WvLog::Error,"Using an unsafe prime number for authentication.\n");
-    if (problems & DH_NOT_SUITABLE_GENERATOR)
-	log(WvLog::Error, "Can you just use 2 instead of %s (%s)!!\n",
-	    BN_bn2hex(info->g), check);
-    if (problems & DH_UNABLE_TO_CHECK_GENERATOR)
-	log(WvLog::Notice, "Using a strange argument for diffie-hellman.\n");
+//     if (problems & DH_CHECK_P_NOT_PRIME)
+// 	log(WvLog::Error, "Using a composite number for authentication.\n");
+//     if (problems & DH_CHECK_P_NOT_SAFE_PRIME)
+// 	log(WvLog::Error, "Using a non-safe prime number for authentication.\n");
+//     if (problems & DH_NOT_SUITEABLE_GENERATOR)
+// 	log(WvLog::Error, "Can you just use 2!!\n");
+//     if (problems & DH_UNABLE_TO_CHECK_GENERATOR)
+// 	log(WvLog::Notice, "Using a strange argument for diffie-hellman.\n");
     DH_generate_key(info);
 }
 
@@ -69,14 +64,9 @@ int WvDiffieHellman::get_public_value(WvBuf &outbuf, int len)
 bool WvDiffieHellman::create_secret(WvBuf &inbuf, size_t in_len, WvBuf& outbuf)
 {
     unsigned char *foo = (unsigned char *)alloca(DH_size(info));
-   log("My public value\n%s\nYour public value\n%s\n",BN_bn2hex(info->pub_key),
-       hexdump_buffer(inbuf.peek(0, in_len), in_len, false));
-    int len = DH_compute_key (foo, BN_bin2bn(inbuf.get(in_len), in_len, NULL), 
-			      info);
+    DH_compute_key (foo, BN_bin2bn(inbuf.get(in_len), in_len, NULL), info);
 
-    outbuf.put(foo, len);
-
-    log("Shared secret\n%s\n",hexdump_buffer(outbuf.peek(0, len), len, false));
+    outbuf.put(foo, DH_size(info));
 
     return true;
 }

@@ -8,7 +8,6 @@
 #include "uniconfkey.h"
 #include <climits>
 #include <assert.h>
-#include <strutils.h>
 
 UniConfKey UniConfKey::EMPTY;
 UniConfKey UniConfKey::ANY("*");
@@ -33,7 +32,7 @@ void UniConfKey::init(WvStringParm key)
     {
 	path.setsize(strlen(key) + 1);
 	char *optr = path.edit();
-	const char *iptr = key + int(strspn(key, "/"));
+	const char *iptr = key + strspn(key, "/");
 	
 	while (*iptr)
 	{

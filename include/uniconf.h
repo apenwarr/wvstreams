@@ -19,11 +19,11 @@ class UniConfRoot;
 /**
  * The callback type for signalling key changes from UniConf.
  * 
- * Parameters: cfg, relkey
+ * Parameters: key, userdata
  *   cfg - the UniConf config object representing the key that has changed
- *   relkey - the changed keypath, relative to the config object
+ *   userdata - the userdata supplied during setcallback
  */
-typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
+typedef WvCallback<void, const UniConf &, void *> UniConfCallback;
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -185,19 +185,12 @@ public:
     /***** Key Handling API *****/
 
     /**
-     * Equivalent to "mv" in a standard unix filesystem. This recursively
-     * moves a given key and any subkeys to a new point. If the new point
-     * exists then the key will be left as a subkey at the new point.
-     * Otherwise, the key will also be renamed to the new point (as when
-     * using mv).
-     * 
-     * Don't try to do dumb stuff like making dst a subkey of this one,
-     * or vice versa, because we won't try to save you.
-     * 
-     * Unlike unix mv(), this is *not* currently atomic.  It's more like
-     * cp-then-rm.
+     * Equivalent to "mv" in a standard unix filesystem. This recursively moves
+     * a given key and any subkeys to a new point. If the new point exists then
+     * the key will be left as a subkey at the new point. Otherwise, the key
+     * will also be renamed to the new point (as when using mv).
      */
-    void move(const UniConf &dst);
+    void move(UniConfKey dst); //FIXME: Currently unimplemented
 
     /**
      * Removes this key and all of its children from the registry.
@@ -207,15 +200,11 @@ public:
         { set(WvString::null); }
 
     /**
-     * Equivalent to "cp -r" in a standard unix filesystem. This
-     * recursively copies a given key to a new location. Any keys that
-     * already exist at that location will not be overridden unless force
-     * is true.
-     * 
-     * Don't try to do dumb stuff like making dst a subkey of this one,
-     * or vice versa, because we won't try to save you.
+     * Equivalent to "cp -r" in a standard unix filesystem. This recursively
+     * copies a given key to a new location. Any keys that already exist at that
+     * location will not be overridden unless force is true.
      */
-    void copy(const UniConf &dst, bool force);
+    void copy(UniConfKey dst, bool force = false); //FIXME: Unimplemented
 
 
     
@@ -283,13 +272,14 @@ public:
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
      */
-    void add_callback(void *cookie, const UniConfCallback &callback,
-		      bool recurse = true) const;
+    void add_callback(const UniConfCallback &callback, void *userdata,
+                      bool recurse = true) const;
     
     /**
      * Cancels notification requested using add_callback().
      */
-    void del_callback(void *cookie, bool recurse = true) const;
+    void del_callback(const UniConfCallback &callback, void *userdata, 
+                      bool recurse = true) const;
 
     /**
      * Requests notification when any of the keys covered by the
@@ -579,3 +569,8 @@ public:
 };
 
 #endif // __UNICONF_H
+
+
+// This is pretty evil, but is rather convenient. By including uniconfroot.h
+// here, we make it so people can #include uniconf.h instead of uniconfroot.h.
+#include "uniconfroot.h"

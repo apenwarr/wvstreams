@@ -7,9 +7,6 @@
 #include "wverror.h"
 #include <assert.h>
 
-#ifdef _WIN32
-#include "windows.h"
-#endif
 
 WvError::~WvError()
 {
@@ -25,22 +22,7 @@ WvString WvError::errstr() const
 	return errstring;
     }
     else
-    {
-#ifndef _WIN32
 	return strerror(errnum);
-#else
-	char msg[4096];
-	const HMODULE module = GetModuleHandle("winsock.dll");
-	DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, module, errnum, 0, msg, sizeof(msg), 0);
-	if (result)
-	    return msg;
-	else
-	{
-	    DWORD e = GetLastError();
-	    return "Unknown error";
-	}
-#endif
-    }
 }
 
 

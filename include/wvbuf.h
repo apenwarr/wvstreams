@@ -18,7 +18,6 @@
  * Refines the interface to add support for untyped pointers.
  * Adds some useful string operations.
  */
-template <>
 class WvBufBase<unsigned char> :
     public WvBufBaseCommonImpl<unsigned char>
 {

@@ -16,17 +16,14 @@ class WvOakleyAuth
 public:
     WvOakleyAuth(int group);
     short public_len();
-    short other_pub_len();
     short get_public_key(WvBuf &outbuf, short len);
-    short get_other_public_key(WvBuf &outbuf, short len);
-    void create_secret(WvBuf &_other_pub_key, short len);
+    void create_secret(WvBuf &inbuf, short len);
     WvDynBuf dh_secret;
 
 private:
     WvDiffieHellman *dh;
-    short pub_len, other_len;
+    short pub_len;
     short secret_len;
-    WvDynBuf other_pub_key;
 };
 
 #endif /* __WVOAKLEY_H */

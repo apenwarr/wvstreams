@@ -22,10 +22,12 @@
 
 #include "wvencoder.h"
 #include "wvtimeutils.h"
+#include "wvlog.h"
 
 class WvRateAdjust : public WvEncoder
 {
 public:
+    WvLog log;
     WvRateAdjust *match_rate;
  
     int sampsize, irate_n, irate_d, orate_n, orate_d;

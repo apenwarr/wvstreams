@@ -10,12 +10,6 @@
 #include <openssl/err.h>
 #include <assert.h>
 
-#ifdef _WIN32
-#undef errno
-#define errno GetLastError()
-#define EAGAIN WSAEWOULDBLOCK
-#endif
-
 static IWvStream *creator(WvStringParm s, IObject *obj, void *userdata)
 {
     if (!obj)
@@ -163,7 +157,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             total += amount;
             if (len == 0)
                 break;
-            buf = (unsigned char *)buf + amount;
+            (unsigned char *)buf += amount;
         }
 
         // attempt to read
@@ -230,7 +224,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
     }
     else
     {
-        buf = (const unsigned char *)buf + write_eat;
+        (const unsigned char *)buf += write_eat;
         total = write_eat;
         len -= write_eat;
         write_eat = 0;
@@ -314,12 +308,13 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         }
         total += size_t(result);
         len -= size_t(result);
-        buf = (const unsigned char *)buf + size_t(result);
+        (const unsigned char *)buf += size_t(result);
     }
     
 //    debug(">> wrote %s bytes\n", total);
     return total;
 }
+ 
 
 void WvSSLStream::close()
 {

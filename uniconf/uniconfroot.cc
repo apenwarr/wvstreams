@@ -10,39 +10,40 @@
 
 /***** UniConfRoot *****/
 
-void UniConfRoot::add_callback(void *cookie, const UniConfKey &key,
-			       const UniConfCallback &callback, bool recurse)
+void UniConfRoot::add_callback(const UniConfKey &key,
+    const UniConfCallback &callback, void *userdata, bool recurse)
 {
-    UniWatchInfo *w = new UniWatchInfo(cookie, recurse, callback);
+    UniWatch *w = new UniWatch(recurse, callback, userdata);
 
-    UniWatchInfoTree *node = &watchroot;
-    UniConfKey::Iter i(key);
-    for (i.rewind(); i.next(); )
+    UniWatchTree *node = & watchroot;
+    UniConfKey::Iter it(key);
+    for (it.rewind(); it.next(); )
     {
-        UniWatchInfoTree *prev = node;
-        node = node->findchild(i());
-        if (!node)
-            node = new UniWatchInfoTree(prev, i());
+        UniWatchTree *prev = node;
+        node = node->findchild(it());
+        if (! node)
+            node = new UniWatchTree(prev, it());
     }
     node->watches.append(w, true);
 }
 
 
-void UniConfRoot::del_callback(void *cookie, const UniConfKey &key,
-			       bool recurse)
+void UniConfRoot::del_callback(const UniConfKey &key,
+    const UniConfCallback &callback, void *userdata, bool recurse)
 {
-    UniWatchInfoTree *node = watchroot.find(key);
+    UniWatch needle(recurse, callback, userdata);
+    UniWatchTree *node = watchroot.find(key);
     if (node)
     {
-        UniWatchInfoList::Iter i(node->watches);
-        for (i.rewind(); i.next(); )
+        UniWatchList::Iter it(node->watches);
+        for (it.rewind(); it.next(); )
         {
-	    // remove the watch if it matches
-            if (i->cookie == cookie && i->recurse == recurse)
-	    {
-                i.xunlink();
-		break;
-	    }
+            UniWatch *w = it.ptr();
+            if (needle == *w)
+            {
+                // remove the watch
+                it.xunlink();
+            }
         }
         // prune the branch if needed
         prune(node);
@@ -50,41 +51,43 @@ void UniConfRoot::del_callback(void *cookie, const UniConfKey &key,
 }
 
 
-void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag, bool recurse)
+void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag,
+                                  bool recurse)
 {
-    add_callback(flag, key,
-		 WvBoundCallback<UniConfCallback, bool *>
-		    (&UniConfRoot::setbool_callback, flag),
-		 recurse);
+    add_callback(key, UniConfCallback(this,
+        &UniConfRoot::setbool_callback), flag, recurse);
 }
 
 
-void UniConfRoot::del_setbool(const UniConfKey &key, bool *flag, bool recurse)
+void UniConfRoot::del_setbool(const UniConfKey &key, bool *flag,
+                                  bool recurse)
 {
-    del_callback(flag, key, recurse);
+    del_callback(key, UniConfCallback(this,
+        &UniConfRoot::setbool_callback), flag, recurse);
 }
 
 
-void UniConfRoot::check(UniWatchInfoTree *node,
-			const UniConfKey &key, int segleft)
+void UniConfRoot::check(UniWatchTree *node,
+    const UniConfKey &key, int segleft)
 {
-    UniWatchInfoList::Iter i(node->watches);
-    for (i.rewind(); i.next(); )
+    UniWatchList::Iter it(node->watches);
+    for (it.rewind(); it.next(); )
     {
-        if (!i->recursive() && segleft > 0)
+        UniWatch *w = it.ptr();
+        if (!w->recursive() && segleft > 0)
             continue;
 
-        i->notify(UniConf(this, key.removelast(segleft)), key.last(segleft));
+        w->notify(UniConf(this, key));
     }
 }
 
 
-void UniConfRoot::deletioncheck(UniWatchInfoTree *node, const UniConfKey &key)
+void UniConfRoot::deletioncheck(UniWatchTree *node, const UniConfKey &key)
 {
-    UniWatchInfoTree::Iter i(*node);
-    for (i.rewind(); i.next(); )
+    UniWatchTree::Iter it(*node);
+    for (it.rewind(); it.next(); )
     {
-        UniWatchInfoTree *w = i.ptr();
+        UniWatchTree *w = it.ptr();
         UniConfKey subkey(key, w->key());
         
         // pretend that we wiped out just this key
@@ -94,14 +97,21 @@ void UniConfRoot::deletioncheck(UniWatchInfoTree *node, const UniConfKey &key)
 }
 
 
-void UniConfRoot::prune(UniWatchInfoTree *node)
+void UniConfRoot::prune(UniWatchTree *node)
 {
     while (node != & watchroot && ! node->isessential())
     {
-        UniWatchInfoTree *next = node->parent();
+        UniWatchTree *next = node->parent();
         delete node;
         node = next;
     }
+}
+
+
+void UniConfRoot::setbool_callback(const UniConf &cfg, void *userdata)
+{
+    bool *flag = static_cast<bool*>(userdata);
+    *flag = true;
 }
 
 
@@ -109,18 +119,19 @@ void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value,
                                    void *userdata)
 {
     hold_delta();
-    UniWatchInfoTree *node = & watchroot;
+    
+    UniWatchTree *node = & watchroot;
     int segs = key.numsegments();
 
     // check root node
     check(node, key, segs);
-
+    
     // look for watches on key and its ancestors
-    for (int s = 0; s < segs; )
+    for (int s = 0; s < segs;)
     {
         node = node->findchild(key.segment(s));
         s++;
-        if (!node)
+        if (! node)
             goto done; // no descendents so we can stop
         check(node, key, segs - s);
     }
@@ -128,6 +139,8 @@ void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value,
     // look for watches on descendents of key if node was deleted
     if (value.isnull())
         deletioncheck(node, key);
+    else
+        check(node, key, 0);
     
 done:
     unhold_delta();

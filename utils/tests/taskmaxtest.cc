@@ -32,8 +32,8 @@ void gentask(void *userdata)
 
 int main()
 {
-    WvTaskMan *man = WvTaskMan::get();
-    gman = man;
+    WvTaskMan man;
+    gman = &man;
     
     WvTask *t = NULL, *last_t = NULL;
     
@@ -42,12 +42,11 @@ int main()
     {
 	printf("starting %d:\n", x);
 	last_t = t;
-	t = man->start("task", gentask, last_t);
-	man->run(*t);
+	t = man.start("task", gentask, last_t);
+	man.run(*t);
     }
     
-    man->run(*t);
-    man->unlink();
+    man.run(*t);
     
     return 0;
 }

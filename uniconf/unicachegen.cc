@@ -43,7 +43,6 @@ UniCacheGen::~UniCacheGen()
     delete inner;
 }
 
-
 void UniCacheGen::loadtree(const UniConfKey &key)
 {
     UniConfGen::Iter *i = inner->iterator(key);
@@ -51,7 +50,7 @@ void UniCacheGen::loadtree(const UniConfKey &key)
     if (!i)
         return;
 
-    for (i->rewind(); i->next(); )
+    for (i->rewind(); i->next();)
     {
         WvString newkey("%s/%s", key, (*i).key());
         WvString value(inner->get(newkey));
@@ -59,20 +58,18 @@ void UniCacheGen::loadtree(const UniConfKey &key)
         if (!!value)
             UniTempGen::set(newkey, value);
 
-        if (inner->haschildren(newkey))
+        if(inner->haschildren(newkey))
             loadtree(newkey);
     }
 
     delete i;
 }
 
-
 void UniCacheGen::deltacallback(const UniConfKey &key, WvStringParm value,
                                 void *userdata)
 {
     UniTempGen::set(key, value);
 }
-
 
 void UniCacheGen::set(const UniConfKey &key, WvStringParm value)
 {

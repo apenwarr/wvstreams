@@ -63,24 +63,8 @@ short WvOakleyAuth::get_public_key(WvBuf &outbuf, short len)
     return dh->get_public_value(outbuf, len);
 }
 
-void WvOakleyAuth::create_secret(WvBuf &_other_pub_key, short len)
+void WvOakleyAuth::create_secret(WvBuf &inbuf, short len)
 {
-    other_pub_key.put(_other_pub_key.peek(0, len), len);
-    other_len = len;
-    dh->create_secret(_other_pub_key, len, dh_secret);
+    dh->create_secret(inbuf, len, dh_secret);
     return;
-}
-
-short WvOakleyAuth::other_pub_len()
-{
-    return other_len;
-}
-
-short WvOakleyAuth::get_other_public_key(WvBuf &outbuf, short len)
-{
-    if (len > other_len)
-	len = other_len;
-
-    outbuf.put(other_pub_key.peek(0, len), len);
-    return len;
 }

@@ -25,11 +25,12 @@
 struct WvDirEnt : public stat
 /***************************/
 {
-    // we already have everything from struct stat, but let's also include
-    // some variations on the filename for convenience.
-    WvString        fullname; // contains: startdir/path/file
-    WvString        name;     // contains: file
-    WvString        relname;  // contains: path/file
+    // we already have everything from struct stat, but we also want the
+    // fullname (dir/dir/file) and name (file), since they're useful
+    // and now we also get a string relative to the starting directory
+    WvString        fullname;
+    WvString        name;
+    WvString        relname;
 };
 
 class WvDirIter
@@ -38,10 +39,7 @@ class WvDirIter
 private:
     bool        recurse;
     bool        go_up;
-    bool        skip_mounts;
-    bool        found_top;
 
-    WvDirEnt        topdir;
     WvDirEnt        info;
     WvString        relpath;
 
@@ -61,7 +59,7 @@ private:
     DirList::Iter dir;
 
 public:
-    WvDirIter( WvStringParm dirname, bool _recurse=true, bool _skip_mounts=false );
+    WvDirIter( WvString dirname, bool _recurse=true );
     ~WvDirIter();
 
     bool isok() const;

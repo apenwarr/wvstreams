@@ -9,7 +9,6 @@
 
 #include "wvencoder.h"
 #include "wvencoderstream.h"
-#include "wvcrypto.h"
 
 #include <openssl/des.h>
 
@@ -19,7 +18,7 @@
  * Supports reset().
  * 
  */
-class WvTripleDESEncoder : public WvCryptoEncoder
+class WvTripleDESEncoder : public WvEncoder
 {
 public:
     enum Mode {
@@ -47,21 +46,14 @@ public:
      *
      * "key[1-3]" are the new keys
      */
-    virtual void setkey(const void *key)
-    { 
-	setkey(key, (unsigned char*)key+DES_KEY_SZ, 
-	       (unsigned char *)key+(DES_KEY_SZ*2)); 
-	return; 
-    }
-    virtual void setkey(const void *_key1, const void *_key2, 
-			const void *_key3);
+    void setkey(const void *_key1, const void *_key2, const void *_key3);
     
     /*
      * Sets the current TripleDES initialization vector.
      *
      * "iv" is the new IV must be 8 bytes
      */
-    virtual void setiv(const void *iv);
+    void setiv(const void *iv);
 
 protected:
     virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
