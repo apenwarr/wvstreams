@@ -32,8 +32,6 @@ struct WvDirEnt : public stat
     WvString        relname;  // contains: path/file
 };
 
-class WvGlob;
-
 class WvDirIter
 /*************/
 {
@@ -46,8 +44,6 @@ private:
     WvDirEnt        topdir;
     WvDirEnt        info;
     WvString        relpath;
-
-    WvGlob          *glob;
 
     struct Dir {
         Dir( DIR * _d, WvString _dirname )
@@ -64,8 +60,6 @@ private:
     DirList       dirs;
     DirList::Iter dir;
     
-    bool _next();
-
 public:
     // the sizeof(stat) helps an assert() in wvdiriter.cc.
     WvDirIter( WvStringParm dirname,
@@ -73,8 +67,6 @@ public:
 	       size_t sizeof_stat = sizeof(struct stat) );
     
     ~WvDirIter();
-
-    void set_glob(WvStringParm glob_str);
 
     bool isok() const;
     bool isdir() const;

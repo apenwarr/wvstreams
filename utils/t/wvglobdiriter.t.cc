@@ -1,5 +1,5 @@
 #include <wvtest.h>
-#include <wvdiriter.h>
+#include <wvglobdiriter.h>
 #include <wvfile.h>
 #include <wvhashtable.h>
 #include <wvstring.h>
@@ -26,7 +26,7 @@ static bool destroy_dir(WvStringParm dir)
     return true;
 }
 
-WVTEST_MAIN("Non-recursive WvDirIter")
+WVTEST_MAIN("Non-recursive WvGlobDirIter")
 {
     WvString dir("/tmp/wvtest-wvdiriter-%s", getpid());
 
@@ -37,7 +37,7 @@ WVTEST_MAIN("Non-recursive WvDirIter")
 
     WvMap<WvString, bool> found(8);
 
-    WvDirIter di(dir, false);
+    WvGlobDirIter di(dir, "file-*", false);
     for (di.rewind(); di.next(); )
         found.set(di->relname, true);
 
@@ -45,8 +45,8 @@ WVTEST_MAIN("Non-recursive WvDirIter")
     WVFAIL(found.exists(".."));
     WVPASS(found.exists("file-one"));
     WVPASS(found.exists("file-two"));
-    WVPASS(found.exists(".dot-file"));
-    WVPASS(found.exists("subdir"));
+    WVFAIL(found.exists(".dot-file"));
+    WVFAIL(found.exists("subdir"));
     WVFAIL(found.exists("subdir/."));
     WVFAIL(found.exists("subdir/.."));
     WVFAIL(found.exists("subdir/sub-file"));
@@ -54,7 +54,7 @@ WVTEST_MAIN("Non-recursive WvDirIter")
     WVPASS(destroy_dir(dir));
 }
 
-WVTEST_MAIN("Recursive WvDirIter")
+WVTEST_MAIN("Recursive WvGlobDirIter")
 {
     WvString dir("/tmp/wvtest-wvdiriter-%s", getpid());
 
@@ -65,19 +65,20 @@ WVTEST_MAIN("Recursive WvDirIter")
 
     WvMap<WvString, bool> found(8);
 
-    WvDirIter di(dir, true);
+    WvGlobDirIter di(dir, "subdir/*-file", true);
     for (di.rewind(); di.next(); )
         found.set(di->relname, true);
 
     WVFAIL(found.exists("."));
     WVFAIL(found.exists(".."));
-    WVPASS(found.exists("file-one"));
-    WVPASS(found.exists("file-two"));
-    WVPASS(found.exists(".dot-file"));
-    WVPASS(found.exists("subdir"));
+    WVFAIL(found.exists("file-one"));
+    WVFAIL(found.exists("file-two"));
+    WVFAIL(found.exists(".dot-file"));
+    WVFAIL(found.exists("subdir"));
     WVFAIL(found.exists("subdir/."));
     WVFAIL(found.exists("subdir/.."));
     WVPASS(found.exists("subdir/sub-file"));
     
     WVPASS(destroy_dir(dir));
 }
+

@@ -8,7 +8,6 @@
  */
 
 #include "wvdiriter.h"
-#include "wvglob.h"
 
 #ifdef _WIN32
 #define S_ISDIR(x) (_S_IFDIR | (x))
@@ -17,7 +16,7 @@
 
 WvDirIter::WvDirIter( WvStringParm dirname,
 		      bool _recurse, bool _skip_mounts, size_t sizeof_stat )
-    : relpath(""), glob(NULL), dir(dirs)
+    : relpath(""), dir(dirs)
 /****************************************************************************/
 {
     // if this assertion fails, then you probably used different compiler
@@ -41,7 +40,6 @@ WvDirIter::~WvDirIter()
 /*********************/
 {
     dirs.zap();
-    if (glob) delete glob;
 }
 
 bool WvDirIter::isok() const
@@ -76,18 +74,6 @@ void WvDirIter::rewind()
 
 
 bool WvDirIter::next()
-{
-    bool result;
-
-    do
-    {
-        result = _next();
-    } while (result && glob && !glob->match(info.relname));
-
-    return result;
-}
-
-bool WvDirIter::_next()
 /********************/
 // use readdir... and if that returns a directory, opendir() it and prepend
 // it to dirs, so we start reading it until it's done.
@@ -174,18 +160,3 @@ bool WvDirIter::_next()
     return( dent != NULL );
 }
 
-void WvDirIter::set_glob(WvStringParm glob_str)
-{
-    if (glob) delete glob;
-
-    if (!glob_str.isnull())
-    {
-        glob = new WvGlob(glob_str);
-        if (!glob->isok())
-        {
-            delete glob;
-            glob = NULL;
-        }
-    }
-    else glob = NULL;
-}
