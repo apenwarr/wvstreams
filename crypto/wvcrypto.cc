@@ -373,13 +373,15 @@ size_t WvRSAStream::uwrite(const void *buf, size_t size)
 	// in the buffer.
 	return size; 
     }
-    
+
     size_t off, len, totalwrite = 0, rsa_size = RSA_size(my_key.rsa), outsz;
     unsigned char *out = cryptbuf(rsa_size);
-    
+
     // break it into blocks of no more than rsa_size each
     for (off = 0; off < size; off += rsa_size/2)
     {
+	size_t written = 0;
+
 	if (size-off < rsa_size/2)
 	    len = size-off;
 	else
@@ -388,11 +390,11 @@ size_t WvRSAStream::uwrite(const void *buf, size_t size)
 	outsz = RSA_public_encrypt(len, (unsigned char *)buf+off, out,
 				   their_key.rsa, RSA_PKCS1_PADDING);
 	assert(outsz == rsa_size);
-	
-	// FIXME: this isn't really correct.  If uwrite() doesn't manage to
-	// write the _entire_ blob at once, we throw out the rest but
-	// claim it got written...
-	if (WvStreamClone::uwrite(out, outsz))
+
+	written = (*cloned)->write(out, outsz);
+	assert(written == outsz);
+
+	if (outsz)
 	    totalwrite += len;
     }
     
