@@ -24,6 +24,20 @@ size_t WvMiniBuffer::strchr(unsigned char ch) const
 }
 
 
+size_t WvMiniBuffer::findone(const unsigned char chlist[], size_t numch) const
+{
+    const unsigned char *cptr, *cp2, *cpe = chlist + numch;
+    
+    for (cptr = head; cptr < tail; cptr++)
+    {
+	for (cp2 = chlist; cp2 < cpe; cp2++)
+	    if (*cptr == *cp2) return cptr - head + 1;
+    }
+    
+    return 0;
+}
+
+
 ////////////////////// WvBuffer
 
 
@@ -230,6 +244,27 @@ size_t WvBuffer::strchr(unsigned char ch)
 	WvMiniBuffer &b = *i.data();
 	
 	t = b.strchr(ch);
+	
+	if (t)
+	    return off + t; // found it
+	else
+	    off += b.used();
+    }
+    
+    return 0;
+}
+
+
+size_t WvBuffer::findone(const unsigned char chlist[], size_t numch)
+{
+    WvMiniBufferList::Iter i(list);
+    size_t off = 0, t;
+    
+    for (i.rewind(); i.next(); )
+    {
+	WvMiniBuffer &b = *i.data();
+	
+	t = b.findone(chlist, numch);
 	
 	if (t)
 	    return off + t; // found it

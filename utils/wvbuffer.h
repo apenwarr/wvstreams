@@ -90,6 +90,14 @@ public:
     size_t strchr(unsigned char ch) const;
     size_t strchr(char ch) const
 	{ return strchr((unsigned char)ch); }
+    
+    /*
+     * similar to strchr() above, but find _any_ of the characters in
+     * chlist.  chlist is an array of unsigned char, of length numch.
+     */
+    size_t findone(const unsigned char chlist[], size_t numch) const;
+    size_t findone(const char chlist[]) const
+        { return findone((const unsigned char *)chlist, strlen(chlist)); }
 };
 
 
@@ -145,6 +153,15 @@ public:
     size_t strchr(unsigned char ch);
     size_t strchr(char ch)
         { return strchr((unsigned char)ch); }
+
+    /*
+     * return the number of bytes that would have to be read to find the
+     * one of the characters in chlist, or zero if none of them are in the
+     * buffer.
+     */
+    size_t findone(const unsigned char chlist[], size_t numch);
+    size_t findone(const char chlist[])
+        { return findone((const unsigned char *)chlist, strlen(chlist)); }
 };
 
 
