@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
  * 
  * WvProtoStream is a framework that makes it easy to communicate using
  * common command-response driven protocols.  This is supposed to be

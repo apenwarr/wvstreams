@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
  *
  * WvTCPConn test.  Telnets to your local SMTP port, or any other port given
  * on the command line.

@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
  *
  * WvTimeStream test.  Should take exactly ten seconds to run, but 
  * tests how well the time stream handles being executed in bursts.

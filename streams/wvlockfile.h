@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
  *
  * Some handy functions to create/remove /var/lock lockfiles.
  */

@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
  * 
  * A WvInterface manages a particular network interface.  It is _allowed_
  * to have more than one WvInterface instance referring to the same

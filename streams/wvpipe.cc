@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
  * 
  * Implementation of a WvPipe stream.  WvPipes allow you to create a new
  * process, attaching its stdin/stdout to a WvStream.
