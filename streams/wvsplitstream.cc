@@ -15,7 +15,7 @@
 #include <assert.h>
 
 // a console stream made from stdin/stdout.
-static WvSplitStream wvconsole(0,1);
+static WvSplitStream wvconsole(dup(0),dup(1));
 WvStream *wvcon = &wvconsole;
 
 
