@@ -10,6 +10,7 @@
 
 #include "wvhash.h"
 #include "wvlinklist.h"
+#include "wvtypetraits.h"
 #include <assert.h>
 
 /**
@@ -275,7 +276,7 @@ public:
     WvMapPair(const TKey &_key, const TData &_data, bool _auto_free)
         : key(_key), data(_data), auto_free(_auto_free) { };
     virtual ~WvMapPair()
-        { if (auto_free) delete data; };
+        { if (auto_free) WvTraits<_TData>::release(data); };
 protected:
     bool auto_free;
 };
