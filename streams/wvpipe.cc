@@ -166,6 +166,8 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	 * child (or sub-) process exits. */
 	if (!writable && !readable && !catch_stderr)
 	    fcntl(socks[1], F_SETFD, 0);  // never close the socketpair
+	else
+	    ::close(socks[1]); // has already been duplicated
 	
 	// this will often fail, but when it does work it is probably
 	// the Right Thing To Do (tm)
