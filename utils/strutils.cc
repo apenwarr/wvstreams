@@ -393,3 +393,15 @@ WvString nice_hostname(WvStringParm name)
     
     return nice;
 }
+
+WvString getfilename (WvStringParm fullname)
+{
+    return WvString(strrchr(fullname, '/') + 1);
+}
+
+WvString getdirname (WvStringParm fullname)
+{
+    WvString dirname(fullname);
+    *strrchr(dirname.edit(), '/') = '\0';
+    return dirname;
+}
