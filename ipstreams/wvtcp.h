@@ -21,6 +21,8 @@ class WvTCPListener;
 class WvTCPConn : public WvStream
 {
     friend class WvTCPListener;
+    friend class WvHTTPClientProxyStream;
+    friend class WvHTTPOriginProxyStream;
 protected:
     bool resolved, connected;
     WvString hostname;
