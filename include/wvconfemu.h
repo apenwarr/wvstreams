@@ -138,6 +138,7 @@ public:
     void del_callback(WvStringParm section, WvStringParm key, void *cookie);
 
     void add_setbool(bool *b, WvStringParm _section, WvStringParm _key);
+    void del_setbool(bool *b, WvStringParm _section, WvStringParm _key);
 
     void add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);
     void del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);

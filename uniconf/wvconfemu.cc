@@ -336,6 +336,12 @@ void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
 }
 
 
+void WvConfEmu::del_setbool(bool *b, WvStringParm _section, WvStringParm _key)
+{
+    del_callback(_section, _key, b);
+}
+
+
 void WvConfEmu::add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
 {
     add_callback(do_addname, list, sect, ent, list);
