@@ -2,7 +2,7 @@ include ${TOPDIR}/wvrules.mk
 
 XPATH=${TOPDIR}/src/wvstreams/include
 
-all: unigremlin
+all: rungremlin
 
 LIBS=-lstdc++
-unigremlin: $(LIBUNICONF)
+rungremlin: $(LIBUNICONF) unigremlin.o

@@ -1,6 +1,4 @@
-#include <cstdlib>
 #include <ctime>
-#include <iostream>
 #include <stdio.h>
 #include <regex.h>
 #include <ctype.h>
@@ -38,7 +36,7 @@ void UniConfGremlin::start(unsigned int seed)
         seed = time(0);
     
     srand(seed);
-    cout << "Using seed " << seed << "\n";
+    printf("Using seed %i\n", seed);
     find_victims(key);
     for (runlevel = 1; runlevel <= max_runlevel; runlevel ++)
         start_trouble(runlevel);
@@ -238,7 +236,7 @@ void UniConfGremlin::add_value()
  */
 void UniConfGremlin::start_trouble(int curr_runlevel)
 {
-    cout << UniConfGremlin::curr_runlevel() << "\n";
+    printf("%s\n", UniConfGremlin::curr_runlevel().cstr());
     int r = curr_runlevel;
     for (int i = 0; i < 1000; i ++)
     {
@@ -372,63 +370,46 @@ WvString UniConfGremlin::status()
  */
 void UniConfGremlin::test()
 {
-    /*
-    cout << "Testing Random Generators\n";
-    cout << "STRING " << UniConfGremlin::rand_str(TYPE_STRING) << "\n";
-    cout << "IP " << UniConfGremlin::rand_str(TYPE_IP) << "\n";
-    cout << "IP_NETWORK " << UniConfGremlin::rand_str(TYPE_IP_NETWORK) 
-         << "\n";
-    cout << "HOSTNAME " << UniConfGremlin::rand_str(TYPE_HOSTNAME) << "\n";
-    cout << "BOOL " << UniConfGremlin::rand_str(TYPE_BOOL) << "\n";   
-    cout << "INT " << UniConfGremlin::rand_str(TYPE_INT) << "\n";
-    cout << "FLOAT " << UniConfGremlin::rand_str(TYPE_FLOAT) << "\n";
-    */
-/*
-    cout << "Testing adding things to the UniConf\n"; 
+    printf("Testing Random Generators\n");
+    printf("STRING %s\n", UniConfGremlin::rand_str(TYPE_STRING).cstr());
+    printf("IP %s\n", UniConfGremlin::rand_str(TYPE_IP).cstr());
+    printf("IP_NETWORK %s\n", UniConfGremlin::rand_str(TYPE_IP_NETWORK).cstr());
+    printf("HOSTNAME %s\n", UniConfGremlin::rand_str(TYPE_HOSTNAME).cstr());
+    printf("BOOL %s\n", UniConfGremlin::rand_str(TYPE_BOOL).cstr());   
+    printf("INT %s\n", UniConfGremlin::rand_str(TYPE_INT).cstr());
+    printf("FLOAT %s\n", UniConfGremlin::rand_str(TYPE_FLOAT).cstr());
+    printf("Testing adding things to the UniConf\n"); 
     int count = 0;
     for (int i = 0; i < 5; i ++)
     {
-        cout << "Adding 5 random strings of type " << type_name(i) << "\n";
+        printf("Adding 5 random strings of type %s\n", type_name(i).cstr());
         for (int j = 0; j < 5; j ++)
         {
             WvString rand = rand_str(i);
-            cout << "Adding " << rand << "\n";
+            printf("Adding %s\n", rand.cstr());
             cfg[count].set(rand);
             cfg[count].commit();
             count ++;
         }
     }
-    cout << "Adding 5 random ints\n";
+    printf("Adding 5 random ints\n");
     for (int i = 5; i < 10; i ++)
     {
-        int rand = rand_str(TYPE_INT);
-        cout << "Adding " << rand << "\n";
-        cfg[count].setint(rand);
+        int randint = rand();
+        printf("Adding %i\n", randint);
+        cfg[count].setint(randint);
         cfg[count].commit();
         count ++;
     }
-  */  
-    cout << "Testing Find Victims\n";
+    printf("Testing Find Victims\n");
     find_victims(key);
     for (int i = 0; i < num_victims; i ++)
     {
-       cout << victims[i]->name << ":";
-       cout << type_name(victims[i]->type) << ":";
-       cout << cfg[victims[i]->name].get() << "\n";
+       printf("%s:", victims[i]->name.cstr());
+       printf("%s:", type_name(victims[i]->type).cstr());
+       printf("%s\n", cfg[victims[i]->name].get().cstr());
     }
     
-    cout << "Testing Start Trouble\n";
+    printf("Testing Start Trouble\n");
     start_trouble(1);
-}
-
-/* main()
- * Simply used to test the gremlin
- */
-int main()
-{
-    UniConfGremlin g("ini:/tmp/test.ini", "", 5);
-    cout << "Gremlin created\n";
-    g.start();
-    cout << g.status();
-    return 0;
 }
