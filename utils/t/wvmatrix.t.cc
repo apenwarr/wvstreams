@@ -1,5 +1,9 @@
 #include "wvtest.h"
 #include "wvmatrix.h"
+#include <malloc.h>
+#ifdef _WIN32
+#define alloca _alloca
+#endif
 
 // BEGIN matrixtest.cc definition
 // test that creation matches intended data
@@ -44,7 +48,8 @@ bool matrix_sum(WvMatrix &in1, WvMatrix &in2, WvMatrix &out)
 // in1, in2 and out *must* have appropriately matching dimensions
 bool matrix_product(WvMatrix &in1, WvMatrix &in2, WvMatrix &out)
 {
-    int result[in1.m * in2.n], c, n = 0;
+    int c, n = 0;
+    int *result = alloca(in1.m * in2.n * sizeof(int));
     bool matches = true;
     // calculate our own results
     for (int i = 0; i < in1.m; i++)
