@@ -56,9 +56,9 @@ WVTEST_MAIN("basic")
     
 
     desired = WvString(" %s %s %s %s", input[0], input[1], input[2], input[3]);
-    l.splitstrict(desired);
+    l.splitstrict(desired, " ");
     //printf("%s\n", l.join().cstr());    
-    desired = WvString();
+    desired = WvString("");
     output = l.popstr();
     // should be an extra space
     WVPASS(output == desired);
