@@ -64,7 +64,10 @@ class WvArgs
     	void add_option(char short_option, const char *long_option,
     	    	const char *desc, const char *arg_desc,
     	    	ArgCallback cb, void *ud = NULL);
- 
+
+        void remove_option(char short_option);
+        void remove_option(const char *long_option);
+        
 };
 
 #endif // WITH_POPT
