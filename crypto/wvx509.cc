@@ -57,7 +57,7 @@ WvString wvssl_errstr()
 
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : WvErrorBase(), debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
+    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
 {
     wvssl_init();
     cert = _cert;
@@ -350,6 +350,7 @@ void WvX509Mgr::create_selfsigned()
     debug("Certificate for %s created\n", dname);
 }
 
+
 void WvX509Mgr::filldname()
 {
     assert(cert);
@@ -359,6 +360,7 @@ void WvX509Mgr::filldname()
     buffer[sizeof(buffer)-1] = 0;
     dname = buffer; 
 }
+
 
 WvRSAKey *WvX509Mgr::fillRSAPubKey()
 {
@@ -770,7 +772,6 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    if (!rsa->isok())
 		seterr("RSA Key failed to import\n");
 	    break;
-	    
 	case RsaPubPEM:
 	    debug("Importing RSA Public Key.\n");
 	    debug("Are you REALLY sure that you want to do this?\n");
@@ -780,7 +781,6 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    if (!rsa->isok())
 		seterr("RSA Public Key failed to import\n");
 	    break;
-	    
 	case RsaRaw:
 	    debug("Importing raw RSA keypair not supported.\n");
 	    break;
@@ -1016,30 +1016,29 @@ WvDynBuf *WvX509Mgr::get_extension(int nid)
 
 bool WvX509Mgr::isok() const
 {
-    return cert && rsa && WvErrorBase::isok();
+    return cert && rsa && WvError::isok();
 }
 
 
 WvString WvX509Mgr::errstr() const
 {
-    WvString ret = WvErrorBase::errstr();
-    if (!ret)
+    if (WvError::geterr() == 0)
     {
         // only use a custom string if there's not an error set
         if (!cert && !rsa)
-            ret = "No certificate or RSA key assigned";
+            return "No certificate or RSA key assigned";
         else if (!cert)
-            ret = "No certificate assigned";
+            return "No certificate assigned";
         else if (!rsa)
-            ret = "No RSA key assigned";
+            return "No RSA key assigned";
     }
-    return ret;
+    return WvError::errstr();
 }
 
 
 int WvX509Mgr::geterr() const
 {
-    int ret = WvErrorBase::geterr();
+    int ret = WvError::geterr();
     if (ret == 0 && (!cert || !rsa))
     {
         // unless there's a regular error set, we'll be returning a custom
@@ -1048,5 +1047,3 @@ int WvX509Mgr::geterr() const
     }
     return ret;
 }
-
-
