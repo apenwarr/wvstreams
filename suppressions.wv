@@ -89,3 +89,11 @@
    Memcheck:Value4
    fun:BF_encrypt
 }
+{
+   WvInterface has a static WvInterfaceDict
+   Memcheck:Leak
+   fun:__builtin_vec_new
+   fun:__t11WvHashTable4Z11WvInterfaceZ8WvStringZt27WvInterfaceDictBaseAccessor2Z11WvInterfaceZ8WvStringz1Z8OpEqCompUi
+   fun:__static_initialization_and_destruction_0
+   fun:_GLOBAL_.I._15WvInterfaceDict.links
+}
