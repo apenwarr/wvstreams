@@ -27,9 +27,6 @@ class WvStringList : public WvStringListBase
     // copy constructor: not defined anywhere!
     WvStringList(const WvStringList &l);
 public:
-    // The empty list
-    static const WvStringList null;
-
     /**
      * Instatiate a new WvStringList()
      */

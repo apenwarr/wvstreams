@@ -10,8 +10,6 @@
 #include "wvstringlist.h"
 #include "strutils.h"
 
-// Instantial the null list
-const WvStringList WvStringList::null;
 
 WvString WvStringList::join(const char *joinchars) const
 {
