@@ -7,27 +7,135 @@
 #ifndef __WVCONFEMU_H
 #define __WVCONFEMU_H
 
-#if 1
 
 #ifndef __WVCONF_H
 #define WvConf WvConfEmu
 #define WvConfigSection WvConfigSectionEmu
+#define WvConfigSectionList WvConfigSectionListEmu
 #define WvConfigEntry WvConfigEntryEmu
+#define WvConfigEntryList WvConfigEntryListEmu
 #endif
+
 
 #include "uniconfroot.h"
 #include "wvstream.h"
 
-class WvConfigSection;
+
+class WvConfEmu;
+class WvConfigEntryEmu;
+class WvConfigSectionEmu;
+
+typedef WvConfEmu WvConfigSectionListEmu;
+typedef WvConfigSectionEmu WvConfigEntryListEmu;
+
+
+class WvConfigEntryEmu
+{
+public:
+    const WvString name;
+    const WvString value;
+    WvConfigEntryEmu(WvStringParm _name, WvStringParm _value):
+	name(_name), value(_value)
+    {}
+};
+
+
+class WvConfigSectionEmu
+{
+private:
+    const UniConf uniconf;
+public:
+    const WvString name;
+    WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name):
+	uniconf(_uniconf), name(_name)
+    {}
+    class Iter;
+    friend Iter;
+};
+
+
+DeclareWvDict(WvConfigSectionEmu, WvString, name);
+
+
+class WvConfigSectionEmu::Iter
+{
+private:
+    UniConf::Iter iter;
+    WvLink link;
+    WvConfigEntryEmu* entry;
+public:
+    Iter(WvConfigSectionEmu& _sect):
+	iter(_sect.uniconf), link(NULL, false),
+	entry(NULL)
+    {}
+    void rewind()
+    {
+	iter.rewind();
+    }
+    WvLink *next()
+    {
+	if (iter.next())
+	{
+	    entry = new WvConfigEntryEmu(iter->key(), iter->get());
+	    link.data = static_cast<void*>(entry);
+	    return &link;
+	}
+
+	return NULL;
+    }
+    WvLink *cur()
+    {
+	return &link;
+    }
+    WvConfigEntryEmu* ptr() const
+    {
+	return entry;
+    }
+    WvIterStuff(WvConfigEntryEmu);
+};
+
 
 class WvConfEmu
 {
 private:
-    UniConf& uniconf;
+    struct SetBool
+    {
+	bool* b;
+	WvString section;
+	WvString key;
+	SetBool(bool* _b, WvStringParm _section, WvStringParm _key):
+	    b(_b), section(_section), key(_key)
+	{}
+    };
+
+    const UniConf uniconf;
+    WvConfigSectionEmuDict sections;
+    bool hold;
+    WvList<SetBool> setbools;
+
+    void notify(const UniConf &_uni, const UniConfKey &_key)
+    {
+	WvList<SetBool>::Iter i(setbools);
+	WvString section(_key.first());
+	WvString key(_key.removefirst());
+
+	if (hold)
+	    return;
+
+	i.rewind();
+	while (i.next())
+	    if (((i->section && !i->section) || !strcasecmp(i->section, section))
+		&& ((i->key && !i->key) || !strcasecmp(i->key, key)))
+		*(i->b) = true;
+    }
 public:
     WvConfEmu(UniConf& _uniconf):
-	uniconf(_uniconf)
-    {}
+	uniconf(_uniconf), sections(42), hold(false)
+    {
+	uniconf.add_callback(this,
+			     UniConfCallback(this, &WvConfEmu::notify),
+			     true);
+    }
     void zap()
     {
 	uniconf.remove();
@@ -36,29 +144,36 @@ public:
     {
 	UniConfRoot new_uniconf(WvString("ini:%s", filename));
 
+	hold = true;
 	new_uniconf.copy(uniconf, true);
+	hold = false;
     }
     WvConfigSectionEmu *operator[] (WvStringParm sect)
     {
-	return NULL;
-	// this is what was below
-	//return (WvConfigSection *)h.find_make(sect);
+	WvConfigSectionEmu* section = sections[sect];
+
+	if (!section && uniconf[sect].exists())
+	{
+	    section = new WvConfigSectionEmu(uniconf[sect], sect);
+	    sections.add(section, true);
+	}
+
+	return section;
     }
-    void add_setbool(bool *b, WvStringParm _section, WvStringParm _entry)
+    void add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
     {
-	WvString section(_section);
-	WvString entry(_entry);
+	WvList<SetBool>::Iter i(setbools);
 
-	if (!section)
-	    section = "*";
+	i.rewind();
+	while (i.next())
+	{
+	    if (i->b == b
+		&& i->section == _section
+		&& i->key == _key)
+		return;
+	}
 
-	if (!entry)
-	    entry = "*";
-
-	if (uniconf[section][entry].isnull())
-	    fprintf(stderr, "this sucks\n");
-
-	uniconf[section][entry].add_setbool(b, false);
+	setbools.append(new SetBool(b, _section, _key), true);
     }
     const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL)
@@ -74,14 +189,42 @@ public:
     {
 	uniconf[section][entry].set(value);
     }
+
+    class Iter;
+    friend Iter;
 };
 
-class WvConfigSectionEmu
+
+class WvConfEmu::Iter
 {
+    WvConfEmu& conf;
+    UniConf::Iter iter;
+    WvLink link;
 public:
+    Iter(WvConfEmu& _conf):
+	conf(_conf), iter(conf.uniconf), link(NULL, false)
+    {}
+    void rewind()
+    {
+	iter.rewind();
+    }
+    WvLink *next()
+    {
+	if (iter.next())
+	{
+	    link.data = static_cast<void*>(conf[iter->key()]);
+	    return &link;
+	}
+
+	return NULL;
+    }
+    WvConfigSectionEmu* ptr() const
+    {
+	return conf[iter->key()];
+    }
+    WvIterStuff(WvConfigSectionEmu);
 };
 
-#endif
 
 #if 0
 

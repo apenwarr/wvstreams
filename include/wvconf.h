@@ -18,6 +18,16 @@
 #include "wvstringlist.h"
 #include "wvcallback.h"
 
+
+#ifdef __WVCONFEMU_H
+#undef WvConf
+#undef WvConfigSection
+#undef WvConfigSectionList
+#undef WvConfigEntry
+#undef WvConfigEntryList
+#endif
+
+
 class WvConf;
 
 
