@@ -30,7 +30,6 @@ public:
     bool keymodified;
 private:
     void errorcheck(WvStream *s, WvString type);
-
     
     WvStreamList l;
     static const WvString DEFAULT_CONFIG_FILE;

@@ -19,10 +19,27 @@ UniConfDaemonConn::~UniConfDaemonConn()
     WvStringList::Iter i(keys);
     for (i.rewind(); i.next();)
     {
-        const UniConfKey k(*i);
-        source->events.del(wvcallback(UniConfCallback, *source,
-            UniConfDaemon::keychanged), this, k);
+        del_callback(*i);
     }
+}
+
+void UniConfDaemonConn::update_callbacks(WvString key)
+{
+    del_callback(key);
+    add_callback(key);
+}
+
+void UniConfDaemonConn::del_callback(WvString key)
+{
+    source->events.del(wvcallback(UniConfCallback, *source,
+                UniConfDaemon::keychanged), this, key);
+
+}
+
+void UniConfDaemonConn::add_callback(WvString key)
+{
+    source->events.add(wvcallback(UniConfCallback,
+                *source, UniConfDaemon::keychanged), this, key);
 }
 
 void UniConfDaemonConn::dook(const WvString cmd, const WvString key)
@@ -44,8 +61,9 @@ void UniConfDaemonConn::doget(WvString key)
     if (this->isok())
     {
         print(response);
-        source->events.add(wvcallback(UniConfCallback,
-                *source, UniConfDaemon::keychanged), this, key);
+
+        // Ensure no duplication of events.
+        update_callbacks(key);
         keys.append(new WvString(key), true);
     }
 }
@@ -64,10 +82,8 @@ void UniConfDaemonConn::dosubtree(WvString key)
         {
             send.append("{%s %s} ", wvtcl_escape(i->name),
                     wvtcl_escape(*i));
-
-            // now add a callback in case this value changes.
-            source->events.add(wvcallback(UniConfCallback,
-                *source, UniConfDaemon::keychanged), this, key);
+            
+            update_callbacks(key);
        }
     }
    
@@ -90,10 +106,8 @@ void UniConfDaemonConn::dorecursivesubtree(WvString key)
         {
             send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)),
                     wvtcl_escape(*i));
-
-            // now add a callback in case this value changes.
-            source->events.add(wvcallback(UniConfCallback,
-                *source, UniConfDaemon::keychanged), this, key);
+            
+            update_callbacks(key);
         }
     }
     send.append("\n");

@@ -28,14 +28,14 @@ UniConfDaemon::~UniConfDaemon()
 // Look after the actual mounting, where mode indicates the type of config file
 // we are using, file is the location of the actual file, and mp is the point
 // where we want to mount the contents into the config tree.
-UniConf *UniConfDaemon::domount(WvString mode, WvString file, WvString mp)
+UniConf *UniConfDaemon::domount(WvString mode, WvString mountfrom, WvString mp)
 {
     log(WvLog::Debug2, "Attempting to mount the %s file %s to point:  %s.\n",
-            mode, file, mp);
+            mode, mountfrom, mp);
     UniConf *mounted = &mainconf[mp];
     if (mode == "ini")
     {
-        mounted->generator = new UniConfIniFile(mounted, file, false);
+        mounted->generator = new UniConfIniFile(mounted, mountfrom, false);
         mounted->generator->load();
         return mounted;
     }
