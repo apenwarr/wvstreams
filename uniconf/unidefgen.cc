@@ -9,6 +9,9 @@
 #include "unidefgen.h"
 #include "wvmoniker.h"
 
+#include <ctype.h>
+#include <stdlib.h>
+
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
 static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
@@ -36,39 +39,84 @@ WvString UniDefGen::get(const UniConfKey &key)
     *q = '\0';
 
     WvString result;
-    finddefault(p, q, result);
+    finddefault(key, p, q, result);
     return result;
 }
 
 
-void UniDefGen::finddefault(char *p, char *q, WvString &result)
+void UniDefGen::finddefault(const UniConfKey &key, char *p, char *q,
+        WvString &result)
 {
     if (!p)
     {
         result = UniFilterGen::get(++q);
+        if (!result.isnull())
+            replacewildcard(key, q, result);
         return;
     }
 
+    // pop the first segment of p to r
     char *r = strchr(p, '/');
     if (r)
         *r++ = '\0';
 
+    // append p to q
     char *s = strchr(q, '\0');
     *s++ = '/';
     *s = 0;
     q = strcat(q, p);
 
-    finddefault(r, q, result);
+    // try this literal path
+    finddefault(key, r, q, result);
 
     if (!result.isnull())
         return;
-    else
-    {
-        *s++ = '*';
-        *s = '\0';
-        finddefault(r, q, result);
-    }
+
+    // replace what used to be p with a *
+    *s++ = '*';
+    *s = '\0';
+    finddefault(key, r, q, result);
 
     if (r)
         *--r = '/';
+}
+
+
+void UniDefGen::replacewildcard(const UniConfKey &key, char *p,
+        WvString &result)
+{
+    // check if the result wants a wildcard ('*n')
+    const char *s = result.cstr();
+    if (strlen(s) < 2 || s[0] != '*')
+        return;
+
+    int idx = atoi(s+1);
+    if (idx == 0)
+        return;
+
+    // search backwards for segment num of the n'th wildcard
+    UniConfKey k(p);
+    int loc = key.numsegments();
+    for (int i = 0; i < idx; i++)
+    {
+        if (i != 0)
+        {
+            k = k.removelast();
+            loc--;
+        }
+        while (!k.last().iswild())
+        {
+            k = k.removelast();
+            loc--;
+            if (k.isempty())
+            {
+                // oops, ran out of segments!
+                result = WvString::null;
+                return;
+            }
+        }
+    }
+
+    // pull the literal from that segment num of the key
+    result = key.segment(loc-1);
 }

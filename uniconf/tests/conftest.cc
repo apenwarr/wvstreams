@@ -419,6 +419,9 @@ int main()
         root["users/apenwarr"].set("ooga booga");
         root["users/apenwarr/chicken/hammer"].set("smashy!");
         root["users/apenwarr/ftp"].set("1");
+        root["wild/*/*/blink"].set("*1");
+        root["wild/*/*/blank"].set("*2");
+        root["wild/*/*/plunk"].set("*3");
         root.commit();
 
         log("Starting tests...\n");
@@ -435,6 +438,15 @@ int main()
 
         result = root["/users/silly/chicken/die"].get();
         log("/users/silly/chicken/die = %s (should = happy)\n", result);
+
+        result = root["/wild/foo/bar/blink"].get("outtaspace");
+        log("/wild/foo/bar/blink = %s (should = bar)\n", result);
+        
+        result = root["/wild/foo/bar/blank"].get("outtaspace");
+        log("/wild/foo/bar/blank = %s (should = foo)\n", result);
+        
+        result = root["/wild/foo/bar/plunk"].get("outtaspace");
+        log("/wild/foo/bar/plunk = %s (should = outtaspace)\n", result);
     }
 
     {
