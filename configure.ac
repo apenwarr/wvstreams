@@ -486,7 +486,7 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/libwvqt.pc
 		 pkgconfig/libwvstreams.pc
 		 pkgconfig/libwvutils.pc])
-if "$xplc_pc" = "wvxplc"; then
+if test "$xplc_pc" = "wvxplc"; then
     AC_CONFIG_FILES([pkgconfig/wvxplc.pc])
 fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
