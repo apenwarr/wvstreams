@@ -87,7 +87,7 @@ cmd="nc $host $port"
 runtimes=1
 
 if [ "$stress" = "+" ] ; then
-    runtimes=10
+    runtimes=100
 fi
 
 count=0

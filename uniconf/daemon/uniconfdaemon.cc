@@ -57,12 +57,21 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
         s->write(WvString("FGET %s\n", keyname));
 }
 
+
+void UniConfDaemon::errorcheck(WvStream *s, WvString type)
+{
+    if (!s || !s->isok())
+    {
+        log(WvLog::Error, "ERROR: Stream type %s could not be created.\n", type);
+        log(WvLog::Error, "REASON: %s\n", s->errstr());
+        exit(2);
+    }
+}
+
 // Daemon looks after running
 void UniConfDaemon::run()
 {
-    // Mount our initial config file.
     domount("ini", DEFAULT_CONFIG_FILE, "/");
-//    mainconf.dump(*wvcon);
 
     // Make sure that everything was cleaned up nicely before.
     system("mkdir -p /tmp/uniconf");
@@ -70,22 +79,14 @@ void UniConfDaemon::run()
     
     // Now listen on our unix socket.
     WvUnixListener *list = new WvUnixListener(WvUnixAddr("/tmp/uniconf/uniconfsocket"), 0755);
-    if (!list->isok())
-    {
-        log(WvLog::Error, "ERROR:  WvUnixListener could not be created.\n");
-        log(WvLog::Error, "Error Reason:  %s\n", list->errstr());
-        exit(2);
-    }
+    errorcheck(list, "WvUnixListener");
+
     l.append(list, true); 
 
     // Now listen on the correct TCP port
     WvTCPListener *tlist = new WvTCPListener(WvIPPortAddr("0.0.0.0", 4111));
-    if (!tlist->isok())
-    {
-        log(WvLog::Error, "ERROR:  WvTCPListener could not be created.\n");
-        log(WvLog::Error, "Error Reason:  %s\n", tlist->errstr());
-        exit(2);
-    }
+    errorcheck(tlist, "WvTCPListener");
+
     l.append(tlist, true);
 
     // Now run the actual daemon.
