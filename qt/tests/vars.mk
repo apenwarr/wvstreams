@@ -1,5 +1,7 @@
 
+ifdef INCLUDE_QT
 TESTS+=$(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
+endif
 
 %.moc: %.h
 	@echo -n "Creating MOC file from $< ..."
