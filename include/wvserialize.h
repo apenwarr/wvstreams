@@ -28,12 +28,27 @@ inline void wv_serialize(WvBuf &buf, const T &t)
 
 
 /**
+ * This function shouldn't be necessary at all, but using it makes totally
+ * insane assembler errors go away (gcc 2.95.4, glibc 2.3.1).
+ */
+inline int32_t _wv_htonl(int32_t i)
+{
+    return htonl(i);
+}
+
+
+
+/**
  * A helper function that serializes different types of integers.  Since
  * it's inlined, the "if" is actually executed at compile time, so don't
  * worry.
+ * 
+ * The clever part: it doesn't really matter what size an 'int' or a 'long'
+ * is, as long as it's one of the sizes supported by this function.  If an
+ * int is 32 bits, we'll use the 32-bit serializer... and so on.
  */
 template <typename T>
-inline void wv_serialize_scalar(WvBuf &buf, const T t)
+void wv_serialize_scalar(WvBuf &buf, const T t)
 {
     if (sizeof(T) == 8)
     {
@@ -43,7 +58,7 @@ inline void wv_serialize_scalar(WvBuf &buf, const T t)
     }
     else if (sizeof(T) == 4)
     {
-	int32_t i = htonl(t);
+	int32_t i = _wv_htonl(t);
 	buf.put(&i, 4);
     }
     else if (sizeof(T) == 2)
@@ -199,6 +214,16 @@ inline T wv_deserialize(WvBuf &buf)
 
 
 /**
+ * This function shouldn't be necessary at all, but using it makes totally
+ * insane assembler errors go away (gcc 2.95.4, glibc 2.3.1).
+ */
+inline int32_t _wv_ntohl(int32_t i)
+{
+    return ntohl(i);
+}
+
+
+/**
  * A helper function that deserializes different types of integers.  Since
  * it's inlined, the "if" is actually executed at compile time, so don't
  * worry.
@@ -216,13 +241,19 @@ inline T wv_deserialize_scalar(WvBuf &buf)
 	return (T) *(int64_t *)buf.get(8);
     }
     else if (sizeof(T) == 4)
-	return (T) ntohl(*(int32_t *)buf.get(4));
+	return (T) _wv_ntohl(*(int32_t *)buf.get(4));
     else if (sizeof(T) == 2)
 	return (T) ntohs(*(int16_t *)buf.get(2));
     else if (sizeof(T) == 1)
 	return (T) *(int8_t *)buf.get(1);
     else
 	assert(0);
+}
+
+template <typename T>
+inline T xwv_deserialize_scalar(WvBuf &buf)
+{
+    return 0;
 }
 
 template <>
