@@ -1,4 +1,4 @@
-#include <wvstream.h>
+#include <wvfile.h>
 
 int main()
 {
