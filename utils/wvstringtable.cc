@@ -8,7 +8,7 @@
 #include "strutils.h"
 
 
-WvString WvStringTable::join(const char *joinchars = " ")
+WvString WvStringTable::join(const char *joinchars)
 {
     WvStringTable::Iter s(*this);
     size_t totlen;
@@ -37,3 +37,27 @@ WvString WvStringTable::join(const char *joinchars = " ")
     
     return total;
 }
+
+
+void WvStringTable::split(const WvString &_s, const char *splitchars)
+{
+    WvString s(_s);
+    char *sptr = s.edit(), *eptr, oldc;
+    
+    while (sptr && *sptr)
+    {
+	sptr += strspn(sptr, splitchars);
+	eptr = sptr + strcspn(sptr, splitchars);
+	
+	oldc = *eptr;
+	*eptr = 0;
+	
+	WvString *newstr = new WvString(sptr);
+	newstr->unique();
+	add(newstr, true);
+	
+	*eptr = oldc;
+	sptr = eptr;
+    }
+}
+

@@ -13,7 +13,8 @@
 #include "wvhashtable.h"
 
 DeclareWvTable2(WvString,
-		WvString join(const char *joinchars = " ");
+		WvString join(const char *joinchars = " \t");
+                void split(const WvString &s, const char *splitchars = " \t");
 		);
 
 #endif // __WVSTRINGTABLE_H
