@@ -130,7 +130,11 @@ WvString encode_hostname_as_DN(WvStringParm hostname);
  */
 WvString nice_hostname(WvStringParm name);
 
-/** Separates the filename and directory name within a path. */
+/**
+ * Take a full path/file name and splits it up into respective pathname and
+ * filename. This can also be useful for splitting the toplevel directory off a
+ * path.
+ */
 WvString getfilename(WvStringParm fullname);
 WvString getdirname(WvStringParm fullname);
 
@@ -224,5 +228,10 @@ WvString strcoll_join(const StringCollection &coll,
  * much dumber.
  */
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
+
+/**
+ * Replace any consecutive instances of character c with a single one
+ */
+WvString undupe(WvStringParm s, char c);
 
 #endif // __STRUTILS_H

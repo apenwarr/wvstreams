@@ -187,6 +187,9 @@ public:
     void add(T *data, bool auto_free)
         { sl()[hash(data) % numslots].append(data, auto_free); }
 
+    WvLink *getlink(const K &key)
+        { return prevlink(wvslots, &key, WvHash(key))->next; }
+
     T *operator[] (const K &key)
         { return (T *)genfind(wvslots, &key, WvHash(key)); }
 
@@ -259,28 +262,28 @@ public:
 // Type specification to facilitate auto_free
 // Object type - ignores auto_free
 template<typename TKey, typename _TData>
-class WvPair
+class WvMapPair
 {
     typedef _TData TData;
 public:
     TKey key;
     TData data;
-    WvPair(const TKey &_key, const TData &_data, bool _auto_free)
+    WvMapPair(const TKey &_key, const TData &_data, bool _auto_free)
         : key(_key), data(_data) { };
 };
 
 
 // Pointer type
 template<typename TKey, typename _TData>
-class WvPair<TKey, _TData*>
+class WvMapPair<TKey, _TData*>
 {
     typedef _TData* TData;
 public:
     TKey key;
     TData data;
-    WvPair(const TKey &_key, const TData &_data, bool _auto_free)
+    WvMapPair(const TKey &_key, const TData &_data, bool _auto_free)
         : key(_key), data(_data), auto_free(_auto_free) { };
-    virtual ~WvPair()
+    virtual ~WvMapPair()
         { if (auto_free) delete data; };
 protected:
     bool auto_free;
@@ -289,42 +292,75 @@ protected:
 
 // *****************************
 // Main map template
+//
+// Since operator[] returns a reference you should always check
+//      if the element exists() before using it.
+// Alternatively, use find(), to get a pointer to the data type,
+//      which will be null if the element does not exist.
+
 template
 <
     typename TKey,
     typename TData,
-    template <class> class Comparator = OpEqComp
+    template <class> class Comparator = OpEqComp,
+    // Warning: Funny looking syntax follows!
+    // If we decide that WvScatterHash is the One True Hash,
+    //      just get rid of this part
+    template
+    <
+        class,
+        class,
+        class,
+        template <class> class
+    > class BackendHash = WvHashTable
 >
-class WvMap : public WvHashTable<WvPair<TKey, TData>, TKey,
-        WvMap<TKey, TData, Comparator>, Comparator>
+class WvMap : public BackendHash<WvMapPair<TKey, TData>, TKey,
+        WvMap<TKey, TData, Comparator, BackendHash>, Comparator>
 {
 protected: 
-    typedef WvPair<TKey, TData> MyPair;
-    typedef WvMap<TKey, TData, Comparator> MyMap;
-    typedef WvHashTable<MyPair, TKey, MyMap, Comparator> MyHashTable;
+    typedef WvMapPair<TKey, TData> MyPair;
+    typedef WvMap<TKey, TData, Comparator, BackendHash> MyMap;
+    typedef BackendHash<MyPair, TKey, MyMap, Comparator> MyHashTable;
 
+    // We need this last_accessed thing to make sure exists()/operator[]
+    //      does not cost us two hash lookups
+    MyPair* last_accessed;
+    MyPair* find_helper(const TKey &key)
+    {
+        if (last_accessed &&
+                Comparator<TKey>::compare(&last_accessed->key, &key))
+            return last_accessed;
+        return last_accessed = MyHashTable::operator[](key);
+    }
+
+public:
     // accessor mothod for WvHashTable to use
-    friend class MyHashTable;
     static const TKey *get_key(const MyPair *obj)
         { return &obj->key; }
 
-public:
-    WvMap(int s) : MyHashTable(s)    { };
-    /* May return NULL!! */ 
+    WvMap(int s) : MyHashTable(s), last_accessed(NULL)  { };
     TData *find(const TKey &key)
     {
-        MyPair* p = MyHashTable::operator[](key);
+        MyPair* p = find_helper(key);
         return p ? &p->data : (TData*)NULL;
     }
-    TData *operator[](const TKey &key)
-        { return find(key); }
+    TData &operator[](const TKey &key)
+    {
+        MyPair* p = find_helper(key);
+        assert(p && "WvMap: operator[] called with a non-existent key");
+        return p->data;
+    }
+    bool exists(const TKey &key)
+        { return find_helper(key); }
     void add(const TKey &key, const TData &data, bool auto_free = false)
         { MyHashTable::add(new MyPair(key, data, auto_free), true); }
     void remove(const TKey &key)
-        { MyHashTable::remove(MyHashTable::operator[](key)); } 
+    {
+        last_accessed = NULL;
+        MyHashTable::remove(MyHashTable::operator[](key));
+    } 
     typedef typename MyHashTable::Iter Iter;
 }; 
-
 
 
 #endif // __WVHASHTABLE_H

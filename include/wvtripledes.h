@@ -25,7 +25,9 @@ public:
         ECBEncrypt, /*!< Encrypt using ECB mode (avoid) */
         ECBDecrypt, /*!< Decrypt using ECB mode (avoid) */
         CFBEncrypt, /*!< Encrypt using CFB mode (simulates a stream) */
-        CFBDecrypt  /*!< Decrypt using CFB mode (simulates a stream) */
+        CFBDecrypt, /*!< Decrypt using CFB mode (simulates a stream) */
+	CBCEncrypt, /*!< Encrypt using CBC mode */
+	CBCDecrypt  /*!< Decrypt using CBC mode */
     };
 
     /*

@@ -157,12 +157,8 @@ public:
  * 
  *  - DeclareWvList(Type): creates a subclass named WvListType
  *     that contains pointers to Type.
- *  - DeclareWvList2(Type, code...): as the above, but includes the
- *     specified block of code into the public section of the
- *     class declaration.
- *     eg. DeclareWvList2(WvString, void autofill(););
- *  - DeclareWvList3(Type, name, code...): as the above, but
- *     calls the resulting class by the specified name.
+ *  - DeclareWvList2(name, Type): as the above, but calls the
+ *     resulting class by the specified name. 
  * 
  * 
  * "T" is the object type
@@ -193,13 +189,13 @@ public:
     /**
      * Clears the linked list.
      * 
-     * Destroys any elements that were added with auto_free == true.
+     * If destroy is true, destroys any elements that were added with auto_free == true.
      * 
      */
-    void zap()
+    void zap(bool destroy = true)
     {
         while (head.next)
-            unlink_after(& head);
+            unlink_after(& head, destroy);
     }
 
     /**
@@ -287,14 +283,15 @@ public:
     /**
      * Unlinks the element that follows the specified link in the list.
      * 
-     * Destroys the element if it was added with auto_free == true.
+     * Destroys the element if it was added with auto_free == true and
+     * destroy == true.
      * 
      * "after" is the link preceeding the element to be removed, non-null
      */ 
-    void unlink_after(WvLink *after)
+    void unlink_after(WvLink *after, bool destroy = true)
     {
         WvLink *next = after->next;
-        T *obj = next->auto_free ?
+        T *obj = (destroy && next->auto_free) ?
             static_cast<T*>(next->data) : NULL;
         if (next == tail) tail = after;
         next->unlink(after);

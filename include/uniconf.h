@@ -7,10 +7,23 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
-#include "uniconfroot.h"
+#include "uniconfkey.h"
+#include "uniconfgen.h"
+#include "wvcallback.h"
 #include "wvvector.h"
 
 class WvStream;
+class UniConf;
+class UniConfRoot;
+
+/**
+ * The callback type for signalling key changes from UniConf.
+ * 
+ * Parameters: key, userdata
+ *   cfg - the UniConf config object representing the key that has changed
+ *   userdata - the userdata supplied during setcallback
+ */
+typedef WvCallback<void, const UniConf &, void *> UniConfCallback;
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -35,8 +48,10 @@ class WvStream;
  */
 class UniConf
 {
+    friend class UniConfRoot;
+    
 protected:
-    UniConfRootImpl *xroot;
+    UniConfRoot *xroot;
     UniConfKey xfullkey;
 
     /**
@@ -45,29 +60,26 @@ protected:
      * You can't create non-NULL UniConf objects yourself - ask UniConfRoot
      * or another UniConf object to make one for you.
      */
-    UniConf(UniConfRootImpl *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
-        : xroot(root), xfullkey(fullkey)
-        { }
+    UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
+        : xroot(root), xfullkey(fullkey) { }
     
 public:
     /** Creates a NULL UniConf handle, useful for reporting errors. */
     UniConf() 
-        : xroot(NULL), xfullkey(UniConfKey::EMPTY)
-        { }
+        : xroot(NULL), xfullkey(UniConfKey::EMPTY) { }
     
     /**
      * Copies a UniConf handle.
      * "other" is the handle to copy
      */
     UniConf(const UniConf &other)
-        : xroot(other.xroot), xfullkey(other.xfullkey)
-    {
-    }
+        : xroot(other.xroot), xfullkey(other.xfullkey) { }
     
     /** Destroys the UniConf handle. */
-    ~UniConf()
-    {
-    }
+    ~UniConf() { }
+
+    
+    /***** Handle Manipulation API *****/
 
     /** Returns a handle to the root of the tree. */
     UniConf root() const
@@ -78,10 +90,10 @@ public:
         { return UniConf(xroot, xfullkey.removelast()); }
     
     /**
-     * Returns a pointer to the UniConfRootImpl that manages this node.
+     * Returns a pointer to the UniConfRoot that manages this node.
      * This may be NULL, to signal an invalid handle.
      */
-    UniConfRootImpl *rootobj() const
+    UniConfRoot *rootobj() const
         { return xroot; }
 
     /** Returns true if the handle is invalid (NULL). */
@@ -120,6 +132,15 @@ public:
         return *this;
     }
 
+    
+    /***** Key Retrieval API *****/
+    
+    /**
+     * Fetches the string value for this key from the registry.  If the
+     * key is not found, returns 'defvalue' instead.
+     */
+    WvString get(WvStringParm defvalue = WvString::null) const;
+
     /**
      * Without fetching its value, returns true if this key exists.
      * 
@@ -129,20 +150,6 @@ public:
     bool exists() const;
 
     /**
-     * Returns true if this key has children.
-     * 
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the keys.
-     */
-    bool haschildren() const;
-
-    /**
-     * Fetches the string value for this key from the registry.  If the
-     * key is not found, returns 'defvalue' instead.
-     */
-    WvString get(WvStringParm defvalue = WvString::null) const;
-    
-    /**
      * Fetches the integer value for this key from the registry.  If the
      * key is not found, returns 'defvalue' instead.  (This is also used to
      * fetch booleans - 'true', 'yes', 'on' and 'enabled' are recognized as
@@ -151,58 +158,73 @@ public:
      */
     int getint(int defvalue = 0) const;
 
+
+    /***** Key Storage API *****/
+
     /**
      * Stores a string value for this key into the registry.  If the value
      * is WvString::null, deletes the key and all of its children.
      * Returns true on success.
      */
-    bool set(WvStringParm value) const;
+    void set(WvStringParm value) const;
 
     /**
      * Stores a string value for this key into the registry.
      * Returns true on success.
      */
-    bool set(WVSTRING_FORMAT_DECL) const
+    void set(WVSTRING_FORMAT_DECL) const
         { return set(WvString(WVSTRING_FORMAT_CALL)); }
 
     /**
      * Stores an integer value for this key into the registry.
      * Returns true on success.
      */
-    bool setint(int value) const;
+    void setint(int value) const;
+
+
+    /***** Key Handling API *****/
+
+    /**
+     * Equivalent to "mv" in a standard unix filesystem. This recursively moves
+     * a given key and any subkeys to a new point. If the new point exists then
+     * the key will be left as a subkey at the new point. Otherwise, the key
+     * will also be renamed to the new point (as when using mv).
+     */
+    void move(UniConfKey dst); //FIXME: Currently unimplemented
 
     /**
      * Removes this key and all of its children from the registry.
      * Returns true on success.
      */
-    bool remove() const
-        { return set(WvString::null); }
+    void remove() const
+        { set(WvString::null); }
 
     /**
-     * Removes all children of this key from the registry.
-     * Returns true on success.
+     * Equivalent to "cp -r" in a standard unix filesystem. This recursively
+     * copies a given key to a new location. Any keys that already exist at that
+     * location will not be overridden unless force is true.
      */
-    bool zap() const;
+    void copy(UniConfKey dst, bool force = false); //FIXME: Unimplemented
+
+
+    
+    /***** Key Persistence API *****/
 
     /**
      * Refreshes information about this key recursively.
-     * May discard uncommitted data.  'depth' is the recursion depth.
+     * May discard uncommitted data.
      * Returns true on success.
-     * 
-     * @see UniConfDepth::Type
      */
-    bool refresh(UniConfDepth::Type depth =
-        UniConfDepth::INFINITE) const;
+    bool refresh() const;
     
     /**
      * Commits information about this key recursively.
-     * 'depth' is the recursion depth.  Returns true on success.
-     * 
-     * @see UniConfDepth::Type
      */
-    bool commit(UniConfDepth::Type depth =
-        UniConfDepth::INFINITE) const;
+    void commit() const;
 
+    
+    /***** Generator Mounting API *****/
+    
     /**
      * Mounts a generator at this key using a moniker.
      * 
@@ -243,39 +265,81 @@ public:
      */
     UniConfGen *whichmount(UniConfKey *mountpoint = NULL) const;
 
-    /**
-     * Requests notification when any the keys covered by the
-     * recursive depth specification change.
-     */
-    void addwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
-
-    /** Cancels a previously registered notification request. */
-    void delwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
-
-    /** Shortcut for registering a callback-style watch. */
-    void addwatchcallback(UniConfDepth::Type depth,
-        const UniConfCallback &callback, void *userdata) const { }
     
-    /** Shortcut for canceling a watch added with addwatchcallback(). */
-    void delwatchcallback(UniConfDepth::Type depth,
-        const UniConfCallback &callback, void *userdata) const { }
+    /***** Notification API *****/
 
     /**
+     * Requests notification when any of the keys covered by the
+     * recursive depth specification change by invoking a callback.
      */
-    void addwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
+    void add_callback(const UniConfCallback &callback, void *userdata,
+                      bool recurse = true) const;
     
-    /** Shortcut for canceling a watch added with addwatchsetbool(). */
-    void delwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
+    /**
+     * Cancels notification requested using add_callback().
+     */
+    void del_callback(const UniConfCallback &callback, void *userdata, 
+                      bool recurse = true) const;
+
+    /**
+     * Requests notification when any of the keys covered by the
+     * recursive depth specification change by setting a flag.
+     */
+    void add_setbool(bool *flag, bool recurse = true) const;
+
+    /**
+     * Cancels notification requested using add_setbool().
+     */
+    void del_setbool(bool *flag, bool recurse = true) const;
+    
+    /**
+     * Pauses notifications until matched with a call to unhold_delta().
+     * 
+     * While paused, notification events are placed into a pending list.
+     * Redundant notifications may be discarded.
+     *
+     * Use this to safeguard non-reentrant code.
+     */
+    void hold_delta();
+
+    /**
+     * Resumes notifications when each hold_delta() has been matched.
+     * 
+     * On resumption, dispatches all pending notifications except
+     * those that were destined to watches that were removed.
+     * 
+     * Use this to safeguard non-reentrant code.
+     */
+    void unhold_delta();
+    
+    /**
+     * Clears the list of pending notifications without sending them.
+     * Does not affect the hold nesting count.
+     */
+    void clear_delta();
+
+    /**
+     * Flushes the list of pending notifications by sending them.
+     * Does not affect the hold nesting count.
+     */
+    void flush_delta();
+    
+    
+    /***** Key Enumeration API *****/
     
     /**
      * Prints the entire contents of this subtree to a stream.
      * If 'everything' is true, also prints empty values.
      */
     void dump(WvStream &stream, bool everything = false) const;
-
-    // FIXME: not final API!
-    void setdefaults(const UniConf &subtree) const { }
-
+    
+    /**
+     * Returns true if this key has children.
+     * 
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the keys.
+     */
+    bool haschildren() const;
     
     /*** Iterators (see comments in class declaration) ***/
 
@@ -302,51 +366,7 @@ public:
 };
 
 
-
 /**
- * Represents the root of a hierarhical registry consisting of pairs
- * of UniConfKeys and associated string values.  This object owns
- * a UniConfRootImpl object and acts as an immutable handle for it.
- * 
- * Any number of data containers may be mounted into the tree at any
- * number of mount points to provide a backing store from which
- * registry keys and values are fetched and into which they are
- * stored.  Multiple data containers may be mounted at the same
- * location.  Key conflicts are resolved via the following
- * scoping rules:
- *
- * TODO: Fill in scoping rules...
- */
-class UniConfRoot : public UniConf
-{
-    /** undefined. */
-    UniConfRoot(const UniConfRoot &other);
-
-public:
-    /** Creates an empty UniConf tree with no mounted stores. */
-    UniConfRoot();
-    
-    /** 
-     * Creates a new UniConf tree and mounts the given moniker at the root.
-     * Since most people only want to mount one generator, this should save
-     * a line of code here and there.
-     */
-    UniConfRoot(WvStringParm moniker, bool refresh = true);
-
-    /** 
-     * Creates a new UniConf tree and mounts the given generator at the root.
-     * Since most people only want to mount one generator, this should save
-     * a line of code here and there.
-     */
-    UniConfRoot(UniConfGen *gen, bool refresh = true);
-
-    /** Destroys the UniConf tree along with all uncommitted data. */
-    ~UniConfRoot();
-};
-
-
-/**
- * @internal
  * An implementation base class for key iterators.
  */
 class UniConf::IterBase
@@ -366,16 +386,16 @@ public:
 };
 
 
-/** This iterator walks through all immediate children of a UniConf node. */
+/**
+ * This iterator walks through all immediate children of a UniConf node.
+ */
 class UniConf::Iter : public UniConf::IterBase
 {
-    UniConfAbstractIter *it;
+    UniConfGen::Iter *it;
     
 public:
     /** Creates an iterator over the direct children of a branch. */
-    Iter(const UniConf &_top)
-        : IterBase(_top), it(_top.rootobj()->iterator(top.fullkey()))
-        { }
+    Iter(const UniConf &_top);
 
     ~Iter()
         { delete it; }
@@ -392,7 +412,9 @@ public:
 };
 
 
-/** This iterator performs depth-first traversal of a subtree. */
+/**
+ * This iterator performs depth-first traversal of a subtree.
+ */
 class UniConf::RecursiveIter : public UniConf::IterBase
 {
     UniConf::IterList itlist;
@@ -448,7 +470,6 @@ private:
 
 
 /**
- * @internal
  * An implementation base class for sorted key iterators.
  * 
  * Unfortunately WvSorter is too strongly tied down to lists and pointers
@@ -495,7 +516,9 @@ protected:
 };
 
 
-/** A sorted variant of UniConf::Iter. */
+/**
+ * A sorted variant of UniConf::Iter.
+ */
 class UniConf::SortedIter : public UniConf::SortedIterBase
 {
     UniConf::Iter i;
@@ -510,7 +533,9 @@ public:
 };
 
 
-/** A sorted variant of UniConf::RecursiveIter. */
+/**
+ * A sorted variant of UniConf::RecursiveIter.
+ */
 class UniConf::SortedRecursiveIter : public UniConf::SortedIterBase
 {
     UniConf::RecursiveIter i;
@@ -526,7 +551,9 @@ public:
 };
 
 
-/** A sorted variant of UniConf::XIter. */
+/**
+ * A sorted variant of UniConf::XIter.
+ */
 class UniConf::SortedXIter : public UniConf::SortedIterBase
 {
     UniConf::XIter i;
@@ -542,3 +569,8 @@ public:
 };
 
 #endif // __UNICONF_H
+
+
+// This is pretty evil, but is rather convenient. By including uniconfroot.h
+// here, we make it so people can #include uniconf.h instead of uniconfroot.h.
+#include "uniconfroot.h"

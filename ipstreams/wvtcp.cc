@@ -219,7 +219,7 @@ bool WvTCPConn::post_select(SelectInfo &si)
 	    
 	    if (!retval || (retval < 0 && errno == EISCONN))
 		connected = result = true;
-	    else if (retval < 0 && errno != EINPROGRESS)
+	    else if (retval < 0 && errno != EINPROGRESS && errno != EALREADY)
 	    {
 		seterr(errno);
 		result = true;

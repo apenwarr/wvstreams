@@ -154,9 +154,9 @@ bool WvFDStream::post_select(SelectInfo &si)
     bool result = WvStream::post_select(si);
     
     // flush the output buffer if possible
-    if (wfd >= 0 
-	&& (outbuf.used() || autoclose_time)
-	&& FD_ISSET(wfd, &si.write))
+    size_t outbuf_used = outbuf.used();
+    if (wfd >= 0 && (outbuf_used || autoclose_time)
+	&& FD_ISSET(wfd, &si.write) && should_flush())
     {
         flush_outbuf(0);
 	

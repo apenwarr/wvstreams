@@ -10,8 +10,23 @@
 
 #include <unistd.h>
 #include "wvhashtable.h"
+#include "wvcallback.h"
 
 DeclareWvTable(int);
+typedef WvCallback<void, pid_t> WvForkCallback;
+
+/**
+ * Register a callback to be called during wvfork.
+ * It will be called (in both parent and child process) after the fork has
+ * happened but before wvfork returns.  It is passed the return value of the
+ * fork.
+ */
+extern void add_wvfork_callback(WvForkCallback cb);
+
+/**
+ * Remove a callback from the list of wvfork callbacks.
+ */
+extern void remove_wvfork_callback(WvForkCallback cb);
 
 /**
  * wvfork_start is just like fork, except that it will block the

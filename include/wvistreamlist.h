@@ -35,6 +35,9 @@ public:
     
 protected:
     WvIStreamListBase sure_thing;
+
+private:
+    static void onfork(pid_t p);
 };
 
 #endif // __WVISTREAMLIST_H

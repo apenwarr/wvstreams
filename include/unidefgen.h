@@ -7,10 +7,10 @@
  * Usable with the moniker default:
  */
 
-#ifndef __UNICONFDEFGEN_H
-#define __UNICONFDEFGEN_H
+#ifndef __UNIDEFGEN_H
+#define __UNIDEFGEN_H
 
-#include "uniconfgen.h"
+#include "unifiltergen.h"
 
 /*
  * The defaults are stored and accessed by using a * in the keyname. The *
@@ -32,10 +32,20 @@
  * If a more absolute path exists, then it will be returned instead of the
  * defaults. Precedence is given to matches existing closer to the end of
  * the key.
+ *
+ * If the key is set to '*n', it will return the n'th element from the end of
+ * the absolute path that was passed in.  For instance, if
+ * /twister/ * / * / reality is set to *1, then a search for
+ * /twister/expression/bob/reality will return 'bob'.  If it is set to *2, the
+ * search will return 'expression'.  If it were set to *3 (or *0), the result is
+ * undefined.
  */
 class UniDefGen : public UniFilterGen
 {
-    WvString finddefault(UniConfKey key, UniConfKey keypart = "");
+    void finddefault(const UniConfKey &key, char *p, char *q,
+            WvString &result);
+    void replacewildcard(const UniConfKey &key, char *p,
+            WvString &result);
 
 public:
     UniDefGen(UniConfGen *gen) : UniFilterGen(gen) { }
@@ -45,4 +55,4 @@ public:
     virtual WvString get(const UniConfKey &key);
 };
 
-#endif // __UNICONFDEFGEN_H
+#endif // __UNIDEFGEN_H

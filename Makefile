@@ -1,5 +1,5 @@
 
-.PHONY: default
+.PHONY: default all
 
 default:
 

@@ -285,8 +285,8 @@ public:
 
 
 
-/** The WvConstInPlaceBuffer storage class. */
-class WvConstInPlaceBufferStore :
+/** The WvConstInPlaceBuf storage class. */
+class WvConstInPlaceBufStore :
     public WvReadOnlyBufferStoreMixin<WvBufStore>
 {
 protected:
@@ -295,7 +295,7 @@ protected:
     size_t readidx;
 
 public:
-    WvConstInPlaceBufferStore(int _granularity,
+    WvConstInPlaceBufStore(int _granularity,
         const void *_data, size_t _avail);
     const void *ptr() const
         { return data; }

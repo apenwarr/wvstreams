@@ -39,6 +39,7 @@ WvStream::WvStream()
     errnum = 0;
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
+    want_to_flush = true;
     is_auto_flush = true;
     alarm_was_ticking = false;
     force.readable = true;
@@ -270,6 +271,19 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
 }
 
 
+size_t WvStream::continue_read(time_t wait_msec, WvBuf &outbuf, size_t count)
+{
+    // for now, just wrap the older read function
+    size_t free = outbuf.free();
+    if (count > free)
+        count = free;
+    unsigned char *buf = outbuf.alloc(count);
+    size_t len = continue_read(wait_msec, buf, count);
+    outbuf.unalloc(count - len);
+    return len;
+}
+
+
 size_t WvStream::write(WvBuf &inbuf, size_t count)
 {
     // for now, just wrap the older write function
@@ -318,12 +332,45 @@ size_t WvStream::read(void *buf, size_t count)
 }
 
 
+size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
+{
+    assert(uses_continue_select);
+
+    if (!count)
+        return 0;
+
+    if (wait_msec >= 0)
+        alarm(wait_msec);
+
+    queuemin(count);
+
+    int got = 0;
+
+    while (isok())
+    {
+        if ((got = read(buf, count)))
+            break;
+        if (alarm_was_ticking) 
+            break;
+
+        continue_select(-1);
+    }
+
+    if (wait_msec >= 0)
+        alarm(-1);
+
+    queuemin(0);
+    
+    return got;
+}
+
+
 size_t WvStream::write(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
     size_t wrote = 0;
-    if (! outbuf_delayed_flush && ! outbuf.used())
+    if (!outbuf_delayed_flush && !outbuf.used())
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
@@ -340,13 +387,15 @@ size_t WvStream::write(const void *buf, size_t count)
         outbuf.put(buf, count);
         wrote += count;
     }
-    if (! outbuf_delayed_flush)
+
+    if (should_flush())
     {
         if (is_auto_flush)
             flush(0);
-        else
+        else 
             flush_outbuf(0);
     }
+
     return wrote;
 }
 
@@ -434,8 +483,15 @@ void WvStream::drain()
 
 bool WvStream::flush(time_t msec_timeout)
 {
+    want_to_flush = true;
     return flush_internal(msec_timeout) // any other internal buffers
 	&& flush_outbuf(msec_timeout);  // our own outbuf
+}
+
+
+bool WvStream::should_flush()
+{
+    return want_to_flush;
 }
 
 
@@ -470,7 +526,10 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	    close();
 	}
     }
-    
+
+    if (!outbuf.used() && outbuf_delayed_flush)
+        want_to_flush = false;
+
     return !outbuf.used();
 }
 

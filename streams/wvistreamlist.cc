@@ -7,6 +7,8 @@
  */
 #include "wvistreamlist.h"
 
+#include "wvfork.h"
+
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #define STREAMTRACE 0
@@ -22,7 +24,10 @@ WvIStreamList::WvIStreamList()
 {
     auto_prune = true;
     if (this == &globallist)
+    {
 	globalstream = this;
+        add_wvfork_callback(WvIStreamList::onfork);
+    }
 }
 
 
@@ -145,4 +150,13 @@ void WvIStreamList::execute()
 
     level--;
     TRACE("[DONE %p]\n", this);
+}
+
+void WvIStreamList::onfork(pid_t p)
+{
+    if (p == 0)
+    {
+        // this is a child process: don't inherit the global streamlist
+        globallist.zap(false);
+    }
 }

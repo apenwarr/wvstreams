@@ -239,8 +239,12 @@ bool WvPipe::child_killed() const
 
 // return the numeric exit status of the child (if it exited) or the
 // signal that killed the child (if it was killed).
-int WvPipe::exit_status() const
+int WvPipe::exit_status()
 {
+    /* FIXME: bug in WvSubProc? */
+    proc.wait(0);
+    proc.wait(0);
+
     int st = proc.estatus;
     assert (WIFEXITED(st) || WIFSIGNALED(st));
     if (child_killed())

@@ -357,6 +357,7 @@ WvString nice_hostname(WvStringParm name)
     return nice;
 }
 
+
 WvString getfilename(WvStringParm fullname)
 {
     WvString tmp(fullname);
@@ -372,6 +373,7 @@ WvString getfilename(WvStringParm fullname)
     else // no terminating slash
 	return cptr+1;
 }
+
 
 WvString getdirname(WvStringParm fullname)
 {
@@ -409,6 +411,30 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
     
     return buf.getstr();
 }
+
+WvString undupe(WvStringParm s, char c)
+{
+    WvDynBuf out;
+
+    bool last = false;
+
+    for (int i = 0; s[i] != '\0'; i++)
+    {
+        if (s[i] != c)
+        {
+            out.putch(s[i]);
+            last = false;
+        }
+        else if (!last)
+        {
+            out.putch(c);
+            last = true;
+        }
+    }
+    
+    return out.getstr();
+}
+
 
 WvString rfc1123_date(time_t t)
 {

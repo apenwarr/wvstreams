@@ -169,8 +169,7 @@ public:
      * strings, then the string returned here will have the same
      * case information as those strings but the arrangement of
      * slashes may differ.  That is, the identity
-     * UniConfKey(string).printable() == key 
-     * does not hold.
+     * UniConfKey(string).printable() == string does not hold.
      * 
      * Returns: the path as a string
      */
@@ -204,6 +203,13 @@ public:
      * Returns: true if the key matches, false otherwise
      */
     bool matches(const UniConfKey &pattern) const;
+
+
+    /**
+     * Returns true if this key is either the same key as the key specified or a
+     * subkey of that key.
+     */
+    bool suborsame(const UniConfKey &key) const;
 
     /**
      * Determines if two paths are equal.

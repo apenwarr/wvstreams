@@ -95,6 +95,8 @@ public:
      * probably not exactly this.
      */
     virtual bool flush(time_t msec_timeout) = 0;
+
+    virtual bool should_flush() = 0;
     
     // IObject
     static const UUID IID;
@@ -168,8 +170,17 @@ public:
     /** read a data block on the stream.  Returns the actual amount read. */
     virtual size_t read(void *buf, size_t count);
 
-    /** write a data block on the stream.  Returns the actual amount written. */
-    virtual size_t write(const void *buf, size_t count);
+    /**
+     * Read exactly count bytes from the stream
+     *
+     * Notes:
+     *      must be using continue_select to use this function
+     *      uses the alarm if wait_msec >= 0
+     *      if timeout strikes before count bytes could be read,
+     *          nothing is read and 0 is returned 
+     *      resets queuemin to 0
+     */
+    virtual size_t continue_read(time_t wait_msec, void *buf, size_t count);
 
     /**
      * Reads a data block from the stream into the buffer.
@@ -181,6 +192,16 @@ public:
      * be read at once.
      */
     virtual size_t read(WvBuf &outbuf, size_t count);
+
+    /**
+     * Read exactly count bytes from the stream
+     *
+     * Notes from the two functions above also apply
+     */
+    virtual size_t continue_read(time_t wait_msec, WvBuf &outbuf, size_t count);
+
+    /** write a data block on the stream.  Returns the actual amount written. */
+    virtual size_t write(const void *buf, size_t count);
 
     /**
      * Writes a data block to the stream from the buffer.
@@ -241,11 +262,6 @@ public:
      * read at once.  (Useful for processing Content-Length headers, etc.)
      * Use count==0 to disable this feature.
      * 
-     * queuemin() mainly affects what happens when you do a read(), not so
-     * much what happens when you do a select().  If you set queuemin != 0,
-     * you might still select true for read, but read() might return 0 bytes
-     * since it's holding back data until enough bytes are ready in inbuf.
-     *
      * WARNING: getline() sets queuemin to 0 automatically!
      */ 
     void queuemin(size_t count)
@@ -263,7 +279,10 @@ public:
      * automatically.  To flush the output buffer, use flush() or select().
      */ 
     void delay_output(bool is_delayed)
-        { outbuf_delayed_flush = is_delayed; }
+    {
+        outbuf_delayed_flush = is_delayed;
+        want_to_flush = !is_delayed;
+    }
 
     /**
      * if true, force write() to call flush() each time, the default behavour.
@@ -281,7 +300,9 @@ public:
      * Returns true if the flushing finished (the output buffer is empty).
      */
     virtual bool flush(time_t msec_timeout);
-    
+
+    virtual bool should_flush();
+
     /**
      * flush the output buffer automatically as select() is called.  If
      * the buffer empties, close the stream.  If msec_timeout seconds pass,
@@ -541,6 +562,7 @@ private:
 		 bool readable, bool writable, bool isexcept,
 		 bool forceable);
 
+
 protected:
     static WvTaskMan *taskman;
 
@@ -552,6 +574,10 @@ protected:
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;
+
+    // Used to guard against excessive flushing when using delay_flush
+    bool want_to_flush;
+
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time

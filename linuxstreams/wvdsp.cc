@@ -14,6 +14,9 @@
 #include <sys/soundcard.h>
 #include <fcntl.h>
 #include <sched.h>
+#include <time.h>
+
+#define DO_RATEADJ 0
 
 static const char *AUDIO_DEVICE = "/dev/dsp";
 
@@ -24,17 +27,30 @@ static int msec_lat(int frags, int frag_bits, int srate)
 
 WvDsp::WvDsp(int msec_latency, int srate, int bits, bool stereo,
 	     bool readable, bool writable, bool _realtime, bool _oss)
-    : log("DSP", WvLog::Debug2), rbuf(102400), wbuf(102400)
+    : log("DSP", WvLog::Debug2), rcircle(102400), wcircle(102400),
+	 inrate(bits/8 * (stereo ? 2 : 1), srate, srate), 
+	outrate(bits/8 * (stereo ? 2 : 1), srate, srate)
 {
     is_realtime = _realtime;
 
     int mode = 0;
+    
+//    srate = 44100;
+    outrate.orate_n = srate;
    
     assert(msec_latency >= 0);
     assert(srate >= 8000);
     assert(srate <= 48000);
     assert(bits == 8 || bits == 16);
     assert(readable || writable);
+    
+#if DO_RATEADJ
+    // the record clock should be the same as the playback clock, so it's
+    // best to match our output rate to the input rate.  Of course, we can
+    // only do this if we'll be inputting anything.
+    if (readable)
+	outrate.match_rate = &inrate;
+#endif
     
     if (readable && writable)
 	mode = O_RDWR;
@@ -129,7 +145,7 @@ bool WvDsp::pre_select(SelectInfo &si)
     bool ret = false;
 
 /*
-    size_t rleft = rbuf.used(), wleft = wbuf.used();
+    size_t rleft = rcircle.used(), wleft = wcircle.used();
 
     if (rleft > 2*frag_size)
 	log("read circle is filling! (%s = %s)\n", rleft, rleft/frag_size);
@@ -141,7 +157,7 @@ bool WvDsp::pre_select(SelectInfo &si)
     if (si.wants.readable)
     {
 	rloop.drain();
-	if (rbuf.used())
+	if (rcircle.used())
 	    return true;
 	else
 	    ret |= rloop.pre_select(si);
@@ -160,7 +176,7 @@ bool WvDsp::post_select(SelectInfo &si)
     
     if (si.wants.readable)
     {
-	if (rbuf.used())
+	if (rcircle.used())
 	    return true;
 	else
 	    ret |= rloop.post_select(si);
@@ -174,26 +190,58 @@ size_t WvDsp::uread(void *buf, size_t len)
 {
     if (len == 0)
         return 0;
-    size_t avail = rbuf.used();
+    size_t avail = rcircle.used();
     
+    // transfer from the magic circle into our rbuf, using the rate adjuster.
+    {
+	WvDynBuf silly;
+	void *data = silly.alloc(avail);
+	size_t got = rcircle.get(data, avail);
+	silly.unalloc(avail - got);
+#if DO_RATEADJ
+	inrate.encode(silly, rbuf);
+#else
+	rbuf.merge(silly);
+#endif	
+    }
+    
+    avail = rbuf.used();
     if (avail < len)
 	len = avail;
     
-    len = rbuf.get(buf, len);
+    rbuf.move(buf, len);
     return len;
 }
 
 
 size_t WvDsp::uwrite(const void *buf, size_t len)
 {
+    static time_t last_dump;
+    
     if (len == 0)
         return 0;
-    size_t howmuch = wbuf.left();
     
-    if (howmuch > len)
-	howmuch = len;
-    
+    if (last_dump < time(NULL) - 1)
+    {
+	log(WvLog::Debug, "writer rates: %s/%s; reader rates: %s/%s\n",
+	    outrate.getirate(), outrate.getorate(),
+	    inrate.getirate(), inrate.getorate());
+	last_dump = time(NULL);
+    }
+   
+#if DO_RATEADJ
+    outrate.flushmembuf(buf, len, wbuf);
+#else
     wbuf.put(buf, len);
+#endif
+    
+    size_t howmuch = wcircle.left();
+    
+    if (howmuch > wbuf.used())
+	howmuch = wbuf.used();
+    
+    buf = wbuf.get(howmuch);
+    wcircle.put(buf, howmuch);
     wloop.write("", 1);
     
     return len; // never let WvStreams buffer anything
@@ -276,7 +324,7 @@ void WvDsp::subproc(bool reading, bool writing)
 	    size_t len = do_uread(buf, sizeof(buf));
 	    if (len)
 	    {
-		rbuf.put(buf, len);
+		rcircle.put(buf, len);
 		rloop.write("", 1);
 	    }
 	}
@@ -285,14 +333,14 @@ void WvDsp::subproc(bool reading, bool writing)
 	{
             wloop.drain();
             size_t avail;
-            while ((avail = wbuf.used()) >= frag_size)
+            while ((avail = wcircle.used()) >= frag_size)
             {
                 if (avail > frag_size)
                     avail = frag_size;
-                size_t len = wbuf.get(buf, avail);
+                size_t len = wcircle.get(buf, avail);
                 do_uwrite(buf, len);
 	    }
-            if (! reading)
+            if (!reading)
                 wloop.select(-1);
 	}
     }
@@ -382,13 +430,13 @@ size_t WvDsp::do_uread(void *buf, size_t len)
 size_t WvDsp::do_uwrite(const void *buf, size_t len)
 {
     if (!len) return 0;
-
+    
     if (len < frag_size)
         log(WvLog::Warning, "writing less than frag size: %s/%s\n",
 	    len, frag_size);
-
+    
     int o = ospace(), o2;
-   
+    
     if (o < 2)
     {
 	o2 = o;
