@@ -345,19 +345,24 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
     queuemin(count);
 
-    while (1)
+    int got = 0;
+
+    while (isok())
     {
-        if (read(buf, count))
-            return count;
+        if ((got = read(buf, count)))
+            break;
         if (alarm_was_ticking) 
-            return 0;
+            break;
 
         continue_select(-1);
     }
 
-    alarm(-1);
+    if (wait_msec >= 0)
+        alarm(-1);
 
     queuemin(0);
+    
+    return got;
 }
 
 
