@@ -79,39 +79,39 @@ public:
     /**
      * Reads a command from the connection.
      * The payload is stored in UniConfConn::payloadbuf.
-     * @return the command string
+     * Returns: the command string
      */
     Command readcmd();
 
     /**
      * Writes a command to the connection.
-     * @param command the command
-     * @param payload the payload
+     * "command" is the command
+     * "payload" is the payload
      */
     void writecmd(Command command, WvStringParm payload);
 
     /**
      * Writes a REPLY_OK message.
-     * @param payload the payload, defaults to ""
+     * "payload" is the payload, defaults to ""
      */
     void writeok(WvStringParm payload = "");
 
     /**
      * Writes a REPLY_FAIL message.
-     * @param payload the payload, defaults to ""
+     * "payload" is the payload, defaults to ""
      */
     void writefail(WvStringParm payload = "");
 
     /**
      * Writes a PART_VALUE message.
-     * @param key the key
-     * @param value the value
+     * "key" is the key
+     * "value" is the value
      */
     void writevalue(const UniConfKey &key, WvStringParm value);
     
     /**
      * Writes a PART_TEXT message.
-     * @param text the text
+     * "text" is the text
      */
     void writetext(WvStringParm text);
 

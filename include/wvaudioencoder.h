@@ -20,13 +20,13 @@ public:
 
     /**
      * Returns the number of channels.
-     * @return the number of channels
+     * Returns: the number of channels
      */
     virtual unsigned int channels() const = 0;
 
     /**
      * Returns the number of samples per frame.
-     * @return the frame size
+     * Returns: the frame size
      */
     virtual size_t samplesperframe() const = 0;
 };
@@ -38,20 +38,20 @@ public:
 
     /**
      * Returns the number of channels.
-     * @return the number of channels
+     * Returns: the number of channels
      */
     virtual unsigned int channels() const = 0;
 
     /**
      * Returns the number of samples per frame.
-     * @return the frame size
+     * Returns: the frame size
      */
     virtual size_t samplesperframe() const = 0;
 
     /**
      * Synthesizes one audio frame to compensate for a missing packet.
-     * @param outbuf the output buffer
-     * @return true on success
+     * "outbuf" is the output buffer
+     * Returns: true on success
      * @see encode
      */
     virtual bool missing(OBuffer &outbuf) = 0;

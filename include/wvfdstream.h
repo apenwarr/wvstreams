@@ -40,7 +40,7 @@ protected:
 public:
     /**
      * Creates a WvStream from an existing file descriptor.
-     * @param rwfd the file descriptor for reading and writing
+     * "rwfd" is the file descriptor for reading and writing
      */
     WvFDStream(int rwfd = -1);
     
@@ -49,8 +49,8 @@ public:
      * 
      * The file decriptors may be the same.
      * 
-     * @param rfd the file descriptor for reading
-     * @param wfd the file descriptor for writing
+     * "rfd" is the file descriptor for reading
+     * "wfd" is the file descriptor for writing
      */
     WvFDStream(int rfd, int wfd);
 
@@ -61,14 +61,14 @@ public:
 
     /**
      * Returns the Unix file descriptor for reading from this stream.
-     * @return the file descriptor, or -1 if none
+     * Returns: the file descriptor, or -1 if none
      */
     int getrfd() const
         { return rfd; }
     
     /**
      * Returns the Unix file descriptor for writing to this stream.
-     * @return the file descriptor, or -1 if none
+     * Returns: the file descriptor, or -1 if none
      */
     int getwfd() const
         { return wfd; }
@@ -79,7 +79,7 @@ public:
      * Asserts that the file descriptors for reading and writing
      * are the same before returning.
      * 
-     * @return the file descriptor, or -1 if none
+     * Returns: the file descriptor, or -1 if none
      */
     int getfd() const
     {

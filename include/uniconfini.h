@@ -28,7 +28,7 @@ class UniConfIniFileGen : public UniConfTempGen
 public:
     /**
      * Creates a generator which can load/modify/save a .ini file.
-     * @param filename the local path of the .ini file
+     * "filename" is the local path of the .ini file
      */
     UniConfIniFileGen(WvStringParm filename);
 

@@ -24,8 +24,8 @@ public:
     /**
      * Creates a tunnel device and its associated interface.
      *
-     * @param addr the initial ip address for the interface
-     * @param mtu the max transfer unit, default 1400
+     * "addr" is the initial ip address for the interface
+     * "mtu" is the max transfer unit, default 1400
      */
     WvTunDev(const WvIPNet &addr, int mtu = 1400);
 

@@ -68,7 +68,7 @@ namespace WvSpeex
     public:
         /**
          * Creates a bitrate specification.
-         * @param quality the quality index
+         * "quality" is the quality index
          */
         VBRQuality(float quality) : BitrateSpec(VBR_QUALITY)
         {
@@ -88,7 +88,7 @@ namespace WvSpeex
     public:
         /**
          * Creates a bitrate specification.
-         * @param nominal the nominal bitrate
+         * "nominal" is the nominal bitrate
          */
         CBRBitrate(int nominal) : BitrateSpec(CBR_BITRATE)
         {
@@ -105,7 +105,7 @@ namespace WvSpeex
     public:
         /**
          * Creates a bitrate specification.
-         * @param bitrate the fixed bitrate
+         * "bitrate" is the fixed bitrate
          */
         CBRQuality(float quality) : BitrateSpec(CBR_QUALITY)
         {
@@ -159,15 +159,15 @@ public:
     /**
      * Creates a Speex Encoder.
      *
-     * @param bitrate the bitrate specification
-     * @param samplingrate the number of samples per second,
+     * "bitrate" is the bitrate specification
+     * "samplingrate" is the number of samples per second,
      *        preferably one of 8000, 16000, or 32000
-     * @param channels number of channels (must be 1 for now),
+     * "channels" is number of channels (must be 1 for now),
      *        defaults to 1
-     * @param mode the Speex codec mode to use or
+     * "mode" is the Speex codec mode to use or
      *        WvSpeex::DEFAULT_MODE to select one automatically
      *        based on the sampling rate, this is the default
-     * @param complexity a measure of the amount of CPU
+     * "complexity" is a measure of the amount of CPU
      *        resources that should be allocated to the encoder,
      *        ranges from 0 to 10 or WvSpeex::DEFAULT_COMPLEXITY
      *        the encoder default, this is the default
@@ -181,39 +181,39 @@ public:
     
     /**
      * Returns the sampling rate.
-     * @return the sampling rate
+     * Returns: the sampling rate
      */
     int samplingrate() const;
     
     /**
      * Returns the number of channels.
-     * @return the number of channels
+     * Returns: the number of channels
      */
     virtual unsigned int channels() const
         { return _channels; }
 
     /**
      * Returns the number of samples per frame.
-     * @return the frame size
+     * Returns: the frame size
      */
     virtual size_t samplesperframe() const
         { return _samplesperframe; }
 
     /**
      * Returns the current encoding mode.
-     * @return the encoding mode
+     * Returns: the encoding mode
      */
     WvSpeex::CodecMode mode() const;
 
     /**
      * Returns true if variable bitrate support has been enabled.
-     * @return true if it is enabled
+     * Returns: true if it is enabled
      */
     bool vbr() const;
 
     /**
      * Returns the nominal bitrate.
-     * @return the bitrate, or -1 if not specified or not meaningful
+     * Returns: the bitrate, or -1 if not specified or not meaningful
      */
     int nominalbitrate() const;
 
@@ -276,11 +276,11 @@ public:
      * For now, if the input bitstream is stereo, outputs the left
      * channel only.  This behaviour may change later on.
      * 
-     * @param samplingrate the number of samples per second,
+     * "samplingrate" is the number of samples per second,
      *        preferably one of 8000, 16000, or 32000
-     * @param channels number of channels (must be 1 for now),
+     * "channels" is number of channels (must be 1 for now),
      *        defaults to 1
-     * @param mode the Speex codec mode to use or
+     * "mode" is the Speex codec mode to use or
      *        WvSpeex::DEFAULT_MODE to select one automatically
      *        based on the sampling rate, this is the default
      */
@@ -291,48 +291,48 @@ public:
     
     /**
      * Synthesizes one audio frame to compensate for a missing packet.
-     * @param outbuf the output buffer
-     * @return true on success
+     * "outbuf" is the output buffer
+     * Returns: true on success
      * @see encode
      */
     virtual bool missing(OBuffer &outbuf);
 
     /**
      * Returns the number of channels in the stream.
-     * @return the number of channels, non-negative
+     * Returns: the number of channels, non-negative
      */
     virtual unsigned int channels() const
         { return _channels; }
 
     /**
      * Returns the sampling rate of the stream.
-     * @return the sampling rate
+     * Returns: the sampling rate
      */
     int samplingrate() const
         { return _samplingrate; }
 
     /**
      * Returns the number of samples per frame.
-     * @return the frame size
+     * Returns: the frame size
      */
     virtual size_t samplesperframe() const
         { return _samplesperframe; }
 
     /**
      * Returns the current encoding mode.
-     * @return the encoding mode
+     * Returns: the encoding mode
      */
     WvSpeex::CodecMode mode() const;
     
     /**
      * Determines if the perceptual enhancement post-filter is enabled.
-     * @return true if it is enabled
+     * Returns: true if it is enabled
      */
     bool postfilter() const;
 
     /**
      * Enables or disables the perceptual enhancement post-filter.
-     * @param enable true or false
+     * "enable" is true or false
      */
     void setpostfilter(bool enable);
 

@@ -28,16 +28,16 @@ public:
     /**
      * Requests notification when any the keys covered by the
      * recursive depth specification changes.
-     * @param depth the recursion depth identifying keys of interest
-     * @param watch the observer to notify
+     * "depth" is the recursion depth identifying keys of interest
+     * "watch" is the observer to notify
      */
     void addwatch(const UniConfKey &key, UniConfDepth::Type depth,
         UniConfWatch *watch);
 
     /**
      * Cancels a previously registered notification request.
-     * @param depth the recursion depth identifying keys of interest
-     * @param watch the observer to notify
+     * "depth" is the recursion depth identifying keys of interest
+     * "watch" is the observer to notify
      */
     void delwatch(const UniConfKey &key, UniConfDepth::Type depth,
         UniConfWatch *watch);

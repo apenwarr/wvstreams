@@ -22,9 +22,9 @@
  * performance, define the functor as a struct that provides an
  * operator() inline.
  *
- * @param IT the input buffer datatype
- * @param OT the output buffer datatype
- * @param FT the functor type
+ * "IT" is the input buffer datatype
+ * "OT" is the output buffer datatype
+ * "FT" is the functor type
  */
 template<class IT, class OT, class FT>
 class WvFunctorEncoder : public WvTypedEncoder<IT, OT>

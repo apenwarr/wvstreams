@@ -89,7 +89,7 @@ public:
      * Transient errors (eg. bad block, but recoverable) should be
      * detected in a different fashion.
      * 
-     * @return true if the encoder is ok
+     * Returns: true if the encoder is ok
      */
     bool isok() const
         { return okay && _isok(); }
@@ -100,7 +100,7 @@ public:
      * This will be set when the encoder detects and end-of-data
      * mark in its input, or when finish() is called.
      * 
-     * @return true if the encoder is finished
+     * Returns: true if the encoder is finished
      */
     bool isfinished() const
         { return finished || _isfinished(); }
@@ -108,7 +108,7 @@ public:
     /**
      * Returns an error message if any is available.
      *
-     * @return the error message, or the null string is isok() == true
+     * Returns: the error message, or the null string is isok() == true
      */
     WvString geterror() const;
 
@@ -146,11 +146,11 @@ public:
      * A stream might become isfinished() == true if an encoder-
      * specific end-of-data marker was detected in the input.
      * 
-     * @param inbuf the input buffer
-     * @param outbuf the output buffer
-     * @param flush if true, flushes the encoder
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inbuf" is the input buffer
+     * "outbuf" is the output buffer
+     * "flush" is if true, flushes the encoder
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      * @see _encode for the actual implementation
      */
     bool encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush = false,
@@ -159,10 +159,10 @@ public:
     /**
      * Flushes the encoder and optionally finishes it.
      *
-     * @param inbuf the input buffer
-     * @param outbuf the output buffer
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inbuf" is the input buffer
+     * "outbuf" is the output buffer
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
         bool finish = false)
@@ -181,8 +181,8 @@ public:
      * It is safe to call this function multiple times.
      * The implementation will simply return isok() and do nothing else.
      * 
-     * @param outbuf the output buffer
-     * @return true on success
+     * "outbuf" is the output buffer
+     * Returns: true on success
      * @see _finish for the actual implementation
      */
     bool finish(WvBuffer &outbuf);
@@ -197,7 +197,7 @@ public:
      * If the behaviour is not supported or an error occurs,
      * then false is returned and afterwards isok() == false.
      * 
-     * @return true on success
+     * Returns: true on success
      * @see _reset for the actual implementation
      */
     bool reset();
@@ -205,10 +205,10 @@ public:
     /**
      * Flushes data through the encoder from a string to a buffer.
      *
-     * @param instr the input string
-     * @param outbuf the output buffer
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "instr" is the input string
+     * "outbuf" is the output buffer
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool flushstrbuf(WvStringParm instr, WvBuffer &outbuf,
         bool finish = false);
@@ -218,10 +218,10 @@ public:
      * 
      * The output data is appended to the target string.
      * 
-     * @param instr the input string
-     * @param outstr the output string
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "instr" is the input string
+     * "outstr" is the output string
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool flushstrstr(WvStringParm instr, WvString &outstr,
         bool finish = false);
@@ -231,11 +231,11 @@ public:
      * 
      * The output data is appended to the target string.
      * 
-     * @param inbuf the input buffer
-     * @param outstr the output string
-     * @param flush if true, flushes the encoder
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inbuf" is the input buffer
+     * "outstr" is the output string
+     * "flush" is if true, flushes the encoder
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */   
     bool encodebufstr(WvBuffer &inbuf, WvString &outstr,
         bool flush = false, bool finish = false);
@@ -245,10 +245,10 @@ public:
      * 
      * The output data is appended to the target string.
      * 
-     * @param inbuf the input buffer
-     * @param outstr the output string
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inbuf" is the input buffer
+     * "outstr" is the output string
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */   
     bool flushbufstr(WvBuffer &inbuf, WvString &outstr,
         bool finish = false)
@@ -257,29 +257,29 @@ public:
     /**
      * Flushes data through the encoder from a string to a string.
      *
-     * @param inbuf the input buffer
-     * @param finish if true, calls finish() on success
-     * @return the resulting encoded string, does not signal errors
+     * "inbuf" is the input buffer
+     * "finish" is if true, calls finish() on success
+     * Returns: the resulting encoded string, does not signal errors
      */   
     WvString strflushstr(WvStringParm instr, bool finish = false);
     
     /**
      * Flushes data through the encoder from a buffer to a string.
      *
-     * @param inbuf the input buffer
-     * @param finish if true, calls finish() on success
-     * @return the resulting encoded string, does not signal errors
+     * "inbuf" is the input buffer
+     * "finish" is if true, calls finish() on success
+     * Returns: the resulting encoded string, does not signal errors
      */   
     WvString strflushbuf(WvBuffer &inbuf, bool finish = false);
 
     /**
      * Flushes data through the encoder from memory to a buffer.
      *
-     * @param inmem the input data pointer
-     * @param inlen the input data length
-     * @param outbuf the output buffer
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inmem" is the input data pointer
+     * "inlen" is the input data length
+     * "outbuf" is the output buffer
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool flushmembuf(const void *inmem, size_t inlen, WvBuffer &outbuf,
         bool finish = false);
@@ -293,12 +293,12 @@ public:
      * If the buffer was too small to hold the data, the overflow
      * bytes will be discarded and false will be returned.
      * 
-     * @param inmem the input data pointer
-     * @param inlen the input data length
-     * @param outmem the output data pointer
-     * @param outlen the output data length, by reference
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inmem" is the input data pointer
+     * "inlen" is the input data length
+     * "outmem" is the output data pointer
+     * "outlen" is the output data length, by reference
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool flushmemmem(const void *inmem, size_t inlen, void *outmem,
         size_t *outlen, bool finish = false);
@@ -312,13 +312,13 @@ public:
      * If the buffer was too small to hold the data, the overflow
      * bytes will be discarded and false will be returned.
      * 
-     * @param inmem the input data pointer
-     * @param inlen the input data length
-     * @param outmem the output data pointer
-     * @param outlen the output data length, by reference
-     * @param flush if true, flushes the encoder
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inmem" is the input data pointer
+     * "inlen" is the input data length
+     * "outmem" is the output data pointer
+     * "outlen" is the output data length, by reference
+     * "flush" is if true, flushes the encoder
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool encodebufmem(WvBuffer &inbuf, void *outmem, size_t *outlen,
         bool flush = false, bool finish = false);   
@@ -332,11 +332,11 @@ public:
      * If the buffer was too small to hold the data, the overflow
      * bytes will be discarded and false will be returned.
      * 
-     * @param inbuf the input buffer
-     * @param outmem the output data pointer
-     * @param outlen the output data length, by reference
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "inbuf" is the input buffer
+     * "outmem" is the output data pointer
+     * "outlen" is the output data length, by reference
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool flushbufmem(WvBuffer &inbuf, void *outmem, size_t *outlen,
         bool finish = false)
@@ -351,11 +351,11 @@ public:
      * If the buffer was too small to hold the data, the overflow
      * bytes will be discarded and false will be returned.
      * 
-     * @param instr the input string
-     * @param outmem the output data pointer
-     * @param outlen the output data length, by reference
-     * @param finish if true, calls finish() on success
-     * @return true on success
+     * "instr" is the input string
+     * "outmem" is the output data pointer
+     * "outlen" is the output data length, by reference
+     * "finish" is if true, calls finish() on success
+     * Returns: true on success
      */
     bool flushstrmem(WvStringParm instr, void *outmem, size_t *outlen,
         bool finish = false);
@@ -363,10 +363,10 @@ public:
     /**
      * Flushes data through the encoder from memory to a string.
      *
-     * @param inmem the input data pointer
-     * @param inlen the input data length
-     * @param finish if true, calls finish() on success
-     * @return the resulting encoded string, does not signal errors
+     * "inmem" is the input data pointer
+     * "inlen" is the input data length
+     * "finish" is if true, calls finish() on success
+     * Returns: the resulting encoded string, does not signal errors
      */
     WvString strflushmem(const void *inmem, size_t inlen, bool finish = false);
 
@@ -406,7 +406,7 @@ protected:
      * 
      * Most implementations do not need to override this.
      * 
-     * @return true if the encoder is ok
+     * Returns: true if the encoder is ok
      * @see setnotok
      */
     virtual bool _isok() const
@@ -422,7 +422,7 @@ protected:
      * 
      * Most implementations do not need to override this.
      * 
-     * @return true if the encoder is finished
+     * Returns: true if the encoder is finished
      * @see setfinished
      */
     virtual bool _isfinished() const
@@ -439,7 +439,7 @@ protected:
      * 
      * Most implementations do not need to override this.
      * 
-     * @return the error message, or the null string if _isok() == true
+     * Returns: the error message, or the null string if _isok() == true
      * @see seterror
      */
     virtual WvString _geterror() const
@@ -462,10 +462,10 @@ protected:
      * invoke this function.  This allows finer control over the
      * semantics of isok() and isfinished() with respect to encode().
      * 
-     * @param inbuf the input buffer
-     * @param outbuf the output buffer
-     * @param flush if true, flushes the encoder
-     * @return true on success
+     * "inbuf" is the input buffer
+     * "outbuf" is the output buffer
+     * "flush" is if true, flushes the encoder
+     * Returns: true on success
      * @see encode
      */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
@@ -489,8 +489,8 @@ protected:
      * invoke this function.  This allows finer control over the
      * semantics of isok() and isfinished() with respect to finish().
      * 
-     * @param outbuf the output buffer
-     * @return true on success
+     * "outbuf" is the output buffer
+     * Returns: true on success
      * @see finish
      */
     virtual bool _finish(WvBuffer &outbuf)
@@ -505,7 +505,7 @@ protected:
      * 
      * May set a detailed error message if an error occurs.
      * 
-     * @return true on success, false on error or if not supported
+     * Returns: true on success, false on error or if not supported
      * @see reset
      */
     virtual bool _reset()
@@ -543,7 +543,7 @@ public:
 
     /**
      * Returns the number of bytes processed so far.
-     * @return the number of bytes
+     * Returns: the number of bytes
      */
     size_t bytes_processed() { return total; }
     
@@ -595,16 +595,16 @@ public:
     /**
      * Appends an encoder to the tail of the chain.
      *
-     * @param enc the encoder
-     * @param auto_free if true, takes ownership of the encoder
+     * "enc" is the encoder
+     * "auto_free" is if true, takes ownership of the encoder
      */
     void append(WvEncoder *enc, bool auto_free);
 
     /**
      * Prepends an encoder to the head of the chain.
      *
-     * @param enc the encoder
-     * @param auto_free if true, takes ownership of the encoder
+     * "enc" is the encoder
+     * "auto_free" is if true, takes ownership of the encoder
      */
     void prepend(WvEncoder *enc, bool auto_free);
 
@@ -613,7 +613,7 @@ public:
      * 
      * Destroys the encoder if it was added with auto_free == true.
      * 
-     * @param enc the encoder
+     * "enc" is the encoder
      */
     void unlink(WvEncoder *enc);
 
@@ -633,7 +633,7 @@ protected:
      * isok() == false to isok() == true if the offending encoders
      * are removed from the list.
      * 
-     * @return true iff all encoders return isok() == true
+     * Returns: true iff all encoders return isok() == true
      * @see WvEncoder::_isok
      */
     virtual bool _isok() const;
@@ -646,7 +646,7 @@ protected:
      * encoders are removed from the list, but not if finish() is
      * called.
      * 
-     * @return false iff all encoders return isfinished() == false
+     * Returns: false iff all encoders return isfinished() == false
      */
     virtual bool _isfinished() const;
 
@@ -657,14 +657,14 @@ protected:
      * !geterror() = false to !geterror() = true if the offending
      * encoders are removed from the list.
      * 
-     * @return the first non-null error message in the chain
+     * Returns: the first non-null error message in the chain
      */
     virtual WvString _geterror() const;
     
     /**
      * Passes the data through the entire chain of encoders.
      *
-     * @return true iff all encoders return true.
+     * Returns: true iff all encoders return true.
      */
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
     
@@ -677,7 +677,7 @@ protected:
      * encoders have been flushed and finished (assuming the first
      * encoder had already been flushed).
      * 
-     * @return true iff all encoders return true.
+     * Returns: true iff all encoders return true.
      */
     virtual bool _finish(WvBuffer & out);
 
@@ -687,7 +687,7 @@ protected:
      * Resets all of the encoders in the chain and discards any
      * pending buffered input.  Preserves the list of encoders.
      * 
-     * @return true iff all encoders return true.
+     * Returns: true iff all encoders return true.
      */
     virtual bool _reset();
 };

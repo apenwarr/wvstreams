@@ -33,28 +33,28 @@ class UniConfPair
 public:
     /**
      * Creates a UniConfPair.
-     * @param key the key
-     * @param value the value
+     * "key" is the key
+     * "value" is the value
      */
     UniConfPair(const UniConfKey &key, WvStringParm value);
 
     /**
      * Returns the key field.
-     * @param the key
+     * "the" is key
      */
     const UniConfKey &key() const
         { return xkey; }
 
     /**
      * Returns the value field.
-     * @param the value
+     * "the" is value
      */
     const WvString &value()
         { return xvalue; }
 
     /**
      * Sets the value field.
-     * @param value the new value
+     * "value" is the new value
      */
     void setvalue(WvStringParm value);
 };

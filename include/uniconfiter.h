@@ -96,7 +96,7 @@ public:
 #if 0
     /**
      * Constructs a copy of another wrapper.
-     * @param other the other wrapper
+     * "other" is the other wrapper
      */
     UniConfIterWrapper(const UniConfIterWrapper &other) 
         : xabstractiter(other.abstractiter()->clone())

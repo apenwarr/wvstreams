@@ -13,8 +13,8 @@
 
 /**
  * Returns the SpeexMode to use for a given sampling rate.
- * @param modeid the suggested mode
- * @param samplingrate the sampling rate
+ * "modeid" is the suggested mode
+ * "samplingrate" is the sampling rate
  */
 static SpeexMode *get_speex_mode(WvSpeex::CodecMode modeid,
     int samplingrate)

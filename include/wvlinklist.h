@@ -39,7 +39,7 @@ public:
      * This function causes a full traversal of the list which may be
      * overly inefficient depending on how and when it is used.
      * 
-     * @return the number of elements
+     * Returns: the number of elements
      */
     size_t count() const;
 
@@ -48,7 +48,7 @@ public:
      * 
      * This is much faster than checking count() == 0.
      * 
-     * @return true if empty
+     * Returns: true if empty
      */
     bool isempty() const
         { return head.next == NULL; }
@@ -69,7 +69,7 @@ public:
 
         /**
          * Binds the iterator to the specified list.
-         * @param l the list
+         * "l" is the list
          */
 	IterBase(const WvListBase &l)
             { list = &l; link = NULL; }
@@ -87,7 +87,7 @@ public:
          * If the iterator had just been rewound, it now points to the
          * first element of the list.
          * 
-         * @return the current WvLink pointer, or null if there were no
+         * Returns: the current WvLink pointer, or null if there were no
          *         more elements remaining in the traversal sequence
          */
 	WvLink *next()
@@ -95,7 +95,7 @@ public:
 
         /**
          * Returns a pointer to the WvLink at the iterator's current location.
-         * @return the current WvLink pointer, or null if there were no
+         * Returns: the current WvLink pointer, or null if there were no
          *         more elements remaining in the traversal sequence
          */
 	WvLink *cur() const
@@ -113,7 +113,7 @@ public:
          * since it always starts searching from the head of the list
          * rather than from the current location.
          * 
-         * @return the current WvLink pointer, or null if no such element
+         * Returns: the current WvLink pointer, or null if no such element
          *         was found
          */
 	WvLink *find(const void *data);
@@ -167,7 +167,7 @@ public:
  *     calls the resulting class by the specified name.
  * 
  * 
- * @param T the object type
+ * "T" is the object type
  */
 template<class T>
 class WvList : public WvListBase
@@ -215,7 +215,7 @@ public:
      * 
      * The list must be non-empty.
      * 
-     * @return the element pointer, possibly null
+     * Returns: the element pointer, possibly null
      */
     T *first() const
         {
@@ -228,7 +228,7 @@ public:
      * 
      * The list must be non-empty.
      * 
-     * @return the element pointer, possibly null
+     * Returns: the element pointer, possibly null
      */
     T *last() const
         { return (T*)tail->data; }
@@ -236,11 +236,11 @@ public:
     /**
      * Adds the element after the specified link in the list.
      *
-     * @param link the link preceeding the desired location of the element
+     * "link" is the link preceeding the desired location of the element
      *             to be inserted, non-null
-     * @param data the element pointer, may be null
-     * @param auto_free if true, takes ownership of the element
-     * @param id an optional string to associate with the element, or null
+     * "data" is the element pointer, may be null
+     * "auto_free" is if true, takes ownership of the element
+     * "id" is an optional string to associate with the element, or null
      */
     void add_after(WvLink *after, T *data, bool auto_free,
 			char *id = NULL )
@@ -249,9 +249,9 @@ public:
     /**
      * Appends the element to the end of the list.
      *
-     * @param data the element pointer, may be null
-     * @param auto_free if true, takes ownership of the element
-     * @param id an optional string to associate with the element, or null
+     * "data" is the element pointer, may be null
+     * "auto_free" is if true, takes ownership of the element
+     * "id" is an optional string to associate with the element, or null
      */
     void append(T *data, bool auto_free, char *id = NULL)
 	{ add_after(tail, data, auto_free, id); }
@@ -266,9 +266,9 @@ public:
     /**
      * Prepends the element to the beginning of the list.
      *
-     * @param data the element pointer, may be null
-     * @param auto_free if true, takes ownership of the element
-     * @param id an optional string to associate with the element, or null
+     * "data" is the element pointer, may be null
+     * "auto_free" is if true, takes ownership of the element
+     * "id" is an optional string to associate with the element, or null
      */
     void prepend(T *data, bool auto_free, char *id = NULL)
 	{ add_after(&head, data, auto_free, id); }
@@ -278,7 +278,7 @@ public:
      * 
      * Destroys the element if it was added with auto_free == true.
      * 
-     * @param data the element pointer, may be null
+     * "data" is the element pointer, may be null
      */
     void unlink(T *data)
         { Iter i(*this); while (i.find(data)) i.unlink(); }
@@ -297,7 +297,7 @@ public:
      * 
      * Destroys the element if it was added with auto_free == true.
      * 
-     * @param after the link preceeding the element to be removed, non-null
+     * "after" is the link preceeding the element to be removed, non-null
      */ 
     void unlink_after(WvLink *after)
     {
@@ -325,14 +325,14 @@ public:
     public:
         /**
          * Binds the iterator to the specified list.
-         * @param l the list
+         * "l" is the list
          */
         Iter(const WvList &l) : IterBase(l)
             { }
 
         /**
          * Returns a pointer to the current element.
-         * @return the element pointer, possibly null
+         * Returns: the element pointer, possibly null
          */
         T *ptr() const
             { return (T *)link->data; }

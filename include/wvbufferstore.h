@@ -36,7 +36,7 @@ protected:
 
     /**
      * Creates a new buffer.
-     * @param _granularity the suggested granularity for data allocation
+     * "_granularity" is the suggested granularity for data allocation
      *        and alignment purposes
      */
     explicit WvBufferStore(int _granularity);
@@ -107,7 +107,7 @@ public:
 
     /**
      * Returns the first subbuffer.
-     * @return the buffer or NULL if none or not supported
+     * Returns: the buffer or NULL if none or not supported
      */
     virtual WvBufferStore *firstsubbuffer() const
         { return NULL; }
@@ -127,7 +127,7 @@ public:
     /**
      * Unlinks the specified subbuffer.
      * Only autofrees the buffer if allowautofree == true.
-     * @return the autofree flag for the buffer
+     * Returns: the autofree flag for the buffer
      */
     virtual bool unlinksubbuffer(WvBufferStore *buffer,
         bool allowautofree)
@@ -384,10 +384,10 @@ protected:
      * to the buffer beginning at the specified offset as one
      * large contiguous block.
      *
-     * @param offset the offset
-     * @param count the number of bytes
-     * @param keephistory if true, does not purge unget history
-     * @return the offset of the first available byte
+     * "offset" is the offset
+     * "count" is the number of bytes
+     * "keephistory" is if true, does not purge unget history
+     * Returns: the offset of the first available byte
      */
     size_t ensurecontiguous(int offset, size_t count, bool keephistory);
 
@@ -395,10 +395,10 @@ protected:
      * Compacts an array arranged as a circular buffer such that
      * the specified region is moved to the beginning of the array.
      *
-     * @param data the array base
-     * @param size the size of the array
-     * @param head the beginning of the region to keep
-     * @param count the number of bytes in the region to keep
+     * "data" is the array base
+     * "size" is the size of the array
+     * "head" is the beginning of the region to keep
+     * "count" is the number of bytes in the region to keep
      */
     static void compact(void *data, size_t size,
         size_t head, size_t count);
@@ -456,8 +456,8 @@ protected:
     /**
      * Called when a new buffer must be allocated to coalesce chunks.
      *
-     * @param minsize the minimum size for the new buffer
-     * @return the new buffer
+     * "minsize" is the minimum size for the new buffer
+     * Returns: the new buffer
      */
     virtual WvBufferStore *newbuffer(size_t minsize);
 
@@ -465,26 +465,26 @@ protected:
      * Called when a buffer with autofree is removed from the list.
      * This function is not called during object destruction.
      *
-     * @param buffer the buffer to be destroyed
+     * "buffer" is the buffer to be destroyed
      */
     virtual void recyclebuffer(WvBufferStore *buffer);
 
     /**
      * Searches for the buffer containing the offset.
      * 
-     * @param it the iterator updated to point to buffer found,
+     * "it" is the iterator updated to point to buffer found,
      *        or to an invalid region if the offset is invalid
-     * @param offset the offset for which to search
-     * @return the corrected offset within the buffer at it.ptr()
+     * "offset" is the offset for which to search
+     * Returns: the corrected offset within the buffer at it.ptr()
      */
     int search(WvBufferStoreList::Iter &it, int offset) const;
 
     /**
      * Coalesces a sequence of buffers.
      *
-     * @param it the iterator pointing to the first buffer
-     * @param count the required number of contiguous used bytes
-     * @return the composite buffer
+     * "it" is the iterator pointing to the first buffer
+     * "count" is the required number of contiguous used bytes
+     * Returns: the composite buffer
      */
     WvBufferStore *coalesce(WvBufferStoreList::Iter &it,
         size_t count);

@@ -23,7 +23,7 @@ public:
     /**
      * Creates a shared memory zone.
      *
-     * @param size the size of the zone in bytes
+     * "size" is the size of the zone in bytes
      */
     WvShmZone(size_t size);
     ~WvShmZone();

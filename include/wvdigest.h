@@ -116,10 +116,10 @@ public:
     /**
      * Creates an HMAC digest encoder.
      *
-     * @param digest the message digest encoder to use as a
+     * "digest" is the message digest encoder to use as a
      *        hash function
-     * @param key the authentication key
-     * @param keysize the key size in bytes
+     * "key" is the authentication key
+     * "keysize" is the key size in bytes
      */
     WvHMACDigest(WvEVPMDDigest *_digest, const void *_key,
         size_t _keysize);

@@ -33,8 +33,8 @@ public:
 
     /**
      * Called when a key changes in some way.
-     * @param key the key
-     * @param depth the recursion depth
+     * "key" is the key
+     * "depth" is the recursion depth
      */
     virtual void notify(const UniConf &key, UniConfDepth::Type depth) = 0;
 };

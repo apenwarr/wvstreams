@@ -49,19 +49,19 @@ public:
      * implementation uses the rand() function and assumes that
      * the PRNG was previously seeded with srand().
      * 
-     * @param bitrate the bitrate specification
-     * @param samplingrate the number of samples per second,
+     * "bitrate" is the bitrate specification
+     * "samplingrate" is the number of samples per second,
      *        preferably one of 8000, 16000, or 32000
-     * @param channels number of channels (must be 1 for now),
+     * "channels" is number of channels (must be 1 for now),
      *        defaults to 1
-     * @param mode the Speex codec mode to use or
+     * "mode" is the Speex codec mode to use or
      *        WvSpeex::DEFAULT_MODE to select one automatically
      *        based on the sampling rate, this is the default
-     * @param complexity a measure of the amount of CPU
+     * "complexity" is a measure of the amount of CPU
      *        resources that should be allocated to the encoder,
      *        ranges from 0 to 10 or WvSpeex::DEFAULT_COMPLEXITY
      *        the encoder default, this is the default
-     * @param serialno the Ogg bitstream serial number
+     * "serialno" is the Ogg bitstream serial number
      */
     WvOggSpeexEncoder(const WvSpeex::BitrateSpec &bitratespec,
         int samplingrate, int channels = 1,
@@ -76,7 +76,7 @@ public:
      * 
      * Do not call after the first invocation of encode().
      * 
-     * @param comment the comment
+     * "comment" is the comment
      */
     void add_comment(WvStringParm comment);
     
@@ -98,49 +98,49 @@ public:
      * 
      * Do not call after the first invocation of encode().
      * 
-     * @param tag the tag name
-     * @param value the value
+     * "tag" is the tag name
+     * "value" is the value
      */
     void add_tag(WvStringParm tag, WvStringParm value);
 
     /**
      * Returns the sampling rate.
-     * @return the sampling rate
+     * Returns: the sampling rate
      */
     int samplingrate() const
         { return speexenc->samplingrate(); }
 
     /**
      * Returns the number of channels.
-     * @return the number of channels
+     * Returns: the number of channels
      */
     int channels() const
         { return speexenc->channels(); }
 
     /**
      * Returns the number of samples per frame.
-     * @return the frame size
+     * Returns: the frame size
      */
     int samplesperframe() const
         { return speexenc->samplesperframe(); }
 
     /**
      * Returns the current encoding mode.
-     * @return the encoding mode
+     * Returns: the encoding mode
      */
     WvSpeex::CodecMode mode() const
         { return speexenc->mode(); }
 
     /**
      * Returns true if variable bitrate support has been enabled.
-     * @return true if it is enabled
+     * Returns: true if it is enabled
      */
     bool vbr() const
         { return speexenc->vbr(); }
 
     /**
      * Returns the nominal bitrate.
-     * @return the bitrate, or -1 if not specified or not meaningful
+     * Returns: the bitrate, or -1 if not specified or not meaningful
      */
     int nominalbitrate() const
         { return speexenc->nominalbitrate(); }
@@ -202,14 +202,14 @@ public:
      * 
      * If false and isok(), try decoding more data.
      * 
-     * @return true when the header has been decoded
+     * Returns: true when the header has been decoded
      */
     bool isheaderok() const;
 
     /**
      * Returns the Ogg Speex vendor comment string.
      *
-     * @return the vendor comment
+     * Returns: the vendor comment
      */
     WvString vendor() const
         { return _vendor; }
@@ -219,7 +219,7 @@ public:
      * 
      * The list is owned by the encoder, do not change.
      * 
-     * @return the list of comments
+     * Returns: the list of comments
      */
     WvStringList &comments()
         { return _comments; }
@@ -227,54 +227,54 @@ public:
     /**
      * Returns the number of channels in the stream.
      * Does not return useful information unless isheaderok() == true.
-     * @return the number of channels, non-negative
+     * Returns: the number of channels, non-negative
      */
     int channels() const;
 
     /**
      * Returns the sampling rate of the stream.
      * Does not return useful information unless isheaderok() == true.
-     * @return the sampling rate
+     * Returns: the sampling rate
      */
     int samplingrate() const;
         
     /**
      * Returns the number of samples per frame.
      * Does not return useful information unless isheaderok() == true.
-     * @return the frame size
+     * Returns: the frame size
      */
     int samplesperframe() const;
 
     /**
      * Returns the current encoding mode.
      * Does not return useful information unless isheaderok() == true.
-     * @return the encoding mode
+     * Returns: the encoding mode
      */
     WvSpeex::CodecMode mode() const;
     
     /**
      * Returns true if variable bitrate support has been enabled.
      * Does not return useful information unless isheaderok() == true.
-     * @return true if it is enabled
+     * Returns: true if it is enabled
      */
     bool vbr() const;
 
     /**
      * Returns the nominal bitrate.
      * Does not return useful information unless isheaderok() == true.
-     * @return the bitrate, or -1 if not specified or not meaningful
+     * Returns: the bitrate, or -1 if not specified or not meaningful
      */
     int nominalbitrate() const;
     
     /**
      * Determines if the perceptual enhancement post-filter is enabled.
-     * @return true if it is enabled
+     * Returns: true if it is enabled
      */
     bool postfilter() const;
 
     /**
      * Enables or disables the perceptual enhancement post-filter.
-     * @param enable true or false
+     * "enable" is true or false
      */
     void setpostfilter(bool enable);
 

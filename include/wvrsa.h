@@ -72,8 +72,8 @@ public:
     /**
      * Creates a new RSA cipher encoder.
      * 
-     * @param mode the encryption mode
-     * @param key the public key if mode is Encrypt or SignDecrypt,
+     * "mode" is the encryption mode
+     * "key" is the public key if mode is Encrypt or SignDecrypt,
      *            otherwise the private key
      */
     WvRSAEncoder(Mode mode, const WvRSAKey &key);

@@ -32,9 +32,9 @@ public:
 
     /**
      * Returns the nearest node in the info tree to the key.
-     * @param key the key
-     * @param split set to the number of leading segments used
-     * @return the node
+     * "key" is the key
+     * "split" is set to the number of leading segments used
+     * Returns: the node
      */
     UniConfMountTree *findnearest(const UniConfKey &key, int &split);
 
@@ -147,10 +147,10 @@ public:
      * Mounts a generator at a key.
      * Takes ownership of the supplied generator instance.
      * 
-     * @param key the key
-     * @param gen the generator instance
-     * @param refresh if true, refreshes the generator after mount
-     * @return the generator instance pointer, or NULL on failure
+     * "key" is the key
+     * "gen" is the generator instance
+     * "refresh" is if true, refreshes the generator after mount
+     * Returns: the generator instance pointer, or NULL on failure
      */
     virtual UniConfGen *mountgen(const UniConfKey &key, UniConfGen *gen,
         bool refresh);
@@ -158,9 +158,9 @@ public:
     /**
      * Unmounts the generator at a key and destroys it.
      *
-     * @param key the key
-     * @param gen the generator instance
-     * @param commit if true, commits the generator before unmount
+     * "key" is the key
+     * "gen" is the generator instance
+     * "commit" is if true, commits the generator before unmount
      */
     virtual void unmount(const UniConfKey &key, UniConfGen *gen, bool commit);
     
@@ -171,10 +171,10 @@ public:
      * contents.  Otherwise returns the generator that would be
      * updated if a value were set.
      * 
-     * @param key the key
-     * @param mountpoint if not NULL, replaced with the mountpoint
+     * "key" is the key
+     * "mountpoint" is if not NULL, replaced with the mountpoint
      *        path on success
-     * @return the handle, or a null handle if none
+     * Returns: the handle, or a null handle if none
      */
     virtual UniConfGen *whichmount(const UniConfKey &key, UniConfKey *mountpoint);
 
@@ -218,7 +218,7 @@ private:
     /**
      * Prunes a branch of the tree beginning at the specified node
      * and moving towards the root.
-     * @param node the node
+     * "node" is the node
      */
     void prune(UniConfMountTree *node);
 

@@ -27,7 +27,7 @@ public:
 
     /**
      * Copies a WvString into the buffer, excluding the null-terminator.
-     * @param str the string
+     * "str" is the string
      */
     void putstr(WvStringParm str);
     void putstr(WVSTRING_FORMAT_DECL)
@@ -41,7 +41,7 @@ public:
      * 
      * After this operation, ungettable() >= length of the string.
      * 
-     * @return the buffer contents as a string
+     * Returns: the buffer contents as a string
      */
     WvString getstr();
 
@@ -52,7 +52,7 @@ public:
      * 
      * The same constraints apply as for get(1).
      * 
-     * @return the character
+     * Returns: the character
      */
     int getch()
         { return int(get()); }
@@ -62,7 +62,7 @@ public:
      * 
      * The same constraints apply as for alloc(1).
      * 
-     * @param ch the character
+     * "ch" is the character
      */
     void putch(int ch)
         { put((unsigned char)ch); }
@@ -72,8 +72,8 @@ public:
      * 
      * The same constraints apply as for peek(offset, 1).
      * 
-     * @param offset the offset
-     * @return the character
+     * "offset" is the offset
+     * Returns: the character
      */
     int peekch(int offset = 0)
         { return int(peek(offset)); }
@@ -81,8 +81,8 @@ public:
     /**
      * Returns the number of characters that would have to be read
      * to find the first instance of the character.
-     * @param ch the character
-     * @return the number of bytes, or zero if the character is not
+     * "ch" is the character
+     * Returns: the number of bytes, or zero if the character is not
      *         in the buffer
      */
     size_t strchr(int ch);
@@ -90,9 +90,9 @@ public:
     /**
      * Returns the number of leading buffer elements that match
      * any of those in the list.
-     * @param bytelist the list bytes to search for
-     * @param numbytes the number of bytes in the list
-     * @return the number of leading buffer elements that match
+     * "bytelist" is the list bytes to search for
+     * "numbytes" is the number of bytes in the list
+     * Returns: the number of leading buffer elements that match
      */
     size_t match(const void *bytelist, size_t numbytes)
         { return _match(bytelist, numbytes, false); }
@@ -100,8 +100,8 @@ public:
     /**
      * Returns the number of leading buffer elements that match
      * any of those in the list.
-     * @param chlist a string of characters to search for
-     * @return the number of leading buffer elements that match
+     * "chlist" is a string of characters to search for
+     * Returns: the number of leading buffer elements that match
      */
     size_t match(const char *chlist)
         { return match(chlist, strlen(chlist)); }
@@ -109,9 +109,9 @@ public:
     /**
      * Returns the number of leading buffer elements that do not
      * match any of those in the list.
-     * @param bytelist the list bytes to search for
-     * @param numbytes the number of bytes in the list
-     * @return the number of leading buffer elements that don't match
+     * "bytelist" is the list bytes to search for
+     * "numbytes" is the number of bytes in the list
+     * Returns: the number of leading buffer elements that don't match
      */
     size_t notmatch(const void *bytelist, size_t numbytes)
         { return _match(bytelist, numbytes, true); }
@@ -119,8 +119,8 @@ public:
     /**
      * Returns the number of leading buffer elements that do not
      * match any of those in the list.
-     * @param chlist a string of characters to search for
-     * @return the number of leading buffer elements that don't match
+     * "chlist" is a string of characters to search for
+     * Returns: the number of leading buffer elements that don't match
      */
     size_t notmatch(const char *chlist)
         { return notmatch(chlist, strlen(chlist)); }
@@ -249,7 +249,7 @@ public:
     /**
      * Creates a new buffer backed by a constant string.
      *
-     * @param _str the string
+     * "_str" is the string
      */
     explicit WvConstStringBuffer(WvStringParm _str);
 
@@ -261,14 +261,14 @@ public:
     /**
      * Resets the buffer contents to a new string.
      *
-     * @param _str the new string
+     * "_str" is the new string
      */
     void reset(WvStringParm _str);
 
     /**
      * Returns the string that backs the array
      *
-     * @return the string
+     * Returns: the string
      */
     WvString str()
         { return xstr; }

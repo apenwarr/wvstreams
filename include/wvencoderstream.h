@@ -58,7 +58,7 @@ public:
     /**
      * Creates an encoder stream.
      *
-     * @param cloned the stream to wrap
+     * "cloned" is the stream to wrap
      */
     WvEncoderStream(WvStream *cloned);
     virtual ~WvEncoderStream();
@@ -82,7 +82,7 @@ public:
      * 
      * The regular stream flush() only operates on the write chain.
      * 
-     * @return true if the encoder chain returned true
+     * Returns: true if the encoder chain returned true
      */
     bool flush_read();
 
@@ -97,14 +97,14 @@ public:
      * WvStreams to drain the encoded output buffer at its leisure,
      * use this function.
      * 
-     * @return true if the encoder chain returned true
+     * Returns: true if the encoder chain returned true
      */
     bool flush_write();
 
     /**
      * Calls flush() then finish() on the read chain of encoders.
      *
-     * @return true if the encoder chain returned true
+     * Returns: true if the encoder chain returned true
      */
     bool finish_read();
 
@@ -113,7 +113,7 @@ public:
      * 
      * Does not flush() the stream.
      * 
-     * @return true if the encoder chain returned true.
+     * Returns: true if the encoder chain returned true.
      */
     bool finish_write();
 
@@ -124,7 +124,7 @@ public:
      * the internal buffers and readchain.isfinished() or
      * ! writechain.isok().
      * 
-     * @return true if it is still possible to read and write data
+     * Returns: true if it is still possible to read and write data
      */
     virtual bool isok() const;
 

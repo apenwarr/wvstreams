@@ -96,7 +96,7 @@ private:
  *
  * Someday this could be further abstracted into a generic WvTreeDict.
  *
- * @param Sub the name of the concrete subclass of UniConfTree
+ * "Sub" is the name of the concrete subclass of UniConfTree
  */
 template<class Sub>
 class UniConfTree : public UniConfTreeBase
@@ -177,9 +177,9 @@ public:
      * Compares this tree with another using the specified comparator
      * function.
      * Comparison of a subtree ends when the comparator returns false.
-     * @param comparator the value compare function
-     * @param userdata userdata for the compare function
-     * @return true if the comparison function returned true each time
+     * "comparator" is the value compare function
+     * "userdata" is userdata for the compare function
+     * Returns: true if the comparison function returned true each time
      */
     void compare(const Sub *other, const Comparator &comparator,
         void *userdata)

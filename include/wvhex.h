@@ -26,7 +26,7 @@ public:
     /**
      * Creates a hex encoder.
      *
-     * @param use_uppercase if true, outputs hex codes A through Z
+     * "use_uppercase" is if true, outputs hex codes A through Z
      *        in upper case, otherwise output them in lower case
      *        (the default)
      */

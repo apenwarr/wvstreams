@@ -42,7 +42,7 @@ public:
     /**
      * Creates a generator which can communicate with a daemon using
      * the specified stream.
-     * @param stream the raw connection
+     * "stream" is the raw connection
      */
     UniConfClientGen(IWvStream *stream);
 

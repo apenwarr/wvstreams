@@ -29,7 +29,7 @@ class WvBufferBase;
  * use the WvBufferBase<T> type rather than WvBufferBaseCommonImpl<T>.
  *
  * @see WvBufferBase<T>
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -52,7 +52,7 @@ protected:
      * Note: Does not take ownership of the storage object.
      * 
      *
-     * @param store the low-level storage object
+     * "store" is the low-level storage object
      */
     explicit WvBufferBaseCommonImpl(WvBufferStore *store) :
         store(store) { }
@@ -66,7 +66,7 @@ public:
     /**
      * Returns a pointer to the underlying storage class object.
      *
-     * @return the low-level storage class object pointer, non-null
+     * Returns: the low-level storage class object pointer, non-null
      */
     WvBufferStore *getstore()
     {
@@ -78,7 +78,7 @@ public:
     /**
      * Returns true if the buffer supports reading.
      *
-     * @return true if reading is supported
+     * Returns: true if reading is supported
      * @see used(), optgettable(), get(size_t), skip(size_t)
      * @see ungettable(), unget(size_t)
      * @see peekable(int), optpeekable(int), peek(int, size_t)
@@ -97,7 +97,7 @@ public:
      * This function could also be called gettable().
      * 
      *
-     * @return the number of elements
+     * Returns: the number of elements
      * @see get(size_t), optgettable()
      */
     size_t used() const
@@ -122,8 +122,8 @@ public:
      * After this operation, at least count elements may be ungotten.
      * 
      *
-     * @param count the number of elements
-     * @return the element storage pointer
+     * "count" is the number of elements
+     * Returns: the element storage pointer
      * @see used(), optgettable()
      * @see skip(size_t), move(T*, size_t)
      * @see unget(size_t)
@@ -143,7 +143,7 @@ public:
      * followed up by an unget(size_t).
      * 
      *
-     * @param count the number of elements
+     * "count" is the number of elements
      * @see used()
      * @see get(size_t)
      * @see unget(size_t)
@@ -164,7 +164,7 @@ public:
      *  - optgettable() != 0 if used() != 0
      * 
      *
-     * @return the number of elements
+     * Returns: the number of elements
      * @see get(size_t), used()
      */
     size_t optgettable() const
@@ -188,7 +188,7 @@ public:
      * It is an error for count to be greater than ungettable().
      * 
      *
-     * @param count the number of elements
+     * "count" is the number of elements
      * @see ungettable()
      * @see get(size_t), skip(size_t)
      */
@@ -201,7 +201,7 @@ public:
      * Returns the maximum number of elements that may be ungotten
      * at this time.
      *
-     * @return the number of elements
+     * Returns: the number of elements
      * @see unget(size_t)
      */
     size_t ungettable() const
@@ -237,9 +237,9 @@ public:
      * at incremental offsets.
      * 
      *
-     * @param offset the buffer offset
-     * @param count the number of elements
-     * @return the element storage pointer
+     * "offset" is the buffer offset
+     * "count" is the number of elements
+     * Returns: the element storage pointer
      * @see peekable(int), optpeekable(int)
      * @see mutablepeek(int, size_t)
      * @see peek(int)
@@ -296,7 +296,7 @@ public:
      * After this operation, at least 1 element may be ungotten.
      * 
      *
-     * @return the element
+     * Returns: the element
      * @see get(size_t), used(), optgettable()
      */
     T get()
@@ -310,8 +310,8 @@ public:
      * It is an error to invoke this method if used() == 0.
      * 
      *
-     * @param offset the offset, default 0
-     * @return the element
+     * "offset" is the offset, default 0
+     * Returns: the element
      * @see peek(int, size_t), peekable(int), optpeekable(int)
      */
     T peek(int offset = 0)
@@ -334,8 +334,8 @@ public:
      * may be ungotten.
      * 
      *
-     * @param buf the buffer that will receive the elements
-     * @param count the number of elements
+     * "buf" is the buffer that will receive the elements
+     * "count" is the number of elements
      * @see get(size_t), used()
      */
     void move(T *buf, size_t count)
@@ -355,9 +355,9 @@ public:
      * The pointer buf may be NULL only if count == 0.
      * 
      *
-     * @param buf the buffer that will receive the elements
-     * @param offset the buffer offset
-     * @param count the number of elements
+     * "buf" is the buffer that will receive the elements
+     * "offset" is the buffer offset
+     * "count" is the number of elements
      * @see peek(int, size_t), peekable(int)
      */
     void copy(T *buf, int offset, size_t count)
@@ -370,7 +370,7 @@ public:
     /**
      * Returns true if the buffer supports writing.
      *
-     * @return true if writing is supported
+     * Returns: true if writing is supported
      * @see free(), optallocable(), alloc(size_t)
      * @see unallocable(), unalloc(size_t)
      * @see mutablepeek(int, size_t)
@@ -386,7 +386,7 @@ public:
      * Returns the number of elements that the buffer can currently
      * accept for writing.
      * 
-     * @return the number of elements
+     * Returns: the number of elements
      * @see alloc(size_t), optallocable()
      */
     size_t free() const
@@ -412,8 +412,8 @@ public:
      * After this operation, at least count elements may be unallocated.
      * 
      *
-     * @param count the number of elements
-     * @return the element storage pointer
+     * "count" is the number of elements
+     * Returns: the element storage pointer
      * @see free(), optallocable()
      * @see put(const T*, size_t)
      * @see unalloc(size_t)
@@ -434,7 +434,7 @@ public:
      *  - optallocable() != 0 if free() != 0
      * 
      *
-     * @return the number of elements
+     * Returns: the number of elements
      * @see alloc(size_t), free()
      */
     size_t optallocable() const
@@ -459,7 +459,7 @@ public:
      * It is an error for count to be greater than unallocable().
      * 
      *
-     * @param count the number of elements
+     * "count" is the number of elements
      * @see unallocable()
      * @see alloc(size_t)
      */
@@ -483,7 +483,7 @@ public:
      *  - unallocable() >= used()
      * 
      *
-     * @return the number of elements
+     * Returns: the number of elements
      * @see unalloc(size_t)
      */
     size_t unallocable() const
@@ -500,9 +500,9 @@ public:
      * operates identically to peek(int, size_t).
      * 
      *
-     * @param offset the buffer offset
-     * @param count the number of elements
-     * @return the element storage pointer
+     * "offset" is the buffer offset
+     * "count" is the number of elements
+     * Returns: the element storage pointer
      * @see peekable(int), optpeekable(int)
      * @see peek(int, size_t)
      * @see poke(const T*, int, size_t)
@@ -526,8 +526,8 @@ public:
      * After this operation, at least count elements may be unallocated.
      * 
      *
-     * @param data the buffer that contains the elements
-     * @param count the number of elements
+     * "data" is the buffer that contains the elements
+     * "count" is the number of elements
      * @see alloc(size_t)
      */
     void put(const T *data, size_t count)
@@ -547,9 +547,9 @@ public:
      * It is an error for count to be greater than free() - offset.
      * 
      *
-     * @param data the buffer that contains the elements
-     * @param count the number of elements
-     * @param offset the buffer offset, default 0
+     * "data" is the buffer that contains the elements
+     * "count" is the number of elements
+     * "offset" is the buffer offset, default 0
      * @see mutablepeek(int, size_t)
      * @see put(const T*, size_t)
      */
@@ -566,7 +566,7 @@ public:
      * After this operation, at least 1 element may be unallocated.
      * 
      *
-     * @param valid the element
+     * "valid" is the element
      * @see put(const T*, size_t)
      */
     void put(T &value)
@@ -582,8 +582,8 @@ public:
      * After this operation, at least 1 element may be unallocated.
      * 
      *
-     * @param value the element
-     * @param offset the buffer offset
+     * "value" is the element
+     * "offset" is the buffer offset
      * @see poke(const T*, int, size_t)
      */
     void poke(T &value, int offset)
@@ -606,8 +606,8 @@ public:
      * may be ungotten from inbuf.
      * 
      *
-     * @param inbuf the buffer from which to read
-     * @param count the number of elements
+     * "inbuf" is the buffer from which to read
+     * "count" is the number of elements
      */
     void merge(Buffer &inbuf, size_t count)
     {
@@ -617,7 +617,7 @@ public:
     /**
      * Efficiently merges the entire contents of a buffer into this one.
      *
-     * @param inbuf the buffer from which to read
+     * "inbuf" is the buffer from which to read
      * @see merge(Buffer &, size_t)
      */
     void merge(Buffer &inbuf)
@@ -634,7 +634,7 @@ public:
  * specialization of this type that derives from WvBufferBaseCommonImpl.
  *
  * @see WvBufferBaseCommonImpl<T>
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -651,7 +651,7 @@ public:
  * A buffer that wraps a pre-allocated array and provides
  * read-write access to its elements.
  *
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -666,10 +666,10 @@ public:
     /**
      * Creates a new buffer backed by the supplied array.
      *
-     * @param _data the array of data to wrap
-     * @param _avail the amount of data available for reading
-     * @param _size the size of the array
-     * @param _autofree if true, the array will be freed when discarded
+     * "_data" is the array of data to wrap
+     * "_avail" is the amount of data available for reading
+     * "_size" is the size of the array
+     * "_autofree" is if true, the array will be freed when discarded
      */
     WvInPlaceBufferBase(T *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
@@ -680,7 +680,7 @@ public:
     /**
      * Creates a new empty buffer backed by a new array.
      *
-     * @param _size the size of the array
+     * "_size" is the size of the array
      */
     explicit WvInPlaceBufferBase(size_t _size) :
         WvBufferBase<T>(& mystore),
@@ -704,7 +704,7 @@ public:
     /**
      * Returns the underlying array pointer.
      *
-     * @return the element pointer
+     * Returns: the element pointer
      */
     T *ptr() const
     {
@@ -714,7 +714,7 @@ public:
     /**
      * Returns the total size of the buffer.
      *
-     * @return the number of elements
+     * Returns: the number of elements
      */
     size_t size() const
     {
@@ -724,7 +724,7 @@ public:
     /**
      * Returns the autofree flag.
      *
-     * @return the autofree flag
+     * Returns: the autofree flag
      */
     bool autofree() const
     {
@@ -734,7 +734,7 @@ public:
     /**
      * Sets or clears the auto_free flag.
      *
-     * @param _autofree if true, the array will be freed when discarded
+     * "_autofree" is if true, the array will be freed when discarded
      */
     void setautofree(bool _autofree)
     {
@@ -747,10 +747,10 @@ public:
      * If the old and new buffer pointers differ and the old buffer
      * was specified as auto_free, the old buffer is destroyed.
      * 
-     * @param _data the array of data to wrap
-     * @param _avail the amount of data available for reading
-     * @param _size the size of the array
-     * @param _autofree if true, the array will be freed when discarded
+     * "_data" is the array of data to wrap
+     * "_avail" is the amount of data available for reading
+     * "_size" is the size of the array
+     * "_autofree" is if true, the array will be freed when discarded
      */
     void reset(T *_data, size_t _avail, size_t _size,
         bool _autofree = false)
@@ -763,7 +763,7 @@ public:
      * Sets the amount of available data using the current buffer
      * and resets the read index to the beginning of the buffer.
      *
-     * @param _avail the amount of data available for reading
+     * "_avail" is the amount of data available for reading
      */
     void setavail(size_t _avail)
     {
@@ -777,7 +777,7 @@ public:
  * A buffer that wraps a pre-allocated array and provides
  * read-only access to its elements.
  *
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -792,8 +792,8 @@ public:
     /**
      * Creates a new buffer backed by the supplied array.
      *
-     * @param _data the array of data to wrap
-     * @param _avail the amount of data available for reading
+     * "_data" is the array of data to wrap
+     * "_avail" is the amount of data available for reading
      */
     WvConstInPlaceBufferBase(const T *_data, size_t _avail) :
         WvBufferBase<T>(& mystore),
@@ -817,7 +817,7 @@ public:
     /**
      * Returns the underlying array pointer.
      *
-     * @return the element pointer
+     * Returns: the element pointer
      */
     const T *ptr() const
     {
@@ -830,8 +830,8 @@ public:
      * Never frees the old buffer.
      * 
      *
-     * @param _data the array of data to wrap
-     * @param _avail the amount of data available for reading
+     * "_data" is the array of data to wrap
+     * "_avail" is the amount of data available for reading
      */
     void reset(const T *_data, size_t _avail)
     {
@@ -842,7 +842,7 @@ public:
      * Sets the amount of available data using the current buffer
      * and resets the read index to the beginning of the buffer.
      *
-     * @param _avail the amount of data available for reading
+     * "_avail" is the amount of data available for reading
      */
     void setavail(size_t _avail)
     {
@@ -865,7 +865,7 @@ public:
  * triggered to explicitly renormalize the array and shift its
  * contents to the front.
  *
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -880,11 +880,11 @@ public:
     /**
      * Creates a new circular buffer backed by the supplied array.
      *
-     * @param _data the array of data to wrap
-     * @param _avail the amount of data available for reading
+     * "_data" is the array of data to wrap
+     * "_avail" is the amount of data available for reading
      *               at the beginning of the buffer
-     * @param _size the size of the array
-     * @param _autofree if true, the array will be freed when discarded
+     * "_size" is the size of the array
+     * "_autofree" is if true, the array will be freed when discarded
      */
     WvCircularBufferBase(T *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
@@ -895,7 +895,7 @@ public:
     /**
      * Creates a new empty circular buffer backed by a new array.
      *
-     * @param _size the size of the array
+     * "_size" is the size of the array
      */
     explicit WvCircularBufferBase(size_t _size) :
         WvBufferBase<T>(& mystore),
@@ -919,7 +919,7 @@ public:
     /**
      * Returns the underlying array pointer.
      *
-     * @return the element pointer
+     * Returns: the element pointer
      */
     T *ptr() const
     {
@@ -929,7 +929,7 @@ public:
     /**
      * Returns the total size of the buffer.
      *
-     * @return the number of elements
+     * Returns: the number of elements
      */
     size_t size() const
     {
@@ -939,7 +939,7 @@ public:
     /**
      * Returns the autofree flag.
      *
-     * @return the autofree flag
+     * Returns: the autofree flag
      */
     bool autofree() const
     {
@@ -949,7 +949,7 @@ public:
     /**
      * Sets or clears the auto_free flag.
      *
-     * @param _autofree if true, the array will be freed when discarded
+     * "_autofree" is if true, the array will be freed when discarded
      */
     void setautofree(bool _autofree)
     {
@@ -962,11 +962,11 @@ public:
      * If the old and new buffer pointers differ and the old buffer
      * was specified as auto_free, the old buffer is destroyed.
      * 
-     * @param _data the array of data to wrap
-     * @param _avail the amount of data available for reading 
+     * "_data" is the array of data to wrap
+     * "_avail" is the amount of data available for reading 
      *               at the beginning of the buffer
-     * @param _size the size of the array
-     * @param _autofree if true, the array will be freed when discarded
+     * "_size" is the size of the array
+     * "_autofree" is if true, the array will be freed when discarded
      */
     void reset(T *_data, size_t _avail, size_t _size,
         bool _autofree = false)
@@ -979,7 +979,7 @@ public:
      * Sets the amount of available data using the current buffer
      * and resets the read index to the beginning of the buffer.
      *
-     * @param _avail the amount of data available for reading
+     * "_avail" is the amount of data available for reading
      *               at the beginning of the buffer
      */
     void setavail(size_t _avail)
@@ -1007,7 +1007,7 @@ public:
 /**
  * A buffer that dynamically grows and shrinks based on demand.
  *
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -1025,9 +1025,9 @@ public:
      * Provides some parameters for tuning response to buffer
      * growth.
      * 
-     * @param _minalloc the minimum number of elements to allocate
+     * "_minalloc" is the minimum number of elements to allocate
      *      at once when creating a new internal buffer segment
-     * @param _maxalloc the maximum number of elements to allocate
+     * "_maxalloc" is the maximum number of elements to allocate
      *      at once when creating a new internal buffer segment
      *      before before reverting to a linear growth pattern
      */
@@ -1040,7 +1040,7 @@ public:
     /**
      * Returns the number of subbuffers currently in use.
      *
-     * @return the number of buffers
+     * Returns: the number of buffers
      */
     size_t numsubbuffers()
     {
@@ -1053,7 +1053,7 @@ public:
 /**
  * A buffer that is always empty.
  *
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -1080,7 +1080,7 @@ public:
  * The underlying buffer's get() position is not affected by
  * reading from this buffer.
  *
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -1098,9 +1098,9 @@ public:
      * Does not take ownership of the supplied buffer.
      * 
      *
-     * @param _buf a pointer to the buffer to be wrapped
-     * @param _start the buffer offset of the window start position
-     * @param _length the length of the window
+     * "_buf" is a pointer to the buffer to be wrapped
+     * "_start" is the buffer offset of the window start position
+     * "_length" is the length of the window
      */
     WvBufferCursorBase(WvBufferBase<T> &_buf, int _start,
         size_t _length) :
@@ -1118,7 +1118,7 @@ public:
  *
  * Most useful for manipulating data backed by a raw memory buffer.
  *
- * @param T the type of object to store, must be a primitive or a struct
+ * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
@@ -1131,7 +1131,7 @@ public:
      * Does not take ownership of the supplied buffer.
      * 
      *
-     * @param _buf a pointer to the buffer to be wrapped
+     * "_buf" is a pointer to the buffer to be wrapped
      */
     template<typename S>
     WvBufferViewBase(WvBufferBase<S> &_buf) :

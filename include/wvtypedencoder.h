@@ -24,9 +24,9 @@
  * encoder hierarchies.  This is somewhat ugly, but necessary.
  * 
  *
- * @param IT the input buffer datatype
- * @param OT the output buffer datatype
- * @param S the WvEncoder supertype
+ * "IT" is the input buffer datatype
+ * "OT" is the output buffer datatype
+ * "S" is the WvEncoder supertype
  * @see WvEncoder
  */
 template<class IT, class OT, class S = WvEncoder>
@@ -128,7 +128,7 @@ protected:
  * Partial template specialization for unsigned char output
  * buffer type to avoid compilation errors.
  *
- * @param IType the input buffer datatype
+ * "IType" is the input buffer datatype
  */
 template<class IT, class S>
 class WvTypedEncoder<IT, unsigned char, S> : public S

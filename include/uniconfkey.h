@@ -53,7 +53,7 @@ public:
      * See the rules above for information about how the key string
      * is canonicalized.
      * 
-     * @param key the key as a string
+     * "key" is the key as a string
      */
     UniConfKey(WvStringParm key)
         { init(key); }
@@ -65,7 +65,7 @@ public:
      * is canonicalized.  This constructor only exists to help out the
      * C++ compiler with its automatic type conversions.
      * 
-     * @param key the key as a string
+     * "key" is the key as a string
      */
     UniConfKey(const char *key)
         { init(key); }   
@@ -78,32 +78,32 @@ public:
 
     /**
      * Copies a UniConfKey.
-     * @param other the key to copy
+     * "other" is the key to copy
      */
     UniConfKey(const UniConfKey &other);
 
     /**
      * Constructs a UniConfKey by concatenating two keys.
-     * @param path the initial part of the new path
-     * @param key the tail of the new path
+     * "path" is the initial part of the new path
+     * "key" is the tail of the new path
      */
     UniConfKey(const UniConfKey &path, const UniConfKey &key);
 
     /**
      * Appends a path to this path.
-     * @param other the path
+     * "other" is the path
      */
     void append(const UniConfKey &other);
 
     /**
      * Prepends a path to this path.
-     * @param other the path
+     * "other" is the path
      */
     void prepend(const UniConfKey &other);
 
     /**
      * Returns true if this path has zero segments (also known as root).
-     * @return numsegments() == 0
+     * Returns: numsegments() == 0
      */
     bool isempty() const;
 
@@ -119,52 +119,52 @@ public:
      * in the path unless the path is "/" (the root), which has
      * zero segments.
      * 
-     * @return the number of segments
+     * Returns: the number of segments
      */
     int numsegments() const;
 
     /**
      * Returns the specified segment of the path.
-     * @param i the segment index
-     * @return the segment
+     * "i" is the segment index
+     * Returns: the segment
      */
     UniConfKey segment(int i) const;
 
     /**
      * Returns the path formed by the n first segments of this path.
-     * @param n the number of segments
-     * @return the path
+     * "n" is the number of segments
+     * Returns: the path
      */
     UniConfKey first(int n = 1) const;
 
     /**
      * Returns the path formed by the n last segments of this path.
-     * @param n the number of segments
-     * @return the path
+     * "n" is the number of segments
+     * Returns: the path
      */
     UniConfKey last(int n = 1) const;
 
     /**
      * Returns the path formed by removing the first n segments of
      *   this path.
-     * @param n the number of segments
-     * @return the path
+     * "n" is the number of segments
+     * Returns: the path
      */
     UniConfKey removefirst(int n = 1) const;
 
     /**
      * Returns the path formed by removing the last n segments of
      *   this path.
-     * @param n the number of segments
-     * @return the path
+     * "n" is the number of segments
+     * Returns: the path
      */
     UniConfKey removelast(int n = 1) const;
 
     /**
      * Returns a range of segments.
-     * @param i the first segment index, beginning if <= 0
-     * @param j the last segment index, end if >= numsegments()
-     * @return the path, empty if j <= i
+     * "i" is the first segment index, beginning if <= 0
+     * "j" is the last segment index, end if >= numsegments()
+     * Returns: the path, empty if j <= i
      */
     UniConfKey range(int i, int j) const;
 
@@ -178,7 +178,7 @@ public:
      * UniConfKey(string).printable() == key 
      * does not hold.
      * 
-     * @return the path as a string
+     * Returns: the path as a string
      */
     WvString printable() const;
     operator WvString() const
@@ -186,7 +186,7 @@ public:
 
     /**
      * Assigns this path to equal another.
-     * @param other the other path
+     * "other" is the other path
      */
     UniConfKey &operator= (const UniConfKey &other);
 
@@ -194,8 +194,8 @@ public:
      * Compares two paths lexicographically.
      * Uses case-insensitive matching on the path string to produce
      * a total ordering of all paths.
-     * @param other the other path
-     * @return 0 if *this == other, < 0 if *this < other, else > 0
+     * "other" is the other path
+     * Returns: 0 if *this == other, < 0 if *this < other, else > 0
      */
     int compareto(const UniConfKey &other) const;
 
@@ -206,31 +206,31 @@ public:
      * the segment "..." which matches zero or more segments.
      * 
      * Using wildcards to represent part of a segment is not supported yet.
-     * @param pattern the pattern
-     * @return true if the key matches, false otherwise
+     * "pattern" is the pattern
+     * Returns: true if the key matches, false otherwise
      */
     bool matches(const UniConfKey &pattern) const;
 
     /**
      * Determines if two paths are equal.
-     * @param other the other path
-     * @return true in that case
+     * "other" is the other path
+     * Returns: true in that case
      */
     bool operator== (const UniConfKey &other) const
         { return compareto(other) == 0; }
         
     /**
      * Determines if two paths are unequal.
-     * @param other the other path
-     * @return true in that case
+     * "other" is the other path
+     * Returns: true in that case
      */
     bool operator!= (const UniConfKey &other) const
         { return ! (*this == other); }
 
     /**
      * Determines if this path precedes the other lexicographically.
-     * @param other the other path
-     * @return true in that case
+     * "other" is the other path
+     * Returns: true in that case
      */
     bool operator< (const UniConfKey &other) const
         { return compareto(other) < 0; }

@@ -110,13 +110,13 @@ public:
 
     /**
      * Returns the number of elements in the hash table.
-     * @return the number of elements
+     * Returns: the number of elements
      */
     size_t count() const;
 
     /**
      * Returns true if the hash table is empty.
-     * @return true if empty
+     * Returns: true if empty
      */
     bool isempty() const;
 
@@ -173,7 +173,7 @@ public:
     /**
      * Creates a hash table.
      *
-     * @param numslots the suggested number of slots
+     * "numslots" is the suggested number of slots
      */
     WvHashTable(unsigned _numslots) : WvHashTableBase(_numslots)
         { wvslots = new WvList<T>[numslots]; setup(); }

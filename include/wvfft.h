@@ -51,8 +51,8 @@ public:
     /**
      * Creates a forward real-to-complex FFT encoder.
      *
-     * @param n the number of values per block
-     * @param wnd the window function
+     * "n" is the number of values per block
+     * "wnd" is the window function
      */
     WvRealToComplexFFTEncoder(size_t n,
         WindowFunction wnd = WND_NONE);
@@ -98,7 +98,7 @@ public:
     /**
      * Creates an inverse complex-to-real FFT encoder encoder.
      *
-     * @param n the number of values per block
+     * "n" is the number of values per block
      */
     WvComplexToRealFFTEncoder(size_t n);
     virtual ~WvComplexToRealFFTEncoder();
@@ -143,7 +143,7 @@ public:
     /**
      * Creates a power spectrum encoder.
      *
-     * @param n the number of values per block
+     * "n" is the number of values per block
      */
     WvPowerSpectrumEncoder(size_t n);
 

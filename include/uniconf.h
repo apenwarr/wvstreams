@@ -59,7 +59,7 @@ public:
     
     /**
      * Copies a UniConf handle.
-     * @param other the handle to copy
+     * "other" is the handle to copy
      */
     UniConf(const UniConf &other)
         : xroot(other.xroot), xfullkey(other.xfullkey)

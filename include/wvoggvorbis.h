@@ -62,7 +62,7 @@ public:
     public:
         /**
          * Creates a bitrate specification.
-         * @param quality the quality index
+         * "quality" is the quality index
          */
         VBRQuality(float quality) : BitrateSpec(VBR_QUALITY)
         {
@@ -79,7 +79,7 @@ public:
     public:
         /**
          * Creates a bitrate specification.
-         * @param nominal the nominal bitrate
+         * "nominal" is the nominal bitrate
          */
         VBRBitrate(long nominal) : BitrateSpec(VBR_BITRATE)
         {
@@ -89,9 +89,9 @@ public:
         }
         /**
          * Creates a bitrate specification.
-         * @param max the maximum bitrate
-         * @param nominal the nominal bitrate
-         * @param min the minimum bitrate
+         * "max" is the maximum bitrate
+         * "nominal" is the nominal bitrate
+         * "min" is the minimum bitrate
          */
         VBRBitrate(long max, long nominal, long min) :
             BitrateSpec(VBR_BITRATE)
@@ -110,11 +110,11 @@ public:
      * implementation uses the rand() function and assumes that
      * the PRNG was previously seeded with srand().
      * 
-     * @param bitrate the bitrate specification
-     * @param samplingrate the number of samples per second
-     * @param channels number of channels (must be 1 for now),
+     * "bitrate" is the bitrate specification
+     * "samplingrate" is the number of samples per second
+     * "channels" is number of channels (must be 1 for now),
      *        defaults to 1
-     * @param serialno the Ogg bitstream serial number,
+     * "serialno" is the Ogg bitstream serial number,
      *        defaults to RANDOM_SERIALNO
      */
     WvOggVorbisEncoder(const BitrateSpec &bitratespec,
@@ -128,7 +128,7 @@ public:
      * 
      * Do not call after the first invocation of encode().
      * 
-     * @param comment the comment
+     * "comment" is the comment
      */
     void add_comment(WvStringParm comment);
     
@@ -150,8 +150,8 @@ public:
      * 
      * Do not call after the first invocation of encode().
      * 
-     * @param tag the tag name
-     * @param value the value
+     * "tag" is the tag name
+     * "value" is the value
      */
     void add_tag(WvStringParm tag, WvStringParm value);
 
@@ -210,14 +210,14 @@ public:
      * 
      * If false and isok(), try decoding more data.
      * 
-     * @return true when the header has been decoded
+     * Returns: true when the header has been decoded
      */
     bool isheaderok() const;
 
     /**
      * Returns the Ogg Vorbis vendor comment string.
      *
-     * @return the vendor comment
+     * Returns: the vendor comment
      */
     WvString vendor() const
         { return ovcomment->vendor; }
@@ -227,7 +227,7 @@ public:
      * 
      * The list is owned by the encoder, do not change.
      * 
-     * @return the list of comments
+     * Returns: the list of comments
      */
     WvStringList &comments()
         { return comment_list; }
@@ -235,7 +235,7 @@ public:
     /**
      * Returns the number of channels in the stream.
      *
-     * @return the number of channels, non-negative
+     * Returns: the number of channels, non-negative
      */
     int channels() const
         { return ovinfo->channels; }
@@ -243,7 +243,7 @@ public:
     /**
      * Returns the sampling rate of the stream.
      *
-     * @return the sampling rate
+     * Returns: the sampling rate
      */
     int samplingrate() const
         { return ovinfo->rate; }

@@ -31,9 +31,9 @@ public:
     /**
      * Creates a new Blowfish cipher encoder.
      *
-     * @param mode the encryption mode
-     * @param key the initial key
-     * @param keysize the initial key size in bytes
+     * "mode" is the encryption mode
+     * "key" is the initial key
+     * "keysize" is the initial key size in bytes
      */
     WvBlowfishEncoder(Mode mode, const void *key, size_t keysize);
     virtual ~WvBlowfishEncoder();
@@ -42,15 +42,15 @@ public:
      * Sets the current Blowfish key and resets the initialization
      * vector to all nulls.
      *
-     * @param key the new key
-     * @param keysize the key size in bytes
+     * "key" is the new key
+     * "keysize" is the key size in bytes
      */
     void setkey(const void *key, size_t keysize);
     
     /**
      * Sets the current Blowfish initialization vector.
      *
-     * @param iv the new IV must be 8 bytes
+     * "iv" is the new IV must be 8 bytes
      */
     void setiv(const void *iv);
 

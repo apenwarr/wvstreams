@@ -43,7 +43,7 @@ public:
     /**
      * Creates a Gzip encoder.
      *
-     * @param mode the compression mode
+     * "mode" is the compression mode
      */
     WvGzipEncoder(Mode mode);
     virtual ~WvGzipEncoder();

@@ -33,10 +33,10 @@ public:
     /**
      * Creates a new WvSyncStream.
      *
-     * @param cloned the stream to wrap
-     * @param bps the number of bytes per second to allow
-     * @param avgchunk the average number of bytes to process at once
-     * @param maxchunk the maximum number of bytes to process at once
+     * "cloned" is the stream to wrap
+     * "bps" is the number of bytes per second to allow
+     * "avgchunk" is the average number of bytes to process at once
+     * "maxchunk" is the maximum number of bytes to process at once
      */
     WvSyncStream(WvStream *cloned, size_t bps,
         size_t avgchunk, size_t maxchunk);
@@ -45,11 +45,11 @@ public:
     /**
      * Convenience constructor for throttling monaural audio streams.
      * 
-     * @param cloned the stream to wrap
-     * @param owner if false, sets disassociate_on_close
-     * @param srate the sampling rate in Hz
-     * @param bits the number of bits per sample
-     * @param msec the allowable average latency
+     * "cloned" is the stream to wrap
+     * "owner" is if false, sets disassociate_on_close
+     * "srate" is the sampling rate in Hz
+     * "bits" is the number of bits per sample
+     * "msec" is the allowable average latency
      * @deprecated
      */
     WvSyncStream(WvStream *cloned, bool owner, int srate, int bits,

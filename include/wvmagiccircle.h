@@ -19,7 +19,7 @@ public:
     /**
      * Creates a shared memory circular queue.
      *
-     * @param size the number of elements to store
+     * "size" is the number of elements to store
      */
     WvMagicCircle(size_t size);
     ~WvMagicCircle();
