@@ -204,13 +204,9 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
     for (i.rewind(); i.next(); )
     {
 	if ((!i->section || !strcasecmp(i->section, section))
-	    && (!i->key || !strcasecmp(i->key, key))
-	    && (i->last != value))
+	    && (!i->key || !strcasecmp(i->key, key)))
 	{
-	    WvString old(i->last);
-	    i->last = value;
-	    i->callback(i->userdata, section, key, old, value);
-	    i.rewind();
+	    i->callback(i->userdata, section, key, WvString(), value);
 	}
     }
 }
@@ -313,7 +309,7 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
     }
 
     callbacks.append(new CallbackInfo(callback, userdata, section, key,
-				      cookie, get(section, key, "")),
+				      cookie),
 		     true);
 }
 

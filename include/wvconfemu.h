@@ -105,12 +105,11 @@ private:
 	WvString section;
 	WvString key;
 	void* cookie;
-	WvString last;
 	CallbackInfo(WvConfCallback _callback, void* _userdata,
 		     WvStringParm _section, WvStringParm _key,
-		     void* _cookie, WvStringParm _last):
+		     void* _cookie):
 	    callback(_callback), userdata(_userdata), section(_section),
-	    key(_key), cookie(_cookie), last(_last)
+	    key(_key), cookie(_cookie)
 	{}
     };
 
