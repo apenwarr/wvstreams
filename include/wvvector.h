@@ -113,7 +113,7 @@ public:
         deletev oldarray;
     }
 
-    void remove(int slot), bool never_delete = false)
+    void remove(int slot, bool never_delete = false)
     {
 	T *obj = (*this)[slot];
 	WvVectorBase::remove(slot);
