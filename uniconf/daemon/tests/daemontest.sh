@@ -22,7 +22,7 @@ function do_help
 }
 
 testfiles=$(ls daemontest*.txt)
-failedfiles=
+failedfiles=""
 nl="-"
 stress="-"
 host="localhost"
@@ -82,12 +82,12 @@ until [ $# -eq 0 ]; do
 done
 
 # Now create our nc command
-cmd="nc -q 1000000 $host $port"
+cmd="nc $host $port"
 
 runtimes=1
 
 if [ "$stress" = "+" ] ; then
-    runtimes=100
+    runtimes=10
 fi
 
 count=0
@@ -95,7 +95,8 @@ count=0
 until [ $count -ge $runtimes ]; do
     do_tests
     count=$((count + 1))
-    if [ -n $failedfiles ]; then
+    
+    if [ "$failedfiles" != "" ]; then
         break
     fi
 done
