@@ -1,10 +1,22 @@
-wvstreams (3.71) unstable; urgency=low
+wvstreams (3.71) unstable; urgency=high
 
   * Synchronised with Upstream version
 
   * Additional packaging fixes to move libwvstreams-dev into the devel
     section, and libwvstreams-docs into the docs section, also fixed a
-    problem with the installer.
+    problem with the installer. (Closes: #166208, #166210)
+
+  * Added a WvQT class to enable WvStreams and QT programs to play nice
+
+  * Rewrite of the Encryption stuff to use the new encoders
+
+  * Rewrite of the WvBuffers
+
+  * New WvOggEncoder/WvOggDecoder
+
+  * Lots and Lots of other stuff. 
+
+  * Now with new AutoConf goodness ;)
 
  -- Patrick Patterson <ppatters@debian.org>  Mon, 29 Jul 2002 18:39:51 -0400
 
