@@ -23,11 +23,6 @@ DEPFILE = $(notdir $(@:.o=.d))
 %: %.o
 	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-%: %.cc
-	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
-	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
-		sed -e 's|^$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
-
 %.o: %.cc
 	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
@@ -134,10 +129,11 @@ uninstall:
 	$(tbd)
 
 $(TESTS): libwvstreams.so libwvutils.so
+$(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
 dishes:
-	@echo "aww, okay, but not now..."
+	@echo "aww, later..."
 
 include $(wildcard */rules.mk */*/rules.mk) /dev/null
 
