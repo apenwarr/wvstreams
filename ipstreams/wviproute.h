@@ -16,10 +16,8 @@
 class WvIPRoute
 {
 public:
-    WvIPRoute(const WvString &_ifc, const WvString &_addr,
-	      const WvString &_mask,const WvString &_gate, int _metric);
-    WvIPRoute(const WvString &_ifc, const WvIPNet &_net,
-	      const WvIPAddr &_gate, int _metric);
+    WvIPRoute(const WvString &_ifc, const WvIPNet &_net, const WvIPAddr &_gate,
+	      int _metric, const WvString &_table);
     operator WvString() const;
     bool operator== (const WvIPRoute &r2) const;
     
@@ -27,6 +25,7 @@ public:
     WvIPNet ip;
     WvIPAddr gateway;
     int metric;
+    WvString table; // "advanced ip routing" table name
 };
 
 

@@ -11,7 +11,7 @@
 #include "strutils.h"
 
 
-WvString WvStringList::join(const char *joinchars = " ")
+WvString WvStringList::join(const char *joinchars)
 {
     WvStringList::Iter s(*this);
     size_t totlen;
@@ -42,7 +42,7 @@ WvString WvStringList::join(const char *joinchars = " ")
 }
 
 
-void WvStringList::split(const WvString &_s, const char *splitchars = " ")
+void WvStringList::split(const WvString &_s, const char *splitchars)
 {
     WvString s(_s);
     char *sptr = s.edit(), *eptr, oldc;

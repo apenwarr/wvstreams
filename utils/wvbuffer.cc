@@ -68,7 +68,7 @@ void WvBuffer::zap()
     WvMiniBufferList::Iter i(list);
     
     for (i.rewind(); i.next(); )
-	i.data().zap();
+	i->zap();
     inuse = 0;
 }
 
@@ -89,7 +89,7 @@ unsigned char *WvBuffer::get(size_t num)
     i.rewind(); i.next();
     
     // if the first minibuffer is empty, delete it.
-    firstb = &i.data();
+    firstb = i.ptr();
     if (firstb->used() == 0)
     {
 	Dprintf("<del-0 MiniBuffer(%d)\n", firstb->total());
@@ -97,7 +97,7 @@ unsigned char *WvBuffer::get(size_t num)
     }
 
     // if the (new) first minibuffer has enough data, just use that.
-    firstb = &i.data();
+    firstb = i.ptr();
     if (firstb->used() >= num)
 	return firstb->get(num);
 
@@ -117,7 +117,7 @@ unsigned char *WvBuffer::get(size_t num)
 
     for (i.rewind(), i.next(); i.cur(); )
     {
-	b = &i.data();
+	b = i.ptr();
 	if (b == destb)
 	{
 	    i.next();
@@ -234,7 +234,7 @@ void WvBuffer::unalloc(size_t num)
 	for (i.rewind(); i.next() && i.cur()->next; )
 	    ;
 	
-	b = &i.data();
+	b = i.ptr();
 	
 	if (b->used() < num)
 	{

@@ -37,10 +37,10 @@ int main()
     WvIPRouteList r2;
     
     r2.append(new WvIPRoute("eth1", WvIPNet("24.112.104.0/255.255.252.0"),
-			    "0", 5), true);
+			    "0", 5, "default"), true);
     r2.append(new WvIPRoute("eth0", WvIPNet("192.168.42.4/24"),
-			    "0", 0), true);
+			    "0", 0, "default"), true);
     r2.append(new WvIPRoute("eth1", WvIPNet("0.0.0.0/0"),
-			    "24.112.104.1", 1), true);
+			    "24.112.104.1", 1, "default"), true);
     r2.set_kernel();
 }

@@ -198,14 +198,16 @@ public: 						\
     public: 						\
         Iter(_newname_ &l) : IterBase(l)		\
             { } 					\
-        _type_ &data() const 				\
-            { return *(_type_ *)link->data; } 		\
+        _type_ *ptr() const 				\
+            { return (_type_ *)link->data; } 		\
 	operator _type_& () const			\
-	    { return data(); }				\
+	    { return *ptr(); }				\
 	_type_ &operator () () const			\
-	    { return data(); }				\
+	    { return *ptr(); }				\
 	_type_ *operator -> () const			\
-	    { return &data(); }				\
+	    { return ptr(); }				\
+	_type_ &operator*() const			\
+	    { return *ptr(); }				\
         void unlink() 					\
         {						\
 	    if (prev) ((_newname_ *)list)->unlink_after(prev); \
@@ -221,17 +223,19 @@ public: 						\
         Sorter(_newname_ &l, int (*_cmp)(const _type_ **, const _type_ **))   \
             : SorterBase(l), cmp(_cmp)                  \
             { }                                         \
-        _type_ &data() const                            \
-            { return *(_type_ *)(*lptr)->data; }        \
+        _type_ *ptr() const                             \
+            { return (_type_ *)(*lptr)->data; }         \
         operator _type_& () const                       \
-            { return data(); }                          \
+            { return *ptr(); }                          \
         _type_ &operator () () const                    \
-            { return data(); }                          \
+            { return *ptr(); }                          \
         _type_ *operator -> () const                    \
-            { return &data(); }                         \
+            { return ptr(); }                           \
+	_type_ &operator*() const			\
+	    { return *ptr(); }				\
         void unlink()                                   \
         {                                               \
-            ((_newname_ *)list)->unlink(&data());       \
+            ((_newname_ *)list)->unlink(ptr());         \
             lptr += sizeof(WvLink *);                   \
         }                                               \
         void rewind()                                   \
