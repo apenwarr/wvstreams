@@ -209,7 +209,6 @@ public:
 	Sorter;
 };
 
-
 // the _hack container class is necessary because if DeclareWvDict is run
 // inside a class definition, the typedef can't access this function for
 // some reason (g++ bug or c++ bug?  The world is left wondering...)
@@ -239,7 +238,6 @@ public:
 	_extra_								\
     };
 
-
 #define DeclareWvDict3(_type_, _newname_, _ftype_, _field_, _extra_) 	\
 	__WvDict_base(_newname_, _type_, _ftype_, (*(const _type_ *)obj). _field_, _extra_)
 #define DeclareWvDict2(_type_, _ftype_, _field_, _extra_)		\
@@ -253,5 +251,68 @@ public:
 	DeclareWvTable3(_type_, _type_##Table, _extra_)
 #define DeclareWvTable(_type_) DeclareWvTable2(_type_, ;)
 
+// ******************************************
+// WvMap
+
+// Type specification to facilitate auto_free
+// Object type - ignores auto_free
+template<typename TKey, typename _TData>
+class WvPair
+{
+    typedef _TData TData;
+public:
+    TKey key;
+    TData data;
+    WvPair(const TKey &_key, const TData &_data, bool _auto_free)
+        : key(_key), data(_data) { };
+};
+
+// Pointer type
+template<typename TKey, typename _TData>
+class WvPair<TKey, _TData*>
+{
+    typedef _TData* TData;
+public:
+    TKey key;
+    TData data;
+    WvPair(const TKey &_key, const TData &_data, bool _auto_free)
+        : key(_key), data(_data), auto_free(_auto_free) { };
+    virtual ~WvPair()
+        { if (auto_free) delete data; };
+protected:
+    bool auto_free;
+};
+
+// Main map template
+template<typename TKey, typename TData>
+class WvMap
+{
+protected: 
+      typedef WvPair<TKey, TData> MyPair;
+      DeclareWvDict(MyPair, TKey, key);
+      MyPairDict dict;
+public:
+      WvMap(int s) : dict(s)    { };
+      /* May return NULL!! */ 
+      TData *find(const TKey &key)
+      {
+          MyPair* p = dict[key];
+          return p ? &p->data : (TData*)NULL;
+      };
+      TData *operator[](const TKey &key)
+      { return find(key); };
+      void add(const TKey &key, const TData &data, bool auto_free = false)
+      { dict.add(new MyPair(key, data, auto_free), true); };
+      void remove(const TKey &key)
+      { dict.remove(dict[key]); }; 
+      void zap()
+      { dict.zap(); };
+      int count()
+      { return dict.count(); };
+      /* An autocast to dict so that the iterator works */
+      operator MyPairDict& ()
+      { return dict; }; 
+      typedef MyPairDict::Iter Iter;
+}; 
 
 #endif // __WVHASHTABLE_H
