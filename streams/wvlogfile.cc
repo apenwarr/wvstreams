@@ -76,7 +76,7 @@ void WvLogFile::start_log()
     // Get the next filename
     do
         fullname = WvString("%s.%s.%s", filename, buf, num++);
-    while (stat(fullname, &statbuf) != -1 || statbuf.st_size < MAX_LOGFILE_SZ);
+    while (stat(fullname, &statbuf) != -1 && statbuf.st_size >= MAX_LOGFILE_SZ);
 
     WvString curname("%s.current", filename);
     WvString base = getfilename(filename);
