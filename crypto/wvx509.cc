@@ -752,7 +752,11 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    }
 	    cert = PEM_read_X509(stupid, NULL, NULL, NULL);
 	    if (cert)
+	    {
 		filldname();
+		if (!rsa)
+		    rsa = fillRSAPubKey();
+	    }
 	    else
 		seterr("Certificate failed to import!");
 	    break;
