@@ -7,7 +7,6 @@
 #include "wvresolver.h"
 #include "wvloopback.h"
 #include "wvaddr.h"
-#include "wvhashtable.h"
 #include "wvtcp.h"
 #include "wvfork.h"
 #include "wvautoconf.h"
@@ -27,27 +26,24 @@ public:
     pid_t pid;
     WvLoopback *loop;
     time_t last_tried;
-    
+
     WvResolverHost(WvStringParm _name) : name(_name)
         { init(); addr = NULL; }
     ~WvResolverHost()
-        {   
-            // Don't need to delete addr, as deleting the list will take care
-            // of it.
-	    // if (addr) delete addr;
-	    if (loop) delete loop; 
-	    if (pid)
-	    {
-		kill(pid, SIGKILL);
-		waitpid(pid, NULL, 0); 
-	    }
-	}
+        {
+            if (loop) delete loop;
+            if (pid)
+            {
+                kill(pid, SIGKILL);
+                waitpid(pid, NULL, 0);
+            }
+        }
 protected:
     WvResolverHost()
         { init(); }
     void init()
         { done = negative = false;
-	  pid = 0; loop = NULL; last_tried = time(NULL); }
+          pid = 0; loop = NULL; last_tried = time(NULL); }
 };
 
 class WvResolverAddr : public WvResolverHost
@@ -56,9 +52,6 @@ public:
     WvResolverAddr(WvIPAddr *_addr)
         { addr = _addr; }
 };
-
-DeclareWvDict(WvResolverHost, WvString, name);
-DeclareWvDict(WvResolverAddr, WvIPAddr, addr[0]);
 
 // static members of WvResolver
 int WvResolver::numresolvers = 0;

@@ -14,10 +14,15 @@
 #include "wvstring.h"
 #include "wvhashtable.h"
 
-DeclareWvTable2(WvString,
+DeclareWvTable2(WvStringTableBase, WvString);
+
+class WvStringTable : public WvStringTableBase
+{
+public:
+    WvStringTable(unsigned _numslots) : WvStringTableBase(_numslots) {};
     WvString join(const char *joinchars = " \t") const;
     void split(WvStringParm s, const char *splitchars = " \t",
         int limit = 0);
-);
+};
 
 #endif // __WVSTRINGTABLE_H

@@ -225,7 +225,21 @@ public:
 // ******************************************
 // WvDict and WvTable
 
-#define __WvDict_base(_classname_, _type_, _ftype_, _field_, _extra_)	\
+
+#define DeclareWvDict2(_classname_,  _type_, _ftype_, _field_) 	        \
+	__WvDict_base(_classname_, _type_, _ftype_, &obj->_field_)
+
+#define DeclareWvDict(_type_, _ftype_, _field_) 			\
+        DeclareWvDict2(_type_##Dict, _type_, _ftype_, _field_)
+
+#define DeclareWvTable2(_classname_, _type_)                            \
+        __WvDict_base(_classname_, _type_, _type_, obj)
+
+#define DeclareWvTable(_type_)                                          \
+        DeclareWvTable2(_type_##Table, _type_)
+
+
+#define __WvDict_base(_classname_, _type_, _ftype_, _field_)	        \
     template <class T, class K>                                         \
     struct _classname_##Accessor 					\
     { 									\
@@ -234,31 +248,8 @@ public:
     }; 									\
 									\
     typedef WvHashTable<_type_, _ftype_,                                \
-             _classname_##Accessor<_type_, _ftype_> > 	                \
-                        _classname_##Base; 				\
-    									\
-    class _classname_ : public _classname_##Base 			\
-    { 									\
-    public: 								\
-	_classname_(unsigned _numslots) : _classname_##Base(_numslots)	\
-		{ }							\
-	void add(_type_ *data, bool auto_free)				\
-		{ _classname_##Base::add(data, auto_free); };		\
-	_extra_								\
-    };
+             _classname_##Accessor<_type_, _ftype_> > _classname_
 
-#define DeclareWvDict3(_type_, _newname_, _ftype_, _field_, _extra_) 	\
-	__WvDict_base(_newname_, _type_, _ftype_, &obj->_field_, _extra_)
-#define DeclareWvDict2(_type_, _ftype_, _field_, _extra_)		\
-        DeclareWvDict3(_type_, _type_##Dict, _ftype_, _field_, _extra_)
-#define DeclareWvDict(_type_, _ftype_, _field_) 			\
-	DeclareWvDict2(_type_, _ftype_, _field_, )
-
-#define DeclareWvTable3(_type_, _newname_, _extra_)			\
-	__WvDict_base(_newname_, _type_, _type_, obj, _extra_)
-#define DeclareWvTable2(_type_, _extra_) 				\
-	DeclareWvTable3(_type_, _type_##Table, _extra_)
-#define DeclareWvTable(_type_) DeclareWvTable2(_type_, ;)
 
 
 // ******************************************
@@ -280,6 +271,7 @@ public:
         : key(_key), data(_data) { };
 };
 
+
 // Pointer type
 template<typename TKey, typename _TData>
 class WvPair<TKey, _TData*>
@@ -296,6 +288,7 @@ protected:
     bool auto_free;
 };
 
+
 // *****************************
 // Main map template
 template
@@ -304,14 +297,13 @@ template
     typename TData,
     template <class> class Comparator = OpEqComp
 >
-class WvMap
+class WvMap : public WvHashTable<WvPair<TKey, TData>, TKey,
+        WvMap<TKey, TData, Comparator>, Comparator>
 {
 protected: 
     typedef WvPair<TKey, TData> MyPair;
     typedef WvMap<TKey, TData, Comparator> MyMap;
     typedef WvHashTable<MyPair, TKey, MyMap, Comparator> MyHashTable;
-
-    MyHashTable hasht;
 
     // accessor mothod for WvHashTable to use
     friend class MyHashTable;
@@ -319,26 +311,19 @@ protected:
         { return &obj->key; }
 
 public:
-    WvMap(int s) : hasht(s)    { };
+    WvMap(int s) : MyHashTable(s)    { };
     /* May return NULL!! */ 
     TData *find(const TKey &key)
     {
-        MyPair* p = hasht[key];
+        MyPair* p = MyHashTable::operator[](key);
         return p ? &p->data : (TData*)NULL;
     }
     TData *operator[](const TKey &key)
         { return find(key); }
     void add(const TKey &key, const TData &data, bool auto_free = false)
-        { hasht.add(new MyPair(key, data, auto_free), true); }
+        { MyHashTable::add(new MyPair(key, data, auto_free), true); }
     void remove(const TKey &key)
-        { hasht.remove(hasht[key]); } 
-    void zap()
-        { hasht.zap(); }
-    int count()
-        { return hasht.count(); }
-    /* An autocast to hasht so that the iterator works */
-    operator MyHashTable& ()
-        { return hasht; }
+        { MyHashTable::remove(MyHashTable::operator[](key)); } 
     typedef typename MyHashTable::Iter Iter;
 }; 
 

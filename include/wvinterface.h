@@ -135,7 +135,7 @@ public:
     int addarp(const WvIPNet &proto, const WvAddr &hw, bool proxy);
 };
 
-DeclareWvDict3(WvInterface, WvInterfaceDictBase, WvString, name, );
+DeclareWvDict2(WvInterfaceDictBase, WvInterface, WvString, name);
 
 class WvInterfaceDict
 {

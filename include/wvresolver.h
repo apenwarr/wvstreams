@@ -12,9 +12,13 @@
 #include "wvaddr.h"
 #include "wvstream.h"
 #include "wvlinklist.h"
+#include "wvhashtable.h"
 
-class WvResolverHostDict;
-class WvResolverAddrDict;
+class WvResolverHost;
+class WvResolverAddr;
+
+DeclareWvDict(WvResolverHost, WvString, name);
+DeclareWvDict(WvResolverAddr, WvIPAddr, addr[0]);
 
 DeclareWvList(WvIPAddr);
 
