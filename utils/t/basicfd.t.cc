@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <errno.h>
-//#include <sys/socket.h>
+#include <sys/socket.h>
 
 /*
  * The main point of these tests is for win32, because we override
