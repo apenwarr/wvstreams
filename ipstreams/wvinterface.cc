@@ -329,8 +329,12 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 	"dev", name,
 	"via", (WvString)gw,
 	"metric", WvString(metric),
+	"scope", "global",
 	NULL
     };
+    
+    if (gw == WvIPAddr()) // no gateway; change the scope name
+	argv[13] = "link";
     
     if (dest == WvIPNet("0.0.0.0", 0)
 	&& WvPipe(argv[0], argv, false, false, false).finish() == 0)
