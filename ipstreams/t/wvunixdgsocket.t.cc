@@ -2,12 +2,13 @@
 #include "wvunixdgsocket.h"
 #include "wvhex.h"
 
-#define TESTFILE "/tmp/wvunixdgtest-test"
 
 WVTEST_MAIN("embarrassingly simple unixdgsockets test")
 {
-    WvUnixDGListener in(TESTFILE);
-    WvUnixDGConn out(TESTFILE);
+    char testtemp[] = "/tmp/wvunixdgtestXXXXXX";
+    WvString testfile(mktemp(testtemp));
+    WvUnixDGListener in(testfile);
+    WvUnixDGConn out(testfile);
     
     WVPASS(out.iswritable());
     WvString t("test");
@@ -203,8 +204,10 @@ WVTEST_MAIN("fire random binary data through unixdgsocket")
     
     unhexify(outbuf, tstdata);
 
-    WvUnixDGListener in(TESTFILE);
-    WvUnixDGConn out(TESTFILE);
+    char testtemp[] = "/tmp/wvunixdgtestXXXXXX";
+    WvString testfile = mktemp(testtemp);
+    WvUnixDGListener in(testfile);
+    WvUnixDGConn out(testfile);
 
     WVPASS(out.iswritable());
     out.write(outbuf, tstlen);
