@@ -49,7 +49,7 @@ void UniConfDaemonConn::execute()
 	    }
             if (cmd == "quit")
             {
-	        print("OK\n");
+	        print("OK quit <null>\n");
                 close();
                 return;
             }
@@ -59,6 +59,7 @@ void UniConfDaemonConn::execute()
 
             if (cmd == "get") // return the specified value
             {
+                print("OK %s %s\n", cmd, key);
                 WvString response;
                 if (!!source->mainconf.get(key))
                     response = WvString("RETN %s %s\n", wvtcl_escape(key),
@@ -75,6 +76,7 @@ void UniConfDaemonConn::execute()
             else if (cmd == "subt") // return the subtree(s) of this key
             {
                 UniConf *nerf = &source->mainconf[key];
+                print("OK %s %s\n", cmd, key);
                 if (nerf)
                 {
                     WvString send("SUBT %s ", wvtcl_escape(key));
@@ -97,6 +99,7 @@ void UniConfDaemonConn::execute()
             }
             else if (cmd == "set") // set the specified value
             {
+                print("OK %s %s\n", cmd, key);
                 WvString newvalue = wvtcl_getword(fromline);
                 source->mainconf[key] = wvtcl_unescape(newvalue);
                 source->keymodified = true;

@@ -11,7 +11,7 @@
 
 WvFastString::WvFastString(const QString &s)
 {
-    fprintf(stderr, "ffqs: '%s'\n", s.latin1());
+//    fprintf(stderr, "ffqs: '%s'\n", s.latin1());
     
 #if 1
     link(&nullbuf, NULL);
@@ -47,7 +47,7 @@ WvFastString::operator QString () const
 
 WvString::WvString(const QString &s)
 {
-    fprintf(stderr, "ssqs: '%s'\n", s.latin1());
+//    fprintf(stderr, "ssqs: '%s'\n", s.latin1());
     
     link(&nullbuf, s);
     unique();

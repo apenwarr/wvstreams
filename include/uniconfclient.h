@@ -42,6 +42,11 @@ public:
     virtual void save();
 protected:
     void execute();
+    void executereturn(WvString &key, WvConstStringBuffer &fromline);
+    void executeforget(WvString &key);
+    void executesubtree(WvString &key, WvConstStringBuffer &fromline);
+    void executeok(WvConstStringBuffer &fromline);
+    void executefail(WvConstStringBuffer &fromline);
     void savesubtree(UniConf *tree, UniConfKey key);
     bool waitforsubt;
 };
