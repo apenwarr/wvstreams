@@ -28,6 +28,7 @@ static WvFastString inicode(WvStringParm s)
 {
     static const char white[] = " \t\r\n";
     
+    // we need braces if the string starts/ends with whitespace
     if (!!s && (strchr(white, *s) || strchr(white, s[strlen(s)-1])))
 	return wvtcl_escape(s, " \t\r\n=[]");
     else
@@ -224,7 +225,9 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
     // dump the "root level" of this tree into one section
     if (any_interesting_children(h))
     {
-	out("\n[%s]\n", inicode(key));
+	// we could use inicode here, but then section names containing
+	// '=' signs get quoted unnecessarily.
+	out("\n[%s]\n", wvtcl_escape(key, " \t\r\n[]"));
     
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
