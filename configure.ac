@@ -380,6 +380,9 @@ fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
 fi
+if test "$with_openslp" = "no"; then
+    AC_MSG_WARN([OpenSLP is missing.])
+fi
 if test "$with_openssl" = "no"; then
     AC_MSG_WARN([OpenSSL is missing.])
     missing_required="$missing_required OpenSSL"
@@ -422,6 +425,7 @@ AC_SUBST(with_fftw)
 AC_SUBST(with_qdbm)
 AC_SUBST(with_gtk)
 AC_SUBST(with_ogg)
+AC_SUBST(with_openslp)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
 AC_SUBST(with_telephony)
