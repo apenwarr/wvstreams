@@ -116,7 +116,9 @@ bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 	des_ede3_cfb64_encrypt(data, crypt, len, deskey1, deskey2, deskey3,
 			       &ivec, &ivecoff,
 			       mode == CFBEncrypt ? DES_ENCRYPT : DES_DECRYPT);
-            break;
+        break;
+    default:
+	break;
     }
     return success;
 }
