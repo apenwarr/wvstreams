@@ -40,7 +40,8 @@ build-stamp-indep: configure-stamp
 	dh_testdir
 
 	$(MAKE) doxygen
-	$(MAKE) -C Docs/sgmlmanual html ps pdf
+#	pcolijn: this doesn't work any more
+#	$(MAKE) -C Docs/sgmlmanual html ps pdf
 
 	touch build-stamp-indep
 
@@ -86,15 +87,16 @@ install-indep: build-indep
 	dh_installdirs
 
 	# Install documents package
+	# pcolijn: commented out manual stuff since it doesn't build any more
 	install -d $(DOCDIR)
 	install -d $(DOCDIR)/html-api
-	install -d $(DOCDIR)/html-manual
+#	install -d $(DOCDIR)/html-manual
 	install -m644 Docs/doxy-html/* $(DOCDIR)/html-api/
-	install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
-		$(DOCDIR)/html-manual/
-	install -m644 Docs/sgmlmanual/wvstreams.ps \
-		Docs/sgmlmanual/wvstreams.pdf \
-		$(DOCDIR)
+#	install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
+#		$(DOCDIR)/html-manual/
+#	install -m644 Docs/sgmlmanual/wvstreams.ps \
+#		Docs/sgmlmanual/wvstreams.pdf \
+#		$(DOCDIR)
 
 
 # Build architecture-independent files here.
