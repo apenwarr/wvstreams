@@ -4,7 +4,7 @@
  * 
  * Test for the UniConf::Iter objects.
  */
-#include "uniconf.h"
+#include "uniconfroot.h"
 #include "uniinigen.h"
 #include <wvlog.h>
 #include <wvlogrcv.h>

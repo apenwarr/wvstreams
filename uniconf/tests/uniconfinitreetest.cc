@@ -3,7 +3,7 @@
 // come up with a better way to do this to allow for automated checking.
 
 
-#include "uniconf.h"
+#include "uniconfroot.h"
 #include "uniinitreegen.h"
 
 int main(int argc, char **argv)

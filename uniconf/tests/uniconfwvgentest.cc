@@ -1,5 +1,5 @@
 #include "uniwvconfgen.h"
-#include "uniconf.h"
+#include "uniconfroot.h"
 #include "wvconf.h"
 #include "wvlog.h"
 

@@ -1,4 +1,4 @@
-#include <uniconf.h>
+#include <uniconfroot.h>
 #include <unisecuregen.h>
 #include <unipermgen.h>
 

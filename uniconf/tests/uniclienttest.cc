@@ -12,7 +12,7 @@
 #include "wvtclstring.h"
 #include "wvunixsocket.h"
 #include "wvaddr.h"
-#include "uniconf.h"
+#include "uniconfroot.h"
 #include "uniclientgen.h"
 #include "wvtcp.h"
 

@@ -7,11 +7,12 @@
 #include "wvlog.h"
 #include "wvlogrcv.h"
 #include "wvdiriter.h"
+#include "wvconf.h"
 #include "wvfile.h"
 #include "wvtclstring.h"
 #include "uniconf.h"
 #include "strutils.h"
-#include "wvconf.h"
+#include "uniconfroot.h"
 #include "uniconftree.h"
 #include "uniconfgen.h"
 

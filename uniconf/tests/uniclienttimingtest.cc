@@ -7,7 +7,7 @@
  */
 
 #include "wvstream.h"
-#include "uniconf.h"
+#include "uniconfroot.h"
 #include "wvlogrcv.h"
 
 int alarms[] = { 10, 100, 1000, 10000, 10000, 10000, -1 };
