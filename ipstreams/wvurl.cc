@@ -91,10 +91,21 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
 
     cptr = strchr(wptr, '@');
     if (!cptr) // no user given
+    {
         user = "";
+	password = "";
+    }
     else
     {
         *cptr = 0;
+	char *cptr2 = strchr(wptr, ':');
+	if (cptr2 && (*(cptr2+1) != 0))
+	{
+	    *cptr2 = 0;
+	    password = cptr2 + 1;
+	}
+	else
+	    password = ""; 
         user = wptr;
         wptr = cptr + 1;
     }
@@ -130,6 +141,7 @@ WvUrl::WvUrl(const WvUrl &url) : err("No error")
     
     proto = url.proto;
     user = url.user;
+    password = url.password;
     hostname = url.hostname;
     file = url.file;
     port = url.port;

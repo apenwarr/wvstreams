@@ -46,9 +46,11 @@ public:
         { return port; }
     WvStringParm getuser() const
         { return user; }
+    WvStringParm getpassword() const
+        { return password; }
 
 protected:
-    WvString proto, hostname, user;
+    WvString proto, hostname, user, password;
     int port;
     bool resolving;
     WvResolver dns;
