@@ -1,10 +1,8 @@
 #include "wvtest.h"
 
-#define private public
-#define protected public
+#define __WVSTREAM_UNIT_TEST 1
 #include "wvstream.h"
-#undef private
-#undef protected
+
 
 #include "wvistreamlist.h"
 #include "wvcont.h"
@@ -34,7 +32,14 @@ public:
     bool yes_writable, block_writes;
     
     CountStream()
-    	{ rcount = wcount = 0; yes_writable = block_writes = false; }
+    { 
+	printf("countstream initializing.\n");
+	rcount = wcount = 0; yes_writable = block_writes = false;
+	int num = geterr();
+	printf("countstream error: %d (%s)\n", num, errstr().cstr());
+	printf("countstream new error: %d\n", geterr());
+    }
+    
     virtual ~CountStream()
     	{ close(); }
     
@@ -47,18 +52,21 @@ public:
     
     virtual size_t uwrite(const void *buf, size_t count)
     {
+	fprintf(stderr, "I'm uwrite! (%d)\n", count);
 	if (block_writes)
 	    return 0;
 	size_t ret = WvStream::uwrite(buf, count);
+	assert(ret == count);
 	wcount += ret;
 	return ret;
     }
     
     virtual bool post_select(SelectInfo &si)
     {
+	printf("countstream post_select\n");
 	int ret = WvStream::post_select(si);
 	if (yes_writable 
-	  && (si.wants.writable || (outbuf.used() && want_to_flush)))
+	  && (si.wants.writable || (outbuf_used() && want_to_flush)))
 	    return true;
 	else
 	    return ret;
@@ -76,7 +84,7 @@ WVTEST_MAIN("buffered read/write")
     WVPASS(!s.isreadable());
     WVPASS(!s.iswritable());
     WVFAIL(s.read(buf, 1024) != 0);
-    WVPASS(s.write(buf, 1024) == 1024);
+    WVPASSEQ(s.write(buf, 1024), 1024);
     WVPASS(!s.iswritable());
     WVPASS(!s.isreadable());
     WVPASS(s.isok());
@@ -103,13 +111,13 @@ WVTEST_MAIN("errors")
     WVPASS(!a.geterr());
     a.seterr(EBUSY);
     WVPASS(!a.isok());
-    WVPASS(a.geterr() == EBUSY);
-    WVPASS(a.errstr() == strerror(EBUSY));
+    WVPASSEQ(a.geterr(), EBUSY);
+    WVPASSEQ(a.errstr(), strerror(EBUSY));
     
     b.seterr("I'm glue!");
     WVPASS(!b.isok());
-    WVPASS(b.geterr() == -1);
-    WVPASS(b.errstr() == "I'm glue!");
+    WVPASSEQ(b.geterr(), -1);
+    WVPASSEQ(b.errstr(), "I'm glue!");
 }
 
 
@@ -134,12 +142,12 @@ WVTEST_MAIN("getline")
     char buf[1024];
     
     WVPASS(!s.isreadable());
-    s.inbuf.putstr("a\n b \r\nline");
+    s.inbuf_putstr("a\n b \r\nline");
     WVPASS(s.isreadable());
     s.noread();
     WVPASS(s.isreadable());
     
-    WVPASS(s.read(buf, 2) == 2);
+    WVPASSEQ(s.read(buf, 2), 2);
     char *line = s.getline();
     WVPASS(line);
     WVPASS(line && !strcmp(line, " b \r"));
@@ -155,7 +163,7 @@ WVTEST_MAIN("getline")
     WVPASS(msecdiff(t2, t1) < 400); // noread().  shouldn't actually wait!
    
     WvStream t;
-    t.inbuf.putstr("tremfodls\nd\ndopple");
+    t.inbuf_putstr("tremfodls\nd\ndopple");
     line = t.getline('\n', 20);
     WVPASS(line && !strcmp(line, "tremfodls"));
     t.close();
@@ -165,9 +173,11 @@ WVTEST_MAIN("getline")
     WVPASS(line && !strcmp(line, "dopple"));
 
     // FIXME: avoid aborting the entire test here on a freezeup!
+#ifndef WIN32
     ::alarm(5); // crash after 5 seconds
     WVPASS(!s.blocking_getline(-1));
     ::alarm(0);
+#endif 
 }
 
 // more noread/nowrite behaviour
@@ -175,7 +185,7 @@ WVTEST_MAIN("more noread/nowrite")
 {
     WvStream s;
     
-    s.inbuf.putstr("hello");
+    s.inbuf_putstr("hello");
     s.write("yellow");
     WVPASS(s.isok());
     s.nowrite();
@@ -213,27 +223,27 @@ WVTEST_MAIN("callbacks")
     WVPASS(!closeval);
     s.runonce(0);
     WVPASS(!val);
-    s.inbuf.putstr("gah");
+    s.inbuf_putstr("gah");
     s.runonce(0);
-    WVPASS(val == 1); // callback works?
+    WVPASSEQ(val, 1); // callback works?
     s.runonce(0);
-    WVPASS(val == 2); // level triggered?
+    WVPASSEQ(val, 2); // level triggered?
     s.getline();
-    WVPASS(val == 2); // but not by getline
+    WVPASSEQ(val, 2); // but not by getline
     WVPASS(!closeval);
-    s.inbuf.putstr("blah!");
+    s.inbuf_putstr("blah!");
     s.nowrite();
     s.noread();
     s.runonce(0);
-    WVPASS(val == 3);
+    WVPASSEQ(val, 3);
     WVPASS(s.getline());
     s.runonce(0);
-    WVPASS(val == 3);
-    WVPASS(closeval == 1);
+    WVPASSEQ(val, 3);
+    WVPASSEQ(closeval, 1);
     s.runonce(0);
-    WVPASS(closeval == 1);
+    WVPASSEQ(closeval, 1);
     s.close();
-    WVPASS(closeval == 1);
+    WVPASSEQ(closeval, 1);
 }
 
 
@@ -244,46 +254,53 @@ WVTEST_MAIN("autoforward and buffers")
     CountStream b;
     int val = 0;
     
+    fprintf(stderr, "a error: '%s'\n", a.errstr().cstr());
+    fprintf(stderr, "b error: '%s'\n", b.errstr().cstr());
+    
     a.autoforward(b);
     b.setcallback(val_cb, &val);
     
-    a.inbuf.putstr("astr");
+    WVPASS(a.isok());
+    WVPASS(b.isok());
+    
+    a.inbuf_putstr("astr");
+    WVPASSEQ(a.inbuf_used(), 4);
     a.runonce(0);
-    WVPASS(!a.inbuf.used());
+    WVPASS(!a.inbuf_used());
     b.runonce(0);
-    WVPASS(val == 0);
-    WVPASS(b.wcount == 4);
+    WVPASSEQ(val, 0);
+    WVPASSEQ(b.wcount, 4);
     a.noautoforward();
-    a.inbuf.putstr("astr2");
+    a.inbuf_putstr("astr2");
     a.runonce(0);
-    WVPASS(a.inbuf.used() == 5);
-    WVPASS(b.wcount == 4);
+    WVPASSEQ(a.inbuf_used(), 5);
+    WVPASSEQ(b.wcount, 4);
     
     // delay_output tests
     a.autoforward(b);
     b.delay_output(true);
     a.runonce(0);
-    WVPASS(!a.inbuf.used());
-    WVPASS(b.wcount == 4);
-    WVPASS(b.outbuf.used() == 5);
+    WVPASS(!a.inbuf_used());
+    WVPASSEQ(b.wcount, 4);
+    WVPASSEQ(b.outbuf_used(), 5);
     b.runonce(0);
-    WVFAIL(!b.outbuf.used());
+    WVFAIL(!b.outbuf_used());
     b.yes_writable = true;
     b.runonce(0);
-    WVFAIL(!b.outbuf.used());
+    WVFAIL(!b.outbuf_used());
     b.flush(0);
-    WVPASS(!b.outbuf.used());
-    WVPASS(b.wcount == 4+5);
+    WVPASS(!b.outbuf_used());
+    WVPASSEQ(b.wcount, 4+5);
     
     // autoforward() has lower precedence than drain()
-    WVPASS(!a.inbuf.used());
-    a.inbuf.putstr("googaa");
+    WVPASS(!a.inbuf_used());
+    a.inbuf_putstr("googaa");
     a.drain();
-    WVPASS(b.wcount == 4+5);
-    WVPASS(!a.inbuf.used());
+    WVPASSEQ(b.wcount, 4+5);
+    WVPASS(!a.inbuf_used());
     
     // queuemin() works
-    a.inbuf.putstr("phleg");
+    a.inbuf_putstr("phleg");
     a.queuemin(2);
     WVPASS(a.isreadable());
     a.queuemin(6);
@@ -291,12 +308,12 @@ WVTEST_MAIN("autoforward and buffers")
     a.drain();
     WVFAIL(a.getline());
     WVFAIL(a.isreadable());
-    WVFAIL(!a.inbuf.used());
-    a.inbuf.putstr("x");
+    WVFAIL(!a.inbuf_used());
+    a.inbuf_putstr("x");
     WVPASS(a.isreadable());
-    WVPASS(a.inbuf.used() == 6);
+    WVPASSEQ(a.inbuf_used(), 6);
     a.drain();
-    WVPASS(!a.inbuf.used());
+    WVPASS(!a.inbuf_used());
 }
 
 
@@ -307,21 +324,21 @@ WVTEST_MAIN("flush_then_close")
     
     s.block_writes = true;
     s.write("abcdefg");
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf_used(), 7);
     s.flush(0);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf_used(), 7);
     s.runonce(0);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf_used(), 7);
     s.flush_then_close(20000);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf_used(), 7);
     s.runonce(0);
-    WVPASS(s.outbuf.used() == 7);
+    WVPASSEQ(s.outbuf_used(), 7);
     WVPASS(s.isok());
     s.yes_writable = true;
     s.block_writes = false;
     s.runonce(0);
     s.runonce(0);
-    WVPASS(s.outbuf.used() == 0);
+    WVPASSEQ(s.outbuf_used(), 0);
     WVFAIL(s.isok());
 }
 
@@ -335,7 +352,7 @@ WVTEST_MAIN("force_select and globallist")
     
     WVFAIL(s.select(0));
     WVPASS(s.select(0, false, true));
-    s.inbuf.putstr("hello");
+    s.inbuf_putstr("hello");
     WVPASS(s.select(0));
     WVFAIL(s.select(0, false, false));
     s.undo_force_select(true, false, false);
@@ -349,7 +366,7 @@ WVTEST_MAIN("force_select and globallist")
     WvIStreamList::globallist.append(&x, false);
     WVFAIL(s.select(0));
     WVPASS(!val);
-    x.inbuf.putstr("yikes");
+    x.inbuf_putstr("yikes");
     x.force_select(false, true, false);
     WVPASS(!s.select(0));
     WVPASS(val == 1);
@@ -389,7 +406,7 @@ WVTEST_MAIN("continue_select")
     
     a.runonce(0);
     WVPASS(aval == 0);
-    a.inbuf.putstr("gak");
+    a.inbuf_putstr("gak");
     a.runonce(0);
     WVPASS(aval == 1);
     a.runonce(0);
@@ -508,7 +525,7 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
 	s.setcallback(WvBoundCallback<WvStreamCallback, void* >
 		      (&call_wvcont_cb, &cont3), &sval);
 	
-	s.inbuf.putstr("gak");
+	s.inbuf_putstr("gak");
 	WVPASS(sval == 0);
 	s.runonce(0);
 	WVPASS(sval == 1);
@@ -558,10 +575,12 @@ WVTEST_MAIN("alarm")
     WVPASSEQ(val, 1);
     s.runonce(10000);
     WVPASSEQ(val, 2);
+    WVPASSEQ(s.geterr(), 0);
     printf("alarm remaining: %d\n", (int)s.alarm_remaining());
     s.runonce(50);
     WVPASSEQ(val, 2);
-
+    printf("alarm remaining: %d\n", (int)s.alarm_remaining());
+ 
     WvIStreamList l;
     l.append(&s, false, "alarmer");
     
@@ -600,7 +619,7 @@ WVTEST_MAIN("self-redirection")
     WvStream s;
     s.uses_continue_select = true;
     s.setcallback(rcb, NULL);
-    s.inbuf.putstr("x");
+    s.inbuf_putstr("x");
     s.runonce(0);
     s.runonce(0);
     s.runonce(0);

@@ -10,6 +10,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include "wvlinkerhack.h"
+
+WV_LINK(UniDefGen);
+
+
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
 static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)

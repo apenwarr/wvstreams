@@ -14,6 +14,15 @@
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 
+static time_t gmtoffset()
+{
+    time_t nowgmt = time(NULL);
+    struct tm gmt = *gmtime(&nowgmt);
+    struct tm local = *localtime(&nowgmt);
+    time_t nowantilocal = mktime(&gmt); // mktime assumes gmt
+    return nowgmt - nowantilocal;
+}
+
 
 //----------------------------------- WvLogFileBase ------------------
 
@@ -62,7 +71,7 @@ WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
 void WvLogFile::_make_prefix()
 {
     time_t timenow = wvtime().tv_sec;
-    struct tm *tmstamp = localtime(&timenow);
+    // struct tm *tmstamp = localtime(&timenow);
     struct stat statbuf;
 
     // Get the filesize
@@ -70,11 +79,28 @@ void WvLogFile::_make_prefix()
         statbuf.st_size = 0;
 
     // Make sure we are calculating last_day in the current time zone.
-    if (last_day < ((timenow + tmstamp->tm_gmtoff)/86400) 
+    if (last_day < ((timenow + gmtoffset())/86400) 
 	|| statbuf.st_size > MAX_LOGFILE_SZ)
         start_log();
 
     WvLogFileBase::_make_prefix();
+}
+
+static void trim_old_logs(WvStringParm filename, WvStringParm base,
+			  int keep_for)
+{
+    if (!keep_for) return;
+    WvDirIter i(getdirname(filename), false);
+    for (i.rewind(); i.next(); )
+    {
+	// if it begins with the base name
+	if (!strncmp(i.ptr()->name, base, strlen(base)))
+	{
+	    // and it's older than 'keep_for' days
+	    if (i.ptr()->st_mtime < wvtime().tv_sec - keep_for*86400)
+		::unlink(i.ptr()->fullname);
+	}
+    }
 }
 
 
@@ -85,8 +111,8 @@ void WvLogFile::start_log()
     int num = 0;
     struct stat statbuf;
     time_t timenow = wvtime().tv_sec;
+    last_day = (timenow + gmtoffset()) / 86400;
     struct tm* tmstamp = localtime(&timenow);
-    last_day = (timenow + tmstamp->tm_gmtoff) / 86400;
     char buf[20];
     WvString fullname;
     strftime(buf, 20, "%Y-%m-%d", tmstamp);
@@ -101,6 +127,7 @@ void WvLogFile::start_log()
 
     WvFile::open(fullname, O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0644);
 
+#ifndef _WIN32 // no symlinks in win32
     // Don't delete the file, unless it's a symlink!
     int sym = readlink(curname, buf, 20);
     if (sym > 0 || errno == ENOENT)
@@ -108,26 +135,20 @@ void WvLogFile::start_log()
         unlink(curname);
         symlink(getfilename(fullname), curname);
     }
+#endif
 
-    // We fork here because this can be really slow when the directory has (oh, say 32,000 files)
+#ifndef _WIN32
+    // We fork here because this can be really slow when the directory has
+    // (oh, say 32,000 files)
     pid_t forky = wvfork();
     if (!forky)
     {
 	// Child will Look for old logs and purge them
-	WvDirIter i(getdirname(filename), false);
-	i.rewind();
-	while (i.next() && keep_for)
-	{
-	    // if it begins with the base name
-	    if (!strncmp(i.ptr()->name, base, strlen(base)))
-		// and it's older than 'keep_for' days
-		if (i.ptr()->st_mtime <
-                    wvtime().tv_sec - keep_for*86400)
-		{
-		    //delete it
-		    unlink(i.ptr()->fullname);
-		}
-	}
+	trim_old_logs(filename, base, keep_for);
 	_exit(0);
     }
+#else
+    // just do it in the foreground on Windows
+    trim_old_logs(filename, base, keep_for);
+#endif
 }

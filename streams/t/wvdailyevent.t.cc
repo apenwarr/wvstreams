@@ -65,7 +65,7 @@ WVTEST_MAIN("configure()-causes-wait-for-one-time-period test")
     
     wait(1);
     
-    printf("\nReconfiguring granularity to once every 5 seconds");
+    printf("Reconfiguring granularity to once every 5 seconds\n");
     devent.set_num_per_day(NUM_MINUTES_IN_DAY * 12);
 
     int seconds_passed = 0;

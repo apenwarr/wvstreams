@@ -10,10 +10,16 @@
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniReplicateGen);
 
 
-//#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
-#define DPRINTF(format, args...)
+#if 0
+#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
+#else
+#define DPRINTF if (0) printf
+#endif
 
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the

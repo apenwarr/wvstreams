@@ -11,8 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #ifndef _WIN32
+//#include <uuid.h>
 #include <errno.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -21,6 +23,10 @@
 #define errno GetLastError()
 #define strcasecmp _stricmp
 #include <winsock2.h>
+#include <direct.h>
+#ifndef EACCES
+#define EACCES 0xfff
+#endif
 #endif
 
 char *terminate_string(char *string, char c)
@@ -677,6 +683,27 @@ WvString fqdomainname()
 }
 
 
+WvString wvgetcwd()
+{
+    int maxlen = 0;
+    for (;;)
+    {
+        maxlen += 80;
+        char *name = new char[maxlen];
+        char *res = getcwd(name, maxlen);
+        if (res)
+        {
+            WvString s(name);
+            deletev name;
+            return s;
+        }
+	if (errno == EACCES || errno == ENOENT)
+	    return "."; // can't deal with those errors
+        assert(errno == ERANGE); // buffer too small
+    }
+}
+
+
 WvString metriculate(const off_t i)
 {
     WvString res;
@@ -989,5 +1016,19 @@ WvString local_date(time_t when)
     strftime(out.edit(), 80, "%b %d %I:%M:%S %p", tmwhen);
 
     return out;
+}
+
+FILE *wvtmpfile()
+{
+#ifndef _WIN32 // tmpfile() is really the best choice, when it works
+    return tmpfile();
+#else
+    // in win32, tmpfile() creates files in c:\...
+    // and that directory isn't always writable!  Idiots.
+    char *name = _tempnam("c:\\temp", "wvtmp");
+    FILE *f = fopen(name, "wb+");
+    free(name);
+    return f;
+#endif
 }
 

@@ -59,7 +59,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
     ctx = NULL;
     ssl = NULL;
     meth = NULL;
-    sslconnected = false;
+    sslconnected = ssl_stop_read = ssl_stop_write = false;
     
     wvssl_init();
     
@@ -155,7 +155,7 @@ WvSSLStream::~WvSSLStream()
 {
     close();
     
-    debug("Shutting down SSL connection.\n");
+    debug("Deleting SSL connection.\n");
     if (geterr())
 	debug("Error was: %s\n", errstr());
     
@@ -218,6 +218,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         
 	ERR_clear_error();
         int result = SSL_read(ssl, data, avail);
+	// debug("<< SSL_read result %s for %s bytes (wanted %s)\n",
+	//      result, avail, len);
         if (result <= 0)
         {
 	    error_t err = errno;
@@ -227,18 +229,19 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-//                    debug("<< SSL_read() needs to wait for readable.\n");
+		    // debug("<< SSL_read() needs to wait for readable.\n");
                     break; // wait for later
                     
                 case SSL_ERROR_NONE:
                     break; // no error, but can't make progress
                     
-                case SSL_ERROR_ZERO_RETURN:
+	        case SSL_ERROR_ZERO_RETURN:
 		    debug("<< EOF: zero return\n");
-		    // signal that we want to be closed
-		    // after we return our buffer
-		    autoclose_time = time(NULL);
-		    noread(); // EOF
+		
+		    // don't do this if we're returning nonzero!
+		    // (SSL has no way to do a one-way shutdown, so if SSL
+		    // detects a read problem, it's also a write problem.)
+		    if (!total) { noread(); nowrite(); }
                     break;
 
 		case SSL_ERROR_SYSCALL:
@@ -246,15 +249,24 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 		    {
 			if (result == 0)
 			{
-			    debug("<< EOF: syscall error\n");
-			    // signal that we want to be closed
-			    // after we return our buffer
-			    autoclose_time = time(NULL);
-			    noread();
+			    debug("<< EOF: syscall error "
+				  "(%s/%s, %s/%s) total=%s\n",
+				  stop_read, stop_write,
+				  isok(), cloned && cloned->isok(), total);
+			    
+			    // don't do this if we're returning nonzero!
+			    // (SSL has no way to do a one-way shutdown, so
+			    // if SSL detects a read problem, it's also a
+			    // write problem.)
+			    if (!total) { noread(); nowrite(); }
 			}
-	                break; 
 		    }
-		    debug("<< SSL_read() %s\n", strerror(errno));
+		    else
+		    {
+			debug("<< SSL_read() %s\n", strerror(errno));
+			seterr(err);
+		    }
+		    break;
                     
                 default:
                     printerr("SSL_read");
@@ -271,7 +283,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         read_bouncebuf.unalloc(avail - result);
     }
 
-    // debug("<< read %s bytes\n", total);
+    // debug("<< read %s bytes (%s, %s)\n",
+    //	  total, isok(), cloned && cloned->isok());
     return total;
 }
 
@@ -358,6 +371,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
                     break; // no error, but can't make progress
                     
                 case SSL_ERROR_ZERO_RETURN:
+		    debug(">> SSL_write zero return: EOF\n");
                     close(); // EOF
                     break;
                     
@@ -388,12 +402,15 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         buf = (const unsigned char *)buf + size_t(result);
     }
     
-//    debug(">> wrote %s bytes\n", total);
+    //debug(">> wrote %s bytes\n", total);
     return total;
 }
 
 void WvSSLStream::close()
 {
+    debug("Closing SSL connection (ok=%s,sr=%s,sw=%s,child=%s).\n",
+	  isok(), stop_read, stop_write, cloned && cloned->isok());
+    
     if (ssl)
     {
         ERR_clear_error();
@@ -419,6 +436,34 @@ bool WvSSLStream::isok() const
 }
 
 
+void WvSSLStream::noread()
+{
+    // WARNING: openssl always needs two-way socket communications even for
+    // one-way encrypted communications, so we don't pass noread/nowrite
+    // along to the child stream.  This should be mostly okay, though,
+    // because we'll still send it close() once we have both noread() and
+    // nowrite().
+    ssl_stop_read = true;
+    if (ssl_stop_write)
+    {
+	WvStreamClone::nowrite();
+	WvStreamClone::noread();
+    }
+}
+
+
+void WvSSLStream::nowrite()
+{
+    // WARNING: see note in noread()
+    ssl_stop_write = true;
+    if (ssl_stop_read)
+    {
+	WvStreamClone::noread();
+	WvStreamClone::nowrite();
+    }
+}
+
+
 bool WvSSLStream::pre_select(SelectInfo &si)
 {
     // the SSL library might be keeping its own internal buffers
@@ -438,8 +483,6 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 bool WvSSLStream::post_select(SelectInfo &si)
 {
     bool result = WvStreamClone::post_select(si);
-
-//    debug("in post_select (%s)\n", result);
 
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep

@@ -65,7 +65,7 @@ WVTEST_MAIN("basic encoding")
     { // very special test that makes sure encoded output uses all possible
 	// characters
 	WvBase64Encoder enc;
-	const char a[] = BASE64_ALPHABET_DEC;
+	const unsigned char a[] = BASE64_ALPHABET_DEC;
 	WvString result = enc.strflushmem(a, sizeof(a), true);
 	WVPASS(result == BASE64_ALPHABET);
     }
@@ -110,7 +110,7 @@ WVTEST_MAIN("basic decoding")
 	WvBase64Decoder dec;
 	WvDynBuf dest;
 	dec.flushstrbuf( BASE64_ALPHABET, dest, true );
-	char a[] = BASE64_ALPHABET_DEC;
+	const unsigned char a[] = BASE64_ALPHABET_DEC;
 	WVPASS(dest.used() == sizeof( a )
 	       && !memcmp( a, dest.get(dest.used()), sizeof(a))
 	       );

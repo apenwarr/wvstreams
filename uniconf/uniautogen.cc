@@ -7,7 +7,10 @@
  */
 #include "uniconfroot.h"
 #include "unisubtreegen.h"
-//#include "wvstream.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniAutoGen);
+
 
 /**
  * The moniker from which the auto: moniker retrieves its own settings.

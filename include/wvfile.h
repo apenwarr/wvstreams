@@ -29,7 +29,13 @@
 class WvFile : public WvFDStream
 {
 public:
-    WvFile(int rwfd = -1);
+    /** Create an empty WvFile that you'll open later with open() */
+    WvFile();
+
+    /** Create a WvFile from an existing fd.  Not available in win32. */
+    WvFile(int rwfd);
+
+    /** Create a WvFile given options like ::open() */
     WvFile(WvStringParm filename, int mode, int create_mode = 0666);
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
     

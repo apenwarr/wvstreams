@@ -10,11 +10,18 @@
 
 #include "wvbuf.h"
 #include "wvstringlist.h"
+
 #ifndef _WIN32
-#include <stdint.h>
-#include <netinet/in.h>
-#include <endian.h>
-#else
+# include <stdint.h>
+# include <netinet/in.h>
+# include <endian.h>
+#else // windows
+# ifdef __GNUC__
+#  include <stdint.h>
+# else
+#  include <winsock2.h>
+#  define __BYTE_ORDER 1234
+#  define __BIG_ENDIAN 4321
 typedef __int8 int8_t;
 typedef unsigned __int8 uint8_t;
 typedef __int16 int16_t;
@@ -23,9 +30,7 @@ typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
-#define __BYTE_ORDER 1234
-#define __BIG_ENDIAN 4321
-#include <winsock2.h>
+# endif
 #endif
 
 /**

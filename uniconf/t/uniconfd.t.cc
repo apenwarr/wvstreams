@@ -40,7 +40,7 @@ public:
     virtual void close()
         {
             log("Closing connection\n");
-            cloned->close();
+	    WvStreamClone::close();
         }
 
     virtual void execute() 
@@ -72,7 +72,10 @@ public:
             // expecting nothing more, can close
             if (!expected_responses->count())
             {
+		log("no more responses expected, closing\n");
                 close();
+		if (isok())
+		    log("um, why are we still ok?\n");
             }
         }
 
@@ -219,6 +222,7 @@ WVTEST_MAIN("daemon multimount")
 
     WVPASS(daemon.isok());
     WvIStreamList::globallist.zap();
+    fprintf(stderr, "we're here\n");
 }
 
 /**** Daemon quit test ****/

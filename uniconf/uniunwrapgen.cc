@@ -6,6 +6,9 @@
  * back into a UniConfGen.  See uniunwrapgen.h.
  */
 #include "uniunwrapgen.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniUnwrapGen);
 
 
 UniUnwrapGen::UniUnwrapGen(const UniConf &inner)

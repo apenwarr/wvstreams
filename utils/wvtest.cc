@@ -10,7 +10,12 @@
 #include <string.h>
 #include <malloc.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <io.h>
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 #include <signal.h>
 
 #include <cstdlib>
@@ -39,6 +44,7 @@ static int memleaks()
     VALGRIND_COUNT_LEAKS(leaked, dubious, reachable, suppressed);
     printf("memleaks: sure:%d dubious:%d reachable:%d suppress:%d\n",
 	   leaked, dubious, reachable, suppressed);
+    fflush(stdout);
     
     // dubious+reachable are normally non-zero because of globals...
     // return leaked+dubious+reachable;
@@ -55,17 +61,19 @@ void WvTest::alarm_handler(int)
 {
     printf("\n! WvTest  Current test took longer than %d seconds!  FAILED\n",
 	   MAX_TEST_TIME);
+    fflush(stdout);
     abort();
 }
 
 
 WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
 {
-    const char *cptr = strrchr(_idstr, '/');
-    if (cptr)
-	idstr = cptr+1;
-    else
-	idstr = _idstr;
+    const char *cptr;
+    idstr = _idstr;
+    cptr = strrchr(idstr, '/');
+    if (cptr) idstr = cptr + 1;
+    cptr = strrchr(idstr, '\\');
+    if (cptr) idstr = cptr + 1;
     descr = _descr;
     main = _main;
     next = NULL;
@@ -93,11 +101,25 @@ int WvTest::run_all(const char * const *prefixes)
     int old_valgrind_errs = 0, new_valgrind_errs;
     int old_valgrind_leaks = 0, new_valgrind_leaks;
     
+#ifdef _WIN32
+    /* I should be doing something to do with SetTimer here, 
+     * not sure exactly what just yet */
+#else
     signal(SIGALRM, alarm_handler);
     // signal(SIGALRM, SIG_IGN);
     alarm(MAX_TEST_TIME);
+#endif
     start_time = time(NULL);
     
+    // make sure we can always start out in the same directory, so tests have
+    // access to their files.  If a test uses chdir(), we want to be able to
+    // reverse it.
+    char wd[1024];
+    if (!getcwd(wd, sizeof(wd)))
+	strcpy(wd, ".");
+    
+    // there are lots of fflush() calls in here because stupid win32 doesn't
+    // flush very often by itself.
     fails = runs = 0;
     for (WvTest *cur = first; cur; cur = cur->next)
     {
@@ -106,7 +128,10 @@ int WvTest::run_all(const char * const *prefixes)
 	    || prefix_match(cur->descr, prefixes))
 	{
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
+	    fflush(stdout);
+	    
 	    cur->main();
+	    chdir(wd);
 	    
 	    new_valgrind_errs = memerrs();
 	    WVPASS(new_valgrind_errs == old_valgrind_errs);
@@ -116,7 +141,9 @@ int WvTest::run_all(const char * const *prefixes)
 	    WVPASS(new_valgrind_leaks == old_valgrind_leaks);
 	    old_valgrind_leaks = new_valgrind_leaks;
 	    
+	    fflush(stderr);
 	    printf("\n");
+	    fflush(stdout);
 	}
     }
     
@@ -128,6 +155,7 @@ int WvTest::run_all(const char * const *prefixes)
     printf("WvTest: %d test%s, %d failure%s.\n",
 	   runs, runs==1 ? "" : "s",
 	   fails, fails==1 ? "": "s");
+    fflush(stdout);
     
     return fails != 0;
 }
@@ -137,13 +165,15 @@ void WvTest::start(const char *file, int line, const char *condstr)
 {
     // strip path from filename
     const char *file2 = strrchr(file, '/');
+    if (file2)
+	file2 = strrchr(file, '\\');
     if (!file2)
 	file2 = file;
     else
 	file2++;
     
-    char *condstr2 = strdup(condstr), *cptr;
-    for (cptr = condstr2; *cptr; cptr++)
+    char *condstr2 = strdup(condstr);
+    for (char *cptr = condstr2; *cptr; cptr++)
     {
 	if (!isprint((unsigned char)*cptr))
 	    *cptr = '!';
@@ -158,13 +188,16 @@ void WvTest::start(const char *file, int line, const char *condstr)
 
 void WvTest::check(bool cond)
 {
+#ifndef _WIN32
     alarm(MAX_TEST_TIME); // restart per-test timeout
+#endif
     if (!start_time) start_time = time(NULL);
     
     if (time(NULL) - start_time > MAX_TOTAL_TIME)
     {
 	printf("\n! WvTest   Total run time exceeded %d seconds!  FAILED\n",
 	       MAX_TOTAL_TIME);
+	fflush(stdout);
 	abort();
     }
     

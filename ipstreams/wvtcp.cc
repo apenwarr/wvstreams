@@ -7,7 +7,7 @@
 #include "wvtcp.h"
 #include "wvistreamlist.h"
 #include "wvmoniker.h"
-
+#include "wvlinkerhack.h"
 #include <fcntl.h>
 
 #ifdef _WIN32
@@ -19,8 +19,11 @@
 #define EINPROGRESS WSAEINPROGRESS
 #define EISCONN WSAEISCONN
 #define EALREADY WSAEALREADY
+#undef EINVAL
+#define EINVAL WSAEINVAL
 #define SOL_TCP IPPROTO_TCP
 #define SOL_IP IPPROTO_IP
+#define FORCE_NONZERO 1
 #else
 #include <errno.h>
 #include <netdb.h>
@@ -29,6 +32,12 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #endif
+
+#ifndef FORCE_NONZERO
+#define FORCE_NONZERO 0
+#endif
+
+WV_LINK(WvTCPConn);
 
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)
@@ -41,7 +50,8 @@ static WvMoniker<IWvStream> reg("tcp", creator);
 
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 {
-    remaddr = _remaddr;
+    remaddr = (_remaddr.is_zero() && FORCE_NONZERO)
+	? WvIPPortAddr("127.0.0.1", _remaddr.port) : _remaddr;
     resolved = true;
     connected = false;
     incoming = false;
@@ -50,10 +60,11 @@ WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 }
 
 
-WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr) :
-    WvFDStream(_fd)
+WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
+    : WvFDStream(_fd)
 {
-    remaddr = _remaddr;
+    remaddr = (_remaddr.is_zero() && FORCE_NONZERO)
+	? WvIPPortAddr("127.0.0.1", _remaddr.port) : _remaddr;
     resolved = true;
     connected = true;
     incoming = true;
@@ -61,8 +72,8 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr) :
 }
 
 
-WvTCPConn::WvTCPConn(WvStringParm _hostname, __u16 _port) :
-    hostname(_hostname)
+WvTCPConn::WvTCPConn(WvStringParm _hostname, __u16 _port)
+    : hostname(_hostname)
 {
     struct servent* serv;
     char *hnstr = hostname.edit(), *cptr;
@@ -107,13 +118,9 @@ WvTCPConn::~WvTCPConn()
 // keepalive)
 void WvTCPConn::nice_tcpopts()
 {
-#ifndef _WIN32
-    fcntl(getfd(), F_SETFD, FD_CLOEXEC);
-    fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
-#else
-    u_long arg = 1;
-    ioctlsocket(getfd(), FIONBIO, &arg); // non-blocking
-#endif
+    set_close_on_exec(true);
+    set_nonblock(true);
+    
     int value = 1;
     setsockopt(getfd(), SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
 }
@@ -141,29 +148,35 @@ void WvTCPConn::debug_mode()
 
 void WvTCPConn::do_connect()
 {
-    int rwfd = socket(PF_INET, SOCK_STREAM, 0);
-    if (rwfd < 0)
+    if (getfd() < 0)
     {
-	seterr(errno);
-	return;
+	int rwfd = socket(PF_INET, SOCK_STREAM, 0);
+	if (rwfd < 0)
+	{
+	    seterr(errno);
+	    return;
+	}
+	setfd(rwfd);
+	
+	nice_tcpopts();
     }
-    setfd(rwfd);
-    
-    nice_tcpopts();
     
     sockaddr *sa = remaddr.sockaddr();
-    if (connect(getfd(), sa, remaddr.sockaddr_len()) < 0
-	&& errno != EINPROGRESS
-#ifdef _WIN32
-	&& errno != WSAEWOULDBLOCK
-#endif
-	)
-    {
-	seterr(errno);
-	delete sa;
-	return;
-    }
+    int ret = connect(getfd(), sa, remaddr.sockaddr_len()), err = errno;
+    assert(ret <= 0);
     
+    if (ret == 0 || (ret < 0 && err == EISCONN))
+	connected = true;
+    else if (ret < 0
+	     && err != EINPROGRESS
+	     && err != EWOULDBLOCK
+	     && err != EAGAIN
+	     && err != EALREADY
+	     && err != EINVAL /* apparently winsock 1.1 might do this */)
+    {
+	connected = true; // "connection phase" is ended, anyway
+	seterr(err);
+    }
     delete sa;
 }
 
@@ -203,7 +216,7 @@ WvIPPortAddr WvTCPConn::localaddr()
 #ifndef _WIN32
         // getsockopt() with SO_ORIGINAL_DST is for transproxy of incoming
         // connections.  For outgoing (and for windows) use just use good
-        // old getsocknmae().
+        // old getsockname().
 	(!incoming || getsockopt(getfd(), SOL_IP,
                                  SO_ORIGINAL_DST, (char*)&sin, &sl) < 0) &&
 #endif
@@ -241,11 +254,13 @@ bool WvTCPConn::pre_select(SelectInfo &si)
 	    si.wants.writable = true; 
 #ifdef _WIN32
 	    // WINSOCK INSANITY ALERT!
-	    // In Unix, you detect the success OR failure of a non-blocking 
+	    // 
+	    // In Unix, you detect the success OR failure of a non-blocking
 	    // connect() by select()ing with the socket in the write set.
-	    // HOWEVER, in Windows, you detect the success of connect() 
-	    // by select()ing with the socket in the write set, and the failure
-	    // of connect() by select()ing with the socket in the exception set!
+	    // HOWEVER, in Windows, you detect the success of connect() by
+	    // select()ing with the socket in the write set, and the
+	    // failure of connect() by select()ing with the socket in the
+	    // exception set!
 	    si.wants.isexception = true;
 #endif
 	}
@@ -267,25 +282,37 @@ bool WvTCPConn::post_select(SelectInfo &si)
     else
     {
 	result = WvFDStream::post_select(si);
-
 	if (result && !connected)
 	{
-	    int conn_res;
+	    // the manual for connect() says just re-calling connect() later
+	    // will return either EISCONN or the error code from the previous
+	    // failed connection attempt.  However, in *some* OSes (like
+	    // Windows, at least) a failed connection attempt resets the 
+	    // socket back to "connectable" state, so every connect() call
+	    // will just restart the background connecting process and we'll
+	    // never get a result out.  Thus, we *first* check SO_ERROR.  If
+	    // that returns no error, then maybe the socket is connected, or
+	    // maybe they just didn't feel like giving us our error yet.
+	    // Only then, call connect() to look for EISCONN or another error.
+	    int conn_res = -1;
 	    socklen_t res_size = sizeof(conn_res);
-	    if (getsockopt(getfd(), SOL_SOCKET, SO_ERROR, &conn_res, &res_size))
+	    if (getsockopt(getfd(), SOL_SOCKET, SO_ERROR,
+			   &conn_res, &res_size))
 	    {
 		// getsockopt failed
 		seterr(errno);
+		connected = true; // not in connecting phase anymore
 	    }
 	    else if (conn_res != 0)
 	    {
 		// connect failed
 		seterr(conn_res);
+		connected = true; // not in connecting phase anymore
 	    }
 	    else
 	    {
-		// connect succeeded!
-		connected = true;
+		// connect succeeded!  Double check by re-calling connect().
+		do_connect();
 	    }
 	}
     }
@@ -323,11 +350,10 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     int x = 1;
 
     setfd(socket(PF_INET, SOCK_STREAM, 0));
+    set_close_on_exec(true);
+    set_nonblock(true);
     if (getfd() < 0
 	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
-#ifndef _WIN32
-	|| fcntl(getfd(), F_SETFD, 1)
-#endif
 	|| bind(getfd(), sa, listenport.sockaddr_len())
 	|| listen(getfd(), 5))
     {

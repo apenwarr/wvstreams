@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\;..\;..\..\include"
+				AdditionalIncludeDirectories=".;..\;..\..\include;..\..\..\..\ports\xplc\build\xplc\include;..\..\..\..\ports\zlib\build\zlib;..\..\..\openssl\inc32"
 				PreprocessorDefinitions="strcasecmp=_stricmp;strncasecmp=_strnicmp;WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -259,14 +259,7 @@
 			<File
 				RelativePath="..\..\streams\wvlogfile.cc">
 				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
@@ -321,6 +314,9 @@
 			</File>
 			<File
 				RelativePath="..\..\ipstreams\wvslp.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvsocketpair.cc">
 			</File>
 			<File
 				RelativePath="..\..\crypto\wvsslhacks.c">

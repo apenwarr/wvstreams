@@ -269,6 +269,7 @@ fi
 if test "$with_openssl" != "no"; then
     AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
                      [#define OPENSSL_NO_KRB5])
+    AC_CHECK_LIB(crypto, CRYPTO_malloc,, )
     AC_CHECK_LIB(ssl, SSL_CTX_new,, [with_openssl=no])
 fi
 

@@ -1,0 +1,91 @@
+WVSTREAMS=.
+#%: %.cc
+#	$(error "barf!")
+
+include $(WVSTREAMS)/wvrules.mk
+include vars.mk
+
+all: fake-libs wvtestmain.exe
+
+%.exe: %
+	rm -f $@
+	ln -s $(shell basename $<) $@
+	
+include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
+
+-include $(shell find . -name '.*.d') /dev/null
+
+	
+LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 \
+	$(with_xplc)/libxplc.a -lsupc++ -lstdc++
+
+-lxplc -lxplc-cxx: ;
+
+default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni
+
+# object files that we replace completely for win32
+OBJREPLACED=utils/wvtask.o
+
+# object files that we can't use in win32 for now, but which we should
+# definitely fix
+OBJFIXME=\
+	streams/fileutils.o \
+	streams/wvdaemon.o \
+	streams/wvpipe.o \
+	streams/wvstreamsdaemon.o \
+	streams/wvwatcher.o \
+	ipstreams/wvunixsocket.o \
+
+# object files that we probably just shouldn't include in win32 libraries
+OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
+	utils/strcrypt.o \
+	utils/wvbdbhash.o \
+	utils/wvfork.o \
+	utils/wvmagiccircle.o \
+	utils/wvqdbmhash.o \
+	utils/wvshmzone.o \
+	utils/wvsubproc.o \
+	streams/wvlockdev.o \
+	streams/wvlockfile.o \
+	streams/wvmagicloopback.o \
+	streams/wvmodem.o \
+	streams/wvsyslog.o \
+	ipstreams/wvipraw.o
+
+TOBJSKIP=\
+	utils/t/strcrypt.t.o \
+	streams/t/wvmagicloopback.t.o \
+	uniconf/t/unireplicategen.t.o \
+	uniconf/t/uniretrygen.t.o \
+	\
+	uniconf/t/unilistgen.t.o
+
+W=$(WVSTREAMS)/Win32WvStreams
+DIRS=utils streams ipstreams uniconf uniconf/daemon crypto \
+	urlget configfile \
+	$W/libwvutils $W/libwvstreams $W/libuniconf
+_OBJFILES=$(call objects,$(DIRS))
+OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
+
+_TOBJFILES=$(call objects,$(addsuffix /t,$(DIRS)))
+TOBJFILES=$(filter-out $(TOBJSKIP),$(_TOBJFILES))
+
+wvtestmain: $(TOBJFILES) libwvwin32.a
+
+$(TESTS): libwvwin32.a
+$(addsuffix .o,$(TESTS)):
+tests: $(TESTS)
+
+$(patsubst %.t.cc,%.t,$(wildcard */t/*.cc)): libwvwin32.a
+
+libwvwin32.a: $(OBJFILES)
+
+fake-libs: libwvwin32.a
+	for d in libwvbase libwvutils libwvstreams libuniconf; do \
+		rm -f $$d.a $$d.so; \
+		ln -s libwvwin32.a $$d.a; \
+		ln -s libwvwin32.a $$d.so; \
+	done
+
+clean:
+	rm -f *test *.exe

@@ -1,8 +1,12 @@
 #include "wvtest.h"
 #include "wvtimeutils.h"
 #include "wvstring.h"
-
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <sys/time.h>
+#endif
+
 
 
 WVTEST_MAIN("msecdiff()")

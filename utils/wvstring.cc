@@ -48,11 +48,17 @@ WvFastString::WvFastString(const WvString &s)
 }
 
 
-WvFastString::WvFastString(const char *_str)
+inline void WvFastString::construct(const char *_str)
 {
     // just copy the pointer - no need to allocate memory!
     str = (char *)_str; // I promise not to change anything!
     buf = NULL;
+}
+
+
+WvFastString::WvFastString(const char *_str)
+{
+    construct(_str);
 }
 
 
@@ -68,7 +74,7 @@ void WvString::copy_constructor(const WvFastString &s)
 }
 
 
-WvString::WvString(const char *_str)
+inline void WvString::construct(const char *_str)
 {
     link(&nullbuf, _str);
     
@@ -76,6 +82,12 @@ WvString::WvString(const char *_str)
     // with unique(), so you should _never_ have to call it explicitly.  We
     // still can (and should!) use fast parameter passing via WvFastString.
     unique();
+}
+
+
+WvString::WvString(const char *_str)
+{
+    construct(_str);
 }
 
 

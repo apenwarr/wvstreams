@@ -15,8 +15,8 @@
  *	logB<Info>: and other stuff.
  *	logC<*3>: another split message.
  */
-
 #include "wvlogrcv.h"
+#include <fcntl.h>
 
 int main()
 {

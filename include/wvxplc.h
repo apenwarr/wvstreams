@@ -19,6 +19,7 @@
 #include <xplc/IObject.h>
 #define deletev delete[]
 #else
+#include <string>
 #include <xplc/delete.h>
 #endif
 

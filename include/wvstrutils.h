@@ -144,12 +144,14 @@ WvString rfc1123_date(time_t _when);
 /** Return the local date (TZ applied) out of _when */
 WvString local_date(time_t _when = -1);
 
+#ifndef _WIN32
 /**
  * Similar to crypt(), but this randomly selects its own salt.
  * This function is defined in strcrypt.cc.
  */
 WvString passwd_crypt(const char *str);
 
+#endif
 /**
  * Returns a string with a backslash in front of every non alphanumeric
  * character in s1.
@@ -347,8 +349,14 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
 /** Replace any consecutive instances of character c with a single one */
 WvString undupe(WvStringParm s, char c);
 
+/** Do gethostname() without a fixed-length buffer */
 WvString hostname();
+
+/** Get the fqdn of the local host, using gethostbyname() and gethostname() */
 WvString fqdomainname();
+
+/** Get the current working directory without a fixed-length buffer */
+WvString wvgetcwd();
 
 /**
  * Inserts SI-style spacing into a number

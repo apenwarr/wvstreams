@@ -27,6 +27,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "uni", "uni\uni.vcproj", "{B
 		{417DFBB1-F315-4903-9D63-8054A069A9D2} = {417DFBB1-F315-4903-9D63-8054A069A9D2}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wvtest", "wvtest\wvtest.vcproj", "{88567BD5-767C-490C-A3FF-A4B27BEBE958}"
+	ProjectSection(ProjectDependencies) = postProject
+		{14E0E229-BD80-481D-B59D-40512DB4BE90} = {14E0E229-BD80-481D-B59D-40512DB4BE90}
+		{411CE682-0606-4EAB-8C85-B1B44E2F72F7} = {411CE682-0606-4EAB-8C85-B1B44E2F72F7}
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B} = {5AABC791-DD08-482F-820C-DF8CF7BFCE8B}
+		{417DFBB1-F315-4903-9D63-8054A069A9D2} = {417DFBB1-F315-4903-9D63-8054A069A9D2}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libwvtest", "libwvtest\libwvtest.vcproj", "{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -53,6 +65,14 @@ Global
 		{BE44DF7F-0E6B-4ACC-B703-184A0795D603}.Debug.Build.0 = Debug|Win32
 		{BE44DF7F-0E6B-4ACC-B703-184A0795D603}.Release.ActiveCfg = Release|Win32
 		{BE44DF7F-0E6B-4ACC-B703-184A0795D603}.Release.Build.0 = Release|Win32
+		{88567BD5-767C-490C-A3FF-A4B27BEBE958}.Debug.ActiveCfg = Debug|Win32
+		{88567BD5-767C-490C-A3FF-A4B27BEBE958}.Debug.Build.0 = Debug|Win32
+		{88567BD5-767C-490C-A3FF-A4B27BEBE958}.Release.ActiveCfg = Release|Win32
+		{88567BD5-767C-490C-A3FF-A4B27BEBE958}.Release.Build.0 = Release|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Debug.ActiveCfg = Debug|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Debug.Build.0 = Debug|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Release.ActiveCfg = Release|Win32
+		{5AABC791-DD08-482F-820C-DF8CF7BFCE8B}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

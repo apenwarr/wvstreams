@@ -84,6 +84,9 @@ public:
 	  const WvLog *par = NULL);
     WvLog(const WvLog &l);
     virtual ~WvLog();
+    
+    /** copy another WvLog into this one */
+    WvLog &operator= (const WvLog &l);
 
     /** fd==-1, but this stream is always ok */
     virtual bool isok() const;

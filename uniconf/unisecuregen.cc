@@ -11,6 +11,9 @@
 #include "wvtclstring.h"
 #include "wvlog.h"
 #include "wvbuf.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniSecureGen);
 
 
 static IUniConfGen *creator(WvStringParm s, IObject *, void *)

@@ -177,6 +177,7 @@ BASEOBJS= \
 	streams/wvfdstream.o \
 	utils/wvfork.o \
 	utils/wvhash.o \
+	utils/wvhashtable.o \
 	utils/wvlinklist.o \
 	utils/wvmoniker.o \
 	utils/wvscatterhash.o utils/wvsorter.o \
@@ -193,13 +194,11 @@ BASEOBJS= \
 	uniconf/unihashtree.o \
 	uniconf/unimountgen.o \
 	uniconf/unitempgen.o \
-	$(BASEOBJS_EXTRA)
-
-BASEOBJS_EXTRA= \
 	utils/wvbackslash.o \
 	utils/wvencoder.o \
 	utils/wvtclstring.o \
 	uniconf/uniinigen.o \
+	uniconf/unigenhack.o \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o
@@ -211,7 +210,9 @@ basesize:
 
 micro: micro.o libwvbase.so
 
-libwvbase.a libwvbase.so: $(BASEOBJS)
+libwvbase.a libwvbase.so: $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
+libwvbase.a: uniconf/unigenhack_s.o
+libwvbase.so: uniconf/unigenhack.o
 
 libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS),$(call objects,utils))
 libwvutils.so: libwvbase.so
@@ -225,6 +226,7 @@ libwvstreams.so: LIBS+=-lssl -lcrypto
 
 libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 	$(call objects,uniconf))
+libuniconf.a: uniconf/uniconfroot.o
 libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
 
 libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)

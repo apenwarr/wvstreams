@@ -11,7 +11,8 @@
 #include "wvcrypto.h"
 #include "wvstringlist.h"
 #include "wvbase64.h"
-#include "strutils.h"
+#include "wvstrutils.h"
+#include "wvfileutils.h"
 
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -825,6 +826,7 @@ bool WvX509Mgr::signedbyCAinfile(WvStringParm certfile)
 }
 
 
+#ifndef _WIN32
 bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
 {
     WvDirIter i(certdir,false);
@@ -835,6 +837,7 @@ bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
     }    
     return true;
 }
+#endif
 
 
 bool WvX509Mgr::signedbyCA(WvX509Mgr *cacert)
@@ -946,6 +949,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	debug("Importing RSA keypair.\n");
 	debug("Make sure that you load or generate a new Certificate!\n");
 	if (rsa) delete rsa;
+
 	rsa = new WvRSAKey(PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL), 
 			   true);
 	if (!rsa->isok())
@@ -974,7 +978,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 {
     debug("Dumping RSA Key and X509 Cert to PKCS12 structure.\n");
 
-    AutoClose fp = fopen(filename, "w");
+    AutoClose fp = fopen(filename, "wb");
 
     if (!fp)
     {

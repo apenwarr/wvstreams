@@ -204,6 +204,15 @@ bool WvHttpPool::pre_select(SelectInfo &si)
 
 void WvHttpPool::execute()
 {
+    log("entering execute()\n");
+    WvUrlStreamDict::Iter j(conns);
+    for (j.rewind(); j.next(); )
+    {
+        log("Stream is%s ok.\n", j().isok() ? "" : " NOT");
+        j().log_urls();
+    }
+    log("end of conns\n");
+
     WvIStreamList::execute();
 
     WvUrlRequestList::Iter i(urls);
