@@ -551,7 +551,7 @@ int lookup(const char *str, const char * const *table, bool case_sensitive)
 WvString hostname()
 {
     int maxlen = 0;
-    for(;;)
+    for (;;)
     {
         maxlen += 80;
         char *name = new char[maxlen];
@@ -559,7 +559,7 @@ WvString hostname()
         if (result == 0)
         {
             WvString hostname(name);
-            delete [] name;         
+            delete[] name;         
             return hostname;
         }
 #ifdef _WIN32

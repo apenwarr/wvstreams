@@ -7,6 +7,12 @@
 #include "uniconfgen.h"
 #include "strutils.h"
 
+// FIXME: interfaces (IUniConfGen) shouldn't have implementations!
+IUniConfGen::~IUniConfGen()
+{
+}
+
+
 /***** UniConfGen *****/
 
 XUUID_MAP_BEGIN(IUniConfGen)

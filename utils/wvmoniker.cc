@@ -192,5 +192,12 @@ void *wvcreate(const XUUID &iid,
 	       WvStringParm s, IObject *obj, void *userdata)
 {
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);
-    return reg->create(s, obj, userdata);
+    if (reg)
+    {
+	void *ret = reg->create(s, obj, userdata);
+	reg->release();
+	return ret;
+    }
+    else
+	return NULL;
 }

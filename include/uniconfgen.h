@@ -35,6 +35,8 @@ typedef WvCallback<void, const UniConfKey &, WvStringParm, void *>
 class IUniConfGen : public IObject
 {
 public:
+    virtual ~IUniConfGen();
+    
     /***** Notification API *****/
     
     /**

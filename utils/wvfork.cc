@@ -17,7 +17,6 @@
  * wvfork() you're making.  (for WvTapeBackup, you want the three
  * backup loopbacks open, and, say, any WvResolver loopbacks closed.)
  */
-
 #include <fcntl.h>
 
 #include "wvfork.h"
@@ -27,6 +26,15 @@
 
 DeclareWvList(WvForkCallback);
 static WvForkCallbackList *callbacks;
+
+class StupidWvForkDeallocator
+{
+public:
+    ~StupidWvForkDeallocator()
+        { if (callbacks) delete callbacks; }
+};
+
+static StupidWvForkDeallocator sfd;
 
 
 // note: this shouldn't really be needed (it would be better to use a simple

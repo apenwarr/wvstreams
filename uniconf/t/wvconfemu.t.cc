@@ -3,7 +3,7 @@
 #include "wvconfemu.h"
 #include "unitempgen.h"
 
-WVTEST_MAIN("wvconfemu_delete_with_NULL")
+WVTEST_MAIN("delete with NULL")
 {
     UniConfGen *unigen = new UniTempGen;
     UniConfRoot uniconf(unigen);
@@ -25,7 +25,7 @@ WVTEST_MAIN("wvconfemu_delete_with_NULL")
         WVFAIL(strcmp(i->name, entry) == 0);
 }
 
-WVTEST_MAIN("wvconfemu_delete_with_empty_string")
+WVTEST_MAIN("delete with empty string")
 {
     UniConfGen *unigen = new UniTempGen;
     UniConfRoot uniconf(unigen);

@@ -104,6 +104,7 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 test: runconfigure wvtestmain
 	$(WVTESTRUN) $(VALGRIND) ./wvtestmain $(TESTNAME)
 
-wvtestmain: wvtestmain.o $(call objects, $(shell find . -type d -name t)) \
+wvtestmain: all wvtestmain.o \
+	$(call objects, $(shell find . -type d -name t)) \
 	$(LIBUNICONF)
 
