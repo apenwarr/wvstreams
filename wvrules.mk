@@ -382,6 +382,7 @@ _wvclean: FORCE
 		.tcl_paths pkgIndex.tcl gmon.out core build-stamp wvtestmain
 	rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
+	rm -f semantic.cache tags
 	rm -rf debian/tmp
 
 #
