@@ -171,6 +171,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         size_t avail = read_bouncebuf.free();
         unsigned char *data = read_bouncebuf.alloc(avail);
         
+	ERR_clear_error();
         int result = SSL_read(ssl, data, avail);
         if (result <= 0)
         {
@@ -188,12 +189,20 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                     break; // no error, but can't make progress
                     
                 case SSL_ERROR_ZERO_RETURN:
+		    debug("<< EOF: zero return\n");
                     close(); // EOF
                     break;
 
 		case SSL_ERROR_SYSCALL:
 		    if (!err)
+		    {
+			if (result == 0)
+			{
+			    debug("<< EOF: syscall error\n");
+			    close();
+			}
 	                break; 
+		    }
 		    debug("<< SSL_read() %s\n", strerror(errno));
                     
                 default:
@@ -204,10 +213,14 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             read_pending = false;
             break; // wait for next iteration
         }
+	// debug("<< read result was %s\n", result);
+	
+	if (result < 0)
+	    result = 0;
         read_bouncebuf.unalloc(avail - result);
     }
 
-//    debug("<< read %s bytes\n", total);
+    // debug("<< read %s bytes\n", total);
     return total;
 }
 
