@@ -6,7 +6,7 @@
 #include "wvstreamlist.h"
 #include "wvencoderstream.h"
 
-#define BACKSLASH_INPUT 5
+#define BSLASH_NUM_INPUT 5
 
 WVTEST_MAIN("old-style")
 {
@@ -16,9 +16,9 @@ WVTEST_MAIN("old-style")
         WvEncoder *enc = new WvBackslashEncoder();
         WvBufStream *ostream = new WvBufStream();
         WvDynBuf outbuf;
-        char *input[BACKSLASH_INPUT] = 
+        char *input[BSLASH_NUM_INPUT] = 
             {"encode this!\n", "baroofey\n", "\\", "\nmagoo\b", " "};
-        char *desired[BACKSLASH_INPUT] =
+        char *desired[BSLASH_NUM_INPUT] =
             {"encode this!\\n", "baroofey\\n", "\\\\", "\\nmagoo\\b", " "};
         WvString result;
 
@@ -27,8 +27,8 @@ WVTEST_MAIN("old-style")
         stream->auto_flush(true);
         stream->writechain.append(enc, true);
 
-        // start giving istream and testing ostream        
-        for (int i = 0; i < BACKSLASH_INPUT; i++)
+        // start giving stream input and testing ostream for results
+        for (int i = 0; i < BSLASH_NUM_INPUT; i++)
         {
             stream->write(input[i], strlen(input[i]));
             ostream->read(outbuf, 1024);
@@ -47,9 +47,9 @@ WVTEST_MAIN("old-style")
         WvEncoder *enc = new WvBackslashDecoder();
         WvBufStream *ostream = new WvBufStream();
         WvDynBuf outbuf;
-        char *input[BACKSLASH_INPUT] =
+        char *input[BSLASH_NUM_INPUT] =
             {"encode this!\\n", "baroofey\\n", "\\\\", "\\nmagoo\\b", " "};
-        char *desired[BACKSLASH_INPUT] = 
+        char *desired[BSLASH_NUM_INPUT] = 
             {"encode this!\n", "baroofey\n", "\\", "\nmagoo\b", " "};
         WvString result;
 
@@ -58,8 +58,8 @@ WVTEST_MAIN("old-style")
         stream->auto_flush(true);
         stream->writechain.append(enc, true);
 
-        // start giving istream and testing ostream        
-        for (int i = 0; i < BACKSLASH_INPUT; i++)
+        // start giving stream input and testing ostream for results
+        for (int i = 0; i < BSLASH_NUM_INPUT; i++)
         {
             stream->write(input[i], strlen(input[i]));
             ostream->read(outbuf, 1024);

@@ -1,5 +1,6 @@
 #include "wvtest.h"
 #include "wvlinklist.h"
+#include "wvstringlist.h"
 
 DeclareWvList(int);
 DeclareWvList2(numberList, int);
@@ -206,5 +207,65 @@ WVTEST_MAIN("basic")
         {
             i.xunlink();
         }
+    }
+}
+
+// from listtest.cc
+WVTEST_MAIN("old-style")
+{
+    WvString x("foo"), y("blue"), z("true"), bob("Foo: bar: baz: bob");
+
+    WvStringList l;
+    WvStringList::Iter i(l);
+    
+    l.append(&x, false);
+    l.append(&y, false);
+    l.append(&z, false);
+    
+    char *out1[3] = {"foo", "blue", "true"};
+    int j = 0;
+    for (i.rewind(); i.next(); j++)
+        if (!WVPASS(i() == out1[j]))
+            printf("   because [%s] != [%s]\n", i().cstr(), out1[j]);
+
+    char *out2[4] = {"Foo", "bar", "baz", "bob"};
+    j = 0;
+    l.zap();
+    l.split(bob, ": ");
+    for (i.rewind(); i.next(); j++)
+        if (!WVPASS(i() == out2[j]))
+            printf("   because [%s] != [%s]\n", i().cstr(), out2[j]);
+
+    char *out3[2] = {"Foo", "bar: baz: bob"};
+    j = 0;
+    l.zap();
+    l.split(bob, ": ", 2);
+    for (i.rewind(); i.next(); j++)
+        if (!WVPASS(i() == out3[j]))
+            printf("   because [%s] != [%s]\n", i().cstr(), out3[j]);
+
+    char *out4[3] = {"Foo", "bar", "baz: bob"};
+    j = 0;
+    l.zap();
+    l.split(bob, ": ", 3);
+    for (i.rewind(); i.next(); j++)
+        if (!WVPASS(i() == out4[j]))
+            printf("   because [%s] != [%s]\n", i().cstr(), out4[j]);
+
+    int a=5, b=6;
+    int out5[2] = {6, 5};
+    intList il;
+    intList::Iter ii(il);
+    
+    il.prepend(&a, false);
+    il.prepend(&b, false);
+    
+    ii.rewind();
+    j = 0;
+    while (ii.next())
+    {
+        if (!WVPASS(ii() == out5[j]))
+            printf("   because [%d] != [%d]\n", ii(), out5[j]);
+        j++;
     }
 }
