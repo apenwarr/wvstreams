@@ -2,6 +2,8 @@ WVSTREAMS=.
 include wvrules.mk
 override enable_efence=no
 
+export WVSTREAMS
+
 XPATH=include
 
 include vars.mk
