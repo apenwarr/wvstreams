@@ -23,7 +23,15 @@ public:
     WvError()
         { noerr(); }
     virtual ~WvError();
-    
+
+    /**
+     * By default, returns true if geterr() == 0.
+     * Might be overridden so that isok() == false even though no
+     * error code has been specified.
+     */
+    virtual bool isok() const
+        { return errnum == 0; }
+
     /**
      * If isok() is false, return the system error number corresponding to
      * the error, -1 for a special error string (which you can obtain with
