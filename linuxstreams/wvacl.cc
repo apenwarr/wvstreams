@@ -9,15 +9,77 @@
 #include "wvstringlist.h"
 #include "wvlog.h"
 #include <sys/stat.h>
+#include <grp.h>
+#include <pwd.h>
 
 #ifdef WITH_ACL
 #include <acl.h>
 #include <acl/libacl.h>
 #endif
 
-void get_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
-			 &acl_entries)
+void get_simple_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
+				&acl_entries)
 {
+    struct stat st;
+    if (stat(filename, &st) != 0)
+	return;
+
+#ifdef WITH_ACL
+    WvString short_form(get_acl_short_form(filename));
+    if (!!short_form)
+    {
+	struct passwd *pw;
+	struct group *gr;
+
+	WvStringList acl_text_entries;
+	acl_text_entries.split(short_form, ",");
+	WvStringList::Iter i(acl_text_entries);
+	for (i.rewind(); i.next(); )
+	{
+	    WvStringList this_entry;
+	    this_entry.splitstrict(i(), ":");
+	    WvString this_type(this_entry.popstr());
+	    WvString this_qualifier(this_entry.popstr());
+	    WvString this_permission(this_entry.popstr());
+
+	    WvSimpleAclEntry *simple_entry = new WvSimpleAclEntry;
+	    if (!!this_qualifier)
+		simple_entry->name = this_qualifier;
+
+	    switch (this_type[0])
+	    {
+	    case 'u':
+		simple_entry->type = WvSimpleAclEntry::AclUser;
+		if (!this_qualifier && (pw = getpwuid(st.st_uid))) // owner
+       		    simple_entry->name = pw->pw_name;
+		break;
+	    case 'g':
+		simple_entry->type = WvSimpleAclEntry::AclGroup;
+		if (!this_qualifier && (gr = getgrgid(st.st_gid))) // owner
+		    simple_entry->name = gr->gr_name;
+		break;
+	    case 'o':
+		simple_entry->type = WvSimpleAclEntry::AclOther;
+		break;
+	    default:   // don't care about mask
+		break;
+	    }
+
+	    if (strchr(this_permission, 'r'))
+		simple_entry->read = true;
+	    if (strchr(this_permission, 'w'))
+		simple_entry->write = true;
+	    if (strchr(this_permission, 'x'))
+		simple_entry->execute = true;
+
+	    acl_entries.append(simple_entry, true);
+	}
+	return;
+    }
+#endif
+
+    // No ACL support.
+    // Fill in default values
 }
 
 

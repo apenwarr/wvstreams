@@ -13,10 +13,13 @@
 /// Abstraction for ACL stuff.
 struct WvSimpleAclEntry
 {
+    enum WvSimpleAclEntryType { AclUser, AclGroup, AclOther } type;
     bool read;
     bool write;
     bool execute;
-    WvString user;
+
+    /// For type user or group, this is the username/groupname; otherwise blank.
+    WvString name;
 };
 DeclareWvList(WvSimpleAclEntry);
 
@@ -27,8 +30,8 @@ WvString build_default_acl(mode_t mode);
 WvString get_acl_short_form(WvStringParm filename);
 
 /// Populates 'acl_entries' with simple entries.
-void get_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
-			 &acl_entries);
+void get_simple_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
+				&acl_entries);
 
 /// Set one or more ACL entries through standard short or long text form.
 bool set_acl_permissions(WvStringParm filename, WvStringParm text_form);
