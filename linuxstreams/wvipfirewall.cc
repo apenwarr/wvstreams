@@ -79,12 +79,8 @@ WvString WvIPFirewall::forward_command(const char *cmd,
     }
     else
     {
-
-        if (!(dstaddr == zero))
-        {
-    	    haveoface.append("-d ");
-	    haveoface.append((WvString)dstaddr);
-        }
+	haveoface.append("-d ");
+	haveoface.append((WvString)dstaddr);
     
         retval.append("iptables -t nat %s OFASTFORWARD -p %s "
                     "-m mark --mark 0xBEEF "
@@ -96,13 +92,16 @@ WvString WvIPFirewall::forward_command(const char *cmd,
                   "%s \n", cmd, proto, src.port, haveiface,  dst, shutup());
     }
 
-    retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
-		  "--dport %s %s \n "
-		  "%s\n", cmd, proto, src.port,
+    // FA57 is leet-speak for FAST, which is short for FASTFORWARD --adewhurst
+    // We need this to mark the packet as it comes in so that we allow the
+    // FastForward-ed packets to bypass the firewall
+    retval.append("iptables -t mangle %s FASTFORWARD -p %s --dport %s "
+	          "-j MARK --set-mark 0xFA57 %s %s\n", cmd, proto, src.port,
 		  haveiface, shutup());
 
+    // Don't open the port completely; just open it for the forwarded packets
     retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
-		  "--dport %s %s "
+		  "--dport %s -m mark --mark 0xFA57 %s "
 		  "%s\n", cmd, proto, dst.port,
 		  haveoface, shutup());
     
