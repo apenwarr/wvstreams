@@ -30,7 +30,7 @@ class WvConfigEntryEmu
 {
 public:
     const WvString name;
-    const WvString value;
+    WvString value;
     WvConfigEntryEmu(WvStringParm _name, WvStringParm _value):
 	name(_name), value(_value)
     {}
@@ -71,12 +71,13 @@ DeclareWvDict(WvConfigSectionEmu, WvString, name);
 class WvConfigSectionEmu::Iter
 {
 private:
+    WvConfigSectionEmu& sect;
     UniConf::Iter iter;
     WvLink link;
     WvConfigEntryEmu* entry;
 public:
     Iter(WvConfigSectionEmu& _sect):
-	iter(_sect.uniconf), link(NULL, false), entry(NULL)
+	sect(_sect), iter(_sect.uniconf), link(NULL, false), entry(NULL)
     {}
     ~Iter();
     void rewind();
@@ -192,24 +193,9 @@ public:
     Iter(WvConfEmu& _conf):
 	conf(_conf), iter(conf.uniconf), link(NULL, false)
     {}
-    void rewind()
-    {
-	iter.rewind();
-    }
-    WvLink *next()
-    {
-	if (iter.next())
-	{
-	    link.data = static_cast<void*>(conf[iter->key()]);
-	    return &link;
-	}
-
-	return NULL;
-    }
-    WvConfigSectionEmu* ptr() const
-    {
-	return conf[iter->key()];
-    }
+    void rewind();
+    WvLink *next();
+    WvConfigSectionEmu* ptr() const;
     WvIterStuff(WvConfigSectionEmu);
 };
 
