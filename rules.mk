@@ -26,19 +26,21 @@ DEPFILE = $(notdir $(@:.o=.d))
 %.so:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
 
-.PHONY: ChangeLog clean depend dust kdoc doxygen install uninstall tests dishes
+.PHONY: ChangeLog clean depend dust kdoc doxygen install uninstall tests dishes dist
 
-config.mk include/wvautoconf.h: config.mk.in include/wvautoconf.h.in configure
+dist: configure
+
+config.mk include/wvautoconf.h: configure
 	$(error Please run the "configure" script)
 
 ifdef WE_ARE_DIST
-configure: configure.ac
+configure: configure.ac config.mk.in include/wvautoconf.h.in
 	$(warning "$@" is old, please run "autoconf")
 
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac
+configure: configure.ac config.mk.in include/wvautoconf.h.in
 	autoconf
 
 include/wvautoconf.h.in: stamp-h.in

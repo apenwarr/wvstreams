@@ -12,7 +12,7 @@ GARBAGES:=
 TESTS:=
 NO_CONFIGURE_TARGETS:=
 
-NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure
+NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist
 
 ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
 include config.mk
