@@ -16,7 +16,6 @@ WvString WvStringList::join(const char *joinchars) const
     return ::strcoll_join(*this, joinchars);
 }
 
-
 void WvStringList::split(WvStringParm s, const char *splitchars,
     int limit)
 {
@@ -38,9 +37,6 @@ void WvStringList::fill(const char * const *array)
     }
 }
 
-
-// get the first string in the list, or an empty string if the list is empty.
-// Removes the returned string from the list.
 WvString WvStringList::popstr()
 {
     if (isempty())
