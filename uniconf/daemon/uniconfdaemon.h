@@ -39,7 +39,7 @@ public:
     // 1 - notify me if my value or any of my immediate children have changed
     // 2 - notify me if my value or any of my children have changed
     void update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot=false, int depth=0);
-    void del_callback(WvString key, UniConfDaemonConn *s);
+    void del_callback(WvString key, UniConfDaemonConn *s, int depth=0);
     void add_callback(WvString key, UniConfDaemonConn *s, bool one_shot, int depth);
 
     bool want_to_die;

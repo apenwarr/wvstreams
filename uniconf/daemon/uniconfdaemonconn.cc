@@ -21,7 +21,10 @@ UniConfDaemonConn::~UniConfDaemonConn()
     {
         WvString key = *i;
         if (!key) key = "/";
-        source->del_callback(key, this);
+        source->del_callback(key, this, 0);
+        source->del_callback(key, this, 1);
+        source->del_callback(key, this, 2);
+
     }
 }
 

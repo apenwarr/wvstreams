@@ -166,7 +166,7 @@ void UniConfDaemon::myvaluechanged(void *userdata, UniConf &conf)
     UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
     WvString keyname(conf.gen_full_key()); 
 
-    if (s->isok())
+    if (s->isok() && conf.notify)
         s->print(create_return_string(keyname));
 }
 
@@ -191,6 +191,9 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata, UniConf &conf)
 
     for (i.rewind(); i.next();)
     {
+        if (key.printable() == i()) // This case has already been handled
+            continue;
+        
         UniConfKey modkey(i());
         
         bool match = true;
@@ -205,7 +208,11 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata, UniConf &conf)
             }
             // Ok, we should have ONE link, then a NULL for this key to matter
             WvLink *temp = i2.next();
-            temp = i2.next();
+            if (temp != NULL )
+                temp = i2.next();
+            else
+                match = false;
+
             match &= temp == NULL;
         }
         else // Make sure we're an IMMEDIATE subchild of /
@@ -245,6 +252,9 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
 
     for (i.rewind(); i.next();)
     {
+        if (key.printable() == i())
+            continue;
+
         UniConfKey modkey(i());
         
         bool match = true;
@@ -270,35 +280,49 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
 
 void UniConfDaemon::update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot, int depth)
 {
-    del_callback(key, s);
+    del_callback(key, s, depth);
     add_callback(key, s, one_shot, depth);
 }
 
-void UniConfDaemon::del_callback(WvString key, UniConfDaemonConn *s)
+void UniConfDaemon::del_callback(WvString key, UniConfDaemonConn *s, int depth)
 {
-    events.del(wvcallback(UniConfCallback, *this,
-                UniConfDaemon::myvaluechanged), s, key);
-    events.del(wvcallback(UniConfCallback, *this,
-                UniConfDaemon::me_or_imm_child_changed), s, key);
-    events.del(wvcallback(UniConfCallback, *this,
-                UniConfDaemon::me_or_any_child_changed), s, key);
+    switch (depth)
+    {
+        case 0:
+            events.del(wvcallback(UniConfCallback, *this,
+                    UniConfDaemon::myvaluechanged), s, key);
+            break;
+        case 1:
+            events.del(wvcallback(UniConfCallback, *this,
+                    UniConfDaemon::me_or_imm_child_changed), s, key);
+            break;
+        case 2:
+            events.del(wvcallback(UniConfCallback, *this,
+                    UniConfDaemon::me_or_any_child_changed), s, key);
+            break;
+        default:
+            log(WvLog::Debug1, "ACK!  Trying to delete an unknown level of callbacks.\n");
+    }
 }
 
 void UniConfDaemon::add_callback(WvString key, UniConfDaemonConn *s, bool one_shot, int depth)
 {
     switch (depth)
     {
-        case 1:
+        case 0: // Myself only
+            events.add(wvcallback(UniConfCallback, *this, 
+                UniConfDaemon::myvaluechanged), s, key, one_shot);
+            break;
+        case 1:  // Myself & my immediate children
             events.add(wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_imm_child_changed), s, key, one_shot);
             break;
-        case 2:
+        case 2: // Myself and any children below me
             events.add(wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_any_child_changed), s, key, one_shot);
             break;
         default:
-            events.add(wvcallback(UniConfCallback, *this, 
-                UniConfDaemon::myvaluechanged), s, key, one_shot);
+            log(WvLog::Debug1, "ACK!  Undefined level for callback!\n");
     }
     // Let the connection track what keys it knows about.
     s->appendkey(new WvString(key));
