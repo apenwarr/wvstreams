@@ -9,9 +9,9 @@
 
 #include "wvstringlist.h"
 #include "wvslp.h"
-#include "slp.h"
 
 #ifdef WITH_SLP
+#include "slp.h"
 
 // Note - this only LOOKS Asynchronous - the OpenSLP folks haven't
 // finished their Async code yet, so for now, we're stuck with a nice
