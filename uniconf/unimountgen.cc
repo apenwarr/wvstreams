@@ -220,6 +220,15 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 }
 
 
+UniMountGen::Iter *UniMountGen::recursiveiterator(const UniConfKey &key)
+{
+    UniGenMount *found = findmount(key);
+    if (found)
+        return found->gen->recursiveiterator(trimkey(found->key, key));
+    return NULL;
+}
+
+
 UniMountGen::UniGenMount *UniMountGen::findmount(const UniConfKey &key)
 {
     // Find the needed generator and keep it as a lastfound

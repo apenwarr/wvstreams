@@ -70,31 +70,15 @@ public:
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
+    virtual Iter *recursiveiterator(const UniConfKey &key);
 
 protected:
+    virtual Iter *do_iterator(const UniConfKey &key, bool recursive);
     void conncallback(WvStream &s, void *userdata);
     bool do_select();
     void clientdelta(const UniConfKey &key, WvStringParm value);
     void deltacb(WvStream &, void *);
 };
 
-
-/** An iterator over remote keys. */
-class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
-{
-protected:
-    WvStringList *list;
-    WvStringList::Iter i;
-
-public:
-    RemoteKeyIter(WvStringList *_list) : list(_list), i(*_list) { }
-    virtual ~RemoteKeyIter() { delete list; }
-
-    /***** Overridden methods *****/
-
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-};
 
 #endif // __UNICONFCLIENT_H

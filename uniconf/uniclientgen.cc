@@ -66,6 +66,34 @@ static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 
 
+
+/***** UniClientGen::RemoteKeyIter *****/
+
+class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
+{
+protected:
+    int topcount;
+    WvStringList *list;
+    WvStringList::Iter i;
+
+public:
+    RemoteKeyIter(const UniConfKey &_top, WvStringList *_list) 
+	: list(_list), i(*_list)
+	{ topcount = _top.numsegments(); }
+    virtual ~RemoteKeyIter() 
+        { delete list; }
+
+    /***** Overridden methods *****/
+
+    virtual void rewind()
+        { i.rewind(); }
+    virtual bool next()
+        { return i.next(); }
+    virtual UniConfKey key() const
+        { return UniConfKey(*i).removefirst(topcount); }
+};
+
+
 /***** UniClientGen *****/
 
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
@@ -149,17 +177,31 @@ bool UniClientGen::haschildren(const UniConfKey &key)
 }
 
 
-UniClientGen::Iter *UniClientGen::iterator(const UniConfKey &key)
+UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
+					      bool recursive)
 {
     result_list = new WvStringList();
-    conn->writecmd(UniClientConn::REQ_SUBTREE, wvtcl_escape(key));
+    conn->writecmd(UniClientConn::REQ_SUBTREE,
+		   WvString("%s %s", wvtcl_escape(key), WvString(recursive)));
 
     if (do_select())
-        return new RemoteKeyIter(result_list);
+        return new RemoteKeyIter(key, result_list);
 
     delete result_list;
     result_list = NULL;
     return NULL;
+}
+
+
+UniClientGen::Iter *UniClientGen::iterator(const UniConfKey &key)
+{
+    return do_iterator(key, false);
+}
+    
+
+UniClientGen::Iter *UniClientGen::recursiveiterator(const UniConfKey &key)
+{
+    return do_iterator(key, true);
 }
     
 
@@ -297,26 +339,6 @@ bool UniClientGen::do_select()
     return cmdsuccess;
 }
 
-
-
-/***** UniClientGen::RemoteKeyIter *****/
-
-void UniClientGen::RemoteKeyIter::rewind()
-{
-    i.rewind();
-}
-
-
-bool UniClientGen::RemoteKeyIter::next()
-{
-    return i.next();
-}
-
-
-UniConfKey UniClientGen::RemoteKeyIter::key() const
-{
-    return UniConfKey(*i).last();
-}
 
 
 void UniClientGen::clientdelta(const UniConfKey &key, WvStringParm value)

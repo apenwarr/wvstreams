@@ -47,6 +47,7 @@ public:
     virtual bool haschildren(const UniConfKey &key);
     virtual bool isok();
     virtual Iter *iterator(const UniConfKey &key);
+    virtual Iter *recursiveiterator(const UniConfKey &key);
 
 protected:
     /**

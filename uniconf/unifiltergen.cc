@@ -86,6 +86,12 @@ UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 }
 
 
+UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
+{
+    return xinner->recursiveiterator(key);
+}
+
+
 void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value,
                                void *userdata)
 {
