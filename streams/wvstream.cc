@@ -534,7 +534,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
         }
         
         bool hasdata;
-        if (uses_continue_select)
+        if (wait_msec != 0 && uses_continue_select)
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
