@@ -6,8 +6,7 @@ CXXFLAGS += -I../../include
 XPATH=../.. ../../utils ../../streams
 
 TESTS=tcptest udptest udp2test listentest unixtest ulistentest \
-	resolvertest routetest \
-	conttest aliastest simpleconn httptest urltest
+	resolvertest conttest simpleconn httptest urltest
 
 default: all
 
