@@ -11,7 +11,7 @@ all: utils.libs
 
 testencoder-LIBS=-lz
 
-utils.libs: base64.o verstring.o strutils.o strcrypt.o \
+utils.libs: base64.o verstring.o strutils.o strcrypt.o wvtimeutils.o \
 		wvstring.o wvstringlist.o wvstringtable.o \
 		wvlinklist.o wvhashtable.o wvsorter.o wvbuffer.o wvtask.o \
 		wvfork.o wvsubproc.o wvencoder.o wvgzip.o wvcrash.o \
