@@ -69,3 +69,4 @@ WVTEST_MAIN("uniconfd")
 
     WVPASS(!cfg["/key"].exists());
 }
+

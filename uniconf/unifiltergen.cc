@@ -33,6 +33,13 @@ void UniFilterGen::setinner(IUniConfGen *inner)
 }
 
 
+UniConfKey UniFilterGen::keymap(const UniConfKey &key)
+{
+    // by default, don't rename the key
+    return key;
+}
+
+
 void UniFilterGen::commit()
 {
     if (xinner)
@@ -52,14 +59,14 @@ bool UniFilterGen::refresh()
 void UniFilterGen::prefetch(const UniConfKey &key, bool recursive)
 {
     if (xinner)
-    	xinner->prefetch(key, recursive);
+    	xinner->prefetch(keymap(key), recursive);
 }
 
 
 WvString UniFilterGen::get(const UniConfKey &key)
 {
     if (xinner)
-    	return xinner->get(key);
+    	return xinner->get(keymap(key));
     else
     	return WvString::null;
 }
@@ -68,14 +75,14 @@ WvString UniFilterGen::get(const UniConfKey &key)
 void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 {
     if (xinner)
-    	xinner->set(key, value);
+    	xinner->set(keymap(key), value);
 }
 
 
 bool UniFilterGen::exists(const UniConfKey &key)
 {
     if (xinner)
-    	return xinner->exists(key);
+    	return xinner->exists(keymap(key));
     else
     	return false;
 }
@@ -84,7 +91,7 @@ bool UniFilterGen::exists(const UniConfKey &key)
 bool UniFilterGen::haschildren(const UniConfKey &key)
 {
     if (xinner)
-    	return xinner->haschildren(key);
+    	return xinner->haschildren(keymap(key));
     else
     	return false;
 }
@@ -102,7 +109,7 @@ bool UniFilterGen::isok()
 UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 {
     if (xinner)
-    	return xinner->iterator(key);
+    	return xinner->iterator(keymap(key));
     else
     	return NULL;
 }
@@ -111,7 +118,7 @@ UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 {
     if (xinner)
-    	return xinner->recursiveiterator(key);
+    	return xinner->recursiveiterator(keymap(key));
     else
     	return NULL;
 }
@@ -120,5 +127,5 @@ UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value,
                                void *userdata)
 {
-    delta(key, value);
+    delta(keymap(key), value);
 }

@@ -170,10 +170,58 @@
 				RelativePath=".\uniregistrygen.cc">
 			</File>
 			<File
+				RelativePath="..\..\uniconf\unireplicategen.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\uniconf\uniretrygen.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\uniconf\unisecuregen.cc">
 			</File>
 			<File
+				RelativePath="..\..\uniconf\unislowgen.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\uniconf\unitempgen.cc">
+			</File>
+			<File
+				RelativePath="..\..\uniconf\uniunwrapgen.cc">
 			</File>
 			<File
 				RelativePath="..\..\uniconf\uniwatch.cc">
@@ -433,7 +481,7 @@
 				RelativePath="..\..\include\wviproute.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvstreamlist.h">
+				RelativePath="..\..\include\wvistreamlist.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvlink.h">
@@ -547,7 +595,7 @@
 				RelativePath="..\..\include\wvstreamclone.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvistreamlist.h">
+				RelativePath="..\..\include\wvstreamlist.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvstring.h">

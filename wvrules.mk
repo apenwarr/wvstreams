@@ -128,8 +128,9 @@ xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
 default: all
 
 # default "test" rule does nothing...
-.PHONY: test
+.PHONY: test runtests
 test:
+runtests:
 
 %/test:
 	$(MAKE) -C $(dir $@) test

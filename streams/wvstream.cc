@@ -46,6 +46,7 @@ UUID_MAP_BEGIN(WvStream)
   UUID_MAP_ENTRY(IWvStream)
   UUID_MAP_END
 
+
 WvStream::WvStream()
 {
     TRACE("Creating wvstream %p\n", this);
@@ -149,17 +150,9 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
 
 void WvStream::_callback()
 {
-    wvstream_execute_called = false;
     execute();
     if (!! callfunc)
 	callfunc(*this, userdata);
-
-    // if this assertion fails, a derived class's virtual execute() function
-    // didn't call its parent's execute() function, and we didn't make it
-    // all the way back up to WvStream::execute().  This doesn't always
-    // matter right now, but it could lead to obscure bugs later, so we'll
-    // enforce it.
-    assert(wvstream_execute_called);
 }
 
 
@@ -185,6 +178,8 @@ void WvStream::callback()
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
 
+    wvstream_execute_called = false;
+
 #define TEST_CONTINUES_HARSHLY 0
 #if TEST_CONTINUES_HARSHLY
 #ifndef _WIN32
@@ -206,6 +201,18 @@ void WvStream::callback()
     }
     else
 	_callback();
+
+    // if this assertion fails, a derived class's virtual execute() function
+    // didn't call its parent's execute() function, and we didn't make it
+    // all the way back up to WvStream::execute().  This doesn't always
+    // matter right now, but it could lead to obscure bugs later, so we'll
+    // enforce it.
+
+    // FIXME: disabled at the moment, because it was implemented
+    // incorrectly with regard to uses_continue_select. Many people
+    // call continue_select without calling their parent's execute
+    // method after, which they should.
+    //assert(wvstream_execute_called);
 }
 
 
@@ -318,7 +325,7 @@ size_t WvStream::read(void *buf, size_t count)
 
 size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 {
-    assert(WvCont::isok());
+    assert(uses_continue_select);
 
     if (!count)
         return 0;
@@ -459,7 +466,7 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
         }
         
         bool hasdata;
-        if (WvCont::isok())
+        if (uses_continue_select)
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
@@ -527,7 +534,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
         }
         
         bool hasdata;
-        if (WvCont::isok())
+        if (wait_msec != 0 && uses_continue_select)
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
@@ -917,7 +924,11 @@ time_t WvStream::alarm_remaining()
 
 bool WvStream::continue_select(time_t msec_timeout)
 {
-    assert(WvCont::isok());
+    assert(uses_continue_select);
+    
+    // if this assertion triggers, you probably tried to do continue_select()
+    // while inside terminate_continue_select().
+    assert(call_ctx);
     
     if (msec_timeout >= 0)
 	alarm(msec_timeout);

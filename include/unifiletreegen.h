@@ -12,6 +12,9 @@
 #include "wvlog.h"
 #include "unimounttreegen.h"
 
+/**
+ * A UniConf generator that access a tree of files
+ */
 class UniConfFileTreeGen : public UniMountTreeGen
 {
 public:

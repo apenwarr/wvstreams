@@ -12,7 +12,7 @@ WvVectorBase::WvVectorBase(bool _auto_free)
 {
     xseq = NULL;
     xcount = xslots = 0;
-    auto_free = _auto_free;
+    autofree = _auto_free;
 }
 
 

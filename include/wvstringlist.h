@@ -38,8 +38,9 @@ public:
     WvString join(const char *joinchars = " ") const;
     
     /**
-     * split s and form a list ignoring splitchars
+     * split s and form a list ignoring splitchars (except at beginning and end)
      * ie. " happy birthday  to  you" split on " " will populate the list with
+     * ""
      * "happy"
      * "birthday"
      * "to"

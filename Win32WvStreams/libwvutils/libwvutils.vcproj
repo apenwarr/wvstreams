@@ -187,6 +187,9 @@
 				RelativePath="..\..\utils\wvgzip.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\wvhash.cc">
+			</File>
+			<File
 				RelativePath="..\..\utils\wvhashtable.cc">
 			</File>
 			<File
@@ -312,10 +315,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\utils\dirent.h">
+				RelativePath=".\dirent.h">
 			</File>
 			<File
-				RelativePath=".\dirent.h">
+				RelativePath="..\utils\dirent.h">
 			</File>
 			<File
 				RelativePath="..\..\include\fileutils.h">

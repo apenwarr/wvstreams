@@ -17,7 +17,7 @@ static IUniConfGen *creator(WvStringParm s, IObject *, void *)
     return new UniIniGen(s);
 }
 
-static WvMoniker<IUniConfGen> reg("ini", creator);
+WvMoniker<IUniConfGen> UniIniGenMoniker("ini", creator);
 
 
 // forward declarations

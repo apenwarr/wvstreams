@@ -161,7 +161,7 @@ public:
  * 
  * 
  * Deallocating list will free all of the WvLinks in the list, but
- * will only free the user objects that were added with auto_free
+ * will only free the user objects that were added with autofree
  * set to true.
  * 
  * We need to malloc memory for each WvLink as well as the data it
@@ -196,7 +196,7 @@ public:
     /**
      * Destroys the linked list.
      * 
-     * Destroys any elements that were added with auto_free == true.
+     * Destroys any elements that were added with autofree == true.
      * 
      */
     ~WvList()
@@ -211,7 +211,7 @@ public:
     /**
      * Clears the linked list.
      * 
-     * If destroy is true, destroys any elements that were added with auto_free == true.
+     * If destroy is true, destroys any elements that were added with autofree == true.
      * 
      */
     void zap(bool destroy = true)
@@ -246,46 +246,46 @@ public:
      * "link" is the link preceeding the desired location of the element
      *             to be inserted, non-null
      * "data" is the element pointer, may be null
-     * "auto_free" is if true, takes ownership of the element
+     * "autofree" is if true, takes ownership of the element
      * "id" is an optional string to associate with the element, or null
      */
-    void add_after(WvLink *after, T *data, bool auto_free,
+    void add_after(WvLink *after, T *data, bool autofree,
 			char *id = NULL )
     {
-	(void)new WvLink((void *)data, after, tail, auto_free, id);
+	(void)new WvLink((void *)data, after, tail, autofree, id);
     }
 
     /**
      * Appends the element to the end of the list.
      *
      * "data" is the element pointer, may be null
-     * "auto_free" is if true, takes ownership of the element
+     * "autofree" is if true, takes ownership of the element
      * "id" is an optional string to associate with the element, or null
      */
-    void append(T *data, bool auto_free, char *id = NULL)
-	{ add_after(tail, data, auto_free, id); }
+    void append(T *data, bool autofree, char *id = NULL)
+	{ add_after(tail, data, autofree, id); }
 
     /**
      * Synonym for append(T*, bool, char*).
      * @see append(T*, bool, char*)
      */
-    void add(T *data, bool auto_free, char *id = NULL)
-        { append(data, auto_free, id); }
+    void add(T *data, bool autofree, char *id = NULL)
+        { append(data, autofree, id); }
 
     /**
      * Prepends the element to the beginning of the list.
      *
      * "data" is the element pointer, may be null
-     * "auto_free" is if true, takes ownership of the element
+     * "autofree" is if true, takes ownership of the element
      * "id" is an optional string to associate with the element, or null
      */
-    void prepend(T *data, bool auto_free, char *id = NULL)
-	{ add_after(&head, data, auto_free, id); }
+    void prepend(T *data, bool autofree, char *id = NULL)
+	{ add_after(&head, data, autofree, id); }
 
     /**
      * Unlinks the specified element from the list.
      * 
-     * Destroys the element if it was added with auto_free == true.
+     * Destroys the element if it was added with autofree == true.
      * 
      * "data" is the element pointer, may be null
      */
@@ -295,7 +295,7 @@ public:
     /**
      * Unlinks the first element from the list.
      * 
-     * Destroys the element if it was added with auto_free == true.
+     * Destroys the element if it was added with autofree == true.
      * 
      */ 
     void unlink_first()
@@ -304,7 +304,7 @@ public:
     /**
      * Unlinks the element that follows the specified link in the list.
      * 
-     * Destroys the element if it was added with auto_free == true and
+     * Destroys the element if it was added with autofree == true and
      * destroy == true.
      * 
      * "after" is the link preceeding the element to be removed, non-null
@@ -312,7 +312,7 @@ public:
     void unlink_after(WvLink *after, bool destroy = true)
     {
         WvLink *next = after->next;
-        T *obj = (destroy && next->auto_free) ?
+        T *obj = (destroy && next->get_autofree()) ?
             static_cast<T*>(next->data) : NULL;
         if (next == tail) tail = after;
         next->unlink(after);
@@ -349,7 +349,23 @@ public:
             { return (T *)link->data; }
 
 	WvIterStuff(T);
-	
+
+	/**
+	 * Returns the state of autofree for the current element.
+	 */
+	bool get_autofree() const
+	{
+	    return link->get_autofree();
+	}
+
+	/**
+	 * Sets the state of autofree for the current element.
+	 */
+	void set_autofree(bool autofree)
+	{
+	    link->set_autofree(autofree);
+	}
+
         /**
          * Unlinks the current element from the list and automatically
          * increments the iterator to point to the next element as if

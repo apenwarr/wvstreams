@@ -17,10 +17,12 @@ reportcode()
     return $CODE
 }
 
+exec 3>&1
+
 if [ -z "$DISPLAY" ]; then
     exec "$@"
 else
     ( "$@"; reportcode $?) \
-    	| ($WVSTREAMS_SRC/wvtestmeter || cat)
+    	| tee /dev/fd/3 | ($WVSTREAMS_SRC/wvtestmeter || cat)
     exit ${PIPESTATUS[0]}
 fi

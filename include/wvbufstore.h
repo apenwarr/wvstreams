@@ -266,9 +266,9 @@ public:
         { return data; }
     size_t size() const
         { return xsize; }
-    bool autofree() const
+    bool get_autofree() const
         { return xautofree; }
-    void setautofree(bool _autofree)
+    void set_autofree(bool _autofree)
         { xautofree = _autofree; }
     void reset(void *_data, size_t _avail, size_t _size, bool _autofree);
     void setavail(size_t _avail);
@@ -336,9 +336,9 @@ public:
         { return data; }
     size_t size() const
         { return xsize; }
-    bool autofree() const
+    bool get_autofree() const
         { return xautofree; }
-    void setautofree(bool _autofree)
+    void set_autofree(bool _autofree)
         { xautofree = _autofree; }
     void reset(void *_data, size_t _avail, size_t _size, bool _autofree);
     void setavail(size_t _avail);
