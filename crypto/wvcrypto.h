@@ -90,9 +90,14 @@ class WvRSAKey
 {
     char *pub, *prv;
     int errnum;
-    void seterr(WvStringParm _errstring);
-    
+
+    void seterr(WvStringParm s)
+            { errstring = s; }
+    void seterr(WVSTRING_FORMAT_DECL)
+            { seterr(WvString(WVSTRING_FORMAT_CALL)); }    
+
     void init(const char *_keystr, bool priv);
+    void hexify(struct rsa_st *rsa);
         
 public:
     struct rsa_st *rsa;
@@ -108,6 +113,8 @@ public:
     char *public_str() const
         { return pub; }
         
+    void pem2hex(WvStringParm filename);
+    
     volatile bool isok()
     	{ return (errnum == 0 ? true : false); }
     

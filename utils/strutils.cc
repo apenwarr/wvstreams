@@ -13,82 +13,86 @@
 #include <time.h>
 
 
-char * terminate_string( char * string, char c )
+char *terminate_string(char *string, char c)
 /**********************************************/
 // Add character c to the end of a string after removing crlf's.
 // NOTE: You need a buffer that's at least one character bigger than the
 // current length of the string, including the terminating NULL.
 {
-    char * p;
+    char *p;
 
-    if( string == NULL ) {
-    	return( NULL );
-    }
+    if (string == NULL)
+    	return NULL;
 
-    p = string + strlen( string ) - 1;
-    while( *p == '\r' || *p == '\n' ) {
+    p = string + strlen(string) - 1;
+    while (*p == '\r' || *p == '\n')
     	p--;
-    }
+
     *(++p) = c;
     *(++p) = 0;
 
-    return( string );
+    return string;
 }
 
-char * trim_string( char * string )
+
+char *trim_string(char *string)
 /*********************************/
 // Trims spaces off the front and end of strings.  Modifies the string.
 // Specifically DOES allow string==NULL; returns NULL in that case.
 {
-    char * p;
-    char * q;
+    char *p;
+    char *q;
 
-    if( string == NULL )
-    	return( NULL );
+    if (string == NULL)
+    	return NULL;
 
     p = string;
     q = string + strlen(string) - 1;
 
-    while( q >= p && isspace( *q ) )
+    while (q >= p && isspace(*q))
     	*(q--) = 0;
-    while( isspace( *p ) )
+    while (isspace(*p))
     	p++;
 
-    return( p );
+    return p;
 }
 
-char * trim_string( char * string, char c )
+
+char *trim_string(char *string, char c)
 // Searches the string for c and removes it plus everything afterwards.
 // Modifies the string and returns NULL if string == NULL.
 {
-    char * p;
+    char *p;
 
-    if ( string == NULL )
-        return( NULL );
+    if (string == NULL)
+        return NULL;
 
     p = string;
 
-    while( *p != 0 && *p != c )
+    while (*p != 0 && *p != c)
         p++;
 
-    while( *p )
+    while (*p)
         *(p++) = 0;
 
-    return( string );
+    return string;
 }
 
-char * non_breaking(char * string)
-/************************************/
+
 // Replaces whitespace characters with nonbreaking spaces.
+char *non_breaking(char * string)
 {
     if (string == NULL)
         return (NULL);
 
     WvBuffer buf;
 
-    while (*string) {
-        if (isspace(*string)) buf.put("&nbsp;");
-        else  buf.putch(*string);
+    while (*string)
+    {
+        if (isspace(*string))
+	    buf.put("&nbsp;");
+        else 
+	    buf.putch(*string);
         string++;
     }
 
@@ -96,40 +100,41 @@ char * non_breaking(char * string)
     return s.edit();
 }
 
-void replace_char( void * _string, char c1, char c2, int length )
-/**************************************************************/
+
 // Searches _string (up to length bytes), replacing any occurrences of c1
 // with c2.
+void replace_char(void *_string, char c1, char c2, int length)
 {
     char *string = (char *)_string;
-    for( int i=0; i < length; i++ )
-    	if( *(string+i) == c1 )
+    for (int i=0; i < length; i++)
+    	if (*(string+i) == c1)
     	    *(string+i) = c2;
 }
 
-char * strlwr( char * string )
-/****************************/
+
+char *strlwr(char *string)
 {
-    char *	p = string;
-    while( *p ) {
-    	*p = tolower( *p );
+    char *p = string;
+    while (*p)
+    {
+    	*p = tolower(*p);
     	p++;
     }
 
-    return( string );
+    return string;
 }
 
-char * strupr( char * string)
-/***************************/
+
+char *strupr(char *string)
 {
     char *p = string;
-    while ( *p )
+    while (*p)
     {
-	*p = toupper( *p);
+	*p = toupper(*p);
 	p++;
     }
 
-    return( string );
+    return string;
 }
 
 
@@ -330,18 +335,15 @@ int strcount(WvStringParm s, const char c)
 
 WvString encode_hostname_as_DN(WvStringParm hostname)
 {
-    WvString dn("cn=%s,", hostname);
+    WvString dn("");
     
     WvStringList fqdnlist;
-    fqdnlist.split(hostname, ".");
-    
     WvStringList::Iter i(fqdnlist);
+    
+    fqdnlist.split(hostname, ".");
     for (i.rewind(); i.next(); )
-    {
-	dn.append("dc=");
-	dn.append(*i);   
-	dn.append(",");
-    }
+	dn.append("dc=%s,", *i);
+    dn.append("cn=%s", hostname);
     
     return dn;
 }

@@ -11,7 +11,7 @@
 #include <blowfish.h>
 #include <rsa.h>
 #include <md5.h>
-
+#include <pem.h>
 
 ////////////////////////// WvCryptoStream
 
@@ -187,7 +187,7 @@ void WvRSAKey::init(const char *_keystr, bool priv)
 	    unsigned char *iend = keybuf;
 	    size = i2d_RSAPublicKey(rsa, &iend);
 	    pub = (char *)malloc(size * 2 + 1);
-	    hexify(pub, keybuf, size);
+	    ::hexify(pub, keybuf, size);
 	}
     }
     else
@@ -226,26 +226,9 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
 
 WvRSAKey::WvRSAKey(int bits)
 {
-    errnum = 0;
-    size_t size;
-    unsigned char *keybuf, *iend;
-    
     rsa = RSA_generate_key(bits, 3, NULL, NULL);
     
-    size = i2d_RSAPrivateKey(rsa, NULL);
-    iend = keybuf = new unsigned char[size];
-    i2d_RSAPrivateKey(rsa, &iend);
-    
-    prv = (char *)malloc(size * 2 + 1);
-    hexify(prv, keybuf, size);
-    
-    iend = keybuf;
-    size = i2d_RSAPublicKey(rsa, &iend);
-    
-    pub = (char *)malloc(size * 2 + 1);
-    hexify(pub, keybuf, size);
-    
-    delete[] keybuf;
+    hexify(rsa);
 }
 
 
@@ -260,12 +243,56 @@ WvRSAKey::~WvRSAKey()
 }
 
 
-void WvRSAKey::seterr(WvStringParm _errstring)
+void WvRSAKey::pem2hex(WvStringParm filename)
 {
-    errstring = _errstring;
-    errnum = -1;
+    RSA *rsa = NULL;
+    FILE *fp;
+
+    fp = fopen(filename, "r");
+
+    if (!fp)
+    {
+	seterr("Unable to open %s!",filename);
+	return;
+    }
+
+    rsa = PEM_read_RSAPrivateKey(fp,NULL,NULL,NULL);
+
+    fclose(fp);
+
+    if (!rsa)
+    {
+	seterr("Unable to decode PEM File!");
+	return;
+    }
+    else
+    {
+	hexify(rsa);
+	return;
+    }
 }
 
+
+void WvRSAKey::hexify(RSA *rsa)
+{
+    size_t size;
+    unsigned char *keybuf, *iend;
+
+    size = i2d_RSAPrivateKey(rsa, NULL);
+    iend = keybuf = new unsigned char[size];
+    i2d_RSAPrivateKey(rsa, &iend);
+    
+    prv = (char *)malloc(size * 2 + 1);
+    ::hexify(prv, keybuf, size);
+    
+    iend = keybuf;
+    size = i2d_RSAPublicKey(rsa, &iend);
+    
+    pub = (char *)malloc(size * 2 + 1);
+    ::hexify(pub, keybuf, size);
+
+    delete[] keybuf;
+}
 
 
 /////////////////////////// WvRSAStream

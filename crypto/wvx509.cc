@@ -247,7 +247,7 @@ void WvX509Mgr::create_selfsigned()
     // issued by a CA - since this is a self-signed cert, we'll take a
     // shortcut, and give a fixed value... saves a couple of cycles rather
     // than get a random number.
-    int	serial = 12345;
+    int	serial = 0;
 
     WvString serverfqdn;
 
@@ -314,6 +314,10 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,"critical, CA:FALSE");
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+
     // Sign the certificate with our own key ("Self Sign")
     if (!X509_sign(cert, pk, EVP_sha1()))
     {
@@ -340,6 +344,7 @@ static WvString file_hack_end(FILE *f)
     rewind(f);
     while ((len = fread(b.alloc(1024), 1, 1024, f)) > 0)
 	b.unalloc(1024 - len);
+    b.unalloc(1024 - len);
     fclose(f);
 
     return b.getstr();
@@ -599,6 +604,7 @@ WvString WvX509Mgr::encode(DumpMode mode)
 	    
 	default:
 	    seterr("Unknown Mode\n");
+	    break;
 	}
 	
 	return file_hack_end(stupid);
