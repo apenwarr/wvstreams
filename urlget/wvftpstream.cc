@@ -16,21 +16,14 @@
 
 WvFtpStream::WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 WvStringParm _password)
-    : WvUrlStream(_remaddr, _username, WvString("FTP %s", _remaddr))
+    : WvUrlStream(_remaddr, _username, WvString("FTP %s", _remaddr)),
+      cont(WvContCallback(this, &WvFtpStream::real_execute))
 {
     data = NULL;
     logged_in = false;
     password = _password;
-    uses_continue_select = true;
     last_request_time = time(0);
     alarm(60000); // timeout if no connection, or something goes wrong
-}
-
-
-WvFtpStream::~WvFtpStream()
-{
-    terminate_continue_select();
-    close();
 }
 
 
@@ -152,7 +145,7 @@ bool WvFtpStream::post_select(SelectInfo &si)
 }
 
 
-void WvFtpStream::execute()
+void *WvFtpStream::real_execute(void*)
 {
     WvString line;
     WvStreamClone::execute();
@@ -163,7 +156,7 @@ void WvFtpStream::execute()
         if (urls.isempty())
             close(); // timed out, but not really an error
 
-        return;
+        return 0;
     }
 
     if (!logged_in)
@@ -172,20 +165,20 @@ void WvFtpStream::execute()
         if (!line)
 	{
 	    seterr("Server not reachable: %s\n",strerror(errno));
-            return;
+            return 0;
 	}
 	    
         if (strncmp(line, "220", 3))
         {
             log("Server rejected connection: %s\n", line);
             seterr("server rejected connection");
-            return;
+            return 0;
         }
         print("USER %s\r\n", !target.username ? WvString("anonymous") :
                     target.username);
         line = get_important_line();
         if (!line)
-            return;
+            return 0;
 
         if (!strncmp(line, "230", 3))
         {
@@ -198,7 +191,7 @@ void WvFtpStream::execute()
 	    
             line = get_important_line();
             if (!line)
-                return;
+                return 0;
 
             if (line[0] == '2')
             {
@@ -209,27 +202,27 @@ void WvFtpStream::execute()
             {
                 log("Strange response to PASS command: %s\n", line);
                 seterr("strange response to PASS command");
-                return;
+                return 0;
             }
         }
         else
         {
             log("Strange response to USER command: %s\n", line);
             seterr("strange response to USER command");
-            return;
+            return 0;
         }
 
         print("TYPE I\r\n");
 	log(WvLog::Debug5, "<< TYPE I\n");
         line = get_important_line();
         if (!line)
-            return;
+            return 0;
 	
         if (strncmp(line, "200", 3))
         {
             log("Strange response to TYPE I command: %s\n", line);
             seterr("strange response to TYPE I command");
-            return;
+            return 0;
         }
     }
 
@@ -240,7 +233,7 @@ void WvFtpStream::execute()
         print("CWD %s\r\n", curl->url.getfile());
         line = get_important_line();
         if (!line)
-            return;
+            return 0;
 
         if (!strncmp(line, "250", 3))
         {
@@ -251,11 +244,11 @@ void WvFtpStream::execute()
         print("PASV\r\n");
         line = get_important_line();
         if (!line)
-            return;
+            return 0;
         WvIPPortAddr *dataip = parse_pasv_response(line.edit());
 
         if (!dataip)
-            return;
+            return 0;
 
         log(WvLog::Debug4, "Data port is %s.\n", *dataip);
         // Open data connection.
@@ -264,7 +257,7 @@ void WvFtpStream::execute()
         {
             log("Can't open data connection.\n");
             seterr("can't open data connection");
-            return;
+            return 0;
         }
 
         if (curl->is_dir)
@@ -305,7 +298,7 @@ void WvFtpStream::execute()
                 log("Target is a directory.\n");
                 seterr("target is a directory");
                 doneurl();
-                return;
+                return 0;
             }
         }
         else if (!curl->putstream)
@@ -317,7 +310,7 @@ void WvFtpStream::execute()
                 print("CWD %s\r\n", getdirname(curl->url.getfile()));
                 line = get_important_line();
                 if (!line)
-                    return;
+                    return 0;
                 if (strncmp(line, "250", 3))
                 {
                     log("Path doesn't exist; creating directories...\n");
@@ -332,7 +325,7 @@ void WvFtpStream::execute()
                         print("MKD %s\r\n", current_dir);
                         line = get_important_line();
                         if (!line)
-                            return;
+                            return 0;
                     }
                 }
             }
@@ -416,7 +409,7 @@ void WvFtpStream::execute()
             if (!line)
             {
                 doneurl();
-                return;
+                return 0;
             }
 
             if (strncmp(line, "226", 3))
@@ -431,7 +424,7 @@ void WvFtpStream::execute()
                 log(WvLog::Debug5, "Waiting for response to CWD /\n");
                 line = get_important_line();
                 if (!line)
-                    return;
+                    return 0;
 
                 if (strncmp(line, "250", 3))
                     log("Strange resonse to \"CWD /\": %s\n", line);
@@ -444,6 +437,14 @@ void WvFtpStream::execute()
 	    log("Why are we here??\n");
 	}
     }
+
+    return 0;
+}
+
+
+void WvFtpStream::execute()
+{
+    real_execute(0);
 }
 
 
