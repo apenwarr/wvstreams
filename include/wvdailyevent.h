@@ -36,10 +36,12 @@ public:
      * occur.
      * \param _num_per_day the number of times in a day that the event should
      * occur.
+     * \param _skip_first indicates whether the first event should be skipped
+     * or not, starting on the second is default.
      * If _num_per_day is not specified, it defaults to 0 (which is equivalent
      * to running the event once a day). 
      */
-    WvDailyEvent( int _first_hour, int _num_per_day=0 );
+    WvDailyEvent( int _first_hour, int _num_per_day=0, bool _skip_first=true );
 
     /** Returns true if the time is right for the event to occur.
      *  "The time is right" means that it is the first hour in some arbitrary 
@@ -72,7 +74,7 @@ public:
      * If _num_per_day is not specified, it defaults to 0 (which is equivalent
      * to running the event once a day). 
      */
-    void configure( int _first_hour, int _num_per_day=0 );
+    void configure( int _first_hour, int _num_per_day=0, bool _skip_first=true );
 
     /// Set number of times per day the event should occur - ONLY FOR TESTING!
     void set_num_per_day(int _num_per_day);
@@ -99,6 +101,7 @@ private:
     int     first_hour;
     int     num_per_day;
     bool    need_reset;
+    bool    skip_first;
     time_t  prev;
     
     time_t  not_until;

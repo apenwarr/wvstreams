@@ -547,7 +547,7 @@ WvString _sizetoa(unsigned long long digits, int size = 0)
     return WvString("%s.%s %s", units, tenths, size_name[size]);
 }
 
-WvString sizetoa(long long blocks, int blocksize)
+WvString sizetoa(unsigned long long blocks, unsigned int blocksize)
 {
     unsigned long long bytes = blocks * blocksize;
 
