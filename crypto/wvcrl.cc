@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
  *
  * X.509v3 CRL management classe.
  */
@@ -50,9 +50,29 @@ WvString WvCRLMgr::hexify()
 }
 
 
-bool WvCRLMgr::validate(WvX509Mgr *cert)
+WvCRLMgr::Valid  WvCRLMgr::validate(WvX509Mgr *cert)
 {
-    return false;
+    assert(cacert);
+    
+    if (!cert)
+	return ERROR;
+    
+    if (!(cert->get_issuer() == cacert->get_subject()))
+	return NOT_THIS_CA;
+    
+    if (!(signedbyCA(cert)))
+	return NO_VALID_SIGNATURE;
+    
+    if (isrevoked(cert))
+	return REVOKED;
+    
+    if (X509_cmp_current_time(cert->get_notvalid_before()) > 0)
+	return BEFORE_VALID;
+
+    if (X509_cmp_current_time(cert->get_notvalid_after()) < 0)
+	return AFTER_VALID;
+    
+    return VALID;
 }
 
 
@@ -68,8 +88,9 @@ bool WvCRLMgr::signedbyCAinfile(WvStringParm certfile)
 }
 
 
-bool WvCRLMgr::signedbyCA(WvX509Mgr *cacert)
+bool WvCRLMgr::signedbyCA(WvX509Mgr *cert)
 {
+    assert(cacert);
     return false;
 }
 

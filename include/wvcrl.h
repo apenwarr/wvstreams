@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
  *
  * X.509v3 CRL management classes.
  */ 
@@ -37,19 +37,32 @@ public:
     WvError err;
    /**
     * Type for the @ref encode() and @ref decode() methods.
-    * CRLPEM   = PEM Encoded X.509 Certificate
-    * CRLDER   = DER Encoded X.509 Certificate returned in Base64
+    * CRLPEM   = PEM Encoded X.509 CRL
+    * CRLDER   = DER Encoded X.509 CRL returned in Base64
+    * TEXT     = Decoded Human readable format.
     */
     enum DumpMode { PEM = 0, DER, TEXT };
-
-   /**
-    * Initialize a blank CRL Object
-    * 
-    * This either initializes a completely empty object, or takes
-    * a pre-allocated _crl - takes ownership.
-    */
+    /**
+     * Type for @ref validate method
+     * YES = this certificate is valid
+     * NOT_THIS_CA = certificate is not signed by this CA
+     * NO_VALID_SIGNATURE = certificate claims to be signed by this CA (Issuer is the same),
+     *                      but the signature is invalid.
+     * BEFORE_VALID = certificate has not become valid yet
+     * AFTER_VALID = ceriticate is past it's validity period
+     * REVOKED = certificate has been revoked (it's serial number is in this CRL)
+     */
+    
+    enum Valid { ERROR = -1, VALID , NOT_THIS_CA, NO_VALID_SIGNATURE, BEFORE_VALID, AFTER_VALID, REVOKED };
+    
+    /**
+     * Initialize a blank CRL Object
+     * 
+     * This either initializes a completely empty object, or takes
+     * a pre-allocated _crl - takes ownership.
+     */
     WvCRLMgr(X509_CRL *_crl = NULL);
-
+    
 private:
     /** 
      * Placeholder for Copy Constructor: this doesn't exist yet, but it keeps
@@ -82,7 +95,7 @@ public:
      * 2: That the certificate is within it's validity range
      * 3: That the certificate isn't in the CRL.
      */
-    bool validate(WvX509Mgr *cert);
+    Valid validate(WvX509Mgr *cert);
 
     /**
      * Check the CRL in crl  against the CA certificates in
@@ -101,7 +114,7 @@ public:
     * Check the CRL in crl against the CA certificate in cacert
     * - returns true if CRL was signed by that CA certificate.
     */
-    bool signedbyCA(WvX509Mgr *cacert);
+    bool signedbyCA(WvX509Mgr *cert);
 
     bool isok()
     { return err.isok(); }

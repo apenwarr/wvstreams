@@ -558,6 +558,13 @@ WvString WvX509Mgr::signcert(WvStringParm pkcs10req)
     assert(rsa);
     assert(cert);
     debug("Signing a certificate request with : %s\n", get_subject());
+
+    if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
+	  (cert->ex_kusage & KU_KEY_CERT_SIGN)))
+    {
+	debug("Certificate not allowed to sign Certificates!\n");
+	return WvString::null;
+    }
     
     // Break this next part out into a de-pemify section, since that is what
     // this part up until the FIXME: is about.
@@ -1337,10 +1344,33 @@ bool WvX509Mgr::verify(WvBuf &original, WvStringParm signature)
 	return true;
 }
 
+
+ASN1_TIME *WvX509Mgr::get_notvalid_before()
+{
+    assert(cert);
+    return X509_get_notBefore(cert);
+}
+
+
+ASN1_TIME *WvX509Mgr::get_notvalid_after()
+{
+    assert(cert);
+    return X509_get_notAfter(cert);
+    
+}
+
+
 bool WvX509Mgr::signcrl(WvCRLMgr *crl)
 {
     assert(crl);
     assert(rsa);
+    
+    if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
+	  (cert->ex_kusage & KU_CRL_SIGN)))
+    {
+	debug("Certificate not allowed to sign CRLs!\n");
+	return false;
+    }
     
     EVP_PKEY *certkey = EVP_PKEY_new();
     bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);

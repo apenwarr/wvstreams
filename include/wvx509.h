@@ -18,6 +18,9 @@ typedef struct ssl_ctx_st SSL_CTX;
 struct X509_crl_st;
 typedef struct X509_crl_st X509_CRL;
 
+struct asn1_string_st;
+typedef struct asn1_string_st ASN1_TIME;
+
 class WvRSAKey;
 class WvCRLMgr;
 
@@ -284,6 +287,13 @@ public:
      */
     WvString get_altsubject();
 
+    /**
+     * Return the 
+     */
+    ASN1_TIME *get_notvalid_before();
+    
+    ASN1_TIME *get_notvalid_after();
+    
     /**
      * Is this certificate Object valid, and in a non-error state
      */
