@@ -498,8 +498,9 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
     }
     
     // we timed out or had a socket error
-    if (inbuf.used())
+    if (!isok() && inbuf.used())
     {
+	// if the stream has closed, dump the entire buffer as the last line
 	inbuf.put("", 1);
 	return (char *)inbuf.get(inbuf.used());
     }
