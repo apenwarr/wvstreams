@@ -22,9 +22,12 @@ WVTEST_MAIN("old-style")
     {
         WvMap<WvString, WvString> map(5);
         map.add ("foo", "bar");
-        WVPASS(*map.find("foo") == "bar");
+        if (!WVPASS(*map.find("foo") == "bar"))
+            printf("   because [%s] != \"bar\"\n", map.find("foo")->cstr());
         map.remove("foo");
-        WVFAIL(map.find("foo"));
+        if (!WVFAIL(map.find("foo")))
+            printf("   because map.find(\"foo\") == [%s]\n", 
+                    map.find("foo")->cstr());
     }
 
     // Iterator test
@@ -41,8 +44,10 @@ WVTEST_MAIN("old-style")
         int i = 0;
         for (iter.rewind(); iter.next(); i++)
         {
-            WVPASS(key[i] == iter->key);
-            WVPASS(data[i] == iter->data);
+            if (!WVPASS(key[i] == iter->key))
+                printf("   because [%s] != [%s]\n", key[i], iter->key.cstr());
+            if (!WVPASS(data[i] == iter->data))
+                printf("   because [%s] != [%s]\n", data[i], iter->data.cstr());
         }
     }
 
@@ -50,9 +55,14 @@ WVTEST_MAIN("old-style")
     {
         WvMap<WvString, WvString> objfreemap (5);
         objfreemap.add ("foo", "bar", true);
-        WVPASS(*objfreemap.find("foo") == "bar");
+        if (!WVPASS(*objfreemap.find("foo") == "bar"))
+            printf("   because [%s] != \"bar\"\n", 
+                    objfreemap.find("foo")->cstr());
+        
         objfreemap.remove("foo");
-        WVFAIL(objfreemap.find("foo"));
+        if (!WVFAIL(objfreemap.find("foo")))
+            printf("   because objfreemap.find(\"foo\") == [%s]\n", 
+                    objfreemap.find("foo")->cstr());
     }
     {
         WvMap<WvString, AutoFreeTest*> freemap(5);
@@ -77,7 +87,7 @@ WVTEST_MAIN("old-style")
         for (j.rewind(); j.next(); i++)
         {
             if (!WVPASS(j->key == keys[i]))
-                printf("   because [%s] != [%s]", j->key.cstr(), keys[i]);
+                printf("   because [%s] != [%s]\n", j->key.cstr(), keys[i]);
         }
     }
 }
