@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     }
 
     test_str = cfg.get(argv[1], argv[2], "not there");
-    printf("%d\n", cfg.get("intl", "icountry", 5));
+    printf("%d\n", cfg.getint("intl", "icountry", 5));
     printf("%s\n\n", test_str);
     if (!cfg.isok())
 	return -1;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
     WvConfigSection *sect = cfg["fontsubSTitUtES"];
     if (sect)
-	sect->dump(stdout);
+	sect->dump(*wvcon);
     
     puts("");
     sect = cfg["should_not_exist"];
