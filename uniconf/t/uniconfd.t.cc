@@ -283,16 +283,16 @@ WVTEST_MAIN("daemon quit")
 // test that proxying between two uniconf daemons works
 // e.g.: client -> uniconfd -> uniconfd
 
-static WvPipe * setup_master_daemon(bool implicit_root, WvString &masterpipename, WvString &ininame)
+static WvPipe * setup_master_daemon(bool implicit_root, 
+        WvString &masterpipename, WvString &ininame)
 {
     int fd;
 
     ininame = "/tmp/iniXXXXXX";
     if ((fd = mkstemp(ininame.edit())) == (-1))
         return NULL;
-    close(fd);
 
-    WvFile stuff(ininame, O_CREAT|O_WRONLY|O_TRUNC);
+    WvFile stuff(fd);
     stuff.print("pickles/apples/foo=1\n");
     stuff.print("pickles/mangos/bar=1\n");
     stuff.close();
