@@ -1,0 +1,7 @@
+# Test getting a key, setting it to a new value, then taking a subt.
+get /chickens/bob
+set /chickens/bob nerf
+subt /chickens
+set /chickens/bob goof
+subt /chickens
+quit
