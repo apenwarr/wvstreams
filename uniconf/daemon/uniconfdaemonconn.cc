@@ -9,6 +9,7 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, UniConfDaemon *_source)
     : UniConfConn(_s), 
       log(WvString("UniConf to %s", *_s->src()), WvLog::Debug)
 {
+    print("HELLO UniConf Server ready\n");
     source = _source;
 }
 
@@ -41,8 +42,14 @@ void UniConfDaemonConn::execute()
         while (!(cmd = wvtcl_getword(fromline)).isnull())
         {
             // check the command
+	    if (cmd == "help")
+	    {
+	    	print("OK I know how to: help, get, subt, quit\n");
+		return;	    
+	    }
             if (cmd == "quit")
             {
+	        print("OK\n");
                 close();
                 return;
             }
