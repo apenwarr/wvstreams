@@ -168,8 +168,17 @@ public:
     /** read a data block on the stream.  Returns the actual amount read. */
     virtual size_t read(void *buf, size_t count);
 
-    /** write a data block on the stream.  Returns the actual amount written. */
-    virtual size_t write(const void *buf, size_t count);
+    /**
+     * Read exactly count bytes from the stream
+     *
+     * Notes:
+     *      must be using continue_select to use this function
+     *      uses the alarm if wait_msec >= 0
+     *      if timeout strikes before count bytes could be read,
+     *          nothing is read and 0 is returned 
+     *      resets queuemin to 0
+     */
+    virtual size_t continue_read(time_t wait_msec, void *buf, size_t count);
 
     /**
      * Reads a data block from the stream into the buffer.
@@ -181,6 +190,16 @@ public:
      * be read at once.
      */
     virtual size_t read(WvBuf &outbuf, size_t count);
+
+    /**
+     * Read exactly count bytes from the stream
+     *
+     * Notes from the two functions above also apply
+     */
+    virtual size_t continue_read(time_t wait_msec, WvBuf &outbuf, size_t count);
+
+    /** write a data block on the stream.  Returns the actual amount written. */
+    virtual size_t write(const void *buf, size_t count);
 
     /**
      * Writes a data block to the stream from the buffer.

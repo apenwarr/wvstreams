@@ -272,6 +272,19 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
 }
 
 
+size_t WvStream::continue_read(time_t wait_msec, WvBuf &outbuf, size_t count)
+{
+    // for now, just wrap the older read function
+    size_t free = outbuf.free();
+    if (count > free)
+        count = free;
+    unsigned char *buf = outbuf.alloc(count);
+    size_t len = continue_read(wait_msec, buf, count);
+    outbuf.unalloc(count - len);
+    return len;
+}
+
+
 size_t WvStream::write(WvBuf &inbuf, size_t count)
 {
     // for now, just wrap the older write function
@@ -317,6 +330,28 @@ size_t WvStream::read(void *buf, size_t count)
     
     TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
     return bufu;
+}
+
+
+size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
+{
+    assert(uses_continue_select);
+
+    if (wait_msec >= 0)
+        alarm(wait_msec);
+
+    queuemin(count);
+
+    while (1)
+    {
+        if (read(buf, count))
+            return count;
+        if (alarm_was_ticking) 
+            return 0;
+        continue_select(-1);
+    }
+
+    queuemin(0);
 }
 
 
