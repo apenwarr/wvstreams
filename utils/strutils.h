@@ -10,6 +10,7 @@
 #define __STRUTILS_H
 
 #include "wvstring.h"
+#include "wvstringlist.h"
 
 /**
  * Add character c to the end of a string after removing 
@@ -108,5 +109,7 @@ WvString passwd_crypt(const char *str);
 WvString backslash_escape(const WvString &s1);
 
 extern int strcount(const WvString &s, const char c);
+
+WvString encode_hostname_as_DN(WvString &hostname);
 
 #endif // __STRUTILS_H
