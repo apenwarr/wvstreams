@@ -84,7 +84,7 @@ bool WvStreamClone::select_setup(SelectInfo &si)
     if (si.readable && !select_ignores_buffer && inbuf.used() 
 	   && inbuf.used() >= queue_min)
 	return true;   // sure_thing if anything in WvStream buffer
-
+    
     if (s() && s()->isok())
 	return s()->select_setup(si);
     return false;
@@ -93,6 +93,9 @@ bool WvStreamClone::select_setup(SelectInfo &si)
 
 bool WvStreamClone::test_set(SelectInfo &si)
 {
+    if (s() && outbuf.used())
+	flush(0);
+
     if (s() && s()->isok())
 	return s()->test_set(si);
     return false;

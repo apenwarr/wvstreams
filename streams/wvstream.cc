@@ -71,21 +71,6 @@ int WvStream::getfd() const
 }
 
 
-bool WvStream::test_set(SelectInfo &si)
-{
-    if (fd < 0) return false;
-    
-    // flush the output buffer if possible
-    if (outbuf.used() && FD_ISSET(getfd(), &si.write))
-	flush(0);
-    
-    return fd >= 0  // flush() might have closed the file!
-	&& (FD_ISSET(getfd(), &si.read)
-	 || FD_ISSET(getfd(), &si.write)
-	 || FD_ISSET(getfd(), &si.except));
-}
-
-
 bool WvStream::isok() const
 {
     return (fd != -1);
@@ -322,6 +307,21 @@ bool WvStream::select_setup(SelectInfo &si)
 	si.max_fd = fd;
     
     return false;
+}
+
+
+bool WvStream::test_set(SelectInfo &si)
+{
+    size_t outbuf_used = outbuf.used();
+    
+    // flush the output buffer if possible
+    if (fd >= 0 && outbuf_used && FD_ISSET(getfd(), &si.write))
+	flush(0);
+    
+    return fd >= 0  // flush() might have closed the file!
+	&&  (FD_ISSET(getfd(), &si.read)
+	 || (FD_ISSET(getfd(), &si.write) && (!outbuf_used || si.writable))
+	 ||  FD_ISSET(getfd(), &si.except));
 }
 
 

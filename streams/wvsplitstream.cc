@@ -107,7 +107,7 @@ bool WvSplitStream::select_setup(SelectInfo &si)
 	    return true; // already ready
 	FD_SET(rfd, &si.read);
     }
-    if (si.writable)
+    if (si.writable || outbuf.used())
 	FD_SET(wfd, &si.write);
     if (si.isexception)
     {
@@ -124,8 +124,17 @@ bool WvSplitStream::select_setup(SelectInfo &si)
 
 bool WvSplitStream::test_set(SelectInfo &si)
 {
-    return (FD_ISSET(rfd, &si.read) || FD_ISSET(wfd, &si.write)
-	    || FD_ISSET(rfd, &si.except) || FD_ISSET(wfd, &si.except));
+    size_t outbuf_used = outbuf.used();
+    
+    // flush the output buffer if possible
+    if (wfd >= 0 && outbuf_used && FD_ISSET(wfd, &si.write))
+	flush(0);
+    
+    return (rfd >= 0 && (FD_ISSET(rfd, &si.read) 
+		      || FD_ISSET(rfd, &si.except)))
+	|| (wfd >= 0 && (FD_ISSET(wfd, &si.write) 
+			 	&& (!outbuf_used || si.writable)
+		      || FD_ISSET(wfd, &si.except)));
 }
 
 
