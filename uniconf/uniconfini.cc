@@ -231,7 +231,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
-	    if (i->hasgen() && !i->comparegen(this))//i->generator && i->generator != this) continue;
+	    if (i->hasgen() && !i->comparegen(this))
 	        continue;
                 
 	    if (!!*i)
@@ -242,7 +242,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 		// exactly one interesting child: don't bother with a
 		// subsection.
 		UniConfKey deepkey(interesting->full_key(h));
-		out("%s = %s\n", inicode(deepkey), inicode(*interesting));
+                out("%s = %s\n", inicode(deepkey), inicode(*interesting));
 	    }
 	}
     }
@@ -253,7 +253,7 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
-	    if (i->hasgen() && !i->comparegen(this))//i->generator && i->generator != this)
+	    if (i->hasgen() && !i->comparegen(this))
 		i->save();
 	    else if (i->has_children()
 		     && (top_special

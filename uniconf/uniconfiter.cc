@@ -10,7 +10,7 @@ WvLink *UniConf::RecursiveIter::_next()
 { 
     if (i.ptr() && i->generator && !recursed_children)
     {
-        wvcon->print("Recursively checking children for %s.\n", (int)i.ptr());
+//        wvcon->print("Recursively checking children for %s.\n", (int)i.ptr());
         i->check_children(true);
         recursed_children = true;
     }

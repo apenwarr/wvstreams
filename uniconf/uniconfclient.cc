@@ -56,23 +56,26 @@ void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
     // last save wins.
     if (tree->dirty)
     {
-        WvString data("%s %s %s\n", UniConfConn::UNICONF_SET, wvtcl_escape(key), wvtcl_escape(*tree));
+        WvString data("%s %s", UniConfConn::UNICONF_SET, wvtcl_escape(key));
+        if (!!*tree)
+            data.append(" %s", wvtcl_escape(*tree));
+        data.append("\n");
         conn->print(data);
         tree->dirty = false;
     }
-    
+   
     // What about our children.. do we have dirty children?
     if (tree->child_dirty)
     {
         tree->child_dirty = false;
-	UniConf::Iter i(*tree);
+	UniConf::RecursiveIter i(*tree);
 
-        for (i.rewind(); i.next();)
+        for (i.rewind(); i._next();)
         {
-            if (i->hasgen() && !i->comparegen(this))//i->generator && this != i->generator)
-                continue;
+            if (i->hasgen() && !i->comparegen(this))
+                i->save();
 
-            if (i->dirty || i->child_dirty)
+            else if (i->dirty || i->child_dirty)
             {
                 UniConfKey key2(key);
                 key2.append(&i->name, false);
@@ -80,7 +83,6 @@ void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
             }
         }
     }
-    // done.
 }
 
 void UniConfClient::save()
@@ -168,6 +170,7 @@ void UniConfClient::update_all()
 void UniConfClient::update(UniConf *&h)
 {
     assert(h != NULL);
+
     if ( h->full_key(top).printable().isnull() )
         return;
 

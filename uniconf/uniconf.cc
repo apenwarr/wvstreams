@@ -10,6 +10,7 @@
 #include "uniconf.h"
 #include "wvstream.h"
 #include "wvstringtable.h"
+#include "uniconfiter.h"
 #include <assert.h>
 
 UniConfDict null_wvhconfdict(1);
@@ -56,7 +57,7 @@ UniConf::~UniConf()
 {
     if (children)
 	delete children;
-    if (generator)// && generator->deleteable())
+    if (generator)
 	delete generator;
 }
 
@@ -136,12 +137,42 @@ UniConf *UniConf::find(const UniConfKey &key)
 	return h->find(key.skip(1));
 }
 
+void UniConf::remove(const UniConfKey &key)
+{
+    UniConf *toremove = find(key);
+    
+    if (!toremove)
+    {
+        wvcon->print("Could not remove %s.\n", key);
+        return;
+    }
+
+    toremove->set(WvString());
+    toremove->dirty = true;
+    //toremove->deleted = true;
+    UniConf::RecursiveIter i(*toremove);
+
+    for (i.rewind(); i._next();)
+    {
+        i->set(WvString());
+        i->dirty = true;
+//        i->deleted = true;
+//        i->child_deleted = true;
+    }
+
+/*    for (UniConf *par = toremove->parent; par != NULL; par = par->parent)
+    {
+        par->child_deleted = true;
+    }*/
+}
 
 // find a key in the subtree.  If it doesn't already exist, create it.
 UniConf *UniConf::find_make(const UniConfKey &key)
 {
     if (key.isempty())
 	return this;
+
+
     if (children)
     {
 	UniConf *h = (*children)[*key.first()];
@@ -159,8 +190,6 @@ UniConf *UniConf::find_make(const UniConfKey &key)
         // that we can get our info.
         while(toreturn->waiting || toreturn->obsolete)
         {
-            if (toreturn->obsolete)
-                wvcon->print("toreturn IS OBSOLETE\n");
             htop->generator->update(toreturn);
         }
         return toreturn;

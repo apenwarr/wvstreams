@@ -31,6 +31,7 @@ public:
     void doset(WvString key, WvConstStringBuffer &fromline, UniConfDaemonConn *s);
     void dook(const WvString cmd, const WvString key, UniConfDaemonConn *s);
     void registerforchange(WvString key, UniConfDaemonConn *s);
+    void deletesubtree(WvString key, UniConfDaemonConn *s);
     void myvaluechanged(void *userdata, UniConf &conf);
     void me_or_imm_child_changed(void *userdata, UniConf &conf);
     void me_or_any_child_changed(void *userdata, UniConf &conf);

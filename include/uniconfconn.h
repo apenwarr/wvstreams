@@ -29,6 +29,7 @@ public:
     // CONSTANTS FOR CONTROL CONNECTIONS TO THE DAEMON
     static const WvString UNICONF_GET;
     static const WvString UNICONF_SET;
+    static const WvString UNICONF_DEL;
     static const WvString UNICONF_SUBTREE;
     static const WvString UNICONF_RECURSIVESUBTREE;
     static const WvString UNICONF_REGISTER;

@@ -4,6 +4,7 @@
 // CONSTANTS FOR CONTROL CONNECTIONS
 const WvString UniConfConn::UNICONF_GET("get");
 const WvString UniConfConn::UNICONF_SET("set");
+const WvString UniConfConn::UNICONF_DEL("del");
 const WvString UniConfConn::UNICONF_SUBTREE("subt");
 const WvString UniConfConn::UNICONF_RECURSIVESUBTREE("rsub");
 const WvString UniConfConn::UNICONF_REGISTER("reg");

@@ -128,8 +128,10 @@ void UniConfDaemon::dosubtree(WvString key, UniConfDaemonConn *s)
         UniConf::Iter i(*nerf);
         for (i.rewind(); i.next();)
         {
-            send.append("{%s %s} ", wvtcl_escape(i->name),
-                    wvtcl_escape(*i));
+            if (!!*i) {
+                dolog(WvLog::Debug3, "dosubtree", WvString ("Sending Key:%s.With val:%s.\n", i->name, *i));
+                send.append("{%s %s} ", wvtcl_escape(i->name), wvtcl_escape(*i));
+            }
             
        }
     }
@@ -158,8 +160,11 @@ void UniConfDaemon::dorecursivesubtree(WvString key, UniConfDaemonConn *s)
         UniConf::RecursiveIter i(*nerf);
         for (i.rewind(); i.next();)
         {
-            send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)),
-                    wvtcl_escape(*i));
+            if (!!*i)
+            {
+                dolog(WvLog::Debug3, "dorecursivesubtree", WvString ("Sending Key:%s.With val:%s.\n", i->name, *i));
+                send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)), wvtcl_escape(*i));
+            }
         }
     }
     send.append("\n");
@@ -175,8 +180,12 @@ void UniConfDaemon::doset(WvString key, WvConstStringBuffer &fromline, UniConfDa
 {
     dolog(WvLog::Debug1, "doset", ENTERING);
     dolog(WvLog::Debug2, "doset", WvString("Connection:  %s", *s->src()));
+   
     WvString newvalue = wvtcl_getword(fromline);
     mainconf[key] = wvtcl_unescape(newvalue);
+    
+    dolog(WvLog::Debug3, "doset", WvString("New value for %s %s", key, (!!mainconf[key] ? WvString(":%s",mainconf[key]).cstr() : "is empty.")));
+
     keymodified = true;
     modifiedkeys.append(new WvString(key), true);
     dook(UniConfConn::UNICONF_SET, key, s);
@@ -390,6 +399,16 @@ void UniConfDaemon::registerforchange(WvString key, UniConfDaemonConn *s)
     dolog(WvLog::Debug1, "registerforchange", LEAVING);
 }
 
+void UniConfDaemon::deletesubtree(WvString key, UniConfDaemonConn *s)
+{
+    dolog(WvLog::Debug1, "deletesubtree", ENTERING);
+    dook(UniConfConn::UNICONF_DEL, key, s);
+    dolog(WvLog::Debug2, "deletesubtree", WvString("Executing delete command from %s.\n", *s->src()));
+    dolog(WvLog::Debug3, "deletesubtree", WvString("Deleting key:  %s.\n", key));
+    mainconf.remove(key);
+    dolog(WvLog::Debug1, "deletesubtree", LEAVING);
+}
+
 /*
  * Callback related methods for UniConfKeys end here
  */
@@ -462,6 +481,10 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
             else if (cmd == UniConfConn::UNICONF_REGISTER)
             {
                 registerforchange(key, s);
+            }
+            else if (cmd == UniConfConn::UNICONF_DEL)
+            {
+                deletesubtree(key, s);
             }
             else
             {

@@ -163,6 +163,7 @@ public:
 
     // Updates me
     void update();
+    void remove(const UniConfKey &key = "");
     
     UniConf *find_default(UniConfKey *_k = NULL) const;
     
