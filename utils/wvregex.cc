@@ -8,6 +8,9 @@
 
 WvString WvRegex::__wvre_null_reg;
 
+const int WvRegex::default_cflags = WvRegex::EXTENDED;
+const int WvRegex::default_eflags = 0;
+    
 void WvRegex::seterr(int errcode)
 {
     int error_desc_len = ::regerror(errcode, &preg, NULL, 0);

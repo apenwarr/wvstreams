@@ -54,28 +54,29 @@ private:
 
 public:
     // cflags: flags that affect interpretation of the regex
-    //
-    // Use (obsolete) basic regex syntax (like grep).  See regex(7).
-    static const int BASIC = 0;
-    // Use extended regex syntax (like egrep).  See regex(7).
-    static const int EXTENDED = REG_EXTENDED;
-    // Case insensitive
-    static const int ICASE = REG_ICASE;
-    // Do not collect match start and end or registers; faster
-    static const int NOSUB = REG_NOSUB;
-    // Match-any-character operators don't match a newline.  See regex(3)
-    static const int NEWLINE = REG_NEWLINE;
-    //
-    static const int default_cflags = EXTENDED;
+    enum {
+    	// Use (obsolete) basic regex syntax (like grep).  See regex(7).
+    	BASIC = 0,
+    	// Use extended regex syntax (like egrep).  See regex(7).
+    	EXTENDED = REG_EXTENDED,
+    	// Case insensitive
+    	ICASE = REG_ICASE,
+    	// Do not collect match start and end or registers; faster
+    	NOSUB = REG_NOSUB,
+    	// Match-any-character operators don't match a newline.  See regex(3)
+    	NEWLINE = REG_NEWLINE
+    };
+    static const int default_cflags;
 
     // eflags: flags that affect matching of regex
-    //
-    // Matching begining of line always fails (unless NEWLINE cflag is set)
-    static const int NOTBOL = REG_NOTBOL;
-    // Matching end of line always fails (unless NEWLINE cflag is set)
-    static const int NOTEOL = REG_NOTEOL;
-    //
-    static const int default_eflags = 0;
+    enum
+    {
+    	// Matching begining of line always fails (unless NEWLINE cflag is set)
+    	NOTBOL = REG_NOTBOL,
+    	// Matching end of line always fails (unless NEWLINE cflag is set)
+    	NOTEOL = REG_NOTEOL
+    };
+    static const int default_eflags;
 
     // Internal use only
     static WvString __wvre_null_reg;
