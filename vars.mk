@@ -29,8 +29,7 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status include/wvautocon
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-CPPFLAGS += -MD -Iinclude
-CXXFLAGS += -pipe
+CPPFLAGS += -MD -Iinclude -pipe
 ARFLAGS = rs
 
 libwvstreams.so-OBJECTS:=
@@ -43,27 +42,35 @@ DEBUG:=$(filter-out no,$(enable_debug))
 
 ifndef enable_debug
 CXXFLAGS+=-g
+CFLAGS+=-g
 endif
 
 ifdef DEBUG
 CXXFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
+CFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
 endif
 
 ifeq ("$(enable_debug)", "no")
 # -DNDEBUG is disabled because we like assert() to crash
 #CXXFLAGS+=-DNDEBUG
+#CFLAGS+=-DNDEBUG
 endif
 
 ifeq ("$(enable_fatal_warnings)", "yes")
 CXXFLAGS+=-Werror
+# FIXME: not for C, because our only C file, crypto/wvsslhack.c, has
+#        a few warnings.
+#CFLAGS+=-Werror
 endif
 
 ifneq ("$(enable_optimization)", "no")
 CXXFLAGS+=-O2
+CFLAGS+=-O2
 endif
 
 ifneq ("$(enable_warnings)", "no")
 CXXFLAGS+=-Wall -Woverloaded-virtual
+CFLAGS+=-Wall
 endif
 
 ifneq ("$(enable_rtti)", "yes")

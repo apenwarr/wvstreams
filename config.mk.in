@@ -14,4 +14,6 @@ exec_prefix:=@exec_prefix@
 includedir:=@includedir@
 libdir:=@libdir@
 PACKAGE_VERSION:=@PACKAGE_VERSION@
+CXX:=@CXX@
+CC:=@CC@
 
