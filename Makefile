@@ -26,7 +26,7 @@ export CC CXX CXXOPTS
 
 -include wvrules.mk
 
-SUBDIRS=utils streams configfile ipstreams crypto Docs
+SUBDIRS=utils streams configfile hconf ipstreams crypto Docs
 
 all: include $(SUBDIRS) $(LIBFILES)
 

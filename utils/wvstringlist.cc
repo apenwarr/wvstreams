@@ -11,7 +11,7 @@
 #include "strutils.h"
 
 
-WvString WvStringList::join(const char *joinchars)
+WvString WvStringList::join(const char *joinchars) const
 {
     WvStringList::Iter s(*this);
     size_t totlen;

@@ -61,13 +61,13 @@ public:
     class IterBase
     {
     public:
-	WvListBase *list;
+	const WvListBase *list;
 	WvLink *link, *prev;
 
-	IterBase(WvListBase &l)
+	IterBase(const WvListBase &l)
             { list = &l; link = NULL; }
-	void rewind()
-            { prev = NULL; link = &list->head; }
+	void rewind() // dropping a const pointer here!  Danger!
+            { prev = NULL; link = &((WvListBase *)list)->head; }
 	WvLink *next()
             { prev = link; return link = link->next; }
 	WvLink *cur() const
@@ -106,10 +106,10 @@ public:
 	}
     }
 
-    _type_ *first()
+    _type_ *first() const
         { return (_type_*)head.next->data; }
 
-    _type_ *last()
+    _type_ *last() const
         { return (_type_*)last->data; }
 
     void add_after(WvLink *after, _type_ *data, bool auto_free,
@@ -139,7 +139,7 @@ public:
     class Iter : public WvListBase::IterBase
     {
     public:
-        Iter(WvList &l) : IterBase(l)
+        Iter(const WvList &l) : IterBase(l)
             { }
         _type_ *ptr() const
             { return (_type_ *)link->data; }
