@@ -319,13 +319,14 @@ size_t WvRSAStream::uwrite(const void *buf, size_t size)
     return totalwrite;
 }
 
-WvMD5::WvMD5(WvString &StringToHash)
+WvMD5::WvMD5(const WvString &StringToHash)
 {
     MD5_CTX ctx;
     unsigned char temp[20];
 
     MD5_Init(&ctx);
-    MD5_Update(&ctx,StringToHash,strlen(StringToHash));
+    MD5_Update(&ctx,(const unsigned char *)StringToHash.cstr(),
+		strlen(StringToHash));
     MD5_Final(temp, &ctx);
     MD5HashValue = (unsigned char *)calloc(1,sizeof(temp));
     memcpy(MD5HashValue,temp,sizeof(temp));
