@@ -21,13 +21,10 @@ public:
     virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 			      bool readable, bool writable, bool isexception);
     virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
-    WvStream *select_one(int msec_timeout, bool readable = true,
-			 bool writable = false, bool isexception = false);
     
 protected:
-    bool sets_valid;
     fd_set sel_r, sel_w, sel_x;
-    WvStream *sure_thing;
+    WvStreamListBase sure_thing;
     static Callback dist_callback;
 };
 

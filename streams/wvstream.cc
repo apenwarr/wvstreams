@@ -284,6 +284,7 @@ bool WvStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 bool WvStream::select(time_t msec_timeout,
 		      bool readable, bool writable, bool isexcept)
 {
+    bool sure;
     int max_fd, sel;
     fd_set r, w, x;
     timeval tv;
@@ -297,24 +298,29 @@ bool WvStream::select(time_t msec_timeout,
     FD_ZERO(&r);
     FD_ZERO(&w);
     FD_ZERO(&x);
-    if (select_setup(r, w, x, max_fd, readable, writable, isexcept))
-	return true;
+
+    sure = select_setup(r, w, x, max_fd, readable, writable, isexcept);
     
-    tv.tv_sec = msec_timeout / 1000;
-    tv.tv_usec = (msec_timeout % 1000) * 1000;
+    if (sure)
+	tv.tv_sec = tv.tv_usec = 0; // never wait: already have a sure thing!
+    else
+    {
+	tv.tv_sec = msec_timeout / 1000;
+	tv.tv_usec = (msec_timeout % 1000) * 1000;
+    }
     
     sel = ::select(max_fd+1, &r, &w, &x,
 		   msec_timeout >= 0 ? &tv : (timeval*)NULL);
-
+    
     if (sel < 0)
     {
 	if (errno!=EAGAIN && errno!=EINTR && errno!=ENOBUFS)
 	    seterr(errno);
-	return false;
+	return sure;
     }
 
     if (!sel)
-	return false;	// timed out
+	return sure;	// timed out
     
     return isok() && test_set(r, w, x);
 }

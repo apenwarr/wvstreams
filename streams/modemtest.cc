@@ -28,8 +28,6 @@ int main(int argc, char **argv)
     
     while (modem.isok() && wvcon->isok())
     {
-	WvStream *s = l.select_one(100);
-	
 	carrier = modem.carrier();
 	if (last_carrier != carrier)
 	{
@@ -37,13 +35,16 @@ int main(int argc, char **argv)
 	    last_carrier = carrier;
 	}
 	
-	if (s==wvcon)
+	if (!l.select(100))
+	    continue;
+	
+	if (wvcon->select(0))
 	{
 	    len = wvcon->read(buf, sizeof(buf));
 	    replace_char(buf, '\n', '\r', len);
 	    modem.write(buf, len);
 	}
-	else if (s==&modem)
+	else if (modem.select(0))
 	{
 	    len = modem.read(buf, sizeof(buf));
 	    modemlog.write(buf, len);

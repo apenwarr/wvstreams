@@ -10,8 +10,6 @@
 
 WvStreamList::WvStreamList()
 {
-    sets_valid = false;
-    sure_thing = NULL;
     setcallback(dist_callback, this);
 }
 
@@ -25,8 +23,7 @@ bool WvStreamList::isok() const
 bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 				bool readable, bool writable, bool isexcept)
 {
-    sure_thing = NULL;
-    sets_valid = false;
+    sure_thing.zap();
 
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
@@ -42,19 +39,17 @@ bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 	if (readable && !select_ignores_buffer
 	    && inbuf.used() && inbuf.used() > queue_min)
 	{
-	    sure_thing = &s;
-	    return true;
+	    sure_thing.append(&s, false);
 	}
 	
 	if (s.isok() 
 	    && s.select_setup(r, w, x, max_fd, readable, writable, isexcept))
 	{
-	    sure_thing = &s;
-	    return true;
+	    sure_thing.append(&s, false);
 	}
     }
     
-    return false;
+    return sure_thing.isempty() ? false : true;
 }
 
 
@@ -65,31 +60,15 @@ bool WvStreamList::test_set(fd_set &r, fd_set &w, fd_set &x)
     sel_r = r;
     sel_w = w;
     sel_x = x;
-    sets_valid = true;
 
-    if (sure_thing)
-	return true;
-    
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
 	s = i.data();
 	if (s->isok() && s->test_set(r, w, x))
-	{
-	    sure_thing = s;
-	    return true;
-	}
+	    sure_thing.append(s, false);
     }
-    return false;
-}
-
-
-WvStream *WvStreamList::select_one(int msec_timeout, bool readable,
-				   bool writable, bool isexception)
-{
-    if (select(msec_timeout, readable, writable, isexception))
-	return sure_thing;
-    return NULL;
+    return !sure_thing.isempty();
 }
 
 
@@ -97,33 +76,18 @@ WvStream *WvStreamList::select_one(int msec_timeout, bool readable,
 void WvStreamList::dist_callback(WvStream &, void *userdata)
 {
     WvStreamList &l = *(WvStreamList *)userdata;
-    WvStream *s;
-
-    if (!l.sets_valid)
+    
+    WvStreamListBase::Iter i(l.sure_thing);
+    for (i.rewind(), i.next(); i.cur(); )
     {
-	if (l.sure_thing)
-	    l.sure_thing->callback();
-	return;
+	WvStream *s = i.data();
+	i.unlink();
+	s->callback();
+	
+	// list might have changed!
+	i.rewind();
+	i.next();
     }
 	
-    WvStreamList::Iter i(l);
-    for (i.rewind(); i.next(); )
-    {
-	s = i.data();
-	if (!s->isok()) continue;
-
-	// FIXME: the select(true,true,true) causes weirdness, but I have 
-	// no time to test removing it right now.  Why is select() even
-	// called here?
-	// update:  I took it out.  What will happen?
-	if (s->test_set(l.sel_r, l.sel_w, l.sel_x)
-	    // && s->select(0, true, true, true)
-	    )
-	{
-	    s->callback();
-	}
-    }
-    
-    l.sure_thing = NULL;
-    l.sets_valid = false;
+    l.sure_thing.zap();
 }

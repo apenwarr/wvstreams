@@ -124,8 +124,13 @@ public: 						\
 	{ setup(); }					\
 							\
     ~##_newname_() 					\
-    { 							\
-	shutdown();					\
+	{ shutdown(); _zap(); }				\
+							\
+    void zap()						\
+	{ _zap(); head.next = NULL; tail = &head; }	\
+							\
+    void _zap()						\
+    {							\
 	WvLink *l, *n=head.next; 			\
 	while ((l = n) != NULL) 			\
 	{ 						\
@@ -133,7 +138,7 @@ public: 						\
             if (l->auto_free) delete (_type_ *)l->data; \
 	    delete l; 					\
 	} 						\
-    } 							\
+    }							\
 							\
     void add_after(WvLink *after, _type_ *data, bool auto_free)		\
         { (void)new WvLink((void *)data, after, tail, auto_free); }	\
