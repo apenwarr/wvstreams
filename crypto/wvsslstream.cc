@@ -14,6 +14,7 @@
 #ifdef _WIN32
 #undef errno
 #define errno GetLastError()
+typedef DWORD error_t;
 #define EAGAIN WSAEWOULDBLOCK
 #endif
 
