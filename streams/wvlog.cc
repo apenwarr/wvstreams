@@ -165,6 +165,18 @@ void WvLogRcv::_end_line()
 }
 
 
+// like isprint(), but always treats chars >128 as printable, because they
+// always are (even if they're meaningless)
+static bool my_isprint(char _c)
+{
+    unsigned char c = _c;
+    if (isprint(c) || c >= 128)
+	return true;
+    else
+	return false;
+}
+
+
 void WvLogRcv::log(const WvLog *source, int _loglevel,
 			const char *_buf, size_t len)
 {
@@ -185,7 +197,7 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 	_make_prefix();
     }
     
-    char *buf = (char *)_buf, *bufend = buf + len, *cptr;
+    const char *buf = (const char *)_buf, *bufend = buf + len, *cptr;
 
     // loop through the buffer, printing each character or its [hex] equivalent
     // if it is unprintable.  Also eat newlines unless they are appropriate.
@@ -206,9 +218,9 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 	    buf++;
 	    continue;
 	}
-	else if (!isascii(buf[0]) || !isprint(buf[0]))
+	else if (!my_isprint(buf[0]))
 	{
-	    snprintf(hex, 5, "[%02x]", *(unsigned char *)buf);
+	    snprintf(hex, 5, "[%02x]", buf[0]);
 	    mid_line(hex, 4);
 	    buf++;
 	    continue;
@@ -216,14 +228,17 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 
 	// like strchr, but size-limited instead of null-terminated
 	for (cptr = buf; cptr < bufend; cptr++)
-	    if (*cptr == '\n' || !isascii(*cptr) || !isprint(*cptr)) break;
+	{
+	    if (*cptr == '\n' || !my_isprint(*cptr))
+		break;
+	}
 	
 	if (*cptr == '\n') // end of line
 	{
-	    mid_line(buf, cptr - buf);
+	    mid_line((const char *)buf, cptr - buf);
 	    buf = cptr;
 	}
-	else if (!isascii(*cptr) || !isprint(*cptr))
+	else if (!my_isprint(*cptr))
 	{
 	    mid_line(buf, cptr - buf);
 	    buf = cptr;
