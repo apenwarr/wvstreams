@@ -93,7 +93,6 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     array = new (void *) [n+2];
     void **aptr = array;
 
-    aptr = array;
     *aptr++ = NULL; // initial link is NULL, to act like a normal iterator
     
     for (remaining = n, i.rewind(); i.next() && remaining; remaining--)
@@ -113,7 +112,7 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     // ends up being called recursively or something really weird...)
     CompareFunc *old_compare = actual_compare;
     actual_compare = cmp;
-    qsort(array+1, n, sizeof(WvLink *), magic_compare);
+    qsort(array+1, n, sizeof(void *), magic_compare);
     actual_compare = old_compare;
 
     lptr = array;
