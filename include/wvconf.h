@@ -180,9 +180,14 @@ public:
     void set_passwd(WvStringParm sect, WvStringParm user, WvStringParm passwd);
     void set_passwd(WvStringParm user, WvStringParm passwd)
         { set_passwd("Users", user, passwd); }
+    WvString set_passwd2(WvStringParm passwd);
 
     // Converts all passwords to unencrypted format.  Not defined in wvconf.cc.
     void convert_to_old_pw();
+
+    // needed by wvfast_user_import
+    void setdirty()
+    { dirty = true; }
 
 private:
     bool dirty;			// true if changed since last flush()
