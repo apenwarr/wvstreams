@@ -35,6 +35,7 @@ class WvDirIter
 {
 private:
     bool        recurse;
+    bool        go_up;
 
     WvDirEnt        info;
 
@@ -60,6 +61,13 @@ public:
     bool isok() const;
     void rewind();
     bool next();
+
+    // calling up() will abandon the current level of recursion, if, for
+    // example, you decide you don't want to continue reading the contents
+    // of the directory you're in.  After up(), next() will return the next
+    // entry after the directory you've abandoned, in its parent.
+    void up()
+        { go_up = true; }
     
     const WvDirEnt *ptr() const { return &info; }
     WvIterStuff(const WvDirEnt);
