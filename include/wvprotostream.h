@@ -33,7 +33,7 @@ public:
     
     DeclareWvList(Token);
 
-    WvDynamicBuffer tokbuf;
+    WvDynBuf tokbuf;
     bool log_enable;
 
     WvProtoStream(WvStream *_cloned, WvLog *_debuglog = NULL);

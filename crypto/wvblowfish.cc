@@ -60,7 +60,7 @@ void WvBlowfishEncoder::preparekey()
 }
 
 
-bool WvBlowfishEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvBlowfishEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     size_t len = in.used();
     bool success = true;

@@ -7,7 +7,7 @@
 #ifndef __WVENCODER_H
 #define __WVENCODER_H
 
-#include "wvbuffer.h"
+#include "wvbuf.h"
 #include "wvlinklist.h"
 #include "wvstring.h"
 
@@ -149,7 +149,7 @@ public:
      * Returns: true on success
      * @see _encode for the actual implementation
      */
-    bool encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush = false,
+    bool encode(WvBuf &inbuf, WvBuf &outbuf, bool flush = false,
         bool finish = false);
 
     /**
@@ -160,7 +160,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: true on success
      */
-    bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush(WvBuf &inbuf, WvBuf &outbuf,
         bool finish = false)
         { return encode(inbuf, outbuf, true, finish); }
 
@@ -181,7 +181,7 @@ public:
      * Returns: true on success
      * @see _finish for the actual implementation
      */
-    bool finish(WvBuffer &outbuf);
+    bool finish(WvBuf &outbuf);
 
     /**
      * Asks an encoder to reset itself to its initial state at
@@ -206,7 +206,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: true on success
      */
-    bool flushstrbuf(WvStringParm instr, WvBuffer &outbuf,
+    bool flushstrbuf(WvStringParm instr, WvBuf &outbuf,
         bool finish = false);
         
     /**
@@ -233,7 +233,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: true on success
      */   
-    bool encodebufstr(WvBuffer &inbuf, WvString &outstr,
+    bool encodebufstr(WvBuf &inbuf, WvString &outstr,
         bool flush = false, bool finish = false);
 
     /**
@@ -246,7 +246,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: true on success
      */   
-    bool flushbufstr(WvBuffer &inbuf, WvString &outstr,
+    bool flushbufstr(WvBuf &inbuf, WvString &outstr,
         bool finish = false)
         { return encodebufstr(inbuf, outstr, true, finish); }
     
@@ -266,7 +266,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: the resulting encoded string, does not signal errors
      */   
-    WvString strflushbuf(WvBuffer &inbuf, bool finish = false);
+    WvString strflushbuf(WvBuf &inbuf, bool finish = false);
 
     /**
      * Flushes data through the encoder from memory to a buffer.
@@ -277,7 +277,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: true on success
      */
-    bool flushmembuf(const void *inmem, size_t inlen, WvBuffer &outbuf,
+    bool flushmembuf(const void *inmem, size_t inlen, WvBuf &outbuf,
         bool finish = false);
         
     /**
@@ -316,7 +316,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: true on success
      */
-    bool encodebufmem(WvBuffer &inbuf, void *outmem, size_t *outlen,
+    bool encodebufmem(WvBuf &inbuf, void *outmem, size_t *outlen,
         bool flush = false, bool finish = false);   
         
     /**
@@ -334,7 +334,7 @@ public:
      * "finish" is if true, calls finish() on success
      * Returns: true on success
      */
-    bool flushbufmem(WvBuffer &inbuf, void *outmem, size_t *outlen,
+    bool flushbufmem(WvBuf &inbuf, void *outmem, size_t *outlen,
         bool finish = false)
         { return encodebufmem(inbuf, outmem, outlen, true, finish); }
 
@@ -456,7 +456,7 @@ protected:
      * Returns: true on success
      * @see encode
      */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush) = 0;
 
     /**
@@ -481,7 +481,7 @@ protected:
      * Returns: true on success
      * @see finish
      */
-    virtual bool _finish(WvBuffer &outbuf)
+    virtual bool _finish(WvBuf &outbuf)
         { return true; }
 
     /**
@@ -505,7 +505,7 @@ protected:
 class WvNullEncoder : public WvEncoder
 {
 protected:
-    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
     virtual bool _reset(); // supported: does nothing
 };
 
@@ -534,7 +534,7 @@ public:
     size_t bytes_processed() { return total; }
     
 protected:
-    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
     virtual bool _reset(); // supported: resets the count to zero
 };
 
@@ -553,7 +553,7 @@ class WvEncoderChain : public WvEncoder
     {
     public:
         WvEncoder *enc;
-        WvDynamicBuffer out;
+        WvDynBuf out;
         bool auto_free;
 
         WvEncoderChainElem(WvEncoder *enc, bool auto_free) :
@@ -650,7 +650,7 @@ protected:
      *
      * Returns: true iff all encoders return true.
      */
-    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
     
     /**
      * Finishes the chain of encoders.
@@ -663,7 +663,7 @@ protected:
      * 
      * Returns: true iff all encoders return true.
      */
-    virtual bool _finish(WvBuffer & out);
+    virtual bool _finish(WvBuf & out);
 
     /**
      * Resets the chain of encoders.

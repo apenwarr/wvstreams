@@ -4,26 +4,26 @@
  * 
  * Specializations of the generic buffering API.
  */
-#include "wvbuffer.h"
+#include "wvbuf.h"
 
 /***** Specialization for raw memory buffers *****/
 
 // Instantiate some commonly used templates
-template WvBufferBaseCommonImpl<unsigned char>;
-template WvInPlaceBufferBase<unsigned char>;
+template WvBufBaseCommonImpl<unsigned char>;
+template WvInPlaceBufBase<unsigned char>;
 template WvConstInPlaceBufferBase<unsigned char>;
-template WvCircularBufferBase<unsigned char>;
-template WvDynamicBufferBase<unsigned char>;
-template WvEmptyBufferBase<unsigned char>;
-template WvBufferCursorBase<unsigned char>;
+template WvCircularBufBase<unsigned char>;
+template WvDynBufBase<unsigned char>;
+template WvNullBufBase<unsigned char>;
+template WvBufCursorBase<unsigned char>;
 
-void WvBufferBase<unsigned char>::putstr(WvStringParm str)
+void WvBufBase<unsigned char>::putstr(WvStringParm str)
 {
     put((const unsigned char*)str.cstr(), str.len());
 }
 
 
-WvString WvBufferBase<unsigned char>::getstr()
+WvString WvBufBase<unsigned char>::getstr()
 {
     /* Copy the contents into the string.
      * We used to just return a reference to those bytes, but
@@ -41,7 +41,7 @@ WvString WvBufferBase<unsigned char>::getstr()
 }
 
 
-size_t WvBufferBase<unsigned char>::strchr(int ch)
+size_t WvBufBase<unsigned char>::strchr(int ch)
 {
     size_t offset = 0;
     size_t avail = used();
@@ -58,7 +58,7 @@ size_t WvBufferBase<unsigned char>::strchr(int ch)
 }
 
 
-size_t WvBufferBase<unsigned char>::_match(const void *bytelist,
+size_t WvBufBase<unsigned char>::_match(const void *bytelist,
     size_t numbytes, bool reverse)
 {
     size_t offset = 0;

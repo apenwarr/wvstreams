@@ -42,7 +42,7 @@ WvBackslashEncoder::WvBackslashEncoder(WvStringParm _nasties) :
 }
 
 
-bool WvBackslashEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvBackslashEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf,
     bool flush)
 {
     size_t avail = outbuf.free();
@@ -119,7 +119,7 @@ WvBackslashDecoder::WvBackslashDecoder() : tmpbuf(4)
 }
 
 
-bool WvBackslashDecoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvBackslashDecoder::_encode(WvBuf &inbuf, WvBuf &outbuf,
     bool flush)
 {
     if (outbuf.free() == 0)
@@ -249,7 +249,7 @@ bool WvBackslashDecoder::_reset()
 }
 
 
-bool WvBackslashDecoder::flushtmpbuf(WvBuffer &outbuf)
+bool WvBackslashDecoder::flushtmpbuf(WvBuf &outbuf)
 {
     if (state != Initial)
         return true;

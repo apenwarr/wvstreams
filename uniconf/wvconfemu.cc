@@ -5,7 +5,7 @@
  * Basic WvConf emulation layer for UniConf.
  */
 #include "wvconfemu.h"
-#include "uniconfini.h"
+#include "uniinigen.h"
 
 #if 0
 

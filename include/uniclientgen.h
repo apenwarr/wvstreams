@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * UniConfClientGen is a UniConfGen for retrieving data from the
+ * UniClientGen is a UniConfGen for retrieving data from the
  * UniConfDaemon.
  */
 #ifndef __UNICONFCLIENT_H
@@ -12,8 +12,8 @@
 #include "wvlog.h"
 #include "wvstringlist.h"
 
-class UniConfConn;
-class UniConfCache;
+class UniClientConn;
+class UniCache;
 
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
@@ -26,10 +26,10 @@ class UniConfCache;
  * UniConfDaemon requests over TCP.
  * 
  */
-class UniConfClientGen : public UniConfGen
+class UniClientGen : public UniConfGen
 {
-    UniConfConn *conn;
-    UniConfCache *cache;
+    UniClientConn *conn;
+    UniCache *cache;
     WvString streamid;
     WvLog log;
 
@@ -44,9 +44,9 @@ public:
      * the specified stream.
      * "stream" is the raw connection
      */
-    UniConfClientGen(IWvStream *stream);
+    UniClientGen(IWvStream *stream);
 
-    virtual ~UniConfClientGen();
+    virtual ~UniClientGen();
 
     /***** Overridden members *****/
 
@@ -71,7 +71,7 @@ protected:
 
 
 /** An iterator over remote keys. */
-class UniConfClientGen::RemoteKeyIter : public UniConfClientGen::Iter
+class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
 {
 protected:
     WvStringList *xlist;

@@ -16,13 +16,13 @@ class WvStringList;
  * Some caching support for building UniConfGen implementations.
  * This API is subject to change.
  */
-class UniConfCache
+class UniCache
 {
     class CacheTree;
     CacheTree *cache;
 
     /** Undefined. */
-    UniConfCache(const UniConfCache &);
+    UniCache(const UniCache &);
 
 public:
     enum TriState
@@ -33,10 +33,10 @@ public:
     };
         
     /** Create an empty cache with no known state. */
-    UniConfCache();
+    UniCache();
 
     /** Destroy a cache and all of its contents. */
-    ~UniConfCache();
+    ~UniCache();
     
     /** Mark node as still existing but with unknown value. */
     void mark_unknown_value(const UniConfKey &key);

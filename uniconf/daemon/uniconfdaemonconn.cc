@@ -9,7 +9,7 @@
 #include "wvtclstring.h"
 
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
-    UniConfConn(_s),
+    UniClientConn(_s),
     root(_root)
 {
     writecmd(EVENT_HELLO, "{UniConf Server ready}");
@@ -23,11 +23,11 @@ UniConfDaemonConn::~UniConfDaemonConn()
 
 void UniConfDaemonConn::execute()
 {
-    UniConfConn::execute();
+    UniClientConn::execute();
     for (;;)
     {
-        UniConfConn::Command command = readcmd();
-        if (command == UniConfConn::NONE)
+        UniClientConn::Command command = readcmd();
+        if (command == UniClientConn::NONE)
             break;
 
         // parse and execute command
@@ -35,15 +35,15 @@ void UniConfDaemonConn::execute()
         WvString arg2(wvtcl_getword(payloadbuf, " "));
         switch (command)
         {
-            case UniConfConn::INVALID:
+            case UniClientConn::INVALID:
                 do_malformed();
                 break;
             
-            case UniConfConn::REQ_NOOP:
+            case UniClientConn::REQ_NOOP:
                 do_noop();
                 break;
 
-            case UniConfConn::REQ_GET:
+            case UniClientConn::REQ_GET:
             {
                 if (arg1.isnull())
                     do_malformed();
@@ -52,35 +52,35 @@ void UniConfDaemonConn::execute()
                 break;
             }
             
-            case UniConfConn::REQ_SET:
+            case UniClientConn::REQ_SET:
                 if (arg1.isnull() || arg2.isnull())
                     do_malformed();
                 else
                     do_set(arg1, arg2);
                 break;
 
-            case UniConfConn::REQ_REMOVE:
+            case UniClientConn::REQ_REMOVE:
                 if (arg1.isnull())
                     do_malformed();
                 else
                     do_remove(arg1);
                 break;
 
-            case UniConfConn::REQ_ZAP:
+            case UniClientConn::REQ_ZAP:
                 if (arg1.isnull())
                     do_malformed();
                 else
                     do_zap(arg1);
                 break;
 
-            case UniConfConn::REQ_SUBTREE:
+            case UniClientConn::REQ_SUBTREE:
                 if (arg1.isnull())
                     do_malformed();
                 else
                     do_subtree(arg1);
                 break;
 
-            case UniConfConn::REQ_ADDWATCH:
+            case UniClientConn::REQ_ADDWATCH:
                 if (arg1.isnull() || arg2.isnull())
                     do_malformed();
                 else
@@ -93,7 +93,7 @@ void UniConfDaemonConn::execute()
                 }
                 break;
 
-            case UniConfConn::REQ_DELWATCH:
+            case UniClientConn::REQ_DELWATCH:
                 if (arg1.isnull() || arg2.isnull())
                     do_malformed();
                 else
@@ -106,11 +106,11 @@ void UniConfDaemonConn::execute()
                 }
                 break;
 
-            case UniConfConn::REQ_QUIT:
+            case UniClientConn::REQ_QUIT:
                 do_quit();
                 break;
 
-            case UniConfConn::REQ_HELP:
+            case UniClientConn::REQ_HELP:
                 do_help();
                 break;
 
@@ -212,7 +212,7 @@ void UniConfDaemonConn::do_quit()
 
 void UniConfDaemonConn::do_help()
 {
-    for (int i = 0; i < UniConfConn::NUM_COMMANDS; ++i)
-        writetext(UniConfConn::cmdinfos[i].description);
+    for (int i = 0; i < UniClientConn::NUM_COMMANDS; ++i)
+        writetext(UniClientConn::cmdinfos[i].description);
     writeok();
 }

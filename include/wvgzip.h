@@ -49,16 +49,16 @@ public:
     virtual ~WvGzipEncoder();
     
 protected:
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
-    virtual bool _finish(WvBuffer &outbuf);
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
+    virtual bool _finish(WvBuf &outbuf);
 
 private:
     struct z_stream_s *zstr;
-    WvInPlaceBuffer tmpbuf;
+    WvInPlaceBuf tmpbuf;
     Mode mode;
 
-    void prepare(WvBuffer *inbuf);
-    bool process(WvBuffer &outbuf, bool flush, bool finish);
+    void prepare(WvBuf *inbuf);
+    bool process(WvBuf &outbuf, bool flush, bool finish);
 };
 
 

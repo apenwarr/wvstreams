@@ -7,7 +7,7 @@
 #ifndef __WVTYPEDENCODER_H
 #define __WVTYPEDENCODER_H
 
-#include "wvbufferbase.h"
+#include "wvbufbase.h"
 #include "wvencoder.h"
 
 /**
@@ -35,55 +35,55 @@ class WvTypedEncoder : public S
 public:
     typedef IT IType;
     typedef OT OType;
-    typedef WvBufferBase<IType> IBuffer;
-    typedef WvBufferBase<OType> OBuffer;
-    typedef WvBufferViewBase<IType> IBufferView;
-    typedef WvBufferViewBase<OType> OBufferView;
+    typedef WvBufBase<IType> IBuffer;
+    typedef WvBufBase<OType> OBuffer;
+    typedef WvBufViewBase<IType> IBufferView;
+    typedef WvBufViewBase<OType> OBufferView;
 
     /**
      * Typed variant of encode().
-     * @see encode(WvBuffer&, WvBuffer&, bool, bool)
+     * @see encode(WvBuf&, WvBuf&, bool, bool)
      */
     bool encode(IBuffer &inbuf, OBuffer &outbuf, bool flush = false,
         bool finish = false)
     {
-        WvBufferView inview(inbuf);
-        WvBufferView outview(outbuf);
+        WvBufView inview(inbuf);
+        WvBufView outview(outbuf);
         return S::encode(inview, outview, flush, finish);
     }
 
     /**
      * Typed variant of flush().
-     * @see flush(WvBuffer, WvBuffer, bool)
+     * @see flush(WvBuf, WvBuf, bool)
      */
     bool flush(IBuffer &inbuf, OBuffer &outbuf, bool finish = false)
     {
-        WvBufferView inview(inbuf);
-        WvBufferView outview(outbuf);
+        WvBufView inview(inbuf);
+        WvBufView outview(outbuf);
         return S::flush(inview, outview, finish);
     }
 
     /**
      * Typed variant of finish().
-     * @see finish(WvBuffer)
+     * @see finish(WvBuf)
      */
     bool finish(OBuffer &outbuf)
     {
-        WvBufferView outview(outbuf);
+        WvBufView outview(outbuf);
         return S::finish(outview);
     }
     
-    bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush = false, bool finish = false)
     {
         return S::encode(inbuf, outbuf, flush, finish);
     }
-    bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush(WvBuf &inbuf, WvBuf &outbuf,
         bool finish = false)
     {
         return S::flush(inbuf, outbuf, finish);
     }
-    bool finish(WvBuffer &outbuf)
+    bool finish(WvBuf &outbuf)
     {
         return S::finish(outbuf);
     }
@@ -91,20 +91,20 @@ public:
 protected:
     /**
      * Typed variant of _encode().
-     * @see _encode(WvBuffer&, WvBuffer&, bool)
+     * @see _encode(WvBuf&, WvBuf&, bool)
      */
     virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf,
         bool flush) = 0;
     
     /**
      * Typed variant of _finish().
-     * @see _finish(WvBuffer&)
+     * @see _finish(WvBuf&)
      */
     virtual bool _typedfinish(OBuffer &outbuf)
         { return true; }
 
     /** Wrapper implementation of _encode(). */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush)
     {
         IBufferView inview(inbuf);
@@ -113,7 +113,7 @@ protected:
     }
     
     /** Wrapper implementation of _finish(). */
-    virtual bool _finish(WvBuffer &outbuf)
+    virtual bool _finish(WvBuf &outbuf)
     {
         OBufferView outview(outbuf);
         return _typedfinish(outview);
@@ -132,38 +132,38 @@ class WvTypedEncoder<IT, unsigned char, S> : public S
 public:
     typedef IT IType;
     typedef unsigned char OType;
-    typedef WvBufferBase<IType> IBuffer;
-    typedef WvBufferBase<OType> OBuffer;
-    typedef WvBufferViewBase<IType> IBufferView;
-    typedef WvBufferViewBase<OType> OBufferView;
+    typedef WvBufBase<IType> IBuffer;
+    typedef WvBufBase<OType> OBuffer;
+    typedef WvBufViewBase<IType> IBufferView;
+    typedef WvBufViewBase<OType> OBufferView;
 
     /**
      * Typed variant of encode().
-     * @see encode(WvBuffer&, WvBuffer&, bool, bool)
+     * @see encode(WvBuf&, WvBuf&, bool, bool)
      */
     bool encode(IBuffer &inbuf, OBuffer &outbuf, bool flush = false,
         bool finish = false)
     {
-        WvBufferView inview(inbuf);
+        WvBufView inview(inbuf);
         return S::encode(inview, outbuf, flush, finish);
     }
 
     /**
      * Typed variant of flush().
-     * @see flush(WvBuffer, WvBuffer, bool)
+     * @see flush(WvBuf, WvBuf, bool)
      */
     bool flush(IBuffer &inbuf, OBuffer &outbuf, bool finish = false)
     {
-        WvBufferView inview(inbuf);
+        WvBufView inview(inbuf);
         return S::flush(inview, outbuf, finish);
     }
     
-    bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush = false, bool finish = false)
     {
         return S::encode(inbuf, outbuf, flush, finish);
     }
-    bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush(WvBuf &inbuf, WvBuf &outbuf,
         bool finish = false)
     {
         return S::flush(inbuf, outbuf, finish);
@@ -172,20 +172,20 @@ public:
 protected:
     /**
      * Typed variant of _encode().
-     * @see _encode(WvBuffer&, WvBuffer&, bool)
+     * @see _encode(WvBuf&, WvBuf&, bool)
      */
     virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf,
         bool flush) = 0;
     
     /**
      * Typed variant of _finish().
-     * @see _finish(WvBuffer&)
+     * @see _finish(WvBuf&)
      */
     virtual bool _typedfinish(OBuffer &outbuf)
         { return true; }
     
     /** Wrapper implementation of _encode(). */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush)
     {
         IBufferView inview(inbuf);
@@ -193,7 +193,7 @@ protected:
     }
     
     /** Wrapper implementation of _finish(). */
-    virtual bool _finish(WvBuffer &outbuf)
+    virtual bool _finish(WvBuf &outbuf)
     {
         return _typedfinish(outbuf);
     }
@@ -210,35 +210,35 @@ class WvTypedEncoder<unsigned char, unsigned char, S> : public S
 public:
     typedef unsigned char IType;
     typedef unsigned char OType;
-    typedef WvBufferBase<IType> IBuffer;
-    typedef WvBufferBase<OType> OBuffer;
-    typedef WvBufferViewBase<IType> IBufferView;
-    typedef WvBufferViewBase<OType> OBufferView;
+    typedef WvBufBase<IType> IBuffer;
+    typedef WvBufBase<OType> OBuffer;
+    typedef WvBufViewBase<IType> IBufferView;
+    typedef WvBufViewBase<OType> OBufferView;
 
 protected:
     /**
      * Typed variant of _encode().
-     * @see _encode(WvBuffer&, WvBuffer&, bool)
+     * @see _encode(WvBuf&, WvBuf&, bool)
      */
     virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf,
         bool flush) = 0;
     
     /**
      * Typed variant of _finish().
-     * @see _finish(WvBuffer&)
+     * @see _finish(WvBuf&)
      */
     virtual bool _typedfinish(OBuffer &outbuf)
         { return true; }
 
     /** Wrapper implementation of _encode(). */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush)
     {
         return _typedencode(inbuf, outbuf, flush);
     }
     
     /** Wrapper implementation of _finish(). */
-    virtual bool _finish(WvBuffer &outbuf)
+    virtual bool _finish(WvBuf &outbuf)
     {
         return _typedfinish(outbuf);
     }

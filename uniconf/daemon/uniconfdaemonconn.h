@@ -8,12 +8,12 @@
 #define __UNICONFDAEMONCONN_H
 
 #include "uniconf.h"
-#include "uniconfconn.h"
+#include "uniclientconn.h"
 #include "wvlog.h"
 
 class UniConfDaemon;
 
-class UniConfDaemonConn : public UniConfConn 
+class UniConfDaemonConn : public UniClientConn 
 {
     UniConf root;
 

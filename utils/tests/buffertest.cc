@@ -2,11 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * WvBuffer test program.  Comments below indicate correct results.
+ * WvBuf test program.  Comments below indicate correct results.
  *
  */
 
-#include "wvbuffer.h"
+#include "wvbuf.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -14,8 +14,8 @@
 
 int main()
 {
-    WvInPlaceBuffer b(1024);
-    WvDynamicBuffer bb;
+    WvInPlaceBuf b(1024);
+    WvDynBuf bb;
     char *s, xx[1024];
     size_t in, i, max, total;
     

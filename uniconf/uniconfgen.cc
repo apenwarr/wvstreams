@@ -67,87 +67,87 @@ void UniConfGen::setcallback(const UniConfGenCallback &callback,
 
 
 
-/***** UniConfFilterGen *****/
+/***** UniFilterGen *****/
 
-UniConfFilterGen::UniConfFilterGen(UniConfGen *inner) :
+UniFilterGen::UniFilterGen(UniConfGen *inner) :
     xinner(NULL)
 {
     setinner(inner);
 }
 
 
-UniConfFilterGen::~UniConfFilterGen()
+UniFilterGen::~UniFilterGen()
 {
     delete xinner;
 }
 
 
-void UniConfFilterGen::setinner(UniConfGen *inner)
+void UniFilterGen::setinner(UniConfGen *inner)
 {
     if (xinner)
         xinner->setcallback(NULL, NULL);
     xinner = inner;
     if (xinner)
         xinner->setcallback(wvcallback(UniConfGenCallback, *this,
-            UniConfFilterGen::gencallback), NULL);
+            UniFilterGen::gencallback), NULL);
 }
 
 
-bool UniConfFilterGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniFilterGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return xinner->commit(key, depth);
 }
 
 
-bool UniConfFilterGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniFilterGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return xinner->refresh(key, depth);
 }
 
 
-WvString UniConfFilterGen::get(const UniConfKey &key)
+WvString UniFilterGen::get(const UniConfKey &key)
 {
     return xinner->get(key);
 }
 
 
-bool UniConfFilterGen::set(const UniConfKey &key, WvStringParm value)
+bool UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 {
     return xinner->set(key, value);
 }
 
 
-bool UniConfFilterGen::zap(const UniConfKey &key)
+bool UniFilterGen::zap(const UniConfKey &key)
 {
     return xinner->zap(key);
 }
 
 
-bool UniConfFilterGen::exists(const UniConfKey &key)
+bool UniFilterGen::exists(const UniConfKey &key)
 {
     return xinner->exists(key);
 }
 
 
-bool UniConfFilterGen::haschildren(const UniConfKey &key)
+bool UniFilterGen::haschildren(const UniConfKey &key)
 {
     return xinner->haschildren(key);
 }
 
 
-bool UniConfFilterGen::isok()
+bool UniFilterGen::isok()
 {
     return xinner->isok();
 }
 
 
-UniConfGen::Iter *UniConfFilterGen::iterator(const UniConfKey &key)
+UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 {
     return xinner->iterator(key);
 }
 
 
-void UniConfFilterGen::gencallback(const UniConfGen &gen,
+void UniFilterGen::gencallback(const UniConfGen &gen,
     const UniConfKey &key, UniConfDepth::Type depth, void *userdata)
 {
     delta(key, depth);
@@ -164,26 +164,26 @@ void UniConfFilterGen::gencallback(const UniConfGen &gen,
  * resided in their respective modules only.  This hack should be
  * removed if ever dynamic loading of generators is provided.
  */
-#include "uniconfnull.h"
+#include "uninullgen.h"
 static UniConfGenFactoryRegistration nullreg("null",
-    new UniConfNullGenFactory(), true);
+    new UniNullGenFactory(), true);
 
-#include "uniconftemp.h"
+#include "unitempgen.h"
 static UniConfGenFactoryRegistration tempreg("temp",
-    new UniConfTempGenFactory(), true);
+    new UniTempGenFactory(), true);
 
-#include "uniconfreadonly.h"
+#include "unireadonlygen.h"
 static UniConfGenFactoryRegistration readonlyreg("readonly",
-    new UniConfReadOnlyGenFactory(), true);
+    new UniReadOnlyGenFactory(), true);
     
-#include "uniconfini.h"
+#include "uniinigen.h"
 static UniConfGenFactoryRegistration filereg("ini",
-    new UniConfIniFileGenFactory(), true);
+    new UniIniGenFactory(), true);
     
-#include "uniconfclient.h"
+#include "uniclientgen.h"
 static UniConfGenFactoryRegistration unixreg("unix",
-    new UniConfClientGenFactory(), true);
+    new UniClientGenFactory(), true);
 static UniConfGenFactoryRegistration tcpreg("tcp",
-    new UniConfClientGenFactory(), true);
+    new UniClientGenFactory(), true);
 
 #endif

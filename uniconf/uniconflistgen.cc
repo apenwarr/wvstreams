@@ -2,12 +2,12 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  *
- * UniConfListGen is a UniConf generator to allow multiple generators to be
+ * UniListGen is a UniConf generator to allow multiple generators to be
  * stacked in a priority sequence for get/set/etc.
  * 
  */
 
-#include "uniconflistgen.h"
+#include "unilistgen.h"
 #include "wvmoniker.h"
 #include "uniconfiter.h"
 #include "wvtclstring.h"
@@ -45,13 +45,13 @@ static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
         }
     }
 
-    return new UniConfListGen(l);
+    return new UniListGen(l);
 }
  
 static WvMoniker<UniConfGen> reg("list", creator);
 
 
-bool UniConfListGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniListGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
 {
     bool result = true; 
     
@@ -60,7 +60,7 @@ bool UniConfListGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
     return result;
 }
 
-bool UniConfListGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniListGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
     bool result = true;
 
@@ -69,7 +69,7 @@ bool UniConfListGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
     return result;
 }
 
-WvString UniConfListGen::get(const UniConfKey &key)
+WvString UniListGen::get(const UniConfKey &key)
 {
     for (i.rewind(); i.next();)
     {
@@ -80,7 +80,7 @@ WvString UniConfListGen::get(const UniConfKey &key)
     return WvString::null;
 }
 
-bool UniConfListGen::set(const UniConfKey &key, WvStringParm value)
+bool UniListGen::set(const UniConfKey &key, WvStringParm value)
 {
     for (i.rewind(); i.next();)
     {
@@ -90,7 +90,7 @@ bool UniConfListGen::set(const UniConfKey &key, WvStringParm value)
     return false;
 }
 
-bool UniConfListGen::zap(const UniConfKey &key)
+bool UniListGen::zap(const UniConfKey &key)
 {
     bool result = true;
 
@@ -100,7 +100,7 @@ bool UniConfListGen::zap(const UniConfKey &key)
 
 }
 
-bool UniConfListGen::exists(const UniConfKey &key)
+bool UniListGen::exists(const UniConfKey &key)
 {
     for (i.rewind(); i.next();)
     {
@@ -110,7 +110,7 @@ bool UniConfListGen::exists(const UniConfKey &key)
     return false;
 }
 
-bool UniConfListGen::haschildren(const UniConfKey &key)
+bool UniListGen::haschildren(const UniConfKey &key)
 {
     for (i.rewind(); i.next();)
     {
@@ -120,7 +120,7 @@ bool UniConfListGen::haschildren(const UniConfKey &key)
     return false;
 }
 
-bool UniConfListGen::isok()
+bool UniListGen::isok()
 {
     for (i.rewind(); i.next();)
     {
@@ -130,11 +130,11 @@ bool UniConfListGen::isok()
     return true;
 }
 
-UniConfGen::Iter *UniConfListGen::iterator(const UniConfKey &key)
+UniConfGen::Iter *UniListGen::iterator(const UniConfKey &key)
 {
     return i().iterator(key);
 }
 
 
-/***** UniConfListGen::IterIter *****/
+/***** UniListGen::IterIter *****/
 

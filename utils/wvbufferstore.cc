@@ -4,9 +4,9 @@
  * 
  * Defines basic buffer storage classes.
  * These are not intended for use directly by clients.
- * See "wvbufferbase.h" for the public API.
+ * See "wvbufbase.h" for the public API.
  */
-#include "wvbufferstore.h"
+#include "wvbufstore.h"
 #include <string.h>
 
 /**
@@ -78,15 +78,15 @@ inline size_t roundup(size_t value, size_t boundary)
 
 
 
-/***** WvBufferStore *****/
+/***** WvBufStore *****/
 
-WvBufferStore::WvBufferStore(int _granularity) :
+WvBufStore::WvBufStore(int _granularity) :
     granularity(_granularity)
 {
 }
 
 
-size_t WvBufferStore::peekable(int offset) const
+size_t WvBufStore::peekable(int offset) const
 {
     if (offset == 0)
     {
@@ -107,7 +107,7 @@ size_t WvBufferStore::peekable(int offset) const
 }
 
 
-void WvBufferStore::move(void *buf, size_t count)
+void WvBufStore::move(void *buf, size_t count)
 {
     while (count > 0)
     {
@@ -124,7 +124,7 @@ void WvBufferStore::move(void *buf, size_t count)
 }
 
 
-void WvBufferStore::copy(void *buf, int offset, size_t count)
+void WvBufStore::copy(void *buf, int offset, size_t count)
 {
     while (count > 0)
     {
@@ -142,7 +142,7 @@ void WvBufferStore::copy(void *buf, int offset, size_t count)
 }
 
 
-void WvBufferStore::put(const void *data, size_t count)
+void WvBufStore::put(const void *data, size_t count)
 {
     while (count > 0)
     {
@@ -159,14 +159,14 @@ void WvBufferStore::put(const void *data, size_t count)
 }
 
 
-void WvBufferStore::fastput(const void *data, size_t count)
+void WvBufStore::fastput(const void *data, size_t count)
 {
     void *buf = alloc(count);
     memops.uninit_copy(buf, data, count);
 }
 
 
-void WvBufferStore::poke(const void *data, int offset, size_t count)
+void WvBufStore::poke(const void *data, int offset, size_t count)
 {
     int limit = int(used());
     assert(offset <= limit ||
@@ -194,7 +194,7 @@ void WvBufferStore::poke(const void *data, int offset, size_t count)
 }
 
 
-void WvBufferStore::merge(WvBufferStore &instore, size_t count)
+void WvBufStore::merge(WvBufStore &instore, size_t count)
 {
     if (count == 0)
         return;
@@ -204,7 +204,7 @@ void WvBufferStore::merge(WvBufferStore &instore, size_t count)
         // merge quickly by stealing subbuffers from the other buffer
         for (;;)
         {
-            WvBufferStore *buf = instore.firstsubbuffer();
+            WvBufStore *buf = instore.firstsubbuffer();
             if (! buf)
                 break; // strange!
 
@@ -225,7 +225,7 @@ void WvBufferStore::merge(WvBufferStore &instore, size_t count)
 }
 
 
-void WvBufferStore::basicmerge(WvBufferStore &instore, size_t count)
+void WvBufStore::basicmerge(WvBufStore &instore, size_t count)
 {
     // move bytes as efficiently as we can using only the public API
     if (count == 0)
@@ -281,31 +281,31 @@ void WvBufferStore::basicmerge(WvBufferStore &instore, size_t count)
 
 
 
-/***** WvInPlaceBufferStore *****/
+/***** WvInPlaceBufStore *****/
 
-WvInPlaceBufferStore::WvInPlaceBufferStore(int _granularity,
+WvInPlaceBufStore::WvInPlaceBufStore(int _granularity,
     void *_data, size_t _avail, size_t _size, bool _autofree) :
-    WvBufferStore(_granularity), data(NULL)
+    WvBufStore(_granularity), data(NULL)
 {
     reset(_data, _avail, _size, _autofree);
 }
 
 
-WvInPlaceBufferStore::WvInPlaceBufferStore(int _granularity, size_t _size) :
-    WvBufferStore(_granularity), data(NULL)
+WvInPlaceBufStore::WvInPlaceBufStore(int _granularity, size_t _size) :
+    WvBufStore(_granularity), data(NULL)
 {
     reset(memops.newarray(_size), 0, _size, true);
 }
 
 
-WvInPlaceBufferStore::~WvInPlaceBufferStore()
+WvInPlaceBufStore::~WvInPlaceBufStore()
 {
     if (data && xautofree)
         memops.deletearray(data);
 }
 
 
-void WvInPlaceBufferStore::reset(void *_data, size_t _avail,
+void WvInPlaceBufStore::reset(void *_data, size_t _avail,
     size_t _size, bool _autofree = false)
 {
     assert(_data != NULL || _avail == 0);
@@ -318,7 +318,7 @@ void WvInPlaceBufferStore::reset(void *_data, size_t _avail,
 }
 
 
-void WvInPlaceBufferStore::setavail(size_t _avail)
+void WvInPlaceBufStore::setavail(size_t _avail)
 {
     assert(_avail <= xsize);
     readidx = 0;
@@ -326,13 +326,13 @@ void WvInPlaceBufferStore::setavail(size_t _avail)
 }
 
 
-size_t WvInPlaceBufferStore::used() const
+size_t WvInPlaceBufStore::used() const
 {
     return writeidx - readidx;
 }
 
 
-const void *WvInPlaceBufferStore::get(size_t count)
+const void *WvInPlaceBufStore::get(size_t count)
 {
     assert(count <= writeidx - readidx ||
         !"attempted to get() more than used()");
@@ -342,7 +342,7 @@ const void *WvInPlaceBufferStore::get(size_t count)
 }
 
 
-void WvInPlaceBufferStore::unget(size_t count)
+void WvInPlaceBufStore::unget(size_t count)
 {
     assert(count <= readidx ||
         !"attempted to unget() more than ungettable()");
@@ -350,25 +350,25 @@ void WvInPlaceBufferStore::unget(size_t count)
 }
 
 
-size_t WvInPlaceBufferStore::ungettable() const
+size_t WvInPlaceBufStore::ungettable() const
 {
     return readidx;
 }
 
 
-void WvInPlaceBufferStore::zap()
+void WvInPlaceBufStore::zap()
 {
     readidx = writeidx = 0;
 }
 
 
-size_t WvInPlaceBufferStore::free() const
+size_t WvInPlaceBufStore::free() const
 {
     return xsize - writeidx;
 }
 
 
-void *WvInPlaceBufferStore::alloc(size_t count)
+void *WvInPlaceBufStore::alloc(size_t count)
 {
     assert(count <= xsize - writeidx ||
         !"attempted to alloc() more than free()");
@@ -378,7 +378,7 @@ void *WvInPlaceBufferStore::alloc(size_t count)
 }
 
 
-void WvInPlaceBufferStore::unalloc(size_t count)
+void WvInPlaceBufStore::unalloc(size_t count)
 {
     assert(count <= writeidx - readidx ||
         !"attempted to unalloc() more than unallocable()");
@@ -386,13 +386,13 @@ void WvInPlaceBufferStore::unalloc(size_t count)
 }
 
 
-size_t WvInPlaceBufferStore::unallocable() const
+size_t WvInPlaceBufStore::unallocable() const
 {
     return writeidx - readidx;
 }
 
 
-void *WvInPlaceBufferStore::mutablepeek(int offset, size_t count)
+void *WvInPlaceBufStore::mutablepeek(int offset, size_t count)
 {
     if (count == 0)
         return NULL;
@@ -409,7 +409,7 @@ void *WvInPlaceBufferStore::mutablepeek(int offset, size_t count)
 
 WvConstInPlaceBufferStore::WvConstInPlaceBufferStore(int _granularity,
     const void *_data, size_t _avail) :
-    WvReadOnlyBufferStoreMixin<WvBufferStore>(_granularity), data(NULL)
+    WvReadOnlyBufferStoreMixin<WvBufStore>(_granularity), data(NULL)
 {
     reset(_data, _avail);
 }
@@ -479,31 +479,31 @@ void WvConstInPlaceBufferStore::zap()
 
 
 
-/***** WvCircularBufferStore *****/
+/***** WvCircularBufStore *****/
 
-WvCircularBufferStore::WvCircularBufferStore(int _granularity,
+WvCircularBufStore::WvCircularBufStore(int _granularity,
     void *_data, size_t _avail, size_t _size, bool _autofree) :
-    WvBufferStore(_granularity), data(NULL)
+    WvBufStore(_granularity), data(NULL)
 {
     reset(_data, _avail, _size, _autofree);
 }
 
 
-WvCircularBufferStore::WvCircularBufferStore(int _granularity, size_t _size) :
-    WvBufferStore(_granularity), data(NULL)
+WvCircularBufStore::WvCircularBufStore(int _granularity, size_t _size) :
+    WvBufStore(_granularity), data(NULL)
 {
     reset(memops.newarray(_size), 0, _size, true);
 }
 
 
-WvCircularBufferStore::~WvCircularBufferStore()
+WvCircularBufStore::~WvCircularBufStore()
 {
     if (data && xautofree)
         memops.deletearray(data);
 }
 
 
-void WvCircularBufferStore::reset(void *_data, size_t _avail,
+void WvCircularBufStore::reset(void *_data, size_t _avail,
     size_t _size, bool _autofree = false)
 {
     assert(_data != NULL || _avail == 0);
@@ -516,7 +516,7 @@ void WvCircularBufferStore::reset(void *_data, size_t _avail,
 }
 
 
-void WvCircularBufferStore::setavail(size_t _avail)
+void WvCircularBufStore::setavail(size_t _avail)
 {
     assert(_avail <= xsize);
     head = 0;
@@ -524,13 +524,13 @@ void WvCircularBufferStore::setavail(size_t _avail)
 }
 
 
-size_t WvCircularBufferStore::used() const
+size_t WvCircularBufStore::used() const
 {
     return totalused;
 }
 
 
-size_t WvCircularBufferStore::optgettable() const
+size_t WvCircularBufStore::optgettable() const
 {
     size_t avail = xsize - head;
     if (avail > totalused)
@@ -539,7 +539,7 @@ size_t WvCircularBufferStore::optgettable() const
 }
 
 
-const void *WvCircularBufferStore::get(size_t count)
+const void *WvCircularBufStore::get(size_t count)
 {
     assert(count <= totalused ||
         ! "attempted to get() more than used()");
@@ -551,7 +551,7 @@ const void *WvCircularBufferStore::get(size_t count)
 }
 
 
-void WvCircularBufferStore::unget(size_t count)
+void WvCircularBufStore::unget(size_t count)
 {
     assert(count <= totalinit - totalused ||
         !"attempted to unget() more than ungettable()");
@@ -560,26 +560,26 @@ void WvCircularBufferStore::unget(size_t count)
 }
 
 
-size_t WvCircularBufferStore::ungettable() const
+size_t WvCircularBufStore::ungettable() const
 {
     return totalinit - totalused;
 }
 
 
-void WvCircularBufferStore::zap()
+void WvCircularBufStore::zap()
 {
     head = 0;
     totalused = totalinit = 0;
 }
 
 
-size_t WvCircularBufferStore::free() const
+size_t WvCircularBufStore::free() const
 {
     return xsize - totalused;
 }
 
 
-size_t WvCircularBufferStore::optallocable() const
+size_t WvCircularBufStore::optallocable() const
 {
     size_t tail = head + totalused;
     if (tail >= xsize)
@@ -588,7 +588,7 @@ size_t WvCircularBufferStore::optallocable() const
 }
 
 
-void *WvCircularBufferStore::alloc(size_t count)
+void *WvCircularBufStore::alloc(size_t count)
 {
     assert(count <= xsize - totalused ||
         !"attempted to alloc() more than free()");
@@ -602,7 +602,7 @@ void *WvCircularBufferStore::alloc(size_t count)
 }
 
 
-void WvCircularBufferStore::unalloc(size_t count)
+void WvCircularBufStore::unalloc(size_t count)
 {
     assert(count <= totalused ||
         !"attempted to unalloc() more than unallocable()");
@@ -611,13 +611,13 @@ void WvCircularBufferStore::unalloc(size_t count)
 }
 
 
-size_t WvCircularBufferStore::unallocable() const
+size_t WvCircularBufStore::unallocable() const
 {
     return totalused;
 }
 
 
-void *WvCircularBufferStore::mutablepeek(int offset, size_t count)
+void *WvCircularBufStore::mutablepeek(int offset, size_t count)
 {
     if (count == 0)
         return NULL;
@@ -632,7 +632,7 @@ void *WvCircularBufferStore::mutablepeek(int offset, size_t count)
 }
 
 
-void WvCircularBufferStore::normalize()
+void WvCircularBufStore::normalize()
 {
     // discard history to minimize data transfers
     totalinit = totalused;
@@ -643,7 +643,7 @@ void WvCircularBufferStore::normalize()
 }
 
 
-size_t WvCircularBufferStore::ensurecontiguous(int offset,
+size_t WvCircularBufStore::ensurecontiguous(int offset,
     size_t count, bool keephistory)
 {
     // determine the region of interest
@@ -680,7 +680,7 @@ size_t WvCircularBufferStore::ensurecontiguous(int offset,
 }
 
 
-void WvCircularBufferStore::compact(void *data, size_t size,
+void WvCircularBufStore::compact(void *data, size_t size,
     size_t head, size_t count)
 {
     if (count == 0)
@@ -736,7 +736,7 @@ void WvCircularBufferStore::compact(void *data, size_t size,
 /***** WvLinkedBufferStore *****/
 
 WvLinkedBufferStore::WvLinkedBufferStore(int _granularity) :
-    WvBufferStore(_granularity), totalused(0), maxungettable(0)
+    WvBufStore(_granularity), totalused(0), maxungettable(0)
 {
 }
 
@@ -753,13 +753,13 @@ size_t WvLinkedBufferStore::numsubbuffers() const
 }
 
 
-WvBufferStore *WvLinkedBufferStore::firstsubbuffer() const
+WvBufStore *WvLinkedBufferStore::firstsubbuffer() const
 {
     return list.first();
 }
 
 
-void WvLinkedBufferStore::appendsubbuffer(WvBufferStore *buffer,
+void WvLinkedBufferStore::appendsubbuffer(WvBufStore *buffer,
     bool autofree)
 {
     list.append(buffer, autofree);
@@ -767,7 +767,7 @@ void WvLinkedBufferStore::appendsubbuffer(WvBufferStore *buffer,
 }
 
 
-void WvLinkedBufferStore::prependsubbuffer(WvBufferStore *buffer,
+void WvLinkedBufferStore::prependsubbuffer(WvBufStore *buffer,
     bool autofree)
 {
     list.prepend(buffer, autofree);
@@ -776,10 +776,10 @@ void WvLinkedBufferStore::prependsubbuffer(WvBufferStore *buffer,
 }
 
 
-bool WvLinkedBufferStore::unlinksubbuffer(WvBufferStore *buffer,
+bool WvLinkedBufferStore::unlinksubbuffer(WvBufStore *buffer,
     bool allowautofree)
 {
-    WvBufferStoreList::Iter it(list);
+    WvBufStoreList::Iter it(list);
     assert(it.find(buffer));
     
     bool autofree = it.link->auto_free;
@@ -802,7 +802,7 @@ size_t WvLinkedBufferStore::used() const
 size_t WvLinkedBufferStore::optgettable() const
 {
     size_t count;
-    WvBufferStoreList::Iter it(list);
+    WvBufStoreList::Iter it(list);
     for (it.rewind(); it.next(); )
         if ((count = it->optgettable()) != 0)
             return count;
@@ -816,9 +816,9 @@ const void *WvLinkedBufferStore::get(size_t count)
         return NULL;
     totalused -= count;
     // search for first non-empty buffer
-    WvBufferStore *buf;
+    WvBufStore *buf;
     size_t availused;
-    WvBufferStoreList::Iter it(list);
+    WvBufStoreList::Iter it(list);
     for (;;)
     {
         it.rewind(); it.next();
@@ -868,7 +868,7 @@ void WvLinkedBufferStore::zap()
 {
     totalused = 0;
     maxungettable = 0;
-    WvBufferStoreList::Iter it(list);
+    WvBufStoreList::Iter it(list);
     for (it.rewind(); it.next(); )
         do_xunlink(it);
 }
@@ -908,14 +908,14 @@ void WvLinkedBufferStore::unalloc(size_t count)
     {
         assert(! list.isempty() ||
             !"attempted to unalloc() more than unallocable()");
-        WvBufferStore *buf = list.last();
+        WvBufStore *buf = list.last();
         size_t avail = buf->unallocable();
         if (count < avail)
         {
             buf->unalloc(count);
             break;
         }
-        WvBufferStoreList::Iter it(list);
+        WvBufStoreList::Iter it(list);
         it.find(buf);
         do_xunlink(it);
         count -= avail;
@@ -932,9 +932,9 @@ size_t WvLinkedBufferStore::unallocable() const
 size_t WvLinkedBufferStore::optpeekable(int offset) const
 {
     // search for the buffer that contains the offset
-    WvBufferStoreList::Iter it(list);
+    WvBufStoreList::Iter it(list);
     offset = search(it, offset);
-    WvBufferStore *buf = it.ptr();
+    WvBufStore *buf = it.ptr();
     if (! buf)
         return 0; // out of bounds
     return buf->optpeekable(offset);
@@ -947,9 +947,9 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
         return NULL;
     
     // search for the buffer that contains the offset
-    WvBufferStoreList::Iter it(list);
+    WvBufStoreList::Iter it(list);
     offset = search(it, offset);
-    WvBufferStore *buf = it.ptr();
+    WvBufStore *buf = it.ptr();
     assert(buf ||
         ! "attempted to peek() with invalid offset or count");
     
@@ -974,21 +974,21 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
 }
 
 
-WvBufferStore *WvLinkedBufferStore::newbuffer(size_t minsize)
+WvBufStore *WvLinkedBufferStore::newbuffer(size_t minsize)
 {
     minsize = roundup(minsize, granularity);
-    //return new WvInPlaceBufferStore(granularity, minsize);
-    return new WvCircularBufferStore(granularity, minsize);
+    //return new WvInPlaceBufStore(granularity, minsize);
+    return new WvCircularBufStore(granularity, minsize);
 }
 
 
-void WvLinkedBufferStore::recyclebuffer(WvBufferStore *buffer)
+void WvLinkedBufferStore::recyclebuffer(WvBufStore *buffer)
 {
     delete buffer;
 }
 
 
-int WvLinkedBufferStore::search(WvBufferStoreList::Iter &it,
+int WvLinkedBufferStore::search(WvBufStoreList::Iter &it,
     int offset) const
 {
     it.rewind();
@@ -997,7 +997,7 @@ int WvLinkedBufferStore::search(WvBufferStoreList::Iter &it,
         if (offset < 0)
         {
             // inside unget() region
-            WvBufferStore *buf = it.ptr();
+            WvBufStore *buf = it.ptr();
             if (size_t(-offset) <= buf->ungettable())
                 return offset;
             it.rewind(); // mark out of bounds
@@ -1007,7 +1007,7 @@ int WvLinkedBufferStore::search(WvBufferStoreList::Iter &it,
             // inside get() region
             do
             {
-                WvBufferStore *buf = it.ptr();
+                WvBufStore *buf = it.ptr();
                 size_t avail = buf->used();
                 if (size_t(offset) < avail)
                     return offset;
@@ -1020,10 +1020,10 @@ int WvLinkedBufferStore::search(WvBufferStoreList::Iter &it,
 }
 
 
-WvBufferStore *WvLinkedBufferStore::coalesce(
-    WvBufferStoreList::Iter &it, size_t count)
+WvBufStore *WvLinkedBufferStore::coalesce(
+    WvBufStoreList::Iter &it, size_t count)
 {
-    WvBufferStore *buf = it.ptr();
+    WvBufStore *buf = it.ptr();
     size_t availused = buf->used();
     if (count <= availused)
         return buf;
@@ -1044,7 +1044,7 @@ WvBufferStore *WvLinkedBufferStore::coalesce(
     // coalesce subsequent buffers into the first
     while (it.next())
     {
-        WvBufferStore *itbuf = it.ptr();
+        WvBufStore *itbuf = it.ptr();
         size_t chunk = itbuf->used();
         if (chunk > 0)
         {
@@ -1062,9 +1062,9 @@ WvBufferStore *WvLinkedBufferStore::coalesce(
 }
 
 
-void WvLinkedBufferStore::do_xunlink(WvBufferStoreList::Iter &it)
+void WvLinkedBufferStore::do_xunlink(WvBufStoreList::Iter &it)
 {
-    WvBufferStore *buf = it.ptr();
+    WvBufStore *buf = it.ptr();
     bool autofree = it.link->auto_free;
     it.link->auto_free = false;
     it.xunlink();
@@ -1074,9 +1074,9 @@ void WvLinkedBufferStore::do_xunlink(WvBufferStoreList::Iter &it)
 
 
 
-/***** WvDynamicBufferStore *****/
+/***** WvDynBufStore *****/
 
-WvDynamicBufferStore::WvDynamicBufferStore(size_t _granularity,
+WvDynBufStore::WvDynBufStore(size_t _granularity,
     size_t _minalloc, size_t _maxalloc) :
     WvLinkedBufferStore(_granularity),
     minalloc(_minalloc), maxalloc(_maxalloc)
@@ -1085,13 +1085,13 @@ WvDynamicBufferStore::WvDynamicBufferStore(size_t _granularity,
 }
 
 
-size_t WvDynamicBufferStore::free() const
+size_t WvDynBufStore::free() const
 {
     return UNLIMITED_FREE_SPACE;
 }
 
 
-size_t WvDynamicBufferStore::optallocable() const
+size_t WvDynBufStore::optallocable() const
 {
     size_t avail = WvLinkedBufferStore::optallocable();
     if (avail == 0)
@@ -1100,18 +1100,18 @@ size_t WvDynamicBufferStore::optallocable() const
 }
 
 
-void *WvDynamicBufferStore::alloc(size_t count)
+void *WvDynBufStore::alloc(size_t count)
 {
     if (count > WvLinkedBufferStore::free())
     {
-        WvBufferStore *buf = newbuffer(count);
+        WvBufStore *buf = newbuffer(count);
         appendsubbuffer(buf, true);
     }
     return WvLinkedBufferStore::alloc(count);
 }
 
 
-WvBufferStore *WvDynamicBufferStore::newbuffer(size_t minsize)
+WvBufStore *WvDynBufStore::newbuffer(size_t minsize)
 {
     // allocate a new buffer
     // try to approximate exponential growth by at least doubling
@@ -1130,39 +1130,39 @@ WvBufferStore *WvDynamicBufferStore::newbuffer(size_t minsize)
 
 
 
-/***** WvEmptyBufferStore *****/
+/***** WvNullBufStore *****/
 
-WvEmptyBufferStore::WvEmptyBufferStore(size_t _granularity) :
+WvNullBufStore::WvNullBufStore(size_t _granularity) :
     WvWriteOnlyBufferStoreMixin<
-        WvReadOnlyBufferStoreMixin<WvBufferStore> >(_granularity)
+        WvReadOnlyBufferStoreMixin<WvBufStore> >(_granularity)
 {
 }
 
 
 
-/***** WvBufferCursorStore *****/
+/***** WvBufCursorStore *****/
 
-WvBufferCursorStore::WvBufferCursorStore(size_t _granularity,
-    WvBufferStore *_buf, int _start, size_t _length) :
-    WvReadOnlyBufferStoreMixin<WvBufferStore>(_granularity),
+WvBufCursorStore::WvBufCursorStore(size_t _granularity,
+    WvBufStore *_buf, int _start, size_t _length) :
+    WvReadOnlyBufferStoreMixin<WvBufStore>(_granularity),
     buf(_buf), start(_start), length(_length), shift(0)
 {
 }
 
 
-bool WvBufferCursorStore::isreadable() const
+bool WvBufCursorStore::isreadable() const
 {
     return buf->isreadable();
 }
 
 
-size_t WvBufferCursorStore::used() const
+size_t WvBufCursorStore::used() const
 {
     return length - shift;
 }
 
 
-size_t WvBufferCursorStore::optgettable() const
+size_t WvBufCursorStore::optgettable() const
 {
     size_t avail = buf->optpeekable(start + shift);
     assert(avail != 0 || length == shift ||
@@ -1173,7 +1173,7 @@ size_t WvBufferCursorStore::optgettable() const
 }
 
 
-const void *WvBufferCursorStore::get(size_t count)
+const void *WvBufCursorStore::get(size_t count)
 {
     assert(count <= length - shift ||
         ! "attempted to get() more than used()");
@@ -1183,7 +1183,7 @@ const void *WvBufferCursorStore::get(size_t count)
 }
 
 
-void WvBufferCursorStore::skip(size_t count)
+void WvBufCursorStore::skip(size_t count)
 {
     assert(count <= length - shift ||
         ! "attempted to skip() more than used()");
@@ -1191,7 +1191,7 @@ void WvBufferCursorStore::skip(size_t count)
 }
 
 
-void WvBufferCursorStore::unget(size_t count)
+void WvBufCursorStore::unget(size_t count)
 {
     assert(count <= shift ||
         ! "attempted to unget() more than ungettable()");
@@ -1199,19 +1199,19 @@ void WvBufferCursorStore::unget(size_t count)
 }
 
 
-size_t WvBufferCursorStore::ungettable() const
+size_t WvBufCursorStore::ungettable() const
 {
     return shift;
 }
 
 
-void WvBufferCursorStore::zap()
+void WvBufCursorStore::zap()
 {
     shift = length;
 }
 
 
-size_t WvBufferCursorStore::peekable(int offset) const
+size_t WvBufCursorStore::peekable(int offset) const
 {
     offset += shift;
     offset -= start;
@@ -1221,7 +1221,7 @@ size_t WvBufferCursorStore::peekable(int offset) const
 }
 
 
-size_t WvBufferCursorStore::optpeekable(int offset) const
+size_t WvBufCursorStore::optpeekable(int offset) const
 {
     size_t avail = buf->optpeekable(start + shift + offset);
     assert(avail != 0 || length == shift ||
@@ -1233,7 +1233,7 @@ size_t WvBufferCursorStore::optpeekable(int offset) const
 }
 
 
-const void *WvBufferCursorStore::peek(int offset, size_t count)
+const void *WvBufCursorStore::peek(int offset, size_t count)
 {
     offset += shift;
     assert((offset >= start && offset - start + count <= length) ||
@@ -1242,14 +1242,14 @@ const void *WvBufferCursorStore::peek(int offset, size_t count)
 }
 
 
-bool WvBufferCursorStore::iswritable() const
+bool WvBufCursorStore::iswritable() const
 {
     // check if mutablepeek() is supported
     return buf->iswritable();
 }
 
 
-void *WvBufferCursorStore::mutablepeek(int offset, size_t count)
+void *WvBufCursorStore::mutablepeek(int offset, size_t count)
 {
     offset += shift;
     assert((offset >= start && offset - start + count <= length) ||

@@ -4,32 +4,32 @@
  * 
  * A UniConf generator that stores keys in memory.
  */
-#include "uniconftemp.h"
+#include "unitempgen.h"
 #include "wvmoniker.h"
 #include "wvlog.h"
 
 static UniConfGen *creator(WvStringParm, IObject *, void *)
 {
-    return new UniConfTempGen();
+    return new UniTempGen();
 }
 
 static WvMoniker<UniConfGen> reg("temp", creator);
 
-/***** UniConfTempGen *****/
+/***** UniTempGen *****/
 
-UniConfTempGen::UniConfTempGen()
+UniTempGen::UniTempGen()
     : root(NULL)
 {
 }
 
 
-UniConfTempGen::~UniConfTempGen()
+UniTempGen::~UniTempGen()
 {
     delete root;
 }
 
 
-WvString UniConfTempGen::get(const UniConfKey &key)
+WvString UniTempGen::get(const UniConfKey &key)
 {
     if (root)
     {
@@ -41,7 +41,7 @@ WvString UniConfTempGen::get(const UniConfKey &key)
 }
 
 
-bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
+bool UniTempGen::set(const UniConfKey &key, WvStringParm value)
 {
     if (value.isnull())
     {
@@ -109,7 +109,7 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
-bool UniConfTempGen::zap(const UniConfKey &key)
+bool UniTempGen::zap(const UniConfKey &key)
 {
     UniConfValueTree *oldroot = root;
     if (oldroot)
@@ -123,7 +123,7 @@ bool UniConfTempGen::zap(const UniConfKey &key)
 }
 
 
-bool UniConfTempGen::exists(const UniConfKey &key)
+bool UniTempGen::exists(const UniConfKey &key)
 {
     if (root)
     {
@@ -134,7 +134,7 @@ bool UniConfTempGen::exists(const UniConfKey &key)
 }
 
 
-bool UniConfTempGen::haschildren(const UniConfKey &key)
+bool UniTempGen::haschildren(const UniConfKey &key)
 {
     if (root)
     {
@@ -145,7 +145,7 @@ bool UniConfTempGen::haschildren(const UniConfKey &key)
 }
 
 
-UniConfGen::Iter *UniConfTempGen::iterator(const UniConfKey &key)
+UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
 {
     if (root)
     {
@@ -158,47 +158,47 @@ UniConfGen::Iter *UniConfTempGen::iterator(const UniConfKey &key)
 
 
 
-/***** UniConfTempGen::NodeIter *****/
+/***** UniTempGen::NodeIter *****/
 
-UniConfTempGen::NodeIter::NodeIter(UniConfTempGen *gen,
+UniTempGen::NodeIter::NodeIter(UniTempGen *gen,
     const UniConfValueTree::Iter &it) :
     xgen(gen), xit(it)
 {
 }
 
 
-UniConfTempGen::NodeIter::NodeIter(
-    const UniConfTempGen::NodeIter &other) :
+UniTempGen::NodeIter::NodeIter(
+    const UniTempGen::NodeIter &other) :
     UniConfAbstractIter(other),
     xgen(other.xgen), xit(other.xit)
 {
 }
 
 
-UniConfTempGen::NodeIter::~NodeIter()
+UniTempGen::NodeIter::~NodeIter()
 {
 }
 
 
-UniConfTempGen::NodeIter *UniConfTempGen::NodeIter::clone() const
+UniTempGen::NodeIter *UniTempGen::NodeIter::clone() const
 {
-    return new UniConfTempGen::NodeIter(*this);
+    return new UniTempGen::NodeIter(*this);
 }
 
 
-void UniConfTempGen::NodeIter::rewind()
+void UniTempGen::NodeIter::rewind()
 {
     xit.rewind();
 }
 
 
-bool UniConfTempGen::NodeIter::next()
+bool UniTempGen::NodeIter::next()
 {
     return xit.next();
 }
 
 
-UniConfKey UniConfTempGen::NodeIter::key() const
+UniConfKey UniTempGen::NodeIter::key() const
 {
     return xit->key();
 }

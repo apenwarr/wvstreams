@@ -167,13 +167,13 @@ DeclareWvList(UniConfGen);
  * derive from this, you can selectively override particular behaviours
  * of a sub-generator.
  */
-class UniConfFilterGen : public UniConfGen
+class UniFilterGen : public UniConfGen
 {
     UniConfGen *xinner;
 
 protected:
-    UniConfFilterGen(UniConfGen *inner);
-    virtual ~UniConfFilterGen();
+    UniFilterGen(UniConfGen *inner);
+    virtual ~UniFilterGen();
 
     /** Rebinds the inner generator. */
     void setinner(UniConfGen *inner);

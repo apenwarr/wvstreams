@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 	return 1;
     }
     
-    WvDynamicBuffer buf, buf2;
+    WvDynBuf buf, buf2;
     
     unsigned char *cptr;
     const unsigned char *iptr;

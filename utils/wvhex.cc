@@ -36,7 +36,7 @@ bool WvHexEncoder::_reset()
 }
 
 
-bool WvHexEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvHexEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     while (in.used() != 0)
     {
@@ -64,7 +64,7 @@ bool WvHexDecoder::_reset()
 }
 
 
-bool WvHexDecoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvHexDecoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     while (in.used() != 0)
     {

@@ -23,7 +23,7 @@ WvXOREncoder::~WvXOREncoder()
 }
 
 
-bool WvXOREncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+bool WvXOREncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 {
     size_t len;
     while ((len = inbuf.optgettable()) != 0)

@@ -26,7 +26,7 @@ WvEVPMDDigest::~WvEVPMDDigest()
 }
 
 
-bool WvEVPMDDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvEVPMDDigest::_encode(WvBuf &inbuf, WvBuf &outbuf,
     bool flush)
 {
     size_t len;
@@ -39,7 +39,7 @@ bool WvEVPMDDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
 }
 
 
-bool WvEVPMDDigest::_finish(WvBuffer &outbuf)
+bool WvEVPMDDigest::_finish(WvBuf &outbuf)
 {
     assert(active);
     unsigned char digest[EVP_MAX_MD_SIZE];
@@ -116,7 +116,7 @@ WvHMACDigest::~WvHMACDigest()
 }
 
 
-bool WvHMACDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvHMACDigest::_encode(WvBuf &inbuf, WvBuf &outbuf,
     bool flush)
 {
     size_t len;
@@ -129,7 +129,7 @@ bool WvHMACDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
 }
 
 
-bool WvHMACDigest::_finish(WvBuffer &outbuf)
+bool WvHMACDigest::_finish(WvBuf &outbuf)
 {
     assert(active);
     unsigned char digest[EVP_MAX_MD_SIZE];

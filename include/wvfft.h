@@ -8,7 +8,7 @@
 #define __WVFFT_H
 
 #include "wvtypedencoder.h"
-#include "wvbuffer.h"
+#include "wvbuf.h"
 
 struct fftw_plan_struct;
 
@@ -90,7 +90,7 @@ class WvComplexToRealFFTEncoder :
 {
     struct fftw_plan_struct *plan;
     size_t n;
-    WvInPlaceBufferBase<double> tmpbuf;
+    WvInPlaceBufBase<double> tmpbuf;
     
 public:
     /**

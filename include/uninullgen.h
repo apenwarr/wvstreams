@@ -15,11 +15,11 @@
  * To mount, use the moniker "null:".
  *
  */
-class UniConfNullGen : public UniConfGen
+class UniNullGen : public UniConfGen
 {
 public:
-    UniConfNullGen();
-    virtual ~UniConfNullGen();
+    UniNullGen();
+    virtual ~UniNullGen();
 
     /***** Overridden methods *****/
 

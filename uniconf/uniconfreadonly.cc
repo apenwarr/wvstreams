@@ -4,7 +4,7 @@
  * 
  * A read only generator wrapper.
  */
-#include "uniconfreadonly.h"
+#include "unireadonlygen.h"
 #include "wvmoniker.h"
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
@@ -18,31 +18,31 @@ static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
     if (!gen)
 	gen = wvcreate<UniConfGen>(s);
     
-    return new UniConfReadOnlyGen(gen);
+    return new UniReadOnlyGen(gen);
 }
 
 static WvMoniker<UniConfGen> reg("readonly", creator);
 
 
-UniConfReadOnlyGen::UniConfReadOnlyGen(UniConfGen *inner) :
-    UniConfFilterGen(inner)
+UniReadOnlyGen::UniReadOnlyGen(UniConfGen *inner) :
+    UniFilterGen(inner)
 {
 }
 
 
-bool UniConfReadOnlyGen::set(const UniConfKey &key, WvStringParm value)
-{
-    return false;
-}
-
-
-bool UniConfReadOnlyGen::zap(const UniConfKey &key)
+bool UniReadOnlyGen::set(const UniConfKey &key, WvStringParm value)
 {
     return false;
 }
 
 
-bool UniConfReadOnlyGen::commit(const UniConfKey &key, 
+bool UniReadOnlyGen::zap(const UniConfKey &key)
+{
+    return false;
+}
+
+
+bool UniReadOnlyGen::commit(const UniConfKey &key, 
 				UniConfDepth::Type depth)
 {
     return false;

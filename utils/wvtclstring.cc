@@ -4,7 +4,7 @@
  */
 #include "wvtclstring.h"
 #include "wvbackslash.h"
-#include "wvbuffer.h"
+#include "wvbuf.h"
 #include <wvstream.h>
 
 WvString wvtcl_escape(WvStringParm s, const char *nasties)
@@ -102,7 +102,7 @@ WvString wvtcl_unescape(WvStringParm s)
 WvString wvtcl_encode(WvStringList &l, const char *nasties,
 		      const char *splitchars)
 {
-    WvDynamicBuffer b;
+    WvDynBuf b;
     WvStringList::Iter i(l);
     for (i.rewind(); i.next(); )
     {
@@ -117,7 +117,7 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties,
     return b.getstr();
 }
 
-WvString wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
+WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
 {
     int origsize = buf.used();
     if (origsize == 0)

@@ -87,7 +87,7 @@ void WvUrlRequest::done()
 
 static WvString fixnl(WvStringParm nonl)
 {
-    WvDynamicBuffer b;
+    WvDynBuf b;
     const char *cptr;
     
     for (cptr = nonl; cptr && *cptr; cptr++)

@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * UniConfDefGen is a UniConfGen for retrieving data with defaults
+ * UniDefGen is a UniConfGen for retrieving data with defaults
  * 
  * Usable with the moniker default:
  */
@@ -33,12 +33,12 @@
  * defaults. Precedence is given to matches existing closer to the end of
  * the key.
  */
-class UniConfDefGen : public UniConfFilterGen
+class UniDefGen : public UniFilterGen
 {
     WvString finddefault(UniConfKey key, UniConfKey keypart = "");
 
 public:
-    UniConfDefGen(UniConfGen *gen) : UniConfFilterGen(gen) { }
+    UniDefGen(UniConfGen *gen) : UniFilterGen(gen) { }
 
     /***** Overridden members *****/
 

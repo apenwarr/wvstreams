@@ -4,52 +4,52 @@
  * 
  * A generator that is always empty and rejects changes.
  */
-#include "uniconfnull.h"
+#include "uninullgen.h"
 #include "wvmoniker.h"
 
 static UniConfGen *creator(WvStringParm, IObject *, void *)
 {
-    return new UniConfNullGen();
+    return new UniNullGen();
 }
 
 static WvMoniker<UniConfGen> reg("null", creator);
 
 
-UniConfNullGen::UniConfNullGen()
+UniNullGen::UniNullGen()
 {
 }
 
 
-UniConfNullGen::~UniConfNullGen()
+UniNullGen::~UniNullGen()
 {
 }
 
 
-WvString UniConfNullGen::get(const UniConfKey &key)
+WvString UniNullGen::get(const UniConfKey &key)
 {
     return WvString::null;
 }
 
 
-bool UniConfNullGen::set(const UniConfKey &key, WvStringParm value)
+bool UniNullGen::set(const UniConfKey &key, WvStringParm value)
 {
     return false;
 }
 
 
-bool UniConfNullGen::zap(const UniConfKey &key)
+bool UniNullGen::zap(const UniConfKey &key)
 {
     return false;
 }
 
 
-bool UniConfNullGen::haschildren(const UniConfKey &key)
+bool UniNullGen::haschildren(const UniConfKey &key)
 {
     return false;
 }
 
 
-UniConfNullGen::Iter *UniConfNullGen::iterator(const UniConfKey &key)
+UniNullGen::Iter *UniNullGen::iterator(const UniConfKey &key)
 {
     return new NullIter();
 }

@@ -31,7 +31,7 @@ WvString WvEncoder::geterror() const
 }
 
 
-bool WvEncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvEncoder::encode(WvBuf &inbuf, WvBuf &outbuf,
     bool flush, bool _finish)
 {
     // deliberately not using isok() and isfinished() here
@@ -44,7 +44,7 @@ bool WvEncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf,
 }
 
 
-bool WvEncoder::finish(WvBuffer &outbuf)
+bool WvEncoder::finish(WvBuf &outbuf)
 {
     // deliberately not using isok() and isfinished() here
     bool success = okay && ! finished;
@@ -72,7 +72,7 @@ bool WvEncoder::reset()
 }
 
 
-bool WvEncoder::flushstrbuf(WvStringParm instr, WvBuffer &outbuf,
+bool WvEncoder::flushstrbuf(WvStringParm instr, WvBuf &outbuf,
     bool finish)
 {
     WvConstStringBuffer inbuf(instr);
@@ -85,17 +85,17 @@ bool WvEncoder::flushstrstr(WvStringParm instr, WvString &outstr,
     bool finish)
 {
     WvConstStringBuffer inbuf(instr);
-    WvDynamicBuffer outbuf;
+    WvDynBuf outbuf;
     bool success = encode(inbuf, outbuf, true, finish);
     outstr.append(outbuf.getstr());
     return success;
 }
 
 
-bool WvEncoder::encodebufstr(WvBuffer &inbuf, WvString &outstr,
+bool WvEncoder::encodebufstr(WvBuf &inbuf, WvString &outstr,
     bool flush, bool finish)
 {
-    WvDynamicBuffer outbuf;
+    WvDynBuf outbuf;
     bool success = encode(inbuf, outbuf, flush, finish);
     outstr.append(outbuf.getstr());
     return success;
@@ -110,7 +110,7 @@ WvString WvEncoder::strflushstr(WvStringParm instr, bool finish)
 }
 
 
-WvString WvEncoder::strflushbuf(WvBuffer &inbuf, bool finish)
+WvString WvEncoder::strflushbuf(WvBuf &inbuf, bool finish)
 {
     WvString outstr;
     flushbufstr(inbuf, outstr, finish);
@@ -119,7 +119,7 @@ WvString WvEncoder::strflushbuf(WvBuffer &inbuf, bool finish)
 
 
 bool WvEncoder::flushmembuf(const void *inmem, size_t inlen,
-    WvBuffer &outbuf, bool finish)
+    WvBuf &outbuf, bool finish)
 {
     WvConstInPlaceBuffer inbuf(inmem, inlen);
     bool success = encode(inbuf, outbuf, true, finish);
@@ -135,10 +135,10 @@ bool WvEncoder::flushmemmem(const void *inmem, size_t inlen,
 }
 
 
-bool WvEncoder::encodebufmem(WvBuffer &inbuf,
+bool WvEncoder::encodebufmem(WvBuf &inbuf,
     void *outmem, size_t *outlen, bool flush, bool finish)
 {
-    WvInPlaceBuffer outbuf(outmem, 0, *outlen);
+    WvInPlaceBuf outbuf(outmem, 0, *outlen);
     bool success = encode(inbuf, outbuf, true, finish);
     *outlen = outbuf.used();
     return success;
@@ -162,7 +162,7 @@ WvString WvEncoder::strflushmem(const void *inmem, size_t inlen, bool finish)
 
 /***** WvNullEncoder *****/
 
-bool WvNullEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvNullEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     in.zap();
     return true;
@@ -184,7 +184,7 @@ WvPassthroughEncoder::WvPassthroughEncoder()
 }
 
 
-bool WvPassthroughEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvPassthroughEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     total += in.used();
     out.merge(in);
@@ -259,7 +259,7 @@ WvString WvEncoderChain::_geterror() const
 //       isfinished() results to allow addition/removal of
 //       individual broken encoders while still processing data
 //       through as much of the chain as possible.
-bool WvEncoderChain::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvEncoderChain::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     if (encoders.isempty())
         return passthrough.encode(in, out, flush);
@@ -269,12 +269,12 @@ bool WvEncoderChain::_encode(WvBuffer &in, WvBuffer &out, bool flush)
     WvEncoderChainElemListBase::Iter it(encoders);
     it.rewind();
     it.next();
-    for (WvBuffer *tmpin = & in;;)
+    for (WvBuf *tmpin = & in;;)
     {
         // merge pending output and select an output buffer
         WvEncoderChainElem *encelem = it.ptr();
         bool hasnext = it.next();
-        WvBuffer *tmpout;
+        WvBuf *tmpout;
         if (! hasnext)
         {
             out.merge(encelem->out);
@@ -299,7 +299,7 @@ bool WvEncoderChain::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 //       isfinished() results to allow addition/removal of
 //       individual broken encoders while still processing data
 //       through as much of the chain as possible.
-bool WvEncoderChain::_finish(WvBuffer &out)
+bool WvEncoderChain::_finish(WvBuf &out)
 {
     if (encoders.isempty())
         return true;
@@ -310,12 +310,12 @@ bool WvEncoderChain::_finish(WvBuffer &out)
     it.rewind();
     it.next();
     bool needs_flush = false;
-    for (WvBuffer *tmpin = NULL;;)
+    for (WvBuf *tmpin = NULL;;)
     {
         // merge pending output and select an output buffer
         WvEncoderChainElem *encelem = it.ptr();
         bool hasnext = it.next();
-        WvBuffer *tmpout;
+        WvBuf *tmpout;
         if (! hasnext)
         {
             out.merge(encelem->out);

@@ -363,7 +363,7 @@ static FILE *file_hack_start()
 
 static WvString file_hack_end(FILE *f)
 {
-    WvDynamicBuffer b;
+    WvDynBuf b;
     size_t len;
     
     rewind(f);

@@ -4,15 +4,15 @@
  *
  * A generic buffering API.
  * Please declare specializations in a separate header file,
- * See "wvbuffer.h".
+ * See "wvbuf.h".
  */
 #ifndef __WVBUFFERBASE_H
 #define __WVBUFFERBASE_H
 
-#include "wvbufferstore.h"
+#include "wvbufstore.h"
 
 template<class T>
-class WvBufferBase;
+class WvBufBase;
 
 /**
  * An abstract generic buffer template.
@@ -22,28 +22,28 @@ class WvBufferBase;
  * storage mechanism and queuing machinery.  In addition they may provide
  * additional functionality for accomplishing particular tasks.
  *
- * The base component is split into two parts, WvBufferBaseCommonImpl
- * that defines the common API for all buffer types, and WvBufferBase
+ * The base component is split into two parts, WvBufBaseCommonImpl
+ * that defines the common API for all buffer types, and WvBufBase
  * that allows specializations to be defined to add functionality
  * to the base type.  When passing around buffer objects, you should
- * use the WvBufferBase<T> type rather than WvBufferBaseCommonImpl<T>.
+ * use the WvBufBase<T> type rather than WvBufBaseCommonImpl<T>.
  *
- * See WvBufferBase<T>
+ * See WvBufBase<T>
  * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvBufferBaseCommonImpl
+class WvBufBaseCommonImpl
 {
 protected:
     typedef T Elem;
-    typedef WvBufferBase<T> Buffer;
+    typedef WvBufBase<T> Buffer;
 
-    WvBufferStore *store;
+    WvBufStore *store;
     
     // discourage copying
-    explicit WvBufferBaseCommonImpl(
-        const WvBufferBaseCommonImpl &other) { }
+    explicit WvBufBaseCommonImpl(
+        const WvBufBaseCommonImpl &other) { }
 
 protected:
     /**
@@ -54,19 +54,19 @@ protected:
      *
      * "store" is the low-level storage object
      */
-    explicit WvBufferBaseCommonImpl(WvBufferStore *store) :
+    explicit WvBufBaseCommonImpl(WvBufStore *store) :
         store(store) { }
 
 public:
     /** Destroys the buffer. */
-    virtual ~WvBufferBaseCommonImpl() { }
+    virtual ~WvBufBaseCommonImpl() { }
 
     /**
      * Returns a pointer to the underlying storage class object.
      *
      * Returns: the low-level storage class object pointer, non-null
      */
-    WvBufferStore *getstore()
+    WvBufStore *getstore()
     {
         return store;
     }
@@ -577,18 +577,18 @@ public:
 /**
  * The generic buffer base type.
  * To specialize buffers to add new functionality, declare a template
- * specialization of this type that derives from WvBufferBaseCommonImpl.
+ * specialization of this type that derives from WvBufBaseCommonImpl.
  *
- * See WvBufferBaseCommonImpl<T>
+ * See WvBufBaseCommonImpl<T>
  * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvBufferBase : public WvBufferBaseCommonImpl<T>
+class WvBufBase : public WvBufBaseCommonImpl<T>
 {
 public:
-    explicit WvBufferBase(WvBufferStore *store) :
-        WvBufferBaseCommonImpl<T>(store) { }
+    explicit WvBufBase(WvBufStore *store) :
+        WvBufBaseCommonImpl<T>(store) { }
 };
 
 
@@ -601,12 +601,12 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvInPlaceBufferBase : public WvBufferBase<T>
+class WvInPlaceBufBase : public WvBufBase<T>
 {
 protected:
     typedef T Elem;
 
-    WvInPlaceBufferStore mystore;
+    WvInPlaceBufStore mystore;
 
 public:
     /**
@@ -617,9 +617,9 @@ public:
      * "_size" is the size of the array
      * "_autofree" is if true, the array will be freed when discarded
      */
-    WvInPlaceBufferBase(T *_data, size_t _avail, size_t _size,
+    WvInPlaceBufBase(T *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
-        WvBufferBase<T>(& mystore),
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _data, _avail * sizeof(Elem),
             _size * sizeof(Elem), _autofree) { }
 
@@ -628,13 +628,13 @@ public:
      *
      * "_size" is the size of the array
      */
-    explicit WvInPlaceBufferBase(size_t _size) :
-        WvBufferBase<T>(& mystore),
+    explicit WvInPlaceBufBase(size_t _size) :
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _size * sizeof(Elem)) { }
 
     /** Creates a new empty buffer with no backing array. */
-    WvInPlaceBufferBase() :
-        WvBufferBase<T>(& mystore),
+    WvInPlaceBufBase() :
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), NULL, 0, 0, false) { }
 
     /**
@@ -643,7 +643,7 @@ public:
      * Frees the underlying array if autofree().
      * 
      */
-    virtual ~WvInPlaceBufferBase() { }
+    virtual ~WvInPlaceBufBase() { }
 
     /**
      * Returns the underlying array pointer.
@@ -725,7 +725,7 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvConstInPlaceBufferBase : public WvBufferBase<T>
+class WvConstInPlaceBufferBase : public WvBufBase<T>
 {
 protected:
     typedef T Elem;
@@ -740,12 +740,12 @@ public:
      * "_avail" is the amount of data available for reading
      */
     WvConstInPlaceBufferBase(const T *_data, size_t _avail) :
-        WvBufferBase<T>(& mystore),
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _data, _avail * sizeof(Elem)) { }
 
     /** Creates a new empty buffer with no backing array. */
     WvConstInPlaceBufferBase() :
-        WvBufferBase<T>(& mystore),
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), NULL, 0) { }
 
     /**
@@ -798,7 +798,7 @@ public:
  * A buffer that wraps a pre-allocated array and provides
  * read-write access to its elements using a circular buffering
  * scheme rather than a purely linear one, as used by
- * WvInPlaceBuffer.  
+ * WvInPlaceBuf.  
  *
  * When there is insufficient contigous free/used space to
  * satisfy a read or write request, the data is automatically
@@ -811,12 +811,12 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvCircularBufferBase : public WvBufferBase<T>
+class WvCircularBufBase : public WvBufBase<T>
 {
 protected:
     typedef T Elem;
 
-    WvCircularBufferStore mystore;
+    WvCircularBufStore mystore;
 
 public:
     /**
@@ -828,9 +828,9 @@ public:
      * "_size" is the size of the array
      * "_autofree" is if true, the array will be freed when discarded
      */
-    WvCircularBufferBase(T *_data, size_t _avail, size_t _size,
+    WvCircularBufBase(T *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
-        WvBufferBase<T>(& mystore),
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _data, _avail * sizeof(Elem),
             _size * sizeof(Elem), _autofree) { }
 
@@ -839,13 +839,13 @@ public:
      *
      * "_size" is the size of the array
      */
-    explicit WvCircularBufferBase(size_t _size) :
-        WvBufferBase<T>(& mystore),
+    explicit WvCircularBufBase(size_t _size) :
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _size * sizeof(Elem)) { }
 
     /** Creates a new empty buffer with no backing array. */
-    WvCircularBufferBase() :
-        WvBufferBase<T>(& mystore),
+    WvCircularBufBase() :
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), NULL, 0, 0, false) { }
 
     /**
@@ -854,7 +854,7 @@ public:
      * Frees the underlying array if autofree().
      * 
      */
-    virtual ~WvCircularBufferBase() { }
+    virtual ~WvCircularBufBase() { }
 
     /**
      * Returns the underlying array pointer.
@@ -951,12 +951,12 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvDynamicBufferBase : public WvBufferBase<T>
+class WvDynBufBase : public WvBufBase<T>
 {
 protected:
     typedef T Elem;
 
-    WvDynamicBufferStore mystore;
+    WvDynBufStore mystore;
     
 public:
     /**
@@ -971,9 +971,9 @@ public:
      *      at once when creating a new internal buffer segment
      *      before before reverting to a linear growth pattern
      */
-    explicit WvDynamicBufferBase(size_t _minalloc = 1024,
+    explicit WvDynBufBase(size_t _minalloc = 1024,
         size_t _maxalloc = 1048576) :
-        WvBufferBase<T>(& mystore),
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _minalloc * sizeof(Elem),
             _maxalloc * sizeof(Elem)) { }
 
@@ -997,17 +997,17 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvEmptyBufferBase : public WvBufferBase<T>
+class WvNullBufBase : public WvBufBase<T>
 {
 protected:
     typedef T Elem;
 
-    WvEmptyBufferStore mystore;
+    WvNullBufStore mystore;
 
 public:
     /** Creates a new buffer. */
-    WvEmptyBufferBase() :
-        WvBufferBase<T>(& mystore),
+    WvNullBufBase() :
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem)) { }
 };
 
@@ -1022,12 +1022,12 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvBufferCursorBase : public WvBufferBase<T>
+class WvBufCursorBase : public WvBufBase<T>
 {
 protected:
     typedef T Elem;
 
-    WvBufferCursorStore mystore;
+    WvBufCursorStore mystore;
 
 public:
     /**
@@ -1040,9 +1040,9 @@ public:
      * "_start" is the buffer offset of the window start position
      * "_length" is the length of the window
      */
-    WvBufferCursorBase(WvBufferBase<T> &_buf, int _start,
+    WvBufCursorBase(WvBufBase<T> &_buf, int _start,
         size_t _length) :
-        WvBufferBase<T>(& mystore),
+        WvBufBase<T>(& mystore),
         mystore(sizeof(Elem), _buf.getstore(),
             _start * sizeof(Elem), _length * sizeof(Elem)) { }
 };
@@ -1060,7 +1060,7 @@ public:
  *        without special initialization, copy, or assignment semantics
  */
 template<class T>
-class WvBufferViewBase : public WvBufferBase<T>
+class WvBufViewBase : public WvBufBase<T>
 {
 public:
     /**
@@ -1072,8 +1072,8 @@ public:
      * "_buf" is a pointer to the buffer to be wrapped
      */
     template<typename S>
-    WvBufferViewBase(WvBufferBase<S> &_buf) :
-        WvBufferBase<T>(_buf.getstore()) { }
+    WvBufViewBase(WvBufBase<S> &_buf) :
+        WvBufBase<T>(_buf.getstore()) { }
 };
 
 #endif // __WVBUFFERBASE_H

@@ -16,10 +16,10 @@
  * moniker of the generator to wrap.
  *
  */
-class UniConfReadOnlyGen : public UniConfFilterGen
+class UniReadOnlyGen : public UniFilterGen
 {
 public:
-    UniConfReadOnlyGen(UniConfGen *inner);
+    UniReadOnlyGen(UniConfGen *inner);
 
     /***** Overridden members *****/
 

@@ -54,9 +54,9 @@ public:
 
 protected:
     WvEVPMDDigest(const env_md_st *_evpmd);
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush); // consumes input
-    virtual bool _finish(WvBuffer &outbuf); // outputs digest
+    virtual bool _finish(WvBuf &outbuf); // outputs digest
     virtual bool _reset(); // supported: resets digest value
     
     const env_md_st *getevpmd()
@@ -121,9 +121,9 @@ public:
     virtual size_t digestsize() const;
 
 protected:
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush); // consumes input
-    virtual bool _finish(WvBuffer &outbuf); // outputs digest
+    virtual bool _finish(WvBuf &outbuf); // outputs digest
     virtual bool _reset(); // supported: resets digest value
 
 private:

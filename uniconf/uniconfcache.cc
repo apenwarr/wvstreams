@@ -4,17 +4,17 @@
  * 
  * Caching support for building UniConfGen implementations.
  */
-#include "uniconfcache.h"
+#include "unicache.h"
 #include "uniconftree.h"
 #include "wvstringlist.h"
 
-/***** UniConfCache::CacheTree *****/
+/***** UniCache::CacheTree *****/
 
 /**
  * @internal
  * Cache tree structure.
  */
-class UniConfCache::CacheTree : public UniConfTree<CacheTree>
+class UniCache::CacheTree : public UniConfTree<CacheTree>
 {
 public:
     WvString xvalue; /*!< the value of this entry, WvString::null if unknown */
@@ -30,20 +30,20 @@ public:
 
 
 
-/***** UniConfCache *****/
+/***** UniCache *****/
 
-UniConfCache::UniConfCache() :
+UniCache::UniCache() :
     cache(NULL)
 {
 }
 
 
-UniConfCache::~UniConfCache()
+UniCache::~UniCache()
 {
     delete cache;
 }
 
-void UniConfCache::mark_unknown_value(const UniConfKey &key)
+void UniCache::mark_unknown_value(const UniConfKey &key)
 {
     CacheTree *node = find(key);
     if (! node) return;
@@ -52,7 +52,7 @@ void UniConfCache::mark_unknown_value(const UniConfKey &key)
 }
 
 
-void UniConfCache::mark_unknown_children(const UniConfKey &key)
+void UniCache::mark_unknown_children(const UniConfKey &key)
 {
     CacheTree *node = find(key);
     if (! node) return;
@@ -62,7 +62,7 @@ void UniConfCache::mark_unknown_children(const UniConfKey &key)
 }
 
 
-void UniConfCache::mark_known_children(const UniConfKey &key)
+void UniCache::mark_known_children(const UniConfKey &key)
 {
     CacheTree *node = find(key);
     if (! node) return;
@@ -71,7 +71,7 @@ void UniConfCache::mark_known_children(const UniConfKey &key)
 }
 
 
-void UniConfCache::mark_no_children(const UniConfKey &key)
+void UniCache::mark_no_children(const UniConfKey &key)
 {
     CacheTree *node = find(key);
     if (! node) return;
@@ -81,7 +81,7 @@ void UniConfCache::mark_no_children(const UniConfKey &key)
 }
 
 
-void UniConfCache::mark_unknown_exist(const UniConfKey &key)
+void UniCache::mark_unknown_exist(const UniConfKey &key)
 {
     CacheTree *node = find(key);
     if (! node) return;
@@ -94,7 +94,7 @@ void UniConfCache::mark_unknown_exist(const UniConfKey &key)
 }
 
 
-void UniConfCache::mark_not_exist(const UniConfKey &key)
+void UniCache::mark_not_exist(const UniConfKey &key)
 {
     CacheTree *node = find(key);
     if (! node) return;
@@ -105,7 +105,7 @@ void UniConfCache::mark_not_exist(const UniConfKey &key)
 }
 
 
-void UniConfCache::mark_exist(const UniConfKey &key, WvStringParm value)
+void UniCache::mark_exist(const UniConfKey &key, WvStringParm value)
 {
     if (! cache)
         cache = new CacheTree(NULL, UniConfKey::EMPTY);
@@ -124,7 +124,7 @@ void UniConfCache::mark_exist(const UniConfKey &key, WvStringParm value)
 }
 
 
-void UniConfCache::mark_change(const UniConfKey &key,
+void UniCache::mark_change(const UniConfKey &key,
     UniConfDepth::Type depth)
 {
     switch (depth)
@@ -142,7 +142,7 @@ void UniConfCache::mark_change(const UniConfKey &key,
 }
 
 
-UniConfCache::TriState UniConfCache::query_exist(const UniConfKey &key,
+UniCache::TriState UniCache::query_exist(const UniConfKey &key,
     WvString *value)
 {
     TriState result;
@@ -157,7 +157,7 @@ UniConfCache::TriState UniConfCache::query_exist(const UniConfKey &key,
  * If keys != NULL, keys will be filled in with the keys of
  * all children ONLY IF they are ALL known.
  */
-UniConfCache::TriState UniConfCache::query_children(const UniConfKey &key,
+UniCache::TriState UniCache::query_children(const UniConfKey &key,
     WvStringList *keys)
 {
     TriState result;
@@ -181,7 +181,7 @@ UniConfCache::TriState UniConfCache::query_children(const UniConfKey &key,
 }
 
 
-UniConfCache::CacheTree *UniConfCache::find(const UniConfKey &key)
+UniCache::CacheTree *UniCache::find(const UniConfKey &key)
 {
     if (! cache)
         return NULL;
@@ -190,7 +190,7 @@ UniConfCache::CacheTree *UniConfCache::find(const UniConfKey &key)
 
 
 
-UniConfCache::CacheTree *UniConfCache::findproof(const UniConfKey &key,
+UniCache::CacheTree *UniCache::findproof(const UniConfKey &key,
     TriState *exists)
 {
     *exists = UNKNOWN;

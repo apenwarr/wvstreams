@@ -7,11 +7,11 @@
 #ifndef __UNICONFROOT_H
 #define __UNICONFROOT_H
 
-#include "uniconfmounttree.h"
+#include "unimounttreegen.h"
 #include "uniconfwatch.h"
 
 /** The UniConfRoot implementation. */
-class UniConfRootImpl : public UniConfMountTreeGen
+class UniConfRootImpl : public UniMountTreeGen
 {
     /** undefined. */
     UniConfRootImpl(const UniConfRootImpl &other);

@@ -36,7 +36,7 @@ class WvOggSpeexEncoder :
     ogg_stream_state *oggstream;
     bool wrote_headers;
     
-    WvInPlaceBuffer framebuf;
+    WvInPlaceBuf framebuf;
 
 public:
     static const long RANDOM_SERIALNO = 0;

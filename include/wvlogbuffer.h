@@ -56,7 +56,7 @@ protected:
      *      there are. Just stores the pointers.
      */
     MsgCounterDict counters;
-    WvDynamicBuffer current;
+    WvDynBuf current;
     int max_lines;
     
     virtual void _begin_line() {};

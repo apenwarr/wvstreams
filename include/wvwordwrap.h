@@ -32,11 +32,11 @@ public:
 
 protected:
     // on flush, outputs a partial line with remaining chars
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
     virtual bool _reset(); // supported
 
 private:
-    void flushline(WvBuffer &outbuf);
+    void flushline(WvBuf &outbuf);
 };
 
 #endif // __WVWORDWRAP_H

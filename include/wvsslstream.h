@@ -95,14 +95,14 @@ private:
      * indicates that the function should be called again with
      * precisely the same arguments as the last time.  To ensure that
      * this can happen, we must unfortunately copy data into a bounce
-     * buffer and remeber the fact.  We use a WvBuffer here to allow
+     * buffer and remeber the fact.  We use a WvBuf here to allow
      * an arbitrary amount of data to be set aside.
      */
-    WvInPlaceBuffer write_bouncebuf;
+    WvInPlaceBuf write_bouncebuf;
     size_t write_eat;
 
     /** Similar nastiness happens with SSL_read() */
-    WvInPlaceBuffer read_bouncebuf;
+    WvInPlaceBuf read_bouncebuf;
     bool read_pending;
 };
 

@@ -7,7 +7,7 @@
 #include "wvunixsocket.h"
 #include "wvaddr.h"
 #include "uniconf.h"
-#include "uniconfclient.h"
+#include "uniclientgen.h"
 #include "wvtcp.h"
 #include "wvlogrcv.h"
 

@@ -2,11 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
- * UniConfDefGen is a UniConfGen for retrieving data with defaults
+ * UniDefGen is a UniConfGen for retrieving data with defaults
  *
  */
 
-#include "uniconfdefgen.h"
+#include "unidefgen.h"
 #include "wvmoniker.h"
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
@@ -20,22 +20,22 @@ static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
     if (!gen)
         gen = wvcreate<UniConfGen>(s);
 
-    return new UniConfDefGen(gen);
+    return new UniDefGen(gen);
 }
 
 static WvMoniker<UniConfGen> reg("default", creator);
 
 
-WvString UniConfDefGen::get(const UniConfKey &key)
+WvString UniDefGen::get(const UniConfKey &key)
 {
     return finddefault(key);
 }
 
 
-WvString UniConfDefGen::finddefault(UniConfKey key, UniConfKey keypart)
+WvString UniDefGen::finddefault(UniConfKey key, UniConfKey keypart)
 {
     if (key.isempty())
-        return UniConfFilterGen::get(keypart);
+        return UniFilterGen::get(keypart);
 
     WvString cur = key.first();
     key = key.removefirst();

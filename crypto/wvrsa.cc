@@ -56,7 +56,7 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     rsa = NULL;
     
     // unhexify the supplied key
-    WvDynamicBuffer keybuf;
+    WvDynBuf keybuf;
     if (! WvHexDecoder().flushstrbuf(keystr, keybuf, true) ||
         keybuf.used() == 0)
     {
@@ -124,7 +124,7 @@ void WvRSAKey::pem2hex(WvStringParm filename)
 
 WvString WvRSAKey::hexifypub(struct rsa_st *rsa)
 {
-    WvDynamicBuffer keybuf;
+    WvDynBuf keybuf;
     size_t size = i2d_RSAPublicKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPublicKey(rsa, & key);
@@ -137,7 +137,7 @@ WvString WvRSAKey::hexifypub(struct rsa_st *rsa)
 
 WvString WvRSAKey::hexifyprv(struct rsa_st *rsa)
 {
-    WvDynamicBuffer keybuf;
+    WvDynBuf keybuf;
     size_t size = i2d_RSAPrivateKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPrivateKey(rsa, & key);
@@ -171,7 +171,7 @@ bool WvRSAEncoder::_reset()
 }
 
 
-bool WvRSAEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvRSAEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     if (rsasize == 0)
     {

@@ -6,7 +6,7 @@
  *
  */
 #include "strutils.h"
-#include "wvbuffer.h"
+#include "wvbuf.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -85,7 +85,7 @@ char *non_breaking(char * string)
     if (string == NULL)
         return (NULL);
 
-    WvDynamicBuffer buf;
+    WvDynBuf buf;
 
     while (*string)
     {
@@ -395,7 +395,7 @@ WvString getdirname(WvStringParm fullname)
 
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
-    WvDynamicBuffer buf;
+    WvDynBuf buf;
     const char *sptr = s, *eptr;
     
     while ((eptr = strstr(sptr, a)) != NULL)

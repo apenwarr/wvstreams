@@ -51,7 +51,7 @@ WvGzipEncoder::~WvGzipEncoder()
 }
 
 
-bool WvGzipEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 {
     bool success;
     for (;;)
@@ -73,14 +73,14 @@ bool WvGzipEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 }
 
 
-bool WvGzipEncoder::_finish(WvBuffer &outbuf)
+bool WvGzipEncoder::_finish(WvBuf &outbuf)
 {
     prepare(NULL);
     return process(outbuf, false, true);
 }
 
 
-void WvGzipEncoder::prepare(WvBuffer *inbuf)
+void WvGzipEncoder::prepare(WvBuf *inbuf)
 {
     assert(zstr->avail_in == 0);
     if (inbuf && inbuf->used() != 0)
@@ -98,7 +98,7 @@ void WvGzipEncoder::prepare(WvBuffer *inbuf)
 }
 
 
-bool WvGzipEncoder::process(WvBuffer &outbuf, bool flush, bool finish)
+bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
 {
     int flushmode = finish ? Z_FINISH :
         flush ? Z_SYNC_FLUSH : Z_NO_FLUSH;

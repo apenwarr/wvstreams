@@ -12,7 +12,7 @@
 #include "wvunixsocket.h"
 #include "wvaddr.h"
 #include "uniconf.h"
-#include "uniconfclient.h"
+#include "uniclientgen.h"
 #include "wvtcp.h"
 
 void printheader(WvString h, WvString mountpoint)

@@ -34,7 +34,7 @@ public:
     virtual ~WvBackslashEncoder() { }
 
 protected:
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
     virtual bool _reset();
 };
 
@@ -67,7 +67,7 @@ class WvBackslashDecoder : public WvEncoder
     enum State
         { Initial, Escape, Hex1, Hex2, Octal1, Octal2, Octal3 };
     State state;
-    WvInPlaceBuffer tmpbuf;
+    WvInPlaceBuf tmpbuf;
     int value;
 
 public:
@@ -76,11 +76,11 @@ public:
     virtual ~WvBackslashDecoder() { }
 
 protected:
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
     virtual bool _reset();
 
 private:
-    bool flushtmpbuf(WvBuffer &outbuf);
+    bool flushtmpbuf(WvBuf &outbuf);
 };
 
 #endif // __WVBACKSLASH_H

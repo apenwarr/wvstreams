@@ -12,7 +12,7 @@
 #include "uniconfiter.h"
 
 /** A UniConf generator that stores keys in memory. */
-class UniConfTempGen : public UniConfGen
+class UniTempGen : public UniConfGen
 {
 protected:
     class NodeIter;
@@ -22,8 +22,8 @@ public:
     UniConfValueTree *root; /*!< the root of the tree */
     bool dirty; /*!< set whenever the tree actually changes */
 
-    UniConfTempGen();
-    virtual ~UniConfTempGen();
+    UniTempGen();
+    virtual ~UniTempGen();
 
     /***** Overridden members *****/
 
@@ -36,15 +36,15 @@ public:
 };
 
 
-/** An iterator over keys stored in a UniConfTempGen. */
-class UniConfTempGen::NodeIter : public UniConfTempGen::Iter
+/** An iterator over keys stored in a UniTempGen. */
+class UniTempGen::NodeIter : public UniTempGen::Iter
 {
 protected:
-    UniConfTempGen *xgen;
+    UniTempGen *xgen;
     UniConfValueTree::Iter xit;
 
 public:
-    NodeIter(UniConfTempGen *gen, const UniConfValueTree::Iter &it);
+    NodeIter(UniTempGen *gen, const UniConfValueTree::Iter &it);
     NodeIter(const NodeIter &other);
     virtual ~NodeIter();
 

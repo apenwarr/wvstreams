@@ -5,16 +5,16 @@
  * A generator to make a UniConf object out of a WvConf.
  */
 
-#include "uniconfwvgen.h"
+#include "uniwvconfgen.h"
 // #include "wvlog.h"
 // WvLog log("Hmm?");
 
-WvString UniConfWvGen::get(const UniConfKey &key)
+WvString UniWvConfGen::get(const UniConfKey &key)
 {
     return cfg.get(key.first(), key.last(key.numsegments() - 1));
 }
 
-bool UniConfWvGen::set(const UniConfKey &key, WvStringParm value)
+bool UniWvConfGen::set(const UniConfKey &key, WvStringParm value)
 {
     cfg.set(key.first(), key.last(key.numsegments() - 1), value);
     if (cfg.get(key.first(), key.last(key.numsegments() - 1)) == value)
@@ -22,7 +22,7 @@ bool UniConfWvGen::set(const UniConfKey &key, WvStringParm value)
     return false;
 }
 
-bool UniConfWvGen::zap(const UniConfKey &key)
+bool UniWvConfGen::zap(const UniConfKey &key)
 {
     cfg.delete_section(key);
 
@@ -32,7 +32,7 @@ bool UniConfWvGen::zap(const UniConfKey &key)
     return true;
 }
 
-bool UniConfWvGen::haschildren(const UniConfKey &key)
+bool UniWvConfGen::haschildren(const UniConfKey &key)
 {
     WvConfigSection *sect = cfg[key];
     if (sect)
@@ -40,7 +40,7 @@ bool UniConfWvGen::haschildren(const UniConfKey &key)
     return false;
 }
 
-UniConfWvGen::Iter *UniConfWvGen::iterator(const UniConfKey &key)
+UniWvConfGen::Iter *UniWvConfGen::iterator(const UniConfKey &key)
 {
     WvConfigSection *sect = cfg[key];
 
@@ -53,27 +53,27 @@ UniConfWvGen::Iter *UniConfWvGen::iterator(const UniConfKey &key)
 
 // WvConfIter
 
-UniConfWvGen::WvConfIter::~WvConfIter()
+UniWvConfGen::WvConfIter::~WvConfIter()
 {
     delete i;
 }
 
-UniConfWvGen::Iter *UniConfWvGen::WvConfIter::clone() const
+UniWvConfGen::Iter *UniWvConfGen::WvConfIter::clone() const
 {
     return new WvConfIter(i);
 }
 
-void UniConfWvGen::WvConfIter::rewind()
+void UniWvConfGen::WvConfIter::rewind()
 {
     i->rewind();
 }
 
-bool UniConfWvGen::WvConfIter::next()
+bool UniWvConfGen::WvConfIter::next()
 {
     return i->next();
 }
 
-UniConfKey UniConfWvGen::WvConfIter::key() const
+UniConfKey UniWvConfGen::WvConfIter::key() const
 {
     return (*i)->name;
 }

@@ -1,4 +1,4 @@
-#include "uniconfwvgen.h"
+#include "uniwvconfgen.h"
 #include "uniconf.h"
 #include "wvconf.h"
 #include "wvlog.h"
@@ -50,7 +50,7 @@ int main()
     log("Now testing uniconf wrapper.\n");
     wvcon->print("\n");
 
-    UniConfRoot root(new UniConfWvGen(cfg));
+    UniConfRoot root(new UniWvConfGen(cfg));
 
     log("[intl]sLanguage = %s\n", root["intl"]["sLanguage"].get());
     log("[blah]bork = %s\n", root["blah"]["bork"].get());

@@ -55,7 +55,7 @@ public:
     void setiv(const void *iv);
 
 protected:
-    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
     virtual bool _reset(); // supported: restores most recently set
         // key and initialization vector
 

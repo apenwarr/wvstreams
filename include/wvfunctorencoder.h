@@ -37,8 +37,8 @@ public:
     typedef FT FType;
     typedef IT IType;
     typedef OT OType;
-    typedef WvBufferBase<IType> IBuffer;
-    typedef WvBufferBase<OType> OBuffer;  
+    typedef WvBufBase<IType> IBuffer;
+    typedef WvBufBase<OType> OBuffer;  
     WvFunctorEncoder(const FType &f) : f(f) { }
     virtual ~WvFunctorEncoder() { }
 

@@ -9,7 +9,7 @@
 
 #include "wvxplc.h"
 #include "wverror.h"
-#include "wvbuffer.h"
+#include "wvbuf.h"
 #include "wvcallback.h"
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
 #include <sys/time.h>
@@ -79,11 +79,11 @@ public:
     virtual size_t read(void *buf, size_t count) = 0;
     virtual size_t write(const void *buf, size_t count) = 0;
 
-    // FIXME: these are the new fancy versions, but WvBuffer needs to have
-    // a safely abstracted interface class (IWvBuffer) before IWvStream will
+    // FIXME: these are the new fancy versions, but WvBuf needs to have
+    // a safely abstracted interface class (IWvBuf) before IWvStream will
     // really be safe, if we include these.
-    virtual size_t read(WvBuffer &outbuf, size_t count) = 0;
-    virtual size_t write(WvBuffer &inbuf, size_t count = INT_MAX) = 0;
+    virtual size_t read(WvBuf &outbuf, size_t count) = 0;
+    virtual size_t write(WvBuf &inbuf, size_t count = INT_MAX) = 0;
     
     /**
      * flush the output buffer, if we can do it without delaying more than
@@ -178,7 +178,7 @@ public:
      * specify a reasonable upper bound on how much data should
      * be read at once.
      */
-    virtual size_t read(WvBuffer &outbuf, size_t count);
+    virtual size_t read(WvBuf &outbuf, size_t count);
 
     /**
      * Writes a data block to the stream from the buffer.
@@ -187,7 +187,7 @@ public:
      * If count is greater than the amount of data available in
      * the buffer, only writes at most that amount.
      */
-    virtual size_t write(WvBuffer &inbuf, size_t count = INT_MAX);
+    virtual size_t write(WvBuf &inbuf, size_t count = INT_MAX);
 
     /**
      * set the maximum size of outbuf, beyond which a call to write() will
@@ -228,7 +228,7 @@ public:
      * Readahead specified the maximum amount of data that the stream is
      * allowed to read in
      *
-     * This now uses the dynamic-sized WvBuffer.  It is expected that there
+     * This now uses the dynamic-sized WvBuf.  It is expected that there
      * will be no NULL characters on the line.
      */
     char *getline(time_t wait_msec, char separator = '\n',
@@ -540,7 +540,7 @@ private:
 protected:
     static WvTaskMan *taskman;
 
-    WvDynamicBuffer inbuf, outbuf;
+    WvDynBuf inbuf, outbuf;
     WvStreamCallback callfunc;
     WvStreamCallback closecb_func;
     void *userdata;

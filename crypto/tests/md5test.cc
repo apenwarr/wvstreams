@@ -10,14 +10,14 @@ int main()
 	free(malloc(1)); // For Electric Fence...
 
 	WvString request = "md5test";
-        WvDynamicBuffer md5buf;
+        WvDynBuf md5buf;
         WvMD5Digest md5;
 
 	WvLog log("MD5test", WvLog::Info);
 	log("Starting...\n");
 
         WvFile file(request, O_RDONLY);
-        WvDynamicBuffer filein;
+        WvDynBuf filein;
         while (file.isok())
         {
             file.read(filein, 1024);

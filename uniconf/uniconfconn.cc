@@ -4,14 +4,14 @@
  *
  * Manages a connection between the UniConf client and daemon.
  */
-#include "uniconfconn.h"
+#include "uniclientconn.h"
 #include "wvaddr.h"
 #include "wvtclstring.h"
 
-/***** UniConfConn *****/
+/***** UniClientConn *****/
 
-const UniConfConn::CommandInfo UniConfConn::cmdinfos[
-    UniConfConn::NUM_COMMANDS] = {
+const UniClientConn::CommandInfo UniClientConn::cmdinfos[
+    UniClientConn::NUM_COMMANDS] = {
     // requests
     { "noop", "noop: verify that the connection is active" },
     { "get", "get <key>: get the value of a key" },
@@ -38,7 +38,7 @@ const UniConfConn::CommandInfo UniConfConn::cmdinfos[
 };
 
 
-UniConfConn::UniConfConn(IWvStream *_s) :
+UniClientConn::UniClientConn(IWvStream *_s) :
     WvStreamClone(_s),
     log(WvString("UniConf to %s", *_s->src()), WvLog::Debug5),
     closed(false), payloadbuf("")
@@ -47,18 +47,18 @@ UniConfConn::UniConfConn(IWvStream *_s) :
 }
 
 
-UniConfConn::~UniConfConn()
+UniClientConn::~UniClientConn()
 {
     close();
 }
 
-bool UniConfConn::isok() const
+bool UniClientConn::isok() const
 {
     return msgbuf.used() != 0 || WvStreamClone::isok();
 }
 
 
-void UniConfConn::close()
+void UniClientConn::close()
 {
     if (! closed)
     {
@@ -69,7 +69,7 @@ void UniConfConn::close()
 }
 
 
-WvString UniConfConn::readmsg()
+WvString UniClientConn::readmsg()
 {
     WvString word;
     while ((word = wvtcl_getword(msgbuf, "\n", false)).isnull())
@@ -95,7 +95,7 @@ WvString UniConfConn::readmsg()
 }
 
 
-void UniConfConn::writemsg(WvStringParm msg)
+void UniClientConn::writemsg(WvStringParm msg)
 {
     write(msg);
     write("\n");
@@ -103,7 +103,7 @@ void UniConfConn::writemsg(WvStringParm msg)
 }
 
 
-UniConfConn::Command UniConfConn::readcmd()
+UniClientConn::Command UniClientConn::readcmd()
 {
     for (;;)
     {
@@ -123,32 +123,32 @@ UniConfConn::Command UniConfConn::readcmd()
 }
 
 
-void UniConfConn::writecmd(UniConfConn::Command cmd, WvStringParm msg)
+void UniClientConn::writecmd(UniClientConn::Command cmd, WvStringParm msg)
 {
     writemsg(WvString("%s %s", cmdinfos[cmd].name, msg));
 }
 
 
-void UniConfConn::writeok(WvStringParm payload)
+void UniClientConn::writeok(WvStringParm payload)
 {
     writecmd(REPLY_OK, payload);
 }
 
 
-void UniConfConn::writefail(WvStringParm payload)
+void UniClientConn::writefail(WvStringParm payload)
 {
     writecmd(REPLY_FAIL, payload);
 }
 
 
-void UniConfConn::writevalue(const UniConfKey &key, WvStringParm value)
+void UniClientConn::writevalue(const UniConfKey &key, WvStringParm value)
 {
     writecmd(PART_VALUE, WvString("%s %s", wvtcl_escape(key),
         wvtcl_escape(value)));
 }
 
 
-void UniConfConn::writetext(WvStringParm text)
+void UniClientConn::writetext(WvStringParm text)
 {
     writecmd(PART_TEXT, wvtcl_escape(text));
 }

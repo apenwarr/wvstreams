@@ -9,7 +9,7 @@
 
 #include "uniconfkey.h"
 #include "wvstreamclone.h"
-#include "wvbuffer.h"
+#include "wvbuf.h"
 #include "wvlog.h"
 
 #define DEFAULT_UNICONF_DAEMON_TCP_PORT 4111
@@ -20,9 +20,9 @@
  * encoding/decoding of lists, filling of the operation buffer and
  * comparison for UniConf operations.
  */
-class UniConfConn : public WvStreamClone
+class UniClientConn : public WvStreamClone
 {
-    WvDynamicBuffer msgbuf;
+    WvDynBuf msgbuf;
 
 protected:
     WvLog log;
@@ -68,15 +68,15 @@ public:
     static const CommandInfo cmdinfos[NUM_COMMANDS];
 
     /** Create a wrapper around the supplied WvStream. */
-    UniConfConn(IWvStream *_s);
-    virtual ~UniConfConn();
+    UniClientConn(IWvStream *_s);
+    virtual ~UniClientConn();
 
     virtual bool isok() const;
     virtual void close();
 
     /**
      * Reads a command from the connection.
-     * The payload is stored in UniConfConn::payloadbuf.
+     * The payload is stored in UniClientConn::payloadbuf.
      * Returns: the command string
      */
     Command readcmd();

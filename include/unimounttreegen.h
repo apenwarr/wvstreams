@@ -14,16 +14,16 @@
 #include "wvmoniker.h"
 
 /**
- * Used by UniConfMountTreeGen to maintain information about mounted
+ * Used by UniMountTreeGen to maintain information about mounted
  * subtrees.
  */
-class UniConfMountTree : public UniConfTree<UniConfMountTree>
+class UniMountTree : public UniConfTree<UniMountTree>
 {
 public:
     UniConfGenList generators;
 
-    UniConfMountTree(UniConfMountTree *parent, const UniConfKey &key);
-    ~UniConfMountTree();
+    UniMountTree(UniMountTree *parent, const UniConfKey &key);
+    ~UniMountTree();
 
     /** Returns true if the node should not be pruned. */
     bool isessential()
@@ -35,10 +35,10 @@ public:
      * "split" is set to the number of leading segments used
      * Returns: the node
      */
-    UniConfMountTree *findnearest(const UniConfKey &key, int &split);
+    UniMountTree *findnearest(const UniConfKey &key, int &split);
 
     /** Finds or makes an info node for the specified key. */
-    UniConfMountTree *findormake(const UniConfKey &key);
+    UniMountTree *findormake(const UniConfKey &key);
    
     // an iterator over nodes that have information about a key
     class MountIter;
@@ -48,21 +48,21 @@ public:
 
 
 /**
- * An iterator over the UniConfMountTree nodes that might know something
+ * An iterator over the UniMountTree nodes that might know something
  * about the provided 'key', starting with the nearest match and then
  * moving up the tree.
  */
-class UniConfMountTree::MountIter
+class UniMountTree::MountIter
 {
     int bestsplit;
-    UniConfMountTree *bestnode;
+    UniMountTree *bestnode;
 
     int xsplit;
-    UniConfMountTree *xnode;
+    UniMountTree *xnode;
     UniConfKey xkey;
 
 public:
-    MountIter(UniConfMountTree &root, const UniConfKey &key);
+    MountIter(UniMountTree &root, const UniConfKey &key);
     
     void rewind();
     bool next();
@@ -75,11 +75,11 @@ public:
         { return xkey.first(xsplit); }
     UniConfKey tail() const
         { return xkey.removefirst(xsplit); }
-    UniConfMountTree *node() const
+    UniMountTree *node() const
         { return xnode; }
-    UniConfMountTree *ptr() const
+    UniMountTree *ptr() const
         { return node(); }
-    WvIterStuff(UniConfMountTree);
+    WvIterStuff(UniMountTree);
 };
 
 
@@ -92,19 +92,19 @@ public:
  * /foo/bar/baz followed by /foo; MountIter will give you /foo/bar/baz,
  * then /foo/bar, then /foo.
  */
-class UniConfMountTree::GenIter : private UniConfMountTree::MountIter
+class UniMountTree::GenIter : private UniMountTree::MountIter
 {
     UniConfGenList::Iter *genit; /*!< active generator iterator */
 
 public:
-    GenIter(UniConfMountTree &root, const UniConfKey &key);
+    GenIter(UniMountTree &root, const UniConfKey &key);
     ~GenIter();
 
-    using UniConfMountTree::MountIter::split;
-    using UniConfMountTree::MountIter::key;
-    using UniConfMountTree::MountIter::head;
-    using UniConfMountTree::MountIter::tail;
-    using UniConfMountTree::MountIter::node;
+    using UniMountTree::MountIter::split;
+    using UniMountTree::MountIter::key;
+    using UniMountTree::MountIter::head;
+    using UniMountTree::MountIter::tail;
+    using UniMountTree::MountIter::node;
     
     void rewind();
     bool next();
@@ -115,20 +115,20 @@ public:
 };
 
 
-/** The UniConfMountTree implementation realized as a UniConfGen. */
-class UniConfMountTreeGen : public UniConfGen
+/** The UniMountTree implementation realized as a UniConfGen. */
+class UniMountTreeGen : public UniConfGen
 {
-    UniConfMountTree *mounts;
+    UniMountTree *mounts;
 
     /** undefined. */
-    UniConfMountTreeGen(const UniConfMountTreeGen &other);
+    UniMountTreeGen(const UniMountTreeGen &other);
 
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
-    UniConfMountTreeGen();
+    UniMountTreeGen();
 
     /** Destroys the UniConf tree along with all uncommitted data. */
-    ~UniConfMountTreeGen();
+    ~UniMountTreeGen();
     
     /**
      * Mounts a generator at a key using a moniker.
@@ -180,15 +180,15 @@ public:
     
     friend class Iter : public UniConfAbstractIter
     {
-        UniConfMountTreeGen *xroot;
+        UniMountTreeGen *xroot;
         UniConfKey xkey;
 
-        UniConfMountTree::GenIter genit;
+        UniMountTree::GenIter genit;
         WvStringTable hack; // FIXME: ugly hack
         WvStringTable::Iter hackit;
 
     public:
-        Iter(UniConfMountTreeGen &root, const UniConfKey &key);
+        Iter(UniMountTreeGen &root, const UniConfKey &key);
 
         virtual void rewind();
         virtual bool next();
@@ -213,14 +213,14 @@ private:
      * and moving towards the root.
      * "node" is the node
      */
-    void prune(UniConfMountTree *node);
+    void prune(UniMountTree *node);
 
     typedef bool (*GenFunc)(UniConfGen*, const UniConfKey&,
         UniConfDepth::Type);
     bool dorecursive(GenFunc func,
         const UniConfKey &key, UniConfDepth::Type depth);
     bool dorecursivehelper(GenFunc func,
-        UniConfMountTree *node, UniConfDepth::Type depth);
+        UniMountTree *node, UniConfDepth::Type depth);
 
     static bool genrefreshfunc(UniConfGen *gen,
         const UniConfKey &key, UniConfDepth::Type depth);

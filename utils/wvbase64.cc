@@ -56,7 +56,7 @@ bool WvBase64Encoder::_reset()
 }
 
 
-bool WvBase64Encoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvBase64Encoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     // base 64 encode the entire buffer
     while (in.used() != 0)
@@ -90,7 +90,7 @@ bool WvBase64Encoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 }
 
 
-bool WvBase64Encoder::_finish(WvBuffer &out)
+bool WvBase64Encoder::_finish(WvBuf &out)
 {
     // pad text if needed
     switch (state)
@@ -128,7 +128,7 @@ bool WvBase64Decoder::_reset()
 }
 
 
-bool WvBase64Decoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvBase64Decoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 {
     // base 64 decode the entire buffer
     while (in.used() != 0)

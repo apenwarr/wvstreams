@@ -43,7 +43,7 @@ void WvCounterModeEncoder::incrcounter()
 }
 
 
-bool WvCounterModeEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvCounterModeEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf,
     bool flush)
 {
     bool success = true;

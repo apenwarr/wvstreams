@@ -4,8 +4,8 @@
  * 
  * A generator for .ini files.
  */
-#include "uniconfini.h"
-#include "uniconftemp.h"
+#include "uniinigen.h"
+#include "unitempgen.h"
 #include "wvtclstring.h"
 #include "strutils.h"
 #include "wvfile.h"
@@ -13,7 +13,7 @@
 
 static UniConfGen *creator(WvStringParm s, IObject *, void *)
 {
-    return new UniConfIniFileGen(s);
+    return new UniIniGen(s);
 }
 
 static WvMoniker<UniConfGen> reg("ini", creator);
@@ -36,9 +36,9 @@ static void printkey(WvStream &file, const UniConfKey &key,
 }
 
 
-/***** UniConfIniFileGen *****/
+/***** UniIniGen *****/
 
-UniConfIniFileGen::UniConfIniFileGen(WvStringParm _filename)
+UniIniGen::UniIniGen(WvStringParm _filename)
     : filename(_filename), log(filename)
 {
     log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
@@ -47,12 +47,12 @@ UniConfIniFileGen::UniConfIniFileGen(WvStringParm _filename)
 }
 
 
-UniConfIniFileGen::~UniConfIniFileGen()
+UniIniGen::~UniIniGen()
 {
 }
 
 
-bool UniConfIniFileGen::refresh(const UniConfKey &key,
+bool UniIniGen::refresh(const UniConfKey &key,
     UniConfDepth::Type depth)
 {
     /** open the file **/
@@ -66,9 +66,9 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
     }
     
     /** loop over all Tcl words in the file **/
-    UniConfTempGen *newgen = new UniConfTempGen();
+    UniTempGen *newgen = new UniTempGen();
     UniConfKey section;
-    WvDynamicBuffer buf;
+    WvDynBuf buf;
     for (bool eof = false; ! eof; )
     {
         if (file.isok())
@@ -174,7 +174,7 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
     {
         oldtree->compare(newtree,
             wvcallback(UniConfValueTree::Comparator, *this,
-            UniConfIniFileGen::refreshcomparator), NULL);
+            UniIniGen::refreshcomparator), NULL);
         delete oldtree;
     }
     else
@@ -187,7 +187,7 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
 }
 
 
-bool UniConfIniFileGen::refreshcomparator(const UniConfValueTree *a,
+bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
     const UniConfValueTree *b, void *userdata)
 {
     if (a != NULL)
@@ -215,7 +215,7 @@ bool UniConfIniFileGen::refreshcomparator(const UniConfValueTree *a,
 }
 
 
-bool UniConfIniFileGen::commit(const UniConfKey &key,
+bool UniIniGen::commit(const UniConfKey &key,
     UniConfDepth::Type depth)
 {
     /** check dirtiness **/
@@ -249,7 +249,7 @@ bool UniConfIniFileGen::commit(const UniConfKey &key,
 }
 
 
-void UniConfIniFileGen::save(WvStream &file, UniConfValueTree &parent)
+void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
 {
     UniConfValueTree::Iter it(parent);
     

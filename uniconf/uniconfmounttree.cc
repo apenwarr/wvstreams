@@ -4,28 +4,28 @@
  * 
  * Defines a UniConfGen that manages a tree of UniConfGen instances.
  */
-#include "uniconfmounttree.h"
+#include "unimounttreegen.h"
 #include "wvmoniker.h"
 
-/***** UniConfMountTreeGen *****/
+/***** UniMountTreeGen *****/
 
-UniConfMountTreeGen::UniConfMountTreeGen()
+UniMountTreeGen::UniMountTreeGen()
 {
-    mounts = new UniConfMountTree(NULL, UniConfKey::EMPTY);
+    mounts = new UniMountTree(NULL, UniConfKey::EMPTY);
 }
 
 
-UniConfMountTreeGen::~UniConfMountTreeGen()
+UniMountTreeGen::~UniMountTreeGen()
 {
     // destroys all generators
     delete mounts;
 }
 
 
-WvString UniConfMountTreeGen::get(const UniConfKey &key)
+WvString UniMountTreeGen::get(const UniConfKey &key)
 {
     // consult the generators
-    UniConfMountTree::GenIter it(*mounts, key);
+    UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -35,7 +35,7 @@ WvString UniConfMountTreeGen::get(const UniConfKey &key)
     }
     
     // ensure key exists if it is in the path of a mountpoint
-    UniConfMountTree *node = mounts->find(key);
+    UniMountTree *node = mounts->find(key);
     if (node)
         return ""; // fake read-only key not provided by anyone
 
@@ -44,7 +44,7 @@ WvString UniConfMountTreeGen::get(const UniConfKey &key)
 }
 
 
-bool UniConfMountTreeGen::set(const UniConfKey &key, WvStringParm value)
+bool UniMountTreeGen::set(const UniConfKey &key, WvStringParm value)
 {
     // update the generator that defines the key, if any
     UniConfKey mountpoint;
@@ -55,10 +55,10 @@ bool UniConfMountTreeGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
-bool UniConfMountTreeGen::zap(const UniConfKey &key)
+bool UniMountTreeGen::zap(const UniConfKey &key)
 {
     bool success = true;
-    UniConfMountTree::GenIter it(*mounts, key);
+    UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -71,15 +71,15 @@ bool UniConfMountTreeGen::zap(const UniConfKey &key)
 }
 
 
-bool UniConfMountTreeGen::exists(const UniConfKey &key)
+bool UniMountTreeGen::exists(const UniConfKey &key)
 {
     // ensure key exists if it is in the path of a mountpoint
-    UniConfMountTree *node = mounts->find(key);
+    UniMountTree *node = mounts->find(key);
     if (node)
         return true;
     
     // otherwise consult the generators
-    UniConfMountTree::GenIter it(*mounts, key);
+    UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -92,13 +92,13 @@ bool UniConfMountTreeGen::exists(const UniConfKey &key)
 }
 
 
-bool UniConfMountTreeGen::haschildren(const UniConfKey &key)
+bool UniMountTreeGen::haschildren(const UniConfKey &key)
 {
-    UniConfMountTree *node = mounts->find(key);
+    UniMountTree *node = mounts->find(key);
     if (node && node->haschildren())
         return true;
 
-    UniConfMountTree::GenIter it(*mounts, key);
+    UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -109,38 +109,38 @@ bool UniConfMountTreeGen::haschildren(const UniConfKey &key)
 }
 
 
-bool UniConfMountTreeGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniMountTreeGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return dorecursive(genrefreshfunc, key, depth);
 }
 
 
-bool UniConfMountTreeGen::genrefreshfunc(UniConfGen *gen,
+bool UniMountTreeGen::genrefreshfunc(UniConfGen *gen,
     const UniConfKey &key, UniConfDepth::Type depth)
 {
     return gen->refresh(key, depth);
 }
 
 
-bool UniConfMountTreeGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniMountTreeGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return dorecursive(gencommitfunc, key, depth);
 }
 
 
-bool UniConfMountTreeGen::gencommitfunc(UniConfGen *gen,
+bool UniMountTreeGen::gencommitfunc(UniConfGen *gen,
     const UniConfKey &key, UniConfDepth::Type depth)
 {
     return gen->commit(key, depth);
 }
 
 
-bool UniConfMountTreeGen::dorecursive(GenFunc func, const UniConfKey &key,
+bool UniMountTreeGen::dorecursive(GenFunc func, const UniConfKey &key,
     UniConfDepth::Type depth)
 {
     // do containing generators
     bool success = true;
-    UniConfMountTree::GenIter it(*mounts, key);
+    UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -151,7 +151,7 @@ bool UniConfMountTreeGen::dorecursive(GenFunc func, const UniConfKey &key,
     // do recursive
     if (depth != UniConfDepth::ZERO)
     {
-        UniConfMountTree *node = mounts->find(key);
+        UniMountTree *node = mounts->find(key);
         if (node && ! dorecursivehelper(func, node, depth))
             success = false;
     }
@@ -159,8 +159,8 @@ bool UniConfMountTreeGen::dorecursive(GenFunc func, const UniConfKey &key,
 }
 
 
-bool UniConfMountTreeGen::dorecursivehelper(GenFunc func,
-    UniConfMountTree *node, UniConfDepth::Type depth)
+bool UniMountTreeGen::dorecursivehelper(GenFunc func,
+    UniMountTree *node, UniConfDepth::Type depth)
 {
     // determine depth for next step
     switch (depth)
@@ -182,7 +182,7 @@ bool UniConfMountTreeGen::dorecursivehelper(GenFunc func,
 
     // process nodes and recurse if needed
     bool success = true;
-    UniConfMountTree::Iter it(*node);
+    UniMountTree::Iter it(*node);
     for (it.rewind(); it.next(); )
     {
         UniConfGenList::Iter genit(it->generators);
@@ -201,7 +201,7 @@ bool UniConfMountTreeGen::dorecursivehelper(GenFunc func,
 }
  
  
-UniConfGen *UniConfMountTreeGen::mount(const UniConfKey &key,
+UniConfGen *UniMountTreeGen::mount(const UniConfKey &key,
     WvStringParm moniker, bool refresh)
 {
     UniConfGen *gen = wvcreate<UniConfGen>(moniker);
@@ -211,23 +211,23 @@ UniConfGen *UniConfMountTreeGen::mount(const UniConfKey &key,
 }
 
 
-UniConfGen *UniConfMountTreeGen::mountgen(const UniConfKey &key,
+UniConfGen *UniMountTreeGen::mountgen(const UniConfKey &key,
     UniConfGen *gen, bool refresh)
 {
-    UniConfMountTree *node = mounts->findormake(key);
+    UniMountTree *node = mounts->findormake(key);
     node->generators.append(gen, true);
     gen->setcallback(wvcallback(UniConfGenCallback, *this,
-        UniConfMountTreeGen::gencallback), node);
+        UniMountTreeGen::gencallback), node);
     if (gen && refresh)
         gen->refresh(UniConfKey::EMPTY, UniConfDepth::INFINITE);
     return gen;
 }
 
 
-void UniConfMountTreeGen::unmount(const UniConfKey &key,
+void UniMountTreeGen::unmount(const UniConfKey &key,
     UniConfGen *gen, bool commit)
 {
-    UniConfMountTree *node = mounts->find(key);
+    UniMountTree *node = mounts->find(key);
     if (!node)
         return;
 
@@ -243,11 +243,11 @@ void UniConfMountTreeGen::unmount(const UniConfKey &key,
 }
 
 
-UniConfGen *UniConfMountTreeGen::whichmount(const UniConfKey &key,
+UniConfGen *UniMountTreeGen::whichmount(const UniConfKey &key,
     UniConfKey *mountpoint)
 {
     // see if a generator acknowledges the key
-    UniConfMountTree::GenIter it(*mounts, key);
+    UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -266,58 +266,58 @@ found:
 }
 
 
-bool UniConfMountTreeGen::ismountpoint(const UniConfKey &key)
+bool UniMountTreeGen::ismountpoint(const UniConfKey &key)
 {
-    UniConfMountTree *node = mounts->find(key);
+    UniMountTree *node = mounts->find(key);
     return node && ! node->generators.isempty();
 }
 
 
-UniConfMountTreeGen::Iter *UniConfMountTreeGen::iterator(const UniConfKey &key)
+UniMountTreeGen::Iter *UniMountTreeGen::iterator(const UniConfKey &key)
 {
     return new Iter(*this, key);
 }
 
 
-void UniConfMountTreeGen::prune(UniConfMountTree *node)
+void UniMountTreeGen::prune(UniMountTree *node)
 {
     while (node != mounts && !node->isessential())
     {
-        UniConfMountTree *next = node->parent();
+        UniMountTree *next = node->parent();
         delete node;
         node = next;
     }
 }
 
 
-void UniConfMountTreeGen::gencallback(const UniConfGen &gen,
+void UniMountTreeGen::gencallback(const UniConfGen &gen,
     const UniConfKey &key, UniConfDepth::Type depth, void *userdata)
 {
-    UniConfMountTree *node = static_cast<UniConfMountTree*>(userdata);
+    UniMountTree *node = static_cast<UniMountTree*>(userdata);
     delta(UniConfKey(node->fullkey(), key), depth);
 }
 
 
-/***** UniConfMountTreeGen::Iter *****/
+/***** UniMountTreeGen::Iter *****/
 
-UniConfMountTreeGen::Iter::Iter(UniConfMountTreeGen &root, const UniConfKey &key) 
+UniMountTreeGen::Iter::Iter(UniMountTreeGen &root, const UniConfKey &key) 
     : xroot(&root), xkey(key), genit(*root.mounts, key),
         hack(71), hackit(hack)
 {
 }
 
 
-void UniConfMountTreeGen::Iter::rewind()
+void UniMountTreeGen::Iter::rewind()
 {
     hack.zap();
 
     // find nodes provided by the root of any mount points.
     // (if we want to iterate over /foo, then mounts directly on /foo/blah and
     // /foo/snoo must be included)
-    UniConfMountTree *node = xroot->mounts->find(xkey);
+    UniMountTree *node = xroot->mounts->find(xkey);
     if (node)
     {
-        UniConfMountTree::Iter nodeit(*node);
+        UniMountTree::Iter nodeit(*node);
         for (nodeit.rewind(); nodeit.next(); )
             hack.add(new WvString(nodeit->key()), true);
     }
@@ -337,42 +337,42 @@ void UniConfMountTreeGen::Iter::rewind()
 }
 
 
-bool UniConfMountTreeGen::Iter::next()
+bool UniMountTreeGen::Iter::next()
 {
     return hackit.next();
 }
 
 
-UniConfKey UniConfMountTreeGen::Iter::key() const
+UniConfKey UniMountTreeGen::Iter::key() const
 {
     return UniConfKey(hackit());
 }
 
 
 
-/***** UniConfMountTree *****/
+/***** UniMountTree *****/
 
-UniConfMountTree::UniConfMountTree(UniConfMountTree *parent,
+UniMountTree::UniMountTree(UniMountTree *parent,
     const UniConfKey &key) :
-    UniConfTree<UniConfMountTree>(parent, key)
+    UniConfTree<UniMountTree>(parent, key)
 {
 }
 
 
-UniConfMountTree::~UniConfMountTree()
+UniMountTree::~UniMountTree()
 {
 }
 
 
-UniConfMountTree *UniConfMountTree::findnearest(const UniConfKey &key,
+UniMountTree *UniMountTree::findnearest(const UniConfKey &key,
     int &split)
 {
     split = 0;
-    UniConfMountTree *node = this;
+    UniMountTree *node = this;
     UniConfKey::Iter it(key);
     for (it.rewind(); it.next(); split++)
     {
-        UniConfMountTree *next = node->findchild(it());
+        UniMountTree *next = node->findchild(it());
         if (!next)
             break;
         node = next;
@@ -381,25 +381,25 @@ UniConfMountTree *UniConfMountTree::findnearest(const UniConfKey &key,
 }
 
 
-UniConfMountTree *UniConfMountTree::findormake(const UniConfKey &key)
+UniMountTree *UniMountTree::findormake(const UniConfKey &key)
 {
-    UniConfMountTree *node = this;
+    UniMountTree *node = this;
     UniConfKey::Iter it(key);
     for (it.rewind(); it.next(); )
     {
-        UniConfMountTree *prev = node;
+        UniMountTree *prev = node;
         node = prev->findchild(it());
         if (!node)
-            node = new UniConfMountTree(prev, it());
+            node = new UniMountTree(prev, it());
     }
     return node;
 }
 
 
 
-/***** UniConfMountTree::MountIter *****/
+/***** UniMountTree::MountIter *****/
 
-UniConfMountTree::MountIter::MountIter(UniConfMountTree &root,
+UniMountTree::MountIter::MountIter(UniMountTree &root,
     const UniConfKey &key)
     : xkey(key)
 {
@@ -407,13 +407,13 @@ UniConfMountTree::MountIter::MountIter(UniConfMountTree &root,
 }
 
 
-void UniConfMountTree::MountIter::rewind()
+void UniMountTree::MountIter::rewind()
 {
     xnode = NULL;
 }
 
 
-bool UniConfMountTree::MountIter::next()
+bool UniMountTree::MountIter::next()
 {
     if (! xnode)
     {
@@ -432,40 +432,40 @@ bool UniConfMountTree::MountIter::next()
 
 
 
-/***** UniConfMountTree::GenIter *****/
+/***** UniMountTree::GenIter *****/
 
-UniConfMountTree::GenIter::GenIter(UniConfMountTree &root,
+UniMountTree::GenIter::GenIter(UniMountTree &root,
     const UniConfKey &key) :
-    UniConfMountTree::MountIter(root, key),
+    UniMountTree::MountIter(root, key),
     genit(NULL)
 {
 }
 
 
-UniConfMountTree::GenIter::~GenIter()
+UniMountTree::GenIter::~GenIter()
 {
     delete genit;
 }
 
 
-void UniConfMountTree::GenIter::rewind()
+void UniMountTree::GenIter::rewind()
 {
     if (genit)
     {
         delete genit;
         genit = NULL;
     }
-    UniConfMountTree::MountIter::rewind();
+    UniMountTree::MountIter::rewind();
 }
 
 
-bool UniConfMountTree::GenIter::next()
+bool UniMountTree::GenIter::next()
 {
     for (;;)
     {
         if (genit && genit->next())
             return true;
-        if (! UniConfMountTree::MountIter::next())
+        if (! UniMountTree::MountIter::next())
             return false;
 
         genit = new UniConfGenList::Iter(node()->generators);

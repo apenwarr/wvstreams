@@ -80,7 +80,7 @@ public:
     virtual ~WvRSAEncoder();
 
 protected:
-    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _encode(WvBuf &in, WvBuf &out, bool flush);
     virtual bool _reset(); // supported
 
 private:

@@ -16,7 +16,7 @@
 #define OGG_SPEEX_DECODER_BUF_SIZE 16384 // at most 16k at once
 
 /** Extracts a little endian integer from a buffer. */
-static unsigned long int getint_le(WvBuffer &inbuf)
+static unsigned long int getint_le(WvBuf &inbuf)
 {
     // FIXME: a little sloppy
     return inbuf.getch() | (inbuf.getch() << 8) |
@@ -25,7 +25,7 @@ static unsigned long int getint_le(WvBuffer &inbuf)
 
 
 /** Appends a little endian integer to a buffer. */
-static void putint_le(WvBuffer &outbuf, unsigned long int value)
+static void putint_le(WvBuf &outbuf, unsigned long int value)
 {
     // FIXME: a little sloppy
     outbuf.putch(value & 255);
@@ -187,7 +187,7 @@ bool WvOggSpeexEncoder::write_headers(OBuffer &outbuf)
     ogg_stream_packetin(oggstream, &header);
 
     // generate comment header
-    WvDynamicBuffer cbuf;
+    WvDynBuf cbuf;
     putint_le(cbuf, _vendor.len());
     cbuf.putstr(_vendor);
     putint_le(cbuf, _comments.count());

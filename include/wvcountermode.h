@@ -53,7 +53,7 @@ protected:
     unsigned char *counter; // auto-incrementing counter
     size_t countersize; // counter size in bytes
     
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
 };
 
 #endif // __WVCOUNTERMODE_H

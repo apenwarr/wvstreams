@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * UniConfListGen is a UniConf generator to allow multiple generators to be
+ * UniListGen is a UniConf generator to allow multiple generators to be
  * stacked in a priority sequence for get/set/etc.
  *
  */
@@ -26,11 +26,11 @@
  *
  * list:readonly:ini:admin.ini list:{ini:user1.ini ini:user2.ini} ini:def.ini
  */
-class UniConfListGen : public UniConfGen
+class UniListGen : public UniConfGen
 {
 public:
-    UniConfListGen(UniConfGenList *_l) : l(_l), i(*_l) { }
-    virtual UniConfListGen::~UniConfListGen() { delete l; }
+    UniListGen(UniConfGenList *_l) : l(_l), i(*_l) { }
+    virtual UniListGen::~UniListGen() { delete l; }
 
     UniConfGenList *l;
     UniConfGenList::Iter i;

@@ -12,13 +12,13 @@
 #include "wvconf.h"
 #include "uniconfiter.h"
 
-class UniConfWvGen : public UniConfGen
+class UniWvConfGen : public UniConfGen
 {
 protected:
     WvConf &cfg;
 
 public:
-    UniConfWvGen(WvConf &_cfg) : cfg(_cfg) { }
+    UniWvConfGen(WvConf &_cfg) : cfg(_cfg) { }
 
     typedef UniConfAbstractIter Iter;
 

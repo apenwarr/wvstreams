@@ -27,7 +27,7 @@ public:
     virtual ~WvXOREncoder();
     
 protected:
-    bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    bool _encode(WvBuf &in, WvBuf &out, bool flush);
 
 private:
     unsigned char *key;

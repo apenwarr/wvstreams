@@ -10,7 +10,7 @@
 #include "wvhashtable.h"
 #include <time.h>
 
-DeclareWvList(WvInPlaceBuffer);
+DeclareWvList(WvInPlaceBuf);
 
 class WvUDPListener;
 
@@ -26,7 +26,7 @@ public:
 protected:
     WvUDPListener *parent;
     time_t last_receive;
-    WvInPlaceBufferList buflist;
+    WvInPlaceBufList buflist;
     
     virtual bool isok() const;
     virtual size_t uread(void *buf, size_t size);
@@ -70,9 +70,9 @@ size_t WvUDPConn::uread(void *buf, size_t size)
 {
     if (!buflist.count()) return 0;
 
-    WvInPlaceBufferList::Iter i(buflist);
+    WvInPlaceBufList::Iter i(buflist);
     i.rewind(); i.next();
-    WvInPlaceBuffer &b = *i;
+    WvInPlaceBuf &b = *i;
     if (b.used() < size)
 	size = b.used();
     memcpy(buf, b.get(size), size);
@@ -93,7 +93,7 @@ void WvUDPConn::push(const void *buf, size_t size)
 {
     time(&last_receive);
     
-    WvInPlaceBuffer *b = new WvInPlaceBuffer(size);
+    WvInPlaceBuf *b = new WvInPlaceBuf(size);
     b->put(buf, size);
     buflist.append(b, true);
 }

@@ -77,8 +77,8 @@ int main(int argc, char **argv)
     
     assert(enc);
     
-    WvDynamicBuffer inbuf;
-    WvDynamicBuffer outbuf;
+    WvDynBuf inbuf;
+    WvDynBuf outbuf;
     
     while (enc->isok())
     {

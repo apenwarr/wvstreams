@@ -29,7 +29,7 @@ bool WvWordWrapEncoder::_reset()
 }
 
 
-bool WvWordWrapEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvWordWrapEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf,
     bool flush)
 {
     while (inbuf.used() != 0)
@@ -103,7 +103,7 @@ bool WvWordWrapEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
 }
 
 
-void WvWordWrapEncoder::flushline(WvBuffer &outbuf)
+void WvWordWrapEncoder::flushline(WvBuf &outbuf)
 {
     outbuf.put(line, curindex);
     curindex = wordindex = 0;

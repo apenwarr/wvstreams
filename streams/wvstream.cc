@@ -258,7 +258,7 @@ void WvStream::seterr(int _errnum)
 }
 
 
-size_t WvStream::read(WvBuffer &outbuf, size_t count)
+size_t WvStream::read(WvBuf &outbuf, size_t count)
 {
     // for now, just wrap the older read function
     size_t free = outbuf.free();
@@ -271,7 +271,7 @@ size_t WvStream::read(WvBuffer &outbuf, size_t count)
 }
 
 
-size_t WvStream::write(WvBuffer &inbuf, size_t count)
+size_t WvStream::write(WvBuf &inbuf, size_t count)
 {
     // for now, just wrap the older write function
     size_t avail = inbuf.used();

@@ -4,7 +4,7 @@
  *
  * Defines basic buffer storage classes.
  * These are not intended for use directly by clients.
- * See "wvbufferbase.h" for the public API.
+ * See "wvbufbase.h" for the public API.
  */
 #ifndef __WVBUFFERSTORE_H
 #define __WVBUFFERSTORE_H
@@ -21,10 +21,10 @@
 #define UNLIMITED_FREE_SPACE (INT_MAX/2)
 
 /** The abstract buffer storage base class. */
-class WvBufferStore
+class WvBufStore
 {
     // discourage copying
-    explicit WvBufferStore(const WvBufferStore &other) { }
+    explicit WvBufStore(const WvBufStore &other) { }
 
 protected:
     // the suggested granularity
@@ -35,10 +35,10 @@ protected:
      * "_granularity" is the suggested granularity for data allocation
      *        and alignment purposes
      */
-    explicit WvBufferStore(int _granularity);
+    explicit WvBufStore(int _granularity);
     
 public:
-    virtual ~WvBufferStore() { }
+    virtual ~WvBufStore() { }
 
     /*** Buffer Reading ***/
     
@@ -82,10 +82,10 @@ public:
 
     /*** Buffer to Buffer Transfers ***/
 
-    virtual void merge(WvBufferStore &instore, size_t count);
+    virtual void merge(WvBufStore &instore, size_t count);
 
     // default implementation
-    void basicmerge(WvBufferStore &instore, size_t count);
+    void basicmerge(WvBufStore &instore, size_t count);
 
     /*** Support for buffers with subbuffers ***/
 
@@ -101,15 +101,15 @@ public:
      * Returns the first subbuffer.
      * Returns: the buffer or NULL if none or not supported
      */
-    virtual WvBufferStore *firstsubbuffer() const
+    virtual WvBufStore *firstsubbuffer() const
         { return NULL; }
 
     /** Appends a subbuffer to the buffer. */
-    virtual void appendsubbuffer(WvBufferStore *buffer, bool autofree)
+    virtual void appendsubbuffer(WvBufStore *buffer, bool autofree)
         { assert(! "not supported"); }
 
     /** Prepends a subbuffer to the buffer. */
-    virtual void prependsubbuffer(WvBufferStore *buffer, bool autofree)
+    virtual void prependsubbuffer(WvBufStore *buffer, bool autofree)
         { assert(! "not supported"); }
 
     /**
@@ -117,13 +117,13 @@ public:
      * Only autofrees the buffer if allowautofree == true.
      * Returns: the autofree flag for the buffer
      */
-    virtual bool unlinksubbuffer(WvBufferStore *buffer,
+    virtual bool unlinksubbuffer(WvBufStore *buffer,
         bool allowautofree)
         { assert(! "not supported"); return true; }
 };
 
 // lists of buffer stores are sometimes useful
-DeclareWvList(WvBufferStore);
+DeclareWvList(WvBufStore);
 
 
 
@@ -171,7 +171,7 @@ public:
             ! "mutablepeek() called on non-writable buffer");
         return NULL;
     }
-    virtual void merge(WvBufferStore &instore, size_t count)
+    virtual void merge(WvBufStore &instore, size_t count)
     {
         assert(count == 0 ||
             ! "non-zero merge() called on non-writable buffer");
@@ -244,8 +244,8 @@ public:
 
 
 
-/** The WvInPlaceBuffer storage class. */
-class WvInPlaceBufferStore : public WvBufferStore
+/** The WvInPlaceBuf storage class. */
+class WvInPlaceBufStore : public WvBufStore
 {
 protected:
     void *data;
@@ -255,10 +255,10 @@ protected:
     bool xautofree;
 
 public:
-    WvInPlaceBufferStore(int _granularity,
+    WvInPlaceBufStore(int _granularity,
         void *_data, size_t _avail, size_t _size, bool _autofree);
-    WvInPlaceBufferStore(int _granularity, size_t _size);
-    virtual ~WvInPlaceBufferStore();
+    WvInPlaceBufStore(int _granularity, size_t _size);
+    virtual ~WvInPlaceBufStore();
     void *ptr() const
         { return data; }
     size_t size() const
@@ -287,7 +287,7 @@ public:
 
 /** The WvConstInPlaceBuffer storage class. */
 class WvConstInPlaceBufferStore :
-    public WvReadOnlyBufferStoreMixin<WvBufferStore>
+    public WvReadOnlyBufferStoreMixin<WvBufStore>
 {
 protected:
     const void *data;
@@ -313,8 +313,8 @@ public:
 
 
 
-/** The WvCircularBuffer storage class. */
-class WvCircularBufferStore : public WvBufferStore
+/** The WvCircularBuf storage class. */
+class WvCircularBufStore : public WvBufStore
 {
 protected:
     void *data;
@@ -325,10 +325,10 @@ protected:
     bool xautofree;
 
 public:
-    WvCircularBufferStore(int _granularity,
+    WvCircularBufStore(int _granularity,
         void *_data, size_t _avail, size_t _size, bool _autofree);
-    WvCircularBufferStore(int _granularity, size_t _size);
-    virtual ~WvCircularBufferStore();
+    WvCircularBufStore(int _granularity, size_t _size);
+    virtual ~WvCircularBufStore();
     void *ptr() const
         { return data; }
     size_t size() const
@@ -395,10 +395,10 @@ protected:
  * This is mostly useful for building other buffer storage classes.
  * 
  */
-class WvLinkedBufferStore : public WvBufferStore
+class WvLinkedBufferStore : public WvBufStore
 {
 protected:
-    WvBufferStoreList list;
+    WvBufStoreList list;
     size_t totalused;
     size_t maxungettable;
 
@@ -422,10 +422,10 @@ public:
 
     virtual bool usessubbuffers() const;
     virtual size_t numsubbuffers() const;
-    virtual WvBufferStore *firstsubbuffer() const;
-    virtual void appendsubbuffer(WvBufferStore *buffer, bool autofree);
-    virtual void prependsubbuffer(WvBufferStore *buffer, bool autofree);
-    virtual bool unlinksubbuffer(WvBufferStore *buffer,
+    virtual WvBufStore *firstsubbuffer() const;
+    virtual void appendsubbuffer(WvBufStore *buffer, bool autofree);
+    virtual void prependsubbuffer(WvBufStore *buffer, bool autofree);
+    virtual bool unlinksubbuffer(WvBufStore *buffer,
         bool allowautofree);
 
 protected:
@@ -435,7 +435,7 @@ protected:
      * "minsize" is the minimum size for the new buffer
      * Returns: the new buffer
      */
-    virtual WvBufferStore *newbuffer(size_t minsize);
+    virtual WvBufStore *newbuffer(size_t minsize);
 
     /**
      * Called when a buffer with autofree is removed from the list.
@@ -443,7 +443,7 @@ protected:
      *
      * "buffer" is the buffer to be destroyed
      */
-    virtual void recyclebuffer(WvBufferStore *buffer);
+    virtual void recyclebuffer(WvBufStore *buffer);
 
     /**
      * Searches for the buffer containing the offset.
@@ -453,7 +453,7 @@ protected:
      * "offset" is the offset for which to search
      * Returns: the corrected offset within the buffer at it.ptr()
      */
-    int search(WvBufferStoreList::Iter &it, int offset) const;
+    int search(WvBufStoreList::Iter &it, int offset) const;
 
     /**
      * Coalesces a sequence of buffers.
@@ -462,24 +462,24 @@ protected:
      * "count" is the required number of contiguous used bytes
      * Returns: the composite buffer
      */
-    WvBufferStore *coalesce(WvBufferStoreList::Iter &it,
+    WvBufStore *coalesce(WvBufStoreList::Iter &it,
         size_t count);
 
 private:
     // unlinks and recycles the buffer pointed at by the iterator
-    void do_xunlink(WvBufferStoreList::Iter &it);
+    void do_xunlink(WvBufStoreList::Iter &it);
 };
 
 
 
-/** The WvDynamicBuffer storage class. */
-class WvDynamicBufferStore : public WvLinkedBufferStore
+/** The WvDynBuf storage class. */
+class WvDynBufStore : public WvLinkedBufferStore
 {
     size_t minalloc;
     size_t maxalloc;
     
 public:
-    WvDynamicBufferStore(size_t _granularity,
+    WvDynBufStore(size_t _granularity,
         size_t _minalloc, size_t _maxalloc);
 
     /*** Overridden Members ***/
@@ -488,33 +488,33 @@ public:
     virtual void *alloc(size_t count);
 
 protected:
-    virtual WvBufferStore *newbuffer(size_t minsize);
+    virtual WvBufStore *newbuffer(size_t minsize);
 };
 
 
 
-/** The WvEmptyBuffer storage class. */
-class WvEmptyBufferStore : public WvWriteOnlyBufferStoreMixin<
-    WvReadOnlyBufferStoreMixin<WvBufferStore> >
+/** The WvNullBuf storage class. */
+class WvNullBufStore : public WvWriteOnlyBufferStoreMixin<
+    WvReadOnlyBufferStoreMixin<WvBufStore> >
 {
 public:
-    explicit WvEmptyBufferStore(size_t _granularity);
+    explicit WvNullBufStore(size_t _granularity);
 };
 
 
 
-/** The WvBufferCursor storage class. */
-class WvBufferCursorStore :
-    public WvReadOnlyBufferStoreMixin<WvBufferStore>
+/** The WvBufCursor storage class. */
+class WvBufCursorStore :
+    public WvReadOnlyBufferStoreMixin<WvBufStore>
 {
 protected:
-    WvBufferStore *buf;
+    WvBufStore *buf;
     int start;
     size_t length;
     size_t shift;
 
 public:
-    WvBufferCursorStore(size_t _granularity, WvBufferStore *_buf,
+    WvBufCursorStore(size_t _granularity, WvBufStore *_buf,
         int _start, size_t _length);
 
     /*** Overridden Members ***/

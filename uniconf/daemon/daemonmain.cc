@@ -6,7 +6,7 @@
 #include "wvlogrcv.h"
 #include "uniconf.h"
 #include "uniconfdaemon.h"
-#include "uniconfconn.h"
+#include "uniclientconn.h"
 
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 

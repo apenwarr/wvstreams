@@ -7,23 +7,23 @@
 #ifndef __WVBUFFER_H
 #define __WVBUFFER_H
  
-#include "wvbufferbase.h"
+#include "wvbufbase.h"
 #include "wvstring.h"
 
 /***** Specialization for 'unsigned char' buffers *****/
 
 /**
- * Specialization of WvBufferBase for unsigned char type
+ * Specialization of WvBufBase for unsigned char type
  * buffers intended for use with raw memory buffers.
  * Refines the interface to add support for untyped pointers.
  * Adds some useful string operations.
  */
-class WvBufferBase<unsigned char> :
-    public WvBufferBaseCommonImpl<unsigned char>
+class WvBufBase<unsigned char> :
+    public WvBufBaseCommonImpl<unsigned char>
 {
 public:
-    explicit WvBufferBase(WvBufferStore *store) :
-        WvBufferBaseCommonImpl<unsigned char>(store) { }
+    explicit WvBufBase(WvBufStore *store) :
+        WvBufBaseCommonImpl<unsigned char>(store) { }
 
     /**
      * Copies a WvString into the buffer, excluding the null-terminator.
@@ -128,15 +128,15 @@ public:
     /*** Overload put() and move() to accept void pointers ***/
     
     void put(unsigned char value)
-        { WvBufferBaseCommonImpl<unsigned char>::put(value); }
+        { WvBufBaseCommonImpl<unsigned char>::put(value); }
     void put(const void *data, size_t count)
-        { WvBufferBaseCommonImpl<unsigned char>::put(
+        { WvBufBaseCommonImpl<unsigned char>::put(
             (const unsigned char*)data, count); }
     void move(void *data, size_t count)
-        { WvBufferBaseCommonImpl<unsigned char>::move(
+        { WvBufBaseCommonImpl<unsigned char>::move(
             (unsigned char*)data, count); }
     void poke(void *data, int offset, size_t count)
-        { WvBufferBaseCommonImpl<unsigned char>::poke(
+        { WvBufBaseCommonImpl<unsigned char>::poke(
             (unsigned char*)data, offset, count); }
 
 private:
@@ -152,21 +152,21 @@ private:
  * The in place raw memory buffer type.
  * Refines the interface to add support for untyped pointers.
  */
-class WvInPlaceBuffer : public WvInPlaceBufferBase<unsigned char>
+class WvInPlaceBuf : public WvInPlaceBufBase<unsigned char>
 {
 public:
-    WvInPlaceBuffer(void *_data, size_t _avail, size_t _size,
+    WvInPlaceBuf(void *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
-        WvInPlaceBufferBase<unsigned char>((unsigned char*)_data,
+        WvInPlaceBufBase<unsigned char>((unsigned char*)_data,
             _avail, _size, _autofree) { }
-    explicit WvInPlaceBuffer(size_t _size) :
-        WvInPlaceBufferBase<unsigned char>(_size) { }
-    WvInPlaceBuffer() :
-        WvInPlaceBufferBase<unsigned char>() { }
+    explicit WvInPlaceBuf(size_t _size) :
+        WvInPlaceBufBase<unsigned char>(_size) { }
+    WvInPlaceBuf() :
+        WvInPlaceBufBase<unsigned char>() { }
     void reset(void *_data, size_t _avail, size_t _size,
         bool _autofree = false)
     {
-        WvInPlaceBufferBase<unsigned char>::reset(
+        WvInPlaceBufBase<unsigned char>::reset(
             (unsigned char*)_data, _avail, _size, _autofree);
     }
 };
@@ -194,39 +194,39 @@ public:
  * The circular in place raw memory buffer type.
  * Refines the interface to add support for untyped pointers.
  */
-class WvCircularBuffer : public WvCircularBufferBase<unsigned char>
+class WvCircularBuf : public WvCircularBufBase<unsigned char>
 {
 public:
-    WvCircularBuffer(void *_data, size_t _avail, size_t _size,
+    WvCircularBuf(void *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
-        WvCircularBufferBase<unsigned char>((unsigned char*)_data,
+        WvCircularBufBase<unsigned char>((unsigned char*)_data,
             _avail, _size, _autofree) { }
-    explicit WvCircularBuffer(size_t _size) :
-        WvCircularBufferBase<unsigned char>(_size) { }
-    WvCircularBuffer() :
-        WvCircularBufferBase<unsigned char>() { }
+    explicit WvCircularBuf(size_t _size) :
+        WvCircularBufBase<unsigned char>(_size) { }
+    WvCircularBuf() :
+        WvCircularBufBase<unsigned char>() { }
     void reset(void *_data, size_t _avail, size_t _size,
         bool _autofree = false)
     {
-        WvCircularBufferBase<unsigned char>::reset(
+        WvCircularBufBase<unsigned char>::reset(
             (unsigned char*)_data, _avail, _size, _autofree);
     }
 };
 
 /** The base raw memory buffer type. */
-typedef WvBufferBase<unsigned char> WvBuffer;
+typedef WvBufBase<unsigned char> WvBuf;
 
 /** The dynamically resizing raw memory buffer type. */
-typedef WvDynamicBufferBase<unsigned char> WvDynamicBuffer;
+typedef WvDynBufBase<unsigned char> WvDynBuf;
 
 /** The empty raw memory buffer type. */
-typedef WvEmptyBufferBase<unsigned char> WvEmptyBuffer;
+typedef WvNullBufBase<unsigned char> WvNullBuf;
 
 /** The raw memory buffer cursor type. */
-typedef WvBufferCursorBase<unsigned char> WvBufferCursor;
+typedef WvBufCursorBase<unsigned char> WvBufCursor;
 
 /** The raw memory buffer view type. */
-typedef WvBufferViewBase<unsigned char> WvBufferView;
+typedef WvBufViewBase<unsigned char> WvBufView;
 
 /** A raw memory read-only buffer backed by a constant WvString */
 class WvConstStringBuffer : public WvConstInPlaceBuffer

@@ -8,7 +8,7 @@
 #define __UNICONFINI_H
 
 #include "uniconfgen.h"
-#include "uniconftemp.h"
+#include "unitempgen.h"
 #include "wvlog.h"
 
 /**
@@ -20,7 +20,7 @@
  * path of the .ini file.
  * 
  */
-class UniConfIniFileGen : public UniConfTempGen
+class UniIniGen : public UniTempGen
 {
     WvString filename;
     WvLog log;
@@ -30,9 +30,9 @@ public:
      * Creates a generator which can load/modify/save a .ini file.
      * "filename" is the local path of the .ini file
      */
-    UniConfIniFileGen(WvStringParm filename);
+    UniIniGen(WvStringParm filename);
 
-    virtual ~UniConfIniFileGen();
+    virtual ~UniIniGen();
     
     /***** Overridden members *****/
 
