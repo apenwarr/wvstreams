@@ -12,8 +12,6 @@
 #include "wvstringlist.h"
 
 class WvStream;
-class WvStringTable;
-
 class UniConf;
 class UniConfDict;
 
@@ -172,7 +170,6 @@ public:
     
     // a handy function to print a copy of this subtree to a stream.
     // if everything=true, also prints objects with null values.
-    void _dump(WvStream &s, bool everything, WvStringTable &keytable);
     void dump(WvStream &s, bool everything = false);
     
     class Iter;

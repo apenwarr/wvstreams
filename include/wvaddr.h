@@ -11,17 +11,11 @@
 
 #include "wvstring.h"
 
-#ifndef ISLINUX
-#ifndef ISBSD
-#define ISLINUX
-#endif
-#endif
-
 #ifdef ISLINUX
 #include <linux/if_ether.h>
 #endif
 
-#ifdef ISBSD
+#if defined(ISBSD) || defined(ISDARWIN)
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if_arp.h>
@@ -30,22 +24,15 @@
 #define ETH_ALEN ETHER_ADDR_LEN
 #endif
 
+#if defined(ISBSD) || defined(ISDARWIN)
+#include <arpa/inet.h>
+#include "if_arp.h"
+#endif
+
 #include <netinet/in.h>
 
 typedef unsigned int __u32;
 typedef short unsigned int __u16;
-
-
-static const char * type_wvaddr = "WvAddr";
-static const char * type_wvipaddr = "WvIPAddr";
-static const char * type_wvipnet = "WvIPNet";
-static const char * type_wvipportaddr = "WvIPPortAddr";
-
-#define WVADDR type_wvaddr
-#define WVIPADDR type_wvipaddr
-#define WVIPNET type_wvipnet
-#define WVIPPORTADDR type_wvipportaddr
-
 
 /**
  * Common packet encapsulation types, with the ability to convert a Linux
@@ -101,20 +88,16 @@ class WvAddr
 {
 protected:
     virtual WvString printable() const = 0;
+    const char *addrtype;
 
 public:
-    WvAddr() {};
-    virtual ~WvAddr() {};
+    WvAddr();
+    virtual ~WvAddr();
     static WvAddr *gen(struct sockaddr *addr);
     
     virtual WvEncap encap() const = 0;
     operator WvString() const
         { return printable(); }
-
-    virtual bool comparator(const WvAddr *a2, bool first_pass = true) const;
-    // Poor man's rtti
-    virtual const char *type() const
-        { return WVADDR; };
     
     virtual bool isbroadcast() const;
 
@@ -124,9 +107,10 @@ public:
     virtual size_t rawdata_len() const;
     
     virtual unsigned WvHash() const;
+    virtual bool comparator(const WvAddr *a2) const;
     
     bool operator== (const WvAddr &a2) const
-        { return comparator(&a2); }
+        { return addrtype == a2.addrtype && comparator(&a2); }
     bool operator!= (const WvAddr &a2) const
         { return ! (*this == a2); }
 };
@@ -251,10 +235,6 @@ public:
     WvIPAddr(const WvIPAddr &_addr)
         { memcpy(binaddr, _addr.binaddr, 4); }
     virtual ~WvIPAddr();
-
-    virtual bool comparator(const WvAddr *a2, bool first_pass = true) const;
-    virtual const char *type() const
-        { return WVIPADDR; };
     
     WvIPAddr operator& (const WvIPAddr &a2) const;
     WvIPAddr operator| (const WvIPAddr &a2) const;
@@ -293,7 +273,7 @@ class WvIPNet : public WvIPAddr
 protected:
     WvIPAddr mask;
     virtual WvString printable() const;
-    
+
 public:
     WvIPNet(const WvIPNet &_net);
     WvIPNet(const char string[]) : WvIPAddr(string)
@@ -302,10 +282,6 @@ public:
         { string_init(string); }
     void string_init(const char string[]);
     WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask);
-
-    virtual bool comparator(const WvAddr *a2, bool first_pass = true) const;
-    virtual const char *type() const
-        { return WVIPNET; };
     
     /**
      * construct an IPNet from a base address and a number of bits in
@@ -325,6 +301,7 @@ public:
      * Override the hash and comparison functions
      */
     virtual unsigned WvHash() const;
+    virtual bool comparator(const WvAddr *a2) const;
     
     /** 
      * Get the 'base IP address' component, netmask, network, and broadcast
@@ -387,7 +364,6 @@ class WvIPPortAddr : public WvIPAddr
 {
 protected:
     virtual WvString printable() const;
-
 public:
     __u16 port;
     
@@ -405,15 +381,12 @@ public:
     WvIPPortAddr(struct sockaddr_in *sin) : WvIPAddr(sin->sin_addr.s_addr)
         { port = ntohs(sin->sin_port); }
     virtual ~WvIPPortAddr();
-
-    virtual bool comparator(const WvAddr *a2, bool first_pass = true) const;
-    virtual const char *type() const
-        { return WVIPPORTADDR; };
-
+    
     virtual struct sockaddr *sockaddr() const;
 
     // Override the hash and comparison functions
     virtual unsigned WvHash() const;
+    virtual bool comparator(const WvAddr *a2) const;
 };
 
 

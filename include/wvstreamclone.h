@@ -1,4 +1,4 @@
-/* -*- Mode: C++ -*-
+/*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */ 
@@ -17,32 +17,21 @@
  * while they run, for example, yet do not want users to know about
  * the member variable.
  * 
- * WvStreamClone _does_ attempt to close the cloned stream in the
+ * WvStreamClone does _not_ attempt to close the cloned stream in the
  * destructor.
  */
 class WvStreamClone : public WvStream
 {
 public:
     /**
-     * WvStreamClone gains ownership (i.e. it will delete it when it
-     * dies) of the stream you give it. If you do not want that to
-     * happen, set cloned to NULL before destroying the WvStreamClone
-     * (for example, in your destructor if you derive WvStreamClone).
+     * NOTE: we must NOT use *cloned at this point since the caller
+     * may not have had a chance to initialize it yet!
+     *
+     * *cloned is still owned by the caller.
      */
-    WvStreamClone():
-	cloned(0)
-    {
-	force_select(false, false, false);
-    }
-
-    WvStreamClone(WvStream *_cloned):
-	cloned(_cloned)
-    {
-	force_select(false, false, false);
-    }
+    WvStreamClone(WvStream **_cloned)
+        { cloned = _cloned; force_select(false, false, false); }
     virtual ~WvStreamClone();
-
-    WvStream *cloned;
     
     virtual void close();
     virtual int getrfd() const;
@@ -56,6 +45,11 @@ public:
     virtual bool post_select(SelectInfo &si);
     virtual const WvAddr *src() const;
     virtual void execute();
+
+protected:
+    WvStream **cloned;
+    WvStream *s() const
+        { return cloned ? *cloned : (WvStream*)NULL; }
 };
 
 #endif // __WVSTREAMCLONE_H

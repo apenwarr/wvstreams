@@ -1,9 +1,11 @@
 TOPDIR=..
 include $(TOPDIR)/wvrules.mk
 
+CXXFLAGS += -I../include
+
 XPATH=../utils ../streams
 
-default: all initest delsection
+default: all tests
 
 all: configfile.libs
 
@@ -13,7 +15,10 @@ configfile.a: configfile.libs
 
 #LIBS = ${EFENCE}
 
-initest delsection: configfile.a
-
 clean:
-	rm -f initest delsection
+	$(MAKE) -C tests clean
+
+.PHONY: tests
+tests: configfile.libs
+	$(MAKE) -C tests
+

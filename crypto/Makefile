@@ -1,6 +1,9 @@
 TOPDIR=..
 include ${TOPDIR}/wvrules.mk
 
+CFLAGS += -I../include
+CXXFLAGS += -I../include
+
 # if you compile SSLeay yourself, change this to the base directory of the
 # package (e.g. /usr/src/SSLeay)
 SSLDIR=SILLY/ssleay
@@ -8,14 +11,15 @@ SSLDIR=SILLY/ssleay
 # List of include directories for SSLeay.  If none of these is yours, add
 # it to the list.
 SSLINC= /usr/include/ssl /usr/include/ssleay /usr/local/include/ssl \
-	/usr/local/ssl/include /usr/local/ssleay/include /usr/include/openssl
+	/usr/local/ssl/include /usr/local/ssleay/include \
+	/usr/include/openssl
 
 # List of library directories for SSLeay.  Add yours to the list.
 # Don't forget the -L before each directory name!
 SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 	-L/usr/local/ssl -L/usr/local/ssl/lib -L/usr/local/ssleay
 
-default: all cryptotest ssltest sslsrvtest certtest reqtest md5test
+default: all tests
 all: crypto.libs crypto.a
 
 LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto -L.. -lwvutils -lwvstreams
@@ -28,7 +32,10 @@ crypto.libs: wvcrypto.o wvsslhacks.o wvsslstream.o wvx509.o
 
 crypto.a: crypto.libs
 
-cryptotest ssltest sslsrvtest certtest reqtest md5test: crypto.a
-
 clean:
-	rm -f cryptotest ssltest sslsrvtest certtest reqtest md5test testcert.pem
+	$(MAKE) -C tests clean
+
+.PHONY: tests
+tests: crypto.libs
+	$(MAKE) -C tests
+

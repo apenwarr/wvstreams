@@ -1,22 +1,22 @@
 TOPDIR=..
 include $(TOPDIR)/wvrules.mk
 
+CXXFLAGS += -I../include
+
 XPATH=.. ../utils ../streams ../ipstreams ../crypto
 
-TESTS=http2test
-
-default: all $(TESTS)
+default: all
 
 all: urlget.libs
 
-urlget.a: urlget.libs ../ipstreams/ipstreams.libs
-
 urlget.libs: wvhttppool.o ../crypto/crypto.libs
 
-LIBS=-lssl -lcrypto
-#LIBS+=$(EFENCE)
-$(TESTS): wvhttppool.o urlget.a
+LIBS=-lssl
 
 clean:
-	rm -f $(TESTS)
+	$(MAKE) -C tests clean
+
+.PHONY: tests
+tests: urlget.libs
+	$(MAKE) -C tests
 

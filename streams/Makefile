@@ -1,6 +1,8 @@
 TOPDIR=..
 include $(TOPDIR)/wvrules.mk
 
+CXXFLAGS += -I../include
+
 # some crazy magic for WvLockDev to use the liblockdev library if it's
 # available, or our simpler method otherwise.
 #
@@ -12,8 +14,7 @@ XPATH=.. ../utils ../zlib
 
 #LIBS=$(EFENCE)
 
-default: all watchtest pipetest clonetest modemtest logtest logbuftest  \
-         syslogtest looptest timetest prototest
+default: all
 
 all: report-lock-mode streams.libs
 
@@ -33,11 +34,9 @@ streams.libs: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvlockdev.o wvdailyevent.o wvtimeoutstream.o wvlogfile.o wvlockfile.o \
 	$(LOCKDEV) ../utils/utils.libs
 
-streams.a: streams.libs $(LOCKDEV)
-
-watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
-	looptest timetest prototest: streams.a
-
 clean:
-	rm -f watchtest pipetest clonetest modemtest logtest logbuftest \
-              syslogtest looptest timetest prototest
+	$(MAKE) -C tests clean
+
+.PHONY: tests
+tests: streams.libs
+	$(MAKE) -C tests

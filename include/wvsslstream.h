@@ -50,6 +50,11 @@ public:
     
 protected:
     /**
+     * Connection to be "cloned"
+     */
+    WvStream *slave;
+    
+    /**
      * SSL Context - used to create SSL Object
      */
     SSL_CTX *ctx;

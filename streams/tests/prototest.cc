@@ -15,7 +15,7 @@
 class ProtoTest : public WvProtoStream
 {
 public:
-    ProtoTest(WvStream *_cloned, WvLog *_debuglog);
+    ProtoTest(WvStream **_cloned, WvLog *_debuglog);
     virtual void do_state(Token &t1);
     virtual void switch_state(int newstate);
 };
@@ -40,7 +40,7 @@ char *toks[] = {
 };
 
 
-ProtoTest::ProtoTest(WvStream *_cloned, WvLog *_debuglog)
+ProtoTest::ProtoTest(WvStream **_cloned, WvLog *_debuglog)
 	: WvProtoStream(_cloned, _debuglog)
 {
     switch_state(One);
@@ -89,7 +89,7 @@ void ProtoTest::switch_state(int newstate)
 int main()
 {
     WvLog log("prototest");
-    ProtoTest ps(wvcon, &log);
+    ProtoTest ps(&wvcon, &log);
     
     log("Starting...\n");
     
@@ -98,6 +98,4 @@ int main()
 	if (ps.select(100))
 	    ps.callback();
     }
-
-    ps.cloned = NULL;
 }

@@ -42,6 +42,7 @@ public:
      * delete it whenever you want.
      */
     WvHTTPStream(const WvURL &_url);
+    ~WvHTTPStream();
 
     virtual bool isok() const;
     virtual int geterr() const;
@@ -51,6 +52,7 @@ public:
 
 public:
     WvURL url;
+    WvTCPConn *http;
     State state;
 };
 

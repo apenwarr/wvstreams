@@ -28,18 +28,14 @@ export CC CXX CXXOPTS
 
 SUBDIRS=utils streams configfile uniconf ipstreams crypto urlget Docs
 
-all: include subdirs $(LIBFILES)
+all: subdirs $(LIBFILES)
 
-subdirs: include
+subdirs:
 	$(subdirs)
 
-libwvcrypto.so: libwvstreams.so
+$(LIBFILES) : subdirs
 
-include:
-	rm -rf $@
-	mkdir $@.new
-	ln -s $(addprefix ../,$(foreach d,$(SUBDIRS),$(wildcard $(d)/*.h))) $@.new
-	mv $@.new $@
+libwvcrypto.so : libwvstreams.so
 
 $(wildcard *.so) $(wildcard *.a): Makefile
 
@@ -51,7 +47,7 @@ libwvstreams.so-LIBS=-lcrypto -lz
 libwvstreams.so: ipstreams/ipstreams.libs
 libwvstreams.a: ipstreams/ipstreams.libs
 
-libwvcrypto.so-LIBS=libwvstreams.so -lssl -lcrypto
+libwvcrypto.so-LIBS=libwvstreams.so -lssl
 libwvcrypto.so: urlget/urlget.libs
 libwvcrypto.a: urlget/urlget.libs
 
@@ -74,7 +70,7 @@ install: all
 	for d in ${LIBFILES} wvrules.mk; do \
 		install -m 0644 $$d ${LIBDIR}; \
 	done
-	#strip --strip-debug ${LIBDI../wvstreams/libwvstreams.a
+#	strip --strip-debug ${LIBDI../wvstreams/libwvstreams.a
 
 uninstall:
 	cd ${LIBDIR}; rm -f ${LIBFILES}
@@ -82,7 +78,7 @@ uninstall:
 	-rmdir ${INCDIR}
 
 clean:
-	rm -rf include Docs/doxy-html Docs/kdoc-html
+	rm -rf Docs/doxy-html Docs/kdoc-html
 	$(subdirs)
 	-[ -L wvrules.mk ]     && rm -f wvrules.mk
 	-[ -L rules.local.mk ] && rm -f rules.local.mk

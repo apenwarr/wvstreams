@@ -7,7 +7,6 @@
 #include "wvhttppool.h"
 #include "wvfile.h"
 #include "strutils.h"
-#include "wvlogrcv.h"
 #include <signal.h>
 
 
@@ -24,7 +23,6 @@ void sighandler_die(int signum)
 
 int main(int argc, char **argv)
 {
-    WvLogConsole logcon(2, WvLog::Debug);
     WvLog log("http2test", WvLog::Info);
     WvStreamList l;
     WvHttpPool p;
@@ -39,7 +37,7 @@ int main(int argc, char **argv)
     
     while (!want_to_die && p.isok() && (wvcon->isok() || !p.idle()))
     {
-	if (l.select(-1))
+	if (l.select(1000))
 	{
 	    l.callback();
 	    
@@ -48,43 +46,24 @@ int main(int argc, char **argv)
 	    {
 		line = trim_string(line);
 		if (!line[0])
-		    ;
+		    continue;
 		else if (strstr(line, ": "))
 		{
 		    // an extra http header
 		    headers = WvString("%s%s\n", headers, line);
-		    log("New header: %s\n", line);
+		    continue;
 		}
-		else if (!strcasecmp(line, "debug"))
+		
+		WvStream *s = p.addurl(line, headers);
+		if (s)
 		{
-		    log("Increasing debug level.\n");
-		    logcon.level(WvLog::Debug5);
-		}
-		else if (!strncasecmp(line, "pipelining=", 11))
-		{
-		    WvHttpStream::global_enable_pipelining = atoi(line+11);
-		    log("Pipelining is now %s.\n", 
-			WvHttpStream::global_enable_pipelining);
-		}
-		else if (!strncasecmp(line, "max=", 4))
-		{
-		    WvHttpStream::max_requests = atoi(line+4);
-		    log("Max requests per connection is now %s.\n",
-			WvHttpStream::max_requests);
-		}
-		else
-		{
-		    WvStream *s = p.addurl(line, headers);
-		    if (s)
-		    {
-			static int num = 0;
-			WvFile *f = new WvFile(WvString("/tmp/url_%s", ++num), 
-					       O_CREAT|O_WRONLY|O_TRUNC);
-			assert(!f->readable);
-			s->autoforward(*f);
-			l.append(s, true);
-			l.append(f, true);
-		    }
+		    static int num = 0;
+		    WvFile *f = new WvFile(WvString("/tmp/url_%s", ++num), 
+					   O_CREAT|O_WRONLY|O_TRUNC);
+		    assert(!f->readable);
+		    s->autoforward(*f);
+		    l.append(s, true);
+		    l.append(f, true);
 		}
 	    }
 	}

@@ -9,7 +9,7 @@
 #include "wvhttppool.h"
 #include "wvbufstream.h"
 #include "wvtcp.h"
-#include "../crypto/wvsslstream.h"
+#include "wvsslstream.h"
 #include "strutils.h"
 
 bool WvHttpStream::enable_pipelining = true;
