@@ -7,6 +7,8 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
+#ifdef	__cplusplus
+
 #include "uniconfkey.h"
 #include "uniconfgen.h"
 #include "wvcallback.h"
@@ -577,5 +579,18 @@ public:
     void rewind()
         { populate(i); }
 };
+
+#endif /* __cplusplus */
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/* FIXME: put the C binding here. */
+typedef void* uniconf_t;
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif // __UNICONF_H
