@@ -47,6 +47,7 @@ bool UniIniGen::refresh()
     if (!file.isok())
     {
         log("Can't open '%s' for reading: %s\n", filename, file.errstr());
+	log("...starting with blank configuration.\n");
         return false;
     }
     
@@ -316,29 +317,43 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 }
 
 
-void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
+static void save_sect(WvStream &file, UniConfValueTree &toplevel,
+		      UniConfValueTree &sect, bool &printedsection,
+		      bool recursive)
 {
-    UniConfValueTree::Iter it(parent);
-    
-    // we want to ensure that a key with an empty value will
-    // get created either by writing its value or by ensuring
-    // that some subkey will create it implicitly with empty value
-    bool printedsection = false;
-    for (it.rewind(); it.next() && file.isok(); )
+    UniConfValueTree::Iter it(sect);
+    for (it.rewind(); it.next(); )
     {
-        UniConfValueTree *node = it.ptr();
-        if (!!node->value() || !node->haschildren())
+        UniConfValueTree &node = *it;
+        if (!!node.value() || !node.haschildren())
         {
             if (!printedsection)
             {
-                printsection(file, parent.fullkey());
+                printsection(file, toplevel.fullkey());
                 printedsection = true;
             }
-            printkey(file, node->key(), node->value());
+            printkey(file, node.fullkey(&toplevel), node.value());
         }
-    }
 
-    // do subsections
-    for (it.rewind(); it.next() && file.isok(); )
-        save(file, *it);
+	// print all children, if requested
+	if (recursive && node.haschildren())
+	    save_sect(file, toplevel, node, printedsection, recursive);
+    }
+}
+
+
+void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
+{
+    bool printedsection = false;
+    
+    save_sect(file, parent, parent, printedsection, false);
+    
+    UniConfValueTree::Iter it(parent);
+    for (it.rewind(); it.next(); )
+    {
+        UniConfValueTree &node = *it;
+	
+	printedsection = false;
+	save_sect(file, node, node, printedsection, true);
+    }
 }

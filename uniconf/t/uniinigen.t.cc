@@ -96,10 +96,10 @@ WVTEST_MAIN("writing")
 	   "\n[x]\ny = z\n");
     
     inicmp("x/y/z", "abc",
-	   "\n[x/y]\nz = abc\n");
+	   "\n[x]\ny/z = abc\n");
     
     inicmp("x\n/y/z", "abc",
-	   "\n[{x\n/y}]\nz = abc\n");
+	   "\n[{x\n}]\ny/z = abc\n");
     
     inicmp("/users/apenwarr", "{OBFU}scation!",
 	   "\n[users]\napenwarr = {OBFU}scation!\n");
