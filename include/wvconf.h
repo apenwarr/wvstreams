@@ -257,7 +257,7 @@ private:
 private:
     WvAuthDaemon *wvauthd;	// Authentication Daemon
 public:
-    friend WvAuthDaemonSvc;
+    friend class WvAuthDaemonSvc;
 };
 
 
