@@ -448,20 +448,22 @@ void UniTransactionGen::cancel_changes(UniConfChangeTree *node,
 }
 
 void UniTransactionGen::gencallback(const UniConfKey &key,
-				      WvStringParm value,
-				      void *userdata)
+				    WvStringParm value,
+				    void *userdata)
 {
     UniConfChangeTree *node = root;
     for (int seg = 0;; node = node->findchild(key.segment(seg++)))
     {
 	if (!node)
 	    // If we couldn't find the next node, then we aren't changing
-	    // the changed key, and so a callback should be made.
+	    // the changed key or any of its children, and so a callback
+	    // should be made.
 	    break;
 	else if (node->mode == NEWTREE)
 	    // Else if the next node has mode of NEWTREE, then we're changing
-	    // the changed key to whatever it's value is in the stored tree,
-	    // and so the callback should be ignored.
+	    // the changed key and all of its children to whatever their
+	    // values are in the stored tree, and so the callback should be
+	    // ignored.
 	    return;
 	else if (seg == key.numsegments())
 	{
@@ -469,17 +471,65 @@ void UniTransactionGen::gencallback(const UniConfKey &key,
 	    // should do a callback or not.
 	    if (value.isnull())
 	    {
-		if (node->mode == BLANK)
-		    // If we're doing nothing to this node, then a callback
-		    // should be made.
-		    break;
-		// Otherwise the mode is either NEWVALUE or NEWNODE, so this
-		// callback should be ignored, but we have to find every
-		// NEWNODE change within this tree and possibly issue a
-		// callback on it to the empty string. Have a recursive helper
-		// function to do this for us.
+		/*
+		  FIXME:
+		
+		  This case really sucks. Why? Because the UniConfGen
+		  callback semantics allow deletion callbacks to be issued
+		  without having to issue deletion callbacks for the
+		  children. As a result, to issue the callbacks necessary
+		  to inform our callback function of precisely what has
+		  changed, we have no choice (given our current data
+		  structure) but to say that the key was deleted and to
+		  then issue additional callbacks for the things that our
+		  changes will later add back to it. While we're at it, we
+		  also have to set the "was_null_or_empty" flags on all of
+		  the NEWNODE trees we see.
+		  
+		  With the current UniConfGen callback semantics, the only
+		  way to fix this (i.e. to issue only the needed
+		  callbacks) is to, whenever our root exists with mode of
+		  NEWVALUE or NEWNODE, store a list of every key that exists
+		  in the underlying generator whose existence will not be
+		  changed by any of our changes. This could be done by
+		  adding an EXISTS mode to the UniConfChangeTree and storing
+		  this information in our change tree. However, this
+		  would require the UniTransactionGen to do almost as much
+		  work as the UniCacheGen, and a major reason for having
+		  the UniTransactionGen at all was to not have to incur
+		  the performance penalty associated with loading all the
+		  data from the underlying generator, since combining that
+		  with a simple modification to the apply_values() function
+		  would reproduce almost all of the UniTransactionGen's
+		  functionality.
+		  
+		  To be honest, I think that changing the callback semanics
+		  is the "right" solution.
+		*/
+
+		// Temporarily unlink this change node and issue the
+		// deletion callback without any holding so that our callback
+		// function gets to see our generator with the key deleted
+		// for a moment.
+		if (node == root)
+		{
+		    root = NULL;
+		    delta(key, WvString::null);
+		    root = node;
+		}
+		else
+		{
+		    UniConfChangeTree *parent = node->parent();
+		    node->setparent(NULL);
+		    delta(key, WvString::null);
+		    node->setparent(parent);
+		}
+
+		// Now issue all of the other callbacks we need, and set
+		// the was_null_or_empty flags on all the NEWNODE trees.
 		hold_delta();
-		was_removed(node, key);
+		if (node->mode != BLANK)
+		    was_removed(node, key);
 		unhold_delta();
 		return;
 	    }
@@ -514,22 +564,35 @@ void UniTransactionGen::gencallback(const UniConfKey &key,
 void UniTransactionGen::was_removed(UniConfChangeTree *node,
 				    const UniConfKey &key)
 {
-    if (node->mode == NEWNODE && !node->was_null_or_empty)
+    if (node->mode == NEWVALUE)
+	delta(key, *node->newvalue);
+    else // i.e. node->mode == NEWNODE
     {
-	// If this node's mode is NEWNODE and it was previously a non-null,
-	// non-empty value, then a callback should be made and its
-	// was_null_or_empty flag should be set.
 	node->was_null_or_empty = true;
 	delta(key, WvString::empty);
     }
 
-    // Repeat for each child with mode of either NEWVALUE or NEWNODE.
     UniConfChangeTree::Iter i(*node);
     for (i.rewind(); i.next();)
     {
-	if (i.ptr()->mode != BLANK && i.ptr()->mode != NEWTREE)
+	if (i.ptr()->mode == NEWTREE)
+	{
+	    if (i.ptr()->newtree)
+		was_removed(i.ptr()->newtree, UniConfKey(key, i->key()));
+	}
+	else if (i.ptr()-> mode != BLANK)
 	    was_removed(i.ptr(), UniConfKey(key, i->key()));
     }
+}
+
+void UniTransactionGen::was_removed(UniConfValueTree *node,
+				    const UniConfKey &key)
+{
+    delta(key, node->value());
+    
+    UniConfValueTree::Iter i(*node);
+    for (i.rewind(); i.next();)
+	was_removed(i.ptr(), UniConfKey(key, i->key()));
 }
 
 // Create and return a UniConfValueTree containing the value 'value' for

@@ -44,27 +44,28 @@ class UniConfValueTree;
  *
  * The UniTransactionGen properly issues callbacks due to calls to set()
  * and refresh() and also due to changes to the underlying generator from
- * other sources. If the underlying generator issues callbacks conservatively,
- * then so will the UniTransactionGen.
+ * other sources.
  *
- * The UniTransactionGen caches nothing. Wrap the underlying generator in
- * a UniCacheGen if it's a slow generator.
+ * If another source deletes a tree from the underlying generator that you
+ * were not already planning to delete or replace, then the
+ * UniTransactionGen currently has to do some very ugly callbacks. (See the
+ * FIXME in the .cc file for details.) In all other cases, if the underlying
+ * generator issues precisely the callbacks needed to indicate a change in
+ * state, then so will the UniTransactionGen.
  *
  * In order to work properly, the UniTransactionGen has to assume that the
- * underlying generator completely obeys the UniConf semantics. If it does
- * not, then the UniTransactionGen might not obey them or its own class
- * contract. Incidentally though, breaking callbacks in the underlying
- * generator cannot break anything in the UniTransactionGen other than its
- * own callbacks.
+ * underlying generator completely obeys the UniConfGen semantics. If it does
+ * not, then the UniTransactionGen might not obey its own class contract or
+ * even the UniConfGen semantics either. Incidentally though, breaking
+ * callbacks in the underlying generator cannot break anything in the
+ * UniTransactionGen other than its own callbacks.
  *
  * Using a UniTransactionGen and/or its underlying generator in multiple
  * threads will probably break it.
- * 
+ *
  * Though similar in concept to a UniFilterGen, the UniTransactionGen
  * doesn't derive from it because we have basically no need for any of
- * its functionality. The exception is our isok() method, which does the
- * same thing as in the UniFilterGen: delegates to the underlying
- * generator.
+ * its functionality.
  */
 class UniTransactionGen : public UniConfGen
 {
@@ -131,6 +132,12 @@ protected:
      * A recursive helper function for gencallback().
      */
     void was_removed(UniConfChangeTree *node,
+		     const UniConfKey &key);
+
+    /**
+     * A recursive helper function for the other was_removed().
+     */
+    void was_removed(UniConfValueTree *node,
 		     const UniConfKey &key);
 
     /**

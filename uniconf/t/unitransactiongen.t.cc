@@ -178,9 +178,15 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Have Disk/Really Have Disk", 1);
     check_iterator(callbacks2, two);
 
-    // And back again.
+    // Test that deleting trees in the underlying generator to which we
+    // are making changes other than a tree replacement causes a deletion
+    // callback followed by callbacks for everything that we will add
+    // back to that tree.
 
+    callbacks2.add("cfg", WvString::null);
     callbacks2.add("cfg", "");
+    callbacks2.add("cfg/Global", "");
+    callbacks2.add("cfg/Global/Have Disk", 1);
     one.xset("cfg", WvString::null);
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
@@ -203,10 +209,17 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Have Disk", 1);
     check_iterator(callbacks2, two);
 
-    // And back again.
+    // Test deletion callbacks again (for no reason).
 
+    callbacks2.add("cfg/Global", WvString::null);
+    callbacks2.add("cfg/Global", "");
+    callbacks2.add("cfg/Global/Have Disk", 1);
     one.xset("cfg/Global", WvString::null);
+    WVPASS(callbacks2.isempty());
+    callbacks2.zap();
+
     WVPASS(two.xget("cfg/Global") == "");
+
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
