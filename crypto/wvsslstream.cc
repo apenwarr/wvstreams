@@ -429,6 +429,7 @@ bool WvSSLStream::isok() const
 
 bool WvSSLStream::pre_select(SelectInfo &si)
 {
+    bool result = WvStreamClone::pre_select(si);
     // the SSL library might be keeping its own internal buffers
     // or we might have left buffered data behind deliberately
     if (si.wants.readable && (read_pending || read_bouncebuf.used()))
@@ -437,7 +438,6 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 	return true;
     }
 
-    bool result = WvStreamClone::pre_select(si);
 //    debug("in pre_select (%s)\n", result);
     return result;
 }
