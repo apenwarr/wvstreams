@@ -13,6 +13,9 @@
 class UniWvConfGen : public UniConfGen
 {
 private:
+    UniConfKey* tempkey;
+    WvString tempvalue;
+
     void notify(void *userdata, WvStringParm section, WvStringParm entry,
 		WvStringParm oldval, WvStringParm newval);
 

@@ -33,12 +33,17 @@ void UniWvConfGen::notify(void *userdata, WvStringParm section,
 			  WvStringParm entry, WvStringParm oldval,
 			  WvStringParm newval)
 {
-    delta(UniConfKey(section, entry), newval);
+    UniConfKey key(section, entry);
+
+    tempvalue = newval;
+    tempkey = &key;
+    delta(key, newval);
+    tempkey = NULL;
 }
 
 
 UniWvConfGen::UniWvConfGen(WvConf &_cfg):
-    cfg(_cfg)
+    tempkey(NULL), tempvalue(), cfg(_cfg)
 {
     cfg.add_callback(WvConfCallback(this, &UniWvConfGen::notify), NULL,
 		     "", "", this);
@@ -47,7 +52,10 @@ UniWvConfGen::UniWvConfGen(WvConf &_cfg):
 
 WvString UniWvConfGen::get(const UniConfKey &key)
 {
-    return cfg.get(key.first(), key.last(key.numsegments() - 1));
+    if (tempkey && key == *tempkey)
+	return tempvalue;
+    else
+	return cfg.get(key.first(), key.last(key.numsegments() - 1));
 }
 
 
