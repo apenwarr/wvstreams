@@ -10,7 +10,7 @@
 #include "wvstring.h"
 #include "wvbuffer.h"
 
-class WvBuffer;
+class WvBuf;
 
 /**
  * Base64-encode a buffer.
@@ -20,6 +20,6 @@ WvString base64_encode(const void *buf, size_t length);
 /**
  * Decode a base64-encoded string into a buffer.
  */
-WvBuffer &base64_decode(WvStringParm in, WvBuffer &out);
+WvBuf &base64_decode(WvStringParm in, WvBuf &out);
 
 #endif // __BASE64_H

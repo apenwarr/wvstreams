@@ -208,4 +208,9 @@ public:
 };
 
 
+// compatibility with the new WvStreams
+class WvBuf : public WvBuffer {};
+class WvDynBuf : public WvBuf {};
+
+
 #endif // __WVBUFFER_H

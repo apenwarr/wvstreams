@@ -127,7 +127,7 @@ public:
      * If wait_msec=0, never waits.  Otherwise, waits up to wait_msec
      * milliseconds until a newline appears.
      *
-     * This now uses the dynamic-sized WvBuffer.  It is expected that there
+     * This now uses the dynamic-sized WvDynBuf.  It is expected that there
      * will be no NULL characters on the line.
      */
     char *getline(time_t wait_msec, char separator = '\n');
@@ -458,7 +458,7 @@ protected:
     void *userdata;
     int rwfd, errnum;
     WvString errstring;
-    WvBuffer inbuf, outbuf;
+    WvDynBuf inbuf, outbuf;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     size_t queue_min;		// minimum bytes to read()
