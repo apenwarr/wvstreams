@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * Implementation of a simple and efficient printable-string class.  It
  * leaves out many of the notational conveniences provided by other string

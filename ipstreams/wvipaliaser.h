@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * WvIPAliaser handles IP aliasing in the Linux kernel.  Multiple instances
  * of the object can be created, and they will share aliases between them.

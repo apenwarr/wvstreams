@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * WvTimeStream causes select() to be true after a configurable number
  * of milliseconds.  Because programs using WvStream make no guarantees

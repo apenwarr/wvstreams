@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * simpleconn is a very simple program that forwards data between an
  * arbitrary set of given files (which are usually devices, named pipes,

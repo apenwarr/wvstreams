@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
  *
  * Definition of the WvModem class.  Inherits from WvFile, but does various
  * important details related to modems, like setting baud rates and dropping

@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * Implementation of the WvLoopback stream.  WvLoopback uses a
  * socketpair() to create a stream that allows you to read()

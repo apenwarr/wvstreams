@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * WvLogBuffer is a descendant of WvLogRcv that buffers log messages for
  * later use.  It only keeps up to max_lines log entries of max_level debug

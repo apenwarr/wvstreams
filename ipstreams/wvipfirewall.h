@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * WvIPFirewall is an extremely simple hackish class that handles the Linux
  * 2.1 "ipchains" firewall.  Someday, this might be rewritten and much

@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * The WvIPRoute and WvIPRouteList class, a quick (mostly hackish) attempt
  * at a way to read the Linux kernel routing table.

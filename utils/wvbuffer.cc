@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * Declarations for WvMiniBuffer (a statically-sized data buffer with
  * get/put functions) and WvBuffer (a dynamically-sized buffer made from
