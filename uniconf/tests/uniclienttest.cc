@@ -56,13 +56,13 @@ bool testgetkeys(const UniConf &mainconf)
     bool pass = true;
 
     UniConf narf(mainconf["chickens/bob"]);
-    pass = check(narf.fullkey(), narf.get(), "goof") && pass;
+    pass = check(narf.fullkey(), narf.getme(), "goof") && pass;
   
     narf = mainconf["wacky test section/  goose  "];
-    pass = check(narf.fullkey(), narf.get(), "bluebayou") && pass;
+    pass = check(narf.fullkey(), narf.getme(), "bluebayou") && pass;
 
     narf = mainconf["this key should not exist/ bcscso "];
-    pass = check(narf.fullkey(), narf.get(), WvString::null) && pass;
+    pass = check(narf.fullkey(), narf.getme(), WvString::null) && pass;
     
     return pass;
 }
@@ -73,15 +73,15 @@ bool testgetfromsections(const UniConf &mainconf)
 
     UniConf neep(mainconf["chickens"]);
     UniConf sub(neep["bob"]);
-    pass = check(sub.fullkey(), sub.get(), "goof") && pass;
+    pass = check(sub.fullkey(), sub.getme(), "goof") && pass;
 
     neep = mainconf["users"];
     sub = neep["apenwarr"];
     UniConf subsub(sub["ftp"]);
-    pass = check(subsub.fullkey(), subsub.get(), "1") && pass;
+    pass = check(subsub.fullkey(), subsub.getme(), "1") && pass;
 
     subsub = sub["pptp"];
-    pass = check(subsub.fullkey(), subsub.get(), "0") && pass;
+    pass = check(subsub.fullkey(), subsub.getme(), "0") && pass;
 
     return pass;
 }
@@ -91,22 +91,22 @@ bool testgetsetkey(const UniConf &mainconf)
     bool pass = true;
 
     UniConf narf(mainconf["chickens/bob"]);
-    pass = check(narf.fullkey(), narf.get(), "goof") && pass;
+    pass = check(narf.fullkey(), narf.getme(), "goof") && pass;
 
-    narf.set("troop");
-    pass = check(narf.fullkey(), narf.get(), "troop") && pass;
+    narf.setme("troop");
+    pass = check(narf.fullkey(), narf.getme(), "troop") && pass;
 
     narf.remove();
-    pass = check(narf.fullkey(), narf.get(), WvString::null) && pass;
+    pass = check(narf.fullkey(), narf.getme(), WvString::null) && pass;
 
 #if 1
     // FIXME: UniConf daemon handling of empty string broken
-    narf.set("");
-    pass = check(narf.fullkey(), narf.get(), "") && pass;
+    narf.setme("");
+    pass = check(narf.fullkey(), narf.getme(), "") && pass;
 #endif
 
-    narf.set("goof");
-    pass = check(narf.fullkey(), narf.get(), "goof") && pass;
+    narf.setme("goof");
+    pass = check(narf.fullkey(), narf.getme(), "goof") && pass;
     
     return pass;
 }

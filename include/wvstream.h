@@ -150,13 +150,12 @@ public:
     /** Sets a callback to be invoked on close().  */
     virtual void setclosecallback(WvStreamCallback _callfunc,
 				  void *_userdata) = 0;
-    
-    // IObject
-    static const XUUID XIID;
 };
 
-DEFINE_XIID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
+#ifndef SWIG	// This ifdef makes ExchangeIt work
+DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
+#endif
 
 /**
  * Unified support for streams, that is, sequences of bytes that may or
@@ -165,8 +164,9 @@ DEFINE_XIID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
  * We provide typical read and write routines, as well as a select() function
  * for each stream.
  */
-class WvStream : public GenericComponent<IWvStream>
+class WvStream: public IWvStream
 {
+    IMPLEMENT_IOBJECT(WvStream);
 public:
     /**
      * 'force' is the list of default SelectRequest values when you use the

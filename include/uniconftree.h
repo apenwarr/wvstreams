@@ -13,23 +13,13 @@
 #include "unihashtree.h"
 
 /**
- * A recursively composed dictionary for ordered tree-structured
- * data indexed by UniConfKey with logarithmic lookup time for
- * each 1-level search, linear insertion and removal.
- *
- * This container maintains a sorted vector of children which
- * greatly facilitates tree comparison and merging.  The
- * underlying collection guarantees fast lookups, but insertion
- * and removal may be quite slow.  If this becomes a problem,
- * then a different (more complex) data structure should be used,
- * such as a binary search tree.  However, for the moment, the
- * use of a vector keeps down memory footprint.
+ * A recursively composed dictionary for tree-structured
+ * data indexed by UniConfKey.
  *
  * Someday this could be further abstracted into a generic WvTreeDict.
  *
- * "Sub" is the name of the concrete subclass of UniConfTree
+ * "Sub" is the name of the concrete subclass of UniConfTree.
  */
-
 template<class Sub, class Base = UniHashTreeBase>
 class UniConfTree : public Base
 {
@@ -117,10 +107,10 @@ public:
      * "userdata" is userdata for the compare function
      * Returns: true if the comparison function returned true each time
      */
-    void compare(const Sub *other, const Comparator &comparator,
+    bool compare(const Sub *other, const Comparator &comparator,
         void *userdata)
     {
-        _recursivecompare(this, other, reinterpret_cast<
+        return _recursivecompare(this, other, reinterpret_cast<
             const typename Base::BaseComparator&>(comparator), userdata);
     }
 
@@ -152,10 +142,9 @@ class UniConfValueTree : public UniConfTree<UniConfValueTree>
     
 public:
     UniConfValueTree(UniConfValueTree *parent,
-        const UniConfKey &key, WvStringParm value) :
-        UniConfTree<UniConfValueTree>(parent, key), xvalue(value)
-    {
-    }
+		     const UniConfKey &key, WvStringParm value)
+	: UniConfTree<UniConfValueTree>(parent, key), xvalue(value)
+	{ }
     
     /** Returns the value field. */
     const WvString &value() const

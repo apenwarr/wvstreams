@@ -39,7 +39,7 @@ protected:
     virtual void do_get(const UniConfKey &key);
     virtual void do_set(const UniConfKey &key, WvStringParm value);
     virtual void do_remove(const UniConfKey &key);
-    virtual void do_subtree(const UniConfKey &key);
+    virtual void do_subtree(const UniConfKey &key, bool recursive);
     virtual void do_haschildren(const UniConfKey &key);
 
     void deltacallback(const UniConf &cfg, const UniConfKey &key);

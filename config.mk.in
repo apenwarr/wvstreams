@@ -52,7 +52,7 @@ with_acl=@with_acl@
 with_fam=@with_fam@
 with_fftw=@with_fftw@
 with_bdb=@with_bdb@
-with_gdbm=@with_gdbm@
+with_qdbm=@with_qdbm@
 with_gtk=@with_gtk@
 with_ogg=@with_ogg@
 with_openssl=@with_openssl@
@@ -65,4 +65,6 @@ with_speex=@with_speex@
 with_vorbis=@with_vorbis@
 with_xplc=@with_xplc@
 with_zlib=@with_zlib@
+
+build_xplc=@build_xplc@
 

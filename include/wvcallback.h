@@ -6,17 +6,17 @@
 #ifndef __WVCALLBACK_H
 #define __WVCALLBACK_H
 
-class EmptyType;
+class E;
 
 template<typename R,
-	 typename P1 = EmptyType,
-	 typename P2 = EmptyType,
-	 typename P3 = EmptyType,
-	 typename P4 = EmptyType,
-	 typename P5 = EmptyType,
-	 typename P6 = EmptyType,
-	 typename P7 = EmptyType,
-	 typename P8 = EmptyType>
+	 typename P1 = E,
+	 typename P2 = E,
+	 typename P3 = E,
+	 typename P4 = E,
+	 typename P5 = E,
+	 typename P6 = E,
+	 typename P7 = E,
+	 typename P8 = E>
 class WvCallbackImpl
 {
 public:
@@ -53,7 +53,7 @@ template<typename R,
 	 typename P5,
 	 typename P6,
 	 typename P7>
-class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, EmptyType>
+class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, P7, E>
 {
 public:
     struct FrozenParams
@@ -87,7 +87,7 @@ template<typename R,
 	 typename P4,
 	 typename P5,
 	 typename P6>
-class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, EmptyType, EmptyType>
+class WvCallbackImpl<R, P1, P2, P3, P4, P5, P6, E, E>
 {
 public:
     struct FrozenParams
@@ -119,7 +119,7 @@ template<typename R,
 	 typename P3,
 	 typename P4,
 	 typename P5>
-class WvCallbackImpl<R, P1, P2, P3, P4, P5, EmptyType, EmptyType, EmptyType>
+class WvCallbackImpl<R, P1, P2, P3, P4, P5, E, E, E>
 {
 public:
     struct FrozenParams
@@ -149,7 +149,7 @@ template<typename R,
 	 typename P2,
 	 typename P3,
 	 typename P4>
-class WvCallbackImpl<R, P1, P2, P3, P4, EmptyType, EmptyType, EmptyType, EmptyType>
+class WvCallbackImpl<R, P1, P2, P3, P4, E, E, E, E>
 {
 public:
     struct FrozenParams
@@ -177,7 +177,7 @@ template<typename R,
 	 typename P1,
 	 typename P2,
 	 typename P3>
-class WvCallbackImpl<R, P1, P2, P3, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+class WvCallbackImpl<R, P1, P2, P3, E, E, E, E, E>
 {
 public:
     struct FrozenParams
@@ -203,7 +203,7 @@ public:
 template<typename R,
 	 typename P1,
 	 typename P2>
-class WvCallbackImpl<R, P1, P2, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+class WvCallbackImpl<R, P1, P2, E, E, E, E, E, E>
 {
 public:
     struct FrozenParams
@@ -227,7 +227,7 @@ public:
 
 template<typename R,
 	 typename P1>
-class WvCallbackImpl<R, P1, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+class WvCallbackImpl<R, P1, E, E, E, E, E, E, E>
 {
 public:
     struct FrozenParams
@@ -249,7 +249,7 @@ public:
 };
 
 template<typename R>
-class WvCallbackImpl<R, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType, EmptyType>
+class WvCallbackImpl<R, E, E, E, E, E, E, E, E>
 {
 public:
     struct FrozenParams
@@ -365,14 +365,14 @@ public:
 };
 
 template<typename R,
-	 typename P1 = EmptyType,
-	 typename P2 = EmptyType,
-	 typename P3 = EmptyType,
-	 typename P4 = EmptyType,
-	 typename P5 = EmptyType,
-	 typename P6 = EmptyType,
-	 typename P7 = EmptyType,
-	 typename P8 = EmptyType>
+	 typename P1 = E,
+	 typename P2 = E,
+	 typename P3 = E,
+	 typename P4 = E,
+	 typename P5 = E,
+	 typename P6 = E,
+	 typename P7 = E,
+	 typename P8 = E>
 class WvCallback
 {
 private:
@@ -413,7 +413,9 @@ public:
     {
         if (this != &cb)
         {
-	    delete impl;
+	    Impl *oldimp = impl;
+	    impl = 0;
+	    delete oldimp;
 	    if (cb.impl)
 	        impl = cb.impl->clone();
 	    else

@@ -19,9 +19,15 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
 }
 
 
+UniConfDaemonConn::~UniConfDaemonConn()
+{
+    close();
+    delcallback();
+}
+
+
 void UniConfDaemonConn::close()
 {
-    delcallback();
     UniClientConn::close();
 }
 
@@ -90,7 +96,7 @@ void UniConfDaemonConn::execute()
 	    if (arg1.isnull())
 		do_malformed();
 	    else
-		do_subtree(arg1);
+		do_subtree(arg1, arg2.num() == 1);
 	    break;
 	    
 	case UniClientConn::REQ_HASCHILDREN:
@@ -136,7 +142,7 @@ void UniConfDaemonConn::do_reply(WvStringParm reply)
 
 void UniConfDaemonConn::do_get(const UniConfKey &key)
 {
-    WvString value(root[key].get());
+    WvString value(root[key].getme());
     if (value.isnull())
         writefail();
     else
@@ -146,7 +152,7 @@ void UniConfDaemonConn::do_get(const UniConfKey &key)
 
 void UniConfDaemonConn::do_set(const UniConfKey &key, WvStringParm value)
 {
-    root[key].set(value);
+    root[key].setme(value);
 }
 
 
@@ -156,15 +162,24 @@ void UniConfDaemonConn::do_remove(const UniConfKey &key)
 }
 
 
-void UniConfDaemonConn::do_subtree(const UniConfKey &key)
+void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 {
     UniConf cfg(root[key]);
     if (cfg.exists())
     {
-        UniConf::Iter it(cfg);
-        for (it.rewind(); it.next(); )
-            writevalue(it->fullkey(), it->get());
-        writeok();
+	if (recursive)
+	{
+	    UniConf::RecursiveIter it(cfg);
+	    for (it.rewind(); it.next(); )
+		writevalue(it->fullkey(), it->getme());
+	}
+	else
+	{
+	    UniConf::Iter it(cfg);
+	    for (it.rewind(); it.next(); )
+		writevalue(it->fullkey(), it->getme());
+	}
+	writeok();
     }
     else
         writefail();
@@ -196,7 +211,10 @@ void UniConfDaemonConn::do_help()
 
 void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
 {
-    WvString value(cfg[key].get());
+    // for now, we just send notifications for *any* key that changes.
+    // Eventually we probably want to do something about having each
+    // connection specify exactly which keys it cares about.
+    WvString value(cfg[key].getme());
     WvString msg;
 
     UniConfKey fullkey(cfg.fullkey());
@@ -206,7 +224,7 @@ void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
         msg = WvString("%s", wvtcl_escape(fullkey));
     else
         msg = WvString("%s %s", wvtcl_escape(fullkey),
-                                wvtcl_escape(cfg[key].get()));
+                                wvtcl_escape(cfg[key].getme()));
 
     writecmd(UniClientConn::EVENT_NOTICE, msg);
 }

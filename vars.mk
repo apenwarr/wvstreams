@@ -138,12 +138,10 @@ ifneq ("$(with_qdbm)", "no")
 endif
 
 ifneq ("$(with_xplc)", "no")
-  # CPPFLAGS+=-DUNSTABLE
   ifneq ("$(with_xplc)", "yes")
     VPATH+=$(with_xplc)
     LDFLAGS+=-L$(with_xplc)
     CPPFLAGS+=-I$(with_xplc)/include
-    libwvstreams.so: -lxplc
     libwvstreams.so: LIBS+=-lxplc-cxx
   endif
 endif
@@ -157,18 +155,19 @@ ifneq ("$(with_pam)", "no")
 endif
 
 LDLIBS := -lgcc $(LDLIBS) \
-	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
-		&& echo " -lsupc++")
+	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
+		&& echo " -lsupc++ -lgcc_eh")
 
 RELEASE?=$(PACKAGE_VERSION)
 
-include $(wildcard */vars.mk */*/vars.mk) /dev/null
+include $(filter-out xplc/%,$(wildcard */vars.mk */*/vars.mk)) /dev/null
 
 libwvutils.a libwvutils.so: $(call objects,utils)
 libwvutils.so: -lz -lcrypt
 
 libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams urlget)
-libwvstreams.so: libwvutils.so -lssl -lcrypto
+libwvstreams.so: libwvutils.so
+libwvstreams.so: LIBS+=-lssl -lcrypto
 
 libuniconf.a libuniconf.so: $(call objects,uniconf)
 libuniconf.so: libwvstreams.so libwvutils.so

@@ -97,10 +97,13 @@ WvString hexdump_buffer(const void *buf, size_t len, bool charRep = true);
 bool isnewline(char c);
 
 /**
- * Converts escaped characters (things like %20 etc.) from web URLS into their
- * normal ASCII representations.
+ * Converts escaped characters (things like %20 etc.) from web URLS
+ * into their normal ASCII representations. If you happen to be
+ * decoding PEM encoded stuff,or anything that has + signs in it that
+ * you don't want encoded as spaces, then set no_space to true, and
+ * it should "just work" for you.
  */
-WvString web_unescape(const char *str);
+WvString web_unescape(const char *str, bool no_space = false);
 
 
 /**
@@ -109,6 +112,12 @@ WvString web_unescape(const char *str);
  */
 WvString url_encode(WvStringParm stuff);
  
+
+/**
+ * Returns the difference between to dates in a human readable format
+ */
+WvString  diff_dates(time_t t1, time_t t2);
+
 
 /**
  * Returns an RFC822-compatible date made out of _when, or, if _when < 0, out of
@@ -161,6 +170,9 @@ WvString getdirname(WvStringParm fullname);
  * WvString containing a human-readable representation of blocks*blocksize.
  */
 WvString sizetoa(long long blocks, int blocksize=1);
+
+/** Give a size in Kilobyes gives a human readable size */
+WvString sizektoa(unsigned int kbytes);
 
 /**
  * Finds a string in an array and returns its index.
@@ -226,6 +238,7 @@ void strcoll_split(StringCollection &coll, WvStringParm _s,
     }
 }
 
+
 /**
  * Splits a string and adds each substring to a collection.
  *   this behaves differently in that it actually delimits the 
@@ -268,6 +281,7 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
         cur += len + 1;
     }
 }
+
 
 /**
  * Concatenates all strings in a collection and returns the result.
@@ -314,13 +328,10 @@ WvString strcoll_join(const StringCollection &coll,
  */
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
 
-/**
- * Replace any consecutive instances of character c with a single one
- */
+/** Replace any consecutive instances of character c with a single one */
 WvString undupe(WvStringParm s, char c);
 
 WvString hostname();
-
 WvString fqdomainname();
 
 /**
@@ -328,5 +339,26 @@ WvString fqdomainname();
  * (eg passing 9876543210 returns "9 876 543 210")
  */
 WvString metriculate(const off_t i);
+
+/**
+ * Returns everything in line (exclusively) after a.
+ * If a is not in line, "" is returned.
+ */
+WvString afterstr(WvStringParm line, WvStringParm a);
+
+/**
+ * Returns everything in line (exclusively) before 'a'.
+ * If a is not in line, line is returned.
+ */
+WvString beforestr(WvStringParm line, WvStringParm a);
+
+/**
+ * Returns the string of length len starting at pos in line.
+ * Error checking prevents seg fault.
+ * If pos > line.len()-1 return ""
+ * if pos+len > line.len() simply return from pos to end of line
+ */
+WvString substr(WvString line, unsigned int pos, unsigned int len);
+
 
 #endif // __WVSTRUTILS_H

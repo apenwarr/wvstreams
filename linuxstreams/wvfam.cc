@@ -1,6 +1,6 @@
 #include "wvfam.h"
 
-#ifdef HAVE_FAM_H
+#ifdef WITH_FAM
 
 #include "wvistreamlist.h"
 #include <sys/stat.h>
@@ -170,4 +170,4 @@ void WvFam::unmonitor(WvStringParm path)
     reqs.remove(req);
 }
 
-#endif
+#endif /* WITH_FAM */

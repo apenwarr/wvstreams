@@ -4,9 +4,9 @@ int main()
 {
     UniConfRoot root("temp:");
 
-    root["foo"].set("bar");
-    printf("foo = \"%s\"\n", root["foo"].get().cstr());
+    root["foo"].setme("bar");
+    printf("foo = \"%s\"\n", root["foo"].getme().cstr());
 
-    root["foo"].set("baz");
-    printf("foo = \"%s\"\n", root["foo"].get().cstr());
+    root["foo"].setme("baz");
+    printf("foo = \"%s\"\n", root["foo"].getme().cstr());
 }

@@ -9,6 +9,7 @@
 
 
 #include "uniconfroot.h"
+#include "wvstringtable.h"
 #include "wvsorter.h"
 
 #define WvConf WvConfEmu
@@ -47,11 +48,12 @@ class WvConfigSectionEmu
 private:
     const UniConf uniconf;
     WvConfigEntryEmuDict entries;
-    WvStringList values;
+    WvStringTable &values;
 public:
     const WvString name;
-    WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name):
-	uniconf(_uniconf), entries(42), name(_name)
+    WvConfigSectionEmu(const UniConf& _uniconf, WvStringParm _name,
+		       WvStringTable *_values):
+	uniconf(_uniconf), entries(42), values(*_values), name(_name)
     {}
     WvConfigEntryEmu *operator[] (WvStringParm s);
     const char *get(WvStringParm entry, const char *def_val = NULL);
@@ -74,7 +76,7 @@ class WvConfigSectionEmu::Iter
 {
 private:
     WvConfigSectionEmu& sect;
-    UniConf::Iter iter;
+    UniConf::RecursiveIter iter;
     WvLink link;
     WvConfigEntryEmu* entry;
 public:
@@ -105,28 +107,29 @@ private:
 	WvString section;
 	WvString key;
 	void* cookie;
-	WvString last;
 	CallbackInfo(WvConfCallback _callback, void* _userdata,
 		     WvStringParm _section, WvStringParm _key,
-		     void* _cookie, WvStringParm _last):
+		     void* _cookie):
 	    callback(_callback), userdata(_userdata), section(_section),
-	    key(_key), cookie(_cookie), last(_last)
+	    key(_key), cookie(_cookie)
 	{}
     };
 
-    const UniConf uniconf;
     WvConfigSectionEmuDict sections;
     bool hold;
     WvList<CallbackInfo> callbacks;
-    WvStringList values;
+    WvStringTable values;
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
-    WvConfEmu(const UniConf& _uniconf);
+    const UniConf uniconf;
+
+    WvConfEmu(const UniConf &_uniconf);
+    ~WvConfEmu();
     void zap();
     bool isok() const;
     void load_file(WvStringParm filename);
-    void save(WvStringParm filename);
+    void save(WvStringParm filename, int _create_mode = 0666);
     void save();
     void flush();
 
@@ -137,11 +140,10 @@ public:
     void del_callback(WvStringParm section, WvStringParm key, void *cookie);
 
     void add_setbool(bool *b, WvStringParm _section, WvStringParm _key);
+    void del_setbool(bool *b, WvStringParm _section, WvStringParm _key);
 
     void add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);
     void del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent);
-
-    void add_addfile(WvString *filename, WvStringParm sect, WvStringParm ent);
 
     WvString getraw(WvString wvconfstr, int &parse_error);
     int getint(WvStringParm section, WvStringParm entry, int def_val);
@@ -173,11 +175,14 @@ public:
     // Check the password passed in.  This isn't defined in wvconf.cc
     // We use this function to check passwords since we may not know what
     // the password actually is!
+    // If s is not null and has continue_select enabled, check_passwd will
+    // pause if the password is incorrect (the pause length depends on how
+    // many password failures have occurred recently).
     bool check_passwd(WvStringParm sect, WvStringParm user,
-		      WvStringParm passwd);
-    bool check_passwd(WvStringParm user, WvStringParm passwd)
+		      WvStringParm passwd, WvStream *s);
+    bool check_passwd(WvStringParm user, WvStringParm passwd, WvStream *s)
     {
-	return check_passwd("Users", user, passwd);
+	return check_passwd("Users", user, passwd, s);
     }
 
     // Check if the user exists.  This isn't defined in wvconf.cc

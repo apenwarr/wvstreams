@@ -1,5 +1,5 @@
 Name: libwvstreams
-Version: 3.71
+Version: 3.80
 Release: 1
 Summary: WvStreams is a network programming library written in C++.
 Source: http://open.nit.ca/download/wvstreams-%{version}.tar.gz

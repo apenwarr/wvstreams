@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  *
- * A UniConf generator that stores keys in memory.
+ * A UniConf generator that caches keys/values in memory.
  */
 #ifndef __UNICACHEGEN_H
 #define __UNICACHEGEN_H
@@ -15,9 +15,9 @@
  * A UniConf generator that adds a cache layer on top of another generator
  *
  * This cache implementation preloads the entire uniconf tree and then keeps up
- * to date by making changes whenever notifications are recieved. This means
- * that a uniconfclient when cached will never actively contact the
- * uniconfdaemon.
+ * to date by making changes whenever notifications are received. This means
+ * that a read-only uniconfclient, when cached, will never actively contact
+ * the uniconfdaemon.
  *
  * **WARNING**
  * The cache *will* go out of date if used with a uniconfclient/daemon without
@@ -38,6 +38,9 @@ public:
     virtual ~UniCacheGen();
 
     /***** Overridden members *****/
+    virtual bool isok();
+    virtual bool refresh();
+    virtual void commit();
     virtual void set(const UniConfKey &key, WvStringParm value);
 };
 

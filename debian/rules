@@ -8,10 +8,9 @@
 #export DH_VERBOSE=1
 export DH_OPTIONS
 
-major=3
-base=libwvstreams
+base=libwvstreams3.80
 # This is used the wvstreams makefile to set the .so links
-PKG=`pwd`/debian/${base}${major}
+PKG=`pwd`/debian/${base}
 PKG_OGG=`pwd`/debian/${base}-ogg
 PKG_QT=`pwd`/debian/${base}-qt
 PKG_SPEEX=`pwd`/debian/${base}-speex
@@ -73,6 +72,10 @@ install: build
 	# Install development package
 	$(MAKE) install-dev DESTDIR=$(PKGDEV)
 
+	# Install a minimal XPLC
+	$(MAKE) install-xplc DESTDIR=$(PKGDEV)
+	rm -f $(PKGDEV)/usr/lib/libxplc.so*
+
 	dh_install --autodest
 
 install-indep: build-indep
@@ -122,9 +125,9 @@ binary-arch: build install
 	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
-	dh_makeshlibs -a -plibwvstreams3-base -V -plibwvstreams3-gtk -V \
-                         -plibwvstreams3-qt -V -plibwvstreams3-fft -V \
-                         -plibwvstreams3-vorbis -V -plibwvstreams3-speex -V
+	dh_makeshlibs -a -plibwvstreams3.80-base -V -plibwvstreams3.80-gtk -V \
+                         -plibwvstreams3.80-qt -V -plibwvstreams3.80-fft -V \
+                         -plibwvstreams3.80-vorbis -V -plibwvstreams3.80-speex -V
 	dh_installdeb -a   
 	dh_shlibdeps -a
 	dh_gencontrol -a

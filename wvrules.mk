@@ -10,55 +10,61 @@
 #
 # It will only work with GNU make.
 #
-ifeq ($(WVSTREAMS),)
-  $(error The WVSTREAMS variable is not defined)
+
+# if WVSTREAMS_SRC is set assume everything else is set.
+# For packages that use WvStreams use WVSTREAMS_SRC=. for distribution.
+ifeq ($(WVSTREAMS_SRC),)
+  ifeq ($(WVSTREAMS),)
+    $(error The WVSTREAMS variable is not defined)
+  endif
+  WVSTREAMS_SRC=$(WVSTREAMS)
+  WVSTREAMS_LIB=$(WVSTREAMS)
+  WVSTREAMS_INC=$(WVSTREAMS)/include
+  WVSTREAMS_BIN=$(WVSTREAMS)
 endif
-export WVSTREAMS
+export WVSTREAMS WVSTREAMS_SRC WVSTREAMS_LIB WVSTREAMS_INC WVSTREAMS_BIN
 
 SHELL=/bin/bash
 
 ifeq (${WVTESTRUN},)
-  WVTESTRUN=$(WVSTREAMS)/wvtesthelper
+  WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
 endif
 
 #ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
 #  -include config.mk
 #endif
 
-ifneq ($(wildcard $(WVSTREAMS)/config.mk),)
-  include $(WVSTREAMS)/config.mk
+ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
+  include $(WVSTREAMS_SRC)/config.mk
 endif
-
-WVSTREAMS_INC=$(WVSTREAMS)/include
 
 ifneq ("$(with_xplc)", "no")
   LIBXPLC=$(with_xplc)/libxplc-cxx.a $(with_xplc)/libxplc.so
 endif
 
-LIBWVUTILS=$(WVSTREAMS)/libwvutils.so $(LIBXPLC)
-LIBWVSTREAMS=$(WVSTREAMS)/libwvstreams.so $(LIBWVUTILS)
-LIBWVOGG=$(WVSTREAMS)/libwvoggvorbis.so $(LIBWVSTREAMS)
-LIBUNICONF=$(WVSTREAMS)/libuniconf.so $(LIBWVSTREAMS)
-LIBWVQT=$(WVSTREAMS)/libwvqt.so $(LIBWVSTREAMS)
+LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBXPLC)
+LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
+LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
+LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
+LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 
 #
 # Initial C compilation flags
 #
-CPPFLAGS += -DUNSTABLE    # for xplc
 CPPFLAGS += $(CPPOPTS)
 C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
 		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS += $(COPTS) $(C_AND_CXX_FLAGS) 
 CXXFLAGS += $(CXXOPTS) $(C_AND_CXX_FLAGS)
-LDFLAGS += $(LDOPTS)
+LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 
 # FIXME: what does this do??
-XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" && echo " -lsupc++")
+XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" && echo " -lsupc++ -lgcc_eh")
 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
 else
-  DEBUG:=
+  DEBUG:=0
 endif
 
 ifeq ("$(enable_fatal_warnings)", "yes")
@@ -123,11 +129,10 @@ test:
 %/test:
 	$(MAKE) -C $(dir $@) test
 
-$(TOPDIR)/rules.local.mk $(WVSTREAMS)/rules.local.mk:
+$(WVSTREAMS_SRC)/rules.local.mk:
 	@true
 
--include $(TOPDIR)/rules.local.mk
--include $(WVSTREAMS)/rules.local.mk
+-include $(WVSTREAMS_SRC)/rules.local.mk
 
 #
 # Figure out which OS we're running (for now, only picks out Linux or BSD)
@@ -172,7 +177,7 @@ ifeq ($(STATIC),1)
   LDFLAGS += -static
 endif
 
-INCFLAGS = $(addprefix -I,$(XPATH))
+INCFLAGS = $(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
 CPPFLAGS += $(INCFLAGS)
 CFLAGS += $(CPPFLAGS)
 CXXFLAGS += $(CPPFLAGS)
@@ -244,7 +249,7 @@ wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2
 /%.a:;		@echo "Library $@ does not exist!"; exit 1
 
 %: %.o;		$(call wvlink,$@,$^) 
-%.t: %.t.o;	$(call wvlink,$@,$(WVSTREAMS)/wvtestmain.o $(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVUTILS))
+%.t: %.t.o;	$(call wvlink,$@,$(WVSTREAMS_SRC)/wvtestmain.o $(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVUTILS))
 %.a %.libs:;	$(call wvlink_ar,$@,$^)
 %.so:;		$(call wvlink_so,$@,$^)
 
@@ -339,6 +344,16 @@ _wvclean: FORCE
 	rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
 	rm -rf debian/tmp
+
+#
+# default dist rules.
+distclean: clean
+
+dist: distclean ChangeLog
+
+ChangeLog: FORCE
+	rm -f ChangeLog ChangeLog.bak
+	cvs2cl --utc
 
 #
 # Make 'tags' file using the ctags program - useful for editing

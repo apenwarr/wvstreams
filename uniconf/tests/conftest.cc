@@ -23,11 +23,11 @@ static void copyall(UniConf &src, UniConf &dest)
     UniConf::RecursiveIter it(src);
     for (it.rewind(); it.next(); )
     {
-        WvString value(it->get());
+        WvString value(it->getme());
         if (value.isnull())
             continue;
         //wverr->print("set: \"%s\" = \"%s\"\n", it->fullkey(), value);
-        dest[it->fullkey()].set(value);
+        dest[it->fullkey()].setme(value);
         //wverr->print("get: \"%s\"\n", dest[it->fullkey()].get());
     }
 }
@@ -285,27 +285,27 @@ int main()
 	log("-- Basic config test begins\n");
 	
         UniConfRoot cfg("temp:");
-	cfg["/foo/blah/weasels"].set("chickens");
+	cfg["/foo/blah/weasels"].setme("chickens");
 	
-	cfg["foo"]["pah"]["meatballs"].setint(6);
+	cfg["foo"]["pah"]["meatballs"].setmeint(6);
 	
 	assert(cfg["/foo/blah"].haschildren());
 	assert(!cfg["/foo/blah/weasels"].haschildren());
 	
 	UniConf x(cfg["snort/fish/munchkins"]);
-	x["big/bad/weasels"].setint(7);
-	x["foo"].set("sneeze");
-        x["blue"].set("sneeze");
-        x["true"].set("sneeze");
+	x["big/bad/weasels"].setmeint(7);
+	x["foo"].setme("sneeze");
+        x["blue"].setme("sneeze");
+        x["true"].setme("sneeze");
 	
 	{
 	    log("get() test:\n");
 	    log("  '%s' '%s' '%s' '%s'/'%s' '%s'\n",
-		cfg["foo/blah/weasels"].get(),
-		cfg["foo/blah"].get(),
-		cfg["foo"].get(),
-		cfg[""].get(), cfg[UniConfKey::EMPTY].get(),
-		cfg.get()
+		cfg["foo/blah/weasels"].getme(),
+		cfg["foo/blah"].getme(),
+		cfg["foo"].getme(),
+		cfg[""].getme(), cfg[UniConfKey::EMPTY].getme(),
+		cfg.getme()
 		);
 	}
 	
@@ -313,7 +313,7 @@ int main()
 	    log("Toplevel dump:\n");
 	    UniConf::Iter i(cfg);
 	    for (i.rewind(); i.next(); )
-		quiet.print("'%s' = '%s'\n", i->key(), i->get());
+		quiet.print("'%s' = '%s'\n", i->key(), i->getme());
 	}
 	
 	log("Config dump:\n");
@@ -325,8 +325,8 @@ int main()
 	log("-- Simple deletion test begins\n");
 	UniConfRoot cfg("temp:");
 	UniConf a(cfg["admins"]), a1(a["1"]), a2(a["2"]);
-	a1.set("11");
-	a2.set("22");
+	a1.setme("11");
+	a2.setme("22");
 	assert(a.haschildren());
 	assert(!a2.haschildren());
 	a1.remove();
@@ -434,40 +434,40 @@ int main()
 
         log("Setting up config file...\n");
         UniConfRoot root("default:ini:uniconf.ini");
-        root["*"].set("go wild, bay-be!");
-        root["*/drheld/whee"].set("3");
-        root["users/*/chicken/bork"].set("b0rk3n g00dn3ss");
-        root["users/*/chicken/*"].set("happy");
-        root["users/apenwarr"].set("ooga booga");
-        root["users/apenwarr/chicken/hammer"].set("smashy!");
-        root["users/apenwarr/ftp"].set("1");
-        root["wild/*/*/blink"].set("*1");
-        root["wild/*/*/blank"].set("*2");
-        root["wild/*/*/plunk"].set("*3");
+        root["*"].setme("go wild, bay-be!");
+        root["*/drheld/whee"].setme("3");
+        root["users/*/chicken/bork"].setme("b0rk3n g00dn3ss");
+        root["users/*/chicken/*"].setme("happy");
+        root["users/apenwarr"].setme("ooga booga");
+        root["users/apenwarr/chicken/hammer"].setme("smashy!");
+        root["users/apenwarr/ftp"].setme("1");
+        root["wild/*/*/blink"].setme("*1");
+        root["wild/*/*/blank"].setme("*2");
+        root["wild/*/*/plunk"].setme("*3");
         root.commit();
 
         log("Starting tests...\n");
 
-        WvString result = root["stupidthing"].get();
+        WvString result = root["stupidthing"].getme();
         log("/stupidthing = %s (should = go wild, bay-be!)\n", result);
 
-        result = root["home/drheld"]["whee"].get();
+        result = root["home/drheld"]["whee"].getme();
         log("/home/drheld/whee = %s (should = 3)\n", result);
 
-        result = root["/users/apenwarr/chicken/bork"].get();
+        result = root["/users/apenwarr/chicken/bork"].getme();
         log("/users/apenwarr/chicken/bork = %s (should = b0rk3n g00dn3ss)\n",
                                                                     result);
 
-        result = root["/users/silly/chicken/die"].get();
+        result = root["/users/silly/chicken/die"].getme();
         log("/users/silly/chicken/die = %s (should = happy)\n", result);
 
-        result = root["/wild/foo/bar/blink"].get("outtaspace");
+        result = root["/wild/foo/bar/blink"].getme("outtaspace");
         log("/wild/foo/bar/blink = %s (should = bar)\n", result);
         
-        result = root["/wild/foo/bar/blank"].get("outtaspace");
+        result = root["/wild/foo/bar/blank"].getme("outtaspace");
         log("/wild/foo/bar/blank = %s (should = foo)\n", result);
         
-        result = root["/wild/foo/bar/plunk"].get("outtaspace");
+        result = root["/wild/foo/bar/plunk"].getme("outtaspace");
         log("/wild/foo/bar/plunk = %s (should = outtaspace)\n", result);
     }
 
@@ -476,18 +476,18 @@ int main()
         log("-- Generator List test begins\n");
         
         UniConfRoot root("list: readonly:ini:test.ini ini:test2.ini");
-        root["chickens"]["boob"].set("not_frank");
+        root["chickens"]["boob"].setme("not_frank");
 
-        log("[chickens][bob] = %s\n", root["chickens"]["bob"].get());
-        log("[chickens][boob] = %s\n", root["chickens"]["boob"].get());
+        log("[chickens][bob] = %s\n", root["chickens"]["bob"].getme());
+        log("[chickens][boob] = %s\n", root["chickens"]["boob"].getme());
 
-        root["chickens"]["bob"].set("gooooblefish");
-        root["chickens"]["boob"].set("I like to wear funny hats");
+        root["chickens"]["bob"].setme("gooooblefish");
+        root["chickens"]["boob"].setme("I like to wear funny hats");
         log("Setting [chickens][bob] = gooooblefish  **(read only on top)\n");
         log("Setting [chickens][boob] = I like to wear funny hats\n");
 
-        log("[chickens][bob] = %s\n", root["chickens"]["bob"].get());
-        log("[chickens][boob] = %s\n", root["chickens"]["boob"].get());
+        log("[chickens][bob] = %s\n", root["chickens"]["bob"].getme());
+        log("[chickens][boob] = %s\n", root["chickens"]["boob"].getme());
 
         root.commit();
 
@@ -527,10 +527,10 @@ int main()
 	
 	log("Changing some data:\n");
 	if (!newh1["big/fat/bob"].exists())
-	    newh1["big/fat/bob"].setint(0);
-	newh1["big/fat/bob"].setint(newh1["big/fat/bob"].getint() + 1);
-	newh1["chicken/hammer\ndesign"].set("simple test");
-	newh1["chicken/whammer/designer\\/code\nweasel"].set(
+	    newh1["big/fat/bob"].setmeint(0);
+	newh1["big/fat/bob"].setmeint(newh1["big/fat/bob"].getmeint() + 1);
+	newh1["chicken/hammer\ndesign"].setme("simple test");
+	newh1["chicken/whammer/designer\\/code\nweasel"].setme(
             "this\n\tis a test  ");
 
         log("Full config dump:\n");

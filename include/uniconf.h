@@ -41,7 +41,7 @@ typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
  * const to guard against accidentally assigning to a temporary by
  * an expression such as cfg["foo"] = cfg["bar"].
  * Instead this must be written as
- *     cfg["foo"].set(cfg["bar"].get())
+ *     cfg["foo"].setme(cfg["bar"].getme())
  * which is slightly
  * less elegant but avoids many subtle mistakes.  Also for this
  * reason, unusual cast operators, assignment operators,
@@ -62,23 +62,17 @@ protected:
      * You can't create non-NULL UniConf objects yourself - ask UniConfRoot
      * or another UniConf object to make one for you.
      */
-    UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
-        : xroot(root), xfullkey(fullkey) { }
+    UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY);
     
 public:
     /** Creates a NULL UniConf handle, useful for reporting errors. */
-    UniConf() 
-        : xroot(NULL), xfullkey(UniConfKey::EMPTY) { }
+    UniConf();
     
-    /**
-     * Copies a UniConf handle.
-     * "other" is the handle to copy
-     */
-    UniConf(const UniConf &other)
-        : xroot(other.xroot), xfullkey(other.xfullkey) { }
+    /** Copies a UniConf handle. */
+    UniConf(const UniConf &other);
     
     /** Destroys the UniConf handle. */
-    virtual ~UniConf() { }
+    virtual ~UniConf();
 
     
     /***** Handle Manipulation API *****/
@@ -125,11 +119,7 @@ public:
      */
     const UniConf operator[] (const UniConfKey &key) const
         { return UniConf(xroot, UniConfKey(xfullkey, key)); }
-    const UniConf operator[] (WvStringParm key) const
-        { return (*this)[UniConfKey(key)]; }
-    const UniConf operator[] (const char *key) const
-        { return (*this)[UniConfKey(key)]; }
-
+    
     /** Reassigns the target of this handle to match a different one. */
     UniConf &operator= (const UniConf &other)
     {
@@ -141,11 +131,40 @@ public:
     
     /***** Key Retrieval API *****/
     
+    /** See UniConfGen::prefetch(). */
+    void prefetch(bool recursive) const;
+    
     /**
      * Fetches the string value for this key from the registry.  If the
      * key is not found, returns 'defvalue' instead.
      */
-    WvString get(WvStringParm defvalue = WvString::null) const;
+    WvString getme(WvStringParm defvalue = WvString::null) const;
+
+    /** A different way to say cfg.getme(): use *cfg instead. */
+    WvString operator* () const
+        { return getme(); }
+
+    /** A different way to say cfg.getme().num(): use cfg->num() instead. */
+    WvStringStar operator -> () const
+        { return getme(); }
+    
+    /** A different way to say cfg[x].getme(y). */
+    WvString xget(WvStringParm key,
+		  WvStringParm defvalue = WvString::null) const
+        { return (*this)[key].getme(defvalue); }
+
+    /**
+     * Fetches the integer value for this key from the registry.  If the
+     * key is not found, returns 'defvalue' instead.  (This is also used to
+     * fetch booleans - 'true', 'yes', 'on' and 'enabled' are recognized as
+     * 1, 'false', 'no', 'off' and 'disabled' as 0.  Note that a nonexistant
+     * key is false by default.)
+     */
+    int getmeint(int defvalue = 0) const;
+
+    /** A different way to say cfg[x].getmeint(y). */
+    int xgetint(WvStringParm key, int defvalue = 0) const
+        { return (*this)[key].getmeint(defvalue); }
 
     /**
      * Without fetching its value, returns true if this key exists.
@@ -155,15 +174,6 @@ public:
      */
     bool exists() const;
 
-    /**
-     * Fetches the integer value for this key from the registry.  If the
-     * key is not found, returns 'defvalue' instead.  (This is also used to
-     * fetch booleans - 'true', 'yes', 'on' and 'enabled' are recognized as
-     * 1, 'false', 'no', 'off' and 'disabled' as 0.  Note that a nonexistant
-     * key is false by default.)
-     */
-    int getint(int defvalue = 0) const;
-
 
     /***** Key Storage API *****/
 
@@ -172,20 +182,28 @@ public:
      * is WvString::null, deletes the key and all of its children.
      * Returns true on success.
      */
-    void set(WvStringParm value) const;
+    void setme(WvStringParm value) const;
 
     /**
      * Stores a string value for this key into the registry.
      * Returns true on success.
      */
-    void set(WVSTRING_FORMAT_DECL) const
-        { return set(WvString(WVSTRING_FORMAT_CALL)); }
+    void setme(WVSTRING_FORMAT_DECL) const
+        { return setme(WvString(WVSTRING_FORMAT_CALL)); }
+
+    /** A different way to say cfg[x].setme(y). */
+    void xset(WvStringParm key, WvStringParm value) const
+        { (*this)[key].setme(value); }
 
     /**
      * Stores an integer value for this key into the registry.
      * Returns true on success.
      */
-    void setint(int value) const;
+    void setmeint(int value) const;
+
+    /** A different way to say cfg[x].setme(y). */
+    void xsetint(WvStringParm key, int value) const
+        { (*this)[key].setmeint(value); }
 
 
     /***** Key Handling API *****/
@@ -210,7 +228,7 @@ public:
      * Returns true on success.
      */
     void remove() const
-        { set(WvString::null); }
+        { setme(WvString::null); }
 
     /**
      * Equivalent to "cp -r" in a standard unix filesystem. This
@@ -420,7 +438,7 @@ public:
         { it->rewind(); }
     bool next()
     {
-        if (! it->next())
+        if (!it->next())
             return false;
         current = top[it->key()];
         return true;
@@ -433,14 +451,24 @@ public:
  */
 class UniConf::RecursiveIter : public UniConf::IterBase
 {
-    UniConf::IterList itlist;
+    UniConfGen::Iter *it;
 
 public:
     /** Creates a recursive iterator over a branch. */
     RecursiveIter(const UniConf &_top);
 
-    void rewind();
-    bool next();
+    ~RecursiveIter()
+        { delete it; }
+
+    void rewind()
+        { it->rewind(); }
+    bool next()
+    {
+        if (!it->next())
+            return false;
+        current = top[it->key()];
+        return true;
+    }   
 };
 
 

@@ -1,9 +1,20 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.80, wvstreams-dev@nit.ca, wvstreams)
 
-rm -f reconfigure
-echo $0 "$@" '"$@"' >reconfigure
-chmod +x reconfigure
+save_args() {
+    ARGS=""
+
+    while test $# -gt 0; do
+        ARGS="$ARGS \"$1\""
+        shift
+    done
+
+    rm -f reconfigure
+    echo $0 $ARGS '"$@"' >reconfigure
+    chmod +x reconfigure
+}
+
+save_args "$@"
 
 # append to a variable without introducing superfluous white space
 AC_DEFUN(WV_APPEND,
@@ -80,7 +91,7 @@ AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
-AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL]))
+AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL (required)]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
@@ -88,8 +99,8 @@ AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
-AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC]))
-AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib]))
+AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC (required)]))
+AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
 
@@ -158,6 +169,9 @@ fi
 if test "$with_fam" != "no"; then
     AC_CHECK_HEADERS(fam.h,, [with_fam=no])
     AC_CHECK_LIB(fam, FAMOpen,, [with_fam=no])
+    if test "$with_fam" != "no"; then
+        AC_DEFINE(WITH_FAM,, [Define to enable FAM support.])
+    fi
 fi
 
 # fftw
@@ -275,12 +289,14 @@ fi
 
 # swig
 if test "$with_swig" != "no"; then
-    AC_CHECK_PROG(SWIG, swig, yes, no)
-    if test "$with_swig" != "no"; then
-        SWIG=swig
-    else
+     AC_CHECK_PROG(SWIG, swig, swig, no, $with_swig:$PATH)
+     if test "$SWIG" = "no"; then
         with_swig=no
-    fi
+     else 
+        if test "$with_swig"; then
+           SWIG="$with_swig/swig"
+        fi
+     fi
 fi
 
 # qt
@@ -328,18 +344,22 @@ fi
 
 # xplc
 if test "$with_xplc" != "no"; then
-    test "$with_xplc" = yes && with_xplc=
-    CPPFLAGS_save="$CPPFLAGS"
-    LDFLAGS_save="$LDFLAGS"
-    if test "$with_xplc"; then
-        WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
-        WV_APPEND(LDFLAGS, [-L$with_xplc])
-    fi
-    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
-    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
-    if test "$with_xplc" = no; then
-        CPPFLAGS="$CPPFLAGS_save"
-        LDFLAGS="$LDFLAGS_save"
+    if test -d xplc; then
+        WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
+        WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
+        AC_CONFIG_SUBDIRS(xplc)
+        build_xplc=yes
+        with_xplc='$(WVSTREAMS)/xplc'
+    else
+        test "$with_xplc" = yes && with_xplc=
+        CPPFLAGS_save="$CPPFLAGS"
+        LDFLAGS_save="$LDFLAGS"
+        if test "$with_xplc"; then
+            WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
+            WV_APPEND(LDFLAGS, [-L$with_xplc])
+        fi
+        AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+        AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
     fi
 fi
 
@@ -394,21 +414,22 @@ if test "$with_vorbis" = "no"; then
 fi
 if test "$with_xplc" = "no"; then
     AC_MSG_WARN([XPLC is missing.])
+    missing_required="$missing_required XPLC"
 fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
 fi
 if test "$with_openssl" = "no"; then
-    AC_MSG_WARN([OpenSSL is missing and is required.])
-    missing_required=yes
+    AC_MSG_WARN([OpenSSL is missing.])
+    missing_required="$missing_required OpenSSL"
 fi
 if test "$with_zlib" = "no"; then
-    AC_MSG_WARN([zlib is missing and is required.])
-    missing_required=yes
+    AC_MSG_WARN([zlib is missing.])
+    missing_required="$missing_required zlib"
 fi
 
 if test -n "$missing_required"; then
-    AC_MSG_ERROR([Required dependencies missing.])
+    AC_MSG_ERROR([Required dependencies missing:$missing_required])
 fi
 
 if test "$enable_devel" = "yes"; then
@@ -418,7 +439,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\${WVSTREAMS}/suppressions.wv"
+    VALGRIND="valgrind --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
 
 AC_SUBST(enable_debug)
@@ -450,6 +471,8 @@ AC_SUBST(with_tcl)
 AC_SUBST(with_vorbis)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
+
+AC_SUBST(build_xplc)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)

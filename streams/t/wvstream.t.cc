@@ -1,5 +1,4 @@
 #include "wvtest.h"
-#include "wvtimeutils.h"
 
 #define private public
 #define protected public
@@ -9,6 +8,24 @@
 
 #include "wvistreamlist.h"
 #include "wvcont.h"
+#include "wvtimeutils.h"
+
+class ReadableStream : public WvStream
+{
+public:
+    bool yes_readable;
+    ReadableStream()
+        { yes_readable = false; }
+    
+    virtual bool pre_select(SelectInfo &si)
+    {
+	int ret = WvStream::pre_select(si);
+	if (yes_readable && si.wants.readable)
+	    return true;
+	else
+	    return ret;
+    }
+};
 
 class CountStream : public WvStream
 {
@@ -346,7 +363,6 @@ static void cont_cb(WvStream &s, void *userdata)
 }
 
 
-// continue_select()
 WVTEST_MAIN("continue_select")
 {
     WvStream a;
@@ -372,6 +388,47 @@ WVTEST_MAIN("continue_select")
     WVPASS(aval == -4);
     
     a.terminate_continue_select();
+}
+
+
+static void cont_once(WvStream &s, void *userdata)
+{
+    int *i = (int *)userdata;
+    
+    (*i)++;
+    s.continue_select(10);
+    (*i)++;
+    *i = -*i;
+}
+
+
+WVTEST_MAIN("continue_select and alarm()")
+{
+    int i = 1;
+    ReadableStream s;
+    s.uses_continue_select = true;
+    s.setcallback(cont_once, &i);
+    
+    s.yes_readable = true;
+    WVPASSEQ(i, 1);
+    s.runonce(100);
+    WVPASSEQ(i, 2);
+    s.runonce(100);
+    WVPASSEQ(i, -3);
+
+    s.yes_readable = false;
+    s.runonce(100);
+    WVPASSEQ(i, -3);
+    
+    s.alarm(0);
+    s.runonce(100);
+    WVPASSEQ(i, -2);
+    
+    s.alarm(-1); // disabling the alarm should disable continue_select timeout
+    s.runonce(100);
+    WVPASSEQ(i, -2);
+    
+    s.terminate_continue_select();
 }
 
 
@@ -503,35 +560,51 @@ WVTEST_MAIN("continue_read and continuing getline")
 }
 
 
+static void alarmcall(WvStream &s, void *userdata)
+{
+    WVPASS(s.alarm_was_ticking);
+    val_cb(s, userdata);
+}
+
+
 // alarm()
 WVTEST_MAIN("alarm")
 {
     int val = 0;
     WvStream s;
-    s.setcallback(val_cb, &val);
+    s.setcallback(alarmcall, &val);
     
     s.runonce(0);
-    WVPASS(val == 0);
+    WVPASSEQ(val, 0);
     s.alarm(0);
     s.runonce(0);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.runonce(5);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.alarm(-5);
     WVPASS(s.alarm_remaining() == -1);
     s.runonce(0);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.alarm(100);
     time_t remain = s.alarm_remaining();
     WVPASS(remain > 0);
     WVPASS(remain <= 100);
     s.runonce(0);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.runonce(10000);
-    WVPASS(val == 2);
+    WVPASSEQ(val, 2);
     printf("alarm remaining: %d\n", (int)s.alarm_remaining());
     s.runonce(50);
-    WVPASS(val == 2);
+    WVPASSEQ(val, 2);
+
+    WvIStreamList l;
+    l.append(&s, false, "alarmer");
+    
+    s.alarm(1);
+    l.runonce(10);
+    l.runonce(10);
+    l.runonce(10);
+    WVPASSEQ(val, 3);
 }
 
 

@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     
     if (cmd == "get")
     {
-	WvString val = cfg[arg1].get(arg2);
+	WvString val = cfg[arg1].getme(arg2);
 	if (!val.isnull())
 	{
 	    fputs(val, stdout);
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     }
     else if (cmd == "set")
     {
-	cfg[arg1].set(arg2);
+	cfg[arg1].setme(arg2);
 	cfg.commit();
 	return 0; // always works
     }
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 	    len = wvcon->read(cptr, 10240);
 	    buf.unalloc(10240 - len);
 	}
-	cfg[arg1].set(buf.getstr());
+	cfg[arg1].setme(buf.getstr());
 	cfg.commit();
 	return 0; // always works
     }
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s = %s\n",
 			 wvtcl_escape(i->key(), "\r\n[]="),
-			 wvtcl_escape(i->get(""), "\r\n[]="));
+			 wvtcl_escape(i->getme(""), "\r\n[]="));
     }
     else if (cmd == "hdump")
     {
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s = %s\n",
 			 wvtcl_escape(i->fullkey(sub), "\r\n[]="),
-			 wvtcl_escape(i->get(""), "\r\n[]="));
+			 wvtcl_escape(i->getme(""), "\r\n[]="));
     }
     else if (cmd == "xdump")
     {
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s = %s\n",
 			 wvtcl_escape(i->fullkey(cfg), "\r\n[]="),
-			 wvtcl_escape(i->get(""), "\r\n[]="));
+			 wvtcl_escape(i->getme(""), "\r\n[]="));
     }
     else
     {

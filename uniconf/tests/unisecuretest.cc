@@ -45,9 +45,9 @@ Objects *setup(WvStringParm perms)
         UniConf u(root);
         u.mount("default:ini:secure.ini");
 
-        u["nondef/*"].set("*1");
-        u["defaults/*/*"].set("*1");
-        u["inherited/*"].set("*1");
+        u["nondef/*"].setme("*1");
+        u["defaults/*/*"].setme("*1");
+        u["inherited/*"].setme("*1");
         u.commit();
     }
 
@@ -143,7 +143,7 @@ void printfinal(bool pass)
 bool testaget(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expectsucc)
 {
     WvString expect = expectsucc ? WvString(key) : WvString("nothing");
-    WvString got = u[prefix][key].get("nothing");
+    WvString got = u[prefix][key].getme("nothing");
     if (expect == got)
         wvcon->print("OK - %s/%s: got \"%s\"\n", prefix, key, got);
     else
@@ -155,10 +155,10 @@ bool testaget(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expe
 bool testaset(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expectsucc)
 {
     WvString val = "brandnew";
-    WvString orig = u[prefix][key].get();
+    WvString orig = u[prefix][key].getme();
     WvString expect = expectsucc ? val : orig;
-    u[prefix][key].set(val);
-    WvString got = u[prefix][key].get();
+    u[prefix][key].setme(val);
+    WvString got = u[prefix][key].getme();
     if (expect == got)
         wvcon->print("OK - set %s/%s: got \"%s\"\n", prefix, key, got);
     else
