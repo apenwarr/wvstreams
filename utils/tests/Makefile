@@ -5,7 +5,7 @@ CXXFLAGS += -I../../include
 
 TESTS=teststr testlist testhash stresshash testbuffer testbase64 testver \
 		testtask testsort testproc testfork testencoder testdiriter \
-		testcallback testcrash testtcl
+		testcallback testcrash testtcl dirnametest
 
 default: all
 
@@ -21,4 +21,3 @@ $(TESTS): utils.a
 
 clean:
 	rm -f $(TESTS)
-
