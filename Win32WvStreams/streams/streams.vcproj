@@ -290,21 +290,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\streams\wvtest.cc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\streams\wvtimeoutstream.cc">
 				<FileConfiguration
 					Name="Debug|Win32">
