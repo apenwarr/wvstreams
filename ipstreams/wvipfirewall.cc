@@ -3,8 +3,12 @@
  *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
  * 
  * WvIPFirewall is an extremely simple hackish class that handles the Linux
- * 2.1 "ipchains" firewall.  Someday, this should be rewritten and much
- * improved.
+ * 2.1/2.2 "ipchains" firewall.  It's okay to create more than one instance
+ * of this class; they'll co-operate.
+ * 
+ * They need you to have created WvDynam and WvRedir chains already,
+ * however, and call them from the right places in the Input and/or Forward
+ * firewalls.
  */
 #include "wvipfirewall.h"
 #include "wvinterface.h"
