@@ -47,7 +47,26 @@ UUID_MAP_BEGIN(WvStream)
   UUID_MAP_END
 
 
-WvStream::WvStream()
+WvStream::WvStream():
+    read_requires_writable(NULL),
+    write_requires_readable(NULL),
+    uses_continue_select(false),
+    personal_stack_size(65536),
+    alarm_was_ticking(false),
+    stop_read(false),
+    stop_write(false),
+    closed(false),
+    userdata(NULL),
+    readcb(this, &WvStream::legacy_callback),
+    max_outbuf_size(0),
+    outbuf_delayed_flush(false),
+    is_auto_flush(true),
+    want_to_flush(true),
+    is_flushing(false),
+    queue_min(0),
+    autoclose_time(0),
+    alarm_time(wvtime_zero),
+    last_alarm_check(wvtime_zero)
 {
     TRACE("Creating wvstream %p\n", this);
     
@@ -56,25 +75,6 @@ WvStream::WvStream()
     int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
     assert(result == 0);
 #endif
-    userdata = NULL;
-    max_outbuf_size = 0;
-    outbuf_delayed_flush = false;
-    want_to_flush = true;
-    is_flushing = false;
-    is_auto_flush = true;
-    alarm_was_ticking = false;
-    force.readable = true;
-    force.writable = force.isexception = false;
-    read_requires_writable = write_requires_readable = NULL;
-    stop_read = stop_write = closed = false;
-    queue_min = 0;
-    autoclose_time = 0;
-    alarm_time = wvtime_zero;
-    last_alarm_check = wvtime_zero;
-    
-    // magic multitasking support
-    uses_continue_select = false;
-    personal_stack_size = 65536;
 }
 
 
@@ -107,10 +107,10 @@ WvStream::~WvStream()
 void WvStream::close()
 {
     flush(2000); // fixme: should not hardcode this stuff
-    if (!! closecb_func)
+    if (!! closecb)
     {
-        IWvStreamCallback cb = closecb_func;
-        closecb_func = 0; // ensure callback is only called once
+        IWvStreamCallback cb = closecb;
+        closecb = 0; // ensure callback is only called once
         cb(*this);
     }
     
@@ -599,7 +599,11 @@ bool WvStream::pre_select(SelectInfo &si)
 	return true; // alarm has rung
 
     if (!si.inherit_request)
-	si.wants |= force;
+    {
+	si.wants.readable |= readcb;
+	si.wants.writable |= writecb;
+	si.wants.isexception |= exceptcb;
+    }
     
     // handle read-ahead buffering
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
@@ -632,7 +636,11 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     FD_ZERO(&si.except);
     
     if (forceable)
-	si.wants = force;
+    {
+	si.wants.readable = readcb;
+	si.wants.writable = writecb;
+	si.wants.isexception = exceptcb;
+    }
     else
     {
 	si.wants.readable = readable;
@@ -738,17 +746,23 @@ bool WvStream::_select(time_t msec_timeout,
 
 void WvStream::force_select(bool readable, bool writable, bool isexception)
 {
-    force.readable |= readable;
-    force.writable |= writable;
-    force.isexception |= isexception;
+    if (readable)
+	readcb = IWvStreamCallback(this, &WvStream::legacy_callback);
+    if (writable)
+	writecb = IWvStreamCallback(this, &WvStream::legacy_callback);
+    if (isexception)
+	exceptcb = IWvStreamCallback(this, &WvStream::legacy_callback);
 }
 
 
 void WvStream::undo_force_select(bool readable, bool writable, bool isexception)
 {
-    force.readable &= !readable;
-    force.writable &= !writable;
-    force.isexception &= !isexception;
+    if (readable)
+	readcb = 0;
+    if (writable)
+	writecb = 0;
+    if (isexception)
+	exceptcb = 0;
 }
 
 
@@ -814,8 +828,7 @@ bool WvStream::continue_select(time_t msec_timeout)
     // inefficient, because if the alarm was expired then pre_select()
     // returned true anyway and short-circuited the previous select().
     TRACE("hello-%p\n", this);
-    return !alarm_was_ticking || select(0, force.readable, force.writable,
-					force.isexception);
+    return !alarm_was_ticking || select(0, readcb, writecb, exceptcb);
 }
 
 
@@ -840,27 +853,51 @@ void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
 }
 
 
-void WvStream::setreadcallback()
+void WvStream::legacy_callback(IWvStream& s)
 {
-    assert(false);
+    execute();
+    if (!! callfunc)
+	callfunc(*this, userdata);
 }
 
 
-void WvStream::setwritecallback()
+IWvStreamCallback WvStream::setreadcallback(IWvStreamCallback _callback)
 {
-    assert(false);
+    IWvStreamCallback tmp = readcb;
+
+    readcb = _callback;
+
+    return tmp;
 }
 
 
-void WvStream::setexceptcallback()
+IWvStreamCallback WvStream::setwritecallback(IWvStreamCallback _callback)
 {
-    assert(false);
+    IWvStreamCallback tmp = writecb;
+
+    writecb = _callback;
+
+    return tmp;
 }
 
 
-void WvStream::setclosecallback(IWvStreamCallback _callfunc)
+IWvStreamCallback WvStream::setexceptcallback(IWvStreamCallback _callback)
 {
-    closecb_func = _callfunc;
+    IWvStreamCallback tmp = exceptcb;
+
+    exceptcb = _callback;
+
+    return tmp;
+}
+
+
+IWvStreamCallback WvStream::setclosecallback(IWvStreamCallback _callback)
+{
+    IWvStreamCallback tmp = closecb;
+
+    closecb = _callback;
+
+    return tmp;
 }
 
 

@@ -9,6 +9,9 @@
 #ifndef __WVDAEMON_H
 #define __WVDAEMON_H
 
+#include "wvautoconf.h"
+#ifdef WITH_POPT
+
 #include "wvstring.h"
 #include "wvargs.h"
 #include "wvlog.h"
@@ -97,5 +100,7 @@ class WvDaemon
             return !_want_to_die && !_want_to_restart;
         }
 };
+
+#endif //WITH_POPT
 
 #endif // __WVDAEMON_H

@@ -29,13 +29,6 @@ WvPamStream::~WvPamStream()
 {
 }
 
-
-bool WvPamStream::isok() const
-{
-    return false;
-}
-
-
 bool WvPamStream::check_pam_status(WvStringParm step)
 {
     return false;
@@ -173,13 +166,6 @@ bool WvPamStream::authenticate(WvStringParm name,
     
     return true;
 }
-
-#if 0
-bool WvPamStream::isok() const
-{
-    return (d->status == PAM_SUCCESS && WvStreamClone::isok());
-}
-#endif
 
 bool WvPamStream::check_pam_status(WvStringParm s)
 {

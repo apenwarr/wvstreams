@@ -120,6 +120,20 @@ AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
+# Detect hard-linking based on LN_S's behaviour
+AC_MSG_CHECKING([whether ln works...])
+case "$LN_S" in
+    ln*) 
+        LN='ln'
+	AC_MSG_RESULT([yes])
+	;;
+    *)
+	LN="$LN_S"
+	AC_MSG_RESULT([no, using $LN])
+	;;
+esac
+AC_SUBST(LN)
+
 # Setting the default language to C++ means that CXX and CXXCPP will be 
 # used for compile tests.
 AC_LANG(C++)
@@ -338,7 +352,7 @@ if test "$with_xplc" != "no"; then
     else
         AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
         AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
-	xplc_version=`pkg-config --modversion xplc`
+	xplc_version=`pkg-config --modversion xplc 2>/dev/null`
 	if test "$xplc_version" != ""; then xplc_version=" >= $xplc_version"; fi
 	xplc_pc="xplc${xplc_version}"
     fi
@@ -423,7 +437,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
 
 AC_SUBST(enable_debug)
