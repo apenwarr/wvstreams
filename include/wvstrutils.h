@@ -166,6 +166,10 @@ WvString getdirname(WvStringParm fullname);
 WvString sizetoa(long long blocks, int blocksize=1);
 
 /**
+ * Give a size in Kilobyes gives a human read able size
+ */
+WvString sizektoa(unsigned int kbytes);
+/**
  * Finds a string in an array and returns its index.
  * Returns -1 if not found.
  */
