@@ -83,7 +83,7 @@ private:
     WvString type_value(int type); 
     WvString curr_runlevel();
     // commits for n iterations
-    void spin_commit(int n); 
+    void spin_commit(int n);
     int randInt(int max, int min = 0);
     
     UniConfRoot root;

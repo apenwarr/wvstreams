@@ -67,6 +67,7 @@ void UniCacheGen::loadtree(const UniConfKey &key)
     UniConfGen::Iter *i = inner->recursiveiterator(key);
     if (!i) return;
 
+    //assert(false);
     for (i->rewind(); i->next(); )
     {
         WvString value(i->value());

@@ -64,8 +64,15 @@ public:
 	datumize(datumize<T> &); // not defined
 
 #if defined __GNUC__ && __GNUC__ < 3
-#warning "BROKEN_COMPILER: Workaround for GCC 2.95"
+	// The following code doesn't work with GCC 2.95, since it ICEs
+	// when resolve some base types.
 #else
+	// The copy constructor is protected to avoid accidental copies.
+	// However, WvOnDiskHash and its Iter need to be able to make
+	// temporary copies.  That's why they're friendly.
+	//
+	// Versions of G++ before 3.4 ignored the protected keyword, and
+	// made the copy constructor public.
 	friend class WvOnDiskHash<K, D, Backend>;
 	friend class WvOnDiskHash<K, D, Backend>::Iter;
 #endif

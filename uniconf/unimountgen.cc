@@ -33,40 +33,51 @@ void UniMountGen::set(const UniConfKey &key, WvStringParm value)
 bool UniMountGen::exists(const UniConfKey &key)
 {
     UniGenMount *found = findmount(key);
-    if (!found)
-        return false;
-
-    return found->gen->exists(trimkey(found->key, key));
+//    fprintf(stdout, "exists:found %p\n", found);
+    if (found && found->gen->exists(trimkey(found->key, key)))
+        return true;
+    else
+        //if there's something mounted and set on a subkey, this key must 
+        //*exist* along the way
+        return has_subkey(key, found);
 }
 
 
 bool UniMountGen::haschildren(const UniConfKey &key)
 {
     UniGenMount *found = findmount(key);
-    if (!found)
-        return false;
-
-    if (found->gen->haschildren(trimkey(found->key, key)))
+//    fprintf(stdout, "haschildren:found %p\n", found);
+    if (found && found->gen->haschildren(trimkey(found->key, key)))
         return true;
 
     // if we get here, the generator we used didn't have a subkey.  We want
     // to see if there's anyone mounted at a subkey of the requested key; if
     // so, then we definitely have a subkey.
+    return has_subkey(key, found);
+}
+
+
+bool UniMountGen::has_subkey(const UniConfKey &key, UniGenMount *found)
+{
     MountList::Iter i(mounts);
     for (i.rewind(); i.next(); )
     {
 	// the list is sorted innermost-first.  So if we find the key
 	// we started with, we've finished searching all children of it.
-        if (i->gen == found->gen)
+        if (found && (i->gen == found->gen))
             break;
 
         if (key.suborsame(i->key))
+        {
+//            fprintf(stdout, "%s has_subkey %s : true\n", key.printable().cstr(), 
+//                    i->key.printable().cstr());
             return true;
+        }
     }
 
+//    fprintf(stdout, "has_subkey false\n");
     return false;
 }
-
 
 bool UniMountGen::refresh()
 {
@@ -103,6 +114,8 @@ IUniConfGen *UniMountGen::mount(const UniConfKey &key,
         mountgen(key, gen, refresh); // assume always succeeds for now
 
     assert(gen && "Moniker doesn't get us a generator!");
+    if (!gen->exists("/"))
+        gen->set("/", "");
     return gen;
 }
 
@@ -129,6 +142,8 @@ IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
     
     delta(key, get(key));
     unhold_delta();
+    if (!gen->exists("/"))
+        gen->set("/", "");
     return gen;
 }
 

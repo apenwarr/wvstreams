@@ -3,12 +3,8 @@
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
  *
  * A WvStream that authenticates with PAM before allowing any reading or
- * writing.  If WvStreams is compiled without PAM, it just fails.
- *
- * For now, this only works for PAM modules that don't require any user
- * interaction.
+ * writing.  See wvpam.h.
  */
-
 #include "wvlog.h"
 #include "wvpam.h"
 #include "wvautoconf.h"
@@ -16,34 +12,41 @@
 // If PAM not installed at compile time, stub this out
 #ifndef HAVE_SECURITY_PAM_APPL_H
 
-WvPamStream::WvPamStream(WvStream *cloned, WvStringParm name, WvStringParm
-        success, WvStringParm fail) :
-    WvStreamClone(cloned)
+WvPamStream::WvPamStream(WvStream *cloned, WvStringParm name,
+			 WvStringParm success, WvStringParm fail)
+    : WvStreamClone(cloned), log("PAM Auth", WvLog::Info)
 {
-    WvLog log("WvPamStream", WvLog::Warning);
-    log("Compiled without PAM support\n");
-    if (cloned && !!fail)
-        cloned->write(fail.cstr(), fail.len());
+    d = NULL;
+    
+    log(WvLog::Warning,
+	"Compiled without PAM support: all authentication will fail!\n");
+    if (!!fail)
+        print(fail);
 }
+
 
 WvPamStream::~WvPamStream()
 {
 }
+
 
 bool WvPamStream::isok() const
 {
     return false;
 }
 
+
 bool WvPamStream::check_pam_status(WvStringParm step)
 {
     return false;
 }
 
+
 WvString WvPamStream::getuser() const
 {
     return WvString::null;
 }
+
 
 void WvPamStream::getgroups(WvStringList &l) const
 {
@@ -64,13 +67,12 @@ class WvPamData
 public:
     pam_handle_t *pamh;
     int status;
-    WvStringParm failmsg;
-    WvString user;
+    WvString failmsg, user;
     WvStringList groups;
 
-    WvPamData(WvStringParm _failmsg) :
-        pamh(NULL), status(PAM_SUCCESS), failmsg(_failmsg)
-    { }
+    WvPamData(WvStringParm _failmsg)
+	: pamh(NULL), status(PAM_SUCCESS), failmsg(_failmsg)
+	{ }
 };
 
 
@@ -87,11 +89,30 @@ int noconv(int num_msg, const struct pam_message **msgm,
 // other hand, the stream's blocked anyway until pam comes back, so do we
 // really care?
 WvPamStream::WvPamStream(WvStream *cloned, WvStringParm name,
-        WvStringParm successmsg, WvStringParm failmsg) :
-    WvStreamClone(cloned),
-    d(new WvPamData(failmsg))
+			 WvStringParm successmsg, WvStringParm failmsg)
+    : WvStreamClone(cloned), log("PAM Auth", WvLog::Info)
 {
-    // create the conv structure
+    d = NULL;
+    if (!authenticate(name, successmsg, failmsg))
+	seterr("PAM auth failed");
+}
+
+
+WvPamStream::~WvPamStream()
+{
+    if (d->status == PAM_SUCCESS)
+        pam_close_session(d->pamh, 0);
+    pam_end(d->pamh, d->status);
+    delete d;
+}
+
+
+bool WvPamStream::authenticate(WvStringParm name,
+			       WvStringParm successmsg, WvStringParm failmsg)
+{
+    d = new WvPamData(failmsg);
+    
+    // create the pam conversation structure
     struct pam_conv c;
     c.conv = noconv;
     c.appdata_ptr = NULL;
@@ -106,22 +127,22 @@ WvPamStream::WvPamStream(WvStream *cloned, WvStringParm name,
  
     // authenticate through PAM
     d->status = pam_start(name, d->user, &c, &d->pamh);
-    if (!check_pam_status("startup")) return;
+    if (!check_pam_status("startup")) return false;
 
     d->status = pam_set_item(d->pamh, PAM_RHOST, rhost);
-    if (!check_pam_status("environment setup")) return;
+    if (!check_pam_status("environment setup")) return false;
 
     d->status = pam_authenticate(d->pamh, PAM_DISALLOW_NULL_AUTHTOK);
-    if (!check_pam_status("authentication")) return;
+    if (!check_pam_status("authentication")) return false;
 
     d->status = pam_setcred(d->pamh, PAM_ESTABLISH_CRED);
-    if (!check_pam_status("credentials")) return;
+    if (!check_pam_status("credentials")) return false;
 
     d->status = pam_open_session(d->pamh, 0);
-    if (!check_pam_status("session open")) return;
+    if (!check_pam_status("session open")) return false;
 
     // write the success message if necessary
-    if (cloned && !!successmsg) cloned->write(successmsg.cstr(), successmsg.len());
+    if (!!successmsg) print(successmsg);
     
     // get the groups
     setgrent();
@@ -138,35 +159,29 @@ WvPamStream::WvPamStream(WvStream *cloned, WvStringParm name,
         }
     }
     endgrent();
+    
+    return true;
 }
 
-
-WvPamStream::~WvPamStream()
-{
-    if (d->status == PAM_SUCCESS)
-        pam_close_session(d->pamh, 0);
-    pam_end(d->pamh, d->status);
-}
-
-
+#if 0
 bool WvPamStream::isok() const
 {
     return (d->status == PAM_SUCCESS && WvStreamClone::isok());
 }
-
+#endif
 
 bool WvPamStream::check_pam_status(WvStringParm s)
 {
-    WvLog log("WvPamStream", WvLog::Debug2);
     if (d->status == PAM_SUCCESS)
     {
-        log("PAM %s succeeded\n", s);
+        log(WvLog::Debug2, "PAM %s succeeded.\n", s);
         return true;
     }
     else
     {
-        log("PAM %s FAILED: %s\n", s, d->status);
-        if (cloned && !!d->failmsg) cloned->write(d->failmsg.cstr(), d->failmsg.len());
+        log(WvLog::Debug2, "PAM %s failed: %s\n", s,
+	    pam_strerror(d->pamh, d->status));
+        if (!!d->failmsg) print(d->failmsg);
         d->user = WvString::null;
         d->groups.zap();
         return false;

@@ -6,10 +6,11 @@
  * factory to get objects supporting a particular interface.  See wvmoniker.h.
  */
 #include "wvmonikerregistry.h"
+#include "strutils.h"
 #include <assert.h>
 #include <stdio.h>
 
-#if 0
+#if 0 
 # define DEBUGLOG(fmt, args...) fprintf(stderr, fmt, ## args)
 #else
 #ifndef _MSC_VER
@@ -71,7 +72,9 @@ void WvMonikerRegistry::del(WvStringParm id)
 void *WvMonikerRegistry::create(WvStringParm _s,
 				IObject *obj, void *userdata)
 {
-    WvString s(_s);
+    WvString t(_s);
+    WvString s(trim_string(t.edit()));
+
     char *cptr = strchr(s.edit(), ':');
     if (cptr)
 	*cptr++ = 0;
