@@ -43,6 +43,6 @@ WvString UniDefGen::finddefault(UniConfKey key, UniConfKey keypart)
     cur = finddefault(key, WvString("%s/%s", keypart, cur));
     if (!!cur)
         return cur;
-    else
+    else if (cur != "*")
         return finddefault(key, WvString("%s/*", keypart));
 }

@@ -82,6 +82,18 @@ void UniConf::setint(int value) const
 }
 
 
+void UniConf::move(UniConfKey dst)
+{
+    //FIXME: Someone should actually make this. :)
+}
+
+
+void UniConf::copy(UniConfKey dst, bool force)
+{
+    //FIXME: Someone should actually make this. :)
+}
+
+
 bool UniConf::refresh() const
 {
     return xroot->refresh();

@@ -195,12 +195,31 @@ public:
      */
     void setint(int value) const;
 
+
+    /***** Key Handling API *****/
+
+    /**
+     * Equivalent to "mv" in a standard unix filesystem. This recursively moves
+     * a given key and any subkeys to a new point. If the new point exists then
+     * the key will be left as a subkey at the new point. Otherwise, the key
+     * will also be renamed to the new point (as when using mv).
+     */
+    void move(UniConfKey dst); //FIXME: Currently unimplemented
+
     /**
      * Removes this key and all of its children from the registry.
      * Returns true on success.
      */
     void remove() const
         { set(WvString::null); }
+
+    /**
+     * Equivalent to "cp -r" in a standard unix filesystem. This recursively
+     * copies a given key to a new location. Any keys that already exist at that
+     * location will not be overridden unless force is true.
+     */
+    void copy(UniConfKey dst, bool force = false); //FIXME: Unimplemented
+
 
     
     /***** Key Persistence API *****/
