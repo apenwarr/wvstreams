@@ -153,7 +153,7 @@ WVTEST_MAIN("nothing to encode/decode")
     for (int i = 1; i <= 2; i++ )
     {
 	{ // "null" WvString
-	    WvEncoder *enc = (i == 1) ? new WvBase64Encoder : new WvBase64Decoder;
+	    WvEncoder *enc = (i == 1) ? (WvEncoder *) new WvBase64Encoder : new WvBase64Decoder;
 	    WvString nul, result("stuff there");
 	    enc->flushstrstr(nul, result, true);
 
@@ -162,7 +162,7 @@ WVTEST_MAIN("nothing to encode/decode")
 	}
 
 	{ // empty WvString
-	    WvEncoder *enc = (i == 1) ? new WvBase64Encoder : new WvBase64Decoder;
+	    WvEncoder *enc = (i == 1) ? (WvEncoder *) new WvBase64Encoder : new WvBase64Decoder;
 	    WvString empty(""), result("stuff there");
 	    enc->flushstrstr(empty, result, true);
 
@@ -171,7 +171,7 @@ WVTEST_MAIN("nothing to encode/decode")
 	}
 
 	{ // empty WvBuf
-	    WvEncoder *enc = (i == 1) ? new WvBase64Encoder : new WvBase64Decoder;
+	    WvEncoder *enc = (i == 1) ? (WvEncoder *) new WvBase64Encoder : new WvBase64Decoder;
 	    WvDynBuf empty, dest;
 	    empty.zap(); // ... just to be sure
 	    dest.put( "stuff there", 11 );
@@ -224,7 +224,7 @@ WVTEST_MAIN("decoding invalid data")
 	src.put(invalid, 3);
 	src.put(FOUR_LETTERS_ENC, sizeof(FOUR_LETTERS_ENC)-1);
 
-	unsigned int original_size = src.used();
+	size_t original_size = src.used();
 	bool ret = dec.encode(src,dest,true,false);
 
 	WVFAIL(dec.isok()); // read bad data

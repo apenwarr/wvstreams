@@ -11,6 +11,7 @@
 #include "wvtest.h"
 #include "verstring.h"
 #include <stdio.h>
+#include <string.h>
 
 /** Tests ver_to_string() and string_to_ver().
  * Given a hex number 0xabcdefgh, where each letter represents a hex
