@@ -126,7 +126,7 @@ public:
         { Iter i(*this); while (i.find(data)) i.unlink(); }
 
     void unlink_first()
-        { Iter i(*this); i.rewind(); i.unlink(); }
+        { Iter i(*this); i.rewind(); i.next(); i.unlink(); }
 
     void unlink_after(WvLink *after)
     {
