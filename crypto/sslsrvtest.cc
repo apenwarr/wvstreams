@@ -1,6 +1,7 @@
 #include "wvlog.h"
 #include "wvtcp.h"
 #include "wvsslstream.h"
+#include "wvx509.h"
 #include "wvstreamlist.h"
 #include <signal.h>
 

@@ -1,4 +1,10 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ */ 
 #include "wvsslstream.h"
+#include "wvx509.h"
+#include "wvcrypto.h"
 #include <ssl.h>
 #include <err.h>
 #include <assert.h>
@@ -13,16 +19,13 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
     read_again = false;
     writeonly = 1400;
     
+    wvssl_init();
+
     if (is_server && (x509 == NULL))
     {
 	seterr("Certificate not available: server mode not possible!");
 	return;
     }
-
-    SSL_load_error_strings();
-    OpenSSL_add_all_algorithms();
-//    SSL_library_init();
-    debug("SSL library initialized.\n");
 
     ctx = NULL;
     ssl = NULL;
@@ -39,6 +42,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 	    seterr("Can't get SSL context!");
 	    return;
     	}
+	
 	// Allow SSL Writes to only write part of a request...
 	SSL_CTX_set_mode(ctx,SSL_MODE_ENABLE_PARTIAL_WRITE);
 
@@ -49,7 +53,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 	}
     	debug("Certificate activated.\n");
 
-	if (SSL_CTX_use_RSAPrivateKey(ctx, x509->keypair->rsa) <= 0)
+	if (SSL_CTX_use_RSAPrivateKey(ctx, x509->rsa->rsa) <= 0)
 	{
 	    seterr("Error loading RSA private key!");
 	    return;
@@ -94,6 +98,8 @@ WvSSLStream::~WvSSLStream()
     
     if (slave)
 	delete slave;
+    
+    wvssl_free();
 }
 
  
@@ -256,15 +262,15 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    if (verify)
 	    {
 	    	WvX509Mgr peercert(SSL_get_peer_certificate(ssl));
-	    	if (peercert.validate() && !peercert.err)
+	    	if (peercert.isok() && peercert.validate())
 	    	{
 		    sslconnected = true;
 	    	    debug("SSL finished negotiating - certificate is valid.\n");
 	    	}
 	    	else
 	    	{
-		    if (peercert.err)
-			seterr(peercert.errstr);
+		    if (!peercert.isok())
+			seterr(peercert.errstr());
 		    else
 			seterr("Peer certificate is invalid!");
 	    	}
