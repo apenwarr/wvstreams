@@ -73,8 +73,10 @@ void very_simple()
     //WvCallback0_bound<void,A> cb(*(A *)&global_a,
     //(WvCallback0_bound<void,A>::BoundFunc)gfunc);
     
-    VoidCallback_bound<A> cb(global_a, &A::f);
-
+    //VoidCallback_bound<A> cb(global_a, &A::f);
+    //cb();
+    
+    VoidCallback cb(wvcallback(VoidCallback, global_a, A::f));
     cb();
 }
 

@@ -72,14 +72,14 @@ public:
 };
 
 
-class WvList
+class WvListBase
 {
 public:
     WvLink head, *tail;
-    WvList() : head(NULL, false)
+    WvListBase() : head(NULL, false)
         { tail = &head; }
-    WvList(const WvList &l); // copy constructor - not actually defined anywhere!
-    WvList& operator= (const WvList &l);
+    WvListBase(const WvListBase &l); // copy constructor - not actually defined anywhere!
+    WvListBase& operator= (const WvListBase &l);
     void setup()
         { /* default: do nothing */ }
     void shutdown()
@@ -94,10 +94,10 @@ public:
     class IterBase
     {
     public:
-	WvList *list;
+	WvListBase *list;
 	WvLink *link, *prev;
 
-	IterBase(WvList &l)
+	IterBase(WvListBase &l)
             { list = &l; link = NULL; }
 	void rewind()
             { prev = NULL; link = &list->head; }
@@ -121,11 +121,11 @@ public:
     class SorterBase
     {
     public:
-        WvList *list;
+        WvListBase *list;
         WvLink **array;
         WvLink **lptr;
 
-        SorterBase(WvList &l)
+        SorterBase(WvListBase &l)
             { list = &l; array = lptr = NULL; }
         virtual ~SorterBase()
             { if (array) delete array; }
@@ -140,13 +140,13 @@ public:
 };
 
 template <class _type_>
-class WvListTmpl : public WvList
+class WvList : public WvListBase
 {
 public:
-    WvListTmpl()
+    WvList()
 	{ setup(); }
 
-    ~WvListTmpl()
+    ~WvList()
 	{ shutdown(); zap(); }
 
     void zap()
@@ -183,10 +183,10 @@ public:
          if (after->next) after->next->unlink(after);
     }
 
-    class Iter : public WvList::IterBase
+    class Iter : public WvListBase::IterBase
     {
     public:
-        Iter(WvListTmpl &l) : IterBase(l)
+        Iter(WvList &l) : IterBase(l)
             { }
         _type_ *ptr() const
             { return (_type_ *)link->data; }
@@ -200,17 +200,17 @@ public:
 	    { return *ptr(); }
         void unlink()
         {
-	    if (prev) ((WvListTmpl *)list)->unlink_after(prev);
+	    if (prev) ((WvList *)list)->unlink_after(prev);
 	    link = prev->next;
         }
     };
 
-    class Sorter : public WvList::SorterBase
+    class Sorter : public WvListBase::SorterBase
     {
     public:
         int (*cmp)(const _type_ **, const _type_ **);
 
-        Sorter(WvListTmpl &l, int (*_cmp)(const _type_ **, const _type_ **))
+        Sorter(WvList &l, int (*_cmp)(const _type_ **, const _type_ **))
             : SorterBase(l), cmp(_cmp)
             { }
         _type_ *ptr() const
@@ -225,7 +225,7 @@ public:
 	    { return *ptr(); }
         void unlink()
         {
-            ((WvListTmpl *)list)->unlink(ptr());
+            ((WvList *)list)->unlink(ptr());
             lptr += sizeof(WvLink *);
         }
         void rewind()
@@ -236,7 +236,7 @@ public:
 
 
 #define DeclareWvList3(_type_,_newname_,_extra_)      	\
-    class _newname_ : public WvListTmpl<_type_> 	\
+    class _newname_ : public WvList<_type_> 		\
     { 							\
     public: 						\
 	_extra_ 					\

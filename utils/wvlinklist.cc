@@ -21,7 +21,7 @@ WvLink::WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _auto_free,
 }
 
 
-size_t WvList::count() const
+size_t WvListBase::count() const
 {
     WvLink *l;
     size_t n = 0;
@@ -32,7 +32,7 @@ size_t WvList::count() const
 }
 
 
-WvLink *WvList::IterBase::find(const void *data)
+WvLink *WvListBase::IterBase::find(const void *data)
 {
     for (rewind(); next(); )
     {
@@ -44,7 +44,7 @@ WvLink *WvList::IterBase::find(const void *data)
 }
 
 
-void WvList::SorterBase::rewind( int (*cmp)( const void *, const void * ) )
+void WvListBase::SorterBase::rewind( int (*cmp)( const void *, const void * ) )
 {
     if( array )
         delete array;

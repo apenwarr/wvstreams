@@ -38,7 +38,7 @@ unsigned WvHash(const int &i)
 // we do not accept the _numslots value directly.  Instead, we find the
 // next number of slots which is >= _numslots and one less then a power
 // of 2.  This usually results in a fairly good hash table size.
-WvHashTable::WvHashTable(unsigned _numslots)
+WvHashTableBase::WvHashTableBase(unsigned _numslots)
 {
     int slides = 1;
     while ((_numslots >>= 1) != 0)
@@ -49,10 +49,10 @@ WvHashTable::WvHashTable(unsigned _numslots)
 
 // never returns NULL.  If the object is not found, the 'previous' link
 // is the last one in the list.
-WvLink *WvHashTable::prevlink(WvList *slots, const void *data,
+WvLink *WvHashTableBase::prevlink(WvListBase *slots, const void *data,
 			      unsigned hash, Comparator *comp)
 {
-    WvList::IterBase i(slots[hash % numslots]);
+    WvListBase::IterBase i(slots[hash % numslots]);
     WvLink *prev;
     
     i.rewind();
@@ -65,7 +65,7 @@ WvLink *WvHashTable::prevlink(WvList *slots, const void *data,
 }
 
 
-void *WvHashTable::genfind(WvList *slots, const void *data,
+void *WvHashTableBase::genfind(WvListBase *slots, const void *data,
 			      unsigned hash, Comparator *comp)
 {
     WvLink *prev = prevlink(slots, data, hash, comp);
@@ -76,7 +76,7 @@ void *WvHashTable::genfind(WvList *slots, const void *data,
 }
 
 
-size_t WvHashTable::count() const
+size_t WvHashTableBase::count() const
 {
     size_t count = 0;
     
@@ -86,7 +86,7 @@ size_t WvHashTable::count() const
 }
 
 
-WvLink *WvHashTable::IterBase::next()
+WvLink *WvHashTableBase::IterBase::next()
 {
     link = link->next;
     while (!link && tblindex < tbl->numslots - 1)
@@ -96,7 +96,7 @@ WvLink *WvHashTable::IterBase::next()
 
 // Note that this is largely the same as WvLink::SorterBase::rewind(),
 // except we iterate through a bunch of lists instead of a single one.
-void WvHashTable::SorterBase::rewind( int (*cmp)( const void *, const void * ) )
+void WvHashTableBase::SorterBase::rewind( int (*cmp)( const void *, const void * ) )
 {
     if( array )
         delete array;

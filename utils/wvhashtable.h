@@ -79,25 +79,25 @@ unsigned WvHash(const int &i);
 
 // this base class has some non-inlined functions that work for all
 // data types.
-class WvHashTable
+class WvHashTableBase
 {
 protected:
     typedef bool Comparator(const void *, const void *);
     
-    WvHashTable(unsigned _numslots);
-    WvHashTable(const WvHashTable &t); // copy constructor - not defined anywhere!
-    WvHashTable& operator= (const WvHashTable &t);
+    WvHashTableBase(unsigned _numslots);
+    WvHashTableBase(const WvHashTableBase &t); // copy constructor - not defined anywhere!
+    WvHashTableBase& operator= (const WvHashTableBase &t);
     void setup()
         { /* default: do nothing */ }
     void shutdown()
         { /* default: do nothing */ }
-    WvLink *prevlink(WvList *slots, const void *data,
+    WvLink *prevlink(WvListBase *slots, const void *data,
 		     unsigned hash, Comparator *comp);
-    void *genfind(WvList *slots, const void *data,
+    void *genfind(WvListBase *slots, const void *data,
 		  unsigned hash, Comparator *comp);
 public:
     unsigned numslots;
-    WvList *slots;
+    WvListBase *slots;
     
     size_t count() const;
 
@@ -105,11 +105,11 @@ public:
     class IterBase
     {
     public:
-	WvHashTable *tbl;
+	WvHashTableBase *tbl;
 	unsigned tblindex;
 	WvLink *link;
 	
-	IterBase(WvHashTable &_tbl)
+	IterBase(WvHashTableBase &_tbl)
             { tbl = &_tbl; }
 	void rewind()
             { tblindex = 0; link = &tbl->slots[0].head; }
@@ -122,11 +122,11 @@ public:
     class SorterBase
     {
     public:
-        WvHashTable *tbl;
+        WvHashTableBase *tbl;
         WvLink **array;
         WvLink **lptr;
 
-        SorterBase(WvHashTable &_tbl)
+        SorterBase(WvHashTableBase &_tbl)
             { tbl = &_tbl; array = lptr = NULL; }
         virtual ~SorterBase()
             { if (array) delete array; }
@@ -146,7 +146,7 @@ public:
 typedef const void *WvFieldPointer(const void *obj);
 
 template <class _type_, class _ftype_, WvFieldPointer *fptr>
-class WvHashTableTmpl : public WvHashTable
+class WvHashTable : public WvHashTableBase
 {
 protected:
     //static const _ftype_ *fptr(const _type_ *obj)
@@ -157,13 +157,13 @@ protected:
         { return *(_ftype_ *)key == *(const _ftype_ *)fptr((const _type_ *)elem); }
 
 public:
-    WvHashTableTmpl(unsigned _numslots) : WvHashTable(_numslots)
-        { slots = new WvListTmpl<_type_>[numslots]; setup(); }
+    WvHashTable(unsigned _numslots) : WvHashTableBase(_numslots)
+        { slots = new WvList<_type_>[numslots]; setup(); }
 
-    WvListTmpl<_type_> *sl()
-	{ return (WvListTmpl<_type_> *)slots; }
+    WvList<_type_> *sl()
+	{ return (WvList<_type_> *)slots; }
 
-    ~WvHashTableTmpl()
+    ~WvHashTable()
         { shutdown(); delete[] sl(); }
 
     void add(_type_ *data, bool auto_free)
@@ -182,13 +182,13 @@ public:
     void zap()
     {
 	delete[] sl();
-	slots = new WvListTmpl<_type_>[numslots];
+	slots = new WvList<_type_>[numslots];
     }
 
-    class Iter : public WvHashTable::IterBase
+    class Iter : public WvHashTableBase::IterBase
     {
     public:
-	Iter(WvHashTableTmpl &_tbl) : IterBase(_tbl)
+	Iter(WvHashTable &_tbl) : IterBase(_tbl)
 	    { }
 	_type_ *ptr() const
 	    { return (_type_ *)link->data; }
@@ -202,12 +202,12 @@ public:
             { return *ptr(); }
     };
 
-    class Sorter : public WvHashTable::SorterBase
+    class Sorter : public WvHashTableBase::SorterBase
     {
     public:
         int (*cmp)(const _type_ **, const _type_ **);
 
-        Sorter(WvHashTableTmpl &_tbl,
+        Sorter(WvHashTable &_tbl,
                int (*_cmp)(const _type_ **, const _type_ **))
             : SorterBase(_tbl), cmp(_cmp)
             { }
@@ -243,7 +243,7 @@ public:
 	    { return &((*(const _type_ *)obj) _field_); } 		\
     }; 									\
 									\
-    typedef WvHashTableTmpl<_type_, _ftype_, 				\
+    typedef WvHashTable<_type_, _ftype_, 				\
 			_classname_##_hack::_classname_##_fptr_> 	\
 			_classname_##Base; 				\
     									\
