@@ -58,6 +58,7 @@ public:
             if (!table)
                 return false;
 
+	    /* FIXME: Couldn't this be a *little* clearer? */
             while (++index <= table->numslots &&
                    !IS_OCCUPIED(table->xslots[index-1])) { }
 
