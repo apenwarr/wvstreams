@@ -35,7 +35,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 %.a:
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
-%.so: SONAME=$@
+%.so: SONAME=$@.$(RELEASE)
 %.so:
 	$(LINK_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) \
 		$(SOFLAGS) $^ -o $@
@@ -99,8 +99,8 @@ doxygen:
 	doxygen
 
 install: install-shared install-dev
+#FIXME: We need to install uniconfd somewhere.
 
-# FIXME: these should be built with their suffix, and the rule automated
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	for i in $(TARGETS_SO); do \
