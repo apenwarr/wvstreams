@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -19,7 +19,7 @@ time_t msecdiff(const WvTime &a, const WvTime &b);
 WvTime wvtime();
 
 /** Adds the specified number of milliseconds to a time value. */
-struct timeval msecadd(const WvTime &a, time_t msec);
+WvTime msecadd(const WvTime &a, time_t msec);
 
 /** Normalizes the time value. */
 inline void normalize(WvTime &tv)
