@@ -25,57 +25,30 @@
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day)
 {
     need_reset = false;
-    last_hour = -1;
-    last_second = -1;
+    prev = 0;
     configure(_first_hour, _num_per_day);
 }
 
 
-// we're "ready" if the time just changed to "first_hour" o'clock,
-// OR if the time just changed to "first_hour" o'clock plus a multiple of
-// 24*60 / num_per_day seconds.
+// we're ready if now is later than the next scheduled event
 bool WvDailyEvent::pre_select(SelectInfo &si)
 {
-    time_t now;
-    struct tm *tnow;
-    
-    now  = time(NULL);
-    tnow = localtime(&now);
-    
-    // too soon after configuration - skip the event
-    if (now < not_until)
-	return false;
-
-    // for a specific hour
-    if (tnow->tm_hour == first_hour)
+    if (num_per_day && !need_reset)
     {
-        if ((first_hour-1) % 24 == last_hour)
-            need_reset = true;
-    }
-    last_hour = tnow->tm_hour;
-
-    // for a number of times a day
-    // use the daily "first_hour" as an offset.  (if first_hour is 3, and
-    // num_per_day is 2, we want to tick at 3 am and 3 pm.)
-    int this_second = ((tnow->tm_hour - first_hour) % 24) * 3600 + tnow->tm_min * 60 + tnow->tm_sec;
-    if (num_per_day)
-    {
-        int seconds_between = 24*60*60 / num_per_day;
-        if ((this_second % seconds_between) == 0)
+	time_t now = time(NULL), next = next_event();
+	if (now >= next)
 	{
-            if (last_second != this_second)
-                need_reset = true;
-        }
+	    need_reset = true;
+	    prev = next;
+	}
     }
-    last_second = this_second;
-
-    return need_reset;
+    return WvStream::pre_select(si) || need_reset;
 }
 
 
-bool WvDailyEvent::post_select( SelectInfo& si )
+bool WvDailyEvent::post_select(SelectInfo& si)
 {
-    return( need_reset );
+    return need_reset;
 }
 
 
@@ -97,6 +70,7 @@ bool WvDailyEvent::isok() const
     return true;
 }
 
+
 void WvDailyEvent::set_num_per_day(int _num_per_day) 
 {
     num_per_day = _num_per_day;
@@ -112,7 +86,9 @@ void WvDailyEvent::set_num_per_day(int _num_per_day)
 
     // don't start until at least one period has gone by
     not_until = time(NULL) + max;
+    prev = 0;
 }
+
 
 void WvDailyEvent::configure(int _first_hour, int _num_per_day)
 {
@@ -124,4 +100,41 @@ void WvDailyEvent::configure(int _first_hour, int _num_per_day)
         _num_per_day = 24*60;
 
     set_num_per_day(_num_per_day);
+}
+
+
+// the daily event occurs each day at first_hour on the hour, or at
+// some multiple of the interval *after* that hour.
+time_t WvDailyEvent::next_event() const
+{
+    if (!num_per_day) // disabled
+	return 0;
+    
+    time_t start, now, next, interval = 24*60*60/num_per_day;
+    struct tm *tm;
+    
+    start = prev + interval;
+    
+    // find the time to start counting from (up to 24 hours in the past)
+    tm = localtime(&start);
+    if (tm->tm_hour < first_hour)
+    {
+	start = now - 24*60*60; // this time yesterday
+	tm = localtime(&start);
+    }
+    tm->tm_hour = first_hour; // always start at the given hour
+    tm->tm_min = tm->tm_sec = 0; // right on the hour
+    start = mktime(tm); // convert back into a time_t
+    
+    // find the next event after 'now' that's a multiple of 'interval'
+    // since 'start'
+    next = prev + interval;
+    if ((next - start)%interval != 0)
+	next = (next - start)/interval * interval + interval;
+    
+    // too soon after configuration - skip the event
+    while (next < not_until)
+	next += interval;
+
+    return next;
 }
