@@ -40,7 +40,7 @@ void UniConfGremlin::start(unsigned int seed)
     find_victims(key);
     for (runlevel = 1; runlevel <= max_runlevel; runlevel ++)
         start_trouble(runlevel);
-    runlevel = max_runlevel - 1;
+    runlevel = max_runlevel;
 }
 
 /* find_victims(UniConfKey _key)
@@ -54,11 +54,11 @@ void UniConfGremlin::find_victims(UniConfKey _key)
     Victim *victim;
     for (i.rewind(); i.next(); )
     {   
-        if (i().get() == "")
+        if (i().getme() == "")
             find_victims(i().fullkey());
         else
         {
-            victim = new Victim(num_victims, inspect(i().get()), i().fullkey());
+            victim = new Victim(num_victims, inspect(i().getme()), i().fullkey());
             victims.add(victim, true);
             num_victims ++;
         }
@@ -140,13 +140,13 @@ void UniConfGremlin::change_value(bool use_valid_data)
         if (victims[r]->type == TYPE_INT)
         {
             int new_value = rand();
-            cfg[victims[r]->name].setint(new_value);
+            cfg[victims[r]->name].setmeint(new_value);
             last_change = WvString("%s %s\n", last_change, new_value);
         }
         else 
         {
             WvString new_value = rand_str(victims[r]->type);
-            cfg[victims[r]->name].set(new_value);
+            cfg[victims[r]->name].setme(new_value);
             last_change = WvString("%s %s\n", last_change, new_value);
         }
     }
@@ -156,14 +156,14 @@ void UniConfGremlin::change_value(bool use_valid_data)
         if (s)
         {
             int new_value = rand();
-            cfg[victims[r]->name].setint(rand());
+            cfg[victims[r]->name].setmeint(rand());
             last_change = WvString("%s %s\n", last_change, new_value);
         }
         else
         {
             WvString new_value = rand_str(victims[r]->type);
             int t = (int)(((double)rand() / (double)RAND_MAX) * NUM_TYPES);
-            cfg[victims[r]->name].set(rand_str(t));
+            cfg[victims[r]->name].setme(rand_str(t));
             last_change = WvString("%s %s\n", last_change, new_value);
         }
             
@@ -211,7 +211,7 @@ void UniConfGremlin::add_value()
     // generate number
     {
         int new_value = rand();
-        cfg[key_name].setint(new_value);
+        cfg[key_name].setmeint(new_value);
         victim = new Victim(num_victims, TYPE_INT, key_name);
         last_change = WvString("%s %s\n", last_change, new_value);
     }
@@ -221,7 +221,7 @@ void UniConfGremlin::add_value()
         int type = (int)(((double)rand() / (double)RAND_MAX) * 5 
                    + TYPE_STRING);
         WvString new_value = rand_str(type);
-        cfg[key_name].set(new_value);
+        cfg[key_name].setme(new_value);
         victim = new Victim(num_victims, TYPE_STRING, key_name);
         last_change = WvString("%s %s\n", last_change, new_value);
     }
@@ -241,9 +241,11 @@ void UniConfGremlin::start_trouble(int curr_runlevel)
     for (int i = 0; i < 1000; i ++)
     {
         if (curr_runlevel == 5)
-            r = (int)(((double)rand() / (double)RAND_MAX) * 4) + 1;
+            r = (int)(((double)rand() / (double)RAND_MAX) * 5);
         
-        if (r == 1)
+        if (r < 1)
+            spin_commit(500);
+        else if (r == 1)
             change_value(true);
         else if (r == 2)
             change_value(false);
@@ -257,6 +259,17 @@ void UniConfGremlin::start_trouble(int curr_runlevel)
             cfg[victims[r]->name].commit();
             last_change = WvString("Deleted the key %s\n", victims[r]->name);
         }
+    }
+}
+
+/* spin_commit(n)
+ * commits for n iterations, to see what effect it has
+ */
+void UniConfGremlin::spin_commit(int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+        cfg.commit();
     }
 }
 
@@ -387,7 +400,7 @@ void UniConfGremlin::test()
         {
             WvString rand = rand_str(i);
             printf("Adding %s\n", rand.cstr());
-            cfg[count].set(rand);
+            cfg[count].setme(rand);
             cfg[count].commit();
             count ++;
         }
@@ -397,7 +410,7 @@ void UniConfGremlin::test()
     {
         int randint = rand();
         printf("Adding %i\n", randint);
-        cfg[count].setint(randint);
+        cfg[count].setmeint(randint);
         cfg[count].commit();
         count ++;
     }
@@ -407,7 +420,7 @@ void UniConfGremlin::test()
     {
        printf("%s:", victims[i]->name.cstr());
        printf("%s:", type_name(victims[i]->type).cstr());
-       printf("%s\n", cfg[victims[i]->name].get().cstr());
+       printf("%s\n", cfg[victims[i]->name].getme().cstr());
     }
     
     printf("Testing Start Trouble\n");
