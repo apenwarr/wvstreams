@@ -18,25 +18,13 @@
 
 class WvTimeoutStream: public WvStream
 {
-    int timeout;
+    bool ok;
+
 public:
-    WvTimeoutStream(int msec):
-	timeout(getmsec() + msec) {}
-    virtual bool isok() const {
-	/* Beware. Comparing them directly *is* simpler, but is not
-	 * correct. */
-	return getmsec() - timeout < 0;
-    }
-    virtual bool pre_select(SelectInfo &si);
-    virtual bool post_select(SelectInfo &si) {
-	return false;
-    }
-private:
-    static int getmsec() {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-    }
+    WvTimeoutStream(time_t msec);
+    virtual bool isok() const { return ok; }
+
+    virtual void execute();
 };
 
 #endif // __WVTIMEOUTSTREAM_H

@@ -6,21 +6,16 @@
  */
 #include "wvtimeoutstream.h"
 
-bool WvTimeoutStream::pre_select(SelectInfo &si)
+WvTimeoutStream::WvTimeoutStream(time_t msec) :
+    ok(true)
 {
-    int now = getmsec();
-
-    /* We expired. */
-    if (now - timeout >= 0)
-    {
-	return true;
-    }
-
-    if ((si.msec_timeout < 0) || (si.msec_timeout > timeout - now))
-    {
-	si.msec_timeout = timeout - now;
-    }
-
-    return false;
+    alarm(msec);
 }
 
+void WvTimeoutStream::execute()
+{
+    WvStream::execute();
+
+    // reset the alarm if it has gone off
+    if (alarm_was_ticking) ok = false;
+}

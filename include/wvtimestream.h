@@ -21,7 +21,6 @@
 class WvTimeStream : public WvStream
 {
     time_t ms_per_tick;
-    int max_backlog;
 
 public:
     WvTimeStream();
