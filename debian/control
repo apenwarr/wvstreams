@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Simon Law <sfllaw@debian.org>
 Uploaders: James Morrison <phython@debian.org>, Patrick Patterson <ppatters@debian.org>
-Build-Depends: debhelper (>> 4.0.0), fftw-dev, libfam-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, zlib1g-dev
+Build-Depends: debhelper (>> 4.0.0), fftw-dev, libfam-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, libxplc-dev, zlib1g-dev
 Build-Depends-Indep: doxygen
 Standards-Version: 3.6.1
 
@@ -54,7 +54,7 @@ Description: C++ network libraries for rapid application development
 Package: libwvstreams4.0-doc
 Architecture: all
 Section: doc
-Suggests: libwvstreams4.0-dev (= ${Source-Version})
+Suggests: libwvstreams-dev (= ${Source-Version})
 Description: Documentation for WvStreams
  Contains all the documentation available to program with WvStreams.
   .
@@ -96,7 +96,7 @@ Description: WvStreams Speex Encoder/Decoder Library
  This library contains the WvSpeexEncoder and WvSpexxDecoder to enable quick 
  and painless creation of audio streams using the Speex Voice over IP CODEC
 
-Package: libwvstreams4.0-dev
+Package: libwvstreams-dev
 Architecture: any
 Section: libdevel
 Depends: libwvstreams4.0-base, libwvstreams4.0-extras, libuniconf4.0, libwvstreams4.0-fft, libwvstreams4.0-qt, libwvstreams4.0-speex, libwvstreams4.0-vorbis, ${misc:Depends}
