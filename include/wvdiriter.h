@@ -39,7 +39,10 @@ class WvDirIter
 private:
     bool        recurse;
     bool        go_up;
+    bool        skip_mounts;
+    bool        found_top;
 
+    WvDirEnt        topdir;
     WvDirEnt        info;
     WvString        relpath;
 
@@ -59,7 +62,7 @@ private:
     DirList::Iter dir;
 
 public:
-    WvDirIter( WvString dirname, bool _recurse=true );
+    WvDirIter( WvStringParm dirname, bool _recurse=true, bool _skip_mounts=false );
     ~WvDirIter();
 
     bool isok() const;
