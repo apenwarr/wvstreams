@@ -334,8 +334,9 @@ static WvString follow_links(WvString fname)
 {
     struct stat st;
     WvString cwd;
-    WvString tmp, tmp2;
+    WvString tmp, tmpdir;
     char *cptr;
+    int linksize;
     
     cwd.setsize(10240);
     getcwd(cwd.edit(), 10240-5);
@@ -350,28 +351,31 @@ static WvString follow_links(WvString fname)
     {
 	// fprintf(stderr, "follow_links: trying '%s'\n", (const char*)fname);
 	
+	// not a symlink - done
 	if (!S_ISLNK(st.st_mode))
 	    return fname;
 	
+	// read the link data into tmp
 	tmp.setsize(st.st_size + 2);
 	cptr = tmp.edit();
-	
-	// read the link data into tmp
-	readlink(fname, cptr, st.st_size + 2);
+	linksize = readlink(fname, cptr, st.st_size + 2);
+	if (linksize < 1)
+	    return fname; // ugly, but not sure what else to do...
 	cptr[st.st_size] = 0;
+	cptr[linksize] = 0;
 	
+	// not an absolute link - need to merge current path and new one
 	if (cptr[0] != '/')
 	{
 	    // need to copy the current directory name from fname
-	    tmp2 = fname;
-	    cptr = tmp2.edit();
-	    
+	    tmpdir = fname;
+	    cptr = tmpdir.edit();
 	    cptr = strrchr(cptr, '/');
 	    if (cptr)
 		*cptr++ = 0;
 	    
 	    WvString x(tmp);
-	    tmp = WvString("%s/%s", tmp2, tmp);
+	    tmp = WvString("%s/%s", tmpdir, x);
 	}
 	
 	if (lstat(tmp, &st))
@@ -390,6 +394,9 @@ void WvConf::save(const WvString &_filename)
     
     WvString xfilename(follow_links(_filename));
     
+    // temporary filename has the last char changed to '!' (or '#' if it's
+    // already '#').  We can't just append a character, because that might
+    // confuse a dos filesystem.
     WvString tmpfilename(xfilename);
     char *cptr = strchr(tmpfilename.edit(), 0);
     cptr--;
