@@ -54,18 +54,23 @@ class UniConfChangeTree : public UniConfTree<UniConfChangeTree>
 public:
     changeMode mode;
 
-    WvString newvalue;
-    UniConfValueTree *newtree;
-    bool was_null_or_empty;
+    // Union of different values used in different modes.
+    union {
+	WvString *newvalue;
+	UniConfValueTree *newtree;
+	bool was_null_or_empty;
+    };
 
     // Constructs a tree and links it to a parent.
     UniConfChangeTree(UniConfChangeTree *parent, const UniConfKey &key)
-	: UniConfTree<UniConfChangeTree>(parent, key), newtree(0) {}
+	: UniConfTree<UniConfChangeTree>(parent, key) {}
 
     // Destroys a tree and everything it owns.
     ~UniConfChangeTree()
     {
-	if (newtree)//mode == NEWTREE && newtree)
+	if (mode == NEWVALUE)
+	    delete newvalue;
+	else if (mode == NEWTREE && newtree)
 	    delete newtree;
     }
 };
@@ -163,7 +168,7 @@ public:
 	if (doing_i1)
 	{
 	    if (i1->mode == NEWVALUE)
-		return i1->newvalue;
+		return *i1->newvalue;
 	    else if (i1->mode == NEWTREE)
 		return i1->newtree->value();
 	    else // i.e. i1->mode == NEWNODE
@@ -232,7 +237,7 @@ WvString UniTransactionGen::get(const UniConfKey &key)
 	    // would do and return the appropriate value. (The node's mode
 	    // will be either NEWVALUE, NEWNODE, or BLANK.)
 	    if (node->mode == NEWVALUE)
-		return node->newvalue;
+		return *node->newvalue;
 	    WvString value(base->get(key.first(seg)));
 	    return (node->mode == NEWNODE && !value) ? WvString::empty : value;
 	}
@@ -358,10 +363,10 @@ void UniTransactionGen::apply_changes(UniConfChangeTree *node,
     else if (node->mode == NEWVALUE)
     {
 	// Else if the current change is a NEWVALUE change, ...
-	if (base->get(section) != node->newvalue)
+	if (base->get(section) != *node->newvalue)
 	    // ... and the current value in the underlying generator isn't
 	    // what we want it to be, then change it.
-	    base->set(section, node->newvalue);
+	    base->set(section, *node->newvalue);
     }
     else if (node->mode == NEWNODE)
     {
@@ -460,7 +465,7 @@ void UniTransactionGen::cancel_changes(UniConfChangeTree *node,
 
     if (node->mode == NEWVALUE &&
 	!value.isnull() &&
-	value != node->newvalue)
+	value != *node->newvalue)
 	delta(section, value);
 
     UniConfChangeTree::Iter i(*node);
@@ -606,8 +611,7 @@ UniConfChangeTree *UniTransactionGen::create_change(UniConfChangeTree *parent,
     else
     {
 	parent->mode = NEWVALUE;
-        fprintf(stderr, "Creating new string create_change\n");
-	parent->newvalue = WvString(value);
+	parent->newvalue = new WvString(value);
 	if (base->get(key) != value)
 	    delta(key, value);
     }
@@ -698,7 +702,6 @@ UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
 						 int seg,
 						 WvStringParm value)
 {
-    fprintf(stderr, "set_change(%p, %s, %d, %s) called\n", node, key.cstr(), seg, value.cstr());
     // Switch to create_change() if we ever can't find the next node,
     // and switch to set_value() if we ever find a NEWTREE.
     if (!node)
@@ -754,9 +757,9 @@ UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
     }
     else if (subnode->mode == NEWVALUE)
     {
-	if (subnode->newvalue != value)
+	if (*subnode->newvalue != value)
 	{
-	    subnode->newvalue = value;
+	    *subnode->newvalue = value;
 	    delta(key, value);
 	}
     }
@@ -765,7 +768,7 @@ UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
 	if (base->get(key) != value)
 	    delta(key, value);	    
 	subnode->mode = NEWVALUE;
-	subnode->newvalue = WvString(value);
+	subnode->newvalue = new WvString(value);
     }
     else // i.e. subnode->mode == NEWNODE
     {
@@ -773,7 +776,7 @@ UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
 	if ((!currval != !value) && (currval != value))
 	    delta(key, value);
 	subnode->mode = NEWVALUE;
-	subnode->newvalue = WvString(value);
+	subnode->newvalue = new WvString(value);
     }
     return node;
 }

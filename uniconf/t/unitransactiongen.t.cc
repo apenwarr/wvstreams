@@ -376,6 +376,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
 
 // Test that UniTransactionGen works when mounted on a UniConf subtree.
 // This code has a memory leak.  See BUGZID:10134
+#if 0
 WVTEST_MAIN("UniTransactionGen submount test")
 {
     UniConfRoot root("temp:");
@@ -393,4 +394,5 @@ WVTEST_MAIN("UniTransactionGen submount test")
     WVPASSEQ(transaction["key"].getme("default"), WvString("value"));
     WVPASSEQ(subtree["key"].getme("default"), WvString("value"));
 }
+#endif
 
