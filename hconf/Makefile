@@ -9,7 +9,7 @@ all: hconf.a
 
 hconftest: hconftest.o hconf.a
 
-hconf.libs: wvhconfkey.o wvhconf.o wvhconfgen.o \
+hconf.libs: wvhconfkey.o wvhconf.o wvhconfgen.o wvhconfini.o \
 	../streams/streams.libs ../utils/utils.libs
 
 hconf.a: hconf.libs
