@@ -384,10 +384,13 @@ bool set_acl_permission(WvStringParm filename, WvStringParm type,
 
     if (read)
 	rwx.append("r");
+    else rwx.append("-");
     if (write)
 	rwx.append("w");
+    else rwx.append("-");
     if (execute)
 	rwx.append("x");
+    else rwx.append("-");
 
 #ifdef WITH_ACL
     struct passwd *pw = getpwuid(st.st_uid);
