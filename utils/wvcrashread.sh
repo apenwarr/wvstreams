@@ -18,9 +18,12 @@ agdb()
 	(
 		echo "set width 2000"
 		echo "set height 20000"
+		echo "break main"
+		echo "run"
 		cat
 		echo "quit"
-	) | gdb --noasync -q --command=/dev/stdin "$1"
+	) | gdb --noasync -q --command=/dev/stdin "$1" \
+	  | (read; read; read; read; cat)
 }
 
 
