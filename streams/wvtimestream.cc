@@ -29,27 +29,28 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 {
     WvTime now;
     time_t diff;
+    bool ready = WvStream::pre_select(si);
 
-    if (!ms_per_tick)
-	return false;
+    if (ms_per_tick)
+    {
+	now = wvtime();
 
-    now = wvtime();
+	if (next < now)
+	    return true;
 
-    if (next < now)
-	return true;
+	diff = msecdiff(next, now);
+	diff = diff < 0 ? 0 : diff;
+	if (diff < si.msec_timeout || si.msec_timeout < 0)
+	    si.msec_timeout = diff;
+    }
 
-    diff = msecdiff(next, now);
-    diff = diff < 0 ? 0 : diff;
-    if (diff < si.msec_timeout || si.msec_timeout < 0)
-	si.msec_timeout = diff;
-
-    return false;
+    return ready;
 }
 
 
 bool WvTimeStream::post_select(SelectInfo &si)
 {
-    return (next < wvtime());
+    return WvStream::post_select(si) || (next < wvtime());
 }
 
 
@@ -57,6 +58,9 @@ void WvTimeStream::execute()
 {
     WvStream::execute();
 
-    // we've got a tick, let's schedule the next one
-    next = msecadd(next, ms_per_tick);
+    /* Schedule our next timer event, unless alarm_is_ticking, which
+     * would mean that we're here because someone used alarm() rather
+     * than because our timer expired. */
+    if (!alarm_was_ticking)
+	next = msecadd(next, ms_per_tick);
 }

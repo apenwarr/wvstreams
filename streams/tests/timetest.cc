@@ -10,29 +10,36 @@
 #include "wvlog.h"
 #include <sys/time.h>
 
+WvLog log("timetest", WvLog::Info);
+bool want_to_quit = false;
+unsigned int count = 0;
+
+void timer_callback(WvStream& s, void*)
+{
+    if (!(count % 10))
+	log("\n");
+
+    log("%02s ", count);
+
+    if (!s.alarm_was_ticking && ++count >= 100)
+	want_to_quit = true;
+}
+
 int main()
 {
-    WvLog log("timetest", WvLog::Info);
     WvTimeStream t;
-    int count;
     
     free(malloc(1));
     
     log("Artificial burstiness test - should take exactly 10 seconds\n");
-    
+
+    t.setcallback(timer_callback, 0);
     t.set_timer(100);
 
-    for (count = 0; count < 100; count++)
+    while (!want_to_quit)
     {
-	if (!(count % 10))
-	{
-	    usleep(500000);
-	    log("\n");
-	}
-	
-	while (!t.select(-1))
-	    ;
-	t.callback();
+	if(t.select(-1))
+	    t.callback();
 
 	/*
 	 * FIXME: It should be okay to sleep more than 100 ms here,
@@ -43,9 +50,9 @@ int main()
 	 * iteration, it could be fixed, but I'm not sure how to do
 	 * that.
 	 */
-
-	log("%02s ", count);
+	//usleep((1 + (rand() % 500)) * 1000);
     }
     
     return 0;
 }
+
