@@ -608,16 +608,24 @@ public:
     void reset(T *_data, size_t _avail, size_t _size, bool _autofree = false)
     {
         assert(_data != NULL || _avail == 0);
-        assert(_avail <= _size);
         if (_data != data && xautofree)
             delete[] data;
         data = _data;
-        xsize = _size;
-        readidx = 0;
-        writeidx = _avail;
         xautofree = _autofree;
+        xsize = _size;
     }
 
+    /**
+     * Sets the amount of available data using the current buffer
+     * and resets the read index to the beginning of the buffer.
+     */
+    void setavail(size_t _avail)
+    {
+        assert(_avail <= xsize);
+        readidx = 0;
+        writeidx = _avail;
+    }
+    
     /*** Overridden Members ***/
     virtual size_t used() const
     {
@@ -725,6 +733,15 @@ public:
     {
         assert(_data != NULL || _avail == 0);
         data = _data;
+        setavail(_avail);
+    }
+
+    /**
+     * Sets the amount of available data using the current buffer
+     * and resets the read index to the beginning of the buffer.
+     */
+    void setavail(size_t _avail)
+    {
         avail = _avail;
         readidx = 0;
     }
