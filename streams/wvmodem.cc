@@ -1,6 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *   Copyright (C) 1999 Red Hat, Inc.
  *
  * Implementation of the WvModem class. Inherits from WvFile, but
  * handles various important details related to modems, like setting
@@ -9,6 +10,8 @@
  */
 
 #include "wvmodem.h"
+
+#include <assert.h>
 #include <sys/ioctl.h>
     	
 
@@ -33,8 +36,76 @@ static SpeedLookup speeds[] = {
 };
 
 
+WvModemBase::WvModemBase(int _fd)
+{
+    fd = _fd;
+    get_real_speed();
+}
+
+int WvModemBase::get_real_speed()
+{
+    speed_t s;
+
+    assert(fd >= 0);
+    tcgetattr( fd, &t );
+    s = cfgetospeed( &t );
+    for (unsigned int i = 0; i < sizeof(speeds) / sizeof(*speeds); i++)
+    {
+	if (speeds[i].speedt == s)
+	{
+	    baud = speeds[i].baud;
+	    break;
+	}
+    }
+
+    return baud;
+}
+
+void WvModemBase::hangup()
+{
+    int i, oldbaud = baud;
+    
+    if (die_fast || !isok()) return;
+
+    // politely abort any dial in progress, to avoid locking USR modems.
+    // we should only do this if we have received any response from the modem,
+    // so that WvModemScan can run faster.
+    drain();
+    write( "\r", 1 );
+    for (i = 0; !select(200) && i < 10; i++)
+	write( "\r", 1 );
+    drain();
+
+    // drop DTR for a while, if we're still online
+    if (carrier())
+    {
+	cfsetospeed( &t, B0 );
+	tcsetattr( fd, TCSANOW, &t );
+	for (i = 0; carrier() && i < 10; i++)
+	    usleep( 100 * 1000 );
+
+	// raise DTR again, restoring the old baud rate
+	speed(oldbaud);
+    }
+    
+    if (carrier())
+    {
+	// need to do +++ manual-disconnect stuff
+	write( "+++", 3 );
+	usleep( 1500 * 1000 );
+	write( "ATH\r", 4 );
+	
+	for (i = 0; carrier() && i < 5; i++)
+	    usleep( 100 * 1000 );
+    }
+}
+
+
+
+
+
 WvModem::WvModem(const char * filename, int _baud)
-	: lock(filename)
+	: WvModemBase(), lock(filename)
 {
     closing = false;
     baud = _baud;
@@ -116,47 +187,6 @@ void WvModem::setup_modem()
 }
 
 
-void WvModem::hangup()
-/********************/
-{
-    int i, oldbaud = baud;
-    
-    if (die_fast || !isok()) return;
-
-    // politely abort any dial in progress, to avoid locking USR modems.
-    // we should only do this if we have received any response from the modem,
-    // so that WvModemScan can run faster.
-    drain();
-    write( "\r", 1 );
-    for (i = 0; !select(200) && i < 10; i++)
-	write( "\r", 1 );
-    drain();
-
-    // drop DTR for a while, if we're still online
-    if (carrier())
-    {
-	cfsetospeed( &t, B0 );
-	tcsetattr( fd, TCSANOW, &t );
-	for (i = 0; carrier() && i < 10; i++)
-	    usleep( 100 * 1000 );
-
-	// raise DTR again, restoring the old baud rate
-	speed(oldbaud);
-    }
-    
-    if (carrier())
-    {
-	// need to do +++ manual-disconnect stuff
-	write( "+++", 3 );
-	usleep( 1500 * 1000 );
-	write( "ATH\r", 4 );
-	
-	for (i = 0; carrier() && i < 5; i++)
-	    usleep( 100 * 1000 );
-    }
-}
-
-
 void WvModem::close()
 {
     if (fd >= 0)
@@ -192,18 +222,7 @@ int WvModem::speed(int _baud)
     cfsetospeed( &t, s );
     tcsetattr( fd, TCSANOW, &t );
 
-    tcgetattr( fd, &t );
-    s = cfgetospeed( &t );
-    for (unsigned int i = 0; i < sizeof(speeds) / sizeof(*speeds); i++)
-    {
-	if (speeds[i].speedt == s)
-	{
-	    baud = speeds[i].baud;
-	    break;
-	}
-    }
-
-    return baud;
+    return get_real_speed();
 }
 
 
