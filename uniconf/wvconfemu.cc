@@ -13,13 +13,57 @@
 #include "strutils.h"
 
 
-#define HACKING_SETRAW
-#define HACKING_ITER_UNLINK
-#define HACKING_GETRAW
-#define HACKING_ITER_XUNLINK
-#define HACKING_ADD_ADDFILE
-#define HACKING_QUICK_SET
-//#define HACKING_ISCLEAN
+#define HACKING
+
+
+/*
+ * Parse the WvConf string "request"; pointers to the found section,
+ * entry, and value fields are stored in *section, *entry, and *value
+ * respectively, and request[] is modified.
+ * 
+ * For example, the string:
+ *     [silly]billy=willy
+ * is parsed into:
+ *     section="silly"; entry="billy"; value="willy";
+ * 
+ * Returns 0 on success, -1 if the command is missing the '[', -2 if
+ * the string is missing a ']', or -3 if the section or entry is
+ * blank.  If a "value" is not found (ie. there is no equal sign
+ * outside the [] brackets) this does not qualify as an error, but
+ * *value is set to NULL.
+*/
+static int parse_wvconf_request(char *request, char *&section,
+				char *&entry, char *&value)
+{
+    entry = value = NULL;
+    
+    section = strchr(request, '[');
+    if (!section)
+	return -1;
+
+    section++;
+    
+    entry = strchr(section, ']');
+    if (!entry)
+	return -2;
+
+    *entry++ = 0;
+    
+    value = strchr(entry, '=');
+    if (value)
+    {
+	*value++ = 0;
+	value = trim_string(value);
+    }
+    
+    section = trim_string(section);
+    entry = trim_string(entry);
+    
+    if (!*section)
+	return -3;
+    
+    return 0;
+}
 
 
 static void do_setbool(void* userdata,
@@ -85,12 +129,10 @@ void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 }
 
 
-#ifdef HACKING_QUICK_SET
 void WvConfigSectionEmu::quick_set(WvStringParm entry, WvStringParm value)
 {
-    assert(false && "not implemented");
+    uniconf[entry].set(value);
 }
-#endif
 
 
 bool WvConfigSectionEmu::isempty() const
@@ -130,7 +172,7 @@ WvConfigEntryEmu* WvConfigSectionEmu::Iter::ptr() const
 }
 
 
-#ifdef HACKING_ITER_UNLINK
+#if defined(HACKING)
 void WvConfigSectionEmu::Iter::unlink()
 {
     assert(false && "not implemented");
@@ -138,7 +180,7 @@ void WvConfigSectionEmu::Iter::unlink()
 #endif
 
 
-#ifdef HACKING_ITER_XUNLINK
+#if defined(HACKING)
 void WvConfigSectionEmu::Iter::xunlink()
 {
     assert(false && "not implemented");
@@ -160,7 +202,7 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 	if (((i->section && !i->section) || !strcasecmp(i->section, section))
 	    && ((i->key && !i->key) || !strcasecmp(i->key, key)))
 	{
-	    WvString value = get(section, key, NULL);
+	    WvString value = uniconf[section][key].get(WvString());
 	    i->callback(i->userdata, section, key, i->last, value);
 	    i->last = value;
 	}
@@ -181,15 +223,6 @@ void WvConfEmu::zap()
 {
     uniconf.remove();
 }
-
-
-#ifdef HACKING_ISCLEAN
-bool WvConfEmu::isclean() const
-{
-    assert(false && "not implemented");
-    return false;
-}
-#endif
 
 
 bool WvConfEmu::isok() const
@@ -243,7 +276,8 @@ WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 
 
 void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
-		  WvStringParm section, WvStringParm key, void *cookie)
+			     WvStringParm section, WvStringParm key,
+			     void *cookie)
 {
     WvList<CallbackInfo>::Iter i(callbacks);
 
@@ -299,22 +333,24 @@ void WvConfEmu::del_addname(WvStringList *list,
 }
 
 
-#ifdef HACKING_ADD_ADDFILE
 void WvConfEmu::add_addfile(WvString *filename,
 			    WvStringParm sect, WvStringParm ent)
 {
     add_callback(do_addfile, filename, sect, ent, NULL);
 }
-#endif
 
 
-#ifdef HACKING_GETRAW
 WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 {
-    assert(false && "not implemented");
-    return "";
+    char *section, *entry, *value;
+    parse_error = parse_wvconf_request(wvconfstr.edit(),
+				       section, entry, value);
+
+    if (parse_error)
+	return WvString();
+
+    return get(section, entry, value);
 }
-#endif
 
 
 int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
@@ -361,12 +397,20 @@ const char *WvConfEmu::fuzzy_get(WvStringList &sect, WvStringParm entry,
 }
 
 
-#ifdef HACKING_SETRAW
-void WvConfEmu::setraw(WvString wvconfstr, const char *&value, int &parse_error)
+void WvConfEmu::setraw(WvString wvconfstr, const char *&_value,
+		       int &parse_error)
 {
-    assert(false && "not implemented");
+    char *section, *entry, *value;
+    parse_error = parse_wvconf_request(wvconfstr.edit(),
+				       section, entry, value);
+    if (!parse_error)
+    {
+	set(section, entry, value);
+	_value = get(section, entry, value);
+    }
+    else
+	_value = NULL;
 }
-#endif
 
 
 void WvConfEmu::setint(WvStringParm section, WvStringParm entry, int value)

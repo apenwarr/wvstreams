@@ -60,7 +60,6 @@ public:
 
     const char *get(WvStringParm entry, const char *def_val = NULL);
     void set(WvStringParm entry, WvStringParm value);
-    // add an entry to the end of the section, _assuming_ no duplicates exist
     void quick_set(WvStringParm entry, WvStringParm value);
 
     bool isempty() const;
@@ -126,9 +125,6 @@ private:
 public:
     WvConfEmu(const UniConf& _uniconf);
     void zap();
-#if 1
-    bool isclean() const;
-#endif
     bool isok() const;
     void load_file(WvStringParm filename);
     void save(WvStringParm filename);
