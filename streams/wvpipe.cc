@@ -18,8 +18,6 @@
 #include <sys/ioctl.h>
 #include <assert.h>
 
-#include "wvfork.h"
-
 // The assorted WvPipe::WvPipe() constructors are described in wvpipe.h
 
 WvPipe::WvPipe(const char *program, const char * const *argv,
@@ -84,7 +82,7 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	return;
     }
 
-    pid = wvfork();
+    pid = fork();
     if (pid < 0)
     {
 	pid = 0;
