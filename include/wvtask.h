@@ -17,7 +17,7 @@
 #include "wvlinklist.h"
 #include "setjmp.h"
 
-#define WVTASK_MAGIC 123678
+#define WVTASK_MAGIC 0x123678
 
 class WvTaskMan;
 
@@ -27,7 +27,7 @@ class WvTask
     typedef void TaskFunc(void *userdata);
     
     static int taskcount, numtasks, numrunning;
-    int magic_number;
+    int magic_number, *stack_magic;
     WvString name;
     int tid;
     

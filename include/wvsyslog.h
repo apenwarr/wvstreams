@@ -21,7 +21,7 @@ public:
 
 protected:
     WvLog::LogLevel first_debug;
-    WvBuffer current;
+    WvDynBuf current;
     WvString syslog_prefix;
     bool include_appname;
     

@@ -219,7 +219,7 @@ public:
 private:
    struct env_md_ctx_st *mdctx;
    unsigned char *raw_digest_value;
-   WvBuffer buf_to_digest;
+   WvDynBuf buf_to_digest;
    DigestMode mode;
 
    /**

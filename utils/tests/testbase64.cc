@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 
     if (!dec)
     {
-	WvBuffer b;
+	WvDynBuf b;
         WvString enc = base64_encode(str, strlen(str));
 	base64_decode(enc, b);
         printf("before:  %s\n"
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     }
     else
     {
-	WvBuffer b;
+	WvDynBuf b;
         base64_decode(str, b);
         printf("encoded: %s\n"
 	       "decoded: %s\n", str, base64_decode(str, b).getstr().cstr());

@@ -55,7 +55,7 @@ int main()
     
     gman = &man;
     ga = man.start("atask", gentask, (void *)"a");
-    gb = man.start("btask", gentask, (void *)"b");
+    gb = man.start("btask", gentask, (void *)"b", 8192);
     
     // simple test
     for (int x = 0; x < 10; x++)
@@ -65,12 +65,17 @@ int main()
 	printf("main2:\n");
 	man.run(*gb, 400);
 	
-	gb->recycle();
-	
 	if (!gb->isrunning())
+	{
+	    gb->recycle();
 	    gb = man.start("bbtask", gentask, (void *)"bb");
+	}
+	
 	if (!ga->isrunning())
+	{
+	    ga->recycle();
 	    ga = man.start("aatask", gentask, (void *)"aa");
+	}
     }
     
     // finish the tasks

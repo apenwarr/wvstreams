@@ -25,7 +25,7 @@ public:
     void flush()
     	{ encode(NULL, 0, true); }
     
-    WvBuffer outbuf;
+    WvDynBuf outbuf;
     
 protected:
     // note: this function may be called with in==NULL, but only if insize==0

@@ -10,9 +10,9 @@
 #include "wvstring.h"
 
 /**
- * Class to handle Lock files - usefull for WvDial, and other places where we 
- * need to guarantee exclusive access to a file or device. Creates/Removes lockfiles
- * in /var/lock
+ * Class to handle Lock files - useful for WvDial and other places where we 
+ * need to guarantee exclusive access to a file or device.  Creates/Removes
+ * lockfiles in /var/lock.
  */
 class WvLockDev
 {

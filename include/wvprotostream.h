@@ -71,7 +71,7 @@ public:
     
     DeclareWvList(Token);
 
-    WvBuffer tokbuf;
+    WvDynBuf tokbuf;
     bool log_enable;
 };
 

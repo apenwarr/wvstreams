@@ -91,24 +91,28 @@ bool WvLockDev::lock()
     if (fd.isok()) 
     {
 	// We made a lock file...
-	fd.print( "%10s\n", getpid() );
+	fd.print("%10s\n", getpid());
     }
     else
     {
 	char *inbuf;
 	
     	// Lock file is already there!  Check for staleness...
-    	sleep( 1 );	// preventing race condition...
+    	sleep(1);	// preventing race condition...
  	
 	fd.open(filename, O_RDONLY);
-	inbuf = trim_string(fd.getline(0));
+	//fprintf(stderr, "ok: %d\n", fd.isok());
+	inbuf = trim_string(fd.getline(-1));
+	//fprintf(stderr, "getline: '%s'\n", inbuf);
 	
 	if (inbuf)
 	    pid = atoi(inbuf);
 	else
 	    pid = 0;
 	
- 	if(pid != 0  &&  kill(pid, 0) == -1  &&  errno == ESRCH)
+	//fprintf(stderr, "pid: '%d'\n", pid);
+	
+ 	if (pid && kill(pid, 0) == -1 && errno == ESRCH)
 	{
  	    // we can create a lockfile now
 	    fd.close();

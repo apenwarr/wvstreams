@@ -102,6 +102,7 @@ public:
 
     WvConfigSection *operator[] (WvStringParm s);
 
+    static int check_for_bool_string(const char *s);
     int parse_wvconf_request(char *request, char *&section, char *&entry,
 			     char *&value);
 

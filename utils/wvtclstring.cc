@@ -146,7 +146,7 @@ WvFastString wvtcl_unescape(WvStringParm s)
 WvString wvtcl_encode(WvStringList &l, const char *nasties,
 		      const char *splitchars)
 {
-    WvBuffer b;
+    WvDynBuf b;
     
     WvStringList::Iter i(l);
     for (i.rewind(); i.next(); )
