@@ -45,6 +45,13 @@ WvStreamClone::~WvStreamClone()
 	delete cloned;
 }
 
+void WvStreamClone::nowrite()
+{
+    if (cloned)
+    {
+	cloned->nowrite();
+    }
+}
 
 void WvStreamClone::close()
 {

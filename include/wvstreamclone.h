@@ -54,6 +54,7 @@ public:
     virtual bool post_select(SelectInfo &si);
     virtual const WvAddr *src() const;
     virtual void execute();
+    virtual void nowrite();
 };
 
 #endif // __WVSTREAMCLONE_H
