@@ -20,8 +20,8 @@
  */
 class WvListBase
 {
-protected:
     WvListBase(const WvListBase &l); // copy constructor - not actually defined anywhere!
+protected:
     WvListBase& operator= (const WvListBase &l);
     
 public:

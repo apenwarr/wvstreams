@@ -76,7 +76,7 @@ public:
     public:
 	WvDynBuf buf;
 	
-	datumize(const T t)
+	datumize(const T &t)
 	{
 	    wv_serialize(buf, t);
 	    dsize = buf.used();

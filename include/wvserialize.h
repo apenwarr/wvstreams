@@ -19,19 +19,7 @@
  * wv_deserialize() which does need one.
  */
 template <typename T>
-inline void wv_serialize(WvBuf &buf, T t)
-{
-    _wv_serialize(buf, t);
-}
-
-
-/**
- * A serializer for passing objects by reference.  This one is used 
- * if the _wv_serialize() for this type of object expects the object to
- * be passed by reference.  Otherwise, the default implementation is used.
- */
-template <typename T>
-inline void wv_serialize(WvBuf &buf, T &t)
+inline void wv_serialize(WvBuf &buf, const T &t)
 {
     _wv_serialize(buf, t);
 }
@@ -119,7 +107,7 @@ inline void _wv_serialize(WvBuf &buf, WvBuf &inbuf)
  * Oh boy - I think I'm having a bit too much fun.
  */
 template <typename T>
-void _wv_serialize(WvBuf &buf, WvList<T> &list)
+void _wv_serialize(WvBuf &buf, const WvList<T> &list)
 {
     // save the number of elements
     _wv_serialize(buf, (size_t)list.count());
@@ -162,7 +150,8 @@ public:
  * that you need to delete later.
  * 
  * FIXME: this class takes precedence over *specialized* _wv_deserialize()
- * functions for pointers!
+ * functions for pointers!  Pointer-based deserializers need to be classes
+ * too until this is resolved.
  */
 // note: this has to be a class because we use partial template
 // specialization, which doesn't work on functions.

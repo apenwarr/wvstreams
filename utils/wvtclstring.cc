@@ -99,11 +99,11 @@ WvString wvtcl_unescape(WvStringParm s)
 }
 
 
-WvString wvtcl_encode(WvStringList &l, const char *nasties,
+WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
 		      const char *splitchars)
 {
     WvDynBuf b;
-    WvStringList::Iter i(l);
+    WvList<WvString>::Iter i(l);
     for (i.rewind(); i.next(); )
     {
 	// elements are separated by spaces
@@ -213,7 +213,7 @@ returnstring:
     return WvString(str).unique();
 }
 
-void wvtcl_decode(WvStringList &l, WvStringParm _s,
+void wvtcl_decode(WvList<WvString> &l, WvStringParm _s,
 		  const char *splitchars, bool do_unescape)
 {
     // empty or null strings are empty lists
