@@ -64,11 +64,7 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
     rsa = NULL;
     if (cert)
     {
-	char buffer[1024];
-
-	X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
-	buffer[sizeof(buffer)-1] = 0;
-	dname = buffer;
+	filldname();
 	
 	EVP_PKEY *pk;
 	pk = X509_get_pubkey(cert);
@@ -110,13 +106,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
     unhexify(hexified_cert);
 
     if (cert)
-    {
-	char buffer[1024];
-
-    	X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
-    	buffer[sizeof(buffer)-1] = 0;
-    	dname = buffer;
-    }
+	filldname();
 }
 
 
@@ -353,6 +343,15 @@ void WvX509Mgr::create_selfsigned()
     }
 
     debug("Certificate for %s created\n", dname);
+}
+
+void WvX509Mgr::filldname()
+{
+    char buffer[1024];
+    
+    X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
+    buffer[sizeof(buffer)-1] = 0;
+    dname = buffer;    
 }
 
 
@@ -686,11 +685,10 @@ WvString WvX509Mgr::encode(const DumpMode mode)
     }
 }
 
-void WvX509Mgr::decode(DumpMode mode, WvStringParm pemEncoded)
+void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 {
     // Let the fun begin... ;)
     FILE *stupid;
-    const EVP_CIPHER *enc;
     WvString outstring = pemEncoded;
                 
     stupid = file_hack_start();
@@ -717,13 +715,15 @@ void WvX509Mgr::decode(DumpMode mode, WvStringParm pemEncoded)
 		cert = NULL;
 	    }
 	    cert = PEM_read_X509(stupid, NULL, NULL, NULL);
+	    filldname();
 	    break;
 	    
 	case RsaPEM:
 	    debug("Importing RSA keypair.\n");
 	    debug("Make sure that you load or generate a new Certificate!\n");
-	    enc = EVP_get_cipherbyname("rsa");
-	    rsa->rsa = PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL);
+	    if (rsa) delete rsa;
+	    rsa = new WvRSAKey(PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL), 
+			       true);
 	    break;
 	    
 	case RsaRaw:
