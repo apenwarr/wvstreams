@@ -1,7 +1,6 @@
 // winstreams.cpp : Defines the entry point for the DLL application.
 //
 
-#include "stdafx.h"
 #include "winsock2.h"
 #include "assert.h"
 
