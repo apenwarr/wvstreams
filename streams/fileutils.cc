@@ -17,6 +17,9 @@ bool mkdirp(WvStringParm _dir, int create_mode)
     if (!access(_dir, X_OK))
         return true;
 
+    // You're trying to make a nothing directory eh?
+    assert(!!_dir);
+
     WvString dir(_dir);
     char *p = dir.edit();
 
