@@ -11,7 +11,7 @@
 
 int main()
 {
-    WvStreamClone c(&wvcon);
+    WvStreamClone c(wvcon);
     
     while (wvcon->isok() && c.isok())
     {
@@ -23,4 +23,6 @@ int main()
     }
     
     wvcon->print("isok: %s/%s\n", wvcon->isok(), c.isok());
+
+    c.cloned = NULL;
 }

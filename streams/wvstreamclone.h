@@ -25,11 +25,16 @@ class WvStreamClone : public WvStream
 public:
     /**
      * WvStreamClone gains ownership (i.e. it will delete it when it
-     * dies) of the stream you give it.
+     * dies) of the stream you give it. If you do not want that to
+     * happen, set cloned to NULL before destroying the WvStreamClone
+     * (for example, in your destructor if you derive WvStreamClone).
      */
-    WvStreamClone(WvStream *_cloned)
-        { cloned = _cloned; force_select(false, false, false); }
+    WvStreamClone(WvStream *_cloned):
+	cloned(_cloned)
+        { force_select(false, false, false); }
     virtual ~WvStreamClone();
+
+    WvStream *cloned;
     
     virtual void close();
     virtual int getrfd() const;
@@ -43,9 +48,6 @@ public:
     virtual bool post_select(SelectInfo &si);
     virtual const WvAddr *src() const;
     virtual void execute();
-
-protected:
-    WvStream *cloned;
 };
 
 #endif // __WVSTREAMCLONE_H
