@@ -344,22 +344,18 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     struct rtentry rte;
     char ifname[17];
     int sock;
-    WvString gwstr(gw), metr(metric);
+    WvString deststr(dest), gwstr(gw), metr(metric);
     const char *argv[] = {
 	"ip", "route", "add",
-	"default",
+	deststr,
 	"table", table,
 	"dev", name,
 	"via", gwstr,
 	"metric", metr,
-	"scope", "global",
 	NULL
     };
     
-    if (gw == WvIPAddr()) // no gateway; change the scope name
-	argv[13] = "link";
-    
-    if (dest.is_default())
+    if (dest.is_default() || table != "default")
     {
 	err(WvLog::Debug2, "addroute: ");
 	for (int i = 0; argv[i]; i++)
@@ -408,22 +404,18 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     struct rtentry rte;
     char ifname[17];
     int sock;
-    WvString gwstr(gw), metr(metric);
+    WvString deststr(dest), gwstr(gw), metr(metric);
     const char *argv[] = {
 	"ip", "route", "del",
-	"default",
+	deststr,
 	"table", table,
 	"dev", name,
 	"via", gwstr,
 	"metric", metr,
-	"scope", "global",
 	NULL
     };
     
-    if (gw == WvIPAddr()) // no gateway; change the scope name
-	argv[13] = "link";
-    
-    if (dest.is_default())
+    if (dest.is_default() || table != "default")
     {
 	err(WvLog::Debug2, "addroute: ");
 	for (int i = 0; argv[i]; i++)
