@@ -56,4 +56,9 @@ bool wvfnmatch(WvStringList &patterns, WvStringParm name, int flags = 0);
  */
 FILE *wvtmpfile();
 
+/**
+ * Basically our own implementation of the NetBSD lchmod() call.
+ */
+int wvchmod(const char *path, mode_t mode);
+
 #endif // __WVFILEUTILS_H

@@ -50,7 +50,7 @@ config.status: configure
 		--sysconfdir=/etc --localstatedir=/var \
 		--disable-debug --disable-verbose \
 		--with-qt --with-vorbis --with-speex --with-openslp \
-		--with-fam --with-fftw
+		--with-fftw
 
 
 #Architecture

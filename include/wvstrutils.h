@@ -201,6 +201,11 @@ WvString sizetoa(unsigned long long blocks, unsigned int blocksize=1);
 /** Give a size in Kilobyes gives a human readable size */
 WvString sizektoa(unsigned int kbytes);
 
+/** Given a number of seconds, returns a formatted human-readable string
+ * saying how long the period is.
+ */
+WvString secondstoa(unsigned int total_seconds);
+
 /**
  * Finds a string in an array and returns its index.
  * Returns -1 if not found.

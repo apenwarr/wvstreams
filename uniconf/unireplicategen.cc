@@ -34,7 +34,7 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
         if (gen)
             gens.append(gen, false);
     }
-    if (gens.count() == 0)
+    if (gens.isempty())
     {
     	WvString encoded_monikers = wvtcl_unescape(s);
     	DPRINTF("encoded_monikers = %s\n", encoded_monikers.cstr());

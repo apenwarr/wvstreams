@@ -1,8 +1,5 @@
 
 #include <time.h>
-#include <iostream>
-
-using namespace std;
 
 #include "wvtest.h"
 #include "wvdailyevent.h"

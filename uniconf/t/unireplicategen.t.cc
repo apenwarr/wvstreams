@@ -23,7 +23,7 @@ WVTEST_MAIN("basic")
     WVPASS(cfg["/key"].getme().isnull());
 }
 
-WVTEST_MAIN("propigation")
+WVTEST_MAIN("propagation")
 {
     UniTempGen tmps[2];
     tmps[0].set("/key0", "value0");
@@ -67,20 +67,6 @@ WVTEST_MAIN("propigation")
     WVPASS(tmps[1].get("key") == "value1");
 }
 
-#define UNICONFD_SOCK "/tmp/unireplicategen-uniconfd"
-#define UNICONFD_INI "/tmp/unireplicategen-uniconfd.ini"
-
-static char *argv[] =
-{
-    "uniconfd",
-    "-f",
-    "-p", "0",
-    "-s", "0",
-    "-u", UNICONFD_SOCK,
-    "ini:" UNICONFD_INI,
-    NULL
-};
-
 static int callback_count = 0;
 
 static void callback(const UniConf &uniconf, const UniConfKey &key)
@@ -88,15 +74,42 @@ static void callback(const UniConf &uniconf, const UniConfKey &key)
     ++callback_count;
 }
 
+static void kill_and_harvest(const pid_t pid)
+{
+    kill(pid, 15);
+    pid_t rv;
+    while ((rv = waitpid(pid, NULL, 0)) != pid)
+    {
+        // in case a signal is in the process of being delivered..
+        if (rv == -1 && errno != EINTR)
+            break;
+    }
+    WVPASS(rv == pid);
+}
+
 WVTEST_MAIN("retry:uniconfd")
 {
     signal(SIGPIPE, SIG_IGN);
 
+    WvString uniconfd_sock("/tmp/unireplicategen-uniconfd-%s", getpid());
+    WvString uniconfd_ini("/tmp/unireplicategen-uniconfd-%s.ini", getpid());
+    WvString ini_moniker("ini:%s", uniconfd_ini);
+    char * uniconfd_argv[] =
+        {
+            "uniconfd",
+            "-f",
+            "-p", "0",
+            "-s", "0",
+            "-u", uniconfd_sock.edit(),
+            ini_moniker.edit(),
+            NULL
+        };
     pid_t uniconfd_pid;
-    
-    unlink(UNICONFD_INI);
-    
-    UniConfRoot cfg("replicate:{retry:{unix:" UNICONFD_SOCK " 100} temp:}");
+
+    unlink(uniconfd_ini.cstr());
+        
+    UniConfRoot cfg(WvString("replicate:{retry:{unix:%s 100} temp:}", 
+                             uniconfd_sock));
     cfg.add_callback(&callback_count, "/", callback, true);
     WVPASS(callback_count == 0);
 
@@ -109,14 +122,14 @@ WVTEST_MAIN("retry:uniconfd")
 
     if ((uniconfd_pid = fork()) == 0)
     {
-    	execv("uniconf/daemon/uniconfd", argv);
+    	execv("uniconf/daemon/uniconfd", uniconfd_argv);
     	_exit(1);
     }
     sleep(1);
     
     // wait for connect
     {
-    	UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    	UniConfRoot another_cfg(WvString("retry:unix:%s", uniconfd_sock));
     
         for (;;)
         {
@@ -130,7 +143,7 @@ WVTEST_MAIN("retry:uniconfd")
 
     old_callback_count = callback_count;
     {
-    	UniConfRoot another_cfg("unix:" UNICONFD_SOCK);
+    	UniConfRoot another_cfg(WvString("unix:%s", uniconfd_sock));
 
         WVPASS(another_cfg["/key"].getme() == "value");
 
@@ -140,8 +153,8 @@ WVTEST_MAIN("retry:uniconfd")
     WVPASS(cfg["/key"].getme() == "value one");
     WVPASS(callback_count > old_callback_count);
    
-    kill(uniconfd_pid, 15);
-    waitpid(uniconfd_pid, NULL, 0);
+    kill_and_harvest(uniconfd_pid);
+    unlink(uniconfd_sock.cstr());
     
     WVPASS(cfg["/key"].getme() == "value one");
 
@@ -152,14 +165,14 @@ WVTEST_MAIN("retry:uniconfd")
     
     if ((uniconfd_pid = fork()) == 0)
     {
-    	execv("uniconf/daemon/uniconfd", argv);
+    	execv("uniconf/daemon/uniconfd", uniconfd_argv);
     	_exit(1);
     }
     sleep(1);
     
     // wait for connect
     {
-    	UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    	UniConfRoot another_cfg(WvString("retry:unix:%s", uniconfd_sock));
     
         for (;;)
         {
@@ -175,7 +188,7 @@ WVTEST_MAIN("retry:uniconfd")
     
     old_callback_count = callback_count;
     {
-    	UniConfRoot another_cfg("unix:" UNICONFD_SOCK);
+    	UniConfRoot another_cfg(WvString("unix:%s", uniconfd_sock));
     
     	another_cfg["/key"].setme("value three");
     	WVPASS(another_cfg["/key"].getme() == "value three");
@@ -189,13 +202,12 @@ WVTEST_MAIN("retry:uniconfd")
     WVPASS(callback_count > old_callback_count);
 
     {
-    	UniConfRoot another_cfg("unix:" UNICONFD_SOCK);
+    	UniConfRoot another_cfg(WvString("unix:%s", uniconfd_sock));
     
     	WVPASS(another_cfg["/key"].getme() == "value four");
     }
-    
-    kill(uniconfd_pid, 15);
-    waitpid(uniconfd_pid, NULL, 0);
+
+    kill_and_harvest(uniconfd_pid);
 
     WVPASS(cfg["/key"].getme() == "value four");
 }

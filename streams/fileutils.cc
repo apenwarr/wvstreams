@@ -136,3 +136,46 @@ bool wvfnmatch(WvStringList& patterns, WvStringParm name, int flags)
 
     return match;
 }
+
+// Only chmod a given file or dir, do not follow symlinks
+int wvchmod(const char *path, mode_t mode)
+{
+    struct stat st;
+    if (lstat(path, &st) == -1) {
+        return -1;
+    }
+
+    int filedes = open(path, O_RDONLY);
+    if (filedes == -1) {
+	// if we're not running as root, this file/dir may have 0
+	// perms and open() fails, so let's try again
+	//
+	// NOTE: This is not as secure as the proper way, since
+	// it's conceivable that someone swaps out the dir/file
+	// for a symlink between our check and the chmod() call
+	//
+        struct stat sst;
+	if (getuid() != 0)
+	    if (stat(path, &sst) != -1)
+		if (st.st_ino == sst.st_ino)
+		    return chmod(path, mode);
+	
+	return -1;
+    }
+
+    struct stat fst;
+    if (fstat(filedes, &fst) == -1) {
+	close(filedes);
+	return -1;
+    }
+
+    if (st.st_ino != fst.st_ino) {
+	close(filedes);
+	return -1;
+    }
+
+    int retval = fchmod(filedes, mode);
+    close(filedes);
+
+    return retval;
+}

@@ -231,7 +231,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
             // key removed
 	    // Issue notifications for every that is missing.
             a->visit(UniConfValueTree::Visitor(this,
-                &UniTempGen::notify_deleted), NULL, false, true);
+                &UniIniGen::notify_deleted), NULL, false, true);
             return false;
         }
     }
@@ -249,13 +249,15 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 bool UniIniGen::commit_atomic(WvString real_filename)
 {
     WvString tmp_filename("%s.tmp%s", real_filename, getpid());
-    WvFile file(tmp_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+    WvFile file(tmp_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
     struct stat statbuf;
     
     if (file.geterr()
 	|| lstat(real_filename, &statbuf) == -1
 	|| !S_ISREG(statbuf.st_mode))
     {
+        log(WvLog::Warning, "Can't write '%s': %s\n",
+                filename, strerror(errno));
 	unlink(tmp_filename);
         file.close();
         return false;
@@ -264,9 +266,12 @@ bool UniIniGen::commit_atomic(WvString real_filename)
     save(file, *root); // write the changes out to our temp file
     
     file.close();
+    chmod(tmp_filename, create_mode);
     if (rename(tmp_filename, real_filename) == -1
             || file.geterr())
     {
+        log(WvLog::Warning, "Can't write '%s': %s\n",
+                filename, strerror(errno));
         unlink(tmp_filename);
 	return false;
     }
@@ -294,14 +299,11 @@ void UniIniGen::commit()
     }
 #else
     char resolved_path[PATH_MAX];
+    WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
     WvString real_filename(filename);
 
     if (realpath(filename, resolved_path) != NULL)
 	real_filename = resolved_path;
-
-    WvString alt_filename("%s.tmp%s", real_filename, getpid());
-    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
-    struct stat statbuf;
 
     // first try to overwrite the file atomically
     if (!commit_atomic(real_filename))
@@ -330,30 +332,9 @@ void UniIniGen::commit()
 	else
 	    log(WvLog::Warning, "Error writing '%s' ('%s'): %s\n",
 		filename, real_filename, file.errstr());
-    }
-#endif
 
+    }
     file.close();
-
-    if (file.geterr())
-    {
-        log(WvLog::Warning, "Can't write '%s': %s\n",
-	    filename, file.errstr());
-	return;
-    }
-
-#ifndef _WIN32
-    if (!alt_filename.isnull())
-    {
-	chmod(alt_filename, create_mode);
-	if (rename(alt_filename, real_filename) == -1)
-	{
-	    log(WvLog::Warning, "Can't write '%s': %s\n",
-		filename, strerror(errno));
-	    unlink(alt_filename);
-	    return;
-	}
-    }
 #endif
 
     dirty = false;

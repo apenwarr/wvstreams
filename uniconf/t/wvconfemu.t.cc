@@ -163,6 +163,41 @@ WVTEST_MAIN("Multiple Generators mounted on the Uniconf")
 }
 #endif
 
+// see bug 9664 and bug 9769
+WVTEST_MAIN("UniRetryGen not ready")
+{
+    UniConfRoot cfg("temp:");
+
+    // emulate bug 9769
+    class UniBuggyGen
+        : public UniTempGen
+    {
+    public:
+        UniBuggyGen()
+            : UniTempGen()
+            {
+            }
+        virtual bool exists(const UniConfKey &)
+            {
+                return false;
+            }
+    };
+
+    cfg["foo"].setme("bar");
+    cfg["retrygen"].mountgen(new UniBuggyGen());
+    cfg["baz"].setme("blah");
+    WvConfEmu conf(cfg);
+
+    WvConfEmu::Iter emuiter(conf);
+    for (emuiter.rewind(); emuiter.next();)
+    {
+        WvConfigSection &emusect = *emuiter;
+        WVPASS(emuiter.ptr());
+        WvConfigEntry *entry = emusect["foo"];
+        WVFAIL(entry);
+    } 
+}
+
 WVTEST_MAIN("Editing while iterating")
 {
     UniConfRoot uniconf("temp:");

@@ -550,12 +550,15 @@ void WvConfEmu::Iter::rewind()
 
 WvLink *WvConfEmu::Iter::next()
 {
-    if (iter.next())
+    link.data = NULL;
+    while (link.data == NULL && iter.next())
     {
-	link.data = static_cast<void*>(conf[iter->key()]);
-	return &link;
+        link.data = static_cast<void*>(conf[iter->key()]);
     }
-
+    if (link.data)
+    {
+        return &link;
+    }
     return NULL;
 }
 
