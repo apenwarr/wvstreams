@@ -10,7 +10,9 @@
 #define __WVDAEMON_H
 
 #include "wvautoconf.h"
-#ifdef WITH_POPT
+#ifndef WITH_POPT
+#error WvDaemon is only availible when WvStreams is compiled with popt support
+#else
 
 #include "wvstring.h"
 #include "wvargs.h"
@@ -75,6 +77,7 @@ class WvDaemon
     	    	WvDaemonCallback _stop_callback,
                 void *_ud = NULL);
     	
+    	int run(const char *argv0); // returns exit status;
     	int run(int argc, char **argv); // returns exit status;
 
         void restart()

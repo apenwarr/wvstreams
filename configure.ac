@@ -104,7 +104,8 @@ AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
-AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC (required)]))
+xplc_version='0.3.10'
+AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
@@ -137,6 +138,16 @@ AC_SUBST(LN)
 # Setting the default language to C++ means that CXX and CXXCPP will be 
 # used for compile tests.
 AC_LANG(C++)
+
+# Detect pkg-config
+AC_PATH_PROG([PKGCONFIG], [pkg-config], [no])
+if test "$PKGCONFIG" = "no"; then
+    if test "$with_xplc" = ""; then
+	AC_MSG_ERROR([pkg-config is not installed])
+    else
+	AC_MSG_WARN([pkg-config is not installed])
+    fi
+fi
 
 # devel
 if test "$enable_devel" = "yes"; then
@@ -343,19 +354,31 @@ fi
 
 # xplc
 if test "$with_xplc" != "no"; then
-    if test -d xplc && test "$with_xplc" = ""; then
+    if test "$with_xplc" = ""; then
+	if pkg-config --modversion xplc-0.3.10 2>/dev/null >/dev/null; then
+            WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-0.3.10`])
+	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-0.3.10`])
+	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	    xplc_pc="xplc-${xplc_version}"
+	else
+	    with_xplc='no'
+	fi
+    else
+        WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
+	WV_APPEND(LDFLAGS, [-L$with_xplc])
+	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	xplc_pc="xplc-${xplc_version}"
+    fi
+    # What if we can't find it?
+    if test "$with_xplc" = "no" && test -d xplc; then
         WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
         WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
         AC_CONFIG_SUBDIRS(xplc)
         build_xplc=yes
         with_xplc='$(WVSTREAMS)/xplc'
 	xplc_pc='wvxplc'
-    else
-        AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
-        AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
-	xplc_version=`pkg-config --modversion xplc 2>/dev/null`
-	if test "$xplc_version" != ""; then xplc_version=" >= $xplc_version"; fi
-	xplc_pc="xplc${xplc_version}"
     fi
 fi
 
@@ -483,8 +506,10 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/liboggvorbis.pc
 		 pkgconfig/libwvqt.pc
 		 pkgconfig/libwvstreams.pc
-		 pkgconfig/libwvutils.pc
-		 pkgconfig/wvxplc.pc])
+		 pkgconfig/libwvutils.pc])
+if test "$xplc_pc" = "wvxplc"; then
+    AC_CONFIG_FILES([pkgconfig/wvxplc.pc])
+fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
 # We wish to tell any sub-configures to install their header files into

@@ -8,7 +8,9 @@
 #define __WVARGS_H
 
 #include "wvautoconf.h"
-#ifdef WITH_POPT
+#ifndef WITH_POPT
+#error WvArgs is only availible when WvStreams is compiled with popt support
+#else
 
 #include "wvstring.h"
 #include "wvstringlist.h"

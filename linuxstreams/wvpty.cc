@@ -19,6 +19,9 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#define DPRINTF(format, args...)
+//#define DPRINTF(format, args...) fprintf(stderr, "WvPty:" # format, ##args)
+
 bool WvPty::open_master()
 {
     const char *xvals = "pqrstuvwxyzPQRST";
@@ -86,15 +89,44 @@ WvPty::WvPty(const char *program, const char * const *argv)
     {
         // child
         int fd = getfd();
-        if (::close(fd) < 0
-                || ::setsid() < 0
-                || !open_slave()
-                || ::ioctl(getrfd(), TIOCSCTTY, NULL)
-                || ::dup2(getrfd(), STDIN_FILENO) < 0
-                || ::dup2(getwfd(), STDOUT_FILENO) < 0
-                || ::dup2(getwfd(), STDERR_FILENO) < 0
-                || (getfd() > STDERR_FILENO && ::close(getfd()) < 0))
+        if (::close(fd) < 0)
+        {
+            DPRINTF("close(fd) failed: %s\n", strerror(errno));
             goto _error;
+        }
+        if (::setsid() < 0)
+        {
+            DPRINTF("setsid() failed: %s\n", strerror(errno));
+            goto _error;
+        }
+        if (!open_slave())
+        {
+            DPRINTF("open_slave() failed: %s\n", strerror(errno));
+            goto _error;
+        }
+        ::ioctl(getrfd(), TIOCSCTTY, NULL); // This may fail in case opening the 
+                                            // ptys in open_slave proactively gave us a
+                                            // controling terminal
+        if (::dup2(getrfd(), STDIN_FILENO) < 0)
+        {
+            DPRINTF("dup2(0) failed: %s\n", strerror(errno));
+            goto _error;
+        }
+        if (::dup2(getwfd(), STDOUT_FILENO) < 0)
+        {
+            DPRINTF("dup2(1) failed: %s\n", strerror(errno));
+            goto _error;
+        }
+        if (::dup2(getwfd(), STDERR_FILENO) < 0)
+        {
+            DPRINTF("dup2(2) failed: %s\n", strerror(errno));
+            goto _error;
+        }
+        if (getfd() > STDERR_FILENO && ::close(getfd()) < 0)
+        {
+            DPRINTF("close(getfd()) failed: %s\n", strerror(errno));
+            goto _error;
+        }
        
         setfd(-1);
         execvp(program, (char * const *)argv);

@@ -38,6 +38,12 @@ UniConfKey UniFilterGen::keymap(const UniConfKey &key)
     return key;
 }
 
+UniConfKey UniFilterGen::reversekeymap(const UniConfKey &key)
+{
+    // by default, don't rename the key
+    return key;
+}
+
 
 void UniFilterGen::commit()
 {
@@ -126,5 +132,8 @@ UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value,
                                void *userdata)
 {
-    delta(keymap(key), value);
+    if (xinner)
+        delta(reversekeymap(key), value);
+    else
+        delta(keymap(key), value);
 }
