@@ -33,6 +33,7 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
     if (inner)
         inner->setcallback(UniConfGenCallback(this,
             &UniCacheGen::deltacallback), NULL);
+    refreshed_once = false;
 }
 
 
@@ -50,9 +51,15 @@ bool UniCacheGen::isok()
 
 bool UniCacheGen::refresh()
 {
-    bool ret = inner->refresh();
-    loadtree();
-    return ret;
+    if (!refreshed_once)
+    {
+	bool ret = inner->refresh();
+	loadtree();
+	refreshed_once = true;
+	return ret;
+    }
+    else
+	return false;
 }
 
 
