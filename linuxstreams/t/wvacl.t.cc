@@ -37,6 +37,8 @@ void create_file(WvStringParm testfn, WvString &username, WvString &groupname)
 
 WVTEST_MAIN("default get_simple_acl_permissions()")
 {
+    if (!acl_check()) return;
+    
     WvString testfn("wvacltest.tmp"), username, groupname;
 
     create_file(testfn, username, groupname);
@@ -91,6 +93,8 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 
 WVTEST_MAIN("get and set acl text")
 {
+    if (!acl_check()) return;
+    
     WvString testfn("wvacltest.tmp"), username, groupname;
     create_file(testfn, username, groupname);
     chmod(testfn, 0421);
@@ -107,6 +111,8 @@ WVTEST_MAIN("get and set acl text")
 
 WVTEST_MAIN("add another user and read it back")
 {
+    if (!acl_check()) return;
+    
     WvString testfn("wvacltest.tmp"), username, groupname;
     create_file(testfn, username, groupname);
     chmod(testfn, 0421);

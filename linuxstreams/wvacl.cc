@@ -26,13 +26,14 @@ int wvsimpleaclentry_sort(const WvSimpleAclEntry *a, const WvSimpleAclEntry *b)
 }
 
 
-void acl_check()
+bool acl_check()
 {
     WvLog log("ACL", WvLog::Info);
 
 #ifndef WITH_ACL
     log("No ACL library support detected.  Not checking for kernel "
         "support.\n");
+    return false;
 #else
     log("ACL library support detected.\n");
     acl_t aclchk = acl_get_file("/", ACL_TYPE_ACCESS);
@@ -40,9 +41,13 @@ void acl_check()
     {
         log("ACL kernel support detected.\n");
         acl_free(aclchk);
+	return true;
     }
     else
+    {
         log("No ACL kernel support detected.\n");
+	return false;
+    }
 #endif
 }
 
@@ -278,6 +283,7 @@ void get_simple_acl_permissions(WvStringParm filename,
     // owners
     WvSimpleAclEntry *acl = new WvSimpleAclEntry;
     struct passwd *pw = getpwuid(st.st_uid);
+    acl->owner = false;
     if (!pw || !pw->pw_name || !strlen(pw->pw_name))
         acl->name = WvString(st.st_uid);
     else
