@@ -26,7 +26,8 @@ WvCryptoStream::WvCryptoStream(WvStream *_slave) : WvStreamClone(&slave)
 
 WvCryptoStream::~WvCryptoStream()
 {
-    // nothing special
+    if (my_cryptbuf)
+	delete[] my_cryptbuf;
 }
 
 
