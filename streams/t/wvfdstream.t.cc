@@ -233,16 +233,12 @@ WVTEST_MAIN("Test undo_force_select() on a WvFDStream")
     foof.called = false;
     WVPASS(!foof.called);
 
-// This fails, but uncommenting the select inside the loop
-// makes it succeed properly
-#if 0
     // undo_force_select() and make sure we're not called
     foof.y.undo_force_select(true, true, true);
-    if (WvIStreamList::globallist.select(1000))
-    {
-//        printf("select(0) returned '%d'\n", foof.y.select(0));
+
+    // can't use runonce() here because it should be false
+    if (WvIStreamList::globallist.select(0))
 	WvIStreamList::globallist.callback();
-    }
+
     WVPASS(!foof.called);
-#endif
 }
