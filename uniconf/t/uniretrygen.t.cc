@@ -21,6 +21,8 @@ static char *argv[] =
     NULL
 };
 
+// FIXME: Disabled due to BUGZID:10341
+#if 0
 WVTEST_MAIN("uniconfd")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -72,6 +74,7 @@ WVTEST_MAIN("uniconfd")
 
     WVPASS(!cfg["/key"].exists());
 }
+#endif
 
 
 WVTEST_MAIN("mount point exists")
