@@ -21,6 +21,14 @@ int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 WvTaskMan *WvTaskMan::singleton = NULL;
 int WvTaskMan::links = 1; // never delete singleton
 
+int WvTaskMan::magic_number;
+WvTaskList WvTaskMan::free_tasks;
+    
+WvTask *WvTaskMan::stack_target;
+    
+WvTask *WvTaskMan::current_task;
+LPVOID WvTaskMan::toplevel;
+
 WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 {
     stacksize = _stacksize;
