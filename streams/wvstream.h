@@ -147,25 +147,33 @@ public:
     // return true if any of the requested features are true on the stream.
     // If msec_timeout < 0, waits forever (bad idea!).  ==0, does not wait.
     // Otherwise, waits for up to msec_timeout milliseconds.
-    // To change the select() behaviour of a stream, change its select_setup
-    // and/or test_set functions.
-    //
+    // 
+    // Note that select() is not virtual.  To change the select() behaviour
+    // of a stream, change its select_setup and/or test_set functions.
+    // 
+    // If forceable==true, force_select options are taken into account;
+    // otherwise, we use the exactly select options given here.  Most often
+    // people should just use auto_select(), which always sets forceable to
+    // true.
+    // 
+    // force_select used to always apply to select(), but it doesn't anymore
+    // (except when forceable==true) because that confuses some functions
+    // that really do need to be able to specify: if, say, getline did
+    // a select(0) for read but force_select for write is true, the select
+    // would return true, which is just nonsense.  So the default is now
+    // forceable==false.
     bool select(time_t msec_timeout,
 		bool readable = true, bool writable = false,
 		bool isexception = false, bool forceable = false);
     
-    // like select, except it uses force_select instead of taking parameters.
-    // force_select used to apply to select(), but it doesn't anymore (except
-    // when forceable==true) because that just confuses everything.
+    // like select, except it always uses force_select instead of taking
+    // parameters.
     // 
-    // If, say, getline does a select(0) for read but force_select for write
-    // is true, the select would return true, which is just nonsense.  So
-    // I took that out.
-    // 
-    // Hmm, there's also a special case for force_select in wvstreamlist that
-    // probably shouldn't be there... but the only fix would be to change
-    // all main programs to use auto_select instead of select, and I don't want
-    // to do that right now. -- apenwarr
+    // Even if you don't use auto_select, there's a special case to enable
+    // force_select in wvstreamlist that probably shouldn't be there...
+    // but the only fix would be to change all main programs to use
+    // auto_select instead of select, and I don't want to do that right
+    // now. -- apenwarr
     bool auto_select(time_t msec_timeout);
     
     // use force_select() to force a particular select mode
@@ -250,6 +258,7 @@ public:
 
 private:
     void init();
+    bool wvstream_execute_called;
     
 protected:
     Callback *callfunc;

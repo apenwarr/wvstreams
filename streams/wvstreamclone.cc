@@ -165,5 +165,6 @@ const WvAddr *WvStreamClone::src() const
 
 void WvStreamClone::execute()
 {
+    WvStream::execute();
     if (s()) s()->callback();
 }

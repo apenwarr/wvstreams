@@ -82,6 +82,8 @@ void WvTimeStream::tick()
 
 void WvTimeStream::execute()
 {
+    WvStream::execute();
+    
     // inform the stream that the clock has officially "ticked"
     tick();
 }

@@ -41,6 +41,7 @@ WvStream::WvStream(int _fd)
 
 void WvStream::init()
 {
+    wvstream_execute_called = false;
     callfunc = NULL;
     userdata = NULL;
     errnum = 0;
@@ -112,9 +113,17 @@ void WvStream::_callback(void *stream)
     
     s->running_callback = true;
     
+    s->wvstream_execute_called = false;
     s->execute();
     if (s->callfunc)
 	s->callfunc(*s, s->userdata);
+    
+    // if this assertion fails, a derived class's virtual execute() function
+    // didn't call its parent's execute() function, and we didn't make it
+    // all the way back up to WvStream::execute().  This doesn't always
+    // matter right now, but it could lead to obscure bugs later, so we'll
+    // enforce it.
+    assert(s->wvstream_execute_called);
     
     s->running_callback = false;
 }
@@ -137,6 +146,8 @@ void WvStream::callback()
     }
     else
 	alarm_was_ticking = false;
+    
+    assert(!uses_continue_select || personal_stack_size >= 1024);
     
 //    if (1)
     if (uses_continue_select && personal_stack_size >= 1024)
@@ -202,7 +213,8 @@ void WvStream::callback()
 
 void WvStream::execute()
 {
-    // do nothing by default
+    // do nothing by default, but notice that we were here.
+    wvstream_execute_called = true;
 }
 
 

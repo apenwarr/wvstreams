@@ -105,6 +105,8 @@ WvUDPListener::WvUDPListener(const WvIPPortAddr &_localaddr)
 
 void WvUDPListener::execute()
 {
+    WvUDPStream::execute();
+    
     unsigned char buf[2048]; // larger than an expected UDP packet
     size_t len;
     

@@ -147,7 +147,10 @@ bool WvStreamList::test_set(SelectInfo &si)
 void WvStreamList::execute()
 {
     static int level = 0;
+    const char *id;
     level++;
+    
+    WvStream::execute();
     
     TRACE("\n%*sList@%p: (%d sure) ", level, "", this, sure_thing.count());
     
@@ -162,7 +165,8 @@ void WvStreamList::execute()
 #endif
 	WvStream &s(*i);
 	
-	TRACE("[%p:%s]", s, i.link->id);
+	id = i.link->id;
+	TRACE("[%p:%s]", s, id);
 	
 	i.xunlink();
 	s.callback();

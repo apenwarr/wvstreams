@@ -69,6 +69,7 @@ bool WvDailyEvent::test_set( SelectInfo& si )
 void WvDailyEvent::execute()
 /**************************/
 {
+    WvStream::execute();
     reset();
 }
 

@@ -188,6 +188,8 @@ void WvProtoStream::switch_state(int newstate)
  */
 void WvProtoStream::execute()
 {
+    WvStreamClone::execute();
+    
     Token *t1 = tokline(getline(0));
     
     if (t1)
