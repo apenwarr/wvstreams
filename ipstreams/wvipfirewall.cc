@@ -25,12 +25,13 @@ WvIPFirewall::~WvIPFirewall()
 }
 
 
-WvString WvIPFirewall::port_command(const char *cmd, const WvIPPortAddr &addr)
+WvString WvIPFirewall::port_command(const char *cmd, const char *proto,
+				    const WvIPPortAddr &addr)
 {
     WvIPAddr ad(addr), none;
     
-    return WvString("ipchains %s WvDynam -j ACCEPT -p tcp -s %s %s -d 0/0 -b",
-		    cmd, ad == none ? WvString("0/0") : (WvString)ad,
+    return WvString("ipchains %s WvDynam -j ACCEPT -p %s -d %s %s",
+		    cmd, proto, ad == none ? WvString("0/0") : (WvString)ad,
 		    addr.port);
 }
 
@@ -50,16 +51,26 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 void WvIPFirewall::add_port(const WvIPPortAddr &addr)
 {
     addrs.append(new WvIPPortAddr(addr), true);
-    WvString s(port_command("-A", addr));
-    if (enable) system(s);
+    WvString s(port_command("-A", "tcp", addr)),
+    	    s2(port_command("-A", "udp", addr));
+    if (enable)
+    {
+	system(s);
+	system(s2);
+    }
 }
 
 
 // note!  This does not remove the address from the list, only the kernel!
 void WvIPFirewall::del_port(const WvIPPortAddr &addr)
 {
-    WvString s(port_command("-D", addr));
-    if (enable) system(s);
+    WvString s(port_command("-D", "tcp", addr)),
+    	    s2(port_command("-D", "udp", addr));
+    if (enable)
+    {
+	system(s);
+	system(s2);
+    }
 }
 
 
