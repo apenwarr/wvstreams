@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 
 #define DPRINTF(format, args...)
-//#define DPRINTF(format, args...) fprintf(stderr, "WvPty:" # format, ##args)
+//#define DPRINTF(format, args...) fprintf(stderr, "WvPty:" format, ##args)
 
 bool WvPty::open_master()
 {
@@ -44,6 +44,8 @@ bool WvPty::open_master()
             }
             else
             {
+		DPRINTF("Chosen PTY is %s\n", pty);
+
                 setfd(fd);
 
                 _master = pty;
@@ -63,12 +65,15 @@ bool WvPty::open_master()
 
 bool WvPty::open_slave()
 {
+    DPRINTF("Chosen TTY is %s\n", _slave.cstr());
+
     // try to change owner and permissions.  this will only work if we 
     // are root; if we're not root, we don't care.
     struct group *gr = ::getgrnam("tty");
     ::chown(_slave, ::getuid(), gr? gr->gr_gid: (gid_t)-1);
 
-    ::chmod(_slave, S_IRUSR | S_IWUSR | S_IWGRP);
+    // Workaround for bug 9900
+    //::chmod(_slave, S_IRUSR | S_IWUSR | S_IWGRP);
 
     setfd(::open(_slave, O_RDWR));
     
