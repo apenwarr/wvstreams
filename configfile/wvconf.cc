@@ -365,7 +365,7 @@ WvConfigSection *WvConf::operator[] (WvStringParm section)
 {
     Iter i(*this);
 
-    if( section )
+    if (section)
 	for (i.rewind(); i.next(); )
 	{
 	    if (strcasecmp(i().name, section) == 0)

@@ -11,7 +11,7 @@
 int main( int argc, char ** argv )
 /********************************/
 {
-    if( argc != 3 ) {
+    if (argc != 3) {
         fprintf( stderr, "Usage: %s cfgfilename section\n", argv[0] );
         return( -1 );
     }

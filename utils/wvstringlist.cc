@@ -48,7 +48,7 @@ void WvStringList::split(WvStringParm _s, const char *splitchars,
     while (sptr && *sptr)
     {
 	--limit;
-	if( limit )
+	if (limit)
 	{
 	    sptr += strspn(sptr, splitchars);
 	    eptr = sptr + strcspn(sptr, splitchars);

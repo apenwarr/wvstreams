@@ -79,7 +79,7 @@ int WvSubProc::startv(const char cmd[],
     {
 	// child process
 	 
-	if( cb )
+	if (cb)
 	    cb();
 
 	// unblock the parent.

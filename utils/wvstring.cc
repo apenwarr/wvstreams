@@ -119,9 +119,9 @@ WvStringBuf *WvFastString::alloc(size_t size)
 
 void WvString::append(WvStringParm s)
 {
-    if( s )
+    if (s)
     {
-	if( *this )
+	if (*this)
 	    *this = WvString("%s%s", *this, s);
 	else
 	    *this = s;

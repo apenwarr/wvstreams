@@ -17,30 +17,35 @@
 #include "wvfork.h"
 
 int main()
-/********/
 {
-    pid_t pid=0;
+    pid_t pid = 0;
 
-    fcntl( 1, F_SETFD, FD_CLOEXEC );    // make stdout close-on-exec
+    fcntl(1, F_SETFD, FD_CLOEXEC);	// make stdout close-on-exec
 
-    pid = wvfork( 1 );                  // but don't close it this time!
-    if( pid != 0 ) {
-        // parent
-        printf( "1\n" );
-        waitpid( pid, NULL, 0 );
-    } else {
-        // child
-        printf( "2\n" );
-
-        pid = wvfork();                 // close it this time.
-        if( pid != 0 ) {
-            // parent
-            printf( "3\n" );
-            waitpid( pid, NULL, 0 );
-        } else {
-            // child
-            printf( "4\n" );    // should NOT be printed!
-        }
+    pid = wvfork(1);		// but don't close it this time!
+    if (pid != 0)
+    {
+	// parent
+	printf("1\n");
+	waitpid(pid, NULL, 0);
     }
-    return( 0 );
+    else
+    {
+	// child
+	printf("2\n");
+
+	pid = wvfork();		// close it this time.
+	if (pid != 0)
+	{
+	    // parent
+	    printf("3\n");
+	    waitpid(pid, NULL, 0);
+	}
+	else
+	{
+	    // child
+	    printf("4\n");	// should NOT be printed!
+	}
+    }
+    return (0);
 }

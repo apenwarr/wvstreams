@@ -239,7 +239,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
         do
         {
             p = strtok(NULL, " \n");
-            if(p)
+            if (p)
             {
                 res++;
                 resolvedaddr = new WvIPAddr(p);

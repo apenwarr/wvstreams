@@ -86,7 +86,7 @@ void WvPipe::setup(const char *program, const char * const *argv,
 
     pid = proc.fork(&waitfd);
 
-    if( !pid )
+    if (!pid)
     {
 	// child process
 	::close(socks[0]);
@@ -129,7 +129,7 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	 * at the execvp, which is bad. If we set the close-on-exec to
 	 * false, the child end of the socket will be closed when the
 	 * child (or sub-) process exits. */
-	if(!writable && !readable && !catch_stderr)
+	if (!writable && !readable && !catch_stderr)
 	    fcntl(socks[1], F_SETFD, 0);  // never close the socketpair
 	
 	// this will often fail, but when it does work it is probably
