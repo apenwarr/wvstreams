@@ -23,6 +23,15 @@
 
 #include "wvstring.h"
 
+WvString t1, t2, t3, t4, t5, t6;
+
+/* this function is mainly for looking at the assembly output */
+void format_test()
+{
+    WvString s(t1, t2, t3, t4, t5, t6);
+}
+
+
 WvString test1(WvString s)
 {
     s.edit()[0]++;

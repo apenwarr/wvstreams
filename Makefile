@@ -52,6 +52,7 @@ libwvcrypto.a: crypto/crypto.libs
 
 wvrules.mk:
 	[ -e ../../wvrules.mk ] && ln -s ../../wvrules.mk .
+	[ -e ../../rules.local.mk ] && ln -s ../../rules.local.mk .
 
 genkdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
@@ -78,4 +79,5 @@ uninstall:
 clean:
 	rm -rf include Docs/doxy-html Docs/kdoc-html
 	$(subdirs)
-	[ -L wvrules.mk ] && rm -f wvrules.mk
+	[ -L wvrules.mk ]     && rm -f wvrules.mk
+	[ -L rules.local.mk ] && rm -f rules.local.mk
