@@ -35,7 +35,7 @@ int main()
     zzz.rewind(); zzz.next();
     sect = &*zzz;
 
-    WvConfigEntry *luck = (*zzz)["qwqw"];
+    WvConfigEntry *luck = (*zzz)["luck"];
 
     if(!!luck)
     {
