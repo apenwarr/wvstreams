@@ -59,6 +59,13 @@ public:
     // read/written.
     size_t read(void *buf, size_t count);
     size_t write(const void *buf, size_t count);
+
+    // set the maximum size of outbuf, beyond which a call to write() will
+    // return 0.  I need to do this for tape backups, since all I can do
+    // is write to the loopback as fast as I can, which causes us to run 
+    // out of memory and get SIGABRT'd.  (DLC: 12/15/2000)
+    void outbuf_limit(size_t size)
+        { max_outbuf_size = size; }
     
     // unbuffered I/O functions; these ignore the buffer, which is
     // handled by read() and write().  Don't call these functions unless
@@ -225,6 +232,7 @@ protected:
     int fd, errnum;
     WvString errstring;
     WvBuffer inbuf, outbuf;
+    size_t max_outbuf_size;
     bool select_ignores_buffer, outbuf_delayed_flush, alarm_was_ticking;
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued

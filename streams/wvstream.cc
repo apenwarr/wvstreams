@@ -44,6 +44,7 @@ void WvStream::init()
     callfunc = NULL;
     userdata = NULL;
     errnum = 0;
+    max_outbuf_size = 0;
     select_ignores_buffer = outbuf_delayed_flush = alarm_was_ticking = false;
     force.readable = force.writable = force.isexception = false;
     running_callback = false;
@@ -316,7 +317,11 @@ size_t WvStream::write(const void *buf, size_t count)
     if (!outbuf_delayed_flush && !outbuf.used())
 	wrote = uwrite(buf, count);
     
+    if (max_outbuf_size && (outbuf.used() > max_outbuf_size))
+        return wrote;
+
     outbuf.put((unsigned char *)buf + wrote, count - wrote);
+
     //TRACE("queue obj 0x%08x, bytes %d/%d, total %d\n", (unsigned int)this, count - wrote, count, outbuf.used());
     
     return count;
