@@ -229,7 +229,7 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
 
 WvRSAKey::WvRSAKey(int bits)
 {
-    rsa = RSA_generate_key(bits, 3, NULL, NULL);
+    rsa = RSA_generate_key(bits, 0x10001, NULL, NULL);
     
     hexify(rsa);
 }
