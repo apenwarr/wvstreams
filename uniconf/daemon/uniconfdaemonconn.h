@@ -1,6 +1,7 @@
 #ifndef __UNICONFDAEMONCONN_H
 #define __UNICONFDAEMONCONN_H
 
+#include "uniconf.h"
 #include "uniconfconn.h"
 #include "wvstringlist.h"
 #include "wvlog.h"
@@ -22,6 +23,7 @@ protected:
     void add_callback(WvString key);
     void del_callback(WvString key);
     void update_callbacks(WvString key);
+    void keychanged(void *userdata, UniConf &conf);
 
     WvLog log;
     UniConfDaemon *source;

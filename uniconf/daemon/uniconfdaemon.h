@@ -20,7 +20,6 @@ public:
     UniConf *domount(WvString mode, WvString file, WvString mp);
     void alertmodified();
     void run();
-    void keychanged(void *userdata, UniConf &conf);
 
     bool want_to_die;
     WvLog log;

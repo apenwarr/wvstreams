@@ -19,9 +19,27 @@ UniConfDaemonConn::~UniConfDaemonConn()
     WvStringList::Iter i(keys);
     for (i.rewind(); i.next();)
     {
-        del_callback(*i);
+        WvString key = *i;
+        if (!key) key = "/";
+        del_callback(key);
     }
 }
+
+void UniConfDaemonConn::keychanged(void *userdata, UniConf &conf)
+{
+    // All the following is irrelevant if we have a null pointer, so check
+    // it first.
+    if (!userdata)
+        return;
+    
+    WvStream *s = (WvStream *)userdata;
+    WvString keyname(conf.gen_full_key()); 
+//    log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
+    if (s->isok())
+        s->write(WvString("FGET %s\n", keyname));
+}
+
+/* Functions to look after UniEvents callback setting / removing */
 
 void UniConfDaemonConn::update_callbacks(WvString key)
 {
@@ -31,16 +49,24 @@ void UniConfDaemonConn::update_callbacks(WvString key)
 
 void UniConfDaemonConn::del_callback(WvString key)
 {
-    source->events.del(wvcallback(UniConfCallback, *source,
-                UniConfDaemon::keychanged), this, key);
+//    log("About to delete callbacks for %s.\n", key);
+    source->events.del(wvcallback(UniConfCallback, *this,
+                UniConfDaemonConn::keychanged), this, key);
 
 }
 
 void UniConfDaemonConn::add_callback(WvString key)
 {
+//    log("About to add callbacks for %s.\n", key);
     source->events.add(wvcallback(UniConfCallback,
-                *source, UniConfDaemon::keychanged), this, key);
+                *this, UniConfDaemonConn::keychanged), this, key);
+
+    // Now track what keys I know of.
+//    log("Now adding key:%s, to the list of keys.\n",key);
+    keys.append(new WvString(key), true);
 }
+
+/* End of functions to look after UniEvents callback setting / removing */
 
 void UniConfDaemonConn::dook(const WvString cmd, const WvString key)
 {
@@ -64,7 +90,6 @@ void UniConfDaemonConn::doget(WvString key)
 
         // Ensure no duplication of events.
         update_callbacks(key);
-        keys.append(new WvString(key), true);
     }
 }
 
@@ -134,7 +159,7 @@ void UniConfDaemonConn::execute()
     {
         WvConstStringBuffer fromline(line);
 
-	log(WvLog::Debug5, "Got command: '%s'\n", line);
+//	log(WvLog::Debug5, "Got command: '%s'\n", line);
 
         while (!(cmd = wvtcl_getword(fromline)).isnull())
         {

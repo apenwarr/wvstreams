@@ -43,19 +43,7 @@ UniConf *UniConfDaemon::domount(WvString mode, WvString mountfrom, WvString mp)
         return NULL;
 }
 
-void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
-{
-    // All the following is irrelevant if we have a null pointer, so check
-    // it first.
-    if (!userdata)
-        return;
-    
-    WvStream *s = (WvStream *)userdata;
-    WvString keyname(conf.gen_full_key()); 
-    log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
-    if (s->isok())
-        s->write(WvString("FGET %s\n", keyname));
-}
+
 
 
 void UniConfDaemon::errorcheck(WvStream *s, WvString type)
@@ -111,9 +99,12 @@ void UniConfDaemon::run()
         if (l.select(5000))
             l.callback();
         if (keymodified)
+        {
 	    notifier.run();
+            keymodified = false;
+        }
+//        log("There are %s streams in my list.\n", l.count());
     }
-    log("We are now dying!\n");
 
     // Make sure all of our listeners are closed
     list->close();
