@@ -7,6 +7,7 @@
 #include "wvhttppool.h"
 #include "wvfile.h"
 #include "strutils.h"
+#include "wvlogrcv.h"
 #include <signal.h>
 
 
@@ -23,6 +24,7 @@ void sighandler_die(int signum)
 
 int main(int argc, char **argv)
 {
+    WvLogConsole logcon(2, WvLog::Debug);
     WvLog log("http2test", WvLog::Info);
     WvStreamList l;
     WvHttpPool p;
@@ -53,11 +55,16 @@ int main(int argc, char **argv)
 		    headers = WvString("%s%s\n", headers, line);
 		    log("New header: %s\n", line);
 		}
+		else if (!strcasecmp(line, "debug"))
+		{
+		    log("Increasing debug level.\n");
+		    logcon.level(WvLog::Debug5);
+		}
 		else if (!strncasecmp(line, "pipelining=", 11))
 		{
-		    WvHttpStream::enable_pipelining = atoi(line+11);
-		    log("Pipelining is now %s\n", 
-			WvHttpStream::enable_pipelining);
+		    WvHttpStream::global_enable_pipelining = atoi(line+11);
+		    log("Pipelining is now %s.\n", 
+			WvHttpStream::global_enable_pipelining);
 		}
 		else if (!strncasecmp(line, "max=", 4))
 		{

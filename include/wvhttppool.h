@@ -29,9 +29,10 @@ public:
     WvString headers;
     WvHttpStream *instream;
     WvBufHttpStream *outstream;
+    bool pipeline_test;
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
-		 WvHttpStream *_instream);
+		 bool _pipeline_test);
     ~WvUrlRequest();
     
     WvString request_str(bool keepalive);
@@ -55,39 +56,47 @@ public:
         {}
 };
 
+DeclareWvTable(WvIPPortAddr);
 
 class WvHttpStream : public WvStreamClone
 {
 public:
     WvIPPortAddr remaddr;
     
-    static bool enable_pipelining;
     static int max_requests;
+    static bool global_enable_pipelining;
+    bool enable_pipelining;
     
 private:
     WvLog log;
     WvUrlRequestList urls, waiting_urls;
-    int request_count;
+    int request_count, pipeline_test_count;
+    WvIPPortAddrTable &pipeline_incompatible;
+    WvString http_response, pipeline_test_response;
     
     WvUrlRequest *curl; // current url
     enum { Unknown, Chunked, ContentLength, Infinity } encoding;
     size_t remaining;
-    bool in_chunk_trailer;
-
+    bool in_chunk_trailer, last_was_pipeline_test;
+    
+    void doneurl();
+    void start_pipeline_test(WvUrl *url);
+    void send_request(WvUrlRequest *url, bool auto_free);
+    void request_next();
+    void pipelining_is_broken(int why);
+    
 public:
-    WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl);
+    WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl,
+		 WvIPPortAddrTable &_pipeline_incompatible);
     virtual ~WvHttpStream();
     virtual void close();
     
     void addurl(WvUrlRequest *url);
-    void doneurl();
-    void request_next();
     
     virtual void execute();
 };
 
 DeclareWvDict(WvHttpStream, WvIPPortAddr, remaddr);
-
 
 class WvHttpPool : public WvStreamList
 {
@@ -96,6 +105,8 @@ class WvHttpPool : public WvStreamList
     WvHttpStreamDict conns;
     WvUrlRequestList urls;
     int num_streams_created;
+    
+    WvIPPortAddrTable pipeline_incompatible;
     
 public:
     WvHttpPool();

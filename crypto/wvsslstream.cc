@@ -112,12 +112,14 @@ size_t WvSSLStream::uread(void *buf, size_t len)
     {
 	if (errno != EAGAIN)
 	    seterr(errno);
+	else
+	    read_again = false;
         return 0;
     }
     
     if (len)
     {
-	if ((size_t)result == len)
+	if (len && (size_t)result == len)
 	    read_again = true;
 	else
 	    read_again = false;
