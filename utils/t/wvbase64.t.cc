@@ -244,8 +244,8 @@ WVTEST_MAIN("decoding invalid data")
 
 	WVFAIL(dec.isok()); // read bad data
 	WVPASS(ret == false);
-
-	wvcon->print( "%s\n", (const char*) dest.peek( 0, dest.used() ));
+// this line was causing valgrind errors, but it appears to be debugging.
+//	wvcon->print( "%s\n", (const char*) dest.peek( 0, dest.used() ));
 	// decoded as much as possible though... a2Vu -> ken
 	WVPASS(dest.used() == 3
 	       && !memcmp(dest.get(dest.used()), "ken", 3));
