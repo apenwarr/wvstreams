@@ -250,7 +250,18 @@ WVPART(streams, The Streams Library,
   )
   
   WVSECT1(wvpipe, WvPipe - talking to subtasks,
-    Not written yet.
+    WvPipe will certainly be very interesting to anyone who writes programs
+    that need to spawn off sub-programs, and read and possibly write to that
+    programs input and output. WvPipe makes this rediculously easy, by
+    making the application call look exactly like any other stream. No more
+    messy exec() calls, and best yet, no more blocking - if you just need to
+    send a program off to do something, then you don't need to fork at all, you
+    can just create a WvPipe stream which ignores any input, output, or error
+    messages, and add it to your WvStreamList. If you do need to access input or
+    output, you can easily just select() on this pipe, which will return true 
+    when the program has something interesting for you.
+
+    Insert Example Here...
   )
   
   WVSECT1(wvmodem, WvModem - baud rates and terminal modes,
@@ -363,7 +374,26 @@ WVPART(streams, The Streams Library,
  )
  
  WVCHAPTER(magicstreams, Some Magical Streams,
-  WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream, x)
+  WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream,
+    WvStreamclone is probably one of the coolest, and most confusing parts
+    within the WvStream library. Almost everyone who has ever encountered this
+    stream the first time has had to stop and go over it a few times before they
+    can wrap their head around what is going on. Ok.. now that I've scared
+    you... I'm going to tell you that it is really quite easy. Most of the time,
+    when you are using a WvStreamClone, you will be doing something like the
+    following:
+
+    1. Start a Stream on a TCP Connection
+    2. Change this Stream into something else (like an SSL Stream)
+    3. And then talk some sort of high level protocol (like HTTP)
+
+    So you have one stream (a TCP Connection), that morphs into another
+    stream TYPE (an SSL Stream), that then becomes another stream (talking
+    HTTP). All the while, not changing the stream that was started and added
+    to the original WvStreamList.
+
+    Insert Example here...
+)
   WVSECT1(wvsplitstream, WvSplitStream - separating read and write streams, x)
   WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), x)
  )

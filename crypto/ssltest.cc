@@ -1,5 +1,4 @@
 #include "wvsslstream.h"
-#include "strutils.h"
 #include "wvstreamlist.h"
 #include "wvtcp.h"
 #include <signal.h>
