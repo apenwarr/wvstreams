@@ -19,6 +19,22 @@
 #endif
 #endif
 
+
+// this class changes the default libc stdout buffering to "line buffered"
+// and stderr to "unbuffered", like they should be in any sane system.
+// Apparently they start off as "fully buffered" in most Windows systems.
+class FixLibcIoBuffers
+{
+public:
+    FixLibcIoBuffers()
+    {
+	setvbuf(stdout, NULL, _IOLBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
+    }
+};
+static FixLibcIoBuffers fixbufs;
+
+
 // these versions of close/read/write try to work with both sockets and
 // msvcrt file descriptors! (I hope we never get a socket with the same
 // VALUE as a file descriptor!)

@@ -64,7 +64,10 @@ TOBJSKIP=\
 	uniconf/t/unilistgen.t.o \
 	uniconf/t/unireadonlygen.t.o \
 
-DIRS=utils streams ipstreams uniconf uniconf/daemon crypto urlget configfile
+W=$(WVSTREAMS)/Win32WvStreams
+DIRS=utils streams ipstreams uniconf uniconf/daemon crypto \
+	urlget configfile \
+	$W/libwvutils $W/libwvstreams $W/libuniconf
 _OBJFILES=$(call objects,$(DIRS))
 OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
 
@@ -79,10 +82,7 @@ tests: $(TESTS)
 
 $(patsubst %.t.cc,%.t,$(wildcard */t/*.cc)): libwvwin32.a
 
-W=$(WVSTREAMS)/Win32WvStreams
-libwvwin32.a: \
-  $(call objects,$W/libwvutils $W/libwvstreams $W/libuniconf) \
-	$(OBJFILES)
+libwvwin32.a: $(OBJFILES)
 
 fake-libs: libwvwin32.a
 	for d in libwvbase libwvutils libwvstreams libuniconf; do \
