@@ -20,8 +20,7 @@
 
 #include <xplc/xplc.h>
 
-#include "wvtypetraits.h"
-
-#define RELEASE(ptr) do { WvTraits<typeof(*ptr)>::release(ptr); ptr = 0; } while (0)
+#define RELEASE(ptr) do { if (ptr) ptr->release(); ptr = 0; } while (0)
+#define DELETE(ptr) do { delete ptr; ptr = 0; } while (0)
 
 #endif // __WVXPLC_H
