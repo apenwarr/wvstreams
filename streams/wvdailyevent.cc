@@ -2,9 +2,14 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * A simple class that can trigger an event once per day.
- * Presently has a one-hour granularity, but that can be extended one
- * day when someone cares.
+ * A simple class that can trigger an event on a timed basis.
+ *   a) if given an hour, triggers once per day, on that hour.
+ *   b) if given a number of times per day, triggers that many times per
+ *      day, evenly, starting at the hour given in (a).  (Needed to get a
+ *      Microbackup going every 15 minutes.)  
+ *
+ * Presently has a one-hour granularity in the first case, but that can be
+ * extended one day when someone cares.
  *
  */
 
@@ -16,7 +21,7 @@
 #include <unistd.h>
 
 WvDailyEvent::WvDailyEvent( int _first_hour, int _num_per_day )
-/*******************************************************/
+/*************************************************************/
 : first_hour( _first_hour ), num_per_day( _num_per_day )
 {
     need_reset = false;
@@ -25,7 +30,7 @@ WvDailyEvent::WvDailyEvent( int _first_hour, int _num_per_day )
 }
 
 bool WvDailyEvent::pre_select( SelectInfo& si )
-/***********************************************/
+/*********************************************/
 // we're "ready" if the time just changed to "first_hour" o'clock,
 // OR if the time just changed to "first_hour" o'clock plus a multiple of
 // 24*60 / num_per_day minutes.
@@ -60,7 +65,7 @@ bool WvDailyEvent::pre_select( SelectInfo& si )
 }
 
 bool WvDailyEvent::post_select( SelectInfo& si )
-/*******************************************/
+/**********************************************/
 {
     return( need_reset );
 }
