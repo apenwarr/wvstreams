@@ -20,7 +20,8 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
     }
 
     SSL_load_error_strings();
-    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+//    SSL_library_init();
     debug("SSL library initialized.\n");
 
     ctx = NULL;
