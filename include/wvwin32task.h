@@ -1,5 +1,7 @@
 /* -*- Mode: C++ -*- */
-#pragma once
+#ifndef __WVWIN32TASK_H
+#define __WVWIN32TASK_H
+
 #include "wvstring.h"
 #include "wvlinklist.h"
 
@@ -85,3 +87,4 @@ public:
         { return current_task; }
 };
 
+#endif // __WVWIN32TASK_H

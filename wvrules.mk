@@ -244,13 +244,13 @@ wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1
 define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
 	echo $2 >$(patsubst %.a,%.libs,$1); \
-	ar q $1 $(filter %.o,$2); \
+	$(AR) q $1 $(filter %.o,$2); \
 	for d in $(filter %.libs,$2); do \
 		cd $$(dirname "$$d"); \
-		ar q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
+		$(AR) q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
 		cd $(shell pwd); \
 	done; \
-	ranlib $1
+	$(AR) s $1
 endef
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so

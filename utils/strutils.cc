@@ -13,6 +13,7 @@
 #include <time.h>
 
 #ifndef _WIN32
+#include <uuid.h>
 #include <errno.h>
 #include <netdb.h>
 #include <unistd.h>
