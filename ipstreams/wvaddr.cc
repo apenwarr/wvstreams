@@ -18,7 +18,7 @@ int WvEncap::extypes[] = {
     // hardware encapsulation
     0, // Unknown
     ARPHRD_LOOPBACK,
-    ARPHRD_ETHER,
+    0, // Ethertap
     ARPHRD_ETHER,
     ARPHRD_ARCNET,
     ARPHRD_SLIP,
