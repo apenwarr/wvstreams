@@ -28,13 +28,9 @@ bool mkdirp(WvStringParm _dir, int create_mode)
         *p = '/';
     }
 
-
     // You're probably creating the directory to write to it? Maybe this should
     // look for R_OK&X_OK instead of X_OK&W_OK...
-    if (access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr(), create_mode))
-        return false;
-
-    return true;
+    return  !(access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr(), create_mode));
 }
 
 

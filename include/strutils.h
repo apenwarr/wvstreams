@@ -229,4 +229,9 @@ WvString strcoll_join(const StringCollection &coll,
  */
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
 
+/**
+ * Replace any consecutive instances of character c with a single one
+ */
+WvString undupe(WvStringParm s, char c);
+
 #endif // __STRUTILS_H

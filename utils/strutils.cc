@@ -395,7 +395,6 @@ WvString getdirname(WvStringParm fullname)
 }
 
 
-
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
     WvDynBuf buf;
@@ -412,6 +411,26 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
     
     return buf.getstr();
 }
+
+WvString undupe(WvStringParm s, char c)
+{
+    WvDynBuf buf;
+    const char *sptr = s, *eptr;
+    
+    while ((eptr = strchr(sptr, c)) != NULL)
+    {
+	buf.put(sptr, eptr-sptr);
+	buf.putch(c);
+        sptr = eptr;
+        while (sptr[0] == c)
+            sptr++;
+    }
+    
+    buf.put(sptr, strlen(sptr));
+    
+    return buf.getstr();
+}
+
 
 WvString rfc1123_date(time_t t)
 {
