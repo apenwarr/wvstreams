@@ -116,7 +116,9 @@ bool WvTCPConn::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 
     if (resolved && isok()) // name might be resolved now.
 	return WvStream::select_setup(r, w, x, max_fd,
-				      readable, writable, isexception);
+				      readable,
+				      isconnected() ? writable : true,
+				      isexception);
     else
 	return false;
 }
@@ -132,7 +134,22 @@ bool WvTCPConn::test_set(fd_set &r, fd_set &w, fd_set &x)
 	result = WvStream::test_set(r, w, x);
 
 	if (result && !connected)
-	    connected = true;
+	{
+	    sockaddr *sa = remaddr.sockaddr();
+	    int retval = connect(fd, sa, remaddr.sockaddr_len());
+	    
+	    if (!retval || (retval < 0 && errno == EISCONN))
+		connected = result = true;
+	    else if (retval < 0 && errno != EINPROGRESS)
+	    {
+		seterr(errno);
+		result = true;
+	    }
+	    else
+		result = false;
+	    
+	    delete sa;
+	}
     }
     
     return result;

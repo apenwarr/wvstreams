@@ -22,6 +22,8 @@ bool WvStreamList::isok() const
 bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 				bool readable, bool writable, bool isexcept)
 {
+    bool one_dead = false;
+	
     sure_thing.zap();
 
     Iter i(*this);
@@ -31,6 +33,7 @@ bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 	
 	if (!s.isok())
 	{
+	    one_dead = true;
 	    i.unlink();
 	    continue;
 	}
@@ -48,7 +51,7 @@ bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 	}
     }
     
-    return sure_thing.isempty() ? false : true;
+    return one_dead || !sure_thing.isempty();
 }
 
 
