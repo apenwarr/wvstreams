@@ -12,7 +12,7 @@ int main()
     printf("A WvString is %d bytes long.\n", sizeof(WvString));
 
     WvString a, b("Foo"), c("Foo"), d("Blue"), e;
-    char *ca = "Fork", *cb = "Foo", *cd = NULL;
+    char *ca = "Fork", *cb = "Foo", *cc = "Foo", *cd = NULL;
     
     {
 	WvString *x = new WvString(a);
@@ -40,6 +40,12 @@ int main()
     
     // 1 0
     printf("%d %d\n", e == a, e == b);
+    
+    e = cb;
+    
+    // 1 1 0
+    printf("%s\n", (const char *)e);
+    printf("%d %d %d\n", e == cb, e == cc, e == cd);
 
     // 0 1 0 0
     printf("%d %d %d %d\n", a == ca, b == cb, d == cb, d == cd);

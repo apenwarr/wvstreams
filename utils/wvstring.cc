@@ -54,7 +54,7 @@ WvString &WvString::unique()
 
 WvString& WvString::operator= (const WvString &s2)
 {
-    if (s2.buf == buf)
+    if (s2.buf == buf && s2.str == str)
 	return *this;
     unlink();
     link(s2.buf, s2.str);
