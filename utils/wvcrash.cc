@@ -13,7 +13,8 @@
 #include <string.h>
 
 
-#ifdef ISLINUX
+#if 1
+// FIXME: this file mostly only works in Linux
 # include <execinfo.h>
 
 static const char *argv0 = "UNKNOWN";
@@ -146,4 +147,4 @@ void wvcrash_setup(const char *_argv0)
 void wvcrash(int sig) {}
 void wvcrash_setup(const char *_argv0) {}
 
-#endif
+#endif // Not Linux

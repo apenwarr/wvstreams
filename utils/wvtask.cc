@@ -9,10 +9,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#ifdef ISLINUX
-# include <malloc.h> // for alloca()
-#else
-# include <stdlib.h>
+
+#include <malloc.h> // for alloca()
+#if 0
+// FIXME: apparently, non-Linux platforms needs this (for alloca?).
+#include <stdlib.h>
 #endif
 
 int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;

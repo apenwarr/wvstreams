@@ -23,6 +23,7 @@
 
 #include "wvstringlist.h"
 
+#include <stdarg.h>
 #include <signal.h>
 #include <time.h>
 
