@@ -59,7 +59,8 @@ DeclareWvDict(WvHTTPHeader, WvString, name);
 class WvHTTPStream : public WvStreamClone
 {
 public:
-    enum State {Resolving, Connecting, ReadHeader1, ReadHeader, ReadData};
+    enum State {Resolving = 0, Connecting, ReadHeader1, ReadHeader, ReadData,
+    		Done};
     WvHTTPHeaderDict headers;
     size_t num_received;
 
@@ -73,7 +74,7 @@ public:
     virtual bool select_setup(SelectInfo &si);
     virtual size_t uread(void *buf, size_t count);
 
-private:
+public:
     WvURL &url;
     WvTCPConn *http;
     State state;

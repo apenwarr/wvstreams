@@ -149,6 +149,7 @@ bool WvHTTPStream::isok() const
 
 int WvHTTPStream::geterr() const
 {
+    fprintf(stderr, "foo blah\n");
     if (http)
 	return WvStreamClone::geterr();
     else
@@ -186,6 +187,8 @@ bool WvHTTPStream::select_setup(SelectInfo &si)
     case Connecting:
 	http->select(0, false, true, false);
 	if (!http->isconnected())
+	    return false;
+	if (http->geterr())
 	    return false;
 
 	// otherwise, we just finished connecting:  start transfer.
@@ -263,6 +266,9 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	len = http->read(buf, count);
 	num_received += len;
 	return len;
+	
+    case Done:
+	break;
     }
     
     return 0;
