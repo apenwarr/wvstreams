@@ -20,12 +20,7 @@ LIBS+=-lssl -lcrypto -lz -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++ -lstd
 
 -lxplc -lxplc-cxx: ;
 
-crypto/tests/ssltest: crypto/tests/ssltest.o
-
-default: ipstreams/tests/tcptest crypto/tests/ssltest
-
-_OBJFILES=$(call objects,utils streams ipstreams uniconf crypto \
-			urlget configfile)
+default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni
 
 # object files that we replace completely for win32
 OBJREPLACED=utils/wvtask.o
@@ -56,8 +51,26 @@ OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	streams/wvmodem.o \
 	streams/wvsyslog.o \
 	ipstreams/wvipraw.o
-	
+
+TOBJSKIP=\
+	utils/t/strcrypt.t.o \
+	streams/t/wvloopback.t.o \
+	streams/t/wvmagicloopback.t.o \
+	uniconf/t/unireplicategen.t.o \
+	uniconf/t/uniretrygen.t.o \
+	\
+	uniconf/t/uniinigen.t.o \
+	uniconf/t/unilistgen.t.o \
+	uniconf/t/unireadonlygen.t.o \
+
+DIRS=utils streams ipstreams uniconf uniconf/daemon crypto urlget configfile
+_OBJFILES=$(call objects,$(DIRS))
 OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
+
+_TOBJFILES=$(call objects,$(addsuffix /t,$(DIRS)))
+TOBJFILES=$(filter-out $(TOBJSKIP),$(_TOBJFILES))
+
+wvtestmain: $(TOBJFILES) libwvwin32.a
 
 $(TESTS): libwvwin32.a
 $(addsuffix .o,$(TESTS)):
