@@ -7,7 +7,7 @@
 #include "wvvector.h"
 #include <assert.h>
 
-comparison_fn_t WvVectorBase::innercomparator;
+WvVectorBase::comparison_type_t WvVectorBase::innercomparator;
 
 WvVectorBase::WvVectorBase(int slots)
     : xseq(NULL), xcount(0), xslots(0)
