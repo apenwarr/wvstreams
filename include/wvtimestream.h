@@ -17,17 +17,11 @@
  * For example, if ms_per_tick=100, WvTimeStream will tick 10 times in one
  * second.  However, there may be a few milliseconds of difference
  * ("jitter") for each individual tick, due to random system delays.
- * 
- * Note that the time delay given to list.select() is very important,
- * because it determines the granularity of the timing.  select(1000) will
- * allow ticks only every 1000 ms.  If ms_per_tick=100, then WvTimeStream
- * will tick about 10 times (all at once) every second. select(-1)
- * (wait forever) may never tick at all -- be careful.
  */
 class WvTimeStream : public WvStream
 {
-    struct timeval last_tv;
-    int ms_per_tick, max_backlog;
+    time_t ms_per_tick;
+    int max_backlog;
 
 public:
     WvTimeStream();
@@ -36,16 +30,14 @@ public:
      * every 'msec' milliseconds, select() will return true on this stream.
      * if 'msec' is 0, the timer is disabled.
      */
-    void set_timer(int msec, int max_backlog = 10);
+    void set_timer(time_t msec);
 
     virtual bool isok() const;
-    virtual bool pre_select(SelectInfo &si);
-    virtual bool post_select(SelectInfo &si);
     
     /**
      * notify timestream that we have "ticked" once
      */
-    void WvTimeStream::tick();
+    void tick();
     virtual void execute();
 };
 
