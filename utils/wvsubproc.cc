@@ -141,7 +141,7 @@ void WvSubProc::stop(time_t msec_delay)
     if (running)
     {
 	kill(SIGKILL);
-	wait(0);
+	wait(-1);
     }
 }
 
