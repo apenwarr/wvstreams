@@ -23,6 +23,7 @@ class IWvIPFirewall
 {
 public:
     virtual ~IWvIPFirewall() { }
+    virtual void zap() = 0;
     virtual void add_port(const WvIPPortAddr &addr) = 0;
     virtual void add_redir(const WvIPPortAddr &src, int dstport) = 0;
     virtual void add_redir_all(int dstport) = 0;
@@ -109,7 +110,7 @@ public:
     
     static bool enable, ignore_errors;
     
-    void zap();
+    virtual void zap();
     virtual void add_port(const WvIPPortAddr &addr);
     virtual void add_redir(const WvIPPortAddr &src, int dstport);
     virtual void add_redir_all(int dstport);
