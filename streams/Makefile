@@ -2,8 +2,10 @@ include $(TOPDIR)/rules.mk
 
 XPATH=.. ../utils
 
+LIBS=$(EFENCE)
+
 default: all watchtest pipetest clonetest modemtest \
-		logtest logbuftest syslogtest looptest timetest
+		logtest logbuftest syslogtest looptest timetest prototest
 
 all: streams.a
 
@@ -12,8 +14,8 @@ streams.a: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvwatcher.o wvpipe.o wvloopback.o wvmodem.o wvtimestream.o
 
 watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
-	looptest timetest: streams.a ../utils/utils.a
+	looptest timetest prototest: streams.a ../utils/utils.a
 
 clean:
 	rm -f watchtest pipetest clonetest modemtest \
-		logtest logbuftest syslogtest looptest timetest
+		logtest logbuftest syslogtest looptest timetest prototest
