@@ -13,6 +13,11 @@
 #include "wvstreamclone.h"
 #include "wvmoniker.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4073)
+#pragma init_seg(lib)
+#endif
+
 static IWvStream *creator(WvStringParm s, IObject *obj, void *)
 {
     if (!obj)
