@@ -9,5 +9,5 @@
 int main()
 {
     while (wvin->isok())
-	wvout->print("You said: %s\n", wvin->getline(-1));
+	wvout->print("You said: %s\n", wvin->blocking_getline(-1));
 }

@@ -181,7 +181,7 @@ void mycallback(WvStream &s, void *userdata)
     }
 
     s.print("Hello world!\n");
-    WvString line = s.getline(-1);
+    WvString line = s.blocking_getline(-1);
 
     s.close();
 }
@@ -206,7 +206,7 @@ void Ctest3Dlg::httpcallback(WvStream &s, void *userdata)
 	return;
     }
 
-    WvString line = s.getline(-1);
+    WvString line = s.blocking_getline(-1);
     if (line) 
     {
 	CString l(line);
@@ -259,7 +259,7 @@ void Ctest3Dlg::tcpincallback(WvStream &s, void *userdata)
 	return;
     }
 
-    WvString line = s.getline(-1);
+    WvString line = s.blocking_getline(-1);
     if (line) 
     {
 	CString l(line);

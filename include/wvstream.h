@@ -175,11 +175,38 @@ public:
      *
      * It is expected that there will be no NULL characters on the
      * line.
+     *
+     * wait_msec is provided so that legacy code does not break.  But
+     * it really should be 0.
      */
-    char *getline(char separator = '\n', int readahead = 1024)
+    char *getline(time_t wait_msec = 0,
+		  char separator = '\n', int readahead = 1024)
     {
-	return blocking_getline(0, separator, readahead);
+	return blocking_getline(wait_msec, separator, readahead);
     }
+
+    /** Auto-convert int to time_t. */
+    char *getline(int wait_msec,
+		  char separator = '\n', int readahead = 1024)
+    {
+	return getline(time_t(wait_msec), separator, readahead);
+    }
+
+    /** Auto-convert double to time_t. */
+    char *getline(double wait_msec,
+		  char separator = '\n', int readahead = 1024)
+    {
+	return getline(time_t(wait_msec), separator, readahead);
+    }
+
+private:
+    /** We will prohibit someone from calling getline with a char or
+     * bool as the first parameter.  This will attempt to detect dumb
+     * mistakes.
+     */
+    char *getline(char, int i = 0);
+    char *getline(bool, int i = 0);
+public:
 
     /**
      * This is a version of getline() that allows you to block for
