@@ -124,3 +124,14 @@ Description: Server that manages UniConf elements
  This package contains the server that accepts incoming TCP or Unix
  connections, and gets or sets UniConf elements at the request of a
  UniConf client.
+
+Package: uniconf-tools
+Architecture: any
+Section: utils
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Tools to interface with UniConf
+ UniConf is a configuration system that can serve as the centrepiece among
+ many other, existing configuration systems.
+ .
+ This package contains utilities that allow users to interface with 
+ UniConf manually.

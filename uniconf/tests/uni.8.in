@@ -1,0 +1,146 @@
+'\" t
+.\" Worldvisions Weaver Software
+.\"   Copyright (C) 1997 - 2004 Net Integration Technologies Inc.
+.TH UNI 8 "September 2004" "Uni #VERSION#"
+.SH NAME
+uni \- a program to interface with the UniConf configuration system
+.SH SYNOPSIS
+.B uni
+get
+.I KEY
+.RI [ DEFAULT ]
+.PP
+.B uni
+set
+.I KEY
+.RI [ VALUE ]
+.br
+.B uni
+xset
+.I KEY
+.RI [ VALUE ]
+.PP
+.B uni
+keys
+.I KEY
+.br
+.B uni
+hkeys
+.I KEY
+.br
+.B uni
+xkeys
+.I KEY
+.PP
+.B uni
+dump
+.I KEY
+.br
+.B uni
+hdump
+.I KEY
+.br
+.B uni
+xdump
+.I KEY
+.SH DESCRIPTION
+UniConf is the One True Configuration system that includes all the
+others because it has plugin backends
+.I and
+frontends. Or, less grandiosely, it's a lightweight, distributed,
+cacheable tree of strings.
+.PP
+.B uni
+is used to interface directly with the UniConf system.  It's primary use
+is for diagnostic purposes, but it can be used to add UniConf support
+to shell scripts.
+.SH "ENVIRONMENT VARIABLE"
+.TP
+.I UNICONF
+Before using
+.BR uni ,
+you must tell it which UniConf moinker you wish to query by setting this
+environment variable.  
+.PP
+Monikers are used to contact UniConf back-ends, be they a
+.B uniconfd
+server, or a local file.
+For example, they could be:
+.RS 4
+\(bu
+a filename
+.RI (ini: /var/lib/app/config.ini ),
+.br
+\(bu
+or a network address,
+.RI (tcp: open.nit.ca:4111 ).
+.RE
+.SH COMMANDS
+.TP
+get
+Retreive the
+.I VALUE
+associated with the provided
+.I KEY
+within the UniConf database.  If a
+.I DEFAULT
+is provided, this will be returned if the
+.I KEY
+has no associated
+.IR VALUE .
+.TP
+set
+Assign the provided
+.I VALUE 
+the the provided
+.IR KEY .
+UniConf provides no guarentee that the entry committed throughout the
+database.  The next \(lqget\(rq command for this
+.I KEY
+may not return the most recently \(lqset\(rq value due to caching, or
+the existance of a read-only generator.
+.TP
+xset
+Assign, to the provided
+.IR KEY ,
+the contents of the standard-input stream.  Use this command to pipe
+information into the UniConf database.
+.TP
+keys
+List all the sub-keys contained within the provided
+.IR KEY .
+.TP
+hkeys
+List all the sub-keys, recursively, contained within the provided
+.IR KEY .
+Since any
+.I KEY
+may contain sub-keys, UniConf provides no guarentee that there are
+no circular references.
+.TP
+xkeys
+List all the sub-keys contained within the provided
+.IR KEY ,
+which can contain wildcards.
+.TP
+dump
+List all the sub-keys and their values, contained within the provided
+.IR KEY .
+.TP
+hdump
+List all the sub-keys and their values, recursively, contained within
+the provided
+.IR KEY .
+.TP
+xdump
+List all the sub-keys and their values, contained within the provided
+.IR KEY ,
+which can contain wildcards.
+.SH "SEE ALSO"
+.BR uniconfd (8)
+.SH AUTHORS
+This software was written by the hackers at Net Integration
+Technologies.  Contact us at <wvstreams\-dev@lists.nit.ca>
+.\" Local variables:
+.\" mode:nroff
+.\" End:

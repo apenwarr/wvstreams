@@ -62,6 +62,7 @@ build-arch-stamp: config.status
 
 	# Add here commands to compile the arch part of the package.
 	$(MAKE) VERBOSE=1 CXXOPTS="-fPIC -DPIC" COPTS="-fPIC -DPIC"
+	$(MAKE) VERBOSE=1 CXXOPTS="-fPIC -DPIC" COPTS="-fPIC -DPIC" uniconf/tests/uni
 	touch build-arch-stamp
 
 build-indep: build-stamp-indep

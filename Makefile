@@ -136,7 +136,9 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
 
-install-uniconfd: uniconfd
+install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) uniconf/tests/uni $(DESTDIR)$(bindir)/
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL_PROGRAM) uniconf/daemon/uniconfd $(DESTDIR)$(sbindir)/
 	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
@@ -145,6 +147,7 @@ install-uniconfd: uniconfd
 	touch $(DESTDIR)$(localstatedir)/lib/uniconf/uniconfd.ini
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
 	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/man8
+	$(INSTALL_DATA) uniconf/tests/uni.8 $(DESTDIR)$(mandir)/man8
 
 uninstall:
 	$(tbd)
