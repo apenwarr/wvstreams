@@ -237,7 +237,7 @@ bool isnewline(char c)
 }
 
 // ex: WvString foo = web_unescape("I+am+text.%0D%0A");
-WvString web_unescape(const char *str)
+WvString web_unescape(const char *str, bool no_space)
 {
     const char *iptr;
     char *optr;
@@ -251,7 +251,7 @@ WvString web_unescape(const char *str)
     optr = out.edit();
     for (iptr = in, optr = out.edit(); *iptr; iptr++)
     {
-        if (*iptr == '+')
+        if (*iptr == '+' && !no_space)
             *optr++ = ' ';
         else if (*iptr == '%' && iptr[1] && iptr[2])
         {
