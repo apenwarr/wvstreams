@@ -11,11 +11,10 @@
 
 WvDirIter::WvDirIter( WvString dirname, bool _recurse )
 /*****************************************************/
-: dir( dirs )
+: relpath( "" ), dir( dirs )
 {
     recurse = _recurse;
     go_up   = false;
-    info.relpath = WvString("");
 
     DIR * d = opendir( dirname );
     if( d ) {
@@ -34,6 +33,12 @@ bool WvDirIter::isok() const
 /**************************/
 {
     return( dirs.count() > 0 );
+}
+
+bool WvDirIter::isdir() const
+/***************************/
+{
+    return( S_ISDIR( info.st_mode ) );
 }
 
 void WvDirIter::rewind()
@@ -86,6 +91,12 @@ bool WvDirIter::next()
             if( dent ) {
                 info.fullname = WvString( "%s/%s", dir->dirname, dent->d_name );
                 info.name = dent->d_name;
+
+                if (relpath == "")
+                    info.relname = info.name;
+                else
+                    info.relname = WvString("%s%s", relpath, info.name);
+
                 ok = ( lstat( info.fullname, &info ) == 0
                             && strcmp( dent->d_name, "." )
                             && strcmp( dent->d_name, ".." ) );
@@ -97,7 +108,7 @@ bool WvDirIter::next()
             if( recurse && S_ISDIR( info.st_mode ) ) {
                 DIR * d = opendir( info.fullname );
                 if( d ) {
-                    info.relpath = WvString("%s%s", info.relpath, info.name);
+                    relpath = WvString( "%s%s/", relpath, info.name );
                     Dir * dd = new Dir( d, info.fullname );
                     dirs.prepend( dd, true );
                     dir.rewind();
@@ -110,9 +121,9 @@ bool WvDirIter::next()
             // the user can ::rewind() again if he wants.
             if( dirs.count() > 1 ) {
                 if (dirs.count() == 2)
-                    info.relpath = WvString("");
+                    relpath = WvString("");
                 else
-                    info.relpath = getdirname(info.relpath);
+                    relpath = WvString( "%s/", getdirname(relpath) );
 
                 dir.unlink();
                 dir.rewind();

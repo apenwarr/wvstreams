@@ -32,7 +32,7 @@ struct WvDirEnt : public stat
     // and now we also get a string relative to the starting directory
     WvString        fullname;
     WvString        name;
-    WvString        relpath;
+    WvString        relname;
 };
 
 class WvDirIter
@@ -43,7 +43,7 @@ private:
     bool        go_up;
 
     WvDirEnt        info;
-    WvString        reldir;
+    WvString        relpath;
 
     struct Dir {
         Dir( DIR * _d, WvString _dirname )
@@ -65,6 +65,7 @@ public:
     ~WvDirIter();
 
     bool isok() const;
+    bool isdir() const;
     void rewind();
     bool next();
 
