@@ -143,7 +143,7 @@ bool WvScatterHashBase::_get_autofree(const void *data, unsigned hash)
 }
 
 struct WvScatterHashBase::pair *WvScatterHashBase::genfind
-    (const void *data, unsigned hash)
+    (const void *data, unsigned hash) const
 {
     unsigned slot = hash % numslots;
 

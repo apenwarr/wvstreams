@@ -100,8 +100,8 @@ protected:
         { /* default: do nothing */ }
     void shutdown()
         { /* default: do nothing */ }
-    WvLink *prevlink(WvListBase *slots, const void *data, unsigned hash);
-    void *genfind(WvListBase *slots, const void *data, unsigned hash);
+    WvLink *prevlink(WvListBase *slots, const void *data, unsigned hash) const;
+    void *genfind(WvListBase *slots, const void *data, unsigned hash) const;
 
     virtual bool compare(const void *key, const void *elem) const = 0;
 public:
@@ -201,7 +201,7 @@ public:
     WvLink *getlink(const K &key)
         { return prevlink(wvslots, &key, WvHash(key))->next; }
 
-    T *operator[] (const K &key)
+    T *operator[] (const K &key) const
         { return (T *)genfind(wvslots, &key, WvHash(key)); }
 
     void remove(const T *data)

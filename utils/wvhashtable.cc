@@ -50,7 +50,7 @@ WvHashTableBase::WvHashTableBase(unsigned _numslots)
 // never returns NULL.  If the object is not found, the 'previous' link
 // is the last one in the list.
 WvLink *WvHashTableBase::prevlink(WvListBase *wvslots, const void *data,
-			      unsigned hash)
+			      unsigned hash) const
 {
     WvListBase::IterBase i(wvslots[hash % numslots]);
     WvLink *prev;
@@ -66,7 +66,7 @@ WvLink *WvHashTableBase::prevlink(WvListBase *wvslots, const void *data,
 
 
 void *WvHashTableBase::genfind(WvListBase *wvslots, const void *data,
-			      unsigned hash)
+			      unsigned hash) const
 {
     WvLink *prev = prevlink(wvslots, data, hash);
     if (prev->next)
