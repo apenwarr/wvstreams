@@ -151,11 +151,11 @@ protected:
     
     /**
      * Mounts a generator at a key.
-     * 
      * Takes ownership of the supplied generator instance.
      * 
      * @param key the key
-     * @param generator the generator instance
+     * @param gen the generator instance
+     * @param refresh if true, refreshes the generator after mount
      * @return the generator instance pointer, or NULL on failure
      */
     UniConfGen *_mountgen(const UniConfKey &key, UniConfGen *gen,
@@ -163,8 +163,12 @@ protected:
 
     /**
      * Unmounts the generator at a key and destroys it.
+     *
+     * @param key the key
+     * @param gen the generator instance
+     * @param commit if true, commits the generator before unmount
      */
-    void _unmount(const UniConfKey &key, bool commit);
+    void _unmount(const UniConfKey &key, UniConfGen *gen, bool commit);
     
     /**
      * Finds the generator that owns a key.
@@ -179,6 +183,11 @@ protected:
      * @return the handle, or a null handle if none
      */
     UniConfGen *_whichmount(const UniConfKey &key, UniConfKey *mountpoint);
+
+    /**
+     * Determines if a key is a mountpoint.
+     */
+    bool _ismountpoint(const UniConfKey &key);
     
     /**
      * Requests notification when any the keys covered by the
@@ -243,14 +252,14 @@ private:
 class UniConfMountTree : public UniConfTree<UniConfMountTree>
 {
 public:
-    UniConfGen *generator;
+    UniConfGenList generators;
 
     UniConfMountTree(UniConfMountTree *parent, const UniConfKey &key);
     ~UniConfMountTree();
 
     /** Returns true if the node should not be pruned. */
     bool isessential()
-        { return haschildren() || generator; }
+        { return haschildren() || ! generators.isempty(); }
 
     /**
      * Returns the nearest node in the info tree to the key.
@@ -312,9 +321,6 @@ public:
  * An iterator over the generators that might provide a key
  * starting with the nearest match.
  * 
- * This is just like MountIter, but it skips all intermediate keys that
- * have NULL generators.
- * 
  * eg. if you have something mounted on /foo and /foo/bar/baz, and you ask
  * for a GenIter starting at /foo/bar/baz/boo/snoot, GenIter will give you
  * /foo/bar/baz followed by /foo; MountIter will give you /foo/bar/baz,
@@ -322,8 +328,11 @@ public:
  */
 class UniConfMountTree::GenIter : private UniConfMountTree::MountIter
 {
+    UniConfGenList::Iter *genit; /*!< active generator iterator */
+
 public:
     GenIter(UniConfMountTree &root, const UniConfKey &key);
+    ~GenIter();
 
     using UniConfMountTree::MountIter::split;
     using UniConfMountTree::MountIter::key;
@@ -335,7 +344,7 @@ public:
     bool next();
 
     UniConfGen *ptr() const
-        { return node()->generator; }
+        { return genit ? genit->ptr() : NULL; }
     WvIterStuff(UniConfGen);
 };
 

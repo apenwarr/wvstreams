@@ -15,19 +15,18 @@
  * like the traditional Unix filesystem.
  * 
  * - Segments in the path are delimited by slashes.
- * - The root of the tree is identified by a single slash.
+ * - The empty string refers to the current level of the tree (eg. root).
  * - Keys are case insensitive yet preserve case information.
- * - An initial slash is added if it was missing or if the string was empty.
  * - Paired slashes are converted to single slashes.
  * - Trailing slashes are discarded.
  * 
  * The following paths are equivalent when canonicalized:
  * 
- * - /foo/key (the canonical representation)
- * - /Foo/Key (also canonical but preserves case)
- * - foo/key (converted to /foo/key)
- * - /foo//key (converted to /foo/key)
- * - /foo/key/ (converted to /foo/key)
+ * - foo/key (the canonical representation)
+ * - Foo/Key (also canonical but preserves case)
+ * - /foo/key (converted to foo/key)
+ * - foo//key (converted to foo/key)
+ * - foo/key/ (converted to foo/key)
  * 
  * Keys that may contain slashes or nulls should be escaped in some fashion
  * prior to constructing a UniConfKey object. Simply prefixing slashes with
@@ -39,8 +38,9 @@ class UniConfKey
     WvString path;
 
 public:
-    static UniConfKey EMPTY; /*!< represents "/" (root) */
+    static UniConfKey EMPTY; /*!< represents "" (root) */
     static UniConfKey ANY;   /*!< represents "*" */
+    static UniConfKey RECURSIVE_ANY; /*!< represents "..." */
 
     /**
      * Constructs an empty UniConfKey (the 'root').
@@ -202,8 +202,10 @@ public:
     /**
      * Determines if the key matches a pattern.
      * Patterns are simply keys that may have path segments consiting
-     * entirely of "*".  Using wildcards to represent part of a
-     * segment or optional segments is not currently supported.
+     * entirely of "*".  Optional path segments are indicated by
+     * the segment "..." which matches zero or more segments.
+     * 
+     * Using wildcards to represent part of a segment is not supported yet.
      * @param pattern the pattern
      * @return true if the key matches, false otherwise
      */

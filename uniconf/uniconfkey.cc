@@ -10,10 +10,13 @@
 #include <assert.h>
 
 UniConfKey UniConfKey::EMPTY;
-UniConfKey UniConfKey::ANY("*"); // yes, this looks a little strange
+UniConfKey UniConfKey::ANY("*");
+UniConfKey UniConfKey::RECURSIVE_ANY("...");
 
 
-UniConfKey::UniConfKey()
+UniConfKey::UniConfKey() :
+    path("") // important to ensure we don't get nil paths everywhere
+             // since for the moment we are not equipped to deal with them
 {
 }
 
@@ -97,7 +100,8 @@ bool UniConfKey::isempty() const
 
 bool UniConfKey::iswild() const
 {
-    return strchr(path, '*') != NULL;
+    // FIXME: not precise
+    return strchr(path, '*') || strstr(path, "...");
 }
 
 
@@ -175,13 +179,16 @@ UniConfKey UniConfKey::range(int i, int j) const
 	return *this;
 
     // otherwise, return a new key.
-    WvString s;
-    s.setsize(eptr-sptr+1);
-    char *cptr = s.edit();
-    strncpy(cptr, sptr, eptr-sptr);
-    cptr[eptr-sptr] = 0;
-    
-    return s;
+    UniConfKey result; // avoid running the normalizing constructor
+    int len = eptr - sptr;
+    if (len)
+    {
+        result.path.setsize(len + 1);
+        char *cptr = result.path.edit();
+        strncpy(cptr, sptr, len);
+        cptr[len] = 0;
+    }
+    return result;
 }
 
 
@@ -204,13 +211,39 @@ int UniConfKey::compareto(const UniConfKey &other) const
 }
 
 
-bool UniConfKey::matches(const UniConfKey &other) const
+bool UniConfKey::matches(const UniConfKey &pattern) const
 {
-    // could be optimized a bit
-    if (*this == other)
+    // TODO: optimize this function
+    if (*this == pattern)
         return true;
-    if (other.first() == UniConfKey::ANY)
-        return removefirst().matches(other.removefirst());
+    
+    UniConfKey head(pattern.first());
+
+    // handle * wildcard
+    if (head == UniConfKey::ANY)
+    {
+        if (isempty())
+            return false;
+        return removefirst().matches(pattern.removefirst());
+    }
+
+    // handle ... wildcard
+    if (head == UniConfKey::RECURSIVE_ANY)
+    {
+        UniConfKey tail(pattern.removefirst());
+        if (tail.isempty())
+            return true; // recursively matches anything
+        for (int n = 0; ; ++n)
+        {
+            UniConfKey part(removefirst(n));
+            if (part.matches(tail))
+                return true;
+            if (part.isempty())
+                break;
+        }
+        return false;
+    }
+    
     // no other wildcard arrangements currently supported
     return false;
 }

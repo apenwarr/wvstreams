@@ -52,16 +52,16 @@ class UniConf
      * or another UniConf object to make one for you.
      */
     UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
-	: xroot(root), xfullkey(fullkey)
-	{ }
+        : xroot(root), xfullkey(fullkey)
+        { }
     
 public:
     /**
      * Creates a NULL UniConf handle, useful for reporting errors.
      */
     UniConf() 
-	: xroot(NULL), xfullkey(UniConfKey::EMPTY)
-	{ }
+        : xroot(NULL), xfullkey(UniConfKey::EMPTY)
+        { }
     
     /**
      * Creates a UniConf handle at the base of the specified root.
@@ -69,15 +69,15 @@ public:
      * of these.
      */
     UniConf(UniConfRoot &root)
-	: xroot(&root), xfullkey(UniConfKey::EMPTY)
-	{ }
+        : xroot(&root), xfullkey(UniConfKey::EMPTY)
+        { }
     
     /**
      * Copies a UniConf handle.
      * @param other the handle to copy
      */
     UniConf(const UniConf &other)
-	: xroot(other.xroot), xfullkey(other.xfullkey)
+        : xroot(other.xroot), xfullkey(other.xfullkey)
     {
     }
     
@@ -109,7 +109,8 @@ public:
     UniConfKey fullkey() const
         { return xfullkey; }
     
-    /** Returns the full path of this node, starting at the given key. */
+    /** Returns the full path of this node, starting at the given key.
+     * Assumes that k is an ancestor of fullkey(). */
     UniConfKey fullkey(const UniConfKey &k) const;
     
     /** Returns the full path of this node, starting at the given handle. */
@@ -241,14 +242,10 @@ public:
     /**
      * Unmounts the generator providing this key and destroys it.
      */
-    void unmount(bool commit) const;
+    void unmount(UniConfGen *gen, bool commit) const;
     
     /**
      * Determines if any generators are mounted at this key.
-     * 
-     * This is a convenience function.
-     * 
-     * @see UniConf::MountIter
      */
     bool ismountpoint() const;
     
@@ -317,8 +314,6 @@ public:
     class RecursiveIter;
     // iterates over children matching a wildcard
     class XIter;
-    // internal class for pattern-matching iterators
-    class PatternIter;
 
     // internal base class for sorted key iterators
     class SortedIterBase;
@@ -331,7 +326,6 @@ public:
     
     // lists of iterators
     class IterList;
-    class PatternIterList;
 };
 
 
@@ -346,8 +340,8 @@ protected:
     UniConf current;
 
     IterBase(const UniConf &_top)
-	: top(_top)
-	{ }
+        : top(_top)
+        { }
 
 public:
     const UniConf *ptr() const
@@ -404,40 +398,6 @@ public:
 
 
 /**
- * @internal
- * This iterator walks over all direct children that match a
- * wildcard pattern.  It is used to help construct pattern-matching
- * iterators.
- * 
- * Patterns are single segment keys, the special key "*", also
- * known as UniConf::ANY, or the special key "..." which matches subkeys of
- * any depth, including zero.
- *
- * FIXME: It is not currently possible to use wildcards to represent part
- * of a path segment, but you could do that by simply improving this class.
- *
- * @see UniConf::XIter
- */
-class UniConf::PatternIter : public UniConf::IterBase
-{
-    UniConfKey pattern;
-    UniConf::Iter *it;
-    UniConf::RecursiveIter *rit;
-    bool rewound;
-    
-public:
-    /** Creates a pattern matching iterator. */
-    PatternIter(const UniConf &_top, const UniConfKey &pattern);
-    ~PatternIter();
-
-    void rewind();
-    bool next();
-};
-//DeclareWvList4(UniConf::PatternIter, PatternIterList, 
-//	       UniConf::PatternIterList, )
-
-
-/**
  * This iterator walks over all children that match a wildcard
  * pattern.
  * 
@@ -445,20 +405,23 @@ public:
  * 
  * Example patterns: (where STAR is the asterisk character, '*')
  *
- * "/": a null iterator
- * "/a": matches only the key "a" if it exists
- * "/STAR": matches all direct children
- * "/STAR/foo": matches any existing key "foo" under direct children
- * "/STAR/STAR": matches all children of depth exactly 2
- * "/foo/...": matches all keys including and below "foo"
- * "/foo/STAR/...": matches all keys below "foo"
- * "/.../foo/STAR": matches all keys below any subkey named "foo" in the tree
+ * "": a null iterator
+ * "a": matches only the key "a" if it exists
+ * "STAR": matches all direct children
+ * "STAR/foo": matches any existing key "foo" under direct children
+ * "STAR/STAR": matches all children of depth exactly 2
+ * "foo/...": matches all keys including and below "foo"
+ * "foo/STAR/...": matches all keys below "foo"
+ * ".../foo/STAR": matches all keys below any subkey named "foo" in the tree
  */
 class UniConf::XIter : public UniConf::IterBase
 {
-    UniConfKey firstkey, subkey;
-    UniConf::PatternIter topit;
+    UniConfKey pathead;
+    UniConfKey pattail;
     UniConf::XIter *subit;
+    UniConf::Iter *it; /*!< iterator over direct children */
+    UniConf::RecursiveIter *recit; /*!< iterator over descendents */
+    bool ready; /*!< next key is ready */
 
 public:
     /** Creates a wildcard iterator. */
@@ -469,7 +432,9 @@ public:
     bool next();
     
 private:
+    void cleanup();
     bool qnext();
+    void enter(const UniConf &child);
 };
 
 
@@ -530,8 +495,8 @@ class UniConf::SortedIter : public UniConf::SortedIterBase
 
 public:
     SortedIter(const UniConf &_top, Comparator comparator = defcomparator)
-	: SortedIterBase(_top, comparator), i(_top)
-	{ }
+        : SortedIterBase(_top, comparator), i(_top)
+        { }
 
     void rewind()
         { populate(i); }
@@ -547,9 +512,9 @@ class UniConf::SortedRecursiveIter : public UniConf::SortedIterBase
 
 public:
     SortedRecursiveIter(const UniConf &_top,
-			Comparator comparator = defcomparator)
-	: SortedIterBase(_top, comparator), i(_top)
-	{ }
+                        Comparator comparator = defcomparator)
+        : SortedIterBase(_top, comparator), i(_top)
+        { }
 
     void rewind()
         { populate(i); }
@@ -565,9 +530,9 @@ class UniConf::SortedXIter : public UniConf::SortedIterBase
 
 public:
     SortedXIter(const UniConf &_top, const UniConfKey &pattern,
-		Comparator comparator = defcomparator) 
-	: SortedIterBase(_top, comparator), i(_top, pattern) 
-	{ }
+                Comparator comparator = defcomparator) 
+        : SortedIterBase(_top, comparator), i(_top, pattern) 
+        { }
 
     void rewind()
         { populate(i); }

@@ -12,12 +12,11 @@
 #include "uniconfiter.h"
 #include "wvcallback.h"
 #include "wvxplc.h"
+#include "wvlinklist.h"
 
 class WvStreamList;
 class UniConfGen;
 
-// void (*UniConfGenCallback)(const UniConfGen &gen, const UniConfKey &key,
-//                            UniConfDepth::Type depth, void *userdata);
 DeclareWvCallback(4, void, UniConfGenCallback, const UniConfGen &,
     const UniConfKey &, UniConfDepth::Type, void *);
 
@@ -30,15 +29,19 @@ DeclareWvCallback(4, void, UniConfGenCallback, const UniConfGen &,
  */
 class UniConfGen : public GenericComponent<IObject>
 {
-protected:
+    // These fields are deliberately hidden to encourage use of the
+    // delta() member in case the notification mechanism changes.
     UniConfGenCallback cb; //!< gets called whenever a key changes its value.
     void *cbdata;
+    
+protected:
 
     /** Creates a UniConfGen object. */
     UniConfGen();
 
     /**
      * Sends notification that a key has changed value.
+     * This takes care of the details of invoking the callback.
      */
     void delta(const UniConfKey &key, UniConfDepth::Type depth);
 
@@ -161,7 +164,7 @@ public:
 
 DEFINE_IID(UniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9f}});
-
+DeclareWvList(UniConfGen);
 
 
 /**

@@ -57,24 +57,6 @@ int main()
     }
 
     {
-	log("PatternIter dump of /does_not_exist: (should be empty)\n");
-	UniConf::PatternIter i(h, "/does_not_exist");
-        dump(log, i);
-        
-	log("PatternIter dump of /httpd: (should one key)\n");
-	UniConf::PatternIter i2(h, "/httpd");
-        dump(log, i2);
-        
-	log("PatternIter dump of /: (should be one key)\n");
-	UniConf::PatternIter i3(h, "/");
-        dump(log, i3);
-	
-	log("PatternIter dump of /*: (should be depth 1 only)\n");
-	UniConf::PatternIter i4(h, "/*");
-        dump(log, i4);
-    }
-    
-    {
 	log("XIter dump of /: (should be one key)\n");
 	UniConf::XIter i(h, "/");
         dump(log, i);

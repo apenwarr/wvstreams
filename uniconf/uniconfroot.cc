@@ -149,14 +149,14 @@ bool UniConfRoot::_commit(const UniConfKey &key, UniConfDepth::Type depth)
 
 
 bool UniConfRoot::gencommitfunc(UniConfGen *gen,
-		const UniConfKey &key, UniConfDepth::Type depth)
+    const UniConfKey &key, UniConfDepth::Type depth)
 {
     return gen->commit(key, depth);
 }
 
 
 bool UniConfRoot::dorecursive(GenFunc func, const UniConfKey &key,
-			      UniConfDepth::Type depth)
+    UniConfDepth::Type depth)
 {
     // do containing generators
     bool success = true;
@@ -205,10 +205,10 @@ bool UniConfRoot::dorecursivehelper(GenFunc func,
     UniConfMountTree::Iter it(*node);
     for (it.rewind(); it.next(); )
     {
-        UniConfGen *gen = it->generator;
-        if (gen)
+        UniConfGenList::Iter genit(it->generators);
+        for (genit.rewind(); genit.next(); )
         {
-            if (! func(gen, UniConfKey::EMPTY, depth))
+            if (! func(genit.ptr(), UniConfKey::EMPTY, depth))
                 success = false;
         }
         if (depth != UniConfDepth::ZERO)
@@ -252,7 +252,7 @@ UniConfGen *UniConfRoot::_mountgen(const UniConfKey &key,
     UniConfGen *gen, bool refresh)
 {
     UniConfMountTree *node = mounts->findormake(key);
-    node->generator = gen;
+    node->generators.append(gen, true);
     gen->setcallback(wvcallback(UniConfGenCallback, *this,
         UniConfRoot::gencallback), node);
     if (gen && refresh)
@@ -261,24 +261,27 @@ UniConfGen *UniConfRoot::_mountgen(const UniConfKey &key,
 }
 
 
-void UniConfRoot::_unmount(const UniConfKey &key, bool commit)
+void UniConfRoot::_unmount(const UniConfKey &key,
+    UniConfGen *gen, bool commit)
 {
     UniConfMountTree *node = mounts->find(key);
     if (!node)
         return;
-    UniConfGen *gen = node->generator;
-    if (!gen)
+
+    UniConfGenList::Iter genit(node->generators);
+    if (! genit.find(gen))
         return;
+
     if (commit)
         gen->commit(UniConfKey::EMPTY, UniConfDepth::INFINITE);
-    node->generator = NULL;
     gen->setcallback(NULL, NULL);
-    delete gen;
+
+    node->generators.unlink(gen);
 }
 
 
 UniConfGen *UniConfRoot::_whichmount(const UniConfKey &key,
-				    UniConfKey *mountpoint)
+    UniConfKey *mountpoint)
 {
     // see if a generator acknowledges the key
     UniConfMountTree::GenIter it(*mounts, key);
@@ -297,6 +300,13 @@ found:
     if (mountpoint)
         *mountpoint = it.tail();
     return it.ptr();
+}
+
+
+bool UniConfRoot::_ismountpoint(const UniConfKey &key)
+{
+    UniConfMountTree *node = mounts->find(key);
+    return node && ! node->generators.isempty();
 }
 
 
@@ -324,7 +334,7 @@ void UniConfRoot::gencallback(const UniConfGen &gen,
 
 UniConfRoot::BasicIter::BasicIter(UniConfRoot &root, const UniConfKey &key) 
     : xroot(&root), xkey(key), genit(*root.mounts, key),
-	hack(71), hackit(hack)
+        hack(71), hackit(hack)
 {
 }
 
@@ -376,19 +386,18 @@ UniConfKey UniConfRoot::BasicIter::key() const
 
 UniConfMountTree::UniConfMountTree(UniConfMountTree *parent,
     const UniConfKey &key) :
-    UniConfTree<UniConfMountTree>(parent, key), generator(NULL)
+    UniConfTree<UniConfMountTree>(parent, key)
 {
 }
 
 
 UniConfMountTree::~UniConfMountTree()
 {
-    delete generator;
 }
 
 
 UniConfMountTree *UniConfMountTree::findnearest(const UniConfKey &key,
-						int &split)
+    int &split)
 {
     split = 0;
     UniConfMountTree *node = this;
@@ -459,24 +468,40 @@ bool UniConfMountTree::MountIter::next()
 
 UniConfMountTree::GenIter::GenIter(UniConfMountTree &root,
     const UniConfKey &key) :
-    UniConfMountTree::MountIter(root, key)
+    UniConfMountTree::MountIter(root, key),
+    genit(NULL)
 {
+}
+
+
+UniConfMountTree::GenIter::~GenIter()
+{
+    delete genit;
 }
 
 
 void UniConfMountTree::GenIter::rewind()
 {
+    if (genit)
+    {
+        delete genit;
+        genit = NULL;
+    }
     UniConfMountTree::MountIter::rewind();
 }
 
 
 bool UniConfMountTree::GenIter::next()
 {
-    // find the next node up that actually has a generator
-    while (UniConfMountTree::MountIter::next())
+    for (;;)
     {
-        if (node()->generator)
+        if (genit && genit->next())
             return true;
+        if (! UniConfMountTree::MountIter::next())
+            return false;
+
+        genit = new UniConfGenList::Iter(node()->generators);
+        genit->rewind();
     }
     return false;
 }

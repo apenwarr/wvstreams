@@ -115,23 +115,15 @@ UniConfGen *UniConf::mountgen(UniConfGen *gen, bool refresh) const
 }
 
 
-void UniConf::unmount(bool commit) const
+void UniConf::unmount(UniConfGen *gen, bool commit) const
 {
-    return xroot->_unmount(xfullkey, commit);
+    return xroot->_unmount(xfullkey, gen, commit);
 }
 
 
 bool UniConf::ismountpoint() const
 {
-    // FIXME: this test does not work if the key is not provided by
-    //        the root of a mountpoint
-    UniConfKey mountpoint;
-    
-    UniConfGen *gen = whichmount(&mountpoint);
-    if (gen && mountpoint == fullkey())
-	return true;
-    else
-	return false;
+    return xroot->_ismountpoint(xfullkey);
 }
 
 
@@ -211,24 +203,24 @@ bool UniConf::RecursiveIter::next()
     UniConf::IterList::Iter i(itlist);
     for (i.rewind(); i.next(); )
     {
-	if (i->next()) // NOTE: not the same as i.next()
-	{
-	    // return the item first
-	    current = **i;
-	    
-	    // set up so next time, we go into its subtree
-	    if (current.haschildren())
-	    {
-		UniConf::Iter *subi = new UniConf::Iter(current);
-		subi->rewind();
-		itlist.prepend(subi, true);
-	    }
-	    
-	    return true;
-	}
-	
-	// otherwise, this iterator is empty; move up the tree
-	i.xunlink();
+        if (i->next()) // NOTE: not the same as i.next()
+        {
+            // return the item first
+            current = **i;
+            
+            // set up so next time, we go into its subtree
+            if (current.haschildren())
+            {
+                UniConf::Iter *subi = new UniConf::Iter(current);
+                subi->rewind();
+                itlist.prepend(subi, true);
+            }
+            
+            return true;
+        }
+        
+        // otherwise, this iterator is empty; move up the tree
+        i.xunlink();
     }
     
     // all done!
@@ -237,111 +229,96 @@ bool UniConf::RecursiveIter::next()
 
 
 
-/***** UniConf::PatternIter *****/
-
-UniConf::PatternIter::PatternIter(const UniConf &_top,
-				  const UniConfKey &_pattern)
-    : IterBase(_top), pattern(_pattern)
-{
-    it = NULL;
-    rit = NULL;
-    
-    rewound = false;
-    
-    if (pattern == "...")
-	rit = new UniConf::RecursiveIter(top);
-    else if (pattern.iswild())
-	it = new UniConf::Iter(top);
-}
-
-
-UniConf::PatternIter::~PatternIter()
-{
-    if (it)
-	delete it;
-    if (rit)
-	delete rit;
-}
-
-
-void UniConf::PatternIter::rewind()
-{
-    if (it)
-	it->rewind();
-    else if (rit)
-	rit->rewind();
-    
-    rewound = true;
-}
-
-
-bool UniConf::PatternIter::next()
-{
-    // handle wildcards
-    if (rit)
-    {
-	if (rewound)
-	{
-	    // include the null key, since '...' can also match a zero-length
-	    // path.
-	    rewound = false;
-	    current = top;
-	    return true;
-	}
-	
-	if (rit->next())
-	{
-	    current = **rit;
-	    return true;
-	}
-	return false;
-    }
-    else if (it)
-    {
-        while (it->next())
-        {
-            current = **it;
-            if (current.key().matches(pattern))
-                return true;
-        }
-        return false;
-    }
-    
-    // handle single elements quickly
-    if (!rewound)
-        return false;
-    rewound = false;
-    current = top[pattern];
-    return current.exists();
-}
-
-
-
 /***** UniConf::XIter *****/
 
 UniConf::XIter::XIter(const UniConf &_top, const UniConfKey &pattern)
-    : IterBase(_top), firstkey(pattern.first()), subkey(pattern.removefirst()),
-	topit(top, firstkey)
+    : IterBase(_top), pathead(pattern.first()),
+    pattail(pattern.removefirst()), subit(NULL), it(NULL), recit(NULL)
 {
-    subit = NULL;
-    topit.rewind();
+    if (! pathead.iswild())
+    {
+        // optimization to collect as many consecutive non-wildcard
+        // segments as possible in one go
+        while (! pattail.isempty())
+        {
+            UniConfKey patnext(pattail.first());
+            if (patnext.iswild())
+                break;
+            pathead.append(patnext);
+            pattail = pattail.removefirst();
+        }
+    }
 }
 
 
 UniConf::XIter::~XIter()
 {
+    cleanup();
+}
+
+
+void UniConf::XIter::cleanup()
+{
     if (subit)
-	delete subit;
+    {
+        delete subit;
+        subit = NULL;
+    }
+    if (it)
+    {
+        delete it;
+        it = NULL;
+    }
+    if (recit)
+    {
+        delete recit;
+        recit = NULL;
+    }
 }
 
 
 void UniConf::XIter::rewind()
 {
-    if (subit)
-	delete subit;
-    subit = NULL;
-    
-    topit.rewind();
+    cleanup();
+    ready = false;
+
+    if (pathead.isempty())
+    {
+        current = top;
+        ready = current.exists();
+    }
+    else if (pathead == UniConfKey::RECURSIVE_ANY)
+    {
+        recit = new UniConf::RecursiveIter(top);
+        recit->rewind();
+        if (UniConfKey::EMPTY.matches(pattail))
+        {
+            // pattern includes self
+            current = top;
+            ready = current.exists();
+        }
+    }
+    else if (pathead == UniConfKey::ANY)
+    {
+        it = new UniConf::Iter(top);
+        it->rewind();
+    }
+    else
+    {
+        // non-wildcard segment
+        current = top[pathead];
+        if (pattail.isempty())
+        {
+            // don't bother recursing if there are no deeper wildcard
+            // elements (works together with optimization in constructor)
+            ready = current.exists();
+        }
+        else
+        {
+            // more wildcards, setup recursion
+            enter(current);
+        }
+    }
 }
 
 
@@ -349,44 +326,59 @@ inline bool UniConf::XIter::qnext()
 {
     if (subit) // currently in a sub-iterator
     {
-	bool found = subit->next();
-	if (found)
-	{
-	    current = **subit;
-	    return true;
-	}
-	else
-	{
-	    // end of this sub-iterator
-	    delete subit;
-	    subit = NULL;
-	    return false;
-	}
+        bool found = subit->next();
+        if (found)
+        {
+            current = **subit;
+            return true;
+        }
+        else
+        {
+            // end of this sub-iterator
+            delete subit;
+            subit = NULL;
+            return false;
+        }
     }
     else // no sub-iterator at all
-	return false;
+        return false;
+}
+
+
+void UniConf::XIter::enter(const UniConf &child)
+{
+    subit = new UniConf::XIter(child, pattail);
+    subit->rewind();
 }
 
 
 bool UniConf::XIter::next()
 {
+    if (ready)
+    {
+        ready = false;
+        return true;
+    }
     while (!qnext())
     {
-	if (topit.next())
-	{
-	    if (subkey.isempty()) // innermost element
-	    {
-		current = *topit;
-		return true;
-	    }
-	    else
-	    {
-		subit = new UniConf::XIter(*topit, subkey);
-		subit->rewind();
-	    }
-	}
-	else // no more toplevel
-	    return false;
+        // UniConfKey::ANY
+        if (it && it->next())
+        {
+            /* Not needed for now since we don't match partial keys
+            if (! pathead.matches(it->key()))
+                break;
+            */
+            enter(**it);
+            continue;
+        }
+        // UniConfKey::RECURSIVE_ANY
+        if (recit && recit->next())
+        {
+            enter(**recit);
+            continue;
+        }
+        // anything else or finished
+        return false;
     }
     
     // if we get here, qnext() returned true
@@ -411,7 +403,7 @@ UniConf::SortedIterBase::~SortedIterBase()
 
 
 int UniConf::SortedIterBase::defcomparator(const UniConf &a,
-					      const UniConf &b)
+    const UniConf &b)
 {
     return a.fullkey().compareto(b.fullkey());
 }
@@ -421,7 +413,7 @@ UniConf::SortedIterBase::Comparator
     UniConf::SortedIterBase::innercomparator = NULL;
 
 int UniConf::SortedIterBase::wrapcomparator(const UniConf **a,
-					       const UniConf **b)
+    const UniConf **b)
 {
     return innercomparator(**a, **b);
 }
