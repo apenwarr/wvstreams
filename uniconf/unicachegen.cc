@@ -33,8 +33,8 @@ UniCacheGen::UniCacheGen(UniConfGen *_inner)
     loadtree();
 
     if (inner)
-        inner->setcallback(wvcallback(UniConfGenCallback, *this,
-                           UniCacheGen::deltacallback), NULL);
+        inner->setcallback(UniConfGenCallback(this,
+            &UniCacheGen::deltacallback), NULL);
 }
 
 

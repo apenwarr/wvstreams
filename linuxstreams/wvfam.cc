@@ -48,7 +48,7 @@ void WvFAMBase::_unmonitor(int reqid)
     FAMCancelMonitor(&fc, &fr);
 }
 
-void WvFAMBase::callback()
+void WvFAMBase::_callback()
 {
     int famstatus;
 
@@ -103,7 +103,7 @@ void WvFAMBase::setup()
     {
         s = new WvFDStream(fc.fd);
 
-        s->setcallback(wvcallback(WvStreamCallback, *this, WvFAMBase::callback), 0);
+        s->setcallback(WvStreamCallback(this, &WvFAMBase::callback), 0);
 
         WvIStreamList::globallist.append(s, true);
     }

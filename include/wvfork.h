@@ -13,7 +13,7 @@
 #include "wvcallback.h"
 
 DeclareWvTable(int);
-DeclareWvCallback(1, void, WvForkCallback, pid_t);
+typedef WvCallback<void, pid_t> WvForkCallback;
 
 /**
  * Register a callback to be called during wvfork.

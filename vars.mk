@@ -58,9 +58,6 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-#XPLC = ../../../xplc
-CPPFLAGS += -I$(XPLC)/include -DUNSTABLE
-
 CPPFLAGS += -Iinclude -pipe
 ARFLAGS = rs
 
@@ -126,9 +123,13 @@ VERBOSE:=yes
 endif
 
 ifneq ("$(with_xplc)", "no")
+CPPFLAGS+=-DUNSTABLE
 ifneq ("$(with_xplc)", "yes")
+VPATH+=$(with_xplc)
 LDFLAGS+=-L$(with_xplc)
 CPPFLAGS+=-I$(with_xplc)/include
+#libwvstreams.so: $(with_xplc)/libxplc.so $(with_xplc)/libxplc-cxx.a
+libwvstreams.so: -lxplc -lxplc-cxx
 endif
 endif
 
@@ -165,8 +166,7 @@ libwvstreams.so: libwvutils.so
 
 libwvutils.a libwvutils.so: $(call objects,utils)
 
-
-libwvstreams.so: -lssl -lcrypt #$(XPLC)/libxplc.so $(XPLC)/libxplc-cxx.a
+libwvstreams.so: -lssl -lcrypt
 
 libwvutils.so: -lz -lcrypt
 

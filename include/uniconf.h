@@ -23,7 +23,7 @@ class UniConfRoot;
  *   cfg - the UniConf config object representing the key that has changed
  *   userdata - the userdata supplied during setcallback
  */
-DeclareWvCallback(2, void, UniConfCallback, const UniConf &, void *);
+typedef WvCallback<void, const UniConf &, void *> UniConfCallback;
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf

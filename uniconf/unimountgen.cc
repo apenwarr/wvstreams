@@ -105,8 +105,8 @@ UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
     UniConfGen *gen, bool refresh)
 {
     UniGenMount *newgen = new UniGenMount(gen, key);
-    gen->setcallback(wvcallback(UniConfGenCallback, *this,
-        UniMountGen::gencallback), &newgen->key);
+    gen->setcallback(UniConfGenCallback(this,
+        &UniMountGen::gencallback), &newgen->key);
 
     hold_delta();
 
@@ -136,7 +136,7 @@ void UniMountGen::unmount(UniConfGen *gen, bool commit)
     
     if (commit)
         gen->commit();
-    gen->setcallback(NULL, NULL);
+    gen->setcallback(UniConfGenCallback(), NULL);
 
     UniConfKey key(i->key);
     UniConfGen *next = NULL;

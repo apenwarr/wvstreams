@@ -33,7 +33,6 @@ UUID_MAP_BEGIN(IWvStream)
   UUID_MAP_END
 
 WvStream::WvStream()
-	: callfunc(NULL), closecb_func(NULL)
 {
     wvstream_execute_called = false;
     userdata = closecb_data = NULL;
@@ -99,7 +98,7 @@ void WvStream::close()
     if (!! closecb_func)
     {
         WvStreamCallback cb = closecb_func;
-        closecb_func = NULL; // ensure callback is only called once
+        closecb_func = 0; // ensure callback is only called once
         cb(*this, closecb_data);
     }
 }
@@ -114,7 +113,7 @@ void WvStream::autoforward(WvStream &s)
 
 void WvStream::noautoforward()
 {
-    setcallback(NULL, NULL);
+    setcallback(0, NULL);
     read_requires_writable = NULL;
 }
 

@@ -14,8 +14,8 @@
 class UniHashTreeBase;
 
 // parameters: 1st node (may be NULL), 2nd node (may be NULL), userdata
-DeclareWvCallback(3, bool, UniHashTreeBaseComparator,
-    const UniHashTreeBase *, const UniHashTreeBase *, void *);
+typedef WvCallback<bool, const UniHashTreeBase *, 
+        const UniHashTreeBase *, void *> UniHashTreeBaseComparator;
 
 class UniHashTreeBase
 {

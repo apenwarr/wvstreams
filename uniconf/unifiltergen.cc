@@ -24,11 +24,11 @@ UniFilterGen::~UniFilterGen()
 void UniFilterGen::setinner(UniConfGen *inner)
 {
     if (xinner)
-        xinner->setcallback(NULL, NULL);
+        xinner->setcallback(UniConfGenCallback(), NULL);
     xinner = inner;
     if (xinner)
-        xinner->setcallback(wvcallback(UniConfGenCallback, *this,
-            UniFilterGen::gencallback), NULL);
+        xinner->setcallback(UniConfGenCallback(this,
+            &UniFilterGen::gencallback), NULL);
 }
 
 

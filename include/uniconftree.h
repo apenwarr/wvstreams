@@ -15,8 +15,7 @@
 class UniConfTreeBase;
 
 // parameters: 1st node (may be NULL), 2nd node (may be NULL), userdata
-DeclareWvCallback(3, bool, UniConfTreeBaseComparator,
-    const UniConfTreeBase *, const UniConfTreeBase *, void *);
+typedef WvCallback<bool, const UniConfTreeBase *, const UniConfTreeBase *, void *> UniConfTreeBaseComparator;
 
 /**
  * UniConfTreeBase the common base implementation for UniConfTree.
@@ -106,8 +105,7 @@ class UniConfTree : public Base
 {
    
 public:
-    DeclareWvCallback(3, bool, Comparator,
-        const Sub *, const Sub *, void *);
+    typedef WvCallback<bool, const Sub *, const Sub *, void *> Comparator;
 
     /** Creates a node and links it to a subtree, if parent is non-NULL */
     UniConfTree(Sub *parent, const UniConfKey &key) :

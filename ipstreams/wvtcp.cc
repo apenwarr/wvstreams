@@ -253,7 +253,7 @@ size_t WvTCPConn::uwrite(const void *buf, size_t count)
 
 
 WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
-	: listenport(_listenport), auto_callback(0)
+	: listenport(_listenport)
 {
     listenport = _listenport;
     auto_list = NULL;

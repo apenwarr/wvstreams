@@ -172,9 +172,8 @@ bool UniIniGen::refresh()
     dirty = false;
     if (oldtree && newtree)
     {
-        oldtree->compare(newtree,
-            wvcallback(UniConfValueTree::Comparator, *this,
-            UniIniGen::refreshcomparator), NULL);
+        oldtree->compare(newtree, UniConfValueTree::Comparator
+            (this, &UniIniGen::refreshcomparator), NULL);
         delete oldtree;
     }
     else

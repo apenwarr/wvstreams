@@ -16,8 +16,7 @@
 
 class WvQtHook;
 // parameters are: WvQtHook &, int type, void *data
-DeclareWvCallback(3, void, WvQtHookCallback,
-    WvQtHook &, int, void *);
+typedef WvCallback<void, WvQtHook &, int, void *> WvQtHookCallback;
 
 class WvQtHook : public QObject
 {

@@ -87,13 +87,13 @@ public:
     /** Creates an empty UniConf tree with no mounted stores. */
     UniConfRoot() : UniConf(this), watchroot(NULL)
     {
-        mounts.setcallback(wvcallback(UniConfGenCallback, *this,
-            UniConfRoot::gen_callback), NULL);
+        mounts.setcallback(UniConfGenCallback(this,
+            &UniConfRoot::gen_callback), NULL);
     }
 
     /** Destroys the UniConf tree along with all uncommitted data. */
     ~UniConfRoot()
-        { mounts.setcallback(NULL, NULL); }
+        { mounts.setcallback(UniConfGenCallback(), NULL); }
 
     /** 
      * Creates a new UniConf tree and mounts the given moniker at the root.

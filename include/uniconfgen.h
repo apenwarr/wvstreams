@@ -15,7 +15,6 @@
 
 class UniConfGen;
 
-
 /**
  * The callback type for signalling key changes from a UniConfGen.
  * 
@@ -30,9 +29,8 @@ class UniConfGen;
  *   key - the key that has changed
  *   userdata - the userdata supplied during setcallback
  */
-DeclareWvCallback(3, void, UniConfGenCallback, const UniConfKey &,
-                  WvStringParm, void *);
-
+typedef WvCallback<void, const UniConfKey &,
+    WvStringParm, void *> UniConfGenCallback;
 
 /**
  * An abstract data container that backs a UniConf tree.

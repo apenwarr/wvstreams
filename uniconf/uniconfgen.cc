@@ -9,7 +9,7 @@
 /***** UniConfGen *****/
 
 UniConfGen::UniConfGen() :
-    cb(NULL), cbdata(NULL), hold_nesting(0)
+    cbdata(NULL), hold_nesting(0)
 {
 }
 

@@ -18,7 +18,7 @@ enum WvFAMEvent
     WvFAMCreated = 5,
 };
 
-DeclareWvCallback(2, void, FAMCallback, WvStringParm, WvFAMEvent);
+typedef WvCallback<void, WvStringParm, WvFAMEvent> FAMCallback;
 
 
 /*
@@ -51,13 +51,13 @@ protected:
     WvFDStream *s;
     WvLog log;
 
-    void callback(WvStream &, void *) { callback(); }
-    void callback();
+    void callback(WvStream &, void *) { _callback(); }
+    void _callback();
 
     void setup();
 
 public:
-    WvFAMBase() : cb(NULL), s(0), log("WvFAM") { setup(); }
+    WvFAMBase() : s(0), log("WvFAM") { setup(); }
     WvFAMBase(FAMCallback _cb) : cb(_cb), s(0), log("WvFAM") { setup(); }
     ~WvFAMBase();
 

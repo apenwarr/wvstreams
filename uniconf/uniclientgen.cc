@@ -70,8 +70,8 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
     cmdinprogress(false), cmdsuccess(false)
 {
     conn = new UniClientConn(stream, dst);
-    conn->setcallback(wvcallback(WvStreamCallback, *this,
-        UniClientGen::conncallback), NULL);
+    conn->setcallback(WvStreamCallback(this,
+        &UniClientGen::conncallback), NULL);
 }
 
 

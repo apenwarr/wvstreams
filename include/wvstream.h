@@ -22,7 +22,7 @@ class WvTaskMan;
 class WvStream;
 
 // parameters are: owning-stream, userdata
-DeclareWvCallback(2, void, WvStreamCallback, WvStream &, void *);
+typedef WvCallback<void, WvStream&, void*> WvStreamCallback;
 
 class IWvStream : public IObject, public WvError
 {
@@ -590,7 +590,7 @@ protected:
     WvStream();
     
     /** Prevent accidental copying of WvStreams. */
-    WvStream(const WvStream &s) : callfunc(0), closecb_func(0) { }
+    WvStream(const WvStream &s) { }
     WvStream& operator= (const WvStream &s) { return *this; }
 
     /**

@@ -54,16 +54,16 @@ void UniConfRoot::del_callback(const UniConfKey &key,
 void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag,
                                   bool recurse)
 {
-    add_callback(key, wvcallback(UniConfCallback, *this,
-        UniConfRoot::setbool_callback), flag, recurse);
+    add_callback(key, UniConfCallback(this,
+        &UniConfRoot::setbool_callback), flag, recurse);
 }
 
 
 void UniConfRoot::del_setbool(const UniConfKey &key, bool *flag,
                                   bool recurse)
 {
-    del_callback(key, wvcallback(UniConfCallback, *this,
-        UniConfRoot::setbool_callback), flag, recurse);
+    del_callback(key, UniConfCallback(this,
+        &UniConfRoot::setbool_callback), flag, recurse);
 }
 
 
