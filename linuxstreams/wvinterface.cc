@@ -321,8 +321,9 @@ void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
 }
 
 
-int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
-                          const WvIPAddr &src, int metric, WvStringParm table)
+int WvInterface::really_addroute(const WvIPNet &dest, const WvIPAddr &gw,
+		 const WvIPAddr &src, int metric, WvStringParm table,
+		 bool shutup)
 {
     struct rtentry rte;
     char ifname[17];
@@ -358,9 +359,7 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     else
         argv = argvnosrc;
 
-    // (dcoombs: 2003/07/11)  I added src!=zero to this condition for
-    // freeswan, but I have no idea whether that's the proper thing to do.
-    if (dest.is_default() || table != "default" || src != zero)
+    if (dest.is_default() || table != "default")
     {
 	err(WvLog::Debug2, "addroute: ");
 	for (int i = 0; argv[i]; i++)
@@ -390,14 +389,43 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     {
 	if (errno != EACCES && errno != EPERM && errno != EEXIST
 	  && errno != ENOENT)
-	    err.perror(WvString("AddRoute '%s' %s (up=%s)",
-				name, dest, isup()));
+	{
+	    if (!shutup)
+		err.perror(WvString("AddRoute '%s' %s (up=%s)",
+				    name, dest, isup()));
+	}
 	close(sock);
 	return -1;
     }
     
     close(sock);
     return 0;
+}
+
+
+int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
+                          const WvIPAddr &src, int metric, WvStringParm table)
+{
+    WvIPAddr zero;
+    int ret;
+    
+    // The kernel (2.4.19) sometimes tries to protect us from ourselves by
+    // not letting us create a route via 'x' if 'x' isn't directly reachable
+    // on the same interface.  This is non-helpful to us in some cases,
+    // particularly with FreeSwan's screwy lying kernel routes.  Anyway,
+    // the kernel people weren't clever enough to check that the routing
+    // table *stays* self-consistent, so we add an extra route, then we
+    // create our real route, and then we delete the extra route again.
+    // Blah.
+    // 
+    // Using metric 255 should make it not the same as any other route.
+    if (gw != zero)
+	really_addroute(gw, zero, zero, 255, "default", true);
+    ret = really_addroute(dest, gw, src, metric, table, false);
+    if (gw != zero)
+	delroute(gw, zero, 255, "default");
+    
+    return ret;
 }
 
 

@@ -192,6 +192,15 @@ void WvIPRouteList::get_kernel()
 }
 
 
+static WvString realtable(WvIPRoute &r)
+{
+    if (!r.ip.is_default() && r.table == "default")
+    	return "main";
+    else
+    	return r.table;
+}
+
+
 // we use an n-squared algorithm here, for no better reason than readability.
 void WvIPRouteList::set_kernel()
 {
@@ -223,7 +232,7 @@ void WvIPRouteList::set_kernel()
 	{
 	    WvInterface i(oi->ifc);
 	    log("Del %s\n", *oi);
-	    i.delroute(oi->ip, oi->gateway, oi->metric, oi->table);
+	    i.delroute(oi->ip, oi->gateway, oi->metric, realtable(*oi));
 	}
     }
 
@@ -237,7 +246,8 @@ void WvIPRouteList::set_kernel()
 	{
 	    WvInterface i(ni->ifc);
 	    log("Add %s\n", *ni);
-	    i.addroute(ni->ip, ni->gateway, ni->src, ni->metric, ni->table);
+	    i.addroute(ni->ip, ni->gateway, ni->src, ni->metric, 
+	    		realtable(*ni));
 	}
     }
 }
