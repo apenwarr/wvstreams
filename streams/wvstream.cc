@@ -389,7 +389,6 @@ char *WvStream::getline(time_t wait_msec, char separator)
 {
     size_t i;
     unsigned char *buf;
-    bool selected;
     
     // if we get here, we either want to wait a bit or there is data
     // available.
@@ -405,7 +404,16 @@ char *WvStream::getline(time_t wait_msec, char separator)
 	    return (char *)buf;
 	}
 	else if (!isok())    // uh oh, stream is in trouble.
-	    break;
+	{
+	    if (inbuf.used())
+	    {
+		// handle "EOF without newline" condition
+		inbuf.alloc(1)[0] = 0; // null-terminate it
+		return (char *)inbuf.get(inbuf.used());
+	    }
+	    else
+		return NULL;   // nothing else to do!
+	}
 
 	// make select not return true until more data is available
 	if (inbuf.used())
@@ -414,30 +422,23 @@ char *WvStream::getline(time_t wait_msec, char separator)
 	// note: this _always_ does the select, even if wait_msec < 0.
 	// That's good, because the fd might be nonblocking!
 	if (uses_continue_select)
-	    selected = continue_select(wait_msec);
+	{
+	    if (!continue_select(wait_msec) && isok() && wait_msec >= 0)
+		return NULL;
+	}
 	else
-	    selected = select(wait_msec);
+	{
+	    if (!select(wait_msec) && isok() && wait_msec >= 0)
+		return NULL;
+	}
 	
 	if (!isok())
-	    break;
-	
-	if (!selected && wait_msec >= 0)
-	    break; // select timed out
-	
-	if (selected)
-	{
-	    // read a few bytes
-	    buf = inbuf.alloc(1024);
-	    i = uread(buf, 1024);
-	    inbuf.unalloc(1024 - i);
-	}
-    }
-    
-    // deal with !isok() while inbuf contains data - return the partial line.
-    if (!isok() && inbuf.used())
-    {
-	inbuf.put("", 1); // null-terminate it
-	return (char *)inbuf.get(inbuf.used());
+	    return NULL;
+
+	// read a few bytes
+	buf = inbuf.alloc(1024);
+	i = uread(buf, 1024);
+	inbuf.unalloc(1024 - i);
     }
     
     // we timed out or had a socket error
@@ -679,7 +680,7 @@ time_t WvStream::alarm_remaining()
 {
     struct timeval &a = alarm_time;
     
-    if (a.tv_sec)
+    if (a.tv_sec && !running_callback)
     {
 	struct timeval tv;
 	struct timezone tz;
