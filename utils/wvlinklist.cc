@@ -19,7 +19,7 @@ WvLink::WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _auto_free)
 }
 
 
-int WvList::count() const
+size_t WvList::count() const
 {
     WvLink *l;
     size_t n = 0;

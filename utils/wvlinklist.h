@@ -87,7 +87,7 @@ public:
         { /* default: do nothing */ }
     void shutdown()
         { /* default: do nothing */ }
-    int count() const;
+    size_t count() const;
 
     // this could be done with count() but it would be slow
     bool isempty() const
