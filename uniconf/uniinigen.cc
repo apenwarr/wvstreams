@@ -236,6 +236,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 }
 
 
+#ifndef _WIN32
 bool UniIniGen::commit_atomic(WvString real_filename)
 {
     WvString tmp_filename("%s.tmp%s", real_filename, getpid());
@@ -263,6 +264,7 @@ bool UniIniGen::commit_atomic(WvString real_filename)
 
     return true;
 }
+#endif
 
 
 void UniIniGen::commit()
