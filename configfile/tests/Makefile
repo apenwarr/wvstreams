@@ -7,12 +7,12 @@ XPATH=../../utils ../../streams
 
 default: all
 
-all: initest delsection
+all: initest delsection nofile
 
 configfile.a: ../configfile.libs
 
-initest delsection: configfile.a
+initest delsection nofile: configfile.a
 
 clean:
-	rm -f initest delsection
+	rm -f initest delsection nofile
 
