@@ -133,15 +133,18 @@ public:
     WvString& operator= (const WvString &s2)
     {
 	if (str) delete[] str;
-	fillme(s2.str);
+	if (s2.str != str)
+	    fillme(s2.str);
+	else
+	    str = NULL;
 	return *this;
     }
 
     // string comparison
     bool operator== (const WvString &s2) const
-	{ return (str==s2.str) || !strcmp(str, s2.str); }
+	{ return (str==s2.str) || (str && s2.str && !strcmp(str, s2.str)); }
     bool operator!= (const WvString &s2) const
-	{ return (str!=s2.str) && strcmp(str, s2.str); }
+	{ return (str!=s2.str) && str && s2.str && strcmp(str, s2.str); }
     
     // auto-convert WvString to int, when needed.
     operator int() const
