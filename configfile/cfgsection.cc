@@ -67,6 +67,12 @@ void WvConfigSection::set(const WvString &entry, const WvString &value)
 }
 
 
+void WvConfigSection::quick_set(const WvString &entry, const WvString &value)
+{
+    append(new WvConfigEntry(entry, value), true);
+}
+
+
 void WvConfigSection::dump(WvStream &fp)
 {
     Iter i(*this);

@@ -50,6 +50,9 @@ public:
     const char *get(const WvString &entry, const char *def_val = NULL);
     void set(const WvString &entry, const WvString &value);
     void set(WvConfigEntry *e, const WvString &value);
+    
+    // add an entry to the end of the section, _assuming_ no duplicates exist
+    void quick_set(const WvString &entry, const WvString &value);
 
     void dump(WvStream &fp);
 
