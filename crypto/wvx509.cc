@@ -496,79 +496,76 @@ void WvX509Mgr::dumpcert(WvString outfile, bool append)
 
     if (append)
     {
-	certout = fopen(outfile,"a");
-        debug("Opening %s for append\n",outfile);
+        debug("Opening %s for append.\n", outfile);
+	certout = fopen(outfile, "a");
     }
     else
     {
-	certout = fopen(outfile,"w");
-        debug("Opening %s for write\n",outfile);
+        debug("Opening %s for write.\n", outfile);
+	certout = fopen(outfile, "w");
     }
 
     if (certout != NULL)
     {
-	debug("Dumping X509 Certificate...\n");
-    	PEM_write_X509(certout,cert);
+	debug("Dumping X509 Certificate.\n");
+    	PEM_write_X509(certout, cert);
+	fclose(certout);
     }
     else
-	seterr("Cannot open file for writing");
-
-    fclose(certout);
+        seterr("fopen: %s", strerror(errno));
 }
 
 
 void WvX509Mgr::dumpkeypair(WvString outfile, bool append)
 {
     FILE *keyout;
-    EVP_CIPHER *enc = NULL;
+    const EVP_CIPHER *enc;
 
     if (append)
     {
-        keyout = fopen(outfile,"a");
-        debug("Opening %s for append\n",outfile);
+        debug("Opening %s for append.\n", outfile);
+        keyout = fopen(outfile, "a");
     }
     else
         keyout = fopen(outfile,"w");
     
-    if (keyout != NULL)
+    if (keyout)
     {
-	debug("Printing keypair...\n");
-	(const EVP_CIPHER *)enc = EVP_get_cipherbyname("rsa");
-	PEM_write_RSAPrivateKey(keyout,rsa->rsa, enc, NULL, 0, NULL, NULL);
+	debug("Printing keypair.\n");
+	enc = EVP_get_cipherbyname("rsa");
+	PEM_write_RSAPrivateKey(keyout, rsa->rsa, enc, NULL, 0, NULL, NULL);
+	fclose(keyout);
     }
     else
-        seterr("Cannot open file for writing");
-
-    fclose(keyout);
+        seterr("fopen: %s", strerror(errno));
 }
 
 
 void WvX509Mgr::dumprawkeypair(WvString outfile, bool append)
 {
     FILE *keyout;
-    int offset;
+    int offset = 0;
     struct stat filestat;
 
     if (append)
     {
-        keyout = fopen(outfile,"a");
-        fstat(fileno(keyout),&filestat);
-	offset = filestat.st_size;
-        debug("Opening %s for append\n",outfile);
+        debug("Opening %s for append.\n", outfile);
+        keyout = fopen(outfile, "a");
+	if (keyout)
+	{
+	    fstat(fileno(keyout), &filestat);
+	    offset = filestat.st_size;
+	}
     }
     else
-    {
-        keyout = fopen(outfile,"w");
-	offset = 0;
-    }
+        keyout = fopen(outfile, "w");
     
-    if (keyout != NULL)
+    if (keyout)
     {
-	debug("Printing keypair...\n");
+	debug("Printing keypair.\n");
 	RSA_print_fp(keyout, rsa->rsa, offset);
+	fclose(keyout);
     }
     else
-        seterr("Cannot open file for writing");
-
-    fclose(keyout);
+        seterr("fopen: %s", strerror(errno));
 }

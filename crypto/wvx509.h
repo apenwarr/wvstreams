@@ -179,7 +179,7 @@ public:
     void seterr(WvStringParm s)
         { errstring = s; }
     void seterr(WVSTRING_FORMAT_DECL)
-        { seterr(WVSTRING_FORMAT_CALL); }
+        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
 };
 
 #endif // __WVX509_H
