@@ -106,6 +106,12 @@ public:
 	}
     }
 
+    _type_ *first()
+        { return (_type_*)head.next->data; }
+
+    _type_ *last()
+        { return (_type_*)last->data; }
+
     void add_after(WvLink *after, _type_ *data, bool auto_free,
 			char *id = NULL )
         { (void)new WvLink((void *)data, after, tail, auto_free, id); }
@@ -118,6 +124,9 @@ public:
 
     void unlink(_type_ *data)
         { Iter i(*this); while (i.find(data)) i.unlink(); }
+
+    void unlink_first()
+        { Iter i(*this); i.rewind(); i.unlink(); }
 
     void unlink_after(WvLink *after)
     {
