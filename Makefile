@@ -33,7 +33,7 @@ all: include $(SUBDIRS) $(LIBFILES)
 include:
 	rm -rf $@
 	mkdir $@.new
-	cd $@.new && for d in $(SUBDIRS); do ln -s ../$$d/*.h .; done
+	ln -s $(foreach d,$(SUBDIRS),$(wildcard $(d)/*.h)) $@.new
 	mv $@.new $@
 
 $(wildcard *.so) $(wildcard *.a): Makefile
