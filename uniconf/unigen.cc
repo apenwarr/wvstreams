@@ -38,7 +38,7 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
     return parent;
 }
 
-void UniConfGen::enumerate_subtrees(UniConf *conf)
+void UniConfGen::enumerate_subtrees(UniConf *conf, bool recursive)
 {
     // do nothing by default.
 }

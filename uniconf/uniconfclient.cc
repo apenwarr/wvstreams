@@ -100,12 +100,16 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
     return toreturn;
 }
 
-void UniConfClient::enumerate_subtrees(UniConf *conf)
+void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
 {
     if (!conn || !conn->isok())
         return;
     
-    WvString cmd("subt ");
+    WvString cmd;
+    if (recursive)
+        cmd.append("rsub ");
+    else
+        cmd.append("subt ");
     
     if (conn->select(0, true, false, false))
         execute();
@@ -152,9 +156,8 @@ void UniConfClient::update(UniConf *&h)
         }
     }
 
-   
+    // If we're waiting, we KNOW the value is coming if we don't have it yet.
     if (h->waiting && !data && conn->isok())
-        // DO NOT leave update without the new value.  We KNOW it is coming.
         conn->select(-1, true, false, false);
     
     if (conn->select(0,true, false, false))

@@ -112,25 +112,25 @@ UniConfKey UniConf::gen_full_key()
     return full_key(gen_top());
 }
 
-bool UniConf::check_children()
+bool UniConf::check_children(bool recursive)
 {
     if (this->generator)
     {
-        this->generator->enumerate_subtrees(this);
+        this->generator->enumerate_subtrees(this, recursive);
     }
-    else
+/*    else
     {
         UniConf *par = this->parent;
         while (par)
         {
             if (par->generator)
             {
-                par->generator->enumerate_subtrees(this);
+                par->generator->enumerate_subtrees(this, recursive);
                 break;
             }
             par = par->parent;
         }
-    }
+    }*/
     return (children != NULL);
 }
 

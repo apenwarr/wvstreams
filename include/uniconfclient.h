@@ -36,7 +36,7 @@ public:
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
-    virtual void enumerate_subtrees(UniConf *conf);
+    virtual void enumerate_subtrees(UniConf *conf, bool recursive);
     virtual void update(UniConf *&h);
     virtual bool isok();
     virtual void save();

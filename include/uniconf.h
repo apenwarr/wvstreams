@@ -74,7 +74,7 @@ public:
     // (in the opinion of the generator)
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
    
-    virtual void enumerate_subtrees(UniConf *conf);
+    virtual void enumerate_subtrees(UniConf *conf, bool recursive);
     virtual void update(UniConf *&h);
     virtual bool isok() { return true; }
     
@@ -150,7 +150,7 @@ public:
         { return (children != NULL); }
     // checks generator, then returns children != NULL
     // Needed for iterator over client connection
-    bool check_children();
+    bool check_children(bool recursive = false);
     UniConf *find(const UniConfKey &key);
     UniConf *find_make(const UniConfKey &key);
     UniConf &operator[](const UniConfKey &key) { return *find_make(key); }

@@ -44,7 +44,7 @@ public:
     RecursiveIter *subiter;
     
     RecursiveIter(UniConf &h)
-	: i(h.check_children()/*h.children*/ ? *h.children : null_wvhconfdict)
+	: i(h.check_children(true) ? *h.children : null_wvhconfdict)
 	{ subiter = NULL; }
     RecursiveIter(UniConfDict &children)
 	: i(children)

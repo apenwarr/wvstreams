@@ -9,7 +9,10 @@
 
 WvLink *UniConf::RecursiveIter::_next()
 { 
-    if (!subiter && i.ptr() && i->check_children())
+    if (i.ptr() && i->generator)
+        i->check_children(true);
+
+    if (!subiter && i.ptr() && i->children)
     {
 	subiter = new RecursiveIter(*i);
 	subiter->rewind();

@@ -97,6 +97,27 @@ void UniConfDaemonConn::execute()
                 }
                     
             }
+            else if (cmd == "rsub")
+            {
+                UniConf *nerf = &source->mainconf[key];
+                print("OK %s %s\n", cmd, key);
+                if (nerf)
+                {
+                    WvString send("SUBT %s ", wvtcl_escape(key));
+                    UniConf::RecursiveIter i(*nerf);
+                    for (i.rewind(); i.next();)
+                    {
+                        send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)),
+                                wvtcl_escape(*i));
+                    }
+                    send.append("\n");
+                    print(send);
+                }
+                else
+                {
+                    print(WvString("SUBT %s\n", key));
+                }
+            }
             else if (cmd == "set") // set the specified value
             {
                 print("OK %s %s\n", cmd, key);
