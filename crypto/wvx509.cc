@@ -9,6 +9,7 @@
 #include "wvdiriter.h"
 #include "wvcrypto.h"
 #include "wvstringlist.h"
+#include "wvbase64.h"
 #include "strutils.h"
 
 #include <openssl/pem.h>
@@ -863,7 +864,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 		    return;
 		}
 	    }
-	}
+}
 	else
 	{
 	    seterr("Either the RSA key or the Certificate is not present\n");
@@ -1055,4 +1056,89 @@ int WvX509Mgr::geterr() const
         ret = -1;
     }
     return ret;
+}
+
+WvString WvX509Mgr::sign(WvStringParm data)
+{
+    WvDynBuf buf;
+    buf.putstr(data);
+    return sign(buf);
+}
+
+WvString WvX509Mgr::sign(WvBuf &data)
+{
+    assert(rsa);
+
+    EVP_MD_CTX sig_ctx;
+    unsigned char sig_buf[4096];
+    
+    EVP_PKEY *pk = EVP_PKEY_new();
+    if (!pk)
+    {
+	seterr("Unable to create PKEY object.\n");
+	return WvString::null;
+    }
+    
+    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
+    {
+	seterr("Error setting RSA keys.\n");
+	EVP_PKEY_free(pk);
+	return WvString::null;
+    }
+    
+    EVP_SignInit(&sig_ctx, EVP_sha1());
+    EVP_SignUpdate(&sig_ctx, data.peek(0, data.used()), data.used());
+    unsigned int sig_len = sizeof(sig_buf);
+    int sig_err = EVP_SignFinal(&sig_ctx, sig_buf, 
+				&sig_len, pk);
+    if (sig_err != 1)
+    {
+	seterr("Error while signing!\n");
+	EVP_PKEY_free(pk);
+	return WvString::null;
+    }
+
+    EVP_PKEY_free(pk);
+    EVP_MD_CTX_cleanup(&sig_ctx); // this isn't my fault ://
+    WvDynBuf buf;
+    buf.put(sig_buf, sig_len);
+    debug("Signature size: %s\n", buf.used());
+    return WvBase64Encoder().strflushbuf(buf, true);
+}
+
+bool WvX509Mgr::verify(WvStringParm original, WvStringParm signature)
+{
+    WvDynBuf buf;
+    buf.putstr(original);
+    return verify(buf, signature);
+}
+
+bool WvX509Mgr::verify(WvBuf &original, WvStringParm signature)
+{
+    
+    unsigned char sig_buf[4096];
+    size_t sig_size = sizeof(sig_buf);
+    WvBase64Decoder().flushstrmem(signature, sig_buf, &sig_size, true);
+    
+    EVP_PKEY *pk = X509_get_pubkey(cert);
+    if (!pk) 
+    {
+        seterr("Couldn't allocate PKEY for verify()\n");
+        return false;
+    }
+    
+    /* Verify the signature */
+    EVP_MD_CTX sig_ctx;
+    EVP_VerifyInit(&sig_ctx, EVP_sha1());
+    EVP_VerifyUpdate(&sig_ctx, original.peek(0, original.used()), original.used());
+    int sig_err = EVP_VerifyFinal(&sig_ctx, sig_buf, sig_size, pk);
+    EVP_PKEY_free(pk);
+    EVP_MD_CTX_cleanup(&sig_ctx); // Again, not my fault... 
+    if (sig_err != 1) 
+    {
+        debug("Verify failed!\n");
+        return false;
+    }
+    else
+	return true;
 }

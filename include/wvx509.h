@@ -169,12 +169,20 @@ public:
    bool signedbyCAinfile(WvStringParm certfile);
 
     /**
-     * Sign the X509 certificate in cert with CAKeypair
-     *
-     * NOT IMPLEMENTED
+     * Sign the contents of data and return the signature.
      */
-    void sign(WvRSAKey CAKeypair);
-   
+    WvString sign(WvBuf &data);
+    WvString sign(WvStringParm data);
+
+    /**
+     * Verify that the contents of data were signed
+     * by the certificate currently in cert. This only
+     * checks the signature, it doesn't check the validity
+     * of the certificate.
+     */
+    bool verify(WvBuf &original, WvStringParm signature);
+    bool verify(WvStringParm original, WvStringParm signature);
+    
     /**
      * Check and see if the certificate in cert has been revoked... currently
      * relies on the CRL Distribution Point X509v3 extension...
