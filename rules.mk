@@ -20,7 +20,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 %: %.cc
 	@$(LINK.cc) -M -E $< | \
 		sed -e 's|^$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
-	$(COMPILE_MSG)$(LINK.cc) $< $(LOADLIBES) $(LDLIBS) -o $@
+	$(COMPILE_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %.o: %.cc
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
@@ -121,8 +121,9 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
+# FIXME: this fucks up
 $(TESTS): libwvstreams.so libwvutils.so
-$(TESTS): LDLIBS+=libwvstreams.so libwvutils.so
+#$(TESTS): LDLIBS+=libwvstreams.so libwvutils.so
 tests: $(TESTS)
 
 dishes:
