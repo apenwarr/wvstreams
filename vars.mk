@@ -125,7 +125,7 @@ endif
 endif
 
 LDLIBS := $(LDLIBS) \
-	$(shell gcc -lsupc++ 2>&1 | grep -q "undefined reference" \
+	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++")
 
 RELEASE?=$(PACKAGE_VERSION)
