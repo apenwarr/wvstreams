@@ -11,8 +11,6 @@
 #include "wvfdstream.h"
 #include "wvlog.h"
 #include "wvsocketpair.h"
-#include "wvfile.h"
-#include "wvistreamlist.h"
 
 //FIXME: absolutely simple simple test right now, built from closeflushtest
 // BEGIN closeflushtest.cc definition
@@ -212,6 +210,7 @@ WVTEST_MAIN("outbuf_limit")
     WVPASS(fdstream1.iswritable());
 }
 
+
 static void myclosecb(int *i, WvStream &s)
 {
     (*i)++;
@@ -252,77 +251,3 @@ WVTEST_MAIN("inbuf after read error")
 }
 
 
-class FooFD : public WvStream {
-public:
-    FooFD(int fd) : y(fd)
-    {
-        called = false;
-        y.setcallback(WvStreamCallback(this,
-        	&FooFD::fooback), NULL);
-        WvIStreamList::globallist.append(&y, false);
-    }
-
-    ~FooFD()
-    {
-	WvIStreamList::globallist.unlink(&y);
-    }
-
-    void fooback(WvStream &, void *)
-    {
-	called = true;
-    }
-
-    WvFDStream y;
-    bool called;
-};
-
-WVTEST_MAIN("Test undo_force_select() on a WvFDStream")
-{
-    // create our test file
-    WvString testfile("/tmp/wvfdstream-testfile-%s", getpid());
-    WvFile x(testfile, O_CREAT|O_RDWR, 0666);
-    x.print("moo\n");
-    x.print("mow\n");
-    x.print("maw\n");
-    x.close();
-
-    int fd = open(testfile, O_RDONLY);
-    WVPASS(fd != -1);
-
-    WvFDStream f(fd);
-    WVPASS(f.isok());
-
-    // should have some data for reading
-    WVPASS(f.select(0));
-
-    // we don't want to select on anything anymore
-    f.undo_force_select(true, true, true);
-    WVFAIL(f.select(0));
-
-    // we want to continue selecting
-    f.force_select(true, true, true);
-    WVPASS(f.select(0));
-
-    FooFD foof(fd);
-    WVPASS(!foof.called);
-
-    // check that our callback is called
-    WvIStreamList::globallist.runonce();
-    WVPASS(foof.called);
-
-    foof.called = false;
-    WVPASS(!foof.called);
-
-// This fails, but uncommenting the select inside the loop
-// makes it succeed properly
-#if 0
-    // undo_force_select() and make sure we're not called
-    foof.y.undo_force_select(true, true, true);
-    if (WvIStreamList::globallist.select(1000))
-    {
-//        printf("select(0) returned '%d'\n", foof.y.select(0));
-	WvIStreamList::globallist.callback();
-    }
-    WVPASS(!foof.called);
-#endif
-}

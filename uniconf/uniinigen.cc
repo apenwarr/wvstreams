@@ -231,7 +231,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
             // key removed
 	    // Issue notifications for every that is missing.
             a->visit(UniConfValueTree::Visitor(this,
-                &UniTempGen::notify_deleted), NULL, false, true);
+                &UniIniGen::notify_deleted), NULL, false, true);
             return false;
         }
     }
