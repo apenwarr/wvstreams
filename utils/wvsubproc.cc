@@ -95,6 +95,15 @@ void WvSubProc::preparev(const char cmd[], const char * const *argv)
 	last_args.append(new WvString(*argptr), true);
 }
 
+void WvSubProc::preparev(const char cmd[], WvStringList &args)
+{
+    last_cmd = cmd;
+    last_args.zap();
+
+    WvStringList::Iter i(args);
+    for (i.rewind(); i.next(); )
+        last_args.append(new WvString(*i), true);
+}
 
 int WvSubProc::start(const char cmd[], ...)
 {
