@@ -60,7 +60,7 @@ void setupcert()
     strcat(fqdn,domname);
     WvString dName("cn=%s,dc=%s",fqdn,domname);
     x509cert = new WvX509Mgr(dName,1024);
-    if (x509cert->isok())
+    if (!x509cert->isok())
     {
 	fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr());
 	want_to_die = true;
