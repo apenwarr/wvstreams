@@ -37,7 +37,7 @@ dist-hack-clean:
 dist: dist-hack-clean configure distclean
 	rm -rf autom4te.cache
 	if test -d .xplc; then \
-	    make -C .xplc clean patch; \
+	    $(MAKE) -C .xplc clean patch; \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
 
@@ -91,7 +91,7 @@ kdoc:
 doxygen:
 	doxygen
 
-install: install-shared install-dev
+install: install-shared install-dev install-xplc
 #FIXME: We need to install uniconfd somewhere.
 
 install-shared: $(TARGETS_SO)
@@ -110,6 +110,17 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	for i in $(TARGETS_SO); do \
 	    cd $(DESTDIR)$(libdir) && $(LN_S) $$i.$(RELEASE) $$i; \
 	done
+
+ifeq ("$(build_xplc)", "yes")
+
+install-xplc: xplc
+	$(MAKE) -C xplc install
+
+else
+
+install-xplc: ;
+
+endif
 
 uninstall:
 	$(tbd)
