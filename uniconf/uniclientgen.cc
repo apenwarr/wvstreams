@@ -309,6 +309,7 @@ bool UniClientGen::delwatch(const UniConfKey &key, UniConfDepth::Type depth)
 
 void UniClientGen::conncallback(WvStream &stream, void *userdata)
 {
+#if 0
     if (conn->alarm_was_ticking)
     {
         // command response took too long!
@@ -318,6 +319,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
         conn->close();
         return;
     }
+#endif
     bool didone = false;
     for (;;)
     {
