@@ -10,7 +10,7 @@
 #include <uniconfclient.h>
 
 UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, bool automount) :
-    top(_top), log("UniConfClient"), dict(5), references(0)
+    top(_top), log("UniConfClient"), dict(5)
 {
     conn = new UniConfConn(stream);
     waitforsubt = false;
@@ -32,20 +32,29 @@ bool UniConfClient::isok()
     return (conn && conn->isok());
 }
 
+
+// Saves the current subtree of the uniconf object.  
+// Note:  If conn is not ok, or if conn is NULL, then we just return.
 void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
 {
     if (!conn || !conn->isok())
+    {
+        log(WvLog::Error, "Could not use connection to daemon.  Save aborted.\n");
         return;
+    }
 
-    if (tree->dirty && !tree->obsolete)
+    // last save wins.
+    if (tree->dirty)
     {
         WvString data("set %s %s\n", wvtcl_escape(key), wvtcl_escape(*tree));
         conn->print(data);
+        tree->dirty = false;
     }
     
     // What about our children.. do we have dirty children?
     if (tree->child_dirty)
     {
+        tree->child_dirty = false;
 	UniConf::Iter i(*tree);
 
         for (i.rewind(); i.next();)
@@ -73,27 +82,28 @@ void UniConfClient::save()
     // check our connection...
     if (!conn || !conn->isok())
     {
-        log(WvLog::Debug2, "Connection was unuseable, save aborted.\n");
+        log(WvLog::Error, "Connection was unuseable, save aborted.\n");
         return;
     }
     
     if (conn->select(0, true, false, false))
         execute();
-    // working.. yay, great, good.  Now, ship this subtree off to savesubtree
+    // working.. yay, great, good.  Now, ship the tree off to savesubtree
     savesubtree(top, "/");
 }
 
 UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
 {
    // Now, do a get on the key from the daemon
-    WvString newkey(key);
+/*    WvString newkey(key);
     UniConf *par = parent;
-    while (par)
+    while (par && par != top)
     {
         if (par->name != "")
             newkey = WvString("%s/%s", par->name, newkey);
         par = par->parent;
-    }
+    }*/
+
     // Get the node which we're actually going to return...
     UniConf *toreturn = UniConfGen::make_tree(parent, key);
     // Now wait for the response regarding this key.
@@ -114,11 +124,21 @@ void UniConfClient::enumerate_subtrees(UniConf *conf)
     else
         conn->print(WvString("subt /\n"));
     waitforsubt = true;
+
+    conn->alarm(5000);
     while (waitforsubt && conn->isok())
     {
-        if (conn->select(0, true, false, false))
+        if (conn->select(500, true, false, false))
+        {
             execute();
+        }
+
+        if (conn->alarm_was_ticking)
+        {
+            waitforsubt = false;
+        }
     }
+    conn->alarm(-1);
 }
 
 void UniConfClient::update(UniConf *&h)
@@ -150,18 +170,12 @@ void UniConfClient::update(UniConf *&h)
         // If we are here, we will not longer be waiting nor will our data be
         // obsolete.
         h->set(data->value.unique());
-//        dict.remove(data);
+        dict.remove(data);
+        h->waiting = false;
+        h->obsolete = false;
     }
 
-    h->waiting = false;
-    h->obsolete = false;
     h->dirty = false;
-}
-
-bool UniConfClient::deleteable()
-{
-    references--;
-    return 0 == references;
 }
 
 void UniConfClient::execute()
@@ -218,7 +232,6 @@ void UniConfClient::execute()
                         newval.unique()), false);
                     UniConf *narf = &top->get(key);
                     narf = &narf->get(newkey);
-//                    narf->generator = this;
                 }
             }
         }

@@ -38,14 +38,11 @@ public:
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
     virtual void enumerate_subtrees(UniConf *conf);
     virtual void update(UniConf *&h);
-    virtual bool deleteable();
     virtual bool isok();
     virtual void save();
 protected:
     void execute();
     void savesubtree(UniConf *tree, UniConfKey key);
     bool waitforsubt;
-private:
-    unsigned long references;
 };
 #endif // __UNICONFCLIENT_H

@@ -170,7 +170,7 @@ UniConf *UniConf::find_make(const UniConfKey &key)
        
         // avoid an infinite loop... but at the same time check to see
         // that we can get our info.
-        for ( int count = 0; toreturn->waiting && count <100; count++)
+        while(toreturn->waiting)
         {
             htop->generator->update(toreturn);
         }

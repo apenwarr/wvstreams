@@ -73,14 +73,33 @@ bool testgetkeys(UniConf &mainconf, WvString prefix)
 
 bool testgetfromsections(UniConf &mainconf, WvString prefix)
 {
+    bool pass = true;
     WvString key("%s/chickens", prefix);
     UniConf *neep = &mainconf[key];
     WvString subkey("bob");
     WvString result("goof");
     UniConf *narf = &neep->get(subkey);
+    pass &= compareresults(result, *narf);
     wvcon->print("\"%s/%s\" should be:%s.Real Value:%s.\n", key, subkey, result, *narf );
 
-    return compareresults(result,*narf);
+    key = WvString("%s/users", prefix);
+    neep = &mainconf[key];
+    subkey = "apenwarr";
+    WvString sub_subkey("ftp");
+    result = "1";
+    narf = &neep->get(subkey);
+    narf = &narf->get(sub_subkey);
+    pass &= compareresults(result, *narf);
+    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n", key, subkey, sub_subkey, result, *narf );
+
+    sub_subkey = "pptp";
+    result = "0";
+    narf = &mainconf[key][subkey][sub_subkey];
+    pass &= compareresults(result, *narf);
+    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n", key, subkey, sub_subkey, result, *narf );
+
+
+    return pass;
 }
 
 bool testgetsetkey(UniConf &mainconf, WvString prefix)
@@ -123,7 +142,7 @@ int main(int argc, char **argv)
 
     system("clear");
     
-    WvString mountpoint("/");
+    WvString mountpoint("");
     WvString h;
 
     WvString totest = "all";
@@ -196,6 +215,9 @@ int main(int argc, char **argv)
         }
         mountpoint = "/orino";
     }
-    
+/*    WvTCPConn conn(addr);
+    conn.select(0, true,true,false);
+    conn.print("|******************************|\n");
+*/    
     return 0;
 }
