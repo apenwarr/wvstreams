@@ -43,8 +43,6 @@ static void lcallback(WvStream&, void *userdata)
 
 WVTEST_MAIN("ssl establish connection")
 {
-    return; // stupid valgrind
-
     WvIStreamList::globallist.zap();
 
     int port = BASEPORT + getpid();
