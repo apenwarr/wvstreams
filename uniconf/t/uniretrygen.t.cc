@@ -39,8 +39,19 @@ WVTEST_MAIN("uniconfd")
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
+    sleep(1);
     
-    sleep(1); // Wait for reconnect
+    // wait for connect
+    {
+    	UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    
+        for (;;)
+        {
+            another_cfg.xset("wait", "ping");
+            if (another_cfg.xget("wait") == "ping") break;
+            sleep(1);
+        }
+    }
     
     cfg["/key"].setme("value");
     WVPASS(cfg["/key"].getme() == "value");
@@ -48,8 +59,6 @@ WVTEST_MAIN("uniconfd")
     cfg.commit();
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
-    
-    sleep(1); // Wait for UDS to go bad
     
     WVPASS(!cfg["/key"].exists());
     
@@ -59,17 +68,26 @@ WVTEST_MAIN("uniconfd")
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
-
-    sleep(1); // Wait for reconnect
+    sleep(1);
     
+    // wait for connect
+    {
+    	UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    
+        for (;;)
+        {
+            another_cfg.xset("wait", "pong");
+            if (another_cfg.xget("wait") == "pong") break;
+            sleep(1);
+        }
+    }
+
     WVPASS(cfg["/key"].getme() == "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
     waitpid(uniconfd_pid, NULL, 0);
     
-    sleep(1); // Wait for UDS to go bad
-
     WVPASS(!cfg["/key"].exists());
 }
 
@@ -96,7 +114,20 @@ WVTEST_MAIN("reconnect callback")
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
-    sleep(1); // Wait for reconnect
+    sleep(1);
+    
+    // wait for connect
+    {
+    	UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    
+        for (;;)
+        {
+            another_cfg.xset("wait", "pong");
+            if (another_cfg.xget("wait") == "pong") break;
+            sleep(1);
+        }
+    }
+
     cfg.getme(); // Do something to reconnect
     WVPASS(reconnected);
 

@@ -17,7 +17,12 @@ struct ssl_ctx_st;
 typedef struct ssl_ctx_st SSL_CTX;
 struct X509_crl_st;
 typedef struct X509_crl_st X509_CRL;
+
+struct asn1_string_st;
+typedef struct asn1_string_st ASN1_TIME;
+
 class WvRSAKey;
+class WvCRLMgr;
 
 // workaround for the fact that OpenSSL initialization stuff must be called
 // only once.
@@ -138,8 +143,15 @@ public:
      * PEM format.
      */
     WvString signcert(WvStringParm pkcs10req);
+
     
-    
+    /**
+     * Take the CRL in crl, and sign it. returns true if successfull, and false if not.
+     * if false, check crl.err.geterr() for reason.
+     */
+    bool signcrl(WvCRLMgr *crl);
+
+
     /**
      * Test to make sure that a certificate and a keypair go together.
      * called internally by unhexify() although you can call it if 
@@ -275,6 +287,13 @@ public:
      */
     WvString get_altsubject();
 
+    /**
+     * Return the 
+     */
+    ASN1_TIME *get_notvalid_before();
+    
+    ASN1_TIME *get_notvalid_after();
+    
     /**
      * Is this certificate Object valid, and in a non-error state
      */

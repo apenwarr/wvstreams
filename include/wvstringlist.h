@@ -12,6 +12,8 @@
 #include "wvstring.h"
 #include "wvlinklist.h"
 
+class WvRegex;
+
 DeclareWvList2(WvStringListBase, WvString);
 
 /**
@@ -63,6 +65,12 @@ public:
      */
     void splitstrict(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
+    /**
+     * split s and form a list ignoring regex (except at beginning and end)
+     * Note that there is no splitstrict for regexes, since the differece is
+     * taken care of through the regex (...)+ syntax
+     */
+    void split(WvStringParm s, const WvRegex &regex, int limit = 0);
     
     /*
      * populate the list from an array of strings
@@ -70,6 +78,8 @@ public:
     void fill(const char * const *array);
 
     void append(WvStringParm str);
+    void append(WVSTRING_FORMAT_DECL)
+        { append(WvString(WVSTRING_FORMAT_CALL)); }
     void append(WvString *strp, bool autofree, char *id = NULL);
 
     /** 

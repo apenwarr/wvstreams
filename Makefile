@@ -7,6 +7,8 @@ ifneq (${_WIN32},)
   $(error "Use 'make -f Makefile-win32' instead!")
 endif
 
+export WVSTREAMS
+
 XPATH=include
 
 include vars.mk
@@ -45,7 +47,7 @@ dist-hack-clean:
 
 # Comment this assignment out for a release.
 ifdef PKGSNAPSHOT
-PKGVER=+$(shell date +%Y%m%d)
+SNAPDATE=+$(shell date +%Y%m%d)
 endif
 
 dist-hook: dist-hack-clean configure
@@ -55,7 +57,8 @@ dist-hook: dist-hack-clean configure
 	    $(MAKE) -C .xplc clean patch && \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
-	@sed -e "s/Version\:\ 4\.0/Version\:\ \$(PKGVER)/" redhat/wvstreams.spec.in > redhat/wvstreams.spec
+	@sed -e "s/@PKGVER@/$(PKGVER)$(SNAPDATE)/g" \
+	 redhat/wvstreams.spec.in > redhat/wvstreams.spec
 
 runconfigure: config.mk include/wvautoconf.h
 
@@ -178,7 +181,7 @@ test: runconfigure all tests wvtestmain
 	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
-	$(VALGRIND) ./wvtestmain $(TESTNAME)
+	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
 ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=0 ./unitest.sh
 	cd uniconf/tests && DAEMON=1 ./unitest.sh

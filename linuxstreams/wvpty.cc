@@ -20,59 +20,58 @@
 #include <sys/stat.h>
 
 #define DPRINTF(format, args...)
-//#define DPRINTF(format, args...) fprintf(stderr, "WvPty:" # format, ##args)
+//#define DPRINTF(format, args...) fprintf(stderr, "WvPty:" format, ##args)
 
-bool WvPty::open_master()
+bool WvPty::open_pty(WvString &master, int &master_fd,
+    	WvString &slave, int &slave_fd)
 {
     const char *xvals = "pqrstuvwxyzPQRST";
     const char *yvals = "0123456789abcdef";
     char pty[] = "/dev/ptyXY";
+    char tty[] = "/dev/ttyXY";
 
     for (int i=0; xvals[i]; ++i)
     {
-        pty[8] = xvals[i];
-
+        pty[8] = tty[8] = xvals[i];
+ 
         for (int j=0; yvals[j]; ++j)
         {
-            pty[9] = yvals[j];
+            pty[9] = tty[9] = yvals[j];
 
-            int fd = ::open(pty, O_RDWR);
-            if (fd < 0)
+            master_fd = ::open(pty, O_RDWR);
+            if (master_fd >= 0)
+	    	slave_fd = ::open(tty, O_RDWR);
+	    else slave_fd = -1;
+            if (master_fd < 0 || slave_fd < 0)
             {
-                if (errno == ENOENT)
+		int saved_errno = errno;
+		if (master_fd >= 0) ::close(master_fd);
+		if (slave_fd >= 0) ::close(slave_fd);
+                if (saved_errno == ENOENT)
+                {
+		    DPRINTF("No more PTYs (ENOENT)\n");
                     return false; // no more ptys
+                }
             }
             else
             {
-                setfd(fd);
+		DPRINTF("PTY is %s\n", (master = WvString(pty)).edit());
+    	    	DPRINTF("TTY is %s\n", (slave = WvString(tty)).edit());
 
-                _master = pty;
-                _master.unique();
-
-                pty[5] = 't';
-                _slave = pty;
-                _slave.unique();
+    	    	// try to change owner and permissions of slave.
+    	    	// this will only work if we 
+    	    	// are root; if we're not root, we don't care.
+    	    	struct group *gr = ::getgrnam("tty");
+    	    	::fchown(slave_fd, ::getuid(), gr? gr->gr_gid: (gid_t)-1);
+    	    	::fchmod(slave_fd, S_IRUSR | S_IWUSR | S_IWGRP);
 
                 return true;
             }
         }
     }
 
+    DPRINTF("No more PTYs\n");
     return false;
-}
-
-bool WvPty::open_slave()
-{
-    // try to change owner and permissions.  this will only work if we 
-    // are root; if we're not root, we don't care.
-    struct group *gr = ::getgrnam("tty");
-    ::chown(_slave, ::getuid(), gr? gr->gr_gid: (gid_t)-1);
-
-    ::chmod(_slave, S_IRUSR | S_IWUSR | S_IWGRP);
-
-    setfd(::open(_slave, O_RDWR));
-    
-    return getfd() != -1;
 }
 
 WvPty::WvPty(const char *program, const char * const *argv,
@@ -80,7 +79,8 @@ WvPty::WvPty(const char *program, const char * const *argv,
         : _pid(-1), _exit_status(242),
           pre_exec_cb(_pre_exec_cb), post_exec_cb(_post_exec_cb)
 {
-    if (!open_master()
+    int master_fd, slave_fd;
+    if (!open_pty(_master, master_fd, _slave, slave_fd)
             || (_pid = ::fork()) < 0)
     {
         // error
@@ -90,10 +90,14 @@ WvPty::WvPty(const char *program, const char * const *argv,
     else if (_pid == 0)
     {
         // child
-        int fd = getfd();
-        if (::close(fd) < 0)
+        static const int std_fds[] = {
+    	    STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO, -1
+    	};
+    	const int *std_fd;
+    	
+        if (::close(master_fd) < 0)
         {
-            DPRINTF("close(fd) failed: %s\n", strerror(errno));
+            DPRINTF("close(master_fd) failed: %s\n", strerror(errno));
             goto _error;
         }
         if (::setsid() < 0)
@@ -101,62 +105,51 @@ WvPty::WvPty(const char *program, const char * const *argv,
             DPRINTF("setsid() failed: %s\n", strerror(errno));
             goto _error;
         }
-        if (!open_slave())
-        {
-            DPRINTF("open_slave() failed: %s\n", strerror(errno));
-            goto _error;
-        }
-        ::ioctl(getrfd(), TIOCSCTTY, NULL); // This may fail in case opening the 
+        ::ioctl(slave_fd, TIOCSCTTY, NULL); // This may fail in case opening the 
                                             // ptys in open_slave proactively gave us a
                                             // controling terminal
-        if (::dup2(getrfd(), STDIN_FILENO) < 0)
+        for (std_fd = std_fds; *std_fd != -1; ++std_fd)
         {
-            DPRINTF("dup2(0) failed: %s\n", strerror(errno));
-            goto _error;
+            if (::dup2(slave_fd, *std_fd) < 0)
+            {
+            	DPRINTF("dup2(slave_fd, %s) failed: %s\n", *std_fd,
+            	    	strerror(errno));
+            	goto _error;
+            }
         }
-        if (::dup2(getwfd(), STDOUT_FILENO) < 0)
+        if (slave_fd > STDERR_FILENO && ::close(slave_fd) < 0)
         {
-            DPRINTF("dup2(1) failed: %s\n", strerror(errno));
-            goto _error;
-        }
-        if (::dup2(getwfd(), STDERR_FILENO) < 0)
-        {
-            DPRINTF("dup2(2) failed: %s\n", strerror(errno));
-            goto _error;
-        }
-        if (getfd() > STDERR_FILENO && ::close(getfd()) < 0)
-        {
-            DPRINTF("close(getfd()) failed: %s\n", strerror(errno));
+            DPRINTF("close(slave_fd) failed: %s\n", strerror(errno));
             goto _error;
         }
         
-	if (::fcntl(STDIN_FILENO, F_SETFL,
-	    	fcntl(STDIN_FILENO, F_GETFL) & (O_APPEND|O_ASYNC)))
-	{
-            DPRINTF("fcntl(0) failed: %s\n", strerror(errno));
-            goto _error;
-	}
-	if (::fcntl(STDOUT_FILENO, F_SETFL,
-	    	fcntl(STDOUT_FILENO, F_GETFL) & (O_APPEND|O_ASYNC)))
-	{
-            DPRINTF("fcntl(1) failed: %s\n", strerror(errno));
-            goto _error;
-	}
-	if (::fcntl(STDERR_FILENO, F_SETFL,
-	    	fcntl(STDERR_FILENO, F_GETFL) & (O_APPEND|O_ASYNC)))
-	{
-            DPRINTF("fcntl(2) failed: %s\n", strerror(errno));
-            goto _error;
+        for (std_fd = std_fds; *std_fd != -1; ++std_fd)
+        {
+	    if (::fcntl(*std_fd, F_SETFL,
+	    	    fcntl(*std_fd, F_GETFL) & (O_APPEND|O_ASYNC)))
+	    {
+            	DPRINTF("fcntl(%s, F_SETFL) failed: %s\n", *std_fd,
+            	    	strerror(errno));
+            	goto _error;
+	    }
 	}
        
-        setfd(-1);
         if (pre_exec_cb && !pre_exec_cb(*this)) goto _error;
         execvp(program, (char * const *)argv);
         if (post_exec_cb) post_exec_cb(*this);
 
 _error:
-        setfd(-1);
         _exit(242);
+    }
+    else
+    {
+        // parent
+        if (::close(slave_fd) < 0)
+        {
+            DPRINTF("close(slave_fd) failed: %s\n", strerror(errno));
+            goto _error;
+        }
+	setfd(master_fd);
     }
 }
 

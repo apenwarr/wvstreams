@@ -1,5 +1,6 @@
 #include "wvtest.h"
 #include "wvstringlist.h"
+#include "wvregex.h"
 
 WVTEST_MAIN("basic")
 {
@@ -88,4 +89,43 @@ WVTEST_MAIN("basic")
             printf("   because [%s] != [%s}\n", output.cstr(), desired.cstr());
     }
 
+}
+
+WVTEST_MAIN("regex split")
+{
+    WvRegex re1("/"), re2("/+"), re3("/*"), re4("");
+    WvStringList l;
+
+#define TEST_SPLIT(str, re, expected) \
+    do { \
+    	const bool debug = false; \
+    	l.zap(); \
+    	l.split(str, re); \
+    	WvString result = l.join("+"); \
+    	if (debug) fprintf(stderr, "str=%s; result=%s\n", \
+    	    	str, result.cstr()); \
+    	WVPASS(result == expected); \
+    } while (false)
+    
+    TEST_SPLIT("tmp//file", re1, "tmp++file");   
+    TEST_SPLIT("/tmp//file", re1, "+tmp++file");   
+    TEST_SPLIT("/tmp/file", re1, "+tmp+file");
+    TEST_SPLIT("/tmp/file//", re1, "+tmp+file++");
+    TEST_SPLIT("tmp/file//", re1, "tmp+file++");
+    TEST_SPLIT("tmpfile", re1, "tmpfile");
+    TEST_SPLIT("", re1, "");
+
+    TEST_SPLIT("tmp//file", re2, "tmp+file");
+    TEST_SPLIT("///tmp//file", re2, "+tmp+file");
+    TEST_SPLIT("/////tmp/////file////", re2, "+tmp+file+");
+    TEST_SPLIT("tmp/file///", re2, "tmp+file+");
+    TEST_SPLIT("tmpfile/", re2, "tmpfile+");
+    TEST_SPLIT("tmpfile", re2, "tmpfile");
+    TEST_SPLIT("", re2, "");
+    
+    TEST_SPLIT("tmpfile", re3, "tmpfile");
+    TEST_SPLIT("", re3, "");
+    
+    TEST_SPLIT("tmpfile", re4, "tmpfile");
+    TEST_SPLIT("", re4, "");
 }

@@ -6,6 +6,7 @@
  */ 
 #include "wvx509.h"
 #include "wvrsa.h"
+#include "wvcrl.h"
 #include "wvsslhacks.h"
 #include "wvdiriter.h"
 #include "wvcrypto.h"
@@ -304,6 +305,13 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
 
     assert(rsa);
 
+    if (cert)
+    {
+	debug("Replacing already existant certificate...\n");
+	X509_free(cert);
+	cert = NULL;
+    }
+    
     // double check RSA key
     if (rsa->isok())
 	debug("RSA Key is fine.\n");
@@ -373,12 +381,18 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
     // the usage of this cert to digital signature, key agreement, and 
     // key encipherment.
     if (is_ca)
+    {
+	debug("Setting Key usage with CA Parameters\n");
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
 				 "critical, keyCertSign, cRLSign");
+    }
     else
+    {
+	debug("Setting Key Usage with normal user parameters\n");
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
 				 "critical, digitalSignature, "
 				 "keyEncipherment, keyAgreement");
+    }
     
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
@@ -403,11 +417,13 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
     if (is_ca)
 	; // Extended Key Usage is not allowed for CA's
     else
+    {
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
 	     "TLS Web Server Authentication, TLS Web Client Authentication");
 	
-    X509_add_ext(cert, ex, -1);
-    X509_EXTENSION_free(ex);
+	X509_add_ext(cert, ex, -1);
+	X509_EXTENSION_free(ex);
+    }
 
     // Sign the certificate with our own key ("Self Sign")
     if (!X509_sign(cert, pk, EVP_sha1()))
@@ -540,6 +556,15 @@ WvString WvX509Mgr::certreq()
 WvString WvX509Mgr::signcert(WvStringParm pkcs10req)
 {
     assert(rsa);
+    assert(cert);
+    debug("Signing a certificate request with : %s\n", get_subject());
+
+    if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
+	  (cert->ex_kusage & KU_KEY_CERT_SIGN)))
+    {
+	debug("Certificate not allowed to sign Certificates!\n");
+	return WvString::null;
+    }
     
     // Break this next part out into a de-pemify section, since that is what
     // this part up until the FIXME: is about.
@@ -551,7 +576,7 @@ WvString WvX509Mgr::signcert(WvStringParm pkcs10req)
 	debug("This doesn't look like PEM Encoded information...\n");
 	return WvString::null;
     }
-    char *end = strstr(begin + 1, "=\n---");
+    char *end = strstr(begin + 1, "\n---");
     if (!end)
     {
 	debug("Is this a complete certificate request?\n");
@@ -932,6 +957,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	debug("Importing X509 certificate.\n");
 	if(cert)
 	{
+	    debug("Replacing an already existant X509 Certificate!\n");
 	    X509_free(cert);
 	    cert = NULL;
 	}
@@ -1316,4 +1342,67 @@ bool WvX509Mgr::verify(WvBuf &original, WvStringParm signature)
     }
     else
 	return true;
+}
+
+
+ASN1_TIME *WvX509Mgr::get_notvalid_before()
+{
+    assert(cert);
+    return X509_get_notBefore(cert);
+}
+
+
+ASN1_TIME *WvX509Mgr::get_notvalid_after()
+{
+    assert(cert);
+    return X509_get_notAfter(cert);
+    
+}
+
+
+bool WvX509Mgr::signcrl(WvCRLMgr *crl)
+{
+    assert(crl);
+    assert(rsa);
+    
+    if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
+	  (cert->ex_kusage & KU_CRL_SIGN)))
+    {
+	debug("Certificate not allowed to sign CRLs!\n");
+	return false;
+    }
+    
+    EVP_PKEY *certkey = EVP_PKEY_new();
+    bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);
+    if (crl->getcrl() && cakeyok)
+    {
+	// Use Version 2 CRLs - Of COURSE that means
+	// to set it to 1 here... grumble..
+	X509_CRL_set_version(crl->getcrl(), 1);
+
+	X509_CRL_set_issuer_name(crl->getcrl(), X509_get_subject_name(cert));
+
+	ASN1_TIME *tmptm = ASN1_TIME_new();
+	// Set the LastUpdate time to now.
+	X509_gmtime_adj(tmptm, 0);
+	X509_CRL_set_lastUpdate(crl->getcrl(), tmptm);
+	// CRL's are valid for 30 days
+	X509_gmtime_adj(tmptm, (long)60*60*24*30);
+	X509_CRL_set_nextUpdate(crl->getcrl(), tmptm);
+	ASN1_TIME_free(tmptm);
+	
+	// OK - now sign it...
+	X509_CRL_sign(crl->getcrl(), certkey, EVP_sha1());
+    }
+    else
+    {
+	debug("No keys??\n");
+	EVP_PKEY_free(certkey);
+	return false;
+    }
+    EVP_PKEY_free(certkey);
+
+    crl->setca(this);
+    
+    return true;
 }
