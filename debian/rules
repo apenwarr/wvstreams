@@ -51,9 +51,9 @@ clean:
 	rm -f build-stamp build-stamp-indep configure-stamp
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) clean
 	-$(MAKE) -C Docs/sgmlmanual clean
 	-rm -rf Docs/doxy-html
+	-$(MAKE) distclean
 	dh_clean
 
 

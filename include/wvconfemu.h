@@ -21,6 +21,8 @@
 class WvConfEmu;
 class WvConfigEntryEmu;
 class WvConfigSectionEmu;
+class WvAuthDaemon;
+class WvAuthDaemonSvc;
 
 typedef WvConfEmu WvConfigSectionListEmu;
 typedef WvConfigSectionEmu WvConfigEntryListEmu;
@@ -168,6 +170,23 @@ public:
         { return get_passwd("Users", user); }
     WvString get_passwd2(WvString pwenc);
 
+    // Check the password passed in.  This isn't defined in wvconf.cc
+    // We use this function to check passwords since we may not know what
+    // the password actually is!
+    bool check_passwd(WvStringParm sect, WvStringParm user,
+		      WvStringParm passwd);
+    bool check_passwd(WvStringParm user, WvStringParm passwd)
+    {
+	return check_passwd("Users", user, passwd);
+    }
+
+    // Check if the user exists.  This isn't defined in wvconf.cc
+    bool user_exists(WvStringParm sect, WvStringParm user);
+    bool user_exists(WvStringParm user)
+    {
+	return user_exists("Users", user);
+    }
+
     // Encrypts and sets a user's password.  This isn't defined in wvconf.cc.
     void set_passwd(WvStringParm sect, WvStringParm user, WvStringParm passwd);
     void set_passwd(WvStringParm user, WvStringParm passwd)
@@ -181,6 +200,20 @@ public:
 
     class Iter;
     friend class Iter;
+    
+private:
+/* The following is an ugly hack, but since WvConf is being
+ * deprecated, we don't care.
+ * 
+ * It seems that check_passwd() and user_exists() need to talk to a
+ * WvAuthDaemon.  However, making them virtual functions would break since
+ * everyone else has to implement them.  So we'll its pointer and accessors
+ * here.
+ */
+private:
+    WvAuthDaemon *wvauthd;	// Authentication Daemon
+public:
+    friend WvAuthDaemonSvc;
 };
 
 

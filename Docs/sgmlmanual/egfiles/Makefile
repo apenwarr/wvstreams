@@ -1,7 +1,10 @@
 #Remember to set TOPDIR to a directory containing wvrules.mk!
+ifeq ($(TOPDIR),)
 TOPDIR=../../..
+endif
+
 STATIC=1
-include $(TOPDIR)/../../wvrules.mk
+include $(TOPDIR)/wvrules.mk
 
 LIBS=-L$(TOPDIR) -lwvstreams -lwvutils -lcrypto 
 XPATH=$(TOPDIR)/include
