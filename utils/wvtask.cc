@@ -11,7 +11,12 @@
 #include <assert.h>
 #include <malloc.h> // for alloca()
 #include <stdlib.h> // for alloca() on non-Linux platforms?
+#include "wvautoconf.h"
+#ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
+#else
+#define VALGRIND_MAKE_READABLE(x, y)
+#endif
 
 #define TASK_DEBUG 0
 #if TASK_DEBUG

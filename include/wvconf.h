@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -20,12 +20,14 @@
 
 
 #ifdef __WVCONFEMU_H
+#ifdef USE_WVCONFEMU
 #warning "disabling wvconfemu transparent emulation"
 #undef WvConf
 #undef WvConfigSection
 #undef WvConfigSectionList
 #undef WvConfigEntry
 #undef WvConfigEntryList
+#endif
 #endif
 
 
@@ -196,6 +198,23 @@ public:
     WvString get_passwd(WvStringParm user)
         { return get_passwd("Users", user); }
     WvString get_passwd2(WvString pwenc);
+
+    // Check the password passed in.  This isn't defined in wvconf.cc
+    // We use this function to check passwords since we may not know what
+    // the password actually is!
+    bool check_passwd(WvStringParm sect, WvStringParm user,
+		      WvStringParm passwd);
+    bool check_passwd(WvStringParm user, WvStringParm passwd)
+    {
+	return check_passwd("Users", user, passwd);
+    }
+
+    // Check if the user exists.  This isn't defined in wvconf.cc
+    bool user_exists(WvStringParm sect, WvStringParm user);
+    bool user_exists(WvStringParm user)
+    {
+	return user_exists("Users", user);
+    }
 
     // Encrypts and sets a user's password.  This isn't defined in wvconf.cc.
     void set_passwd(WvStringParm sect, WvStringParm user, WvStringParm passwd);

@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
  *
@@ -18,7 +18,7 @@
 /**
  * A generator that exposes the windows registry.
  *
- * To mount, use the moniker "reegistry:".
+ * To mount, use the moniker "registry:".
  *
  */
 class UniRegistryGen : public UniConfGen

@@ -7,6 +7,7 @@
 
 typedef WvBdbHash<WvString,WvString> StrStrMap;
 typedef WvBdbHash<WvString,int> StrTimeMap;
+typedef WvBdbHash<int,int> IntIntMap;
 
 DeclareWvList(int);
 
@@ -20,8 +21,10 @@ int main()
 	printf("\nList of strings:\n");
 	{
 	    StrStrMap::Iter i(ss);
-	    for (i.rewind(); i.next(); )
+            int guard = 0;
+	    for (i.rewind(); i.next() && guard < 5; guard++)
 		printf("'%s': '%s'\n", i.key().cstr(), i->cstr());
+            if (guard == 5) printf("FAILED\n");
 	}
 	
 	ss.add("hello", "world", true);
@@ -33,15 +36,56 @@ int main()
 	else
 	    ss.add("appendable", "init");
 	printf("appendable is now '%s'\n", ss["appendable"].cstr());
+
+        printf("\nRestarting an iter:\n");
+        {
+            StrStrMap::Iter i(ss);
+            int guard = 0;
+            for (i.rewind(); i.next() && guard < 5; guard++)
+            {
+                printf("1 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+                if (i.key() == "hello")
+                {
+                    printf("Hit 'hello': modifying and starting over\n");
+                    i().append("-yak");
+                    i.save();
+                    int guard2 = 0;
+                    for (i.rewind(); i.next() && guard2 < 5; guard2++)
+                        printf("1 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+                    if (guard == 5) guard2 = 5;
+                    break;
+                }
+            }
+            if (guard == 5) printf("FAILED\n");
+        }
+
+        printf("\nUnlinking 'hello' from an iter:\n");
+        {
+            StrStrMap::Iter i(ss);
+            int guard = 0;
+            for (i.rewind(); i.next() && guard < 5; guard++)
+            {
+		printf("1 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+                if (i.key() == "hello")
+                    i.xunlink();
+            }
+            if (guard == 5) printf("FAILED\n");
+            for (i.rewind(), guard = 0; i.next() && guard < 5; guard++)
+		printf("2 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+            if (guard == 5) printf("FAILED\n");
+        }
     }
 
     {
-	StrTimeMap st("dbmfile2");
+	StrTimeMap st;
+        st.opendb("dbmfile2");
 	printf("\nList of times:\n");
 	{
 	    StrTimeMap::Iter i(st);
-	    for (i.rewind(); i.next(); )
+            int guard = 0;
+            for (i.rewind(); i.next() && guard < 5; guard++)
 		printf("'%s': %d\n", i.key().cstr(), *i);
+            if (guard == 5) printf("FAILED\n");
 	}
 	
 	st.add("hello", 65, true);
@@ -75,7 +119,8 @@ int main()
 	//for (int count = 0; count < 10000; count++)
 	{
 	    ListMap::Iter i(m);
-	    for (i.rewind(); i.next(); )
+            int guard = 0;
+            for (i.rewind(); i.next() && guard < 5; guard++)
 	    {
 		WvList<WvString> &key = i.key();
 		intList &data = i();
@@ -94,6 +139,34 @@ int main()
 		}
 		printf("\n");
 	    }
+            if (guard == 5) printf("FAILED\n");
 	}
+    }
+
+    {
+        printf("\nTesting anonymous db:\n");
+        bool ok = true;
+        StrStrMap st;
+        if (!st.isempty()) { ok = false; printf("Anon-db is NOT empty: FAILED\n"); }
+        st.add("foo", "bar");
+        if (st["foo"] != "bar") {
+            ok = false;
+            printf(WvString("Put in foo: bar; got out foo: %s: FAILED\n", st["foo"]));
+        }
+        if (ok) printf("Success!\n");
+    }
+
+    {
+        printf("\nTesting iter:\n");
+        IntIntMap m("ints");
+        m.add(42,43,true);
+        IntIntMap::Iter i(m);
+        int guard = 0;
+        for (i.rewind(); i.next() && guard < 5; guard++)
+        {
+            printf( "%d -> %d\n", i.key(), i() );
+            i.save();
+        }
+        if (guard == 5) printf("FAILED\n");
     }
 }

@@ -38,8 +38,8 @@ static void printkey(WvStream &file, const UniConfKey &key,
 
 /***** UniIniGen *****/
 
-UniIniGen::UniIniGen(WvStringParm _filename)
-    : filename(_filename), log(filename)
+UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
+    : filename(_filename), create_mode(_create_mode), log(filename)
 {
     log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
@@ -182,6 +182,8 @@ bool UniIniGen::refresh()
     }
     unhold_delta();
 
+    delete newgen;
+
     /** done **/
     return true;
 }
@@ -225,10 +227,9 @@ void UniIniGen::commit()
     /** check dirtiness **/
     if (! dirty)
         return;
-    dirty = false;
 
     /** open the file **/
-    WvFile file(filename, O_WRONLY | O_TRUNC | O_CREAT);
+    WvFile file(filename, O_WRONLY | O_TRUNC | O_CREAT, create_mode);
     if (! file.isok())
     {
         //FIXME: Should use wverror
@@ -249,6 +250,8 @@ void UniIniGen::commit()
         log("Error writing to config file: \"%s\"\n", file.errstr());
         return;
     }
+
+    dirty = false;
 
     /** done **/
     return;

@@ -93,7 +93,7 @@ bool WvLockDev::lock()
 	// We made a lock file...
 	fd.print("%10s\n", getpid());
     }
-    else
+    else if (fd.geterr() == EEXIST)
     {
 	char *inbuf;
 	
@@ -124,6 +124,8 @@ bool WvLockDev::lock()
 	else
  	    return false; // device already locked
     }
+    else // some other unexpected error
+	return false;
 
     lock_count++;
     return true;
@@ -136,7 +138,7 @@ void WvLockDev::unlock()
     if (!lock_count) return;
 
     if (!--lock_count)
-	unlink( filename );
+	unlink(filename);
 }
 
 

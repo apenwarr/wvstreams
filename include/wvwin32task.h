@@ -1,3 +1,4 @@
+/* -*- Mode: C++ -*- */
 #pragma once
 #include "wvstring.h"
 #include "wvlinklist.h"

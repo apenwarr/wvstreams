@@ -1,3 +1,4 @@
+/* -*- Mode: C++ -*- */
 #ifndef FTPPARSE_H
 #define FTPPARSE_H
 

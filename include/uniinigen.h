@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
@@ -23,6 +23,7 @@
 class UniIniGen : public UniTempGen
 {
     WvString filename;
+    int create_mode;
     WvLog log;
     
 public:
@@ -30,7 +31,7 @@ public:
      * Creates a generator which can load/modify/save a .ini file.
      * "filename" is the local path of the .ini file
      */
-    UniIniGen(WvStringParm filename);
+    UniIniGen(WvStringParm filename, int _create_mode = 0666);
 
     virtual ~UniIniGen();
     

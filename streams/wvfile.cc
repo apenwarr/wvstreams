@@ -28,7 +28,11 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 	undo_force_select(true, false, false);
     
     close();
+    #ifndef _WIN32
     int rwfd = ::open(filename, mode | O_NONBLOCK, create_mode);
+    #else
+    int rwfd = ::_open(filename, mode | O_NONBLOCK, create_mode);
+    #endif
     if (rwfd < 0)
     {
 	seterr(errno);

@@ -17,8 +17,14 @@ NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist \
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libuniconf.so libuniconf.a
-TARGETS += wvtestmain.o
-TARGETS += uniconf/daemon/uniconfdaemon crypto/tests/ssltest
+GARBAGE += wvtestmain.o
+
+ifneq ("$(with_swig)", "no")
+  ifneq ("$(with_tcl)", "no")
+    TARGETS += libuniconf_tcl.so
+    CPPFLAGS += -I/usr/include/tcl8.3
+  endif
+endif
 
 ifneq ("$(with_ogg)", "no")
   ifneq ("$(with_vorbis)", "no")
@@ -52,6 +58,59 @@ ARFLAGS = rs
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
+# for O_LARGEFILE
+CXXFLAGS+=${CXXOPTS}
+CFLAGS+=${COPTS}
+CXXFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+
+ifeq ($(DEBUG),)
+CXXFLAGS+=-g
+CFLAGS+=-g
+endif
+
+ifneq ($(DEBUG),)
+CXXFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
+CFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
+endif
+
+ifeq ("$(enable_debug)", "no")
+#CXXFLAGS+=-fomit-frame-pointer
+# -DNDEBUG is disabled because we like assert() to crash
+#CXXFLAGS+=-DNDEBUG
+#CFLAGS+=-DNDEBUG
+endif
+
+ifeq ("$(enable_fatal_warnings)", "yes")
+CXXFLAGS+=-Werror
+# FIXME: not for C, because our only C file, crypto/wvsslhack.c, has
+#        a few warnings.
+#CFLAGS+=-Werror
+endif
+
+ifneq ("$(enable_optimization)", "no")
+CXXFLAGS+=-O2
+#CXXFLAGS+=-felide-constructors
+CFLAGS+=-O2
+endif
+
+ifneq ("$(enable_warnings)", "no")
+CXXFLAGS+=-Wall -Woverloaded-virtual
+CFLAGS+=-Wall
+endif
+
+ifneq ("$(enable_rtti)", "yes")
+CXXFLAGS+=-fno-rtti
+endif
+
+ifneq ("$(enable_exceptions)", "yes")
+CXXFLAGS+=-fno-exceptions
+endif
+
+ifeq ("$(enable_efence)", "yes")
+LDLIBS+=-lefence
+endif
+
 ifneq ("$(with_fam)", "no")
   libwvstreams.so: -lfam
 endif
@@ -62,10 +121,6 @@ endif
 
 ifneq ("$(with_bdb)", "no")
   libwvutils.so-LIBS+=-ldb
-endif
-
-ifeq ("$(enable_verbose)", "yes")
-  VERBOSE:=yes
 endif
 
 ifneq ("$(with_xplc)", "no")
@@ -86,7 +141,6 @@ ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
 endif
 
-
 LDLIBS := -lgcc $(LDLIBS) \
 	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++")
@@ -99,10 +153,10 @@ libwvutils.a libwvutils.so: $(call objects,utils)
 libwvutils.so: -lz -lcrypt
 
 libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams urlget)
-libwvstreams.so: libwvutils.so -lssl
+libwvstreams.so: libwvutils.so -lssl -lcrypto
 
 libuniconf.a libuniconf.so: $(call objects,uniconf)
-libuniconf.so: libwvstreams.so
+libuniconf.so: libwvstreams.so libwvutils.so
 
 libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
 libwvoggvorbis.so: -logg -lvorbis -lvorbisenc libwvutils.so
@@ -113,9 +167,16 @@ libwvoggspeex.so: -logg -lspeex libwvutils.so
 libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: -lfftw -lrfftw libwvutils.so
 
+ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
+  libwvqt.so-LIBS+=-lqt-mt
+else
+  libwvqt.so-LIBS+=-lqt
+endif
 libwvqt.a libwvqt.so: $(call objects,qt)
 libwvqt.so: libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
+
+libuniconf_tcl.so: bindings/uniconf_tcl.o -ltcl8.3 -luniconf
 

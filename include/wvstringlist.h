@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -19,6 +19,8 @@ class WvStringList : public WvStringListBase
 public:
     WvString join(const char *joinchars = " ") const;
     void split(WvStringParm s, const char *splitchars = " \t\r\n",
+	       int limit = 0);
+    void splitstrict(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
     void fill(const char * const *array);
     WvString popstr();

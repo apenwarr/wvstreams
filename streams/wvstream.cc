@@ -537,7 +537,14 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
     }
     
     // we timed out or had a socket error
-    return NULL;
+    if (!isok() && inbuf.used())
+    {
+	// if the stream has closed, dump the entire buffer as the last line
+	inbuf.put("", 1);
+	return (char *)inbuf.get(inbuf.used());
+    }
+    else
+	return NULL;
 }
 
 
@@ -552,12 +559,16 @@ void WvStream::drain()
 bool WvStream::flush(time_t msec_timeout)
 {
     if (is_flushing) return false;
+    
+    TRACE("flush starts\n");
 
     is_flushing = true;
     want_to_flush = true;
     bool done = flush_internal(msec_timeout) // any other internal buffers
 	&& flush_outbuf(msec_timeout);  // our own outbuf
     is_flushing = false;
+
+    TRACE("flush stops (%d)\n", done);
     return done;
 }
 
@@ -570,6 +581,8 @@ bool WvStream::should_flush()
 
 bool WvStream::flush_outbuf(time_t msec_timeout)
 {
+    TRACE("flush_outbuf starts (isok=%d)\n", isok());
+    
     // flush outbuf
     while (isok() && outbuf.used())
     {
@@ -578,8 +591,16 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	
 	size_t attempt = outbuf.used();
 	size_t real = uwrite(outbuf.get(attempt), attempt);
-	if (real < attempt)
+	
+	// WARNING: uwrite() may have messed up our outbuf!
+	// This probably only happens if uwrite() closed the stream because
+	// of an error, so we'll check isok().
+	if (isok() && real < attempt)
+	{
+	    TRACE("flush_outbuf: unget %d-%d\n", attempt, real);
+	    assert(outbuf.ungettable() >= attempt - real);
 	    outbuf.unget(attempt - real);
+	}
 	
 	// since post_select() can call us, and select() calls post_select(),
 	// we need to be careful not to call select() if we don't need to!
@@ -594,8 +615,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     if (isok() && autoclose_time)
     {
 	time_t now = time(NULL);
-	TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
-	      (unsigned int)this, now - autoclose_time, outbuf.used());
+	TRACE("Autoclose enabled for 0x%p - now-time=%ld, buf %d bytes\n", 
+	      this, now - autoclose_time, outbuf.used());
 	if ((flush_internal(0) && !outbuf.used()) || now > autoclose_time)
 	{
 	    autoclose_time = 0; // avoid infinite recursion!
@@ -605,12 +626,16 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 
     if (!outbuf.used() && outbuf_delayed_flush)
         want_to_flush = false;
+    
+    TRACE("flush_outbuf: now isok=%d\n", isok());
 
     // if we can't flush the outbuf, at least empty it!
     if (!isok())
 	outbuf.zap();
 
     maybe_autoclose();
+    TRACE("flush_outbuf stops\n");
+    
     return !outbuf.used();
 }
 
@@ -639,8 +664,8 @@ void WvStream::flush_then_close(int msec_timeout)
     time_t now = time(NULL);
     autoclose_time = now + (msec_timeout + 999) / 1000;
     
-    TRACE("Autoclose SETUP for 0x%08X - buf %d bytes, timeout %ld sec\n", 
-	    (unsigned int)this, outbuf.used(), autoclose_time - now);
+    TRACE("Autoclose SETUP for 0x%p - buf %d bytes, timeout %ld sec\n", 
+	    this, outbuf.used(), autoclose_time - now);
 
     // as a fast track, we _could_ close here: but that's not a good idea,
     // since flush_then_close() deals with obscure situations, and we don't

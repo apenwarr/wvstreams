@@ -101,10 +101,16 @@ void WvDailyEvent::configure(int _first_hour, int _num_per_day)
     num_per_day = _num_per_day;
     if (num_per_day < 0)
 	num_per_day = 1;
+
+    // Don't let WvDailyEvents occur more than once a minute. -- use an alarm
+    // instead
+    if (num_per_day > 24*60)
+        num_per_day = 24*60;
     
-    // don't start until at least one period has gone by
-    time_t max = (24*60*60)/(num_per_day + 1);
+    time_t max = num_per_day ? (24*60*60)/num_per_day : 6*60*60;
     if (max > 6*60*60)
-	max = 6*60*60; // unless that's a very long time
+	max = 6*60*60; // unless that's a very long time, 6 hrs
+
+    // don't start until at least one period has gone by
     not_until = time(NULL) + max;
 }

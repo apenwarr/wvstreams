@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -82,7 +82,13 @@ public:
      * In addition to the nice_tcpopts(), set TCP_NODELAY
      */
     void low_delay();
-    
+
+    /**
+     * function to set up a TCP socket the way we *don't* like: turn the
+     * timeouts way down so that network errors show up easily for debugging
+     */
+    void debug_mode();
+
     /**
      * the local address of this socket (ie. from getsockname())
      * really useful only for transparent proxies, but always available.

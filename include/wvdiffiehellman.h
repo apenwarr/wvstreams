@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  * Copyright (C) 2003 Net Integration Technologies, Inc.
  *

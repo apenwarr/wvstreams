@@ -45,6 +45,10 @@ LDFLAGS += $(LDOPTS)
 # FIXME: what does this do??
 XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" && echo " -lsupc++")
 
+ifdef USE_WVCONFEMU
+CXXFLAGS += -DUSE_WVCONFEMU
+endif
+
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
 else
@@ -84,6 +88,10 @@ endif
 
 ifeq (USE_EFENCE,1)
   LDLIBS+=$(EFENCE)
+endif
+
+ifeq ("$(enable_verbose)", "yes")
+  VERBOSE:=1
 endif
 
 ifdef DONT_LIE
@@ -201,7 +209,7 @@ define wvlink_ar
 endef
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
-	$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
+	$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-z,defs,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
 	$(if $(filter-out $(call wvsoname,$1),$1),ln -sf $1 $(call wvsoname,$1))
 endef
 

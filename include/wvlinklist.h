@@ -98,6 +98,13 @@ public:
          */
 	WvLink *cur() const
             { return link; }
+	
+	/**
+	 * Returns a void pointer to the object at the iterator's current
+	 * location.  You should almost never need this.  Use ptr() instead.
+	 */
+	void *vptr() const
+	    { return link->data; }
 
         /**
          * Rewinds the iterator and repositions it over the element that

@@ -5,15 +5,12 @@
  * Test program for the WvConf emulation in UniConf.
  */
 
+#ifndef USE_WVCONFEMU
 #define USE_WVCONFEMU
-
-#ifdef USE_WVCONFEMU
-# include "uniconfroot.h"
-# include "wvconfemu.h"
-#else
-# include "wvconf.h"
 #endif
 
+#include "uniconfroot.h"
+#include "wvconfemu.h"
 #include "wvlog.h"
 
 int main()
@@ -22,7 +19,7 @@ int main()
     WvLog log("emutest", WvLog::Info);
 #ifdef USE_WVCONFEMU
     UniConfRoot uniconf("ini:test2.ini.new");
-    WvConfEmu cfg(uniconf);
+    WvConf cfg(uniconf);
 #else
     WvConf cfg("test2.ini.new");
 #endif
@@ -91,6 +88,8 @@ int main()
     cfg.set("users", "bob", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(c1 && c2 && c3);
+
+    //log("Number of entries in [Global]: %s\n", cfg["Global"]->count());
   
     return 0;
 }

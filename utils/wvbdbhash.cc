@@ -23,13 +23,25 @@
 #endif
 
 
-WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile)
-    : itercount(0)
+int comparefunc(const DBT *a, const DBT *b)
 {
-    dbf = dbopen(dbfile, O_CREAT|O_RDWR, 0666, DB_BTREE, NULL);
-    if (!dbf)
-        fprintf(stderr, "Could not open database '%s': %s\n",
-                dbfile.cstr(), strerror(errno));
+    if (a == NULL && b == NULL) return 0;
+    if (a == NULL) return 1;
+    if (b == NULL) return -1;
+    
+    size_t minlen = (a->size > b->size) ? b->size : a->size;
+    int ret = memcmp(a->data, b->data, minlen);
+    if (ret != 0) return ret;
+    if (a->size > b->size) return 1;
+    if (a->size < b->size) return -1;
+    return 0;
+}
+
+
+WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile) :
+    dbf(NULL)
+{
+    opendb(dbfile);
 }
 
 
@@ -37,6 +49,21 @@ WvBdbHashBase::~WvBdbHashBase()
 {
     if (dbf)
 	dbf->close(dbf);
+}
+
+
+void WvBdbHashBase::opendb(WvStringParm dbfile)
+{
+    if (dbf) dbf->close(dbf);
+    
+    BTREEINFO info;
+    memset(&info, 0, sizeof(info));
+    info.compare = comparefunc;
+    dbf = dbopen(!!dbfile ? dbfile.cstr() : NULL, O_CREAT|O_RDWR, 0666,
+            DB_BTREE, &info);
+    if (!dbf)
+        fprintf(stderr, "Could not open database '%s': %s\n",
+                dbfile.cstr(), strerror(errno));
 }
 
 
@@ -84,57 +111,94 @@ void WvBdbHashBase::zap()
 WvBdbHashBase::IterBase::IterBase(WvBdbHashBase &_bdbhash)
     : bdbhash(_bdbhash)
 {
-    curkey.dptr = curdata.dptr = NULL;
-    assert(++bdbhash.itercount == 1);
+    rewindto.dsize = 0;
+    rewindto.dptr = NULL;
 }
 
 
 WvBdbHashBase::IterBase::~IterBase()
 {
-    bdbhash.itercount--;
+    free(rewindto.dptr);
 }
 
 
 void WvBdbHashBase::IterBase::rewind()
 {
-    curkey.dptr = NULL;
-    empty = false;
+    free(rewindto.dptr);
+    rewindto.dptr = NULL;
 }
 
 
-void WvBdbHashBase::IterBase::rewind(const datum &firstkey)
+void WvBdbHashBase::IterBase::rewind(const datum &firstkey, datum &curkey,
+        datum &curdata)
 {
     assert(bdbhash.isok());
-    curkey.dptr = NULL;
-    empty = false;
-    
-    curkey = firstkey;
-    if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
-			 R_CURSOR))
-    {
-	// no key >= requested one?  empty set.
-	curkey.dptr = NULL;
-	empty = true;
-    }
-    else if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
-			      R_PREV))
-    {
-	// no key < requested one?  start at the beginning.
-	curkey.dptr = NULL;
-    }
-    
-    // otherwise, curkey is now the key right before the requested one.
-    // That makes next() go to the first requested key, following standard
-    // WvUtils semantics.
+
+    // save the firstkey and clear the current one
+    free(rewindto.dptr);
+    rewindto.dsize = firstkey.dsize;
+    rewindto.dptr = malloc(rewindto.dsize);
+    memcpy(rewindto.dptr, firstkey.dptr, rewindto.dsize);
+    curkey.dptr = curdata.dptr = NULL;
 }
 
 
-void WvBdbHashBase::IterBase::next()
+void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
 {
     assert(bdbhash.isok());
+
+    // check if this is the first next() after a rewind()
+    bool first = !curkey.dptr;
+    datum wanted = { 0, 0 };
+    if (first) {
+        if (rewindto.dptr) {
+            curkey = rewindto;
+            first = false;
+        }
+    } else {
+        wanted.dsize = curkey.dsize;
+        wanted.dptr = malloc(wanted.dsize);
+        memcpy(wanted.dptr, curkey.dptr, wanted.dsize);
+    }
+
+    // always seek for the saved cursor we were just passed, to work around
+    // bugs in libdb1's seq with btrees.  (As a bonus, this gives us multiple
+    // iterators for free!)
     if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
-			 curkey.dptr ? R_NEXT : R_FIRST))
+                first ? R_FIRST : R_CURSOR))
+    {
+        // current key gone, and none higher left: done
 	curkey.dptr = curdata.dptr = NULL;
+    }
+    else if (wanted.dptr && !comparefunc((DBT *) &curkey, (DBT *) &wanted))
+    {
+        // found the exact key requested, so move forward one
+        if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+                    R_NEXT))
+        {
+            // nothing left?  Fine, we're done
+            curkey.dptr = curdata.dptr = NULL;
+        }
+    }
+
+    // otherwise, curkey is now sitting on the key after the requested one (or
+    // the very first key), as expected.  (Also, if rewindto is set it should
+    // be either filled in with the matching btree data or cleared.)
+    assert(!rewindto.dptr || curkey.dptr != rewindto.dptr);
+    free(wanted.dptr);
+}
+
+
+void WvBdbHashBase::IterBase::xunlink(const datum &curkey)
+{
+    bdbhash.remove(curkey);
+}
+
+
+void WvBdbHashBase::IterBase::update(const datum &curkey, const datum &data)
+{
+    int r = bdbhash.add(curkey, data, true);
+    assert(!r && "Weird: database add failed during save?");
 }
 
 #endif /* WITH_BDB */

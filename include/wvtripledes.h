@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
  *

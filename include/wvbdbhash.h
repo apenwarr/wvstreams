@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
  *
@@ -29,10 +29,15 @@ public:
 	size_t dsize;
     };
     
-    WvBdbHashBase(WvStringParm dbfile);
+    WvBdbHashBase(WvStringParm dbfile = WvString::null);
     ~WvBdbHashBase();
-    //int count() const { return entries; }
-    // bool isempty() const { return !entries; }
+
+    /**
+     * Open a new db file.  This will instantly change the contents of the
+     * db, and probably mess up all your iterators.  Best used just aftter
+     * creation.
+     */
+    void opendb(WvStringParm dbfile = WvString::null);
     
     bool isok() const
         { return dbf; }
@@ -48,21 +53,21 @@ public:
     public:
         IterBase(WvBdbHashBase &_bdbhash);
         ~IterBase();
+
         void rewind();
-	void rewind(const datum &firstkey);
-        void next();
+	void rewind(const datum &firstkey, datum &key, datum &data);
+        void next(datum &key, datum &data);
+        void xunlink(const datum &key);
+        void update(const datum &key, const datum &data);
         
     protected:
         WvBdbHashBase &bdbhash;
-        datum curkey;
-        datum curdata;
-	bool empty;
+        datum rewindto;
     };
-    
+   
 private:
     friend class IterBase;
     struct __db *dbf;
-    int itercount;
 };
 
 
@@ -92,15 +97,25 @@ public:
     class datumize : public datum
     {
 	datumize(datumize &); // not defined
+
+        void init(const T &t)
+        {
+	    wv_serialize(buf, t);
+	    dsize = buf.used();
+	    dptr = (char *)buf.peek(0, buf.used());
+        }
+
     public:
 	WvDynBuf buf;
 	
 	datumize(const T &t)
-	{
-	    wv_serialize(buf, t);
-	    dsize = buf.used();
-	    dptr = (char *)buf.peek(0, buf.used());
-	}
+            { init(t); }
+
+	datumize(const T *t)
+        {
+            if (t) { init(*t); }
+            else { dsize = 0; dptr = 0; }
+        }
     };
     
     template <typename T>
@@ -112,9 +127,9 @@ public:
 
 protected:
     D *saveddata;
-    
+
 public:
-    WvBdbHash(WvStringParm dbfile) : WvBdbHashBase(dbfile)
+    WvBdbHash(WvStringParm dbfile = WvString::null) : WvBdbHashBase(dbfile)
         { saveddata = NULL; }
 
     void add(const K &key, const D &data, bool replace = false)
@@ -153,6 +168,13 @@ public:
 	return res;
     }
 
+    bool isempty()
+    {
+        Iter i(*this);
+        i.rewind();
+        return !i.next();
+    }
+ 
     D &first()
     {
 	Iter i(*this);
@@ -164,49 +186,82 @@ public:
     {
 	K *k;
 	D *d;
+
     public:
         Iter(WvBdbHash &_bdbhash) : IterBase(_bdbhash) 
 	    { k = NULL; d = NULL; }
 	~Iter()
 	{
-	    if (k) delete k;
-	    if (d) delete d;
+	    delete k;
+	    delete d;
 	}
 	
 	void rewind()
-	    { IterBase::rewind(); }
+        {
+            IterBase::rewind();
+            delete k; k = NULL;
+            delete d; d = NULL;
+        }
+
 	void rewind(const K &firstkey)
-	    { IterBase::rewind(WvBdbHash::datumize<K>(firstkey)); }
+        {
+            WvBdbHash::datumize<K> key(k);
+            WvBdbHash::datumize<D> data(d);
+
+            IterBase::rewind(WvBdbHash::datumize<K>(firstkey), key, data);
+            delete k;
+            delete d;
+            if (data.dptr)
+            {
+                k = undatumize<K *>(key);
+                d = undatumize<D *>(data);
+            }
+            else
+            {
+                k = NULL;
+                d = NULL;
+            }
+        }
 
         bool next()
         {
-	    if (k) delete k;
-	    if (d) delete d;
-	    if (empty) return false;
-            IterBase::next();
-	    if (curdata.dptr)
-	    {
-		k = undatumize<K *>(curkey);
-		d = undatumize<D *>(curdata);
-		return true;
-	    }
-	    else
-	    {
-		k = NULL;
-		d = NULL;
-		return false;
-	    }
+            WvBdbHash::datumize<K> key(k);
+            datum data = { 0, 0 };
+            IterBase::next(key, data);
+            delete k;
+            delete d;
+            if (data.dptr)
+            {
+                k = undatumize<K *>(key);
+                d = undatumize<D *>(data);
+                return true;
+            }
+            k = NULL;
+            d = NULL;
+            return false;
         }
+    
+        void unlink()
+            { xunlink(); next(); }
         
+        void xunlink()
+            { IterBase::xunlink(WvBdbHash::datumize<K>(k)); }
+
+        void save()
+            { IterBase::update(WvBdbHash::datumize<K>(k),
+                    WvBdbHash::datumize<D>(d)); }
+
 	bool cur()
-            { return !empty && curdata.dptr; }
+            { return d; }
 	
 	K &key() const
-	    { return *k; }
+	    { assert(k); return *k; }
 	
         D *ptr() const
 	    { return d; }
+
 	WvIterStuff(D);
+
     };
 
 };

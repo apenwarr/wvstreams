@@ -118,6 +118,8 @@ void WvScatterHashBase::_zap()
 
         xslots[i].status = 0;
     }
+    
+    used = num = 0;
 }
 
 void WvScatterHashBase::_set_autofree(const void *data,
@@ -141,7 +143,7 @@ bool WvScatterHashBase::_get_autofree(const void *data, unsigned hash)
 }
 
 struct WvScatterHashBase::pair *WvScatterHashBase::genfind
-    (const void *data, unsigned hash)
+    (const void *data, unsigned hash) const
 {
     unsigned slot = hash % numslots;
 

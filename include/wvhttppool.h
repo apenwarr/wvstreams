@@ -127,6 +127,9 @@ public:
     virtual void close() = 0;
     void addurl(WvUrlRequest *url);
     void delurl(WvUrlRequest *url);
+    // only implemented in WvHttpStream
+    virtual size_t remaining()
+    { return 0; }
     
     virtual void execute() = 0;
 };
@@ -151,7 +154,7 @@ private:
     WvDynBuf putstream_data;
     
     enum { Unknown, Chunked, ContentLength, Infinity } encoding;
-    size_t remaining;
+    size_t bytes_remaining;
     bool in_chunk_trailer, last_was_pipeline_test;
 
     virtual void doneurl();
@@ -170,6 +173,8 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
+    virtual size_t remaining()
+    { return bytes_remaining; }
 };
 
 
