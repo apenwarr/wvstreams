@@ -10,9 +10,9 @@
 #include <stdio.h>
 
 #if 0
-# define DEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
+# define DEBUGLOG(fmt, args...) fprintf(stderr, fmt, ## args)
 #else
-# define DEBUG(fmt, args...)
+# define DEBUGLOG(fmt, args...)
 #endif
 
 static unsigned WvHash(const UUID &_uuid)
@@ -35,20 +35,20 @@ static WvMonikerRegistryDict *regs;
 WvMonikerRegistry::WvMonikerRegistry(const UUID &iid) 
     : reg_iid(iid), dict(10)
 {
-    DEBUG("WvMonikerRegistry creating.\n");
+    DEBUGLOG("WvMonikerRegistry creating.\n");
     refcount = 0;
 }
 
 
 WvMonikerRegistry::~WvMonikerRegistry()
 {
-    DEBUG("WvMonikerRegistry destroying.\n");
+    DEBUGLOG("WvMonikerRegistry destroying.\n");
 }
 
 
 void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func)
 {
-    DEBUG("WvMonikerRegistry register(%s).\n", id.cstr());
+    DEBUGLOG("WvMonikerRegistry register(%s).\n", id.cstr());
     assert(!dict[id]);
     dict.add(new Registration(id, func), true);
 }
@@ -56,7 +56,7 @@ void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func)
 
 void WvMonikerRegistry::del(WvStringParm id)
 {
-    DEBUG("WvMonikerRegistry unregister(%s).\n", id.cstr());
+    DEBUGLOG("WvMonikerRegistry unregister(%s).\n", id.cstr());
     assert(dict[id]);
     dict.remove(dict[id]);
 }
@@ -72,7 +72,7 @@ IObject *WvMonikerRegistry::create(WvStringParm _s,
     else
 	cptr = "";
     
-    DEBUG("WvMonikerRegistry create object ('%s' '%s').\n", s.cstr(), cptr);
+    DEBUGLOG("WvMonikerRegistry create object ('%s' '%s').\n", s.cstr(), cptr);
     
     Registration *r = dict[s];
     if (r)
@@ -88,7 +88,7 @@ IObject *WvMonikerRegistry::create(WvStringParm _s,
 
 WvMonikerRegistry *WvMonikerRegistry::find_reg(const UUID &iid)
 {
-    DEBUG("WvMonikerRegistry find_reg.\n");
+    DEBUGLOG("WvMonikerRegistry find_reg.\n");
     
     if (!regs)
 	regs = new WvMonikerRegistryDict(10);
@@ -126,14 +126,14 @@ IObject *WvMonikerRegistry::getInterface(const UUID &uuid)
 
 unsigned int WvMonikerRegistry::addRef()
 {
-    DEBUG("WvMonikerRegistry addRef.\n");
+    DEBUGLOG("WvMonikerRegistry addRef.\n");
     return ++refcount;
 }
 
 
 unsigned int WvMonikerRegistry::release()
 {
-    DEBUG("WvMonikerRegistry release.\n");
+    DEBUGLOG("WvMonikerRegistry release.\n");
     
     if (--refcount > 1)
 	return refcount;
@@ -162,7 +162,7 @@ WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm _id,
 			     WvMonikerCreateFunc *func)
     : id(_id)
 {
-    DEBUG("WvMoniker creating(%s).\n", id.cstr());
+    DEBUGLOG("WvMoniker creating(%s).\n", id.cstr());
     reg = WvMonikerRegistry::find_reg(iid);
     if (reg)
 	reg->add(id, func);
@@ -171,7 +171,7 @@ WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm _id,
 
 WvMonikerBase::~WvMonikerBase()
 {
-    DEBUG("WvMoniker destroying(%s).\n", id.cstr());
+    DEBUGLOG("WvMoniker destroying(%s).\n", id.cstr());
     if (reg)
     {
 	reg->del(id);
