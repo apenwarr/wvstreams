@@ -70,7 +70,7 @@ install: all
 	for d in ${LIBFILES} wvrules.mk; do \
 		install -m 0644 $$d ${LIBDIR}; \
 	done
-	#strip --strip-debug ${LIBDI../wvstreams/libwvstreams.a
+#	strip --strip-debug ${LIBDI../wvstreams/libwvstreams.a
 
 uninstall:
 	cd ${LIBDIR}; rm -f ${LIBFILES}
