@@ -151,6 +151,15 @@ struct OpEqComp
 };
 
 
+// Case-insensitive comparison function for WvHastTable
+template <class K>
+struct StrCaseComp
+{
+    static bool compare(const K *key1, const K *key2)
+        { return strcasecmp(*key1, *key2) == 0; }
+};
+
+
 template <
     class T,                                            // element type
     class K,                                            // key type
