@@ -57,7 +57,7 @@ WvString wvssl_errstr()
 
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
+    : WvErrorBase(), debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
 {
     wvssl_init();
     cert = _cert;

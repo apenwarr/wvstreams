@@ -25,7 +25,7 @@ WvString wvssl_errstr();
  * X509 Class to handle certificates and their related
  * functions
  */
-class WvX509Mgr
+class WvX509Mgr : public WvErrorBase
 {
 public:
    /** Distinguished Name to be used in the certificate. */
@@ -240,26 +240,19 @@ public:
      * Is this certificate Object valid, and in a non-error state
      */
     bool isok() const
-        { return cert && rsa && !errstring; }
+        { return cert && rsa && !errstring && errnum == 0; }
 
     /// Accessor for the error string if !isok()
     WvString errstr() const;
 
 private:
     WvLog debug;
-    WvString errstring;
 
    /** 
     * Password for PKCS12 dump - we don't handle this entirely correctly 
     * since we should erase it from memory as soon as we are done with it
     */
     WvString pkcs12pass;
-
-    void seterr(WvStringParm s)
-        { if (!errstring) errstring = s; }
-
-    void seterr(WVSTRING_FORMAT_DECL)
-        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
 
     /**
      * Get the Extension information - returns NULL if extension doesn't exist

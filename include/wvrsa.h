@@ -24,7 +24,6 @@ struct rsa_st;
  */
 class WvRSAKey : public WvErrorBase
 {
-    int errnum;
     WvString pub, prv;
 
     void init(WvStringParm keystr, bool priv);
@@ -36,7 +35,15 @@ public:
 
     WvRSAKey(const WvRSAKey &k);
     WvRSAKey(struct rsa_st *_rsa, bool priv); // note: takes ownership
+
+    /**
+     * Populate the RSA key with a hexified() key 
+     */
     WvRSAKey(WvStringParm keystr, bool priv);
+
+    /**
+     * Create a new RSA key of bits strength.
+     */
     WvRSAKey(int bits);
     
     ~WvRSAKey();
