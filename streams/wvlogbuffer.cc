@@ -59,7 +59,7 @@ void WvLogBuffer::_end_line()
 	    i.rewind(); i.next();
 	    while (nl >= max_lines && i.cur())
 	    {
-		Msg &m = *i.data();
+		Msg &m = i;
 		if (m.level == lastmsg->level)
 		{
 		    i.unlink();
@@ -86,7 +86,7 @@ void WvLogBuffer::dump(WvStream &s)
     
     for (i.rewind(); i.next(); )
     {
-	Msg &m = *i.data();
+	Msg &m = i;
 	s.print("%s %s<%s>: %s+\n",
 		m.timestamp, m.source, loglevels[m.level], m.message);
     }

@@ -84,10 +84,10 @@ void WvIPAliaser::start_edit()
     
     for (i.rewind(); i.next(); )
     {
-	assert(i_all.find(i.data()));
+	assert(i_all.find(&i.data()));
 	
 	// the global alias entry goes down by one
-	i_all.data()->link_count--;
+	i_all.data().link_count--;
     }
     
     // empty out the local list
@@ -103,8 +103,8 @@ WvIPAliaser::Alias *WvIPAliaser::ipsearch(WvIPAliaser::AliasList &l,
     
     for (i.rewind(); i.next(); )
     {
-	if (i.data()->ip == WvIPAddr(ip))
-	    return i.data();
+	if (i.data().ip == WvIPAddr(ip))
+	    return &i.data();
     }
     
     return NULL;
@@ -143,7 +143,7 @@ void WvIPAliaser::done_edit()
     i.rewind(); i.next();
     while (i.cur())
     {
-	Alias &a = *i.data();
+	Alias &a = i;
 	if (!a.link_count)
 	    i.unlink();
 	else
@@ -159,7 +159,7 @@ void WvIPAliaser::dump()
 	AliasList::Iter i(aliases);
 	for (i.rewind(); i.next(); )
 	{
-	    Alias &a = *i.data();
+	    Alias &a = i;
 	    log("#%s = lo:wv%s: %s (%s links)\n",
 		a.index, a.index, a.ip, a.link_count);
 	}
@@ -171,7 +171,7 @@ void WvIPAliaser::dump()
 	AliasList::Iter i(all_aliases);
 	for (i.rewind(); i.next(); )
 	{
-	    Alias &a = *i.data();
+	    Alias &a = i;
 	    log("#%s = lo:wv%s: %s (%s links)\n",
 		a.index, a.index, a.ip, a.link_count);
 	}

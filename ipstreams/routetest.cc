@@ -9,7 +9,7 @@ int main()
     WvIPRouteList::Iter i(r);
     
     for (i.rewind(); i.next(); )
-	l("%s\n", *i.data());
+	l("%s\n", i());
     
     WvIPAddr a("192.168.42.22");
     l("\n%s through:\n  %s\n", a, *r.find(a));

@@ -42,7 +42,7 @@ int main()
     WvStringTable::Iter i(t);
     printf("Full(%d) contents: ", t.count());
     for (i.rewind(); i.next(); )
-	printf("%p(%s) ", i.data(), (char *)*i.data());
+	printf("%p(%s) ", (char *)i.data(), (char *)i.data());
     printf("\n\n");
     
     t.remove(&x);
@@ -50,7 +50,7 @@ int main()
     printf("Result: %p %p %p %p\n", t[x2], t[y2], t[z2], t[xx]);
     printf("Full(%d) contents: ", t.count());
     for (i.rewind(); i.next(); )
-	printf("%p(%s) ", i.data(), (char *)*i.data());
+	printf("%p(%s) ", (char *)i.data(), (char *)i.data());
     printf("\n\n");
     
     

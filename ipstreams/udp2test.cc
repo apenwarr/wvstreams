@@ -68,7 +68,7 @@ size_t WvUDPConn::uread(void *buf, size_t size)
 
     WvMiniBufferList::Iter i(buflist);
     i.rewind(); i.next();
-    WvMiniBuffer &b = *i.data();
+    WvMiniBuffer &b = i;
     if (b.used() < size)
 	size = b.used();
     memcpy(buf, b.get(size), size);

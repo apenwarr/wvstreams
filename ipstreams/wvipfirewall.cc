@@ -58,7 +58,7 @@ void WvIPFirewall::zap()
     i.rewind(); i.next();
     while (i.cur())
     {
-	del(*i.data());
+	del(i);
 	i.unlink();
     }
 }

@@ -29,8 +29,8 @@ WvConfigEntry *WvConfigSection::operator[] (const WvString &ename)
 
     for (i.rewind(); i.next();)
     {
-	if (strcasecmp(i.data()->name, ename) == 0)
-	    return i.data();
+	if (strcasecmp(i().name, ename) == 0)
+	    return &i();
     }
 
     return NULL;
@@ -69,7 +69,7 @@ void WvConfigSection::dump(FILE *fp)
 
     for (i.rewind(); i.next(); )
     {
-	WvConfigEntry &e = *i.data();
+	WvConfigEntry &e = i;
 	if (e.value && e.value[0])
 	    fprintf(fp, "%s = %s\n", (char *)e.name, (char *)e.value);
 	else

@@ -59,7 +59,7 @@ void WvBuffer::zap()
     WvMiniBufferList::Iter i(list);
     
     for (i.rewind(); i.next(); )
-	i.data()->zap();
+	i.data().zap();
     inuse = 0;
 }
 
@@ -80,7 +80,7 @@ unsigned char *WvBuffer::get(size_t num)
     i.rewind(); i.next();
 
     // if the first minibuffer has enough data, just use that.
-    firstb = i.data();
+    firstb = &i.data();
     if (firstb->used() >= num)
 	return firstb->get(num);
 
@@ -100,7 +100,7 @@ unsigned char *WvBuffer::get(size_t num)
 
     for (i.rewind(), i.next(); i.cur(); )
     {
-	b = i.data();
+	b = &i.data();
 	if (b == destb)
 	{
 	    i.next();
@@ -189,7 +189,7 @@ void WvBuffer::unalloc(size_t num)
 	for (i.rewind(); i.next() && i.cur()->next; )
 	    ;
 	
-	b = i.data();
+	b = &i.data();
 	
 	if (b->used() < num)
 	{
@@ -257,7 +257,7 @@ size_t WvBuffer::strchr(unsigned char ch)
     
     for (i.rewind(); i.next(); )
     {
-	WvMiniBuffer &b = *i.data();
+	WvMiniBuffer &b = i;
 	
 	t = b.strchr(ch);
 	
@@ -279,7 +279,7 @@ size_t WvBuffer::match(const unsigned char chlist[], size_t numch,
     
     for (i.rewind(); i.next(); )
     {
-	WvMiniBuffer &b = *i.data();
+	WvMiniBuffer &b = i;
 	
 	t = b.match(chlist, numch, reverse);
 	

@@ -153,12 +153,12 @@ const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
 
     for (i.rewind(); i.next(); )
     {
-	WvConfigSection *s = (*this)[*i.data()];
+	WvConfigSection *s = (*this)[i];
 	if (!s) continue; // no such section
 
 	for (i2.rewind(); i2.next();)
 	{
-	    WvConfigEntry *e = (*s)[*i.data()];
+	    WvConfigEntry *e = (*s)[i];
 	    if (e) return e->value;
 	}
     }
@@ -174,7 +174,7 @@ const char *WvConf::fuzzy_get(WvStringList &sections, const WvString &entry,
 
     for (i.rewind(); i.next(); )
     {
-	WvConfigSection *s = (*this)[*i.data()];
+	WvConfigSection *s = (*this)[i];
 	if (!s) continue;
 	
 	WvConfigEntry *e = (*s)[entry];
@@ -212,8 +212,8 @@ WvConfigSection *WvConf::operator[] (const WvString &section)
     // otherwise, search the whole list.
     for (i.rewind(); i.next(); )
     {
-	if (strcasecmp(i.data()->name, section) == 0)
-	    return i.data();
+	if (strcasecmp(i().name, section) == 0)
+	    return &i();
     }
 
     return NULL;
@@ -279,7 +279,7 @@ void WvConf::flush()
         Iter i(*this);
 	for (i.rewind(); i.next();)
 	{
-	    WvConfigSection & sect = *i.data();
+	    WvConfigSection & sect = i;
 	    fprintf(fp, "\n[%s]\n", (char *)sect.name);
 	    sect.dump(fp);
 	}

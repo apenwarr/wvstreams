@@ -16,7 +16,7 @@
  *
  *           i.rewind();
  *           while (i.next())
- *               printf("%s\n", i.data()->str);
+ *               printf("%s\n", i.str);
  *           
  *           ...
  *       }
@@ -165,8 +165,12 @@ public: 						\
     public: 						\
         Iter(_newname_ &l) : IterBase(l)		\
             { } 					\
-        _type_ *data() const 				\
-            { return (_type_ *)link->data; } 		\
+        _type_ &data() const 				\
+            { return *(_type_ *)link->data; } 		\
+	operator _type_& () const			\
+	    { return data(); }				\
+	_type_ &operator () () const			\
+	     { return data(); }				\
         void unlink() 					\
         {						\
 	    if (prev) ((_newname_ *)list)->unlink_after(prev); \

@@ -73,7 +73,7 @@ int main()
 	    fflush(stdout);
 	}
 
-	assert(i.data()->s == WvString(i.data()->i));
+	assert(i().s == WvString(i().i));
 	count++;
     }
     

@@ -160,8 +160,12 @@ public:									\
     public:								\
 	Iter(_classname_ &_tbl) : IterBase(_tbl)			\
 	    { }								\
-	_type_ *data() const						\
-	    { return (_type_ *)link->data; }				\
+	_type_ &data() const						\
+	    { return *(_type_ *)link->data; }				\
+	operator _type_& () const					\
+	    { return data(); }						\
+	_type_ &operator () () const					\
+	     { return data(); }						\
     };									\
     									\
 public:									\

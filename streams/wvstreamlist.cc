@@ -29,7 +29,7 @@ bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
-	WvStream &s = *i.data();
+	WvStream &s = i;
 	
 	if (!s.isok())
 	{
@@ -57,14 +57,12 @@ bool WvStreamList::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 
 bool WvStreamList::test_set(fd_set &r, fd_set &w, fd_set &x)
 {
-    WvStream *s;
-    
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
-	s = i.data();
-	if (s->isok() && s->test_set(r, w, x))
-	    sure_thing.append(s, false);
+	WvStream &s(i);
+	if (s.isok() && s.test_set(r, w, x))
+	    sure_thing.append(&s, false);
     }
     return !sure_thing.isempty();
 }
@@ -82,14 +80,14 @@ void WvStreamList::execute()
     WvStreamListBase::Iter i(sure_thing);
     for (i.rewind(), i.next(); i.cur(); )
     {
-	WvStream *s = i.data();
+	WvStream &s(i);
 	
 #if STREAMTRACE
-	fprintf(stderr, "[%p], ", s);
+	fprintf(stderr, "[%p], ", &s);
 #endif
 	
 	i.unlink();
-	s->callback();
+	s.callback();
 	
 	// list might have changed!
 	i.rewind();

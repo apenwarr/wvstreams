@@ -103,8 +103,8 @@ WvIPRoute *WvIPRouteList::find(const WvIPAddr &addr)
     
     for (i.rewind(); i.next(); )
     {
-	if (i.data()->ip.includes(addr))
-	    return i.data();
+	if (i.data().ip.includes(addr))
+	    return &i.data();
     }
     
     return NULL;

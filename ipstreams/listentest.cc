@@ -10,7 +10,6 @@ static void stream_bounce_to_list(WvStream &s, void *userdata)
 {
     WvStreamList &l = *(WvStreamList *)userdata;
     WvStreamList::Iter i(l);
-    WvStream *out;
     char *line;
 
     while ((line = s.getline(0)) != NULL)
@@ -23,9 +22,9 @@ static void stream_bounce_to_list(WvStream &s, void *userdata)
 	
 	for (i.rewind(); i.next(); )
 	{
-	    out = i.data();
-	    if (out != &s && out->select(0, false, true))
-		out->print("%s> %s\n", 
+	    WvStream &out(i);
+	    if (&out != &s && out.select(0, false, true))
+		out.print("%s> %s\n", 
 			   s.src() ? (WvString)*s.src() : WvString("stdin"),
 			   line);
 	}

@@ -454,7 +454,7 @@ void WvInterfaceDict::update()
     // mark all interfaces in list invalid for now
     Iter i(*this);
     for (i.rewind(); i.next(); )
-	i.data()->valid = false;
+	i.data().valid = false;
     
 
     // get list of all non-aliased interfaces from /proc/net/dev
@@ -523,7 +523,7 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
-	WvInterface &ifc = *i.data();
+	WvInterface &ifc(i);
 	if (!ifc.valid) continue;
 	
 	if (ifc.ipaddr() == addr || ifc.ipaddr().broadcast() == addr)
@@ -545,7 +545,7 @@ bool WvInterfaceDict::on_local_net(const WvIPNet &addr)
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
-	WvInterface &ifc = *i.data();
+	WvInterface &ifc = i;
 	if (!ifc.valid) continue;
 	
 	if (ifc.ipaddr().includes(addr))
