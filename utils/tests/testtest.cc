@@ -5,13 +5,14 @@
 static int sequence = 0;
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("first test")
 {
     WvString a, b;
     
     WVPASS(sequence++ == 0);
     
     WVPASS(a==NULL);
+    WVPASS("Next one should fail");
     WVFAIL(b==NULL); // should fail
     WVPASS(1);
     WVPASS(a==b);
@@ -19,6 +20,7 @@ WVTEST_MAIN()
     
     a.append(b);
     WVPASS(a==b);
+    WVPASS("Next one should fail");
     WVFAIL(a == b); // should fail
     WVFAIL(a != b);
     WVPASS(a == b);
@@ -31,17 +33,18 @@ WVTEST_MAIN()
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("second test")
 {
     WVPASS(++sequence == 2);
     WVPASS("booga booga");
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("third test")
 {
     WVFAIL(++sequence != 3);
     WVPASS("booga booga");
+    WVPASS("Next one should fail");
     WVPASS(sequence != 3); // should fail
 }
 
