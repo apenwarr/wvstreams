@@ -12,6 +12,7 @@
 #include "wvautoconf.h"
 #include "wvhashtable.h"
 #include "wvserialize.h"
+#include "wverror.h"
 
 /**
  * This hashtable is different from normal WvStreams hashtables in that it
@@ -22,11 +23,6 @@
  * For find and operator[], the returned object is only guaranteed to be
  * around until the next find() (or next(), for iterators).  Remember that
  * you may not be the only person to do a next() or find() on this database.
- *
- * You may only have one iterator at a time for a given hash table (for the
- * moment at least).  This is due to the strange way in which the database
- * handles iteration (with its own internal cursor).  Note that first()
- * and count() also use iterators!
  */
 
 // default to QDBM if available because it's faster
@@ -89,7 +85,8 @@ protected:
     D *saveddata;
 
 public:
-    WvOnDiskHash(WvStringParm dbfile = WvString::null) : Backend(dbfile)
+    WvOnDiskHash(WvStringParm dbfile = WvString::null, bool persist = true) :
+        Backend(dbfile, persist)
         { saveddata = NULL; }
 
     ~WvOnDiskHash()
@@ -238,7 +235,6 @@ public:
     }
     void rewind(const Datum &firstkey, Datum &curkey, Datum &curdata)
     {
-        assert(parent.isok());
         // save the firstkey and clear the current one
         free((void*)rewindto.dptr);
         rewindto.dsize = firstkey.dsize;
@@ -258,9 +254,10 @@ protected:
 #ifdef WITH_BDB
 
 // Base class for the template to save space
-class WvBdbHash
+class WvBdbHash : public WvErrorBase
 {
     WvString dbfile;
+    bool persist_dbfile;
 
 public:
     struct datum
@@ -270,23 +267,44 @@ public:
     };
     typedef datum Datum;
 
-    WvBdbHash(WvStringParm _dbfile = WvString::null);
+    WvBdbHash(WvStringParm _dbfile = WvString::null, bool persist = true);
     ~WvBdbHash();
 
     /**
      * Open a new db file.  This will instantly change the contents of the
      * db, and probably mess up all your iterators.  Best used just after
      * creation.
+     *
+     * if dbfile is NULL, bdb will create an "anonymous" database.  It'll
+     * still take up disk space, but it disappears when closed.  If dbfile is
+     * not NULL but persist_dbfile is false, the file will be truncated when
+     * opened and deleted when closed.
+     *
+     * It is ok to use this if !isok - in fact, it's the expected way to reset
+     * it.  It may fail and seterr itself, though, so don't get stuck in a
+     * loop.
      */
-    void opendb(WvStringParm _dbfile = WvString::null);
-    
-    bool isok() const
-        { return dbf; }
+    void opendb(WvStringParm _dbfile = WvString::null, bool persist = true);
 
+    /**
+     * Close the db file.  Makes isok return false, so you must call opendb()
+     * before using it again.  The effect on open iterators is undefined.
+     *
+     * This can be called when !isok.  It will always set the error message to
+     * "The db is closed" if it succeeds; if it sets it to anything else,
+     * there was an error while flushing the db.
+     */
+    void closedb();
+    
     void add(const datum &key, const datum &data, bool replace);
-    int remove(const datum &key);
+    void remove(const datum &key);
     datum find(const datum &key);
     bool exists(const datum &key);
+
+    /**
+     * Wipe the db.  Calling this while !isok is allowed, but not guaranteed
+     * to fix it.
+     */
     void zap();
     
     class IterBase : public WvOnDiskHashIterBase<WvBdbHash, Datum>
@@ -306,8 +324,13 @@ private:
 
 #ifdef WITH_QDBM
 
-class WvQdbmHash
+// FIXME: the interface for this is quite backwards.  It should be delegating
+// to WvQdbmHash, not inheriting from it!  In the meantime, see WvBdbHash for
+// the API docs... 
+class WvQdbmHash : public WvErrorBase
 {
+    bool persist_dbfile;
+
 public:
     struct datum
     {
@@ -316,16 +339,14 @@ public:
     };
     typedef datum Datum;
 
-    WvQdbmHash(WvStringParm dbfile);
+    WvQdbmHash(WvStringParm dbfile = WvString::null, bool persist = true);
     ~WvQdbmHash();
     
-    void opendb(WvStringParm dbfile);
+    void opendb(WvStringParm dbfile = WvString::null, bool persist = true);
+    void closedb();
     
-    bool isok() const
-        { return dbf; }
-
     void add(const Datum &key, const Datum &data, bool replace);
-    int remove(const Datum &key);
+    void remove(const Datum &key);
     Datum find(const Datum &key);
     bool exists(const Datum &key);
     void zap();
@@ -341,8 +362,9 @@ public:
 private:
     Datum saveddata;
     friend class IterBase;
-    void closedb();
     void *dbf;
+
+    void dperr();
 };
 #endif // WITH_QDBM
 
