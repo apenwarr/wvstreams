@@ -15,7 +15,7 @@ export DH_OPTIONS
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-base=libwvstreams4.0
+base=libwvstreams4.1
 # This is used the wvstreams makefile to set the .so links
 PKG=`pwd`/debian/${base}
 PKG_OGG=`pwd`/debian/${base}-ogg
@@ -172,19 +172,19 @@ binary-common:
 	dh_fixperms
 #       dh_perl
 #       dh_python
-	dh_makeshlibs -plibwvstreams4.0-base \
-		      -plibwvstreams4.0-extras \
-		      -plibwvstreams4.0-qt \
-		      -plibwvstreams4.0-fft \
-		      -plibwvstreams4.0-speex \
-		      -plibwvstreams4.0-vorbis \
-		      -plibuniconf4.0 \
+	dh_makeshlibs -plibwvstreams4.1-base \
+		      -plibwvstreams4.1-extras \
+		      -plibwvstreams4.1-qt \
+		      -plibwvstreams4.1-fft \
+		      -plibwvstreams4.1-speex \
+		      -plibwvstreams4.1-vorbis \
+		      -plibuniconf4.1 \
 	dh_installdeb
 	dh_installdeb
-	dh_shlibdeps -L libwvstreams4.0-base \
-		     -L libwvstreams4.0-extras \
-		     -L libuniconf4.0 \
-		     -l debian/libwvstreams4.0-base/usr/lib:debian/libwvstreams4.0-extras/usr/lib:debian/libuniconf4.0/usr/lib
+	dh_shlibdeps -L libwvstreams4.1-base \
+		     -L libwvstreams4.1-extras \
+		     -L libuniconf4.1 \
+		     -l debian/libwvstreams4.1-base/usr/lib:debian/libwvstreams4.1-extras/usr/lib:debian/libuniconf4.1/usr/lib
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
