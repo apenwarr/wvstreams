@@ -8,7 +8,69 @@
 #include "uniconfroot.h"
 
 
-/***** UniConfRoot *****/
+UniConfRoot::UniConfRoot() : UniConf(this), watchroot(NULL)
+{
+    mounts.setcallback(UniConfGenCallback(this,
+			  &UniConfRoot::gen_callback), NULL);
+}
+
+
+UniConfRoot::UniConfRoot(WvStringParm moniker, bool refresh)
+    : UniConf(this), watchroot(NULL)
+{
+    mounts.mount("/", moniker, refresh);
+    mounts.setcallback(UniConfGenCallback(this,
+			  &UniConfRoot::gen_callback), NULL);
+}
+
+
+UniConfRoot::UniConfRoot(UniConfGen *gen, bool refresh)
+    : UniConf(this), watchroot(NULL)
+{
+    mounts.mountgen("/", gen, refresh);
+    mounts.setcallback(UniConfGenCallback(this,
+			  &UniConfRoot::gen_callback), NULL);
+}
+
+
+// make sure the given subtree of callback information is empty
+static bool watchout(UniWatchInfoTree *t)
+{
+    bool fail = false;
+    
+    UniWatchInfoTree::Iter i(*t);
+    for (i.rewind(); i.next(); )
+    {
+	UniWatchInfoTree *w = i.ptr();
+	
+	if (w->haschildren())
+	    if (watchout(w))
+		fail = true;
+	
+	if (!w->watches.isempty())
+	{
+	    fail = true;
+	    if (1)
+		fprintf(stderr, "Remaining watch: '%s' (%d)\n",
+			w->fullkey().printable().cstr(), w->watches.count());
+	}
+    }
+    
+    return fail;
+}
+
+
+UniConfRoot::~UniConfRoot()
+{
+    // if the list of callbacks is non-empty, someone is either very buggy
+    // (they disappeared without deleting their callback, so they could cause
+    // crashes), or they're not getting what they expected (we disappeared
+    // before they did, so they won't be getting their callback).
+    assert(!watchout(&watchroot));
+    
+    mounts.setcallback(UniConfGenCallback(), NULL);
+}
+
 
 void UniConfRoot::add_callback(void *cookie, const UniConfKey &key,
 			       const UniConfCallback &callback, bool recurse)

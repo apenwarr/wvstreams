@@ -11,6 +11,34 @@
 #include <assert.h>
 
 
+UniConf::UniConf(UniConfRoot *root, const UniConfKey &fullkey)
+    : xroot(root), xfullkey(fullkey)
+{ 
+    // nothing special
+}
+    
+
+UniConf::UniConf() : xroot(NULL), xfullkey(UniConfKey::EMPTY)
+{ 
+    // nothing special
+}
+
+
+UniConf::UniConf(const UniConf &other)
+    : xroot(other.xroot), xfullkey(other.xfullkey)
+{ 
+    // nothing special
+}
+
+
+UniConf::~UniConf()
+{ 
+    // nothing special
+}
+
+
+
+
 UniConfKey UniConf::fullkey(const UniConfKey &k) const
 {
     int n = k.numsegments();

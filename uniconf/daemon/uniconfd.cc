@@ -180,12 +180,13 @@ int main(int argc, char **argv)
 				WvIPPortAddr("0.0.0.0", sslport), x509cert))
             exit(1);
     }
-    
+
+#if 1
     // since we're a daemon, we should now background ourselves.
     pid_t pid = fork();
     if (pid > 0) // parent
 	_exit(0);
-    
+#endif
     time_t now, last = 0;
 	
     // otherwise, fork failed or we're the child

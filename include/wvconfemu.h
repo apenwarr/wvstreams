@@ -122,7 +122,8 @@ private:
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
-    WvConfEmu(const UniConf& _uniconf);
+    WvConfEmu(const UniConf &_uniconf);
+    ~WvConfEmu();
     void zap();
     bool isok() const;
     void load_file(WvStringParm filename);
@@ -173,11 +174,14 @@ public:
     // Check the password passed in.  This isn't defined in wvconf.cc
     // We use this function to check passwords since we may not know what
     // the password actually is!
+    // If s is not null and has continue_select enabled, check_passwd will
+    // pause if the password is incorrect (the pause length depends on how
+    // many password failures have occurred recently).
     bool check_passwd(WvStringParm sect, WvStringParm user,
-		      WvStringParm passwd);
-    bool check_passwd(WvStringParm user, WvStringParm passwd)
+		      WvStringParm passwd, WvStream *s);
+    bool check_passwd(WvStringParm user, WvStringParm passwd, WvStream *s)
     {
-	return check_passwd("Users", user, passwd);
+	return check_passwd("Users", user, passwd, s);
     }
 
     // Check if the user exists.  This isn't defined in wvconf.cc

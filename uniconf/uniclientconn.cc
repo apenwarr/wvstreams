@@ -70,7 +70,7 @@ bool UniClientConn::isok() const
 
 void UniClientConn::close()
 {
-    if (! closed)
+    if (!closed)
     {
         closed = true;
         WvStreamClone::close();

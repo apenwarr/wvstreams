@@ -185,7 +185,7 @@ void WvStream::callback()
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
 
-#define TEST_CONTINUES_HARSHLY 1
+#define TEST_CONTINUES_HARSHLY 0
 #if TEST_CONTINUES_HARSHLY
 #ifndef _WIN32
 # warning "Using WvCont for *all* streams for testing!"
@@ -899,7 +899,12 @@ time_t WvStream::alarm_remaining()
 
 	// Time is going backward!
 	if (now < last_alarm_check)
+	{
+	    fprintf(stderr, "TIME WENT BACKWARDS! (%ld:%ld %ld:%ld)\n",
+		    last_alarm_check.tv_sec, last_alarm_check.tv_usec,
+		    now.tv_sec, now.tv_usec);
 	    alarm_time = tvdiff(alarm_time, tvdiff(last_alarm_check, now));
+	}
 
 	last_alarm_check = now;
 

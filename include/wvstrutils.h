@@ -329,4 +329,59 @@ WvString fqdomainname();
  */
 WvString metriculate(const off_t i);
 
+/**
+ * Returns everything in line (exclusively) after a
+ * If a is not in line, "" is returned
+ */
+inline WvString afterstr(WvStringParm line, WvStringParm a)
+{
+    char *loc = strstr(line, a);
+    if (loc == 0)
+	return "";
+
+    loc += a.len();
+    WvString ret = loc;
+    ret.unique();
+    return ret;
+}
+
+/**
+ * Returns everything in line (exclusively) before a
+ * If a is not in line, line is returned
+ */
+inline WvString beforestr(WvStringParm line, WvStringParm a)
+{
+    WvString ret = line;
+    ret.unique();    
+    char *loc = strstr(ret, a);
+
+    if (loc == 0)
+	return line;
+
+    loc[0] = '\0';
+    return ret;
+}
+
+/*
+ * Returns the string od length len starting at pos in line
+ * Error checking prevents seg fault.
+ * If pos > line.len()-1 return ""
+ * if pos+len > line.len() simply return from pos to end of line
+ */
+inline WvString substr(WvString line, unsigned int pos, unsigned int len)
+{
+    const char *tmp = line.cstr();
+    if (pos > line.len()-1)
+	return "";
+    tmp += pos;
+
+    WvString ret = tmp;
+    char *tmp2 = ret.edit();
+    if (pos + len < line.len())
+	tmp2[len] = '\0';
+
+    return ret;
+}
+
+
 #endif // __WVSTRUTILS_H

@@ -62,23 +62,17 @@ protected:
      * You can't create non-NULL UniConf objects yourself - ask UniConfRoot
      * or another UniConf object to make one for you.
      */
-    UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
-        : xroot(root), xfullkey(fullkey) { }
+    UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY);
     
 public:
     /** Creates a NULL UniConf handle, useful for reporting errors. */
-    UniConf() 
-        : xroot(NULL), xfullkey(UniConfKey::EMPTY) { }
+    UniConf();
     
-    /**
-     * Copies a UniConf handle.
-     * "other" is the handle to copy
-     */
-    UniConf(const UniConf &other)
-        : xroot(other.xroot), xfullkey(other.xfullkey) { }
+    /** Copies a UniConf handle. */
+    UniConf(const UniConf &other);
     
     /** Destroys the UniConf handle. */
-    virtual ~UniConf() { }
+    virtual ~UniConf();
 
     
     /***** Handle Manipulation API *****/

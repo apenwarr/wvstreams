@@ -579,3 +579,35 @@ WVTEST_MAIN("metriculate")
             printf("   because [%s] != [%s]\n", result.cstr(), desired[i]);
     }
 }
+
+
+WVTEST_MAIN("afterstr")
+{
+    WvString big = "foobarman";
+
+    WVPASS(afterstr(big, "foo") == "barman");
+    WVPASS(afterstr(big, "o") == "obarman");
+    WVPASS(afterstr(big, "man") == "");
+    WVPASS(afterstr(big, "smarch") == "");
+}
+
+WVTEST_MAIN("beforestr")
+{
+    WvString big = "foobarman";
+
+    WVPASS(beforestr(big, "foo") == "");
+    WVPASS(beforestr(big, "o") == "f");
+    WVPASS(beforestr(big, "man") == "foobar");
+    WVPASS(beforestr(big, "smarch") == big);
+}
+
+WVTEST_MAIN("substr")
+{
+    WvString big = "foobarman";
+
+    WVPASS(substr(big, 0, 9) == big);
+    WVPASS(substr(big, 0, 10) == big);
+    WVPASS(substr(big, 0, 6) == "foobar");
+    WVPASS(substr(big, 5, 0) == "");
+    WVPASS(substr(big, 10, 1) == "");
+}

@@ -2,7 +2,7 @@
 #include "wvstream.h"
 #include "wvstreamclone.h"
 
-WVTEST_MAIN("bug 3184")
+WVTEST_MAIN("close() non-loopiness")
 {
     WvStream *s = new WvStream();
     WvStreamClone c(s);

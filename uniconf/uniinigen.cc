@@ -28,7 +28,7 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 /***** UniIniGen *****/
 
 UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
-    : filename(_filename), create_mode(_create_mode), log(filename)
+    : filename(_filename), create_mode(_create_mode), log("ConfigFileReader")
 {
     log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed

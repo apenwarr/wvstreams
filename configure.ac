@@ -158,6 +158,9 @@ fi
 if test "$with_fam" != "no"; then
     AC_CHECK_HEADERS(fam.h,, [with_fam=no])
     AC_CHECK_LIB(fam, FAMOpen,, [with_fam=no])
+    if test "$with_fam" != "no"; then
+        AC_DEFINE(WITH_FAM,, [Define to enable FAM support.])
+    fi
 fi
 
 # fftw
