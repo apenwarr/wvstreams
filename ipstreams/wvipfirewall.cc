@@ -20,6 +20,8 @@ bool WvIPFirewall::enable = false;
 
 WvIPFirewall::WvIPFirewall()
 {
+    system("iptables -F Services");
+    system("iptables -t nat -F TProxy");
 }
 
 

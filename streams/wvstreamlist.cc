@@ -130,7 +130,9 @@ void WvStreamList::execute()
 	TRACE("[%p:%s]", s, id);
 	
 	i.xunlink();
-	s.callback();
+	
+	if (s.isok())
+	    s.callback();
 	
 	// list might have changed!
 	i.rewind();
