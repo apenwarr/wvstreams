@@ -14,7 +14,10 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
 	: localaddr(), remaddr(_rem)
 {
     fd = socket(PF_INET, SOCK_DGRAM, 0);
-    if (fd < 0 || fcntl(fd, F_SETFL, O_RDWR | O_NONBLOCK))
+    if (fd < 0 
+	|| fcntl(fd, F_SETFD, 1)
+	|| fcntl(fd, F_SETFL, O_RDWR | O_NONBLOCK)
+	)
     {
 	seterr(errno);
 	return;
