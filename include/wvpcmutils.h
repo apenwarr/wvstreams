@@ -51,7 +51,7 @@ class WvPCMFloatToSigned16Encoder : public WvFunctorEncoder
 {
 public:
     WvPCMFloatToSigned16Encoder() :
-        WvFunctorEncoder<OType, IType, FType>(FType()) { }
+        WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 
 
@@ -64,7 +64,7 @@ class WvPCMSigned16ToFloatEncoder : public WvFunctorEncoder
 {
 public:
     WvPCMSigned16ToFloatEncoder() :
-        WvFunctorEncoder<OType, IType, FType>(FType()) { }
+        WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 
 /**
@@ -76,7 +76,7 @@ class WvPCMDoubleToSigned16Encoder : public WvFunctorEncoder
 {
 public:
     WvPCMDoubleToSigned16Encoder() :
-        WvFunctorEncoder<OType, IType, FType>(FType()) { }
+        WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 
 
@@ -85,11 +85,11 @@ public:
  * to normalized doubles.
  */
 class WvPCMSigned16ToDoubleEncoder : public WvFunctorEncoder
-    <double, signed short int, WvPCMSigned16ToDoubleFunctor>
+    <signed short int, double, WvPCMSigned16ToDoubleFunctor>
 {
 public:
     WvPCMSigned16ToDoubleEncoder() :
-        WvFunctorEncoder<OType, IType, FType>(FType()) { }
+        WvFunctorEncoder<IType, OType, FType>(FType()) { }
 };
 
 #endif // __WVPCMUTILS_H
