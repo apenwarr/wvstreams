@@ -34,9 +34,8 @@ static SpeedLookup speeds[] = {
 };
 
 
-WvModemBase::WvModemBase(int _fd)
+WvModemBase::WvModemBase(int _fd) : WvFile(_fd)
 {
-    fd = _fd;
     get_real_speed();
 }
 
@@ -53,7 +52,7 @@ int WvModemBase::get_real_speed()
     
     if (!isok()) return 0;
 
-    tcgetattr( fd, &t );
+    tcgetattr( getrfd(), &t );
     s = cfgetospeed( &t );
     for (unsigned int i = 0; i < sizeof(speeds) / sizeof(*speeds); i++)
     {
@@ -105,7 +104,7 @@ void WvModemBase::hangup()
     if (carrier())
     {
 	cfsetospeed( &t, B0 );
-	tcsetattr( fd, TCSANOW, &t );
+	tcsetattr( getrfd(), TCSANOW, &t );
 	for (i = 0; carrier() && i < 10; i++)
 	    usleep( 100 * 1000 );
 
@@ -162,7 +161,7 @@ void WvModem::setup_modem(bool rtscts)
 {
     if (!isok()) return;
 
-    if (tcgetattr( fd, &t ) || tcgetattr( fd, &old_t ))
+    if (tcgetattr( getrfd(), &t ) || tcgetattr( getrfd(), &old_t ))
     {
 	closing = true;
 	seterr(errno);
@@ -181,7 +180,7 @@ void WvModem::setup_modem(bool rtscts)
     if( rtscts )
         t.c_cflag |= CRTSCTS;
     t.c_lflag &= ~(ISIG | XCASE | ECHO);
-    tcsetattr( fd, TCSANOW, &t );
+    tcsetattr( getrfd(), TCSANOW, &t );
     
     // make sure we leave the modem in CLOCAL when we exit, so normal user
     // tasks can open the modem without using nonblocking.
@@ -200,7 +199,7 @@ void WvModem::setup_modem(bool rtscts)
     cfsetispeed( &t, B0 );
     cfsetospeed( &t, B0 );
     cfmakeraw( &t );
-    tcsetattr( fd, TCSANOW, &t );
+    tcsetattr( getrfd(), TCSANOW, &t );
     if (carrier())
 	usleep( 500 * 1000 );
     
@@ -213,7 +212,7 @@ void WvModem::setup_modem(bool rtscts)
 
 void WvModem::close()
 {
-    if (fd >= 0)
+    if (isok())
     {
 	if (!closing)
 	{
@@ -221,8 +220,8 @@ void WvModem::close()
 	    hangup();
 	}
 	closing = true;
-	tcflush(fd, TCIOFLUSH);
-	tcsetattr(fd, TCSANOW, &old_t);
+	tcflush(getrfd(), TCIOFLUSH);
+	tcsetattr(getrfd(), TCSANOW, &old_t);
 	WvFile::close();
 	closing = false;
     }
@@ -244,7 +243,7 @@ int WvModem::speed(int _baud)
 
     cfsetispeed( &t, B0 ); // auto-match to output speed
     cfsetospeed( &t, s );
-    tcsetattr( fd, TCSANOW, &t );
+    tcsetattr( getrfd(), TCSANOW, &t );
 
     return get_real_speed();
 }
@@ -254,7 +253,7 @@ int WvModem::getstatus()
 {
     if (!isok()) return 0;
     int status = 0;
-    ioctl(fd, TIOCMGET, &status);
+    ioctl(getrfd(), TIOCMGET, &status);
     return status;
 }
 

@@ -81,7 +81,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
     debug("SSL Connector initialized\n");
 
     // make sure we run the SSL_connect once, after our stream is writable
-    slave->force_select(true, true, false);
+    slave->force_select(false, true);
 }
 
 
@@ -192,24 +192,24 @@ void WvSSLStream::close()
 }
 
 
-bool WvSSLStream::select_setup(SelectInfo &si)
+bool WvSSLStream::pre_select(SelectInfo &si)
 {
     // the SSL library might be keeping its own internal buffers - try
     // reading again if we were full the last time.
-    if (si.readable && read_again)
+    if (si.wants.readable && read_again)
     {
 	debug("Have to try reading again!\n");
 	return true;
     }
 
-    return WvStreamClone::select_setup(si);
+    return WvStreamClone::pre_select(si);
 
 }
 
  
-bool WvSSLStream::test_set(SelectInfo &si)
+bool WvSSLStream::post_select(SelectInfo &si)
 {
-    bool result = WvStreamClone::test_set(si);
+    bool result = WvStreamClone::post_select(si);
 
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep
@@ -217,13 +217,15 @@ bool WvSSLStream::test_set(SelectInfo &si)
     // to do the validation of the connection ;)
     if (!sslconnected && slave && slave->isok() && result)
     {
-	slave->force_select(false, false, false);
+	slave->undo_force_select(false, true, false);
 	
 	// for ssl streams to work, we have to be cloning a stream that
-	// actually uses a valid fd.
-	assert(getfd() >= 0);
-	SSL_set_fd(ssl, getfd());
-	debug("SSL Connected to WvStream %s\n",getfd());
+	// actually uses a single, valid fd.
+	assert(getrfd() >= 0);
+	assert(getwfd() >= 0);
+	assert(getwfd() == getrfd());
+	SSL_set_fd(ssl, getrfd());
+	debug("SSL Connected to WvStream %s\n", getrfd());
 	
 	int err;
     

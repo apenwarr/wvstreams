@@ -22,7 +22,7 @@ WvDailyEvent::WvDailyEvent( int _first_hour, int _num_per_day )
     need_reset = false;
 }
 
-bool WvDailyEvent::select_setup( SelectInfo& si )
+bool WvDailyEvent::pre_select( SelectInfo& si )
 /***********************************************/
 // we're "ready" if the time just changed to "first_hour" o'clock,
 // OR if the time just changed to "first_hour" o'clock plus a multiple of
@@ -60,7 +60,7 @@ bool WvDailyEvent::select_setup( SelectInfo& si )
     return( need_reset );
 }
 
-bool WvDailyEvent::test_set( SelectInfo& si )
+bool WvDailyEvent::post_select( SelectInfo& si )
 /*******************************************/
 {
     return( need_reset );

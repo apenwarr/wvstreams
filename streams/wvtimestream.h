@@ -39,8 +39,8 @@ public:
     void set_timer(int msec, int max_backlog = 10);
 
     virtual bool isok() const;
-    virtual bool select_setup(SelectInfo &si);
-    virtual bool test_set(SelectInfo &si);
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     
     /**
      * notify timestream that we have "ticked" once

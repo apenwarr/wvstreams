@@ -168,7 +168,7 @@ const char *WvHTTPStream::errstr() const
 }
 
 
-bool WvHTTPStream::select_setup(SelectInfo &si)
+bool WvHTTPStream::pre_select(SelectInfo &si)
 {
     if (!isok()) return false;
     
@@ -207,7 +207,7 @@ bool WvHTTPStream::select_setup(SelectInfo &si)
 	
     default:
 	return WvStreamClone::isok()
-	    && WvStreamClone::select_setup(si);
+	    && WvStreamClone::pre_select(si);
     }
 }
 

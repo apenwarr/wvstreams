@@ -90,7 +90,7 @@ public:
      * or we may end up accept()ing twice, causing a hang the second time.
      */
     void auto_accept(WvStreamList *list,
-		     Callback *callfunc = NULL, void *userdata = NULL);
+		     WvStreamCallback callfunc = NULL, void *userdata = NULL);
 
     /**
      * these don't do anything, but they confuse the socket, so we'll
@@ -109,10 +109,10 @@ protected:
     bool bound_okay;
     WvStreamList *auto_list;
 
-    Callback *auto_callback;
+    WvStreamCallback auto_callback;
     void *auto_userdata;
 
-    static Callback accept_callback;
+    static void accept_callback(WvStream &s, void *userdata);
 };
 
 

@@ -22,7 +22,6 @@ WvStream *wvcon = &wvconsole;
 WvSplitStream::WvSplitStream(int _rfd, int _wfd)
 	: WvStream(_rfd)
 {
-    in_progress = 0;
     rfd = _rfd;
     wfd = _wfd;
 }
@@ -31,7 +30,6 @@ WvSplitStream::WvSplitStream(int _rfd, int _wfd)
 WvSplitStream::WvSplitStream()
 	: WvStream()
 {
-    in_progress = 0;
     rfd = wfd = -1;
 }
 
@@ -44,29 +42,21 @@ WvSplitStream::~WvSplitStream()
 
 void WvSplitStream::close()
 {
-    assert(in_progress >= 0);
-    
-    if (in_progress)
-	WvStream::close();
-    else
-    {
-	fd = rfd;
-	WvStream::close();
-	rfd = fd;
-	
-	fd = wfd;
-	WvStream::close();
-	wfd = fd;
-    }
+    WvStream::close();
+    rfd = -1;
+    wfd = -1;
 }
 
 
-int WvSplitStream::getfd() const
+int WvSplitStream::getrfd() const
 {
-    if (in_progress)
-	return fd;
-    else
-	return rfd;
+    return rfd;
+}
+
+
+int WvSplitStream::getwfd() const
+{
+    return wfd;
 }
 
 
@@ -92,91 +82,4 @@ void WvSplitStream::nowrite()
 	wfd = rfd;
     }
 }
-
-
-bool WvSplitStream::isok() const
-{
-    if (in_progress)
-	return fd >= 0;
-    else
-	return rfd >= 0 && wfd >= 0;
-}
-
-
-bool WvSplitStream::select_setup(SelectInfo &si)
-{
-    time_t alarmleft = alarm_remaining();
-    
-    if (alarmleft == 0 && !select_ignores_buffer)
-	return true; // alarm has rung
-    
-    if (si.readable || (force.readable && si.forceable))
-    {
-	if (!select_ignores_buffer && inbuf.used())
-	    return true; // already ready
-	FD_SET(rfd, &si.read);
-    }
-    if (si.writable || ((outbuf.used() || force.writable)
-			 && si.forceable))
-	FD_SET(wfd, &si.write);
-    if (si.isexception || (force.isexception && si.forceable))
-    {
-	FD_SET(rfd, &si.except);
-	FD_SET(wfd, &si.except);
-    }
-    
-    if (si.max_fd < rfd) si.max_fd = rfd;
-    if (si.max_fd < wfd) si.max_fd = wfd;
-    
-    if (alarmleft >= 0
-      && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
-	si.msec_timeout = alarmleft;
-    
-    return false;
-}
-
-
-bool WvSplitStream::test_set(SelectInfo &si)
-{
-    size_t outbuf_used = outbuf.used();
-    
-    // flush the output buffer if possible
-    if (wfd >= 0 && outbuf_used && FD_ISSET(wfd, &si.write))
-	flush(0);
-    
-    return (rfd >= 0 && (FD_ISSET(rfd, &si.read) 
-		      || FD_ISSET(rfd, &si.except)))
-	|| (wfd >= 0 && (FD_ISSET(wfd, &si.write) 
-			 && (!outbuf_used || si.writable)
-		      || FD_ISSET(wfd, &si.except)));
-}
-
-
-size_t WvSplitStream::uwrite(const void *buf, size_t size)
-{
-    size_t retval;
-    
-    in_progress++;
-    fd = wfd;
-    retval = WvStream::uwrite(buf, size);
-    wfd = fd;
-    in_progress--;
-    
-    return retval;
-}
-
-
-size_t WvSplitStream::uread(void *buf, size_t size)
-{
-    size_t retval;
-    
-    in_progress++;
-    fd = rfd;
-    retval = WvStream::uread(buf, size);
-    rfd = fd;
-    in_progress--;
-    
-    return retval;
-}
-
 

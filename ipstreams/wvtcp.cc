@@ -33,7 +33,7 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
     
     nice_tcpopts();
 
-    if (fd < 0)
+    if (getfd() < 0)
 	seterr(errno);
 }
 
@@ -81,11 +81,11 @@ WvTCPConn::~WvTCPConn()
 // keepalive)
 void WvTCPConn::nice_tcpopts()
 {
-    fcntl(fd, F_SETFD, FD_CLOEXEC);
-    fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
+    fcntl(getfd(), F_SETFD, FD_CLOEXEC);
+    fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
 
     int value = 1;
-    setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+    setsockopt(getfd(), SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
 }
 
 
@@ -94,10 +94,10 @@ void WvTCPConn::low_delay()
     int value;
     
     value = 1;
-    setsockopt(fd, SOL_TCP, TCP_NODELAY, &value, sizeof(value));
+    setsockopt(getfd(), SOL_TCP, TCP_NODELAY, &value, sizeof(value));
     
     value = IPTOS_LOWDELAY;
-    setsockopt(fd, SOL_IP, IP_TOS, &value, sizeof(value));
+    setsockopt(getfd(), SOL_IP, IP_TOS, &value, sizeof(value));
 }
 
 
@@ -105,8 +105,8 @@ void WvTCPConn::do_connect()
 {
     sockaddr *sa;
 
-    fd = socket(PF_INET, SOCK_STREAM, 0);
-    if (fd < 0)
+    rwfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (rwfd < 0)
     {
 	seterr(errno);
 	return;
@@ -115,7 +115,7 @@ void WvTCPConn::do_connect()
     nice_tcpopts();
     
     sa = remaddr.sockaddr();
-    if (connect(fd, sa, remaddr.sockaddr_len()) < 0
+    if (connect(getfd(), sa, remaddr.sockaddr_len()) < 0
 	&& errno != EINPROGRESS)
     {
 	seterr(errno);
@@ -174,27 +174,27 @@ const WvIPPortAddr *WvTCPConn::src() const
 }
 
 
-bool WvTCPConn::select_setup(SelectInfo &si)
+bool WvTCPConn::pre_select(SelectInfo &si)
 {
     if (!resolved)
     {
-	if (dns.select_setup(hostname, si))
+	if (dns.pre_select(hostname, si))
 	    check_resolver();
     }
 
     if (resolved && isok()) // name might be resolved now.
     {
-	bool oldw = si.writable, retval;
-	if (!isconnected()) si.writable = true;
-	retval = WvStream::select_setup(si);
-	si.writable = oldw;
+	bool oldw = si.wants.writable, retval;
+	if (!isconnected()) si.wants.writable = true;
+	retval = WvStream::pre_select(si);
+	si.wants.writable = oldw;
 	return retval;
     }
     else
 	return false;
 }
 			  
-bool WvTCPConn::test_set(SelectInfo &si)
+bool WvTCPConn::post_select(SelectInfo &si)
 {
     bool result = false;
 
@@ -202,12 +202,12 @@ bool WvTCPConn::test_set(SelectInfo &si)
 	check_resolver();
     else
     {
-	result = WvStream::test_set(si);
+	result = WvStream::post_select(si);
 
 	if (result && !connected)
 	{
 	    sockaddr *sa = remaddr.sockaddr();
-	    int retval = connect(fd, sa, remaddr.sockaddr_len());
+	    int retval = connect(getfd(), sa, remaddr.sockaddr_len());
 	    
 	    if (!retval || (retval < 0 && errno == EISCONN))
 		connected = result = true;
@@ -234,23 +234,22 @@ bool WvTCPConn::isok() const
 
 
 WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
-	: listenport(_listenport)
+	: listenport(_listenport), auto_callback(NULL)
 {
     listenport = _listenport;
     auto_list = NULL;
-    auto_callback = NULL;
     auto_userdata = NULL;
     
     sockaddr *sa = listenport.sockaddr();
     
     int x = 1;
 
-    fd = socket(PF_INET, SOCK_STREAM, 0);
-    if (fd < 0
-	|| setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
-	|| fcntl(fd, F_SETFD, 1)
-	|| bind(fd, sa, listenport.sockaddr_len())
-	|| listen(fd, 5))
+    rwfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (rwfd < 0
+	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
+	|| fcntl(getfd(), F_SETFD, 1)
+	|| bind(getfd(), sa, listenport.sockaddr_len())
+	|| listen(getfd(), 5))
     {
 	seterr(errno);
     }
@@ -259,7 +258,7 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     {
 	socklen_t namelen = listenport.sockaddr_len();
 	
-	if (getsockname(fd, sa, &namelen) != 0)
+	if (getsockname(getfd(), sa, &namelen) != 0)
 	    seterr(errno);
 	else
 	    listenport = WvIPPortAddr((sockaddr_in *)sa);
@@ -293,14 +292,14 @@ WvTCPConn *WvTCPListener::accept()
     int newfd;
     WvTCPConn *ret;
 
-    newfd = ::accept(fd, (struct sockaddr *)&sin, &len);
+    newfd = ::accept(getfd(), (struct sockaddr *)&sin, &len);
     ret = new WvTCPConn(newfd, WvIPPortAddr(&sin));
     return ret;
 }
 
 
 void WvTCPListener::auto_accept(WvStreamList *list,
-				Callback *callfunc, void *userdata)
+				WvStreamCallback callfunc, void *userdata)
 {
     auto_list = list;
     auto_callback = callfunc;

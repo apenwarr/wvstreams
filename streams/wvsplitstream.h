@@ -20,14 +20,8 @@ public:
     virtual ~WvSplitStream();
     
     virtual void close();
-    virtual int getfd() const;
-    virtual bool isok() const;
-    virtual bool select_setup(SelectInfo &si);
-    virtual bool test_set(SelectInfo &si);
-    int getrfd() const
-        { return rfd; }
-    int getwfd() const
-        { return wfd; }
+    virtual int getrfd() const;
+    virtual int getwfd() const;
     
     /**
      * noread() closes the rfd and makes this stream no longer valid for
@@ -43,12 +37,8 @@ public:
     
 protected:
     int rfd, wfd;
-    int in_progress;
 
     WvSplitStream(); // derived classes might not know the fds yet!
-    
-    virtual size_t uwrite(const void *buf, size_t size);
-    virtual size_t uread(void *buf, size_t size);
 };
 
 #endif // __WVSPLITSTREAM_H

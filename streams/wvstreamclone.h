@@ -30,18 +30,19 @@ public:
      * *cloned is still owned by the caller.
      */
     WvStreamClone(WvStream **_cloned)
-        { cloned = _cloned; }
+        { cloned = _cloned; force_select(false, false, false); }
     virtual ~WvStreamClone();
     
     virtual void close();
-    virtual int getfd() const;
+    virtual int getrfd() const;
+    virtual int getwfd() const;
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
     virtual bool isok() const;
     virtual int geterr() const;
     virtual const char *errstr() const;
-    virtual bool select_setup(SelectInfo &si);
-    virtual bool test_set(SelectInfo &si);
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     virtual const WvAddr *src() const;
     virtual void execute();
 

@@ -94,15 +94,15 @@ public:
         { return connected; }
     
     /**
-     * override select_setup() to cause select() results when resolving names.
+     * override pre_select() to cause select() results when resolving names.
      */
-    virtual bool select_setup(SelectInfo &si);
+    virtual bool pre_select(SelectInfo &si);
     
     /**
-     * override test_set() to set the 'connected' variable as soon as we
+     * override post_select() to set the 'connected' variable as soon as we
      * are connected.
      */
-    virtual bool test_set(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     
     /**
      * Is this connection OK? 
@@ -151,7 +151,7 @@ public:
      * or we may end up accept()ing twice, causing a hang the second time.
      */
     void auto_accept(WvStreamList *list,
-		     Callback *callfunc = NULL, void *userdata = NULL);
+		     WvStreamCallback callfunc = NULL, void *userdata = NULL);
 
     /**
      * these don't do anything, but they confuse the socket, so we'll
@@ -168,9 +168,10 @@ public:
 protected:
     WvIPPortAddr listenport;
     WvStreamList *auto_list;
-    static Callback accept_callback;
-    Callback *auto_callback;
+    WvStreamCallback auto_callback;
     void *auto_userdata;
+    
+    static void accept_callback(WvStream &s, void *userdata);
 };
 
 

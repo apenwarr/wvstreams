@@ -24,8 +24,8 @@ class WvDailyEvent : public WvStream
 public:
     WvDailyEvent( int _first_hour, int _num_per_day=0 );
 
-    virtual bool select_setup( SelectInfo& si );
-    virtual bool test_set( SelectInfo& si );
+    virtual bool pre_select( SelectInfo& si );
+    virtual bool post_select( SelectInfo& si );
 
     // execute() and any overridden versions of it must call reset().
     virtual void execute();

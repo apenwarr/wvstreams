@@ -32,22 +32,23 @@ static void normalize(struct timeval &tv)
 }
 
 
-WvStream::WvStream(int _fd)
+WvStream::WvStream(int _fd) : callfunc(NULL)
 {
     init();
-    fd = _fd;
+    rwfd = _fd;
 }
 
 
 void WvStream::init()
 {
     wvstream_execute_called = false;
-    callfunc = NULL;
     userdata = NULL;
     errnum = 0;
     max_outbuf_size = 0;
-    select_ignores_buffer = outbuf_delayed_flush = alarm_was_ticking = false;
-    force.readable = force.writable = force.isexception = false;
+    outbuf_delayed_flush = alarm_was_ticking = false;
+    force.readable = true;
+    force.writable = force.isexception = false;
+    read_requires_writable = write_requires_readable = NULL;
     running_callback = false;
     queue_min = 0;
     autoclose_time = 0;
@@ -84,9 +85,14 @@ WvStream::~WvStream()
 
 void WvStream::close()
 {
+    int rfd = getrfd(), wfd = getwfd();
+    
     flush(2000);
-    if (fd >= 0) ::close(fd);
-    fd = -1;
+    if (rfd >= 0)
+	::close(getrfd());
+    if (wfd >= 0 && wfd != rfd)
+	::close(getwfd());
+    rwfd = -1;
 }
 
 
@@ -215,15 +221,31 @@ void WvStream::execute()
 }
 
 
+// by default, we use the same fd for reading and writing
+int WvStream::getrfd() const
+{
+    return rwfd;
+}
+
+
+// by default, we use the same fd for reading and writing
+int WvStream::getwfd() const
+{
+    return rwfd;
+}
+
+
 int WvStream::getfd() const
 {
-    return fd;
+    int rfd = getrfd(), wfd = getwfd();
+    assert(rfd == wfd);
+    return rfd;
 }
 
 
 bool WvStream::isok() const
 {
-    return (fd != -1);
+    return (getrfd() != -1) && (getwfd() != -1);
 }
 
 
@@ -298,11 +320,12 @@ size_t WvStream::read(void *buf, size_t count)
     return bufu;
 }
 
+
 size_t WvStream::uread(void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
-    int in = ::read(getfd(), buf, count);
+    int in = ::read(getrfd(), buf, count);
     
     if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
 	return 0; // interrupted
@@ -344,7 +367,7 @@ size_t WvStream::uwrite(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
-    int out = ::write(getfd(), buf, count);
+    int out = ::write(getwfd(), buf, count);
     
     if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
 	return 0; // kernel buffer full - data not written
@@ -448,7 +471,7 @@ void WvStream::flush(time_t msec_timeout)
 	if (real < attempt)
 	    outbuf.unget(attempt - real);
 	
-	// since test_set() can call us, and select() calls test_set(),
+	// since post_select() can call us, and select() calls post_select(),
 	// we need to be careful not to call select() if we don't need to!
 	if (!msec_timeout || !select(msec_timeout, false, true))
         {
@@ -488,33 +511,36 @@ void WvStream::flush_then_close(int msec_timeout)
 }
 
 
-bool WvStream::select_setup(SelectInfo &si)
+bool WvStream::pre_select(SelectInfo &si)
 {
-    int fd;
+    int rfd, wfd;
     
     time_t alarmleft = alarm_remaining();
     
-    if (alarmleft == 0 && !select_ignores_buffer)
+    if (alarmleft == 0)
 	return true; // alarm has rung
     
     // handle read-ahead buffering
-    if (si.readable && !select_ignores_buffer && inbuf.used()
-	  && inbuf.used() >= queue_min )
+    if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
 	return true; // already ready
     
-    fd = getfd();
-    if (fd < 0) return false;
+    rfd = getrfd();
+    wfd = getwfd();
     
-    if (si.readable || (force.readable && si.forceable))
-	FD_SET(fd, &si.read);
-    if (si.writable || ((outbuf.used() || autoclose_time || force.writable)
-			 && si.forceable))
-	FD_SET(fd, &si.write);
-    if (si.isexception || (force.isexception && si.forceable))
-	FD_SET(fd, &si.except);
+    if (si.wants.readable && (rfd >= 0))
+	FD_SET(rfd, &si.read);
+    if ((si.wants.writable || outbuf.used() || autoclose_time) && (wfd >= 0))
+	FD_SET(wfd, &si.write);
+    if (si.wants.isexception)
+    {
+	if (rfd >= 0) FD_SET(rfd, &si.except);
+	if (wfd >= 0) FD_SET(wfd, &si.except);
+    }
     
-    if (si.max_fd < fd)
-	si.max_fd = fd;
+    if (si.max_fd < rfd)
+	si.max_fd = rfd;
+    if (si.max_fd < wfd)
+	si.max_fd = wfd;
     
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
@@ -524,30 +550,42 @@ bool WvStream::select_setup(SelectInfo &si)
 }
 
 
-bool WvStream::test_set(SelectInfo &si)
+bool WvStream::post_select(SelectInfo &si)
 {
     size_t outbuf_used = outbuf.used();
-    int fd = getfd();
+    int rfd = getrfd(), wfd = getwfd();
+    bool val;
     
     // flush the output buffer if possible
-    if (fd >= 0 
+    if (wfd >= 0 
 	&& (outbuf_used || autoclose_time)
-	&& FD_ISSET(fd, &si.write))
+	&& FD_ISSET(wfd, &si.write))
     {
 	flush(0);
+	
+	// flush() might have closed the file!
+	if (!isok()) return false;
     }
     
-    return fd >= 0  // flush() might have closed the file!
-	&&  (FD_ISSET(fd, &si.read)
-	 || (FD_ISSET(fd, &si.write)
-	     && (!outbuf_used || si.writable))
-	 ||  FD_ISSET(fd, &si.except));
+    val = ((rfd >= 0 && FD_ISSET(rfd, &si.read)) ||
+	    (wfd >= 0 && FD_ISSET(wfd, &si.write)) ||
+	    (rfd >= 0 && FD_ISSET(rfd, &si.except)) ||
+	    (wfd >= 0 && FD_ISSET(wfd, &si.except)));
+    
+    if (val && si.wants.readable && read_requires_writable
+      && !read_requires_writable->select(0, false, true))
+	return false;
+    if (val && si.wants.writable && write_requires_readable
+      && !write_requires_readable->select(0, true, false))
+	return false;
+    
+    return val;
 }
 
 
-bool WvStream::select(time_t msec_timeout,
-		      bool readable, bool writable, bool isexcept,
-		      bool forceable)
+bool WvStream::_select(time_t msec_timeout,
+		       bool readable, bool writable, bool isexcept,
+		       bool forceable)
 {
     bool sure;
     int sel;
@@ -559,14 +597,21 @@ bool WvStream::select(time_t msec_timeout,
     FD_ZERO(&si.read);
     FD_ZERO(&si.write);
     FD_ZERO(&si.except);
-    si.forceable = forceable;
-    si.readable = readable;
-    si.writable = writable;
-    si.isexception = isexcept;
+    
+    if (forceable)
+	si.wants = force;
+    else
+    {
+	si.wants.readable = readable;
+	si.wants.writable = writable;
+	si.wants.isexception = isexcept;
+    }
+    
     si.max_fd = -1;
     si.msec_timeout = msec_timeout;
+    si.inherit_request = !forceable;
     
-    sure = select_setup(si);
+    sure = pre_select(si);
     
     if (sure)
     {
@@ -592,21 +637,23 @@ bool WvStream::select(time_t msec_timeout,
     if (!sel)
 	return sure;	// timed out
     
-    return isok() && test_set(si);
-}
-
-
-bool WvStream::auto_select(time_t msec_timeout)
-{
-    return select(msec_timeout, true, false, false, true);
+    return isok() && post_select(si);
 }
 
 
 void WvStream::force_select(bool readable, bool writable, bool isexception)
 {
-    force.readable = readable;
-    force.writable = writable;
-    force.isexception = isexception;
+    force.readable |= readable;
+    force.writable |= writable;
+    force.isexception |= isexception;
+}
+
+
+void WvStream::undo_force_select(bool readable, bool writable, bool isexception)
+{
+    force.readable &= !readable;
+    force.writable &= !writable;
+    force.isexception &= !isexception;
 }
 
 
@@ -680,7 +727,7 @@ bool WvStream::continue_select(time_t msec_timeout)
     // We have to select(0) here because it's possible that the alarm was 
     // ticking _and_ data was available.  This is aggravated especially if
     // msec_delay was zero.  Note that running select() here isn't
-    // inefficient, because if the alarm was expired then select_setup()
+    // inefficient, because if the alarm was expired then pre_select()
     // returned true anyway and short-circuited the previous select().
     return !alarm_was_ticking || select(0);
 }

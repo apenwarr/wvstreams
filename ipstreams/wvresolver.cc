@@ -278,7 +278,7 @@ int WvResolver::findname(int msec_timeout, WvIPAddr *ipaddr, char **name)
 */
 
 
-bool WvResolver::select_setup(const WvString &hostname,
+bool WvResolver::pre_select(const WvString &hostname,
 			      WvStream::SelectInfo &si)
 {
     WvResolverHost *host = (*hostmap)[hostname];
@@ -286,7 +286,7 @@ bool WvResolver::select_setup(const WvString &hostname,
     if (host)
     {
 	if (host->loop)
-	    return host->loop->select_setup(si);
+	    return host->loop->pre_select(si);
 	else
 	    return true; // sure thing: already looked up this name!
     }

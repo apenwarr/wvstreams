@@ -42,7 +42,7 @@ public:
     /**
      * add all of our waiting fds to an fd_set for use with select().
      */
-    bool select_setup(const WvString &hostname, WvStream::SelectInfo &si);
+    bool pre_select(const WvString &hostname, WvStream::SelectInfo &si);
 };
 
 #endif // __WVRESOLVER_H

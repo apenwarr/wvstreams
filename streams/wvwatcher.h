@@ -35,7 +35,7 @@ public:
     virtual bool isok() const;
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
-    virtual bool select_setup(SelectInfo &si);
+    virtual bool pre_select(SelectInfo &si);
 };
 
 #endif // __WVWATCHER_H

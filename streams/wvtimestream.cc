@@ -32,7 +32,7 @@ bool WvTimeStream::isok() const
 }
 
 
-bool WvTimeStream::select_setup(SelectInfo &si)
+bool WvTimeStream::pre_select(SelectInfo &si)
 {
     struct timeval tv;
     struct timezone tz;
@@ -62,7 +62,7 @@ bool WvTimeStream::select_setup(SelectInfo &si)
 }
 
 
-bool WvTimeStream::test_set(SelectInfo &si)
+bool WvTimeStream::post_select(SelectInfo &si)
 {
     return false; // if you have to ask, then just forget it.
 }

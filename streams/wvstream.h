@@ -7,6 +7,7 @@
 
 #include "wvstring.h"
 #include "wvbuffer.h"
+#include "wvcallback.h"
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
 #include <sys/time.h>
 #include <errno.h>
@@ -14,6 +15,10 @@
 class WvAddr;
 class WvTask;
 class WvTaskMan;
+class WvStream;
+
+// parameters are: owning-stream, userdata
+DeclareWvCallback(2, void, WvStreamCallback, WvStream &, void *);
 
 /**
  * Unified support for streams, that is, sequences of bytes that may or
@@ -25,8 +30,6 @@ class WvTaskMan;
 class WvStream
 {
 public:
-    typedef void Callback(WvStream &s, void *userdata);
-
     /**
      * constructor to create a WvStream from an existing file descriptor.
      * The file descriptor is closed automatically by the destructor.  If
@@ -52,9 +55,19 @@ public:
     virtual void close();
     
     /**
-     * return the Unix file descriptor associated with this stream
+     * return the Unix file descriptor for reading from this stream
      */
-    virtual int getfd() const;
+    virtual int getrfd() const;
+    
+    /**
+     * return the Unix file descriptor for writing to this stream
+     */
+    virtual int getwfd() const;
+    
+    /**
+     * return the rfd _and_ the wfd... if they're the same.
+     */
+    int getfd() const;
     
     /**
      * return true if the stream is actually usable right now
@@ -120,10 +133,16 @@ public:
     char *getline(time_t wait_msec, char separator = '\n');
     
     /**
-     *force read() to not return any bytes unless 'count' bytes can be
-     * read at once.  (Useful for processing Content-Length headers,
-     * etc.)  Use count==0 to disable this feature.  getline() sets it to 0
-     * automatically.
+     * force read() to not return any bytes unless 'count' bytes can be
+     * read at once.  (Useful for processing Content-Length headers, etc.)
+     * Use count==0 to disable this feature.
+     * 
+     * queuemin() mainly affects what happens when you do a read(), not so
+     * much what happens when you do a select().  If you set queuemin != 0,
+     * you might still select true for read, but read() might return 0 bytes
+     * since it's holding back data until enough bytes are ready in inbuf.
+     *
+     * WARNING: getline() sets queuemin to 0 automatically!
      */ 
     void queuemin(size_t count)
         { queue_min = count; }
@@ -157,72 +176,171 @@ public:
     void flush_then_close(int msec_timeout);
     
     /**
-     * add appropriate fd to rfd, wfd, and efd sets if this stream can be
-     * group-select()ed; returns true if the stream is known to _already_
-     * be ready for one of the requested operations, in which case the
-     * caller should not do an actual select().  This function is only
-     * called for a stream where isok() returns true.
-     */ 
-    struct SelectInfo {
-	fd_set read, write, except;
-	bool forceable;
+     * A SelectRequest is a convenient way to remember what we want to do
+     * to a particular stream: read from it, write to it, or check for
+     * exceptions.
+     */
+    struct SelectRequest {
 	bool readable, writable, isexception;
-	int max_fd;
-	time_t msec_timeout;
+	
+	SelectRequest() { }
+	SelectRequest(bool r, bool w, bool x = false)
+	    { readable = r; writable = w; isexception = x; }
+	
+	SelectRequest &operator |= (const SelectRequest &r)
+	    { readable |= r.readable; writable |= r.writable;
+		isexception |= r.isexception; return *this; }
     };
-    virtual bool select_setup(SelectInfo &si);
     
     /**
-     * return 'true' if this object is in the sets r, w, or x.  Called
-     * from within select() to see if the object matches.
+     * 'force' is the list of default SelectRequest values when you use the
+     * variant of select() that doesn't override them.
      */
-    virtual bool test_set(SelectInfo &si);
+    SelectRequest force;
+    
+    /**
+     * If this is set, select() doesn't return true for read unless the
+     * given stream also returns true for write.
+     */
+    WvStream *read_requires_writable;
 
     /**
-     * return true if any of the requested features are true on the stream.
+     * If this is set, select() doesn't return true for write unless the
+     * given stream also returns true for read.
+     */
+    WvStream *write_requires_readable;
+    
+    /**
+     * the data structure used by pre_select()/post_select() and internally
+     * by select().
+     */
+    struct SelectInfo {
+	fd_set read, write, except;  // set by pre_select, read by post_select
+	SelectRequest wants;         // what is the user looking for?
+	int max_fd;                  // largest fd in read, write, or except
+	time_t msec_timeout;         // max time to wait, or -1 for forever
+	bool inherit_request;        // 'wants' values passed to child streams
+    };
+    
+    /**
+     * pre_select() sets up for eventually calling ::select().
+     * It adds the right fds to the read, write, and except lists in the
+     * SelectInfo struct.
+     * 
+     * Returns true if we already know this stream is ready, and there's no
+     * need to actually do a real ::select().  Some streams, such as timers,
+     * can be implemented by _only_ either returning true or false here after
+     * doing a calculation, and never actually adding anything to the
+     * SelectInfo.
+     * 
+     * You can add your stream to any of the lists even if readable,
+     * writable, or isexception isn't set.  This is what force_select()
+     * does.  You can also choose not to add yourself to the list if you know
+     * it would be useless right now.
+     * 
+     * pre_select() is only called if isok() is true.
+     * 
+     * pre_select() is allowed to reduce msec_timeout (or change it if it's
+     * -1).  However, it's not allowed to _increase_ msec_timeout.
+     */ 
+    virtual bool pre_select(SelectInfo &si);
+    
+    /**
+     * A more convenient version of pre_select() usable for overriding the
+     * 'want' value temporarily.
+     */
+    bool pre_select(SelectInfo &si, const SelectRequest &r)
+    {
+	SelectRequest oldwant = si.wants;
+	si.wants = r;
+	bool val = pre_select(si);
+	si.wants = oldwant;
+	return val;
+    }
+    
+    /**
+     * post_select() is called after ::select(), and returns true if this
+     * object is now ready.  Usually this is done by checking for this object
+     * in the read, write, and except lists in the SelectInfo structure.  If
+     * you want to do it in some other way, you should usually do it in
+     * pre_select() instead.  (post_select() _only_ gets called if ::select()
+     * returned true for _some_ stream or another.)
+     * 
+     * You may also want to do extra maintenance functions here; for example,
+     * the standard WvStream::post_select tries to flush outbuf if it's
+     * nonempty.  WvTCPConn might retry connect() if it's waiting for a
+     * connection to be established.
+     */
+    virtual bool post_select(SelectInfo &si);
+
+    /**
+     * A more convenient version of post_select() usable for overriding the
+     * 'want' value temporarily.
+     */
+    bool post_select(SelectInfo &si, const SelectRequest &r)
+    {
+	SelectRequest oldwant = si.wants;
+	si.wants = r;
+	bool val = post_select(si);
+	si.wants = oldwant;
+	return val;
+    }
+    
+    /**
+     * Return true if any of the requested features are true on the stream.
      * If msec_timeout < 0, waits forever (bad idea!).  ==0, does not wait.
      * Otherwise, waits for up to msec_timeout milliseconds.
      * 
-     * Note that select() is not virtual.  To change the select() behaviour
-     * of a stream, change its select_setup and/or test_set functions.
+     * **NOTE**
+     *   select() is _not_ virtual!  To change the select() behaviour
+     *   of a stream, override the pre_select() and/or post_select()
+     *   functions.
      * 
-     * If forceable==true, force_select options are taken into account;
-     * otherwise, we use the exactly select options given here.  Most often
-     * people should just use auto_select(), which always sets forceable to
-     * true.
+     * This version of select() sets forceable==true, so force_select
+     * options are taken into account.
      * 
-     * force_select used to always apply to select(), but it doesn't anymore
-     * (except when forceable==true) because that confuses some functions
-     * that really do need to be able to specify: if, say, getline did
-     * a select(0) for read but force_select for write is true, the select
-     * would return true, which is just nonsense.  So the default is now
-     * forceable==false.
+     * You almost always use this version of select() with callbacks, like
+     * this:  if (stream.select(1000)) stream.callback();
+     * 
+     * If you want to read/write the stream in question, try using the other
+     * variant of select().
      */
+    bool select(time_t msec_timeout)
+        { return _select(msec_timeout, false, false, false, true); }
+    
+     /**
+      * This version of select() sets forceable==false, so we use the exact
+      * readable/writable/isexception options provided.
+      * 
+      * You normally use this variant of select() when deciding whether you
+      * should read/write a particular stream.  For example:
+      * 
+      *     if (stream.select(1000, true, false))
+      *             len = stream.read(buf, sizeof(buf));
+      * 
+      * This variant of select() is probably not what you want with
+      * most WvStreamLists, unless you know exactly what you're doing.
+      */
     bool select(time_t msec_timeout,
-		bool readable = true, bool writable = false,
-		bool isexception = false, bool forceable = false);
+		bool readable, bool writable, bool isex = false)
+        { return _select(msec_timeout, readable, writable, isex, false); }
     
     /**
-     * like select, except it always uses force_select instead of taking
-     * parameters.
+     * Use force_select() to force one or more particular modes (readable,
+     * writable, or isexception) to true when selecting on this stream.
      * 
-     * Even if you don't use auto_select, there's a special case to enable
-     * force_select in wvstreamlist that probably shouldn't be there...
-     * but the only fix would be to change all main programs to use
-     * auto_select instead of select, and I don't want to do that right
-     * now. -- apenwarr
+     * If an option is set 'true', we will select on that option when someone
+     * does a select().  If it's set 'false', we don't change its force
+     * status.  (To de-force something, use undo_force_select().)
      */
-    bool auto_select(time_t msec_timeout);
+    void force_select(bool readable, bool writable, bool isexception = false);
     
     /**
-     * use force_select() to force a particular select mode
-     * (readable, writable, or isexception) to true when selecting
-     * on this stream.
+     * Undo a previous force_select() - ie. un-forces the options which
+     * are 'true', and leaves the false ones alone.
      */
-    struct ForceSelect {
-	bool readable, writable, isexception;
-    } force;
-    void force_select(bool readable, bool writable, bool isexception);
+    void undo_force_select(bool readable, bool writable,
+			   bool isexception = false);
     
     /**
      * return to the caller from execute(), but don't really return exactly;
@@ -262,7 +380,7 @@ public:
      * define the callback function for this stream, called whenever
      * the callback() member is run, and passed the 'userdata' pointer.
      */
-    void setcallback(Callback *_callfunc, void *_userdata)
+    void setcallback(WvStreamCallback _callfunc, void *_userdata)
         { callfunc = _callfunc; userdata = _userdata; }
     
     /**
@@ -271,7 +389,7 @@ public:
      * stream.
      */
     void autoforward(WvStream &s)
-        { callfunc = autoforward_callback; userdata = &s; }
+        { setcallback(autoforward_callback, &s); read_requires_writable = &s; }
     static void autoforward_callback(WvStream &s, void *userdata);
     
     /**
@@ -299,12 +417,12 @@ public:
      */
     size_t write(const WvString &s)
         { return write(s, strlen(s)); }
+    size_t print(const WvString &s)
+        { return write(s); }
 
     /**
      * preformat and print a string.
      */
-    size_t print(const WvString &s)
-        { return write(s); }
     size_t print(WVSTRING_FORMAT_DECL)
 	{ return write(WvString(WVSTRING_FORMAT_CALL)); }
     size_t operator() (const WvString &s)
@@ -316,14 +434,21 @@ private:
     void init();
     bool wvstream_execute_called;
     
+    /**
+     * The function that does the actual work of select().
+     */
+    bool _select(time_t msec_timeout,
+		 bool readable, bool writable, bool isexcept,
+		 bool forceable);
+    
 protected:
-    Callback *callfunc;
+    WvStreamCallback callfunc;
     void *userdata;
-    int fd, errnum;
+    int rwfd, errnum;
     WvString errstring;
     WvBuffer inbuf, outbuf;
     size_t max_outbuf_size;
-    bool select_ignores_buffer, outbuf_delayed_flush, alarm_was_ticking;
+    bool outbuf_delayed_flush, alarm_was_ticking;
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time
@@ -335,8 +460,8 @@ protected:
     /**
      * plain internal constructor to just set up internal variables.
      */
-    WvStream()
-        { init(); fd = -1; }
+    WvStream() : callfunc(NULL)
+        { init(); rwfd = -1; }
     
     /**
      * set the errnum variable and close the stream -- we have an error.
@@ -352,11 +477,14 @@ protected:
     static void _callback(void *stream);
     
     /**
-     * if no callback function is defined, we call execute() instead.
-     * the default execute() function does nothing.
-     * To get this function to run, use callback().
+     * The callback() function calls execute(), and then calls the user-
+     * specified callback if one is defined.  Do not call execute() directly;
+     * call callback() instead.
+     * 
+     * The default execute() function does nothing.
+     * 
      * Note: If you override this function in a derived class, you must
-     * call it yourself from the execute() method of the derived class.
+     * call the parent execute() yourself from the derived class.
      */
     virtual void execute();
 };

@@ -74,7 +74,7 @@ public:
     virtual bool isok() const;
     virtual int geterr() const;
     virtual const char *errstr() const;
-    virtual bool select_setup(SelectInfo &si);
+    virtual bool pre_select(SelectInfo &si);
     virtual size_t uread(void *buf, size_t count);
 
 public:

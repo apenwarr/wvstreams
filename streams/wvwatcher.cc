@@ -42,7 +42,7 @@ bool WvFileWatcher::make_ok(bool retry)
     // if the inode has changed, or the size is smaller than last
     // time, or we cannot stat the file, close it and start over.
     struct stat st;
-    if (fd >= 0 
+    if (getrfd() >= 0 
 	&& (stat(filename, &st)
 	    || st.st_ino != last_st.st_ino || st.st_size < last_st.st_size))
     {
@@ -92,34 +92,35 @@ size_t WvFileWatcher::uwrite(const void *buf, size_t size)
 
 
 // since you cannot really select() on a real file, we fake it:
-// select_setup() returns true if the file is longer than it was last time,
+// pre_select() returns true if the file is longer than it was last time,
 // or you want to write to it.  Otherwise the file is "not ready."
-// Because this happens in select_setup, the file will only be checked as
+// Because this happens in pre_select, the file will only be checked as
 // often as your select() delay.  So infinite delays are a bad idea!
-bool WvFileWatcher::select_setup(SelectInfo &si)
+bool WvFileWatcher::pre_select(SelectInfo &si)
 {
     struct stat st;
     
     if (!once_ok) return false;
     
-    if (si.writable)
+    if (si.wants.writable)
 	return true; // always writable
     
-    if (!si.readable)
+    if (!si.wants.readable)
 	return false; // what are you asking?
     
     // readable if the current location pointer is < size
-    if (fd >= 0 && si.readable && !fstat(fd, &st) && fpos < st.st_size)
+    if (getrfd() >= 0 && si.wants.readable 
+	   && !fstat(getrfd(), &st) && fpos < st.st_size)
 	return true;
 	    
     // get the file open, at least
     if (make_ok(false))
     {
 	// writable as long as file is open
-	if (si.writable)
+	if (si.wants.writable)
 	    return true;
 	
-	if (si.readable && fpos < last_st.st_size)
+	if (si.wants.readable && fpos < last_st.st_size)
 	    return true;
     }
     

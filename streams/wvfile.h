@@ -25,6 +25,8 @@ class WvFile : public WvStream
 public:
     WvFile()
         { }
+    WvFile(int _fd) : WvStream(_fd)
+        { }
     WvFile(const WvString &filename, int mode, int create_mode = 0666)
         { open(filename, mode, create_mode); }
     bool open(const WvString &filename, int mode, int create_mode = 0666);

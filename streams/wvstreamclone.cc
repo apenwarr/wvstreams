@@ -28,10 +28,18 @@ void WvStreamClone::close()
 }
 
 
-int WvStreamClone::getfd() const
+int WvStreamClone::getrfd() const
 {
     if (s())
-	return s()->getfd();
+	return s()->getrfd();
+    return -1;
+}
+
+
+int WvStreamClone::getwfd() const
+{
+    if (s())
+	return s()->getwfd();
     return -1;
 }
 
@@ -86,16 +94,16 @@ const char *WvStreamClone::errstr() const
 }
 
 
-bool WvStreamClone::select_setup(SelectInfo &si)
+bool WvStreamClone::pre_select(SelectInfo &si)
 {
-    bool oldrd, oldwr, oldex, result;
+    SelectRequest oldwant;
+    bool result;
     time_t alarmleft = alarm_remaining();
     
-    if (alarmleft == 0 && !select_ignores_buffer)
+    if (alarmleft == 0)
 	return true; // alarm has rung
     
-    if (si.readable && !select_ignores_buffer && inbuf.used() 
-	   && inbuf.used() >= queue_min)
+    if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
 	return true;   // sure_thing if anything in WvStream buffer
     
     if (alarmleft >= 0
@@ -104,25 +112,20 @@ bool WvStreamClone::select_setup(SelectInfo &si)
     
     if (s() && s()->isok())
     {
-	oldrd = si.readable;
-	oldwr = si.writable;
-	oldex = si.isexception;
+	oldwant = si.wants;
 	
-	if (si.forceable)
+	if (!si.inherit_request)
 	{
-	    if (force.readable)
-		si.readable = true;
-	    if (outbuf.used() || autoclose_time || force.writable)
-		si.writable = true;
-	    if (force.isexception)
-		si.isexception = true;
+	    si.wants |= force;
+	    si.wants |= s()->force;
 	}
 	
-	result = s()->select_setup(si);
+	if (outbuf.used() || autoclose_time)
+	    si.wants.writable = true;
 	
-	si.readable = oldrd;
-	si.writable = oldwr;
-	si.isexception = oldex;
+	result = s()->pre_select(si);
+	
+	si.wants = oldwant;
 	return result;
     }
     
@@ -130,26 +133,42 @@ bool WvStreamClone::select_setup(SelectInfo &si)
 }
 
 
-bool WvStreamClone::test_set(SelectInfo &si)
+bool WvStreamClone::post_select(SelectInfo &si)
 {
-    bool oldrd, oldwr, oldex, val;
+    SelectRequest oldwant;
+    bool val, want_write;
     
     if (s() && (outbuf.used() || autoclose_time))
 	flush(0);
 
     if (s() && s()->isok())
     {
-	oldrd = si.readable;
-	oldwr = si.writable;
-	oldex = si.isexception;
+	oldwant = si.wants;
+	if (!si.inherit_request)
+	{
+	    si.wants |= force;
+	    si.wants |= s()->force;
+	}
+
+	val = s()->post_select(si);
+	want_write = si.wants.writable;
+	si.wants = oldwant;
 	
-	val = s()->test_set(si);
-	
-	si.readable = oldrd;
-	si.writable = oldwr;
-	si.isexception = oldex;
-	
-	return val;
+	// don't return true if they're looking for writable and we still
+	// have data in outbuf - we're not ready to flush yet.
+	if (want_write && outbuf.used())
+	    return false;
+	else
+	{
+	    if (val && si.wants.readable && read_requires_writable
+	      && !read_requires_writable->select(0, false, true))
+		return false;
+	    if (val && si.wants.writable && write_requires_readable
+	      && !write_requires_readable->select(0, true, false))
+		return false;
+
+	    return val;
+	}
     }
     return false;
 }

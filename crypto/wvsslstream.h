@@ -42,8 +42,8 @@ public:
      */
     virtual ~WvSSLStream();
     
-    virtual bool select_setup(SelectInfo &si);
-    virtual bool test_set(SelectInfo &si);
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     
     /**
      * Close down the SSL Connection

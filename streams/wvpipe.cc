@@ -37,11 +37,11 @@ WvPipe::WvPipe(const char *program, const char **argv,
 {
     int fd0 = 0, fd1 = 1, fd2 = 2;
     if (stdin_str)
-	fd0 = stdin_str->getfd();
+	fd0 = stdin_str->getrfd();
     if (stdout_str)
-	fd1 = stdout_str->getfd();
+	fd1 = stdout_str->getwfd();
     if (stderr_str)
-	fd2 = stderr_str->getfd();
+	fd2 = stderr_str->getwfd();
     setup(program, argv, writable, readable, catch_stderr, fd0, fd1, fd2);
 }
 
@@ -140,7 +140,7 @@ void WvPipe::setup(const char *program, const char **argv,
     // set non-blocking
     fcntl(socks[0], F_SETFL, O_RDWR|O_NONBLOCK);
 
-    fd = socks[0];
+    rwfd = socks[0];
     ::close(socks[1]);
 }
 

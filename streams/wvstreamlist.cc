@@ -34,10 +34,10 @@ bool WvStreamList::isok() const
 }
 
 
-bool WvStreamList::select_setup(SelectInfo &si)
+bool WvStreamList::pre_select(SelectInfo &si)
 {
     bool one_dead = false;
-    bool oldrd, oldwr, oldex, oldforce;
+    SelectRequest oldwant;
     
     // usually because of WvTask, we might get here without having finished
     // the _last_ set of sure_thing streams...
@@ -47,26 +47,11 @@ bool WvStreamList::select_setup(SelectInfo &si)
     sure_thing.zap();
     
     time_t alarmleft = alarm_remaining();
-    if (alarmleft == 0 && !select_ignores_buffer)
+    if (alarmleft == 0)
 	return true; // alarm has rung
     
-    oldrd = si.readable;
-    oldwr = si.writable;
-    oldex = si.isexception;
-    oldforce = si.forceable;
+    oldwant = si.wants;
     
-    // when selecting on a streamlist, we always enable forceable because
-    // it doesn't mean anything otherwise...
-    // (or does it? maybe we shouldn't have a special case -- apenwarr)
-    si.forceable = true;
-    
-    if (si.forceable)
-    {
-	if (force.readable)    si.readable = true;
-	if (force.writable)    si.writable = true;
-	if (force.isexception) si.isexception = true;
-    }
-
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
@@ -80,65 +65,41 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	    continue;
 	}
 	
-	if (si.readable && !select_ignores_buffer
-	    && inbuf.used() && inbuf.used() > queue_min)
-	{
-	    sure_thing.append(&s, false, i.link->id);
-	}
+	//if (si.wants.readable && inbuf.used() && inbuf.used() > queue_min)
+	//    sure_thing.append(&s, false, i.link->id);
 	
-	if (s.isok() && s.select_setup(si))
+	if (!si.inherit_request)
+	    si.wants = s.force;
+	if (s.isok() && s.pre_select(si))
 	    sure_thing.append(&s, false, i.link->id);
     }
     
-    si.readable = oldrd;
-    si.writable = oldwr;
-    si.isexception = oldex;
-    si.forceable = oldforce;
-    
+    si.wants = oldwant;
     return one_dead || !sure_thing.isempty();
 }
 
 
-bool WvStreamList::test_set(SelectInfo &si)
+bool WvStreamList::post_select(SelectInfo &si)
 {
     bool one_dead = false;
-    bool oldrd, oldwr, oldex, oldforce;
-
-    oldrd = si.readable;
-    oldwr = si.writable;
-    oldex = si.isexception;
-    oldforce = si.forceable;
+    SelectRequest oldwant = si.wants;
     
-    si.forceable = true;
-    
-    if (si.forceable)
-    {
-	if (force.readable)
-	    si.readable = true;
-	if (force.writable)
-	    si.writable = true;
-	if (force.isexception)
-	    si.isexception = true;
-    }
-	
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
 	WvStream &s(i);
 	if (s.isok())
 	{
-	    if (s.test_set(si))
+	    if (!si.inherit_request)
+		si.wants = s.force;
+	    if (s.post_select(si))
 		sure_thing.append(&s, false);
 	}
 	else
 	    one_dead = true;
     }
     
-    si.readable = oldrd;
-    si.writable = oldwr;
-    si.isexception = oldex;
-    si.forceable = oldforce;
-    
+    si.wants = oldwant;
     return one_dead || !sure_thing.isempty();
 }
 

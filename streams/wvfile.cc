@@ -8,15 +8,15 @@
 
 bool WvFile::open(const WvString &filename, int mode, int create_mode)
 {
-    if (fd >= 0)
+    if (rwfd >= 0)
 	close();
-    fd = ::open(filename, mode | O_NONBLOCK, create_mode);
-    if (fd < 0)
+    rwfd = ::open(filename, mode | O_NONBLOCK, create_mode);
+    if (rwfd < 0)
     {
 	seterr(errno);
 	return false;
     }
 
-    fcntl(fd, F_SETFD, 1);
+    fcntl(rwfd, F_SETFD, 1);
     return true;
 }

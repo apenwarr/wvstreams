@@ -18,10 +18,8 @@
 
 
 WvUnixConn::WvUnixConn(int _fd, const WvUnixAddr &_addr)
-    : addr(_addr)
+    : WvStream(_fd), addr(_addr)
 {
-    fd = _fd;
-    
     // already connected...
 }
 
@@ -31,15 +29,15 @@ WvUnixConn::WvUnixConn(const WvUnixAddr &_addr)
 {
     sockaddr *sa;
     
-    fd = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0)
+    rwfd = socket(PF_UNIX, SOCK_STREAM, 0);
+    if (rwfd < 0)
     {
 	seterr(errno);
 	return;
     }
     
     sa = addr.sockaddr();
-    if (connect(fd, sa, addr.sockaddr_len()) < 0)
+    if (connect(getfd(), sa, addr.sockaddr_len()) < 0)
     {
 	seterr(errno);
 	delete sa;
@@ -50,8 +48,8 @@ WvUnixConn::WvUnixConn(const WvUnixAddr &_addr)
     
     // all is well and we're connected.  Make it non-blocking 
     // and close-on-exec.
-    fcntl(fd, F_SETFD, 1);
-    fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK);
+    fcntl(getfd(), F_SETFD, 1);
+    fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
 }
 
 
@@ -72,12 +70,11 @@ const WvUnixAddr *WvUnixConn::src() const
 
 
 WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
-	: addr(_addr)
+	: addr(_addr), auto_callback(NULL)
 {
     mode_t oldmask;
     
     auto_list = NULL;
-    auto_callback = NULL;
     auto_userdata = NULL;
     bound_okay = false;
     
@@ -90,11 +87,11 @@ WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
     oldmask = umask(0777); // really just reading the old umask here
     umask(oldmask | ((~create_mode) & 0777));
     
-    fd = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0
-	|| fcntl(fd, F_SETFD, 1)
-	|| bind(fd, sa, addr.sockaddr_len())
-	|| listen(fd, 5))
+    rwfd = socket(PF_UNIX, SOCK_STREAM, 0);
+    if (rwfd < 0
+	|| fcntl(getfd(), F_SETFD, 1)
+	|| bind(getfd(), sa, addr.sockaddr_len())
+	|| listen(getfd(), 5))
     {
 	seterr(errno);
     }
@@ -134,14 +131,14 @@ WvUnixConn *WvUnixListener::accept()
     int newfd;
     WvUnixConn *ret;
 
-    newfd = ::accept(fd, (struct sockaddr *)&sun, &len);
+    newfd = ::accept(getfd(), (struct sockaddr *)&sun, &len);
     ret = new WvUnixConn(newfd, addr);
     return ret;
 }
 
 
 void WvUnixListener::auto_accept(WvStreamList *list,
-				 Callback *callfunc, void *userdata)
+				 WvStreamCallback callfunc, void *userdata)
 {
     auto_list = list;
     auto_callback = callfunc;

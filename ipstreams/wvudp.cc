@@ -13,10 +13,10 @@
 WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
 	: localaddr(), remaddr(_rem)
 {
-    fd = socket(PF_INET, SOCK_DGRAM, 0);
-    if (fd < 0 
-	|| fcntl(fd, F_SETFD, 1)
-	|| fcntl(fd, F_SETFL, O_RDWR | O_NONBLOCK)
+    rwfd = socket(PF_INET, SOCK_DGRAM, 0);
+    if (getfd() < 0 
+	|| fcntl(getfd(), F_SETFD, 1)
+	|| fcntl(getfd(), F_SETFL, O_RDWR | O_NONBLOCK)
 	)
     {
 	seterr(errno);
@@ -24,7 +24,7 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
     }
     
     struct sockaddr *sa = _local.sockaddr();
-    if (bind(fd, sa, _local.sockaddr_len()))
+    if (bind(getfd(), sa, _local.sockaddr_len()))
     {
 	delete sa;
 	seterr(errno);
@@ -34,7 +34,7 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
     
     struct sockaddr_in nsa;
     socklen_t nsalen = sizeof(nsa);
-    if (getsockname(fd, (sockaddr *)&nsa, &nsalen) < 0)
+    if (getsockname(getfd(), (sockaddr *)&nsa, &nsalen) < 0)
     {
 	seterr(errno);
 	return;
@@ -44,7 +44,7 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
     if (WvIPAddr(_rem) != WvIPAddr())
     {
 	struct sockaddr *sa = _rem.sockaddr();
-	if (connect(fd, sa, _rem.sockaddr_len()))
+	if (connect(getfd(), sa, _rem.sockaddr_len()))
 	{
 	    delete sa;
 	    seterr(errno);
@@ -114,5 +114,5 @@ void WvUDPStream::enable_broadcasts()
     
     if (!isok()) return;
     
-    setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &value, sizeof(value));
+    setsockopt(getfd(), SOL_SOCKET, SO_BROADCAST, &value, sizeof(value));
 }

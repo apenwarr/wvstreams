@@ -13,7 +13,7 @@
 int main(int argc, char **argv)
 {
     WvLog log("httptest", WvLog::Info);
-    WvURL url("http://office.worldvisions.ca:8080/~apenwarr/neti/r2_9921.img?serialno=asdfadsfasd");
+    WvURL url("http://www.net-itech.com/");
     WvHTTPStream http(url);
     WvFile out("httptest.out", O_WRONLY | O_TRUNC | O_CREAT);
     WvHTTPStream::State last_state = WvHTTPStream::Done;
