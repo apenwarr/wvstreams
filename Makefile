@@ -118,6 +118,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(libdir); \
 	done
 	cd $(DESTDIR)$(libdir) && for i in $(TARGETS_SO); do \
+	    rm -f $$i; \
 	    $(LN_S) $$i.$(RELEASE) $$i; \
 	done
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
