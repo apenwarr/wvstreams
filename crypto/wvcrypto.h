@@ -124,5 +124,23 @@ public:
     virtual ~WvRSAStream();
 };
 
+/*
+ * MD5 Hash of either a string or a File 
+ */
+class WvMD5
+{
+   unsigned char *MD5HashValue;
+
+public:
+
+   WvMD5(WvString &StringToHash);
+   WvMD5(FILE *FileToHash);
+   ~WvMD5();
+   
+   operator const unsigned char *() const
+   	{ return MD5HashValue; }
+
+   WvString MD5Hash() const;
+};
 
 #endif // __WVCRYPTO_H
