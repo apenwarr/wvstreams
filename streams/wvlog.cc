@@ -338,7 +338,7 @@ bool WvLogRcv::set_custom_levels(WvString descr)
     WvStringList lst;
     WvStringList::Iter i(lst);
     lst.split(descr, ",= ");
-    if (!lst.count())
+    if (lst.isempty())
         return true;
     WvString src("");
 

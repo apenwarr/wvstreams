@@ -63,18 +63,31 @@ void WvQdbmHash::closedb()
 
 void WvQdbmHash::opendb(WvStringParm dbfile, bool _persist)
 {
+    static char tmpbuf[L_tmpnam];
+    static int tmpbuf_inited = 0;
     closedb();
 
     noerr();
 
     persist_dbfile = _persist;
+    //jdeboer: If this is an anonymous hash, we don't want it to persist!
+    if (dbfile.isnull()) {
+        persist_dbfile = false;
+        tmpnam(tmpbuf);
+        tmpbuf_inited = 1;
+    }
+    if (tmpbuf_inited > 0 && dbfile == WvString(tmpbuf)) {
+        // sometime people reopen the database with the same name.
+        persist_dbfile = false;
+    }
 
     int mode = VL_OWRITER | VL_OCREAT;
     if (!persist_dbfile) mode |= VL_OTRUNC;
     
     // VL_CMPLEX = lexigraphic comparison
-    static char tmpbuf[L_tmpnam];
-    const char *fname = dbfile.isnull() ? tmpnam(tmpbuf) : dbfile.cstr();
+    // FIXME: tmpnam!!
+    
+    const char *fname = dbfile.isnull() ? tmpbuf : dbfile.cstr();
     dbf = vlopen(fname, mode, VL_CMPLEX);
     if (dbf == NULL) dperr();
 }

@@ -227,7 +227,8 @@ WVTEST_MAIN("permgen + defaultgen")
     IUniConfGen *innerperm = new UniTempGen();
     IUniConfGen *innerdef = new UniDefGen(innerperm);
     UniPermGen permgen(innerdef);
-    WvStringList defgroups;
+    WvStringList nogroups;
+    WvStringList rootgroup; rootgroup.append("root");
 
     innerdef->set("cfg/*/world-exec", "false"); 
     
@@ -235,7 +236,8 @@ WVTEST_MAIN("permgen + defaultgen")
     WVPASS(root.mountgen(sec));
 
     permgen.setowner("/", "root");
-    sec->setcredentials("root", defgroups);
+    permgen.setgroup("/", "root");
+    sec->setcredentials("root", nogroups);
     permgen.chmod(UniConfKey("/"), 7, 7, 7);
 
     // test that readable/writable stuff works as expected (default does
@@ -243,9 +245,14 @@ WVTEST_MAIN("permgen + defaultgen")
     root["/cfg/users/foo"].setme("123");
     WVPASS(root["/cfg/users/foo"].getme() == "123");
 
+    // make sure that the same is true for groups
+    sec->setcredentials("notroot", rootgroup);
+    root["/cfg/users/foo"].setme("456");
+    WVPASS(root["/cfg/users/foo"].getme() == "456");
+
     // test execute permission denial by default, and test override
     root["cfg/exec/read"].setmeint(1);
-    sec->setcredentials("notroot", defgroups);
+    sec->setcredentials("notroot", nogroups);
     WVPASS(root["cfg/exec/read"].getme() == WvString::null);
     innerdef->set("cfg/exec/world-exec", "true"); 
     WVPASS(root["cfg/exec/read"].getme() == "1");
