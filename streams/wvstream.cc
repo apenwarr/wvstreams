@@ -417,7 +417,7 @@ void WvStream::flush(time_t msec_timeout)
     
     if (!isok()) return;
     
-    while (outbuf.used())
+    while (isok() && outbuf.used())
     {
 	attempt = outbuf.used();
 	if (attempt > 1400)
