@@ -4,10 +4,6 @@
  *
  * A hash table container backed by a Berkeley DB (libdb) database.
  * Intended to work with versions as old as libdb1.
- * 
- * FIXME: the error checking in here is horrendous.
- * 
- * FIXME: share more code with WvGdbmHash, since there's a lot of duplication?
  */
 #ifndef __WVBDBHASH_H
 #define __WVBDBHASH_H
@@ -25,7 +21,8 @@
 class WvBdbHashBase
 {
 public:
-    // a very ugly way to avoid #including the db.h from here
+    // a very ugly way to avoid #including the db.h from here.  This has
+    // to be binary-compatible with the DBT structure.
     struct datum
     {
 	void *dptr;
@@ -34,8 +31,11 @@ public:
     
     WvBdbHashBase(WvStringParm dbfile);
     ~WvBdbHashBase();
-    int count() const { return entries; }
-    bool isempty() const { return !entries; }
+    //int count() const { return entries; }
+    // bool isempty() const { return !entries; }
+    
+    bool isok() const
+        { return dbf; }
 
     int add(const datum &key, const datum &data, bool replace);
     int remove(const datum &key);
@@ -58,9 +58,9 @@ public:
         datum curdata;
 	bool empty;
     };
+    
 private:
     friend class IterBase;
-    int entries;
     struct __db *dbf;
 };
 
@@ -72,7 +72,8 @@ private:
  * This affects memory management for objects stored in it.
  * 
  * For find and operator[], the returned object is only guaranteed to be
- * around until the next find/or next() for iterators. 
+ * around until the next find() (or next(), for iterators).  Remember that
+ * you may not be the only person to do a next() or find() on this database.
  */
 template <class K, class D>
 class WvBdbHash : public WvBdbHashBase
@@ -114,7 +115,9 @@ public:
     {
         int r = WvBdbHashBase::add(datumize<K>(key),
 				    datumize<D>(data), replace);
-        assert(!r && "Set the replace flag to replace existing elements.");
+        assert((!r || replace)
+	       && "Set the replace flag to replace existing elements.");
+	assert(!r && "Weird: database add failed?");
     }
 
     void remove(const K &key)

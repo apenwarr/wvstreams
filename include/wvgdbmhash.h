@@ -25,8 +25,6 @@ class WvGdbmHashBase
 public:
     WvGdbmHashBase(WvStringParm dbfile);
     ~WvGdbmHashBase();
-    int count() const { return entries; }
-    bool isempty() const { return !entries; }
 
     int add(const datum &key, const datum &data, bool replace);
     int remove(const datum &key);
@@ -49,7 +47,6 @@ public:
     };
 private:
     friend class IterBase;
-    int entries;
     GDBM_FILE dbf;
 };
 

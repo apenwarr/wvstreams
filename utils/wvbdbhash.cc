@@ -31,7 +31,7 @@ WvBdbHashBase::~WvBdbHashBase()
 
 int WvBdbHashBase::add(const datum &key, const datum &data, bool replace)
 {
-    if (!dbf) return -1;
+    assert(isok());
     return dbf->put(dbf, (DBT *)&key, (DBT *)&data,
 		    !replace ? R_NOOVERWRITE : 0);
 }
@@ -39,15 +39,15 @@ int WvBdbHashBase::add(const datum &key, const datum &data, bool replace)
 
 int WvBdbHashBase::remove(const datum &key)
 {
-    if (!dbf) return -1;
+    assert(isok());
     return dbf->del(dbf, (DBT *)&key, 0);
 }
 
 
 WvBdbHashBase::datum WvBdbHashBase::find(const datum &key)
 {
+    assert(isok());
     datum ret = {0, 0};
-    if (!dbf) return ret;
     dbf->get(dbf, (DBT *)&key, (DBT *)&ret, 0);
     return ret;
 }
@@ -55,7 +55,7 @@ WvBdbHashBase::datum WvBdbHashBase::find(const datum &key)
 
 bool WvBdbHashBase::exists(const datum &key)
 {
-    if (!dbf) return false; 
+    assert(isok());
     datum ret = {0, 0};
     return !dbf->get(dbf, (DBT *)&key, (DBT *)&ret, 0);
 }
@@ -63,8 +63,8 @@ bool WvBdbHashBase::exists(const datum &key)
 
 void WvBdbHashBase::zap()
 {
+    assert(isok());
     datum key, value;
-    if (!dbf) return;
     while (!dbf->seq(dbf, (DBT *)&key, (DBT *)&value, R_FIRST))
 	dbf->del(dbf, (DBT *)&key, 0);
 }
@@ -91,9 +91,9 @@ void WvBdbHashBase::IterBase::rewind()
 
 void WvBdbHashBase::IterBase::rewind(const datum &firstkey)
 {
+    assert(bdbhash.isok());
     curkey.dptr = NULL;
     empty = false;
-    if (!bdbhash.dbf) return;
     
     curkey = firstkey;
     if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
@@ -118,7 +118,7 @@ void WvBdbHashBase::IterBase::rewind(const datum &firstkey)
 
 void WvBdbHashBase::IterBase::next()
 {
-    if (!bdbhash.dbf) return;
+    assert(bdbhash.isok());
     if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
 			 curkey.dptr ? R_NEXT : R_FIRST))
 	curkey.dptr = curdata.dptr = NULL;
