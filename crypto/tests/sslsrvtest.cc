@@ -37,7 +37,7 @@ void tcp_incoming(WvStream &_listener, void *userdata)
 {
     WvTCPListener *listener = (WvTCPListener *)&_listener;
     WvStreamList *l = (WvStreamList *)userdata;
-    WvStream *s = listener->accept();
+    WvTCPConn *s = listener->accept();
     
     if (s)
     {
