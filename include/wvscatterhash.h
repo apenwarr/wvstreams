@@ -87,9 +87,11 @@ protected:
 
 private:
     void rebuild();
-    long curhash(unsigned hash, unsigned attempt)
+    unsigned second_hash(unsigned hash)
+        { return (hash % (numslots - 1)) + 1; }
+    unsigned curhash(unsigned hash, unsigned hash2, unsigned attempt)
         //{ return (hash + attempt * attempt) % numslots; }
-        { return (hash + attempt*((hash % (numslots - 1) + 1))) % numslots; }
+        { return (hash + attempt*hash2) % numslots; }
 
     size_t used;
     size_t num;

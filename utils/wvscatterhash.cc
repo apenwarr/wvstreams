@@ -55,10 +55,15 @@ void WvScatterHashBase::_add(void *data, unsigned hash, bool auto_free)
         rebuild();
 
     unsigned slot = hash % numslots;
-    unsigned attempt = 0;
 
-    while (IS_OCCUPIED(slots[slot]))
-        slot = curhash(hash, ++attempt);
+    if (IS_OCCUPIED(slots[slot]))
+    {
+        unsigned attempt = 0;
+        unsigned hash2 = second_hash(hash);
+
+        while (IS_OCCUPIED(slots[slot]))
+            slot = curhash(hash, hash2, ++attempt);
+    }
 
     num++;
     if (!IS_DELETED(slots[slot]))
@@ -119,14 +124,19 @@ struct WvScatterHashBase::pair *WvScatterHashBase::genfind
     (const void *data, unsigned hash)
 {
     unsigned slot = hash % numslots;
-    int attempt = 0;
+
+    if (IS_OCCUPIED(slots[slot]) && compare(data, slots[slot].data))
+        return &slots[slot];
+
+    unsigned attempt = 0;
+    unsigned hash2 = second_hash(hash);
 
     while (slots[slot].status)
     {
+        slot = curhash(hash, hash2, ++attempt);
+
         if (IS_OCCUPIED(slots[slot]) && compare(data, slots[slot].data))
             return &slots[slot];
-
-        slot = curhash(hash, ++attempt);
     } 
 
     return &null_pair;
