@@ -11,7 +11,7 @@ WvTask *ga, *gb;
 
 WvTaskMan *gman;
 
-void gentask(void *userdata)
+int gentask(void *userdata)
 {
     char *str = (char *)userdata;
     int count = 0, delay = 0;
@@ -46,6 +46,7 @@ void gentask(void *userdata)
     }
     
     printf("Gentask ending %s\n", str);
+    return 0;
 }
 
 

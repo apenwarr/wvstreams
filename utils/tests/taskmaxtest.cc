@@ -8,7 +8,7 @@
 
 WvTaskMan *gman;
 
-void gentask(void *userdata)
+int gentask(void *userdata)
 {
     static int xc = 0;
     
@@ -27,6 +27,7 @@ void gentask(void *userdata)
     }
     
     printf("  Gentask ending %d\n", x);
+    return 0;
 }
 
 

@@ -149,7 +149,7 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
 // this is run in the subtask owned by 'stream', if any; NOT necessarily
 // the task that runs WvStream::callback().  That's why this needs to be
 // a separate function.
-void WvStream::_callback(void *stream)
+int WvStream::_callback(void *stream)
 {
     WvStream *s = (WvStream *)stream;
     
@@ -168,6 +168,7 @@ void WvStream::_callback(void *stream)
     assert(s->wvstream_execute_called);
     
     s->running_callback = false;
+    return 0; // not used
 }
 
 

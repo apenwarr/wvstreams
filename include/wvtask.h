@@ -31,7 +31,7 @@ class WvTaskMan;
 class WvTask
 {
     friend class WvTaskMan;
-    typedef void TaskFunc(void *userdata);
+    typedef int TaskFunc(void *userdata);
     
     static int taskcount, numtasks, numrunning;
     int magic_number, *stack_magic;

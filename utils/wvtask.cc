@@ -72,8 +72,13 @@ void WvTask::recycle()
 }
 
 
+static int taskmen = 0;
+
 WvTaskMan::WvTaskMan()
 {
+    taskmen++;
+    assert(taskmen == 1);
+    
     stack_target = NULL;
     current_task = NULL;
     magic_number = -WVTASK_MAGIC;
@@ -90,6 +95,8 @@ WvTaskMan::WvTaskMan()
 WvTaskMan::~WvTaskMan()
 {    
     magic_number = -42;
+    taskmen--;
+    assert(taskmen == 0);
 }
 
 
@@ -301,23 +308,25 @@ void WvTaskMan::do_task()
 	// someone did a run() on the task, which
 	// means they're ready to make it go.  Do it.
 	for (;;)
-	{	    
+	{
 	    assert(magic_number == -WVTASK_MAGIC);
 	    assert(task->magic_number == WVTASK_MAGIC);
 	    
+	    int retval = -42;
+	
 	    if (task->func && task->running)
 	    {
 		// this is the task's main function.  It can call yield()
 		// to give up its timeslice if it wants.  Either way, it
 		// only returns to *us* if the function actually finishes.
-		task->func(task->userdata);
+		retval = task->func(task->userdata);
 		
 		// the task's function terminated.
 		task->name = "DEAD";
 		task->running = false;
 		task->numrunning--;
 	    }
-	    yield();
+	    yield(retval);
 	}
     }
 }
