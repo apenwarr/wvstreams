@@ -27,16 +27,14 @@ WVTEST_MAIN("unwrap basics")
     
     UniUnwrapGen g(cfg);
     WVPASSEQ(itcount(g.iterator("/")), 4);
+    WVPASSEQ(itcount(g.recursiveiterator("/foo")), 6);
+    WVPASSEQ(itcount(g.recursiveiterator("/foo2")), 6);
     WVPASSEQ(itcount(g.recursiveiterator("/foo3")), 6);
-    
-#if SOMEONE_FIXES_MOUNTGEN_RECURSIVEITER
+
     WVPASSEQ(itcount(g.recursiveiterator("/")), 23);
-#endif
-    
+
     cfg.xset("foo3/fork", "forky");
     WVPASSEQ(itcount(g.recursiveiterator("/foo")), 7);
 
-#if SOMEONE_FIXES_MOUNTGEN_RECURSIVEITER
     WVPASSEQ(itcount(g.recursiveiterator("/")), 26);
-#endif
 }

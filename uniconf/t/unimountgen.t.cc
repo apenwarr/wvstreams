@@ -158,6 +158,8 @@ WVTEST_MAIN("multiple generators - iterators")
         WVPASSEQ(num_values, 10);
     }
 #endif
+
+    delete i;
 }
 
 WVTEST_MAIN("multiple generators - iterating with gaps")

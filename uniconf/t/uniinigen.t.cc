@@ -86,6 +86,18 @@ WVTEST_MAIN("Setting and getting (bug 6090)")
 //    WVPASSEQ(cfg2["mrwise"].getme(), "{{bork!");
 }
 
+WVTEST_MAIN("Trailing slashes")
+{
+    UniConfRoot cfg("ini:tmp.ini");
+
+    cfg["sfllaw"].setme("law");
+    WVPASSEQ(cfg["sfllaw"].getme(), "law");
+    WVPASSEQ(cfg["sfllaw/"].getme(), "");
+
+    cfg["sfllaw/"].setme("LAW");
+    WVPASSEQ(cfg["sfllaw"].getme(), "law");
+    WVPASSEQ(cfg["sfllaw/"].getme(), "");
+}
 
 static void inicmp(WvStringParm key, WvStringParm val, WvStringParm content)
 {
