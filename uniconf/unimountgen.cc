@@ -231,16 +231,33 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
     UniGenMount *found = findmount(key);
     if (found)
         return found->gen->iterator(trimkey(found->key, key));
-    return NULL;
+    else
+    {
+	// deal with elements mounted on nothingness.
+	// FIXME: this is really a hack, and should (somehow) be dealt with
+	// in a more general way.
+	ListIter *it = new ListIter(this);
+	MountList::Iter i(mounts);
+	for (i.rewind(); i.next(); )
+	{
+	    if (key.numsegments() < i->key.numsegments()
+	      && key.suborsame(i->key))
+		it->keys.append(new WvString(i->key), true);
+	}
+	return it;
+    }
 }
 
 
+// FIXME: doesn't work correctly when something is mounted somewhere
+// underneath 'key' itself, because we don't recurse into sub-iterators.
 UniMountGen::Iter *UniMountGen::recursiveiterator(const UniConfKey &key)
 {
     UniGenMount *found = findmount(key);
     if (found)
         return found->gen->recursiveiterator(trimkey(found->key, key));
-    return NULL;
+    else
+	return UniConfGen::recursiveiterator(key);
 }
 
 
