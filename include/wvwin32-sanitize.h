@@ -1,14 +1,19 @@
 #ifndef __WIN32_SANITIZE_H
 #define __WIN32_SANITIZE_H
 
+#ifdef __GNUC__
 #include "wvautoconf.h"
+#endif
+
 #include <basetyps.h>
 #include <objbase.h>
 #include <signal.h>
 #include <winsock.h>
 #include <malloc.h>
 
+#ifndef _SYS_GUID_OPERATOR_EQ_
 #define _SYS_GUID_OPERATOR_EQ_ 1
+#endif
 
 #ifndef SIGALRM
 #define SIGALRM 14

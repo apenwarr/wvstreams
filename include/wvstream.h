@@ -16,6 +16,7 @@
 #include <time.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "wvwin32-sanitize.h"
 #else
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
 #include <sys/time.h>

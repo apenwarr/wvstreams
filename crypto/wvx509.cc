@@ -11,7 +11,8 @@
 #include "wvcrypto.h"
 #include "wvstringlist.h"
 #include "wvbase64.h"
-#include "strutils.h"
+#include "wvstrutils.h"
+#include "wvfileutils.h"
 
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -422,7 +423,7 @@ WvRSAKey *WvX509Mgr::fillRSAPubKey()
 
 static FILE *file_hack_start()
 {
-    return tmpfile();
+    return wvtmpfile();
 }
 
 
@@ -912,6 +913,14 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    return;
 	}
 	rewind(stupid);
+
+#if 0
+	char buf[256];
+	while (fgets(buf, sizeof(buf)-1, stupid))
+	    printf("line: '%s'\n", buf);
+	rewind(stupid);
+#endif
+
 	switch(mode)
 	{
 	case CertPEM:
@@ -936,6 +945,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    debug("Importing RSA keypair.\n");
 	    debug("Make sure that you load or generate a new Certificate!\n");
 	    if (rsa) delete rsa;
+
 	    rsa = new WvRSAKey(PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL), 
 			       true);
 	    if (!rsa->isok())
@@ -984,13 +994,13 @@ public:
 private:
     FILE *fp;
 };
-} // anomymous namespace...
+} // anonymous namespace
 
 void WvX509Mgr::write_p12(WvStringParm filename)
 {
     debug("Dumping RSA Key and X509 Cert to PKCS12 structure.\n");
 
-    AutoClose fp = fopen(filename, "w");
+    AutoClose fp = fopen(filename, "wb");
 
     if (!fp)
     {

@@ -23,7 +23,7 @@
 				PreprocessorDefinitions="WVSTREAMS_RELEASE=&quot;4.0&quot;;WIN32;_DEBUG;_CONSOLE;strcasecmp=stricmp"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="2"
 				ForceConformanceInForLoopScope="TRUE"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
@@ -38,7 +38,7 @@
 				OutputFile="$(OutDir)/uniconfd.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..;..\..\..\openssl\out32dll;..\..\..\..\ports\zlib\VisualC\zlib\Debug;..\..\..\..\ports\xplc\build\xplc\VisualC++\Debug"
-				IgnoreDefaultLibraryNames="msvcrt.lib;libc.lib;libcmt.lib;libcd.lib;libcmtd.lib"
+				IgnoreDefaultLibraryNames="libc.lib;libcmt.lib;libcd.lib;libcmtd.lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/uniconfd.pdb"
 				SubSystem="1"
@@ -130,27 +130,6 @@
 			</File>
 			<File
 				RelativePath="..\..\uniconf\daemon\uniconfd.cc">
-			</File>
-			<File
-				RelativePath="..\..\uniconf\daemon\uniconfdaemon.cc">
-			</File>
-			<File
-				RelativePath="..\..\uniconf\daemon\uniconfdaemonconn.cc">
-			</File>
-			<File
-				RelativePath="..\..\uniconf\daemon\uniconfpamconn.cc">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter

@@ -2,6 +2,10 @@
 #include "wvgzipstream.h"
 #include "wvloopback.h"
 
+#ifdef _WIN32
+#define ZLIB_DOESNT_HAVE_VALGRIND_ERRORS 1 // win32 has no valgrind!
+#endif
+
 // hmm... this test itself passes now, but the gzip encoder seems to have
 // valgrind errors.  Probably minor, but we shouldn't upset the unit tests.
 #if ZLIB_DOESNT_HAVE_VALGRIND_ERRORS
@@ -23,7 +27,7 @@ WVTEST_MAIN("autoflush")
     gzip.auto_flush(false);
     gzip.write("y");
     WVFAIL(gzip.read(buf, sizeof(buf)));
-    gzip.select(10);
+    gzip.select(1000);
     WVPASS(gzip.read(buf, sizeof(buf)));
 }
 

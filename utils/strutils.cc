@@ -784,3 +784,18 @@ WvString substr(WvString line, unsigned int pos, unsigned int len)
 
     return ret;
 }
+
+
+FILE *wvtmpfile()
+{
+#ifndef _WIN32 // tmpfile() is really the best choice, when it works
+    return tmpfile();
+#else
+    // in win32, tmpfile() creates files in c:\...
+    // and that directory isn't always writable!  Idiots.
+    char *name = _tempnam("c:\\temp", "wvtmp");
+    FILE *f = fopen(name, "wb+");
+    free(name);
+    return f;
+#endif
+}

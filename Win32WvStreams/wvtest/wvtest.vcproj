@@ -24,22 +24,22 @@
 				PreprocessorDefinitions="WVSTREAMS_RELEASE=&quot;4.0&quot;;WIN32;_WIN32;WINDOWS;_WINDOWS;_DEBUG;_CONSOLE;strcasecmp=stricmp;strncasecmp=_strnicmp"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="2"
 				ForceConformanceInForLoopScope="TRUE"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
-				DebugInformationFormat="4"/>
+				DebugInformationFormat="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Rpcrt4.lib ws2_32.lib ssleay32.lib libeay32.lib dirent.lib zlib.lib xplc.lib xplc-cxx.lib"
 				OutputFile="$(OutDir)/wvtest.exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="..;..\..\..\openssl\out32dll;..\..\..\..\ports\zlib\VisualC\zlib\Debug;..\..\..\..\ports\xplc\build\xplc\VisualC++\Debug"
-				IgnoreDefaultLibraryNames="msvcrt.lib;libc.lib;libcmt.lib;libcd.lib;libcmtd.lib"
+				IgnoreDefaultLibraryNames="libc.lib;libcmt.lib;libcd.lib;libcmtd.lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/wvtest.pdb"
 				SubSystem="1"
@@ -178,6 +178,9 @@
 				RelativePath="..\..\utils\t\wvhex.t.cc">
 			</File>
 			<File
+				RelativePath="..\..\urlget\t\wvhttppool.t.cc">
+			</File>
+			<File
 				RelativePath="..\..\utils\t\wvlinklist.t.cc">
 			</File>
 			<File
@@ -185,6 +188,9 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\t\wvmatrix.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\t\wvrsa.t.cc">
 			</File>
 			<File
 				RelativePath="..\..\utils\t\wvscatterhash.t.cc">
@@ -221,6 +227,9 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\t\wvwordwrap.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\t\wvx509.t.cc">
 			</File>
 		</Filter>
 		<Filter

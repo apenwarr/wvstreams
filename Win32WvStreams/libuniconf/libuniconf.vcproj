@@ -23,7 +23,7 @@
 				PreprocessorDefinitions="strcasecmp=_stricmp;strncasecmp=_strnicmp;WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="2"
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="0"
@@ -125,10 +125,19 @@
 				RelativePath="..\..\uniconf\uniconf_c.cc">
 			</File>
 			<File
+				RelativePath="..\..\uniconf\daemon\uniconfdaemon.cc">
+			</File>
+			<File
+				RelativePath="..\..\uniconf\daemon\uniconfdaemonconn.cc">
+			</File>
+			<File
 				RelativePath="..\..\uniconf\uniconfgen.cc">
 			</File>
 			<File
 				RelativePath="..\..\uniconf\uniconfkey.cc">
+			</File>
+			<File
+				RelativePath="..\..\uniconf\daemon\uniconfpamconn.cc">
 			</File>
 			<File
 				RelativePath="..\..\uniconf\uniconfroot.cc">

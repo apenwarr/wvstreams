@@ -4,6 +4,8 @@
 #include "wvgzip.h"
 #include <ctype.h>
 
+#if 1
+
 WVTEST_MAIN("gzip")
 {
     //FIXME: this test is associated with bug #6166 
@@ -51,6 +53,7 @@ WVTEST_MAIN("gzip")
     line = gzip2.blocking_getline(1000);
     WVPASSEQ(line, "a compressed line");
 }
+
 
 #include "wvbufstream.h"
 #include "wvbase64.h"
@@ -565,3 +568,4 @@ WVTEST_MAIN("add filters midstream")
     WVPASSEQ(s.geterr(), 0);
     wvcon->print("Error code: '%s'\n", s.errstr());
 }
+#endif

@@ -137,13 +137,19 @@ WVTEST_MAIN("X509")
 	WVFAIL(t509.test());
     }
     
+    // WIN32 people!  If your unit tests are crashing here, you probably
+    // linked openssl with a different version of msvcr*.dll than the
+    // unit test.  We pass a FILE* from one to the other here, and it
+    // won't work if there's a library mismatch.
     {
         WvX509Mgr t509(NULL);
 	t509.decode(WvX509Mgr::RsaPEM, rsakeytext);
 	t509.decode(WvX509Mgr::CertPEM, x509certtext);
 	basic_test(&t509, dName1);
-	WVPASS(t509.encode(WvX509Mgr::CertPEM) == x509certtext);
-	WVPASS(t509.encode(WvX509Mgr::RsaPEM) == rsakeytext);
+	WvString certencode = t509.encode(WvX509Mgr::CertPEM);
+	WVPASS(certencode == x509certtext);
+	WvString rsaencode = t509.encode(WvX509Mgr::RsaPEM);
+	WVPASS(rsaencode == rsakeytext);
 	WVPASS(t509.certreq() == certreqtext);
     }
     {
@@ -213,4 +219,3 @@ WVTEST_MAIN("X509")
 	WVPASS(n509.validate(&t509));
     }
 }
-

@@ -68,11 +68,12 @@ void WvTest::alarm_handler(int)
 
 WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
 {
-    const char *cptr = strrchr(_idstr, '/');
-    if (cptr)
-	idstr = cptr+1;
-    else
-	idstr = _idstr;
+    const char *cptr;
+    idstr = _idstr;
+    cptr = strrchr(idstr, '/');
+    if (cptr) idstr = cptr + 1;
+    cptr = strrchr(idstr, '\\');
+    if (cptr) idstr = cptr + 1;
     descr = _descr;
     main = _main;
     next = NULL;
