@@ -29,11 +29,16 @@ public:
     static inline bool start_check(const char *file, int line,
 				   const char *condstr, bool cond)
         { start(file, line, condstr); check(cond); return cond; }
+    static bool start_check_eq(const char *file, int line,
+			       const char *a, const char *b);
+    static bool start_check_eq(const char *file, int line, int a, int b);
 };
 
 
 #define WVPASS(cond) \
     WvTest::start_check(__FILE__, __LINE__, #cond, (cond))
+#define WVPASSEQ(a, b) \
+    WvTest::start_check_eq(__FILE__, __LINE__, (a), (b))
 #define WVFAIL(cond) \
     WvTest::start_check(__FILE__, __LINE__, "NOT(" #cond ")", !(cond))
 

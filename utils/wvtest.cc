@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
+#include <ctype.h>
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 # include <valgrind/memcheck.h>
@@ -102,13 +104,24 @@ int WvTest::run_all(const char *prefix)
 
 void WvTest::start(const char *file, int line, const char *condstr)
 {
-    const char *cptr = strrchr(file, '/');
-    if (!cptr)
-	cptr = file;
+    // strip path from filename
+    const char *file2 = strrchr(file, '/');
+    if (!file2)
+	file2 = file;
     else
-	cptr++;
-    printf("! %s:%-5d %-40s ", cptr, line, condstr);
+	file2++;
+    
+    char *condstr2 = strdup(condstr), *cptr;
+    for (cptr = condstr2; *cptr; cptr++)
+    {
+	if (!isprint((unsigned char)*cptr))
+	    *cptr = '!';
+    }
+    
+    printf("! %s:%-5d %-40s ", file2, line, condstr2);
     fflush(stdout);
+
+    free(condstr2);
 }
 
 
@@ -126,4 +139,37 @@ void WvTest::check(bool cond)
     fflush(stdout);
 }
 
+
+bool WvTest::start_check_eq(const char *file, int line,
+			    const char *a, const char *b)
+{
+    if (!a) a = "";
+    if (!b) b = "";
+    
+    size_t len = strlen(a) + strlen(b) + 8 + 1;
+    char *str = new char[len];
+    sprintf(str, "[%s] == [%s]", a, b);
+    
+    start(file, line, str);
+    delete[] str;
+    
+    bool cond = !strcmp(a, b);
+    check(cond);
+    return cond;
+}
+
+
+bool WvTest::start_check_eq(const char *file, int line, int a, int b)
+{
+    size_t len = 128 + 128 + 8 + 1;
+    char *str = new char[len];
+    sprintf(str, "%d == %d", a, b);
+    
+    start(file, line, str);
+    delete[] str;
+    
+    bool cond = (a == b);
+    check(cond);
+    return cond;
+}
 

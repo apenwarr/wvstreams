@@ -10,6 +10,7 @@
 #include "strutils.h"
 #include "wvfile.h"
 #include "wvmoniker.h"
+#include <ctype.h>
 
 static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 {
@@ -18,22 +19,6 @@ static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 
 static WvMoniker<IUniConfGen> reg("ini", creator);
 
-
-
-static void printsection(WvStream &file, const UniConfKey &key)
-{
-    file.print("[%s]\n", wvtcl_escape(key, "\t\r\n[]"));
-}
-
-static void printkey(WvStream &file, const UniConfKey &key,
-    WvStringParm value)
-{
-    // need to escape []#= in key only to distinguish a key/value
-    // pair from a section name or comment and to delimit the value
-    file.print("%s = %s\n",
-        wvtcl_escape(key, "\r\n[]=#"),
-        wvtcl_escape(value, "\r\n"));
-}
 
 
 /***** UniIniGen *****/
@@ -54,21 +39,18 @@ UniIniGen::~UniIniGen()
 
 bool UniIniGen::refresh()
 {
-    /** open the file **/
     WvFile file(filename, O_RDONLY);
-    if (! file.isok())
+    if (!file.isok())
     {
-        log("Cannot open config file for reading: \"%s\"\n",
-            file.errstr());
-        file.close();
+        log("Can't open '%s' for reading: %s\n", filename, file.errstr());
         return false;
     }
     
-    /** loop over all Tcl words in the file **/
+    // loop over all Tcl words in the file
     UniTempGen *newgen = new UniTempGen();
     UniConfKey section;
     WvDynBuf buf;
-    for (bool eof = false; ! eof; )
+    for (bool eof = false; !eof; )
     {
         if (file.isok())
         {
@@ -93,55 +75,61 @@ bool UniIniGen::refresh()
             // run the loop one more time to compensate
         }
         buf.put('\n');
-        
-        for (WvString word;
-            ! (word = wvtcl_getword(buf, "\r\n", false)).isnull(); )
+
+        WvString word;
+	while (!(word = wvtcl_getword(buf, "\r\n", false)).isnull())
         {
+	    //log(WvLog::Info, "LINE: '%s'\n", word);
+	    
             char *str = trim_string(word.edit());
             int len = strlen(str);
-            if (len == 0)
-            {
-                // we have an empty line
-                continue;
-            }
+            if (len == 0) continue; // blank line
+	    
             if (str[0] == '#')
             {
-                // we have a comment line
+                // a comment line.  FIXME: we drop it completely!
                 log(WvLog::Debug5, "Comment: \"%s\"\n", str + 1);
                 continue;
             }
+	    
             if (str[0] == '[' && str[len - 1] == ']')
             {
-                // we have a section name line
+                // a section name
                 str[len - 1] = '\0';
                 WvString name(wvtcl_unescape(trim_string(str + 1)));
-                section = UniConfKey(name.unique());
+                section = UniConfKey(name);
                 log(WvLog::Debug5, "Refresh section: \"%s\"\n", section);
                 continue;
             }
+	    
             // we possibly have a key = value line
             WvConstStringBuffer line(word);
-            WvString temp = wvtcl_getword(line, "=", false);
-            if (! temp.isnull() && line.peek(-1) == '=')
+            WvString name = wvtcl_getword(line, "=", false);
+            if (!name.isnull() && line.used())
             {
-                WvString name(wvtcl_unescape(trim_string(temp.edit())));
-                UniConfKey key(name.unique());
-                if (! key.isempty())
+                name = wvtcl_unescape(trim_string(name.edit()));
+		
+                UniConfKey key(name);
+                if (!key.isempty())
                 {
                     key.prepend(section);
-                    temp = line.getstr();
-                    WvString value(wvtcl_unescape(trim_string(temp.edit())));
+		    
+                    WvString value = line.getstr();
+		    assert(*value == '=');
+                    value = wvtcl_unescape(trim_string(value.edit() + 1));
                     newgen->set(key, value.unique());
+
                     //log(WvLog::Debug5, "Refresh: (\"%s\", \"%s\")\n",
                     //    key, value);
                     continue;
                 }
             }
+	    
             log("Ignoring malformed input line: \"%s\"\n", word);
         }
     }
 
-    /** close the file **/
+    // close the file
     file.close();
     if (file.geterr())
     {
@@ -150,7 +138,7 @@ bool UniIniGen::refresh()
         return false;
     }
 
-    /** handle unparsed input **/
+    // handle unparsed input
     size_t avail = buf.used();
     while (avail > 0 && buf.peek(avail - 1) == '\n')
     {
@@ -163,7 +151,7 @@ bool UniIniGen::refresh()
         log("XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
     }
 
-    /** switch the trees send notifications **/
+    // switch the trees and send notifications
     hold_delta();
     UniConfValueTree *oldtree = root;
     UniConfValueTree *newtree = newgen->root;
@@ -184,7 +172,6 @@ bool UniIniGen::refresh()
 
     delete newgen;
 
-    /** done **/
     return true;
 }
 
@@ -224,37 +211,92 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 
 void UniIniGen::commit()
 {
-    /** check dirtiness **/
-    if (! dirty)
-        return;
+    if (!dirty) return;
 
-    /** open the file **/
-    WvFile file(filename, O_WRONLY | O_TRUNC | O_CREAT, create_mode);
-    if (! file.isok())
-    {
-        //FIXME: Should use wverror
-        log("Cannot open config file for writing: \"%s\"\n",
-            file.errstr());
-        return;
-    }
+    WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+    assert(root);
+    save(file, *root);
 
-    /** iterate over all keys **/
-    if (root)
-        save(file, *root);
-
-    /** close the file **/
     file.close();
     if (file.geterr())
+        log("Can't write '%s': %s\n", filename, file.errstr());
+    else
+	dirty = false;
+}
+
+
+// may return false for strings that wvtcl_escape would escape anyway; this
+// may not escape tcl-invalid strings, but that's on purpose so we can keep
+// old-style .ini file compatibility (and wvtcl_getword() and friends can
+// still parse them anyway).
+static bool absolutely_needs_escape(WvStringParm s, const char *sepchars)
+{
+    const char *cptr;
+    int numbraces = 0;
+    bool inescape = false, inspace = false;
+    
+    if (isspace((unsigned char)*s))
+	return true; // leading whitespace needs escaping
+    
+    for (cptr = s; *cptr; cptr++)
     {
-        //FIXME: Should use wverror
-        log("Error writing to config file: \"%s\"\n", file.errstr());
-        return;
+	if (inescape)
+	    inescape = false; // fine
+	else if (!numbraces && strchr(sepchars, *cptr))
+	    return true; // one of the magic characters, and not escaped
+	else if (*cptr == '\\')
+	    inescape = true;
+	else if (*cptr == '{')
+	    numbraces++;
+	else if (*cptr == '}')
+	    numbraces--;
+	
+	inspace = isspace((unsigned char)*cptr);
+	
+	if (numbraces < 0) // yikes!  mismatched braces will need some help.
+	    return false; 
     }
+    
+    if (inescape || inspace)
+	return true; // terminating backslash or whitespace... evil.
+    
+    // otherwise, I guess we're safe.
+    return false;
+}
 
-    dirty = false;
 
-    /** done **/
-    return;
+static void printsection(WvStream &file, const UniConfKey &key)
+{
+    WvString s;
+    
+    if (absolutely_needs_escape(key, "\r\n[]"))
+	s = wvtcl_escape(key, "\r\n[]");
+    else
+	s = key;
+    file.print("\n[%s]\n", s);
+}
+
+
+static void printkey(WvStream &file, const UniConfKey &_key,
+		     WvStringParm _value)
+{
+    WvString key, value;
+    
+    if (absolutely_needs_escape(_key, "\r\n[]=#\""))
+	key = wvtcl_escape(_key, "\r\n\t []=#");
+    else
+	key = _key;
+    
+    // value is more relaxed, since we don't use wvtcl_getword after we grab
+    // the "key=" part of each line
+    if (absolutely_needs_escape(_value, "\r\n"))
+	value = wvtcl_escape(_value, "\r\n\t ");
+    else
+	value = _value;
+    
+    // need to escape []#= in key only to distinguish a key/value
+    // pair from a section name or comment and to delimit the value
+    file.print("%s = %s\n", key, value);
 }
 
 
@@ -262,17 +304,16 @@ void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
 {
     UniConfValueTree::Iter it(parent);
     
-    /** output values for non-empty direct or barren nodes **/
     // we want to ensure that a key with an empty value will
     // get created either by writing its value or by ensuring
-    // that some subkey will create it implictly with empty value
+    // that some subkey will create it implicitly with empty value
     bool printedsection = false;
     for (it.rewind(); it.next() && file.isok(); )
     {
         UniConfValueTree *node = it.ptr();
-        if (!! node->value() || ! node->haschildren())
+        if (!!node->value() || !node->haschildren())
         {
-            if (! printedsection)
+            if (!printedsection)
             {
                 printsection(file, parent.fullkey());
                 printedsection = true;
@@ -280,12 +321,8 @@ void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
             printkey(file, node->key(), node->value());
         }
     }
-    if (printedsection)
-        file.print("\n");
 
-    /** output child sections **/
+    // do subsections
     for (it.rewind(); it.next() && file.isok(); )
-    {
         save(file, *it);
-    }
 }

@@ -108,6 +108,7 @@ test: runconfigure all tests wvtestmain
 runtests:
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
 	cd uniconf/tests && ./unitest.sh
+	rm -f tmp.ini
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

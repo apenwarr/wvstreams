@@ -15,28 +15,26 @@ WVTEST_MAIN("escaping and unescaping")
     result = wvtcl_escape(a);
     WVFAIL(result);
     result = wvtcl_unescape(result);
-    if (!WVPASS(result == a))
-        printf("   because [%s] != [%s]\n", result.cstr(), a.cstr());
+    WVPASSEQ(result, a);
     
     result = wvtcl_escape(b);
     desired = WvString("{}");
-    if (!WVPASS(result == desired))
-        printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
+    WVPASSEQ(result, desired);
     result = wvtcl_unescape(result);
-    if (!WVPASS(result == b))
-        printf("   because [%s] != [%s]\n", result.cstr(), b.cstr());
+    WVPASSEQ(result, b);
     
     
     //no escape required
     result = wvtcl_escape(c);
-    if (!WVPASS(result == c))
-        printf("   because [%s] != [%s]\n", result.cstr(), c.cstr());
+    WVPASSEQ(result, c);
     result = wvtcl_unescape(result);
-    if (!WVPASS(result == c))
-        printf("   because [%s] != [%s]\n", result.cstr(), c.cstr());
+    WVPASSEQ(result, c);
     
     
     //bracket escape required
+    WVPASSEQ(wvtcl_escape(" foo"), "{ foo}");
+    WVPASSEQ(wvtcl_escape("foo "), "{foo }");
+    
     result = wvtcl_escape(d);
     desired = WvString("{%s}", d.cstr());
     if (!WVPASS(result == desired))
@@ -108,6 +106,7 @@ WVTEST_MAIN("escaping and unescaping")
         printf("   because [%s] != [%s]\n", result.cstr(), k.cstr());
 }
 
+
 WVTEST_MAIN("encoding and decoding")
 {
     WvString a("jabba"), b("crab poody-doo"), c("pooky{doo"), result, desired;
@@ -142,6 +141,7 @@ WVTEST_MAIN("encoding and decoding")
     list.unlink_first();
 }
 
+
 WVTEST_MAIN("getword")
 {
     WvDynBuf buf;
@@ -156,7 +156,7 @@ WVTEST_MAIN("getword")
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
     // buffer should be updated properly
     result = buf.getstr();
-    desired = WvString("{crab poody-doo} pooky\\{doo");
+    desired = WvString(" {crab poody-doo} pooky\\{doo");
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
     
@@ -173,7 +173,7 @@ WVTEST_MAIN("getword")
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
     result = buf.getstr();
-    desired = WvString("pooky\\{doo");
+    desired = WvString(" pooky\\{doo");
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
 
@@ -196,4 +196,32 @@ WVTEST_MAIN("getword")
     // buffer should be reset to original state, ie unchanged
     if (!WVPASS(result == test))
         printf("   because [%s] != [%s]\n", result.cstr(), test.cstr());
+}
+
+
+static void do_word(WvBuf &buf, WvStringParm word, size_t expect)
+{
+    buf.putstr("%s\n", word);
+    WvString new_word = wvtcl_getword(buf, "\r\n");
+    WVPASSEQ(buf.used(), expect);
+    WVPASSEQ(word, new_word);
+}
+
+
+WVTEST_MAIN("getword with dynamic buffer")
+{
+    WvDynBuf buf;
+    WvString word;
+    
+    buf.putstr("\n\n\n");
+    do_word(buf, "foo", 1);
+    buf.zap();
+    
+    do_word(buf, "n = 6", 1);
+    do_word(buf, "", 2); // left old newline *and* new newline
+    do_word(buf, "[S1]", 1);
+    do_word(buf, "a = b", 1);
+    do_word(buf, "", 2);
+    do_word(buf, "[S2]", 1);
+    do_word(buf, "Enable = 0", 1);
 }
