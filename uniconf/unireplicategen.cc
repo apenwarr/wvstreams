@@ -12,8 +12,8 @@
 #include "wvtclstring.h"
 
 
-#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
-//#define DPRINTF(format, args...)
+//#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
+#define DPRINTF(format, args...)
 
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
