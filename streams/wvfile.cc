@@ -13,11 +13,12 @@
 #define fcntl(a,b,c)
 #endif
 
-#ifndef _WIN32
-/* The Win32 runtime library doesn't provide fcntl so we can't
-   set readable and writable reliably. Use the other constructor.
-*/
-WvFile::WvFile(int rwfd = -1) : WvFDStream(rwfd)
+#ifndef _WIN32 // meaningless to do this on win32
+/*
+ * The Win32 runtime library doesn't provide fcntl so we can't
+ * set readable and writable reliably. Use the other constructor.
+ */
+WvFile::WvFile(int rwfd) : WvFDStream(rwfd)
 {
     if (rwfd > -1)
     {
