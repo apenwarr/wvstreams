@@ -770,3 +770,7 @@ bool UniTransactionGen::isok()
 {
     return base->isok();
 }
+
+void UniTransactionGen::flush_buffers()
+{
+}

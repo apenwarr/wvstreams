@@ -90,6 +90,7 @@ public:
     bool refresh();
     Iter *iterator(const UniConfKey &key);
     bool isok();
+    void flush_buffers();
     
 protected:
     UniConfChangeTree *root;
