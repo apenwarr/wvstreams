@@ -162,8 +162,9 @@ void WvConf::load_file(WvStringParm filename)
     if (!file.isok())
     {
 	// Could not open for read.
-        log(loaded_once ? WvLog::Debug1 : WvLog::Warning,
-	    "Can't read config file %s: %s\n", filename, file.errstr());
+	// ...actually, this warning is mainly just annoying.
+        //log(loaded_once ? WvLog::Debug1 : WvLog::Warning,
+	//    "Can't read config file %s: %s\n", filename, file.errstr());
 	if (file.geterr() != ENOENT && !loaded_once)
 	    error = true;
 	return;
