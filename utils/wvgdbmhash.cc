@@ -13,7 +13,7 @@
 
 WvGdbmHashBase::WvGdbmHashBase(WvStringParm dbfile)
 {
-    dbf = gdbm_open((char *)dbfile.cstr(), 0, GDBM_WRCREAT, 0600, 0);
+    dbf = gdbm_open((char *)dbfile.cstr(), 0, GDBM_WRCREAT|GDBM_FAST, 0600, 0);
     if (!dbf)
         fprintf (stderr, "Could not open database '%s': %s\n",
                 dbfile.cstr(), gdbm_strerror(gdbm_errno));

@@ -25,55 +25,60 @@ inline void wv_serialize(WvBuf &buf, const T &t)
 }
 
 
-/** Serialize a 32-bit int in network byte order. */
-inline void _wv_serialize(WvBuf &buf, int32_t i)
+/**
+ * A helper function that serializes different types of integers.  Since
+ * it's inlined, the "if" is actually executed at compile time, so don't
+ * worry.
+ */
+template <typename T>
+inline void wv_serialize_scalar(WvBuf &buf, const T t)
 {
-    int32_t i2 = htonl(i);
-    buf.put(&i2, sizeof(i2));
+    if (sizeof(T) == 8)
+    {
+	// FIXME: don't know a portable way to convert this to network
+	// byte order!
+	buf.put(&t, 8);
+    }
+    else if (sizeof(T) == 4)
+    {
+	int32_t i = htonl(t);
+	buf.put(&i, 4);
+    }
+    else if (sizeof(T) == 2)
+    {
+	int32_t i = htons(t);
+	buf.put(&i, 2);
+    }
+    else if (sizeof(T) == 1)
+	buf.put(&t, 1);
+    else
+	assert(0);
 }
 
+inline void _wv_serialize(WvBuf &buf, long long i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, unsigned long long i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, long i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, unsigned long i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, int i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, unsigned int i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, short i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, unsigned short i)
+    { wv_serialize_scalar(buf, i); }
 
-/** Serialize a 32-bit unsigned int in network byte order. */
-inline void _wv_serialize(WvBuf &buf, uint32_t i)
-{
-    _wv_serialize(buf, (int32_t)i);
-}
-
-
-/** Serialize a 16-bit int in network byte order. */
-inline void _wv_serialize(WvBuf &buf, int16_t i)
-{
-    int16_t i2 = htons(i);
-    buf.put(&i2, sizeof(i2));
-}
-
-
-/** Serialize a 16-bit unsigned int in network byte order. */
-inline void _wv_serialize(WvBuf &buf, uint16_t i)
-{
-    _wv_serialize(buf, (int16_t)i);
-}
-
-
-/** Note: signed char, unsigned char, and char are all different types! */
-inline void _wv_serialize(WvBuf &buf, char c)
-{
-    buf.put(&c, sizeof(c));
-}
-
-
-/** Note: signed char, unsigned char, and char are all different types! */
-inline void _wv_serialize(WvBuf &buf, signed char c)
-{
-    _wv_serialize(buf, (char)c);
-}
-
-
-/** Note: signed char, unsigned char, and char are all different types! */
-inline void _wv_serialize(WvBuf &buf, unsigned char c)
-{
-    _wv_serialize(buf, (char)c);
-}
+/** Note: char != signed char for purposes of function overloading! */
+inline void _wv_serialize(WvBuf &buf, char i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, signed char i)
+    { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, unsigned char i)
+    { wv_serialize_scalar(buf, i); }
 
 
 /**
@@ -191,66 +196,66 @@ inline T wv_deserialize(WvBuf &buf)
 }
 
 
-/** Deserialize a 32-bit int in network byte order. */
-template <>
-inline int32_t _wv_deserialize<int32_t>(WvBuf &buf)
+/**
+ * A helper function that deserializes different types of integers.  Since
+ * it's inlined, the "if" is actually executed at compile time, so don't
+ * worry.
+ */
+template <typename T>
+inline T wv_deserialize_scalar(WvBuf &buf)
 {
-    if (buf.used() < sizeof(int32_t))
+    if (buf.used() < sizeof(T))
 	return 0;
+    
+    if (sizeof(T) == 8)
+    {
+	// FIXME: don't know a portable way to convert this to network
+	// byte order!
+	return (T) *(int64_t *)buf.get(8);
+    }
+    else if (sizeof(T) == 4)
+	return (T) ntohl(*(int32_t *)buf.get(4));
+    else if (sizeof(T) == 2)
+	return (T) ntohs(*(int16_t *)buf.get(2));
+    else if (sizeof(T) == 1)
+	return (T) *(int8_t *)buf.get(1);
     else
-	return ntohl(*(int32_t *)buf.get(sizeof(int32_t)));
+	assert(0);
 }
 
-/** Deserialize a 32-bit unsigned int in network byte order. */
 template <>
-inline uint32_t _wv_deserialize<uint32_t>(WvBuf &buf)
-{
-    return (uint32_t)_wv_deserialize<int32_t>(buf);
-}
-
-
-/** Deserialize a 16-bit int in network byte order. */
+    inline long long _wv_deserialize<long long>(WvBuf &buf)
+    { return wv_deserialize_scalar<long long>(buf); }
+template <> 
+    inline unsigned long long _wv_deserialize<unsigned long long>(WvBuf &buf)
+    { return wv_deserialize_scalar<unsigned long long>(buf); }
 template <>
-inline int16_t _wv_deserialize<int16_t>(WvBuf &buf)
-{
-    if (buf.used() < sizeof(int16_t))
-	return 0;
-    else
-	return ntohs(*(int16_t *)buf.get(sizeof(int16_t)));
-}
-
-/** Deserialize a 16-bit unsigned int in network byte order. */
+    inline long _wv_deserialize<long>(WvBuf &buf)
+    { return wv_deserialize_scalar<long>(buf); }
+template <> 
+    inline unsigned long _wv_deserialize<unsigned long>(WvBuf &buf)
+    { return wv_deserialize_scalar<unsigned long>(buf); }
 template <>
-inline uint16_t _wv_deserialize<uint16_t>(WvBuf &buf)
-{
-    return (uint16_t)_wv_deserialize<int16_t>(buf);
-}
-
-
-/** Deserialize a single character. */
+    inline int _wv_deserialize<int>(WvBuf &buf)
+    { return wv_deserialize_scalar<int>(buf); }
+template <> 
+    inline unsigned int _wv_deserialize<unsigned int>(WvBuf &buf)
+    { return wv_deserialize_scalar<unsigned int>(buf); }
 template <>
-inline char _wv_deserialize<char>(WvBuf &buf)
-{
-    if (buf.used() < sizeof(char))
-	return 0;
-    else
-	return *(char *)buf.get(sizeof(char));
-}
-
-/** Deserialize a single character (signed char != char). */
+    inline short _wv_deserialize<short>(WvBuf &buf)
+    { return wv_deserialize_scalar<short>(buf); }
+template <> 
+    inline unsigned short _wv_deserialize<unsigned short>(WvBuf &buf)
+    { return wv_deserialize_scalar<unsigned short>(buf); }
 template <>
-inline signed char _wv_deserialize<signed char>(WvBuf &buf)
-{
-    return (signed char)_wv_deserialize<char>(buf);
-}
-
-/** Deserialize a single unsigned character (unsigned char != char). */
-template <>
-inline unsigned char _wv_deserialize<unsigned char>(WvBuf &buf)
-{
-    return (unsigned char)_wv_deserialize<char>(buf);
-}
-
+    inline char _wv_deserialize<char>(WvBuf &buf)
+    { return wv_deserialize_scalar<char>(buf); }
+template <> 
+    inline signed char _wv_deserialize<signed char>(WvBuf &buf)
+    { return wv_deserialize_scalar<signed char>(buf); }
+template <> 
+    inline unsigned char _wv_deserialize<unsigned char>(WvBuf &buf)
+    { return wv_deserialize_scalar<unsigned char>(buf); }
 
 /**
  * Deserialize a WvString.  Stops at (and includes) the terminating nul
@@ -270,7 +275,7 @@ public:
     static inline WvBuf *go(WvBuf &buf)
     {
 	size_t len = wv_deserialize<size_t>(buf);
-	WvBuf *outbuf = new WvInPlaceBuf(new char[len], 0, len);
+	WvBuf *outbuf = new WvInPlaceBuf(new char[len], 0, len, true);
 	outbuf->merge(buf, len);
 	return outbuf;
     }

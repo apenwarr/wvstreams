@@ -68,25 +68,28 @@ int main()
 	m.add(l2, i2, true);
 	m.add(l3, i1, true);
 	
-	ListMap::Iter i(m);
-	for (i.rewind(); i.next(); )
+	//for (;;)
 	{
-	    WvList<WvString> &key = i.key();
-	    intList &data = i();
-	    
-	    printf("key(%d): ", key.count());
+	    ListMap::Iter i(m);
+	    for (i.rewind(); i.next(); )
 	    {
-		WvList<WvString>::Iter ii(key);
-		for (ii.rewind(); ii.next(); )
-		    printf("'%s' ", ii->cstr());
+		WvList<WvString> &key = i.key();
+		intList &data = i();
+		
+		printf("key(%d): ", key.count());
+		{
+		    WvList<WvString>::Iter ii(key);
+		    for (ii.rewind(); ii.next(); )
+			printf("'%s' ", ii->cstr());
+		}
+		printf("\n    ");
+		{
+		    intList::Iter ii(data);
+		    for (ii.rewind(); ii.next(); )
+			printf("%d ", ii());
+		}
+		printf("\n");
 	    }
-	    printf("\n    ");
-	    {
-		intList::Iter ii(data);
-		for (ii.rewind(); ii.next(); )
-		    printf("%d ", ii());
-	    }
-	    printf("\n");
 	}
     }
 }
