@@ -9,6 +9,10 @@
 #include "wvfile.h"
 #include "strutils.h"
 
+//#define DEBUG_DEL_CALLBACK
+#ifdef DEBUG_DEL_CALLBACK
+#include <execinfo.h>
+#endif
 
 /*
  * Parse the WvConf string "request"; pointers to the found section,
@@ -229,7 +233,20 @@ WvConfEmu::~WvConfEmu()
     // think they will. (ie. someone might be using a temporary WvConfEmu
     // and think his callbacks will stick around; they won't!)
     //assert(callbacks.isempty());
-    
+
+#ifdef DEBUG_DEL_CALLBACK
+    if (!callbacks.isempty())
+    {
+	WvList<CallbackInfo>::Iter i(callbacks);
+
+	fprintf(stderr, " *** leftover callbacks in WvConfEmu ***\n");
+	for (i.rewind(); i.next(); )
+	{
+	    fprintf(stderr, "     - [%s]%s (%p)\n", i->section.cstr(), i->key.cstr(), i->cookie);
+	}
+    }
+#endif
+
     uniconf.del_callback(this);
 }
 
@@ -308,6 +325,17 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
 	    return;
     }
 
+#ifdef DEBUG_DEL_CALLBACK
+    void* trace[10];
+    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+    char** tracedump = backtrace_symbols(trace, count);
+    fprintf(stderr, "TRACE:add:%s:%s:%p", section.cstr(), key.cstr(), cookie);
+    for (int i = 0; i < count; ++i)
+	fprintf(stderr, ":%s", tracedump[i]);
+    fprintf(stderr, "\n");
+    free(tracedump);
+#endif
+
     callbacks.append(new CallbackInfo(callback, userdata, section, key,
 				      cookie),
 		     true);
@@ -325,7 +353,12 @@ void WvConfEmu::del_callback(WvStringParm section, WvStringParm key, void *cooki
 	if (i->cookie == cookie
 	    && i->section == section
 	    && i->key == key)
+	{
+#ifdef DEBUG_DEL_CALLBACK
+	    fprintf(stderr, "TRACE:del:%s:%s:%p\n", section.cstr(), key.cstr(), cookie);
+#endif
 	    i.xunlink();
+	}
     }
 }
 
