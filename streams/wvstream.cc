@@ -583,15 +583,9 @@ bool WvStream::post_select(SelectInfo &si)
 }
 
 
-bool WvStream::_select(time_t msec_timeout,
-		       bool readable, bool writable, bool isexcept,
-		       bool forceable)
+bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
+    bool readable, bool writable, bool isexcept, bool forceable)
 {
-    bool sure;
-    int sel;
-    timeval tv;
-    SelectInfo si;
-    
     if (!isok()) return false;
 
     FD_ZERO(&si.read);
@@ -609,35 +603,52 @@ bool WvStream::_select(time_t msec_timeout,
     
     si.max_fd = -1;
     si.msec_timeout = msec_timeout;
-    si.inherit_request = !forceable;
-    
-    sure = pre_select(si);
-    
-    if (sure)
-    {
-	si.msec_timeout = 0;
-	tv.tv_sec = tv.tv_usec = 0; // never wait: already have a sure thing!
-    }
-    else
-    {
-	tv.tv_sec = si.msec_timeout / 1000;
-	tv.tv_usec = (si.msec_timeout % 1000) * 1000;
-    }
-    
-    sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
-		   si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
-    
-    if (sel < 0)
-    {
-	if (errno!=EAGAIN && errno!=EINTR && errno!=ENOBUFS)
-	    seterr(errno);
-	return sure;
-    }
+    si.inherit_request = ! forceable;
 
-    if (!sel)
-	return sure;	// timed out
+    bool sure = pre_select(si);
+    if (sure)
+        si.msec_timeout = 0;
+    return sure;
+}
+
+
+int WvStream::_do_select(SelectInfo &si)
+{
+    // prepare timeout
+    timeval tv;
+    tv.tv_sec = si.msec_timeout / 1000;
+    tv.tv_usec = (si.msec_timeout % 1000) * 1000;
     
-    return isok() && post_select(si);
+    // block
+    int sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
+        si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
+
+    // handle errors
+    if (sel < 0 &&
+        errno != EAGAIN && errno != EINTR && errno != ENOBUFS)
+        seterr(errno);
+    return sel;
+}
+
+
+bool WvStream::_process_selectinfo(SelectInfo &si)
+{
+    if (!isok()) return false;
+    return post_select(si);
+}
+
+
+bool WvStream::_select(time_t msec_timeout,
+    bool readable, bool writable, bool isexcept, bool forceable)
+{
+    SelectInfo si;
+    bool sure = _build_selectinfo(si, msec_timeout,
+        readable, writable, isexcept, forceable);
+
+    int sel = _do_select(si);
+    if (sel > 0)
+        sure = _process_selectinfo(si) || sure; // note the order
+    return sure;
 }
 
 

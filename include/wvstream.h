@@ -442,6 +442,25 @@ public:
     void seterr(int _errnum);
     void seterr(WvStringParm specialerr);
     
+protected:
+    // builds the SelectInfo data structure (runs pre_select)
+    // returns true if there are callbacks to be dispatched
+    //
+    // all of the fields are filled in with new values
+    // si.msec_timeout contains the time until the next alarm expires
+    bool _build_selectinfo(SelectInfo &si, time_t msec_timeout,
+        bool readable, bool writable, bool isexcept,
+        bool forceable);
+
+    // runs the actual select() function over the given
+    // SelectInfo data structure, returns the number of descriptors
+    // in the set, and sets the error code if a problem occurs
+    int _do_select(SelectInfo &si);
+
+    // processes the SelectInfo data structure (runs post_select)
+    // returns true if there are callbacks to be dispatched
+    bool _process_selectinfo(SelectInfo &si);
+    
 private:
     void init();
     bool wvstream_execute_called;
@@ -452,7 +471,7 @@ private:
     bool _select(time_t msec_timeout,
 		 bool readable, bool writable, bool isexcept,
 		 bool forceable);
-    
+
 protected:
     WvStreamCallback callfunc;
     void *userdata;
