@@ -62,10 +62,10 @@ static int check_for_bool_string(const char *s)
 // "value" is not found (ie. there is no equal sign outside the [] brackets)
 // this does not qualify as an error, but *value is set to NULL.
 //
-int WvConf::parse_wvconf_request(const char *request, char *&section,
+int WvConf::parse_wvconf_request(char *request, char *&section,
 				 char *&entry, char *&value)
 {
-    printf("parsing %s\n", request);
+    //printf("parsing %s\n", request);
     entry = value = NULL;
     
     section = strchr(request, '[');
@@ -86,7 +86,7 @@ int WvConf::parse_wvconf_request(const char *request, char *&section,
 	*value++ = 0;
 	value = trim_string(value);
     }
-    printf("section: %s\nentry: %s\n", section, entry);
+    //printf("section: %s\nentry: %s\n", section, entry);
     section = trim_string(section);
     entry = trim_string(entry);
     
@@ -237,10 +237,11 @@ const char *WvConf::get(WvStringParm section, WvStringParm entry,
 // Gets an entry, given a string in the form [section]entry=value.  Returns
 // the value or NULL if not found.  The parameter parse_error is set to the
 // return value of parse_wvconf_request.
-const char *WvConf::getraw(const char *wvconfstr, int &parse_error)
+const char *WvConf::getraw(WvString wvconfstr, int &parse_error)
 {
     char *section, *entry, *value;
-    parse_error = parse_wvconf_request(wvconfstr, section, entry, value);
+    parse_error = parse_wvconf_request(wvconfstr.edit(),
+				       section, entry, value);
 
     if (parse_error)
 	return NULL;
@@ -333,10 +334,11 @@ void WvConf::set(WvStringParm section, WvStringParm entry,
 // error code as defined in parse_wvconf_request.  The value parameter is
 // also set to the value (useful in rcommand, when we display the value after
 // it has been set).
-void WvConf::setraw(const char *wvconfstr, char *&value, int &parse_error)
+void WvConf::setraw(WvString wvconfstr, char *&value, int &parse_error)
 {
     char *section, *entry;
-    parse_error = parse_wvconf_request(wvconfstr, section, entry, value);
+    parse_error = parse_wvconf_request(wvconfstr.edit(),
+				       section, entry, value);
     set(section, entry, value);
 }
 
