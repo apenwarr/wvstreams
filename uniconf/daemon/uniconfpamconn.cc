@@ -9,9 +9,11 @@
 
 #ifdef HAVE_SECURITY_PAM_APPL_H
 
-#include "wvtclstring.h"
-#include "wvlog.h"
+#include <sys/types.h>
+#include <pwd.h>
 
+#include "wvtclstring.h"
+#include "wvaddr.h"
 
 const int PAM_START_STEP = 1;
 const int PAM_AUTH_STEP = 2;
@@ -42,13 +44,23 @@ void UniConfPamConn::startup()
 {
     UniConfDaemonConn::startup();
 
-    WvLog("UniConfPamConn", WvLog::Debug);
-
+    // create the conv structure
     struct pam_conv c;
     c.conv = UniConfPamConn::noconv;
     c.appdata_ptr = NULL;
-    pam_status = pam_start(PAM_SERVICE_NAME, NULL, &c, &pamh);
+
+    // find the user
+    struct passwd *pw = getpwuid(getuid());
+    assert(pw);
+    
+    // find the host and port
+    WvString rhost(*src());
+    
+    pam_status = pam_start(PAM_SERVICE_NAME, pw->pw_name, &c, &pamh);
     if (!check_pam_status("startup")) return;
+
+    pam_status = pam_set_item(pamh, PAM_RHOST, rhost);
+    if (!check_pam_status("environment setup")) return;
 
     pam_status = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
     if (!check_pam_status("authentication")) return;
@@ -70,12 +82,12 @@ bool UniConfPamConn::check_pam_status(WvStringParm s)
 {
     if (pam_status == PAM_SUCCESS)
     {
-        log("PAM %s succeeded\n", s);
+        log(WvLog::Debug2, "PAM %s succeeded\n", s);
         return true;
     }
     else
     {
-        log("PAM %s FAILED: %s\n", s, pam_status);
+        log(WvLog::Debug2, "PAM %s FAILED: %s\n", s, pam_status);
         writefail(wvtcl_escape("Authorization failed"));
         return false;
     }
