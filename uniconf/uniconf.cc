@@ -50,7 +50,7 @@ int UniConf::getint(int defvalue) const
         {
             char *end;
             int num = strtol(value.cstr(), & end, 0);
-            if (*end)
+            if (!*end)
                 return num; // was a valid integer
         }
         
