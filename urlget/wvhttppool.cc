@@ -67,9 +67,7 @@ void WvUrlRequest::done()
         outstream = NULL; 
     }
     if (putstream)
-    {
         putstream = NULL;
-    }
     inuse = false;
 }
 
