@@ -90,6 +90,10 @@ ifeq (USE_EFENCE,1)
   LDLIBS+=$(EFENCE)
 endif
 
+ifeq ("$(enable_verbose)", "yes")
+  VERBOSE:=1
+endif
+
 ifdef DONT_LIE
   VERBOSE:=1 $(warning DONT_LIE is deprecated, use VERBOSE instead)
 endif

@@ -193,8 +193,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         int result = SSL_read(ssl, data, avail);
         if (result <= 0)
         {
-            int errcode = SSL_get_error(ssl, result);
             read_bouncebuf.unalloc(avail);
+            int errcode = SSL_get_error(ssl, result);
             switch (errcode)
             {
                 case SSL_ERROR_WANT_READ:
@@ -208,6 +208,11 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                 case SSL_ERROR_ZERO_RETURN:
                     close(); // EOF
                     break;
+
+		case SSL_ERROR_SYSCALL:
+		    if (!errno)
+	                break;
+		    debug("<< SSL_read() %s\n", strerror(errno));
                     
                 default:
                     printerr("SSL_read");
@@ -217,7 +222,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             read_pending = false;
             break; // wait for next iteration
         }
-        read_bouncebuf.unalloc(avail - size_t(result));
+        read_bouncebuf.unalloc(avail - result);
     }
 
 //    debug("<< read %s bytes\n", total);

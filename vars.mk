@@ -64,10 +64,6 @@ ifneq ("$(with_bdb)", "no")
   libwvutils.so-LIBS+=-ldb
 endif
 
-ifeq ("$(enable_verbose)", "yes")
-  VERBOSE:=yes
-endif
-
 ifneq ("$(with_xplc)", "no")
   CPPFLAGS+=-DUNSTABLE
   ifneq ("$(with_xplc)", "yes")

@@ -88,6 +88,8 @@ inline void _wv_serialize(WvBuf &buf, short i)
     { wv_serialize_scalar(buf, i); }
 inline void _wv_serialize(WvBuf &buf, unsigned short i)
     { wv_serialize_scalar(buf, i); }
+inline void _wv_serialize(WvBuf &buf, bool i)
+    { wv_serialize_scalar(buf, i); }
 
 /** Note: char != signed char for purposes of function overloading! */
 inline void _wv_serialize(WvBuf &buf, char i)
@@ -280,6 +282,9 @@ template <>
 template <> 
     inline unsigned short _wv_deserialize<unsigned short>(WvBuf &buf)
     { return wv_deserialize_scalar<unsigned short>(buf); }
+template <> 
+    inline bool _wv_deserialize<bool>(WvBuf &buf)
+    { return wv_deserialize_scalar<bool>(buf); }
 template <>
     inline char _wv_deserialize<char>(WvBuf &buf)
     { return wv_deserialize_scalar<char>(buf); }
