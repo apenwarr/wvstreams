@@ -169,14 +169,21 @@ void UniRegistryGen::set(const UniConfKey &key, WvStringParm value)
     HKEY hKey = follow_path(m_hRoot, key.first( key.numsegments()-1 ), true, NULL);
     if (hKey)
     {
-	result = RegSetValueEx(
-	    hKey,
-	    key.last().printable(),
-	    0,
-	    REG_SZ,
-	    (BYTE *) value.cstr(),
-	    strlen(value)+1
-	);
+	if (value.isnull())
+	{
+	    result = RegDeleteValue(hKey, key.last().printable());
+	}
+	else
+	{
+	    result = RegSetValueEx(
+		hKey,
+		key.last().printable(),
+		0,
+		REG_SZ,
+		(BYTE *) value.cstr(),
+		strlen(value)+1
+	    );
+	}
 	if (result == ERROR_SUCCESS)
 	{
 	    delta(key, value);
