@@ -57,7 +57,7 @@ FILE_PATTERNS          = *.h \
                          *.c \
                          *.cc
 RECURSIVE              = YES
-EXCLUDE                = include
+EXCLUDE                = 
 EXCLUDE_PATTERNS       = test*.cc \
                          *test.cc
 EXAMPLE_PATH           = 
