@@ -66,6 +66,7 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	      int stdin_fd, int stdout_fd, int stderr_fd)
 {
     int socks[2];
+    int flags;
 
     pid = 0;
     estatus = -1;
@@ -116,10 +117,20 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	    ::close(2);
 	else
 	    dup2(stderr_fd, 2);
-	
-	fcntl(0, F_SETFD, 0);  // never close stdin
-	fcntl(1, F_SETFD, 0);  // never close stdout
-	fcntl(2, F_SETFD, 0);  // never close stderr
+
+	/* never close stdin/stdout/stderr */
+	fcntl(0, F_SETFD, 0);
+	fcntl(1, F_SETFD, 0);
+	fcntl(2, F_SETFD, 0);
+
+	/* drop the O_NONBLOCK from stdin/stdout/stderr, it confuses
+	 * some programs */
+	flags = fcntl(0, F_GETFL);
+	fcntl(0, F_SETFL, flags & (O_APPEND|O_ASYNC));
+	flags = fcntl(1, F_GETFL);
+	fcntl(1, F_SETFL, flags & (O_APPEND|O_ASYNC));
+	flags = fcntl(2, F_GETFL);
+	fcntl(2, F_SETFL, flags & (O_APPEND|O_ASYNC));
 
 	/* If we're not capturing any of these through the socket, it
 	 * means that the child end of the socket will be closed right
