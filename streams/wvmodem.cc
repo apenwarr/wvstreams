@@ -10,8 +10,6 @@
  */
 
 #include "wvmodem.h"
-
-#include <assert.h>
 #include <sys/ioctl.h>
     	
 
@@ -42,11 +40,19 @@ WvModemBase::WvModemBase(int _fd)
     get_real_speed();
 }
 
+
+WvModemBase::~WvModemBase()
+{
+    // nothing needed
+}
+
+
 int WvModemBase::get_real_speed()
 {
     speed_t s;
+    
+    if (!isok()) return 0;
 
-    assert(fd >= 0);
     tcgetattr( fd, &t );
     s = cfgetospeed( &t );
     for (unsigned int i = 0; i < sizeof(speeds) / sizeof(*speeds); i++)
@@ -60,6 +66,25 @@ int WvModemBase::get_real_speed()
 
     return baud;
 }
+
+
+void WvModemBase::close()
+{
+    // no file open, no need to close it
+}
+
+
+bool WvModemBase::carrier()
+{
+    return true;
+}
+
+
+int WvModemBase::speed(int _baud)
+{
+    return get_real_speed();
+}
+
 
 void WvModemBase::hangup()
 {

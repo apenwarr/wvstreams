@@ -34,12 +34,12 @@ public:
     bool die_fast;
     
     WvModemBase(int _fd);
-    virtual ~WvModemBase() {}
+    virtual ~WvModemBase();
     
     // do-nothing methods that aren't needed in WvModemBase
-    virtual void close() {}  // didn't open the file, don't close it
-    virtual bool carrier() { return true; }
-    virtual int speed(int _baud) { return get_real_speed(); }
+    virtual void close();
+    virtual bool carrier();
+    virtual int speed(int _baud);
 
     // may need to hangup for redial reasons
     virtual void hangup();
