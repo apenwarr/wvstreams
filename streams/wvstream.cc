@@ -324,7 +324,7 @@ size_t WvStream::read(void *buf, size_t count)
 
 size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 {
-    assert(WvCont::isok());
+    assert(uses_continue_select);
 
     if (!count)
         return 0;
@@ -465,7 +465,7 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
         }
         
         bool hasdata;
-        if (WvCont::isok())
+        if (uses_continue_select)
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
@@ -533,7 +533,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
         }
         
         bool hasdata;
-        if (WvCont::isok())
+        if (uses_continue_select)
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
@@ -923,7 +923,7 @@ time_t WvStream::alarm_remaining()
 
 bool WvStream::continue_select(time_t msec_timeout)
 {
-    assert(WvCont::isok());
+    assert(uses_continue_select);
     
     if (msec_timeout >= 0)
 	alarm(msec_timeout);
