@@ -69,11 +69,11 @@ public:
     // the next immediate child of our own.
     WvLink *_next();
     
-    // like _next(), but skip elements with empty values.
+    // like _next(), but skip elements with empty values that are not mountpoints for generators.
     WvLink *next()
     { 
 	WvLink *l;
-	while ((l = _next()) != NULL && !*ptr())
+	while ((l = _next()) != NULL && !*ptr() && !ptr()->hasgen());
 	    ;
 	return l;
     }
