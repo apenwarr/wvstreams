@@ -13,7 +13,7 @@
 #include <assert.h>
 
 
-WvProtoStream::WvProtoStream(WvStream **_cloned, WvLog *_debuglog)
+WvProtoStream::WvProtoStream(WvStream *_cloned, WvLog *_debuglog)
 		: WvStreamClone(_cloned)
 {
     if (_debuglog)

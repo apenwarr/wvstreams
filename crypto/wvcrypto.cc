@@ -17,9 +17,8 @@
 
 
 
-WvCryptoStream::WvCryptoStream(WvStream *_slave) : WvStreamClone(&slave)
+WvCryptoStream::WvCryptoStream(WvStream *_slave) : WvStreamClone(_slave)
 {
-    slave = _slave;
     my_cryptbuf = NULL;
     cryptbuf_size = 0;
 }
@@ -307,14 +306,14 @@ WvRSAStream::WvRSAStream(WvStream *_slave,
 {
     // we always want to read encrypted data in multiples of RSA_size.
     if (my_key.rsa)
-	slave->queuemin(RSA_size(my_key.rsa));
+	cloned->queuemin(RSA_size(my_key.rsa));
 }
 
 
 WvRSAStream::~WvRSAStream()
 {
     // remove our strange queuing requirements
-    slave->queuemin(0);
+    cloned->queuemin(0);
 }
 
 

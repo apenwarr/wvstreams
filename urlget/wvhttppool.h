@@ -57,7 +57,6 @@ public:
 
 class WvHttpStream : public WvStreamClone
 {
-    WvStream *cloned;
 public:
     WvIPPortAddr remaddr;
     

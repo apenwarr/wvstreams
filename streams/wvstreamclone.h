@@ -17,19 +17,17 @@
  * while they run, for example, yet do not want users to know about
  * the member variable.
  * 
- * WvStreamClone does _not_ attempt to close the cloned stream in the
+ * WvStreamClone _does_ attempt to close the cloned stream in the
  * destructor.
  */
 class WvStreamClone : public WvStream
 {
 public:
     /**
-     * NOTE: we must NOT use *cloned at this point since the caller
-     * may not have had a chance to initialize it yet!
-     *
-     * *cloned is still owned by the caller.
+     * WvStreamClone gains ownership (i.e. it will delete it when it
+     * dies) of the stream you give it.
      */
-    WvStreamClone(WvStream **_cloned)
+    WvStreamClone(WvStream *_cloned)
         { cloned = _cloned; force_select(false, false, false); }
     virtual ~WvStreamClone();
     
@@ -47,9 +45,7 @@ public:
     virtual void execute();
 
 protected:
-    WvStream **cloned;
-    WvStream *s() const
-        { return cloned ? *cloned : (WvStream*)NULL; }
+    WvStream *cloned;
 };
 
 #endif // __WVSTREAMCLONE_H

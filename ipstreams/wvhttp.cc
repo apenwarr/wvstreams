@@ -12,11 +12,11 @@
 
 
 WvHTTPStream::WvHTTPStream(const WvURL &_url)
-	: WvStreamClone((WvStream **)&http), headers(7), client_headers(7),
+	: WvStreamClone(NULL), headers(7), client_headers(7),
           url(_url)
 {
     state = Resolving;
-    http = NULL;
+    cloned = NULL;
     num_received = 0;
     
     // we need this: if the URL tried to dns-resolve before, but failed,
@@ -25,15 +25,9 @@ WvHTTPStream::WvHTTPStream(const WvURL &_url)
 }
 
 
-WvHTTPStream::~WvHTTPStream()
-{
-    if (http) delete http;
-}
-
-
 bool WvHTTPStream::isok() const
 {
-    if (http)
+    if (cloned)
 	return WvStreamClone::isok();
     else
 	return url.isok();
@@ -42,7 +36,7 @@ bool WvHTTPStream::isok() const
 
 int WvHTTPStream::geterr() const
 {
-    if (http)
+    if (cloned)
 	return WvStreamClone::geterr();
     else
 	return -1;
@@ -51,7 +45,7 @@ int WvHTTPStream::geterr() const
 
 const char *WvHTTPStream::errstr() const
 {
-    if (http)
+    if (cloned)
 	return WvStreamClone::errstr();
     else if (!url.isok())
 	return url.errstr();
@@ -72,15 +66,15 @@ bool WvHTTPStream::pre_select(SelectInfo &si)
 	else if (url.resolve())
 	{
 	    state = Connecting;
-	    http = new WvTCPConn(url.getaddr());
+	    cloned = new WvTCPConn(url.getaddr());
 	}
 	return false;
 
     case Connecting:
-	http->select(0, false, true, false);
-	if (!http->isconnected())
+	cloned->select(0, false, true, false);
+	if (!static_cast<WvTCPConn*>(cloned)->isconnected())
 	    return false;
-	if (http->geterr())
+	if (cloned->geterr())
 	    return false;
 
 	// otherwise, we just finished connecting:  start transfer.
@@ -120,7 +114,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader1:
-	line = http->getline(0);
+	line = getline(0);
 	line = trim_string(line);
 	if (line) // got response code line
 	{
@@ -143,7 +137,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader:
-	line = http->getline(0);
+	line = getline(0);
 	if (line)
 	{
 	    line = trim_string(line);
@@ -166,7 +160,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadData:
-	len = http->read(buf, count);
+	len = cloned->read(buf, count);
 	num_received += len;
 	return len;
 	

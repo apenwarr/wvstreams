@@ -17,37 +17,38 @@
 
 WvStreamClone::~WvStreamClone()
 {
-    // do NOT close the cloned stream!
+    if (cloned)
+	delete cloned;
 }
 
 
 void WvStreamClone::close()
 {
-    if (s())
-	s()->close();
+    if (cloned)
+	cloned->close();
 }
 
 
 int WvStreamClone::getrfd() const
 {
-    if (s())
-	return s()->getrfd();
+    if (cloned)
+	return cloned->getrfd();
     return -1;
 }
 
 
 int WvStreamClone::getwfd() const
 {
-    if (s())
-	return s()->getwfd();
+    if (cloned)
+	return cloned->getwfd();
     return -1;
 }
 
 
 size_t WvStreamClone::uread(void *buf, size_t size)
 {
-    if (s())
-	return s()->read(buf, size);
+    if (cloned)
+	return cloned->read(buf, size);
     else
 	return 0;
 }
@@ -55,10 +56,10 @@ size_t WvStreamClone::uread(void *buf, size_t size)
 
 size_t WvStreamClone::uwrite(const void *buf, size_t size)
 {
-    // we use s()->uwrite() here, not write(), since we want the _clone_
+    // we use cloned->uwrite() here, not write(), since we want the _clone_
     // to own the output buffer, not the main stream.
-    if (s())
-	return s()->uwrite(buf, size);
+    if (cloned)
+	return cloned->uwrite(buf, size);
     else
 	return 0;
 }
@@ -68,8 +69,8 @@ bool WvStreamClone::isok() const
 {
     if (errnum)
 	return false;
-    if (s())
-	return s()->isok();
+    if (cloned)
+	return cloned->isok();
     return false;
 }
 
@@ -78,8 +79,8 @@ int WvStreamClone::geterr() const
 {
     if (errnum)
 	return errnum;
-    if (s())
-	return s()->geterr();
+    if (cloned)
+	return cloned->geterr();
     return EIO;
 }
 
@@ -88,8 +89,8 @@ const char *WvStreamClone::errstr() const
 {
     if (errnum)
 	return WvStream::errstr();
-    if (s())
-	return s()->errstr();
+    if (cloned)
+	return cloned->errstr();
     return "No child stream!";
 }
 
@@ -110,20 +111,20 @@ bool WvStreamClone::pre_select(SelectInfo &si)
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft;
     
-    if (s() && s()->isok())
+    if (cloned && cloned->isok())
     {
 	oldwant = si.wants;
 	
 	if (!si.inherit_request)
 	{
 	    si.wants |= force;
-	    si.wants |= s()->force;
+	    si.wants |= cloned->force;
 	}
 	
 	if (outbuf.used() || autoclose_time)
 	    si.wants.writable = true;
 	
-	result = s()->pre_select(si);
+	result = cloned->pre_select(si);
 	
 	si.wants = oldwant;
 	return result;
@@ -138,19 +139,19 @@ bool WvStreamClone::post_select(SelectInfo &si)
     SelectRequest oldwant;
     bool val, want_write;
     
-    if (s() && (outbuf.used() || autoclose_time))
+    if (cloned && (outbuf.used() || autoclose_time))
 	flush(0);
 
-    if (s() && s()->isok())
+    if (cloned && cloned->isok())
     {
 	oldwant = si.wants;
 	if (!si.inherit_request)
 	{
 	    si.wants |= force;
-	    si.wants |= s()->force;
+	    si.wants |= cloned->force;
 	}
 
-	val = s()->post_select(si);
+	val = cloned->post_select(si);
 	want_write = si.wants.writable;
 	si.wants = oldwant;
 	
@@ -176,8 +177,8 @@ bool WvStreamClone::post_select(SelectInfo &si)
 
 const WvAddr *WvStreamClone::src() const
 {
-    if (s())
-	return s()->src();
+    if (cloned)
+	return cloned->src();
     return NULL;
 }
 
@@ -185,5 +186,5 @@ const WvAddr *WvStreamClone::src() const
 void WvStreamClone::execute()
 {
     WvStream::execute();
-    if (s()) s()->callback();
+    if (cloned) cloned->callback();
 }

@@ -77,7 +77,7 @@ WvString WvUrlRequest::request_str(bool keepalive)
 
 
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl)
-    : WvStreamClone(&cloned), remaddr(_remaddr),
+    : WvStreamClone(0), remaddr(_remaddr),
 	log(WvString("HTTP %s", remaddr), WvLog::Debug)
 {
     log("Opening server connection.\n");
@@ -101,9 +101,6 @@ WvHttpStream::~WvHttpStream()
     
     if (geterr())
 	log("Error was: %s\n", errstr());
-    
-    if (cloned)
-	delete cloned;
 }
 
 

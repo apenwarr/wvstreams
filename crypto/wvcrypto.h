@@ -32,7 +32,6 @@ class WvCryptoStream : public WvStreamClone
     size_t cryptbuf_size;
     
 protected:
-    WvStream *slave;
     unsigned char *cryptbuf(size_t size);
     
 public:

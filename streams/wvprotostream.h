@@ -18,7 +18,7 @@ class WvLog;
 class WvProtoStream : public WvStreamClone
 {
 public:
-    WvProtoStream(WvStream **_cloned, WvLog *_debuglog = NULL);
+    WvProtoStream(WvStream *_cloned, WvLog *_debuglog = NULL);
     virtual ~WvProtoStream();
     
     class Token;

@@ -11,9 +11,8 @@
 
 WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 		         bool _is_server)
-    : WvStreamClone(&slave), debug("WvSSLStream",WvLog::Debug5)
+    : WvStreamClone(_slave), debug("WvSSLStream",WvLog::Debug5)
 {
-    slave = _slave;
     verify = _verify;
     is_server = _is_server;
     read_again = false;
@@ -84,7 +83,7 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
     debug("SSL stream initialized.\n");
 
     // make sure we run the SSL_connect once, after our stream is writable
-    slave->force_select(false, true);
+    cloned->force_select(false, true);
 }
 
 
@@ -95,9 +94,6 @@ WvSSLStream::~WvSSLStream()
     debug("Shutting down SSL connection.\n");
     if (geterr())
 	debug("Error was: %s\n", errstr());
-    
-    if (slave)
-	delete slave;
     
     wvssl_free();
 }
@@ -224,9 +220,9 @@ bool WvSSLStream::post_select(SelectInfo &si)
     // initialize itself, and we mustn't block in the constructor, so keep
     // trying here... it is also turning into a rather cool place
     // to do the validation of the connection ;)
-    if (!sslconnected && slave && slave->isok() && result)
+    if (!sslconnected && cloned && cloned->isok() && result)
     {
-	slave->undo_force_select(false, true, false);
+	cloned->undo_force_select(false, true, false);
 	
 	// for ssl streams to work, we have to be cloning a stream that
 	// actually uses a single, valid fd.
