@@ -776,11 +776,12 @@ WVTEST_MAIN("cstr_unescape")
    
     // Tests for detection of misformatting
     WVFAIL(cstr_unescape(WvString::null, data, max_size, size) || size);
-    WVFAIL(cstr_unescape("", data, max_size, size) || size);
+    WVPASS(cstr_unescape("", data, max_size, size) && size == 0);
     WVFAIL(cstr_unescape("garbage", data, max_size, size) || size);
     WVFAIL(cstr_unescape("\"", data, max_size, size) || size);
-    WVFAIL(cstr_unescape(" \"\" ", data, max_size, size) || size);
-    WVFAIL(cstr_unescape("\"\" ", data, max_size, size) || size);
+    WVPASS(cstr_unescape(" \"\" ", data, max_size, size) && size == 0);
+    WVPASS(cstr_unescape("\"\" ", data, max_size, size) && size == 0);
+    WVFAIL(cstr_unescape("\"\" \"", data, max_size, size) || size);
 
     // Tests for correcly formatted strings with enough space
     WVPASS(cstr_unescape("\"\"", data, max_size, size) && size == 0);
@@ -795,5 +796,9 @@ WVTEST_MAIN("cstr_unescape")
     
     // Test for passing data as a NULL
     WVPASS(cstr_unescape("\"four\"", NULL, max_size, size) && size == 4);
+
+    // Tests for concatenation
+    WVPASS(cstr_unescape(" \r\"one\" \t\"two\"\v\n", data, max_size, size)
+            && size == 6 && memcmp(data, "onetwo", size) == 0);
 }
 

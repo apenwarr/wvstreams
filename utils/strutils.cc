@@ -911,14 +911,20 @@ bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size)
     if (!q) goto misformatted;
     size = 0;
     
-    if (*q++ != '\"') goto misformatted;
-    while (*q && *q != '\"')
+    for (;;)
     {
-    	char unesc;
-        if (!cstr_unescape_char(q, unesc)) goto misformatted;
-        if (size++ < max_size && cdata) *cdata++ = unesc;
+        while (isspace(*q)) q++;
+        if (*q == '\0') break;
+
+        if (*q++ != '\"') goto misformatted;
+        while (*q && *q != '\"')
+        {
+            char unesc;
+            if (!cstr_unescape_char(q, unesc)) goto misformatted;
+            if (size++ < max_size && cdata) *cdata++ = unesc;
+        }
+        if (*q++ != '\"') goto misformatted;
     }
-    if (*q++ != '\"' || *q != '\0') goto misformatted;
     
     return size <= max_size;
 

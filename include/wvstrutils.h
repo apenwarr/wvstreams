@@ -437,6 +437,13 @@ WvString cstr_escape(const void *data, size_t size);
 // 
 // If cstr is incorrectly formatted, returns false and size will equal 0.
 //
+// This functions works just as well on multiple, whitespace-separated
+// C-style strings as well.  This allows you to concatenate strings produced
+// by cstr_escape, and the result of cstr_unescape will be the data blocks
+// concatenated together.  This implies that the empty string corresponds
+// to a valid data block of length zero; however, a null string still returns
+// an error.
+//
 bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size);
 
 #endif // __WVSTRUTILS_H
