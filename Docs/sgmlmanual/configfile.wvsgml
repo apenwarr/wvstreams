@@ -1,6 +1,10 @@
 WVPART(configfile, The ConfigFile (.ini manager) Library,
- WVCHAPTER(cfgentry, Configuration Entries, x)
+ WVCHAPTER(cfgentry, Configuration Entries, 
+  used to read/write config files that are formatted in the style of Windows .ini files.
+ )
  WVCHAPTER(cfgsection, Configuration Sections, x)
- WVCHAPTER(wvconf, Configuration Files, x)
+ WVCHAPTER(wvconf, Configuration Files, 
+ x
+ )
 )
 
