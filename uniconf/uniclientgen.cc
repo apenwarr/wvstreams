@@ -309,17 +309,16 @@ bool UniClientGen::delwatch(const UniConfKey &key, UniConfDepth::Type depth)
 
 void UniClientGen::conncallback(WvStream &stream, void *userdata)
 {
-#if 0
     if (conn->alarm_was_ticking)
     {
         // command response took too long!
-        log(WvLog::Error, "Command timeout; connection closed.\n");
+//        log(WvLog::Error, "Command timeout; connection closed.\n");
+        log(WvLog::Error, "Command timeout.\n");
         cmdinprogress = false;
         cmdsuccess = false;
-        conn->close();
+//        conn->close();
         return;
     }
-#endif
     bool didone = false;
     for (;;)
     {
