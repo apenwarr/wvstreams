@@ -104,7 +104,7 @@ void WvCont::call()
 
 WvCont::R WvCont::operator() (P1 p1)
 {
-    data->ret = (void *)-42;
+    data->ret = R(-42);
     
     if (!data->task)
 	data->task = data->taskman->start("wvcont", bouncer, data);
