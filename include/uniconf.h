@@ -41,7 +41,7 @@ class UniConfRoot;
 class UniConf
 {
     friend class UniConfRoot;
-    
+ 
     UniConfRoot *xroot;
     UniConfKey xfullkey;
 
@@ -162,7 +162,10 @@ public:
     
     /**
      * Fetches the integer value for this key from the registry.  If the
-     * key is not found, returns 'defvalue' instead.
+     * key is not found, returns 'defvalue' instead.  (This is also used to
+     * fetch booleans - 'true', 'yes', 'on' and 'enabled' are recognized as
+     * 1, 'false', 'no', 'off' and 'disabled' as 0.  Note that a nonexistant
+     * key is false by default.)
      */
     int getint(int defvalue = 0) const;
 
