@@ -74,16 +74,18 @@ WVTEST_MAIN("parsing3")
     WVPASSEQ(cfg.getme(), "foo");
     WVFAIL(cfg.haschildren());
 }
+
+
 WVTEST_MAIN("Setting and getting (bug 6090)")
 {
     UniConfRoot cfg("ini:tmp.ini");
-    cfg["mrwise"].setme("{{bork!");
     
+    cfg["mrwise"].setme("{{bork!");
+    cfg.commit();
     WVPASSEQ(cfg["mrwise"].getme(), "{{bork!");
 
-    cfg.commit();
     UniConfRoot cfg2("ini:tmp.ini");
-//    WVPASSEQ(cfg2["mrwise"].getme(), "{{bork!");
+    WVPASSEQ(cfg2["mrwise"].getme(), "{{bork!");
 }
 
 

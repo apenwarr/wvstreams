@@ -368,6 +368,9 @@ static bool absolutely_needs_escape(WvStringParm s, const char *sepchars)
     if (inescape || inspace)
 	return true; // terminating backslash or whitespace... evil.
     
+    if (numbraces != 0)
+        return true; // uneven number of braces, can't be good
+
     // otherwise, I guess we're safe.
     return false;
 }
