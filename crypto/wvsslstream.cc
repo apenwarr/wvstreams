@@ -5,12 +5,34 @@
 #include "wvsslstream.h"
 #include "wvx509.h"
 #include "wvcrypto.h"
+#include "wvmoniker.h"
 #include <openssl/ssl.h>
 #include <assert.h>
 
+static IWvStream *creator(WvStringParm s, IObject *obj, void *userdata)
+{
+    if (!obj)
+	obj = wvcreate<IWvStream>(s);
+    return new WvSSLStream(mutate<IWvStream>(obj),
+			   (WvX509Mgr *)userdata, false, false);
+}
+
+static IWvStream *screator(WvStringParm s, IObject *obj, void *userdata)
+{
+    if (!obj)
+	obj = wvcreate<IWvStream>(s);
+    return new WvSSLStream(mutate<IWvStream>(obj),
+			   (WvX509Mgr *)userdata, false, true);
+}
+
+static WvMoniker<IWvStream> reg("ssl", creator);
+static WvMoniker<IWvStream> sreg("sslserv", screator);
+
+
+
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record
 
-WvSSLStream::WvSSLStream(WvFDStream *_slave, WvX509Mgr *x509,
+WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
     bool _verify, bool _is_server) :
     WvStreamClone(_slave), debug("WvSSLStream",WvLog::Debug5),
     write_bouncebuf(MAX_BOUNCE_AMOUNT), write_eat(0),
@@ -88,7 +110,7 @@ WvSSLStream::WvSSLStream(WvFDStream *_slave, WvX509Mgr *x509,
     debug("SSL stream initialized.\n");
 
     // make sure we run the SSL_connect once, after our stream is writable
-    cloned->force_select(false, true);
+    force_select(false, true);
 }
 
 
@@ -177,7 +199,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 {
     if (!sslconnected)
     {
-	debug(">> writing, but not connected yet; enqueue.\n");
+	debug(">> writing, but not connected yet (%s); enqueue.\n", getwfd());
 	return 0;
     }
     if (len == 0) return 0;
@@ -301,13 +323,17 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 	return true;
     }
 
-    return WvStreamClone::pre_select(si);
+    bool result = WvStreamClone::pre_select(si);
+    debug("in pre_select (%s)\n", result);
+    return result;
 }
 
  
 bool WvSSLStream::post_select(SelectInfo &si)
 {
     bool result = WvStreamClone::post_select(si);
+    
+    debug("in post_select (%s)\n", result);
 
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep
@@ -315,7 +341,9 @@ bool WvSSLStream::post_select(SelectInfo &si)
     // to do the validation of the connection ;)
     if (!sslconnected && cloned && cloned->isok() && result)
     {
-	cloned->undo_force_select(false, true, false);
+	debug("!sslconnected in post_select\n");
+	
+	undo_force_select(false, true, false);
 	
 	// for ssl streams to work, we have to be cloning a stream that
 	// actually uses a single, valid fd.

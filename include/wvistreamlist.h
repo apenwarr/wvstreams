@@ -2,39 +2,41 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Provides support for managing a list of WvStreams.
+ * FIXME: Suspiciously similar to wvstreamlist, and with tons of duplicated
+ * code.  Blech.
  */ 
-#ifndef __WVSTREAMLIST_H
-#define __WVSTREAMLIST_H
+#ifndef __WVISTREAMLIST_H
+#define __WVISTREAMLIST_H
 
 #include "wvstream.h"
 
 /**
  * Create the WvStreamListBase class - a simple linked list of WvStreams
  */
-DeclareWvList3(WvStream, WvStreamListBase, );
+DeclareWvList3(IWvStream, WvIStreamListBase, );
 
 /**
  * WvStreamList holds a list of WvStream objects -- and its select() and
  * callback() functions know how to handle multiple simultaneous streams.
  */
-class WvStreamList : public WvStream, public WvStreamListBase
+class WvIStreamList : public WvStream, public WvIStreamListBase
 {
 public:
-    WvStreamList();
-    virtual ~WvStreamList();
+    WvIStreamList();
+    virtual ~WvIStreamList();
     virtual bool isok() const;
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     
     void unlink(WvStream *data)
-        { sure_thing.unlink(data); WvStreamListBase::unlink(data); }
+        { sure_thing.unlink(data); WvIStreamListBase::unlink(data); }
     
     bool auto_prune; // remove !isok() streams from the list automatically?
+    static WvIStreamList globallist;
     
 protected:
-    WvStreamListBase sure_thing;
+    WvIStreamListBase sure_thing;
 };
 
-#endif // __WVSTREAMLIST_H
+#endif // __WVISTREAMLIST_H

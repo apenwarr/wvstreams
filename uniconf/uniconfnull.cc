@@ -1,14 +1,19 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
- 
-/** \file
+ * 
  * A generator that is always empty and rejects changes.
  */
 #include "uniconfnull.h"
+#include "wvmoniker.h"
 
-/***** UniConfNullGen *****/
+static UniConfGen *creator(WvStringParm, IObject *, void *)
+{
+    return new UniConfNullGen();
+}
+
+static WvMoniker<UniConfGen> reg("null", creator);
+
 
 UniConfNullGen::UniConfNullGen()
 {
@@ -17,12 +22,6 @@ UniConfNullGen::UniConfNullGen()
 
 UniConfNullGen::~UniConfNullGen()
 {
-}
-
-
-UniConfLocation UniConfNullGen::location() const
-{
-    return UniConfLocation("null://");
 }
 
 
@@ -53,14 +52,4 @@ bool UniConfNullGen::haschildren(const UniConfKey &key)
 UniConfNullGen::Iter *UniConfNullGen::iterator(const UniConfKey &key)
 {
     return new NullIter();
-}
-
-
-
-/***** UniConfNullGenFactory *****/
-
-UniConfNullGen *UniConfNullGenFactory::newgen(
-    const UniConfLocation &location)
-{
-    return new UniConfNullGen();
 }

@@ -10,12 +10,12 @@
 #include "wvhashtable.h"
 #include "wvtcp.h"
 #include "wvfork.h"
+#include "wvautoconf.h"
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
-#include "wvautoconf.h"
 
 class WvResolverHost
 {
@@ -134,19 +134,23 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
     WvResolverHost *host;
     time_t now = time(NULL);
     int res = 0;
-
+    
     host = (*hostmap)[name];
+
     if (host)
     {
-	// refresh successes after 5 minutes, retry failures every 1 minute
+	// refresh successes after 5 minutes, retry failures every 1 minute	    
 	if ((host->done && host->last_tried + 60*5 < now)
 	    || (!host->done && host->last_tried + 60 < now))
 	{
+	    // expired from the cache.  Force a repeat lookup below...
 	    hostmap->remove(host);
 	    host = NULL;
 	}
 	else if (host->done)
 	{
+	    // entry exists, is marked done, and hasn't expired yet.  Return
+	    // the cached value.
 	    if (addr)
 		*addr = host->addr;
             if (addrlist)
@@ -163,33 +167,43 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	    return res;
 	}
 	else if (host->negative)
+	{
+	    // the entry is in the cache, but the response was negative:
+	    // the name doesn't exist.
 	    return 0;
+	}
+	
+	// if we get here, 'host' either exists (still in progress)
+	// or is NULL (need to start again).
     }
-    
+
     if (!host)
     {
+	// nothing matches this hostname in the cache.  Create a new entry,
+	// and start a new lookup.
 	host = new WvResolverHost(name);
 	hostmap->add(host, true);
 	
 	host->loop = new WvLoopback();
+	
 #ifdef WVRESOLVER_SKIP_FORK
-        /* background name resolution does not work when debugging
-         * with gdb
-         */
+        // background name resolution doesn't work when debugging with gdb!
 	namelookup(name, host->loop);
 #else
-        /* otherwise it works just file...
-         */
+        // fork a subprocess so we don't block while doing the DNS lookup.
 
-	// don't close host->loop!
+	// close everything but host->loop in the subprocess.
 	host->pid = wvfork(host->loop->getrfd(), host->loop->getwfd());
 	
-	if (!host->pid) // child process
+	if (!host->pid)
 	{
+	    // child process
 	    host->loop->noread();
 	    namelookup(name, host->loop);
 	    _exit(1);
 	}
+	
+	// parent process
 	host->loop->nowrite();
 #endif
     }
@@ -201,7 +215,8 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	if (waitpid(host->pid, NULL, WNOHANG) == host->pid)
 	    host->pid = 0;
 	
-	if (!host->loop->select(msec_timeout < 0 ? 100 : msec_timeout))
+	if (!host->loop->select(msec_timeout < 0 ? 100 : msec_timeout,
+				true, false))
 	{
 	    if (host->pid)
 	    {
@@ -210,6 +225,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	    }
 	    else
 	    {
+		// the child is dead.  Clean up our stream, too.
 		delete host->loop;
 		host->loop = NULL;
 		host->negative = true;
@@ -263,7 +279,7 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
     delete host->loop;
     host->loop = NULL;
     
-    // Not lazy anymore!  Return as many addresses as we find.
+    // Return as many addresses as we find.
     return host->negative ? 0 : res;
 }
 

@@ -8,26 +8,23 @@
 #include <climits>
 #include <assert.h>
 
-/***** UniConfKey *****/
-
 UniConfKey UniConfKey::EMPTY;
 UniConfKey UniConfKey::ANY("/*"); // yes, this looks a little strange
 
 
-UniConfKey::UniConfKey() :
-    path("/")
+UniConfKey::UniConfKey() : path("/")
 {
 }
 
 
 void UniConfKey::init(WvStringParm key)
 {
-    assert(! key.isnull());
+    assert(!key.isnull());
 
     // canonicalize the key
     // only make a new copy if strictly necessary
     path = key; // does not actually copy anything
-    const char *src = key.cstr();
+    const char *src = key;
     char *dest = NULL;
 
     // add a slash to the beginning of the string
@@ -43,38 +40,34 @@ void UniConfKey::init(WvStringParm key)
     for (char c; (c = *(src++));)
     {
         if (c != '/')
-        {
             haveslash = false;
-        }
         else
         {
-            if (haveslash || *src == '\0')
+            if (haveslash || *src == 0)
             {
-                if (! dest)
+                if (!dest)
                     dest = path.edit() + (src - key.cstr() - 1);
                 continue;
             }
             haveslash = true;
         }
         if (dest)
-            *(dest++) = c;
+            *dest++ = c;
     }
 
     // add null terminator if needed
     if (dest)
-        *(dest++) = '\0';
+        *dest++ = 0;
 }
 
 
-UniConfKey::UniConfKey(const UniConfKey &other) :
-    path(other.path)
+UniConfKey::UniConfKey(const UniConfKey &other) : path(other.path)
 {
 }
 
 
-UniConfKey::UniConfKey(const UniConfKey &_path,
-    const UniConfKey &_key) :
-    path(_path)
+UniConfKey::UniConfKey(const UniConfKey &_path, const UniConfKey &_key) 
+    : path(_path)
 {
     append(_key);
 }
@@ -84,7 +77,7 @@ void UniConfKey::append(const UniConfKey &_key)
 {
     if (isempty())
         path = _key.path;
-    else if (! _key.isempty())
+    else if (!_key.isempty())
         path.append(_key.path);
 }
 
@@ -93,7 +86,7 @@ void UniConfKey::prepend(const UniConfKey &_key)
 {
     if (isempty())
         path = _key.path;
-    else if (! _key.isempty())
+    else if (!_key.isempty())
         path = WvString("%s%s", _key.path, path);
 }
 
@@ -101,13 +94,13 @@ void UniConfKey::prepend(const UniConfKey &_key)
 bool UniConfKey::isempty() const
 {
     // note: path string always has at least 1 character + null
-    return path.cstr()[1] == '\0';
+    return path[1] == '\0';
 }
 
 
 int UniConfKey::numsegments() const
 {
-    const char *str = path.cstr() + 1; // ignore leading '/'
+    const char *str = path + 1; // ignore leading '/'
     if (*str == '\0')
         return 0; // root has zero segments
         
@@ -115,7 +108,7 @@ int UniConfKey::numsegments() const
     for (;;)
     {
         char c = *(str++);
-        if (! c)
+        if (!c)
             break;
         if (c == '/')
             n += 1;
@@ -168,7 +161,7 @@ UniConfKey UniConfKey::range(int i, int j) const
     while (i-- > 0)
     {
         first = strchr(first + 1, '/');
-        if (! first)
+        if (!first)
             return EMPTY;
     }
     
@@ -177,7 +170,7 @@ UniConfKey UniConfKey::range(int i, int j) const
     for (;;)
     {
         char c = first[len];
-        if (! c)
+        if (!c)
         {
             if (first != path.cstr())
                 break;
@@ -213,7 +206,7 @@ WvString UniConfKey::strip() const
 {
     // we make the string unique to avoid possible problems
     // that would occur if the UniConfKey were a temporary
-    WvString result(printable().cstr() + 1);
+    WvString result(printable() + 1);
     return result.unique();
 }
 

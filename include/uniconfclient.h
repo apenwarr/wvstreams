@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ * 
  * UniConfClientGen is a UniConfGen for retrieving data from the
  * UniConfDaemon.
  */
@@ -14,7 +12,6 @@
 #include "uniconfconn.h"
 #include "uniconfpair.h"
 #include "wvlog.h"
-#include "wvstream.h"
 #include "wvstreamlist.h"
 #include "wvstringlist.h"
 
@@ -32,7 +29,6 @@
  */
 class UniConfClientGen : public UniConfGen
 {
-    UniConfLocation xlocation;
     UniConfConn *conn;
     WvLog log;
     UniConfPairDict waiting;
@@ -50,17 +46,13 @@ public:
      * @param location the location of the daemon
      * @param stream the raw connection
      */
-    UniConfClientGen(const UniConfLocation &location,
-        WvStream *stream);
+    UniConfClientGen(IWvStream *stream);
 
     virtual ~UniConfClientGen();
 
     /***** Overridden members *****/
 
-    virtual UniConfLocation location() const;
     virtual bool isok();
-    virtual void attach(WvStreamList *streamlist);
-    virtual void detach(WvStreamList *streamlist);
 
     virtual bool refresh(const UniConfKey &key,
         UniConfDepth::Type depth);
@@ -105,16 +97,6 @@ public:
     virtual void rewind();
     virtual bool next();
     virtual UniConfKey key() const;
-};
-
-
-/**
- * A factory for UniConfClientGen instances.
- */
-class UniConfClientGenFactory : public UniConfGenFactory
-{
-public:
-    virtual UniConfGen *newgen(const UniConfLocation &location);
 };
 
 #endif // __UNICONFCLIENT_H

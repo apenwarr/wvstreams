@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 {
 //    system("clear");
     
-    UniConfLocation location("tcp://");
+    WvString location("tcp:localhost:4111");
     WvString mountpoint("");
     WvString totest = "all";
 
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
         if ("all" == totest || "get" == totest)
         {
             UniConfRoot root;
-            UniConf mainconf(& root);
+            UniConf mainconf(root);
             UniConf mounted(mainconf[mountpoint]);
             mounted.mount(location);
 
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
         if ("all" == totest || "section" == totest) 
         {
             UniConfRoot root;
-            UniConf mainconf(& root);
+            UniConf mainconf(root);
             UniConf mounted(mainconf[mountpoint]);
             mounted.mount(location);
 
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
         if ("all" == totest || "set" == totest) 
         {
             UniConfRoot root;
-            UniConf mainconf(& root);
+            UniConf mainconf(root);
             UniConf mounted(mainconf[mountpoint]);
             mounted.mount(location);
 

@@ -16,8 +16,7 @@ class UniConfDaemon
 public:
     UniConfDaemon(WvLog::LogLevel level = WvLog::Info);
     ~UniConfDaemon();
-    UniConf domount(const UniConfKey &mountpoint,
-        const UniConfLocation &location);
+    UniConf domount(const UniConfKey &mountpoint, WvStringParm moniker);
 
     WvString create_return_string(const UniConfKey &key);
     

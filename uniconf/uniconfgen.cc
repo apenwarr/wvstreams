@@ -1,16 +1,12 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- */
- 
-/** /file
+ * 
  * A UniConf key management abstraction.
  */
 #include "uniconfgen.h"
 #include "uniconfiter.h"
 
-
-/***** UniConfGen *****/
 
 UniConfGen::UniConfGen()
 {
@@ -46,16 +42,6 @@ bool UniConfGen::exists(const UniConfKey &key)
 }
 
 
-void UniConfGen::attach(WvStreamList *streamlist)
-{
-}
-
-
-void UniConfGen::detach(WvStreamList *streamlist)
-{
-}
-
-
 bool UniConfGen::isok()
 {
     return true;
@@ -77,21 +63,13 @@ UniConfFilterGen::~UniConfFilterGen()
 }
 
 
-UniConfLocation UniConfFilterGen::location() const
-{
-    return xinner->location();
-}
-
-
-bool UniConfFilterGen::commit(const UniConfKey &key,
-    UniConfDepth::Type depth)
+bool UniConfFilterGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return xinner->commit(key, depth);
 }
 
 
-bool UniConfFilterGen::refresh(const UniConfKey &key,
-    UniConfDepth::Type depth)
+bool UniConfFilterGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return xinner->refresh(key, depth);
 }
@@ -127,18 +105,6 @@ bool UniConfFilterGen::haschildren(const UniConfKey &key)
 }
 
 
-void UniConfFilterGen::attach(WvStreamList *streamlist)
-{
-    xinner->attach(streamlist);
-}
-
-
-void UniConfFilterGen::detach(WvStreamList *streamlist)
-{
-    xinner->detach(streamlist);
-}
-
-
 bool UniConfFilterGen::isok()
 {
     return xinner->isok();
@@ -151,111 +117,13 @@ UniConfGen::Iter *UniConfFilterGen::iterator(const UniConfKey &key)
 }
 
 
-
-/***** UniConfGenFactory *****/
-
-UniConfGenFactory::UniConfGenFactory()
-{
-}
-
-
-UniConfGenFactory::~UniConfGenFactory()
-{
-}
-
-
-
-/***** UniConfGenFactoryRegistration *****/
-
-UniConfGenFactoryRegistration::UniConfGenFactoryRegistration(
-    WvStringParm _proto, UniConfGenFactory *_factory, bool _autofree) :
-    proto(_proto), factory(_factory), autofree(_autofree)
-{
-    UniConfGenFactoryRegistry::instance()->add(this);
-}
-
-
-UniConfGenFactoryRegistration::~UniConfGenFactoryRegistration()
-{
-    UniConfGenFactoryRegistry::instance()->remove(this);
-    if (autofree)
-        delete factory;
-}
-
-
-
-/***** UniConfGenFactoryRegistry *****/
-
-UniConfGenFactoryRegistry *
-    UniConfGenFactoryRegistry::singleton = NULL;
-
-
-UniConfGenFactoryRegistry *UniConfGenFactoryRegistry::instance()
-{
-    if (! singleton)
-        singleton = new UniConfGenFactoryRegistry();
-    return singleton;
-}
-
-
-UniConfGenFactoryRegistry::UniConfGenFactoryRegistry() :
-    dict(13), log("UniConfGenFactoryRegistry", WvLog::Debug4)
-{
-}
-
-
-UniConfGenFactoryRegistry::~UniConfGenFactoryRegistry()
-{
-    singleton = NULL;
-}
-
-
-void UniConfGenFactoryRegistry::add(
-    UniConfGenFactoryRegistration *reg)
-{
-    //log("Registering \"%s\"\n", reg->proto);
-    dict.add(reg, false);
-}
-
-
-void UniConfGenFactoryRegistry::remove(
-    UniConfGenFactoryRegistration *reg)
-{
-    //log("Unregistering \"%s\"\n", reg->proto);
-    dict.remove(reg);
-    if (dict.isempty())
-        delete this;
-}
-
-
-UniConfGenFactory *UniConfGenFactoryRegistry::find(WvStringParm proto)
-{
-    UniConfGenFactoryRegistration *reg = dict[proto];
-    if (! reg)
-    {
-        log("Could not find factory for \"%s\"\n", proto);
-        return NULL;
-    }
-    return reg->factory;
-}
-
-
-UniConfGen *UniConfGenFactoryRegistry::newgen(
-    const UniConfLocation &location)
-{
-    UniConfGenFactory *factory = find(location.proto());
-    if (! factory)
-        return NULL;
-    return factory->newgen(location);
-}
-
-
+#if 0
 
 /****** Registry Hack *****/
 
 /**
  * This is  a quick hack to ensure that all standard generators
- * are always available.  Unless explicitly reference by the
+ * are always available.  Unless explicitly referenced by the
  * program, some generators may not be linked with the executable
  * and therefore would not be registered if their static initializers
  * resided in their respective modules only.  This hack should be
@@ -282,3 +150,5 @@ static UniConfGenFactoryRegistration unixreg("unix",
     new UniConfClientGenFactory(), true);
 static UniConfGenFactoryRegistration tcpreg("tcp",
     new UniConfClientGenFactory(), true);
+
+#endif

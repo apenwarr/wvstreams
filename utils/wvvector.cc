@@ -1,18 +1,18 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ * 
  * Provides a dynamic array data structure.
  */
 #include "wvvector.h"
+#include <assert.h>
 
-/***** WvVectorBase *****/
 
-WvVectorBase::WvVectorBase() :
-    xseq(NULL), xsize(0), xslots(0)
+WvVectorBase::WvVectorBase(bool _auto_free)
 {
+    xseq = NULL;
+    xcount = xslots = 0;
+    auto_free = _auto_free;
 }
 
 
@@ -33,4 +33,50 @@ int WvVectorBase::shrinkcapacity(int maxslots)
     while (newslots > maxslots)
         newslots /= 2;
     return newslots;
+}
+
+
+void WvVectorBase::remove(int slot)
+{
+    xcount--;
+    moveelems(xseq + slot, xseq + slot + 1, xcount - slot);
+    setcapacity(shrinkcapacity(xcount));
+}
+
+
+void WvVectorBase::insert(int slot, void *elem)
+{
+    setcapacity(growcapacity(xcount + 1));
+    moveelems(xseq + slot + 1, xseq + slot, xcount - slot);
+    xseq[slot] = elem;
+    xcount++;
+}
+
+
+void WvVectorBase::append(void *elem)
+{
+    setcapacity(growcapacity(xcount + 1));
+    xseq[xcount] = elem;
+    xcount++;
+}
+
+
+void WvVectorBase::setcapacity(int newslots)
+{
+    if (newslots == xslots)
+	return;
+    
+    assert(newslots >= xcount);
+    if (newslots < xcount)
+	xcount = newslots;
+    void **oldseq = xseq;
+    xslots = newslots;
+    if (newslots != 0)
+    {
+	xseq = new void *[newslots];
+	moveelems(xseq, oldseq, xcount);
+    }
+    else
+	xseq = NULL;
+    delete[] oldseq;
 }

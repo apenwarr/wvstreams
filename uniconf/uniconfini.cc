@@ -1,15 +1,23 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
- 
-/** \file
+ * 
  * A generator for .ini files.
  */
 #include "uniconfini.h"
 #include "wvtclstring.h"
 #include "strutils.h"
 #include "wvfile.h"
+#include "wvmoniker.h"
+
+static UniConfGen *creator(WvStringParm s, IObject *, void *)
+{
+    return new UniConfIniFileGen(s);
+}
+
+static WvMoniker<UniConfGen> reg("ini", creator);
+
+
 
 static void printsection(WvStream &file, const UniConfKey &key)
 {
@@ -29,9 +37,8 @@ static void printkey(WvStream &file, const UniConfKey &key,
 
 /***** UniConfIniFileGen *****/
 
-UniConfIniFileGen::UniConfIniFileGen(
-    WvStringParm _filename) :
-    filename(_filename), log(filename)
+UniConfIniFileGen::UniConfIniFileGen(WvStringParm _filename)
+    : filename(_filename), log(filename)
 {
     log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
@@ -41,12 +48,6 @@ UniConfIniFileGen::UniConfIniFileGen(
 
 UniConfIniFileGen::~UniConfIniFileGen()
 {
-}
-
-
-UniConfLocation UniConfIniFileGen::location() const
-{
-    return UniConfLocation(WvString("ini://%s", filename));
 }
 
 
@@ -234,14 +235,4 @@ void UniConfIniFileGen::save(WvStream &file, UniConfValueTree &parent)
     {
         save(file, *it);
     }
-}
-
-
-
-/***** UniConfIniFileGenFactory *****/
-
-UniConfIniFileGen *UniConfIniFileGenFactory::newgen(
-    const UniConfLocation &location)
-{
-    return new UniConfIniFileGen(location.payload());
 }

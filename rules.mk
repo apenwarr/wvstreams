@@ -1,23 +1,6 @@
 
 default: $(TARGETS)
 
-libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
-libwvoggvorbis.so: libwvstreams.so
-
-libwvoggspeex.a libwvoggspeex.so: $(call objects,oggspeex)
-libwvoggspeex.so: libwvstreams.so
-
-libwvfft.a libwvfft.so: $(call objects,fft)
-libwvfft.so: libwvstreams.so
-
-libwvqt.a libwvqt.so: $(call objects,qt)
-libwvqt.so: libwvstreams.so
-
-libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams uniconf urlget)
-libwvstreams.so: libwvutils.so
-
-libwvutils.a libwvutils.so: $(call objects,utils)
-
 ifdef VERBOSE
 COMPILE_MSG:=
 LINK_MSG:=
@@ -138,8 +121,8 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
-$(TESTS): libwvstreams.a libwvutils.a
-$(TESTS): LDLIBS+=libwvstreams.a libwvutils.a
+$(TESTS): libwvstreams.so libwvutils.so
+$(TESTS): LDLIBS+=libwvstreams.so libwvutils.so
 tests: $(TESTS)
 
 dishes:

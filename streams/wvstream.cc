@@ -24,24 +24,49 @@
 # define TRACE(x, y...)
 #endif
 
-WvTaskMan *WvStream::taskman = NULL;
+WvTaskMan *WvStream::taskman;
+WvStream *WvStream::globalstream = NULL;
 
-WvStream::WvStream() :
-    // public members
-    force(true, false, false),
-    read_requires_writable(NULL), write_requires_readable(NULL),
-    uses_continue_select(false), personal_stack_size(65536),
-    alarm_was_ticking(false),
-    // protected members
-    callfunc(0), closecb_func(0),
-    userdata(NULL), closecb_data(NULL),
-    max_outbuf_size(0), outbuf_delayed_flush(false), is_auto_flush(true),
-    queue_min(0), autoclose_time(0),
-    running_callback(false), wvstream_execute_called(false),
-    task(NULL)
+UUID_MAP_BEGIN(IWvStream)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_ENTRY(IWvStream)
+  UUID_MAP_END
+
+WvStream::WvStream()
+	: callfunc(NULL), closecb_func(NULL)
 {
+    wvstream_execute_called = false;
+    userdata = closecb_data = NULL;
+    errnum = 0;
+    max_outbuf_size = 0;
+    outbuf_delayed_flush = false;
+    is_auto_flush = true;
+    alarm_was_ticking = false;
+    force.readable = true;
+    force.writable = force.isexception = false;
+    read_requires_writable = write_requires_readable = NULL;
+    running_callback = false;
+    queue_min = 0;
+    autoclose_time = 0;
+    alarm_time.tv_sec = alarm_time.tv_usec = 0;
+    
+    // magic multitasking support
+    uses_continue_select = false;
+    personal_stack_size = 65536;
+    task = NULL;
+
     alarm_time.tv_sec = 0;
     alarm_time.tv_usec = 0;
+}
+
+
+IWvStream::IWvStream()
+{
+}
+
+
+IWvStream::~IWvStream()
+{
 }
 
 
@@ -378,7 +403,7 @@ char *WvStream::getline(time_t wait_msec, char separator,
         if (uses_continue_select)
             hasdata = continue_select(wait_msec);
         else
-            hasdata = select(wait_msec);
+            hasdata = select(wait_msec, true, false);
         if (! isok())
             break;
 
@@ -460,6 +485,18 @@ void WvStream::flush_internal(time_t msec_timeout)
 }
 
 
+int WvStream::getrfd() const
+{
+    return -1;
+}
+
+
+int WvStream::getwfd() const
+{
+    return -1;
+}
+
+
 void WvStream::flush_then_close(int msec_timeout)
 {
     time_t now = time(NULL);
@@ -483,6 +520,9 @@ bool WvStream::pre_select(SelectInfo &si)
     
     if (alarmleft == 0)
 	return true; // alarm has rung
+
+    if (!si.inherit_request)
+	si.wants |= force;
     
     // handle read-ahead buffering
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
@@ -526,6 +566,13 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     if (!isok()) return false;
 
     bool sure = pre_select(si);
+    if (globalstream && forceable)
+    {
+	WvStream *s = globalstream;
+	globalstream = NULL; // prevent recursion
+	sure = sure || s->pre_select(si);
+	globalstream = s;
+    }
     if (sure)
         si.msec_timeout = 0;
     return sure;
@@ -551,10 +598,19 @@ int WvStream::_do_select(SelectInfo &si)
 }
 
 
-bool WvStream::_process_selectinfo(SelectInfo &si)
+bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 {
     if (!isok()) return false;
-    return post_select(si);
+    
+    bool sure = post_select(si);
+    if (globalstream && forceable)
+    {
+	WvStream *s = globalstream;
+	globalstream = NULL; // prevent recursion
+	sure = sure || s->post_select(si);
+	globalstream = s;
+    }
+    return sure;
 }
 
 
@@ -563,13 +619,15 @@ bool WvStream::_select(time_t msec_timeout,
 {
     SelectInfo si;
     bool sure = _build_selectinfo(si, msec_timeout,
-        readable, writable, isexcept, forceable);
+				  readable, writable, isexcept, forceable);
     
     if (!isok()) return false;
 
     int sel = _do_select(si);
     if (sel > 0)
-        sure = _process_selectinfo(si) || sure; // note the order
+        sure = _process_selectinfo(si, forceable) || sure; // note the order
+    if (sure && globalstream && forceable)
+	globalstream->callback();
     return sure;
 }
 
@@ -653,3 +711,4 @@ const WvAddr *WvStream::src() const
 {
     return NULL;
 }
+

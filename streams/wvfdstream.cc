@@ -5,6 +5,7 @@
  * Base class for streams built on Unix file descriptors.
  */
 #include "wvfdstream.h"
+#include "wvmoniker.h"
 #include <sys/socket.h>
 
 // console streams
@@ -19,6 +20,13 @@ WvStream *wvout = &_wvout;
 WvStream *wverr = &_wverr;
 
 /***** WvFDStream *****/
+
+static IWvStream *creator(WvStringParm s, IObject *, void *)
+{
+    return new WvFDStream(s.num());
+}
+
+static WvMoniker<IWvStream> reg("fd", creator);
 
 WvFDStream::WvFDStream(int _rwfd) :
     rfd(_rwfd), wfd(_rwfd)

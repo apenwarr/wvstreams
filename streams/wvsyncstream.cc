@@ -45,8 +45,7 @@ void WvSyncStream::init(size_t _bps, size_t _avgchunk, size_t _maxchunk)
     waiting = false;
     resettimer();
 
-    if (cloned)
-        cloned->force_select(true, false, false);
+    force_select(true, false, false);
 }
 
 

@@ -37,8 +37,8 @@ public:
         { return proto; }
     
     // this one is ONLY valid if resolve() returns true!
-    const WvIPPortAddr &getaddr() const
-        { return *addr; }
+    const WvIPPortAddr getaddr() const
+        { return addr ? *addr : WvIPPortAddr(); }
     
     WvStringParm getfile() const
         { return file; }

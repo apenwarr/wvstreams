@@ -1,10 +1,8 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- */
-
-/** /file
- * A UniConf hierarchical key path abstraction.
+ * 
+ * UniConfKeys are paths in the UniConf hierarchy.
  */
 #ifndef __UNICONFKEY_H
 #define __UNICONFKEY_H
@@ -15,32 +13,26 @@
 /**
  * Represents a UniConf key which is a path in a hierarchy structured much
  * like the traditional Unix filesystem.
- * <p>
- * <ul>
- * <li>Segments in the path are delimited by slashes.</li>
- * <li>The root of the tree is identified by a single slash.</li>
- * <li>Keys are case insensitive yet preserve case information.</li>
- * <li>An initial slash is added if it was missing or if the
- *     string was empty.</li>
- * <li>Paired slashes are converted to single slashes.</li>
- * <li>Trailing slashes are discarded.</li>
- * </ul>
- * </p><p>
+ * 
+ * - Segments in the path are delimited by slashes.
+ * - The root of the tree is identified by a single slash.
+ * - Keys are case insensitive yet preserve case information.
+ * - An initial slash is added if it was missing or if the string was empty.
+ * - Paired slashes are converted to single slashes.
+ * - Trailing slashes are discarded.
+ * 
  * The following paths are equivalent when canonicalized:
- * <ul>
- * <li>/foo/key <em>(the canonical representation)</em></li>
- * <li>/Foo/Key <em>(also canonical but preserves case)</em></li>
- * <li>foo/key <em>(converted to /foo/key)<li>
- * <li>/foo//key <em>(converted to /foo/key)<li>
- * <li>/foo/key/ <em>(converted to /foo/key)<li>
- * </ul>
- * </p><p>
- * Keys that may contain slashes or nulls should be escaped in
- * some fashion prior to constructing a UniConfKey object.
- * Simply prefixing slashes with backslashes is inadequate
- * because UniConfKey does not invest any special meaning in
- * backslash.
- * </p>
+ * 
+ * - /foo/key (the canonical representation)
+ * - /Foo/Key (also canonical but preserves case)
+ * - foo/key (converted to /foo/key)
+ * - /foo//key (converted to /foo/key)
+ * - /foo/key/ (converted to /foo/key)
+ * 
+ * Keys that may contain slashes or nulls should be escaped in some fashion
+ * prior to constructing a UniConfKey object. Simply prefixing slashes with
+ * backslashes is inadequate because UniConfKey does not give any special
+ * meaning to backslash.
  */
 class UniConfKey
 {
@@ -51,36 +43,38 @@ public:
     static UniConfKey ANY;   /*!< represents "*" */
 
     /**
-     * Constructs an empty UniConfKey (also known as root).
+     * Constructs an empty UniConfKey (the 'root').
      */
     UniConfKey();
 
     /**
      * Constructs a UniConfKey from a string.
-     * <p>
+     * 
      * See the rules above for information about how the key string
      * is canonicalized.
-     * </p>
+     * 
      * @param key the key as a string
      */
-    inline UniConfKey(WvStringParm key)
-    {
-        init(key);
-    }
+    UniConfKey(WvStringParm key)
+        { init(key); }
 
     /**
      * Constructs a UniConfKey from a string.
-     * <p>
+     * 
      * See the rules above for information about how the key string
      * is canonicalized.  This constructor only exists to help out the
      * C++ compiler with its automatic type conversions.
-     * </p>
+     * 
      * @param key the key as a string
      */
-    inline UniConfKey(const char *key)
-    {
-        init(key);
-    }   
+    UniConfKey(const char *key)
+        { init(key); }   
+    
+    /**
+     * Constructs a UniConfKey from an int.
+     */
+    UniConfKey(int key)
+        { init(key); }
 
     /**
      * Copies a UniConfKey.
@@ -115,11 +109,11 @@ public:
 
     /**
      * Returns the number of segments in this path.
-     * <p>
+     * 
      * The number of segments is equal to the number of slashes
      * in the path unless the path is "/" (the root), which has
      * zero segments.
-     * </p>
+     * 
      * @return the number of segments
      */
     int numsegments() const;
@@ -171,14 +165,14 @@ public:
 
     /**
      * Returns the canonical string representation of the path.
-     * <p>
+     * 
      * If the UniConfKey was constructed in part or whole from
      * strings, then the string returned here will have the same
      * case information as those strings but the arrangement of
      * slashes may differ.  That is, the identity
-     * <code>UniConfKey(string).printable() == key<code> <em>
-     * does not hold</em>.
-     * </p>
+     * <code>UniConfKey(string).printable() == key<code> 
+     * does not hold.
+     * 
      * @return the path as a string
      */
     WvString printable() const;
@@ -245,33 +239,26 @@ DeclareWvList(UniConfKey);
 class UniConfKey::Iter
 {
     const UniConfKey &key;
-    int segment;
-    int numsegments;
+    int seg, max;
+    UniConfKey curseg;
     
 public:
-    Iter(const UniConfKey &_key) :
-        key(_key) { }
+    Iter(const UniConfKey &_key) : key(_key) 
+        { }
 
     void rewind()
-    {
-        segment = -1;
-        numsegments = key.numsegments();
-    }
+        { seg = -1; max = key.numsegments(); }
+    
+    bool cur()
+        { return seg >= 0 && seg < max; }
     
     bool next()
-    {
-        segment += 1;
-        return segment < numsegments;
-    }
+        { seg++; curseg = key.segment(seg); return cur(); }
     
-    UniConfKey operator*() const
-    {
-        return key.segment(segment);
-    }
-    inline UniConfKey operator()() const
-    {
-        return **this;
-    }
+    const UniConfKey *ptr() const
+        { return &curseg; }
+    
+    WvIterStuff(const UniConfKey);
 };
 
 #endif // __UNICONFKEY_H

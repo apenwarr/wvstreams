@@ -13,9 +13,9 @@
 
 /**
  * A generator that is always empty and rejects changes.
- * <p>
- * To mount, use the moniker "null://".
- * </p>
+ *
+ * To mount, use the moniker "null:".
+ *
  */
 class UniConfNullGen : public UniConfGen
 {
@@ -25,22 +25,11 @@ public:
 
     /***** Overridden methods *****/
 
-    virtual UniConfLocation location() const;
     virtual WvString get(const UniConfKey &key);
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
-};
-
-
-/**
- * A factory for UniConfNullGen instances.
- */
-class UniConfNullGenFactory : public UniConfGenFactory
-{
-public:
-    virtual UniConfNullGen *newgen(const UniConfLocation &location);
 };
 
 

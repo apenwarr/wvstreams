@@ -17,7 +17,7 @@ void usage()
     wvcon->print("uniconfdaemon usage:  uniconfdaemon "
         "[-mount mountpoint moniker] [-d level]\n");
     wvcon->print("    mountpoint:   is the point to mount the config keys under\n");
-    wvcon->print("    moniker:      is the moniker, eg. ini://myfile\n");
+    wvcon->print("    moniker:      is the moniker, eg. ini:myfile\n");
     wvcon->print("    level:        is one of:  Critical, Error, Warning, Notice, Info, or Debug[1-5]\n");
 
     exit(2);
@@ -88,10 +88,9 @@ int main(int argc, char **argv)
 
     while (i.next())
     {
-        UniConfKey mp(i());
-        i.next();
-        UniConfLocation location(i());
-        daem->domount(mp, location);
+        UniConfKey mp(*i);
+        if (!i.next()) break;
+        daem->domount(mp, *i);
     }
     daem->run();
     

@@ -94,7 +94,7 @@ public:
     WvString username;
 
     bool operator== (const WvUrlStreamInfo &n2)
-    { return (username == n2.username && remaddr == n2.remaddr); }
+        { return (username == n2.username && remaddr == n2.remaddr); }
 };
 unsigned WvHash(const WvUrlStreamInfo &n);
 

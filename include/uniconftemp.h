@@ -31,7 +31,6 @@ public:
 
     /***** Overridden members *****/
 
-    virtual UniConfLocation location() const;
     virtual WvString get(const UniConfKey &key);
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);
@@ -61,16 +60,6 @@ public:
     virtual void rewind();
     virtual bool next();
     virtual UniConfKey key() const;
-};
-    
-
-/**
- * A factory for UniConfNullGen instances.
- */
-class UniConfTempGenFactory : public UniConfGenFactory
-{
-public:
-    virtual UniConfTempGen *newgen(const UniConfLocation &location);
 };
 
 

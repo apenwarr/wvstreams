@@ -54,20 +54,11 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
+#XPLC = ../../../xplc
+CPPFLAGS += -I$(XPLC)/include -DUNSTABLE
+
 CPPFLAGS += -Iinclude -pipe
 ARFLAGS = rs
-
-libwvstreams.so: -lssl
-
-libwvutils.so: -lz -lcrypto
-
-libwvoggvorbis.so: -logg -lvorbis -lvorbisenc
-
-libwvoggspeex.so: -logg -lspeex
-
-libwvfft.so: -lfftw -lrfftw
-
-libwvqt.so: -lqt
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
@@ -135,8 +126,37 @@ endif
 
 # Some other generally useful optimizations
 CXXFLAGS+=-fnonnull-objects
-
 RELEASE?=$(PACKAGE_VERSION)
 
 include $(wildcard */vars.mk */*/vars.mk) /dev/null
+
+libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
+libwvoggvorbis.so: libwvstreams.so
+
+libwvoggspeex.a libwvoggspeex.so: $(call objects,oggspeex)
+libwvoggspeex.so: libwvstreams.so
+
+libwvfft.a libwvfft.so: $(call objects,fft)
+libwvfft.so: libwvstreams.so
+
+libwvqt.a libwvqt.so: $(call objects,qt)
+libwvqt.so: libwvstreams.so
+
+libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams uniconf urlget)
+libwvstreams.so: libwvutils.so
+
+libwvutils.a libwvutils.so: $(call objects,utils)
+
+
+libwvstreams.so: -lssl #$(XPLC)/libxplc.so $(XPLC)/libxplc-cxx.a
+
+libwvutils.so: -lz -lcrypto
+
+libwvoggvorbis.so: -logg -lvorbis -lvorbisenc
+
+libwvoggspeex.so: -logg -lspeex
+
+libwvfft.so: -lfftw -lrfftw
+
+libwvqt.so: -lqt
 

@@ -36,9 +36,8 @@ int main()
 {
     WvLogConsole rcv(2, WvLog::Debug4);
     WvLog log("itertest", WvLog::Info);
-    UniConfRoot uniconfroot;
-    UniConf h(& uniconfroot);
-    h.mount(UniConfLocation("ini://test2.ini"));
+    UniConfRoot uniconfroot("ini:test2.ini");
+    UniConf h(uniconfroot);
     
     {
 	log("Iter dump of /HTTPD:\n");

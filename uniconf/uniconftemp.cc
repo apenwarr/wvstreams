@@ -1,29 +1,29 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- */
- 
-/** /file
+ * 
  * A UniConf generator that stores keys in memory.
  */
 #include "uniconftemp.h"
+#include "wvmoniker.h"
 
-/***** UniConfTempGen *****/
+static UniConfGen *creator(WvStringParm, IObject *, void *)
+{
+    return new UniConfTempGen();
+}
 
-UniConfTempGen::UniConfTempGen() :
-    root(NULL, UniConfKey::EMPTY, WvString::null)
+static WvMoniker<UniConfGen> reg("temp", creator);
+
+
+
+UniConfTempGen::UniConfTempGen()
+    : root(NULL, UniConfKey::EMPTY, WvString::null)
 {
 }
 
 
 UniConfTempGen::~UniConfTempGen()
 {
-}
-
-
-UniConfLocation UniConfTempGen::location() const
-{
-    return UniConfLocation("temp://");
 }
 
 
@@ -120,8 +120,7 @@ bool UniConfTempGen::haschildren(const UniConfKey &key)
 }
 
 
-UniConfGen::Iter *UniConfTempGen::iterator(
-    const UniConfKey &key)
+UniConfGen::Iter *UniConfTempGen::iterator(const UniConfKey &key)
 {
     UniConfValueTree *node = root.find(key);
     if (node)
@@ -174,14 +173,4 @@ bool UniConfTempGen::NodeIter::next()
 UniConfKey UniConfTempGen::NodeIter::key() const
 {
     return xit->key();
-}
-
-
-
-/***** UniConfTempGenFactory *****/
-
-UniConfTempGen *UniConfTempGenFactory::newgen(
-    const UniConfLocation &location)
-{
-    return new UniConfTempGen();
 }

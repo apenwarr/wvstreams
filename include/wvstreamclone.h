@@ -1,10 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ * 
  * Provides support for constructing streams that wrap other streams.
+ * This can turn a (relatively useless) IWvStream into a useful WvStream.
  */ 
 #ifndef __WVSTREAMCLONE_H
 #define __WVSTREAMCLONE_H
@@ -37,10 +36,10 @@ public:
      * harmed in any way by deleting or closing the wrapper stream,
      * set disassociate_on_close to true.
      */
-    WvStreamClone(WvStream *_cloned = NULL);
+    WvStreamClone(IWvStream *_cloned = NULL);
     virtual ~WvStreamClone();
 
-    WvStream *cloned;
+    IWvStream *cloned;
     bool disassociate_on_close; // defaults to false
     
     virtual void close();

@@ -1,24 +1,32 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
- 
-/** \file
+ * 
  * A read only generator wrapper.
  */
 #include "uniconfreadonly.h"
+#include "wvmoniker.h"
 
-/***** UniConfReadOnlyGen *****/
+// if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
+// given moniker.
+static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
+{
+    UniConfGen *gen = NULL;
+    
+    if (obj)
+	gen = mutate<UniConfGen>(obj);
+    if (!gen)
+	gen = wvcreate<UniConfGen>(s);
+    
+    return new UniConfReadOnlyGen(gen);
+}
+
+static WvMoniker<UniConfGen> reg("readonly", creator);
+
 
 UniConfReadOnlyGen::UniConfReadOnlyGen(UniConfGen *inner) :
     UniConfFilterGen(inner)
 {
-}
-
-
-UniConfLocation UniConfReadOnlyGen::location() const
-{
-    return WvString("readonly://%s", UniConfFilterGen::location());
 }
 
 
@@ -34,22 +42,8 @@ bool UniConfReadOnlyGen::zap(const UniConfKey &key)
 }
 
 
-bool UniConfReadOnlyGen::commit(const UniConfKey &key,
-    UniConfDepth::Type depth)
+bool UniConfReadOnlyGen::commit(const UniConfKey &key, 
+				UniConfDepth::Type depth)
 {
     return false;
-}
-
-
-
-/***** UniConfReadOnlyGenFactory *****/
-
-UniConfReadOnlyGen *UniConfReadOnlyGenFactory::newgen(
-    const UniConfLocation &location)
-{
-    UniConfGen *inner = UniConfGenFactoryRegistry::instance()->
-        newgen(location.payload());
-    if (inner)
-        return new UniConfReadOnlyGen(inner);
-    return NULL;
 }

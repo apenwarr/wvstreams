@@ -11,8 +11,17 @@
  * See wvstreamclone.h.
  */
 #include "wvstreamclone.h"
+#include "wvmoniker.h"
 
-WvStreamClone::WvStreamClone(WvStream *_cloned) :
+static IWvStream *creator(WvStringParm, IObject *obj, void *)
+{
+    return new WvStreamClone(mutate<IWvStream>(obj));
+}
+
+static WvMoniker<IWvStream> reg("clone", creator);
+
+
+WvStreamClone::WvStreamClone(IWvStream *_cloned) :
     cloned(_cloned), disassociate_on_close(false)
 {
     force_select(false, false, false);
@@ -39,8 +48,10 @@ void WvStreamClone::close()
 
 void WvStreamClone::flush_internal(time_t msec_timeout)
 {
+#if 0 // FIXME: not supported by IWvStream
     if (cloned)
         cloned->flush(msec_timeout);
+#endif
 }
 
 
@@ -58,7 +69,7 @@ size_t WvStreamClone::uwrite(const void *buf, size_t size)
     // we use cloned->uwrite() here, not write(), since we want the _clone_
     // to own the output buffer, not the main stream.
     if (cloned)
-	return cloned->uwrite(buf, size);
+	return cloned->write(buf, size);
     else
 	return 0;
 }
@@ -105,7 +116,7 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	if (!si.inherit_request)
 	{
 	    si.wants |= force;
-	    si.wants |= cloned->force;
+	    // si.wants |= cloned->force; // why would this be necessary?
 	}
 	
 	if (outbuf.used() || autoclose_time)
@@ -134,7 +145,7 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	if (!si.inherit_request)
 	{
 	    si.wants |= force;
-	    si.wants |= cloned->force;
+	    // si.wants |= cloned->force; // why would this be needed?
 	}
 
 	val = cloned->post_select(si);
@@ -143,9 +154,11 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	
 	// don't return true if they're looking for writable and we still
 	// have data in outbuf - we're not ready to flush yet.
+#if 0 /* I don't understand the logic here... */
 	if (want_write && outbuf.used())
 	    return false;
 	else
+#endif
 	{
 	    if (val && si.wants.readable && read_requires_writable
 	      && !read_requires_writable->select(0, false, true))

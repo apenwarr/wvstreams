@@ -8,10 +8,11 @@
  */
 #include "wvencoderstream.h"
 
-WvEncoderStream::WvEncoderStream(WvStream *_cloned) :
-    WvStreamClone(_cloned), is_closing(false), is_eof(false),
-    min_readsize(0)
+WvEncoderStream::WvEncoderStream(WvStream *_cloned) : WvStreamClone(_cloned)
 {
+    is_closing = false;
+    is_eof = false;
+    min_readsize = 0;
 }
 
 

@@ -39,6 +39,7 @@ public:
     WvHTTPHeaderDict headers;
     WvHTTPHeaderDict client_headers;
     size_t num_received;
+    WvTCPConn *tcp;
 
     /**
      * Changed: now we copy _url in the constructor, so you can (and must)

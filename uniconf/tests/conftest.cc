@@ -40,7 +40,7 @@ public:
     int count;
     
     HelloGen(WvStringParm _def = "Hello World") :
-        UniConfGen(WvString("hello://%s", _def)),
+        UniConfGen(WvString("hello:%s", _def)),
         defstr(_def)
     {
         count = 0;
@@ -72,7 +72,6 @@ public:
 
     /***** Overridden members *****/
 
-    virtual UniConfLocation location() const;
     virtual bool refresh(const UniConfKey &key,
         UniConfDepth::Type depth);
     virtual WvString get(const UniConfKey &key);
@@ -126,12 +125,6 @@ UniConfFileTreeGen::UniConfFileTreeGen(WvStringParm _basedir) :
 }
 
 
-UniConfLocation UniConfFileTreeGen::location() const
-{
-    return WvString("filetree://%s", basedir);
-}
-
-
 bool UniConfFileTreeGen::refresh(const UniConfKey &key,
     UniConfDepth::Type depth)
 {
@@ -142,12 +135,12 @@ bool UniConfFileTreeGen::refresh(const UniConfKey &key,
         depth == UniConfDepth::INFINITE)
     {
         struct stat statbuf;
-        bool exists = lstat(filename.cstr(), & statbuf) == 0;
+        bool exists = lstat(filename.cstr(), &statbuf) == 0;
         
         UniConfValueTree *node = root.find(key);
-        if (! exists)
+        if (!exists)
         {
-            if (node != & root)
+            if (node != &root)
                 delete node;
             return true;
         }
@@ -186,7 +179,7 @@ WvString UniConfFileTreeGen::get(const UniConfKey &key)
 {
     // check the cache
     UniConfValueTree *node = root.find(key);
-    if (node && ! node->value().isnull())
+    if (node && !node->value().isnull())
         return node->value();
 
     // read the file and extract the first non-black line
@@ -197,7 +190,7 @@ WvString UniConfFileTreeGen::get(const UniConfKey &key)
     for (;;)
     {
         line = NULL;
-        if (! file.isok())
+        if (!file.isok())
             break;
 	line = file.getline(-1);
 	if (!line)
@@ -213,7 +206,7 @@ WvString UniConfFileTreeGen::get(const UniConfKey &key)
         line = "";
     }
 
-    if (! node)
+    if (!node)
         node = maketree(key);
     WvString value(line);
     value.unique();
@@ -226,7 +219,7 @@ WvString UniConfFileTreeGen::get(const UniConfKey &key)
 bool UniConfFileTreeGen::exists(const UniConfKey &key)
 {
     UniConfValueTree *node = root.find(key);
-    if (! node)
+    if (!node)
     {
         refresh(key, UniConfDepth::ZERO);
         node = root.find(key);
@@ -238,7 +231,7 @@ bool UniConfFileTreeGen::exists(const UniConfKey &key)
 bool UniConfFileTreeGen::haschildren(const UniConfKey &key)
 {
     UniConfValueTree *node = root.find(key);
-    if (! node || ! node->haschildren())
+    if (!node || !node->haschildren())
     {
         refresh(key, UniConfDepth::CHILDREN);
         node = root.find(key);
@@ -262,14 +255,14 @@ UniConfFileTreeGen::Iter *UniConfFileTreeGen::iterator(const UniConfKey &key)
 UniConfValueTree *UniConfFileTreeGen::maketree(const UniConfKey &key)
 {
     // construct a node for the file with a null value
-    UniConfValueTree *node = & root;
+    UniConfValueTree *node = &root;
     UniConfKey::Iter it(key);
     it.rewind();
     while (it.next())
     {
         UniConfValueTree *prev = node;
         node = node->findchild(it());
-        if (! node)
+        if (!node)
             node = new UniConfValueTree(prev, it(), WvString::null);
     }
     return node;
@@ -306,9 +299,7 @@ int main()
 	wvcon->print("\n\n");
 	log("-- Basic config test begins\n");
 	
-        UniConfRoot root;
-	UniConf cfg(& root);
-        cfg.mount(UniConfLocation("temp://"));
+        UniConfRoot cfg("temp:");
 	cfg["/foo/blah/weasels"].set("chickens");
 	
 	cfg["foo"]["pah"]["meatballs"].setint(6);
@@ -389,9 +380,8 @@ int main()
 	wvcon->print("\n\n");
 	log("-- FileTree test begins\n");
 	
-        UniConfRoot root;
-	UniConf cfg(& root);
-        cfg.mountgen(new UniConfFileTreeGen("/etc/modutils"));
+        UniConfRoot root(new UniConfFileTreeGen("/etc/modutils"));
+	UniConf cfg(root);
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -402,11 +392,11 @@ int main()
 	log("-- IniFile test begins\n");
 	
         UniConfRoot root;
-	UniConf cfg(& root);
+	UniConf cfg(root);
 	UniConf cfg2(cfg["/weaver ini test"]);
 	
-        cfg.mount(UniConfLocation("readonly://ini://test.ini"));
-        cfg2.mount(UniConfLocation("readonly://ini://tmp/weaver.ini"));
+        cfg.mount("readonly:ini:test.ini");
+        cfg2.mount("readonly:ini:/tmp/weaver.ini");
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -417,12 +407,12 @@ int main()
 	log("-- IniFile test2 begins\n");
 	
         UniConfRoot root;
-	UniConf cfg(& root);
+	UniConf cfg(root);
 	UniConf h1(cfg["/1"]);
         UniConf h2(cfg["/"]);
 	
-	h1.mount(UniConfLocation("ini://test.ini"), true);
-        h2.mount(UniConfLocation("ini://test2.ini"), true);
+	h1.mount("ini:test.ini", true);
+        h2.mount("ini:test2.ini", true);
         
 	log("Partial config dump (branch 1 only):\n");
 	h1.dump(quiet);
@@ -431,12 +421,12 @@ int main()
 	cfg.commit();
 
         UniConfRoot newroot;
-        UniConf newcfg(& newroot);
+        UniConf newcfg(newroot);
         UniConf newh1(newcfg["/1"]);
         UniConf newh2(newcfg["/"]);
         
-	newh1.mount(UniConfLocation("ini://test.ini.new"), false);
-        newh2.mount(UniConfLocation("ini://test2.ini.new"), false);
+	newh1.mount("ini:test.ini.new", false);
+        newh2.mount("ini:test2.ini.new", false);
 	
         copyall(cfg, newcfg);
         newh1.dump(quiet);
@@ -445,7 +435,7 @@ int main()
 	newcfg.commit();
 	
 	log("Changing some data:\n");
-	if (! newh1["big/fat/bob"].exists())
+	if (!newh1["big/fat/bob"].exists())
 	    newh1["big/fat/bob"].setint(0);
 	newh1["big/fat/bob"].setint(newh1["big/fat/bob"].getint() + 1);
 	newh1["chicken/hammer\ndesign"].set("simple test");

@@ -46,14 +46,14 @@ void testrecursiveiter(const UniConf &mainconf)
 int main(int argc, char **argv)
 {
     WvString mountpoint("/");
-    UniConfLocation location("tcp://");
+    WvString location("tcp:localhost:4111");
     
     for (int i = 0; i < 2; i++)
     {
         // Test a normal iterator
         {
             UniConfRoot root;
-            UniConf mainconf(& root);
+            UniConf mainconf(root);
             UniConf mounted(mainconf[mountpoint]);
             mounted.mount(location);
 
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
         // Test a recursive iterator
         {
             UniConfRoot root;
-            UniConf mainconf(& root);
+            UniConf mainconf(root);
             UniConf mounted(mainconf[mountpoint]);
             mounted.mount(location);
             

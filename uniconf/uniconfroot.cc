@@ -1,80 +1,102 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
- * Defines the root management class for UniConf.
+ * 
+ * Defines the root management class for UniConf.  To create any kind of
+ * UniConf tree, you'll need one of these.
  */
 #include "uniconfroot.h"
 #include "uniconfgen.h"
-#include "wvstreamlist.h"
+#include "uniconf.h"
+#include "wvmoniker.h"
 
 
 /***** UniConfRoot *****/
 
-UniConfRoot::UniConfRoot() :
-    root(NULL), streamlist(NULL)
+UniConfRoot::UniConfRoot()
+    : UniConf(this, UniConfKey::EMPTY)
 {
-    root = new UniConfInfoTree(NULL, UniConfKey::EMPTY);
+    mounts = new UniConfMountTree(NULL, UniConfKey::EMPTY);
+}
+
+
+UniConfRoot::UniConfRoot(WvStringParm moniker, bool refresh)
+    : UniConf(this, UniConfKey::EMPTY)
+{
+    mounts = new UniConfMountTree(NULL, UniConfKey::EMPTY);
+    _mount(UniConfKey::EMPTY, moniker, refresh);
+}
+
+
+UniConfRoot::UniConfRoot(UniConfGen *gen, bool refresh)
+    : UniConf(this, UniConfKey::EMPTY)
+{
+    mounts = new UniConfMountTree(NULL, UniConfKey::EMPTY);
+    _mountgen(UniConfKey::EMPTY, gen, refresh);
 }
 
 
 UniConfRoot::~UniConfRoot()
 {
-    if (streamlist)
-        detach(streamlist);
     // destroys all generators
-    delete root;
+    delete mounts;
 }
 
-
-WvString UniConfRoot::get(const UniConfKey &key)
+#if 0
+const UniConf UniConfRoot::operator[] (const UniConfKey &key)
 {
-    UniConfInfoTree::GenIter it(*root, key);
+    return UniConf(this, "/");
+}
+#endif
+
+WvString UniConfRoot::_get(const UniConfKey &key)
+{
+    UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
         WvString result = gen->get(it.tail());
-        if (! result.isnull())
+        if (!result.isnull())
             return result;
     }
+    
+    // no matches
     return WvString::null;
 }
 
 
-bool UniConfRoot::set(const UniConfKey &key, WvStringParm value)
+bool UniConfRoot::_set(const UniConfKey &key, WvStringParm value)
 {
     // update the generator that defines the key, if any
     UniConfKey mountpoint;
-    UniConfGen *provider = whichmount(key, & mountpoint);
+    UniConfGen *provider = _whichmount(key, &mountpoint);
     if (provider)
         return provider->set(mountpoint, value);
     return false;
 }
 
 
-bool UniConfRoot::zap(const UniConfKey &key)
+bool UniConfRoot::_zap(const UniConfKey &key)
 {
     bool success = true;
-    UniConfInfoTree::GenIter it(*root, key);
+    UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
-        if (! gen->zap(it.tail()))
+        if (!gen->zap(it.tail()))
             success = false;
     }
     return success;
 }
 
 
-bool UniConfRoot::exists(const UniConfKey &key)
+bool UniConfRoot::_exists(const UniConfKey &key)
 {
-    UniConfInfoTree *node = root->find(key);
+    UniConfMountTree *node = mounts->find(key);
     if (node)
         return true;
         
-    UniConfInfoTree::GenIter it(*root, key);
+    UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -85,13 +107,13 @@ bool UniConfRoot::exists(const UniConfKey &key)
 }
 
 
-bool UniConfRoot::haschildren(const UniConfKey &key)
+bool UniConfRoot::_haschildren(const UniConfKey &key)
 {
-    UniConfInfoTree *node = root->find(key);
+    UniConfMountTree *node = mounts->find(key);
     if (node && node->haschildren())
         return true;
 
-    UniConfInfoTree::GenIter it(*root, key);
+    UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -102,7 +124,7 @@ bool UniConfRoot::haschildren(const UniConfKey &key)
 }
 
 
-bool UniConfRoot::refresh(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniConfRoot::_refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return dorecursive(genrefreshfunc, key, depth);
 }
@@ -115,36 +137,36 @@ bool UniConfRoot::genrefreshfunc(UniConfGen *gen,
 }
 
 
-bool UniConfRoot::commit(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniConfRoot::_commit(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return dorecursive(gencommitfunc, key, depth);
 }
 
 
 bool UniConfRoot::gencommitfunc(UniConfGen *gen,
-    const UniConfKey &key, UniConfDepth::Type depth)
+		const UniConfKey &key, UniConfDepth::Type depth)
 {
     return gen->commit(key, depth);
 }
 
 
 bool UniConfRoot::dorecursive(GenFunc func, const UniConfKey &key,
-    UniConfDepth::Type depth)
+			      UniConfDepth::Type depth)
 {
     // do containing generators
     bool success = true;
-    UniConfInfoTree::GenIter it(*root, key);
+    UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
-        if (! func(gen, it.tail(), depth))
+        if (!func(gen, it.tail(), depth))
             success = false;
     }
 
     // do recursive
     if (depth != UniConfDepth::ZERO)
     {
-        UniConfInfoTree *node = root->find(key);
+        UniConfMountTree *node = mounts->find(key);
         if (node && ! dorecursivehelper(func, node, depth))
             success = false;
     }
@@ -153,7 +175,7 @@ bool UniConfRoot::dorecursive(GenFunc func, const UniConfKey &key,
 
 
 bool UniConfRoot::dorecursivehelper(GenFunc func,
-    UniConfInfoTree *node, UniConfDepth::Type depth)
+    UniConfMountTree *node, UniConfDepth::Type depth)
 {
     // determine depth for next step
     switch (depth)
@@ -175,7 +197,7 @@ bool UniConfRoot::dorecursivehelper(GenFunc func,
 
     // process nodes and recurse if needed
     bool success = true;
-    UniConfInfoTree::Iter it(*node);
+    UniConfMountTree::Iter it(*node);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it->generator;
@@ -194,88 +216,47 @@ bool UniConfRoot::dorecursivehelper(GenFunc func,
 }
  
  
-void UniConfRoot::attach(WvStreamList *_streamlist)
+UniConfGen *UniConfRoot::_mount(const UniConfKey &key,
+			       WvStringParm moniker, bool refresh)
 {
-    assert(streamlist == NULL);
-    assert(_streamlist != NULL);
-    streamlist = _streamlist;
-    recursiveattach(root);
-}
-
-
-void UniConfRoot::recursiveattach(UniConfInfoTree *node)
-{
-    UniConfGen *gen = node->generator;
-    if (gen)
-        gen->attach(streamlist);
-    UniConfInfoTree::Iter it(*node);
-    for (it.rewind(); it.next(); )
-        recursiveattach(it.ptr());
-}
-
-
-void UniConfRoot::detach(WvStreamList *_streamlist)
-{
-    assert(streamlist != NULL);
-    assert(streamlist == _streamlist);
-    recursivedetach(root);
-    streamlist = NULL;
-}
-
-
-void UniConfRoot::recursivedetach(UniConfInfoTree *node)
-{
-    UniConfGen *gen = node->generator;
-    if (gen)
-        gen->detach(streamlist);
-    UniConfInfoTree::Iter it(*node);
-    for (it.rewind(); it.next(); )
-        recursivedetach(it.ptr());
-}
-
-
-UniConfGen *UniConfRoot::mount(const UniConfKey &key,
-    const UniConfLocation &location)
-{
-    UniConfGen *gen = UniConfGenFactoryRegistry::instance()->
-        newgen(location);
-    mountgen(key, gen); // assume always succeeds for now
+    UniConfGen *gen = wvcreate<UniConfGen>(moniker);
+    _mountgen(key, gen, refresh); // assume always succeeds for now
     return gen;
 }
 
 
-UniConfGen *UniConfRoot::mountgen(const UniConfKey &key,
-    UniConfGen *gen)
+UniConfGen *UniConfRoot::_mountgen(const UniConfKey &key,
+				  UniConfGen *gen, bool refresh)
 {
-    UniConfInfoTree *node = root->findormake(key);
+    UniConfMountTree *node = mounts->findormake(key);
     node->generator = gen;
-    if (streamlist)
-        gen->attach(streamlist);
+    if (gen && refresh)
+        gen->refresh(UniConfKey::EMPTY, UniConfDepth::INFINITE);
     return gen;
 }
 
 
-void UniConfRoot::unmount(const UniConfKey &key, UniConfGen *xgen)
+void UniConfRoot::_unmount(const UniConfKey &key, bool commit)
 {
-    UniConfInfoTree *node = root->find(key);
-    if (! node)
+    UniConfMountTree *node = mounts->find(key);
+    if (!node)
         return;
     UniConfGen *gen = node->generator;
-    if (! gen)
+    if (!gen)
         return;
+    if (commit)
+        gen->commit(UniConfKey::EMPTY, UniConfDepth::INFINITE);
 
     node->generator = NULL;
-    if (streamlist)
-        gen->detach(streamlist);
     delete gen;
 }
 
 
-UniConfGen *UniConfRoot::whichmount(const UniConfKey &key,
-    UniConfKey *mountpoint)
+UniConfGen *UniConfRoot::_whichmount(const UniConfKey &key,
+				    UniConfKey *mountpoint)
 {
     // see if a generator acknowledges the key
-    UniConfInfoTree::GenIter it(*root, key);
+    UniConfMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
         UniConfGen *gen = it.ptr();
@@ -294,11 +275,11 @@ found:
 }
 
 
-void UniConfRoot::prune(UniConfInfoTree *node)
+void UniConfRoot::prune(UniConfMountTree *node)
 {
-    while (node != root && ! node->isessential())
+    while (node != mounts && !node->isessential())
     {
-        UniConfInfoTree *next = node->parent();
+        UniConfMountTree *next = node->parent();
         delete node;
         node = next;
     }
@@ -306,24 +287,24 @@ void UniConfRoot::prune(UniConfInfoTree *node)
 
 
 
-/***** UniConfRoot::Iter *****/
+/***** UniConfRoot::BasicIter *****/
 
-UniConfRoot::Iter::Iter(UniConfRoot &root, const UniConfKey &key) :
-    xroot(& root), xkey(key), genit(*root.root, key),
-    hack(71), hackit(hack)
+UniConfRoot::BasicIter::BasicIter(UniConfRoot &root, const UniConfKey &key) 
+    : xroot(&root), xkey(key), genit(*root.mounts, key),
+	hack(71), hackit(hack)
 {
 }
 
 
-void UniConfRoot::Iter::rewind()
+void UniConfRoot::BasicIter::rewind()
 {
     hack.zap();
 
     // add mountpoint nodes
-    UniConfInfoTree *node = xroot->root->find(xkey);
+    UniConfMountTree *node = xroot->mounts->find(xkey);
     if (node)
     {
-        UniConfInfoTree::Iter nodeit(*node);
+        UniConfMountTree::Iter nodeit(*node);
         for (nodeit.rewind(); nodeit.next(); )
         {
             hack.add(new WvString(nodeit->key()), true);
@@ -346,42 +327,42 @@ void UniConfRoot::Iter::rewind()
 }
 
 
-bool UniConfRoot::Iter::next()
+bool UniConfRoot::BasicIter::next()
 {
     return hackit.next();
 }
 
 
-UniConfKey UniConfRoot::Iter::key() const
+UniConfKey UniConfRoot::BasicIter::key() const
 {
     return UniConfKey(hackit());
 }
 
 
 
-/***** UniConfInfoTree *****/
+/***** UniConfMountTree *****/
 
-UniConfInfoTree::UniConfInfoTree(UniConfInfoTree *parent,
+UniConfMountTree::UniConfMountTree(UniConfMountTree *parent,
     const UniConfKey &key) :
-    UniConfTree<UniConfInfoTree>(parent, key), generator(NULL)
+    UniConfTree<UniConfMountTree>(parent, key), generator(NULL)
 {
 }
 
 
-UniConfInfoTree::~UniConfInfoTree()
+UniConfMountTree::~UniConfMountTree()
 {
 }
 
 
-UniConfInfoTree *UniConfInfoTree::findnearest(const UniConfKey &key,
+UniConfMountTree *UniConfMountTree::findnearest(const UniConfKey &key,
     int &split)
 {
     split = 0;
-    UniConfInfoTree *node = this;
+    UniConfMountTree *node = this;
     UniConfKey::Iter it(key);
     for (it.rewind(); it.next(); ++split)
     {
-        UniConfInfoTree *next = node->findchild(it());
+        UniConfMountTree *next = node->findchild(it());
         if (! next)
             break;
         node = next;
@@ -390,25 +371,25 @@ UniConfInfoTree *UniConfInfoTree::findnearest(const UniConfKey &key,
 }
 
 
-UniConfInfoTree *UniConfInfoTree::findormake(const UniConfKey &key)
+UniConfMountTree *UniConfMountTree::findormake(const UniConfKey &key)
 {
-    UniConfInfoTree *node = this;
+    UniConfMountTree *node = this;
     UniConfKey::Iter it(key);
     for (it.rewind(); it.next(); )
     {
-        UniConfInfoTree *prev = node;
+        UniConfMountTree *prev = node;
         node = prev->findchild(it());
         if (! node)
-            node = new UniConfInfoTree(prev, it());
+            node = new UniConfMountTree(prev, it());
     }
     return node;
 }
 
 
 
-/***** UniConfInfoTree::NodeIter *****/
+/***** UniConfMountTree::MountIter *****/
 
-UniConfInfoTree::NodeIter::NodeIter(UniConfInfoTree &root,
+UniConfMountTree::MountIter::MountIter(UniConfMountTree &root,
     const UniConfKey &key) :
     xkey(key)
 {
@@ -416,13 +397,13 @@ UniConfInfoTree::NodeIter::NodeIter(UniConfInfoTree &root,
 }
 
 
-void UniConfInfoTree::NodeIter::rewind()
+void UniConfMountTree::MountIter::rewind()
 {
     xnode = NULL;
 }
 
 
-bool UniConfInfoTree::NodeIter::next()
+bool UniConfMountTree::MountIter::next()
 {
     if (! xnode)
     {
@@ -441,24 +422,25 @@ bool UniConfInfoTree::NodeIter::next()
 
 
 
-/***** UniConfInfoTree::GenIter *****/
+/***** UniConfMountTree::GenIter *****/
 
-UniConfInfoTree::GenIter::GenIter(UniConfInfoTree &root,
+UniConfMountTree::GenIter::GenIter(UniConfMountTree &root,
     const UniConfKey &key) :
-    UniConfInfoTree::NodeIter(root, key)
+    UniConfMountTree::MountIter(root, key)
 {
 }
 
 
-void UniConfInfoTree::GenIter::rewind()
+void UniConfMountTree::GenIter::rewind()
 {
-    UniConfInfoTree::NodeIter::rewind();
+    UniConfMountTree::MountIter::rewind();
 }
 
 
-bool UniConfInfoTree::GenIter::next()
+bool UniConfMountTree::GenIter::next()
 {
-    while (UniConfInfoTree::NodeIter::next())
+    // find the next node up that actually has a generator
+    while (UniConfMountTree::MountIter::next())
     {
         if (node()->generator)
             return true;

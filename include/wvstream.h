@@ -1,14 +1,13 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ * 
  * Provides basic streaming I/O support.
  */ 
 #ifndef __WVSTREAM_H
 #define __WVSTREAM_H
 
+#include "wvxplc.h"
 #include "wverror.h"
 #include "wvbuffer.h"
 #include "wvcallback.h"
@@ -25,14 +24,7 @@ class WvStream;
 // parameters are: owning-stream, userdata
 DeclareWvCallback(2, void, WvStreamCallback, WvStream &, void *);
 
-/**
- * Unified support for streams, that is, sequences of bytes that may or
- * may not be ready for read/write at any given time.
- * 
- * We provide typical read and write routines, as well as a select() function
- * for each stream.
- */
-class WvStream : public WvError
+class IWvStream : public IObject, public WvError
 {
 public:
     /**
@@ -45,11 +37,11 @@ public:
 	
 	SelectRequest() { }
 	SelectRequest(bool r, bool w, bool x = false)
-	    { readable = r; writable = w; isexception = x; }
+		{ readable = r; writable = w; isexception = x; }
 	
 	SelectRequest &operator |= (const SelectRequest &r)
-	    { readable |= r.readable; writable |= r.writable;
-		isexception |= r.isexception; return *this; }
+		{ readable |= r.readable; writable |= r.writable;
+		    isexception |= r.isexception; return *this; }
     };
     
     /**
@@ -63,7 +55,53 @@ public:
 	time_t msec_timeout;         // max time to wait, or -1 for forever
 	bool inherit_request;        // 'wants' values passed to child streams
     };
+    
+    IWvStream();
+    virtual ~IWvStream();
+    virtual void close() = 0;
+    virtual bool isok() const = 0;
+    virtual void callback() = 0;
+    
+    // FIXME: these really have no place in the interface...
+    virtual int getrfd() const = 0;
+    virtual int getwfd() const = 0;
 
+    // FIXME: evil, should go away (or be changed to localaddr/remoteaddr)
+    virtual const WvAddr *src() const = 0;
+    
+    // needed for select().
+    // Some say that pre_select() should go away.
+    virtual bool pre_select(SelectInfo &si) = 0;
+    virtual bool post_select(SelectInfo &si) = 0;
+    
+    // these are now the official way to get/put data to your stream.
+    // The old uread() and uwrite() are just implementation details!
+    virtual size_t read(void *buf, size_t count) = 0;
+    virtual size_t write(const void *buf, size_t count) = 0;
+
+    // FIXME: these are the new fancy versions, but WvBuffer needs to have
+    // a safely abstracted interface class (IWvBuffer) before IWvStream will
+    // really be safe, if we include these.
+    virtual size_t read(WvBuffer &outbuf, size_t count) = 0;
+    virtual size_t write(WvBuffer &inbuf, size_t count = INT_MAX) = 0;
+    
+    // IObject
+    static const UUID IID;
+};
+
+DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
+    {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
+
+/**
+ * Unified support for streams, that is, sequences of bytes that may or
+ * may not be ready for read/write at any given time.
+ * 
+ * We provide typical read and write routines, as well as a select() function
+ * for each stream.
+ */
+class WvStream : public GenericComponent<IWvStream>
+{
+public:
     /**
      * 'force' is the list of default SelectRequest values when you use the
      * variant of select() that doesn't override them.
@@ -127,12 +165,12 @@ public:
     /**
      * read a data block on the stream.  Returns the actual amount read.
      */
-    size_t read(void *buf, size_t count);
+    virtual size_t read(void *buf, size_t count);
 
     /**
      * write a data block on the stream.  Returns the actual amount written.
      */
-    size_t write(const void *buf, size_t count);
+    virtual size_t write(const void *buf, size_t count);
 
     /**
      * Reads a data block from the stream into the buffer.
@@ -143,7 +181,7 @@ public:
      * specify a reasonable upper bound on how much data should
      * be read at once.
      */
-    size_t read(WvBuffer &outbuf, size_t count);
+    virtual size_t read(WvBuffer &outbuf, size_t count);
 
     /**
      * Writes a data block to the stream from the buffer.
@@ -152,7 +190,7 @@ public:
      * If count is greater than the amount of data available in
      * the buffer, only writes at most that amount.
      */
-    size_t write(WvBuffer &inbuf, size_t count = INT_MAX);
+    virtual size_t write(WvBuffer &inbuf, size_t count = INT_MAX);
 
     /**
      * set the maximum size of outbuf, beyond which a call to write() will
@@ -435,7 +473,7 @@ public:
      * if the stream has a callback function defined, call it now.
      * otherwise call execute().
      */
-    void callback();
+    virtual void callback();
     
     /**
      * set an alarm, ie. select() will return true after this many ms.
@@ -486,7 +524,7 @@ protected:
 
     // processes the SelectInfo data structure (runs post_select)
     // returns true if there are callbacks to be dispatched
-    bool _process_selectinfo(SelectInfo &si);
+    bool _process_selectinfo(SelectInfo &si, bool forceable);
 
     // tries to empty the output buffer if the stream is writable
     // not quite the same as flush() since it merely empties the output
@@ -497,6 +535,12 @@ protected:
     // called once flush() has emptied outbuf to ensure that any other
     // internal stream buffers actually do get flushed before it returns
     virtual void flush_internal(time_t msec_timeout);
+    
+    // the real implementations for these are actually in WvFDStream, which
+    // is where they belong.  By IWvStream needs them to exist for now, so
+    // it's a hack.  In standard WvStream they return -1.
+    virtual int getrfd() const;
+    virtual int getwfd() const;
     
 private:
     /**
@@ -554,6 +598,9 @@ protected:
      * call the parent execute() yourself from the derived class.
      */
     virtual void execute();
+    
+    // every call to select() selects on the globalstream.
+    static WvStream *globalstream;
 };
 
 

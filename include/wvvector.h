@@ -1,133 +1,14 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
- * Provides a dynamic array data structure.
+ * 
+ * Provides an auto-resizing array data structure.
  */
 #ifndef __WVVECTOR_H
 #define __WVVECTOR_H
 
-#include <stdlib.h>
+#include "wvlink.h"
 #include <string.h>
-#include <new>
-
-/**
- * Block operations help us to reduce the amount of overhead
- * for maintaining controlled sequences of non-object types.
- *
- * The base type is provided mostly for documentation purposes.
- */
-template<class T>
-struct BlockOps
-{
-    /**
-     * Fills an array with initialized elements.
-     * @param target the pointer to the uninitialized array
-     * @param n the number of elements
-     */
-    static void initelems(T *target, size_t n)
-    {
-    }
-
-    /**
-     * Destroys the initialized elements in an array.
-     * @param target the pointer to the initialized array
-     * @param n the number of elements
-     */
-    static void destroyelems(T *target, size_t n)
-    {
-    }
-
-    /**
-     * Moves an initialized array of elements into a target
-     * uninitialized array leaving the source array uninitialized.
-     * The arrays may overlap but must not coincide.
-     *
-     * @param target the pointer to the uninitialized target array
-     * @param source the pointer to the initialized source array
-     * @param n the number of elements
-     */
-    static void moveelems(T *target, T *source, size_t n)
-    {
-        memmove(target, source, n * sizeof(T));
-    }
-
-    /**
-     * Moves an initialized array of elements into a target
-     * uninitialized array without affecting the source array.
-     * @param target the pointer to the uninitialized target array
-     * @param source the pointer to the initialized source array
-     * @param n the number of elements
-     */
-    static void copyelems(T *target, const T *source, size_t n)
-    {
-        memcpy(target, source, n * sizeof(T));
-    }
-};
-
-
-/**
- * Shallow block operations for use with primitive types.
- */
-template<class T>
-struct ShallowBlockOps : public BlockOps<T>
-{
-};
-
-
-/**
- * Deep block operations for use with object types that have
- * a visible default constructor, copy constructor and destructor.
- */
-template<class T>
-struct DeepBlockOps : public BlockOps<T>
-{
-    static void initelems(T *target, size_t n)
-    {
-        while (n-- > 0)
-            new(target + n) T();
-    }
-
-    static void destroyelems(T *target, size_t n)
-    {
-        while (n-- > 0)
-            (target + n)->~T();
-    }
-
-    static void moveelems(T *target, T *source, size_t n)
-    {
-        if (source < target)
-        {
-            while (n-- > 0)
-            {
-                const T &ref = *(source + n);
-                new(target + n) T(ref);
-                (source + n)->~T();
-            }
-        }
-        else
-        {
-            for (size_t i = 0; i < n; ++i)
-            {
-                const T &ref = *(source + i);
-                new(target + i) T(ref);
-                (source + i)->~T();
-            }
-        }
-    }
-
-    static void copyelems(T *target, const T *source, size_t n)
-    {
-        while (n-- > 0)
-        {
-            const T &ref = *(source + n);
-            new(target + n) T(ref);
-        }
-    }
-};
-
 
 /**
  * The untyped vector base type.
@@ -139,57 +20,59 @@ protected:
     static const int MINALLOC = 4;
         /*!< the minimum number of slots to allocate */
 
-    void *xseq; /*!< the controlled sequence */
-    int xsize; /*!< the number of elements in the sequence */
+    void **xseq; /*!< the controlled sequence */
+    int xcount; /*!< the number of elements in the sequence */
     int xslots; /*!< the capacity of the array */
+    bool auto_free; /*!< whether to auto-delete the elements when removed */
 
     /**
      * Creates an empty vector.
      */
-    WvVectorBase();
+    WvVectorBase(bool _auto_free);
 
-    /**
-     * Computes the number of slots needed to grow on demand.
-     * @param newslots the minimum number of slots currently needed
-     * @return the recommended number of slots
-     */
+    /** Computes the number of slots needed to grow to at least minslots. */
     int growcapacity(int minslots);
     
-    /**
-     * Computes the number of slots needed to shrink on demand.
-     * @param newslots the maximum number of slots currently needed
-     * @return the recommended number of slots
-     */
+    /** Computes the number of slots needed to shrink down to maxslots. */
     int shrinkcapacity(int maxslots);
+    
+    /** A shorthand for memmove() with size adjustment. */
+    void moveelems(void *dst, void *src, int nelems)
+        { memmove(dst, src, nelems * sizeof(void *)); }
 
+    /** Removes the element at the specified slot. */
+    void remove(int slot);
+    
+    /** Inserts an element at the specified slot. */
+    void insert(int slot, void *elem);
+
+    /** Appends an element onto the tail of the vector. */
+    void append(void *elem);
+    
 public:
-    /**
-     * Returns the size of the vector.
-     * @return the number of elements actually stored
-     */
-    inline int size() const
-    {
-        return xsize;
-    }
+    /** Returns the number of elements actually stored in the vector. */
+    int count() const
+        { return xcount; }
 
-    /**
-     * Returns true if the vector is empty.
-     * @return true if the vector is empty
-     */
-    inline bool isempty() const
-    {
-        return xsize == 0;
-    }
+    /** Returns true if the vector is empty. */
+    bool isempty() const
+        { return xcount == 0; }
 
+    /** The number of elements that could be stored without resizing. */
+    int capacity() const
+        { return xslots; }
+    
     /**
-     * Returns the current capacity of the vector.
-     * @return the number of elements that could be stored without
-     *         resizing
+     * Adjusts the capacity of the vector.
+     *
+     * If the new capacity is greater than the old one, extends the array
+     * size without actually filling in any elements.
      */
-    inline int capacity() const
-    {
-        return xslots;
-    }
+    void setcapacity(int newslots);
+
+    /** Compacts the vector to minimize its footprint. */
+    void compact()
+        { setcapacity(count()); }
 };
 
 
@@ -197,242 +80,87 @@ public:
  * A dynamic array data structure with constant time lookup,
  * linear time insertion / removal, and expected logarithmic time
  * append.
- *
- * @param T the element type
- * @param BOps a structure defining block operations on elements
  */
-template<class T, class BOps>
+template<class T>
 class WvVector : public WvVectorBase
 {
-    typedef T& TRef;
-    typedef const T& ConstTRef;
-
-    void _setsize(int newsize);
-    void _setcapacity(int newsize);
-    
 public:
-    /**
-     * Creates an empty vector.
-     */
-    WvVector()
-    {
-    }
-    
-    /**
-     * Creates a vector of the specified size with default contents.
-     * @param size the number of slots
-     */
-    WvVector(int size)
-    {
-        setsize(size);
-    }
+    /** Creates an empty vector. */
+    WvVector(bool _auto_free) : WvVectorBase(_auto_free)
+        { }
 
-    /**
-     * Destroys the vector and all of its contents.
-     */
+    /** Destroys the vector and all of its contents. */
     ~WvVector()
-    {
-        setcapacity(0);
+        { zap(); setcapacity(0); }
+
+    /** Dereferences a particular slot of the vector. */
+    T *operator[] (int slot)
+        { return reinterpret_cast<T**>(xseq)[slot]; }
+
+    /** Removes all elements from the vector. */
+    void zap()
+    { 
+	if (auto_free)
+	{
+	    for (--xcount; xcount >= 0; xcount--)
+		delete ptr()[xcount];
+	}
+	xcount = 0;
     }
 
-    /**
-     * Returns a pointer to the beginning of the controlled sequence.
-     * @return the controlled sequence, may be NULL if size() == 0
-     */
-    inline const T *ptr() const
+    void remove(int slot, bool never_delete = false)
     {
-        return static_cast<const T*>(xseq);
-    }
-
-    /**
-     * Returns a pointer to the beginning of the controlled sequence.
-     * @return the controlled sequence, may be NULL if size() == 0
-     */
-    inline T *ptr()
-    {
-        return static_cast<T*>(xseq);
+	T *obj = (*this)[slot];
+	WvVectorBase::remove(slot);
+	if (auto_free && !never_delete)
+	    delete obj;
     }
     
-    /**
-     * Dereferences a particular slot of the vector.
-     * @param slot the slot
-     * @return the element reference
-     */
-    inline TRef operator[] (int slot)
-    {
-        return ptr()[slot];
-    }
+    /** Removes the last element */
+    void remove_last()
+        { if (xcount) { remove(xcount-1); } }
+	
+    T *last()
+        { return xcount ? (*this)[xcount-1] : NULL; }
     
-    /**
-     * Dereferences a particular slot of the vector.
-     * @param slot the slot
-     * @return the element reference
-     */
-    inline ConstTRef operator[] (int slot) const
-    {
-        return ptr()[slot];
-    }
+    void insert(int slot, T *elem)
+        { WvVectorBase::insert(slot, elem); }
 
-
-    /**
-     * Adjusts the size of the vector.
-     * <p>
-     * If the new size is greater than the old one, appends
-     * newly initialized elements until the desired size has been
-     * reached.  Otherwise destroys and removes old elements from
-     * the tail.
-     * </p>
-     * @param newsize the desired size of the vector
-     */
-    inline void setsize(int newsize)
+    void append(T *elem)
+        { WvVectorBase::append(elem); }
+    
+    // FIXME: I'd rather not give public access to this, since it's dangerous!
+    T **ptr() 
+        { return reinterpret_cast<T **>(xseq); }
+    
+    
+    /** A simple iterator that walks through all elements in the list. */
+    class Iter
     {
-        if (newsize == xsize)
-            return;
-        _setsize(newsize);
-    }
+	WvVector<T> *list;
+	int count;
+	
+    protected:
+	/** _list is allowed to be NULL, and this will still work. */
+	Iter(WvVector<T> *_list) : list(_list)
+	    { count = -1; }
 
-    /**
-     * Adjusts the capacity of the vector.
-     * <p>
-     * If the new capacity is greater than the old one, extends
-     * the controlled sequence but does not append any elements.
-     * Otherwise shrinks the controlled sequence and destroys
-     * initialized elements from the tail until the desired size
-     * has been reached.
-     * </p>
-     * @param slots the desired capacity of the vector
-     */
-    inline void setcapacity(int newslots)
-    {
-        if (newslots == xslots)
-            return;
-        _setcapacity(newslots);
-    }
-
-    /**
-     * Compacts the vector to minimize its footprint.
-     */
-    inline void compact()
-    {
-        setcapacity(size());
-    }
-
-    /**
-     * Removes all elements from the vector.
-     */
-    inline void zap()
-    {
-        setsize(0);
-    }
-
-    /**
-     * Removes the element at the specified slot.
-     * @param slot the slot
-     */
-    void remove(int slot)
-    {
-        xsize -= 1;
-        BOps::destroyelems(ptr() + slot, 1);
-        BOps::moveelems(ptr() + slot, ptr() + slot + 1,
-            xsize - slot);
-        setcapacity(shrinkcapacity(xsize));
-    }
-
-    /**
-     * Inserts an element at the specified slot.
-     * @param slot the slot
-     * @param elem the element
-     */
-    void insert(int slot, ConstTRef elem)
-    {
-        // FIXME: suboptimal, might perform two copies
-        setcapacity(growcapacity(xsize + 1));
-        BOps::moveelems(ptr() + slot + 1, ptr() + slot,
-            xsize - slot);
-        BOps::copyelems(ptr() + slot, & elem, 1);
-        xsize += 1;
-    }
-
-    /**
-     * Appends an element onto the tail of the vector.
-     * @param elem the element
-     */
-    void pushback(ConstTRef elem)
-    {
-        setcapacity(growcapacity(xsize + 1));
-        BOps::copyelems(ptr() + xsize, & elem, 1);
-        xsize += 1;
-    }
-
-    /**
-     * Prepends an element onto the head of the vector.
-     * @param elem the element
-     */
-    inline void pushfront(ConstTRef elem)
-    {
-        insert(0, elem);
-    }
-
-    /**
-     * Removes and returns the first element of the vector.
-     * @return the element
-     */
-    T popfront()
-    {
-        T value = ptr()[0];
-        remove(0);
-        return value;
-    }
-
-    /**
-     * Removes and returns the last element of the vector.
-     * @return the element
-     */
-    T popback()
-    {
-        T value = ptr()[xsize - 1];
-        setsize(xsize - 1);
-        return value;
-    }
+    public:
+	Iter(WvVector<T> &_list) : list(&_list)
+	    { count = -1; }
+	
+	void rewind()
+	    { count = -1; }
+	bool next()
+	    { count++; return cur(); }
+	bool cur()
+	    { return list && count >= 0 && count < list->count(); }
+	
+	T *ptr() const
+	    { return (*list)[count]; }
+	
+	WvIterStuff(T);
+    };
 };
-
-template<class T, class BOps>
-void WvVector<T, BOps>::_setsize(int newsize)
-{
-    if (newsize > xsize)
-    {
-        setcapacity(growcapacity(newsize));
-        BOps::initelems(ptr() + xsize, newsize - xsize);
-        xsize = newsize;
-    }
-    else
-    {
-        BOps::destroyelems(ptr() + newsize, xsize - newsize);
-        xsize = newsize;
-        setcapacity(shrinkcapacity(newsize));
-    }
-}
-
-
-template<class T, class BOps>
-void WvVector<T, BOps>::_setcapacity(int newslots)
-{
-    if (newslots < xsize)
-    {
-        BOps::destroyelems(ptr() + newslots, xsize - newslots);
-        xsize = newslots;
-    }
-    T *oldseq = ptr();
-    xslots = newslots;
-    if (newslots != 0)
-    {
-        xseq = malloc(sizeof(T) * newslots);
-        BOps::moveelems(ptr(), oldseq, xsize);
-    }
-    else
-        xseq = NULL;
-    free(oldseq);
-}
-
 
 #endif // __WVVECTOR_H

@@ -14,37 +14,33 @@ const WvString UniConfDaemon::ENTERING = "Entering";
 const WvString UniConfDaemon::LEAVING = "Leaving";
 // Daemon
 
-UniConfDaemon::UniConfDaemon(WvLog::LogLevel level) :
-    log("UniConfDaemon"),
-    mainconf(& confroot),
-    logcons(1, level)
+UniConfDaemon::UniConfDaemon(WvLog::LogLevel level)
+    : log("UniConfDaemon"), mainconf(confroot["/"]), logcons(1, level)
 {
     want_to_die = false;
     keymodified = false;
-    confroot.attach(& l);
 }
 
 
 UniConfDaemon::~UniConfDaemon()
 {
-    confroot.detach(& l);
+    // nothing special
 }
 
 
 UniConf UniConfDaemon::domount(const UniConfKey &mountpoint,
-    const UniConfLocation &location)
+			       WvStringParm moniker)
 {
     dolog(WvLog::Debug1, "domount", ENTERING);
-    UniConf mounted(mainconf[mountpoint]);
     dolog(WvLog::Debug3, "domount", WvString("Mounting "
-        "\"%s\" from \"%s\"\n", mountpoint, location));
-    UniConfMount mount = mounted.mount(location);
-    if (! mount.isnull())
-        return mounted;
+        "\"%s\" from \"%s\"\n", mountpoint, moniker));
+    UniConfGen *mount = mainconf[mountpoint].mount(moniker);
+    if (mount)
+        return confroot[mountpoint];
 
     dolog(WvLog::Error, "domount", WvString("Could not mount "
-        "\"%s\" from \"%s\"\n", mountpoint, location));
-    return UniConf(NULL);
+        "\"%s\" from \"%s\"\n", mountpoint, moniker));
+    return UniConf();
 }
 
 void UniConfDaemon::errorcheck(WvStream *s, WvString type)
@@ -582,7 +578,7 @@ void UniConfDaemon::run()
     WvStringParm myname("run");
 
     dolog(WvLog::Debug1, myname, ENTERING);
-    domount("/", WvString("ini://%s", DEFAULT_CONFIG_FILE));
+    domount("/", WvString("ini:%s", DEFAULT_CONFIG_FILE));
 
     // Make sure that everything was cleaned up nicely before.
     dolog(WvLog::Debug3,myname,"Housecleaning");

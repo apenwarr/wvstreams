@@ -17,6 +17,7 @@ WvHTTPStream::WvHTTPStream(const WvURL &_url)
 {
     state = Resolving;
     num_received = 0;
+    tcp = NULL;
     
     // we need this: if the URL tried to dns-resolve before, but failed,
     // this might make isok() true again if the name has turned up.
@@ -65,15 +66,15 @@ bool WvHTTPStream::pre_select(SelectInfo &si)
 	else if (url.resolve())
 	{
 	    state = Connecting;
-	    cloned = new WvTCPConn(url.getaddr());
+	    cloned = tcp = new WvTCPConn(url.getaddr());
 	}
 	return false;
 
     case Connecting:
-	cloned->select(0, false, true, false);
-	if (!static_cast<WvTCPConn*>(cloned)->isconnected())
+	tcp->select(0, false, true, false);
+	if (!tcp->isconnected())
 	    return false;
-	if (cloned->geterr())
+	if (tcp->geterr())
 	    return false;
 
 	// otherwise, we just finished connecting:  start transfer.
@@ -113,7 +114,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader1:
-	line = trim_string(cloned->getline(0));
+	line = trim_string(tcp->getline(0));
 	if (line) // got response code line
 	{
 	    if (strncmp(line, "HTTP/", 5))
@@ -135,7 +136,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader:
-	line = trim_string(cloned->getline(0));
+	line = trim_string(tcp->getline(0));
 	if (line)
 	{
 	    if (!line[0])
@@ -157,7 +158,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadData:
-	len = cloned->read(buf, count);
+	len = tcp->read(buf, count);
 	num_received += len;
 	return len;
 	

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
- 
-/** \file
+ * 
  * UniConfClientGen is a UniConfGen for retrieving data from the
  * UniConfDaemon.
  */
@@ -13,15 +11,47 @@
 #include "wvunixsocket.h"
 #include "wvaddr.h"
 #include "wvresolver.h"
+#include "wvistreamlist.h"
+
+#include "wvmoniker.h"
+
+static UniConfGen *unixcreator(WvStringParm s, IObject *, void *)
+{
+    return new UniConfClientGen(new WvUnixConn(s));
+}
+
+static UniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
+{
+    WvString s(_s);
+    char *cptr = s.edit();
+    
+    if (!strchr(cptr, ':')) // no default port
+	s.append(":%s", DEFAULT_UNICONF_DAEMON_TCP_PORT);
+    
+    return new UniConfClientGen(new WvTCPConn(s));
+}
+
+// if 'obj' is a WvStream, build the uniconf connection around that;
+// otherwise, create a new WvStream using 's' as the wvstream moniker.
+static UniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
+{
+    IWvStream *stream = NULL;
+    if (obj)
+	stream = mutate<IWvStream>(obj);
+    if (!stream)
+	stream = wvcreate<IWvStream>(s);
+    return new UniConfClientGen(stream);
+}
+
+static WvMoniker<UniConfGen> unixreg("unix", unixcreator);
+static WvMoniker<UniConfGen> tcpreg("tcp", tcpcreator);
+static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 
-/***** UniConfClientGen *****/
-
-UniConfClientGen::UniConfClientGen(const UniConfLocation &location,
-    WvStream *stream) :
-    xlocation(location), conn(NULL),
+UniConfClientGen::UniConfClientGen(IWvStream *stream)
+    : conn(NULL),
     log("UniConfClientGen"), waiting(13),
-    streamid("UniConfClient: %s", location),
+    streamid("UniConfClient"),
     inprogress(false), success(false)
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
@@ -31,11 +61,15 @@ UniConfClientGen::UniConfClientGen(const UniConfLocation &location,
     conn->select(15000);
     conn->setcallback(wvcallback(WvStreamCallback, *this,
         UniConfClientGen::execute), NULL);
+    
+    WvIStreamList::globallist.append(conn, false, streamid.edit());
 }
 
 
 UniConfClientGen::~UniConfClientGen()
 {
+    WvIStreamList::globallist.unlink(conn);
+    
     if (conn)
     {
         if (conn->isok())
@@ -45,32 +79,13 @@ UniConfClientGen::~UniConfClientGen()
 }
 
 
-UniConfLocation UniConfClientGen::location() const
-{
-    return xlocation;
-}
-
-
 bool UniConfClientGen::isok()
 {
     return (conn && conn->isok());
 }
 
 
-void UniConfClientGen::attach(WvStreamList *streamlist)
-{
-    streamlist->append(conn, false, streamid.edit());
-}
-
-
-void UniConfClientGen::detach(WvStreamList *streamlist)
-{
-    streamlist->unlink(conn);
-}
-
-
-bool UniConfClientGen::refresh(const UniConfKey &key,
-    UniConfDepth::Type depth)
+bool UniConfClientGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
     // TODO: no caching so nothing to be done here right now
     if (! isok())
@@ -366,52 +381,4 @@ bool UniConfClientGen::RemoteKeyIter::next()
 UniConfKey UniConfClientGen::RemoteKeyIter::key() const
 {
     return UniConfKey(*xit);
-}
-
-
-
-/***** UniConfClientGenFactory *****/
-
-UniConfGen *UniConfClientGenFactory::newgen(
-    const UniConfLocation &location)
-{
-    // TODO: move the slow parts of this code into UniConfClientGen so
-    //       that they can happen in the background
-
-    if (location.proto() == "unix")
-    {
-        WvUnixAddr addr(location.payload());
-        return new UniConfClientGen(location, new WvUnixConn(addr));
-    }
-    else
-    {
-        WvStringList hostport;
-        hostport.split(location.payload(), ":");
-        WvString hostname("localhost");
-        int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
-        WvStringList::Iter it(hostport);
-        it.rewind();
-        // if there is a hostname, use it (otherwise localhost)
-        if (it.next())
-        {
-            hostname = it();
-            // if there is a port, use it (otherwise default port)
-            if (it.next())
-                port = it().num();
-        }
-        const WvIPAddr *hostaddr;
-        WvResolver resolver;
-        // FIXME: timeout does not really belong here!
-        if (resolver.findaddr(500, hostname, & hostaddr) > 0)
-        {
-            WvIPPortAddr addr(*hostaddr, port);
-            return new UniConfClientGen(location, new WvTCPConn(addr));
-        }
-
-        // TODO: log an error message that we could not connect?
-        //       probably better if we created the generator and returned
-        //       immediately since we already have error notification
-        //       support there
-        return NULL;
-    }
 }

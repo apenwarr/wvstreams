@@ -60,7 +60,7 @@ static void wrn(int fd, int num)
 }
 
 
-static void wvcrash_real(int sig, int fd)
+void wvcrash_real(int sig, int fd)
 {
     static void *trace[64];
     
@@ -76,7 +76,7 @@ static void wvcrash_real(int sig, int fd)
     // Whatever... just send a different one :)
     if (sig == SIGSEGV)
 	sig = SIGBUS;
-    else
+    else if (sig != 0)
 	sig = SIGSEGV;
     
     signal(sig, SIG_DFL);

@@ -2,10 +2,10 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * WvStreamList holds a list of WvStream objects -- and its select() and
+ * WvIStreamList holds a list of IWvStream objects -- and its select() and
  * callback() functions know how to handle multiple simultaneous streams.
  */
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
@@ -16,40 +16,35 @@
 # define TRACE(x, y...)
 #endif
 
-WvStreamList::WvStreamList()
+WvIStreamList WvIStreamList::globallist;
+
+WvIStreamList::WvIStreamList()
 {
     auto_prune = true;
+    if (this == &globallist)
+	globalstream = this;
 }
 
 
-WvStreamList::~WvStreamList()
+WvIStreamList::~WvIStreamList()
 {
     // nothing to do
 }
 
 
-bool WvStreamList::isok() const
+bool WvIStreamList::isok() const
 {
     return true;  // "error" condition on a list is undefined
 }
 
 
-bool WvStreamList::pre_select(SelectInfo &si)
+bool WvIStreamList::pre_select(SelectInfo &si)
 {
     bool one_dead = false;
     SelectRequest oldwant;
     
     // usually because of WvTask, we might get here without having finished
     // the _last_ set of sure_thing streams...
-    // 
-    // FIXME: this isn't really a good fix.  It doesn't deal properly with
-    // the case where a continue_selectable callback is called by someone
-    // *other* than WvStreamList... eg. WvStreamClone calling its cloned
-    // callback().
-    // 
-    // FIXME: this hack makes it so calling select() on this object from
-    // its own callback always returns true.  This is why we can't apply
-    // this hack inside WvStreamClone.
     if (running_callback)
 	return true;
     
@@ -64,7 +59,7 @@ bool WvStreamList::pre_select(SelectInfo &si)
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
-	WvStream &s(*i);
+	IWvStream &s(*i);
 	
 	if (!s.isok())
 	{
@@ -89,7 +84,7 @@ bool WvStreamList::pre_select(SelectInfo &si)
 }
 
 
-bool WvStreamList::post_select(SelectInfo &si)
+bool WvIStreamList::post_select(SelectInfo &si)
 {
     bool one_dead = false;
     SelectRequest oldwant = si.wants;
@@ -97,7 +92,7 @@ bool WvStreamList::post_select(SelectInfo &si)
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
-	WvStream &s(*i);
+	IWvStream &s(*i);
 	if (s.isok())
 	{
 	    if (s.post_select(si))
@@ -113,7 +108,7 @@ bool WvStreamList::post_select(SelectInfo &si)
 
 
 // distribute the callback() request to all children that select 'true'
-void WvStreamList::execute()
+void WvIStreamList::execute()
 {
     static int level = 0;
     const char *id;
@@ -123,16 +118,16 @@ void WvStreamList::execute()
     
     TRACE("\n%*sList@%p: (%d sure) ", level, "", this, sure_thing.count());
     
-    WvStreamListBase::Iter i(sure_thing);
+    WvIStreamListBase::Iter i(sure_thing);
     for (i.rewind(); i.next(); )
     {
 #if STREAMTRACE
-	WvStreamListBase::Iter x(*this);
+	WvIStreamListBase::Iter x(*this);
 	if (!x.find(&i()))
 	    TRACE("Yikes! %p in sure_thing, but not in main list!\n",
 		  i.cur());
 #endif
-	WvStream &s(*i);
+	IWvStream &s(*i);
 	
 	id = i.link->id;
 	TRACE("[%p:%s]", s, id);

@@ -26,7 +26,7 @@ public:
     /**
      * Create a wrapper around the supplied WvStream.
      */
-    UniConfConn(WvStream *_s);
+    UniConfConn(IWvStream *_s);
     
     /**
      * Default destructor

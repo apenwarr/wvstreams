@@ -4,15 +4,24 @@
  * 
  * WvStream-based TCP connection class.
  */
-#include <netdb.h>
-#include "wvstreamlist.h"
 #include "wvtcp.h"
+#include "wvstreamlist.h"
+#include "wvmoniker.h"
+
+#include <netdb.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <errno.h>
+
+static IWvStream *creator(WvStringParm s, IObject *, void *)
+{
+    return new WvTCPConn(s);
+}
+
+static WvMoniker<IWvStream> reg("tcp", creator);
 
 
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)

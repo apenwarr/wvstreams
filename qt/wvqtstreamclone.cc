@@ -48,8 +48,8 @@ WvQtStreamClone::~WvQtStreamClone()
 void WvQtStreamClone::pre_poll()
 {
     // prepare lists of file descriptors
-    bool sure = _build_selectinfo(si, msec_timeout,
-        false, false, false, true);
+    bool sure = _build_selectinfo(si, msec_timeout, 
+				  false, false, false, true);
     if (sure)
     {
         pending_callback = true;
@@ -126,7 +126,7 @@ void WvQtStreamClone::pre_poll()
 void WvQtStreamClone::post_poll()
 {
     // cleanup and invoke callbacks
-    bool sure = _process_selectinfo(si);
+    bool sure = _process_selectinfo(si, true);
     if (sure || pending_callback)
     {
         pending_callback = false;

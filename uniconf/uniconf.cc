@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ * 
  * Defines a hierarchical registry abstraction.
  */
 #include "uniconf.h"
@@ -16,19 +14,19 @@
 
 bool UniConf::exists() const
 {
-    return xmanager->exists(xfullkey);
+    return xroot->_exists(xfullkey);
 }
 
 
 bool UniConf::haschildren() const
 {
-    return xmanager->haschildren(xfullkey);
+    return xroot->_haschildren(xfullkey);
 }
 
 
 WvString UniConf::get(WvStringParm defvalue) const
 {
-    WvString value = xmanager->get(xfullkey);
+    WvString value = xroot->_get(xfullkey);
     if (value.isnull())
         return defvalue;
     return value;
@@ -67,76 +65,67 @@ int UniConf::getint(int defvalue) const
 
 bool UniConf::set(WvStringParm value) const
 {
-    return xmanager->set(xfullkey, value);
+    return xroot->_set(xfullkey, value);
 }
 
 
 bool UniConf::setint(int value) const
 {
-    return xmanager->set(xfullkey, WvString(value));
+    return xroot->_set(xfullkey, WvString(value));
 }
 
 
 bool UniConf::zap() const
 {
-    return xmanager->zap(xfullkey);
+    return xroot->_zap(xfullkey);
 }
 
 
 bool UniConf::refresh(UniConfDepth::Type depth) const
 {
-    return xmanager->refresh(xfullkey, depth);
+    return xroot->_refresh(xfullkey, depth);
 }
 
 
 bool UniConf::commit(UniConfDepth::Type depth) const
 {
-    return xmanager->commit(xfullkey, depth);
+    return xroot->_commit(xfullkey, depth);
 }
 
 
-UniConfMount UniConf::mount(const UniConfLocation &location,
-    bool refresh) const
+UniConfGen *UniConf::mount(WvStringParm moniker, bool refresh) const
 {
-    UniConfGen *gen = xmanager->mount(xfullkey, location);
-    if (gen && refresh)
-        gen->refresh(UniConfKey::EMPTY, UniConfDepth::INFINITE);
-    return UniConfMount(*this, gen);
+    return xroot->_mount(xfullkey, moniker, refresh);
 }
 
 
-UniConfMount UniConf::mountgen(UniConfGen *gen, bool refresh) const
+UniConfGen *UniConf::mountgen(UniConfGen *gen, bool refresh) const
 {
-    gen = xmanager->mountgen(xfullkey, gen);
-    if (gen && refresh)
-        gen->refresh(UniConfKey::EMPTY, UniConfDepth::INFINITE);
-    return UniConfMount(*this, gen);
+    return xroot->_mountgen(xfullkey, gen, refresh);
+}
+
+
+void UniConf::unmount(bool commit) const
+{
+    return xroot->_unmount(xfullkey, commit);
 }
 
 
 bool UniConf::ismountpoint() const
 {
-    // FIXME: temporary
-    UniConfMount mount(whichmount());
-    return ! mount.isnull() &&
-        mount.mountpoint().fullkey() == fullkey();
+    UniConfKey mountpoint;
     
-#if 0
-    UniConf::MountIter it(*this);
-    it.rewind();
-    return it.next();
-#endif
+    UniConfGen *gen = whichmount(&mountpoint);
+    if (gen && mountpoint == fullkey())
+	return true;
+    else
+	return false;
 }
 
 
-UniConfMount UniConf::whichmount() const
+UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 {
-    UniConfKey mountpoint;
-    UniConfGen *provider = xmanager->whichmount(xfullkey,
-        & mountpoint);
-    if (provider)
-        return UniConfMount(root()[mountpoint], provider);
-    return UniConfMount();
+    return xroot->_whichmount(xfullkey, mountpoint);
 }
 
 
@@ -155,9 +144,9 @@ void UniConf::dump(WvStream &stream, bool everything) const
 
 /***** UniConf::Iter *****/
 
-UniConf::Iter::Iter(const UniConf &root) :
-    KeyIterBase(root),
-    it(*root.manager(), root.fullkey())
+UniConf::Iter::Iter(const UniConf &root) 
+    : KeyIterBase(root),
+    it(*root.rootobj(), root.fullkey())
 {
 }
 
@@ -351,9 +340,8 @@ bool UniConf::XIter::next()
 /***** UniConf::SortedKeyIterBase *****/
 
 UniConf::SortedKeyIterBase::SortedKeyIterBase(const UniConf &root,
-    UniConf::SortedKeyIterBase::Comparator comparator) :
-    KeyIterBase(root),
-    xcomparator(comparator)
+    UniConf::SortedKeyIterBase::Comparator comparator) 
+    : KeyIterBase(root), xcomparator(comparator), xkeys(true)
 {
 }
 
@@ -365,7 +353,7 @@ UniConf::SortedKeyIterBase::~SortedKeyIterBase()
 
 
 int UniConf::SortedKeyIterBase::defcomparator(const UniConf &a,
-    const UniConf &b)
+					      const UniConf &b)
 {
     return a.fullkey().compareto(b.fullkey());
 }
@@ -375,7 +363,7 @@ UniConf::SortedKeyIterBase::Comparator
     UniConf::SortedKeyIterBase::innercomparator = NULL;
 
 int UniConf::SortedKeyIterBase::wrapcomparator(const UniConf **a,
-    const UniConf **b)
+					       const UniConf **b)
 {
     return innercomparator(**a, **b);
 }
@@ -383,9 +371,7 @@ int UniConf::SortedKeyIterBase::wrapcomparator(const UniConf **a,
 
 void UniConf::SortedKeyIterBase::_purge()
 {
-    count = xkeys.size();
-    for (int i = 0; i < count; ++i)
-        delete xkeys[i];
+    count = xkeys.count();
     xkeys.zap();
 }
 
@@ -393,7 +379,7 @@ void UniConf::SortedKeyIterBase::_purge()
 void UniConf::SortedKeyIterBase::_rewind()
 {
     index = 0;
-    count = xkeys.size();
+    count = xkeys.count();
     
     // This code is NOT reentrant because qsort makes it too hard
     innercomparator = xcomparator;
@@ -409,24 +395,4 @@ bool UniConf::SortedKeyIterBase::next()
     xcurrent = *xkeys[index];
     index += 1;
     return true;
-}
-
-
-
-/***** UniConfMount *****/
-
-bool UniConfMount::isok() const
-{
-    return xgen && xgen->isok();
-}
-
-
-void UniConfMount::unmount(bool commit)
-{
-    if (! xgen)
-        return;
-    if (commit)
-        xgen->commit(UniConfKey::EMPTY, UniConfDepth::INFINITE);
-    xmountpoint.manager()->unmount(xmountpoint.fullkey(), xgen);
-    xgen = NULL;
 }
