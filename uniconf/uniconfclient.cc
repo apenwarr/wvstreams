@@ -96,7 +96,6 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
 {
     // Create the node which we're actually going to return...
     UniConf *toreturn = UniConfGen::make_tree(parent, key);
-    toreturn->waiting = true;
     return toreturn;
 }
 
@@ -143,6 +142,10 @@ void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
 void UniConfClient::update(UniConf *&h)
 {
     WvString lookfor(h->full_key(top));
+
+    if (conn->select(0,true,false,false))
+        execute();
+
     waitingdata *data = dict[lookfor];
 
     if (!data && (h->waiting || (h->obsolete && !h->dirty)))

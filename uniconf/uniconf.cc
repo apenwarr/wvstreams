@@ -118,19 +118,6 @@ bool UniConf::check_children(bool recursive)
     {
         this->generator->enumerate_subtrees(this, recursive);
     }
-/*    else
-    {
-        UniConf *par = this->parent;
-        while (par)
-        {
-            if (par->generator)
-            {
-                par->generator->enumerate_subtrees(this, recursive);
-                break;
-            }
-            par = par->parent;
-        }
-    }*/
     return (children != NULL);
 }
 

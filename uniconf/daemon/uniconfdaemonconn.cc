@@ -25,6 +25,81 @@ UniConfDaemonConn::~UniConfDaemonConn()
     }
 }
 
+void UniConfDaemonConn::doget(WvString key)
+{
+    dook("get", key);
+    WvString response;
+    if (!!source->mainconf.get(key))
+        response = WvString("RETN %s %s\n", wvtcl_escape(key),
+                wvtcl_escape(source->mainconf.get(key)));
+    else
+        response = WvString("RETN %s \\0\n", wvtcl_escape(key));
+
+    print(response);
+    source->events.add(wvcallback(UniConfCallback,
+                *source, UniConfDaemon::keychanged), this, key);
+    keys.append(new WvString(key), true);
+}
+
+void UniConfDaemonConn::dosubtree(WvString key)
+{
+    UniConf *nerf = &source->mainconf[key];
+    dook("subt", key);
+    if (nerf)
+    {
+        WvString send("SUBT %s ", wvtcl_escape(key));
+        UniConf::Iter i(*nerf);
+        for (i.rewind(); i.next();)
+        {
+            send.append("{%s %s} ", wvtcl_escape(i->name),
+                    wvtcl_escape(*i));
+
+            // now add a callback in case this value changes.
+            source->events.add(wvcallback(UniConfCallback,
+                *source, UniConfDaemon::keychanged), this, key);
+       }
+        send.append("\n");
+        print(send);
+    }
+    else
+    {
+        print(WvString("SUBT %s\n", key));
+    }
+}
+
+void UniConfDaemonConn::dorecursivesubtree(WvString key)
+{
+    dook("rsub", key);
+    UniConf *nerf = &source->mainconf[key];
+    if (nerf)
+    {
+        WvString send("SUBT %s ", wvtcl_escape(key));
+        UniConf::RecursiveIter i(*nerf);
+        for (i.rewind(); i.next();)
+        {
+            send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)),
+                    wvtcl_escape(*i));
+
+            // now add a callback in case this value changes.
+            source->events.add(wvcallback(UniConfCallback,
+                *source, UniConfDaemon::keychanged), this, key);
+        }
+        send.append("\n");
+        print(send);
+    }
+    else
+    {
+        print(WvString("SUBT %s\n", key));
+    }
+}
+
+void UniConfDaemonConn::doset(WvString key, WvConstStringBuffer &fromline)
+{
+    dook("set", key);
+    WvString newvalue = wvtcl_getword(fromline);
+    source->mainconf[key] = wvtcl_unescape(newvalue);
+    source->keymodified = true;
+}
 
 void UniConfDaemonConn::execute()
 {
@@ -49,7 +124,7 @@ void UniConfDaemonConn::execute()
 	    }
             if (cmd == "quit")
             {
-	        print("OK quit <null>\n");
+                dook(cmd, "<null>");
                 close();
                 return;
             }
@@ -59,72 +134,19 @@ void UniConfDaemonConn::execute()
 
             if (cmd == "get") // return the specified value
             {
-                print("OK %s %s\n", cmd, key);
-                WvString response;
-                if (!!source->mainconf.get(key))
-                    response = WvString("RETN %s %s\n", wvtcl_escape(key),
-                        wvtcl_escape(source->mainconf.get(key)));
-                else
-                    response = WvString("RETN %s \\0\n", wvtcl_escape(key));
-
-                print(response);
-                source->events.add(wvcallback(UniConfCallback,
-                    *source, UniConfDaemon::keychanged), this, key);
-                keys.append(new WvString(key), true);
-//                wvcon->print(WvString("RETURNING %s.\n", response));
+                doget(key);
             }
             else if (cmd == "subt") // return the subtree(s) of this key
             {
-                UniConf *nerf = &source->mainconf[key];
-                print("OK %s %s\n", cmd, key);
-                if (nerf)
-                {
-                    WvString send("SUBT %s ", wvtcl_escape(key));
-                    UniConf::Iter i(*nerf);
-                    for (i.rewind(); i.next();)
-                    {
-                        send.append("{%s %s} ", wvtcl_escape(i->name),
-                            wvtcl_escape(*i));
-                    }
-                    send.append("\n");
-                    print(send);
-//                    wvcon->print(WvString("RETURNING:  %s.\n", send));
-                }
-                else
-                {
-                    print(WvString("SUBT %s\n", key));
-//                    wvcon->print(WvString("RETURNING:  SUBT %s\n", key));
-                }
-                    
+                dosubtree(key);
             }
             else if (cmd == "rsub")
             {
-                UniConf *nerf = &source->mainconf[key];
-                print("OK %s %s\n", cmd, key);
-                if (nerf)
-                {
-                    WvString send("SUBT %s ", wvtcl_escape(key));
-                    UniConf::RecursiveIter i(*nerf);
-                    for (i.rewind(); i.next();)
-                    {
-                        send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)),
-                                wvtcl_escape(*i));
-                    }
-                    send.append("\n");
-                    print(send);
-                }
-                else
-                {
-                    print(WvString("SUBT %s\n", key));
-                }
+                dorecursivesubtree(key);
             }
             else if (cmd == "set") // set the specified value
             {
-                print("OK %s %s\n", cmd, key);
-                WvString newvalue = wvtcl_getword(fromline);
-                source->mainconf[key] = wvtcl_unescape(newvalue);
-                source->keymodified = true;
-//                wvcon->print(WvString("SET %s TO %s.\n", key, newvalue));
+                doset(key, fromline);
             }
         }
     }

@@ -14,6 +14,11 @@ public:
     virtual ~UniConfDaemonConn();
     virtual void execute();
 protected:
+    void doget(WvString key);
+    void dosubtree(WvString key);
+    void dorecursivesubtree(WvString key);
+    void doset(WvString key, WvConstStringBuffer &fromline);
+    void dook(WvString cmd, WvString key) { print("OK %s %s\n", cmd, key); }
     WvLog log;
     UniConfDaemon *source;
     WvStringList keys;
