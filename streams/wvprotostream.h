@@ -33,7 +33,7 @@ public:
     WvString token_remaining();
     virtual TokenList *tokenize();
     size_t list_to_array(TokenList *tl, Token **array);
-    Token *tokline();
+    Token *tokline(const char *line);
     
     // Convert token strings to enum values
     int tokanal(const Token &t, char **lookup,

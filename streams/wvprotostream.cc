@@ -130,16 +130,21 @@ size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
 /* Retrieve an input line and parse its first token.
  * This is the usual high-level interface to the input tokenizer. Remember
  * to free the array afterwards!
+ * Ths input line is specifically allowed to be a NULL pointer.  In that case,
+ * the returned token will be NULL also.
  */
-WvProtoStream::Token *WvProtoStream::tokline()
+WvProtoStream::Token *WvProtoStream::tokline(const char *line)
 { 
-    char *line = getline(0);
-    if (!line) return 0;
+    if (!line) return NULL;
+    
+    char *newline = strdup(line);
     
     tokbuf.zap();
     tokbuf.put(line, strlen(line));
 
-    (*logp)("Read: %s\n", trim_string(line));
+    (*logp)("Read: %s\n", trim_string(newline));
+    
+    free(newline);
     
     return next_token();
 }
@@ -182,7 +187,7 @@ void WvProtoStream::switch_state(int newstate)
  */
 void WvProtoStream::execute()
 {
-    Token *t1 = tokline();
+    Token *t1 = tokline(getline(0));
     
     if (t1)
     {
