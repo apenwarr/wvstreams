@@ -355,6 +355,10 @@ public:
         MyPair* p = find_helper(key);
         return p ? &p->data : (TData*)NULL;
     }
+    MyPair *find_pair(const TKey &key) const
+    {
+        return find_helper(key);
+    }
     TData &operator[](const TKey &key) const
     {
         MyPair* p = find_helper(key);
