@@ -327,12 +327,14 @@ void WvX509Mgr::create_selfsigned()
 	     "critical,digitalSignature,keyEncipherment,keyCertSign");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
-
+    
+#if 0 // this causes netscape to have a hairball
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
 			     "critical, CA:FALSE");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
-
+#endif
+    
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
 	     "TLS Web Server Authentication,TLS Web Client Authentication");
     X509_add_ext(cert, ex, -1);
