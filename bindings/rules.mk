@@ -1,3 +1,7 @@
+bindings/tcl: bindings/tcl/uniconf.so
+bindings/python: bindings/python/_uniconf.so
+bindings/php: bindings/php/php_uniconf.so
+
 GARBAGE+=bindings/tcl/uniconf.cc bindings/python/uniconf.cc bindings/php/uniconf.cc
 
 SWIGOPTS = -c++ -Iinclude
