@@ -52,46 +52,6 @@ private:
 
     virtual void seterr(int _errnum);
 
-public:
-    // cflags: flags that affect interpretation of the regex
-    enum {
-    	// Use (obsolete) basic regex syntax (like grep).  See regex(7).
-    	BASIC = 0,
-    	// Use extended regex syntax (like egrep).  See regex(7).
-    	EXTENDED = REG_EXTENDED,
-    	// Case insensitive
-    	ICASE = REG_ICASE,
-    	// Do not collect match start and end or registers; faster
-    	NOSUB = REG_NOSUB,
-    	// Match-any-character operators don't match a newline.  See regex(3)
-    	NEWLINE = REG_NEWLINE
-    };
-    static const int default_cflags;
-
-    // eflags: flags that affect matching of regex
-    enum
-    {
-    	// Matching begining of line always fails (unless NEWLINE cflag is set)
-    	NOTBOL = REG_NOTBOL,
-    	// Matching end of line always fails (unless NEWLINE cflag is set)
-    	NOTEOL = REG_NOTEOL
-    };
-    static const int default_eflags;
-
-    // Internal use only
-    static WvString __wvre_null_reg;
-
-    // Construct an empty regex object.  Matches will always fail until set()
-    // is called with a valid regex.
-    WvRegex() : have_preg(false) {}
-    // Construct a regex object, compiling the given regex
-    WvRegex(WvStringParm regex, int cflags = default_cflags) : have_preg(false)
-    	{ set(regex, cflags); }
-    ~WvRegex();
-    
-    // Replace the current regex to match with a new one.
-    bool set(WvStringParm regex, int cflags = default_cflags);
-    
     // The match functions match a given string against the compiled regex.
     //
     // All match functions return return true if a match was found and false
@@ -118,7 +78,7 @@ public:
     // re.match("a string", WvRegex::NOTEOL,
     //      match_start, match_end, reg1, reg2, reg3);
     //
-    bool match(WvStringParm string, int eflags,
+    bool _match(WvStringParm string, int eflags,
     	    int &match_start, int &match_end, WVREGEX_REGS_DECL) const
     {
     	regmatch_t pmatch[21];
@@ -166,22 +126,71 @@ public:
      	     	
      	return true;
     }
+
+public:
+    // cflags: flags that affect interpretation of the regex
+    enum {
+    	// Use (obsolete) basic regex syntax (like grep).  See regex(7).
+    	BASIC = 0,
+    	// Use extended regex syntax (like egrep).  See regex(7).
+    	EXTENDED = REG_EXTENDED,
+    	// Case insensitive
+    	ICASE = REG_ICASE,
+    	// Do not collect match start and end or registers; faster
+    	NOSUB = REG_NOSUB,
+    	// Match-any-character operators don't match a newline.  See regex(3)
+    	NEWLINE = REG_NEWLINE
+    };
+    static const int default_cflags;
+
+    // eflags: flags that affect matching of regex
+    enum
+    {
+    	// Matching begining of line always fails (unless NEWLINE cflag is set)
+    	NOTBOL = REG_NOTBOL,
+    	// Matching end of line always fails (unless NEWLINE cflag is set)
+    	NOTEOL = REG_NOTEOL
+    };
+    static const int default_eflags;
+
+    // Internal use only
+    static WvString __wvre_null_reg;
+
+    // Construct an empty regex object.  Matches will always fail until set()
+    // is called with a valid regex.
+    WvRegex() : have_preg(false) {}
+    // Construct a regex object, compiling the given regex
+    WvRegex(WvStringParm regex, int cflags = default_cflags) : have_preg(false)
+    	{ set(regex, cflags); }
+    ~WvRegex();
+    
+    // Replace the current regex to match with a new one.
+    bool set(WvStringParm regex, int cflags = default_cflags);
+    
     bool match(WvStringParm string, WVREGEX_REGS_DECL) const
     {
     	int match_start, match_end;
-    	return match(string, default_eflags,
+    	return _match(string, default_eflags,
     	    	match_start, match_end, WVREGEX_REGS_CALL); 
     }
     bool match(WvStringParm string, int eflags, WVREGEX_REGS_DECL) const
     {
     	int match_start, match_end;
-    	return match(string, eflags,
+    	return _match(string, eflags,
     	    	match_start, match_end, WVREGEX_REGS_CALL); 
     }
-    bool match(WvStringParm string, int &match_start, int &match_end,
+    bool continuable_match(WvStringParm string,
+            int &match_start, int &match_end,
     	    WVREGEX_REGS_DECL) const
     {
-    	return match(string, default_eflags,
+    	return _match(string, default_eflags,
+    	    	match_start, match_end, WVREGEX_REGS_CALL); 
+    }
+    bool continuable_match(WvStringParm string, int eflags,
+            int &match_start, int &match_end,
+    	    WVREGEX_REGS_DECL) const
+    {
+    	return _match(string, eflags,
     	    	match_start, match_end, WVREGEX_REGS_CALL); 
     }
 };
