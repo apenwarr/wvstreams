@@ -280,7 +280,7 @@ void WvConf::flush()
     if (!dirty || error)
 	return;
     
-    WvFile fp(filename, O_WRONLY, create_mode);
+    WvFile fp(filename, O_WRONLY|O_CREAT|O_TRUNC, create_mode);
 
     if (!fp.isok())
     {

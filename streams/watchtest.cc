@@ -9,7 +9,7 @@ int main()
 {
     WvLog log("watchtest", WvLog::Info);
     const WvString fname("/tmp/test.txt");
-    WvFileWatcher f(fname, O_RDONLY | O_CREAT);
+    WvFileWatcher f(fname, O_RDONLY | O_CREAT | O_TRUNC);
     char buf[1024];
     size_t len;
     
