@@ -20,7 +20,8 @@ static char *argv[] =
     "ini:" UNICONFD_INI,
     NULL
 };
-/*
+
+#if 0
 WVTEST_MAIN("uniconfd")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -68,4 +69,6 @@ WVTEST_MAIN("uniconfd")
     waitpid(uniconfd_pid, NULL, 0);
 
     WVPASS(!cfg["/key"].exists());
-}*/
+}
+#endif
+
