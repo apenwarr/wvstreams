@@ -8,12 +8,6 @@
 #include <assert.h>
 #include <openssl/rand.h>
 
-/* As of openssl 0.9.7 the des_* functions have been renamed to DES_* .
-   Don't as me why, but they have, so eventually, when resonance is upgraded
-   to sarge, about the GNU Hurd 1.0 is released, these functions should be
-   changed.
-*/
-
 /***** WvTripleDESEncoder ****/
 
 WvTripleDESEncoder::WvTripleDESEncoder(Mode _mode, const void *_key1, 
@@ -45,13 +39,13 @@ void WvTripleDESEncoder::setkey(const void *_key1, const void *_key2,
 				const void *_key3)
 {
     memcpy(key, _key1, DES_KEY_SZ);
-    des_set_key(&key, deskey1);
+    DES_set_key(&key, &deskey1);
 
     memcpy(key, _key2, DES_KEY_SZ);
-    des_set_key(&key, deskey2);
+    DES_set_key(&key, &deskey2);
 
     memcpy(key, _key3, DES_KEY_SZ);
-    des_set_key(&key, deskey3);
+    DES_set_key(&key, &deskey3);
 
     memset(ivec, 0, sizeof(ivec));
     ivecoff = 0;
@@ -108,10 +102,16 @@ bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 	// ECB works 64bits at a time
 	while (len >= 8)
 	{
-	    
-	    des_ecb3_encrypt((const_des_cblock*)&data, (des_cblock*)&crypt, 
-			     deskey1, deskey2, deskey3,
+#if OPENSSL_VERSION_NUMBER >= 0x0090705FL
+	    DES_ecb3_encrypt(data, crypt,
+			     &deskey1, &deskey2, &deskey3,
 			     mode == ECBEncrypt ? DES_ENCRYPT : DES_DECRYPT);
+#else
+	    DES_ecb3_encrypt(reinterpret_cast<const_DES_cblock*>(&data),
+			     reinterpret_cast<DES_cblock*>(&crypt),
+			     &deskey1, &deskey2, &deskey3,
+			     mode == ECBEncrypt ? DES_ENCRYPT : DES_DECRYPT);
+#endif
 	    len -= 8;
 	    data += 8;
 	    crypt += 8;
@@ -121,16 +121,16 @@ bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
     case CFBEncrypt:
     case CFBDecrypt:
 	// CFB simulates a stream
-	des_ede3_cfb64_encrypt(data, crypt, len, deskey1, deskey2, deskey3,
+	DES_ede3_cfb64_encrypt(data, crypt, len, &deskey1, &deskey2, &deskey3,
 			       &ivec, &ivecoff,
 			       mode == CFBEncrypt ? DES_ENCRYPT : DES_DECRYPT);
         break;
     case CBCEncrypt:
-	des_ede3_cbc_encrypt(data, crypt, len, deskey1, deskey2, deskey3,
+	DES_ede3_cbc_encrypt(data, crypt, len, &deskey1, &deskey2, &deskey3,
 			     &ivec, DES_ENCRYPT);
 	break;
     case CBCDecrypt:
-	des_ede3_cbc_encrypt(data, crypt, len, deskey1, deskey2, deskey3,
+	DES_ede3_cbc_encrypt(data, crypt, len, &deskey1, &deskey2, &deskey3,
 			     &ivec, DES_DECRYPT);
 	break;
     }

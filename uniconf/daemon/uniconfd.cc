@@ -1,3 +1,15 @@
+#include "wvautoconf.h"
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
+
+#ifndef _WIN32
+#include <signal.h>
+#endif
+
 #include "wvlogrcv.h"
 #include "uniconfdaemon.h"
 #include "uniclientconn.h"
@@ -8,11 +20,6 @@
 #include "wvstrutils.h"
 #include "wvfileutils.h"
 #include "wvcrash.h"
-
-#ifndef _WIN32
-#include <getopt.h>
-#include <signal.h>
-#endif
 
 #ifdef WITH_SLP
 #include "slp.h"
@@ -51,7 +58,7 @@ static void usage(WvStringParm argv0)
         "     -dd  Print lots of debug messages\n"
 	"     -V   Print version number and exit\n"
 	"     -a   Require authentication on incoming connections\n"
-	"     -A   Require authentication and check perms against moniker\n"
+	"     -A   Check all accesses against perms moniker\n"
 	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
 	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
 	"     -u   Listen on given Unix socket filename (default=disabled)\n"
@@ -157,7 +164,7 @@ int main(int argc, char **argv)
 	    break;
 	    
 	case 'A':
-	    needauth = true;
+	    // needauth = true; // sometimes it makes sense to skip auth...
 	    permmon = optarg;
 	    break;
 	    

@@ -69,6 +69,7 @@ WvCont::~WvCont()
     if (data->links == 1) // I'm the last link, and it's not currently running
     {
 	data->finishing = true;
+	data->p1 = NULL; // don't re-pass invalid data
 	while (data->task && data->task->isrunning())
 	    call();
     }
@@ -117,7 +118,10 @@ void *WvCont::_call(Data *data)
 	{
 	    data->taskman->run(*data->task);
 	    if (data->links == 1)
+	    {
 		data->finishing = true; // make WvCont::isok() false
+		data->p1 = NULL; // don't re-pass invalid data
+	    }
 	} while (data->finishing && data->task && data->task->isrunning());
 	assert(data->links);
     } while (taskdepth > data->mydepth);

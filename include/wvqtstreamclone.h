@@ -53,7 +53,7 @@ public:
      * Timeout sets the time between polls with select().
      * A value less than zero is regarded as an infinite timeout.
      */
-    WvQtStreamClone(WvStream* _cloned = NULL, int msec_timeout = -1);
+    WvQtStreamClone(IWvStream *_cloned = NULL, int msec_timeout = -1);
     virtual ~WvQtStreamClone();
 
     // Call this to stop managing this stream via the Qt event loop.

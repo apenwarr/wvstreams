@@ -1,6 +1,5 @@
 #include <fcntl.h>
 #include <unistd.h>
-#include <iostream>
 #include <string.h>
 
 #include "wvtest.h"

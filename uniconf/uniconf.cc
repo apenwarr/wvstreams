@@ -95,18 +95,10 @@ void UniConf::setmeint(int value) const
 }
 
 
-void UniConf::move(const UniConf &dst)
+void UniConf::move(const UniConf &dst) const
 {
     dst.remove();
-    
-    // do the main key first
-    dst.setme(getme());
-
-    // now all the children
-    RecursiveIter i(*this);
-    for (i.rewind(); i.next(); )
-	dst[i->fullkey(*this)].setme(i->getme());
-    
+    copy(dst, true); 
     remove();
 }
 

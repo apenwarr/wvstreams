@@ -1,6 +1,5 @@
 
 #include <time.h>
-#include <iostream.h>
 
 #include "wvtest.h"
 #include "wvdailyevent.h"

@@ -93,6 +93,7 @@ WvString UniSecureGen::get(const UniConfKey &key)
         WvString val = UniFilterGen::get(key);
         return val;
     }
+
     return WvString::null;
 }
 
@@ -120,6 +121,35 @@ bool UniSecureGen::haschildren(const UniConfKey &key)
 }
 
 
+class _UniSecureIter : public UniConfGen::Iter
+{
+    UniFilterGen::Iter *it;
+    UniSecureGen *gen;
+
+public:
+    _UniSecureIter(UniFilterGen::Iter *_it, UniSecureGen *_gen) :
+        it(_it),
+        gen(_gen)
+        { }
+    virtual ~_UniSecureIter()
+        { delete it; }
+
+    virtual void rewind() 
+        { it->rewind(); }
+
+    virtual bool next()
+        { return it->next(); }
+
+    virtual UniConfKey key() const 
+        { return it->key(); } // if we've come this far, this is ok
+
+    virtual WvString value() const
+        {
+            return gen->get(it->key());
+        }               
+};
+
+
 UniConfGen::Iter *UniSecureGen::iterator(const UniConfKey &key)
 {
     // we don't check the permissions on keys returned by the iterator, but
@@ -127,7 +157,8 @@ UniConfGen::Iter *UniSecureGen::iterator(const UniConfKey &key)
     // permissions on the parent key, we know we're allowed to at least read
     // the *names* of all child keys (even if the value itself is unreadable)
     if (findperm(key, UniPermGen::EXEC))
-        return UniFilterGen::iterator(key);
+        return new _UniSecureIter(UniFilterGen::iterator(key), this); 
+
     return NULL;
 }
 
@@ -143,6 +174,7 @@ UniConfGen::Iter *UniSecureGen::recursiveiterator(const UniConfKey &key)
     // iterator, so it'll be fine.)
     if (findperm(key, UniPermGen::EXEC))
 	return UniConfGen::recursiveiterator(key);
+
     return NULL;
 }
 

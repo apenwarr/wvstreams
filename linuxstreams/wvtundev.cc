@@ -10,7 +10,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h> 
 #include "if_tun.h"
-#include <linux/if.h>
 #include <string.h> 
 
 #include "wvlog.h"
