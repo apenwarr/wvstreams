@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * A top-level data encoder class.
+ * A top-level data encoder class and a few useful encoders.
  */
 #ifndef __WVENCODER_H
 #define __WVENCODER_H
@@ -46,7 +46,23 @@
  * <li>Reset support: the encoder may be reset to its initial
  *     state and thereby recycled at minimum cost</li>
  * </ul>
- * </p>
+ * </p><p>
+ *
+ * Helper functions are provided for encoding data from plain
+ * memory buffers and from strings.  Some have no encode(...)
+ * equivalent because they cannot incrementally encode from
+ * the input, hence they always use the flush option.
+ *
+ * The 'mem' suffix has been tacked on to these functions to
+ * resolve ambiguities dealing with 'char *' that should be
+ * promoted to WvString.  For instance, consider the signatures
+ * of strflushmem(const void*, size_t) and strflushstr(WvStringParm,
+ * bool).
+ *
+ * Another reason for these suffixes is to simplify overloading
+ * the basic methods in subclasses since C++ would require the
+ * subclass to redeclare all of the other signatures for
+ * an overloaded method.
  */
 class WvEncoder
 {
@@ -185,12 +201,6 @@ public:
      */
     bool reset();
 
-    /*
-     * Helper functions for encoding strings.
-     * Some variants have no encode(...) equivalent because they must
-     * always flush.
-     */
-     
     /**
      * Flushes data through the encoder from a string to a buffer.
      *
@@ -199,7 +209,7 @@ public:
      * @param finish if true, calls finish() on success
      * @return true on success
      */
-    bool flush(WvStringParm instr, WvBuffer &outbuf,
+    bool flushstrbuf(WvStringParm instr, WvBuffer &outbuf,
         bool finish = false);
         
     /**
@@ -212,7 +222,7 @@ public:
      * @param finish if true, calls finish() on success
      * @return true on success
      */
-    bool flush(WvStringParm instr, WvString &outstr,
+    bool flushstrstr(WvStringParm instr, WvString &outstr,
         bool finish = false);
 
     /**
@@ -226,7 +236,7 @@ public:
      * @param finish if true, calls finish() on success
      * @return true on success
      */   
-    bool encode(WvBuffer &inbuf, WvString &outstr,
+    bool encodebufstr(WvBuffer &inbuf, WvString &outstr,
         bool flush = false, bool finish = false);
 
     /**
@@ -239,9 +249,9 @@ public:
      * @param finish if true, calls finish() on success
      * @return true on success
      */   
-    inline bool flush(WvBuffer &inbuf, WvString &outstr,
+    inline bool flushbufstr(WvBuffer &inbuf, WvString &outstr,
         bool finish = false)
-        { return encode(inbuf, outstr, true, finish); }
+        { return encodebufstr(inbuf, outstr, true, finish); }
     
     /**
      * Flushes data through the encoder from a string to a string.
@@ -250,7 +260,7 @@ public:
      * @param finish if true, calls finish() on success
      * @return the resulting encoded string, does not signal errors
      */   
-    WvString strflush(WvStringParm instr, bool finish = false);
+    WvString strflushstr(WvStringParm instr, bool finish = false);
     
     /**
      * Flushes data through the encoder from a buffer to a string.
@@ -259,20 +269,8 @@ public:
      * @param finish if true, calls finish() on success
      * @return the resulting encoded string, does not signal errors
      */   
-    WvString strflush(WvBuffer &inbuf, bool finish = false);
+    WvString strflushbuf(WvBuffer &inbuf, bool finish = false);
 
-    /*
-     * Helper functions for encoding data from plain memory buffers.
-     * Some variants have no encode(...) equivalent because they must
-     * always flush.
-     *
-     * The 'mem' suffix has been tacked on to these functions to
-     * resolve ambiguities dealing with 'char *' that should be
-     * promoted to WvString.  For instance, consider the signatures
-     * of strflushmem(const void*, size_t) and strflush(WvStringParm,
-     * bool).
-     */
-     
     /**
      * Flushes data through the encoder from memory to a buffer.
      *
@@ -526,8 +524,8 @@ protected:
 
 
 /**
- * A very efficient passthrough encoder that just sends its input
- * to its output without actually copying any data.
+ * A very efficient passthrough encoder that just merges the
+ * input buffer into the output buffer.
  * Counts the number of bytes it has processed.
  */
 class WvPassthroughEncoder : public WvEncoder

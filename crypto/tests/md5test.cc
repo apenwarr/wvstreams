@@ -24,7 +24,7 @@ int main()
             md5.encode(filein, md5buf);
         }
         md5.finish(md5buf);
-        WvString md5str = WvHexEncoder().strflush(md5buf, true);
+        WvString md5str = WvHexEncoder().strflushbuf(md5buf, true);
 	
         log("%s -> %s\n", request, md5str);
 

@@ -8,7 +8,7 @@
 #ifndef __WVOGGVORBIS_H
 #define __WVOGGVORBIS_H
 
-#include "wvencoder.h"
+#include "wvtypedencoder.h"
 #include "wvstringlist.h"
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
@@ -20,7 +20,8 @@
  *   values in machine order representing normalized PCM audio data.
  * Outbut buffer will contain part of an Ogg bitstream.
  */
-class WvOggVorbisEncoder : public WvEncoder
+class WvOggVorbisEncoder :
+    public WvTypedEncoder<float, unsigned char>
 {
 public:
     static const long RANDOM_SERIALNO = 0;
@@ -110,8 +111,9 @@ public:
     void add_tag(WvStringParm tag, WvStringParm value);
 
 protected:
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
-    virtual bool _finish(WvBuffer &outbuf);
+    virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf,
+        bool flush);
+    virtual bool _typedfinish(OBuffer &outbuf);
 
 private:
     ogg_stream_state *oggstream;
@@ -121,9 +123,9 @@ private:
     vorbis_block *ovblock;
     bool wrote_header;
 
-    bool write_header(WvBuffer &outbuf);
-    bool write_stream(WvBuffer &outbuf, bool flush = false);
-    bool process_audio(WvBuffer &outbuf);
+    bool write_header(OBuffer &outbuf);
+    bool write_stream(OBuffer &outbuf, bool flush = false);
+    bool process_audio(OBuffer &outbuf);
 };
 
 
@@ -133,7 +135,8 @@ private:
  * Output buffer will contain a sequence of signed 'float' type
  *   values in machine order representing normalized PCM audio data.
  */
-class WvOggVorbisDecoder : public WvEncoder
+class WvOggVorbisDecoder :
+    public WvTypedEncoder<unsigned char, float>
 {
     WvStringList comment_list;
 
@@ -182,8 +185,9 @@ protected:
      *   the client to examine the header and to tailor the decoding
      *   process based on that information.
      */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
-    virtual bool _finish(WvBuffer &outbuf);
+    virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf,
+        bool flush);
+    virtual bool _typedfinish(OBuffer &outbuf);
 
 private:
     ogg_sync_state *oggsync;
@@ -196,8 +200,8 @@ private:
     bool need_serialno;
     int need_headers;
 
-    bool process_page(ogg_page *oggpage, WvBuffer &outbuf);
-    bool process_packet(ogg_packet *oggpacket, WvBuffer &outbuf);
+    bool process_page(ogg_page *oggpage, OBuffer &outbuf);
+    bool process_packet(ogg_packet *oggpacket, OBuffer &outbuf);
     bool prepare_dsp();
     bool prepare_stream(long serialno);
 };

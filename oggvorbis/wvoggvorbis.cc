@@ -135,7 +135,7 @@ void WvOggVorbisEncoder::add_tag(WvStringParm tag, WvStringParm value)
 }
 
 
-bool WvOggVorbisEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvOggVorbisEncoder::_typedencode(IBuffer &inbuf, OBuffer &outbuf,
     bool flush)
 {
     // write header pages if needed
@@ -150,7 +150,7 @@ bool WvOggVorbisEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     for (;;)
     {
         // read in more data
-        size_t ovsamples = inbuf.used() / sizeof(float);
+        size_t ovsamples = inbuf.used();
         if (ovsamples == 0)
         {
             // no more data
@@ -168,9 +168,8 @@ bool WvOggVorbisEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
             seterror("error allocating vorbis analysis buffer");
             return false;
         }
-        size_t ovbufsize = ovsamples * sizeof(float);
-        const unsigned char *indata = inbuf.get(ovbufsize);
-        memcpy(ovbuf[0], indata, ovbufsize);
+        const float *indata = inbuf.get(ovsamples);
+        memcpy(ovbuf[0], indata, ovsamples * sizeof(float));
         vorbis_analysis_wrote(ovdsp, ovsamples);
 
         process_audio(outbuf);
@@ -178,7 +177,7 @@ bool WvOggVorbisEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
 }
 
 
-bool WvOggVorbisEncoder::_finish(WvBuffer &outbuf)
+bool WvOggVorbisEncoder::_typedfinish(OBuffer &outbuf)
 {
     // write header pages if needed
     if (! wrote_header)
@@ -195,7 +194,7 @@ bool WvOggVorbisEncoder::_finish(WvBuffer &outbuf)
 }
 
 
-bool WvOggVorbisEncoder::write_header(WvBuffer &outbuf)
+bool WvOggVorbisEncoder::write_header(OBuffer &outbuf)
 {
     // generate headers
     ogg_packet headers[3];
@@ -216,7 +215,7 @@ bool WvOggVorbisEncoder::write_header(WvBuffer &outbuf)
 }
 
 
-bool WvOggVorbisEncoder::write_stream(WvBuffer &outbuf, bool flush)
+bool WvOggVorbisEncoder::write_stream(OBuffer &outbuf, bool flush)
 {
     ogg_page oggpage;
     for (;;)
@@ -250,7 +249,7 @@ bool WvOggVorbisEncoder::write_stream(WvBuffer &outbuf, bool flush)
 }
 
 
-bool WvOggVorbisEncoder::process_audio(WvBuffer &outbuf)
+bool WvOggVorbisEncoder::process_audio(OBuffer &outbuf)
 {
     while (vorbis_analysis_blockout(ovdsp, ovblock) == 1)
     {
@@ -347,7 +346,7 @@ bool WvOggVorbisDecoder::isheaderok() const
 }
 
 
-bool WvOggVorbisDecoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvOggVorbisDecoder::_typedencode(IBuffer &inbuf, OBuffer &outbuf,
     bool flush)
 {
     bool checkheaderok = ! isheaderok() && ! flush;
@@ -399,7 +398,7 @@ bool WvOggVorbisDecoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
 }
 
 
-bool WvOggVorbisDecoder::_finish(WvBuffer &outbuf)
+bool WvOggVorbisDecoder::_typedfinish(OBuffer &outbuf)
 {
     if (! isheaderok())
     {
@@ -411,7 +410,7 @@ bool WvOggVorbisDecoder::_finish(WvBuffer &outbuf)
 
 
 bool WvOggVorbisDecoder::process_page(ogg_page *oggpage,
-    WvBuffer &outbuf)
+    OBuffer &outbuf)
 {       
     if (need_serialno)
     {
@@ -440,7 +439,7 @@ bool WvOggVorbisDecoder::process_page(ogg_page *oggpage,
 
 
 bool WvOggVorbisDecoder::process_packet(ogg_packet *oggpacket,
-    WvBuffer &outbuf)
+    OBuffer &outbuf)
 {
     if (need_headers > 0)
     {
@@ -472,9 +471,8 @@ bool WvOggVorbisDecoder::process_packet(ogg_packet *oggpacket,
             long samples = vorbis_synthesis_pcmout(ovdsp, &pcm);
             if (samples == 0) break;
             
-            size_t numbytes = samples * sizeof(float);
-            unsigned char *out = outbuf.alloc(numbytes);
-            memcpy(out, pcm[0], numbytes);
+            float *out = outbuf.alloc(samples);
+            memcpy(out, pcm[0], samples * sizeof(float));
             vorbis_synthesis_read(ovdsp, samples);
         }
     }

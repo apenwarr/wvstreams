@@ -72,7 +72,8 @@ bool WvEncoder::reset()
 }
 
 
-bool WvEncoder::flush(WvStringParm instr, WvBuffer &outbuf, bool finish)
+bool WvEncoder::flushstrbuf(WvStringParm instr, WvBuffer &outbuf,
+    bool finish)
 {
     WvConstStringBuffer inbuf(instr);
     bool success = encode(inbuf, outbuf, true, finish);
@@ -80,7 +81,8 @@ bool WvEncoder::flush(WvStringParm instr, WvBuffer &outbuf, bool finish)
 }
 
 
-bool WvEncoder::flush(WvStringParm instr, WvString &outstr, bool finish)
+bool WvEncoder::flushstrstr(WvStringParm instr, WvString &outstr,
+    bool finish)
 {
     WvConstStringBuffer inbuf(instr);
     WvDynamicBuffer outbuf;
@@ -90,7 +92,7 @@ bool WvEncoder::flush(WvStringParm instr, WvString &outstr, bool finish)
 }
 
 
-bool WvEncoder::encode(WvBuffer &inbuf, WvString &outstr,
+bool WvEncoder::encodebufstr(WvBuffer &inbuf, WvString &outstr,
     bool flush, bool finish)
 {
     WvDynamicBuffer outbuf;
@@ -100,18 +102,18 @@ bool WvEncoder::encode(WvBuffer &inbuf, WvString &outstr,
 }
 
 
-WvString WvEncoder::strflush(WvStringParm instr, bool finish)
+WvString WvEncoder::strflushstr(WvStringParm instr, bool finish)
 {
     WvString outstr;
-    flush(instr, outstr, finish);
+    flushstrstr(instr, outstr, finish);
     return outstr;
 }
 
 
-WvString WvEncoder::strflush(WvBuffer &inbuf, bool finish)
+WvString WvEncoder::strflushbuf(WvBuffer &inbuf, bool finish)
 {
     WvString outstr;
-    flush(inbuf, outstr, finish);
+    flushbufstr(inbuf, outstr, finish);
     return outstr;
 }
 
@@ -154,7 +156,7 @@ bool WvEncoder::flushstrmem(WvStringParm instr,
 WvString WvEncoder::strflushmem(const void *inmem, size_t inlen, bool finish)
 {
     WvConstInPlaceBuffer inbuf(inmem, inlen);
-    return strflush(inbuf, finish);
+    return strflushbuf(inbuf, finish);
 }
 
 

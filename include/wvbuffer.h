@@ -181,6 +181,11 @@ typedef WvEmptyBufferBase<unsigned char> WvEmptyBuffer;
 typedef WvBufferCursorBase<unsigned char> WvBufferCursor;
 
 /**
+ * The raw memory buffer view type.
+ */
+typedef WvBufferViewBase<unsigned char> WvBufferView;
+
+/**
  * A raw memory read-only buffer backed by a constant WvString
  */
 class WvConstStringBuffer : public WvConstInPlaceBuffer

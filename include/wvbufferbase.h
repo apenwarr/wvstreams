@@ -10,7 +10,6 @@
 #define __WVBUFFERBASE_H
 
 #include "wvbufferstore.h"
-#include "wvtraits.h"
 
 template<class T>
 class WvBufferBase;
@@ -36,7 +35,6 @@ class WvBufferBaseCommonImpl
 {
 protected:
     typedef T Elem;
-    typedef WvTraits<T> ElemTraits;
     typedef WvBufferBase<T> Buffer;
 
     WvBufferStore *store;
@@ -569,7 +567,7 @@ public:
      * @param valid the element
      * @see put(const T*, size_t)
      */
-    inline void put(typename ElemTraits::Param value)
+    inline void put(T &value)
     {
         store->fastput(& value, sizeof(Elem));
     }
@@ -586,7 +584,7 @@ public:
      * @param offset the buffer offset
      * @see poke(const T*, int, size_t)
      */
-    inline void poke(typename ElemTraits::Param value, int offset)
+    inline void poke(T &value, int offset)
     {
         poke(& value, offset, 1);
     }
@@ -638,6 +636,7 @@ public:
 template<class T>
 class WvBufferBase : public WvBufferBaseCommonImpl<T>
 {
+public:
     explicit WvBufferBase(WvBufferStore *store) :
         WvBufferBaseCommonImpl<T>(store) { }
 };
@@ -1048,7 +1047,7 @@ public:
 
 
 /**
- * A buffer that provides a view over a window of another buffer.
+ * A buffer that acts like a cursor over a portion of another buffer.
  * The underlying buffer's get() position is not affected by
  * reading from this buffer.
  */
@@ -1061,16 +1060,45 @@ protected:
 public:
     /**
      * Creates a new buffer.
+     * <p>
+     * Does not take ownership of the supplied buffer.
+     * </p>
      *
      * @param _buf a pointer to the buffer to be wrapped
      * @param _start the buffer offset of the window start position
      * @param _length the length of the window
      */
-    WvBufferCursorBase(WvBufferBase<T> *_buf, int _start,
+    WvBufferCursorBase(WvBufferBase<T> &_buf, int _start,
         size_t _length) :
         WvBufferBase<T>(& mystore),
-        mystore(sizeof(Elem), _buf->getstore(),
+        mystore(sizeof(Elem), _buf.getstore(),
             _start * sizeof(Elem), _length * sizeof(Elem)) { }
+};
+
+
+/**
+ * A buffer that provides a read-write view over another buffer
+ * with a different datatype.  Reading and writing through this
+ * buffer implicitly performs the equivalent of reinterpret_cast
+ * on each element.
+ *
+ * Most useful for manipulating data backed by a raw memory buffer.
+ */
+template<class T>
+class WvBufferViewBase : public WvBufferBase<T>
+{
+public:
+    /**
+     * Creates a new buffer.
+     * <p>
+     * Does not take ownership of the supplied buffer.
+     * </p>
+     *
+     * @param _buf a pointer to the buffer to be wrapped
+     */
+    template<class S>
+    WvBufferViewBase(WvBufferBase<S> &_buf) :
+        WvBufferBase<T>(_buf.getstore()) { }
 };
 
 #endif // __WVBUFFERBASE_H

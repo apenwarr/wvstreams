@@ -11,7 +11,7 @@
 
 WvRealToComplexFFTEncoder::WvRealToComplexFFTEncoder(size_t _n,
     WvRealToComplexFFTEncoder::WindowFunction _wnd) :
-    n(_n), nbytes(n * sizeof(double)), wnd(_wnd)
+    n(_n), wnd(_wnd)
 {
     plan = rfftw_create_plan(n, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE);
 }
@@ -23,32 +23,30 @@ WvRealToComplexFFTEncoder::~WvRealToComplexFFTEncoder()
 }
 
 
-bool WvRealToComplexFFTEncoder::_encode(WvBuffer &inbuf,
-    WvBuffer &outbuf, bool flush)
+bool WvRealToComplexFFTEncoder::_typedencode(IBuffer &inbuf,
+    OBuffer &outbuf, bool flush)
 {
     size_t len;
     while ((len = inbuf.optgettable()) != 0)
     {
-        if (len < nbytes)
+        if (len < n)
         {
             len = inbuf.used();
-            if (len < nbytes)
+            if (len < n)
                 return ! flush;
         }
         size_t avail = outbuf.free();
         if (len > avail)
             len = avail;
-        size_t howmany = len / nbytes;
+        size_t howmany = len / n;
         if (howmany == 0)
             return ! flush; // not enough space
         if (wnd != WND_NONE || ! flush)
             howmany = 1;
         
-        size_t total = howmany * nbytes;
-        double *dataout = reinterpret_cast<double*>(
-            outbuf.alloc(total));
-        double *datain = const_cast<double*>(
-            reinterpret_cast<const double*>(inbuf.get(total)));
+        size_t total = howmany * n;
+        double *dataout = outbuf.alloc(total);
+        double *datain = const_cast<double*>(inbuf.get(total));
         rfftw(plan, howmany, datain, 1, 1, dataout, 1, 1);
 
         if (wnd == WND_BOXCAR)
@@ -70,8 +68,7 @@ bool WvRealToComplexFFTEncoder::_reset()
 /***** WvComplexToRealFFTEncoder *****/
 
 WvComplexToRealFFTEncoder::WvComplexToRealFFTEncoder(size_t _n) :
-    n(_n), nbytes(n * sizeof(double)),
-    tmpbuf(nbytes)
+    n(_n), tmpbuf(n)
 {
     plan = rfftw_create_plan(_n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
 }
@@ -83,21 +80,20 @@ WvComplexToRealFFTEncoder::~WvComplexToRealFFTEncoder()
 }
 
 
-bool WvComplexToRealFFTEncoder::_encode(WvBuffer &inbuf,
-    WvBuffer &outbuf, bool flush)
+bool WvComplexToRealFFTEncoder::_typedencode(IBuffer &inbuf,
+    OBuffer &outbuf, bool flush)
 {
     size_t len;
     while ((len = inbuf.used()) != 0)
     {
-        if (len < nbytes)
+        if (len < n)
             return ! flush;
-        if (outbuf.free() < nbytes)
+        if (outbuf.free() < n)
             return ! flush;
-        double *dataout = reinterpret_cast<double*>(
-            outbuf.alloc(nbytes));
+        double *dataout = outbuf.alloc(n);
         tmpbuf.zap();
-        tmpbuf.merge(inbuf, nbytes);
-        double *datain = reinterpret_cast<double*>(tmpbuf.ptr());
+        tmpbuf.merge(inbuf, n);
+        double *datain = tmpbuf.ptr();
         rfftw_one(plan, datain, dataout);
 
         // if not flushing, process at most one block at a time
@@ -116,26 +112,23 @@ bool WvComplexToRealFFTEncoder::_reset()
 /***** WvPowerSpectrumEncoder *****/
 
 WvPowerSpectrumEncoder::WvPowerSpectrumEncoder(size_t _n) :
-    n(_n), half(_n / 2 + 1), mid((_n + 1) / 2),
-    nbytes(n * sizeof(double)), halfbytes(half * sizeof(double))
+    n(_n), half(_n / 2 + 1), mid((_n + 1) / 2)
 {
 }
 
 
-bool WvPowerSpectrumEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+bool WvPowerSpectrumEncoder::_typedencode(IBuffer &inbuf, OBuffer &outbuf,
     bool flush)
 {
     size_t len;
     while ((len = inbuf.used()) != 0)
     {
-        if (len < nbytes)
+        if (len < n)
             return ! flush;
-        if (outbuf.free() < halfbytes)
+        if (outbuf.free() < half)
             return ! flush;
-        const double *datain = reinterpret_cast<const double*>(
-            inbuf.get(nbytes));
-        double *dataout = reinterpret_cast<double*>(
-            outbuf.alloc(halfbytes));
+        const double *datain = inbuf.get(n);
+        double *dataout = outbuf.alloc(half);
         // compute power spectrum
         dataout[0] = datain[0] * datain[0];
         for (size_t i = 1; i < mid; ++i)

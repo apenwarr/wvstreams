@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     obuf[15] = 'Z';
     assert(memcmp(obuf, "41424344450aff\0Z", 16) == 0);
 
-    assert(strcmp(WvHexEncoder().strflush("ABCDE\n\377", true),
+    assert(strcmp(WvHexEncoder().strflushstr("ABCDE\n\377", true),
         "41424344450aff") == 0);
 
     unhexify(obuf, "41424344450aff\377\0ab");

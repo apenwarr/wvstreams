@@ -7,7 +7,7 @@
 #ifndef __WVFFT_H
 #define __WVFFT_H
 
-#include "wvencoder.h"
+#include "wvtypedencoder.h"
 #include "wvbuffer.h"
 
 /**
@@ -31,7 +31,8 @@
  *   of the former.
  */
 struct fftw_plan_struct;
-class WvRealToComplexFFTEncoder : public WvEncoder
+class WvRealToComplexFFTEncoder :
+    public WvTypedEncoder<double, double>
 {
 public:
     enum WindowFunction {
@@ -48,12 +49,12 @@ protected:
     /**
      * If not flushing, only processes at most one block of data.
      */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf, bool flush);
     virtual bool _reset();
 
 private:
     struct fftw_plan_struct *plan;
-    size_t n, nbytes;
+    size_t n;
     WindowFunction wnd;
 };
 
@@ -68,11 +69,12 @@ private:
  * Output buffer will contain a sequence of 'double' type
  *   values in machine order representing samples in the time domain.
  */
-class WvComplexToRealFFTEncoder : public WvEncoder
+class WvComplexToRealFFTEncoder :
+    public WvTypedEncoder<double, double>
 {
     struct fftw_plan_struct *plan;
-    size_t n, nbytes;
-    WvInPlaceBuffer tmpbuf;
+    size_t n;
+    WvInPlaceBufferBase<double> tmpbuf;
     
 public:
     WvComplexToRealFFTEncoder(size_t _n);
@@ -82,7 +84,7 @@ protected:
     /**
      * If not flushing, only processes at most one block of data.
      */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf, bool flush);
     virtual bool _reset();
 };
 
@@ -104,9 +106,10 @@ protected:
  *     buf[0] : the squared DC coefficient
  *     buf[i] : the squared power of the i'th band
  */
-class WvPowerSpectrumEncoder : public WvEncoder
+class WvPowerSpectrumEncoder :
+    public WvTypedEncoder<double, double>
 {
-    size_t n, half, mid, nbytes, halfbytes;
+    size_t n, half, mid;
 
 public:
     WvPowerSpectrumEncoder(size_t _n);
@@ -115,7 +118,7 @@ protected:
     /**
      * If not flushing, only processes at most one block of data.
      */
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf, bool flush);
     virtual bool _reset();
 };
 

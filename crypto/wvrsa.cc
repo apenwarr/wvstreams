@@ -57,7 +57,8 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     
     // unhexify the supplied key
     WvDynamicBuffer keybuf;
-    if (! WvHexDecoder().flush(keystr, keybuf, true) || keybuf.used() == 0)
+    if (! WvHexDecoder().flushstrbuf(keystr, keybuf, true) ||
+        keybuf.used() == 0)
     {
         seterr("RSA key is not a valid hex string");
         return;
@@ -129,7 +130,7 @@ WvString WvRSAKey::hexifypub(RSA *rsa)
     size_t newsize = i2d_RSAPublicKey(rsa, & key);
     assert(size == newsize);
     
-    WvString keystr = WvHexEncoder().strflush(keybuf, true);
+    WvString keystr = WvHexEncoder().strflushbuf(keybuf, true);
     return keystr;
 }
 
@@ -142,7 +143,7 @@ WvString WvRSAKey::hexifyprv(RSA *rsa)
     size_t newsize = i2d_RSAPrivateKey(rsa, & key);
     assert(size == newsize);
     
-    WvString keystr = WvHexEncoder().strflush(keybuf, true);
+    WvString keystr = WvHexEncoder().strflushbuf(keybuf, true);
     return keystr;
 }
 

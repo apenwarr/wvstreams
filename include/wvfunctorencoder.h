@@ -9,6 +9,8 @@
 #ifndef __WVFUNCTORENCODER_H
 #define __WVFUNCTORENCODER_H
 
+#include "wvtypedencoder.h"
+
 /**
  * OType specifies the output data type.
  * IType specifies the input data type.
@@ -23,7 +25,7 @@
  * operator() inline.
  */
 template<class OType, class IType, class Functor>
-class WvFunctorEncoder : public WvEncoder
+class WvFunctorEncoder : public WvTypedEncoder<IType, OType>
 {
 protected:
     typedef OType OT;
@@ -35,28 +37,22 @@ public:
     virtual ~WvFunctorEncoder() { }
 
 protected:
-    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+    virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf,
+        bool flush)
     {
-        size_t count = inbuf.used() / sizeof(IType);
-        if (count != 0)
+        size_t count;
+        while ( (count = inbuf.optgettable()) )
         {
-            const unsigned char *indataraw =
-                inbuf.get(count * sizeof(IType));
-            unsigned char *outdataraw = outbuf.alloc(count * sizeof(OType));
-            for (;;)
-            {
-                // FIXME: possible unaligned data problems on some CPUs
-                const IType *indata =
-                    reinterpret_cast<const IType*>(indataraw);
-                OType *outdata = reinterpret_cast<OType*>(outdataraw);
-                *outdata = f(*indata);
-                if (--count == 0) break;
-                indataraw += sizeof(IType);
-                outdataraw += sizeof(OType);
-            }
+            size_t avail = outbuf.optallocable();
+            if (avail == 0)
+                return ! flush;
+            if (avail < count)
+                count = avail;
+            const IType *indata = inbuf.get(count);
+            OType *outdata = outbuf.alloc(count);
+            while (count-- > 0)
+                *(outdata++) = f(*(indata++));
         }
-        if (flush && inbuf.used() != 0)
-            return false; // insufficient data to flush
         return true;
     }
     virtual bool _reset()

@@ -51,7 +51,7 @@ WvString wvtcl_escape(WvStringParm s, const char *nasties)
     if (backslashify)
     {
 	// the backslashify method: backslash-escape _all_ suspicious chars.
-        return WvBackslashEncoder(allnasties).strflush(s, true);
+        return WvBackslashEncoder(allnasties).strflushstr(s, true);
     }
     else
     {
