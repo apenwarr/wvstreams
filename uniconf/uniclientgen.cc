@@ -131,16 +131,11 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
     conn = new UniClientConn(stream, dst);
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
-
-    deltastream.setcallback(WvStreamCallback(this, &UniClientGen::deltacb), 0);
-    WvIStreamList::globallist.append(&deltastream, false);    
 }
 
 
 UniClientGen::~UniClientGen()
 {
-    WvIStreamList::globallist.unlink(&deltastream);
-
     conn->writecmd(UniClientConn::REQ_QUIT, "");
     RELEASE(conn);
 }
@@ -336,7 +331,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
-                clientdelta(key, value);
+                delta(key, value);
             }   
 
         default:
@@ -349,6 +344,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 // FIXME: horribly horribly evil!!
 bool UniClientGen::do_select()
 {
+    hold_delta();
+    
     cmdinprogress = true;
     cmdsuccess = false;
 
@@ -370,26 +367,7 @@ bool UniClientGen::do_select()
 //    if (!cmdsuccess)
 //        seterror("Error: server timed out on response.");
 
-    return cmdsuccess;
-}
-
-
-
-void UniClientGen::clientdelta(const UniConfKey &key, WvStringParm value)
-{
-    deltas.append(new UniConfPair(key, value), true);
-    deltastream.alarm(0);
-}
-
-
-void UniClientGen::deltacb(WvStream &, void *)
-{
-    hold_delta();
-    UniConfPairList::Iter i(deltas);
-
-    for (i.rewind(); i.next(); )
-        delta(i->key(), i->value());
-
-    deltas.zap();
     unhold_delta();
+    
+    return cmdsuccess;
 }
