@@ -3,12 +3,7 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  * WvIPFirewall is an extremely simple hackish class that handles the Linux
- * 2.1/2.2 "ipchains" firewall.  It's okay to create more than one instance
- * of this class; they'll co-operate.
- * 
- * They need you to have created WvDynam and WvRedir chains already,
- * however, and call them from the right places in the Input and/or Forward
- * firewalls.
+ * 2.4 "iptables" firewall.  See wvipfirewall.h.
  */
 #include "wvipfirewall.h"
 #include "wvinterface.h"
@@ -20,8 +15,8 @@ bool WvIPFirewall::enable = false, WvIPFirewall::ignore_errors = true;
 
 WvIPFirewall::WvIPFirewall()
 {
-    system(WvString("iptables -F Services %s", shutup()));
-    system(WvString("iptables -t nat -F TProxy %s", shutup()));
+    // don't change any firewall rules here!  Remember that there may be
+    // more than one instance of the firewall object.
 }
 
 
@@ -150,6 +145,7 @@ void WvIPFirewall::del_proto(WvStringParm proto)
 }
 
 
+// clear out our portion of the firewall
 void WvIPFirewall::zap()
 {
     WvIPPortAddrList::Iter i(addrs);
@@ -165,6 +161,7 @@ void WvIPFirewall::zap()
 	del_redir(i2->src, i2->dstport);
 	i2.xunlink();
     }
+    
     WvStringList::Iter i3(protos);
     for (i3.rewind(); i3.next(); )
     {
