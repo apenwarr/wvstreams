@@ -29,13 +29,6 @@ WvPamStream::~WvPamStream()
 {
 }
 
-
-bool WvPamStream::isok() const
-{
-    return false;
-}
-
-
 bool WvPamStream::check_pam_status(WvStringParm step)
 {
     return false;
@@ -118,19 +111,23 @@ bool WvPamStream::authenticate(WvStringParm name,
     c.appdata_ptr = NULL;
 
     // find the user
-    struct passwd *pw = getpwuid(getuid());
-    assert(pw);
-    d->user = pw->pw_name;
+    //struct passwd *pw = getpwuid(getuid());
+    //assert(pw);
+    //d->user = pw->pw_name;
+    d->user = ""; // don't give any username hints.  Let PAM do it...
 
     // find the host and port
     WvString rhost(*src());
  
+    log(WvLog::Debug2, "Trying auth for service '%s', host '%s'\n",
+	name, rhost);
+    
     // authenticate through PAM
     d->status = pam_start(name, d->user, &c, &d->pamh);
     if (!check_pam_status("startup")) return false;
 
     d->status = pam_set_item(d->pamh, PAM_RHOST, rhost);
-    if (!check_pam_status("environment setup")) return false;
+    if (!check_pam_status("rhost setup")) return false;
 
     d->status = pam_authenticate(d->pamh, PAM_DISALLOW_NULL_AUTHTOK);
     if (!check_pam_status("authentication")) return false;
@@ -140,6 +137,13 @@ bool WvPamStream::authenticate(WvStringParm name,
 
     d->status = pam_open_session(d->pamh, 0);
     if (!check_pam_status("session open")) return false;
+
+    const void *x = NULL;
+    d->status = pam_get_item(d->pamh, PAM_USER, &x);
+    if (!check_pam_status("get username")) return false;
+    d->user = (const char *)x;
+    
+    log(WvLog::Debug2, "Session open as user '%s'\n", d->user);
 
     // write the success message if necessary
     if (!!successmsg) print(successmsg);
@@ -162,13 +166,6 @@ bool WvPamStream::authenticate(WvStringParm name,
     
     return true;
 }
-
-#if 0
-bool WvPamStream::isok() const
-{
-    return (d->status == PAM_SUCCESS && WvStreamClone::isok());
-}
-#endif
 
 bool WvPamStream::check_pam_status(WvStringParm s)
 {

@@ -74,8 +74,6 @@ public:
     UniClientConn(IWvStream *_s, WvStringParm dst = WvString::null);
     virtual ~UniClientConn();
 
-    virtual bool pre_select(SelectInfo &si);
-    virtual bool isok() const;
     virtual void close();
 
     /**

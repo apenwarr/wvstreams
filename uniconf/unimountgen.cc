@@ -231,16 +231,34 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
     UniGenMount *found = findmount(key);
     if (found)
         return found->gen->iterator(trimkey(found->key, key));
-    return NULL;
+    else
+    {
+	// deal with elements mounted on nothingness.
+	// FIXME: this is really a hack, and should (somehow) be dealt with
+	// in a more general way.
+	ListIter *it = new ListIter(this);
+	MountList::Iter i(mounts);
+	for (i.rewind(); i.next(); )
+	{
+	    if (key.numsegments() < i->key.numsegments()
+	      && key.suborsame(i->key))
+		it->keys.append(new WvString(i->key), true);
+	}
+	return it;
+    }
 }
 
 
+// FIXME: this function will be rather slow if you try to iterate over multiple
+// generators and the latency level is high (as is the case with e.g.: the tcp generator). 
+// the fast path will only kick in if you iterate over a single generator.
 UniMountGen::Iter *UniMountGen::recursiveiterator(const UniConfKey &key)
 {
-    UniGenMount *found = findmount(key);
+    UniGenMount *found = findmountunder(key);
     if (found)
         return found->gen->recursiveiterator(trimkey(found->key, key));
-    return NULL;
+    else
+	return UniConfGen::recursiveiterator(key);
 }
 
 
@@ -253,6 +271,37 @@ UniMountGen::UniGenMount *UniMountGen::findmount(const UniConfKey &key)
         if (i->key.suborsame(key))
 	    return i.ptr();
     } 
+
+    return NULL;
+}
+
+
+UniMountGen::UniGenMount *UniMountGen::findmountunder(const UniConfKey &key)
+{
+    UniMountGen::UniGenMount * foundmount = NULL;
+    int num_found_mounts = 0;
+
+    // Find the needed generator and keep it as a lastfound
+    MountList::Iter i(mounts);
+    for (i.rewind(); i.next(); )
+    {
+        // key lies beneath mount (only care about the first)
+        if (i->key.suborsame(key) && !foundmount)
+        {
+            foundmount = i.ptr();
+            num_found_mounts++;
+            //fprintf(stderr, "key %s lies beneath mount %s\n", key.cstr(), i->key.cstr());
+        }
+        // mount lies beneath key
+        else if (key.suborsame(i->key))
+        {
+            num_found_mounts++;
+            //fprintf(stderr, "mount %s lies beneath key %s\n", i->key.cstr(), key.cstr());
+        }
+    }
+
+    if (num_found_mounts == 1 && foundmount)
+        return foundmount;
 
     return NULL;
 }

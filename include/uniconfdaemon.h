@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
  *
  * Manages a UniConf daemon.
  */
@@ -33,8 +33,20 @@ public:
 
     void accept(WvStream *stream);
     
+    /**
+     * Sets up a unix domain socket to allow for communication with the
+     * daemon. Returns 'true' if successful, false otherwise.
+     */
     bool setupunixsocket(WvStringParm path, int create_mode = 0755);
+    /**
+     * Sets up a tcp socket to allow for communication with the
+     * daemon. Returns 'true' if successful, false otherwise.
+     */
     bool setuptcpsocket(const WvIPPortAddr &addr);
+    /**
+     * Sets up an ssl-encrypted tcp socket to allow for communication with 
+     * the daemon. Returns 'true' if successful, false otherwise.
+     */
     bool setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509);
 
 private:

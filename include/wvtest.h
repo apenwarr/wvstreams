@@ -28,7 +28,7 @@ class WvTest
    
 public:
     WvTest(const char *_descr, const char *_idstr, MainFunc *_main);
-    static int run_all(const char *prefix = "");
+    static int run_all(const char * const *prefixes = NULL);
     static void start(const char *file, int line, const char *condstr);
     static void check(bool cond);
     static inline bool start_check(const char *file, int line,

@@ -12,6 +12,7 @@
 #include "wvbuf.h"
 #include "wvbase64.h"
 #include "strutils.h"
+#include <execinfo.h>
 
 #ifdef _WIN32
 #define ETIMEDOUT WSAETIMEDOUT
@@ -20,7 +21,7 @@
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
-      pipeline_incompatible(_pipeline_incompatible)
+      pipeline_incompatible(_pipeline_incompatible), in_doneurl(false)
 {
     log("Opening server connection.\n");
     http_response = "";
@@ -46,6 +47,15 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug2, "Deleting.\n");
+    void* trace[10];
+    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+    char** tracedump = backtrace_symbols(trace, count);
+    log(WvLog::Debug, "TRACE");
+    for (int i = 0; i < count; ++i)
+        log(WvLog::Debug, ":%s", tracedump[i]);
+    log(WvLog::Debug, "\n");
+    free(tracedump);
+
     if (geterr())
         log("Error was: %s\n", errstr());
     close();
@@ -54,6 +64,17 @@ WvHttpStream::~WvHttpStream()
 
 void WvHttpStream::close()
 {
+    log("close called\n");
+    void* trace[10];
+    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+    char** tracedump = backtrace_symbols(trace, count);
+    log(WvLog::Debug, "TRACE");
+    for (int i = 0; i < count; ++i)
+        log(WvLog::Debug, ":%s", tracedump[i]);
+    log(WvLog::Debug, "\n");
+    free(tracedump);
+
+    log_urls();
     // assume pipelining is broken if we're closing without doing at least
     // one successful pipelining test and a following non-test request.
     if (enable_pipelining && max_requests > 1
@@ -75,18 +96,31 @@ void WvHttpStream::close()
         if (!msgurl && !waiting_urls.isempty())
             msgurl = waiting_urls.first();
         if (msgurl)
-            log("URL '%s' is FAILED\n", msgurl->url);
+            log("URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
+                errstr());
     }
     waiting_urls.zap();
     if (curl)
         doneurl();
+    log("close done\n");
 }
 
 
 void WvHttpStream::doneurl()
 {
+    // There is a slight chance that we might receive an error during or just before
+    // this function is called, which means that the write occuring during
+    // start_pipeline_test() would be called, which would call close() because of the
+    // error, which would call doneurl() again.  We don't want to execute doneurl()
+    // a second time when we're already in the middle.
+    if (in_doneurl)
+        return;
+    in_doneurl = true;
+
     assert(curl != NULL);
+    WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
+    log_urls();
 
     http_response = "";
     encoding = Unknown;
@@ -100,7 +134,7 @@ void WvHttpStream::doneurl()
         pipeline_test_count++;
         if (pipeline_test_count == 1)
             start_pipeline_test(&curl->url);
-        else if (pipeline_test_response != http_response)
+        else if (pipeline_test_response != last_response)
         {
             // getting a bit late in the game to be detecting brokenness :(
             // However, if the response code isn't the same for both tests,
@@ -108,7 +142,7 @@ void WvHttpStream::doneurl()
             pipelining_is_broken(4);
             broken = true;
         }
-        pipeline_test_response = http_response;
+        pipeline_test_response = last_response;
     }
 
     assert(curl == urls.first());
@@ -121,6 +155,8 @@ void WvHttpStream::doneurl()
         close();
 
     request_next();
+    in_doneurl = false;
+    log("done doneurl()\n");
 }
 
 
