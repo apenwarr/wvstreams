@@ -132,6 +132,7 @@ public:
     // 
     struct SelectInfo {
 	fd_set read, write, except;
+	bool forceable;
 	bool readable, writable, isexception;
 	int max_fd;
 	time_t msec_timeout;
@@ -151,7 +152,21 @@ public:
     //
     bool select(time_t msec_timeout,
 		bool readable = true, bool writable = false,
-		bool isexception = false);
+		bool isexception = false, bool forceable = false);
+    
+    // like select, except it uses force_select instead of taking parameters.
+    // force_select used to apply to select(), but it doesn't anymore (except
+    // when forceable==true) because that just confuses everything.
+    // 
+    // If, say, getline does a select(0) for read but force_select for write
+    // is true, the select would return true, which is just nonsense.  So
+    // I took that out.
+    // 
+    // Hmm, there's also a special case for force_select in wvstreamlist that
+    // probably shouldn't be there... but the only fix would be to change
+    // all main programs to use auto_select instead of select, and I don't want
+    // to do that right now. -- apenwarr
+    bool auto_select(time_t msec_timeout);
     
     // use force_select() to force a particular select mode
     // (readable, writable, or isexception) to true when selecting
