@@ -518,6 +518,9 @@ void WvHttpStream::execute()
 
         if (!remaining && encoding == ContentLength)
             doneurl();
+
+	if (remaining && !isok())
+	    seterr("connection interrupted");
     }
 
     if (urls.isempty())
