@@ -2,8 +2,8 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * WvTCPConn test.  Telnets to your local SMTP port, or any other port given
- * on the command line.
+ * WvUnixConn test.  Creates a Unix Domain socket on /tmp/fuzzy or whatever
+ * you give it on the command line.
  */
 #include "wvunixsocket.h"
 #include "wvstreamlist.h"
