@@ -292,12 +292,12 @@ WVTEST_MAIN("UniTransactionGen functionality test")
 
     // Test that refresh works.
     callbacks2.add("cfg/foo/bar", "");
-    callbacks2.add("cfg/Global/Have Disk", WvString::null);
+    callbacks2.add("cfg/Global/Have Disk/", WvString::null);
     two.refresh();
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
     WVPASS(two.xget("cfg/foo/bar") == "");
-    WVPASS(two.xget("cfg/Global/Have Disk") == WvString::null);
+    WVPASS(two.xget("cfg/Global/Have Disk/") == WvString::null);
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/foo", "");
