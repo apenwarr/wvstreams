@@ -76,17 +76,6 @@ unsigned WvHash(const WvAddr &addr)
 }
 
 
-WvAddr::WvAddr()
-{
-    addrtype = "WvAddr";
-}
-
-
-WvAddr::~WvAddr()
-{
-}
-
-
 /* Create an object of the appropriate WvAddr-derived class based on the
  * address and type stored in 'addr'.
  */
@@ -148,8 +137,10 @@ unsigned WvAddr::WvHash() const
 }
 
 
-bool WvAddr::comparator(const WvAddr *a2) const
+bool WvAddr::comparator(const WvAddr *a2, bool first_pass) const
 {
+    if (type() != a2->type()) return false;    
+
     const unsigned char *raw1, *raw2;
     size_t len;
     
@@ -384,6 +375,31 @@ WvIPAddr::~WvIPAddr()
     // nothing to do
 }
 
+bool WvIPAddr::comparator(const WvAddr *a2, bool first_pass) const
+{
+    if (a2->type() == WVIPADDR)
+        return !memcmp(binaddr, ((WvIPAddr *)a2)->binaddr, sizeof(binaddr));
+    else if (first_pass)
+        return a2->comparator(this, false);
+    else 
+    {
+        const unsigned char *raw1, *raw2;
+        size_t len;
+
+        len = rawdata_len();
+        if (len != a2->rawdata_len())
+            return false;
+
+        raw1 = rawdata();
+        raw2 = a2->rawdata();
+
+        if (!raw1 && !raw2) return true;
+        if (!raw1 || !raw2) return false;
+
+        return !memcmp(raw1, raw2, len);
+    }
+} 
+
 
 /* Generate a printable version of an IP address. */
 WvString WvIPAddr::printable() const
@@ -493,19 +509,11 @@ size_t WvIPAddr::sockaddr_len() const
 }
 
 
-static char wvipnet[] = "WvIPNet";
-
-WvIPNet::WvIPNet()
-{
-    addrtype = wvipnet;
-}
+WvIPNet::WvIPNet() { }
 
 
 WvIPNet::WvIPNet(const WvIPNet &_net)
-	: WvIPAddr(_net), mask(_net.netmask())
-{
-    addrtype = wvipnet;
-}
+	: WvIPAddr(_net), mask(_net.netmask()) { }
 
 
 // If the netmask is not specified, it will default to all 1's.
@@ -514,8 +522,6 @@ void WvIPNet::string_init(const char string[])
     char *maskptr;
     int bits;
     __u32 imask;
-
-    addrtype = wvipnet;
 
     maskptr = strchr(string, '/');
     if (!maskptr)
@@ -541,10 +547,7 @@ void WvIPNet::string_init(const char string[])
 
 
 WvIPNet::WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask)
-	: WvIPAddr(base), mask(_mask)
-{
-    addrtype = wvipnet;
-}
+	: WvIPAddr(base), mask(_mask) { }
 
 
 WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
@@ -556,7 +559,6 @@ WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
     else
 	imask = 0;
     mask = WvIPAddr((unsigned char *)&imask);
-    addrtype = wvipnet;
 }
 
 WvIPNet::~WvIPNet()
@@ -580,9 +582,15 @@ unsigned WvIPNet::WvHash() const
 }
 
 
-bool WvIPNet::comparator(const WvAddr *a2) const
+bool WvIPNet::comparator(const WvAddr *a2, bool first_pass) const
 {
-    return WvIPAddr::comparator(a2) && mask.comparator(&((WvIPNet *)a2)->mask);
+    if (a2->type() == WVIPNET)
+        return WvIPAddr::comparator(a2, false) && mask == ((WvIPNet *)a2)->mask;
+    else if (first_pass)
+        return a2->comparator(this, false);
+    else
+        return WvIPAddr::comparator(a2, false);
+    
 }
 
 
@@ -625,13 +633,9 @@ void WvIPNet::normalize()
 }
 
 
-static char wvipportaddr[] = "WvIPPortAddr";
-
-
 WvIPPortAddr::WvIPPortAddr()
 {
     port = 0;
-    addrtype = wvipportaddr;
 }
 
 
@@ -639,7 +643,6 @@ WvIPPortAddr::WvIPPortAddr(const unsigned char _ipaddr[4], __u16 _port)
 			: WvIPAddr(_ipaddr)
 {
     port = _port;
-    addrtype = wvipportaddr;
 }
 
 
@@ -647,7 +650,6 @@ WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port)
 			: WvIPAddr(_ipaddr)
 {
     port = _port;
-    addrtype = wvipportaddr;
 }
 
 
@@ -668,8 +670,6 @@ void WvIPPortAddr::string_init(const char string[])
     } else {
         port = 0;
     }
-
-    addrtype = wvipportaddr;
 }
 
 
@@ -677,7 +677,6 @@ WvIPPortAddr::WvIPPortAddr(__u16 _port)
                               : WvIPAddr("0.0.0.0")
 {
     port = _port;
-    addrtype = wvipportaddr;
 }
 
 
@@ -685,7 +684,6 @@ WvIPPortAddr::WvIPPortAddr(const char string[], __u16 _port)
                               : WvIPAddr(string)
 {
     port = _port;
-    addrtype = wvipportaddr;
 }
 
  
@@ -718,12 +716,17 @@ unsigned WvIPPortAddr::WvHash() const
     return WvIPAddr::WvHash() + port;
 }
 
-
-bool WvIPPortAddr::comparator(const WvAddr *a2) const
+bool WvIPPortAddr::comparator(const WvAddr *a2, bool first_pass) const
 {
-    return WvIPAddr::comparator(a2) && port == ((WvIPPortAddr *)a2)->port;
-}
+    if (a2->type() == WVIPPORTADDR)
+        return WvIPAddr::comparator(a2, false)
+             && port == ((WvIPPortAddr *)a2)->port;
+    else if (first_pass)
+        return a2->comparator(this, false);
+    else
+        return WvIPAddr::comparator(a2, false);
 
+}  
 
 WvUnixAddr::WvUnixAddr(const char *_sockname)
     : sockname(_sockname)
