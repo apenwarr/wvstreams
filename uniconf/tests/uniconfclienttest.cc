@@ -59,7 +59,7 @@ bool testgetkeys(const UniConf &mainconf)
     pass = check(narf.fullkey(), narf.get(), "goof") && pass;
   
     narf = mainconf["wacky test section/  goose  "];
-    pass = check(narf.fullkey(), narf.get(), "bluebayou") && pass;
+    pass = check(narf.fullkey(), narf.get(), "weasels") && pass;
 
     narf = mainconf["this key should not exist/ bcscso "];
     pass = check(narf.fullkey(), narf.get(), WvString::null) && pass;
