@@ -9,26 +9,72 @@
 #include "wvbufferstore.h"
 #include <string.h>
 
+/**
+ * An abstraction for memory transfer operations.
+ *
+ * This is in preparation for supporting buffers of full-blown
+ * objects that have special copy and destruction semantics,
+ * someday...
+ */
 struct MemOps
 {
+    /**
+     * Copies initialized region to uninitialized region.
+     */
     inline void uninit_copy(void *target, const void *source,
         size_t count)
     {
         memcpy(target, source, count);
     }
+    /**
+     * Copies initialized region to initialized region.
+     */
     inline void copy(void *target, const void *source, size_t count)
     {
+        uninit(target, count);
         memcpy(target, source, count);
     }
-    inline void uninit_move(void *target, const void *source,
+    /**
+     * Moves initialized region to uninitialized region.
+     * Source data becomes uninitialized.
+     */
+    inline void uninit_move(void *target, void *source,
         size_t count)
     {
         memmove(target, source, count);
+        uninit(source, count);
     }
+    /**
+     * Swaps initialized regions.
+     */
+    inline void swap(void *target, void *source, size_t count)
+    {
+        register unsigned char *t1 = (unsigned char*)target;
+        register unsigned char *t2 = (unsigned char*)source;
+        while (count-- > 0)
+        {
+            register unsigned char temp;
+            temp = *t1;
+            *(t1++) = *t2;
+            *(t2++) = temp;
+        }
+    }
+    /**
+     * Uninitializes a region.
+     */
+    inline void uninit(void *target, size_t count)
+    {
+    }
+    /**
+     * Creates a new array.
+     */
     inline void *newarray(size_t count)
     {
         return new unsigned char[count];
     }
+    /**
+     * Deletes an uninitialized array.
+     */
     inline void deletearray(void *buf)
     {
         delete[] (unsigned char*)buf;
@@ -86,7 +132,7 @@ void WvBufferStore::move(void *buf, size_t count)
             amount = count;
         const void *data = get(amount);
         memops.uninit_copy(buf, data, amount);
-        ((unsigned char*)buf) += amount;
+        (unsigned char*)buf += amount;
         count -= amount;
     }
 }
@@ -103,7 +149,7 @@ void WvBufferStore::copy(void *buf, int offset, size_t count)
             amount = count;
         const void *data = peek(offset, amount);
         memops.uninit_copy(buf, data, amount);
-        ((unsigned char*)buf) += amount;
+        (unsigned char*)buf += amount;
         count -= amount;
         offset += amount;
     }
@@ -121,7 +167,7 @@ void WvBufferStore::put(const void *data, size_t count)
             amount = count;
         void *buf = alloc(amount);
         memops.uninit_copy(buf, data, amount);
-        ((const unsigned char*)data) += amount;
+        (const unsigned char*)data += amount;
         count -= amount;
     }
 }
@@ -144,7 +190,7 @@ void WvBufferStore::poke(const void *data, int offset, size_t count)
     {
         size_t tail = end - limit;
         count -= tail;
-        put(((const unsigned char*)data) + count, tail);
+        put((const unsigned char*)data + count, tail);
     }
     while (count > 0)
     {
@@ -155,10 +201,41 @@ void WvBufferStore::poke(const void *data, int offset, size_t count)
             amount = count;
         void *buf = mutablepeek(offset, amount);
         memops.copy(buf, data, amount);
-        ((const unsigned char*)data) += amount;
+        (const unsigned char*)data += amount;
         count -= amount;
         offset += amount;
     }
+}
+
+
+void WvBufferStore::merge(WvBufferStore &instore, size_t count)
+{
+    if (count == 0)
+        return;
+
+    if (usessubbuffers() && instore.usessubbuffers())
+    {
+        // merge quickly by stealing subbuffers from the other buffer
+        for (;;)
+        {
+            WvBufferStore *buf = instore.firstsubbuffer();
+            if (! buf)
+                break; // strange!
+
+            size_t avail = buf->used();
+            if (avail > count)
+                break;
+                
+            // move the entire buffer
+            bool autofree = instore.unlinksubbuffer(buf, false);
+            appendsubbuffer(buf, autofree);
+            count -= avail;
+            if (count == 0)
+                return;
+        }
+    }
+    // merge slowly by copying data
+    basicmerge(instore, count);
 }
 
 
@@ -201,7 +278,7 @@ void WvBufferStore::basicmerge(WvBufferStore &instore, size_t count)
                 unalloc(outavail);
                 return;
             }
-            ((unsigned char*)outdata) += inavail;
+            (unsigned char*)outdata += inavail;
             inavail = 0;
         }
         else
@@ -210,7 +287,7 @@ void WvBufferStore::basicmerge(WvBufferStore &instore, size_t count)
             count -= outavail;
             if (count == 0) return;
             inavail -= outavail;
-            ((const unsigned char*)indata) += outavail;
+            (const unsigned char*)indata += outavail;
             outavail = 0;
         }
     }
@@ -273,7 +350,7 @@ const void *WvInPlaceBufferStore::get(size_t count)
 {
     assert(count <= writeidx - readidx ||
         !"attempted to get() more than used()");
-    const void *tmpptr = ((const unsigned char*)data) + readidx;
+    const void *tmpptr = (const unsigned char*)data + readidx;
     readidx += count;
     return tmpptr;
 }
@@ -309,7 +386,7 @@ void *WvInPlaceBufferStore::alloc(size_t count)
 {
     assert(count <= xsize - writeidx ||
         !"attempted to alloc() more than free()");
-    void *tmpptr = ((unsigned char*)data) + writeidx;
+    void *tmpptr = (unsigned char*)data + writeidx;
     writeidx += count;
     return tmpptr;
 }
@@ -337,7 +414,7 @@ void *WvInPlaceBufferStore::mutablepeek(int offset, size_t count)
         size_t(-offset) <= readidx :
         size_t(offset) < writeidx - readidx) ||
         ! "attempted to peek() with invalid offset or count");
-    return ((unsigned char*)data) + readidx + offset;
+    return (unsigned char*)data + readidx + offset;
 }
 
 
@@ -377,7 +454,7 @@ const void *WvConstInPlaceBufferStore::get(size_t count)
 {
     assert(count <= avail - readidx ||
         ! "attempted to get() more than used()");
-    const void *ptr = ((const unsigned char*)data) + readidx;
+    const void *ptr = (const unsigned char*)data + readidx;
     readidx += count;
     return ptr;
 }
@@ -405,7 +482,7 @@ const void *WvConstInPlaceBufferStore::peek(int offset, size_t count)
         size_t(-offset) <= readidx :
         size_t(offset) < avail - readidx) ||
         ! "attempted to peek() with invalid offset or count");
-    return ((const unsigned char*)data) + readidx + offset;
+    return (const unsigned char*)data + readidx + offset;
 }
 
 
@@ -481,7 +558,7 @@ const void *WvCircularBufferStore::get(size_t count)
     assert(count <= totalused ||
         ! "attempted to get() more than used()");
     size_t first = ensurecontiguous(0, count, false /*keephistory*/);
-    const void *tmpptr = ((const unsigned char*)data) + first;
+    const void *tmpptr = (const unsigned char*)data + first;
     head = (head + count) % xsize;
     totalused -= count;
     return tmpptr;
@@ -532,7 +609,7 @@ void *WvCircularBufferStore::alloc(size_t count)
     totalinit = totalused; // always discard history
     size_t first = ensurecontiguous(totalused, count,
         false /*keephistory*/);
-    void *tmpptr = ((unsigned char*)data) + first;
+    void *tmpptr = (unsigned char*)data + first;
     totalused += count;
     totalinit += count;
     return tmpptr;
@@ -564,7 +641,7 @@ void *WvCircularBufferStore::mutablepeek(int offset, size_t count)
         ! "attempted to peek() with invalid offset or count");
     size_t first = ensurecontiguous(offset, count,
         true /*keephistory*/);
-    void *tmpptr = ((unsigned char*)data) + first;
+    void *tmpptr = (unsigned char*)data + first;
     return tmpptr;
 }
 
@@ -620,30 +697,51 @@ size_t WvCircularBufferStore::ensurecontiguous(int offset,
 void WvCircularBufferStore::compact(void *data, size_t size,
     size_t head, size_t count)
 {
-    // Case 1: Empty region
     if (count == 0)
+    {
+        // Case 1: Empty region
+        // Requires 0 moves
         return;
+    }
 
-    // Case 2: Contiguous region
     if (head + count <= size)
     {
-        memops.uninit_move(data,
-            ((unsigned char*)data) + head, count);
+        // Case 2: Contiguous region
+        // Requires count moves
+        memops.uninit_move(data, (unsigned char*)data + head, count);
         return;
     }
     
-    // Case 3: Non-contiguous region
-    // FIXME: this is an interim solution
-    // We can actually do this whole thing in place with a little
-    // more effort...
     size_t headcount = size - head;
     size_t tailcount = count - headcount;
+    size_t freecount = size - count;
+    if (freecount >= headcount)
+    {
+        // Case 3: Non-contiguous region, does not require swapping
+        // Requires count moves
+        memops.uninit_move((unsigned char*)data + headcount,
+            data, tailcount);
+        memops.uninit_move(data, (unsigned char*)data + head,
+            headcount);
+        return;
+    }
+
+    // Case 4: Non-contiguous region, requires swapping
+    // Requires count * 2 moves
+    unsigned char *start = (unsigned char*)data;
+    unsigned char *end = (unsigned char*)data + head;
+    while (tailcount >= headcount)
+    {
+        memops.swap(start, end, headcount);
+        start += headcount;
+        tailcount -= headcount;
+    }
+    // Now the array looks like: |a|b|c|g|h|_|d|e|f|   
+    // FIXME: this is an interim solution
     void *buf = memops.newarray(tailcount);
-    memops.uninit_move(buf, data, tailcount);
-    memops.uninit_move(data,
-        ((unsigned char*)data) + head, headcount);
-    memops.uninit_move(((unsigned char*)data) + headcount,
-        buf, tailcount);
+    memops.uninit_move(buf, start, tailcount);
+    memops.uninit_move(start, end, headcount);
+    memops.uninit_move(start + headcount, buf, tailcount);
     memops.deletearray(buf);
 }
 
@@ -657,14 +755,34 @@ WvLinkedBufferStore::WvLinkedBufferStore(int _granularity) :
 }
 
 
-void WvLinkedBufferStore::append(WvBufferStore *buffer, bool autofree)
+bool WvLinkedBufferStore::usessubbuffers() const
+{
+    return true;
+}
+
+
+size_t WvLinkedBufferStore::numsubbuffers() const
+{
+    return list.count();
+}
+
+
+WvBufferStore *WvLinkedBufferStore::firstsubbuffer() const
+{
+    return list.first();
+}
+
+
+void WvLinkedBufferStore::appendsubbuffer(WvBufferStore *buffer,
+    bool autofree)
 {
     list.append(buffer, autofree);
     totalused += buffer->used();
 }
 
 
-void WvLinkedBufferStore::prepend(WvBufferStore *buffer, bool autofree)
+void WvLinkedBufferStore::prependsubbuffer(WvBufferStore *buffer,
+    bool autofree)
 {
     list.prepend(buffer, autofree);
     totalused += buffer->used();
@@ -672,22 +790,20 @@ void WvLinkedBufferStore::prepend(WvBufferStore *buffer, bool autofree)
 }
 
 
-void WvLinkedBufferStore::unlink(WvBufferStore *buffer)
+bool WvLinkedBufferStore::unlinksubbuffer(WvBufferStore *buffer,
+    bool allowautofree)
 {
     WvBufferStoreList::Iter it(list);
-    if (it.find(buffer))
-    {
-        totalused -= buffer->used();
-        if (buffer == list.first())
-            maxungettable = 0;
-        it.unlink(); // do not recycle the buffer
-    }
-}
-
-
-size_t WvLinkedBufferStore::numbuffers() const
-{
-    return list.count();
+    assert(it.find(buffer));
+    
+    bool autofree = it.link->auto_free;
+    totalused -= buffer->used();
+    if (buffer == list.first())
+        maxungettable = 0;
+    if (! allowautofree)
+        it.link->auto_free = false;
+    it.unlink(); // do not recycle the buffer
+    return autofree;
 }
 
 
@@ -872,50 +988,6 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
 }
 
 
-void WvLinkedBufferStore::merge(WvBufferStore &instore, size_t count)
-{
-    if (count == 0)
-        return;
-
-    // determine if we can just do a fast merge
-    WvLinkedBufferStore *inlinked =
-        wvdynamic_cast<WvLinkedBufferStore*>(& instore);
-    if (! inlinked)
-    {
-        basicmerge(instore, count);
-        return;
-    }
-    WvLinkedBufferStore &other = *inlinked;
-
-    // merge quickly by simply stealing internal buffers away from
-    // the other buffer
-    other.maxungettable = 0;
-    WvBufferStoreList::Iter it(other.list);
-    for (it.rewind(); it.next(); )
-    {
-        WvBufferStore *buf = it.ptr();
-        size_t avail = buf->used();
-        if (avail > count)
-        {
-            basicmerge(*buf, count);
-            return; // done!
-        }
-        // move the entire buffer
-        bool autofree = it.link->auto_free;
-        it.link->auto_free = false;
-        it.xunlink();
-        other.totalused -= avail;
-        append(buf, autofree);
-
-        count -= avail;
-        if (count == 0)
-            return;
-    }
-    assert(count == 0 ||
-        ! "attempted to merge() more than other.used()");
-}
-
-
 WvBufferStore *WvLinkedBufferStore::newbuffer(size_t minsize)
 {
     minsize = roundup(minsize, granularity);
@@ -1047,7 +1119,7 @@ void *WvDynamicBufferStore::alloc(size_t count)
     if (count > WvLinkedBufferStore::free())
     {
         WvBufferStore *buf = newbuffer(count);
-        append(buf, true);
+        appendsubbuffer(buf, true);
     }
     return WvLinkedBufferStore::alloc(count);
 }

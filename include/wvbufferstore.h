@@ -9,7 +9,6 @@
 #ifndef __WVBUFFERSTORE_H
 #define __WVBUFFERSTORE_H
 
-#include "wvrtti.h"
 #include "wvlinklist.h"
 #include <limits.h>
 
@@ -26,8 +25,6 @@
  */
 class WvBufferStore
 {
-    WVTYPE(void)
-
     // discourage copying
     explicit WvBufferStore(const WvBufferStore &other) { }
 
@@ -87,11 +84,52 @@ public:
 
     /*** Buffer to Buffer Transfers ***/
 
-    virtual void merge(WvBufferStore &instore, size_t count)
-        { basicmerge(instore, count); }
+    virtual void merge(WvBufferStore &instore, size_t count);
 
     // default implementation
     void basicmerge(WvBufferStore &instore, size_t count);
+
+    /*** Support for buffers with subbuffers ***/
+
+    /**
+     * Returns true if the buffer uses subbuffers for storage.
+     */
+    virtual bool usessubbuffers() const
+        { return false; }
+
+    /**
+     * Returns the number of subbuffers in the buffer.
+     */
+    virtual size_t numsubbuffers() const
+        { return 0; }
+
+    /**
+     * Returns the first subbuffer.
+     * @return the buffer or NULL if none or not supported
+     */
+    virtual WvBufferStore *firstsubbuffer() const
+        { return NULL; }
+
+    /**
+     * Appends a subbuffer to the buffer.
+     */
+    virtual void appendsubbuffer(WvBufferStore *buffer, bool autofree)
+        { assert(! "not supported"); }
+
+    /**
+     * Prepends a subbuffer to the buffer.
+     */
+    virtual void prependsubbuffer(WvBufferStore *buffer, bool autofree)
+        { assert(! "not supported"); }
+
+    /**
+     * Unlinks the specified subbuffer.
+     * Only autofrees the buffer if allowautofree == true.
+     * @return the autofree flag for the buffer
+     */
+    virtual bool unlinksubbuffer(WvBufferStore *buffer,
+        bool allowautofree)
+        { assert(! "not supported"); return true; }
 };
 
 // lists of buffer stores are sometimes useful
@@ -221,8 +259,6 @@ public:
  */
 class WvInPlaceBufferStore : public WvBufferStore
 {
-    WVTYPE(WvBufferStore)
-    
 protected:
     void *data;
     size_t xsize;
@@ -267,8 +303,6 @@ public:
 class WvConstInPlaceBufferStore :
     public WvReadOnlyBufferStoreMixin<WvBufferStore>
 {
-    WVTYPE(WvBufferStore)
-
 protected:
     const void *data;
     size_t avail;
@@ -298,8 +332,6 @@ public:
  */
 class WvCircularBufferStore : public WvBufferStore
 {
-    WVTYPE(WvBufferStore)
-    
 protected:
     void *data;
     size_t xsize;
@@ -380,8 +412,6 @@ protected:
  */
 class WvLinkedBufferStore : public WvBufferStore
 {
-    WVTYPE(WvBufferStore)
-    
 protected:
     WvBufferStoreList list;
     size_t totalused;
@@ -389,14 +419,6 @@ protected:
 
 public:
     explicit WvLinkedBufferStore(int _granularity);
-    // Appends a buffer store to the list.
-    void append(WvBufferStore *buffer, bool autofree);
-    // Prepends a buffer store to the list.
-    void prepend(WvBufferStore *buffer, bool autofree);
-    // Unlinks a buffer store from the list.
-    void unlink(WvBufferStore *buffer);
-    // Returns the number of buffer stores in the list.
-    size_t numbuffers() const;
 
     /*** Overridden Members ***/
     virtual size_t used() const;
@@ -412,7 +434,14 @@ public:
     virtual size_t unallocable() const;
     virtual size_t optpeekable(int offset) const;
     virtual void *mutablepeek(int offset, size_t count);
-    virtual void merge(WvBufferStore &instore, size_t count);
+
+    virtual bool usessubbuffers() const;
+    virtual size_t numsubbuffers() const;
+    virtual WvBufferStore *firstsubbuffer() const;
+    virtual void appendsubbuffer(WvBufferStore *buffer, bool autofree);
+    virtual void prependsubbuffer(WvBufferStore *buffer, bool autofree);
+    virtual bool unlinksubbuffer(WvBufferStore *buffer,
+        bool allowautofree);
 
 protected:
     /**
@@ -459,7 +488,6 @@ private:
  */
 class WvDynamicBufferStore : public WvLinkedBufferStore
 {
-    WVTYPE(WvLinkedBufferStore)
     size_t minalloc;
     size_t maxalloc;
     
@@ -484,8 +512,6 @@ protected:
 class WvEmptyBufferStore : public WvWriteOnlyBufferStoreMixin<
     WvReadOnlyBufferStoreMixin<WvBufferStore> >
 {
-    WVTYPE(WvBufferStore)
-    
 public:
     explicit WvEmptyBufferStore(size_t _granularity);
 };
@@ -498,8 +524,6 @@ public:
 class WvBufferCursorStore :
     public WvReadOnlyBufferStoreMixin<WvBufferStore>
 {
-    WVTYPE(WvBufferStore)
-    
 protected:
     WvBufferStore *buf;
     int start;

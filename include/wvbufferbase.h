@@ -1015,13 +1015,13 @@ public:
             _maxalloc * sizeof(Elem)) { }
 
     /**
-     * Returns the number of buffer stores in the list.
+     * Returns the number of subbuffers currently in use.
      *
      * @return the number of buffers
      */
-    inline size_t numbuffers()
+    inline size_t numsubbuffers()
     {
-        return mystore.numbuffers();
+        return mystore.numsubbuffers();
     }
 };
 
