@@ -378,24 +378,10 @@ public:
     typedef class WvSorter<T, WvListBase, WvListBase::IterBase> Sorter;
 };
 
+#define DeclareWvList2(_classname_, _type_)  \
+    typedef class WvList<_type_> _classname_ 
 
-#define DeclareWvList4(_type_,_newname_,_fullname_,_extra_) \
-    class _fullname_ : public WvList<_type_> 		\
-    { 							\
-    public: 						\
-        _newname_() { setup(); }			\
-        						\
-        ~_newname_() { shutdown(); }			\
-	_extra_ 					\
-    };
-
-#define DeclareWvList3(_type_,_newname_,_extra_) \
-    DeclareWvList4(_type_,_newname_,_newname_,_extra_)
-
-#define DeclareWvList2(_type_,_extra_)  		\
-		DeclareWvList3(_type_,_type_##List,_extra_ )
-
-#define DeclareWvList(_type_) DeclareWvList2(_type_,;)
+#define DeclareWvList(_type_) DeclareWvList2(_type_##List, _type_)
 
 
 #endif // __WVLINKLIST_H

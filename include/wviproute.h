@@ -33,7 +33,7 @@ public:
 };
 
 
-DeclareWvList3(WvIPRoute, WvIPRouteListBase, );
+DeclareWvList2(WvIPRouteListBase, WvIPRoute);
 
 /**
  * List of IP Routes currently in effect

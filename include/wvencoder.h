@@ -576,7 +576,7 @@ class WvEncoderChain : public WvEncoder
             enc(enc), auto_free(auto_free) { }
         ~WvEncoderChainElem() { if (auto_free) delete enc; }
     };
-    DeclareWvList3(WvEncoderChainElem, WvEncoderChainElemListBase, );
+    DeclareWvList2(WvEncoderChainElemListBase, WvEncoderChainElem);
 
     WvEncoderChainElemListBase encoders;
     WvPassthroughEncoder passthrough;

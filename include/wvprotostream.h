@@ -21,11 +21,25 @@ class WvLog;
 class WvProtoStream : public WvStreamClone
 {
 public:
+    class Token
+    {
+    public:
+	WvString data;
+	size_t length;
+	
+	Token();
+	Token(const unsigned char *_data, size_t _length);
+	void fill(const unsigned char *_data, size_t _length);
+	~Token();
+    };
+    
+    DeclareWvList(Token);
+
+    WvDynamicBuffer tokbuf;
+    bool log_enable;
+
     WvProtoStream(WvStream *_cloned, WvLog *_debuglog = NULL);
     virtual ~WvProtoStream();
-    
-    class Token;
-    class TokenList;
     
     /**
      * override uwrite() so we can log all output
@@ -58,24 +72,6 @@ public:
     
 protected:
     WvLog *logp;
-    
-public:
-    class Token
-    {
-    public:
-	WvString data;
-	size_t length;
-	
-	Token();
-	Token(const unsigned char *_data, size_t _length);
-	void fill(const unsigned char *_data, size_t _length);
-	~Token();
-    };
-    
-    DeclareWvList(Token);
-
-    WvDynamicBuffer tokbuf;
-    bool log_enable;
 };
 
 

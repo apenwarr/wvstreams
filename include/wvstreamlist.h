@@ -12,7 +12,7 @@
 /**
  * Create the WvStreamListBase class - a simple linked list of WvStreams
  */
-DeclareWvList3(WvStream, WvStreamListBase, );
+DeclareWvList2(WvStreamListBase, WvStream);
 
 /**
  * WvStreamList holds a list of WvStream objects -- and its select() and

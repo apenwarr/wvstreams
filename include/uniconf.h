@@ -288,7 +288,6 @@ public:
         const UniConfCallback &callback, void *userdata) const { }
 
     /**
-     * Shortcut for adding a setbool-style watch.
      */
     void addwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
     
@@ -328,7 +327,7 @@ public:
     class SortedXIter;
     
     // lists of iterators
-    class IterList;
+    DeclareWvList(Iter);
 };
 
 
@@ -381,8 +380,6 @@ public:
         { it.rewind(); }
     bool next();
 };
-DeclareWvList4(UniConf::Iter, IterList, UniConf::IterList, )
-
 
 /**
  * This iterator performs depth-first traversal of a subtree.
