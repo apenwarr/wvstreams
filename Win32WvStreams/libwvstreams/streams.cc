@@ -1,22 +1,22 @@
 // streams.cpp : Defines the entry point for the DLL application.
 //
-
 #include "streams.h"
+#include "wvstring.h"
 #include <assert.h>
-#include <wvstring.h>
+#include <errno.h>
 
-// these versions of close/read/write try to work with bot sockets and msvcrt 
+// these versions of close/read/write try to work with both sockets and msvcrt 
 // file descriptors! (I hope we never get a socket with the same VALUE
 // as a file descriptor!)
 int close(int fd)
 {
-    int retval = 0;
-    if (((retval = closesocket(fd)) < 0) && (GetLastError() == WSAENOTSOCK))
+    int retval = _close(fd), err = errno;
+    if (retval < 0 && err == EBADF)
     { 
-	// fd is not a socket, perhaps its a file descriptor?
-	retval = _close(fd);
-	if (retval < 0) 
-	    SetLastError(errno); // save the "real" errno
+	// fd is not a normal fd; perhaps it's a socket?
+	retval = closesocket(fd);
+	if (retval < 0 && GetLastError() == WSAENOTSOCK)
+	    SetLastError(err); // save the original errno
     } 
     return retval;
 }
@@ -26,7 +26,7 @@ int read(int fd, void *buf, size_t count)
     int retval = 0;
     if (((retval = recv(fd, (char *) buf, count, 0)) < 0) && (GetLastError() == WSAENOTSOCK))
     {
-	// fd is not a socket, perhaps its a file descriptor?
+	// fd is not a socket; perhaps it's a file descriptor?
 	retval = _read(fd, buf, count);
 	if (retval < 0) 
 	    SetLastError(errno); // save the "real" errno
@@ -39,7 +39,7 @@ int write(int fd, const void *buf, size_t count)
     int retval = 0;
     if (((retval = send(fd, (char *) buf, count, 0)) < 0) && (GetLastError() == WSAENOTSOCK))
     {
-	// fd is not a socket, perhaps its a file descriptor?
+	// fd is not a socket; perhaps it's a file descriptor?
 	retval = _write(fd, buf, count);
 	if (retval < 0) 
 	    SetLastError(errno); // save the "real" errno
@@ -49,7 +49,6 @@ int write(int fd, const void *buf, size_t count)
 
 int socketpair(int family, int type, int protocol, int *sb)
 {
-    int res = -1;
     SOCKET insock, outsock, newsock;
     struct sockaddr_in sock_in;
 
@@ -153,7 +152,7 @@ SocketFromFDMaker::SocketFromFDMaker(int fd, LPTHREAD_START_ROUTINE lpStartAddre
 {
     // might do this twice
     WSAData wsaData;
-    int result = WSAStartup(MAKEWORD(2,0), &wsaData);
+    WSAStartup(MAKEWORD(2,0), &wsaData);
 
     int s[2];
     socketpair(AF_INET, SOCK_STREAM, 0, s);

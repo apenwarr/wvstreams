@@ -26,16 +26,16 @@ export WVSTREAMS WVSTREAMS_SRC WVSTREAMS_LIB WVSTREAMS_INC WVSTREAMS_BIN
 
 SHELL=/bin/bash
 
-ifeq (${WVTESTRUN},)
-  WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
-endif
-
-#ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
-#  -include config.mk
-#endif
-
 ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
   include $(WVSTREAMS_SRC)/config.mk
+endif
+
+ifeq (${EXEEXT},.exe)
+  include $(WVSTREAMS_SRC)/wvrules-win32.mk
+endif
+
+ifeq (${WVTESTRUN},)
+  WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
 endif
 
 ifneq ("$(with_xplc)", "no")
@@ -260,6 +260,11 @@ endef
 
 wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
 
+../%.so:;	@echo "Shared library $@ does not exist!"; exit 1
+../%.a:;	@echo "Library $@ does not exist!"; exit 1
+../%.o:;	@echo "Object $@ does not exist!"; exit 1
+/%.a:;		@echo "Library $@ does not exist!"; exit 1
+
 %.o: %.c;	$(call wvcc ,$@,$<,$*)
 %.fpic.o: %.c;	$(call wvcc ,$@,$<,$*,-fPIC)
 %.o: %.cc;	$(call wvcxx,$@,$<,$*)
@@ -274,11 +279,6 @@ wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2
 %.E: %.cpp;	$(call wvcxx,$@,$<,$*,,-E)
 
 %.moc: %.h;	moc -o $@ $<
-
-../%.so:;	@echo "Shared library $@ does not exist!"; exit 1
-../%.a:;	@echo "Library $@ does not exist!"; exit 1
-../%.o:;	@echo "Object $@ does not exist!"; exit 1
-/%.a:;		@echo "Library $@ does not exist!"; exit 1
 
 %: %.o;		$(call wvlink,$@,$^) 
 %.t: %.t.o;	$(call wvlink,$@,$(WVSTREAMS_SRC)/wvtestmain.o $(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVUTILS))

@@ -1,0 +1,75 @@
+WVSTREAMS=.
+#%: %.cc
+#	$(error "barf!")
+include $(WVSTREAMS)/wvrules.mk
+include vars.mk
+
+all: fake-libs
+
+%.exe: %
+	rm -f $@
+	ln -s $(shell basename $<) $@
+	
+include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
+
+-include $(shell find . -name '.*.d') /dev/null
+
+	
+LIBS+=-lssl -lcrypto -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++
+
+-lxplc -lxplc-cxx: ;
+
+crypto/tests/ssltest: crypto/tests/ssltest.o
+
+default: ipstreams/tests/tcptest crypto/tests/ssltest
+
+_OBJFILES=$(call objects,utils streams ipstreams uniconf crypto \
+			urlget configfile)
+
+# object files that we replace completely for win32
+OBJREPLACED=utils/wvtask.o
+
+# object files that we can't use in win32 for now, but which we should
+# definitely fix
+OBJFIXME=\
+	utils/wvdiriter.o \
+	streams/fileutils.o \
+	streams/wvdaemon.o \
+	streams/wvlogfile.o \
+	streams/wvpipe.o \
+	streams/wvstreamsdaemon.o \
+	streams/wvwatcher.o \
+	ipstreams/wvunixsocket.o \
+
+# object files that we probably just shouldn't include in win32 libraries
+OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
+	utils/strcrypt.o \
+	utils/wvbdbhash.o \
+	utils/wvfork.o \
+	utils/wvqdbmhash.o \
+	utils/wvshmzone.o \
+	utils/wvsubproc.o \
+	streams/wvlockdev.o \
+	streams/wvlockfile.o \
+	streams/wvmodem.o \
+	streams/wvsyslog.o \
+	ipstreams/wvipraw.o
+	
+OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
+
+$(TESTS): libwvwin32.a
+$(addsuffix .o,$(TESTS)):
+tests: $(TESTS)
+
+W=$(WVSTREAMS)/Win32WvStreams
+libwvwin32.a: $(call objects,$W/libwvutils $W/libwvstreams) $(OBJFILES)
+
+fake-libs: libwvwin32.a
+	for d in libwvbase libwvutils libwvstreams libuniconf; do \
+		rm -f $$d.a $$d.so; \
+		ln -s libwvwin32.a $$d.a; \
+		ln -s libwvwin32.a $$d.so; \
+	done
+
+clean:
+	rm -f *test *.exe

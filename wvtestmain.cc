@@ -6,17 +6,18 @@
 
 static int fd_count(const char *when)
 {
-    long arg = 0;
     int count = 0;
     
     printf("fds open at %s:", when);
     
     for (int fd = 0; fd < 1024; fd++)
     {
-	if (!fcntl(fd, F_GETFD, &arg))
+	int nfd = dup(fd);
+	if (nfd >= 0) // didn't fail: fd was open!
 	{
 	    count++;
 	    printf(" %d", fd);
+	    close(nfd);
 	}
     }
     printf("\n");
