@@ -63,7 +63,11 @@ WvStream::~WvStream()
 {
     TRACE("destroying %p\n", this);
     if (running_callback)
+    {
+	// user should have called terminate_continue_select()...
 	TRACE("eek! destroying while running_callback!\n");
+	assert(!running_callback);
+    }
     close();
     
     if (task)
@@ -386,7 +390,18 @@ char *WvStream::getline(time_t wait_msec, char separator)
 	
 	// note: this _always_ does the select, even if wait_msec < 0.
 	// That's good, because the fd might be nonblocking!
-	if (!select(wait_msec) && isok() && wait_msec >= 0)
+	if (uses_continue_select)
+	{
+	    if (!continue_select(wait_msec) && isok() && wait_msec >= 0)
+		return NULL;
+	}
+	else
+	{
+	    if (!select(wait_msec) && isok() && wait_msec >= 0)
+		return NULL;
+	}
+	
+	if (!isok())
 	    return NULL;
 
 	// read a few bytes
@@ -651,6 +666,19 @@ bool WvStream::continue_select(time_t msec_timeout)
     
     // when we get here, someone has jumped back into our task
     return !alarm_was_ticking;
+}
+
+
+void WvStream::terminate_continue_select()
+{
+    close();
+    if (task)
+    {
+	while (task->isrunning())
+	    taskman->run(*task);
+	task->recycle();
+	task = NULL;
+    }
 }
 
 

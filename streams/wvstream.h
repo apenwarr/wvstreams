@@ -195,6 +195,11 @@ public:
     bool uses_continue_select;
     size_t personal_stack_size;	// stack size to reserve for continue_select()
     bool continue_select(time_t msec_timeout);
+    
+    // you MUST run this from your destructor if you use continue_select(), or
+    // very weird things will happen if someone deletes your object while in
+    // continue_select().
+    void terminate_continue_select();
 
     // get the remote address from which the last data block was received.
     // May be NULL.  The pointer becomes invalid upon the next call to read().
