@@ -26,26 +26,26 @@ WvGdbmHashBase::~WvGdbmHashBase()
 }
 
 
-int WvGdbmHashBase::add(datum key, datum data, bool replace)
+int WvGdbmHashBase::add(const datum &key, const datum &data, bool replace)
 {
     return gdbm_store(dbf, key, data,
             replace ? GDBM_REPLACE : GDBM_INSERT);
 }
 
 
-int WvGdbmHashBase::remove(datum key)
+int WvGdbmHashBase::remove(const datum &key)
 {
     return gdbm_delete(dbf, key);
 }
 
 
-datum WvGdbmHashBase::find(datum key)
+datum WvGdbmHashBase::find(const datum &key)
 {   
     return gdbm_fetch(dbf, key);
 }
 
 
-bool WvGdbmHashBase::exists(datum key)
+bool WvGdbmHashBase::exists(const datum &key)
 {
     return gdbm_exists(dbf, key);
 }

@@ -44,50 +44,11 @@ Silly *_wv_deserialize<Silly *>(WvBuf &buf)
 template <>
 Silly _wv_deserialize<Silly>(WvBuf &buf)
 {
-    Silly *tmp = wv_deserialize<Silly *>(buf);
+    Silly *tmp = _wv_deserialize<Silly *>(buf);
     Silly tmp2 = *tmp;
     delete tmp;
     return tmp2;
 }
-
-
-/**
- * Serialize a list of serializable things.
- * 
- * Oh boy - I think I'm having a bit too much fun.
- */
-template <typename T>
-void _wv_serialize(WvBuf &buf, WvList<T> &list)
-{
-    // save the number of elements
-    _wv_serialize(buf, (size_t)list.count());
-    
-    // save the elements
-    typename WvList<T>::Iter i(list);
-    for (i.rewind(); i.next(); )
-	_wv_serialize(buf, *i);
-}
-
-
-/** Deserialize a list of serializable things. */
-template <typename T>
-class WvDeserialize<WvList<T> *>
-{
-public:
-    static WvList<T> *go(WvBuf &buf)
-    {
-	WvList<T> *list = new WvList<T>;
-	size_t nelems = wv_deserialize<size_t>(buf);
-	
-	for (size_t count = 0; count < nelems; count++)
-	{
-	    T t = wv_deserialize<T>(buf);
-	    list->append(new T(t), true);
-	}
-	
-	return list;
-    }
-};
 
 
 DeclareWvList(int);
@@ -141,7 +102,13 @@ int main()
     wv_serialize(buf, list);
     printf("buf used: %d\n", buf.used());
     
-    intList *list2 = wv_deserialize<intList *>(buf);
+    WvDynBuf xbuf;
+    wv_serialize(xbuf, buf);
+    
+    WvBuf *xbuf2 = wv_deserialize<WvBuf *>(xbuf);
+    intList *list2 = wv_deserialize<intList *>(*xbuf2);
+    delete xbuf2;
+    
     printf("%d list elements after deserialize.\n", list.count());
     intList::Iter i(*list2);
     for (i.rewind(); i.next(); )

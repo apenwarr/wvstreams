@@ -102,6 +102,34 @@ inline void _wv_serialize(WvBuf &buf, WvStringParm s)
 }
 
 
+/**
+ * Serialize a WvBuf.  This is handier than it sounds, because then
+ * WvGdbmHash's value can be a WvBuf.
+ */
+inline void _wv_serialize(WvBuf &buf, WvBuf &inbuf)
+{
+    wv_serialize(buf, inbuf.used());
+    buf.merge(inbuf);
+}
+
+
+/**
+ * Serialize a list of serializable things.
+ * 
+ * Oh boy - I think I'm having a bit too much fun.
+ */
+template <typename T>
+void _wv_serialize(WvBuf &buf, WvList<T> &list)
+{
+    // save the number of elements
+    _wv_serialize(buf, (size_t)list.count());
+    
+    // save the elements
+    typename WvList<T>::Iter i(list);
+    for (i.rewind(); i.next(); )
+	_wv_serialize(buf, *i);
+}
+
 
 
 /** Deserialize an object.  See wv_deserialize(). */
@@ -110,7 +138,7 @@ template <typename T>
 
 
 /**
- * Deserialize a complex nested templated object.  See wv_deserialize().
+ * Deserialize a complex templated object.  See wv_deserialize().
  * 
  * This class is needed because partial template specialization only works
  * on classes, not on functions.  So in order to define a generic deserializer
@@ -123,6 +151,29 @@ public:
     static T go(WvBuf &buf)
 	{ return _wv_deserialize<T>(buf); }
 };
+
+
+/**
+ * If there's a deserializer for type "T", this will make a default
+ * deserializer for type "T *"; that is, it'll allocate the new object
+ * dynamically and you'll have to free it after.
+ * 
+ * This helps when you want to assume *all* deserializers return pointers
+ * that you need to delete later.
+ * 
+ * FIXME: this class takes precedence over *specialized* _wv_deserialize()
+ * functions for pointers!
+ */
+// note: this has to be a class because we use partial template
+// specialization, which doesn't work on functions.
+template <typename T>
+class WvDeserialize<T *>
+{
+public:
+    static T *go(WvBuf &buf)
+        { return new T(_wv_deserialize<T>(buf)); }
+};
+
 
 
 /**
@@ -219,5 +270,43 @@ inline unsigned char _wv_deserialize<unsigned char>(WvBuf &buf)
  */
 template <>
 extern WvString _wv_deserialize<WvString>(WvBuf &buf);
+
+
+/** Deserialize a WvBuf. */
+// FIXME: it should be possible to do this without using a class!
+template <>
+class WvDeserialize<WvBuf *>
+{
+public:
+    static inline WvBuf *go(WvBuf &buf)
+    {
+	size_t len = wv_deserialize<size_t>(buf);
+	WvBuf *outbuf = new WvInPlaceBuf(new char[len], 0, len);
+	outbuf->merge(buf, len);
+	return outbuf;
+    }
+};
+
+
+/** Deserialize a list of serializable things. */
+template <typename T>
+class WvDeserialize<WvList<T> *>
+{
+public:
+    static WvList<T> *go(WvBuf &buf)
+    {
+	WvList<T> *list = new WvList<T>;
+	size_t nelems = wv_deserialize<size_t>(buf);
+	
+	for (size_t count = 0; count < nelems; count++)
+	{
+	    T t = wv_deserialize<T>(buf);
+	    list->append(new T(t), true);
+	}
+	
+	return list;
+    }
+};
+
 
 #endif // __WVSERIALIZE_H
