@@ -1,3 +1,15 @@
+#include "wvautoconf.h"
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
+
+#ifndef _WIN32
+#include <signal.h>
+#endif
+
 #include "wvlogrcv.h"
 #include "uniconfdaemon.h"
 #include "uniclientconn.h"
@@ -8,11 +20,6 @@
 #include "wvstrutils.h"
 #include "wvfileutils.h"
 #include "wvcrash.h"
-
-#ifndef _WIN32
-#include <getopt.h>
-#include <signal.h>
-#endif
 
 #ifdef WITH_SLP
 #include "slp.h"

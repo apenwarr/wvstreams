@@ -161,6 +161,6 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 #else // Not Linux
 
 void wvcrash(int sig) {}
-void wvcrash_setup(const char *_argv0) {}
+void wvcrash_setup(const char *_argv0, const char *_desc) {}
 
 #endif // Not Linux

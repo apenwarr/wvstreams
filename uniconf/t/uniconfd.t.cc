@@ -109,7 +109,7 @@ static void linecmp(WvIStreamList &sl, WvBuf &buf,
 		    const char *w1, const char *w2 = NULL,
 		    const char *w3 = NULL)
 {
-    printf("Awaiting '%s' '%s' '%s'\n", w1, w2, w3);
+    printf("%s", WvString("Awaiting '%s' '%s' '%s'\n", w1, w2, w3).cstr());
     spin(sl);
     
     WvString line = wvtcl_getword(buf, "\r\n");

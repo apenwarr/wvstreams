@@ -69,9 +69,8 @@ void WvLogFile::_make_prefix()
     if (fstat(getfd(), &statbuf) == -1)
         statbuf.st_size = 0;
 
-    // Make sure we are calculating last_day in the current time zone.
-    if (last_day < ((timenow + tmstamp->tm_gmtoff)/86400) 
-	|| statbuf.st_size > MAX_LOGFILE_SZ)
+    // Start a new log when it's a new day or the file is too big
+    if (last_day != tmstamp->tm_yday || statbuf.st_size > MAX_LOGFILE_SZ)
         start_log();
 
     WvLogFileBase::_make_prefix();
@@ -86,7 +85,7 @@ void WvLogFile::start_log()
     struct stat statbuf;
     time_t timenow = wvtime().tv_sec;
     struct tm* tmstamp = localtime(&timenow);
-    last_day = (timenow + tmstamp->tm_gmtoff) / 86400;
+    last_day = tmstamp->tm_yday;
     char buf[20];
     WvString fullname;
     strftime(buf, 20, "%Y-%m-%d", tmstamp);
