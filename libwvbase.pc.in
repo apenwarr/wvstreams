@@ -1,7 +1,0 @@
-Name: libwvbase
-Description: Base WvStreams library
-Version: 4.0
-Requires: xplc >= 0.3.7
-Libs: -L@prefix@/lib -lwvbase
-Cflags: -I@prefix@/include/wvstreams
-

@@ -1,6 +1,0 @@
-Name: UniConf
-Description: The One True Configuration System
-Version: 4.0
-Requires: libwvstreams = 4.0, libwvutils = 4.0, libwvbase = 4.0
-Libs: -L@prefix@/lib -luniconf
-Cflags: -I@prefix@/include/wvstreams

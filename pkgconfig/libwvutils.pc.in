@@ -1,0 +1,12 @@
+version=@PACKAGE_VERSION@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: WvStreams utilities
+Description: WvStreams utility library
+Version: ${version}
+Requires: libwvbase = ${version}
+Libs: -L${libdir} -lwvutils
+Cflags: -I${includedir}/wvstreams
