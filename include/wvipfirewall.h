@@ -3,15 +3,18 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  * WvIPFirewall is an extremely simple hackish class that handles the Linux
- * 2.1 "ipchains" firewall.  Someday, this might be rewritten and much
- * improved.
+ * 2.4 "iptables" firewall.  It's okay to create more than one instance
+ * of this class; they'll co-operate.
+ * 
+ * They need you to have created the appropriate firewall tables already,
+ * however, and call them from the right places in the Input and/or Forward
+ * firewalls.
  */
 #ifndef __WVIPFIREWALL_H
 #define __WVIPFIREWALL_H
 
 #include "wvstringlist.h"
 #include "wvaddr.h"
-
 
 
 DeclareWvList(WvIPPortAddr);
