@@ -112,6 +112,7 @@ void UniConfDaemon::run()
         if (keymodified)
 	    notifier.run();
     }
+    log("We are now dying!\n");
 
     // Make sure all of our listeners are closed
     list->close();

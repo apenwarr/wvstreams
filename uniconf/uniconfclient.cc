@@ -14,10 +14,9 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, bool automount) :
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
     // actually try to finish connecting until in the first pre_select.
-     if (stream->select(0, true, true, false) && stream->isok())
-        conn = new UniConfConn(stream);
-    else
-        conn = NULL;
+    conn = new UniConfConn(stream);
+    conn->select(15000, true, false, false);
+
     waitforsubt = false;
     if (automount)
         top->mount(this);

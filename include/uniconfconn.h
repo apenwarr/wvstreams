@@ -13,6 +13,7 @@ public:
     WvString gettclline();
     virtual void fillbuffer();
     virtual void execute();
+    virtual bool isok() const;
 protected:
 
     WvDynamicBuffer incomingbuff;

@@ -37,3 +37,7 @@ void UniConfConn::execute()
     // now do nothing
 }
 
+bool UniConfConn::isok() const
+{
+    return cloned->isok();
+}
