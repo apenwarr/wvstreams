@@ -51,7 +51,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 dist-hack-clean:
 	rm -f stamp-h.in
 
-dist: dist-hack-clean configure distclean
+dist: dist-hack-clean configure distclean ChangeLog
 	rm -rf autom4te.cache
 
 runconfigure: config.mk include/wvautoconf.h
