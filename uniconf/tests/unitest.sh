@@ -24,6 +24,7 @@ RECONFIG()
 {
     killall -q uniconfd
     killall -q -9 uniconfd
+    rm -f $PWD/unisocket
     
     XDAEMON="$DAEMON"
     if [ "$1" = "--daemon" ]; then
@@ -35,8 +36,8 @@ RECONFIG()
         UNICONF="$@"
     else
         echo "Starting UniConfDaemon."
-	../daemon/uniconfd -p4111 -s0 "$@"
-	UNICONF="tcp:localhost:4111"
+	../daemon/uniconfd -p0 -s0 -u$PWD/unisocket "$@"
+	UNICONF="unix:$PWD/unisocket"
     fi
 }
 
