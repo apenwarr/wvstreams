@@ -26,7 +26,7 @@
 
 pid_t wvfork(int dontclose1, int dontclose2)
 {
-    WvIntTable t(1);
+    intTable t(1);
     if (dontclose1 >= 0)
 	t.add(&dontclose1, false);
     if (dontclose2 >= 0)
@@ -64,7 +64,7 @@ pid_t wvfork_start(int *waitfd)
     return pid;
 }
 
-pid_t wvfork(WvIntTable &dontclose)
+pid_t wvfork(intTable &dontclose)
 {
     int waitfd = -1;
     pid_t pid = wvfork_start(&waitfd);

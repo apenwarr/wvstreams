@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include "wvhashtable.h"
 
-DeclareWvTable3( int, WvIntTable, );
+DeclareWvTable(int);
 
 /**
  * wvfork_start is just like fork, except that it will block the
@@ -31,7 +31,7 @@ extern pid_t wvfork_start(int *waitfd);
  * watchdog reboots because the CHILD process wasn't touching it, and
  * it was already open before the fork()...
  */
-extern pid_t wvfork( int dontclose1=-1, int dontclose2=-1 );
-extern pid_t wvfork( WvIntTable& dontclose );
+extern pid_t wvfork(int dontclose1 = -1, int dontclose2 = -1);
+extern pid_t wvfork(intTable &dontclose );
 
 #endif
