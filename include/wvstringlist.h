@@ -55,7 +55,7 @@ public:
     void fill(const char * const *array);
 
     void append(WvStringParm str);
-    void append(const WvString *strp, bool autofree, char *id = NULL);
+    void append(WvString *strp, bool autofree, char *id = NULL);
 
     /** 
      * get the first string in the list, or an empty string if the list is empty.

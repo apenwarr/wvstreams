@@ -44,9 +44,9 @@ void WvStringList::append(WvStringParm str)
 }
 
 
-void WvStringList::append(const WvString *strp, bool autofree, char *id)
+void WvStringList::append(WvString *strp, bool autofree, char *id)
 {
-    WvStringListBase::append(new WvString(*strp), true);
+    WvStringListBase::append(strp, autofree, id);
 }
 
 
