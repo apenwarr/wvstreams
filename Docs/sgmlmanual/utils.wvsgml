@@ -270,22 +270,77 @@ WVPART(utils, The Utilities Library,
    
   )
 
+  WVSECT1(encoding, Encoding Tools (WvEncoder.cc),
 
-  WVSECT1(base64, Base64 Encoding Tools (base64.cc),
+   The base encoder class.
 
-   Functions for encoding and decoding strings in MIME Base64 notation.
-   
-   WVSECT2(base64encode, base64_encode(),
-    WVCMD(WvString base64_encode(const void *buf, size_t length))
-    
-    Converts buf to base64 encoding and returns a new WvString with the result.
-   )
-   
-   WVSECT2(base64decode, base64_decode(),
-    WVCMD(WvBuffer &base64_decode(WvStringParm in, WvBuffer &out))
-    
-    Converts the WvString in from base64 format into a normal string and
-    returns it as a WvBuffer.
+
+   Encoders read data from an input buffer, transform it in some way, then
+   write the results to an output buffer. The resulting data may be of a
+   different size or data type, and may or may not depend on previous data.
+
+   Encoders may or may not possess the following characteristics:
+
+   - Statefulness: encoding of successive input elements may depend on
+     previous one
+
+   - Error states: encoding may enter an error state indicated by isok() ==
+     false due to problems detected in the in encoder has been used
+
+   - Minimum input block size: data will not be drawn from the input buffer
+     until enough is available or the encoder is flushed
+
+   - Minimum output block size: data will not be written to the output
+     buffer until enough free space is available
+
+   - Synchronization boundaries: data is process or generated in chunks which
+     can be manipulated independently of any others, in which case flush() may
+     cause the encoder to produce such a boundary in its output
+
+   - Recognition of end-of-data mark: a special sequence marks the end of
+     input, after which the encoder transitions to isfinished() == true
+
+   - Generation of end-of-data mark: a special sequence marks the end of
+     output when the encoder transitions to isfinished() == true, usually by an
+     explicit call to finish()
+
+   - Reset support: the encoder may be reset to its initial state and thereby
+     recycled at minimum cost
+
+
+   Helper functions are provided for encoding data from plain
+   memory buffers and from strings.  Some have no encode(...)
+   equivalent because they cannot incrementally encode from
+   the input, hence they always use the flush option.
+
+
+   The 'mem' suffix has been tacked on to these functions to
+   resolve ambiguities dealing with 'char *' that should be
+   promoted to WvString.  For instance, consider the signatures
+   of strflushmem(const void*, size_t) and strflushstr(WvStringParm,
+   bool).
+
+
+   Another reason for these suffixes is to simplify overloading
+   the basic methods in subclasses since C++ would require the
+   subclass to redeclare all of the other signatures for
+   an overloaded method.
+
+   WVSECT2(wvbase64, WvBase64.cc(),
+
+    Functions for encoding and decoding strings in MIME Base64 notation.
+
+    WVSECT3(wvbase64encode, WvBase64Encoder(),
+     Converts a string to base64 encoding and returns a new WvBuffer in
+     result.
+    )
+
+    WVSECT3(wvbase64decode, WvBase64Decoder(),
+     Converts a string in from base64 format into a normal format and
+     returns it as a WvBuffer.
+     
+     Insert examples here...
+    )
    )
   )
  )
