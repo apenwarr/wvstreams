@@ -158,6 +158,15 @@ public:
         { load_file(filename); }
     void load_file(WvStringParm filename); // append any config file
 
+    // Gets a user's password and decrypts it.  This isn't defined in wvconf.cc.
+    WvString get_passwd(WvStringParm user);
+
+    // Encrypts and sets a user's password.  This isn't defined in wvconf.cc.
+    void set_passwd(WvStringParm user, WvStringParm passwd);
+
+    // Converts all passwords to unencrypted format.  Not defined in wvconf.cc.
+    void convert_to_old_pw();
+
 private:
     bool dirty;			// true if changed since last flush()
     bool error;			// true if something has gone wrong
