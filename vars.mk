@@ -25,7 +25,7 @@ endif
 
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
-TARGETS += uniconf/daemon/uniconfdaemon
+TARGETS += uniconf/daemon/uniconfdaemon crypto/tests/ssltest
 
 ifneq ("$(with_ogg)", "no")
 ifneq ("$(with_vorbis)", "no")

@@ -30,12 +30,12 @@ int main(int argc, char **argv)
     WvStreamList l;
     
     l.append(&cli, false);
-    l.append(wvcon, false);
+    l.append(wvin, false);
     
-    cli.autoforward(*wvcon);
-    wvcon->autoforward(cli);
+    cli.autoforward(*wvout);
+    wvin->autoforward(cli);
     
-    while (cli.isok() && wvcon->isok() && !want_to_die)
+    while (cli.isok() && !want_to_die)
     {
 	if (l.select(-1))
 	    l.callback();
