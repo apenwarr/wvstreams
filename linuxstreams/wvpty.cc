@@ -27,19 +27,26 @@ bool WvPty::open_master()
     const char *xvals = "pqrstuvwxyzPQRST";
     const char *yvals = "0123456789abcdef";
     char pty[] = "/dev/ptyXY";
+    char tty[] = "/dev/ttyXY";
 
     for (int i=0; xvals[i]; ++i)
     {
         pty[8] = xvals[i];
+        tty[8] = xvals[i];
 
         for (int j=0; yvals[j]; ++j)
         {
             pty[9] = yvals[j];
+            tty[9] = yvals[j];
 
             int fd = ::open(pty, O_RDWR);
-            if (fd < 0)
+	    _sfd = ::open(tty, O_RDWR);
+            if (fd < 0 || _sfd < 0)
             {
-                if (errno == ENOENT)
+		int saved_errno = errno;
+		if (fd >= 0) ::close(fd);
+		if (_sfd >= 0) ::close(_sfd);
+                if (saved_errno == ENOENT)
                     return false; // no more ptys
             }
             else
@@ -51,8 +58,7 @@ bool WvPty::open_master()
                 _master = pty;
                 _master.unique();
 
-                pty[5] = 't';
-                _slave = pty;
+                _slave = tty;
                 _slave.unique();
 
                 return true;
@@ -67,15 +73,32 @@ bool WvPty::open_slave()
 {
     DPRINTF("Chosen TTY is %s\n", _slave.cstr());
 
+#if 0
+    struct stat st;
+
+    if (stat(_slave, &st) == 0)
+	DPRINTF("Before: st_mode=%o, st_uid=%d, st_gid=%d\n",
+		st.st_mode, st.st_uid, st.st_gid);
+    else
+	DPRINTF("stat() failed\n");
+#endif
+
     // try to change owner and permissions.  this will only work if we 
     // are root; if we're not root, we don't care.
     struct group *gr = ::getgrnam("tty");
     ::chown(_slave, ::getuid(), gr? gr->gr_gid: (gid_t)-1);
 
-    // Workaround for bug 9900
-    //::chmod(_slave, S_IRUSR | S_IWUSR | S_IWGRP);
+    ::chmod(_slave, S_IRUSR | S_IWUSR | S_IWGRP);
 
-    setfd(::open(_slave, O_RDWR));
+#if 0
+    if (stat(_slave, &st) == 0)
+	DPRINTF("After: st_mode=%o, st_uid=%d, st_gid=%d\n",
+		st.st_mode, st.st_uid, st.st_gid);
+    else
+	DPRINTF("stat() failed\n");
+#endif
+
+    setfd(_sfd);
     
     return getfd() != -1;
 }
@@ -162,6 +185,10 @@ WvPty::WvPty(const char *program, const char * const *argv,
 _error:
         setfd(-1);
         _exit(242);
+    }
+    else
+    {
+	::close(_sfd);
     }
 }
 

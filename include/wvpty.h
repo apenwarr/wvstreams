@@ -21,6 +21,7 @@ class WvPty : public WvFDStream
         WvString _slave;
         pid_t _pid;
         int _exit_status;
+	int _sfd;
 
         bool open_master();
         bool open_slave();
