@@ -12,7 +12,11 @@ static void spin(WvIStreamList &l)
 {
     int max;
     for (max = 0; max < 100 && l.select(10); max++)
+    {
+	wvcon->print(".");
 	l.callback();
+    }
+    wvcon->print("\n");
     WVPASS(max < 100);
 }
 
@@ -50,22 +54,29 @@ static void linecmp(WvIStreamList &sl, WvBuf &buf,
 
 WVTEST_MAIN("daemon surprise close")
 {
+    WvIStreamList l;
+    WVPASSEQ(WvIStreamList::globallist.count(), 0);
+    spin(WvIStreamList::globallist);
+    
     signal(SIGPIPE, SIG_IGN);
     WvIPPortAddr addr("0.0.0.0:4113");
     
     UniConfRoot cfg("temp:");
     UniConfDaemon daemon(cfg, false, NULL);
     
+    spin(l);
+    
     WVPASS(daemon.isok());
     daemon.setuptcpsocket(addr);
     WVPASS(daemon.isok());
+    
+    spin(l);
     
     WvDynBuf buf;
     WvTCPConn tcp(addr);
     tcp.setcallback(appendbuf, &buf);
     WVPASS(tcp.isok());
     
-    WvIStreamList l;
     l.append(&daemon, false);
     l.append(&tcp, false);
     

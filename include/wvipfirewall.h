@@ -89,7 +89,7 @@ public:
     void del_proto(WvStringParm proto);
     void del_port(const WvIPPortAddr &addr);
     void del_redir(const WvIPPortAddr &src, int dstport);
-    void del_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst);
+    void del_forward(const WvIPPortAddr &src);
     void del_redir_all(int dstport);
 };
 

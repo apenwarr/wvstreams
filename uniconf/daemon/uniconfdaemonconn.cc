@@ -7,6 +7,7 @@
 #include "uniconfdaemonconn.h"
 #include "uniconfdaemon.h"
 #include "wvtclstring.h"
+#include "wvstrutils.h"
 
 
 /***** UniConfDaemonConn *****/
@@ -171,13 +172,13 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 	{
 	    UniConf::RecursiveIter it(cfg);
 	    for (it.rewind(); it.next(); )
-		writevalue(it->fullkey(cfg), it->getme());
+		writevalue(it->fullkey(cfg), it._value());
 	}
 	else
 	{
 	    UniConf::Iter it(cfg);
 	    for (it.rewind(); it.next(); )
-		writevalue(it->fullkey(cfg), it->getme());
+		writevalue(it->fullkey(cfg), it._value());
 	}
 	writeok();
     }
@@ -189,8 +190,8 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
 {
     bool haschild = root[key].haschildren();
-    WvString msg("%s %s", wvtcl_escape(key), haschild ? "TRUE" : "FALSE");
-    writecmd(REPLY_CHILD, msg);
+    writecmd(REPLY_CHILD,
+	     spacecat(wvtcl_escape(key), haschild ? "TRUE" : "FALSE"));
 }
 
 
@@ -221,10 +222,10 @@ void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
     fullkey.append(key);
 
     if (value.isnull())
-        msg = WvString("%s", wvtcl_escape(fullkey));
+        msg = wvtcl_escape(fullkey);
     else
-        msg = WvString("%s %s", wvtcl_escape(fullkey),
-                                wvtcl_escape(cfg[key].getme()));
+        msg = spacecat(wvtcl_escape(fullkey),
+		       wvtcl_escape(cfg[key].getme()));
 
     writecmd(UniClientConn::EVENT_NOTICE, msg);
 }

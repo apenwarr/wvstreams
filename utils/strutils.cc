@@ -94,6 +94,35 @@ char *trim_string(char *string, char c)
 }
 
 
+// return the string formed by concatenating string 'a' and string 'b' with
+// the 'sep' character between them.  For example,
+//    spacecat("xx", "yy", ";")
+// returns "xx;yy".
+// 
+// This function is much faster than the more obvious WvString("%s;%s", a, b),
+// so it's useful when you're producing a *lot* of string data.
+WvString spacecat(WvStringParm a, WvStringParm b, char sep)
+{
+    int alen = a ? strlen(a) : 0;
+    int blen = b ? strlen(b) : 0;
+    WvString s;
+    s.setsize(alen + blen + 2);
+    char *cptr = s.edit();
+
+    if (a)
+	memcpy(cptr, a, alen);
+
+    cptr[alen] = sep;
+
+    if (b)
+	memcpy(cptr + alen + 1, b, blen);
+
+    cptr[alen + 1 + blen] = 0;
+    
+    return s;
+}
+
+
 // Replaces whitespace characters with nonbreaking spaces.
 char *non_breaking(char * string)
 {
