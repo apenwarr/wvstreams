@@ -2,7 +2,7 @@
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Streams with built-in cryptography on read/write.
+ * Miscellaneous cryptography primitives.
  */
 #ifndef __WVCRYPTO_H
 #define __WVCRYPTO_H
@@ -12,6 +12,7 @@
 #include "wvencoderstream.h"
 #include "wvrsa.h"
 #include "wvblowfish.h"
+#include "wvxor.h"
 
 /**
  * a very simple stream that returns randomness from /dev/urandom
@@ -110,30 +111,6 @@ private:
 
 
 /**
- * An encoder implementing simple XOR encryption.
- * Mainly useful for testing.
- */
-class WvXOREncoder : public WvEncoder
-{
-public:
-    /**
-     * Creates a new XOR encoder / decoder.
-     *   _key    : the key
-     *   _keylen : the length of the key in bytes
-     */
-    WvXOREncoder(const void *_key, size_t _keylen);
-    virtual ~WvXOREncoder();
-    
-    bool encode(WvBuffer &in, WvBuffer &out, bool flush);
-
-private:
-    unsigned char *key;
-    size_t keylen;
-    int keyoff;
-};
-
-
-/**
  * A counter mode encryption encoder.
  */
 class WvCounterModeEncoder
@@ -176,18 +153,5 @@ protected:
     
     virtual void incrcounter();    
 };
-
-
-/**
- * A crypto stream implementing XOR encryption.
- * See WvXOREncoder for details.
- */
-class WvXORStream : public WvEncoderStream
-{
-public:
-    WvXORStream(WvStream *_cloned, const void *key, size_t _keysize);
-    virtual ~WvXORStream() { }
-};
-
 
 #endif // __WVCRYPTO_H

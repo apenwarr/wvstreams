@@ -2,12 +2,10 @@
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Streams with built-in cryptography on read/write.  See wvcrypto.h.
+ * Miscellaneous cryptography primitives.
  */
 #include "wvcrypto.h"
-#include "strutils.h"
 #include <assert.h>
-#include <rand.h>
 #include <evp.h>
 #include <pem.h>
 
@@ -145,36 +143,6 @@ void WvMessageDigest::init()
 //    EVP_DigestInit_ex(mdctx, md, NULL);
 }
 
-////////////////////////////// WvXOREncoder
-
-WvXOREncoder::WvXOREncoder(const void *_key, size_t _keylen) :
-    keylen(_keylen), keyoff(0)
-{
-    key = new unsigned char[keylen];
-    memcpy(key, _key, keylen);
-}
-
-WvXOREncoder::~WvXOREncoder()
-{
-    delete[] key;
-}
-
-bool WvXOREncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
-{
-    size_t len = inbuf.used();
-    unsigned char *data = inbuf.get(len);
-    unsigned char *out = outbuf.alloc(len);
-
-    // FIXME: this loop is SLOW! (believe it or not)
-    while (len-- > 0)
-    {
-        *out++ = (*data++) ^ key[keyoff++];
-        keyoff %= keylen;
-    }
-    return true;
-}
-
-
 ////////////////////////////// WvCounterModeEncoder
 
 WvCounterModeEncoder::WvCounterModeEncoder(WvEncoder *_keycrypt,
@@ -247,15 +215,4 @@ bool WvCounterModeEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
         incrcounter();
     }
     return true;
-}
-
-
-////////////////////////////// WvXORStream
-
-WvXORStream::WvXORStream(WvStream *_cloned,
-    const void *_key, size_t _keysize) :
-    WvEncoderStream(_cloned)
-{
-    readchain.append(new WvXOREncoder(_key, _keysize), true);
-    writechain.append(new WvXOREncoder(_key, _keysize), true);
 }

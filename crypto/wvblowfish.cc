@@ -11,9 +11,9 @@
 
 /***** WvBlowfishEncoder ****/
 
-WvBlowfishEncoder::WvBlowfishEncoder(Mode _mode, bool _encrypt,
+WvBlowfishEncoder::WvBlowfishEncoder(Mode _mode,
     const void *_key, size_t _keysize) :
-    mode(_mode), encrypt(_encrypt), key(NULL)
+    mode(_mode), key(NULL)
 {
     setkey(_key, _keysize);
 }
@@ -40,23 +40,29 @@ bool WvBlowfishEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     size_t len = in.used();
     bool success = true;
-    if (mode == ECB)
-    {
-        size_t remainder = len & 7;
-        len -= remainder;
-        if (remainder != 0 && flush)
+    switch (mode) {
+        case ECBEncrypt:
+        case ECBDecrypt:
         {
-            if (encrypt)
+            size_t remainder = len & 7;
+            len -= remainder;
+            if (remainder != 0 && flush)
             {
-                // if flushing on encryption, add some randomized padding
-                size_t padlen = 8 - remainder;
-                unsigned char *pad = in.alloc(padlen);
-                RAND_pseudo_bytes(pad, padlen);
-                len += 8;
+                if (mode == ECBEncrypt)
+                {
+                    // if flushing on encryption, add some randomized padding
+                    size_t padlen = 8 - remainder;
+                    unsigned char *pad = in.alloc(padlen);
+                    RAND_pseudo_bytes(pad, padlen);
+                    len += 8;
+                }
+                else // nothing we can do here, flushing does not make sense!
+                    success = false;
             }
-            else // nothing we can do here, flushing does not make sense!
-                success = false;
         }
+
+        default:
+            break;
     }
     if (len == 0) return success;
     
@@ -65,22 +71,24 @@ bool WvBlowfishEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
     
     switch (mode)
     {
-        case ECB:
+        case ECBEncrypt:
+        case ECBDecrypt:
             // ECB works 64bits at a time
             while (len >= 8)
             {
                 BF_ecb_encrypt(data, crypt, key,
-                    encrypt ? BF_ENCRYPT : BF_DECRYPT);
+                    mode == ECBEncrypt ? BF_ENCRYPT : BF_DECRYPT);
                 len -= 8;
                 data += 8;
                 crypt += 8;
             }
             break;
 
-        case CFB:
+        case CFBEncrypt:
+        case CFBDecrypt:
             // CFB simulates a stream
-            BF_cfb64_encrypt(data, crypt, len, key, ivec,
-                &ivecoff, encrypt ? BF_ENCRYPT : BF_DECRYPT);
+            BF_cfb64_encrypt(data, crypt, len, key, ivec, &ivecoff,
+                mode == CFBEncrypt ? BF_ENCRYPT : BF_DECRYPT);
             break;
     }
     return success;
@@ -90,11 +98,12 @@ bool WvBlowfishEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 /***** WvBlowfishStream *****/
 
 WvBlowfishStream::WvBlowfishStream(WvStream *_cloned,
-    const void *_key, size_t _keysize) :
+    const void *_key, size_t _keysize,
+    WvBlowfishEncoder::Mode readmode, WvBlowfishEncoder::Mode writemode) :
     WvEncoderStream(_cloned)
 {
-    readchain.append(new WvBlowfishEncoder(WvBlowfishEncoder::CFB,
-        false /*encrypt*/, _key, _keysize), true);
-    writechain.append(new WvBlowfishEncoder(WvBlowfishEncoder::CFB,
-        true /*encrypt*/, _key, _keysize), true);
+    readchain.append(new WvBlowfishEncoder(readmode,
+        _key, _keysize), true);
+    writechain.append(new WvBlowfishEncoder(writemode,
+        _key, _keysize), true);
 }

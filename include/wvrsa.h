@@ -55,19 +55,26 @@ public:
 class WvRSAEncoder : public WvEncoder
 {
 public:
+    enum Mode {
+        Encrypt, // encrypt with public key
+        Decrypt, // decrypt with private key
+        SignEncrypt, // encrypt signature with public key 
+        SignDecrypt  // decrypt signature with private key
+    };
+
     /**
      * Creates a new RSA encoder / decoder.
-     *   _encrypt : if true, encrypts else decrypts
-     *   _key     : the public key for encryption if _encrypt == true,
-     *              otherwise the private key for decryption
+     *   _mode : the encryption mode
+     *   _key  : the public key for encryption if _encrypt == true,
+     *           otherwise the private key for decryption
      */
-    WvRSAEncoder(bool _encrypt, const WvRSAKey &_key);
+    WvRSAEncoder(Mode _mode, const WvRSAKey &_key);
     virtual ~WvRSAEncoder();
 
     virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
 
 private:
-    bool encrypt;
+    Mode mode;
     WvRSAKey key;
     size_t rsasize;
 };
@@ -76,12 +83,16 @@ private:
 /**
  * A crypto stream implementing RSA public/private key encryption.
  * See WvRSAEncoder for details.
+ *
+ * By default, written data is "encrypted", read data is "decrypted".
  */
 class WvRSAStream : public WvEncoderStream
 {
 public:
     WvRSAStream(WvStream *_cloned,
-        const WvRSAKey &_my_private_key, const WvRSAKey &_their_public_key);
+        const WvRSAKey &_my_key, const WvRSAKey &_their_key, 
+        WvRSAEncoder::Mode readmode = WvRSAEncoder::Decrypt,
+        WvRSAEncoder::Mode writemode = WvRSAEncoder::Encrypt);
     virtual ~WvRSAStream() { }
 };
 

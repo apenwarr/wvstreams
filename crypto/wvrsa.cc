@@ -149,8 +149,8 @@ WvString WvRSAKey::hexifyprv(RSA *rsa)
 
 /***** WvRSAEncoder *****/
 
-WvRSAEncoder::WvRSAEncoder(bool _encrypt, const WvRSAKey & _key) :
-    encrypt(_encrypt), key(_key)
+WvRSAEncoder::WvRSAEncoder(Mode _mode, const WvRSAKey & _key) :
+    mode(_mode), key(_key)
 {
     if (key.isok() && key.rsa != NULL)
         rsasize = RSA_size(key.rsa);
@@ -174,49 +174,64 @@ bool WvRSAEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
     }
         
     bool success = true;
-    if (encrypt)
+    switch (mode)
     {
-        // reserve space for PKCS1_PADDING
-        const size_t maxchunklen = rsasize - 12;
-        while (in.used() != 0)
+        case Encrypt:
+        case SignEncrypt:
         {
-            size_t chunklen = in.used();
-            if (chunklen >= maxchunklen)
-                chunklen = maxchunklen;
-            else if (! flush)
-                break;
+            // reserve space for PKCS1_PADDING
+            const size_t maxchunklen = rsasize - 12;
+            while (in.used() != 0)
+            {
+                size_t chunklen = in.used();
+                if (chunklen >= maxchunklen)
+                    chunklen = maxchunklen;
+                else if (! flush)
+                    break;
 
-            // encrypt a chunk
-            unsigned char *data = in.get(chunklen);
-            unsigned char *crypt = out.alloc(rsasize);
-            size_t cryptlen = RSA_public_encrypt(chunklen, data, crypt,
-                key.rsa, RSA_PKCS1_PADDING);
-            if (cryptlen != rsasize)
-            {
-                out.unalloc(rsasize);
-                success = false;
+                // encrypt a chunk
+                unsigned char *data = in.get(chunklen);
+                unsigned char *crypt = out.alloc(rsasize);
+                size_t cryptlen = (mode == Encrypt) ?
+                    RSA_public_encrypt(chunklen, data, crypt,
+                    key.rsa, RSA_PKCS1_PADDING) :
+                    RSA_private_encrypt(chunklen, data, crypt,
+                    key.rsa, RSA_PKCS1_PADDING);
+                if (cryptlen != rsasize)
+                {
+                    out.unalloc(rsasize);
+                    success = false;
+                }
             }
+            break;
         }
-    } else {
-        const size_t chunklen = rsasize;
-        while (in.used() >= chunklen)
+        case Decrypt:
+        case SignDecrypt:
         {
-            // decrypt a chunk
-            unsigned char *crypt = in.get(chunklen);
-            unsigned char *data = out.alloc(rsasize);
-            int cryptlen = RSA_private_decrypt(chunklen, crypt, data,
-                key.rsa, RSA_PKCS1_PADDING);
-            if (cryptlen == -1)
+            const size_t chunklen = rsasize;
+            while (in.used() >= chunklen)
             {
-                out.unalloc(rsasize);
-                success = false;
+                // decrypt a chunk
+                unsigned char *crypt = in.get(chunklen);
+                unsigned char *data = out.alloc(rsasize);
+                int cryptlen = (mode == Decrypt) ?
+                    RSA_private_decrypt(chunklen, crypt, data,
+                    key.rsa, RSA_PKCS1_PADDING) :
+                    RSA_public_decrypt(chunklen, crypt, data,
+                    key.rsa, RSA_PKCS1_PADDING);
+                if (cryptlen == -1)
+                {
+                    out.unalloc(rsasize);
+                    success = false;
+                }
+                else
+                    out.unalloc(rsasize - cryptlen);
             }
-            else
-                out.unalloc(rsasize - cryptlen);
+            // flush does not make sense for us here
+            if (flush && in.used() != 0)
+                success = false;
+            break;
         }
-        // flush does not make sense for us here
-        if (flush && in.used() != 0)
-            success = false;
     }
     return success;
 }
@@ -225,13 +240,12 @@ bool WvRSAEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 /***** WvRSAStream *****/
 
 WvRSAStream::WvRSAStream(WvStream *_cloned,
-    const WvRSAKey &_my_private_key, const WvRSAKey &_their_public_key) :
+    const WvRSAKey &_my_key, const WvRSAKey &_their_key,
+    WvRSAEncoder::Mode readmode, WvRSAEncoder::Mode writemode) :
     WvEncoderStream(_cloned)
 {
-    readchain.append(new WvRSAEncoder(false /*encrypt*/,
-        _my_private_key), true);
-    writechain.append(new WvRSAEncoder(true /*encrypt*/,
-        _their_public_key), true);
-    if (_my_private_key.isok() && _my_private_key.rsa)
-        min_readsize = RSA_size(_my_private_key.rsa);
+    readchain.append(new WvRSAEncoder(readmode, _my_key), true);
+    writechain.append(new WvRSAEncoder(writemode, _their_key), true);
+    if (_my_key.isok() && _my_key.rsa)
+        min_readsize = RSA_size(_my_key.rsa);
 }

@@ -10,7 +10,9 @@
 
 #define ZBUFSIZE 10240
 
-WvGzipEncoder::WvGzipEncoder(GzipMode _mode) :
+/***** GzipEncoder *****/
+
+WvGzipEncoder::WvGzipEncoder(Mode _mode) :
     okay(true), tmpbuf(ZBUFSIZE), mode(_mode)
 {
     zstr = new z_stream;
@@ -20,7 +22,7 @@ WvGzipEncoder::WvGzipEncoder(GzipMode _mode) :
     zstr->opaque = NULL;
     
     int retval;
-    if (mode == Compress)
+    if (mode == Deflate)
 	retval = deflateInit(zstr, Z_DEFAULT_COMPRESSION);
     else
 	retval = inflateInit(zstr);
@@ -38,7 +40,7 @@ WvGzipEncoder::WvGzipEncoder(GzipMode _mode) :
 
 WvGzipEncoder::~WvGzipEncoder()
 {
-    if (mode == Compress)
+    if (mode == Deflate)
         deflateEnd(zstr);
     else
         inflateEnd(zstr);
@@ -82,7 +84,7 @@ bool WvGzipEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 	}
 
 	tmpbuf.alloc(tmpbuf.free());
-	if (mode == Compress)
+	if (mode == Deflate)
 	    retval = deflate(zstr, flush ? Z_SYNC_FLUSH : Z_NO_FLUSH);
 	else
 	    retval = inflate(zstr, flush ? Z_SYNC_FLUSH : Z_NO_FLUSH);
@@ -96,4 +98,15 @@ bool WvGzipEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
         retval != Z_BUF_ERROR)
         okay = false;
     return okay;
+}
+
+
+/***** GzipStream *****/
+
+WvGzipStream::WvGzipStream(WvStream *_cloned,
+    WvGzipEncoder::Mode readmode, WvGzipEncoder::Mode writemode) :
+    WvEncoderStream(_cloned)
+{
+    readchain.append(new WvGzipEncoder(readmode), true);
+    writechain.append(new WvGzipEncoder(writemode), true);
 }

@@ -18,19 +18,19 @@ class WvBlowfishEncoder : public WvEncoder
 {
 public:
     enum Mode {
-        ECB, // electronic code book mode (avoid!)
-        CFB  // cipher feedback mode (simulates a stream)
+        ECBEncrypt, // electronic code book mode (avoid!)
+        ECBDecrypt,
+        CFBEncrypt, // cipher feedback mode (simulates a stream)
+        CFBDecrypt
     };
 
     /**
      * Creates a new Blowfish encoder / decoder.
      *   _mode    : the encryption mode
-     *   _encrypt : if true, encrypts else decrypts
      *   _key     : the initial key data
      *   _keysize : the initial key size
      */
-    WvBlowfishEncoder(Mode _mode, bool _encrypt,
-        const void *_key, size_t _keysize);
+    WvBlowfishEncoder(Mode _mode, const void *_key, size_t _keysize);
     virtual ~WvBlowfishEncoder();
 
     /**
@@ -43,7 +43,6 @@ public:
 
 private:
     Mode mode;
-    bool encrypt;
     size_t keysize;
     struct bf_key_st *key;
     unsigned char ivec[8]; // initialization vector
@@ -52,13 +51,18 @@ private:
 
 
 /**
- * A crypto stream implementing Blowfish CFB encryption.
+ * A crypto stream implementing Blowfish encryption.
  * See WvBlowfishEncoder for details.
+ *
+ * By default, written data is "cfbencrypted", read data is "cfbdecrypted".
  */
 class WvBlowfishStream : public WvEncoderStream
 {
 public:
-    WvBlowfishStream(WvStream *_cloned, const void *key, size_t _keysize);
+    WvBlowfishStream(WvStream *_cloned,
+        const void *key, size_t _keysize,
+        WvBlowfishEncoder::Mode readmode = WvBlowfishEncoder::CFBDecrypt,
+        WvBlowfishEncoder::Mode writemode = WvBlowfishEncoder::CFBEncrypt);
     virtual ~WvBlowfishStream() { }
 };
 
