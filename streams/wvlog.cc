@@ -52,10 +52,21 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, const WvLog *par)
 
 WvLog::WvLog(const WvLog &l)
 {
-    parent = l.parent ? l.parent : &l;
-    app = parent->app;
-    loglevel = parent->loglevel;
+    parent = l.parent ? l.parent : NULL;
+    app = l.app;
+    loglevel = l.loglevel;
     num_logs++;
+}
+
+
+WvLog &WvLog::operator= (const WvLog &l)
+{
+    if (&l == this) return *this; // already done!
+    parent = l.parent ? l.parent : NULL;
+    app = l.app;
+    loglevel = l.loglevel;
+    // don't increment num_logs, because we already existed before
+    return *this;
 }
 
 

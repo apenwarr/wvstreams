@@ -593,10 +593,6 @@ protected:
     WvTime alarm_time;          // select() returns true at this time
     WvTime last_alarm_check;    // last time we checked the alarm_remaining
     
-    /** Prevent accidental copying of WvStreams. */
-    WvStream(const WvStream &s);
-    WvStream& operator= (const WvStream &s);
-
     /**
      * The callback() function calls execute(), and then calls the user-
      * specified callback if one is defined.  Do not call execute() directly;
@@ -608,16 +604,28 @@ protected:
      * call the parent execute() yourself from the derived class.
      */
     virtual void execute()
-    {}
+        { }
     
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
+    
+    // ridiculous hackery for now so that the wvstream unit test can poke
+    // around in the insides of WvStream.  Eventually, inbuf will go away
+    // from the base WvStream class, so nothing like this will be needed.
 #ifdef __WVSTREAM_UNIT_TEST
 public:
-    size_t outbuf_used() { return outbuf.used(); };
-    size_t inbuf_used() { return inbuf.used(); };
-    void inbuf_putstr(WvStringParm t) { inbuf.putstr(t); } ;
+    size_t outbuf_used() 
+        { return outbuf.used(); }
+    size_t inbuf_used()
+        { return inbuf.used(); }
+    void inbuf_putstr(WvStringParm t)
+        { inbuf.putstr(t); }
 #endif
+    
+private:
+    /** Prevent accidental copying of WvStream.  These don't actually exist. */
+    WvStream(const WvStream &s);
+    WvStream& operator= (const WvStream &s);
 };
 
 /**

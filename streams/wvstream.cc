@@ -11,13 +11,10 @@
 #include <time.h>
 #include <sys/types.h>
 #include <assert.h>
-#include <algorithm>
+#define __WVSTREAM_UNIT_TEST 1
 #include "wvstream.h"
 #include "wvtimeutils.h"
 #include "wvcont.h"
-
-using std::min;
-using std::max;
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
