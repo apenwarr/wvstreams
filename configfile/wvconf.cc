@@ -190,11 +190,17 @@ void WvConf::load_file(WvStringParm filename)
 	file.close();
     }
 
+    #ifdef _WIN32
+    //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that
+    //  the file is being written to. Just be careful :).
+    #else
+    // check the sticky bit and fail if set
     if (file.isok() && (statbuf.st_mode & S_ISVTX))
     {
 	file.close();
 	file.seterr(EAGAIN);
     }
+    #endif
 
     if (!file.isok())
     {
@@ -483,7 +489,12 @@ void WvConf::save(WvStringParm _filename)
 	return;
     }
 
+    #ifdef _WIN32
+    //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that
+    //  the file is being written to. Just be careful :).
+    #else
     fchmod(fp.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
+    #endif
 
     globalsection.dump(fp);
     
@@ -495,7 +506,12 @@ void WvConf::save(WvStringParm _filename)
 	sect.dump(fp);
     }
 
+    #ifdef _WIN32
+    //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that
+    //  the file is being written to. Just be careful :).
+    #else
     fchmod(fp.getwfd(), statbuf.st_mode & 07777);
+    #endif
 }
 
 

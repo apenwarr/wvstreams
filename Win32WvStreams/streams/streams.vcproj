@@ -109,6 +109,12 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\..\configfile\cfgentry.cc">
+			</File>
+			<File
+				RelativePath="..\..\configfile\cfgsection.cc">
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -140,6 +146,9 @@
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\configfile\wvconf.cc">
 			</File>
 			<File
 				RelativePath="..\..\streams\wvconstream.cc">
@@ -334,6 +343,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\wvcallback.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvconf.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvstream.h">
