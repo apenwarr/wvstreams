@@ -39,6 +39,11 @@ endif
 dist-hack-clean:
 	@rm -f stamp-h.in
 
+# Comment this assignment out for a release.
+ifdef PKGSNAPSHOT
+PKGVER=+$(shell date +%Y%m%d)
+endif
+
 dist-hook: dist-hack-clean configure
 	@rm -rf autom4te.cache
 	@if test -d .xplc; then \
@@ -46,6 +51,7 @@ dist-hook: dist-hack-clean configure
 	    $(MAKE) -C .xplc clean patch && \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
+	@sed -e "s/Version\:\ 4\.0/Version\:\ \$(PKGVER)/" redhat/wvstreams.spec.in > redhat/wvstreams.spec
 
 runconfigure: config.mk include/wvautoconf.h
 
