@@ -45,6 +45,14 @@ public:
      */
     WvString getstr();
 
+    /**
+     * Returns the first len characters in the buffer.
+     *
+     * This is equivalent to doing a get(len), but returns it as a WvString
+     * instead of as an unsigned char *.
+     */
+    WvString getstr(size_t len);
+
     /*** Get/put characters as integer values ***/
 
     /**

@@ -41,6 +41,17 @@ WvString WvBufBase<unsigned char>::getstr()
 }
 
 
+WvString WvBufBase<unsigned char>::getstr(size_t len)
+{
+    WvString result;
+    result.setsize(len + 1);
+    char *str = result.edit();
+    move(str, len);
+    str[len] = '\0';
+    return result;
+}
+
+
 size_t WvBufBase<unsigned char>::strchr(int ch)
 {
     size_t offset = 0;
