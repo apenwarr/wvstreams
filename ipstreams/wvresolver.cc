@@ -62,11 +62,11 @@ WvResolverAddrDict *WvResolver::addrmap = NULL;
 
 // function that runs in a child task
 
-void namelookup(const char *name, WvLoopback *loop)
+static void namelookup(const char *name, WvLoopback *loop)
 {
     struct hostent *he;
     
-    // wait up to one minute... hopefully no clients are impatient :)
+    // wait up to one minute...
     alarm(60);
     
     for (;;)
@@ -155,15 +155,18 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
 	
 	if (!host->pid) // child process
 	{
+	    host->loop->noread();
 	    namelookup(name.str, host->loop);
 	    _exit(1);
 	}
+	host->loop->nowrite();
 #endif
     }
     
+    // if we get here, we are the parent task waiting for the child.
+    
     do
     {
-	// if we get here, we are the parent task waiting for the child.
 	if (waitpid(host->pid, NULL, WNOHANG) == host->pid)
 	    host->pid = 0;
 	
@@ -192,21 +195,28 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
     do
     {
 	line = host->loop->getline(-1);
-    } while (!line);
+    } while (!line && host->loop->isok());
     
-    host->addr = new WvIPAddr(line);
-    host->done = true;
+    if (line && line[0] != 0)
+    {
+	host->addr = new WvIPAddr(line);
+	host->done = true;
     
+	if (addr)
+	    *addr = host->addr;
+    }
+    else
+    {
+	host->negative = true;
+    }
+
     if (host->pid && waitpid(host->pid, NULL, 0) == host->pid)
 	host->pid = 0;
     delete host->loop;
     host->loop = NULL;
     
-    if (addr)
-	*addr = host->addr;
-
     // laziness: we always assume just one address.
-    return 1;
+    return host->negative ? 0 : 1;
 }
 
 /*
@@ -216,3 +226,21 @@ int WvResolver::findname(int msec_timeout, WvIPAddr *ipaddr, char **name)
     return 0;
 }
 */
+
+
+bool WvResolver::select_setup(const WvString &hostname,
+			      fd_set &fds, int &max_fd)
+{
+    WvResolverHost *host = (*hostmap)[hostname];
+    
+    if (host)
+    {
+	if (host->loop)
+	    return host->loop->select_setup(fds, fds, fds, max_fd,
+					    true, false, false);
+	else
+	    return true; // sure thing: already looked up this name!
+    }
+    else
+	return false; // will never be ready... host not even in map!
+}

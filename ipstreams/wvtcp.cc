@@ -10,10 +10,53 @@
 
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 {
-    sockaddr *sa;
     remaddr = _remaddr;
+    resolved = true;
     connected = false;
+    do_connect();
+}
+
+
+WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
+	: WvStream(_fd)
+{
+    remaddr = _remaddr;
+    resolved = true;
+    connected = true;
     
+    if (fd < 0)
+	seterr(errno);
+}
+
+
+WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
+	: hostname(_hostname)
+{
+    char *cptr;
+    
+    cptr = strchr(hostname.str, ':');
+    if (!cptr)
+	cptr = strchr(hostname.str, '\t');
+    if (!cptr)
+	cptr = strchr(hostname.str, ' ');
+    if (cptr)
+    {
+	*cptr++ = 0;
+	remaddr.port = atoi(cptr);
+    }
+    
+    resolved = connected = false;
+    
+    dns.findaddr(0, hostname.str, NULL);
+    if (_port)
+	remaddr.port = _port;
+}
+
+
+void WvTCPConn::do_connect()
+{
+    sockaddr *sa;
+
     fd = socket(PF_INET, SOCK_STREAM, 0);
     if (fd < 0
 	|| fcntl(fd, F_SETFD, 1)
@@ -36,14 +79,23 @@ WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 }
 
 
-WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
-	: WvStream(_fd)
+void WvTCPConn::check_resolver()
 {
-    remaddr = _remaddr;
-    connected = true;
+    const WvIPAddr *ipr;
+    int dnsres = dns.findaddr(0, hostname.str, &ipr);
     
-    if (fd < 0)
-	seterr(errno);
+    if (dnsres == 0)
+    {
+	// error resolving!
+	resolved = true;
+	seterr(WvString("Unknown host \"%s\"", hostname));
+    }
+    else if (dnsres > 0)
+    {
+	remaddr = WvIPPortAddr(*ipr, remaddr.port);
+	resolved = true;
+	do_connect();
+    }
 }
 
 
@@ -53,14 +105,43 @@ const WvAddr *WvTCPConn::src() const
 }
 
 
+bool WvTCPConn::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
+			     bool readable, bool writable, bool isexception)
+{
+    if (!resolved)
+    {
+	if (dns.select_setup(hostname, r, max_fd))
+	    check_resolver();
+    }
+
+    if (resolved && isok()) // name might be resolved now.
+	return WvStream::select_setup(r, w, x, max_fd,
+				      readable, writable, isexception);
+    else
+	return false;
+}
+			  
 bool WvTCPConn::test_set(fd_set &r, fd_set &w, fd_set &x)
 {
-    bool result = WvStream::test_set(r, w, x);
+    bool result = false;
 
-    if (result && !connected)
-	connected = true;
+    if (!resolved)
+	check_resolver();
+    else
+    {
+	result = WvStream::test_set(r, w, x);
+
+	if (result && !connected)
+	    connected = true;
+    }
     
     return result;
+}
+
+
+bool WvTCPConn::isok() const
+{
+    return !resolved || WvStream::isok();
 }
 
 

@@ -528,6 +528,13 @@ WvIPPortAddr::WvIPPortAddr(__u16 _port)
 }
 
 
+WvIPPortAddr::WvIPPortAddr(const char string[], __u16 _port)
+                              : WvIPAddr(string)
+{
+    port = _port;
+}
+
+
 /* Generate a printable version of an IP+Port Address. */
 WvString WvIPPortAddr::printable() const
 {

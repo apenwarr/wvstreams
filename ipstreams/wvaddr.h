@@ -297,6 +297,7 @@ public:
         { port = _port; }
     WvIPPortAddr(const char string[]);
     WvIPPortAddr(__u16 _port);          // assumes address 0.0.0.0, (ie local)
+    WvIPPortAddr(const char string[], __u16 _port);
     
     WvIPPortAddr(struct sockaddr_in *sin) : WvIPAddr(sin->sin_addr.s_addr)
         { port = ntohs(sin->sin_port); }

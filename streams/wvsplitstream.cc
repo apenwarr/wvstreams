@@ -66,6 +66,30 @@ int WvSplitStream::getfd() const
 }
 
 
+void WvSplitStream::noread()
+{
+    if (rfd == wfd)
+	close();
+    else
+    {
+	::close(rfd);
+	rfd = wfd;
+    }
+}
+
+
+void WvSplitStream::nowrite()
+{
+    if (rfd == wfd)
+	close();
+    else
+    {
+	::close(wfd);
+	wfd = rfd;
+    }
+}
+
+
 bool WvSplitStream::test_set(fd_set &r, fd_set &w, fd_set &x)
 {
     return (FD_ISSET(rfd, &r) || FD_ISSET(wfd, &w)

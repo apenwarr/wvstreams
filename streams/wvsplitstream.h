@@ -3,9 +3,7 @@
  *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
  * 
  * A WvSplitStream uses two different file descriptors: one for input
- * and another for output.  Because of this, simultaneous select()
- * for read and write will not work, and select() via WvStreamList
- * only works for read.
+ * and another for output.
  * 
  * This is primarily used for the combined stdin/stdout stream.
  */
@@ -33,6 +31,12 @@ public:
         { return rfd; }
     int getwfd() const
         { return wfd; }
+    
+    // noread() closes the rfd and makes this stream no longer valid for
+    // reading.  nowrite() closes wfd and makes it no longer valid for
+    // writing.
+    void noread();
+    void nowrite();
     
 protected:
     int rfd, wfd;

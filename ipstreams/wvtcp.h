@@ -13,6 +13,7 @@
 
 #include "wvstream.h"
 #include "wvaddr.h"
+#include "wvresolver.h"
 
 class WvStreamList;
 class WvTCPListener;
@@ -21,27 +22,42 @@ class WvTCPConn : public WvStream
 {
     friend class WvTCPListener;
 protected:
-    bool connected;
+    bool resolved, connected;
+    WvString hostname;
     WvIPPortAddr remaddr;
+    WvResolver dns;
     
     // connect an already-open socket (used by WvTCPListener)
     WvTCPConn(int _fd, const WvIPPortAddr &_remaddr);
+    
+    void do_connect();
+    void check_resolver();
     
 public:
     // connect a new socket
     WvTCPConn(const WvIPPortAddr &_remaddr);
     
+    // resolve the hostname, then connect a new socket
+    WvTCPConn(const WvString &_hostname, __u16 _port = 0);
+    
     // return the remote address (source of all incoming packets),
-    // which is always the same for TCP.
+    // which is a constant for any given TCP connection.
     virtual const WvAddr *src() const;
 
     // has the connection been completed yet?
     bool isconnected() const
         { return connected; }
     
+    // override select_setup() to cause select() results when resolving names.
+    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
+			      bool readable, bool writable, bool isexception);
+    
     // override test_set() to set the 'connected' variable as soon as we
     // are connected.
     virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
+    
+    // isok() will always be true if !resolved, even though fd==-1.
+    virtual bool isok() const;
 };
 
 
