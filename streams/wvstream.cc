@@ -302,7 +302,10 @@ size_t WvStream::continue_read(time_t wait_msec, WvBuf &outbuf, size_t count)
     if (count > free)
         count = free;
     unsigned char *buf = outbuf.alloc(count);
+    
+    // call the non-WvBuf continue_read
     size_t len = continue_read(wait_msec, buf, count);
+    
     outbuf.unalloc(count - len);
     return len;
 }
@@ -363,6 +366,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
     if (!count)
         return 0;
 
+    // FIXME: continue_select also uses the alarm, so this doesn't work.
     if (wait_msec >= 0)
         alarm(wait_msec);
 
@@ -425,12 +429,31 @@ size_t WvStream::write(const void *buf, size_t count)
 }
 
 
+void WvStream::noread()
+{
+    // FIXME: this really ought to be symmetrical with nowrite(), but instead
+    // it's empty for some reason.
+}
+
+
 void WvStream::nowrite()
 {
     if (getwfd() < 0)
         return;
 
     want_nowrite = true;
+}
+
+
+bool WvStream::isreadable()
+{
+    return isok() && select(0, true, false, false);
+}
+
+
+bool WvStream::iswritable()
+{
+    return isok() && select(0, false, true, false);
 }
 
 
@@ -510,7 +533,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 void WvStream::drain()
 {
     char buf[1024];
-    while (select(0, true, false, false))
+    while (isreadable())
 	read(buf, sizeof(buf));
 }
 
@@ -810,6 +833,9 @@ bool WvStream::continue_select(time_t msec_timeout)
     // msec_delay was zero.  Note that running select() here isn't
     // inefficient, because if the alarm was expired then pre_select()
     // returned true anyway and short-circuited the previous select().
+    // 
+    // FIXME: we should probably be using select(t,r,w,x) here instead, but
+    // I'm not sure.
     TRACE("hello-%p\n", this);
     return !alarm_was_ticking || select(0);
 }
@@ -832,6 +858,7 @@ const WvAddr *WvStream::src() const
 {
     return NULL;
 }
+
 
 void WvStream::unread(WvBuf &unreadbuf, size_t count)
 {
