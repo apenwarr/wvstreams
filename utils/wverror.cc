@@ -48,9 +48,11 @@ WvString WvErrorBase::errstr() const
 
 void WvErrorBase::seterr(int _errnum)
 {
-    assert(_errnum != -1 || !!errstring);
     if (!errnum)
+    {
+        assert(_errnum != -1 || !!errstring);
 	errnum = _errnum;
+    }
 }
 
 
