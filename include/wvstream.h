@@ -5,7 +5,7 @@
 #ifndef __WVSTREAM_H
 #define __WVSTREAM_H
 
-#include "wvstring.h"
+#include "wverror.h"
 #include "wvbuffer.h"
 #include "wvcallback.h"
 #include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
@@ -27,7 +27,7 @@ DeclareWvCallback(2, void, WvStreamCallback, WvStream &, void *);
  * We provide typical read and write routines, as well as a select() function
  * for each stream.
  */
-class WvStream
+class WvStream : public WvError
 {
 public:
     /**
@@ -55,6 +55,13 @@ public:
     virtual void close();
     
     /**
+     * Override seterr() from WvError so that it auto-closes the stream.
+     */
+    virtual void seterr(int _errnum);
+    void seterr(WvStringParm specialerr)
+        { WvError::seterr(specialerr); }
+    
+    /**
      * return the Unix file descriptor for reading from this stream
      */
     virtual int getrfd() const;
@@ -73,15 +80,6 @@ public:
      * return true if the stream is actually usable right now
      */
     virtual bool isok() const;
-    
-    /**
-     * if isok() is false, return the system error number corresponding to
-     * the error, -1 for a special error string (which you can obtain with
-     * errstr()) or 0 on end of file.  If isok() is true, returns an
-     * undefined number.
-     */ 
-    virtual int geterr() const;
-    virtual const char *errstr() const;
     
     /**
      * read a data block on the stream.  Returns the actual amount read.
@@ -436,12 +434,6 @@ public:
     size_t operator() (WVSTRING_FORMAT_DECL)
         { return write(WvString(WVSTRING_FORMAT_CALL)); }
 
-    /**
-     * set the errnum variable and close the stream -- we have an error.
-     */
-    void seterr(int _errnum);
-    void seterr(WvStringParm specialerr);
-    
 protected:
     // builds the SelectInfo data structure (runs pre_select)
     // returns true if there are callbacks to be dispatched
@@ -475,8 +467,7 @@ private:
 protected:
     WvStreamCallback callfunc;
     void *userdata;
-    int rwfd, errnum;
-    WvString errstring;
+    int rwfd;
     WvBuffer inbuf, outbuf;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;

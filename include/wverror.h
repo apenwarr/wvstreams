@@ -1,0 +1,59 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ * 
+ * A class for managing error numbers and strings.  It can have either a
+ * system error value (like the global 'errno' and defined in errno.h) or an
+ * arbitrary error string.  It can return a string representation of itself
+ * in either case.
+ */ 
+#ifndef __WVERROR_H
+#define __WVERROR_H
+
+#include "wvstring.h"
+
+
+class WvError
+{
+protected:
+    int errnum;
+    WvString errstring;
+    
+public:
+    WvError()
+        { noerr(); }
+    virtual ~WvError();
+    
+    /**
+     * If isok() is false, return the system error number corresponding to
+     * the error, -1 for a special error string (which you can obtain with
+     * errstr()) or 0 on end of file.  If isok() is true, returns an
+     * undefined number.
+     */ 
+    int geterr() const
+        { return errnum; }
+    const char *errstr() const;
+    
+    /**
+     * Set the errnum variable -- we have an error.  If called more than
+     * once, seterr() doesn't change the error code away from the previous
+     * one.  That way, we remember the _original_ cause of our problems.
+     * 
+     * Subclasses may want to override seterr(int) to shut themselves down
+     * (eg. WvStream::close()) when an error condition is set.
+     * 
+     * Note that seterr(WvString) will call seterr(-1).
+     */
+    virtual void seterr(int _errnum);
+    void seterr(WvStringParm specialerr);
+    void seterr(const WvError &err);
+    
+    /**
+     * Reset our error state - there's no error condition anymore.
+     */
+    void noerr()
+        { errnum = 0; }
+};
+
+
+#endif // __WVERROR_H

@@ -251,38 +251,8 @@ bool WvStream::isok() const
 
 void WvStream::seterr(int _errnum)
 {
-    if (!errnum)
-	errnum = _errnum;
+    WvError::seterr(_errnum);
     close();
-}
-
-
-void WvStream::seterr(WvStringParm specialerr)
-{
-    if (!errnum)
-    {
-	errstring = specialerr;
-	errnum = -1;
-    }
-    close();
-}
-
-
-int WvStream::geterr() const
-{
-    return errnum;
-}
-
-
-const char *WvStream::errstr() const
-{
-    if (errnum == -1)
-    {
-	assert(errstring);
-	return errstring;
-    }
-    else
-	return strerror(errnum);
 }
 
 
