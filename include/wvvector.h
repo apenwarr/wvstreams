@@ -174,9 +174,9 @@ public:
 	WvLink *next()
 	{
 	    if (++i > vec.xcount - 1)
-		return NULL;
+		return link = NULL;
 	    else
-		return vec.xseq[i];
+		return link = vec.xseq[i];
 	}
 
 	/**
@@ -188,9 +188,9 @@ public:
 	WvLink *prev()
 	{
 	    if (--i < 0)
-		return NULL;
+		return link = NULL;
 	    else
-		return vec.xseq[i];
+		return link = vec.xseq[i];
 	}
 
 	/**
