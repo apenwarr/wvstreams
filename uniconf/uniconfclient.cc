@@ -218,7 +218,7 @@ void UniConfClient::execute()
                         newval.unique()), false);
                     UniConf *narf = &top->get(key);
                     narf = &narf->get(newkey);
-                    narf->generator = this;
+//                    narf->generator = this;
                 }
             }
         }

@@ -56,7 +56,7 @@ UniConf::~UniConf()
 {
     if (children)
 	delete children;
-    if (generator && generator->deleteable())
+    if (generator)// && generator->deleteable())
 	delete generator;
 }
 
@@ -117,6 +117,19 @@ bool UniConf::check_children()
     if (this->generator)
     {
         this->generator->enumerate_subtrees(this);
+    }
+    else
+    {
+        UniConf *par = this->parent;
+        while (par)
+        {
+            if (par->generator)
+            {
+                par->generator->enumerate_subtrees(this);
+                break;
+            }
+            par = par->parent;
+        }
     }
     return (children != NULL);
 }
