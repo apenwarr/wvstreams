@@ -330,23 +330,12 @@ WvString fqdomainname();
 WvString metriculate(const off_t i);
 
 /**
- * Finds a in line
- * returns 0 if not found
- */
-inline char *locatestr(WvStringParm line, WvStringParm a)
-{
-    if (line.len() == 0 || a.len() == 0)
-	return 0;
-    return strstr(line, a);
-}
-
-/**
  * Returns everything in line (exclusively) after a
  * If a is not in line, "" is returned
  */
 inline WvString afterstr(WvStringParm line, WvStringParm a)
 {
-    char *loc = locatestr(line, a);
+    char *loc = strstr(line, a);
     if (loc == 0)
 	return "";
 
@@ -364,7 +353,7 @@ inline WvString beforestr(WvStringParm line, WvStringParm a)
 {
     WvString ret = line;
     ret.unique();    
-    char *loc = locatestr(ret, a);
+    char *loc = strstr(ret, a);
 
     if (loc == 0)
 	return line;

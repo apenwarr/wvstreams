@@ -580,16 +580,6 @@ WVTEST_MAIN("metriculate")
     }
 }
 
-WVTEST_MAIN("locatestr")
-{
-    WvString big = "foobarman";
-    
-    WVPASS(locatestr(big, "foo") == &big.cstr()[0]);
-    WVPASS(locatestr(big, "o") == &big.cstr()[1]);
-    WVPASS(locatestr(big, "barman") == &big.cstr()[3]);
-
-    WVFAIL(locatestr(big, "smarch"));
-}
 
 WVTEST_MAIN("afterstr")
 {
