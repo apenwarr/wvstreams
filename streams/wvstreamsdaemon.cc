@@ -50,24 +50,27 @@ void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *)
     streams.zap();
 }
 
-void WvStreamsDaemon::add_stream(IWvStream *istream, const char *id)
+void WvStreamsDaemon::add_stream(IWvStream *istream,
+    	bool auto_free, const char *id)
 {
-    streams.append(istream, true);
-    WvIStreamList::globallist.append(istream, false);
+    streams.append(istream, false);
+    WvIStreamList::globallist.append(istream, auto_free);
 }
 
-void WvStreamsDaemon::add_restart_stream(IWvStream *istream, const char *id)
+void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
+    	bool auto_free, const char *id)
 {
-    add_stream(istream);
+    add_stream(istream, auto_free, id);
     
     istream->setclosecallback(
             WvStreamCallback(this, &WvStreamsDaemon::restart_close_cb),
                     (void *)id);
 }
 
-void WvStreamsDaemon::add_die_stream(IWvStream *istream, const char *id)
+void WvStreamsDaemon::add_die_stream(IWvStream *istream,
+    	bool auto_free, const char *id)
 {
-    add_stream(istream);
+    add_stream(istream, auto_free, id);
     
     istream->setclosecallback(
             WvStreamCallback(this, &WvStreamsDaemon::die_close_cb), 
@@ -98,7 +101,7 @@ void WvStreamsDaemon::die_close_cb(WvStream &, void *ud)
         const char *id = (const char *)ud;
         log(WvLog::Error, "%s is stale; dying\n",
                 id? id: "Stream");
-        restart();
+        die();
     }
 }
 
