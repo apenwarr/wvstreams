@@ -129,7 +129,7 @@ void UniConfTreeBase::link(UniConfTreeBase *child)
     int slot = bsearch(child->key(), found);
     assert (!found);
     if (!xchildren)
-        xchildren = new Vector(true);
+        xchildren = new Container(true);
     xchildren->insert(slot, child);
 }
 
