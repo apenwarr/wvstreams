@@ -57,6 +57,14 @@ protected:
             return false; // insufficient data to flush
         return true;
     }
+    virtual bool _reset()
+    {
+        // Assume most functor encoders will be stateless and therefore
+        // support reset() implicitly.
+        // If this is not the case, then override this method for
+        // particular subclasses to return false.
+        return true;
+    }
 };
 
 #endif // __WVFUNCTORENCODER_H
