@@ -83,7 +83,10 @@ public:
      * Unimplimented function for the moment, but eventually, you will be able
      * to create a certificate request (PKCS#10) using this function.. this 
      * request is what you would send off to Verisign, or Entrust.net (or any
-     * other CA), to get your real certificate.
+     * other CA), to get your real certificate. It leaves the RSA key pair
+     * in keypair, where you MUST save it for the certificate to be AT ALL
+     * valid when you get it back. Returns a PEM Encoded PKCS#10 certificate
+     * request.
      */    
     WvString createcertreq(WvString dName, int keysize);
 

@@ -17,7 +17,6 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
     keypair = NULL;
 }
 
-
 WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair)
     : debug("X509",WvLog::Debug5), errstr("")
 {
@@ -220,6 +219,67 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
     encodecert();
 }
 
+WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
+{
+    EVP_PKEY *pk;
+    X509_NAME *name = NULL;
+    X509_REQ *certreq;
+    WvString pkcs10("");
+    struct stat stupidstat;
+
+    FILE *stupidtmp = tmpfile();
+
+    // First thing to do is to generate an RSA Keypair if the
+    // Manager doesn't already have one:
+    if ( keypair == NULL)
+    {
+	keypair = new WvRSAKey(keysize);
+    }
+    if ((pk=EVP_PKEY_new()) == NULL)
+    {
+        seterr("Error creating key handler for new certificate");
+        return pkcs10;
+    }
+    if ((certreq=X509_REQ_new()) == NULL)
+    {
+        seterr("Error creating new PKCS#10 object");
+        return pkcs10;
+    }
+
+    if (!EVP_PKEY_assign_RSA(pk, keypair->rsa))
+    {
+        seterr("Error adding RSA keys to certificate");
+        return pkcs10;
+    }
+    X509_REQ_set_pubkey(certreq, pk);
+    name = X509_REQ_get_subject_name(certreq);   
+
+    set_name_entry(name, dName);
+    
+    X509_REQ_set_subject_name(certreq, name);
+
+    // Horribly involuted hack to get around the fact that the
+    // OpenSSL people are too braindead to have a PEM_write function
+    // that returns a char *
+    PEM_write_X509_REQ(stupidtmp,certreq);
+    // With any luck, PEM_write won't close the file ;)
+  
+    rewind(stupidtmp);
+
+    fstat(fileno(stupidtmp),&stupidstat);
+
+    pkcs10.setsize(stupidstat.st_size + 1);
+
+    fread(pkcs10.edit(),sizeof(char),stupidstat.st_size,stupidtmp);
+
+    fclose(stupidtmp);
+
+    pkcs10.edit()[stupidstat.st_size] = 0;
+    X509_REQ_free(certreq);
+    EVP_PKEY_free(pk);
+
+    return pkcs10;
+}
 
 void WvX509Mgr::decodecert(WvString *encodedcert)
 {
