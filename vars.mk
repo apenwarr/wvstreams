@@ -21,20 +21,20 @@ TARGETS += wvtestmain.o
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
 GARBAGE += wvtestmain.o tmp.ini
 
-ifneq ("$(with_swig)", "no")
-  ifneq ("$(with_tcl)", "no")
-    TARGETS += bindings/tcl
-    CPPFLAGS += -I/usr/include/tcl8.3
-  endif
-  ifneq ("$(with_python)", "no")
-    TARGETS += bindings/python
-    CPPFLAGS += -I/usr/include/python2.1
-  endif
-  ifneq ("$(with_php)", "no")
-    TARGETS += bindings/php
-    CPPFLAGS += `php-config --includes`
-  endif
-endif
+#ifneq ("$(with_swig)", "no")
+#  ifneq ("$(with_tcl)", "no")
+#    TARGETS += bindings/tcl
+#    CPPFLAGS += -I/usr/include/tcl8.3
+#  endif
+#  ifneq ("$(with_python)", "no")
+#    TARGETS += bindings/python
+#    CPPFLAGS += -I/usr/include/python2.1
+#  endif
+#  ifneq ("$(with_php)", "no")
+#    TARGETS += bindings/php
+#    CPPFLAGS += `php-config --includes`
+#  endif
+#endif
 
 ifneq ("$(with_ogg)", "no")
   ifneq ("$(with_vorbis)", "no")
