@@ -17,26 +17,24 @@ WvHConfGen::~WvHConfGen()
 
 WvHConf *WvHConfGen::make_tree(WvHConf *parent, const WvHConfKey &key)
 {
-    if (key.isempty())
-	return parent;
+    WvHConfKey::Iter i(key);
+    for (i.rewind(); i.next(); )
+    {
+	if (!parent->children)
+	    parent->children = new WvHConfDict(10);
+	
+	WvHConf *child = (*parent->children)[*key.first()];
+	if (!child)
+	{
+	    child = new WvHConf(parent, *i);
+	    parent->children->add(child, true);
+	    update(child);
+	}
+	
+	parent = child;
+    }
     
-    WvHConf *h = parent->children ? (*parent->children)[*key.first()] : NULL;
-
-    if (!h)
-	h = make_obj(parent, *key.first());
-    if (!h)
-	return NULL;
-    
-    return make_tree(h, key.skip(1));
-}
-
-
-WvHConf *WvHConfGen::make_obj(WvHConf *parent, WvStringParm name)
-{
-    WvHConf *child = new WvHConf(parent, name);
-    parent->needs_children()->add(child, true);
-    update(child);
-    return child;
+    return parent;
 }
 
 

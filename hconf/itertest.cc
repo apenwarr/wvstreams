@@ -5,6 +5,7 @@
  * Test for the WvHConf::Iter object.
  */
 #include "wvhconfini.h"
+#include <assert.h>
 
 
 static int hconfcmp(const WvHConf *a, const WvHConf *b)
@@ -16,7 +17,7 @@ static int hconfcmp(const WvHConf *a, const WvHConf *b)
 static int rhconfcmp(const WvHConf *a, const WvHConf *b)
 {
     return strcasecmp(a->full_key().printable(),
-		       b->full_key().printable());
+		      b->full_key().printable());
 }
 
 
@@ -28,8 +29,16 @@ int main()
     h.load();
     
     {
+	// make sure iterators don't create the 'children' array
+	WvHConf::Iter i(h["/spam/spam/spam"]);
+	for (i.rewind(); i.next(); )
+	    *i;
+	assert(!h["spam/spam/spam"].has_children());
+    }
+    
+    {
 	log("Non-recursive dump of /HTTPD:\n");
-	WvHConf::Iter i(h["/HTTPD"]);
+	WvHConf::Iter i(h["/httpd"]);
 	for (i.rewind(); i.next(); )
 	    log("  '%s' = '%s'\n", i->full_key(), *i);
     }

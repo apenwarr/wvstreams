@@ -10,6 +10,8 @@
 #include "wvhconf.h"
 #include "wvstream.h"
 
+WvHConfDict null_wvhconfdict(1);
+
 
 bool WvHConfString::operator== (WvStringParm s2) const
 {
@@ -103,27 +105,9 @@ WvHConf *WvHConf::gen_top()
 // 
 // like with gen_key, this method of returning the object is pretty
 // inefficient - lots of extra copying stuff around.
-WvHConfKey WvHConf::gen_full_key() const
+WvHConfKey WvHConf::gen_full_key()
 {
-    WvHConfKey k;
-    const WvHConf *h = this;
-    
-    while (h && !h->generator)
-    {
-	k.prepend(new WvString(h->name), true);
-	h = h->parent;
-    };
-    
-    return k;
-}
-
-
-// create the "children" entry if it is NULL.
-WvHConfDict *WvHConf::needs_children()
-{
-    if (!children)
-	children = new WvHConfDict(10);
-    return children;
+    return full_key(gen_top());
 }
 
 
@@ -225,13 +209,13 @@ void WvHConf::set(WvStringParm s)
     if (dirty && notify)
 	return; // nothing more needed
     
-    do_notify();
+    mark_notify();
 }
 
 
 // set the dirty and notify flags on this object, and inform all parent
 // objects that their child is dirty.
-void WvHConf::do_notify()
+void WvHConf::mark_notify()
 {
     WvHConf *h;
     

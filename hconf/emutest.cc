@@ -108,15 +108,15 @@ public:
         { return true; /* FIXME */ }
     
     void zap()
-        { if (h.children) { delete h.children; h.children = NULL; } }
+        { /* FIXME */ }
     
     void load_file() // append the contents of the real config file
         { h.load(); }
     void load_file(WvStringParm _filename) // append any config file
-        { switchfile(_filename); h.load(); switchfile(filename); }
+        { h.load(); }
 
     void save(WvStringParm _filename)
-        { switchfile(_filename); h.save(); switchfile(filename); }
+        { h.save(); }
     void save()
         { h.save(); }
     void flush()
@@ -156,8 +156,17 @@ public:
     WvConfigSection *operator[] (WvStringParm sect)
         { return (WvConfigSection *)h.find_make(sect); }
     
-protected:
-    void switchfile(WvStringParm newfile);
+    class Iter : public WvHConf::Iter
+    {
+    public:
+	Iter(WvConf &cfg) : WvHConf::Iter(cfg.h)
+	    { }
+	
+	WvConfigSection *ptr() const
+	    { return (WvConfigSection *)WvHConf::Iter::ptr(); }
+	
+	WvIterStuff(WvConfigSection);
+    };
 };
 
 
@@ -172,14 +181,6 @@ WvConf::WvConf(WvStringParm _filename, int _create_mode)
 WvConf::~WvConf()
 {
     save();
-}
-
-
-void WvConf::switchfile(WvStringParm newfile)
-{
-    if (h.generator)
-	delete h.generator;
-    h.generator = new WvHConfIniFile(&h, newfile);
 }
 
 
@@ -212,7 +213,7 @@ int main()
 {
     bool c1 = false, c2 = false, c3 = false;
     WvLog log("emutest", WvLog::Info);
-    WvConf cfg("xtest.ini");
+    WvConf cfg("test2.ini");
     
     cfg.zap();
     cfg.load_file("test2.ini");
@@ -226,7 +227,7 @@ int main()
     log("Test2a: '%s'\n", cfg.get("Users", "Zebmaster", "foo"));
     log("Test2b: '%s'\n", cfg.get("Users", "Zebmaster", NULL));
 
-    log("Section dump:\n");
+    log("Single section dump:\n");
     WvConfigSection *sect = cfg["tunnel vision routes"];
     if (sect)
     {
@@ -235,6 +236,19 @@ int main()
 	    log("  Found: '%s' = '%s'\n", i->name, i->value);
     }
     log("Section dump done.\n");
+    
+    log("All-section dump:\n");
+    WvConfigSectionList::Iter i(cfg);
+    for (i.rewind(); i.next(); )
+    {
+	WvConfigSection &sect = *i;
+	log("  Section '%s'\n", sect.name);
+	WvConfigSection::Iter i2(sect);
+	i2.rewind(); i2.next();
+	if (i2.cur())
+	    log("   First entry: '%s'='%s'\n", i2->name, i2->value);
+    }
+    log("All-section dump done.\n");
 
     cfg.setint("Neener", "Bobber", 50);
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);

@@ -15,6 +15,8 @@ class WvStream;
 class WvHConf;
 class WvHConfDict;
 
+extern WvHConfDict null_wvhconfdict;
+
 
 /**
  * A class to allow case-insensitive string comparisons.  Without this,
@@ -64,10 +66,9 @@ public:
     WvHConfGen() {}
     virtual ~WvHConfGen();
     
-    // both of these functions may return NULL if the object "shouldn't"
-    // exist.
+    // this function may return NULL if the object "shouldn't" exist
+    // (in the opinion of the generator)
     virtual WvHConf *make_tree(WvHConf *parent, const WvHConfKey &key);
-    virtual WvHConf *make_obj(WvHConf *parent, WvStringParm name);
     
     virtual void update(WvHConf *h);
     
@@ -93,8 +94,8 @@ public:
     WvHConfString name;    // the name of this entry
 private:
     WvString value;        // the contents of this entry
-public:    
     WvHConfDict *children; // list of all child nodes of this node (subkeys)
+public:    
     WvHConf *defaults;     // a tree possibly containing default values
     WvHConfGen *generator; // subtree generator for this tree
     
@@ -124,9 +125,11 @@ public:
     WvHConfKey full_key(WvHConf *top = NULL) const;
     
     WvHConf *gen_top();
-    WvHConfKey gen_full_key() const;
+    WvHConfKey gen_full_key();
     
-    WvHConfDict *needs_children();
+    bool has_children() const
+        { return (children != NULL); }
+    
     WvHConf *find(const WvHConfKey &key);
     WvHConf *find_make(const WvHConfKey &key);
     WvHConf &operator[](const WvHConfKey &key) { return *find_make(key); }
@@ -146,7 +149,7 @@ public:
     // Reassign the 'value' of this object to something.
     void set_without_notify(WvStringParm s);
     void set(WvStringParm s);
-    void do_notify();
+    void mark_notify();
     const WvHConf &operator= (WvStringParm s) { set(s); return *this; }
     const WvHConf &operator= (const WvHConf &s) { set(s); return *this; }
     
@@ -170,6 +173,12 @@ public:
     class RecursiveIter;
     class Sorter;
     class RecursiveSorter;
+    
+    friend class Iter;
+    friend class RecursiveIter;
+    friend class Sorter;
+    friend class RecursiveSorter;
+    friend class WvHConfGen;
 };
 
 
@@ -182,7 +191,7 @@ class WvHConf::Iter : public WvHConfDict::Iter
 {
 public:
     Iter(WvHConf &h)
-	: WvHConfDict::Iter(*h.needs_children())
+	: WvHConfDict::Iter(h.children ? *h.children : null_wvhconfdict)
 	{ }
     Iter(WvHConfDict &children)
 	: WvHConfDict::Iter(children)
@@ -210,7 +219,7 @@ public:
     RecursiveIter *subiter;
     
     RecursiveIter(WvHConf &h)
-	: i(*h.needs_children())
+	: i(h.children ? *h.children : null_wvhconfdict)
 	{ subiter = NULL; }
     RecursiveIter(WvHConfDict &children)
 	: i(children)
@@ -270,7 +279,8 @@ class WvHConf::Sorter : public _WvHConfSorter
 {
 public:
     Sorter(WvHConf &h, RealCompareFunc *cmp)
-	: _WvHConfSorter(*h.needs_children(), cmp)
+	: _WvHConfSorter(h.children ? *h.children : null_wvhconfdict,
+			 cmp)
 	{ }
 };
 
@@ -282,7 +292,8 @@ class WvHConf::RecursiveSorter : public _WvHConfRecursiveSorter
 {
 public:
     RecursiveSorter(WvHConf &h, RealCompareFunc *cmp)
-	: _WvHConfRecursiveSorter(*h.needs_children(), cmp)
+	: _WvHConfRecursiveSorter(h.children ? *h.children : null_wvhconfdict,
+				  cmp)
 	{ }
 };
 

@@ -152,10 +152,10 @@ static int count_children(WvHConf *h, WvHConf *&ret)
     
     ret = NULL;
     
-    if (!h->children)
+    if (!h->has_children())
 	return 0;
     
-    WvHConfDict::Iter i(*h->children);
+    WvHConf::Iter i(*h);
     for (i.rewind(); i.next(); )
     {
 	n = count_children(i.ptr(), tmp);
@@ -184,10 +184,10 @@ static bool any_interesting_children(WvHConf *h)
 {
     WvHConf *junk;
     
-    if (!h->children)
+    if (!h->has_children())
 	return false;
     
-    WvHConfDict::Iter i(*h->children);
+    WvHConf::Iter i(*h);
     for (i.rewind(); i.next(); )
     {
 	if (!!*i)
@@ -215,7 +215,7 @@ void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
     {
 	out("\n[%s]\n", inicode(key));
     
-	WvHConfDict::Iter i(*h->children);
+	WvHConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
 	    if (i->generator && i->generator != this) continue;
@@ -234,14 +234,14 @@ void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
     }
     
     // dump subtrees into their own sections
-    if (h->children)
+    if (h->has_children())
     {
-	WvHConfDict::Iter i(*h->children);
+	WvHConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
 	    if (i->generator && i->generator != this)
 		i->save();
-	    else if (i->children
+	    else if (i->has_children()
 		     && (top_special
 			 || count_children(i.ptr(), interesting) > 1))
 	    {
