@@ -127,7 +127,6 @@ endif
 
 ifneq ("$(with_bdb)", "no")
 libwvutils.so: LDLIBS+=-ldb
-#libwvutils.so: LDLIBS+=$(TOPDIR)/ports/libdb.a
 endif
 
 ifeq ("$(enable_verbose)", "yes")
