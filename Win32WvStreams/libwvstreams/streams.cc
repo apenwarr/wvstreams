@@ -12,6 +12,7 @@
 
 int close(int fd)
 {
+    // fprintf(stderr, "(closing %d)\n", fd); fflush(stderr);
     int retval = _close(fd), err = errno;
     if (retval < 0 && err == EBADF)
     { 
@@ -26,28 +27,32 @@ int close(int fd)
 
 int read(int fd, void *buf, size_t count)
 {
-    int retval = 0;
-    if (((retval = recv(fd, (char *) buf, count, 0)) < 0) && (GetLastError() == WSAENOTSOCK))
+    int retval = recv(fd, (char *)buf, count, 0), err = GetLastError();
+    if (retval < 0 && (err == WSAENOTSOCK || err == EIO))
     {
 	// fd is not a socket; perhaps it's a file descriptor?
 	retval = _read(fd, buf, count);
 	if (retval < 0) 
 	    SetLastError(errno); // save the "real" errno
     }
+    else
+	errno = err;
     return retval;
 }
 
 
 int write(int fd, const void *buf, size_t count)
 {
-    int retval = 0;
-    if (((retval = send(fd, (char *) buf, count, 0)) < 0) && (GetLastError() == WSAENOTSOCK))
+    int retval = send(fd, (char *)buf, count, 0), err = GetLastError();
+    if (retval < 0 && (err == WSAENOTSOCK || err == EIO))
     {
 	// fd is not a socket; perhaps it's a file descriptor?
 	retval = _write(fd, buf, count);
 	if (retval < 0) 
 	    SetLastError(errno); // save the "real" errno
     }
+    else
+	errno = err;
     return retval;
 }
 

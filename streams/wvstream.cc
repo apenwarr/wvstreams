@@ -363,6 +363,12 @@ bool WvStream::iswritable()
 char *WvStream::blocking_getline(time_t wait_msec, char separator,
 				 int readahead)
 {
+    // in fact, a separator of 0 would probably work fine.  Unfortunately,
+    // the parameters of getline() changed recently to not include
+    // wait_msec, so people keep trying to pass 0/-1 wait_msec in as the
+    // separator.  Stop them now, before they get confused.
+    assert(separator != 0 && separator != -1);
+    
     //assert(uses_continue_select || wait_msec == 0);
 
     struct timeval timeout_time;

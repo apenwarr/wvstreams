@@ -31,16 +31,21 @@ WvString WvErrorBase::errstr() const
 #ifndef _WIN32
 	return strerror(errnum);
 #else
-	char msg[4096];
-	const HMODULE module = GetModuleHandle("winsock.dll");
-	DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, module, errnum, 0, msg, sizeof(msg), 0);
-	if (result)
-	    return msg;
-	else
+	if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
 	{
-	    DWORD e = GetLastError();
-	    return "Unknown error";
+	    char msg[4096];
+	    const HMODULE module = GetModuleHandle("winsock.dll");
+	    DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, module, errnum, 0, msg, sizeof(msg), 0);
+	    if (result)
+		return msg;
+	    else
+	    {
+		DWORD e = GetLastError();
+		return WvString("Unknown format %s for error %s", e, errnum);
+	    }
 	}
+	else
+	    return strerror(errnum);
 #endif
     }
 }

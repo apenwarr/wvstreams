@@ -94,7 +94,8 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
 	if (!default_receiver)
 	{
 	    // nobody's listening -- create a receiver on the console
-	    default_receiver = new WvLogConsole(dup(2));
+	    int xfd = dup(2);
+	    default_receiver = new WvLogConsole(xfd);
 	    num_receivers--; // default does not qualify!
 	}
 	default_receiver->log(parent ? parent : this, loglevel,

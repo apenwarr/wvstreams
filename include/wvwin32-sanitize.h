@@ -5,6 +5,7 @@
 #include <basetyps.h>
 #include <objbase.h>
 #include <signal.h>
+#include <winsock.h>
 
 #define _SYS_GUID_OPERATOR_EQ_ 1
 
@@ -15,6 +16,11 @@
 #ifndef SIGPIPE
 #define SIGPIPE 13
 #endif
+
+#ifndef ECONNREFUSED
+#define ECONNREFUSED WSAECONNREFUSED
+#endif
+
 
 typedef int socklen_t;
 

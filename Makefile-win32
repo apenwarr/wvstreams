@@ -15,7 +15,7 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 	
-LIBS+=-lssl -lcrypto -lz -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++
+LIBS+=-lssl -lcrypto -lz -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++ -lstdc++
 
 -lxplc -lxplc-cxx: ;
 
@@ -45,23 +45,26 @@ OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	utils/strcrypt.o \
 	utils/wvbdbhash.o \
 	utils/wvfork.o \
+	utils/wvmagiccircle.o \
 	utils/wvqdbmhash.o \
 	utils/wvshmzone.o \
 	utils/wvsubproc.o \
 	streams/wvlockdev.o \
 	streams/wvlockfile.o \
+	streams/wvmagicloopback.o \
 	streams/wvmodem.o \
 	streams/wvsyslog.o \
 	ipstreams/wvipraw.o
 	
 OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
 
-$(TESTS): libwvwin32.a
+$(TESTS): $(shell cat libwvwin32.libs)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
 W=$(WVSTREAMS)/Win32WvStreams
-libwvwin32.a: $(call objects,$W/libwvutils $W/libwvstreams) $(OBJFILES)
+libwvwin32.a: \
+  $(call objects,$W/libwvutils $W/libwvstreams) $(OBJFILES)
 
 fake-libs: libwvwin32.a
 	for d in libwvbase libwvutils libwvstreams libuniconf; do \

@@ -73,7 +73,7 @@ void WvFdStream::close()
     if (!closed)
     {
 	WvStream::close();
-	//fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
+	// fprintf(stderr, "closing%d:%d/%d\n", (int)this, rfd, wfd);
 	if (rfd >= 0)
 	    ::close(rfd);
 	if (wfd >= 0 && wfd != rfd)
@@ -117,10 +117,12 @@ size_t WvFdStream::uwrite(const void *buf, size_t count)
     
     if (out <= 0)
     {
-	if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
+	int err = errno;
+	// fprintf(stderr, "(fd%d-err-%d)", wfd, err);
+	if (out < 0 && (err == ENOBUFS || err==EAGAIN))
 	    return 0; // kernel buffer full - data not written (yet!)
     
-	seterr(out < 0 ? errno : 0); // a more critical error
+	seterr(out < 0 ? err : 0); // a more critical error
 	return 0;
     }
 

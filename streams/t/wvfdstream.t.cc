@@ -86,6 +86,35 @@ WVTEST_MAIN("open and close with null FDs")
     WVFAIL(fdstream.isreadable());
 }
 
+WVTEST_MAIN("stdout clone")
+{
+    {
+	WvFDStream s(dup(1));
+	WVPASS(s.isok());
+	WVPASSEQ(s.geterr(), 0);
+	s.print("This is stdout!\n");
+	WVPASS(s.isok());
+	WVPASSEQ(s.geterr(), 0);
+	s.close();
+	WVFAIL(s.isok());
+	WVPASSEQ(s.geterr(), 0);
+    }
+    
+    {
+	int fd = dup(1);
+	WvFDStream s(fd);
+	WVPASS(s.isok());
+	WVPASSEQ(s.geterr(), 0);
+	s.print("Boink!\n");
+	WVPASS(s.isok());
+	WVPASSEQ(s.geterr(), 0);
+	close(fd);
+	s.print("this will write to an invalid fd\n");
+	WVFAIL(s.isok());
+	WVPASSEQ(s.geterr(), EBADF);
+    }
+}
+
 WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 {
     // create temporary and empty file for testing

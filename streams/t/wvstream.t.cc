@@ -76,7 +76,7 @@ WVTEST_MAIN("buffered read/write")
     WVPASS(!s.isreadable());
     WVPASS(!s.iswritable());
     WVFAIL(s.read(buf, 1024) != 0);
-    WVPASS(s.write(buf, 1024) == 1024);
+    WVPASSEQ(s.write(buf, 1024), 1024);
     WVPASS(!s.iswritable());
     WVPASS(!s.isreadable());
     WVPASS(s.isok());
@@ -103,13 +103,13 @@ WVTEST_MAIN("errors")
     WVPASS(!a.geterr());
     a.seterr(EBUSY);
     WVPASS(!a.isok());
-    WVPASS(a.geterr() == EBUSY);
-    WVPASS(a.errstr() == strerror(EBUSY));
+    WVPASSEQ(a.geterr(), EBUSY);
+    WVPASSEQ(a.errstr(), strerror(EBUSY));
     
     b.seterr("I'm glue!");
     WVPASS(!b.isok());
-    WVPASS(b.geterr() == -1);
-    WVPASS(b.errstr() == "I'm glue!");
+    WVPASSEQ(b.geterr(), -1);
+    WVPASSEQ(b.errstr(), "I'm glue!");
 }
 
 
@@ -139,7 +139,7 @@ WVTEST_MAIN("getline")
     s.noread();
     WVPASS(s.isreadable());
     
-    WVPASS(s.read(buf, 2) == 2);
+    WVPASSEQ(s.read(buf, 2), 2);
     char *line = s.getline();
     WVPASS(line);
     WVPASS(line && !strcmp(line, " b \r"));
@@ -215,25 +215,25 @@ WVTEST_MAIN("callbacks")
     WVPASS(!val);
     s.inbuf.putstr("gah");
     s.runonce(0);
-    WVPASS(val == 1); // callback works?
+    WVPASSEQ(val, 1); // callback works?
     s.runonce(0);
-    WVPASS(val == 2); // level triggered?
+    WVPASSEQ(val, 2); // level triggered?
     s.getline();
-    WVPASS(val == 2); // but not by getline
+    WVPASSEQ(val, 2); // but not by getline
     WVPASS(!closeval);
     s.inbuf.putstr("blah!");
     s.nowrite();
     s.noread();
     s.runonce(0);
-    WVPASS(val == 3);
+    WVPASSEQ(val, 3);
     WVPASS(s.getline());
     s.runonce(0);
-    WVPASS(val == 3);
-    WVPASS(closeval == 1);
+    WVPASSEQ(val, 3);
+    WVPASSEQ(closeval, 1);
     s.runonce(0);
-    WVPASS(closeval == 1);
+    WVPASSEQ(closeval, 1);
     s.close();
-    WVPASS(closeval == 1);
+    WVPASSEQ(closeval, 1);
 }
 
 
@@ -251,21 +251,21 @@ WVTEST_MAIN("autoforward and buffers")
     a.runonce(0);
     WVPASS(!a.inbuf.used());
     b.runonce(0);
-    WVPASS(val == 0);
-    WVPASS(b.wcount == 4);
+    WVPASSEQ(val, 0);
+    WVPASSEQ(b.wcount, 4);
     a.noautoforward();
     a.inbuf.putstr("astr2");
     a.runonce(0);
-    WVPASS(a.inbuf.used() == 5);
-    WVPASS(b.wcount == 4);
+    WVPASSEQ(a.inbuf.used(), 5);
+    WVPASSEQ(b.wcount, 4);
     
     // delay_output tests
     a.autoforward(b);
     b.delay_output(true);
     a.runonce(0);
     WVPASS(!a.inbuf.used());
-    WVPASS(b.wcount == 4);
-    WVPASS(b.outbuf.used() == 5);
+    WVPASSEQ(b.wcount, 4);
+    WVPASSEQ(b.outbuf.used(), 5);
     b.runonce(0);
     WVFAIL(!b.outbuf.used());
     b.yes_writable = true;
@@ -273,13 +273,13 @@ WVTEST_MAIN("autoforward and buffers")
     WVFAIL(!b.outbuf.used());
     b.flush(0);
     WVPASS(!b.outbuf.used());
-    WVPASS(b.wcount == 4+5);
+    WVPASSEQ(b.wcount, 4+5);
     
     // autoforward() has lower precedence than drain()
     WVPASS(!a.inbuf.used());
     a.inbuf.putstr("googaa");
     a.drain();
-    WVPASS(b.wcount == 4+5);
+    WVPASSEQ(b.wcount, 4+5);
     WVPASS(!a.inbuf.used());
     
     // queuemin() works
@@ -294,7 +294,7 @@ WVTEST_MAIN("autoforward and buffers")
     WVFAIL(!a.inbuf.used());
     a.inbuf.putstr("x");
     WVPASS(a.isreadable());
-    WVPASS(a.inbuf.used() == 6);
+    WVPASSEQ(a.inbuf.used(), 6);
     a.drain();
     WVPASS(!a.inbuf.used());
 }
