@@ -78,7 +78,7 @@ WvString WvUrlRequest::request_str(bool keepalive)
 
 
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl)
-    : WvStreamClone(0), remaddr(_remaddr),
+    : WvStreamClone(new WvTCPConn(_remaddr)), remaddr(_remaddr),
 	log(WvString("HTTP %s", remaddr), WvLog::Debug)
 {
     log("Opening server connection.\n");
@@ -87,7 +87,6 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl)
     chunked = in_chunk_trailer = false;
     request_count = 0;
     
-    cloned = new WvTCPConn(remaddr);
     if (ssl)
 	cloned = new WvSSLStream(cloned);
     

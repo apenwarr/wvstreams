@@ -363,9 +363,10 @@ WVPART(streams, The Streams Library,
   WVSECT1(wvstreamlistfun, An Interesting Example,
 
     Now that we've introduced all the pieces, we can have our first
-    interesting WvStream example by throwing several pieces together. Here's
-    a program that prints messages every once in a while through a WvPipe
-    and using timeouts, while you talk to your modem device via the console.
+    interesting WvStream example by throwing several pieces
+    together. Here's a program that prints messages every once in a
+    while through a WvPipe and using timeouts, while you talk to your
+    modem device via the console.
 
     WVEXAMPLE(wvstreamfunex.cc)
     
@@ -375,22 +376,22 @@ WVPART(streams, The Streams Library,
  
  WVCHAPTER(magicstreams, Some Magical Streams,
   WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream,
-    WvStreamclone is probably one of the coolest, and most confusing parts
-    within the WvStream library. Almost everyone who has ever encountered this
-    stream the first time has had to stop and go over it a few times before they
-    can wrap their head around what is going on. Ok.. now that I've scared
-    you... I'm going to tell you that it is really quite easy. Most of the time,
-    when you are using a WvStreamClone, you will be doing something like the
-    following:
+    WvStreamclone is probably one of the coolest, and most confusing
+    parts within the WvStream library. Almost everyone who has ever
+    encountered this stream the first time has had to stop and go over
+    it a few times before they can wrap their head around what is
+    going on. Ok.. now that I've scared you... I'm going to tell you
+    that it is really quite easy. Most of the time, when you are using
+    a WvStreamClone, you will be doing something like the following:
 
     1. Start a Stream on a TCP Connection
     2. Change this Stream into something else (like an SSL Stream)
     3. And then talk some sort of high level protocol (like HTTP)
 
-    So you have one stream (a TCP Connection), that morphs into another
-    stream TYPE (an SSL Stream), that then becomes another stream (talking
-    HTTP). All the while, not changing the stream that was started and added
-    to the original WvStreamList.
+    So you have one stream (a TCP Connection), that morphs into
+    another stream TYPE (an SSL Stream), that then becomes another
+    stream (talking HTTP). All the while, not changing the stream that
+    was started and added to the original WvStreamList.
 
     Insert Example here...
 )

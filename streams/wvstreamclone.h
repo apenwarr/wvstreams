@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */ 
@@ -29,9 +29,17 @@ public:
      * happen, set cloned to NULL before destroying the WvStreamClone
      * (for example, in your destructor if you derive WvStreamClone).
      */
+    WvStreamClone():
+	cloned(0)
+    {
+	force_select(false, false, false);
+    }
+
     WvStreamClone(WvStream *_cloned):
 	cloned(_cloned)
-        { force_select(false, false, false); }
+    {
+	force_select(false, false, false);
+    }
     virtual ~WvStreamClone();
 
     WvStream *cloned;
