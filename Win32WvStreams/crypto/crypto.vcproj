@@ -28,8 +28,9 @@
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="4"
+				DisableSpecificWarnings="4355;4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -70,8 +71,9 @@
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355;4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool

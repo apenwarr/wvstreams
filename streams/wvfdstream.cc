@@ -18,7 +18,6 @@
 #define SHUT_RD SD_RECEIVE
 #define SHUT_WR SD_SEND
 #define ENOBUFS WSAENOBUFS
-#define EAGAIN WSAEWOULDBLOCK
 
 // streams.cpp
 int close(int fd);

@@ -14,7 +14,6 @@
 #ifdef _WIN32
 #undef errno
 #define errno GetLastError()
-#define EAGAIN WSAEWOULDBLOCK
 #endif
 
 static IWvStream *creator(WvStringParm s, IObject *obj, void *userdata)

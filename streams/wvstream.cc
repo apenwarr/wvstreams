@@ -351,7 +351,7 @@ size_t WvStream::read(void *buf, size_t count)
 	memcpy(buf, inbuf.get(bufu), bufu);
     }
     
-    TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
+    TRACE("read  obj 0x%p, bytes %d/%d\n", this, bufu, count);
     return bufu;
 }
 
@@ -580,8 +580,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     if (isok() && autoclose_time)
     {
 	time_t now = time(NULL);
-	TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
-	      (unsigned int)this, now - autoclose_time, outbuf.used());
+	TRACE("Autoclose enabled for 0x%p - now-time=%ld, buf %d bytes\n", 
+	      this, now - autoclose_time, outbuf.used());
 	if ((flush_internal(0) && !outbuf.used()) || now > autoclose_time)
 	{
 	    autoclose_time = 0; // avoid infinite recursion!
@@ -624,8 +624,8 @@ void WvStream::flush_then_close(int msec_timeout)
     time_t now = time(NULL);
     autoclose_time = now + (msec_timeout + 999) / 1000;
     
-    TRACE("Autoclose SETUP for 0x%08X - buf %d bytes, timeout %ld sec\n", 
-	    (unsigned int)this, outbuf.used(), autoclose_time - now);
+    TRACE("Autoclose SETUP for 0x%p - buf %d bytes, timeout %ld sec\n", 
+	    this, outbuf.used(), autoclose_time - now);
 
     // as a fast track, we _could_ close here: but that's not a good idea,
     // since flush_then_close() deals with obscure situations, and we don't
