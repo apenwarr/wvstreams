@@ -56,8 +56,7 @@ WvStream::WvStream()
     int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
     assert(result == 0);
 #endif
-    wvstream_execute_called = false;
-    userdata = closecb_data = NULL;
+    userdata = NULL;
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
     want_to_flush = true;
@@ -110,9 +109,9 @@ void WvStream::close()
     flush(2000); // fixme: should not hardcode this stuff
     if (!! closecb_func)
     {
-        WvStreamCallback cb = closecb_func;
+        IWvStreamCallback cb = closecb_func;
         closecb_func = 0; // ensure callback is only called once
-        cb(*this, closecb_data);
+        cb(*this);
     }
     
     closed = true;
@@ -178,8 +177,6 @@ void WvStream::callback()
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
 
-    wvstream_execute_called = false;
-
 #define TEST_CONTINUES_HARSHLY 0
 #if TEST_CONTINUES_HARSHLY
 #ifndef _WIN32
@@ -207,19 +204,6 @@ void WvStream::callback()
     // all the way back up to WvStream::execute().  This doesn't always
     // matter right now, but it could lead to obscure bugs later, so we'll
     // enforce it.
-
-    // FIXME: disabled at the moment, because it was implemented
-    // incorrectly with regard to uses_continue_select. Many people
-    // call continue_select without calling their parent's execute
-    // method after, which they should.
-    //assert(wvstream_execute_called);
-}
-
-
-void WvStream::execute()
-{
-    // do nothing by default, but notice that we were here.
-    wvstream_execute_called = true;
 }
 
 
@@ -251,22 +235,6 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
     size_t len = read(buf, count);
     tmp.unalloc(count - len);
     outbuf.merge(tmp);
-    return len;
-}
-
-
-size_t WvStream::continue_read(time_t wait_msec, WvBuf &outbuf, size_t count)
-{
-    // for now, just wrap the older read function
-    size_t free = outbuf.free();
-    if (count > free)
-        count = free;
-    unsigned char *buf = outbuf.alloc(count);
-    
-    // call the non-WvBuf continue_read
-    size_t len = continue_read(wait_msec, buf, count);
-    
-    outbuf.unalloc(count - len);
     return len;
 }
 
@@ -320,43 +288,6 @@ size_t WvStream::read(void *buf, size_t count)
     TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
     maybe_autoclose();
     return bufu;
-}
-
-
-size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
-{
-    assert(uses_continue_select);
-
-    if (!count)
-        return 0;
-
-    // FIXME: continue_select also uses the alarm, so this doesn't work.
-    if (wait_msec >= 0)
-        alarm(wait_msec);
-
-    queuemin(count);
-
-    int got = 0;
-
-    while (isok())
-    {
-	WvStream::execute();
-        if (continue_select(-1))
-        {
-	    if ((got = read(buf, count)) != 0)
-		break;
-	    if (alarm_was_ticking) 
-		break;
-        }
-    }
-
-    if (wait_msec >= 0)
-        alarm(-1);
-
-    queuemin(0);
-    
-    WvStream::execute();
-    return got;
 }
 
 
@@ -429,81 +360,9 @@ bool WvStream::iswritable()
 }
 
 
-size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char separator)
+char *WvStream::blocking_getline(time_t wait_msec, char separator,
+				 int readahead)
 {
-    if (count == 0)
-        return 0;
-
-    size_t result;
-
-    struct timeval timeout_time;
-    if (wait_msec > 0)
-        timeout_time = msecadd(wvtime(), wait_msec);
-
-    // if we get here, we either want to wait a bit or there is data
-    // available.
-    while (isok())
-    {
-        // if there is a newline already, return its string.
-        result = min(count, inbuf.strchr(separator));
-        if (result > 0)
-        {
-            inbuf.move(buf, result);
-            queuemin(0);
-            return result;
-        }
-
-        size_t needed = inbuf.used() + 1;
-        // make select not return true until more data is available
-        queuemin(needed);
-
-        // compute remaining timeout
-        if (wait_msec > 0)
-        {
-            wait_msec = msecdiff(timeout_time, wvtime());
-            if (wait_msec < 0)
-                wait_msec = 0;
-        }
-        
-        bool hasdata;
-        if (uses_continue_select)
-            hasdata = continue_select(wait_msec);
-        else
-            hasdata = select(wait_msec, true, false);
-        if (!isok())
-            break;
-
-        if (hasdata)
-        {
-            // Why doesn't this work?  It blows the heap...
-            //
-            //size_t bytesToGet = max(inbuf.optallocable(), 1U);
-            //inbuf.unalloc(bytesToGet - uread(inbuf.alloc(bytesToGet), bytesToGet));
-
-            // Workaround:
-            //
-            // note that buf is unused until we have the entire line, so
-            // we can use it for temporary storage
-            size_t numread = uread(buf, count);
-            inbuf.put(buf, numread);
-
-            hasdata = inbuf.used() >= needed; // enough?
-        }
-
-        if (!hasdata && wait_msec == 0)
-            break; // handle timeout
-    }
-    queuemin(0);
-    
-    // we timed out or had a socket error
-    return 0;
-}
-
-
-char *WvStream::getline(time_t wait_msec, char separator, int readahead)
-{
-    // FIXME: this should probably use read_until now that it exists
-
     //assert(uses_continue_select || wait_msec == 0);
 
     struct timeval timeout_time;
@@ -577,6 +436,15 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 	inbuf.alloc(1)[0] = 0; // null-terminate it
 	return const_cast<char *>((const char *)inbuf.get(inbuf.used()));
     }
+}
+
+
+char *WvStream::continue_getline(time_t wait_msec, char separator,
+				 int readahead)
+{
+    assert(false && "not implemented, come back later!");
+    assert(uses_continue_select);
+    return NULL;
 }
 
 
@@ -972,10 +840,27 @@ void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
 }
 
 
-void WvStream::setclosecallback(WvStreamCallback _callfunc, void *_userdata)
+void WvStream::setreadcallback()
+{
+    assert(false);
+}
+
+
+void WvStream::setwritecallback()
+{
+    assert(false);
+}
+
+
+void WvStream::setexceptcallback()
+{
+    assert(false);
+}
+
+
+void WvStream::setclosecallback(IWvStreamCallback _callfunc)
 {
     closecb_func = _callfunc;
-    closecb_data = _userdata;
 }
 
 

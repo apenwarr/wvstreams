@@ -56,6 +56,9 @@ public:
     virtual void execute();
     virtual void noread();
     virtual void nowrite();
+
+private:
+    void close_callback(WvStream &s);
 };
 
 #endif // __WVSTREAMCLONE_H

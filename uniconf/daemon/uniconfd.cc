@@ -51,7 +51,7 @@ static void usage(WvStringParm argv0)
         "     -dd  Print lots of debug messages\n"
 	"     -V   Print version number and exit\n"
 	"     -a   Require authentication on incoming connections\n"
-	"     -A   Require authentication and check perms against moniker\n"
+	"     -A   Check all accesses against perms moniker\n"
 	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
 	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
 	"     -u   Listen on given Unix socket filename (default=disabled)\n"
@@ -126,8 +126,8 @@ int main(int argc, char **argv)
     signal(SIGINT,  signal_handler);
     signal(SIGTERM, signal_handler);
     signal(SIGPIPE, SIG_IGN);
-#endif
     wvcrash_setup(argv[0]);
+#endif
 
     int c, buglevel = 0;
     bool dontfork = false, needauth = false;
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
 	    break;
 	    
 	case 'A':
-	    needauth = true;
+	    // needauth = true; // sometimes it makes sense to skip auth...
 	    permmon = optarg;
 	    break;
 	    

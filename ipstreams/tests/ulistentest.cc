@@ -12,7 +12,7 @@ static void stream_bounce_to_list(WvStream &s, void *userdata)
     WvIStreamList::Iter out(l);
     char *line;
 
-    while ((line = s.getline(0)) != NULL)
+    while ((line = s.getline()) != NULL)
     {
 	if (!strncmp(line, "quit", 4))
 	{

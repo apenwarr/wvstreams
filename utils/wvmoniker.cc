@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#if 0 
+#if 0
 # define DEBUGLOG(fmt, args...) fprintf(stderr, fmt, ## args)
 #else
 #ifndef _MSC_VER

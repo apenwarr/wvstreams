@@ -11,7 +11,9 @@
 #define UNSTABLE
 #endif
 
+#ifndef _WIN32
 #include "wvautoconf.h"
+#endif
 
 #ifndef ENABLE_DELETE_DETECTOR
 #include <xplc/IObject.h>

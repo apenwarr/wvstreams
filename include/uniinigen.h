@@ -7,9 +7,10 @@
 #ifndef __UNICONFINI_H
 #define __UNICONFINI_H
 
-#include "uniconfgen.h"
 #include "unitempgen.h"
 #include "wvlog.h"
+
+class WvFile;
 
 /**
  * Loads and saves ".ini"-style files similar to those used by
@@ -41,6 +42,9 @@ public:
     virtual bool refresh();
 
 private:
+    // helper methods for commit
+    bool commit_atomic(WvString real_filename);
+    
     void save(WvStream &file, UniConfValueTree &parent);
     bool refreshcomparator(const UniConfValueTree *a,
         const UniConfValueTree *b, void *userdata);

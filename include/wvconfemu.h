@@ -138,8 +138,6 @@ public:
     void flush();
 
     WvConfigSectionEmu *operator[] (WvStringParm sect);
-    operator const UniConf &()
-        { return uniconf; }
 
     void add_callback(WvConfCallback callback, void *userdata,
 		      WvStringParm section, WvStringParm key, void *cookie);

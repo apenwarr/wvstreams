@@ -222,7 +222,7 @@ size_t WvDsp::uwrite(const void *buf, size_t len)
     
     if (last_dump < time(NULL) - 1)
     {
-	log(WvLog::Debug, "writer rates: %s/%s; reader rates: %s/%s\n",
+	log(WvLog::Debug, "Writer rates: %s/%s; reader rates: %s/%s\n",
 	    outrate.getirate(), outrate.getorate(),
 	    inrate.getirate(), inrate.getorate());
 	last_dump = time(NULL);
@@ -354,7 +354,7 @@ size_t WvDsp::ispace()
     
     if (ioctl(fd, SNDCTL_DSP_GETISPACE, &info) < 0)
     {
-	log(WvLog::Error, "error in GETISPACE\n");
+	log(WvLog::Error, "Error in GETISPACE\n");
 	return 0;
     }
     
@@ -368,7 +368,7 @@ size_t WvDsp::ospace()
     
     if (ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) < 0)
     {
-	log(WvLog::Error, "error in GETOSPACE\n");
+	log(WvLog::Error, "Error in GETOSPACE\n");
 	return 0;
     }
     
@@ -381,7 +381,7 @@ size_t WvDsp::do_uread(void *buf, size_t len)
     if (!len) return 0;
 
     if (len < frag_size)
-        log(WvLog::Warning, "reading less than frag size: %s/%s\n", len, frag_size);
+        log(WvLog::Warning, "Reading less than frag size: %s/%s\n", len, frag_size);
 
     size_t i, i2;
     
@@ -392,7 +392,7 @@ size_t WvDsp::do_uread(void *buf, size_t len)
     {
         if (i > num_frags * 2)
         {
-            log("resetting: frag count is broken! (%s)\n", i);
+            log("Resetting: frag count is broken! (%s)\n", i);
             ioctl(fd, SNDCTL_DSP_RESET, NULL);
         }
         else
@@ -429,7 +429,7 @@ size_t WvDsp::do_uwrite(const void *buf, size_t len)
     if (!len) return 0;
     
     if (len < frag_size)
-        log(WvLog::Warning, "writing less than frag size: %s/%s\n",
+        log(WvLog::Warning, "Writing less than frag size: %s/%s\n",
 	    len, frag_size);
     
     int o = ospace(), o2;

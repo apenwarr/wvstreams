@@ -100,6 +100,7 @@ UniPStoreGen::UniPStoreGen(WvString _moniker) :
 
 UniPStoreGen::~UniPStoreGen()
 {
+    m_spPStore = 0;
     if (m_hPstoreDLL)
     {
 	FreeLibrary(m_hPstoreDLL);
@@ -138,7 +139,8 @@ WvString UniPStoreGen::get(const UniConfKey &key)
 
     if (hRes == PST_E_OK)
     {
-	value = (char*) data;
+	value.setsize(MAX);
+	wcstombs(value.edit(), (wchar_t*)data, MAX);
 	CoTaskMemFree(data);
     }
 
@@ -147,22 +149,19 @@ WvString UniPStoreGen::get(const UniConfKey &key)
 
 void UniPStoreGen::set(const UniConfKey &key, WvStringParm value)
 {
-    HRESULT hRes;
-    unsigned char *data = (unsigned char *) value.cstr();
+    WCHAR name[MAX], data[MAX];
+    mbstowcs(name, key.last().printable().cstr(), MAX);
+    mbstowcs(data, value.cstr(), MAX);
     
-    WvString _name = key.last().printable();
-    WCHAR name[MAX];
-    mbstowcs(name, _name.cstr(), MAX);
-    
-    DWORD cbdata = DWORD((strlen(value.cstr()) + 1) * sizeof(char));
+    DWORD cbdata = DWORD((wcslen(name) + 1) * sizeof(WCHAR));
    
-    hRes = m_spPStore->WriteItem(
+    HRESULT hRes = m_spPStore->WriteItem(
 	m_key, 
 	&m_type, 
 	&m_subtype, 
 	name, 
 	cbdata, 
-	data, 
+	(unsigned char *)data, 
 	NULL, 
 	PST_CF_NONE, 
 	0

@@ -210,13 +210,11 @@ public:
     /**
      * Stores a string value for this key into the registry.  If the value
      * is WvString::null, deletes the key and all of its children.
-     * Returns true on success.
      */
     void setme(WvStringParm value) const;
 
     /**
      * Stores a string value for this key into the registry.
-     * Returns true on success.
      */
     void setme(WVSTRING_FORMAT_DECL) const
         { return setme(WvString(WVSTRING_FORMAT_CALL)); }
@@ -227,7 +225,6 @@ public:
 
     /**
      * Stores an integer value for this key into the registry.
-     * Returns true on success.
      */
     void setmeint(int value) const;
 
@@ -251,11 +248,10 @@ public:
      * Unlike unix mv(), this is *not* currently atomic.  It's more like
      * cp-then-rm.
      */
-    void move(const UniConf &dst);
+    void move(const UniConf &dst) const;
 
     /**
      * Removes this key and all of its children from the registry.
-     * Returns true on success.
      */
     void remove() const
         { setme(WvString::null); }
@@ -476,7 +472,12 @@ public:
             return false;
         current = top[it->key()];
         return true;
-    }   
+    }
+    
+    // FIXME: this is a speed optimization only.  Don't use this unless
+    // you're apenwarr.  It will change.
+    WvString _value() const
+        { return it->value(); }
 };
 
 
@@ -503,6 +504,11 @@ public:
         current = top[it->key()];
         return true;
     }   
+
+    // FIXME: this is a speed optimization only.  Don't use this unless
+    // you're apenwarr.  It will change.
+    WvString _value() const
+        { return it->value(); }
 };
 
 

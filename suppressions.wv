@@ -12,9 +12,14 @@
    stupid_libdl_error_2
    Memcheck:Cond
    fun:_dl_relocate_object
-   obj:/lib/libc-2.3.2.so
+   obj:/lib/libc-2.3.*.so
    fun:_dl_catch_error
    fun:_dl_open
+}
+{
+   stupid_ld_error
+   Memcheck:Cond
+   obj:/lib/ld-2.3.*.so
 }
 {
    <insert a suppression name here>
@@ -33,4 +38,54 @@
    fun:__umoddi3@GLIBC_2.0
    fun:BN_mod_word
    obj:/usr/lib/libcrypto.so.0.9.6
+}
+{
+   stupid_ecard_stuff
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/evolution/1.4/libicalvcal-evolution.so.0.0.0
+   fun:lookupStr
+   fun:lookupProp
+   fun:addGroup
+   obj:/usr/lib/evolution/1.4/libicalvcal-evolution.so.0.0.0
+   fun:mime_parse
+   obj:/usr/lib/evolution/1.4/libicalvcal-evolution.so.0.0.0
+   fun:e_card_new_with_default_charset
+   fun:e_card_new
+}
+{
+   stupid_elist_stuff
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:g_type_create_instance
+   obj:/usr/lib/libgobject-2.0.*
+   fun:g_object_newv
+   fun:g_object_new_valist
+   fun:e_list_new
+}
+{
+    stupid_libc_stuff
+    Memcheck:Leak
+    fun:malloc
+    fun:my_malloc
+    fun:get_or_allocate_specifics_ptr
+    fun:pthread_key_create
+    obj:/lib/libdl-2.3.*.so
+    fun:pthread_once
+    obj:/lib/libdl-2.3.*.so
+    fun:dlvsym
+    fun:__errno_location
+    fun:_IOvfprintf
+}
+{
+   sigaction_bites_my_nuts
+   Memcheck:Param
+   sigaction(act)
+   fun:__libc_sigaction
+}
+{
+   more_fun_libcrypto_junk
+   Memcheck:Value4
+   fun:BF_encrypt
 }

@@ -18,10 +18,6 @@
  */
 class UniTempGen : public UniConfGen
 {
-protected:
-    class NodeIter;
-    friend class NodeIter;
-
 public:
     UniConfValueTree *root; /*!< the root of the tree */
     bool dirty; /*!< set whenever the tree actually changes */

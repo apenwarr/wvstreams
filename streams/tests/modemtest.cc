@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     }
     
     if (!modem.isok() && modem.geterr())
-	log(WvLog::Error, "modem device: %s\n", modem.errstr());
+	log(WvLog::Error, "Modem device: %s\n", modem.errstr());
     
     return 0;
 }

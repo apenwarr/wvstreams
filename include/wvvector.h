@@ -70,10 +70,28 @@ protected:
 	    xseq[slot]->set_autofree(autofree);
     }
 
+    // Comparison functions for use later in qsort()
+    typedef int (*comparison_type_t)(const void *, const void *);
+private:
+    static comparison_type_t innercomparator;
+protected:
+    static int wrapcomparator(const void *_a, const void *_b)
+    {
+	WvLink *a = *static_cast<WvLink**>(const_cast<void*>(_a));
+	WvLink *b = *static_cast<WvLink**>(const_cast<void*>(_b));
+	return innercomparator(a->data, b->data);
+    }
+
+    void qsort(comparison_type_t comparator)
+    {
+	innercomparator = comparator;
+	::qsort(xseq, xcount, sizeof(WvLink*), &WvVectorBase::wrapcomparator);
+    }
+
+public:
     class IterBase;
     friend class IterBase;
 
-public:
     /** Returns the number of elements actually stored in the vector. */
     int count() const
     {
@@ -158,7 +176,7 @@ public:
 	    if (++i > vec.xcount - 1)
 		return NULL;
 	    else
-		return link;	// FIXME = next element of vec
+		return vec.xseq[i];
 	}
 
 	/**
@@ -172,7 +190,7 @@ public:
 	    if (--i < 0)
 		return NULL;
 	    else
-		return link;	// FIXME = next element of vec
+		return vec.xseq[i];
 	}
 
 	/**
@@ -216,7 +234,6 @@ public:
     };
 };
 
-
 /**
  * A dynamic array data structure with constant time lookup,
  * linear time insertion / removal, and expected logarithmic time
@@ -258,13 +275,9 @@ public:
     /** Removes all elements from the vector. */
     void zap(bool destroy = true)
     {
-	printf("zap: %d\n", xcount);
 	if (xcount > 0)
 	    for (int i = xcount - 1; i >= 0; --i)
-	    {
-		printf("%d\n", i);
 		remove(i, destroy);
-	    }
     }
 
     /** Returns the first element */
@@ -323,13 +336,11 @@ public:
      * the order of the operators.
      */
     typedef int (*comparison_type_fn_t)(const T *, const T *);
-    typedef int (*comparison_type_t)(const void *, const void *);
     void qsort(comparison_type_fn_t comparator)
     {
 	if (xcount < 2)
 	    return;
-	::qsort(xseq, xcount, sizeof(T *),
-		reinterpret_cast<comparison_type_t>(comparator));
+	WvVectorBase::qsort(reinterpret_cast<comparison_type_t>(comparator));
     }
 
     /** A simple iterator that walks through all elements in the list. */
@@ -395,5 +406,10 @@ public:
 	}
     };
 };
+
+#define DeclareWvVector2(_classname_, _type_)  \
+    typedef class WvVector<_type_> _classname_
+
+#define DeclareWvVector(_type_) DeclareWvVector2(_type_##Vector, _type_)
 
 #endif // __WVVECTOR_H

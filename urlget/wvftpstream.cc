@@ -97,7 +97,7 @@ char *WvFtpStream::get_important_line()
     char *line;
     do
     {
-        line = getline(-1);
+        line = blocking_getline(-1);
         if (!line)
             return NULL;
     }
@@ -353,7 +353,7 @@ void *WvFtpStream::real_execute(void*)
     {
         if (curl->is_dir)
         {
-            line = data->getline(-1);
+            line = data->blocking_getline(-1);
             if (line && curl->outstream)
             {
                 WvString output_line(parse_for_links(line.edit()));

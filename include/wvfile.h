@@ -30,8 +30,7 @@ class WvFile : public WvFDStream
 {
 public:
     WvFile(int rwfd = -1);
-    WvFile(WvStringParm filename, int mode, int create_mode = 0666)
-        { open(filename, mode, create_mode); }
+    WvFile(WvStringParm filename, int mode, int create_mode = 0666);
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
     
     bool readable, writable;

@@ -13,7 +13,7 @@
 bool WvIPFirewall::enable = false, WvIPFirewall::ignore_errors = true;
 
 
-WvIPFirewall::WvIPFirewall() : log("Firewall", WvLog::Debug)
+WvIPFirewall::WvIPFirewall() : log("Firewall", WvLog::Debug2)
 {
     // don't change any firewall rules here!  Remember that there may be
     // more than one instance of the firewall object.
@@ -68,21 +68,34 @@ WvString WvIPFirewall::forward_command(const char *cmd,
 	haveiface.append("-d ");
 	haveiface.append((WvString)srcaddr);
     }
+    
+    WvString retval;
 
-    if (!(dstaddr == zero))
+    if (dst == WvIPAddr("127.0.0.1"))
     {
-	haveoface.append("-d ");
-	haveoface.append((WvString)dstaddr);
+        retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
+                  "-j REDIRECT --to-port %s %s \n",
+                   cmd, proto, src.port, haveiface, dst.port, shutup());
     }
+    else
+    {
 
-    WvString retval("iptables -t nat %s OFASTFORWARD -p %s -m mark --mark 0xBEEF "
+        if (!(dstaddr == zero))
+        {
+    	    haveoface.append("-d ");
+	    haveoface.append((WvString)dstaddr);
+        }
+    
+        retval.append("iptables -t nat %s OFASTFORWARD -p %s "
+                    "-m mark --mark 0xBEEF "
                     "--dport %s %s -j MASQUERADE %s \n", 
                     cmd, proto, dst.port, haveoface, shutup());
 
-    retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
+        retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
                   "-j DNAT --to-destination %s "
                   "%s \n", cmd, proto, src.port, haveiface,  dst, shutup());
-    
+    }
+
     retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
 		  "--dport %s %s \n "
 		  "%s\n", cmd, proto, src.port,
@@ -164,18 +177,17 @@ void WvIPFirewall::add_forward(const WvIPPortAddr &src,
     }
 }
 
-void WvIPFirewall::del_forward(const WvIPPortAddr &src,
-			       const WvIPPortAddr &dst)
+void WvIPFirewall::del_forward(const WvIPPortAddr &src)
 {
      FastForwardList::Iter i(forwards);
-     log("Find this Forward %s, %s\n", (WvString)src, (WvString)dst);
+     log("Find this Forward %s\n", (WvString)src);
      for (i.rewind(); i.next(); )
      {
 	 log("Find Forward %s, %s\n", (WvString)i->src, (WvString)i->dst);
-	 if (i->src == src && i->dst == dst)
+	 if (i->src == src)
 	 {
-	     WvString s(forward_command("-D", "tcp", src, dst)),
-	     s2(forward_command("-D", "udp", src, dst));
+	     WvString s(forward_command("-D", "tcp", src, i->dst)),
+	     s2(forward_command("-D", "udp", src, i->dst));
 	     log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
 	     if (enable) 
 	     {

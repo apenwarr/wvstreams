@@ -102,8 +102,8 @@ bool WvLockDev::lock()
  	
 	fd.open(filename, O_RDONLY);
 	//fprintf(stderr, "ok: %d\n", fd.isok());
-	inbuf = trim_string(fd.getline(-1));
-	//fprintf(stderr, "getline: '%s'\n", inbuf);
+	inbuf = trim_string(fd.blocking_getline(-1));
+	//fprintf(stderr, "blocking_getline: '%s'\n", inbuf);
 	
 	if (inbuf)
 	    pid = atoi(inbuf);

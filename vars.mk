@@ -20,7 +20,7 @@ TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
 TARGETS += wvtestmain.o
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
-GARBAGE += wvtestmain.o tmp.ini
+GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 
 #ifneq ("$(with_swig)", "no")
 #  ifneq ("$(with_tcl)", "no")
@@ -61,7 +61,7 @@ endif
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
-GARBAGE += ChangeLog $(wildcard lib*.so.*)
+GARBAGE += $(wildcard lib*.so.*)
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
 		include/wvautoconf.h config.cache reconfigure
@@ -118,11 +118,11 @@ ifeq ("$(enable_testgui)", "no")
 WVTESTRUN=env
 endif
 
-ifneq ("$(enable_rtti)", "yes")
+ifeq ("$(enable_rtti)", "no")
 CXXFLAGS+=-fno-rtti
 endif
 
-ifneq ("$(enable_exceptions)", "yes")
+ifeq ("$(enable_exceptions)", "no")
 CXXFLAGS+=-fno-exceptions
 endif
 
@@ -154,6 +154,10 @@ endif
 
 ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
+endif
+
+ifneq ("$(with_ppopt)", "no")
+  libwvutils.so: LIBS+=-lpopt
 endif
 
 LDLIBS := -lgcc $(LDLIBS) \
