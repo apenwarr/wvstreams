@@ -42,7 +42,7 @@ int main()
     
     ACallback c0(bunk);
     A2Callback c1(bunk1);
-    A3Callback c2(BoundCallback<A3Callback, const A &>(bunk, a));
+    A3Callback c2(WvBoundCallback<A3Callback, const A &>(bunk, a));
     A2Callback c3(&a, &A::add);
     
     print_a(c0(a, (void *)5));

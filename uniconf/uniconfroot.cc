@@ -53,7 +53,7 @@ void UniConfRoot::del_callback(void *cookie, const UniConfKey &key,
 void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag, bool recurse)
 {
     add_callback(flag, key,
-		 BoundCallback<UniConfCallback, bool *>
+		 WvBoundCallback<UniConfCallback, bool *>
 		    (&UniConfRoot::setbool_callback, flag),
 		 recurse);
 }

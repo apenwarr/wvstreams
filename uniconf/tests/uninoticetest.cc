@@ -39,7 +39,7 @@ int main()
     foo thing;
 
     r["heh"].add_callback(0,
-		  BoundCallback<UniConfCallback, int>(&thing, &foo::cb, 3));
+		  WvBoundCallback<UniConfCallback, int>(&thing, &foo::cb, 3));
 
  
     WvStreamList l;

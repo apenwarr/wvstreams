@@ -215,7 +215,7 @@ public:
     
     void honk_at(Honk &a)
     {
-	cb = WvCont(BoundCallback<RealCallback, Honk &>
+	cb = WvCont(WvBoundCallback<RealCallback, Honk &>
 		    (this, &Honk::honker, a));
     }
 
