@@ -25,7 +25,7 @@ protected:
     /**
      * Rebinds the inner generator and prepares its callback.
      * The previous generator is NOT destroyed.
-     * "inner" must not be null.
+     * 
      */
     void setinner(IUniConfGen *inner);
 

@@ -17,7 +17,8 @@ UniFilterGen::UniFilterGen(IUniConfGen *inner)
 
 UniFilterGen::~UniFilterGen()
 {
-    RELEASE(xinner);
+    if (xinner)
+    	RELEASE(xinner);
 }
 
 
@@ -34,61 +35,85 @@ void UniFilterGen::setinner(IUniConfGen *inner)
 
 void UniFilterGen::commit()
 {
-    xinner->commit();
+    if (xinner)
+    	xinner->commit();
 }
 
 
 bool UniFilterGen::refresh()
 {
-    return xinner->refresh();
+    if (xinner)
+    	return xinner->refresh();
+    else
+    	return false;
 }
 
 
 void UniFilterGen::prefetch(const UniConfKey &key, bool recursive)
 {
-    xinner->prefetch(key, recursive);
+    if (xinner)
+    	xinner->prefetch(key, recursive);
 }
 
 
 WvString UniFilterGen::get(const UniConfKey &key)
 {
-    return xinner->get(key);
+    if (xinner)
+    	return xinner->get(key);
+    else
+    	return WvString::null;
 }
 
 
 void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 {
-    xinner->set(key, value);
+    if (xinner)
+    	xinner->set(key, value);
 }
 
 
 bool UniFilterGen::exists(const UniConfKey &key)
 {
-    return xinner->exists(key);
+    if (xinner)
+    	return xinner->exists(key);
+    else
+    	return false;
 }
 
 
 bool UniFilterGen::haschildren(const UniConfKey &key)
 {
-    return xinner->haschildren(key);
+    if (xinner)
+    	return xinner->haschildren(key);
+    else
+    	return false;
 }
 
 
 bool UniFilterGen::isok()
 {
-    return xinner->isok();
+    if (xinner)
+    	return xinner->isok();
+    else
+    	return false;
 }
 
 
 UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 {
-    return xinner->iterator(key);
+    if (xinner)
+    	return xinner->iterator(key);
+    else
+    	return NULL;
 }
 
 
 UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 {
-    return xinner->recursiveiterator(key);
+    if (xinner)
+    	return xinner->recursiveiterator(key);
+    else
+    	return NULL;
 }
 
 
