@@ -279,16 +279,16 @@ WVTEST_MAIN("daemon quit")
 // test that proxying between two uniconf daemons works
 // e.g.: client -> uniconfd -> uniconfd
 
-WvPipe * setup_master_daemon(bool implicit_root, WvString &masterpipename)
+static WvPipe * setup_master_daemon(bool implicit_root, WvString &masterpipename, WvString &ininame)
 {
-    WvString inifilename = "/tmp/uniXXXXXX";
     int fd;
 
-    if ((fd = mkstemp(inifilename.edit())) == (-1))
+    ininame = "/tmp/iniXXXXXX";
+    if ((fd = mkstemp(ininame.edit())) == (-1))
         return NULL;
     close(fd);
 
-    WvFile stuff(inifilename, O_CREAT|O_WRONLY|O_TRUNC);
+    WvFile stuff(ininame, O_CREAT|O_WRONLY|O_TRUNC);
     stuff.print("pickles/apples/foo=1\n");
     stuff.print("pickles/mangos/bar=1\n");
     stuff.close();
@@ -298,7 +298,7 @@ WvPipe * setup_master_daemon(bool implicit_root, WvString &masterpipename)
         return NULL;
     close(fd);
 
-    WvString inimount("/cfg=ini:%s", inifilename);    
+    WvString inimount("/cfg=ini:%s", ininame);    
     WvString mount1, mount2;
     if (implicit_root)
         mount1 = inimount;
@@ -327,7 +327,7 @@ WvPipe * setup_master_daemon(bool implicit_root, WvString &masterpipename)
 }
 
 
-WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipename, 
+static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipename, 
                             WvString &slavepipename)
 {
     int fd;
@@ -361,7 +361,7 @@ WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipename,
 }
 
 
-void wait_for_pipe_ready(WvStringParm pipename)
+static void wait_for_pipe_ready(WvStringParm pipename)
 {
     // If we can't get a connection in 100ms, something is seriously wrong..
 
@@ -383,8 +383,8 @@ void wait_for_pipe_ready(WvStringParm pipename)
 
 static void daemon_proxy_test(bool implicit_root)
 {
-    WvString masterpipename;
-    WvPipe *master = setup_master_daemon(implicit_root, masterpipename);
+    WvString masterpipename, ininame;
+    WvPipe *master = setup_master_daemon(implicit_root, masterpipename, ininame);
     master->setcallback(WvPipe::ignore_read, NULL);
     master->nowrite();
     wait_for_pipe_ready(masterpipename);
@@ -428,6 +428,10 @@ static void daemon_proxy_test(bool implicit_root)
     WvIStreamList::globallist.zap();
     WVRELEASE(master);
     WVRELEASE(slave);
+
+    unlink(slavepipename.cstr());
+    unlink(masterpipename.cstr());
+    unlink(ininame.cstr());
 }
 
 

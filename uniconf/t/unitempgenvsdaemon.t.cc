@@ -15,13 +15,17 @@
 #include <sys/wait.h>
 #include <sys/signal.h>
 
-#define UNICONFD_SOCK "/tmp/unitempgen-uniconfd"
-#define UNICONFD_INI "/tmp/unitempgen-uniconfd.ini"
-
 // write out a temporary ini file for use, saves flushing entries
-static bool write_ini()
+static bool write_ini(WvString &ininame)
 {
-    WvFile outfile(UNICONFD_INI, O_CREAT | O_WRONLY | O_TRUNC);
+    int fd;
+    ininame = "/tmp/iniXXXXXX";
+    if ((fd = mkstemp(ininame.edit())) == (-1))
+        return false;    
+    close(fd);
+
+
+    WvFile outfile(ininame, O_CREAT | O_WRONLY | O_TRUNC);
     if (outfile.isok())
     {
         outfile.print("%s\n%s\n", "[eth0]", "dhcpd = 1");
@@ -31,20 +35,39 @@ static bool write_ini()
     return false;
 }
 
+static WvString get_sockname()
+{
+    int fd;
+    WvString sockname = "/tmp/sockXXXXXX";
+    if ((fd = mkstemp(sockname.edit())) == (-1))
+        return "";    
+    close(fd);
+
+    return sockname;
+}
+
 WVTEST_MAIN("tempgen/cachegen basics")
 {
     signal(SIGPIPE, SIG_IGN);
 
-    if (!write_ini())
+    WvString ininame;
+    if (!write_ini(ininame))
     {
         WVFAIL(true || "Could not write ini file");
+        exit(1); 
+    }
+
+    WvString sockname = get_sockname();
+    if (!sockname)
+    {
+        WVFAIL(true || "Could not get socket filename");
         exit(1); 
     }
 
     pid_t cfg_handler = fork();
     if (!cfg_handler) // child only
     {
-        UniIniGen *unigen = new UniIniGen(UNICONFD_INI, 0666);
+        UniIniGen *unigen = new UniIniGen(ininame, 0666);
 
         UniConfRoot uniconf;
         uniconf["cfg"].mountgen(unigen);
@@ -53,7 +76,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
         UniConf defcfg(uniconf["default"]);
 
         UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(UNICONFD_SOCK, 0777);
+        daemon.setupunixsocket(sockname, 0777);
 
         WvIStreamList::globallist.append(&daemon, false);
         while (daemon.isok())
@@ -66,7 +89,8 @@ WVTEST_MAIN("tempgen/cachegen basics")
 
     // Wait for child to become responsive
     {
-        UniConfRoot cfg_ok("retry:unix:" UNICONFD_SOCK);
+        WvString root("retry:unix:%s", sockname);
+        UniConfRoot cfg_ok(root);
         for (;;)
         {
             cfg_ok.xset("/tmp/dummy", "foo");
@@ -76,7 +100,8 @@ WVTEST_MAIN("tempgen/cachegen basics")
     }
 
     /* Setup subtree root */
-    UniConfRoot cfg("cache:subtree:unix:" UNICONFD_SOCK " cfg");
+    WvString root("cache:subtree:unix:%s cfg", sockname);
+    UniConfRoot cfg(root);
     
     int initial_value = cfg["eth0"].xgetint("dhcpd", 0);
     cfg["eth0"].xsetint("dhcpd", !initial_value);
@@ -88,6 +113,6 @@ WVTEST_MAIN("tempgen/cachegen basics")
    
     // kill off the daemon
     kill(cfg_handler, 15);
-    unlink(UNICONFD_INI);
-    unlink(UNICONFD_SOCK);
+    unlink(ininame.cstr());
+    unlink(sockname.cstr());
 }
