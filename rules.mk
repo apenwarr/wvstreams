@@ -13,16 +13,19 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.cc
 	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(notdir $@).d > $(dir $@).$(notdir $@).d
 	@rm -f $(notdir $@).d
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
 
