@@ -20,13 +20,10 @@ class WvConduit : public WvFDStream
 {
 public:
     WvConduit();
-    WvConduit *get_slave();
-    void shutdown();
-    virtual ~WvConduit();
+    WvStream *get_slave();
+    virtual ~WvConduit() {};
 protected:
-    WvConduit(WvConduit* master, int fd);
-    WvConduit* other;
-    bool slave;
+    WvStream* slave;
 };
 
 #endif // __WVCONDUIT_H

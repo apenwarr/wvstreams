@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
-WvConduit::WvConduit() : slave(false)
+WvConduit::WvConduit()
 {
     int socks[2];
 
@@ -28,28 +28,10 @@ WvConduit::WvConduit() : slave(false)
 
     wfd = rfd = socks[0];
 
-    other = new WvConduit(this, socks[1]);
+    slave = new WvFDStream(socks[1]);
 }
 
-WvConduit::WvConduit(WvConduit *master, int fd) 
-    : WvFDStream(fd, fd), other(master), slave(true)
+WvStream *WvConduit::get_slave()
 {
-}
-
-WvConduit *WvConduit::get_slave()
-{
-    return other;
-}
-
-void WvConduit::shutdown()
-{
-    ::shutdown(wfd, SHUT_WR);
-}
-
-WvConduit::~WvConduit()
-{
-    if (slave)
-        other->other = NULL;
-    else
-        delete other;
+    return slave;
 }
