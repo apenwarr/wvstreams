@@ -6,6 +6,7 @@
  *
  */
 
+
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
@@ -199,6 +200,64 @@ void strcoll_split(StringCollection &coll, WvStringParm _s,
 	
 	*eptr = oldc;
 	sptr = eptr;
+    }
+}
+
+/**
+ * Splits a string and adds each substring to a collection.
+ *   this behaves differently in that it actually delimits the 
+ *   pieces as fields and returns them, it doesn't treat multiple
+ *   delimeters as one and skip them.
+ *
+ *   ie., parm1::parm2 -> 'parm1','','parm2' when delimited with ':'
+ *
+ *   coll       : the collection of strings to add to
+ *   _s         : the string to split
+ *   splitchars : the set of delimiter characters
+ *   limit      : the maximum number of elements to split
+ */
+template<class StringCollection>
+void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
+    const char *splitchars = " \t", int limit = 0)
+{
+    WvString s(_s);
+    char *sptr = s.edit(), *eptr, oldc;
+
+	bool start = true;
+    while (sptr && *sptr)
+	{
+	  int len = strspn(sptr,splitchars);
+	    sptr += len;
+
+	  if (len > 0)
+		--limit;
+
+	  for (bool unseen = true; len > 0; (len -= strlen(splitchars)),--limit)
+	  {
+		if ((!start) && (unseen))
+		  { unseen = false; continue; }
+
+		if (limit)
+		  coll.add(new WvString(""), true);
+		else
+		  break;
+	  }
+
+	  start = false;
+
+	  if (limit)
+        eptr = sptr + strcspn(sptr,splitchars);
+      else
+		eptr = sptr + strlen(sptr);
+
+      oldc = *eptr;
+      *eptr = '\0';
+
+      if (limit)
+		coll.add(new WvString(sptr), true);
+
+      *eptr = oldc;
+      sptr = eptr;
     }
 }
 

@@ -23,6 +23,11 @@ void WvStringList::split(WvStringParm s, const char *splitchars,
     return ::strcoll_split(*this, s, splitchars, limit);
 }
 
+void WvStringList::splitstrict(WvStringParm s, const char *splitchars,
+    int limit)
+{
+    return ::strcoll_splitstrict(*this, s, splitchars, limit);
+}
 
 void WvStringList::fill(const char * const *array)
 {

@@ -20,6 +20,8 @@ public:
     WvString join(const char *joinchars = " ") const;
     void split(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
+    void splitstrict(WvStringParm s, const char *splitchars = " \t\r\n",
+	       int limit = 0);
     void fill(const char * const *array);
     WvString popstr();
 };
