@@ -58,7 +58,7 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-CPPFLAGS += -Iinclude -pipe
+CPPFLAGS += -Iinclude -pipe $(QTINCLUDE)
 ARFLAGS = rs
 
 DEBUG:=$(filter-out no,$(enable_debug))
@@ -161,7 +161,7 @@ libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: -lfftw -lrfftw libwvutils.so
 
 libwvqt.a libwvqt.so: $(call objects,qt)
-libwvqt.so: -lqt libwvutils.so libwvstreams.so
+libwvqt.so: $(QTLIB) libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
