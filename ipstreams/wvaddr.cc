@@ -224,7 +224,7 @@ WvString WvStringAddr::printable() const
 /* create a WvEtherAddr from a printable string in the format:
  *      AA:BB:CC:DD:EE:FF  (six hex numbers, separated by colons)
  */
-WvEtherAddr::WvEtherAddr(char const string[])
+void WvEtherAddr::string_init(char const string[])
 {
     char *endptr = NULL;
     unsigned char *cptr = binaddr;
@@ -358,7 +358,7 @@ size_t WvARCnetAddr::sockaddr_len() const
 /* create an IP address from a dotted-quad string.  Maybe someday we'll
  * support hostnames too with gethostbyname, but not yet.
  */
-WvIPAddr::WvIPAddr(const char string[])
+void WvIPAddr::string_init(const char string[])
 {
     const char *iptr, *nptr;
     unsigned char *cptr = binaddr;
@@ -506,7 +506,7 @@ WvIPNet::WvIPNet(const WvIPNet &_net)
 
 
 // If the netmask is not specified, it will default to all 1's.
-WvIPNet::WvIPNet(const char string[]) : WvIPAddr(string)
+void WvIPNet::string_init(const char string[])
 {
     char *maskptr;
     int bits;
@@ -649,8 +649,7 @@ WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port)
 
 
 // If no port is specified (after a ':' or a space or a tab) it defaults to 0.
-WvIPPortAddr::WvIPPortAddr(const char string[]) 
-                              : WvIPAddr(string)
+void WvIPPortAddr::string_init(const char string[]) 
 {
     const char *cptr = strchr(string, ':');
     if (!cptr)

@@ -161,7 +161,7 @@ WvIPPortAddr WvTCPConn::localaddr()
 }
 
 
-const WvAddr *WvTCPConn::src() const
+const WvIPPortAddr *WvTCPConn::src() const
 {
     return &remaddr;
 }
@@ -327,7 +327,7 @@ size_t WvTCPListener::uwrite(const void *, size_t)
 }
 
 
-const WvAddr *WvTCPListener::src() const
+const WvIPPortAddr *WvTCPListener::src() const
 {
     return &listenport;
 }

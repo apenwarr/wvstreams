@@ -13,7 +13,8 @@
 #include "wvlinklist.h"
 
 DeclareWvList2(WvString,
-		WvString join(const char *joinchars = " ");
+	       WvString join(const char *joinchars = " ");
+	       void split(const WvString &s, const char *splitchars = " ");
 	       );
 
 #endif // __WVSTRINGLIST_H

@@ -53,7 +53,7 @@ public:
     
     // return the remote address (source of all incoming packets),
     // which is a constant for any given TCP connection.
-    virtual const WvAddr *src() const;
+    virtual const WvIPPortAddr *src() const;
 
     // has the connection been completed yet?
     bool isconnected() const
@@ -101,7 +101,7 @@ public:
     virtual size_t uwrite(const void *buf, size_t len);
     
     // src() is a bit of a misnomer, but it returns the listener port.
-    virtual const WvAddr *src() const;
+    virtual const WvIPPortAddr *src() const;
     
     // when we fork(), we want the child not to have any of our listeners!
     static void close_all_listeners();
