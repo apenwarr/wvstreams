@@ -113,82 +113,20 @@ private:
     bool hold;
     WvList<SetBool> setbools;
 
-    void notify(const UniConf &_uni, const UniConfKey &_key)
-    {
-	WvList<SetBool>::Iter i(setbools);
-	WvString section(_key.first());
-	WvString key(_key.removefirst());
-
-	if (hold)
-	    return;
-
-	i.rewind();
-	while (i.next())
-	    if (((i->section && !i->section) || !strcasecmp(i->section, section))
-		&& ((i->key && !i->key) || !strcasecmp(i->key, key)))
-		*(i->b) = true;
-    }
+    void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
-    WvConfEmu(UniConf& _uniconf):
-	uniconf(_uniconf), sections(42), hold(false)
-    {
-	uniconf.add_callback(this,
-			     UniConfCallback(this, &WvConfEmu::notify),
-			     true);
-    }
-    void zap()
-    {
-	uniconf.remove();
-    }
-    void load_file(WvStringParm filename)
-    {
-	UniConfRoot new_uniconf(WvString("ini:%s", filename));
-
-	hold = true;
-	new_uniconf.copy(uniconf, true);
-	hold = false;
-    }
-    WvConfigSectionEmu *operator[] (WvStringParm sect)
-    {
-	WvConfigSectionEmu* section = sections[sect];
-
-	if (!section && uniconf[sect].exists())
-	{
-	    section = new WvConfigSectionEmu(uniconf[sect], sect);
-	    sections.add(section, true);
-	}
-
-	return section;
-    }
-    void add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
-    {
-	WvList<SetBool>::Iter i(setbools);
-
-	i.rewind();
-	while (i.next())
-	{
-	    if (i->b == b
-		&& i->section == _section
-		&& i->key == _key)
-		return;
-	}
-
-	setbools.append(new SetBool(b, _section, _key), true);
-    }
+    WvConfEmu(const UniConf& _uniconf);
+    void zap();
+    void load_file(WvStringParm filename);
+    WvConfigSectionEmu *operator[] (WvStringParm sect);
+    void add_setbool(bool *b, WvStringParm _section, WvStringParm _key);
     const char *get(WvStringParm section, WvStringParm entry,
-		    const char *def_val = NULL)
-    {
-	return uniconf[section][entry].get(def_val);
-    }
-    void setint(WvStringParm section, WvStringParm entry, int value)
-    {
-	uniconf[section][entry].setint(value);
-    }
+		    const char *def_val = NULL);
+    void setint(WvStringParm section, WvStringParm entry, int value);
     void set(WvStringParm section, WvStringParm entry,
-	     const char *value)
-    {
-	uniconf[section][entry].set(value);
-    }
+	     const char *value);
+    void maybeset(WvStringParm section, WvStringParm entry,
+		  const char *value);
 
     class Iter;
     friend Iter;

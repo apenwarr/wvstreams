@@ -5,62 +5,104 @@
  * Basic WvConf emulation layer for UniConf.
  */
 #include "wvconfemu.h"
-#include "uniinigen.h"
 
-#if 0
-
-WvConf::WvConf(WvStringParm _filename, int _create_mode)
-    : notifier(h), ev(h), filename(_filename)
+void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 {
-    h.mount(new UniConfIniFile(&h, filename));
-    h.load();
+    WvList<SetBool>::Iter i(setbools);
+    WvString section(_key.first());
+    WvString key(_key.removefirst());
+
+    if (hold)
+	return;
+
+    i.rewind();
+    while (i.next())
+	if (((i->section && !i->section) || !strcasecmp(i->section, section))
+	    && ((i->key && !i->key) || !strcasecmp(i->key, key)))
+	    *(i->b) = true;
 }
 
 
-WvConf::~WvConf()
+WvConfEmu::WvConfEmu(const UniConf& _uniconf):
+    uniconf(_uniconf), sections(42), hold(false)
 {
-    save();
+    uniconf.add_callback(this,
+			 UniConfCallback(this, &WvConfEmu::notify),
+			 true);
 }
 
 
-const char *WvConf::get(WvStringParm section, WvStringParm entry,
-			const char *def_val)
+void WvConfEmu::zap()
 {
-    UniConf *res = h.find(UniConfKey(section, entry));
-    if (!res || !*res)
-	return def_val;
-    else
-	return res->cstr();
+    uniconf.remove();
 }
 
 
-void WvConf::setint(WvStringParm section, WvStringParm entry, int value)
+void WvConfEmu::load_file(WvStringParm filename)
 {
-    h.find_make(UniConfKey(section, entry))->set(value);
-    run_all_callbacks();
+    UniConfRoot new_uniconf(WvString("ini:%s", filename));
+
+    hold = true;
+    new_uniconf.copy(uniconf, true);
+    hold = false;
 }
 
 
-void WvConf::set(WvStringParm section, WvStringParm entry, const char *value)
+WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 {
-    h.find_make(UniConfKey(section, entry))->set(value);
-    run_all_callbacks();
+    WvConfigSectionEmu* section = sections[sect];
+
+    if (!section && uniconf[sect].exists())
+    {
+	section = new WvConfigSectionEmu(uniconf[sect], sect);
+	sections.add(section, true);
+    }
+
+    return section;
 }
 
 
-void WvConf::add_setbool(bool *b, WvStringParm section, WvStringParm entry)
+void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
 {
-    WvFastString s(!!section ? section : WvFastString("*"));
-    WvFastString e(!!entry ? entry : WvFastString("*"));
-    ev.add_setbool(b, UniConfKey(s, e));
+    WvList<SetBool>::Iter i(setbools);
+
+    i.rewind();
+    while (i.next())
+    {
+	if (i->b == b
+	    && i->section == _section
+	    && i->key == _key)
+	    return;
+    }
+
+    setbools.append(new SetBool(b, _section, _key), true);
 }
 
 
-void WvConf::del_setbool(bool *b, WvStringParm section, WvStringParm entry)
+const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
+			   const char *def_val = NULL)
 {
-    WvFastString s(!!section ? section : WvFastString("*"));
-    WvFastString e(!!entry ? entry : WvFastString("*"));
-    ev.del_setbool(b, UniConfKey(s, e));
+    return uniconf[section][entry].get(def_val);
 }
 
-#endif
+
+void WvConfEmu::setint(WvStringParm section, WvStringParm entry, int value)
+{
+    uniconf[section][entry].setint(value);
+}
+
+
+void WvConfEmu::set(WvStringParm section, WvStringParm entry,
+		    const char *value)
+{
+    uniconf[section][entry].set(value);
+}
+
+
+void WvConfEmu::maybeset(WvStringParm section, WvStringParm entry,
+			 const char *value)
+{
+    if (get(section, entry, 0) == 0)
+	set(section, entry, value);
+}
+
