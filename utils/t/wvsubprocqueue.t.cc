@@ -9,7 +9,9 @@
 #include "wvtest.h"
 #include "wvfile.h"
 
-static WvString fn("test.tmp");
+#include <unistd.h>
+
+static WvString fn("test-%s.tmp", getpid());
 static WvString cmd1("echo cmd1 >>%s", fn), 
 	cmd2("echo cmd2 >>%s", fn),
 	cmd2s("sleep 1; %s", cmd2);
