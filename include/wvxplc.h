@@ -7,7 +7,9 @@
 #ifndef __WVXPLC_H
 #define __WVXPLC_H
 
+#ifndef _WIN32
 #include "wvautoconf.h"
+#endif
 
 #if HAVE_LIBXPLC
 
