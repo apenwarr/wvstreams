@@ -92,7 +92,7 @@ class WvRSAKey
 public:
     struct rsa_st *rsa;
 
-    WvRSAKey(char *_keystr, bool priv);
+    WvRSAKey(const char *_keystr, bool priv);
     WvRSAKey(int bits);
     ~WvRSAKey();
 

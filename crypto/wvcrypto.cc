@@ -137,7 +137,7 @@ WvBlowfishStream::~WvBlowfishStream()
 
 
 
-WvRSAKey::WvRSAKey(char *_keystr, bool priv)
+WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
 {
     // the ssl library segfaults if the buffer isn't big enough and our key
     // is unexpectedly short... sigh.  There's probably a security hole
