@@ -17,12 +17,12 @@ XPATH=../.. ../../utils ../../zlib
 default: all
 
 all: watchtest pipetest clonetest modemtest logtest logbuftest  \
-         syslogtest looptest timetest prototest
+         logfiletest syslogtest looptest timetest prototest
 
 streams.a: ../streams.libs $(LOCKDEV)
 
 watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
-	looptest timetest prototest: streams.a
+	logfiletest looptest timetest prototest: streams.a
 
 clean:
 	rm -f watchtest pipetest clonetest modemtest logtest logbuftest \
