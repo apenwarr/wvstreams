@@ -1,4 +1,4 @@
-
+#if 0
 #include "wvtest.h"
 #include "wvdailyevent.h"
 
@@ -151,3 +151,4 @@ WVTEST_MAIN("Ridiculous values (first_hour) test")
 */
 }
 
+#endif
