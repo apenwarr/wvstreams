@@ -127,7 +127,7 @@ void printfinal(bool pass)
 
 bool testaget(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expectsucc)
 {
-    WvString expect = expectsucc ? key : WvString("nothing");
+    WvString expect = expectsucc ? WvString(key) : WvString("nothing");
     WvString got = u[prefix][key].get("nothing");
     if (expect == got)
         wvcon->print("OK - %s/%s: got \"%s\"\n", prefix, key, got);

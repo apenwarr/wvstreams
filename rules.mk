@@ -19,7 +19,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.cc
 	@$(LINK.cc) -M -E $< | \
-		sed -e 's|^$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
+		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
 	$(COMPILE_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %.o: %.cc
