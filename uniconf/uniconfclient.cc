@@ -78,7 +78,15 @@ void UniConfClient::save()
 UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
 {
    // Now, do a get on the key from the daemon
-    conn->print(WvString("get %s\n", wvtcl_escape(key)));
+    WvString newkey(key);
+    UniConf *par = parent;
+    while (par)
+    {
+        if (par->name != "")
+            newkey = WvString("%s/%s", par->name, newkey);
+        par = par->parent;
+    }
+    conn->print(WvString("get %s\n", wvtcl_escape(newkey)));
     // Get the node which we're actually going to return...
     UniConf *toreturn = UniConfGen::make_tree(parent, key);
     // Now wait for the response regarding this key.
@@ -95,8 +103,8 @@ void UniConfClient::enumerate_subtrees(const UniConfKey &key)
     waitforsubt = true;
     while (waitforsubt)
     {
-        conn->select(-1, true, false, false);
-        execute();
+        if (conn->select(500, true, false, false))
+            execute();
     }
 }
 
@@ -104,7 +112,7 @@ void UniConfClient::update(UniConf *&h)
 {
     waitingdata *data = dict[(WvString)h->gen_full_key()];
     if (conn->select(0,true, false, false) 
-    || (h->waiting && !data && conn->select(-1, true, false, false)))
+    || (h->waiting && !data && conn->select(0, true, false, false)))
     {
         //conn->callback();
         execute();
@@ -116,11 +124,11 @@ void UniConfClient::update(UniConf *&h)
         // If we are here, we will not longer be waiting nor will our data be
         // obsolete.
         h->set(data->value.unique());
-        h->waiting = false;
-        h->obsolete = false;
         dict.remove(data);
     }
 
+    h->waiting = false;
+    h->obsolete = false;
     h->dirty = false;
 }
 
@@ -189,7 +197,6 @@ void UniConfClient::execute()
                     UniConf *narf = &top->get(*key);
                     narf = &narf->get(*newkey);
                     narf->generator = this;
-                    references++;
                 }
             }
 
