@@ -29,10 +29,8 @@ public:
 	size_t dsize;
     };
     
-    WvBdbHashBase(WvStringParm dbfile);
+    WvBdbHashBase(WvStringParm dbfile = WvString::null);
     ~WvBdbHashBase();
-    //int count() const { return entries; }
-    // bool isempty() const { return !entries; }
     
     bool isok() const
         { return dbf; }
@@ -48,9 +46,15 @@ public:
     public:
         IterBase(WvBdbHashBase &_bdbhash);
         ~IterBase();
+
+        /** Rewind to beginning. */
         void rewind();
+
+        /** Rewind to just before firstkey. */
 	void rewind(const datum &firstkey);
         void next();
+        void xunlink();
+        void update(const datum &data);
         
     protected:
         WvBdbHashBase &bdbhash;
@@ -114,7 +118,7 @@ protected:
     D *saveddata;
     
 public:
-    WvBdbHash(WvStringParm dbfile) : WvBdbHashBase(dbfile)
+    WvBdbHash(WvStringParm dbfile = WvString::null) : WvBdbHashBase(dbfile)
         { saveddata = NULL; }
 
     void add(const K &key, const D &data, bool replace = false)
@@ -153,6 +157,13 @@ public:
 	return res;
     }
 
+    bool isempty()
+    {
+        Iter i(*this);
+        i.rewind();
+        return !i.next();
+    }
+ 
     D &first()
     {
 	Iter i(*this);
@@ -197,7 +208,16 @@ public:
 		return false;
 	    }
         }
+    
+        void unlink()
+            { xunlink(); next(); }
         
+        void xunlink()
+            { IterBase::xunlink(); }
+
+        void save()
+            { IterBase::update(WvBdbHash::datumize<D>(*d)); }
+
 	bool cur()
             { return !empty && curdata.dptr; }
 	

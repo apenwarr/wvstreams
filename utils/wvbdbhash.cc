@@ -21,7 +21,8 @@
 WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile)
     : itercount(0)
 {
-    dbf = dbopen(dbfile, O_CREAT|O_RDWR, 0666, DB_BTREE, NULL);
+    dbf = dbopen(!!dbfile ? dbfile.cstr() : NULL, O_CREAT|O_RDWR, 0666,
+            DB_BTREE, NULL);
     if (!dbf)
         fprintf(stderr, "Could not open database '%s': %s\n",
                 dbfile.cstr(), strerror(errno));
@@ -133,3 +134,13 @@ void WvBdbHashBase::IterBase::next()
 }
 
 
+void WvBdbHashBase::IterBase::xunlink()
+{
+    bdbhash.remove(curkey);
+}
+
+void WvBdbHashBase::IterBase::update(const datum &data)
+{
+    int r = bdbhash.add(curkey, data, true);
+    assert(!r && "Weird: database add failed during save?");
+}

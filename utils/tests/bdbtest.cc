@@ -33,6 +33,37 @@ int main()
 	else
 	    ss.add("appendable", "init");
 	printf("appendable is now '%s'\n", ss["appendable"].cstr());
+
+        printf("\nRestarting an iter:\n");
+        {
+            StrStrMap::Iter i(ss);
+            for (i.rewind(); i.next(); )
+            {
+                printf("1 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+                if (i.key() == "hello")
+                {
+                    printf("Hit 'hello': modifying and starting over\n");
+                    i().append("-yak");
+                    i.save();
+                    for (i.rewind(); i.next(); )
+                        printf("1 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+                    break;
+                }
+            }
+        }
+
+        printf("\nUnlinking 'hello' from an iter:\n");
+        {
+            StrStrMap::Iter i(ss);
+            for (i.rewind(); i.next(); )
+            {
+		printf("1 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+                if (i.key() == "hello")
+                    i.xunlink();
+            }
+            for (i.rewind(); i.next(); )
+		printf("2 - '%s': '%s'\n", i.key().cstr(), i->cstr());
+        }
     }
 
     {
@@ -95,5 +126,18 @@ int main()
 		printf("\n");
 	    }
 	}
+    }
+
+    {
+        printf("\nTesting anonymous db:\n");
+        bool ok = true;
+        StrStrMap st;
+        if (!st.isempty()) { ok = false; printf("Anon-db is NOT empty: FAILED\n"); }
+        st.add("foo", "bar");
+        if (st["foo"] != "bar") {
+            ok = false;
+            printf(WvString("Put in foo: bar; got out foo: %s: FAILED\n", st["foo"]));
+        }
+        if (ok) printf("Success!\n");
     }
 }
