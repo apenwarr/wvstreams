@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#ifndef ISDARWIN
+#ifdef ISLINUX
 # include <malloc.h> // for alloca()
 #else
 # include <stdlib.h>

@@ -53,7 +53,7 @@ libwvstreams.so-LIBS=-lcrypto -lz
 libwvstreams.so: ipstreams/ipstreams.libs
 libwvstreams.a: ipstreams/ipstreams.libs
 
-libwvcrypto.so-LIBS=libwvstreams.so -lssl
+libwvcrypto.so-LIBS=libwvstreams.so -lssl -lcrypto
 libwvcrypto.so: urlget/urlget.libs
 libwvcrypto.a: urlget/urlget.libs
 

@@ -11,12 +11,20 @@
 #include "wvaddr.h"
 #include "wvresolver.h"
 
-#if defined(ISBSD) || defined(ISDARWIN)
-# include <netinet/in_systm.h>
-# define socklen_t int
-# define SOL_TCP 6
-# define SOL_IP 4
+#ifndef ISLINUX
+#include <netinet/in_systm.h>
+#define SOL_TCP 6
+#define SOL_IP 4
 #endif
+
+#ifdef ISBSD
+#define socklen_t unsigned int
+#endif
+
+#ifdef ISDARWIN
+#define socklen_t int
+#endif
+
 
 class WvStreamList;
 class WvTCPListener;

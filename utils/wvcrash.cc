@@ -13,7 +13,7 @@
 #include <string.h>
 
 
-#ifndef ISDARWIN
+#ifdef ISLINUX
 # include <execinfo.h>
 
 static const char *argv0 = "UNKNOWN";
@@ -141,9 +141,9 @@ void wvcrash_setup(const char *_argv0)
     signal(SIGABRT, wvcrash);
 }
 
-#else // DARWIN
+#else // Not Linux
 
 void wvcrash(int sig) {}
 void wvcrash_setup(const char *_argv0) {}
 
-#endif // DARWIN
+#endif

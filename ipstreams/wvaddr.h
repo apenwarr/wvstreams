@@ -24,7 +24,7 @@
 #define ETH_ALEN ETHER_ADDR_LEN
 #endif
 
-#ifdef ISDARWIN
+#if defined(ISBSD) || defined(ISDARWIN)
 #include <arpa/inet.h>
 #include "if_arp.h"
 #endif
