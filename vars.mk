@@ -17,7 +17,6 @@ NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist \
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
-TARGETS += libuniconfdaemon.so libuniconfdaemon.a
 TARGETS += wvtestmain.o
 TARGETS += uniconf/daemon/uniconfdaemon uniconf/tests/uni
 GARBAGE += wvtestmain.o

@@ -1,7 +1,5 @@
 
-libuniconfdaemon.so: \
-   $(filter-out uniconf/daemon/daemonmain.o,$(call objects,uniconf/daemon)) \
-   $(LIBUNICONF)
+libuniconf.so libuniconf.a: $(filter-out uniconf/daemon/daemonmain.o,$(call objects,uniconf/daemon))
 
-uniconf/daemon/uniconfdaemon: libuniconfdaemon.so uniconf/daemon/daemonmain.o
+uniconf/daemon/uniconfdaemon: uniconf/daemon/daemonmain.o libuniconf.so
 
