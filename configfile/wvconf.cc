@@ -105,7 +105,7 @@ int WvConf::parse_wvconf_request(char *request, char *&section,
     section = trim_string(section);
     entry = trim_string(entry);
     
-    if (!*section || !*entry)
+    if (!*section)
 	return -3;
     
     return 0;
