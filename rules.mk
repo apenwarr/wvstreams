@@ -60,6 +60,8 @@ dist-hack-clean:
 dist: dist-hack-clean configure distclean
 	rm -rf autom4te.cache
 
+runconfigure: config.mk include/wvautoconf.h
+
 config.mk include/wvautoconf.h: configure config.mk.in include/wvautoconf.h.in
 	$(error Please run the "configure" script)
 
