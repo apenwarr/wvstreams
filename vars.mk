@@ -178,5 +178,5 @@ libwvqt.so: libwvutils.so libwvstreams.so
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
-libuniconf_tcl.so: bindings/uniconf_tcl.o -ltcl8.3 -luniconf
+libuniconf_tcl.so: bindings/uniconf_tcl.o libuniconf.so -ltcl8.3
 
