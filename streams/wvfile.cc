@@ -90,6 +90,36 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
     return true;
 }
 
+#ifndef _WIN32  // since win32 doesn't support fcntl
+
+bool WvFile::open(int _rwfd)
+{
+    noerr();
+    if (_rwfd < 0)
+        return false;
+
+    noerr();
+    close();
+    
+    int mode = fcntl(_rwfd, F_GETFL);
+    int xmode = (mode & (O_RDONLY | O_WRONLY | O_RDWR));
+    readable = (xmode == O_RDONLY) || (xmode == O_RDWR);
+    writable = (xmode == O_WRONLY) || (xmode == O_RDWR);
+
+    skip_select = false;
+    
+    if (!readable)
+	undo_force_select(true, false, false);
+
+    setfd(_rwfd);
+    fcntl(_rwfd, F_SETFL, mode | O_NONBLOCK);
+    fcntl(_rwfd, F_SETFD, 1);
+
+    closed = stop_read = stop_write = false;
+    return true;
+}
+
+#endif 
 
 // files not open for read are never readable; files not open for write
 // are never writable.

@@ -22,9 +22,8 @@ class WvAtomicFile : public WvFile
 {
 private:
     WvString atomic_file, tmp_file;
+    int tmpfd;
     bool atomic;
-
-    bool create_tmp_file();
 
 public:
     WvAtomicFile(int rwfd = -1);

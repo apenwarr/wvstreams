@@ -27,50 +27,48 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
     atomic_file = filename;
     atomic = true;
 
-    create_tmp_file();
-
     if (mode & O_RDWR || mode & O_WRONLY)
-    {
         writable = true;
-        atomic = false;
-    }
-
-    struct stat old_file;
-    int fexists = lstat("filename", &old_file);
     
-    if (writable && !fexists)
-    {
+    if (writable)
+    { 
+        struct stat old_file;
+        int fexists = lstat(atomic_file, &old_file);
         if (!S_ISREG(old_file.st_mode))
+        {
+            close();
+            unlink(tmp_file);
+            return false;
+        }
+
+        //char tmpname[] = tmptemplate(nitix);
+        tmp_file = WvString(tmptemplate(nitix));
+        tmpfd = mkstemp(tmp_file.edit());
+        fcntl(tmpfd, F_SETFL, mode);
+
+        if (!WvFile::open(tmpfd))
             return false;
 
-        WvString cmd("cp %s %s", filename, tmp_file);
-        if (system(cmd) < 0) 
-            return false;
-
-        // retain rights
-        //chown(tmp_file, old_file.st_uid, old_file.st_gid);
+        if (!fexists && (mode & O_APPEND))
+        {
+            // copy the contents from one file to another
+            int fd = open(atomic_file, O_RDONLY | O_NONBLOCK);
+            char buffer[256];
+            int count;
+            while ((count = ::read(fd, buffer, 256)) > 0)
+                ::write(tmpfd, buffer, count);
+            ::close(fd);
+        }
     }
-    else if (!writable)
+    else
     {
         atomic = false;
         return WvFile::open(filename, mode, create_mode);
     }
 
-    return WvFile::open(tmp_file, mode, create_mode);
-}
-
-bool WvAtomicFile::create_tmp_file()
-{
-    if (!!tmp_file)
-    {
-        close();
-        unlink(tmp_file);
-    }
-
-    char tmpname[] = tmptemplate(nitix);
-    tmp_file = mktemp(tmpname);
-
-    return (!!tmp_file);
+    // retain rights
+    //chown(tmp_file, old_file.st_uid, old_file.st_gid);
+    return true;
 }
 
 void WvAtomicFile::close()
