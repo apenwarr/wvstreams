@@ -174,6 +174,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         int result = SSL_read(ssl, data, avail);
         if (result <= 0)
         {
+	    error_t err = errno;
             read_bouncebuf.unalloc(avail);
             int errcode = SSL_get_error(ssl, result);
             switch (errcode)
@@ -191,8 +192,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                     break;
 
 		case SSL_ERROR_SYSCALL:
-		    if (!errno)
-	                break;
+		    if (!err)
+	                break; 
 		    debug("<< SSL_read() %s\n", strerror(errno));
                     
                 default:
