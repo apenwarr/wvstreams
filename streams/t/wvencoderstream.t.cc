@@ -401,9 +401,9 @@ WVTEST_MAIN("encoderstream eof2")
     s.write("nonewline");
     s.nowrite();
     WVPASS(s.isok());
-    WVPASSEQ(s.blocking_getline(100), "Hello");
+    WVPASSEQ(s.blocking_getline(1000), "Hello");
     WVPASS(s.isok());
-    WVPASSEQ(s.blocking_getline(100), "nonewline");
+    WVPASSEQ(s.blocking_getline(1000), "nonewline");
     WVFAIL(s.isok());
 }
 
@@ -484,15 +484,15 @@ WVTEST_MAIN("encoderstream eof3")
 	s.writechain.append(new_enc(), true);
 	s.readchain.append(new_dec(), true);
 	s.setclosecallback
-	    (WvBoundCallback<IWvStreamCallback, int *>(closecb, &closed));
+	    (WvBoundCallback<IWvStreamCallback, int *>(&closecb, &closed));
 	
 	s.write("Hello\n");
 	s.write("nonewline");
 	WVPASS(s.isok());
-	WVPASSEQ(s.blocking_getline(100), "Hello");
+	WVPASSEQ(s.blocking_getline(1000), "Hello");
 	WVPASS(s.isok());
 	l->nowrite();
-	WVPASSEQ(s.blocking_getline(100), "nonewline");
+	WVPASSEQ(s.blocking_getline(1000), "nonewline");
 	l->close();
 	s.runonce(100);
 	WVFAIL(s.isok());

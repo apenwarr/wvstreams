@@ -43,8 +43,8 @@ WVTEST_MAIN("streamclone eof2")
     s.write("nonewline");
     s.nowrite();
     WVPASS(s.isok());
-    WVPASSEQ(s.blocking_getline(100), "Hello");
+    WVPASSEQ(s.blocking_getline(1000), "Hello");
     WVPASS(s.isok());
-    WVPASSEQ(s.blocking_getline(100), "nonewline");
+    WVPASSEQ(s.blocking_getline(1000), "nonewline");
     WVFAIL(s.isok());
 }

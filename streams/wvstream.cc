@@ -31,13 +31,17 @@
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #if 0
-# define TRACE(x, y...) fprintf(stderr, x, ## y); fflush(stderr);
+# ifndef _MSC_VER
+#  define TRACE(x, y...) fprintf(stderr, x, ## y); fflush(stderr);
+# else
+#  define TRACE printf
+# endif
 #else
-#ifndef _MSC_VER
-# define TRACE(x, y...)
-#else
-# define TRACE
-#endif
+# ifndef _MSC_VER
+#  define TRACE(x, y...)
+# else
+#  define TRACE
+# endif
 #endif
 
 WvStream *WvStream::globalstream = NULL;
@@ -107,8 +111,10 @@ WvStream::~WvStream()
 
 void WvStream::close()
 {
+    TRACE("flushing in wvstream...\n");
     flush(2000); // fixme: should not hardcode this stuff
-    if (!! closecb)
+    TRACE("(flushed)\n");
+    if (!!closecb)
     {
         IWvStreamCallback cb = closecb;
         closecb = 0; // ensure callback is only called once
@@ -505,6 +511,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	return true;
     }
     
+    WvTime stoptime = msecadd(wvtime(), msec_timeout);
+    
     // flush outbuf
     while (outbuf_was_used && isok())
     {
@@ -526,11 +534,13 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	
 	// since post_select() can call us, and select() calls post_select(),
 	// we need to be careful not to call select() if we don't need to!
-	if (!msec_timeout || !select(msec_timeout, false, true))
-        {
-            if (msec_timeout >= 0)
-                break;
-        }
+	// post_select() will only call us with msec_timeout==0, and we don't
+	// need to do select() in that case anyway.
+	if (!msec_timeout)
+	    break;
+	if (msec_timeout >= 0 
+	  && (stoptime < wvtime() || !select(msec_timeout, false, true)))
+	    break;
 	
 	outbuf_was_used = outbuf.used();
     }
@@ -632,6 +642,9 @@ bool WvStream::post_select(SelectInfo &si)
     // FIXME: need sane buffer flush support for non FD-based streams
     // FIXME: need read_requires_writable and write_requires_readable
     //        support for non FD-based streams
+    
+    // note: flush(nonzero) might call select(), but flush(0) never does,
+    // so this is safe.
     if (should_flush())
 	flush(0);
     if (!si.inherit_request && alarm_remaining() == 0)
@@ -713,7 +726,8 @@ int WvStream::_do_select(SelectInfo &si)
     }
 #ifdef _WIN32
     ::close(fakefd);
-#endif    
+#endif
+    TRACE("select() returned %d\n", sel);
     return sel;
 }
 

@@ -7,16 +7,16 @@
  * everything written to it, even (especially) across a fork() call.
  */
 #include "wvloopback.h"
-
-#ifndef _WIN32
-#include <sys/socket.h>
-#else
-#include <io.h>
-#endif
 #include <fcntl.h>
 
+#ifndef _WIN32
+# include <sys/socket.h>
+#else
+# include <io.h>
+#endif
+
 #ifdef _WIN32
-int socketpair (int family, int type, int protocol, int *sb);
+int socketpair(int family, int type, int protocol, int *sb);
 #endif
 
 WvLoopback::WvLoopback()

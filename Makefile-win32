@@ -5,7 +5,7 @@ WVSTREAMS=.
 include $(WVSTREAMS)/wvrules.mk
 include vars.mk
 
-all: fake-libs
+all: fake-libs wvtestmain.exe
 
 %.exe: %
 	rm -f $@
@@ -55,14 +55,11 @@ OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 
 TOBJSKIP=\
 	utils/t/strcrypt.t.o \
-	streams/t/wvloopback.t.o \
 	streams/t/wvmagicloopback.t.o \
 	uniconf/t/unireplicategen.t.o \
 	uniconf/t/uniretrygen.t.o \
 	\
-	uniconf/t/uniinigen.t.o \
-	uniconf/t/unilistgen.t.o \
-	uniconf/t/unireadonlygen.t.o \
+	uniconf/t/unilistgen.t.o
 
 W=$(WVSTREAMS)/Win32WvStreams
 DIRS=utils streams ipstreams uniconf uniconf/daemon crypto \

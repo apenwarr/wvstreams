@@ -72,16 +72,17 @@ WvFdStream::~WvFdStream()
 
 void WvFdStream::close()
 {
-    // fprintf(stderr, "closing fdstream!\n");
+    //fprintf(stderr, "closing fdstream!\n");
     if (!closed)
     {
 	WvStream::close();
-	// fprintf(stderr, "closing%d:%d/%d\n", (int)this, rfd, wfd);
+	//fprintf(stderr, "closing%d:%d/%d\n", (int)this, rfd, wfd);
 	if (rfd >= 0)
 	    ::close(rfd);
 	if (wfd >= 0 && wfd != rfd)
 	    ::close(wfd);
 	rfd = wfd = -1;
+	//fprintf(stderr, "closed!\n");
     }
 }
 
