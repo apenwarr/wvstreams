@@ -185,7 +185,7 @@ void WvStream::callback()
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
 
-#define TEST_CONTINUES_HARSHLY 0
+#define TEST_CONTINUES_HARSHLY 1
 #if TEST_CONTINUES_HARSHLY
 #ifndef _WIN32
 # warning "Using WvCont for *all* streams for testing!"
