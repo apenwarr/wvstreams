@@ -56,6 +56,7 @@ public:
         WvBdbHashBase &bdbhash;
         datum curkey;
         datum curdata;
+	bool empty;
     };
 private:
     friend class IterBase;
@@ -156,6 +157,7 @@ public:
         {
 	    if (k) delete k;
 	    if (d) delete d;
+	    if (empty) return false;
             IterBase::next();
 	    if (curdata.dptr)
 	    {
@@ -172,7 +174,7 @@ public:
         }
         
 	bool cur()
-            { return curdata.dptr; }
+            { return !empty && curdata.dptr; }
 	
 	K &key() const
 	    { return *k; }

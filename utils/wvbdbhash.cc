@@ -85,20 +85,23 @@ WvBdbHashBase::IterBase::~IterBase()
 void WvBdbHashBase::IterBase::rewind()
 {
     curkey.dptr = NULL;
+    empty = false;
 }
 
 
 void WvBdbHashBase::IterBase::rewind(const datum &firstkey)
 {
     curkey.dptr = NULL;
+    empty = false;
     if (!bdbhash.dbf) return;
     
     curkey = firstkey;
     if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
 			 R_CURSOR))
     {
-	// no key >= requested one?  start at the beginning.
+	// no key >= requested one?  empty set.
 	curkey.dptr = NULL;
+	empty = true;
     }
     else if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
 			      R_PREV))
