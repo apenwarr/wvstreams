@@ -35,9 +35,12 @@
 #include "wvstringlist.h"
 
 // the default set of "nasties", ie. characters that need to be escaped if
-// they occur somewhere in a string.  Note that {, }, and " are always
-// considered "nasty."
-#define WVTCL_NASTIES    " \t\n\r\\"
+// they occur somewhere in a string.
+#define WVTCL_NASTIES    " \t\n\r"
+
+
+// {, }, \, and " are always considered "nasty."
+#define WVTCL_ALWAYS_NASTY "{}\\\""
 
 
 // the default set of split characters, ie. characters that separate elements
@@ -58,8 +61,9 @@ WvFastString wvtcl_escape(WvStringParm s, const char *nasties = WVTCL_NASTIES);
 
 // tcl-unescape a string.  This is generally the reverse of wvtcl_escape,
 // except we can reverse any backslashified or embraced string, even if it
-// doesn't follow the "simplest encoding" rules used by wvtcl_escape.
-WvFastString wvtcl_unescape(WvStringParm s, bool do_embrace = true);
+// doesn't follow the "simplest encoding" rules used by wvtcl_escape.  We
+// can also handle strings in double-quotes, ie. '"foo"' becomes 'foo'.
+WvFastString wvtcl_unescape(WvStringParm s);
 
 
 // encode a tcl-style list.  This is easily done by tcl-escaping each

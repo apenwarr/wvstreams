@@ -32,8 +32,7 @@ WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
 	if (bracecount < 0)
 	    backslashify = true;
 	
-	if (*cptr=='{' || *cptr=='}' || *cptr=='"'
-	  || strchr(nasties, *cptr))
+	if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
 	    unprintables++;
 
 	if (*cptr == '\\')
@@ -54,8 +53,7 @@ WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
 	
 	for (cptr = s; *cptr; cptr++)
 	{
-	    if (*cptr=='{' || *cptr=='}' || *cptr=='"'
-	      || strchr(nasties, *cptr))
+	    if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
 		*optr++ = '\\';
 	    *optr++ = *cptr;
 	}
@@ -71,16 +69,19 @@ WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
 }
 
 
-WvFastString wvtcl_unescape(WvStringParm s, bool do_embrace)
+WvFastString wvtcl_unescape(WvStringParm s)
 {
+    //printf("  unescape '%s'\n", (const char *)s);
+    
     // empty or NULL strings remain themselves
     if (!s)
 	return s;
     
     int slen = strlen(s);
+    bool skipquotes = false;
     
     // deal with embraced strings by simply removing the braces
-    if (do_embrace && s[0] == '{' && s[slen-1] == '}')
+    if (s[0] == '{' && s[slen-1] == '}')
     {
 	WvString out;
 	char *optr;
@@ -91,22 +92,26 @@ WvFastString wvtcl_unescape(WvStringParm s, bool do_embrace)
 	return out;
     }
     
+    // deal with quoted strings by ignoring the quotes _and_ unbackslashifying.
+    if (s[0] == '"' && s[slen-1] == '"')
+	skipquotes = true;
+    
     // strings without backslashes don't need to be unbackslashified!
-    if (!strchr(s, '\\'))
+    if (!skipquotes && !strchr(s, '\\'))
 	return s;
     
     // otherwise, unbackslashify it.
     WvString out;
     out.setsize(slen);
     
-    const char *cptr;
+    const char *cptr, *end = s + slen - skipquotes;
     char *optr = out.edit();
-    for (cptr = s; *cptr; cptr++)
+    for (cptr = s + skipquotes; cptr < end; cptr++)
     {
 	if (*cptr == '\\')
 	{
 	    cptr++;
-	    if (!*cptr)
+	    if (!*cptr || cptr >= end)
 		break; // weird - ends in a backslash!
 	    
 	    // FIXME: support \x## and \### notation, perhaps?
@@ -168,7 +173,7 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
     bool inescape = false, inquote = false;
     int bracecount = 0;
     WvString s(_s);
-    char *sptr = s.edit(), *eptr;
+    char *sptr = s.edit(), *eptr, olde;
     
     inquote = (*sptr == '"');
     
@@ -179,17 +184,19 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
 	    && ((inquote && *eptr == '"')
 		|| (!inquote && strchr(splitchars, *eptr))))
 	{
-	    *eptr = 0;
 	    if (inquote)
-		l.append(new WvString(wvtcl_unescape(sptr, false)), true);
-	    else if (*sptr)
-		l.append(new WvString(wvtcl_unescape(sptr, true)), true);
-	    *eptr = 'X'; // make sure the loop doesn't exit!
+		eptr++;
+	    olde = *eptr;
+	    *eptr = 0;
+	    if (*sptr)
+		l.append(new WvString(wvtcl_unescape(sptr)), true);
+	    *eptr = olde; // make sure the loop doesn't exit!
+	    if (inquote)
+		eptr--;
 	    sptr = eptr + 1;
 	    
 	    // if the next string begins with a quote, remember that.
 	    inquote = (*sptr == '"');
-	    sptr += inquote;
 	    eptr += inquote;
 	    continue;
 	}

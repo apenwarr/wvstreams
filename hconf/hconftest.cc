@@ -9,6 +9,7 @@
 #include "wvconf.h"
 #include "wvdiriter.h"
 #include "wvfile.h"
+#include "wvtclstring.h"
 
 
 class HelloGen : public WvHConfGen
@@ -191,19 +192,30 @@ static bool any_direct_children(WvHConf *h)
 }
 
 
+static WvFastString inicode(WvStringParm s)
+{
+    static const char white[] = " \t\r\n";
+    
+    if (!!s && (strchr(white, *s) || strchr(white, s[strlen(s)-1])))
+	return wvtcl_escape(s, " \t\r\n=[]");
+    else
+	return wvtcl_escape(s, "\r\n=[]");
+}
+
+
 void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
 {
     // dump the "root level" of this tree into one section
     if (any_direct_children(h))
     {
-	out("\n[%s]\n", key);
+	out("\n[%s]\n", inicode(key));
 	WvHConfDict::Iter i(*h->children);
 	for (i.rewind(); i.next(); )
 	{
 	    if (i->generator && i->generator != this) continue;
 	    
 	    if (!!*i)
-		out("%s = %s\n", i->name, *i);
+		out("%s = %s\n", inicode(i->name), inicode(*i));
 	}
     }
     
@@ -271,17 +283,22 @@ int main()
 	cfg.set("/default/users/*/comment", "defuser comment");
 	cfg.set("/default/users/bob/comment", "defbob comment");
 	
+	// should be (nil)/(nil)
 	log("Old comment settings are: %s/%s\n",
 	    cfg["/users/randomperson/comment"], cfg["/users/bob/comment"]);
 	
 	cfg["/users"].defaults = &cfg["/default/users"];
-	
+       
+	// should be defuser comment
 	h = cfg["/users/randomperson/comment"].find_default();
-	log("Default for randomperson: '%s'\n", h ? *h : WvString("NONE"));
+	log("Default for randomperson(%s): '%s'\n", h ? h->full_key() : "",
+	    h ? *h : WvString("NONE"));
 	
+	// should be defbob comment
 	h = cfg["/users/bob/comment"].find_default();
 	log("Default for bob: '%s'\n", h ? *h : WvString("NONE"));
 	
+	// should be defuser comment/defbob comment
 	log("New comment settings are: %s/%s\n",
 	    cfg["/users/noperson/comment"], cfg["/users/bob/comment"]);
 	
@@ -364,6 +381,8 @@ int main()
 	if (!h1["big/fat/bob"])
 	    h1["big/fat/bob"] = 0;
 	h1["big/fat/bob"] = h1["big/fat/bob"].num() + 1;
+	h1["chicken/hammer\ndesign"] = "simple test";
+	h1["chicken/whammer/designer\\/code\nweasel"] = "this\n\tis a test  ";
 	h1.dump(quiet);
 	
 	log("Saving changed data:\n");
