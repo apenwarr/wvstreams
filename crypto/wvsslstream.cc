@@ -7,6 +7,7 @@
 #include "wvcrypto.h"
 #include "wvmoniker.h"
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <assert.h>
 
 static IWvStream *creator(WvStringParm s, IObject *obj, void *userdata)
