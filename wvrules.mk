@@ -59,7 +59,7 @@ CXXFLAGS += $(CXXOPTS) $(C_AND_CXX_FLAGS)
 LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 
 # FIXME: what does this do??
-XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" && echo " -lsupc++")
+XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" && echo " -lsupc++ -lgcc_eh")
 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1

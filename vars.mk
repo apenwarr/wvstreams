@@ -156,8 +156,8 @@ ifneq ("$(with_pam)", "no")
 endif
 
 LDLIBS := -lgcc $(LDLIBS) \
-	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
-		&& echo " -lsupc++")
+	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
+		&& echo " -lsupc++ -lgcc_eh")
 
 RELEASE?=$(PACKAGE_VERSION)
 
