@@ -46,7 +46,9 @@ const char *WvConfigSection::get(WvStringParm entry, const char *def_val)
 
 void WvConfigSection::set(WvStringParm entry, WvStringParm value)
 {
-    WvConfigEntry *e = (*this)[entry];
+    WvString clean_entry = entry;
+    trim_string(clean_entry.edit());
+    WvConfigEntry *e = (*this)[clean_entry];
     
     // need to delete the entry?
     if (!value || !value[0])
@@ -59,13 +61,15 @@ void WvConfigSection::set(WvStringParm entry, WvStringParm value)
     if (e)
 	e->set(value);
     else
-	append(new WvConfigEntry(entry, value), true);
+	append(new WvConfigEntry(clean_entry, value), true);
 }
 
 
 void WvConfigSection::quick_set(WvStringParm entry, WvStringParm value)
 {
-    append(new WvConfigEntry(entry, value), true);
+    WvString clean_entry = entry;
+    trim_string(clean_entry.edit());
+    append(new WvConfigEntry(clean_entry, value), true);
 }
 
 
