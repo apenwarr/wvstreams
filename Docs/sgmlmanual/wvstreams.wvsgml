@@ -3,67 +3,84 @@
 <book id="index">
 
 
-<TITLE>My Short SGML Book</TITLE>
+<title>My Short SGML Book</title>
 
-<BOOKINFO>
-<BOOKBIBLIO>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>George</FIRSTNAME>
-<SURNAME>Tirebiter</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-</BOOKBIBLIO>
-</BOOKINFO>
+<bookinfo>
+<bookbiblio>
+<authorgroup>
+<author>
+<firstname>George</firstname>
+<surname>Tirebiter</surname>
+</author>
+</authorgroup>
+</bookbiblio>
+</bookinfo>
 
-<TOC></TOC>
-<LOT></LOT>
+<toc></toc>
+<lot></lot>
 
-<PREFACE>
-<TITLE>Introduction</TITLE>
-<PARA>Short paragraph.
-</PARA>
-</PREFACE>
+<preface>
+<title>Introduction</title>
 
-<PART>
-<TITLE>This Part Is First</TITLE>
+Short paragraph.
 
-<PARTINTRO>
-<TITLE>Introducing This Part</TITLE>
-<PARA>This Part is like no other Part.</PARA>
-</PARTINTRO>
+</preface>
 
-<CHAPTER id="chappy">
-<TITLE>A Chapter</TITLE>
-<PARA>Short paragraph.
-</PARA>
-</CHAPTER>
+<part>
+<title>This Part Is First</title>
 
-<CHAPTER id="wappy">
-<TITLE>Another Chapter</TITLE>
-<PARA>Short paragraph.
-</PARA>
-</CHAPTER>
+<partintro>
+<title>Introducing This Part</title>
 
-</PART>
+This Part is like no other Part.
 
-<PART>
-<TITLE>This Part Is Second</TITLE>
+</partintro>
 
-<CHAPTER id="snappy">
-<TITLE>Yet Another Chapter</TITLE>
-<PARA>Short paragraph.
-</PARA>
-</CHAPTER>
+WVCHAPTER(bork, A Bork Chapter,
 
-<CHAPTER>
-<TITLE>Still Yet Another Chapter</TITLE>
-<PARA>Short paragraph.
-</PARA>
-</CHAPTER>
+  This is a fun para
+  
+  This too
+  
+  Whee!
+  
+)
 
-</PART>
+<chapter id="chappy">
+<title>A Chapter</title>
 
-<INDEX></INDEX>
+Short paragraph.
+
+</chapter>
+
+<chapter id="wappy">
+<title>Another Chapter</title>
+
+Short paragraph.
+
+</chapter>
+
+</part>
+
+<part>
+<title>This Part Is Second</title>
+
+<chapter id="snappy">
+<title>Yet Another Chapter</title>
+
+Short paragraph.
+
+</chapter>
+
+<chapter>
+<title>Still Yet Another Chapter</title>
+
+Short paragraph.
+
+</chapter>
+
+</part>
+
+<index></index>
 
 </book>

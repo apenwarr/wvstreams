@@ -1,3 +1,6 @@
+
+default: wvstreams.verify
+
 all: wvstreams.verify wvstreams.html wvstreams.ps wvstreams.pdf
 
 html: wvstreams.html
@@ -11,16 +14,16 @@ IMGFILES=$(shell [ -d img ] && find img -type f)
 	nsgmls $< >/dev/null
 	# Syntax check passed
 
-%.sgml: %.wvsgml
+%.sgml: %.wvsgml *.m4
 	@echo Preprocessing $< to $@...
-	@cat $< | awk '					\
+	@m4 sgmlmacros.m4 $< | awk '			\
 		BEGIN {					\
 			paropen = 0;			\
 			parready = 0;			\
 		}					\
 							\
-		parready && /^[ 	]*[^<]/ {	\
-			print "<PARA>";			\
+		parready && !paropen && /^[ 	]*[-A-Za-z0-9]/ {	\
+			print "<para>";			\
 			print;				\
 			parready = 0;			\
 			paropen = 1;			\
@@ -28,7 +31,7 @@ IMGFILES=$(shell [ -d img ] && find img -type f)
 		}					\
 							\
 		(paropen) && (!parready) && /^[ 	]*$$/ {	\
-			print "</PARA>";		\
+			print "</para>";		\
 			print;				\
 			parready = 1;			\
 			paropen = 0;			\
@@ -124,3 +127,4 @@ jadetex.fmt:
 clean:
 	rm -f *~ *.fmt *.tex *.ps *.pdf *.dvi *.aux *.log HTML.manifest
 	rm -rf *.html *.tmp
+	rm -f $$(/bin/ls *.wvsgml | sed 's/\.wvsgml/.sgml/')
