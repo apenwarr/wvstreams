@@ -4,6 +4,7 @@
  * 
  * WvStream-based TCP connection class.
  */
+#include <netdb.h>
 #include "wvstreamlist.h"
 #include "wvtcp.h"
 #include <fcntl.h>
@@ -41,6 +42,7 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
 WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
 	: hostname(_hostname)
 {
+    struct servent* serv;
     char *hnstr = hostname.edit(), *cptr;
     
     cptr = strchr(hnstr, ':');
@@ -51,7 +53,8 @@ WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
     if (cptr)
     {
 	*cptr++ = 0;
-	remaddr.port = atoi(cptr);
+	serv = getservbyname(cptr, NULL);
+	remaddr.port = serv ? ntohs(serv->s_port) : atoi(cptr);
     }
     
     if (_port)
