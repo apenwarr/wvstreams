@@ -182,12 +182,12 @@ size_t WvStream::uwrite(const void *buf, size_t count)
 	out = ::write(getfd(), buf, count);
     while (out < 0 && errno==EINTR);
     
-    if (errno == ENOBUFS || errno==EAGAIN) // buffer full - data not written
-	return 0;
+    if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
+	return 0; // buffer full - data not written
     
     if (out < 0 || (count && out==0))
     {
-	seterr(out < 0 ? errno : 0);
+	seterr(out < 0 ? errno : 0); // a more critical error
 	return 0;
     }
     return out;
