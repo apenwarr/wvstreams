@@ -20,6 +20,9 @@ static void bouncer(WvStream &s, void *userdata)
     char buf[1024];
     size_t len;
     
+    if (!s.select(0, true, false, false))
+	return;
+    
     len = s.read(buf, sizeof(buf));
     if (!len) return;
     
@@ -102,8 +105,7 @@ int main(int argc, char **argv)
 		f = new WvFile(argv[count], O_RDONLY);
 		if (!f->isok())
 		{
-		    fprintf(stderr, "%s: %s\n", argv[count],
-                        f->errstr().cstr());
+		    fprintf(stderr, "%s: %s\n", argv[count], f->errstr());
 		    return 1;
 		}
 	    }

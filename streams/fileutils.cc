@@ -57,7 +57,7 @@ bool fcopy(WvStringParm src, WvStringParm dst)
 	 * false, it'll keep doing it until the end of time. If you're
 	 * going into an infinite loop, better save the CPU a bit, since
 	 * you can still find out about it with strace... */
-        if (in.select(-1))
+        if (in.select(-1, true, false))
             in.callback();
     }
     if (!out.isok())

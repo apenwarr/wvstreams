@@ -16,11 +16,11 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <net/if_arp.h>
-#include <net/if.h>
 #include <net/route.h>
 #include <unistd.h>
 #include <errno.h>
 #include <linux/sockios.h>
+#include <linux/wireless.h>
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
@@ -57,6 +57,22 @@ int WvInterface::req(int ioctl_num, struct ifreq *ifr)
     return retval;
 }
 
+// For Wireless Interfaces...
+int WvInterface::req(int ioctl_num, struct iwreq *ifr)
+{
+    int sock, retval;
+    
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    strncpy(ifr->ifr_name, name, IFNAMSIZ-1);
+    ifr->ifr_name[IFNAMSIZ-1] = 0;
+    
+    retval = ioctl(sock, ioctl_num, ifr);
+    if (retval)
+	retval = errno;
+    close(sock);
+    return retval;
+}
+                                                
 
 // forget all stored information about the address(es) of this interface
 void WvInterface::rescan()

@@ -22,16 +22,10 @@
 
 #include "wvencoder.h"
 #include "wvtimeutils.h"
-#if 0
-#include "wvlog.h"
-#endif
 
 class WvRateAdjust : public WvEncoder
 {
 public:
-#if 0
-    WvLog log;
-#endif
     WvRateAdjust *match_rate;
  
     int sampsize, irate_n, irate_d, orate_n, orate_d;

@@ -73,13 +73,13 @@ bool WvRateAdjust::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
     irate_d = msecdiff(wvtime(), epoch) / 100;
     if (!irate_d)
 	irate_d = 1;
-   
-#if 0 
+
+#if 0
     log("irate=%s (%s/%s), orate=%s (%s/%s), bucket=%s\n",
 	getirate(), irate_n, irate_d, getorate(), orate_n, orate_d,
 	bucket);
 #endif
-    
+
     // reduce the rate estimate if it's getting out of control FIXME:
     // this method is (almost) unbearably cheesy because it's very
     // "blocky" - it doesn't happen every time, so it'll cause sudden
@@ -91,7 +91,7 @@ bool WvRateAdjust::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 	epoch.tv_sec++; // time now starts one second later
 	irate_n = irate_n * (irate_d - 10)/irate_d;
 	irate_d -= 10;
-	
+
 #if 0
 	log("  JUMP!  new irate=%s (%s/%s)\n", getirate(), irate_n, irate_d);
 #endif

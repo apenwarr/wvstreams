@@ -32,7 +32,7 @@ public:
     ~WvResolverHost()
         {
             if (loop) delete loop;
-            if (pid)
+            if (pid && pid != -1)
             {
                 kill(pid, SIGKILL);
                 waitpid(pid, NULL, 0);

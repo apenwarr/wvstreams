@@ -175,7 +175,7 @@ public:
      * key - and to enable two stage loading (the certificate first, then the
      * key), it DOES NOT call test() - that will be up to the programmer
      */
-    void decode(const DumpMode mode);
+    void decode(DumpMode mode, WvStringParm PemEncoded);
 
     /**
      * And of course, since PKCS12 files are in the rediculous DER encoding 
@@ -196,6 +196,8 @@ public:
     /** Sets the PKCS12 password */
     void setPkcs12Password(WvStringParm passwd)
     	{ pkcs12pass = passwd; }
+
+    WvString get_issuer();
 
     WvLog debug;
     

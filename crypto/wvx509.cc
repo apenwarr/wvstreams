@@ -330,9 +330,10 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     
-#if 0 // this causes netscape to have a hairball
+#if 0
+    // This still causes Netscape to barf... 
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
-			     "critical, CA:FALSE");
+			     "critical,CA:FALSE");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 #endif
@@ -471,6 +472,12 @@ bool WvX509Mgr::test()
     bool bad = false;
     
     EVP_PKEY *pk = EVP_PKEY_new();
+    
+    if (!cert)
+    {
+	seterr("no Certificate in X509 Manager!");
+	bad = true;
+    }
     
     if (rsa && pk)
     {
@@ -679,10 +686,60 @@ WvString WvX509Mgr::encode(const DumpMode mode)
     }
 }
 
-void WvX509Mgr::decode(const DumpMode mode)
+void WvX509Mgr::decode(DumpMode mode, WvStringParm pemEncoded)
 {
     // Let the fun begin... ;)
+    FILE *stupid;
+    const EVP_CIPHER *enc;
+    WvString outstring = pemEncoded;
+                
+    stupid = file_hack_start();
 
+    if (stupid)
+    {
+	// I HATE OpenSSL... this is SO Stupid!!!
+	rewind(stupid);
+	unsigned int written = fwrite(outstring.edit(), 1, outstring.len(), stupid);
+	if (written != outstring.len())
+	{
+	    debug(WvLog::Error,"Couldn't write full amount to temp file!\n");
+	    fclose(stupid);
+	    return;
+	}
+	rewind(stupid);
+	switch(mode)
+	{
+	case CertPEM:
+	    debug("Importing X509 certificate.\n");
+	    if(cert)
+	    {
+		X509_free(cert);
+		cert = NULL;
+	    }
+	    cert = PEM_read_X509(stupid, NULL, NULL, NULL);
+	    break;
+	    
+	case RsaPEM:
+	    debug("Importing RSA keypair.\n");
+	    debug("Make sure that you load or generate a new Certificate!\n");
+	    enc = EVP_get_cipherbyname("rsa");
+	    rsa->rsa = PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL);
+	    break;
+	    
+	case RsaRaw:
+	    debug("Importing raw RSA keypair not supported.\n");
+	    break;
+
+	default:
+	    seterr("Unknown Mode\n");
+	}
+	fclose(stupid);
+    }
+    else
+    {   
+        debug(WvLog::Error, "Can't create temp file in WvX509Mgr::decode!\n");
+        return;
+    }
 }
 
 void WvX509Mgr::write_p12(WvStringParm filename)
@@ -798,4 +855,9 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	seterr("No Password specified for PKCS12 file - aborting!\n");
 	return;
     }
+}
+
+WvString WvX509Mgr::get_issuer()
+{ 
+    return WvString(X509_NAME_oneline(X509_get_issuer_name(cert),0,0)); 
 }

@@ -21,8 +21,10 @@ void WvConf::setbool(void *userdata,
     if (!*(bool *)userdata)
     {
 	WvLog log("Config Event", WvLog::Debug);
-	log("Changed: [%s]%s = '%s' -> '%s'\n",
-	    sect, ent, oldval, newval);
+	if(sect == "Tunnel Vision" && ent == "Magic Password")
+  	    log("Changed:[%s]%s\n",sect, ent);
+	else
+	    log("Changed: [%s]%s = '%s' -> '%s'\n", sect, ent, oldval, newval);
     }
     
     *(bool *)userdata = true;
@@ -35,8 +37,21 @@ void WvConf::addname(void *userdata,
     (*(WvStringList *)userdata).append(new WvString(ent), true);
 }
 
-		     
 
+void WvConf::addfile(void *userdata,
+                     WvStringParm sect, WvStringParm ent,
+                     WvStringParm oldval, WvStringParm newval)
+{
+    WvFile tmp(WvString("/home/%s/%s", ent, *(WvString *)userdata), 
+               O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if(tmp.isok())
+    {
+        if(!!newval)
+            tmp.print("%s\n", newval);
+        else
+            tmp.print("%s\n", ent);
+    }
+}
 
 WvConf::WvConf(WvStringParm _filename, int _create_mode)
 	: filename(_filename), log(filename), globalsection("")
