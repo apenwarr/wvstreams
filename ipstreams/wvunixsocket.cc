@@ -98,25 +98,35 @@ WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
     auto_userdata = NULL;
     bound_okay = false;
     
-    sockaddr *sa = addr.sockaddr();
-    
-    // unfortunately we have to change the umask here to make the create_mode
-    // work, because bind() doesn't take extra arguments like open() does.
-    // However, we don't actually want to _cancel_ the effects of umask,
-    // only add to them; so the original umask is or'ed into ~create_mode.
-    oldmask = umask(0777); // really just reading the old umask here
-    umask(oldmask | ((~create_mode) & 0777));
-    
     setfd(socket(PF_UNIX, SOCK_STREAM, 0));
-    if (getfd() < 0
-	|| fcntl(getfd(), F_SETFD, 1)
-	|| bind(getfd(), sa, addr.sockaddr_len())
-	|| listen(getfd(), 5))
+    if (getfd() < 0 || fcntl(getfd(), F_SETFD, 1))
     {
 	seterr(errno);
+	return;
     }
+    
+    sockaddr *sa = addr.sockaddr();
+    size_t salen = addr.sockaddr_len();
+    
+    if (connect(getfd(), sa, salen) == 0) // successful connect?!
+	seterr(EADDRINUSE); // someone is using this already!
     else
-	bound_okay = true;
+    {
+	// unfortunately we have to change the umask here to make the
+	// create_mode work, because bind() doesn't take extra arguments
+	// like open() does. However, we don't actually want to _cancel_
+	// the effects of umask, only add to them; so the original umask is
+	// or'ed into ~create_mode.
+	oldmask = umask(0777); // really just reading the old umask here
+	umask(oldmask | ((~create_mode) & 0777));
+	
+	::unlink(WvString(addr));
+	
+	if (bind(getfd(), sa, salen) || listen(getfd(), 50))
+	    seterr(errno);
+	else
+	    bound_okay = true;
+    }
     
     delete sa;
     umask(oldmask);
