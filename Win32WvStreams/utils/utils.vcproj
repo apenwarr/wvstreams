@@ -108,6 +108,21 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\..\utils\strcrypt.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\utils\strutils.cc">
 			</File>
 			<File
@@ -124,6 +139,21 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\wvbase64.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\wvbdbhash.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvbuffer.cc">
@@ -147,6 +177,36 @@
 				RelativePath="..\..\utils\wverror.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\wvfork.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\utils\wvgdbmhash.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\utils\wvgzip.cc">
 			</File>
 			<File
@@ -159,10 +219,49 @@
 				RelativePath="..\..\utils\wvlinklist.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\wvmagiccircle.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\wvmatrix.cc">
+			</File>
+			<File
 				RelativePath="..\..\utils\wvmoniker.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\wvrateadjust.cc">
+			</File>
+			<File
 				RelativePath="..\..\utils\wvscatterhash.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\wvserialize.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\utils\wvshmzone.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvsorter.cc">
@@ -177,7 +276,52 @@
 				RelativePath="..\..\utils\wvstringtable.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\wvsubproc.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\utils\wvtask.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\utils\wvtclstring.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\wvtest.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvtimeutils.cc">
@@ -351,6 +495,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\wvdailyevent.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvdelayedcallback.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvdiffiehellman.h">

@@ -12,6 +12,7 @@
 #ifdef _WIN32
 #include "winsock2.h"
 #include <time.h>
+int gettimeofday(struct timeval *tv, struct timezone *tz);
 #else
 #include <sys/time.h>
 #endif
