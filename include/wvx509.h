@@ -112,7 +112,7 @@ public:
      * Given the Distinguished Name dname and an already generated keypair in 
      * rsa, return a Self Signed Certificate in cert.
      */
-    void create_selfsigned();
+    void create_selfsigned(bool is_ca = false);
 
     /**
      * Create a certificate request (PKCS#10) using this function.. this 
@@ -127,6 +127,15 @@ public:
      * Make sure that it has what you want in it first.
      */    
     WvString certreq();
+    
+
+    /**
+     * Take the PKCS#10 request in the string pkcs10req, sign it with the
+     * private key in rsa, and then spit back a new X509 Certificate in
+     * PEM format.
+     */
+    WvString signcert(WvStringParm pkcs10req);
+    
     
     /**
      * Test to make sure that a certificate and a keypair go together.

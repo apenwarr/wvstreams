@@ -46,7 +46,7 @@ static WvMoniker<IUniConfGen> reg("retry", creator);
 /***** UniRetryGen *****/
 
 UniRetryGen::UniRetryGen(WvStringParm _moniker,
-    	time_t _retry_interval_ms = 5000) 
+    	time_t _retry_interval_ms) 
     : UniFilterGen(NULL),
     	log(WvString("UniRetryGen %s", _moniker), WvLog::Debug1),
     	moniker(_moniker),

@@ -22,6 +22,11 @@ RSA *wv_d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length)
 }
 
 
+X509_REQ *wv_d2i_X509_REQ(X509_REQ **a, const unsigned char **pp, long length)
+{
+    return d2i_X509_REQ(a, (void *)pp, length);
+}
+
 X509 *wv_d2i_X509(X509 **a, unsigned char **pp, long length)
 {
     return d2i_X509(a, (void *)pp, length);
