@@ -358,26 +358,18 @@ WVTEST_MAIN("Base64")
 " server store";
     
     WvBufStream input_stream;
-    input_stream.print(input_stuff);
+    input_stream.write(input_stuff);
 
     WvBufStream *buf_stream = new WvBufStream();
     WvEncoderStream b64_stream(buf_stream);
     b64_stream.writechain.append(new WvBase64Decoder, true);
     b64_stream.auto_flush(false);
 
-    char buf[512];
-    size_t read = 0;
-
     while (true)
     {
-        read = input_stream.read_until(buf, sizeof(buf), '\n');
-
-        if (buf[read-1] == '\n')
-            buf[--read] = '\0'; 
-        if (read == 0)
-            break;
-
-        b64_stream.write(buf, read);
+	WvString s(input_stream.getline(0));
+	if (!s) break;
+	b64_stream.write(s);
     }
 
     WvDynBuf outbuf;
