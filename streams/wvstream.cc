@@ -86,6 +86,13 @@ void WvStream::autoforward(WvStream &s)
 }
 
 
+void WvStream::noautoforward()
+{
+    setcallback(NULL, NULL);
+    read_requires_writable = NULL;
+}
+
+
 void WvStream::autoforward_callback(WvStream &s, void *userdata)
 {
     WvStream &s2 = *(WvStream *)userdata;

@@ -424,6 +424,11 @@ public:
      * stream.
      */
     void autoforward(WvStream &s);
+
+    /**
+     * Stops autoforwarding.
+     */
+    void noautoforward();
     static void autoforward_callback(WvStream &s, void *userdata);
     
     /**
