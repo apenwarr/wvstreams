@@ -119,6 +119,20 @@ AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
+# Detect hard-linking based on LN_S's behaviour
+AC_MSG_CHECKING([whether ln works...])
+case "$LN_S" in
+    ln*) 
+        LN='ln'
+	AC_MSG_RESULT([yes])
+	;;
+    *)
+	LN="$LN_S"
+	AC_MSG_RESULT([no, using $LN])
+	;;
+esac
+AC_SUBST(LN)
+
 # Setting the default language to C++ means that CXX and CXXCPP will be 
 # used for compile tests.
 AC_LANG(C++)
