@@ -17,6 +17,7 @@ class WvStreamList : public WvStream, public WvStreamListBase
 {
 public:
     WvStreamList();
+    virtual ~WvStreamList();
     virtual bool isok() const;
     virtual bool select_setup(SelectInfo &si);
     virtual bool test_set(SelectInfo &si);

@@ -14,6 +14,12 @@ WvStreamList::WvStreamList()
 }
 
 
+WvStreamList::~WvStreamList()
+{
+    // nothing to do
+}
+
+
 bool WvStreamList::isok() const
 {
     return true;  // "error" condition on a list is undefined

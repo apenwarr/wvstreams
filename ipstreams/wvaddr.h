@@ -113,6 +113,7 @@ protected:
 public:
     WvStringAddr(const WvString &s, const WvEncap &_cap);
     WvStringAddr(const struct sockaddr *_addr);
+    virtual ~WvStringAddr();
     virtual WvEncap encap() const;
     virtual struct sockaddr *sockaddr() const;
     virtual size_t sockaddr_len() const;
@@ -137,6 +138,7 @@ public:
     WvEtherAddr(const char string[]);
     WvEtherAddr(const struct sockaddr *addr)
         { memcpy(binaddr, (void *)addr->sa_data, ETH_ALEN); }
+    virtual ~WvEtherAddr();
     
     virtual WvEncap encap() const;
     virtual bool isbroadcast() const;
@@ -162,6 +164,7 @@ public:
         { binaddr = strtoul(string, NULL, 16); }
     WvARCnetAddr(const struct sockaddr *addr)
         { binaddr = ((unsigned char *)addr->sa_data)[0]; }
+    virtual ~WvARCnetAddr();
     
     virtual WvEncap encap() const;
     virtual struct sockaddr *sockaddr() const;
@@ -195,6 +198,7 @@ public:
 		 (void *)&((struct sockaddr_in *)addr)->sin_addr.s_addr, 4); }
     WvIPAddr(const WvIPAddr &_addr)
         { memcpy(binaddr, _addr.binaddr, 4); }
+    virtual ~WvIPAddr();
     
     WvIPAddr operator& (const WvIPAddr &a2) const;
     WvIPAddr operator| (const WvIPAddr &a2) const;
@@ -245,6 +249,8 @@ public:
     
     // construct an empty IPNet for later copying (probably by operator=)
     WvIPNet();
+    
+    virtual ~WvIPNet();
     
     // Override the hash and comparison functions
     virtual unsigned WvHash() const;
@@ -302,6 +308,8 @@ public:
     
     WvIPPortAddr(struct sockaddr_in *sin) : WvIPAddr(sin->sin_addr.s_addr)
         { port = ntohs(sin->sin_port); }
+    virtual ~WvIPPortAddr();
+    
     virtual struct sockaddr *sockaddr() const;
 
     // Override the hash and comparison functions

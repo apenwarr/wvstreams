@@ -63,6 +63,12 @@ WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
 }
 
 
+WvTCPConn::~WvTCPConn()
+{
+    // nothing to do
+}
+
+
 // Set a few "nice" options on our socket... (read/write, non-blocking, 
 // keepalive)
 void WvTCPConn::nice_tcpopts()

@@ -39,6 +39,8 @@ public:
     
     // resolve the hostname, then connect a new socket
     WvTCPConn(const WvString &_hostname, __u16 _port = 0);
+
+    virtual ~WvTCPConn();
     
     // some functions to set of a TCP socket the way we like
     void nice_tcpopts();

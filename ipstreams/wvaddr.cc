@@ -176,6 +176,12 @@ WvStringAddr::WvStringAddr(const sockaddr_bin *_addr)
 }
 
 
+WvStringAddr::~WvStringAddr()
+{
+    // nothing to do
+}
+
+
 WvEncap WvStringAddr::encap() const
 {
     return cap;
@@ -230,6 +236,12 @@ WvEtherAddr::WvEtherAddr(char const string[])
 	if (!endptr || endptr==string) break;
 	endptr++;
     }
+}
+
+
+WvEtherAddr::~WvEtherAddr()
+{
+    // nothing to do
 }
 
 
@@ -295,6 +307,12 @@ size_t WvEtherAddr::sockaddr_len() const
 }
 
 
+WvARCnetAddr::~WvARCnetAddr()
+{
+    // nothing to do
+}
+
+
 WvString WvARCnetAddr::printable() const
 {
     WvString s("  ");
@@ -355,6 +373,12 @@ WvIPAddr::WvIPAddr(const char string[])
 	*cptr++ = strtol(iptr, NULL, 10);
 	if (!nptr) break;
     }
+}
+
+
+WvIPAddr::~WvIPAddr()
+{
+    // nothing to do
 }
 
 
@@ -532,6 +556,11 @@ WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
     addrtype = wvipnet;
 }
 
+WvIPNet::~WvIPNet()
+{
+    // nothing to do
+}
+
 
 WvString WvIPNet::printable() const
 {
@@ -648,6 +677,12 @@ WvIPPortAddr::WvIPPortAddr(const char string[], __u16 _port)
 {
     port = _port;
     addrtype = wvipportaddr;
+}
+
+ 
+WvIPPortAddr::~WvIPPortAddr()
+{
+    // nothing to do
 }
 
 
