@@ -35,6 +35,9 @@ public:
     bool isatomic()
         { return atomic; }
 
+    /* For users hoping to get a filename for chmod/chown purposes */
+    WvString gettmpfname() const
+        { return tmp_file; }
 };
 
 #endif // __WVATOMFILE_H

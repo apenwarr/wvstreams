@@ -8,6 +8,8 @@
 */
 
 #include "wvatomicfile.h"
+#include "wvfileutils.h"
+
 #define tmptemplate(_pre_) "/tmp/" #_pre_ "XXXXXX"
 
 WvAtomicFile::WvAtomicFile(int rwfd)
@@ -41,12 +43,9 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
             return false;
         }
 
-        //char tmpname[] = tmptemplate(nitix);
         tmp_file = WvString(tmptemplate(nitix));
         tmpfd = mkstemp(tmp_file.edit());
         fcntl(tmpfd, F_SETFL, mode);
-
-
 
         if (!WvFile::open(tmpfd))
             return false;
@@ -61,6 +60,7 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
                 ::write(tmpfd, buffer, count);
             ::close(fd);
         }
+        wvchmod(tmp_file, create_mode);
     }
     else
     {
