@@ -13,6 +13,7 @@
 #include "wvlog.h"
 
 struct ifreq;
+struct iwreq;
 struct rtentry;
 
 /** 
@@ -27,8 +28,6 @@ class WvInterface
     
     WvLog err;
     
-    /** get/set information about an interface */
-    int req(int ioctl_num, struct ifreq *ifr);
     
     /** used by addroute()/delroute() */
     void fill_rte(struct rtentry *rte, char ifname[17],
@@ -105,6 +104,12 @@ public:
     /** add an ARP entry on this interface */
     bool isarp();
     int addarp(const WvIPNet &proto, const WvAddr &hw, bool proxy);
+
+    /** get/set information about an interface */
+    int req(int ioctl_num, struct ifreq *ifr);
+
+    /** get/set information about a wireless interface */
+    int req(int ioctl_num, struct iwreq *ifr);
 };
 
 DeclareWvDict2(WvInterfaceDictBase, WvInterface, WvString, name);
