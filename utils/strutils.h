@@ -31,6 +31,12 @@ extern char *terminate_string(char *string, char c);
 extern char *trim_string(char *string);
 
 /**
+ * Similar to above, but trims the string starting at the first occurrence of
+ * c.
+ */
+extern char *trim_string(char *string, char c);
+
+/**
  * Replace all instances of c1 with c2 for the first 'length' characters in 
  * 'string'. Ignores terminating NUL, so make sure you set 'length' correctly.
  */
