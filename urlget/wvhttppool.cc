@@ -13,7 +13,13 @@
 #include "strutils.h"
 
 bool WvHttpStream::global_enable_pipelining = true;
-int WvHttpStream::max_requests = 100;
+int WvUrlStream::max_requests = 100;
+
+unsigned WvHash(const WvUrlStreamInfo &n)
+{
+    WvString key("%s%s", n.remaddr, n.proto);
+    return (WvHash(key));
+}
 
 
 WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
@@ -28,7 +34,7 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 	outstream = NULL;
     else
     {
-	WvBufHttpStream *x = new WvBufHttpStream;
+	WvBufUrlStream *x = new WvBufUrlStream;
 	outstream = x;
 	x->death_notify = (WvStream **)&outstream;
 	x->url = url;
@@ -90,11 +96,11 @@ WvString WvUrlRequest::request_str(bool keepalive)
 
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
 			   WvIPPortAddrTable &_pipeline_incompatible)
-    : WvStreamClone(new WvTCPConn(_remaddr)), remaddr(_remaddr),
-	log(WvString("HTTP %s", remaddr), WvLog::Debug),
+    : WvUrlStream(_remaddr, WvString("HTTP %s", _remaddr)),
 	pipeline_incompatible(_pipeline_incompatible)
 {
     log("Opening server connection.\n");
+    info.remaddr = _remaddr;
     curl = NULL;
     http_response = "";
     encoding = Unknown;
@@ -104,11 +110,16 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
     last_was_pipeline_test = false;
     
     enable_pipelining = global_enable_pipelining 
-		&& !pipeline_incompatible[remaddr];
+		&& !pipeline_incompatible[info.remaddr];
     ssl = _ssl;
     
     if (ssl)
+    {
+	info.proto = "https";
 	cloned = new WvSSLStream(cloned);
+    }
+    else
+	info.proto = "http";
     
     alarm(60000); // timeout if no connection, or something goes wrong
 }
@@ -156,7 +167,7 @@ void WvHttpStream::close()
 }
 
 
-void WvHttpStream::addurl(WvUrlRequest *url)
+void WvUrlStream::addurl(WvUrlRequest *url)
 {
     log(WvLog::Debug4, "Adding a new url: '%s'\n", url->url);
     
@@ -252,9 +263,9 @@ void WvHttpStream::request_next()
 
 void WvHttpStream::pipelining_is_broken(int why)
 {
-    if (!pipeline_incompatible[remaddr])
+    if (!pipeline_incompatible[info.remaddr])
     {
-	pipeline_incompatible.add(new WvIPPortAddr(remaddr), true);
+	pipeline_incompatible.add(new WvIPPortAddr(info.remaddr), true);
 	log("Pipelining is broken on this server (%s)!  Disabling.\n", why);
     }
 }
@@ -290,7 +301,7 @@ void WvHttpStream::execute()
 	close();
 	if (cloned)
 	    delete cloned;
-	cloned = new WvTCPConn(remaddr);
+	cloned = new WvTCPConn(info.remaddr);
         if (ssl)
 	    cloned = new WvSSLStream(cloned);
 	doneurl();
@@ -361,7 +372,7 @@ void WvHttpStream::execute()
             if (line[0])
             {
                 char *p;
-		WvBufHttpStream *outstream = urls.first()->outstream;
+		WvBufUrlStream *outstream = urls.first()->outstream;
 		
                 if ((p = strchr(line, ':')) != NULL)
                 {
@@ -502,7 +513,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
 {
     bool sure = false;
     
-    WvHttpStreamDict::Iter ci(conns);
+    WvUrlStreamDict::Iter ci(conns);
     for (ci.rewind(); ci.next(); )
     {
 	if (!ci->isok() || urls.isempty())
@@ -561,13 +572,20 @@ void WvHttpPool::execute()
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )
     {
-	WvHttpStream *s;
+	WvUrlStream *s;
 	
 	if (!i->outstream || !i->url.isok() || !i->url.resolve())
 	    continue; // skip it for now
-	
-	WvIPPortAddr ip(i->url.getaddr());
-	s = conns[ip];
+
+	WvUrlStreamInfo ui;
+	ui.remaddr = i->url.getaddr();
+	ui.proto = "http";
+	s = conns[ui];
+	if (!s)
+	{
+	    ui.proto = "https";
+	    s = conns[ui];
+	}
 	//if (!s) log("conn for '%s' is not found.\n", ip);
 	
 	if (s && !s->isok())
@@ -582,7 +600,7 @@ void WvHttpPool::execute()
 	if (!s)
 	{
 	    num_streams_created++;
-	    s = new WvHttpStream(ip, i->url.getproto() == "https",
+	    s = new WvHttpStream(ui.remaddr, i->url.getproto() == "https",
 				 pipeline_incompatible);
 	    conns.add(s, true);
 	    
@@ -599,7 +617,7 @@ void WvHttpPool::execute()
 }
 
 
-WvBufHttpStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
+WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
 				    bool headers_only = false)
 {
     log(WvLog::Debug4, "Adding a new url to pool: '%s'\n", _url);
@@ -610,9 +628,9 @@ WvBufHttpStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
 }
 
 
-void WvHttpPool::unconnect(WvHttpStream *s)
+void WvHttpPool::unconnect(WvUrlStream *s)
 {
-    log("Unconnecting stream to %s.\n", s->remaddr);
+    log("Unconnecting stream to %s.\n", s->info.remaddr);
     
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )

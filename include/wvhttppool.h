@@ -18,7 +18,8 @@
 #include "wvhttp.h"
 #include "wvbufstream.h"
 
-class WvBufHttpStream;
+class WvBufUrlStream;
+class WvUrlStream;
 class WvHttpStream;
 
 
@@ -27,8 +28,8 @@ class WvUrlRequest
 public:
     WvUrl url;
     WvString headers;
-    WvHttpStream *instream;
-    WvBufHttpStream *outstream;
+    WvUrlStream *instream;
+    WvBufUrlStream *outstream;
     bool pipeline_test;
     bool headers_only;
     bool inuse;
@@ -44,68 +45,105 @@ public:
 DeclareWvList(WvUrlRequest);
 
 
-class WvBufHttpStream : public WvBufStream
+class WvBufUrlStream : public WvBufStream
 {
 public:
     WvString url;
+    WvString proto;
+
+    // HTTP stuff...
     WvString version;
     int status;
     WvHTTPHeaderDict headers; 
 
-    WvBufHttpStream() : status(0), headers(10)
+    WvBufUrlStream() : status(0), headers(10)
         {}
-    virtual ~WvBufHttpStream()
+    virtual ~WvBufUrlStream()
         {}
 };
 
 DeclareWvTable(WvIPPortAddr);
 
-class WvHttpStream : public WvStreamClone
+
+// For looking up WvUrlStreams in a WvDict.
+struct WvUrlStreamInfo
+{
+    WvIPPortAddr remaddr;
+    WvString proto;
+
+    bool operator== (const WvUrlStreamInfo &n2) const
+    { return (proto == n2.proto && remaddr == n2.remaddr); }
+};
+unsigned WvHash(const WvUrlStreamInfo &n);
+
+
+class WvUrlStream : public WvStreamClone
 {
 public:
-    WvIPPortAddr remaddr;
-    
+    WvUrlStreamInfo info;
     static int max_requests;
+
+protected:
+    WvLog log;
+    WvUrlRequestList urls, waiting_urls;
+    int request_count;
+    WvUrlRequest *curl; // current url
+    virtual void doneurl() = 0;
+    virtual void request_next() = 0;
+
+public:
+    WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm logname)
+	: WvStreamClone(new WvTCPConn(_remaddr)), log(logname, WvLog::Debug)
+    {}
+    virtual ~WvUrlStream() {};
+
+    virtual void close() = 0;
+    void addurl(WvUrlRequest *url);
+    
+    virtual void execute() = 0;
+};
+
+DeclareWvDict(WvUrlStream, WvUrlStreamInfo, info);
+
+
+class WvHttpStream : public WvUrlStream
+{
+public:
     static bool global_enable_pipelining;
     bool enable_pipelining;
     
 private:
-    WvLog log;
-    WvUrlRequestList urls, waiting_urls;
-    int request_count, pipeline_test_count;
+    int pipeline_test_count;
     bool ssl;
     WvIPPortAddrTable &pipeline_incompatible;
     WvString http_response, pipeline_test_response;
     
-    WvUrlRequest *curl; // current url
     enum { Unknown, Chunked, ContentLength, Infinity } encoding;
     size_t remaining;
     bool in_chunk_trailer, last_was_pipeline_test;
-    
-    void doneurl();
+
+    virtual void doneurl();
+    virtual void request_next();
     void start_pipeline_test(WvUrl *url);
     void send_request(WvUrlRequest *url, bool auto_free);
-    void request_next();
     void pipelining_is_broken(int why);
     
 public:
     WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl,
 		 WvIPPortAddrTable &_pipeline_incompatible);
     virtual ~WvHttpStream();
+
     virtual void close();
-    
-    void addurl(WvUrlRequest *url);
-    
     virtual void execute();
 };
 
-DeclareWvDict(WvHttpStream, WvIPPortAddr, remaddr);
 
+// FIXME: Rename this to WvUrlPool someday.
 class WvHttpPool : public WvStreamList
 {
     WvLog log;
     WvResolver dns;
-    WvHttpStreamDict conns;
+    WvUrlStreamDict conns;
     WvUrlRequestList urls;
     int num_streams_created;
     
@@ -118,10 +156,10 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual void execute();
     
-    WvBufHttpStream *addurl(WvStringParm _url, WvStringParm _headers,
+    WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _headers,
                             bool headers_only = false);
 private:
-    void unconnect(WvHttpStream *s);
+    void unconnect(WvUrlStream *s);
     
 public:
     bool idle() const 
