@@ -42,7 +42,7 @@ bool UniConfFileTreeGen::refresh()
         }
     }
 
-//    UniMountTreeGen::refresh();
+    UniMountTreeGen::refresh();
     return true;
 }
 
