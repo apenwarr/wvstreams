@@ -5,7 +5,9 @@
  * Test program for the WvConf emulation in UniConf.
  */
 
+#ifndef USE_WVCONFEMU
 #define USE_WVCONFEMU
+#endif
 
 #include "uniconfroot.h"
 #include "wvconfemu.h"
@@ -86,6 +88,8 @@ int main()
     cfg.set("users", "bob", "hello");
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(c1 && c2 && c3);
+
+    log("Number of entries in [Global]: %s\n", cfg["Global"]->count());
   
     return 0;
 }
