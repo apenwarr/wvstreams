@@ -130,12 +130,13 @@ void WvModemBase::hangup()
 
 
 
-WvModem::WvModem(const char * filename, int _baud, bool rtscts)
+WvModem::WvModem(WvStringParm filename, int _baud, bool rtscts, bool _no_reset)
 	: WvModemBase(), lock(filename)
 {
     closing = false;
     baud = _baud;
     die_fast = false;
+    no_reset = _no_reset;
     
     if (!lock.lock())
     {
@@ -191,9 +192,12 @@ void WvModem::setup_modem(bool rtscts)
     old_t.c_cflag |= CLOCAL;
     
     // Send a few returns to make sure the modem is "good and zonked".
-    if (cfgetospeed(&t) != B0)
+    // but only if we care enough to reset... sometimes we dont... 
+    // like when this "modem" is really a UPS
+    if (cfgetospeed(&t) != B0 && !no_reset)
     {
-	for( int i=0; i<5; i++ ) {
+	for( int i=0; i<5; i++ ) 
+	{
 	    write( "\r", 1 );
 	    usleep( 10 * 1000 );
 	}
@@ -221,7 +225,8 @@ void WvModem::close()
 	if (!closing)
 	{
 	    closing = true;
-	    hangup();
+	    if (!no_reset)
+		hangup();
 	}
 	closing = true;
 	tcflush(getrfd(), TCIOFLUSH);
@@ -245,9 +250,9 @@ int WvModem::speed(int _baud)
 	}
     }
 
-    cfsetispeed( &t, B0 ); // auto-match to output speed
-    cfsetospeed( &t, s );
-    tcsetattr( getrfd(), TCSANOW, &t );
+    cfsetispeed(&t, B0 ); // auto-match to output speed
+    cfsetospeed(&t, s );
+    tcsetattr(getrfd(), TCSANOW, &t );
 
     return get_real_speed();
 }

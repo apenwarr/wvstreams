@@ -79,18 +79,20 @@ private:
     WvLockDev		lock;
     struct termios	old_t;
     bool		closing;
-
+    bool                no_reset;
+    
     /**
      * Setup all of the terminal characteristics, and leave the modem in CLOCAL
      * mode to make sure that we can communicate easily with the modem later.
      */
-    void setup_modem( bool rtscts );
+    void setup_modem(bool rtscts);
     
     /** Check the status of the modem */
     int getstatus();
     
 public:
-    WvModem( const char * filename, int _baud, bool rtscts = true );
+    WvModem(WvStringParm filename, int _baud, bool rtscts = true, 
+	    bool _no_reset = false);
     virtual ~WvModem();
     
     /** Close the connection to the modem */
