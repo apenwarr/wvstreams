@@ -1,4 +1,5 @@
-/*
+/* -*- Mode: C++ -*-
+ *
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */
@@ -11,7 +12,18 @@
 
 DeclareWvTable3( int, WvIntTable, );
 
-/* wvfork() just runs fork(), but it closes all file descriptors that
+/**
+ * wvfork_start is just like fork, except that it will block the
+ * parent until the child process closes the waitfd, to avoid race
+ * conditions.
+ *
+ * For example, wvfork uses it, closing the waitfd only when it is
+ * done closing the close-on-exec file descriptors.
+ */
+extern pid_t wvfork_start(int *waitfd);
+
+/**
+ * wvfork() just runs fork(), but it closes all file descriptors that
  * are flagged close-on-exec, since we don't necessarily always run
  * exec() after we fork()...
  *

@@ -2,20 +2,20 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * wvfork() just runs fork(), but it closes all file descriptors that are
- * flagged close-on-exec, since we don't necessarily always run exec() 
- * after we fork()...
+ * wvfork() just runs fork(), but it closes all file descriptors that
+ * are flagged close-on-exec, since we don't necessarily always run
+ * exec() after we fork()...
  *
- * This fixes the year-old mystery bug where WvTapeBackup caused watchdog
- * reboots because the CHILD process wasn't touching it, and it was already
- * open before the fork()...
+ * This fixes the year-old mystery bug where WvTapeBackup caused
+ * watchdog reboots because the CHILD process wasn't touching it, and
+ * it was already open before the fork()...
  *
- * If you want to explicitly leave a file descriptor OPEN, even if it's
- * marked close-on-exec, then add the fd number to dontclose, and pass that
- * to wvfork().  This is mainly useful for WvLoopbacks -- you may want
- * certain ones open or closed depending on which call to wvfork() you're
- * making.  (for WvTapeBackup, you want the three backup loopbacks open,
- * and, say, any WvResolver loopbacks closed.)
+ * If you want to explicitly leave a file descriptor OPEN, even if
+ * it's marked close-on-exec, then add the fd number to dontclose, and
+ * pass that to wvfork().  This is mainly useful for WvLoopbacks --
+ * you may want certain ones open or closed depending on which call to
+ * wvfork() you're making.  (for WvTapeBackup, you want the three
+ * backup loopbacks open, and, say, any WvResolver loopbacks closed.)
  */
 
 #include <fcntl.h>
@@ -34,8 +34,6 @@ pid_t wvfork(int dontclose1, int dontclose2)
     return(wvfork(t));
 }
 
-// do the fork. parent process must wait for child to finish closing
-// its file descriptors (and maybe other init stuff) before returning.
 pid_t wvfork_start(int *waitfd)
 {
     int waitpipe[2];
@@ -49,8 +47,8 @@ pid_t wvfork_start(int *waitfd)
         return pid;
     else if (pid > 0)
     {
-        // parent process. close its writing end of the pipe and wait for
-        // its reading end to close.
+        // parent process. close its writing end of the pipe and wait
+        // for its reading end to close.
         char buf;
         close(waitpipe[1]);
         read(waitpipe[0], &buf, 1);
@@ -64,12 +62,6 @@ pid_t wvfork_start(int *waitfd)
     }
 
     return pid;
-}
-
-// close the child's writing fd to signal to parent to continue.
-void wvfork_end(int waitfd)
-{
-    close(waitfd);
 }
 
 pid_t wvfork(WvIntTable& dontclose)
@@ -91,7 +83,7 @@ pid_t wvfork(WvIntTable& dontclose)
             close(fd);
     }
 
-    wvfork_end(waitfd);
+    close(waitfd);
 
     return pid ;
 }
