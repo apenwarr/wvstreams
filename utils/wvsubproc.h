@@ -46,10 +46,10 @@ public:
     
     // stop (kill -TERM or -KILL as necessary) the subprocess and
     // all its children.
-    void stop(time_t msec_delay);
+    void stop(time_t msec_delay, bool kill_children = true);
     
     // wait for the subprocess (and all its children) to die.
-    void wait(time_t msec_delay);
+    void wait(time_t msec_delay, bool wait_children = true);
     
     // send a signal to the subprocess and all its children.
     void kill(int sig);
