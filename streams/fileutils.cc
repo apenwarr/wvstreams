@@ -12,43 +12,6 @@
 #include <utime.h>
 #include <wvfile.h>
 
-WvString getfilename(WvStringParm fullname)
-{
-    WvString tmp(fullname);
-    char *cptr = strrchr(tmp.edit(), '/');
-    
-    if (!cptr) // no slash at all
-	return fullname;
-    else if (!cptr[1]) // terminating slash
-    {
-	*cptr = 0;
-	return getfilename(tmp);
-    }
-    else // no terminating slash
-	return cptr+1;
-}
-
-
-WvString getdirname(WvStringParm fullname)
-{
-    WvString tmp(fullname);
-    char *cptr = strrchr(tmp.edit(), '/');
-    
-    if (!cptr) // no slash at all
-	return ".";
-    else if (!cptr[1]) // terminating slash
-    {
-	*cptr = 0;
-	return getdirname(tmp);
-    }
-    else // no terminating slash
-    {
-	*cptr = 0;
-	return !tmp ? WvString("/") : tmp;
-    }
-}
-
-
 bool mkdirp(WvStringParm _dir, int create_mode)
 {
     if (!access(_dir, X_OK))

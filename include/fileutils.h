@@ -13,15 +13,6 @@
 
 
 /**
- * Take a full path/file name and splits it up into respective pathname and
- * filename. This can also be useful for splitting the toplevel directory off a
- * path.
- */
-WvString getfilename(WvStringParm fullname);
-WvString getdirname(WvStringParm fullname);
-
-
-/**
  * Create a directory and any subdirectories required along the way. (Equivalent
  * to mkdir -p). This command probably doesn't belong in strutils, but I
  * couldn't think of a better place to put it.

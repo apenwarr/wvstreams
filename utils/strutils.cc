@@ -358,6 +358,44 @@ WvString nice_hostname(WvStringParm name)
 }
 
 
+WvString getfilename(WvStringParm fullname)
+{
+    WvString tmp(fullname);
+    char *cptr = strrchr(tmp.edit(), '/');
+    
+    if (!cptr) // no slash at all
+	return fullname;
+    else if (!cptr[1]) // terminating slash
+    {
+	*cptr = 0;
+	return getfilename(tmp);
+    }
+    else // no terminating slash
+	return cptr+1;
+}
+
+
+WvString getdirname(WvStringParm fullname)
+{
+    WvString tmp(fullname);
+    char *cptr = strrchr(tmp.edit(), '/');
+    
+    if (!cptr) // no slash at all
+	return ".";
+    else if (!cptr[1]) // terminating slash
+    {
+	*cptr = 0;
+	return getdirname(tmp);
+    }
+    else // no terminating slash
+    {
+	*cptr = 0;
+	return !tmp ? WvString("/") : tmp;
+    }
+}
+
+
+
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
     WvDynBuf buf;

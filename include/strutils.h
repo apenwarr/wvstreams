@@ -131,6 +131,14 @@ WvString encode_hostname_as_DN(WvStringParm hostname);
 WvString nice_hostname(WvStringParm name);
 
 /**
+ * Take a full path/file name and splits it up into respective pathname and
+ * filename. This can also be useful for splitting the toplevel directory off a
+ * path.
+ */
+WvString getfilename(WvStringParm fullname);
+WvString getdirname(WvStringParm fullname);
+
+/**
  * Finds a string in an array and returns its index.
  * Returns -1 if not found.
  */
