@@ -73,7 +73,6 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
-	rm -rf xplc
 
 clean: depend dust
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
