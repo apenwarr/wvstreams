@@ -100,6 +100,7 @@ Package: libwvstreams-dev
 Architecture: any
 Section: libdevel
 Depends: libwvstreams4.0-base, libwvstreams4.0-extras, libuniconf4.0, libwvstreams4.0-fft, libwvstreams4.0-qt, libwvstreams4.0-speex, libwvstreams4.0-vorbis, ${misc:Depends}
+Provides: libwvstreams4.0-dev
 Description: Development libraries and header files for libwvstreams4.0
  Contains the header files and static libraries for use in rapid 
  application development using the WvStreams set of libraries.  It 
