@@ -4,7 +4,7 @@
  */
 #include "wvtclstring.h"
 #include "wvbuffer.h"
-
+#include <wvstream.h>
 
 WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
 {
@@ -162,22 +162,25 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties,
     return b.getstr();
 }
 
-
-void wvtcl_decode(WvStringList &l, WvStringParm _s,
-		  const char *splitchars, bool do_unescape)
+WvString *wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
 {
-    // empty or null strings are empty lists
-    if (!_s)
-	return;
-    
+    WvString *toreturn = NULL; 
     bool inescape = false, inquote = false;
-    int bracecount = 0;
-    WvString s(_s);
-    char *sptr = s.edit(), *eptr, olde;
-    
+    int bracecount = 0, origsize = buf.used();
+
+    if (origsize <= 0)
+        return NULL;
+    char *sptr = (char *)buf.get(origsize);
+    char *eptr = sptr;
+
     inquote = (*sptr == '"');
     
-    for (eptr = sptr; *eptr; eptr++)
+    // If the first character is a quote, we need to move
+    // eptr so we don't get just an empty 0 character string.
+    if (inquote)
+        eptr++;
+    
+    for (; *eptr && (eptr - sptr < origsize); eptr++)
     {
 	// end of a quoted/unquoted string
 	if (!bracecount && !inescape 
@@ -186,23 +189,38 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
 	{
 	    if (inquote)
 		eptr++;
-	    olde = *eptr;
+          
+	    char olde = *eptr;
 	    *eptr = 0;
 	    if (*sptr)
 	    {
+                // This new stuff here was added to deal with a memory 
+                // corruption issue.
+                char newstring[(eptr - sptr)+1];
+                strncpy(newstring, sptr, (eptr - sptr));
+                newstring[(eptr - sptr)] = '\0';
 		if (do_unescape)
-		    l.append(new WvString(wvtcl_unescape(sptr)), true);
+		    toreturn=new WvString(wvtcl_unescape(newstring));
 		else
-		    l.append(new WvString(sptr), true);
+		    toreturn=new WvString(newstring);
 	    }
 	    *eptr = olde; // make sure the loop doesn't exit!
 	    if (inquote)
 		eptr--;
-	    sptr = eptr + 1;
-	    
-	    // if the next string begins with a quote, remember that.
-	    inquote = (*sptr == '"');
-	    eptr += inquote;
+            origsize -= (eptr - sptr) + 1;
+            if (toreturn)
+            {
+                buf.unget(origsize);
+                return toreturn;
+            }
+            else
+            {
+                sptr = eptr + 1;
+                // if the next string begins with a quote, remember that.
+                inquote = (*sptr == '"');
+                if (inquote)
+                    eptr++;
+            }
 	    continue;
 	}
 	
@@ -218,12 +236,42 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
     }
     
     // finished the string - get the terminating element, if any.
-    if (*sptr)
+    if (*sptr && !bracecount && !inquote)
     {
-	if (do_unescape)
-	    l.append(new WvString(wvtcl_unescape(sptr)), true);
-	else
-	    l.append(new WvString(sptr), true);
+        // This new stuff here was added due to a memory corruption issue.
+        char newstring[(eptr - sptr)+1];
+        strncpy(newstring, sptr, (eptr - sptr));
+        newstring[(eptr - sptr)] = '\0';
+        if (do_unescape)
+            return new WvString(wvtcl_unescape(newstring));
+        else
+            return new WvString(newstring);
+    }
+    else
+    {
+        buf.unget(origsize);
+    }
+   return NULL;
+}
+
+void wvtcl_decode(WvStringList &l, WvStringParm _s,
+		  const char *splitchars, bool do_unescape)
+{
+    // empty or null strings are empty lists
+    if (!_s)
+	return;
+
+    WvBuffer buf;
+    buf.put(_s);
+    while (buf.used() > 0)
+    {
+        WvString *appendword = wvtcl_getword(buf, splitchars, do_unescape);
+        if (appendword)
+        {
+            l.append(appendword, true);
+        }
+        else
+            break; 
     }
 }
 
