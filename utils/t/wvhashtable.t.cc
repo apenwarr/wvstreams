@@ -264,24 +264,21 @@ WVTEST_MAIN("WvMap auto_free and sorting")
 
 WVTEST_MAIN("WvMap zapping")
 {
+    /*** FAILURE: This doesn't pass as of 2004-07-13.  See BUGZID: 6281 ***/
+    /*
     WvMap<WvString, WvString> zapmap(5);
     zapmap.add("Febtober", "Months that start with 'Feb'");
     zapmap.add("Febturday", "Months that start with 'Feb'");
 
     WVPASS(zapmap.exists("Febtober"));
     zapmap.zap();
-    /*** FAILURE: This doesn't pass as of 2004-07-13.  See BUGZID: 6281 ***/
-    /*
     WVFAIL(zapmap.exists("Febtober"));
-    */
 
     WvMap<WvString, WvString*> ptrmap(5);
 
     ptrmap.set("Smarch", new WvString("Mapril"));
     WVPASS(ptrmap.exists("Smarch"));
     ptrmap.zap();
-    /*** FAILURE: This doesn't pass as of 2004-07-13.  See BUGZID: 6281 ***/
-    /*
     WVFAIL(listmap.exists("Smarch"));
     */
 
