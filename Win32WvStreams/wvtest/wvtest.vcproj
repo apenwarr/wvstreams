@@ -210,12 +210,6 @@
 				RelativePath="..\..\utils\t\wvtclstring.t.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvtest.cc">
-			</File>
-			<File
-				RelativePath="..\..\wvtestmain.cc">
-			</File>
-			<File
 				RelativePath="..\..\utils\t\wvtimeutils.t.cc">
 			</File>
 			<File
@@ -229,9 +223,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-			<File
-				RelativePath="..\..\include\wvtest.h">
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
