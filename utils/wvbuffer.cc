@@ -10,6 +10,11 @@
 #include <assert.h>
 #include <stdio.h> // for printf()
 
+#if 0
+#define Dprintf printf
+#else
+#define Dprintf if (0) printf
+#endif
 
 ///////////////////// WvMiniBuffer
 
@@ -78,8 +83,16 @@ unsigned char *WvBuffer::get(size_t num)
     inuse -= num;
     
     i.rewind(); i.next();
+    
+    // if the first minibuffer is empty, delete it.
+    firstb = &i.data();
+    if (firstb->used() == 0)
+    {
+	Dprintf("<del-0 MiniBuffer(%d)\n", firstb->total());
+	i.unlink();
+    }
 
-    // if the first minibuffer has enough data, just use that.
+    // if the (new) first minibuffer has enough data, just use that.
     firstb = &i.data();
     if (firstb->used() >= num)
 	return firstb->get(num);
@@ -95,7 +108,7 @@ unsigned char *WvBuffer::get(size_t num)
     {
 	got = 0;
 	list.prepend(destb = new WvMiniBuffer(num), true);
-	// printf("<new-1 MiniBuffer(%d)>\n", num);
+	Dprintf("<new-1 MiniBuffer(%d)>\n", num);
     }
 
     for (i.rewind(), i.next(); i.cur(); )
@@ -115,7 +128,10 @@ unsigned char *WvBuffer::get(size_t num)
 	
 	destb->put(b->get(avail), avail);
 	if (!b->used())
+	{
+	    Dprintf("<del-1 MiniBuffer(%d)\n", b->total());
 	    i.unlink();
+	}
 	else
 	    i.next();
     }
@@ -163,13 +179,19 @@ unsigned char *WvBuffer::alloc(size_t num)
     // otherwise, we need a new MiniBuffer so we can provide contiguous 'num'
     // bytes.  New buffers grow in size exponentially, and have minimum size
     // of 10.
-    newsize = lastb ? lastb->total() * 2 : num;
+    newsize = 0;
+    if (lastb)
+    {
+	newsize = lastb->total();
+	if (lastb->used() >= lastb->total() / 2)
+	    newsize *= 2;
+    }
     if (newsize < 10)
 	newsize = 10;
     if (newsize < num)
 	newsize = num;
     b = new WvMiniBuffer(newsize);
-    // printf("<new-2 MiniBuffer(%d)>\n", newsize);
+    Dprintf("<new-2 MiniBuffer(%d)>\n", newsize);
     
     list.append(b, true);
     
@@ -213,6 +235,7 @@ void WvBuffer::unalloc(size_t num)
 	if (b->used() < num)
 	{
 	    num -= b->used();
+	    Dprintf("<del-2 MiniBuffer(%d)>\n", b->total());
 	    i.unlink();
 	}
 	else
@@ -255,13 +278,19 @@ void WvBuffer::put(const void *data, size_t num)
     // of 10.
     if (num > 0)
     {
-	newsize = lastb ? lastb->total() * 2 : num;
+	newsize = 0;
+	if (lastb)
+	{
+	    newsize = lastb->total();
+	    if (lastb->used() >= lastb->total() / 2)
+		newsize *= 2;
+	}
 	if (newsize < 10)
 	    newsize = 10;
 	if (newsize < num)
 	    newsize = num;
 	b = new WvMiniBuffer(newsize);
-	// printf("<new-3 MiniBuffer(%d)>\n", newsize);
+	Dprintf("<new-3 MiniBuffer(%d)>\n", newsize);
 	
 	list.append(b, true);
 	b->put(data, num);
