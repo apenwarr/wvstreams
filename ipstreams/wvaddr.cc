@@ -480,7 +480,7 @@ WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
 	: WvIPAddr(base)
 {
     __u32 imask;
-    if (bits) // <<32 is a bad idea!
+    if (bits > 0) // <<32 is a bad idea!
 	imask = htonl(~(((__u32)1 << (32-bits)) - 1));
     else
 	imask = 0;
