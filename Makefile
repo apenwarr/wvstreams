@@ -8,8 +8,7 @@ MANDIR=${PREFIX}/man
 
 INCFILES=$(wildcard include/*.h)
 INCOUT=$(addprefix $(INCDIR)/,$(INCFILES))
-LIBFILES=libwvutils.a libwvutils.so libwvstreams.a libwvstreams.so \
-	 libwvcrypto.a libwvcrypto.so
+LIBFILES=libwvutils.a libwvutils.so libwvstreams.a libwvstreams.so
 
 #
 #
@@ -35,21 +34,15 @@ subdirs:
 
 $(LIBFILES) : subdirs
 
-libwvcrypto.so : libwvstreams.so
-
-$(wildcard *.so) $(wildcard *.a): Makefile
+$(wildcard *.so *.a): Makefile
 
 libwvutils.so-LIBS=-lcrypto -lz
 libwvutils.so: utils/utils.libs
 libwvutils.a: utils/utils.libs
 
-libwvstreams.so-LIBS=-lcrypto -lz
-libwvstreams.so: ipstreams/ipstreams.libs
-libwvstreams.a: ipstreams/ipstreams.libs
-
-libwvcrypto.so-LIBS=libwvstreams.so -lssl
-libwvcrypto.so: urlget/urlget.libs
-libwvcrypto.a: urlget/urlget.libs
+libwvstreams.so-LIBS=-lcrypto -lssl -lz
+libwvstreams.so: urlget/urlget.libs
+libwvstreams.a: urlget/urlget.libs
 
 wvrules.mk:
 	-[ -e ../../wvrules.mk ] && ln -s ../../wvrules.mk .
