@@ -34,11 +34,20 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     : filename(_filename), create_mode(_create_mode), log(_filename)
 {
+    // Create the root, since this generator can't handle it not existing.
+    UniTempGen::set(UniConfKey::EMPTY, WvString::empty);
     //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
 }
 
+void UniIniGen::set(const UniConfKey &key, WvStringParm value)
+{
+    // Don't allow people to delete the root, since this generator can't
+    // handle it not existing.
+    if (!(value.isnull() && key.isempty()))
+        UniTempGen::set(key, value);
+}
 
 UniIniGen::~UniIniGen()
 {
@@ -76,6 +85,7 @@ bool UniIniGen::refresh()
     
     // loop over all Tcl words in the file
     UniTempGen *newgen = new UniTempGen();
+    newgen->set(UniConfKey::EMPTY, WvString::empty);
     UniConfKey section;
     WvDynBuf buf;
     for (bool eof = false; !eof; )
@@ -189,15 +199,8 @@ bool UniIniGen::refresh()
     root = newtree;
     newgen->root = NULL;
     dirty = false;
-    if (oldtree && newtree)
-    {
-        oldtree->compare(newtree, UniConfValueTree::Comparator
-            (this, &UniIniGen::refreshcomparator), NULL);
-    }
-    else
-    {
-        delta(UniConfKey::EMPTY, WvString::null); // REMOVED
-    }
+    oldtree->compare(newtree, UniConfValueTree::Comparator
+        (this, &UniIniGen::refreshcomparator), NULL);
     delete oldtree;
     unhold_delta();
 
@@ -226,7 +229,9 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
         else
         {
             // key removed
-            delta(a->fullkey(), WvString::null); // REMOVED
+	    // Issue notifications for every that is missing.
+            a->visit(UniConfValueTree::Visitor(this,
+                &UniTempGen::notify_deleted), NULL, false, true);
             return false;
         }
     }
@@ -293,7 +298,11 @@ void UniIniGen::commit()
 
     if (realpath(filename, resolved_path) != NULL)
 	real_filename = resolved_path;
-    
+
+    WvString alt_filename("%s.tmp%s", real_filename, getpid());
+    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
+    struct stat statbuf;
+
     // first try to overwrite the file atomically
     if (!commit_atomic(real_filename))
     {
@@ -318,15 +327,32 @@ void UniIniGen::commit()
 	    statbuf.st_mode = statbuf.st_mode & ~S_ISVTX;
 	    fchmod(file.getwfd(), statbuf.st_mode & 07777);
 	}
-        
-        file.close();
-        
-        if (file.geterr())
-        {
-            log(WvLog::Warning, "Can't write '%s': %s\n",
-	        filename, file.errstr());
-            return;
-        }
+	else
+	    log(WvLog::Warning, "Error writing '%s' ('%s'): %s\n",
+		filename, real_filename, file.errstr());
+    }
+#endif
+
+    file.close();
+
+    if (file.geterr())
+    {
+        log(WvLog::Warning, "Can't write '%s': %s\n",
+	    filename, file.errstr());
+	return;
+    }
+
+#ifndef _WIN32
+    if (!alt_filename.isnull())
+    {
+	chmod(alt_filename, create_mode);
+	if (rename(alt_filename, real_filename) == -1)
+	{
+	    log(WvLog::Warning, "Can't write '%s': %s\n",
+		filename, strerror(errno));
+	    unlink(alt_filename);
+	    return;
+	}
     }
 #endif
 

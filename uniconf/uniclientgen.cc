@@ -134,6 +134,12 @@ void UniClientGen::flush_buffers()
         conn->callback();
 }
 
+void UniClientGen::commit()
+{
+   UniConfKey tempkey("dummykey");
+   get(tempkey); // NOOP command, to ensure that all requests are flushed
+}
+
 WvString UniClientGen::get(const UniConfKey &key)
 {
     WvString value;

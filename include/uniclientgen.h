@@ -70,6 +70,7 @@ public:
 
     virtual bool refresh();
     virtual void flush_buffers();
+    virtual void commit(); 
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);

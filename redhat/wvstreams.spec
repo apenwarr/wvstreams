@@ -5,7 +5,7 @@ Release: 1
 Source: http://open.nit.ca/download/wvstreams-%{version}.tar.gz
 URL: http://open.nit.ca/wvstreams
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: fam-devel, fftw-devel, libogg-devel, libvorbis-devel, openssl-devel, openslp-devel, pam-devel, qdbm-devel, speex-devel, xplc-devel >= 0.3.7
+BuildRequires: fam-devel, fftw-devel, libogg-devel, libvorbis-devel, openssl-devel, openslp-devel, pam-devel, qdbm-devel, speex-devel, xplc = 0.3.10
 Group: None
 License: LGPL
 
@@ -166,7 +166,7 @@ export CXXFLAGS=-I/usr/kerberos/include # stupid redhat 9 kerberos..
     --disable-debug --disable-verbose \
     --with-qt --with-vorbis --with-speex --with-openslp \
     --with-fam --with-fftw \
-    --with-xplc=/usr
+    --with-xplc=/usr/lib/xplc-0.3.10
 make
 
 %install

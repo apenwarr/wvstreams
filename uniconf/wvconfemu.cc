@@ -79,7 +79,8 @@ static void do_addname(void *userdata,
 		       WvStringParm section, WvStringParm key,
 		       WvStringParm oldval, WvStringParm newval)
 {
-    (*(WvStringList *)userdata).append(new WvString(key), true);
+    if (!!key)
+        (*(WvStringList *)userdata).append(new WvString(key), true);
 }
 
 

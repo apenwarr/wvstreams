@@ -35,6 +35,7 @@ public:
     virtual Iter *iterator(const UniConfKey &key);
 
 protected:
+    void notify_deleted(const UniConfValueTree *node, void *);
 };
 
 
