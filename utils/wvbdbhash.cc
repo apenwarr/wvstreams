@@ -5,7 +5,6 @@
  * A hash table container backed by a Berkeley DB (libdb) database.
  * See wvbdbhash.h.
  */
-
 #include "wvautoconf.h"
 
 #ifdef WITH_BDB
@@ -235,4 +234,5 @@ void WvBdbHashBase::IterBase::update(const datum &curkey, const datum &data)
     assert(!r && "Weird: database add failed during save?");
 }
 
-#endif /* WITH_BDB */
+#endif
+
