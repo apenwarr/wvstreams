@@ -59,6 +59,19 @@ WvURL::WvURL(const WvString &url) : err("No error")
 }
 
 
+WvURL::WvURL(const WvURL &url) : err("No error")
+{
+    addr = NULL;
+    resolving = true;
+    
+    hostname = url.hostname;
+    file = url.file;
+    port = url.port;
+    
+    resolve();
+}
+
+
 WvURL::~WvURL()
 {
     if (addr) delete addr;
@@ -119,7 +132,7 @@ WvURL::operator WvString () const
 
 
 
-WvHTTPStream::WvHTTPStream(WvURL &_url)
+WvHTTPStream::WvHTTPStream(const WvURL &_url)
 	: WvStreamClone((WvStream **)&http), headers(7), client_headers(7),
           url(_url)
 {
@@ -164,7 +177,7 @@ const char *WvHTTPStream::errstr() const
     else if (!url.isok())
 	return url.errstr();
     else
-	return "Unknown error!";
+	return "Unknown error! (no stream yet)";
 }
 
 
@@ -193,15 +206,18 @@ bool WvHTTPStream::pre_select(SelectInfo &si)
 
 	// otherwise, we just finished connecting:  start transfer.
 	state = ReadHeader1;
-	print("GET %s HTTP/1.0\n", url.getfile());
+	delay_output(true);
+	print("GET %s HTTP/1.0\r\n", url.getfile());
+	print("Host: %s:%s\r\n", url.gethost(), url.getport());
         {
             WvHTTPHeaderDict::Iter i(client_headers);
             for (i.rewind(); i.next(); )
             {
-                print("%s: %s\n", i().name, i().value);
+                print("%s: %s\r\n", i().name, i().value);
             }
         }
-        print("\n");
+        print("\r\n");
+	delay_output(false);
 	
 	// FALL THROUGH!
 	

@@ -436,6 +436,12 @@ public:
     size_t operator() (WVSTRING_FORMAT_DECL)
         { return write(WvString(WVSTRING_FORMAT_CALL)); }
 
+    /**
+     * set the errnum variable and close the stream -- we have an error.
+     */
+    void seterr(int _errnum);
+    void seterr(const WvString &specialerr);
+    
 private:
     void init();
     bool wvstream_execute_called;
@@ -468,12 +474,6 @@ protected:
      */
     WvStream() : callfunc(NULL)
         { init(); rwfd = -1; }
-    
-    /**
-     * set the errnum variable and close the stream -- we have an error.
-     */
-    void seterr(int _errnum);
-    void seterr(const WvString &specialerr);
     
     /**
      * actually do the callback for an arbitrary stream.
