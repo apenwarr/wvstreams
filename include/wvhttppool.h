@@ -31,6 +31,7 @@ public:
     WvBufHttpStream *outstream;
     bool pipeline_test;
     bool headers_only;
+    bool inuse;
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 		 bool _pipeline_test, bool _headers_only);
@@ -72,6 +73,7 @@ private:
     WvLog log;
     WvUrlRequestList urls, waiting_urls;
     int request_count, pipeline_test_count;
+    bool ssl;
     WvIPPortAddrTable &pipeline_incompatible;
     WvString http_response, pipeline_test_response;
     
