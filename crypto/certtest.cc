@@ -28,11 +28,12 @@ int main()
 	wvcon->write(x509cert.encode(WvX509Mgr::CertPEM));
 	wvcon->write(x509cert.encode(WvX509Mgr::RsaPEM));
 	wvcon->write(x509cert.encode(WvX509Mgr::RsaRaw));
+	wvcon->write(x509cert.certreq());
     }
     else
 	log("Error: %s\n", x509cert.errstr());
     
-    log("Test result: %s\n", x509cert.test());
+    log("Test result: %s\n", x509cert.test() ? "OK" : "NOT OK");
     
     log("Done...\n");
 }

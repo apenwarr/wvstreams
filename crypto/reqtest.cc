@@ -29,7 +29,8 @@ int main(int argc, char **argv)
     }
     
     log("Private RSA key follows (KEEP THIS!):\n");
-    wvcon->write(cert.encode(WvX509Mgr::RsaPEM));
+    WvString rsaout = cert.encode(WvX509Mgr::RsaPEM);
+    wvcon->print("%s",rsaout);
     
     log("Temporary self-signed certificate follows (replace later):\n");
     wvcon->write(cert.encode(WvX509Mgr::CertPEM));

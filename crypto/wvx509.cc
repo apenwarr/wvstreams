@@ -254,6 +254,15 @@ void WvX509Mgr::create_selfsigned()
 
     assert(rsa);
 
+    // double check RSA key
+    if (RSA_check_key(rsa->rsa) == 1)
+	debug("RSA Key is fine.\n");
+    else
+    {
+	seterr("RSA Key is bad!\n");
+	return;
+    }
+
     if ((pk=EVP_PKEY_new()) == NULL)
     {
 	seterr("Error creating key handler for new certificate");
@@ -264,6 +273,8 @@ void WvX509Mgr::create_selfsigned()
 	seterr("Error creating new X509 object");
 	return;
     }
+
+    // Assign RSA Key from WvKey into stupid package that OpenSSL needs
     if (!EVP_PKEY_assign_RSA(pk, rsa->rsa))
     {
 	seterr("Error adding RSA keys to certificate");
@@ -295,29 +306,6 @@ void WvX509Mgr::create_selfsigned()
     X509_set_issuer_name(cert, name);
     X509_set_subject_name(cert, name);
 
-    // Add the Subject Key Identifier to make certain programs happy.
-//    unsigned char shabuffer[20];
-//    char tempbuffer[60];
-
-    // FIXME: GET RID OF THIS AS SOON AS WvMessageDigest is working!!!
-//    int i;
-//    SHA_CTX  sha_ctx;
-//    SHA1_Init(&sha_ctx);
-//    SHA1_Update(&sha_ctx, rsa->pub, sizeof(rsa->pub));
-//    SHA1_Final(shabuffer, &sha_ctx);
-//
-//    for (i=0;i<20;i++)
-//    {
-//	snprintf(tempbuffer+(i*3),4,"%02x:",shabuffer[i]);
-//    }
-//    tempbuffer[59] = 0;
-//    debug("subjectKeyIdentifier will be filled with: %s\n",tempbuffer);
-    // FIXME: End of crap to get rid of
-
-//    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_subject_key_identifier, tempbuffer);
-//    X509_add_ext(cert, ex, -1);
-//    X509_EXTENSION_free(ex);
-
     // Add in the netscape-specific server extension
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_cert_type, "server");
     X509_add_ext(cert, ex, -1);
@@ -334,16 +322,19 @@ void WvX509Mgr::create_selfsigned()
     // Set the RFC2459-mandated keyUsage field to critical, and restrict
     // the usage of this cert to digital signature and key encipherment.
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage,
-			     "critical,digitalSignature,keyEncipherment");
+	     "critical,digitalSignature,keyEncipherment,keyCertSign");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
-// Don't set this at all (since it appears OpenSSL has problems
-// encoding it properly if you do!! Stupid, broken programmers...)
-// FIXME:
-//    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,"CA:FALSE");
-//    X509_add_ext(cert, ex, -1);
-//    X509_EXTENSION_free(ex);
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
+			     "critical, CA:FALSE");
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
+	     "TLS Web Server Authentication,TLS Web Client Authentication");
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
 
     // Sign the certificate with our own key ("Self Sign")
     if (!X509_sign(cert, pk, EVP_sha1()))
@@ -353,6 +344,7 @@ void WvX509Mgr::create_selfsigned()
 	EVP_PKEY_free(pk);
 	return;
     }
+
     debug("Certificate for %s created\n", dname);
 }
 
@@ -389,6 +381,15 @@ WvString WvX509Mgr::certreq()
     
     assert(rsa);
 
+    // double check RSA key
+    if (RSA_check_key(rsa->rsa) == 1)
+	debug("RSA Key is fine.\n");
+    else
+    {
+	seterr("RSA Key is bad!\n");
+	return nil;
+    }
+
     if ((pk=EVP_PKEY_new()) == NULL)
     {
         seterr("Error creating key handler for new certificate");
@@ -411,15 +412,17 @@ WvString WvX509Mgr::certreq()
         return nil;
     }
     
-    // don't let rsa2 free its own RSA key... the certificate will do that
-    // for us.
-    rsa2.rsa = NULL;
-    
+    X509_REQ_set_version(certreq, 0); /* version 1 */
+
     X509_REQ_set_pubkey(certreq, pk);
 
-    name = X509_REQ_get_subject_name(certreq);   
+    name = X509_REQ_get_subject_name(certreq);
+
+    debug("Creating Certificate request for %s\n", dname);
     set_name_entry(name, dname);
     X509_REQ_set_subject_name(certreq, name);
+    debug("SubjectDN: %s\n",
+	      X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 0, 0));
 
     if (!X509_REQ_sign(certreq, pk, EVP_sha1()))
     {
@@ -429,6 +432,22 @@ WvString WvX509Mgr::certreq()
         return WvString("");
     }
 
+    int verify_result = X509_REQ_verify(certreq, pk);
+    if (verify_result == 0)
+    {
+	seterr("Self Signed Request failed!");
+	X509_REQ_free(certreq);
+	EVP_PKEY_free(pk);
+        return WvString("");
+    }
+    else
+    {
+	debug("Self Signed Certificate Request verifies OK!\n");
+    }
+
+    // don't let rsa2 free its own RSA key... the certificate will do that
+    // for us.
+    rsa2.rsa = NULL;
 
     // Horribly involuted hack to get around the fact that the
     // OpenSSL people are too braindead to have a PEM_write function
@@ -533,8 +552,6 @@ bool WvX509Mgr::validate()
     if (cert != NULL)
     {
 	debug("Peer Certificate:\n");
-	debug("SubjectDN: %s\n",
-	      X509_NAME_oneline(X509_get_subject_name(cert),0,0));
 	debug("Issuer: %s\n",
 	      X509_NAME_oneline(X509_get_issuer_name(cert),0,0));
 
