@@ -154,7 +154,10 @@ void UniClientConn::writefail(WvStringParm payload)
 
 void UniClientConn::writevalue(const UniConfKey &key, WvStringParm value)
 {
-    writecmd(PART_VALUE, spacecat(wvtcl_escape(key), wvtcl_escape(value)));
+    if (value == WvString::null)
+        writecmd(PART_VALUE, wvtcl_escape(key));
+    else
+        writecmd(PART_VALUE, spacecat(wvtcl_escape(key), wvtcl_escape(value)));
 }
 
 
