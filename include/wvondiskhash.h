@@ -260,6 +260,8 @@ protected:
 // Base class for the template to save space
 class WvBdbHash
 {
+    WvString dbfile;
+
 public:
     struct datum
     {
@@ -268,7 +270,7 @@ public:
     };
     typedef datum Datum;
 
-    WvBdbHash(WvStringParm dbfile = WvString::null);
+    WvBdbHash(WvStringParm _dbfile = WvString::null);
     ~WvBdbHash();
 
     /**
@@ -276,7 +278,7 @@ public:
      * db, and probably mess up all your iterators.  Best used just after
      * creation.
      */
-    void opendb(WvStringParm dbfile = WvString::null);
+    void opendb(WvStringParm _dbfile = WvString::null);
     
     bool isok() const
         { return dbf; }

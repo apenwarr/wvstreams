@@ -90,11 +90,10 @@ unsigned WvHash(const int &i);
 
 class WvHashTableBase
 {
-protected:
-    
-    WvHashTableBase(unsigned _numslots);
     // Copy constructor - not defined anywhere!
     WvHashTableBase(const WvHashTableBase &t); 
+protected:
+    WvHashTableBase(unsigned _numslots);
     virtual ~WvHashTableBase() {}; 
     WvHashTableBase& operator= (const WvHashTableBase &t);
     void setup()
@@ -171,6 +170,8 @@ template <
 >
 class WvHashTable : public WvHashTableBase
 {
+    // copy constructor: not defined anywhere!
+    WvHashTable(const WvHashTable &h);
 protected:
     typedef Comparator<K> MyComparator; 
 
@@ -344,6 +345,9 @@ protected:
             return last_accessed;
         return last_accessed = MyHashTable::operator[](key);
     }
+    
+    // copy constructor: not defined anywhere!
+    WvMap(const WvMap &m);
 
 public:
     // accessor method for WvHashTable to use

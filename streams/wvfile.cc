@@ -13,10 +13,34 @@
 #define fcntl(a,b,c)
 #endif
 
+#ifndef _WIN32
+/* The Win32 runtime library doesn't provide fcntl so we can't
+   set readable and writable reliably. Use the other constructor.
+*/
+WvFile::WvFile(int rwfd = -1) : WvFDStream(rwfd)
+{
+    if (rwfd > -1)
+    {
+	/* We have to do it this way since O_RDONLY is defined as 0
+	    in linux. */
+	mode_t xmode = fcntl(rwfd, F_GETFL);
+	xmode = xmode & (O_RDONLY | O_WRONLY | O_RDWR);
+	readable = (xmode == O_RDONLY) || (xmode == O_RDWR);
+	writable = (xmode == O_WRONLY) || (xmode == O_RDWR);
+    }
+    else
+    {
+	readable = writable = false;
+    }
+}
+#endif
+
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
     noerr();
     
+    /* We have to do it this way since O_RDONLY is defined as 0
+       in linux. */
     int xmode = (mode & (O_RDONLY | O_WRONLY | O_RDWR));
     readable = (xmode == O_RDONLY) || (xmode == O_RDWR);
     writable = (xmode == O_WRONLY) || (xmode == O_RDWR);

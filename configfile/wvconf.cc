@@ -176,13 +176,12 @@ void WvConf::maybesetint(WvStringParm section, WvStringParm entry,
  
 void WvConf::load_file(WvStringParm filename)
 {
-    WvFile file;
     char *p;
     char *from_file;
     WvConfigSection *sect = &globalsection;
     bool quick_mode = false;
 
-    file.open(filename, O_RDONLY);
+    WvFile file(filename, O_RDONLY);
 
     #ifdef _WIN32
     //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that
@@ -376,10 +375,10 @@ void WvConf::set(WvStringParm section, WvStringParm entry,
 	/* fprintf(stderr, "cfg.set: set [%s]%s = %s\n",
 		(const char *)section, (const char *)entry,
 		(const char *)value ?: "!!!"); */
-    }
     
-    s->set(entry, value);
-    dirty = true;
+	s->set(entry, value);
+	dirty = true;
+    }
 }
 
 
@@ -430,8 +429,10 @@ void WvConf::delete_section(WvStringParm section)
 {
     WvConfigSection *s = (*this)[section];
     if (s)
+    {
 	unlink(s);
-    dirty = true;
+	dirty = true;
+    }
 }
 
 

@@ -183,6 +183,8 @@ public:
 template<class T>
 class WvList : public WvListBase
 {
+    // copy constructor: not defined anywhere!
+    WvList(const WvList &list);
 public:
     /** Creates an empty linked list. */
     WvList()

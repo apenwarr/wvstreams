@@ -12,6 +12,7 @@
 #include "wvondiskhash.h"
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 #ifdef HAVE_DB_H
 #include <db.h>
@@ -37,9 +38,10 @@ int comparefunc(const DBT *a, const DBT *b)
 }
 
 
-WvBdbHash::WvBdbHash(WvStringParm dbfile) :
-    dbf(NULL)
+WvBdbHash::WvBdbHash(WvStringParm _dbfile)
+    : dbfile(_dbfile)
 {
+    dbf = NULL;
     opendb(dbfile);
 }
 
@@ -51,19 +53,19 @@ WvBdbHash::~WvBdbHash()
 }
 
 
-void WvBdbHash::opendb(WvStringParm dbfile)
+void WvBdbHash::opendb(WvStringParm _dbfile)
 {
-    if (dbf)
-        dbf->close(dbf);
+    if (dbf) dbf->close(dbf);
+    dbfile = _dbfile;
     
     BTREEINFO info;
     memset(&info, 0, sizeof(info));
     info.compare = comparefunc;
-    dbf = dbopen(!!dbfile ? dbfile.cstr() : NULL, O_CREAT|O_RDWR, 0666,
-            DB_BTREE, &info);
+    dbf = dbopen(!!dbfile ? dbfile.cstr() : NULL,
+		 O_CREAT|O_RDWR, 0666, DB_BTREE, &info);
     if (!dbf)
-        fprintf(stderr, "Could not open database '%s': %s\n",
-                dbfile.cstr(), strerror(errno));
+	fprintf(stderr, "Could not open database '%s': %s\n",
+		dbfile.cstr(), strerror(errno));
 }
 
 
@@ -111,9 +113,21 @@ bool WvBdbHash::exists(const datum &key)
 void WvBdbHash::zap()
 {
     assert(isok());
+#if 0 // super-slow version
     datum key, value;
     while (!dbf->seq(dbf, (DBT *)&key, (DBT *)&value, R_FIRST))
 	dbf->del(dbf, (DBT *)&key, R_CURSOR);
+#else // delete the database file and reopen - much quicker!
+    if (dbf)
+    {
+	dbf->close(dbf);
+	dbf = NULL;
+    }
+    
+    int fd = open(dbfile, O_RDWR|O_TRUNC);
+    if (fd >= 0) ::close(fd);
+    opendb(dbfile);
+#endif
 }
 
 void WvBdbHash::IterBase::next(datum &curkey, datum &curdata)

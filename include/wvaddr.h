@@ -40,8 +40,12 @@
 #define IP_ALEN			4
 #endif
 
+#ifndef __u32
 typedef unsigned int __u32;
+#endif
+#ifndef __u16
 typedef short unsigned int __u16;
+#endif
 
 
 static const char * type_wvaddr = "WvAddr";
