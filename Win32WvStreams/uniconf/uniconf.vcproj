@@ -23,7 +23,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				RuntimeLibrary="4"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -99,6 +99,15 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath=".\fake.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
 			<File
 				RelativePath="..\..\uniconf\unicachegen.cc">
 				<FileConfiguration
@@ -262,9 +271,39 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\unipstoregen.cc">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\uniconf\unireadonlygen.cc">
 				<FileConfiguration
 					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\uniregistrygen.cc">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -322,6 +361,87 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath=".\stdafx.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unicachegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniclientconn.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniclientgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconf.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfkey.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfpair.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfroot.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconftree.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unidefgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unifiletreegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unifiltergen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unihashtree.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniinigen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniinitreegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unilistgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unimountgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unimounttreegen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uninullgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unipermgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unipstoregen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unireadonlygen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniregistrygen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unisecuregen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\unitempgen.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniwatch.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniwvconfgen.h">
 			</File>
 		</Filter>
 		<Filter
