@@ -34,7 +34,8 @@ public:
     void split(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
     /**
-     * split s and form a list creating null entries when there are multiple splitchars
+     * split s and form a list creating null entries when there are multiple 
+     * splitchars
      * ie " happy birthday  to  you" split on " " will populate the list with
      *  ""
      *  "happy"
