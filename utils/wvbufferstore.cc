@@ -7,6 +7,7 @@
  * See "wvbufferbase.h" for the public API.
  */
 #include "wvbufferstore.h"
+#include <string.h>
 
 struct MemOps
 {
@@ -19,6 +20,11 @@ struct MemOps
     {
         memcpy(target, source, count);
     }
+    inline void uninit_move(void *target, const void *source,
+        size_t count)
+    {
+        memmove(target, source, count);
+    }
     inline void *newarray(size_t count)
     {
         return new unsigned char[count];
@@ -29,11 +35,15 @@ struct MemOps
     }
 } memops;
 
+/**
+ * Rounds the value up to the specified boundary.
+ */
 inline size_t roundup(size_t value, size_t boundary)
 {
     size_t mod = value % boundary;
     return mod ? value + boundary - mod : value;
 }
+
 
 
 /***** WvBufferStore *****/
@@ -406,10 +416,243 @@ void WvConstInPlaceBufferStore::zap()
 
 
 
+/***** WvCircularBufferStore *****/
+
+WvCircularBufferStore::WvCircularBufferStore(int _granularity,
+    void *_data, size_t _avail, size_t _size, bool _autofree) :
+    WvBufferStore(_granularity), data(NULL)
+{
+    reset(_data, _avail, _size, _autofree);
+}
+
+
+WvCircularBufferStore::WvCircularBufferStore(int _granularity, size_t _size) :
+    WvBufferStore(_granularity), data(NULL)
+{
+    reset(memops.newarray(_size), 0, _size, true);
+}
+
+
+WvCircularBufferStore::~WvCircularBufferStore()
+{
+    if (data && xautofree)
+        memops.deletearray(data);
+}
+
+
+void WvCircularBufferStore::reset(void *_data, size_t _avail,
+    size_t _size, bool _autofree = false)
+{
+    assert(_data != NULL || _avail == 0);
+    if (data && _data != data && xautofree)
+        memops.deletearray(data);
+    data = _data;
+    xautofree = _autofree;
+    xsize = _size;
+    setavail(_avail);
+}
+
+
+void WvCircularBufferStore::setavail(size_t _avail)
+{
+    assert(_avail <= xsize);
+    head = 0;
+    totalused = totalinit = _avail;
+}
+
+
+size_t WvCircularBufferStore::used() const
+{
+    return totalused;
+}
+
+
+size_t WvCircularBufferStore::optgettable() const
+{
+    size_t avail = xsize - head;
+    if (avail > totalused)
+        avail = totalused;
+    return avail;
+}
+
+
+const void *WvCircularBufferStore::get(size_t count)
+{
+    assert(count <= totalused ||
+        ! "attempted to get() more than used()");
+    size_t first = ensurecontiguous(0, count, false /*keephistory*/);
+    const void *tmpptr = ((const unsigned char*)data) + first;
+    head = (head + count) % xsize;
+    totalused -= count;
+    return tmpptr;
+}
+
+
+void WvCircularBufferStore::unget(size_t count)
+{
+    assert(count <= totalinit - totalused ||
+        !"attempted to unget() more than ungettable()");
+    head = (head + xsize - count) % xsize;
+    totalused += count;
+}
+
+
+size_t WvCircularBufferStore::ungettable() const
+{
+    return totalinit - totalused;
+}
+
+
+void WvCircularBufferStore::zap()
+{
+    head = 0;
+    totalused = totalinit = 0;
+}
+
+
+size_t WvCircularBufferStore::free() const
+{
+    return xsize - totalused;
+}
+
+
+size_t WvCircularBufferStore::optallocable() const
+{
+    size_t tail = head + totalused;
+    if (tail >= xsize)
+        return xsize - totalused;
+    return xsize - tail;
+}
+
+
+void *WvCircularBufferStore::alloc(size_t count)
+{
+    assert(count <= xsize - totalused ||
+        !"attempted to alloc() more than free()");
+    totalinit = totalused; // always discard history
+    size_t first = ensurecontiguous(totalused, count,
+        false /*keephistory*/);
+    void *tmpptr = ((unsigned char*)data) + first;
+    totalused += count;
+    totalinit += count;
+    return tmpptr;
+}
+
+
+void WvCircularBufferStore::unalloc(size_t count)
+{
+    assert(count <= totalused ||
+        !"attempted to unalloc() more than unallocable()");
+    totalused -= count;
+    totalinit -= count;
+}
+
+
+size_t WvCircularBufferStore::unallocable() const
+{
+    return totalused;
+}
+
+
+void *WvCircularBufferStore::mutablepeek(int offset, size_t count)
+{
+    if (count == 0)
+        return NULL;
+    assert(((offset <= 0) ? 
+        size_t(-offset) <= totalinit - totalused :
+        size_t(offset) < totalused) ||
+        ! "attempted to peek() with invalid offset or count");
+    size_t first = ensurecontiguous(offset, count,
+        true /*keephistory*/);
+    void *tmpptr = ((unsigned char*)data) + first;
+    return tmpptr;
+}
+
+
+void WvCircularBufferStore::normalize()
+{
+    // discard history to minimize data transfers
+    totalinit = totalused;
+
+    // normalize the buffer
+    compact(data, xsize, head, totalused);
+    head = 0;
+}
+
+
+size_t WvCircularBufferStore::ensurecontiguous(int offset,
+    size_t count, bool keephistory)
+{
+    // determine the region of interest
+    size_t start = (head + offset + xsize) % xsize;
+    if (count != 0)
+    {   
+        size_t end = start + count;
+        if (end > xsize)
+        {
+            // the region is not entirely contiguous
+            // determine the region that must be normalized
+            size_t keepstart = head;
+            if (keephistory)
+            {
+                // adjust the region to include history
+                keepstart += totalused - totalinit + xsize;
+            }
+            else
+            {
+                // discard history to minimize data transfers
+                totalinit = totalused;
+            }
+            keepstart %= xsize;
+
+            // normalize the buffer over this region
+            compact(data, xsize, keepstart, totalinit);
+            head = totalinit - totalused;
+
+            // compute the new start offset
+            start = (head + offset + xsize) % xsize;
+        }
+    }
+    return start;
+}
+
+
+void WvCircularBufferStore::compact(void *data, size_t size,
+    size_t head, size_t count)
+{
+    // Case 1: Empty region
+    if (count == 0)
+        return;
+
+    // Case 2: Contiguous region
+    if (head + count <= size)
+    {
+        memops.uninit_move(data,
+            ((unsigned char*)data) + head, count);
+        return;
+    }
+    
+    // Case 3: Non-contiguous region
+    // FIXME: this is an interim solution
+    // We can actually do this whole thing in place with a little
+    // more effort...
+    size_t headcount = size - head;
+    size_t tailcount = count - headcount;
+    void *buf = memops.newarray(tailcount);
+    memops.uninit_move(buf, data, tailcount);
+    memops.uninit_move(data,
+        ((unsigned char*)data) + head, headcount);
+    memops.uninit_move(((unsigned char*)data) + headcount,
+        buf, tailcount);
+    memops.deletearray(buf);
+}
+
+
+
 /***** WvLinkedBufferStore *****/
 
 WvLinkedBufferStore::WvLinkedBufferStore(int _granularity) :
-    WvBufferStore(_granularity), totalused(0)
+    WvBufferStore(_granularity), totalused(0), maxungettable(0)
 {
 }
 
@@ -425,6 +668,7 @@ void WvLinkedBufferStore::prepend(WvBufferStore *buffer, bool autofree)
 {
     list.prepend(buffer, autofree);
     totalused += buffer->used();
+    maxungettable = 0;
 }
 
 
@@ -434,6 +678,8 @@ void WvLinkedBufferStore::unlink(WvBufferStore *buffer)
     if (it.find(buffer))
     {
         totalused -= buffer->used();
+        if (buffer == list.first())
+            maxungettable = 0;
         it.unlink(); // do not recycle the buffer
     }
 }
@@ -482,11 +728,13 @@ const void *WvLinkedBufferStore::get(size_t count)
             break;
         // unlink the leading empty buffer
         do_xunlink(it);
+        maxungettable = 0;
     }
 
     // return the data
     if (availused < count)
         buf = coalesce(it, count);
+    maxungettable += count;
     return buf->get(count);
 }
 
@@ -495,9 +743,10 @@ void WvLinkedBufferStore::unget(size_t count)
 {
     if (count == 0)
         return;
-    assert(! list.isempty() ||
+    assert(! list.isempty() || count > maxungettable ||
         !"attempted to unget() more than ungettable()");
     totalused += count;
+    maxungettable -= count;
     list.first()->unget(count);
 }
 
@@ -506,13 +755,17 @@ size_t WvLinkedBufferStore::ungettable() const
 {
     if (list.isempty())
         return 0;
-    return list.first()->ungettable();
+    size_t avail = list.first()->ungettable();
+    if (avail > maxungettable)
+        avail = maxungettable;
+    return avail;
 }
 
 
 void WvLinkedBufferStore::zap()
 {
     totalused = 0;
+    maxungettable = 0;
     WvBufferStoreList::Iter it(list);
     for (it.rewind(); it.next(); )
         do_xunlink(it);
@@ -600,19 +853,21 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
     
     // return data if we have enough
     size_t availpeek = buf->peekable(offset);
-    if (availpeek >= count)
-        return buf->mutablepeek(offset, count);
-
-    // if the offset was negative, then we need to unget the
-    // data to ensure it will not be overwritten due to subsequent
-    // writes
-    if (offset < 0)
-        buf->unget(size_t(-offset));
-
-    // return the data
-    buf = coalesce(it, count);
-    if (offset < 0)
-        buf->skip(size_t(-offset));
+    if (availpeek < count)
+    {
+        // if this is the first buffer, then we need to unget as
+        // much as possible to ensure it does not get discarded
+        // during the coalescing phase
+        size_t mustskip = 0;
+        if (buf == list.first())
+        {
+            mustskip = ungettable();
+            buf->unget(mustskip);
+        }
+        buf = coalesce(it, count);
+        if (mustskip != 0)
+            buf->skip(mustskip);
+    }
     return buf->mutablepeek(offset, count);
 }
 
@@ -620,7 +875,8 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
 WvBufferStore *WvLinkedBufferStore::newbuffer(size_t minsize)
 {
     minsize = roundup(minsize, granularity);
-    return new WvInPlaceBufferStore(granularity, minsize);
+    //return new WvInPlaceBufferStore(granularity, minsize);
+    return new WvCircularBufferStore(granularity, minsize);
 }
 
 

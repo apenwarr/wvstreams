@@ -109,13 +109,13 @@ private:
      * buffer and remeber the fact.  We use a WvBuffer here to allow
      * an arbitrary amount of data to be set aside.
      */
-    WvMiniBuffer write_bouncebuf;
+    WvInPlaceBuffer write_bouncebuf;
     size_t write_eat;
 
     /**
      * Similar nastiness happens with SSL_read()
      */
-    WvMiniBuffer read_bouncebuf;
+    WvInPlaceBuffer read_bouncebuf;
     bool read_pending;
 };
 

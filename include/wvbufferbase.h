@@ -839,6 +839,153 @@ public:
 
 
 /**
+ * A buffer that wraps a pre-allocated array and provides
+ * read-write access to its elements using a circular buffering
+ * scheme rather than a purely linear one, as used by
+ * WvInPlaceBuffer.  
+ *
+ * When there is insufficient contigous free/used space to
+ * satisfy a read or write request, the data is automatically
+ * reordered in-place to coalesce the free/used spaces into
+ * sufficiently large chunks.  The process may also be manually
+ * triggered to explicitly renormalize the array and shift its
+ * contents to the front.
+ */
+template<class T>
+class WvCircularBufferBase : public WvBufferBase<T>
+{
+protected:
+    WvCircularBufferStore mystore;
+
+public:
+    /**
+     * Creates a new circular buffer backed by the supplied array.
+     *
+     * @param _data the array of data to wrap
+     * @param _avail the amount of data available for reading
+     *               at the beginning of the buffer
+     * @param _size the size of the array
+     * @param _autofree if true, the array will be freed when discarded
+     */
+    WvCircularBufferBase(T *_data, size_t _avail, size_t _size,
+        bool _autofree = false) :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), _data, _avail * sizeof(Elem),
+            _size * sizeof(Elem), _autofree) { }
+
+    /**
+     * Creates a new empty circular buffer backed by a new array.
+     *
+     * @param _size the size of the array
+     */
+    WvCircularBufferBase(size_t _size) :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), _size * sizeof(Elem)) { }
+
+    /**
+     * Creates a new empty buffer with no backing array.
+     */
+    WvCircularBufferBase() :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), NULL, 0, 0, false) { }
+
+    /**
+     * Destroys the buffer.
+     * <p>
+     * Frees the underlying array if autofree().
+     * </p>
+     */
+    virtual ~WvCircularBufferBase() { }
+
+    /**
+     * Returns the underlying array pointer.
+     *
+     * @return the element pointer
+     */
+    inline T *ptr() const
+    {
+        return static_cast<T*>(mystore.ptr());
+    }
+
+    /**
+     * Returns the total size of the buffer.
+     *
+     * @return the number of elements
+     */
+    inline size_t size() const
+    {
+        return mystore.size() / sizeof(Elem);
+    }
+
+    /**
+     * Returns the autofree flag.
+     *
+     * @return the autofree flag
+     */
+    inline bool autofree() const
+    {
+        return mystore.autofree();
+    }
+
+    /**
+     * Sets or clears the auto_free flag.
+     *
+     * @param _autofree if true, the array will be freed when discarded
+     */
+    inline void setautofree(bool _autofree)
+    {
+        mystore.setautofree(_autofree);
+    }
+
+    /**
+     * Resets the underlying buffer pointer and properties.
+     * <p>
+     * If the old and new buffer pointers differ and the old buffer
+     * was specified as auto_free, the old buffer is destroyed.
+     * </p>
+     * @param _data the array of data to wrap
+     * @param _avail the amount of data available for reading 
+     *               at the beginning of the buffer
+     * @param _size the size of the array
+     * @param _autofree if true, the array will be freed when discarded
+     */
+    inline void reset(T *_data, size_t _avail, size_t _size,
+        bool _autofree = false)
+    {
+        mystore.reset(_data, _avail * sizeof(Elem),
+            _size * sizeof(Elem), _autofree);
+    }
+
+    /**
+     * Sets the amount of available data using the current buffer
+     * and resets the read index to the beginning of the buffer.
+     *
+     * @param _avail the amount of data available for reading
+     *               at the beginning of the buffer
+     */
+    inline void setavail(size_t _avail)
+    {
+        mystore.setavail(_avail * sizeof(Elem));
+    }
+
+    /**
+     * Normalizes the arrangement of the data such that the
+     * contents of the buffer are stored at the beginning of
+     * the array starting with the next element that would be
+     * returned by get(size_t).
+     * <p>
+     * After invocation, ungettable() may equal 0.
+     * </p>
+     */
+    inline void normalize()
+    {
+        mystore.normalize();
+    }
+};
+
+
+
+/**
  * A buffer that dynamically grows and shrinks based on demand.
  */
 template<class T>

@@ -12,6 +12,7 @@
 template WvBufferBaseCommonImpl<unsigned char>;
 template WvInPlaceBufferBase<unsigned char>;
 template WvConstInPlaceBufferBase<unsigned char>;
+template WvCircularBufferBase<unsigned char>;
 template WvDynamicBufferBase<unsigned char>;
 template WvEmptyBufferBase<unsigned char>;
 template WvBufferCursorBase<unsigned char>;

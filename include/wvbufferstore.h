@@ -290,6 +290,78 @@ public:
 
 
 /**
+ * The WvCircularBuffer storage class.
+ */
+class WvCircularBufferStore : public WvBufferStore
+{
+protected:
+    void *data;
+    size_t xsize;
+    size_t head;
+    size_t totalused;
+    size_t totalinit;
+    bool xautofree;
+
+public:
+    WvCircularBufferStore(int _granularity,
+        void *_data, size_t _avail, size_t _size, bool _autofree);
+    WvCircularBufferStore(int _granularity, size_t _size);
+    virtual ~WvCircularBufferStore();
+    inline void *ptr() const
+        { return data; }
+    inline size_t size() const
+        { return xsize; }
+    inline bool autofree() const
+        { return xautofree; }
+    inline void setautofree(bool _autofree)
+        { xautofree = _autofree; }
+    void reset(void *_data, size_t _avail, size_t _size, bool _autofree);
+    void setavail(size_t _avail);
+    void normalize();
+    
+    /*** Overridden Members ***/
+    virtual size_t used() const;
+    virtual size_t optgettable() const;
+    virtual const void *get(size_t count);
+    virtual void unget(size_t count);
+    virtual size_t ungettable() const;
+    virtual void zap();
+    virtual size_t free() const;
+    virtual size_t optallocable() const;
+    virtual void *alloc(size_t count);
+    virtual void unalloc(size_t count);
+    virtual size_t unallocable() const;
+    virtual void *mutablepeek(int offset, size_t count);
+
+protected:
+    /**
+     * Ensures that count new bytes can be read from or written
+     * to the buffer beginning at the specified offset as one
+     * large contiguous block.
+     *
+     * @param offset the offset
+     * @param count the number of bytes
+     * @param keephistory if true, does not purge unget history
+     * @return the offset of the first available byte
+     */
+    size_t ensurecontiguous(int offset, size_t count, bool keephistory);
+
+    /**
+     * Compacts an array arranged as a circular buffer such that
+     * the specified region is moved to the beginning of the array.
+     *
+     * @param data the array base
+     * @param size the size of the array
+     * @param head the beginning of the region to keep
+     * @param count the number of bytes in the region to keep
+     */
+    static void compact(void *data, size_t size,
+        size_t head, size_t count);
+};
+
+
+
+/**
  * The WvLinkedBuffer storage class.
  *
  * A buffer store built out of a list of other buffers linked together.
@@ -305,6 +377,7 @@ class WvLinkedBufferStore : public WvBufferStore
 protected:
     WvBufferStoreList list;
     size_t totalused;
+    size_t maxungettable;
 
 public:
     WvLinkedBufferStore(int _granularity);

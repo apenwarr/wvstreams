@@ -12,6 +12,12 @@
 
 /***** Specialization for 'unsigned char' buffers *****/
 
+/**
+ * Specialization of WvBufferBase for unsigned char type
+ * buffers intended for use with raw memory buffers.
+ * Refines the interface to add support for untyped pointers.
+ * Adds some useful string operations.
+ */
 class WvBufferBase<unsigned char> :
     public WvBufferBaseCommonImpl<unsigned char>
 {
@@ -38,9 +44,8 @@ public:
      */
     WvFastString getstr();
 
-    /**
-     * Get/put characters as integer values.
-     */
+    /*** Get/put characters as integer values ***/
+
     inline int getch() { return int(get()); }
     inline void putch(int ch) { put((unsigned char)ch); }
     inline int peekch(int offset = 0) { return int(peek(offset)); }
@@ -67,9 +72,8 @@ public:
     size_t notmatch(const char *chlist)
         { return notmatch(chlist, strlen(chlist)); }
 
-    /**
-     * Overload put() and move() to accept void pointers.
-     */
+    /*** Overload put() and move() to accept void pointers ***/
+    
     inline void put(unsigned char value)
         { WvBufferBaseCommonImpl<unsigned char>::put(value); }
     inline void put(const void *data, size_t count)
@@ -88,8 +92,12 @@ private:
 };
 
 
+
+/***** Declarations for some commonly used memory buffers *****/
+
 /**
- * Declarations for some commonly used raw byte memory buffers.
+ * The in place raw memory buffer type.
+ * Refines the interface to add support for untyped pointers.
  */
 class WvInPlaceBuffer : public WvInPlaceBufferBase<unsigned char>
 {
@@ -110,6 +118,10 @@ public:
     }
 };
 
+/**
+ * The const in place raw memory buffer type.
+ * Refines the interface to add support for untyped pointers.
+ */
 class WvConstInPlaceBuffer : public WvConstInPlaceBufferBase<unsigned char>
 {
 public:
@@ -125,19 +137,52 @@ public:
     }
 };
 
-typedef WvInPlaceBuffer WvMiniBuffer;
+/**
+ * The circular in place raw memory buffer type.
+ * Refines the interface to add support for untyped pointers.
+ */
+class WvCircularBuffer : public WvCircularBufferBase<unsigned char>
+{
+public:
+    inline WvCircularBuffer(void *_data, size_t _avail, size_t _size,
+        bool _autofree = false) :
+        WvCircularBufferBase<unsigned char>((unsigned char*)_data,
+            _avail, _size, _autofree) { }
+    inline WvCircularBuffer(size_t _size) :
+        WvCircularBufferBase<unsigned char>(_size) { }
+    inline WvCircularBuffer() :
+        WvCircularBufferBase<unsigned char>() { }
+    inline void reset(void *_data, size_t _avail, size_t _size,
+        bool _autofree = false)
+    {
+        WvCircularBufferBase<unsigned char>::reset(
+            (unsigned char*)_data, _avail, _size, _autofree);
+    }
+};
 
+/**
+ * The base raw memory buffer type.
+ */
 typedef WvBufferBase<unsigned char> WvBuffer;
 
+/**
+ * The dynamically resizing raw memory buffer type.
+ */
 typedef WvDynamicBufferBase<unsigned char> WvDynamicBuffer;
 
+/**
+ * The empty raw memory buffer type.
+ */
 typedef WvEmptyBufferBase<unsigned char> WvEmptyBuffer;
 
+/**
+ * The raw memory buffer cursor type.
+ */
 typedef WvBufferCursorBase<unsigned char> WvBufferCursor;
 
-
-/***** A read-only buffer backed by a constant WvString *****/
-
+/**
+ * A raw memory read-only buffer backed by a constant WvString
+ */
 class WvConstStringBuffer : public WvConstInPlaceBuffer
 {
     WvString xstr;
@@ -145,22 +190,27 @@ class WvConstStringBuffer : public WvConstInPlaceBuffer
 public:
     /**
      * Creates a new buffer backed by a constant string.
-     *   str - the string to use
+     *
+     * @param _str the string
      */
     WvConstStringBuffer(WvStringParm _str);
 
     /**
-     * Creates a new empty buffer.
+     * Creates a new empty buffer backed by a null string.
      */
     WvConstStringBuffer();
 
     /**
      * Resets the buffer contents to a new string.
+     *
+     * @param _str the new string
      */
     void reset(WvStringParm _str);
 
     /**
-     * Returns the string.
+     * Returns the string that backs the array
+     *
+     * @return the string
      */
     WvString str()
         { return xstr; }

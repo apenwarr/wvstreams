@@ -14,12 +14,12 @@
 
 int main()
 {
-    WvMiniBuffer b(1024);
+    WvInPlaceBuffer b(1024);
     WvDynamicBuffer bb;
     char *s, xx[1024];
     size_t in, i, max, total;
     
-    printf("MINIBUFFER TEST\n");
+    printf("InPlaceBuffer TEST\n");
     printf("A %20u used, %u free, offset %d/%d\n",
 	   b.used(), b.free(), b.strchr('c'), b.strchr((unsigned char)'c'));
 
@@ -153,7 +153,7 @@ int main()
 	if (bb.used() > max)
 	{
 	    max = bb.used();
-	    printf("New max: %u bytes in %d minibuffer(s) after %u bytes\n",
+	    printf("New max: %u bytes in %d InPlaceBuffer(s) after %u bytes\n",
 		   max, bb.numbuffers(), total);
 	}
 #ifdef DEBUG_STRESS

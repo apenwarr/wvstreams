@@ -31,7 +31,7 @@ protected:
 
 private:
     struct z_stream_s *zstr;
-    WvMiniBuffer tmpbuf;
+    WvInPlaceBuffer tmpbuf;
     Mode mode;
 
     void prepare(WvBuffer *inbuf);
