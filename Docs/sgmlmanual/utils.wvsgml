@@ -373,14 +373,39 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
    A WvBuffer is a dynamically-sized buffer.  It is pretty simple to use:
    you use the put() function to write data to it, and you use the get()
    function to retrieve (and delete) data from the buffer.  It's often
-   perfect for storing streamed data, such as that from network connections.
+   perfect for storing streamed data.
 
+   WvBuffer is pretty simple to use.  You can write data to it using put()
+   and retrieve the data using get().  get() effectively deletes the data
+   from the buffer, but you can use unget() to get it back if you haven't
+   done any buffer operations in the meantime.
+
+   WVCMD(WvBuffer buf;
+buf.put("borkle borkle\n");
+printf(buf.get(14));
+buf.unget(14);
+printf(buf.get(14));)
+
+   The above code will print "borkle borkle" twice.
+
+   WvBuffers also have interesting functions to let you find characters, 
+   merge WvBuffers, and get entire strings.  wvbuffer.h documents these
+   functions and more.
  )
  
- WVCHAPTER(wvlockfile, WvLockFile - tty lock file creation,
+ WVCHAPTER(wvcrash, WvCrash - automatic stack backtrace generation,
  
-   Not written yet.
- 
+   WvCrash is a simple way to get useful information when a program dies.
+   It automatically generates a stack trace including function names of
+   not only your program's functions but also library functions.
+
+   Setting up WvCrash involves running wvcrash_setup(), passing it the name
+   of your program (generally you'll want want to pass argv[0]).  When the
+   program dies, it automatically executes the wvcrash() function, which in
+   turn executes the user-defined program "wvcrash", if it exists, and pipes
+   the WvCrash stack trace to its stdin.  If there's no program called
+   "wvcrash" in the path, it writes the stack trace to a file named
+   "wvcrash.txt" in the current directory. 
  )
+
 )
-
