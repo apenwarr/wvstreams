@@ -136,16 +136,15 @@ class WvMD5
 public:
 
    /**
-    * Create the MD5 Hash of a String
+    * Create the MD5 Hash of a String or of a File, depending on whether
+    * string_or_filename is, well, a string, or a filename.. isfile must be set
+    * to false if you want to Hash only a string.
     */
-   WvMD5(WvStringParm string_to_hash);
+   WvMD5(WvStringParm string_or_filename, bool isfile=true);
 
-   /**
-    * Create the MD5 Hash of a File
-    */
-   WvMD5(FILE *file_to_hash);
+
    ~WvMD5();
-   
+      
    /**
     * MD5 seems to like unsigned char * for some reason, so make it easy
     * to return that type (Probably only be usefull inside other crypto

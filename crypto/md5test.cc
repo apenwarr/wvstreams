@@ -12,7 +12,7 @@ int main()
 	WvLog log("MD5test", WvLog::Info);
 	log("Starting...\n");
 	
-        log("%s -> %s\n",request, WvMD5(request));
+        log("%s -> %s\n",request, WvMD5(request,false));
 
 	log("Done...\n");
 }

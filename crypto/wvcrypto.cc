@@ -319,50 +319,64 @@ size_t WvRSAStream::uwrite(const void *buf, size_t size)
     return totalwrite;
 }
 
-WvMD5::WvMD5(WvStringParm string_to_hash)
+WvMD5::WvMD5(WvStringParm string_or_filename, bool isfile)
 {
     MD5_CTX ctx;
     unsigned char temp[20];
 
-    MD5_Init(&ctx);
-    MD5_Update(&ctx,(const unsigned char *)string_to_hash.cstr(),
-		strlen(string_to_hash));
-    MD5_Final(temp, &ctx);
-    md5_hash_value = (unsigned char *)calloc(1,sizeof(temp));
-    memcpy(md5_hash_value,temp,sizeof(temp));
-}
+    if (isfile)
+    {
+	unsigned char buf[1024];
+	int n;
+	FILE *file_to_hash;
+	
+	file_to_hash = fopen(string_or_filename,"r");
+	
+	if (file_to_hash != NULL)
+	{
+	    MD5_Init(&ctx);
+	    while ((n = fread(buf, 1, sizeof(buf), file_to_hash)) > 0)
+		MD5_Update(&ctx, buf, n);
+	    MD5_Final(temp, &ctx);
+	    if (ferror(file_to_hash))
+		md5_hash_value = NULL;
+	    else
+	    {
+		md5_hash_value = (unsigned char *)calloc(1,sizeof(temp));
+		memcpy(md5_hash_value,temp,sizeof(temp));
+	    }
 
-WvMD5::WvMD5(FILE *file_to_hash)
-{
-    unsigned char buf[1024];
-    unsigned char temp[20];
-    MD5_CTX ctx;
-    int n;
-
-    MD5_Init(&ctx);
-    while ((n = fread(buf, 1, sizeof(buf), file_to_hash)) > 0)
-            MD5_Update(&ctx, buf, n);
-    MD5_Final(temp, &ctx);
-    if (ferror(file_to_hash))
-	md5_hash_value = NULL;
+	    fclose(file_to_hash);
+	}
+	else
+	{
+	    md5_hash_value = NULL;
+	}
+    }
     else
     {
-    	md5_hash_value = (unsigned char *)calloc(1,sizeof(temp));
-    	memcpy(md5_hash_value,temp,sizeof(temp));
+	MD5_Init(&ctx);
+	MD5_Update(&ctx,(const unsigned char *)string_or_filename.cstr(),
+		   strlen(string_or_filename));
+	MD5_Final(temp, &ctx);
+	md5_hash_value = (unsigned char *)calloc(1,sizeof(temp));
+	memcpy(md5_hash_value,temp,sizeof(temp));
     }
 }
+
 
 WvMD5::~WvMD5()
 {
     free(md5_hash_value);
 }
 
+
 WvString WvMD5::md5_hash() const
 {
     int count;
     unsigned char *temp;
     WvString hash_value("");
-
+    
     temp = md5_hash_value;
     for (count = 0; count < 16; count++)
     {
@@ -370,6 +384,6 @@ WvString WvMD5::md5_hash() const
 	snprintf(buf,2,"%02x", *temp++);
 	hash_value.append(buf);
     }
-
+    
     return hash_value;
 }
