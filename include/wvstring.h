@@ -238,6 +238,12 @@ public:
      */
     int num() const
         { return str ? atoi(str) : 0; }
+
+    /**
+     * returns true if this string is null
+     */
+    bool isnull() const
+        { return str == NULL; }
 };
 
 

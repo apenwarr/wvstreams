@@ -7,7 +7,7 @@
 #include "wvbuffer.h"
 #include <wvstream.h>
 
-WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
+WvString wvtcl_escape(WvStringParm s, const char *nasties)
 {
     WvString allnasties(WVTCL_ALWAYS_NASTY);
     allnasties.append(nasties);
@@ -61,7 +61,7 @@ WvFastString wvtcl_escape(WvStringParm s, const char *nasties)
 }
 
 
-WvFastString wvtcl_unescape(WvStringParm s)
+WvString wvtcl_unescape(WvStringParm s)
 {
     //printf("  unescape '%s'\n", (const char *)s);
     
@@ -117,14 +117,14 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties,
     return b.getstr();
 }
 
-WvString *wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
+WvString wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
 {
-    WvString *toreturn = NULL; 
-    bool inescape = false, inquote = false;
-    int bracecount = 0, origsize = buf.used();
+    int origsize = buf.used();
+    if (origsize == 0)
+        return WvString::null;
 
-    if (origsize <= 0)
-        return NULL;
+    bool inescape = false, inquote = false;
+    int bracecount = 0;
     char *sptr = (char *)buf.get(origsize);
     char *eptr = sptr;
 
@@ -147,6 +147,7 @@ WvString *wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
           
 	    char olde = *eptr;
 	    *eptr = 0;
+            WvString toreturn;  // NULL string
 	    if (*sptr)
 	    {
                 // This new stuff here was added to deal with a memory 
@@ -155,15 +156,15 @@ WvString *wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
                 strncpy(newstring, sptr, (eptr - sptr));
                 newstring[(eptr - sptr)] = '\0';
 		if (do_unescape)
-		    toreturn=new WvString(wvtcl_unescape(newstring));
+		    toreturn = wvtcl_unescape(newstring);
 		else
-		    toreturn=new WvString(newstring);
+		    toreturn = newstring;
 	    }
 	    *eptr = olde; // make sure the loop doesn't exit!
 	    if (inquote)
 		eptr--;
             origsize -= (eptr - sptr) + 1;
-            if (toreturn)
+            if (! toreturn.isnull())
             {
                 buf.unget(origsize);
                 return toreturn;
@@ -198,15 +199,15 @@ WvString *wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
         strncpy(newstring, sptr, (eptr - sptr));
         newstring[(eptr - sptr)] = '\0';
         if (do_unescape)
-            return new WvString(wvtcl_unescape(newstring));
+            return wvtcl_unescape(newstring);
         else
-            return new WvString(newstring);
+            return newstring;
     }
     else
     {
         buf.unget(origsize);
     }
-   return NULL;
+   return WvString::null;
 }
 
 void wvtcl_decode(WvStringList &l, WvStringParm _s,
@@ -219,14 +220,12 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
     WvConstStringBuffer buf(_s);
     while (buf.used() > 0)
     {
-        WvString *appendword = wvtcl_getword(buf, splitchars, do_unescape);
-        if (appendword)
+        WvString appendword = wvtcl_getword(buf, splitchars, do_unescape);
+        if (! appendword.isnull())
         {
-            l.append(appendword, true);
+            l.append(new WvString(appendword), true);
         }
         else
             break; 
     }
 }
-
-

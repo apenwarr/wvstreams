@@ -9,7 +9,7 @@ UniConfConn::~UniConfConn()
 {
 }
 
-WvString *UniConfConn::gettclline()
+WvString UniConfConn::gettclline()
 {
     if (select(0,true,false,false))
         fillbuffer();

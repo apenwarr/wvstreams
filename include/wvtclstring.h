@@ -56,27 +56,27 @@
 //         (For example, "foo blah" becomes "{foo blah}")
 //   3) Strings containing nasties _and_ unmatched braces are encoded using
 //         backslash notation.  (For example, " foo} " becomes "\ foo\}\ "
-WvFastString wvtcl_escape(WvStringParm s, const char *nasties = WVTCL_NASTIES);
+WvString wvtcl_escape(WvStringParm s, const char *nasties = WVTCL_NASTIES);
 
 
 // tcl-unescape a string.  This is generally the reverse of wvtcl_escape,
 // except we can reverse any backslashified or embraced string, even if it
 // doesn't follow the "simplest encoding" rules used by wvtcl_escape.  We
 // can also handle strings in double-quotes, ie. '"foo"' becomes 'foo'.
-WvFastString wvtcl_unescape(WvStringParm s);
+WvString wvtcl_unescape(WvStringParm s);
 
 
 // encode a tcl-style list.  This is easily done by tcl-escaping each
 // string in 'l', then appending the escaped strings together, separated by
 // the first char in splitchars.
 WvString wvtcl_encode(WvStringList &l, const char *nasties = WVTCL_NASTIES,
-		      const char *splitchars = WVTCL_SPLITCHARS);
+    const char *splitchars = WVTCL_SPLITCHARS);
 
 // Get a single tcl word from an input buffer, and return the rest of the
 // buffer untouched.  If no word can be created from the buffer, return
 // a null string and reset the buffer to it's original state.
-WvString *wvtcl_getword(WvBuffer &buf, const char *splitchars = WVTCL_SPLITCHARS,
-                        bool do_unescape = true);
+WvString wvtcl_getword(WvBuffer &buf, const char *splitchars = WVTCL_SPLITCHARS,
+    bool do_unescape = true);
 
 // split a tcl-style list.  There are some special "convenience" features
 // here, which allow users to create lists more flexibly than wvtcl_encode
@@ -93,8 +93,6 @@ WvString *wvtcl_getword(WvBuffer &buf, const char *splitchars = WVTCL_SPLITCHARS
 // Zero-length elements must be represented by 
 // 
 void wvtcl_decode(WvStringList &l, WvStringParm _s,
-		  const char *splitchars = WVTCL_SPLITCHARS,
-		  bool do_unescape = true);
-
+    const char *splitchars = WVTCL_SPLITCHARS, bool do_unescape = true);
 
 #endif // __WVTCLSTRING_H

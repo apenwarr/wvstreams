@@ -140,36 +140,31 @@ bool UniConfClient::deleteable()
 void UniConfClient::execute()
 {
     conn->fillbuffer();
-
-    WvString *line = conn->gettclline();
-    
-    if (!line) return;
-
-    WvDynamicBuffer fromline;
-    WvString *cmd = NULL;
-    WvString *key = NULL;
-    while (line)
+    for (;;)
     {
-        fromline.putstr(*line);
-        cmd = wvtcl_getword(fromline);
-        key = wvtcl_getword(fromline);
-        while (cmd && key)
+        WvString line = conn->gettclline();
+        if (line.isnull())
+            break;
+        WvConstStringBuffer fromline(line);
+        for (;;)
         {
+            WvString cmd = wvtcl_getword(fromline);
+            WvString key = wvtcl_getword(fromline);
+            if (cmd.isnull() || key.isnull())
+                break;
+            
             // Value from a get is incoming
-            if (*cmd == "RETN") 
+            if (cmd == "RETN") 
             {
-                WvString *value = wvtcl_getword(fromline);
-                if (!value)
-                {
-                    value = new WvString();
-                }
-                dict.add(new waitingdata(key->unique(), value->unique()), true);
+                WvString value = wvtcl_getword(fromline);
+                dict.add(new waitingdata(key.unique(), value.unique()),
+                    true);
             }
             // A set has happened on a key we requested.
-            else if (*cmd == "FGET") 
+            else if (cmd == "FGET") 
             {
-                dict.remove(dict[*key]);
-                UniConf *obs = &(*top)[*key];
+                dict.remove(dict[key]);
+                UniConf *obs = &(*top)[key];
                 if (obs)
                 {
                     obs->obsolete = true;
@@ -181,28 +176,23 @@ void UniConfClient::execute()
                     }
                 }
             }
-            else if (*cmd == "SUBT")  // This is so inefficient it scares me.
+            else if (cmd == "SUBT")  // This is so inefficient it scares me.
             {
                 waitforsubt = false;
                 while (fromline.used() > 0)
                 {
-                    WvString *pair = wvtcl_getword(fromline);
+                    WvString pair = wvtcl_getword(fromline);
                     WvDynamicBuffer temp;
-                    temp.put(*pair, pair->len());
-                    WvString *newkey = wvtcl_getword(temp);
-                    WvString *newval = wvtcl_getword(temp);
-                    if (!newval) newval = new WvString;
-                    dict.add(new waitingdata(newkey->unique(), newval->unique()), false);
-                    UniConf *narf = &top->get(*key);
-                    narf = &narf->get(*newkey);
+                    temp.putstr(pair);
+                    WvString newkey = wvtcl_getword(temp);
+                    WvString newval = wvtcl_getword(temp);
+                    dict.add(new waitingdata(newkey.unique(),
+                        newval.unique()), false);
+                    UniConf *narf = &top->get(key);
+                    narf = &narf->get(newkey);
                     narf->generator = this;
                 }
             }
-
-            cmd = wvtcl_getword(fromline);
-            key = wvtcl_getword(fromline);
         }
-        line = conn->gettclline();
     }
-   
 }

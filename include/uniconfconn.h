@@ -10,7 +10,7 @@ public:
     UniConfConn(WvStream *_s);
     virtual ~UniConfConn();
 
-    WvString *gettclline();
+    WvString gettclline();
     virtual void fillbuffer();
     virtual void execute();
 protected:

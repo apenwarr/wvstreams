@@ -93,9 +93,15 @@ void UniConfDaemon::run()
     while (!want_to_die)
     {
         if (list->select(0, true, false))
+        {
+            wvcon->print("Incoming Connection on list.\n");
             l.append(new UniConfDaemonConn(list->accept(), this), true);
+        }
         if (tlist->select(0, true, false))
+        {
+            wvcon->print("Incoming Connection on tlist.\n");
             l.append(new UniConfDaemonConn(tlist->accept(), this), true);
+        }
         
         if (l.select(5000, true, false))
             l.callback();
