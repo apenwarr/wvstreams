@@ -29,5 +29,9 @@ int main()
     {
         WvUrl url(*s);
         wvcon->print("%s -> %s\n", *s, url);
+        wvcon->print("proto: %s, host: %s, port:%s, file: %s, user: %s\n",
+                     url.getproto(), url.gethost(), url.getport(),
+                     url.getfile(), url.getuser());
+        wvcon->print("\n");
     }
 }

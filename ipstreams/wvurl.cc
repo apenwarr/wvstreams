@@ -14,12 +14,15 @@ struct DefaultPort
 {
     char *proto;
     int port;
+    bool uses_slashes;
 };
 
+// The protocols must be arranged from longest to shortest because they're
+// compared with strncmp, so "https://" will also match http.
 DefaultPort portmap[] = {
-    { "http://", 80 },
-    { "https://", 443 },
-    { "sip:", 5060 },
+    { "https", 443, true },
+    { "http", 80, true },
+    { "sip", 5060, false },
     { NULL, 0 }
 };
 
@@ -42,7 +45,7 @@ bool protocol_uses_slashes(WvString proto)
     for (p = portmap; p->proto != NULL; p++)
     {
         if (strncmp(p->proto, proto, strlen(p->proto)) == 0)
-            return (strrchr(p->proto, '/'));
+            return p->uses_slashes;
     }
     return false;
 }
@@ -65,12 +68,17 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
 	return;
     }
 
-    use_slashes = protocol_uses_slashes(wptr);
-
     cptr = strchr(wptr, ':');
+    if (!cptr)
+    {
+        err = "No colon after the protocol.";
+        return;
+    }
     *cptr = 0;
     proto = wptr;
     
+    use_slashes = protocol_uses_slashes(proto);
+
     wptr = cptr + (use_slashes ? 3 : 1);
 
     cptr = strchr(wptr, '@');
