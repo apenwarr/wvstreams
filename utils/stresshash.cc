@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
  *
  * WvHashTable stress tester.  Adds a lot of elements to the table and 
  * looks them up, iterates through them, etc.  This requires lots of memory.

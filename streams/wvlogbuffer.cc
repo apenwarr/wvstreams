@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
  * 
  * WvLogBuffer is a descendant of WvLogRcv that buffers log messages for
  * later use.  It only keeps up to max_lines log entries of _each_ log

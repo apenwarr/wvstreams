@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
  * 
  * Unified support for streams, that is, sequences of bytes that may or
  * may not be ready for read/write at any given time.

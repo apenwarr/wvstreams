@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
  *
  * WvStrings are used a lot more often than WvStringTables, so the Table need
  * not be defined most of the time.  Include this file if you need it.

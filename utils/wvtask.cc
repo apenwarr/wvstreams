@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
  * 
  * A set of classes that provide co-operative multitasking support.  See
  * wvtask.h for more information.

@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2000 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
  *
  * WvProtoStream test.  Defines a simple language consisting of the commands
  * and states "one", "two", "three", and "four".  See if you can get to state
