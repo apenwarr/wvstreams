@@ -86,22 +86,16 @@ bool WvHexDecoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 
 void hexify(char *obuf, const void *ibuf, size_t len)
 {
-    // will replace soon with in-place buffers
-    WvBuffer inbuf, outbuf;
-    inbuf.put(ibuf, len);
-    WvHexEncoder(false /*use_uppercase*/).flush(inbuf, outbuf);
-    outbuf.putch('\0');
-    size_t used = outbuf.used();
-    memcpy(obuf, outbuf.get(used), used);
+    size_t outlen = len * 2 + 1;
+    WvHexEncoder(false /*use_uppercase*/).
+        flush(ibuf, len, obuf, & outlen);
+    obuf[outlen] = '\0';
 }
 
 
 void unhexify(void *obuf, const char *ibuf)
 {
-    // will replace soon with in-place buffers
-    WvBuffer inbuf, outbuf;
-    inbuf.put(WvString(ibuf));
-    WvHexDecoder().flush(inbuf, outbuf);
-    size_t used = outbuf.used();
-    memcpy(obuf, outbuf.get(used), used);
+    size_t inlen = strlen(ibuf);
+    size_t outlen = inlen / 2;
+    WvHexDecoder().flush(ibuf, inlen, obuf, & outlen);
 }

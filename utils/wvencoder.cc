@@ -24,7 +24,7 @@ bool WvEncoder::isok() const
 }
 
 
-bool WvEncoder::encode(WvStringParm instr, WvBuffer &outbuf)
+bool WvEncoder::flush(WvStringParm instr, WvBuffer &outbuf)
 {
     WvBuffer inbuf;
     inbuf.put(instr);
@@ -33,7 +33,7 @@ bool WvEncoder::encode(WvStringParm instr, WvBuffer &outbuf)
 }
 
 
-bool WvEncoder::encode(WvStringParm instr, WvString &outstr)
+bool WvEncoder::flush(WvStringParm instr, WvString &outstr)
 {
     WvBuffer inbuf, outbuf;
     inbuf.put(instr);
@@ -52,21 +52,69 @@ bool WvEncoder::encode(WvBuffer &inbuf, WvString &outstr, bool flush)
 }
 
 
-WvString WvEncoder::strencode(WvStringParm instr, bool ignore_errors)
+WvString WvEncoder::strflush(WvStringParm instr, bool ignore_errors)
 {
     WvString outstr;
-    bool success = encode(instr, outstr);
+    bool success = flush(instr, outstr);
     return ignore_errors || success ?
         outstr : WvString(WvString::null);
 }
 
 
-WvString WvEncoder::strencode(WvBuffer &inbuf, bool ignore_errors)
+WvString WvEncoder::strflush(WvBuffer &inbuf, bool ignore_errors)
 {
     WvString outstr;
-    bool success = encode(inbuf, outstr);
+    bool success = flush(inbuf, outstr);
     return ignore_errors || success ?
         outstr : WvString(WvString::null);
+}
+
+
+bool WvEncoder::flush(const void *inmem, size_t inlen, WvBuffer &outbuf)
+{
+    // FIXME: optimize using in-place buffers someday
+    WvBuffer inbuf;
+    inbuf.put(inmem, inlen);
+    bool success = encode(inbuf, outbuf, true);
+    return success;
+}
+
+
+bool WvEncoder::flush(const void *inmem, size_t inlen, void *outmem,
+    size_t *outlen)
+{
+    // FIXME: optimize using in-place buffers someday
+    WvBuffer inbuf;
+    inbuf.put(inmem, inlen);
+    return encode(inbuf, outmem, outlen, true);
+}
+
+
+bool WvEncoder::encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
+    bool flush)
+{
+    // FIXME: optimize using in-place buffers someday
+    WvBuffer outbuf;
+    bool success = encode(inbuf, outbuf, true);
+    size_t used = outbuf.used();
+    if (used > *outlen)
+    {
+        // uhoh, overflow detected!
+        used = *outlen;
+        success = false;
+    }
+    else
+        *outlen = used;
+    memcpy(outmem, outbuf.get(used), used);
+    return success;
+}
+
+
+bool WvEncoder::flush(WvStringParm instr, void *outmem, size_t *outlen)
+{
+    WvBuffer inbuf;
+    inbuf.put(instr);
+    return flush(inbuf, outmem, outlen);
 }
 
 

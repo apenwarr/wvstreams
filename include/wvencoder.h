@@ -79,24 +79,42 @@ public:
         { return encode(in, out, true); }
 
     /**
-     * Helper functions, encodes strings to buffers, strings to strings,
-     * and buffers to strings.  The functions that take strings as input
-     * or return them force false to true because incremental processing
-     * of strings would require extra state.
+     * Helper functions for encoding strings.
+     * Some variants have no encode(...) equivalent because they must
+     * always flush.
      */
-    bool encode(WvStringParm instr, WvBuffer &outbuf);
-    bool encode(WvStringParm instr, WvString &outbuf);
+    bool flush(WvStringParm instr, WvBuffer &outbuf);
+    bool flush(WvStringParm instr, WvString &outstr);
     bool encode(WvBuffer &inbuf, WvString &outstr, bool flush = false);
 
-    inline bool flush(WvStringParm instr, WvBuffer &outbuf)
-        { return encode(instr, outbuf); }
-    inline bool flush(WvStringParm instr, WvString &outstr)
-        { return encode(instr, outstr); }
     inline bool flush(WvBuffer &inbuf, WvString &outstr)
         { return encode(inbuf, outstr, true); }
     
-    WvString strencode(WvStringParm instr, bool ignore_errors = true);
-    WvString strencode(WvBuffer &inbuf, bool ignore_errors = true);
+    WvString strflush(WvStringParm instr, bool ignore_errors = true);
+    WvString strflush(WvBuffer &inbuf, bool ignore_errors = true);
+
+    /**
+     * Helper functions for encoder data from plain memory buffers.
+     * Some variants have no encode(...) equivalent because they must
+     * always flush.  The size_t pointer at by the outlen parameter
+     * will be updated to reflect the actual number of bytes that
+     * were stored into the output buffer.  If the outbuf buffer
+     * is not large enough, the overflow bytes will be discarded
+     * and false will be returned.
+     */
+    bool flush(const void *inmem, size_t inlen, WvBuffer &outbuf);
+    bool flush(const void *inmem, size_t inlen, void *outmem,
+        size_t *outlen);
+    bool encode(WvBuffer &inbuf, void *outmem, size_t *outlen,
+        bool flush = false);
+        
+    inline bool flush(WvBuffer &inbuf, void *outmem, size_t *outlen)
+        { return encode(inbuf, outmem, outlen, true); }
+
+    /**
+     * Helper functions for other interesting cases.
+     */
+    bool flush(WvStringParm instr, void *outmem, size_t *outlen);
 };
 
 
