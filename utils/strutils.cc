@@ -273,13 +273,13 @@ WvString backslash_escape(WvStringParm s1)
 
     const char *p1 = s1;
     char *p2 = s2.edit();
-    memset(p2, '\0', s2.len());
     while (*p1)
     {
         if (!isalnum(*p1))
             *p2++ = '\\';
         *p2++ = *p1++;
     }
+    *p2 = 0;
 
     return s2;
 }
