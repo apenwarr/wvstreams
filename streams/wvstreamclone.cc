@@ -108,12 +108,15 @@ bool WvStreamClone::select_setup(SelectInfo &si)
 	oldwr = si.writable;
 	oldex = si.isexception;
 	
-	if (force.readable)
-	    si.readable = true;
-	if (outbuf.used() || autoclose_time || force.writable)
-	    si.writable = true;
-	if (force.isexception)
-	    si.isexception = true;
+	if (si.forceable)
+	{
+	    if (force.readable)
+		si.readable = true;
+	    if (outbuf.used() || autoclose_time || force.writable)
+		si.writable = true;
+	    if (force.isexception)
+		si.isexception = true;
+	}
 	
 	result = s()->select_setup(si);
 	

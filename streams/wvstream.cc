@@ -380,15 +380,14 @@ char *WvStream::getline(time_t wait_msec, char separator)
 		return NULL;   // nothing else to do!
 	}
 
-	if (wait_msec >= 0)
-	{
-	    // make select not return true until more data is available
-	    if (inbuf.used())
-		queuemin(inbuf.used() + 1);
-	    
-	    if (!select(wait_msec) && isok())
-		return NULL;
-	}
+	// make select not return true until more data is available
+	if (inbuf.used())
+	    queuemin(inbuf.used() + 1);
+	
+	// note: this _always_ does the select, even if wait_msec < 0.
+	// That's good, because the fd might be nonblocking!
+	if (!select(wait_msec) && isok() && wait_msec >= 0)
+	    return NULL;
 
 	// read a few bytes
 	buf = inbuf.alloc(1024);
@@ -483,11 +482,12 @@ bool WvStream::select_setup(SelectInfo &si)
     fd = getfd();
     if (fd < 0) return false;
     
-    if (si.readable || force.readable)
+    if (si.readable || (force.readable && si.forceable))
 	FD_SET(fd, &si.read);
-    if (si.writable || outbuf.used() || autoclose_time || force.writable)
+    if (si.writable || ((outbuf.used() || autoclose_time || force.writable)
+			 && si.forceable))
 	FD_SET(fd, &si.write);
-    if (si.isexception || force.isexception)
+    if (si.isexception || (force.isexception && si.forceable))
 	FD_SET(fd, &si.except);
     
     if (si.max_fd < fd)
@@ -523,7 +523,8 @@ bool WvStream::test_set(SelectInfo &si)
 
 
 bool WvStream::select(time_t msec_timeout,
-		      bool readable, bool writable, bool isexcept)
+		      bool readable, bool writable, bool isexcept,
+		      bool forceable)
 {
     bool sure;
     int sel;
@@ -535,6 +536,7 @@ bool WvStream::select(time_t msec_timeout,
     FD_ZERO(&si.read);
     FD_ZERO(&si.write);
     FD_ZERO(&si.except);
+    si.forceable = forceable;
     si.readable = readable;
     si.writable = writable;
     si.isexception = isexcept;
@@ -565,6 +567,12 @@ bool WvStream::select(time_t msec_timeout,
 	return sure;	// timed out
     
     return isok() && test_set(si);
+}
+
+
+bool WvStream::auto_select(time_t msec_timeout)
+{
+    return select(msec_timeout, true, false, false, true);
 }
 
 
