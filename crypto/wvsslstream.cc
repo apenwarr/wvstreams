@@ -239,7 +239,9 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 		    debug("<< EOF: zero return\n");
 		
 		    // don't do this if we're returning nonzero!
-		    if (!total) noread();
+		    // (SSL has no way to do a one-way shutdown, so if SSL
+		    // detects a read problem, it's also a write problem.)
+		    if (!total) { noread(); nowrite(); }
                     break;
 
 		case SSL_ERROR_SYSCALL:
@@ -247,11 +249,16 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 		    {
 			if (result == 0)
 			{
-			    debug("<< EOF: syscall error (%s, %s) total=%s\n",
+			    debug("<< EOF: syscall error "
+				  "(%s/%s, %s/%s) total=%s\n",
+				  stop_read, stop_write,
 				  isok(), cloned && cloned->isok(), total);
 			    
 			    // don't do this if we're returning nonzero!
-			    if (!total) noread();
+			    // (SSL has no way to do a one-way shutdown, so
+			    // if SSL detects a read problem, it's also a
+			    // write problem.)
+			    if (!total) { noread(); nowrite(); }
 			}
 		    }
 		    else
@@ -476,8 +483,6 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 bool WvSSLStream::post_select(SelectInfo &si)
 {
     bool result = WvStreamClone::post_select(si);
-
-//    debug("in post_select (%s)\n", result);
 
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep

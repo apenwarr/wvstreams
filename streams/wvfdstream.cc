@@ -226,6 +226,8 @@ bool WvFdStream::pre_select(SelectInfo &si)
     else
 	result |= si.wants.readable;
     
+    // FIXME: outbuf flushing should really be in WvStream::pre_select()
+    // instead!  But it's hard to get the equivalent behaviour there.
     if (isselectable(wfd))
     {
 	if ((si.wants.writable || outbuf.used() || autoclose_time) 

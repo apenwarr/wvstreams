@@ -78,6 +78,72 @@ WVTEST_MAIN("crypto basics")
 }
 
 
+WVTEST_MAIN("sslconnect")
+{
+    WvX509Mgr x509("cn=random_stupid_dn", 1024);
+    WvIStreamList list;
+    WvSSLStream *s1, *s2;
+    sslloop(list, x509, s1, s2);
+    
+    s1->print("hello\n");
+    WvDynBuf buf;
+    WVPASSEQ(s1->read(buf, 1024), 0);
+ 
+    // make sure s1 has sent/received all the data currently in its pipe,
+    // but without giving s2 a chance to run
+    for (int i = 0; i < 50; i++)
+	s1->runonce(5);
+    
+    WVFAIL(s1->isreadable());
+    
+    for (int i = 0; i < 50; i++)
+	s2->runonce(5);
+    
+    WVFAIL(s2->isreadable());
+}
+
+
+WVTEST_MAIN("sslclose 1")
+{
+    WvX509Mgr x509("cn=random_stupid_dn", 1024);
+    WvIStreamList list;
+    WvSSLStream *s1, *s2;
+    sslloop(list, x509, s1, s2);
+ 
+    s2->print("hello\n");
+    run(list, s1, s2);
+    WVPASSEQ(s1->getline(), "hello");
+    s2->cloned->close();
+    run(list, s1, s2);
+    run(list, s1, NULL);
+    WvDynBuf buf;
+    WVPASSEQ(s1->read(buf, 1024), 0);
+    WVFAIL(s1->isok());
+}
+
+
+// like sslclose2, but shutting down SSL politely (ie. closing the sslstream
+// instead of the underlying stream).  This tests a different code path
+// in WvSSLStream.
+WVTEST_MAIN("sslclose 2")
+{
+    WvX509Mgr x509("cn=random_stupid_dn", 1024);
+    WvIStreamList list;
+    WvSSLStream *s1, *s2;
+    sslloop(list, x509, s1, s2);
+ 
+    s2->print("hello\n");
+    run(list, s1, s2);
+    WVPASSEQ(s1->getline(), "hello");
+    s2->close();
+    run(list, s1, s2);
+    run(list, s1, NULL);
+    WvDynBuf buf;
+    WVPASSEQ(s1->read(buf, 1024), 0);
+    WVFAIL(s1->isok());
+}
+
+
 // This test relies on the fact that reading a stream will never cause it
 // to go !isok() until the inbuf is actually empty.  I'm not sure if that's
 // desirable behaviour or not, but it definitely isn't the *current*
