@@ -95,9 +95,8 @@ void UniMountGen::commit()
 
 
 UniConfGen *UniMountGen::mount(const UniConfKey &key,
-    WvStringParm moniker, bool refresh)
+			       WvStringParm moniker, bool refresh)
 {
-
     UniConfGen *gen = wvcreate<UniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
@@ -108,13 +107,17 @@ UniConfGen *UniMountGen::mount(const UniConfKey &key,
 
 
 UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
-    UniConfGen *gen, bool refresh)
+				  UniConfGen *gen, bool refresh)
 {
+    if (!gen)
+	return NULL;
+    
     UniGenMount *newgen = new UniGenMount(gen, key);
     gen->setcallback(UniConfGenCallback(this,
-        &UniMountGen::gencallback), &newgen->key);
+				&UniMountGen::gencallback), &newgen->key);
 
     hold_delta();
+    delta(key, WvString());
 
     makemount(key);
 
@@ -123,6 +126,7 @@ UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 
     mounts.prepend(newgen, true);
     
+    delta(key, get(key));
     unhold_delta();
     return gen;
 }
@@ -130,10 +134,13 @@ UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 
 void UniMountGen::unmount(UniConfGen *gen, bool commit)
 {
+    if (!gen)
+	return;
+    
     MountList::Iter i(mounts);
 
-    i.rewind();
-    while (i.next() && i->gen != gen);
+    for (i.rewind(); i.next() && i->gen != gen; )
+	;
 
     if (i->gen != gen)
         return;
@@ -147,18 +154,23 @@ void UniMountGen::unmount(UniConfGen *gen, bool commit)
     UniConfKey key(i->key);
     UniConfGen *next = NULL;
 
-    // Find the first generator mounted past the one we're removing (if any).
-    // This way we can make sure that each generator still has keys leading up
-    // to it (in case they lost their mountpoint due to the unmounted generator)
+    delta(key, WvString());
+
+    // Find the first generator mounted past the one we're removing (if
+    // any). This way we can make sure that each generator still has keys
+    // leading up to it (in case they lost their mountpoint due to the
+    // unmounted generator)
     i.xunlink();
     if (i.next())
         next = i->gen;
 
-    i.rewind();
-    while (i.next() && i->gen != next)
+    for (i.rewind(); i.next() && i->gen != next; )
     {
         if (key.suborsame(i->key) && key != i->key)
+	{
             makemount(i->key);
+	    delta(i->key, get(i->key));
+	}
     } 
 
     unhold_delta();
@@ -166,7 +178,7 @@ void UniMountGen::unmount(UniConfGen *gen, bool commit)
 
 
 UniConfGen *UniMountGen::whichmount(const UniConfKey &key,
-    UniConfKey *mountpoint)
+				    UniConfKey *mountpoint)
 {
     MountList::Iter i(mounts);
 

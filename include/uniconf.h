@@ -185,12 +185,19 @@ public:
     /***** Key Handling API *****/
 
     /**
-     * Equivalent to "mv" in a standard unix filesystem. This recursively moves
-     * a given key and any subkeys to a new point. If the new point exists then
-     * the key will be left as a subkey at the new point. Otherwise, the key
-     * will also be renamed to the new point (as when using mv).
+     * Equivalent to "mv" in a standard unix filesystem. This recursively
+     * moves a given key and any subkeys to a new point. If the new point
+     * exists then the key will be left as a subkey at the new point.
+     * Otherwise, the key will also be renamed to the new point (as when
+     * using mv).
+     * 
+     * Don't try to do dumb stuff like making dst a subkey of this one,
+     * or vice versa, because we won't try to save you.
+     * 
+     * Unlike unix mv(), this is *not* currently atomic.  It's more like
+     * cp-then-rm.
      */
-    void move(UniConfKey dst); //FIXME: Currently unimplemented
+    void move(const UniConf &dst);
 
     /**
      * Removes this key and all of its children from the registry.
@@ -200,11 +207,15 @@ public:
         { set(WvString::null); }
 
     /**
-     * Equivalent to "cp -r" in a standard unix filesystem. This recursively
-     * copies a given key to a new location. Any keys that already exist at that
-     * location will not be overridden unless force is true.
+     * Equivalent to "cp -r" in a standard unix filesystem. This
+     * recursively copies a given key to a new location. Any keys that
+     * already exist at that location will not be overridden unless force
+     * is true.
+     * 
+     * Don't try to do dumb stuff like making dst a subkey of this one,
+     * or vice versa, because we won't try to save you.
      */
-    void copy(UniConfKey dst, bool force = false); //FIXME: Unimplemented
+    void copy(const UniConf &dst, bool force);
 
 
     

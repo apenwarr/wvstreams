@@ -9,7 +9,8 @@
 #include "uniconfroot.h"
 
 
-UniWatch::UniWatch(const UniConf &_cfg, UniConfCallback &_cb, bool _recurse)
+UniWatch::UniWatch(const UniConf &_cfg, const UniConfCallback &_cb,
+		   bool _recurse)
     : cfg(_cfg), cb(_cb), recurse(_recurse)
 {
     cfg.add_callback(this, cb, recurse);

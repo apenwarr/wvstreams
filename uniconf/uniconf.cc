@@ -57,19 +57,39 @@ void UniConf::set(WvStringParm value) const
 
 void UniConf::setint(int value) const
 {
-   set(WvString(value));
+    set(WvString(value));
 }
 
 
-void UniConf::move(UniConfKey dst)
+void UniConf::move(const UniConf &dst)
 {
-    //FIXME: Someone should actually make this. :)
+    dst.remove();
+    
+    // do the main key first
+    dst.set(get());
+
+    // now all the children
+    RecursiveIter i(*this);
+    for (i.rewind(); i.next(); )
+	dst[i->fullkey(*this)].set(i->get());
+    
+    remove();
 }
 
 
-void UniConf::copy(UniConfKey dst, bool force)
+void UniConf::copy(const UniConf &dst, bool force)
 {
-    //FIXME: Someone should actually make this. :)
+    // do the main key first
+    dst.set(get());
+
+    // now all the children
+    RecursiveIter i(*this);
+    for (i.rewind(); i.next(); )
+    {
+	UniConf dst2 = dst[i->fullkey(*this)];
+	if (force || dst2.get().isnull())
+	    dst2.set(i->get());
+    }
 }
 
 

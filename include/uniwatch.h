@@ -21,12 +21,15 @@ class UniWatch
     
 public:
     // standard "add_callback" version
-    UniWatch(const UniConf &_cfg, UniConfCallback &_cb, bool _recurse = true);
+    UniWatch(const UniConf &_cfg, const UniConfCallback &_cb,
+	     bool _recurse = true);
     
     // special "add_setbool" version
     UniWatch(const UniConf &_cfg, bool *b, bool _recurse = true);
     
     ~UniWatch();
+    
+    void update();
 };
 
 DeclareWvList(UniWatch);
