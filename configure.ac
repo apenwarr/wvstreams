@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.41 2003/10/31 21:01:25 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.42 2003/11/03 19:46:06 pphaneuf Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -98,7 +98,6 @@ AC_PROG_CPP
 AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
-AC_CHECK_PROG(VALGRIND, valgrind, yes)
 
 # Setting the default language to C++ means that CXX and CXXCPP will be 
 # used for compile tests.
@@ -251,6 +250,10 @@ if test "$with_speex" != "no"; then
     AC_CHECK_HEADERS(speex.h speex_header.h,, [with_speex=no])
     AC_CHECK_LIB(speex, speex_encoder_init,, [with_speex=no])
 fi
+
+# valgrind
+AC_CHECK_PROG(VALGRIND, valgrind, yes)
+AC_CHECK_HEADERS(valgrind/memcheck.h)
 
 # vorbis
 if test "$with_vorbis" != "no"; then
