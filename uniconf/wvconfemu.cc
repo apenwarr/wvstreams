@@ -125,10 +125,13 @@ const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 
 void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 {
-    if (!!value)
-	uniconf[entry].set(value);
-    else
-	uniconf[entry].set(WvString::null);
+    if (!!entry)
+    {
+        if (!!value)
+            uniconf[entry].set(value);
+        else
+            uniconf[entry].set(WvString::null);
+    }
 }
 
 
@@ -432,24 +435,28 @@ void WvConfEmu::setraw(WvString wvconfstr, const char *&_value,
 
 void WvConfEmu::setint(WvStringParm section, WvStringParm entry, int value)
 {
-    uniconf[section][entry].setint(value);
+    if (!!entry)
+        uniconf[section][entry].setint(value);
 }
 
 
 void WvConfEmu::set(WvStringParm section, WvStringParm entry,
 		    const char *value)
 {
-    if (value && value[0] != 0)
-	uniconf[section][entry].set(value);
-    else
-	uniconf[section][entry].set(WvString::null);
+    if (!!entry)
+    {
+        if (value && value[0] != 0)
+            uniconf[section][entry].set(value);
+        else
+            uniconf[section][entry].set(WvString::null);
+    }
 }
 
 
 void WvConfEmu::maybesetint(WvStringParm section, WvStringParm entry,
 			    int value)
 {
-    if (!get(section, entry, NULL))
+    if (!!entry && !get(section, entry, NULL))
 	setint(section, entry, value);
 }
 
@@ -457,7 +464,7 @@ void WvConfEmu::maybesetint(WvStringParm section, WvStringParm entry,
 void WvConfEmu::maybeset(WvStringParm section, WvStringParm entry,
 			 const char *value)
 {
-    if (get(section, entry, 0) == 0)
+    if (!!entry && get(section, entry, 0) == 0)
 	set(section, entry, value);
 }
 
