@@ -271,7 +271,7 @@ size_t WvStream::write(WvBuf &inbuf, size_t count)
 
 size_t WvStream::read(void *buf, size_t count)
 {
-    size_t bufu = inbuf.used(), i;
+    size_t bufu, i;
     unsigned char *newbuf;
 
     bufu = inbuf.used();
