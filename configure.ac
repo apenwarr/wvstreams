@@ -69,7 +69,7 @@ AC_ARG_ENABLE(resolver-fork,
               AC_HELP_STRING([--disable-resolver-fork],
                              [WvResolver background name resolution (debugging)]))
 
-AC_ARG_ENABLE(delete-detector
+AC_ARG_ENABLE(delete-detector,
               AC_HELP_STRING([--enable-delete-detector],
                              [Delete detector (reference counting)]))
 
