@@ -19,13 +19,14 @@ SONAMEOPT=-Wl,-soname,$(SONAME)
 SOFLAGS=-shared $(if $(SONAME),$(SONAMEOPT))
 
 DEPFILE = $(notdir $(@:.o=.d))
+CPPFLAGS += $(patsubst %,-I%,$(XPATH))
 
 %: %.o
 	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %.o: %.cc
-	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
-	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
+	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(DEPEND_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
 
 %.o: %.c
