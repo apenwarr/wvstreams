@@ -112,6 +112,9 @@ public:
      */
     const T *get(size_t count)
     {
+	if (count > used())
+	    return NULL;
+
         return static_cast<const T*>(
             store->get(count * sizeof(Elem)));
     }
