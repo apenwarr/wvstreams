@@ -4,7 +4,7 @@
  *
  * Handles access control lists (ACLs).
  */
-
+#include "wvautoconf.h"
 #include "wvacl.h"
 #include "wvstringlist.h"
 #include "wvlog.h"
@@ -17,8 +17,8 @@
 #include <acl/libacl.h>
 #endif
 
-void get_simple_acl_permissions(WvStringParm filename, WvSimpleAclEntryList
-				&acl_entries)
+void get_simple_acl_permissions(WvStringParm filename,
+				WvSimpleAclEntryList &acl_entries)
 {
     struct stat st;
     if (stat(filename, &st) != 0)

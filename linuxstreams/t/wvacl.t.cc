@@ -17,6 +17,12 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
     
     WvSimpleAclEntryList acls;
     get_simple_acl_permissions("/tmp/wvacltest", acls);
+    
+    if (!acls.count())
+    {
+	WVPASS("No kernel ACL support!");
+	return;
+    }
 
     bool u_chk = false, g_chk = false, o_chk = false;
     WvSimpleAclEntryList::Iter i(acls);
@@ -54,6 +60,7 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 	    break;
 	}
     }
+    
     WVPASS(u_chk);
     WVPASS(g_chk);
     WVPASS(o_chk);
