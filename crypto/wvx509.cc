@@ -5,6 +5,7 @@
  * X.509 certificate management classes.
  */ 
 #include "wvx509.h"
+#include "wvrsa.h"
 #include "wvsslhacks.h"
 #include "wvdiriter.h"
 #include "wvcrypto.h"
@@ -15,6 +16,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 #include <openssl/sha.h>
 #include <openssl/pkcs12.h>
 
@@ -146,6 +148,29 @@ WvX509Mgr::~WvX509Mgr()
     wvssl_free();
 }
 
+
+bool WvX509Mgr::bind_ssl(SSL_CTX *ctx)
+{
+    if (SSL_CTX_use_certificate(ctx, cert) <= 0)
+    {
+	return false;
+    }
+    debug("Certificate activated.\n");
+    
+    if (SSL_CTX_use_RSAPrivateKey(ctx, rsa->rsa) <= 0)
+    {
+	return false;
+    }
+    debug("RSA private key activated.\n");
+    return true;
+}
+
+const WvRSAKey &WvX509Mgr::get_rsa()
+{
+    assert(rsa);
+
+    return *rsa;
+}
 
 // The people who designed this garbage should be shot!
 // Support old versions of openssl...
@@ -661,12 +686,6 @@ bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
 	    return false;
     }    
     return true;
-}
-
-
-bool WvX509Mgr::isinCRL()
-{
-    return false;
 }
 
 

@@ -1,4 +1,5 @@
 #include "wvx509.h"
+#include "wvrsa.h"
 #include "wvlog.h"
 #include "strutils.h"
 #include "wvcrash.h"
@@ -34,7 +35,7 @@ void test(WvStringParm _dN)
 	wvcon->print(x509cert.encode(WvX509Mgr::RsaPEM));
 	wvcon->print(x509cert.encode(WvX509Mgr::RsaRaw));
 	x509cert.write_p12("/tmp/test.p12");
-	wvcon->print("Private Key: %s\n", x509cert.rsa->private_str());
+	wvcon->print("Private Key: %s\n", x509cert.get_rsa().private_str());
 	wvcon->print("Certificate: %s\n", x509cert.hexify());
     }
     else

@@ -148,7 +148,7 @@ WVTEST_MAIN("X509 Basic sanity tests")
     }
     {
 	WvX509Mgr t509(strcert, "");
-	WVFAIL(t509.rsa->isok());
+	WVFAIL(t509.get_rsa().isok());
     }
     
     {

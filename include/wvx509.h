@@ -7,13 +7,16 @@
 #ifndef __WVX509_H
 #define __WVX509_H
 
-#include "wvrsa.h"
 #include "wvlog.h"
 #include "wverror.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
 typedef struct x509_st X509;
+struct ssl_ctx_st;
+typedef struct ssl_ctx_st SSL_CTX;
+
+class WvRSAKey;
 
 // workaround for the fact that OpenSSL initialization stuff must be called
 // only once.
@@ -85,22 +88,27 @@ public:
     WvX509Mgr(WvStringParm _dname, int bits);
 
 private:
-    /** Placeholder: this doesn't exist yet. */
+    /** 
+     * Placeholder for Copy Constructor: this doesn't exist yet, but it keeps
+     * us out of trouble :) 
+     */
     WvX509Mgr(const WvX509Mgr &mgr);
 
 public:
     /** Destructor */
     virtual ~WvX509Mgr();
-
-    /** X.509v3 Certificate - this is why this class exists */
-    X509     *cert;
-
+    
     /**
-     * The Public and Private RSA keypair associated with this certificate
-     * Make sure that you save this somewhere!!! If you don't, then you won't
-     * really be able to use the certificate for anything...
+     * Avoid a lot of ugliness by having it so that we are binding to the SSL
+     * context, and not the other way around, since that would make ownership
+     * of the cert and rsa keys ambiguous.
      */
-    WvRSAKey *rsa;
+    bool bind_ssl(SSL_CTX *ctx);
+ 
+    /**
+     * Accessor for the RSA Keys
+     */
+    const WvRSAKey &get_rsa();
     
     /**
      * Given the Distinguished Name dname and an already generated keypair in 
@@ -183,15 +191,6 @@ public:
     bool verify(WvBuf &original, WvStringParm signature);
     bool verify(WvStringParm original, WvStringParm signature);
     
-    /**
-     * Check and see if the certificate in cert has been revoked... currently
-     * relies on the CRL Distribution Point X509v3 extension...
-     * returns true if it has expired
-     * 
-     * NOT IMPLEMENTED
-     */
-    bool isinCRL();
-
     /** Return the information requested by mode as a WvString. */
     WvString encode(const DumpMode mode);
 
@@ -262,6 +261,17 @@ public:
     virtual int geterr() const;
 
 private:
+    /** X.509v3 Certificate - this is why this class exists */
+    X509     *cert;
+
+    /**
+     * The Public and Private RSA keypair associated with this certificate
+     * Make sure that you save this somewhere!!! If you don't, then you won't
+     * really be able to use the certificate for anything...
+     */
+    WvRSAKey *rsa;
+
+    
     WvLog debug;
 
    /** 

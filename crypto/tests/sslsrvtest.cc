@@ -2,6 +2,7 @@
 #include "wvtcp.h"
 #include "wvsslstream.h"
 #include "wvx509.h"
+#include "wvrsa.h"
 #include "wvstreamlist.h"
 #include "strutils.h"
 #include "wvcrash.h"

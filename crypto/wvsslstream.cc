@@ -92,19 +92,12 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
 	// and disable the insecure SSLv2 protocol
         SSL_CTX_set_options(ctx, SSL_OP_ALL|SSL_OP_NO_SSLv2);
 
-	if (SSL_CTX_use_certificate(ctx, x509->cert) <= 0)
+	if (!x509->bind_ssl(ctx))
 	{
-	    seterr("Error loading certificate!");
+	    seterr("Unable to bind Certificate to SSL Context!");
 	    return;
 	}
-    	debug("Certificate activated.\n");
-
-	if (SSL_CTX_use_RSAPrivateKey(ctx, x509->rsa->rsa) <= 0)
-	{
-	    seterr("Error loading RSA private key!");
-	    return;
-	}
-	debug("RSA private key activated.\n");
+	
 	debug("Server mode ready.\n");
     }
     else
