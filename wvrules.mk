@@ -43,7 +43,8 @@ ifneq ("$(with_xplc)", "no")
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
-LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBXPLC)
+LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
+LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)

@@ -1,9 +1,21 @@
 #include "wvtest.h"
+#include "wvfile.h"
+#include "wvstringlist.h"
 #include "uniconfroot.h"
 #include "unilistgen.h"
 #include "unitempgen.h"
-#include "wvstringlist.h"
-#include <stdio.h>
+
+WVTEST_MAIN("Testing refresh()")
+{
+    ::unlink("tmp.ini");
+    WvFile file("tmp.ini", O_WRONLY|O_TRUNC|O_CREAT);
+    file.write("[foo]\n"
+               "a = b\n");
+    WVPASS(file.isok());
+    
+    UniConfRoot uni("list:ini:/tmp/foobee.ini ini:tmp.ini");
+    WVPASSEQ(uni["foo"]["a"].getme(), "b");
+}
 
 WVTEST_MAIN("Testing for use with weaver")
 {

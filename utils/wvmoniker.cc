@@ -34,7 +34,7 @@ static unsigned WvHash(const UUID &_uuid)
 }
 
 
-DeclareWvDict(WvMonikerRegistry, UUID, reg_iid);
+DeclareWvScatterDict(WvMonikerRegistry, UUID, reg_iid);
 static WvMonikerRegistryDict *regs;
   
 

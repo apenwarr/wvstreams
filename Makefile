@@ -138,7 +138,10 @@ test: runconfigure all tests wvtestmain
 
 runtests:
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
-	cd uniconf/tests && ./unitest.sh
+ifeq ("$(TESTNAME)", "unitest")
+	cd uniconf/tests && DAEMON=0 ./unitest.sh
+	cd uniconf/tests && DAEMON=1 ./unitest.sh
+endif
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

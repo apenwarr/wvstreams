@@ -71,7 +71,7 @@ bool WvHTTPStream::pre_select(SelectInfo &si)
 	    tcp = new WvTCPConn(url.getaddr());
 	    if (url.getproto() == "https")
 	    {
-		ssl = new WvSSLStream(tcp, NULL, true);
+		ssl = new WvSSLStream(tcp, NULL, 0);
 		cloned = conn = ssl;
 	    }
 	    else
