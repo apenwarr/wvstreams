@@ -194,8 +194,8 @@ public:
     virtual ~WvHashTable()
         { shutdown(); deletev sl(); }
 
-    void add(T *data, bool auto_free)
-        { sl()[hash(data) % numslots].append(data, auto_free); }
+    void add(T *data, bool autofree)
+        { sl()[hash(data) % numslots].append(data, autofree); }
 
     WvLink *getlink(const K &key)
         { return prevlink(wvslots, &key, WvHash(key))->next; }

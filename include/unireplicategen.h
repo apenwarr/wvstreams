@@ -26,10 +26,10 @@ protected:
 
 public:
     UniReplicateGen();
-    UniReplicateGen(const IUniConfGenList &_gens, bool auto_free = true);
+    UniReplicateGen(const IUniConfGenList &_gens, bool autofree = true);
     
-    void prepend(IUniConfGen *gen, bool auto_free = true);
-    void append(IUniConfGen *gen, bool auto_free = true);
+    void prepend(IUniConfGen *gen, bool autofree = true);
+    void append(IUniConfGen *gen, bool autofree = true);
 
     /***** Overridden members *****/
     virtual bool isok();
