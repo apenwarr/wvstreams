@@ -169,8 +169,7 @@ public:
      * strings, then the string returned here will have the same
      * case information as those strings but the arrangement of
      * slashes may differ.  That is, the identity
-     * UniConfKey(string).printable() == key 
-     * does not hold.
+     * UniConfKey(string).printable() == string does not hold.
      * 
      * Returns: the path as a string
      */

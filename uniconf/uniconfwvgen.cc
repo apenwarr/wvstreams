@@ -6,13 +6,20 @@
  */
 
 #include "uniwvconfgen.h"
-// #include "wvlog.h"
-// WvLog log("Hmm?");
+
+/***** UniWvConfGen *****/
+
+UniWvConfGen::UniWvConfGen(WvConf &_cfg)
+    : cfg(cfg)
+{
+}
+
 
 WvString UniWvConfGen::get(const UniConfKey &key)
 {
     return cfg.get(key.first(), key.last(key.numsegments() - 1));
 }
+
 
 bool UniWvConfGen::set(const UniConfKey &key, WvStringParm value)
 {
@@ -21,6 +28,7 @@ bool UniWvConfGen::set(const UniConfKey &key, WvStringParm value)
         return true;
     return false;
 }
+
 
 bool UniWvConfGen::zap(const UniConfKey &key)
 {
@@ -32,6 +40,7 @@ bool UniWvConfGen::zap(const UniConfKey &key)
     return true;
 }
 
+
 bool UniWvConfGen::haschildren(const UniConfKey &key)
 {
     WvConfigSection *sect = cfg[key];
@@ -40,40 +49,40 @@ bool UniWvConfGen::haschildren(const UniConfKey &key)
     return false;
 }
 
+
 UniWvConfGen::Iter *UniWvConfGen::iterator(const UniConfKey &key)
 {
     WvConfigSection *sect = cfg[key];
 
     if (sect)
-        return new WvConfIter(new WvConfigSection::Iter(*sect));
+        return new WvConfIter(sect);
     else
         return new UniConfGen::NullIter();
 }
 
 
-// WvConfIter
 
-UniWvConfGen::WvConfIter::~WvConfIter()
+/***** UniWvConfGen::WvConfIter *****/
+
+UniWvConfGen::WvConfIter::WvConfIter(WvConfigSection *sect)
+    : i(*sect)
 {
-    delete i;
 }
 
-UniWvConfGen::Iter *UniWvConfGen::WvConfIter::clone() const
-{
-    return new WvConfIter(i);
-}
 
 void UniWvConfGen::WvConfIter::rewind()
 {
-    i->rewind();
+    i.rewind();
 }
+
 
 bool UniWvConfGen::WvConfIter::next()
 {
-    return i->next();
+    return i.next();
 }
+
 
 UniConfKey UniWvConfGen::WvConfIter::key() const
 {
-    return (*i)->name;
+    return i->name;
 }

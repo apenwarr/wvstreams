@@ -166,22 +166,8 @@ UniTempGen::NodeIter::NodeIter(UniTempGen *gen,
 }
 
 
-UniTempGen::NodeIter::NodeIter(
-    const UniTempGen::NodeIter &other) :
-    UniConfAbstractIter(other),
-    xgen(other.xgen), xit(other.xit)
-{
-}
-
-
 UniTempGen::NodeIter::~NodeIter()
 {
-}
-
-
-UniTempGen::NodeIter *UniTempGen::NodeIter::clone() const
-{
-    return new UniTempGen::NodeIter(*this);
 }
 
 

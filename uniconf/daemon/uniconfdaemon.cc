@@ -6,7 +6,6 @@
  */
 #include "uniconfdaemon.h"
 #include "uniconfdaemonconn.h"
-#include "uniconfiter.h"
 #include "wvunixsocket.h"
 #include "wvtcp.h"
 

@@ -9,7 +9,6 @@
 
 #include "unilistgen.h"
 #include "wvmoniker.h"
-#include "uniconfiter.h"
 #include "wvtclstring.h"
 
 

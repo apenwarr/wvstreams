@@ -9,14 +9,27 @@
  
 #include "uniconfdefs.h"
 #include "uniconfkey.h"
-#include "uniconfiter.h"
 #include "wvcallback.h"
 #include "wvxplc.h"
 #include "wvlinklist.h"
 
-class WvStreamList;
 class UniConfGen;
 
+/**
+ * The callback type for signalling key changes from a UniConfGen.
+ * 
+ * Generators that wrap other generators should catch notifications
+ * and reissue them using themselves as the "gen" parameter and their
+ * userdata as the "userdata parameter".  This can be done effectively by
+ * invoking the delta() function on receipt of a notification from a
+ * wrapped generator.  See UniFilterGen.
+ * 
+ * Parameters: gen, key, userdata
+ * 
+ * gen - the externally visible generator whose key has changed
+ * key - the key that has changed
+ * userdata - the userdata supplied during setcallback
+ */
 DeclareWvCallback(3, void, UniConfGenCallback, UniConfGen *,
     const UniConfKey &, void *);
 
@@ -53,12 +66,16 @@ public:
     virtual ~UniConfGen();
     
     /**
+     * Sets the callback for change notification.
+     * Must not be reimplemented by subclasses.
+     */
+    void setcallback(const UniConfGenCallback &callback, void *userdata);
+    
+    /**
      * Commits information about a key recursively.
      * 'depth' is the recursion depth.  Returns true on success.
      *
      * The default implementation always just returns true.
-     * 
-     * @see UniConfDepth::Type
      */
     virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
     
@@ -67,8 +84,6 @@ public:
      * May discard uncommitted data.
      *
      * The default implementation always returns true.
-     *
-     * @see UniConfDepth::Type
      */
     virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
 
@@ -125,35 +140,19 @@ public:
      */
     virtual bool isok();
 
-    /** Sets the callback for change notification. */
-    void setcallback(const UniConfGenCallback &callback, void *userdata);
-    
-    /** Base type for all UniConfGen iterators. */
-    typedef UniConfAbstractIter Iter;
+    /** The abstract iterator type (see below) */
+    class Iter;
+
+    /** A concrete null iterator type (see below) */
+    class NullIter;
 
     /**
-     * An iterator that's always empty.  This is handy if you don't have
-     * anything good to iterate over.
+     * Returns an iterator over the children of the specified key.
+     * Must not return NULL; consider returning a NullIter instead.
+     *
+     * The caller takes ownership of the returned iterator and is responsible
+     * for deleting it when finished.
      */
-    class NullIter : public Iter
-    {
-    public:
-        NullIter()
-            { }
-        NullIter(const NullIter &other) : Iter(other)
-            { }
-    
-        virtual Iter *clone() const
-            { return new NullIter(*this); }
-        virtual void rewind()
-            { }
-        virtual bool next()
-            { return false; }
-        virtual UniConfKey key() const
-            { return UniConfKey::EMPTY; }
-    };
-
-    /** Returns an iterator over the children of the specified key. */
     virtual Iter *iterator(const UniConfKey &key) = 0;
 };
 
@@ -163,44 +162,55 @@ DeclareWvList(UniConfGen);
 
 
 /**
- * A UniConfGen that delegates all requests to an inner generator.  If you
- * derive from this, you can selectively override particular behaviours
- * of a sub-generator.
+ * An abstract iterator over keys and values in a generator.
+ *
+ * Unlike other WvStreams iterators, this one declares virtual methods so
+ * that UniConfGen implementations can supply the right behaviour
+ * through a common interface that does not depend on static typing.
+ *
+ * The precise traversal sequence is defined by the iterator implementation.
+ *
+ * The iterator need not support concurrent modifications of the underlying
+ * data structures.
+ * 
+ * TODO: Consider changing this rule depending on observed usage patterns.
  */
-class UniFilterGen : public UniConfGen
+class UniConfGen::Iter
 {
-    UniConfGen *xinner;
-
-protected:
-    UniFilterGen(UniConfGen *inner);
-    virtual ~UniFilterGen();
-
-    /** Rebinds the inner generator. */
-    void setinner(UniConfGen *inner);
-
 public:
-    UniConfGen *inner() const
-        { return xinner; }
+    /** Destroys the iterator. */
+    virtual ~Iter() { }
 
-    /***** Overridden methods *****/
-
-    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
-    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
-    virtual WvString get(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
-    virtual bool exists(const UniConfKey &key);
-    virtual bool haschildren(const UniConfKey &key);
-    virtual bool isok();
-    virtual Iter *iterator(const UniConfKey &key);
-
-protected:
     /**
-     * Called by inner generator when a key changes.
-     * The default implementation calls delta(key).
+     * Rewinds the iterator.
+     * Must be called prior to the first invocation of next().
      */
-    virtual void gencallback(UniConfGen *gen, const UniConfKey &key,
-        void *userdata);
+    virtual void rewind() = 0;
+
+    /**
+     * Seeks to the next element in the sequence.
+     * Returns true if that element exists.
+     * Must be called prior to the first invocation of key().
+     */
+    virtual bool next() = 0;
+
+    /** Returns the current key. */
+    virtual UniConfKey key() const = 0;
+};
+
+
+/**
+ * An iterator that's always empty.
+ * This is handy if you don't have anything good to iterate over.
+ */
+class UniConfGen::NullIter : public UniConfGen::Iter
+{
+public:
+    /***** Overridden members *****/
+    
+    virtual void rewind() { }
+    virtual bool next() { return false; }
+    virtual UniConfKey key() const { return UniConfKey::EMPTY; }
 };
 
 #endif // UNICONFGEN_H

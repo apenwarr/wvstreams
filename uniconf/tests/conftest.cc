@@ -98,15 +98,9 @@ protected:
 public:
     NodeIter(UniConfValueTree &node) : xit(node)
         { }
-    NodeIter(const NodeIter &other) : xit(other.xit)
-        { }
-    virtual ~NodeIter()
-        { }
 
     /***** Overridden methods *****/
 
-    virtual NodeIter *clone() const
-        { return new NodeIter(*this); }
     virtual void rewind()
         { xit.rewind(); }
     virtual bool next()

@@ -369,7 +369,7 @@ public:
  */
 class UniConf::Iter : public UniConf::IterBase
 {
-    UniConfAbstractIter *it;
+    UniConfGen::Iter *it;
     
 public:
     /** Creates an iterator over the direct children of a branch. */

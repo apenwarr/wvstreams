@@ -7,10 +7,10 @@
  * Usable with the moniker default:
  */
 
-#ifndef __UNICONFDEFGEN_H
-#define __UNICONFDEFGEN_H
+#ifndef __UNIDEFGEN_H
+#define __UNIDEFGEN_H
 
-#include "uniconfgen.h"
+#include "unifiltergen.h"
 
 /*
  * The defaults are stored and accessed by using a * in the keyname. The *
@@ -45,4 +45,4 @@ public:
     virtual WvString get(const UniConfKey &key);
 };
 
-#endif // __UNICONFDEFGEN_H
+#endif // __UNIDEFGEN_H

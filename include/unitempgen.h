@@ -4,14 +4,18 @@
  *
  * A UniConf generator that stores keys in memory.
  */
-#ifndef __UNICONFTEMP_H
-#define __UNICONFTEMP_H
+#ifndef __UNITEMPGEN_H
+#define __UNITEMPGEN_H
 
 #include "uniconfgen.h"
 #include "uniconftree.h"
-#include "uniconfiter.h"
 
-/** A UniConf generator that stores keys in memory. */
+/**
+ * A UniConf generator that stores keys in memory.
+ * 
+ * Maintains a dirtyness indicator that is set whenever the contents
+ * are changed.  Also dispatches notifications on such changes.
+ */
 class UniTempGen : public UniConfGen
 {
 protected:
@@ -45,16 +49,14 @@ protected:
 
 public:
     NodeIter(UniTempGen *gen, const UniConfValueTree::Iter &it);
-    NodeIter(const NodeIter &other);
     virtual ~NodeIter();
 
     /***** Overridden methods *****/
 
-    virtual NodeIter *clone() const;
     virtual void rewind();
     virtual bool next();
     virtual UniConfKey key() const;
 };
 
 
-#endif // __UNICONFTEMP_H
+#endif // __UNITEMPGEN_H

@@ -6,7 +6,6 @@
  */
 #include "uniconf.h"
 #include "uniinigen.h"
-#include "uniconfiter.h"
 #include <wvlog.h>
 #include <wvlogrcv.h>
 #include <assert.h>

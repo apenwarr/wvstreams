@@ -51,6 +51,10 @@ bool UniMountTreeGen::set(const UniConfKey &key, WvStringParm value)
     UniConfGen *provider = whichmount(key, &mountpoint);
     if (provider)
         return provider->set(mountpoint, value);
+
+    // FIXME: if we delete a key, do we need to recurse over generators
+    //        at descendent mount points to set("/", NULL) them?
+    //        or do we allow them to shadow the deleted key?
     return false;
 }
 
@@ -65,8 +69,8 @@ bool UniMountTreeGen::zap(const UniConfKey &key)
         if (!gen->zap(it.tail()))
             success = false;
     }
-    // FIXME: need to recurse over generators of descendent keys
-    //        to zap all of their contents also
+    // FIXME: need to recurse over generators at descendent mount points
+    //        to set("/", NULL) them, same problem as with set() above
     return success;
 }
 
@@ -275,7 +279,7 @@ bool UniMountTreeGen::ismountpoint(const UniConfKey &key)
 
 UniMountTreeGen::Iter *UniMountTreeGen::iterator(const UniConfKey &key)
 {
-    return new Iter(*this, key);
+    return new KeyIter(*this, key);
 }
 
 
@@ -298,16 +302,17 @@ void UniMountTreeGen::gencallback(UniConfGen *gen,
 }
 
 
-/***** UniMountTreeGen::Iter *****/
 
-UniMountTreeGen::Iter::Iter(UniMountTreeGen &root, const UniConfKey &key) 
+/***** UniMountTreeGen::KeyIter *****/
+
+UniMountTreeGen::KeyIter::KeyIter(UniMountTreeGen &root, const UniConfKey &key) 
     : xroot(&root), xkey(key), genit(*root.mounts, key),
         hack(71), hackit(hack)
 {
 }
 
 
-void UniMountTreeGen::Iter::rewind()
+void UniMountTreeGen::KeyIter::rewind()
 {
     hack.zap();
 
@@ -327,7 +332,7 @@ void UniMountTreeGen::Iter::rewind()
     for (genit.rewind(); genit.next(); )
     {
         UniConfGen *gen = genit.ptr();
-        UniConfAbstractIter *keyit = gen->iterator(genit.tail());
+        UniConfGen::Iter *keyit = gen->iterator(genit.tail());
         for (keyit->rewind(); keyit->next(); )
             hack.add(new WvString(keyit->key()), true);
         delete keyit;
@@ -337,13 +342,13 @@ void UniMountTreeGen::Iter::rewind()
 }
 
 
-bool UniMountTreeGen::Iter::next()
+bool UniMountTreeGen::KeyIter::next()
 {
     return hackit.next();
 }
 
 
-UniConfKey UniMountTreeGen::Iter::key() const
+UniConfKey UniMountTreeGen::KeyIter::key() const
 {
     return UniConfKey(hackit());
 }

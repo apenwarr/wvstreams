@@ -4,8 +4,8 @@
  * 
  * Defines a UniConfGen that manages a tree of UniConfGen instances.
  */
-#ifndef __UNICONFMOUNTTREE_H
-#define __UNICONFMOUNTTREE_H
+#ifndef __UNIMOUNTTREEGEN_H
+#define __UNIMOUNTTREEGEN_H
 
 #include "uniconfgen.h"
 #include "uniconftree.h"
@@ -123,6 +123,10 @@ class UniMountTreeGen : public UniConfGen
     /** undefined. */
     UniMountTreeGen(const UniMountTreeGen &other);
 
+protected:
+    class KeyIter;
+    friend class KeyIter;
+
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
     UniMountTreeGen();
@@ -178,24 +182,6 @@ public:
     
     /***** Overridden members *****/
     
-    friend class Iter : public UniConfAbstractIter
-    {
-        UniMountTreeGen *xroot;
-        UniConfKey xkey;
-
-        UniMountTree::GenIter genit;
-        WvStringTable hack; // FIXME: ugly hack
-        WvStringTable::Iter hackit;
-
-    public:
-        Iter(UniMountTreeGen &root, const UniConfKey &key);
-
-        virtual void rewind();
-        virtual bool next();
-        
-        virtual UniConfKey key() const;
-    };
-    
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual WvString get(const UniConfKey &key);
@@ -231,4 +217,27 @@ private:
     void gencallback(UniConfGen *gen, const UniConfKey &key, void *userdata);
 };
 
-#endif //__UNICONFMOUNTTREE_H
+
+/**
+ * An iterator over the keys in a tree of mounted generators.
+ */
+class UniMountTreeGen::KeyIter : public UniConfGen::Iter
+{
+    UniMountTreeGen *xroot;
+    UniConfKey xkey;
+
+    UniMountTree::GenIter genit;
+    WvStringTable hack; // FIXME: ugly hack
+    WvStringTable::Iter hackit;
+
+public:
+    KeyIter(UniMountTreeGen &root, const UniConfKey &key);
+
+    /***** Overridden members *****/
+    
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
+};
+
+#endif //__UNIMOUNTTREEGEN_H
