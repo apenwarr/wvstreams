@@ -130,9 +130,10 @@ void UniHashTreeBase::unlink(UniHashTreeBase *node)
 
     xchildren->remove(node);
     if (xchildren->count() == 0)
+    {
         delete xchildren;
-
-    xchildren = NULL;
+	xchildren = NULL;
+    }
 }
 
 
