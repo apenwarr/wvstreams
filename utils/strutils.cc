@@ -565,6 +565,53 @@ WvString sizektoa(unsigned int kbytes)
     return _sizetoa(kbytes, 2);
 }
 
+WvString secondstoa(unsigned int total_seconds)
+{
+    WvString result("");
+
+    int days = total_seconds / (3600*24);
+    total_seconds %= (3600*24);
+    int hours = total_seconds / 3600;
+    total_seconds %= 3600;
+    int mins = total_seconds / 60;
+    int secs = total_seconds % 60; 
+
+    int num_elements = (days > 0) + (hours > 0) + (mins > 0);
+
+    if (days > 0)
+    {
+        result.append(days);
+        result.append(days > 1 ? " days" : " day");
+        num_elements--;
+        if (num_elements > 1)
+            result.append(", ");
+        else if (num_elements == 1)
+            result.append(" and ");
+    }
+    if (hours > 0)
+    {
+        result.append(hours);
+        result.append(hours > 1 ? " hours" : " hour");
+        num_elements--;
+        if (num_elements > 1)
+            result.append(", ");
+        else if (num_elements == 1)
+            result.append(" and ");
+    }
+    if (mins > 0)
+    {
+        result.append(mins);
+        result.append(mins > 1 ? " minutes" : " minute");
+    }
+    if (days == 0 && hours == 0 && mins == 0)
+    {
+        result.append(secs);
+        result.append(secs > 1 ? " seconds" : " second");
+    }
+
+    return result;
+}
+
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b)
 {
     WvDynBuf buf;
