@@ -564,6 +564,8 @@ bool WvStream::_select(time_t msec_timeout,
     SelectInfo si;
     bool sure = _build_selectinfo(si, msec_timeout,
         readable, writable, isexcept, forceable);
+    
+    if (!isok()) return false;
 
     int sel = _do_select(si);
     if (sel > 0)
