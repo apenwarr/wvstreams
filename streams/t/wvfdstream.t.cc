@@ -90,17 +90,17 @@ WVTEST_MAIN("open and close with null FDs")
 WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 {
     // create temporary and empty file for testing
-    printf("Trying to open /tmp/wvfdstream.t to write\n");
-    int file1 = open("/tmp/wvfdstream.t", O_CREAT | O_TRUNC | O_WRONLY, 0666); 
+    printf("Trying to open tmp-test/wvfdstream.t to write\n");
+    int file1 = open("tmp-test/wvfdstream.t", O_CREAT | O_TRUNC | O_WRONLY, 0666); 
     if (!WVPASS(file1 > 2))
     {
-        printf("Are you sure we can write to /tmp/wvfdstream.t?\n");
+        printf("Are you sure we can write to tmp-test/wvfdstream.t?\n");
     }
-    printf("Trying to open /tmp/wvfdstream.t to read\n");
-    int file2 = open("/tmp/wvfdstream.t", O_CREAT | O_TRUNC | O_RDONLY, 0666); 
+    printf("Trying to open tmp-test/wvfdstream.t to read\n");
+    int file2 = open("tmp-test/wvfdstream.t", O_CREAT | O_TRUNC | O_RDONLY, 0666); 
     if (!WVPASS(file2 > 2))
     {
-        printf("Are you sure we can read from /tmp/wvfdstream.t?\n");
+        printf("Are you sure we can read from tmp-test/wvfdstream.t?\n");
     }
     
     WvFDStream writestream(-1, file1);
@@ -137,10 +137,10 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
 WVTEST_MAIN("outbuf_limit")
 {
     int fd = open("/dev/null", O_WRONLY);
-    printf("Trying to open /tmp/wvfdstream.t to read/write\n");
+    printf("Trying to open tmp-test/wvfdstream.t to read/write\n");
     if(!WVPASS(fd > 2))
     {
-        printf("Are you sure we can write to /tmp/wvfdstream.t?\n");
+        printf("Are you sure we can write to tmp-test/wvfdstream.t?\n");
     }
     WvFDStream fdstream1(dup(0), fd);
     
