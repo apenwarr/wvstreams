@@ -126,6 +126,3 @@ RELEASE?=$(PACKAGE_VERSION)
 
 include $(wildcard */vars.mk */*/vars.mk) /dev/null
 
-.PHONY: uniconf/daemon/uniconfdaemon
-uniconf/daemon/uniconfdaemon:
-	$(MAKE) -C uniconf/daemon uniconfdaemon
