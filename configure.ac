@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.26 2003/04/26 09:23:01 ilguiz Exp $)
+AC_REVISION($Id: configure.ac,v 1.27 2003/04/28 16:15:25 ilguiz Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -149,7 +149,7 @@ AC_ARG_WITH(gtk,
 
 AC_ARG_WITH(glib,
             AC_HELP_STRING([--with-glib],
-                           [Glib]),
+                           [Glib system include directory]),
 	    [],
 	    [with_glib="no"])
 
@@ -177,86 +177,6 @@ AC_PROG_LN_S
 # Setting the default language to C++ means that CXX and CXXCPP will be 
 # used for compile tests.
 AC_LANG(C++)
-
-# xplc
-case "${with_xplc}" in
-  ("yes" | "")
-    with_xplc="${WVPACKAGES}/xplc"
-    ;;
-esac
-
-if test "$with_xplc" != "no" ; then
-  LDFLAGS="$LDFLAGS -L${with_xplc}"
-  CPPFLAGS="$CPPFLAGS -I${with_xplc}/include"
-fi
-
-# Qt 
-# FIXME: should be replaced with a check for a Qt function not main()
-if test "${with_qt}" != "no" ; then
-  AC_CHECK_LIB(qt-mt, main, 
-    [QTLIB="-lqt-mt"], 
-    [
-      AC_CHECK_LIB(qt, main, 
-	[QTLIB="-lqt"], 
-	[with_qt="no"])
-    ])
-fi
-
-case "${with_qt}" in
-  ("no")
-    ;;
-  ("yes" | "")
-    QTINC="qt3"
-    test -d /usr/include/${QTINC} || QTINC="qt"
-    QTINCLUDE="-I/usr/include/${QTINC}"
-    ;;
-  (*)
-    QTINCLUDE="-I${with_qt}/include"
-    ;;
-esac
-
-if test "${QTINCLUDE}" != "" ; then
-  save_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
-  AC_CHECK_HEADERS([qobject.h], [], [with_qt="no"])
-  CPPFLAGS="$save_CPPFLAGS"
-fi
-
-if test "${with_qt}" != "no" ; then
-  AC_MSG_CHECKING([for Qt vs. $CXX ABI compatibility])
-
-  save_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
-  save_LIBS="$LIBS"
-  LIBS="${LIBS} ${QTLIB}"
-
-  function qt_test() {
-	AC_LINK_IFELSE([
-	    AC_LANG_SOURCE([[
-		#include <qapplication.h>
-
-		int main( int argc, char **argv )
-		{
-		    QApplication a(argc,argv);
-		    return a.exec();
-		}
-		]])
-	    ],
-	    [qt_compatible="yes"],
-	    [qt_compatible="no"])
-  }
-
-  qt_test
-  if test "${qt_compatible}" = "yes" ; then
-	AC_MSG_RESULT([ok])
-  else
-	AC_MSG_RESULT([no])
-	with_qt="no"
-  fi
-
-  LIBS="$save_LIBS"
-  CPPFLAGS="$save_CPPFLAGS"
-fi
 
 # system crypt function
 AC_CHECK_LIB(crypt, crypt)
@@ -335,39 +255,151 @@ AC_CHECK_LIB([pam], [pam_start], [], [with_pam=no])
 AC_CHECK_HEADERS([security/pam_appl.h], [], [with_pam=no])
 fi
 
+# glib
+# FIXME: accept system library path
+if test "${with_glib}" != "no" ; then
+  AC_CHECK_LIB([glib], [g_main_run], 
+    [
+     GLIBLIB="-lglib"
+     AC_DEFINE([HAVE_LIBGLIB], [1], [Do we have Glib library?])
+    ], 
+    [with_glib="no"])
+fi
+
+case "${with_glib}" in
+  ("no")
+    ;;
+  ("yes" | "")
+    GLIBINC="glib"
+    test -d /usr/include/${GLIBINC} || GLIBINC="glib-1.2"
+    GLIBINCLUDE="-I/usr/include/${GLIBINC} -I/usr/lib/${GLIBINC}"
+    ;;
+  (*)
+    GLIBINCLUDE="-I${with_glib}/include"
+    ;;
+esac
+
+if test "${GLIBINCLUDE}" != "" ; then
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="${CPPFLAGS} ${GLIBINCLUDE}"
+  AC_CHECK_HEADERS([glib.h], [], [with_glib="no"])
+  AC_CHECK_HEADERS([glibconfig.h], [], [with_glib="no"])
+  CPPFLAGS="$save_CPPFLAGS"
+fi
+
+
 #gtk
 if test "$with_gtk" != "no"; then
 
   AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
   AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
 
-  if test "$with_glib" != "yes"; then
-    GLIBDIR=$with_glib
-  fi
-  
-  if test -n "$GLIBDIR"; then
-    GLIBINCLUDE="$GLIBDIR/include"
-  else
-    GLIBINCLUDE="/usr/include/glib-1.2"
-  fi
-
   if test "$with_gtk" != "yes"; then
     GTKDIR=$with_gtk
   fi
   if test -n "$GTKDIR"; then
-    GTKINCLUDE="$GTKDIR/include"
+    GTKINCLUDE="-I$GTKDIR/include"
   else
-    GTKINCLUDE="/usr/include/gtk-1.2"
+    GTKINCLUDE="-I/usr/include/gtk-1.2"
   fi
   
-  CPPFLAGS="$CPPFLAGS -I$GTKINCLUDE -I$GLIBINCLUDE -I/usr/lib/glib/include"
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $GTKINCLUDE $GLIBINCLUDE"
   AC_CHECK_HEADERS(gtk/gtk.h, [], [with_gtk=no])
+  CPPFLAGS="$save_CPPFLAGS"
 fi
 
+
 # xplc
+case "${with_xplc}" in
+  ("yes" | "")
+    with_xplc="${WVPACKAGES}/xplc"
+    ;;
+esac
+
+if test "$with_xplc" != "no" ; then
+  LDFLAGS="$LDFLAGS -L${with_xplc}"
+  CPPFLAGS="$CPPFLAGS -I${with_xplc}/include"
+fi
+
 if test "$with_xplc" != "no"; then
 AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no], -lxplc-cxx)
 AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no])
+fi
+
+
+# Qt 
+# FIXME: accept system library path
+if test "${with_qt}" != "no" ; then
+  AC_CHECK_LIB([qt-mt], [qt_xscreen], 
+    [
+     QTLIB="-lqt-mt"
+     AC_DEFINE([HAVE_LIBQT], [1], [Do we have Qt library?])
+    ],[
+      AC_CHECK_LIB([qt], [qt_xscreen], 
+	[
+	 QTLIB="-lqt"
+         AC_DEFINE([HAVE_LIBQT], [1], [Do we have Qt library?])
+	],[
+	 with_qt="no"
+	])
+    ])
+fi
+
+case "${with_qt}" in
+  ("no")
+    ;;
+  ("yes" | "")
+    QTINC="qt3"
+    test -d /usr/include/${QTINC} || QTINC="qt"
+    QTINCLUDE="-I/usr/include/${QTINC}"
+    ;;
+  (*)
+    QTINCLUDE="-I${with_qt}/include"
+    ;;
+esac
+
+if test "${QTINCLUDE}" != "" ; then
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
+  AC_CHECK_HEADERS([qobject.h], [], [with_qt="no"])
+  CPPFLAGS="$save_CPPFLAGS"
+fi
+
+if test "${with_qt}" != "no" ; then
+  AC_MSG_CHECKING([for Qt vs. $CXX ABI compatibility])
+
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
+  save_LIBS="$LIBS"
+  LIBS="${LIBS} ${QTLIB}"
+
+  function qt_test() {
+	AC_LINK_IFELSE([
+	    AC_LANG_SOURCE([[
+		#include <qapplication.h>
+
+		int main( int argc, char **argv )
+		{
+		    QApplication a(argc,argv);
+		    return a.exec();
+		}
+		]])
+	    ],
+	    [qt_compatible="yes"],
+	    [qt_compatible="no"])
+  }
+
+  qt_test
+  if test "${qt_compatible}" = "yes" ; then
+	AC_MSG_RESULT([ok])
+  else
+	AC_MSG_RESULT([no])
+	with_qt="no"
+  fi
+
+  LIBS="$save_LIBS"
+  CPPFLAGS="$save_CPPFLAGS"
 fi
 
 # resolver fork
@@ -442,14 +474,20 @@ AC_SUBST(with_vorbis)
 AC_SUBST(with_speex)
 AC_SUBST(with_fftw)
 AC_SUBST(with_pam)
+
 AC_SUBST(with_glib)
+AC_SUBST(GLIBINCLUDE)
+AC_SUBST(GLIBLIB)
+
 AC_SUBST(with_gtk)
 AC_SUBST(with_xplc)
 AC_SUBST(with_fam)
 AC_SUBST(with_gdbm)
+
 AC_SUBST(with_qt)
 AC_SUBST(QTINCLUDE)
 AC_SUBST(QTLIB)
+
 AC_SUBST(CXX)
 AC_SUBST(CC)
 

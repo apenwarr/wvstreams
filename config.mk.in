@@ -16,7 +16,11 @@ with_speex:=@with_speex@
 with_vorbis:=@with_vorbis@
 with_fftw:=@with_fftw@
 with_pam:=@with_pam@
+
 with_glib:=@with_glib@
+GLIBINCLUDE:=@GLIBINCLUDE@
+GLIBLIB:=@GLIBLIB@
+
 with_gtk:=@with_gtk@
 with_xplc:=@with_xplc@
 with_fam:=@with_fam@
@@ -35,6 +39,7 @@ PACKAGE_VERSION:=@PACKAGE_VERSION@
 with_qt:=@with_qt@
 QTINCLUDE:=@QTINCLUDE@
 QTLIB:=@QTLIB@
+
 CXX:=@CXX@
 CC:=@CC@
 
