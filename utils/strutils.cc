@@ -76,6 +76,24 @@ char * trim_string( char * string, char c )
     return( string );
 }
 
+char * non_breaking(char * string)
+/************************************/
+// Replaces whitespace characters with nonbreaking spaces.
+{
+    if (string == NULL)
+        return (NULL);
+
+    WvString s("");
+
+    while (*string) {
+        if (isspace(*string)) s = WvString("%s&nbsp;", s);
+        else  s = WvString("%s%c", s, *string);
+        string++;
+    }
+
+    return s.edit();
+}
+
 void replace_char( void * _string, char c1, char c2, int length )
 /**************************************************************/
 // Searches _string (up to length bytes), replacing any occurrences of c1
@@ -371,4 +389,3 @@ WvString nice_hostname(WvStringParm name)
     
     return nice;
 }
-

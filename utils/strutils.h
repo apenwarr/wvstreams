@@ -42,6 +42,12 @@ char *trim_string(char *string);
 char *trim_string(char *string, char c);
 
 /**
+ * Replaces all whitespace characters in the string with non-breaking spaces
+ * (&nbsp;) for use with web stuff.
+ */
+char *non_breaking(char *string);
+
+/**
  * Replace all instances of c1 with c2 for the first 'length' characters in 
  * 'string'. Ignores terminating NULL, so make sure you set 'length' correctly.
  */
