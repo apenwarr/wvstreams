@@ -18,6 +18,8 @@
  *  - Given an hour, triggers once per day, on that hour.
  *  - Given a number of times per day, triggers that many times
  *     per day, evenly, starting at the specified hour.
+ *  - WvDailyEvents can happen up to 1440 times a day, that is once per
+ *     minute, no more.
  * 
  * 
  * Presently has a one-hour granularity in the first case, but that
