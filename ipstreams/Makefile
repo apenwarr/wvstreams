@@ -3,9 +3,11 @@ include $(TOPDIR)/wvrules.mk
 
 XPATH=.. ../utils ../streams
 
-default: all tcptest udptest udp2test listentest unixtest ulistentest \
+TESTS=tcptest udptest udp2test listentest unixtest ulistentest \
 	resolvertest routetest \
 	conttest aliastest simpleconn httptest
+
+default: all $(TESTS)
 
 all: ipstreams.libs
 
@@ -22,6 +24,5 @@ tcptest udptest udp2test listentest unixtest ulistentest \
 		ipstreams.a
 
 clean:
-	rm -f tcptest udptest udp2test listentest resolvertest routetest \
-		conttest aliastest stresstest simpleconn httptest
+	rm -f $(TESTS)
 

@@ -64,10 +64,10 @@ install: all
 	@set -x; for d in ${INCFILES}; do \
 		install -m 0644 $$d ${INCDIR}; \
 	done
-	for d in ${LIBFILES}; do \
+	for d in ${LIBFILES} wvrules.mk; do \
 		install -m 0644 $$d ${LIBDIR}; \
 	done
-	#strip --strip-debug ${LIBDIR}/libwvstreams.a
+	#strip --strip-debug ${LIBDI../wvstreams/libwvstreams.a
 
 uninstall:
 	cd ${LIBDIR}; rm -f ${LIBFILES}
