@@ -1,4 +1,4 @@
-#include <xplc/xplc.h>
+#include "wvxplc.h"
 #include <xplc/IServiceManager.h>
 #include <xplc/IStaticServiceHandler.h>
 #include <xplc/IMonikerService.h>

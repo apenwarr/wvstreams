@@ -7,7 +7,7 @@
 #ifndef __WVMAGIC_H
 #define __WVMAGIC_H
 
-#include <xplc/IObject.h>
+#include "wvxplc.h"
 
 template<class T, bool b>
 struct Magic_Helper

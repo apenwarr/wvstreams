@@ -138,7 +138,6 @@ ifneq ("$(with_qdbm)", "no")
 endif
 
 ifneq ("$(with_xplc)", "no")
-  # CPPFLAGS+=-DUNSTABLE
   ifneq ("$(with_xplc)", "yes")
     VPATH+=$(with_xplc)
     LDFLAGS+=-L$(with_xplc)
