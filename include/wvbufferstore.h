@@ -13,7 +13,6 @@
 #include <limits.h>
 
 /**
- * @internal
  * This value is used internally to signal unlimited free space.
  * It is merely meant to be as large as possible yet leave enough
  * room to accomodate simple arithmetic operations without overflow.
@@ -21,10 +20,7 @@
  */
 #define UNLIMITED_FREE_SPACE (INT_MAX/2)
 
-/**
- * @internal
- * The abstract buffer storage base class.
- */
+/** The abstract buffer storage base class. */
 class WvBufferStore
 {
     // discourage copying
@@ -132,7 +128,6 @@ DeclareWvList(WvBufferStore);
 
 
 /**
- * @internal
  * A statically bound mixin template for buffer implementations that are
  * read-only.  It is an error to attempt to write to a read-only buffer.
  * Note that read-only in this context does not mean the same as "const".
@@ -186,7 +181,6 @@ public:
 
 
 /**
- * @internal
  * A statically bound mixin template for buffer implementations that are
  * write-only.  It is an error to attempt to read from a write-only buffer.
  */
@@ -250,10 +244,7 @@ public:
 
 
 
-/**
- * @internal
- * The WvInPlaceBuffer storage class.
- */
+/** The WvInPlaceBuffer storage class. */
 class WvInPlaceBufferStore : public WvBufferStore
 {
 protected:
@@ -294,10 +285,7 @@ public:
 
 
 
-/**
- * @internal
- * The WvConstInPlaceBuffer storage class.
- */
+/** The WvConstInPlaceBuffer storage class. */
 class WvConstInPlaceBufferStore :
     public WvReadOnlyBufferStoreMixin<WvBufferStore>
 {
@@ -325,10 +313,7 @@ public:
 
 
 
-/**
- * @internal
- * The WvCircularBuffer storage class.
- */
+/** The WvCircularBuffer storage class. */
 class WvCircularBufferStore : public WvBufferStore
 {
 protected:
@@ -399,7 +384,6 @@ protected:
 
 
 /**
- * @internal
  * The WvLinkedBuffer storage class.
  * 
  * A buffer store built out of a list of other buffers linked together.
@@ -488,10 +472,7 @@ private:
 
 
 
-/**
- * @internal
- * The WvDynamicBuffer storage class.
- */
+/** The WvDynamicBuffer storage class. */
 class WvDynamicBufferStore : public WvLinkedBufferStore
 {
     size_t minalloc;
@@ -512,10 +493,7 @@ protected:
 
 
 
-/**
- * @internal
- * The WvEmptyBuffer storage class.
- */
+/** The WvEmptyBuffer storage class. */
 class WvEmptyBufferStore : public WvWriteOnlyBufferStoreMixin<
     WvReadOnlyBufferStoreMixin<WvBufferStore> >
 {
@@ -525,10 +503,7 @@ public:
 
 
 
-/**
- * @internal
- * The WvBufferCursor storage class.
- */
+/** The WvBufferCursor storage class. */
 class WvBufferCursorStore :
     public WvReadOnlyBufferStoreMixin<WvBufferStore>
 {

@@ -46,22 +46,7 @@ public:
     virtual bool haschildren(const UniConfKey &key);
     virtual bool isok();
     virtual Iter *iterator(const UniConfKey &key);
-
-//    class IterIter;
 };
-
-
-
-/** An iterator over UniConf iterators. */
-/*class UniConfListGen::IterIter : public UniConfListGen::Iter
-{
-protected:
-    
-public:
-
-
-}; */
-
 
 
 #endif // __UNICONFLISTGEN_H

@@ -39,12 +39,6 @@ public:
     virtual ~UniConfAbstractIter()
         { }
 
-#if 0
-//FIXME: not sure if this was really a good idea...
-    /** Clones the iterator. */
-    virtual UniConfAbstractIter *clone() const = 0;
-#endif
-
     /** Rewinds the iterator. */
     virtual void rewind() = 0;
 

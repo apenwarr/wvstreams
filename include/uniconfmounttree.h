@@ -14,7 +14,6 @@
 #include "wvmoniker.h"
 
 /**
- * @internal
  * Used by UniConfMountTreeGen to maintain information about mounted
  * subtrees.
  */
@@ -49,7 +48,6 @@ public:
 
 
 /**
- * @internal
  * An iterator over the UniConfMountTree nodes that might know something
  * about the provided 'key', starting with the nearest match and then
  * moving up the tree.
@@ -86,7 +84,6 @@ public:
 
 
 /**
- * @internal
  * An iterator over the generators that might provide a key
  * starting with the nearest match.
  * 

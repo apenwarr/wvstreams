@@ -20,7 +20,8 @@
  * The best way to use this monster is to subclass with friendly
  * names for the implementations that are needed.  For maximum
  * performance, define the functor as a struct that provides an
- * operator() inline.
+ * operator() inline.  This is extremely efficent since this class is
+ * templated, so there's room for lots of compiler optimization.
  *
  * "IT" is the input buffer datatype
  * "OT" is the output buffer datatype

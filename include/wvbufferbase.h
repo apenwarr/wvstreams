@@ -28,7 +28,7 @@ class WvBufferBase;
  * to the base type.  When passing around buffer objects, you should
  * use the WvBufferBase<T> type rather than WvBufferBaseCommonImpl<T>.
  *
- * @see WvBufferBase<T>
+ * See WvBufferBase<T>
  * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
@@ -77,11 +77,6 @@ public:
      * Returns true if the buffer supports reading.
      *
      * Returns: true if reading is supported
-     * @see used(), optgettable(), get(size_t), skip(size_t)
-     * @see ungettable(), unget(size_t)
-     * @see peekable(int), optpeekable(int), peek(int, size_t)
-     * @see move(T*, size_t), copy(T*, int, size_t)
-     * @see zap()
      */
     bool isreadable() const
     {
@@ -96,7 +91,6 @@ public:
      * 
      *
      * Returns: the number of elements
-     * @see get(size_t), optgettable()
      */
     size_t used() const
     {
@@ -122,9 +116,6 @@ public:
      *
      * "count" is the number of elements
      * Returns: the element storage pointer
-     * @see used(), optgettable()
-     * @see skip(size_t), move(T*, size_t)
-     * @see unget(size_t)
      */
     const T *get(size_t count)
     {
@@ -142,9 +133,6 @@ public:
      * 
      *
      * "count" is the number of elements
-     * @see used()
-     * @see get(size_t)
-     * @see unget(size_t)
      */
     void skip(size_t count)
     {
@@ -163,7 +151,6 @@ public:
      * 
      *
      * Returns: the number of elements
-     * @see get(size_t), used()
      */
     size_t optgettable() const
     {
@@ -187,8 +174,6 @@ public:
      * 
      *
      * "count" is the number of elements
-     * @see ungettable()
-     * @see get(size_t), skip(size_t)
      */
     void unget(size_t count)
     {
@@ -200,7 +185,6 @@ public:
      * at this time.
      *
      * Returns: the number of elements
-     * @see unget(size_t)
      */
     size_t ungettable() const
     {
@@ -238,10 +222,6 @@ public:
      * "offset" is the buffer offset
      * "count" is the number of elements
      * Returns: the element storage pointer
-     * @see peekable(int), optpeekable(int)
-     * @see mutablepeek(int, size_t)
-     * @see peek(int)
-     * @see copy(T*, int, size_t)
      */
     const T *peek(int offset, size_t count)
     {
@@ -249,13 +229,11 @@ public:
             offset * sizeof(Elem), count * sizeof(Elem)));
     }
 
-    /** @see peek(int, size_t), optpeekable(int) */
     size_t peekable(int offset)
     {
         return store->peekable(offset * sizeof(Elem)) / sizeof(Elem);
     }
 
-    /** @see peek(int, size_t), peekable(int) */
     size_t optpeekable(int offset)
     {
         offset *= sizeof(Elem);
@@ -291,7 +269,6 @@ public:
      * 
      *
      * Returns: the element
-     * @see get(size_t), used(), optgettable()
      */
     T get()
     {
@@ -306,7 +283,6 @@ public:
      *
      * "offset" is the offset, default 0
      * Returns: the element
-     * @see peek(int, size_t), peekable(int), optpeekable(int)
      */
     T peek(int offset = 0)
     {
@@ -330,7 +306,6 @@ public:
      *
      * "buf" is the buffer that will receive the elements
      * "count" is the number of elements
-     * @see get(size_t), used()
      */
     void move(T *buf, size_t count)
     {
@@ -352,7 +327,6 @@ public:
      * "buf" is the buffer that will receive the elements
      * "offset" is the buffer offset
      * "count" is the number of elements
-     * @see peek(int, size_t), peekable(int)
      */
     void copy(T *buf, int offset, size_t count)
     {
@@ -365,11 +339,6 @@ public:
      * Returns true if the buffer supports writing.
      *
      * Returns: true if writing is supported
-     * @see free(), optallocable(), alloc(size_t)
-     * @see unallocable(), unalloc(size_t)
-     * @see mutablepeek(int, size_t)
-     * @see put(const T*, size_t), poke(const T*, int, size_t)
-     * @see merge(Buffer &, size_t)
      */
     bool iswritable() const
     {
@@ -381,7 +350,6 @@ public:
      * accept for writing.
      * 
      * Returns: the number of elements
-     * @see alloc(size_t), optallocable()
      */
     size_t free() const
     {
@@ -408,9 +376,6 @@ public:
      *
      * "count" is the number of elements
      * Returns: the element storage pointer
-     * @see free(), optallocable()
-     * @see put(const T*, size_t)
-     * @see unalloc(size_t)
      */
     T *alloc(size_t count)
     {
@@ -429,7 +394,6 @@ public:
      * 
      *
      * Returns: the number of elements
-     * @see alloc(size_t), free()
      */
     size_t optallocable() const
     {
@@ -454,8 +418,6 @@ public:
      * 
      *
      * "count" is the number of elements
-     * @see unallocable()
-     * @see alloc(size_t)
      */
     void unalloc(size_t count)
     {
@@ -478,7 +440,6 @@ public:
      * 
      *
      * Returns: the number of elements
-     * @see unalloc(size_t)
      */
     size_t unallocable() const
     {
@@ -497,9 +458,6 @@ public:
      * "offset" is the buffer offset
      * "count" is the number of elements
      * Returns: the element storage pointer
-     * @see peekable(int), optpeekable(int)
-     * @see peek(int, size_t)
-     * @see poke(const T*, int, size_t)
      */
     T *mutablepeek(int offset, size_t count)
     {
@@ -522,7 +480,6 @@ public:
      *
      * "data" is the buffer that contains the elements
      * "count" is the number of elements
-     * @see alloc(size_t)
      */
     void put(const T *data, size_t count)
     {
@@ -544,8 +501,6 @@ public:
      * "data" is the buffer that contains the elements
      * "count" is the number of elements
      * "offset" is the buffer offset, default 0
-     * @see mutablepeek(int, size_t)
-     * @see put(const T*, size_t)
      */
     void poke(const T *data, int offset, size_t count)
     {
@@ -561,7 +516,6 @@ public:
      * 
      *
      * "valid" is the element
-     * @see put(const T*, size_t)
      */
     void put(T &value)
     {
@@ -578,7 +532,6 @@ public:
      *
      * "value" is the element
      * "offset" is the buffer offset
-     * @see poke(const T*, int, size_t)
      */
     void poke(T &value, int offset)
     {
@@ -612,7 +565,6 @@ public:
      * Efficiently merges the entire contents of a buffer into this one.
      *
      * "inbuf" is the buffer from which to read
-     * @see merge(Buffer &, size_t)
      */
     void merge(Buffer &inbuf)
     {
@@ -627,7 +579,7 @@ public:
  * To specialize buffers to add new functionality, declare a template
  * specialization of this type that derives from WvBufferBaseCommonImpl.
  *
- * @see WvBufferBaseCommonImpl<T>
+ * See WvBufferBaseCommonImpl<T>
  * "T" is the type of object to store, must be a primitive or a struct
  *        without special initialization, copy, or assignment semantics
  */
