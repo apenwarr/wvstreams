@@ -60,7 +60,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
     
     int err;
     
-    err = SSL_read(ssl, buf, len);
+    err = SSL_read(ssl, (char *) buf, len);
     if (len > 0 && err == 0)
 	close();
     else if (err < 0)
@@ -82,7 +82,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 	return 0;
     
     int err;
-    err = SSL_write(ssl, buf, len);
+    err = SSL_write(ssl, (char *) buf, len);
     if (len > 0 && err == 0)
 	close();
     else if (err < 0)
