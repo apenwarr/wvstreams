@@ -61,10 +61,16 @@ bool WvCounterModeEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     }
     if (flush && len != 0 && success)
     {
-        counterbuf.zap();
+        counterbuf.reset(counter, countersize);
         success = keycrypt->encode(counterbuf, outbuf, true);
         if (success)
+        {
+            outbuf.unalloc(countersize - len);
+            len = 0;
             incrcounter();
+        }
+        else
+            outbuf.unalloc(outbuf.used() - offset - avail);
     }
     avail -= len;
     
@@ -77,7 +83,7 @@ bool WvCounterModeEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
             len = lenopt;
         const unsigned char *datain = inbuf.get(len);
         
-        if (len > avail)
+        if (len >= avail)
         {
             len = avail;
             avail = 0;

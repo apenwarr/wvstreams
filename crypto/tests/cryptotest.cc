@@ -4,12 +4,16 @@
  * 
  * This should let us get an impression of how fast the cryptostreams are, and
  * how much latency they introduce.
+ *
+ * This test case BADLY needs to be rewritten.
  */
 #include "wvcrypto.h"
 #include "wvrsa.h"
 #include "wvblowfish.h"
 #include "wvxor.h"
 #include "wvcountermode.h"
+#include "wvdigest.h"
+#include "wvhex.h"
 #include "wvlog.h"
 #include "wvtimeutils.h"
 #include "wvstreamlist.h"
@@ -48,9 +52,11 @@ static void usage(WvLog &log, const char *progname)
 	"         -r is for an RSAEncoder test\n"
 	"         -b is for a BlowfishEncoder test\n"
         "         -c is for a CounterModeEncoder Blowfish test\n"
+        "         -M is for an MD5Digest test\n"
+        "         -S is for a SHA1Digest test\n"
+        "         -H is for an HMACDigest over SHA1Digest test\n"
 	"         -E encrypts stdin (default)\n"
-	"         -D decrypts stdin\n"
-	"         -B sets the number of bits in the encryption key",
+	"         -D decrypts stdin (makes no sense for digests)\n"
         "         -i XXX sets the input file",
         "         -o XXX sets the output file",
 	progname);
@@ -85,7 +91,8 @@ int main(int argc, char **argv)
 {
     WvLog log(argv[0], WvLog::Info);
     int opt;
-    enum { None, XOR, RSA, Blowfish, CounterMode } crypt_type = None;
+    enum { None, XOR, RSA, Blowfish, CounterMode,
+        MD5, SHA1, HMAC } crypt_type = None;
     enum { Encrypt, Decrypt } direction = Encrypt;
     WvRSAKey *rsakey = NULL;
     unsigned char *blowkey = NULL;
@@ -103,7 +110,7 @@ int main(int argc, char **argv)
 	return 1;
     }
     
-    while ((opt = getopt(argc, argv, "?xrbcEDB:i:o:")) >= 0)
+    while ((opt = getopt(argc, argv, "?xrbcMSHEDB:i:o:")) >= 0)
     {
 	switch (opt)
 	{
@@ -129,6 +136,24 @@ int main(int argc, char **argv)
         case 'c':
             crypt_type = CounterMode;
 	    if (!numbits) numbits = 128;
+            break;
+
+        case 'M':
+            crypt_type = MD5;
+            numbits = 128;
+            direction = Decrypt;
+            break;
+
+        case 'S':
+            crypt_type = SHA1;
+            numbits = 160;
+            direction = Decrypt;
+            break;
+
+        case 'H':
+            crypt_type = HMAC;
+	    if (!numbits) numbits = 128;
+            direction = Decrypt;
             break;
 	    
 	case 'E':
@@ -182,7 +207,6 @@ int main(int argc, char **argv)
 	log("Using 8-bit XOR encryption.\n");
         char key = 1;
 	crypto = new WvXORStream(base, &key, 1);
-        crypto->disassociate_on_close = true;
 	break;
     }
 	
@@ -194,7 +218,6 @@ int main(int argc, char **argv)
 	//log("ok.\n");
         rsakey = new WvRSAKey(PRIVATE_KEY, true);
 	crypto = new WvRSAStream(base, *rsakey, *rsakey);
-        crypto->disassociate_on_close = true;
 	break;
 	
     case Blowfish:
@@ -204,13 +227,12 @@ int main(int argc, char **argv)
             blowkey[count] = count;
         
         crypto = new WvBlowfishStream(base, blowkey, numbits/8);
-        crypto->disassociate_on_close = true;
 	break;
 
     case CounterMode:
     {
         log("Using %s-bit Counter Mode Blowfish encryption.\n", numbits);
-        blowkey = new unsigned char[numbits/8];
+        unsigned char blowkey[numbits/8];
         for (int count = 0; count < numbits/8; count++)
             blowkey[count] = count;
         
@@ -222,10 +244,59 @@ int main(int argc, char **argv)
         encstream->readchain.append(enc, false);
         encstream->auto_flush(false);
         crypto = encstream;
-        crypto->disassociate_on_close = true;
 	break;
     }
+
+    case MD5:
+    {
+        log("Using MD5 digest.\n");
+        WvEncoder *enc = new WvMD5Digest();
+        WvEncoder *hex = new WvHexEncoder();
+        WvEncoderStream *encstream = new WvEncoderStream(base);
+        encstream->writechain.append(enc, true);
+        encstream->writechain.append(hex, true);
+        encstream->readchain.append(enc, false);
+        encstream->readchain.append(hex, false);
+        encstream->auto_flush(false);
+        crypto = encstream;
+        break;
+    }
 	
+    case SHA1:
+    {
+        log("Using SHA1 digest.\n");
+        WvEncoder *enc = new WvSHA1Digest();
+        WvEncoder *hex = new WvHexEncoder();
+        WvEncoderStream *encstream = new WvEncoderStream(base);
+        encstream->writechain.append(enc, true);
+        encstream->writechain.append(hex, true);
+        encstream->readchain.append(enc, false);
+        encstream->readchain.append(hex, false);
+        encstream->auto_flush(false);
+        crypto = encstream;
+        break;
+    }
+    
+    case HMAC:
+    {
+        unsigned char key[numbits/8];
+        for (int count = 0; count < numbits/8; count++)
+            key[count] = count;
+            
+        log("Using HMAC over SHA1 digest.\n");
+        WvEncoder *enc = new WvHMACDigest(new WvSHA1Digest(),
+            key, numbits / 8);
+        WvEncoder *hex = new WvHexEncoder();
+        WvEncoderStream *encstream = new WvEncoderStream(base);
+        encstream->writechain.append(enc, true);
+        encstream->writechain.append(hex, true);
+        encstream->readchain.append(enc, false);
+        encstream->readchain.append(hex, false);
+        encstream->auto_flush(false);
+        crypto = encstream;
+        break;
+    }
+    
     default:
 	assert(0);
 	break;
@@ -244,9 +315,12 @@ int main(int argc, char **argv)
 	log("Decrypting stdin to stdout.\n");
         total = copy(crypto, wvout);
     }
+    crypto->close();
     delete crypto;
-    delete wvin;
-    delete wvout;
+    if (wvin != base)
+        delete wvin;
+    if (wvout != base)
+        delete wvout;
     
     gettimeofday(&stop, &tz);
     long tdiff = msecdiff(stop, start);

@@ -27,8 +27,8 @@ public:
     /**
      * Creates a new Blowfish encoder / decoder.
      *   _mode    : the encryption mode
-     *   _key     : the initial key data
-     *   _keysize : the initial key size
+     *   _key     : the initial key
+     *   _keysize : the initial key size in bytes
      */
     WvBlowfishEncoder(Mode _mode, const void *_key, size_t _keysize);
     virtual ~WvBlowfishEncoder();

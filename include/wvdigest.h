@@ -17,11 +17,20 @@
 
 #include "wvencoder.h"
 
+/**
+ * Superclass for all digests.
+ * Does not add anything right now, but could come in handy later on.
+ */
+class WvDigest : public WvEncoder
+{
+};
+
 // internal implementation class do not reference this directly
 struct env_md_st;
 struct env_md_ctx_st;
-class WvEVPMDDigest : public WvEncoder
+class WvEVPMDDigest : public WvDigest
 {
+    friend class WvHMACDigest;
     env_md_st *evpmd;
     env_md_ctx_st *evpctx;
     bool active;
@@ -35,6 +44,9 @@ protected:
         bool flush); // consumes input
     virtual bool _finish(WvBuffer &outbuf); // outputs digest
     virtual bool _reset(); // supported: resets digest value
+    
+    env_md_st *getevpmd()
+        { return evpmd; }
 
 private:
     void cleanup();
@@ -43,10 +55,14 @@ private:
 
 /**
  * MD5 Digest
+ * Has a digest length of 128 bits.
  */
 class WvMD5Digest : public WvEVPMDDigest
 {
 public:
+    /**
+     * Creates an MD5 digest encoder.
+     */
     WvMD5Digest();
     virtual ~WvMD5Digest() { }
 };
@@ -54,26 +70,53 @@ public:
 
 /**
  * SHA-1 Digest
+ * Has a digest length of 160 bits.
  */
 class WvSHA1Digest : public WvEVPMDDigest
 {
 public:
+    /**
+     * Creates an MD5 digest encoder.
+     */
     WvSHA1Digest();
     virtual ~WvSHA1Digest() { }
 };
 
-#if 0
-class WvHMACDigest : public WvEncoder
+
+/**
+ * HMAC Message Authentication Code
+ * Has a digest length that varies according to the underlying
+ * digest encoder.
+ */
+struct hmac_ctx_st;
+class WvHMACDigest : public WvDigest
 {
+    WvEVPMDDigest *digest;
+    unsigned char *key;
+    size_t keysize;
+    hmac_ctx_st *hmacctx;
+    bool active;
+
 public:
-    WvHMACDigest();
+    /**
+     * Creates an HMAC digest encoder.
+     *   digest - specifies the digest algorithm to use as a
+     *            hash function
+     *   key     - the authentication key
+     *   keysize - the key size in bytes
+     */
+    WvHMACDigest(WvEVPMDDigest *_digest, const void *_key,
+        size_t _keysize);
     virtual ~WvHMACDigest();
 
 protected:
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
-        bool flush); // consumes input, on flush outputs digest value
+        bool flush); // consumes input
+    virtual bool _finish(WvBuffer &outbuf); // outputs digest
     virtual bool _reset(); // supported: resets digest value
+
+private:
+    void cleanup();
 };
-#endif
 
 #endif // __WVDIGEST_H

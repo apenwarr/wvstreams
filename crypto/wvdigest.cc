@@ -6,9 +6,8 @@
  */
 #include "wvdigest.h"
 #include <evp.h>
+#include <hmac.h>
 #include <assert.h>
-
-#define EVPMD_BUFFER_SIZE 4096
 
 /***** WvEVPMDDigest *****/
 
@@ -33,8 +32,6 @@ bool WvEVPMDDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     size_t len;
     while ((len = inbuf.usedopt()) != 0)
     {
-        if (len > EVPMD_BUFFER_SIZE)
-            len = EVPMD_BUFFER_SIZE;
         const unsigned char *data = inbuf.get(len);
         EVP_DigestUpdate(evpctx, data, len);
     }
@@ -91,3 +88,66 @@ WvSHA1Digest::WvSHA1Digest() : WvEVPMDDigest(EVP_sha1())
 
 /***** WvHMACDigest *****/
 
+WvHMACDigest::WvHMACDigest(WvEVPMDDigest *_digest,
+    const void *_key, size_t _keysize) :
+    digest(_digest), keysize(_keysize), active(false)
+{
+    key = new unsigned char[keysize];
+    memcpy(key, _key, keysize);
+    hmacctx = new HMAC_CTX;
+    _reset();
+}
+
+WvHMACDigest::~WvHMACDigest()
+{
+    cleanup();
+    delete hmacctx;
+    delete[] key;
+    delete digest;
+}
+
+
+bool WvHMACDigest::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush)
+{
+    size_t len;
+    while ((len = inbuf.usedopt()) != 0)
+    {
+        const unsigned char *data = inbuf.get(len);
+        HMAC_Update(hmacctx, data, len);
+    }
+    return true;
+}
+
+
+bool WvHMACDigest::_finish(WvBuffer &outbuf)
+{
+    assert(active);
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    size_t size;
+    HMAC_Final(hmacctx, digest, & size);
+    active = false;
+    outbuf.put(digest, size);
+    return true;
+}
+
+
+bool WvHMACDigest::_reset()
+{
+    cleanup();
+    HMAC_Init(hmacctx, key, keysize, digest->getevpmd());
+    active = true;
+    return true;
+}
+
+
+void WvHMACDigest::cleanup()
+{
+    if (active)
+    {
+        // discard digest
+        unsigned char digest[EVP_MAX_MD_SIZE];
+        HMAC_Final(hmacctx, digest, NULL);
+        active = false;
+    }
+}
