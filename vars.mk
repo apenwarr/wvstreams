@@ -40,6 +40,10 @@ libwvutils.so-LIBS:=-lz -lcrypto
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
+# for O_LARGEFILE
+CXXFLAGS+=-D_GNU_SOURCE
+CFLAGS+=-D_GNU_SOURCE
+
 ifndef enable_debug
 CXXFLAGS+=-g
 CFLAGS+=-g

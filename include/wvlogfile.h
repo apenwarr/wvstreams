@@ -11,6 +11,7 @@
 #include "wvdailyevent.h"
 #include "wvfile.h"
 #include "wvlogrcv.h"
+#include <fcntl.h>
 
 // Basic LogFile receiver. Always logs to the same file. No rotation.
 
@@ -19,7 +20,7 @@ class WvLogFileBase : public WvLogRcv, public WvFile
     public:
         WvLogFileBase(WvStringParm _filename, WvLog::LogLevel _max_level
              = WvLog::NUM_LOGLEVELS) : WvLogRcv(_max_level),
-             WvFile(_filename, O_WRONLY|O_APPEND|O_CREAT, 0644) {};
+             WvFile(_filename, O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0644) {};
 
     protected:
         WvLogFileBase(WvLog::LogLevel _max_level) : WvLogRcv(_max_level) {};

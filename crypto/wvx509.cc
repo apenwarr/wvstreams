@@ -247,10 +247,11 @@ void WvX509Mgr::create_selfsigned()
     X509_EXTENSION *ex = NULL;
 
     // RFC2459 says that this number must be unique for each certificate
-    // issued by a CA - since this is a self-signed cert, we'll take a
-    // shortcut, and give a fixed value... saves a couple of cycles rather
-    // than get a random number.
-    int	serial = 0;
+    // issued by a CA.  It may be that some web browsers get confused if
+    // more than one cert with the same name has the same serial number, so
+    // let's be careful.
+    srand(time(NULL));
+    int	serial = random();
 
     WvString serverfqdn;
 
