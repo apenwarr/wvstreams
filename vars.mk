@@ -37,10 +37,6 @@ ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so libwvqt.a
 endif
 
-ifneq ("$(with_gtk)", "no")
-  TARGETS += libwvgtk.so libwvgtk.a
-endif
-
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 

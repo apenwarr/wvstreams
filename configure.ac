@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.35 2003/09/10 03:42:20 apenwarr Exp $)
+AC_REVISION($Id: configure.ac,v 1.36 2003/09/11 15:00:36 ppatters Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -74,7 +74,6 @@ AC_ARG_ENABLE(warnings,
 AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(gdbm, AC_HELP_STRING([--with-gdbm], [GDBM]))
-AC_ARG_WITH(gtk, AC_HELP_STRING([--with-gtk], [GTK+]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
@@ -144,14 +143,14 @@ if test "$with_gdbm" != "no"; then
 fi
 
 # gtk
-if test "$with_gtk" != "no"; then
-    CPPFLAGS_save="$CPPFLAGS"
-    WV_APPEND(CPPFLAGS,`pkg-config --cflags gtk+ 2>/dev/null`)
-    AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
-    AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
-    AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
-    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
-fi
+#if test "$with_gtk" != "no"; then
+#    CPPFLAGS_save="$CPPFLAGS"
+#    WV_APPEND(CPPFLAGS,`pkg-config --cflags gtk+ 2>/dev/null`)
+#    AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
+#    AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
+#    AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
+#    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
+#fi
 
 # ogg
 if test "$with_ogg" != "no"; then
@@ -231,10 +230,6 @@ if test "$with_fftw" = "no"; then
 fi
 if test "$with_gdbm" = "no"; then
     AC_MSG_WARN([GDBM is missing.])
-    missing_devel=yes
-fi
-if test "$with_gtk" = "no"; then
-    AC_MSG_WARN([GTK+ is missing.])
     missing_devel=yes
 fi
 if test "$with_ogg" = "no"; then
