@@ -42,6 +42,11 @@ SHELL=/bin/bash
 STRIP=strip --remove-section=.note --remove-section=.comment
 #STRIP=echo
 
+# macros that expand to the object files in the given directories
+objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
+objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
+objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
+
 # we need a default rule, since the 'includes' below causes trouble
 default: all
 
@@ -367,7 +372,7 @@ clean: FORCE cleanrule
 
 cleanrule: FORCE
 	rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.moc *.d .*.d .depend .\#* \
-		.tcl_paths pkgIndex.tcl gmon.out core build-stamp
+		.tcl_paths pkgIndex.tcl gmon.out core build-stamp wvtestmain
 	rm -rf debian/tmp
 
 #

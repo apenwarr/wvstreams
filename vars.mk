@@ -26,6 +26,7 @@ endif
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libuniconf.so libuniconf.a
+TARGETS += wvtestmain.o
 TARGETS += uniconf/daemon/uniconfdaemon crypto/tests/ssltest
 
 ifneq ("$(with_ogg)", "no")
@@ -52,7 +53,7 @@ endif
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
-GARBAGE += ChangeLog $(wildcard libwv*.so.*)
+GARBAGE += ChangeLog $(wildcard libwv*.so.*) wvtestmain
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
 		include/wvautoconf.h config.cache
