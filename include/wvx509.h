@@ -9,6 +9,7 @@
 
 #include "wvrsa.h"
 #include "wvlog.h"
+#include "wverror.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
@@ -25,7 +26,7 @@ WvString wvssl_errstr();
  * X509 Class to handle certificates and their related
  * functions
  */
-class WvX509Mgr
+class WvX509Mgr : public WvError
 {
 public:
    /** Distinguished Name to be used in the certificate. */
@@ -240,22 +241,11 @@ public:
     /**
      * Is this certificate Object valid, and in a non-error state
      */
-    bool isok() const
-        { return cert && rsa && !errstring; }
+    virtual bool isok() const;
 
-    /**
-     * Accessor for the error string if !isok()
-     */
-    const WvString errstr()
-        { 
-            // Note for merging: The 3.80 version is correct.
-	    if (!!errstring)
-		return errstring; 
-	    else if (!cert || !rsa)
-		return WvString("Not Initialized yet");
-	    else
-		return "Success";
-	}
+    virtual WvString errstr() const;
+
+    virtual int geterr() const;
 
 private:
     WvLog debug;
