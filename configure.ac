@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.19 2003/03/03 10:04:00 ilguiz Exp $)
+AC_REVISION($Id: configure.ac,v 1.20 2003/03/19 19:47:09 sharvil Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -59,6 +59,14 @@ AC_ARG_WITH(speex,
 AC_ARG_WITH(fftw,
             AC_HELP_STRING([--with-fftw],
                            [FFTW]))
+
+AC_ARG_WITH(gtk,
+            AC_HELP_STRING([--with-gtk],
+                           [GTK]))
+
+AC_ARG_WITH(glib,
+            AC_HELP_STRING([--with-glib],
+                           [Location of Glib headers]))
 
 AC_ARG_WITH(xplc,
             AC_HELP_STRING([--with-xplc],
@@ -274,6 +282,33 @@ AC_SUBST(QTLIB)
 AC_SUBST(CXX)
 AC_SUBST(CC)
 
+#gtk
+if test "$with_gtk" != "no"; then
+
+AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
+AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
+
+if test "$with_glib" != "yes"; then
+    GLIBDIR=$with_glib
+fi
+if test -n "$GLIBDIR"; then
+    GLIBINCLUDE="$GLIBDIR/include"
+else
+    GLIBINCLUDE="/usr/include/glib-1.2"
+fi
+
+if test "$with_gtk" != "yes"; then
+    GTKDIR=$with_gtk
+fi
+if test -n "$GTKDIR"; then
+    GTKINCLUDE="$GTKDIR/include"
+else
+    GTKINCLUDE="/usr/include/gtk-1.2"
+fi
+CPPFLAGS="$CPPFLAGS -I$GTKINCLUDE -I$GLIBINCLUDE -I/usr/lib/glib/include"
+AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
+fi
+
 # xplc
 if test "$with_xplc" != "no"; then
 AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no], -lxplc-cxx)
@@ -314,6 +349,10 @@ if test "$with_qt" == "no"; then
     AC_MSG_WARN([Qt is missing.])
     missing_devel=yes
 fi
+if test "$with_gtk" == "no"; then
+    AC_MSG_WARN([Gtk is missing.])
+    missing_devel=yes
+fi
 if test "$with_xplc" == "no"; then
     AC_MSG_WARN([XPLC is missing.])
 #    missing_devel=yes
@@ -346,6 +385,8 @@ AC_SUBST(with_fftw)
 AC_SUBST(with_qt)
 AC_SUBST(QTINCLUDE)
 AC_SUBST(QTLIB)
+AC_SUBST(with_glib)
+AC_SUBST(with_gtk)
 AC_SUBST(with_xplc)
 
 AC_CONFIG_FILES(config.mk)

@@ -44,6 +44,10 @@ ifneq ("$(with_qt)", "no")
 TARGETS += libwvqt.so libwvqt.a
 endif
 
+ifneq ("$(with_gtk)", "no")
+TARGETS += libwvgtk.so libwvgtk.a
+endif
+
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
@@ -144,6 +148,9 @@ libwvfft.so: libwvstreams.so
 libwvqt.a libwvqt.so: $(call objects,qt)
 libwvqt.so: libwvstreams.so
 
+libwvgtk.a libwvgtk.so: $(call objects,gtk)
+libwvgtk.so: libwvstreams.so
+
 libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams uniconf urlget)
 libwvstreams.so: libwvutils.so
 
@@ -161,4 +168,6 @@ libwvoggspeex.so: -logg -lspeex
 libwvfft.so: -lfftw -lrfftw
 
 libwvqt.so: ${QTLIB}
+
+libwvgtk.so: -lgtk
 
