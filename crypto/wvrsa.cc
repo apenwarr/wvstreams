@@ -42,7 +42,7 @@ WvRSAKey::WvRSAKey(struct rsa_st *_rsa, bool priv)
 
 WvRSAKey::WvRSAKey(WvStringParm keystr, bool priv)
 {
-    init(WvString(keystr), priv);
+    init(keystr, priv);
 }
 
 
@@ -63,7 +63,7 @@ WvRSAKey::~WvRSAKey()
 
 bool WvRSAKey::isok() const
 {
-   return rsa && (RSA_check_key(rsa) == 1) && !errstring;   
+   return rsa && !errstring && (!prv || RSA_check_key(rsa) == 1);
 }
 
 

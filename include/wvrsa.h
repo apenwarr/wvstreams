@@ -24,7 +24,6 @@ struct rsa_st;
  */
 class WvRSAKey : public WvError
 {
-    int errnum;
     WvString pub, prv;
 
     void init(WvStringParm keystr, bool priv);
