@@ -55,6 +55,8 @@ void WvStreamClone::flush_internal(time_t msec_timeout)
 
 size_t WvStreamClone::uread(void *buf, size_t size)
 {
+    // we use cloned->read() here, not uread(), since we want the _clone_
+    // to own the input buffer, not the main stream.
     if (cloned)
 	return cloned->read(buf, size);
     else
@@ -64,7 +66,7 @@ size_t WvStreamClone::uread(void *buf, size_t size)
 
 size_t WvStreamClone::uwrite(const void *buf, size_t size)
 {
-    // we use cloned->uwrite() here, not write(), since we want the _clone_
+    // we use cloned->write() here, not uwrite(), since we want the _clone_
     // to own the output buffer, not the main stream.
     if (cloned)
 	return cloned->write(buf, size);
