@@ -135,3 +135,14 @@ WVTEST_MAIN("reconnect callback")
     waitpid(uniconfd_pid, NULL, 0);
 }
 
+
+WVTEST_MAIN("mount point exists")
+{
+    // bug 9769
+    UniConfRoot uniconf("temp:");
+    
+    WVPASS(uniconf["foo"].mount("retry:unix:/tmp/foobar"));
+
+    WVPASS(uniconf["foo"].exists());
+}
+
