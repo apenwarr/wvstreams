@@ -52,8 +52,6 @@ public:
     template <typename T>
     class datumize : public datum
     {
-	datumize(datumize &); // not defined
-
 	void init(const T &t)
 	{
 	    wv_serialize(buf, t);
@@ -61,9 +59,15 @@ public:
 	    this->dptr = (char *)buf.peek(0, buf.used());
 	}
 
+    protected:
+	datumize(datumize<T> &); // not defined
+
+	friend class WvOnDiskHash<K, D, Backend>;
+	friend class WvOnDiskHash<K, D, Backend>::Iter;
+
     public:
 	WvDynBuf buf;
-	
+
 	datumize(const T &t)
             { init(t); }
 
