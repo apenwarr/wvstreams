@@ -157,15 +157,18 @@ private:
     /** Prunes a branch of the watch tree. */
     void prune(UniWatchInfoTree *node);
     
-    /** Internal callback for setbool style notifications. */
-    void setbool_callback(bool *flag, const UniConf &, const UniConfKey &)
-        { *flag = true; }
-
     /** Callback from UniMountTreeGen */
     void gen_callback(const UniConfKey &key, WvStringParm value, void *userdata);
 
 protected:
     UniMountGen mounts;
+    
+public:
+    /** Internal callback for setbool style notifications. */
+    static void setbool_callback(bool *flag, const UniConf &,
+				 const UniConfKey &)
+        { *flag = true; }
+
 };
 
 #endif //__UNICONFROOT_H

@@ -54,7 +54,7 @@ void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag, bool recurse)
 {
     add_callback(flag, key,
 		 BoundCallback<UniConfCallback, bool *>
-		    (this, &UniConfRoot::setbool_callback, flag),
+		    (&UniConfRoot::setbool_callback, flag),
 		 recurse);
 }
 

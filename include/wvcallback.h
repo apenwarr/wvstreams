@@ -347,6 +347,11 @@ public:
         : cb(WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7>(obj, member)),
           param(_param)
         { }
+    template<typename Functor>
+    BoundCallback(const Functor& func, const B _param)
+        : cb(WvCallback<R, B, P1, P2, P3, P4, P5, P6, P7>(func)),
+          param(_param)
+        { }
     R operator()() const
         { return cb(param); }
     R operator()(P1 p1) const
