@@ -690,6 +690,9 @@
 				RelativePath="..\..\include\wvstringtable.h">
 			</File>
 			<File
+				RelativePath="..\..\include\wvstrutils.h">
+			</File>
+			<File
 				RelativePath="..\..\include\wvsubproc.h">
 			</File>
 			<File

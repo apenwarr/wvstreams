@@ -2,7 +2,11 @@
 #include "wvlinklist.h"
 #include "wvfile.h"
 #include "strutils.h"
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 
 /**
  * Functions in strutils.h left untested:
@@ -207,8 +211,8 @@ WVTEST_MAIN("url_encode")
 {
     char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
     const char *desired = "http%3a//www.free_email-account.com/~ponyman/mail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
-
     WVPASS(url_encode(input) == desired);
+
 }
 
 /** Tests backslash_escape().

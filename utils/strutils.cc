@@ -323,7 +323,7 @@ WvString url_encode(WvStringParm stuff)
         }               
         else            
         {               
-            char buf[3];
+            char buf[4];
             sprintf(buf, "%%%02x", stuff[i] & 0xff);
             retval.put(&buf, 3);
         }

@@ -21,7 +21,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=".\;..\;..\..\include"
-				PreprocessorDefinitions="WVSTREAMS_RELEASE=&quot;4.0&quot;;WIN32;_WIN32;WINDOWS;_WINDOWS;_DEBUG;_CONSOLE;strcasecmp=stricmp"
+				PreprocessorDefinitions="WVSTREAMS_RELEASE=&quot;4.0&quot;;WIN32;_WIN32;WINDOWS;_WINDOWS;_DEBUG;_CONSOLE;strcasecmp=stricmp;strncasecmp=_strnicmp"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -120,13 +120,43 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\..\utils\t\basicfd.t.cc">
+			</File>
+			<File
 				RelativePath=".\fake.cpp">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\strutils.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\verstring.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvargs.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvbackslash.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvbase64.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvbuffer.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvbufferunget.t.cc">
 			</File>
 			<File
 				RelativePath="..\..\streams\t\wvdailyevent.t.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\t\wvencoder.t.cc">
+			</File>
+			<File
 				RelativePath="..\..\streams\t\wvencoderstream.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wverror.t.cc">
 			</File>
 			<File
 				RelativePath="..\..\streams\t\wvfdstream.t.cc">
@@ -138,7 +168,25 @@
 				RelativePath="..\..\streams\t\wvgzipstream.t.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\t\wvhashtable.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvhex.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvlinklist.t.cc">
+			</File>
+			<File
 				RelativePath="..\..\streams\t\wvlog.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvmatrix.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvscatterhash.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvsorter.t.cc">
 			</File>
 			<File
 				RelativePath="..\..\streams\t\wvstream.t.cc">
@@ -147,10 +195,34 @@
 				RelativePath="..\..\streams\t\wvstreamclone.t.cc">
 			</File>
 			<File
+				RelativePath="..\..\utils\t\wvstring.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvstringlist.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvstringtable.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvtask.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvtclstring.t.cc">
+			</File>
+			<File
 				RelativePath="..\..\utils\wvtest.cc">
 			</File>
 			<File
 				RelativePath="..\..\wvtestmain.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvtimeutils.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvvector.t.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\t\wvwordwrap.t.cc">
 			</File>
 		</Filter>
 		<Filter

@@ -4,19 +4,20 @@
 WVTEST_MAIN("basic")
 {
     WvString output, desired;
-    char * input[] = {"mahoooey", "", "kablooey", "mafooey"};
+    char * input[] = {"mahoooey", "", "kablooey", "mafooey", 0};
     WvStringList l;
 
-    
     // test fill()
     l.fill(input);
     // test popstr()
+
     for (int i = 0; i < 4; i ++)
     {  
         output = l.popstr();
         if (!WVPASS(output == input[i]))
             printf("   because [%s] != [%s]\n", output.cstr(), desired.cstr());
     }
+
     // should return empty string for no element
     output = l.popstr();
     WVPASS(output == "");
@@ -86,4 +87,5 @@ WVTEST_MAIN("basic")
         if (!WVPASS(output == desired))
             printf("   because [%s] != [%s}\n", output.cstr(), desired.cstr());
     }
+
 }

@@ -141,12 +141,14 @@ WvString rfc822_date(time_t _when = -1);
 /** Returns an RFC1123-compatible date made out of _when */
 WvString rfc1123_date(time_t _when);
 
+#ifndef _WIN32
 /**
  * Similar to crypt(), but this randomly selects its own salt.
  * This function is defined in strcrypt.cc.
  */
 WvString passwd_crypt(const char *str);
 
+#endif
 /**
  * Returns a string with a backslash in front of every non alphanumeric
  * character in s1.
