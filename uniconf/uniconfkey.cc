@@ -4,6 +4,7 @@
  *
  * A UniConf hierarchical key path abstraction.
  */
+#include "wvstream.h"
 #include "uniconfkey.h"
 #include <climits>
 #include <assert.h>
@@ -155,9 +156,10 @@ UniConfKey UniConfKey::removelast(int n) const
 
 UniConfKey UniConfKey::range(int i, int j) const
 {
-    //wverr->print("range %s-%s of \"%s\" == ", i, j, *this);
+    wverr->print("range %s-%s of \"%s\" == ", i, j, *this);
     if (i < 0)
         i = 0;
+    bool abs = !i;
     int n = j - i;
     if (n <= 0)
         return EMPTY;
@@ -170,7 +172,10 @@ UniConfKey UniConfKey::range(int i, int j) const
         if (!first)
             return EMPTY;
     }
-    
+ 
+    if (!abs)
+        first++;  // get rid of the first '/' if the path isn't absolute
+
     // find end of range
     int len = 1; // number of characters in range
     for (;;)
@@ -197,7 +202,7 @@ UniConfKey UniConfKey::range(int i, int j) const
     memcpy(str, first, len);
     str[len] = '\0';
 
-//    wverr->print("\"%s\"\n", result);
+    wverr->print("\"%s\"\n", result);
     return result;
 }
 
