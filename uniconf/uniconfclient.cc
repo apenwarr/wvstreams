@@ -18,7 +18,7 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l, b
     conn->select(15000, true, false, false);
     conn->setcallback(wvcallback(WvStreamCallback, *this, UniConfClient::execute), NULL);
 
-    list->append(conn, false);
+    list->append(conn, true);
 
     waitforsubt = false;
     if (automount)
@@ -197,13 +197,21 @@ void UniConfClient::executereturn(WvString &key, WvConstStringBuffer &fromline)
     {
         dict.add(new waitingdata(key.unique(), value.unique()),
                 true);
-        UniConf *temp = &top->get(key);
-        if (!temp->dirty)
-            temp->obsolete = true;
     }
     else
     {
         data->value = value.unique();
+    }
+
+    UniConf *temp = &top->get(key);
+    if (!temp->dirty)
+    {
+        temp->obsolete = true;
+        temp->notify = true;
+        for (UniConf *par = temp->parent; par != NULL; par = par->parent)
+        {
+            par->child_notify = true;
+        }
     }
 }
 
