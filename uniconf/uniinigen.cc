@@ -247,18 +247,22 @@ void UniIniGen::commit()
 #else
     // try to overwrite the file atomically
     char resolved_path[PATH_MAX];
-    WvString real_filename(filename);
+    WvString real_filename(filename), parent_dir;
 
     if (realpath(filename, resolved_path) != NULL)
 	real_filename = resolved_path;
+    if (realpath(WvString("%s/../", real_filename), resolved_path) != NULL)
+        parent_dir = resolved_path;
 	
     WvString alt_filename("%s.tmp%s", real_filename, getpid());
     WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
     struct stat statbuf;
 
     if (file.geterr()
-	|| lstat(real_filename, &statbuf) == -1
-	|| !S_ISREG(statbuf.st_mode))
+        || lstat(real_filename, &statbuf) == -1
+        || !S_ISREG(statbuf.st_mode)
+        || stat(parent_dir, &statbuf) == -1
+        || statbuf.st_mode & S_ISVTX) // sticky bit set
     {
 	if (file.geterr())
 	    log(WvLog::Warning, "couldn't create '%s'\n", alt_filename);
