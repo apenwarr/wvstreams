@@ -106,7 +106,7 @@ int WvDaemon::run(int argc, char **argv)
             {
                 WvSyslog syslog(name, false);
                 
-                ::chdir("/tmp");
+                ::chdir("/");
                 
                 ::umask(0);
                 
