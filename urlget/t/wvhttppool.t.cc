@@ -130,7 +130,7 @@ void listener_callback(WvStream &s, void *userdata)
     WvTCPConn *newconn = l.accept();
     printf("Incoming connection (%u)\n", http_conns);
     newconn->setcallback(tcp_callback, NULL);
-    list.append(newconn, false, "incoming http conn");
+    list.append(newconn, true, "incoming http conn");
     expecting_request = true;
 }
 
