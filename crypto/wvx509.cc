@@ -66,7 +66,7 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
     {
 	char buffer[1024];
 
-	X509_NAME_oneline(X509_get_subject_name(cert), buffer, 1024);
+	X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
 	buffer[sizeof(buffer)-1] = 0;
 	dname = buffer;
 	
@@ -85,7 +85,7 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
 
             tmppub.setsize(size * 2 + 1);
 	    ::hexify(tmppub.edit(), keybuf, size);
-	    rsa = new WvRSAKey(tmppub,false);
+	    rsa = new WvRSAKey(tmppub, false);
 
 	    delete[] keybuf;
 	}
@@ -113,7 +113,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
     {
 	char buffer[1024];
 
-    	X509_NAME_oneline(X509_get_subject_name(cert), buffer, 1024);
+    	X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
     	buffer[sizeof(buffer)-1] = 0;
     	dname = buffer;
     }
@@ -165,7 +165,7 @@ WvX509Mgr::~WvX509Mgr()
 
 
 // returns some approximation of the server's fqdn, or an empty string.
-static WvString set_name_entry(X509_NAME *name, WvString dn)
+static WvString set_name_entry(X509_NAME *name, WvStringParm dn)
 {
     WvString fqdn(""), force_fqdn("");
     X509_NAME_ENTRY *ne = NULL;
@@ -243,7 +243,7 @@ static WvString set_name_entry(X509_NAME *name, WvString dn)
 
 void WvX509Mgr::create_selfsigned()
 {
-    EVP_PKEY *pk;
+    EVP_PKEY *pk = NULL;
     X509_NAME *name = NULL;
     X509_EXTENSION *ex = NULL;
 
@@ -278,7 +278,7 @@ void WvX509Mgr::create_selfsigned()
 	return;
     }
 
-    // Assign RSA Key from WvKey into stupid package that OpenSSL needs
+    // Assign RSA Key from WvRSAKey into stupid package that OpenSSL needs
     if (!EVP_PKEY_assign_RSA(pk, rsa->rsa))
     {
 	seterr("Error adding RSA keys to certificate");
@@ -296,7 +296,7 @@ void WvX509Mgr::create_selfsigned()
     X509_gmtime_adj(X509_get_notBefore(cert), 0);
 
     // Now + 10 years... should be shorter, but since we don't currently
-    // Have a set of routines to refresh the certificates, make it
+    // have a set of routines to refresh the certificates, make it
     // REALLY long.
     X509_gmtime_adj(X509_get_notAfter(cert), (long)60*60*24*3650);
     X509_set_pubkey(cert, pk);
@@ -315,7 +315,7 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
-    debug("Setting netscape SSL server name extension to %s\n", serverfqdn);
+    debug("Setting Netscape SSL server name extension to %s\n", serverfqdn);
 
     // Set the netscape server name extension to our server name
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_ssl_server_name,
@@ -381,11 +381,11 @@ WvString WvX509Mgr::certreq()
     EVP_PKEY *pk;
     X509_NAME *name = NULL;
     X509_REQ *certreq;
-    WvString nil;
 
     FILE *stupid = file_hack_start();
     
     assert(rsa);
+    assert(dname);
 
     // double check RSA key
     if (RSA_check_key(rsa->rsa) == 1)
@@ -393,20 +393,20 @@ WvString WvX509Mgr::certreq()
     else
     {
 	seterr("RSA Key is bad!\n");
-	return nil;
+	return WvString::null;
     }
 
     if ((pk=EVP_PKEY_new()) == NULL)
     {
         seterr("Error creating key handler for new certificate");
-        return nil;
+        return WvString::null;
     }
     
     if ((certreq=X509_REQ_new()) == NULL)
     {
         seterr("Error creating new PKCS#10 object");
 	EVP_PKEY_free(pk);
-        return nil;
+        return WvString::null;
     }
 
     WvRSAKey rsa2(*rsa);
@@ -415,7 +415,7 @@ WvString WvX509Mgr::certreq()
         seterr("Error adding RSA keys to certificate");
 	X509_REQ_free(certreq);
 	EVP_PKEY_free(pk);
-        return nil;
+        return WvString::null;
     }
     
     X509_REQ_set_version(certreq, 0); /* version 1 */
@@ -435,7 +435,7 @@ WvString WvX509Mgr::certreq()
 	seterr("Could not self sign the request");
 	X509_REQ_free(certreq);
 	EVP_PKEY_free(pk);
-        return WvString("");
+        return WvString::null;
     }
 
     int verify_result = X509_REQ_verify(certreq, pk);
@@ -444,7 +444,7 @@ WvString WvX509Mgr::certreq()
 	seterr("Self Signed Request failed!");
 	X509_REQ_free(certreq);
 	EVP_PKEY_free(pk);
-        return WvString("");
+        return WvString::null;
     }
     else
     {
@@ -506,9 +506,9 @@ bool WvX509Mgr::test()
 }
 
 
-void WvX509Mgr::unhexify(WvString encodedcert)
+void WvX509Mgr::unhexify(WvStringParm encodedcert)
 {
-    int hexbytes = strlen((const char *)encodedcert);
+    int hexbytes = strlen(encodedcert.cstr());
     int bufsize = hexbytes/2;
     unsigned char *certbuf = new unsigned char[bufsize];
     unsigned char *cp = certbuf;
@@ -529,7 +529,7 @@ void WvX509Mgr::unhexify(WvString encodedcert)
     }
     
     if (!cert)
-	seterr("certificate decode failed!");
+	seterr("X.509 certificate decode failed!");
     
     delete[] certbuf;
 }
@@ -581,7 +581,7 @@ bool WvX509Mgr::validate()
 }
 
 
-bool WvX509Mgr::signedbyCAinfile(WvString certfile)
+bool WvX509Mgr::signedbyCAinfile(WvStringParm certfile)
 {
     X509_STORE *cert_ctx = NULL;
     X509_STORE_CTX csc;
@@ -595,13 +595,17 @@ bool WvX509Mgr::signedbyCAinfile(WvString certfile)
 	return false;
     }
 
-    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
-    if (lookup == NULL) abort();  
+    lookup=X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
+    if (lookup == NULL)
+    {
+	seterr("Can't add lookup method...\n");
+	return false;
+    }  
 
-    if (!X509_LOOKUP_load_file(lookup,certfile,X509_FILETYPE_PEM))
-        X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
+    if (!X509_LOOKUP_load_file(lookup, certfile, X509_FILETYPE_PEM))
+        X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
 
-    X509_STORE_CTX_init(&csc,cert_ctx,cert,NULL);
+    X509_STORE_CTX_init(&csc, cert_ctx, cert, NULL);
     result = X509_verify_cert(&csc);
     X509_STORE_CTX_cleanup(&csc);
     
@@ -614,7 +618,7 @@ bool WvX509Mgr::signedbyCAinfile(WvString certfile)
 }
 
 
-bool WvX509Mgr::signedbyCAindir(WvString certdir)
+bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
 {
     WvDirIter i(certdir,false);
     for (i.rewind(); i.next(); )
@@ -632,7 +636,7 @@ bool WvX509Mgr::isinCRL()
 }
 
 
-WvString WvX509Mgr::encode(DumpMode mode)
+WvString WvX509Mgr::encode(const DumpMode mode)
 {
     FILE *stupid;
     const EVP_CIPHER *enc;
@@ -675,7 +679,7 @@ WvString WvX509Mgr::encode(DumpMode mode)
     }
 }
 
-void WvX509Mgr::decode(DumpMode mode)
+void WvX509Mgr::decode(const DumpMode mode)
 {
     // Let the fun begin... ;)
 
@@ -683,7 +687,7 @@ void WvX509Mgr::decode(DumpMode mode)
 
 void WvX509Mgr::write_p12(WvStringParm filename)
 {
-    debug("Dumping RSA Key and X509 Cert to PKCS12 structure\n");
+    debug("Dumping RSA Key and X509 Cert to PKCS12 structure.\n");
 
     FILE *fp = fopen(filename, "w");
     
@@ -698,7 +702,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 	EVP_PKEY *pk = EVP_PKEY_new();
 	if (!pk)
 	{
-	    seterr("Unable to create PKEY object\n");
+	    seterr("Unable to create PKEY object.\n");
 	    return;
 	}
 	
@@ -708,7 +712,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 	    
 	    if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
 	    {
-		seterr("Error setting RSA keys");
+		seterr("Error setting RSA keys.\n");
 		return;
 	    }
 	    else
@@ -723,7 +727,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 		}
 		else
 		{
-		    seterr("Unable to create PKCS12 object\n");
+		    seterr("Unable to create PKCS12 object.\n");
 		    return;
 		}
 	    }
@@ -761,7 +765,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	    EVP_PKEY *pk = EVP_PKEY_new();
 	    if (!pk)
 	    {
-		seterr("Unable to create PKEY object\n");
+		seterr("Unable to create PKEY object.\n");
 		return;
 	    }
 	    
@@ -777,7 +781,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	    // Now that we have both, check to make sure that they match
 	    if (!rsa || !cert || test())
 	    {
-		seterr("Could not fill in RSA and Cert with matching values... \n");
+		seterr("Could not fill in RSA and Cert with matching values.\n");
 		return;
 	    }
 	    // We don't free pk here because the WvRSAKey object now 
@@ -785,13 +789,13 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	}
 	else
 	{
-	    seterr("Read in of PKCS12 file '%s' failed - aborting\n", filename);
+	    seterr("Read in of PKCS12 file '%s' failed - aborting!\n", filename);
 	    return;
 	}
     }
     else
     {
-	seterr("No Password specified for PKCS12 file - aborting\n");
-	return;	
+	seterr("No Password specified for PKCS12 file - aborting!\n");
+	return;
     }
 }

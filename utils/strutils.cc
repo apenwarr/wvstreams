@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-
+#include <unistd.h>
+#include <errno.h>
 
 char *terminate_string(char *string, char c)
 /**********************************************/
@@ -218,7 +219,7 @@ WvString web_unescape(const char *str)
     const char *iptr;
     char *optr;
     char *idx1, *idx2;
-    static char hex[] = "0123456789ABCDEF";
+    static const char hex[] = "0123456789ABCDEF";
     WvString in, intmp(str), out;
  
     in = trim_string(intmp.edit());
@@ -450,8 +451,7 @@ WvString rfc1123_date(time_t t)
 }
 
 
-int lookup(const char *str, const char * const *table,
-    bool case_sensitive)
+int lookup(const char *str, const char * const *table, bool case_sensitive)
 {
     for (int i = 0; table[i]; ++i)
     {
@@ -468,4 +468,40 @@ int lookup(const char *str, const char * const *table,
         return i;
     }
     return -1;
+}
+
+WvString hostname()
+{
+    int maxlen = 0;
+    for(;;)
+    {
+        maxlen += 80;
+        char *name = new char[maxlen];
+        int result = gethostname(name, maxlen);
+        if (result == 0)
+        {
+            WvString hostname(name);
+            delete [] name;         
+            return hostname;
+        }
+        assert(errno == EINVAL);
+    }
+}
+
+WvString domainname() 
+{
+    int maxlen = 0;
+    for(;;)
+    {
+        maxlen += 128;
+        char *name = new char[maxlen];
+        int result = getdomainname(name, maxlen);
+        if (result == 0)
+        {
+            WvString domainname(name);
+            delete [] name;
+            return domainname;
+        }
+        assert(errno == EINVAL);
+    }
 }

@@ -3,10 +3,12 @@
 #include "wvsslstream.h"
 #include "wvx509.h"
 #include "wvstreamlist.h"
+#include "strutils.h"
+#include "wvcrash.h"
 #include <signal.h>
 
 volatile bool want_to_die = false;
-WvX509Mgr *x509cert;
+WvX509Mgr *x509cert = NULL;
 
 void sighandler_die(int sig)
 {
@@ -40,6 +42,7 @@ void tcp_incoming(WvStream &_listener, void *userdata)
     
     if (s)
     {
+	assert(x509cert);
 	WvSSLStream *sslsrvr = new WvSSLStream(s, x509cert, false, true);
 	l->append(sslsrvr, true, "ss tcp");
 	sslsrvr->setcallback(bounce_to_list, l);
@@ -49,19 +52,19 @@ void tcp_incoming(WvStream &_listener, void *userdata)
  
 void setupcert()
 {
-    char hname[32];
-    char domname[128];
-    WvString fqdn = "";   
-    gethostname(hname, 32);
-    getdomainname(domname, 128);
-    fqdn.append(hname);
-    fqdn.append(".");  
-    fqdn.append(domname);
-    WvString dName("cn=%s,dc=%s", fqdn, domname);
+    WvString fqdn;
+    WvString hname = hostname();
+    WvString domname = domainname();
+    if (!!domname)
+        fqdn = WvString("%s.%s", hname, domname);
+    else
+	fqdn = hname;      
+    
+    WvString dName = encode_hostname_as_DN(fqdn);
     x509cert = new WvX509Mgr(dName, 1024);
     if (!x509cert->isok())
     {
-	fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr());
+	wverr->print("Error: %s\n", x509cert->errstr());
 	want_to_die = true;
     }
 }
@@ -69,6 +72,12 @@ void setupcert()
 
 int main(int argc, char **argv)
 {
+    // Set up WvCrash
+    wvcrash_setup(argv[0]);
+    
+    // make sure electric fence works
+    free(malloc(1));
+
     WvLog log("SSL-Server", WvLog::Info);
     WvStreamList l;
     
@@ -79,10 +88,10 @@ int main(int argc, char **argv)
     if (argc >= 2)
     {
 	WvString dName = argv[1];
-    	x509cert = new WvX509Mgr(dName,1024);
+    	x509cert = new WvX509Mgr(dName, 1024);
     	if (!x509cert->isok())
     	{
-	    fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr());
+	    wverr->print("Error: %s\n", x509cert->errstr());
 	    want_to_die = true;
     	}	
     } 
@@ -90,6 +99,7 @@ int main(int argc, char **argv)
     {
 	setupcert();
     }
+
     WvTCPListener tcplisten("0.0.0.0:5238");
     tcplisten.setcallback(tcp_incoming, &l);
     

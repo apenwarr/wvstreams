@@ -230,4 +230,8 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
  */
 WvString undupe(WvStringParm s, char c);
 
+WvString hostname();
+
+WvString domainname();
+
 #endif // __STRUTILS_H
