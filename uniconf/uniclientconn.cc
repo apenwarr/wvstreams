@@ -114,6 +114,8 @@ UniClientConn::Command UniClientConn::readcmd()
         // extract command, leaving the remainder in payloadbuf
         payloadbuf.reset(msg);
         WvString cmd(readarg());
+        if (cmd.isnull())
+            return INVALID;
 
         for (int i = 0; i < NUM_COMMANDS; ++i)
             if (strcasecmp(cmdinfos[i].name, cmd.cstr()) == 0)
