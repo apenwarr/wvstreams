@@ -5,6 +5,7 @@ enable_warnings:=@enable_warnings@
 enable_fatal_warnings:=@enable_fatal_warnings@
 enable_rtti:=@enable_rtti@
 enable_exceptions:=@enable_exceptions@
+enable_efence:=@enable_efence@
 INSTALL:=@INSTALL@
 INSTALL_PROGRAM:=@INSTALL_PROGRAM@
 INSTALL_DATA:=@INSTALL_DATA@
