@@ -213,6 +213,11 @@ bool WvFdStream::pre_select(SelectInfo &si)
 {
     bool result = WvStream::pre_select(si);
     
+#if 0
+    fprintf(stderr, "%d/%d wr:%d ww:%d wx:%d inh:%d\n", rfd, wfd,
+	    si.wants.readable, si.wants.writable, si.wants.isexception,
+	    si.inherit_request);
+#endif
     if (isselectable(rfd))
     {
 	if (si.wants.readable && (rfd >= 0))

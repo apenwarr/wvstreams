@@ -218,6 +218,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         
 	ERR_clear_error();
         int result = SSL_read(ssl, data, avail);
+	// debug("<< SSL_read result %s for %s bytes (wanted %s)\n",
+	//      result, avail, len);
         if (result <= 0)
         {
 	    error_t err = errno;
@@ -227,7 +229,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-//                    debug("<< SSL_read() needs to wait for readable.\n");
+		    // debug("<< SSL_read() needs to wait for readable.\n");
                     break; // wait for later
                     
                 case SSL_ERROR_NONE:
@@ -235,10 +237,6 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                     
 	        case SSL_ERROR_ZERO_RETURN:
 		    debug("<< EOF: zero return\n");
-		
-		    // signal that we want to be closed
-		    // after we return our buffer
-		    autoclose_time = time(NULL);
 		
 		    // don't do this if we're returning nonzero!
 		    if (!total) noread();
@@ -249,11 +247,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 		    {
 			if (result == 0)
 			{
-			    debug("<< EOF: syscall error (%s, %s)\n",
-				  isok(), cloned && cloned->isok());
-			    // signal that we want to be closed
-			    // after we return our buffer
-			    autoclose_time = time(NULL);
+			    debug("<< EOF: syscall error (%s, %s) total=%s\n",
+				  isok(), cloned && cloned->isok(), total);
 			    
 			    // don't do this if we're returning nonzero!
 			    if (!total) noread();
@@ -369,6 +364,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
                     break; // no error, but can't make progress
                     
                 case SSL_ERROR_ZERO_RETURN:
+		    debug(">> SSL_write zero return: EOF\n");
                     close(); // EOF
                     break;
                     
@@ -405,7 +401,8 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 
 void WvSSLStream::close()
 {
-    debug("Closing SSL connection.\n");
+    debug("Closing SSL connection (ok=%s,sr=%s,sw=%s,child=%s).\n",
+	  isok(), stop_read, stop_write, cloned && cloned->isok());
     
     if (ssl)
     {

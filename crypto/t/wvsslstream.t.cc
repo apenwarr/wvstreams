@@ -59,7 +59,7 @@ WVTEST_MAIN("crypto basics")
     s2->nowrite();
     s1->print("foostring");
     run(list, s1, s2);
-    s1->close();
+    s1->cloned->close();
     list.unlink(s1); // auto_prune disabled, so we need to do this by hand
     run(list, NULL, s2);
     
@@ -68,6 +68,7 @@ WVTEST_MAIN("crypto basics")
     WVPASSEQ(buf.getstr(), "foostring");
     WVPASS(s2->isok());
     run(list, NULL, s2);
+    WVPASS(s2->isok());
     
     WVPASSEQ(s2->read(buf, 1024), 0);
     WVFAIL(s2->isreadable());

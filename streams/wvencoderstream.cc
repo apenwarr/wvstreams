@@ -64,20 +64,6 @@ bool WvEncoderStream::flush_internal(time_t msec_timeout)
 {
     flush_write();
     return WvStreamClone::flush_internal(msec_timeout);
-    
-#if 0 // somebody else's job!!
-    // flush underlying stream
-    while (isok() && writeoutbuf.used())
-    {
-        WvEncoderStream::flush(msec_timeout);
-        if (!msec_timeout || !select(msec_timeout, false, true))
-        {
-            if (msec_timeout >= 0)
-                break;
-        }
-    }
-    return !writeoutbuf.used();
-#endif
 }
 
 
@@ -117,6 +103,8 @@ bool WvEncoderStream::finish_write()
 
 void WvEncoderStream::pull(size_t size)
 {
+    // fprintf(stderr, "encoder pull %d\n", size);
+    
     // pull a chunk of unencoded input
     bool finish = false;
     if (cloned)
@@ -189,7 +177,7 @@ bool WvEncoderStream::push(bool flush, bool finish)
 
 size_t WvEncoderStream::uread(void *buf, size_t size)
 {
-    //fprintf(stderr, "encstream::uread(%d)\n", size);
+    // fprintf(stderr, "encstream::uread(%d)\n", size);
     if (size && readoutbuf.used() == 0)
 	pull(min_readsize > size ? min_readsize : size);
     size_t avail = readoutbuf.used();
