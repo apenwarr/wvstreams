@@ -25,6 +25,12 @@ UniConfDaemonConn::~UniConfDaemonConn()
     }
 }
 
+void UniConfDaemonConn::dook(const WvString cmd, const WvString key)
+{
+    if (this->isok())
+        print("OK %s %s\n", cmd, key); 
+}
+
 void UniConfDaemonConn::doget(WvString key)
 {
     dook("get", key);
@@ -35,19 +41,24 @@ void UniConfDaemonConn::doget(WvString key)
     else
         response = WvString("RETN %s \\0\n", wvtcl_escape(key));
 
-    print(response);
-    source->events.add(wvcallback(UniConfCallback,
+    if (this->isok())
+    {
+        print(response);
+        source->events.add(wvcallback(UniConfCallback,
                 *source, UniConfDaemon::keychanged), this, key);
-    keys.append(new WvString(key), true);
+        keys.append(new WvString(key), true);
+    }
 }
 
 void UniConfDaemonConn::dosubtree(WvString key)
 {
     UniConf *nerf = &source->mainconf[key];
+    WvString send("SUBT %s ", wvtcl_escape(key));
+    
     dook("subt", key);
+    
     if (nerf)
     {
-        WvString send("SUBT %s ", wvtcl_escape(key));
         UniConf::Iter i(*nerf);
         for (i.rewind(); i.next();)
         {
@@ -58,22 +69,22 @@ void UniConfDaemonConn::dosubtree(WvString key)
             source->events.add(wvcallback(UniConfCallback,
                 *source, UniConfDaemon::keychanged), this, key);
        }
-        send.append("\n");
+    }
+   
+    send.append("\n");
+    if (this->isok())
         print(send);
-    }
-    else
-    {
-        print(WvString("SUBT %s\n", key));
-    }
 }
 
 void UniConfDaemonConn::dorecursivesubtree(WvString key)
 {
-    dook("rsub", key);
     UniConf *nerf = &source->mainconf[key];
+    WvString send("SUBT %s ", wvtcl_escape(key));
+    
+    dook("rsub", key);
+    
     if (nerf)
     {
-        WvString send("SUBT %s ", wvtcl_escape(key));
         UniConf::RecursiveIter i(*nerf);
         for (i.rewind(); i.next();)
         {
@@ -84,21 +95,18 @@ void UniConfDaemonConn::dorecursivesubtree(WvString key)
             source->events.add(wvcallback(UniConfCallback,
                 *source, UniConfDaemon::keychanged), this, key);
         }
-        send.append("\n");
+    }
+    send.append("\n");
+    if (this->isok())
         print(send);
-    }
-    else
-    {
-        print(WvString("SUBT %s\n", key));
-    }
 }
 
 void UniConfDaemonConn::doset(WvString key, WvConstStringBuffer &fromline)
 {
-    dook("set", key);
     WvString newvalue = wvtcl_getword(fromline);
     source->mainconf[key] = wvtcl_unescape(newvalue);
     source->keymodified = true;
+    dook("set", key);
 }
 
 void UniConfDaemonConn::execute()
@@ -119,7 +127,8 @@ void UniConfDaemonConn::execute()
             // check the command
 	    if (cmd == "help")
 	    {
-	    	print("OK I know how to: help, get, subt, quit\n");
+                if (this->isok())
+	    	    print("OK I know how to: help, get, subt, quit\n");
 		return;	    
 	    }
             if (cmd == "quit")

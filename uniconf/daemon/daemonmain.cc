@@ -25,6 +25,7 @@ int main(int argc, char **argv)
 {
     signal(SIGINT,  sighandler_die);
     signal(SIGTERM, sighandler_die);
+    signal(SIGPIPE, SIG_IGN);
     wvcrash_setup(argv[0]);
     daem = new UniConfDaemon();
 

@@ -18,7 +18,7 @@ protected:
     void dosubtree(WvString key);
     void dorecursivesubtree(WvString key);
     void doset(WvString key, WvConstStringBuffer &fromline);
-    void dook(WvString cmd, WvString key) { print("OK %s %s\n", cmd, key); }
+    void dook(const WvString cmd, const WvString key);
     WvLog log;
     UniConfDaemon *source;
     WvStringList keys;
