@@ -113,8 +113,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader1:
-	line = getline(0);
-	line = trim_string(line);
+	line = trim_string(cloned->getline(0));
 	if (line) // got response code line
 	{
 	    if (strncmp(line, "HTTP/", 5))
@@ -136,10 +135,9 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	break;
 	
     case ReadHeader:
-	line = getline(0);
+	line = trim_string(cloned->getline(0));
 	if (line)
 	{
-	    line = trim_string(line);
 	    if (!line[0])
 		state = ReadData;	// header is done
 	    else
