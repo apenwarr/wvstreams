@@ -98,15 +98,18 @@ WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
 {
     WvConfigEntryEmu* entry = entries[s];
 
-    if (!entry && uniconf[s].exists())
+    if (uniconf[s].exists())
     {
-	entry = new WvConfigEntryEmu(s, uniconf[s].get());
-	entries.add(entry, true);
+	if (!entry)
+	{
+	    entry = new WvConfigEntryEmu(s, uniconf[s].get());
+	    entries.add(entry, true);
+	}
+	else
+	    entry->value = uniconf[s].get();
     }
     else
-    {
-	entry->value = uniconf[s].get();
-    }
+	entry = NULL;
 
     return entry;
 }
