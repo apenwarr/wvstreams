@@ -214,8 +214,7 @@ public:
      */
     T *first() const
         {
-	    assert(!isempty());
-	    return (T*)head.next->data;
+            return (T*)head.next->data;
 	}
 
     /**
