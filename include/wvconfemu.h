@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -7,9 +7,83 @@
 #ifndef __WVCONFEMU_H
 #define __WVCONFEMU_H
 
-#if 0
+#if 1
 
-#include "unievents.h"
+#ifndef __WVCONF_H
+#define WvConf WvConfEmu
+#define WvConfigSection WvConfigSectionEmu
+#define WvConfigEntry WvConfigEntryEmu
+#endif
+
+#include "uniconfroot.h"
+#include "wvstream.h"
+
+class WvConfigSection;
+
+class WvConfEmu
+{
+private:
+    UniConf& uniconf;
+public:
+    WvConfEmu(UniConf& _uniconf):
+	uniconf(_uniconf)
+    {}
+    void zap()
+    {
+	uniconf.remove();
+    }
+    void load_file(WvStringParm filename)
+    {
+	UniConfRoot new_uniconf(WvString("ini:%s", filename));
+
+	new_uniconf.copy(uniconf, true);
+    }
+    WvConfigSectionEmu *operator[] (WvStringParm sect)
+    {
+	return NULL;
+	// this is what was below
+	//return (WvConfigSection *)h.find_make(sect);
+    }
+    void add_setbool(bool *b, WvStringParm _section, WvStringParm _entry)
+    {
+	WvString section(_section);
+	WvString entry(_entry);
+
+	if (!section)
+	    section = "*";
+
+	if (!entry)
+	    entry = "*";
+
+	if (uniconf[section][entry].isnull())
+	    fprintf(stderr, "this sucks\n");
+
+	uniconf[section][entry].add_setbool(b, false);
+    }
+    const char *get(WvStringParm section, WvStringParm entry,
+		    const char *def_val = NULL)
+    {
+	return uniconf[section][entry].get(def_val);
+    }
+    void setint(WvStringParm section, WvStringParm entry, int value)
+    {
+	uniconf[section][entry].setint(value);
+    }
+    void set(WvStringParm section, WvStringParm entry,
+	     const char *value)
+    {
+	uniconf[section][entry].set(value);
+    }
+};
+
+class WvConfigSectionEmu
+{
+public:
+};
+
+#endif
+
+#if 0
 
 class WvConfigEntryEmu;
 class WvConfigSectionEmu;

@@ -5,9 +5,10 @@
  * Test program for the WvConf emulation in UniConf.
  */
 
-//#define USE_WVCONFEMU
+#define USE_WVCONFEMU
 
 #ifdef USE_WVCONFEMU
+# include "uniconfroot.h"
 # include "wvconfemu.h"
 #else
 # include "wvconf.h"
@@ -20,11 +21,12 @@ int main()
     bool c1 = false, c2 = false, c3 = false;
     WvLog log("emutest", WvLog::Info);
 #ifdef USE_WVCONFEMU
-    assert(0);
+    UniConfRoot uniconf("ini:test2.ini.new");
+    WvConfEmu cfg(uniconf);
 #else
     WvConf cfg("test2.ini.new");
 #endif
-    
+
     cfg.zap();
     cfg.load_file("test2.ini");
     
@@ -38,6 +40,7 @@ int main()
     log("Test2b: '%s'\n", cfg.get("Users", "Zebmaster", NULL));
 
     log("Single section dump:\n");
+#ifndef USE_WVCONFEMU    
     WvConfigSection *sect = cfg["tunnel vision routes"];
     if (sect)
     {
@@ -45,9 +48,11 @@ int main()
 	for (i.rewind(); i.next(); )
 	    log("  Found: '%s' = '%s'\n", i->name, i->value);
     }
+#endif
     log("Section dump done.\n");
     
     log("All-section dump:\n");
+#ifndef USE_WVCONFEMU    
     WvConfigSectionList::Iter i(cfg);
     for (i.rewind(); i.next(); )
     {
@@ -58,6 +63,7 @@ int main()
 	if (i2.cur())
 	    log("   First entry: '%s'='%s'\n", i2->name, i2->value);
     }
+#endif
     log("All-section dump done.\n");
 
     // not interesting
