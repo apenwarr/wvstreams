@@ -197,7 +197,13 @@ WvUrl::operator WvString () const
         protostr = WvString("%s:", proto);
     WvString userstr("");
     if (user && user.len() != 0)
-        userstr = WvString("%s@", user);
+    {
+        userstr = WvString("%s", user);
+	if (password && password.len() != 0)
+	    userstr.append(WvString(":%s@", password));
+	else
+	    userstr.append("@");
+    }
     WvString portstr("");
     if (port && port != get_default_port(proto))
 	portstr = WvString(":%s", port);
