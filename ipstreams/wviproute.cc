@@ -88,7 +88,7 @@ static char *next_col(char *str)
 /////////////////////////////////////// WvIPRouteList
 
 
-WvIPRouteList::WvIPRouteList() : log("Route Table")
+WvIPRouteList::WvIPRouteList() : log("Route Table", WvLog::Debug)
 {
     // nothing else to do
 }
@@ -133,22 +133,19 @@ void WvIPRouteList::set_kernel()
     old_kern.get_kernel();
     
     Iter oi(old_kern), ni(*this);
+    
+    // FIXME!!
+    // Kernel 2.1.131: deleting a route with no gateway causes the kernel
+    // to delete the _first_ route to that network, regardless of its
+    // gateway.  This is probably to make things like "route del default"
+    // more convenient.  However, it messes up if we add routes first, then
+    // delete routes.
+    //
+    // Except for this problem, it makes more sense to add and then delete,
+    // since we avoid races (we never completely remove a route to a host
+    // we should be routing to).
 
-    // first, add any brand new routes.
-    for (ni.rewind(); ni.next(); )
-    {
-	for (oi.rewind(); oi.next(); )
-	    if (oi() == ni()) break;
-	
-	if (!oi.cur()) // hit end of list without finding a match
-	{
-	    WvInterface i(ni().ifc);
-	    log("Add %s\n", ni());
-	    i.addroute(ni().ip, ni().gateway, ni().metric);
-	}
-    }
-
-    // now delete outdated routes.
+    // delete outdated routes.
     for (oi.rewind(); oi.next(); )
     {
 	if (oi().metric == 99) continue; // "magic" metric for manual override
@@ -161,6 +158,20 @@ void WvIPRouteList::set_kernel()
 	    WvInterface i(oi().ifc);
 	    log("Del %s\n", oi());
 	    i.delroute(oi().ip, oi().gateway, oi().metric);
+	}
+    }
+
+    // add any new routes.
+    for (ni.rewind(); ni.next(); )
+    {
+	for (oi.rewind(); oi.next(); )
+	    if (oi() == ni()) break;
+	
+	if (!oi.cur()) // hit end of list without finding a match
+	{
+	    WvInterface i(ni().ifc);
+	    log("Add %s\n", ni());
+	    i.addroute(ni().ip, ni().gateway, ni().metric);
 	}
     }
 }
