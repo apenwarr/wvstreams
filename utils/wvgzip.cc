@@ -2,16 +2,15 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * gzip encoder/decoders based on zlib.
+ * Gzip encoder/decoder based on zlib.
  */
 #include "wvgzip.h"
 #include <zlib.h>
-
 #include <assert.h>
 
 #define ZBUFSIZE 10240
 
-WvGzip::WvGzip(GzipMode _mode) :
+WvGzipEncoder::WvGzipEncoder(GzipMode _mode) :
     okay(true), tmpbuf(ZBUFSIZE), mode(_mode)
 {
     zstr = new z_stream;
@@ -37,7 +36,7 @@ WvGzip::WvGzip(GzipMode _mode) :
 }
 
 
-WvGzip::~WvGzip()
+WvGzipEncoder::~WvGzipEncoder()
 {
     if (mode == Compress)
         deflateEnd(zstr);
@@ -48,13 +47,13 @@ WvGzip::~WvGzip()
 }
 
 
-bool WvGzip::isok() const
+bool WvGzipEncoder::isok() const
 {
     return okay;
 }
 
 
-bool WvGzip::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvGzipEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     if (! okay) return false;
     assert(zstr->avail_in == 0);

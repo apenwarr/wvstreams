@@ -11,13 +11,13 @@
 
 struct z_stream_s;
 
-class WvGzip : public WvEncoder
+class WvGzipEncoder : public WvEncoder
 {
 public:
     enum GzipMode { Compress, Decompress };
     
-    WvGzip(GzipMode _mode);
-    virtual ~WvGzip();
+    WvGzipEncoder(GzipMode _mode);
+    virtual ~WvGzipEncoder();
     
     virtual bool isok() const;
     virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);

@@ -107,10 +107,10 @@ int main(int argc, char **argv)
     switch (mode)
     {
     case Gzip:
-	enc = new WvGzip(WvGzip::Compress);
+	enc = new WvGzipEncoder(WvGzipEncoder::Compress);
 	break;
     case Gunzip:
-	enc = new WvGzip(WvGzip::Decompress);
+	enc = new WvGzipEncoder(WvGzipEncoder::Decompress);
 	break;
     case XOR:
 	enc = new WvXOR(xor_key, strlen(xor_key));
