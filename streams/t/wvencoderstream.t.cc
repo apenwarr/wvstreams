@@ -505,6 +505,16 @@ WVTEST_MAIN("encoderstream eof3")
 }
 
 
+WVTEST_MAIN("encoderstream eof4")
+{
+    WvStream *x = new WvStream;
+    WvEncoderStream s(x);
+    WVPASS(s.isok());
+    x->close();
+    WVFAIL(s.isok());
+}
+
+
 WVTEST_MAIN("add filters midstream")
 {
     WvEncoderStream s(new ECountStream(new WvLoopback));

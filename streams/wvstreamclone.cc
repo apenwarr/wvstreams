@@ -69,7 +69,7 @@ void WvStreamClone::nowrite()
 
 void WvStreamClone::close()
 {
-    //fprintf(stderr, "%p closing substream %p\n", this, cloned);
+    // fprintf(stderr, "%p closing substream %p\n", this, cloned);
     if (cloned)
 	cloned->setclosecallback(0); // prevent recursion!
     WvStream::close();

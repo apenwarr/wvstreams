@@ -209,3 +209,25 @@ WVTEST_MAIN("outbuf_limit")
     WVPASS(fdstream1.iswritable());
 }
 
+
+static void myclosecb(int *i, WvStream &s)
+{
+    (*i)++;
+}
+
+WVTEST_MAIN("closecallback")
+{
+    WvFdStream s(dup(0), dup(1));
+    int i = 0;
+    s.setclosecallback(
+	       WvBoundCallback<IWvStreamCallback,int*>(&myclosecb, &i));
+    
+    WVPASS(s.isok());
+    s.nowrite();
+    WVPASS(s.isok());
+    WVPASSEQ(i, 0);
+    s.noread();
+    s.runonce(0);
+    WVFAIL(s.isok());
+    WVPASSEQ(i, 1);
+}

@@ -34,7 +34,7 @@ WvString WvEncoder::geterror() const
 
 
 bool WvEncoder::encode(WvBuf &inbuf, WvBuf &outbuf,
-    bool flush, bool _finish)
+		       bool flush, bool _finish)
 {
     // deliberately not using isok() and isfinished() here
     bool success = okay && !finished && (inbuf.used() != 0 || flush);

@@ -59,7 +59,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
     ctx = NULL;
     ssl = NULL;
     meth = NULL;
-    sslconnected = false;
+    sslconnected = ssl_stop_read = ssl_stop_write = false;
     
     wvssl_init();
     
@@ -233,12 +233,15 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                 case SSL_ERROR_NONE:
                     break; // no error, but can't make progress
                     
-                case SSL_ERROR_ZERO_RETURN:
+	        case SSL_ERROR_ZERO_RETURN:
 		    debug("<< EOF: zero return\n");
+		
 		    // signal that we want to be closed
 		    // after we return our buffer
 		    autoclose_time = time(NULL);
-		    noread(); // EOF
+		
+		    // don't do this if we're returning nonzero!
+		    if (!total) noread();
                     break;
 
 		case SSL_ERROR_SYSCALL:
@@ -246,11 +249,14 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 		    {
 			if (result == 0)
 			{
-			    debug("<< EOF: syscall error\n");
+			    debug("<< EOF: syscall error (%s, %s)\n",
+				  isok(), cloned && cloned->isok());
 			    // signal that we want to be closed
 			    // after we return our buffer
 			    autoclose_time = time(NULL);
-			    noread();
+			    
+			    // don't do this if we're returning nonzero!
+			    if (!total) noread();
 			}
 	                break; 
 		    }
@@ -271,7 +277,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         read_bouncebuf.unalloc(avail - result);
     }
 
-    // debug("<< read %s bytes\n", total);
+    // debug("<< read %s bytes (%s, %s)\n",
+    //	  total, isok(), cloned && cloned->isok());
     return total;
 }
 
@@ -388,12 +395,14 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         buf = (const unsigned char *)buf + size_t(result);
     }
     
-//    debug(">> wrote %s bytes\n", total);
+    // debug(">> wrote %s bytes\n", total);
     return total;
 }
 
 void WvSSLStream::close()
 {
+    // debug("(closing)\n");
+    
     if (ssl)
     {
         ERR_clear_error();
@@ -416,6 +425,34 @@ void WvSSLStream::close()
 bool WvSSLStream::isok() const
 {
     return ssl && WvStreamClone::isok();
+}
+
+
+void WvSSLStream::noread()
+{
+    // WARNING: openssl always needs two-way socket communications even for
+    // one-way encrypted communications, so we don't pass noread/nowrite
+    // along to the child stream.  This should be mostly okay, though,
+    // because we'll still send it close() once we have both noread() and
+    // nowrite().
+    ssl_stop_read = true;
+    if (ssl_stop_write)
+    {
+	WvStreamClone::nowrite();
+	WvStreamClone::noread();
+    }
+}
+
+
+void WvSSLStream::nowrite()
+{
+    // WARNING: see note in noread()
+    ssl_stop_write = true;
+    if (ssl_stop_read)
+    {
+	WvStreamClone::noread();
+	WvStreamClone::nowrite();
+    }
 }
 
 

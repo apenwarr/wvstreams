@@ -150,6 +150,7 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
     size_t len;
     
     len = s.read(buf, sizeof(buf));
+    // fprintf(stderr, "autoforward read %d bytes\n", (int)len);
     s2.write(buf, len);
 }
 
@@ -350,7 +351,7 @@ void WvStream::nowrite()
 
 void WvStream::maybe_autoclose()
 {
-    if (stop_read && stop_write && !outbuf.used() && !inbuf.used() && isok())
+    if (stop_read && stop_write && !outbuf.used() && !inbuf.used() && !closed)
 	close();
 }
 

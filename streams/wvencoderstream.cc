@@ -43,6 +43,10 @@ void WvEncoderStream::close()
 
 bool WvEncoderStream::isok() const
 {
+    //fprintf(stderr, "encoderstream isok: %d %p %d %d\n",
+    //	    WvStream::isok(), cloned, cloned->isok(), cloned->geterr());
+	    
+    
     // handle encoder error conditions
     if (!WvStream::isok())
         return false;
@@ -121,7 +125,7 @@ void WvEncoderStream::pull(size_t size)
         if (!cloned->isok())
             finish = true; // underlying stream hit EOF or error
     }
-
+    
     // deal with any encoders that have been added recently
     WvDynBuf tmpbuf;
     tmpbuf.merge(readoutbuf);
@@ -211,7 +215,7 @@ bool WvEncoderStream::pre_select(SelectInfo &si)
     // try to push pending encoded output to cloned stream
     // outbuf_delayed_flush condition already handled by uwrite()
     push(false /*flush*/, false /*finish*/);
-
+    
     // consult the underlying stream
     if (WvStreamClone::pre_select(si))
         surething = true;
