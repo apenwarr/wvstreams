@@ -10,6 +10,7 @@
 #define __WVBUFFER_H
 
 #include "wvlinklist.h"
+#include <string.h>
 
 class WvMiniBuffer
 {

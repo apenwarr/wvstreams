@@ -43,7 +43,7 @@
 		__wvs_a11, __wvs_a12, __wvs_a13, __wvs_a14, __wvs_a15, \
 		__wvs_a16, __wvs_a17, __wvs_a18, __wvs_a19
 
-class WvStringBuf;
+struct WvStringBuf;
 class WvString;
 
 // WvStringBuf used for char* strings that have not been cloned.
