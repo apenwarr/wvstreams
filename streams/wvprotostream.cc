@@ -38,7 +38,7 @@ size_t WvProtoStream::uwrite(const void *buf, size_t size)
 {
     if (log && log_enable)
     {
-	(*log)("Send: ");
+	(*log)("Sent: ");
 	log->write(buf, size);
 	(*log)("\n");
     }
@@ -47,30 +47,38 @@ size_t WvProtoStream::uwrite(const void *buf, size_t size)
 }
 
 
+WvProtoStream::Token *WvProtoStream::next_token()
+{
+    static unsigned char whitespace[] = " \t\r\n";
+    size_t len;
+    
+    // find and remove up to first non-whitespace
+    tokbuf.get(tokbuf.match(whitespace, sizeof(whitespace)));
+
+    // return a token up to the first whitespace character
+    len = tokbuf.match(whitespace, sizeof(whitespace), true);
+    return len ? new Token(tokbuf.get(len), len) : NULL;
+}
+
+
 /* Default input tokenizer.  "line" is NULL-terminated, and individual string
  * tokens are separated by any amount of whitespace.
  */
-WvProtoStream::TokenList *WvProtoStream::tokenize(const char *line)
+WvProtoStream::TokenList *WvProtoStream::tokenize(const unsigned char *line,
+						  size_t length)
 {
     TokenList *tl = new TokenList;
-    const char *sptr, *cptr;
+    Token *t;
+
+    tokbuf.zap();
+    tokbuf.put(line, length);
     
-    for (sptr = cptr = line; *cptr; cptr++)
+    while ((t = next_token()) != NULL)
+	tl->append(t, true);
+    
+    if (log && log_enable && tl->count())
     {
-	if (isblank(*(unsigned char *)cptr))
-	{
-	    if (cptr > sptr)
-		tl->append(new Token(sptr, cptr-sptr), true);
-	    sptr = cptr + 1; // skip whitespace
-	}
-    }
-    
-    if (cptr > sptr)
-	tl->append(new Token(sptr, cptr-sptr), true);
-    
-    if (log && log_enable)
-    {
-	(*log)(" Got: ");
+	(*log)("Read: ");
 	TokenList::Iter i(*tl);
 	for (i.rewind(); i.next(); )
 	    (*log)("(%s) ", i.data()->data);
@@ -83,6 +91,7 @@ WvProtoStream::TokenList *WvProtoStream::tokenize(const char *line)
 
 /* convert a TokenList to an array of Token.
  * The TokenList becomes invalid after this operation!
+ * Remember to free the array afterwards!
  */
 size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
 {
@@ -95,7 +104,7 @@ size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
     for (count = 0, i.rewind(); i.next(); count++)
     {
 	Token &t = *i.data();
-	(*array)[count].fill(t.data.str, t.length, t.extra);
+	(*array)[count].fill((unsigned char *)t.data.str, t.length);
     }
     
     delete tl;
@@ -105,31 +114,31 @@ size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
 
 /* Retrieve an input line and convert it to an array of tokens.  This is the
  * usual high-level interface to the input tokenizer.
+ * Remember to free the array afterwards!
  */
 size_t WvProtoStream::tokline(Token **array)
 { 
     char *line = getline(0);
-    
     if (!line) return 0;
-    return list_to_array(tokenize(line), array);
+    return list_to_array(tokenize((unsigned char *)line, strlen(line)),
+			 array);
 }
 
 
 /* returns -1 if t is not in lookup[], or else the index into lookup where
  * the token was found.
  */
-int WvProtoStream::tokanal(const Token *t, char **lookup,
+int WvProtoStream::tokanal(const Token &t, char **lookup,
 			   bool case_sensitive)
 {
-    assert(t);
     assert(lookup);
     
     char **i;
     
     for (i = lookup; *i; i++)
     {
-	if ( (!case_sensitive && !strcasecmp(t->data.str, *i))
-	  || ( case_sensitive && !strcmp(t->data.str, *i)) )
+	if ( (!case_sensitive && !strcasecmp(t.data.str, *i))
+	  || ( case_sensitive && !strcmp(t.data.str, *i)) )
 	    return i - lookup;
     }
     
@@ -174,21 +183,20 @@ WvProtoStream::Token::Token()
 }
 
 
-WvProtoStream::Token::Token(const char *_data, size_t _length, int _extra)
+WvProtoStream::Token::Token(const unsigned char *_data, size_t _length)
 {
-    fill(_data, _length, _extra);
+    fill(_data, _length);
 }
 
 
-void WvProtoStream::Token::fill(const char *_data, size_t _length, int _extra)
+void WvProtoStream::Token::fill(const unsigned char *_data,
+				size_t _length)
 {
     length = _length;
     
     data.setsize(length + 1);
     memcpy(data.str, _data, length);
     data.str[length] = 0;
-    
-    extra = _extra;
 }
 
 

@@ -39,7 +39,7 @@ ProtoTest::ProtoTest(WvStream **_cloned, WvLog *_debuglog)
 
 void ProtoTest::do_state(Token *t, size_t nt)
 {
-    enum States tok = (States)tokanal(t, toks, false);
+    enum States tok = (States)tokanal(t[0], toks, false);
 
     if (tok < 0)
 	print("ERROR Unknown command (%s)\n", t->data);

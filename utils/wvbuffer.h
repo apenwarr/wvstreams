@@ -92,12 +92,14 @@ public:
 	{ return strchr((unsigned char)ch); }
     
     /*
-     * similar to strchr() above, but find _any_ of the characters in
-     * chlist.  chlist is an array of unsigned char, of length numch.
+     * Count the number of leading bytes that match any in chlist.
+     * If reverse==true, match bytes that are _not_ in chlist.
      */
-    size_t findone(const unsigned char chlist[], size_t numch) const;
-    size_t findone(const char chlist[]) const
-        { return findone((const unsigned char *)chlist, strlen(chlist)); }
+    size_t match(const unsigned char chlist[], size_t numch,
+		   bool reverse = false) const;
+    size_t match(const char chlist[], bool reverse = false) const
+        { return match((const unsigned char *)chlist,
+			 strlen(chlist), reverse); }
 };
 
 
@@ -155,13 +157,14 @@ public:
         { return strchr((unsigned char)ch); }
 
     /*
-     * return the number of bytes that would have to be read to find the
-     * one of the characters in chlist, or zero if none of them are in the
-     * buffer.
+     * return the number of leading bytes that match any in chlist.
+     * If reverse==true, match bytes that are NOT in chlist.
      */
-    size_t findone(const unsigned char chlist[], size_t numch);
-    size_t findone(const char chlist[])
-        { return findone((const unsigned char *)chlist, strlen(chlist)); }
+    size_t match(const unsigned char chlist[], size_t numch,
+		   bool reverse = false);
+    size_t match(const char chlist[], bool reverse = false)
+        { return match((const unsigned char *)chlist, strlen(chlist),
+			 reverse); }
 };
 
 

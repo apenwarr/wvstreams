@@ -24,17 +24,29 @@ size_t WvMiniBuffer::strchr(unsigned char ch) const
 }
 
 
-size_t WvMiniBuffer::findone(const unsigned char chlist[], size_t numch) const
+size_t WvMiniBuffer::match(const unsigned char chlist[], size_t numch,
+			     bool reverse) const
 {
     const unsigned char *cptr, *cp2, *cpe = chlist + numch;
     
     for (cptr = head; cptr < tail; cptr++)
     {
-	for (cp2 = chlist; cp2 < cpe; cp2++)
-	    if (*cptr == *cp2) return cptr - head + 1;
+	if (reverse)
+	{
+	    // stop if this character matches ANY of chlist
+	    for (cp2 = chlist; cp2 < cpe; cp2++)
+		if (*cptr == *cp2) return cptr - head;
+	}
+	else
+	{
+	    // stop if this character matches NONE of chlist
+	    for (cp2 = chlist; cp2 < cpe; cp2++)
+		if (*cptr == *cp2) break;
+	    if (cp2 == cpe) return cptr - head;
+	}
     }
-    
-    return 0;
+
+    return cptr - head;
 }
 
 
@@ -255,7 +267,8 @@ size_t WvBuffer::strchr(unsigned char ch)
 }
 
 
-size_t WvBuffer::findone(const unsigned char chlist[], size_t numch)
+size_t WvBuffer::match(const unsigned char chlist[], size_t numch,
+			 bool reverse)
 {
     WvMiniBufferList::Iter i(list);
     size_t off = 0, t;
@@ -264,13 +277,13 @@ size_t WvBuffer::findone(const unsigned char chlist[], size_t numch)
     {
 	WvMiniBuffer &b = *i.data();
 	
-	t = b.findone(chlist, numch);
+	t = b.match(chlist, numch, reverse);
 	
-	if (t)
-	    return off + t; // found it
+	if (t < b.used())
+	    return off + t; // done
 	else
 	    off += b.used();
     }
     
-    return 0;
+    return off;
 }
