@@ -137,6 +137,8 @@ runtests:
 %/test:
 	$(MAKE) -C $(dir $@) test
 
+$(LIBXPLC):
+
 $(WVSTREAMS_SRC)/rules.local.mk:
 	@true
 
