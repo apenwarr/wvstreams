@@ -203,7 +203,7 @@ void WvInterface::up(bool enable)
 
 bool WvInterface::isup()
 {
-    return (getflags() & IFF_UP) ? 1 : 0;
+    return (valid && (getflags() & IFF_UP)) ? 1 : 0;
 }
 
 
