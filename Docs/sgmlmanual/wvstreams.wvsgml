@@ -1,27 +1,24 @@
 <!doctype book public "-//Davenport//DTD DocBook V3.0//EN">
 <book id="index">
 
-
 <title>Programmer's Guide to the WvStreams Library</title>
 
 <bookinfo>
 <bookbiblio>
-<authorgroup>
-<corpauthor>Worldvisions Computer Technology, Inc.</corpauthor>
-</authorgroup>
+ <authorgroup>
+  <corpauthor>Worldvisions Computer Technology, Inc.</corpauthor>
+ </authorgroup>
 </bookbiblio>
 </bookinfo>
 
-<preface>
-<title>Introduction</title>
-
-Short paragraph.
-
-</preface>
+WVPREFACE(Introduction,
+  Short paragraph.
+)
 
 WVPART(first, This Part Is First,
+
 WVPARTINTRO(Introducing This Part,
-This Part is like no other Part.
+  This Part is like no other Part.
 )
 
 WVCHAPTER(bork, A Bork Chapter,
@@ -33,11 +30,11 @@ WVCHAPTER(bork, A Bork Chapter,
 )
 
 WVCHAPTER(chappy, A Chapter,
-Short paragraph.
+  Short paragraph.
 )
 
 WVCHAPTER(wappy, Another Chapter,
-Short paragraph.
+  Short paragraph.
 )
 
 )

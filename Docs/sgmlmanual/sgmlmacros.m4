@@ -1,7 +1,6 @@
-
-define(WVCHAPTER, <chapter id="$1"><title>$2</title>
-$3
-</chapter>
+define(WVPREFACE, <preface><title>$1</title>
+$2
+</preface>
 
 )
 
@@ -16,3 +15,10 @@ $2
 </partintro>
 
 )
+
+define(WVCHAPTER, <chapter id="$1"><title>$2</title>
+$3
+</chapter>
+
+)
+
