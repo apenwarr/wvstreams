@@ -55,7 +55,7 @@ UniSmartKey *UniListIter::new_smart_key(const UniConfKey &k)
 }
     
 
-void UniListIter::add(WvStringParm k, WvStringParm v = noval)
+void UniListIter::add(WvStringParm k, WvStringParm v)
 { 
     UniSmartKey *sk = new_smart_key(k);
     // UniSmartKey *sk = new UniSmartKey(NULL, k);
