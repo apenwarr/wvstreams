@@ -192,21 +192,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvqdbmhash.cc">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\utils\wvgzip.cc">
 			</File>
 			<File
@@ -226,6 +211,21 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\wvmoniker.cc">
+			</File>
+			<File
+				RelativePath="..\..\utils\wvqdbmhash.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\wvrateadjust.cc">
@@ -328,9 +328,6 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\wvvector.cc">
-			</File>
-			<File
-				RelativePath=".\wvwin32task.cpp">
 			</File>
 			<File
 				RelativePath="..\..\utils\wvwordwrap.cc">
@@ -536,12 +533,6 @@
 				RelativePath="..\..\include\wvfunctorencoder.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wvondiskhash.h">
-			</File>
-			<File
-				RelativePath="..\..\include\wvondisklist.h">
-			</File>
-			<File
 				RelativePath="..\..\include\wvgzip.h">
 			</File>
 			<File
@@ -633,6 +624,12 @@
 			</File>
 			<File
 				RelativePath="..\..\include\wvoggvorbis.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvondiskhash.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvondisklist.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvpam.h">
