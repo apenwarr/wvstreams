@@ -104,7 +104,7 @@ AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
-xplc_version='0.3.10'
+xplc_version='0.3.11'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
@@ -558,9 +558,9 @@ fi
 # xplc
 if test "$with_xplc" != "no"; then
     if test "$with_xplc" = ""; then
-	if pkg-config --modversion xplc-0.3.10 2>/dev/null >/dev/null; then
-            WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-0.3.10`])
-	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-0.3.10`])
+	if pkg-config --modversion xplc-0.3.11 2>/dev/null >/dev/null; then
+            WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-0.3.11`])
+	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-0.3.11`])
 	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
 	    xplc_pc="xplc-${xplc_version}"

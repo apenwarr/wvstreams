@@ -124,6 +124,15 @@ WVTEST_MAIN("haschildren() and exists()")
     }
 }
 
+
+WVTEST_MAIN("section collapsing")
+{
+    UniConfRoot r;
+    WVPASSEQ(r[""][""]["/"]["simon"][""][""].fullkey().printable(), "simon/");
+    WVPASSEQ(r[""][""]["/"]["simon"][""]["/"].fullkey().printable(), "simon/");
+}
+
+
 /* Commented out until fullkey is fixed
 WVTEST_MAIN("fullkey()")
 {

@@ -91,8 +91,13 @@ int noconv(int num_msg, const struct pam_message **msgm,
 // The password gets passed in from userdata, and we simply echo it back
 // out in the response... *sigh* This is because pam expects this function
 // to actually interact with the user, and get their password.
+#if HAVE_BROKEN_PAM
+static int passconv(int num_msg, struct pam_message **msgm,
+        struct pam_response **response, void *userdata)
+#else
 static int passconv(int num_msg, const struct pam_message **msgm,
         struct pam_response **response, void *userdata)
+#endif
 {
     struct pam_response *password_echo;
     
@@ -174,9 +179,18 @@ bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm pas
         d->status = pam_set_item(d->pamh, PAM_AUTHTOK, password);
         if (!check_pam_status("password setup")) return false;   
     }
-     
+
+#if HAVE_BROKEN_PAM
+    void *x = NULL;
+#else
+    const void *x = NULL;
+#endif
+    d->status = pam_get_item(d->pamh, PAM_USER, &x);
+    if (!check_pam_status("get username")) return false;
+    d->user = (const char *)x;
+
     log("Starting Authentication for %s@%s\n", d->user, rhost);
-    
+
     d->status = pam_authenticate(d->pamh, PAM_DISALLOW_NULL_AUTHTOK | PAM_SILENT);
     if (!check_pam_status("authentication")) return false;
 

@@ -33,7 +33,10 @@ WvString UniTempGen::get(const UniConfKey &key)
 {
     if (root)
     {
-        UniConfValueTree *node = root->find(key);
+	// Look for an empty section at the end.
+	if (!key.isempty() && key.last().isempty())
+	    return WvString::null;
+	UniConfValueTree *node = root->find(key);
         if (node)
             return node->value();
     }
@@ -45,9 +48,22 @@ void UniTempGen::notify_deleted(const UniConfValueTree *node, void *)
     delta(node->fullkey(), WvString::null);
 }
 
-void UniTempGen::set(const UniConfKey &key, WvStringParm value)
+void UniTempGen::set(const UniConfKey &_key, WvStringParm value)
 {
     hold_delta();
+    UniConfKey key = _key;
+    bool trailing_slash = false;
+    if (!key.isempty())
+    {
+	// Look for an empty section at the end.
+	UniConfKey last = key;
+	key = last.pop(last.numsegments() - 1);
+	if (last.isempty())
+	    trailing_slash = true;
+	else
+	    key = _key;
+    }
+
     if (value.isnull())
     {
         // remove a subtree
@@ -68,7 +84,7 @@ void UniTempGen::set(const UniConfKey &key, WvStringParm value)
             }
         }
     }
-    else
+    else if (!trailing_slash)
     {
         UniConfValueTree *node = root;
         UniConfValueTree *prev = NULL;
