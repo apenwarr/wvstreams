@@ -30,6 +30,7 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 { 
     instream = NULL;
     putstream = NULL;
+    create_dirs = false;
     pipeline_test = _pipeline_test;
     headers_only = _headers_only;
     is_dir = false;    // for ftp primarily; set later
@@ -48,9 +49,10 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 
 
 WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
-			   WvStream *s)
+			   WvStream *s, bool _create_dirs)
     : url(_url), headers(_headers), putstream(s)
 {
+    create_dirs = _create_dirs;
     instream = NULL;
     pipeline_test = false;
     headers_only = false;
@@ -793,16 +795,43 @@ void WvFtpStream::execute()
 	else if (!curl->putstream)
 	    write(WvString("RETR %s\r\n", curl->url.getfile()));
 	else
-	    write(WvString("STOR %s\r\n", curl->url.getfile()));
+	{
+	    if (curl->create_dirs)
+	    {
+		write(WvString("CWD %s\r\n", getdirname(curl->url.getfile())));
+		line = get_important_line(60000);
+		if (!line)
+		    return;
 
-	log(WvLog::Debug5, "Waiting for response to RETR/LIST\n");
+		if (strncmp(line, "250", 3))
+		{
+		    log("Path doesn't exist; creating directories...\n");
+		    // create missing directories.
+		    WvString current_dir("");
+		    WvStringList dirs;
+		    dirs.split(getdirname(curl->url.getfile()), "/");
+		    WvStringList::Iter i(dirs);
+		    for (i.rewind(); i.next(); )
+		    {
+			current_dir.append(WvString("/%s", i()));
+			write(WvString("MKD %s\r\n", current_dir));
+			line = get_important_line(60000);
+			if (!line)
+			    return;
+		    }
+		}
+	    }
+	    write(WvString("STOR %s\r\n", curl->url.getfile()));
+	}
+
+	log(WvLog::Debug5, "Waiting for response to STOR/RETR/LIST\n");
 	line = get_important_line(60000);
 	if (!line)
 	    doneurl();
 	else if (strncmp(line, "150", 3))
 	{
-	    log("Strange response to %s command: %s\n", line,
-		curl->putstream ? "STOR" : "RETR");
+	    log("Strange response to %s command: %s\n", 
+		curl->putstream ? "STOR" : "RETR", line);
 	    seterr(WvString("strange response to %s command",
 			    curl->putstream ? "STOR" : "RETR"));
 	    doneurl();
@@ -863,8 +892,8 @@ void WvFtpStream::execute()
 	    if (curl->is_dir)
 	    {
 		if (curl->outstream)
-		    curl->outstream->write(WvString(
-					       "</table><hr/></body></html>\n"));
+		    curl->outstream->write("</table><hr/></body>\n"
+					   "</html>\n");
 		write("CWD /\r\n");
 		log(WvLog::Debug5, "Waiting for response to CWD /\n");
 		line = get_important_line(60000);
@@ -1146,10 +1175,11 @@ WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
 
 
 WvBufUrlStream *WvHttpPool::addputurl(WvStringParm _url,
-				      WvStringParm _headers, WvStream *s)
+				      WvStringParm _headers, WvStream *s,
+				      bool create_dirs = false)
 {
     log(WvLog::Debug4, "Adding a new put url to pool: '%s'\n", _url);
-    WvUrlRequest *url = new WvUrlRequest(_url, _headers, s);
+    WvUrlRequest *url = new WvUrlRequest(_url, _headers, s, create_dirs);
     urls.append(url, true);
 
     return url->outstream;

@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 		    *ptr = 0;
 		    printf("sending file %s to url %s.\n", &line[1], ptr+1);
 		    WvFile *sendfile = new WvFile(&line[1], O_RDONLY);
-		    s = p.addputurl(ptr+1, headers, sendfile);
+		    s = p.addputurl(ptr+1, headers, sendfile, true);
 		    l.append(sendfile, true);
 		}
 		

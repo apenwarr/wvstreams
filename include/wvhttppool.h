@@ -40,10 +40,12 @@ public:
     bool headers_only;
     bool inuse;
     bool is_dir;
+    bool create_dirs;
     
     WvUrlRequest(WvStringParm _url, WvStringParm _headers,
 		 bool _pipeline_test, bool _headers_only);
-    WvUrlRequest(WvStringParm _url, WvStringParm _headers, WvStream *s);
+    WvUrlRequest(WvStringParm _url, WvStringParm _headers, WvStream *s,
+		 bool _create_dirs);
     ~WvUrlRequest();
     
     WvString request_str(bool keepalive);
@@ -216,8 +218,11 @@ public:
     
     WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _headers,
                             bool headers_only = false);
+
+    // For URL uploads.  create_dirs should be true if you want all
+    // non-existent directories in _url to be created.
     WvBufUrlStream *addputurl(WvStringParm _url, WvStringParm _headers,
-			      WvStream *s);
+			      WvStream *s, bool create_dirs = false);
 private:
     void unconnect(WvUrlStream *s);
     
