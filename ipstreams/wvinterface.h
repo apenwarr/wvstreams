@@ -72,12 +72,16 @@ public:
     int setmtu(int mtu);
     
     // add a route to the given network through this interface.
-    int addroute(const WvIPNet &dest, int metric = 0);
-    int addroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0);
+    int addroute(const WvIPNet &dest, int metric = 0,
+		 const WvString &table = "default");
+    int addroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0,
+		 const WvString &table = "default");
 
     // delete a route to the given network through this interface.
-    int delroute(const WvIPNet &dest, int metric = 0);
-    int delroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0);
+    int delroute(const WvIPNet &dest, int metric = 0,
+		 const WvString &table = "default");
+    int delroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0,
+		 const WvString &table = "default");
     
     // add an ARP entry on this interface
     bool isarp();

@@ -339,7 +339,7 @@ void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
 
 
 int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
-			   int metric)
+			   int metric, const WvString &table)
 {
     struct rtentry rte;
     char ifname[17];
@@ -348,7 +348,7 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     const char *argv[] = {
 	"ip", "route", "add",
 	"default",
-	"table", "default",
+	"table", table,
 	"dev", name,
 	"via", gwstr,
 	"metric", metr,
@@ -395,14 +395,15 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 
 
 // add a route with no gateway, ie. direct to interface
-int WvInterface::addroute(const WvIPNet &dest, int metric)
+int WvInterface::addroute(const WvIPNet &dest, int metric,
+			  const WvString &table)
 {
-    return addroute(dest, WvIPAddr(), metric);
+    return addroute(dest, WvIPAddr(), metric, table);
 }
 
 
 int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
-			   int metric)
+			  int metric, const WvString &table)
 {
     struct rtentry rte;
     char ifname[17];
@@ -411,7 +412,7 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     const char *argv[] = {
 	"ip", "route", "del",
 	"default",
-	"table", "default",
+	"table", table,
 	"dev", name,
 	"via", gwstr,
 	"metric", metr,
@@ -453,9 +454,9 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
 
 
 // delete a route with no gateway, ie. direct to interface
-int WvInterface::delroute(const WvIPNet &dest, int metric)
+int WvInterface::delroute(const WvIPNet &dest, int metric, const WvString &table)
 {
-    return delroute(dest, WvIPAddr(), metric);
+    return delroute(dest, WvIPAddr(), metric, table);
 }
 
 
