@@ -95,8 +95,8 @@ protected:
 		  unsigned hash, Comparator *comp);
 public:
     unsigned numslots;
-    WvListBase *slots;
-    
+    WvListBase *wvslots;
+
     size_t count() const;
 
     // base class for the auto-declared hash table iterators
@@ -110,7 +110,7 @@ public:
 	IterBase(WvHashTableBase &_tbl)
             { tbl = &_tbl; }
 	void rewind()
-            { tblindex = 0; link = &tbl->slots[0].head; }
+            { tblindex = 0; link = &tbl->wvslots[0].head; }
 	WvLink *next();
 	WvLink *cur() const
             { return link; }
@@ -135,10 +135,10 @@ protected:
 
 public:
     WvHashTable(unsigned _numslots) : WvHashTableBase(_numslots)
-        { slots = new WvList<_type_>[numslots]; setup(); }
+        { wvslots = new WvList<_type_>[numslots]; setup(); }
 
     WvList<_type_> *sl()
-	{ return (WvList<_type_> *)slots; }
+	{ return (WvList<_type_> *)wvslots; }
 
     ~WvHashTable()
         { shutdown(); delete[] sl(); }
@@ -147,19 +147,19 @@ public:
         { sl()[hash(data) % numslots].append(data, auto_free); }
 
     _type_ *operator[] (const _ftype_ &key)
-        { return (_type_ *)genfind(slots, &key, WvHash(key), comparator); }
+        { return (_type_ *)genfind(wvslots, &key, WvHash(key), comparator); }
 
     void remove(const _type_ *data)
     {
 	unsigned h = hash(data);
-	WvLink *l = prevlink(slots, fptr(data), h, comparator);
+	WvLink *l = prevlink(wvslots, fptr(data), h, comparator);
 	if (l && l->next) sl()[h % numslots].unlink_after(l);
     }
 
     void zap()
     {
 	delete[] sl();
-	slots = new WvList<_type_>[numslots];
+	wvslots = new WvList<_type_>[numslots];
     }
 
     class Iter : public WvHashTableBase::IterBase
