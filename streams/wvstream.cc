@@ -44,6 +44,8 @@ XUUID_MAP_BEGIN(IWvStream)
 
 WvStream::WvStream()
 {
+    TRACE("Creating wvstream %p\n", this);
+    
 #ifdef _WIN32
     WSAData wsaData;
     int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
@@ -76,6 +78,7 @@ WvStream::WvStream()
 }
 
 
+// FIXME: interfaces (IWvStream) shouldn't have implementations!
 IWvStream::IWvStream()
 {
 }
@@ -611,6 +614,8 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	}
     }
 
+    TRACE("flush_outbuf: after autoclose chunk\n");
+    
     if (!outbuf.used() && outbuf_delayed_flush)
         want_to_flush = false;
     
