@@ -55,18 +55,20 @@ protected:
     void callback(WvStream &, void *) { _callback(); }
     void _callback();
 
-    void setup();
 
 public:
     WvFamBase() : s(0), log("WvFAM") { setup(); }
     WvFamBase(WvFamCallback _cb) : cb(_cb), s(0), log("WvFam") { setup(); }
-    ~WvFamBase();
+    ~WvFamBase() { close(); }
 
+    void setup();
 
 /**
  * These should be the only calls from WvFamBase that most people ever need to
  * look at.
  */
+    void close();
+
     static bool fam_ok();
 
     bool isok() const;

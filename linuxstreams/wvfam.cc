@@ -5,10 +5,14 @@
 #include "wvistreamlist.h"
 #include <sys/stat.h>
 
-WvFamBase::~WvFamBase()
+void WvFamBase::close()
 {
+    if (!s)
+        return;
+
     WvIStreamList::globallist.unlink(s);
     delete s;
+    s = 0;
 
     if (FAMClose(&fc) == -1)
         log(WvLog::Error, "%s\n", FamErrlist[FAMErrno]);
