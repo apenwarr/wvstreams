@@ -64,7 +64,6 @@ public:
     void quick_set(WvStringParm entry, WvStringParm value);
 
     bool isempty() const;
-    size_t count() const;
 
     class Iter;
     friend class Iter;
@@ -85,29 +84,10 @@ public:
 	iter(_sect.uniconf), link(NULL, false),
 	entry(NULL)
     {}
-    void rewind()
-    {
-	iter.rewind();
-    }
-    WvLink *next()
-    {
-	if (iter.next())
-	{
-	    entry = new WvConfigEntryEmu(iter->key(), iter->get());
-	    link.data = static_cast<void*>(entry);
-	    return &link;
-	}
-
-	return NULL;
-    }
-    WvLink *cur()
-    {
-	return &link;
-    }
-    WvConfigEntryEmu* ptr() const
-    {
-	return entry;
-    }
+    void rewind();
+    WvLink *next();
+    WvLink *cur();
+    WvConfigEntryEmu* ptr() const;
     void unlink();
     void xunlink();
     WvIterStuff(WvConfigEntryEmu);
@@ -140,7 +120,9 @@ private:
 public:
     WvConfEmu(const UniConf& _uniconf);
     void zap();
+#if 1
     bool isclean() const;
+#endif
     bool isok() const;
     void load_file(WvStringParm filename);
     void save(WvStringParm filename);
@@ -180,8 +162,6 @@ public:
 		  const char *value);
 
     void delete_section(WvStringParm section);
-
-    size_t count() const;
 
     // Gets a user's password and decrypts it.  This isn't defined in wvconf.cc.
     WvString get_passwd(WvStringParm sect, WvStringParm user);

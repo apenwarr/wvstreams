@@ -35,12 +35,10 @@ const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 }
 
 
-#if 1
 void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 {
-    assert(false);
+    uniconf[entry].set(value);
 }
-#endif
 
 
 #if 1
@@ -51,22 +49,41 @@ void WvConfigSectionEmu::quick_set(WvStringParm entry, WvStringParm value)
 #endif
 
 
-#if 1
 bool WvConfigSectionEmu::isempty() const
 {
-    assert(false);
-    return false;
+    return !uniconf.haschildren();
 }
-#endif
 
 
-#if 1
-size_t WvConfigSectionEmu::count() const
+void WvConfigSectionEmu::Iter::rewind()
 {
-    assert(false);
-    return 0;
+    iter.rewind();
 }
-#endif
+
+
+WvLink *WvConfigSectionEmu::Iter::next()
+{
+    if (iter.next())
+    {
+	entry = new WvConfigEntryEmu(iter->key(), iter->get());
+	link.data = static_cast<void*>(entry);
+	return &link;
+    }
+
+    return NULL;
+}
+
+
+WvLink *WvConfigSectionEmu::Iter::cur()
+{
+    return &link;
+}
+
+
+WvConfigEntryEmu* WvConfigSectionEmu::Iter::ptr() const
+{
+    return entry;
+}
 
 
 #if 1
@@ -126,13 +143,10 @@ bool WvConfEmu::isclean() const
 #endif
 
 
-#if 1
 bool WvConfEmu::isok() const
 {
-    assert(false);
-    return false;
+    return !uniconf.isnull();
 }
-#endif
 
 
 void WvConfEmu::load_file(WvStringParm filename)
@@ -333,15 +347,6 @@ void WvConfEmu::delete_section(WvStringParm section)
 {
     assert(false);
 }
-
-
-#if 0
-size_t WvConfEmu::count() const
-{
-    assert(false);
-    return 0;
-}
-#endif
 
 
 int WvConfEmu::check_for_bool_string(const char *s)
