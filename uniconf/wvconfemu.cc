@@ -13,6 +13,15 @@
 #include "strutils.h"
 
 
+#define HACKING_SETRAW
+#define HACKING_ITER_UNLINK
+#define HACKING_GETRAW
+#define HACKING_ITER_XUNLINK
+#define HACKING_ADD_ADDFILE
+#define HACKING_QUICK_SET
+//#define HACKING_ISCLEAN
+
+
 static void do_setbool(void* userdata,
 		       WvStringParm section, WvStringParm key,
 		       WvStringParm oldval, WvStringParm newval)
@@ -76,7 +85,7 @@ void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 }
 
 
-#if 1
+#ifdef HACKING_QUICK_SET
 void WvConfigSectionEmu::quick_set(WvStringParm entry, WvStringParm value)
 {
     assert(false && "not implemented");
@@ -121,7 +130,7 @@ WvConfigEntryEmu* WvConfigSectionEmu::Iter::ptr() const
 }
 
 
-#if 1
+#ifdef HACKING_ITER_UNLINK
 void WvConfigSectionEmu::Iter::unlink()
 {
     assert(false && "not implemented");
@@ -129,7 +138,7 @@ void WvConfigSectionEmu::Iter::unlink()
 #endif
 
 
-#if 1
+#ifdef HACKING_ITER_XUNLINK
 void WvConfigSectionEmu::Iter::xunlink()
 {
     assert(false && "not implemented");
@@ -174,7 +183,7 @@ void WvConfEmu::zap()
 }
 
 
-#if 1
+#ifdef HACKING_ISCLEAN
 bool WvConfEmu::isclean() const
 {
     assert(false && "not implemented");
@@ -199,28 +208,24 @@ void WvConfEmu::load_file(WvStringParm filename)
 }
 
 
-#if 1
 void WvConfEmu::save(WvStringParm filename)
 {
-    assert(false && "not implemented");
+    UniConfRoot tmp_uniconf(WvString("ini:%s", filename));
+
+    uniconf.copy(tmp_uniconf, true);
 }
-#endif
 
 
-#if 1
 void WvConfEmu::save()
 {
-    assert(false && "not implemented");
+    uniconf.commit();
 }
-#endif
 
 
-#if 1
 void WvConfEmu::flush()
 {
-    assert(false && "not implemented");
+    uniconf.commit();
 }
-#endif
 
 
 WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
@@ -259,13 +264,20 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
 }
 
 
-#if 1
-void WvConfEmu::del_callback(WvStringParm section, WvStringParm entry, void *cookie)
+void WvConfEmu::del_callback(WvStringParm section, WvStringParm key, void *cookie)
 {
-    assert(false && "not implemented");
+    WvList<CallbackInfo>::Iter i(callbacks);
+
     assert(cookie);
+
+    for (i.rewind(); i.next(); )
+    {
+	if (i->cookie == cookie
+	    && i->section == section
+	    && i->key == key)
+	    i.xunlink();
+    }
 }
-#endif
 
 
 void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
@@ -280,16 +292,14 @@ void WvConfEmu::add_addname(WvStringList *list, WvStringParm sect, WvStringParm 
 }
 
 
-#if 1
 void WvConfEmu::del_addname(WvStringList *list,
 			    WvStringParm sect, WvStringParm ent)
 {
-    assert(false && "not implemented");
+    del_callback(sect, ent, list);
 }
-#endif
 
 
-#if 1
+#ifdef HACKING_ADD_ADDFILE
 void WvConfEmu::add_addfile(WvString *filename,
 			    WvStringParm sect, WvStringParm ent)
 {
@@ -298,7 +308,7 @@ void WvConfEmu::add_addfile(WvString *filename,
 #endif
 
 
-#if 1
+#ifdef HACKING_GETRAW
 WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 {
     assert(false && "not implemented");
@@ -351,7 +361,7 @@ const char *WvConfEmu::fuzzy_get(WvStringList &sect, WvStringParm entry,
 }
 
 
-#if 1
+#ifdef HACKING_SETRAW
 void WvConfEmu::setraw(WvString wvconfstr, const char *&value, int &parse_error)
 {
     assert(false && "not implemented");
