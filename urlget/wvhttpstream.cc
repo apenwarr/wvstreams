@@ -101,10 +101,7 @@ void WvHttpStream::close()
     }
     waiting_urls.zap();
     if (curl)
-    {
-        log("curl is %s\n", curl->url);
         doneurl();
-    }
     log("close done\n");
 }
 

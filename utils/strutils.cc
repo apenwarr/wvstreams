@@ -977,4 +977,17 @@ misformatted:
     return false;
 }
 
+WvString local_date(time_t when)
+{
+    WvString out;
+    out.setsize(80);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when);
+    strftime(out.edit(), 80, "%b %d %I:%M:%S %p", tmwhen);
+
+    return out;
+}
 
