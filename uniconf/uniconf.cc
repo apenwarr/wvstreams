@@ -9,6 +9,8 @@
  */
 #include "uniconf.h"
 #include "wvstream.h"
+#include "wvstringtable.h"
+#include <assert.h>
 
 UniConfDict null_wvhconfdict(1);
 
@@ -275,23 +277,37 @@ void UniConf::save()
 }
 
 
-void UniConf::dump(WvStream &s, bool everything)
+void UniConf::_dump(WvStream &s, bool everything, WvStringTable &keytable)
 {
-    if (everything || !!value)
+    WvString key(full_key());
+    
+    if (everything || !!value || keytable[key])
     {
 	s.print("  %s%s%s%s%s%s %s = %s\n",
 	        child_dirty, dirty,
 		child_notify, notify,
 		child_obsolete, obsolete,
-		full_key(), value);
+		key, value);
     }
 
+    // this key better not exist yet!
+    assert(!keytable[key]);
+    
+    keytable.add(new WvString(key), true);
+    
     if (children)
     {
 	UniConfDict::Iter i(*children);
 	for (i.rewind(); i.next(); )
-	    i->dump(s, everything);
+	    i->_dump(s, everything, keytable);
     }
+}
+
+
+void UniConf::dump(WvStream &s, bool everything)
+{
+    WvStringTable keytable(100);
+    _dump(s, everything, keytable);
 }
 
 

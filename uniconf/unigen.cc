@@ -23,7 +23,7 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
 	if (!parent->children)
 	    parent->children = new UniConfDict(10);
 	
-	UniConf *child = (*parent->children)[*key.first()];
+	UniConf *child = (*parent->children)[*i];
 	if (!child)
 	{
 	    child = new UniConf(parent, *i);
