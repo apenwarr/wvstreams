@@ -125,6 +125,7 @@ public:
 
     virtual ~WvUrlStream() {};
 
+    void log_urls();
     virtual void close() = 0;
     void addurl(WvUrlRequest *url);
     void delurl(WvUrlRequest *url);
