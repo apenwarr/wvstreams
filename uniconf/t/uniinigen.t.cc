@@ -3,7 +3,9 @@
 #include "uniconfroot.h"
 
 
-static void inigen(WvStringParm content)
+// static void inigen(WvStringParm content)
+
+void inigen(WvStringParm content)
 {
     ::unlink("tmp.ini");
     WvFile file("tmp.ini", O_WRONLY|O_TRUNC|O_CREAT);
