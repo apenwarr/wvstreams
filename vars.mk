@@ -25,6 +25,7 @@ endif
 
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
+TARGETS += libuniconf.so libuniconf.a
 TARGETS += uniconf/daemon/uniconfdaemon crypto/tests/ssltest
 
 ifneq ("$(with_ogg)", "no")
@@ -174,8 +175,11 @@ libwvqt.so: libwvutils.so libwvstreams.so
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
-libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams uniconf urlget)
+libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams urlget)
 libwvstreams.so: libwvutils.so -lssl
+
+libuniconf.a libuniconf.so: $(call objects,uniconf)
+libuniconf.so: libwvstreams.so
 
 libwvutils.a libwvutils.so: $(call objects,utils)
 libwvutils.so: -lz -lcrypt
