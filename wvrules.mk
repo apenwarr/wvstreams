@@ -234,7 +234,7 @@ wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2
 /%.a:;		@echo "Library $@ does not exist!"; exit 1
 
 %: %.o;		$(call wvlink,$@,$^) 
-%.t: %.t.o;	$(call wvlink,$@,../wvstreams/wvtestmain.o $(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVUTILS))
+%.t: %.t.o;	$(call wvlink,$@,$(WVSTREAMS)/wvtestmain.o $(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVUTILS))
 %.a %.libs:;	$(call wvlink_ar,$@,$^)
 %.so:;		$(call wvlink_so,$@,$^)
 
