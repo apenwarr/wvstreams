@@ -751,7 +751,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
     if (!fp)
     {
 	seterr("Unable to create: %s\n", filename);
-	return;
+        goto ERROR;
     }
     
     if (!!pkcs12pass)
@@ -760,7 +760,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 	if (!pk)
 	{
 	    seterr("Unable to create PKEY object.\n");
-	    return;
+            goto ERROR;
 	}
 	
 	if (rsa && cert)
@@ -770,7 +770,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 	    if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
 	    {
 		seterr("Error setting RSA keys.\n");
-		return;
+                goto ERROR;
 	    }
 	    else
 	    {
@@ -781,25 +781,30 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 		    debug("Write the PKCS12 object out...\n");
 		    i2d_PKCS12_fp(fp, pkg);
 		    PKCS12_free(pkg);
+                    fclose(fp);
+                    return;
 		}
 		else
 		{
 		    seterr("Unable to create PKCS12 object.\n");
-		    return;
+                    goto ERROR;
 		}
 	    }
 	}
 	else
 	{
 	    seterr("Either the RSA key or the Certificate is not present\n");
-	    return;
+	    goto ERROR;
 	}
     }
     else
     {
 	seterr("No Password specified for PKCS12 dump\n");
-	return;
+        goto ERROR;	
     }
+ERROR:
+    fclose(fp);
+    return;
 }
 
 void WvX509Mgr::read_p12(WvStringParm filename)
@@ -811,7 +816,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
     if (!fp)
     {
 	seterr("Unable to read from: %s\n", filename);
-	return;
+        goto ERROR;
     }
     
     if (!!pkcs12pass)
@@ -823,7 +828,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	    if (!pk)
 	    {
 		seterr("Unable to create PKEY object.\n");
-		return;
+                goto ERROR;
 	    }
 	    
 	    // Parse out the bits out the PKCS12 package.
@@ -839,22 +844,26 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	    if (!rsa || !cert || test())
 	    {
 		seterr("Could not fill in RSA and Cert with matching values.\n");
-		return;
+                goto ERROR;
 	    }
 	    // We don't free pk here because the WvRSAKey object now 
 	    // owns the key value and should delete it in the constructor.
+            return;
 	}
 	else
 	{
 	    seterr("Read in of PKCS12 file '%s' failed - aborting!\n", filename);
-	    return;
+            goto ERROR;
 	}
     }
     else
     {
 	seterr("No Password specified for PKCS12 file - aborting!\n");
-	return;
+        goto ERROR;
     }
+ERROR:
+    fclose(fp);
+    return;
 }
 
 WvString WvX509Mgr::get_issuer()
