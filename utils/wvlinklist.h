@@ -116,6 +116,33 @@ public:
 	// link.  If 'data' is not found, sets cur=NULL and returns NULL.
 	WvLink *find(const void *data);
     };
+
+    // the base class for sorted list iterators.
+    // It is similar to IterBase, except for rewind(), next(), and cur().
+    // The sorting is done in rewind(), which makes an array of WvLink 
+    // pointers and calls qsort.  "lptr" is a pointer to the current WvLink *
+    // in the array, and next() increments to the next one.
+    // NOTE: we do not keep "prev" because it makes no sense to do so.  
+    //       I guess Sorter::unlink() will be slow... <sigh>
+    class SorterBase
+    {
+    public:
+        WvList *list;
+        WvLink **array;
+        WvLink **lptr;
+
+        SorterBase(WvList &l)
+            { list = &l; array = lptr = NULL; }
+        virtual ~SorterBase()
+            { if (array) delete array; }
+        WvLink *next()
+            { return lptr ? *(++lptr)
+                          : *(lptr = array); }
+        WvLink *cur() const
+            { return lptr ? *lptr : &list->head; }
+    protected:
+        void rewind(int (*cmp)(const void *, const void *));
+    };
 };
 
 
@@ -183,6 +210,32 @@ public: 						\
 	    link = prev->next;				\
         }						\
     };							\
+                                                        \
+    class Sorter : public WvList::SorterBase            \
+    {                                                   \
+    public:                                             \
+        int (*cmp)(const _type_ **, const _type_ **);   \
+                                                        \
+        Sorter(_newname_ &l, int (*_cmp)(const _type_ **, const _type_ **))   \
+            : SorterBase(l), cmp(_cmp)                  \
+            { }                                         \
+        _type_ &data() const                            \
+            { return *(_type_ *)(*lptr)->data; }        \
+        operator _type_& () const                       \
+            { return data(); }                          \
+        _type_ &operator () () const                    \
+            { return data(); }                          \
+        _type_ *operator -> () const                    \
+            { return &data(); }                         \
+        void unlink()                                   \
+        {                                               \
+            ((_newname_ *)list)->unlink(&data());       \
+            lptr += sizeof(WvLink *);                   \
+        }                                               \
+        void rewind()                                   \
+            { SorterBase::rewind((int (*)(const void *, const void *)) \
+                                 ((void *)cmp)); }      \
+    };                                                  \
 							\
 public: 						\
     _extra_ 						\
