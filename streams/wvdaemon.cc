@@ -20,7 +20,7 @@
 DeclareWvList(WvDaemon);
 static WvDaemonList daemons;
 
-static void daemon_restart_handler(int signum)
+static void sighup_handler(int signum)
 {
     signal(signum, SIG_IGN);
 
@@ -32,7 +32,7 @@ static void daemon_restart_handler(int signum)
     }
 }
 
-static void daemon_quit_handler(int signum)
+static void sigterm_handler(int signum)
 {
     signal(signum, SIG_IGN);
 
@@ -42,6 +42,13 @@ static void daemon_quit_handler(int signum)
         i->log(WvLog::Notice, "Dying on signal %s.\n", signum);
         i->die();
     }
+}
+
+static void sigquit_handler(int signum)
+{
+    signal(signum, SIG_IGN);
+
+    exit(1);
 }
 
 WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
@@ -130,9 +137,13 @@ int WvDaemon::_run(const char *argv0)
 
     daemons.append(this, false);
     
-    signal(SIGINT, daemon_quit_handler);
-    signal(SIGQUIT, daemon_quit_handler);
-    signal(SIGHUP, daemon_restart_handler);
+    if (daemonize)
+        signal(SIGINT, SIG_IGN);
+    else
+        signal(SIGINT, sigterm_handler);
+    signal(SIGTERM, sigterm_handler);
+    signal(SIGQUIT, sigquit_handler);
+    signal(SIGHUP, sighup_handler);
 
     _want_to_die = false;
     while (!want_to_die())
@@ -152,6 +163,7 @@ int WvDaemon::_run(const char *argv0)
         signal(SIGHUP, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
         signal(SIGINT, SIG_DFL);
+        signal(SIGTERM, SIG_DFL);
     }
 
     log(WvLog::Notice, "Exiting\n");
