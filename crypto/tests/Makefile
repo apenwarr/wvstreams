@@ -20,9 +20,11 @@ SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 
 XPATH=$(SSLINC) $(SSLDIR)/include
 
-LIBS += -L../.. -lwvutils -lwvstreams
-ssltest-LIBS += -lssl
-sslsrvtest-LIBS += -lssl
+LIBS += -L../.. -lwvutils -lwvstreams -lssl
+# cryptotest-LIBS += -lssl
+# ssltest-LIBS += -lssl
+# sslsrvtest-LIBS += -lssl
+# certtest-LIBS += -lssl
 
 default: all
 
