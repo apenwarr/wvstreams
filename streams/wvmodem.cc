@@ -19,6 +19,7 @@ struct SpeedLookup {
 
 
 static SpeedLookup speeds[] = {
+    {460800, B460800},
     {230400, B230400},
     {115200, B115200},
     { 57600, B57600},
@@ -174,7 +175,7 @@ void WvModem::close()
 }
 
 
-void WvModem::speed(int _baud)
+int WvModem::speed(int _baud)
 {
     speed_t s = B0;
     baud = 0;
@@ -183,7 +184,6 @@ void WvModem::speed(int _baud)
 	if (speeds[i].baud <= _baud)
 	{
 	    s = speeds[i].speedt;
-	    baud = speeds[i].baud;
 	    break;
 	}
     }
@@ -191,6 +191,19 @@ void WvModem::speed(int _baud)
     cfsetispeed( &t, B0 ); // auto-match to output speed
     cfsetospeed( &t, s );
     tcsetattr( fd, TCSANOW, &t );
+
+    tcgetattr( fd, &t );
+    s = cfgetospeed( &t );
+    for (unsigned int i = 0; i < sizeof(speeds) / sizeof(*speeds); i++)
+    {
+	if (speeds[i].speedt == s)
+	{
+	    baud = speeds[i].baud;
+	    break;
+	}
+    }
+
+    return baud;
 }
 
 

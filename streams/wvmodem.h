@@ -37,7 +37,7 @@ public:
     
     bool carrier();
     
-    void speed(int _baud);
+    int speed(int _baud);
     int speed() const
 	{ return baud; }
 };
