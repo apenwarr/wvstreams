@@ -1,0 +1,69 @@
+<!doctype book public "-//Davenport//DTD DocBook V3.0//EN">
+
+<book id="index">
+
+
+<TITLE>My Short SGML Book</TITLE>
+
+<BOOKINFO>
+<BOOKBIBLIO>
+<AUTHORGROUP>
+<AUTHOR>
+<FIRSTNAME>George</FIRSTNAME>
+<SURNAME>Tirebiter</SURNAME>
+</AUTHOR>
+</AUTHORGROUP>
+</BOOKBIBLIO>
+</BOOKINFO>
+
+<TOC></TOC>
+<LOT></LOT>
+
+<PREFACE>
+<TITLE>Introduction</TITLE>
+<PARA>Short paragraph.
+</PARA>
+</PREFACE>
+
+<PART>
+<TITLE>This Part Is First</TITLE>
+
+<PARTINTRO>
+<TITLE>Introducing This Part</TITLE>
+<PARA>This Part is like no other Part.</PARA>
+</PARTINTRO>
+
+<CHAPTER id="chappy">
+<TITLE>A Chapter</TITLE>
+<PARA>Short paragraph.
+</PARA>
+</CHAPTER>
+
+<CHAPTER id="wappy">
+<TITLE>Another Chapter</TITLE>
+<PARA>Short paragraph.
+</PARA>
+</CHAPTER>
+
+</PART>
+
+<PART>
+<TITLE>This Part Is Second</TITLE>
+
+<CHAPTER id="snappy">
+<TITLE>Yet Another Chapter</TITLE>
+<PARA>Short paragraph.
+</PARA>
+</CHAPTER>
+
+<CHAPTER>
+<TITLE>Still Yet Another Chapter</TITLE>
+<PARA>Short paragraph.
+</PARA>
+</CHAPTER>
+
+</PART>
+
+<INDEX></INDEX>
+
+</book>

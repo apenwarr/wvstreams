@@ -1,0 +1,9 @@
+*.html
+
+*.fmt
+*.tex
+*.log
+*.aux
+*.dvi
+*.ps
+*.pdf
