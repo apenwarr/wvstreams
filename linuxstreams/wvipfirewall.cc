@@ -74,15 +74,27 @@ WvString WvIPFirewall::forward_command(const char *cmd,
 	haveoface.append("-d ");
 	haveoface.append((WvString)dstaddr);
     }
+    
+    WvString retval;
 
-    WvString retval("iptables -t nat %s OFASTFORWARD -p %s -m mark --mark 0xBEEF "
+    if (dstaddr == WvIPAddr("127.0.0.1"))
+    {
+        retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
+                  "-j REDIRECT --to-port %s %s \n",
+                   cmd, proto, src.port, haveiface, dst.port, shutup());
+    }
+    else
+    {
+        retval.append("iptables -t nat %s OFASTFORWARD -p %s "
+                    "-m mark --mark 0xBEEF "
                     "--dport %s %s -j MASQUERADE %s \n", 
                     cmd, proto, dst.port, haveoface, shutup());
 
-    retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
+        retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
                   "-j DNAT --to-destination %s "
                   "%s \n", cmd, proto, src.port, haveiface,  dst, shutup());
-    
+    }
+
     retval.append("iptables %s FFASTFORWARD -j ACCEPT -p %s "
 		  "--dport %s %s \n "
 		  "%s\n", cmd, proto, src.port,
