@@ -114,10 +114,12 @@ WVTEST_MAIN("add another user and read it back")
     if (!acl_check()) return;
     
     WvString testfn("wvacltest.tmp"), username, groupname;
+    WvString newuser("root");   // I think we can assume root exists
+
     create_file(testfn, username, groupname);
     chmod(testfn, 0421);
 
-    set_acl_permission(testfn, "u", "testuser", true, true, false);
+    set_acl_permission(testfn, "u", newuser, true, true, false);
 
     // our new permission changed the Unix group field to "rwx"
     struct stat st;
@@ -149,11 +151,11 @@ WVTEST_MAIN("add another user and read it back")
             else
             {
                 WVPASS(!u_chk2);
-                WVPASSEQ(i().name, "testuser");
+                WVPASSEQ(i().name, newuser);
                 WVPASS(i().read);
                 WVPASS(i().write);
                 WVFAIL(i().execute);
-                if (i().name == "testuser")
+                if (i().name == newuser)
                     u_chk2 = true;
             }
 	    break;
