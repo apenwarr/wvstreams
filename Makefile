@@ -35,7 +35,7 @@ endif
 dist-hack-clean:
 	rm -f stamp-h.in
 
-dist: dist-hack-clean configure distclean
+dist-hook: dist-hack-clean configure
 	rm -rf autom4te.cache
 	if test -d .xplc; then \
 	    $(MAKE) -C .xplc clean patch; \
@@ -74,6 +74,7 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
+	@rm -f .xplc
 
 clean: depend dust
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
@@ -92,8 +93,7 @@ kdoc:
 doxygen:
 	doxygen
 
-install: install-shared install-dev install-xplc
-#FIXME: We need to install uniconfd somewhere.
+install: install-shared install-dev install-xplc install-uniconfd
 
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
@@ -122,6 +122,19 @@ else
 install-xplc: ;
 
 endif
+
+uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
+          uniconf/daemon/uniconfd.8
+
+install-uniconfd: uniconfd
+	$(INSTALL) -d $(DESTDIR)$(sbindir)
+	$(INSTALL_PROGRAM) uniconf/daemon/uniconfd $(DESTDIR)$(sbindir)/
+	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
+	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
+	$(INSTALL) -d $(DESTDIR)$(localstatedir)/lib/uniconf
+	touch $(DESTDIR)$(localstatedir)/lib/uniconf/uniconfd.ini
+	$(INSTALL) -d $(DESTDIR)$(mandir)
+	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/
 
 uninstall:
 	$(tbd)
