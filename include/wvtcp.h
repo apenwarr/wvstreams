@@ -42,6 +42,7 @@ class WvTCPConn : public WvFDStream
 protected:
     bool resolved, connected;
     WvString hostname;
+    bool incoming;
     WvIPPortAddr remaddr;
     WvResolver dns;
     

@@ -44,6 +44,7 @@ WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
     remaddr = _remaddr;
     resolved = true;
     connected = false;
+    incoming = false;
     
     do_connect();
 }
@@ -55,6 +56,7 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr) :
     remaddr = _remaddr;
     resolved = true;
     connected = true;
+    incoming = true;
     nice_tcpopts();
 }
 
@@ -81,6 +83,7 @@ WvTCPConn::WvTCPConn(WvStringParm _hostname, __u16 _port) :
 	remaddr.port = _port;
     
     resolved = connected = false;
+    incoming = false;
     
     WvIPAddr x(hostname);
     if (x != WvIPAddr())
@@ -198,7 +201,11 @@ WvIPPortAddr WvTCPConn::localaddr()
     
     if (
 #ifndef _WIN32
-	getsockopt(getfd(), SOL_IP, SO_ORIGINAL_DST, (char*)&sin, &sl) < 0 &&
+        // getsockopt() with SO_ORIGINAL_DST is for transproxy of incoming
+        // connections.  For outgoing (and for windows) use just use good
+        // old getsocknmae().
+	(!incoming || getsockopt(getfd(), SOL_IP,
+                                 SO_ORIGINAL_DST, (char*)&sin, &sl) < 0) &&
 #endif
 	getsockname(getfd(), (sockaddr *)&sin, &sl))
     {
