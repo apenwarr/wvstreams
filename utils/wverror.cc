@@ -46,6 +46,8 @@ WvString WvError::errstr() const
 
 void WvError::seterr(int _errnum)
 {
+    assert(_errnum != -1 || !!errstring &&
+            "attempt to set errnum to -1 without also setting errstring");
     if (!errnum)
 	errnum = _errnum;
 }
@@ -53,6 +55,7 @@ void WvError::seterr(int _errnum)
 
 void WvError::seterr(WvStringParm specialerr)
 {
+    assert(!!specialerr);
     if (!errnum)
     {
 	errstring = specialerr;
