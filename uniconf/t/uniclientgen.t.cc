@@ -11,7 +11,16 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define UNICONFD_SOCK "/tmp/uniclientgen-uniconfd"
+static WvString get_sockname()
+{
+    int fd;
+    WvString sockname = "/tmp/sockXXXXXX";
+    if ((fd = mkstemp(sockname.edit())) == (-1))
+        return "";
+    close(fd);
+
+    return sockname;
+}
 
 static int delta_count;
 static void callback(const UniConf &, const UniConfKey &)
@@ -25,13 +34,15 @@ WVTEST_MAIN("deltas")
 
     signal(SIGPIPE, SIG_IGN);
 
+    WvString sockname = get_sockname();
+
     pid_t child = fork();
     WVPASS(child >= 0);
     if (child == 0)
     {
         uniconf.mountgen(new UniTempGen());
         UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(UNICONFD_SOCK);
+        WVPASS(daemon.setupunixsocket(sockname));
         WvIStreamList::globallist.append(&daemon, false);
         while (true)
         {
@@ -47,7 +58,7 @@ WVTEST_MAIN("deltas")
         {
             WvUnixConn *unix_conn;
             client_gen = new UniClientGen(
-                    unix_conn = new WvUnixConn(UNICONFD_SOCK));
+                    unix_conn = new WvUnixConn(sockname));
             if (!unix_conn || !unix_conn->isok()
                     || !client_gen || !client_gen->isok())
             {
@@ -72,7 +83,15 @@ WVTEST_MAIN("deltas")
         WVPASS(delta_count > old_delta_count);
         
         kill(child, 15);
-        WVPASS(waitpid(child, NULL, 0) == child);
+        pid_t rv;
+        while ((rv = waitpid(child, NULL, 0)) != child)
+        {
+            // in case a signal is in the process of being delivered..
+            if (rv == -1 && errno != EINTR)
+                break;
+        }       
+        WVPASS(rv == child);
+        unlink(sockname);
     }
 }
 
