@@ -35,7 +35,7 @@
  */
 class UniDefGen : public UniFilterGen
 {
-    WvString finddefault(UniConfKey key, UniConfKey keypart = "");
+    void finddefault(char *p, char *q, WvString &result);
 
 public:
     UniDefGen(UniConfGen *gen) : UniFilterGen(gen) { }

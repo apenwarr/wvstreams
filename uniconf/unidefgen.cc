@@ -28,22 +28,47 @@ static WvMoniker<UniConfGen> reg("default", creator);
 
 WvString UniDefGen::get(const UniConfKey &key)
 {
-    return finddefault(key);
+    WvString tmp_key(key), tmp("");
+    char *p = tmp_key.edit();
+
+    tmp.setsize(strlen(tmp_key) * 2);
+    char *q = tmp.edit();
+    *q = '\0';
+
+    WvString result;
+    finddefault(p, q, result);
+    return result;
 }
 
 
-WvString UniDefGen::finddefault(UniConfKey key, UniConfKey keypart)
+void UniDefGen::finddefault(char *p, char *q, WvString &result)
 {
-    if (key.isempty())
-        return UniFilterGen::get(keypart);
+    if (!p)
+    {
+        result = UniFilterGen::get(++q);
+        return;
+    }
 
-    WvString cur = key.first();
-    key = key.removefirst();
+    char *r = strchr(p, '/');
+    if (r)
+        *r++ = '\0';
 
-    cur = finddefault(key, WvString("%s/%s", keypart, cur));
+    char *s = strchr(q, '\0');
+    *s++ = '/';
+    *s = 0;
+    q = strcat(q, p);
 
-    if (!cur.isnull())
-        return cur;
-    else if (cur != "*")
-        return finddefault(key, WvString("%s/*", keypart));
+    finddefault(r, q, result);
+
+    if (!result.isnull())
+        return;
+    else
+    {
+        *s++ = '*';
+        *s = '\0';
+        finddefault(r, q, result);
+    }
+
+    if (r)
+        *--r = '/';
 }
