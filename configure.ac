@@ -54,7 +54,7 @@ AC_ARG_ENABLE(efence,
                              [link against Electric Fence]))
 
 AC_ARG_ENABLE(exceptions,
-              AC_HELP_STRING([--enable-exceptions],
+              AC_HELP_STRING([--disable-exceptions],
                              [C++ exceptions (compiler)]))
 
 AC_ARG_ENABLE(fatal-warnings,
@@ -74,7 +74,7 @@ AC_ARG_ENABLE(delete-detector,
                              [Delete detector (reference counting)]))
 
 AC_ARG_ENABLE(rtti,
-              AC_HELP_STRING([--enable-rtti],
+              AC_HELP_STRING([--disable-rtti],
                              [C++ run-time type identification (compiler)]))
 
 AC_ARG_ENABLE(verbose,
@@ -130,7 +130,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 # exceptions
-if test "$enable_exceptions" != "yes"; then
+if test "$enable_exceptions" = "no"; then
     WV_APPEND(CXXFLAGS, -fno-exceptions)
 fi
 
@@ -147,7 +147,7 @@ if test "$enable_delete_detector" = "yes"; then
 fi
 
 # rtti
-if test "$enable_rtti" != "yes"; then
+if test "$enable_rtti" = "no"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
