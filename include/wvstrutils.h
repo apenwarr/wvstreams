@@ -97,10 +97,13 @@ WvString hexdump_buffer(const void *buf, size_t len, bool charRep = true);
 bool isnewline(char c);
 
 /**
- * Converts escaped characters (things like %20 etc.) from web URLS into their
- * normal ASCII representations.
+ * Converts escaped characters (things like %20 etc.) from web URLS
+ * into their normal ASCII representations. If you happen to be
+ * decoding PEM encoded stuff,or anything that has + signs in it that
+ * you don't want encoded as spaces, th en set no_space to true, and
+ * it should "just work" for you.
  */
-WvString web_unescape(const char *str);
+WvString web_unescape(const char *str, bool no_space = false);
 
 
 /**
