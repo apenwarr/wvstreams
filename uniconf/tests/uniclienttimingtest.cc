@@ -25,19 +25,28 @@ public:
         alarm(0);
     }
 
-    void run_test()
+    bool check(WvString test, WvString expected)
     {
-        WvString test("chickens/bob");
-        WvString expected("goof");
-        WvString value(uniconf[test].get());
+        WvString value(uniconf[test].get()); 
         if (value == expected)
         {
             wvcon->print("OK - %s: got \"%s\"\n", test, value);
+            return true;
         }
         else
         {
             wvcon->print("FAIL - %s: expected \"%s\", got \"%s\"\n",
                     test, expected, value);
+            return false;
+        }
+    }
+
+    void run_test()
+    {
+        bool pass = check("chickens/bob", "goof");
+        if (pass) pass = check("users/apenwarr/ftp", "1");
+        if (!pass)
+        {
             passed = false;
             done = true;
         }
