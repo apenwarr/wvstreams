@@ -22,7 +22,7 @@ class WvDailyEvent : public WvStream
 /**********************************/
 {
 public:
-    WvDailyEvent( int _hour, int _num_per_day=0 );
+    WvDailyEvent( int _first_hour, int _num_per_day=0 );
 
     virtual bool select_setup( SelectInfo& si );
     virtual bool test_set( SelectInfo& si );
@@ -33,12 +33,12 @@ public:
 
     virtual bool isok() const;
 
-    void configure( int _hour, int _num_per_day=0 );
+    void configure( int _first_hour, int _num_per_day=0 );
     void set_hour( int h )
         { configure( h, num_per_day ); }
 
 private:
-    int     hour;
+    int     first_hour;
     int     num_per_day;
     bool    need_reset;
 };
