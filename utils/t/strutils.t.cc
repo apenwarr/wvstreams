@@ -894,3 +894,14 @@ WVTEST_MAIN("secondstoa")
     WVPASSEQ(secondstoa(10*24*3600), "10 days");
 }
 
+WVTEST_MAIN("spacecat")
+{
+    WVPASSEQ(spacecat("xx", "yy"), "xx yy");
+    WVPASSEQ(spacecat("xx", "yy", ';'), "xx;yy");
+    WVPASSEQ(spacecat("xx;;", "yy", ';'), "xx;;;yy");
+    WVPASSEQ(spacecat("xx;;;", "yy", ';', true), "xx;yy");
+    WVPASSEQ(spacecat("xx;;;", ";yy", ';', true), "xx;yy");
+    WVPASSEQ(spacecat("", "yy"), " yy");
+    WVPASSEQ(spacecat("", "yy", ';', true), ";yy");
+    WVPASSEQ(spacecat("", ";;yy", ';', true), ";yy");
+}
