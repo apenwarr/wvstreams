@@ -8,7 +8,7 @@
  * another when you know exactly what you want to do.
  * 
  * This is mainly intended for use by WvStream, but that's probably not the
- * only possible use...
+ * only possible use... see also WvCont.
  */
 #ifndef __WVTASK_H
 #define __WVTASK_H
@@ -84,7 +84,8 @@ class WvTaskMan
     static void stackmaster();
     static void _stackmaster();
     static void do_task();
-    
+
+    static char *stacktop;
     static jmp_buf stackmaster_task;
     
     static WvTask *stack_target;

@@ -5,7 +5,7 @@
 static int sequence = 0;
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("basic 1")
 {
     WvString a, b;
     
@@ -31,14 +31,14 @@ WVTEST_MAIN()
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("basic 2")
 {
     WVPASS(++sequence == 2);
     WVPASS("booga booga");
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("basic 3")
 {
     WVFAIL(++sequence != 3);
     WVPASS("booga booga");

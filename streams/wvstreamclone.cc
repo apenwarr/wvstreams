@@ -45,19 +45,19 @@ WvStreamClone::~WvStreamClone()
 	delete cloned;
 }
 
+
 void WvStreamClone::nowrite()
 {
     if (cloned)
-    {
 	cloned->nowrite();
-    }
 }
+
 
 void WvStreamClone::close()
 {
     WvStream::close();
     if (disassociate_on_close)
-        cloned = NULL;
+        setclone(NULL);
     if (cloned)
 	cloned->close();
 }

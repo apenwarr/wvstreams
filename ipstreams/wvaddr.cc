@@ -776,7 +776,10 @@ sockaddr_bin *WvUnixAddr::sockaddr() const
     
     memset(sun, 0, sizeof(*sun));
     sun->sun_family = AF_UNIX;
-    strncpy(sun->sun_path, sockname, sizeof(sun->sun_path) - 2);
+    size_t max = strlen(sockname);
+    if (max > sizeof(sun->sun_path) - 2) // appease valgrind
+	max = sizeof(sun->sun_path) - 2;
+    strncpy(sun->sun_path, sockname, max);
     return (sockaddr_bin *)sun;
 }
 

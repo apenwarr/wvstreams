@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <malloc.h> // for alloca()
 #include <stdlib.h> // for alloca() on non-Linux platforms?
+#include <valgrind/memcheck.h>
 
 #define TASK_DEBUG 0
 #if TASK_DEBUG
@@ -27,6 +28,16 @@ WvTaskList WvTaskMan::free_tasks;
 jmp_buf WvTaskMan::stackmaster_task, WvTaskMan::get_stack_return,
     WvTaskMan::toplevel;
 WvTask *WvTaskMan::current_task, *WvTaskMan::stack_target;
+char *WvTaskMan::stacktop;
+
+
+static void valgrind_fix(char *stacktop)
+{
+    char val;
+    //printf("valgrind fix: %p-%p\n", &val, stacktop);
+    assert(stacktop > &val);
+    VALGRIND_MAKE_READABLE(&val, stacktop - &val);
+}
 
 
 WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
@@ -103,6 +114,8 @@ WvTaskMan::WvTaskMan()
     current_task = NULL;
     magic_number = -WVTASK_MAGIC;
     
+    stacktop = (char *)alloca(0);
+    
     if (setjmp(get_stack_return) == 0)
     {
 	// initial setup - start the stackmaster() task (never returns!)
@@ -176,6 +189,8 @@ int WvTaskMan::run(WvTask &task, int val)
     else
     {
 	// someone did yield() (if toplevel) or run() on our old task; done.
+	if (state != &toplevel)
+	    valgrind_fix(stacktop);
 	current_task = old_task;
 	return newval;
     }
@@ -193,6 +208,8 @@ int WvTaskMan::yield(int val)
     assert(current_task->stack_magic);
     
     // if this fails, this task overflowed its stack.  Make it bigger!
+    VALGRIND_MAKE_READABLE(current_task->stack_magic,
+			   sizeof(current_task->stack_magic));
     assert(*current_task->stack_magic == WVTASK_MAGIC);
 
 #if TASK_DEBUG
@@ -218,6 +235,7 @@ int WvTaskMan::yield(int val)
     {
 	// back via longjmp, because someone called run() again.  Let's go
 	// back to our running task...
+	valgrind_fix(stacktop);
 	return newval;
     }
 }
@@ -236,6 +254,7 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
     }
     else
     {
+	valgrind_fix(stacktop);
 	assert(magic_number == -WVTASK_MAGIC);
 	assert(task.magic_number == WVTASK_MAGIC);
 	
@@ -279,6 +298,7 @@ void WvTaskMan::_stackmaster()
 	}
 	else
 	{
+	    valgrind_fix(stacktop);
 	    assert(magic_number == -WVTASK_MAGIC);
 	    
 	    // set up a stack frame for the new task.  This runs once
@@ -329,6 +349,7 @@ void WvTaskMan::do_task()
     {
 	// someone did a run() on the task, which
 	// means they're ready to make it go.  Do it.
+	valgrind_fix(stacktop);
 	for (;;)
 	{
 	    assert(magic_number == -WVTASK_MAGIC);
