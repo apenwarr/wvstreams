@@ -20,7 +20,11 @@ SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 	-L/usr/local/ssl -L/usr/local/ssl/lib -L/usr/local/ssleay
 
 default: all tests
-all: crypto.libs crypto.a
+all: crypto.libs crypto.a ssltest
+
+.PHONY: ssltest
+ssltest:
+	$(MAKE) -C tests ssltest
 
 LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto -L.. -lwvutils -lwvstreams
 LIBS += ${EFENCE}
