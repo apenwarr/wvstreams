@@ -124,6 +124,7 @@ public:
 		      const WvString &section, const WvString &entry);
     void run_callbacks(const WvString &section, const WvString &entry,
 		       const WvString &oldvalue, const WvString &newvalue);
+    void run_all_callbacks();
     
     // generic callback function for setting a bool to "true" when changed
     static WvConfCallback setbool;

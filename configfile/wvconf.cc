@@ -106,6 +106,7 @@ void WvConf::load_file(const WvString &filename)
 
     while ((from_file = trim_string(file.getline(0))) != NULL)
     {
+
 	if ((p = parse_section(from_file)) != NULL)
 	{
 	    quick_mode = false;
@@ -141,6 +142,8 @@ void WvConf::load_file(const WvString &filename)
 	    }
 	}
     }
+
+    run_all_callbacks();
 }
 
 
@@ -369,5 +372,16 @@ void WvConf::run_callbacks(const WvString &section, const WvString &entry,
 		i().callback(*this, i().userdata, section, entry,
 			     oldvalue, newvalue);
 	}
+    }
+}
+
+
+void WvConf::run_all_callbacks()
+{
+    WvConfCallbackInfoList::Iter i(callbacks);
+
+    for (i.rewind(); i.next(); )
+    {
+        i().callback(*this, i().userdata, "", "", "", "");
     }
 }
