@@ -18,7 +18,7 @@ SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 default: all cryptotest ssltest sslsrvtest certtest
 all: crypto.libs
 
-LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto
+LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto -L.. -lwvutils -lwvstreams
 LIBS += ${EFENCE}
 #LIBS += /usr/local/mpr/libmpr.a -static
 XPATH=.. ../utils ../streams ../configfile ../ipstreams \
@@ -28,7 +28,7 @@ crypto.libs: wvcrypto.o wvsslstream.o wvx509.o
 
 crypto.a: crypto.libs
 
-cryptotest ssltest sslsrvtest certtest: crypto.a ../ipstreams/ipstreams.a
+cryptotest ssltest sslsrvtest certtest: crypto.a
 
 clean:
 	rm -f cryptotest ssltest sslsrvtest certtest
