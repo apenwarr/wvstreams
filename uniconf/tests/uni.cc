@@ -1,6 +1,7 @@
 #include "uniconfroot.h"
 #include "wvlogrcv.h"
 #include "strutils.h"
+#include "wvtclstring.h"
 
 int main(int argc, char **argv)
 {
@@ -44,6 +45,7 @@ int main(int argc, char **argv)
     else if (cmd == "set")
     {
 	cfg[arg1].set(arg2);
+	cfg.commit();
 	return 0; // always works
     }
     else if (cmd == "xset")
@@ -59,19 +61,42 @@ int main(int argc, char **argv)
 	    buf.unalloc(10240 - len);
 	}
 	cfg[arg1].set(buf.getstr());
+	cfg.commit();
+	return 0; // always works
     }
-    else if (cmd == "sect")
+    else if (cmd == "keys")
     {
 	UniConf::Iter i(cfg[arg1]);
 	for (i.rewind(); i.next(); )
-	    wvcon->print("%s = %s\n", i->key(), i->get(""));
+	    wvcon->print("%s\n", wvtcl_escape(i->key(), "\r\n"));
     }
-    else if (cmd == "hsect")
+    else if (cmd == "hkeys")
     {
 	UniConf sub(cfg[arg1]);
 	UniConf::RecursiveIter i(sub);
 	for (i.rewind(); i.next(); )
-	    wvcon->print("%s = %s\n", i->fullkey(sub), i->get(""));
+	    wvcon->print("%s\n", wvtcl_escape(i->fullkey(sub), "\r\n"));
+    }
+    else if (cmd == "dump")
+    {
+	// note: the output of this command happens to be compatible with
+	// (can be read by) the 'ini' UniConf backend.
+	UniConf::Iter i(cfg[arg1]);
+	for (i.rewind(); i.next(); )
+	    wvcon->print("%s = %s\n",
+			 wvtcl_escape(i->key(), "\r\n[]="),
+			 wvtcl_escape(i->get(""), "\r\n[]="));
+    }
+    else if (cmd == "hdump")
+    {
+	// note: the output of this command happens to be compatible with
+	// (can be read by) the 'ini' UniConf backend.
+	UniConf sub(cfg[arg1]);
+	UniConf::RecursiveIter i(sub);
+	for (i.rewind(); i.next(); )
+	    wvcon->print("%s = %s\n",
+			 wvtcl_escape(i->fullkey(sub), "\r\n[]="),
+			 wvtcl_escape(i->get(""), "\r\n[]="));
     }
     else
     {
