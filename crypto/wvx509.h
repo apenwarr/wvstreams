@@ -135,6 +135,21 @@ public:
      */
     bool isinCRL();
         
+    /**
+     * Dump the X509 Certificate in Cert to outfile in PEM
+     */
+    void dumpcert(WvString outfile, bool append = false);
+    
+    /**
+     * Dump RSA Keypair to outfile in PEM format 
+     */
+    void dumpkeypair(WvString outfile, bool append = false);
+
+    /**
+     * Dump RSA Keypair to outfile in RAW format (suitable for FreeS/WAN)
+     */
+    void dumprawkeypair(WvString outfile, bool append = false);
+
     WvLog debug;
     
     /**

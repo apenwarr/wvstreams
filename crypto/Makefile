@@ -31,4 +31,4 @@ crypto.a: crypto.libs
 cryptotest ssltest sslsrvtest certtest reqtest: crypto.a
 
 clean:
-	rm -f cryptotest ssltest sslsrvtest certtest reqtest
+	rm -f cryptotest ssltest sslsrvtest certtest reqtest testcert.pem

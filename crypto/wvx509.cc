@@ -392,7 +392,100 @@ bool WvX509Mgr::signedbyCAindir(WvString certdir)
     return true;
 }
 
-bool isinCRL()
+bool WvX509Mgr::isinCRL()
 {
     return true;
+}
+
+void WvX509Mgr::dumpcert(WvString outfile, bool append)
+{
+    FILE *certout;
+
+    if (append)
+    {
+	certout = fopen(outfile,"a");
+        debug("Opening %s for append\n",outfile);
+    }
+    else
+    {
+	certout = fopen(outfile,"w");
+        debug("Opening %s for write\n",outfile);
+    }
+
+    if (certout != NULL)
+    {
+	debug("Dumping X509 Certificate...\n");
+    	PEM_write_X509(certout,cert);
+    }
+    else
+    {
+	seterr("Cannot open file for writing");
+    }
+
+    fclose(certout);
+
+    return;
+}
+
+void WvX509Mgr::dumpkeypair(WvString outfile, bool append)
+{
+    FILE *keyout;
+    EVP_CIPHER *enc = NULL;
+
+    if (append)
+    {
+        keyout = fopen(outfile,"a");
+        debug("Opening %s for append\n",outfile);
+    }
+    else
+    {
+        keyout = fopen(outfile,"w");
+    }
+    if (keyout != NULL)
+    {
+	debug("Printing keypair...\n");
+	(const EVP_CIPHER *)enc = EVP_get_cipherbyname("rsa");
+	PEM_write_RSAPrivateKey(keyout,keypair->rsa, enc, NULL, 0, NULL, NULL);
+    }
+    else
+    {   
+        seterr("Cannot open file for writing");
+    }
+
+    fclose(keyout);
+
+    return;
+}
+
+void WvX509Mgr::dumprawkeypair(WvString outfile, bool append)
+{
+    FILE *keyout;
+    int offset;
+    struct stat filestat;
+
+    if (append)
+    {
+        keyout = fopen(outfile,"a");
+        fstat(fileno(keyout),&filestat);
+	offset = filestat.st_size;
+        debug("Opening %s for append\n",outfile);
+    }
+    else
+    {
+        keyout = fopen(outfile,"w");
+	offset = 0;
+    }
+    if (keyout != NULL)
+    {
+	debug("Printing keypair...\n");
+	RSA_print(keyout,keypair->rsa, offset);
+    }
+    else
+    {   
+        seterr("Cannot open file for writing");
+    }
+
+    fclose(keyout);
+
+    return;
 }

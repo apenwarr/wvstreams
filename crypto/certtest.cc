@@ -23,11 +23,9 @@ int main()
 	
 	if (!x509cert.err)
 	{
-	    PEM_write_X509(stdout,x509cert.cert);
-	    log("Now take this, and give it to Openssl, with the command line\n"	
-		"openssl x509 -text\n"
-		"At the blank line, paste the part between BEGIN and END\n"
-		"and it will decode the certificate you just created\n");
+	    WvString filename("testcert.pem");
+	    x509cert.dumpkeypair(filename,false);
+	    x509cert.dumpcert(filename,true);
 	}
 	else
 		log("Error: %s",x509cert.errstr);
