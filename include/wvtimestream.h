@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
@@ -6,8 +6,8 @@
 #ifndef __WVTIMESTREAM_H
 #define __WVTIMESTREAM_H
 
+#include "wvtimeutils.h"
 #include "wvstream.h"
-#include <sys/time.h>
 
 /**
  * WvTimeStream causes select() to be true after a configurable number
@@ -21,21 +21,21 @@
  */
 class WvTimeStream : public WvStream
 {
+    WvTime next;
     time_t ms_per_tick;
 
 public:
     WvTimeStream();
     
     /**
-     * every 'msec' milliseconds, select() will return true on this stream.
-     * if 'msec' is 0, the timer is disabled.
+     * Every 'msec' milliseconds, select() will return true on this
+     * stream.  if 'msec' is 0 (or less), the timer is disabled.
      */
     void set_timer(time_t msec);
 
     virtual bool isok() const;
-    
-    /** notify timestream that we have "ticked" once */
-    void tick();
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     virtual void execute();
 };
 

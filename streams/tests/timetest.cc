@@ -24,12 +24,26 @@ int main()
 
     for (count = 0; count < 100; count++)
     {
-	if (!(count % 10)) log("\n");
+	if (!(count % 10))
+	{
+	    usleep(500000);
+	    log("\n");
+	}
 	
 	while (!t.select(-1))
 	    ;
 	t.callback();
-	
+
+	/*
+	 * FIXME: It should be okay to sleep more than 100 ms here,
+	 * but it isn't. The time stream knows it is late, and will
+	 * force the select() timeout to zero to try catching up, but
+	 * since we're sleeping outside of it, there's nothing it can
+	 * do. If it could call the callback more than once per loop
+	 * iteration, it could be fixed, but I'm not sure how to do
+	 * that.
+	 */
+
 	log("%02s ", count);
     }
     
