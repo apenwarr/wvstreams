@@ -3,7 +3,7 @@ include $(TOPDIR)/wvrules.mk
 
 TESTS=teststr testlist testhash stresshash testbuffer testbase64 testver \
 		testtask testsort testproc testfork testencoder testdiriter \
-		testcallback
+		testcallback testcrash
 
 MODULES=base64.o verstring.o strutils.o strcrypt.o wvtimeutils.o \
 		wvstring.o wvstringlist.o wvstringtable.o \
@@ -16,6 +16,8 @@ default: all $(TESTS)
 all: utils.libs
 
 testencoder-LIBS=-lz
+
+testcrash-LIBS=-rdynamic
 
 utils.libs: $(MODULES)
 

@@ -13,4 +13,5 @@ testfork
 testencoder
 testdiriter
 testcallback
+testcrash
 utils.libs
