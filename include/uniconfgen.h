@@ -13,12 +13,10 @@
 #include "uniconflocation.h"
 #include "uniconfkey.h"
 #include "uniconfiter.h"
-#include "uniconf.h"
 #include "wvstring.h"
 #include "wvhashtable.h"
 #include "wvlog.h"
 
-class UniConf;
 class WvStreamList;
 
 /**

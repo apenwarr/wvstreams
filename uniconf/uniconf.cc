@@ -156,17 +156,23 @@ void UniConf::dump(WvStream &stream, bool everything) const
 /***** UniConf::Iter *****/
 
 UniConf::Iter::Iter(const UniConf &root) :
-    UniConfRoot::Iter(*root.manager(), root.fullkey()),
-    xroot(root), current(NULL)
+    KeyIterBase(root),
+    it(*root.manager(), root.fullkey())
 {
+}
+
+
+void UniConf::Iter::rewind()
+{
+    it.rewind();
 }
 
 
 bool UniConf::Iter::next()
 {
-    if (UniConfRoot::Iter::next())
+    if (it.next())
     {
-        current = xroot[key()];
+        xcurrent = xroot[it.key()];
         return true;
     }
     return false;
@@ -178,7 +184,8 @@ bool UniConf::Iter::next()
 
 UniConf::RecursiveIter::RecursiveIter(const UniConf &root,
     UniConfDepth::Type depth) :
-    xroot(root), top(root), depth(depth), current(NULL)
+    KeyIterBase(root),
+    top(root), depth(depth)
 {
 }
 
@@ -212,26 +219,127 @@ bool UniConf::RecursiveIter::next()
     if (first)
     {
         first = false;
-        current = xroot;
+        xcurrent = xroot;
         return true;
     }
 
-    IterList::Iter itlistit(itlist);
+    UniConf::IterList::Iter itlistit(itlist);
     for (itlistit.rewind(); itlistit.next(); )
     {
         UniConf::Iter &it = itlistit();
         if (it.next())
         {
-            current = *it;
+            xcurrent = *it;
             if ((depth == UniConfDepth::INFINITE ||
             depth == UniConfDepth::DESCENDENTS) &&
-                current.haschildren())
+                xcurrent.haschildren())
             {
-                UniConf::Iter *subit = new UniConf::Iter(current);
+                UniConf::Iter *subit = new UniConf::Iter(xcurrent);
                 subit->rewind();
                 itlist.prepend(subit, true);
             }
             return true;
+        }
+        itlistit.xunlink();
+    }
+    return false;
+}
+
+
+
+/***** UniConf::PatternIter *****/
+
+UniConf::PatternIter::PatternIter(const UniConf &root,
+    const UniConfKey &pattern) :
+    KeyIterBase(root),
+    xpattern(pattern), it(NULL)
+{
+}
+
+
+UniConf::PatternIter::~PatternIter()
+{
+    delete it;
+}
+
+
+void UniConf::PatternIter::rewind()
+{
+    done = false;
+    if (xpattern == UniConfKey::ANY)
+    {
+        if (! it)
+            it = new UniConf::Iter(root());
+        it->rewind();
+    }
+}
+
+
+bool UniConf::PatternIter::next()
+{
+    // handle "*" wildcard
+    if (it)
+    {
+        if (! it->next())
+            return false;
+        xcurrent = **it;
+        return true;
+    }
+    // handle isolated elements
+    if (done)
+        return false;
+    done = true;
+    xcurrent = root()[xpattern];
+    return xcurrent.exists();
+}
+
+
+
+/***** UniConf::XIter *****/
+
+UniConf::XIter::XIter(const UniConf &root,
+    const UniConfKey &pattern) :
+    KeyIterBase(root),
+    xpattern(pattern)
+{
+}
+
+
+void UniConf::XIter::rewind()
+{
+    itlist.zap();
+    if (! xpattern.isempty())
+    {
+        UniConf::PatternIter *subit = new UniConf::PatternIter(
+            root(), xpattern.first());
+        subit->rewind();
+        itlist.prepend(subit, true);
+    }
+}
+
+
+bool UniConf::XIter::next()
+{
+    UniConf::PatternIterList::Iter itlistit(itlist);
+    for (itlistit.rewind(); itlistit.next(); )
+    {
+        UniConf::PatternIter &it = itlistit();
+        if (it.next())
+        {
+            // return key if we reached the desired depth
+            xcurrent = *it;
+            int depth = itlist.count();
+            int desired = xpattern.numsegments();
+            if (depth == desired)
+                return true;
+            
+            // otherwise add a level to the stack
+            UniConf::PatternIter *subit = new UniConf::PatternIter(
+                it(), xpattern.segment(depth));
+            subit->rewind();
+            itlist.prepend(subit, true);
+            itlistit.rewind();
+            continue;
         }
         itlistit.xunlink();
     }
