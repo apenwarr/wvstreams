@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.10 2002/12/10 16:46:37 jbrown Exp $)
+AC_REVISION($Id: configure.ac,v 1.11 2002/12/20 04:12:10 jbrown Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -39,6 +39,10 @@ AC_ARG_ENABLE(exceptions,
 AC_ARG_ENABLE(efence,
               AC_HELP_STRING([--enable-efence],
                              [Electric Fence]))
+
+AC_ARG_ENABLE(resolver-fork,
+              AC_HELP_STRING([--disable-resolver-fork],
+                             [WvResolver background name resolution (debugging)]))
 
 AC_ARG_WITH(openssl,
             AC_HELP_STRING([--with-openssl],
@@ -146,6 +150,12 @@ CPPFLAGS="$CPPFLAGS -I$QTINCLUDE"
 AC_CHECK_HEADERS(qt/qobject.h,, [with_qt=no])
 fi
 
+# resolver fork
+if test "$enable_resolver_fork" == no; then
+AC_DEFINE(WVRESOLVER_SKIP_FORK,,
+          [Define to disable WvResolver forking for debugging with gdb.])
+fi
+
 AC_SUBST(enable_debug)
 AC_SUBST(enable_fatal_warnings)
 AC_SUBST(enable_verbose)
@@ -154,6 +164,7 @@ AC_SUBST(enable_warnings)
 AC_SUBST(enable_rtti)
 AC_SUBST(enable_exceptions)
 AC_SUBST(enable_efence)
+AC_SUBST(enable_resolver_fork)
 AC_SUBST(with_openssl)
 AC_SUBST(with_zlib)
 AC_SUBST(with_ogg)

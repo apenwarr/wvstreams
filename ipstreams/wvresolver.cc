@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
+#include "wvautoconf.h"
 
 class WvResolverHost
 {
@@ -171,11 +172,15 @@ int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 	hostmap->add(host, true);
 	
 	host->loop = new WvLoopback();
-#define SKIP_FORK_FOR_DEBUGGING 0 // this does NOT work on a real weaver!!
-#if SKIP_FORK_FOR_DEBUGGING
+#ifdef WVRESOLVER_SKIP_FORK
+        /* background name resolution does not work when debugging
+         * with gdb
+         */
 	namelookup(name, host->loop);
 #else
-	
+        /* otherwise it works just file...
+         */
+
 	// don't close host->loop!
 	host->pid = wvfork(host->loop->getrfd(), host->loop->getwfd());
 	
