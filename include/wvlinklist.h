@@ -157,12 +157,8 @@ public:
  * 
  *  - DeclareWvList(Type): creates a subclass named WvListType
  *     that contains pointers to Type.
- *  - DeclareWvList2(Type, code...): as the above, but includes the
- *     specified block of code into the public section of the
- *     class declaration.
- *     eg. DeclareWvList2(WvString, void autofill(););
- *  - DeclareWvList3(Type, name, code...): as the above, but
- *     calls the resulting class by the specified name.
+ *  - DeclareWvList2(name, Type): as the above, but calls the
+ *     resulting class by the specified name. 
  * 
  * 
  * "T" is the object type
