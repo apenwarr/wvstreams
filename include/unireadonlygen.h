@@ -19,7 +19,7 @@
 class UniReadOnlyGen : public UniFilterGen
 {
 public:
-    UniReadOnlyGen(UniConfGen *inner) : UniFilterGen(inner) { }
+    UniReadOnlyGen(IUniConfGen *inner) : UniFilterGen(inner) { }
 
     /***** Overridden members *****/
 

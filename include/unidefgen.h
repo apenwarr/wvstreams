@@ -48,7 +48,7 @@ class UniDefGen : public UniFilterGen
             WvString &result);
 
 public:
-    UniDefGen(UniConfGen *gen) : UniFilterGen(gen) { }
+    UniDefGen(IUniConfGen *gen) : UniFilterGen(gen) { }
 
     /***** Overridden members *****/
 

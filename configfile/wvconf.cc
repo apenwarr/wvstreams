@@ -58,6 +58,7 @@ WvConf::WvConf(WvStringParm _filename, int _create_mode)
 {
     create_mode = _create_mode;
     dirty = error = loaded_once = false;
+    wvauthd = NULL;
     load_file();
 }
 

@@ -14,19 +14,19 @@
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
-static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
 {
-    UniConfGen *gen = NULL;
+    IUniConfGen *gen = NULL;
 
     if (obj)
-        gen = mutate<UniConfGen>(obj);
+        gen = mutate<IUniConfGen>(obj);
     if (!gen)
-        gen = wvcreate<UniConfGen>(s);
+        gen = wvcreate<IUniConfGen>(s);
 
     return new UniDefGen(gen);
 }
 
-static WvMoniker<UniConfGen> reg("default", creator);
+static WvMoniker<IUniConfGen> reg("default", creator);
 
 
 WvString UniDefGen::get(const UniConfKey &key)

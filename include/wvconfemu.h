@@ -8,12 +8,6 @@
 #define __WVCONFEMU_H
 
 
-#ifndef USE_WVCONFEMU
-
-#include "wvconf.h"
-
-#else
-
 #include "uniconfroot.h"
 #include "wvsorter.h"
 
@@ -27,6 +21,8 @@
 class WvConfEmu;
 class WvConfigEntryEmu;
 class WvConfigSectionEmu;
+class WvAuthDaemon;
+class WvAuthDaemonSvc;
 
 typedef WvConfEmu WvConfigSectionListEmu;
 typedef WvConfigSectionEmu WvConfigEntryListEmu;
@@ -36,7 +32,7 @@ class WvConfigEntryEmu
 {
 public:
     const WvString name;
-    const WvString value;
+    WvString value;
     WvConfigEntryEmu(WvStringParm _name, WvStringParm _value):
 	name(_name), value(_value)
     {}
@@ -77,12 +73,13 @@ DeclareWvDict(WvConfigSectionEmu, WvString, name);
 class WvConfigSectionEmu::Iter
 {
 private:
+    WvConfigSectionEmu& sect;
     UniConf::Iter iter;
     WvLink link;
     WvConfigEntryEmu* entry;
 public:
     Iter(WvConfigSectionEmu& _sect):
-	iter(_sect.uniconf), link(NULL, false), entry(NULL)
+	sect(_sect), iter(_sect.uniconf), link(NULL, false), entry(NULL)
     {}
     ~Iter();
     void rewind();
@@ -173,6 +170,23 @@ public:
         { return get_passwd("Users", user); }
     WvString get_passwd2(WvString pwenc);
 
+    // Check the password passed in.  This isn't defined in wvconf.cc
+    // We use this function to check passwords since we may not know what
+    // the password actually is!
+    bool check_passwd(WvStringParm sect, WvStringParm user,
+		      WvStringParm passwd);
+    bool check_passwd(WvStringParm user, WvStringParm passwd)
+    {
+	return check_passwd("Users", user, passwd);
+    }
+
+    // Check if the user exists.  This isn't defined in wvconf.cc
+    bool user_exists(WvStringParm sect, WvStringParm user);
+    bool user_exists(WvStringParm user)
+    {
+	return user_exists("Users", user);
+    }
+
     // Encrypts and sets a user's password.  This isn't defined in wvconf.cc.
     void set_passwd(WvStringParm sect, WvStringParm user, WvStringParm passwd);
     void set_passwd(WvStringParm user, WvStringParm passwd)
@@ -186,6 +200,20 @@ public:
 
     class Iter;
     friend class Iter;
+    
+private:
+/* The following is an ugly hack, but since WvConf is being
+ * deprecated, we don't care.
+ * 
+ * It seems that check_passwd() and user_exists() need to talk to a
+ * WvAuthDaemon.  However, making them virtual functions would break since
+ * everyone else has to implement them.  So we'll its pointer and accessors
+ * here.
+ */
+private:
+    WvAuthDaemon *wvauthd;	// Authentication Daemon
+public:
+    friend class WvAuthDaemonSvc;
 };
 
 
@@ -198,28 +226,11 @@ public:
     Iter(WvConfEmu& _conf):
 	conf(_conf), iter(conf.uniconf), link(NULL, false)
     {}
-    void rewind()
-    {
-	iter.rewind();
-    }
-    WvLink *next()
-    {
-	if (iter.next())
-	{
-	    link.data = static_cast<void*>(conf[iter->key()]);
-	    return &link;
-	}
-
-	return NULL;
-    }
-    WvConfigSectionEmu* ptr() const
-    {
-	return conf[iter->key()];
-    }
+    void rewind();
+    WvLink *next();
+    WvConfigSectionEmu* ptr() const;
     WvIterStuff(WvConfigSectionEmu);
 };
 
-
-#endif /* USE_WVCONFEMU */
 
 #endif // __WVCONFEMU_H

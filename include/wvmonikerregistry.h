@@ -15,7 +15,7 @@
  * 
  * This is used by WvMoniker and wvcreate().  See those for details.
  */
-class WvMonikerRegistry : public IObject
+class WvMonikerRegistry //: public GenericComponent<IObject>
 {
     struct Registration
     {
@@ -50,8 +50,8 @@ public:
     // IObject stuff
     virtual IObject *getInterface(const XUUID &uuid);
     
-    // we can't use GenericComponent, since we have to unregister ourselves
-    // on the second-last release().
+    // we can't use GenericComponent's implementation, since we have to
+    // unregister ourselves on the second-last release().
     virtual unsigned int addRef();
     virtual unsigned int release();
 };

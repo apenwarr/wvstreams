@@ -12,12 +12,12 @@
 #include "wvfile.h"
 #include "wvmoniker.h"
 
-static UniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 {
     return new UniIniTreeGen(s);
 }
 
-static WvMoniker<UniConfGen> reg("initree", creator);
+static WvMoniker<IUniConfGen> reg("initree", creator);
 
 const WvString UniIniTreeGen::moniker = "ini";
 /**

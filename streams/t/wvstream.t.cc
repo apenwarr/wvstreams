@@ -142,7 +142,6 @@ WVTEST_MAIN("getline")
     ::alarm(0);
 }
 
-
 // more noread/nowrite behaviour
 WVTEST_MAIN("more noread/nowrite")
 {

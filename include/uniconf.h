@@ -246,7 +246,7 @@ public:
      *
      * Returns the mounted generator, or NULL on failure.
      */
-    UniConfGen *mount(WvStringParm moniker, bool refresh = true) const;
+    IUniConfGen *mount(WvStringParm moniker, bool refresh = true) const;
     
     /**
      * Mounts a generator at this key.
@@ -258,10 +258,10 @@ public:
      * 
      * Returns the mounted generator, or NULL on failure.
      */
-    UniConfGen *mountgen(UniConfGen *gen, bool refresh = true) const;
+    IUniConfGen *mountgen(IUniConfGen *gen, bool refresh = true) const;
     
     /** Unmounts the generator providing this key and destroys it. */
-    void unmount(UniConfGen *gen, bool commit) const;
+    void unmount(IUniConfGen *gen, bool commit) const;
     
     /** Determines if any generators are mounted at this key. */
     bool ismountpoint() const;
@@ -276,7 +276,7 @@ public:
      * If non-NULL, 'mountpoint' is set to the actual key where the generator
      * is mounted.
      */
-    UniConfGen *whichmount(UniConfKey *mountpoint = NULL) const;
+    IUniConfGen *whichmount(UniConfKey *mountpoint = NULL) const;
 
     
     /***** Notification API *****/

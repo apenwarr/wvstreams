@@ -665,12 +665,20 @@ void WvIPPortAddr::string_init(const char string[])
     if (!cptr)
 	cptr = strchr(string, '\t');
 
-    if (cptr) {
-        serv = getservbyname(cptr+1, NULL);
-        port = serv ? ntohs(serv->s_port) : atoi(cptr+1);
-    } else {
-        port = 0;
+    // avoid calling getservbyname() if we can avoid it, since it's really
+    // slow and people like to create WvIPPortAddr objects really often.
+    if (cptr && strcmp(cptr+1, "0"))
+    {
+	port = atoi(cptr+1);
+	if (!port)
+	{
+	    serv = getservbyname(cptr+1, NULL);
+	    if (serv)
+		port = ntohs(serv->s_port);
+	}
     }
+    else
+        port = 0;
 }
 
 

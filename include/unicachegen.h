@@ -27,14 +27,14 @@ class UniCacheGen : public UniTempGen
 {
 protected:
     WvLog log;
-    UniConfGen *inner;
+    IUniConfGen *inner;
 
     void loadtree(const UniConfKey &key = "");
     void deltacallback(const UniConfKey &key, WvStringParm value,
                        void *userdata);
 
 public:
-    UniCacheGen(UniConfGen *_inner);
+    UniCacheGen(IUniConfGen *_inner);
     virtual ~UniCacheGen();
 
     /***** Overridden members *****/

@@ -29,7 +29,7 @@ WvString UniMountTreeGen::get(const UniConfKey &key)
     UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
-        UniConfGen *gen = it.ptr();
+        IUniConfGen *gen = it.ptr();
         WvString result = gen->get(it.tail());
         if (!result.isnull())
         {
@@ -53,7 +53,7 @@ void UniMountTreeGen::set(const UniConfKey &key, WvStringParm value)
 {
     // update the generator that defines the key, if any
     UniConfKey mountpoint;
-    UniConfGen *provider = whichmount(key, &mountpoint);
+    IUniConfGen *provider = whichmount(key, &mountpoint);
     if (provider)
         provider->set(mountpoint, value);
 }
@@ -71,7 +71,7 @@ bool UniMountTreeGen::exists(const UniConfKey &key)
     UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
-        UniConfGen *gen = it.ptr();
+        IUniConfGen *gen = it.ptr();
         if (gen->exists(it.tail()))
         {
             unhold_delta();
@@ -95,7 +95,7 @@ bool UniMountTreeGen::haschildren(const UniConfKey &key)
         UniMountTree::GenIter it(*mounts, key);
         for (it.rewind(); it.next(); )
         {
-            UniConfGen *gen = it.ptr();
+            IUniConfGen *gen = it.ptr();
             if (gen->haschildren(it.tail()))
             {
                 result = true;
@@ -134,10 +134,10 @@ void UniMountTreeGen::commit()
 }
 
 
-UniConfGen *UniMountTreeGen::mount(const UniConfKey &key,
+IUniConfGen *UniMountTreeGen::mount(const UniConfKey &key,
     WvStringParm moniker, bool refresh)
 {
-    UniConfGen *gen = wvcreate<UniConfGen>(moniker);
+    IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
     assert(gen && "Moniker doesn't get us a generator!");
@@ -145,8 +145,8 @@ UniConfGen *UniMountTreeGen::mount(const UniConfKey &key,
 }
 
 
-UniConfGen *UniMountTreeGen::mountgen(const UniConfKey &key,
-    UniConfGen *gen, bool refresh)
+IUniConfGen *UniMountTreeGen::mountgen(const UniConfKey &key,
+    IUniConfGen *gen, bool refresh)
 {
     UniMountTree *node = mounts->findormake(key);
     node->generators.append(gen, true);
@@ -164,7 +164,7 @@ UniConfGen *UniMountTreeGen::mountgen(const UniConfKey &key,
 
 
 void UniMountTreeGen::unmount(const UniConfKey &key,
-    UniConfGen *gen, bool commit)
+    IUniConfGen *gen, bool commit)
 {
     UniMountTree *node = mounts->find(key);
     if (!node)
@@ -186,7 +186,7 @@ void UniMountTreeGen::unmount(const UniConfKey &key,
 }
 
 
-UniConfGen *UniMountTreeGen::whichmount(const UniConfKey &key,
+IUniConfGen *UniMountTreeGen::whichmount(const UniConfKey &key,
     UniConfKey *mountpoint)
 {
     hold_delta();
@@ -195,7 +195,7 @@ UniConfGen *UniMountTreeGen::whichmount(const UniConfKey &key,
     UniMountTree::GenIter it(*mounts, key);
     for (it.rewind(); it.next(); )
     {
-        UniConfGen *gen = it.ptr();
+        IUniConfGen *gen = it.ptr();
         if (gen->exists(it.tail()))
             goto found;
     }
@@ -277,7 +277,7 @@ void UniMountTreeGen::KeyIter::rewind()
     // provided by each generator.
     for (genit.rewind(); genit.next(); )
     {
-        UniConfGen *gen = genit.ptr();
+        IUniConfGen *gen = genit.ptr();
         UniConfGen::Iter *keyit = gen->iterator(genit.tail());
         for (keyit->rewind(); keyit->next(); )
             hack.add(new WvString(keyit->key()), true);

@@ -7,9 +7,9 @@
 #include "uninullgen.h"
 #include "wvmoniker.h"
 
-static UniConfGen *creator(WvStringParm, IObject *, void *)
+static IUniConfGen *creator(WvStringParm, IObject *, void *)
 {
     return new UniNullGen();
 }
 
-static WvMoniker<UniConfGen> reg("null", creator);
+static WvMoniker<IUniConfGen> reg("null", creator);

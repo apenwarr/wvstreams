@@ -17,7 +17,7 @@
  * such as a circular queue, semaphore, etc.
  * 
  */
-class WvShmZone : public WvError
+class WvShmZone : public WvErrorBase
 {
 public:
     /**

@@ -4,9 +4,6 @@
  *
  * Basic WvConf emulation layer for UniConf.
  */
-#ifndef USE_WVCONFEMU
-#define USE_WVCONFEMU
-#endif
 #include "wvconfemu.h"
 #include "wvstringtable.h"
 #include "wvfile.h"
@@ -97,15 +94,22 @@ static void do_addfile(void* userdata,
 }
 
 
-WvConfigEntry *WvConfigSectionEmu::operator[] (WvStringParm s)
+WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
 {
     WvConfigEntryEmu* entry = entries[s];
 
-    if (!entry && uniconf[s].exists())
+    if (uniconf[s].exists())
     {
-	entry = new WvConfigEntryEmu(s, uniconf[s].get());
-	entries.add(entry, true);
+	if (!entry)
+	{
+	    entry = new WvConfigEntryEmu(s, uniconf[s].get());
+	    entries.add(entry, true);
+	}
+	else
+	    entry->value = uniconf[s].get();
     }
+    else
+	entry = NULL;
 
     return entry;
 }
@@ -139,14 +143,13 @@ bool WvConfigSectionEmu::isempty() const
 
 WvConfigSectionEmu::Iter::~Iter()
 {
-    if (entry)
-        delete entry;
 }
 
 
 void WvConfigSectionEmu::Iter::rewind()
 {
     iter.rewind();
+    link.data = entry = NULL;
 }
 
 
@@ -154,10 +157,7 @@ WvLink *WvConfigSectionEmu::Iter::next()
 {
     if (iter.next())
     {
-        if (entry)
-            delete entry;
-
-	entry = new WvConfigEntryEmu(iter->key(), iter->get());
+	entry = sect[iter->key()];
 	link.data = static_cast<void*>(entry);
 	return &link;
     }
@@ -209,6 +209,7 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 WvConfEmu::WvConfEmu(const UniConf& _uniconf):
     uniconf(_uniconf), sections(42), hold(false)
 {
+    wvauthd = NULL;
     uniconf.add_callback(this,
 			 UniConfCallback(this, &WvConfEmu::notify),
 			 true);
@@ -242,6 +243,7 @@ void WvConfEmu::save(WvStringParm filename)
     UniConfRoot tmp_uniconf(WvString("ini:%s", filename));
 
     uniconf.copy(tmp_uniconf, true);
+    tmp_uniconf.commit();
 }
 
 
@@ -458,5 +460,30 @@ int WvConfEmu::check_for_bool_string(const char *s)
 
     // not a special bool case, so just return the number
     return (atoi(s));
+}
+
+
+void WvConfEmu::Iter::rewind()
+{
+    iter.rewind();
+    link.data = NULL;
+}
+
+
+WvLink *WvConfEmu::Iter::next()
+{
+    if (iter.next())
+    {
+	link.data = static_cast<void*>(conf[iter->key()]);
+	return &link;
+    }
+
+    return NULL;
+}
+
+
+WvConfigSectionEmu* WvConfEmu::Iter::ptr() const
+{
+    return conf[iter->key()];
 }
 

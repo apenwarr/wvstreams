@@ -11,13 +11,13 @@
 #include "windows.h"
 #endif
 
-WvError::~WvError()
+WvErrorBase::~WvErrorBase()
 {
     // nothing special
 }
 
 
-WvString WvError::errstr() const
+WvString WvErrorBase::errstr() const
 {
     if (errnum == -1)
     {
@@ -44,14 +44,14 @@ WvString WvError::errstr() const
 }
 
 
-void WvError::seterr(int _errnum)
+void WvErrorBase::seterr(int _errnum)
 {
     if (!errnum)
 	errnum = _errnum;
 }
 
 
-void WvError::seterr(WvStringParm specialerr)
+void WvErrorBase::seterr(WvStringParm specialerr)
 {
     if (!errnum)
     {
@@ -61,7 +61,7 @@ void WvError::seterr(WvStringParm specialerr)
 }
 
 
-void WvError::seterr(const WvError &err)
+void WvErrorBase::seterr(const WvErrorBase &err)
 {
     if (err.geterr() > 0)
 	seterr(err.geterr());

@@ -34,7 +34,7 @@ WvStreamList::~WvStreamList()
 
 bool WvStreamList::isok() const
 {
-    return WvError::isok();  // only !isok() if we explicitly set an error
+    return WvErrorBase::isok();  // only !isok() if we explicitly set an error
 }
 
 

@@ -279,6 +279,15 @@ bool WvFastString::operator!= (WvStringParm s2) const
 }
 
 
+bool WvFastString::operator< (WvStringParm s2) const
+{
+    if (str == s2.str) return false;
+    if (str == 0) return true;
+    if (s2.str == 0) return false;
+    return strcmp(str, s2.str) < 0;
+}
+
+
 bool WvFastString::operator== (const char *s2) const
 {
     return (str==s2) || (str && s2 && !strcmp(str, s2));
@@ -288,6 +297,15 @@ bool WvFastString::operator== (const char *s2) const
 bool WvFastString::operator!= (const char *s2) const
 {
     return (str!=s2) && (!str || !s2 || strcmp(str, s2));
+}
+
+
+bool WvFastString::operator< (const char *s2) const
+{
+    if (str == s2) return false;
+    if (str == 0) return true;
+    if (s2 == 0) return false;
+    return strcmp(str, s2) < 0;
 }
 
 

@@ -51,7 +51,9 @@ private:
      * Doesn't do anything with arguments or return values.
      */
     void call();
-    
+
+    WvCont(Data *data);
+
 public:
     /**
      * Construct a WvCont using an existing WvCallback.  The WvCont object
@@ -81,12 +83,17 @@ public:
     // context you think you are.
     
     /**
+     * Get a copy of the current WvCont.
+     */
+    static WvCont current();
+
+    /**
      * "return" from the current callback, giving value 'ret' to the person
      * who called us.  Next time this callback is called, it's as if yield()
      * had returned, and the parameter to the callback is the value of
      * yield().
      */
-    static P1 yield(R ret);
+    static P1 yield(R ret = 0);
     
     /**
      * Tell us if the current context is "okay", that is, not trying to

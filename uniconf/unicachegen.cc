@@ -10,24 +10,24 @@
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
-static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
 {
-    UniConfGen *gen = NULL;
+    IUniConfGen *gen = NULL;
 
     if (obj)
-        gen = mutate<UniConfGen>(obj);
+        gen = mutate<IUniConfGen>(obj);
     if (!gen)
-        gen = wvcreate<UniConfGen>(s);
+        gen = wvcreate<IUniConfGen>(s);
 
     return new UniCacheGen(gen);
 }
 
-static WvMoniker<UniConfGen> reg("cache", creator);
+static WvMoniker<IUniConfGen> reg("cache", creator);
 
 
 /***** UniCacheGen *****/
 
-UniCacheGen::UniCacheGen(UniConfGen *_inner)
+UniCacheGen::UniCacheGen(IUniConfGen *_inner)
     : log("UniCache", WvLog::Debug1), inner(_inner)
 {
     loadtree();

@@ -22,7 +22,7 @@ struct rsa_st;
  * 
  * @see WvRSAEncoder
  */
-class WvRSAKey : public WvError
+class WvRSAKey : public WvErrorBase
 {
     int errnum;
     WvString pub, prv;

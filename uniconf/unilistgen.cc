@@ -18,14 +18,14 @@
 //
 // otherwise, treat the moniker as a tcl list of monikers and add the generator
 // made by each moniker to the generator list
-static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
 {
     UniConfGenList *l = new UniConfGenList();
-    UniConfGen *gen = NULL;
+    IUniConfGen *gen = NULL;
 
     if (obj)
     {
-        gen = mutate<UniConfGen>(obj);
+        gen = mutate<IUniConfGen>(obj);
         if (gen)
             l->append(gen, true);
     }
@@ -38,7 +38,7 @@ static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
 
         for (i.rewind(); i.next();)
         {
-            gen = wvcreate<UniConfGen>(i());
+            gen = wvcreate<IUniConfGen>(i());
             if (gen)
                 l->append(gen, true);
         }
@@ -47,7 +47,7 @@ static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
     return new UniListGen(l);
 }
  
-static WvMoniker<UniConfGen> reg("list", creator);
+static WvMoniker<IUniConfGen> reg("list", creator);
 
 
 void UniListGen::commit()

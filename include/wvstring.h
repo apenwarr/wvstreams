@@ -219,8 +219,10 @@ public:
     // string comparison
     bool operator== (WvStringParm s2) const;
     bool operator!= (WvStringParm s2) const;
+    bool operator< (WvStringParm s2) const;
     bool operator== (const char *s2) const;
     bool operator!= (const char *s2) const;
+    bool operator< (const char *s2) const;
     
     /** the not operator is 'true' if string is empty */
     bool operator! () const;

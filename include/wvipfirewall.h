@@ -32,9 +32,20 @@ class WvIPFirewall
 	    { dstport = _dstport; }
     };
 
+    class RedirAll
+    {
+    public:
+	int dstport;
+	
+	RedirAll(int _dstport) 
+            { dstport = _dstport; }
+    };
+
     DeclareWvList(Redir);
+    DeclareWvList(RedirAll);
 
     RedirList redirs;
+    RedirAllList redir_alls;
     WvIPPortAddrList addrs;
     WvStringList protos;
     
@@ -42,6 +53,7 @@ class WvIPFirewall
 			  const WvIPPortAddr &addr);
     WvString redir_command(const char *cmd,
 			   const WvIPPortAddr &src, int dstport);
+    WvString redir_all_command(const char *cmd, int dstport);
     WvString proto_command(const char *cmd, const char *proto);
     const char *shutup() const
         { return ignore_errors ? " >/dev/null 2>/dev/null " : ""; }
@@ -55,10 +67,12 @@ public:
     void zap();
     void add_port(const WvIPPortAddr &addr);
     void add_redir(const WvIPPortAddr &src, int dstport);
+    void add_redir_all(int dstport);
     void add_proto(WvStringParm proto);
     void del_proto(WvStringParm proto);
     void del_port(const WvIPPortAddr &addr);
     void del_redir(const WvIPPortAddr &src, int dstport);
+    void del_redir_all(int dstport);
 };
 
 #endif // __WVIPFIREWALL_H

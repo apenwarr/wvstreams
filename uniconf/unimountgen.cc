@@ -94,10 +94,10 @@ void UniMountGen::commit()
 }
 
 
-UniConfGen *UniMountGen::mount(const UniConfKey &key,
+IUniConfGen *UniMountGen::mount(const UniConfKey &key,
 			       WvStringParm moniker, bool refresh)
 {
-    UniConfGen *gen = wvcreate<UniConfGen>(moniker);
+    IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
 
@@ -106,8 +106,8 @@ UniConfGen *UniMountGen::mount(const UniConfKey &key,
 }
 
 
-UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
-				  UniConfGen *gen, bool refresh)
+IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
+				  IUniConfGen *gen, bool refresh)
 {
     if (!gen)
 	return NULL;
@@ -132,7 +132,7 @@ UniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 }
 
 
-void UniMountGen::unmount(UniConfGen *gen, bool commit)
+void UniMountGen::unmount(IUniConfGen *gen, bool commit)
 {
     if (!gen)
 	return;
@@ -152,7 +152,7 @@ void UniMountGen::unmount(UniConfGen *gen, bool commit)
     gen->setcallback(UniConfGenCallback(), NULL);
 
     UniConfKey key(i->key);
-    UniConfGen *next = NULL;
+    IUniConfGen *next = NULL;
 
     delta(key, WvString());
 
@@ -177,7 +177,7 @@ void UniMountGen::unmount(UniConfGen *gen, bool commit)
 }
 
 
-UniConfGen *UniMountGen::whichmount(const UniConfKey &key,
+IUniConfGen *UniMountGen::whichmount(const UniConfKey &key,
 				    UniConfKey *mountpoint)
 {
     MountList::Iter i(mounts);

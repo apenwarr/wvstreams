@@ -56,6 +56,17 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 		    shutup());
 }
 
+WvString WvIPFirewall::redir_all_command(const char *cmd, int dstport)
+{
+    return WvString("iptables -t nat %s TProxy "
+		    "-p tcp "
+		    "-j REDIRECT --to-ports %s "
+		    "%s",
+		    cmd,
+		    dstport,
+		    shutup());
+}
+
 
 WvString WvIPFirewall::proto_command(const char *cmd, const char *proto)
 {
@@ -121,6 +132,28 @@ void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
     }
 }
 
+void WvIPFirewall::add_redir_all(int dstport)
+{
+    redir_alls.append(new RedirAll(dstport), true);
+    WvString s(redir_all_command("-A", dstport));
+    if (enable) system(s);
+}
+
+
+void WvIPFirewall::del_redir_all(int dstport)
+{
+    RedirAllList::Iter i(redir_alls);
+    for (i.rewind(); i.next(); )
+    {
+	if (i->dstport == dstport)
+	{
+	    WvString s(redir_all_command("-D", dstport));
+	    if (enable) system(s);
+	    return;
+	}
+    }
+}
+
 
 void WvIPFirewall::add_proto(WvStringParm proto)
 {
@@ -160,6 +193,13 @@ void WvIPFirewall::zap()
     {
 	del_redir(i2->src, i2->dstport);
 	i2.xunlink();
+    }
+    
+    RedirAllList::Iter i2_5(redir_alls);
+    for (i2_5.rewind(); i2_5.next(); )
+    {
+	del_redir_all(i2_5->dstport);
+	i2_5.xunlink();
     }
     
     WvStringList::Iter i3(protos);

@@ -20,14 +20,12 @@
 
 
 #ifdef __WVCONFEMU_H
-#ifdef USE_WVCONFEMU
 #warning "disabling wvconfemu transparent emulation"
 #undef WvConf
 #undef WvConfigSection
 #undef WvConfigSectionList
 #undef WvConfigEntry
 #undef WvConfigEntryList
-#endif
 #endif
 
 
@@ -94,6 +92,10 @@ public:
 
 DeclareWvList(WvConfCallbackInfo);
 DeclareWvList(WvConfigSection);
+
+
+class WvAuthDaemon;
+class WvAuthDaemonSvc;
 
 /**
  * WvConf configuration file management class: used to read/write config
@@ -243,6 +245,19 @@ private:
 
     char *parse_section(char *s);
     char *parse_value(char *s);
+
+/* The following is an ugly hack, but since WvConf is being
+ * deprecated, we don't care.
+ * 
+ * It seems that check_passwd() and user_exists() need to talk to a
+ * WvAuthDaemon.  However, making them virtual functions would break since
+ * everyone else has to implement them.  So we'll its pointer and accessors
+ * here.
+ */
+private:
+    WvAuthDaemon *wvauthd;	// Authentication Daemon
+public:
+    friend class WvAuthDaemonSvc;
 };
 
 
