@@ -1,3 +1,2 @@
-# Test getting a recursive subtree of /
 rsub /
 quit

@@ -1,4 +1,3 @@
-# Test getting then setting a key
 get /chickens/bob
 set /chickens/bob nerf
 quit

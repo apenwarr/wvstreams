@@ -1,3 +1,2 @@
-# Test just getting a single key then quitting
 get /chickens/bob
 quit

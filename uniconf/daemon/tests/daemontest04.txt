@@ -1,4 +1,3 @@
-# Test getting then setting, then re-getting a key
 get /chickens/bob
 set /chickens/bob goof
 get /chickens/bob

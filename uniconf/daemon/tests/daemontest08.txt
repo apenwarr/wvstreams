@@ -1,4 +1,3 @@
-# Test getting a key, setting it to a new value, then taking a recursive subt from the top.
 get /chickens/bob
 set /chickens/bob nerf
 rsub /
