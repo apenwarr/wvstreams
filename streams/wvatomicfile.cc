@@ -9,8 +9,7 @@
 
 #include "wvatomicfile.h"
 #include "wvfileutils.h"
-
-#define tmptemplate(_pre_) "/tmp/" #_pre_ "XXXXXX"
+#include "wvstrutils.h"
 
 WvAtomicFile::WvAtomicFile(int rwfd)
     : WvFile(rwfd), atomic(false)
@@ -21,6 +20,12 @@ WvAtomicFile::WvAtomicFile(WvStringParm filename, int mode, int create_mode)
 {
     open(filename, mode, create_mode);
 }
+
+WvAtomicFile::~WvAtomicFile()
+{
+    close();
+}
+
 
 /* Mimics behaviour of wvfile except that it uses a tmp file and stores the
    real name */
@@ -43,7 +48,7 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
             return false;
         }
 
-        tmp_file = WvString(tmptemplate(nitix));
+        tmp_file = WvString("%s/nitixXXXXXX", getdirname(filename));
         tmpfd = mkstemp(tmp_file.edit());
         fcntl(tmpfd, F_SETFL, mode);
 
@@ -80,5 +85,7 @@ void WvAtomicFile::close()
     // this value is only filled if we OPENED the file otherwise
     //  we mimic the behaviour of a WvFile
     if (atomic)
-        rename(tmp_file, atomic_file);
+        if (rename(tmp_file, atomic_file) < 0)
+            ::unlink(tmp_file);
+
 }

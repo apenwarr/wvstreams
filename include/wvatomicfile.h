@@ -28,6 +28,7 @@ private:
 public:
     WvAtomicFile(int rwfd = -1);
     WvAtomicFile(WvStringParm filename, int mode, int create_mode = 0666);
+    ~WvAtomicFile();
 
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
     void close();
