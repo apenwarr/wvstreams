@@ -300,7 +300,7 @@ public:
     }
     
     operator bool() const
-        { return impl; }
+        { return impl != 0; }
     R operator()() const
         { return (*impl)(); }
     R operator()(P1 p1) const
