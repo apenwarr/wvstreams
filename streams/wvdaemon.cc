@@ -73,7 +73,9 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
             "Increase log level (can be used multiple times)",
             WvArgs::NoArgCallback(this, &WvDaemon::inc_log_level));
     args.add_set_bool_option('d', "daemonize",
-            "Fork into background and return", daemonize);
+            "Fork into background and return (implies -s)", daemonize);
+    args.add_set_bool_option('s', "syslog",
+            "Write log entries to syslog", syslog);
     args.add_option('V', "version",
             "Display version and exit",
             WvArgs::NoArgCallback(this, &WvDaemon::display_version_and_exit));
@@ -141,7 +143,12 @@ int WvDaemon::run(const char *argv0)
     else
     {
         WvLogConsole console_log(STDOUT_FILENO, log_level);
-        return _run(argv0);
+        if (syslog)
+        {
+            WvSyslog syslog(name, false);
+            return _run(argv0);
+        }
+        else return _run(argv0);
     }
 }
 
