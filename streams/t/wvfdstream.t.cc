@@ -233,7 +233,6 @@ WVTEST_MAIN("Test undo_force_select() on a WvFDStream")
     foof.called = false;
     WVPASS(!foof.called);
 
-#if 0
     // undo_force_select() and make sure we're not called
     foof.y.undo_force_select(true, true, true);
 
@@ -242,5 +241,6 @@ WVTEST_MAIN("Test undo_force_select() on a WvFDStream")
 	WvIStreamList::globallist.callback();
 
     WVPASS(!foof.called);
-#endif
+
+    unlink(testfile);
 }

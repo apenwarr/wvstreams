@@ -29,6 +29,7 @@ WvIStreamList WvIStreamList::globallist;
 WvIStreamList::WvIStreamList():
     in_select(false)
 {
+    readcb = writecb = exceptcb = 0;
     auto_prune = true;
     if (this == &globallist)
     {
@@ -89,6 +90,8 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     {
 	IWvStream &s(*i);
 	
+        si.wants = oldwant;
+
 	if (!s.isok())
 	{
 	    one_dead = true;
