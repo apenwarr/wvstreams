@@ -30,7 +30,7 @@ public:
     WvSorterBase(void *_list)
     	{ list = _list; array = lptr = NULL; }
     ~WvSorterBase()
-    	{ if (array) delete array; }
+    	{ if (array) delete[] array; }
     WvLink *next()
 	{ return *(++lptr); }
     WvLink *cur()
