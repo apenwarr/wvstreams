@@ -21,6 +21,6 @@ if [ -z "$DISPLAY" ]; then
     exec "$@"
 else
     ( "$@"; reportcode $?) \
-    	| ($WVSTREAMS/wvtestmeter || cat)
+    	| ($WVSTREAMS_SRC/wvtestmeter || cat)
     exit ${PIPESTATUS[0]}
 fi
