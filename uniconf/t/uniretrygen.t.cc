@@ -43,7 +43,7 @@ WVTEST_MAIN("uniconfd")
     sleep(1); // Wait for reconnect
     
     cfg["/key"].setme("value");
-    WVPASS(cfg["/key"].getme() == "value");
+    WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
@@ -62,7 +62,7 @@ WVTEST_MAIN("uniconfd")
 
     sleep(1); // Wait for reconnect
     
-    WVPASS(cfg["/key"].getme() == "value");
+    WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
     kill(uniconfd_pid, 15);
