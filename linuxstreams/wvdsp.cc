@@ -4,6 +4,9 @@
  *
  * One more attempt at making a decent stream for Linux /dev/dsp.
  * See wvdsp.h.
+ * 
+ * "See all that stuff in there, Homer?  I guess that's why _your_ robot
+ * never worked!"
  */
 #include "wvdsp.h"
 #include "wvfork.h"
