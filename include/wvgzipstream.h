@@ -23,6 +23,7 @@ public:
     WvGzipStream(WvStream *_cloned,
 		 WvGzipEncoder::Mode readmode = WvGzipEncoder::Inflate,
 		 WvGzipEncoder::Mode writemode = WvGzipEncoder::Deflate)
+        : WvEncoderStream(_cloned)
 	{
 	    readchain.append(new WvGzipEncoder(readmode), true);
 	    writechain.append(new WvGzipEncoder(writemode), true);
