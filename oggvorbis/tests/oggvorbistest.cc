@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <time.h>
 
-size_t copy(WvStream *in, WvStream *out, size_t maxbytes = 0)
+size_t mycopy(WvStream *in, WvStream *out, size_t maxbytes = 0)
 {
     size_t total = 0;
     char buf[10240];
@@ -245,14 +245,14 @@ int main(int argc, char **argv)
                 wverr->print("\n");
                 break;
             }
-            copy(iencstream, oencstream, 1024);
+            mycopy(iencstream, oencstream, 1024);
         }
     }
 
     /*** Stream rest of file ***/
     wverr->print("Working...");
     
-    copy(iencstream, oencstream);
+    mycopy(iencstream, oencstream);
     oencstream->finish_read();
     oencstream->finish_write();
     oencstream->flush(0);

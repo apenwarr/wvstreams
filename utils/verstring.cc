@@ -13,29 +13,11 @@
 #include <ctype.h>
 #include <string.h>
 
-char *trim_verstr(char *verstr)
-{
-    // trim off trailing zeroes
-    char *cptr;
-
-    for (cptr = strchr(verstr, 0); --cptr >= verstr; )
-    {
-	if (*cptr != '0')
-	    break;
-	
-	if (cptr <= verstr  ||  *(cptr - 1) == '.')
-	    break;
-	
-	*cptr = 0;
-    }
-    return verstr;
-}
-
-const char *ver_to_string(unsigned int ver)
+const char *old_ver_to_string(unsigned int ver)
 {
     static char str[10];
     unsigned int maj = (ver & 0xFFFF0000) >> 16, min = (ver & 0x0000FFFF);
-    
+
     sprintf(str, "%x.%04x", maj, min);
     trim_verstr(str);
     
@@ -43,23 +25,28 @@ const char *ver_to_string(unsigned int ver)
 }
 
 
-const char *new_ver_to_string(unsigned int ver, bool convert_old)
+const char *new_ver_to_string(unsigned int ver)
 {
     static char str[11];
     unsigned int maj = (ver & 0xFF000000) >> 24, min = (ver & 0x00FF0000) >> 16,
                  rev = (ver & 0x0000FFFF);
 
-    if (convert_old && !maj)
-	return ver_to_string(ver);
-
     sprintf(str, "%x.%02x.%04x", maj, min, rev);
-    trim_verstr(str);
 
     return str;
 }
 
 
-unsigned int string_to_ver(const char *str)
+const char *ver_to_string(unsigned int ver)
+{
+    if (is_new_ver(ver))
+        return new_ver_to_string(ver);
+
+    return old_ver_to_string(ver);
+}
+
+
+unsigned int string_to_old_ver(const char *str)
 {
     static char lookup[] = "0123456789abcdef";
     unsigned int maj = 0, min = 0;
@@ -95,10 +82,10 @@ unsigned int string_to_ver(const char *str)
 unsigned int string_to_new_ver(const char *str)
 {
     static char lookup[] = "0123456789abcdef";
-    unsigned int maj = 0, min = 0, rev = 0;
+    unsigned int maj = 0, min = 0, rev = 0, ver;
     unsigned char *cptr, *idx;
     int bits;
-    
+
     // do the major number
     cptr = (unsigned char *)str;
     for (; *cptr; cptr++)
@@ -137,5 +124,51 @@ unsigned int string_to_new_ver(const char *str)
 	bits--;
     }
 
-    return (maj << 24) | (min << 16) | (rev << (4*bits));
+    ver = (maj << 24) | (min << 16) | (rev << (4*bits));
+
+    return ver;
+}
+
+
+unsigned int string_to_ver(const char *str)
+{
+    if (is_new_verstr(str))
+        return string_to_new_ver(str);
+
+    return string_to_old_ver(str);
+}
+
+
+bool is_new_ver(unsigned int ver)
+{
+    return (ver & 0xff000000);
+}
+
+
+bool is_new_verstr(const char *str)
+{
+    char *p = strchr(str, '.');
+    if (p && strchr(p+1, '.'))
+        return true;
+
+    return false;
+}
+
+
+char *trim_verstr(char *verstr)
+{
+    // trim off trailing zeroes
+    char *cptr;
+
+    for (cptr = strchr(verstr, 0); --cptr >= verstr; )
+    {
+	if (*cptr != '0')
+	    break;
+	
+	if (cptr <= verstr  ||  *(cptr - 1) == '.')
+	    break;
+	
+	*cptr = 0;
+    }
+    return verstr;
 }
