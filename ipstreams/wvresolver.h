@@ -36,6 +36,8 @@ public:
     int findaddr(int msec_timeout, const WvString &name,
 		 WvIPAddr const **addr, WvIPAddrList *addrlist = NULL);
     int findname(int msec_timeout, WvIPAddr *ipaddr, char **name);
+
+    void clearhost(const WvString &hostname);
     
     /**
      * add all of our waiting fds to an fd_set for use with select().

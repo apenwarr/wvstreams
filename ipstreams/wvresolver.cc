@@ -262,6 +262,13 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
     return host->negative ? 0 : res;
 }
 
+void WvResolver::clearhost(const WvString &hostname)
+{
+    WvResolverHost *host = (*hostmap)[hostname];
+    if (host)
+        hostmap->remove(host);
+}
+
 /*
 int WvResolver::findname(int msec_timeout, WvIPAddr *ipaddr, char **name)
 {
