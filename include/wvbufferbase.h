@@ -156,7 +156,7 @@ public:
      * It is an error to invoke this method if used() == 0.
      * See peek(...) for information about offset.
      */
-    T peek(int offset)
+    T peek(int offset = 0)
         { return *peek(offset, NULL); }
 
     /**

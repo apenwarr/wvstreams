@@ -40,6 +40,7 @@ public:
      */
     inline int getch() { return int(get()); }
     inline void putch(int ch) { put((unsigned char)ch); }
+    inline int peekch(int offset = 0) { return int(peek(offset)); }
     
     /**
      * Returns the number of bytes that would have to be read to find
