@@ -1,11 +1,13 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+
+/** \file
  * Implementation of a simple and efficient printable-string class.
+ * 
  * It leaves out many of the notational conveniences provided by other
  * string classes, because they waste too much CPU time and space.
- * 
  * It does the one thing really missing from char* strings, that is,
  * dynamic buffer management.
  * 
@@ -363,6 +365,5 @@ inline bool operator!= (const char *s1, WvStringParm s2)
 {
     return s2 != s1;
 }
-
 
 #endif // __WVSTRING_H

@@ -67,10 +67,9 @@ FILE_PATTERNS          = *.h \
                          *.cc
 RECURSIVE              = YES
 EXCLUDE                = 
-EXCLUDE_PATTERNS       = test*.cc \
-                         *test.cc
-EXAMPLE_PATH           = 
-EXAMPLE_PATTERNS       = 
+EXCLUDE_PATTERNS       = test*.cc *test.cc
+EXAMPLE_PATH           = Docs/sgmlmanual/egfiles
+EXAMPLE_PATTERNS       = *.cc *.h *.c
 IMAGE_PATH             = 
 INPUT_FILTER           = 
 FILTER_SOURCE_FILES    = NO
