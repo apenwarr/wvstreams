@@ -4,26 +4,11 @@
 
 #include "wvistreamlist.h"
 
-WvFAM::WvFAM() : cb(NULL), log("WvFAM"), reqs(0)
-{
-    if (FAMOpen(fc) == -1)
-        log(WvLog::Critical, "Could not connect to FAM!\n");
-    else
-    {
-        s = new WvFDStream(fc->fd);
-
-        s->setcallback(wvcallback(WvStreamCallback,
-            *this, WvFAM::Callback), 0);
-
-        WvIStreamList::globallist.append(s, true);
-    }
-}
-
 WvFAM::~WvFAM()
 {
     WvIStreamList::globallist.unlink(s);
 
-    if (FAMClose(fc) == -1)
+    if (FAMClose(&fc) == -1)
         log(WvLog::Critical, "Could not disconnect from FAM...? Huh...?\n");
 }
 
@@ -35,15 +20,12 @@ bool WvFAM::isok()
     return false;
 }
 
-void WvFAM::setcallback(FAMCallback _cb, void *userdata)
-{
-    cb = _cb;
-    cbdata = userdata;    
-}
-
 void WvFAM::monitordir(WvStringParm dir)
 {
-    if (!FAMMonitorDirectory(fc, dir, &fr, NULL))
+    if (!isok())
+        return;
+
+    if (!FAMMonitorDirectory(&fc, dir, &fr, NULL))
         reqs.add(dir, fr.reqnum);
     else
         log(WvLog::Error, "Could not monitor directory '%s'.\n", dir);
@@ -51,7 +33,10 @@ void WvFAM::monitordir(WvStringParm dir)
 
 void WvFAM::monitorfile(WvStringParm file)
 {
-    if (!FAMMonitorFile(fc, file, &fr, NULL))
+    if (!isok())
+        return;
+
+    if (!FAMMonitorFile(&fc, file, &fr, NULL))
         reqs.add(file, fr.reqnum);
     else
         log(WvLog::Error, "Could not monitor file '%s'.\n", file);
@@ -59,16 +44,53 @@ void WvFAM::monitorfile(WvStringParm file)
 
 void WvFAM::unmonitordir(WvStringParm dir)
 {
+    if (!isok())
+        return;
+
     if (!reqs.exists(dir))
         return;
 
     fr.reqnum = reqs[dir];    
-    FAMCancelMonitor(fc, &fr);
+    FAMCancelMonitor(&fc, &fr);
+    reqs.remove(dir);
 }
 
 void WvFAM::Callback(WvStream &, void *)
 {
+    int famstatus;
 
+    while((famstatus = FAMPending(&fc)) && famstatus != -1)
+    {
+        if (FAMNextEvent(&fc, &fe) == 1)
+        {
+            if (fe.code == FAMChanged || fe.code == FAMDeleted
+                    || fe.code == FAMCreated)
+                cb(WvString(fe.filename), WvFAMEvent(fe.code));
+        }
+        else
+            log("Odd... recieved event pending but no event.\n");
+    }
+
+    if (famstatus == -1)
+        log(WvLog::Error, "FAM error: (%s)\n", FAMErrno);
+}
+
+void WvFAM::setup()
+{
+    if (FAMOpen(&fc) == -1)
+    {
+        log(WvLog::Critical, "Could not connect to FAM!\n", fc.fd);
+        log(WvLog::Error, "FAM error: (%s)\n", FAMErrno);
+    }
+    else
+    {
+        s = new WvFDStream(fc.fd);
+
+        s->setcallback(wvcallback(WvStreamCallback,
+            *this, WvFAM::Callback), 0);
+
+        WvIStreamList::globallist.append(s, true);
+    }
 }
 
 #endif
