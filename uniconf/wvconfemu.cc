@@ -109,9 +109,12 @@ const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
     if (!entry)
 	return def_val;
 
-    WvString *value = new WvString(uniconf[entry].getme(def_val));
-    values.add(value, true);
-    return value->cstr();
+    WvString s(uniconf[entry].getme(def_val));
+    
+    // look it up in the cache
+    WvString *sp = values[s];
+    if (!sp) values.add(sp = new WvString(s), true);
+    return sp->cstr();
 }
 
 
@@ -211,7 +214,7 @@ void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 
 
 WvConfEmu::WvConfEmu(const UniConf &_uniconf)
-    : sections(42), hold(false), uniconf(_uniconf)
+    : sections(42), hold(false), values(420), uniconf(_uniconf)
 {
     wvauthd = NULL;
     uniconf.add_callback(this,
@@ -299,7 +302,7 @@ WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 
     if (!section && uniconf[sect].exists())
     {
-	section = new WvConfigSectionEmu(uniconf[sect], sect);
+	section = new WvConfigSectionEmu(uniconf[sect], sect, &values);
 	sections.add(section, true);
     }
 
@@ -414,9 +417,12 @@ const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
     if (!section || !entry)
 	return def_val;
 
-    WvString *value = new WvString(uniconf[section][entry].getme(def_val));
-    values.add(value, true);
-    return value->cstr();
+    WvString s(uniconf[section][entry].getme(def_val));
+    
+    // look it up in the cache
+    WvString *sp = values[s];
+    if (!sp) values.add(sp = new WvString(s), true);
+    return sp->cstr();
 }
 
 int WvConfEmu::fuzzy_getint(WvStringList &sect, WvStringParm entry,
