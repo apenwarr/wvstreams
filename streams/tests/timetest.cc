@@ -16,13 +16,21 @@ unsigned int count = 0;
 
 void timer_callback(WvStream& s, void*)
 {
-    if (!(count % 10))
-	log("\n");
+    if (s.alarm_was_ticking)
+    {
+	log("X ");
+	s.alarm(200);
+    }
+    else
+    {
+	if (!(count % 10))
+	    log("\n");
 
-    log("%02s ", count);
+	log("%02s ", count);
 
-    if (!s.alarm_was_ticking && ++count >= 100)
-	want_to_quit = true;
+	if (++count >= 100)
+	    want_to_quit = true;
+    }
 }
 
 int main()
@@ -35,6 +43,7 @@ int main()
 
     t.setcallback(timer_callback, 0);
     t.set_timer(100);
+    t.alarm(200);
 
     while (!want_to_quit)
     {
