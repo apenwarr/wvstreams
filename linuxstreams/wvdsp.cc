@@ -109,7 +109,7 @@ WvDsp::WvDsp(int msec_latency, int srate, int bits, bool stereo,
     
     rloop.nowrite();
     wloop.noread();
-    //realtime(); // actually necessary, but a bit dangerous...
+    realtime(); // actually necessary, but a bit dangerous...
 }
 
 

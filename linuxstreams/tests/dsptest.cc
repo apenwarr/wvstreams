@@ -12,7 +12,7 @@ int main()
     WvLog log("dsptest", WvLog::Info);
     
     log("Opening dsp...");
-    WvDsp dsp(100, 44100, 16, 2, true, true);
+    WvDsp dsp(0, 44100, 16, 2, true, true);
     log("done.\n");
     
     if (!dsp.isok())
