@@ -216,7 +216,16 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
     UniGenMount *found = findmount(key);
     if (found)
         return found->gen->iterator(trimkey(found->key, key));
-    return new NullIter;
+    return NULL;
+}
+
+
+UniMountGen::Iter *UniMountGen::recursiveiterator(const UniConfKey &key)
+{
+    UniGenMount *found = findmount(key);
+    if (found)
+        return found->gen->recursiveiterator(trimkey(found->key, key));
+    return NULL;
 }
 
 

@@ -12,6 +12,7 @@ WVTEST_MAIN("basic")
     WVPASS(a == NULL);
     WVFAIL(a == "");
     WVPASS(a.isnull());
+    WVPASSEQ(a.ifnull("x"), "x");
     WVPASS(!a);
     WVFAIL(!!a);
     WVFAIL(a != NULL);
@@ -24,6 +25,7 @@ WVTEST_MAIN("basic")
     WVPASS(c == "");
     WVFAIL(c == NULL);
     WVFAIL(c.isnull());
+    WVPASSEQ(c.ifnull("x"), "");
     WVPASS(!c);
     WVFAIL(!!c);
     WVPASS(c == d);

@@ -56,6 +56,23 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 		    shutup());
 }
 
+WvString WvIPFirewall::redir_port_range_command(const char *cmd,
+    	const WvIPPortAddr &src_min, const WvIPPortAddr &src_max, int dstport)
+{
+    WvIPAddr ad(src_min), none;
+    
+    return WvString("iptables -t nat %s TProxy "
+		    "-p tcp %s --dport %s:%s "
+		    "-j REDIRECT --to-ports %s "
+		    "%s",
+		    cmd,
+		    ad == none ? WvString("") : WvString("-d %s", ad),
+		    src_min.port == 0? WvString(""): WvString(src_min.port),
+		    src_max.port == 0? WvString(""): WvString(src_max.port),
+		    dstport,
+		    shutup());
+}
+
 WvString WvIPFirewall::redir_all_command(const char *cmd, int dstport)
 {
     return WvString("iptables -t nat %s TProxy "
@@ -154,6 +171,31 @@ void WvIPFirewall::del_redir_all(int dstport)
     }
 }
 
+void WvIPFirewall::add_redir_port_range(const WvIPPortAddr &src_min,
+    	const WvIPPortAddr &src_max, int dstport)
+{
+    redir_port_ranges.append(new RedirPortRange(src_min, src_max, dstport), true);
+    WvString s(redir_port_range_command("-A", src_min, src_max, dstport));
+    if (enable) system(s);
+}
+
+
+void WvIPFirewall::del_redir_port_range(const WvIPPortAddr &src_min,
+    	const WvIPPortAddr &src_max, int dstport)
+{
+    RedirPortRangeList::Iter i(redir_port_ranges);
+    for (i.rewind(); i.next(); )
+    {
+	if (i->src_min == src_min && i->src_max == src_max
+	    	&& i->dstport == dstport)
+	{
+	    WvString s(redir_port_range_command("-D", src_min, src_max, dstport));
+	    if (enable) system(s);
+	    return;
+	}
+    }
+}
+
 
 void WvIPFirewall::add_proto(WvStringParm proto)
 {
@@ -200,6 +242,14 @@ void WvIPFirewall::zap()
     {
 	del_redir_all(i2_5->dstport);
 	i2_5.xunlink();
+    }
+    
+    RedirPortRangeList::Iter port_range(redir_port_ranges);
+    for (port_range.rewind(); port_range.next(); )
+    {
+	del_redir_port_range(port_range->src_min, port_range->src_max,
+	    	port_range->dstport);
+	port_range.xunlink();
     }
     
     WvStringList::Iter i3(protos);

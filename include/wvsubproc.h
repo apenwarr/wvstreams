@@ -38,14 +38,16 @@ public:
     WvString pidfile, last_cmd, app;
     WvStringList last_args, env;
     
-    WvSubProc();
+    WvSubProc() 
+        { init(); }
 
     WvSubProc(const char cmd[], const char * const *argv)
-        { startv(cmd, argv); }
+        { init(); startv(cmd, argv); }
 
     virtual ~WvSubProc();
     
 private:
+    void init();
     int _startv(const char cmd[], const char * const *argv);
 
     int memlimit;

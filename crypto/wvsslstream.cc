@@ -216,7 +216,10 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                     
                 case SSL_ERROR_ZERO_RETURN:
 		    debug("<< EOF: zero return\n");
-                    close(); // EOF
+		    // signal that we want to be closed
+		    // after we return our buffer
+		    autoclose_time = time(NULL);
+		    noread(); // EOF
                     break;
 
 		case SSL_ERROR_SYSCALL:
@@ -225,7 +228,10 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 			if (result == 0)
 			{
 			    debug("<< EOF: syscall error\n");
-			    close();
+			    // signal that we want to be closed
+			    // after we return our buffer
+			    autoclose_time = time(NULL);
+			    noread();
 			}
 	                break; 
 		    }

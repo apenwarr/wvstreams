@@ -25,7 +25,7 @@ class WvErrorBase
 protected:
     int errnum;
     WvString errstring;
-    
+
 public:
     WvErrorBase()
         { noerr(); }
@@ -67,7 +67,7 @@ public:
     
     /** Reset our error state - there's no error condition anymore. */
     void noerr()
-        { errnum = 0; }
+        { errnum = 0; errstring = WvString::null; }
 };
 
 

@@ -133,6 +133,15 @@ public:
 	    { }
     };
     
+    class Sorter : public WvInterfaceDictBase::Sorter
+    {
+    public:
+	Sorter(WvInterfaceDict &l,
+	       WvInterfaceDictBase::Sorter::RealCompareFunc *f)
+	    : WvInterfaceDictBase::Sorter(l.slist, f)
+	    { }
+    };
+    
     WvInterfaceDict();
     ~WvInterfaceDict();
     

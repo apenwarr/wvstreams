@@ -25,7 +25,8 @@ void test(WvStringParm _dN)
     WvX509Mgr x509cert(_dN, 1024);
     x509cert.setPkcs12Password("Foo");
     
-    wvcon->print("Consistancy Test result: %s\n", x509cert.test());
+    wvcon->print("Consistancy Test result: %s\n", 
+		 x509cert.test() ? "Ok" : "Inconsistant");
 
     if (x509cert.isok())
     {
@@ -33,6 +34,8 @@ void test(WvStringParm _dN)
 	wvcon->print(x509cert.encode(WvX509Mgr::RsaPEM));
 	wvcon->print(x509cert.encode(WvX509Mgr::RsaRaw));
 	x509cert.write_p12("/tmp/test.p12");
+	wvcon->print("Private Key: %s\n", x509cert.rsa->private_str());
+	wvcon->print("Certificate: %s\n", x509cert.hexify());
     }
     else
 	wverr->print("Error: %s\n", x509cert.errstr());

@@ -5,10 +5,15 @@
  * Basic WvConf emulation layer for UniConf.
  */
 #include "wvconfemu.h"
+#include "uniinigen.h"
 #include "wvstringtable.h"
 #include "wvfile.h"
 #include "strutils.h"
 
+//#define DEBUG_DEL_CALLBACK
+#ifdef DEBUG_DEL_CALLBACK
+#include <execinfo.h>
+#endif
 
 /*
  * Parse the WvConf string "request"; pointers to the found section,
@@ -60,7 +65,7 @@ static int parse_wvconf_request(char *request, char *&section,
 }
 
 
-static void do_setbool(void* userdata,
+static void do_setbool(void *userdata,
 		       WvStringParm section, WvStringParm key,
 		       WvStringParm oldval, WvStringParm newval)
 {
@@ -70,27 +75,11 @@ static void do_setbool(void* userdata,
 }
 
 
-static void do_addname(void* userdata,
+static void do_addname(void *userdata,
 		       WvStringParm section, WvStringParm key,
 		       WvStringParm oldval, WvStringParm newval)
 {
     (*(WvStringList *)userdata).append(new WvString(key), true);
-}
-
-
-static void do_addfile(void* userdata,
-		       WvStringParm section, WvStringParm key,
-		       WvStringParm oldval, WvStringParm newval)
-{
-    WvFile tmp(WvString("/home/%s/%s", key, *(WvString *)userdata), 
-               O_WRONLY | O_CREAT | O_TRUNC, 0600);
-    if(tmp.isok())
-    {
-        if(!!newval)
-            tmp.print("%s\n", newval);
-        else
-            tmp.print("%s\n", key);
-    }
 }
 
 
@@ -102,11 +91,11 @@ WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
     {
 	if (!entry)
 	{
-	    entry = new WvConfigEntryEmu(s, uniconf[s].get());
+	    entry = new WvConfigEntryEmu(s, uniconf[s].getme());
 	    entries.add(entry, true);
 	}
 	else
-	    entry->value = uniconf[s].get();
+	    entry->value = uniconf[s].getme();
     }
     else
 	entry = NULL;
@@ -117,24 +106,33 @@ WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
 
 const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 {
-    WvString *value = new WvString(uniconf[entry].get(def_val));
-    values.add(value, true);
-    return value->cstr();
+    if (!entry)
+	return def_val;
+
+    WvString s(uniconf[entry].getme(def_val));
+    
+    // look it up in the cache
+    WvString *sp = values[s];
+    if (!sp) values.add(sp = new WvString(s), true);
+    return sp->cstr();
 }
 
 
 void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 {
-    if (!!value)
-	uniconf[entry].set(value);
-    else
-	uniconf[entry].set(WvString::null);
+    if (!!entry)
+    {
+        if (!!value)
+            uniconf[entry].setme(value);
+        else
+            uniconf[entry].setme(WvString::null);
+    }
 }
 
 
 void WvConfigSectionEmu::quick_set(WvStringParm entry, WvStringParm value)
 {
-    uniconf[entry].set(value);
+    uniconf[entry].setme(value);
 }
 
 
@@ -158,12 +156,18 @@ void WvConfigSectionEmu::Iter::rewind()
 
 WvLink *WvConfigSectionEmu::Iter::next()
 {
-    if (iter.next())
-    {
-	entry = sect[iter->key()];
-	link.data = static_cast<void*>(entry);
-	return &link;
-    }
+    while (iter.next())
+	if (!!iter->getme())
+	{
+	    /*
+	     * FIXME: if the WvConfEmu is not at the root of the
+	     * UniConf tree, this will give an incorrect result.
+	     */
+	    entry = sect[iter->fullkey().removefirst()];
+	    link.data = static_cast<void*>(entry);
+	    assert(entry);
+	    return &link;
+	}
 
     return NULL;
 }
@@ -175,13 +179,13 @@ WvLink *WvConfigSectionEmu::Iter::cur()
 }
 
 
-WvConfigEntryEmu* WvConfigSectionEmu::Iter::ptr() const
+WvConfigEntryEmu *WvConfigSectionEmu::Iter::ptr() const
 {
     return entry;
 }
 
 
-void* WvConfigSectionEmu::Iter::vptr() const
+void *WvConfigSectionEmu::Iter::vptr() const
 {
     return link.data;
 }
@@ -189,33 +193,58 @@ void* WvConfigSectionEmu::Iter::vptr() const
 
 void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 {
-    WvList<CallbackInfo>::Iter i(callbacks);
     WvString section(_key.first());
     WvString key(_key.removefirst());
 
     if (hold)
 	return;
 
+    WvString value = uniconf[section][key].getme("");
+    
+    WvList<CallbackInfo>::Iter i(callbacks);
     for (i.rewind(); i.next(); )
     {
-	if (((i->section && !i->section) || !strcasecmp(i->section, section))
-	    && ((i->key && !i->key) || !strcasecmp(i->key, key)))
+	if ((!i->section || !strcasecmp(i->section, section))
+	    && (!i->key || !strcasecmp(i->key, key)))
 	{
-	    WvString value = uniconf[section][key].get("");
-	    i->callback(i->userdata, section, key, i->last, value);
-	    i->last = value;
+	    i->callback(i->userdata, section, key, WvString(), value);
 	}
     }
 }
 
 
-WvConfEmu::WvConfEmu(const UniConf& _uniconf):
-    uniconf(_uniconf), sections(42), hold(false)
+WvConfEmu::WvConfEmu(const UniConf &_uniconf)
+    : sections(42), hold(false), values(420), uniconf(_uniconf)
 {
     wvauthd = NULL;
     uniconf.add_callback(this,
 			 UniConfCallback(this, &WvConfEmu::notify),
 			 true);
+}
+
+
+WvConfEmu::~WvConfEmu()
+{
+    // things will "work" if you don't empty the callback list before
+    // deleting the WvConfEmu, but they probably won't work the way you
+    // think they will. (ie. someone might be using a temporary WvConfEmu
+    // and think his callbacks will stick around; they won't!)
+    assert(callbacks.isempty());
+
+#ifdef DEBUG_DEL_CALLBACK
+    if (!callbacks.isempty())
+    {
+	WvList<CallbackInfo>::Iter i(callbacks);
+
+	fprintf(stderr, " *** leftover callbacks in WvConfEmu ***\n");
+	for (i.rewind(); i.next(); )
+	{
+	    fprintf(stderr, "     - [%s]%s (%p)\n", i->section.cstr(), i->key.cstr(), i->cookie);
+	}
+    }
+#endif
+
+    uniconf.del_callback(this);
 }
 
 
@@ -241,9 +270,9 @@ void WvConfEmu::load_file(WvStringParm filename)
 }
 
 
-void WvConfEmu::save(WvStringParm filename)
+void WvConfEmu::save(WvStringParm filename, int _create_mode)
 {
-    UniConfRoot tmp_uniconf(WvString("ini:%s", filename), false);
+    UniConfRoot tmp_uniconf(new UniIniGen(filename, _create_mode), false);
 
     uniconf.copy(tmp_uniconf, true);
 
@@ -265,11 +294,14 @@ void WvConfEmu::flush()
 
 WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 {
+    if (UniConfKey(sect).numsegments() != 1)
+	return NULL;
+
     WvConfigSectionEmu* section = sections[sect];
 
     if (!section && uniconf[sect].exists())
     {
-	section = new WvConfigSectionEmu(uniconf[sect], sect);
+	section = new WvConfigSectionEmu(uniconf[sect], sect, &values);
 	sections.add(section, true);
     }
 
@@ -281,11 +313,10 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
 			     WvStringParm section, WvStringParm key,
 			     void *cookie)
 {
-    WvList<CallbackInfo>::Iter i(callbacks);
-
     if (!callback)
 	return;
 
+    WvList<CallbackInfo>::Iter i(callbacks);
     for (i.rewind(); i.next(); )
     {
 	if (i->cookie == cookie
@@ -294,8 +325,19 @@ void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
 	    return;
     }
 
+#ifdef DEBUG_DEL_CALLBACK
+    void* trace[10];
+    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+    char** tracedump = backtrace_symbols(trace, count);
+    fprintf(stderr, "TRACE:add:%s:%s:%p", section.cstr(), key.cstr(), cookie);
+    for (int i = 0; i < count; ++i)
+	fprintf(stderr, ":%s", tracedump[i]);
+    fprintf(stderr, "\n");
+    free(tracedump);
+#endif
+
     callbacks.append(new CallbackInfo(callback, userdata, section, key,
-				      cookie, get(section, key, "")),
+				      cookie),
 		     true);
 }
 
@@ -311,7 +353,12 @@ void WvConfEmu::del_callback(WvStringParm section, WvStringParm key, void *cooki
 	if (i->cookie == cookie
 	    && i->section == section
 	    && i->key == key)
+	{
+#ifdef DEBUG_DEL_CALLBACK
+	    fprintf(stderr, "TRACE:del:%s:%s:%p\n", section.cstr(), key.cstr(), cookie);
+#endif
 	    i.xunlink();
+	}
     }
 }
 
@@ -319,6 +366,12 @@ void WvConfEmu::del_callback(WvStringParm section, WvStringParm key, void *cooki
 void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
 {
     add_callback(do_setbool, b, _section, _key, b);
+}
+
+
+void WvConfEmu::del_setbool(bool *b, WvStringParm _section, WvStringParm _key)
+{
+    del_callback(_section, _key, b);
 }
 
 
@@ -332,13 +385,6 @@ void WvConfEmu::del_addname(WvStringList *list,
 			    WvStringParm sect, WvStringParm ent)
 {
     del_callback(sect, ent, list);
-}
-
-
-void WvConfEmu::add_addfile(WvString *filename,
-			    WvStringParm sect, WvStringParm ent)
-{
-    add_callback(do_addfile, filename, sect, ent, NULL);
 }
 
 
@@ -357,16 +403,25 @@ WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 
 int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
 {
-    return uniconf[section][entry].getint(def_val);
+    if (!section || !entry)
+	return def_val;
+
+    return uniconf[section][entry].getmeint(def_val);
 }
 
 
 const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
 			   const char *def_val)
 {
-    WvString *value = new WvString(uniconf[section][entry].get(def_val));
-    values.add(value, true);
-    return value->cstr();
+    if (!section || !entry)
+	return def_val;
+
+    WvString s(uniconf[section][entry].getme(def_val));
+    
+    // look it up in the cache
+    WvString *sp = values[s];
+    if (!sp) values.add(sp = new WvString(s), true);
+    return sp->cstr();
 }
 
 int WvConfEmu::fuzzy_getint(WvStringList &sect, WvStringParm entry,
@@ -417,24 +472,28 @@ void WvConfEmu::setraw(WvString wvconfstr, const char *&_value,
 
 void WvConfEmu::setint(WvStringParm section, WvStringParm entry, int value)
 {
-    uniconf[section][entry].setint(value);
+    if (!!entry)
+        uniconf[section][entry].setmeint(value);
 }
 
 
 void WvConfEmu::set(WvStringParm section, WvStringParm entry,
 		    const char *value)
 {
-    if (value && value[0] != 0)
-	uniconf[section][entry].set(value);
-    else
-	uniconf[section][entry].set(WvString::null);
+    if (!!entry)
+    {
+        if (value && value[0] != 0)
+            uniconf[section][entry].setme(value);
+        else
+            uniconf[section][entry].setme(WvString::null);
+    }
 }
 
 
 void WvConfEmu::maybesetint(WvStringParm section, WvStringParm entry,
 			    int value)
 {
-    if (!get(section, entry, NULL))
+    if (!!entry && !get(section, entry, NULL))
 	setint(section, entry, value);
 }
 
@@ -442,14 +501,14 @@ void WvConfEmu::maybesetint(WvStringParm section, WvStringParm entry,
 void WvConfEmu::maybeset(WvStringParm section, WvStringParm entry,
 			 const char *value)
 {
-    if (get(section, entry, 0) == 0)
+    if (!!entry && get(section, entry, 0) == 0)
 	set(section, entry, value);
 }
 
 
 void WvConfEmu::delete_section(WvStringParm section)
 {
-    uniconf[section].set(WvString::null);
+    uniconf[section].remove();
 }
 
 
@@ -458,15 +517,15 @@ int WvConfEmu::check_for_bool_string(const char *s)
     if (strcasecmp(s, "off") == 0
 	|| strcasecmp(s, "false") == 0
 	|| strncasecmp(s, "no", 2) == 0)   // also handles "none"
-	return (0);
+	return 0;
 
     if (strcasecmp(s, "on") == 0
 	|| strcasecmp(s, "true") == 0
 	|| strcasecmp(s, "yes") == 0)
-	return (1);
+	return 1;
 
     // not a special bool case, so just return the number
-    return (atoi(s));
+    return atoi(s);
 }
 
 
@@ -489,7 +548,7 @@ WvLink *WvConfEmu::Iter::next()
 }
 
 
-WvConfigSectionEmu* WvConfEmu::Iter::ptr() const
+WvConfigSectionEmu *WvConfEmu::Iter::ptr() const
 {
     return conf[iter->key()];
 }

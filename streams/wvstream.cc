@@ -41,10 +41,10 @@ using std::max;
 
 WvStream *WvStream::globalstream = NULL;
 
-XUUID_MAP_BEGIN(IWvStream)
-  XUUID_MAP_ENTRY(IObject)
-  XUUID_MAP_ENTRY(IWvStream)
-  XUUID_MAP_END
+UUID_MAP_BEGIN(WvStream)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_ENTRY(IWvStream)
+  UUID_MAP_END
 
 WvStream::WvStream()
 {
@@ -185,7 +185,7 @@ void WvStream::callback()
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
 
-#define TEST_CONTINUES_HARSHLY 1
+#define TEST_CONTINUES_HARSHLY 0
 #if TEST_CONTINUES_HARSHLY
 #ifndef _WIN32
 # warning "Using WvCont for *all* streams for testing!"
@@ -363,7 +363,7 @@ size_t WvStream::write(const void *buf, size_t count)
 	wrote = uwrite(buf, count);
         count -= wrote;
         buf = (const unsigned char *)buf + wrote;
-	if (!count) return wrote; // short circuit if no buffering needed
+	// if (!count) return wrote; // short circuit if no buffering needed
     }
     if (max_outbuf_size != 0)
     {
@@ -899,7 +899,17 @@ time_t WvStream::alarm_remaining()
 
 	// Time is going backward!
 	if (now < last_alarm_check)
+	{
+#if 0 // okay, I give up.  Time just plain goes backwards on some systems.
+	    // warn only if it's a "big" difference (sigh...)
+	    if (msecdiff(last_alarm_check, now) > 200)
+		fprintf(stderr, " ************* TIME WENT BACKWARDS! "
+			"(%ld:%ld %ld:%ld)\n",
+			last_alarm_check.tv_sec, last_alarm_check.tv_usec,
+			now.tv_sec, now.tv_usec);
+#endif
 	    alarm_time = tvdiff(alarm_time, tvdiff(last_alarm_check, now));
+	}
 
 	last_alarm_check = now;
 
@@ -915,6 +925,9 @@ time_t WvStream::alarm_remaining()
 bool WvStream::continue_select(time_t msec_timeout)
 {
     assert(uses_continue_select);
+    
+    // if this assertion triggers, you probably tried to do continue_select()
+    // while inside terminate_continue_select().
     assert(call_ctx);
     
     if (msec_timeout >= 0)
@@ -922,6 +935,7 @@ bool WvStream::continue_select(time_t msec_timeout)
 
     alarm(msec_timeout);
     WvCont::yield();
+    alarm(-1); // cancel the still-pending alarm, or it might go off later!
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 

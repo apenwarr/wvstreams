@@ -22,6 +22,22 @@ WvTestFileTree::WvTestFileTree(UniConf _files, WvStringList &_dirs,
 }
 
 
+WvString WvTestFileTree::sample_acl(unsigned int num)
+{
+    switch (num)
+    {
+        case 0: return "u::rwx,g::---,o::---"; break;
+        case 1: return "u::rwx,g::---,o::--x"; break;
+        case 2: return "u::rwx,g::---,o::-wx"; break;
+        case 3: return "u::rwx,g::---,o::rwx"; break;
+        case 4: return "u::rwx,g::--x,o::rwx"; break;
+        case 5: return "u::rwx,g::-wx,o::rwx"; break;
+        case 6: return "u::rwx,g::rwx,o::rwx"; break;
+        default: return "u::rwx,g::rwx,o::rwx"; break;
+    }
+}
+
+
 bool WvTestFileTree::create_test_files(unsigned int _num_dirs,
 				       unsigned int _num_files,
 				       off_t _size_of_file,
@@ -40,6 +56,9 @@ bool WvTestFileTree::create_test_files(unsigned int _num_dirs,
     {
       	WvString dirname("%s/dir%s", basedir, i);
 	mkdir(dirname, 0777);
+        set_acl_permissions(dirname, sample_acl(i), false);
+        set_default_acl_permissions(dirname, sample_acl(i+1));
+
 	dirs.append(new WvString(dirname), true);
 	if (!record_fileinfo(dirname))
 	{
@@ -60,7 +79,8 @@ bool WvTestFileTree::create_test_files(unsigned int _num_dirs,
 }
 
 
-bool WvTestFileTree::create_random_file(WvStringParm filename, off_t size)
+bool WvTestFileTree::create_random_file(WvStringParm filename, off_t size,
+                                        WvStringParm acl)
 {
     WvDynBuf buf;
     UniConf info(files[filename]);
@@ -89,7 +109,9 @@ bool WvTestFileTree::create_random_file(WvStringParm filename, off_t size)
     char md5string[md5.digestsize() * 2 + 1];
     hexify(md5string, md5sum.get(md5.digestsize()), md5.digestsize());
 
-    info["wvstats/md5sum"].set(md5string);
+    info["wvstats/md5sum"].setme(md5string);
+
+    if (!!acl) set_acl_permissions(filename, acl, false);
 
     return (record_fileinfo(filename, false));
 }
@@ -125,33 +147,34 @@ bool WvTestFileTree::record_fileinfo(WvStringParm filename, bool set_md5)
     if (lstat(filename, &st) != 0)
 	return false;
     UniConf info(files[filename]);
-    info["wvstats/mode"].setint(st.st_mode);
-    info["wvstats/uid"].setint(st.st_uid);
-    info["wvstats/gid"].setint(st.st_gid);
-    info["wvstats/rdev"].setint(st.st_rdev);
-    info["wvstats/mtime"].setint(st.st_mtime);
-    info["wvstats/ctime"].setint(st.st_ctime);
-    info["wvstats/acl"].set(get_acl_short_form(filename));
+    info["wvstats/mode"].setmeint(st.st_mode);
+    info["wvstats/uid"].setmeint(st.st_uid);
+    info["wvstats/gid"].setmeint(st.st_gid);
+    info["wvstats/rdev"].setmeint(st.st_rdev);
+    info["wvstats/mtime"].setmeint(st.st_mtime);
+    info["wvstats/ctime"].setmeint(st.st_ctime);
+    info["wvstats/acl"].setme(get_acl_short_form(filename));
+    info["wvstats/default_acl"].setme(get_acl_short_form(filename, true));
 
     if (S_ISDIR(st.st_mode))
-	info["wvstats/size"].setint(0);
+	info["wvstats/size"].setmeint(st.st_size);
     else if (S_ISLNK(st.st_mode))
     {
-	info["wvstats/size"].setint(st.st_size);
+	info["wvstats/size"].setmeint(st.st_size);
 	char *linkto = new char[st.st_size+1];
 	linkto[st.st_size] = 0;
 	if (readlink(filename, linkto, st.st_size))
 	{
 //	    printf("symlink to %s\n", linkto);
-	    info["wvstats/linkto"].set(linkto);
+	    info["wvstats/linkto"].setme(linkto);
 	    delete[] linkto;
 	}
     }
     else if (S_ISREG(st.st_mode))
     {
-	info["wvstats/size"].setint(st.st_size);
+	info["wvstats/size"].setmeint(st.st_size);
 	if (set_md5)
-	    info["wvstats/md5sum"].set(get_md5_str(filename));
+	    info["wvstats/md5sum"].setme(get_md5_str(filename));
     }
     else
     {
@@ -194,6 +217,7 @@ bool WvTestFileTree::fill_in_dir(WvStringParm dirname, WvStringParm dirnum,
     int last_file = 0;
     for (unsigned int j = 0; j < num_files; j++)
     {
+        WvString fname("%s/file%s.%s", dirname, dirnum, j);
 	// create files and symlinks
 	if (j % 3 == 1)
 	{
@@ -204,14 +228,13 @@ bool WvTestFileTree::fill_in_dir(WvStringParm dirname, WvStringParm dirnum,
 	    else
 		target = WvString("%s/file%s.%s", dirname, dirnum, last_file);
 
-	    if (!create_symlink(target, WvString("%s/file%s.%s", dirname,
-						 dirnum, j)))
+
+            if (!create_symlink(target, fname))
 		created_files = false;
 	}
 	else
 	{
-	    if (!create_random_file(WvString("%s/file%s.%s", dirname, dirnum,
-					     j), size_of_file))
+	    if (!create_random_file(fname, size_of_file, sample_acl(j)))
 		created_files = false;
 	    else
 		last_file = j;

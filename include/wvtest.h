@@ -12,6 +12,8 @@
 #ifndef __WVTEST_H
 #define __WVTEST_H
 
+#include <time.h>
+
 class WvTest
 {
     typedef void MainFunc();
@@ -20,6 +22,9 @@ class WvTest
     WvTest *next;
     static WvTest *first, *last;
     static int fails, runs;
+    static time_t start_time;
+    
+    static void alarm_handler(int sig);
    
 public:
     WvTest(const char *_descr, const char *_idstr, MainFunc *_main);

@@ -10,7 +10,6 @@
 
 #define ZBUFSIZE 10240
 
-/***** GzipEncoder *****/
 
 WvGzipEncoder::WvGzipEncoder(Mode _mode) :
     tmpbuf(ZBUFSIZE), mode(_mode)

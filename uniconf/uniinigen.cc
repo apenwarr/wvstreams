@@ -28,9 +28,9 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 /***** UniIniGen *****/
 
 UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
-    : filename(_filename), create_mode(_create_mode), log(filename)
+    : filename(_filename), create_mode(_create_mode), log(_filename)
 {
-    log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
+    //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
 }
@@ -44,10 +44,29 @@ UniIniGen::~UniIniGen()
 bool UniIniGen::refresh()
 {
     WvFile file(filename, O_RDONLY);
+
+    #ifndef _WIN32
+    struct stat statbuf;
+    if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
+    {
+	log(WvLog::Warning, "Can't stat '%s': %s\n",
+	    filename, strerror(errno));
+	file.close();
+    }
+
+    if (file.isok() && (statbuf.st_mode & S_ISVTX))
+    {
+	file.close();
+	file.seterr(EAGAIN);
+    }
+    #endif
+
     if (!file.isok())
     {
-        log("Can't open '%s' for reading: %s\n", filename, file.errstr());
-	log("...starting with blank configuration.\n");
+        log(WvLog::Warning, 
+	    "Can't open '%s' for reading: %s\n"
+	    "...starting with blank configuration.\n",
+	    filename, file.errstr());
         return false;
     }
     
@@ -93,7 +112,7 @@ bool UniIniGen::refresh()
             if (str[0] == '#')
             {
                 // a comment line.  FIXME: we drop it completely!
-                log(WvLog::Debug5, "Comment: \"%s\"\n", str + 1);
+                //log(WvLog::Debug5, "Comment: \"%s\"\n", str + 1);
                 continue;
             }
 	    
@@ -103,7 +122,7 @@ bool UniIniGen::refresh()
                 str[len - 1] = '\0';
                 WvString name(wvtcl_unescape(trim_string(str + 1)));
                 section = UniConfKey(name);
-                log(WvLog::Debug5, "Refresh section: \"%s\"\n", section);
+                //log(WvLog::Debug5, "Refresh section: \"%s\"\n", section);
                 continue;
             }
 	    
@@ -130,7 +149,8 @@ bool UniIniGen::refresh()
                 }
             }
 	    
-            log("Ignoring malformed input line: \"%s\"\n", word);
+            log(WvLog::Warning,
+		"Ignoring malformed input line: \"%s\"\n", word);
         }
     }
 
@@ -138,7 +158,8 @@ bool UniIniGen::refresh()
     file.close();
     if (file.geterr())
     {
-        log("Error reading from config file: \"%s\"\n", file.errstr());
+        log(WvLog::Warning, 
+	    "Error reading from config file: \"%s\"\n", file.errstr());
         delete newgen;
         return false;
     }
@@ -153,7 +174,8 @@ bool UniIniGen::refresh()
     if (avail > 0)
     {
         // last line must have contained junk
-        log("XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
+        log(WvLog::Warning,
+	    "XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
     }
 
     // switch the trees and send notifications
@@ -218,7 +240,44 @@ void UniIniGen::commit()
 {
     if (!dirty) return;
 
+#ifdef _WIN32
+    // Windows doesn't support all that fancy stuff, just open the file
+    //   and be done with it
     WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+#else
+    // try to overwrite the file atomically
+    char resolved_path[PATH_MAX];
+    WvString real_filename(filename);
+
+    if (realpath(filename, resolved_path) != NULL)
+	real_filename = resolved_path;
+	
+    WvString alt_filename("%s.tmp%s", real_filename, getpid());
+    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+    struct stat statbuf;
+
+    if (file.geterr()
+	|| lstat(real_filename, &statbuf) == -1
+	|| !S_ISREG(statbuf.st_mode))
+    {
+	if (file.geterr())
+	    log(WvLog::Warning, "couldn't create '%s'\n", alt_filename);
+
+	unlink(alt_filename);
+	alt_filename = WvString::null;
+
+	file.open(real_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+
+	if (fstat(file.getwfd(), &statbuf) == -1)
+	{
+	    log(WvLog::Warning, "Can't write '%s' ('%s'): %s\n",
+		filename, real_filename, strerror(errno));
+	    return;
+	}
+
+	fchmod(file.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
+    }
+#endif
     
     if (root) // the tree may be empty, so NULL root is okay
     {
@@ -232,11 +291,45 @@ void UniIniGen::commit()
 	save(file, *root);
     }
 
+#ifndef _WIN32
+    if (alt_filename.isnull())
+    {
+	if (!file.geterr())
+	{
+	    /* We only reset the sticky bit if all went well, but before
+	     * we close it, because we need the file descriptor. */
+	    statbuf.st_mode = statbuf.st_mode & ~S_ISVTX;
+	    fchmod(file.getwfd(), statbuf.st_mode & 07777);
+	}
+	else
+	    log(WvLog::Warning, "Error writing '%s' ('%s'): %s\n",
+		filename, real_filename, file.errstr());
+    }
+#endif
+
     file.close();
+
     if (file.geterr())
-        log("Can't write '%s': %s\n", filename, file.errstr());
-    else
-	dirty = false;
+    {
+        log(WvLog::Warning, "Can't write '%s': %s\n",
+	    filename, file.errstr());
+	return;
+    }
+
+#ifndef _WIN32
+    if (!alt_filename.isnull())
+    {
+	if (rename(alt_filename, real_filename) == -1)
+	{
+	    log(WvLog::Warning, "Can't write '%s': %s\n",
+		filename, strerror(errno));
+	    unlink(alt_filename);
+	    return;
+	}
+    }
+#endif
+
+    dirty = false;
 }
 
 
@@ -325,7 +418,17 @@ static void save_sect(WvStream &file, UniConfValueTree &toplevel,
     for (it.rewind(); it.next(); )
     {
         UniConfValueTree &node = *it;
-        if (!!node.value() || !node.haschildren())
+	
+	// FIXME: we never print empty-string ("") keys, for compatibility
+	// with WvConf.  Example: set x/y = 1; delete x/y; now x = "", because
+	// it couldn't be NULL while x/y existed, and nobody auto-deleted it
+	// when x/y went away.  Therefore we would try to write x = "" to the
+	// config file, but that's not what WvConf would do.
+	// 
+	// The correct fix would be to auto-delete x if the only reason it
+	// exists is for x/y.  But since that's hard, we'll just *never*
+	// write lines for "" entries.  Icky, but it works.
+        if (!!node.value())// || !node.haschildren())
         {
             if (!printedsection)
             {
