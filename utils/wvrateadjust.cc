@@ -9,18 +9,19 @@
  */
 #include "wvrateadjust.h"
 
-WvRateAdjust::WvRateAdjust(int _sampsize, int _orate)
+WvRateAdjust::WvRateAdjust(int _sampsize, int _irate_base, int _orate)
     : log("RateAdj", WvLog::Debug5)
 {
     orate_n = _orate;
     orate_d = 1;
     match_rate = NULL;
     
-    init(_sampsize);
+    init(_sampsize, _irate_base);
 }
 
 
-WvRateAdjust::WvRateAdjust(int _sampsize, WvRateAdjust *_match_rate)
+WvRateAdjust::WvRateAdjust(int _sampsize, int _irate_base,
+			   WvRateAdjust *_match_rate)
     : log("RateAdj", WvLog::Debug5)
 {
     match_rate = _match_rate;
@@ -29,16 +30,17 @@ WvRateAdjust::WvRateAdjust(int _sampsize, WvRateAdjust *_match_rate)
     orate_n = match_rate->irate_n;
     orate_d = match_rate->irate_d;
     
-    init(_sampsize);
+    init(_sampsize, _irate_base);
 }
 
 
-void WvRateAdjust::init(int _sampsize)
+void WvRateAdjust::init(int _sampsize, int _irate_base)
 {
     sampsize = _sampsize;
-    irate_n = 1;
-    irate_d = 1;
-    epoch.tv_sec = 0;
+    irate_n = _irate_base * 10;
+    irate_d = 10;
+    epoch = wvtime();
+    epoch.tv_sec--;
     bucket = 0;
 }
 
@@ -88,10 +90,10 @@ bool WvRateAdjust::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
     }
 	
     int plus = orate_n * irate_d, minus = irate_n * orate_d;
-    log("plus=%s, minus=%s, ", plus, minus);
+    //log("plus=%s, minus=%s, ", plus, minus);
 
     unsigned omax = isamps + isamps/2;
-    log("isamps=%s, omax=%s\n", isamps, omax);
+    //log("isamps=%s, omax=%s\n", isamps, omax);
     
     const unsigned char *iptr = inbuf.get(isamps * sampsize);
     unsigned char *ostart, *optr;
@@ -118,7 +120,7 @@ bool WvRateAdjust::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
     }
     
     unsigned un = omax*sampsize - (optr - ostart);
-    log("unalloc %s/%s (%s)\n", un, omax*sampsize, optr-ostart);
+    //log("unalloc %s/%s (%s)\n", un, omax*sampsize, optr-ostart);
     outbuf.unalloc(un);
     
     return true;

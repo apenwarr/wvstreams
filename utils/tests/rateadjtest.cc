@@ -23,7 +23,7 @@ int main()
     
     WvTest test;
     WvLog dump("Outbuf", WvLog::Debug2);
-    WvRateAdjust adj(SAMPSIZE, OUTRATE), adj2(SAMPSIZE, &adj);
+    WvRateAdjust adj(SAMPSIZE, INRATE, OUTRATE), adj2(SAMPSIZE, OUTRATE, &adj);
     
     for (int i = 0; i < (int)sizeof(chunk); i++)
 	chunk[i] = (i+1) % 256;

@@ -3,7 +3,7 @@
 #include "wvtimeutils.h"
 
 #define RATE (8192)
-#define BITS (8)
+#define BITS (16)
 #define STEREO (false)
 #define CHANNELS (STEREO ? 2 : 1)
 

@@ -43,8 +43,8 @@ public:
     // ...but with some care thrown in to prevent overflows.
     int bucket;
     
-    WvRateAdjust(int _sampsize, int _orate);
-    WvRateAdjust(int _sampsize, WvRateAdjust *_match_rate);
+    WvRateAdjust(int _sampsize, int _irate_base, int _orate);
+    WvRateAdjust(int _sampsize, int _irate_base, WvRateAdjust *_match_rate);
     
     int getirate()
         { return irate_n / irate_d; }
@@ -52,7 +52,7 @@ public:
         { return orate_n / orate_d; }
     
 protected:
-    void init(int _sampsize);
+    void init(int _sampsize, int _irate_base);
     
     virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
 };
