@@ -34,6 +34,8 @@ public:
     WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem);
     virtual ~WvUDPStream();
     
+    const WvAddr *local() const;
+    
     // return the remote address (source of incoming packets, target of
     // outgoing packets).  This is the last host sent to or received from,
     // whichever was more recent.
@@ -42,7 +44,7 @@ public:
         { remaddr = _remaddr; }
 
 protected:
-    WvIPPortAddr remaddr;
+    WvIPPortAddr localaddr, remaddr;
     
     virtual size_t uread(void *buf, size_t count);
     virtual size_t uwrite(const void *buf, size_t count);

@@ -5,6 +5,25 @@
 #include "wvstreamlist.h"
 #include "wvlog.h"
 #include "wvudp.h"
+#include "wvhashtable.h"
+
+DeclareWvTable(WvIPPortAddr);
+
+class WvUDPListener : public WvUDPStream
+{
+public:
+    WvUDPListener(const WvIPPortAddr &_localaddr);
+    
+protected:
+    
+};
+
+
+WvUDPListener::WvUDPListener(const WvIPPortAddr &_localaddr)
+	: WvUDPStream(_localaddr, WvIPPortAddr())
+{
+}
+
 
 int main(int argc, char **argv)
 {

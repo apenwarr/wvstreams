@@ -9,7 +9,7 @@
 
 
 WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
-	: remaddr(_rem)
+	: localaddr(), remaddr(_rem)
 {
     fd = socket(PF_INET, SOCK_DGRAM, 0);
     if (fd < 0 || fcntl(fd, F_SETFD, 1))
@@ -26,6 +26,15 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
 	return;
     }
     delete sa;
+    
+    struct sockaddr_in nsa;
+    size_t nsalen = sizeof(nsa);
+    if (getsockname(fd, (sockaddr *)&nsa, &nsalen) < 0)
+    {
+	seterr(errno);
+	return;
+    }
+    localaddr = WvIPPortAddr(&nsa);
     
     if (_rem != WvIPAddr())
     {
@@ -49,6 +58,12 @@ WvUDPStream::~WvUDPStream()
 const WvAddr *WvUDPStream::src() const
 {
     return &remaddr;
+}
+
+
+const WvAddr *WvUDPStream::local() const
+{
+    return &localaddr;
 }
 
 
@@ -84,5 +99,3 @@ size_t WvUDPStream::uwrite(const void *buf, size_t count)
     // errors in UDP are ignored
     return out < 0 ? 0 : out;
 }
-
-

@@ -66,8 +66,10 @@ class WvAddr
 {
 protected:
     virtual WvString printable() const = 0;
+    const char *addrtype;
 
 public:
+    WvAddr();
     virtual ~WvAddr();
     static WvAddr *gen(struct sockaddr *addr);
     
@@ -82,14 +84,11 @@ public:
     virtual const unsigned char *rawdata() const;
     virtual size_t rawdata_len() const;
     
-    // comparison operator.  WARNING: uses rawdata() and rawdata_len() for
-    // the classes to be compared.  WvIPNet and WvIPPortAddr compare only
-    // the IP address portion when this function is called; so,
-    // 192.168.42.4:23 == 192.168.42.4:4242.
-    //
-    // This behaviour actually seems to be more useful in our case.
-    //
-    bool operator== (const WvAddr &a2) const;
+    virtual unsigned WvHash() const;
+    virtual bool comparator(const WvAddr *a2) const;
+    
+    bool operator== (const WvAddr &a2) const
+        { return addrtype == a2.addrtype && comparator(&a2); }
     bool operator!= (const WvAddr &a2) const
         { return ! (*this == a2); }
 };
@@ -239,8 +238,11 @@ public:
     WvIPNet(const WvIPAddr &base, int bits = 32);
     
     // construct an empty IPNet for later copying (probably by operator=)
-    WvIPNet()
-        { }
+    WvIPNet();
+    
+    // Override the hash and comparison functions
+    virtual unsigned WvHash() const;
+    virtual bool comparator(const WvAddr *a2) const;
     
     // Get the 'base IP address' component, netmask, network, and broadcast
     WvIPAddr base() const
@@ -285,16 +287,9 @@ protected:
 public:
     __u16 port;
     
-    WvIPPortAddr()
-	    : WvIPAddr()
-        { port = 0; }
-    WvIPPortAddr(const unsigned char _ipaddr[4],
-		 __u16 _port = 0)
-	    : WvIPAddr(_ipaddr)
-        { port = _port; }
-    WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port = 0)
-	    : WvIPAddr(_ipaddr)
-        { port = _port; }
+    WvIPPortAddr();
+    WvIPPortAddr(const unsigned char _ipaddr[4], __u16 _port = 0);
+    WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port = 0);
     WvIPPortAddr(const char string[]);
     WvIPPortAddr(__u16 _port);          // assumes address 0.0.0.0, (ie local)
     WvIPPortAddr(const char string[], __u16 _port);
@@ -302,6 +297,10 @@ public:
     WvIPPortAddr(struct sockaddr_in *sin) : WvIPAddr(sin->sin_addr.s_addr)
         { port = ntohs(sin->sin_port); }
     virtual struct sockaddr *sockaddr() const;
+
+    // Override the hash and comparison functions
+    virtual unsigned WvHash() const;
+    virtual bool comparator(const WvAddr *a2) const;
 };
 
 #endif // __WVADDR_H
