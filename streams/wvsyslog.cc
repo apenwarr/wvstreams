@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  * WvSyslog is a descendant of WvLogRcv that sends messages to the syslogd
  * daemon.

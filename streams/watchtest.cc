@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
  * WvFileWatcher test.  Opens a file, /tmp/test.txt, and displays new
  * additions to this file as they occur.

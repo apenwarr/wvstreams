@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
  * A simple class that can trigger an event once per day.
  * Presently has a one-hour granularity, but that can be extended one

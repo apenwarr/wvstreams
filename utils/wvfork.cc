@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
  * wvfork() just runs fork(), but it closes all file descriptors that are
  * flagged close-on-exec, since we don't necessarily always run exec() 

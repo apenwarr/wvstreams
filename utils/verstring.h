@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  * Version number and string manipulations.  Version numbers are 32-bit
  * hexadecimal numbers such as 0x00012a00.  The first 16 bits are the major

@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  * A top-level data encoder class.  You put data in, and when it comes out
  * it's encoded.  It might be a different size or not, and future data might

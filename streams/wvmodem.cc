@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *   Copyright (C) 1999 Red Hat, Inc.
  *
  * Implementation of the WvModem class. Inherits from WvFile, but

@@ -1,6 +1,6 @@
 /*
  * Worldvisions Tunnel Vision Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
  * Streams with built-in cryptography on read/write.  See wvcrypto.h.
  */

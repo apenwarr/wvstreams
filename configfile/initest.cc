@@ -1,7 +1,7 @@
 
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
  * The test program for the WvConfigFile class.  Not to be used in real life.
  *

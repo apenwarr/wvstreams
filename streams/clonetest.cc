@@ -1,6 +1,6 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2001 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
  * Test of the WvStreamClone class.  Clones stdin and stdout, prints whatever
  * it receives, and terminates when the stream closes.  (Ctrl-D)
