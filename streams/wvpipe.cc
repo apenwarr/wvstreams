@@ -18,6 +18,7 @@
 #include <sys/ioctl.h>
 #include <assert.h>
 
+#include "wvfork.h"
 
 // The assorted WvPipe::WvPipe() constructors are described in wvpipe.h
 
@@ -83,9 +84,7 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	return;
     }
 
-    // Fork.  The child process will run the program we're piping.
-    // we don't need wvfork() because the child runs exec().
-    pid = fork();
+    pid = wvfork();
     if (pid < 0)
     {
 	pid = 0;

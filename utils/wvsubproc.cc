@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "wvfork.h"
 
 WvSubProc::WvSubProc()
 {
@@ -69,7 +70,7 @@ int WvSubProc::startv(const char cmd[], const char * const *argv)
     running = false;
     estatus = 0;
     
-    pid = fork();   // don't need wvfork(), since we call exec().
+    pid = wvfork();
     //fprintf(stderr, "pid for '%s' is %d\n", cmd, pid);
     
     if (!pid)
