@@ -52,8 +52,12 @@ public:
 	uniconf(_uniconf), name(_name)
     {}
 
+    WvConfigEntryEmu *operator[] (WvStringParm s);
+
     const char *get(WvStringParm entry, const char *def_val = NULL);
     void set(WvStringParm entry, WvStringParm value);
+    // add an entry to the end of the section, _assuming_ no duplicates exist
+    void quick_set(WvStringParm entry, WvStringParm value);
 
     bool isempty() const;
     size_t count() const;
@@ -156,6 +160,10 @@ public:
     int getint(WvStringParm section, WvStringParm entry, int def_val);
     const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL);
+    int fuzzy_getint(WvStringList &sect, WvStringParm entry,
+		  int def_val);
+    const char *fuzzy_get(WvStringList &sect, WvStringParm entry,
+			  const char *def_val = NULL);
 
     void setraw(WvString wvconfstr, const char *&value, int &parse_error);
     void setint(WvStringParm section, WvStringParm entry, int value);

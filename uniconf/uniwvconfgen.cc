@@ -4,15 +4,23 @@
  * 
  * A generator to make a UniConf object out of a WvConf.
  */
-#include "wvconf.h"
+#ifdef USE_WVCONFEMU
+# include "wvconfemu.h"
+#else
+# include "wvconf.h"
+#endif
 #include "uniwvconfgen.h"
 #include "wvmoniker.h"
 
 
 static UniConfGen *creator(WvStringParm s, IObject *, void *obj)
 {
+#ifdef USE_WVCONFEMU
+    assert(obj && "uniwvconfgen compiled with WvConfEmu");
+#else
     if (!obj)
 	obj = new WvConf(s);
+#endif
     
     // FIXME EEK!  This never deletes the WvConf object!
     return new UniWvConfGen(*(WvConf *)obj);

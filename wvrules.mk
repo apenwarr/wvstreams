@@ -45,6 +45,10 @@ LDFLAGS += $(LDOPTS)
 # FIXME: what does this do??
 XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" && echo " -lsupc++")
 
+ifdef USE_WVCONFEMU
+CXXFLAGS += -DUSE_WVCONFEMU
+endif
+
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
 else
