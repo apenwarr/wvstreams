@@ -179,16 +179,7 @@ int WvInterface::setflags(int clear, int set)
 
 void WvInterface::up(bool enable)
 {
-#if 0 // impossible on 2.1 kernels
-    const WvIPNet &ip = ipaddr();
-    
-    // if address is 0.0.0.0, make sure netmask is 255.255.255.255.
-    if (ip == WvIPNet(WvIPAddr(), 0))
-	setipaddr(WvIPNet(WvIPAddr(), 32));
-#endif
-
     setflags(IFF_UP, enable ? IFF_UP : 0);
-    
     rescan();
 }
 
@@ -337,7 +328,7 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     if (gw == WvIPAddr()) // no gateway; change the scope name
 	argv[13] = "link";
     
-    if (dest == WvIPNet("0.0.0.0", 0)
+    if (dest.bits() == 0
 	&& WvPipe(argv[0], argv, false, false, false).finish() != 242)
     {
 	// added a default route via the subprogram
@@ -392,7 +383,7 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     if (gw == WvIPAddr()) // no gateway; change the scope name
 	argv[13] = "link";
     
-    if (dest == WvIPNet("0.0.0.0", 0)
+    if (dest.bits() == 0
 	&& WvPipe(argv[0], argv, false, false, false).finish() == 0)
     {
 	// successfully deleted a default route via the subprogram
