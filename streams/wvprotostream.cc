@@ -8,6 +8,7 @@
  */
 #include "wvprotostream.h"
 #include "wvlog.h"
+#include "strutils.h"
 #include <ctype.h>
 #include <assert.h>
 
@@ -75,7 +76,7 @@ WvString WvProtoStream::next_token_str()
 WvString WvProtoStream::token_remaining()
 {
     tokbuf.put("", 1);
-    return (char *)tokbuf.get(tokbuf.used());
+    return trim_string((char *)tokbuf.get(tokbuf.used()));
 }
 
 
