@@ -951,14 +951,37 @@ WvDynBuf *WvX509Mgr::get_extension(int nid)
 }
 
 
+bool WvX509Mgr::isok() const
+{
+    return cert && rsa && WvErrorBase::isok();
+}
+
+
 WvString WvX509Mgr::errstr() const
 {
-    if (!cert)
-	return "No certificate!";
-    else if (!rsa)
-	return "No RSA keys!";
-    else if (!!errstring)
-	return errstring;
-    else
-	return "WVX509 COMPLETELY BROKEN!";
+    WvString ret = WvErrorBase::errstr();
+    if (!ret)
+    {
+        // only use a custom string if there's not an error set
+        if (!cert && !rsa)
+            ret = "No certificate or RSA key assigned";
+        else if (!cert)
+            ret = "No certificate assigned";
+        else if (!rsa)
+            ret = "No RSA key assigned";
+    }
+    return ret;
+}
+
+
+int WvX509Mgr::geterr() const
+{
+    int ret = WvErrorBase::geterr();
+    if (ret == 0 && !cert || !rsa)
+    {
+        // unless there's a regular error set, we'll be returning a custom
+        // string: see errstr()
+        ret = -1;
+    }
+    return ret;
 }

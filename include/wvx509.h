@@ -9,6 +9,7 @@
 
 #include "wvrsa.h"
 #include "wvlog.h"
+#include "wverror.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
@@ -236,14 +237,11 @@ public:
      */
     WvString get_altsubject();
 
-    /**
-     * Is this certificate Object valid, and in a non-error state
-     */
-    bool isok() const
-        { return cert && rsa && !errstring && errnum == 0; }
+    virtual bool isok() const;
+    
+    virtual WvString errstr() const;
 
-    /// Accessor for the error string if !isok()
-    WvString errstr() const;
+    virtual int geterr() const;
 
 private:
     WvLog debug;
