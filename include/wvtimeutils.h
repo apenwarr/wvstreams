@@ -10,7 +10,7 @@
 
 #include <sys/time.h>
 
-time_t msecdiff(struct timeval &a, struct timeval &b);
+time_t msecdiff(const struct timeval &a, const struct timeval &b);
 struct timeval wvtime();
 
 #endif // __WVTIMEUTILS_H

@@ -6,7 +6,7 @@
  */
 #include "wvtimeutils.h"
 
-time_t msecdiff(struct timeval &a, struct timeval &b)
+time_t msecdiff(const struct timeval &a, const struct timeval &b)
 {
     time_t secdiff, usecdiff;
     
