@@ -158,6 +158,30 @@ void UniConf::del_setbool(bool *flag,
 }
 
 
+void UniConf::hold_delta()
+{
+    xroot->hold_delta();
+}
+
+
+void UniConf::unhold_delta()
+{
+    xroot->unhold_delta();
+}
+
+
+void UniConf::clear_delta()
+{
+    xroot->clear_delta();
+}
+
+
+void UniConf::flush_delta()
+{
+    xroot->flush_delta();
+}
+
+
 void UniConf::dump(WvStream &stream, bool everything) const
 {
     UniConf::RecursiveIter it(*this);

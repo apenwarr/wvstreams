@@ -93,6 +93,9 @@ public:
     {
     }
 
+    
+    /***** Handle Manipulation API *****/
+
     /** Returns a handle to the root of the tree. */
     UniConf root() const
         { return UniConf(xroot, UniConfKey::EMPTY); }
@@ -144,6 +147,15 @@ public:
         return *this;
     }
 
+    
+    /***** Key Retrieval API *****/
+    
+    /**
+     * Fetches the string value for this key from the registry.  If the
+     * key is not found, returns 'defvalue' instead.
+     */
+    WvString get(WvStringParm defvalue = WvString::null) const;
+
     /**
      * Without fetching its value, returns true if this key exists.
      * 
@@ -153,20 +165,6 @@ public:
     bool exists() const;
 
     /**
-     * Returns true if this key has children.
-     * 
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the keys.
-     */
-    bool haschildren() const;
-
-    /**
-     * Fetches the string value for this key from the registry.  If the
-     * key is not found, returns 'defvalue' instead.
-     */
-    WvString get(WvStringParm defvalue = WvString::null) const;
-    
-    /**
      * Fetches the integer value for this key from the registry.  If the
      * key is not found, returns 'defvalue' instead.  (This is also used to
      * fetch booleans - 'true', 'yes', 'on' and 'enabled' are recognized as
@@ -174,6 +172,9 @@ public:
      * key is false by default.)
      */
     int getint(int defvalue = 0) const;
+
+
+    /***** Key Storage API *****/
 
     /**
      * Stores a string value for this key into the registry.  If the value
@@ -208,25 +209,25 @@ public:
      */
     bool zap() const;
 
+    
+    /***** Key Persistence API *****/
+
     /**
      * Refreshes information about this key recursively.
      * May discard uncommitted data.  'depth' is the recursion depth.
      * Returns true on success.
-     * 
-     * @see UniConfDepth::Type
      */
-    bool refresh(UniConfDepth::Type depth =
-        UniConfDepth::INFINITE) const;
+    bool refresh(UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
     
     /**
      * Commits information about this key recursively.
      * 'depth' is the recursion depth.  Returns true on success.
-     * 
-     * @see UniConfDepth::Type
      */
-    bool commit(UniConfDepth::Type depth =
-        UniConfDepth::INFINITE) const;
+    bool commit(UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
 
+    
+    /***** Generator Mounting API *****/
+    
     /**
      * Mounts a generator at this key using a moniker.
      * 
@@ -267,6 +268,9 @@ public:
      */
     UniConfGen *whichmount(UniConfKey *mountpoint = NULL) const;
 
+    
+    /***** Notification API *****/
+
     /**
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
@@ -294,10 +298,53 @@ public:
         UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
     
     /**
+     * Pauses notifications until matched with a call to unhold_delta().
+     * 
+     * While paused, notification events are placed into a pending list.
+     * Redundant notifications may be discarded.
+     *
+     * Use this to safeguard non-reentrant code.
+     */
+    void hold_delta();
+
+    /**
+     * Resumes notifications when each hold_delta() has been matched.
+     * 
+     * On resumption, dispatches all pending notifications except
+     * those that were destined to watches that were removed.
+     * 
+     * Use this to safeguard non-reentrant code.
+     */
+    void unhold_delta();
+    
+    /**
+     * Clears the list of pending notifications without sending them.
+     * Does not affect the hold nesting count.
+     */
+    void clear_delta();
+
+    /**
+     * Flushes the list of pending notifications by sending them.
+     * Does not affect the hold nesting count.
+     */
+    void flush_delta();
+    
+    
+    /***** Key Enumeration API *****/
+    
+    /**
      * Prints the entire contents of this subtree to a stream.
      * If 'everything' is true, also prints empty values.
      */
     void dump(WvStream &stream, bool everything = false) const;
+    
+    /**
+     * Returns true if this key has children.
+     * 
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the keys.
+     */
+    bool haschildren() const;
     
     /*** Iterators (see comments in class declaration) ***/
 

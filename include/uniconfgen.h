@@ -78,7 +78,7 @@ public:
     void dispatch_delta(const UniConfKey &key);
 
     /**
-     * Pauses notifications until matched with a call to unhold().
+     * Pauses notifications until matched with a call to unhold_delta().
      * 
      * While paused, notification events are placed into a pending list.
      * Redundant notifications may be discarded.
@@ -88,10 +88,10 @@ public:
     void hold_delta();
 
     /**
-     * Resumes notifications when each hold() has been matched.
+     * Resumes notifications when each hold_delta() has been matched.
      * 
      * On resumption, dispatches all pending notifications except
-     * those that were destined to watchers that were removed.
+     * those that were destined to watches that were removed.
      * 
      * Use this to safeguard non-reentrant code.
      */
