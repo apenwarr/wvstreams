@@ -1,7 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
-
-AC_REVISION($Id: configure.ac,v 1.49 2003/12/16 21:52:08 pphaneuf Exp $)
+AC_INIT(WvStreams, 3.80, wvstreams-dev@nit.ca, wvstreams)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
