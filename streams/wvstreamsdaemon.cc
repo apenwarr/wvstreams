@@ -56,12 +56,12 @@ void WvStreamsDaemon::add_stream(IWvStream *istream, const char *id)
     WvIStreamList::globallist.append(istream, false);
 }
 
-void WvStreamsDaemon::add_reset_stream(IWvStream *istream, const char *id)
+void WvStreamsDaemon::add_restart_stream(IWvStream *istream, const char *id)
 {
     add_stream(istream);
     
     istream->setclosecallback(
-            WvStreamCallback(this, &WvStreamsDaemon::reset_close_cb),
+            WvStreamCallback(this, &WvStreamsDaemon::restart_close_cb),
                     (void *)id);
 }
 
@@ -80,7 +80,7 @@ void WvStreamsDaemon::close_existing_connections_on_restart()
         WvDaemonCallback(this, &WvStreamsDaemon::stop_full_close_cb);
 }
 
-void WvStreamsDaemon::reset_close_cb(WvStream &, void *ud)
+void WvStreamsDaemon::restart_close_cb(WvStream &, void *ud)
 {
     if (should_run())
     {
