@@ -73,6 +73,9 @@ bool WvStreamList::pre_select(SelectInfo &si)
 	if (s.isok() && s.pre_select(si))
 	    sure_thing.append(&s, false, i.link->id);
     }
+
+    if (alarmleft >= 0 && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
+	si.msec_timeout = alarmleft;
     
     si.wants = oldwant;
     return one_dead || !sure_thing.isempty();
