@@ -188,18 +188,36 @@ void strcoll_split(StringCollection &coll, WvStringParm _s,
 {
     WvString s(_s);
     char *sptr = s.edit(), *eptr, oldc;
+    
+    // Simple if statement to catch (and add) empty (but not NULL) strings.
+    if (sptr && !*sptr )
+    {	
+	WvString *emptyString = new WvString("");
+	coll.add(emptyString, true);
+    }
+    
+    // Needed to catch delimeters at the beginning of the string.
+    bool firstrun = true;
 
     while (sptr && *sptr)
     {
 	--limit;
-	if (limit)
-	{
-	    sptr += strspn(sptr, splitchars);
-	    eptr = sptr + strcspn(sptr, splitchars);
+
+	if (firstrun)
+	{   
+	    firstrun = false;
 	}
 	else
 	{
 	    sptr += strspn(sptr, splitchars);
+	}
+
+	if (limit)
+	{
+	    eptr = sptr + strcspn(sptr, splitchars);
+	}
+	else
+	{
 	    eptr = sptr + strlen(sptr);
 	}
 	
@@ -233,6 +251,8 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
 {
     WvString s(_s);
     char *cur = s.edit();
+
+    if (!cur) return;
 
     for (;;)
     {
