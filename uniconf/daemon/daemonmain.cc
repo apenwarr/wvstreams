@@ -79,6 +79,7 @@ int main(int argc, char **argv)
     daem = new UniConfDaemon(level);
     WvStringList::Iter i(strings);
     i.rewind();
+
     while (i.next())
     {
         WvString mode = i();

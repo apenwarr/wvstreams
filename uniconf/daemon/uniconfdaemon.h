@@ -59,8 +59,10 @@ private:
     
     WvStreamList l;
     WvStringList modifiedkeys;
+    void dolog(WvLog::LogLevel level, WvStringParm func, WvStringParm msg) {log(level, "UniConfDaemon::%s -> %s.\n",func, msg); }
 
     static const WvString DEFAULT_CONFIG_FILE;
+    static const WvString ENTERING, LEAVING;
 };
 
 #endif // __UNICONFDAEMON_H

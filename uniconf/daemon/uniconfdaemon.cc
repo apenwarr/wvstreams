@@ -11,6 +11,8 @@
 #include <signal.h>
 
 const WvString UniConfDaemon::DEFAULT_CONFIG_FILE = "uniconf.ini";
+const WvString UniConfDaemon::ENTERING = "Entering";
+const WvString UniConfDaemon::LEAVING = "Leaving";
 // Daemon
 
 UniConfDaemon::UniConfDaemon(WvLog::LogLevel level) 
@@ -31,18 +33,20 @@ UniConfDaemon::~UniConfDaemon()
 // where we want to mount the contents into the config tree.
 UniConf *UniConfDaemon::domount(WvString mode, WvString mountfrom, WvString mp)
 {
+    dolog(WvLog::Debug1, "domount", ENTERING);
     UniConf *mounted = &mainconf[mp];
     if (mode == "ini")
     {
-        log(WvLog::Debug2, "Attempting to mount the %s file %s to point:  %s->\n",
-                mode, mountfrom, mp);
+        dolog(WvLog::Debug3, "domount", WvString("Attempting to mount the %s file %s to point:  %s->\n",
+                mode, mountfrom, mp));
         new UniConfIniFile(mounted, mountfrom, true);
         if (!mounted->checkgen())
         {
-            log(WvLog::Error, "IniFile generator was not successfully created for %s with file %s->\n",
-                    mp, mountfrom);
+            dolog(WvLog::Error, "domount", WvString("IniFile generator was not successfully created for %s with file %s->\n",
+                    mp, mountfrom));
             mounted->unmount();
         }
+        dolog(WvLog::Debug1, "domount", LEAVING);
         return mounted;
     }
     else
@@ -53,8 +57,8 @@ void UniConfDaemon::errorcheck(WvStream *s, WvString type)
 {
     if (!s || !s->isok())
     {
-        log(WvLog::Error, "ERROR: Stream type %s could not be created.\n", type);
-        log(WvLog::Error, "REASON: %s\n", s->errstr());
+        dolog(WvLog::Error, "errorcheck", WvString("ERROR: Stream type %s could not be created.\n", type));
+        dolog(WvLog::Error, "errorcheck", WvString("REASON: %s\n", s->errstr()));
         exit(2);
     }
 }
@@ -66,36 +70,53 @@ void UniConfDaemon::errorcheck(WvStream *s, WvString type)
 
 WvString UniConfDaemon::create_return_string(WvString key)
 {
+    dolog(WvLog::Debug1, "create_return_string", ENTERING);
+    dolog(WvLog::Debug3, "create_return_string", WvString("Creating return string for key %s.\n",key));
+
     WvString result("%s %s", UniConfConn::UNICONF_RETURN, wvtcl_escape(key));
     if (!!mainconf.get(key))
         result.append(" %s", wvtcl_escape(mainconf.get(key)));
     result.append("\n");
 
+    dolog(WvLog::Debug1, "create_return_string", LEAVING);
     return result;
 }
 
 
 void UniConfDaemon::dook(const WvString cmd, const WvString key, UniConfDaemonConn *s)
 {
+    dolog(WvLog::Debug1, "dook", ENTERING);
+    dolog(WvLog::Debug2, "dook", WvString("Connection:  %s", *s->src()));
     if (s->isok())
-        s->print("%s %s %s\n", UniConfConn::UNICONF_OK, cmd, key); 
+    {
+        WvString okmsg("%s %s %s\n", UniConfConn::UNICONF_OK, cmd, key);
+        dolog(WvLog::Debug3, "dook", WvString("MSG TO %s:  %s\n", *s->src(),okmsg));
+        s->print(okmsg);
+    }
+    dolog(WvLog::Debug1, "dook", LEAVING);
 }
 
 void UniConfDaemon::doget(WvString key, UniConfDaemonConn *s)
 {
+    dolog(WvLog::Debug1, "doget", ENTERING);
+    dolog(WvLog::Debug2, "doget", WvString("Connection:  %s", *s->src()));
     dook(UniConfConn::UNICONF_GET, key, s);
 
     if (s->isok())
     {
+        dolog(WvLog::Debug3, "doget", WvString("Sending:%s TO:%s.", create_return_string(key), *s->src()));
         s->print(create_return_string(key));
 
         // Ensure no duplication of events.
         update_callbacks(key, s);
     }
+    dolog(WvLog::Debug1, "doget", LEAVING);
 }
 
 void UniConfDaemon::dosubtree(WvString key, UniConfDaemonConn *s)
 {
+    dolog(WvLog::Debug1, "dosubtree", ENTERING);
+    dolog(WvLog::Debug2, "dosubtree", WvString("Connection:  %s", *s->src()));
     UniConf *nerf = &mainconf[key];
     WvString send("%s %s ", UniConfConn::UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
     update_callbacks(key, s, false, 1);
@@ -112,14 +133,20 @@ void UniConfDaemon::dosubtree(WvString key, UniConfDaemonConn *s)
             
        }
     }
+    dolog(WvLog::Debug3, "dosubtree", WvString("Sending:%s TO:%s.", send,  *s->src()));
    
     send.append("\n");
     if (s->isok())
+    {
         s->print(send);
+    }
+    dolog(WvLog::Debug1, "dosubtree", LEAVING);
 }
 
 void UniConfDaemon::dorecursivesubtree(WvString key, UniConfDaemonConn *s)
 {
+    dolog(WvLog::Debug1, "dorecursivesubtree", ENTERING);
+    dolog(WvLog::Debug2, "dorecursivesubtree", WvString("Connection:  %s", *s->src()));
     UniConf *nerf = &mainconf[key];
     WvString send("%s %s ", UniConfConn::UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
     
@@ -137,16 +164,23 @@ void UniConfDaemon::dorecursivesubtree(WvString key, UniConfDaemonConn *s)
     }
     send.append("\n");
     if (s->isok())
+    {
+        dolog(WvLog::Debug3, "dorecursivesubtree", WvString("Sending:%s TO:%s",send, *s->src()));
         s->print(send);
+    }
+    dolog(WvLog::Debug1, "dorecursivesubtree", LEAVING);
 }
 
 void UniConfDaemon::doset(WvString key, WvConstStringBuffer &fromline, UniConfDaemonConn *s)
 {
+    dolog(WvLog::Debug1, "doset", ENTERING);
+    dolog(WvLog::Debug2, "doset", WvString("Connection:  %s", *s->src()));
     WvString newvalue = wvtcl_getword(fromline);
     mainconf[key] = wvtcl_unescape(newvalue);
     keymodified = true;
     modifiedkeys.append(new WvString(key), true);
     dook(UniConfConn::UNICONF_SET, key, s);
+    dolog(WvLog::Debug1, "doset", LEAVING);
 }
 
 /*
@@ -158,20 +192,27 @@ void UniConfDaemon::doset(WvString key, WvConstStringBuffer &fromline, UniConfDa
  */
 void UniConfDaemon::myvaluechanged(void *userdata, UniConf &conf)
 {
+    dolog(WvLog::Debug1, "myvaluechanged", ENTERING);
     // All the following is irrelevant if we have a null pointer, so check
     // it first.
     if (!userdata)
         return;
     
     UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
+    dolog(WvLog::Debug2, "myvaluechanged", WvString("Connection:  %s", *s->src()));
     WvString keyname(conf.gen_full_key()); 
 
     if (s->isok() && conf.notify)
+    {
+        dolog(WvLog::Debug3, "myvaluechanged", WvString("SENDING: %s.  TO:%s", create_return_string(keyname), *s->src()));
         s->print(create_return_string(keyname));
+    }
+    dolog(WvLog::Debug1, "myvaluechanged", LEAVING);
 }
 
 void UniConfDaemon::me_or_imm_child_changed(void *userdata, UniConf &conf)
 {
+    dolog(WvLog::Debug1, "me_or_imm_child_changed", ENTERING);
     // All the following is irrelevant if we have a null pointer, so check
     // it first.
     if (!userdata)
@@ -224,14 +265,17 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata, UniConf &conf)
             response.append(create_return_string(i()));
             
     }
-    if (s && s->isok())
+    if (s->isok())
     {
+        dolog(WvLog::Debug3, "me_or_imm_child_changed", WvString("SENDING:%s TO:%s.",response,*s->src()));
         s->print(response);
     }
+    dolog(WvLog::Debug1, "me_or_imm_child_changed", LEAVING);
 }
 
 void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
 {
+    dolog(WvLog::Debug1, "me_or_any_child_changed", ENTERING);
     // All the following is irrelevant if we have a null pointer, so check
     // it first.
     if (!userdata)
@@ -275,17 +319,24 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
     }
 
     if (s->isok())
+    {
+        dolog(WvLog::Debug3, "me_or_any_child_changed", WvString("SENDING:%s TO:%s.",response,*s->src()));
         s->print(response);
+    }
+    dolog(WvLog::Debug1, "me_or_any_child_changed", LEAVING);
 }
 
 void UniConfDaemon::update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot, int depth)
 {
+    dolog(WvLog::Debug1, "update_callbacks",ENTERING);
     del_callback(key, s, depth);
     add_callback(key, s, one_shot, depth);
+    dolog(WvLog::Debug1, "update_callbacks",LEAVING); 
 }
 
 void UniConfDaemon::del_callback(WvString key, UniConfDaemonConn *s, int depth)
 {
+    dolog(WvLog::Debug1, "del_callback", ENTERING);
     switch (depth)
     {
         case 0:
@@ -301,12 +352,14 @@ void UniConfDaemon::del_callback(WvString key, UniConfDaemonConn *s, int depth)
                     UniConfDaemon::me_or_any_child_changed), s, key);
             break;
         default:
-            log(WvLog::Debug1, "ACK!  Trying to delete an unknown level of callbacks.\n");
+            dolog(WvLog::Warning, "del_callback", "Attempting to delete call back with unsupported depth");
     }
+    dolog(WvLog::Debug1, "del_callback", LEAVING);
 }
 
 void UniConfDaemon::add_callback(WvString key, UniConfDaemonConn *s, bool one_shot, int depth)
 {
+    dolog(WvLog::Debug1, "add_callback",ENTERING);
     switch (depth)
     {
         case 0: // Myself only
@@ -322,16 +375,19 @@ void UniConfDaemon::add_callback(WvString key, UniConfDaemonConn *s, bool one_sh
                 UniConfDaemon::me_or_any_child_changed), s, key, one_shot);
             break;
         default:
-            log(WvLog::Debug1, "ACK!  Undefined level for callback!\n");
+            dolog(WvLog::Warning, "add_callback", "Attempting to add call back with unsupported depth");
     }
     // Let the connection track what keys it knows about.
     s->appendkey(new WvString(key));
+    dolog(WvLog::Debug1, "add_callback", LEAVING);
 }
 
 void UniConfDaemon::registerforchange(WvString key, UniConfDaemonConn *s)
 {
+    dolog(WvLog::Debug1, "registerforchange", ENTERING);
     dook(UniConfConn::UNICONF_REGISTER, key, s);
     update_callbacks(key, s);
+    dolog(WvLog::Debug1, "registerforchange", LEAVING);
 }
 
 /*
@@ -341,8 +397,13 @@ void UniConfDaemon::registerforchange(WvString key, UniConfDaemonConn *s)
 // Look after all of the handling of incoming connections
 void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
 {
+    dolog(WvLog::Debug1, "connection_callback", ENTERING);
+
     UniConfDaemonConn *s = (UniConfDaemonConn *) &stream;
-    WvString line, cmd;
+    
+    dolog(WvLog::Debug2, "connection_callback", WvString("Callback for: %s", *s->src()));
+    
+    WvString line, cmd, known_cmds("help, get, subt, rsub, quit");
    
     s->fillbuffer();
 
@@ -353,14 +414,17 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
         while (!(cmd = wvtcl_getword(fromline)).isnull())
         {
             // check the command
+            WvString logstring("RECEIVED:  FROM:%s.  CMD:%s", *s->src(), cmd);
 	    if (cmd == UniConfConn::UNICONF_HELP)
 	    {
+                dolog(WvLog::Debug3, "connection_callback", logstring);
                 if (s->isok())
-	    	    s->print("OK I know how to: help, get, subt, quit\n");
+	    	    s->print("OK I know how to: %s\n", known_cmds);
 		return;	    
 	    }
             if (cmd == UniConfConn::UNICONF_QUIT)
             {
+                dolog(WvLog::Debug3, "connection_callback", logstring);
                 dook(cmd, "<null>", s);
                 s->close();
                 return;
@@ -368,8 +432,17 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
             WvString key = wvtcl_getword(fromline);
 
             if (key.isnull())
+            {
+                dolog(WvLog::Warning, "connection_callback", WvString("NO KEY SENT FROM %s.\n", *s->src()));
+                if (s->isok())
+                    s->print("%s %s {NO KEY}.\n", UniConfConn::UNICONF_FAIL, cmd);
                 break;
+            }
+            
+            logstring.append(".  KEY:%s", key);
 
+            dolog(WvLog::Debug3, "connection_callback", logstring);
+            
             if (cmd == UniConfConn::UNICONF_GET)
             {
                 doget(key, s);
@@ -390,28 +463,44 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
             {
                 registerforchange(key, s);
             }
+            else
+            {
+                dolog(WvLog::Warning, "connection_callback", WvString("Received Unknown Command:  %s", cmd));
+                if (s->isok())
+                    s->print("FAIL %s {NO KNOWN COMMAND}.  I know:  %s.\n",cmd, known_cmds);
+            }
         }
     }
+    dolog(WvLog::Debug1, "connection_callback", LEAVING);
 }
 
 void UniConfDaemon::accept_connection(WvStream *stream)
 {
+    WvStringParm myname("accept_connection");
+    dolog(WvLog::Debug1, myname, ENTERING);
     if (stream)
     {
         UniConfDaemonConn *s = new UniConfDaemonConn(stream, this);
+        dolog(WvLog::Debug2, myname, WvString("Received connection from: %s", *s->src()) );
         s->setcallback(wvcallback(WvStreamCallback, *this, UniConfDaemon::connection_callback), NULL);
         l.append(s, true);
     }
     else
-        log(WvLog::Debug2, "Incoming connection was null.\n");
+        dolog(WvLog::Warning, myname, "Incoming connection was null");
+
+    dolog(WvLog::Debug1, myname, LEAVING);
 }
 
 // Daemon looks after running
 void UniConfDaemon::run()
 {
+    WvStringParm myname("run");
+
+    dolog(WvLog::Debug1, myname, ENTERING);
     domount("ini", DEFAULT_CONFIG_FILE, "/");
 
     // Make sure that everything was cleaned up nicely before.
+    dolog(WvLog::Debug3,myname,"Housecleaning");
     system("mkdir -p /tmp/uniconf");
     system("rm -fr /tmp/uniconf/uniconfsocket");
     
@@ -433,12 +522,12 @@ void UniConfDaemon::run()
     {
         if (list->select(0))
         {
-            log("Incoming Connection on unix domain listener.\n");
+            dolog(WvLog::Debug2, myname, "Incoming Connection on unix domain listener.");
             accept_connection(list->accept());
         }
         if (tlist->select(0))
         {
-            log("Incoming connection on TCP listener.\n");
+            dolog(WvLog::Debug2, myname, "Incoming connection on TCP listener.");
             accept_connection(tlist->accept());
         }
         
@@ -458,6 +547,7 @@ void UniConfDaemon::run()
     tlist->close();
     
     // Save any changes
-    log("Saving changes.\n");
+    dolog(WvLog::Info, myname, "Saving changes");
     mainconf.save();
+    dolog(WvLog::Debug1, myname, LEAVING);
 }
