@@ -480,6 +480,37 @@ WvIPNet::WvIPNet(const WvIPNet &_net)
 }
 
 
+WvIPNet::WvIPNet(const char string[]) : WvIPAddr(string)
+{
+    char *maskptr;
+    int bits;
+    __u32 imask;
+
+    addrtype = wvipnet;
+
+    maskptr = strchr(string, '/');
+    if (!maskptr)
+    {
+	mask = WvIPAddr("255.255.255.255");
+	return;
+    }
+    
+    maskptr++;
+    
+    if (strchr(maskptr, '.'))
+	mask = WvIPAddr(maskptr);
+    else
+    {
+	bits = atoi(maskptr);
+	if (bits > 0)
+	    imask = htonl(~(((__u32)1 << (32-bits)) - 1)); // see below
+	else
+	    imask = 0;
+	mask = WvIPAddr((unsigned char *)&imask);
+    }
+}
+
+
 WvIPNet::WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask)
 	: WvIPAddr(base), mask(_mask)
 {
@@ -502,7 +533,7 @@ WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
 
 WvString WvIPNet::printable() const
 {
-    return WvString("%s/%s", WvIPAddr::printable(), mask);
+    return WvString("%s/%s", WvIPAddr::printable(), bits());
 }
 
 

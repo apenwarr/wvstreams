@@ -24,13 +24,15 @@ int main()
     if (rr)
 	l("\n%s through:\n  %s\n", b, *r.find(b));
     
+    l("Check point.\n");
+    
     WvIPRouteList r2;
     
-    r2.append(new WvIPRoute("eth1", WvIPNet("24.112.104.0", "255.255.252.0"),
+    r2.append(new WvIPRoute("eth1", WvIPNet("24.112.104.0/255.255.252.0"),
+			    "0", 5), true);
+    r2.append(new WvIPRoute("eth0", WvIPNet("192.168.42.4/24"),
 			    "0", 0), true);
-    r2.append(new WvIPRoute("eth0", WvIPNet("192.168.42.4", "255.255.255.0"),
-			    "0", 0), true);
-    r2.append(new WvIPRoute("eth1", WvIPNet("0.0.0.0", 0),
+    r2.append(new WvIPRoute("eth1", WvIPNet("0.0.0.0/0"),
 			    "24.112.104.1", 1), true);
     r2.set_kernel();
 }
