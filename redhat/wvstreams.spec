@@ -85,6 +85,14 @@ Requires: libwvstreams4.0-base, libwvstreams4.0-extras, libogg, libvorbis
 This library contains the WvOggEncoder and WvOggDecoder to enable quick and
 painless creation of audio streams using the OggVorbis CODEC
 
+%package -n libwvstreams4.0-telephony
+Summary: C++ network libraries for rapid application development.
+Group: System Environment/Libraries
+Requires: libwvstreams4.0-base
+
+%description -n libwvstreams4.0-telephony
+This library provides adaptive echo cancellation for 16-bit PCM samples.
+
 %package -n libuniconf4.0
 Summary: C++ network libraries for rapid application development.
 Group: System Environment/Libraries
@@ -158,8 +166,8 @@ install -d 644 $RPM_BUILD_ROOT/etc/rc.d/init.d/
 install -m 755 redhat/uniconfd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/uniconfd
 chmod 755 $RPM_BUILD_ROOT/usr/lib/*.so.*
 install -d 644 $RPM_BUILD_ROOT/usr/share/man/man8
-gzip $RPM_BUILD_ROOT/usr/share/man/uniconfd.8
-mv $RPM_BUILD_ROOT/usr/share/man/uniconfd.8.gz $RPM_BUILD_ROOT/usr/share/man/man8
+gzip $RPM_BUILD_ROOT/usr/share/man/man8/uniconfd.8
+#mv $RPM_BUILD_ROOT/usr/share/man/man8/uniconfd.8.gz $RPM_BUILD_ROOT/usr/share/man/man8
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -199,6 +207,11 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc COPYING.LIB
 /usr/lib/libuniconf.so.4.0
+
+%files -n libwvstreams4.0-telephony
+%defattr(-,root,root,-)
+%doc COPYING.LIB README
+/usr/lib/libwvtelephony.so.4.0
 
 %files -n libwvstreams4.0-devel
 %defattr(-,root,root)
