@@ -13,20 +13,20 @@ struct z_stream_s;
 
 class WvGzip : public WvEncoder
 {
-    struct z_stream_s *zstr;
-    WvMiniBuffer tmpbuf;
-    
 public:
-    bool okay;
-    
-    enum GzipMode { Compress, Decompress } mode;
+    enum GzipMode { Compress, Decompress };
     
     WvGzip(GzipMode _mode);
     virtual ~WvGzip();
     
     virtual bool isok() const;
     virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
-};
 
+private:
+    bool okay;
+    struct z_stream_s *zstr;
+    WvMiniBuffer tmpbuf;
+    GzipMode mode;
+};
 
 #endif // __WVGZIP_H

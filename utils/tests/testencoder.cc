@@ -30,7 +30,7 @@ WvXOR::WvXOR(const void *_key, size_t _keylen)
 
 WvXOR::~WvXOR()
 {
-    delete key;
+    delete[] key;
 }
 
 

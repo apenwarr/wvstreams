@@ -11,19 +11,16 @@
 
 #define ZBUFSIZE 10240
 
-WvGzip::WvGzip(GzipMode _mode) : tmpbuf(ZBUFSIZE)
+WvGzip::WvGzip(GzipMode _mode) :
+    okay(true), tmpbuf(ZBUFSIZE), mode(_mode)
 {
-    int retval;
-    
-    okay = true;
-    mode = _mode;
     zstr = new z_stream;
-    
     memset(zstr, 0, sizeof(*zstr));
     zstr->zalloc = Z_NULL;
     zstr->zfree = Z_NULL;
     zstr->opaque = NULL;
     
+    int retval;
     if (mode == Compress)
 	retval = deflateInit(zstr, Z_DEFAULT_COMPRESSION);
     else
@@ -42,7 +39,11 @@ WvGzip::WvGzip(GzipMode _mode) : tmpbuf(ZBUFSIZE)
 
 WvGzip::~WvGzip()
 {
-    deflateEnd(zstr);
+    if (mode == Compress)
+        deflateEnd(zstr);
+    else
+        inflateEnd(zstr);
+
     delete zstr;
 }
 
@@ -55,9 +56,20 @@ bool WvGzip::isok() const
 
 bool WvGzip::encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
+    if (! okay) return false;
     assert(zstr->avail_in == 0);
-    zstr->avail_in = in.used();
-    zstr->next_in = in.get(in.used());
+
+    if (in.used() == 0)
+    {
+        if (! flush) return true; // nothing to do!
+        zstr->avail_in = 0;
+        zstr->next_in = (Bytef*)""; // so it's not NULL
+    }
+    else
+    {
+        zstr->avail_in = in.used();
+        zstr->next_in = in.get(in.used());
+    }    
 
     int retval;
     do
@@ -81,7 +93,8 @@ bool WvGzip::encode(WvBuffer &in, WvBuffer &out, bool flush)
 	out.put(tmpbuf.get(tmpused), tmpused);
     } while (retval == Z_OK && zstr->avail_out == 0);
 
-    if (retval != Z_OK && retval != Z_BUF_ERROR)
+    if (retval != Z_OK && retval != Z_STREAM_END &&
+        retval != Z_BUF_ERROR)
         okay = false;
     return okay;
 }
