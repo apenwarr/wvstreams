@@ -5,7 +5,9 @@
 
 WVTEST_MAIN("wvsystem")
 {
-    WvString fn("test.tmp"), fn2("test2.tmp"), fn3("test3.tmp");
+    WvString fn("test-%s.tmp", getpid()); 
+    WvString fn2("test2-%s.tmp", getpid()); 
+    WvString fn3("test3-%s.tmp", getpid());
     WvString teststring("test \t string");
     
     ::unlink(fn);
