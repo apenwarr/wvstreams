@@ -159,7 +159,7 @@ public:
     bool exists(const K &key)
         { return WvBdbHashBase::exists(datumize<K>(key)); }
 
-    int count()
+    size_t count()
     {
 	int res = 0;
 	Iter i(*this);
