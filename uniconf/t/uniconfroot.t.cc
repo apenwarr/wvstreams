@@ -111,6 +111,28 @@ WVTEST_MAIN("iterators")
     WVPASSEQ(i->fullkey(sub).printable(), "b/1");
 }
 
+WVTEST_MAIN("nested iterators")
+{
+    UniConfRoot root("temp:");
+    UniConf cfg(root);
+    UniConf::Iter i1(cfg);
+    cfg["foo"].setmeint(1);
+    cfg["/foo/bar"].setmeint(1);
+    cfg["/foo/car/bar"].setmeint(1);
+    WVPASS(cfg["foo"].getmeint());
+    
+    for (i1.rewind(); i1.next();)
+    {
+        UniConf::RecursiveIter i2(cfg);
+        for (i2.rewind(); i2.next();)
+        {
+            i2->getme();
+        }
+    }
+    WVPASS(cfg["foo"].getmeint());
+    WVPASS(cfg["/foo/bar"].getmeint());
+}
+
 WVTEST_MAIN("mounting with paths prefixed by /")
 {
     UniConfRoot root("temp:");
