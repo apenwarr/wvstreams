@@ -14,11 +14,7 @@
 
 static UniConfGen *creator(WvStringParm s, IObject *, void *)
 {
-    WvStringList params;
-    params.split(s, ":");
-    WvString *dir = params.first();
-    WvString *rec = params.last();
-    return new UniIniTreeGen(*dir, (*rec == "true" ? true : false));
+    return new UniIniTreeGen(s);
 }
 
 static WvMoniker<UniConfGen> reg("initree", creator);
@@ -28,8 +24,8 @@ const WvString UniIniTreeGen::moniker = "ini";
  * Creates a generator which can load/modify/save a .ini file.
  * "filename" is the local path of the .ini file
  */
-UniIniTreeGen::UniIniTreeGen(WvStringParm directory, bool recursive) :
-    UniFileTreeGen(directory, moniker, recursive)
+UniIniTreeGen::UniIniTreeGen(WvStringParm directory) :
+    UniConfFileTreeGen(directory, moniker)
 {
 }
 

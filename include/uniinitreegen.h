@@ -21,7 +21,7 @@
  * directory to search.
  * 
  */
-class UniIniTreeGen : public UniFileTreeGen
+class UniIniTreeGen : public UniConfFileTreeGen
 {
     static const WvString moniker;
 public:
@@ -29,7 +29,7 @@ public:
      * Creates a generator which can load/modify/save a .ini file.
      * "filename" is the local path of the .ini file
      */
-    UniIniTreeGen(WvStringParm directory, bool recursive);
+    UniIniTreeGen(WvStringParm directory);
 
     virtual ~UniIniTreeGen();
     

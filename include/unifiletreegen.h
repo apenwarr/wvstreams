@@ -10,35 +10,51 @@
 #include "uniconfgen.h"
 #include "unitempgen.h"
 #include "wvlog.h"
+#include "unimounttreegen.h"
 
-/**
- * Loads and saves configuration files of the specified type to and
- * from the specified directory.  If the generator is told to
- * do a recursive search of directories, all files in the specified
- * directory as well as ALL sub-directories will be stored.
- *  
- */
-class UniFileTreeGen : public UniTempGen
+class UniConfFileTreeGen : public UniMountTreeGen//UniConfGen
 {
-    WvString directory, moniker;
-    bool recursive;
-    WvLog log;
-    
 public:
-    /**
-     * Creates a generator which can load/modify/save configuration
-     * files from the specified directory using the specified
-     * moniker.
-     */
-    UniFileTreeGen(WvStringParm dir, WvStringParm genmoniker, bool rec)
-        : directory(dir), moniker(genmoniker), recursive(rec), log(directory)
-    { }
-
-    virtual ~UniFileTreeGen() { }
+    WvString basedir, moniker;
+    WvLog log;
+//    UniConfValueTree root;
     
+    UniConfFileTreeGen(WvStringParm _basedir, WvStringParm _moniker);
+    virtual ~UniConfFileTreeGen() { }
+
+    /***** Overridden members *****/
+
+    virtual bool refresh();
+/*    virtual WvString get(const UniConfKey &key);
+    virtual bool exists(const UniConfKey &key);
+    virtual bool haschildren(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm) { }
+
+    virtual Iter *iterator(const UniConfKey &key);
+*/
 private:
-    void map_directory();
+//    UniConfValueTree *maketree(const UniConfKey &key);
+    class NodeIter;
 };
 
+
+class UniConfFileTreeGen::NodeIter : public UniConfFileTreeGen::Iter
+{
+protected:
+    UniConfValueTree::Iter xit;
+
+public:
+    NodeIter(UniConfValueTree &node) : xit(node)
+        { }
+
+    /***** Overridden methods *****/
+
+    virtual void rewind()
+        { xit.rewind(); }
+    virtual bool next()
+        { return xit.next(); }
+    virtual UniConfKey key() const
+        { return xit->key(); }
+};
 
 #endif // __UNICONFFILETREEGEN_H
