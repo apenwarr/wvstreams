@@ -444,9 +444,9 @@ WvString getdirname(WvStringParm fullname)
 }
 
 
-WvString sizetoa(long blocks, int blocksize)
+WvString sizetoa(long long blocks, int blocksize)
 {
-    long long kbytes = (long long) blocks * (long long) blocksize / 1000;
+    long long kbytes = blocks * (long long) blocksize / 1000;
 
     if (kbytes >= 1000*1000*1000)
         return WvString("%s.%s TB",

@@ -161,7 +161,7 @@ WvString getdirname(WvStringParm fullname);
  * Given a number of blocks and a blocksize (default==1 byte), return a 
  * WvString containing a human-readable representation of blocks*blocksize.
  */
-WvString sizetoa(long blocks, int blocksize=1);
+WvString sizetoa(long long blocks, int blocksize=1);
 
 /**
  * Finds a string in an array and returns its index.
