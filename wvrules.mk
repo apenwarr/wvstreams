@@ -51,7 +51,7 @@ LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 #
 # Initial C compilation flags
 #
-CPPFLAGS += -DUNSTABLE    # for xplc
+CPPFLAGS += -DUNSTABLE   # for xplc
 CPPFLAGS += $(CPPOPTS)
 C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
 		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
@@ -181,10 +181,10 @@ ifeq ($(STATIC),1)
   LDFLAGS += -static
 endif
 
-INCFLAGS = $(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
-CPPFLAGS += $(INCFLAGS)
-CFLAGS += $(CPPFLAGS)
-CXXFLAGS += $(CPPFLAGS)
+INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
+CPPFLAGS+=$(INCFLAGS)
+CFLAGS+=$(CPPFLAGS)
+CXXFLAGS+=$(CPPFLAGS)
 
 ifeq ($(VERBOSE),1)
   COMPILE_MSG = 
@@ -210,8 +210,8 @@ define wvcc_base
 	$(DEPEND_MSG)$4 -M -E $< \
 		| sed -e 's|^[^:]*:|$1:|' >$(DEPFILE)
 endef
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
+wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
 
 define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \

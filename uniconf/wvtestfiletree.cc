@@ -7,7 +7,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "strutils.h"
-#include "wvacl.h"
 #include "wvbuf.h"
 #include "wvdigest.h"
 #include "wvdiriter.h"
@@ -131,7 +130,6 @@ bool WvTestFileTree::record_fileinfo(WvStringParm filename, bool set_md5)
     info["wvstats/rdev"].setint(st.st_rdev);
     info["wvstats/mtime"].setint(st.st_mtime);
     info["wvstats/ctime"].setint(st.st_ctime);
-    info["wvstats/acl"].set(get_acl_short_form(filename));
 
     if (S_ISDIR(st.st_mode))
 	info["wvstats/size"].setint(st.st_size);

@@ -85,7 +85,6 @@ AC_ARG_ENABLE(testgui,
               AC_HELP_STRING([--disable-testgui],
                              [GUI for unit tests]))
 
-AC_ARG_WITH(acl, AC_HELP_STRING([--with-acl], [ACL]))
 AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
@@ -140,16 +139,6 @@ fi
 # rtti
 if test "$enable_rtti" != "yes"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
-fi
-
-# acl
-if test "$with_acl" != "no"; then
-    AC_CHECK_HEADERS(acl.h,, [with_acl=no])
-    AC_CHECK_LIB(acl, acl_set_file,, [with_acl=no])
-    if test "$with_acl" != "no"; then
-        AC_DEFINE(WITH_ACL,,
-                  [Define to enable ACL support.])
-    fi
 fi
 
 # fam
@@ -327,10 +316,6 @@ fi
 # check for missing packages
 missing_required=
 missing_devel=
-if test "$with_acl" = "no"; then
-    AC_MSG_WARN([ACL is missing.])
-    missing_devel=yes
-fi
 if test "$with_fam" = "no"; then
     AC_MSG_WARN([FAM is missing.])
     missing_devel=yes
@@ -409,7 +394,6 @@ AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
 
-AC_SUBST(with_acl)
 AC_SUBST(with_bdb)
 AC_SUBST(with_fam)
 AC_SUBST(with_fftw)
