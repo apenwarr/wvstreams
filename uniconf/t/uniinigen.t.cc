@@ -22,8 +22,8 @@ static int childcount(UniConf cfg)
 	count++;
     return count;
 }
-//FIXME: this test leaks because mounting now sets / to ""
-/*
+
+
 WVTEST_MAIN("commit-without-refresh")
 {
 
@@ -32,7 +32,7 @@ WVTEST_MAIN("commit-without-refresh")
     cfg.refresh();
     cfg.commit();
     WVFAIL(cfg.haschildren());
-}*/
+}
 
 
 WVTEST_MAIN("parsing1")

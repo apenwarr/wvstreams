@@ -189,12 +189,12 @@ bool UniIniGen::refresh()
     {
         oldtree->compare(newtree, UniConfValueTree::Comparator
             (this, &UniIniGen::refreshcomparator), NULL);
-        delete oldtree;
     }
     else
     {
         delta(UniConfKey::EMPTY, WvString::null); // REMOVED
     }
+    delete oldtree;
     unhold_delta();
 
     WVRELEASE(newgen);
