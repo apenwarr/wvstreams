@@ -520,12 +520,16 @@ void WvStream::drain()
 bool WvStream::flush(time_t msec_timeout)
 {
     if (is_flushing) return false;
+    
+    TRACE("flush starts\n");
 
     is_flushing = true;
     want_to_flush = true;
     bool done = flush_internal(msec_timeout) // any other internal buffers
 	&& flush_outbuf(msec_timeout);  // our own outbuf
     is_flushing = false;
+
+    TRACE("flush stops (%d)\n", done);
     return done;
 }
 
@@ -538,6 +542,8 @@ bool WvStream::should_flush()
 
 bool WvStream::flush_outbuf(time_t msec_timeout)
 {
+    TRACE("flush_outbuf starts (isok=%d)\n", isok());
+    
     // flush outbuf
     while (isok() && outbuf.used())
     {
@@ -546,8 +552,16 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 	
 	size_t attempt = outbuf.used();
 	size_t real = uwrite(outbuf.get(attempt), attempt);
-	if (real < attempt)
+	
+	// WARNING: uwrite() may have messed up our outbuf!
+	// This probably only happens if uwrite() closed the stream because
+	// of an error, so we'll check isok().
+	if (isok() && real < attempt)
+	{
+	    TRACE("flush_outbuf: unget %d-%d\n", attempt, real);
+	    assert(outbuf.ungettable() >= attempt - real);
 	    outbuf.unget(attempt - real);
+	}
 	
 	// since post_select() can call us, and select() calls post_select(),
 	// we need to be careful not to call select() if we don't need to!
@@ -573,11 +587,15 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 
     if (!outbuf.used() && outbuf_delayed_flush)
         want_to_flush = false;
+    
+    TRACE("flush_outbuf: now isok=%d\n", isok());
 
     // if we can't flush the outbuf, at least empty it!
     if (!isok())
 	outbuf.zap();
 
+    TRACE("flush_outbuf stops\n");
+    
     return !outbuf.used();
 }
 

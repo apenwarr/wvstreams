@@ -70,12 +70,12 @@ CFLAGS=${COPTS}
 CXXFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 
-ifndef enable_debug
+ifeq ($(DEBUG),)
 CXXFLAGS+=-g
 CFLAGS+=-g
 endif
 
-ifdef DEBUG
+ifneq ($(DEBUG),)
 CXXFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
 CFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
 endif
