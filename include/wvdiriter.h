@@ -22,14 +22,17 @@
 
 #include "wvstring.h"
 #include "wvlinklist.h"
+#include "strutils.h"
 
 struct WvDirEnt : public stat
 /***************************/
 {
     // we already have everything from struct stat, but we also want the
     // fullname (dir/dir/file) and name (file), since they're useful
+    // and now we also get a string relative to the starting directory
     WvString        fullname;
     WvString        name;
+    WvString        relpath;
 };
 
 class WvDirIter
@@ -40,6 +43,7 @@ private:
     bool        go_up;
 
     WvDirEnt        info;
+    WvString        reldir;
 
     struct Dir {
         Dir( DIR * _d, WvString _dirname )

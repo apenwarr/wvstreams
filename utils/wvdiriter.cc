@@ -15,6 +15,7 @@ WvDirIter::WvDirIter( WvString dirname, bool _recurse )
 {
     recurse = _recurse;
     go_up   = false;
+    info.relpath = WvString("");
 
     DIR * d = opendir( dirname );
     if( d ) {
@@ -96,6 +97,7 @@ bool WvDirIter::next()
             if( recurse && S_ISDIR( info.st_mode ) ) {
                 DIR * d = opendir( info.fullname );
                 if( d ) {
+                    info.relpath = WvString("%s%s", info.relpath, info.name);
                     Dir * dd = new Dir( d, info.fullname );
                     dirs.prepend( dd, true );
                     dir.rewind();
@@ -107,6 +109,11 @@ bool WvDirIter::next()
             // notch.  if this is the top level, DON'T close it, so that
             // the user can ::rewind() again if he wants.
             if( dirs.count() > 1 ) {
+                if (dirs.count() == 2)
+                    info.relpath = WvString("");
+                else
+                    info.relpath = getdirname(info.relpath);
+
                 dir.unlink();
                 dir.rewind();
                 dir.next();
