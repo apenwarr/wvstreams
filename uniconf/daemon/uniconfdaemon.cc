@@ -274,6 +274,7 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
             
     }
 
+    wvcon->print("SENDING:%s.\n",response);
     if (s->isok())
         s->print(response);
 }

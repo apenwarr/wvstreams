@@ -146,17 +146,22 @@ void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
 
 void UniConfClient::update(UniConf *&h)
 {
-    WvString lookfor(h->full_key(top));
+    WvString lookfor("%s",h->full_key(top));
 
     if (conn->select(0,true,false,false))
         conn->callback();
 
     waitingdata *data = dict[lookfor];
+/*    if (!data)
+        data = dict[WvString("/%s",lookfor)];*/
 
     if (!data && (h->waiting || (h->obsolete && !h->dirty)))
     {
         if (conn && conn->isok())
+        {
             conn->print(WvString("%s %s\n", UniConfConn::UNICONF_GET, wvtcl_escape(lookfor)));
+            wvcon->print("DOING A GET!\n");
+        }
         else
         {
             h->waiting = false;
@@ -170,6 +175,7 @@ void UniConfClient::update(UniConf *&h)
         conn->select(-1, true, false, false);
 
         conn->callback();
+        wvcon->print("Looking for:  %s.\n", lookfor);
         data = dict[lookfor];
     }
     
@@ -178,25 +184,30 @@ void UniConfClient::update(UniConf *&h)
         // If we are here, we will not longer be waiting nor will our data be
         // obsolete.
         h->set(data->value.unique());
-        dict.remove(data);
+//        dict.remove(data);
         h->waiting = false;
         h->obsolete = false;
     }
+    else
+        wvcon->print("NO DATA!\n");
     h->dirty = false;
 
 }
 
-void UniConfClient::executereturn(WvString &key, WvConstStringBuffer &fromline)
+void UniConfClient::executereturn(UniConfKey &key, WvConstStringBuffer &fromline)
 {
     WvString value = wvtcl_getword(fromline);
-    waitingdata *data = dict[key];
+    waitingdata *data = dict[key.printable()];
+    wvcon->print("GOT:RETN;%s;%s.\n",key,value);
     if (data == NULL)
     {
-        dict.add(new waitingdata(key.unique(), value.unique()),
+        wvcon->print("DATA WAS NULL!\n");
+        dict.add(new waitingdata(key.printable(), value.unique()),
                 true);
     }
     else
     {
+        wvcon->print("DATA WASN'T NULL!Key:%s.Value:%s.\n",data->key, data->value);
         data->value = value.unique();
     }
 
@@ -212,9 +223,9 @@ void UniConfClient::executereturn(WvString &key, WvConstStringBuffer &fromline)
     }
 }
 
-void UniConfClient::executeforget(WvString &key)
+void UniConfClient::executeforget(UniConfKey &key)
 {
-    dict.remove(dict[key]);
+    dict.remove(dict[key.printable()]);
     UniConf *obs = &(*top)[key];
     if (obs)
     {
@@ -228,7 +239,7 @@ void UniConfClient::executeforget(WvString &key)
     }
 }
 
-void UniConfClient::executesubtree(WvString &key, WvConstStringBuffer &fromline)
+void UniConfClient::executesubtree(UniConfKey &key, WvConstStringBuffer &fromline)
 {
     waitforsubt = false;
     while (fromline.used() > 0)
@@ -271,9 +282,11 @@ void UniConfClient::execute(WvStream &stream, void *userdata)
         for (;;)
         {
             WvString cmd = wvtcl_getword(fromline);
-            WvString key = wvtcl_getword(fromline);
-            if (cmd.isnull() || key.isnull())
+            WvString k = wvtcl_getword(fromline);
+            if (cmd.isnull() || k.isnull())
                 break;
+
+            UniConfKey key(k);
            
             // Value from a get is incoming
             if (cmd == UniConfConn::UNICONF_RETURN)
