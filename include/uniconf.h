@@ -591,7 +591,7 @@ extern "C" {
 #include "uniconf.h"
 %}
 
-%newobject uniconf_get;
+//%newobject uniconf_get;
 #endif
 
 /* FIXME: put the C binding here. */
