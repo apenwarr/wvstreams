@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
- * Worldvisions Tunnel Vision Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
  *
  * High-level abstraction for creating daemon processes.  Handles
  * command-line argument processing, forking into the background,
@@ -28,6 +28,8 @@ class WvDaemon
 
         WvArgs args;
         WvLog log;
+        WvLog::LogLevel log_level;
+        bool syslog;
     
     protected:
 
@@ -42,9 +44,7 @@ class WvDaemon
         volatile bool _want_to_die;
         volatile bool _want_to_restart;
 
-        WvLog::LogLevel log_level;
         bool daemonize;
-        bool syslog;
 
         void dec_log_level(void *)
         {

@@ -62,13 +62,13 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
     : name(_name), version(_version),
             pid_file("/var/run/%s.pid", _name),
             log(_name, WvLog::Debug),
+            log_level(WvLog::Info),
+            syslog(false),
             start_callback(_start_callback),
             run_callback(_run_callback),
             stop_callback(_stop_callback),
             ud(_ud),
-            log_level(WvLog::Info),
-            daemonize(false),
-            syslog(false)
+            daemonize(false)
 {
     args.add_option('q', "quiet",
             "Decrease log level (can be used multiple times)",
@@ -219,8 +219,12 @@ int WvDaemon::_run(const char *argv0)
         _want_to_restart = false;
 
         start_callback(*this, ud);
+	if (want_to_die())
+	    continue;
 
         run_callback(*this, ud);
+	if (want_to_die())
+	    continue;
 
         stop_callback(*this, ud);
     }
