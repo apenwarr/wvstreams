@@ -659,7 +659,7 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     if (!isok()) return false;
 
     bool sure = pre_select(si);
-    if (globalstream && forceable)
+    if (globalstream && forceable && (globalstream != this))
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
@@ -708,7 +708,7 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
     if (!isok()) return false;
     
     bool sure = post_select(si);
-    if (globalstream && forceable)
+    if (globalstream && forceable && (globalstream != this))
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
@@ -740,7 +740,7 @@ bool WvStream::_select(time_t msec_timeout,
     int sel = _do_select(si);
     if (sel >= 0)
         sure = _process_selectinfo(si, forceable) || sure; // note the order
-    if (si.global_sure && globalstream && forceable)
+    if (si.global_sure && globalstream && forceable && (globalstream != this))
 	globalstream->callback();
     return sure;
 }
