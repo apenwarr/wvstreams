@@ -322,13 +322,14 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     struct rtentry rte;
     char ifname[17];
     int sock;
+    WvString gwstr(gw), metr(metric);
     const char *argv[] = {
 	"ip", "route", "add",
 	"default",
 	"table", "default",
 	"dev", name,
-	"via", (WvString)gw,
-	"metric", WvString(metric),
+	"via", gwstr,
+	"metric", metr,
 	"scope", "global",
 	NULL
     };
@@ -375,13 +376,14 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     struct rtentry rte;
     char ifname[17];
     int sock;
+    WvString gwstr(gw), metr(metric);
     const char *argv[] = {
 	"ip", "route", "del",
 	"default",
 	"table", "default",
 	"dev", name,
-	"via", (WvString)gw,
-	"metric", WvString(metric),
+	"via", gwstr,
+	"metric", metr,
 	"scope", "global",
 	NULL
     };
