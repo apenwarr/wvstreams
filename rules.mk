@@ -76,7 +76,7 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac config.mk.in
+configure: configure.ac config.mk.in include/wvautoconf.h.in
 	autoconf
 
 include/wvautoconf.h.in: stamp-h.in
