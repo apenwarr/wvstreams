@@ -19,9 +19,15 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
 }
 
 
+UniConfDaemonConn::~UniConfDaemonConn()
+{
+    close();
+    delcallback();
+}
+
+
 void UniConfDaemonConn::close()
 {
-    delcallback();
     UniClientConn::close();
 }
 
