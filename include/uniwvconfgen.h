@@ -10,6 +10,8 @@
 
 #include "uniconfgen.h"
 
+class WvConf;
+
 class UniWvConfGen : public UniConfGen
 {
 private:

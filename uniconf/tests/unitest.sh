@@ -182,7 +182,7 @@ if false; then
 SECTION default "Default (*/*) generator tests"
 RECONFIG "default: null:"
  s
-xx uni get /anything  # FIXME: this one segfaults uni (URI contains a space)
+xx uni get /anything
 RECONFIG default:ini:simple.ini
  s 1
 xx uni get /section1/a
