@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Defines a hierarchical registry abstraction.
+ * Defines a hierarchical registry abstraction.  See uniconf.h.
  */
 #include "uniconf.h"
 #include "uniconfroot.h"
@@ -10,7 +10,17 @@
 #include "wvstream.h"
 #include <assert.h>
 
-/***** UniConf *****/
+
+UniConfKey UniConf::fullkey(const UniConfKey &k) const
+{
+    int n = k.numsegments();
+    
+    // this function is undefined if k isn't an ancestor!
+    assert(k == xfullkey.first(n));
+    
+    return xfullkey.removefirst(n);
+}
+
 
 bool UniConf::exists() const
 {
@@ -149,7 +159,7 @@ void UniConf::dump(WvStream &stream, bool everything) const
     for (it.rewind(); it.next(); )
     {
         WvString value(it->get());
-        if (everything || !! value)
+        if (everything || !!value)
             stream.print("%s = %s\n", it->fullkey(), value);
     }
 }
@@ -159,15 +169,9 @@ void UniConf::dump(WvStream &stream, bool everything) const
 /***** UniConf::Iter *****/
 
 UniConf::Iter::Iter(const UniConf &root) 
-    : KeyIterBase(root),
+    : IterBase(root),
     it(*root.rootobj(), root.fullkey())
 {
-}
-
-
-void UniConf::Iter::rewind()
-{
-    it.rewind();
 }
 
 
@@ -175,7 +179,7 @@ bool UniConf::Iter::next()
 {
     if (it.next())
     {
-        xcurrent = xroot[it.key()];
+        current = top[it.key()];
         return true;
     }
     return false;
@@ -185,10 +189,8 @@ bool UniConf::Iter::next()
 
 /***** UniConf::RecursiveIter *****/
 
-UniConf::RecursiveIter::RecursiveIter(const UniConf &root,
-    UniConfDepth::Type depth) :
-    KeyIterBase(root),
-    top(root), depth(depth)
+UniConf::RecursiveIter::RecursiveIter(const UniConf &root)
+    : IterBase(root)
 {
 }
 
@@ -196,55 +198,40 @@ UniConf::RecursiveIter::RecursiveIter(const UniConf &root,
 void UniConf::RecursiveIter::rewind()
 {
     itlist.zap();
-    first = false;
-    switch (depth)
-    {
-        case UniConfDepth::ZERO:
-            first = true;
-            break;
-
-        case UniConfDepth::ONE:
-        case UniConfDepth::INFINITE:
-            first = true;
-            // fall through
-
-        case UniConfDepth::CHILDREN:
-        case UniConfDepth::DESCENDENTS:
-            itlist.append(& top, false);
-            top.rewind();
-            break;
-    }
+    UniConf::Iter *subi = new UniConf::Iter(top);
+    subi->rewind();
+    itlist.prepend(subi, true);
 }
 
 
 bool UniConf::RecursiveIter::next()
 {
-    if (first)
+    assert(!itlist.isempty()); // trying to seek past the end is illegal!
+    
+    UniConf::IterList::Iter i(itlist);
+    for (i.rewind(); i.next(); )
     {
-        first = false;
-        xcurrent = xroot;
-        return true;
+	if (i->next()) // NOTE: not the same as i.next()
+	{
+	    // return the item first
+	    current = **i;
+	    
+	    // set up so next time, we go into its subtree
+	    if (current.haschildren())
+	    {
+		UniConf::Iter *subi = new UniConf::Iter(current);
+		subi->rewind();
+		itlist.prepend(subi, true);
+	    }
+	    
+	    return true;
+	}
+	
+	// otherwise, this iterator is empty; move up the tree
+	i.xunlink();
     }
-
-    UniConf::IterList::Iter itlistit(itlist);
-    for (itlistit.rewind(); itlistit.next(); )
-    {
-        UniConf::Iter &it = itlistit();
-        if (it.next())
-        {
-            xcurrent = *it;
-            if ((depth == UniConfDepth::INFINITE ||
-            depth == UniConfDepth::DESCENDENTS) &&
-                xcurrent.haschildren())
-            {
-                UniConf::Iter *subit = new UniConf::Iter(xcurrent);
-                subit->rewind();
-                itlist.prepend(subit, true);
-            }
-            return true;
-        }
-        itlistit.xunlink();
-    }
+    
+    // all done!
     return false;
 }
 
@@ -252,148 +239,202 @@ bool UniConf::RecursiveIter::next()
 
 /***** UniConf::PatternIter *****/
 
-UniConf::PatternIter::PatternIter(const UniConf &root,
-    const UniConfKey &pattern) :
-    KeyIterBase(root),
-    xpattern(pattern), it(NULL)
+UniConf::PatternIter::PatternIter(const UniConf &_top,
+				  const UniConfKey &_pattern)
+    : IterBase(_top), pattern(_pattern)
 {
+    it = NULL;
+    rit = NULL;
+    
+    rewound = false;
+    
+    if (pattern == "...")
+	rit = new UniConf::RecursiveIter(top);
+    else if (pattern.iswild())
+	it = new UniConf::Iter(top);
 }
 
 
 UniConf::PatternIter::~PatternIter()
 {
-    delete it;
+    if (it)
+	delete it;
+    if (rit)
+	delete rit;
 }
 
 
 void UniConf::PatternIter::rewind()
 {
-    done = false;
-    if (xpattern.iswild())
-    {
-        if (! it)
-            it = new UniConf::Iter(root());
-        it->rewind();
-    }
+    if (it)
+	it->rewind();
+    else if (rit)
+	rit->rewind();
+    
+    rewound = true;
 }
 
 
 bool UniConf::PatternIter::next()
 {
     // handle wildcards
-    if (it)
+    if (rit)
+    {
+	if (rewound)
+	{
+	    // include the null key, since '...' can also match a zero-length
+	    // path.
+	    rewound = false;
+	    current = top;
+	    return true;
+	}
+	
+	if (rit->next())
+	{
+	    current = **rit;
+	    return true;
+	}
+	return false;
+    }
+    else if (it)
     {
         while (it->next())
         {
-            xcurrent = **it;
-            if (xcurrent.key().matches(xpattern))
+            current = **it;
+            if (current.key().matches(pattern))
                 return true;
         }
         return false;
     }
-    // handle isolated elements quickly
-    if (done)
+    
+    // handle single elements quickly
+    if (!rewound)
         return false;
-    done = true;
-    xcurrent = root()[xpattern];
-    return xcurrent.exists();
+    rewound = false;
+    current = top[pattern];
+    return current.exists();
 }
 
 
 
 /***** UniConf::XIter *****/
 
-UniConf::XIter::XIter(const UniConf &root,
-    const UniConfKey &pattern) :
-    KeyIterBase(root),
-    xpattern(pattern)
+UniConf::XIter::XIter(const UniConf &_top, const UniConfKey &pattern)
+    : IterBase(_top), firstkey(pattern.first()), subkey(pattern.removefirst()),
+	topit(top, firstkey)
 {
+    subit = NULL;
+    topit.rewind();
+}
+
+
+UniConf::XIter::~XIter()
+{
+    if (subit)
+	delete subit;
 }
 
 
 void UniConf::XIter::rewind()
 {
-    itlist.zap();
-    if (! xpattern.isempty())
+    if (subit)
+	delete subit;
+    subit = NULL;
+    
+    topit.rewind();
+}
+
+
+inline bool UniConf::XIter::qnext()
+{
+    if (subit) // currently in a sub-iterator
     {
-        UniConf::PatternIter *subit = new UniConf::PatternIter(
-            root(), xpattern.first());
-        subit->rewind();
-        itlist.prepend(subit, true);
+	bool found = subit->next();
+	if (found)
+	{
+	    current = **subit;
+	    return true;
+	}
+	else
+	{
+	    // end of this sub-iterator
+	    delete subit;
+	    subit = NULL;
+	    return false;
+	}
     }
+    else // no sub-iterator at all
+	return false;
 }
 
 
 bool UniConf::XIter::next()
 {
-    UniConf::PatternIterList::Iter itlistit(itlist);
-    for (itlistit.rewind(); itlistit.next(); )
+    while (!qnext())
     {
-        UniConf::PatternIter &it = itlistit();
-        if (it.next())
-        {
-            // return key if we reached the desired depth
-            xcurrent = *it;
-            int depth = itlist.count();
-            int desired = xpattern.numsegments();
-            if (depth == desired)
-                return true;
-            
-            // otherwise add a level to the stack
-            UniConf::PatternIter *subit = new UniConf::PatternIter(
-                it(), xpattern.segment(depth));
-            subit->rewind();
-            itlist.prepend(subit, true);
-            itlistit.rewind();
-            continue;
-        }
-        itlistit.xunlink();
+	if (topit.next())
+	{
+	    if (subkey.isempty()) // innermost element
+	    {
+		current = *topit;
+		return true;
+	    }
+	    else
+	    {
+		subit = new UniConf::XIter(*topit, subkey);
+		subit->rewind();
+	    }
+	}
+	else // no more toplevel
+	    return false;
     }
-    return false;
+    
+    // if we get here, qnext() returned true
+    return true; 
 }
 
 
 
-/***** UniConf::SortedKeyIterBase *****/
+/***** UniConf::SortedIterBase *****/
 
-UniConf::SortedKeyIterBase::SortedKeyIterBase(const UniConf &root,
-    UniConf::SortedKeyIterBase::Comparator comparator) 
-    : KeyIterBase(root), xcomparator(comparator), xkeys(true)
+UniConf::SortedIterBase::SortedIterBase(const UniConf &root,
+    UniConf::SortedIterBase::Comparator comparator) 
+    : IterBase(root), xcomparator(comparator), xkeys(true)
 {
 }
 
 
-UniConf::SortedKeyIterBase::~SortedKeyIterBase()
+UniConf::SortedIterBase::~SortedIterBase()
 {
     _purge();
 }
 
 
-int UniConf::SortedKeyIterBase::defcomparator(const UniConf &a,
+int UniConf::SortedIterBase::defcomparator(const UniConf &a,
 					      const UniConf &b)
 {
     return a.fullkey().compareto(b.fullkey());
 }
 
 
-UniConf::SortedKeyIterBase::Comparator
-    UniConf::SortedKeyIterBase::innercomparator = NULL;
+UniConf::SortedIterBase::Comparator
+    UniConf::SortedIterBase::innercomparator = NULL;
 
-int UniConf::SortedKeyIterBase::wrapcomparator(const UniConf **a,
+int UniConf::SortedIterBase::wrapcomparator(const UniConf **a,
 					       const UniConf **b)
 {
     return innercomparator(**a, **b);
 }
 
 
-void UniConf::SortedKeyIterBase::_purge()
+void UniConf::SortedIterBase::_purge()
 {
     count = xkeys.count();
     xkeys.zap();
 }
 
 
-void UniConf::SortedKeyIterBase::_rewind()
+void UniConf::SortedIterBase::_rewind()
 {
     index = 0;
     count = xkeys.count();
@@ -405,11 +446,11 @@ void UniConf::SortedKeyIterBase::_rewind()
 }
 
 
-bool UniConf::SortedKeyIterBase::next()
+bool UniConf::SortedIterBase::next()
 {
     if (index >= count)
         return false;
-    xcurrent = *xkeys[index];
+    current = *xkeys[index];
     index += 1;
     return true;
 }

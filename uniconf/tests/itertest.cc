@@ -26,10 +26,10 @@ static int rhconfcmp(const UniConf *a, const UniConf *b)
 #endif
 
 template<class Iter>
-void dump(WvLog &log, Iter &it)
+void dump(WvLog &log, Iter &i)
 {
-    for (it.rewind(); it.next(); )
-	log("  '%s' = '%s'\n", it->fullkey(), it->get());
+    for (i.rewind(); i.next(); )
+	log("  '%s' = '%s'\n", i->fullkey(), i->get());
 }
 
 int main()
@@ -41,83 +41,79 @@ int main()
     
     {
 	log("Iter dump of /HTTPD:\n");
-	UniConf::Iter it(h["/httpd"]);
-        dump(log, it);
+	UniConf::Iter i(h["/httpd"]);
+        dump(log, i);
 
 	log("SortedIter dump of /HTTPD:\n");
-	UniConf::SortedIter sit(h["/httpd"]);
-        dump(log, sit);
+	UniConf::SortedIter si(h["/httpd"]);
+        dump(log, si);
     }
     
     {
         UniConf r(h["/Tunnel Vision Routes"]);
-	log("RecursiveIter dump of %s, Depth = ZERO:\n", r.fullkey());
-	UniConf::RecursiveIter it(r, UniConfDepth::ZERO);
-        dump(log, it);
-        
-	log("RecursiveIter dump of %s, Depth = ONE:\n", r.fullkey());
-	UniConf::RecursiveIter it2(r, UniConfDepth::ONE);
-        dump(log, it2);
-        
-	log("RecursiveIter dump of %s, Depth = CHILDREN:\n", r.fullkey());
-	UniConf::RecursiveIter it3(r, UniConfDepth::CHILDREN);
-        dump(log, it3);
-        
-	log("RecursiveIter dump of %s Depth = INFINITE:\n", r.fullkey());
-	UniConf::RecursiveIter it4(r, UniConfDepth::INFINITE);
-        dump(log, it4);
-        
-	log("RecursiveIter dump of %s Depth = DESCENDENTS:\n", r.fullkey());
-	UniConf::RecursiveIter it5(r, UniConfDepth::DESCENDENTS);
-        dump(log, it5);
-        
-	log("SortedRecursiveIter dump of %s Depth = INFINITE:\n", h.fullkey());
-	UniConf::SortedRecursiveIter sit(h, UniConfDepth::INFINITE);
-        dump(log, sit);
+	log("RecursiveIter dump of %s:\n", r.fullkey());
+	UniConf::RecursiveIter i(r);
+        dump(log, i);
     }
 
     {
 	log("PatternIter dump of /does_not_exist: (should be empty)\n");
-	UniConf::PatternIter it(h, "/does_not_exist");
-        dump(log, it);
+	UniConf::PatternIter i(h, "/does_not_exist");
+        dump(log, i);
         
 	log("PatternIter dump of /httpd: (should one key)\n");
-	UniConf::PatternIter it2(h, "/httpd");
-        dump(log, it2);
+	UniConf::PatternIter i2(h, "/httpd");
+        dump(log, i2);
         
+	log("PatternIter dump of /: (should be one key)\n");
+	UniConf::PatternIter i3(h, "/");
+        dump(log, i3);
+	
 	log("PatternIter dump of /*: (should be depth 1 only)\n");
-	UniConf::PatternIter it3(h, "/*");
-        dump(log, it3);
+	UniConf::PatternIter i4(h, "/*");
+        dump(log, i4);
     }
     
     {
-	log("XIter dump of /: (should be empty)\n");
-	UniConf::XIter it(h, "/");
-        dump(log, it);
+	log("XIter dump of /: (should be one key)\n");
+	UniConf::XIter i(h, "/");
+        dump(log, i);
         
 	log("XIter dump of /*: (should be depth 1 only)\n");
-	UniConf::XIter it2(h, "/*");
-        dump(log, it2);
+	UniConf::XIter i2(h, "/*");
+        dump(log, i2);
         
 	log("XIter dump of /*/*: (should be depth 2 only)\n");
-	UniConf::XIter it3(h, "/*/*");
-        dump(log, it3);
+	UniConf::XIter i3(h, "/*/*");
+        dump(log, i3);
         
 	log("XIter dump of /httpd/*: (should be depth 2 only)\n");
-	UniConf::XIter it4(h, "/httpd/*");
-        dump(log, it4);
+	UniConf::XIter i4(h, "/httpd/*");
+        dump(log, i4);
         
 	log("XIter dump of /*/webmaster: (should show a few entries)\n");
-	UniConf::XIter it5(h, "/*/webmaster");
-        dump(log, it5);
+	UniConf::XIter i5(h, "/*/webmaster");
+        dump(log, i5);
 
         log("XIter dump of /*/*/monkey/*/2/*:\n");
-        UniConf::XIter it6(h, "/*/*/monkey/*/2/*");
-        dump(log, it6);
+        UniConf::XIter i6(h, "/*/*/monkey/*/2/*");
+        dump(log, i6);
+        
+        log("XIter dump of /.../2/*:\n");
+        UniConf::XIter i7(h, "/.../2/*");
+        dump(log, i7);
+        
+        log("XIter dump of /.../*/4/...:\n");
+        UniConf::XIter i8(h, "/.../*/4/...");
+        dump(log, i8);
+        
+        log("XIter dump of /.../virus scanner/...:\n");
+        UniConf::XIter i9(h, "/.../virus scanner/...");
+        dump(log, i9);
         
         log("SortedXIter dump of /*/*/monkey/*/2/*:\n");
-        UniConf::XIter sit(h, "/*/*/monkey/*/2/*");
-        dump(log, sit);
+        UniConf::XIter si(h, "/*/*/monkey/*/2/*");
+        dump(log, si);
     }
     return 0;
 }

@@ -6,6 +6,7 @@
  */
 #include "uniconftemp.h"
 #include "wvmoniker.h"
+#include "wvlog.h"
 
 static UniConfGen *creator(WvStringParm, IObject *, void *)
 {
@@ -16,8 +17,8 @@ static WvMoniker<UniConfGen> reg("temp", creator);
 
 /***** UniConfTempGen *****/
 
-UniConfTempGen::UniConfTempGen() :
-    root(NULL)
+UniConfTempGen::UniConfTempGen()
+    : root(NULL)
 {
 }
 
@@ -63,25 +64,31 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
         UniConfValueTree *node = root;
         UniConfValueTree *prev = NULL;
         UniConfKey prevkey;
-
+	
         UniConfKey::Iter it(key);
         it.rewind();
         for (;;)
         {
-            bool interior = it.next(); // an interior node?
-            if (! node)
+            bool more = it.next(); // not the last node in the key?
+	    
+            if (!node)
             {
+		// we'll have to create the sub-node, since we couldn't
+		// find the most recent part of the key.
                 node = new UniConfValueTree(prev, prevkey,
-                    interior ? WvString("") : value);
+					    more ? WvString("") : value);
                 dirty = true;
-                if (! prev)
+                if (!prev) // we just created the root
                     root = node;
                 delta(node->fullkey(), UniConfDepth::ONE);
-                if (! interior)
+                if (!more)
                     break; // done!
             }
-            else if (! interior)
+            else if (!more)
             {
+		// don't have to create the most recent sub-node, but there
+		// are no more sub-nodes; that means we're changing the value
+		// of an existing node.
                 if (value != node->value())
                 {
                     node->setvalue(value);
@@ -90,11 +97,14 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
                 }
                 break;
             }
-            prevkey = it();
+            prevkey = *it;
             prev = node;
             node = prev->findchild(prevkey);
         }
+	
+	assert(node);
     }
+    
     return true;
 }
 

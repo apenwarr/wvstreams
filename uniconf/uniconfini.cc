@@ -22,7 +22,7 @@ static WvMoniker<UniConfGen> reg("ini", creator);
 
 static void printsection(WvStream &file, const UniConfKey &key)
 {
-    file.print("[%s]\n", wvtcl_escape(key.strip(), "\t\r\n[]"));
+    file.print("[%s]\n", wvtcl_escape(key, "\t\r\n[]"));
 }
 
 static void printkey(WvStream &file, const UniConfKey &key,
@@ -31,7 +31,7 @@ static void printkey(WvStream &file, const UniConfKey &key,
     // need to escape []#= in key only to distinguish a key/value
     // pair from a section name or comment and to delimit the value
     file.print("%s = %s\n",
-        wvtcl_escape(key.strip(), " \t\r\n[]=#"),
+        wvtcl_escape(key, " \t\r\n[]=#"),
         wvtcl_escape(value, " \t\r\n"));
 }
 

@@ -185,12 +185,6 @@ public:
         { return printable(); }
 
     /**
-     * Returns the path as a string without the leading slash.
-     * @return the path as a string
-     */
-    WvString strip() const;
-
-    /**
      * Assigns this path to equal another.
      * @param other the other path
      */

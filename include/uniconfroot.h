@@ -361,6 +361,7 @@ public:
 
     void rewind();
     bool next();
+    
     UniConfKey key() const;
 };
 

@@ -108,6 +108,13 @@ public:
     /** Returns the full path of this node, starting at the root. */
     UniConfKey fullkey() const
         { return xfullkey; }
+    
+    /** Returns the full path of this node, starting at the given key. */
+    UniConfKey fullkey(const UniConfKey &k) const;
+    
+    /** Returns the full path of this node, starting at the given handle. */
+    UniConfKey fullkey(const UniConf &cfg) const
+        { return fullkey(cfg.fullkey()); }
 
     /** Returns the path of this node relative to its parent. */
     UniConfKey key() const
@@ -303,7 +310,7 @@ public:
     /*** Iterators (see comments in class declaration) ***/
 
     // internal base class for all of the key iterators
-    class KeyIterBase;
+    class IterBase;
     // iterates over direct children
     class Iter;
     // iterates over all descendents in preorder traversal
@@ -314,7 +321,7 @@ public:
     class PatternIter;
 
     // internal base class for sorted key iterators
-    class SortedKeyIterBase;
+    class SortedIterBase;
     // sorted variant of Iter
     class SortedIter;
     // sorted variant of RecursiveIter
@@ -332,23 +339,19 @@ public:
  * @internal
  * An implementation base class for key iterators.
  */
-class UniConf::KeyIterBase
+class UniConf::IterBase
 {
 protected:
-    UniConf xroot;
-    UniConf xcurrent;
+    UniConf top;
+    UniConf current;
 
-public:
-    KeyIterBase(const UniConf &root) 
-	: xroot(root)
+    IterBase(const UniConf &_top)
+	: top(_top)
 	{ }
 
-    const UniConf root() const
-        { return xroot; }
-    const UniConfKey key() const
-        { return xcurrent.key(); }
+public:
     const UniConf *ptr() const
-        { return &xcurrent; }
+        { return &current; }
     WvIterStuff(const UniConf);
 };
 
@@ -369,15 +372,16 @@ public:
 /**
  * This iterator walks through all immediate children of a UniConf node.
  */
-class UniConf::Iter : public UniConf::KeyIterBase
+class UniConf::Iter : public UniConf::IterBase
 {
     UniConfRoot::BasicIter it;
     
 public:
     /** Creates an iterator over the direct children of a branch. */
-    Iter(const UniConf &root);
+    Iter(const UniConf &_top);
 
-    void rewind();
+    void rewind()
+        { it.rewind(); }
     bool next();
 };
 DeclareWvList4(UniConf::Iter, IterList, UniConf::IterList, )
@@ -386,21 +390,13 @@ DeclareWvList4(UniConf::Iter, IterList, UniConf::IterList, )
 /**
  * This iterator performs depth-first traversal of a subtree.
  */
-class UniConf::RecursiveIter : public UniConf::KeyIterBase
+class UniConf::RecursiveIter : public UniConf::IterBase
 {
-    UniConf::Iter top;
-    UniConfDepth::Type depth;
     UniConf::IterList itlist;
-    bool first;
 
 public:
-    /**
-     * Creates a recursive iterator over a branch.
-     * @param root the branch
-     * @param depth the recursion depth
-     */
-    RecursiveIter(const UniConf &root,
-		  UniConfDepth::Type depth = UniConfDepth::INFINITE);
+    /** Creates a recursive iterator over a branch. */
+    RecursiveIter(const UniConf &_top);
 
     void rewind();
     bool next();
@@ -413,33 +409,32 @@ public:
  * wildcard pattern.  It is used to help construct pattern-matching
  * iterators.
  * 
- * Patterns are single segment keys or the special key "*", also
- * known as UniConf::ANY.  It is not currently possible to use
- * wildcards to represent part of a path segment.
- * 
+ * Patterns are single segment keys, the special key "*", also
+ * known as UniConf::ANY, or the special key "..." which matches subkeys of
+ * any depth, including zero.
+ *
+ * FIXME: It is not currently possible to use wildcards to represent part
+ * of a path segment, but you could do that by simply improving this class.
  *
  * @see UniConf::XIter
  */
-class UniConf::PatternIter : public UniConf::KeyIterBase
+class UniConf::PatternIter : public UniConf::IterBase
 {
-    UniConfKey xpattern;
+    UniConfKey pattern;
     UniConf::Iter *it;
-    bool done;
+    UniConf::RecursiveIter *rit;
+    bool rewound;
     
 public:
-    /**
-     * Creates a pattern matching iterator.
-     * @param root the branch at which to begin iteration
-     * @param pattern the pattern for matching children
-     */
-    PatternIter(const UniConf &root, const UniConfKey &pattern);
+    /** Creates a pattern matching iterator. */
+    PatternIter(const UniConf &_top, const UniConfKey &pattern);
     ~PatternIter();
 
     void rewind();
     bool next();
 };
-DeclareWvList4(UniConf::PatternIter, PatternIterList, 
-	       UniConf::PatternIterList, )
+//DeclareWvList4(UniConf::PatternIter, PatternIterList, 
+//	       UniConf::PatternIterList, )
 
 
 /**
@@ -455,18 +450,26 @@ DeclareWvList4(UniConf::PatternIter, PatternIterList,
  * "/STAR": matches all direct children
  * "/STAR/foo": matches any existing key "foo" under direct children
  * "/STAR/STAR": matches all children of depth exactly 2
+ * "/foo/...": matches all keys including and below "foo"
+ * "/foo/STAR/...": matches all keys below "foo"
+ * "/.../foo/STAR": matches all keys below any subkey named "foo" in the tree
  */
-class UniConf::XIter : public UniConf::KeyIterBase
+class UniConf::XIter : public UniConf::IterBase
 {
-    UniConfKey xpattern;
-    UniConf::PatternIterList itlist;
+    UniConfKey firstkey, subkey;
+    UniConf::PatternIter topit;
+    UniConf::XIter *subit;
 
 public:
     /** Creates a wildcard iterator. */
-    XIter(const UniConf &root, const UniConfKey &pattern);
+    XIter(const UniConf &_top, const UniConfKey &pattern);
+    ~XIter();
 
     void rewind();
     bool next();
+    
+private:
+    bool qnext();
 };
 
 
@@ -479,7 +482,7 @@ public:
  * return pointers to temporary objects whereas WvSorter assumes that the
  * pointers will remain valid for the lifetime of the iterator.
  */
-class UniConf::SortedKeyIterBase : public UniConf::KeyIterBase
+class UniConf::SortedIterBase : public UniConf::IterBase
 {
 public:
     typedef int (*Comparator)(const UniConf &a, const UniConf &b);
@@ -487,9 +490,8 @@ public:
     /** Default comparator. Sorts alphabetically by full key. */
     static int defcomparator(const UniConf &a, const UniConf &b);
 
-    SortedKeyIterBase(const UniConf &root,
-        Comparator comparator = defcomparator);
-    ~SortedKeyIterBase();
+    SortedIterBase(const UniConf &_top, Comparator comparator = defcomparator);
+    ~SortedIterBase();
 
     bool next();
 
@@ -509,11 +511,11 @@ protected:
     Vector xkeys;
     
     template<class Iter>
-    void populate(Iter &it)
+    void populate(Iter &i)
     {
         _purge();
-        for (it.rewind(); it.next(); )
-            xkeys.append(new UniConf(it()));
+        for (i.rewind(); i.next(); )
+            xkeys.append(new UniConf(*i));
         _rewind();
     }
 };
@@ -522,54 +524,53 @@ protected:
 /**
  * A sorted variant of UniConf::Iter.
  */
-class UniConf::SortedIter : public UniConf::SortedKeyIterBase
+class UniConf::SortedIter : public UniConf::SortedIterBase
 {
-    UniConf::Iter it;
+    UniConf::Iter i;
 
 public:
-    SortedIter(const UniConf &root,
-        Comparator comparator = defcomparator)
-	: SortedKeyIterBase(root, comparator), it(root)
+    SortedIter(const UniConf &_top, Comparator comparator = defcomparator)
+	: SortedIterBase(_top, comparator), i(_top)
 	{ }
 
     void rewind()
-        { populate(it); }
+        { populate(i); }
 };
 
 
 /**
  * A sorted variant of UniConf::RecursiveIter.
  */
-class UniConf::SortedRecursiveIter : public UniConf::SortedKeyIterBase
+class UniConf::SortedRecursiveIter : public UniConf::SortedIterBase
 {
-    UniConf::RecursiveIter it;
+    UniConf::RecursiveIter i;
 
 public:
-    SortedRecursiveIter(const UniConf &root, UniConfDepth::Type depth,
-        Comparator comparator = defcomparator)
-	: SortedKeyIterBase(root, comparator), it(root, depth)
+    SortedRecursiveIter(const UniConf &_top,
+			Comparator comparator = defcomparator)
+	: SortedIterBase(_top, comparator), i(_top)
 	{ }
 
     void rewind()
-        { populate(it); }
+        { populate(i); }
 };
 
 
 /**
  * A sorted variant of UniConf::XIter.
  */
-class UniConf::SortedXIter : public UniConf::SortedKeyIterBase
+class UniConf::SortedXIter : public UniConf::SortedIterBase
 {
-    UniConf::XIter it;
+    UniConf::XIter i;
 
 public:
-    SortedXIter(const UniConf &root, const UniConfKey &pattern,
+    SortedXIter(const UniConf &_top, const UniConfKey &pattern,
 		Comparator comparator = defcomparator) 
-	: SortedKeyIterBase(root, comparator), it(root, pattern) 
+	: SortedIterBase(_top, comparator), i(_top, pattern) 
 	{ }
 
     void rewind()
-        { populate(it); }
+        { populate(i); }
 };
 
 

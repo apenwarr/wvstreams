@@ -16,6 +16,8 @@
 class WvStreamList;
 class UniConfGen;
 
+// void (*UniConfGenCallback)(const UniConfGen &gen, const UniConfKey &key,
+//                            UniConfDepth::Type depth, void *userdata);
 DeclareWvCallback(4, void, UniConfGenCallback, const UniConfGen &,
     const UniConfKey &, UniConfDepth::Type, void *);
 
@@ -29,7 +31,7 @@ DeclareWvCallback(4, void, UniConfGenCallback, const UniConfGen &,
 class UniConfGen : public GenericComponent<IObject>
 {
 protected:
-    UniConfGenCallback cb;
+    UniConfGenCallback cb; //!< gets called whenever a key changes its value.
     void *cbdata;
 
     /** Creates a UniConfGen object. */

@@ -333,26 +333,25 @@ void UniConfRoot::BasicIter::rewind()
 {
     hack.zap();
 
-    // add mountpoint nodes
+    // find nodes provided by the root of any mount points.
+    // (if we want to iterate over /foo, then mounts directly on /foo/blah and
+    // /foo/snoo must be included)
     UniConfMountTree *node = xroot->mounts->find(xkey);
     if (node)
     {
         UniConfMountTree::Iter nodeit(*node);
         for (nodeit.rewind(); nodeit.next(); )
-        {
             hack.add(new WvString(nodeit->key()), true);
-        }
     }
 
-    // add key nodes
+    // walk through *all* generators and add any appropriate sub-keys
+    // provided by each generator.
     for (genit.rewind(); genit.next(); )
     {
         UniConfGen *gen = genit.ptr();
         UniConfAbstractIter *keyit = gen->iterator(genit.tail());
         for (keyit->rewind(); keyit->next(); )
-        {
             hack.add(new WvString(keyit->key()), true);
-        }
         delete keyit;
     }
 
@@ -389,15 +388,15 @@ UniConfMountTree::~UniConfMountTree()
 
 
 UniConfMountTree *UniConfMountTree::findnearest(const UniConfKey &key,
-    int &split)
+						int &split)
 {
     split = 0;
     UniConfMountTree *node = this;
     UniConfKey::Iter it(key);
-    for (it.rewind(); it.next(); ++split)
+    for (it.rewind(); it.next(); split++)
     {
         UniConfMountTree *next = node->findchild(it());
-        if (! next)
+        if (!next)
             break;
         node = next;
     }
@@ -413,7 +412,7 @@ UniConfMountTree *UniConfMountTree::findormake(const UniConfKey &key)
     {
         UniConfMountTree *prev = node;
         node = prev->findchild(it());
-        if (! node)
+        if (!node)
             node = new UniConfMountTree(prev, it());
     }
     return node;
@@ -424,8 +423,8 @@ UniConfMountTree *UniConfMountTree::findormake(const UniConfKey &key)
 /***** UniConfMountTree::MountIter *****/
 
 UniConfMountTree::MountIter::MountIter(UniConfMountTree &root,
-    const UniConfKey &key) :
-    xkey(key)
+    const UniConfKey &key)
+    : xkey(key)
 {
     bestnode = root.findnearest(key, bestsplit);
 }

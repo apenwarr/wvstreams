@@ -10,10 +10,10 @@
 #include <assert.h>
 
 UniConfKey UniConfKey::EMPTY;
-UniConfKey UniConfKey::ANY("/*"); // yes, this looks a little strange
+UniConfKey UniConfKey::ANY("*"); // yes, this looks a little strange
 
 
-UniConfKey::UniConfKey() : path("/")
+UniConfKey::UniConfKey()
 {
 }
 
@@ -22,43 +22,36 @@ void UniConfKey::init(WvStringParm key)
 {
     assert(!key.isnull());
 
-    // canonicalize the key
-    // only make a new copy if strictly necessary
-    path = key; // does not actually copy anything
-    const char *src = key;
-    char *dest = NULL;
+    // canonicalize the key by removing leading/trailing slashes, and
+    // changing multiple slashes in a row to single slashes.
 
-    // add a slash to the beginning of the string
-    if (*src != '/')
+    if (key[0] == '/' || *(strchr(key, 0)-1) == '/' || strstr(key, "//"))
     {
-        path.setsize(key.len() + 2); // must account for '/' and '\0'
-        dest = path.edit();
-        *(dest++) = '/';
+	path.setsize(strlen(key) + 1);
+	char *optr = path.edit();
+	const char *iptr = key + strspn(key, "/");
+	
+	while (*iptr)
+	{
+	    if (*iptr == '/')
+	    {
+		// if there's more than one slash, this finds the last one:
+		iptr += strspn(iptr, "/") - 1;
+		
+		// if there's nothing after the slash, it's a terminating
+		// slash; stop now.
+		if (!iptr[1]) break;
+		
+		// if we get here, it's exactly one intermediate slash.
+	    }
+	    
+	    *optr++ = *iptr++;
+	}
+	
+	*optr = 0;
     }
-    
-    // remove redundant slashes
-    bool haveslash = false;
-    for (char c; (c = *(src++));)
-    {
-        if (c != '/')
-            haveslash = false;
-        else
-        {
-            if (haveslash || *src == 0)
-            {
-                if (!dest)
-                    dest = path.edit() + (src - key.cstr() - 1);
-                continue;
-            }
-            haveslash = true;
-        }
-        if (dest)
-            *dest++ = c;
-    }
-
-    // add null terminator if needed
-    if (dest)
-        *dest++ = 0;
+    else // easy: already in good shape!  Use WvString's optimized copying.
+	path = key;
 }
 
 
@@ -68,57 +61,56 @@ UniConfKey::UniConfKey(const UniConfKey &other) : path(other.path)
 
 
 UniConfKey::UniConfKey(const UniConfKey &_path, const UniConfKey &_key) 
-    : path(_path)
 {
-    append(_key);
+    if (!_path.path)
+	path = _key;
+    else if (!_key.path)
+	path = _path;
+    else
+	path = WvString("%s/%s", _path, _key.path);
 }
 
 
 void UniConfKey::append(const UniConfKey &_key)
 {
-    if (isempty())
+    if (!path)
         path = _key.path;
-    else if (!_key.isempty())
-        path.append(_key.path);
+    else if (!!_key.path)
+	path = WvString("%s/%s", path, _key.path);
 }
 
 
 void UniConfKey::prepend(const UniConfKey &_key)
 {
-    if (isempty())
+    if (!path)
         path = _key.path;
-    else if (!_key.isempty())
-        path = WvString("%s%s", _key.path, path);
+    else if (!!_key.path)
+        path = WvString("%s/%s", _key.path, path);
 }
 
 
 bool UniConfKey::isempty() const
 {
-    // note: path string always has at least 1 character + null
-    return path[1] == '\0';
+    return !path;
 }
 
 
 bool UniConfKey::iswild() const
 {
-    return strchr(path.cstr(), '*') != NULL;
+    return strchr(path, '*') != NULL;
 }
 
 
 int UniConfKey::numsegments() const
 {
-    const char *str = path + 1; // ignore leading '/'
-    if (*str == '\0')
-        return 0; // root has zero segments
-        
-    int n = 1;
-    for (;;)
+    if (!path)
+	return 0;
+    
+    int n = 1; // all non-null paths have at least one segment
+    for (const char *cptr = path; *cptr; cptr++)
     {
-        char c = *(str++);
-        if (!c)
-            break;
-        if (c == '/')
-            n += 1;
+        if (*cptr == '/')
+            n++;
     }
     return n;
 }
@@ -156,62 +148,46 @@ UniConfKey UniConfKey::removelast(int n) const
 
 UniConfKey UniConfKey::range(int i, int j) const
 {
-    if (i < 0)
-        i = 0;
-    int n = j - i;
-    if (n <= 0)
-        return EMPTY;
-
-    // find beginning of range
-    const char *first = path.cstr(); // points to '/' at range start
-    while (i-- > 0)
+    if (!path) return *this;
+    
+    const char *sptr, *eptr;
+    int count;
+    
+    // find the beginning
+    for (sptr = path, count = 0; *sptr && count < i; sptr++)
     {
-        first = strchr(first + 1, '/');
-        if (!first)
-            return EMPTY;
-    }
- 
-    // find end of range
-    int len = 1; // number of characters in range
-    for (;;)
-    {
-        char c = first[len];
-        if (!c)
-        {
-            if (first != path.cstr())
-                break;
-
-            // optimization: entire key requested!
-            return *this;
-        }
-        if (c == '/' && --n == 0)
-            break;
-        len += 1;
+	if (*sptr == '/')
+	    count++;
     }
     
-    // construct a new key for the range
-    UniConfKey result;
-    result.path.setsize(len + 1);
-    char *str = result.path.edit();
-    memcpy(str, first, len);
-    str[len] = '\0';
+    // find the end
+    for (eptr = sptr; *eptr; eptr++)
+    {
+	if (*eptr == '/')
+	    count++;
+	
+	if (count >= j)
+	    break; // don't want to increment eptr
+    }
+    
+    // optimization: they got the whole key!  Don't copy.
+    if (sptr == path && !*eptr)
+	return *this;
 
-    return result;
+    // otherwise, return a new key.
+    WvString s;
+    s.setsize(eptr-sptr+1);
+    char *cptr = s.edit();
+    strncpy(cptr, sptr, eptr-sptr);
+    cptr[eptr-sptr] = 0;
+    
+    return s;
 }
 
 
 WvString UniConfKey::printable() const
 {
     return path;
-}
-
-
-WvString UniConfKey::strip() const
-{
-    // we make the string unique to avoid possible problems
-    // that would occur if the UniConfKey were a temporary
-    WvString result(printable() + 1);
-    return result.unique();
 }
 
 

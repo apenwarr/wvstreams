@@ -287,12 +287,25 @@ int main()
 	wvcon->print("\n\n");
 	log("-- Key test begins\n");
 	
-	UniConfKey key("/a/b/c/d/e/f/ghij////k/l/m");
-	UniConfKey key2(key);
+	UniConfKey key("/a/b/c/d/e/f/ghij////k/l/m/");
+	UniConfKey key2(key), key2b(key, key);
         UniConfKey key3(key.removefirst(5));
         UniConfKey key4(key.removefirst(900));
         // FIXME: we're just barely scratching the surface here!
-	log("key : %s\nkey2: %s\nkey3: %s\nkey4: %s\n", key, key2, key3, key4);
+	log("key :  %s\n"
+	    "key2:  %s (%s, %s)\n"
+	    "key2b: %s (%s)\n"
+	    "key3:  %s\n"
+	    "key4:  %s\n",
+	    key, key2, key2.range(1, key2.numsegments()-1), key2.range(0, 0),
+	    key2b, key2b.numsegments(),
+	    key3, key4);
+	
+	log("keyiter test 2b: ");
+	UniConfKey::Iter i(key2b);
+	for (i.rewind(); i.next(); )
+	     log("'%s' ", *i);
+	log("\n");
     }
     
     {
@@ -310,8 +323,33 @@ int main()
         x["blue"].set("sneeze");
         x["true"].set("sneeze");
 	
+	{
+	    log("get() test:\n");
+	    log("  '%s' '%s' '%s' '%s'/'%s' '%s'\n",
+		cfg["foo/blah/weasels"].get(),
+		cfg["foo/blah"].get(),
+		cfg["foo"].get(),
+		cfg[""].get(), cfg[UniConfKey::EMPTY].get(),
+		cfg.get()
+		);
+	}
+	
+	{
+	    log("BasicIter dump:\n");
+	    UniConfRoot::BasicIter i(cfg, UniConfKey::EMPTY);
+	    for (i.rewind(); i.next(); )
+		quiet.print("'%s' = '%s'\n", i.key(), cfg[i.key()].get());
+	}
+
+	{
+	    log("Toplevel dump:\n");
+	    UniConf::Iter i(cfg);
+	    for (i.rewind(); i.next(); )
+		quiet.print("'%s' = '%s'\n", i->key(), i->get());
+	}
+	
 	log("Config dump:\n");
-	cfg.dump(quiet);
+	cfg.dump(quiet, true);
     }
     
 #if 0
