@@ -105,6 +105,13 @@ void WvCont::call()
 }
 
 
+WvCont::WvCont(Data *data)
+{
+    this->data = data;
+    data->link();
+}
+
+
 WvCont::R WvCont::operator() (P1 p1)
 {
     data->ret = R(-42);
@@ -118,6 +125,15 @@ WvCont::R WvCont::operator() (P1 p1)
     data->p1 = p1;
     call();
     return data->ret;
+}
+
+
+WvCont WvCont::current()
+{
+    assert(curdata);
+    assert(curdata->task == curdata->taskman->whoami());
+    assert(isok()); // this assertion is a bit aggressive...
+    return WvCont(curdata);
 }
 
 
