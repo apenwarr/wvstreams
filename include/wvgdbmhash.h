@@ -5,6 +5,8 @@
  * A hash table container backed by a gdbm database.
  */
 
+#include "wvautoconf.h"
+
 #ifdef WITH_GDBM
 
 #ifndef WVGDBMHASH_H

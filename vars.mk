@@ -120,6 +120,10 @@ ifneq ("$(enable_fam)", "no")
 LDFLAGS+=-lfam
 endif
 
+ifneq ("$(enable_gdbm)", "no")
+LDFLAGS+=-lgdbm
+endif
+
 ifeq ("$(enable_verbose)", "yes")
 VERBOSE:=yes
 endif

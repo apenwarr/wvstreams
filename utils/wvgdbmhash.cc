@@ -1,6 +1,6 @@
-#ifdef WITH_GDBM
-
 #include "wvgdbmhash.h"
+
+#ifdef WITH_GDBM
 
 WvGdbmHashBase::WvGdbmHashBase(WvStringParm dbfile)
 {
