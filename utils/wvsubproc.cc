@@ -66,27 +66,24 @@ int WvSubProc::start(const char cmd[], ...)
 }
 
 
-int WvSubProc::startv(const char cmd[], const char * const *argv)
+int WvSubProc::startv(const char cmd[],
+		      const char * const *argv,
+		      const WvSubProcCallback& cb)
 {
-    running = false;
-    estatus = 0;
+    int waitfd = -1;
     
-    pid = wvfork();
+    pid = fork(&waitfd);
     //fprintf(stderr, "pid for '%s' is %d\n", cmd, pid);
     
     if (!pid)
     {
 	// child process
 	 
-	// set the process group of this process, so "negative" kill
-	// will kill everything in the whole session, not just the
-	// main process.
-	setpgid(0,0);
-	
-	// set up any extra environment variables
-	WvStringList::Iter i(env);
-	for (i.rewind(); i.next(); )
-	    putenv(i().edit());
+	if( cb )
+	    cb();
+
+	// unblock the parent.
+	close(waitfd);
 	
 	// run the subprocess.
 	execvp(cmd, (char * const *)argv);
@@ -102,9 +99,42 @@ int WvSubProc::startv(const char cmd[], const char * const *argv)
 	running = true;
     }
     else if (pid < 0)
-	return -errno;
+	return pid;
     
     return 0; // ok
+}
+
+
+int WvSubProc::fork(int *waitfd)
+{
+    running = false;
+    estatus = 0;
+
+    pid = wvfork_start(waitfd);
+
+    if (!pid)
+    {
+	// child process
+	 
+	// set the process group of this process, so "negative" kill
+	// will kill everything in the whole session, not just the
+	// main process.
+	setpgid(0,0);
+
+	// set up any extra environment variables
+	WvStringList::Iter i(env);
+	for (i.rewind(); i.next(); )
+	    putenv(i().edit());
+    }
+    else if (pid > 0)
+    {
+	// parent process
+	running = true;
+    }
+    else if (pid < 0)
+	return -errno;
+    
+    return pid;
 }
 
 
