@@ -152,8 +152,10 @@ public:
 				  void *_userdata) = 0;
 };
 
+#ifndef SWIG	// This ifdef makes ExchangeIt work
 DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
+#endif
 
 /**
  * Unified support for streams, that is, sequences of bytes that may or
