@@ -8,6 +8,7 @@
  */
 #include "wvbuffer.h"
 #include <assert.h>
+#include <stdio.h> // for printf()
 
 
 ///////////////////// WvMiniBuffer
@@ -94,6 +95,7 @@ unsigned char *WvBuffer::get(size_t num)
     {
 	got = 0;
 	list.prepend(destb = new WvMiniBuffer(num), true);
+	// printf("<new-1 MiniBuffer(%d)>\n", num);
     }
 
     for (i.rewind(), i.next(); i.cur(); )
@@ -148,6 +150,7 @@ unsigned char *WvBuffer::alloc(size_t num)
     if (newsize < num)
 	newsize = num;
     b = new WvMiniBuffer(newsize);
+    // printf("<new-2 MiniBuffer(%d)>\n", newsize);
     
     list.append(b, true);
     
@@ -239,6 +242,7 @@ void WvBuffer::put(const void *data, size_t num)
 	if (newsize < num)
 	    newsize = num;
 	b = new WvMiniBuffer(newsize);
+	// printf("<new-3 MiniBuffer(%d)>\n", newsize);
 	
 	list.append(b, true);
 	b->put(data, num);

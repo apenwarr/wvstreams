@@ -19,6 +19,8 @@ WvIPAliaser::AliasList WvIPAliaser::all_aliases;
 
 WvIPAliaser::Alias::Alias(const WvIPAddr &_ip)
 {
+    WvIPAddr noip;
+    WvIPNet nonet(noip, noip);
     ip = _ip;
     link_count = 0;
     
@@ -26,7 +28,7 @@ WvIPAliaser::Alias::Alias(const WvIPAddr &_ip)
     {
 	WvInterface i(WvString("lo:wv%s", index));
 	
-	if (!i.isup() || i.ipaddr() == WvIPAddr()) // not in use yet!
+	if (!i.isup() || i.ipaddr() == nonet) // not in use yet!
 	{
 	    i.setipaddr(ip);
 	    if (i.ipaddr() != ip)
@@ -101,7 +103,7 @@ WvIPAliaser::Alias *WvIPAliaser::ipsearch(WvIPAliaser::AliasList &l,
     
     for (i.rewind(); i.next(); )
     {
-	if (i.data()->ip == ip)
+	if (i.data()->ip == WvIPAddr(ip))
 	    return i.data();
     }
     
@@ -113,7 +115,7 @@ void WvIPAliaser::add(const WvIPAddr &ip)
 {
     Alias *a;
 
-    if (ip == WvIPAddr() || ipsearch(aliases, ip))
+    if (WvIPAddr(ip) == WvIPAddr() || ipsearch(aliases, ip))
 	return;     // already done.
     
     a = ipsearch(all_aliases, ip);

@@ -10,7 +10,6 @@
 
 WvStreamList::WvStreamList()
 {
-    setcallback(dist_callback, this);
 }
 
 
@@ -57,10 +56,6 @@ bool WvStreamList::test_set(fd_set &r, fd_set &w, fd_set &x)
 {
     WvStream *s;
     
-    sel_r = r;
-    sel_w = w;
-    sel_x = x;
-
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
@@ -73,14 +68,23 @@ bool WvStreamList::test_set(fd_set &r, fd_set &w, fd_set &x)
 
 
 // distribute the callback() request to all children that select 'true'
-void WvStreamList::dist_callback(WvStream &, void *userdata)
+#define STREAMTRACE 0
+void WvStreamList::execute()
 {
-    WvStreamList &l = *(WvStreamList *)userdata;
+#if STREAMTRACE
+    static int level = 0;
+    fprintf(stderr, "%*sWvStreamList@%p: ", level++, "", this);
+#endif
     
-    WvStreamListBase::Iter i(l.sure_thing);
+    WvStreamListBase::Iter i(sure_thing);
     for (i.rewind(), i.next(); i.cur(); )
     {
 	WvStream *s = i.data();
+	
+#if STREAMTRACE
+	fprintf(stderr, "[%p], ", s);
+#endif
+	
 	i.unlink();
 	s->callback();
 	
@@ -88,6 +92,11 @@ void WvStreamList::dist_callback(WvStream &, void *userdata)
 	i.rewind();
 	i.next();
     }
-	
-    l.sure_thing.zap();
+    
+    sure_thing.zap();
+
+#if STREAMTRACE
+    level--;
+    fprintf(stderr, "\n");
+#endif
 }

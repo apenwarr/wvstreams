@@ -191,6 +191,8 @@ public:
     WvIPAddr(const struct sockaddr *addr)
         { memcpy(binaddr,
 		 (void *)&((struct sockaddr_in *)addr)->sin_addr.s_addr, 4); }
+    WvIPAddr(const WvIPAddr &_addr)
+        { memcpy(binaddr, _addr.binaddr, 4); }
     
     WvIPAddr operator& (const WvIPAddr &a2) const;
     WvIPAddr operator| (const WvIPAddr &a2) const;
