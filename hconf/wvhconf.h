@@ -110,6 +110,7 @@ public:
     WvHConf *gen_top();
     WvHConfKey gen_full_key() const;
     
+    WvHConfDict *needs_children();
     WvHConf *find(const WvHConfKey &key);
     WvHConf *find_make(const WvHConfKey &key);
     WvHConf &operator[](const WvHConfKey &key) { return *find_make(key); }
@@ -138,6 +139,7 @@ public:
     const WvString &printable() const;
     operator const WvString& () const { return printable(); }
     bool operator! () const { return !printable(); }
+    const char *cstr() const { return printable().cstr(); }
     int num() const { return printable().num(); }
     
     // load/save the entire tree (including subtrees).

@@ -67,8 +67,8 @@ static void inisplit(WvStringParm s, WvString &key, WvString &value)
     }
     
     value = wvtcl_unescape(trim_string(tval.edit()));
-    printf(" split '%s' to '%s'='%s'\n", (const char *)s, 
-	   key.cstr(), value.cstr());
+    //printf(" split '%s' to '%s'='%s'\n", (const char *)s, 
+    //    key.cstr(), value.cstr());
 }
 
 

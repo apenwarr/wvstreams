@@ -3,18 +3,18 @@ include $(TOPDIR)/wvrules.mk
 
 XPATH=../utils ../streams ../configfile
 
-default: all hconftest
+default: all hconftest emutest
 
 all: hconf.a
 
-hconftest: hconftest.o hconf.a
+emutest hconftest: hconf.a
 
 hconf.libs: wvhconfkey.o wvhconf.o wvhconfgen.o wvhconfini.o \
-	../streams/streams.libs ../utils/utils.libs
+	../configfile/configfile.libs
 
 hconf.a: hconf.libs
 
 LIBS = ${EFENCE}
 
 clean:
-	rm -f hconftest
+	rm -f hconftest emutest

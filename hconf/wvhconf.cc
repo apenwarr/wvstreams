@@ -111,6 +111,15 @@ WvHConfKey WvHConf::gen_full_key() const
 }
 
 
+// create the "children" entry if it is NULL.
+WvHConfDict *WvHConf::needs_children()
+{
+    if (!children)
+	children = new WvHConfDict(10);
+    return children;
+}
+
+
 // find a key in the subtree.  If it doesn't already exist, return NULL.
 WvHConf *WvHConf::find(const WvHConfKey &key)
 {

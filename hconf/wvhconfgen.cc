@@ -34,9 +34,7 @@ WvHConf *WvHConfGen::make_tree(WvHConf *parent, const WvHConfKey &key)
 WvHConf *WvHConfGen::make_obj(WvHConf *parent, WvStringParm name)
 {
     WvHConf *child = new WvHConf(parent, name);
-    if (!parent->children)
-	parent->children = new WvHConfDict(10);
-    parent->children->add(child, true);
+    parent->needs_children()->add(child, true);
     update(child);
     return child;
 }
