@@ -107,7 +107,6 @@ void UniConfEvents::do_callbacks()
         {
             // run the callback then delete.
 	    i->cb(i->userdata, *h);
-            i.xunlink();
         }
     }
 }
