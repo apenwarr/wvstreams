@@ -17,8 +17,11 @@ int main()
     
     while (f.isok())
     {
-	len = f.read(buf, 1024);
-	log.write(buf, len);
+	if (f.select(100))
+	{
+	    len = f.read(buf, 1024);
+	    log.write(buf, len);
+	}
     }
     
     if (f.geterr())

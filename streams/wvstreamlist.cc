@@ -115,8 +115,10 @@ void WvStreamList::dist_callback(WvStream &, void *userdata)
 	// FIXME: the select(true,true,true) causes weirdness, but I have 
 	// no time to test removing it right now.  Why is select() even
 	// called here?
+	// update:  I took it out.  What will happen?
 	if (s->test_set(l.sel_r, l.sel_w, l.sel_x)
-	    && s->select(0, true, true, true))
+	    // && s->select(0, true, true, true)
+	    )
 	{
 	    s->callback();
 	}

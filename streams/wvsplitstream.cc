@@ -130,18 +130,6 @@ bool WvSplitStream::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 }
 
 
-bool WvSplitStream::select(time_t msec_timeout, bool readable,
-			   bool writable, bool isexception)
-{
-    bool retval;
-    in_progress++;
-    fd = rfd;
-    retval = WvStream::select(msec_timeout, readable, writable, isexception);
-    in_progress--;
-    return retval;
-}
-
-
 size_t WvSplitStream::uwrite(const void *buf, size_t size)
 {
     size_t retval;

@@ -3,11 +3,14 @@
  *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
  * 
  * The WvFileWatcher class provides support for files which sometimes
- * have data appended at the end.  The WvStream::select() function is
- * overloaded to provide support for this as best we can (ie., polling
- * every 100ms or so).
+ * have data appended at the end.  It only polls as often as your select()
+ * delay, so be careful!
  * 
- * See wvwatcher.h for more information.
+ * The file is rewound and reopened if its inode changes or its
+ * length gets shorter, under the assumption that we will want to see the
+ * entire contents of the new file.
+ *
+ * See wvwatcher.h.
  */
 #include "wvwatcher.h"
 #include <sys/time.h>
@@ -65,10 +68,15 @@ size_t WvFileWatcher::uread(void *buf, size_t size)
 {
     size_t len;
     if (!once_ok) return 0; // this is never going to work
-    select(-1, true, false, false);
-    len = WvFile::uread(buf, size);
-    fpos += len;
-    return len;
+    
+    if (select(0))
+    {
+	len = WvFile::uread(buf, size);
+	fpos += len;
+	return len;
+    }
+    
+    return 0;
 }
 
 
@@ -83,57 +91,38 @@ size_t WvFileWatcher::uwrite(const void *buf, size_t size)
 }
 
 
-bool WvFileWatcher::select(time_t msec_timeout,
-			   bool readable = true, bool writable = false,
-			   bool isexception = false)
+// since you cannot really select() on a real file, we fake it:
+// select_setup() returns true if the file is longer than it was last time,
+// or you want to write to it.  Otherwise the file is "not ready."
+// Because this happens in select_setup, the file will only be checked as
+// often as your select() delay.  So infinite delays are a bad idea!
+bool WvFileWatcher::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
+			      bool readable, bool writable, bool isexception)
 {
     struct stat st;
     
     if (!once_ok) return false;
-
-    // if not waiting for r/w, then return true only if not waiting for
-    // an exception either.
-    if (!writable && !readable)
-	return !isexception;
     
-    struct timeval tv1, tv;
-    time_t timeused;
-    gettimeofday(&tv1, NULL);
-
-    for (;;)
+    if (writable)
+	return true; // always writable
+    
+    if (!readable)
+	return false; // what are you asking?
+    
+    // readable if the current location pointer is < size
+    if (fd >= 0 && readable && !fstat(fd, &st) && fpos < st.st_size)
+	return true;
+	    
+    // get the file open, at least
+    if (make_ok(false))
     {
-	// readable if the current location pointer is < size
-	if (fd >= 0 && readable && !fstat(fd, &st) && fpos < st.st_size)
+	// writable as long as file is open
+	if (writable)
 	    return true;
-	    
-	// get the file open, at least
-	if (make_ok(false))
-	{
-	    // writable as long as file is open
-	    if (writable)
-		return true;
-	    
-	    if (readable && fpos < last_st.st_size)
-		return true;
-	}
-    
-	gettimeofday(&tv, NULL);
-	timeused = ((tv.tv_sec - tv1.tv_sec)*1000
-		    + (tv.tv_usec - tv1.tv_usec)/1000);
-	if (msec_timeout >= 0 && msec_timeout <= timeused)
-	{
-	    return false; // not ready, timed out
-	}
 	
-	// wait for msec_timeout or 100ms, whichever is less
-	if (msec_timeout >= 0)
-	    usleep ((msec_timeout-timeused < 100 
-		     ? msec_timeout-timeused : 100) * 1000);
-	else
-	    usleep(100 * 1000);
+	if (readable && fpos < last_st.st_size)
+	    return true;
     }
     
     return false;
 }
-
-

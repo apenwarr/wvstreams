@@ -25,8 +25,6 @@ public:
     virtual bool isok() const;
     virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 			      bool readable, bool writable, bool isexception);
-    virtual bool select(time_t msec_timeout, bool readable = true,
-			bool writable = false, bool isexception = false);
     int getrfd() const
         { return rfd; }
     int getwfd() const

@@ -3,18 +3,12 @@
  *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
  * 
  * The WvFileWatcher class provides support for files which sometimes
- * have data appended at the end.  The WvStream::select() function is
- * overloaded to provide support for this as best we can (ie., polling
- * every 100ms or so).
+ * have data appended at the end.  It only polls as often as your select()
+ * delay, so be careful!
  * 
  * The file is rewound and reopened if its inode changes or its
  * length gets shorter, under the assumption that we will want to see the
  * entire contents of the new file.
- * 
- * IMPORTANT!! NOTE:
- * 
- * WvStreamList::select() cannot be used with this class, since the real
- * Unix select() call will not work properly with files.
  */
 #ifndef __WVWATCHER_H
 #define __WVWATCHER_H
@@ -40,9 +34,8 @@ public:
     virtual bool isok() const;
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
-    virtual bool select(time_t msec_timeout,
-			bool readable = true, bool writable = false,
-			bool isexception = false);
+    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
+			      bool readable, bool writable, bool isexception);
 };
 
 #endif // __WVWATCHER_H

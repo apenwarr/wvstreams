@@ -101,18 +101,6 @@ bool WvStreamClone::select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 }
 
 
-#if 0
-bool WvStreamClone::select(time_t msec_timeout,
-			   bool readable = true, bool writable = false,
-			   bool isexception = false)
-{
-    if (s())
-	return s()->select(msec_timeout, readable, writable, isexception);
-    return false;
-}
-#endif
-
-
 const WvAddr *WvStreamClone::src() const
 {
     if (s())

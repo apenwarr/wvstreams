@@ -7,10 +7,17 @@
 #include "wvlog.h"
 #include "strutils.h"
 
-int main()
+int main(int argc, char **argv)
 {
     WvLog log("modemtest"), modemlog("Rx");
-    WvModem modem("/dev/ttyS3", 19200);
+
+    if (argc < 2)
+    {
+	log("usage: modemtest <devname>\n");
+	return 1;
+    }
+    
+    WvModem modem(argv[1], 19200);
     unsigned char buf[1024];
     size_t len;
     bool last_carrier = false, carrier;

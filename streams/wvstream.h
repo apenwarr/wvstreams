@@ -102,13 +102,12 @@ public:
     // return true if any of the requested features are true on the stream.
     // If msec_timeout < 0, waits forever (bad idea!).  ==0, does not wait.
     // Otherwise, waits for up to msec_timeout milliseconds.
+    // To change the select() behaviour of a stream, change its select_setup
+    // and/or test_set functions.
     //
-    // Certain stream types may want to redefine this function.  The default
-    // calls standard Unix select() on the 'fd' member.
-    //
-    virtual bool select(time_t msec_timeout,
-			bool readable = true, bool writable = false,
-			bool isexception = false);
+    bool select(time_t msec_timeout,
+		bool readable = true, bool writable = false,
+		bool isexception = false);
 
     // get the remote address from which the last data block was received.
     // May be NULL.  The pointer becomes invalid upon the next call to read().
