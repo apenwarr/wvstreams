@@ -37,7 +37,6 @@
 class WvEncoderStream : public WvStreamClone
 {
     bool is_closing;
-    bool is_eof;
     WvDynBuf readinbuf;
     WvDynBuf readoutbuf;
     WvDynBuf writeinbuf;

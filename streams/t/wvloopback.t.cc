@@ -34,6 +34,7 @@ WVTEST_MAIN("loopback")
     loop.nowrite();
 }
 
+
 WVTEST_MAIN("loopback non-blocking")
 {
     WvLoopback *loop = new WvLoopback;
@@ -51,4 +52,27 @@ WVTEST_MAIN("loopback non-blocking")
     WVPASS(loop->isok());
 
     WVRELEASE(loop);
+}
+
+
+WVTEST_MAIN("loopback eof1")
+{
+    WvLoopback s;
+    s.nowrite(); // done sending
+    s.blocking_getline(1000);
+    WVFAIL(s.isok()); // should be eof now
+}
+
+
+WVTEST_MAIN("loopback eof2")
+{
+    WvLoopback s;
+    s.write("Hello\n");
+    s.write("nonewline");
+    s.nowrite();
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(100), "Hello");
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(100), "nonewline");
+    WVFAIL(s.isok());
 }

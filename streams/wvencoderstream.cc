@@ -11,7 +11,6 @@
 WvEncoderStream::WvEncoderStream(WvStream *_cloned) : WvStreamClone(_cloned)
 {
     is_closing = false;
-    is_eof = false;
     min_readsize = 0;
 }
 
@@ -24,6 +23,8 @@ WvEncoderStream::~WvEncoderStream()
 
 void WvEncoderStream::close()
 {
+    // fprintf(stderr, "Encoderstream close!\n");
+    
     // we want to finish the encoders even if !isok() since we
     // might just have encountered an EOF condition, and we want
     // to ensure that the remaining data is processed, but this
@@ -34,6 +35,7 @@ void WvEncoderStream::close()
     // finish encoders
     finish_read();
     finish_write();
+    
     // flush write chain and close the stream
     WvStreamClone::close();
 }
@@ -51,8 +53,7 @@ bool WvEncoderStream::isok() const
     if (!cloned || cloned->geterr() != 0)
         return false;
         
-    // handle deferred EOF condition
-    return !is_eof;
+    return true;
 }
 
 
@@ -98,7 +99,7 @@ bool WvEncoderStream::finish_read()
         success = false;
     checkreadisok();
     inbuf.merge(readoutbuf);
-    is_eof = true;
+    // noread();
     return success;
 }
 
@@ -111,12 +112,9 @@ bool WvEncoderStream::finish_write()
 
 void WvEncoderStream::pull(size_t size)
 {
-    if (is_eof)
-        return;
-
     // pull a chunk of unencoded input
     bool finish = false;
-    if (!readchain.isfinished() && cloned)
+    if (cloned)
     {
         if (size != 0)
             cloned->read(readinbuf, size);
@@ -138,15 +136,15 @@ void WvEncoderStream::pull(size_t size)
     if (finish)
     {
         readchain.finish(readoutbuf);
-        if (readoutbuf.used() == 0 && inbuf.used() == 0)
-            is_eof = true;
+        // if (readoutbuf.used() == 0 && inbuf.used() == 0)
+	//   noread();
         // otherwise defer EOF until the buffered data has been read
     }
     else if (!readoutbuf.used() && !inbuf.used() && readchain.isfinished())
     {
         // only get EOF when the chain is finished and we have no
         // more data
-        is_eof = true;
+	// noread();
     }
     checkreadisok();
 }
@@ -227,7 +225,7 @@ void WvEncoderStream::checkreadisok()
     if (!readchain.isok())
     {
         seterr(WvString("read chain: %s", readchain.geterror()));
-        is_eof = true;
+	noread();
     }
 }
 

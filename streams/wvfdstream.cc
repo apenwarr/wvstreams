@@ -72,6 +72,7 @@ WvFdStream::~WvFdStream()
 
 void WvFdStream::close()
 {
+    // fprintf(stderr, "closing fdstream!\n");
     if (!closed)
     {
 	WvStream::close();

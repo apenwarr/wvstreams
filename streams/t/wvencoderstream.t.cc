@@ -385,10 +385,33 @@ WVTEST_MAIN("Base64")
 }
 
 
-class CountStream : public WvStreamClone
+WVTEST_MAIN("encoderstream eof1")
+{
+    WvEncoderStream s(new WvLoopback);
+    s.nowrite(); // done sending
+    s.blocking_getline(1000);
+    WVFAIL(s.isok()); // should be eof now
+}
+
+
+WVTEST_MAIN("encoderstream eof2")
+{
+    WvEncoderStream s(new WvLoopback);
+    s.write("Hello\n");
+    s.write("nonewline");
+    s.nowrite();
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(100), "Hello");
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(100), "nonewline");
+    WVFAIL(s.isok());
+}
+
+
+class ECountStream : public WvStreamClone
 {
 public:
-    CountStream(IWvStream *s) : WvStreamClone(s)
+    ECountStream(IWvStream *s) : WvStreamClone(s)
         { }
     
     virtual size_t uread(void *buf, size_t len)
@@ -443,9 +466,45 @@ protected:
 // expect to add encoders later.
 #define READAHEAD (1)
 
+
+
+static void closecb(int *i, WvStream &s)
+{
+    (*i)++;
+}
+
+
+WVTEST_MAIN("encoderstream eof3")
+{
+    int closed = 0;
+    
+    {
+	WvLoopback *l = new WvLoopback;
+	WvEncoderStream s(l);
+	s.writechain.append(new_enc(), true);
+	s.readchain.append(new_dec(), true);
+	s.setclosecallback
+	    (WvBoundCallback<IWvStreamCallback, int *>(closecb, &closed));
+	
+	s.write("Hello\n");
+	s.write("nonewline");
+	WVPASS(s.isok());
+	WVPASSEQ(s.blocking_getline(100), "Hello");
+	WVPASS(s.isok());
+	l->nowrite();
+	WVPASSEQ(s.blocking_getline(100), "nonewline");
+	l->close();
+	s.runonce(100);
+	WVFAIL(s.isok());
+	WVPASSEQ(closed, 1);
+    }
+    WVPASSEQ(closed, 1);
+}
+
+
 WVTEST_MAIN("add filters midstream")
 {
-    WvEncoderStream s(new CountStream(new WvLoopback));
+    WvEncoderStream s(new ECountStream(new WvLoopback));
     
     // if we don't do this, the flush() commands below should be unnecessary.
     s.delay_output(true);

@@ -1,6 +1,7 @@
 #include "wvtest.h"
 #include "wvstream.h"
 #include "wvstreamclone.h"
+#include "wvloopback.h"
 
 WVTEST_MAIN("close() non-loopiness")
 {
@@ -23,4 +24,27 @@ WVTEST_MAIN("noread/nowrite")
     WVFAIL(s.write(buf, 1024) != 0);
     s.noread();
     WVPASS(!s.isok());
+}
+
+
+WVTEST_MAIN("streamclone eof1")
+{
+    WvStreamClone s(new WvLoopback);
+    s.nowrite(); // done sending
+    s.blocking_getline(1000);
+    WVFAIL(s.isok()); // should be eof now
+}
+
+
+WVTEST_MAIN("streamclone eof2")
+{
+    WvStreamClone s(new WvLoopback);
+    s.write("Hello\n");
+    s.write("nonewline");
+    s.nowrite();
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(100), "Hello");
+    WVPASS(s.isok());
+    WVPASSEQ(s.blocking_getline(100), "nonewline");
+    WVFAIL(s.isok());
 }

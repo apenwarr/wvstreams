@@ -35,6 +35,9 @@ public:
     { 
 	printf("countstream initializing.\n");
 	rcount = wcount = 0; yes_writable = block_writes = false;
+	int num = geterr();
+	printf("countstream error: %d (%s)\n", num, errstr().cstr());
+	printf("countstream new error: %d\n", geterr());
     }
     
     virtual ~CountStream()
@@ -49,9 +52,11 @@ public:
     
     virtual size_t uwrite(const void *buf, size_t count)
     {
+	fprintf(stderr, "I'm uwrite! (%d)\n", count);
 	if (block_writes)
 	    return 0;
 	size_t ret = WvStream::uwrite(buf, count);
+	assert(ret == count);
 	wcount += ret;
 	return ret;
     }
@@ -249,10 +254,17 @@ WVTEST_MAIN("autoforward and buffers")
     CountStream b;
     int val = 0;
     
+    fprintf(stderr, "a error: '%s'\n", a.errstr().cstr());
+    fprintf(stderr, "b error: '%s'\n", b.errstr().cstr());
+    
     a.autoforward(b);
     b.setcallback(val_cb, &val);
     
+    WVPASS(a.isok());
+    WVPASS(b.isok());
+    
     a.inbuf_putstr("astr");
+    WVPASSEQ(a.inbuf_used(), 4);
     a.runonce(0);
     WVPASS(!a.inbuf_used());
     b.runonce(0);

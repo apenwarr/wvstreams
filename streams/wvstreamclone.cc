@@ -47,20 +47,22 @@ WvStreamClone::~WvStreamClone()
 
 void WvStreamClone::noread()
 {
-#if 0 
+    // unlike nowrite(), it is safe to call cloned->noread() immediately.
+    // That will pass the shutdown(SHUT_RD) on to the deepest stream right
+    // away, but won't close anything until all the inbufs are empty.
     if (cloned)
 	cloned->noread();
-#endif
     WvStream::noread();
 }
 
 
 void WvStreamClone::nowrite()
 {
-#if 0 // this clone may have an unflushed buffer, so don't nowrite() now!
-    if (cloned)
+    // this sets stop_write.  We call cloned->nowrite() in flush_internal()
+    // when our outbuf is flushed (because until then, we *do* want to be
+    // able to write to the clone).
+    if (cloned && !outbuf.used())
 	cloned->nowrite();
-#endif
     WvStream::nowrite();
 }
 
@@ -81,7 +83,11 @@ void WvStreamClone::close()
 bool WvStreamClone::flush_internal(time_t msec_timeout)
 {
     if (cloned)
+    {
+	if (stop_write && !outbuf.used())
+	    cloned->nowrite();
         return cloned->flush(msec_timeout);
+    }
     else
 	return true;
 }
