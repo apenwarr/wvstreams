@@ -124,7 +124,7 @@ size_t WvUDPStream::uwrite(const void *buf, size_t count)
     if (out < 0 && errno == EACCES) // permission denied
 	seterr(EACCES);
     
-    free(to);
+    delete to;
     
     // errors in UDP are ignored
     // pretend that the write always succeeds even if the kernel
