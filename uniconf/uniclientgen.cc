@@ -52,7 +52,7 @@ static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
     conn(NULL), log(WvString("UniClientGen to %s",
-    dst.isnull() ? WvString(*stream->src()) : dst)),
+    dst.isnull() ? WvStringParm(*stream->src()) : dst)),
     cmdinprogress(false), cmdsuccess(false)
 {
     conn = new UniClientConn(stream, dst);
