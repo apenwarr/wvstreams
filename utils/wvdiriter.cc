@@ -9,10 +9,12 @@
 
 #include "wvdiriter.h"
 
-WvDirIter::WvDirIter( WvString _dirname )
-/***************************************/
+WvDirIter::WvDirIter( WvString _dirname, bool _recurse )
+/******************************************************/
 : dirname( _dirname )
 {
+    recurse = _recurse;
+
     dent = NULL;
     child = NULL;
 
@@ -56,13 +58,22 @@ const WvDirEnt& WvDirIter::operator () () const
         return( info );
 }
 
+const WvDirEnt * WvDirIter::operator -> () const
+/**********************************************/
+{
+    if( child )
+        return( &(*child) () );
+    else
+        return( &info );
+}
+
 bool WvDirIter::next()
 /********************/
 // use readdir... and if that returns a directory, make a child and recurse
 // into it.  If there's already a child, call ITS next() instead of ours.
 {
     // recurse?
-    if( !child && dent && S_ISDIR( info.mode ) )
+    if( recurse && !child && dent && S_ISDIR( info.st_mode ) )
         child = new WvDirIter( info.fullname );
 
     if( child ) {
@@ -76,20 +87,19 @@ bool WvDirIter::next()
 
     if( d ) {
         bool ok = false;
-        struct stat st;
         WvString fname;
         do {
             dent = readdir( d );
             if( dent ) {
                 fname = WvString( "%s/%s", dirname, dent->d_name );
-                ok = ( lstat( fname, &st ) == 0
+                ok = ( lstat( fname, &info ) == 0
                             && strcmp( dent->d_name, "." )
                             && strcmp( dent->d_name, ".." ) );
             }
         } while( dent && !ok );
 
         if( dent )
-            fill_info( fname, st );
+            info.fullname = fname;
         else {
             closedir( d );
             d = NULL;
@@ -101,22 +111,3 @@ bool WvDirIter::next()
     return( dent != NULL );
 }
 
-void WvDirIter::fill_info( WvString& fullname, struct stat& st )
-/**************************************************************/
-{
-    info.dev        = st.st_dev;
-    info.ino        = st.st_ino;
-    info.mode       = st.st_mode;
-    info.nlink      = st.st_nlink;
-    info.uid        = st.st_uid;
-    info.gid        = st.st_gid;
-    info.rdev       = st.st_rdev;
-    info.size       = st.st_size;
-    info.blksize    = st.st_blksize;
-    info.blocks     = st.st_blocks;
-    info.atime      = st.st_atime;
-    info.mtime      = st.st_mtime;
-    info.ctime      = st.st_ctime;
-
-    info.fullname   = fullname;
-}

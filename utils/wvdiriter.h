@@ -16,25 +16,11 @@
 
 #include "wvstring.h"
 
-struct WvDirEnt
-/*************/
+struct WvDirEnt : public stat
+/***************************/
 {
-    // copied directly from struct stat
-    dev_t           dev;
-    ino_t           ino;
-    mode_t          mode;
-    nlink_t         nlink;
-    uid_t           uid;
-    gid_t           gid;
-    dev_t           rdev;
-    off_t           size;
-    unsigned long   blksize;
-    unsigned long   blocks;
-    time_t          atime;
-    time_t          mtime;
-    time_t          ctime;
-
-    // and, since it's useful
+    // we already have everything from struct stat, but we also want the
+    // fullname, since it's useful
     WvString        fullname;
 };
 
@@ -42,7 +28,7 @@ class WvDirIter
 /*************/
 {
 public:
-    WvDirIter( WvString _dirname );
+    WvDirIter( WvString _dirname, bool _recurse=true );
     ~WvDirIter();
 
     bool isok() const;
@@ -50,9 +36,11 @@ public:
     bool next();
 
     const WvDirEnt& operator () () const;
+    const WvDirEnt * operator -> () const;
 
 private:
-    WvString dirname;
+    WvString    dirname;
+    bool        recurse;
 
     WvDirIter * child;
 

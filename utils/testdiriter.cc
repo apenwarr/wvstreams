@@ -12,15 +12,25 @@
 int main( int argc, char * argv[] )
 /*********************************/
 {
-    if( argc < 2 ) {
-        fprintf( stderr, "Specify a directory.\n" );
+    WvString dirname;
+    bool     recurse = false;
+
+    for( int i=1; i<argc; i++ ) {
+        if( !strcmp( argv[i], "-R" ) )
+            recurse = true;
+        else
+            dirname = argv[i];
+    }
+
+    if( !dirname ) {
+        fprintf( stderr, "Usage: %s [-R] directory\n", argv[0] );
         return( -1 );
     }
 
-    WvDirIter i( argv[1] );
+    WvDirIter i( dirname, recurse );
     for( i.rewind(); i.next(); ) {
-        printf( "%s -- mode %u -- size %lu\n", (const char *) i().fullname,
-                                               i().mode, i().size );
+        printf( "%s -- mode %u -- size %lu\n", (const char *) i->fullname,
+                                               i->st_mode, i->st_size );
     }
 
     return( 0 );
