@@ -13,59 +13,84 @@
 #include <malloc.h> // for alloca()
 #include <setjmp.h>
 #include <unistd.h> // for sleep()
+#include <assert.h>
 
 class WvTaskMan;
 
 class WvTask
 {
-public:
+    friend WvTaskMan;
     typedef void TaskFunc(WvTaskMan &man, void *userdata);
     
-    static int taskcount, numtasks;
+    static int taskcount, numtasks, numrunning;
+    WvString name;
     int tid;
     
-    WvTask(WvTaskMan &man, size_t stacksize = 64*1024);
-    virtual ~WvTask();
-    
-    void start(TaskFunc *func, void *userdata);
+    size_t stacksize;
+    bool running, recycled;
     
     WvTaskMan &man;
     jmp_buf mystate;	// used for resuming the task
     
     TaskFunc *func;
     void *userdata;
+    
+    WvTask(WvTaskMan &_man, size_t _stacksize = 64*1024);
+public:
+    virtual ~WvTask();
+    
+    void start(const WvString &_name, TaskFunc *_func, void *_userdata);
+    bool isrunning() const
+        { return running; }
+    void recycle();
 };
 
-DeclareWvList(WvTask);
 
-int WvTask::taskcount, WvTask::numtasks;
+int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 
 
 class WvTaskMan
 {
-public:
-    WvTaskMan();
-    virtual ~WvTaskMan();
-    
-    void run(WvTask &task, int val = 1);
-    int yield();
+    friend WvTask;
+    DeclareWvList(WvTask);
+    WvTaskList free_tasks;
     
     void get_stack(WvTask &task, size_t size);
     void stackmaster();
     void _stackmaster();
-    void _stackmaster_go();
+    void do_task();
     jmp_buf stackmaster_task;
     
     WvTask *stack_target;
     jmp_buf get_stack_return;
     
     WvTask *current_task;
-    jmp_buf *return_here;
+    jmp_buf toplevel;
+    
+public:
+    
+    WvTaskMan();
+    virtual ~WvTaskMan();
+    
+    WvTask *start(const WvString &name,
+		  WvTask::TaskFunc *func, void *userdata,
+		  size_t stacksize = 64*1024);
+    
+    // run() and yield() return the 'val' passed to run() when this task
+    // was started.
+    int run(WvTask &task, int val = 1);
+    int yield(int val = 1);
+    
+    WvTask *whoami() const
+        { return current_task; }
 };
 
 
-WvTask::WvTask(WvTaskMan &_man, size_t stacksize) : man(_man)
+WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 {
+    stacksize = _stacksize;
+    running = false;
+    
     tid = ++taskcount;
     numtasks++;
     
@@ -79,14 +104,36 @@ WvTask::~WvTask()
 {
     numtasks--;
     printf("task %d stopping (%d tasks left)\n", tid, numtasks);
+    
+    if (running)
+    {
+	printf("WARNING: task %d was running -- bad stuff may happen!\n",
+	       tid);
+	numrunning--;
+    }
 }
 
 
-void WvTask::start(TaskFunc *_func, void *_userdata)
+void WvTask::start(const WvString &_name, TaskFunc *_func, void *_userdata)
 {
-    printf("task %d starting\n", tid);
+    assert(!recycled);
+    name = _name;
+    name.unique();
+    printf("task %d (%s) starting\n", tid, (const char *)name);
     func = _func;
     userdata = _userdata;
+    running = true;
+    numrunning++;
+}
+
+
+void WvTask::recycle()
+{
+    if (!running && !recycled)
+    {
+	man.free_tasks.append(this, true);
+	recycled = true;
+    }
 }
 
 
@@ -94,7 +141,6 @@ WvTaskMan::WvTaskMan()
 {
     printf("task manager up\n");
     current_task = NULL;
-    return_here = NULL;
     
     if (setjmp(get_stack_return) == 0)
     {
@@ -108,58 +154,90 @@ WvTaskMan::WvTaskMan()
 WvTaskMan::~WvTaskMan()
 {
     printf("task manager down\n");
+    if (WvTask::numrunning != 0)
+	printf("WARNING!  %d tasks still running at WvTaskMan shutdown!\n",
+	       WvTask::numrunning);
 }
 
 
-void WvTaskMan::run(WvTask &task, int val)
+WvTask *WvTaskMan::start(const WvString &name, 
+			 WvTask::TaskFunc *func, void *userdata,
+			 size_t stacksize)
 {
-    // save the previous task state
-    jmp_buf *old_buf = return_here;
+    WvTask *t;
+    
+    WvTaskList::Iter i(free_tasks);
+    for (i.rewind(); i.next(); )
+    {
+	if (i().stacksize >= stacksize)
+	{
+	    t = &i();
+	    i.link->auto_free = false;
+	    i.unlink();
+	    t->recycled = false;
+	    t->start(name, func, userdata);
+	    return t;
+	}
+    }
+    
+    // if we get here, no matching task was found.
+    t = new WvTask(*this, stacksize);
+    t->start(name, func, userdata);
+    return t;
+}
+
+
+int WvTaskMan::run(WvTask &task, int val)
+{
+    if (&task == current_task)
+	return val; // that's easy!
+    
+    printf("WvTaskMan: switching to task #%d (%s)\n",
+	   task.tid, (const char *)task.name);
+    
     WvTask *old_task = current_task;
-    
-    jmp_buf runbuf;
-    
-    if (current_task)
-	return_here = &current_task->mystate;
-    else
-	return_here = &runbuf;
     current_task = &task;
+    jmp_buf *state;
     
-    int newval = setjmp(*return_here);
+    if (!old_task)
+	state = &toplevel; // top-level call (not in an actual task yet)
+    else
+	state = &old_task->mystate;
+    
+    int newval = setjmp(*state);
     if (newval == 0)
     {
-	// our state has been saved; run the task.
+	// saved the state, now run the task.
 	longjmp(task.mystate, val);
-	
-	// (not reached)
     }
     else
     {
-	// we're back via the longjmp, so the task has done yield().
-	return_here = old_buf;
+	// someone did yield() (if toplevel) or run() on our task; exit
 	current_task = old_task;
-	return;
+	return newval;
     }
 }
 
 
-int WvTaskMan::yield()
+int WvTaskMan::yield(int val)
 {
     if (!current_task)
 	return 0; // weird...
     
-    int val = setjmp(current_task->mystate);
+    printf("WvTaskMan: yielding from task #%d (%s)\n",
+	   current_task->tid, (const char *)current_task->name);
     
-    if (val == 0)
+    int newval = setjmp(current_task->mystate);
+    if (newval == 0)
     {
-	// saved the task state; now yield to the caller of run().
-	longjmp(*return_here, 1);
+	// saved the task state; now yield to the toplevel.
+	longjmp(toplevel, val);
     }
     else
     {
-	// back via longjmp, because someone called run().  Let's go
+	// back via longjmp, because someone called run() again.  Let's go
 	// back to our running task...
-	return val;
+	return newval;
     }
 }
 
@@ -210,7 +288,7 @@ void WvTaskMan::_stackmaster()
 	else
 	{
 	    // set up a stack frame for the task
-	    _stackmaster_go();
+	    do_task();
 	    
 	    // allocate the stack area so we never use it again
 	    void *x = alloca(val * (size_t)1024);
@@ -220,7 +298,7 @@ void WvTaskMan::_stackmaster()
 }
 
 
-void WvTaskMan::_stackmaster_go()
+void WvTaskMan::do_task()
 {
     WvTask *task = stack_target;
     
@@ -242,8 +320,13 @@ void WvTaskMan::_stackmaster_go()
 	for (;;)
 	{
 	    printf("stackmaster 6\n");
-	    if (task->func)
+	    if (task->func && task->running)
+	    {
 		task->func(*this, task->userdata);
+		task->name = "DEAD";
+		task->running = false;
+		task->numrunning--;
+	    }
 	    printf("stackmaster 7\n");
 	    yield();
 	}
@@ -261,25 +344,24 @@ void gentask(WvTaskMan &man, void *userdata)
     
     printf("Gentask starting %s\n", str);
     
-    for (;;) 
+    while (count < 3)
     {
 	printf("%s #%d -- %p\n", str, ++count, &str);
-	usleep(400*1000);
+	sleep(1);
 	if (count % 2)
 	{
-	    if (man.current_task == ga)
+	    if (man.whoami() == ga)
 	    {
-		printf("Doing gb\n");
+		printf("Doing gb:\n");
 		man.run(*gb);
 	    }
 	    else
 	    {
-		printf("Doing ga\n");
+		printf("Doing ga:\n");
 		man.run(*ga);
 	    }
 	}
 	
-	printf("%s yielding\n", str);
 	man.yield();
     }
     
@@ -290,19 +372,23 @@ void gentask(WvTaskMan &man, void *userdata)
 int main()
 {
     WvTaskMan man;
-    WvTask a(man), b(man);
     
-    ga = &a;
-    gb = &b;
+    ga = man.start("atask", gentask, (void *)"a");
+    gb = man.start("btask", gentask, (void *)"b");
     
-    a.start(gentask, (void *)"a");
-    b.start(gentask, (void *)"b");
-    
-    for (int x = 0; x < 50; x++)
+    for (int x = 0; x < 10; x++)
     {
-	printf("main\n");
-	man.run(a);
-	man.run(b);
+	printf("main1:\n");
+	man.run(*ga);
+	printf("main2:\n");
+	man.run(*gb);
+	
+	gb->recycle();
+	
+	if (!gb->isrunning())
+	    gb = man.start("bbtask", gentask, (void *)"bb");
+	if (!ga->isrunning())
+	    ga = man.start("aatask", gentask, (void *)"aa");
     }
     
     return 0;

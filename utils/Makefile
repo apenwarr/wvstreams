@@ -10,7 +10,8 @@ utils.a: base64.o verstring.o strutils.o wvstring.o \
 
 
 LIBS=${EFENCE}
-teststr testlist testhash stresshash testbuffer testbase64 testver: utils.a
+teststr testlist testhash stresshash testbuffer testbase64 \
+	testver testtask: utils.a
 
 clean:
 	rm -f teststr testlist testhash stresshash testbuffer \
