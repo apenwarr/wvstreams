@@ -147,7 +147,7 @@ WvTask *WvTaskMan::start(WvStringParm name,
 	if (i().stacksize >= stacksize)
 	{
 	    t = &i();
-	    i.link->set_autofree(false);
+	    i.link->auto_free = false;
 	    i.unlink();
 	    t->recycled = false;
 	    t->start(name, func, userdata);

@@ -9,14 +9,14 @@
  */
 #include "wvlinklist.h"
 
-WvLink::WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _autofree,
+WvLink::WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _auto_free,
 	       char *_id)
 {
     data = _data;
     next = prev->next;
     if (!next) tail = this;
     prev->next = this;
-    autofree = _autofree;
+    auto_free = (unsigned)_auto_free;
     id = _id;
 }
 

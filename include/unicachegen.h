@@ -28,6 +28,7 @@ class UniCacheGen : public UniTempGen
 protected:
     WvLog log;
     IUniConfGen *inner;
+    bool refreshed_once; //< we cache forever, so no need to re-refresh()
 
     void loadtree(const UniConfKey &key = "");
     void deltacallback(const UniConfKey &key, WvStringParm value,

@@ -8,7 +8,7 @@
 #export DH_VERBOSE=1
 export DH_OPTIONS
 
-base=libwvstreams3.80
+base=libwvstreams4.0
 # This is used the wvstreams makefile to set the .so links
 PKG=`pwd`/debian/${base}
 PKG_OGG=`pwd`/debian/${base}-ogg
@@ -25,7 +25,7 @@ configure-stamp:
         # Add here commands to configure the package.
         # There is no configuration necessary to build WvStreams
 	./configure --prefix=/usr --disable-debug --disable-verbose \
-		    --with-gtk --with-qt --with-vorbis --with-speex \
+		    --with-qt --with-vorbis --with-speex --with-openslp \
 		    --with-fam --with-fftw
 	touch configure-stamp
 
@@ -40,7 +40,8 @@ build-stamp-indep: configure-stamp
 	dh_testdir
 
 	$(MAKE) doxygen
-	$(MAKE) -C Docs/sgmlmanual html ps pdf
+#	pcolijn: this doesn't work any more
+#	$(MAKE) -C Docs/sgmlmanual html ps pdf
 
 	touch build-stamp-indep
 
@@ -86,15 +87,16 @@ install-indep: build-indep
 	dh_installdirs
 
 	# Install documents package
+	# pcolijn: commented out manual stuff since it doesn't build any more
 	install -d $(DOCDIR)
 	install -d $(DOCDIR)/html-api
-	install -d $(DOCDIR)/html-manual
+#	install -d $(DOCDIR)/html-manual
 	install -m644 Docs/doxy-html/* $(DOCDIR)/html-api/
-	install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
-		$(DOCDIR)/html-manual/
-	install -m644 Docs/sgmlmanual/wvstreams.ps \
-		Docs/sgmlmanual/wvstreams.pdf \
-		$(DOCDIR)
+#	install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
+#		$(DOCDIR)/html-manual/
+#	install -m644 Docs/sgmlmanual/wvstreams.ps \
+#		Docs/sgmlmanual/wvstreams.pdf \
+#		$(DOCDIR)
 
 
 # Build architecture-independent files here.
@@ -125,9 +127,11 @@ binary-arch: build install
 	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
-	dh_makeshlibs -a -plibwvstreams3.80-base -V -plibwvstreams3.80-gtk -V \
-                         -plibwvstreams3.80-qt -V -plibwvstreams3.80-fft -V \
-                         -plibwvstreams3.80-vorbis -V -plibwvstreams3.80-speex -V
+	dh_makeshlibs -a -plibwvstreams4.0-base -V \
+                         -plibwvstreams4.0-qt -V \
+			 -plibwvstreams4.0-fft -V \
+                         -plibwvstreams4.0-vorbis -V \
+			 -plibwvstreams4.0-speex -V
 	dh_installdeb -a   
 	dh_shlibdeps -a
 	dh_gencontrol -a

@@ -21,17 +21,6 @@ RSA *wv_d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length)
     return d2i_RSAPrivateKey(a, (void *)pp, length);
 }
 
-DSA *wv_d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length)
-{
-    return d2i_DSAPublicKey(a, (void *)pp, length);
-}
-
-
-DSA *wv_d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length)
-{
-    return d2i_DSAPrivateKey(a, (void *)pp, length);
-}
-
 
 X509_REQ *wv_d2i_X509_REQ(X509_REQ **a, const unsigned char **pp, long length)
 {

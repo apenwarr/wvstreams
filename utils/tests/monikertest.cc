@@ -60,7 +60,7 @@ int main()
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(IObject_IID);
     IObject *a = (IObject *)reg->create("obj:obj-a");
     IObject *b = (IObject *)reg->create("obj2:obj2-b");
-    RELEASE(reg);
+    WVRELEASE(reg);
     
     IObject *c = wvcreate<IObject>("obj2:obj2-c");
     
@@ -68,8 +68,8 @@ int main()
     if (d)
 	d->f();
 
-    RELEASE(a);
-    RELEASE(b);
-    RELEASE(c);
-    RELEASE(d);
+    WVRELEASE(a);
+    WVRELEASE(b);
+    WVRELEASE(c);
+    WVRELEASE(d);
 }

@@ -784,12 +784,12 @@ bool WvLinkedBufferStore::unlinksubbuffer(WvBufStore *buffer,
     WvLink *link = it.find(buffer);
     assert(link);
     
-    bool autofree = it.get_autofree();
+    bool autofree = it.link->auto_free;
     totalused -= buffer->used();
     if (buffer == list.first())
         maxungettable = 0;
     if (! allowautofree)
-        it.set_autofree(false);
+        it.link->auto_free = false;
     it.unlink(); // do not recycle the buffer
     return autofree;
 }
@@ -1108,8 +1108,8 @@ void WvLinkedBufferStore::do_xunlink(WvBufStoreList::Iter &it)
     if (buf == list.first())
         maxungettable = 0;
 
-    bool autofree = it.get_autofree();
-    it.set_autofree(false);
+    bool autofree = it.link->auto_free;
+    it.link->auto_free = false;
     it.xunlink();
     if (autofree)
         recyclebuffer(buf);

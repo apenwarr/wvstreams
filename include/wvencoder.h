@@ -596,10 +596,11 @@ public:
      *
      * If an encoder is in the chain multiple times, this will return
      * true if at least one instance is set to autofree.
+     * chain.
      *
      * "enc" is the encoder
      */
-    bool get_autofree(WvEncoder *enc) const;
+    bool get_autofree(WvEncoder *enc);
 
     /**
      * Sets the autofree state of a particular encoder in the chain.

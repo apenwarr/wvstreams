@@ -15,7 +15,7 @@
  * 
  * Note that WvLink itself is untyped to minimize the amount of
  * generated code.  This means that WvLink cannot handle the
- * autofree behaviour itself which would require static type
+ * auto_free behaviour itself which would require static type
  * information.  Instead, it defers this behaviour to the
  * template instantiation of WvList<T> that uses it.
  * 
@@ -26,27 +26,14 @@ public:
     void *data;
     WvLink *next;
     char *id;
+    unsigned auto_free : 1;
 
-private:
-    bool autofree : 1;
-
-public:
-    WvLink(void *_data, bool _autofree, char *_id = NULL)
-        { data = _data; next = NULL; autofree = _autofree;
+    WvLink(void *_data, bool _auto_free, char *_id = NULL)
+        { data = _data; next = NULL; auto_free = (unsigned)_auto_free;
 	    id = _id; }
 
-    WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _autofree,
+    WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _auto_free,
 	   char *_id = NULL);
-
-    bool get_autofree()
-    {
-	return autofree;
-    }
-
-    void set_autofree(bool _autofree)
-    {
-	autofree = _autofree;
-    }
 
     void unlink(WvLink *prev)
     {

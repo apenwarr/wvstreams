@@ -225,19 +225,30 @@ WVTEST_MAIN("mounting with paths prefixed by /")
 
 }
 
-#if BUG_5512_IS_RESOLVED
+#if 0 && BUG_5512_IS_RESOLVED
 WVTEST_MAIN("Deleting while iterating")
 {
     UniConfRoot root("temp:");
+    char *foo = new char[250];
     for (int i = 0; i < 10; i++)
+    {
         root.xsetint(i, i);
+        root[i].xsetint(i, i);
+    }
     
     UniConf::Iter i(root);
+    char *foo2 = new char[250];
     for (i.rewind(); i.next(); )
     {
-        i().setme(WvString());
+/*        if (i->getmeint() < 15 && i->getmeint() > 8)
+            for (int i2 = 0; i2 < 200; i2++)
+                root.xset(WvString("foo%s",i2), "blargseshs");
+*/
+        fprintf(stderr, "%s\n", i->getme().cstr());
+        root[i->key()].setme(WvString::null);
         i.rewind();
     }
-    WVPASS("If not crashed && no valgrind errors");
+    deletev foo;
+    deletev foo2;
 }
 #endif

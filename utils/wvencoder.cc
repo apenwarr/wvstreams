@@ -375,12 +375,12 @@ void WvEncoderChain::prepend(WvEncoder *enc, bool autofree)
     encoders.prepend(new WvEncoderChainElem(enc, autofree), true);
 }
 
-bool WvEncoderChain::get_autofree(WvEncoder *enc) const
+bool WvEncoderChain::get_autofree(WvEncoder *enc)
 {
     WvEncoderChainElemListBase::Iter i(encoders);
     for (i.rewind(); i.next(); )
     {
-	if ((i.ptr()->enc == enc) && (i.get_autofree()))
+	if ((i.ptr()->enc == enc) && (i.cur()->auto_free))
 	    return true;
     }
     return false;
@@ -399,11 +399,11 @@ void WvEncoderChain::set_autofree(WvEncoder *enc, bool autofree)
 	    {
 		if (first)
 		{
-		    i.set_autofree(true);
+		    i.cur()->auto_free = true;
 		    first = false;
 		}
 		else
-		    i.set_autofree(false);
+		    i.cur()->auto_free = false;
 	    }
 	}
     }
@@ -412,7 +412,7 @@ void WvEncoderChain::set_autofree(WvEncoder *enc, bool autofree)
 	// Clear autofree for all encoders
 	for (i.rewind(); i.next(); )
 	    if (i.ptr()->enc == enc)
-		i.set_autofree(false);
+		i.cur()->auto_free = false;
     }
 }
 

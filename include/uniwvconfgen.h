@@ -11,9 +11,7 @@
 #include "uniconfgen.h"
 
 class WvConf;
-/**
- * A UniConf generator for backwards compatibility with WvConf
- */
+
 class UniWvConfGen : public UniConfGen
 {
 private:

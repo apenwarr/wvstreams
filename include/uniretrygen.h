@@ -14,24 +14,7 @@
 
 /**
  * A UniConfGen that reconnects to an inner generator specified by
- * a moniker whenever the inner generator is no longer OK.  It will
- * try to periodically recreate the inner generator until the resulting
- * object returns isok() true.
- *
- * The UniRetryGen's moniker takes either of the forms retry:<inner moniker>
- * or retry:{<inner moniker> <retry timeout>}; in the second form the retry
- * timeout is specified in milliseconds.  If not specified, the retry timout
- * is 5000ms.  Specifically this means that whenever the retry generator is
- * does not have a good inner generator and at least 5000ms have passed 
- * since the disconnect or last reconnect attempt, reconnection will be 
- * attempted again.
- *
- * The connection is created through the underlying
- * backend's moniker and destroyed by delete.
- *
- * UniRetryGen can be used in combination with UniReplicateGen to create
- * a connection to a UniConf daemon that is robust against network
- * failures through a moniker such as replicate:{retry:tcp:192.168.0.1 tmp:}
+ * a moniker whenever the inner generator is no longer OK. 
  */
 class UniRetryGen : public UniFilterGen
 {

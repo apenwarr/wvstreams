@@ -65,15 +65,11 @@ public:
 	    return index <= table->numslots;
         }
 
-        bool get_autofree() const
-	{
-	    return IS_AUTO_FREE(table->xslots[index-1]);
-	}
+        bool get_autofree()
+            { return IS_AUTO_FREE(table->xslots[index-1]); }
 
-        void set_autofree(bool autofree)
-	{
-	    table->xslots[index-1].status = autofree ? 3 : 2;
-	}
+        void set_autofree(bool auto_free)
+            { table->xslots[index-1].status = auto_free ? 3 : 2; }
 
     protected:
         void *get() const { return table->xslots[index-1].data; }
@@ -94,11 +90,11 @@ protected:
     unsigned numslots;
 
     pair *genfind(const void *data, unsigned hash) const;
-    void _add(void *data, bool autofree);
-    void _add(void *data, unsigned hash, bool autofree);
+    void _add(void *data, bool auto_free);
+    void _add(void *data, unsigned hash, bool auto_free);
     void _remove(const void *data, unsigned hash);
     void _zap();
-    void _set_autofree(const void *data, unsigned hash, bool autofree);
+    void _set_autofree(const void *data, unsigned hash, bool auto_free);
     bool _get_autofree(const void *data, unsigned hash);
 
     virtual bool compare(const void *key, const void *elem) const = 0;
@@ -148,31 +144,17 @@ public:
     T *operator[] (const K &key) const
         { return (T *)(genfind(&key, WvHash(key))->data); }
 
-    void add(const T *data, bool autofree = false)
-        { _add((void *)data, hash(data), autofree); }
+    void add(const T *data, bool auto_free = false)
+        { _add((void *)data, hash(data), auto_free); }
 
     void remove(const T *data)
         { _remove(Accessor::get_key(data), hash(data)); }
 
-    void set_autofree(const K &key, bool autofree)
-    {
-	_set_autofree(key, WvHash(key), autofree);
-    }
-
-    void set_autofree(const T *data, bool autofree)
-    {
-	_set_autofree(Accessor::get_key(data), hash(data), autofree);
-    }
-
-    bool get_autofree(const K &key)
-    {
-	return _get_autofree(key, WvHash(key));
-    }
+    void set_autofree(const T *data, bool auto_free)
+        { _set_autofree(Accessor::get_key(data), hash(data), auto_free); }
 
     bool get_autofree(const T *data)
-    {
-	return _get_autofree(Accessor::get_key(data), hash(data));
-    }
+        { return _get_autofree(Accessor::get_key(data), hash(data)); }
 
     void zap()
         { _zap(); }

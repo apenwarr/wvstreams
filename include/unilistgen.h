@@ -13,7 +13,7 @@
 #include "uniconfgen.h"
 #include "wvscatterhash.h"
 
-/**
+/*
  * Accepts a list of UniConf generators, and stacks them, treating them as one
  * uniconf source.
  *
