@@ -138,23 +138,4 @@ private:
     void writemsg(WvStringParm message);
 };
 
-
-class UniDeltaStream : public WvStream
-{
-public:
-    UniDeltaStream(UniConfGen *_gen) : gen(_gen)
-        { WvIStreamList::globallist.append(this, false); }
-
-    virtual ~UniDeltaStream() { WvIStreamList::globallist.unlink(this); }
-
-    void delta(const UniConfKey &key, WvStringParm value);
-
-    virtual void execute();
-
-protected:
-    UniConfPairList deltas;
-    UniConfGen *gen;
-};
-
-
 #endif // __UNICONFCONN_H

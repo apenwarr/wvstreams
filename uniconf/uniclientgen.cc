@@ -38,8 +38,7 @@ static UniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_SSL_PORT);
     
-    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL, true),
-            _s);
+    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL, true), _s);
 }
 
 // if 'obj' is a WvStream, build the uniconf connection around that;
@@ -64,18 +63,23 @@ static WvMoniker<UniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 /***** UniClientGen *****/
 
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
-    conn(NULL), deltas(this), log(WvString("UniClientGen to %s",
+    conn(NULL), log(WvString("UniClientGen to %s",
     dst.isnull() ? *stream->src() : WvString(dst))),
     cmdinprogress(false), cmdsuccess(false)
 {
     conn = new UniClientConn(stream, dst);
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
+
+    deltastream.setcallback(WvStreamCallback(this, &UniClientGen::deltacb), 0);
+    WvIStreamList::globallist.append(&deltastream, false);
 }
 
 
 UniClientGen::~UniClientGen()
 {
+    WvIStreamList::globallist.unlink(&deltastream);
+
     conn->writecmd(UniClientConn::REQ_QUIT, "");
     delete conn;
 }
@@ -300,4 +304,22 @@ bool UniClientGen::RemoteKeyIter::next()
 UniConfKey UniClientGen::RemoteKeyIter::key() const
 {
     return UniConfKey(*i).last();
+}
+
+void UniClientGen::clientdelta(const UniConfKey &key, WvStringParm value)
+{
+    deltas.append(new UniConfPair(key, value), true);
+    deltastream.alarm(0);
+}
+
+void UniClientGen::deltacb(WvStream &, void *)
+{
+    hold_delta();
+    UniConfPairList::Iter i(deltas);
+
+    for (i.rewind(); i.next(); )
+        delta(i->key(), i->value());
+
+    deltas.zap();
+    unhold_delta();
 }

@@ -616,6 +616,9 @@ protected:
     static WvStream *globalstream;
 };
 
+class WvNullStream : public WvStream
+{ };
+
 
 /**
  * Console streams...
