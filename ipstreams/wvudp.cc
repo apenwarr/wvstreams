@@ -16,16 +16,18 @@
 WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
 	: localaddr(), remaddr(_rem)
 {
+    int x = 1;
     rwfd = socket(PF_INET, SOCK_DGRAM, 0);
     if (getfd() < 0 
 	|| fcntl(getfd(), F_SETFD, 1)
 	|| fcntl(getfd(), F_SETFL, O_RDWR | O_NONBLOCK)
+        || setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x)) < 0
 	)
     {
 	seterr(errno);
 	return;
     }
-    
+
     struct sockaddr *sa = _local.sockaddr();
     if (bind(getfd(), sa, _local.sockaddr_len()))
     {
