@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-WVTEST_MAIN("WvMagicLoopback") 
+WVTEST_MAIN("WvMagicLoopback Sanity") 
 {
     WvMagicLoopback ml(1024);
     
@@ -40,4 +40,19 @@ WVTEST_MAIN("WvMagicLoopback")
     }
     
     wait();
+}
+
+WVTEST_MAIN("WvMagicLoopback Non-Blocking Writes") 
+{
+    WvMagicLoopback ml(1024);
+
+    WVPASS(ml.isok());
+
+    for (int i=0; i<(1<<10); ++i)
+    {
+        char buf[1024] = "WvMagicLoopback Non-Blocking Writes";
+        ml.write(buf, sizeof(buf));
+    }
+
+    WVPASS(ml.isok());
 }
