@@ -17,8 +17,8 @@
 #include "wvhashtable.h"
 #include "wvsorter.h"
 
-DeclareWvList(WvString)
-DeclareWvTable(WvString)
+DeclareWvList(WvString);
+DeclareWvTable(WvString);
 
 int apples_to_oranges(const WvString *a, const WvString *b)
 {
