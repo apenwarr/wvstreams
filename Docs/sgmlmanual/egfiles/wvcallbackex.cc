@@ -1,9 +1,14 @@
+/** \file
+ * A WvCallback example.
+ */
+/** \example wvcallback.cc
+ */
 
 #include "wvcallback.h"
 #include <stdio.h>
 
 //Declare a new type of WvCallback called WvMath
-//This WvCallbak can point to functions that take 2 input parameters, both of type 
+//This WvCallbak can point to functions that take 2 input parameters, both of type
 //integer, and returns an integer value.
 DeclareWvCallback(2, int, WvMath, int, int);
 

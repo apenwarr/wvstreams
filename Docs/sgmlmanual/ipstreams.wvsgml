@@ -1,7 +1,22 @@
 WVPART(ipstreams, The IPStreams (TCP/IP sockets interface) Library,
  WVCHAPTER(basicip, Support Classes,
-  WVSECT1(wvaddr, WvAddr - storing an arbitrary network address, x)
-  WVSECT1(wvresolver, WvResolver - Background DNS name resolution, x)
+
+  WVSECT1(wvaddr, WvAddr - storing an arbitrary network address, 
+  
+  Device-independent and device-specific hardware/protocol address classes
+  that can store themselves efficiently as well as create a printable
+  string version of themselves.
+
+  WVEXAMPLE(wvhttpex.cc)
+  )
+  
+  WVSECT1(wvresolver, WvResolver - Background DNS name resolution, 
+   DNS name resolver with support for background lookups.
+   It is an aSynchronous DNS resolver functions, so that we can do non-blocking
+   lookups.
+
+   WVEXAMPLE(wvresolverex.cc)
+  )
  )
  WVCHAPTER(kernelip, Interfacing to Linux Kernel Features,
   WVSECT1(wvinterface, WvInterface - manipulating network interfaces, x)
@@ -9,9 +24,37 @@ WVPART(ipstreams, The IPStreams (TCP/IP sockets interface) Library,
   WVSECT1(wvipfirewall, WvIPFirewall - basic ipchains firewall interface, x)
   WVSECT1(wvipaliaser, WvIPAliaser - using Linux IP aliasing, x)
  )
- WVCHAPTER(wvudp, WvUDP - using udp datagrams, x)
+ WVCHAPTER(wvudp, WvUDP - using udp datagrams, 
+  WvUDPStream can send and receive packets on a connectionless UDP socket.
+ 
+  In the constructor, the socket is attached using bind() to the given
+  _local address.  If the address is 0.0.0.0, all addresses on the local
+  host are used; if the port is 0, an available port number is chosen
+  automatically.
+ 
+  If the _rem address is 0.0.0.0, the port is not connect()ed.  That means
+  it can receive packets from anywhere and send them to anywhere.  The
+  src() and setdest() functions are useful for this.  If _rem is not
+  0.0.0.0, connect() is called and the socket will only accept data to/from the
+  specified remote UDP address.
+ 
+  Buffering: all the usual WvStream-style input buffering is available,
+  including getline(), but because input packets may get lost it is of
+  limited usefulness.  Buffering will cause particular confusion if the
+  socket is not connect()ed.
+ 
+  WVEXAMPLE(wvudpex.cc)
+ )
  WVCHAPTER(wvudp2, WvUDP2 - logically separate udp datagram connections, x)
- WVCHAPTER(wvtcp, WvTCP - using tcp streams, x)
- WVCHAPTER(wvhttp, WvHTTP - HTTP URL downloader, x)
+ WVCHAPTER(wvtcp, WvTCP - using tcp streams, 
+  WvTCP is a WvStream-based TCP connection class.
+  WVEXAMPLE(wvtcpex.cc)
+ )
+
+ WVCHAPTER(wvhttp, WvHTTP - HTTP URL downloader,
+  WvHTTPStream connects to an HTTP server and allows the requested file
+  to be retrieved using the usual WvStream-style calls.
+  WVEXAMPLE(wvhttpex.cc)
+ )
 )
 

@@ -1,41 +1,49 @@
 /** \file
- * A WvLog example.
+ * A WvLogRcv example.
  */
-/** \example wvlogex.cc
- * Some text about this example...
+/** \example wvlogrcvex.cc
+ * Expected output:
+ *	logA<*1>: a message
+ *	logB<*2>: b message
+ *	logB<*2>: b message
+ *	logC<*3>: c message with extra newline
+ *	logC<*4>: c2 message
+ *	logA<Info>: a info message
+ *	logA<*1>: a normal message with [07][08] control chars
+ *	logA<*1>: a split
+ *	logB<*2>: message with stuff
+ *	logB<Info>: and other stuff.
+ *	logC<*3>: another split message.
  */
-#include <wvstreamlist.h>
-#include <wvpipe.h>
-#include <wvlog.h>
 
-void concallback(WvStream &con, void *userdata)
-{
-    WvStream &p = *(WvStream *)userdata;
-
-    char *str = con.getline(0);
-    if (str)
-        p.print("%s\n", str); //
-}
+#include "wvlogrcv.h"
 
 int main()
 {
-    const char *argv1[] = { "sh", "-c", "while :; do echo foo; sleep 3; done", NULL };
+    WvLog a("logA", WvLog::Debug), b("logB", WvLog::Debug2);
+    WvLog c("logC", WvLog::Debug3), c2 = c.split(WvLog::Debug4);
 
-    WvLog log1("logger_1", WvLog::Info);
-    WvPipe pipe1(argv1[0], argv1, false, true, false);
+    a("a message\n");
+    b("b message\n"); // prints twice -- once for rc, once for rc2
+    c("c message with extra newline\n\n"); // extra newline discarded
+    c2("c2 message\n");
 
-    pipe1.autoforward(log1);
-    wvcon->setcallback(concallback, wvout);
+    // the second line should be back at WvLog::Debug
+    a(WvLog::Info, "a info message\n");
+    a("a normal message with \a\b control chars\r\n");
 
-    WvStreamList l;
-    l.append(&pipe1, false);
-    l.append(wvcon, false);
+    // should display like this:
+    //  a split // message with stuff // and other stuff
+    a("a split ");
+    b("message ");
+    b("with stuff ");
+    b(WvLog::Info, "and other stuff.\n");
 
-    while (wvcon->isok())
-    {
-        if (l.select(1000))
-            l.callback();
-        else
-            log1("[TICK]\n");
-    }
+    // should display all on one line
+    c("another split ");
+    c2(WvLog::Debug3, "message.");
+
+    // should auto-terminate line on exit
+
+    return 0;
 }

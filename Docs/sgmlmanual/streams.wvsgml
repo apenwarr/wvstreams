@@ -261,13 +261,16 @@ WVPART(streams, The Streams Library,
     output, you can easily just select() on this pipe, which will return true 
     when the program has something interesting for you.
 
+    WvPipes allow you to create a new process, and attaching its stdin/stdout to a WvStream.
+
     Insert Example Here...
   )
   
   WVSECT1(wvmodem, WvModem - baud rates and terminal modes,
-    Not written yet.
+   Definition of the WvModemBase and WvModem classes.  Inherit from WvFile,
+   but do various important details related to modems, like setting baud
+   rates and dropping DTR and the like.
   )
-  
  )
  
  WVCHAPTER(logs, Dealing with Log Messages,
@@ -282,13 +285,48 @@ log.print("string\nfoo");)
    will print:
    WVCMD(appname(lvl): test string
 appname(lvl): foo)
-
-   An example for WvLog:
-   WVEXAMPLE(wvlogex.cc)
+   
+   See also, WvLogRcv.
   )
-  WVSECT1(wvlogrcv, WvLogRcv - receiving and disposing of log messages, x)
-  WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, x)
-  WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
+
+  WVSECT1(wvlogrcv, WvLogRcv - receiving and disposing of log messages, 
+   
+   WvLogRcv is an enhanced "Log Receiver" classes for WvLog. WvLogRcv-derived 
+   classes support automatic formatting of log lines with a prefix, removing 
+   control characters, and so on, to keep track of line-prefix-printing 
+   and other formatting information.
+  
+   WvLogRcv supports partial- and multiple-line log messages, like WvLog.
+   
+   An example:
+   WVEXMAPLE(wvlogex.cc)
+  )
+  
+  WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, 
+   
+   WvLogBuffer is a descendant of WvLogRcv that buffers log messages for
+   later use.  It only keeps up to max_lines log entries for every
+   source/debug level, s.t. debug level <= max_level 
+  
+   WVEXAMPLE(wvlogbufex.cc)
+  )
+  
+  WVSECT1(wvlogfile, WvLogFile - sending log messages to a file,
+   A "Log Receiver" that logs messages to a file.
+
+   WVEXAMPLE(wvlogfileex.cc)
+  )
+  
+  WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, 
+   WvSyslog is a descendant of WvLogRcv that sends messages to the syslogd
+   daemon.
+  )
+
+  WVSECT1(pipelogex, An example of WvPipe and WvLog together,
+   WVEXAMPLE(wvpipelogex.cc)
+  )
+
+
  )
  
  WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams,
@@ -383,39 +421,83 @@ appname(lvl): foo)
     modem device via the console.
 
     WVEXAMPLE(wvstreamfunex.cc)
-    
   )
-
  )
  
  WVCHAPTER(magicstreams, Some Magical Streams,
   WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream,
-    WvStreamclone is probably one of the coolest, and most confusing
-    parts within the WvStream library. Almost everyone who has ever
-    encountered this stream the first time has had to stop and go over
-    it a few times before they can wrap their head around what is
-    going on. Ok.. now that I've scared you... I'm going to tell you
-    that it is really quite easy. Most of the time, when you are using
-    a WvStreamClone, you will be doing something like the following:
+   WvStreamclone is probably one of the coolest, and most confusing
+   parts within the WvStream library. Almost everyone who has ever
+   encountered this stream the first time has had to stop and go over
+   it a few times before they can wrap their head around what is
+   going on. Ok.. now that I've scared you... I'm going to tell you
+   that it is really quite easy. Most of the time, when you are using
+   a WvStreamClone, you will be doing something like the following:
 
-    1. Start a Stream on a TCP Connection
-    2. Change this Stream into something else (like an SSL Stream)
-    3. And then talk some sort of high level protocol (like HTTP)
+   1. Start a Stream on a TCP Connection
+   2. Change this Stream into something else (like an SSL Stream)
+   3. And then talk some sort of high level protocol (like HTTP)
 
-    So you have one stream (a TCP Connection), that morphs into
-    another stream TYPE (an SSL Stream), that then becomes another
-    stream (talking HTTP). All the while, not changing the stream that
-    was started and added to the original WvStreamList.
+   So you have one stream (a TCP Connection), that morphs into
+   another stream TYPE (an SSL Stream), that then becomes another
+   stream (talking HTTP). All the while, not changing the stream that
+   was started and added to the original WvStreamList.
 
-    Insert Example here...
-)
+   WvStreamClone simply forwards all requests to the "cloned" stream.
+   A class derived from WvStreamClone can contain a WvStream as a
+   dynamically allocated data member, but act like the stream itself.
+ 
+   This is useful for classes that need to create/destroy WvPipes
+   while they run, for example, yet do not want users to know about
+   the member variable.
+  
+   WvStreamClone _does_ attempt to close the cloned stream in the
+   destructor.
+
+   Insert Example here...
+  )
+
   WVSECT1(wvsplitstream, WvSplitStream - separating read and write streams, x)
-  WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), x)
+  
+  WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), 
+   WvLoopback uses a socketpair() to create a stream that allows you to read()
+   everything written to it, even (especially) across a fork() call.
+  )
  )
  
  WVCHAPTER(unusualstreams, Some Unusual Streams,
-   WVSECT1(wvtimestream, WvTimeStream - timed events, x)
-   WVSECT1(wvprotostream, WvProtoStream - a protocol state machine, x)
+   WVSECT1(wvtimestream, WvTimeStream - timed events, 
+    WvTimeStream causes select() to be true after a configurable number
+    of milliseconds.  Because programs using WvStream make no guarantees
+    about how often select() will be called, WvTimeStream tries to adjust
+    its timing to a correct _average_ number of milliseconds per tick.
+ 
+    For example, if ms_per_tick=100, WvTimeStream will tick 10 times in one
+    second.  However, there may be a few milliseconds of difference
+    ("jitter") for each individual tick, due to random system delays.
+
+    WVEXAMPLE(wvtimeex.cc)
+   )
+   
+   WVSECT1(wvtimeoutstream, WvTimeOutStream - timed out,
+    WvTimeoutStream is a stream that becomes !isok() after a
+    configurable number of milliseconds. It will wake up a select(). It
+    will return true if select()ed and that the timeout has
+    expired. But using it in a WvStreamList will not have it call the
+    callback/execute because the WvStreamList checks whether isok() is
+    true before doing the select().
+    
+    WVEXAMPLE(wvtimeoutex.cc)
+   )
+
+   WVSECT1(wvprotostream, WvProtoStream - a protocol state machine, 
+
+    WvProtoStream is a framework that makes it easy to communicate using
+    common command-response driven protocols.  This is supposed to be
+    flexible enough to handle FTP, HTTP, SMTP, tunnelv, Weaver rcmd, and
+    many others.
+
+   )
  )
 
  WVCHAPTER(wvcallback, The Magic of WvCallBack,
