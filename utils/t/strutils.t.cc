@@ -737,3 +737,60 @@ WVTEST_MAIN("substr")
     WVPASS(substr(big, 10, 1) == "");
 }
 
+WVTEST_MAIN("cstr_escape")
+{
+    WVPASS(cstr_escape(NULL, 0).isnull());
+    WVPASS(cstr_escape("", 0) == "\"\"");
+    WVPASS(cstr_escape("\"", 1) == "\"\\\"\"");
+    WVPASS(cstr_escape("\\", 1) == "\"\\\\\"");
+    WVPASS(cstr_escape("\a", 1) == "\"\\a\"");
+    WVPASS(cstr_escape("\b", 1) == "\"\\b\"");
+    WVPASS(cstr_escape("\r", 1) == "\"\\r\"");
+    WVPASS(cstr_escape("\t", 1) == "\"\\t\"");
+    WVPASS(cstr_escape("\n", 1) == "\"\\n\"");
+    WVPASS(cstr_escape("\v", 1) == "\"\\v\"");
+    WVPASS(cstr_escape("\0", 1) == "\"\\0\"");
+    WVPASS(cstr_escape("a", 1) == "\"a\"");
+    WVPASS(cstr_escape("\xFF", 1) == "\"\\xFF\"");
+}
+
+WVTEST_MAIN("cstr_escape_unescape")
+{
+    int i;
+    const size_t max_size = 256;
+    char orig_data[max_size], data[max_size];
+    size_t size;
+   
+    for (i=0; i<256; ++i)
+        orig_data[i] = (char)i;
+    
+    WVPASS(cstr_unescape(cstr_escape(orig_data, max_size), data, max_size, size)
+            && size == max_size && memcmp(orig_data, data, size) == 0);
+}
+
+WVTEST_MAIN("cstr_unescape")
+{
+    const size_t max_size = 16;
+    char data[max_size];
+    size_t size;
+   
+    // Tests for detection of misformatting
+    WVFAIL(cstr_unescape(WvString::null, data, max_size, size) || size);
+    WVFAIL(cstr_unescape("", data, max_size, size) || size);
+    WVFAIL(cstr_unescape("garbage", data, max_size, size) || size);
+    WVFAIL(cstr_unescape("\"", data, max_size, size) || size);
+    WVFAIL(cstr_unescape(" \"\" ", data, max_size, size) || size);
+    WVFAIL(cstr_unescape("\"\" ", data, max_size, size) || size);
+
+    // Tests for correcly formatted strings with enough space
+    WVPASS(cstr_unescape("\"\"", data, max_size, size) && size == 0);
+    WVPASS(cstr_unescape("\"four\"", data, max_size, size)
+            && size == 4 && memcmp(data, "four", size) == 0);
+    WVPASS(cstr_unescape("\"sixteencharacter\"", data, max_size, size)
+            && size == 16 && memcmp(data, "sixteencharacter", size) == 0);
+
+    // Test for correctly formatted string without enough space
+    WVPASS(!cstr_unescape("\"nsixteencharacter\"", data, max_size, size)
+            && size == 17 && memcmp(data, "nsixteencharacter", max_size) == 0);
+}
+
