@@ -394,6 +394,12 @@ WvString beforestr(WvStringParm line, WvStringParm a);
  */
 WvString substr(WvString line, unsigned int pos, unsigned int len);
 
+/** 
+ * Removes any trailing punctuation ('.', '?', or '!') from the line, and
+ * returns it in a new string.  Does not modify line.
+ */
+WvString depunctuate(WvStringParm line);
+
 // Converts a string in decimal to an arbitrary numeric type
 template<class T>
 bool wvstring_to_num(WvStringParm str, T &n)
