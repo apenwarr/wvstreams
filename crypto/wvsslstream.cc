@@ -15,6 +15,7 @@
 #undef errno
 #define errno GetLastError()
 typedef DWORD error_t;
+#undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
 #endif
 

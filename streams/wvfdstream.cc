@@ -18,6 +18,7 @@
 #define SHUT_RD SD_RECEIVE
 #define SHUT_WR SD_SEND
 #define ENOBUFS WSAENOBUFS
+#undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
 
 // streams.cpp

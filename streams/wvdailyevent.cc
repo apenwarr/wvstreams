@@ -16,8 +16,11 @@
 #include "wvdailyevent.h"
 
 #include <time.h>
+
+#ifndef _WIN32
 #include <sys/time.h>
 #include <unistd.h>
+#endif
 
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day)
 {

@@ -16,11 +16,6 @@
 #include "wvstringlist.h"
 #include "wvhex.h"
 
-#ifdef _WIN32
-#define strncasecmp _strnicmp
-#define strcasecmp _stricmp
-#endif
-
 /** \file
  * Various little string functions
  */

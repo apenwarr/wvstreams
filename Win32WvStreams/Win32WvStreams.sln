@@ -1,30 +1,16 @@
 Microsoft Visual Studio Solution File, Format Version 8.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utils", "utils\utils.vcproj", "{475A4DD8-6E72-49D5-99A5-F4CA78A2A440}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libwvutils", "libwvutils\libwvutils.vcproj", "{14E0E229-BD80-481D-B59D-40512DB4BE90}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "winstreams", "winstreams\winstreams.vcproj", "{8D97A952-740C-4420-A63B-1793F1A8C511}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libwvstreams", "libwvstreams\libwvstreams.vcproj", "{417DFBB1-F315-4903-9D63-8054A069A9D2}"
 	ProjectSection(ProjectDependencies) = postProject
+		{14E0E229-BD80-481D-B59D-40512DB4BE90} = {14E0E229-BD80-481D-B59D-40512DB4BE90}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "streams", "streams\streams.vcproj", "{7F383590-1155-464B-A463-D10806498E17}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libuniconf", "libuniconf\libuniconf.vcproj", "{411CE682-0606-4EAB-8C85-B1B44E2F72F7}"
 	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ipstreams", "ipstreams\ipstreams.vcproj", "{AEC91723-F3F9-487E-9C9D-26F25BCBAE72}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crypto", "crypto\crypto.vcproj", "{D49901E2-9914-460E-A5E8-C65FB78080F2}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "urlget", "urlget\urlget.vcproj", "{0C11F188-A70B-4662-A174-BC1166B7C584}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "uniconf", "uniconf\uniconf.vcproj", "{1477D43E-2496-43F4-A7E9-BAE3947987CC}"
-	ProjectSection(ProjectDependencies) = postProject
+		{417DFBB1-F315-4903-9D63-8054A069A9D2} = {417DFBB1-F315-4903-9D63-8054A069A9D2}
 	EndProjectSection
 EndProject
 Global
@@ -33,34 +19,18 @@ Global
 		Release = Release
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
-		{475A4DD8-6E72-49D5-99A5-F4CA78A2A440}.Debug.ActiveCfg = Debug|Win32
-		{475A4DD8-6E72-49D5-99A5-F4CA78A2A440}.Debug.Build.0 = Debug|Win32
-		{475A4DD8-6E72-49D5-99A5-F4CA78A2A440}.Release.ActiveCfg = Release|Win32
-		{475A4DD8-6E72-49D5-99A5-F4CA78A2A440}.Release.Build.0 = Release|Win32
-		{8D97A952-740C-4420-A63B-1793F1A8C511}.Debug.ActiveCfg = Debug|Win32
-		{8D97A952-740C-4420-A63B-1793F1A8C511}.Debug.Build.0 = Debug|Win32
-		{8D97A952-740C-4420-A63B-1793F1A8C511}.Release.ActiveCfg = Release|Win32
-		{8D97A952-740C-4420-A63B-1793F1A8C511}.Release.Build.0 = Release|Win32
-		{7F383590-1155-464B-A463-D10806498E17}.Debug.ActiveCfg = Debug|Win32
-		{7F383590-1155-464B-A463-D10806498E17}.Debug.Build.0 = Debug|Win32
-		{7F383590-1155-464B-A463-D10806498E17}.Release.ActiveCfg = Release|Win32
-		{7F383590-1155-464B-A463-D10806498E17}.Release.Build.0 = Release|Win32
-		{AEC91723-F3F9-487E-9C9D-26F25BCBAE72}.Debug.ActiveCfg = Debug|Win32
-		{AEC91723-F3F9-487E-9C9D-26F25BCBAE72}.Debug.Build.0 = Debug|Win32
-		{AEC91723-F3F9-487E-9C9D-26F25BCBAE72}.Release.ActiveCfg = Release|Win32
-		{AEC91723-F3F9-487E-9C9D-26F25BCBAE72}.Release.Build.0 = Release|Win32
-		{D49901E2-9914-460E-A5E8-C65FB78080F2}.Debug.ActiveCfg = Debug|Win32
-		{D49901E2-9914-460E-A5E8-C65FB78080F2}.Debug.Build.0 = Debug|Win32
-		{D49901E2-9914-460E-A5E8-C65FB78080F2}.Release.ActiveCfg = Release|Win32
-		{D49901E2-9914-460E-A5E8-C65FB78080F2}.Release.Build.0 = Release|Win32
-		{0C11F188-A70B-4662-A174-BC1166B7C584}.Debug.ActiveCfg = Debug|Win32
-		{0C11F188-A70B-4662-A174-BC1166B7C584}.Debug.Build.0 = Debug|Win32
-		{0C11F188-A70B-4662-A174-BC1166B7C584}.Release.ActiveCfg = Release|Win32
-		{0C11F188-A70B-4662-A174-BC1166B7C584}.Release.Build.0 = Release|Win32
-		{1477D43E-2496-43F4-A7E9-BAE3947987CC}.Debug.ActiveCfg = Debug|Win32
-		{1477D43E-2496-43F4-A7E9-BAE3947987CC}.Debug.Build.0 = Debug|Win32
-		{1477D43E-2496-43F4-A7E9-BAE3947987CC}.Release.ActiveCfg = Release|Win32
-		{1477D43E-2496-43F4-A7E9-BAE3947987CC}.Release.Build.0 = Release|Win32
+		{14E0E229-BD80-481D-B59D-40512DB4BE90}.Debug.ActiveCfg = Debug|Win32
+		{14E0E229-BD80-481D-B59D-40512DB4BE90}.Debug.Build.0 = Debug|Win32
+		{14E0E229-BD80-481D-B59D-40512DB4BE90}.Release.ActiveCfg = Release|Win32
+		{14E0E229-BD80-481D-B59D-40512DB4BE90}.Release.Build.0 = Release|Win32
+		{417DFBB1-F315-4903-9D63-8054A069A9D2}.Debug.ActiveCfg = Debug|Win32
+		{417DFBB1-F315-4903-9D63-8054A069A9D2}.Debug.Build.0 = Debug|Win32
+		{417DFBB1-F315-4903-9D63-8054A069A9D2}.Release.ActiveCfg = Release|Win32
+		{417DFBB1-F315-4903-9D63-8054A069A9D2}.Release.Build.0 = Release|Win32
+		{411CE682-0606-4EAB-8C85-B1B44E2F72F7}.Debug.ActiveCfg = Debug|Win32
+		{411CE682-0606-4EAB-8C85-B1B44E2F72F7}.Debug.Build.0 = Debug|Win32
+		{411CE682-0606-4EAB-8C85-B1B44E2F72F7}.Release.ActiveCfg = Release|Win32
+		{411CE682-0606-4EAB-8C85-B1B44E2F72F7}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

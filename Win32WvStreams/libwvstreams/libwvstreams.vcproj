@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="utils"
-	ProjectGUID="{475A4DD8-6E72-49D5-99A5-F4CA78A2A440}"
+	Name="libwvstreams"
+	ProjectGUID="{417DFBB1-F315-4903-9D63-8054A069A9D2}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -19,10 +19,9 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\include;$(ProjectDir)"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;UTILS_EXPORTS;ZLIB_DLL"
+				AdditionalIncludeDirectories=".\;..\;..\..\include"
+				PreprocessorDefinitions="strncasecmp=_strnicmp;strcasecmp=_stricmp;WIN32;_DEBUG;_WINDOWS;_USRDLL;ZLIB_DLL"
 				MinimalRebuild="TRUE"
-				ExceptionHandling="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				TreatWChar_tAsBuiltInType="TRUE"
@@ -35,8 +34,7 @@
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="TRUE"/>
+				Name="VCLibrarianTool"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -64,8 +62,8 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\include;$(ProjectDir)"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;UTILS_EXPORTS;ZLIB_DLL"
+				AdditionalIncludeDirectories=".\;..\;..\..\include"
+				PreprocessorDefinitions="strncasecmp=_strnicmp;strcasecmp=_stricmp;WIN32;NDEBUG;_WINDOWS;_USRDLL;ZLIB_DLL"
 				RuntimeLibrary="2"
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
@@ -99,16 +97,23 @@
 		</Configuration>
 	</Configurations>
 	<References>
-		<AssemblyReference
-			RelativePath="$(SolutionDir)utils\dirent.lib.dll"/>
 	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			Filter="cpp;cc;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\utils\strcrypt.cc">
+				RelativePath="..\..\configfile\cfgentry.cc">
+			</File>
+			<File
+				RelativePath="..\..\configfile\cfgsection.cc">
+			</File>
+			<File
+				RelativePath=".\fake.cpp">
+			</File>
+			<File
+				RelativePath="..\..\streams\fileutils.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -123,25 +128,67 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\strutils.cc">
+				RelativePath="..\..\urlget\ftpparse.cc">
 			</File>
 			<File
-				RelativePath=".\utils.cpp">
+				RelativePath=".\streams.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\verstring.cc">
+				RelativePath="..\..\ipstreams\wvaddr.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvaudioencoder.cc">
+				RelativePath="..\..\crypto\wvblowfish.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvbackslash.cc">
+				RelativePath="..\..\streams\wvbufstream.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvbase64.cc">
+				RelativePath="..\..\configfile\wvconf.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvbdbhash.cc">
+				RelativePath="..\..\streams\wvconstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvcountermode.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvcrypto.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvdailyevent.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvdiffiehellman.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvdigest.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvencoderstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvfdstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvfile.cc">
+			</File>
+			<File
+				RelativePath="..\..\urlget\wvftpstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\ipstreams\wvhttp.cc">
+			</File>
+			<File
+				RelativePath="..\..\urlget\wvhttpcomponent.cc">
+			</File>
+			<File
+				RelativePath="..\..\urlget\wvhttppool.cc">
+			</File>
+			<File
+				RelativePath="..\..\urlget\wvhttpstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\ipstreams\wvipraw.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -156,28 +203,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvbuffer.cc">
+				RelativePath="..\..\streams\wvistreamlist.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvbufferstore.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvcont.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvcrash.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvdiriter.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvencoder.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wverror.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvfork.cc">
+				RelativePath="..\..\streams\wvlockdev.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -192,28 +221,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvgzip.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvhashtable.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvhex.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvlinklist.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvmagiccircle.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvmatrix.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvmoniker.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvqdbmhash.cc">
+				RelativePath="..\..\streams\wvlockfile.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -228,13 +236,13 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvrateadjust.cc">
+				RelativePath="..\..\streams\wvlog.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvscatterhash.cc">
+				RelativePath="..\..\streams\wvlogbuffer.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvserialize.cc">
+				RelativePath="..\..\streams\wvlogfile.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -249,7 +257,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvshmzone.cc">
+				RelativePath="..\..\streams\wvloopback.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvmodem.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -264,19 +275,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvsorter.cc">
+				RelativePath="..\..\crypto\wvoakley.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvstring.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvstringlist.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvstringtable.cc">
-			</File>
-			<File
-				RelativePath="..\..\utils\wvsubproc.cc">
+				RelativePath="..\..\streams\wvpipe.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -291,7 +293,34 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvtask.cc">
+				RelativePath="..\..\streams\wvprotostream.cc">
+			</File>
+			<File
+				RelativePath="..\..\ipstreams\wvresolver.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvrsa.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvsslhacks.c">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvsslstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvstreamclone.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvstreamlist.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvsyncstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvsyslog.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -306,10 +335,22 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvtclstring.cc">
+				RelativePath="..\..\ipstreams\wvtcp.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvtest.cc">
+				RelativePath="..\..\streams\wvtimeoutstream.cc">
+			</File>
+			<File
+				RelativePath="..\..\streams\wvtimestream.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvtripledes.cc">
+			</File>
+			<File
+				RelativePath="..\..\ipstreams\wvudp.cc">
+			</File>
+			<File
+				RelativePath="..\..\ipstreams\wvunixsocket.cc">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -324,25 +365,37 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\utils\wvtimeutils.cc">
+				RelativePath="..\..\ipstreams\wvurl.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvvector.cc">
+				RelativePath="..\..\streams\wvwatcher.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\wvwin32task.cpp">
+				RelativePath=".\wvwinstreamclone.cc">
 			</File>
 			<File
-				RelativePath="..\..\utils\wvwordwrap.cc">
+				RelativePath="..\..\crypto\wvx509.cc">
+			</File>
+			<File
+				RelativePath="..\..\crypto\wvxor.cc">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-			<File
-				RelativePath=".\dirent.h">
-			</File>
 			<File
 				RelativePath="..\..\include\fileutils.h">
 			</File>
@@ -351,6 +404,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\if_arp.h">
+			</File>
+			<File
+				RelativePath=".\streams.h">
 			</File>
 			<File
 				RelativePath="..\..\include\strutils.h">
@@ -444,9 +500,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\uniwvconfgen.h">
-			</File>
-			<File
-				RelativePath=".\utils.h">
 			</File>
 			<File
 				RelativePath="..\..\include\verstring.h">
@@ -798,8 +851,5 @@
 		</Filter>
 	</Files>
 	<Globals>
-		<Global
-			Name="DevPartner_IsInstrumented"
-			Value="0"/>
 	</Globals>
 </VisualStudioProject>

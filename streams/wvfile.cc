@@ -7,13 +7,6 @@
 #include "wvfile.h"
 #include "wvmoniker.h"
 
-#ifdef _WIN32
-#include <io.h>
-#define O_NONBLOCK 0
-#define O_LARGEFILE 0
-#define fcntl(a,b,c)
-#endif
-
 #ifndef _WIN32
 /* The Win32 runtime library doesn't provide fcntl so we can't
    set readable and writable reliably. Use the other constructor.

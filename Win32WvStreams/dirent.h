@@ -16,8 +16,8 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  * $Revision: 1.1 $
- * $Author: jdcormie $
- * $Date: 2003/08/01 19:00:02 $
+ * $Author: slajoie $
+ * $Date: 2004/01/31 09:15:59 $
  *
  */
 

@@ -15,7 +15,6 @@
 # include <valgrind/memcheck.h>
 # include <valgrind/valgrind.h>
 #else
-# warning "fake valgrind"
 # define VALGRIND_COUNT_ERRORS 0
 # define VALGRIND_DO_LEAK_CHECK
 # define VALGRIND_COUNT_LEAKS(a,b,c,d) (a=b=c=d=0)
