@@ -34,6 +34,15 @@ WvX509Mgr::~WvX509Mgr()
     X509_free(cert);
 }
 
+// The people who designed this garbage should be shot!
+// Support old versions of openssl...
+#ifndef NID_domainComponent
+#define NID_domainComponent 391
+#endif
+
+#ifndef NID_Domain
+#define NID_Domain 392
+#endif
 
 // returns some approximation of the server's fqdn, or an empty string.
 static WvString set_name_entry(X509_NAME *name, WvString dn)
