@@ -337,15 +337,17 @@ void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
 }
 
 
-int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
-			   int metric, WvStringParm table)
+int WvInterface::really_addroute(const WvIPNet &dest, const WvIPAddr &gw,
+		 const WvIPAddr &src, int metric, WvStringParm table,
+		 bool shutup)
 {
     struct rtentry rte;
     char ifname[17];
     int sock;
-    WvString deststr(dest), gwstr(gw), metr(metric);
+    WvString deststr(dest), gwstr(gw), metr(metric), srcstr(src);
 
-    const char * const argv[] = {
+    // FIXME: There has got to be a better way to do this.
+    const char * const argvnosrc[] = {
 	"ip", "route", "add",
 	deststr,
 	"table", table,
@@ -355,6 +357,23 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 	NULL
     };
 
+    const char * const argvsrc[] = {
+	"ip", "route", "add",
+	deststr,
+	"table", table,
+	"dev", name,
+	"via", gwstr,
+        "src", srcstr,
+	"metric", metr,
+	NULL
+    };
+
+    WvIPAddr zero;
+    const char * const * argv;
+    if (src != zero)
+        argv = argvsrc;
+    else
+        argv = argvnosrc;
 
     if (dest.is_default() || table != "default")
     {
@@ -386,8 +405,11 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     {
 	if (errno != EACCES && errno != EPERM && errno != EEXIST
 	  && errno != ENOENT)
-	    err.perror(WvString("AddRoute '%s' %s (up=%s)",
-				name, dest, isup()));
+	{
+	    if (!shutup)
+		err.perror(WvString("AddRoute '%s' %s (up=%s)",
+				    name, dest, isup()));
+	}
 	close(sock);
 	return -1;
     }
@@ -397,11 +419,37 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 }
 
 
+int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
+                          const WvIPAddr &src, int metric, WvStringParm table)
+{
+    WvIPAddr zero;
+    int ret;
+    
+    // The kernel (2.4.19) sometimes tries to protect us from ourselves by
+    // not letting us create a route via 'x' if 'x' isn't directly reachable
+    // on the same interface.  This is non-helpful to us in some cases,
+    // particularly with FreeSwan's screwy lying kernel routes.  Anyway,
+    // the kernel people weren't clever enough to check that the routing
+    // table *stays* self-consistent, so we add an extra route, then we
+    // create our real route, and then we delete the extra route again.
+    // Blah.
+    // 
+    // Using metric 255 should make it not the same as any other route.
+    if (gw != zero)
+	really_addroute(gw, zero, zero, 255, "default", true);
+    ret = really_addroute(dest, gw, src, metric, table, false);
+    if (gw != zero)
+	delroute(gw, zero, 255, "default");
+    
+    return ret;
+}
+
+
 // add a route with no gateway, ie. direct to interface
 int WvInterface::addroute(const WvIPNet &dest, int metric,
 			  WvStringParm table)
 {
-    return addroute(dest, WvIPAddr(), metric, table);
+    return addroute(dest, WvIPAddr(), WvIPAddr(), metric, table);
 }
 
 
