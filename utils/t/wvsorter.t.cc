@@ -79,27 +79,17 @@ WVTEST_MAIN("sorttest.cc")
 	{
 	    WvStringTable::Sorter s(t, apples_to_oranges);
             int i = 0;
-	    for(s.rewind(); s.next();i++)
+	    for (s.rewind(); s.next();i++)
                 if (!WVFAIL(strcmp((const char*) s(), frontwards[i])))
                     printf("   because [%s] != [%s]\n", (const char*) s(),
                             frontwards[i]);            
-	}
-	
-	//Unsorted: 
-        {
-            int j = 0;
-	    WvStringTable::Iter i(t);
-	    for(i.rewind(); i.next(); j++)
-                 if (!WVFAIL(strcmp((const char *) i(), unsorted[j])))
-                     printf("   because [%s] != [%s]\n", (const char*) i(),
-                             unsorted[j]);
 	}
 	
 	//Backwards:
 	{
 	    WvStringTable::Sorter s(t, oranges_to_apples);
             int i = 0;
-	    for(s.rewind(); s.next(); i++)
+	    for (s.rewind(); s.next(); i++)
                 if (!WVFAIL(strcmp((const char*) s(), backwards[i])))
                     printf("   because [%s] != [%s]\n", (const char*) s(),
                             backwards[i]);            
@@ -122,16 +112,6 @@ WVTEST_MAIN("sorttest.cc")
                 if (!WVFAIL(strcmp((const char*) s(), frontwards[i])))
                     printf("   because [%s] != [%s]\n", (const char*) s(),
                             frontwards[i]);            
-	}
-	
-	//Unsorted: 
-        {
-            int j = 0;
-	    WvStringTable2::Iter i(t);
-	    for(i.rewind(); i.next(); j++)
-                 if (!WVFAIL(strcmp((const char *) i(), unsorted[j])))
-                     printf("   because [%s] != [%s]\n", (const char*) i(),
-                             unsorted[j]);
 	}
 	
 	//Backwards:

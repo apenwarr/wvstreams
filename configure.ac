@@ -385,7 +385,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="$VALGRIND --leak-check=yes"
+    VALGRIND="valgrind --leak-check=yes --num-callers=10 --logfile-fd=-1"
 fi
 
 AC_SUBST(enable_debug)

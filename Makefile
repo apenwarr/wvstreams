@@ -1,4 +1,4 @@
-WVSTREAMS=$(shell pwd)
+WVSTREAMS=.
 include wvrules.mk
 override enable_efence=no
 
@@ -102,10 +102,10 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
-test: runconfigure wvtestmain
+test: runconfigure all wvtestmain
 	$(WVTESTRUN) $(VALGRIND) ./wvtestmain $(TESTNAME)
 
-wvtestmain: all wvtestmain.o \
+wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \
 	$(LIBUNICONF)
 

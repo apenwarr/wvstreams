@@ -18,7 +18,7 @@ unsigned WvHash(const char *s)
     andval = 0x1F << slide;
     
     while (*s)
-	hash = (hash<<5) ^ (*(s++) & 0x1F) ^ ((hash & andval) >> slide);
+	hash = (hash<<4) ^ (*(s++) & 0x1F) ^ ((hash & andval) >> slide);
     
     return hash;
 }
