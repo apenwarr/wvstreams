@@ -96,19 +96,17 @@ void UniConfRootImpl::check(UniWatchTree *node,
 }
 
 
-void UniConfRootImpl::recursivecheck(UniWatchTree *node,
-    const UniConfKey &key, int segleft)
+void UniConfRootImpl::deletioncheck(UniWatchTree *node, const UniConfKey &key)
 {
     UniWatchTree::Iter it(*node);
-    segleft -= 1;
     for (it.rewind(); it.next(); )
     {
         UniWatchTree *w = it.ptr();
         UniConfKey subkey(key, w->key());
         
         // pretend that we wiped out just this key
-        check(w, subkey, segleft);
-        recursivecheck(w, subkey, segleft);
+        check(w, subkey, 0);
+        deletioncheck(w, subkey);
     }
 }
 
@@ -146,14 +144,17 @@ void UniConfRootImpl::gen_callback(const UniConfKey &key, WvStringParm value,
     for (int s = 0; s < segs;)
     {
         node = node->findchild(key.segment(s));
-        s += 1;
+        s++;
         if (! node)
             goto done; // no descendents so we can stop
         check(node, key, segs - s);
     }
 
-    // look for watches on descendents of key
-    recursivecheck(node, key, 0);
+    // look for watches on descendents of key if node was deleted
+    if (value.isnull())
+        deletioncheck(node, key);
+    else
+        check(node, key, 0);
     
 done:
     unhold_delta();

@@ -121,10 +121,8 @@ private:
      * Recursively checks a branch of the watch tree for notification candidates.
      *   node - the current node
      *   key - the key that changed
-     *   segleft - the number of segments left in the key (possibly negative)
      */
-    void recursivecheck(UniWatchTree *node,
-        const UniConfKey &key, int segleft);
+    void deletioncheck(UniWatchTree *node, const UniConfKey &key);
 
     /** Prunes a branch of the watch tree. */
     void prune(UniWatchTree *node);

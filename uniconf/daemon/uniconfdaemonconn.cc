@@ -178,7 +178,14 @@ void UniConfDaemonConn::do_help()
 
 void UniConfDaemonConn::deltacallback(const UniConf &key, void *userdata)
 {
-    WvString msg("%s %s", wvtcl_escape(key.fullkey()),
-                          wvtcl_escape(key.get()));
+    WvString value(key.get());
+    WvString msg;
+
+    if (value.isnull())
+        msg = WvString("%s", wvtcl_escape(key.fullkey()));
+    else
+        msg = WvString("%s %s", wvtcl_escape(key.fullkey()),
+                                wvtcl_escape(key.get()));
+
     writecmd(UniClientConn::EVENT_NOTICE, msg);
 }
