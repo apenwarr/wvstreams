@@ -39,7 +39,7 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
 
 UniCacheGen::~UniCacheGen()
 {
-    RELEASE(inner);
+    WVRELEASE(inner);
 }
 
 

@@ -66,7 +66,7 @@ int main()
     fprintf(stderr, "About to create...\n");
     IObject *obj = xplc.create<IObject>("hello:");
     assert(obj);
-    RELEASE(obj);
+    WVRELEASE(obj);
     
     fprintf(stderr, "Done.\n");
     return 0;

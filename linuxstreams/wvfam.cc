@@ -11,7 +11,7 @@ void WvFamBase::close()
         return;
 
     WvIStreamList::globallist.unlink(s);
-    RELEASE(s);
+    WVRELEASE(s);
 
     if (FAMClose(&fc) == -1)
         log(WvLog::Error, "%s\n", FamErrlist[FAMErrno]);

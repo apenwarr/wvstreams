@@ -108,7 +108,7 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
 UniClientGen::~UniClientGen()
 {
     conn->writecmd(UniClientConn::REQ_QUIT, "");
-    RELEASE(conn);
+    WVRELEASE(conn);
 }
 
 
