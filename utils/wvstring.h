@@ -108,9 +108,12 @@ class WvString
 
 public:
     /**
-     * Fill black strings later with operator= or setsize()
+     * Create an empty, NULL string.  In the past, these were dangerous
+     * and could only be filled with operator= or setsize(); nowadays, NULL
+     * strings are explicitly allowed, since it's useful to express the
+     * difference between a zero-length string and a NULL result.
      */
-    WvString();  
+    WvString();
     void setsize(size_t i);
 
     /**
@@ -182,7 +185,8 @@ public:
     ~WvString();
     
     void append(const WvString &s);
-    void append(WVSTRING_FORMAT_DECL);
+    void append(WVSTRING_FORMAT_DECL)
+        { append(WvString(WVSTRING_FORMAT_CALL)); }
     size_t len() const;
 
     WvString &operator= (const WvString &s2);
@@ -199,9 +203,9 @@ public:
     bool operator!= (const char *s2) const;
     
     /**
-     *not operator is 'true' if string is empty
+     * the not operator is 'true' if string is empty
      */
-    bool operator! () const;
+    bool operator! ();
 
     // pointer arithmetic
     const char *operator+ (int i) const
@@ -216,6 +220,14 @@ public:
         { return str; }
     
     /**
+     * return a (const char *) for this string.  The typecast operator does
+     * this automatically when needed, but sometimes (especially with varargs
+     * like in printf()) that isn't convenient enough.
+     */
+    const char *cstr() const
+        { return str; }
+    
+    /**
      * make the string editable, and return a non-const (char*)
      */
     char *edit()
@@ -226,7 +238,7 @@ public:
      * we no longer provide a typecast, because it causes annoyance.
      */
     int num() const
-        { return atoi(str); }
+        { return str ? atoi(str) : 0; }
     
 };
 

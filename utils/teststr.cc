@@ -88,5 +88,20 @@ int main()
     t = test1(s);
     printf("%s .. %s\n", (const char *)s, (const char *)t);
     
+    // NULL value tests.  NULL strings are different from zero-length strings.
+    // null: ok1
+    // null: 1 1 0 1 0
+    // null: 0 1 1 1 0
+    WvString n1, n2((const char *)NULL), n3(n1), n4("foo"), n5("blah"), n6("");
+    n4 = n1;
+    n1 = n4;
+    n5 = n1;
+    printf("null: ok1\n");
+    printf("null: %d %d %d %d %d\n", !n1, !n2, n1.len(), n1==n2, n3.num());
+    n3.append("junk");
+    printf("null: %d %d %d %d %d\n", n1==n6, !n1, !n6, n1==NULL, n6==NULL);
+    WvString ns("%s %s %s %s %s %s\n", n1, n2, n3, n4, n5, n6);
+    printf("null: %s\n", ns.cstr());
+    
     return 0;
 }

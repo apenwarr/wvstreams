@@ -20,13 +20,6 @@ static inline int _max(int x, int y)
 }
 
 
-WvString::WvString()
-{ 
-    buf = NULL;
-    str = NULL;
-}
-
-
 void WvString::setsize(size_t i)
 {
     unlink();
@@ -34,7 +27,15 @@ void WvString::setsize(size_t i)
 }
 
 
-WvString::WvString(const WvString &s) // Copy constructor
+
+WvString::WvString()
+{
+    buf = NULL;
+    str = NULL;
+}
+
+
+WvString::WvString(const WvString &s)
 {
     link(s.buf, s.str);
 }
@@ -42,7 +43,7 @@ WvString::WvString(const WvString &s) // Copy constructor
 
 WvString::WvString(const char *_str)
 {
-    if (_str) 
+    if (_str)
 	link(&__wvs_nb, _str);
     else 
     {
@@ -94,18 +95,19 @@ WvStringBuf *WvString::alloc(size_t size)
 
 void WvString::append(const WvString &s)
 {
-    *this = WvString("%s%s", *this, s);
-}
-
-
-void WvString::append(WVSTRING_FORMAT_DECL)
-{ 
-    append(WvString(WVSTRING_FORMAT_CALL));
+    if (buf)
+	*this = WvString("%s%s", *this, s);
+    else
+    {
+	*this = s;
+	unique();
+    }
 }
 
 
 size_t WvString::len() const
 {
+    if (!buf) return 0;
     return buf->size ? buf->size-1 : strlen(str);
 }
 
@@ -174,7 +176,6 @@ bool WvString::operator! () const
 {
     return !buf || !str[0];
 }
-
 
 
 // parse a 'percent' operator from a format string.  For example:
