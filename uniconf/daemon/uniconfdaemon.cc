@@ -51,31 +51,16 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
         return;
     
     WvStream *s = (WvStream *)userdata;
-    // Ok, now compile the complete keyname.
-    WvString keyname("/%s", conf.name);
-    UniConf *f = conf.parent;
-    while (f)
-    {
-        if (f->name.len() > 0)
-            keyname = WvString("/%s%s", f->name, keyname);
-        f = f->parent;
-    }
-    // now notify.
+    WvString keyname(conf.gen_full_key()); 
     log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
     if (s->isok())
         s->write(WvString("FGET %s\n", keyname));
-//    events.del(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), s, keyname);
-
 }
 
 // Daemon looks after running
 void UniConfDaemon::run()
 {
-//    WvBuffer *newbuf = new WvBuffer;
     // Mount our initial config file.
-    // FIXME:  When we decide to mount configurations from various locations,
-    // the domount command can be used, combined with data read in from the
-    // configuration file which tells us where to find information.
     domount("ini", DEFAULT_CONFIG_FILE, "/");
 
     // Make sure that everything was cleaned up nicely before.

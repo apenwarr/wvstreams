@@ -9,7 +9,7 @@
 
 #include <uniconfclient.h>
 
-UniConfClient::UniConfClient(UniConf *_top, WvStream *conn) : WvStreamClone(conn),
+UniConfClient::UniConfClient(UniConf *_top, WvStream *conn) : UniConfConn/*WvStreamClone*/(conn),
     top(_top), log("UniConfClient"), dict(5)
 {
 }
@@ -58,7 +58,6 @@ void UniConfClient::save()
         savesubtree(top, "/");
     else
         log(WvLog::Error, "Connection was unuseable to save data.\n");
-        // Not working.. damn.. log it and stop.
 }
 
 UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
@@ -67,52 +66,38 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
     write(WvString("get %s\n", wvtcl_escape(key)));
     // Get the node which we're actually going to return...
     UniConf *toreturn = UniConfGen::make_tree(parent, key);
-    // Now, we're actually waiting to get information back.
-    toreturn->waiting = true;
     // Now wait for the response regarding this key.
-    update(toreturn);
+    if (toreturn->waiting)
+        update(toreturn);
     return toreturn;
 }
 
 void UniConfClient::update(UniConf *&h)
 {
-    waitingdata *data = dict[(WvString)h->gen_full_key().printable()];
-    if (!data && select(-1, true, false, false))
+    waitingdata *data = dict[(WvString)h->gen_full_key()];
+
+    if (select(0,true, false, false) || (h->waiting && !data && select(-1, true, false, false)))
     {
         callback();
-        data = dict[(WvString)h->gen_full_key().printable()];
+        data = dict[(WvString)h->gen_full_key()];
     }
     
-    // First check to see if we are in the dict..
-    // if we are, then just return.  otherwise, do a select on the stream
-    // and update our data appropriately.
-
-    if (data) //&& data->key == h->gen_full_key())
+    if (data) 
     {
-        h->set(data->value);
-        //dict.remove(data);
+        h->set(data->value.unique());
         h->waiting = false;
+        dict.remove(data);
     }
 
-    // Mark this as not being dirty
     h->dirty = false;
 }
 
 void UniConfClient::execute()
 {
-    WvStreamClone::execute();
+    UniConfConn::execute();
+    fillbuffer();
 
-    int len = -1; 
-    WvBuffer inc;
-    while (len != 0)
-    {
-        char cptr[1024];
-        len = read(cptr, 1023);
-        cptr[len] = '\0';
-        inc.put(cptr);
-    }
-
-    WvString *line = wvtcl_getword(inc, "\n");
+    WvString *line = gettclline();
     
     if (!line) return;
 
@@ -126,13 +111,14 @@ void UniConfClient::execute()
         key = wvtcl_getword(fromline);
         while (cmd && key)
         {
-            if (*cmd == "RETN")
+            // Value from a get is incoming
+            if (*cmd == "RETN") 
             {
                 WvString *value = wvtcl_getword(fromline);
                 dict.add(new waitingdata(key->unique(), value->unique()), true);
-                wvcon->print("Received:%s=%s.\n", *key, *value);
             }
-            else if (*cmd == "FGET")
+            // A set has happened on a key we requested.
+            else if (*cmd == "FGET") 
             {
                 dict.remove(dict[*key]);
                 UniConf *obs = &(*top)[*key];
@@ -151,7 +137,7 @@ void UniConfClient::execute()
             cmd = wvtcl_getword(fromline);
             key = wvtcl_getword(fromline);
         }
-        line = wvtcl_getword(inc, "\n");
+        line = gettclline();
     }
    
 }

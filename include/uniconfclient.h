@@ -9,10 +9,11 @@
 
 #include "uniconf.h"
 #include "uniconfiter.h"
+#include "uniconfconn.h"
 #include "wvlog.h"
 #include "wvstream.h"
-#include <wvtclstring.h>
-#include <wvstreamclone.h>
+#include "wvtclstring.h"
+//#include <wvstreamclone.h>
 
 struct waitingdata
 {
@@ -23,7 +24,7 @@ struct waitingdata
 DeclareWvDict(waitingdata, UniConfString, key);
 
 
-class UniConfClient : public UniConfGen, WvStreamClone
+class UniConfClient : public UniConfGen, UniConfConn//WvStreamClone
 {
 public:
 //    WvStream *daemoncon;

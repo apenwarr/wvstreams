@@ -28,6 +28,7 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
 	{
 	    child = new UniConf(parent, *i);
 	    parent->children->add(child, true);
+            child->waiting = true;
 	    update(child);
 	}
 	
@@ -41,6 +42,7 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
 void UniConfGen::update(UniConf *&h)
 {
     h->dirty = false;
+    h->waiting = false;
 }
 
 
