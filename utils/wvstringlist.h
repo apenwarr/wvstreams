@@ -12,6 +12,8 @@
 #include "wvstring.h"
 #include "wvlinklist.h"
 
-DeclareWvList(WvString);
+DeclareWvList2(WvString,
+		WvString join(const char *joinchars = " ");
+	       );
 
 #endif // __WVSTRINGLIST_H
