@@ -170,10 +170,10 @@ void WvPipe::kill(int signum)
 
 
 // wait for the child to die
-int WvPipe::finish()
+int WvPipe::finish(bool wait_children)
 {
     while (proc.running)
-	proc.wait(100);
+	proc.wait(100, wait_children);
     
     return proc.estatus;
 }

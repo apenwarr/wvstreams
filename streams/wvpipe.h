@@ -91,13 +91,13 @@ public:
     /**
      * wait for child to die.  Returns exit_status()
      */
-    int finish();
+    int finish(bool wait_children = true);
     
     /**
      * returns true if child is dead.
      */
     bool child_exited();
-    
+
     /**
      * returns true if child is dead because of a signal.
      */
