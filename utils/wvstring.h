@@ -167,9 +167,9 @@ public:
         { return !buf || !str[0]; }
 
     // pointer arithmetic
-    bool operator+ (int i) const
+    const char *operator+ (int i) const
         { return str + i; }
-    bool operator- (int i) const
+    const char *operator- (int i) const
         { return str - i; }
     
     // auto-convert WvString to (char *), when needed.
