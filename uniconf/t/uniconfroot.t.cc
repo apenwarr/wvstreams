@@ -3,7 +3,20 @@
 
 WVTEST_MAIN("no generator")
 {
-    UniConfRoot root;
+    UniConfRoot root1;
+    WVPASS(root1.getme() == WvString::null);
+
+    // verify that setting keys in unmounted space does not actually
+    // set their values (or more likely, cause a segfault)
+    UniConfRoot root2;
+    root2["subt/mayo/baz"].mount("temp:");
+    root2["/"].setme("foo");
+    root2["subt"].setme("bar");
+    root2["subt/mayo"].setme("moo");
+    WVPASS(strcmp(root2["/"].getme().cstr(), "") == 0);
+    WVPASS(strcmp(root2["subt"].getme().cstr(), "") == 0);
+    WVPASS(strcmp(root2["subt/mayo"].getme().cstr(), "") == 0);        
+
 }
 
 
