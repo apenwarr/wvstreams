@@ -124,6 +124,7 @@ void listener_callback(WvStream &s, void *userdata)
 }
 
 
+#if 0
 static void do_test(WvIStreamList &l, unsigned int num_requests)
 {
     printf("pipelining [%d] requusts [%u]\n", pipelining_enabled,
@@ -166,7 +167,6 @@ static void do_test(WvIStreamList &l, unsigned int num_requests)
 }
 
 
-#if 0
 WVTEST_MAIN("WvHttpPool pipelining")
 {
     WvIStreamList l;
