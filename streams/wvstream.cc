@@ -503,7 +503,9 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
 char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 {
     // FIXME: this should probably use read_until now that it exists
-    
+
+    //assert(uses_continue_select || wait_msec == 0);
+
     struct timeval timeout_time;
     if (wait_msec > 0)
         timeout_time = msecadd(wvtime(), wait_msec);

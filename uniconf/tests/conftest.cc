@@ -2,12 +2,12 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * Test program for the new, hierarchical WvConf.
+ * Test program for the new, hierarchical WvConfEmu.
  */
 #include "wvlog.h"
 #include "wvlogrcv.h"
 #include "wvdiriter.h"
-#include "wvconf.h"
+#include "wvconfemu.h"
 #include "wvfile.h"
 #include "wvtclstring.h"
 #include "uniconf.h"

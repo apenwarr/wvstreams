@@ -1,4 +1,4 @@
-#include "wvconf.h"
+#include "wvconfemu.h"
 #include "wvx509.h"
 #include "wvrsa.h"
 #include <assert.h>

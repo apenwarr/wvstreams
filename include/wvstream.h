@@ -211,7 +211,7 @@ public:
      * read up to count characters into buf, up to and including the first
      * instance of separator.
      * 
-     * if separator is not found on input before timeout (usual symantics)
+     * if separator is not found on input before timeout (usual semantics)
      * or stream close or error, or if count is 0, nothing is placed in buf
      * and 0 is returned.
      * 
