@@ -58,8 +58,6 @@ public:
 
     virtual void startup();
 
-    void banner();
-
 protected:
     virtual void do_malformed();
     virtual void do_noop();

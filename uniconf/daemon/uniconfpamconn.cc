@@ -42,8 +42,6 @@ UniConfPamConn::~UniConfPamConn()
 
 void UniConfPamConn::startup()
 {
-    UniConfDaemonConn::startup();
-
     // create the conv structure
     struct pam_conv c;
     c.conv = UniConfPamConn::noconv;
@@ -65,9 +63,6 @@ void UniConfPamConn::startup()
     pam_status = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
     if (!check_pam_status("authentication")) return;
 
-    pam_status = pam_acct_mgmt(pamh, 0);
-    if (!check_pam_status("authorization")) return;
-        
     pam_status = pam_setcred(pamh, PAM_ESTABLISH_CRED);
     if (!check_pam_status("credentials")) return;
         
@@ -75,6 +70,8 @@ void UniConfPamConn::startup()
     if (!check_pam_status("session open")) return;
 
     session_exists = true;
+
+    UniConfDaemonConn::startup();
 }
 
 
