@@ -1,13 +1,17 @@
-#include "wvgdbmhash.h"
+/*
+ * Note: this test program should be exactly the same as the one in
+ * gdbmtest.cc, because the APIs should be identical.
+ */
+#include "wvbdbhash.h"
 #include "wvstringlist.h"
 
-typedef WvGdbmHash<WvString,WvString> StrStrMap;
-typedef WvGdbmHash<WvString,int> StrTimeMap;
+typedef WvBdbHash<WvString,WvString> StrStrMap;
+typedef WvBdbHash<WvString,int> StrTimeMap;
 
 DeclareWvList(int);
 
 // yes, I *am* crazy.
-typedef WvGdbmHash<WvList<WvString>,intList> ListMap;
+typedef WvBdbHash<WvList<WvString>,intList> ListMap;
 
 int main()
 {

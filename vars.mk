@@ -124,6 +124,10 @@ ifneq ("$(with_gdbm)", "no")
 libwvutils.so: -lgdbm
 endif
 
+ifneq ("$(with_bdb)", "no")
+libwvutils.so: -ldb
+endif
+
 ifeq ("$(enable_verbose)", "yes")
 VERBOSE:=yes
 endif
