@@ -83,8 +83,7 @@ public:
     void createSScert(WvString dName, int keysize);
 
     /**
-     * Unimplimented function for the moment, but eventually, you will be able
-     * to create a certificate request (PKCS#10) using this function.. this 
+     * Create a certificate request (PKCS#10) using this function.. this 
      * request is what you would send off to Verisign, or Entrust.net (or any
      * other CA), to get your real certificate. It leaves the RSA key pair
      * in keypair, where you MUST save it for the certificate to be AT ALL
@@ -92,7 +91,7 @@ public:
      * request.
      */    
     WvString createcertreq(WvString dName, int keysize);
-
+    
     /**
      * Given a hexified encodedcert, fill the cert member
      */
@@ -111,7 +110,21 @@ public:
      * (has not expired, and was issued by a valid and trusted CA)
      */
     bool validate();
-    
+
+    /**
+     * Check the certificate in cert against the CA certificates in
+     * certdir - returns true if cert was signed by one of the CA certificates.
+     */
+    bool signedbyvalidCA(WvString certdir);
+
+
+    /**
+     * Check and see if the certificate in cert has been revoked... currently
+     * relies on the CRL Distribution Point X509v3 extension...
+     * returns true if it has expired
+     */
+    bool isinCRL();
+        
     WvLog debug;
     
     /**

@@ -5,6 +5,7 @@
  */
 
 #include "wvx509.h"
+#include "wvdiriter.h"
 
 #include "pem.h"
 #include "x509v3.h"
@@ -330,6 +331,9 @@ bool WvX509Mgr::validate()
 	}
 	// Kind of a placeholder thing right now...
 	// Later on, do CRL, and certificate validity checks here..
+        // Actually, break these out in signedbyvalidCA(), and isinCRL()
+	// Maybe have them here and activated by bool values as parameters 
+	// to validate.
     }
     else
 	debug("Peer doesn't have a certificate.\n");
@@ -337,3 +341,30 @@ bool WvX509Mgr::validate()
     return true;
 }
 
+bool signedbyCA(WvString fullname, struct X509 *cert)
+{
+/*
+    struct X509 *CAcert;
+
+    PEM_read_X509(fullname, CAcert);
+*/
+    return true;
+}
+
+bool WvX509Mgr::signedbyvalidCA(WvString certdir)
+{
+    WvDirIter i(certdir,false);
+    for (i.rewind(); i.next() ; )
+    {
+	if (!signedbyCA(i->fullname, cert))
+	{
+	    return false;
+	}
+    }    
+    return true;
+}
+
+bool isinCRL()
+{
+    return true;
+}
