@@ -83,7 +83,7 @@ public:
     virtual ~WvX509Mgr();
 
     /**
-     * Certificate - this is why this class exists
+     * X.509v3 Certificate - this is why this class exists
      */
     X509     *cert;
 
@@ -95,9 +95,8 @@ public:
     WvRSAKey *rsa;
     
     /**
-     * Given the Distinguished Name dname and the number of bits for the
-     * Private key in keysize, return a Self Signed Certificate, and the RSA
-     * Private/Public Keypair in rsa, as well as a hexify()'d string in enccert;
+     * Given the Distinguished Name dname and an already generated keypair in 
+     * rsa, return a Self Signed Certificate in cert.
      */
     void create_selfsigned();
 
@@ -107,7 +106,8 @@ public:
      * other CA), to get your real certificate. It leaves the RSA key pair
      * in rsa, where you MUST save it for the certificate to be AT ALL
      * valid when you get it back. Returns a PEM Encoded PKCS#10 certificate
-     * request.
+     * request, and leaves the RSA keypair in rsa, and a self-signed temporary
+     * certificate in cert.
      */    
     WvString certreq();
     
@@ -159,6 +159,8 @@ public:
 
     /**
      * Sign the X509 certificate in cert with CAKeypair
+     *
+     * NOT IMPLEMENTED
      */
     void sign(WvRSAKey CAKeypair);
    
@@ -172,7 +174,7 @@ public:
     bool isinCRL();
 
     /**
-     * Dump the information requested by mode into filename.
+     * Return the information requested by mode as a WvString.
      */
     WvString encode(DumpMode mode);
 
