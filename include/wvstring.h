@@ -94,9 +94,9 @@ protected:
     static WvStringBuf nullbuf;
     
 public:
-    // just an empty (NULL) string
+    // a null string, converted to char* as "(nil)"
     static const WvFastString null;
-    
+
     /**
      * Create an empty, NULL string.  In the past, these were dangerous
      * and could only be filled with operator= or setsize(); nowadays, NULL
@@ -287,6 +287,9 @@ public:
 class WvString : public WvFastString
 {
 public:
+    // an empty string, converted to char* as ""
+    static const WvString empty;
+ 
     WvString() {} // nothing special needed
     WvString(int i) : WvFastString(i) { } // nothing special
     

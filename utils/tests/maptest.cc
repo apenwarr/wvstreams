@@ -28,8 +28,6 @@ int main ()
     map.add("star", "trek");
     map.add("star", "office");
 
-    *map["star"] = "fox";
-
     // Iterator test
 
     WvMap<WvString, WvString>::Iter i(map);
@@ -67,15 +65,6 @@ int main ()
     {
         fprintf (stderr, "Iter test: %s\n", j->key.cstr());
     }
-
-    // Const pointer
-
-    WvMap<WvString, AutoFreeTest const *> constmap(5);
-    constmap.add("moo", new AutoFreeTest(), true);
-    assert(constmap.find("moo"));
-    *constmap["moo"] = new AutoFreeTest();
-    constmap.remove("moo");
-    assert(!constmap.find("moo"));
 }
 
 

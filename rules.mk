@@ -19,8 +19,8 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.cc
 	@$(LINK.cc) -M -E $< | \
-		sed -e 's|^$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
-	$(COMPILE_MSG)$(LINK.cc) $< $(LOADLIBES) $(LDLIBS) -o $@
+		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
+	$(COMPILE_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %.o: %.cc
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
@@ -35,9 +35,11 @@ DEPFILE = $(notdir $(@:.o=.d))
 %.a:
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
-%.so: SONAME=$@
+%.so: SONAME=$@.$(RELEASE)
 %.so:
-	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SOFLAGS) $^ -o $@
+	$(LINK_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) \
+		$(SOFLAGS) $^ -o $@
+	$(LN_S) -f $@ $(SONAME)
 
 %.moc: %.h
 	$(COMPILE_MSG)moc $< -o $@
@@ -63,10 +65,11 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac include/wvautoconf.h.in
+configure: configure.ac
+	autoheader
 	autoconf
 
-include/wvautoconf.h.in: configure.ac
+include/wvautoconf.h.in:
 	autoheader
 endif
 
@@ -97,12 +100,12 @@ doxygen:
 	doxygen
 
 install: install-shared install-dev
+#FIXME: We need to install uniconfd somewhere.
 
-# FIXME: these should be built with their suffix, and the rule automated
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	for i in $(TARGETS_SO); do \
-	    $(INSTALL_PROGRAM) $$i $(DESTDIR)$(libdir)/$$i.$(RELEASE); \
+	    $(INSTALL_PROGRAM) $$i.$(RELEASE) $(DESTDIR)$(libdir)/ ; \
 	done
 
 install-dev: $(TARGETS_SO) $(TARGETS_A)
@@ -119,8 +122,9 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
+# FIXME: this fucks up
 $(TESTS): libwvstreams.so libwvutils.so
-$(TESTS): LDLIBS+=libwvstreams.so libwvutils.so
+#$(TESTS): LDLIBS+=libwvstreams.so libwvutils.so
 tests: $(TESTS)
 
 dishes:

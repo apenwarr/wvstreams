@@ -44,6 +44,10 @@ ifneq ("$(with_qt)", "no")
 TARGETS += libwvqt.so libwvqt.a
 endif
 
+ifneq ("$(with_gtk)", "no")
+TARGETS += libwvgtk.so libwvgtk.a
+endif
+
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
@@ -53,9 +57,6 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 		include/wvautoconf.h
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
-
-#XPLC = ../../../xplc
-CPPFLAGS += -I$(XPLC)/include -DUNSTABLE
 
 CPPFLAGS += -Iinclude -pipe
 ARFLAGS = rs
@@ -113,16 +114,33 @@ ifeq ("$(enable_efence)", "yes")
 LDFLAGS+=-lefence
 endif
 
+ifneq ("$(enable_fam)", "no")
+LDFLAGS+=-lfam
+endif
+
 ifeq ("$(enable_verbose)", "yes")
 VERBOSE:=yes
 endif
 
 ifneq ("$(with_xplc)", "no")
+CPPFLAGS+=-DUNSTABLE
 ifneq ("$(with_xplc)", "yes")
+VPATH+=$(with_xplc)
 LDFLAGS+=-L$(with_xplc)
 CPPFLAGS+=-I$(with_xplc)/include
+#libwvstreams.so: $(with_xplc)/libxplc.so $(with_xplc)/libxplc-cxx.a
+libwvstreams.so: -lxplc -lxplc-cxx
 endif
 endif
+
+ifneq ("$(with_pam)", "no")
+LDFLAGS += -lpam
+endif
+
+
+LDLIBS := $(LDLIBS) \
+	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
+		&& echo " -lsupc++")
 
 RELEASE?=$(PACKAGE_VERSION)
 
@@ -140,13 +158,15 @@ libwvfft.so: libwvstreams.so
 libwvqt.a libwvqt.so: $(call objects,qt)
 libwvqt.so: libwvstreams.so
 
+libwvgtk.a libwvgtk.so: $(call objects,gtk)
+libwvgtk.so: libwvstreams.so
+
 libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams uniconf urlget)
 libwvstreams.so: libwvutils.so
 
 libwvutils.a libwvutils.so: $(call objects,utils)
 
-
-libwvstreams.so: -lssl -lcrypt #$(XPLC)/libxplc.so $(XPLC)/libxplc-cxx.a
+libwvstreams.so: -lssl -lcrypt
 
 libwvutils.so: -lz -lcrypt
 
@@ -156,5 +176,7 @@ libwvoggspeex.so: -logg -lspeex
 
 libwvfft.so: -lfftw -lrfftw
 
-libwvqt.so: -lqt
+libwvqt.so: ${QTLIB}
+
+libwvgtk.so: -lgtk
 

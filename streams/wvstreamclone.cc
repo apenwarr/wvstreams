@@ -21,9 +21,10 @@ static IWvStream *creator(WvStringParm, IObject *obj, void *)
 static WvMoniker<IWvStream> reg("clone", creator);
 
 
-WvStreamClone::WvStreamClone(IWvStream *_cloned) :
-    cloned(_cloned), disassociate_on_close(false)
+WvStreamClone::WvStreamClone(IWvStream *_cloned) 
+    : cloned(_cloned), disassociate_on_close(false)
 {
+    // the sub-stream will force its own values, if it really wants.
     force_select(false, false, false);
 }
 
@@ -38,7 +39,7 @@ WvStreamClone::~WvStreamClone()
 
 void WvStreamClone::close()
 {
-    flush(2000); // fixme: should not hardcode this stuff
+    flush(2000); // FIXME: should not hardcode this stuff
     if (disassociate_on_close)
         cloned = NULL;
     if (cloned)
@@ -46,15 +47,19 @@ void WvStreamClone::close()
 }
 
 
-void WvStreamClone::flush_internal(time_t msec_timeout)
+bool WvStreamClone::flush_internal(time_t msec_timeout)
 {
     if (cloned)
-        cloned->flush(msec_timeout);
+        return cloned->flush(msec_timeout);
+    else
+	return true;
 }
 
 
 size_t WvStreamClone::uread(void *buf, size_t size)
 {
+    // we use cloned->read() here, not uread(), since we want the _clone_
+    // to own the input buffer, not the main stream.
     if (cloned)
 	return cloned->read(buf, size);
     else
@@ -64,7 +69,7 @@ size_t WvStreamClone::uread(void *buf, size_t size)
 
 size_t WvStreamClone::uwrite(const void *buf, size_t size)
 {
-    // we use cloned->uwrite() here, not write(), since we want the _clone_
+    // we use cloned->write() here, not uwrite(), since we want the _clone_
     // to own the output buffer, not the main stream.
     if (cloned)
 	return cloned->write(buf, size);
@@ -123,18 +128,20 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	result = result || cloned->pre_select(si);
 	
 	si.wants = oldwant;
-	return result;
     }
-    return false;
+    return result;
 }
 
 
 bool WvStreamClone::post_select(SelectInfo &si)
 {
     SelectRequest oldwant;
+    // This currently always returns false, but we prolly should
+    // still have it here in case it ever becomes useful
+    bool result = WvStream::post_select(si);
     bool val, want_write;
     
-    if (cloned)
+    if (cloned && cloned->should_flush())
 	flush(0);
 
     if (cloned && cloned->isok())
@@ -150,21 +157,21 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	want_write = si.wants.writable;
 	si.wants = oldwant;
 	
-	// return false if they're looking for writable and we still
+	// return result if they're looking for writable and we still
 	// have data in outbuf - the writable is for flushing, not for you!
 	if (want_write && outbuf.used())
-	    return false;
+	    return result;
 	else if (val && si.wants.readable && read_requires_writable
 		 && !read_requires_writable->select(0, false, true))
-	    return false;
+	    return result;
 	else if (val && si.wants.writable && write_requires_readable
 		 && !write_requires_readable->select(0, true, false))
-	    return false;
+	    return result;
 	else
-	    return val;
+	    return val || result;
     }
     
-    return false;
+    return result;
 }
 
 

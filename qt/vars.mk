@@ -1,3 +1,3 @@
 
-$(call objects,qt): CPPFLAGS+=-I/usr/include/qt
+$(call objects,qt): CPPFLAGS := $(CPPFLAGS) $(QTINCLUDE)
 

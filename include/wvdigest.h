@@ -116,7 +116,7 @@ public:
      * "keysize" is the key size in bytes
      */
     WvHMACDigest(WvEVPMDDigest *_digest, const void *_key,
-        size_t _keysize);
+		 size_t _keysize);
     virtual ~WvHMACDigest();
     virtual size_t digestsize() const;
 

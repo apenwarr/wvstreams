@@ -121,7 +121,7 @@ WvString WvEncoder::strflushbuf(WvBuf &inbuf, bool finish)
 bool WvEncoder::flushmembuf(const void *inmem, size_t inlen,
     WvBuf &outbuf, bool finish)
 {
-    WvConstInPlaceBuffer inbuf(inmem, inlen);
+    WvConstInPlaceBuf inbuf(inmem, inlen);
     bool success = encode(inbuf, outbuf, true, finish);
     return success;
 }
@@ -130,7 +130,7 @@ bool WvEncoder::flushmembuf(const void *inmem, size_t inlen,
 bool WvEncoder::flushmemmem(const void *inmem, size_t inlen,
     void *outmem, size_t *outlen, bool finish)
 {
-    WvConstInPlaceBuffer inbuf(inmem, inlen);
+    WvConstInPlaceBuf inbuf(inmem, inlen);
     return encodebufmem(inbuf, outmem, outlen, true, finish);
 }
 
@@ -155,7 +155,7 @@ bool WvEncoder::flushstrmem(WvStringParm instr,
 
 WvString WvEncoder::strflushmem(const void *inmem, size_t inlen, bool finish)
 {
-    WvConstInPlaceBuffer inbuf(inmem, inlen);
+    WvConstInPlaceBuf inbuf(inmem, inlen);
     return strflushbuf(inbuf, finish);
 }
 

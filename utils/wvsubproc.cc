@@ -318,6 +318,12 @@ void WvSubProc::wait(time_t msec_delay, bool wait_children)
 	    for (i.rewind(); i.next(); )
 	    {
 		pid_t subpid = *i;
+		
+		// if the subproc is our direct descendant, we'll be able
+		// to kill it forever if it's a zombie.  Sigh.  waitpid()
+		// on it just in case.
+		waitpid(subpid, NULL, WNOHANG);
+		
 		if (::kill(-subpid, 0) && errno == ESRCH)
 		    i.xunlink();
 	    }

@@ -18,16 +18,15 @@
 class UniNullGen : public UniConfGen
 {
 public:
-    UniNullGen();
-    virtual ~UniNullGen();
+    UniNullGen() { };
+    virtual ~UniNullGen() { };
 
     /***** Overridden methods *****/
 
-    virtual WvString get(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
-    virtual bool haschildren(const UniConfKey &key);
-    virtual Iter *iterator(const UniConfKey &key);
+    virtual WvString get(const UniConfKey &key) { return WvString::null; }
+    virtual void set(const UniConfKey &key, WvStringParm value) { }
+    virtual bool haschildren(const UniConfKey &key) { return false; }
+    virtual Iter *iterator(const UniConfKey &key) { return new NullIter(); }
 };
 
 

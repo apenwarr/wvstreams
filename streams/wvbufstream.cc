@@ -32,11 +32,11 @@ void WvBufStream::close()
 }
 
 
+// if uread() is called, someone has already exhausted inbuf... so now it's
+// time to close our stream so they know they're at EOF.
 size_t WvBufStream::uread(void *buf, size_t size)
 {
-    if (inbuf.used())
-	return WvStream::uread(buf, size);
-    else if (eof) 
+    if (eof)
 	close();
     return 0; 
 }

@@ -99,8 +99,8 @@ public:
      *   if child_killed()==true, the signal that killed the child.
      *   if child_killed()==false, the return code of the program.
      */
-    int exit_status() const;
-    
+    int exit_status();
+
     // returns pid
     int getpid() const { return proc.pid; };
 };

@@ -4,10 +4,10 @@
  * 
  * A read only generator wrapper.
  */
-#ifndef __UNICONFREADONLY_H
-#define __UNICONFREADONLY_H
+#ifndef __UNIREADONLYGEN_H
+#define __UNIREADONLYGEN_H
 
-#include "uniconfgen.h"
+#include "unifiltergen.h"
 
 /**
  * A generator that wraps another generator and makes it read only.
@@ -19,14 +19,11 @@
 class UniReadOnlyGen : public UniFilterGen
 {
 public:
-    UniReadOnlyGen(UniConfGen *inner);
+    UniReadOnlyGen(UniConfGen *inner) : UniFilterGen(inner) { }
 
     /***** Overridden members *****/
 
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
-    virtual bool commit(const UniConfKey &key,
-        UniConfDepth::Type depth);
+    virtual void set(const UniConfKey &key, WvStringParm value) { };
 };
 
 

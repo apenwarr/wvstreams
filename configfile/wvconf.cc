@@ -47,7 +47,7 @@ WvConf::WvConf(WvStringParm _filename, int _create_mode)
 }
 
 
-static int check_for_bool_string(const char *s)
+int WvConf::check_for_bool_string(const char *s)
 {
     if (strcasecmp(s, "off") == 0
      || strcasecmp(s, "false") == 0
@@ -106,7 +106,7 @@ int WvConf::parse_wvconf_request(char *request, char *&section,
     section = trim_string(section);
     entry = trim_string(entry);
     
-    if (!*section || !*entry)
+    if (!*section)
 	return -3;
     
     return 0;

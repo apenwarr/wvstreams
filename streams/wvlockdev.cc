@@ -101,16 +101,16 @@ bool WvLockDev::lock()
     	sleep(1);	// preventing race condition...
  	
 	fd.open(filename, O_RDONLY);
-	fprintf(stderr, "ok: %d\n", fd.isok());
+	//fprintf(stderr, "ok: %d\n", fd.isok());
 	inbuf = trim_string(fd.getline(-1));
-	fprintf(stderr, "getline: '%s'\n", inbuf);
+	//fprintf(stderr, "getline: '%s'\n", inbuf);
 	
 	if (inbuf)
 	    pid = atoi(inbuf);
 	else
 	    pid = 0;
 	
-	fprintf(stderr, "pid: '%d'\n", pid);
+	//fprintf(stderr, "pid: '%d'\n", pid);
 	
  	if (pid && kill(pid, 0) == -1 && errno == ESRCH)
 	{

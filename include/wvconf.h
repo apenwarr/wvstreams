@@ -60,10 +60,7 @@ public:
 
 
 // parameters are: userdata, section, entry, oldval, newval
-DeclareWvCallback(5, void, WvConfCallback,
-		  void *,
-		  WvStringParm, WvStringParm,
-		  WvStringParm, WvStringParm);
+typedef WvCallback<void, void*, WvStringParm, WvStringParm, WvStringParm, WvStringParm> WvConfCallback;
 
 
 class WvConfCallbackInfo
@@ -103,6 +100,7 @@ public:
 
     WvConfigSection *operator[] (WvStringParm s);
 
+    static int check_for_bool_string(const char *s);
     int parse_wvconf_request(char *request, char *&section, char *&entry,
 			     char *&value);
 
@@ -154,14 +152,14 @@ public:
 		 WvStringParm oldval, WvStringParm newval);
 
     void add_addname(WvStringList *list, WvStringParm section, WvStringParm entry)
-	{ add_callback(wvcallback(WvConfCallback, *this, WvConf::addname),
+	{ add_callback(WvConfCallback(this, &WvConf::addname),
 		       list, section, entry); }
     
     void add_setbool(bool *b, WvStringParm section, WvStringParm entry)
-        { add_callback(wvcallback(WvConfCallback, *this, WvConf::setbool),
+        { add_callback(WvConfCallback(this, &WvConf::setbool),
 		       b, section, entry); }
     void del_setbool(bool *b, WvStringParm section, WvStringParm entry)
-        { del_callback(wvcallback(WvConfCallback, *this, WvConf::setbool),
+        { del_callback(WvConfCallback(this, &WvConf::setbool),
 		       b, section, entry); }
 		    
     void load_file() // append the contents of the real config file

@@ -1,3 +1,4 @@
+.*.swp
 wvautoconf.h
 wvautoconf.h.in
 *.moc

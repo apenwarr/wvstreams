@@ -36,8 +36,8 @@ public:
     
     /***** Overridden members *****/
 
-    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
-    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
+    virtual void commit();
+    virtual bool refresh();
 
 private:
     void save(WvStream &file, UniConfValueTree &parent);

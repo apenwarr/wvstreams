@@ -8,22 +8,43 @@
 #include "uniconfdaemon.h"
 #include "wvtclstring.h"
 
+
+/***** UniConfDaemonConn *****/
+
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
     UniClientConn(_s),
-    root(_root)
+    root(_root), watches(NUM_WATCHES)
 {
-    writecmd(EVENT_HELLO, "{UniConf Server ready}");
+    addcallback();
+    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
 }
 
 
-UniConfDaemonConn::~UniConfDaemonConn()
+void UniConfDaemonConn::close()
 {
+    delcallback();
+    UniClientConn::close();
+}
+
+
+void UniConfDaemonConn::addcallback()
+{
+    root.add_callback(UniConfCallback(this,
+            &UniConfDaemonConn::deltacallback), NULL, true);
+}
+
+
+void UniConfDaemonConn::delcallback()
+{
+    root.del_callback(UniConfCallback(this,
+            &UniConfDaemonConn::deltacallback), NULL, true);
 }
 
 
 void UniConfDaemonConn::execute()
 {
     UniClientConn::execute();
+    
     for (;;)
     {
         UniClientConn::Command command = readcmd();
@@ -31,8 +52,8 @@ void UniConfDaemonConn::execute()
             break;
 
         // parse and execute command
-        WvString arg1(wvtcl_getword(payloadbuf, " "));
-        WvString arg2(wvtcl_getword(payloadbuf, " "));
+        WvString arg1(readarg());
+        WvString arg2(readarg());
         switch (command)
         {
             case UniClientConn::INVALID:
@@ -66,13 +87,6 @@ void UniConfDaemonConn::execute()
                     do_remove(arg1);
                 break;
 
-            case UniClientConn::REQ_ZAP:
-                if (arg1.isnull())
-                    do_malformed();
-                else
-                    do_zap(arg1);
-                break;
-
             case UniClientConn::REQ_SUBTREE:
                 if (arg1.isnull())
                     do_malformed();
@@ -80,30 +94,11 @@ void UniConfDaemonConn::execute()
                     do_subtree(arg1);
                 break;
 
-            case UniClientConn::REQ_ADDWATCH:
-                if (arg1.isnull() || arg2.isnull())
+            case UniClientConn::REQ_HASCHILDREN:
+                if (arg1.isnull())
                     do_malformed();
                 else
-                {
-                    UniConfDepth::Type depth = UniConfDepth::fromname(arg2);
-                    if (depth == -1)
-                        do_malformed();
-                    else
-                        do_addwatch(arg1, depth);
-                }
-                break;
-
-            case UniClientConn::REQ_DELWATCH:
-                if (arg1.isnull() || arg2.isnull())
-                    do_malformed();
-                else
-                {
-                    UniConfDepth::Type depth = UniConfDepth::fromname(arg2);
-                    if (depth == -1)
-                        do_malformed();
-                    else
-                        do_delwatch(arg1, depth);
-                }
+                    do_haschildren(arg1);
                 break;
 
             case UniClientConn::REQ_QUIT:
@@ -124,7 +119,7 @@ void UniConfDaemonConn::execute()
 
 void UniConfDaemonConn::do_malformed()
 {
-    writefail("malformed");
+    writefail("malformed request");
 }
 
 
@@ -134,43 +129,31 @@ void UniConfDaemonConn::do_noop()
 }
 
 
+void UniConfDaemonConn::do_reply(WvStringParm reply)
+{
+    writefail("unexpected reply");
+}
+
+
 void UniConfDaemonConn::do_get(const UniConfKey &key)
 {
     WvString value(root[key].get());
     if (value.isnull())
         writefail();
     else
-    {
-        writevalue(key, value);
-        writeok();
-    }
+        writeonevalue(key, value);
 }
 
 
 void UniConfDaemonConn::do_set(const UniConfKey &key, WvStringParm value)
 {
-    if (root[key].set(value))
-        writeok();
-    else
-        writefail();
+    root[key].set(value);
 }
 
 
 void UniConfDaemonConn::do_remove(const UniConfKey &key)
 {
-    if (root[key].remove())
-        writeok();
-    else
-        writefail();
-}
-
-
-void UniConfDaemonConn::do_zap(const UniConfKey &key)
-{
-    if (root[key].zap())
-        writeok();
-    else
-        writefail();
+    root[key].remove();
 }
 
 
@@ -189,17 +172,11 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key)
 }
 
 
-void UniConfDaemonConn::do_addwatch(const UniConfKey &key,
-    UniConfDepth::Type depth)
+void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
 {
-    // FIXME: not implemented
-}
-
-
-void UniConfDaemonConn::do_delwatch(const UniConfKey &key,
-    UniConfDepth::Type depth)
-{
-    // FIXME: not implemented
+    bool haschild = root[key].haschildren();
+    WvString msg("%s %s", wvtcl_escape(key), haschild ? "TRUE" : "FALSE");
+    writecmd(REPLY_CHILD, msg);
 }
 
 
@@ -215,4 +192,19 @@ void UniConfDaemonConn::do_help()
     for (int i = 0; i < UniClientConn::NUM_COMMANDS; ++i)
         writetext(UniClientConn::cmdinfos[i].description);
     writeok();
+}
+
+
+void UniConfDaemonConn::deltacallback(const UniConf &key, void *userdata)
+{
+    WvString value(key.get());
+    WvString msg;
+
+    if (value.isnull())
+        msg = WvString("%s", wvtcl_escape(key.fullkey()));
+    else
+        msg = WvString("%s %s", wvtcl_escape(key.fullkey()),
+                                wvtcl_escape(key.get()));
+
+    writecmd(UniClientConn::EVENT_NOTICE, msg);
 }

@@ -18,43 +18,27 @@ class UniConfPair
     UniConfKey xkey;  /*!< the name of this entry */
     WvString xvalue;  /*!< the value of this entry */
 
-    /** undefined. */
-    UniConfPair(const UniConfPair &);
-
-    /** undefined. */
-    UniConfPair &operator= (const UniConfPair &);
-
 public:
     /**
      * Creates a UniConfPair.
      * "key" is the key
      * "value" is the value
      */
-    UniConfPair(const UniConfKey &key, WvStringParm value);
+    UniConfPair(const UniConfKey &key, WvStringParm value)
+        : xkey(key), xvalue(value) { }
 
-    /**
-     * Returns the key field.
-     * "the" is key
-     */
+
     const UniConfKey &key() const
         { return xkey; }
 
-    /**
-     * Returns the value field.
-     * "the" is value
-     */
     const WvString &value()
         { return xvalue; }
 
-    /**
-     * Sets the value field.
-     * "value" is the new value
-     */
-    void setvalue(WvStringParm value);
+    void setvalue(WvStringParm value) { xvalue = value; }
+
+    void setkey(UniConfKey &key) { xkey = key; }
 };
 
-DeclareWvDict(UniConfPair, UniConfKey, key());
-
-extern UniConfPairDict null_UniConfPairDict;
+DeclareWvList(UniConfPair);
 
 #endif //__UNICONFPAIR_H

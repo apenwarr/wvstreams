@@ -13,7 +13,6 @@
 #include "wvstringlist.h"
 
 class UniClientConn;
-class UniCache;
 
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
@@ -28,15 +27,20 @@ class UniCache;
  */
 class UniClientGen : public UniConfGen
 {
+    class RemoteKeyIter;
+
     UniClientConn *conn;
-    UniCache *cache;
-    WvString streamid;
+    //WvStringList set_queue;
     WvLog log;
 
-    bool cmdinprogress; /*!< true while a command is in progress */
-    bool cmdsuccess; /*!< true when a command completed successfully */
+    WvString result_key;        /*!< the key that the current result is from */
+    WvString result;            /*!< the result from the current key */
+    WvStringList *result_list;  /*!< result list for iterations */
 
-    static const int TIMEOUT = 2000; // 2 sec timeout
+    bool cmdinprogress;     /*!< true while a command is in progress */
+    bool cmdsuccess;        /*!< true when a command completed successfully */
+
+    static const int TIMEOUT = 1000; // 1 sec timeout
 
 public:
     /**
@@ -44,7 +48,7 @@ public:
      * the specified stream.
      * "stream" is the raw connection
      */
-    UniClientGen(IWvStream *stream);
+    UniClientGen(IWvStream *stream, WvStringParm dst = WvString::null);
 
     virtual ~UniClientGen();
 
@@ -52,21 +56,15 @@ public:
 
     virtual bool isok();
 
-    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
-    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
+    virtual bool refresh();
     virtual WvString get(const UniConfKey &key);
-    virtual bool exists(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
 
-    class RemoteKeyIter;
-
 protected:
     void conncallback(WvStream &s, void *userdata);
-    void prepare();
-    bool wait();
+    bool do_select();
 };
 
 
@@ -74,16 +72,15 @@ protected:
 class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
 {
 protected:
-    WvStringList *xlist;
-    WvStringList::Iter xit;
+    WvStringList *list;
+    WvStringList::Iter i;
 
 public:
-    RemoteKeyIter(WvStringList *list);
-    virtual ~RemoteKeyIter();
+    RemoteKeyIter(WvStringList *_list) : list(_list), i(*_list) { }
+    virtual ~RemoteKeyIter() { delete list; }
 
     /***** Overridden methods *****/
 
-    virtual RemoteKeyIter *clone() const;
     virtual void rewind();
     virtual bool next();
     virtual UniConfKey key() const;

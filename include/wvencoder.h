@@ -456,8 +456,7 @@ protected:
      * Returns: true on success
      * @see encode
      */
-    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
-        bool flush) = 0;
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush) = 0;
 
     /**
      * Template method implementation of finish().

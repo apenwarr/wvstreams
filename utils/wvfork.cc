@@ -21,8 +21,28 @@
 #include <fcntl.h>
 
 #include "wvfork.h"
+#include "wvlinklist.h"
 
 #define MAX_FD sysconf(_SC_OPEN_MAX) + 1
+
+DeclareWvList(WvForkCallback);
+WvForkCallbackList callbacks;
+
+void add_wvfork_callback(WvForkCallback cb)
+{
+    // be sure we don't add this twice
+    WvForkCallbackList::Iter i(callbacks);
+    for (i.rewind(); i.next(); )
+        if (*i == cb) return;
+    callbacks.append(new WvForkCallback(cb), true);
+}
+
+void remove_wvfork_callback(WvForkCallback cb)
+{
+    WvForkCallbackList::Iter i(callbacks);
+    for (i.rewind(); i.next(); )
+        if (*i == cb) i.xunlink();
+}
 
 pid_t wvfork(int dontclose1, int dontclose2)
 {
@@ -42,6 +62,13 @@ pid_t wvfork_start(int *waitfd)
 	return -1;
 
     pid_t pid = fork();
+
+    WvForkCallbackList::Iter i(callbacks);
+    for (i.rewind(); i.next(); )
+    {
+        WvForkCallback *cb = i.ptr();
+        (*cb)(pid);
+    }
 
     if (pid < 0)
 	return pid;

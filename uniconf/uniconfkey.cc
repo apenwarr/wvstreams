@@ -247,3 +247,14 @@ bool UniConfKey::matches(const UniConfKey &pattern) const
     // no other wildcard arrangements currently supported
     return false;
 }
+
+
+bool UniConfKey::suborsame(const UniConfKey &key) const
+{
+    UniConfKey k = key.first(numsegments());
+
+    if (k == *this)
+        return true;
+    return false;
+}
+

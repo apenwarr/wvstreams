@@ -24,19 +24,19 @@ UniConfKey UniConf::fullkey(const UniConfKey &k) const
 
 bool UniConf::exists() const
 {
-    return xroot->exists(xfullkey);
+    return xroot->mounts.exists(xfullkey);
 }
 
 
 bool UniConf::haschildren() const
 {
-    return xroot->haschildren(xfullkey);
+    return xroot->mounts.haschildren(xfullkey);
 }
 
 
 WvString UniConf::get(WvStringParm defvalue) const
 {
-    WvString value = xroot->get(xfullkey);
+    WvString value = xroot->mounts.get(xfullkey);
     if (value.isnull())
         return defvalue;
     return value;
@@ -45,100 +45,123 @@ WvString UniConf::get(WvStringParm defvalue) const
 
 int UniConf::getint(int defvalue) const
 {
-    // also recognize bool strings as integers
-    const char *strs[] = {
-        "true", "yes", "on", "enabled",
-        "false", "no", "off", "disabled"
-    };
-    const size_t numtruestrs = 4;
-
-    WvString value = get();
-    if (!value.isnull())
-    {
-        // try to recognize an integer
-        char *end;
-        int num = strtol(value.cstr(), &end, 0);
-        if (end != value.cstr())
-            return num; // was a valid integer
-        
-        // try to recognize a special string
-        for (size_t i = 0; i < sizeof(strs) / sizeof(const char*); ++i)
-            if (strcasecmp(value, strs[i]) == 0)
-                return i < numtruestrs;
-    }
-    return defvalue;
+    return xroot->mounts.str2int(get(), defvalue);
 }
 
 
-bool UniConf::set(WvStringParm value) const
+void UniConf::set(WvStringParm value) const
 {
-    return xroot->set(xfullkey, value);
+    xroot->mounts.set(xfullkey, value);
 }
 
 
-bool UniConf::setint(int value) const
+void UniConf::setint(int value) const
 {
-    return set(WvString(value));
+   set(WvString(value));
 }
 
 
-bool UniConf::zap() const
+void UniConf::move(UniConfKey dst)
 {
-    return xroot->zap(xfullkey);
+    //FIXME: Someone should actually make this. :)
 }
 
 
-bool UniConf::refresh(UniConfDepth::Type depth) const
+void UniConf::copy(UniConfKey dst, bool force)
 {
-    return xroot->refresh(xfullkey, depth);
+    //FIXME: Someone should actually make this. :)
 }
 
 
-bool UniConf::commit(UniConfDepth::Type depth) const
+bool UniConf::refresh() const
 {
-    return xroot->commit(xfullkey, depth);
+    return xroot->mounts.refresh();
+}
+
+
+void UniConf::commit() const
+{
+    xroot->mounts.commit();
 }
 
 
 UniConfGen *UniConf::mount(WvStringParm moniker, bool refresh) const
 {
-    return xroot->mount(xfullkey, moniker, refresh);
+    return xroot->mounts.mount(xfullkey, moniker, refresh);
 }
 
 
 UniConfGen *UniConf::mountgen(UniConfGen *gen, bool refresh) const
 {
-    return xroot->mountgen(xfullkey, gen, refresh);
+    return xroot->mounts.mountgen(xfullkey, gen, refresh);
 }
 
 
 void UniConf::unmount(UniConfGen *gen, bool commit) const
 {
-    return xroot->unmount(xfullkey, gen, commit);
+    return xroot->mounts.unmount(gen, commit);
 }
 
 
 bool UniConf::ismountpoint() const
 {
-    return xroot->ismountpoint(xfullkey);
+    return xroot->mounts.ismountpoint(xfullkey);
 }
 
 
 UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 {
-    return xroot->whichmount(xfullkey, mountpoint);
+    return xroot->mounts.whichmount(xfullkey, mountpoint);
 }
 
 
-void UniConf::addwatch(UniConfDepth::Type depth, UniConfWatch *watch) const
+void UniConf::add_callback(const UniConfCallback &callback, void *userdata,
+                           bool recurse) const
 {
-    return xroot->addwatch(xfullkey, depth, watch);
+    xroot->add_callback(xfullkey, callback, userdata, recurse);
 }
 
 
-void UniConf::delwatch(UniConfDepth::Type depth, UniConfWatch *watch) const
+void UniConf::del_callback(const UniConfCallback &callback, void *userdata,
+                           bool recurse) const
 {
-    return xroot->delwatch(xfullkey, depth, watch);
+    xroot->del_callback(xfullkey, callback, userdata, recurse);
+}
+
+
+void UniConf::add_setbool(bool *flag, bool recurse) const
+{
+    xroot->add_setbool(xfullkey, flag, recurse);
+}
+
+
+void UniConf::del_setbool(bool *flag, bool recurse) const
+{
+    xroot->del_setbool(xfullkey, flag, recurse);
+}
+
+
+void UniConf::hold_delta()
+{
+    xroot->mounts.hold_delta();
+}
+
+
+void UniConf::unhold_delta()
+{
+    xroot->mounts.unhold_delta();
+}
+
+
+void UniConf::clear_delta()
+{
+    xroot->mounts.clear_delta();
+}
+
+
+void UniConf::flush_delta()
+{
+    xroot->mounts.flush_delta();
 }
 
 
@@ -151,6 +174,15 @@ void UniConf::dump(WvStream &stream, bool everything) const
         if (everything || !!value)
             stream.print("%s = %s\n", it->fullkey(), value);
     }
+}
+
+
+
+/***** UniConf::Iter *****/
+
+UniConf::Iter::Iter(const UniConf &_top)
+    : IterBase(_top), it(_top.rootobj()->mounts.iterator(top.fullkey()))
+{
 }
 
 
@@ -421,33 +453,4 @@ bool UniConf::SortedIterBase::next()
     current = *xkeys[index];
     index += 1;
     return true;
-}
-
-
-
-/***** UniConfRoot *****/
-
-UniConfRoot::UniConfRoot()
-    : UniConf(new UniConfRootImpl(), UniConfKey::EMPTY)
-{
-}
-
-
-UniConfRoot::UniConfRoot(WvStringParm moniker, bool refresh)
-    : UniConf(new UniConfRootImpl(), UniConfKey::EMPTY)
-{
-    mount(moniker, refresh);
-}
-
-
-UniConfRoot::UniConfRoot(UniConfGen *gen, bool refresh)
-    : UniConf(new UniConfRootImpl(), UniConfKey::EMPTY)
-{
-    mountgen(gen, refresh);
-}
-
-
-UniConfRoot::~UniConfRoot()
-{
-    delete xroot;
 }
