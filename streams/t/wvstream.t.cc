@@ -49,7 +49,7 @@ public:
 
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("buffered read/write")
 {
     WvStream s;
     char buf[1024];
@@ -77,7 +77,7 @@ WVTEST_MAIN()
 
 
 // error tests
-WVTEST_MAIN()
+WVTEST_MAIN("errors")
 {
     WvStream a, b;
     
@@ -96,7 +96,7 @@ WVTEST_MAIN()
 
 
 // noread/nowrite behaviour
-WVTEST_MAIN()
+WVTEST_MAIN("noread/nowrite")
 {
     WvStream s;
     char buf[1024];
@@ -110,7 +110,7 @@ WVTEST_MAIN()
 
 
 // getline tests
-WVTEST_MAIN()
+WVTEST_MAIN("getline")
 {
     WvStream s;
     char buf[1024];
@@ -144,7 +144,7 @@ WVTEST_MAIN()
 
 
 // more noread/nowrite behaviour
-WVTEST_MAIN()
+WVTEST_MAIN("more noread/nowrite")
 {
     WvStream s;
     
@@ -168,7 +168,7 @@ static void val_cb(WvStream &s, void *userdata)
 
 
 // callback tests
-WVTEST_MAIN()
+WVTEST_MAIN("callbacks")
 {
     int val = 0, closeval = 0;
     
@@ -205,7 +205,7 @@ WVTEST_MAIN()
 
 
 // autoforward and various buffer-related tests
-WVTEST_MAIN()
+WVTEST_MAIN("autoforward and buffers")
 {
     WvStream a;
     CountStream b;
@@ -268,7 +268,7 @@ WVTEST_MAIN()
 
 
 // flush_then_close()
-WVTEST_MAIN()
+WVTEST_MAIN("flush_then_close")
 {
     CountStream s;
     
@@ -294,7 +294,7 @@ WVTEST_MAIN()
 
 
 // force_select and the globallist
-WVTEST_MAIN()
+WVTEST_MAIN("force_select and globallist")
 {
     int val = 0;
     CountStream s, x;
@@ -346,7 +346,7 @@ static void cont_cb(WvStream &s, void *userdata)
 }
 
 // continue_select()
-WVTEST_MAIN()
+WVTEST_MAIN("continue_select")
 {
     WvStream a;
     int aval = 0;
@@ -396,7 +396,7 @@ static void cont_read_cb(WvStream &s, void *userdata)
 
 
 // continue_read() and getline() auto-continuation
-WVTEST_MAIN()
+WVTEST_MAIN("continue_read and continuing getline")
 {
     WvStream s;
     s.uses_continue_select = true;
@@ -425,7 +425,7 @@ WVTEST_MAIN()
 
 
 // alarm()
-WVTEST_MAIN()
+WVTEST_MAIN("alarm")
 {
     int val = 0;
     WvStream s;
@@ -454,20 +454,3 @@ WVTEST_MAIN()
     s.runonce(50);
     WVPASS(val == 2);
 }
-
-
-// FIXME: lots of remaining untested stuff
-//    . callback/closecallback
-//    . autoforward/noautoforward
-//    . continue_select / continue_read
-//    . seterr
-//    read_requires_writable / write_requires_readable
-//    . flush_then_close
-//    . alarm() and alarm_remaining()
-//    . delay_output()
-//    . drain()
-//    . queuemin()
-//    . select including globallist (runonce())
-//        . force_select
-//    
-// Wow, jbrown was right.  This *is* a pretty tangled mess!

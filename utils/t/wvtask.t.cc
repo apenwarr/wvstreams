@@ -54,7 +54,7 @@ void testme()
 }
 
 
-WVTEST_MAIN()
+WVTEST_MAIN("simple")
 {
     testme();
     WVPASS("--REPEATING TEST--");
