@@ -160,7 +160,7 @@ test: runconfigure all tests wvtestmain
 	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
-	$(VALGRIND) ./wvtestmain $(TESTNAME)
+	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
 ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=0 ./unitest.sh
 	cd uniconf/tests && DAEMON=1 ./unitest.sh
