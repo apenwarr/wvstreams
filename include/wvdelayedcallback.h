@@ -39,7 +39,6 @@ private:
     void thaw(WvStream &stream, void *userdata)
     {
         cb.thaw(*frozen);
-        stream.close();
     }
 
 public:
