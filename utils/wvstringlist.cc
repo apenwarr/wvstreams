@@ -81,3 +81,14 @@ void WvStringList::fill(const char * const *array)
 }
 
 
+// get the first string in the list, or an empty string if the list is empty.
+// Removes the returned string from the list.
+WvString WvStringList::popstr()
+{
+    if (isempty())
+	return "";
+    
+    WvString s = *first();
+    unlink_first();
+    return s;
+}
