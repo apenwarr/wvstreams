@@ -48,9 +48,9 @@ int main()
     {
         l.select(-1);
         wvcon->print("(normals) key: %s, key/bob: %s\n", nonsilly,
-silly);
+		     silly);
         wvcon->print("(recurse) key: %s, key/bob: %s\n", nonsilly2,
-silly2);
+		     silly2);
 
         silly2 = nonsilly2 = false;
         silly = nonsilly = false;
