@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <cstdlib>
+
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 # include <valgrind/memcheck.h>
 # include <valgrind/valgrind.h>
