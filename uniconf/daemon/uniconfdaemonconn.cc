@@ -36,7 +36,7 @@ void UniConfDaemonConn::keychanged(void *userdata, UniConf &conf)
     WvString keyname(conf.gen_full_key()); 
 //    log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
     if (s->isok())
-        s->write(WvString("FGET %s\n", keyname));
+        s->write(WvString("%s %s\n", UNICONF_FORGET, wvtcl_escape(keyname)));
 }
 
 /* Functions to look after UniEvents callback setting / removing */
@@ -71,18 +71,17 @@ void UniConfDaemonConn::add_callback(WvString key)
 void UniConfDaemonConn::dook(const WvString cmd, const WvString key)
 {
     if (this->isok())
-        print("OK %s %s\n", cmd, key); 
+        print("%s %s %s\n", UNICONF_OK, cmd, key); 
 }
 
 void UniConfDaemonConn::doget(WvString key)
 {
     dook("get", key);
-    WvString response;
+    WvString response("%s %s ", UNICONF_RETURN, wvtcl_escape(key));
     if (!!source->mainconf.get(key))
-        response = WvString("RETN %s %s\n", wvtcl_escape(key),
-                wvtcl_escape(source->mainconf.get(key)));
+        response.append("%s\n",wvtcl_escape(source->mainconf.get(key)));
     else
-        response = WvString("RETN %s \\0\n", wvtcl_escape(key));
+        response.append("\\0\n");
 
     if (this->isok())
     {
@@ -96,9 +95,9 @@ void UniConfDaemonConn::doget(WvString key)
 void UniConfDaemonConn::dosubtree(WvString key)
 {
     UniConf *nerf = &source->mainconf[key];
-    WvString send("SUBT %s ", wvtcl_escape(key));
+    WvString send("%s %s ", UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
     
-    dook("subt", key);
+    dook(UNICONF_SUBTREE, key);
     
     if (nerf)
     {
@@ -120,9 +119,9 @@ void UniConfDaemonConn::dosubtree(WvString key)
 void UniConfDaemonConn::dorecursivesubtree(WvString key)
 {
     UniConf *nerf = &source->mainconf[key];
-    WvString send("SUBT %s ", wvtcl_escape(key));
+    WvString send("%s %s ", UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
     
-    dook("rsub", key);
+    dook(UNICONF_RECURSIVESUBTREE, key);
     
     if (nerf)
     {
@@ -145,7 +144,7 @@ void UniConfDaemonConn::doset(WvString key, WvConstStringBuffer &fromline)
     WvString newvalue = wvtcl_getword(fromline);
     source->mainconf[key] = wvtcl_unescape(newvalue);
     source->keymodified = true;
-    dook("set", key);
+    dook(UNICONF_SET, key);
 }
 
 void UniConfDaemonConn::execute()
@@ -164,13 +163,13 @@ void UniConfDaemonConn::execute()
         while (!(cmd = wvtcl_getword(fromline)).isnull())
         {
             // check the command
-	    if (cmd == "help")
+	    if (cmd == UNICONF_HELP)//"help")
 	    {
                 if (this->isok())
 	    	    print("OK I know how to: help, get, subt, quit\n");
 		return;	    
 	    }
-            if (cmd == "quit")
+            if (cmd == UNICONF_QUIT)//"quit")
             {
                 dook(cmd, "<null>");
                 close();
@@ -180,19 +179,19 @@ void UniConfDaemonConn::execute()
             if (key.isnull())
                 break;
 
-            if (cmd == "get") // return the specified value
+            if (cmd == UNICONF_GET)//"get") // return the specified value
             {
                 doget(key);
             }
-            else if (cmd == "subt") // return the subtree(s) of this key
+            else if (cmd == UNICONF_SUBTREE)//"subt") // return the subtree(s) of this key
             {
                 dosubtree(key);
             }
-            else if (cmd == "rsub")
+            else if (cmd == UNICONF_RECURSIVESUBTREE)//"rsub")
             {
                 dorecursivesubtree(key);
             }
-            else if (cmd == "set") // set the specified value
+            else if (cmd == UNICONF_SET) // set the specified value
             {
                 doset(key, fromline);
             }
