@@ -15,6 +15,7 @@
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvhex.h"
+#include "wvregex.h"
 
 /** \file
  * Various little string functions
@@ -305,6 +306,44 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
 
         if (!cur[len]) break;
         cur += len + 1;
+    }
+}
+
+
+/**
+ * Splits a string and adds each substring to a collection.
+ *   coll       : the collection of strings to add to
+ *   _s         : the string to split
+ *   splitchars : the set of delimiter characters
+ *   limit      : the maximum number of elements to split
+ */
+template<class StringCollection>
+void strcoll_split(StringCollection &coll, WvStringParm s,
+    const WvRegex &regex, int limit = 0)
+{
+    int start = 0;
+    int match_start, match_end;
+    int count = 0;
+    
+    while ((limit == 0 || count < limit)
+    	    && regex.match(&s[start], match_start, match_end)
+    	    && match_end > 0)
+    {
+    	WvString *substr = new WvString;
+    	int len = match_start;
+    	substr->setsize(len+1);
+    	memcpy(substr->edit(), &s[start], len);
+    	substr->edit()[len] = '\0';
+    	coll.add(substr, true);
+    	start += match_end;
+    	++count;
+    }
+    
+    if (limit == 0 || count < limit)
+    {
+    	WvString *last = new WvString(&s[start]);
+    	last->unique();
+    	coll.add(last, true);
     }
 }
 

@@ -98,12 +98,13 @@ public:
     //
     // If eflags are given, they affect the matching as described above.
     //
-    // If match_start and match_end are given, they will contain the offset
-    // in the string of the start of the first match and the end of the first
-    // match PLUS ONE.
+    // If a match was found and match_start and match_end are given,
+    // they will contain the offset in the string of the start of the first 
+    // match and the end of the first match PLUS ONE.
     //
-    // If registers are given they will contain the substrings of the match
-    // that correspond to the parenthesized expressions in the regex.
+    // If a match was found and registers are given they will contain the
+    // substrings of the match that correspond to the parenthesized
+    // expressions in the regex.
     //
     // Examples:
     // int match_start, match_end;

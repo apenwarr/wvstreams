@@ -61,3 +61,8 @@ WvString WvStringList::popstr()
     unlink_first();
     return s;
 }
+
+void WvStringList::split(WvStringParm s, const WvRegex &regex, int limit)
+{
+    return ::strcoll_split(*this, s, regex, limit);
+}
