@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.33 2003/05/08 18:18:16 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.34 2003/09/09 19:10:21 jim Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -189,7 +189,7 @@ if test "$with_qt" != "no"; then
         WV_APPEND(CPPFLAGS, -I$with_qt/include)
         WV_APPEND(LDFLAGS, -L$with_qt/lib)
     fi
-    AC_PATH_PROG(MOC, moc, ["moc not found"], $with_qt/bin)
+    AC_PATH_PROG(MOC, moc, [moc not found], $with_qt/bin)
 fi
 
 # speex
