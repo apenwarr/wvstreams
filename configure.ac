@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.12 2003/01/06 20:28:01 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.13 2003/01/08 21:17:40 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -107,29 +107,24 @@ fi
 
 # ogg
 if test "$with_ogg" != "no"; then
-AC_CHECK_LIB(ogg, ogg_stream_init,, [with_ogg=no])
-AC_CHECK_HEADERS(ogg/ogg.h,, [with_ogg=no])
+    AC_CHECK_LIB(ogg, ogg_stream_init,, [with_ogg=no])
+    AC_CHECK_HEADERS(ogg/ogg.h,, [with_ogg=no])
 fi
-
-# vorbis
 if test "$with_ogg" != "no"; then
-if test "$with_vorbis" != "no"; then
-AC_CHECK_LIB(vorbis, vorbis_info_init,, [with_vorbis=no])
-AC_CHECK_LIB(vorbisenc, vorbis_encode_init,, [with_vorbis=no])
-AC_CHECK_HEADERS(vorbis/codec.h vorbis/vorbisenc.h,, [with_vorbis=no])
-fi
+    # vorbis
+    if test "$with_vorbis" != "no"; then
+        AC_CHECK_LIB(vorbis, vorbis_info_init,, [with_vorbis=no])
+        AC_CHECK_LIB(vorbisenc, vorbis_encode_init,, [with_vorbis=no])
+        AC_CHECK_HEADERS(vorbis/codec.h vorbis/vorbisenc.h,, [with_vorbis=no])
+    fi
+    # speex
+    if test "$with_speex" != "no"; then
+        AC_CHECK_LIB(speex, speex_encoder_init,, [with_speex=no])
+        AC_CHECK_HEADERS(speex.h speex_header.h,, [with_speex=no])
+    fi
 else
-with_vorbis="no"
-fi
-    
-# speex
-if test "$with_ogg" != "no"; then
-if test "$with_speex" != "no"; then
-AC_CHECK_LIB(speex, speex_encoder_init,, [with_speex=no])
-AC_CHECK_HEADERS(speex.h speex_header.h,, [with_speex=no])
-fi
-else
-with_speex="no"
+    with_vorbis="no"
+    with_speex="no"
 fi
 
 # fftw
@@ -160,30 +155,41 @@ AC_DEFINE(WVRESOLVER_SKIP_FORK,,
           [Define to disable WvResolver forking for debugging with gdb.])
 fi
 
+if test "$with_openssl" == "no"; then
+    AC_MSG_WARN([OpenSSL is missing.])
+    missing_devel=yes
+fi
+if test "$with_zlib" == "no"; then
+    AC_MSG_WARN([zlib is missing.])
+    missing_devel=yes
+fi
+if test "$with_ogg" == "no"; then
+    AC_MSG_WARN([Ogg is missing.])
+    missing_devel=yes
+fi
+if test "$with_vorbis" == "no"; then
+    AC_MSG_WARN([Vorbis is missing.])
+    missing_devel=yes
+fi
+if test "$with_speex" == "no"; then
+    AC_MSG_WARN([Speex is missing.])
+    missing_devel=yes
+fi
+if test "$with_fftw" == "no"; then
+    AC_MSG_WARN([FFTW is missing.])
+    missing_devel=yes
+fi
+if test "$with_qt" == "no"; then
+    AC_MSG_WARN([Qt is missing.])
+    missing_devel=yes
+fi
+
 if test "$enable_devel" == "yes"; then
     enable_debug=yes
     enable_fatal_warnings=yes
     enable_warnings=yes
-    if test "$with_openssl" == "no"; then
-	AC_MSG_ERROR([OpenSSL is missing and required.])
-    fi
-    if test "$with_zlib" == "no"; then
-	AC_MSG_ERROR([zlib is missing and required.])
-    fi
-    if test "$with_ogg" == "no"; then
-	AC_MSG_ERROR([Ogg is missing and required.])
-    fi
-    if test "$with_vorbis" == "no"; then
-	AC_MSG_ERROR([Vorbis is missing and required.])
-    fi
-    if test "$with_speex" == "no"; then
-	AC_MSG_ERROR([Speex is missing and required.])
-    fi
-    if test "$with_fftw" == "no"; then
-	AC_MSG_ERROR([FFTW is missing and required.])
-    fi
-    if test "$with_qt" == "no"; then
-	AC_MSG_ERROR([Qt is missing and required.])
+    if test "$missing_devel" == "yes"; then
+        AC_MSG_ERROR([Some packages required in developer mode are missing.])
     fi
 fi
 
@@ -207,4 +213,6 @@ AC_SUBST(with_qt)
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 AC_OUTPUT
+
+touch include/wvautoconf.h
 
