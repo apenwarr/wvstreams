@@ -7,9 +7,21 @@
 #ifndef __UNICONFROOT_H
 #define __UNICONFROOT_H
 
+
+#ifdef SWIG
+%{
+#include "uniconfroot.h"
+%}
+#endif  // SWIG
+
+
 #include "uniconf.h"
 #include "uniconftree.h"
 #include "unimountgen.h"
+
+
+#ifndef SWIG
+
 
 /**
  * @internal
@@ -57,6 +69,9 @@ public:
     bool isessential()
         { return haschildren() || ! watches.isempty(); }
 };
+
+
+#endif  // SWIG
 
 
 /**

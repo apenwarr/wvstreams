@@ -7,7 +7,55 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
-#ifdef	__cplusplus
+
+/**
+ * SWIG extensions
+ */
+
+
+#ifdef SWIG
+
+%{
+#include "uniconf.h"
+%}
+
+%typemap(typecheck) WvStringParm = char *;
+
+%typemap(in) WvStringParm (WvString temp)
+{
+#if (defined SWIGPYTHON)
+    if ($input == NULL)
+        temp = WvString::null;
+    else
+    {
+        temp = PyString_AsString($input);
+        $1 = &temp;
+    }
+#else
+#   error "Unknown SWIG target language"
+#endif
+}
+
+%typemap(out) WvString
+{
+#if (defined SWIGPYTHON)
+    $result = PyString_FromString($1);
+#else
+#   error "Unknown SWIG target language"
+#endif
+}
+
+%import "wvstring.h"
+
+#endif  // SWIG
+
+
+/**
+ * C++ Interface
+ */
+
+
+#ifdef  __cplusplus
 
 #include "uniconfkey.h"
 #include "uniconfgen.h"
@@ -118,6 +166,7 @@ public:
     UniConfKey key() const
         { return xfullkey.last(); }
 
+#ifndef SWIG
     /**
      * Returns a handle for a subtree below this key. 'key' is the path
      * of the subtree to be appended to the full path of this handle to
@@ -129,6 +178,18 @@ public:
         { return (*this)[UniConfKey(key)]; }
     const UniConf operator[] (const char *key) const
         { return (*this)[UniConfKey(key)]; }
+#endif  // SWIG
+
+    /**
+     * Return a subtree handle (see operator[]).  Mainly to support bindings
+     * for languages that can't handle methods named [].
+     */
+    const UniConf u(const UniConfKey &key) const
+        { return (*this)[key]; }
+    const UniConf u(WvStringParm key) const
+        { return (*this)[key]; }
+    const UniConf u(const char *key) const
+        { return (*this)[key]; }
 
     /** Reassigns the target of this handle to match a different one. */
     UniConf &operator= (const UniConf &other)
@@ -376,11 +437,15 @@ public:
     class SortedRecursiveIter;
     // sorted variant of XIter
     class SortedXIter;
-    
+
+#ifndef SWIG
     // lists of iterators
     DeclareWvList(Iter);
+#endif  // SWIG
 };
 
+
+#ifndef SWIG
 
 /**
  * An implementation base class for key iterators.
@@ -584,22 +649,23 @@ public:
         { populate(i); }
 };
 
-extern "C" {
+#endif  // SWIG
+
 #endif /* __cplusplus */
 
 
-#ifdef SWIG
-%module UniConf
+/**
+ * C Interface
+ */
 
-%{
-#include "uniconf.h"
-%}
 
-//%newobject uniconf_get;
-#endif
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
 
-/* FIXME: put the C binding here. */
-typedef void* uniconf_t;
+
+/** An opaque handle to a Uniconf object */
+typedef void *uniconf_t;
 
 
 /* Initialize and destroy UniConf. */
@@ -620,6 +686,7 @@ void uniconf_set(uniconf_t _uniconf,
 
 #ifdef	__cplusplus
 }
-#endif
+#endif  // __cplusplus
+
 
 #endif // __UNICONF_H

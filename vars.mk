@@ -23,8 +23,12 @@ GARBAGE += wvtestmain.o
 
 ifneq ("$(with_swig)", "no")
   ifneq ("$(with_tcl)", "no")
-    TARGETS += libuniconf_tcl.so
+    TARGETS += bindings/tcl/uniconf.so
     CPPFLAGS += -I/usr/include/tcl8.3
+  endif
+  ifneq ("$(with_python)", "no")
+    TARGETS += bindings/python/_uniconf.so
+    CPPFLAGS += -I/usr/include/python2.1
   endif
 endif
 
@@ -187,7 +191,8 @@ libwvqt.so: libwvutils.so libwvstreams.so
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
-libuniconf_tcl.so: bindings/uniconf_tcl.o libuniconf.so -ltcl8.3
+bindings/tcl/uniconf.so: bindings/tcl/uniconf.o libuniconf.so -ltcl8.3
+bindings/python/_uniconf.so: bindings/python/_uniconf.o libuniconf.so -lpython2.1
 
 xplc-stamp: $(wildcard $(with_xplc)/libxplc.*)
 	rm -f xplc-stamp
