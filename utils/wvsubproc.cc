@@ -228,7 +228,7 @@ void WvSubProc::wait(time_t msec_delay, bool wait_children = true)
 	gettimeofday(&tv2, &tz);
 	
     } while (running 
-	     && (dead_pid >= 0
+	     && (dead_pid > 0
 		 || (msec_delay 
 		     && (msec_delay < 0 || msecdiff(tv2, tv1) < msec_delay))));
 }
