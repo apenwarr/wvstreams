@@ -348,12 +348,13 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
     while (isok())
     {
-        if ((got = read(buf, count)))
-            break;
-        if (alarm_was_ticking) 
-            break;
-
-        continue_select(-1);
+        if (continue_select(-1))
+        {
+	    if ((got = read(buf, count)) != 0)
+		break;
+	    if (alarm_was_ticking) 
+		break;
+        }
     }
 
     if (wait_msec >= 0)
