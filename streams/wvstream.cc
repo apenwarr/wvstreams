@@ -55,6 +55,7 @@ WvStream::WvStream()
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
     want_to_flush = true;
+    is_flushing = false;
     is_auto_flush = true;
     alarm_was_ticking = false;
     force.readable = true;
@@ -512,9 +513,14 @@ void WvStream::drain()
 
 bool WvStream::flush(time_t msec_timeout)
 {
+    if (is_flushing) return false;
+
+    is_flushing = true;
     want_to_flush = true;
-    return flush_internal(msec_timeout) // any other internal buffers
+    bool done = flush_internal(msec_timeout) // any other internal buffers
 	&& flush_outbuf(msec_timeout);  // our own outbuf
+    is_flushing = false;
+    return done;
 }
 
 
