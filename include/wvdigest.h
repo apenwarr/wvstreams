@@ -1,9 +1,7 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * MD5, SHA-1 and HMAC digest abstractions.
  */
 #ifndef __WVDIGEST_H
@@ -48,7 +46,7 @@ public:
 class WvEVPMDDigest : public WvDigest
 {
     friend class WvHMACDigest;
-    env_md_st *evpmd;
+    const env_md_st *evpmd;
     env_md_ctx_st *evpctx;
     bool active;
 
@@ -57,13 +55,13 @@ public:
     virtual size_t digestsize() const;
 
 protected:
-    WvEVPMDDigest(env_md_st *_evpmd);
+    WvEVPMDDigest(const env_md_st *_evpmd);
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush); // consumes input
     virtual bool _finish(WvBuffer &outbuf); // outputs digest
     virtual bool _reset(); // supported: resets digest value
     
-    env_md_st *getevpmd()
+    const env_md_st *getevpmd()
         { return evpmd; }
 
 private:

@@ -148,9 +148,9 @@ libwvstreams.so: libwvutils.so
 libwvutils.a libwvutils.so: $(call objects,utils)
 
 
-libwvstreams.so: -lssl #$(XPLC)/libxplc.so $(XPLC)/libxplc-cxx.a
+libwvstreams.so: -lssl -lcrypt #$(XPLC)/libxplc.so $(XPLC)/libxplc-cxx.a
 
-libwvutils.so: -lz -lcrypto
+libwvutils.so: -lz -lcrypt
 
 libwvoggvorbis.so: -logg -lvorbis -lvorbisenc
 

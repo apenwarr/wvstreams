@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.14 2003/01/12 21:46:08 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.15 2003/01/16 21:09:10 ppatters Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -89,7 +89,7 @@ AC_PROG_LN_S
 AC_LANG(C++)
 
 # system crypt function
-AC_CHECK_LIB(crypto, crypt)
+AC_CHECK_LIB(crypt, crypt)
 AC_CHECK_HEADERS(crypt.h)
 
 # open ssl
