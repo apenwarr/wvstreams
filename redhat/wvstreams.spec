@@ -143,13 +143,13 @@ fi
 %setup -q -n wvstreams-%{version}
 
 %build
+export CXXFLAGS=-I/usr/kerberos/include # stupid redhat 9 kerberos..
 %configure \
     --disable-debug --disable-verbose \
     --with-qt --with-vorbis --with-speex --with-openslp \
     --with-fam --with-fftw \
     --with-xplc=/usr
 make
-# FIXME: jim suggests make -k test at this point
 
 %install
 rm -rf $RPM_BUILD_ROOT
