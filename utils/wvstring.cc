@@ -126,14 +126,22 @@ WvFastString::WvFastString(unsigned long i)
 WvFastString::WvFastString(long long i)
 {
     newbuf(32);
+#ifdef _WIN32
+    sprintf(str, "%I64d", i);
+#else
     sprintf(str, "%lld", i);
+#endif
 }
 
 
 WvFastString::WvFastString(unsigned long long i)
 {
     newbuf(32);
+#ifdef _WIN32
+    sprintf(str, "%I64u", i);
+#else
     sprintf(str, "%llu", i);
+#endif
 }
 
 
