@@ -6,6 +6,7 @@
 #include "wvstreamclone.h"
 #include "wvfdstream.h"
 #include "wvlog.h"
+#include "wvfile.h"
 
 //FIXME: absolutely simple simple test right now, built from closeflushtest
 // BEGIN closeflushtest.cc definition
@@ -168,5 +169,33 @@ WVTEST_MAIN("outbuf_limit")
     WVPASS(fdstream1.isok());
     WVPASS(fdstream1.write("Hello terminal, again!\n") == 0);
     WVPASS(fdstream1.iswritable());
+}
+
+WVTEST_MAIN("Test undo_force_select() on a WvFDStream")
+{
+    // create our test file
+    WvString testfile("/tmp/wvfdstream-testfile-%s", getpid());
+    WvFile x(testfile, O_CREAT|O_RDWR, 0666);
+    x.print("moo\n");
+    x.print("mow\n");
+    x.print("maw\n");
+    x.close();
+
+    int fd = open(testfile, O_RDONLY);
+    WVPASS(fd != -1);
+
+    WvFDStream f(fd);
+    WVPASS(f.isok());
+
+    // should have some data for reading
+    WVPASS(f.select(0));
+
+    // we don't want to select on anything anymore
+    f.undo_force_select(true, true, true);
+    WVFAIL(f.select(0));
+
+    // we want to continue selecting
+    f.force_select(true, true, true);
+    WVPASS(f.select(0));
 }
 
