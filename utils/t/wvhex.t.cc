@@ -4,21 +4,24 @@
 #define snprintf _snprintf
 #endif
 
-#ifdef __GNUC__
-# define alloca __builtin_alloca
-#else
-# ifdef _MSC_VER
-#  include <malloc.h>
-#  define alloca _alloca
+#include "wvautoconf.h"
+#ifndef HAVE_ALLOCA
+# ifdef __GNUC__
+#  define alloca __builtin_alloca
 # else
-#  if HAVE_ALLOCA_H
-#   include <alloca.h>
+#  ifdef _MSC_VER
+#   include <malloc.h>
+#   define alloca _alloca
 #  else
-#   ifdef _AIX
-#pragma alloca
+#   if HAVE_ALLOCA_H
+#    include <alloca.h>
 #   else
-#    ifndef alloca /* predefined by HP cc +Olibcalls */
+#    ifdef _AIX
+#pragma alloca
+#    else
+#     ifndef alloca /* predefined by HP cc +Olibcalls */
 char *alloca ();
+#     endif
 #    endif
 #   endif
 #  endif
