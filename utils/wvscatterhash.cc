@@ -10,9 +10,14 @@ WvScatterHashBase::WvScatterHashBase(unsigned _numslots)
     num = 0;
     used = 0;
 
-    prime_index = 1;
-    while ((_numslots >>= 1) != 0)
-        prime_index++;
+    if (_numslots == 0)
+        prime_index = 8;
+    else
+    {
+        prime_index = 1;
+        while ((_numslots >>= 1) != 0)
+            prime_index++;
+    }
 
     numslots = prime_numbers[prime_index];
     slots = new pair[numslots];

@@ -31,7 +31,6 @@ public:
     bool isempty() const { return !num; }
 
   
-
     /******* IterBase ******/
     class IterBase
     {
@@ -122,7 +121,7 @@ protected:
         { delete (T *)data; }    
 
 public:
-    WvScatterHash(unsigned _numslots) : WvScatterHashBase(_numslots) { }
+    WvScatterHash(unsigned _numslots = 0) : WvScatterHashBase(_numslots) { }
     virtual ~WvScatterHash() { _zap(true); }
 
     T *operator[] (const K &key)
