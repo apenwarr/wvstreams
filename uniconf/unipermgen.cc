@@ -38,7 +38,8 @@ void UniPermGen::setowner(const UniConfKey &path, WvStringParm owner)
 WvString UniPermGen::getowner(const UniConfKey &path)
 {
     WvString owner = inner()->get(WvString("%s/owner", path));
-    if (owner.isnull() && !path.isempty())
+
+    if (!owner && !path.isempty())
         owner = getowner(path.removelast());
     return owner;
 }
@@ -79,9 +80,9 @@ bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred,
     else level = WORLD;
 
     bool perm = getoneperm(path, level, type);
-    //wverr->print("getperm(%s/%s,%s,%s-%s) = %s\n",
-    //           cred.user, cred.groups.count(),
-    //		 path, level2str(level), type2str(type), perm);
+//     wverr->print("getperm(%s/%s,%s,%s-%s) = %s\n",
+//                cred.user, cred.groups.count(),
+//     		 path, level2str(level), type2str(type), perm);
     return perm;
 }
 

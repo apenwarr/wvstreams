@@ -5,6 +5,7 @@
 #include "unipermgen.h"
 #include "unisecuregen.h"
 #include "uniunwrapgen.h"
+#include "unidefgen.h"
 
 // Same as the one in unicachegen.t.cc
 class CbCounter
@@ -24,6 +25,8 @@ WVTEST_MAIN("permgen basic")
     UniConfRoot root;
     IUniConfGen *tempgen = new UniTempGen();
     UniPermGen permgen("temp:");
+    WvStringList defgroups;
+
     permgen.setexec(UniConfKey("/"), UniPermGen::WORLD, true);
     permgen.setread(UniConfKey("/"), UniPermGen::WORLD, true);
     permgen.setwrite(UniConfKey("/"), UniPermGen::WORLD, true);
@@ -33,6 +36,8 @@ WVTEST_MAIN("permgen basic")
     WVPASS(root.mountgen(sec));
     fprintf(stderr, "Done\n");
 
+    sec->setcredentials("notroot", defgroups);
+    
     root["/open/foo"].setmeint(1);
     root["/open/bar"].setmeint(1);
     root["/exec_only/read"].setmeint(1);
@@ -41,16 +46,21 @@ WVTEST_MAIN("permgen basic")
     root["/exec_only/read_noexec/read"].setmeint(1); // should be unreadable
     root["/exec_only/read_noexec/read/exec"].setmeint(1); // should be unreadable
     root["/exec_only/read_noexec/exec/read"].setmeint(1); // should be unreadable
+    root["/exec_only/noread_noexec/read"].setmeint(1); // should be unreadable
 
     root["/closed/foo"].setmeint(1);
     root["/closed/bar"].setmeint(1);
     root["/closed/exec/foo"].setmeint(1);
 
+    permgen.setowner("/", "root");
+    permgen.chmod(UniConfKey("/open"), 7, 7, 5);
+    permgen.chmod(UniConfKey("/"), 7, 7, 1);
     permgen.chmod(UniConfKey("/exec_only"), 7, 7, 1);
     // FIXME: chmodding one key seems to automatically chmod its
     // children. Is this correct?
     permgen.chmod(UniConfKey("/exec_only/read"), 7, 7, 4);
     permgen.chmod(UniConfKey("/exec_only/noread"), 7, 7, 0);
+    permgen.chmod(UniConfKey("/exec_only/noread_noexec"), 7, 7, 0);
     permgen.chmod(UniConfKey("/exec_only/read_noexec"), 7, 7, 4);
     permgen.chmod(UniConfKey("/exec_only/read_noexec/read"), 7, 7, 4);
     permgen.chmod(UniConfKey("/exec_only/read_noexec/exec"), 7, 7, 1);
@@ -123,7 +133,7 @@ WVTEST_MAIN("permgen basic")
             WVPASS(j.ptr()->getme() == WvString::null);
             WVPASS(j._value() == WvString::null);
 
-            for (int l=0; l<3; l++)
+            for (int l=0; l<4; l++)
             {
                 WVPASS(j.next());
                 if (j.ptr()->key() == "read")
@@ -131,10 +141,17 @@ WVTEST_MAIN("permgen basic")
                     WVPASS(j.ptr()->getme() == "1");
                     WVPASS(j._value() == "1");
                 }
+                else if (j.ptr()->key() == "noread_noexec")
+                {
+                    WVPASS(j.ptr()->getme() == WvString::null);
+                    WVPASS(j._value() == WvString::null);
+
+                }
                 else if (j.ptr()->key() == "read_noexec")
                 {
                     WVPASS(j.ptr()->getme() == "1");
                     WVPASS(j._value() == "1");
+
                 }
                 else if (j.ptr()->key() == "noread")
                 {
@@ -190,4 +207,39 @@ WVTEST_MAIN("permgen basic")
     WVPASS(notifywatcher.cbs == 3);
     tempgen->set("closed/foo", "2");
     WVPASS(notifywatcher.cbs == 3);
+
+    // Test appropriate granting of permissions (recall the owner is root)
+    sec->setcredentials("root", defgroups);
+    WVPASS(root["/closed/foo"].getme() == "2");
+    WVPASS(root["/exec_only/noread_noexec/read"].getme() == "1");
+    UniConf::Iter k(root["/exec_only/noread_noexec"]);
+    k.rewind();
+    WVPASS(k.next());
+    WVPASS(k.ptr()->key() == "read");
+    WVPASS(k._value() == "1");
+    WVFAIL(k.next());
+}
+
+WVTEST_MAIN("permgen + defaultgen")
+{
+    UniConfRoot root;
+    IUniConfGen *tempgen = new UniTempGen();
+    IUniConfGen *innerperm = new UniTempGen();
+    IUniConfGen *innerdef = new UniDefGen(innerperm);
+    UniPermGen permgen(innerdef);
+    WvStringList defgroups;
+
+    innerdef->set("cfg/*/world-exec", "false"); 
+    
+    UniSecureGen *sec = new UniSecureGen(tempgen, &permgen);
+    fprintf(stderr, "Mounting securegen\n");
+    WVPASS(root.mountgen(sec));
+    fprintf(stderr, "Done\n");
+
+    permgen.setowner("/", "notroot");
+    sec->setcredentials("notroot", defgroups);
+    permgen.chmod(UniConfKey("/"), 7, 7, 7);
+    root["/cfg/users/foo"].setme("scs");
+    printf("About to try getting '/cfg/users/foo'\n");
+    WVPASS(root["/cfg/users/foo"].getme() == "scs");
 }
