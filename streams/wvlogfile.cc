@@ -12,6 +12,8 @@
 #include "wvdiriter.h"
 #include "strutils.h"
 
+#define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
+
 
 //----------------------------------- WvLogFileBase ------------------
 
@@ -44,9 +46,14 @@ WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
 void WvLogFile::_make_prefix()
 {
     time_t timenow = wvtime().tv_sec;
+    struct stat statbuf;
+
+    // Get the filesize
+    if (fstat(getfd(), &statbuf) == -1)
+        statbuf.st_size = 0;
 
     // Check if it's tomorrow yet, and start logging to a different file
-    if (last_day != timenow/86400)
+    if (last_day != timenow/86400 || statbuf.st_size > MAX_LOGFILE_SZ)
         start_log();
     
     WvLogFileBase::_make_prefix();
@@ -57,12 +64,20 @@ void WvLogFile::start_log()
 {
     WvFile::close();
 
+    int num = 0;
+    struct stat statbuf;
     time_t timenow = wvtime().tv_sec;
     last_day = timenow/86400;
     struct tm* tmstamp = localtime(&timenow);
     char buf[20];
+    WvString fullname;
     strftime(buf, 20, "%Y-%m-%d", tmstamp);
-    WvString fullname("%s.%s", filename, buf);
+
+    // Get the next filename
+    do
+        fullname = WvString("%s.%s.%s", filename, buf, num++);
+    while (stat(fullname, &statbuf) != -1 || statbuf.st_size < MAX_LOGFILE_SZ);
+
     WvString curname("%s.current", filename);
     WvString base = getfilename(filename);
 

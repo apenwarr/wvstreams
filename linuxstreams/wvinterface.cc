@@ -28,8 +28,8 @@ WvInterfaceDictBase WvInterfaceDict::slist(15);
 int WvInterfaceDict::links = 0;
 
 
-WvInterface::WvInterface(WvStringParm _name) 
-	: err("Net Interface", WvLog::Error), name(_name)
+WvInterface::WvInterface(WvStringParm _name) :
+    err("Net Interface", WvLog::Error), name(_name)
 {
     my_hwaddr = my_ipaddr = NULL;
     valid = true;
@@ -42,16 +42,17 @@ WvInterface::~WvInterface()
 }
 
 
-int WvInterface::getinfo(struct ifreq *ifr, int ioctl_num)
+int WvInterface::req(int ioctl_num, struct ifreq *ifr)
 {
     int sock, retval;
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     strncpy(ifr->ifr_name, name, IFNAMSIZ-1);
     ifr->ifr_name[IFNAMSIZ-1] = 0;
-    ifr->ifr_addr.sa_family = AF_INET;
     
     retval = ioctl(sock, ioctl_num, ifr);
+    if (retval)
+        retval = errno;
     close(sock);
     return retval;
 }
@@ -62,14 +63,14 @@ void WvInterface::rescan()
 {
     if (my_hwaddr)
     {
-	delete my_hwaddr;
-	my_hwaddr = NULL;
+        delete my_hwaddr;
+        my_hwaddr = NULL;
     }
     
     if (my_ipaddr)
     {
-	delete my_ipaddr;
-	my_ipaddr = NULL;
+        delete my_ipaddr;
+        my_ipaddr = NULL;
     }
 }
 
@@ -81,12 +82,11 @@ const WvAddr &WvInterface::hwaddr()
     
     if (!my_hwaddr)
     {
-	if (getinfo(&ifr, SIOCGIFHWADDR))
-	    my_hwaddr = new WvStringAddr("Unknown", WvEncap::Unknown);
-	else
-	    my_hwaddr = WvAddr::gen(&ifr.ifr_hwaddr);
+        if (req(SIOCGIFHWADDR, &ifr))
+            my_hwaddr = new WvStringAddr("Unknown", WvEncap::Unknown);
+        else
+            my_hwaddr = WvAddr::gen(&ifr.ifr_hwaddr);
     }
-    
     return *my_hwaddr;
 }
 
@@ -98,10 +98,12 @@ const WvIPNet &WvInterface::ipaddr()
     
     if (!my_ipaddr)
     {
-	if (getinfo(&ifr, SIOCGIFADDR) || getinfo(&ifr2, SIOCGIFNETMASK))
-	    my_ipaddr = new WvIPNet();
-	else
-	    my_ipaddr = new WvIPNet(&ifr.ifr_addr, &ifr2.ifr_netmask);
+        ifr.ifr_addr.sa_family = AF_INET;
+        ifr2.ifr_netmask.sa_family = AF_INET;
+        if (req(SIOCGIFADDR, &ifr) || req(SIOCGIFNETMASK, &ifr2))
+            my_ipaddr = new WvIPNet();
+        else
+            my_ipaddr = new WvIPNet(&ifr.ifr_addr, &ifr2.ifr_netmask);
     }
     
     return *my_ipaddr;
@@ -112,33 +114,20 @@ const WvIPNet &WvInterface::ipaddr()
 const WvIPAddr WvInterface::dstaddr()
 {
     struct ifreq ifr;
-    if (!(getflags() & IFF_POINTOPOINT) || getinfo(&ifr, SIOCGIFDSTADDR))
-	return WvIPAddr();
+    ifr.ifr_dstaddr.sa_family = AF_INET;
+    if (!(getflags() & IFF_POINTOPOINT) || req(SIOCGIFDSTADDR, &ifr))
+        return WvIPAddr();
     else
-	return WvIPAddr(&ifr.ifr_dstaddr);
+        return WvIPAddr(&ifr.ifr_dstaddr);
 }
 
 
 int WvInterface::getflags()
 {
     struct ifreq ifr;
-    int sock, errnum;
-    
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
-    ifr.ifr_name[IFNAMSIZ-1] = 0;
-
-    if (ioctl(sock, SIOCGIFFLAGS, &ifr))
-    {
-	errnum = errno;
-	//if (errnum != EACCES && errnum != EPERM)
-	//    err.perror(WvString("GetFlags %s", name));
-	close(sock);
-	valid = false;
-	return 0;
-    }
-    
-    close(sock);
+    int retval = req(SIOCGIFFLAGS, &ifr);
+    if (retval)
+        valid = false;
     return ifr.ifr_flags;
 }
 
@@ -146,38 +135,19 @@ int WvInterface::getflags()
 int WvInterface::setflags(int clear, int set)
 {
     struct ifreq ifr;
-    int sock, errnum;
-    
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
-    ifr.ifr_name[IFNAMSIZ-1] = 0;
 
-    if (ioctl(sock, SIOCGIFFLAGS, &ifr))
+    int retval = req(SIOCGIFFLAGS, &ifr);
+    if (retval)
+        return retval;
+    int newflags = (ifr.ifr_flags & ~clear) | set;
+    if (newflags != ifr.ifr_flags)
     {
-	errnum = errno;
-	//if (errnum != EACCES && errnum != EPERM)
-	//    err.perror(WvString("GetFlags2 %s", name));
-	close(sock);
-	return errnum;
+        ifr.ifr_flags = newflags;
+        retval = req(SIOCSIFFLAGS, &ifr);
+        if (retval && retval != EACCES && retval != EPERM)
+            err.perror(WvString("SetFlags %s", name));
     }
-    
-    if (((ifr.ifr_flags & ~clear) | set) != ifr.ifr_flags)
-    {
-	ifr.ifr_flags &= ~clear;
-	ifr.ifr_flags |= set;
-	
-	if (ioctl(sock, SIOCSIFFLAGS, &ifr))
-	{
-	    errnum = errno;
-	    if (errnum != EACCES && errnum != EPERM)
-		err.perror(WvString("SetFlags %s", name));
-	    close(sock);
-	    return errnum;
-	}
-    }
-    
-    close(sock);
-    return 0;
+    return retval;
 }
 
 
@@ -277,25 +247,34 @@ int WvInterface::setipaddr(const WvIPNet &addr)
 int WvInterface::setmtu(int mtu)
 {
     struct ifreq ifr;
-    int sock, errnum;
-    
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
-    ifr.ifr_name[IFNAMSIZ-1] = 0;
-
     ifr.ifr_mtu = mtu;
-    
-    if (ioctl(sock, SIOCSIFMTU, &ifr))
-    {
-	errnum = errno;
-	if (errnum != EACCES && errnum != EPERM)
-	    err.perror(WvString("SetMTU %s", name));
-	close(sock);
-	return errnum;
-    }
-    
-    close(sock);
-    return 0;
+    int retval = req(SIOCSIFMTU, &ifr);
+    if (retval && retval != EACCES && retval != EPERM)
+        err.perror(WvString("SetMTU %s", name));
+    return retval;
+}
+
+
+int WvInterface::sethwaddr(const WvAddr &addr)
+{
+    struct ifreq ifr;
+    sockaddr *saddr = addr.sockaddr();
+    memcpy(& ifr.ifr_hwaddr, saddr, addr.sockaddr_len());
+    delete saddr;
+
+    bool wasup = isup();
+    if (wasup)
+        up(false);
+        
+    int retval = req(SIOCSIFHWADDR, &ifr);
+    if (retval && retval != EACCES && retval != EPERM)
+        err.perror(WvString("SetHWAddr %s", name));
+
+    if (wasup)
+        up(true);
+
+    rescan();
+    return retval;
 }
 
 

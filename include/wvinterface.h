@@ -28,7 +28,7 @@ class WvInterface
     /**
      * get/set information about an interface
      */
-    int getinfo(struct ifreq *ifr, int ioctl_num);
+    int req(int ioctl_num, struct ifreq *ifr);
     
     /**
      * used by addroute()/delroute()
@@ -87,15 +87,26 @@ public:
     void promisc(bool enable);
     
     /**
-     * Set the local address, netmask, and broadcast of this interface
+     * Sets the local address, netmask, and broadcast of this interface
      * and set a route to the local net.
+     *
+     * Returns 0 on success, else an error code.
      */
     int setipaddr(const WvIPNet &addr);
     
     /**
-     * Set the MTU of the interface.
+     * Sets the MTU of the interface.
+     *
+     * Returns 0 on success, else an error code.
      */
     int setmtu(int mtu);
+
+    /**
+     * Set the hardware address of this interface
+     *
+     * Returns 0 on success, else an error code.
+     */
+    int sethwaddr(const WvAddr &addr);
     
     /**
      * add a route to the given network through this interface.
