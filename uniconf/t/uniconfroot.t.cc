@@ -133,15 +133,19 @@ WVTEST_MAIN("section collapsing")
 }
 
 
-/* Commented out until fullkey is fixed
 WVTEST_MAIN("fullkey()")
 {
     UniConfRoot root;
     root.mount("temp:");
-    UniConf cfg(root["bleep"]);
-    cfg["/foo/bar/blah"].setme("mink");
-    WVPASSEQ(cfg["mink"].fullkey(cfg).cstr(), "/foo/bar/blah/mink");
-}*/
+    UniConf cfg(root["cfg"]);
+    cfg.xsetint("hello", 1);
+    cfg.xsetint("hello/world", 2);
+
+    WVPASSEQ(cfg["hello"].fullkey().cstr(), "cfg/hello");
+    WVPASSEQ(cfg["hello/world"].fullkey(cfg).cstr(), "hello/world");
+    WVPASSEQ(cfg["hello/world"].fullkey("cfg").cstr(), "hello/world");
+    WVPASSEQ(cfg["hello/world"].fullkey("cfg/").cstr(), "hello/world");
+}
 
 static int itcount(const UniConf &cfg)
 {
