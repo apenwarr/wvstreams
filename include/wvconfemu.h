@@ -8,16 +8,17 @@
 #define __WVCONFEMU_H
 
 
-#ifndef __WVCONF_H
+#ifndef USE_WVCONFEMU
+
+#include "wvconf.h"
+
+#else
+
 #define WvConf WvConfEmu
 #define WvConfigSection WvConfigSectionEmu
 #define WvConfigSectionList WvConfigSectionListEmu
 #define WvConfigEntry WvConfigEntryEmu
 #define WvConfigEntryList WvConfigEntryListEmu
-#else
-#warning "disabling wvconfemu transparent emulation"
-#endif
-
 
 #include "uniconfroot.h"
 #include "wvstream.h"
@@ -231,6 +232,8 @@ public:
     WvIterStuff(WvConfigSectionEmu);
 };
 
+
+#endif /* USE_WVCONFEMU */
 
 #if 0
 

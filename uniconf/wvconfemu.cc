@@ -4,6 +4,9 @@
  *
  * Basic WvConf emulation layer for UniConf.
  */
+#ifndef USE_WVCONFEMU
+#define USE_WVCONFEMU
+#endif
 #include "wvconfemu.h"
 
 
@@ -203,8 +206,7 @@ WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 
 int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
 {
-    assert(false);
-    return 0;
+    return uniconf[section][entry].getint(def_val);
 }
 
 
@@ -283,5 +285,4 @@ int WvConfEmu::check_for_bool_string(const char *s)
     assert(false);
     return 0;
 }
-
 

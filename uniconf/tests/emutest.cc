@@ -7,13 +7,8 @@
 
 #define USE_WVCONFEMU
 
-#ifdef USE_WVCONFEMU
-# include "uniconfroot.h"
-# include "wvconfemu.h"
-#else
-# include "wvconf.h"
-#endif
-
+#include "uniconfroot.h"
+#include "wvconfemu.h"
 #include "wvlog.h"
 
 int main()
@@ -22,7 +17,7 @@ int main()
     WvLog log("emutest", WvLog::Info);
 #ifdef USE_WVCONFEMU
     UniConfRoot uniconf("ini:test2.ini.new");
-    WvConfEmu cfg(uniconf);
+    WvConf cfg(uniconf);
 #else
     WvConf cfg("test2.ini.new");
 #endif
