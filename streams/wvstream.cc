@@ -355,7 +355,7 @@ size_t WvStream::uwrite(const void *buf, size_t count)
 
 // NOTE:  wait_msec is implemented wrong, but it has cleaner code this way
 // and can at least handle wait vs wait forever vs wait never.
-char *WvStream::getline(time_t wait_msec, char separator)
+char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 {
     size_t i;
     unsigned char *buf;
@@ -406,9 +406,9 @@ char *WvStream::getline(time_t wait_msec, char separator)
 	    return NULL;
 
 	// read a few bytes
-	buf = inbuf.alloc(1024);
-	i = uread(buf, 1024);
-	inbuf.unalloc(1024 - i);
+	buf = inbuf.alloc(readahead);
+	i = uread(buf, readahead);
+	inbuf.unalloc(readahead - i);
     }
     
     // we timed out or had a socket error

@@ -125,10 +125,14 @@ public:
      * If wait_msec=0, never waits.  Otherwise, waits up to wait_msec
      * milliseconds until a newline appears.
      *
+     * Readahead specified the maximum amount of data that the stream is
+     * allowed to read in
+     *
      * This now uses the dynamic-sized WvBuffer.  It is expected that there
      * will be no NULL characters on the line.
      */
-    char *getline(time_t wait_msec, char separator = '\n');
+    char *getline(time_t wait_msec, char separator = '\n',
+        int readahead = 1024);
     
     /**
      * force read() to not return any bytes unless 'count' bytes can be

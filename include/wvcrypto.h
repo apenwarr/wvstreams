@@ -139,7 +139,8 @@ protected:
     virtual size_t uwrite(const void *buf, size_t size);
     
 public:
-    WvRSAStream(WvStream *_slave, WvRSAKey &_my_key, WvRSAKey &_their_key);
+    WvRSAStream(WvStream *_slave,
+        const WvRSAKey &_my_key, const WvRSAKey &_their_key);
     virtual ~WvRSAStream();
 };
 

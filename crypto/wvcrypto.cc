@@ -303,10 +303,10 @@ void WvRSAKey::hexify(RSA *rsa)
 
 
 WvRSAStream::WvRSAStream(WvStream *_slave,
-			 WvRSAKey &_my_key, WvRSAKey &_their_key)
-		: WvCryptoStream(_slave),
-		  my_key(_my_key.private_str(), true),
-		  their_key(_their_key.public_str(), false)
+    const WvRSAKey &_my_key, const WvRSAKey &_their_key) :
+    WvCryptoStream(_slave),
+    my_key(_my_key.private_str(), true),
+    their_key(_their_key.public_str(), false)
 {
     // we always want to read encrypted data in multiples of RSA_size.
     if (my_key.rsa)
