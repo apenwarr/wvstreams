@@ -251,7 +251,7 @@ int WvStream::getfd() const
 
 bool WvStream::isok() const
 {
-    return (getrfd() != -1) && (getwfd() != -1) && ! errnum;
+    return (getrfd() != -1) && (getwfd() != -1) && !errnum;
 }
 
 
