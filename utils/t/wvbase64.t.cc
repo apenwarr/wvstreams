@@ -13,6 +13,9 @@
 #define FIVE_LETTERS_ENC	"a2Vua2U="
 #define SIX_LETTERS 		"kenken"
 #define SIX_LETTERS_ENC		"a2Vua2Vu"
+#define FOURTEEN_LETTERS        "aaaaaa:bbbbbbb"
+#define FOURTEEN_LETTERS_ENC    "YWFhYWFhOmJiYmJiYmI="
+
 #define BASE64_ALPHABET_DEC	{0, 16, 131, 16, 81, 135, 32, 146, 139, 48, 211, 143, 65, 20, 147, 81, 85, 151, 97, 150, 155, 113, 215, 159, 130, 24, 163, 146, 89, 167, 162, 154, 171, 178, 219, 175, 195, 28, 179, 211, 93, 183, 227, 158, 187, 243, 223, 191};
 #define BASE64_ALPHABET		"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
 				"abcdefghijklmnopqrstuvwxyz" \
@@ -53,6 +56,12 @@ WVTEST_MAIN("basic encoding")
 	WvBase64Encoder enc;
 	WvString result = enc.strflushstr(SIX_LETTERS, true);
 	WVPASS(result == SIX_LETTERS_ENC);
+    }
+    
+    { // 14 characters
+	WvBase64Encoder enc;
+	WvString result = enc.strflushstr(FOURTEEN_LETTERS, true);
+	WVPASS(result == FOURTEEN_LETTERS_ENC);
     }
 
     { // many characters long... no newlines should be put in after 76
