@@ -113,7 +113,7 @@ CXXFLAGS+=-fno-exceptions
 endif
 
 ifeq ("$(enable_efence)", "yes")
-LDFLAGS+=-lefence
+LDLIBS+=-lefence
 endif
 
 ifneq ("$(with_fam)", "no")
