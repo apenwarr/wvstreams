@@ -25,13 +25,13 @@
 #define NUM_MINS_IN_DAY (24*60)
 #define NUM_SECS_IN_DAY (60*NUM_MINS_IN_DAY)
 
-WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day)
+WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 {
     need_reset = false;
     skip_event = true;
     needs_event = false;
     prev = time(NULL);
-    configure(_first_hour, _num_per_day);
+    configure(_first_hour, _num_per_day, _skip_first);
 }
 
 
@@ -104,9 +104,10 @@ void WvDailyEvent::set_num_per_day(int _num_per_day)
 }
 
 
-void WvDailyEvent::configure(int _first_hour, int _num_per_day)
+void WvDailyEvent::configure(int _first_hour, int _num_per_day, bool _skip_first)
 {
     first_hour = _first_hour;
+    skip_first = _skip_first;
 
     // Don't let WvDailyEvents occur more than once a minute. -- use an alarm
     // instead
@@ -157,8 +158,8 @@ time_t WvDailyEvent::next_event()
     {
 	// set 'next' to be the next multiple of 'interval' after 'not_until'
 	// (could possibly be 'not_until' also)
-	if (next < not_until)
-	{
+	if (skip_first && next < not_until)
+	{ 
 	    time_t diff = not_until - next;
 	    next += (diff/interval) * interval;
 
