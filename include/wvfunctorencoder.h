@@ -36,14 +36,21 @@ public:
 
     virtual bool encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
     {
-        // this will be nice and fast as most of the things
-        // the loop uses will be inlined!
-        while (inbuf.used() >= sizeof(IType))
+        size_t count = inbuf.used() / sizeof(IType);
+        if (count != 0)
         {
-            unsigned char *indataraw = inbuf.get(sizeof(IType));
-            IType indata(*reinterpret_cast<IType*>(indataraw));
-            OType outdata(f(indata));
-            outbuf.put(& outdata, sizeof(OType));
+            unsigned char *indataraw = inbuf.get(count * sizeof(IType));
+            unsigned char *outdataraw = outbuf.alloc(count * sizeof(OType));
+            for (;;)
+            {
+                // FIXME: possible unaligned data problems on some CPUs
+                IType *indata = reinterpret_cast<IType*>(indataraw);
+                OType *outdata = reinterpret_cast<OType*>(outdataraw);
+                *outdata = f(*indata);
+                if (count-- == 0) break;
+                indataraw += sizeof(IType);
+                outdataraw += sizeof(OType);
+            }
         }
         if (flush && inbuf.used() != 0)
             return false; // insufficient data to flush
