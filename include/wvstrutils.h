@@ -418,7 +418,10 @@ bool wvstring_to_num(WvStringParm str, T &n)
         else return false;
     }
 
-    return neg? -n: n;
+    if (neg)
+    	n = -n;
+
+    return true;
 }
         
 #endif // __WVSTRUTILS_H
