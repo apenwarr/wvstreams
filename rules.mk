@@ -50,7 +50,8 @@ endif
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
 %.so:
-	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared $^ -o $@
+	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared \
+		-Wl,-soname,$@ $^ -o $@
 
 %.moc: %.h
 	$(COMPILE_MSG)moc $< -o $@
