@@ -1,3 +1,5 @@
+#include "wvautoconf.h"
+#ifdef WITH_QDBM
 #include "wvondiskhash.h"
 #include "wvstringlist.h"
 
@@ -93,3 +95,8 @@ int main()
 	}
     }
 }
+#else
+int main() {
+  return 0;
+}
+#endif

@@ -1,3 +1,29 @@
+wvstreams (4.0+20040827-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * Don't install XPLC out of the source tarball.
+  * libwvstreams4.0-dev should really be libwvstreams-dev.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 27 Aug 2004 20:45:15 -0400
+
+wvstreams (4.0+20040826-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * Added support for libuniconf4.0 and uniconfd.
+  * Updated Build-Depends and Build-Depends-Indep.
+  * Rewrote debian/rules.
+
+ -- Simon Law <sfllaw@debian.org>  Thu, 26 Aug 2004 00:10:16 -0400
+
+wvstreams (4.0+20040815-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * New SONAME.
+  * Split libwvstreams4.0-extras off of libwvstreams4.0-base.
+  * Split libuniconf4.0 off of libwvstreams4.0-base.
+
+ -- Peter Colijn <pcolijn@nit.ca>  Sun, 15 Aug 2004 01:24:31 -0400
+
 wvstreams (3.80+20040623-1) unstable; urgency=low
 
   * New upstream snapshot.

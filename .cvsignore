@@ -16,5 +16,6 @@ tmp?.ini
 wvtestmain
 xplc
 *.tmp
+*.pc
 
 wvver.h

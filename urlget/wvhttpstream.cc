@@ -54,6 +54,8 @@ WvHttpStream::~WvHttpStream()
 
 void WvHttpStream::close()
 {
+    log("close called\n");
+    log_urls();
     // assume pipelining is broken if we're closing without doing at least
     // one successful pipelining test and a following non-test request.
     if (enable_pipelining && max_requests > 1
@@ -75,18 +77,25 @@ void WvHttpStream::close()
         if (!msgurl && !waiting_urls.isempty())
             msgurl = waiting_urls.first();
         if (msgurl)
-            log("URL '%s' is FAILED\n", msgurl->url);
+            log("URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
+                errstr());
     }
     waiting_urls.zap();
     if (curl)
+    {
+        log("curl is %s\n", curl->url);
         doneurl();
+    }
+    log("close done\n");
 }
 
 
 void WvHttpStream::doneurl()
 {
     assert(curl != NULL);
+    WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
+    log_urls();
 
     http_response = "";
     encoding = Unknown;
@@ -100,7 +109,7 @@ void WvHttpStream::doneurl()
         pipeline_test_count++;
         if (pipeline_test_count == 1)
             start_pipeline_test(&curl->url);
-        else if (pipeline_test_response != http_response)
+        else if (pipeline_test_response != last_response)
         {
             // getting a bit late in the game to be detecting brokenness :(
             // However, if the response code isn't the same for both tests,
@@ -108,7 +117,7 @@ void WvHttpStream::doneurl()
             pipelining_is_broken(4);
             broken = true;
         }
-        pipeline_test_response = http_response;
+        pipeline_test_response = last_response;
     }
 
     assert(curl == urls.first());
@@ -121,6 +130,7 @@ void WvHttpStream::doneurl()
         close();
 
     request_next();
+    log("done doneurl()\n");
 }
 
 

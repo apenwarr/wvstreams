@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 static const char *argv0 = "UNKNOWN";
+static const char *desc = NULL;
 
 // write a string 'str' to fd
 static void wr(int fd, const char *str)
@@ -65,6 +66,12 @@ void wvcrash_real(int sig, int fd)
     static char *signame = strsignal(sig);
     
     wr(fd, argv0);
+    if (desc)
+    {
+	wr(fd, " (");
+	wr(fd, desc);
+	wr(fd, ")");
+    }
     wr(fd, " dying on signal ");
     wrn(fd, sig);
     if (signame)
@@ -140,9 +147,10 @@ void wvcrash(int sig)
 }
 
 
-void wvcrash_setup(const char *_argv0)
+void wvcrash_setup(const char *_argv0, const char *_desc)
 {
     argv0 = _argv0;
+    desc = _desc;
     signal(SIGSEGV, wvcrash);
     signal(SIGBUS,  wvcrash);
     signal(SIGABRT, wvcrash);

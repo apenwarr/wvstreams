@@ -7,7 +7,6 @@
 #ifndef __UNICONFINI_H
 #define __UNICONFINI_H
 
-#include "uniconfgen.h"
 #include "unitempgen.h"
 #include "wvlog.h"
 

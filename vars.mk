@@ -61,7 +61,7 @@ endif
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
-GARBAGE += ChangeLog $(wildcard lib*.so.*)
+GARBAGE += $(wildcard lib*.so.*)
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
 		include/wvautoconf.h config.cache reconfigure
@@ -118,11 +118,11 @@ ifeq ("$(enable_testgui)", "no")
 WVTESTRUN=env
 endif
 
-ifneq ("$(enable_rtti)", "yes")
+ifeq ("$(enable_rtti)", "no")
 CXXFLAGS+=-fno-rtti
 endif
 
-ifneq ("$(enable_exceptions)", "yes")
+ifeq ("$(enable_exceptions)", "no")
 CXXFLAGS+=-fno-exceptions
 endif
 
@@ -237,8 +237,13 @@ libwvtelephony.so:
 
 ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
   libwvqt.so-LIBS+=-lqt-mt
-else
-  libwvqt.so-LIBS+=-lqt
+else 
+  # RedHat has a pkgconfig file we can use to sort out this mess..
+  ifeq ("$(wildcard /usr/lib/pkgconfig/qt-mt.pc)", "/usr/lib/pkgconfig/qt-mt.pc")
+    libwvqt.so-LIBS+=`pkg-config --libs qt-mt`
+  else
+    libwvqt.so-LIBS+=-lqt
+  endif
 endif
 libwvqt.a libwvqt.so: $(call objects,qt)
 libwvqt.so: libwvutils.so libwvstreams.so

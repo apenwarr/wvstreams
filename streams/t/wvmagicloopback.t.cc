@@ -41,7 +41,7 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
     	}
     }
     
-    WVPASS(wait(NULL) == pid);
+    WVPASS(waitpid(pid, NULL, 0) == pid);
 }
 
 WVTEST_MAIN("WvMagicLoopback Non-Blocking Writes") 

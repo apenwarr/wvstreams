@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 3.80, wvstreams-dev@nit.ca, wvstreams)
+AC_INIT(WvStreams, 4.0, wvstreams-dev@nit.ca, wvstreams)
 
 save_args() {
     ARGS=""
@@ -316,15 +316,19 @@ fi
 
 # xplc
 if test "$with_xplc" != "no"; then
-    if test -d xplc; then
+    if test -d xplc && test "$with_xplc" = ""; then
         WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
         WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
         AC_CONFIG_SUBDIRS(xplc)
         build_xplc=yes
         with_xplc='$(WVSTREAMS)/xplc'
+	xplc_pc='wvxplc'
     else
         AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
         AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	xplc_version=`pkg-config --modversion xplc`
+	if test "$xplc_version" != ""; then xplc_version=" >= $xplc_version"; fi
+	xplc_pc="xplc${xplc_version}"
     fi
 fi
 
@@ -403,7 +407,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
 
 AC_SUBST(enable_debug)
@@ -438,8 +442,24 @@ AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
 
 AC_SUBST(build_xplc)
+AC_SUBST(xplc_pc)
 
 AC_CONFIG_FILES(config.mk)
+AC_CONFIG_FILES([pkgconfig/libuniconf.pc
+		 pkgconfig/libwvbase.pc
+		 pkgconfig/libwvfft.pc
+		 pkgconfig/liboggspeex.pc
+		 pkgconfig/liboggvorbis.pc
+		 pkgconfig/libwvqt.pc
+		 pkgconfig/libwvstreams.pc
+		 pkgconfig/libwvutils.pc
+		 pkgconfig/wvxplc.pc])
 AC_CONFIG_HEADERS(include/wvautoconf.h)
+
+# We wish to tell any sub-configures to install their header files into
+# $includedir/wvstreams/, not the default location.  This prevents clashes
+# with other libraries.
+AC_CONFIG_COMMANDS_POST([ac_configure_args="$ac_configure_args --includedir=\${includedir}/wvstreams --oldincludedir=\${oldincludedir}/wvstreams"])
+
 AC_OUTPUT
 

@@ -39,7 +39,9 @@ ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
 endif
 
 ifneq ("$(with_xplc)", "no")
-  LDFLAGS+=-L$(with_xplc)
+ifneq ("$(with_xplc)", "")
+  LDFLAGS:=-L$(with_xplc) $(LDFLAGS)
+endif
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
@@ -209,8 +211,22 @@ DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
 define wvcc_base
 	@rm -f "$1"
 	$(COMPILE_MSG)$4 $5 $2 -o $1
+	@# The Perl script here generates the proper dependencies, including
+	@# null dependencies so Make doesn't complain
 	$(DEPEND_MSG)$4 -M -E $< \
-		| sed -e 's|^[^:]*:|$1:|' >$(DEPFILE)
+                | perl -we \
+                '$$a = '"'"'$1'"'"'; \
+                $$\ = $$/; \
+                local $$/; \
+                while (<>) { \
+                    for (split(/(?<!\\)$$/m)) { \
+                        s/^[^:]+:\s*/$$a: /; \
+                        print; \
+                        if (s/^$$a: //) { \
+			    map {print "$$_:" unless m/^\\$$/} (split(/\s+/));\
+                        } \
+                    } \
+                }' >$(DEPFILE)
 endef
 wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
 wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
@@ -355,11 +371,13 @@ _wvclean: FORCE
 # default dist rules.
 distclean: clean
 
-dist: distclean ChangeLog
+dist-hook:
+
+dist: dist-hook distclean ChangeLog
 
 ChangeLog: FORCE
-	rm -f ChangeLog ChangeLog.bak
-	cvs2cl --utc
+	-cvs2cl --utc
+	@rm -f ChangeLog.bak
 
 #
 # Make 'tags' file using the ctags program - useful for editing

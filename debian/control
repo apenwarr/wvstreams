@@ -1,56 +1,107 @@
 Source: wvstreams
 Section: libs
 Priority: optional
-Maintainer: Patrick Patterson <ppatters@debian.org>
-Uploaders: James Morrison <phython@debian.org>, Simon Law <sfllaw@debian.org>
-Build-Depends: debhelper (>> 4.0.0), libssl-dev, zlib1g-dev, qt3-dev-tools, libvorbis-dev, fftw-dev, libgtk1.2-dev, libpam0g-dev, libspeex-dev, libfam-dev, autoconf, gs-common, libqt3-mt-dev, libdb2-dev, libgdbm-dev
-Build-Depends-Indep: doxygen, sp, jade, jadetex, docbook-defguide, docbook, docbook-dsssl
+Maintainer: Simon Law <sfllaw@debian.org>
+Uploaders: James Morrison <phython@debian.org>, Patrick Patterson <ppatters@debian.org>
+Build-Depends: debhelper (>> 4.0.0), fftw-dev, libfam-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, libxplc-dev, zlib1g-dev
+Build-Depends-Indep: doxygen
 Standards-Version: 3.6.1
 
-Package: libwvstreams3.80
-Architecture: all
-Section: libs
-Depends: libwvstreams3.80-base
-Description: C++ network libraries for rapid application development
- WvStreams is a library suite that is comprised of several parts.  Among 
- them are:
-  * WvIPStreams: which includes WvTCPStream and WvUDPStream
-  * WvStrings: yet another C++ String class
-  * WvCrypto streams: a REALLY easy way to add SSL support to applications 
-  * WvConf: a configuration file handler
-  * WvLog: a log files handler 
- and a whole host of other goodness. 
- .
- These are the base classes used to build programs such as the ever popular 
- WvDial, TunnelVision, FastForward, KWvDial, retchmail, and many more yet 
- to come.  ;) 
- .
- This package is a dependency package, which depends on libwvstreams3.80-base.
-
-Package: libwvstreams3.80-base
+Package: libwvstreams4.0-base
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
-Provides: libwvstreams3
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: C++ network libraries for rapid application development
- WvStreams is a library suite that is comprised of several parts.  Among 
- them are:
-  * WvIPStreams: which includes WvTCPStream and WvUDPStream
-  * WvStrings: yet another C++ String class
-  * WvCrypto streams: a REALLY easy way to add SSL support to applications 
-  * WvConf: a configuration file handler
+ WvStreams is a library suite that is comprised of several parts.  Included
+ in the base package are:
+  * WvString: a convenient and efficient C++ string class
+  * WvList: an easy-to-use linked list
+  * WvHashTable: an efficient and easy-to-use hash table
+  * WvFile: a WvStream wrapper for handling files
+  * WvStreamClone: a base class which makes writing your own WvStreams easy
   * WvLog: a log files handler 
- and a whole host of other goodness. 
+  * UniIniGen: a tiny version of UniConf for simple configuration systems
+
+Package: libwvstreams4.0-extras
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: C++ network libraries for rapid application development
+ WvStreams is a library suite that is comprised of several parts.  Included
+ in the extras package are:
+  * WvIPStreams: which includes WvTCPStream and WvUDPStream
+  * WvCrypto streams: a REALLY easy way to add SSL support to applications 
  .
  These are the base classes used to build programs such as the ever popular 
  WvDial, TunnelVision, FastForward, KWvDial, retchmail, and many more yet 
  to come.  ;) 
 
-Package: libwvstreams3.80-dev
+Package: libuniconf4.0
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: C++ network libraries for rapid application development
+ UniConf is a configuration system that can serve as the centrepiece among
+ many other, existing configuration systems, such as:
+  * GConf
+  * KConfig
+  * Windows registry
+  * Mutt ;)
+ .
+ UniConf can also be accessed over the network, with authentication, allowing
+ easy replication of configuration data via the UniReplicateGen.
+
+Package: libwvstreams4.0-doc
+Architecture: all
+Section: doc
+Suggests: libwvstreams-dev (= ${Source-Version})
+Description: Documentation for WvStreams
+ Contains all the documentation available to program with WvStreams.
+  .
+ The WvStreams library suite is a set of C++ network libraries that
+ make it fast and simple to develop network applications.
+
+Package: libwvstreams4.0-fft
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: WvStreams wrapper for libfftw
+ This package contains the library necessary for the WvStreams to libfftw
+ wrapper. It enables WvStreams programs to easily handle Fast-Fourier
+ transforms, instead of forcing the programmer to use the much harder to use
+ libfftw interface.
+
+Package: libwvstreams4.0-qt
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: WvStreams and Qt Event Integration Library
+ This package contains the library necessary to tie WvStreams and Qt program
+ event loops together to enable WvStreams to act as the I/O and configuration
+ back end for Qt and KDE.
+
+Package: libwvstreams4.0-vorbis
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: WvStreams OggVorbis Encoder/Decoder Library
+ This library contains the WvOggEncoder and WvOggDecoder to enable quick and
+ painless creation of audio streams using the OggVorbis CODEC
+
+Package: libwvstreams4.0-speex
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: WvStreams Speex Encoder/Decoder Library
+ This library contains the WvSpeexEncoder and WvSpexxDecoder to enable quick 
+ and painless creation of audio streams using the Speex Voice over IP CODEC
+
+Package: libwvstreams-dev
 Architecture: any
 Section: libdevel
-Depends: libwvstreams3.80-base, libwvstreams3.80-fft, libwvstreams3.80-gtk, libwvstreams3.80-qt, libwvstreams3.80-vorbis, libwvstreams3.80-speex
-Description: Development libraries and header files for libwvstreams3.80
+Depends: libwvstreams4.0-base, libwvstreams4.0-extras, libuniconf4.0, libwvstreams4.0-fft, libwvstreams4.0-qt, libwvstreams4.0-speex, libwvstreams4.0-vorbis, ${misc:Depends}
+Provides: libwvstreams4.0-dev
+Description: Development libraries and header files for libwvstreams4.0
  Contains the header files and static libraries for use in rapid 
  application development using the WvStreams set of libraries.  It 
  includes everything that is needed to compile a program that needs 
@@ -59,56 +110,17 @@ Description: Development libraries and header files for libwvstreams3.80
  The WvStreams library suite is a set of C++ network libraries that
  make it fast and simple to develop network applications.
 
-Package: libwvstreams3.80-doc
-Architecture: all
-Section: doc
-Suggests: libwvstreams3.80 (= ${Source-Version}), libwvstreams3.80-dev (= ${Source-Version})
-Description: Documentation for WvStreams
- Contains all the documentation available to program with WvStreams.
-  .
- The WvStreams library suite is a set of C++ network libraries that
- make it fast and simple to develop network applications.
-
-Package: libwvstreams3.80-fft
+Package: uniconfd
 Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}
-Description: WvStreams wrapper for libfftw
- This package contains the library necessary for the WvStreams to libfftw
- wrapper. It enables WvStreams programs to easily handle Fast-Fourier
- transforms, instead of forcing the programmer to use the much harder to use
- libfftw interface.
-
-Package: libwvstreams3.80-gtk
-Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}
-Description: WvStreams and GTK+ Event Integration Library
- This package contains the library necessary to tie WvStreams and GTK+ program
- event loops together to enable WvStreams to act as the I/O and configuration
- back end for GTK+ and GNOME.
-
-Package: libwvstreams3.80-speex
-Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}
-Description: WvStreams Speex Encoder/Decoder Library
- This library contains the WvSpeexEncoder and WvSpexxDecoder to enable quick 
- and painless creation of audio streams using the Speex Voice over IP CODEC
-
-Package: libwvstreams3.80-qt
-Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}
-Description: WvStreams and Qt Event Integration Library
- This package contains the library necessary to tie WvStreams and Qt program
- event loops together to enable WvStreams to act as the I/O and configuration
- back end for Qt and KDE.
-
-Package: libwvstreams3.80-vorbis
-Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}
-Description: WvStreams OggVorbis Encoder/Decoder Library
- This library contains the WvOggEncoder and WvOggDecoder to enable quick and
- painless creation of audio streams using the OggVorbis CODEC
+Section: utils
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Server that manages UniConf elements
+ UniConf is a configuration system that can serve as the centrepiece among
+ many other, existing configuration systems.
+ .
+ UniConf can also be accessed over the network, with authentication, allowing
+ easy replication of configuration data via the UniReplicateGen.
+ .
+ This package contains the server that accepts incoming TCP or Unix
+ connections, and gets or sets UniConf elements at the request of a
+ UniConf client.
