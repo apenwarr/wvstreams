@@ -12,6 +12,7 @@
 
 #ifdef _WIN32
 #define setsockopt(a,b,c,d,e) setsockopt(a,b,c, (const char*) d,e)
+#define getsockopt(a,b,c,d,e) getsockopt(a,b,c,(char *)d, e) 
 #undef errno
 #define errno GetLastError()
 #define EWOULDBLOCK WSAEWOULDBLOCK
@@ -223,7 +224,18 @@ bool WvTCPConn::pre_select(SelectInfo &si)
     if (resolved && isok()) // name might be resolved now.
     {
 	bool oldw = si.wants.writable, retval;
-	if (!isconnected()) si.wants.writable = true; 
+	if (!isconnected()) {
+	    si.wants.writable = true; 
+#ifdef _WIN32
+	    // WINSOCK INSANITY ALERT!
+	    // In Unix, you detect the success OR failure of a non-blocking 
+	    // connect() by select()ing with the socket in the write set.
+	    // HOWEVER, in Windows, you detect the success of connect() 
+	    // by select()ing with the socket in the write set, and the failure
+	    // of connect() by select()ing with the socket in the exception set!
+	    si.wants.isexception = true;
+#endif
+	}
 	retval = WvFDStream::pre_select(si);
 	si.wants.writable = oldw;
 	return retval;
@@ -245,20 +257,23 @@ bool WvTCPConn::post_select(SelectInfo &si)
 
 	if (result && !connected)
 	{
-	    sockaddr *sa = remaddr.sockaddr();
-	    int retval = connect(getfd(), sa, remaddr.sockaddr_len());
-	    
-	    if (!retval || (retval < 0 && errno == EISCONN))
-		connected = result = true;
-	    else if (retval < 0 && errno != EINPROGRESS && errno != EALREADY)
+	    int conn_res;
+	    socklen_t res_size = sizeof(conn_res);
+	    if (getsockopt(getfd(), SOL_SOCKET, SO_ERROR, &conn_res, &res_size))
 	    {
+		// getsockopt failed
 		seterr(errno);
-		result = true;
+	    }
+	    else if (conn_res != 0)
+	    {
+		// connect failed
+		seterr(conn_res);
 	    }
 	    else
-		result = false;
-	    
-	    delete sa;
+	    {
+		// connect succeeded!
+		connected = true;
+	    }
 	}
     }
     
