@@ -82,22 +82,6 @@ static void do_addname(void *userdata,
 }
 
 
-static void do_addfile(void *userdata,
-		       WvStringParm section, WvStringParm key,
-		       WvStringParm oldval, WvStringParm newval)
-{
-    WvFile tmp(WvString("/home/%s/%s", key, *(WvString *)userdata), 
-               O_WRONLY | O_CREAT | O_TRUNC, 0600);
-    if(tmp.isok())
-    {
-        if(!!newval)
-            tmp.print("%s\n", newval);
-        else
-            tmp.print("%s\n", key);
-    }
-}
-
-
 WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
 {
     WvConfigEntryEmu* entry = entries[s];
@@ -232,7 +216,7 @@ WvConfEmu::~WvConfEmu()
     // deleting the WvConfEmu, but they probably won't work the way you
     // think they will. (ie. someone might be using a temporary WvConfEmu
     // and think his callbacks will stick around; they won't!)
-    //assert(callbacks.isempty());
+    assert(callbacks.isempty());
 
 #ifdef DEBUG_DEL_CALLBACK
     if (!callbacks.isempty())
@@ -385,13 +369,6 @@ void WvConfEmu::del_addname(WvStringList *list,
 			    WvStringParm sect, WvStringParm ent)
 {
     del_callback(sect, ent, list);
-}
-
-
-void WvConfEmu::add_addfile(WvString *filename,
-			    WvStringParm sect, WvStringParm ent)
-{
-    add_callback(do_addfile, filename, sect, ent, NULL);
 }
 
 
