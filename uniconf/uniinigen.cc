@@ -31,8 +31,8 @@ static void printkey(WvStream &file, const UniConfKey &key,
     // need to escape []#= in key only to distinguish a key/value
     // pair from a section name or comment and to delimit the value
     file.print("%s = %s\n",
-        wvtcl_escape(key, " \t\r\n[]=#"),
-        wvtcl_escape(value, " \t\r\n"));
+        wvtcl_escape(key, "\r\n[]=#"),
+        wvtcl_escape(value, "\r\n"));
 }
 
 
