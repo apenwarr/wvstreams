@@ -156,7 +156,6 @@ UniConfKey UniConfKey::removelast(int n) const
 
 UniConfKey UniConfKey::range(int i, int j) const
 {
-    wverr->print("range %s-%s of \"%s\" == ", i, j, *this);
     if (i < 0)
         i = 0;
     bool abs = !i;
