@@ -368,7 +368,7 @@ WvArgs::~WvArgs()
     delete options;
 }    	
     	    	    	
-bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args = NULL)
+bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
 {
     struct poptOption *popt_options =
     	    new struct poptOption[options->count() + 2];
