@@ -234,4 +234,10 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
  */
 WvString undupe(WvStringParm s, char c);
 
+/**
+ * Inserts SI-style spacing into a number
+ * (eg passing 9876543210 returns "9 876 543 210")
+ */
+WvString metriculate(const off_t i);
+
 #endif // __STRUTILS_H

@@ -467,3 +467,34 @@ int lookup(const char *str, const char * const *table,
     }
     return -1;
 }
+
+
+WvString metriculate(const off_t i)
+{
+    WvString res;
+    int digits=0;
+    int digit=0;
+    long long int j=i;
+    char *p;
+
+    while (j)
+    {
+        digits++;
+        j/=10;
+    }
+
+    j=i;
+    res.setsize(digits + (digits-1)/3 + 1);
+    p=res.edit()+digits+((digits-1)/3);
+    *p-- = '\0';
+
+    for (digit=0; digit<digits; digit++)
+    {
+        *p-- = '0' + ( j%10 );
+        if (((digit+1) % 3) == 0)
+            *p-- = ' ';
+        j /= 10;
+    }
+
+    return res;
+}
