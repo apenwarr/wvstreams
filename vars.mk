@@ -10,7 +10,7 @@ objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
 
 # initialization
 TARGETS:=
-GARBAGES:=
+GARBAGE:=
 DISTCLEAN:=
 REALCLEAN:=
 TESTS:=
@@ -20,7 +20,7 @@ NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist \
 		distclean realclean
 
 ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
-include config.mk
+-include config.mk
 endif
 
 TARGETS += libwvstreams.so libwvstreams.a
@@ -51,10 +51,10 @@ endif
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
-GARBAGES += ChangeLog
+GARBAGE += ChangeLog $(wildcard libwv*.so.*)
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
-		include/wvautoconf.h
+		include/wvautoconf.h config.cache
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
@@ -64,6 +64,8 @@ ARFLAGS = rs
 DEBUG:=$(filter-out no,$(enable_debug))
 
 # for O_LARGEFILE
+CXXFLAGS=${CXXOPTS}
+CFLAGS=${COPTS}
 CXXFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 
@@ -111,7 +113,19 @@ CXXFLAGS+=-fno-exceptions
 endif
 
 ifeq ("$(enable_efence)", "yes")
-LDFLAGS+=-lefence
+LDLIBS+=-lefence
+endif
+
+ifneq ("$(with_fam)", "no")
+libwvstreams.so: -lfam
+endif
+
+ifneq ("$(with_gdbm)", "no")
+libwvutils.so: -lgdbm
+endif
+
+ifneq ("$(with_bdb)", "no")
+libwvutils.so: -ldb
 endif
 
 ifeq ("$(enable_verbose)", "yes")
@@ -124,7 +138,6 @@ ifneq ("$(with_xplc)", "yes")
 VPATH+=$(with_xplc)
 LDFLAGS+=-L$(with_xplc)
 CPPFLAGS+=-I$(with_xplc)/include
-#libwvstreams.so: $(with_xplc)/libxplc.so $(with_xplc)/libxplc-cxx.a
 libwvstreams.so: -lxplc -lxplc-cxx
 endif
 endif
@@ -147,36 +160,23 @@ RELEASE?=$(PACKAGE_VERSION)
 include $(wildcard */vars.mk */*/vars.mk) /dev/null
 
 libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
-libwvoggvorbis.so: libwvstreams.so
+libwvoggvorbis.so: -logg -lvorbis -lvorbisenc libwvutils.so
 
 libwvoggspeex.a libwvoggspeex.so: $(call objects,oggspeex)
-libwvoggspeex.so: libwvstreams.so
+libwvoggspeex.so: -logg -lspeex libwvutils.so
 
 libwvfft.a libwvfft.so: $(call objects,fft)
-libwvfft.so: libwvstreams.so
+libwvfft.so: -lfftw -lrfftw libwvutils.so
 
 libwvqt.a libwvqt.so: $(call objects,qt)
-libwvqt.so: libwvstreams.so
+libwvqt.so: libwvutils.so libwvstreams.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
-libwvgtk.so: libwvstreams.so
+libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
 libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams uniconf urlget)
-libwvstreams.so: libwvutils.so
+libwvstreams.so: libwvutils.so -lssl
 
 libwvutils.a libwvutils.so: $(call objects,utils)
-
-libwvstreams.so: -lssl -lcrypt
-
 libwvutils.so: -lz -lcrypt
-
-libwvoggvorbis.so: -logg -lvorbis -lvorbisenc
-
-libwvoggspeex.so: -logg -lspeex
-
-libwvfft.so: -lfftw -lrfftw
-
-libwvqt.so: ${QTLIB}
-
-libwvgtk.so: -lgtk
 

@@ -289,6 +289,9 @@ int main()
 	
 	cfg["foo"]["pah"]["meatballs"].setint(6);
 	
+	assert(cfg["/foo/blah"].haschildren());
+	assert(!cfg["/foo/blah/weasels"].haschildren());
+	
 	UniConf x(cfg["snort/fish/munchkins"]);
 	x["big/bad/weasels"].setint(7);
 	x["foo"].set("sneeze");
@@ -315,6 +318,24 @@ int main()
 	
 	log("Config dump:\n");
 	cfg.dump(quiet, true);
+    }
+    
+    {
+	wvcon->print("\n\n");
+	log("-- Simple deletion test begins\n");
+	UniConfRoot cfg("temp:");
+	UniConf a(cfg["admins"]), a1(a["1"]), a2(a["2"]);
+	a1.set("11");
+	a2.set("22");
+	assert(a.haschildren());
+	assert(!a2.haschildren());
+	a1.remove();
+	assert(a.exists());
+	assert(!a1.exists());
+	assert(a2.exists());
+	assert(a.haschildren());
+	assert(!a1.haschildren());
+	assert(!a2.haschildren());
     }
     
 #if 0

@@ -17,25 +17,26 @@
 
 #include <string.h> // for memcmp
 
-struct UUID
+struct XUUID
 {
-    int a;
-    short b, c;
-    char d[8];
+    unsigned int a;
+    unsigned short b, c;
+    unsigned char d[8];
     
-    bool operator== (const UUID &other) const
+    bool operator== (const XUUID &other) const
         { return !memcmp(this, &other, sizeof(*this)); }
 };
 
 template<class T>
-struct IID {
+struct XIID {
 };
 
-#define DEFINE_IID(iface, u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11) \
-static const UUID iface##_IID = u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11; \
-struct IID<iface> { \
-  static const UUID &get() { \
-    return iface##_IID; \
+#define DEFINE_XIID(iface, u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11) \
+static const XUUID iface##_XIID = u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11; \
+template<> \
+struct XIID<iface> { \
+  static const XUUID &get() { \
+    return iface##_XIID; \
   } \
 }
 
@@ -49,7 +50,7 @@ public:
     virtual unsigned int release() = 0;
 };
 
-DEFINE_IID(IObject, {0x12345678, 0xb653, 0x43d7,
+DEFINE_XIID(IObject, {0x12345678, 0xb653, 0x43d7,
   {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
 
 
@@ -83,9 +84,9 @@ T *mutate(T2 *x)
     return (T *)(void *)x;
 }
 
-#define UUID_MAP_BEGIN(name)
-#define UUID_MAP_ENTRY(name)
-#define UUID_MAP_END
+#define XUUID_MAP_BEGIN(name)
+#define XUUID_MAP_ENTRY(name)
+#define XUUID_MAP_END
 
 #endif
 

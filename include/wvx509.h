@@ -51,7 +51,7 @@ public:
 
     /**
      * Constructor to create a selfsigned certificate for dn dname
-     * NOTE: If you already have a @ref WvRSAKey, then you can shove it
+     * NOTE: If you already have a WvRSAKey, then you can shove it
      * in here in the second parameter (i.e.: If you wanted to generate a
      * cert for an existing TunnelVision connection), or if you don't have an 
      * RSA Key yet, you can just give it a number of bits, and it will create 
@@ -62,7 +62,7 @@ public:
      * (actually, any part after the cn=FQDN is up to you... dc= works as well..)
      *
      * But the important bit is to use the Fully Qualified Domain Name in 
-     * the cn= part - otherwise Web Clients get confused...(I imaging other
+     * the cn= part - otherwise Web Clients get confused...(I imagine other
      * server clients will get equally confused, but I haven't checked).
      * I don't check for this, since other kinds of certificates are perfectly
      * valid without this... If you want to generate invalid certs, that's up
@@ -116,11 +116,11 @@ public:
      * your RSA Keys before calling this! It is best if you have hexify()'d
      * keys to simply use the proper constructor. 
      */
-    void unhexify(WvString encodedcert);
+    void unhexify(WvStringParm encodedcert);
     
     /**
      * Given the X509 certificate object cert, return a hexified string
-     * useful in a WvConf file.
+     * useful in a WvConf or UniConf file.
      * 
      * I don't provide a similar function for that for the rsa key, because
      * you can always call rsa->private_str() and rsa->public_str()
@@ -142,13 +142,13 @@ public:
      * certfile - returns true if cert was signed by one of the CA
      * certificates.
      */
-    bool signedbyCAindir(WvString certdir);
+    bool signedbyCAindir(WvStringParm certdir);
    
     /**
      * Check the certificate in cert against the CA certificates in certdir
      * - returns true if cert was signed by one of the CA certificates. 
      */
-   bool signedbyCAinfile(WvString certfile);
+   bool signedbyCAinfile(WvStringParm certfile);
 
     /**
      * Sign the X509 certificate in cert with CAKeypair
@@ -167,7 +167,7 @@ public:
     bool isinCRL();
 
     /** Return the information requested by mode as a WvString. */
-    WvString encode(DumpMode mode);
+    WvString encode(const DumpMode mode);
 
     /**
      * Load the information from the format requested by mode into
@@ -207,7 +207,7 @@ public:
         { return cert && rsa && !errstring; }
     const WvString &errstr()
         { return errstring; }
-    
+
     void seterr(WvStringParm s)
         { errstring = s; }
     void seterr(WVSTRING_FORMAT_DECL)

@@ -50,13 +50,14 @@ protected:
         const UniHashTreeBase *a, const UniHashTreeBase *b,
         const UniHashTreeBaseComparator &comparator, void *userdata);
 
-    friend class Iter : public Container::Iter
+public:
+    class Iter : public Container::Iter
     {
     public:
         Iter(UniHashTreeBase &b) : Container::Iter(*b.xchildren) { }
     };
+    friend class Iter;
 
-public:
     /** Returns the key field. */
     const UniConfKey &key() const
         { return xkey; }

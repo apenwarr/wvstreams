@@ -6,11 +6,14 @@
  * classes that can store themselves efficiently as well as create a
  * printable string version of themselves.
  */
+#ifndef _WIN32
 #include <netdb.h>
-#include "wvaddr.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <net/if_arp.h>
+#endif
+
+#include "wvaddr.h"
 #include <assert.h>
 
 // workaround for functions called sockaddr() -- oops.
@@ -18,6 +21,9 @@ typedef struct sockaddr sockaddr_bin;
 
 /* A list of Linux ARPHRD_* types, one for each element of CapType. */
 int WvEncap::extypes[] = {
+#ifdef _WIN32
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+#else
     // hardware encapsulation
     0, // Unknown
     ARPHRD_LOOPBACK,
@@ -31,6 +37,7 @@ int WvEncap::extypes[] = {
     // protocol encapsulation
     AF_INET, // IPv4
     AF_UNIX  // Unix domain socket
+#endif
 };
 
 
@@ -90,14 +97,14 @@ WvAddr *WvAddr::gen(struct sockaddr *addr)
 	
     case WvEncap::IPv4:
 	return new WvIPPortAddr((sockaddr_in *)addr);
-	
+#ifndef _WIN32
     case WvEncap::ARCnet:
 	return new WvARCnetAddr(addr);
 	
     case WvEncap::Ethertap:
     case WvEncap::Ethernet:
 	return new WvEtherAddr(addr);
-
+#endif
     default:
 	return new WvStringAddr("Unknown", WvEncap::Unknown);
     }
@@ -215,6 +222,7 @@ WvString WvStringAddr::printable() const
 }
 
 
+#ifndef _WIN32
 /* create a WvEtherAddr from a printable string in the format:
  *      AA:BB:CC:DD:EE:FF  (six hex numbers, separated by colons)
  */
@@ -348,6 +356,7 @@ size_t WvARCnetAddr::sockaddr_len() const
     return sizeof(sockaddr_bin);
 }
 
+#endif //_WIN32
 
 /* create an IP address from a dotted-quad string.  Maybe someday we'll
  * support hostnames too with gethostbyname, but not yet.
@@ -457,14 +466,14 @@ WvIPAddr WvIPAddr::operator~ () const
  */
 WvIPAddr WvIPAddr::operator+ (int n) const
 {
-    __u32 newad = htonl(ntohl(s_addr()) + n);
+    __u32 newad = htonl(ntohl(addr()) + n);
     return WvIPAddr((unsigned char *)&newad);
 }
 
 
 WvIPAddr WvIPAddr::operator- (int n) const
 {
-    __u32 newad = htonl(ntohl(s_addr()) - n);
+    __u32 newad = htonl(ntohl(addr()) - n);
     return WvIPAddr((unsigned char *)&newad);
 }
 
@@ -496,7 +505,7 @@ sockaddr_bin *WvIPAddr::sockaddr() const
     
     memset(sin, 0, sizeof(*sin));
     sin->sin_family = AF_INET;
-    sin->sin_addr.s_addr = s_addr();
+    sin->sin_addr.s_addr = addr();
     sin->sin_port = 0;
     return (sockaddr_bin *)sin;
 }
@@ -609,7 +618,7 @@ bool WvIPNet::includes(const WvIPNet &addr) const
 int WvIPNet::bits() const
 {
     int bits = 0;
-    __u32 val = ntohl(mask.s_addr());
+    __u32 val = ntohl(mask.addr());
     
     do
     {
@@ -720,6 +729,7 @@ bool WvIPPortAddr::comparator(const WvAddr *a2, bool first_pass) const
 
 }  
 
+#ifndef _WIN32
 WvUnixAddr::WvUnixAddr(const char *_sockname)
     : sockname(_sockname)
 {
@@ -787,3 +797,4 @@ size_t WvUnixAddr::rawdata_len() const
 {
     return strlen(sockname);
 }
+#endif // _WIN32

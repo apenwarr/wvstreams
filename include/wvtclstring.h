@@ -32,8 +32,8 @@
 #ifndef __WVTCLSTRING_H
 #define __WVTCLSTRING_H
 
-#include "wvstringlist.h"
 #include "wvbuf.h"
+
 // the default set of "nasties", ie. characters that need to be escaped if
 // they occur somewhere in a string.
 #define WVTCL_NASTIES    " \t\n\r"
@@ -69,8 +69,8 @@ WvString wvtcl_unescape(WvStringParm s);
 // encode a tcl-style list.  This is easily done by tcl-escaping each
 // string in 'l', then appending the escaped strings together, separated by
 // the first char in splitchars.
-WvString wvtcl_encode(WvStringList &l, const char *nasties = WVTCL_NASTIES,
-    const char *splitchars = WVTCL_SPLITCHARS);
+WvString wvtcl_encode(WvList<WvString> &l, const char *nasties = WVTCL_NASTIES,
+		      const char *splitchars = WVTCL_SPLITCHARS);
 
 // Get a single tcl word from an input buffer, and return the rest of the
 // buffer untouched.  If no word can be created from the buffer, return
@@ -92,7 +92,8 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars = WVTCL_SPLITCHARS,
 // 
 // Zero-length elements must be represented by {}
 // 
-void wvtcl_decode(WvStringList &l, WvStringParm _s,
-    const char *splitchars = WVTCL_SPLITCHARS, bool do_unescape = true);
+void wvtcl_decode(WvList<WvString> &l, WvStringParm _s,
+		  const char *splitchars = WVTCL_SPLITCHARS,
+		  bool do_unescape = true);
 
 #endif // __WVTCLSTRING_H

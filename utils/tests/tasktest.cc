@@ -51,33 +51,34 @@ void gentask(void *userdata)
 
 int main()
 {
-    WvTaskMan man;
+    WvTaskMan *man = WvTaskMan::get();
     
-    gman = &man;
-    ga = man.start("atask", gentask, (void *)"a");
-    gb = man.start("btask", gentask, (void *)"b");
+    gman = man;
+    ga = man->start("atask", gentask, (void *)"a");
+    gb = man->start("btask", gentask, (void *)"b");
     
     // simple test
     for (int x = 0; x < 10; x++)
     {
 	printf("main1:\n");
-	man.run(*ga, 400);
+	man->run(*ga, 400);
 	printf("main2:\n");
-	man.run(*gb, 400);
+	man->run(*gb, 400);
 	
-	gb->recycle();
+	// it's still running; can't recycle it yet!
+	//gb->recycle();
 	
 	if (!gb->isrunning())
-	    gb = man.start("bbtask", gentask, (void *)"bb");
+	    gb = man->start("bbtask", gentask, (void *)"bb");
 	if (!ga->isrunning())
-	    ga = man.start("aatask", gentask, (void *)"aa");
+	    ga = man->start("aatask", gentask, (void *)"aa");
     }
     
     // finish the tasks
     while (ga->isrunning())
-	man.run(*ga, 0);
+	man->run(*ga, 0);
     while (gb->isrunning())
-	man.run(*gb, 0);
+	man->run(*gb, 0);
     
     ga->recycle();
     gb->recycle();
@@ -91,7 +92,7 @@ int main()
 	printf("x == %d\n", x);
 	for (int y = 1; y <= 10; y++)
 	{
-	    WvTask *t = man.start("stresstask", gentask,
+	    WvTask *t = man->start("stresstask", gentask,
 				  (void *)"testy",
 				  16384);
 	    tasks.append(t, false);
@@ -99,14 +100,14 @@ int main()
 	
 	WvTaskList::Iter i(tasks);
 	for (i.rewind(); i.next(); )
-	    man.run(i(), 10);
+	    man->run(i(), 10);
     }
     while (tasks.count())
     {
 	WvTaskList::Iter i(tasks);
 	for (i.rewind(); i.next(); )
 	{
-	    man.run(i(), 100);
+	    man->run(i(), 100);
 	    if (!i().isrunning())
 	    {
 		i().recycle();
@@ -116,5 +117,6 @@ int main()
 	}
     }
     
+    man->unlink();
     return 0;
 }

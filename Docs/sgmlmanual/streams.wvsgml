@@ -299,7 +299,7 @@ appname(lvl): foo)
    WvLogRcv supports partial- and multiple-line log messages, like WvLog.
    
    An example:
-   WVEXMAPLE(wvlogex.cc)
+   WVEXAMPLE(wvlogex.cc)
   )
   
   WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, 

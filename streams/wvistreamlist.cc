@@ -7,7 +7,9 @@
  */
 #include "wvistreamlist.h"
 
+#ifndef _WIN32
 #include "wvfork.h"
+#endif
 
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
@@ -15,7 +17,11 @@
 #if STREAMTRACE
 # define TRACE(x, y...) fprintf(stderr, x, ## y)
 #else
+#ifndef _MSC_VER
 # define TRACE(x, y...)
+#else
+# define TRACE
+#endif
 #endif
 
 WvIStreamList WvIStreamList::globallist;
@@ -26,7 +32,9 @@ WvIStreamList::WvIStreamList()
     if (this == &globallist)
     {
 	globalstream = this;
+#ifndef _WIN32
         add_wvfork_callback(WvIStreamList::onfork);
+#endif
     }
 }
 
@@ -152,6 +160,7 @@ void WvIStreamList::execute()
     TRACE("[DONE %p]\n", this);
 }
 
+#ifndef _WIN32
 void WvIStreamList::onfork(pid_t p)
 {
     if (p == 0)
@@ -160,3 +169,4 @@ void WvIStreamList::onfork(pid_t p)
         globallist.zap(false);
     }
 }
+#endif

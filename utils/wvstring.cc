@@ -123,7 +123,7 @@ WvStringBuf *WvFastString::alloc(size_t size)
 }
 
 
-void WvString::append(WvStringParm s)
+WvString &WvString::append(WvStringParm s)
 {
     if (s)
     {
@@ -132,6 +132,8 @@ void WvString::append(WvStringParm s)
 	else
 	    *this = s;
     }
+    
+    return *this;
 }
 
 

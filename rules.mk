@@ -2,13 +2,17 @@
 default: $(TARGETS)
 
 ifdef VERBOSE
-PREPROC_MSG :=
-COMPILE_MSG :=
-LINK_MSG :=
+PREPROC_MSG =
+COMPILE_MSG =
+LINK_MSG =
+EMPTY_MSG =
+DEPEND_MSG = @
 else
 PREPROC_MSG = @echo preprocessing $@;
 COMPILE_MSG = @echo compiling $@;
 LINK_MSG = @echo linking $@;
+EMPTY_MSG = @
+DEPEND_MSG = @
 endif
 
 SONAMEOPT=-Wl,-soname,$(SONAME)
@@ -19,33 +23,26 @@ DEPFILE = $(notdir $(@:.o=.d))
 %: %.o
 	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-%: %.cc
-	$(PREPROC_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
-		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
-	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ \
-		$(LOADLIBES) $(LDLIBS) -o $@
-
 %.o: %.cc
-	$(PREPROC_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
-		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
 	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
+		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
 
 %.o: %.c
-	@$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
-		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
 	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(DEPEND_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
+		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
 
 %.a:
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
 %.so: SONAME=$@.$(RELEASE)
 %.so:
-	$(LINK_MSG)$(CC) $(LDFLAGS) $(SOFLAGS) $(filter-out %.so, $^) \
-		-lgcc $(filter %.so, $^) $(LDLIBS) -o $@
-	$(LN_S) -f $@ $(SONAME)
+	$(LINK_MSG)$(CC) $(LDFLAGS) $(SOFLAGS) $^ $(LDLIBS) -o $@
+	$(EMPTY_MSG)$(LN_S) -f $@ $(SONAME)
 
 %.moc: %.h
-	$(COMPILE_MSG)moc $< -o $@
+	$(COMPILE_MSG)$(MOC) $< -o $@
 
 .PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean
 
@@ -56,6 +53,8 @@ dist-hack-clean:
 
 dist: dist-hack-clean configure distclean
 	rm -rf autom4te.cache
+
+runconfigure: config.mk include/wvautoconf.h
 
 config.mk include/wvautoconf.h: configure config.mk.in include/wvautoconf.h.in
 	$(error Please run the "configure" script)
@@ -80,21 +79,25 @@ ChangeLog:
 	rm -f ChangeLog ChangeLog.bak
 	cvs2cl --utc
 
+define wild_clean
+	@list=`echo $(wildcard $(1))` ; test -z "$${list}" || sh -cx "rm -rf $${list}"
+endef
+
 realclean: distclean
-	rm -rf $(wildcard $(REALCLEAN))
+	$(call wild_clean,$(REALCLEAN))
 
 
 distclean: clean
-	rm -rf $(wildcard $(DISTCLEAN))
+	$(call wild_clean,$(DISTCLEAN))
 
 clean: depend dust
-	rm -rf $(wildcard $(TARGETS) $(GARBAGES) $(TESTS)) $(shell find . -name '*.o' -o -name '*.moc')
+	$(call wild_clean,$(TARGETS) $(GARBAGE) $(TESTS) $(shell find . -name '*.o' -o -name '*.moc'))
 
 depend:
-	rm -rf $(shell find . -name '.*.d')
+	$(call wild_clean,$(shell find . -name '.*.d'))
 
 dust:
-	rm -rf $(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d)
+	$(call wild_clean,$(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d))
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
@@ -126,10 +129,11 @@ uninstall:
 	$(tbd)
 
 $(TESTS): libwvstreams.so libwvutils.so
+$(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
 dishes:
-	@echo "aww, okay, but not now..."
+	@echo "aww, later..."
 
 include $(wildcard */rules.mk */*/rules.mk) /dev/null
 

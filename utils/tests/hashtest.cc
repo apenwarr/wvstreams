@@ -52,7 +52,7 @@ int main()
     
     printf("String hash test: \n\t %08x %08x %08x %08x \n"
 	   "\t %08x %08x %08x %08x\n",
-	   WvHash(x), WvHash(y), WvHash(z), WvHash(NULL),
+	   WvHash(x), WvHash(y), WvHash(z), WvHash((const char *)0),
 	   WvHash("fuzzy wuzzy buzzy foo"), WvHash("FUZZY wuzzy BUZZY foo"),
 	   WvHash("fuzzy wuzzy buzzy woo"),
 	   WvHash("wuzzy wuzzy buzzy foo"));

@@ -7,8 +7,7 @@
 #include "uniclientconn.h"
 #include "wvaddr.h"
 #include "wvtclstring.h"
-#include "wvistreamlist.h"
-
+#include "strutils.h"
 
 /***** UniClientConn *****/
 
@@ -84,7 +83,7 @@ void UniClientConn::close()
 WvString UniClientConn::readmsg()
 {
     WvString word;
-    while ((word = wvtcl_getword(msgbuf, "\n", false)).isnull())
+    while ((word = wvtcl_getword(msgbuf, "\r\n", false)).isnull())
     {
         char *line = getline(0);
         if (line)
@@ -94,7 +93,7 @@ WvString UniClientConn::readmsg()
         }
         else
         {
-            if (! isok())
+            if (!isok())
             {
                 // possibly left some incomplete command behind
                 msgbuf.zap();
@@ -102,7 +101,8 @@ WvString UniClientConn::readmsg()
             return WvString::null;
         }
     }
-    log("Read: %s\n", word);
+    if (!!word)
+	log("Read: %s\n", word);
     return word;
 }
 
@@ -126,7 +126,7 @@ UniClientConn::Command UniClientConn::readcmd()
         payloadbuf.reset(msg);
         WvString cmd(readarg());
         if (cmd.isnull())
-            return INVALID;
+            return NONE;
 
         for (int i = 0; i < NUM_COMMANDS; ++i)
             if (strcasecmp(cmdinfos[i].name, cmd.cstr()) == 0)
@@ -138,7 +138,7 @@ UniClientConn::Command UniClientConn::readcmd()
 
 WvString UniClientConn::readarg()
 {
-    return wvtcl_getword(payloadbuf, " ");
+    return wvtcl_getword(payloadbuf);
 }
 
 
@@ -181,4 +181,3 @@ void UniClientConn::writetext(WvStringParm text)
 {
     writecmd(PART_TEXT, wvtcl_escape(text));
 }
-

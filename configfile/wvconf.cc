@@ -519,23 +519,22 @@ void WvConf::flush()
 
 
 void WvConf::add_callback(WvConfCallback callback, void *userdata,
-			  WvStringParm section, WvStringParm entry)
+			  WvStringParm section, WvStringParm entry,
+			  void *cookie)
 {
     callbacks.append(new WvConfCallbackInfo(callback, userdata,
-					    section, entry), true);
+					    section, entry, cookie), true);
 }
 
-void WvConf::del_callback(WvConfCallback callback, void *userdata,
-			  WvStringParm section, WvStringParm entry)
+
+void WvConf::del_callback(WvStringParm section, WvStringParm entry,
+			  void *cookie)
 {
     WvConfCallbackInfoList::Iter i(callbacks);
     
     for (i.rewind(); i.next(); )
     {
-	WvConfCallbackInfo &c(*i);
-	
-	if (c.callback == callback && c.userdata == userdata
-	    && c.section == section && c.entry == entry)
+	if (i->cookie == cookie && i->section == section && i->entry == entry)
 	{
 	    i.unlink();
 	    return;

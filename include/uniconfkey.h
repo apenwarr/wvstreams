@@ -206,8 +206,8 @@ public:
 
 
     /**
-     * Returns true if this key is either the same key as the key specified or a
-     * subkey of that key.
+     * Returns true if this key is either the same key as the key specified
+     * or a subkey of that key.
      */
     bool suborsame(const UniConfKey &key) const;
 

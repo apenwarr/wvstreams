@@ -9,14 +9,16 @@
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
-#if 0
-// FIXME: this is needed on BSD and Win32
+#include <sys/types.h> // off_t
 #include <time.h>
-#endif
-
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvhex.h"
+
+#ifdef _WIN32
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
 
 /**
  * Add character c to the end of a string after removing 
@@ -55,6 +57,7 @@ char *non_breaking(char *string);
  */
 void replace_char(void *string, char c1, char c2, int length);
 
+#ifndef _WIN32
 /**
  * In-place modify a character string so that all contained letters are 
  * in lower case. Returns 'string'.
@@ -67,6 +70,8 @@ char *strlwr(char *string);
  */
 char *strupr(char *string);
 
+#endif
+
 /** Returns true if all characters in 'string' are isalnum() (alphanumeric). */
 bool is_word(const char *string);
 
@@ -78,7 +83,7 @@ bool is_word(const char *string);
  * This is used mostly for debugging purposes. You can send the returned 
  * WvString object directly to a WvLog or any other WvStream for output.
  */
-WvString hexdump_buffer(const void *buf, size_t len);
+WvString hexdump_buffer(const void *buf, size_t len, bool charRep = true);
 
 /**
  * Returns true if 'c' is a newline or carriage return character. 
@@ -233,6 +238,10 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
  * Replace any consecutive instances of character c with a single one
  */
 WvString undupe(WvStringParm s, char c);
+
+WvString hostname();
+
+WvString fqdomainname();
 
 /**
  * Inserts SI-style spacing into a number

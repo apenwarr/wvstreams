@@ -45,6 +45,10 @@ WvString wvtcl_escape(WvStringParm s, const char *nasties)
 	    inescape = false;
     }
     
+    // if the braces aren't balanced, backslashify
+    if (bracecount != 0)
+        backslashify = true;
+
     if (!backslashify && !unprintables)
 	return s; // no work needed!
     
@@ -99,11 +103,11 @@ WvString wvtcl_unescape(WvStringParm s)
 }
 
 
-WvString wvtcl_encode(WvStringList &l, const char *nasties,
+WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
 		      const char *splitchars)
 {
     WvDynBuf b;
-    WvStringList::Iter i(l);
+    WvList<WvString>::Iter i(l);
     for (i.rewind(); i.next(); )
     {
 	// elements are separated by spaces
@@ -130,6 +134,16 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     const char *sptr = (const char*)buf.get(origsize);
     int len = 0;
 
+    // skip leading whitespace/separators
+    while (strchr(splitchars, *sptr) && origsize > 0)
+    {
+        sptr++;
+        origsize--;
+    }
+
+    if (origsize == 0)
+        return WvString::null;
+
     // detect initial quote
     if (*sptr == '"')
     {
@@ -148,12 +162,12 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
         incontinuation = false;
         if (inescape)
         {
-            inescape = false;
             if (ch == '\n')
-            {
+                // need a char from next line before the escape is done
                 incontinuation = true;
-                continue; // need a character from the next line
-            }
+            else
+                inescape = false;
+            continue; // don't process this char
         }
         else
         {
@@ -195,7 +209,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     }
     
     // finished the string - get the terminating element, if any.
-    if (bracecount == 0 && !inquote && !inescape && !incontinuation)
+    if (bracecount == 0 && len != 0 && !inquote && !inescape && !incontinuation)
         goto returnstring;
 
     // give up
@@ -203,7 +217,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     return WvString::null;
 
 returnstring:
-    char str[len + 1];
+    char *str = (char*) alloca(len + 1);
     memcpy(str, sptr, len);
     str[len] = '\0';
     buf.unget(origsize - len);
@@ -213,7 +227,7 @@ returnstring:
     return WvString(str).unique();
 }
 
-void wvtcl_decode(WvStringList &l, WvStringParm _s,
+void wvtcl_decode(WvList<WvString> &l, WvStringParm _s,
 		  const char *splitchars, bool do_unescape)
 {
     // empty or null strings are empty lists

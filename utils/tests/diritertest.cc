@@ -7,6 +7,10 @@
  *
  */
 
+#define __STDC_FORMAT_MACROS
+
+#include <sys/types.h>
+#include <inttypes.h>
 #include "wvdiriter.h"
 
 int main( int argc, char * argv[] )
@@ -32,8 +36,9 @@ int main( int argc, char * argv[] )
 
     WvDirIter i( dirname, recurse, skip_mounts );
     for( i.rewind(); i.next(); ) {
-        printf( "%s -- mode %u -- size %lu\n", (const char *) i->fullname,
-                                               i->st_mode, i->st_size );
+        printf( "%s -- (filename = [%s]) -- mode %u -- size %" PRIu64 "\n", 
+		(const char *) i->fullname, i->name.cstr(), i->st_mode, 
+		u_int64_t(i->st_size) );
     }
 
     return( 0 );

@@ -3,7 +3,7 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */
 #include "wvtclstring.h"
-
+#include "wvstringlist.h"
 
 int main(int argc, char **argv)
 {
@@ -20,6 +20,7 @@ int main(int argc, char **argv)
 	    "hammer",
 	    "",
 	    "banana split",
+            "split\nends",
 	    "shameless{frog}parts",
 	    "big}monkey {potatoes",
 	    "hammer\\}time",

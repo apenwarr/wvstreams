@@ -1,5 +1,7 @@
 #include "wvx509.h"
 #include "wvlog.h"
+#include "strutils.h"
+#include "wvcrash.h"
 
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -17,33 +19,48 @@
 // and a bunch of other crap ;)
 // 
 
-int main()
+void test(WvStringParm _dN)
 {
-    free(malloc(1)); // For Electric Fence...
-    
-    WvLog log("certtest", WvLog::Info);
-    log("Starting...\n");
-    
-    // Setup a new DN entry, like a server would set.
-    WvString dN("cn=test.foo.com,dc=foo,dc=com");
-    
     // Create a new certificate
-    WvX509Mgr x509cert(dN, 1024);
+    WvX509Mgr x509cert(_dN, 1024);
     x509cert.setPkcs12Password("Foo");
     
-    log("Consistancy Test result: %s\n", x509cert.test());
+    wvcon->print("Consistancy Test result: %s\n", x509cert.test());
 
     if (x509cert.isok())
     {
-	wvcon->write(x509cert.encode(WvX509Mgr::CertPEM));
-	wvcon->write(x509cert.encode(WvX509Mgr::RsaPEM));
-	wvcon->write(x509cert.encode(WvX509Mgr::RsaRaw));
+	wvcon->print(x509cert.encode(WvX509Mgr::CertPEM));
+	wvcon->print(x509cert.encode(WvX509Mgr::RsaPEM));
+	wvcon->print(x509cert.encode(WvX509Mgr::RsaRaw));
 	x509cert.write_p12("/tmp/test.p12");
     }
     else
-	log("Error: %s\n", x509cert.errstr());
-    
-    log("Errors after the write: %s\n", x509cert.errstr());
+	wverr->print("Error: %s\n", x509cert.errstr());
 
-    log("Done...\n");
+    // check and make sure that the PKCS12 wrote properly...
+    if (!x509cert.isok())
+        wverr->print("Errors after the write: %s\n", x509cert.errstr());
+}
+
+int main(int argc, char *argv[])
+{
+    wvcrash_setup(argv[0]);
+
+    free(malloc(1)); // For Electric Fence...
+    
+    wvcon->print("Certificate Test Starting...\n");
+    
+    // Setup a new DN entry, like a server would set.
+    WvString dName("cn=test.foo.com,dc=foo,dc=com");
+    
+    test(dName);
+
+    // Or, from the actual settings of the server...
+    // this tests the case where the domainname() ends up 
+    // being (none)
+    dName = encode_hostname_as_DN(fqdomainname());
+
+    test(dName);
+
+    wvcon->print("Certificate Test Done...\n");
 }

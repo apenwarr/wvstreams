@@ -9,13 +9,12 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <string.h>
-#include <unistd.h>
-#include <string.h>
 
-
-#if 1
 // FIXME: this file mostly only works in Linux
+#ifdef __linux
+
 # include <execinfo.h>
+#include <unistd.h>
 
 static const char *argv0 = "UNKNOWN";
 

@@ -43,7 +43,7 @@ bool WvEVPMDDigest::_finish(WvBuf &outbuf)
 {
     assert(active);
     unsigned char digest[EVP_MAX_MD_SIZE];
-    size_t size;
+    unsigned int size; // size_t is not an unsigned int on many 64 bit systems
     EVP_DigestFinal(evpctx, digest, & size);
     active = false;
     outbuf.put(digest, size);
@@ -133,7 +133,7 @@ bool WvHMACDigest::_finish(WvBuf &outbuf)
 {
     assert(active);
     unsigned char digest[EVP_MAX_MD_SIZE];
-    size_t size;
+    unsigned int size;
     HMAC_Final(hmacctx, digest, & size);
     active = false;
     outbuf.put(digest, size);

@@ -8,13 +8,28 @@
 #include "wvstreamlist.h"
 #include "wvmoniker.h"
 
-#include <netdb.h>
 #include <fcntl.h>
+
+#ifdef _WIN32
+#define setsockopt(a,b,c,d,e) setsockopt(a,b,c, (const char*) d,e)
+#define getsockopt(a,b,c,d,e) getsockopt(a,b,c,(char *)d, e) 
+#undef errno
+#define errno GetLastError()
+#define EWOULDBLOCK WSAEWOULDBLOCK
+#define EINPROGRESS WSAEINPROGRESS
+#define EISCONN WSAEISCONN
+#define EALREADY WSAEALREADY
+#define SOL_TCP IPPROTO_TCP
+#define SOL_IP IPPROTO_IP
+#else
+#include <errno.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <errno.h>
+#endif
+
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)
 {
@@ -89,9 +104,13 @@ WvTCPConn::~WvTCPConn()
 // keepalive)
 void WvTCPConn::nice_tcpopts()
 {
+#ifndef _WIN32
     fcntl(getfd(), F_SETFD, FD_CLOEXEC);
     fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
-
+#else
+    u_long arg = 1;
+    ioctlsocket(getfd(), FIONBIO, &arg); // non-blocking
+#endif
     int value = 1;
     setsockopt(getfd(), SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
 }
@@ -104,8 +123,10 @@ void WvTCPConn::low_delay()
     value = 1;
     setsockopt(getfd(), SOL_TCP, TCP_NODELAY, &value, sizeof(value));
     
+#ifndef _WIN32
     value = IPTOS_LOWDELAY;
     setsockopt(getfd(), SOL_IP, IP_TOS, &value, sizeof(value));
+#endif
 }
 
 
@@ -123,7 +144,11 @@ void WvTCPConn::do_connect()
     
     sockaddr *sa = remaddr.sockaddr();
     if (connect(getfd(), sa, remaddr.sockaddr_len()) < 0
-	&& errno != EINPROGRESS)
+	&& errno != EINPROGRESS
+#ifdef _WIN32
+	&& errno != WSAEWOULDBLOCK
+#endif
+	)
     {
 	seterr(errno);
 	delete sa;
@@ -165,8 +190,11 @@ WvIPPortAddr WvTCPConn::localaddr()
     if (!isok())
 	return WvIPPortAddr();
     
-    if (getsockopt(getfd(), SOL_IP, SO_ORIGINAL_DST, (char*)&sin, &sl) < 0
-	&& getsockname(getfd(), (sockaddr *)&sin, &sl))
+    if (
+#ifndef _WIN32
+	getsockopt(getfd(), SOL_IP, SO_ORIGINAL_DST, (char*)&sin, &sl) < 0 &&
+#endif
+	getsockname(getfd(), (sockaddr *)&sin, &sl))
     {
 	return WvIPPortAddr();
     }
@@ -186,13 +214,28 @@ bool WvTCPConn::pre_select(SelectInfo &si)
     if (!resolved)
     {
 	if (dns.pre_select(hostname, si))
+	{
 	    check_resolver();
+	    if (!isok())
+		return true; // oops, failed to resolve the name!
+	}
     }
 
     if (resolved && isok()) // name might be resolved now.
     {
 	bool oldw = si.wants.writable, retval;
-	if (!isconnected()) si.wants.writable = true;
+	if (!isconnected()) {
+	    si.wants.writable = true; 
+#ifdef _WIN32
+	    // WINSOCK INSANITY ALERT!
+	    // In Unix, you detect the success OR failure of a non-blocking 
+	    // connect() by select()ing with the socket in the write set.
+	    // HOWEVER, in Windows, you detect the success of connect() 
+	    // by select()ing with the socket in the write set, and the failure
+	    // of connect() by select()ing with the socket in the exception set!
+	    si.wants.isexception = true;
+#endif
+	}
 	retval = WvFDStream::pre_select(si);
 	si.wants.writable = oldw;
 	return retval;
@@ -214,20 +257,23 @@ bool WvTCPConn::post_select(SelectInfo &si)
 
 	if (result && !connected)
 	{
-	    sockaddr *sa = remaddr.sockaddr();
-	    int retval = connect(getfd(), sa, remaddr.sockaddr_len());
-	    
-	    if (!retval || (retval < 0 && errno == EISCONN))
-		connected = result = true;
-	    else if (retval < 0 && errno != EINPROGRESS && errno != EALREADY)
+	    int conn_res;
+	    socklen_t res_size = sizeof(conn_res);
+	    if (getsockopt(getfd(), SOL_SOCKET, SO_ERROR, &conn_res, &res_size))
 	    {
+		// getsockopt failed
 		seterr(errno);
-		result = true;
+	    }
+	    else if (conn_res != 0)
+	    {
+		// connect failed
+		seterr(conn_res);
 	    }
 	    else
-		result = false;
-	    
-	    delete sa;
+	    {
+		// connect succeeded!
+		connected = true;
+	    }
 	}
     }
     
@@ -266,7 +312,9 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     setfd(socket(PF_INET, SOCK_STREAM, 0));
     if (getfd() < 0
 	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
+#ifndef _WIN32
 	|| fcntl(getfd(), F_SETFD, 1)
+#endif
 	|| bind(getfd(), sa, listenport.sockaddr_len())
 	|| listen(getfd(), 5))
     {

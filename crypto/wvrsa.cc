@@ -65,11 +65,12 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     }
     size_t keylen = keybuf.used();
     const unsigned char *key = keybuf.get(keylen);
+    const unsigned char *p = key;
     
     // create the RSA struct
     if (priv)
     {
-	rsa = wv_d2i_RSAPrivateKey(NULL, & key, keylen);
+	rsa = wv_d2i_RSAPrivateKey(NULL, &p, keylen);
         if (rsa != NULL)
         {
             prv = keystr;
@@ -78,7 +79,7 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     }
     else
     {
-	rsa = wv_d2i_RSAPublicKey(NULL, & key, keylen);
+	rsa = wv_d2i_RSAPublicKey(NULL, &p, keylen);
         if (rsa != NULL)
         {
             prv = WvString::null;

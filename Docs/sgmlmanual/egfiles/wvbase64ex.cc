@@ -1,39 +1,48 @@
 /*
  * A WvBase64 example.
  *
- * This program encodes strings to Base64 format.
- * Typing CTRL-D will terminate this program.
  */
 
 #include "wvbase64.h"
 #include "wvstream.h"
 #include "wvstreamlist.h"
 #include "wvencoderstream.h"
-
+#include "wvbufbase.h"
 
 int main()
 {
-    WvEncoder *enc;
-    enc = new WvBase64Encoder();
+   WvEncoder *enc;
+   enc = new WvBase64Encoder();
 
-    WvEncoderStream *stream = new WvEncoderStream(wvout);
-    stream->disassociate_on_close = true;
-    stream->auto_flush(false);
-    stream->writechain.append(enc, true);
+   WvInPlaceBuf to_encode(100);
+   WvInPlaceBuf encoded(100);
 
-    WvStreamList *slist = new WvStreamList();
-    slist->append(stream, false);
-    slist->append(wvin, false);
-    wvin->autoforward(*stream);
+   to_encode.put("123",3);
+   //to_encode contains the string to be encoded in base64
 
-    while (wvin->isok() && stream->isok())
-    {
-        if (slist->select(-1))
-            slist->callback();
-    }
-    stream->flush(0);
-    delete stream;
-    delete slist;
+   if (enc->encode(to_encode, encoded, true,true))
+     printf ("This is the result: %s\n", (char *) encoded.get(1));
 
-    return 0;
+   //it will display on screen:
+   //This is the result: MTIz
+
+
+
+
+   WvEncoder *dec;
+   dec = new WvBase64Decoder();
+
+   WvInPlaceBuf to_decode(100);
+   WvInPlaceBuf decoded(100);
+
+   to_decode.put("MTIz",4);
+   //to_encode contains the string to be encoded in base64
+
+   if (dec->encode(to_decode, decoded, true))
+     printf ("This is the result: %s\n", (char *) decoded.get(1));
+
+   //it will display on screen:
+   //This is the result: 123
+
+   return 0;
 }

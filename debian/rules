@@ -26,13 +26,15 @@ configure-stamp:
         # Add here commands to configure the package.
         # There is no configuration necessary to build WvStreams
 	$(MAKE) dist
-	./configure --prefix=/usr --disable-debug
+	./configure --prefix=/usr --disable-debug --disable-verbose \
+		    --with-gtk --with-qt --with-vorbis --with-speex \
+		    --with-fam --with-fftw
 	touch configure-stamp
 
 build: build-stamp
 build-stamp: configure-stamp
 	dh_testdir
-	$(MAKE) CXXOPTS="-fPIC -DPIC"
+	$(MAKE) CXXOPTS="-fPIC -DPIC" COPTS="-fPIC -DPIC"
 	touch build-stamp
 
 build-indep: build-stamp-indep

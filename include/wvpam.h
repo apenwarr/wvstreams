@@ -8,7 +8,7 @@
  * constructor will go through before authentication begins.
  *
  * For now, this only works for PAM modules that don't require any user
- * interaction.  (Most notably Ssoya.)
+ * interaction.
  */
 #ifndef __WVPAM_H
 #define __WVPAM_H

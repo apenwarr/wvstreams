@@ -215,7 +215,7 @@ public:
     virtual Iter *iterator(const UniConfKey &key) = 0;
 };
 
-DEFINE_IID(UniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
+DEFINE_XIID(UniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9f}});
 DeclareWvList(UniConfGen);
 

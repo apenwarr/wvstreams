@@ -11,6 +11,7 @@
 #include <openssl/dh.h>
 
 #include "wvstream.h"
+#include "wvlog.h"
 
 class WvDiffieHellman
 {
@@ -30,6 +31,8 @@ protected:
     BN_ULONG generator;
 
 private:
+
+    WvLog log;
 };
 
 #endif /* __WVDIFFIEHELLMAN_H */

@@ -13,27 +13,42 @@
 #include "wvtimeutils.h"
 #include <time.h>
 #include <sys/types.h>
-#include <errno.h>
 #include <assert.h>
+
+#ifdef _WIN32
+#define ENOBUFS WSAENOBUFS
+#undef errno
+#define errno GetLastError()
+class RunWinSockInitialize;
+extern RunWinSockInitialize __runinitialize;
+#else
+#include <errno.h>
+#endif
 
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #if 0
 # define TRACE(x, y...) fprintf(stderr, x, ## y); fflush(stderr);
 #else
+#ifndef _MSC_VER
 # define TRACE(x, y...)
+#else
+# define TRACE
+#endif
 #endif
 
-WvTaskMan *WvStream::taskman;
 WvStream *WvStream::globalstream = NULL;
 
-UUID_MAP_BEGIN(IWvStream)
-  UUID_MAP_ENTRY(IObject)
-  UUID_MAP_ENTRY(IWvStream)
-  UUID_MAP_END
+XUUID_MAP_BEGIN(IWvStream)
+  XUUID_MAP_ENTRY(IObject)
+  XUUID_MAP_ENTRY(IWvStream)
+  XUUID_MAP_END
 
 WvStream::WvStream()
 {
+#ifdef _WIN32
+    void *addy = &__runinitialize; // this ensures WSAStartup() is run
+#endif
     wvstream_execute_called = false;
     userdata = closecb_data = NULL;
     errnum = 0;
@@ -50,6 +65,7 @@ WvStream::WvStream()
     queue_min = 0;
     autoclose_time = 0;
     alarm_time.tv_sec = alarm_time.tv_usec = 0;
+    taskman = 0;
     
     // magic multitasking support
     uses_continue_select = false;
@@ -90,6 +106,8 @@ WvStream::~WvStream()
 	task = NULL;
     }
     TRACE("done destroying %p\n", this);
+    if (taskman)
+	taskman->unlink();
 }
 
 
@@ -179,7 +197,7 @@ void WvStream::callback()
     if (uses_continue_select && personal_stack_size >= 1024)
     {
 	if (!taskman)
-	    taskman = new WvTaskMan;
+	    taskman = WvTaskMan::get();
     
 	if (!task)
 	{
@@ -349,12 +367,13 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
     while (isok())
     {
-        if ((got = read(buf, count)))
-            break;
-        if (alarm_was_ticking) 
-            break;
-
-        continue_select(-1);
+        if (continue_select(-1))
+        {
+	    if ((got = read(buf, count)) != 0)
+		break;
+	    if (alarm_was_ticking) 
+		break;
+        }
     }
 
     if (wait_msec >= 0)
@@ -375,7 +394,7 @@ size_t WvStream::write(const void *buf, size_t count)
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
-        (const unsigned char*)buf += wrote;
+        buf = (const unsigned char*)buf + wrote;
     }
     if (max_outbuf_size != 0)
     {
@@ -510,6 +529,9 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     // flush outbuf
     while (isok() && outbuf.used())
     {
+	//fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
+	//	this, getrfd(), getwfd(), outbuf.used());
+	
 	size_t attempt = outbuf.used();
 	size_t real = uwrite(outbuf.get(attempt), attempt);
 	if (real < attempt)
@@ -539,6 +561,10 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 
     if (!outbuf.used() && outbuf_delayed_flush)
         want_to_flush = false;
+
+    // if we can't flush the outbuf, at least empty it!
+    if (!isok())
+	outbuf.zap();
 
     return !outbuf.used();
 }
@@ -628,6 +654,7 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     si.max_fd = -1;
     si.msec_timeout = msec_timeout;
     si.inherit_request = ! forceable;
+    si.global_sure = false;
 
     if (!isok()) return false;
 
@@ -636,10 +663,10 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	sure = sure || s->pre_select(si);
+	si.global_sure = s->pre_select(si);
 	globalstream = s;
     }
-    if (sure)
+    if (sure || si.global_sure)
         si.msec_timeout = 0;
     return sure;
 }
@@ -662,9 +689,16 @@ int WvStream::_do_select(SelectInfo &si)
     //   EBADF is kind of gross and might imply that something is wrong,
     //      but it happens sometimes...
     if (sel < 0 
-      && errno != EAGAIN && errno != EINTR && errno != ENOBUFS
-      && errno != EBADF)
+      && errno != EAGAIN && errno != EINTR 
+      && errno != EBADF
+      && errno != ENOBUFS
+#ifdef _WIN32
+      && errno != WSAEINVAL // the sets might be empty
+#endif
+      )
+    {
         seterr(errno);
+    }
     return sel;
 }
 
@@ -678,7 +712,7 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	sure = sure || s->post_select(si);
+	si.global_sure = s->post_select(si) || si.global_sure;
 	globalstream = s;
     }
     return sure;
@@ -692,7 +726,8 @@ bool WvStream::_select(time_t msec_timeout,
     bool sure = _build_selectinfo(si, msec_timeout,
 				  readable, writable, isexcept, forceable);
     
-    if (!isok()) return false;
+    if (!isok())
+	return false;
     
     // the eternal question: if 'sure' is true already, do we need to do the
     // rest of this stuff?  If we do, it might increase fairness a bit, but
@@ -703,9 +738,9 @@ bool WvStream::_select(time_t msec_timeout,
     // sound *too* bad, so let's go for the fairness.
 
     int sel = _do_select(si);
-    if (sel > 0)
+    if (sel >= 0)
         sure = _process_selectinfo(si, forceable) || sure; // note the order
-    if (sure && globalstream && forceable)
+    if (si.global_sure && globalstream && forceable)
 	globalstream->callback();
     return sure;
 }
@@ -762,6 +797,8 @@ bool WvStream::continue_select(time_t msec_timeout)
     running_callback = false;
     taskman->yield();
     alarm(-1);
+    
+    // FIXME: shouldn't we set running_callback = true here?
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 

@@ -9,6 +9,11 @@
 
 #include "wvdiriter.h"
 
+#ifdef _WIN32
+#define S_ISDIR(x) (_S_IFDIR | (x))
+#define lstat stat
+#endif
+
 WvDirIter::WvDirIter( WvStringParm dirname, bool _recurse, bool _skip_mounts )
 /****************************************************************************/
 : relpath( "" ), dir( dirs )
