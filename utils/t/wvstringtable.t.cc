@@ -86,6 +86,9 @@ WVTEST_MAIN("stringtabletest.cc")
 	WVPASS(testTable4->count() == 5);
 	testTable4->splitstrict(*heapString);
 	WVPASS(testTable4->count() == 11);
+	/*testTable4->zap();
+	testTable4->splitstrict(WvString("I rock hard"), " ", 2);
+	WVFAIL((*testTable4)["rock hard"] != NULL);*/
 
 	delete testTable4;
 	WVPASS(!strcmp(heapString->cstr(), "This is\t\talmost\ndone!\t"));
