@@ -103,7 +103,7 @@ void UniConfClient::enumerate_subtrees(const UniConfKey &key)
     waitforsubt = true;
     while (waitforsubt)
     {
-        if (conn->select(500, true, false, false))
+        if (conn->select(0, true, false, false))
             execute();
     }
 }

@@ -62,7 +62,7 @@ void UniConfDaemon::run()
 {
     // Mount our initial config file.
     domount("ini", DEFAULT_CONFIG_FILE, "/");
-    mainconf.dump(*wvcon);
+//    mainconf.dump(*wvcon);
 
     // Make sure that everything was cleaned up nicely before.
     system("mkdir -p /tmp/uniconf");

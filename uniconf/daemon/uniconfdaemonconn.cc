@@ -64,7 +64,7 @@ void UniConfDaemonConn::execute()
                 source->events.add(wvcallback(UniConfCallback, *source, UniConfDaemon::keychanged), this, *key);
                 keys.append(key, false);
                 cmd = key = 0;
-                wvcon->print(WvString("RETURNING %s.\n", *response));
+//                wvcon->print(WvString("RETURNING %s.\n", *response));
             }
             else if (*cmd == "subt") // return the subtree(s) of this key
             {
@@ -79,12 +79,12 @@ void UniConfDaemonConn::execute()
                     }
                     send.append("\n");
                     print(send);
-                    wvcon->print(WvString("RETURNING:  %s.\n", send));
+//                    wvcon->print(WvString("RETURNING:  %s.\n", send));
                 }
                 else
                 {
                     print(WvString("SUBT %s\n", *key));
-                    wvcon->print(WvString("RETURNING:  SUBT %s\n", *key));
+//                    wvcon->print(WvString("RETURNING:  SUBT %s\n", *key));
                 }
                     
            }
@@ -95,7 +95,7 @@ void UniConfDaemonConn::execute()
                 delete cmd;
                 cmd = key = 0;
                 source->keymodified = true;
-                wvcon->print(WvString("SET %s TO %s.\n", *key, *newvalue));
+//                wvcon->print(WvString("SET %s TO %s.\n", *key, *newvalue));
             }
 
             // get a new command & key
