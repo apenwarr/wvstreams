@@ -1,0 +1,8 @@
+
+enable_debug:=@enable_debug@
+enable_optimization:=@enable_optimization@
+enable_warnings:=@enable_warnings@
+enable_fatal_warnings:=@enable_fatal_warnings@
+enable_rtti:=@enable_rtti@
+enable_exceptions:=@enable_exceptions@
+

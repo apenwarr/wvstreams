@@ -11,7 +11,9 @@
 #include "wvaddr.h"
 #include "wvresolver.h"
 
-#ifndef ISLINUX
+
+#if 0
+// FIXME: this is needed on BSD
 #include <netinet/in_systm.h>
 #define SOL_TCP 6
 #define SOL_IP 4

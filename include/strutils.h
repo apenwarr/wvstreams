@@ -9,7 +9,8 @@
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
-#if defined ISBSD || defined WIN32
+#if 0
+// FIXME: this is needed on BSD and Win32
 #include <time.h>
 #endif
 

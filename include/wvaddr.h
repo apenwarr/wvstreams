@@ -11,11 +11,11 @@
 
 #include "wvstring.h"
 
-#ifdef ISLINUX
+// FIXME: this is not needed on platforms other than Linux
 #include <linux/if_ether.h>
-#endif
 
-#if defined(ISBSD) || defined(ISDARWIN)
+#if 0
+// FIXME: this is needed on BSD and Darwin
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if_arp.h>

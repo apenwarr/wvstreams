@@ -7,7 +7,8 @@
 #include "wvstreamlist.h"
 #include "wvunixsocket.h"
 
-#ifdef ISBSD
+#if 0
+// FIXME: this is needed on BSD
 #include <netinet/in_systm.h>
 #endif
 
