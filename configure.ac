@@ -287,7 +287,7 @@ if test "$with_speex" != "no"; then
 fi
 
 # valgrind
-AC_CHECK_PROG(VALGRIND, valgrind, yes)
+AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
 AC_CHECK_HEADERS(valgrind/memcheck.h)
 
 # vorbis
@@ -339,10 +339,6 @@ if test "$with_ogg" = "no"; then
     AC_MSG_WARN([Ogg is missing.])
     missing_devel=yes
 fi
-if test "$with_openssl" = "no"; then
-    AC_MSG_WARN([OpenSSL is missing and is required.])
-    missing_required=yes
-fi
 if test "$with_pam" = "no"; then
     AC_MSG_WARN([PAM is missing.])
     missing_devel=yes
@@ -366,6 +362,13 @@ fi
 if test "$with_xplc" = "no"; then
     AC_MSG_WARN([XPLC is missing.])
 fi
+if test "$VALGRIND" = ""; then
+    AC_MSG_WARN([Valgrind is missing.])
+fi
+if test "$with_openssl" = "no"; then
+    AC_MSG_WARN([OpenSSL is missing and is required.])
+    missing_required=yes
+fi
 if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing and is required.])
     missing_required=yes
@@ -381,10 +384,8 @@ if test "$enable_devel" = "yes"; then
     fi
 fi
 
-if test "$VALGRIND" = "yes"; then
-    VALGRIND="valgrind --leak-check=yes"
-else
-    VALGRIND=
+if test "$VALGRIND" != ""; then
+    VALGRIND="$VALGRIND --leak-check=yes"
 fi
 
 AC_SUBST(enable_debug)
