@@ -1,0 +1,4 @@
+*.d
+cryptotest
+ssltest
+*.libs
