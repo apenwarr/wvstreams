@@ -287,6 +287,7 @@ WvString get_acl_short_form(WvStringParm filename, bool get_default)
 	char *text = acl_to_any_text(acl, NULL, ',', TEXT_ABBREVIATE);
 	short_form = fix_acl(text);
 	acl_free(text);
+        acl_free(acl);
 	log("Successfully retrieved ACL for %s: %s\n", filename, short_form);
 	return short_form;
     }
@@ -359,6 +360,9 @@ bool set_acl_permissions(WvStringParm filename, WvStringParm text_form,
     else
 	log(WvLog::Error, "Can't modify permissions for %s: ACL %s invalid "
 	    "(%s).\n", filename, text_form, strerror(errno));
+
+    if (acl) acl_free(acl);
+
 #else
     log(WvLog::Warning, "ACL library not found.\n");
 #endif
