@@ -210,13 +210,11 @@ public:
     /**
      * Stores a string value for this key into the registry.  If the value
      * is WvString::null, deletes the key and all of its children.
-     * Returns true on success.
      */
     void setme(WvStringParm value) const;
 
     /**
      * Stores a string value for this key into the registry.
-     * Returns true on success.
      */
     void setme(WVSTRING_FORMAT_DECL) const
         { return setme(WvString(WVSTRING_FORMAT_CALL)); }
@@ -227,7 +225,6 @@ public:
 
     /**
      * Stores an integer value for this key into the registry.
-     * Returns true on success.
      */
     void setmeint(int value) const;
 
@@ -255,7 +252,6 @@ public:
 
     /**
      * Removes this key and all of its children from the registry.
-     * Returns true on success.
      */
     void remove() const
         { setme(WvString::null); }
