@@ -136,8 +136,7 @@ public:
         // uniconf value is unstable at best, unusable at worst.. so don't
         // use it until the bit is removed.
         child_waiting:1,   // some data in the subtree has waiting=1
-        waiting:1,         // need to actually retrieve data before next use.
-        have_all_children:1;
+        waiting:1;         // need to actually retrieve data before next use.
 
     UniConf();
     UniConf(UniConf *_parent, WvStringParm _name);
