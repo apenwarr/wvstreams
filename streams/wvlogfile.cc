@@ -66,7 +66,7 @@ void WvLogFile::start_log()
     WvString curname("%s.current", filename);
     WvString base = getfilename(filename);
 
-    WvFile::open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0644);
+    WvFile::open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0666);
 
     // Don't delete the file, unless it's a symlink!
     int sym = readlink(curname, buf, 20);

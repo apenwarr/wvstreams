@@ -36,7 +36,7 @@ public:
     pid_t pid;
     bool running;
     int estatus;
-    WvString last_cmd;
+    WvString pidfile, last_cmd;
     WvStringList last_args, env;
     
     WvSubProc();
@@ -69,6 +69,9 @@ public:
     
     // wait for the subprocess (and all its children) to die.
     void wait(time_t msec_delay, bool wait_children = true);
+
+    // figure out the pid from the /var/run pidfile
+    pid_t pidfile_pid();
     
     // send a signal to the subprocess and all its children.
     void kill(int sig);

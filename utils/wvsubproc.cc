@@ -171,6 +171,29 @@ int WvSubProc::fork(int *waitfd)
 }
 
 
+pid_t WvSubProc::pidfile_pid()
+{
+    if (!!pidfile)
+    {
+	// unfortunately, we don't have WvFile in basic wvutils...
+	char buf[1024];
+	pid_t p = -1;
+	FILE *file = fopen(pidfile, "r");
+	
+	memset(buf, 0, sizeof(buf));
+	if (file && fread(buf, 1, sizeof(buf), file) > 0)
+	    p = atoi(buf);
+	if (file)
+	    fclose(file);
+	if (p <= 0)
+	    p = -1;
+	return p;
+    }
+    
+    return -1;
+}
+
+
 void WvSubProc::kill(int sig)
 {
     assert(!running || pid > 0 || !old_pids.isempty());
@@ -268,7 +291,12 @@ void WvSubProc::wait(time_t msec_delay, bool wait_children)
 		// the main process is dead - save its status.
 		estatus = status;
 		old_pids.append(new pid_t(pid), true);
-		pid = -1;
+		
+		pid_t p2 = pidfile_pid();
+		if (pid != p2)
+		    pid = p2;
+		else
+		    pid = -1;
 	    }
 	    else if (dead_pid < 0)
 		perror("WvSubProc::waitpid");
