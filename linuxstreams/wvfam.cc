@@ -8,6 +8,7 @@
 WvFamBase::~WvFamBase()
 {
     WvIStreamList::globallist.unlink(s);
+    delete s;
 
     if (FAMClose(&fc) == -1)
         log(WvLog::Error, "%s\n", FamErrlist[FAMErrno]);
@@ -59,14 +60,14 @@ void WvFamBase::_callback()
                 || fe.code == FAMCreated)
         {
             if (!fe.userdata)
-                cb(WvString(fe.filename), WvFamEvent(fe.code));
+                cb(WvString(fe.filename), WvFAMEvent(fe.code), false);
 
             // If the void * points to something this is a directory callback.
             // We'll prepend the path to the returned filename.
             else
                 cb(WvString("%s/%s",
                     *reinterpret_cast<WvString *>(fe.userdata),
-                    fe.filename), WvFamEvent(fe.code));
+                    fe.filename), WvFAMEvent(fe.code), true);
         }
     }
 
@@ -105,7 +106,7 @@ void WvFamBase::setup()
 
         s->setcallback(WvStreamCallback(this, &WvFamBase::callback), 0);
 
-        WvIStreamList::globallist.append(s, true);
+        WvIStreamList::globallist.append(s, false);
     }
 }
 

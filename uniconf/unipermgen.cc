@@ -12,10 +12,6 @@
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
-#include "wvlog.h"
-
-
-WvLog log("UniPermGen", WvLog::Debug);
 
 
 UniPermGen::UniPermGen(UniConfGen *_gen) :

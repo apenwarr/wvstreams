@@ -18,7 +18,7 @@ enum WvFamEvent
     WvFamCreated = 5,
 };
 
-typedef WvCallback<void, WvStringParm, WvFamEvent> WvFamCallback;
+typedef WvCallback<void, WvStringParm, WvFamEvent, bool> WvFamCallback;
 
 
 /*
@@ -32,17 +32,16 @@ typedef WvCallback<void, WvStringParm, WvFamEvent> WvFamCallback;
  */
 class WvFamBase
 {
-protected:
-
+public:
     // These calls all take a pointer to a WvString. The WvString must exist and
     // be unmodified until the fam monitoring is removed for directory
     // monitoring. For file monitoring you can get rid of it, but you'll
     // probably want to use it for tracking ids anyways.
     int _monitordir(WvString *dir);
     int _monitorfile(WvString *file);
-
     void _unmonitor(int reqid);
 
+protected:
     FAMConnection fc;
     FAMRequest fr;
     FAMEvent fe;
