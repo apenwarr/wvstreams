@@ -204,6 +204,13 @@ public:
      */
     bool matches(const UniConfKey &pattern) const;
 
+
+    /**
+     * Returns true if this key is either the same key as the key specified or a
+     * subkey of that key.
+     */
+    bool suborsame(const UniConfKey &key) const;
+
     /**
      * Determines if two paths are equal.
      * "other" is the other path
