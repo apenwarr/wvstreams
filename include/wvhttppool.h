@@ -117,7 +117,7 @@ public:
     virtual void execute();
     
     WvBufHttpStream *addurl(WvStringParm _url, WvStringParm _headers,
-                            bool headers_only);
+                            bool headers_only = false);
 private:
     void unconnect(WvHttpStream *s);
     
