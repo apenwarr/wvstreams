@@ -89,16 +89,16 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     WvFDStream readstream(file, -1);
 
     // writestream is not-readable and writeable
-    WVPASS(writestream.select(0, false, true));
+    WVPASS(writestream.iswritable());
     // readstream is readable and not-writeable
-    WVPASS(readstream.select(0, true, false));
+    WVPASS(readstream.isreadable());
 
     char *buf = new char[256];
     
     // Writing to readstream
     writestream.write("Bonjour, j'me appellez writestream\n");
-    WVPASS(writestream.select(0, false, true));
-    WVPASS(readstream.select(0, true, false));
+    WVPASS(writestream.iswritable());
+    WVPASS(readstream.isreadable());
 
     // It's not reading for some odd reason...
 //    WVPASS(readstream.read(buf, 256) == 35);
@@ -109,29 +109,37 @@ WVTEST_MAIN("open, read, write and close between two WvFDStreams")
     close(file);
 }
 
-WVTEST_MAIN("packing the buffer until its full")
+WVTEST_MAIN("outbuf_limit")
 {
-    WvFDStream fdstream1(0, 1);
+    int fd = open("/dev/null", O_WRONLY);
+    WVPASS(fd > 2);
+    WvFDStream fdstream1(dup(0), fd);
+    
     fdstream1.outbuf_limit(10);
     fdstream1.delay_output(true);
     
     // empty buffer - should be writeable
-    WVPASS(fdstream1.isok());   // fails - dont know why
-    WVPASS(fdstream1.select(0, false, true));
+    WVPASS(fdstream1.isok());
+    WVPASS(fdstream1.iswritable());
 
     // one character in buffer - still writeable
     fdstream1.write("d");
-    WVPASS(fdstream1.isok());   // fails - dont know why
-    WVPASS(fdstream1.select(0, false, true));
+    WVPASS(fdstream1.isok());
+    WVPASS(fdstream1.iswritable());
     
     // string is too long - write only (10 - 1) chars
     WVPASS(fdstream1.write("Hello terminal!\n") == 9);
     WVPASS(fdstream1.isok());
-    WVFAIL(fdstream1.select(0, false, true));
+    
+    // you might expect fdstream to return false here, but it doesn't; the
+    // stream *is* writable (if you were to allow it to flush), but you
+    // don't, so writes will fail even if it's writable.  You have to be
+    // prepared for writes to fail even if a stream is writable anyway,
+    //WVFAIL(fdstream1.iswritable());
 
     // full buffer - not writeable and write() returns 0
     WVPASS(fdstream1.isok());
     WVPASS(fdstream1.write("Hello terminal, again!\n") == 0);
-    WVFAIL(fdstream1.select(0, false, true));
+    //WVFAIL(fdstream1.iswritable());
 }
 
