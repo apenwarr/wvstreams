@@ -214,22 +214,6 @@ public:
      */
     char *continue_getline(time_t wait_msec, char separator = '\n',
 			   int readahead = 1024);
-    
-    /**
-     * read up to count characters into buf, up to and including the first
-     * instance of separator.
-     * 
-     * if separator is not found on input before timeout (usual semantics)
-     * or stream close or error, or if count is 0, nothing is placed in buf
-     * and 0 is returned.
-     * 
-     * if your buffer is not large enough for line, call multiple times
-     * until seperator is found at end of buffer to retrieve the entire
-     * line.
-     * 
-     * Returns the number of characters that were put in buf.
-     */
-    size_t read_until(void *buf, size_t count, char separator);
 
     /**
      * force read() to not return any bytes unless 'count' bytes can be
@@ -584,6 +568,10 @@ private:
 
 
 protected:
+    // FIXME: this one is so bad, I'm not touching it. Quick hack to
+    // make it work anyway.
+    friend class WvHTTPClientProxyStream;
+
     WvDynBuf inbuf, outbuf;
     WvStreamCallback callfunc, closecb_func;
     WvCallback<void*,void*> call_ctx;
