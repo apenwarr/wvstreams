@@ -115,6 +115,7 @@ WVTEST_MAIN("sslclose 1")
     WVPASSEQ(s1->getline(), "hello");
     s2->cloned->close();
     run(list, s1, s2);
+    list.unlink(s2);
     run(list, s1, NULL);
     WvDynBuf buf;
     WVPASSEQ(s1->read(buf, 1024), 0);
@@ -122,7 +123,7 @@ WVTEST_MAIN("sslclose 1")
 }
 
 
-// like sslclose2, but shutting down SSL politely (ie. closing the sslstream
+// like sslclose1, but shutting down SSL politely (ie. closing the sslstream
 // instead of the underlying stream).  This tests a different code path
 // in WvSSLStream.
 WVTEST_MAIN("sslclose 2")
@@ -137,6 +138,7 @@ WVTEST_MAIN("sslclose 2")
     WVPASSEQ(s1->getline(), "hello");
     s2->close();
     run(list, s1, s2);
+    list.unlink(s2);
     run(list, s1, NULL);
     WvDynBuf buf;
     WVPASSEQ(s1->read(buf, 1024), 0);
