@@ -34,3 +34,9 @@
    fun:BN_mod_word
    obj:/usr/lib/libcrypto.so.0.9.6
 }
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   sigaction(act)
+   fun:__libc_sigaction
+}
