@@ -19,10 +19,11 @@ protected:
     void dosubtree(WvString key);
     void dorecursivesubtree(WvString key);
     void doset(WvString key, WvConstStringBuffer &fromline);
+    void registerforchange(WvString key);
     void dook(const WvString cmd, const WvString key);
-    void add_callback(WvString key);
+    void add_callback(WvString key, bool one_shot);
     void del_callback(WvString key);
-    void update_callbacks(WvString key);
+    void update_callbacks(WvString key, bool one_shot=false);
     void keychanged(void *userdata, UniConf &conf);
 
     WvLog log;

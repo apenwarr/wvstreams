@@ -68,9 +68,9 @@ static UniConf *find_match(UniConf *h, const UniConfKey &key)
 	return NULL;
 }
 
-void UniConfEvents::add(UniConfCallback cb, void *userdata, const UniConfKey &key)
+void UniConfEvents::add(UniConfCallback cb, void *userdata, const UniConfKey &key, bool one_shot)
 {     
-    callbacks.append(new CallbackInfo(cb, userdata, key), true); 
+    callbacks.append(new CallbackInfo(cb, userdata, key, one_shot? 1 : 0 ), true); 
     eventcount++;
     WvLog log(label, WvLog::Debug);
 //    log("Added a callback for %s.There are now %s events.\n", key, eventcount);
@@ -118,6 +118,9 @@ void UniConfEvents::do_callbacks()
         {
 	    i->cb(i->userdata, *h);
         }
+        // Now, if it's a one shot event, delete it.
+        if (i->one_shot != 0)
+            i.xunlink();
     }
 }
 

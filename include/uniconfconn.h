@@ -20,6 +20,7 @@ public:
     static const WvString UNICONF_SET;
     static const WvString UNICONF_SUBTREE;
     static const WvString UNICONF_RECURSIVESUBTREE;
+    static const WvString UNICONF_REGISTER;
     
     static const WvString UNICONF_RETURN;
     static const WvString UNICONF_FORGET;

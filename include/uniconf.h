@@ -194,7 +194,7 @@ public:
 
     // Functions to enable the masking of generators
     // Set my generator to be gen, then run load.
-    bool hasgen()   { return generator; }
+    bool hasgen()   { return generator != NULL; }
     bool checkgen() { return hasgen() && generator->isok(); }
     bool comparegen(UniConfGen *gen) { return gen == generator; }
     void mount(UniConfGen *gen);

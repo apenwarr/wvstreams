@@ -32,10 +32,11 @@ private:
 	UniConfKey key;
 	UniConfCallback cb;
 	void *userdata;
+        int one_shot:1; // Is this a one shot [self deleting] event?
 	
 	CallbackInfo(UniConfCallback _cb, void *_userdata, 
-		     const UniConfKey &_key)
-	    : key(_key), cb(_cb)
+		     const UniConfKey &_key, int os=0)
+	    : key(_key), cb(_cb), one_shot(os)
 	    { userdata = _userdata; }
     };
     DeclareWvList(CallbackInfo);
@@ -67,7 +68,7 @@ public:
     UniConfEvents(UniConf &_cfg, WvStringParm _label = "Config Event");
     ~UniConfEvents();
     
-    void add(UniConfCallback cb, void *userdata, const UniConfKey &key);
+    void add(UniConfCallback cb, void *userdata, const UniConfKey &key, bool one_shot=false);
     void del(UniConfCallback cb, void *userdata, const UniConfKey &key);
     
     

@@ -41,10 +41,10 @@ void UniConfDaemonConn::keychanged(void *userdata, UniConf &conf)
 
 /* Functions to look after UniEvents callback setting / removing */
 
-void UniConfDaemonConn::update_callbacks(WvString key)
+void UniConfDaemonConn::update_callbacks(WvString key, bool one_shot)
 {
     del_callback(key);
-    add_callback(key);
+    add_callback(key, one_shot);
 }
 
 void UniConfDaemonConn::del_callback(WvString key)
@@ -55,11 +55,11 @@ void UniConfDaemonConn::del_callback(WvString key)
 
 }
 
-void UniConfDaemonConn::add_callback(WvString key)
+void UniConfDaemonConn::add_callback(WvString key, bool one_shot)
 {
 //    log("About to add callbacks for %s.\n", key);
     source->events.add(wvcallback(UniConfCallback,
-                *this, UniConfDaemonConn::keychanged), this, key);
+                *this, UniConfDaemonConn::keychanged), this, key, one_shot);
 
     // Now track what keys I know of.
 //    log("Now adding key:%s, to the list of keys.\n",key);
@@ -147,6 +147,12 @@ void UniConfDaemonConn::doset(WvString key, WvConstStringBuffer &fromline)
     dook(UNICONF_SET, key);
 }
 
+void UniConfDaemonConn::registerforchange(WvString key)
+{
+    log("Registering to listen to any changes on or below %s.\n", key);
+    update_callbacks(key);
+}
+
 void UniConfDaemonConn::execute()
 {
     WvString line, cmd;
@@ -194,6 +200,10 @@ void UniConfDaemonConn::execute()
             else if (cmd == UNICONF_SET) // set the specified value
             {
                 doset(key, fromline);
+            }
+            else if (cmd == UNICONF_REGISTER)
+            {
+                registerforchange(key);
             }
         }
     }
