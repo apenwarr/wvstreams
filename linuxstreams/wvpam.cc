@@ -6,7 +6,7 @@
  * writing.  If WvStreams is compiled without PAM, it just fails.
  *
  * For now, this only works for PAM modules that don't require any user
- * interaction.  (Most notably Ssoya.)
+ * interaction.
  */
 
 #include "wvlog.h"
