@@ -45,20 +45,9 @@ WVTEST_MAIN("tempgen/cachgen basics")
     if (!cfg_handler) // child only
     {
         UniIniGen *unigen = new UniIniGen(UNICONFD_INI, 0666);
-        UniTempGen *defgen = new UniTempGen();
-        UniConfGenList *l = new UniConfGenList(); 
-
-        // Must addRef here since both ReadOnlyGen and mountgen take ownership.
-        defgen->addRef();
-        l->append(unigen, true);
-        l->append(new UniReadOnlyGen(defgen), true);
-
-        UniListGen *listgen = new UniListGen(l);
 
         UniConfRoot uniconf;
-        uniconf["cfg"].mountgen(listgen);
-        uniconf["default"].mountgen(defgen);
-        uniconf["auth"].mount("temp:");
+        uniconf["cfg"].mountgen(unigen);
         uniconf["tmp"].mount("temp:");
 
         UniConf defcfg(uniconf["default"]);
@@ -89,9 +78,9 @@ WVTEST_MAIN("tempgen/cachgen basics")
     /* Setup subtree root */
     UniConfRoot cfg("cache:subtree:unix:" UNICONFD_SOCK " cfg");
     
-    /* test to see that value gets pushed into the tempgen as well */
     int initial_value = cfg["eth0"].xgetint("dhcpd", 0);
     cfg["eth0"].xsetint("dhcpd", !initial_value);
+    usleep(50); // compensate for latency in propogation
     int new_value = cfg["eth0"].xgetint("dhcpd", 0);
 
     WVPASS(initial_value != new_value);
