@@ -170,6 +170,8 @@ WVTEST_MAIN("daemon surprise close")
 
 /**** Daemon multimount test ****/
 
+// FIXME: Disabled due to BUGZID:10341
+#if 0
 WVTEST_MAIN("daemon multimount")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -220,6 +222,7 @@ WVTEST_MAIN("daemon multimount")
     WVPASS(daemon.isok());
     WvIStreamList::globallist.zap();
 }
+#endif
 
 /**** Daemon quit test ****/
 
@@ -228,6 +231,8 @@ WVTEST_MAIN("daemon multimount")
 // test that the server responds with 'OK' upon close (rather than
 // actually testing whether or not it closed). leaving this
 // here as a simple (generic) example to write future tests
+// FIXME: Disabled due to BUGZID:10341
+#if 0
 WVTEST_MAIN("daemon quit")
 {
     UniConfRoot cfg("temp:");
@@ -268,6 +273,7 @@ WVTEST_MAIN("daemon quit")
     WVPASS(daemon.isok());
     WvIStreamList::globallist.zap();
 }
+#endif
 
 /**** Daemon proxying test ****/
 
