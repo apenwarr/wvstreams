@@ -51,12 +51,15 @@ public:
 protected:
     virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
     virtual bool _finish(WvBuf &outbuf);
+    virtual bool _reset();
 
 private:
     struct z_stream_s *zstr;
     WvInPlaceBuf tmpbuf;
     Mode mode;
 
+    void init();
+    void close();
     void prepare(WvBuf *inbuf);
     bool process(WvBuf &outbuf, bool flush, bool finish);
 };

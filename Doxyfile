@@ -132,7 +132,7 @@ GENERATE_XML           = NO
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
 ENABLE_PREPROCESSING   = YES
-MACRO_EXPANSION        = YES
+MACRO_EXPANSION        = NO
 EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = include
@@ -183,3 +183,4 @@ DOC_URL                =
 DOC_ABSPATH            = 
 BIN_ABSPATH            = /usr/local/bin/
 EXT_DOC_PATHS          = 
+

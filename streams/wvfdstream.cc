@@ -6,7 +6,36 @@
  */
 #include "wvfdstream.h"
 #include "wvmoniker.h"
+
+#ifndef _WIN32
 #include <sys/socket.h>
+
+#define isselectable(fd) (true)
+
+#else // _WIN32
+
+#define getsockopt(a,b,c,d,e) getsockopt(a,b,c,(char *)d, e) 
+#define SHUT_RD SD_RECEIVE
+#define SHUT_WR SD_SEND
+#define ENOBUFS WSAENOBUFS
+#define EAGAIN WSAEWOULDBLOCK
+
+// streams.cpp
+int close(int fd);
+int read(int fd, void *buf, size_t count);
+int write(int fd, const void *buf, size_t count);
+
+#undef errno
+#define errno GetLastError()
+
+// in win32, only sockets can be in the FD_SET for select()
+inline bool isselectable(int s)
+{
+    static u_long crap;
+    return (ioctlsocket(s, FIONREAD, &crap) == 0) ? true : (GetLastError() != WSAENOTSOCK);
+}
+
+#endif // _WIN32
 
 /***** WvFDStream *****/
 
@@ -138,14 +167,21 @@ bool WvFDStream::pre_select(SelectInfo &si)
 {
     bool result = WvStream::pre_select(si);
     
-    if (si.wants.readable && (rfd >= 0))
-	FD_SET(rfd, &si.read);
-    if ((si.wants.writable || outbuf.used() || autoclose_time) && (wfd >= 0))
-	FD_SET(wfd, &si.write);
+    if (isselectable(rfd))
+    {
+	if (si.wants.readable && (rfd >= 0))
+	    FD_SET(rfd, &si.read);
+    } else result |= si.wants.readable;
+    if (isselectable(wfd))
+    {
+	if ((si.wants.writable || outbuf.used() || autoclose_time) && (wfd >= 0))
+	    FD_SET(wfd, &si.write);
+    } else result |= si.wants.writable ;
+    
     if (si.wants.isexception)
     {
-	if (rfd >= 0) FD_SET(rfd, &si.except);
-	if (wfd >= 0) FD_SET(wfd, &si.except);
+	if (rfd >= 0 && isselectable(rfd)) FD_SET(rfd, &si.except);
+	if (wfd >= 0 && isselectable(wfd)) FD_SET(wfd, &si.except);
     }
     if (si.max_fd < rfd)
 	si.max_fd = rfd;

@@ -322,9 +322,9 @@ public:
     WvString(WVSTRING_FORMAT_DECL) : WvFastString(WVSTRING_FORMAT_CALL)
         { }
     
-    void append(WvStringParm s);
-    void append(WVSTRING_FORMAT_DECL)
-        { append(WvString(WVSTRING_FORMAT_CALL)); }
+    WvString &append(WvStringParm s);
+    WvString &append(WVSTRING_FORMAT_DECL)
+        { return append(WvString(WVSTRING_FORMAT_CALL)); }
     
     WvString &operator= (int i);
     WvString &operator= (const WvFastString &s2);

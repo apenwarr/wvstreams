@@ -6,10 +6,10 @@
  * stacked in a priority sequence for get/set/etc.
  * 
  */
-
 #include "unilistgen.h"
 #include "wvmoniker.h"
 #include "wvtclstring.h"
+#include "wvstringlist.h"
 
 
 // if 'obj' is non-NULL and is a UniConfGen then whoever invoked this is being

@@ -15,46 +15,43 @@
  * @internal
  * Holds information about a single watch.
  */
-class UniWatch
+class UniWatchInfo
 {
+public:
+    void *cookie;
     bool recurse;
     UniConfCallback cb;
-    void *cbdata;
 
-public:
-    UniWatch(bool _recurse, UniConfCallback _cb, void *_cbdata)
-        : recurse(_recurse), cb(_cb), cbdata(_cbdata) { }
+    UniWatchInfo(void *_cookie, bool _recurse, UniConfCallback _cb)
+        : cookie(_cookie), recurse(_recurse), cb(_cb) { }
 
     /** Returns watch recursion */
     bool recursive()
         { return recurse; }
 
     /** Notifies that a key has changed. */
-    void notify(const UniConf &cfg)
-        { cb(cfg, cbdata); }
+    void notify(const UniConf &cfg, const UniConfKey &key)
+        { cb(cfg, key); }
 
     /** Equality test. */
-    bool operator== (const UniWatch &other) const
-    {
-        return recurse  == other.recurse &&
-            cb == other.cb && cbdata == other.cbdata;
-    }
+    bool operator== (const UniWatchInfo &other) const
+        { return other.cookie == cookie; }
 };
-DeclareWvList(UniWatch);
+DeclareWvList(UniWatchInfo);
 
 
 /**
  * @internal
  * Data structure to track requested watches.
  */
-class UniWatchTree : public UniConfTree<UniWatchTree>
+class UniWatchInfoTree : public UniConfTree<UniWatchInfoTree>
 {
 public:
-    UniWatchList watches;
+    UniWatchInfoList watches;
     
-    UniWatchTree(UniWatchTree *parent,
-        const UniConfKey &key = UniConfKey::EMPTY)
-        : UniConfTree<UniWatchTree>(parent, key) { }
+    UniWatchInfoTree(UniWatchInfoTree *parent,
+		 const UniConfKey &key = UniConfKey::EMPTY)
+        : UniConfTree<UniWatchInfoTree>(parent, key) { }
 
     /** Returns true if the node should not be pruned. */
     bool isessential()
@@ -78,7 +75,7 @@ class UniConfRoot : public UniConf
     friend class UniConf;
     friend class UniConf::Iter;
 
-    UniWatchTree watchroot;
+    UniWatchInfoTree watchroot;
     
     /** undefined. */
     UniConfRoot(const UniConfRoot &other);
@@ -102,7 +99,11 @@ public:
      */
     UniConfRoot(WvStringParm moniker, bool refresh = true)
         : UniConf(this), watchroot(NULL)
-        { mounts.mount("/", moniker, refresh); }
+    {
+        mounts.mount("/", moniker, refresh);
+        mounts.setcallback(UniConfGenCallback(this,
+            &UniConfRoot::gen_callback), NULL);
+    }
 
     /** 
      * Creates a new UniConf tree and mounts the given generator at the root.
@@ -117,14 +118,14 @@ public:
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
      */
-    void add_callback(const UniConfKey &key, const UniConfCallback &callback,
-                      void *userdata, bool recurse = true);
+    void add_callback(void *cookie, const UniConfKey &key,
+		      const UniConfCallback &callback, bool recurse = true);
     
     /**
      * Cancels notification requested using add_callback().
      */
-    void del_callback(const UniConfKey &key, const UniConfCallback &callback,
-                      void *userdata, bool recurse = true);
+    void del_callback(void *cookie, const UniConfKey &key,
+		      bool recurse = true);
 
     /**
      * Requests notification when any of the keys covered by the
@@ -144,27 +145,30 @@ private:
      *   key - the key that changed
      *   segleft - the number of segments left in the key (possibly negative)
      */
-    void check(UniWatchTree *node, const UniConfKey &key, int segleft);
+    void check(UniWatchInfoTree *node, const UniConfKey &key, int segleft);
 
     /**
      * Recursively checks a branch of the watch tree for notification candidates.
      *   node - the current node
      *   key - the key that changed
      */
-    void deletioncheck(UniWatchTree *node, const UniConfKey &key);
+    void deletioncheck(UniWatchInfoTree *node, const UniConfKey &key);
 
     /** Prunes a branch of the watch tree. */
-    void prune(UniWatchTree *node);
+    void prune(UniWatchInfoTree *node);
     
-    /** Internal callback for setbool style notifications. */
-    void setbool_callback(const UniConf &cfg, void *userdata);
-
     /** Callback from UniMountTreeGen */
-    void gen_callback(const UniConfKey &key, WvStringParm value,
-                      void *userdata);
+    void gen_callback(const UniConfKey &key, WvStringParm value, void *userdata);
 
 protected:
     UniMountGen mounts;
+    
+public:
+    /** Internal callback for setbool style notifications. */
+    static void setbool_callback(bool *flag, const UniConf &,
+				 const UniConfKey &)
+        { *flag = true; }
+
 };
 
 #endif //__UNICONFROOT_H

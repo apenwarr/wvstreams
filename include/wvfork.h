@@ -20,13 +20,10 @@ typedef WvCallback<void, pid_t> WvForkCallback;
  * It will be called (in both parent and child process) after the fork has
  * happened but before wvfork returns.  It is passed the return value of the
  * fork.
+ * 
+ * NOTE: There is no way to undo this operation!
  */
 extern void add_wvfork_callback(WvForkCallback cb);
-
-/**
- * Remove a callback from the list of wvfork callbacks.
- */
-extern void remove_wvfork_callback(WvForkCallback cb);
 
 /**
  * wvfork_start is just like fork, except that it will block the

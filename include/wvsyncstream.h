@@ -7,7 +7,9 @@
 #ifndef __WVSYNCSTREAM_H
 #define __WVSYNCSTREAM_H
 
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 #include <time.h>
 #include "wvstream.h"
 #include "wvstreamclone.h"

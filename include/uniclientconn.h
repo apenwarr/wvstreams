@@ -8,7 +8,9 @@
 #define __UNICONFCONN_H
 
 #include "uniconfkey.h"
+#include "uniconfgen.h"
 #include "wvstreamclone.h"
+#include "wvistreamlist.h"
 #include "wvbuf.h"
 #include "wvlog.h"
 

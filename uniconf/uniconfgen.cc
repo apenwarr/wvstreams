@@ -5,6 +5,7 @@
  * A UniConf key management abstraction.
  */
 #include "uniconfgen.h"
+#include "strutils.h"
 
 /***** UniConfGen *****/
 
@@ -21,7 +22,7 @@ UniConfGen::~UniConfGen()
 
 void UniConfGen::hold_delta()
 {
-    hold_nesting += 1;
+    hold_nesting++;
 }
 
 
@@ -30,7 +31,7 @@ void UniConfGen::unhold_delta()
     assert(hold_nesting > 0);
     if (hold_nesting == 1)
         flush_delta();
-    hold_nesting -= 1;
+    hold_nesting--;
 }
 
 

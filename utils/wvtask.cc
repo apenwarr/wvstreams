@@ -43,12 +43,8 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 WvTask::~WvTask()
 {
     numtasks--;
-    
     if (running)
-    {
 	numrunning--;
-    }
-    
     magic_number = 42;
 }
 
@@ -72,6 +68,29 @@ void WvTask::recycle()
     {
 	man.free_tasks.append(this, true);
 	recycled = true;
+    }
+}
+
+
+WvTaskMan *WvTaskMan::singleton;
+int WvTaskMan::links;
+
+WvTaskMan *WvTaskMan::get()
+{
+    if (!links)
+	singleton = new WvTaskMan;
+    links++;
+    return singleton;
+}
+
+
+void WvTaskMan::unlink()
+{
+    links--;
+    if (!links)
+    {
+	delete singleton;
+	singleton = NULL;
     }
 }
 
@@ -130,6 +149,9 @@ int WvTaskMan::run(WvTask &task, int val)
     assert(task.magic_number == WVTASK_MAGIC);
     assert(!task.recycled);
     
+    Dprintf("WvTaskMan: running task #%d with value %d (%s)\n",
+	    task.tid, val, (const char *)task.name);
+    
     if (&task == current_task)
 	return val; // that's easy!
         
@@ -150,7 +172,7 @@ int WvTaskMan::run(WvTask &task, int val)
     }
     else
     {
-	// someone did yield() (if toplevel) or run() on our task; exit
+	// someone did yield() (if toplevel) or run() on our old task; done.
 	current_task = old_task;
 	return newval;
     }
@@ -162,8 +184,8 @@ int WvTaskMan::yield(int val)
     if (!current_task)
 	return 0; // weird...
     
-    Dprintf("WvTaskMan: yielding from task #%d (%s)\n",
-	   current_task->tid, (const char *)current_task->name);
+    Dprintf("WvTaskMan: yielding from task #%d with value %d (%s)\n",
+	   current_task->tid, val, (const char *)current_task->name);
     
     assert(current_task->stack_magic);
     
@@ -305,7 +327,7 @@ void WvTaskMan::do_task()
 	// someone did a run() on the task, which
 	// means they're ready to make it go.  Do it.
 	for (;;)
-	{	    
+	{
 	    assert(magic_number == -WVTASK_MAGIC);
 	    assert(task->magic_number == WVTASK_MAGIC);
 	    

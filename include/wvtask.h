@@ -13,6 +13,12 @@
 #ifndef __WVTASK_H
 #define __WVTASK_H
 
+#ifdef _WIN32
+
+#include "wvwin32task.h"
+
+#else
+
 #include "wvstring.h"
 #include "wvlinklist.h"
 #include "setjmp.h"
@@ -25,6 +31,14 @@ class WvTaskMan;
 class WvTask
 {
     friend class WvTaskMan;
+    
+    // you might think it would be useful to have this return an int, since
+    // yield() and run() both return int.  But that ends up being more
+    // confusing than you think, because if you call task1->run(), and he
+    // calls task2->run(), and task2 calls yield(), then task1->run() returns
+    // the value *task2* passed to yield!  So we avoid the confusion by not
+    // using return values here, which discourages people from thinking of
+    // them as return values.
     typedef void TaskFunc(void *userdata);
     
     static int taskcount, numtasks, numrunning;
@@ -59,6 +73,10 @@ DeclareWvList(WvTask);
 class WvTaskMan
 {
     friend class WvTask;
+    
+    static WvTaskMan *singleton;
+    static int links;
+    
     int magic_number;
     WvTaskList free_tasks;
     
@@ -66,6 +84,7 @@ class WvTaskMan
     void stackmaster();
     void _stackmaster();
     void do_task();
+    
     jmp_buf stackmaster_task;
     
     WvTask *stack_target;
@@ -74,9 +93,13 @@ class WvTaskMan
     WvTask *current_task;
     jmp_buf toplevel;
     
-public:
     WvTaskMan();
     virtual ~WvTaskMan();
+    
+public:
+    /// get/dereference the singleton global WvTaskMan
+    static WvTaskMan *get();
+    static void unlink();
     
     WvTask *start(WvStringParm name,
 		  WvTask::TaskFunc *func, void *userdata,
@@ -92,5 +115,5 @@ public:
 };
 
 
-
+#endif // ifdef _WIN32
 #endif // __WVTASK_H

@@ -6,7 +6,17 @@
  * See wvudp.h for details.
  */
 #include "wvudp.h"
+
+#ifndef WIN32
 #include <sys/socket.h>
+#else
+#define setsockopt(a,b,c,d,e) setsockopt(a,b,c, (const char*) d,e)
+#define recvfrom(a,b,c,d,e,f) recvfrom(a, (char *) b, c, d, e, f)
+#define sendto(a,b,c,d,e,f) sendto(a,(const char*) b,c,d,e,f)
+#undef errno
+#define errno GetLastError()
+#endif
+
 #include <fcntl.h>
 
 #ifdef ISDARWIN
@@ -20,9 +30,13 @@ WvUDPStream::WvUDPStream(const WvIPPortAddr &_local,
     int x = 1;
     setfd(socket(PF_INET, SOCK_DGRAM, 0));
     if (getfd() < 0 
+#ifndef _WIN32
 	|| fcntl(getfd(), F_SETFD, 1)
 	|| fcntl(getfd(), F_SETFL, O_RDWR | O_NONBLOCK)
-        || setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x)) < 0
+#else
+	|| ioctlsocket(getfd(), FIONBIO, (u_long*) &x) // non-blocking
+#endif        
+	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x)) < 0
 	)
     {
 	seterr(errno);

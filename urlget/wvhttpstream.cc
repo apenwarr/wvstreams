@@ -13,6 +13,10 @@
 #include "wvbase64.h"
 #include "strutils.h"
 
+#ifdef _WIN32
+#define ETIMEDOUT WSAETIMEDOUT
+#endif
+
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),

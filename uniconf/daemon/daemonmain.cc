@@ -10,6 +10,7 @@
 #include "unipermgen.h"
 #include "wvx509.h"
 #include "uniconfroot.h"
+#include "strutils.h"
 
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
@@ -93,42 +94,6 @@ static void trymount(const UniConf &cfg, const UniConfKey &key,
     }
 }
 
-WvString hostname()
-{
-    int maxlen = 0;
-    for(;;)
-    {
-        maxlen += 80;
-        char *name = new char[maxlen];
-        int result = gethostname(name, maxlen);
-        if (result == 0)
-        {
-            WvString hostname(name);
-            delete [] name;
-            return hostname;
-        }
-        assert(errno == EINVAL);
-    }
-}
-
-WvString domainname()
-{
-    int maxlen = 0;
-    for(;;)
-    {
-        maxlen += 128;
-        char *name = new char[maxlen];
-        int result = getdomainname(name, maxlen);
-        if (result == 0)
-        {
-            WvString domainname(name);
-            delete [] name;
-            return domainname;
-        }
-        assert(errno == EINVAL);
-    }
-}
-
 int main(int argc, char **argv)
 {
     signal(SIGINT,  sighandler_die);
@@ -202,12 +167,8 @@ int main(int argc, char **argv)
 
     if (sslport)
     {
-        // FIXME: copied from sslsrvtest.cc, this looks too simple
-        WvString hname = hostname();
-        WvString domname = domainname();
-        WvString fqdn("%s.%s", hname, domname);
-        WvString dName("cn=%s,dc=%s",fqdn,domname);
-        WvX509Mgr *x509cert = new WvX509Mgr(dName,1024);
+        WvString dName = encode_hostname_as_DN(fqdomainname());
+        WvX509Mgr *x509cert = new WvX509Mgr(dName, 1024);
         if (!x509cert->isok())
         {
             WvLog log("uniconfdaemon", WvLog::Error);
@@ -217,12 +178,28 @@ int main(int argc, char **argv)
             exit(1);
     }
     
-    while (globdaemon->isok())
+    // since we're a daemon, we should now background ourselves.
+    pid_t pid = fork();
+    if (pid <= 0) // child or failed
     {
-        if (globdaemon->select(-1))
-            globdaemon->callback();
+	while (globdaemon->isok())
+	{
+	    if (globdaemon->select(5000))
+		globdaemon->callback();
+	    else
+	    {
+		// FIXME: do this *exactly* every so x seconds
+		cfg.commit();
+		cfg.refresh();
+	    }
+	}
+	globdaemon->close();
+	delete globdaemon;
     }
-    globdaemon->close();
-    delete globdaemon;
+    else // parent
+    {
+	_exit(0);
+    }
+    
     return 0;
 }

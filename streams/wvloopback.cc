@@ -7,8 +7,17 @@
  * everything written to it, even (especially) across a fork() call.
  */
 #include "wvloopback.h"
+
+#ifndef _WIN32
 #include <sys/socket.h>
+#else
+#include <io.h>
+#endif
 #include <fcntl.h>
+
+#ifdef _WIN32
+int socketpair (int family, int type, int protocol, int *sb);
+#endif
 
 WvLoopback::WvLoopback()
 {
@@ -23,8 +32,14 @@ WvLoopback::WvLoopback()
     rfd = socks[0];
     wfd = socks[1];
 
+#ifndef _WIN32
     fcntl(rfd, F_SETFD, 1);
     fcntl(rfd, F_SETFL, O_RDONLY|O_NONBLOCK);
     fcntl(wfd, F_SETFD, 1);
     fcntl(wfd, F_SETFL, O_WRONLY|O_NONBLOCK);
+#else
+    u_long arg = 1;
+    ioctlsocket(rfd, FIONBIO, &arg); // non-blocking
+    ioctlsocket(wfd, FIONBIO, &arg); // non-blocking
+#endif
 }

@@ -57,19 +57,39 @@ void UniConf::set(WvStringParm value) const
 
 void UniConf::setint(int value) const
 {
-   set(WvString(value));
+    set(WvString(value));
 }
 
 
-void UniConf::move(UniConfKey dst)
+void UniConf::move(const UniConf &dst)
 {
-    //FIXME: Someone should actually make this. :)
+    dst.remove();
+    
+    // do the main key first
+    dst.set(get());
+
+    // now all the children
+    RecursiveIter i(*this);
+    for (i.rewind(); i.next(); )
+	dst[i->fullkey(*this)].set(i->get());
+    
+    remove();
 }
 
 
-void UniConf::copy(UniConfKey dst, bool force)
+void UniConf::copy(const UniConf &dst, bool force)
 {
-    //FIXME: Someone should actually make this. :)
+    // do the main key first
+    dst.set(get());
+
+    // now all the children
+    RecursiveIter i(*this);
+    for (i.rewind(); i.next(); )
+    {
+	UniConf dst2 = dst[i->fullkey(*this)];
+	if (force || dst2.get().isnull())
+	    dst2.set(i->get());
+    }
 }
 
 
@@ -115,17 +135,16 @@ UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 }
 
 
-void UniConf::add_callback(const UniConfCallback &callback, void *userdata,
+void UniConf::add_callback(void *cookie, const UniConfCallback &callback,
                            bool recurse) const
 {
-    xroot->add_callback(xfullkey, callback, userdata, recurse);
+    xroot->add_callback(cookie, xfullkey, callback, recurse);
 }
 
 
-void UniConf::del_callback(const UniConfCallback &callback, void *userdata,
-                           bool recurse) const
+void UniConf::del_callback(void *cookie, bool recurse) const
 {
-    xroot->del_callback(xfullkey, callback, userdata, recurse);
+    xroot->del_callback(cookie, xfullkey, recurse);
 }
 
 

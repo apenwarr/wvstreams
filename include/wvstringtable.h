@@ -19,8 +19,8 @@ class WvStringTable : public WvStringTableBase
 public:
     WvStringTable(unsigned _numslots) : WvStringTableBase(_numslots) {};
     WvString join(const char *joinchars = " \t") const;
-    void split(WvStringParm s, const char *splitchars = " \t",
-        int limit = 0);
+    void split(WvStringParm s, const char *splitchars = " \t\r\n",
+	       int limit = 0);
 };
 
 #endif // __WVSTRINGTABLE_H

@@ -87,7 +87,7 @@ public:
 class WvSHA1Digest : public WvEVPMDDigest
 {
 public:
-    /** Creates an MD5 digest encoder. */
+    /** Creates an SHA1 digest encoder. */
     WvSHA1Digest();
     virtual ~WvSHA1Digest() { }
 };

@@ -1,8 +1,0 @@
-syntax=on
-softtabstop=4
-shiftwidth=4
-numbers=on
-expandtab=on
-wrap=off
-color=torte
-incsearch=on

@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
@@ -11,10 +11,17 @@
 #include "wverror.h"
 #include "wvbuf.h"
 #include "wvcallback.h"
-#include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
-#include <sys/time.h>
 #include <errno.h>
 #include <limits.h>
+
+#ifdef _WIN32
+#include <time.h>
+#include <Winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
+#include <sys/time.h>
+#endif
 
 class WvAddr;
 class WvTask;
@@ -54,6 +61,7 @@ public:
 	int max_fd;                  // largest fd in read, write, or except
 	time_t msec_timeout;         // max time to wait, or -1 for forever
 	bool inherit_request;        // 'wants' values passed to child streams
+	bool global_sure;            // should we run the globalstream callback
     };
     
     IWvStream();
@@ -111,10 +119,10 @@ public:
     virtual bool should_flush() = 0;
     
     // IObject
-    static const UUID IID;
+    static const XUUID XIID;
 };
 
-DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
+DEFINE_XIID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
 
 /**
@@ -157,7 +165,9 @@ public:
      */
     bool alarm_was_ticking;
     
-    
+   
+    /* Basic constructor for just a do-nothing WvStream */ 
+    WvStream();
     virtual ~WvStream();
 
     /**
@@ -363,12 +373,18 @@ public:
     }
     
     /**
+     * Like pre_select(), but still exists even if you override the other
+     * pre_select() in a subclass.  Sigh.
+     */
+    bool xpre_select(SelectInfo &si, const SelectRequest &r)
+        { return pre_select(si, r); }
+    
+    /**
      * post_select() is called after ::select(), and returns true if this
      * object is now ready.  Usually this is done by checking for this object
      * in the read, write, and except lists in the SelectInfo structure.  If
      * you want to do it in some other way, you should usually do it in
-     * pre_select() instead.  (post_select() _only_ gets called if ::select()
-     * returned true for _some_ stream or another.)
+     * pre_select() instead.
      * 
      * You may also want to do extra maintenance functions here; for example,
      * the standard WvStream::post_select tries to flush outbuf if it's
@@ -377,6 +393,13 @@ public:
      */
     virtual bool post_select(SelectInfo &si);
 
+    /**
+     * Like post_select(), but still exists even if you override the other
+     * post_select() in a subclass.  Sigh.
+     */
+    bool xpost_select(SelectInfo &si, const SelectRequest &r)
+        { return post_select(si, r); }
+    
     /**
      * A more convenient version of post_select() usable for overriding the
      * 'want' value temporarily.
@@ -579,7 +602,7 @@ private:
 
 
 protected:
-    static WvTaskMan *taskman;
+    WvTaskMan *taskman;
 
     WvDynBuf inbuf, outbuf;
     WvStreamCallback callfunc;
@@ -601,9 +624,6 @@ protected:
     bool wvstream_execute_called;
     
     WvTask *task;
-
-    /** plain internal constructor to just set up internal variables. */
-    WvStream();
     
     /** Prevent accidental copying of WvStreams. */
     WvStream(const WvStream &s) { }
@@ -631,7 +651,6 @@ protected:
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
 };
-
 
 /**
  * Console streams...

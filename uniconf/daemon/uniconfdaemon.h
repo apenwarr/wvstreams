@@ -17,7 +17,7 @@ class WvX509Mgr;
 class UniConfDaemon : public WvStreamList
 {
     UniConf cfg;
-    WvLog log;
+    WvLog log, debug;
     bool closed;
     bool authenticate;
 

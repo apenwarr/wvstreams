@@ -12,6 +12,16 @@
 #include <string.h>
 #include <time.h>
 
+#ifndef _WIN32
+#include <errno.h>
+#include <netdb.h>
+#include <unistd.h>
+#else
+#undef errno
+#define errno GetLastError()
+#define strcasecmp _stricmp
+#include <winsock2.h>
+#endif
 
 char *terminate_string(char *string, char c)
 /**********************************************/
@@ -111,7 +121,7 @@ void replace_char(void *_string, char c1, char c2, int length)
     	    *(string+i) = c2;
 }
 
-
+#ifndef _WIN32
 char *strlwr(char *string)
 {
     char *p = string;
@@ -136,7 +146,7 @@ char *strupr(char *string)
 
     return string;
 }
-
+#endif
 
 // true if all the characters in "string" are isalnum().
 bool is_word(const char *p)
@@ -154,7 +164,7 @@ bool is_word(const char *p)
 // produce a hexadecimal dump of the data buffer in 'buf' of length 'len'.
 // it is formatted with 16 bytes per line; each line has an address offset,
 // hex representation, and printable representation.
-WvString hexdump_buffer(const void *_buf, size_t len)
+WvString hexdump_buffer(const void *_buf, size_t len, bool charRep)
 {
     const unsigned char *buf = (const unsigned char *)_buf;
     size_t count, count2, top;
@@ -194,9 +204,11 @@ WvString hexdump_buffer(const void *_buf, size_t len)
 	*cptr++ = ' ';
 	
 	// dump character representation
-	for (count2 = 0; count2 < top; count2++)
-	    *cptr++ = (isprint(buf[count+count2])
-			     ? buf[count+count2] : '.');
+	if (charRep)
+	    for (count2 = 0; count2 < top; count2++)
+	        *cptr++ = (isprint(buf[count+count2])
+			   ? buf[count+count2] : '.');
+
 	*cptr++ = '\n';
     }
     *cptr = 0;
@@ -216,7 +228,7 @@ WvString web_unescape(const char *str)
     const char *iptr;
     char *optr;
     char *idx1, *idx2;
-    static char hex[] = "0123456789ABCDEF";
+    static const char hex[] = "0123456789ABCDEF";
     WvString in, intmp(str), out;
  
     in = trim_string(intmp.edit());
@@ -448,8 +460,7 @@ WvString rfc1123_date(time_t t)
 }
 
 
-int lookup(const char *str, const char * const *table,
-    bool case_sensitive)
+int lookup(const char *str, const char * const *table, bool case_sensitive)
 {
     for (int i = 0; table[i]; ++i)
     {
@@ -466,6 +477,41 @@ int lookup(const char *str, const char * const *table,
         return i;
     }
     return -1;
+}
+
+
+WvString hostname()
+{
+    int maxlen = 0;
+    for(;;)
+    {
+        maxlen += 80;
+        char *name = new char[maxlen];
+        int result = gethostname(name, maxlen);
+        if (result == 0)
+        {
+            WvString hostname(name);
+            delete [] name;         
+            return hostname;
+        }
+#ifdef _WIN32
+	assert(errno == WSAEFAULT);
+#else
+        assert(errno == EINVAL);
+#endif
+    }
+}
+
+
+WvString fqdomainname() 
+{
+    struct hostent *myhost;
+
+    myhost = gethostbyname(hostname());
+    if (myhost)
+	return myhost->h_name;
+    else
+	return WvString::null;
 }
 
 

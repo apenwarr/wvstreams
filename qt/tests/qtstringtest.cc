@@ -1,9 +1,9 @@
 /*
  * Test the WvString -> QString compatibility stuff
  */
+#include <qstring.h>
 #include "wvstring.h"
 #include "wvtest.h"
-#include <qt/qstring.h>
 
 WvString qf(const QString &q)
 {
