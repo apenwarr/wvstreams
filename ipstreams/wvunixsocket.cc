@@ -4,7 +4,7 @@
  * 
  * WvStream-based Unix domain socket connection class.  See wvunixsocket.h.
  */
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvunixsocket.h"
 #include "wvmoniker.h"
 
@@ -168,7 +168,7 @@ WvUnixConn *WvUnixListener::accept()
 }
 
 
-void WvUnixListener::auto_accept(WvStreamList *list,
+void WvUnixListener::auto_accept(WvIStreamList *list,
 				 WvStreamCallback callfunc, void *userdata)
 {
     auto_list = list;

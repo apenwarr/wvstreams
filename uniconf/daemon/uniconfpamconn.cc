@@ -6,95 +6,26 @@
  */
 #include "uniconfpamconn.h"
 #include "unisecuregen.h"
+#include "uniunwrapgen.h"
+#include "uninullgen.h"
 #include "wvpam.h"
 
 
-unsigned int WvHash(const IUniConfGen *u)
+UniConfPamConn::UniConfPamConn(WvStream *_s, const UniConf &_root,
+			       UniPermGen *perms)
+    : WvStreamClone(NULL)
 {
-    return WvHash((int) u);
-}
-
-
-/***** UniConfPamConn *****/
-
-
-SecureGenDict UniConfPamConn::securegens(7);
-
-
-UniConfPamConn::UniConfPamConn(WvStream *_s, const UniConf &_root) :
-    UniConfDaemonConn(new WvPamStream(_s, "uniconfdaemon", WvString::null,
-            "FAIL { Not authorized }"), _root)
-{
-}
-
-
-void UniConfPamConn::addcallback()
-{
-    root.add_callback(this, UniConfCallback(this,
-            &UniConfPamConn::deltacallback), true);
-}
-
-
-void UniConfPamConn::delcallback()
-{
-    root.del_callback(this, true);
-}
-
-
-void UniConfPamConn::do_get(const UniConfKey &key)
-{
-    updatecred(root[key]);
-    UniConfDaemonConn::do_get(key);
-}
-
-
-void UniConfPamConn::do_set(const UniConfKey &key, WvStringParm value)
-{
-    updatecred(root[key]);
-    UniConfDaemonConn::do_set(key, value);
-}
-
-
-void UniConfPamConn::do_remove(const UniConfKey &key)
-{
-    updatecred(root[key]);
-    UniConfDaemonConn::do_remove(key);
-}
-
-
-void UniConfPamConn::do_subtree(const UniConfKey &key, bool recursive)
-{
-    updatecred(root[key]);
-    UniConfDaemonConn::do_subtree(key, recursive);
-}
-
-
-void UniConfPamConn::do_haschildren(const UniConfKey &key)
-{
-    updatecred(root[key]);
-    UniConfDaemonConn::do_haschildren(key);
-}
-
-
-void UniConfPamConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
-{
-    updatecred(cfg[key]);
-    UniConfDaemonConn::deltacallback(cfg, key);
-
-    // FIXME: looks like if there's no permission to read, pamconn will tell
-    // the client that it's been deleted instead of just staying silent.
-}
-
-
-void UniConfPamConn::updatecred(const UniConf &key)
-{
+    pam = new WvPamStream(_s, "uniconfd", WvString::null,
+			  "FAIL {Not authorized.}\n");
+    
+    UniSecureGen *sec = new UniSecureGen(new UniUnwrapGen(_root), perms);
+    
     // get the user and groups from PAM
-    WvPamStream *pam = static_cast<WvPamStream *>(cloned);
     WvString user = pam->getuser();
     WvStringList groups;
     pam->getgroups(groups);
     
-    // if this isn't a UniSecureGen, don't need to authenticate
-    SecureGen *sec = securegens[key.whichmount(NULL)];
-    if (sec && sec->data) sec->data->setcredentials(user, groups);
+    sec->setcredentials(user, groups);
+    newroot.mountgen(sec, false);
+    setclone(new UniConfDaemonConn(pam, newroot));
 }

@@ -66,9 +66,6 @@ proc showlogs {} {
 }
 
 proc addend {text args} {
-    puts -nonewline $text
-    flush stdout
-    
     catch {
         .l.log insert end $text $args
     	.l.log see end

@@ -8,11 +8,11 @@
 #include <assert.h>
 
 
-WvVectorBase::WvVectorBase(bool _auto_free)
+WvVectorBase::WvVectorBase(bool _autofree)
 {
     xseq = NULL;
     xcount = xslots = 0;
-    auto_free = _auto_free;
+    autofree = _autofree;
 }
 
 

@@ -10,7 +10,7 @@
 #include "wvfile.h"
 #include "strutils.h"
 
-//#define DEBUG_DEL_CALLBACK
+//#define DEBUG_DEL_CALLBACK 1
 #ifdef DEBUG_DEL_CALLBACK
 #include <execinfo.h>
 #endif
@@ -229,9 +229,9 @@ WvConfEmu::~WvConfEmu()
     // deleting the WvConfEmu, but they probably won't work the way you
     // think they will. (ie. someone might be using a temporary WvConfEmu
     // and think his callbacks will stick around; they won't!)
+#ifndef DEBUG_DEL_CALLBACK
     assert(callbacks.isempty());
-
-#ifdef DEBUG_DEL_CALLBACK
+#else
     if (!callbacks.isempty())
     {
 	WvList<CallbackInfo>::Iter i(callbacks);

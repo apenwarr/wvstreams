@@ -1,4 +1,5 @@
 WVSTREAMS=.
+WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
 include wvrules.mk
 override enable_efence=no
 
@@ -32,11 +33,12 @@ endif
 # FIXME: little trick to ensure that the wvautoconf.h.in file is there
 .PHONY: dist-hack-clean
 dist-hack-clean:
-	rm -f stamp-h.in
+	@rm -f stamp-h.in
 
-dist: dist-hack-clean configure distclean
-	rm -rf autom4te.cache
-	if test -d .xplc; then \
+dist-hook: dist-hack-clean configure
+	@rm -rf autom4te.cache
+	@if test -d .xplc; then \
+	    echo '--> Preparing XPLC for dist...' \
 	    $(MAKE) -C .xplc clean patch; \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
@@ -62,10 +64,17 @@ include/wvautoconf.h.in:
 	autoheader
 endif
 
+ifeq ($(VERBOSE),)
+define wild_clean
+	@list=`echo $(wildcard $(1))`; \
+		test -z "$${list}" || sh -c "rm -rf $${list}"
+endef
+else
 define wild_clean
 	@list=`echo $(wildcard $(1))`; \
 		test -z "$${list}" || sh -cx "rm -rf $${list}"
 endef
+endif
 
 realclean: distclean
 	$(call wild_clean,$(REALCLEAN))
@@ -75,6 +84,7 @@ distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
 
 clean: depend dust
+	@rm -f .wvtest-total
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
@@ -138,7 +148,10 @@ test: runconfigure all tests wvtestmain
 
 runtests:
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
-	cd uniconf/tests && ./unitest.sh
+ifeq ("$(TESTNAME)", "unitest")
+	cd uniconf/tests && DAEMON=0 ./unitest.sh
+	cd uniconf/tests && DAEMON=1 ./unitest.sh
+endif
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

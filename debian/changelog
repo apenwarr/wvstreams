@@ -1,8 +1,8 @@
-wvstreams (3.80+20040622-1) unstable; urgency=low
+wvstreams (3.80+20040623-1) unstable; urgency=low
 
   * New upstream snapshot.
 
- -- Simon Law <sfllaw@debian.org>  Tue, 22 Jun 2004 12:20:21 -0400
+ -- Simon Law <sfllaw@debian.org>  Tue, 23 Jun 2004 12:20:21 -0400
 
 wvstreams (3.74+20031017-1) unstable; urgency=low
 

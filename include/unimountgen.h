@@ -45,6 +45,9 @@ public:
     virtual ~UniMountGen()
         { }
     
+    void zap()
+        { mounts.zap(); }
+    
     /**
      * Mounts a generator at a key using a moniker.
      
@@ -117,6 +120,11 @@ private:
 		     void *userdata);
 
     void makemount(const UniConfKey &key);
+
+    /** Return true if the given key has a subkey 
+     *  if you used findmount first, give the result as a parameter to
+     *  improve efficiency*/
+    bool has_subkey(const UniConfKey &key, UniGenMount *found = NULL);
 };
 
 #endif //__UNIMOUNTGEN_H

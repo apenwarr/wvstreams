@@ -89,6 +89,21 @@ WVTEST_MAIN("DynBuf")
     
     WVPASS(b.used() == 0);
     WVPASS(b.strchr('c') == b.strchr((unsigned char)'c'));
+
+    WvDynBuf big;
+    char bigbuf[1024];
+    memset(bigbuf, 'c', 1024);
+    for (int x=0; x < 768; x++)
+       big.put(bigbuf, 1024);
+    WVPASSEQ(big.used(), 786432);
+    
+    bool ok = true;
+    for (int x=0; x < 1024; x++)
+    {
+       if (strncmp((const char *)big.get(768), bigbuf, 768))
+          ok = false;
+    }
+    WVPASS(ok);
 }
 
 

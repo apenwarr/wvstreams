@@ -43,7 +43,8 @@ ifneq ("$(with_xplc)", "no")
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
-LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBXPLC)
+LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
+LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
@@ -65,7 +66,7 @@ XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
 else
-  DEBUG:=
+  DEBUG:=0
 endif
 
 ifeq ("$(enable_fatal_warnings)", "yes")
@@ -127,8 +128,9 @@ xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
 default: all
 
 # default "test" rule does nothing...
-.PHONY: test
+.PHONY: test runtests
 test:
+runtests:
 
 %/test:
 	$(MAKE) -C $(dir $@) test
@@ -340,24 +342,55 @@ subdirs: ${SUBDIRS}
 # Auto-clean rule.  Feel free to append to this in your own directory, by
 # defining your own "clean" rule.
 #
-clean: FORCE _wvclean
+.PHONY: clean _wvclean
 
-_wvclean: FORCE
-	rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.moc *.d .*.d .depend .\#* \
-		.tcl_paths pkgIndex.tcl gmon.out core build-stamp wvtestmain
-	rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
+clean: _wvclean
+
+_wvclean:
+	@echo '--> Cleaning $(shell pwd)...'
+	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.moc *.d .*.d .depend \
+		 .\#* .tcl_paths pkgIndex.tcl gmon.out core build-stamp \
+		 wvtestmain
+	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
-	rm -rf debian/tmp
+	@rm -rf debian/tmp
 
 #
 # default dist rules.
 distclean: clean
 
-dist: distclean ChangeLog
+PKGNAME := $(notdir $(shell pwd))
+PPKGNAME := $(shell echo $(PKGNAME) | tr a-z A-Z)
+PKGVER := $(shell test -f wvver.h \
+	    && cat wvver.h | sed -ne "s/\#define $(PPKGNAME)_VER_STRING.*\"\([^ ]*\)\"/\1/p")
+ifneq ($(PKGVER),)
+PKGDIR := $(PKGNAME)-$(PKGVER)
+else
+PKGDIR := $(PKGNAME)
+endif
+ifneq ($(PKGSNAPSHOT),)
+PKGDIR := $(PKGDIR)+$(shell date +%Y%m%d)
+endif
+dist-dir:
+	@echo $(PKGDIR)
+
+dist-hook:
+
+dist: dist-hook ChangeLog
+	@echo '--> Making dist in ../build/$(PKGDIR)...'
+	@test -d ../build || mkdir ../build
+	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
+	@find '../build/$(PKGDIR)' -name CVS -type d -print0 | xargs -0 rm -rf --
+	@find '../build/$(PKGDIR)' -name .cvsignore -type f -print0 | xargs -0 rm -f --
+	@$(MAKE) -C '../build/$(PKGDIR)' distclean
+	@rm -f '../build/$(PKGDIR).tar.gz'
+	@cd ../build; tar -zcf '$(PKGDIR).tar.gz' '$(PKGDIR)'
+	@echo '--> Created tarball in ../build/$(PKGDIR).tar.gz.'
 
 ChangeLog: FORCE
-	rm -f ChangeLog ChangeLog.bak
-	cvs2cl --utc
+	@echo '--> Generating ChangeLog from CVS...'
+	@rm -f ChangeLog ChangeLog.bak
+	@cvs2cl --utc
 
 #
 # Make 'tags' file using the ctags program - useful for editing

@@ -3,12 +3,10 @@
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
  * UniDefGen is a UniConfGen for retrieving data with defaults
- *
  */
-
 #include "unidefgen.h"
 #include "wvmoniker.h"
-
+//#include "wvstream.h"
 #include <ctype.h>
 #include <stdlib.h>
 
@@ -29,30 +27,17 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
 static WvMoniker<IUniConfGen> reg("default", creator);
 
 
-WvString UniDefGen::get(const UniConfKey &key)
+UniConfKey UniDefGen::finddefault(const UniConfKey &key, char *p, char *q)
 {
-    WvString tmp_key(key), tmp("");
-    char *p = tmp_key.edit();
-
-    tmp.setsize(strlen(tmp_key) * 2);
-    char *q = tmp.edit();
-    *q = '\0';
-
-    WvString result;
-    finddefault(key, p, q, result);
-    return result;
-}
-
-
-void UniDefGen::finddefault(const UniConfKey &key, char *p, char *q,
-        WvString &result)
-{
+    UniConfKey result;
+    
     if (!p)
     {
-        result = UniFilterGen::get(++q);
-        if (!result.isnull())
-            replacewildcard(key, q, result);
-        return;
+	q++;
+	if (inner() && inner()->exists(q))
+	    return q;
+	else
+	    return UniConfKey();
     }
 
     // pop the first segment of p to r
@@ -67,35 +52,36 @@ void UniDefGen::finddefault(const UniConfKey &key, char *p, char *q,
     q = strcat(q, p);
 
     // try this literal path
-    finddefault(key, r, q, result);
-
-    if (!result.isnull())
-        return;
+    result = finddefault(key, r, q);
+    if (result.numsegments())
+        return result;
 
     // replace what used to be p with a *
     *s++ = '*';
     *s = '\0';
-    finddefault(key, r, q, result);
+    result = finddefault(key, r, q);
 
     if (r)
         *--r = '/';
+    
+    return result;
 }
 
 
-void UniDefGen::replacewildcard(const UniConfKey &key, char *p,
-        WvString &result)
+WvString UniDefGen::replacewildcard(const UniConfKey &key,
+			    const UniConfKey &defkey, WvStringParm in)
 {
     // check if the result wants a wildcard ('*n')
-    const char *s = result.cstr();
-    if (strlen(s) < 2 || s[0] != '*')
-        return;
+    if (in.len() < 2 || in[0] != '*')
+        return in;
 
+    const char *s = in.cstr();
     int idx = atoi(s+1);
     if (idx == 0)
-        return;
+        return in;
 
     // search backwards for segment num of the n'th wildcard
-    UniConfKey k(p);
+    UniConfKey k(defkey);
     int loc = key.numsegments();
     for (int i = 0; i < idx; i++)
     {
@@ -111,12 +97,44 @@ void UniDefGen::replacewildcard(const UniConfKey &key, char *p,
             if (k.isempty())
             {
                 // oops, ran out of segments!
-                result = WvString::null;
-                return;
+                return WvString();
             }
         }
     }
 
     // pull the literal from that segment num of the key
-    result = key.segment(loc-1);
+    return key.segment(loc-1);
+}
+
+
+UniConfKey UniDefGen::keymap(const UniConfKey &key)
+{
+    WvString tmp_key(key), tmp("");
+    char *p = tmp_key.edit();
+
+    tmp.setsize(strlen(tmp_key) * 2);
+    char *q = tmp.edit();
+    *q = '\0';
+
+    UniConfKey result = finddefault(key, p, q);
+    if (!result.numsegments())
+	result = key;
+    // wvcon->print("mapping '%s' -> '%s'\n", key, result);
+    return result;
+}
+
+
+WvString UniDefGen::get(const UniConfKey &key)
+{
+    UniConfKey defkey = keymap(key);
+    return replacewildcard(key, defkey,
+			   inner() ? inner()->get(defkey) : WvString());
+}
+
+
+void UniDefGen::set(const UniConfKey &key, WvStringParm value)
+{
+    // no keymap() on set()
+    if (inner())
+	inner()->set(key, value);
 }

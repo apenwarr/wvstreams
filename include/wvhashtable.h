@@ -2,19 +2,16 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * A hash table container.
+ * A hash table container.  See also wvscatterhash.h, which is newer, faster,
+ * and better.
  */
 #ifndef __WVHASHTABLE_H
 #define __WVHASHTABLE_H
 
+#include "wvhash.h"
 #include "wvlinklist.h"
-#include "wvstring.h"
+#include "wvtypetraits.h"
 #include <assert.h>
-
-// predefined hashing functions (note: string hashes are case-insensitive)
-unsigned WvHash(WvStringParm s);
-unsigned WvHash(const char *s);
-unsigned WvHash(const int &i);
 
 /**
  * A small, efficient, type-safe hash table (also known as dictionary)
@@ -103,6 +100,8 @@ protected:
     WvLink *prevlink(WvListBase *slots, const void *data, unsigned hash) const;
     void *genfind(WvListBase *slots, const void *data, unsigned hash) const;
 
+    
+
     virtual bool compare(const void *key, const void *elem) const = 0;
 public:
     unsigned numslots;
@@ -140,25 +139,23 @@ public:
             { return link; }
 	void *vptr() const
 	    { return link->data; }
+
+	/**
+	 * Returns the state of autofree for the current element.
+	 */
+	bool get_autofree() const
+	{
+	    return link->get_autofree();
+	}
+
+	/**
+	 * Sets the state of autofree for the current element.
+	 */
+	void set_autofree(bool autofree)
+	{
+	    link->set_autofree(autofree);
+	}
     };
-};
-
-
-// Default comparison function used by WvHashTable
-template <class K>
-struct OpEqComp
-{
-    static bool compare(const K *key1, const K *key2)
-        { return *key1 == *key2; }
-};
-
-
-// Case-insensitive comparison function for WvHastTable
-template <class K>
-struct StrCaseComp
-{
-    static bool compare(const K *key1, const K *key2)
-        { return strcasecmp(*key1, *key2) == 0; }
 };
 
 
@@ -197,14 +194,45 @@ public:
     virtual ~WvHashTable()
         { shutdown(); deletev sl(); }
 
-    void add(T *data, bool auto_free)
-        { sl()[hash(data) % numslots].append(data, auto_free); }
+    void add(T *data, bool autofree)
+        { sl()[hash(data) % numslots].append(data, autofree); }
 
     WvLink *getlink(const K &key)
         { return prevlink(wvslots, &key, WvHash(key))->next; }
 
     T *operator[] (const K &key) const
         { return (T *)genfind(wvslots, &key, WvHash(key)); }
+
+    /**
+     * Returns the state of autofree for the element associated with key.
+     */
+    bool get_autofree(const K &key) const
+    {
+	WvLink *l = getlink(key);
+	if (l)
+	    return l->get_autofree();
+	return false;
+    }
+
+    bool get_autofree(const T *data) const
+    {
+	return get_autofree(hash(data));
+    }
+
+    /**
+     * Sets the state of autofree for the element associated with key.
+     */
+    void set_autofree(const K &key, bool autofree)
+    {
+	WvLink *l = getlink(key);
+	if (l)
+	    l->set_autofree(autofree);
+    }
+
+    void set_autofree(const T *data, bool autofree)
+    {
+	set_autofree(hash(data), autofree);
+    }
 
     void remove(const T *data)
     {
@@ -272,8 +300,8 @@ public:
 // *****************************
 // WvPair
 
-// Type specification to facilitate auto_free
-// Object type - ignores auto_free
+// Type specification to facilitate autofree
+// Object type - ignores autofree
 template<typename TKey, typename _TData>
 class WvMapPair
 {
@@ -281,7 +309,7 @@ class WvMapPair
 public:
     TKey key;
     TData data;
-    WvMapPair(const TKey &_key, const TData &_data, bool _auto_free)
+    WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
         : key(_key), data(_data) { };
 };
 
@@ -294,12 +322,12 @@ class WvMapPair<TKey, _TData*>
 public:
     TKey key;
     TData data;
-    WvMapPair(const TKey &_key, const TData &_data, bool _auto_free)
-        : key(_key), data(_data), auto_free(_auto_free) { };
+    WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
+        : key(_key), data(_data), autofree(_autofree) { };
     virtual ~WvMapPair()
-        { if (auto_free) delete data; };
+        { if (autofree) WvTraits<_TData>::release(data); };
 protected:
-    bool auto_free;
+    bool autofree;
 };
 
 
@@ -372,19 +400,24 @@ public:
     }
     bool exists(const TKey &key) const
         { return find_helper(key); }
-    void set(const TKey &key, const TData &data, bool auto_free = false)
+    void set(const TKey &key, const TData &data, bool autofree = false)
     {
 	if (find_helper(key))
 	    remove(key);
-	add(key, data, auto_free);
+	add(key, data, autofree);
     }
-    void add(const TKey &key, const TData &data, bool auto_free = false)
-        { MyHashTable::add(new MyPair(key, data, auto_free), true); }
+    void add(const TKey &key, const TData &data, bool autofree = false)
+        { MyHashTable::add(new MyPair(key, data, autofree), true); }
     void remove(const TKey &key)
     {
         last_accessed = NULL;
         MyHashTable::remove(MyHashTable::operator[](key));
     } 
+    void zap()
+    {
+	MyHashTable::zap();
+	last_accessed = NULL;
+    }
     typedef typename MyHashTable::Iter Iter;
 }; 
 

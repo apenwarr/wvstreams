@@ -31,7 +31,7 @@ static void close_callback(WvStream& s, void* userdata)
 
 int main(int argc, char **argv)
 {
-    WvStreamList l;
+    WvIStreamList l;
     WvHttpPool p;
     WvString headers("");
     char *line;

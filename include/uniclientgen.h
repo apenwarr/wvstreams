@@ -42,14 +42,6 @@ class UniClientGen : public UniConfGen
     };
     DeclareWvList(KeyVal);
 
-    /*
-     * To make sure we don't deliver notifications while we're already in the
-     * callback (as this could result in trying to call it again before
-     * completion), we instead have an empty stream handle this using alarm(0).
-     */
-    UniConfPairList deltas;
-    WvStream deltastream;
-
     //WvStringList set_queue;
     WvLog log;
 
@@ -88,8 +80,6 @@ protected:
     virtual Iter *do_iterator(const UniConfKey &key, bool recursive);
     void conncallback(WvStream &s, void *userdata);
     bool do_select();
-    void clientdelta(const UniConfKey &key, WvStringParm value);
-    void deltacb(WvStream &, void *);
 };
 
 

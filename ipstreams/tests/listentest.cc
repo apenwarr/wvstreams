@@ -6,13 +6,13 @@
  * between all connections established to it.
  */
 #include "wvtcp.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
 
 static void stream_bounce_to_list(WvStream &s, void *userdata)
 {
-    WvStreamList &l = *(WvStreamList *)userdata;
-    WvStreamList::Iter out(l);
+    WvIStreamList &l = *(WvIStreamList *)userdata;
+    WvIStreamList::Iter out(l);
     char *line;
 
     while ((line = s.getline(0)) != NULL)
@@ -25,9 +25,9 @@ static void stream_bounce_to_list(WvStream &s, void *userdata)
 	
 	for (out.rewind(); out.next(); )
 	{
-	    if (&out() != &s && out().select(0, false, true))
+	    if (&out() != &s && out->iswritable())
 	    {
-		out().print("%s> %s\n", 
+		static_cast<WvStream*>(&out())->print("%s> %s\n", 
 			    s.src() ? (WvString)*s.src() : WvString("stdin"),
 			    line);
 		if (s.src())
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 {
     {
 	WvLog log("testlisten"), err = log.split(WvLog::Error);
-	WvStreamList l;
+	WvIStreamList l;
 
 	WvTCPListener sock(WvIPPortAddr(argc==2 ? argv[1] : "0.0.0.0:0"));
 	

@@ -3,7 +3,7 @@
 #include "wvstream.h"
 #include "wvbufstream.h"
 #include "wvfile.h"
-#include "wvstreamlist.h"
+#include "wvistreamlist.h"
 #include "wvencoderstream.h"
 
 #define BSLASH_NUM_INPUT 5
