@@ -54,7 +54,9 @@ dist-hook: dist-hack-clean configure
 runconfigure: config.mk include/wvautoconf.h
 
 config.mk: configure config.mk.in include/wvautoconf.h.in
+ifndef CONFIGURING
 	$(error Please run the "configure" script)
+endif
 
 # FIXME: there is some confusion here
 ifdef WE_ARE_DIST
