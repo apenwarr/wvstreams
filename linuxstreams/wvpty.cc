@@ -113,7 +113,7 @@ _error:
 
 void WvPty::kill(int signum)
 {
-    if (_pid)
+    if (_pid != -1)
         ::kill(_pid, signum);
 }
 
