@@ -16,9 +16,9 @@
 class WvStringList;
 
 /**
- * Get a list of servers that provide service
- * At the moment, you have to free the returned
- * WvStringList.
+ * Get a list of servers that provide the requested service
+ * returns false only if the SLP service failed... a list
+ * with 0 values is perfectly legal.
  */
 bool slp_get_servs(WvStringParm service, WvStringList &list);
 
