@@ -35,7 +35,6 @@ WvDsp::WvDsp(int msec_latency, int srate, int bits, bool stereo,
 
     int mode = 0;
     
-//    srate = 44100;
     outrate.orate_n = srate;
    
     assert(msec_latency >= 0);
@@ -358,8 +357,6 @@ size_t WvDsp::ispace()
 	log(WvLog::Error, "error in GETISPACE\n");
 	return 0;
     }
-    
-    assert(info.fragsize == (int)frag_size);
     
     return info.fragments;
 }
