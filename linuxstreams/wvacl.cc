@@ -143,7 +143,7 @@ void get_simple_acl_permissions(WvStringParm filename,
     // owners
     WvSimpleAclEntry *acl = new WvSimpleAclEntry;
     struct passwd *pw = getpwuid(st.st_uid);
-    if (!strlen(pw->pw_name))
+    if (!pw || !pw->pw_name || !strlen(pw->pw_name))
         acl->name = WvString(st.st_uid);
     else
         acl->name = pw->pw_name;
@@ -155,7 +155,7 @@ void get_simple_acl_permissions(WvStringParm filename,
 
     acl = new WvSimpleAclEntry;
     struct group *gr = getgrgid(st.st_gid);
-    if (!strlen(gr->gr_name))
+    if (!gr || !gr->gr_name || !strlen(gr->gr_name))
         acl->name = WvString(st.st_gid);
     else
         acl->name = gr->gr_name;

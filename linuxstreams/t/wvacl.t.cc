@@ -11,14 +11,27 @@ WvLogConsole logrcv(1);
 
 WVTEST_MAIN("default get_simple_acl_permissions()")
 {
+    WvString testfn("/tmp/wvacltest"), username, groupname;
     acl_check();
-    WvFile tmp("/tmp/wvacltest", O_WRONLY | O_CREAT | O_TRUNC, 0754);
-    WvString username(getpwuid(getuid())->pw_name);
-    if (!username)
+    WvFile tmp(testfn, O_WRONLY | O_CREAT | O_TRUNC, 0754);
+
+    // On some filesystems (notably reiserfs), a new file's group is inherited
+    // from its directory.  We use chown() here to set it to a known value.
+    // We could, of course, figure this out from stat(), but that's what
+    // get_simple_acl_permissions() does, so it wouldn't be much of a test.
+    struct passwd *pw = getpwuid(getuid());
+    struct group *gr = getgrgid(pw->pw_gid);
+    chown(testfn, getuid(), pw->pw_gid);
+
+    if (!pw->pw_name)
         username = getuid();
-    WvString groupname(getgrgid(getgid())->gr_name);
-    if (!groupname)
-        groupname = getgid();
+    else
+	username = pw->pw_name;
+
+    if (!gr || !gr->gr_name)
+	groupname = pw->pw_gid;
+    else
+	groupname = gr->gr_name;
 
     WvSimpleAclEntryList acls;
     get_simple_acl_permissions("/tmp/wvacltest", acls);
