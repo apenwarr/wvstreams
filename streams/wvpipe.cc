@@ -18,6 +18,42 @@
 #include "wvpipe.h"
 #include "wvsplitstream.h"
 
+// this code is pretty handy for debugging, since 'netstat -nap' can't tell
+// you the endpoints of a socketpair(), but it can tell you the name of a
+// "real" Unix domain socket.
+#if 0
+#include "wvaddr.h"
+static int socketpair(int d, int type, int protocol, int sv[2])
+{
+    static int counter = 10;
+    
+    int f1 = socket(PF_UNIX, SOCK_STREAM, protocol);
+    int f2 = socket(PF_UNIX, SOCK_STREAM, protocol);
+    
+    WvString s("/tmp/sock%s", ++counter);
+    WvString s2("/tmp/sock%sb", counter);
+    WvUnixAddr a(s), a2(s2);
+    
+    unlink(s);
+    unlink(s2);
+    
+    bind(f1, a.sockaddr(), a.sockaddr_len());
+    bind(f2, a2.sockaddr(), a2.sockaddr_len());
+    listen(f1, 10);
+    connect(f2, a.sockaddr(), a.sockaddr_len());
+    
+    socklen_t ll = a.sockaddr_len();
+    int f3 = accept(f1, a.sockaddr(), &ll);
+    close(f1);
+    
+    sv[0] = f3;
+    sv[1] = f2;
+    
+    return 0;
+}
+#endif
+
+
 // The assorted WvPipe::WvPipe() constructors are described in wvpipe.h
 
 WvPipe::WvPipe(const char *program, const char * const *argv,
@@ -149,7 +185,9 @@ void WvPipe::setup(const char *program, const char * const *argv,
     }
     else if (pid > 0)
     {
-	// parent process
+	// parent process.
+	// now that we've forked, it's okay to close this fd if we fork again.
+	fcntl(socks[0], F_SETFD, 1);
 	::close(socks[1]);
     }
     else
@@ -172,8 +210,10 @@ void WvPipe::kill(int signum)
 // wait for the child to die
 int WvPipe::finish(bool wait_children)
 {
+    shutdown(getwfd(), SHUT_WR);
+    close();
     while (proc.running)
-	proc.wait(100, wait_children);
+	proc.wait(1000, wait_children);
     
     return proc.estatus;
 }
