@@ -18,6 +18,7 @@ public:
     ~UniConfDaemon();
     UniConf domount(const UniConfKey &mountpoint,
         const UniConfLocation &location);
+    UniConf domountdefault();
 
     WvString create_return_string(const UniConfKey &key);
     

@@ -83,6 +83,10 @@ int main(int argc, char **argv)
     }
    
     daem = new UniConfDaemon(level);
+
+    if (strings.isempty())
+        daem->domountdefault();
+
     WvStringList::Iter i(strings);
     i.rewind();
 

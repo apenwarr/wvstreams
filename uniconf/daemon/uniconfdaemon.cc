@@ -47,6 +47,11 @@ UniConf UniConfDaemon::domount(const UniConfKey &mountpoint,
     return UniConf(NULL);
 }
 
+UniConf UniConfDaemon::domountdefault()
+{
+    return domount("/", WvString("ini://%s", DEFAULT_CONFIG_FILE));
+}
+
 void UniConfDaemon::errorcheck(WvStream *s, WvString type)
 {
     if (!s || !s->isok())
@@ -582,7 +587,6 @@ void UniConfDaemon::run()
     WvStringParm myname("run");
 
     dolog(WvLog::Debug1, myname, ENTERING);
-    domount("/", WvString("ini://%s", DEFAULT_CONFIG_FILE));
 
     // Make sure that everything was cleaned up nicely before.
     dolog(WvLog::Debug3,myname,"Housecleaning");
