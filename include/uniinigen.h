@@ -10,6 +10,8 @@
 #include "unitempgen.h"
 #include "wvlog.h"
 
+class WvFile;
+
 /**
  * Loads and saves ".ini"-style files similar to those used by
  * Windows, but adapted to represent keys and values using Tcl
@@ -40,6 +42,9 @@ public:
     virtual bool refresh();
 
 private:
+    // helper methods for commit
+    bool commit_atomic(WvString real_filename);
+    
     void save(WvStream &file, UniConfValueTree &parent);
     bool refreshcomparator(const UniConfValueTree *a,
         const UniConfValueTree *b, void *userdata);
