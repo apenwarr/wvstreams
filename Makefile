@@ -36,6 +36,10 @@ dist-hack-clean:
 
 dist: dist-hack-clean configure distclean
 	rm -rf autom4te.cache
+	if test -d .xplc; then \
+	    make -C .xplc patch; \
+	    cp -ar .xplc/build/xplc .; \
+	fi
 
 runconfigure: config.mk include/wvautoconf.h
 
@@ -69,6 +73,7 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
+	rm -rf xplc
 
 clean: depend dust
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
