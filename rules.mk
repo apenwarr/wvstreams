@@ -81,21 +81,25 @@ ChangeLog:
 	rm -f ChangeLog ChangeLog.bak
 	cvs2cl --utc
 
+define wild_clean
+	@list=`echo $(1)` ; test -z "$${list}" || sh -cx "rm -rf $${list}"
+endef
+
 realclean: distclean
-	rm -rf $(wildcard $(REALCLEAN))
+	$(call wild_clean,$(REALCLEAN))
 
 
 distclean: clean
-	rm -rf $(wildcard $(DISTCLEAN))
+	$(call wild_clean,$(DISTCLEAN))
 
 clean: depend dust
-	rm -rf $(wildcard $(TARGETS) $(GARBAGE) $(TESTS)) $(shell find . -name '*.o' -o -name '*.moc')
+	$(call wild_clean,$(TARGETS) $(GARBAGE) $(TESTS) $(shell find . -name '*.o' -o -name '*.moc'))
 
 depend:
-	rm -rf $(shell find . -name '.*.d')
+	$(call wild_clean,$(shell find . -name '.*.d'))
 
 dust:
-	rm -rf $(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d)
+	$(call wild_clean,$(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d))
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
