@@ -25,7 +25,7 @@
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day)
 {
     need_reset = false;
-    prev = 0;
+    prev = time(NULL);
     configure(_first_hour, _num_per_day);
 }
 
@@ -36,13 +36,19 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
     if (num_per_day && !need_reset)
     {
 	time_t now = time(NULL), next = next_event();
+	assert(prev);
+	assert(next);
+	assert(prev > 100000);
+	assert(next > 100000);
 	if (now >= next)
 	{
 	    need_reset = true;
 	    prev = next;
 	}
     }
-    return WvStream::pre_select(si) || need_reset;
+    bool ret = WvStream::pre_select(si) || need_reset;
+    // printf("%p ret=%d msd=%d\n", this, ret, si.msec_timeout);
+    return ret;
 }
 
 
@@ -86,7 +92,7 @@ void WvDailyEvent::set_num_per_day(int _num_per_day)
 
     // don't start until at least one period has gone by
     not_until = time(NULL) + max;
-    prev = 0;
+    prev = time(NULL);
 }
 
 
@@ -113,6 +119,7 @@ time_t WvDailyEvent::next_event() const
     time_t start, now, next, interval = 24*60*60/num_per_day;
     struct tm *tm;
     
+    assert(prev);
     start = prev + interval;
     
     // find the time to start counting from (up to 24 hours in the past)
@@ -130,11 +137,13 @@ time_t WvDailyEvent::next_event() const
     // since 'start'
     next = prev + interval;
     if ((next - start)%interval != 0)
-	next = (next - start)/interval * interval + interval;
+	next = start + (next - start)/interval * interval + interval;
     
     // too soon after configuration - skip the event
+    assert(next);
+    assert(next > 100000);
     while (next < not_until)
-	next += interval;
+    	next += interval;
 
     return next;
 }
