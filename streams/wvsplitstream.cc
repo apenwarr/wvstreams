@@ -146,7 +146,7 @@ bool WvSplitStream::test_set(SelectInfo &si)
     return (rfd >= 0 && (FD_ISSET(rfd, &si.read) 
 		      || FD_ISSET(rfd, &si.except)))
 	|| (wfd >= 0 && (FD_ISSET(wfd, &si.write) 
-			 && (!outbuf_used || si.writable || force.writable)
+			 && (!outbuf_used || si.writable)
 		      || FD_ISSET(wfd, &si.except)));
 }
 
