@@ -136,11 +136,16 @@ void UniConfIniFile::save()
     if (!top->dirty && !top->child_dirty)
 	return; // no need to rewrite!
     
-    log("Saving %s...", filename);
+    log("Saving %s...\n", filename);
     
-    WvFile out(WvString("%s.new", filename), O_WRONLY|O_CREAT|O_TRUNC);
-    save_subtree(out, top, "/");
-    out("\n");
+    WvFile out(WvString("%s", filename), O_WRONLY|O_CREAT|O_TRUNC);
+    if (out.isok())
+    {
+        save_subtree(out, top, "/");
+        out("\n");
+    }
+    else
+        log("Error writing to config file: %s\n", out.errstr());
 }
 
 
