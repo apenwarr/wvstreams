@@ -30,9 +30,9 @@ public:
      * errstr()) or 0 on end of file.  If isok() is true, returns an
      * undefined number.
      */ 
-    int geterr() const
+    virtual int geterr() const
         { return errnum; }
-    const char *errstr() const;
+    virtual const char *errstr() const;
     
     /**
      * Set the errnum variable -- we have an error.  If called more than
