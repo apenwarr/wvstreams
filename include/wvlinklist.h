@@ -96,15 +96,8 @@ public:
 
     void zap()
     {
-	WvLink *l, *n=head.next;
-	head.next = NULL;
-	tail = &head;
-	while ((l = n) != NULL)
-	{
-	    n = l->next;
-            if (l->auto_free) delete (_type_ *)l->data;
-	    delete l;
-	}
+        while (head.next)
+            unlink_after(& head);
     }
 
     _type_ *first() const
@@ -137,10 +130,12 @@ public:
 
     void unlink_after(WvLink *after)
     {
-         if (after->next->auto_free)
-             delete (_type_ *)after->next->data;
-         if (after->next == tail) tail = after;
-         if (after->next) after->next->unlink(after);
+        WvLink *next = after->next;
+        _type_ *obj = next->auto_free ?
+            static_cast<_type_*>(next->data) : NULL;
+        if (next == tail) tail = after;
+        next->unlink(after);
+        delete obj;
     }
 
     class Iter : public WvListBase::IterBase
