@@ -7,6 +7,12 @@
 #include "wvfile.h"
 #include "wvmoniker.h"
 
+WvFile::WvFile()
+{
+    readable = writable = false;
+    skip_select = false;
+}
+
 #ifndef _WIN32 // meaningless to do this on win32
 /*
  * The Win32 runtime library doesn't provide fcntl so we can't
