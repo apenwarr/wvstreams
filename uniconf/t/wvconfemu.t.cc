@@ -39,9 +39,9 @@ WVTEST_MAIN("wvconfemu delete with empty key name")
     WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
 
     {
-    WvConfigSectionEmu *sect = cfg[section];
+    WvConfigSection *sect = cfg[section];
     WVPASS(sect != NULL);
-    WvConfigEntryListEmu::Iter i(*sect);
+    WvConfigEntryList::Iter i(*sect);
     int count = 0;
     for (i.rewind(); i.next(); )
     {
@@ -56,9 +56,9 @@ WVTEST_MAIN("wvconfemu delete with empty key name")
     WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
 
     {
-    WvConfigSectionEmu *sect = cfg[section];
+    WvConfigSection *sect = cfg[section];
     WVPASS(sect != NULL);
-    WvConfigEntryListEmu::Iter i(*sect);
+    WvConfigEntryList::Iter i(*sect);
     int count = 0;
     for (i.rewind(); i.next(); )
     {
@@ -84,10 +84,10 @@ WVTEST_MAIN("wvconfemu delete with NULL")
     cfg.set(section, entry, NULL);
     WVPASS(strcmp(cfg.get(section, entry, notValue), notValue) == 0);
 
-    WvConfigSectionEmu *sect = cfg[section];
+    WvConfigSection *sect = cfg[section];
     WVPASS(sect != NULL);
 
-    WvConfigEntryListEmu::Iter i(*sect);
+    WvConfigEntryList::Iter i(*sect);
     for (i.rewind(); i.next(); )
         WVFAIL(strcmp(i->name, entry) == 0);
 }
@@ -106,10 +106,10 @@ WVTEST_MAIN("wvconfemu delete with empty string")
     cfg.set(section, entry, "");
     WVPASS(strcmp(cfg.get(section, entry, notValue), notValue) == 0);
 
-    WvConfigSectionEmu *sect = cfg[section];
+    WvConfigSection *sect = cfg[section];
     WVPASS(sect != NULL);
 
-    WvConfigEntryListEmu::Iter i(*sect);
+    WvConfigEntryList::Iter i(*sect);
     for (i.rewind(); i.next(); )
         WVFAIL(strcmp(i->name, entry) == 0);
 }
@@ -126,8 +126,8 @@ WVTEST_MAIN("wvconfemu iterating while not mounted at root of UniConf tree")
     cfg.set(section, entry, value);
     WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
     
-    WvConfigSectionEmu *sect = cfg[section];
-    WvConfigSectionEmu::Iter i(*sect);
+    WvConfigSection *sect = cfg[section];
+    WvConfigSection::Iter i(*sect);
     for (i.rewind(); sect && i.next(); )
     {
         printf("name: %s\n", i->name.cstr());
@@ -158,7 +158,7 @@ WVTEST_MAIN("Multiple Generators mounted on the Uniconf")
     uniconf["foo/bar"].mountgen(tmp2);
     cfg2.setmeint(1);
     WVPASS(uniconf.xgetint("foo/bar", 0));
-    WvConfigSectionEmu *sect = cfg["foo/bar"];
+    WvConfigSection *sect = cfg["foo/bar"];
     WVPASS(sect);
     }
 }
