@@ -39,6 +39,7 @@ private:
     static void static_init();
 
 public:
+    bool force_new_line;
     WvLogRcvBase();
     virtual ~WvLogRcvBase();
 };

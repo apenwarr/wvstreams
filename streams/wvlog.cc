@@ -128,6 +128,7 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
 WvLogRcvBase::WvLogRcvBase()
 {
     static_init();
+    WvLogRcvBase::force_new_line = false;
     WvLog::receivers.append(this, false);
     WvLog::num_receivers++;
 }
@@ -249,7 +250,7 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
     // only need to start a new line with new headers if they headers have
     // changed.  if the source and level are the same as before, just continue
     // the previous log entry.
-    if (source != last_source || loglevel != last_level)
+    if (source != last_source || loglevel != last_level || WvLogRcvBase::force_new_line)
     {
 	end_line();
 	last_source = source;

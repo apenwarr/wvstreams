@@ -36,9 +36,10 @@ void WvLogFileBase::_make_prefix()
 //----------------------------------- WvLogFile ----------------------
 
 WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
-     int _keep_for) : WvLogFileBase(_max_level), keep_for(_keep_for),
+     int _keep_for, bool _force_new_line) : WvLogFileBase(_max_level), keep_for(_keep_for),
      filename(_filename)
 {
+    WvLogRcv::force_new_line = _force_new_line;
     start_log();
 }
 

@@ -36,7 +36,7 @@ class WvLogFile : public WvLogFileBase
 {
     public:
         WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level
-            = WvLog::NUM_LOGLEVELS, int _keep_for = 7);
+            = WvLog::NUM_LOGLEVELS, int _keep_for = 7, bool _force_new_line = false);
 
     private:
         virtual void _make_prefix(); 
