@@ -25,9 +25,12 @@ void get_simple_acl_permissions(WvStringParm filename,
 	return;
 
 #ifdef WITH_ACL
-    WvString short_form(get_acl_short_form(filename));
-    if (!!short_form)
+    acl_t aclchk = acl_get_file(filename, ACL_TYPE_ACCESS);
+    if (aclchk)
     {
+        // Library and kernel support.
+        acl_free(aclchk);
+        WvString short_form(get_acl_short_form(filename));
 	struct passwd *pw;
 	struct group *gr;
 
@@ -74,12 +77,41 @@ void get_simple_acl_permissions(WvStringParm filename,
 
 	    acl_entries.append(simple_entry, true);
 	}
-	return;
+
+        return;
     }
 #endif
 
     // No ACL support.
-    // Fill in default values
+    // Fill in default values--don't DoubleTranslate through
+    // build_default_acl() though.
+    
+    // owners
+    WvSimpleAclEntry *acl = new WvSimpleAclEntry;
+    struct passwd *pw = getpwuid(st.st_uid);
+    acl->name = pw->pw_name;
+    acl->type = WvSimpleAclEntry::AclUser;
+    acl->read = st.st_mode & S_IRUSR;
+    acl->write = st.st_mode & S_IWUSR;
+    acl->execute = st.st_mode & S_IXUSR;
+    acl_entries.append(acl, true);
+
+    acl = new WvSimpleAclEntry;
+    struct group *gr = getgrgid(st.st_gid);
+    acl->name = gr->gr_name;
+    acl->type = WvSimpleAclEntry::AclGroup;
+    acl->read = st.st_mode & S_IRGRP;
+    acl->write = st.st_mode & S_IWGRP;
+    acl->execute = st.st_mode & S_IXGRP;
+    acl_entries.append(acl, true);
+
+    // other
+    acl = new WvSimpleAclEntry;
+    acl->type = WvSimpleAclEntry::AclOther;
+    acl->read = st.st_mode & S_IROTH;
+    acl->write = st.st_mode & S_IWOTH;
+    acl->execute = st.st_mode & S_IXOTH;
+    acl_entries.append(acl, true);
 }
 
 
