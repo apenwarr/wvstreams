@@ -9,13 +9,16 @@
 
 #include <uniconfclient.h>
 
-UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, bool automount) :
-    top(_top), log("UniConfClient"), dict(5)
+UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l, bool automount) :
+    top(_top), log("UniConfClient"), dict(5), list(l)
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
     // actually try to finish connecting until in the first pre_select.
     conn = new UniConfConn(stream);
     conn->select(15000, true, false, false);
+    conn->setcallback(wvcallback(WvStreamCallback, *this, UniConfClient::execute), NULL);
+
+    list->append(conn, false);
 
     waitforsubt = false;
     if (automount)
@@ -26,9 +29,11 @@ UniConfClient::~UniConfClient()
 {
     if (conn)
     {
+        list->unlink(conn);
         if (conn->isok())
-            conn->print("%s\n", UniConfConn::UNICONF_QUIT);   
+            conn->print("%s\n", UniConfConn::UNICONF_QUIT);
         delete conn;
+        conn = NULL;
     }
 }
 
@@ -92,7 +97,8 @@ void UniConfClient::save()
     }
     
     if (conn->select(0, true, false, false))
-        execute();
+        conn->callback();
+        //execute();
     // working.. yay, great, good.  Now, ship the tree off to savesubtree
     savesubtree(top, "/");
 }
@@ -113,7 +119,7 @@ void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
             UniConfConn::UNICONF_SUBTREE);
 
     if (conn->select(0, true, false, false))
-        execute();
+        conn->callback(); 
 
     if (conf != top)
         cmd.append(wvtcl_escape(conf->full_key(top)));
@@ -130,7 +136,7 @@ void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
     {
         if (conn->select(500, true, false, false))
         {
-            execute();
+            conn->callback();
         }
 
         if (conn->alarm_was_ticking)
@@ -146,7 +152,7 @@ void UniConfClient::update(UniConf *&h)
     WvString lookfor(h->full_key(top));
 
     if (conn->select(0,true,false,false))
-        execute();
+        conn->callback();
 
     waitingdata *data = dict[lookfor];
 
@@ -166,7 +172,7 @@ void UniConfClient::update(UniConf *&h)
     {
         conn->select(-1, true, false, false);
 
-        execute();
+        conn->callback();
         data = dict[lookfor];
     }
     
@@ -178,8 +184,8 @@ void UniConfClient::update(UniConf *&h)
         dict.remove(data);
         h->waiting = false;
         h->obsolete = false;
-        h->dirty = false;
     }
+    h->dirty = false;
 
 }
 
@@ -191,6 +197,9 @@ void UniConfClient::executereturn(WvString &key, WvConstStringBuffer &fromline)
     {
         dict.add(new waitingdata(key.unique(), value.unique()),
                 true);
+        UniConf *temp = &top->get(key);
+        if (!temp->dirty)
+            temp->obsolete = true;
     }
     else
     {
@@ -244,12 +253,13 @@ void UniConfClient::executefail(WvConstStringBuffer &fromline)
     fromline.zap();
 }
 
-void UniConfClient::execute()
+void UniConfClient::execute(WvStream &stream, void *userdata)
 {
-    conn->fillbuffer();
+    UniConfConn *s = (UniConfConn *) &stream;
+    s->fillbuffer();
     for (;;)
     {
-        WvString line = conn->gettclline();
+        WvString line = s->gettclline();
         if (line.isnull())
             break;
         WvConstStringBuffer fromline(line);
@@ -259,7 +269,7 @@ void UniConfClient::execute()
             WvString key = wvtcl_getword(fromline);
             if (cmd.isnull() || key.isnull())
                 break;
-            
+           
             // Value from a get is incoming
             if (cmd == UniConfConn::UNICONF_RETURN)
             {

@@ -12,6 +12,7 @@
 #include "uniconfconn.h"
 #include "wvlog.h"
 #include "wvstream.h"
+#include "wvstreamlist.h"
 #include "wvtclstring.h"
 
 struct waitingdata
@@ -32,7 +33,7 @@ public:
     waitingdataDict dict;
     
     // pass false to automount if you don't want to automatically set _top's generator to this.
-    UniConfClient(UniConf *_top, WvStream *stream, bool automount);
+    UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l, bool automount);
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
@@ -41,7 +42,7 @@ public:
     virtual bool isok();
     virtual void save();
 protected:
-    void execute();
+    void execute(WvStream &s, void *userdata);
     void executereturn(WvString &key, WvConstStringBuffer &fromline);
     void executeforget(WvString &key);
     void executesubtree(WvString &key, WvConstStringBuffer &fromline);
@@ -49,5 +50,7 @@ protected:
     void executefail(WvConstStringBuffer &fromline);
     void savesubtree(UniConf *tree, UniConfKey key);
     bool waitforsubt;
+private:
+    WvStreamList *list;
 };
 #endif // __UNICONFCLIENT_H

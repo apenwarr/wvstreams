@@ -157,8 +157,10 @@ UniConf *UniConf::find_make(const UniConfKey &key)
        
         // avoid an infinite loop... but at the same time check to see
         // that we can get our info.
-        while(toreturn->waiting)
+        while(toreturn->waiting || toreturn->obsolete)
         {
+            if (toreturn->obsolete)
+                wvcon->print("toreturn IS OBSOLETE\n");
             htop->generator->update(toreturn);
         }
         return toreturn;
@@ -167,6 +169,15 @@ UniConf *UniConf::find_make(const UniConfKey &key)
 	return UniConfGen().make_tree(this, key); // generate an empty tree
 }
 
+void UniConf::update()
+{
+    UniConf *htop = gen_top();
+    UniConf *me = this;
+    while (obsolete || waiting && !dirty)
+    {
+        htop->generator->update(me);
+    }
+}
 
 // find a key that contains the default value for this key, regardless of
 // whether this key _needs_ a default value or not.  (If !!value, we no longer
@@ -253,7 +264,7 @@ void UniConf::mark_notify()
 const WvString &UniConf::printable() const
 {
     UniConf *def;
-    
+   
     if (!!value)
 	return value;
     

@@ -154,6 +154,9 @@ public:
     UniConf *find(const UniConfKey &key);
     UniConf *find_make(const UniConfKey &key);
     UniConf &operator[](const UniConfKey &key) { return *find_make(key); }
+
+    // Updates me
+    void update();
     
     UniConf *find_default(UniConfKey *_k = NULL) const;
     

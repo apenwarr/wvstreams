@@ -366,6 +366,7 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
                 return;
             }
             WvString key = wvtcl_getword(fromline);
+
             if (key.isnull())
                 break;
 
