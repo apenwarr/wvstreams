@@ -42,6 +42,8 @@ bool WvStreamList::select_setup(SelectInfo &si)
     // the _last_ set of sure_thing streams...
     if (running_callback)
 	return true;
+    
+    sure_thing.zap();
 
     Iter i(*this);
     for (i.rewind(), i.next(); i.cur(); )
