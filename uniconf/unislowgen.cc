@@ -90,7 +90,7 @@ UniConfGen::Iter *UniSlowGen::recursiveiterator(const UniConfKey &key)
 
 void UniSlowGen::be_slow(WvStringParm what)
 {
-    fprintf(stderr, "%p: UniSlowGen: slow operation: %s!\n",
+    fprintf(stderr, "%p: UniSlowGen: slow operation: %s\n",
 	    this, what.cstr());
     // sleep(1);
     slowcount++;

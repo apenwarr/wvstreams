@@ -11,6 +11,27 @@
 #include "wvtclstring.h"
 #include "wvstringlist.h"
 
+class UniListGen::IterIter : public UniConfGen::Iter
+{
+protected:
+    DeclareWvScatterTable(UniConfKey);
+    DeclareWvList2(IterList, UniConfGen::Iter);
+    
+    IterList l;
+    IterList::Iter *i;
+    UniConfKeyTable d;
+    
+public:
+    IterIter(UniConfGenList::Iter &geniter, const UniConfKey &key);
+    virtual ~IterIter() { delete i; }
+    
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
+    virtual WvString value() const;
+};
+
+
 
 // if 'obj' is non-NULL and is a UniConfGen then whoever invoked this is being
 // silly. we'll make a list and add the single generator to it anyways, for the
@@ -166,7 +187,16 @@ bool UniListGen::IterIter::next()
     return next();
 }
 
+
 UniConfKey UniListGen::IterIter::key() const
 {
     return (*i)->key();
 }
+
+
+WvString UniListGen::IterIter::value() const
+{
+    return (*i)->value();
+}
+
+

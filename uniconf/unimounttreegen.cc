@@ -8,6 +8,30 @@
 #include "wvmoniker.h"
 #include <assert.h>
 
+/**
+ * An iterator over the keys in a tree of mounted generators.
+ */
+class UniMountTreeGen::KeyIter : public UniConfGen::Iter
+{
+    UniMountTreeGen *xroot;
+    UniConfKey xkey;
+
+    UniMountTree::GenIter genit;
+    WvStringTable hack; // FIXME: ugly hack
+    WvStringTable::Iter hackit;
+
+public:
+    KeyIter(UniMountTreeGen &root, const UniConfKey &key);
+
+    /***** Overridden members *****/
+    
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
+    virtual WvString value() const;
+};
+
+
 /***** UniMountTreeGen *****/
 
 UniMountTreeGen::UniMountTreeGen()
@@ -302,6 +326,12 @@ bool UniMountTreeGen::KeyIter::next()
 UniConfKey UniMountTreeGen::KeyIter::key() const
 {
     return UniConfKey(hackit());
+}
+
+
+WvString UniMountTreeGen::KeyIter::value() const
+{
+    return xroot->get(key());
 }
 
 

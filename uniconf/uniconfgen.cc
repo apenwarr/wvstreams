@@ -237,6 +237,11 @@ public:
 	else
 	    return current;
     }
+    
+    virtual WvString value() const
+    {
+	return gen->get(UniConfKey(top, key()));
+    }
 };
 
 

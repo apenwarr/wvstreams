@@ -73,11 +73,11 @@ class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
 {
 protected:
     int topcount;
-    WvStringList *list;
-    WvStringList::Iter i;
+    KeyValList *list;
+    KeyValList::Iter i;
 
 public:
-    RemoteKeyIter(const UniConfKey &_top, WvStringList *_list) 
+    RemoteKeyIter(const UniConfKey &_top, KeyValList *_list) 
 	: list(_list), i(*_list)
 	{ topcount = _top.numsegments(); }
     virtual ~RemoteKeyIter() 
@@ -90,23 +90,28 @@ public:
     virtual bool next()
         { return i.next(); }
     virtual UniConfKey key() const
-        { return UniConfKey(*i).removefirst(topcount); }
+        { return i->key.removefirst(topcount); }
+    virtual WvString value() const
+        { return i->val; }
 };
 
 
 /***** UniClientGen *****/
 
-UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) :
-    conn(NULL), log(WvString("UniClientGen to %s",
-    dst.isnull() && stream->src() ? *stream->src() : WvString(dst))),
-    cmdinprogress(false), cmdsuccess(false)
+UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) 
+    : log(WvString("UniClientGen to %s",
+		   dst.isnull() && stream->src() 
+		   ? *stream->src() : WvString(dst)))
 {
+    cmdinprogress = cmdsuccess = false;
+    result_list = NULL;
+
     conn = new UniClientConn(stream, dst);
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
 
     deltastream.setcallback(WvStreamCallback(this, &UniClientGen::deltacb), 0);
-    WvIStreamList::globallist.append(&deltastream, false);
+    WvIStreamList::globallist.append(&deltastream, false);    
 }
 
 
@@ -180,16 +185,23 @@ bool UniClientGen::haschildren(const UniConfKey &key)
 UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
 					      bool recursive)
 {
-    result_list = new WvStringList();
+    assert(!result_list);
+    result_list = new KeyValList;
     conn->writecmd(UniClientConn::REQ_SUBTREE,
 		   WvString("%s %s", wvtcl_escape(key), WvString(recursive)));
 
     if (do_select())
-        return new RemoteKeyIter(key, result_list);
-
-    delete result_list;
-    result_list = NULL;
-    return NULL;
+    {
+	Iter *it = new RemoteKeyIter(key, result_list);
+	result_list = NULL;
+        return it;
+    }
+    else
+    {
+	delete result_list;
+	result_list = NULL;
+	return NULL;
+    }
 }
 
 
@@ -277,7 +289,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 if (!key.isnull() && !value.isnull())
                 {
                     if (result_list)
-                        result_list->append(new WvString(key), true);
+                        result_list->append(new KeyVal(key, value), true);
                 }
                 break;
             }

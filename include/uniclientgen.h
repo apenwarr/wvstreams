@@ -31,6 +31,17 @@ class UniClientGen : public UniConfGen
 
     UniClientConn *conn;
 
+    struct KeyVal
+    {
+	UniConfKey key;
+	WvString val;
+	
+	KeyVal(const UniConfKey &_key, WvStringParm _val)
+	    : key(_key), val(_val)
+	    { }
+    };
+    DeclareWvList(KeyVal);
+
     /*
      * To make sure we don't deliver notifications while we're already in the
      * callback (as this could result in trying to call it again before
@@ -44,7 +55,8 @@ class UniClientGen : public UniConfGen
 
     WvString result_key;        /*!< the key that the current result is from */
     WvString result;            /*!< the result from the current key */
-    WvStringList *result_list;  /*!< result list for iterations */
+    
+    KeyValList *result_list;    /*!< result list for iterations */
 
     bool cmdinprogress;     /*!< true while a command is in progress */
     bool cmdsuccess;        /*!< true when a command completed successfully */

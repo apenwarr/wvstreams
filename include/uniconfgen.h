@@ -317,6 +317,12 @@ public:
 
     /** Returns the current key. */
     virtual UniConfKey key() const = 0;
+    
+    /** 
+     * Returns the value of the current key.  You could just do a get(),
+     * but maybe your generator has a more efficient way.
+     */
+    virtual WvString value() const = 0;
 };
 
 
@@ -332,6 +338,7 @@ public:
     virtual void rewind() { }
     virtual bool next() { return false; }
     virtual UniConfKey key() const { return UniConfKey::EMPTY; }
+    virtual WvString value() const { return WvString(); }
 };
 
 #endif // UNICONFGEN_H

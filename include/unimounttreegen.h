@@ -202,26 +202,4 @@ private:
 };
 
 
-/**
- * An iterator over the keys in a tree of mounted generators.
- */
-class UniMountTreeGen::KeyIter : public UniConfGen::Iter
-{
-    UniMountTreeGen *xroot;
-    UniConfKey xkey;
-
-    UniMountTree::GenIter genit;
-    WvStringTable hack; // FIXME: ugly hack
-    WvStringTable::Iter hackit;
-
-public:
-    KeyIter(UniMountTreeGen &root, const UniConfKey &key);
-
-    /***** Overridden members *****/
-    
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-};
-
 #endif //__UNIMOUNTTREEGEN_H

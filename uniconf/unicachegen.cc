@@ -63,7 +63,7 @@ void UniCacheGen::loadtree(const UniConfKey &key)
 
     for (i->rewind(); i->next(); )
     {
-        WvString value(inner->get(i->key()));
+        WvString value(i->value());
 	
 	//fprintf(stderr, "Key: '%s'\n", i->key().cstr());
 	//fprintf(stderr, "  Val: '%s'\n", value.cstr());
