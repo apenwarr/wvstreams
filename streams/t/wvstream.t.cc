@@ -430,10 +430,10 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
     
     {
 	WvCont cont1(WvBoundCallback<WvCallback<void*,void*>, WvStream&>
-		     (wvcont_cb, s));
+		     (&wvcont_cb, s));
 	WvCont cont2(cont1), cont3(cont2);
 	s.setcallback(WvBoundCallback<WvStreamCallback, void* >
-		      (call_wvcont_cb, &cont3), &sval);
+		      (&call_wvcont_cb, &cont3), &sval);
 	
 	s.inbuf.putstr("gak");
 	WVPASS(sval == 0);
