@@ -143,6 +143,13 @@ WvString getfilename(WvStringParm fullname);
 WvString getdirname(WvStringParm fullname);
 
 /**
+ * Finds a string in an array and returns its index.
+ * Returns -1 if not found.
+ */
+int lookup(const char *str, const char * const *table,
+    bool case_sensitive = false);
+
+/**
  * Splits a string and adds each substring to a collection.
  *   coll       : the collection of strings to add to
  *   _s         : the string to split

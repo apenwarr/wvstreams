@@ -380,3 +380,24 @@ WvString rfc1123_date(time_t t)
 
     return s;
 }
+
+
+int lookup(const char *str, const char * const *table,
+    bool case_sensitive)
+{
+    for (int i = 0; table[i]; ++i)
+    {
+        if (case_sensitive)
+        {
+            if (strcmp(str, table[i]) != 0)
+                continue;
+        }
+        else
+        {
+            if (strcasecmp(str, table[i]) != 0)
+                continue;
+        }
+        return i;
+    }
+    return -1;
+}
