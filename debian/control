@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Patrick Patterson <ppatters@debian.org>
 Uploaders: James Morrison <phython@debian.org>, Simon Law <sfllaw@debian.org>
-Build-Depends: debhelper (>> 4.0.0), libssl-dev, zlib1g-dev, libvorbis-dev, fftw-dev, libpam0g-dev, libspeex-dev, libfam-dev, autoconf, gs-common, libqt3-mt-dev
+Build-Depends: debhelper (>> 4.0.0), libssl-dev, zlib1g-dev, libvorbis-dev, fftw-dev, libpam0g-dev, libspeex-dev, libfam-dev, autoconf, gs-common, libqt3-mt-dev, graphviz
 Build-Depends-Indep: doxygen, sp, jade, jadetex, docbook, docbook-dsssl
 Standards-Version: 3.6.1
 
