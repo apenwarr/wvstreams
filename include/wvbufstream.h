@@ -24,6 +24,9 @@
  * too unreliable to do that, since streams do things like drop out of
  * WvStreamLists automatically when they're !isok(), even if they still have
  * data in inbuf.
+ * 
+ * 2003/12/09: This is cleaned up a lot by WvStream's new noread()/nowrite()
+ * functions, but we still need to actually *use* them in WvBufStream...
  */
 class WvBufStream : public WvStream
 {

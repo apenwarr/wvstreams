@@ -8,6 +8,9 @@ int main()
     int guard4 = 0;
     printf("Before: %d %d %d %d\n", guard1, guard2, guard3, guard4);
     WvDirIter i("/");
-    WvDirIter *i2 = new WvDirIter("/");
+    assert(!guard1);
+    assert(!guard2);
+    assert(!guard3);
+    assert(!guard4);
     printf("After: %d %d %d %d\n", guard1, guard2, guard3, guard4);
 }
