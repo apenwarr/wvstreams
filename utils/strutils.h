@@ -133,10 +133,9 @@ int strcount(WvStringParm s, const char c);
 
 /**
  * Example: encode_hostname_as_DN("www.fizzle.com")
- * will result in cn=www.fizzle.com,dc=www,dc=fizzle,dc=com
- * (I think ;)
+ * will result in dc=www,dc=fizzle,dc=com,cn=www.fizzle.com
  */
-WvString encode_hostname_as_DN(WvString &hostname);
+WvString encode_hostname_as_DN(WvStringParm hostname);
 
 /**
  * Given a hostname, turn it into a "nice" one.  It has to start with a

@@ -313,23 +313,19 @@ int strcount(WvStringParm s, const char c)
 }
 
 
-WvString encode_hostname_as_DN(WvString &hostname)
+WvString encode_hostname_as_DN(WvStringParm hostname)
 {
-   WvString dn("cn=%s,",hostname);
-
-   WvStringList fqdnlist;
-   WvStringList::Iter i(fqdnlist);
-   fqdnlist.split(hostname,".");
-   for (i.rewind();i.next();)       
-   {
-       dn.append("dc=");
-       dn.append(*i);   
-       dn.append(",");
-   }
-   char *ptr = dn.edit() + strlen(dn) - 1;
-   *ptr = '\0';
-
-   return dn;
+    WvString dn("");
+    
+    WvStringList fqdnlist;
+    WvStringList::Iter i(fqdnlist);
+    
+    fqdnlist.split(hostname, ".");
+    for (i.rewind(); i.next(); )
+	dn.append("dc=%s,", *i);
+    dn.append("cn=%s", hostname);
+    
+    return dn;
 }
 
 
