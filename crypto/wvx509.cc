@@ -330,10 +330,13 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     
+#if 0
+    // This still causes Netscape to barf... 
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
 			     "critical,CA:FALSE");
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
+#endif
     
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_ext_key_usage,
 	     "TLS Web Server Authentication,TLS Web Client Authentication");
@@ -733,8 +736,6 @@ void WvX509Mgr::decode(DumpMode mode, WvStringParm pemEncoded)
         debug(WvLog::Error, "Can't create temp file in WvX509Mgr::decode!\n");
         return;
     }
-
-    
 }
 
 void WvX509Mgr::write_p12(WvStringParm filename)
