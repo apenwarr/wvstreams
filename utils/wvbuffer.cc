@@ -185,7 +185,7 @@ unsigned char *WvBuffer::alloc(size_t num)
     if (lastb)
     {
 	newsize = lastb->total();
-	if (lastb->used() >= lastb->total() / 2)
+	if (lastb->used() > lastb->total() / 2)
 	    newsize *= 2;
     }
     if (newsize < 10)
