@@ -9,6 +9,7 @@
 #include "unisecuregen.h"
 #include "unipermgen.h"
 #include "wvx509.h"
+#include "uniconfroot.h"
 
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
