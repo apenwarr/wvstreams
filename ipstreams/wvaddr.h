@@ -279,7 +279,7 @@ public:
         { return *this & mask; }
     WvIPAddr broadcast() const
         { return *this | ~mask; }
-
+    
     // adjust the netmask so that 'addr' would be included in this network
     void include(const WvIPNet &addr);
     
@@ -296,6 +296,14 @@ public:
     // actually doing the normalization.
     int bits() const;
     void normalize();
+    
+    // is this net the default gateway? (0.0.0.0/0)
+    bool is_default() const
+        { return mask.binaddr[0] == 0; }
+    
+    // is it a plain host? (x.x.x.x/32)
+    bool is_host() const
+        { return mask.binaddr[3] == 255; }
 };
 
 

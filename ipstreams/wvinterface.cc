@@ -303,7 +303,7 @@ void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
     struct sockaddr *net, *mask, *gwaddr;
     size_t len;
     bool is_direct = (gw == WvIPAddr());
-    bool is_host = (dest.bits() == 32);
+    bool is_host = dest.is_host();
     
     memset(rte, 0, sizeof(struct rtentry));
     rte->rt_metric = metric + 1;
@@ -359,7 +359,7 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     if (gw == WvIPAddr()) // no gateway; change the scope name
 	argv[13] = "link";
     
-    if (dest.bits() == 0)
+    if (dest.is_default())
     {
 	err(WvLog::Debug2, "addroute: ");
 	for (int i = 0; argv[i]; i++)
@@ -423,7 +423,7 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     if (gw == WvIPAddr()) // no gateway; change the scope name
 	argv[13] = "link";
     
-    if (dest.bits() == 0)
+    if (dest.is_default())
     {
 	err(WvLog::Debug2, "addroute: ");
 	for (int i = 0; argv[i]; i++)
@@ -487,7 +487,7 @@ int WvInterface::addarp(const WvIPNet &dest, const WvAddr &hw, bool proxy)
     
     ar.arp_flags = (ATF_COM | ATF_PERM
 		    | (proxy ? ATF_PUBL : 0)
-		    | (proxy && dest.bits()==32 ? ATF_NETMASK : 0));
+		    | (proxy && dest.is_host() ? ATF_NETMASK : 0));
     
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (ioctl(sock, SIOCSARP, &ar))
