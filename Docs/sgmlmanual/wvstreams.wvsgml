@@ -15,101 +15,12 @@ WVPREFACE(Introduction,
   Short paragraph.
 )
 
-WVPART(tutorial, Getting Started (Really Fast),
-
- WVPARTINTRO(A WvStreams Tutorial,{{
-
-  In this part, we dive quickly into some example programs that will give
-  you a feel for the concepts behind WvStreams before you need to deal with
-  all the gory details.  We'll show you how to compile your own
-  applications, then we'll write a network client and server, and
-  demonstrate how to read and write some config files.
-
-  In later chapters, we'll go into more detail about the techniques used to
-  write these programs, and why they really work.  For now, just try out the
-  programs as we present them and think about how the different parts might
-  fit together.
- }})
-
- WVCHAPTER(telnet, A Cheesy Replacement for Telnet,x)
- WVCHAPTER(chat, A Multi-User Chat Program,x)
- WVCHAPTER(cfgexample, Configuration (.ini) Files,x)
-)
-
-WVPART(utils, The Utilities Library,
- WVCHAPTER(basicutils, Basic String Handling,
-  WVSECT1(strutils, String Utilities, x)
-  WVSECT1(verstring, Version String Manipulation, x)
-  WVSECT1(base64, Base64 Encoding Tools, x)
- )
- WVCHAPTER(wvstring, WvString - dynamic character strings, x)
- WVCHAPTER(wvlinklist, WvLinkList - type-safe linked lists and iterators, x)
- WVCHAPTER(wvhashtable, WvHashTable - type-safe hash tables and iterators, x)
- WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers, x)
- WVCHAPTER(wvlockfile, WvLockFile - tty lock file creation, x)
-)
-
-WVPART(streams, The Streams Library,
- WVCHAPTER(wvstream, WvStream - communications fundamentals, x)
- WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams, x)
- WVCHAPTER(wvpipe, WvPipe - talking to subtasks, x)
- WVCHAPTER(logs, Dealing with Log Messages,
-  WVSECT1(wvlog, WvLog - printing log messages, x)
-  WVSECT1(wvlogrcv, WvLogRcv - receiving and disposing of log messages, x)
-  WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, x)
-  WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
- )
- WVCHAPTER(magicstreams, Some Magical Streams,
-  WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream, x),
-  WVSECT1(wvsplitstream, WvSplitStream - separating read/write streams, x),
-  WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), x),
- )
- WVCHAPTER(wvtimestream, WvTimeStream - timed events, x)
- WVCHAPTER(wvwatcher, WvFileWatcher - waiting for a file to change, x)
- WVCHAPTER(wvprotostream, WvProtoStream - a protocol state machine, x)
-)
-
-WVPART(ipstreams, The IPStreams (TCP/IP sockets interface) Library,
- WVCHAPTER(basicip, Support Classes,
-  WVSECT1(wvaddr, WvAddr - storing an arbitrary network address, x)
-  WVSECT1(wvresolver, WvResolver - Background DNS name resolution, x)
- )
- WVCHAPTER(kernelip, Interfacing to Linux Kernel Features,
-  WVSECT1(wvinterface, WvInterface - manipulating network interfaces, x)
-  WVSECT1(wviproute, WvIPRoute - manipulating the routing table, x)
-  WVSECT1(wvipfirewall, WvIPFirewall - basic ipchains firewall interface, x)
-  WVSECT1(wvipaliaser, WvIPAliaser - using Linux IP aliasing, x)
- )
- WVCHAPTER(wvudp, WvUDP - using udp datagrams, x)
- WVCHAPTER(wvudp2, WvUDP2 - logically separate udp datagram connections, x)
- WVCHAPTER(wvtcp, WvTCP - using tcp streams, x)
- WVCHAPTER(wvhttp, WvHTTP - HTTP URL downloader, x)
-)
-
-WVPART(configfile, The ConfigFile (.ini manager) Library,
- WVCHAPTER(cfgentry, Configuration Entries, x)
- WVCHAPTER(cfgsection, Configuration Sections, x)
- WVCHAPTER(wvconf, Configuration Files, x)
-)
-
-WVPART(netmap, Network Mapping and Intelligence - the NetMap Library,
- WVCHAPTER(wvnetcap, WvNetCap - network packet capture, x)
- WVCHAPTER(wvnetmap, WvNetMap - raw host information, x)
- WVCHAPTER(wvnetintel, WvNetIntelligence - network map reduction, x)
- WVCHAPTER(wvpingprobe, WvPingProbe - active probing, x)
- WVCHAPTER(wvnetguide, WvNetGuide - route manipulation and overrides, x)
-)
-
-WVPART(wvapps, Weaver Applications,
- WVCHAPTER(blah, NONE OF THESE CHAPTERS ARE WRITTEN YET,
-   None of these chapters are written yet.
- )
- 
- WVCHAPTER(webconfig, WebConfig,x)
- WVCHAPTER(lcdconfig, LCDConfig,x)
- WVCHAPTER(wvdial, The WvDial API,x)
- WVCHAPTER(tunnelv, The Tunnel Vision API,x)
- WVCHAPTER(fastforward, The Fast Forward API,x)
-)
+include(tutorial.wvsgml)
+include(utils.wvsgml)
+include(streams.wvsgml)
+include(ipstreams.wvsgml)
+include(configfile.wvsgml)
+include(netmap.wvsgml)
+include(wvapps.wvsgml)
 
 </book>

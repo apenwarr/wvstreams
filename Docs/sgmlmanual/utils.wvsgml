@@ -1,0 +1,13 @@
+WVPART(utils, The Utilities Library,
+ WVCHAPTER(basicutils, Basic String Handling,
+  WVSECT1(strutils, String Utilities, x)
+  WVSECT1(verstring, Version String Manipulation, x)
+  WVSECT1(base64, Base64 Encoding Tools, x)
+ )
+ WVCHAPTER(wvstring, WvString - dynamic character strings, x)
+ WVCHAPTER(wvlinklist, WvLinkList - type-safe linked lists and iterators, x)
+ WVCHAPTER(wvhashtable, WvHashTable - type-safe hash tables and iterators, x)
+ WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers, x)
+ WVCHAPTER(wvlockfile, WvLockFile - tty lock file creation, x)
+)
+

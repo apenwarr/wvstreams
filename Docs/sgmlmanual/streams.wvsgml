@@ -1,0 +1,20 @@
+WVPART(streams, The Streams Library,
+ WVCHAPTER(wvstream, WvStream - communications fundamentals, x)
+ WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams, x)
+ WVCHAPTER(wvpipe, WvPipe - talking to subtasks, x)
+ WVCHAPTER(logs, Dealing with Log Messages,
+  WVSECT1(wvlog, WvLog - printing log messages, x)
+  WVSECT1(wvlogrcv, WvLogRcv - receiving and disposing of log messages, x)
+  WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, x)
+  WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
+ )
+ WVCHAPTER(magicstreams, Some Magical Streams,
+  WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream, x),
+  WVSECT1(wvsplitstream, WvSplitStream - separating read/write streams, x),
+  WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), x),
+ )
+ WVCHAPTER(wvtimestream, WvTimeStream - timed events, x)
+ WVCHAPTER(wvwatcher, WvFileWatcher - waiting for a file to change, x)
+ WVCHAPTER(wvprotostream, WvProtoStream - a protocol state machine, x)
+)
+

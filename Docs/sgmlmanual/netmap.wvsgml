@@ -1,0 +1,8 @@
+WVPART(netmap, Network Mapping and Intelligence - the NetMap Library,
+ WVCHAPTER(wvnetcap, WvNetCap - network packet capture, x)
+ WVCHAPTER(wvnetmap, WvNetMap - raw host information, x)
+ WVCHAPTER(wvnetintel, WvNetIntelligence - network map reduction, x)
+ WVCHAPTER(wvpingprobe, WvPingProbe - active probing, x)
+ WVCHAPTER(wvnetguide, WvNetGuide - route manipulation and overrides, x)
+)
+
