@@ -2,7 +2,7 @@ wvstreams (3.74+20030919-1) unstable; urgency=low
 
   * Added -fPIC -DPIC back into the build.
   * Synchronize with upstream CVS.
-  * Don't run make dist
+  * Don't run make dist.  Call autoheader and autoconf directly.
 
  -- James A. Morrison <phython@debian.org>  Fri, 19 Sep 2003 12:28:54 -0400
 
