@@ -64,7 +64,7 @@ WvHConf *WvHConf::top()
 
 // this method of returning the object is pretty inefficient - lots of extra
 // copying stuff around.
-WvHConfKey WvHConf::full_key() const
+WvHConfKey WvHConf::full_key(WvHConf *top) const
 {
     WvHConfKey k;
     const WvHConf *h = this;
@@ -73,7 +73,7 @@ WvHConfKey WvHConf::full_key() const
     {
 	k.prepend(new WvString(h->name), true);
 	h = h->parent;
-    } while (h);
+    } while (h && h != top);
     
     return k;
 }
@@ -210,8 +210,6 @@ void WvHConf::set_without_notify(WvStringParm s)
 
 void WvHConf::set(WvStringParm s)
 {
-    WvHConf *h;
-    
     if (s == value)
 	return; // nothing to change - no notifications needed
     
@@ -220,20 +218,12 @@ void WvHConf::set(WvStringParm s)
     if (dirty && notify)
 	return; // nothing more needed
     
-    dirty = notify = true;
-    
-    // also notify all parents that a child has changed.  We can stop this
-    // if we reach a parent that already has child_notify AND child_dirty
-    // set to true.
-    h = parent;
-    while (h && (!h->child_dirty || !h->child_notify))
-    {
-	h->child_dirty = h->child_notify = true;
-	h = h->parent;
-    }
+    do_notify();
 }
 
 
+// set the dirty and notify flags on this object, and inform all parent
+// objects that their child is dirty.
 void WvHConf::do_notify()
 {
     WvHConf *h;

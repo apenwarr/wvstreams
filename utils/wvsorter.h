@@ -11,8 +11,6 @@
 
 #include "wvlink.h"
 
-extern WvLink blank_wvlink;
-
 // the base class for sorted list iterators.
 // It is similar to IterBase, except for rewind(), next(), and cur().
 // The sorting is done in rewind(), which makes an array of WvLink
@@ -34,9 +32,9 @@ public:
     ~WvSorterBase()
     	{ if (array) delete array; }
     WvLink *next()
-	{ return lptr ? *(++lptr) : *(lptr = array); }
+	{ return *(++lptr); }
     WvLink *cur()
-    	{ return lptr ? *lptr : &blank_wvlink; }
+    	{ return *lptr; }
     
 protected:
     template <class _list_,class _iter_> void rewind(CompareFunc *cmp);
@@ -68,9 +66,6 @@ public:
     // declare standard iterator accessors
     WvIterStuff(_type_);
     
-    //void rewind()
-    //	{ WvSorterBase::rewind((CompareFunc *)cmp); }
-    
     void rewind()
       { WvSorterBase::rewind<_list_,_iter_>((CompareFunc *)cmp); }
 };
@@ -81,24 +76,38 @@ public:
 template <class _list_,class _iter_>
 void WvSorterBase::rewind(CompareFunc *cmp)
 {
+    int n, remaining;
+    
     if (array)
         delete array;
     array = lptr = NULL;
 
-    int n = ((_list_ *)list)->count();
-    array = new WvLink * [n+1];
+    _iter_ i(*(_list_ *)list);
+    
+    // count the number of elements
+    n = 0;
+    for (i.rewind(); i.next(); )
+	n++;
+    
+    array = new (WvLink *) [n+2];
     WvLink **aptr = array;
 
     // fill the array with data pointers for sorting, so that the user doesn't
     // have to deal with the WvLink objects.  Put the WvLink pointers back 
     // in after sorting.
-    _iter_ i(*(_list_ *)list);
     aptr = array;
-    for (i.rewind(); i.next(); )
+    *aptr++ = NULL; // initial link is NULL, to act like a normal iterator
+    
+    for (remaining = n, i.rewind(); i.next() && remaining; remaining--)
     {
         *aptr = i.cur();
         aptr++;
     }
+    
+    // weird: list length changed?
+    // (this can happen with "virtual" lists like ones from WvDirIter)
+    if (remaining)
+	n -= remaining;
     
     *aptr = NULL;
 
@@ -106,10 +115,10 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     // ends up being called recursively or something really weird...)
     CompareFunc *old_compare = actual_compare;
     actual_compare = cmp;
-    qsort(array, n, sizeof(WvLink *), magic_compare);
+    qsort(array+1, n, sizeof(WvLink *), magic_compare);
     actual_compare = old_compare;
 
-    lptr = NULL;    // subsequent next() will set it to first element.
+    lptr = array;
 }
 
 

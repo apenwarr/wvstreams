@@ -203,8 +203,6 @@ static bool any_interesting_children(WvHConf *h)
 void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
 {
     WvHConf *interesting;
-    WvHConfKey basekey(h->full_key());
-    int basecount = basekey.count();
     
     // special case: the root node of this generator shouldn't get its own
     // section unless there are _really_ nodes directly in that section.
@@ -229,10 +227,8 @@ void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
 	    {
 		// exactly one interesting child: don't bother with a
 		// subsection.
-		WvHConfKey deepkey(interesting->full_key());
-		out("%s = %s\n", 
-		    inicode(deepkey.skip(basecount)),
-		    inicode(*interesting));
+		WvHConfKey deepkey(interesting->full_key(h));
+		out("%s = %s\n", inicode(deepkey), inicode(*interesting));
 	    }
 	}
     }
