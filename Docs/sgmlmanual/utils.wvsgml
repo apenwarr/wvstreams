@@ -256,27 +256,20 @@ WVPART(utils, The Utilities Library,
 
    Be warned that some unscrupulous functions (such as strchr())
    return char*s even though they take const char*s, so it is possible to
-   mess up your WvStringParm (and hence whatever you passed to the function).
+   edit a non-unique WvString (and hence the original WvString).  These cases
+   are pretty rare, but they occur.
 
-   But it does cut out extra dynamic memory allocation for the most common
-   cases, and it almost always avoids manual 'new' and 'delete' of string
-   objects.
-   
   )
 
   WVSECT1(wvstringexamples, WvString Examples,
    
-     WVCMD(WvString x("fuzzy wazoo");
-x.unique();)
+     WVCMD(WvString x("fuzzy wazoo");)
 
-     The first line creates a WvString object 'x' containing a pointer to
-     the static string "fuzzy wazoo".  This requires no dynamic memory
-     allocation.
+     In this case, a WvString object 'x' is created.  "fuzzy wazoo" is a
+     static string, meaning a const char * is passed to the constructor of
+     'x', so a dynamic string is created inside of 'x', and "fuzzy wazoo" is
+     copied over.  No call to unique() is necessary in this case.
 
-     The second line makes the WvString "unique", which separates it from
-     the static string.  This requires a dynamic memory allocation.  In this
-     particular case, calling unique() was a pretty silly thing to do.
-     
      When 'x' is destroyed (automatically upon exiting the C++ code block)
      the dynamic string will be deleted automatically.
      
@@ -291,18 +284,17 @@ c.edit()[1] = 'a';)
      wrong kind of object to the formatter.  In fact, everything you format
      must use a '%s' format string - %d, %f, etc are not supported.
      
-     The above function call works as follows:  C++ automatically promotes the
-     first two parameters ("fuzzy..." and "abcdef") into static WvStrings
-     using the simple WvString constructor.  Then it turns '12' into a
-     WvString using the WvString::WvString(int) constructor.  This one
-     requires a dynamic memory allocation since it generates a new string.
+     The above function call works as follows:  new WvStrings are allocated
+     for the first two parameters ("fuzzy..." and "abcdef").  Then it turns
+     '12' into a WvString using the WvString::WvString(int) constructor. 
+     All three operations require dynamic memory allocations.
      
      C++ then passes the new WvStrings on to the WvString "complex"
      constructor, which formats them according to the first string and
      generates an output string, which is always dynamically allocated.
      
      The second line above creates a WvString 'c' which is the same as
-     'output'.  It does not cause any new dynamic memory allocations to occur,
+     'output'.  It does not cause any new dynamic memory allocations to occur
      and is very quick.
      
      The third line first makes 'c' unique (so that it has a separate copy
@@ -314,11 +306,23 @@ c.edit()[1] = 'a';)
      This command creates a null WvString.  This is NOT simply a WvString
      containing a zero-length string, but a WvString that points to nothing.
      You very seldom want to leave a WvString this way, but if you do, you
-     can test for this condition with something like:
+     can test for this condition simply by comparing it to NULL:
 	  
-	  WVCMD(((char *)nul == NULL))
+	  WVCMD((nul == NULL))
      
-     Most often, you will want to immediately fill the null WvString with
+     A zero-length WvString differs slightly from a null WvString.  You can
+     declare one as follows:
+
+          WVCMD(WvString zerolen("");)
+
+     The following expression will be true:
+
+         WVCMD((zerolen == ""))
+
+     However, 'zerolen' will not be equal to NULL.  Conversely, a null
+     WvString is not equal to the zero-length string, "".
+
+     Most often, you will want to immediately fill a null WvString with
      an empty buffer with setsize(), as below.
      
      WVCMD(WvString newstr;
@@ -337,7 +341,7 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
 
    WvLinkList allows you to create type-safe lists of objects, along with
    appropriate iterators.  Lists are used all over the Weaver and WvStreams,
-   and the best way to learn about them is by example -- so read the source
+   and the best way to learn about them is by example--so read the source
    code and look at the sample program in testlist.cc.
 
    You might also want to read the top of wvlinklist.h for some implementation
@@ -366,8 +370,11 @@ sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
  
  WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers,
    
-   Not written yet.
-   
+   A WvBuffer is a dynamically-sized buffer.  It is pretty simple to use:
+   you use the put() function to write data to it, and you use the get()
+   function to retrieve (and delete) data from the buffer.  It's often
+   perfect for storing streamed data, such as that from network connections.
+
  )
  
  WVCHAPTER(wvlockfile, WvLockFile - tty lock file creation,

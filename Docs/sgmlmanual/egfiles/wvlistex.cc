@@ -16,7 +16,9 @@ int main()
     for (i.rewind(); i.next(); )
     {
 	// we will learn a nicer way to do this with WvStream later.
-	printf("%s\n", (const char *)i());
+        // we could typecast i() to (const char *), but the cstr() member
+        // function is nicer (we all avoid typecasts when possible, right?)
+	printf("%s\n", i().cstr());
     }
     
     // exiting this function will have C++ auto-free the list, which
