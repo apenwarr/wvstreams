@@ -8,14 +8,14 @@
 
 WvTimeStream::WvTimeStream()
 {
-    ms_per_tick = 0;
+    ms_per_tick = -1;
 }
 
 
 void WvTimeStream::set_timer(time_t msec)
 {
-    ms_per_tick = msec;
-    alarm(msec);
+    ms_per_tick = msec ? msec : -1;
+    alarm(ms_per_tick);
 }
 
 
