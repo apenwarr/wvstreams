@@ -72,7 +72,7 @@ WvString::WvString(const char *_str)
     
     // apenwarr (2002/04/24): from now on, all WvString objects are created
     // with unique(), so you should _never_ have to call it explicitly.  We
-    // still can (and should!) use fast parameter passing via WvFString.
+    // still can (and should!) use fast parameter passing via WvFastString.
     unique();
 }
 
@@ -98,6 +98,7 @@ void WvFastString::unlink()
 	free(buf);
 }
     
+
 void WvFastString::link(WvStringBuf *_buf, const char *_str)
 {
     buf = _buf;

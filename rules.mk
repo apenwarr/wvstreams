@@ -15,16 +15,13 @@ libwvutils.a libwvutils.so: $(libwvutils.so-OBJECTS)
 
 DEPFILE = $(notdir $(@:.o=.d))
 
-%: %.cc
+%: %.o
 ifeq ("$(enable_verbose)", "yes")
 	$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
 else
-	@echo compiling $@
+	@echo linking $@
 	@$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
 endif
-	@test -f $(notdir $(@).d)
-	@sed -e 's|^$(notdir $@)|$@|' $(notdir $@).d > $(dir $@).$(notdir $@).d
-	@rm -f $(notdir $@).d
 
 %.o: %.cc
 ifeq ("$(enable_verbose)", "yes")

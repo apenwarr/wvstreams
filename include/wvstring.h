@@ -46,6 +46,8 @@
 struct WvStringBuf;
 class WvFastString;
 class WvString;
+class QString; // for operator QString()
+class QCString;
 
 // all WvFastString objects are const - they should _only_ be created
 // automatically by automatic typecasting in parameter passing.  So let's
@@ -120,6 +122,13 @@ public:
      * didn't use WvFastString where you should have used a WvString.
      */
     WvFastString(const char *_str);
+    
+    /**
+     * Create a string out of a Qt library QString.  If you use this,
+     * you need to link with libwvqt.so.
+     */
+    WvFastString(const QString &s);
+    WvFastString(const QCString &s);
 
     /**
      * NOTE: make sure that 32 bytes is big enough for your longest
@@ -233,6 +242,12 @@ public:
         { return str; }
     
     /**
+     * return a Qt library QString containing the contents of this string.
+     * You need to link to libwvqt.so if you use this.
+     */
+    operator QString() const;
+    
+    /**
      * used to convert WvString to int, when needed.
      * we no longer provide a typecast, because it causes annoyance.
      */
@@ -301,6 +316,13 @@ public:
      * WvStringParm instead.
      */
     WvString(const char *_str);
+
+    /**
+     * Create a WvString out of a Qt library QString.  You have to link with
+     * libwvqt.so if you want to use this.
+     */
+    WvString(const QString &);
+    WvString(const QCString &);
 
     WvString(WVSTRING_FORMAT_DECL) : WvFastString(WVSTRING_FORMAT_CALL)
         { }
