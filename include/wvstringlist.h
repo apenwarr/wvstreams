@@ -17,6 +17,7 @@ DeclareWvList2(WvString,
 	       void split(WvStringParm s, const char *splitchars = " \t",
 			  int limit = 0);
 	       void fill(const char * const *array);
+	       WvString popstr();
 	       );
 
 #endif // __WVSTRINGLIST_H
