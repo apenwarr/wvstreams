@@ -114,9 +114,55 @@ bool UniListGen::isok()
 
 UniConfGen::Iter *UniListGen::iterator(const UniConfKey &key)
 {
-    return i().iterator(key);
+    return new IterIter(i, key);
 }
 
 
 /***** UniListGen::IterIter *****/
 
+UniListGen::IterIter::IterIter(UniConfGenList::Iter &geniter,
+    const UniConfKey &key)
+{
+    for (geniter.rewind(); geniter.next(); )
+        l.append(geniter->iterator(key), true);
+
+    i = new IterList::Iter(l);
+}
+
+void UniListGen::IterIter::rewind()
+{
+    for ((*i).rewind(); (*i).next(); )
+        (*i)->rewind();
+
+    i->rewind();
+    i->next();
+
+    d.zap();
+}
+
+
+bool UniListGen::IterIter::next()
+{
+    if ((*i)->next())
+    {
+        // When iterating, make sure each key value is only returned once (from
+        // the top item in the list)
+        if (!d[(*i)->key()])
+        {
+            d.add(new UniConfKey((*i)->key()), true);
+            return true;
+        }
+        else
+            return next();
+    }
+
+    if (!i->next())
+        return false;
+
+    return next();
+}
+
+UniConfKey UniListGen::IterIter::key() const
+{
+    return (*i)->key();
+}

@@ -1,6 +1,6 @@
 #include "uniconf.h"
+#include "wvcallback.h"
 #include "wvstreamlist.h"
-
 
 /**
  * This test is mostly for using with the uniconf daemon to see what
@@ -10,6 +10,18 @@
  *
  * Fun for the whole family!
  */
+
+class foo
+{
+public:
+    foo()
+    {
+        UniConfCallback meow(wvcallback(UniConfCallback, *this, foo::cb));
+    }
+
+    void cb(const UniConf &moo, void *goo)
+    { }
+};
 
 int main()
 {
@@ -26,6 +38,8 @@ int main()
     r["key/bob"].add_setbool(&silly2, true);
     r["key"].add_setbool(&nonsilly2, true);
 
+    foo thing;
+    UniConfCallback cb(wvcallback(UniConfCallback, thing, foo::cb));
  
     WvStreamList l;
 
