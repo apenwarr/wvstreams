@@ -84,7 +84,7 @@ int WvStreamClone::geterr() const
 }
 
 
-const char *WvStreamClone::errstr() const
+WvString WvStreamClone::errstr() const
 {
     if (errnum)
 	return WvStream::errstr();

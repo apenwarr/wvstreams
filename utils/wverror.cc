@@ -14,7 +14,7 @@ WvError::~WvError()
 }
 
 
-const char *WvError::errstr() const
+WvString WvError::errstr() const
 {
     if (errnum == -1)
     {

@@ -45,7 +45,7 @@ public:
     virtual size_t uwrite(const void *buf, size_t size);
     virtual bool isok() const;
     virtual int geterr() const;
-    virtual const char *errstr() const;
+    virtual WvString errstr() const;
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual const WvAddr *src() const;

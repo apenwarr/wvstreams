@@ -42,7 +42,7 @@ int WvHTTPStream::geterr() const
 }
 
 
-const char *WvHTTPStream::errstr() const
+WvString WvHTTPStream::errstr() const
 {
     if (cloned)
 	return WvStreamClone::errstr();
