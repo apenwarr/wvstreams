@@ -178,6 +178,13 @@ public:
      */
     WvString encode(DumpMode mode);
 
+    /**
+     * Return a hexified certificate out of the file
+     *
+     * NOT IMPLEMENTED
+     */
+    WvString pem2hex(WvStringParm filename);
+
     WvLog debug;
     
     WvString errstring;

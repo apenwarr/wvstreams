@@ -314,6 +314,10 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
+    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,"critical, CA:FALSE");
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+
     // Sign the certificate with our own key ("Self Sign")
     if (!X509_sign(cert, pk, EVP_sha1()))
     {
