@@ -16,31 +16,61 @@ libwvutils.a libwvutils.so: $(libwvutils.so-OBJECTS)
 DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.cc
+ifeq ("$(enable_verbose)", "yes")
 	$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+else
+	@echo compiling $@
+	@$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+endif
 	@test -f $(notdir $(@).d)
 	@sed -e 's|^$(notdir $@)|$@|' $(notdir $@).d > $(dir $@).$(notdir $@).d
 	@rm -f $(notdir $@).d
 
 %.o: %.cc
+ifeq ("$(enable_verbose)", "yes")
 	$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
+else
+	@echo compiling $@
+	@$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
+endif
 	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
 
 %.o: %.c
+ifeq ("$(enable_verbose)", "yes")
 	$(CC) $(CFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
+else
+	@echo compiling $@
+	@$(CC) $(CFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
+endif
 	@test -f $(DEPFILE)
 	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
 	@rm -f $(DEPFILE)
 
 %.a:
+ifeq ("$(enable_verbose)", "yes")
 	$(AR) $(ARFLAGS) $@ $^
+else
+	@echo linking $@
+	@$(AR) $(ARFLAGS) $@ $^
+endif
 
 %.so:
+ifeq ("$(enable_verbose)", "yes")
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
+else
+	@echo linking $@
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
+endif
 
 %.moc: %.h
+ifeq ("$(enable_verbose)", "yes")
 	moc $< -o $@
+else
+	@echo compiling $@
+	@moc $< -o $@
+endif
 
 .PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean
 

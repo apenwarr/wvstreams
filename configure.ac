@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.8 2002/10/31 23:00:27 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.9 2002/11/08 06:26:26 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -15,6 +15,10 @@ AC_ARG_ENABLE(debug,
 AC_ARG_ENABLE(fatal-warnings,
               AC_HELP_STRING([--enable-fatal-warnings],
                              [turn warnings into errors]))
+
+AC_ARG_ENABLE(verbose,
+              AC_HELP_STRING([--enable-verbose],
+                             [verbose compilation output]))
 
 AC_ARG_ENABLE(optimization,
               AC_HELP_STRING([--disable-optimization],
@@ -117,6 +121,7 @@ fi
 
 AC_SUBST(enable_debug)
 AC_SUBST(enable_fatal_warnings)
+AC_SUBST(enable_verbose)
 AC_SUBST(enable_optimization)
 AC_SUBST(enable_warnings)
 AC_SUBST(enable_rtti)
