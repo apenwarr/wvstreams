@@ -329,7 +329,7 @@ public:
 	if (xcount < 2)
 	    return;
 	::qsort(xseq, xcount, sizeof(T *),
-		reinterpret_cast<comparison_fn_t>(comparator));
+		reinterpret_cast<comparison_type_t>(comparator));
     }
 
     /** A simple iterator that walks through all elements in the list. */
