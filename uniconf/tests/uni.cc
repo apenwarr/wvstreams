@@ -18,15 +18,17 @@ int main(int argc, char **argv)
     if (argc < 3)
     {
 	fprintf(stderr,
-		"Usage: %s <cmd> <key> [extra stuff...]\n"
-		" where <cmd> is one of:\n"
-		"   get - get the value of a key, with optional default\n"
-		"   set - set a key to the given value from the command line\n"
-		"   xset - set a key to the given value from stdin\n"
-		"   keys - list the subkeys of a key\n"
-		"   hkeys - list the subkeys of a key, their subkeys, etc\n"
-		"   dump - list the subkeys/values of a key (key=value)\n"
-		"   hdump - list the subkeys/values recursively\n",
+	    "Usage: %s <cmd> <key> [extra stuff...]\n"
+	    " where <cmd> is one of:\n"
+	    "   get   - get the value of a key, with optional default\n"
+	    "   set   - set a key to the given value from the command line\n"
+	    "   xset  - set a key to the given value from stdin\n"
+	    "   keys  - list the subkeys of a key\n"
+	    "   hkeys - list the subkeys of a key, their subkeys, etc\n"
+	    "   xkeys - list keys that match a wildcard\n"
+	    "   dump  - list the subkeys/values of a key (key=value)\n"
+	    "   hdump - list the subkeys/values recursively\n"
+	    "   xdump - list keys/values that match a wildcard\n",
 		argv[0]);
 	return 3;
     }
@@ -88,6 +90,12 @@ int main(int argc, char **argv)
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s\n", wvtcl_escape(i->fullkey(sub), "\r\n"));
     }
+    else if (cmd == "xkeys")
+    {
+	UniConf::XIter i(cfg, arg1);
+	for (i.rewind(); i.next(); )
+	    wvcon->print("%s\n", wvtcl_escape(i->fullkey(cfg), "\r\n"));
+    }
     else if (cmd == "dump")
     {
 	// note: the output of this command happens to be compatible with
@@ -107,6 +115,16 @@ int main(int argc, char **argv)
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s = %s\n",
 			 wvtcl_escape(i->fullkey(sub), "\r\n[]="),
+			 wvtcl_escape(i->get(""), "\r\n[]="));
+    }
+    else if (cmd == "xdump")
+    {
+	// note: the output of this command happens to be compatible with
+	// (can be read by) the 'ini' UniConf backend.
+	UniConf::XIter i(cfg, arg1);
+	for (i.rewind(); i.next(); )
+	    wvcon->print("%s = %s\n",
+			 wvtcl_escape(i->fullkey(cfg), "\r\n[]="),
 			 wvtcl_escape(i->get(""), "\r\n[]="));
     }
     else
