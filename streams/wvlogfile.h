@@ -2,10 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * A "Log Receiver" that logs to a file changing files every day
- *  the 'keep_for' variable controls the number of days to keep
- *  the old log file for. Setting it to 0 disables automatic
- *  purging of log files.
+ * A "Log Receiver" that logs messages to a file 
  */
 
 #ifndef __WVLOGFILE_H
@@ -15,21 +12,34 @@
 #include "wvfile.h"
 #include "wvlogrcv.h"
 
-// Keep
+// Basic LogFile receiver. Always logs to the same file. No rotation.
 
-class WvLogFile : public WvLogRcv
+class WvLogFileBase : public WvLogRcv, public WvFile
 {
     public:
-        WvLogFile(WvString _dirpath, WvString _basefname,
-            int _keep_for, WvLog::LogLevel _max_level);
+        WvLogFileBase(WvStringParm _filename, WvLog::LogLevel _max_level
+             = WvLog::NUM_LOGLEVELS) : WvLogRcv(_max_level),
+             WvFile(_filename, O_WRONLY|O_APPEND|O_CREAT, 0644) {};
 
     protected:
+        WvLogFileBase(WvLog::LogLevel _max_level) : WvLogRcv(_max_level) {};
         virtual void _make_prefix(); 
         virtual void _mid_line(const char *str, size_t len);
+};
+
+// A more advanced LogFile. Logs <filename>.<date>
+//  Deletes old log files after 'keep_for' days
+
+class WvLogFile : public WvLogFileBase
+{
+    public:
+        WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level
+            = WvLog::NUM_LOGLEVELS, int _keep_for = 7);
+    private:
+        virtual void _make_prefix(); 
         void start_log();
         int keep_for, last_day;
-        WvString dirpath, basefname;
-        WvFile logfile;
+        WvString filename;
 };
 
 #endif // __WVLOGFILE_H

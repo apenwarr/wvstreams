@@ -2,24 +2,42 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * A "Log Receiver" that logs to a file changing files every day
- *  the 'keep_for' variable controls the number of days to keep
- *  the old log file for. Setting it to 0 disables automatic
- *  purging of log files.
+ * A "Log Receiver" that logs messages to a file
  */
 
 
 #include <time.h>
+#include <libgen.h>
 
 #include "wvlogfile.h"
 #include "wvtimeutils.h"
 #include "wvdiriter.h"
 
-///////////////////////////////////// WvLogFile
 
-WvLogFile::WvLogFile(WvString _dirpath, WvString _basefname,
-    int _keep_for, WvLog::LogLevel _max_level) : WvLogRcv(_max_level),
-    keep_for(_keep_for), dirpath(_dirpath), basefname(_basefname)
+//----------------------------------- WvLogFileBase ------------------
+
+void WvLogFileBase::_mid_line(const char *str, size_t len)
+{
+    WvFile::write(str, len);
+}
+
+void WvLogFileBase::_make_prefix()
+{
+    time_t timenow = wvtime().tv_sec;
+    struct tm* tmstamp = localtime(&timenow);
+    char timestr[30];
+    strftime(&timestr[0], 30, "%b %d %T %Z", tmstamp);
+     
+    prefix = WvString("%s: %s<%s>: ", timestr, appname(last_source),
+        loglevels[last_level]);
+    prelen = strlen(prefix);
+}
+
+//----------------------------------- WvLogFile ----------------------
+
+WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
+     int _keep_for) : WvLogFileBase(_max_level), keep_for(_keep_for),
+     filename(_filename)
 {
     start_log();
 }
@@ -31,41 +49,32 @@ void WvLogFile::_make_prefix()
     // Check if it's tomorrow yet, and start logging to a different file
     if (last_day != timenow%86400)
         start_log();
-
-    struct tm* tmstamp = localtime(&timenow);
-    char timestr[30];
-    strftime(&timestr[0], 30, "%b %d %T %Z", tmstamp);
-     
-    prefix = WvString("%s: %s<%s>: ", timestr, appname(last_source),
-        loglevels[last_level]);
-    prelen = strlen(prefix);
+    
+    WvLogFileBase::_make_prefix();
 }
 
-void WvLogFile::_mid_line(const char *str, size_t len)
-{
-    logfile.write(str, len);
-}
 
 void WvLogFile::start_log()
 {
-    logfile.close();
+    WvFile::close();
 
     time_t timenow = wvtime().tv_sec;
     last_day = timenow%86400;
     struct tm* tmstamp = localtime(&timenow);
     char suffix[20];
     strftime(&suffix[0], 20, "%Y-%m-%d", tmstamp);
-    WvString fullname("%s%s.%s", dirpath, basefname, suffix);
+    WvString fullname("%s.%s", filename, suffix);
+    WvString base = basename(WvString(filename).edit());
 
-    logfile.open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0644);
+    WvFile::open(fullname, O_WRONLY|O_APPEND|O_CREAT, 0644);
 
     // Look for old logs and purge them
-    WvDirIter i(dirpath, false);
+    WvDirIter i(dirname(WvString(filename).edit()), false);
     i.rewind();
     while (i.next() && keep_for)
     {
         // if it begins with the base name
-        if (!strncmp(i.ptr()->name, basefname, strlen(basefname)))
+        if (!strncmp(i.ptr()->name, base, strlen(base)))
             // and it's older than 'keep_for' days
             if (i.ptr()->st_mtime <
                     wvtime().tv_sec - keep_for*86400) 
