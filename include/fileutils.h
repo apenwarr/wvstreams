@@ -14,8 +14,7 @@
 
 /**
  * Create a directory and any subdirectories required along the way. (Equivalent
- * to mkdir -p). This command probably doesn't belong in strutils, but I
- * couldn't think of a better place to put it.
+ * to mkdir -p).
  *
  * The default permissions on created directories is 0700, but this can be
  * changed at will.
