@@ -221,7 +221,7 @@ WVTEST_MAIN("basic decoding lowercase")
 
 	WVPASS(dest.used() == 256);
 	bool decoded_correctly = true;
-	for (unsigned int i; i < dest.used(); i++)
+	for (unsigned int i = 0; i < dest.used(); i++)
 	{
 	    if (dest.peek(i) != i)
 	    {
@@ -273,7 +273,7 @@ WVTEST_MAIN("basic decoding uppercase")
 
 	WVPASS(dest.used() == 256);
 	bool decoded_correctly = true;
-	for (unsigned int i; i < dest.used(); i++)
+	for (unsigned int i = 0; i < dest.used(); i++)
 	{
 	    if (dest.peek(i) != i)
 	    {
@@ -426,6 +426,7 @@ WVTEST_MAIN("nothing to encode/decode")
 	    enc->flushmembuf(empty, 0, dest, true);
 	    WVPASS(dest.used() == 11
 		   && !memcmp(dest.get(dest.used()), "stuff there", 11));
+	    delete(enc);
 	}
     }
 }
@@ -491,10 +492,9 @@ WVTEST_MAIN("decoding invalid data")
 	WVFAIL(dec.isok()); // read bad data
 	WVPASS(ret == false);
 
-	wvcon->print( "%s\n", (const char*) dest.peek( 0, dest.used() ));
 	// decoded as much as possible though... a2Vu -> ken
 	WVPASS(dest.used() == 2
-	       && !memcmp(dest.get(dest.used()), "a+", 3));
+	       && !memcmp(dest.peek(0,dest.used()), "a+", 2));
 	WVPASS(src.used() == 4); // 4 chars left since should have removed
 				 // the bad character
     }
