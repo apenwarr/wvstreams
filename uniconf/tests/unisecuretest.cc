@@ -9,6 +9,12 @@
 
 #include <unistd.h>
 
+/**
+ * FIXME: this doesn't test the following:
+ * - exec permissions
+ * - drilldown (ie. intermediate keys missing exec)
+ * - default permissions (ie. users / * / foo) 
+ */
 
 struct Objects
 {
@@ -73,9 +79,9 @@ void teardown(Objects *o)
 }
 
 
-void printheader(WvStringParm h, WvStringParm moniker)
+void printheader(WvStringParm h)
 {
-    WvString header("\n\nTEST %s WITH PERMS GEN %s", h, moniker);
+    WvString header("\n\nTEST %s", h);
     wvcon->print("%s\n",header);
     
     for (size_t i = 0; i < header.len(); i++)
@@ -91,8 +97,9 @@ void printfooter(bool pass)
 }
 
 
-bool testaget(const UniConf &u, WvStringParm key, WvStringParm expect)
+bool testget(const UniConf &u, WvStringParm key, bool expectsucc)
 {
+    WvString expect = expectsucc ? key : WvString("nothing");
     WvString got = u[key].get("nothing");
     if (expect != got)
         wvcon->print("FAILED: get %s expected %s, got %s\n", key, expect, got);
@@ -100,229 +107,115 @@ bool testaget(const UniConf &u, WvStringParm key, WvStringParm expect)
 }
 
 
-bool testaset(const UniConf &u, WvStringParm key, WvStringParm val)
+bool testset(const UniConf &u, WvStringParm key, bool expectsucc)
 {
+    WvString val = "test";
     WvString orig = u[key].get();
+    WvString expect = expectsucc ? val : orig;
     u[key].set(val);
     WvString got = u[key].get();
-    if (val != got)
+    if (got != expect)
         wvcon->print("FAILED: set %s expected %s, got %s (orig was %s)\n",
-                key, val, got, orig);
-    return (val == got);
+                key, expect, got, orig);
+    return (got == expect);
 }
 
 
-bool testdefault(const UniConf &u)
+bool testreadable(const UniConf &u, bool none, bool o, bool g, bool w, bool og,
+        bool ow, bool gw, bool ogw)
 {
     bool pass = true;
 
-    // all world
-    for (int world = 0; world < 8; world++)
-    {
-        // all user
-        for (int group = 0; group < 8; group++)
-        {
-            // all group
-            for (int user = 0; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
+    //readable:   4567
+    //unreadable: 0123
 
+    // all unreadable
+    pass = testget(u, "000", none) && pass;
+    pass = testget(u, "123", none) && pass;
+
+    // user readable
+    pass = testget(u, "400", o) && pass;
+    pass = testget(u, "700", o) && pass;
+    pass = testget(u, "512", o) && pass;
+
+    // group readable
+    pass = testget(u, "040", g) && pass;
+    pass = testget(u, "070", g) && pass;
+    pass = testget(u, "152", g) && pass;
+
+    // world readable
+    pass = testget(u, "004", w) && pass;
+    pass = testget(u, "007", w) && pass;
+    pass = testget(u, "236", w) && pass;
+
+    // user, group readable
+    pass = testget(u, "440", og) && pass;
+    pass = testget(u, "770", og) && pass;
+    pass = testget(u, "561", og) && pass;
+ 
+    // user, world readable
+    pass = testget(u, "404", ow) && pass;
+    pass = testget(u, "707", ow) && pass;
+    pass = testget(u, "625", ow) && pass;
+  
+    // group, world readable
+    pass = testget(u, "044", gw) && pass;
+    pass = testget(u, "077", gw) && pass;
+    pass = testget(u, "265", gw) && pass;
+     
+    // all readable
+    pass = testget(u, "444", ogw) && pass;
+    pass = testget(u, "777", ogw) && pass;
+    pass = testget(u, "465", ogw) && pass;
+   
     return pass;
 }
 
 
-bool testownergroup(const UniConf &u)
+/** Make sure this is called last - it updates the keys */
+bool testwriteable(const UniConf &u, bool none, bool o, bool g, bool w, bool og,
+        bool ow, bool gw, bool ogw)
 {
     bool pass = true;
 
-    // world unreadable
-    for (int world = 0; world < 4; world++)
-    {
-        // group unreadble
-        for (int group = 0; group < 4; group++)
-        {
-            // user unreadable
-            for (int user = 0; user < 4; user++)
-            {
-                // should fail
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, "nothing") && pass;
-            }
-            // user readable
-            for (int user = 4; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-        // group readable
-        for (int group = 4; group < 8; group++)
-        {
-            // all user
-            for (int user = 0; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
-    // world readable
-    for (int world = 4; world < 8; world++)
-    {
-        // all group
-        for (int group = 0; group < 8; group++)
-        {
-            // all user
-            for (int user = 0; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
+    //writeable:   2367
+    //unwriteable: 0145
 
-    return pass;
-}
+    //FIXME: we never test writeable but not readable because it's not
+    //convenient
 
+    // all unwriteable
+    pass = testset(u, "000", none) && pass;
+    pass = testset(u, "145", none) && pass;
 
-bool testownernogroup(const UniConf &u)
-{
-    bool pass = true;
+    // user writeable
+    pass = testset(u, "700", o) && pass;
+    pass = testset(u, "614", o) && pass;
 
-    // world unreadable
-    for (int world = 0; world < 4; world++)
-    {
-        // all group
-        for (int group = 0; group < 8; group++)
-        {
-            // user unreadable
-            for (int user = 0; user < 4; user++)
-            {
-                // should fail
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, "nothing") && pass;
-            }
-            // user readable
-            for (int user = 4; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
-    // world readable
-    for (int world = 4; world < 8; world++)
-    {
-        // all group
-        for (int group = 0; group < 8; group++)
-        {
-            for (int user = 0; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
+    // group writeable
+    pass = testset(u, "070", g) && pass;
+    pass = testset(u, "164", g) && pass;
 
-    return pass;
-}
+    // world writeable
+    pass = testset(u, "007", w) && pass;
+    pass = testset(u, "516", w) && pass;
 
-
-bool testnoownergroup(const UniConf &u)
-{
-    bool pass = true;
-
-    // world unreadable
-    for (int world = 0; world < 4; world++)
-    {
-        // group unreadble
-        for (int group = 0; group < 4; group++)
-        {
-            // all user
-            for (int user = 0; user < 8; user++)
-            {
-                // should fail
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, "nothing") && pass;
-            }
-        }
-        // group readable
-        for (int group = 4; group < 8; group++)
-        {
-            // all user
-            for (int user = 0; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
-    // world readable
-    for (int world = 4; world < 8; world++)
-    {
-        // all group
-        for (int group = 0; group < 8; group++)
-        {
-            // all user
-            for (int user = 0; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
-
-    return pass;
-}
-
-
-bool testnoownernogroup(const UniConf &u)
-{
-    bool pass = true;
-
-    // world unreadable
-    for (int world = 0; world < 4; world++)
-    {
-        // all group
-        for (int group = 0; group < 4; group++)
-        {
-            // all user
-            for (int user = 0; user < 4; user++)
-            {
-                // should fail
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, "nothing") && pass;
-            }
-        }
-    }
-    // world readable
-    for (int world = 4; world < 8; world++)
-    {
-        // all group
-        for (int group = 0; group < 8; group++)
-        {
-            // all user
-            for (int user = 0; user < 8; user++)
-            {
-                // should succeed
-                WvString key("%s%s%s", user, group, world);
-                pass = testaget(u, key, key) && pass;
-            }
-        }
-    }
-
+    // user, group writeable
+    pass = testset(u, "770", og) && pass;
+    pass = testset(u, "661", og) && pass;
+ 
+    // user, world writeable
+    pass = testset(u, "707", ow) && pass;
+    pass = testset(u, "646", ow) && pass;
+  
+    // group, world writeable
+    pass = testset(u, "077", gw) && pass;
+    pass = testset(u, "566", gw) && pass;
+     
+    // all writeable
+    pass = testset(u, "777", ogw) && pass;
+    pass = testset(u, "666", ogw) && pass;
+ 
     return pass;
 }
 
@@ -333,77 +226,89 @@ int main(int argc, char **argv)
 
     WvString ini("ini:secure.ini");
 
-    // test with default perms
     {
-        WvString perms("null");
-        Objects *o = setup(perms);
+        printheader("DEFAULT PERMISSIONS");
+        Objects *o = setup("null");
 
-        printheader("READING WITH DEFAULT PERMISSIONS", perms);
+        /** All reads succeed, all writes fail */
+        bool pass = true;
+        pass = testreadable(o->u, true, true, true, true, true, true, true, true) && pass;
+        pass = testwriteable(o->u, false, false, false, false, false, false, false, false) && pass;
 
-        bool pass = testdefault(o->u);
-
+        teardown(o);
         printfooter(pass);
+    }
+
+    {
+        printheader("OWNER, GROUP MATCH");
+        Objects *o = setup("temp");    
+            
+        UniPermGen::Credentials c;
+        c.user = "clampy";
+        c.groups.add(new WvString("cloggers"), true);
+        o->s->setcredentials(c);
+
+        /** All succeed except --- */
+        bool pass = true;
+        pass = testreadable(o->u, false, true, true, true, true, true, true, true) && pass;
+        pass = testwriteable(o->u, false, true, true, true, true, true, true, true) && pass;
+            
+        teardown(o);
+        printfooter(pass);
+    }
+
+    {
+        printheader("OWNER MATCHES BUT NOT GROUP");
+        Objects *o = setup("temp");    
+
+        UniPermGen::Credentials c;
+        c.user = "clampy";
+        c.groups.add(new WvString("froggers"), true);
+        o->s->setcredentials(c);
+
+        /** ---, -g- fail; o--, --w, og-, o-w, -gw, ogw succeed */
+        bool pass = true;
+        pass = testreadable(o->u, false, true, false, true, true, true, true, true) && pass;
+        pass = testwriteable(o->u, false, true, false, true, true, true, true, true) && pass;
         
         teardown(o);
+        printfooter(pass);
     }
 
-    // test without a defaults gen
     {
-        WvString perms("temp");
-        Objects *o = setup(perms);    
+        printheader("GROUP MATCHES BUT NOT OWNER");
+        Objects *o = setup("temp");    
 
-        {
-            printheader("READING WHERE OWNER, GROUP MATCH", perms);
-            
-            UniPermGen::Credentials c;
-            c.user = "clampy";
-            c.groups.add(new WvString("cloggers"), true);
-            o->s->setcredentials(c);
+        UniPermGen::Credentials c;
+        c.user = "stumpy";
+        c.groups.add(new WvString("cloggers"), true);
+        o->s->setcredentials(c);
 
-            bool pass = testownergroup(o->u);
-            
-            printfooter(pass);
-        }
-
-        {
-            printheader("READS WHERE OWNER MATCHES BUT NOT GROUP", perms);
-
-            UniPermGen::Credentials c;
-            c.user = "clampy";
-            c.groups.add(new WvString("froggers"), true);
-            o->s->setcredentials(c);
-
-            bool pass = testownernogroup(o->u);
-            
-            printfooter(pass);
-        }
-
-        {
-            printheader("READS WHERE GROUP MATCHES BUT NOT OWNER", perms);
-
-            UniPermGen::Credentials c;
-            c.user = "stumpy";
-            c.groups.add(new WvString("cloggers"), true);
-            o->s->setcredentials(c);
-
-            bool pass = testnoownergroup(o->u);
-            
-            printfooter(pass);
-        }
-
-        {
-            printheader("READS WHERE OWNER, GROUP DON'T MATCH", perms);
-
-            UniPermGen::Credentials c;
-            c.user = "stumpy";
-            c.groups.add(new WvString("froggers"), true);
-            o->s->setcredentials(c);
-
-            bool pass = testnoownernogroup(o->u);
-            
-            printfooter(pass);
-        }
+        /** ---, o-- fail; -g-, --w, og-, o-w, -gw, ogw succeed */ 
+        bool pass = true;
+        pass = testreadable(o->u, false, false, true, true, true, true, true, true) && pass;
+        pass = testwriteable(o->u, false, false, true, true, true, true, true, true) && pass;
 
         teardown(o);
+        printfooter(pass);
     }
+
+    {
+        printheader("OWNER, GROUP DON'T MATCH");
+        Objects *o = setup("temp");    
+
+        UniPermGen::Credentials c;
+        c.user = "stumpy";
+        c.groups.add(new WvString("froggers"), true);
+        o->s->setcredentials(c);
+
+        /** ---, o--, -g-, og- fail; -w, o-w, -gw, ogw succeed */ 
+        bool pass = true;
+        pass = testreadable(o->u, false, false, false, true, false, true, true, true) && pass;
+        pass = testwriteable(o->u, false, false, false, true, false, true, true, true) && pass;
+
+        teardown(o);
+        printfooter(pass);
+    }
+
 }
