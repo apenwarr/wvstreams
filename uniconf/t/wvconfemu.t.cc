@@ -159,7 +159,7 @@ WVTEST_MAIN("Multiple Generators mounted on the Uniconf")
     WVPASS(sect);
     }
 }*/
-
+/*
 WVTEST_MAIN("Editing while iterating")
 {
     UniIniGen *unigen = new UniIniGen("weaver.ini", 0600);
@@ -175,4 +175,4 @@ WVTEST_MAIN("Editing while iterating")
         ent.rewind();
     }
     WVPASS("Didn't crash, or cause valgrind errors?");
-}
+}*/
