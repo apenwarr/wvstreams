@@ -32,7 +32,7 @@ public:
     WvString dname;
 
    /**
-    * Type for the dump() method, which can output the information
+    * Type for the @ref dump() method, which can output the information
     * in this class in a variety of formats
     */
     enum DumpMode { CertPEM = 0, RsaPEM, RsaRaw };
@@ -53,10 +53,11 @@ public:
 
     /**
      * Constructor to create a selfsigned certificate for dn dname
-     * NOTE: If you already have an RSAKey, then you can shove it
+     * NOTE: If you already have a @ref WvRSAKey, then you can shove it
      * in here in the second parameter (i.e.: If you wanted to generate a
-     * cert for an existing TunnelVision connection), or if you don't have an RSA Key
-     * yet, you can just give it a number of bits, and it will create one for you.
+     * cert for an existing TunnelVision connection), or if you don't have an 
+     * RSA Key yet, you can just give it a number of bits, and it will create 
+     * one for you.
      *
      * Also: For SSL Servers:
      * the dname MUST be in the form: cn=FQDN,o=foo,c=CA

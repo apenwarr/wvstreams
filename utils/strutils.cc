@@ -369,3 +369,14 @@ WvString getdirname (WvStringParm fullname)
     *strrchr(dirname.edit(), '/') = '\0';
     return dirname;
 }
+
+WvString rfc1123_date(time_t t)
+{
+    struct tm *tm = gmtime(&t);
+    WvString s;
+
+    s.setsize(128);
+    strftime(s.edit(), 128, "%a, %d %b %Y %H:%M:%S GMT", tm);
+
+    return s;
+}
