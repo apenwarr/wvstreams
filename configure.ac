@@ -1,12 +1,16 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.11 2002/12/20 04:12:10 jbrown Exp $)
+AC_REVISION($Id: configure.ac,v 1.12 2003/01/06 20:28:01 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
+
+AC_ARG_ENABLE(devel,
+              AC_HELP_STRING([--enable-devel],
+                             [developer options]))
 
 AC_ARG_ENABLE(debug,
               AC_HELP_STRING([--enable-debug],
@@ -136,7 +140,7 @@ AC_CHECK_HEADERS(rfftw.h,, [with_fftw=no])
 fi
 
 # qt
-if test "$with_qt" != no; then
+if test "$with_qt" != "no"; then
 AC_CHECK_LIB(qt, main,, [with_qt=no])
 if test -n "$with_qt"; then
     QTDIR=$with_qt
@@ -154,6 +158,33 @@ fi
 if test "$enable_resolver_fork" == no; then
 AC_DEFINE(WVRESOLVER_SKIP_FORK,,
           [Define to disable WvResolver forking for debugging with gdb.])
+fi
+
+if test "$enable_devel" == "yes"; then
+    enable_debug=yes
+    enable_fatal_warnings=yes
+    enable_warnings=yes
+    if test "$with_openssl" == "no"; then
+	AC_MSG_ERROR([OpenSSL is missing and required.])
+    fi
+    if test "$with_zlib" == "no"; then
+	AC_MSG_ERROR([zlib is missing and required.])
+    fi
+    if test "$with_ogg" == "no"; then
+	AC_MSG_ERROR([Ogg is missing and required.])
+    fi
+    if test "$with_vorbis" == "no"; then
+	AC_MSG_ERROR([Vorbis is missing and required.])
+    fi
+    if test "$with_speex" == "no"; then
+	AC_MSG_ERROR([Speex is missing and required.])
+    fi
+    if test "$with_fftw" == "no"; then
+	AC_MSG_ERROR([FFTW is missing and required.])
+    fi
+    if test "$with_qt" == "no"; then
+	AC_MSG_ERROR([Qt is missing and required.])
+    fi
 fi
 
 AC_SUBST(enable_debug)
