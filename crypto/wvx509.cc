@@ -888,7 +888,7 @@ WvString WvX509Mgr::errstr() const
 int WvX509Mgr::geterr() const
 {
     int ret = WvError::geterr();
-    if (ret == 0 && !cert || !rsa)
+    if (ret == 0 && (!cert || !rsa))
     {
         // unless there's a regular error set, we'll be returning a custom
         // string: see errstr()
