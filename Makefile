@@ -109,7 +109,7 @@ $(TESTS): $(LIBUNICONF)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
-include $(filter-out xplc/%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
+include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
