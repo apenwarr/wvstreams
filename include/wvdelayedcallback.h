@@ -47,20 +47,20 @@ public:
     WvDelayedCallback(PtrToObject obj, PtrToMember member)
         : cb(InnerCallback(obj, member)), frozen(0), stream(new WvStream)
     {
-        stream->setcallback(WvStreamCallback(this, thaw), 0);
+        stream->setcallback(WvStreamCallback(this, &WvDelayedCallback::thaw), 0);
         WvIStreamList::globallist.append(stream, true);
     }
     template<typename Functor>
     WvDelayedCallback(const Functor& func)
         : cb(InnerCallback(func)), frozen(0), stream(new WvStream)
     {
-        stream->setcallback(WvStreamCallback(this, thaw), 0);
+        stream->setcallback(WvStreamCallback(this, &WvDelayedCallback::thaw), 0);
         WvIStreamList::globallist.append(stream, true);
     }
     WvDelayedCallback(const WvDelayedCallback &other)
         : cb(other.cb), frozen(0), stream(new WvStream)
     {
-        stream->setcallback(WvStreamCallback(this, thaw), 0);
+        stream->setcallback(WvStreamCallback(this, &WvDelayedCallback::thaw), 0);
         WvIStreamList::globallist.append(stream, true);
     }
     ~WvDelayedCallback()
