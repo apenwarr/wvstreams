@@ -100,6 +100,7 @@ UniPStoreGen::UniPStoreGen(WvString _moniker) :
 
 UniPStoreGen::~UniPStoreGen()
 {
+    m_spPStore = 0;
     if (m_hPstoreDLL)
     {
 	FreeLibrary(m_hPstoreDLL);
@@ -138,7 +139,8 @@ WvString UniPStoreGen::get(const UniConfKey &key)
 
     if (hRes == PST_E_OK)
     {
-	value = (char*) data;
+	value.setsize(MAX);
+	wcstombs(value.edit(), (wchar_t*)data, MAX);
 	CoTaskMemFree(data);
     }
 
