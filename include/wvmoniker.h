@@ -63,15 +63,16 @@ class WvMoniker : public WvMonikerBase
 {
 public:
     typedef T *CreateFunc(WvStringParm parms, IObject *obj, void *userdata);
-    IObject *silly;
     
     WvMoniker(WvStringParm _id, CreateFunc *_func)
 	: WvMonikerBase(XIID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
     { 
 	// this looks pointless, but it ensures that T* can be safely,
 	// automatically downcast to IObject*.  That means T is really derived
-	// from IObject, which is very important.
-	silly = (T *)NULL;
+	// from IObject, which is very important. The 'for' avoids a
+	// warning.
+	for(IObject *silly = (T *)NULL; silly; )
+            ;
     };
 };
 
