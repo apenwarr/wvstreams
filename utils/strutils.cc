@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 
 char * terminate_string( char * string, char c )
@@ -215,6 +216,21 @@ WvString web_unescape(const char *str)
     }
 
     *optr = 0;
+
+    return out;
+}
+
+
+WvString rfc822_date(time_t when)
+{
+    WvString out;
+    out.setsize(80);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when);
+    strftime(out.edit(), 80, "%a, %d %b %Y %H:%M:%S %z", tmwhen);
 
     return out;
 }

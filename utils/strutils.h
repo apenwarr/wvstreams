@@ -21,6 +21,7 @@ extern bool isnewline( char c );
 extern void hexify( char *obuf, unsigned char *ibuf, size_t len );
 extern void unhexify( unsigned char *obuf, char *ibuf );
 extern WvString web_unescape(const char *str);
+extern WvString rfc822_date(time_t when=-1);
 
 
 #endif // __STRUTILS_H
