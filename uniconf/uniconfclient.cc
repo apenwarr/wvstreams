@@ -9,11 +9,13 @@
 
 #include <uniconfclient.h>
 
-UniConfClient::UniConfClient(UniConf *_top, UniConfConnFactory *_fctry) :
-    top(_top), fctry(_fctry), log("UniConfClient"), dict(5), references(0)
+UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, bool automount) :
+    top(_top), log("UniConfClient"), dict(5), references(0)
 {
-    conn = fctry->open();
+    conn = new UniConfConn(stream);
     waitforsubt = false;
+    if (automount)
+        top->mount(this);
 }
 
 UniConfClient::~UniConfClient()
@@ -71,13 +73,8 @@ void UniConfClient::save()
     // check our connection...
     if (!conn || !conn->isok())
     {
-        log(WvLog::Debug2, "Connection was unuseable.  Creating another.\n");
-        conn = fctry->open();
-        if (!conn || !conn->isok()) // we're borked
-        {
-            log(WvLog::Error, "Unable to create new connection.  Save aborted.\n");
-            return;
-        }
+        log(WvLog::Debug2, "Connection was unuseable, save aborted.\n");
+        return;
     }
     
     if (conn->select(0, true, false, false))

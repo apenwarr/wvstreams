@@ -26,7 +26,7 @@ int main()
 {
     WvLog log("itertest", WvLog::Info);
     UniConf h;
-    h.generator = new UniConfIniFile(&h, "test2.ini");
+    h.generator = new UniConfIniFile(&h, "test2.ini", false);
     h.load();
     
     {

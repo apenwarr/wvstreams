@@ -207,11 +207,11 @@ int main()
 	UniConf *cfg2 = &cfg["/weaver ini test"];
 	UniConfIniFile *ini;
 	
-	cfg.generator = ini = new UniConfIniFile(&cfg, "test.ini");
+	cfg.generator = ini = new UniConfIniFile(&cfg, "test.ini", false);
 	ini->save_test = true;
 	cfg.generator->load();
 	
-	cfg2->generator = ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini");
+	cfg2->generator = ini = new UniConfIniFile(cfg2, "/tmp/weaver.ini", false);
 	ini->save_test = true;
 	cfg2->generator->load();
 	
@@ -227,11 +227,11 @@ int main()
 	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
 	UniConfIniFile *ini;
 	
-	h1.generator = ini = new UniConfIniFile(&h1, "test.ini");
+	h1.generator = ini = new UniConfIniFile(&h1, "test.ini", false);
 	ini->save_test = true;
 	h1.generator->load();
 	
-	h2.generator = ini = new UniConfIniFile(&h2, "test2.ini");
+	h2.generator = ini = new UniConfIniFile(&h2, "test2.ini", false);
 	ini->save_test = true;
 	h2.generator->load();
 	

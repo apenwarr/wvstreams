@@ -20,7 +20,9 @@ public:
     WvLog log;
     bool save_test; // test mode: don't actually save over input file
     
-    UniConfIniFile(UniConf *_top, WvStringParm _filename);
+    // Pass false to the automount parameter if you don't want to automatically set
+    // _top's generator to this.
+    UniConfIniFile(UniConf *_top, WvStringParm _filename, bool automount);
     virtual void load();
     virtual void save();
     

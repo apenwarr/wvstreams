@@ -14,13 +14,15 @@
 #include "wvfile.h"
 
 
-UniConfIniFile::UniConfIniFile(UniConf *_top, WvStringParm _filename)
+UniConfIniFile::UniConfIniFile(UniConf *_top, WvStringParm _filename, bool automount)
     : filename(_filename), log(filename)
 {
     top = _top;
     save_test = false;
     log(WvLog::Notice, "Using IniFile '%s' at location '%s'.\n", 
 	filename, top->full_key());
+    if (automount)
+        top->mount(this);
 }
 
 

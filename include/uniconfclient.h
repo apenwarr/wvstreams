@@ -10,7 +10,6 @@
 #include "uniconf.h"
 #include "uniconfiter.h"
 #include "uniconfconn.h"
-#include "uniconfconnfactory.h"
 #include "wvlog.h"
 #include "wvstream.h"
 #include "wvtclstring.h"
@@ -28,12 +27,12 @@ class UniConfClient : public UniConfGen
 {
 public:
     UniConf *top;
-    UniConfConnFactory *fctry;
     UniConfConn *conn;
     WvLog log;
     waitingdataDict dict;
     
-    UniConfClient(UniConf *_top, UniConfConnFactory *_fctry);
+    // pass false to automount if you don't want to automatically set _top's generator to this.
+    UniConfClient(UniConf *_top, WvStream *stream, bool automount);
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
@@ -49,16 +48,4 @@ protected:
 private:
     unsigned long references;
 };
-/*
-class UniConfViaClient : public UniConf
-{
-public:
-    UniConfViaClient(WvIPPortAddr addr);
-    UniConfViaClient(WvIPAddr addr);
-    UniConfViaClient(WvUnixAddr addr);
-    ~UniConfViaClient();
-protected:
-private:
-};
-*/
 #endif // __UNICONFCLIENT_H

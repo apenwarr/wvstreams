@@ -35,7 +35,7 @@ UniConf *UniConfDaemon::domount(WvString mode, WvString file, WvString mp)
     UniConf *mounted = &mainconf[mp];
     if (mode == "ini")
     {
-        mounted->generator = new UniConfIniFile(mounted, file);
+        mounted->generator = new UniConfIniFile(mounted, file, false);
         mounted->generator->load();
         return mounted;
     }

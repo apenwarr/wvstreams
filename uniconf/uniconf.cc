@@ -328,4 +328,11 @@ void UniConf::dump(WvStream &s, bool everything)
     _dump(s, everything, keytable);
 }
 
-
+void UniConf::mount(UniConfGen *gen)
+{
+    if (this->generator)
+        delete this->generator;
+    
+    this->generator = gen;
+    this->generator->load();
+}   

@@ -83,6 +83,7 @@ public:
     virtual void load();
     virtual void save();
     virtual bool deleteable() { return true; }
+
 };
 
 
@@ -191,7 +192,10 @@ public:
     // if everything=true, also prints objects with null values.
     void _dump(WvStream &s, bool everything, WvStringTable &keytable);
     void dump(WvStream &s, bool everything = false);
-    
+
+    // Set my generator to be gen, then run load.
+    void mount(UniConfGen *gen);
+
     class Iter;
     class RecursiveIter;
     class XIter;
