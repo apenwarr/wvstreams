@@ -281,10 +281,15 @@ void WvDsp::subproc(bool reading, bool writing)
 		wloop.drain();
 		
 		len = wbuf.used();
-		if (len > frag_size)
-		    len = frag_size;
-		len = wbuf.get(buf, len);
-		do_uwrite(buf, len);
+		
+		// never write less than a full fragment!
+		if (len >= frag_size)
+		{
+		    if (len > frag_size)
+			len = frag_size;
+		    len = wbuf.get(buf, len);
+		    do_uwrite(buf, len);
+		}
 	    }
 	}
     }
@@ -372,7 +377,8 @@ size_t WvDsp::do_uread(void *buf, size_t len)
 size_t WvDsp::do_uwrite(const void *buf, size_t len)
 {
     if (len < frag_size)
-        log(WvLog::Warning, "writing less than frag size: %s/%s\n", len, frag_size);
+        log(WvLog::Warning, "writing less than frag size: %s/%s\n",
+	    len, frag_size);
 
     int o = ospace(), o2;
    
