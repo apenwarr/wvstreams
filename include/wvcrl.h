@@ -21,12 +21,6 @@ typedef struct asn1_string_st ASN1_INTEGER;
 class WvRSAKey;
 class WvX509Mgr;
 
-// workaround for the fact that OpenSSL initialization stuff must be called
-// only once.
-void wvssl_init();
-void wvssl_free();
-WvString wvssl_errstr();
-
 /**
  * CRL Class to handle certificates and their related
  * functions
@@ -34,23 +28,29 @@ WvString wvssl_errstr();
 class WvCRLMgr
 {
 public:
-    WvError err;
-   /**
-    * Type for the @ref encode() and @ref decode() methods.
-    * CRLPEM   = PEM Encoded X.509 CRL
-    * CRLDER   = DER Encoded X.509 CRL returned in Base64
-    * TEXT     = Decoded Human readable format.
-    */
-    enum DumpMode { PEM = 0, DER, TEXT };
     /**
-     * Type for @ref validate method
-     * YES = this certificate is valid
-     * NOT_THIS_CA = certificate is not signed by this CA
-     * NO_VALID_SIGNATURE = certificate claims to be signed by this CA (Issuer is the same),
+     * Where errors go when they happen
+     */
+    WvError err;
+
+    /**
+     * Type for the @ref encode() and @ref decode() methods:
+     * CRLPEM   = PEM Encoded X.509 CRL
+     * CRLDER   = DER Encoded X.509 CRL returned in Base64
+     * TEXT     = Decoded Human readable format.
+     */
+    enum DumpMode { PEM = 0, DER, TEXT };
+
+    /**
+     * Type for @ref validate() method:
+     * ERROR = there was an error that happened..
+     * VALID = the certificate is valid
+     * NOT_THIS_CA = the certificate is not signed by this CA
+     * NO_VALID_SIGNATURE = the certificate claims to be signed by this CA (Issuer is the same),
      *                      but the signature is invalid.
-     * BEFORE_VALID = certificate has not become valid yet
-     * AFTER_VALID = ceriticate is past it's validity period
-     * REVOKED = certificate has been revoked (it's serial number is in this CRL)
+     * BEFORE_VALID = the certificate has not become valid yet
+     * AFTER_VALID = the certificate is past it's validity period
+     * REVOKED = the certificate has been revoked (it's serial number is in this CRL)
      */
     
     enum Valid { ERROR = -1, VALID , NOT_THIS_CA, NO_VALID_SIGNATURE, BEFORE_VALID, AFTER_VALID, REVOKED };
@@ -104,23 +104,29 @@ public:
      */
     bool signedbyCAindir(WvStringParm certdir);
    
+    
     /**
      * Check the CRL in crl against the CA certificate in certfile
      * - returns true if crl was signed by that CA certificate. 
      */
-   bool signedbyCAinfile(WvStringParm certfile);
-
-   /**
-    * Check the CRL in crl against the CA certificate in cacert
-    * - returns true if CRL was signed by that CA certificate.
-    */
+    bool signedbyCAinfile(WvStringParm certfile);
+    
+    
+    /**
+     * Check the CRL in crl against the CA certificate in cacert
+     * - returns true if CRL was signed by that CA certificate.
+     */
     bool signedbyCA(WvX509Mgr *cert);
-
+    
+    /**
+     * Do we have any errors... convenience function..
+     */
     bool isok()
     { return err.isok(); }
     
+    
     /**
-     * Set the CA for this certificate...
+     * Set the CA for this CRL...
      */
     void setca(WvX509Mgr *cacert);
     
@@ -130,6 +136,7 @@ public:
      */
     WvString encode(const DumpMode mode);
 
+
     /**
      * Load the information from the format requested by mode into
      * the class - this overwrites the certificate, and possibly the
@@ -138,27 +145,32 @@ public:
      */
     void decode(const DumpMode mode, WvStringParm PemEncoded);
 
+    
     /** 
      * Return the CRL Issuer (usually the CA who signed 
      * the certificate)
      */
     WvString get_issuer();
 
+    
     /**
      * Is the certificate in cert revoked?
      */
     bool isrevoked(WvX509Mgr *cert);
     bool isrevoked(WvStringParm serial_number);
     
+    
     /**
      * How many certificates in the CRL?
      */
     int numcerts();
 
+    
     /**
      * Add the certificate in cert to the CRL
      */
     void addcert(WvX509Mgr *cert);
+
 
 private:
     /** X.509v3 CRL - this is why this class exists */
