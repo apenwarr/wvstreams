@@ -24,15 +24,31 @@ WvScatterHashBase::WvScatterHashBase(unsigned _numslots)
     memset(slots, 0, numslots * sizeof(pair));
 }
 
+size_t WvScatterHashBase::slowcount() const 
+{   
+    unsigned count = 0;
+    for (unsigned index = 0; index < numslots; index++)
+    {
+        if (IS_OCCUPIED(slots[index]))
+            count++;
+    }
+
+    return count;
+}
+
 void WvScatterHashBase::rebuild()
 {
+    if (!(numslots * REBUILD_LOAD_FACTOR <= used + 1))
+        return;
+
     unsigned oldnumslots = numslots;
 
-    if (numslots * MAX_LOAD_FACTOR <= num) 
+    if (numslots * RESIZE_LOAD_FACTOR <= num + 1) 
         numslots = prime_numbers[++prime_index];
 
     pair *tmpslots = slots;
     slots = new pair[numslots];
+    memset(slots, 0, numslots * sizeof(pair));
     used = num = 0;
 
     for (unsigned i = 0; i < oldnumslots; i++)
@@ -51,9 +67,7 @@ void WvScatterHashBase::_add(void *data, bool auto_free)
 
 void WvScatterHashBase::_add(void *data, unsigned hash, bool auto_free)
 {
-    if (numslots * MAX_LOAD_FACTOR <= used)
-        rebuild();
-
+    rebuild();
     unsigned slot = hash % numslots;
 
     if (IS_OCCUPIED(slots[slot]))
@@ -77,7 +91,7 @@ void WvScatterHashBase::_remove(const void *data, unsigned hash)
 {
     pair *res = genfind(data, hash);
 
-    if (res)
+    if (res != &null_pair)
     {
         if (IS_AUTO_FREE((*res)))
             do_delete(res->data);

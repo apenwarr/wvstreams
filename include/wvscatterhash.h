@@ -4,8 +4,9 @@
 #include <sys/types.h>
 #include "wvhashtable.h"
 
+#define REBUILD_LOAD_FACTOR 0.5
+#define RESIZE_LOAD_FACTOR 0.4
 
-#define MAX_LOAD_FACTOR 0.5
 #define IS_OCCUPIED(x) (x.status >> 1)
 #define IS_AUTO_FREE(x) (x.status == 3)
 #define IS_DELETED(x) (x.status == 1)
@@ -29,7 +30,7 @@ public:
 
     size_t count() const { return num; }
     bool isempty() const { return !num; }
-
+    size_t slowcount() const;
   
     /******* IterBase ******/
     class IterBase
