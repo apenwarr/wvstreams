@@ -76,7 +76,6 @@
 				PreprocessorDefinitions="WVSTREAMS_RELEASE=&quot;4.0&quot;;WIN32;NDEBUG;_CONSOLE;strcasecmp=stricmp"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
