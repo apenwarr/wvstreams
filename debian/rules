@@ -25,7 +25,7 @@ configure-stamp:
         # Add here commands to configure the package.
         # There is no configuration necessary to build WvStreams
 	./configure --prefix=/usr --disable-debug --disable-verbose \
-		    --with-qt --with-vorbis --with-speex \
+		    --with-qt --with-vorbis --with-speex --with-openslp \
 		    --with-fam --with-fftw
 	touch configure-stamp
 
