@@ -30,7 +30,8 @@ WvString WvIPFirewall::command(const char *cmd, const WvIPPortAddr &addr)
     WvIPAddr ad = addr, none;
     
     return WvString("ipchains %s input -j ACCEPT -p tcp -s %s %s -d 0/0 -b",
-		    cmd, ad == none ? "0/0" : (WvString)ad, addr.port);
+		    cmd, ad == none ? WvString("0/0") : (WvString)ad,
+		    addr.port);
 }
 
 
@@ -38,7 +39,7 @@ void WvIPFirewall::add(const WvIPPortAddr &addr)
 {
     addrs.append(new WvIPPortAddr(addr), true);
     WvString s(command("-I", addr));
-    if (enable) system(s.str);
+    if (enable) system(s);
 }
 
 
@@ -46,7 +47,7 @@ void WvIPFirewall::add(const WvIPPortAddr &addr)
 void WvIPFirewall::del(const WvIPPortAddr &addr)
 {
     WvString s(command("-D", addr));
-    if (enable) system(s.str);
+    if (enable) system(s);
 }
 
 

@@ -179,13 +179,13 @@ WvEncap WvStringAddr::encap() const
 
 const unsigned char *WvStringAddr::rawdata() const
 {
-    return (const unsigned char *)addr.str;
+    return (const unsigned char *)(char *)addr;
 }
 
 
 size_t WvStringAddr::rawdata_len() const
 {
-    return strlen(addr.str);
+    return strlen(addr);
 }
 
 
@@ -193,7 +193,7 @@ sockaddr_bin *WvStringAddr::sockaddr() const
 {
     sockaddr_bin *sa = new sockaddr_bin;
     memset(sa, 0, sizeof(*sa));
-    strncpy(sa->sa_data, addr.str, sizeof(sa->sa_data));
+    strncpy(sa->sa_data, addr, sizeof(sa->sa_data));
     return sa;
 }
 
@@ -292,7 +292,7 @@ size_t WvEtherAddr::sockaddr_len() const
 WvString WvARCnetAddr::printable() const
 {
     WvString s("  ");
-    sprintf(s.str, "%02X", binaddr);
+    sprintf(s, "%02X", binaddr);
     return s;
 }
 

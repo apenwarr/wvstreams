@@ -107,8 +107,8 @@ const char *WvStream::errstr() const
 {
     if (errnum == -1)
     {
-	assert(errstring.str);
-	return errstring.str;
+	assert(errstring);
+	return errstring;
     }
     else
 	return strerror(errnum);
@@ -338,7 +338,7 @@ bool WvFile::open(const WvString &filename, int mode, int create_mode)
 {
     if (fd >= 0)
 	close();
-    fd = ::open(filename.str, mode | O_NONBLOCK, create_mode);
+    fd = ::open(filename, mode | O_NONBLOCK, create_mode);
     if (fd < 0)
     {
 	seterr(errno);

@@ -149,14 +149,14 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
 	host->loop = new WvLoopback();
 #define SKIP_FORK_FOR_DEBUGGING 0 // this does NOT work on a real weaver!!
 #if SKIP_FORK_FOR_DEBUGGING
-	namelookup(name.str, host->loop);
+	namelookup(name, host->loop);
 #else
 	host->pid = fork();
 	
 	if (!host->pid) // child process
 	{
 	    host->loop->noread();
-	    namelookup(name.str, host->loop);
+	    namelookup(name, host->loop);
 	    _exit(1);
 	}
 	host->loop->nowrite();

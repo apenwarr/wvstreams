@@ -119,7 +119,7 @@ size_t WvProtoStream::list_to_array(TokenList *tl, Token **array)
     for (count = 0, i.rewind(); i.next(); count++)
     {
 	Token &t = *i.data();
-	(*array)[count].fill((unsigned char *)t.data.str, t.length);
+	(*array)[count].fill((unsigned char *)(char *)t.data, t.length);
     }
     
     delete tl;
@@ -163,8 +163,8 @@ int WvProtoStream::tokanal(const Token &t, char **lookup,
     
     for (i = lookup; *i; i++)
     {
-	if ( (!case_sensitive && !strcasecmp(t.data.str, *i))
-	  || ( case_sensitive && !strcmp(t.data.str, *i)) )
+	if ( (!case_sensitive && !strcasecmp(t.data, *i))
+	  || ( case_sensitive && !strcmp(t.data, *i)) )
 	    return i - lookup;
     }
     
@@ -221,8 +221,8 @@ void WvProtoStream::Token::fill(const unsigned char *_data,
     length = _length;
     
     data.setsize(length + 1);
-    memcpy(data.str, _data, length);
-    data.str[length] = 0;
+    memcpy(data, _data, length);
+    data[length] = 0;
 }
 
 

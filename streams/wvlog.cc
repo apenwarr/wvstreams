@@ -121,7 +121,7 @@ WvLogRcvBase::~WvLogRcvBase()
 
 const char *WvLogRcvBase::appname(const WvLog *log) const
 {
-    return log->app.str;
+    return log->app;
 }
 
 
@@ -148,13 +148,13 @@ void WvLogRcv::_make_prefix()
 {
     prefix = WvString("%s<%s>: ",
 		      appname(last_source), loglevels[last_level]);
-    prelen = strlen(prefix.str);
+    prelen = strlen(prefix);
 }
 
 
 void WvLogRcv::_begin_line()
 {
-    mid_line(prefix.str, prelen);
+    mid_line(prefix, prelen);
 }
 
 

@@ -34,11 +34,11 @@ WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
 {
     char *cptr;
     
-    cptr = strchr(hostname.str, ':');
+    cptr = strchr(hostname, ':');
     if (!cptr)
-	cptr = strchr(hostname.str, '\t');
+	cptr = strchr(hostname, '\t');
     if (!cptr)
-	cptr = strchr(hostname.str, ' ');
+	cptr = strchr(hostname, ' ');
     if (cptr)
     {
 	*cptr++ = 0;
@@ -47,7 +47,7 @@ WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
     
     resolved = connected = false;
     
-    dns.findaddr(0, hostname.str, NULL);
+    dns.findaddr(0, hostname, NULL);
     if (_port)
 	remaddr.port = _port;
 }
@@ -82,7 +82,7 @@ void WvTCPConn::do_connect()
 void WvTCPConn::check_resolver()
 {
     const WvIPAddr *ipr;
-    int dnsres = dns.findaddr(0, hostname.str, &ipr);
+    int dnsres = dns.findaddr(0, hostname, &ipr);
     
     if (dnsres == 0)
     {

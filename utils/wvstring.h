@@ -9,8 +9,8 @@
  * It does the one thing really missing from char* strings, that is,
  * dynamic buffer management.
  * 
- * The 'str' member is the actual (char*) string.  Modify it at will.  You
- * can pass a 'maxlen' parameter to the constructor to make the 'str' buffer
+ * The '_st' member is the actual (char*) string.  Modify it at will.  You
+ * can pass a 'maxlen' parameter to the constructor to make the '_st' buffer
  * larger than it initially needs to be.
  */
 #ifndef __WVSTRING_H
@@ -46,35 +46,35 @@
 
 class WvString
 {
-    void fillme(const char *_str)
+    void fillme(const char *__st)
     { 
-	if (_str == NULL) { str = NULL; return; }
-	str = new char[strlen(_str) + WVSTRING_EXTRA];
-	strcpy(str, _str); 
+	if (__st == NULL) { _st = NULL; return; }
+	_st = new char[strlen(__st) + WVSTRING_EXTRA];
+	strcpy(_st, __st); 
     }
 
-    // when this is called, we assume output.str == NULL; it will be filled.
+    // when this is called, we assume output._st == NULL; it will be filled.
     static void do_format(WvString &output, char *format, const WvString **a);
 
 public:
-    char *str;
+    char *_st;
 
     // just an empty string
     static const WvString wv_null;
-    
-    WvString()      // fill blank strings ASAP by operator= or setsize()
-        { str = NULL; }
-    void setsize(size_t i)
-        { if (str) delete[] str; str = new char[i]; }
-    WvString(const WvString &s) // Copy constructor
-        { fillme(s.str); }
-    WvString(const char *_str)
-        { fillme(_str); }
-    WvString(int i) // auto-render int 'i' into a string
-        { str = new char[16]; snprintf(str, 16, "%d", i); }
 
-    // Now, you are probably thinking to yourself, "Boy, does this ever look
-    // ridiculous."  And indeed it does.  However, it is completely type-safe
+    WvString()      // fill blank strings ASAP by operator= or setsize()
+        { _st = NULL; }
+    void setsize(size_t i)
+        { if (_st) delete[] _st; _st = new char[i]; }
+    WvString(const WvString &s) // Copy constructor
+        { fillme(s._st); }
+    WvString(const char *__st)
+        { fillme(__st); }
+    WvString(int i) // auto-render int 'i' into a string
+        { _st = new char[16]; snprintf(_st, 16, "%d", i); }
+
+    // Now, you are probably thinking to yourself: Boy, does this ever look
+    // ridiculous.  And indeed it does.  However, it is completely type-safe
     // and when inline functions are enabled, it reduces automatically to its
     // minimum possible implementation.  (ie. all extra comparisons with
     // wv_null go away if the parameter really _is_ wv_null,
@@ -112,43 +112,75 @@ public:
 	    if (&__wvs_a18 != &wv_null) x[18] = &__wvs_a18;
 	    if (&__wvs_a19 != &wv_null) x[19] = &__wvs_a19;
 	    
-	    str = NULL;
-	    do_format(*this, __wvs_format.str, x);
+	    _st = NULL;
+	    do_format(*this, __wvs_format._st, x);
 	}
-    
-    
+
     ~WvString()
-        { if (str) delete[] str; }
+        { if (_st) delete[] _st; }
 
     // we need to be able to concatenate strings
     WvString operator+(const WvString &s2) const
     {
 	WvString e;
-	e.str = new char[strlen(str) + strlen(s2.str) + WVSTRING_EXTRA];
-	strcpy(e.str, str);
-	strcat(e.str, s2.str);
+	e._st = new char[strlen(_st) + strlen(s2._st) + WVSTRING_EXTRA];
+	strcpy(e._st, _st);
+	strcat(e._st, s2._st);
 	return e;
     }
     
     WvString& operator= (const WvString &s2)
     {
-	if (str) delete[] str;
-	if (s2.str != str)
-	    fillme(s2.str);
+	if (_st) delete[] _st;
+	if (s2._st != _st)
+	    fillme(s2._st);
 	else
-	    str = NULL;
+	    _st = NULL;
 	return *this;
     }
 
     // string comparison
     bool operator== (const WvString &s2) const
-	{ return (str==s2.str) || (str && s2.str && !strcmp(str, s2.str)); }
+	{ return (_st==s2._st) || (_st && s2._st && !strcmp(_st, s2._st)); }
     bool operator!= (const WvString &s2) const
-	{ return (str!=s2.str) && str && s2.str && strcmp(str, s2.str); }
+	{ return (_st!=s2._st) && (!_st || !s2._st || strcmp(_st, s2._st)); }
+
+    bool operator== (const char *s2) const
+        { return (_st==s2) || (_st && s2 && !strcmp(_st, s2)); }
+    bool operator!= (const char *s2) const
+	{ return (_st!=s2) && (!_st || !s2 || strcmp(_st, s2)); }
     
-    // auto-convert WvString to int, when needed.
-    operator int() const
-        { return atoi(str); }
+    // not operator is 'true' if string is empty
+    bool operator! () const
+        { return !_st || !_st[0]; }
+
+    // pointer arithmetic
+    bool operator+ (int i) const
+        { return _st + i; }
+    bool operator- (int i) const
+        { return _st - i; }
+    
+    // auto-convert WvString to (char *), when needed.
+    operator char*() const
+        { return _st; }
+    
+    // used to convert WvString to int, when needed.
+    // we no longer provide a typecast, because it causes annoyance.
+    int num() const
+        { return atoi(_st); }
 };
+
+
+inline bool operator== (const char *s1, const WvString &s2)
+{
+    return s2 == s1;
+}
+
+
+inline bool operator!= (const char *s1, const WvString &s2)
+{
+    return s2 != s1;
+}
+
 
 #endif // __WVSTRING_H

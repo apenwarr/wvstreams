@@ -85,7 +85,7 @@ public:
     
     // print a preformatted WvString to the stream
     size_t write(const WvString &s)
-        { return write(s.str, strlen(s.str)); }
+        { return write(s, strlen(s)); }
 
     // add appropriate fd to rfd, wfd, and efd sets if this stream can be
     // group-select()ed; returns true if the stream is known to _already_

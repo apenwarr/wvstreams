@@ -43,7 +43,7 @@ static int check_for_bool_string(const char *s)
 int WvConf::get(const WvString &section, const WvString &entry, int def_val)
 {
     WvString def_str(def_val);
-    return check_for_bool_string(get(section, entry, def_str.str));
+    return check_for_bool_string(get(section, entry, def_str));
 }
 
 
@@ -53,7 +53,7 @@ int WvConf::fuzzy_get(WvStringList &section, WvStringList &entry,
 		      int def_val)
 {
     WvString def_str(def_val);
-    return check_for_bool_string(fuzzy_get(section, entry, def_str.str));
+    return check_for_bool_string(fuzzy_get(section, entry, def_str));
 }
 
 
@@ -63,14 +63,14 @@ int WvConf::fuzzy_get(WvStringList &section, const WvString &entry,
 		      int def_val)
 {
     WvString def_str(def_val);
-    return check_for_bool_string(fuzzy_get(section, entry, def_str.str));
+    return check_for_bool_string(fuzzy_get(section, entry, def_str));
 }
 
 
 void WvConf::set(const WvString &section, const WvString &entry, int value)
 {
     WvString def_str(value);
-    set(section, entry, def_str.str);
+    set(section, entry, def_str);
 }
 
  
@@ -81,7 +81,7 @@ void WvConf::load_file()
     char *from_file;
     WvConfigSection *sect = &globalsection;
 
-    file.open(filename.str, O_RDONLY);
+    file.open(filename, O_RDONLY);
     if (!file.isok())
     {
 	// Could not open for read.
@@ -142,7 +142,7 @@ const char *WvConf::get(const WvString &section, const WvString &entry,
     if (!e)
 	return globalsection.get(entry, def_val);
     else
-	return e->value.str;
+	return e->value;
 }
 
 
@@ -159,7 +159,7 @@ const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
 	for (i2.rewind(); i2.next();)
 	{
 	    WvConfigEntry *e = (*s)[*i.data()];
-	    if (e) return e->value.str;
+	    if (e) return e->value;
 	}
     }
     
@@ -178,7 +178,7 @@ const char *WvConf::fuzzy_get(WvStringList &sections, const WvString &entry,
 	if (!s) continue;
 	
 	WvConfigEntry *e = (*s)[entry];
-	if (e) return e->value.str;
+	if (e) return e->value;
     }
 
     return def_val;
@@ -212,7 +212,7 @@ WvConfigSection *WvConf::operator[] (const WvString &section)
     // otherwise, search the whole list.
     for (i.rewind(); i.next(); )
     {
-	if (strcasecmp(i.data()->name.str, section.str) == 0)
+	if (strcasecmp(i.data()->name, section) == 0)
 	    return i.data();
     }
 
@@ -265,7 +265,7 @@ void WvConf::flush()
 
     if (dirty && !error)
     {
-	fp = fopen(filename.str, "w");
+	fp = fopen(filename, "w");
 	if (!fp)
 	{
 	    log(WvLog::Error, "Can't write to config file: %s\n",
@@ -280,7 +280,7 @@ void WvConf::flush()
 	for (i.rewind(); i.next();)
 	{
 	    WvConfigSection & sect = *i.data();
-	    fprintf(fp, "\n[%s]\n", sect.name.str);
+	    fprintf(fp, "\n[%s]\n", (char *)sect.name);
 	    sect.dump(fp);
 	}
 

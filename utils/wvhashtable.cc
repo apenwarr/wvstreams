@@ -25,7 +25,7 @@ unsigned WvHash(const char *s)
 
 unsigned WvHash(const WvString &s)
 {
-    return s.str ? WvHash(s.str) : 0;
+    return !s ? 0 : WvHash((char *)s);
 }
 
 

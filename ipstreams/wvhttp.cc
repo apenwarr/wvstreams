@@ -21,14 +21,14 @@ WvURL::WvURL(const WvString &url) : err("No error")
     addr = NULL;
     resolving = true;
     
-    if (strncmp(url.str, "http://", 7)) // NOT equal
+    if (strncmp(url, "http://", 7)) // NOT equal
     {
 	err = "WvURL can only handle HTTP URLs.";
 	return;
     }
-    hostname = url.str + 7;
+    hostname = (char *)url + 7;
     
-    cptr = strchr(hostname.str, '/');
+    cptr = strchr(hostname, '/');
     if (!cptr) // no path given
 	file = "/";
     else
@@ -37,7 +37,7 @@ WvURL::WvURL(const WvString &url) : err("No error")
 	*cptr = 0;
     }
     
-    cptr = strchr(hostname.str, ':');
+    cptr = strchr(hostname, ':');
     if (!cptr)
 	port = 80;
     else
@@ -91,7 +91,7 @@ WvURL::operator WvString () const
     WvString portstr("");
     if (port && port != 80)
 	portstr = WvString(":%s", port);
-    if (hostname.str)
+    if (hostname)
 	return WvString("http://%s%s%s", hostname, portstr, file);
     else if (addr)
 	return WvString("http://%s%s%s", *addr, portstr, file);
@@ -150,7 +150,7 @@ const char *WvHTTPStream::errstr() const
     if (http)
 	return WvStreamClone::errstr();
     else if (!url.isok())
-	return url.errstr().str;
+	return url.errstr();
     else
 	return "Unknown error!";
 }

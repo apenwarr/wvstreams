@@ -15,7 +15,7 @@ WvSyslog::WvSyslog(const WvString &_prefix, bool _include_appname,
 	: WvLogRcv(_max_level), syslog_prefix(_prefix)
 {
     include_appname = _include_appname;
-    openlog(syslog_prefix.str, 0, LOG_DAEMON);
+    openlog(syslog_prefix, 0, LOG_DAEMON);
 }
 
 
@@ -29,7 +29,7 @@ WvSyslog::~WvSyslog()
 void WvSyslog::_begin_line()
 {
     if (include_appname)
-	current.put(prefix.str, prelen);
+	current.put(prefix, prelen);
 }
 
 

@@ -29,7 +29,7 @@ WvConfigEntry *WvConfigSection::operator[] (const WvString &ename)
 
     for (i.rewind(); i.next();)
     {
-	if (strcasecmp(i.data()->name.str, ename.str) == 0)
+	if (strcasecmp(i.data()->name, ename) == 0)
 	    return i.data();
     }
 
@@ -40,7 +40,7 @@ WvConfigEntry *WvConfigSection::operator[] (const WvString &ename)
 const char *WvConfigSection::get(const WvString &entry, const char *def_val)
 {
     WvConfigEntry *e = (*this)[entry];
-    return e ? e->value.str : def_val;
+    return e ? (char *)e->value : def_val;
 }
 
 
@@ -49,7 +49,7 @@ void WvConfigSection::set(const WvString &entry, const WvString &value)
     WvConfigEntry *e = (*this)[entry];
     
     // need to delete the entry?
-    if (!value.str || !value.str[0])
+    if (!value || !value[0])
     {
 	if (e) unlink(e);
 	return;
@@ -70,9 +70,9 @@ void WvConfigSection::dump(FILE *fp)
     for (i.rewind(); i.next(); )
     {
 	WvConfigEntry &e = *i.data();
-	if (e.value.str && e.value.str[0])
-	    fprintf(fp, "%s = %s\n", e.name.str, e.value.str);
+	if (e.value && e.value[0])
+	    fprintf(fp, "%s = %s\n", (char *)e.name, (char *)e.value);
 	else
-	    fprintf(fp, "%s\n", e.name.str);
+	    fprintf(fp, "%s\n", (char *)e.name);
     }
 }

@@ -22,7 +22,7 @@ WvFileWatcher::WvFileWatcher(const char *_filename, int _mode)
     once_ok = WvFile::isok();
     openmode = _mode;
     fpos = 0;
-    if (stat(filename.str, &last_st) && WvFile::isok())
+    if (stat(filename, &last_st) && WvFile::isok())
     {
 	errnum = errno;
 	close();
@@ -43,7 +43,7 @@ bool WvFileWatcher::make_ok(bool retry)
     // time, or we cannot stat the file, close it and start over.
     struct stat st;
     if (fd >= 0 
-	&& (stat(filename.str, &st)
+	&& (stat(filename, &st)
 	    || st.st_ino != last_st.st_ino || st.st_size < last_st.st_size))
     {
 	close();
@@ -53,13 +53,13 @@ bool WvFileWatcher::make_ok(bool retry)
     while (!WvFile::isok())
     {
 	fpos = 0;
-	if (!open(filename.str, openmode) && retry)
+	if (!open(filename, openmode) && retry)
 	    sleep(1);
 	if (!retry && !WvFile::isok())
 	    return false; // no such luck
     }
 
-    stat(filename.str, &last_st);
+    stat(filename, &last_st);
     return true;
 }
 

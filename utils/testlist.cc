@@ -18,7 +18,7 @@ int main()
     l.append(&z, false);
 
     for (i.rewind(); i.next();)
-	printf("Thingy: %s\n", i.data()->str);
+	printf("Thingy: %s\n", (char *)*i.data());
 
     int a=5, b=6;
     intList il;

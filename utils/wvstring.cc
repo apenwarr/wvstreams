@@ -90,9 +90,9 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 
 	if (*iptr++ == 's')
 	{
-	    if (!*aptr || !(*aptr)->str)
+	    if (!*aptr || !(char *)**aptr)
 		*aptr = &blank;
-	    ladd = _max(abs(justify), strlen((*aptr)->str));
+	    ladd = _max(abs(justify), strlen(**aptr));
 	    if (maxlen && maxlen < ladd)
 		ladd = maxlen;
 	    total += ladd;
@@ -100,10 +100,10 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	}
     }
     
-    output.str = new char[total+1];
+    output.setsize(total + 1);
     
     iptr = format;
-    optr = output.str;
+    optr = output;
     aptr = a;
     while (*iptr)
     {
@@ -122,7 +122,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 	}
 	if (*iptr++ == 's')
 	{
-	    aplen = strlen((*aptr)->str);
+	    aplen = strlen(**aptr);
 	    if (maxlen && maxlen < aplen)
 		aplen = maxlen;
 	
@@ -132,7 +132,7 @@ void WvString::do_format(WvString &output, char *format, const WvString **a)
 		optr += justify-aplen;
 	    }
 	
-	    strncpy(optr, (*aptr)->str, aplen);
+	    strncpy(optr, **aptr, aplen);
 	    optr += aplen;
 	
 	    if (justify < 0 && -justify > aplen)

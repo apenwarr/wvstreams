@@ -37,7 +37,7 @@ int WvInterface::getinfo(struct ifreq *ifr, int ioctl_num)
     int sock, retval;
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    strncpy(ifr->ifr_name, name.str, IFNAMSIZ-1);
+    strncpy(ifr->ifr_name, name, IFNAMSIZ-1);
     ifr->ifr_name[IFNAMSIZ-1] = 0;
     ifr->ifr_addr.sa_family = AF_INET;
     
@@ -116,7 +116,7 @@ int WvInterface::getflags()
     int sock, errnum;
     
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    strncpy(ifr.ifr_name, name.str, IFNAMSIZ-1);
+    strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
     ifr.ifr_name[IFNAMSIZ-1] = 0;
 
     if (ioctl(sock, SIOCGIFFLAGS, &ifr))
@@ -139,7 +139,7 @@ int WvInterface::setflags(int clear, int set)
     int sock, errnum;
     
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    strncpy(ifr.ifr_name, name.str, IFNAMSIZ-1);
+    strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
     ifr.ifr_name[IFNAMSIZ-1] = 0;
 
     if (ioctl(sock, SIOCGIFFLAGS, &ifr))
@@ -216,7 +216,7 @@ int WvInterface::setipaddr(const WvIPNet &addr)
 	err(WvLog::Info, "Changing %s address to %s\n", name, addr);
     
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    strncpy(ifr.ifr_name, name.str, IFNAMSIZ-1);
+    strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
     ifr.ifr_name[IFNAMSIZ-1] = 0;
     ifr.ifr_addr.sa_family = AF_INET;
 
@@ -280,7 +280,7 @@ void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
     memset(rte, 0, sizeof(struct rtentry));
     rte->rt_metric = metric + 1;
     
-    strncpy(ifname, name.str, 17);
+    strncpy(ifname, name, 17);
     ifname[17-1] = 0;
     rte->rt_dev = ifname;
 
@@ -393,7 +393,7 @@ int WvInterface::addarp(const WvIPNet &dest, const WvAddr &hw, bool proxy)
     memcpy(&ar.arp_netmask, sa, len);
     delete sa;
     
-    strncpy(ar.arp_dev, name.str, sizeof(ar.arp_dev));
+    strncpy(ar.arp_dev, name, sizeof(ar.arp_dev));
     
     ar.arp_flags = (ATF_COM | ATF_PERM
 		    | (proxy ? ATF_PUBL : 0)
