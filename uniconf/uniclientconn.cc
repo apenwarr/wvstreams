@@ -93,7 +93,7 @@ WvString UniClientConn::readmsg()
         }
         else
         {
-            if (!isok())
+            if (!WvStreamClone::isok())
             {
                 // possibly left some incomplete command behind
                 msgbuf.zap();
