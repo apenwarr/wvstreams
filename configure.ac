@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(wvstreams, 3.73, wvstreams-dev@nit.ca)
+AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.15.2.3 2003/04/10 01:15:32 drheld Exp $)
+AC_REVISION($Id: configure.ac,v 1.15.2.3.2.1 2003/07/07 20:53:06 jnc Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
