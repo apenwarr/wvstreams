@@ -27,6 +27,13 @@ void WvConf::setbool(void *userdata,
     
     *(bool *)userdata = true;
 }
+
+void WvConf::addname(void *userdata,
+		     WvStringParm sect, WvStringParm ent,
+		     WvStringParm oldval, WvStringParm newval)
+{
+    (*(WvStringList *)userdata).append(new WvString(ent), false);
+}
 		     
 
 

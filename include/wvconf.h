@@ -146,6 +146,15 @@ public:
     void setbool(void *userdata,
 		 WvStringParm section, WvStringParm entry,
 		 WvStringParm oldval, WvStringParm newval);
+
+    // generic callback for adding a name to a list when changing stuff
+    void addname(void *userdata,
+		 WvStringParm section, WvStringParm entry,
+		 WvStringParm oldval, WvStringParm newval);
+
+    void add_addname(WvStringList *list, WvStringParm section, WvStringParm entry)
+	{ add_callback(wvcallback(WvConfCallback, *this, WvConf::addname),
+		       list, section, entry); }
     
     void add_setbool(bool *b, WvStringParm section, WvStringParm entry)
         { add_callback(wvcallback(WvConfCallback, *this, WvConf::setbool),
