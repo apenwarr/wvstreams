@@ -73,7 +73,14 @@ int WvBdbHashBase::add(const datum &key, const datum &data, bool replace)
 int WvBdbHashBase::remove(const datum &key)
 {
     assert(isok());
-    return dbf->del(dbf, (DBT *)&key, 0);
+    datum newkey, data;
+    newkey = key;
+    
+    int ret = dbf->seq(dbf, (DBT *)&newkey, (DBT *)&data, R_CURSOR);
+    if (!ret)
+	return dbf->del(dbf, (DBT *)&newkey, R_CURSOR);
+    else
+	return ret;
 }
 
 
@@ -99,7 +106,7 @@ void WvBdbHashBase::zap()
     assert(isok());
     datum key, value;
     while (!dbf->seq(dbf, (DBT *)&key, (DBT *)&value, R_FIRST))
-	dbf->del(dbf, (DBT *)&key, 0);
+	dbf->del(dbf, (DBT *)&key, R_CURSOR);
 }
 
 
