@@ -1,3 +1,11 @@
+/** \file
+ * A WvFile example.
+ */
+
+/** \example wvfileex.cc
+ * Some text about this example...
+ */
+
 #include <wvfile.h>
 
 int main()

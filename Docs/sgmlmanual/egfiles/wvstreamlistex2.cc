@@ -1,3 +1,10 @@
+/** \file 
+ * A WvStream example.
+ */
+/** \example wvstringlistex2.cc
+ * Some text about this example...
+ */
+
 #include <wvstreamlist.h>
 #include <wvpipe.h>
 

@@ -1,3 +1,10 @@
+/** \file
+ * A WvStream example.
+ */
+/** \example wvstreamex5.cc
+ * Some text about this example...
+ */
+
 #include <wvstream.h>
 
 int main()

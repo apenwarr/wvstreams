@@ -1,9 +1,15 @@
+/** \file 
+ * A WvStream example.
+ */
+
+/*! \example wvstreamex.cc
+ * Some documentation for WvStreams...
+ */
+
 #include <wvstream.h>
 
 int main()
 {
-    WvStream wvstdin(0), wvstdout(1);
-    
-    while (wvstdin.isok())
-	wvstdout.print("You said: %s\n", wvstdin.getline(-1));
+    while (wvin->isok())
+	wvout->print("You said: %s\n", wvin->getline(-1));
 }

@@ -1,3 +1,10 @@
+/** \file
+ * A WvPipe example.
+ */
+/** \example wvstringlistex.cc
+ * Some text about this example...
+ */
+
 #include <wvpipe.h>
 
 int X = -1;

@@ -1,3 +1,10 @@
+/** \file
+ * A WvStringList example.
+ */
+/** \example wvlistex.cc
+ * Some text about this example...
+ */
+
 #include "wvstring.h"
 #include "wvlinklist.h"
    
