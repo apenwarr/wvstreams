@@ -182,6 +182,8 @@ bool UniIniGen::refresh()
     }
     unhold_delta();
 
+    delete newgen;
+
     /** done **/
     return true;
 }
