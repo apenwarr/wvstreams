@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.40.2.3 2003/11/30 02:04:45 apenwarr Exp $)
+AC_REVISION($Id: configure.ac,v 1.40.2.4 2003/12/01 20:41:33 mrwise Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -262,6 +262,12 @@ if test "$with_vorbis" != "no"; then
     AC_CHECK_LIB(vorbisenc, vorbis_encode_init,, [with_vorbis=no])
 fi
 
+# zlib
+if test "$with_zlib" != "no"; then
+    AC_CHECK_HEADERS(zlib.h,, [with_zlib=no])
+    AC_CHECK_LIB(z, compress,, [with_zlib=no])
+fi
+
 # xplc
 if test "$with_xplc" != "no"; then
     test "$with_xplc" = yes && with_xplc=
@@ -279,11 +285,6 @@ if test "$with_xplc" != "no"; then
     fi
 fi
 
-# zlib
-if test "$with_zlib" != "no"; then
-    AC_CHECK_HEADERS(zlib.h,, [with_zlib=no])
-    AC_CHECK_LIB(z, compress,, [with_zlib=no])
-fi
 
 # check for missing packages
 missing_required=
