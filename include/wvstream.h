@@ -54,6 +54,7 @@ public:
 	int max_fd;                  // largest fd in read, write, or except
 	time_t msec_timeout;         // max time to wait, or -1 for forever
 	bool inherit_request;        // 'wants' values passed to child streams
+	bool global_sure;            // should we run the globalstream callback
     };
     
     IWvStream();
@@ -361,8 +362,7 @@ public:
      * object is now ready.  Usually this is done by checking for this object
      * in the read, write, and except lists in the SelectInfo structure.  If
      * you want to do it in some other way, you should usually do it in
-     * pre_select() instead.  (post_select() _only_ gets called if ::select()
-     * returned true for _some_ stream or another.)
+     * pre_select() instead.
      * 
      * You may also want to do extra maintenance functions here; for example,
      * the standard WvStream::post_select tries to flush outbuf if it's

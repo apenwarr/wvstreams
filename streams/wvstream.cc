@@ -626,6 +626,7 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     si.max_fd = -1;
     si.msec_timeout = msec_timeout;
     si.inherit_request = ! forceable;
+    si.global_sure = false;
 
     if (!isok()) return false;
 
@@ -634,10 +635,10 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	sure = sure || s->pre_select(si);
+	si.global_sure = s->pre_select(si);
 	globalstream = s;
     }
-    if (sure)
+    if (sure || si.global_sure)
         si.msec_timeout = 0;
     return sure;
 }
@@ -676,7 +677,7 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	sure = sure || s->post_select(si);
+	si.global_sure = s->post_select(si) || si.global_sure;
 	globalstream = s;
     }
     return sure;
@@ -690,7 +691,8 @@ bool WvStream::_select(time_t msec_timeout,
     bool sure = _build_selectinfo(si, msec_timeout,
 				  readable, writable, isexcept, forceable);
     
-    if (!isok()) return false;
+    if (!isok())
+	return false;
     
     // the eternal question: if 'sure' is true already, do we need to do the
     // rest of this stuff?  If we do, it might increase fairness a bit, but
@@ -701,12 +703,10 @@ bool WvStream::_select(time_t msec_timeout,
     // sound *too* bad, so let's go for the fairness.
 
     int sel = _do_select(si);
-    if (sel > 0)
+    if (sel >= 0)
         sure = _process_selectinfo(si, forceable) || sure; // note the order
-    if (sure && globalstream && forceable)
+    if (si.global_sure && globalstream && forceable)
 	globalstream->callback();
-    /* FIXME: we should NOT return true if it was the globalstream
-     * that made 'sure' true. See bug 2145. */
     return sure;
 }
 
