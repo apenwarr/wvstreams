@@ -20,14 +20,12 @@
 
 
 #ifdef __WVCONFEMU_H
-#ifdef USE_WVCONFEMU
 #warning "disabling wvconfemu transparent emulation"
 #undef WvConf
 #undef WvConfigSection
 #undef WvConfigSectionList
 #undef WvConfigEntry
 #undef WvConfigEntryList
-#endif
 #endif
 
 

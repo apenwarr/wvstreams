@@ -4,9 +4,6 @@
  *
  * Basic WvConf emulation layer for UniConf.
  */
-#ifndef USE_WVCONFEMU
-#define USE_WVCONFEMU
-#endif
 #include "wvconfemu.h"
 #include "wvstringtable.h"
 #include "wvfile.h"

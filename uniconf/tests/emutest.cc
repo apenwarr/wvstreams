@@ -5,9 +5,7 @@
  * Test program for the WvConf emulation in UniConf.
  */
 
-#ifndef USE_WVCONFEMU
-#define USE_WVCONFEMU
-#endif
+#define WVCONFEMU
 
 #include "uniconfroot.h"
 #include "wvconfemu.h"
@@ -17,7 +15,7 @@ int main()
 {
     bool c1 = false, c2 = false, c3 = false;
     WvLog log("emutest", WvLog::Info);
-#ifdef USE_WVCONFEMU
+#ifdef WVCONFEMU
     UniConfRoot uniconf("ini:test2.ini.new");
     WvConf cfg(uniconf);
 #else

@@ -8,12 +8,6 @@
 #define __WVCONFEMU_H
 
 
-#ifndef USE_WVCONFEMU
-
-#include "wvconf.h"
-
-#else
-
 #include "uniconfroot.h"
 #include "wvsorter.h"
 
@@ -219,7 +213,5 @@ public:
     WvIterStuff(WvConfigSectionEmu);
 };
 
-
-#endif /* USE_WVCONFEMU */
 
 #endif // __WVCONFEMU_H
