@@ -6,7 +6,6 @@
  */
 #include "uniconfiter.h"
 
-
 WvLink *UniConf::RecursiveIter::_next()
 { 
     if (i.ptr() && i->generator)

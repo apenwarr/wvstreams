@@ -98,6 +98,7 @@ void UniConfDaemon::dosubtree(WvString key, UniConfDaemonConn *s)
 {
     UniConf *nerf = &mainconf[key];
     WvString send("%s %s ", UniConfConn::UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
+    update_callbacks(key, s, false, 1);
     
     dook(UniConfConn::UNICONF_SUBTREE, key, s);
     
@@ -109,7 +110,6 @@ void UniConfDaemon::dosubtree(WvString key, UniConfDaemonConn *s)
             send.append("{%s %s} ", wvtcl_escape(i->name),
                     wvtcl_escape(*i));
             
-            update_callbacks(key, s);
        }
     }
    
@@ -124,6 +124,7 @@ void UniConfDaemon::dorecursivesubtree(WvString key, UniConfDaemonConn *s)
     WvString send("%s %s ", UniConfConn::UNICONF_SUBTREE_RETURN, wvtcl_escape(key));
     
     dook(UniConfConn::UNICONF_RECURSIVESUBTREE, key, s);
+    update_callbacks(key, s, false, 2);
     
     if (nerf)
     {
@@ -132,8 +133,6 @@ void UniConfDaemon::dorecursivesubtree(WvString key, UniConfDaemonConn *s)
         {
             send.append("{%s %s} ", wvtcl_escape(i->full_key(nerf)),
                     wvtcl_escape(*i));
-            
-            update_callbacks(key, s);
         }
     }
     send.append("\n");
@@ -146,6 +145,7 @@ void UniConfDaemon::doset(WvString key, WvConstStringBuffer &fromline, UniConfDa
     WvString newvalue = wvtcl_getword(fromline);
     mainconf[key] = wvtcl_unescape(newvalue);
     keymodified = true;
+    modifiedkeys.append(new WvString(key), true);
     dook(UniConfConn::UNICONF_SET, key, s);
 }
 
@@ -156,7 +156,7 @@ void UniConfDaemon::doset(WvString key, WvConstStringBuffer &fromline, UniConfDa
 /*
  * Callback related methods for UniConfKeys begin here
  */
-void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
+void UniConfDaemon::myvaluechanged(void *userdata, UniConf &conf)
 {
     // All the following is irrelevant if we have a null pointer, so check
     // it first.
@@ -170,24 +170,136 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
         s->print(create_return_string(keyname));
 }
 
-void UniConfDaemon::update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot)
+void UniConfDaemon::me_or_imm_child_changed(void *userdata, UniConf &conf)
+{
+    // All the following is irrelevant if we have a null pointer, so check
+    // it first.
+    if (!userdata)
+        return;
+
+    UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
+    UniConfKey key = conf.gen_full_key();
+
+    WvString response;
+    if (conf.dirty && conf.notify)
+        response.append(create_return_string(key.printable()));
+
+    WvStringList::Iter i(modifiedkeys);
+    WvStringList::Iter i1(key);
+
+    WvString final_string("/");
+
+    for (i.rewind(); i.next();)
+    {
+        UniConfKey modkey(i());
+        
+        bool match = true;
+       
+        // only have to do the loop if we have a key that's not root. 
+        if (key.printable() != final_string)
+        {
+            WvStringList::Iter i2(modkey);
+            for (i1.rewind(), i2.rewind(); i1.next() && i2.next() && match; )
+            {
+                match = (i1() == i2());
+            }
+            // Ok, we should have ONE link, then a NULL for this key to matter
+            WvLink *temp = i2.next();
+            temp = i2.next();
+            match &= temp == NULL;
+        }
+        else // Make sure we're an IMMEDIATE subchild of /
+        {
+            match = modkey.skip(1).printable() == final_string;
+        }
+
+        if (match && mainconf[i()].notify)
+            response.append(create_return_string(i()));
+            
+    }
+    if (s && s->isok())
+    {
+        s->print(response);
+    }
+}
+
+void UniConfDaemon::me_or_any_child_changed(void *userdata, UniConf &conf)
+{
+    // All the following is irrelevant if we have a null pointer, so check
+    // it first.
+    if (!userdata)
+        return;
+
+    UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
+
+    UniConfKey key = conf.gen_full_key();
+
+    WvString response;
+    if (conf.dirty && conf.notify)
+        response.append(create_return_string(key.printable()));
+
+    WvStringList::Iter i(modifiedkeys);
+    WvStringList::Iter i1(key);
+
+    WvString final_string("/");
+
+    for (i.rewind(); i.next();)
+    {
+        UniConfKey modkey(i());
+        
+        bool match = true;
+       
+        // only have to do the loop if we have a key that's not root. 
+        if (key.printable() != final_string)
+        {
+            WvStringList::Iter i2(modkey);
+            for (i1.rewind(), i2.rewind(); i1.next() && i2.next() && match; )
+            {
+                match = (i1() == i2());
+            }
+        }
+    
+        if (match && mainconf[i()].notify)
+            response.append(create_return_string(i()));
+            
+    }
+
+    if (s->isok())
+        s->print(response);
+}
+
+void UniConfDaemon::update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot, int depth)
 {
     del_callback(key, s);
-    add_callback(key, s, one_shot);
+    add_callback(key, s, one_shot, depth);
 }
 
 void UniConfDaemon::del_callback(WvString key, UniConfDaemonConn *s)
 {
     events.del(wvcallback(UniConfCallback, *this,
-                UniConfDaemon::keychanged), s, key);
-
+                UniConfDaemon::myvaluechanged), s, key);
+    events.del(wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_imm_child_changed), s, key);
+    events.del(wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_any_child_changed), s, key);
 }
 
-void UniConfDaemon::add_callback(WvString key, UniConfDaemonConn *s, bool one_shot)
+void UniConfDaemon::add_callback(WvString key, UniConfDaemonConn *s, bool one_shot, int depth)
 {
-    events.add(wvcallback(UniConfCallback, *this, 
-                UniConfDaemon::keychanged), s, key, one_shot);
-
+    switch (depth)
+    {
+        case 1:
+            events.add(wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_imm_child_changed), s, key, one_shot);
+            break;
+        case 2:
+            events.add(wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_any_child_changed), s, key, one_shot);
+            break;
+        default:
+            events.add(wvcallback(UniConfCallback, *this, 
+                UniConfDaemon::myvaluechanged), s, key, one_shot);
+    }
     // Let the connection track what keys it knows about.
     s->appendkey(new WvString(key));
 }
@@ -311,6 +423,7 @@ void UniConfDaemon::run()
         {
 	    notifier.run();
             keymodified = false;
+            modifiedkeys.zap();
         }
 //        log("There are %s streams in my list.\n", l.count());
     }

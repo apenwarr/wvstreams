@@ -30,10 +30,17 @@ public:
     void doset(WvString key, WvConstStringBuffer &fromline, UniConfDaemonConn *s);
     void dook(const WvString cmd, const WvString key, UniConfDaemonConn *s);
     void registerforchange(WvString key, UniConfDaemonConn *s);
-    void keychanged(void *userdata, UniConf &conf);
-    void update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot=false);
+    void myvaluechanged(void *userdata, UniConf &conf);
+    void me_or_imm_child_changed(void *userdata, UniConf &conf);
+    void me_or_any_child_changed(void *userdata, UniConf &conf);
+
+    // The depth parameter is for:  
+    // 0 - notify me only if my value has changed
+    // 1 - notify me if my value or any of my immediate children have changed
+    // 2 - notify me if my value or any of my children have changed
+    void update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot=false, int depth=0);
     void del_callback(WvString key, UniConfDaemonConn *s);
-    void add_callback(WvString key, UniConfDaemonConn *s, bool one_shot);
+    void add_callback(WvString key, UniConfDaemonConn *s, bool one_shot, int depth);
 
     bool want_to_die;
     WvLog log;
@@ -49,6 +56,8 @@ private:
     void errorcheck(WvStream *s, WvString type);
     
     WvStreamList l;
+    WvStringList modifiedkeys;
+
     static const WvString DEFAULT_CONFIG_FILE;
 };
 
