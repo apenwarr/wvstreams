@@ -21,6 +21,7 @@
 WvSubProc::WvSubProc()
 {
     pid = -1;
+    memlimit = -1;
     running = false;
     estatus = 0;
 }
@@ -46,6 +47,15 @@ int WvSubProc::_startv(const char cmd[], const char * const *argv)
 	// unblock the parent.
 	close(waitfd);
 	
+        // Set memory limit, if applicable
+        if (memlimit > 0)
+        {
+            struct rlimit rlim;
+            rlim.rlim_cur = memlimit * 1024 * 1024;
+            rlim.rlim_max = memlimit * 1024 * 1024;
+            setrlimit(RLIMIT_AS, &rlim);
+        }
+
 	// run the subprocess.
 	execvp(cmd, (char * const *)argv);
 	

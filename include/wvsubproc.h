@@ -47,6 +47,8 @@ public:
     
 private:
     int _startv(const char cmd[], const char * const *argv);
+
+    int memlimit;
     
 public:
     void prepare(const char cmd[], ...);
@@ -71,6 +73,10 @@ public:
 
     // figure out the pid from the /var/run pidfile
     pid_t pidfile_pid();
+
+    /// Sets a limit on the number of megabytes of memory the subprocess will
+    // use
+    void setMemLimit(int megs) { memlimit = megs; }
     
     // send a signal to the subprocess and all its children.
     void kill(int sig);

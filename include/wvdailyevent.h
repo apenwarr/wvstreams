@@ -84,12 +84,14 @@ public:
     void set_hour( int h )
         { configure( h, num_per_day ); }
 
+    /// return the time when the next event will occur
+    time_t next_event() const;
+
 private:
     int     first_hour;
     int     num_per_day;
     bool    need_reset;
-    int     last_hour;
-    int     last_second;
+    time_t  prev;
     
     time_t  not_until;
 };

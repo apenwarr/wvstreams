@@ -477,7 +477,8 @@ void WvConf::save(WvStringParm _filename)
     {
 	log(WvLog::Error, "Can't write to config file %s: %s\n",
 	    _filename, strerror(errno));
-	error = true;
+	if (fp.geterr() != ENOENT)
+	    error = true;
 	return;
     }
 

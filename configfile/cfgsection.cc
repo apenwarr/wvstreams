@@ -27,9 +27,6 @@ WvConfigEntry *WvConfigSection::operator[] (WvStringParm ename)
 {
     Iter i(*this);
 
-    if (!ename)
-	return NULL;
-
     for (i.rewind(); i.next();)
     {
 	if (strcasecmp(i().name, ename) == 0)
@@ -59,7 +56,7 @@ void WvConfigSection::set(WvStringParm entry, WvStringParm value)
 	if (e) unlink(e);
 	return;
     }
-
+    
     // otherwise, add the entry requested
     if (e)
 	e->set(value);
