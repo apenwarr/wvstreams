@@ -23,6 +23,7 @@
 
 class WvEncoderStream : public WvStreamClone
 {
+    bool is_closing;
     WvBuffer readinbuf;
     WvBuffer readoutbuf;
     WvBuffer writeinbuf;
@@ -87,6 +88,15 @@ public:
      */
     bool finish_write();
 
+    /**
+     * Refine isok() semantics for encoders.
+     * Goes false on error or after all data has been read from
+     * the internal buffers and readchain.isfinished().
+     * Note: readchain is finished automatically when cloned
+     *       stream encounters an error
+     */
+    virtual bool isok() const;
+
 protected:
     bool pre_select(SelectInfo &si);
     virtual size_t uread(void *buf, size_t size);
@@ -94,7 +104,8 @@ protected:
     virtual void flush_internal(time_t msec_timeout);
 
 private:
-    void checkisok();
+    void checkreadisok();
+    void checkwriteisok();
     
     // pulls a chunk of specified size from the underlying stream
     void pull(size_t size);
