@@ -53,7 +53,7 @@ bool check(WvStringParm test, int value, int expected)
 bool testgetabool(const UniConf &mainconf, WvStringParm key, bool expected)
 {
     UniConf conf(mainconf["bools"][key]);
-    return check(conf.fullkey(), conf.getint(), expected);
+    return check(conf.fullkey(), conf.getmeint(), expected);
 }
 
 bool testgetbools(const UniConf &mainconf)
@@ -75,7 +75,7 @@ bool testgetbools(const UniConf &mainconf)
 bool testgetanint(const UniConf &mainconf, WvStringParm key, int expected)
 {
     UniConf conf(mainconf["ints"][key]);
-    return check(conf.fullkey(), conf.getint(), expected);
+    return check(conf.fullkey(), conf.getmeint(), expected);
 }
 
 bool testgetints(const UniConf &mainconf)

@@ -18,7 +18,7 @@ public:
 
     void cb(int a, const UniConf &moo, const UniConfKey &goo)
         { fprintf(stderr, "Moo... '%d' - goo = %s (%s)\n", a,
-            goo.printable().cstr(), moo[goo].get().cstr()); moo.set("whee"); }
+            goo.printable().cstr(), moo[goo].getme().cstr()); moo.setme("whee"); }
 };
 
 int main()

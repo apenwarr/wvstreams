@@ -88,7 +88,7 @@ bool WvTestFileTree::create_random_file(WvStringParm filename, off_t size)
     char md5string[md5.digestsize() * 2 + 1];
     hexify(md5string, md5sum.get(md5.digestsize()), md5.digestsize());
 
-    info["wvstats/md5sum"].set(md5string);
+    info["wvstats/md5sum"].setme(md5string);
 
     return (record_fileinfo(filename, false));
 }
@@ -124,32 +124,32 @@ bool WvTestFileTree::record_fileinfo(WvStringParm filename, bool set_md5)
     if (lstat(filename, &st) != 0)
 	return false;
     UniConf info(files[filename]);
-    info["wvstats/mode"].setint(st.st_mode);
-    info["wvstats/uid"].setint(st.st_uid);
-    info["wvstats/gid"].setint(st.st_gid);
-    info["wvstats/rdev"].setint(st.st_rdev);
-    info["wvstats/mtime"].setint(st.st_mtime);
-    info["wvstats/ctime"].setint(st.st_ctime);
+    info["wvstats/mode"].setmeint(st.st_mode);
+    info["wvstats/uid"].setmeint(st.st_uid);
+    info["wvstats/gid"].setmeint(st.st_gid);
+    info["wvstats/rdev"].setmeint(st.st_rdev);
+    info["wvstats/mtime"].setmeint(st.st_mtime);
+    info["wvstats/ctime"].setmeint(st.st_ctime);
 
     if (S_ISDIR(st.st_mode))
-	info["wvstats/size"].setint(st.st_size);
+	info["wvstats/size"].setmeint(st.st_size);
     else if (S_ISLNK(st.st_mode))
     {
-	info["wvstats/size"].setint(st.st_size);
+	info["wvstats/size"].setmeint(st.st_size);
 	char *linkto = new char[st.st_size+1];
 	linkto[st.st_size] = 0;
 	if (readlink(filename, linkto, st.st_size))
 	{
 //	    printf("symlink to %s\n", linkto);
-	    info["wvstats/linkto"].set(linkto);
+	    info["wvstats/linkto"].setme(linkto);
 	    delete[] linkto;
 	}
     }
     else if (S_ISREG(st.st_mode))
     {
-	info["wvstats/size"].setint(st.st_size);
+	info["wvstats/size"].setmeint(st.st_size);
 	if (set_md5)
-	    info["wvstats/md5sum"].set(get_md5_str(filename));
+	    info["wvstats/md5sum"].setme(get_md5_str(filename));
     }
     else
     {

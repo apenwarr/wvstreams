@@ -288,9 +288,9 @@ RECONFIG "null:"
 
 echo
 if [ "$FAILS" = 0 ]; then
-    echo "All tests passed."
+    echo "All uniconf tests passed."
     exit 0
 else
-    echo "$FAILS tests failed!"
+    echo "$FAILS uniconf tests failed!"
     exit 1
 fi
