@@ -60,10 +60,10 @@ class WvArgs
     	    	const char *desc, const char *arg_desc, WvStringList &val);
     	    	
     	void add_option(char short_option, const char *long_option,
-    	    	const char *desc, NoArgCallback cb, void *ud);
+    	    	const char *desc, NoArgCallback cb, void *ud = NULL);
     	void add_option(char short_option, const char *long_option,
     	    	const char *desc, const char *arg_desc,
-    	    	ArgCallback cb, void *ud);
+    	    	ArgCallback cb, void *ud = NULL);
  
 };
 
