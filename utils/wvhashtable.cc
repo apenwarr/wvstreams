@@ -87,3 +87,55 @@ WvLink *WvHashTable::IterBase::next()
 	link = tbl->slots[++tblindex].head.next;
     return link;
 }
+
+// Note that this is largely the same as WvLink::SorterBase::rewind(),
+// except we iterate through a bunch of lists instead of a single one.
+void WvHashTable::SorterBase::rewind( int (*cmp)( const void *, const void * ) )
+{
+    if( array )
+        delete array;
+    array = lptr = NULL;
+
+    int n = tbl->count();
+    void ** varray = new void * [n+1];
+    array = (WvLink **) varray;
+
+    // fill the array with data pointers for sorting, so that the user doesn't
+    // have to deal with the WvLink objects.  Put the WvLink pointers back
+    // in after sorting.
+    void ** vptr = varray;
+    unsigned sl;
+    WvLink * src;
+    for( sl=0; sl < tbl->numslots; sl++ ) {
+        src = tbl->slots[ sl ].head.next;
+        while( src ) {
+            *vptr = src->data;
+            vptr++;
+            src = src->next;
+        }
+    }
+    *vptr = NULL;
+
+    // sort the array
+    qsort( array, n, sizeof( WvLink * ), cmp );
+
+    // go through the array, find the WvLink corresponding to each element,
+    // and substitute.
+    for( sl=0; sl < tbl->numslots; sl++ ) {
+        src = tbl->slots[ sl ].head.next;
+        while( src ) {
+            lptr = (WvLink **) vptr = varray;
+            while( lptr != NULL ) {
+                if( *vptr == src->data ) {
+                    *lptr = src;
+                    break;
+                }
+                lptr++;
+                vptr++;
+            }
+            src = src->next;
+        }
+    }
+
+    lptr = NULL;    // subsequent next() will set it to the first element.
+}

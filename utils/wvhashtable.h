@@ -116,6 +116,27 @@ public:
 	WvLink *cur() const
             { return link; }
     };
+
+    // base class for the auto-declared sorted hash table iterators
+    class SorterBase
+    {
+    public:
+        WvHashTable *tbl;
+        WvLink **array;
+        WvLink **lptr;
+
+        SorterBase(WvHashTable &_tbl)
+            { tbl = &_tbl; array = lptr = NULL; }
+        virtual ~SorterBase()
+            { if (array) delete array; }
+        WvLink *next()
+            { return lptr ? *(++lptr)
+                          : *(lptr = array); }
+        WvLink *cur()
+            { return lptr ? *lptr : &tbl->slots[0].head; }
+    protected:
+        void rewind(int (*cmp)(const void *, const void *));
+    };
 };
 
 
@@ -175,6 +196,28 @@ public:									\
 	_type_ *operator -> () const					\
 	    { return &data(); }						\
     };									\
+                                                                        \
+    class Sorter : public WvHashTable::SorterBase                       \
+    {                                                                   \
+    public:                                                             \
+        int (*cmp)(const _type_ **, const _type_ **);                   \
+                                                                        \
+        Sorter(_classname_ &_tbl,                                       \
+               int (*_cmp)(const _type_ **, const _type_ **))           \
+            : SorterBase(_tbl), cmp(_cmp)                               \
+            { }                                                         \
+        _type_ &data() const                                            \
+            { return *(_type_ *)(*lptr)->data; }                        \
+        operator _type_& () const                                       \
+            { return data(); }                                          \
+        _type_ &operator () () const                                    \
+            { return data(); }                                          \
+        _type_ *operator -> () const                                    \
+            { return &data(); }                                         \
+        void rewind()                                                   \
+            { SorterBase::rewind((int (*)(const void *, const void *))  \
+                                 ((void *)cmp)); }                      \
+    };                                                                  \
     									\
 public:									\
     _extra_								\

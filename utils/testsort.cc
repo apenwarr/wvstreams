@@ -14,8 +14,10 @@
 #include <stdio.h>
 #include "wvstring.h"
 #include "wvlinklist.h"
+#include "wvhashtable.h"
 
 DeclareWvList( WvString )
+DeclareWvTable( WvString )
 
 int apples_to_oranges( const WvString ** a, const WvString ** b )
 /***************************************************************/
@@ -32,6 +34,10 @@ int oranges_to_apples( const WvString ** a, const WvString ** b )
 int main()
 /********/
 {
+    free( malloc( 1 ) );
+
+    // sorted linked list
+    printf( "\nLinked list sorter test:\n" );
     WvStringList l;
     l.append( new WvString( "one" ), true );
     l.append( new WvString( "two" ), true );
@@ -64,6 +70,43 @@ int main()
         for( s.rewind(); s.next(); )
             printf( "%s ", (const char *) s() );
     }
+
+    // sorted hash table
+    printf( "\n\nHash table sorter test:\n" );
+    WvStringTable t( 3 );
+    t.add( new WvString( "one" ), true );
+    t.add( new WvString( "two" ), true );
+    t.add( new WvString( "three" ), true );
+    t.add( new WvString( "four" ), true );
+    t.add( new WvString( "five" ), true );
+    t.add( new WvString( "six" ), true );
+    t.add( new WvString( "seven" ), true );
+    t.add( new WvString( "eight" ), true );
+    t.add( new WvString( "nine" ), true );
+    t.add( new WvString( "ten" ), true );
+
+    printf( "Frontwards: " );
+    {
+        WvStringTable::Sorter s( t, apples_to_oranges );
+        for( s.rewind(); s.next(); )
+            printf( "%s ", (const char *) s() );
+    }
+
+    printf( "\nUnsorted:   " );
+    {
+        WvStringTable::Iter i( t );
+        for( i.rewind(); i.next(); )
+            printf( "%s ", (const char *) i() );
+    }
+
+    printf( "\nBackwards:  " );
+    {
+        WvStringTable::Sorter s( t, oranges_to_apples );
+        for( s.rewind(); s.next(); )
+            printf( "%s ", (const char *) s() );
+    }
+
+    printf( "\n" );
 
     return( 0 );
 }
