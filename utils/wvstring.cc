@@ -109,11 +109,11 @@ void WvFastString::link(WvStringBuf *_buf, const char *_str)
 
 WvStringBuf *WvFastString::alloc(size_t size)
 { 
-    WvStringBuf *buf = (WvStringBuf *)malloc(WVSTRINGBUF_SIZE(buf)
+    WvStringBuf *abuf = (WvStringBuf *)malloc(WVSTRINGBUF_SIZE(buf)
 					     + size + WVSTRING_EXTRA);
-    buf->links = 0;
-    buf->size = size;
-    return buf;
+    abuf->links = 0;
+    abuf->size = size;
+    return abuf;
 }
 
 

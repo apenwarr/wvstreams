@@ -185,7 +185,7 @@ public:
 #define DeclareWvList2(_type_,_extra_)  		\
 		DeclareWvList3(_type_,_type_##List,_extra_ )
 
-#define DeclareWvList(_type_) DeclareWvList2(_type_, )
+#define DeclareWvList(_type_) DeclareWvList2(_type_,;)
 
 
 #endif // __WVLINKLIST_H

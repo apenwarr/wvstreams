@@ -11,13 +11,6 @@
 #include <malloc.h> // for alloca()
 #include <assert.h>
 
-#if 0
-# define Dprintf(fmt, args...) fprintf(stderr, fmt, ##args)
-#else
-# define Dprintf(fmt, args...)
-#endif
-
-
 int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 
 
@@ -30,21 +23,16 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
     numtasks++;
     magic_number = WVTASK_MAGIC;
     
-    Dprintf("task %d initializing\n", tid);
     man.get_stack(*this, stacksize);
-    Dprintf("task %d initialized\n", tid);
 }
 
 
 WvTask::~WvTask()
 {
     numtasks--;
-    Dprintf("task %d stopping (%d tasks left)\n", tid, numtasks);
     
     if (running)
     {
-	Dprintf("WARNING: task %d was running -- bad stuff may happen!\n",
-	       tid);
 	numrunning--;
     }
     
@@ -56,7 +44,6 @@ void WvTask::start(WvStringParm _name, TaskFunc *_func, void *_userdata)
 {
     assert(!recycled);
     name = _name;
-    Dprintf("task %d (%s) starting\n", tid, (const char *)name);
     func = _func;
     userdata = _userdata;
     running = true;
@@ -76,7 +63,6 @@ void WvTask::recycle()
 
 WvTaskMan::WvTaskMan()
 {
-    Dprintf("task manager up\n");
     current_task = NULL;
     magic_number = -WVTASK_MAGIC;
     
@@ -90,11 +76,7 @@ WvTaskMan::WvTaskMan()
 
 
 WvTaskMan::~WvTaskMan()
-{
-    Dprintf("task manager down\n");
-    if (WvTask::numrunning != 0)
-	Dprintf("WARNING!  %d tasks still running at WvTaskMan shutdown!\n",
-	       WvTask::numrunning);
+{    
     magic_number = -42;
 }
 
@@ -134,10 +116,7 @@ int WvTaskMan::run(WvTask &task, int val)
     
     if (&task == current_task)
 	return val; // that's easy!
-    
-    Dprintf("WvTaskMan: switching to task #%d (%s)\n",
-	   task.tid, (const char *)task.name);
-    
+        
     WvTask *old_task = current_task;
     current_task = &task;
     jmp_buf *state;
@@ -166,9 +145,6 @@ int WvTaskMan::yield(int val)
 {
     if (!current_task)
 	return 0; // weird...
-    
-    Dprintf("WvTaskMan: yielding from task #%d (%s)\n",
-	   current_task->tid, (const char *)current_task->name);
     
     int newval = setjmp(current_task->mystate);
     if (newval == 0)
@@ -220,13 +196,10 @@ void WvTaskMan::_stackmaster()
 {
     int val;
     
-    Dprintf("stackmaster 1\n");
-    
     for (;;)
     {
 	assert(magic_number == -WVTASK_MAGIC);
 	
-	Dprintf("stackmaster 2\n");
 	val = setjmp(stackmaster_task);
 	if (val == 0)
 	{
@@ -235,7 +208,6 @@ void WvTaskMan::_stackmaster()
 	    // just did setjmp; save stackmaster's current state (with
 	    // all current stack allocations) and go back to get_stack
 	    // (or the constructor, if that's what called us)
-	    Dprintf("stackmaster 3\n");
 	    longjmp(get_stack_return, 1);
 	}
 	else
@@ -260,15 +232,13 @@ void WvTaskMan::do_task()
     WvTask *task = stack_target;
     assert(task->magic_number == WVTASK_MAGIC);
 	
-    // back here from longjmp; someone wants stack space.
-    Dprintf("stackmaster 4\n");
+    // back here from longjmp; someone wants stack space.    
     if (setjmp(task->mystate) == 0)
     {
 	// done the setjmp; that means the target task now has
 	// a working jmp_buf all set up.  Leave space on the stack
 	// for his data, then repeat the loop (so we can return
-	// to get_stack(), and allocate more stack for someone later)
-	Dprintf("stackmaster 5\n");
+	// to get_stack(), and allocate more stack for someone later)	
 	return;
     }
     else
@@ -276,8 +246,7 @@ void WvTaskMan::do_task()
 	// someone did a run() on the task, which
 	// means they're ready to make it go.  Do it.
 	for (;;)
-	{
-	    Dprintf("stackmaster 6\n");
+	{	    
 	    assert(magic_number == -WVTASK_MAGIC);
 	    assert(task->magic_number == WVTASK_MAGIC);
 	    
@@ -288,7 +257,6 @@ void WvTaskMan::do_task()
 		task->running = false;
 		task->numrunning--;
 	    }
-	    Dprintf("stackmaster 7\n");
 	    yield();
 	}
     }

@@ -106,7 +106,7 @@ WvFastString wvtcl_unescape(WvStringParm s)
     
     const char *cptr, *end = s + slen - skipquotes;
     char *optr = out.edit();
-    for (cptr = s + skipquotes; cptr < end; cptr++)
+    for (cptr = s + (int)skipquotes; cptr < end; cptr++)
     {
 	if (*cptr == '\\')
 	{

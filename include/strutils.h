@@ -9,7 +9,7 @@
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
-#ifdef ISBSD
+#if defined ISBSD || defined WIN32
 #include <time.h>
 #endif
 
