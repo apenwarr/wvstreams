@@ -237,8 +237,13 @@ libwvtelephony.so:
 
 ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
   libwvqt.so-LIBS+=-lqt-mt
-else
-  libwvqt.so-LIBS+=-lqt
+else 
+  # RedHat has a pkgconfig file we can use to sort out this mess..
+  ifeq ("$(wildcard /usr/lib/pkgconfig/qt-mt.pc)", "/usr/lib/pkgconfig/qt-mt.pc")
+    libwvqt.so-LIBS+=`pkg-config --libs qt-mt`
+  else
+    libwvqt.so-LIBS+=-lqt
+  endif
 endif
 libwvqt.a libwvqt.so: $(call objects,qt)
 libwvqt.so: libwvutils.so libwvstreams.so
