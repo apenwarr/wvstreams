@@ -54,7 +54,7 @@ TARGETS_A := $(filter %.a,$(TARGETS))
 GARBAGE += ChangeLog $(wildcard libwv*.so.*)
 
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
-		include/wvautoconf.h
+		include/wvautoconf.h config.cache
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 

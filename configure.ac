@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.31 2003/05/07 20:16:29 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.32 2003/05/08 04:57:21 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -15,7 +15,18 @@ AC_DEFUN(WV_APPEND,
     fi
 )
 
-QT_SEARCH_PATH="$libdir/qt3/include $includedir/qt3 $includedir/qt $datadir/qt3/include $datadir/qt/include /usr/lib/qt3/include /usr/include/qt3 /usr/include/qt /usr/share/qt3/include /usr/share/qt/include"
+QT_SEARCH_PATH="
+$prefix
+$libdir/qt3
+$libdir/qt
+$datadir/qt3
+$datadir/qt
+/usr
+/usr/lib/qt3
+/usr/share/qt3
+/usr/lib/qt
+/usr/share/qt
+"
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
 
@@ -71,6 +82,8 @@ AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib]))
+
+AC_ARG_VAR(MOC, [Qt meta object compiler])
 
 # avoid autoconf's default values, but keep those the user might have given
 CFLAGS="$CFLAGS"
@@ -158,21 +171,23 @@ fi
 # qt
 if test "$with_qt" != "no"; then
     test "$with_qt" = yes && with_qt=
-    AC_CACHE_CHECK([for Qt header files], [wv_cv_with_qt], [
+    AC_CACHE_CHECK([for Qt], [wv_cv_with_qt], [
         wv_cv_with_qt=no
         CPPFLAGS_save="$CPPFLAGS"
-        for QTINCLUDE in $QT_SEARCH_PATH; do
-            CPPFLAGS="$CPPFLAGS_save -I$QTINCLUDE"
+        for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
+            CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include"
             AC_TRY_COMPILE([#include <qapplication.h>],
                            [QApplication app(0, 0); return app.exec()],
-                           [wv_cv_with_qt=$QTINCLUDE; break])
+                           [wv_cv_with_qt=$wv_qtdir; break])
         done
         CPPFLAGS="$CPPFLAGS_save"
     ])
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
-        WV_APPEND(CPPFLAGS, -I$with_qt)
+        WV_APPEND(CPPFLAGS, -I$with_qt/include)
+        WV_APPEND(LDFLAGS, -L$with_qt/lib)
     fi
+    AC_PATH_PROG(MOC, moc, ["moc not found"], $with_qt/bin)
 fi
 
 # speex

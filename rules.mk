@@ -47,7 +47,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 	$(EMPTY_MSG)$(LN_S) -f $@ $(SONAME)
 
 %.moc: %.h
-	$(COMPILE_MSG)moc $< -o $@
+	$(COMPILE_MSG)$(MOC) $< -o $@
 
 .PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean
 
