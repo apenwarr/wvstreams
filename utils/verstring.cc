@@ -55,7 +55,6 @@ const char *ver_to_string(unsigned int ver, unsigned int my_watershed)
 	return old_ver_to_string(ver);
 
     sprintf(str, "%x.%02x.%04x", maj, min, rev);
-    trim_verstr(str);
 
     return str;
 }
