@@ -25,13 +25,14 @@ WvRSAKey::WvRSAKey(struct rsa_st *_rsa, bool priv)
 {
     if (_rsa == NULL)
     {
+        // assert(_rsa);
         pub = WvString::null;
         prv = WvString::null;
         rsa = NULL;
         seterr("Initializing with a NULL key.. are you insane?");
-        return;
+	return;
     }
-    
+
     rsa = _rsa;
     pub = hexifypub(rsa);
     if (priv)
@@ -69,12 +70,13 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     
     // unhexify the supplied key
     WvDynBuf keybuf;
-    if (! WvHexDecoder().flushstrbuf(keystr, keybuf, true) ||
-        keybuf.used() == 0)
+    if (!WvHexDecoder().flushstrbuf(keystr, keybuf, true) ||
+	keybuf.used() == 0)
     {
         seterr("RSA key is not a valid hex string");
         return;
     }
+    
     size_t keylen = keybuf.used();
     const unsigned char *key = keybuf.get(keylen);
     const unsigned char *p = key;
@@ -117,7 +119,7 @@ void WvRSAKey::pem2hex(WvStringParm filename)
 	return;
     }
 
-    rsa = PEM_read_RSAPrivateKey(fp,NULL,NULL,NULL);
+    rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
 
     fclose(fp);
 
