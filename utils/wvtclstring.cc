@@ -135,7 +135,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     int len = 0;
 
     // skip leading whitespace/separators
-    while (strchr(splitchars, *sptr) && origsize > 0)
+    while (origsize > 0 && strchr(splitchars, *sptr))
     {
         sptr++;
         origsize--;
