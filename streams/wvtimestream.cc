@@ -36,7 +36,10 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 	now = wvtime();
 
 	if (next < now)
+	{
+	    si.msec_timeout = 0;
 	    return true;
+	}
 
 	diff = msecdiff(next, now);
 	diff = diff < 0 ? 0 : diff;
