@@ -139,7 +139,7 @@ WvProtoStream::Token *WvProtoStream::tokline()
     tokbuf.zap();
     tokbuf.put(line, strlen(line));
 
-    (*logp)("Read: %s\n", line);
+    (*logp)("Read: %s\n", trim_string(line));
     
     return next_token();
 }
