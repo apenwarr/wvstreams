@@ -138,7 +138,7 @@ void WvUrlStream::addurl(WvUrlRequest *url)
 
 void WvUrlStream::delurl(WvUrlRequest *url)
 {
-    log(WvLog::Debug4, "Removing a url: '%s'\n", url->url);
+    log(WvLog::Debug4, "Removing an url: '%s'\n", url->url);
 
     if (url == curl)
         doneurl();
@@ -258,6 +258,7 @@ void WvHttpStream::send_request(WvUrlRequest *url, bool auto_free)
     write(url->request_str(url->pipeline_test
 			   || request_count < max_requests));
     urls.append(url, auto_free, "sent_running_url");
+    alarm(60000);
 }
 
 
@@ -331,17 +332,18 @@ void WvHttpStream::execute()
 	return;
     }
 
-    // Die if somebody closed our outstream
+    // Die if somebody closed our outstream.  This is so that if we were
+    // downloading a really big file, they can stop it in the middle and
+    // our next url request can start downloading immediately.
     if (curl && !curl->outstream)
     {
+	// don't complain about pipelining failures
+	pipeline_test_count++;
+	last_was_pipeline_test = false;
+	
 	close();
         if (curl)
             doneurl();
-	if (cloned)
-	    delete cloned;
-	cloned = new WvTCPConn(target.remaddr);
-        if (ssl)
-	    cloned = new WvSSLStream((WvTCPConn*)cloned);
 	return;
     }
     else if (curl)
