@@ -102,7 +102,7 @@ public:
 
 	~Target() {}
 
-	bool operator== (const Target &n2)
+	bool operator== (const Target &n2) const
         { return (username == n2.username && remaddr == n2.remaddr); }
     };
     Target target;
