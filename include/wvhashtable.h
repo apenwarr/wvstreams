@@ -100,6 +100,8 @@ protected:
     WvLink *prevlink(WvListBase *slots, const void *data, unsigned hash) const;
     void *genfind(WvListBase *slots, const void *data, unsigned hash) const;
 
+    
+
     virtual bool compare(const void *key, const void *elem) const = 0;
 public:
     unsigned numslots;
@@ -137,6 +139,22 @@ public:
             { return link; }
 	void *vptr() const
 	    { return link->data; }
+
+	/**
+	 * Returns the state of autofree for the current element.
+	 */
+	bool get_autofree() const
+	{
+	    return link->get_autofree();
+	}
+
+	/**
+	 * Sets the state of autofree for the current element.
+	 */
+	void set_autofree(bool autofree)
+	{
+	    link->set_autofree(autofree);
+	}
     };
 };
 
@@ -184,6 +202,37 @@ public:
 
     T *operator[] (const K &key) const
         { return (T *)genfind(wvslots, &key, WvHash(key)); }
+
+    /**
+     * Returns the state of autofree for the element associated with key.
+     */
+    bool get_autofree(const K &key) const
+    {
+	WvLink *l = getlink(key);
+	if (l)
+	    return l->get_autofree();
+	return false;
+    }
+
+    bool get_autofree(const T *data) const
+    {
+	return get_autofree(hash(data));
+    }
+
+    /**
+     * Sets the state of autofree for the element associated with key.
+     */
+    void set_autofree(const K &key, bool autofree)
+    {
+	WvLink *l = getlink(key);
+	if (l)
+	    l->set_autofree(autofree);
+    }
+
+    void set_autofree(const T *data, bool autofree)
+    {
+	set_autofree(hash(data), autofree);
+    }
 
     void remove(const T *data)
     {
@@ -251,8 +300,8 @@ public:
 // *****************************
 // WvPair
 
-// Type specification to facilitate auto_free
-// Object type - ignores auto_free
+// Type specification to facilitate autofree
+// Object type - ignores autofree
 template<typename TKey, typename _TData>
 class WvMapPair
 {
@@ -260,7 +309,7 @@ class WvMapPair
 public:
     TKey key;
     TData data;
-    WvMapPair(const TKey &_key, const TData &_data, bool _auto_free)
+    WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
         : key(_key), data(_data) { };
 };
 
@@ -273,12 +322,12 @@ class WvMapPair<TKey, _TData*>
 public:
     TKey key;
     TData data;
-    WvMapPair(const TKey &_key, const TData &_data, bool _auto_free)
-        : key(_key), data(_data), auto_free(_auto_free) { };
+    WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
+        : key(_key), data(_data), autofree(_autofree) { };
     virtual ~WvMapPair()
-        { if (auto_free) WvTraits<_TData>::release(data); };
+        { if (autofree) WvTraits<_TData>::release(data); };
 protected:
-    bool auto_free;
+    bool autofree;
 };
 
 
@@ -351,14 +400,14 @@ public:
     }
     bool exists(const TKey &key) const
         { return find_helper(key); }
-    void set(const TKey &key, const TData &data, bool auto_free = false)
+    void set(const TKey &key, const TData &data, bool autofree = false)
     {
 	if (find_helper(key))
 	    remove(key);
-	add(key, data, auto_free);
+	add(key, data, autofree);
     }
-    void add(const TKey &key, const TData &data, bool auto_free = false)
-        { MyHashTable::add(new MyPair(key, data, auto_free), true); }
+    void add(const TKey &key, const TData &data, bool autofree = false)
+        { MyHashTable::add(new MyPair(key, data, autofree), true); }
     void remove(const TKey &key)
     {
         last_accessed = NULL;
