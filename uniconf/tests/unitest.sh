@@ -35,7 +35,7 @@ RECONFIG()
         UNICONF="$@"
     else
         echo "Starting UniConfDaemon."
-	../daemon/uniconfd -ssl 0 -mount / "$@"
+	../daemon/uniconfd -p4111 -s0 "$@"
 	UNICONF="tcp:localhost:4111"
     fi
 }

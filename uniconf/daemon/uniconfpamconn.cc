@@ -23,7 +23,7 @@ SecureGenDict UniConfPamConn::securegens(7);
 
 UniConfPamConn::UniConfPamConn(WvStream *_s, const UniConf &_root) :
     UniConfDaemonConn(new WvPamStream(_s, "uniconfdaemon", WvString::null,
-            "FAIL { Not authorized }"), _root)
+            "FAIL {Not authorized}"), _root)
 {
 }
 
