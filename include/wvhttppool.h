@@ -119,6 +119,7 @@ public:
 
     virtual void close() = 0;
     void addurl(WvUrlRequest *url);
+    void delurl(WvUrlRequest *url);
     
     virtual void execute() = 0;
 };

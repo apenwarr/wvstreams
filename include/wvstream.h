@@ -514,7 +514,7 @@ protected:
     /**
      * Prevent accidental copying of WvStreams.
      */
-    WvStream(const WvStream &s) : callfunc(NULL) { }
+    WvStream(const WvStream &s) : callfunc(0) { }
     WvStream& operator= (const WvStream &s) { return *this; }
 
     /**

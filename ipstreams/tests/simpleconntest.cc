@@ -102,7 +102,8 @@ int main(int argc, char **argv)
 		f = new WvFile(argv[count], O_RDONLY);
 		if (!f->isok())
 		{
-		    fprintf(stderr, "%s: %s\n", argv[count], f->errstr());
+		    fprintf(stderr, "%s: %s\n", argv[count],
+                        f->errstr().cstr());
 		    return 1;
 		}
 	    }

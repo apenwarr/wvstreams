@@ -17,7 +17,7 @@ int main()
     
     if (q.geterr())
     {
-	fprintf(stderr, "q: %s\n", q.errstr());
+	fprintf(stderr, "q: %s\n", q.errstr().cstr());
 	return 1;
     }
     

@@ -76,6 +76,7 @@ CFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
 endif
 
 ifeq ("$(enable_debug)", "no")
+#CXXFLAGS+=-fomit-frame-pointer
 # -DNDEBUG is disabled because we like assert() to crash
 #CXXFLAGS+=-DNDEBUG
 #CFLAGS+=-DNDEBUG
@@ -90,6 +91,7 @@ endif
 
 ifneq ("$(enable_optimization)", "no")
 CXXFLAGS+=-O2
+#CXXFLAGS+=-felide-constructors
 CFLAGS+=-O2
 endif
 
@@ -113,6 +115,9 @@ endif
 ifeq ("$(enable_verbose)", "yes")
 VERBOSE:=yes
 endif
+
+# Some other generally useful optimizations
+CXXFLAGS+=-fnonnull-objects
 
 RELEASE?=$(PACKAGE_VERSION)
 

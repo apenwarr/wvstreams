@@ -33,7 +33,7 @@ WvStream::WvStream() :
     uses_continue_select(false), personal_stack_size(65536),
     alarm_was_ticking(false),
     // protected members
-    callfunc(NULL), userdata(NULL),
+    callfunc(0), userdata(NULL),
     max_outbuf_size(0), outbuf_delayed_flush(false), is_auto_flush(true),
     queue_min(0), autoclose_time(0),
     running_callback(false), wvstream_execute_called(false),
@@ -101,7 +101,7 @@ void WvStream::_callback(void *stream)
     
     s->wvstream_execute_called = false;
     s->execute();
-    if (s->callfunc)
+    if (!! s->callfunc)
 	s->callfunc(*s, s->userdata);
     
     // if this assertion fails, a derived class's virtual execute() function

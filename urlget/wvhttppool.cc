@@ -56,11 +56,11 @@ void WvUrlRequest::done()
 {
     if (outstream)
     {
-	outstream->seteof();
 	outstream->death_notify = NULL;
+	outstream->seteof();
+        outstream = NULL; 
     }
     inuse = false;
-    outstream = NULL; 
 }
 
 
@@ -112,6 +112,17 @@ void WvUrlStream::addurl(WvUrlRequest *url)
     
     waiting_urls.append(url, false);
     request_next();
+}
+
+
+void WvUrlStream::delurl(WvUrlRequest *url)
+{
+    log(WvLog::Debug4, "Removing a url: '%s'\n", url->url);
+
+    if (url == curl)
+        doneurl();
+    waiting_urls.unlink(url);
+    urls.unlink(url);
 }
 
 
@@ -167,27 +178,32 @@ void WvHttpStream::close()
     {
 	// if there was an error, count the first URL as done.  This prevents
 	// retrying indefinitely.
-	if (!curl && !urls.isempty())
-	    curl = urls.first();
-	if (!curl && !waiting_urls.isempty())
-	    curl = waiting_urls.first();
-	if (curl)
-	    log("URL '%s' is FAILED\n", curl->url);
-	if (curl) 
-	    curl->done();
+        WvUrlRequest *msgurl = curl;
+	if (!msgurl && !urls.isempty())
+	    msgurl = urls.first();
+	if (!msgurl && !waiting_urls.isempty())
+	    msgurl = waiting_urls.first();
+	if (msgurl)
+	    log("URL '%s' is FAILED\n", msgurl->url);
     }
-    
+    waiting_urls.zap();
     if (curl)
-	curl->done();
+        doneurl();
 }
 
 
 void WvHttpStream::doneurl()
 {
+    assert(curl != NULL);
     log("Done URL: %s\n", curl->url);
     
-    last_was_pipeline_test = curl->pipeline_test;
+    http_response = "";
+    encoding = Unknown;
+    in_chunk_trailer = false;
+    remaining = 0;
     
+    last_was_pipeline_test = curl->pipeline_test;
+    bool broken = false;
     if (last_was_pipeline_test)
     {
 	pipeline_test_count++;
@@ -199,19 +215,19 @@ void WvHttpStream::doneurl()
 	    // However, if the response code isn't the same for both tests,
 	    // something's definitely screwy.
 	    pipelining_is_broken(4);
-	    close();
-	    return;
+            broken = true;
 	}
 	pipeline_test_response = http_response;
     }
     
+    assert(curl == urls.first());
     curl->done();
     curl = NULL;
-    http_response = "";
-    encoding = Unknown;
-    in_chunk_trailer = false;
-    remaining = 0;
     urls.unlink_first();
+    
+    if (broken)
+        close();
+
     request_next();
 }
 
@@ -300,12 +316,13 @@ void WvHttpStream::execute()
     if (curl && !curl->outstream)
     {
 	close();
+        if (curl)
+            doneurl();
 	if (cloned)
 	    delete cloned;
 	cloned = new WvTCPConn(info.remaddr);
         if (ssl)
 	    cloned = new WvSSLStream((WvTCPConn*)cloned);
-	doneurl();
 	return;
     }
     else if (curl)
@@ -908,6 +925,7 @@ WvHttpPool::~WvHttpPool()
     
     // these must get zapped before the URL list, since they have pointers
     // to URLs.
+    zap();
     conns.zap();
 }
 
@@ -944,6 +962,13 @@ bool WvHttpPool::pre_select(SelectInfo &si)
 		log("URL not okay: '%s'\n", i->url);
 		i->done();
 	    }
+            // nicely delete the url request
+	    WvUrlStreamInfo info;
+            info.remaddr = i->url.getaddr();
+            info.username = i->url.getuser();
+            WvUrlStream *s = conns[info];
+            if (s)
+                s->delurl(i.ptr());
 	    i.xunlink();
 	    continue;
 	}
