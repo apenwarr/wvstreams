@@ -67,12 +67,12 @@ UniClientGen::UniClientGen(IWvStream *stream) :
         UniClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, streamid.edit());
 
-    // FIXME: We currently registry for notifications over all keys
+    // FIXME: We currently register for notifications over all keys
     //        which places undue burden on the server.
     //        This could be alleviated if UniConfGen supplied an advisory
-    //        add_watch() / del_watch() interface in addition to asking for
+    //        addwatch() / delwatch() interface in addition to asking for
     //        notification about keys that are currently cached.
-    conn->writecmd(UniClientConn::REQ_ADDWATCH, "/ infinite");
+    addwatch(UniConfKey::EMPTY, UniConfDepth::INFINITE);
 }
 
 
@@ -267,6 +267,24 @@ UniClientGen::Iter *UniClientGen::iterator(const UniConfKey &key)
         }
     }
     return new RemoteKeyIter(keylist);
+}
+    
+
+bool UniClientGen::addwatch(const UniConfKey &key, UniConfDepth::Type depth)
+{
+    prepare();
+    conn->writecmd(UniClientConn::REQ_ADDWATCH, WvString("%s %s",
+        wvtcl_escape(key), UniConfDepth::nameof(depth)));
+    return wait();
+}
+
+
+bool UniClientGen::delwatch(const UniConfKey &key, UniConfDepth::Type depth)
+{
+    prepare();
+    conn->writecmd(UniClientConn::REQ_DELWATCH, WvString("%s %s",
+        wvtcl_escape(key), UniConfDepth::nameof(depth)));
+    return wait();
 }
 
 

@@ -113,19 +113,28 @@ UniClientConn::Command UniClientConn::readcmd()
 
         // extract command, leaving the remainder in payloadbuf
         payloadbuf.reset(msg);
-        WvString cmd = wvtcl_getword(payloadbuf, " ");
+        WvString cmd(readarg());
 
         for (int i = 0; i < NUM_COMMANDS; ++i)
-            if (strcmp(cmdinfos[i].name, cmd.cstr()) == 0)
+            if (strcasecmp(cmdinfos[i].name, cmd.cstr()) == 0)
                 return Command(i);
         return INVALID;
     }
 }
 
 
+WvString UniClientConn::readarg()
+{
+    return wvtcl_getword(payloadbuf, " ");
+}
+
+
 void UniClientConn::writecmd(UniClientConn::Command cmd, WvStringParm msg)
 {
-    writemsg(WvString("%s %s", cmdinfos[cmd].name, msg));
+    if (msg)
+        writemsg(WvString("%s %s", cmdinfos[cmd].name, msg));
+    else
+        writemsg(cmdinfos[cmd].name);
 }
 
 

@@ -28,6 +28,8 @@ class UniCache;
  */
 class UniClientGen : public UniConfGen
 {
+    class RemoteKeyIter;
+
     UniClientConn *conn;
     UniCache *cache;
     WvString streamid;
@@ -61,9 +63,10 @@ public:
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
 
-    class RemoteKeyIter;
-
 protected:
+    bool addwatch(const UniConfKey &key, UniConfDepth::Type depth);
+    bool delwatch(const UniConfKey &key, UniConfDepth::Type depth);
+    
     void conncallback(WvStream &s, void *userdata);
     void prepare();
     bool wait();

@@ -51,8 +51,8 @@ void UniConfDaemonConn::execute()
             break;
 
         // parse and execute command
-        WvString arg1(wvtcl_getword(payloadbuf, " "));
-        WvString arg2(wvtcl_getword(payloadbuf, " "));
+        WvString arg1(readarg());
+        WvString arg2(readarg());
         switch (command)
         {
             case UniClientConn::INVALID:
@@ -144,7 +144,7 @@ void UniConfDaemonConn::execute()
 
 void UniConfDaemonConn::do_malformed()
 {
-    writefail("malformed");
+    writefail("malformed request");
 }
 
 
@@ -216,6 +216,7 @@ void UniConfDaemonConn::do_addwatch(const UniConfKey &key,
     if (watches[*watch])
     {
         delete watch;
+        writefail("already exists");
     }
     else
     {
@@ -224,6 +225,7 @@ void UniConfDaemonConn::do_addwatch(const UniConfKey &key,
         watches.add(watch, true);
         root[key].add_callback(wvcallback(UniConfCallback, *this,
             UniConfDaemonConn::deltacallback), NULL, depth);
+        writeok();
     }
 }
 
@@ -239,6 +241,11 @@ void UniConfDaemonConn::do_delwatch(const UniConfKey &key,
         watches.remove(& watch);
         root[key].del_callback(wvcallback(UniConfCallback, *this,
             UniConfDaemonConn::deltacallback), NULL, depth);
+        writeok();
+    }
+    else
+    {
+        writefail("no such watch");
     }
 }
 
@@ -260,5 +267,5 @@ void UniConfDaemonConn::do_help()
 
 void UniConfDaemonConn::deltacallback(const UniConf &key, void *userdata)
 {
-    writecmd(UniClientConn::EVENT_FORGET, key.fullkey());
+    writecmd(UniClientConn::EVENT_FORGET, wvtcl_escape(key.fullkey()));
 }

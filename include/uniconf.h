@@ -7,10 +7,32 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
-#include "uniconfroot.h"
+#include "uniconfdefs.h"
+#include "uniconfkey.h"
+#include "uniconfgen.h"
+#include "wvcallback.h"
 #include "wvvector.h"
 
 class WvStream;
+class UniConf;
+class UniConfRootImpl;
+
+/**
+ * The callback type for signalling key changes from UniConf.
+ *
+ * For the moment, notifications can be seen as invalidating the
+ * entire subtree of keys rooted at the specified config object.
+ * This is because there may be complex key aliasing and shadowing
+ * interactions between mounted generators.
+ * 
+ * TODO: Enhance the API using a change type code to discriminate
+ *       between different effects from changes.
+ * 
+ * Parameters: key, userdata
+ *   cfg - the UniConf config object representing the key that has changed
+ *   userdata - the userdata supplied during setcallback
+ */
+DeclareWvCallback(2, void, UniConfCallback, const UniConf &, void *);
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -35,6 +57,8 @@ class WvStream;
  */
 class UniConf
 {
+    friend class UniConfRootImpl;
+    
 protected:
     UniConfRootImpl *xroot;
     UniConfKey xfullkey;
@@ -373,9 +397,7 @@ class UniConf::Iter : public UniConf::IterBase
     
 public:
     /** Creates an iterator over the direct children of a branch. */
-    Iter(const UniConf &_top)
-        : IterBase(_top), it(_top.rootobj()->iterator(top.fullkey()))
-        { }
+    Iter(const UniConf &_top);
 
     ~Iter()
         { delete it; }

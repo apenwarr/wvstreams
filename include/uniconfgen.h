@@ -25,10 +25,9 @@ class UniConfGen;
  * wrapped generator.  See UniFilterGen.
  * 
  * Parameters: gen, key, userdata
- * 
- * gen - the externally visible generator whose key has changed
- * key - the key that has changed
- * userdata - the userdata supplied during setcallback
+ *   gen - the externally visible generator whose key has changed
+ *   key - the key that has changed
+ *   userdata - the userdata supplied during setcallback
  */
 DeclareWvCallback(3, void, UniConfGenCallback, UniConfGen *,
     const UniConfKey &, void *);

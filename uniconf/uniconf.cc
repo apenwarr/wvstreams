@@ -171,6 +171,15 @@ void UniConf::dump(WvStream &stream, bool everything) const
 
 
 
+/***** UniConf::Iter *****/
+
+UniConf::Iter::Iter(const UniConf &_top)
+    : IterBase(_top), it(_top.rootobj()->iterator(top.fullkey()))
+{
+}
+
+
+
 /***** UniConf::RecursiveIter *****/
 
 UniConf::RecursiveIter::RecursiveIter(const UniConf &root)

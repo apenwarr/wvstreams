@@ -77,9 +77,15 @@ public:
     /**
      * Reads a command from the connection.
      * The payload is stored in UniClientConn::payloadbuf.
-     * Returns: the command string
+     * Returns: the command code, NONE, or INVALID
      */
     Command readcmd();
+
+    /**
+     * Reads the next argument from the command payload.
+     * Returns: the argument or WvString::null
+     */
+    WvString readarg();
 
     /**
      * Writes a command to the connection.
