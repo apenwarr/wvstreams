@@ -62,8 +62,8 @@ public:
 // parameters are: userdata, section, entry, oldval, newval
 DeclareWvCallback(5, void, WvConfCallback,
 		  void *,
-		  WvStringParm , WvStringParm ,
-		  WvStringParm , WvStringParm );
+		  WvStringParm, WvStringParm,
+		  WvStringParm, WvStringParm);
 
 class WvConfCallbackInfo
 {

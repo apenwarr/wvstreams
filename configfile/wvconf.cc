@@ -15,9 +15,16 @@
 
 
 void WvConf::setbool(void *userdata,
-		     WvStringParm , WvStringParm ,
-		     WvStringParm , WvStringParm )
+		     WvStringParm sect, WvStringParm ent,
+		     WvStringParm oldval, WvStringParm newval)
 {
+    if (!*(bool *)userdata)
+    {
+	WvLog log("Config Event", WvLog::Debug);
+	log("Changed: [%s]%s = '%s' -> '%s'\n",
+	    sect, ent, oldval, newval);
+    }
+    
     *(bool *)userdata = true;
 }
 		     
