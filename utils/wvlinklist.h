@@ -41,6 +41,7 @@
 #ifndef __WVLINKLIST_H
 #define __WVLINKLIST_H
 
+#include <assert.h>
 #include "wvsorter.h"
 
 class WvListBase
@@ -107,7 +108,10 @@ public:
     }
 
     _type_ *first() const
-        { return (_type_*)head.next->data; }
+        {
+	    assert(!isempty());
+	    return (_type_*)head.next->data;
+	}
 
     _type_ *last() const
         { return (_type_*)last->data; }
