@@ -9,6 +9,7 @@
 
 #include "wvlinklist.h"
 #include "wvstring.h"
+#include <assert.h>
 
 // predefined hashing functions (note: string hashes are case-insensitive)
 unsigned WvHash(WvStringParm s);
