@@ -3,6 +3,8 @@ WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
 include wvrules.mk
 override enable_efence=no
 
+export WVSTREAMS
+
 XPATH=include
 
 include vars.mk
