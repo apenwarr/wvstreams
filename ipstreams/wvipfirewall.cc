@@ -165,4 +165,10 @@ void WvIPFirewall::zap()
 	del_redir(i2->src, i2->dstport);
 	i2.xunlink();
     }
+    WvStringList::Iter i3(protos);
+    for (i3.rewind(); i3.next(); )
+    {
+        del_proto(*i3);
+        i3.xunlink();
+    }
 }
