@@ -3,6 +3,12 @@
 #include "strutils.h"
 #include "wvtclstring.h"
 
+#ifdef _WIN32
+#pragma comment(linker, "/include:?UniRegistryGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#pragma comment(linker, "/include:?UniPStoreGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#pragma comment(linker, "/include:?UniIniGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
+#endif
+
 int main(int argc, char **argv)
 {
     WvLogConsole logcon(2, WvLog::Info);
