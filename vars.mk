@@ -128,9 +128,9 @@ ifneq ("$(with_xplc)", "no")
   #CPPFLAGS+=-DUNSTABLE
   ifneq ("$(with_xplc)", "yes")
     #VPATH+=$(with_xplc)
-    LDFLAGS+=-L$(with_xplc)
-    CPPFLAGS+=-I$(with_xplc)/include
-    libwvstreams.so: -lxplc -lxplc-cxx
+    #LDFLAGS+=-L$(with_xplc)
+    #CPPFLAGS+=-I$(with_xplc)/include
+    #libwvstreams.so: -lxplc -lxplc-cxx
   endif
 endif
 
