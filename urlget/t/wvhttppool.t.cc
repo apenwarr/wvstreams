@@ -1,6 +1,7 @@
 #include "wvtest.h"
 #include "wvhttppool.h"
 #include <stdio.h>
+#include <netdb.h>
 
 static void close_callback(WvStream& s, void* userdata)
 {
@@ -10,45 +11,55 @@ static void close_callback(WvStream& s, void* userdata)
 
 WVTEST_MAIN("WvHttpPool GET")
 {
-    WvHttpPool pool;
+    if (gethostbyname("www.google.com"))
+    {
+	WvHttpPool pool;
 
-    WvIStreamList l;
-    l.append(&pool, false);
+	WvIStreamList l;
+	l.append(&pool, false);
 
-    WvStream *buf;
-    WVPASS(buf = pool.addurl("http://www.internal.nit.ca"));
-    WVPASS(buf->isok());
-    buf->autoforward(*wvcon);
-    buf->setclosecallback(close_callback, NULL);
-    l.append(buf, true);
-    while (buf->isok() && (wvcon->isok() || !pool.idle()))
-	l.runonce();
-    WVPASS(!(buf->isok()));
-    
-    WVPASSEQ(l.count(), 2);
+	WvStream *buf;
+	WVPASS(buf = pool.addurl("http://www.google.com"));
+	WVPASS(buf->isok());
+	buf->autoforward(*wvcon);
+	buf->setclosecallback(close_callback, NULL);
+	l.append(buf, true);
+	while (buf->isok() && (wvcon->isok() || !pool.idle()))
+	    l.runonce();
+	WVPASS(!(buf->isok()));
+
+	WVPASSEQ(l.count(), 2);
+    }
+    else
+	printf("Can't find www.google.com.  SKIPPED.\n");
 }
 
 WVTEST_MAIN("WvHttpPool HEAD")
 {
-    WvHttpPool pool;
-
-    WvIStreamList l;
-    l.append(&pool, false);
-
-    WvStream *buf;
-    WVPASS(buf = pool.addurl("http://www.internal.nit.ca", "HEAD"));
-    WVPASS(buf->isok());
-    buf->autoforward(*wvcon);
-    buf->setclosecallback(close_callback, NULL);
-    l.append(buf, true);
-    while (buf->isok() && (wvcon->isok() || !pool.idle()))
+    if (gethostbyname("www.google.com"))
     {
-	if (l.select(-1))
+	WvHttpPool pool;
+
+	WvIStreamList l;
+	l.append(&pool, false);
+
+	WvStream *buf;
+	WVPASS(buf = pool.addurl("http://www.google.com", "HEAD"));
+	WVPASS(buf->isok());
+	buf->autoforward(*wvcon);
+	buf->setclosecallback(close_callback, NULL);
+	l.append(buf, true);
+	while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	{
-	    l.callback();
+	    if (l.select(-1))
+	    {
+		l.callback();
+	    }
 	}
+	WVPASS(!(buf->isok()));
     }
-    WVPASS(!(buf->isok()));
+    else
+	printf("Can't find www.google.com.  SKIPPED.\n");
 }
 
 bool pipelining_enabled = true;
