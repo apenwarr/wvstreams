@@ -6,11 +6,13 @@ PREPROC_MSG =
 COMPILE_MSG =
 LINK_MSG =
 EMPTY_MSG =
+DEPEND_MSG = @
 else
 PREPROC_MSG = @echo preprocessing $@;
 COMPILE_MSG = @echo compiling $@;
 LINK_MSG = @echo linking $@;
 EMPTY_MSG = @
+DEPEND_MSG = @
 endif
 
 SONAMEOPT=-Wl,-soname,$(SONAME)
@@ -22,20 +24,20 @@ DEPFILE = $(notdir $(@:.o=.d))
 	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %: %.cc
-	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
-		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
-	$(EMPTY_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ \
+	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ \
 		$(LOADLIBES) $(LDLIBS) -o $@
+	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
+		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
 
 %.o: %.cc
-	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
+	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
-	$(EMPTY_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.o: %.c
-	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
+	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(DEPEND_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
-	$(EMPTY_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.a:
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
