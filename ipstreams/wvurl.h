@@ -44,11 +44,14 @@ public:
         { return hostname; }
     int getport() const
         { return port; }
-    
+    WvStringParm getuser() const
+        { return user; }
+
 protected:
-    WvString proto, hostname;
+    WvString proto, hostname, user;
     int port;
     bool resolving;
+    bool use_slashes;
     WvResolver dns;
     WvIPPortAddr *addr;
     WvString file, err;

@@ -9,6 +9,43 @@
  */ 
 #include "wvurl.h"
 
+// A static list of the default ports for each protocol.
+struct DefaultPort
+{
+    char *proto;
+    int port;
+};
+
+DefaultPort portmap[] = {
+    { "http://", 80 },
+    { "https://", 443 },
+    { "sip:", 5060 },
+    { NULL, 0 }
+};
+
+// Look up the protocol and return the default port.
+int get_default_port(WvString proto)
+{
+    DefaultPort *p = portmap;
+    for (p = portmap; p->proto != NULL; p++)
+    {
+        if (strncmp(p->proto, proto, strlen(p->proto)) == 0)
+            return p->port;
+    }
+    return -1;
+}
+
+// Look up the protocol and decide whether it uses slashes (http) or not (sip)
+bool protocol_uses_slashes(WvString proto)
+{
+    DefaultPort *p = portmap;
+    for (p = portmap; p->proto != NULL; p++)
+    {
+        if (strncmp(p->proto, proto, strlen(p->proto)) == 0)
+            return (strrchr(p->proto, '/'));
+    }
+    return false;
+}
 
 // Split up the URL into a hostname, a port, and the rest of it.
 WvUrl::WvUrl(WvStringParm url) : err("No error")
@@ -22,18 +59,29 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
 
     // if it's not one of these easy prefixes, give up.  Our URL parser is
     // pretty dumb.
-    if (strncmp(wptr, "http://", 7) && strncmp(wptr, "https://", 8))
+    if (get_default_port(wptr) < 0)
     {
-	err = "WvUrl can only handle HTTP URLs.";
+	err = "WvUrl cannot handle the given protocol.";
 	return;
     }
-    
+
     cptr = strchr(wptr, ':');
     *cptr = 0;
     proto = wptr;
     
-    wptr = cptr + 3;
-    hostname = wptr;
+    use_slashes = protocol_uses_slashes(proto);
+
+    wptr = cptr + (use_slashes ? 3 : 1);
+
+    cptr = strchr(wptr, '@');
+    if (!cptr) // no user given
+        user = "";
+    else
+    {
+        *cptr = 0;
+        user = wptr;
+        wptr = cptr + 1;
+    }
     
     cptr = strchr(wptr, '/');
     if (!cptr) // no path given
@@ -46,7 +94,7 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     
     cptr = strchr(wptr, ':');
     if (!cptr)
-	port = (proto=="http" ? 80 : (proto=="https" ? 443 : 0));
+	port = get_default_port(proto);
     else
     {
 	port = atoi(cptr+1);
@@ -54,7 +102,7 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     }
 
     hostname = wptr;
-    
+
     resolve();
 }
 
@@ -65,6 +113,7 @@ WvUrl::WvUrl(const WvUrl &url) : err("No error")
     resolving = true;
     
     proto = url.proto;
+    user = url.user;
     hostname = url.hostname;
     file = url.file;
     port = url.port;
@@ -112,14 +161,22 @@ WvUrl::operator WvString () const
 {
     if (!isok())
 	return WvString("(Invalid URL: %s)", err);
-    
+
+    WvString protostr;
+    if (use_slashes)
+        protostr = WvString("%s://", proto);
+    else
+        protostr = WvString("%s:", proto);
+    WvString userstr("");
+    if (user)
+        userstr = WvString("%s@", user);
     WvString portstr("");
-    if (port && port != 80)
+    if (port && port != get_default_port(proto))
 	portstr = WvString(":%s", port);
     if (hostname)
-	return WvString("http://%s%s%s", hostname, portstr, file);
+	return WvString("%s%s%s%s%s", protostr, userstr, hostname, portstr, file);
     else if (addr)
-	return WvString("http://%s%s%s", *addr, portstr, file);
+	return WvString("%s%s%s%s%s", protostr, userstr, *addr, portstr, file);
     else
     {
 	assert(0);
