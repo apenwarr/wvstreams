@@ -112,7 +112,7 @@ public:
     virtual bool next()
         { return i.next(); }
     virtual UniConfKey key() const
-        { return i->key.removefirst(topcount); }
+        { return i->key; }
     virtual WvString value() const
         { return i->val; }
 };
