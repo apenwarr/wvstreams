@@ -87,7 +87,7 @@ static bool prefix_match(const char *s, const char * const *prefixes)
 {
     for (const char * const *prefix = prefixes; prefix && *prefix; prefix++)
     {
-	if (!_strnicmp(s, *prefix, strlen(*prefix)))
+	if (!strncasecmp(s, *prefix, strlen(*prefix)))
 	    return true;
     }
     return false;
