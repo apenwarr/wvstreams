@@ -1,6 +1,11 @@
 #include "wvtest.h"
 #include <stdlib.h>
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <stdio.h>
 
@@ -8,7 +13,7 @@ static bool fd_is_valid(int fd)
 {
 #ifdef _WIN32
     if ((HANDLE)_get_osfhandle(fd) != INVALID_HANDLE_VALUE) return true;
-#endif
+#endif    
     int nfd = dup(fd);
     if (nfd >= 0)
     {
@@ -16,6 +21,7 @@ static bool fd_is_valid(int fd)
 	return true;
     }
     return false;
+
 }
 
 

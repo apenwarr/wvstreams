@@ -612,6 +612,12 @@ protected:
     
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
+#ifdef __WVSTREAM_UNIT_TEST
+public:
+    size_t outbuf_used() { return outbuf.used(); };
+    size_t inbuf_used() { return inbuf.used(); };
+    void inbuf_putstr(WvStringParm t) { inbuf.putstr(t); } ;
+#endif
 };
 
 /**

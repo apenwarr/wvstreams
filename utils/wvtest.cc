@@ -10,7 +10,11 @@
 #include <string.h>
 #include <malloc.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <signal.h>
 
 #include <cstdlib>
@@ -83,7 +87,7 @@ static bool prefix_match(const char *s, const char * const *prefixes)
 {
     for (const char * const *prefix = prefixes; prefix && *prefix; prefix++)
     {
-	if (!strncasecmp(s, *prefix, strlen(*prefix)))
+	if (!_strnicmp(s, *prefix, strlen(*prefix)))
 	    return true;
     }
     return false;
@@ -95,9 +99,14 @@ int WvTest::run_all(const char * const *prefixes)
     int old_valgrind_errs = 0, new_valgrind_errs;
     int old_valgrind_leaks = 0, new_valgrind_leaks;
     
+#ifdef _WIN32
+    /* I should be doing something to do with SetTimer here, not sure exactly what just yet */
+
+#else
     signal(SIGALRM, alarm_handler);
     // signal(SIGALRM, SIG_IGN);
     alarm(MAX_TEST_TIME);
+#endif
     start_time = time(NULL);
     
     fails = runs = 0;
@@ -164,7 +173,9 @@ void WvTest::start(const char *file, int line, const char *condstr)
 
 void WvTest::check(bool cond)
 {
+#ifndef _WIN32
     alarm(MAX_TEST_TIME); // restart per-test timeout
+#endif
     if (!start_time) start_time = time(NULL);
     
     if (time(NULL) - start_time > MAX_TOTAL_TIME)
