@@ -214,6 +214,8 @@ WVTEST_MAIN("add another user and read it back")
 
 WVTEST_MAIN("default ACL permissions")
 {
+    if (!acl_check()) return;
+
     WvString testfn("wvacltest.tmp"), username, groupname;
     WvString p1("u::rwx,g::rwx,o::rwx"), p2("u::---,g::---,o::---"),
              p3("u::r-x,g::r-x,o::r-x");
