@@ -7,28 +7,41 @@
 #include "wvbuf.h"
 #include <wvstream.h>
 
-WvString wvtcl_escape(WvStringParm s, const char *nasties)
+static size_t wvtcl_escape(char *dst, WvStringParm s,
+        const char *nasties, bool *verbatim = NULL)
 {
+    if (verbatim) *verbatim = false;
+
+    // NULL strings remain such
+    if (s.isnull())
+        return 0;
+    // empty strings are just {}
+    if (!s)
+    {
+        if (dst)
+        {
+            dst[0] = '{';
+            dst[1] = '}';
+        }
+	return 2;
+    }
+    
     WvString allnasties(WVTCL_ALWAYS_NASTY);
     allnasties.append(nasties);
     
     bool backslashify = false, inescape = false;
-    int unprintables = 0, bracecount = 0;
+    int len = 0, unprintables = 0, bracecount = 0;
     const char *cptr;
-    
-    // NULL strings remain such
-    if (!(const char *)s)
-	return s;
-    
-    // empty strings are just {}
-    if (!s)
-	return "{}";
     
     // figure out which method we need to use: backslashify or embrace.
     // also count the number of unprintable characters we'll need to 
     // backslashify, if it turns out that's necessary.
     for (cptr = s; *cptr; cptr++)
     {
+        // Assume we do nothing
+        if (dst) dst[len] = *cptr;
+        ++len;
+
 	if (!inescape && *cptr == '{')
 	    bracecount++;
 	else if (!inescape && *cptr == '}')
@@ -50,18 +63,54 @@ WvString wvtcl_escape(WvStringParm s, const char *nasties)
         backslashify = true;
 
     if (!backslashify && !unprintables)
-	return s; // no work needed!
+    {
+        if (verbatim) *verbatim = true;
+	return len; // no work needed!
+    }
     
     if (backslashify)
     {
-	// the backslashify method: backslash-escape _all_ suspicious chars.
-        return WvBackslashEncoder(allnasties).strflushstr(s, true);
+        if (dst)
+        {
+            len = 0;
+            for (cptr = s; *cptr; ++cptr)
+            {
+                if (strchr(allnasties, *cptr)) dst[len++] = '\\';
+                dst[len++] = *cptr;
+            }
+            return len;
+        }
+        else return len+unprintables;
     }
     else
     {
 	// the embrace method: just take the string and put braces around it
-	return WvString("{%s}", s);
+        if (dst)
+        {
+            len = 0;
+            dst[len++] = '{';
+            for (cptr = s; *cptr; ++cptr)
+                dst[len++] = *cptr;
+            dst[len++] = '}';
+            return len;
+        }
+        else return len+2;
     }
+}
+
+
+WvString wvtcl_escape(WvStringParm s, const char *nasties)
+{
+    bool verbatim;
+    size_t len = wvtcl_escape(NULL, s, nasties, &verbatim);
+    if (verbatim) return s;
+
+    WvString result;
+    result.setsize(len);
+    char *e = result.edit();
+    e += wvtcl_escape(e, s, nasties);
+    *e = '\0';
+    return result;
 }
 
 
@@ -106,19 +155,24 @@ WvString wvtcl_unescape(WvStringParm s)
 WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
 		      const char *splitchars)
 {
-    WvDynBuf b;
+    int size = 0;
+
     WvList<WvString>::Iter i(l);
     for (i.rewind(); i.next(); )
-    {
-	// elements are separated by spaces
-	if (b.used())
-	    b.put(splitchars, 1);
-	
-	// escape and add the element
-	b.putstr(wvtcl_escape(*i, nasties));
-    }
+        size += wvtcl_escape(NULL, *i, nasties);
     
-    return b.getstr();
+    WvString result;
+    result.setsize(size+1);
+
+    char *p = result.edit();
+    for (i.rewind(); i.next(); )
+    {
+        p += wvtcl_escape(p, *i, nasties);
+        *p++ = ' ';
+    }
+    *--p = '\0';
+    
+    return result;
 }
 
 WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
