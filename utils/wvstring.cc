@@ -20,6 +20,21 @@ static inline int _max(int x, int y)
 }
 
 
+void WvString::unlink()
+{ 
+    if (!buf) return;
+    if (! --buf->links)
+	free(buf);
+}
+    
+void WvString::link(WvStringBuf *_buf, const char *_str)
+{
+    buf = _buf;
+    if (buf) buf->links++;
+    str = (char *)_str; // I promise not to change it without asking!
+}
+    
+
 WvStringBuf *WvString::alloc(size_t size)
 { 
     WvStringBuf *buf = (WvStringBuf *)malloc(WVSTRINGBUF_SIZE(buf)

@@ -60,6 +60,7 @@ struct WvStringBuf
     char data[1];	// optional room for extra string data
 };
 
+
 // the _actual_ space taken by a WvStringBuf, without the data[] array
 // (which is variable-sized, not really 1 byte)
 #define WVSTRINGBUF_SIZE(s) (s->data - (char *)s)
@@ -70,19 +71,8 @@ class WvString
     WvStringBuf *buf;
     char *str;
     
-    void unlink()
-    { 
-	if (!buf) return;
-	if (! --buf->links)
-	    free(buf);
-    }
-    
-    void link(WvStringBuf *_buf, const char *_str)
-    {
-	buf = _buf;
-	if (buf) buf->links++;
-	str = (char *)_str; // I promise not to change it without asking!
-    }
+    void unlink();
+    void link(WvStringBuf *_buf, const char *_str);
     
     WvStringBuf *alloc(size_t size);
     void newbuf(size_t size);
@@ -104,6 +94,7 @@ public:
 
     // when this is called, we assume output.str == NULL; it will be filled.
     static void do_format(WvString &output, char *format, const WvString **a);
+    
     // Now, you are probably thinking to yourself: Boy, does this ever look
     // ridiculous.  And indeed it does.  However, it is completely type-safe
     // and when inline functions are enabled, it reduces automatically to its
