@@ -363,7 +363,7 @@ size_t WvStream::write(const void *buf, size_t count)
 	wrote = uwrite(buf, count);
         count -= wrote;
         buf = (const unsigned char *)buf + wrote;
-	if (!count) return wrote; // short circuit if no buffering needed
+	// if (!count) return wrote; // short circuit if no buffering needed
     }
     if (max_outbuf_size != 0)
     {
