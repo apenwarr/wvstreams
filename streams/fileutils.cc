@@ -136,3 +136,33 @@ bool wvfnmatch(WvStringList& patterns, WvStringParm name, int flags)
 
     return match;
 }
+
+// Only chmod a given file or dir, do not follow symlinks
+int wvchmod(const char *path, mode_t mode)
+{
+    struct stat st;
+    if (lstat(path, &st) == -1) {
+        return -1;
+    }
+
+    int filedes = open(path, O_RDONLY);
+    if (filedes == -1) {
+	return -1;
+    }
+
+    struct stat fst;
+    if (fstat(filedes, &fst) == -1) {
+	close(filedes);
+	return -1;
+    }
+
+    if (st.st_ino != fst.st_ino) {
+	close(filedes);
+	return -1;
+    }
+
+    int retval = fchmod(filedes, mode);
+    close(filedes);
+
+    return retval;
+}
