@@ -5,11 +5,13 @@
  * A WvInterface stores information about a particular network interface.
  */
 #include "wvinterface.h"
-#include "wvpipe.h"
+//#include "wvpipe.h"
+#include "wvsubproc.h"
 #include "wvfile.h"
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <net/if_arp.h>
 #include <net/if.h>
 #include <net/route.h>
@@ -345,7 +347,8 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     char ifname[17];
     int sock;
     WvString deststr(dest), gwstr(gw), metr(metric);
-    const char *argv[] = {
+
+    const char * const argv[] = {
 	"ip", "route", "add",
 	deststr,
 	"table", table,
@@ -354,7 +357,8 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 	"metric", metr,
 	NULL
     };
-    
+
+
     if (dest.is_default() || table != "default")
     {
 	err(WvLog::Debug2, "addroute: ");
@@ -362,7 +366,12 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 	    err(WvLog::Debug2, "%s ", argv[i]);
 	err(WvLog::Debug2, "\n");
 	
-	if (WvPipe(argv[0], argv, false, false, false).finish() != 242)
+        WvSubProc checkProc;
+        checkProc.startv(*argv, argv);
+        checkProc.wait(-1);
+
+	//if (WvPipe(argv[0], argv, false, false, false).finish() != 242)
+        if (checkProc.estatus != 242)
 	{
 	    // added a default route via the subprogram
 	    // 242 is the magic "WvPipe could not exec program..." exit code.
@@ -423,7 +432,12 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
 	    err(WvLog::Debug2, "%s ", argv[i]);
 	err(WvLog::Debug2, "\n");
 	
-	if (WvPipe(argv[0], argv, false, false, false).finish() == 0)
+        WvSubProc checkProc;
+        checkProc.startv(*argv, (char * const *)argv);
+        checkProc.wait(-1);
+
+	//if (WvPipe(argv[0], argv, false, false, false).finish() == 0)
+        if (!WEXITSTATUS(checkProc.estatus))
 	{
 	    // successfully deleted a default route via the subprogram
 	    return 0;
