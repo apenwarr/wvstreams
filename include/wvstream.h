@@ -444,7 +444,7 @@ public:
     
 private:
     void init();
-    bool wvstream_execute_called;
+    bool wvstream_execute_called, now_closing;
     
     /**
      * The function that does the actual work of select().

@@ -41,7 +41,7 @@ WvStream::WvStream(int _fd) : callfunc(NULL)
 
 void WvStream::init()
 {
-    wvstream_execute_called = false;
+    wvstream_execute_called = now_closing = false;
     userdata = NULL;
     errnum = 0;
     max_outbuf_size = 0;
@@ -85,6 +85,10 @@ WvStream::~WvStream()
 
 void WvStream::close()
 {
+    if (now_closing)
+	return;
+    now_closing = true;
+    
     int rfd = getrfd(), wfd = getwfd();
     
     flush(2000);
@@ -93,6 +97,8 @@ void WvStream::close()
     if (wfd >= 0 && wfd != rfd)
 	::close(getwfd());
     rwfd = -1;
+    
+    now_closing = false;
 }
 
 
