@@ -1,7 +1,7 @@
 
 WVPART(utils, The Utilities Library,
 
- WVPREFACE(Introduction, {
+ WVPREFACE(Introduction,
   
   The "utils" library contains fundamental support utilities used throughout
   WvStreams, or at least ones that we couldn't classify anywhere else.
@@ -9,31 +9,28 @@ WVPART(utils, The Utilities Library,
   Functions and classes in the utils library don't depend on functions and
   classes from any other WvStreams libraries.
   
- })
+ )
 
  WVCHAPTER(basicutils, Basic String Handling,
-  {
   
   Here are some particularly simple C functions for manipulating character
   strings.  In general, the only reason they sit in C++ files is to make it
   easier to link with our C++ functions -- they don't use many C++ features.
-  
-  }
  
   WVSECT1(strutils, String Utilities (strutils.cc),
-   WVSECT2(terminatestring, terminate_string(), {
+   WVSECT2(terminatestring, terminate_string(),
     
-    <synopsis>char *terminate_string(char *string, char c)</synopsis>
+    WVCMD(char *terminate_string(char *string, char c))
 
     Add character c to the end of a string after removing terminating
     carriage returns/linefeeds if any.
 
     You need a buffer that's at least one character bigger than the
     current length of the string, including the terminating NUL.
-   })
+   )
    
-   WVSECT2(trimstring, trim_string(), {
-    <synopsis>char *trim_string(char *string)</synopsis>
+   WVSECT2(trimstring, trim_string(),
+    WVCMD(char *trim_string(char *string))
     
     Trims whitespace from the beginning and end of the character string,
     including carriage return / linefeed characters.  Modifies the string
@@ -41,31 +38,31 @@ WVPART(utils, The Utilities Library,
     either at 'string' itself or some character contained therein.
     
     string is allowed to be NULL; returns NULL in that case.
-   })
+   )
     
-   WVSECT2(replacechar, replace_char(), {
-    <synopsis>void replace_char(void *string, char c1, char c2, int length)</synopsis>
+   WVSECT2(replacechar, replace_char(),
+    WVCMD(void replace_char(void *string, char c1, char c2, int length))
     
     Replace all instances of c1 with c2 for the first 'length' characters in
     'string'.  Ignores terminating NUL, so make sure you set 'length'
     correctly.
-   })
+   )
     
-   WVSECT2(strlwr, strlwr(), {
-    <synopsis>char *strlwr(char *string)</synopsis>
+   WVSECT2(strlwr, strlwr(),
+    WVCMD(char *strlwr(char *string))
     
     In-place modify a character string so that all contained letters are
     in lower case.  Returns 'string'.
-   })
+   )
     
-   WVSECT2(isword, is_word(), {
-    <synopsis>bool is_word(char *string)</synopsis>
+   WVSECT2(isword, is_word(),
+    WVCMD(bool is_word(char *string))
     
     Returns true if all characters in 'string' are isalnum() (alphanumeric).
-   })
+   )
     
-   WVSECT2(hexdumpbuffer, hexdump_buffer(), {
-    <synopsis>WvString hexdump_buffer(unsigned char *buf, size_t len)</synopsis>
+   WVSECT2(hexdumpbuffer, hexdump_buffer(),
+    WVCMD(WvString hexdump_buffer(unsigned char *buf, size_t len))
     
     Produce a hexadecimal dump of the data buffer in 'buf' of length 'len'.
     it is formatted with 16 bytes per line; each line has an address offset,
@@ -76,17 +73,17 @@ WVPART(utils, The Utilities Library,
     <link linkend="wvlog">WvLog</link> or any other <link linkend="wvstream">
     WvStream</link> for output.
 
-   })
+   )
     
-   WVSECT2(isnewline, isnewline(), {
-    <synopsis>bool isnewline(char c)</synopsis>
+   WVSECT2(isnewline, isnewline(),
+    WVCMD(bool isnewline(char c))
     
     Returns true if 'c' is a newline or carriage return character.  Increases
     code readability a bit.
-   })
+   )
     
-   WVSECT2(hexify, hexify(), {
-    <synopsis>void hexify(char *obuf, unsigned char *ibuf, size_t len)</synopsis>
+   WVSECT2(hexify, hexify(),
+    WVCMD(void hexify(char *obuf, unsigned char *ibuf, size_t len))
     
     Write the contents of the binary string of length 'len' pointed to by
     'ibuf' into the output buffer 'obuf' in hexadecimal format.
@@ -101,23 +98,21 @@ WVPART(utils, The Utilities Library,
     obuf must be a buffer with at least (len * 2) + 1 bytes available.
     (two digits for each byte of ibuf, plus a terminating NUL).
     
-   })
+   )
     
-   WVSECT2(unhexify, unhexify(), {
-    <synopsis>void unhexify(unsigned char *obuf, char *ibuf)</synopsis>
+   WVSECT2(unhexify, unhexify(),
+    WVCMD(void unhexify(unsigned char *obuf, char *ibuf))
     
     Reverse the operation performed by <link
     linkend="hexify">hexify()</link>.  obuf must be a buffer large enough to
     contain the entire binary output string; you can calculate this size with
     (strlen(ibuf) / 2).  obuf will NOT be automatically NUL-terminated.
     
-   })
+   )
   )
   
 
   WVSECT1(verstring, Version String Manipulation (verstring.cc),
-  
-   {
   
    These are version number and string manipulations, mostly specific to
    Worldvisions software.
@@ -134,51 +129,49 @@ WVPART(utils, The Utilities Library,
    digits to the left or right of the decimal, letters greater than f, or
    more than one decimal.
 
-   }
 
-   WVSECT2(vertostring, ver_to_string(), {
-    <synopsis>const char *ver_to_string(unsigned int ver)</synopsis>
+   WVSECT2(vertostring, ver_to_string(),
+    WVCMD(const char *ver_to_string(unsigned int ver))
     
     Converts an integer, like 0x00012a00, to a string, like 1.2a.
-   })
+   )
    
-   WVSECT2(stringtover, string_to_ver(), {
-    <synopsis>unsigned int string_to_ver(const char *str)</synopsis>
+   WVSECT2(stringtover, string_to_ver(),
+    WVCMD(unsigned int string_to_ver(const char *str))
     
     Converts a string, like 1.2a, to an integer, like 0x00012a00.
-   })
+   )
    
   )
 
 
   WVSECT1(base64, Base64 Encoding Tools (base64.cc),
-   {
-    Functions for encoding and ecoding strings in MIME Base64 notation.
-   }
+
+   Functions for encoding and ecoding strings in MIME Base64 notation.
    
-   WVSECT2(base64encode, base64_encode(), {
-    <synopsis>char *base64_encode(char *str)</synopsis>
+   WVSECT2(base64encode, base64_encode(),
+    WVCMD(char *base64_encode(char *str))
     
     Convert 'str' to base64 encoding, and return a dynamically-allocated
     char* string with the result.
     
     You must 'delete' the returned string when you've finished with it.
-   })
+   )
    
-   WVSECT2(base64decode, base64_decode(), {
-    <synopsis>char *base64_decode(char *str)</synopsis>
+   WVSECT2(base64decode, base64_decode(),
+    WVCMD(char *base64_decode(char *str))
     
     Convert 'str' from base64 format into a normal string, and return a
     dynamically-allocated char* string with the result.
     
     You must 'delete' the returned string when you've finished with it.
-   })
+   )
   )
  )
  
  WVCHAPTER(wvstring, WvString - dynamic character strings,
  
-  WVSECT1(wvstringintro, Introduction, {
+  WVSECT1(wvstringintro, Introduction,
 
    WvString is an implementation of a simple and efficient printable-string
    class.  It leaves out many of the notational conveniences provided by
@@ -207,12 +200,12 @@ WVPART(utils, The Utilities Library,
    cases, and it almost always avoids manual 'new' and 'delete' of string
    objects.
    
-  })
+  )
 
-  WVSECT1(wvstringexamples, WvString Examples, {
+  WVSECT1(wvstringexamples, WvString Examples,
    
-     <synopsis>WvString x("fuzzy wazoo");</synopsis>
-     <synopsis>x.unique();</synopsis>
+     WVCMD(WvString x("fuzzy wazoo");
+x.unique();)
 
      The first line creates a WvString object 'x' containing a pointer to
      the static string "fuzzy wazoo".  This requires no dynamic memory
@@ -225,9 +218,9 @@ WVPART(utils, The Utilities Library,
      When 'x' is destroyed (automatically upon exiting the C++ code block)
      the dynamic string will be deleted automatically.
      
-     <synopsis>WvString output("fuzzy %-10.3s %5s\n", "abcdef", 12);</synopsis>
-     <synopsis>WvString c(output);</synopsis>
-     <synopsis>c.edit()[1] = 'a';</synopsis>
+     WVCMD(WvString output("fuzzy %-10.3s %5s\n", "abcdef", 12);
+WvString c(output);
+c.edit()[1] = 'a';)
      
      The first command above creates a WvString called 'output' which contains
      the string "fuzzy abc[seven spaces] [three spaces]12\n".  This uses the
@@ -254,31 +247,31 @@ WVPART(utils, The Utilities Library,
      of the output string), then changes the second character to 'a', so that
      now 'c' contains "fazzy abc 12" and output contains "fuzzy abc 12".
    
-     <synopsis>WvString nul;</synopsis>
+     WVCMD(WvString nul;)
      
      This command creates a null WvString.  This is NOT simply a WvString
      containing a zero-length string, but a WvString that points to nothing.
      You very seldom want to leave a WvString this way, but if you do, you
-     can test for this condition with something like <synopsis>((char *)nul
-     == NULL)</synopsis>.
+     can test for this condition with something like:
+	  
+	  WVCMD(((char *)nul == NULL))
      
      Most often, you will want to immediately fill the null WvString with
      an empty buffer with setsize(), as below.
      
-     <synopsis>WvString newstr;</synopsis>
-     <synopsis>newstr.setsize(128);</synopsis>
-     <synopsis>sprintf(newstr.edit(), "blah blah %5.4f", floatval);</synopsis>
+     WVCMD(WvString newstr;
+newstr.setsize(128);
+sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
      
      These commands first create a NULL WvString, then attach it to an
      uninitialized 128-byte buffer.  We then use sprintf to fill the string
      buffer.
    
-   })
+   )
 
  )
  
  WVCHAPTER(wvlinklist, WvLinkList - type-safe linked lists and iterators, 
- {
 
    WvLinkList allows you to create type-safe lists of objects, along with
    appropriate iterators.  Lists are used all over the Weaver and WvStreams,
@@ -290,41 +283,10 @@ WVPART(utils, The Utilities Library,
    
    A typical use of WvLinkList would be something like this:
    
-   --SNIP--
-   <ProgramListing>
-   #include "wvstring.h"
-   #include "wvlinklist.h"
-   
-   DeclareWvList(WvString);   // creates class WvStringList
-   
-   int main()
-   {
-       WvStringList l;
-       WvStringList::Iter i(l);
-       WvString autostr("bork bork");
-       
-       l.append(new WvString("blah blah"), true); // auto-free enabled
-       l.append(&amp;autostr, false); // auto-free disabled: C++ will do this one
-       // etc
-       
-       for (i.rewind(); i.next(); )
-       {
-           // we will learn a nicer way to do this with <link linkend="wvstream">WvStream</link> later.
-           printf("%s\n", (const char *)i());
-       }
-       
-       // exiting this function will have C++ auto-free the list, which
-       // causes the list to auto-free the "blah blah" string.  C++ also
-       // auto-frees the "bork bork" string automatically.  It doesn't matter
-       // that "bork bork" is freed before the list destructor is called; the
-       // list doesn't refer to its members during destruction, unless it
-       // needs to free the elements by itself.
-   }
-   </ProgramListing>
-   --SNIP--
- })
+   WVEXAMPLE(wvlistex.cc)
+ )
  
- WVCHAPTER(wvhashtable, WvHashTable - type-safe hash tables and iterators, {
+ WVCHAPTER(wvhashtable, WvHashTable - type-safe hash tables and iterators,
  
    WvHashTable works a lot like <link linkend="wvlinklist">WvLinkList</link>,
    except it allows for fast indexing of objects in the table (or
@@ -338,18 +300,18 @@ WVPART(utils, The Utilities Library,
 
    WvHashTable usage is described more fully, along with examples, in
    wvhashtable.h.
- })
+ )
  
- WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers, {
+ WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers,
    
    Not written yet.
    
- })
+ )
  
- WVCHAPTER(wvlockfile, WvLockFile - tty lock file creation, {
+ WVCHAPTER(wvlockfile, WvLockFile - tty lock file creation,
  
    Not written yet.
  
- })
+ )
 )
 

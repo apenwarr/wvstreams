@@ -15,10 +15,10 @@
 </bookbiblio>
 </bookinfo>
 
-WVPREFACE(Introduction, {
+WVPREFACE(Introduction,
 
  This book describes the programming libraries used in the Worldvisions
- Weaver, collectively called the "WvStreams" (Weav Streams) set of
+ Weaver, collectively called the "WvStreams" (Weave Streams) set of
  libraries.
 
  This is eternally a work-in-progress.  WvStreams is a fast-moving target
@@ -33,7 +33,7 @@ WVPREFACE(Introduction, {
  look directly at the source code.  The code itself is right, most of the
  time.
 
-})
+)
 
 skip_include(tutorial.wvsgml)
 include(utils.wvsgml)

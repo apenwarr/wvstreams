@@ -3,7 +3,7 @@ default: includes wvstreams.verify
 
 all: includes wvstreams.verify wvstreams.html wvstreams.ps wvstreams.pdf
 
-html: wvstreams.html
+html: wvstreams.sgml wvstreams.html
 ps: wvstreams.ps
 pdf: wvstreams.pdf
 
@@ -14,18 +14,31 @@ IMGFILES=$(shell [ -d img ] && find img -type f)
 	nsgmls $< >/dev/null
 	# Syntax check passed
 
-%.sgml: %.wvsgml *.m4 *.wvsgml
+%.sgml: %.wvsgml *.m4 *.wvsgml Makefile
 	@echo Preprocessing $< to $@...
-	@m4 sgmlmacros.m4 $< | awk '			\
+	@M4PATH=egfiles:../weaver/src m4 sgmlmacros.m4 $< | awk '			\
 		BEGIN {					\
 			paropen = 0;			\
 			parready = 0;			\
 			disabled = 0;			\
+			autopunc = 0;			\
 		}					\
 							\
-		/^[ 	]*--SNIP--[ 	]*$$/ {		\
+ 		/^[ 	]*--AUTOPUNC--[ 	]*$$/ {	\
+			autopunc = !autopunc;		\
+			next;				\
+		}					\
+							\
+ 		/^[ 	]*--SNIP--[ 	]*$$/ {		\
 			disabled = !disabled;		\
 			next;				\
+		}					\
+							\
+							\
+		(autopunc==1) {				\
+			gsub("&", "\\&amp;");		\
+			gsub("<", "\\&lt;");		\
+			gsub(">", "\\&gt;");		\
 		}					\
 							\
 		parready && !disabled && !paropen && /^[ 	]*[-A-Za-z0-9]/ {	\
@@ -133,6 +146,7 @@ jadetex.fmt:
 
 
 clean:
+	$(MAKE) -C egfiles clean
 	rm -f *~ *.fmt *.tex *.ps *.pdf *.dvi *.aux *.log HTML.manifest
 	rm -rf *.html *.tmp
 	rm -f $$(/bin/ls *.wvsgml | sed 's/\.wvsgml/.sgml/')
