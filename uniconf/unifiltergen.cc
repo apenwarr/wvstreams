@@ -32,15 +32,15 @@ void UniFilterGen::setinner(UniConfGen *inner)
 }
 
 
-bool UniFilterGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
+void UniFilterGen::commit()
 {
-    return xinner->commit(key, depth);
+    xinner->commit();
 }
 
 
-bool UniFilterGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniFilterGen::refresh()
 {
-    return xinner->refresh(key, depth);
+    return xinner->refresh();
 }
 
 
@@ -50,15 +50,9 @@ WvString UniFilterGen::get(const UniConfKey &key)
 }
 
 
-bool UniFilterGen::set(const UniConfKey &key, WvStringParm value)
+void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 {
-    return xinner->set(key, value);
-}
-
-
-bool UniFilterGen::zap(const UniConfKey &key)
-{
-    return xinner->zap(key);
+    xinner->set(key, value);
 }
 
 

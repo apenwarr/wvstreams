@@ -40,8 +40,8 @@ public:
         REQ_GET, /*!< get <key> ==> VAL ... OK / FAIL */
         REQ_SET, /*!< set <key> <value> ==> OK / FAIL */
         REQ_REMOVE, /*!< del <key> ==> OK / FAIL */
-        REQ_ZAP, /*! zap <key> ==> OK / FAIL */
         REQ_SUBTREE, /*!< subt <key> ==> VAL ... OK / FAIL <*/
+        REQ_HASCHILDREN, /*!< hchild <key> => HCHILD <key> TRUE / FALSE */
         REQ_ADDWATCH, /*!< reg <key> <depth> ==> OK / FAIL */
         REQ_DELWATCH, /*!< ureg <key> <depth> ==> OK / FAIL */
         REQ_QUIT, /*!< quit ==> OK */
@@ -50,6 +50,8 @@ public:
         // command completion replies
         REPLY_OK, /*!< OK */
         REPLY_FAIL, /*!< FAIL */
+        REPLY_CHILD, /*!< HCHILD <key> TRUE / FALSE */
+        REPLY_ONEVAL, /*!< ONEVAL <key> <value> */
 
         // partial replies
         PART_VALUE, /*!< VAL <key> <value> */
@@ -112,7 +114,14 @@ public:
      * "value" is the value
      */
     void writevalue(const UniConfKey &key, WvStringParm value);
-    
+
+    /**
+     * Writes a PART_VALUE message.
+     * "key" is the key
+     * "value" is the value
+     */ 
+    void writeonevalue(const UniConfKey &key, WvStringParm value);
+
     /**
      * Writes a PART_TEXT message.
      * "text" is the text

@@ -41,7 +41,7 @@ WvString UniTempGen::get(const UniConfKey &key)
 }
 
 
-bool UniTempGen::set(const UniConfKey &key, WvStringParm value)
+void UniTempGen::set(const UniConfKey &key, WvStringParm value)
 {
     hold_delta();
     if (value.isnull())
@@ -106,22 +106,6 @@ bool UniTempGen::set(const UniConfKey &key, WvStringParm value)
     }
     
     unhold_delta();
-    return true;
-}
-
-
-bool UniTempGen::zap(const UniConfKey &key)
-{
-    //hold_delta(); // omitted because delta comes last
-    UniConfValueTree *node = root->find(key);
-    if (node && node->haschildren())
-    {
-        dirty = true;
-        node->zap();
-        delta(key); // CHILDREN REMOVED
-    }
-    //unhold_delta(); // omitted because delta comes last
-    return true;
 }
 
 

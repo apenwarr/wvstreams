@@ -78,36 +78,6 @@ void UniConfGen::delta(const UniConfKey &key)
 }
 
 
-bool UniConfGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
-{
-    return true;
-}
-
-
-bool UniConfGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
-{
-    return true;
-}
-
-
-bool UniConfGen::zap(const UniConfKey &key)
-{
-    hold_delta();
-    
-    bool success = true;
-    Iter *it = iterator(key);
-    for (it->rewind(); it->next();)
-    {
-        if (! set(it->key(), WvString::null))
-            success = false;
-    }
-    delete it;
-    
-    unhold_delta();
-    return success;
-}
-
-
 bool UniConfGen::haschildren(const UniConfKey &key)
 {
     hold_delta();

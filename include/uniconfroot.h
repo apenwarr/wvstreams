@@ -16,17 +16,17 @@
  */
 class UniWatch
 {
-    UniConfDepth::Type xdepth;
+    bool recurse;
     UniConfCallback cb;
     void *cbdata;
 
 public:
-    UniWatch(UniConfDepth::Type depth, UniConfCallback _cb, void *_cbdata)
-        : xdepth(depth), cb(_cb), cbdata(_cbdata) { }
+    UniWatch(bool _recurse, UniConfCallback _cb, void *_cbdata)
+        : recurse(_recurse), cb(_cb), cbdata(_cbdata) { }
 
-    /** Returns watch recursion depth. */
-    UniConfDepth::Type depth()
-        { return xdepth; }
+    /** Returns watch recursion */
+    bool recursive()
+        { return recurse; }
 
     /** Notifies that a key has changed. */
     void notify(const UniConf &cfg)
@@ -35,7 +35,7 @@ public:
     /** Equality test. */
     bool operator== (const UniWatch &other) const
     {
-        return xdepth == other.xdepth &&
+        return recurse  == other.recurse &&
             cb == other.cb && cbdata == other.cbdata;
     }
 };
@@ -88,29 +88,25 @@ public:
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
      */
-    void add_callback(const UniConfKey &key,
-        const UniConfCallback &callback, void *userdata,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
+    void add_callback(const UniConfKey &key, const UniConfCallback &callback,
+                      void *userdata, bool recurse = true);
     
     /**
      * Cancels notification requested using add_callback().
      */
-    void del_callback(const UniConfKey &key,
-        const UniConfCallback &callback, void *userdata,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
+    void del_callback(const UniConfKey &key, const UniConfCallback &callback,
+                      void *userdata, bool recurse = true);
 
     /**
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by setting a flag.
      */
-    void add_setbool(const UniConfKey &key, bool *flag,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
+    void add_setbool(const UniConfKey &key, bool *flag, bool recurse = true);
 
     /**
      * Cancels notification requested using add_setbool().
      */
-    void del_setbool(const UniConfKey &key, bool *flag,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
+    void del_setbool(const UniConfKey &key, bool *flag, bool recurse = true);
 
 private:
     /**

@@ -7,7 +7,6 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
-#include "uniconfdefs.h"
 #include "uniconfkey.h"
 #include "wvcallback.h"
 #include "wvxplc.h"
@@ -131,12 +130,9 @@ public:
     /***** Key Persistence API *****/
     
     /**
-     * Commits information about a key recursively.
-     * 'depth' is the recursion depth.  Returns true on success.
-     *
-     * The default implementation always just returns true.
+     * Commits any changes. The default implementation does nothing.
      */
-    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
+    virtual void commit() { }
     
     /**
      * Refreshes information about a key recursively.
@@ -144,7 +140,7 @@ public:
      *
      * The default implementation always returns true.
      */
-    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
+    virtual bool refresh() { return true; }
 
     
     /***** Key Retrieval API *****/
@@ -174,17 +170,7 @@ public:
      * 
      * Returns true on success.
      */
-    virtual bool set(const UniConfKey &key, WvStringParm value) = 0;
-
-    /**
-     * Removes all children of a key from the registry. Returns true on
-     * success.
-     *
-     * The default implementation iterates over all children using
-     * iterator() removing them using set(key, WvString::null).
-     * Subclasses are strongly encouraged to provide a better implementation.
-     */
-    virtual bool zap(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value) = 0;
 
 
     /***** Key Enumeration API *****/

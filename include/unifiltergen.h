@@ -38,11 +38,10 @@ public:
 
     /***** Overridden methods *****/
 
-    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
-    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
+    virtual void commit();
+    virtual bool refresh();
     virtual WvString get(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual bool isok();

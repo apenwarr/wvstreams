@@ -7,6 +7,8 @@
 #include "uniclientconn.h"
 #include "wvaddr.h"
 #include "wvtclstring.h"
+#include "wvistreamlist.h"
+
 
 /***** UniClientConn *****/
 
@@ -17,8 +19,8 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "get", "get <key>: get the value of a key" },
     { "set", "set <key> <value>: sets the value of a key" },
     { "del", "del <key>: deletes the key" },
-    { "zap", "zap <key>: deletes the children of a key" },
     { "subt", "subt <key>: enumerates the children of a key" },
+    { "hchild", "hchild <key>: returns whether a key has children" },
     { "reg", "reg <key> <depth>: registers for change notification" },
     { "ureg", "ureg <key> <depth>: unregisters for change notification" },
     { "quit", "quit: kills the session nicely" },
@@ -27,6 +29,8 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     // command completion replies
     { "OK", "OK <payload>: reply on command success" },
     { "FAIL", "FAIL <payload>: reply on command failure" },
+    { "CHILD", "CHILD <key> TRUE / FALSE: key has children or not" },
+    { "ONEVAL", "ONEVAL <key> <value>: reply to a gate" },
 
     // partial replies
     { "VAL", "VAL <key> <value>: intermediate reply value of a key" },
@@ -43,12 +47,14 @@ UniClientConn::UniClientConn(IWvStream *_s) :
     log(WvString("UniConf to %s", *_s->src()), WvLog::Debug5),
     closed(false), payloadbuf("")
 {
+    WvIStreamList::globallist.append(this, false);
     log("Opened\n");
 }
 
 
 UniClientConn::~UniClientConn()
 {
+    WvIStreamList::globallist.unlink(this);
     close();
 }
 
@@ -97,8 +103,7 @@ WvString UniClientConn::readmsg()
 
 void UniClientConn::writemsg(WvStringParm msg)
 {
-    write(msg);
-    write("\n");
+    write(WvString("%s\n", msg));
     log("Wrote: %s\n", msg);
 }
 
@@ -155,6 +160,13 @@ void UniClientConn::writefail(WvStringParm payload)
 void UniClientConn::writevalue(const UniConfKey &key, WvStringParm value)
 {
     writecmd(PART_VALUE, WvString("%s %s", wvtcl_escape(key),
+        wvtcl_escape(value)));
+}
+
+
+void UniClientConn::writeonevalue(const UniConfKey &key, WvStringParm value)
+{
+    writecmd(REPLY_ONEVAL, WvString("%s %s", wvtcl_escape(key),
         wvtcl_escape(value)));
 }
 

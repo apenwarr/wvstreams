@@ -50,21 +50,18 @@ static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
 static WvMoniker<UniConfGen> reg("list", creator);
 
 
-bool UniListGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
+void UniListGen::commit()
 {
-    bool result = true; 
-    
     for (i.rewind(); i.next();)
-        result = result & i().commit(key, depth);
-    return result;
+        i().commit();
 }
 
-bool UniListGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniListGen::refresh()
 {
     bool result = true;
 
     for (i.rewind(); i.next();)
-        result = result & i().refresh(key, depth);
+        result = result && i().refresh();
     return result;
 }
 
@@ -79,24 +76,10 @@ WvString UniListGen::get(const UniConfKey &key)
     return WvString::null;
 }
 
-bool UniListGen::set(const UniConfKey &key, WvStringParm value)
+void UniListGen::set(const UniConfKey &key, WvStringParm value)
 {
     for (i.rewind(); i.next();)
-    {
-        if (i().set(key, value))
-            return true;
-    }
-    return false;
-}
-
-bool UniListGen::zap(const UniConfKey &key)
-{
-    bool result = true;
-
-    for (i.rewind(); i.next();)
-        result = result & i().zap(key);
-    return result;
-
+        i().set(key, value);
 }
 
 bool UniListGen::exists(const UniConfKey &key)

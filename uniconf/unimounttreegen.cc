@@ -49,36 +49,13 @@ WvString UniMountTreeGen::get(const UniConfKey &key)
 }
 
 
-bool UniMountTreeGen::set(const UniConfKey &key, WvStringParm value)
+void UniMountTreeGen::set(const UniConfKey &key, WvStringParm value)
 {
     // update the generator that defines the key, if any
     UniConfKey mountpoint;
     UniConfGen *provider = whichmount(key, &mountpoint);
     if (provider)
-        return provider->set(mountpoint, value);
-
-    // FIXME: if we delete a key, do we need to recurse over generators
-    //        at descendent mount points to set("/", NULL) them?
-    //        or do we allow them to shadow the deleted key?
-    return false;
-}
-
-
-bool UniMountTreeGen::zap(const UniConfKey &key)
-{
-    hold_delta();
-    bool success = true;
-    UniMountTree::GenIter it(*mounts, key);
-    for (it.rewind(); it.next(); )
-    {
-        UniConfGen *gen = it.ptr();
-        if (!gen->zap(it.tail()))
-            success = false;
-    }
-    // FIXME: need to recurse over generators at descendent mount points
-    //        to set("/", NULL) them, same problem as with set() above
-    unhold_delta();
-    return success;
+        provider->set(mountpoint, value);
 }
 
 
@@ -131,104 +108,32 @@ bool UniMountTreeGen::haschildren(const UniConfKey &key)
 }
 
 
-bool UniMountTreeGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
+bool UniMountTreeGen::refresh()
 {
     hold_delta();
-    bool result = dorecursive(genrefreshfunc, key, depth);
+    bool result = true;
+
+    UniConfGenList::Iter i(mounts->generators);
+    for (i.rewind(); i.next();)
+        result = result && i->refresh();
+
     unhold_delta();
     return result;
 }
 
 
-bool UniMountTreeGen::genrefreshfunc(UniConfGen *gen,
-    const UniConfKey &key, UniConfDepth::Type depth)
-{
-    return gen->refresh(key, depth);
-}
-
-
-bool UniMountTreeGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
+void UniMountTreeGen::commit()
 {
     hold_delta();
-    bool result = dorecursive(gencommitfunc, key, depth);
+
+    UniConfGenList::Iter i(mounts->generators);
+    for (i.rewind(); i.next();)
+        i->commit();
+
     unhold_delta();
-    return result;
 }
 
 
-bool UniMountTreeGen::gencommitfunc(UniConfGen *gen,
-    const UniConfKey &key, UniConfDepth::Type depth)
-{
-    return gen->commit(key, depth);
-}
-
-
-bool UniMountTreeGen::dorecursive(GenFunc func, const UniConfKey &key,
-    UniConfDepth::Type depth)
-{
-    // do containing generators
-    bool success = true;
-    UniMountTree::GenIter it(*mounts, key);
-    for (it.rewind(); it.next(); )
-    {
-        UniConfGen *gen = it.ptr();
-        if (!func(gen, it.tail(), depth))
-            success = false;
-    }
-
-    // do recursive
-    if (depth != UniConfDepth::ZERO)
-    {
-        UniMountTree *node = mounts->find(key);
-        if (node && ! dorecursivehelper(func, node, depth))
-            success = false;
-    }
-    return success;
-}
-
-
-bool UniMountTreeGen::dorecursivehelper(GenFunc func,
-    UniMountTree *node, UniConfDepth::Type depth)
-{
-    // determine depth for next step
-    switch (depth)
-    {
-        case UniConfDepth::ZERO:
-            assert(false);
-            return true;
-
-        case UniConfDepth::ONE:
-        case UniConfDepth::CHILDREN:
-            depth = UniConfDepth::ZERO;
-            break;
-
-        case UniConfDepth::DESCENDENTS:
-            depth = UniConfDepth::INFINITE;
-        case UniConfDepth::INFINITE:
-            break;
-    }
-
-    // process nodes and recurse if needed
-    bool success = true;
-    UniMountTree::Iter it(*node);
-    for (it.rewind(); it.next(); )
-    {
-        UniConfGenList::Iter genit(it->generators);
-        for (genit.rewind(); genit.next(); )
-        {
-            if (! func(genit.ptr(), UniConfKey::EMPTY, depth))
-                success = false;
-        }
-        if (depth != UniConfDepth::ZERO)
-        {
-            if (! dorecursivehelper(func, it.ptr(), depth))
-                success = false;
-        }
-    }
-    return success;
-}
- 
- 
 UniConfGen *UniMountTreeGen::mount(const UniConfKey &key,
     WvStringParm moniker, bool refresh)
 {
@@ -250,7 +155,7 @@ UniConfGen *UniMountTreeGen::mountgen(const UniConfKey &key,
     gen->setcallback(wvcallback(UniConfGenCallback, *this,
         UniMountTreeGen::gencallback), node);
     if (gen && refresh)
-        gen->refresh(UniConfKey::EMPTY, UniConfDepth::INFINITE);
+        gen->refresh();
     
     unhold_delta();
     return gen;
@@ -271,7 +176,7 @@ void UniMountTreeGen::unmount(const UniConfKey &key,
     hold_delta();
     
     if (commit)
-        gen->commit(UniConfKey::EMPTY, UniConfDepth::INFINITE);
+        gen->commit();
     gen->setcallback(NULL, NULL);
 
     node->generators.unlink(gen);

@@ -25,10 +25,9 @@ UniConfRootImpl::~UniConfRootImpl()
 
 
 void UniConfRootImpl::add_callback(const UniConfKey &key,
-    const UniConfCallback &callback, void *userdata,
-    UniConfDepth::Type depth)
+    const UniConfCallback &callback, void *userdata, bool recurse)
 {
-    UniWatch *w = new UniWatch(depth, callback, userdata);
+    UniWatch *w = new UniWatch(recurse, callback, userdata);
 
     UniWatchTree *node = & watchroot;
     UniConfKey::Iter it(key);
@@ -44,10 +43,9 @@ void UniConfRootImpl::add_callback(const UniConfKey &key,
 
 
 void UniConfRootImpl::del_callback(const UniConfKey &key,
-    const UniConfCallback &callback, void *userdata,
-    UniConfDepth::Type depth)
+    const UniConfCallback &callback, void *userdata, bool recurse)
 {
-    UniWatch needle(depth, callback, userdata);
+    UniWatch needle(recurse, callback, userdata);
     UniWatchTree *node = watchroot.find(key);
     if (node)
     {
@@ -68,18 +66,18 @@ void UniConfRootImpl::del_callback(const UniConfKey &key,
 
 
 void UniConfRootImpl::add_setbool(const UniConfKey &key, bool *flag,
-    UniConfDepth::Type depth)
+                                  bool recurse)
 {
     add_callback(key, wvcallback(UniConfCallback, *this,
-        UniConfRootImpl::setbool_callback), flag, depth);
+        UniConfRootImpl::setbool_callback), flag, recurse);
 }
 
 
 void UniConfRootImpl::del_setbool(const UniConfKey &key, bool *flag,
-    UniConfDepth::Type depth)
+                                  bool recurse)
 {
     del_callback(key, wvcallback(UniConfCallback, *this,
-        UniConfRootImpl::setbool_callback), flag, depth);
+        UniConfRootImpl::setbool_callback), flag, recurse);
 }
 
 
@@ -90,31 +88,9 @@ void UniConfRootImpl::check(UniWatchTree *node,
     for (it.rewind(); it.next(); )
     {
         UniWatch *w = it.ptr();
-        switch (w->depth())
-        {
-            case UniConfDepth::ZERO:
-                if (segleft > 0)
-                    continue;
-                break;
-                
-            case UniConfDepth::ONE:
-                if (segleft > 1)
-                    continue;
-                break;
+        if (!w->recursive() && segleft > 0)
+            continue;
 
-            case UniConfDepth::INFINITE:
-                // always matches
-                break;
-
-            case UniConfDepth::CHILDREN:
-                if (segleft > 1)
-                    continue;
-                break;
-
-            case UniConfDepth::DESCENDENTS:
-                // always matches
-                break;
-        }
         w->notify(UniConf(this, key));
     }
 }

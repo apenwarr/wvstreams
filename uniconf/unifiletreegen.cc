@@ -11,26 +11,8 @@
 #include "wvdiriter.h"
 #include "unifiletreegen.h"
 
-UniFileTreeGen::UniFileTreeGen(WvStringParm dir, WvStringParm genmoniker, bool rec) :
-    directory(dir), moniker(genmoniker), recursive(rec), log(directory)
-{
-}
-
-UniFileTreeGen::~UniFileTreeGen()
-{
-}
 
 /***** Overridden members *****/
-
-bool UniFileTreeGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
-{
-    return true;
-}
-
-bool UniFileTreeGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
-{
-    return true;
-}
 
 void UniFileTreeGen::map_directory()
 {
@@ -48,6 +30,5 @@ void UniFileTreeGen::map_directory()
     {
         log(WvLog::Error, WvString("Looking at:  %s!\n", i().name));
     }
-
 }
 

@@ -30,15 +30,12 @@ public:
      * files from the specified directory using the specified
      * moniker.
      */
-    UniFileTreeGen(WvStringParm dir, WvStringParm genmoniker, bool rec);
+    UniFileTreeGen(WvStringParm dir, WvStringParm genmoniker, bool rec)
+        : directory(dir), moniker(genmoniker), recursive(rec), log(directory)
+    { }
 
-    virtual ~UniFileTreeGen();
+    virtual ~UniFileTreeGen() { }
     
-    /***** Overridden members *****/
-
-    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth);
-    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
-
 private:
     void map_directory();
 };

@@ -17,29 +17,20 @@ UniWvConfGen::UniWvConfGen(WvConf &_cfg)
 
 WvString UniWvConfGen::get(const UniConfKey &key)
 {
-    fprintf(stderr, "Section: %s, Key: %s", WvString(key.first()).cstr(),
-WvString(key.last(key.numsegments() - 1)).cstr());
     return cfg.get(key.first(), key.last(key.numsegments() - 1));
 }
 
 
-bool UniWvConfGen::set(const UniConfKey &key, WvStringParm value)
+void UniWvConfGen::set(const UniConfKey &key, WvStringParm value)
 {
-    cfg.set(key.first(), key.last(key.numsegments() - 1), value);
-    if (cfg.get(key.first(), key.last(key.numsegments() - 1)) == value)
-        return true;
-    return false;
-}
+    WvString section = key.first();
+    WvString keyname = key.last(key.numsegments() - 1);
 
-
-bool UniWvConfGen::zap(const UniConfKey &key)
-{
-    cfg.delete_section(key);
-
-    WvConfigSection *sect = cfg[key];
-    if (sect)
-        return false;
-    return true;
+    WvConfigSection *sect = cfg[section];
+    if (value == WvString::null && sect)
+        cfg.delete_section(key);
+    else
+        cfg.set(section, keyname, value);
 }
 
 

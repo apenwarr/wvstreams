@@ -12,20 +12,22 @@
 #include "wvlog.h"
 #include "wvhashtable.h"
 
+#define NUM_WATCHES 113
+
 class UniConfDaemon;
 
 /** Data structure to track requested watches */
 struct UniConfDaemonWatch
 {
     UniConfKey key;
-    UniConfDepth::Type depth;
+    bool recurse;
 
-    UniConfDaemonWatch(const UniConfKey &_key, UniConfDepth::Type _depth)
-        : key(_key), depth(_depth) { }
+    UniConfDaemonWatch(const UniConfKey &_key, bool _recurse)
+        : key(_key), recurse(_recurse) { }
 
     bool operator== (const UniConfDaemonWatch &other) const
     {
-        return key == other.key && depth == other.depth;
+        return key == other.key && recurse == other.recurse;
     }
 
     // annoying identity function
@@ -59,10 +61,10 @@ private:
     void do_get(const UniConfKey &key);
     void do_set(const UniConfKey &key, WvStringParm value);
     void do_remove(const UniConfKey &key);
-    void do_zap(const UniConfKey &key);
     void do_subtree(const UniConfKey &key);
-    void do_addwatch(const UniConfKey &key, UniConfDepth::Type depth);
-    void do_delwatch(const UniConfKey &key, UniConfDepth::Type depth);
+    void do_haschildren(const UniConfKey &key);
+    void do_addwatch(const UniConfKey &key, bool recurse = true);
+    void do_delwatch(const UniConfKey &key, bool recurse = true);
     void do_quit();
     void do_help();
 

@@ -184,12 +184,9 @@ public:
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual WvString get(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
-    virtual bool refresh(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
-    virtual bool commit(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
+    virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual bool refresh();
+    virtual void commit();
     virtual Iter *iterator(const UniConfKey &key);
 
 private:
@@ -199,18 +196,6 @@ private:
      * "node" is the node
      */
     void prune(UniMountTree *node);
-
-    typedef bool (*GenFunc)(UniConfGen*, const UniConfKey&,
-        UniConfDepth::Type);
-    bool dorecursive(GenFunc func,
-        const UniConfKey &key, UniConfDepth::Type depth);
-    bool dorecursivehelper(GenFunc func,
-        UniMountTree *node, UniConfDepth::Type depth);
-
-    static bool genrefreshfunc(UniConfGen *gen,
-        const UniConfKey &key, UniConfDepth::Type depth);
-    static bool gencommitfunc(UniConfGen *gen,
-        const UniConfKey &key, UniConfDepth::Type depth);
 
     /** Called by generators when a key changes. */
     void gencallback(UniConfGen *gen, const UniConfKey &key, void *userdata);

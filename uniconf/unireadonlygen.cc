@@ -22,28 +22,3 @@ static UniConfGen *creator(WvStringParm s, IObject *obj, void *)
 }
 
 static WvMoniker<UniConfGen> reg("readonly", creator);
-
-
-UniReadOnlyGen::UniReadOnlyGen(UniConfGen *inner) :
-    UniFilterGen(inner)
-{
-}
-
-
-bool UniReadOnlyGen::set(const UniConfKey &key, WvStringParm value)
-{
-    return false;
-}
-
-
-bool UniReadOnlyGen::zap(const UniConfKey &key)
-{
-    return false;
-}
-
-
-bool UniReadOnlyGen::commit(const UniConfKey &key, 
-				UniConfDepth::Type depth)
-{
-    return false;
-}

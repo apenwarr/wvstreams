@@ -19,14 +19,11 @@
 class UniReadOnlyGen : public UniFilterGen
 {
 public:
-    UniReadOnlyGen(UniConfGen *inner);
+    UniReadOnlyGen(UniConfGen *inner) : UniFilterGen(inner) { }
 
     /***** Overridden members *****/
 
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
-    virtual bool commit(const UniConfKey &key,
-        UniConfDepth::Type depth);
+    virtual void set(const UniConfKey &key, WvStringParm value) { };
 };
 
 

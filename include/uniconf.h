@@ -7,7 +7,6 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
-#include "uniconfdefs.h"
 #include "uniconfkey.h"
 #include "uniconfgen.h"
 #include "wvcallback.h"
@@ -181,49 +180,42 @@ public:
      * is WvString::null, deletes the key and all of its children.
      * Returns true on success.
      */
-    bool set(WvStringParm value) const;
+    void set(WvStringParm value) const;
 
     /**
      * Stores a string value for this key into the registry.
      * Returns true on success.
      */
-    bool set(WVSTRING_FORMAT_DECL) const
+    void set(WVSTRING_FORMAT_DECL) const
         { return set(WvString(WVSTRING_FORMAT_CALL)); }
 
     /**
      * Stores an integer value for this key into the registry.
      * Returns true on success.
      */
-    bool setint(int value) const;
+    void setint(int value) const;
 
     /**
      * Removes this key and all of its children from the registry.
      * Returns true on success.
      */
-    bool remove() const
-        { return set(WvString::null); }
-
-    /**
-     * Removes all children of this key from the registry.
-     * Returns true on success.
-     */
-    bool zap() const;
+    void remove() const
+        { set(WvString::null); }
 
     
     /***** Key Persistence API *****/
 
     /**
      * Refreshes information about this key recursively.
-     * May discard uncommitted data.  'depth' is the recursion depth.
+     * May discard uncommitted data.
      * Returns true on success.
      */
-    bool refresh(UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
+    bool refresh() const;
     
     /**
      * Commits information about this key recursively.
-     * 'depth' is the recursion depth.  Returns true on success.
      */
-    bool commit(UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
+    void commit() const;
 
     
     /***** Generator Mounting API *****/
@@ -276,26 +268,24 @@ public:
      * recursive depth specification change by invoking a callback.
      */
     void add_callback(const UniConfCallback &callback, void *userdata,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
+                      bool recurse = true) const;
     
     /**
      * Cancels notification requested using add_callback().
      */
-    void del_callback(const UniConfCallback &callback, void *userdata,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
+    void del_callback(const UniConfCallback &callback, void *userdata, 
+                      bool recurse = true) const;
 
     /**
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by setting a flag.
      */
-    void add_setbool(bool *flag,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
+    void add_setbool(bool *flag, bool recurse = true) const;
 
     /**
      * Cancels notification requested using add_setbool().
      */
-    void del_setbool(bool *flag,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE) const;
+    void del_setbool(bool *flag, bool recurse = true) const;
     
     /**
      * Pauses notifications until matched with a call to unhold_delta().

@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     
     while (globdaemon->isok())
     {
-        if (globdaemon->select(1000))
+        if (globdaemon->select(-1))
             globdaemon->callback();
     }
     globdaemon->close();

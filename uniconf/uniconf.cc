@@ -70,33 +70,27 @@ int UniConf::getint(int defvalue) const
 }
 
 
-bool UniConf::set(WvStringParm value) const
+void UniConf::set(WvStringParm value) const
 {
-    return xroot->set(xfullkey, value);
+    xroot->set(xfullkey, value);
 }
 
 
-bool UniConf::setint(int value) const
+void UniConf::setint(int value) const
 {
-    return set(WvString(value));
+   set(WvString(value));
 }
 
 
-bool UniConf::zap() const
+bool UniConf::refresh() const
 {
-    return xroot->zap(xfullkey);
+    return xroot->refresh();
 }
 
 
-bool UniConf::refresh(UniConfDepth::Type depth) const
+void UniConf::commit() const
 {
-    return xroot->refresh(xfullkey, depth);
-}
-
-
-bool UniConf::commit(UniConfDepth::Type depth) const
-{
-    return xroot->commit(xfullkey, depth);
+    xroot->commit();
 }
 
 
@@ -131,30 +125,28 @@ UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 
 
 void UniConf::add_callback(const UniConfCallback &callback, void *userdata,
-    UniConfDepth::Type depth) const
+                           bool recurse) const
 {
-    xroot->add_callback(xfullkey, callback, userdata, depth);
+    xroot->add_callback(xfullkey, callback, userdata, recurse);
 }
 
 
 void UniConf::del_callback(const UniConfCallback &callback, void *userdata,
-    UniConfDepth::Type depth) const
+                           bool recurse) const
 {
-    xroot->del_callback(xfullkey, callback, userdata, depth);
+    xroot->del_callback(xfullkey, callback, userdata, recurse);
 }
 
 
-void UniConf::add_setbool(bool *flag,
-    UniConfDepth::Type depth) const
+void UniConf::add_setbool(bool *flag, bool recurse) const
 {
-    xroot->add_setbool(xfullkey, flag, depth);
+    xroot->add_setbool(xfullkey, flag, recurse);
 }
 
 
-void UniConf::del_setbool(bool *flag,
-    UniConfDepth::Type depth) const
+void UniConf::del_setbool(bool *flag, bool recurse) const
 {
-    xroot->del_setbool(xfullkey, flag, depth);
+    xroot->del_setbool(xfullkey, flag, recurse);
 }
 
 

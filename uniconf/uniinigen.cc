@@ -52,8 +52,7 @@ UniIniGen::~UniIniGen()
 }
 
 
-bool UniIniGen::refresh(const UniConfKey &key,
-    UniConfDepth::Type depth)
+bool UniIniGen::refresh()
 {
     /** open the file **/
     WvFile file(filename, O_RDONLY);
@@ -222,21 +221,21 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 }
 
 
-bool UniIniGen::commit(const UniConfKey &key,
-    UniConfDepth::Type depth)
+void UniIniGen::commit()
 {
     /** check dirtiness **/
     if (! dirty)
-        return true;
+        return;
     dirty = false;
 
     /** open the file **/
     WvFile file(filename, O_WRONLY | O_TRUNC | O_CREAT);
     if (! file.isok())
     {
+        //FIXME: Should use wverror
         log("Cannot open config file for writing: \"%s\"\n",
             file.errstr());
-        return false;
+        return;
     }
 
     /** iterate over all keys **/
@@ -247,12 +246,13 @@ bool UniIniGen::commit(const UniConfKey &key,
     file.close();
     if (file.geterr())
     {
+        //FIXME: Should use wverror
         log("Error writing to config file: \"%s\"\n", file.errstr());
-        return false;
+        return;
     }
 
     /** done **/
-    return true;
+    return;
 }
 
 
