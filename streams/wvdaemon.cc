@@ -79,11 +79,8 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
             WvArgs::NoArgCallback(this, &WvDaemon::display_version_and_exit));
 }
 
-int WvDaemon::run(int argc, char **argv)
+int WvDaemon::run(const char *argv0)
 {
-    if (!args.process(argc, argv))
-        return 1;
-
     if (daemonize)
     {
         pid_t pid = ::fork();
@@ -133,7 +130,7 @@ int WvDaemon::run(int argc, char **argv)
                     _exit(1);
                 }
                 
-                _run(argv[0]);
+                _run(argv0);
             }
 
             _exit(0);
@@ -144,8 +141,16 @@ int WvDaemon::run(int argc, char **argv)
     else
     {
         WvLogConsole console_log(STDOUT_FILENO, log_level);
-        return _run(argv[0]);
+        return _run(argv0);
     }
+}
+
+int WvDaemon::run(int argc, char **argv)
+{
+    if (!args.process(argc, argv))
+        return 1;
+
+    return run(argv[0]);
 }
 
 int WvDaemon::_run(const char *argv0)

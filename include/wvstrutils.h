@@ -182,7 +182,7 @@ WvString getdirname(WvStringParm fullname);
  * Given a number of blocks and a blocksize (default==1 byte), return a 
  * WvString containing a human-readable representation of blocks*blocksize.
  */
-WvString sizetoa(long long blocks, int blocksize=1);
+WvString sizetoa(unsigned long long blocks, unsigned int blocksize=1);
 
 /** Give a size in Kilobyes gives a human readable size */
 WvString sizektoa(unsigned int kbytes);

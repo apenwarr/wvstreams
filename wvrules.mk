@@ -137,6 +137,8 @@ runtests:
 %/test:
 	$(MAKE) -C $(dir $@) test
 
+$(LIBXPLC):
+
 $(WVSTREAMS_SRC)/rules.local.mk:
 	@true
 
@@ -206,6 +208,13 @@ endif
 # any rule that depends on FORCE will always run
 .PHONY: FORCE
 FORCE:
+
+ifeq ($(LN_S),)
+LN_S := ln -s
+endif
+ifeq ($(LN),)
+LN := ln
+endif
 
 # Create symbolic links
 # usage: $(wvlns,source,dest)
@@ -379,6 +388,7 @@ _wvclean:
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
+	@rm -f semantic.cache tags
 	@rm -rf debian/tmp
 
 #

@@ -1,3 +1,11 @@
+wvstreams (4.0.0-1) unstable; urgency=low
+
+  * New upstream version.
+  * Depend on a newer version of BDB.  (Closes: Bug#248522)
+  * We now depend on XPLC 0.3.10.
+
+ -- Simon Law <sfllaw@debian.org>  Thu,  7 Oct 2004 19:54:24 +0000
+
 wvstreams (4.0+20040924-1) unstable; urgency=low
 
   * New upstream snapshot.

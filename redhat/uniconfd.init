@@ -9,10 +9,6 @@
 #
 # modelled after the D-BUS initscript
 
-
-# Sanity checks.
-[ -x /usr/bin/dbus-daemon-1 ] || exit 0
-
 # Source function library.
 . /etc/rc.d/init.d/functions
 
