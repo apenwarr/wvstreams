@@ -12,3 +12,4 @@ testproc
 testfork
 testencoder
 testdiriter
+testcallback

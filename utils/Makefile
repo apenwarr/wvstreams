@@ -2,7 +2,8 @@ TOPDIR=../..
 include $(TOPDIR)/rules.mk
 
 TESTS=teststr testlist testhash stresshash testbuffer testbase64 testver \
-		testtask testsort testproc testfork testencoder testdiriter
+		testtask testsort testproc testfork testencoder testdiriter \
+		testcallback
 
 default: all $(TESTS)
 
