@@ -31,7 +31,6 @@ OBJREPLACED=utils/wvtask.o
 OBJFIXME=\
 	streams/fileutils.o \
 	streams/wvdaemon.o \
-	streams/wvlogfile.o \
 	streams/wvpipe.o \
 	streams/wvstreamsdaemon.o \
 	streams/wvwatcher.o \
