@@ -706,9 +706,64 @@ printf(buf.get(14));)
 
    The above code will print "borkle borkle" twice.
 
-   WvBuffers also have interesting functions to let you find characters,
-   merge WvBuffers, and get entire strings.  wvbuffer.h documents these
-   functions and more.
+   WVSECT1(wvbuffercc,  WvBuffer (WvBuffer.cc),
+     WVSECT2(alloc, alloc(),
+
+       WVCMD(unsigned char *alloc(size_t num))
+
+       allocates 'num' bytes in the buffer and returns a pointer to its start
+       . Pointer is valid until next zap() or get().
+     )
+
+     WVSECT2(unalloc, unalloc(),
+
+       WVCMD(void unalloc(size_t num))
+
+       unallocates the last 'num' bytes in the buffer that were previously al
+       located using alloc() or put(), They are then available for a subseque       nt alloc() or put().
+     )
+  
+     WVSECT2(put, put(),
+
+       WVCMD(void put(WvStringParm str))
+
+       Copy a WvString into the buffer, not including the terminating nul.
+
+       WVCMD(void put(const void *data, size_t num))
+
+       Copy 'buf' into the next 'num' bytes of buffer.
+    )
+
+     WVSECT2(get, get(),
+     
+       WVCMD(unsigned char *get(size_t num))
+
+       Return the next 'num' bytes in the buffer. Returns NULL if there are not enough bytes in the buffer.
+     )
+
+     WVSECT2(unget, unget(),
+     
+       WVCMD(void unget(size_t num))
+
+       Undo all or part of the previous get(). You can unget() up to the numb
+       er of bytes you did in the last get(), assuming you have not done any        other buffer operation in the meantime.
+     )
+
+     WVSECT2(match, match(),
+
+       WVCMD(size_t match(const unsigned char chlist[], size_t numch, bool reverse = false))
+
+       Returns the number of leading bytes that match any in chlist. If rever
+       se == trye, match bytes that are not in chlist.
+     )
+
+     WVSECT2(merge, merge(),
+  
+       WVCMD(void merge(WvBuffer &buf))
+
+       Merges another WvBuffer into this one, simply move all of its objects into our own list.
+    )
+   )
 
    WVSECT1(wvbufferstore, WvBufferStore - basic buffer storage class,
    x
