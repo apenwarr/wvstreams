@@ -175,3 +175,54 @@ WVTEST_MAIN("vectortest.cc")
     printf("%d\n", InstrumentedType::live_instances);
     WVPASS(InstrumentedType::live_instances == 0);
 }
+
+int compare_int(const int *a, const int *b)
+{
+    printf ("%d, %d\n", *a, *b);
+    if (*a == *b)
+    {
+	printf ("Equal\n");
+	return 0;
+    }
+    else if (*a > *b)
+    {
+	printf ("Greater\n");
+	return 1;
+    }
+    else
+    {
+	printf ("Lesser\n");
+	return -1;
+    }
+}
+
+int comp_int(const void *_a, const void *_b)
+{
+    int *a = *(int **)_a;
+    int *b = *(int **)_b;
+    if (*a == *b)
+	return 0;
+    else if (*a > *b)
+	return 1;
+    else
+	return -1;
+}
+
+WVTEST_MAIN("wvvector - sorting")
+{
+    WvVector<int> v;
+
+    v.append(new int(5), true);
+    v.append(new int(10), true);
+    v.append(new int(1), true);
+    v.append(new int(6), true);
+    v.append(new int(15), true);
+    v.qsort(&compare_int);
+
+    WVPASSEQ(*v[0], 1);
+    WVPASSEQ(*v[1], 5);
+    WVPASSEQ(*v[2], 6);
+    WVPASSEQ(*v[3], 10);
+    WVPASSEQ(*v[4], 15);
+    WVPASSEQ(v.count(), 5);
+}

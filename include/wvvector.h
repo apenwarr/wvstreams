@@ -70,6 +70,24 @@ protected:
 	    xseq[slot]->set_autofree(autofree);
     }
 
+    // Comparison functions for use later in qsort()
+    typedef int (*comparison_type_t)(const void *, const void *);
+private:
+    static comparison_type_t innercomparator;
+protected:
+    static int wrapcomparator(const void *_a, const void *_b)
+    {
+	WvLink *a = *static_cast<WvLink**>(const_cast<void*>(_a));
+	WvLink *b = *static_cast<WvLink**>(const_cast<void*>(_b));
+	return innercomparator(a->data, b->data);
+    }
+
+    void qsort(comparison_type_t comparator)
+    {
+	innercomparator = comparator;
+	::qsort(xseq, xcount, sizeof(WvLink*), &WvVectorBase::wrapcomparator);
+    }
+
 public:
     class IterBase;
     friend class IterBase;
@@ -216,7 +234,6 @@ public:
     };
 };
 
-
 /**
  * A dynamic array data structure with constant time lookup,
  * linear time insertion / removal, and expected logarithmic time
@@ -319,13 +336,11 @@ public:
      * the order of the operators.
      */
     typedef int (*comparison_type_fn_t)(const T *, const T *);
-    typedef int (*comparison_type_t)(const void *, const void *);
     void qsort(comparison_type_fn_t comparator)
     {
 	if (xcount < 2)
 	    return;
-	::qsort(xseq, xcount, sizeof(T *),
-		reinterpret_cast<comparison_type_t>(comparator));
+	WvVectorBase::qsort(reinterpret_cast<comparison_type_t>(comparator));
     }
 
     /** A simple iterator that walks through all elements in the list. */
