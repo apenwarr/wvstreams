@@ -30,7 +30,7 @@ report-lock-mode:
 streams.libs: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvfile.o wvlog.o wvlogbuffer.o wvsyslog.o wvwatcher.o wvpipe.o \
 	wvloopback.o wvmodem.o wvtimestream.o wvprotostream.o wvbufstream.o \
-	wvlockfile.o wvdailyevent.o wvtimeoutstream.o wvlogfile.o \
+	wvlockfile.o wvdailyevent.o wvtimeoutstream.o wvlogfile.o wvtundev.o \
 	$(LOCKDEV) ../utils/utils.libs
 
 streams.a: streams.libs $(LOCKDEV)
