@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.39 2003/09/24 21:02:40 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.40 2003/09/24 21:13:28 pphaneuf Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -159,6 +159,10 @@ if test "$with_bdb" != "no"; then
     if test "$with_bdb" = "no"; then
         CPPFLAGS="$CPPFLAGS_save"
         LDFLAGS="$LDFLAGS_save"
+    else
+        AC_DEFINE(WITH_BDB,,
+                  [Define to enable Berkeley DB support.])
+
     fi
 fi
 

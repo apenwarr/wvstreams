@@ -10,7 +10,7 @@
 
 #include "wvautoconf.h"
 
-#if !defined(HAVE_DB_H) && !defined(HAVE_DB_185_H)
+#ifndef WITH_BDB
 # error "Sorry, no Berkeley DB support in WvStreams!"
 #endif
 

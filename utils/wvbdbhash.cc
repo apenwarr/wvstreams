@@ -5,6 +5,11 @@
  * A hash table container backed by a Berkeley DB (libdb) database.
  * See wvbdbhash.h.
  */
+
+#include "wvautoconf.h"
+
+#ifdef WITH_BDB
+
 #include "wvbdbhash.h"
 #include <fcntl.h>
 #include <errno.h>
@@ -132,4 +137,4 @@ void WvBdbHashBase::IterBase::next()
 	curkey.dptr = curdata.dptr = NULL;
 }
 
-
+#endif /* WITH_BDB */
