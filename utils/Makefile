@@ -2,7 +2,7 @@ TOPDIR=../..
 include $(TOPDIR)/rules.mk
 
 default: all teststr testlist testhash stresshash testbuffer \
-		testbase64 testver
+		testbase64 testver testtask
 all: utils.a
 
 utils.a: base64.o verstring.o strutils.o wvstring.o \
@@ -14,4 +14,4 @@ teststr testlist testhash stresshash testbuffer testbase64 testver: utils.a
 
 clean:
 	rm -f teststr testlist testhash stresshash testbuffer \
-		testbase64 testver
+		testbase64 testver testtask
