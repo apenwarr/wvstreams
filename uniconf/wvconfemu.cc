@@ -287,6 +287,9 @@ void WvConfEmu::flush()
 
 WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 {
+    if (UniConfKey(sect).numsegments() != 1)
+	return NULL;
+
     WvConfigSectionEmu* section = sections[sect];
 
     if (!section && uniconf[sect].exists())
