@@ -9,11 +9,15 @@
  * for each stream.
  */
 #include "wvstream.h"
-#include "wvtask.h"
 #include "wvtimeutils.h"
+#include "wvcont.h"
 #include <time.h>
 #include <sys/types.h>
 #include <assert.h>
+#include <algorithm>
+
+using std::min;
+using std::max;
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
@@ -62,18 +66,15 @@ WvStream::WvStream()
     force.readable = true;
     force.writable = force.isexception = false;
     read_requires_writable = write_requires_readable = NULL;
-    running_callback = false;
-    want_nowrite = false;
+    stop_read = stop_write = closed = false;
     queue_min = 0;
     autoclose_time = 0;
     alarm_time = wvtime_zero;
     last_alarm_check = wvtime_zero;
-    taskman = 0;
     
     // magic multitasking support
     uses_continue_select = false;
     personal_stack_size = 65536;
-    task = NULL;
 }
 
 
@@ -91,24 +92,15 @@ IWvStream::~IWvStream()
 WvStream::~WvStream()
 {
     TRACE("destroying %p\n", this);
-    if (running_callback)
-    {
-	// user should have called terminate_continue_select()...
-	TRACE("eek! destroying while running_callback!\n");
-	assert(!running_callback);
-    }
     close();
     
-    if (task)
-    {
-	while (task->isrunning())
-	    taskman->run(*task);
-	task->recycle();
-	task = NULL;
-    }
+    // if this assertion fails, then uses_continue_select is true, but you
+    // didn't call terminate_continue_select() or close() before destroying
+    // your object.  Shame on you!
+    assert(!uses_continue_select || !call_ctx);
+    
+    call_ctx = 0; // finish running the suspended callback, if any
     TRACE("done destroying %p\n", this);
-    if (taskman)
-	taskman->unlink();
 }
 
 
@@ -121,6 +113,12 @@ void WvStream::close()
         closecb_func = 0; // ensure callback is only called once
         cb(*this, closecb_data);
     }
+    
+    closed = true;
+    
+    // I would like to delete call_ctx here, but then if someone calls
+    // close() from *inside* a continuable callback, we explode.  Oops!
+    //call_ctx = 0; // destroy the context, if necessary
 }
 
 
@@ -149,39 +147,32 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
 }
 
 
-// this is run in the subtask owned by 'stream', if any; NOT necessarily
-// the task that runs WvStream::callback().  That's why this needs to be
-// a separate function.
-void WvStream::_callback(void *stream)
+void WvStream::_callback()
 {
-    WvStream *s = (WvStream *)stream;
-    
-    s->running_callback = true;
-    
-    s->wvstream_execute_called = false;
-    s->execute();
-    if (!! s->callfunc)
-	s->callfunc(*s, s->userdata);
-    
+    wvstream_execute_called = false;
+    execute();
+    if (!! callfunc)
+	callfunc(*this, userdata);
+
     // if this assertion fails, a derived class's virtual execute() function
     // didn't call its parent's execute() function, and we didn't make it
     // all the way back up to WvStream::execute().  This doesn't always
     // matter right now, but it could lead to obscure bugs later, so we'll
     // enforce it.
-    assert(s->wvstream_execute_called);
-    
-    s->running_callback = false;
+    assert(wvstream_execute_called);
+}
+
+
+void *WvStream::_callwrap(void *)
+{
+    _callback();
+    return NULL;
 }
 
 
 void WvStream::callback()
 {
     TRACE("(?)");
-    
-    // callback is already running -- don't try to start it again, or we
-    // could end up in an infinite loop!
-    if (running_callback)
-	return;
     
     // if the alarm has gone off and we're calling callback... good!
     if (alarm_remaining() == 0)
@@ -193,65 +184,26 @@ void WvStream::callback()
 	alarm_was_ticking = false;
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
-    
-//    if (1)
+
+#define TEST_CONTINUES_HARSHLY 1
+#if TEST_CONTINUES_HARSHLY
+# warning "Using WvCont for *all* streams for testing!"
+    if (1)
+#else
     if (uses_continue_select && personal_stack_size >= 1024)
+#endif
     {
-	if (!taskman)
-	    taskman = WvTaskMan::get();
-    
-	if (!task)
+	if (!call_ctx) // no context exists yet!
 	{
-	    TRACE("(!)");
-	    task = taskman->start("streamexec", _callback, this,
-				  personal_stack_size);
-	}
-	else if (!task->isrunning())
-	{
-	    TRACE("(.)");
-	    task->start("streamexec2", _callback, this);
+	    call_ctx = WvCont(WvCallback<void*,void*>
+			      (this, &WvStream::_callwrap),
+			      personal_stack_size);
 	}
 	
-	// This loop is much more subtle than it looks.
-	// By implementing it this way, we provide something that works
-	// like a typical callback() stack: that is, a child callback
-	// must return before the parent's callback does.
-	// 
-	// What _actually_ happens is a child will call yield() upon returning
-	// from its callback function, which exits the taskman and returns to
-	// the top level.  The top level, though, is running this loop, which
-	// re-executes taskman->run() since its child (which is eventually
-	// the parent of the child that called yield()) hasn't finished yet.
-	// We build our way all the way back up to the first-level parent of
-	// the child calling yield(), which now notices its child has finished
-	// and continues on in its execute() function.
-	// 
-	// continue_select() will set running_callback to false, even though
-	// it doesn't actually return from the callback function.  That
-	// causes this loop to terminate, and the callback will get resumed
-	// later when select() returns true.
-	do
-	{
-	    taskman->run(*task);
-	} while (task && task->isrunning() && running_callback);
+	call_ctx(NULL);
     }
     else
-	_callback(this);
-    
-    /* DON'T PUT ANY CODE HERE!
-     * 
-     * WvStreamList calls its child streams above via taskman->run().
-     * If a child is deleted, it waits for its callback task to finish the
-     * current iteration, then recycles its WvTask object and allows the
-     * "delete" call to finish, so the object no longer exists.
-     * 
-     * The catch: the callback() function is actually running in
-     * the WvStreamList's task (if any), which hasn't had a chance to
-     * exit yet.  Next time we jump into the WvStreamList, we will arrive
-     * immediately after the taskman->run() line, ie. right here in the
-     * code.  In that case, the 'this' pointer could be pointing at an
-     * invalid object, so we should just exit before we do something stupid.
-     */
+	_callback();
 }
 
 
@@ -264,7 +216,7 @@ void WvStream::execute()
 
 bool WvStream::isok() const
 {
-    return WvErrorBase::isok();
+    return !closed && WvErrorBase::isok();
 }
 
 
@@ -325,7 +277,7 @@ size_t WvStream::write(WvBuf &inbuf, size_t count)
 
 size_t WvStream::read(void *buf, size_t count)
 {
-    size_t bufu = inbuf.used(), i;
+    size_t bufu, i;
     unsigned char *newbuf;
 
     bufu = inbuf.used();
@@ -339,7 +291,10 @@ size_t WvStream::read(void *buf, size_t count)
     }
     
     if (bufu < queue_min)
+    {
+	maybe_autoclose();
 	return 0;
+    }
         
     // if buffer is empty, do a hard read
     if (!bufu)
@@ -353,7 +308,8 @@ size_t WvStream::read(void *buf, size_t count)
 	memcpy(buf, inbuf.get(bufu), bufu);
     }
     
-    TRACE("read  obj 0x%p, bytes %d/%d\n", this, bufu, count);
+    TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
+    maybe_autoclose();
     return bufu;
 }
 
@@ -375,6 +331,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
     while (isok())
     {
+	WvStream::execute();
         if (continue_select(-1))
         {
 	    if ((got = read(buf, count)) != 0)
@@ -389,20 +346,22 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
     queuemin(0);
     
+    WvStream::execute();
     return got;
 }
 
 
 size_t WvStream::write(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!isok() || !buf || !count || stop_write) return 0;
     
     size_t wrote = 0;
     if (!outbuf_delayed_flush && !outbuf.used())
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
-        buf = (const unsigned char*)buf + wrote;
+        buf = (const unsigned char *)buf + wrote;
+	if (!count) return wrote; // short circuit if no buffering needed
     }
     if (max_outbuf_size != 0)
     {
@@ -430,17 +389,22 @@ size_t WvStream::write(const void *buf, size_t count)
 
 void WvStream::noread()
 {
-    // FIXME: this really ought to be symmetrical with nowrite(), but instead
-    // it's empty for some reason.
+    stop_read = true;
+    maybe_autoclose();
 }
 
 
 void WvStream::nowrite()
 {
-    if (getwfd() < 0)
-        return;
+    stop_write = true;
+    maybe_autoclose();
+}
 
-    want_nowrite = true;
+
+void WvStream::maybe_autoclose()
+{
+    if (stop_read && stop_write && !outbuf.used() && !inbuf.used() && isok())
+	close();
 }
 
 
@@ -452,28 +416,9 @@ bool WvStream::isreadable()
 
 bool WvStream::iswritable()
 {
-    return isok() && select(0, false, true, false);
+    return !stop_write && isok() && select(0, false, true, false);
 }
 
-// FIXME: these should be elsewhere...
-template <class T>
-T max(T a, T b)
-{
-    if (a > b)
-        return a;
-    else
-        return b;
-}
-
-template <class T>
-T min(T a, T b)
-{
-    if (a < b)
-        return a;
-    else
-        return b;
-}
-// END FIXME
 
 size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char separator)
 {
@@ -553,6 +498,8 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
     struct timeval timeout_time;
     if (wait_msec > 0)
         timeout_time = msecadd(wvtime(), wait_msec);
+    
+    maybe_autoclose();
 
     // if we get here, we either want to wait a bit or there is data
     // available.
@@ -569,7 +516,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 	    *eol = 0;
             return (char *)inbuf.get(i);
         }
-        else if (!isok())    // uh oh, stream is in trouble.
+        else if (!isok() || stop_read)    // uh oh, stream is in trouble.
         {
             if (inbuf.used())
             {
@@ -577,8 +524,8 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 		// FIXME: it's very silly that buffers can't return editable
 		// char* arrays.
                 inbuf.alloc(1)[0] = 0; // null-terminate it
-                return const_cast<char*>(
-                    (const char*)inbuf.get(inbuf.used()));
+                return const_cast<char *>(
+                    (const char *)inbuf.get(inbuf.used()));
             }
             else
                 break; // nothing else to do!
@@ -663,9 +610,19 @@ bool WvStream::should_flush()
 bool WvStream::flush_outbuf(time_t msec_timeout)
 {
     TRACE("%p flush_outbuf starts (isok=%d)\n", this, isok());
+    bool outbuf_was_used = outbuf.used();
+    
+    // do-nothing shortcut for speed
+    // FIXME: definitely makes a "measurable" difference...
+    //   but is it worth the risk?
+    if (!outbuf_was_used && !autoclose_time && !outbuf_delayed_flush)
+    {
+	maybe_autoclose();
+	return true;
+    }
     
     // flush outbuf
-    while (isok() && outbuf.used())
+    while (outbuf_was_used && isok())
     {
 //	fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
 //		this, getrfd(), getwfd(), outbuf.used());
@@ -690,10 +647,12 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
             if (msec_timeout >= 0)
                 break;
         }
+	
+	outbuf_was_used = outbuf.used();
     }
 
     // handle autoclose
-    if (isok() && autoclose_time)
+    if (autoclose_time && isok())
     {
 	time_t now = time(NULL);
 	TRACE("Autoclose enabled for 0x%p - now-time=%ld, buf %d bytes\n", 
@@ -706,19 +665,19 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     }
 
     TRACE("flush_outbuf: after autoclose chunk\n");
-    
-    if (!outbuf.used() && outbuf_delayed_flush)
+    if (outbuf_delayed_flush && !outbuf_was_used)
         want_to_flush = false;
     
     TRACE("flush_outbuf: now isok=%d\n", isok());
 
     // if we can't flush the outbuf, at least empty it!
-    if (!isok())
+    if (outbuf_was_used && !isok())
 	outbuf.zap();
 
+    maybe_autoclose();
     TRACE("flush_outbuf stops\n");
     
-    return !outbuf.used();
+    return !outbuf_was_used;
 }
 
 
@@ -760,9 +719,11 @@ void WvStream::flush_then_close(int msec_timeout)
 
 bool WvStream::pre_select(SelectInfo &si)
 {
+    maybe_autoclose();
+    
     time_t alarmleft = alarm_remaining();
     
-    if (alarmleft == 0)
+    if (!si.inherit_request && alarmleft == 0)
 	return true; // alarm has rung
 
     if (!si.inherit_request)
@@ -773,16 +734,20 @@ bool WvStream::pre_select(SelectInfo &si)
 	return true; // already ready
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
-	si.msec_timeout = alarmleft;
+	si.msec_timeout = alarmleft + 10;
     return false;
 }
 
 
 bool WvStream::post_select(SelectInfo &si)
 {
-    // FIXME: need output buffer flush support for non FD-based streams
+    // FIXME: need sane buffer flush support for non FD-based streams
     // FIXME: need read_requires_writable and write_requires_readable
     //        support for non FD-based streams
+    if (should_flush())
+	flush(0);
+    if (!si.inherit_request && alarm_remaining() == 0)
+	return true; // alarm ticked
     return false;
 }
 
@@ -815,7 +780,7 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	si.global_sure = s->pre_select(si);
+	si.global_sure = s->xpre_select(si, SelectRequest(false, false, false));
 	globalstream = s;
     }
     if (sure || si.global_sure)
@@ -864,7 +829,8 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	si.global_sure = s->post_select(si) || si.global_sure;
+	si.global_sure = s->xpost_select(si, SelectRequest(false, false, false))
+					 || si.global_sure;
 	globalstream = s;
     }
     return sure;
@@ -925,11 +891,11 @@ void WvStream::alarm(time_t msec_timeout)
 
 time_t WvStream::alarm_remaining()
 {
-    if (alarm_time.tv_sec && !running_callback)
+    if (alarm_time.tv_sec)
     {
 	WvTime now = wvtime();
 
-	/* Time is going backward! */
+	// Time is going backward!
 	if (now < last_alarm_check)
 	    alarm_time = tvdiff(alarm_time, tvdiff(last_alarm_check, now));
 
@@ -947,17 +913,13 @@ time_t WvStream::alarm_remaining()
 bool WvStream::continue_select(time_t msec_timeout)
 {
     assert(uses_continue_select);
-    assert(task);
-    assert(taskman);
-    assert(taskman->whoami() == task);
+    assert(call_ctx);
     
     if (msec_timeout >= 0)
 	alarm(msec_timeout);
-    
-    running_callback = false;
-    taskman->yield();
-    running_callback = true; // and we're back!
-    alarm(-1);
+
+    alarm(msec_timeout);
+    WvCont::yield();
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 
@@ -965,30 +927,37 @@ bool WvStream::continue_select(time_t msec_timeout)
     // msec_delay was zero.  Note that running select() here isn't
     // inefficient, because if the alarm was expired then pre_select()
     // returned true anyway and short-circuited the previous select().
-    // 
-    // FIXME: we should probably be using select(t,r,w,x) here instead, but
-    // I'm not sure.
     TRACE("hello-%p\n", this);
-    return !alarm_was_ticking || select(0);
+    return !alarm_was_ticking || select(0, force.readable, force.writable,
+					force.isexception);
 }
 
 
 void WvStream::terminate_continue_select()
 {
     close();
-    if (task)
-    {
-	while (task->isrunning())
-	    taskman->run(*task);
-	task->recycle();
-	task = NULL;
-    }
+    call_ctx = 0; // destroy the context, if necessary
 }
 
 
 const WvAddr *WvStream::src() const
 {
     return NULL;
+}
+
+
+void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
+{ 
+    callfunc = _callfunc;
+    userdata = _userdata;
+    call_ctx = 0; // delete any in-progress WvCont
+}
+
+
+void WvStream::setclosecallback(WvStreamCallback _callfunc, void *_userdata)
+{
+    closecb_func = _callfunc;
+    closecb_data = _userdata;
 }
 
 

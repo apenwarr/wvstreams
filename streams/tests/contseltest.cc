@@ -15,8 +15,14 @@ public:
     virtual void execute()
         {
             fprintf(stderr, "#%d\t going into continue select\n", counter++);
+	    WvStream::execute();
             continue_select(-1);
         }
+    virtual ~Silly()
+        {
+	    terminate_continue_select();
+	    close();
+	}
 };
 
 int Silly::counter = 1;
@@ -26,6 +32,7 @@ int main()
     for (int i = 0; i < 20; i++)
         new Silly();
 
-    while (1)
-         WvIStreamList::globallist.select(-1);
+    // we should only print exactly 20 messages
+    for (int i = 0; i < 200; i++)
+         WvIStreamList::globallist.runonce(10);
 }

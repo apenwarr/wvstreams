@@ -74,7 +74,7 @@ WvString wvtcl_encode(WvList<WvString> &l, const char *nasties = WVTCL_NASTIES,
 
 // Get a single tcl word from an input buffer, and return the rest of the
 // buffer untouched.  If no word can be created from the buffer, return
-// a null string and reset the buffer to its original state.
+// a null string and leave the buffer unmodified.
 WvString wvtcl_getword(WvBuf &buf, const char *splitchars = WVTCL_SPLITCHARS,
     bool do_unescape = true);
 

@@ -45,11 +45,13 @@ WvStreamClone::~WvStreamClone()
 	delete cloned;
 }
 
+
 void WvStreamClone::nowrite()
 {
     if (cloned)
 	cloned->nowrite();
 }
+
 
 void WvStreamClone::close()
 {
@@ -58,7 +60,7 @@ void WvStreamClone::close()
 	cloned->setclosecallback(0, 0); // prevent recursion!
     WvStream::close();
     if (disassociate_on_close)
-        cloned = NULL;
+        setclone(NULL);
     if (cloned)
 	cloned->close();
 }

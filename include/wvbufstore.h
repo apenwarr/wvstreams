@@ -12,6 +12,7 @@
 #include "wvlinklist.h"
 #include <assert.h>
 #include <limits.h>
+#include <assert.h>
 
 /**
  * This value is used internally to signal unlimited free space.
@@ -108,11 +109,11 @@ protected:
 
     /** Appends a subbuffer to the buffer. */
     virtual void appendsubbuffer(WvBufStore *buffer, bool autofree)
-        { assert(! "not supported"); }
+        { /*assert(! "not supported");*/ }
 
     /** Prepends a subbuffer to the buffer. */
     virtual void prependsubbuffer(WvBufStore *buffer, bool autofree)
-        { assert(! "not supported"); }
+        { /*assert(! "not supported");*/ }
 
     /**
      * Unlinks the specified subbuffer.
@@ -121,7 +122,7 @@ protected:
      */
     virtual bool unlinksubbuffer(WvBufStore *buffer,
         bool allowautofree)
-        { assert(! "not supported"); return true; }
+        { /*assert(! "not supported");*/ return true; }
 };
 
 // lists of buffer stores are sometimes useful

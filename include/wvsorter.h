@@ -89,8 +89,9 @@ void WvSorterBase::rewind(CompareFunc *cmp)
     n = 0;
     for (i.rewind(); i.next(); )
 	n++;
-    
-    array = new (void *) [n+2];
+
+    typedef void *VoidPtr;
+    array = new VoidPtr[n+2];
     void **aptr = array;
 
     *aptr++ = NULL; // initial link is NULL, to act like a normal iterator

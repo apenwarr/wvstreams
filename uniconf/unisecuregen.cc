@@ -23,7 +23,7 @@ UniSecureGen::UniSecureGen(UniConfGen *_gen, UniPermGen *_perms) :
 UniSecureGen::UniSecureGen(WvStringParm moniker, UniPermGen *_perms) :
     UniFilterGen(NULL)
 {
-    UniConfGen *_gen = wvcreate<UniConfGen>(moniker);
+    IUniConfGen *_gen = wvcreate<IUniConfGen>(moniker);
     assert(_gen && "Moniker doesn't get us a generator!");
     setinner(_gen);
     perms = _perms;

@@ -32,6 +32,13 @@ static unsigned WvHash(const XUUID &_uuid)
     return val;
 }
 
+
+static bool operator==(const XUUID &a, const XUUID &b)
+{
+    return a.equals(b);
+}
+
+
 DeclareWvDict(WvMonikerRegistry, XUUID, reg_iid);
 static WvMonikerRegistryDict *regs;
   
@@ -67,8 +74,8 @@ void WvMonikerRegistry::del(WvStringParm id)
 }
 
 
-IObject *WvMonikerRegistry::create(WvStringParm _s,
-				   IObject *obj, void *userdata)
+void *WvMonikerRegistry::create(WvStringParm _s,
+				IObject *obj, void *userdata)
 {
     WvString s(_s);
     char *cptr = strchr(s.edit(), ':');
@@ -81,11 +88,7 @@ IObject *WvMonikerRegistry::create(WvStringParm _s,
     
     Registration *r = dict[s];
     if (r)
-    {
-	IObject *s = r->func(cptr, obj, userdata);
-	s->addRef();
-	return s;
-    }
+	return r->func(cptr, obj, userdata);
     else
 	return NULL;
 }
@@ -185,11 +188,9 @@ WvMonikerBase::~WvMonikerBase()
 }
 
 
-IObject *wvcreate(const XUUID &iid,
-		  WvStringParm s, IObject *obj, void *userdata)
+void *wvcreate(const XUUID &iid,
+	       WvStringParm s, IObject *obj, void *userdata)
 {
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);
-    IObject *o = reg->create(s, obj, userdata);
-    reg->release();
-    return o;
+    return reg->create(s, obj, userdata);
 }

@@ -105,19 +105,19 @@ void UniConf::commit() const
 }
 
 
-UniConfGen *UniConf::mount(WvStringParm moniker, bool refresh) const
+IUniConfGen *UniConf::mount(WvStringParm moniker, bool refresh) const
 {
     return xroot->mounts.mount(xfullkey, moniker, refresh);
 }
 
 
-UniConfGen *UniConf::mountgen(UniConfGen *gen, bool refresh) const
+IUniConfGen *UniConf::mountgen(IUniConfGen *gen, bool refresh) const
 {
     return xroot->mounts.mountgen(xfullkey, gen, refresh);
 }
 
 
-void UniConf::unmount(UniConfGen *gen, bool commit) const
+void UniConf::unmount(IUniConfGen *gen, bool commit) const
 {
     return xroot->mounts.unmount(gen, commit);
 }
@@ -129,7 +129,7 @@ bool UniConf::ismountpoint() const
 }
 
 
-UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
+IUniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 {
     return xroot->mounts.whichmount(xfullkey, mountpoint);
 }

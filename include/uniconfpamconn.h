@@ -15,14 +15,14 @@
  * UniSecureGen's.  That way we can convert a UniConfGen to the derived class
  * by just looking it up.  If it's not there, it can't be downcasted.
  */
-unsigned int WvHash(const UniConfGen *);
+unsigned int WvHash(const IUniConfGen *);
 
 struct SecureGen
 {
-    UniConfGen *key;
+    IUniConfGen *key;
     UniSecureGen *data;
 };
-DeclareWvDict(SecureGen, UniConfGen *, key);
+DeclareWvDict(SecureGen, IUniConfGen *, key);
 
 
 class UniConfPamConn : public UniConfDaemonConn

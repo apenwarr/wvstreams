@@ -1,4 +1,4 @@
-#
+
 # wvrules.mk:  2003 09 09
 #
 # Copyright (C) 1998-2003 by Avery Pennarun <apenwarr@worldvisions.ca>.
@@ -26,7 +26,12 @@ ifneq ($(wildcard $(WVSTREAMS)/config.mk),)
 endif
 
 WVSTREAMS_INC=$(WVSTREAMS)/include
-LIBWVUTILS=$(WVSTREAMS)/libwvutils.so
+
+ifneq ("$(with_xplc)", "no")
+  LIBXPLC=$(with_xplc)/libxplc-cxx.a $(with_xplc)/libxplc.so
+endif
+
+LIBWVUTILS=$(WVSTREAMS)/libwvutils.so $(LIBXPLC)
 LIBWVSTREAMS=$(WVSTREAMS)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS)/libuniconf.so $(LIBWVSTREAMS)
@@ -35,6 +40,7 @@ LIBWVQT=$(WVSTREAMS)/libwvqt.so $(LIBWVSTREAMS)
 #
 # Initial C compilation flags
 #
+CPPFLAGS += -DUNSTABLE    # for xplc
 CPPFLAGS += $(CPPOPTS)
 C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
 		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64

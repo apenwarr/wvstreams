@@ -7,13 +7,27 @@
 #ifndef __WVXPLC_H
 #define __WVXPLC_H
 
-#if HAS_XPLC
+#ifndef _WIN32
+#include "wvautoconf.h"
+#endif
+
+#if HAVE_LIBXPLC
+
+// wvstreams uses 'X' in front of these words, to avoid conflicts when
+// compiling windows apps.
+#define XUUID UUID
+#define XIID IID
+#define DEFINE_XIID DEFINE_IID
+
+#define XUUID_MAP_BEGIN UUID_MAP_BEGIN
+#define XUUID_MAP_ENTRY UUID_MAP_ENTRY
+#define XUUID_MAP_END   UUID_MAP_END
 
 #include <xplc/xplc.h>
 #include <xplc/utils.h>
 #include <xplc/IServiceManager.h>
 
-#else // not HAS_XPLC, so we'll fake it (badly)
+#else // not HAVE_LIBXPLC, so we'll fake it (badly)
 
 #include <string.h> // for memcmp
 
@@ -23,7 +37,7 @@ struct XUUID
     unsigned short b, c;
     unsigned char d[8];
     
-    bool operator== (const XUUID &other) const
+    bool equals(const XUUID &other) const
         { return !memcmp(this, &other, sizeof(*this)); }
 };
 
@@ -88,6 +102,6 @@ T *mutate(T2 *x)
 #define XUUID_MAP_ENTRY(name)
 #define XUUID_MAP_END
 
-#endif
+#endif // HAVE_LIBXPLC
 
 #endif // __WVXPLC_H

@@ -23,7 +23,7 @@ UniPermGen::UniPermGen(UniConfGen *_gen) :
 UniPermGen::UniPermGen(WvStringParm moniker) :
     UniFilterGen(NULL)
 {
-    UniConfGen *gen = wvcreate<UniConfGen>(moniker);
+    IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
     assert(gen && "Moniker doesn't get us a generator!");
     setinner(new UniDefGen(gen));
 }

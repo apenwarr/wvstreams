@@ -209,11 +209,11 @@ UniConfGen::Iter *UniRegistryGen::iterator(const UniConfKey &key)
     return new NullIter();
 }
 
-static UniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 {
     return new UniRegistryGen(s);
 }
 
 #pragma warning(disable : 4073)
 #pragma init_seg(lib)
-WvMoniker<UniConfGen> UniRegistryGenMoniker("registry", creator);
+WvMoniker<IUniConfGen> UniRegistryGenMoniker("registry", creator);

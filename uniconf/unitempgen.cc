@@ -8,12 +8,12 @@
 #include "wvmoniker.h"
 #include "wvlog.h"
 
-static UniConfGen *creator(WvStringParm, IObject *, void *)
+static IUniConfGen *creator(WvStringParm, IObject *, void *)
 {
     return new UniTempGen();
 }
 
-static WvMoniker<UniConfGen> reg("temp", creator);
+static WvMoniker<IUniConfGen> reg("temp", creator);
 
 /***** UniTempGen *****/
 

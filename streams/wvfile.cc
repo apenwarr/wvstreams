@@ -5,6 +5,7 @@
  * A simple class to access filesystem files using WvStreams.
  */
 #include "wvfile.h"
+#include "wvmoniker.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -35,6 +36,25 @@ WvFile::WvFile(int rwfd) : WvFDStream(rwfd)
 }
 #endif
 
+static IWvStream *increator(WvStringParm s, IObject *, void *)
+{
+    return new WvFile(s, O_RDONLY, 0666);
+}
+
+static IWvStream *outcreator(WvStringParm s, IObject *, void *)
+{
+    return new WvFile(s, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+}
+
+static IWvStream *creator(WvStringParm s, IObject *, void *)
+{
+    return new WvFile(s, O_RDWR|O_CREAT, 0666);
+}
+
+static WvMoniker<IWvStream> reg0("infile", increator);
+static WvMoniker<IWvStream> reg1("outfile", outcreator);
+static WvMoniker<IWvStream> reg3("file", creator);
+
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
     noerr();
@@ -64,6 +84,8 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
     }
     setfd(rwfd);
     fcntl(rwfd, F_SETFD, 1);
+
+    closed = stop_read = stop_write = false;
     return true;
 }
 

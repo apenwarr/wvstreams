@@ -9,7 +9,7 @@
 #include "wvmoniker.h"
 
 
-static UniConfGen *creator(WvStringParm s, IObject *, void *obj)
+static IUniConfGen *creator(WvStringParm s, IObject *, void *obj)
 {
     if (!obj)
 	obj = new WvConf(s);
@@ -18,7 +18,7 @@ static UniConfGen *creator(WvStringParm s, IObject *, void *obj)
     return new UniWvConfGen(*(WvConf *)obj);
 }
 
-static WvMoniker<UniConfGen> reg("wvconf", creator);
+static WvMoniker<IUniConfGen> reg("wvconf", creator);
 
 
 void UniWvConfGen::notify(void *userdata, WvStringParm section,

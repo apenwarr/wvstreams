@@ -54,10 +54,10 @@ int main ()
     // check if sorting confuses auto_free 
     // a'la auto_ptr's in standard containers
 
-    freemap.add("meaw", new AutoFreeTest());
-    freemap.add("dog", new AutoFreeTest());
-    freemap.add("star", new AutoFreeTest());
-    freemap.add("star", new AutoFreeTest());
+    freemap.add("meaw", new AutoFreeTest(), true);
+    freemap.add("dog", new AutoFreeTest(), true);
+    freemap.add("star", new AutoFreeTest(), true);
+    freemap.add("star", new AutoFreeTest(), true);
 
     WvMap<WvString, AutoFreeTest*>::Iter j(freemap);
 

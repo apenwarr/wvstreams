@@ -29,8 +29,123 @@ class UniConfGen;
  *   key - the key that has changed
  *   userdata - the userdata supplied during setcallback
  */
-typedef WvCallback<void, const UniConfKey &,
-    WvStringParm, void *> UniConfGenCallback;
+typedef WvCallback<void, const UniConfKey &, WvStringParm, void *> 
+    UniConfGenCallback;
+
+class IUniConfGen : public IObject
+{
+public:
+    /***** Notification API *****/
+    
+    /**
+     * Sets the callback for change notification.
+     * Must not be reimplemented by subclasses.
+     * FIXME: why??
+     */
+    virtual void setcallback(const UniConfGenCallback &callback,
+			     void *userdata) = 0;
+    
+
+    /***** Status API *****/
+    
+    /**
+     * Determines if the generator is usable and working properly.
+     *
+     * The default implementation always returns true.
+     */
+    virtual bool isok() = 0;
+
+    
+    /***** Key Persistence API *****/
+    
+    /**
+     * Commits any changes. The default implementation does nothing.
+     */
+    virtual void commit() = 0;
+    
+    /**
+     * Refreshes information about a key recursively.
+     * May discard uncommitted data.
+     *
+     * The default implementation always returns true.
+     */
+    virtual bool refresh() = 0;
+
+    
+    /***** Key Retrieval API *****/
+    
+    /**
+     * Fetches a string value for a key from the registry.  If the key doesn't
+     * exist, the return value is WvString::null.
+     */
+    virtual WvString get(const UniConfKey &key) = 0;
+    
+    /**
+     * Without fetching its value, returns true if a key exists.
+     *
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the value.
+     *
+     * The default implementation returns !get(key).isnull().
+     */
+    virtual bool exists(const UniConfKey &key) = 0;
+
+
+    /**
+     * Converts a string to an integer.  If the string is null or not
+     * recognized, return defvalue. 
+     *
+     * This is here to support the common str2int(get(key)).
+     *
+     * The default implementation recognizes the booleans 'true', 'yes', 'on'
+     * and 'enabled' as 1, and 'false', 'no', 'off' and 'disabled' as 0.
+     */
+    virtual int str2int(WvStringParm s, int defvalue) const = 0;
+
+    
+    /***** Key Storage API *****/
+    
+    /**
+     * Stores a string value for a key into the registry.  If the value is
+     * WvString::null, the key is deleted.
+     * 
+     * Returns true on success.
+     */
+    virtual void set(const UniConfKey &key, WvStringParm value) = 0;
+
+
+    /***** Key Enumeration API *****/
+    
+    /**
+     * Returns true if a key has children.
+     *
+     * This is provided because it is often more efficient to
+     * test existance than to actually retrieve the keys.
+     * 
+     * The default implementation uses the iterator returned by iterator()
+     * to test whether the child has any keys.
+     * Subclasses are strongly encouraged to provide a better implementation.
+     */
+    virtual bool haschildren(const UniConfKey &key) = 0;
+
+    /** The abstract iterator type (see below) */
+    class Iter;
+
+    /** A concrete null iterator type (see below) */
+    class NullIter;
+
+    /**
+     * Returns an iterator over the children of the specified key.
+     * Must not return NULL; consider returning a NullIter instead.
+     *
+     * The caller takes ownership of the returned iterator and is responsible
+     * for deleting it when finished.
+     */
+    virtual Iter *iterator(const UniConfKey &key) = 0;
+};
+
+DEFINE_XIID(IUniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
+    {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9f}});
 
 /**
  * An abstract data container that backs a UniConf tree.
@@ -39,7 +154,7 @@ typedef WvCallback<void, const UniConfKey &,
  * and storing keys and values using different access methods.
  *
  */
-class UniConfGen : public GenericComponent<IObject>
+class UniConfGen : public GenericComponent<IUniConfGen>
 {
     // These fields are deliberately hidden to encourage use of the
     // special notification members
@@ -52,7 +167,7 @@ class UniConfGen : public GenericComponent<IObject>
 protected:
     /** Creates a UniConfGen object. */
     UniConfGen();
-    
+
     /** Raises an error condition. */
     void seterror(WvStringParm error)
         { } // FIXME: decide on final API for this probably WvError
@@ -119,105 +234,32 @@ public:
     
     /***** Status API *****/
     
-    /**
-     * Determines if the generator is usable and working properly.
-     *
-     * The default implementation always returns true.
-     */
     virtual bool isok();
 
     
     /***** Key Persistence API *****/
     
-    /**
-     * Commits any changes. The default implementation does nothing.
-     */
     virtual void commit() { }
-    
-    /**
-     * Refreshes information about a key recursively.
-     * May discard uncommitted data.
-     *
-     * The default implementation always returns true.
-     */
     virtual bool refresh() { return true; }
-
-    
-    /***** Key Retrieval API *****/
-    
-    /**
-     * Fetches a string value for a key from the registry.  If the key doesn't
-     * exist, the return value is WvString::null.
-     */
     virtual WvString get(const UniConfKey &key) = 0;
-    
-    /**
-     * Without fetching its value, returns true if a key exists.
-     *
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the value.
-     *
-     * The default implementation returns !get(key).isnull().
-     */
     virtual bool exists(const UniConfKey &key);
-
-
-    /**
-     * Converts a string to an integer.  If the string is null or not
-     * recognized, return defvalue. 
-     *
-     * This is here to support the common str2int(get(key)).
-     *
-     * The default implementation recognizes the booleans 'true', 'yes', 'on'
-     * and 'enabled' as 1, and 'false', 'no', 'off' and 'disabled' as 0.
-     */
     virtual int str2int(WvStringParm s, int defvalue) const;
 
     
     /***** Key Storage API *****/
     
-    /**
-     * Stores a string value for a key into the registry.  If the value is
-     * WvString::null, the key is deleted.
-     * 
-     * Returns true on success.
-     */
     virtual void set(const UniConfKey &key, WvStringParm value) = 0;
 
 
     /***** Key Enumeration API *****/
     
-    /**
-     * Returns true if a key has children.
-     *
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the keys.
-     * 
-     * The default implementation uses the iterator returned by iterator()
-     * to test whether the child has any keys.
-     * Subclasses are strongly encouraged to provide a better implementation.
-     */
     virtual bool haschildren(const UniConfKey &key);
 
-    /** The abstract iterator type (see below) */
-    class Iter;
-
-    /** A concrete null iterator type (see below) */
-    class NullIter;
-
-    /**
-     * Returns an iterator over the children of the specified key.
-     * Must not return NULL; consider returning a NullIter instead.
-     *
-     * The caller takes ownership of the returned iterator and is responsible
-     * for deleting it when finished.
-     */
     virtual Iter *iterator(const UniConfKey &key) = 0;
 };
 
-DEFINE_XIID(UniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
-    {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9f}});
-DeclareWvList(UniConfGen);
+DeclareWvList(IUniConfGen);
+DeclareWvList2(UniConfGenList, IUniConfGen);
 
 
 /**

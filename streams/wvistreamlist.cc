@@ -56,11 +56,6 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     bool one_dead = false;
     SelectRequest oldwant;
     
-    // usually because of WvTask, we might get here without having finished
-    // the _last_ set of sure_thing streams...
-    if (running_callback)
-	return true;
-    
     sure_thing.zap();
     
     time_t alarmleft = alarm_remaining();
@@ -81,11 +76,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 		i.xunlink();
 	    continue;
 	}
-	
-	//if (si.wants.readable && inbuf.used() && inbuf.used() > queue_min)
-	//    sure_thing.append(&s, false, i.link->id);
-	
-	if (s.isok() && s.pre_select(si))
+	else if (s.pre_select(si))
 	    sure_thing.append(&s, false, i.link->id);
     }
 

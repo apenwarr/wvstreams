@@ -37,63 +37,69 @@ inline bool isselectable(int s)
 
 #endif // _WIN32
 
-/***** WvFDStream *****/
+
+/***** WvFdStream *****/
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)
 {
-    return new WvFDStream(s.num());
+    return new WvFdStream(s.num());
 }
 
 static WvMoniker<IWvStream> reg("fd", creator);
 
-WvFDStream::WvFDStream(int _rwfd)
+WvFdStream::WvFdStream(int _rwfd)
     : rfd(_rwfd), wfd(_rwfd)
 {
+    shutdown_read = shutdown_write = false;
 }
 
 
-WvFDStream::WvFDStream(int _rfd, int _wfd)
+WvFdStream::WvFdStream(int _rfd, int _wfd)
     : rfd(_rfd), wfd(_wfd)
 {
+    shutdown_read = shutdown_write = false;
 }
 
 
-WvFDStream::~WvFDStream()
+WvFdStream::~WvFdStream()
 {
     close();
 }
 
 
-void WvFDStream::close()
+void WvFdStream::close()
 {
-    WvStream::close();
-    //fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
-    if (rfd >= 0)
-	::close(rfd);
-    if (wfd >= 0 && wfd != rfd)
-	::close(wfd);
-    rfd = wfd = -1;
+    if (!closed)
+    {
+	WvStream::close();
+	//fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
+	if (rfd >= 0)
+	    ::close(rfd);
+	if (wfd >= 0 && wfd != rfd)
+	    ::close(wfd);
+	rfd = wfd = -1;
+    }
 }
 
 
-bool WvFDStream::isok() const
+bool WvFdStream::isok() const
 {
     return WvStream::isok() && (rfd != -1 || wfd != -1);
 }
 
 
-size_t WvFDStream::uread(void *buf, size_t count)
+size_t WvFdStream::uread(void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!count || !buf || !isok()) return 0;
     
     int in = ::read(rfd, buf, count);
     
-    if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
-	return 0; // interrupted
-
     // a read that returns zero bytes signifies end-of-file (EOF).
-    if (in < 0 || (count && in==0))
+    if (in <= 0)
     {
+	if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
+	    return 0; // interrupted
+
 	seterr(in < 0 ? errno : 0);
 	return 0;
     }
@@ -102,68 +108,55 @@ size_t WvFDStream::uread(void *buf, size_t count)
 }
 
 
-size_t WvFDStream::uwrite(const void *buf, size_t count)
+size_t WvFdStream::uwrite(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!buf || !count || !isok()) return 0;
     
     int out = ::write(wfd, buf, count);
     
-    if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
-	return 0; // kernel buffer full - data not written
-    
-    if (out < 0 || (count && out==0))
+    if (out <= 0)
     {
+	if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
+	    return 0; // kernel buffer full - data not written (yet!)
+    
 	seterr(out < 0 ? errno : 0); // a more critical error
 	return 0;
     }
 
-    if (!outbuf.used() && want_nowrite && wfd < 0)
-    {
-        // copied from nowrite()
-        if (rfd != wfd)
-            ::close(wfd);
-        else
-            ::shutdown(rfd, SHUT_WR); // might be a socket
-
-        want_nowrite = false;
-        wfd = -1;
-    }
-    
     //TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
     return out;
 }
 
 
-void WvFDStream::noread()
+void WvFdStream::maybe_autoclose()
 {
-    if (rfd < 0)
-        return;
-    if (rfd != wfd)
-        ::close(rfd);
-    else
-        ::shutdown(rfd, SHUT_RD); // might be a socket        
-    rfd = -1;
-}
-
-
-void WvFDStream::nowrite()
-{
-    if (!outbuf.used())
+    if (stop_write && !shutdown_write && !outbuf.used())
     {
+	shutdown_write = true;
+	if (wfd < 0)
+	    return;
+	if (rfd != wfd)
+	    ::close(wfd);
+	else
+	    ::shutdown(wfd, SHUT_RD); // might be a socket        
+	wfd = -1;
+    }
+    
+    if (stop_read && !shutdown_read && !inbuf.used())
+    {
+	shutdown_read = true;
         if (rfd != wfd)
-            ::close(wfd);
+            ::close(rfd);
         else
             ::shutdown(rfd, SHUT_WR); // might be a socket
-
-        want_nowrite = false;
-        wfd = -1;
+        rfd = -1;
     }
-    else
-        WvStream::nowrite();
+    
+    WvStream::maybe_autoclose();
 }
 
 
-bool WvFDStream::pre_select(SelectInfo &si)
+bool WvFdStream::pre_select(SelectInfo &si)
 {
     bool result = WvStream::pre_select(si);
     
@@ -171,12 +164,18 @@ bool WvFDStream::pre_select(SelectInfo &si)
     {
 	if (si.wants.readable && (rfd >= 0))
 	    FD_SET(rfd, &si.read);
-    } else result |= si.wants.readable;
+    } 
+    else
+	result |= si.wants.readable;
+    
     if (isselectable(wfd))
     {
-	if ((si.wants.writable || outbuf.used() || autoclose_time) && (wfd >= 0))
+	if ((si.wants.writable || outbuf.used() || autoclose_time) 
+	      && (wfd >= 0))
 	    FD_SET(wfd, &si.write);
-    } else result |= si.wants.writable ;
+    }
+    else
+	result |= si.wants.writable;
     
     if (si.wants.isexception)
     {
@@ -191,7 +190,7 @@ bool WvFDStream::pre_select(SelectInfo &si)
 }
 
 
-bool WvFDStream::post_select(SelectInfo &si)
+bool WvFdStream::post_select(SelectInfo &si)
 {
     bool result = WvStream::post_select(si);
     

@@ -41,11 +41,8 @@ static void valgrind_fix(char *stacktop)
 #ifdef HAVE_VALGRIND_MEMCHECK_H
     char val;
     //printf("valgrind fix: %p-%p\n", &val, stacktop);
+    assert(stacktop > &val);
 #endif
-    /* FIXME: this assert is commented out because of a bug that
-     * apparently doesn't mess things up too much, but should be
-     * uncommented sometimes (and the bug fixed!). */
-    //assert(stacktop > &val);
     VALGRIND_MAKE_READABLE(&val, stacktop - &val);
 }
 
@@ -198,6 +195,8 @@ int WvTaskMan::run(WvTask &task, int val)
     }
     else
     {
+        // need to make state readable to see if we need to make more readable..
+        VALGRIND_MAKE_READABLE(&state, sizeof(state));
 	// someone did yield() (if toplevel) or run() on our old task; done.
 	if (state != &toplevel)
 	    valgrind_fix(stacktop);
@@ -264,7 +263,8 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
     }
     else
     {
-	valgrind_fix(stacktop);
+	if (current_task)
+	    valgrind_fix(stacktop);
 	assert(magic_number == -WVTASK_MAGIC);
 	assert(task.magic_number == WVTASK_MAGIC);
 	

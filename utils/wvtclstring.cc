@@ -123,7 +123,7 @@ WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
 
 WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
 {
-    int origsize = buf.used();
+    int origsize = buf.used(), size = origsize;
     if (origsize == 0)
         return WvString::null;
 
@@ -135,14 +135,17 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     int len = 0;
 
     // skip leading whitespace/separators
-    while (origsize > 0 && strchr(splitchars, *sptr))
+    while (size > 0 && strchr(splitchars, *sptr))
     {
         sptr++;
-        origsize--;
+        size--;
     }
 
-    if (origsize == 0)
+    if (size == 0)
+    {
+        buf.unget(origsize);
         return WvString::null;
+    }
 
     // detect initial quote
     if (*sptr == '"')
@@ -152,7 +155,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
     }
     
     // loop over string until something satisfactory is found
-    for (; len < origsize; ++len)
+    for (; len < size; ++len)
     {
         char ch = sptr[len];
         

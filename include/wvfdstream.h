@@ -17,7 +17,7 @@
  * may be independently shut down by calling noread() or nowrite().
  * 
  */
-class WvFDStream : public WvStream
+class WvFdStream : public WvStream
 {
 protected:
     /** The file descriptor for reading. */
@@ -25,6 +25,9 @@ protected:
 
     /** The file descriptor for writing. */
     int wfd;
+    
+    /** Have we actually shut down the read/write sides? */
+    bool shutdown_read, shutdown_write;
 
     /**
      * Sets the file descriptor for both reading and writing.
@@ -38,7 +41,7 @@ public:
      * Creates a WvStream from an existing file descriptor.
      * "rwfd" is the file descriptor for reading and writing
      */
-    WvFDStream(int rwfd = -1);
+    WvFdStream(int rwfd = -1);
     
     /**
      * Creates a WvStream from two existing file descriptors.
@@ -48,10 +51,10 @@ public:
      * "rfd" is the file descriptor for reading
      * "wfd" is the file descriptor for writing
      */
-    WvFDStream(int rfd, int wfd);
+    WvFdStream(int rfd, int wfd);
 
     /** Destroys the stream and invokes close(). */
-    virtual ~WvFDStream();
+    virtual ~WvFdStream();
 
     /**
      * Returns the Unix file descriptor for reading from this stream.
@@ -97,8 +100,9 @@ public:
     virtual size_t uwrite(const void *buf, size_t count);
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
-    virtual void noread();
-    virtual void nowrite();
+    virtual void maybe_autoclose();
 };
+
+typedef WvFdStream WvFDStream;
 
 #endif // __WVFDSTREAM_H

@@ -16,7 +16,6 @@ WvString WvStringList::join(const char *joinchars) const
     return ::strcoll_join(*this, joinchars);
 }
 
-
 void WvStringList::split(WvStringParm s, const char *splitchars,
     int limit)
 {
@@ -38,15 +37,18 @@ void WvStringList::fill(const char * const *array)
     }
 }
 
+
 void WvStringList::append(WvStringParm str)
 {
     WvStringListBase::append(new WvString(str), true);
 }
 
-void WvStringList::append(const WvString *strp, bool autofree, char *id)
+
+void WvStringList::append(WvString *strp, bool autofree, char *id)
 {
-    WvStringListBase::append(new WvString(*strp), true);
+    WvStringListBase::append(strp, autofree, id);
 }
+
 
 // get the first string in the list, or an empty string if the list is empty.
 // Removes the returned string from the list.

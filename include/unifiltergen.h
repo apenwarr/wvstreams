@@ -16,10 +16,10 @@
  */
 class UniFilterGen : public UniConfGen
 {
-    UniConfGen *xinner;
+    IUniConfGen *xinner;
 
 protected:
-    UniFilterGen(UniConfGen *inner);
+    UniFilterGen(IUniConfGen *inner);
     virtual ~UniFilterGen();
 
     /**
@@ -27,13 +27,13 @@ protected:
      * The previous generator is NOT destroyed.
      * "inner" must not be null.
      */
-    void setinner(UniConfGen *inner);
+    void setinner(IUniConfGen *inner);
 
 public:
     /**
      * Returns the inner generator.
      */
-    UniConfGen *inner() const
+    IUniConfGen *inner() const
         { return xinner; }
 
     /***** Overridden methods *****/

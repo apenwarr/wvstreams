@@ -110,9 +110,9 @@ public:
     void rewind();
     bool next();
 
-    UniConfGen *ptr() const
+    IUniConfGen *ptr() const
         { return genit ? genit->ptr() : NULL; }
-    WvIterStuff(UniConfGen);
+    WvIterStuff(IUniConfGen);
 };
 
 
@@ -139,7 +139,7 @@ public:
      * 
      * Returns the generator instance pointer, or NULL on failure.
      */
-    virtual UniConfGen *mount(const UniConfKey &key, WvStringParm moniker,
+    virtual IUniConfGen *mount(const UniConfKey &key, WvStringParm moniker,
         bool refresh);
     
     /**
@@ -151,7 +151,7 @@ public:
      * "refresh" is if true, refreshes the generator after mount
      * Returns: the generator instance pointer, or NULL on failure
      */
-    virtual UniConfGen *mountgen(const UniConfKey &key, UniConfGen *gen,
+    virtual IUniConfGen *mountgen(const UniConfKey &key, IUniConfGen *gen,
         bool refresh);
 
     /**
@@ -161,7 +161,7 @@ public:
      * "gen" is the generator instance
      * "commit" is if true, commits the generator before unmount
      */
-    virtual void unmount(const UniConfKey &key, UniConfGen *gen, bool commit);
+    virtual void unmount(const UniConfKey &key, IUniConfGen *gen, bool commit);
     
     /**
      * Finds the generator that owns a key.
@@ -175,7 +175,8 @@ public:
      *        path on success
      * Returns: the handle, or a null handle if none
      */
-    virtual UniConfGen *whichmount(const UniConfKey &key, UniConfKey *mountpoint);
+    virtual IUniConfGen *whichmount(const UniConfKey &key,
+				    UniConfKey *mountpoint);
 
     /** Determines if a key is a mountpoint. */
     virtual bool ismountpoint(const UniConfKey &key);

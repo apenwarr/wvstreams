@@ -8,8 +8,8 @@
 
 /***** UniFilterGen *****/
 
-UniFilterGen::UniFilterGen(UniConfGen *inner) :
-    xinner(NULL)
+UniFilterGen::UniFilterGen(IUniConfGen *inner) 
+    : xinner(NULL)
 {
     setinner(inner);
 }
@@ -21,7 +21,7 @@ UniFilterGen::~UniFilterGen()
 }
 
 
-void UniFilterGen::setinner(UniConfGen *inner)
+void UniFilterGen::setinner(IUniConfGen *inner)
 {
     if (xinner)
         xinner->setcallback(UniConfGenCallback(), NULL);

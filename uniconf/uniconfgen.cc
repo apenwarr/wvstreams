@@ -9,6 +9,11 @@
 
 /***** UniConfGen *****/
 
+XUUID_MAP_BEGIN(IUniConfGen)
+  XUUID_MAP_ENTRY(IObject)
+  XUUID_MAP_ENTRY(IUniConfGen)
+  XUUID_MAP_END
+
 UniConfGen::UniConfGen() :
     cbdata(NULL), hold_nesting(0)
 {

@@ -742,118 +742,140 @@ void WvX509Mgr::decode(DumpMode mode, WvStringParm pemEncoded)
     }
 }
 
+namespace {
+class AutoClose {
+public:
+    AutoClose(FILE *fp): fp(fp) { }
+    ~AutoClose()
+    {
+        if (fp)
+            fclose(fp);
+    }
+
+	operator FILE *() const
+	{
+		return fp;
+	}
+
+private:
+    FILE *fp;
+};
+}
+
 void WvX509Mgr::write_p12(WvStringParm filename)
 {
     debug("Dumping RSA Key and X509 Cert to PKCS12 structure.\n");
 
-    FILE *fp = fopen(filename, "w");
-    
+    AutoClose fp = fopen(filename, "w");
+
     if (!fp)
     {
-	seterr("Unable to create: %s\n", filename);
-	return;
+        seterr("Unable to create: %s\n", filename);
+        return;
     }
-    
+
     if (!!pkcs12pass)
     {
-	EVP_PKEY *pk = EVP_PKEY_new();
-	if (!pk)
-	{
-	    seterr("Unable to create PKEY object.\n");
-	    return;
-	}
-	
-	if (rsa && cert)
-	{
-	    WvRSAKey tmpkey(*rsa);
-	    
-	    if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
-	    {
-		seterr("Error setting RSA keys.\n");
-		return;
-	    }
-	    else
-	    {
-		PKCS12 *pkg = PKCS12_create(pkcs12pass.edit(), "foo", pk, 
-					    cert, NULL, 0, 0, 0, 0, 0);
-		if (pkg)
-		{
-		    debug("Write the PKCS12 object out...\n");
-		    i2d_PKCS12_fp(fp, pkg);
-		    PKCS12_free(pkg);
-		}
-		else
-		{
-		    seterr("Unable to create PKCS12 object.\n");
-		    return;
-		}
-	    }
-	}
-	else
-	{
-	    seterr("Either the RSA key or the Certificate is not present\n");
-	    return;
-	}
+        EVP_PKEY *pk = EVP_PKEY_new();
+        if (!pk)
+        {
+            seterr("Unable to create PKEY object.\n");
+            return;
+        }
+
+        if (rsa && cert)
+        {
+            WvRSAKey tmpkey(*rsa);
+
+            if (!EVP_PKEY_assign_RSA(pk, tmpkey.rsa))
+            {
+                seterr("Error setting RSA keys.\n");
+                return;
+            }
+            else
+            {
+                PKCS12 *pkg = PKCS12_create(pkcs12pass.edit(), "foo", pk,
+                                            cert, NULL, 0, 0, 0, 0, 0);
+                if (pkg)
+                {
+                    debug("Write the PKCS12 object out...\n");
+                    i2d_PKCS12_fp(fp, pkg);
+                    PKCS12_free(pkg);
+                    return;
+                }
+                else
+                {
+                    seterr("Unable to create PKCS12 object.\n");
+                    return;
+                }
+            }
+        }
+        else
+        {
+            seterr("Either the RSA key or the Certificate is not present\n");
+            return;
+        }
     }
     else
     {
-	seterr("No Password specified for PKCS12 dump\n");
-	return;
+        seterr("No Password specified for PKCS12 dump\n");
+        return; 
     }
 }
 
 void WvX509Mgr::read_p12(WvStringParm filename)
 {
     debug("Reading Certificate and Private Key from PKCS12 file: %s\n", filename);
-    
-    FILE *fp = fopen(filename, "r");
-    
+
+    AutoClose fp = fopen(filename, "r");
+
     if (!fp)
     {
-	seterr("Unable to read from: %s\n", filename);
-	return;
+        seterr("Unable to read from: %s\n", filename);
+        return;
     }
-    
+
     if (!!pkcs12pass)
     {
-	PKCS12 *pkg = d2i_PKCS12_fp(fp, NULL);
-	if (pkg)
-	{
-	    EVP_PKEY *pk = EVP_PKEY_new();
-	    if (!pk)
-	    {
-		seterr("Unable to create PKEY object.\n");
-		return;
-	    }
-	    
-	    // Parse out the bits out the PKCS12 package.
-	    PKCS12_parse(pkg, pkcs12pass, &pk, &cert, NULL);
-	    PKCS12_free(pkg);
-	    
-	    // Now, cert should be OK, let's try and set up the RSA stuff
-	    // since we've essentially got a PKEY, and not a WvRSAKey
-	    // We need to create a new WvRSAKey from the PKEY...
-	    rsa = new WvRSAKey(pk->pkey.rsa, true);
-	    
-	    // Now that we have both, check to make sure that they match
-	    if (!rsa || !cert || test())
-	    {
-		seterr("Could not fill in RSA and Cert with matching values.\n");
-		return;
-	    }
-	    // We don't free pk here because the WvRSAKey object now 
-	    // owns the key value and should delete it in the constructor.
-	}
-	else
-	{
-	    seterr("Read in of PKCS12 file '%s' failed - aborting!\n", filename);
-	    return;
-	}
+        PKCS12 *pkg = d2i_PKCS12_fp(fp, NULL);
+        if (pkg)
+        {
+            EVP_PKEY *pk = EVP_PKEY_new();
+            if (!pk)
+            {
+                seterr("Unable to create PKEY object.\n");
+                return;
+            }
+
+            // Parse out the bits out the PKCS12 package.
+            PKCS12_parse(pkg, pkcs12pass, &pk, &cert, NULL);
+            PKCS12_free(pkg);
+
+            // Now, cert should be OK, let's try and set up the RSA stuff
+            // since we've essentially got a PKEY, and not a WvRSAKey
+            // We need to create a new WvRSAKey from the PKEY...
+            rsa = new WvRSAKey(pk->pkey.rsa, true);
+
+            // Now that we have both, check to make sure that they match
+            if (!rsa || !cert || test())
+            {
+                seterr("Could not fill in RSA and Cert with matching values.\n");
+                return;
+            }
+            // We don't free pk here because the WvRSAKey object now 
+            // owns the key value and should delete it in the constructor.
+            return;
+        }
+        else
+        {
+            seterr("Read in of PKCS12 file '%s' failed - aborting!\n", filename);
+            return;
+        }
     }
     else
     {
-	seterr("No Password specified for PKCS12 file - aborting!\n");
-	return;
+        seterr("No Password specified for PKCS12 file - aborting!\n");
+        return;
     }
 }
 

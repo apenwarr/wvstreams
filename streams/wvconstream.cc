@@ -5,6 +5,7 @@
  * Declarations for wvcon, wvin, wvout, and wverr global streams.
  */
 #include "wvfdstream.h"
+#include "wvmoniker.h"
 
 // just like WvFDStream, but doesn't close the fd
 class _WvConStream : public WvFDStream
@@ -17,6 +18,30 @@ public:
     virtual void close();
     virtual bool isok() const;
 };
+
+
+static IWvStream *create_stdin(WvStringParm s, IObject *, void *)
+{
+    return new _WvConStream(0, -1);
+}
+static IWvStream *create_stdout(WvStringParm s, IObject *, void *)
+{
+    return new _WvConStream(-1, 1);
+}
+static IWvStream *create_stderr(WvStringParm s, IObject *, void *)
+{
+    return new _WvConStream(-1, 2);
+}
+static IWvStream *create_stdio(WvStringParm s, IObject *, void *)
+{
+    return new _WvConStream(0, 1);
+}
+
+static WvMoniker<IWvStream> reg0("stdin",  create_stdin);
+static WvMoniker<IWvStream> reg1("stdout", create_stdout);
+static WvMoniker<IWvStream> reg2("stderr", create_stderr);
+static WvMoniker<IWvStream> reg3("stdio",  create_stdio);
+
 
 
 _WvConStream::_WvConStream(int _rfd, int _wfd) : WvFDStream(_rfd, _wfd)

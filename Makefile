@@ -9,7 +9,7 @@ all: config.mk $(TARGETS)
 
 %.so: SONAME=$@.$(RELEASE)
 
-.PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean
+.PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean test
 
 # FIXME: little trick to ensure that the wvautoconf.h.in file is there
 .PHONY: dist-hack-clean
@@ -102,8 +102,8 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 test: runconfigure wvtestmain
-	$(VALGRIND) ./wvtestmain
+	$(VALGRIND) ./wvtestmain $(TESTNAME)
 
 wvtestmain: wvtestmain.o $(call objects, $(shell find . -type d -name t)) \
-	libwvstreams.so libwvutils.so libuniconf.so
+	$(LIBUNICONF)
 
