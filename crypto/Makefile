@@ -15,7 +15,7 @@ SSLINC= /usr/include/ssl /usr/include/ssleay /usr/local/include/ssl \
 SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 	-L/usr/local/ssl -L/usr/local/ssl/lib -L/usr/local/ssleay
 
-default: all cryptotest ssltest
+default: all cryptotest ssltest sslsrvtest certtest
 all: crypto.libs
 
 LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto
@@ -24,12 +24,12 @@ LIBS += ${EFENCE}
 XPATH=.. ../utils ../streams ../configfile ../ipstreams ../netmap ../netguide \
 	${SSLDIR}/include ${SSLINC}
 
-crypto.libs: wvcrypto.o wvsslstream.o
+crypto.libs: wvcrypto.o wvsslstream.o wvx509.o
 
 crypto.a: crypto.libs
 
-cryptotest ssltest: crypto.a \
+cryptotest ssltest sslsrvtest certtest: crypto.a \
 	 ../netguide/netguide.a ../netmap/netmap.a ../libwvstreams.a
 
 clean:
-	rm -f cryptotest ssltest
+	rm -f cryptotest ssltest sslsrvtest certtest

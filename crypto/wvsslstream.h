@@ -3,6 +3,7 @@
  * I really don't care just mention me in a changelog somewhere ;) ppatters.
  */
 #include "wvstreamclone.h"
+#include "wvx509.h"
 #include "wvlog.h"
  
 struct ssl_st;
@@ -14,28 +15,31 @@ typedef struct ssl_st SSL;
 typedef struct ssl_method_st SSL_METHOD;
 
 /**
- * SSL Client Side (for now) Stream, handles SSLv2, SSLv3, and TLS
- * Methods
+ * SSL Stream, handles SSLv2, SSLv3, and TLS
+ * Methods - If you want it to be a server, then you must feed the constructor
+ * a WvX509Mgr object
  */
 class WvSSLStream : public WvStreamClone
 {
 public:
     /**  
-     * Start an SSL Connection on the stream _slave 
+     * Start an SSL Connection on the stream _slave - if the x509 structure
+     * is passed to the wvsslstream, then the stream will assume it is a 
+     * server. This is a temporary hack, since a client can also have a 
+     * certificate(for client side validation - SSLv3, TLS). Eventually, 
+     * this constructor will have a third parameter, bool _is_server, which
+     * will be used to decide between server and client mode.
      */
-    WvSSLStream(WvStream *_slave);
+    WvSSLStream(WvStream *_slave, WvX509Mgr *x509 = NULL, 
+    		bool _verify = false, bool _is_server = false);
     
     /**
      * Cleans up everything (calls close + frees up the SSL Objects used)
      */
     virtual ~WvSSLStream();
     
-    /**
-     * Need an execute function for this stream because
-     * the initial connection takes a bit of fiddling to set
-     * up.
-     */   
-    virtual void execute();
+    virtual bool select_setup(SelectInfo &si);
+    virtual bool test_set(SelectInfo &si);
     
     /**
      * Close down the SSL Connection
@@ -43,6 +47,9 @@ public:
     virtual void close();
     
 protected:
+    /**
+     * Connection to be "cloned"
+     */
     WvStream *slave;
     
     /**
@@ -63,7 +70,7 @@ protected:
     SSL_METHOD *meth;
     
     /**
-     * Overrider the standard write function, and use
+     * Overrides the standard write function, and use
      * SSL_write() instead...
      */
     size_t     uwrite(const void *buf, size_t len);
@@ -75,9 +82,28 @@ protected:
     size_t     uread(void *buf, size_t len);
     
 private:
-    /// Connection Status Flag, since SSL takes a few seconds to
-    /// initialize itself.
-    bool       sslconnected;
+    /**
+     * Connection Status Flag, since SSL takes a few seconds to
+     * initialize itself.
+     */
+    volatile bool       sslconnected;
+    
+    /**
+     * Keep track of whether we are a client or a server
+     */
+    bool	is_server;
+    
+    /**
+     * Keep track of whether we want to check the peer who connects to us
+     */
+    bool	verify;
+    
+    /**
+     * SSL may keep its own internal read/write buffers, so we need to
+     * avoid doing a real select() until these are definitely empty (SSL_read
+     * or SSL_write returns EAGAIN).
+     */
+    bool read_again, write_again;
     
     /**
      * Internal Log Object

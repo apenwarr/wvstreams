@@ -26,7 +26,8 @@ int main(int argc, char **argv)
     
     // For this test, we connect to bond.net's POP3-SSL server...
     WvString target(argc >= 2 ? argv[1] : "mail.bond.net:995");
-    WvSSLStream cli(new WvTCPConn(target));
+    log("Connecting to %s...\n", target);
+    WvSSLStream cli(new WvTCPConn(target),NULL,false);
     WvStreamList l;
     
     l.append(&cli, false);
@@ -35,7 +36,7 @@ int main(int argc, char **argv)
     cli.autoforward(*wvcon);
     wvcon->autoforward(cli);
     
-    while (cli.isok() && !want_to_die)
+    while (cli.isok() && wvcon->isok() && !want_to_die)
     {
 	if (l.select(-1))
 	    l.callback();
