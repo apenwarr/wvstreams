@@ -503,35 +503,51 @@ WVTEST_MAIN("continue_read and continuing getline")
 }
 
 
+static void alarmcall(WvStream &s, void *userdata)
+{
+    WVPASS(s.alarm_was_ticking);
+    val_cb(s, userdata);
+}
+
+
 // alarm()
 WVTEST_MAIN("alarm")
 {
     int val = 0;
     WvStream s;
-    s.setcallback(val_cb, &val);
+    s.setcallback(alarmcall, &val);
     
     s.runonce(0);
-    WVPASS(val == 0);
+    WVPASSEQ(val, 0);
     s.alarm(0);
     s.runonce(0);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.runonce(5);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.alarm(-5);
     WVPASS(s.alarm_remaining() == -1);
     s.runonce(0);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.alarm(100);
     time_t remain = s.alarm_remaining();
     WVPASS(remain > 0);
     WVPASS(remain <= 100);
     s.runonce(0);
-    WVPASS(val == 1);
+    WVPASSEQ(val, 1);
     s.runonce(10000);
-    WVPASS(val == 2);
+    WVPASSEQ(val, 2);
     printf("alarm remaining: %d\n", (int)s.alarm_remaining());
     s.runonce(50);
-    WVPASS(val == 2);
+    WVPASSEQ(val, 2);
+
+    WvIStreamList l;
+    l.append(&s, false, "alarmer");
+    
+    s.alarm(1);
+    l.runonce(10);
+    l.runonce(10);
+    l.runonce(10);
+    WVPASSEQ(val, 3);
 }
 
 
