@@ -242,9 +242,12 @@ void UniIniGen::commit()
     WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
     struct stat statbuf;
 
-    if (file.geterr())
+    if (file.geterr()
+	|| lstat(filename, &statbuf) == -1
+	|| !S_ISREG(statbuf.st_mode))
     {
 	log(WvLog::Warning, "couldn't create %s\n", alt_filename);
+	unlink(alt_filename);
 	alt_filename = WvString::null;
 
 	file.open(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
