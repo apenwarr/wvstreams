@@ -34,8 +34,10 @@ WvString WvIPFirewall::port_command(const char *cmd, const char *proto,
 {
     WvIPAddr ad(addr), none;
     
-    return WvString("iptables %s Services -j ACCEPT -p %s -d %s --dport %s",
-		    cmd, proto, ad == none ? WvString("0/0") : (WvString)ad,
+    return WvString("iptables %s Services -j ACCEPT -p %s "
+		    "%s --dport %s",
+		    cmd, proto,
+		    ad == none ? WvString("") : WvString("-d %s", ad),
 		    addr.port);
 }
 
@@ -45,10 +47,10 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
 {
     WvIPAddr ad(src), none;
     
-    // FIXME update for iptables
-    return WvString("ipchains %s WvRedir -j REDIRECT %s -p tcp -d %s %s",
+    return WvString("iptables -t nat %s TProxy -j REDIRECT %s -p tcp "
+		    "%s --dport %s",
 		    cmd, dstport, 
-		    ad == none ? WvString("0/0") : (WvString)ad,
+		    ad == none ? WvString("") : WvString("-d %s", ad),
 		    src.port);
 }
 
@@ -83,7 +85,7 @@ void WvIPFirewall::add_redir(const WvIPPortAddr &src, int dstport)
 {
     redirs.append(new Redir(src, dstport), true);
     WvString s(redir_command("-A", src, dstport));
-//    if (enable) system(s); // FIXME
+    if (enable) system(s);
 }
 
 
