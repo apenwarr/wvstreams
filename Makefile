@@ -33,9 +33,7 @@ all: include subdirs $(LIBFILES)
 subdirs: include
 	$(subdirs)
 
-$(LIBFILES) : subdirs
-
-libwvcrypto.so : libwvstreams.so
+libwvcrypto.so: libwvstreams.so
 
 include:
 	rm -rf $@
