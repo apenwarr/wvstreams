@@ -65,7 +65,8 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
                 ::write(tmpfd, buffer, count);
             ::close(fd);
         }
-        wvchmod(tmp_file, create_mode);
+
+        fchmod(tmpfd, create_mode);
     }
     else
     {
