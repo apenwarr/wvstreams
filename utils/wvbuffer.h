@@ -131,6 +131,13 @@ public:
     unsigned char *get(size_t num);
     
     /*
+     * Undo all or part of the previous get().  You can unget() up to the
+     * number of bytes you did in the last get(), assuming you have not done
+     * any other buffer operations in the meantime.
+     */
+    void unget(size_t num);
+    
+    /*
      * allocate 'num' bytes in the buffer and return a pointer to its start.
      * Pointer is valid until next zap() or get().
      */

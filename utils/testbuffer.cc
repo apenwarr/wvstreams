@@ -13,43 +13,66 @@ int main()
     printf("MINIBUFFER TEST\n");
     printf("A %20u used, %u free, offset %d/%d\n",
 	   b.used(), b.free(), b.strchr('c'), b.strchr((unsigned char)'c'));
+
     b.put("frogs on ice", 13);
     printf("B %20u used, %u free, offset %d/%d\n",
 	   b.used(), b.free(), b.strchr('c'), b.strchr((unsigned char)'c'));
+    
     s = (char *)b.get(8);
     printf("C s: %s\n", s);
+    
     printf("D %20u used, %u free, offset %d/%d\n",
 	   b.used(), b.free(), b.strchr('c'), b.strchr((unsigned char)'c'));
+
     s = (char *)b.get(5);
     printf("E s: %s\n", s);
+    
     printf("F %20u used, %u free, offset %d/%d\n",
 	   b.used(), b.free(), b.strchr('c'), b.strchr((unsigned char)'c'));
     printf("\n");
     
     printf("BUFFER TEST\n");
+    
     printf("A %20u used, offset %d/%d\n",
 	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
+    
     bb.put("frogs on ice", 13);
     printf("B %20u used, offset %d/%d\n",
 	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
+    
     bb.put("frogs on rice", 14);
     printf("C %20u used, offset %d/%d\n",
 	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
+    
     s = (char *)bb.get(8);
-    printf("D s: %s\n", s);
+    printf("D s: %s\n", s);  // "frogs on ice"
+    
     printf("E %20u used, offset %d/%d\n",
 	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
+    
     bb.put("frogs on bryce", 15);
     s = (char *)bb.get(5);
-    printf("F s: %s\n", s);
+    printf("F s: %s\n", s);  // " ice"
+
     printf("G %20u used, offset %d/%d\n",
 	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
-    s = (char *)bb.get(15);
-    printf("H s: %s\n", s);
+    
+    s = (char *)bb.get(16);
+    printf("H s: %s\n", s);  // "frogs on rice"
+    
     printf("I %20u used, offset %d/%d\n",
 	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
+
+    bb.unget(12);
+    printf("I2 %19u used, offset %d/%d\n",
+	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
+    
+    s = (char *)bb.get(11);
+    printf("J s: %s\n", s);  // "s on rice"
+    
     s = (char *)bb.get(14);
-    printf("J s: %s\n", s);
+    printf("J2 s: %s\n", s);  // "rogs on bryce"
+    
     printf("K %20u used, offset %d/%d\n",
 	   bb.used(), bb.strchr('c'), bb.strchr((unsigned char)'c'));
     printf("\n");

@@ -124,6 +124,25 @@ unsigned char *WvBuffer::get(size_t num)
 }
 
 
+void WvBuffer::unget(size_t num)
+{
+    WvMiniBuffer *b;
+    WvMiniBufferList::Iter i(list);
+    size_t ungettable;
+    
+    i.rewind(); i.next();
+    b = &i();
+    
+    ungettable = b->total() - b->used() - b->free();
+    
+    if (num > ungettable)
+	num = ungettable;
+    
+    b->unget(num);
+    inuse += num;
+}
+
+
 unsigned char *WvBuffer::alloc(size_t num)
 {
     WvMiniBuffer *lastb, *b;
