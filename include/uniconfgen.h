@@ -32,6 +32,12 @@ class UniConfGen;
 typedef WvCallback<void, const UniConfKey &, WvStringParm, void *> 
     UniConfGenCallback;
 
+/**
+ * An abstract data container that backs a UniConf tree.
+ *
+ * This is intended to be implemented to provide support for fetching
+ * and storing keys and values using different access methods.
+ */
 class IUniConfGen : public IObject
 {
 public:
@@ -39,11 +45,7 @@ public:
     
     /***** Notification API *****/
     
-    /**
-     * Sets the callback for change notification.
-     * Must not be reimplemented by subclasses.
-     * FIXME: why??
-     */
+    /** Sets the callback for change notification. */
     virtual void setcallback(const UniConfGenCallback &callback,
 			     void *userdata) = 0;
     
@@ -52,7 +54,6 @@ public:
     
     /**
      * Determines if the generator is usable and working properly.
-     *
      * The default implementation always returns true.
      */
     virtual bool isok() = 0;
@@ -60,9 +61,7 @@ public:
     
     /***** Key Persistence API *****/
     
-    /**
-     * Commits any changes. The default implementation does nothing.
-     */
+    /** Commits any changes. The default implementation does nothing. */
     virtual void commit() = 0;
     
     /**
@@ -78,7 +77,7 @@ public:
     
     /**
      * Fetches a string value for a key from the registry.  If the key doesn't
-     * exist, the return value is WvString::null.
+     * exist, the return value has .isnull() == true.
      */
     virtual WvString get(const UniConfKey &key) = 0;
     
@@ -150,11 +149,8 @@ DEFINE_IID(IUniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9f}});
 
 /**
- * An abstract data container that backs a UniConf tree.
- *
- * This is intended to be implemented to provide support for fetching
- * and storing keys and values using different access methods.
- *
+ * A default implementation of IUniConfGen, providing various handy features
+ * that save trouble when implementing typical generators.
  */
 class UniConfGen : public IUniConfGen
 {
