@@ -157,8 +157,22 @@ void WvConf::load_file(WvStringParm filename)
     char *from_file;
     WvConfigSection *sect = &globalsection;
     bool quick_mode = false;
+    struct stat statbuf;
 
     file.open(filename, O_RDONLY);
+
+    if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
+    {
+	log(WvLog::Warning, "Can't stat config file %s\n", filename);
+	file.close();
+    }
+
+    if (file.isok() && (statbuf.st_mode & S_ISVTX))
+    {
+	file.close();
+	file.seterr(EAGAIN);
+    }
+
     if (!file.isok())
     {
 	// Could not open for read.
@@ -474,35 +488,31 @@ static WvString follow_links(WvString fname)
 
 void WvConf::save(WvStringParm _filename)
 {
+    struct stat statbuf;
+
     if (error || !_filename)
 	return;
     
-    WvString xfilename(follow_links(_filename));
-    
-    // temporary filename has the last char changed to '!' (or '#' if it's
-    // already '#').  We can't just append a character, because that might
-    // confuse a dos filesystem.
-    WvString tmpfilename(xfilename);
-    char *cptr = strchr(tmpfilename.edit(), 0);
-    cptr--;
-    if (*cptr != '!')
-	*cptr = '!';
-    else
-	*cptr = '#';
-    
-    ::unlink(tmpfilename);
-    WvFile fp(tmpfilename, O_WRONLY|O_CREAT|O_TRUNC, create_mode);
+    WvFile fp(_filename, O_WRONLY|O_CREAT|O_TRUNC, create_mode);
 
     if (!fp.isok())
     {
-	log(xfilename==filename ? WvLog::Error : WvLog::Debug1,
-	    "Can't write to config file %s: %s\n",
-	    tmpfilename, strerror(errno));
-	if (xfilename == filename)
-	    error = true;
+	log(WvLog::Error, "Can't write to config file %s: %s\n",
+	    _filename, strerror(errno));
+	error = true;
 	return;
     }
-    
+
+    if (fstat(fp.getwfd(), &statbuf) == -1)
+    {
+	log(WvLog::Error, "Can't stat config file %s: %s\n",
+	    _filename, strerror(errno));
+	error = true;
+	return;
+    }
+
+    fchmod(fp.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
+
     globalsection.dump(fp);
     
     Iter i(*this);
@@ -512,9 +522,8 @@ void WvConf::save(WvStringParm _filename)
 	fp.print("\n[%s]\n", sect.name);
 	sect.dump(fp);
     }
-    
-    ::unlink(xfilename);
-    ::rename(tmpfilename, xfilename);
+
+    fchmod(fp.getwfd(), statbuf.st_mode & 07777);
 }
 
 
