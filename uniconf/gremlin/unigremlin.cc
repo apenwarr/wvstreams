@@ -426,7 +426,7 @@ void UniConfGremlin::test()
  */
 int main()
 {
-    UniConfGremlin g("ini:/home/mrwise/test.ini", "", 5);
+    UniConfGremlin g("ini:/tmp/test.ini", "", 5);
     cout << "Gremlin created\n";
     g.start();
     cout << g.status();
