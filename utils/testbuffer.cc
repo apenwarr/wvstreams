@@ -15,7 +15,7 @@ int main()
     WvMiniBuffer b(1024);
     WvBuffer bb;
     char *s, xx[1024];
-    size_t in, i;
+    size_t in, i, max, total;
     
     printf("MINIBUFFER TEST\n");
     printf("A %20u used, %u free, offset %d/%d\n",
@@ -85,13 +85,14 @@ int main()
     printf("\n");
     
     printf("BUFFER STRESS\n");
-    in = 0;
+    in = max = total = 0;
     while (1)
     {
 	i = random() % sizeof(xx);
 	s = (char *)bb.alloc(i);
 	memcpy(s, xx, i);
 	in += i;
+	total += i;
 	
 	i = random() % sizeof(xx);
 	if (i > in)
@@ -102,12 +103,20 @@ int main()
 	i = random() % sizeof(xx);
 	bb.put(xx, i);
 	in += i;
+	total += i;
 
 	i = random() % sizeof(xx);
 	if (i > in)
 	    i = in;
 	bb.get(i);
 	in -= i;
+	
+	if (bb.used() > max)
+	{
+	    max = bb.used();
+	    printf("New max: %u bytes in %d minibuffer(s) after %u bytes\n",
+		   max, bb.num_of_bufs(), total);
+	}
 	
 	fprintf(stderr, "[%6d]", in);
     }

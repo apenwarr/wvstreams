@@ -173,6 +173,9 @@ public:
     size_t match(const char chlist[], bool reverse = false)
         { return match((const unsigned char *)chlist, strlen(chlist),
 			 reverse); }
+    
+    int num_of_bufs()
+        { return list.count(); }
 };
 
 
