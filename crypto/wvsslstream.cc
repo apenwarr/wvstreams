@@ -111,6 +111,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
     	}
     }
     
+    ERR_clear_error();
     ssl = SSL_new(ctx);
     if (!ssl)
     {
@@ -134,6 +135,22 @@ WvSSLStream::~WvSSLStream()
 	debug("Error was: %s\n", errstr());
     
     wvssl_free();
+}
+
+
+void WvSSLStream::printerr(WvStringParm func)
+{
+    unsigned long l = ERR_get_error();
+    char buf[121];      // man ERR_error_string says must be > 120.
+
+    SSL_load_error_strings();
+    while (l)
+    {
+        ERR_error_string(l, buf);
+        debug("%s error: %s\n", func, buf);
+        l = ERR_get_error();
+    }
+    ERR_free_strings();
 }
 
  
@@ -171,6 +188,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         size_t avail = read_bouncebuf.free();
         unsigned char *data = read_bouncebuf.alloc(avail);
         
+        ERR_clear_error();
         int result = SSL_read(ssl, data, avail);
         if (result <= 0)
         {
@@ -191,8 +209,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                     break;
                     
                 default:
-                    debug("<< ERROR: SSL_read() call failed.\n");
-                    seterr(WvString("SSL read error #%s", errcode));
+                    printerr("SSL_read");
+                    seterr("SSL read error #%s", errcode);
                     break;
             }
             read_pending = false;
@@ -259,6 +277,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         size_t used = write_bouncebuf.used();
         const unsigned char *data = write_bouncebuf.get(used);
         
+        ERR_clear_error();
         int result = SSL_write(ssl, data, used);
         if (result <= 0)
         {
@@ -291,7 +310,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
                     break;
                     
                 default:
-                    debug(">> ERROR: SSL_write() call failed.\n");
+                    printerr("SSL_write");
                     seterr(WvString("SSL write error #%s", errcode));
                     break;
             }
@@ -325,6 +344,7 @@ void WvSSLStream::close()
 {
     if (ssl)
     {
+        ERR_clear_error();
 	SSL_shutdown(ssl);
 	SSL_free(ssl);
 	ssl = NULL;
@@ -384,6 +404,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
         WvFDStream *fdstream = static_cast<WvFDStream*>(cloned);
         int fd = fdstream->getfd();
         assert(fd >= 0);
+        ERR_clear_error();
 	SSL_set_fd(ssl, fd);
 //	debug("SSL connected on fd %s.\n", fd);
 	
@@ -403,9 +424,15 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    if (errno == EAGAIN)
 		debug("Still waiting for SSL negotiation.\n");
 	    else if (!errno)
+            {
+                printerr(is_server ? "SSL_accept" : "SSL_connect");
 		seterr(WvString("SSL negotiation failed (%s)!", err));
+            }
 	    else
+            {
+                printerr(is_server ? "SSL_accept" : "SSL_connect");
 		seterr(errno);
+            }
 	}
 	else  // We're connected, so let's do some checks ;)
 	{

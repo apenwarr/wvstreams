@@ -110,6 +110,9 @@ private:
 
     /** Need to buffer writes until sslconnected */
     WvDynBuf unconnected_buf;
+
+    /** Prints out the entire SSL error queue */
+    void printerr(WvStringParm func);
 };
 
 #endif // __WVSSLSTREAM_H
