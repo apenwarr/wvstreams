@@ -6,31 +6,48 @@
  */
 
 #include "uniconfwvgen.h"
+// #include "wvlog.h"
+// WvLog log("Hmm?");
 
 WvString UniConfWvGen::get(const UniConfKey &key)
 {
-    return cfg.get(key.first(), key.last(key.numsegments()));
+    return cfg.get(key.first(), key.last(key.numsegments() - 1));
 }
 
 bool UniConfWvGen::set(const UniConfKey &key, WvStringParm value)
 {
-    cfg.set(key.first(), key.last(key.numsegments()), value);
-    return true;
+    cfg.set(key.first(), key.last(key.numsegments() - 1), value);
+    if (cfg.get(key.first(), key.last(key.numsegments() - 1)) == value)
+        return true;
+    return false;
 }
 
 bool UniConfWvGen::zap(const UniConfKey &key)
 {
-    if (key.first() == key)
-        cfg.delete_section(key);
-    else 
-        remove(key);
+    cfg.delete_section(key);
+
+    WvConfigSection *sect = cfg[key];
+    if (sect)
+        return false;
     return true;
+}
+
+bool UniConfWvGen::haschildren(const UniConfKey &key)
+{
+    WvConfigSection *sect = cfg[key];
+    if (sect)
+        return true;
+    return false;
 }
 
 UniConfWvGen::Iter *UniConfWvGen::iterator(const UniConfKey &key)
 {
     WvConfigSection *sect = cfg[key];
-    return new WvConfIter(new WvConfigSection::Iter(*sect));
+
+    if (sect)
+        return new WvConfIter(new WvConfigSection::Iter(*sect));
+    else
+        return new UniConfGen::NullIter();
 }
 
 

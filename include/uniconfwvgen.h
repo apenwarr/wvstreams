@@ -25,7 +25,7 @@ public:
     virtual WvString get(const UniConfKey &key);
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);
-    virtual bool haschildren(const UniConfKey &key) { return false; }
+    virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
 
     /**
