@@ -33,6 +33,7 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
+    memset(&old_st, 0, sizeof(old_st));
 }
 
 
@@ -60,7 +61,8 @@ bool UniIniGen::refresh()
 	file.seterr(EAGAIN);
     }
     
-    if (statbuf.st_ctime == old_st.st_ctime
+    if (file.isok() // guarantes statbuf is valid from above
+	&& statbuf.st_ctime == old_st.st_ctime
 	&& statbuf.st_dev == old_st.st_dev
 	&& statbuf.st_ino == old_st.st_ino
 	&& statbuf.st_blocks == old_st.st_blocks
