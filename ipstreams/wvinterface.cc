@@ -338,9 +338,10 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
 	argv[13] = "link";
     
     if (dest == WvIPNet("0.0.0.0", 0)
-	&& WvPipe(argv[0], argv, false, false, false).finish() == 0)
+	&& WvPipe(argv[0], argv, false, false, false).finish() != 242)
     {
-	// successfully added a default route via the subprogram
+	// added a default route via the subprogram
+	// 242 is the magic "WvPipe could not exec program..." exit code.
 	return 0;
     }
     
@@ -608,6 +609,8 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
 
 bool WvInterfaceDict::on_local_net(const WvIPNet &addr)
 {
+    WvIPAddr zero;
+    
     if (islocal(addr))
 	return true;
     
@@ -617,7 +620,8 @@ bool WvInterfaceDict::on_local_net(const WvIPNet &addr)
 	WvInterface &ifc = i;
 	if (!ifc.valid) continue;
 	
-	if (ifc.ipaddr().includes(addr))
+	if (ifc.isup() && WvIPAddr(ifc.ipaddr()) != zero
+	  && ifc.ipaddr().includes(addr))
 	    return true;
     }
     
