@@ -54,7 +54,7 @@ dist-hook: dist-hack-clean configure
 runconfigure: config.mk include/wvautoconf.h
 
 ifndef CONFIGURING
-configure:=$(error Please run the "configure" script)
+configure=$(error Please run the "configure" script)
 else
 configure:=
 endif
