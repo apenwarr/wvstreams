@@ -89,7 +89,7 @@ int main()
     log("ChangeBools: %s/%s/%s\n", c1, c2, c3);
     assert(c1 && c2 && c3);
 
-    log("Number of entries in [Global]: %s\n", cfg["Global"]->count());
+    //log("Number of entries in [Global]: %s\n", cfg["Global"]->count());
   
     return 0;
 }

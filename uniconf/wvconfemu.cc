@@ -9,12 +9,47 @@
 #endif
 #include "wvconfemu.h"
 #include "wvstringtable.h"
+#include "wvfile.h"
 #include "strutils.h"
+
+
+static void do_setbool(void* userdata,
+		       WvStringParm section, WvStringParm key,
+		       WvStringParm oldval, WvStringParm newval)
+{
+    bool* b = static_cast<bool*>(userdata);
+
+    *b = true;
+}
+
+
+static void do_addname(void* userdata,
+		       WvStringParm section, WvStringParm key,
+		       WvStringParm oldval, WvStringParm newval)
+{
+    (*(WvStringList *)userdata).append(new WvString(key), true);
+}
+
+
+static void do_addfile(void* userdata,
+		       WvStringParm section, WvStringParm key,
+		       WvStringParm oldval, WvStringParm newval)
+{
+    WvFile tmp(WvString("/home/%s/%s", key, *(WvString *)userdata), 
+               O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if(tmp.isok())
+    {
+        if(!!newval)
+            tmp.print("%s\n", newval);
+        else
+            tmp.print("%s\n", key);
+    }
+}
 
 
 WvConfigEntry *WvConfigSectionEmu::operator[] (WvStringParm s)
 {
-    assert(false);
+    assert(false && "not implemented");
     return NULL;
 
     WvConfigEntryEmu* entry = entries[s];
@@ -44,7 +79,7 @@ void WvConfigSectionEmu::set(WvStringParm entry, WvStringParm value)
 #if 1
 void WvConfigSectionEmu::quick_set(WvStringParm entry, WvStringParm value)
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 #endif
 
@@ -89,7 +124,7 @@ WvConfigEntryEmu* WvConfigSectionEmu::Iter::ptr() const
 #if 1
 void WvConfigSectionEmu::Iter::unlink()
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 #endif
 
@@ -97,25 +132,30 @@ void WvConfigSectionEmu::Iter::unlink()
 #if 1
 void WvConfigSectionEmu::Iter::xunlink()
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 #endif
 
 
 void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
 {
-    WvList<SetBool>::Iter i(setbools);
+    WvList<CallbackInfo>::Iter i(callbacks);
     WvString section(_key.first());
     WvString key(_key.removefirst());
 
     if (hold)
 	return;
 
-    i.rewind();
-    while (i.next())
+    for (i.rewind(); i.next(); )
+    {
 	if (((i->section && !i->section) || !strcasecmp(i->section, section))
 	    && ((i->key && !i->key) || !strcasecmp(i->key, key)))
-	    *(i->b) = true;
+	{
+	    WvString value = get(section, key, NULL);
+	    i->callback(i->userdata, section, key, i->last, value);
+	    i->last = value;
+	}
+    }
 }
 
 
@@ -137,7 +177,7 @@ void WvConfEmu::zap()
 #if 1
 bool WvConfEmu::isclean() const
 {
-    assert(false);
+    assert(false && "not implemented");
     return false;
 }
 #endif
@@ -162,7 +202,7 @@ void WvConfEmu::load_file(WvStringParm filename)
 #if 1
 void WvConfEmu::save(WvStringParm filename)
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 #endif
 
@@ -170,7 +210,7 @@ void WvConfEmu::save(WvStringParm filename)
 #if 1
 void WvConfEmu::save()
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 #endif
 
@@ -178,7 +218,7 @@ void WvConfEmu::save()
 #if 1
 void WvConfEmu::flush()
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 #endif
 
@@ -198,57 +238,62 @@ WvConfigSectionEmu *WvConfEmu::operator[] (WvStringParm sect)
 
 
 void WvConfEmu::add_callback(WvConfCallback callback, void *userdata,
-		  WvStringParm section, WvStringParm entry, void *cookie)
+		  WvStringParm section, WvStringParm key, void *cookie)
 {
-    assert(false);
+    WvList<CallbackInfo>::Iter i(callbacks);
+
+    if (!callback)
+	return;
+
+    for (i.rewind(); i.next(); )
+    {
+	if (i->cookie == cookie
+	    && i->section == section
+	    && i->key == key)
+	    return;
+    }
+
+    callbacks.append(new CallbackInfo(callback, userdata, section, key,
+				      cookie, get(section, key, NULL)),
+		     true);
 }
 
 
 #if 1
 void WvConfEmu::del_callback(WvStringParm section, WvStringParm entry, void *cookie)
 {
-    assert(false);
+    assert(false && "not implemented");
+    assert(cookie);
 }
 #endif
 
 
 void WvConfEmu::add_setbool(bool *b, WvStringParm _section, WvStringParm _key)
 {
-    WvList<SetBool>::Iter i(setbools);
-
-    i.rewind();
-    while (i.next())
-    {
-	if (i->b == b
-	    && i->section == _section
-	    && i->key == _key)
-	    return;
-    }
-
-    setbools.append(new SetBool(b, _section, _key), true);
+    add_callback(do_setbool, b, _section, _key, b);
 }
 
 
-#if 1
 void WvConfEmu::add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
 {
-    assert(false);
+    add_callback(do_addname, list, sect, ent, list);
+}
+
+
+#if 1
+void WvConfEmu::del_addname(WvStringList *list,
+			    WvStringParm sect, WvStringParm ent)
+{
+    assert(false && "not implemented");
 }
 #endif
 
 
 #if 1
-void WvConfEmu::del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
+void WvConfEmu::add_addfile(WvString *filename,
+			    WvStringParm sect, WvStringParm ent)
 {
-    assert(false);
-}
-#endif
-
-
-#if 1
-void WvConfEmu::add_addfile(WvString *filename, WvStringParm sect, WvStringParm ent)
-{
-    assert(false);
+    add_callback(do_addfile, filename, sect, ent, NULL);
 }
 #endif
 
@@ -256,7 +301,7 @@ void WvConfEmu::add_addfile(WvString *filename, WvStringParm sect, WvStringParm 
 #if 1
 WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 {
-    assert(false);
+    assert(false && "not implemented");
     return "";
 }
 #endif
@@ -309,7 +354,7 @@ const char *WvConfEmu::fuzzy_get(WvStringList &sect, WvStringParm entry,
 #if 1
 void WvConfEmu::setraw(WvString wvconfstr, const char *&value, int &parse_error)
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 #endif
 
@@ -345,7 +390,7 @@ void WvConfEmu::maybeset(WvStringParm section, WvStringParm entry,
 
 void WvConfEmu::delete_section(WvStringParm section)
 {
-    assert(false);
+    assert(false && "not implemented");
 }
 
 

@@ -101,20 +101,26 @@ typedef WvCallback<void, void*, WvStringParm, WvStringParm, WvStringParm, WvStri
 class WvConfEmu
 {
 private:
-    struct SetBool
+    struct CallbackInfo
     {
-	bool* b;
+	WvConfCallback callback;
+	void* userdata;
 	WvString section;
 	WvString key;
-	SetBool(bool* _b, WvStringParm _section, WvStringParm _key):
-	    b(_b), section(_section), key(_key)
+	void* cookie;
+	WvString last;
+	CallbackInfo(WvConfCallback _callback, void* _userdata,
+		     WvStringParm _section, WvStringParm _key,
+		     void* _cookie, WvStringParm _last):
+	    callback(_callback), userdata(_userdata), section(_section),
+	    key(_key), cookie(_cookie), last(_last)
 	{}
     };
 
     const UniConf uniconf;
     WvConfigSectionEmuDict sections;
     bool hold;
-    WvList<SetBool> setbools;
+    WvList<CallbackInfo> callbacks;
 
     void notify(const UniConf &_uni, const UniConfKey &_key);
 public:
@@ -132,8 +138,8 @@ public:
     WvConfigSectionEmu *operator[] (WvStringParm sect);
 
     void add_callback(WvConfCallback callback, void *userdata,
-		      WvStringParm section, WvStringParm entry, void *cookie);
-    void del_callback(WvStringParm section, WvStringParm entry, void *cookie);
+		      WvStringParm section, WvStringParm key, void *cookie);
+    void del_callback(WvStringParm section, WvStringParm key, void *cookie);
 
     void add_setbool(bool *b, WvStringParm _section, WvStringParm _key);
 
