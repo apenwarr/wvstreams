@@ -129,7 +129,7 @@ WvResolver::~WvResolver()
 // If addr==NULL, this just tests to see if the name exists.
 int WvResolver::findaddr(int msec_timeout, WvStringParm name,
 			 WvIPAddr const **addr,
-                         WvIPAddrList *addrlist = NULL)
+                         WvIPAddrList *addrlist)
 {
     WvResolverHost *host;
     time_t now = time(NULL);
