@@ -27,7 +27,7 @@ WvConf::WvConf(const WvString &_filename, int _create_mode)
 {
     create_mode = _create_mode;
     filename.unique();
-    dirty = error = false;
+    dirty = error = loaded_once = false;
     load_file();
 }
 
@@ -97,9 +97,9 @@ void WvConf::load_file(const WvString &filename)
     if (!file.isok())
     {
 	// Could not open for read.
-        log(WvLog::Warning, "Can't read config file %s: %s\n",
-	    filename, file.errstr());
-	if (file.geterr() != ENOENT)
+        log(loaded_once ? WvLog::Debug1 : WvLog::Warning,
+	    "Can't read config file %s: %s\n", filename, file.errstr());
+	if (file.geterr() != ENOENT && !loaded_once)
 	    error = true;
 	return;
     }
@@ -142,8 +142,10 @@ void WvConf::load_file(const WvString &filename)
 	    }
 	}
     }
-
+    
     run_all_callbacks();
+
+    loaded_once = true;
 }
 
 
@@ -302,19 +304,29 @@ char *WvConf::parse_value(char *s)
 }
 
 
-void WvConf::flush()
+void WvConf::save(const WvString &xfilename)
 {
-
-    if (!dirty || error)
+    if (error || !xfilename)
 	return;
     
-    WvFile fp(filename, O_WRONLY|O_CREAT|O_TRUNC, create_mode);
+    WvString tmpfilename(xfilename);
+    char *cptr = strchr(tmpfilename.edit(), 0);
+    cptr--;
+    if (*cptr != '!')
+	*cptr = '!';
+    else
+	*cptr = '#';
+    
+    ::unlink(tmpfilename);
+    WvFile fp(tmpfilename, O_WRONLY|O_CREAT|O_TRUNC, create_mode);
 
     if (!fp.isok())
     {
-	log(WvLog::Error, "Can't write to config file: %s\n",
-	    strerror(errno));
-	error = true;
+	log(xfilename==filename ? WvLog::Error : WvLog::Debug1,
+	    "Can't write to config file %s: %s\n",
+	    tmpfilename, strerror(errno));
+	if (xfilename == filename)
+	    error = true;
 	return;
     }
     
@@ -327,6 +339,26 @@ void WvConf::flush()
 	fp.print("\n[%s]\n", sect.name);
 	sect.dump(fp);
     }
+    
+    ::unlink(xfilename);
+    ::rename(tmpfilename, xfilename);
+}
+
+
+void WvConf::save()
+{
+    save(filename);
+}
+
+
+// only save the config file if it's dirty
+void WvConf::flush()
+{
+    if (!dirty || error)
+	return;
+    
+    // save under default filename
+    save(filename);
     
     dirty = false;
 }

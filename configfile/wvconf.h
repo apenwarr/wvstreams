@@ -92,6 +92,8 @@ public:
     	{ return !error; }
     bool isclean() const
     	{ return isok() && !dirty; }
+    void save(const WvString &filename);
+    void save();
     void flush();
 
     WvConfigSection *operator[] (const WvString &s);
@@ -140,6 +142,7 @@ public:
 private:
     bool dirty;			// true if changed since last flush()
     bool error;			// true if something has gone wrong
+    bool loaded_once;		// true if load_file succeeded at least once
     int create_mode;		// if we must create config file
 
     WvString filename;
