@@ -45,19 +45,15 @@ WvModem::WvModem(const char * filename, int _baud)
 	return;
     }
     
-    open(filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
-    
-    // this is needed because if CLOCAL is not set on the modem, open will
+    // note: if CLOCAL is not set on the modem, open will
     // block until a carrier detect.  Since we have to open the modem to
     // generate a carrier detect, we have a problem.  So we open the modem
-    // nonblocking and then switch it immediately to blocking.
+    // nonblocking.  It would then be safe to switch to blocking mode,
+    // but that is no longer recommended for WvStream.
+    open(filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
+    
     if (isok())
-    {
-	if (fcntl(fd, F_SETFL, O_RDWR|O_NOCTTY) < 0)
-	    seterr(errno);
-	else
-	    setup_modem();
-    }
+	setup_modem();
 }
 
 

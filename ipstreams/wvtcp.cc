@@ -58,11 +58,7 @@ bool WvTCPConn::test_set(fd_set &r, fd_set &w, fd_set &x)
     bool result = WvStream::test_set(r, w, x);
 
     if (result && !connected)
-    { 
 	connected = true;
-	if (fcntl(fd, F_SETFL, O_RDWR) < 0)
-	    seterr(errno);
-    }
     
     return result;
 }

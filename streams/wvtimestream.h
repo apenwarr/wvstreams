@@ -8,8 +8,8 @@
  * its timing to a correct _average_ number of milliseconds per tick.
  * 
  * For example, if ms_per_tick=100, WvTimeStream will tick 10 times in one
- * second.  However, there may be a few milliseconds of difference for each
- * individual tick, due to random system delays.
+ * second.  However, there may be a few milliseconds of difference
+ * ("jitter") for each individual tick, due to random system delays.
  * 
  * Note that the time delay given to list.select() is very important,
  * because it determines the granularity of the timing.  select(1000) will
