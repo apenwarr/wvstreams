@@ -84,8 +84,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Rpcrt4.lib ws2_32.lib ssleay32.lib libeay32.lib dirent.lib zlib.lib xplc.lib xplc-cxx.lib"
 				OutputFile="$(OutDir)/wvtest.exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="..;..\..\..\openssl\out32dll;..\..\..\..\ports\zlib\VisualC\zlib\Release;..\..\..\..\ports\xplc\build\xplc\VisualC++\Release"
+				IgnoreDefaultLibraryNames="msvcrtd.lib;libc.lib;libcmt.lib;libcd.lib;libcmtd.lib"
 				GenerateDebugInformation="TRUE"
 				SubSystem="1"
 				OptimizeReferences="2"
