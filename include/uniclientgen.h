@@ -38,7 +38,7 @@ class UniClientGen : public UniConfGen
      * completion), we instead have an empty stream handle this using alarm(0).
      */
     UniConfPairList deltas;
-    WvNullStream deltastream;
+    WvStream deltastream;
 
     //WvStringList set_queue;
     WvLog log;

@@ -145,7 +145,9 @@ public:
      */
     bool alarm_was_ticking;
     
-    
+   
+    /* Basic constructor for just a do-nothing WvStream */ 
+    WvStream();
     virtual ~WvStream();
 
     /**
@@ -585,9 +587,6 @@ protected:
     bool wvstream_execute_called;
     
     WvTask *task;
-
-    /** plain internal constructor to just set up internal variables. */
-    WvStream();
     
     /** Prevent accidental copying of WvStreams. */
     WvStream(const WvStream &s) { }
@@ -615,10 +614,6 @@ protected:
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
 };
-
-class WvNullStream : public WvStream
-{ };
-
 
 /**
  * Console streams...
