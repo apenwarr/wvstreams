@@ -197,6 +197,7 @@ bool WvTCPConn::pre_select(SelectInfo &si)
 	return false;
 }
 			  
+
 bool WvTCPConn::post_select(SelectInfo &si)
 {
     bool result = false;
@@ -234,6 +235,17 @@ bool WvTCPConn::isok() const
 {
     return !resolved || WvStream::isok();
 }
+
+
+size_t WvTCPConn::uwrite(const void *buf, size_t count)
+{
+    if (connected)
+	return WvStream::uwrite(buf, count);
+    else
+	return 0; // can't write yet; let them enqueue it instead
+}
+
+
 
 
 WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)

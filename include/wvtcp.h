@@ -124,6 +124,9 @@ public:
      * Note: isok() will always be true if !resolved, even though fd==-1.
      */
     virtual bool isok() const;
+
+protected:
+    virtual size_t uwrite(const void *buf, size_t count);
 };
 
 /**
