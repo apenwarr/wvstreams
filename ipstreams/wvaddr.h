@@ -11,6 +11,12 @@
 
 #include "wvstring.h"
 
+#ifndef ISLINUX
+#ifndef ISBSD
+#define ISLINUX
+#endif
+#endif
+
 #ifdef ISLINUX
 #include <linux/if_ether.h>
 #endif
