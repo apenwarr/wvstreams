@@ -569,7 +569,10 @@ bool WvStream::select(time_t msec_timeout,
     sure = select_setup(si);
     
     if (sure)
+    {
+	si.msec_timeout = 0;
 	tv.tv_sec = tv.tv_usec = 0; // never wait: already have a sure thing!
+    }
     else
     {
 	tv.tv_sec = si.msec_timeout / 1000;
