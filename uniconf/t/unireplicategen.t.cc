@@ -112,7 +112,19 @@ WVTEST_MAIN("retry:uniconfd")
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
-    usleep(150000);
+    sleep(1);
+    
+    // wait for connect
+    {
+    	UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    
+        for (;;)
+        {
+            another_cfg.xset("wait", "ping");
+            if (another_cfg.xget("wait") == "ping") break;
+            sleep(1);
+        }
+    }
 
     WVPASS(cfg["/key"].getme() == "value");
 
@@ -143,7 +155,19 @@ WVTEST_MAIN("retry:uniconfd")
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
     }
-    usleep(150000);
+    sleep(1);
+    
+    // wait for connect
+    {
+    	UniConfRoot another_cfg("retry:unix:" UNICONFD_SOCK);
+    
+        for (;;)
+        {
+            another_cfg.xset("wait", "pong");
+            if (another_cfg.xget("wait") == "pong") break;
+            sleep(1);
+        }
+    }
 
     old_callback_count = callback_count;
     WVPASS(cfg["/key"].getme() == "value one");
