@@ -1,11 +1,15 @@
 
-libwvoggvorbis.a libwvoggvorbis.so: $(libwvoggvorbis.so-OBJECTS) libwvutils.so
+libwvoggvorbis.a libwvoggvorbis.so: $(libwvoggvorbis.so-OBJECTS)
+libwvoggvorbis.so: libwvutils.so
 
-libwvfft.a libwvfft.so: $(libwvfft.so-OBJECTS) libwvutils.so
+libwvfft.a libwvfft.so: $(libwvfft.so-OBJECTS)
+libwvfft.so: libwvutils.so
 
-libwvqt.a libwvqt.so: $(libwvqt.so-OBJECTS) libwvstreams.so
+libwvqt.a libwvqt.so: $(libwvqt.so-OBJECTS)
+libwvqt.so: libwvstreams.so
 
-libwvstreams.a libwvstreams.so: $(libwvstreams.so-OBJECTS) libwvutils.so
+libwvstreams.a libwvstreams.so: $(libwvstreams.so-OBJECTS)
+libwvstreams.so: libwvutils.so
 
 libwvutils.a libwvutils.so: $(libwvutils.so-OBJECTS)
 
