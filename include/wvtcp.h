@@ -7,7 +7,7 @@
 #ifndef __WVTCP_H
 #define __WVTCP_H
 
-#include "wvstream.h"
+#include "wvfdstream.h"
 #include "wvaddr.h"
 #include "wvresolver.h"
 
@@ -36,7 +36,7 @@ class WvTCPListener;
  * the background).  You can tell the connection has been established
  * when a select() call returns 'true' with writable==true.
  */
-class WvTCPConn : public WvStream
+class WvTCPConn : public WvFDStream
 {
     friend class WvTCPListener;
 protected:
@@ -131,7 +131,7 @@ public:
 /**
  * Class to easily create the Server side of a TCPConn...
  */
-class WvTCPListener : public WvStream
+class WvTCPListener : public WvFDStream
 {
 public:
     /**

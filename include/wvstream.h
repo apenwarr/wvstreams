@@ -32,20 +32,71 @@ class WvStream : public WvError
 {
 public:
     /**
-     * constructor to create a WvStream from an existing file descriptor.
-     * The file descriptor is closed automatically by the destructor.  If
-     * this is undesirable, duplicate it first using dup().
+     * A SelectRequest is a convenient way to remember what we want to do
+     * to a particular stream: read from it, write to it, or check for
+     * exceptions.
      */
-    WvStream(int _fd);
-    virtual ~WvStream();
-   
-    /**
-     * copy constructor - not actually defined anywhere.  This prevents people
-     * from accidentally trying to copy a WvStream without defining one.
-     */
-    WvStream(const WvStream &s);
-    WvStream& operator= (const WvStream &s);
+    struct SelectRequest {
+	bool readable, writable, isexception;
+	
+	SelectRequest() { }
+	SelectRequest(bool r, bool w, bool x = false)
+	    { readable = r; writable = w; isexception = x; }
+	
+	SelectRequest &operator |= (const SelectRequest &r)
+	    { readable |= r.readable; writable |= r.writable;
+		isexception |= r.isexception; return *this; }
+    };
     
+    /**
+     * the data structure used by pre_select()/post_select() and internally
+     * by select().
+     */
+    struct SelectInfo {
+	fd_set read, write, except;  // set by pre_select, read by post_select
+	SelectRequest wants;         // what is the user looking for?
+	int max_fd;                  // largest fd in read, write, or except
+	time_t msec_timeout;         // max time to wait, or -1 for forever
+	bool inherit_request;        // 'wants' values passed to child streams
+    };
+
+    /**
+     * 'force' is the list of default SelectRequest values when you use the
+     * variant of select() that doesn't override them.
+     */
+    SelectRequest force;
+    
+    /**
+     * If this is set, select() doesn't return true for read unless the
+     * given stream also returns true for write.
+     */
+    WvStream *read_requires_writable;
+
+    /**
+     * If this is set, select() doesn't return true for write unless the
+     * given stream also returns true for read.
+     */
+    WvStream *write_requires_readable;
+    
+    /**
+     * If this is set, enables the use of continue_select().
+     */
+    bool uses_continue_select;
+
+    /**
+     * Specifies the stack size to reserve for continue_select().
+     */
+    size_t personal_stack_size;
+
+    /**
+     * This will be true during callback execution if the
+     * callback was triggered by the alarm going off.
+     */
+    bool alarm_was_ticking;
+    
+    
+    virtual ~WvStream();
+
     /**
      * Close the stream if it is open; isok() becomes false from now on.
      * Note!!  If you override this function in a derived class, you must
@@ -54,7 +105,7 @@ public:
      *   functions work in C++.
      */ 
     virtual void close();
-    
+
     /**
      * Override seterr() from WvError so that it auto-closes the stream.
      */
@@ -63,21 +114,6 @@ public:
         { WvError::seterr(specialerr); }
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
-    
-    /**
-     * return the Unix file descriptor for reading from this stream
-     */
-    virtual int getrfd() const;
-    
-    /**
-     * return the Unix file descriptor for writing to this stream
-     */
-    virtual int getwfd() const;
-    
-    /**
-     * return the rfd _and_ the wfd... if they're the same.
-     */
-    int getfd() const;
     
     /**
      * return true if the stream is actually usable right now
@@ -128,14 +164,16 @@ public:
      * handled by read().  Don't call these functions unless
      * you have a _really_ good reason.
      */ 
-    virtual size_t uread(void *buf, size_t count);
+    virtual size_t uread(void *buf, size_t count)
+        { return 0; }
 
     /**
      * unbuffered I/O functions; these ignore the buffer, which is
      * handled by write().  Don't call these functions unless
      * you have a _really_ good reason.
      */ 
-    virtual size_t uwrite(const void *buf, size_t count);
+    virtual size_t uwrite(const void *buf, size_t count)
+        { return 0; }
     
     /**
      * read up to one line of data from the stream and return a pointer
@@ -208,53 +246,6 @@ public:
      * (and a WvStreamList can delete it automatically)
      */ 
     void flush_then_close(int msec_timeout);
-    
-    /**
-     * A SelectRequest is a convenient way to remember what we want to do
-     * to a particular stream: read from it, write to it, or check for
-     * exceptions.
-     */
-    struct SelectRequest {
-	bool readable, writable, isexception;
-	
-	SelectRequest() { }
-	SelectRequest(bool r, bool w, bool x = false)
-	    { readable = r; writable = w; isexception = x; }
-	
-	SelectRequest &operator |= (const SelectRequest &r)
-	    { readable |= r.readable; writable |= r.writable;
-		isexception |= r.isexception; return *this; }
-    };
-    
-    /**
-     * 'force' is the list of default SelectRequest values when you use the
-     * variant of select() that doesn't override them.
-     */
-    SelectRequest force;
-    
-    /**
-     * If this is set, select() doesn't return true for read unless the
-     * given stream also returns true for write.
-     */
-    WvStream *read_requires_writable;
-
-    /**
-     * If this is set, select() doesn't return true for write unless the
-     * given stream also returns true for read.
-     */
-    WvStream *write_requires_readable;
-    
-    /**
-     * the data structure used by pre_select()/post_select() and internally
-     * by select().
-     */
-    struct SelectInfo {
-	fd_set read, write, except;  // set by pre_select, read by post_select
-	SelectRequest wants;         // what is the user looking for?
-	int max_fd;                  // largest fd in read, write, or except
-	time_t msec_timeout;         // max time to wait, or -1 for forever
-	bool inherit_request;        // 'wants' values passed to child streams
-    };
     
     /**
      * pre_select() sets up for eventually calling ::select().
@@ -393,8 +384,6 @@ public:
      * 
      * NOTE 3: if msec_timeout >= 0, this uses WvStream::alarm().
      */
-    bool uses_continue_select;
-    size_t personal_stack_size;	// stack size to reserve for continue_select()
     bool continue_select(time_t msec_timeout);
     
     /**
@@ -437,12 +426,6 @@ public:
      */
     void alarm(time_t msec_timeout);
 
-    /**
-     * alarm_was_ticking is true during callback execution if the
-     * callback was triggered by the alarm going off.
-     */
-    bool alarm_was_ticking;
-    
     /**
      * return the number of milliseconds remaining before the alarm will go
      * off; -1 means no alarm is set (infinity), 0 means the alarm has
@@ -499,9 +482,6 @@ protected:
     virtual void flush_internal(time_t msec_timeout);
     
 private:
-    void init();
-    bool wvstream_execute_called;
-    
     /**
      * The function that does the actual work of select().
      */
@@ -510,10 +490,11 @@ private:
 		 bool forceable);
 
 protected:
+    static WvTaskMan *taskman;
+
+    WvDynamicBuffer inbuf, outbuf;
     WvStreamCallback callfunc;
     void *userdata;
-    int rwfd;
-    WvDynamicBuffer inbuf, outbuf;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;
@@ -521,16 +502,21 @@ protected:
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time
     bool running_callback;	// already in the callback() function
+    bool wvstream_execute_called;
     
-    static WvTaskMan *taskman;
     WvTask *task;
 
     /**
      * plain internal constructor to just set up internal variables.
      */
-    WvStream() : callfunc(NULL)
-        { init(); rwfd = -1; }
+    WvStream();
     
+    /**
+     * Prevent accidental copying of WvStreams.
+     */
+    WvStream(const WvStream &s) : callfunc(NULL) { }
+    WvStream& operator= (const WvStream &s) { return *this; }
+
     /**
      * actually do the callback for an arbitrary stream.
      * This is a static function so we can pass it as a function pointer
@@ -553,10 +539,14 @@ protected:
 
 
 /**
- * console stream, typically a WvSplitStream made from fd's 0 and 1.  This
- * can be reassigned while the program is running, if desired, but MUST NOT
- * be NULL.
+ * Console streams...
+ *
+ * This can be reassigned while the program is running, if desired,
+ * but MUST NOT be NULL.
  */
-extern WvStream *wvcon;
+extern WvStream *wvcon; // tied stdin and stdout stream
+extern WvStream *wvin;  // stdin stream
+extern WvStream *wvout; // stdout stream
+extern WvStream *wverr; // stderr stream
 
 #endif // __WVSTREAM_H

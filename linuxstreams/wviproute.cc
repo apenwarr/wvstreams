@@ -14,13 +14,9 @@
 #include <net/route.h>
 #include <ctype.h>
 
-
-
-
 WvIPRoute::WvIPRoute(WvStringParm _ifc, const WvIPNet &_net,
-		     const WvIPAddr &_gate, int _metric,
-		     WvStringParm _table)
-	: ifc(_ifc), ip(_net), gateway(_gate), table(_table)
+    const WvIPAddr &_gate, int _metric, WvStringParm _table) :
+    ifc(_ifc), ip(_net), gateway(_gate), table(_table)
 {
     metric = _metric;
 }
@@ -29,9 +25,9 @@ WvIPRoute::WvIPRoute(WvStringParm _ifc, const WvIPNet &_net,
 WvIPRoute::operator WvString() const
 {
     return WvString("%s via %s %s metric %s%s",
-		    ip, ifc, gateway, metric,
-		    (table != "default") 
-		      ? WvString(" (table %s)", table) : WvString(""));
+        ip, ifc, gateway, metric,
+        (table != "default") ?
+            WvString(" (table %s)", table) : WvString(""));
 }
 
 

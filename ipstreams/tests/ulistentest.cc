@@ -40,21 +40,20 @@ int main(int argc, char **argv)
 {
     {
 	WvLog log("testlisten"), err = log.split(WvLog::Error);
-	WvStream wvin(0), wvout(1);
 	WvStreamList l;
 
 	WvUnixListener sock(argc==2 ? argv[1] : "/tmp/fuzzy",
 			    0777);
 	
-	wvin.setcallback(stream_bounce_to_list, &l);
+	wvin->setcallback(stream_bounce_to_list, &l);
 	sock.auto_accept(&l, stream_bounce_to_list, &l);
 	
 	log("Listening on port %s\n", *sock.src());
 	
 	l.append(&sock, false);
-	l.append(&wvin, false);
+	l.append(wvin, false);
 	
-	while (sock.isok() && wvin.isok())
+	while (sock.isok() && wvin->isok())
 	{
 	    if (l.select(-1))
 		l.callback();

@@ -7,9 +7,8 @@
 #ifndef __WVFILE_H
 #define __WVFILE_H
 
-#include "wvstream.h"
+#include "wvfdstream.h"
 #include <fcntl.h>
-
 
 /**
  * WvFile implements a stream connected to a file or Unix device.  We
@@ -20,13 +19,11 @@
  * WvFile is primarily useful for Unix device files, which have defined
  * select() behaviour for example.
  */
-class WvFile : public WvStream
+class WvFile : public WvFDStream
 {
 public:
-    WvFile()
-        { }
-    WvFile(int _fd) : WvStream(_fd)
-        { }
+    WvFile(int rwfd = -1) :
+        WvFDStream(rwfd) { }
     WvFile(WvStringParm filename, int mode, int create_mode = 0666)
         { open(filename, mode, create_mode); }
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
@@ -38,6 +35,5 @@ public:
     
     virtual bool pre_select(SelectInfo &si);
 };
-
 
 #endif // __WVFILE_H

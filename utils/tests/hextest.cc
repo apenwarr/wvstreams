@@ -36,9 +36,8 @@ int main(int argc, char **argv)
     else
         enc = new WvHexDecoder();
 
-    WvStream *wvin = new WvStream(0);
-    WvStream *wvout = new WvStream(1);
     WvEncoderStream *stream = new WvEncoderStream(wvout);
+    stream->disassociate_on_close = true;
     stream->auto_flush(false);
     stream->writechain.append(enc, true);
 
@@ -54,7 +53,6 @@ int main(int argc, char **argv)
     }
     stream->flush(0);
     delete stream;
-    delete wvin;
     delete slist;
     
     return 0;

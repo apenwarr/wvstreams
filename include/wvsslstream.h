@@ -8,6 +8,7 @@
 #define __WVSSLSTREAM_H
 
 #include "wvstreamclone.h"
+#include "wvfdstream.h"
 #include "wvlog.h"
  
 struct ssl_st;
@@ -32,7 +33,7 @@ public:
      * Start an SSL connection on the stream _slave.  The x509 structure
      * is optional for a client, and mandatory for a server.
      */
-    WvSSLStream(WvStream *_slave, WvX509Mgr *x509 = NULL, 
+    WvSSLStream(WvFDStream *_slave, WvX509Mgr *x509 = NULL, 
     		bool _verify = false, bool _is_server = false);
     
     /**

@@ -5,7 +5,7 @@
 #ifndef __WVUNIXSOCKET_H
 #define __WVUNIXSOCKET_H
 
-#include "wvstream.h"
+#include "wvfdstream.h"
 #include "wvaddr.h"
 
 class WvStreamList;
@@ -26,7 +26,7 @@ class WvUnixListener;
  * with the remote end of the socket.  See the unix(7) man page.  This would
  * be very cool for authentication purposes.
  */
-class WvUnixConn : public WvStream
+class WvUnixConn : public WvFDStream
 {
     friend class WvUnixListener;
 protected:
@@ -64,7 +64,7 @@ public:
 /**
  * Server end of a Unix Sockets stream
  */
-class WvUnixListener : public WvStream
+class WvUnixListener : public WvFDStream
 {
 public:
     WvUnixListener(const WvUnixAddr &_addr, int create_mode);

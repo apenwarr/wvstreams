@@ -10,6 +10,7 @@
  */
 #include "wvstream.h"
 #include "wvtask.h"
+#include "wvtimeutils.h"
 #include <time.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -23,43 +24,23 @@
 # define TRACE(x, y...)
 #endif
 
-WvTaskMan *WvStream::taskman;
+WvTaskMan *WvStream::taskman = NULL;
 
-static void normalize(struct timeval &tv)
+WvStream::WvStream() :
+    // public members
+    force(true, false, false),
+    read_requires_writable(NULL), write_requires_readable(NULL),
+    uses_continue_select(false), personal_stack_size(65536),
+    alarm_was_ticking(false),
+    // protected members
+    callfunc(NULL), userdata(NULL),
+    max_outbuf_size(0), outbuf_delayed_flush(false), is_auto_flush(true),
+    queue_min(0), autoclose_time(0),
+    running_callback(false), wvstream_execute_called(false),
+    task(NULL)
 {
-    tv.tv_sec += tv.tv_usec / 1000000;
-    tv.tv_usec %= 1000000;
-}
-
-
-WvStream::WvStream(int _fd) : callfunc(NULL)
-{
-    init();
-    rwfd = _fd;
-}
-
-
-void WvStream::init()
-{
-    wvstream_execute_called = false;
-    userdata = NULL;
-    errnum = 0;
-    max_outbuf_size = 0;
-    outbuf_delayed_flush = false;
-    is_auto_flush = true;
-    alarm_was_ticking = false;
-    force.readable = true;
-    force.writable = force.isexception = false;
-    read_requires_writable = write_requires_readable = NULL;
-    running_callback = false;
-    queue_min = 0;
-    autoclose_time = 0;
-    alarm_time.tv_sec = alarm_time.tv_usec = 0;
-    
-    // magic multitasking support
-    uses_continue_select = false;
-    personal_stack_size = 65536;
-    task = NULL;
+    alarm_time.tv_sec = 0;
+    alarm_time.tv_usec = 0;
 }
 
 
@@ -87,14 +68,7 @@ WvStream::~WvStream()
 
 void WvStream::close()
 {
-    int rfd = getrfd(), wfd = getwfd();
-    
     flush(2000); // fixme: should not hardcode this stuff
-    if (rfd >= 0)
-	::close(getrfd());
-    if (wfd >= 0 && wfd != rfd)
-	::close(getwfd());
-    rwfd = -1;
 }
 
 
@@ -230,38 +204,19 @@ void WvStream::execute()
 }
 
 
-// by default, we use the same fd for reading and writing
-int WvStream::getrfd() const
-{
-    return rwfd;
-}
-
-
-// by default, we use the same fd for reading and writing
-int WvStream::getwfd() const
-{
-    return rwfd;
-}
-
-
-int WvStream::getfd() const
-{
-    int rfd = getrfd(), wfd = getwfd();
-    assert(rfd == wfd);
-    return rfd;
-}
-
-
 bool WvStream::isok() const
 {
-    return (getrfd() != -1) && (getwfd() != -1) && WvError::isok();
+    return WvError::isok();
 }
 
 
 void WvStream::seterr(int _errnum)
 {
-    WvError::seterr(_errnum);
-    close();
+    if (! errnum)
+    {
+        WvError::seterr(_errnum);
+        close();
+    }
 }
 
 
@@ -326,25 +281,6 @@ size_t WvStream::read(void *buf, size_t count)
 }
 
 
-size_t WvStream::uread(void *buf, size_t count)
-{
-    if (!isok() || !buf || !count) return 0;
-    
-    int in = ::read(getrfd(), buf, count);
-    
-    if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
-	return 0; // interrupted
-
-    if (in < 0 || (count && in==0))
-    {
-	seterr(in < 0 ? errno : 0);
-	return 0;
-    }
-
-    return in;
-}
-
-
 size_t WvStream::write(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
@@ -375,26 +311,6 @@ size_t WvStream::write(const void *buf, size_t count)
             flush_outbuf(0);
     }
     return wrote;
-}
-
-
-size_t WvStream::uwrite(const void *buf, size_t count)
-{
-    if (!isok() || !buf || !count) return 0;
-    
-    int out = ::write(getwfd(), buf, count);
-    
-    if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
-	return 0; // kernel buffer full - data not written
-    
-    if (out < 0 || (count && out==0))
-    {
-	seterr(out < 0 ? errno : 0); // a more critical error
-	return 0;
-    }
-    
-    //TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
-    return out;
 }
 
 
@@ -543,8 +459,6 @@ void WvStream::flush_then_close(int msec_timeout)
 
 bool WvStream::pre_select(SelectInfo &si)
 {
-    int rfd, wfd;
-    
     time_t alarmleft = alarm_remaining();
     
     if (alarmleft == 0)
@@ -553,63 +467,19 @@ bool WvStream::pre_select(SelectInfo &si)
     // handle read-ahead buffering
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
 	return true; // already ready
-    
-    rfd = getrfd();
-    wfd = getwfd();
-    
-    if (si.wants.readable && (rfd >= 0))
-	FD_SET(rfd, &si.read);
-    if ((si.wants.writable || outbuf.used() || autoclose_time) && (wfd >= 0))
-	FD_SET(wfd, &si.write);
-    if (si.wants.isexception)
-    {
-	if (rfd >= 0) FD_SET(rfd, &si.except);
-	if (wfd >= 0) FD_SET(wfd, &si.except);
-    }
-    
-    if (si.max_fd < rfd)
-	si.max_fd = rfd;
-    if (si.max_fd < wfd)
-	si.max_fd = wfd;
-    
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft;
-    
     return false;
 }
 
 
 bool WvStream::post_select(SelectInfo &si)
 {
-    size_t outbuf_used = outbuf.used();
-    int rfd = getrfd(), wfd = getwfd();
-    bool val;
-    
-    // flush the output buffer if possible
-    if (wfd >= 0 
-	&& (outbuf_used || autoclose_time)
-	&& FD_ISSET(wfd, &si.write))
-    {
-        flush_outbuf(0);
-	
-	// flush_outbuf() might have closed the file!
-	if (!isok()) return false;
-    }
-    
-    val = ((rfd >= 0 && FD_ISSET(rfd, &si.read)) ||
-	    (wfd >= 0 && FD_ISSET(wfd, &si.write)) ||
-	    (rfd >= 0 && FD_ISSET(rfd, &si.except)) ||
-	    (wfd >= 0 && FD_ISSET(wfd, &si.except)));
-    
-    if (val && si.wants.readable && read_requires_writable
-      && !read_requires_writable->select(0, false, true))
-	return false;
-    if (val && si.wants.writable && write_requires_readable
-      && !write_requires_readable->select(0, true, false))
-	return false;
-    
-    return val;
+    // FIXME: need output buffer flush support for non FD-based streams
+    // FIXME: need read_requires_writable and write_requires_readable
+    //        support for non FD-based streams
+    return false;
 }
 
 

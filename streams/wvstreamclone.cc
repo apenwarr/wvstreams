@@ -44,22 +44,6 @@ void WvStreamClone::flush_internal(time_t msec_timeout)
 }
 
 
-int WvStreamClone::getrfd() const
-{
-    if (cloned)
-	return cloned->getrfd();
-    return -1;
-}
-
-
-int WvStreamClone::getwfd() const
-{
-    if (cloned)
-	return cloned->getwfd();
-    return -1;
-}
-
-
 size_t WvStreamClone::uread(void *buf, size_t size)
 {
     if (cloned)
@@ -113,19 +97,7 @@ const char *WvStreamClone::errstr() const
 bool WvStreamClone::pre_select(SelectInfo &si)
 {
     SelectRequest oldwant;
-    bool result;
-    time_t alarmleft = alarm_remaining();
-    
-    if (alarmleft == 0)
-	return true; // alarm has rung
-    
-    if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
-	return true;   // sure_thing if anything in WvStream buffer
-    
-    if (alarmleft >= 0
-      && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
-	si.msec_timeout = alarmleft;
-    
+    bool result = WvStream::pre_select(si);
     if (cloned && cloned->isok())
     {
 	oldwant = si.wants;
@@ -139,12 +111,11 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	if (outbuf.used() || autoclose_time)
 	    si.wants.writable = true;
 	
-	result = cloned->pre_select(si);
+	result = result || cloned->pre_select(si);
 	
 	si.wants = oldwant;
 	return result;
     }
-    
     return false;
 }
 

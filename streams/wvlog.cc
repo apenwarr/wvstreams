@@ -311,8 +311,8 @@ bool WvLogRcv::set_custom_levels(WvString descr)
 
 
 
-WvLogConsole::WvLogConsole(int _fd, WvLog::LogLevel _max_level)
-	: WvStream(_fd), WvLogRcv(_max_level)
+WvLogConsole::WvLogConsole(int _fd, WvLog::LogLevel _max_level) :
+    WvFDStream(_fd), WvLogRcv(_max_level)
 {
 }
 

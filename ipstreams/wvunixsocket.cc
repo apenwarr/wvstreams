@@ -27,26 +27,24 @@
 #include <errno.h>
 
 
-WvUnixConn::WvUnixConn(int _fd, const WvUnixAddr &_addr)
-    : WvStream(_fd), addr(_addr)
+WvUnixConn::WvUnixConn(int _fd, const WvUnixAddr &_addr) :
+    WvFDStream(_fd), addr(_addr)
 {
     // already connected...
 }
 
 
-WvUnixConn::WvUnixConn(const WvUnixAddr &_addr)
-    : addr(_addr)
+WvUnixConn::WvUnixConn(const WvUnixAddr &_addr) :
+    addr(_addr)
 {
-    sockaddr *sa;
-    
-    rwfd = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (rwfd < 0)
+    setfd(socket(PF_UNIX, SOCK_STREAM, 0));
+    if (getfd() < 0)
     {
 	seterr(errno);
 	return;
     }
     
-    sa = addr.sockaddr();
+    sockaddr *sa = addr.sockaddr();
     if (connect(getfd(), sa, addr.sockaddr_len()) < 0)
     {
 	seterr(errno);
@@ -97,8 +95,8 @@ WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
     oldmask = umask(0777); // really just reading the old umask here
     umask(oldmask | ((~create_mode) & 0777));
     
-    rwfd = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (rwfd < 0
+    setfd(socket(PF_UNIX, SOCK_STREAM, 0));
+    if (getfd() < 0
 	|| fcntl(getfd(), F_SETFD, 1)
 	|| bind(getfd(), sa, addr.sockaddr_len())
 	|| listen(getfd(), 5))
@@ -130,7 +128,7 @@ void WvUnixListener::close()
 	::unlink(filename);
     }
     
-    WvStream::close();
+    WvFDStream::close();
 }
 
 

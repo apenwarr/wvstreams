@@ -25,22 +25,18 @@ WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 }
 
 
-WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
-	: WvStream(_fd)
+WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr) :
+    WvFDStream(_fd)
 {
     remaddr = _remaddr;
     resolved = true;
     connected = true;
-    
     nice_tcpopts();
-
-    if (getfd() < 0)
-	seterr(errno);
 }
 
 
-WvTCPConn::WvTCPConn(WvStringParm _hostname, __u16 _port)
-	: hostname(_hostname)
+WvTCPConn::WvTCPConn(WvStringParm _hostname, __u16 _port) :
+    hostname(_hostname)
 {
     struct servent* serv;
     char *hnstr = hostname.edit(), *cptr;
@@ -106,18 +102,17 @@ void WvTCPConn::low_delay()
 
 void WvTCPConn::do_connect()
 {
-    sockaddr *sa;
-
-    rwfd = socket(PF_INET, SOCK_STREAM, 0);
+    int rwfd = socket(PF_INET, SOCK_STREAM, 0);
     if (rwfd < 0)
     {
 	seterr(errno);
 	return;
     }
+    setfd(rwfd);
     
     nice_tcpopts();
     
-    sa = remaddr.sockaddr();
+    sockaddr *sa = remaddr.sockaddr();
     if (connect(getfd(), sa, remaddr.sockaddr_len()) < 0
 	&& errno != EINPROGRESS)
     {
@@ -189,7 +184,7 @@ bool WvTCPConn::pre_select(SelectInfo &si)
     {
 	bool oldw = si.wants.writable, retval;
 	if (!isconnected()) si.wants.writable = true;
-	retval = WvStream::pre_select(si);
+	retval = WvFDStream::pre_select(si);
 	si.wants.writable = oldw;
 	return retval;
     }
@@ -205,7 +200,7 @@ bool WvTCPConn::post_select(SelectInfo &si)
 	check_resolver();
     else
     {
-	result = WvStream::post_select(si);
+	result = WvFDStream::post_select(si);
 
 	if (result && !connected)
 	{
@@ -232,7 +227,7 @@ bool WvTCPConn::post_select(SelectInfo &si)
 
 bool WvTCPConn::isok() const
 {
-    return !resolved || WvStream::isok();
+    return !resolved || WvFDStream::isok();
 }
 
 
@@ -247,8 +242,8 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     
     int x = 1;
 
-    rwfd = socket(PF_INET, SOCK_STREAM, 0);
-    if (rwfd < 0
+    setfd(socket(PF_INET, SOCK_STREAM, 0));
+    if (getfd() < 0
 	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
 	|| fcntl(getfd(), F_SETFD, 1)
 	|| bind(getfd(), sa, listenport.sockaddr_len())
@@ -280,7 +275,7 @@ WvTCPListener::~WvTCPListener()
 //#include <wvlog.h>
 void WvTCPListener::close()
 {
-    WvStream::close();
+    WvFDStream::close();
 /*    WvLog log("ZAP!");
     
     log("Closing TCP LISTENER at %s!!\n", listenport);

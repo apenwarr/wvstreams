@@ -11,10 +11,6 @@
 #include <assert.h>
 #include <time.h>
 
-WvStream *wvin = NULL;
-WvStream *wvout = NULL;
-WvStream *wverr = NULL;
-
 size_t copy(WvStream *in, WvStream *out, size_t maxbytes = 0)
 {
     size_t total = 0;
@@ -79,10 +75,6 @@ void usage(const char *prog)
 
 int main(int argc, char **argv)
 {
-    wvin = new WvStream(0);
-    wvout = new WvStream(1);
-    wverr = new WvStream(2);
-
     /*** Parse options ***/
     WvStream *in = wvin, *out = wvout;
     bool decoding = false, encoding = false;
@@ -309,9 +301,5 @@ int main(int argc, char **argv)
         delete in;
     if (out != wvout)
         delete out;
-
-    delete wvin;
-    delete wvout;
-    delete wverr;
     return 0;
 }

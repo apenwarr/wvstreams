@@ -41,8 +41,6 @@ public:
     
     virtual void close();
     virtual void flush_internal(time_t msec_timeout);
-    virtual int getrfd() const;
-    virtual int getwfd() const;
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
     virtual bool isok() const;

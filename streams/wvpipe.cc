@@ -16,7 +16,6 @@
 #include <sys/ioctl.h>
 #include <assert.h>
 #include "wvpipe.h"
-#include "wvsplitstream.h"
 
 // The assorted WvPipe::WvPipe() constructors are described in wvpipe.h
 
@@ -31,8 +30,8 @@ WvPipe::WvPipe(const char *program, const char * const *argv,
 
 WvPipe::WvPipe(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
-	       WvStream *stdin_str, WvStream *stdout_str,
-	       WvStream *stderr_str)
+	       WvFDStream *stdin_str, WvFDStream *stdout_str,
+	       WvFDStream *stderr_str)
 {
     int fd0 = 0, fd1 = 1, fd2 = 2;
     if (stdin_str)
@@ -47,7 +46,7 @@ WvPipe::WvPipe(const char *program, const char * const *argv,
 
 WvPipe::WvPipe(const char *program, const char **argv,
 	       bool writable, bool readable, bool catch_stderr,
-	       WvSplitStream *stdio_str)
+	       WvFDStream *stdio_str)
 {
     if (stdio_str)
     {
@@ -82,7 +81,7 @@ void WvPipe::setup(const char *program, const char * const *argv,
     }
 
     fcntl(socks[0], F_SETFL, O_RDWR|O_NONBLOCK);
-    rwfd = socks[0];
+    setfd(socks[0]);
 
     pid = proc.fork(&waitfd);
 

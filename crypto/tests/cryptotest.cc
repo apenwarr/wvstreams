@@ -101,8 +101,8 @@ int main(int argc, char **argv)
     struct timeval start, stop;
     struct timezone tz;
 
-    WvStream *wvin = NULL;
-    WvStream *wvout = NULL;
+    WvStream *in = NULL;
+    WvStream *out = NULL;
     
     if (argc < 2)
     {
@@ -169,18 +169,18 @@ int main(int argc, char **argv)
 	    break;
             
         case 'i':
-            delete wvin;
-            wvin = new WvFile(optarg, O_RDONLY);
+            delete in;
+            in = new WvFile(optarg, O_RDONLY);
             break;
             
         case 'o':
-            delete wvout;
-            wvout = new WvFile(optarg, O_WRONLY | O_CREAT);
+            delete out;
+            out = new WvFile(optarg, O_WRONLY | O_CREAT);
             break;
 	}
     }
-    if (! wvin) wvin = new WvStream(0);
-    if (! wvout) wvout = new WvStream(1);
+    if (! in) in = wvin;
+    if (! out) out = wvout;
     
     if (crypt_type == None)
     {
@@ -195,11 +195,12 @@ int main(int argc, char **argv)
 	return 5;
     }
 
-    WvStream *base;
+    WvStreamClone *base;
     if (direction == Encrypt)
-        base = wvout;
+        base = new WvStreamClone(out);
     else
-        base = wvin;
+        base = new WvStreamClone(in);
+    base->disassociate_on_close = true;
     
     switch (crypt_type)
     {
@@ -308,19 +309,19 @@ int main(int argc, char **argv)
     if (direction == Encrypt)
     {
 	log("Encrypting stdin to stdout.\n");
-        total = copy(wvin, crypto);
+        total = copy(in, crypto);
     }
     else
     {
 	log("Decrypting stdin to stdout.\n");
-        total = copy(crypto, wvout);
+        total = copy(crypto, out);
     }
     crypto->close();
     delete crypto;
-    if (wvin != base)
-        delete wvin;
-    if (wvout != base)
-        delete wvout;
+    if (in != base && in != wvin)
+        delete in;
+    if (out != base && out != wvout)
+        delete out;
     
     gettimeofday(&stop, &tz);
     long tdiff = msecdiff(stop, start);

@@ -6,10 +6,8 @@
 #ifndef __WVPIPE_H
 #define __WVPIPE_H
 
-#include "wvstream.h"
+#include "wvfdstream.h"
 #include "wvsubproc.h"
-
-class WvSplitStream;
 
 /**
  * Implementation of a WvPipe stream.  These allow you to create a new
@@ -30,7 +28,7 @@ class WvSplitStream;
  * 2 seconds, SIGKILL) it can take up to 2 seconds to destroy a
  * WvPipe.
  */
-class WvPipe : public WvStream
+class WvPipe : public WvFDStream
 {
     WvSubProc proc;
 protected:
@@ -66,16 +64,16 @@ public:
      */
     WvPipe(const char *program, const char * const *argv,
 	   bool writable, bool readable, bool catch_stderr,
-	   WvStream *stdin_str, WvStream *stdout_str = NULL,
-	   WvStream *stderr_str = NULL);
+	   WvFDStream *stdin_str, WvFDStream *stdout_str = NULL,
+	   WvFDStream *stderr_str = NULL);
     
     /**
      * This constructor is the same again, except that it uses the features
-     * of the WvSplitStream class to get all its fds from one place.
+     * of the WvFDStream class to get all its fds from one place.
      */
     WvPipe(const char *program, const char **argv,
 	   bool writable, bool readable, bool catch_stderr,
-	   WvSplitStream *stdio_str);
+	   WvFDStream *stdio_str);
 
     /**
      * kill the child process and close the stream.

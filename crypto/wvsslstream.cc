@@ -10,7 +10,7 @@
 
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record
 
-WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509,
+WvSSLStream::WvSSLStream(WvFDStream *_slave, WvX509Mgr *x509,
     bool _verify, bool _is_server) :
     WvStreamClone(_slave), debug("WvSSLStream",WvLog::Debug5),
     write_bouncebuf(MAX_BOUNCE_AMOUNT), write_eat(0),
@@ -319,11 +319,11 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	
 	// for ssl streams to work, we have to be cloning a stream that
 	// actually uses a single, valid fd.
-	assert(getrfd() >= 0);
-	assert(getwfd() >= 0);
-	assert(getwfd() == getrfd());
-	SSL_set_fd(ssl, getrfd());
-	debug("SSL connected on fd %s.\n", getrfd());
+        WvFDStream *fdstream = static_cast<WvFDStream*>(cloned);
+        int fd = fdstream->getfd();
+        assert(fd >= 0);
+	SSL_set_fd(ssl, fd);
+	debug("SSL connected on fd %s.\n", fd);
 	
 	int err;
     

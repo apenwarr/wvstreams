@@ -13,11 +13,12 @@
 # define socklen_t int
 #endif
 
-WvUDPStream::WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem)
-	: localaddr(), remaddr(_rem)
+WvUDPStream::WvUDPStream(const WvIPPortAddr &_local,
+    const WvIPPortAddr &_rem) :
+    localaddr(), remaddr(_rem)
 {
     int x = 1;
-    rwfd = socket(PF_INET, SOCK_DGRAM, 0);
+    setfd(socket(PF_INET, SOCK_DGRAM, 0));
     if (getfd() < 0 
 	|| fcntl(getfd(), F_SETFD, 1)
 	|| fcntl(getfd(), F_SETFL, O_RDWR | O_NONBLOCK)

@@ -18,6 +18,7 @@
 #define __WVLOGRCV_H
 
 #include "wvlog.h"
+#include "wvfdstream.h"
 #include "wvhashtable.h"
 
 /**
@@ -104,7 +105,7 @@ public:
 };
 
 
-class WvLogConsole : public WvStream, public WvLogRcv
+class WvLogConsole : public WvFDStream, public WvLogRcv
 {
     public:
         WvLogConsole(int _fd,

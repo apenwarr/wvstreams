@@ -5,7 +5,7 @@
 #ifndef __WVUDP_H
 #define __WVUDP_H
 
-#include "wvstream.h"
+#include "wvfdstream.h"
 #include "wvaddr.h"
 
 /**
@@ -27,7 +27,7 @@
  * limited usefulness.  Buffering will cause particular confusion if the
  * socket is not connect()ed.
  */
-class WvUDPStream : public WvStream
+class WvUDPStream : public WvFDStream
 {
 public:
     /**

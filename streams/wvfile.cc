@@ -14,15 +14,14 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 
     skip_select = false;
     
-    if (rwfd >= 0)
-	close();
-    rwfd = ::open(filename, mode | O_NONBLOCK, create_mode);
+    close();
+    int rwfd = ::open(filename, mode | O_NONBLOCK, create_mode);
     if (rwfd < 0)
     {
 	seterr(errno);
 	return false;
     }
-
+    setfd(rwfd);
     fcntl(rwfd, F_SETFD, 1);
     return true;
 }
@@ -38,7 +37,7 @@ bool WvFile::pre_select(SelectInfo &si)
     
     if (!readable) si.wants.readable = false;
     if (!writable) si.wants.writable = false;
-    ret = WvStream::pre_select(si);
+    ret = WvFDStream::pre_select(si);
     
     si.wants = oldwant;
 
@@ -49,6 +48,5 @@ bool WvFile::pre_select(SelectInfo &si)
 	si.msec_timeout = 0;
 	ret = true;
     }
-    
     return ret;
 }

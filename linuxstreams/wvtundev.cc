@@ -16,8 +16,8 @@
 #include "wvlog.h"
 #include "wvtundev.h"
 
-WvTunDev::WvTunDev(const WvIPNet &addr, int mtu)
-    : WvFile("/dev/net/tun", O_RDWR)
+WvTunDev::WvTunDev(const WvIPNet &addr, int mtu) :
+    WvFile("/dev/net/tun", O_RDWR)
 {
     init(addr, mtu);
 }
@@ -25,7 +25,7 @@ WvTunDev::WvTunDev(const WvIPNet &addr, int mtu)
 void WvTunDev::init(const WvIPNet &addr, int mtu)
 {
     WvLog log("New tundev", WvLog::Debug2);
-    if (rwfd < 0)
+    if (getfd() < 0)
     {
         log("Could not open /dev/net/tun: %s\n", strerror(errno)); 
         seterr(errno);
@@ -36,11 +36,10 @@ void WvTunDev::init(const WvIPNet &addr, int mtu)
     memset(&ifr, 0, sizeof(ifr));
     ifr.ifr_flags = IFF_NO_PI | IFF_TUN;
 
-    if (ioctl(rwfd, TUNSETIFF, (void *) &ifr) < 0 ||
-        ioctl(rwfd, TUNSETNOCSUM, 1) < 0)
+    if (ioctl(getfd(), TUNSETIFF, (void *) &ifr) < 0 ||
+        ioctl(getfd(), TUNSETNOCSUM, 1) < 0)
     {
         log("Could not initialize the interface: %s\n", strerror(errno));
-        rwfd = -1;
         seterr(errno);
         return;
     }
