@@ -149,17 +149,9 @@ void WvStream::autoforward_callback(WvStream &s, void *userdata)
 
 void WvStream::_callback()
 {
-    wvstream_execute_called = false;
     execute();
     if (!! callfunc)
 	callfunc(*this, userdata);
-
-    // if this assertion fails, a derived class's virtual execute() function
-    // didn't call its parent's execute() function, and we didn't make it
-    // all the way back up to WvStream::execute().  This doesn't always
-    // matter right now, but it could lead to obscure bugs later, so we'll
-    // enforce it.
-    assert(wvstream_execute_called);
 }
 
 
@@ -185,6 +177,8 @@ void WvStream::callback()
     
     assert(!uses_continue_select || personal_stack_size >= 1024);
 
+    wvstream_execute_called = false;
+
 #define TEST_CONTINUES_HARSHLY 0
 #if TEST_CONTINUES_HARSHLY
 #ifndef _WIN32
@@ -206,6 +200,18 @@ void WvStream::callback()
     }
     else
 	_callback();
+
+    // if this assertion fails, a derived class's virtual execute() function
+    // didn't call its parent's execute() function, and we didn't make it
+    // all the way back up to WvStream::execute().  This doesn't always
+    // matter right now, but it could lead to obscure bugs later, so we'll
+    // enforce it.
+
+    // FIXME: disabled at the moment, because it was implemented
+    // incorrectly with regard to uses_continue_select. Many people
+    // call continue_select without calling their parent's execute
+    // method after, which they should.
+    //assert(wvstream_execute_called);
 }
 
 
