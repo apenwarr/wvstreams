@@ -472,6 +472,14 @@ WvIPNet::WvIPNet()
     addrtype = wvipnet;
 }
 
+
+WvIPNet::WvIPNet(const WvIPNet &_net)
+	: WvIPAddr(_net), mask(_net.netmask())
+{
+    addrtype = wvipnet;
+}
+
+
 WvIPNet::WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask)
 	: WvIPAddr(base), mask(_mask)
 {

@@ -6,7 +6,7 @@
  * at a way to read the Linux kernel routing table.
  */
 #include "wviproute.h"
-#include "wvstream.h"
+#include "wvpipe.h"
 #include "wvinterface.h"
 #include <net/route.h>
 #include <ctype.h>
@@ -84,6 +84,12 @@ static char *next_col(char *str)
 }
 
 
+static void nullify(char *str)
+{
+    *find_space(str) = 0;
+}
+
+
 
 /////////////////////////////////////// WvIPRouteList
 
@@ -97,7 +103,8 @@ WvIPRouteList::WvIPRouteList() : log("Route Table", WvLog::Debug)
 void WvIPRouteList::get_kernel()
 {
     WvFile kinfo("/proc/net/route", O_RDONLY);
-    char *line, *addr, *gate, *mask, *flags, *metric, *end;
+    char *line, *ifc, *addr, *gate, *mask, *flags, *metric, *end;
+    char *keyword, *value;
     bool last_white;
     
     // skip header
@@ -107,6 +114,7 @@ void WvIPRouteList::get_kernel()
     last_white = false;
     while ((line = kinfo.getline(0)) != NULL)
     {
+	ifc = line;
 	addr = next_col(line);
 	gate = next_col(addr);
 	flags = next_col(gate);
@@ -121,7 +129,59 @@ void WvIPRouteList::get_kernel()
 	end = find_space(line);
 	*end = 0;
 	
-	append(new WvIPRoute(line, addr, mask, gate, atoi(metric)), true);
+	append(new WvIPRoute(ifc, addr, mask, gate, atoi(metric)), true);
+    }
+    
+    
+    // append data from the 2.1.x kernel "policy routing" default table
+    const char *argv[] = { "ip", "route", "list", "table", "default", NULL };
+    WvPipe defaults(argv[0], argv, false, true, false);
+    while (defaults.isok() && (line = defaults.getline(-1)) != NULL)
+    {
+	// log(WvLog::Debug2, "iproute: %s\n", line);
+	
+	keyword = line;
+	line = next_col(keyword);
+	nullify(keyword);
+	
+	if (strcmp(keyword, "default"))
+	{
+	    log(WvLog::Debug, "skipping unknown route '%s'\n", keyword);
+	    continue;
+	}
+	
+	ifc = addr = gate = flags = metric = mask = NULL;
+	
+	do
+	{
+	    keyword = line;
+	    value = next_col(keyword);
+	    line = next_col(value);
+	    nullify(keyword);
+	    nullify(value);
+	    
+	    if (!strcmp(keyword, "via"))
+		gate = value;
+	    else if (!strcmp(keyword, "dev"))
+		ifc = value;
+	    else if (!strcmp(keyword, "metric"))
+		metric = value;
+	    else if (!strcmp(keyword, "scope"))
+		; // ignore
+	    else
+		log(WvLog::Debug, "Unknown keyvalue: '%s' '%s'\n",
+		    keyword, value);
+	} while (*line);
+	
+	if (!ifc)
+	{
+	    log(WvLog::Debug2, "No interface given for this route; skipped.");
+	    continue;
+	}
+	
+	append(new WvIPRoute(ifc, WvIPNet("0.0.0.0", 0),
+			     gate ? WvIPAddr(gate) : WvIPAddr(),
+			     metric ? atoi(metric) : 0), true);
     }
 }
 

@@ -234,6 +234,8 @@ protected:
     virtual WvString printable() const;
 
 public:
+    WvIPNet(const WvIPNet &_net);
+    
     WvIPNet(const WvIPAddr &base, const WvIPAddr &_mask);
     
     // construct an IPNet from a base address and a number of bits in

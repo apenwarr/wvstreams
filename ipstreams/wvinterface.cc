@@ -5,7 +5,7 @@
  * A WvInterface stores information about a particular network interface.
  */
 #include "wvinterface.h"
-#include "wvstream.h"
+#include "wvpipe.h"
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -322,6 +322,25 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     struct rtentry rte;
     char ifname[17];
     int sock;
+    const char *argv[] = {
+	"ip", "route", "add",
+	"default",
+	"table", "default",
+	"dev", name,
+	"via", (WvString)gw,
+	"metric", WvString(metric),
+	NULL
+    };
+    
+    if (dest == WvIPNet("0.0.0.0", 0)
+	&& WvPipe(argv[0], argv, false, false, false).finish() == 0)
+    {
+	// successfully added a default route via the subprogram
+	return 0;
+    }
+    
+    // if we get here, it is not a default route or the 'ip' command is
+    // broken somehow.
 
     fill_rte(&rte, ifname, dest, gw, metric);
     
@@ -352,6 +371,26 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     struct rtentry rte;
     char ifname[17];
     int sock;
+    const char *argv[] = {
+	"ip", "route", "del",
+	"default",
+	"table", "default",
+	"dev", name,
+	"via", (WvString)gw,
+	"metric", WvString(metric),
+	"scope", "global",
+	NULL
+    };
+    
+    if (gw == WvIPAddr()) // no gateway; change the scope name
+	argv[13] = "link";
+    
+    if (dest == WvIPNet("0.0.0.0", 0)
+	&& WvPipe(argv[0], argv, false, false, false).finish() == 0)
+    {
+	// successfully deleted a default route via the subprogram
+	return 0;
+    }
 
     fill_rte(&rte, ifname, dest, gw, metric);
     
