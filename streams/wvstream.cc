@@ -66,7 +66,7 @@ int WvStream::getfd() const
 
 bool WvStream::test_set(SelectInfo &si)
 {
-    return (FD_ISSET(getfd(), &si.read)
+    return fd >= 0 && (FD_ISSET(getfd(), &si.read)
 	    || FD_ISSET(getfd(), &si.write)
 	    || FD_ISSET(getfd(), &si.except));
 }
