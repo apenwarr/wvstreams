@@ -17,6 +17,7 @@ ifeq ("$(build_xplc)", "yes")
 .PHONY: xplc
 xplc:
 	$(MAKE) -C xplc
+	/sbin/ldconfig -n xplc
 
 endif
 
