@@ -48,7 +48,7 @@ WvFastString::WvFastString(const WvString &s)
 }
 
 
-inline void WvFastString::construct(const char *_str)
+void WvFastString::construct(const char *_str)
 {
     // just copy the pointer - no need to allocate memory!
     str = (char *)_str; // I promise not to change anything!
