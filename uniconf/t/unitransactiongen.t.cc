@@ -333,18 +333,18 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     two.xset("cfg/OpenWall", WvString::null);
     callbacks2.add("cfg/OpenWall", "");
     callbacks2.add("cfg/OpenWall/Harden Stack", 0);
-    callbacks2.add("cfg/OpenWall/Harden FIFO", 0);    
+    callbacks2.add("cfg/OpenWall/Harden FIFO", "");    
     callbacks2.add("cfg/OpenWall/Harden Proc", 1);
     callbacks2.add("cfg/Global/Servers/FunFS", 0);
     two.xset("cfg/OpenWall/Harden Stack", 0);
-    two.xset("cfg/OpenWall/Harden FIFO", 0);
+    two.xset("cfg/OpenWall/Harden FIFO", "");
     two.xset("cfg/OpenWall/Harden Proc", 1);
     two.xset("cfg/Global/Servers/FunFS", 0);
     two.xset("cfg/Global/Servers/NFS", 0);
     UniWatch mywatch1(one, callback1);
     callbacks1.add("cfg/OpenWall/Harden Link", WvString::null);
     callbacks1.add("cfg/OpenWall/Harden Stack", 0);
-    callbacks1.add("cfg/OpenWall/Harden FIFO", 0);
+    callbacks1.add("cfg/OpenWall/Harden FIFO", "");
     callbacks1.add("cfg/Global/Servers/FunFS", 0);
     // Here we go.
     two.commit();
@@ -356,13 +356,24 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/OpenWall", "");
     callbacks2.add("cfg/OpenWall/Harden Stack", 0);
-    callbacks2.add("cfg/OpenWall/Harden FIFO", 0);    
+    callbacks2.add("cfg/OpenWall/Harden FIFO", "");    
     callbacks2.add("cfg/OpenWall/Harden Proc", 1);
     callbacks2.add("cfg/Global", "");
     callbacks2.add("cfg/Global/Servers", "");
     callbacks2.add("cfg/Global/Servers/Funfs", 0);
     callbacks2.add("cfg/Global/Servers/NFS", 0);
     check_iterator(callbacks2, two);
+
+    callbacks1.add("cfg", "");
+    callbacks1.add("cfg/OpenWall", "");
+    callbacks1.add("cfg/OpenWall/Harden Stack", 0);
+    callbacks1.add("cfg/OpenWall/Harden FIFO", "");    
+    callbacks1.add("cfg/OpenWall/Harden Proc", 1);
+    callbacks1.add("cfg/Global", "");
+    callbacks1.add("cfg/Global/Servers", "");
+    callbacks1.add("cfg/Global/Servers/Funfs", 0);
+    callbacks1.add("cfg/Global/Servers/NFS", 0);
+    check_iterator(callbacks1, one);
 }
 
 // Test that UniTransactionGen works when mounted on a UniConf subtree.
