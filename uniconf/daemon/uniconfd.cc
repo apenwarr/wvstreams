@@ -27,13 +27,14 @@ static void usage(WvStringParm argv0)
 {
     wverr->print(
 	"\n"
-        "Usage: %s [-fdVa] [-p port] [-s sslport] [-u unixsocket] "
+        "Usage: %s [-fdVa] [-A moniker] [-p port] [-s sslport] [-u unixsocket] "
 		 "<mounts...>\n"
 	"     -f   Run in foreground (non-forking)\n"
 	"     -d   Print debug messages\n"
         "     -dd  Print lots of debug messages\n"
 	"     -V   Print version number and exit\n"
 	"     -a   Require authentication on incoming connections\n"
+	"     -A   Require authentication and check perms against moniker\n"
 	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
 	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
 	"     -u   Listen on given Unix socket filename (default=disabled)\n"
@@ -57,9 +58,9 @@ int main(int argc, char **argv)
     bool dontfork = false, needauth = false;
     unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
     unsigned int sslport = DEFAULT_UNICONF_DAEMON_SSL_PORT;
-    WvString unixport;
+    WvString unixport, permmon;
 
-    while ((c = getopt(argc, argv, "fdVap:s:u:h?")) >= 0)
+    while ((c = getopt(argc, argv, "fdVaA:p:s:u:h?")) >= 0)
     {
 	switch (c)
 	{
@@ -78,6 +79,11 @@ int main(int argc, char **argv)
 	    
 	case 'a':
 	    needauth = true;
+	    break;
+	    
+	case 'A':
+	    needauth = true;
+	    permmon = optarg;
 	    break;
 	    
 	case 'p':
@@ -132,7 +138,8 @@ int main(int argc, char **argv)
     
     cfg.refresh();
     
-    UniConfDaemon daemon(cfg, needauth);
+    IUniConfGen *permgen = !!permmon ? wvcreate<IUniConfGen>(permmon) : NULL;
+    UniConfDaemon daemon(cfg, needauth, permgen);
     WvIStreamList::globallist.append(&daemon, false);
     
     if (!!unixport)
@@ -181,6 +188,7 @@ int main(int argc, char **argv)
 	{
 	    cfg.commit();
 	    cfg.refresh();
+	    if (permgen) permgen->refresh();
 	    last = now;
 	}
     }

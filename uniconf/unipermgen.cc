@@ -79,8 +79,9 @@ bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred,
     else level = WORLD;
 
     bool perm = getoneperm(path, level, type);
-    //wverr->print("getperm(%s,%s-%s) = %s\n",
-    //             path, level2str(level), type2str(type), perm);
+    //wverr->print("getperm(%s/%s,%s,%s-%s) = %s\n",
+    //           cred.user, cred.groups.count(),
+    //		 path, level2str(level), type2str(type), perm);
     return perm;
 }
 

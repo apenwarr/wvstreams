@@ -9,42 +9,18 @@
 
 #include "uniconfdaemonconn.h"
 #include "unisecuregen.h"
+#include "uniconfroot.h"
 
-/**
- * Get around the lack of RTTI by keeping a mapping of UniConfGen's to
- * UniSecureGen's.  That way we can convert a UniConfGen to the derived class
- * by just looking it up.  If it's not there, it can't be downcasted.
- */
-unsigned int WvHash(const IUniConfGen *);
+class WvPamStream;
 
-struct SecureGen
-{
-    IUniConfGen *key;
-    UniSecureGen *data;
-};
-DeclareWvDict(SecureGen, IUniConfGen *, key);
-
-
-class UniConfPamConn : public UniConfDaemonConn
+class UniConfPamConn : public WvStreamClone
 {
 public:
-    UniConfPamConn(WvStream *s, const UniConf &root);
-
-    static SecureGenDict securegens;
+    UniConfPamConn(WvStream *s, const UniConf &root, UniPermGen *perms);
 
 protected:
-    virtual void addcallback();
-    virtual void delcallback();
-
-    virtual void do_get(const UniConfKey &key);
-    virtual void do_set(const UniConfKey &key, WvStringParm value);
-    virtual void do_remove(const UniConfKey &key);
-    virtual void do_subtree(const UniConfKey &key, bool recursive);
-    virtual void do_haschildren(const UniConfKey &key);
-
-    void deltacallback(const UniConf &cfg, const UniConfKey &key);
-
-    void updatecred(const UniConf &key);
+    WvPamStream *pam;
+    UniConfRoot newroot;
 };
 
 #endif // __UNICONFPAMCONN_H

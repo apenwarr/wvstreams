@@ -8,7 +8,7 @@
  * constructor will go through before authentication begins.
  *
  * For now, this only works for PAM modules that don't require any user
- * interaction.
+ * interaction (not even a password!), such as ssoya.
  */
 #ifndef __WVPAM_H
 #define __WVPAM_H
@@ -36,7 +36,7 @@ public:
     virtual ~WvPamStream();
 
     /** Goes not ok if authentication fails */
-    virtual bool isok() const;
+    // virtual bool isok() const;
 
     /** Return the user */
     WvString getuser() const;
@@ -52,6 +52,9 @@ private:
      * succeeded, false if it failed.
      */
     bool check_pam_status(WvStringParm step);
+    
+    bool authenticate(WvStringParm name,
+		      WvStringParm successmsg, WvStringParm failmsg);
 };
 
 #endif // __WVPAM_H

@@ -45,6 +45,9 @@ public:
     virtual ~UniMountGen()
         { }
     
+    void zap()
+        { mounts.zap(); }
+    
     /**
      * Mounts a generator at a key using a moniker.
      
