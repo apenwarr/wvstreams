@@ -58,14 +58,16 @@ int main()
     
     handler->addObject(_hellouuid, new GenericComponent<HelloFactory>);
     
-    IMoniker *monikers = mutate<IMoniker>(servmgr->getObject(XPLC_monikers));
+    IMonikerService *monikers = mutate<IMonikerService>(
+					servmgr->getObject(XPLC_monikers));
     assert(monikers);
-    IMonikerService *monserv = get<IMonikerService>(monikers);
-    assert(monserv);
     
-    monserv->registerObject("hello", _hellouuid);
+    monikers->registerObject("hello", _hellouuid);
     
-    assert(xplc.create<IObject>("hello:"));
+    fprintf(stderr, "About to create...\n");
+    IObject *obj = xplc.create<IObject>("hello:");
+    assert(obj);
+    obj->release();
     
     fprintf(stderr, "Done.\n");
     return 0;
