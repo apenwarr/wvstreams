@@ -11,9 +11,6 @@
  * See wvstreamclone.h.
  */
 #include "wvstreamclone.h"
-#include <errno.h>
-#include <time.h>
-
 
 WvStreamClone::~WvStreamClone()
 {
