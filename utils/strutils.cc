@@ -1108,3 +1108,14 @@ FILE *wvtmpfile()
 #endif
 }
 
+// Removes any trailing punctuation ('.', '?', or '!') from the line
+WvString depunctuate(WvStringParm line)
+{
+    WvString ret = line;
+    char * edit = ret.edit();
+    int last = ret.len() - 1;
+    if (edit[last] == '.' || edit[last] == '?' || edit[last] == '!')
+        edit[last] = '\0';
+
+    return ret;
+}

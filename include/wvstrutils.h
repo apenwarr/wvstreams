@@ -336,7 +336,7 @@ void strcoll_split(StringCollection &coll, WvStringParm s,
     int count = 0;
     
     while ((limit == 0 || count < limit)
-    	    && regex.match(&s[start], match_start, match_end)
+    	    && regex.continuable_match(&s[start], match_start, match_end)
     	    && match_end > 0)
     {
     	WvString *substr = new WvString;
@@ -440,6 +440,12 @@ WvString beforestr(WvStringParm line, WvStringParm a);
  * if pos+len > line.len() simply return from pos to end of line
  */
 WvString substr(WvString line, unsigned int pos, unsigned int len);
+
+/** 
+ * Removes any trailing punctuation ('.', '?', or '!') from the line, and
+ * returns it in a new string.  Does not modify line.
+ */
+WvString depunctuate(WvStringParm line);
 
 // Converts a string in decimal to an arbitrary numeric type
 template<class T>

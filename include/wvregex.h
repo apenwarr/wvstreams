@@ -38,9 +38,12 @@
 		__WVRE_CALL_FORM(16), __WVRE_CALL_FORM(17), \
 		__WVRE_CALL_FORM(18), __WVRE_CALL_FORM(19)
 
-/**
- * Unified support for regular expressions
- */
+/*!
+@brief WvRegex -- Unified support for regular expressions.
+
+Supports matching compiled regular expressions and capturing substrings
+in registers.
+!*/
 class WvRegex: public WvErrorBase
 {
 private:
@@ -52,73 +55,7 @@ private:
 
     virtual void seterr(int _errnum);
 
-public:
-    // cflags: flags that affect interpretation of the regex
-    enum {
-    	// Use (obsolete) basic regex syntax (like grep).  See regex(7).
-    	BASIC = 0,
-    	// Use extended regex syntax (like egrep).  See regex(7).
-    	EXTENDED = REG_EXTENDED,
-    	// Case insensitive
-    	ICASE = REG_ICASE,
-    	// Do not collect match start and end or registers; faster
-    	NOSUB = REG_NOSUB,
-    	// Match-any-character operators don't match a newline.  See regex(3)
-    	NEWLINE = REG_NEWLINE
-    };
-    static const int default_cflags;
-
-    // eflags: flags that affect matching of regex
-    enum
-    {
-    	// Matching begining of line always fails (unless NEWLINE cflag is set)
-    	NOTBOL = REG_NOTBOL,
-    	// Matching end of line always fails (unless NEWLINE cflag is set)
-    	NOTEOL = REG_NOTEOL
-    };
-    static const int default_eflags;
-
-    // Internal use only
-    static WvString __wvre_null_reg;
-
-    // Construct an empty regex object.  Matches will always fail until set()
-    // is called with a valid regex.
-    WvRegex() : have_preg(false) {}
-    // Construct a regex object, compiling the given regex
-    WvRegex(WvStringParm regex, int cflags = default_cflags) : have_preg(false)
-    	{ set(regex, cflags); }
-    ~WvRegex();
-    
-    // Replace the current regex to match with a new one.
-    bool set(WvStringParm regex, int cflags = default_cflags);
-    
-    // The match functions match a given string against the compiled regex.
-    //
-    // All match functions return return true if a match was found and false
-    // if not.
-    //
-    // If eflags are given, they affect the matching as described above.
-    //
-    // If a match was found and match_start and match_end are given,
-    // they will contain the offset in the string of the start of the first 
-    // match and the end of the first match PLUS ONE.
-    //
-    // If a match was found and registers are given they will contain the
-    // substrings of the match that correspond to the parenthesized
-    // expressions in the regex.
-    //
-    // Examples:
-    // int match_start, match_end;
-    // WvString reg1, reg2, reg3;
-    // re.match("a string");
-    // re.match("a string", match_start, match_end);
-    // re.match("a string", reg1);
-    // re.match("a string", reg1, reg2, reg3);
-    // re.match("a string", WvRegex::NOTBOL);
-    // re.match("a string", WvRegex::NOTEOL,
-    //      match_start, match_end, reg1, reg2, reg3);
-    //
-    bool match(WvStringParm string, int eflags,
+    bool _match(WvStringParm string, int eflags,
     	    int &match_start, int &match_end, WVREGEX_REGS_DECL) const
     {
     	regmatch_t pmatch[21];
@@ -166,22 +103,155 @@ public:
      	     	
      	return true;
     }
+
+public:
+    //!
+    //! Flags that affect interpretation of the regex; used in Regex() and
+    //! set()
+    //! 
+    enum CFlags {
+    	// Use (obsolete) basic regex syntax (like grep).  See regex(7).
+    	BASIC = 0,
+    	// Use extended regex syntax (like egrep).  See regex(7).
+    	EXTENDED = REG_EXTENDED,
+    	// Case insensitive
+    	ICASE = REG_ICASE,
+    	// Do not collect match start and end or registers; faster
+    	NOSUB = REG_NOSUB,
+    	// Match-any-character operators don't match a newline.  See regex(3)
+    	NEWLINE = REG_NEWLINE
+    };
+    static const int default_cflags;
+
+    //!
+    //! Flags that affect matching of regex.  Used in match() and
+    //! continuable_match()
+    //!
+    enum EFlags
+    {
+    	// Matching begining of line always fails (unless NEWLINE cflag is set)
+    	NOTBOL = REG_NOTBOL,
+    	// Matching end of line always fails (unless NEWLINE cflag is set)
+    	NOTEOL = REG_NOTEOL
+    };
+    static const int default_eflags;
+
+    //!
+    //! Internal use only
+    //!
+    static WvString __wvre_null_reg;
+
+    //!
+    //! Construct an empty regex object.  Matches will always fail until set()
+    //! is called with a valid regex.
+    //!
+    WvRegex() : have_preg(false) {}
+    //!
+    //! Construct a regex object, compiling the given regex
+    //!
+    //! \param regex The new regular expression to match
+    //! \param cflags CFlags used to compile the regular expression;
+    //!               the defaults are case sensitive, extended RE.
+    //!
+    WvRegex(WvStringParm regex, int cflags = default_cflags) : have_preg(false)
+    	{ set(regex, cflags); }
+    ~WvRegex();
+    
+    //!
+    //! Replace the current regex to match with a new one.
+    //!
+    //! \param regex The new regular expression to match
+    //! \param cflags CFlags used to compile the regular expression;
+    //!               the defaults are case sensitive, extended RE.
+    //!
+    bool set(WvStringParm regex, int cflags = default_cflags);
+    
+    //!
+    //! Match a given string against the compiled regular expression
+    //!
+    //! \param string The string to match
+    //! \param (remaining) WvString registers to capture substring matches
+    //!     	as specified in the RE
+    //!
+    //! \code
+    //! extern WvString line;
+    //! WvString match;
+    //! if (re.match(line, match))
+    //!	    wvout->print("Matching substring is '%s'\n", match);
+    //! \endcode
+    //!
     bool match(WvStringParm string, WVREGEX_REGS_DECL) const
     {
     	int match_start, match_end;
-    	return match(string, default_eflags,
+    	return _match(string, default_eflags,
     	    	match_start, match_end, WVREGEX_REGS_CALL); 
     }
+    //!
+    //! Match a given string against the compiled regular expression
+    //!
+    //! \param string The string to match
+    //! \param eflags EFlags that affect matching 
+    //! \param (remaining) WvString registers to capture substring matches
+    //!     	as specified in the RE
+    //!
     bool match(WvStringParm string, int eflags, WVREGEX_REGS_DECL) const
     {
     	int match_start, match_end;
-    	return match(string, eflags,
+    	return _match(string, eflags,
     	    	match_start, match_end, WVREGEX_REGS_CALL); 
     }
-    bool match(WvStringParm string, int &match_start, int &match_end,
+    
+    //!
+    //! Match a given string against the compiled regular expression, 
+    //! capturing the start and end positions of the matching string.
+    //!
+    //! \param string The string to match
+    //! \param match_start If the match succeeds, the starting index of the
+    //!	    	match in string
+    //! \param match_end If the match succeeds, the index of the character in
+    //!	    	string following the last character of the match
+    //! \param (remaining) WvString registers to capture substring matches
+    //!     	as specified in the RE
+    //!
+    //! \code
+    //! extern WvString line;
+    //! int start = 0;
+    //! WvString match;
+    //! int match_start, match_end;
+    //! while (re.continuable_match(&line[start],
+    //!	    	match_start, match_end, match))
+    //! {
+    //!	    wvout->print("Matching substring is '%s'@[%s,%s)\n",
+    //!	    	    match, match_start, match_end);
+    //!	    start += match_end;
+    //! }
+    //! \endcode
+    //!
+    bool continuable_match(WvStringParm string,
+            int &match_start, int &match_end,
     	    WVREGEX_REGS_DECL) const
     {
-    	return match(string, default_eflags,
+    	return _match(string, default_eflags,
+    	    	match_start, match_end, WVREGEX_REGS_CALL); 
+    }
+    //!
+    //! Match a given string against the compiled regular expression, 
+    //! capturing the start and end positions of the matching string.
+    //!
+    //! \param string The string to match
+    //! \param eflags EFlags that affect matching 
+    //! \param match_start If the match succeeds, the starting index of the
+    //!	    	match in string
+    //! \param match_end If the match succeeds, the index of the character in
+    //!	    	string following the last character of the match
+    //! \param (remaining) WvString registers to capture substring matches
+    //!     	as specified in the RE
+    //!
+    bool continuable_match(WvStringParm string, int eflags,
+            int &match_start, int &match_end,
+    	    WVREGEX_REGS_DECL) const
+    {
+    	return _match(string, eflags,
     	    	match_start, match_end, WVREGEX_REGS_CALL); 
     }
 };

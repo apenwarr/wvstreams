@@ -41,10 +41,12 @@ UniSubtreeGen::UniSubtreeGen(IUniConfGen *gen, const UniConfKey &_subkey)
 
 UniConfKey UniSubtreeGen::keymap(const UniConfKey &key)
 {
-    if (key != "")
-        return UniConfKey(subkey, key);
-    else
+    if (key == UniConfKey())
         return subkey;
+    else if (subkey == UniConfKey())
+        return key;
+    else
+        return UniConfKey(subkey, key);
 }
 
 UniConfKey UniSubtreeGen::reversekeymap(const UniConfKey &key)

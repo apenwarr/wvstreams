@@ -12,6 +12,8 @@
 #include "wvlinklist.h"
 #include "wvsyslog.h"
 #include "wvcrash.h"
+#include "wvfile.h"
+#include "wvatomicfile.h"
 
 #include <signal.h>
 #include <sys/types.h>
@@ -58,6 +60,7 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
         WvDaemonCallback _stop_callback,
         void *_ud)
     : name(_name), version(_version),
+            pid_file("/var/run/%s.pid", _name),
             log(_name, WvLog::Debug),
             start_callback(_start_callback),
             run_callback(_run_callback),
@@ -165,6 +168,38 @@ int WvDaemon::_run(const char *argv0)
 {
     wvcrash_setup(argv0);
 
+    if (!!pid_file)
+    {
+        // FIXME: this is racy!
+        
+        // First, make sure we aren't already running
+        WvFile old_pid_fd(pid_file, O_RDONLY);
+        if (old_pid_fd.isok())
+        {
+            WvString line = old_pid_fd.getline(0);
+            if (!!line)
+            {
+                pid_t old_pid = line.num();
+                if (old_pid > 0 && (kill(old_pid, 0) == 0 || errno == EPERM))
+                {
+                    log(WvLog::Error,
+                            "%s is already running (pid %s); exiting\n",
+                            name, old_pid);
+                    return 1;
+                }
+            }
+        }
+        old_pid_fd.close();
+
+        // Now write our new PID file
+        WvAtomicFile pid_fd(pid_file, 0666);
+        pid_fd.print("%s\n", getpid());
+        if (!pid_fd.isok())
+            log(WvLog::Warning, "Failed to write PID file %s: %s\n",
+                    pid_file, pid_fd.errstr());
+        pid_fd.close();
+    }
+
     log(WvLog::Notice, "Starting\n");
     log(WvLog::Info, "%s version %s\n", name, version);
 
@@ -201,6 +236,9 @@ int WvDaemon::_run(const char *argv0)
 
     log(WvLog::Notice, "Exiting\n");
     
+    if (!!pid_file)
+        ::unlink(pid_file);
+
     return 0;
 }
 

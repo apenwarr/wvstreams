@@ -1,3 +1,4 @@
+#include "wvdiriter.h"
 #include "wvfile.h"
 #include "wvlogrotator.h"
 #include "wvtest.h"
@@ -17,24 +18,28 @@ void touch_file(WvStringParm file)
 class WvLogRotatorTest
 {
 public:
+    // useful when debugging rare failures to do with rotator forking
+    bool nonefailed;
     WvLogRotator *rotator;
     WvString workdir;
     WvStringList lognames;
 
     WvLogRotatorTest(WvStringParm _lognames, int keep_for)
+        : nonefailed(true)
     {
         lognames.split(_lognames, " ");
         WvStringList::Iter j(lognames);
         j.rewind(); j.next();
         
         // find a directory not in use, try using the first log name given
-        workdir = WvString("%s/%s", WORKDIR, j());
-        int num = 0;
-        struct stat statbuf;
-        WvString dirname = workdir;
-        while (stat(workdir, &statbuf) != -1)
-            workdir = WvString("%s.%s", dirname, num++);
+        workdir = WvString("%s/%sXXXXXX", WORKDIR, j());
+        
+        int fd;
+        while ((fd = mkstemp(workdir.edit())) == (-1));
+        close(fd);
+        unlink(workdir);
         system(WvString("mkdir %s", workdir));
+        // fprintf(stderr, "using dir %s\n", workdir.cstr());
         
         WvStringList::Iter i(lognames);
         for (i.rewind(); i.next(); )
@@ -49,13 +54,25 @@ public:
     
     ~WvLogRotatorTest()
     {
-        system(WvString("rm -r %s", workdir));
         WVRELEASE(rotator);
+        WvDirIter i(workdir);
+        for (i.rewind(); i.next(); )
+        {
+            unlink(i->fullname);
+        }
+        rmdir(workdir);
+        if (!nonefailed)
+            sleep(10);
     }
 
     void execute()
     {
         rotator->execute();
+    }
+    
+    int get_keep_for()
+    {
+        return rotator->keep_for;
     }
     
     WvString create_log(int days_old = 0)
@@ -110,11 +127,23 @@ void run_test(WvStringParm lognames)
     result2.split(test.create_log(4));
     result3.split(test.create_log(5));
     test.execute();
-    WVPASS(files_exist(result));
-    // FAILS
-    //WVFAIL(files_exist(result1));
-    //WVFAIL(files_exist(result2));
-    //WVFAIL(files_exist(result3));
+    // wait for rotator's delete fork to finish up
+    sleep(1);
+    test.nonefailed = WVPASS(files_exist(result));
+    test.nonefailed = !WVFAIL(files_exist(result1));
+    test.nonefailed = !(files_exist(result2));
+    test.nonefailed = !(files_exist(result3));
+}
+
+WVTEST_MAIN("basics")
+{
+    WvLogRotatorTest test("log", 2);
+    test.rotator->set_keep_for(5);
+    WVPASS(test.get_keep_for() == 5);
+    test.rotator->set_keep_for(0);
+    WVPASS(test.get_keep_for() == 0);
+    test.rotator->set_keep_for(-50);
+    WVPASS(test.get_keep_for() == 0);
 }
 
 WVTEST_MAIN("old logs get removed, good ones don't")

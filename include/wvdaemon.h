@@ -24,6 +24,7 @@ class WvDaemon
 
         WvString name;
         WvString version;
+        WvString pid_file;
 
         WvArgs args;
         WvLog log;

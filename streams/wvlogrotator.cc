@@ -12,9 +12,15 @@
 #define NUM_SECS_IN_DAY (60*NUM_MINS_IN_DAY)
 
 WvLogRotator::WvLogRotator(WvStringParm _filenames, int _keep_for)
-    : WvDailyEvent(1), keep_for(_keep_for)
+    : WvDailyEvent(0), keep_for(_keep_for)
 {
     filenames.split(_filenames, " ");
+}
+
+void WvLogRotator::set_keep_for(int _keep_for)
+{
+    if (_keep_for >= 0)
+        keep_for = _keep_for;
 }
 
 void WvLogRotator::execute()

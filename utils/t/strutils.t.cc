@@ -911,3 +911,18 @@ WVTEST_MAIN("spacecat")
     WVPASSEQ(spacecat("", "yy", ';', true), ";yy");
     WVPASSEQ(spacecat("", ";;yy", ';', true), ";yy");
 }
+
+WVTEST_MAIN("depunctuate")
+{
+    WVPASSEQ(depunctuate(""), "");
+    WVPASSEQ(depunctuate("."), "");
+    WVPASSEQ(depunctuate("?"), "");
+    WVPASSEQ(depunctuate("!"), "");
+    WVPASSEQ(depunctuate("a"), "a");
+    WVPASSEQ(depunctuate("a."), "a");
+    WVPASSEQ(depunctuate("a?"), "a");
+    WVPASSEQ(depunctuate("a!"), "a");
+    WVPASSEQ(depunctuate("a.."), "a.");
+    WVPASSEQ(depunctuate("a. "), "a. ");
+}
+

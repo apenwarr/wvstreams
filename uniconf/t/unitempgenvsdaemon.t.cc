@@ -74,8 +74,6 @@ WVTEST_MAIN("tempgen/cachegen basics")
         uniconf["cfg"].mountgen(unigen);
         uniconf["tmp"].mount("temp:");
 
-        UniConf defcfg(uniconf["default"]);
-
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname, 0777);
 
