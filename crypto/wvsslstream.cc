@@ -193,7 +193,11 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 
 		case SSL_ERROR_SYSCALL:
 		    if (!err)
+		    {
+			if (result == 0)
+			    close();
 	                break; 
+		    }
 		    debug("<< SSL_read() %s\n", strerror(errno));
                     
                 default:
