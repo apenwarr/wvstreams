@@ -20,6 +20,8 @@ WvDailyEvent::WvDailyEvent( int _first_hour, int _num_per_day )
 : first_hour( _first_hour ), num_per_day( _num_per_day )
 {
     need_reset = false;
+    last_hour = -1;
+    last_minute = -1;
 }
 
 bool WvDailyEvent::pre_select( SelectInfo& si )
@@ -28,9 +30,6 @@ bool WvDailyEvent::pre_select( SelectInfo& si )
 // OR if the time just changed to "first_hour" o'clock plus a multiple of
 // 24*60 / num_per_day minutes.
 {
-    static int last_hour = -1;
-    static int last_minute = -1;
-
     time_t      now;
     struct tm * tnow;
 

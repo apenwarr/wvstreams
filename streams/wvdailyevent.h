@@ -41,6 +41,8 @@ private:
     int     first_hour;
     int     num_per_day;
     bool    need_reset;
+    int     last_hour;
+    int     last_minute;
 };
 
 #endif
