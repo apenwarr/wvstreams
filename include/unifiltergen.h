@@ -43,12 +43,20 @@ public:
      * The default implementation of this function doesn't change the key.
      */
     virtual UniConfKey keymap(const UniConfKey &key);
+
+    /**
+     * A mapping function for filters that unmap a keyspace.
+     *
+     * The default implementation of this function doesn't change the key.
+     */
+    virtual UniConfKey reversekeymap(const UniConfKey &key);
     
 
     /***** Overridden methods *****/
 
     virtual void commit();
     virtual bool refresh();
+    virtual void flush_buffers();
     virtual void prefetch(const UniConfKey &key, bool recursive);
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);

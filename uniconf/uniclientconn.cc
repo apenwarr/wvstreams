@@ -72,7 +72,9 @@ WvString UniClientConn::readmsg()
     WvString word;
     while ((word = wvtcl_getword(msgbuf, "\r\n", false)).isnull())
     {
-        char *line = getline(0);
+	// use lots of readahead to prevent unnecessary runs through select()
+	// during heavy data transfers.
+        char *line = getline(0, '\n', 20480);
         if (line)
         {
             msgbuf.putstr(line);
@@ -88,7 +90,7 @@ WvString UniClientConn::readmsg()
             return WvString::null;
         }
     }
-    if (!!word)
+    if (!!word && 0)
 	log("Read: %s\n", word);
     return word;
 }
@@ -96,8 +98,8 @@ WvString UniClientConn::readmsg()
 
 void UniClientConn::writemsg(WvStringParm msg)
 {
-    write(WvString("%s\n", msg));
-    log("Wrote: %s\n", msg);
+    write(spacecat(msg, "", '\n'));
+    // log("Wrote: %s\n", msg);
 }
 
 
@@ -132,7 +134,7 @@ WvString UniClientConn::readarg()
 void UniClientConn::writecmd(UniClientConn::Command cmd, WvStringParm msg)
 {
     if (msg)
-        writemsg(WvString("%s %s", cmdinfos[cmd].name, msg));
+        writemsg(spacecat(cmdinfos[cmd].name, msg));
     else
         writemsg(cmdinfos[cmd].name);
 }
@@ -152,15 +154,16 @@ void UniClientConn::writefail(WvStringParm payload)
 
 void UniClientConn::writevalue(const UniConfKey &key, WvStringParm value)
 {
-    writecmd(PART_VALUE, WvString("%s %s", wvtcl_escape(key),
-        wvtcl_escape(value)));
+    if (value == WvString::null)
+        writecmd(PART_VALUE, wvtcl_escape(key));
+    else
+        writecmd(PART_VALUE, spacecat(wvtcl_escape(key), wvtcl_escape(value)));
 }
 
 
 void UniClientConn::writeonevalue(const UniConfKey &key, WvStringParm value)
 {
-    writecmd(REPLY_ONEVAL, WvString("%s %s", wvtcl_escape(key),
-        wvtcl_escape(value)));
+    writecmd(REPLY_ONEVAL, spacecat(wvtcl_escape(key), wvtcl_escape(value)));
 }
 
 

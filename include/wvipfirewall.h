@@ -32,14 +32,6 @@ class WvIPFirewall
 	Redir(const WvIPPortAddr &_src, int _dstport) : src(_src)
 	    { dstport = _dstport; }
     };
-    class FastForward
-    {
-      public:
-	WvIPPortAddr src, dst;
-	FastForward(const WvIPPortAddr &_src, const WvIPPortAddr &_dst) :
-	src(_src), dst(_dst)
-	{}
-    };
 
     class RedirAll
     {
@@ -50,13 +42,26 @@ class WvIPFirewall
             { dstport = _dstport; }
     };
 
+    class RedirPortRange
+    {
+    public:
+	WvIPPortAddr src_min;
+	WvIPPortAddr src_max;
+	int dstport;
+	
+	RedirPortRange(const WvIPPortAddr &_src_min,
+	    	const WvIPPortAddr &_src_max, int _dstport)
+	    : src_min(_src_min), src_max(_src_max)
+	    { dstport = _dstport; }
+    };
+
     DeclareWvList(Redir);
-    DeclareWvList(FastForward);
     DeclareWvList(RedirAll);
+    DeclareWvList(RedirPortRange);
 
     RedirList redirs;
-    FastForwardList forwards;
     RedirAllList redir_alls;
+    RedirPortRangeList redir_port_ranges;
 
     WvIPPortAddrList addrs;
     WvStringList protos;
@@ -65,11 +70,13 @@ class WvIPFirewall
 			  const WvIPPortAddr &addr);
     WvString redir_command(const char *cmd,
 			   const WvIPPortAddr &src, int dstport);
+    WvString redir_port_range_command(const char *cmd,
+    	const WvIPPortAddr &src_min, const WvIPPortAddr &src_max, int dstport);
     WvString redir_all_command(const char *cmd, int dstport);
     WvString proto_command(const char *cmd, const char *proto);
     WvString forward_command(const char *cmd, const char *proto,
 			     const WvIPPortAddr &src,
-			     const WvIPPortAddr &dst);
+			     const WvIPPortAddr &dst, bool snat);
     WvLog log;
     const char *shutup() const
         { return ignore_errors ? " >/dev/null 2>/dev/null " : ""; }
@@ -84,13 +91,19 @@ public:
     void add_port(const WvIPPortAddr &addr);
     void add_redir(const WvIPPortAddr &src, int dstport);
     void add_redir_all(int dstport);
+    void add_redir_port_range(const WvIPPortAddr &src_min,
+    	    const WvIPPortAddr &src_max, int dstport);
     void add_proto(WvStringParm proto);
-    void add_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst);
+    void add_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst,
+	    bool snat);
     void del_proto(WvStringParm proto);
     void del_port(const WvIPPortAddr &addr);
     void del_redir(const WvIPPortAddr &src, int dstport);
-    void del_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst);
+    void del_forward(const WvIPPortAddr &src, const WvIPPortAddr &dst,
+	    bool snat);
     void del_redir_all(int dstport);
+    void del_redir_port_range(const WvIPPortAddr &src_min,
+    	    const WvIPPortAddr &src_max, int dstport);
 };
 
 #endif // __WVIPFIREWALL_H

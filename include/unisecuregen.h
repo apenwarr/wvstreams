@@ -42,6 +42,7 @@ public:
     void setcredentials(WvStringParm user, const WvStringList &groups);
     
     /** Overridden methods */
+    virtual void flush_buffers() { }
     virtual WvString get(const UniConfKey &key);
     virtual bool exists(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);

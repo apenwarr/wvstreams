@@ -108,6 +108,48 @@ public:
      * going to keep calling you until you die.  Return as soon as you can.
      */
     static bool isok();
+
+    
+    /**
+     * A templated function that allows you to pass a WvCont wherever a
+     * C-style function pointer of the form
+     *      R func(T, void *userdata)
+     * is taken.  It's your job to make sure the 'userdata' provided is
+     * a pointer to the right WvCont.
+     * 
+     * Example:
+     *     typedef bool MyFunc(Obj *obj, void *userdata);
+     *     WvCont cont;
+     *     MyFunc *func = &WvCont::c_bouncer<bool,Obj *>;
+     *     bool b = func(new Obj, &cont);
+     */
+    template <typename R, typename T>
+	static R c_bouncer(T t, void *_cont)
+	{
+	    WvCont &cont = *(WvCont *)_cont;
+	    return (R)cont((T)t);
+	}
+
+
+    /**
+     * A templated function that allows you to pass a WvCont wherever a
+     * C-style function pointer of the form
+     *      R func(void *userdata)
+     * is taken.  It's your job to make sure the 'userdata' provided is
+     * a pointer to the right WvCont.
+     * 
+     * Example:
+     *     typedef bool MyFunc(void *userdata);
+     *     WvCont cont;
+     *     MyFunc *func = &WvCont::c_bouncer<bool>;
+     *     bool b = func(&cont);
+     */
+    template <typename R>
+     static R c_bouncer(void *_cont)
+	{
+	    WvCont &cont = *(WvCont *)_cont;
+	    return (R)cont(0);
+	}
 };
 
 #endif // __WVCONT_H

@@ -94,7 +94,7 @@ AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
-AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL (required)]))
+AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
 AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
@@ -103,7 +103,8 @@ AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
 AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
-AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC (required)]))
+xplc_version='0.3.10'
+AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
@@ -119,9 +120,206 @@ AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
+# Detect target build environment
+AC_CANONICAL_TARGET
+case "$target" in
+    *-linux*)
+        ARCH_SUBDIRS="linuxstreams"
+	;;
+    *-sunos*|*-solaris*)
+    	ARCH_SUBDIRS=""
+	ac_libs="-lstdc++ -lgcc_s -ldl -lm -lc"
+	;;
+    *)
+    	ARCH_SUBDIRS=""
+	;;
+esac
+AC_SUBST(target)
+AC_SUBST(ARCH_SUBDIRS)
+
+# Detect endianness
+AC_C_BIGENDIAN
+
+# Function checks
+AC_FUNC_ALLOCA
+
+# Check for error_t
+AC_CHECK_HEADERS([argz.h errno.h])
+AC_CHECK_TYPE(error_t,, AC_DEFINE([error_t], [int],
+				  [Define to a type to use for `error_t' if it is not otherwise available.]),dnl `
+[#if HAVE_ARGZ_H
+# include <argz.h>
+#else
+# if HAVE_ERRNO_H
+#  include <errno.h>
+# endif
+#endif])
+
+# Check for size of ethernet addresses
+AC_CHECK_HEADERS([sys/socket.h])
+AC_CHECK_HEADERS([net/if.h], [], [],
+[#include <stdio.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+])
+AC_CHECK_HEADERS([net/ethernet.h], [], [],
+[#include <stdio.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+])
+AC_CHECK_HEADERS([netinet/if_ether.h], [], [],
+[#include <stdio.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+])
+AC_CHECK_DECL(ETHER_ADDR_LEN,,
+	      AC_CHECK_TYPE(ether_addr_t,
+	      		    AC_DEFINE([ETHER_ADDR_LEN], [sizeof(ether_addr_t)],
+			    	      [Size of ethernet address]),
+			    AC_DEFINE([ETHER_ADDR_LEN], [6]),
+[#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NET_ETHERNET_H
+# include <net/ethernet.h>
+#endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+#if HAVE_NETINET_IF_ETHER_H
+# include <netinet/if_ether.h>
+#endif
+]),
+[#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NET_ETHERNET_H
+# include <net/ethernet.h>
+#endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+#if HAVE_NETINET_IF_ETHER_H
+# include <netinet/if_ether.h>
+#endif
+])
+
+# Check for basic Internet support
+AC_CHECK_HEADERS([netdb.h])
+AC_CHECK_HEADERS([netinet/in.h])
+AC_CHECK_HEADERS([netinet/in_systm.h])
+AC_CHECK_HEADERS([netinet/ip.h], [], [],
+[#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+])
+AC_CHECK_HEADERS([netinet/tcp.h])
+
+# Check for advanced Linux-style modem support
+AC_CHECK_HEADERS([linux/serial.h])
+
+# Look for getopt
+AC_CHECK_FUNCS([getopt],,[getopt=no])
+if test "$getopt" = "no"; then
+    AC_CHECK_HEADERS([getopt.h])
+fi
+
+# Detect hard-linking based on LN_S's behaviour
+AC_MSG_CHECKING([whether ln works...])
+case "$LN_S" in
+    ln*) 
+        LN='ln'
+	AC_MSG_RESULT([yes])
+	;;
+    *)
+	LN="$LN_S"
+	AC_MSG_RESULT([no, using $LN])
+	;;
+esac
+AC_SUBST(LN)
+
 # Setting the default language to C++ means that CXX and CXXCPP will be 
 # used for compile tests.
 AC_LANG(C++)
+
+# Detect pkg-config
+AC_PATH_PROG([PKGCONFIG], [pkg-config], [no])
+if test "$PKGCONFIG" = "no"; then
+    if test "$with_xplc" = ""; then
+	AC_MSG_ERROR([pkg-config is not installed])
+    else
+	AC_MSG_WARN([pkg-config is not installed])
+    fi
+fi
 
 # devel
 if test "$enable_devel" = "yes"; then
@@ -228,17 +426,48 @@ if test "$with_openslp" != "no"; then
     fi 
 fi
 
+# BSD sockets, if you're on Solaris
+AC_CHECK_LIB(socket, bind)
+
 # openssl
 if test "$with_openssl" != "no"; then
     AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
                      [#define OPENSSL_NO_KRB5])
-    AC_CHECK_LIB(ssl, SSL_CTX_new,, [with_openssl=no])
+    AC_CHECK_LIB(crypto, X509_free)
+    AC_CHECK_LIB(ssl, SSL_has_matching_session_id,, [with_openssl=no])
 fi
 
 # pam
 if test "$with_pam" != "no"; then
     AC_CHECK_HEADERS(security/pam_appl.h,, [with_pam=no])
     AC_CHECK_LIB(pam, pam_start,, [with_pam=no])
+    AC_MSG_CHECKING(for sane PAM implementation)
+    AC_COMPILE_IFELSE(
+[#include "confdefs.h"
+#if HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+#endif
+
+/* noconv: null PAM conversation function */
+int noconv(int num_msg, const struct pam_message **msgm,
+        struct pam_response **response, void *userdata)
+{
+    // if you need to ask things, it won't work
+    return PAM_CONV_ERR;
+}
+
+int main()
+{
+    struct pam_conv c;
+    c.conv = noconv;
+    return 0;
+}
+],
+		      [AC_MSG_RESULT([yes])
+		       AC_DEFINE([HAVE_BROKEN_PAM], [0])],
+		      [AC_MSG_RESULT([no])
+		       AC_DEFINE([HAVE_BROKEN_PAM], [1],
+				 [Solaris has a broken PAM implementation])])
 fi
 
 # tcl
@@ -316,15 +545,31 @@ fi
 
 # xplc
 if test "$with_xplc" != "no"; then
-    if test -d xplc; then
+    if test "$with_xplc" = ""; then
+	if pkg-config --modversion xplc-0.3.10 2>/dev/null >/dev/null; then
+            WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-0.3.10`])
+	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-0.3.10`])
+	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	    xplc_pc="xplc-${xplc_version}"
+	else
+	    with_xplc='no'
+	fi
+    else
+        WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
+	WV_APPEND(LDFLAGS, [-L$with_xplc])
+	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	xplc_pc="xplc-${xplc_version}"
+    fi
+    # What if we can't find it?
+    if test "$with_xplc" = "no" && test -d xplc; then
         WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
         WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
         AC_CONFIG_SUBDIRS(xplc)
         build_xplc=yes
         with_xplc='$(WVSTREAMS)/xplc'
-    else
-        AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
-        AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	xplc_pc='wvxplc'
     fi
 fi
 
@@ -385,7 +630,7 @@ if test "$with_openslp" = "no"; then
 fi
 if test "$with_openssl" = "no"; then
     AC_MSG_WARN([OpenSSL is missing.])
-    missing_required="$missing_required OpenSSL"
+    missing_required="$missing_required OpenSSL>=0.9.7"
 fi
 if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing.])
@@ -403,7 +648,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
 
 AC_SUBST(enable_debug)
@@ -438,8 +683,28 @@ AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
 
 AC_SUBST(build_xplc)
+AC_SUBST(xplc_pc)
+
+AC_SUBST(ac_libs)
 
 AC_CONFIG_FILES(config.mk)
+AC_CONFIG_FILES([pkgconfig/libuniconf.pc
+		 pkgconfig/libwvbase.pc
+		 pkgconfig/libwvfft.pc
+		 pkgconfig/liboggspeex.pc
+		 pkgconfig/liboggvorbis.pc
+		 pkgconfig/libwvqt.pc
+		 pkgconfig/libwvstreams.pc
+		 pkgconfig/libwvutils.pc])
+if test "$xplc_pc" = "wvxplc"; then
+    AC_CONFIG_FILES([pkgconfig/wvxplc.pc])
+fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
+
+# We wish to tell any sub-configures to install their header files into
+# $includedir/wvstreams/, not the default location.  This prevents clashes
+# with other libraries.
+AC_CONFIG_COMMANDS_POST([ac_configure_args="$ac_configure_args --includedir=\${includedir}/wvstreams --oldincludedir=\${oldincludedir}/wvstreams"])
+
 AC_OUTPUT
 

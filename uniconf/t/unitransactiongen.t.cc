@@ -109,12 +109,6 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/OpenWall/Harden Stack", 1);
     check_iterator(callbacks2, two);
 
-    callbacks2.add("cfg/OpenWall/Harden Proc", WvString::null);
-    callbacks2.add("cfg/OpenWall/Harden Link", WvString::null);
-    callbacks2.add("cfg/OpenWall/Harden RLIMIT", WvString::null);
-    callbacks2.add("cfg/OpenWall/Harden Stack", WvString::null);
-    callbacks2.add("cfg/OpenWall", WvString::null);
-    callbacks2.add("cfg", WvString::null);
     callbacks2.add("", WvString::null);
     one.xset("", WvString::null);
     WVPASS(callbacks2.isempty());
@@ -184,16 +178,17 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Have Disk/Really Have Disk", 1);
     check_iterator(callbacks2, two);
 
-    // Test that it changes back to the empty string. Also, after r4_2,
-    // test that deleting keys in the underlying generator to which we
-    // are making changes other than a tree replacement succeeds in
-    // causing the necessary callbacks for children of that key.
+    // Test that it changes back to the empty string. Also, in r4_2
+    // and below, test that deleting keys in the underlying generator
+    // to which we are making changes other than a tree replacement
+    // fails to cause the necessary callbacks for children of that
+    // key.
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global/Have Disk/Really Have Disk", WvString::null);
     one.xset("cfg", WvString::null);
     WVPASS(!callbacks2.exists("cfg"));
-    WVPASS(!callbacks2.exists("cfg/Global/Have Disk/Really Have Disk"));
+    WVFAIL(!callbacks2.exists("cfg/Global/Have Disk/Really Have Disk"));
     callbacks2.zap();
     WVPASS(two.xget("cfg") == "");
 
@@ -311,10 +306,6 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     check_iterator(callbacks2, two);
 
     // Prepare to test that commit works.
-    callbacks2.add("cfg/Global", WvString::null);
-    callbacks2.add("cfg/foo/bar", WvString::null);
-    callbacks2.add("cfg/foo", WvString::null);
-    callbacks2.add("cfg", WvString::null);
     callbacks2.add("", WvString::null);
     one.xset("", WvString::null);
     callbacks2.add("", "");

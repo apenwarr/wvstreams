@@ -141,7 +141,10 @@ UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
 	    ListIter *it = new ListIter(this);
 	    UniConfValueTree::Iter i(*node);
 	    for (i.rewind(); i.next(); )
+	    {
 		it->keys.append(new WvString(i->key()), true);
+		it->values.append(new WvString(i->value()), true);
+	    }
             return it;
 	}
     }

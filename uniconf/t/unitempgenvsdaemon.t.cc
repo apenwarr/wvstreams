@@ -80,6 +80,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
     
     int initial_value = cfg["eth0"].xgetint("dhcpd", 0);
     cfg["eth0"].xsetint("dhcpd", !initial_value);
+    //usleep(50); // compensate for latency in propogation
     cfg.commit();
     int new_value = cfg["eth0"].xgetint("dhcpd", 0);
 

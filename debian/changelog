@@ -1,6 +1,55 @@
+wvstreams (4.0.2-1) unstable; urgency=low
+
+  * New upstream version.  (Closes: Bug#276571)
+    - Fixes OpenSSL FTBFS.  (Closes: Bug#281772)
+  * Depend on a newer version of BDB.  (Closes: Bug#248522)
+  * We now depend on XPLC 0.3.10.
+  * Moved /etc/uniconf.conf to libuniconf4.0.
+  * Added /etc/default/uniconfd to uniconfd's init script.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 26 Nov 2004 22:20:07 -0500
+
+wvstreams (4.0.1-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Simon Law <sfllaw@debian.org>  Wed, 17 Nov 2004 15:17:09 -0500
+
+wvstreams (4.0.0-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Simon Law <sfllaw@debian.org>  Thu,  7 Oct 2004 19:54:24 +0000
+
+wvstreams (4.0+20040924-1) unstable; urgency=low
+
+  * New upstream snapshot.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 24 Sep 2004 10:44:55 -0400
+
+wvstreams (4.0+20040827-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * Don't install XPLC out of the source tarball.
+  * libwvstreams4.0-dev should really be libwvstreams-dev.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 27 Aug 2004 20:45:15 -0400
+
+wvstreams (4.0+20040826-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * Added support for libuniconf4.0 and uniconfd.
+  * Updated Build-Depends and Build-Depends-Indep.
+  * Rewrote debian/rules.
+
+ -- Simon Law <sfllaw@debian.org>  Thu, 26 Aug 2004 00:10:16 -0400
+
 wvstreams (4.0+20040815-1) unstable; urgency=low
 
   * New upstream snapshot.
+  * New SONAME.
+  * Split libwvstreams4.0-extras off of libwvstreams4.0-base.
+  * Split libuniconf4.0 off of libwvstreams4.0-base.
 
  -- Peter Colijn <pcolijn@nit.ca>  Sun, 15 Aug 2004 01:24:31 -0400
 
@@ -9,6 +58,20 @@ wvstreams (3.80+20040623-1) unstable; urgency=low
   * New upstream snapshot.
 
  -- Simon Law <sfllaw@debian.org>  Tue, 23 Jun 2004 12:20:21 -0400
+
+wvstreams (3.75.0-1) unstable; urgency=low
+
+  * New Upstream release.
+
+ -- James Morrison <phython@debian.org>  Sat, 13 Mar 2004 14:33:44 -0500
+
+wvstreams (3.75+20040221-1) unstable; urgency=low
+
+  * Expand on libwvstreams-fft description.  (Closes: #210130)
+  * Check the file descriptor status in wvfile.cc. (Closes: #194336)
+  * Use new void * instead of new (void*) .
+
+ -- James Morrison <phython@debian.org>  Sat, 21 Feb 2004 20:55:39 -0500
 
 wvstreams (3.74+20031017-1) unstable; urgency=low
 

@@ -145,6 +145,20 @@ static int keysorter(const UniHashTreeBase *a, const UniHashTreeBase *b)
     return a->key().compareto(b->key());
 }
 
+void UniHashTreeBase::_recursive_unsorted_visit(
+    const UniHashTreeBase *a,
+    const UniHashTreeBaseVisitor &visitor, void *userdata,
+    bool preorder, bool postorder)
+{
+    if (preorder)
+	visitor(a, userdata);
+    Container::Iter i(*const_cast<Container*>(a->xchildren));
+    for (i.rewind(); i.next();)
+        _recursive_unsorted_visit(i.ptr(), visitor, userdata,
+            preorder, postorder);
+    if (postorder)
+        visitor(a, userdata);
+}
 
 bool UniHashTreeBase::_recursivecompare(
     const UniHashTreeBase *a, const UniHashTreeBase *b,
