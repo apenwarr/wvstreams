@@ -156,14 +156,13 @@ public: 						\
 	{ setup(); }					\
 							\
     ~##_newname_() 					\
-	{ shutdown(); _zap(); }				\
+	{ shutdown(); zap(); }				\
 							\
     void zap()						\
-	{ _zap(); head.next = NULL; tail = &head; }	\
-							\
-    void _zap()						\
     {							\
 	WvLink *l, *n=head.next; 			\
+	head.next = NULL;				\
+	tail = &head;					\
 	while ((l = n) != NULL) 			\
 	{ 						\
 	    n = l->next; 				\
