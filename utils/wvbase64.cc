@@ -138,7 +138,7 @@ bool WvBase64Decoder::_encode(WvBuf &in, WvBuf &out, bool flush)
         switch (symbol)
         {
             case -1: // invalid character
-                seterror("invalid character '%s' in base64 input", next);
+                seterror("invalid character #%s in base64 input", next);
                 return false;
                 
             case 64: // padding
@@ -175,7 +175,7 @@ bool WvBase64Decoder::_encode(WvBuf &in, WvBuf &out, bool flush)
                         break;
                         
                     case PAD:
-                        seterror("invalid character '%s' "
+                        seterror("invalid character #%s "
                             "after base64 padding", next);
                         return false;
                 }
