@@ -159,7 +159,7 @@ public:
     // 
     bool uses_continue_select;
     size_t personal_stack_size;	// stack size to reserve for continue_select()
-    void continue_select(time_t msec_timeout);
+    bool continue_select(time_t msec_timeout);
 
     // get the remote address from which the last data block was received.
     // May be NULL.  The pointer becomes invalid upon the next call to read().
@@ -188,6 +188,11 @@ public:
     // The alarm is cleared when callback() is called.
     void alarm(time_t msec_timeout);
     
+    // return the number of milliseconds remaining before the alarm will go
+    // off; -1 means no alarm is set (infinity), 0 means the alarm has
+    // been hit and will be cleared by the next callback().
+    time_t alarm_remaining();
+    
     // print a preformatted WvString to the stream.
     // see the simple version of write() way up above.
     size_t write(const WvString &s)
@@ -212,7 +217,7 @@ protected:
     int fd, errnum;
     WvString errstring;
     WvBuffer inbuf, outbuf;
-    bool select_ignores_buffer, outbuf_delayed_flush;
+    bool select_ignores_buffer, outbuf_delayed_flush, alarm_was_ticking;
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time

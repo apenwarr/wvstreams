@@ -33,13 +33,12 @@ static void stream_call(WvStream &s, void *userdata)
 	}
 	else
 	{
-	    //s.print("%s/%s: Tick?\n", mynum, count);
-	    //log("#%s: Tick?\n", count);
+	    log("#%s: Tick.\n", count);
 	    s.print("!");
 	}
 	
 	count++;
-	s.continue_select(100);
+	s.continue_select(100*mynum);
     }
 }
 

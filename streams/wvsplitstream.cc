@@ -4,6 +4,10 @@
  * 
  * A WvSplitStream uses two different file descriptors: one for input
  * and another for output.  See wvsplitstream.h.
+ * 
+ * NOTE: this file is a pain to maintain, because many of these functions
+ * are almost (but not quite) exactly like the ones in WvStream.  If
+ * WvStream changes, you need to change this too.
  */
 #include "wvsplitstream.h"
 #include <sys/types.h>

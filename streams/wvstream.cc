@@ -32,51 +32,19 @@ static void normalize(struct timeval &tv)
 }
 
 
-static time_t msec_remaining(struct timeval a)
-{
-    if (a.tv_sec)
-    {
-	struct timeval tv;
-	struct timezone tz;
-	
-	gettimeofday(&tv, &tz);
-	normalize(a);
-	normalize(tv);
-	
-	if (a.tv_sec <= tv.tv_sec
-	    || (   a.tv_sec  == tv.tv_sec 
-		&& a.tv_usec <= tv.tv_usec))
-	{
-	    return 0;
-	}
-	else if (a.tv_sec > tv.tv_sec)
-	{
-	    return ((a.tv_sec - tv.tv_sec) * 1000
-		    + (a.tv_usec - tv.tv_usec) / 1000);
-	}
-	else // a.tv_sec == tv.tv_sec
-	{
-	    return (a.tv_usec - tv.tv_usec) / 1000;
-	}
-	    
-    }
-    
-    return -1;
-}
-
-
 WvStream::WvStream(int _fd)
 {
     init();
     fd = _fd;
 }
 
+
 void WvStream::init()
 {
     callfunc = NULL;
     userdata = NULL;
     errnum = 0;
-    select_ignores_buffer = outbuf_delayed_flush = false;
+    select_ignores_buffer = outbuf_delayed_flush = alarm_was_ticking = false;
     queue_min = 0;
     autoclose_time = 0;
     alarm_time.tv_sec = alarm_time.tv_usec = 0;
@@ -94,8 +62,13 @@ WvStream::~WvStream()
     
     if (task)
     {
+	fprintf(stderr, "Killing object %p\n", this);
 	while (task->isrunning())
+	{
+	    fprintf(stderr, "(still) Killing object %p\n", this);
 	    taskman->run(*task);
+	}
+	fprintf(stderr, "Dead object %p\n", this);
 	task->recycle();
 	task = NULL;
     }
@@ -137,16 +110,23 @@ void WvStream::_callback(void *stream)
 
 void WvStream::callback()
 {
-    // if the alarm has gone off and we're calling callback... good!
-    if (msec_remaining(alarm_time) == 0)
-	alarm_time.tv_sec = alarm_time.tv_usec = 0;
+    fprintf(stderr, "callback object %p\n", this);
     
-    if (!taskman)
-	taskman = new WvTaskMan;
+    // if the alarm has gone off and we're calling callback... good!
+    if (alarm_remaining() == 0)
+    {
+	alarm_time.tv_sec = alarm_time.tv_usec = 0;
+	alarm_was_ticking = true;
+    }
+    else
+	alarm_was_ticking = false;
     
     if (1)
 //    if (uses_continue_select && personal_stack_size >= 1024)
     {
+	if (!taskman)
+	    taskman = new WvTaskMan;
+    
 	if (!task)
 	{
 	    task = taskman->start("streamexec", _callback, this,
@@ -159,6 +139,21 @@ void WvStream::callback()
     }
     else
 	_callback(this);
+    
+    /* DON'T PUT ANY CODE HERE!
+     * 
+     * WvStreamList calls its child streams above via taskman->run().
+     * If a child is deleted, it waits for its callback task to finish the
+     * current iteration, then recycles its WvTask object and allows the
+     * "delete" call to finish, so the object no longer exists.
+     * 
+     * The catch: the callback() function is actually running in
+     * the WvStreamList's task (if any), which hasn't had a chance to
+     * exit yet.  Next time we jump into the WvStreamList, we will arrive
+     * immediately after the taskman->run() line, ie. right here in the
+     * code.  In that case, the 'this' pointer could be pointing at an
+     * invalid object, so we should just exit before we do something stupid.
+     */
 }
 
 
@@ -390,7 +385,7 @@ void WvStream::flush(time_t msec_timeout)
 	    outbuf.unget(attempt - real);
 	
 	// since test_set() can call us, and select() calls test_set(),
-	// we need to be careful not to call select() if it is unnecessary!
+	// we need to be careful not to call select() if we don't need to!
 	if (!msec_timeout || !select(msec_timeout, false, true))
 	    break;
     }
@@ -430,9 +425,9 @@ bool WvStream::select_setup(SelectInfo &si)
 {
     int fd;
     
-    time_t alarm_remaining = msec_remaining(alarm_time);
+    time_t alarmleft = alarm_remaining();
     
-    if (alarm_remaining == 0 && !select_ignores_buffer)
+    if (alarmleft == 0 && !select_ignores_buffer)
 	return true; // alarm has rung
     
     // handle read-ahead buffering
@@ -453,9 +448,9 @@ bool WvStream::select_setup(SelectInfo &si)
     if (si.max_fd < fd)
 	si.max_fd = fd;
     
-    if (alarm_remaining >= 0
-      && (alarm_remaining < si.msec_timeout || si.msec_timeout < 0))
-	si.msec_timeout = alarm_remaining;
+    if (alarmleft >= 0
+      && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
+	si.msec_timeout = alarmleft;
     
     return false;
 }
@@ -538,6 +533,7 @@ void WvStream::alarm(time_t msec_timeout)
 	gettimeofday(&alarm_time, &tz);
 	alarm_time.tv_sec += msec_timeout / 1000;
 	alarm_time.tv_usec += (msec_timeout % 1000) * 1000;
+	normalize(alarm_time);
     }
     else
     {
@@ -547,7 +543,40 @@ void WvStream::alarm(time_t msec_timeout)
 }
 
 
-void WvStream::continue_select(time_t msec_timeout)
+time_t WvStream::alarm_remaining()
+{
+    struct timeval &a = alarm_time;
+    
+    if (a.tv_sec)
+    {
+	struct timeval tv;
+	struct timezone tz;
+	
+	gettimeofday(&tv, &tz);
+	normalize(tv);
+	
+	if (a.tv_sec < tv.tv_sec
+	    || (   a.tv_sec  == tv.tv_sec 
+		&& a.tv_usec <= tv.tv_usec))
+	{
+	    return 0;
+	}
+	else if (a.tv_sec > tv.tv_sec)
+	{
+	    return ((a.tv_sec - tv.tv_sec) * 1000
+		    + (a.tv_usec - tv.tv_usec) / 1000);
+	}
+	else // a.tv_sec == tv.tv_sec
+	{
+	    return (a.tv_usec - tv.tv_usec) / 1000;
+	}
+    }
+    
+    return -1;
+}
+
+
+bool WvStream::continue_select(time_t msec_timeout)
 {
     assert(uses_continue_select);
     assert(task);
@@ -558,6 +587,9 @@ void WvStream::continue_select(time_t msec_timeout)
 	alarm(msec_timeout);
     
     taskman->yield();
+    
+    // when we get here, someone has jumped back into our task
+    return !alarm_was_ticking;
 }
 
 
