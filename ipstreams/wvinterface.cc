@@ -359,12 +359,19 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     if (gw == WvIPAddr()) // no gateway; change the scope name
 	argv[13] = "link";
     
-    if (dest.bits() == 0
-	&& WvPipe(argv[0], argv, false, false, false).finish() != 242)
+    if (dest.bits() == 0)
     {
-	// added a default route via the subprogram
-	// 242 is the magic "WvPipe could not exec program..." exit code.
-	return 0;
+	err(WvLog::Debug2, "addroute: ");
+	for (int i = 0; argv[i]; i++)
+	    err(WvLog::Debug2, "%s ", argv[i]);
+	err(WvLog::Debug2, "\n");
+	
+	if (WvPipe(argv[0], argv, false, false, false).finish() != 242)
+	{
+	    // added a default route via the subprogram
+	    // 242 is the magic "WvPipe could not exec program..." exit code.
+	    return 0;
+	}
     }
     
     // if we get here, it is not a default route or the 'ip' command is
@@ -415,11 +422,18 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     if (gw == WvIPAddr()) // no gateway; change the scope name
 	argv[13] = "link";
     
-    if (dest.bits() == 0
-	&& WvPipe(argv[0], argv, false, false, false).finish() == 0)
+    if (dest.bits() == 0)
     {
-	// successfully deleted a default route via the subprogram
-	return 0;
+	err(WvLog::Debug2, "addroute: ");
+	for (int i = 0; argv[i]; i++)
+	    err(WvLog::Debug2, "%s ", argv[i]);
+	err(WvLog::Debug2, "\n");
+	
+	if (WvPipe(argv[0], argv, false, false, false).finish() == 0)
+	{
+	    // successfully deleted a default route via the subprogram
+	    return 0;
+	}
     }
 
     fill_rte(&rte, ifname, dest, gw, metric);
