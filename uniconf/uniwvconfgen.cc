@@ -8,6 +8,25 @@
 #include "uniwvconfgen.h"
 #include "wvmoniker.h"
 
+/**
+ * A wrapper class for the wvconf iters to provide a UniConfGen iter.
+ */
+class UniWvConfGen::WvConfIter : public UniConfGen::Iter
+{
+protected:
+    WvConfigSection::Iter i;
+
+public:
+    WvConfIter(WvConfigSection *sect);
+
+    /***** Overridden members *****/
+
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
+    virtual WvString value() const;
+};
+
 
 static IUniConfGen *creator(WvStringParm s, IObject *, void *obj)
 {
@@ -80,7 +99,7 @@ UniWvConfGen::Iter *UniWvConfGen::iterator(const UniConfKey &key)
     if (sect)
         return new WvConfIter(sect);
     else
-        return new UniConfGen::NullIter();
+        return NULL;
 }
 
 
@@ -108,4 +127,10 @@ bool UniWvConfGen::WvConfIter::next()
 UniConfKey UniWvConfGen::WvConfIter::key() const
 {
     return i->name;
+}
+
+
+WvString UniWvConfGen::WvConfIter::value() const
+{
+    return i->value;
 }

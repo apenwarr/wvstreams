@@ -31,6 +31,17 @@ class UniClientGen : public UniConfGen
 
     UniClientConn *conn;
 
+    struct KeyVal
+    {
+	UniConfKey key;
+	WvString val;
+	
+	KeyVal(const UniConfKey &_key, WvStringParm _val)
+	    : key(_key), val(_val)
+	    { }
+    };
+    DeclareWvList(KeyVal);
+
     /*
      * To make sure we don't deliver notifications while we're already in the
      * callback (as this could result in trying to call it again before
@@ -44,7 +55,8 @@ class UniClientGen : public UniConfGen
 
     WvString result_key;        /*!< the key that the current result is from */
     WvString result;            /*!< the result from the current key */
-    WvStringList *result_list;  /*!< result list for iterations */
+    
+    KeyValList *result_list;    /*!< result list for iterations */
 
     bool cmdinprogress;     /*!< true while a command is in progress */
     bool cmdsuccess;        /*!< true when a command completed successfully */
@@ -70,31 +82,15 @@ public:
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
+    virtual Iter *recursiveiterator(const UniConfKey &key);
 
 protected:
+    virtual Iter *do_iterator(const UniConfKey &key, bool recursive);
     void conncallback(WvStream &s, void *userdata);
     bool do_select();
     void clientdelta(const UniConfKey &key, WvStringParm value);
     void deltacb(WvStream &, void *);
 };
 
-
-/** An iterator over remote keys. */
-class UniClientGen::RemoteKeyIter : public UniClientGen::Iter
-{
-protected:
-    WvStringList *list;
-    WvStringList::Iter i;
-
-public:
-    RemoteKeyIter(WvStringList *_list) : list(_list), i(*_list) { }
-    virtual ~RemoteKeyIter() { delete list; }
-
-    /***** Overridden methods *****/
-
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-};
 
 #endif // __UNICONFCLIENT_H

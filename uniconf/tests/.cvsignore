@@ -3,3 +3,4 @@ uniconf.ini
 .*.d
 *test
 uni
+.wvtest-total

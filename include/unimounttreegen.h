@@ -9,9 +9,7 @@
 
 #include "uniconfgen.h"
 #include "uniconftree.h"
-#include "wvcallback.h"
 #include "wvstringtable.h"
-#include "wvmoniker.h"
 
 /**
  * Used by UniMountTreeGen to maintain information about mounted
@@ -203,27 +201,5 @@ private:
     void gencallback(const UniConfKey &key, WvStringParm value, void *userdata);
 };
 
-
-/**
- * An iterator over the keys in a tree of mounted generators.
- */
-class UniMountTreeGen::KeyIter : public UniConfGen::Iter
-{
-    UniMountTreeGen *xroot;
-    UniConfKey xkey;
-
-    UniMountTree::GenIter genit;
-    WvStringTable hack; // FIXME: ugly hack
-    WvStringTable::Iter hackit;
-
-public:
-    KeyIter(UniMountTreeGen &root, const UniConfKey &key);
-
-    /***** Overridden members *****/
-    
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-};
 
 #endif //__UNIMOUNTTREEGEN_H

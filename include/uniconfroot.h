@@ -61,19 +61,19 @@ public:
 
 /**
  * Represents the root of a hierarhical registry consisting of pairs
- * of UniConfKeys and associated string values.  * 
+ * of UniConfKeys and associated string values.
  *
  * Any number of data containers may be mounted into the tree at any
  * number of mount points to provide a backing store from which
  * registry keys and values are fetched and into which they are
  * stored.  Multiple data containers may be mounted at the same
  * location using standard unix semantics.
- *
  */
 class UniConfRoot : public UniConf
 {
     friend class UniConf;
     friend class UniConf::Iter;
+    friend class UniConf::RecursiveIter;
 
     UniWatchInfoTree watchroot;
     

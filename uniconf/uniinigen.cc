@@ -30,7 +30,7 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     : filename(_filename), create_mode(_create_mode), log(_filename)
 {
-    log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
+    //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
 }
@@ -46,8 +46,10 @@ bool UniIniGen::refresh()
     WvFile file(filename, O_RDONLY);
     if (!file.isok())
     {
-        log("Can't open '%s' for reading: %s\n", filename, file.errstr());
-	log("...starting with blank configuration.\n");
+        log(WvLog::Warning, 
+	    "Can't open '%s' for reading: %s\n"
+	    "...starting with blank configuration.\n",
+	    filename, file.errstr());
         return false;
     }
     
@@ -93,7 +95,7 @@ bool UniIniGen::refresh()
             if (str[0] == '#')
             {
                 // a comment line.  FIXME: we drop it completely!
-                log(WvLog::Debug5, "Comment: \"%s\"\n", str + 1);
+                //log(WvLog::Debug5, "Comment: \"%s\"\n", str + 1);
                 continue;
             }
 	    
@@ -103,7 +105,7 @@ bool UniIniGen::refresh()
                 str[len - 1] = '\0';
                 WvString name(wvtcl_unescape(trim_string(str + 1)));
                 section = UniConfKey(name);
-                log(WvLog::Debug5, "Refresh section: \"%s\"\n", section);
+                //log(WvLog::Debug5, "Refresh section: \"%s\"\n", section);
                 continue;
             }
 	    
@@ -130,7 +132,8 @@ bool UniIniGen::refresh()
                 }
             }
 	    
-            log("Ignoring malformed input line: \"%s\"\n", word);
+            log(WvLog::Warning,
+		"Ignoring malformed input line: \"%s\"\n", word);
         }
     }
 
@@ -138,7 +141,8 @@ bool UniIniGen::refresh()
     file.close();
     if (file.geterr())
     {
-        log("Error reading from config file: \"%s\"\n", file.errstr());
+        log(WvLog::Warning, 
+	    "Error reading from config file: \"%s\"\n", file.errstr());
         delete newgen;
         return false;
     }
@@ -153,7 +157,8 @@ bool UniIniGen::refresh()
     if (avail > 0)
     {
         // last line must have contained junk
-        log("XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
+        log(WvLog::Warning,
+	    "XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
     }
 
     // switch the trees and send notifications
@@ -234,7 +239,8 @@ void UniIniGen::commit()
 
     file.close();
     if (file.geterr())
-        log("Can't write '%s': %s\n", filename, file.errstr());
+        log(WvLog::Warning,
+	    "Can't write '%s': %s\n", filename, file.errstr());
     else
 	dirty = false;
 }

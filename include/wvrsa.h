@@ -48,10 +48,28 @@ public:
     
     ~WvRSAKey();
     
+    virtual bool isok() const;
+    
+    /**
+     * Retrieve the private key as a hexified string
+     * returns WvString::null if there is only a public
+     * key.
+     */
     WvString private_str() const
         { return prv; }
+
+    /**
+     * Retrieve the public key as a hexified string
+     */
     WvString public_str() const
         { return pub; }
+    
+    /**
+     * Retrieve the public or private key in PEM encoded
+     * format.
+     */
+    WvString getpem(bool privkey);
+
 };
 
 

@@ -47,24 +47,7 @@ public:
     virtual bool isok();
     virtual Iter *iterator(const UniConfKey &key);
 
-    class IterIter : public UniConfGen::Iter
-    {
-    protected:
-        DeclareWvScatterTable(UniConfKey);
-        DeclareWvList2(IterList, UniConfGen::Iter);
-
-        IterList l;
-        IterList::Iter *i;
-        UniConfKeyTable d;
-
-    public:
-        IterIter(UniConfGenList::Iter &geniter, const UniConfKey &key);
-        virtual ~IterIter() { delete i; }
-
-        virtual void rewind();
-        virtual bool next();
-        virtual UniConfKey key() const;
-    };
+    class IterIter;
 };
 
 

@@ -62,6 +62,12 @@ bool UniConf::haschildren() const
 }
 
 
+void UniConf::prefetch(bool recursive) const
+{
+    xroot->mounts.prefetch(xfullkey, recursive);
+}
+
+
 WvString UniConf::get(WvStringParm defvalue) const
 {
     WvString value = xroot->mounts.get(xfullkey);
@@ -228,60 +234,22 @@ void UniConf::dump(WvStream &stream, bool everything) const
 /***** UniConf::Iter *****/
 
 UniConf::Iter::Iter(const UniConf &_top)
-    : IterBase(_top), it(_top.rootobj()->mounts.iterator(top.fullkey()))
+    : IterBase(_top)
 {
+    it = _top.rootobj()->mounts.iterator(top.fullkey());
+    if (!it) it = new UniConfGen::NullIter;
 }
 
 
 
 /***** UniConf::RecursiveIter *****/
 
-UniConf::RecursiveIter::RecursiveIter(const UniConf &root)
-    : IterBase(root)
+UniConf::RecursiveIter::RecursiveIter(const UniConf &_top)
+    : IterBase(_top)
 {
+    it = _top.rootobj()->mounts.recursiveiterator(top.fullkey());
+    if (!it) it = new UniConfGen::NullIter;
 }
-
-
-void UniConf::RecursiveIter::rewind()
-{
-    itlist.zap();
-    UniConf::Iter *subi = new UniConf::Iter(top);
-    subi->rewind();
-    itlist.prepend(subi, true);
-}
-
-
-bool UniConf::RecursiveIter::next()
-{
-    assert(!itlist.isempty()); // trying to seek past the end is illegal!
-    
-    UniConf::IterList::Iter i(itlist);
-    for (i.rewind(); i.next(); )
-    {
-        if (i->next()) // NOTE: not the same as i.next()
-        {
-            // return the item first
-            current = **i;
-            
-            // set up so next time, we go into its subtree
-            if (current.haschildren())
-            {
-                UniConf::Iter *subi = new UniConf::Iter(current);
-                subi->rewind();
-                itlist.prepend(subi, true);
-            }
-            
-            return true;
-        }
-        
-        // otherwise, this iterator is empty; move up the tree
-        i.xunlink();
-    }
-    
-    // all done!
-    return false;
-}
-
 
 
 /***** UniConf::XIter *****/

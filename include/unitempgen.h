@@ -39,23 +39,4 @@ public:
 };
 
 
-/** An iterator over keys stored in a UniTempGen. */
-class UniTempGen::NodeIter : public UniTempGen::Iter
-{
-protected:
-    UniTempGen *xgen;
-    UniConfValueTree::Iter xit;
-
-public:
-    NodeIter(UniTempGen *gen, const UniConfValueTree::Iter &it);
-    virtual ~NodeIter();
-
-    /***** Overridden methods *****/
-
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-};
-
-
 #endif // __UNITEMPGEN_H

@@ -135,12 +135,15 @@ public:
     
     /***** Key Retrieval API *****/
     
+    /** See UniConfGen::prefetch(). */
+    void prefetch(bool recursive) const;
+    
     /**
      * Fetches the string value for this key from the registry.  If the
      * key is not found, returns 'defvalue' instead.
      */
     WvString get(WvStringParm defvalue = WvString::null) const;
-
+    
     /**
      * Without fetching its value, returns true if this key exists.
      * 
@@ -414,7 +417,7 @@ public:
         { it->rewind(); }
     bool next()
     {
-        if (! it->next())
+        if (!it->next())
             return false;
         current = top[it->key()];
         return true;
@@ -427,14 +430,24 @@ public:
  */
 class UniConf::RecursiveIter : public UniConf::IterBase
 {
-    UniConf::IterList itlist;
+    UniConfGen::Iter *it;
 
 public:
     /** Creates a recursive iterator over a branch. */
     RecursiveIter(const UniConf &_top);
 
-    void rewind();
-    bool next();
+    ~RecursiveIter()
+        { delete it; }
+
+    void rewind()
+        { it->rewind(); }
+    bool next()
+    {
+        if (!it->next())
+            return false;
+        current = top[it->key()];
+        return true;
+    }   
 };
 
 

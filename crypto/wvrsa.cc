@@ -4,11 +4,12 @@
  * 
  * RSA cryptography abstractions.
  */
+#include <assert.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
 #include "wvsslhacks.h"
 #include "wvrsa.h"
 #include "wvhex.h"
-#include <assert.h>
-#include <openssl/rsa.h>
 
 /***** WvRSAKey *****/
 
@@ -61,6 +62,12 @@ WvRSAKey::~WvRSAKey()
 }
 
 
+bool WvRSAKey::isok() const
+{
+   return rsa && !errstring && (!prv || RSA_check_key(rsa) == 1);
+}
+
+
 void WvRSAKey::init(WvStringParm keystr, bool priv)
 {
     // Start out with everything nulled out...
@@ -70,7 +77,7 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     
     // unhexify the supplied key
     WvDynBuf keybuf;
-    if (!WvHexDecoder().flushstrbuf(keystr, keybuf, true) ||
+    if (!WvHexDecoder().flushstrbuf(keystr,  keybuf, true) ||
 	keybuf.used() == 0)
     {
         seterr("RSA key is not a valid hex string");
@@ -79,12 +86,11 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     
     size_t keylen = keybuf.used();
     const unsigned char *key = keybuf.get(keylen);
-    const unsigned char *p = key;
     
     // create the RSA struct
     if (priv)
     {
-	rsa = wv_d2i_RSAPrivateKey(NULL, &p, keylen);
+	rsa = wv_d2i_RSAPrivateKey(NULL, &key, keylen);
         if (rsa != NULL)
         {
             prv = keystr;
@@ -93,7 +99,7 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     }
     else
     {
-	rsa = wv_d2i_RSAPublicKey(NULL, &p, keylen);
+	rsa = wv_d2i_RSAPublicKey(NULL, &key, keylen);
         if (rsa != NULL)
         {
             prv = WvString::null;
@@ -105,61 +111,72 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
 }
 
 
-#if 0
-void WvRSAKey::pem2hex(WvStringParm filename)
+
+WvString WvRSAKey::getpem(bool privkey)
 {
-    RSA *rsa = NULL;
-    FILE *fp;
-
-    fp = fopen(filename, "r");
-
+    FILE *fp = tmpfile();
+    const EVP_CIPHER *enc;
+    
     if (!fp)
     {
-	seterr("Unable to open %s!",filename);
-	return;
+	seterr("Unable to open temporary file!");
+	return WvString::null;
     }
 
-    rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
-
-    fclose(fp);
-
-    if (!rsa)
+    if (privkey)
     {
-	seterr("Unable to decode PEM File!");
-	return;
+	enc = EVP_get_cipherbyname("rsa");
+	PEM_write_RSAPrivateKey(fp, rsa, enc,
+			       NULL, 0, NULL, NULL);
     }
     else
     {
-	hexify(rsa);
-	return;
+	enc = EVP_get_cipherbyname("rsa");
+	PEM_write_RSAPublicKey(fp, rsa);
     }
+    
+    WvDynBuf b;
+    size_t len;
+    
+    rewind(fp);
+    while ((len = fread(b.alloc(1024), 1, 1024, fp)) > 0)
+	b.unalloc(1024 - len);
+    b.unalloc(1024 - len);
+    fclose(fp);
+
+    return b.getstr();
 }
-#endif
+
 
 
 WvString WvRSAKey::hexifypub(struct rsa_st *rsa)
 {
     WvDynBuf keybuf;
+
+    assert(rsa);
+
     size_t size = i2d_RSAPublicKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPublicKey(rsa, & key);
     assert(size == newsize);
-    
-    WvString keystr = WvHexEncoder().strflushbuf(keybuf, true);
-    return keystr;
+    assert(keybuf.used() == size);
+
+    return WvString(WvHexEncoder().strflushbuf(keybuf, true));
 }
 
 
 WvString WvRSAKey::hexifyprv(struct rsa_st *rsa)
 {
     WvDynBuf keybuf;
+
+    assert(rsa);
+
     size_t size = i2d_RSAPrivateKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPrivateKey(rsa, & key);
     assert(size == newsize);
-    
-    WvString keystr = WvHexEncoder().strflushbuf(keybuf, true);
-    return keystr;
+
+    return WvString(WvHexEncoder().strflushbuf(keybuf, true));
 }
 
 

@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
- * A UniConf key management abstraction.
+ * An abstract data container that backs a UniConf tree.
  */
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
@@ -76,6 +76,17 @@ public:
     /***** Key Retrieval API *****/
     
     /**
+     * Indicate that we will eventually be interested in doing get(),
+     * haschildren(), or other "get-like" operations on a particular key
+     * or tree of keys.  The generator may be able to speed up these
+     * operations by, say, caching them in advance.
+     * 
+     * This function is not allowed to do blocking operations.  It is allowed
+     * to do nothing at all, however, and then get() might block later.
+     */
+    virtual void prefetch(const UniConfKey &key, bool recursive) = 0;
+    
+    /**
      * Fetches a string value for a key from the registry.  If the key doesn't
      * exist, the return value has .isnull() == true.
      */
@@ -137,16 +148,33 @@ public:
 
     /**
      * Returns an iterator over the children of the specified key.
-     * Must not return NULL; consider returning a NullIter instead.
+     * May return NULL or an empty iterator if the key has no children.
      *
      * The caller takes ownership of the returned iterator and is responsible
      * for deleting it when finished.
      */
     virtual Iter *iterator(const UniConfKey &key) = 0;
+    
+    /**
+     * Like iterator(), but the returned iterator is recursive, that is,
+     * it will return children of the immediate children, not just the
+     * immediate children themselves.
+     * 
+     * May return NULL if the key has no immediate children (since that means
+     * there are also no indirect children).
+     * 
+     * Note that UniConfGen::recursiveiterator() is a default
+     * implementation that just calls iterator() recursively, so it'll work
+     * in any derived class without you overriding this function.  However,
+     * you might want to do it anyway if it would be more efficient in your
+     * particular case.
+     */
+    virtual Iter *recursiveiterator(const UniConfKey &key) = 0;
 };
 
 DEFINE_IID(IUniConfGen, {0x7ca76e98, 0xb694, 0x43ca,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9f}});
+
 
 /**
  * A default implementation of IUniConfGen, providing various handy features
@@ -167,10 +195,6 @@ class UniConfGen : public IUniConfGen
 protected:
     /** Creates a UniConfGen object. */
     UniConfGen();
-
-    /** Raises an error condition. */
-    void seterror(WvStringParm error)
-        { } // FIXME: decide on final API for this probably WvError
 
 public:
     /** Destroys the UniConfGen and may discard uncommitted data. */
@@ -233,29 +257,25 @@ public:
     void delta(const UniConfKey &key, WvStringParm value);   
     
     /***** Status API *****/
-    
     virtual bool isok();
-
     
     /***** Key Persistence API *****/
-    
     virtual void commit() { }
     virtual bool refresh() { return true; }
+    virtual void prefetch(const UniConfKey &key, bool recursive) { }
     virtual WvString get(const UniConfKey &key) = 0;
     virtual bool exists(const UniConfKey &key);
     virtual int str2int(WvStringParm s, int defvalue) const;
 
-    
     /***** Key Storage API *****/
-    
     virtual void set(const UniConfKey &key, WvStringParm value) = 0;
 
-
     /***** Key Enumeration API *****/
-    
     virtual bool haschildren(const UniConfKey &key);
-
     virtual Iter *iterator(const UniConfKey &key) = 0;
+    
+    // a helpful default that just calls iterator() recursively
+    virtual Iter *recursiveiterator(const UniConfKey &key);
 };
 
 DeclareWvList(IUniConfGen);
@@ -297,6 +317,12 @@ public:
 
     /** Returns the current key. */
     virtual UniConfKey key() const = 0;
+    
+    /** 
+     * Returns the value of the current key.  You could just do a get(),
+     * but maybe your generator has a more efficient way.
+     */
+    virtual WvString value() const = 0;
 };
 
 
@@ -312,6 +338,7 @@ public:
     virtual void rewind() { }
     virtual bool next() { return false; }
     virtual UniConfKey key() const { return UniConfKey::EMPTY; }
+    virtual WvString value() const { return WvString(); }
 };
 
 #endif // UNICONFGEN_H
