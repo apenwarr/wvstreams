@@ -35,7 +35,7 @@ WvString UniConfDefGen::get(const UniConfKey &key)
 WvString UniConfDefGen::finddefault(UniConfKey key, UniConfKey keypart)
 {
     if (key.isempty())
-        return UniConfFilterGen::get(key);
+        return UniConfFilterGen::get(keypart);
 
     WvString cur = key.first();
     key = key.removefirst();

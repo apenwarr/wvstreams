@@ -441,6 +441,37 @@ int main()
     }
     
     {
+        wvcon->print("\n\n");
+        log("-- Defaults test begins\n");
+
+        log("Setting up config file...\n");
+        UniConfRoot root("default:ini:uniconf.ini");
+        root["*"].set("go wild, bay-be!");
+        root["*/drheld/whee"].set("3");
+        root["users/*/chicken/bork"].set("b0rk3n g00dn3ss");
+        root["users/*/chicken/*"].set("happy");
+        root["users/apenwarr"].set("ooga booga");
+        root["users/apenwarr/chicken/hammer"].set("smashy!");
+        root["users/apenwarr/ftp"].set("1");
+        root.commit();
+
+        log("Starting tests...\n");
+
+        WvString result = root["stupidthing"].get();
+        log("/stupidthing = %s (should = go wild, bay-be!)\n", result);
+
+        result = root["home/drheld"]["whee"].get();
+        log("/home/drheld/whee = %s (should = 3)\n", result);
+
+        result = root["/users/apenwarr/chicken/bork"].get();
+        log("/users/apenwarr/chicken/bork = %s (should = b0rk3n g00dn3ss)\n",
+                                                                    result);
+
+        result = root["/users/silly/chicken/die"].get();
+        log("/users/silly/chicken/die = %s (should = happy)\n", result);
+    }
+
+    {
 	wvcon->print("\n\n");
 	log("-- IniFile test2 begins\n");
 	
