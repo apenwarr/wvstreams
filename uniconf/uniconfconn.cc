@@ -1,6 +1,18 @@
 #include "uniconfconn.h"
 #include "wvtclstring.h"
 
+// CONSTANTS FOR CONTROL CONNECTIONS
+const WvString UniConfConn::UNICONF_GET("get");
+const WvString UniConfConn::UNICONF_SET("set");
+const WvString UniConfConn::UNICONF_SUBTREE("subt");
+const WvString UniConfConn::UNICONF_RECURSIVESUBTREE("rsub");
+    
+const WvString UniConfConn::UNICONF_RETURN("RETN");
+const WvString UniConfConn::UNICONF_FORGET("FGET");
+const WvString UniConfConn::UNICONF_SUBTREE_RETURN("SUBT");
+const WvString UniConfConn::UNICONF_OK("OK");
+const WvString UniConfConn::UNICONF_FAIL("FAIL");
+
 UniConfConn::UniConfConn(WvStream *_s) : WvStreamClone(_s)
 {
 }

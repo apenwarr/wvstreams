@@ -11,6 +11,7 @@
 
 UniConfEvents::NotifierDict UniConfEvents::notifiers(5);
 
+int eventcount = 0;
 
 unsigned int WvHash(const UniConf *ptr)
 {
@@ -23,6 +24,7 @@ UniConfEvents::UniConfEvents(UniConf &_cfg, WvStringParm _label)
 {
     notifier = NULL;
     find_notifier();
+
 }
 
 
@@ -66,6 +68,14 @@ static UniConf *find_match(UniConf *h, const UniConfKey &key)
 	return NULL;
 }
 
+void UniConfEvents::add(UniConfCallback cb, void *userdata, const UniConfKey &key)
+{     
+    callbacks.append(new CallbackInfo(cb, userdata, key), true); 
+    eventcount++;
+    WvLog log(label, WvLog::Debug);
+//    log("Added a callback for %s.There are now %s events.\n", key, eventcount);
+}
+
 
 // find the closest UniConfNotifier that can contain us.
 void UniConfEvents::find_notifier()
@@ -100,12 +110,12 @@ void UniConfEvents::do_callbacks()
     UniConf *h;
     
     CallbackInfoList::Iter i(callbacks);
+    WvLog log(label, WvLog::Debug);
     for (i.rewind(); i.next(); )
     {
 	h = find_match(&cfg, i->key);
 	if (h)
         {
-            // run the callback then delete.
 	    i->cb(i->userdata, *h);
         }
     }
@@ -115,12 +125,18 @@ void UniConfEvents::do_callbacks()
 void UniConfEvents::del(UniConfCallback cb,
 			    void *userdata, const UniConfKey &key)
 {
+    WvLog log(label, WvLog::Debug);
     CallbackInfoList::Iter i(callbacks);
     for (i.rewind(); i.next(); )
     {
 	if (i->cb == cb && i->userdata == userdata 
 	  && i->key.printable() == key.printable())
+        {
+            eventcount--;
+/*            log("Deleted a callback for %s.  There are now %s events.\n",
+                    key.printable(), eventcount);*/
 	    i.xunlink();
+        }
     }
 }
 

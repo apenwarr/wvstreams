@@ -67,8 +67,7 @@ public:
     UniConfEvents(UniConf &_cfg, WvStringParm _label = "Config Event");
     ~UniConfEvents();
     
-    void add(UniConfCallback cb, void *userdata, const UniConfKey &key)
-        { callbacks.append(new CallbackInfo(cb, userdata, key), true); }
+    void add(UniConfCallback cb, void *userdata, const UniConfKey &key);
     void del(UniConfCallback cb, void *userdata, const UniConfKey &key);
     
     

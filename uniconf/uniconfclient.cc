@@ -264,7 +264,7 @@ void UniConfClient::execute()
                 break;
             
             // Value from a get is incoming
-            if (cmd == "RETN") 
+            if (cmd == UniConfConn::UNICONF_RETURN)
             {
                 executereturn(key, fromline);
             }
@@ -272,19 +272,19 @@ void UniConfClient::execute()
             // but for now is used when:  
             //
             // A set has happened on a key we requested.
-            else if (cmd == "FGET") 
+            else if (cmd == UniConfConn::UNICONF_FORGET)
             {
                 executeforget(key);
             }
-            else if (cmd == "SUBT")  // This is so inefficient it scares me.
+            else if (cmd == UniConfConn::UNICONF_SUBTREE_RETURN)
             {
                 executesubtree(key, fromline);
             }
-            else if (cmd == "OK")
+            else if (cmd == UniConfConn::UNICONF_OK)
             {
                 executeok(fromline);
             }
-            else if (cmd == "FAIL")
+            else if (cmd == UniConfConn::UNICONF_FAIL)
             {
                 executefail(fromline);
             }
