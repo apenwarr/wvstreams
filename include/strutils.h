@@ -229,37 +229,38 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
     WvString s(_s);
     char *sptr = s.edit(), *eptr, oldc;
 
-	bool start = true;
+    bool start = true;
     while (sptr && *sptr)
+    {
+	int len = strspn(sptr,splitchars);
+	sptr += len;
+
+	--limit;
+
+	for (bool unseen = true; len > 0 && limit; 
+			(len -= strlen(splitchars)),--limit)
 	{
-	  int len = strspn(sptr,splitchars);
-	    sptr += len;
+	    if ((!start) && (unseen))
+		{ unseen = false; continue; }
 
-	  --limit;
+	    coll.add(new WvString(""), true);
+	}
 
-	  for (bool unseen = true; len > 0 && limit; (len -= strlen(splitchars)),--limit)
-	  {
-		if ((!start) && (unseen))
-		  { unseen = false; continue; }
+	start = false;
 
-		coll.add(new WvString(""), true);
-	  }
+	if (limit)
+	    eptr = sptr + strcspn(sptr,splitchars);
+	else
+	    eptr = sptr + strlen(sptr);
 
-	  start = false;
+	oldc = *eptr;
+	*eptr = '\0';
 
-	  if (limit)
-        eptr = sptr + strcspn(sptr,splitchars);
-      else
-		eptr = sptr + strlen(sptr);
+	if (limit)
+	    coll.add(new WvString(sptr), true);
 
-      oldc = *eptr;
-      *eptr = '\0';
-
-      if (limit)
-		coll.add(new WvString(sptr), true);
-
-      *eptr = oldc;
-      sptr = eptr;
+	*eptr = oldc;
+	sptr = eptr;
     }
 }
 
