@@ -259,6 +259,27 @@ WvString &WvString::operator= (const WvFastString &s2)
 	return *this; // no change
     else if (!s2.buf)
     {
+	// We have a string, and we're about to free() it.
+	if (str && buf && buf->links == 1)
+	{
+	    // Set buf->size, if we don't already know it.
+	    if (buf->size == 0)
+		buf->size = strlen(str);
+	    // If the two strings overlap, we'll need to copy s2 into
+	    // a new WvStringBuf.
+	    if (str <= s2.str && s2.str <= (str + buf->size))
+	    {
+		// We do what unlink(); link(); unique() would do, but
+		// in the right order.
+		WvStringBuf *oldbuf = buf;
+		link(&nullbuf, s2.str);
+		nullbuf.links++; // Force unique to make a copy
+		unique();
+		nullbuf.links--; // Undo the forcing
+		free(oldbuf);
+		return *this;
+	    }
+	}
 	// assigning from a non-copied string - copy data if needed.
 	unlink();
 	link(&nullbuf, s2.str);

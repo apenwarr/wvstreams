@@ -740,3 +740,34 @@ WVTEST_MAIN("substr")
     WVPASS(substr(big, 10, 1) == "");
 }
 
+void foo(WvStringParm s)
+{
+    wvcon->print("foo: s is `%s'\n", s);
+    WvString str(s);
+    str = trim_string(str.edit());
+    wvcon->print("foo: str is `%s'\n", str);
+}
+
+WVTEST_MAIN("WvString: circular reference")
+{
+    {
+	char cstr[] = "Hello";
+	WvString CStr(cstr);
+	CStr = CStr.cstr();
+	wvcon->print("cstr is `%s'\n", CStr);
+    }
+
+    {
+	WvString s("Law");
+	s = s.cstr();
+	wvcon->print("s is `%s'\n", s);
+    }
+
+    {
+	WvString str("  abc ");
+	str = trim_string(str.edit());
+	wvcon->print("str is `%s'\n", str);
+    }
+
+    foo("def ");
+}
