@@ -64,6 +64,17 @@ void UniConfDaemon::errorcheck(WvStream *s, WvString type)
  * Methods for actual data retrieval/manipulation via connections begin here
  */
 
+WvString UniConfDaemon::create_return_string(WvString key)
+{
+    WvString result("%s %s", UniConfConn::UNICONF_RETURN, wvtcl_escape(key));
+    if (!!mainconf.get(key))
+        result.append(" %s", wvtcl_escape(mainconf.get(key)));
+    result.append("\n");
+
+    return result;
+}
+
+
 void UniConfDaemon::dook(const WvString cmd, const WvString key, UniConfDaemonConn *s)
 {
     if (s->isok())
@@ -74,16 +85,9 @@ void UniConfDaemon::doget(WvString key, UniConfDaemonConn *s)
 {
     dook(UniConfConn::UNICONF_GET, key, s);
 
-    WvString response("%s %s ", UniConfConn::UNICONF_RETURN, wvtcl_escape(key));
-
-    if (!!mainconf.get(key))
-        response.append("%s\n",wvtcl_escape(mainconf.get(key)));
-    else
-        response.append("\\0\n");
-
     if (s->isok())
     {
-        s->print(response);
+        s->print(create_return_string(key));
 
         // Ensure no duplication of events.
         update_callbacks(key, s);
@@ -162,11 +166,8 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
     UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
     WvString keyname(conf.gen_full_key()); 
 
-    WvString response("%s %s %s\n", UniConfConn::UNICONF_RETURN, wvtcl_escape(keyname),
-            !!mainconf.get(keyname) ? wvtcl_escape(mainconf.get(keyname)) :
-            WvString());
     if (s->isok())
-        s->print(response);
+        s->print(create_return_string(keyname));
 }
 
 void UniConfDaemon::update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot)
@@ -216,13 +217,13 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
         while (!(cmd = wvtcl_getword(fromline)).isnull())
         {
             // check the command
-	    if (cmd == UniConfConn::UNICONF_HELP)//"help")
+	    if (cmd == UniConfConn::UNICONF_HELP)
 	    {
                 if (s->isok())
 	    	    s->print("OK I know how to: help, get, subt, quit\n");
 		return;	    
 	    }
-            if (cmd == UniConfConn::UNICONF_QUIT)//"quit")
+            if (cmd == UniConfConn::UNICONF_QUIT)
             {
                 dook(cmd, "<null>", s);
                 s->close();
@@ -232,19 +233,19 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
             if (key.isnull())
                 break;
 
-            if (cmd == UniConfConn::UNICONF_GET)//"get") // return the specified value
+            if (cmd == UniConfConn::UNICONF_GET)
             {
                 doget(key, s);
             }
-            else if (cmd == UniConfConn::UNICONF_SUBTREE)//"subt") // return the subtree(s) of s key
+            else if (cmd == UniConfConn::UNICONF_SUBTREE)
             {
                 dosubtree(key, s);
             }
-            else if (cmd == UniConfConn::UNICONF_RECURSIVESUBTREE)//"rsub")
+            else if (cmd == UniConfConn::UNICONF_RECURSIVESUBTREE)
             {
                 dorecursivesubtree(key, s);
             }
-            else if (cmd == UniConfConn::UNICONF_SET) // set the specified value
+            else if (cmd == UniConfConn::UNICONF_SET) 
             {
                 doset(key, fromline, s);
             }

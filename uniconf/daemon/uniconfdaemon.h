@@ -19,9 +19,11 @@ public:
     UniConfDaemon();
     ~UniConfDaemon();
     UniConf *domount(WvString mode, WvString file, WvString mp);
+
+    WvString create_return_string(WvString key);
+    
     void alertmodified();
     void run();
-
     void doget(WvString key, UniConfDaemonConn *s);
     void dosubtree(WvString key, UniConfDaemonConn *s);
     void dorecursivesubtree(WvString key, UniConfDaemonConn *s);
@@ -32,7 +34,6 @@ public:
     void update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot=false);
     void del_callback(WvString key, UniConfDaemonConn *s);
     void add_callback(WvString key, UniConfDaemonConn *s, bool one_shot);
-
 
     bool want_to_die;
     WvLog log;
