@@ -78,12 +78,11 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     
     size_t keylen = keybuf.used();
     const unsigned char *key = keybuf.get(keylen);
-    const unsigned char *p = key;
     
     // create the RSA struct
     if (priv)
     {
-	rsa = wv_d2i_RSAPrivateKey(NULL, &p, keylen);
+	rsa = wv_d2i_RSAPrivateKey(NULL, &key, keylen);
         if (rsa != NULL)
         {
             prv = keystr;
@@ -92,7 +91,7 @@ void WvRSAKey::init(WvStringParm keystr, bool priv)
     }
     else
     {
-	rsa = wv_d2i_RSAPublicKey(NULL, &p, keylen);
+	rsa = wv_d2i_RSAPublicKey(NULL, &key, keylen);
         if (rsa != NULL)
         {
             prv = WvString::null;
@@ -139,26 +138,30 @@ void WvRSAKey::pem2hex(WvStringParm filename)
 WvString WvRSAKey::hexifypub(struct rsa_st *rsa)
 {
     WvDynBuf keybuf;
+
+    assert(rsa);
+
     size_t size = i2d_RSAPublicKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPublicKey(rsa, & key);
     assert(size == newsize);
-    
-    WvString keystr = WvHexEncoder().strflushbuf(keybuf, true);
-    return keystr;
+
+    return WvString(WvHexEncoder().strflushbuf(keybuf, true));
 }
 
 
 WvString WvRSAKey::hexifyprv(struct rsa_st *rsa)
 {
     WvDynBuf keybuf;
+
+    assert(rsa);
+
     size_t size = i2d_RSAPrivateKey(rsa, NULL);
     unsigned char *key = keybuf.alloc(size);
     size_t newsize = i2d_RSAPrivateKey(rsa, & key);
     assert(size == newsize);
-    
-    WvString keystr = WvHexEncoder().strflushbuf(keybuf, true);
-    return keystr;
+
+    return WvString(WvHexEncoder().strflushbuf(keybuf, true));
 }
 
 
