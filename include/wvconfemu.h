@@ -80,15 +80,12 @@ private:
     WvConfigEntryEmu* entry;
 public:
     Iter(WvConfigSectionEmu& _sect):
-	iter(_sect.uniconf), link(NULL, false),
-	entry(NULL)
+	iter(_sect.uniconf), link(NULL, false), entry(NULL)
     {}
     void rewind();
     WvLink *next();
     WvLink *cur();
     WvConfigEntryEmu* ptr() const;
-    void unlink();
-    void xunlink();
     WvIterStuff(WvConfigEntryEmu);
 };
 

@@ -13,9 +13,6 @@
 #include "strutils.h"
 
 
-#define HACKING
-
-
 /*
  * Parse the WvConf string "request"; pointers to the found section,
  * entry, and value fields are stored in *section, *entry, and *value
@@ -170,22 +167,6 @@ WvConfigEntryEmu* WvConfigSectionEmu::Iter::ptr() const
 {
     return entry;
 }
-
-
-#if defined(HACKING)
-void WvConfigSectionEmu::Iter::unlink()
-{
-    assert(false && "not implemented");
-}
-#endif
-
-
-#if defined(HACKING)
-void WvConfigSectionEmu::Iter::xunlink()
-{
-    assert(false && "not implemented");
-}
-#endif
 
 
 void WvConfEmu::notify(const UniConf &_uni, const UniConfKey &_key)
