@@ -935,6 +935,7 @@ bool WvStream::continue_select(time_t msec_timeout)
 
     alarm(msec_timeout);
     WvCont::yield();
+    alarm(-1); // cancel the still-pending alarm, or it might go off later!
     
     // when we get here, someone has jumped back into our task.
     // We have to select(0) here because it's possible that the alarm was 
