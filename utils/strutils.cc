@@ -329,7 +329,7 @@ WvString encode_hostname_as_DN(WvStringParm hostname)
 }
 
 
-WvString nice_hostname(WvString name)
+WvString nice_hostname(WvStringParm name)
 {
     WvString nice;
     char *optr, *optr_start;

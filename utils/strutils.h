@@ -143,6 +143,6 @@ WvString encode_hostname_as_DN(WvStringParm hostname);
  * hyphens, and have no more than one hyphen in a row.  If we can't do this
  * and have any sort of answer, return "UNKNOWN".
  */
-WvString nice_hostname(WvString name);
+WvString nice_hostname(WvStringParm name);
 
 #endif // __STRUTILS_H
