@@ -56,6 +56,15 @@ WVTEST_MAIN("type conversions")
     WVPASSEQ("zz", cfg["blah"]->ifnull("zz"));
 }
 
+WVTEST_MAIN("case")
+{
+    UniConfRoot root("temp:");
+    UniConf cfg(root);
+
+    cfg.xset("eth0/IPAddr", "10");
+    WVPASSEQ("10", cfg.xget("eth0/IPAddr"));
+    WVPASSEQ("10", cfg.xget("eth0/ipaddr"));
+}
 
 static int itcount(const UniConf &cfg)
 {
