@@ -29,7 +29,7 @@ WvString WvIPFirewall::command(const char *cmd, const WvIPPortAddr &addr)
 {
     WvIPAddr ad = addr, none;
     
-    return WvString("ipchains %s input -j ACCEPT -p tcp -s %s %s -d 0/0 -b",
+    return WvString("ipchains %s WvDynam -j ACCEPT -p tcp -s %s %s -d 0/0 -b",
 		    cmd, ad == none ? WvString("0/0") : (WvString)ad,
 		    addr.port);
 }
