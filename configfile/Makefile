@@ -5,7 +5,7 @@ CXXFLAGS += -I../include
 
 XPATH=../utils ../streams
 
-default: all
+default: all tests
 
 all: configfile.libs
 
