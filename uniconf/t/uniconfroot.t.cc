@@ -13,6 +13,34 @@ WVTEST_MAIN("null generator")
 }
 
 
+// if this test compiles at all, we win!
+WVTEST_MAIN("type conversions")
+{
+    UniConfRoot root("null:");
+    UniConf cfg(root);
+    
+    cfg.set("x");
+    cfg.set(5);
+    cfg.get("x");
+    cfg.get(5);
+    
+    cfg["x"].set("x");
+    cfg[5].set("x");
+    int x = 5;
+    cfg[x].set("x");
+    
+    cfg[cfg.get(5)].set("x");
+    cfg.set(cfg.get(x));
+    cfg.set(cfg.getint(x));
+    cfg.setint(cfg.getint(x));
+    cfg.setint(cfg.get(x).num());
+    
+    cfg[WvString(x)].set("x");
+    cfg[WvFastString(x)].set("x");
+    cfg[WvString(5)].set("x");
+}
+
+
 static int itcount(const UniConf &cfg)
 {
     int count = 0;
