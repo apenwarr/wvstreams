@@ -21,6 +21,8 @@ struct DefaultPort
 // The protocols must be arranged from longest to shortest because they're
 // compared with strncmp, so "https://" will also match http.
 static DefaultPort portmap[] = {
+    { "exchangeits", 7070, false },
+    { "exchangeit", 6969, false },
     { "https", 443, true },
     { "http", 80, true },
     { "sip", 5060, false },
