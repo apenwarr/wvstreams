@@ -209,6 +209,12 @@ size_t WvSSLStream::uread(void *buf, size_t len)
                 break;
 	    }
             buf = (unsigned char *)buf + amount;
+	    
+	    // FIXME: this shouldn't be necessary, but it resolves weird
+	    // problems when the other end disconnects in the middle of
+	    // SSL negotiation, but only on emakela's machine.  I don't
+	    // know why.  -- apenwarr (2004/02/10)
+	    break;
         }
 
         // attempt to read
@@ -345,9 +351,11 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         // attempt to write
         size_t used = write_bouncebuf.used();
         const unsigned char *data = write_bouncebuf.get(used);
-        
+
         ERR_clear_error();
         int result = SSL_write(ssl, data, used);
+	// debug("<< SSL_write result %s for %s bytes\n",
+	//      result, used);
         if (result <= 0)
         {
             int sslerrcode = SSL_get_error(ssl, result);
