@@ -613,6 +613,7 @@ public:
         data = _data;
         xautofree = _autofree;
         xsize = _size;
+        setavail(_avail);
     }
 
     /**
