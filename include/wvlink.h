@@ -43,11 +43,14 @@ public:
 };
 
 #define WvIterStuff(_type_) \
-	_type_ &operator () () const \
-	    { return *ptr(); } \
-	_type_ *operator -> () const \
-	    { return ptr(); } \
-        _type_ &operator* () const \
-            { return *ptr(); }
+    /*! @brief Returns a reference to the current element. */ \
+    _type_ &operator () () const \
+        { return *ptr(); } \
+    /*! @brief Returns a pointer to the current element. */ \
+    _type_ *operator -> () const \
+        { return ptr(); } \
+    /*! @brief Returns a reference to the current element. */ \
+    _type_ &operator* () const \
+        { return *ptr(); }
 
 #endif // __WVLINK_H
