@@ -6,6 +6,7 @@
  */
 #include "wvtest.h"
 #include "wvautoconf.h"
+#include "wvlogrcv.h"
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
@@ -90,6 +91,8 @@ static bool prefix_match(const char *s, const char * const *prefixes)
 
 int WvTest::run_all(const char * const *prefixes)
 {
+    WvLogConsole logConsole(dup(1));
+
     int old_valgrind_errs = 0, new_valgrind_errs;
     int old_valgrind_leaks = 0, new_valgrind_leaks;
     
@@ -192,7 +195,7 @@ bool WvTest::start_check_eq(const char *file, int line,
     sprintf(str, "[%s] == [%s]", a, b);
     
     start(file, line, str);
-    delete[] str;
+    deletev str;
     
     bool cond = !strcmp(a, b);
     check(cond);
@@ -207,7 +210,7 @@ bool WvTest::start_check_eq(const char *file, int line, int a, int b)
     sprintf(str, "%d == %d", a, b);
     
     start(file, line, str);
-    delete[] str;
+    deletev str;
     
     bool cond = (a == b);
     check(cond);
