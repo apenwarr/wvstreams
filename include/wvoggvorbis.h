@@ -15,11 +15,9 @@
 #include <vorbis/codec.h>
 #include <vorbis/vorbisenc.h>
 
-typedef float OggVorbisFloat;
-
 /**
  * Encodes PCM audio using the Ogg Vorbis stream format.
- * Input buffer must contain a sequence of signed 'OggVorbisFloat' type
+ * Input buffer must contain a sequence of signed 'float' type
  *   values in machine order representing normalized PCM audio data.
  * Outbut buffer will contain part of an Ogg bitstream.
  */
@@ -38,7 +36,7 @@ public:
     protected:
         enum Mode { VBR_QUALITY, VBR_BITRATE };
         Mode mode;
-        OggVorbisFloat quality;
+        float quality;
         long max_bitrate;
         long nominal_bitrate;
         long min_bitrate;
@@ -55,7 +53,7 @@ public:
     class VBRQuality : public BitrateSpec
     {
     public:
-        VBRQuality(OggVorbisFloat _quality) : BitrateSpec(VBR_QUALITY)
+        VBRQuality(float _quality) : BitrateSpec(VBR_QUALITY)
         {
             quality = _quality;
         }
@@ -133,7 +131,7 @@ private:
 /**
  * Decodes PCM audio using the Ogg Vorbis stream format.
  * Inbut buffer must contain part of an Ogg bitstream.
- * Output buffer will contain a sequence of signed 'OggVorbisFloat' type
+ * Output buffer will contain a sequence of signed 'float' type
  *   values in machine order representing normalized PCM audio data.
  */
 class WvOggVorbisDecoder : public WvEncoder
@@ -209,16 +207,16 @@ private:
 /**
  * Data type conversion and renormalization functors.
  */
-struct WvSigned16ToOggVorbisFloatFunctor
+struct WvSigned16ToFloatFunctor
 {
-    inline OggVorbisFloat operator()(signed short int pcm) const
+    inline float operator()(signed short int pcm) const
     {
-        return OggVorbisFloat(pcm) / 32768;
+        return float(pcm) / 32768;
     }
 };
-struct WvOggVorbisFloatToSigned16Functor
+struct WvFloatToSigned16Functor
 {
-    inline signed short int operator()(OggVorbisFloat pcm) const
+    inline signed short int operator()(float pcm) const
     {
         return (signed short int)(pcm * 32768);
     }
@@ -227,23 +225,23 @@ struct WvOggVorbisFloatToSigned16Functor
 
 /**
  * Instantiate some useful types for renormalizing data for Ogg Vorbis.
- * Use WvOggVorbisFloatToSigned16 on the decoder output and
- *     WvSigned16ToOggVorbisFloat on the encoder input.
+ * Use WvFloatToSigned16 on the decoder output and
+ *     WvSigned16ToFloat on the encoder input.
  */
-class WvOggVorbisFloatToSigned16 : public WvFunctorEncoder
-    <signed short int, OggVorbisFloat, WvOggVorbisFloatToSigned16Functor>
+class WvFloatToSigned16 : public WvFunctorEncoder
+    <signed short int, float, WvFloatToSigned16Functor>
 {
 public:
-    WvOggVorbisFloatToSigned16() :
+    WvFloatToSigned16() :
         WvFunctorEncoder<OT, IT, FT>(FT()) { }
 };
 
 
-class WvSigned16ToOggVorbisFloat : public WvFunctorEncoder
-    <OggVorbisFloat, signed short int, WvSigned16ToOggVorbisFloatFunctor>
+class WvSigned16ToFloat : public WvFunctorEncoder
+    <float, signed short int, WvSigned16ToFloatFunctor>
 {
 public:
-    WvSigned16ToOggVorbisFloat() :
+    WvSigned16ToFloat() :
         WvFunctorEncoder<OT, IT, FT>(FT()) { }
 };
 

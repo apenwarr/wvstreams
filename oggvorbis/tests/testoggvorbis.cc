@@ -181,7 +181,7 @@ int main(int argc, char **argv)
     {
         oggdec = new WvOggVorbisDecoder();
         iencstream->readchain.append(oggdec, true);
-        iencstream->readchain.append(new WvOggVorbisFloatToSigned16(), true);
+        iencstream->readchain.append(new WvFloatToSigned16(), true);
     }
     
     WvPassthroughEncoder *passmid = new WvPassthroughEncoder();
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
             wverr->print("  Comment : %s\n", it());
         }
             
-        oencstream->writechain.append(new WvSigned16ToOggVorbisFloat(), true);
+        oencstream->writechain.append(new WvSigned16ToFloat(), true);
         oencstream->writechain.append(oggenc, true);
         wverr->print("\n");
     }

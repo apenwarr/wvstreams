@@ -150,7 +150,7 @@ bool WvOggVorbisEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     for (;;)
     {
         // read in more data
-        size_t ovsamples = inbuf.used() / sizeof(OggVorbisFloat);
+        size_t ovsamples = inbuf.used() / sizeof(float);
         if (ovsamples == 0)
         {
             // no more data
@@ -162,13 +162,13 @@ bool WvOggVorbisEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
         if (ovsamples > OGG_VORBIS_ENCODER_BUF_SIZE)
             ovsamples = OGG_VORBIS_ENCODER_BUF_SIZE;
                 
-        OggVorbisFloat **ovbuf = vorbis_analysis_buffer(ovdsp, ovsamples);
+        float **ovbuf = vorbis_analysis_buffer(ovdsp, ovsamples);
         if (ovbuf == NULL)
         {
             seterror("error allocating vorbis analysis buffer");
             return false;
         }
-        size_t ovbufsize = ovsamples * sizeof(OggVorbisFloat);
+        size_t ovbufsize = ovsamples * sizeof(float);
         const unsigned char *indata = inbuf.get(ovbufsize);
         memcpy(ovbuf[0], indata, ovbufsize);
         vorbis_analysis_wrote(ovdsp, ovsamples);
@@ -468,11 +468,11 @@ bool WvOggVorbisDecoder::process_packet(ogg_packet *oggpacket,
     
         // synthesize PCM audio
         for (;;) {
-            OggVorbisFloat **pcm;
+            float **pcm;
             long samples = vorbis_synthesis_pcmout(ovdsp, &pcm);
             if (samples == 0) break;
             
-            size_t numbytes = samples * sizeof(OggVorbisFloat);
+            size_t numbytes = samples * sizeof(float);
             unsigned char *out = outbuf.alloc(numbytes);
             memcpy(out, pcm[0], numbytes);
             vorbis_synthesis_read(ovdsp, samples);
