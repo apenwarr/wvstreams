@@ -146,7 +146,7 @@ ifeq ($(DEBUG),1)
   C_AND_CXX_FLAGS += -ggdb -DDEBUG=1
   LDFLAGS += -ggdb
 else
-  C_AND_CXX_FLAGS += -g -O -DDEBUG=0
+  C_AND_CXX_FLAGS += -g -DDEBUG=0
   #CFLAGS += -DNDEBUG    # I don't like disabling assertions...
   #CFLAGS += -fomit-frame-pointer  # really evil
   #CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0

@@ -9,9 +9,14 @@
 #define __WVSERIALIZE_H
 
 #include "wvbuf.h"
+#include "wvstringlist.h"
 #include <stdint.h>
 #ifndef _WIN32
-#include <netinet/in.h>
+# include <netinet/in.h>
+# include <endian.h>
+#else
+# define __BYTE_ORDER 1234
+# define __BIG_ENDIAN 4321
 #endif
 
 /**
@@ -36,7 +41,26 @@ inline int32_t _wv_htonl(int32_t i)
     return htonl(i);
 }
 
+/**
+ * Helper functions to convert 64 bit ints to and from host byteorder
+ */
+inline uint64_t ntohll(uint64_t n)
+{
+#if __BYTE_ORDER == __BIG_ENDIAN
+    return n;
+#else
+    return (((uint64_t)ntohl(n)) << 32) | ntohl(n >> 32);
+#endif
+}
 
+inline uint64_t htonll(uint64_t n)
+{
+#if __BYTE_ORDER == __BIG_ENDIAN
+    return n;
+#else
+    return (((uint64_t)htonl(n)) << 32) | htonl(n >> 32);
+#endif
+}
 
 /**
  * A helper function that serializes different types of integers.  Since
@@ -52,9 +76,8 @@ void wv_serialize_scalar(WvBuf &buf, const T t)
 {
     if (sizeof(T) == 8)
     {
-	// FIXME: don't know a portable way to convert this to network
-	// byte order!
-	buf.put(&t, 8);
+        int64_t i = htonll(t);
+        buf.put(&i, 8);
     }
     else if (sizeof(T) == 4)
     {
@@ -237,11 +260,7 @@ inline T wv_deserialize_scalar(WvBuf &buf)
 	return 0;
     
     if (sizeof(T) == 8)
-    {
-	// FIXME: don't know a portable way to convert this to network
-	// byte order!
-	return (T) *(int64_t *)buf.get(8);
-    }
+        return (T) ntohll(*(int64_t *)buf.get(8));
     else if (sizeof(T) == 4)
 	return (T) _wv_ntohl(*(int32_t *)buf.get(4));
     else if (sizeof(T) == 2)
@@ -340,5 +359,23 @@ public:
     }
 };
 
+template <>
+class WvDeserialize<WvStringList*>
+{
+public:
+    static WvStringList *go(WvBuf &buf)
+    {
+        WvStringList *list = new WvStringList();
+        size_t nelems = wv_deserialize<size_t>(buf);
+
+        for (size_t count = 0; count < nelems; count++)
+        {
+            WvString str = wv_deserialize<WvString>(buf);
+            list->append(str);
+        }
+
+        return list;
+    }
+};
 
 #endif // __WVSERIALIZE_H

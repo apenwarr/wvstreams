@@ -9,4 +9,5 @@ stamp-h.in
 wvtestmain
 .*.d
 *.libs
+*.ii
 xplc-stamp

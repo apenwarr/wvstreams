@@ -26,24 +26,35 @@
 #define MAX_FD sysconf(_SC_OPEN_MAX) + 1
 
 DeclareWvList(WvForkCallback);
-WvForkCallbackList callbacks;
+static WvForkCallbackList *callbacks;
+
+
+// note: this shouldn't really be needed (it would be better to use a simple
+// static list), but might be needed if your dynamic linker (ld.so) runs
+// global constructors in the wrong order.
+static WvForkCallbackList &get_callbacks()
+{
+    if (!callbacks)
+	callbacks = new WvForkCallbackList;
+    return *callbacks;		
+}
 
 
 void add_wvfork_callback(WvForkCallback cb)
 {
 #if 0
     // be sure we don't add this twice
-    WvForkCallbackList::Iter i(callbacks);
+    WvForkCallbackList::Iter i(get_callbacks());
     for (i.rewind(); i.next(); )
         if (*i == cb) return;
 #endif
-    callbacks.append(new WvForkCallback(cb), true);
+    get_callbacks().append(new WvForkCallback(cb), true);
 }
 
 #if 0
 void remove_wvfork_callback(WvForkCallback cb)
 {
-    WvForkCallbackList::Iter i(callbacks);
+    WvForkCallbackList::Iter i(get_callbacks());
     for (i.rewind(); i.next(); )
         if (*i == cb) i.xunlink();
 }
@@ -68,7 +79,7 @@ pid_t wvfork_start(int *waitfd)
 
     pid_t pid = fork();
 
-    WvForkCallbackList::Iter i(callbacks);
+    WvForkCallbackList::Iter i(get_callbacks());
     for (i.rewind(); i.next(); )
     {
         WvForkCallback *cb = i.ptr();

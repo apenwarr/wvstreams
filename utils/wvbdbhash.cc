@@ -3,14 +3,14 @@
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
  *
  * A hash table container backed by a Berkeley DB (libdb) database.
- * See wvbdbhash.h.
+ * See wvondiskhash.h.
  */
 
 #include "wvautoconf.h"
 
 #ifdef WITH_BDB
 
-#include "wvbdbhash.h"
+#include "wvondiskhash.h"
 #include <fcntl.h>
 #include <errno.h>
 
@@ -38,23 +38,24 @@ int comparefunc(const DBT *a, const DBT *b)
 }
 
 
-WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile) :
+WvBdbHash::WvBdbHash(WvStringParm dbfile) :
     dbf(NULL)
 {
     opendb(dbfile);
 }
 
 
-WvBdbHashBase::~WvBdbHashBase()
+WvBdbHash::~WvBdbHash()
 {
     if (dbf)
 	dbf->close(dbf);
 }
 
 
-void WvBdbHashBase::opendb(WvStringParm dbfile)
+void WvBdbHash::opendb(WvStringParm dbfile)
 {
-    if (dbf) dbf->close(dbf);
+    if (dbf)
+        dbf->close(dbf);
     
     BTREEINFO info;
     memset(&info, 0, sizeof(info));
@@ -67,15 +68,17 @@ void WvBdbHashBase::opendb(WvStringParm dbfile)
 }
 
 
-int WvBdbHashBase::add(const datum &key, const datum &data, bool replace)
+void WvBdbHash::add(const datum &key, const datum &data, bool replace)
 {
     assert(isok());
-    return dbf->put(dbf, (DBT *)&key, (DBT *)&data,
+    int r = dbf->put(dbf, (DBT *)&key, (DBT *)&data,
 		    !replace ? R_NOOVERWRITE : 0);
+    if (r)
+        fprintf(stderr, "Error: %s\n", strerror(errno));
 }
 
 
-int WvBdbHashBase::remove(const datum &key)
+int WvBdbHash::remove(const datum &key)
 {
     assert(isok());
     datum newkey, data;
@@ -89,7 +92,7 @@ int WvBdbHashBase::remove(const datum &key)
 }
 
 
-WvBdbHashBase::datum WvBdbHashBase::find(const datum &key)
+WvBdbHash::datum WvBdbHash::find(const datum &key)
 {
     assert(isok());
     datum ret = {0, 0};
@@ -98,7 +101,7 @@ WvBdbHashBase::datum WvBdbHashBase::find(const datum &key)
 }
 
 
-bool WvBdbHashBase::exists(const datum &key)
+bool WvBdbHash::exists(const datum &key)
 {
     assert(isok());
     datum ret = {0, 0};
@@ -106,7 +109,7 @@ bool WvBdbHashBase::exists(const datum &key)
 }
 
 
-void WvBdbHashBase::zap()
+void WvBdbHash::zap()
 {
     assert(isok());
     datum key, value;
@@ -114,45 +117,9 @@ void WvBdbHashBase::zap()
 	dbf->del(dbf, (DBT *)&key, R_CURSOR);
 }
 
-
-WvBdbHashBase::IterBase::IterBase(WvBdbHashBase &_bdbhash)
-    : bdbhash(_bdbhash)
+void WvBdbHash::IterBase::next(datum &curkey, datum &curdata)
 {
-    rewindto.dsize = 0;
-    rewindto.dptr = NULL;
-}
-
-
-WvBdbHashBase::IterBase::~IterBase()
-{
-    free(rewindto.dptr);
-}
-
-
-void WvBdbHashBase::IterBase::rewind()
-{
-    free(rewindto.dptr);
-    rewindto.dptr = NULL;
-}
-
-
-void WvBdbHashBase::IterBase::rewind(const datum &firstkey, datum &curkey,
-        datum &curdata)
-{
-    assert(bdbhash.isok());
-
-    // save the firstkey and clear the current one
-    free(rewindto.dptr);
-    rewindto.dsize = firstkey.dsize;
-    rewindto.dptr = malloc(rewindto.dsize);
-    memcpy(rewindto.dptr, firstkey.dptr, rewindto.dsize);
-    curkey.dptr = curdata.dptr = NULL;
-}
-
-
-void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
-{
-    assert(bdbhash.isok());
+    assert(parent.isok());
 
     // check if this is the first next() after a rewind()
     bool first = !curkey.dptr;
@@ -175,7 +142,7 @@ void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
     // always seek for the saved cursor we were just passed, to work around
     // bugs in libdb1's seq with btrees.  (As a bonus, this gives us multiple
     // iterators for free!)
-    if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+    if (parent.dbf->seq(parent.dbf, (DBT *)&curkey, (DBT *)&curdata,
                 first ? R_FIRST : R_CURSOR))
     {
         // current key gone, and none higher left: done
@@ -190,7 +157,7 @@ void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
 	    // the documentation's claims!)
 	    // This algorithm definitely makes it so inserting the same key
 	    // more than once doesn't work at all.
-	    if (bdbhash.dbf->seq(bdbhash.dbf, (DBT *)&curkey, (DBT *)&curdata,
+	    if (parent.dbf->seq(parent.dbf, (DBT *)&curkey, (DBT *)&curdata,
 				 R_NEXT))
 	    {
 		// nothing left?  Fine, we're done
@@ -205,19 +172,6 @@ void WvBdbHashBase::IterBase::next(datum &curkey, datum &curdata)
     // be either filled in with the matching btree data or cleared.)
     assert(!rewindto.dptr || curkey.dptr != rewindto.dptr);
     free(wanted.dptr);
-}
-
-
-void WvBdbHashBase::IterBase::xunlink(const datum &curkey)
-{
-    bdbhash.remove(curkey);
-}
-
-
-void WvBdbHashBase::IterBase::update(const datum &curkey, const datum &data)
-{
-    int r = bdbhash.add(curkey, data, true);
-    assert(!r && "Weird: database add failed during save?");
 }
 
 #endif /* WITH_BDB */

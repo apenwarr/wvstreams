@@ -54,10 +54,13 @@ public:
      */
     void fill(const char * const *array);
 
+    void append(WvStringParm str);
+    void append(const WvString *strp, bool autofree, char *id = NULL);
+
     /** 
-    * get the first string in the list, or an empty string if the list is empty.
-    * Removes the returned string from the list.
-    */
+     * get the first string in the list, or an empty string if the list is empty.
+     * Removes the returned string from the list.
+     */
     WvString popstr();
 };
 

@@ -6,6 +6,7 @@
  */
 #include "unimounttreegen.h"
 #include "wvmoniker.h"
+#include <assert.h>
 
 /***** UniMountTreeGen *****/
 

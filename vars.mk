@@ -116,12 +116,12 @@ ifneq ("$(with_fam)", "no")
   libwvstreams.so: -lfam
 endif
 
-ifneq ("$(with_gdbm)", "no")
-  libwvutils.so: -lgdbm
-endif
-
 ifneq ("$(with_bdb)", "no")
   libwvutils.so-LIBS+=-ldb
+endif
+
+ifneq ("$(with_qdbm)", "no")
+  libwvutils.so-LIBS+=-L. -lqdbm
 endif
 
 ifneq ("$(with_xplc)", "no")
@@ -179,7 +179,7 @@ libwvqt.so: libwvutils.so libwvstreams.so
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
 libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
-libuniconf_tcl.so: bindings/uniconf_tcl.o -ltcl8.3 -luniconf
+libuniconf_tcl.so: bindings/uniconf_tcl.o libuniconf.so -ltcl8.3
 
 xplc-stamp: $(wildcard $(with_xplc)/libxplc.*)
 	rm -f xplc-stamp

@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+
 #include "wvwinstreamclone.h"
 
 ATOM WvWinStreamClone::s_aClass = 0;

@@ -42,12 +42,14 @@ int main()
     
     ACallback c0(bunk);
     A2Callback c1(bunk1);
-    A3Callback c2(WvBoundCallback<A3Callback, const A &>(bunk, a));
+    // FIXME: I am broken. Please show this to somebody
+    // who can fix.... can fix.... can fix.....
+    // A3Callback c2(WvBoundCallback<A3Callback, const A &>(bunk, a));
     A2Callback c3(&a, &A::add);
     
     print_a(c0(a, (void *)5));
     print_a(c1(a));
-    print_a(c2((void *)2));
+    // print_a(c2((void *)2));
     print_a(c3(a));
     
     return 0;

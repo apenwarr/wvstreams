@@ -7,6 +7,7 @@
  */
 #include "wvcont.h"
 #include "wvtask.h"
+#include <assert.h>
  
 // private data that doesn't need to be in the header
 struct WvCont::Data

@@ -6,6 +6,7 @@
  */ 
 
 #include "wvscatterhash.h"
+#include <assert.h>
 
 // Prime numbers close to powers of 2
 const unsigned WvScatterHashBase::prime_numbers[] = {2u, 5u, 11u, 17u, 31u, 67u, 127u, 251u, 509u, 1021u, 2039u, 4093u, 8191u, 16381u, 32749u, 65521u, 131071u, 262139u, 524287u, 1048573u, 2097143u, 4194301u, 8388593u, 16777213u, 33554393u, 67108859u, 134217689u, 268435399u, 536870909u, 1073741789u, 2147483647u, 4294967281u};

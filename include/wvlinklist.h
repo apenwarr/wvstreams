@@ -7,7 +7,6 @@
 #ifndef __WVLINKLIST_H
 #define __WVLINKLIST_H
 
-#include <assert.h>
 #include "wvsorter.h"
 
 /**
@@ -213,9 +212,7 @@ public:
      * Returns: the element pointer, possibly null
      */
     T *first() const
-        {
-            return (T*)head.next->data;
-	}
+        { return (T*)head.next->data; }
 
     /**
      * Returns a pointer to the last element in the linked list.

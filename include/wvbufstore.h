@@ -10,6 +10,7 @@
 #define __WVBUFFERSTORE_H
 
 #include "wvlinklist.h"
+#include <assert.h>
 #include <limits.h>
 #include <assert.h>
 

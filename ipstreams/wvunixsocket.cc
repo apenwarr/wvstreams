@@ -126,10 +126,11 @@ WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
 	    seterr(errno);
 	else
 	    bound_okay = true;
+
+        umask(oldmask);
     }
     
     delete sa;
-    umask(oldmask);
 }
 
 

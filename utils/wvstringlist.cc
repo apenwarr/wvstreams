@@ -37,6 +37,21 @@ void WvStringList::fill(const char * const *array)
     }
 }
 
+
+void WvStringList::append(WvStringParm str)
+{
+    WvStringListBase::append(new WvString(str), true);
+}
+
+
+void WvStringList::append(const WvString *strp, bool autofree, char *id)
+{
+    WvStringListBase::append(new WvString(*strp), true);
+}
+
+
+// get the first string in the list, or an empty string if the list is empty.
+// Removes the returned string from the list.
 WvString WvStringList::popstr()
 {
     if (isempty())

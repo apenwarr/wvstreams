@@ -1,18 +1,18 @@
 /*
  * Note: this test program should be exactly the same as the one in
- * gdbmtest.cc, because the APIs should be identical.
+ * qdbmtest.cc, because the APIs should be identical.
  */
-#include "wvbdbhash.h"
+#include "wvondiskhash.h"
 #include "wvstringlist.h"
 
-typedef WvBdbHash<WvString,WvString> StrStrMap;
-typedef WvBdbHash<WvString,int> StrTimeMap;
-typedef WvBdbHash<int,int> IntIntMap;
+typedef WvOnDiskHash<WvString,WvString,WvBdbHash> StrStrMap;
+typedef WvOnDiskHash<WvString,int,WvBdbHash> StrTimeMap;
+typedef WvOnDiskHash<int,int,WvBdbHash> IntIntMap;
 
 DeclareWvList(int);
 
 // yes, I *am* crazy.
-typedef WvBdbHash<WvList<WvString>,intList> ListMap;
+typedef WvOnDiskHash<WvList<WvString>,intList, WvBdbHash> ListMap;
 
 int main()
 {

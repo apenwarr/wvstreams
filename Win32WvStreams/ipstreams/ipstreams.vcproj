@@ -112,21 +112,6 @@
 				RelativePath=".\ipstreams.cpp">
 			</File>
 			<File
-				RelativePath=".\stdafx.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\ipstreams\wvaddr.cc">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -154,6 +139,21 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\ipstreams\wvipraw.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -202,6 +202,21 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\ipstreams\wvunixsocket.cc">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\ipstreams\wvurl.cc">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -223,12 +238,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath=".\ipstreams.h">
-			</File>
-			<File
-				RelativePath=".\stdafx.h">
-			</File>
-			<File
-				RelativePath="..\..\include\wvtcp.h">
 			</File>
 		</Filter>
 		<Filter

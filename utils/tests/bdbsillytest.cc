@@ -2,9 +2,10 @@
  * Do some repetitive stuff that *shouldn't* stress bdbhash very much, so
  * that somebody can strace it and see if it does.
  */
-#include "wvbdbhash.h"
+#include "wvondiskhash.h"
+#include "wvstring.h"
 
-typedef WvBdbHash<int, WvString> MyHash;
+typedef WvOnDiskHash<int, WvString, WvBdbHash> MyHash;
 
 int main()
 {
