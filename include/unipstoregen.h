@@ -16,7 +16,7 @@
 #include "wvlog.h"
 #include "windows.h"
 
-#import "c:\windows\system32\pstorec.dll" raw_interfaces_only
+#include "pstorec.tlh"
 
 #define PST_KEY_CURRENT_USER 0x00000000 // Specifies that the storage is maintained in the current user section of the registry.
 #define PST_KEY_LOCAL_MACHINE 0x00000001 // Specifies that the storage is maintained in the local machine section of the registry.

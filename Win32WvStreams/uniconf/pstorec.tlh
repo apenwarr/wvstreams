@@ -1,0 +1,286 @@
+// Created by Microsoft (R) C/C++ Compiler Version 13.00.9466 (b086ed06).
+//
+// e:\dev\niti\src\exchangeit\outlook\debug\pstorec.tlh
+//
+// C++ source equivalent of Win32 type library c:\windows\system32\pstorec.dll
+// compiler-generated file created 06/13/03 at 16:47:23 - DO NOT EDIT!
+
+#pragma once
+#pragma pack(push, 8)
+
+#include <comdef.h>
+
+namespace PSTORECLib {
+
+//
+// Forward references and typedefs
+//
+
+struct __declspec(uuid("5a6f1ebd-2db1-11d0-8c39-00c04fd9126b"))
+/* LIBID */ __PSTORECLib;
+struct /* coclass */ CPStore;
+struct __declspec(uuid("5a6f1ebf-2db1-11d0-8c39-00c04fd9126b"))
+/* interface */ IEnumPStoreProviders;
+struct _PST_PROVIDERINFO;
+struct __declspec(uuid("5a6f1ec0-2db1-11d0-8c39-00c04fd9126b"))
+/* interface */ IPStore;
+struct _PST_TYPEINFO;
+struct _PST_ACCESSRULESET;
+struct _PST_ACCESSRULE;
+struct _PST_ACCESSCLAUSE;
+struct __declspec(uuid("789c1cbf-31ee-11d0-8c39-00c04fd9126b"))
+/* interface */ IEnumPStoreTypes;
+struct _PST_PROMPTINFO;
+struct __declspec(uuid("5a6f1ec1-2db1-11d0-8c39-00c04fd9126b"))
+/* interface */ IEnumPStoreItems;
+struct /* coclass */ CEnumTypes;
+struct /* coclass */ CEnumItems;
+
+//
+// Smart pointer typedef declarations
+//
+
+_COM_SMARTPTR_TYPEDEF(IEnumPStoreProviders, __uuidof(IEnumPStoreProviders));
+_COM_SMARTPTR_TYPEDEF(IEnumPStoreTypes, __uuidof(IEnumPStoreTypes));
+_COM_SMARTPTR_TYPEDEF(IEnumPStoreItems, __uuidof(IEnumPStoreItems));
+_COM_SMARTPTR_TYPEDEF(IPStore, __uuidof(IPStore));
+
+//
+// Type library items
+//
+
+struct __declspec(uuid("5a6f1ec3-2db1-11d0-8c39-00c04fd9126b"))
+CPStore;
+    // [ default ] interface IEnumPStoreProviders
+    // interface IPStore
+
+struct _PST_PROVIDERINFO
+{
+    unsigned long cbSize;
+    GUID ID;
+    unsigned long Capabilities;
+    LPWSTR szProviderName;
+};
+
+struct __declspec(uuid("5a6f1ebf-2db1-11d0-8c39-00c04fd9126b"))
+IEnumPStoreProviders : IUnknown
+{
+    //
+    // Raw methods provided by interface
+    //
+
+      virtual HRESULT __stdcall Next (
+        /*[in]*/ unsigned long celt,
+        /*[out]*/ struct _PST_PROVIDERINFO * * rgelt,
+        /*[in,out]*/ unsigned long * pceltFetched ) = 0;
+      virtual HRESULT __stdcall Skip (
+        /*[in]*/ unsigned long celt ) = 0;
+      virtual HRESULT __stdcall Reset ( ) = 0;
+      virtual HRESULT __stdcall Clone (
+        /*[out]*/ struct IEnumPStoreProviders * * ppenum ) = 0;
+};
+
+struct _PST_TYPEINFO
+{
+    unsigned long cbSize;
+    LPWSTR szDisplayName;
+};
+
+struct _PST_ACCESSCLAUSE
+{
+    unsigned long cbSize;
+    unsigned long ClauseType;
+    unsigned long cbClauseData;
+    unsigned char * pbClauseData;
+};
+
+struct _PST_ACCESSRULE
+{
+    unsigned long cbSize;
+    unsigned long AccessModeFlags;
+    unsigned long cClauses;
+    struct _PST_ACCESSCLAUSE * rgClauses;
+};
+
+struct _PST_ACCESSRULESET
+{
+    unsigned long cbSize;
+    unsigned long cRules;
+    struct _PST_ACCESSRULE * rgRules;
+};
+
+struct __declspec(uuid("789c1cbf-31ee-11d0-8c39-00c04fd9126b"))
+IEnumPStoreTypes : IUnknown
+{
+    //
+    // Raw methods provided by interface
+    //
+
+      virtual HRESULT __stdcall Next (
+        /*[in]*/ unsigned long celt,
+        /*[out]*/ GUID * rgelt,
+        /*[in,out]*/ unsigned long * pceltFetched ) = 0;
+      virtual HRESULT __stdcall Skip (
+        /*[in]*/ unsigned long celt ) = 0;
+      virtual HRESULT __stdcall Reset ( ) = 0;
+      virtual HRESULT __stdcall Clone (
+        /*[out]*/ struct IEnumPStoreTypes * * ppenum ) = 0;
+};
+
+struct _PST_PROMPTINFO
+{
+    unsigned long cbSize;
+    unsigned long dwPromptFlags;
+    unsigned long hwndApp;
+    LPWSTR szPrompt;
+};
+
+struct __declspec(uuid("5a6f1ec1-2db1-11d0-8c39-00c04fd9126b"))
+IEnumPStoreItems : IUnknown
+{
+    //
+    // Raw methods provided by interface
+    //
+
+      virtual HRESULT __stdcall Next (
+        /*[in]*/ unsigned long celt,
+        /*[out]*/ LPWSTR * rgelt,
+        /*[in,out]*/ unsigned long * pceltFetched ) = 0;
+      virtual HRESULT __stdcall Skip (
+        /*[in]*/ unsigned long celt ) = 0;
+      virtual HRESULT __stdcall Reset ( ) = 0;
+      virtual HRESULT __stdcall Clone (
+        /*[out]*/ struct IEnumPStoreItems * * ppenum ) = 0;
+};
+
+struct __declspec(uuid("5a6f1ec0-2db1-11d0-8c39-00c04fd9126b"))
+IPStore : IUnknown
+{
+    //
+    // Raw methods provided by interface
+    //
+
+      virtual HRESULT __stdcall GetInfo (
+        /*[out]*/ struct _PST_PROVIDERINFO * * ppProperties ) = 0;
+      virtual HRESULT __stdcall GetProvParam (
+        /*[in]*/ unsigned long dwParam,
+        /*[out]*/ unsigned long * pcbData,
+        /*[out]*/ unsigned char * * ppbData,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall SetProvParam (
+        /*[in]*/ unsigned long dwParam,
+        /*[in]*/ unsigned long cbData,
+        /*[in]*/ unsigned char * pbData,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall CreateType (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ struct _PST_TYPEINFO * pInfo,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall GetTypeInfo (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[out]*/ struct _PST_TYPEINFO * * ppInfo,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall DeleteType (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall CreateSubtype (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ GUID * pSubtype,
+        /*[in]*/ struct _PST_TYPEINFO * pInfo,
+        /*[in]*/ struct _PST_ACCESSRULESET * pRules,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall GetSubtypeInfo (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ GUID * pSubtype,
+        /*[out]*/ struct _PST_TYPEINFO * * ppInfo,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall DeleteSubtype (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ GUID * pSubtype,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall ReadAccessRuleset (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ GUID * pSubtype,
+        /*[out]*/ struct _PST_ACCESSRULESET * * ppRules,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall WriteAccessRuleset (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ GUID * pSubtype,
+        /*[in]*/ struct _PST_ACCESSRULESET * pRules,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall EnumTypes (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ unsigned long dwFlags,
+        /*[in]*/ struct IEnumPStoreTypes * * ppenum ) = 0;
+      virtual HRESULT __stdcall EnumSubtypes (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pType,
+        /*[in]*/ unsigned long dwFlags,
+        /*[in]*/ struct IEnumPStoreTypes * * ppenum ) = 0;
+      virtual HRESULT __stdcall DeleteItem (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pItemType,
+        /*[in]*/ GUID * pItemSubtype,
+        /*[in]*/ LPWSTR szItemName,
+        /*[in]*/ struct _PST_PROMPTINFO * pPromptInfo,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall ReadItem (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pItemType,
+        /*[in]*/ GUID * pItemSubtype,
+        /*[in]*/ LPWSTR szItemName,
+        /*[out]*/ unsigned long * pcbData,
+        /*[out]*/ unsigned char * * ppbData,
+        /*[in]*/ struct _PST_PROMPTINFO * pPromptInfo,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall WriteItem (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pItemType,
+        /*[in]*/ GUID * pItemSubtype,
+        /*[in]*/ LPWSTR szItemName,
+        /*[in]*/ unsigned long cbData,
+        /*[in]*/ unsigned char * pbData,
+        /*[in]*/ struct _PST_PROMPTINFO * pPromptInfo,
+        /*[in]*/ unsigned long dwDefaultConfirmationStyle,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall OpenItem (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pItemType,
+        /*[in]*/ GUID * pItemSubtype,
+        /*[in]*/ LPWSTR szItemName,
+        /*[in]*/ unsigned long ModeFlags,
+        /*[in]*/ struct _PST_PROMPTINFO * pPromptInfo,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall CloseItem (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pItemType,
+        /*[in]*/ GUID * pItemSubtype,
+        /*[in]*/ LPWSTR szItemName,
+        /*[in]*/ unsigned long dwFlags ) = 0;
+      virtual HRESULT __stdcall EnumItems (
+        /*[in]*/ unsigned long Key,
+        /*[in]*/ GUID * pItemType,
+        /*[in]*/ GUID * pItemSubtype,
+        /*[in]*/ unsigned long dwFlags,
+        /*[in]*/ struct IEnumPStoreItems * * ppenum ) = 0;
+};
+
+struct __declspec(uuid("09bb61e7-31ec-11d0-8c39-00c04fd9126b"))
+CEnumTypes;
+    // [ default ] interface IEnumPStoreTypes
+
+struct __declspec(uuid("09bb61e6-31ec-11d0-8c39-00c04fd9126b"))
+CEnumItems;
+    // [ default ] interface IEnumPStoreItems
+
+} // namespace PSTORECLib
+
+#pragma pack(pop)
