@@ -21,7 +21,7 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 	undo_force_select(true, false, false);
     
     close();
-    int rwfd = ::open(filename, mode | O_NONBLOCK | O_LARGEFILE, create_mode);
+    int rwfd = ::open(filename, mode | O_NONBLOCK, create_mode);
     if (rwfd < 0)
     {
 	seterr(errno);

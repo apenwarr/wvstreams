@@ -114,10 +114,6 @@ ifeq ("$(enable_efence)", "yes")
 LDFLAGS+=-lefence
 endif
 
-ifneq ("$(enable_fam)", "no")
-LDFLAGS+=-lfam
-endif
-
 ifeq ("$(enable_verbose)", "yes")
 VERBOSE:=yes
 endif
@@ -131,6 +127,10 @@ CPPFLAGS+=-I$(with_xplc)/include
 #libwvstreams.so: $(with_xplc)/libxplc.so $(with_xplc)/libxplc-cxx.a
 libwvstreams.so: -lxplc -lxplc-cxx
 endif
+endif
+
+ifneq ("$(with_fam)", "no")
+LDFLAGS+=-lfam
 endif
 
 ifneq ("$(with_pam)", "no")
