@@ -24,10 +24,10 @@ protected:
     void **xseq; /*!< the controlled sequence */
     int xcount; /*!< the number of elements in the sequence */
     int xslots; /*!< the capacity of the array */
-    bool auto_free; /*!< whether to auto-delete the elements when removed */
+    bool autofree; /*!< whether to auto-delete the elements when removed */
 
     /** Creates an empty vector. */
-    WvVectorBase(bool _auto_free);
+    WvVectorBase(bool _autofree);
 
     /** Computes the number of slots needed to grow to at least minslots. */
     int growcapacity(int minslots);
@@ -85,7 +85,7 @@ class WvVector : public WvVectorBase
 {
 public:
     /** Creates an empty vector. */
-    WvVector(bool _auto_free) : WvVectorBase(_auto_free)
+    WvVector(bool _autofree) : WvVectorBase(_autofree)
         { }
 
     /** Destroys the vector and all of its contents. */
@@ -105,7 +105,7 @@ public:
         xcount = 0;
         xslots = 0;
         xseq = NULL;
-	if (auto_free)
+	if (autofree)
 	{
             while (oldcount > 0)
 		delete oldarray[--oldcount];
@@ -113,11 +113,11 @@ public:
         deletev oldarray;
     }
 
-    void remove(int slot, bool never_delete = false)
+    void remove(int slot), bool never_delete = false)
     {
 	T *obj = (*this)[slot];
 	WvVectorBase::remove(slot);
-	if (auto_free && !never_delete)
+	if (autofree && !never_delete)
 	    delete obj;
     }
     
