@@ -12,3 +12,4 @@ wvtestmain
 *.ii
 xplc-stamp
 .wvtest-total
+tmp.ini
