@@ -351,6 +351,8 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
         continue_select(-1);
     }
 
+    alarm(-1);
+
     queuemin(0);
 }
 
