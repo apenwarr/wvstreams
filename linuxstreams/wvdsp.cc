@@ -22,13 +22,14 @@ static int msec_lat(int frags, int frag_bits, int srate)
     return frags * (1<<frag_bits) * 1000 / srate;
 }
 
-
 WvDsp::WvDsp(int msec_latency, int srate, int bits, bool stereo,
-	     bool readable, bool writable)
-    : log("DSP", WvLog::Debug), rbuf(102400), wbuf(102400)
+	     bool readable, bool writable, bool _realtime, bool _oss)
+    : log("DSP", WvLog::Debug2), rbuf(102400), wbuf(102400)
 {
+    is_realtime = _realtime;
+
     int mode = 0;
-    
+   
     assert(msec_latency >= 0);
     assert(srate >= 8000);
     assert(srate <= 48000);
@@ -69,7 +70,8 @@ WvDsp::WvDsp(int msec_latency, int srate, int bits, bool stereo,
 	    num_frags++;
     }
     
-    log("Latency will be about %s ms.\n", lat);
+    log(WvLog::Debug, "With %s %s-bit frags, latency will be about %s ms.\n",
+                      num_frags, frag_size_bits, lat);
     
     frag_size = (1 << frag_size_bits);
     if (!setioctl(SNDCTL_DSP_SETFRAGMENT, (num_frags << 16) | frag_size_bits))
@@ -96,20 +98,20 @@ WvDsp::WvDsp(int msec_latency, int srate, int bits, bool stereo,
     // doing reads and writes at the same time.  Unfortunately, ALSA seems
     // to _need_ that for decent real-time performance.  But you can toggle
     // it here :)
-    if (1)
+    if (_oss)
     {
-	// start the reader process
-	subproc(true, false);
-	
-	// start the writer process
-	subproc(false, true);
+	// start the read/writer process
+	subproc(readable, writable);
     }
     else
     {
-	// start the read/writer process
-	subproc(true, true);
+	// start the reader process
+	if (readable) subproc(true, false);
+	
+	// start the writer process
+	if (writable) subproc(false, true);
     }
-    
+
     rloop.nowrite();
     wloop.noread();
     realtime(); // actually necessary, but a bit dangerous...
@@ -214,13 +216,13 @@ bool WvDsp::setioctl(int ctl, int param)
 // set realtime scheduling priority
 void WvDsp::realtime()
 {
-    if (1)
+    if (is_realtime)
     {
-	struct sched_param sch;
-	memset(&sch, 0, sizeof(sch));
-	sch.sched_priority = 1;
-	if (sched_setscheduler(getpid(), SCHED_FIFO, &sch) < 0)
-	    seterr("can't set scheduler priority!");
+        struct sched_param sch;
+        memset(&sch, 0, sizeof(sch));
+        sch.sched_priority = 1;
+        if (sched_setscheduler(getpid(), SCHED_FIFO, &sch) < 0)
+            seterr("can't set scheduler priority!");
     }
 }
 
@@ -241,22 +243,22 @@ void WvDsp::subproc(bool reading, bool writing)
     }
     else if (pid > 0) // parent
 	return;
-    
+
     // otherwise, this is the child
-    
+
     char buf[10240];
     size_t len;
-    
+ 
     realtime();
-    
+ 
     rloop.noread();
     wloop.nowrite();
-    
+ 
     if (!reading)
 	rloop.close();
     if (!writing)
 	wloop.close();
-    
+ 
     while (isok() && (rloop.isok() || wloop.isok()))
     {
 	if (reading)
@@ -268,7 +270,7 @@ void WvDsp::subproc(bool reading, bool writing)
 		rloop.write("", 1);
 	    }
 	}
-	
+
 	if (writing)
 	{
 	    if (wbuf.used() || reading || wloop.select(-1))
@@ -283,7 +285,7 @@ void WvDsp::subproc(bool reading, bool writing)
 	    }
 	}
     }
-	
+
     _exit(0);
 }
 
@@ -294,7 +296,7 @@ size_t WvDsp::ispace()
     
     if (ioctl(fd, SNDCTL_DSP_GETISPACE, &info) < 0)
     {
-	log("error in GETISPACE\n");
+	log(WvLog::Error, "error in GETISPACE\n");
 	return 0;
     }
     
@@ -310,7 +312,7 @@ size_t WvDsp::ospace()
     
     if (ioctl(fd, SNDCTL_DSP_GETOSPACE, &info) < 0)
     {
-	log("error in GETOSPACE\n");
+	log(WvLog::Error, "error in GETOSPACE\n");
 	return 0;
     }
     
@@ -320,6 +322,9 @@ size_t WvDsp::ospace()
 
 size_t WvDsp::do_uread(void *buf, size_t len)
 {
+    if (len < frag_size)
+        log(WvLog::Warning, "reading less than frag size: %s/%s\n", len, frag_size);
+
     int i, i2;
     
     if (len > frag_size)
@@ -327,13 +332,21 @@ size_t WvDsp::do_uread(void *buf, size_t len)
     
     if ((i = ispace()) > 1)
     {
-	i2 = i;
-	while (i2-- > 1)
-	{
-	    char buf2[frag_size];
-	    ::read(fd, buf2, frag_size);
-	}
-	log("inbuf is filling up! (%s waiting)\n", i);
+        if (i > num_frags * 2)
+        {
+            log("resetting: frag count is broken! (%s)\n", i);
+            ioctl(fd, SNDCTL_DSP_RESET, NULL);
+        }
+        else
+        {
+            i2 = i;
+            while (i2-- > 1)
+            {
+                char buf2[frag_size];
+                ::read(fd, buf2, frag_size);
+            }
+            log("inbuf is filling up! (%s waiting)\n", i);
+        }
     }
     
     // note: ALSA drivers sometimes read zero bytes even with stuff in the
@@ -348,15 +361,18 @@ size_t WvDsp::do_uread(void *buf, size_t len)
     
     if (ret && ret < (int)len && ret < (int)frag_size)
 	log("inbuf underflow (%s/%s)!\n", ret, len);
-    
+
     return ret;
 }
 
 
 size_t WvDsp::do_uwrite(const void *buf, size_t len)
 {
+    if (len < frag_size)
+        log(WvLog::Warning, "writing less than frag size: %s/%s\n", len, frag_size);
+
     int o = ospace(), o2;
-    
+   
     if (o < 2)
     {
 	o2 = o;
@@ -378,6 +394,7 @@ size_t WvDsp::do_uwrite(const void *buf, size_t len)
     size_t ret = ::write(fd, buf, len);
     if (ret < 0)
     {
+        log("Error: %s\n", errno);
 	if (errno != EAGAIN)
 	    seterr(errno);
 	return len; // avoid using WvStreams buffer

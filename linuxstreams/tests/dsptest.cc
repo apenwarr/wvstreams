@@ -6,13 +6,63 @@
  * apparently much trickier than it looks.
  */
 #include "wvdsp.h"
+#include <wvlogrcv.h>
 
-int main()
+void usage()
+{
+    wvcon->print("dsptest [-r] [-o] [-l latency] [-d]\n");
+    exit(1);
+}
+
+int main(int argc, char **argv)
 {
     WvLog log("dsptest", WvLog::Info);
     
+    bool realtime = false;
+    bool oss = false;
+    int latency = 0;
+    int debuglvl = 0;
+    
+    int c;
+    opterr = true;
+    while ((c = getopt(argc, argv, "rol:dDh?")) >= 0)
+    {
+        switch (c)
+        {
+            case 'r':
+                realtime = true;
+                break;
+            case 'o':
+                oss = true;
+                break;
+            case 'l':
+                latency = WvString(optarg).num();
+                break;
+            case 'd':
+                debuglvl = 1;
+                break;
+            case 'D':
+                debuglvl = 2;
+                break;
+            case 'h':
+            case '?':
+            default:
+                usage();
+                break;
+        }
+    }
+
+    WvLog::LogLevel loglvl = WvLog::Info;
+    switch (debuglvl)
+    {
+        case 0: loglvl = WvLog::Info; break;
+        case 1: loglvl = WvLog::Debug; break;
+        case 2: loglvl = WvLog::Debug2; break;
+    };
+    WvLogConsole clog(1, loglvl);
+
     log("Opening dsp...");
-    WvDsp dsp(0, 44100, 16, 2, true, true);
+    WvDsp dsp(latency, 44100, 16, 2, true, true, realtime, oss);
     log("done.\n");
     
     if (!dsp.isok())

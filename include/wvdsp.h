@@ -29,9 +29,12 @@ public:
      * bits = bits per sample ( 8 or 16 )
      * stereo = should this be a stereo stream?
      * readable/writeable = should this stream be readable and/or writeable
+     * realtime = should the stream give itself realtime priority (needs root)
+     * oss = is this a real OSS driver (not ALSA's OSS emulation)?
      */
     WvDsp(int msec_latency, int srate, int bits, bool stereo,
-	  bool readable, bool writable);
+	  bool readable = true, bool writable = true,
+          bool _realtime = false, bool _oss = false);
     virtual ~WvDsp();
 
     /**
@@ -54,7 +57,6 @@ public:
      */
     virtual size_t uwrite(const void *buf, size_t len);
 
-
     /**
      * Reimplemented from @ref WvStreams for internal reasons
      */
@@ -72,7 +74,7 @@ public:
 private:
     bool setioctl(int ctl, int param);
     void subproc(bool reading, bool writing);
-    
+
     size_t do_uread(void *buf, size_t len);
     size_t do_uwrite(const void *buf, size_t len);
     
@@ -81,6 +83,7 @@ private:
     WvMagicCircle rbuf, wbuf;
     WvLoopback rloop, wloop;
     int fd;
+    bool is_realtime;
 };
 
 
