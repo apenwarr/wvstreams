@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     log("Starting...\n");
     
     // Setup a new DN entry, like a server would set.
-    WvString dn("cn=test.foo.com,dc=foo,dc=com");
+    WvString dn(argc > 1 ? argv[1] : "cn=test.foo.com,dc=foo,dc=com");
     
     // Create a new certificate
     WvX509Mgr cert(dn, 1024);
@@ -28,7 +28,14 @@ int main(int argc, char **argv)
 	return 1;
     }
     
+    log("Private RSA key follows (KEEP THIS!):\n");
     wvcon->write(cert.encode(WvX509Mgr::RsaPEM));
+    
+    log("Temporary self-signed certificate follows (replace later):\n");
+    wvcon->write(cert.encode(WvX509Mgr::CertPEM));
+    
+    log("Certificate request follows:\n");
     wvcon->write(cert.certreq());
+    
     log("Done...\n");
 }
