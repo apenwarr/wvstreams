@@ -19,7 +19,6 @@ class UniWatch
 {
     bool recurse;
     UniConfCallback cb;
-    void *cbdata;
 
 public:
     UniWatch(bool _recurse, UniConfCallback _cb)
@@ -36,8 +35,8 @@ public:
     /** Equality test. */
     bool operator== (const UniWatch &other) const
     {
-        return recurse  == other.recurse &&
-            cb == other.cb && cbdata == other.cbdata;
+        return recurse == other.recurse &&
+            cb == other.cb;
     }
 };
 DeclareWvList(UniWatch);
