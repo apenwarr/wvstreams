@@ -124,7 +124,11 @@ UniListGen::IterIter::IterIter(UniConfGenList::Iter &geniter,
     const UniConfKey &key)
 {
     for (geniter.rewind(); geniter.next(); )
-        l.append(geniter->iterator(key), true);
+    {
+	Iter *it = geniter->iterator(key);
+	if (it)
+	    l.append(it, true);
+    }
 
     i = new IterList::Iter(l);
 }

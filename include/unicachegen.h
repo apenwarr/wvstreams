@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  *
- * A UniConf generator that stores keys in memory.
+ * A UniConf generator that caches keys/values in memory.
  */
 #ifndef __UNICACHEGEN_H
 #define __UNICACHEGEN_H
@@ -38,6 +38,8 @@ public:
     virtual ~UniCacheGen();
 
     /***** Overridden members *****/
+    virtual bool refresh();
+    virtual void commit();
     virtual void set(const UniConfKey &key, WvStringParm value);
 };
 

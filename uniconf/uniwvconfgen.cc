@@ -80,7 +80,7 @@ UniWvConfGen::Iter *UniWvConfGen::iterator(const UniConfKey &key)
     if (sect)
         return new WvConfIter(sect);
     else
-        return new UniConfGen::NullIter();
+        return NULL;
 }
 
 

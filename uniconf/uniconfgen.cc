@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
  * 
- * A UniConf key management abstraction.
+ * An abstract data container that backs a UniConf tree.
  */
 #include "uniconfgen.h"
 #include "strutils.h"
@@ -12,17 +12,15 @@ IUniConfGen::~IUniConfGen()
 {
 }
 
-
-/***** UniConfGen *****/
-
 UUID_MAP_BEGIN(UniConfGen)
   UUID_MAP_ENTRY(IObject)
   UUID_MAP_ENTRY(IUniConfGen)
   UUID_MAP_END
 
-UniConfGen::UniConfGen() :
-    cbdata(NULL), hold_nesting(0)
+UniConfGen::UniConfGen()
 {
+    cbdata = NULL;
+    hold_nesting = 0;
 }
 
 
@@ -95,12 +93,17 @@ void UniConfGen::delta(const UniConfKey &key, WvStringParm value)
 
 bool UniConfGen::haschildren(const UniConfKey &key)
 {
+    bool children = false;
+    
     hold_delta();
     
     Iter *it = iterator(key);
-    it->rewind();
-    bool children = it->next();
-    delete it;
+    if (it)
+    {
+	it->rewind();
+	if (it->next()) children = true;
+	delete it;
+    }
     
     unhold_delta();
     return children;
@@ -109,7 +112,7 @@ bool UniConfGen::haschildren(const UniConfKey &key)
 
 bool UniConfGen::exists(const UniConfKey &key)
 {
-    return ! get(key).isnull();
+    return !get(key).isnull();
 }
 
 
@@ -146,7 +149,7 @@ bool UniConfGen::isok()
 
 
 void UniConfGen::setcallback(const UniConfGenCallback &callback,
-    void *userdata)
+			     void *userdata)
 {
     cb = callback;
     cbdata = userdata;

@@ -139,7 +139,7 @@ UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
         if (node)
             return new NodeIter(this, UniConfValueTree::Iter(*node));
     }
-    return new NullIter();
+    return NULL;
 }
 
 

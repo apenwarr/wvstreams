@@ -280,9 +280,12 @@ void UniMountTreeGen::KeyIter::rewind()
     {
         IUniConfGen *gen = genit.ptr();
         UniConfGen::Iter *keyit = gen->iterator(genit.tail());
-        for (keyit->rewind(); keyit->next(); )
-            hack.add(new WvString(keyit->key()), true);
-        delete keyit;
+	if (keyit)
+	{
+	    for (keyit->rewind(); keyit->next(); )
+		hack.add(new WvString(keyit->key()), true);
+	    delete keyit;
+	}
     }
 
     hackit.rewind();

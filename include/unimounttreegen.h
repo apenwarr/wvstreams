@@ -9,9 +9,7 @@
 
 #include "uniconfgen.h"
 #include "uniconftree.h"
-#include "wvcallback.h"
 #include "wvstringtable.h"
-#include "wvmoniker.h"
 
 /**
  * Used by UniMountTreeGen to maintain information about mounted

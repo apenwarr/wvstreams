@@ -62,6 +62,12 @@ bool UniConf::haschildren() const
 }
 
 
+void UniConf::prefetch(bool recursive) const
+{
+    xroot->mounts.prefetch(xfullkey, recursive);
+}
+
+
 WvString UniConf::get(WvStringParm defvalue) const
 {
     WvString value = xroot->mounts.get(xfullkey);
@@ -228,8 +234,11 @@ void UniConf::dump(WvStream &stream, bool everything) const
 /***** UniConf::Iter *****/
 
 UniConf::Iter::Iter(const UniConf &_top)
-    : IterBase(_top), it(_top.rootobj()->mounts.iterator(top.fullkey()))
+    : IterBase(_top)
 {
+    it = _top.rootobj()->mounts.iterator(top.fullkey());
+    if (!it)
+	it = new UniConfGen::NullIter;
 }
 
 

@@ -135,12 +135,15 @@ public:
     
     /***** Key Retrieval API *****/
     
+    /** See UniConfGen::prefetch(). */
+    void prefetch(bool recursive) const;
+    
     /**
      * Fetches the string value for this key from the registry.  If the
      * key is not found, returns 'defvalue' instead.
      */
     WvString get(WvStringParm defvalue = WvString::null) const;
-
+    
     /**
      * Without fetching its value, returns true if this key exists.
      * 

@@ -216,7 +216,7 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
     UniGenMount *found = findmount(key);
     if (found)
         return found->gen->iterator(trimkey(found->key, key));
-    return new NullIter;
+    return NULL;
 }
 
 

@@ -13,6 +13,7 @@
 #include "wvmoniker.h"
 #include "wvsslstream.h"
 
+
 #ifndef _WIN32
 #include "wvunixsocket.h"
 static IUniConfGen *unixcreator(WvStringParm s, IObject *, void *)
@@ -21,6 +22,7 @@ static IUniConfGen *unixcreator(WvStringParm s, IObject *, void *)
 }
 static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 #endif
+
 
 static IUniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
 {
@@ -33,6 +35,7 @@ static IUniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
     return new UniClientGen(new WvTCPConn(s), _s);
 }
 
+
 static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
 {
     WvString s(_s);
@@ -43,6 +46,7 @@ static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
     
     return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL, true), _s);
 }
+
 
 // if 'obj' is a WvStream, build the uniconf connection around that;
 // otherwise, create a new WvStream using 's' as the wvstream moniker.
@@ -109,8 +113,8 @@ WvString UniClientGen::get(const UniConfKey &key)
     {
         if (result_key == key)
             value = result;
-        else
-            seterror("Error: server sent wrong key pair.");
+//        else
+//            seterror("Error: server sent wrong key pair.");
     }
     return value;
 }
@@ -154,7 +158,8 @@ UniClientGen::Iter *UniClientGen::iterator(const UniConfKey &key)
         return new RemoteKeyIter(result_list);
 
     delete result_list;
-    return new UniConfGen::NullIter();
+    result_list = NULL;
+    return NULL;
 }
     
 
@@ -274,6 +279,10 @@ bool UniClientGen::do_select()
     conn->alarm(TIMEOUT);
     while (conn->isok() && cmdinprogress)
     {
+	// We would really like to run the "real" wvstreams globallist
+	// select loop here, but we can't because we may already be inside
+	// someone else's callback or something.  So we'll wait on *only* this
+	// connection.
         if (conn->select(-1, true, false))
         {
             conn->callback();
@@ -282,8 +291,8 @@ bool UniClientGen::do_select()
     }
     conn->alarm(-1);
 
-    if (!cmdsuccess)
-        seterror("Error: server timed out on response.");
+//    if (!cmdsuccess)
+//        seterror("Error: server timed out on response.");
 
     return cmdsuccess;
 }
@@ -309,11 +318,13 @@ UniConfKey UniClientGen::RemoteKeyIter::key() const
     return UniConfKey(*i).last();
 }
 
+
 void UniClientGen::clientdelta(const UniConfKey &key, WvStringParm value)
 {
     deltas.append(new UniConfPair(key, value), true);
     deltastream.alarm(0);
 }
+
 
 void UniClientGen::deltacb(WvStream &, void *)
 {
