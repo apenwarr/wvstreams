@@ -20,4 +20,6 @@
 
 #include <xplc/xplc.h>
 
+#define RELEASE(ptr) do { if (ptr) ptr->release(); ptr = 0; } while (0)
+
 #endif // __WVXPLC_H
