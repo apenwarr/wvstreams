@@ -32,18 +32,6 @@ DeclareWvCallback(2, void, FAMCallback, WvStringParm, WvFAMEvent);
  */
 class WvFAMBase
 {
-public:
-    WvFAMBase() : cb(NULL), s(0), log("WvFAM") { setup(); }
-    WvFAMBase(FAMCallback _cb) : cb(_cb), s(0), log("WvFAM") { setup(); }
-    ~WvFAMBase();
-
-    static bool fam_ok();
-
-    bool isok() const;
-
-    void setcallback(FAMCallback _cb)
-        { cb = _cb; }
-
 protected:
 
     // These calls all take a pointer to a WvString. The WvString must exist and
@@ -67,6 +55,18 @@ protected:
     void callback();
 
     void setup();
+
+public:
+    WvFAMBase() : cb(NULL), s(0), log("WvFAM") { setup(); }
+    WvFAMBase(FAMCallback _cb) : cb(_cb), s(0), log("WvFAM") { setup(); }
+    ~WvFAMBase();
+
+    static bool fam_ok();
+
+    bool isok() const;
+
+    void setcallback(FAMCallback _cb)
+        { cb = _cb; }
 };
 
 
@@ -79,7 +79,6 @@ public:
     void monitordir(WvStringParm dir);
     void monitorfile(WvStringParm file);
     void monitor(WvStringParm path);
-
     void unmonitor(WvStringParm path);
 
 protected:
