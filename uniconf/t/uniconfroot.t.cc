@@ -172,8 +172,38 @@ WVTEST_MAIN("iterators")
     WVPASSEQ(i->fullkey(sub).printable(), "b");
     i.next();
     WVPASSEQ(i->fullkey(sub).printable(), "b/1");
+
 }
 
+/*bug 6869
+static int compare(const UniConf &_a, const UniConf &_b)
+{
+    return _a.key().printable() > _b.key().printable();
+}
+
+
+WVTEST_MAIN("sorted iterators")
+{
+    UniConfRoot root("temp:");
+    root["3"].setme("foo1");
+    root["2"].setme("foo2");
+    root["1"].setme("foo3");
+    root["4"].setme("foo4");
+    
+    UniConf sub(root);
+    UniConf::SortedIter i(sub, compare);
+    i.rewind();
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "1");
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "2");
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "3");
+    i.next();
+    WVPASSEQ(i->fullkey(sub).printable(), "4");
+}
+*/
+    
 WVTEST_MAIN("nested iterators")
 {
     UniConfRoot root("temp:");
