@@ -6,6 +6,7 @@
 #include <objbase.h>
 #include <signal.h>
 #include <winsock.h>
+#include <malloc.h>
 
 #define _SYS_GUID_OPERATOR_EQ_ 1
 
@@ -38,5 +39,7 @@ static inline unsigned int alarm(unsigned int t) { return 0; }
 extern void *_wvinitialize;
 static void *_wvinitialize_local = _wvinitialize;
 #endif
+
+// #define _alloca(x) alloca(x)
 
 #endif // __WIN32_SANITIZE_H
