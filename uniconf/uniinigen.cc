@@ -200,7 +200,8 @@ bool UniIniGen::refresh()
     newgen->root = NULL;
     dirty = false;
     oldtree->compare(newtree, UniConfValueTree::Comparator
-        (this, &UniIniGen::refreshcomparator), NULL);
+            (this, &UniIniGen::refreshcomparator), NULL);
+    
     delete oldtree;
     unhold_delta();
 
@@ -392,7 +393,11 @@ static void printsection(WvStream &file, const UniConfKey &key)
 	s = wvtcl_escape(key, "\r\n[]");
     else
 	s = key;
-    file.print("\n[%s]\n", s);
+    // broken up for optimization, no temp wvstring created
+    //file.print("\n[%s]\n", s);
+    file.print("\n[");
+    file.print(s);
+    file.print("]\n");
 }
 
 
@@ -417,7 +422,12 @@ static void printkey(WvStream &file, const UniConfKey &_key,
     
     // need to escape []#= in key only to distinguish a key/value
     // pair from a section name or comment and to delimit the value
-    file.print("%s = %s\n", key, value);
+    // broken up for optimization, no temp wvstring created
+    //file.print("%s = %s\n", key, value);
+    file.print(key);
+    file.print(" = ");
+    file.print(value);
+    file.print("\n");
 }
 
 
