@@ -7,17 +7,26 @@ XPATH=include
 
 include vars.mk
 
+all: config.mk xplc $(TARGETS)
+
+.PHONY: xplc xplc/clean install-xplc
+xplc:
+xplc/clean:
+install-xplc:
+
 ifeq ("$(build_xplc)", "yes")
-  MYXPLC:=xplc
-endif
 
-all: config.mk $(MYXPLC) $(TARGETS)
-
-ifeq ("$(build_xplc)", "yes")
-
-.PHONY: xplc
 xplc:
 	$(MAKE) -C xplc
+
+xplc/clean:
+	$(MAKE) -C xplc clean
+
+install-xplc: xplc
+	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams/xplc
+	$(INSTALL_DATA) $(wildcard xplc/include/xplc/*.h) $(DESTDIR)$(includedir)/wvstreams/xplc
+	$(INSTALL) -d $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) xplc/libxplc-cxx.a $(DESTDIR)$(libdir)
 
 # Prevent complaints that Make can't find these two linker options.
 -lxplc-cxx: ;
@@ -76,7 +85,7 @@ distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
 	@rm -f .xplc
 
-clean: depend dust
+clean: depend dust xplc/clean
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
@@ -108,22 +117,11 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	for i in $(TARGETS_A); do \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(libdir); \
 	done
-	for i in $(TARGETS_SO); do \
-	    cd $(DESTDIR)$(libdir) && $(LN_S) $$i.$(RELEASE) $$i; \
+	cd $(DESTDIR)$(libdir) && for i in $(TARGETS_SO); do \
+	    $(LN_S) $$i.$(RELEASE) $$i; \
 	done
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL_DATA) $(wildcard pkgconfig/*.pc) $(DESTDIR)$(libdir)/pkgconfig
-
-ifeq ("$(build_xplc)", "yes")
-
-install-xplc: xplc
-	$(MAKE) -C xplc install
-
-else
-
-install-xplc: ;
-
-endif
 
 uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
