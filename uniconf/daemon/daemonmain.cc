@@ -27,9 +27,10 @@ static void usage()
 {
     wverr->print(
         "uniconfdaemon usage:  uniconfdaemon "
-            "[-mount mountpoint moniker] [-perms moniker] [-p port] [-ssl sslport] [-d level]\n"
+            "[-mount mountpoint moniker perms] [-p port] [-ssl sslport] [-d level]\n"
         "    mountpoint - the point to mount the config keys under\n"
         "    moniker    - the moniker, eg. ini:myfile\n"
+        "    perms      - moniker to get permissions from (optional)\n"
         "    level      - the debug level\n"
         "                 Critical, Error, Warning, Notice, Info, or Debug[1-5]\n"
         "    port       - the port to listen on for TCP connections (use 0 to disallow)\n"
@@ -66,7 +67,7 @@ static WvLog::LogLevel findloglevel(char *arg)
 
 
 static void trymount(const UniConf &cfg, const UniConfKey &key,
-    WvStringParm location, WvStringParm perms)
+    WvStringParm location, WvStringParm perms = WvString::null)
 {
     UniConfGen *gen;
     WvString errormsg;
@@ -140,9 +141,8 @@ int main(int argc, char **argv)
     UniConfRoot root;
     UniConf cfg(root);
 
-    UniConfKey mountpoint = UniConfKey::EMPTY;
-    WvString mountloc = DEFAULT_CONFIG_FILE;
-    WvString perms;
+    bool mountattempt = false;
+    bool needauth = false;
     unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
     unsigned int sslport = DEFAULT_UNICONF_DAEMON_SSL_PORT;
 
@@ -151,15 +151,19 @@ int main(int argc, char **argv)
         if (!strcmp(argv[i],"-mount"))
         {
             if (argc < i + 3) usage();
-            mountpoint = argv[i + 1];
-            mountloc = argv[i + 2];
-            i += 2;
-        }
-        else if (!strcmp(argv[i], "-perms"))
-        {
-            if (argc < i + 2) usage();
-            perms = argv[i + 1];
-            i += 1;
+            WvString mountpoint = argv[i + 1];
+            WvString mountloc = argv[i + 2];
+            WvString perms;
+            if (argc < i + 4 || argv[i + 3][0] == '-')
+                i += 2;
+            else
+            {
+                perms = argv[i + 3];
+                i += 3;
+                needauth = true;
+            }
+            trymount(cfg, mountpoint, mountloc, perms);
+            mountattempt = true;
         }
         else if (!strcmp(argv[i], "-p"))
         {
@@ -183,9 +187,10 @@ int main(int argc, char **argv)
             usage();
     }
 
-    trymount(cfg, mountpoint, mountloc, perms);
+    if (!mountattempt)
+        trymount(cfg, UniConfKey::EMPTY, DEFAULT_CONFIG_FILE);
 
-    globdaemon = new UniConfDaemon(cfg, !perms.isnull());
+    globdaemon = new UniConfDaemon(cfg, needauth);
     
     // FIXME: THIS IS NOT SAFE!
     system("mkdir -p /tmp/uniconf");
