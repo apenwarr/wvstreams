@@ -117,29 +117,6 @@ public:
 	WvLink *cur() const
             { return link; }
     };
-
-    // base class for the auto-declared sorted hash table iterators
-    class SorterBase
-    {
-    public:
-	typedef int (CompareFunc)(const void *a, const void *b);
-	
-        WvHashTableBase *tbl;
-        WvLink **array;
-        WvLink **lptr;
-
-        SorterBase(WvHashTableBase &_tbl)
-            { tbl = &_tbl; array = lptr = NULL; }
-        virtual ~SorterBase()
-            { if (array) delete array; }
-        WvLink *next()
-            { return lptr ? *(++lptr)
-                          : *(lptr = array); }
-        WvLink *cur()
-            { return lptr ? *lptr : &tbl->slots[0].head; }
-    protected:
-        void rewind(CompareFunc *cmp);
-    };
 };
 
 
@@ -197,21 +174,8 @@ public:
 	WvIterStuff(_type_);
     };
 
-    class Sorter : public WvHashTableBase::SorterBase
-    {
-    public:
-	typedef int (RealCompareFunc)(const _type_ *a, const _type_ *b);
-	RealCompareFunc *cmp;
-
-        Sorter(WvHashTable &_tbl, RealCompareFunc *_cmp)
-            : SorterBase(_tbl), cmp(_cmp)
-            { }
-        _type_ *ptr() const
-            { return (_type_ *)(*lptr)->data; }
-	WvIterStuff(_type_);
-        void rewind()
-            { SorterBase::rewind((CompareFunc *)cmp); }
-    };
+    typedef class WvSorter<_type_,WvHashTableBase,WvHashTableBase::IterBase>
+	Sorter;
 };
 
 

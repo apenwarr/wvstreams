@@ -44,7 +44,7 @@ WvLink *WvListBase::IterBase::find(const void *data)
 }
 
 
-
+#if 0
 static WvListBase::SorterBase::CompareFunc *actual_compare = NULL;
 
 static int magic_compare(const void *_a, const void *_b)
@@ -85,3 +85,4 @@ void WvListBase::SorterBase::rewind(CompareFunc *cmp)
 
     lptr = NULL;    // subsequent next() will set it to first element.
 }
+#endif

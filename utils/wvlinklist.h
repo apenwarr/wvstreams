@@ -41,49 +41,7 @@
 #ifndef __WVLINKLIST_H
 #define __WVLINKLIST_H
 
-#include <stdlib.h>  // for 'NULL'
-
-
-#define WvIterStuff(_type_) \
-	operator _type_& () const \
-	    { return *ptr(); } \
-	_type_ &operator () () const \
-	    { return *ptr(); } \
-	_type_ *operator -> () const \
-	    { return ptr(); } \
-        _type_ &operator* () const \
-            { return *ptr(); }
-	
-
-
-// note: auto_free behaviour is a little bit weird; since WvLink does not
-// know what data type it has received, there is no way it can call the
-// right destructor.  So, the WvList needs to handle the data deletion
-// by itself.  On the other hand, the auto_free flag needs to be stored in
-// the WvLink.  <sigh>...
-//
-class WvLink
-{
-public:
-    void *data;
-    WvLink *next;
-    char *id;
-    unsigned auto_free : 1;
-
-    WvLink(void *_data, bool _auto_free, char *_id = NULL)
-        { data = _data; next = NULL; auto_free = (unsigned)_auto_free;
-	    id = _id; }
-
-    WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _auto_free,
-	   char *_id = NULL);
-
-    void unlink(WvLink *prev)
-    {
-	prev->next = next;
-	delete this;
-    }
-};
-
+#include "wvsorter.h"
 
 class WvListBase
 {
@@ -122,35 +80,6 @@ public:
 	// set 'cur' to the WvLink that points to 'data', and return the
 	// link.  If 'data' is not found, sets cur=NULL and returns NULL.
 	WvLink *find(const void *data);
-    };
-
-    // the base class for sorted list iterators.
-    // It is similar to IterBase, except for rewind(), next(), and cur().
-    // The sorting is done in rewind(), which makes an array of WvLink
-    // pointers and calls qsort.  "lptr" is a pointer to the current WvLink *
-    // in the array, and next() increments to the next one.
-    // NOTE: we do not keep "prev" because it makes no sense to do so.
-    //       I guess Sorter::unlink() will be slow... <sigh>
-    class SorterBase
-    {
-    public:
-	typedef int (CompareFunc)(const void *a, const void *b);
-	    
-        WvListBase *list;
-        WvLink **array;
-        WvLink **lptr;
-
-        SorterBase(WvListBase &l)
-            { list = &l; array = lptr = NULL; }
-        virtual ~SorterBase()
-            { if (array) delete array; }
-        WvLink *next()
-            { return lptr ? *(++lptr)
-                          : *(lptr = array); }
-        WvLink *cur() const
-            { return lptr ? *lptr : &list->head; }
-    protected:
-        void rewind(CompareFunc *cmp);
     };
 };
 
@@ -225,27 +154,8 @@ public:
 	    link = prev;
 	}
     };
-
-    class Sorter : public WvListBase::SorterBase
-    {
-    public:
-	typedef int (RealCompareFunc)(const _type_ *a, const _type_ *b);
-	RealCompareFunc *cmp;
-
-        Sorter(WvList &l, RealCompareFunc *_cmp)
-            : SorterBase(l), cmp(_cmp)
-            { }
-        _type_ *ptr() const
-            { return (_type_ *)(*lptr)->data; }
-	WvIterStuff(_type_);
-        void unlink()
-        {
-            ((WvList *)list)->unlink(ptr());
-            lptr += sizeof(WvLink *);
-        }
-        void rewind()
-            { SorterBase::rewind((CompareFunc *)cmp); }
-    };
+    
+    typedef class WvSorter<_type_,WvListBase,WvListBase::IterBase> Sorter;
 };
 
 
