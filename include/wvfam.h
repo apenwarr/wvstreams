@@ -1,3 +1,4 @@
+/* -*- Mode: C++ -*- */
 #include "wvautoconf.h"
 
 #ifdef WITH_FAM
@@ -22,13 +23,14 @@ typedef WvCallback<void, WvStringParm, WvFamEvent, bool> WvFamCallback;
 
 
 /*
- * The WvFamBase class is provided for efficiency. If you're going to be keeping
- * track of the stuff you're monitoring anyways then there's no reason to have
- * duplicate wvstrings/hashes. This class accepts a pointer to a wvstring and
- * returns the request id number (which is needed to unmonitor).
+ * The WvFamBase class is provided for efficiency. If you're going to
+ * be keeping track of the stuff you're monitoring anyways then
+ * there's no reason to have duplicate wvstrings/hashes. This class
+ * accepts a pointer to a wvstring and returns the request id number
+ * (which is needed to unmonitor).
  *
- * If you're not keeping a list of stuff you're monitoring around for other
- * reasons just ignore this and use the main WvFam class.
+ * If you're not keeping a list of stuff you're monitoring around for
+ * other reasons just ignore this and use the main WvFam class.
  */
 class WvFamBase
 {

@@ -1,3 +1,4 @@
+/* -*- Mode: C++ -*- */
 #pragma once
 #include "wvstreamclone.h"
 #include <map>

@@ -1,3 +1,4 @@
+/* -*- Mode: C++ -*- */
 #ifndef __WVMATRIX_H
 #define __WVMATRIX_H
 
