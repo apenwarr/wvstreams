@@ -1,3 +1,19 @@
+#include "wvautoconf.h"
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
+
+#ifndef _WIN32
+#include <signal.h>
+#endif
+
+#ifdef WITH_SLP
+#include "wvslp.h"
+#endif
+
 #include "wvlogrcv.h"
 #include "uniconfdaemon.h"
 #include "uniclientconn.h"
@@ -8,11 +24,6 @@
 #include "wvstrutils.h"
 #include "wvfileutils.h"
 #include "wvcrash.h"
-
-#ifndef _WIN32
-#include <getopt.h>
-#include <signal.h>
-#endif
 
 #ifdef WITH_SLP
 #include "slp.h"
@@ -72,14 +83,6 @@ static void usage(WvStringParm argv0)
 #endif
     exit(1);
 }
-
-#ifdef WITH_SLP
-static void sillyslpcb(SLPHandle hslp, SLPError errcode, void* cookie) 
-{ 
-    /* return the error code in the cookie */ 
-    *(SLPError*)cookie = errcode; 
-}
-#endif
 
 #ifndef _WIN32
 extern char *optarg;
@@ -260,43 +263,15 @@ int main(int argc, char **argv)
     
 #ifdef WITH_SLP
     // Now that we're this far...
-    SLPError slperr; 
-    SLPError callbackerr; 
-    SLPHandle hslp; 
-
-    slperr = SLPOpen("en", SLP_FALSE, &hslp); 
-    if(slperr != SLP_OK)
-    { 
-        log(WvLog::Critical, "Error opening SLP handle\n"); 
-	exit(7);
-    } 
+    WvSlp slp;
     
     // Register UniConf service with SLP 
     if (port)
-    {
-	svc = WvString("service:uniconf.niti://%s:%s", fqdomainname(), port);
-	slperr = SLPReg(hslp, svc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
-			sillyslpcb, &callbackerr);
-	
-	if(slperr != SLP_OK)
-	{ 
-	    log(WvLog::Notice, "Error registering UniConf Daemon with SLP Service\n"); 
-	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
-	}
-    }
+	slp.add_service("uniconf.niti", fqdomainname(), port);
 
     // Register UniConf SSL service with SLP 
     if (sslport)
-    {
-	sslsvc = WvString("service:uniconfs.niti://%s:%s", fqdomainname(), sslport);
-	slperr = SLPReg(hslp, sslsvc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE, 
-			sillyslpcb, &callbackerr);
-	if(slperr != SLP_OK)
-	{ 
-	    log(WvLog::Notice, "Error registering UniConf SSL Daemon with SLP Service\n");
-	    log(WvLog::Notice, "This may be because there is no SLP DA on your network\n");
-	}
-    }
+	slp.add_service("uniconfs.niti", fqdomainname(), sslport);
 #endif
     
     // main loop
@@ -318,14 +293,5 @@ int main(int argc, char **argv)
     
     WvIStreamList::globallist.unlink(&daemon);
 
-#ifdef WITH_SLP
-    if (!!sslsvc)
-	SLPDereg(hslp, sslsvc, sillyslpcb, &callbackerr);
-    if (!!svc)
-	SLPDereg(hslp, svc, sillyslpcb, &callbackerr);
-    
-    SLPClose(hslp);
-#endif
-    
     return 0;
 }

@@ -11,6 +11,8 @@
 #include "wvdailyevent.h"
 #include "wvfork.h"
 #include <time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 
@@ -69,9 +71,8 @@ void WvLogFile::_make_prefix()
     if (fstat(getfd(), &statbuf) == -1)
         statbuf.st_size = 0;
 
-    // Make sure we are calculating last_day in the current time zone.
-    if (last_day < ((timenow + tmstamp->tm_gmtoff)/86400) 
-	|| statbuf.st_size > MAX_LOGFILE_SZ)
+    // Start a new log when it's a new day or the file is too big
+    if (last_day != tmstamp->tm_yday || statbuf.st_size > MAX_LOGFILE_SZ)
         start_log();
 
     WvLogFileBase::_make_prefix();
@@ -86,7 +87,7 @@ void WvLogFile::start_log()
     struct stat statbuf;
     time_t timenow = wvtime().tv_sec;
     struct tm* tmstamp = localtime(&timenow);
-    last_day = (timenow + tmstamp->tm_gmtoff) / 86400;
+    last_day = tmstamp->tm_yday;
     char buf[20];
     WvString fullname;
     strftime(buf, 20, "%Y-%m-%d", tmstamp);
@@ -113,21 +114,28 @@ void WvLogFile::start_log()
     pid_t forky = wvfork();
     if (!forky)
     {
-	// Child will Look for old logs and purge them
-	WvDirIter i(getdirname(filename), false);
-	i.rewind();
-	while (i.next() && keep_for)
+	// In child
+	if (!wvfork())
 	{
-	    // if it begins with the base name
-	    if (!strncmp(i.ptr()->name, base, strlen(base)))
-		// and it's older than 'keep_for' days
-		if (i.ptr()->st_mtime <
+	    // Child will Look for old logs and purge them
+	    WvDirIter i(getdirname(filename), false);
+	    i.rewind();
+	    while (i.next() && keep_for)
+	    {
+		// if it begins with the base name
+		if (!strncmp(i.ptr()->name, base, strlen(base)))
+		    // and it's older than 'keep_for' days
+		    if (i.ptr()->st_mtime <
                     wvtime().tv_sec - keep_for*86400)
-		{
-		    //delete it
-		    unlink(i.ptr()->fullname);
-		}
+		    {
+			//delete it
+			unlink(i.ptr()->fullname);
+		    }
+	    }
+	    _exit(0);
 	}
 	_exit(0);
     }
+    int status;
+    waitpid(forky, &status, 0);
 }

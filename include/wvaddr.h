@@ -9,44 +9,45 @@
 #ifndef __WVADDR_H
 #define __WVADDR_H
 
-#include "wvstring.h"
+#include "wvautoconf.h"
+#include "if_arp.h" /* To define ARPHRD_.* */
 
-// FIXME: this is not needed on platforms other than Linux
-#ifdef __linux
-#include <linux/if_ether.h>
+
+#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
 #endif
-
-#if 0
-// FIXME: this is needed on BSD and Darwin
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <net/if_arp.h>
-#include <netinet/in_systm.h>
-#include <net/ethernet.h>
-#define ETH_ALEN ETHER_ADDR_LEN
-#endif
-
-#if defined(ISBSD) || defined(ISDARWIN)
-#include <arpa/inet.h>
-#include "if_arp.h"
-#endif
-
-#ifndef _WIN32
-#include <netinet/in.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
 #else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NET_ETHERNET_H
+# include <net/ethernet.h>
+#endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+#if HAVE_NETINET_IF_ETHER_H
+# include <netinet/if_ether.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
 
+#ifdef _WIN32
 #include <winsock2.h>
-#define ETH_ALEN		6
+#define ETHER_ADDR_LEN		6
 #define IP_ALEN			4
 #endif
 
-#ifndef __u32
-typedef unsigned int __u32;
-#endif
-#ifndef __u16
-typedef short unsigned int __u16;
-#endif
-
+#include "wvstring.h"
 
 static const char * type_wvaddr = "WvAddr";
 static const char * type_wvipaddr = "WvIPAddr";
@@ -180,21 +181,21 @@ public:
  */
 class WvEtherAddr : public WvAddr
 {
-    unsigned char binaddr[ETH_ALEN];
+    unsigned char binaddr[ETHER_ADDR_LEN];
 
 protected:
     virtual WvString printable() const;
 
 public:
-    WvEtherAddr(const unsigned char _binaddr[ETH_ALEN] = NULL)
-        { if (_binaddr) memcpy(binaddr, _binaddr, ETH_ALEN); }
+    WvEtherAddr(const unsigned char _binaddr[ETHER_ADDR_LEN] = NULL)
+        { if (_binaddr) memcpy(binaddr, _binaddr, ETHER_ADDR_LEN); }
     WvEtherAddr(const char string[])
         { string_init(string); }
     WvEtherAddr(WvStringParm string)
         { string_init(string); }
     void string_init(const char string[]);
     WvEtherAddr(const struct sockaddr *addr)
-        { memcpy(binaddr, (void *)addr->sa_data, ETH_ALEN); }
+        { memcpy(binaddr, (void *)addr->sa_data, ETHER_ADDR_LEN); }
     virtual ~WvEtherAddr();
     
     virtual WvEncap encap() const;
@@ -250,7 +251,7 @@ public:
 
     WvIPAddr(const unsigned char _binaddr[4])
         { if (_binaddr) memcpy(binaddr, _binaddr, 4); }
-    WvIPAddr(const __u32 _binaddr = 0)
+    WvIPAddr(const uint32_t _binaddr = 0)
         { memcpy(binaddr, &_binaddr, 4); }
     WvIPAddr(const char string[])
     	{ string_init(string); }
@@ -275,8 +276,8 @@ public:
     WvIPAddr operator+ (int n) const;
     WvIPAddr operator- (int n) const;
 
-    __u32 addr() const
-        { return *(__u32 *)binaddr; }
+    uint32_t addr() const
+        { return *(uint32_t *)binaddr; }
 
     bool is_zero() const
         { return addr() == 0; }
@@ -391,19 +392,19 @@ protected:
     virtual WvString printable() const;
 
 public:
-    __u16 port;
+    uint16_t port;
     
     WvIPPortAddr();
-    WvIPPortAddr(const unsigned char _ipaddr[4], __u16 _port = 0) 
+    WvIPPortAddr(const unsigned char _ipaddr[4], uint16_t _port = 0) 
 	  : WvIPAddr(_ipaddr), port(_port) { };
-    WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port = 0);
+    WvIPPortAddr(const WvIPAddr &_ipaddr, uint16_t _port = 0);
     WvIPPortAddr(const char string[]) : WvIPAddr(string)
         { string_init(string); }
     WvIPPortAddr(WvStringParm string) : WvIPAddr(string)
         { string_init(string); }
     void string_init(const char string[]);
-    WvIPPortAddr(__u16 _port);          // assumes address 0.0.0.0, (ie local)
-    WvIPPortAddr(const char string[], __u16 _port);
+    WvIPPortAddr(uint16_t _port);          // assumes address 0.0.0.0, (ie local)
+    WvIPPortAddr(const char string[], uint16_t _port);
     
     WvIPPortAddr(struct sockaddr_in *sin) : WvIPAddr(sin->sin_addr.s_addr)
         { port = ntohs(sin->sin_port); }

@@ -5,7 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/signal.h>
+#include <signal.h>
 
 #define UNICONFD_SOCK "/tmp/uniretrygen-uniconfd"
 #define UNICONFD_INI "/tmp/uniretrygen-uniconfd.ini"

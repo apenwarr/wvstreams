@@ -166,7 +166,8 @@ LDLIBS := -lgcc $(LDLIBS) \
 
 RELEASE?=$(PACKAGE_VERSION)
 
-include $(filter-out xplc/%,$(wildcard */vars.mk */*/vars.mk)) /dev/null
+include $(filter-out xplc/% linuxstreams/%,$(wildcard */vars.mk */*/vars.mk)) \
+	$(wildcard $(foreach dir,$(ARCH_SUBDIRS),$(dir)/*/vars.mk)) /dev/null
 
 # LDFLAGS+=-z defs
 
@@ -219,7 +220,7 @@ libwvutils.so: -lz -lcrypt
 
 libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
-		linuxstreams streams urlget))
+		$(ARCH_SUBDIRS) streams urlget))
 libwvstreams.so: libwvutils.so libwvbase.so
 libwvstreams.so: LIBS+=-lssl -lcrypto
 
