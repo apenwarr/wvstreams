@@ -105,6 +105,9 @@ WvConfigEntryEmu *WvConfigSectionEmu::operator[] (WvStringParm s)
 
 const char *WvConfigSectionEmu::get(WvStringParm entry, const char *def_val)
 {
+    if (!entry)
+	return def_val;
+
     WvString *value = new WvString(uniconf[entry].getme(def_val));
     values.add(value, true);
     return value->cstr();
@@ -396,6 +399,9 @@ WvString WvConfEmu::getraw(WvString wvconfstr, int &parse_error)
 
 int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
 {
+    if (!section || !entry)
+	return def_val;
+
     return uniconf[section][entry].getmeint(def_val);
 }
 
@@ -403,6 +409,9 @@ int WvConfEmu::getint(WvStringParm section, WvStringParm entry, int def_val)
 const char *WvConfEmu::get(WvStringParm section, WvStringParm entry,
 			   const char *def_val)
 {
+    if (!section || !entry)
+	return def_val;
+
     WvString *value = new WvString(uniconf[section][entry].getme(def_val));
     values.add(value, true);
     return value->cstr();
