@@ -26,6 +26,9 @@ class UniRegistryGen : public UniConfGen
     WvLog m_log;
     HKEY m_hRoot;
 
+protected:
+    virtual void flush_buffers() { }
+
 public:
     UniRegistryGen(WvString _base);
     virtual ~UniRegistryGen();

@@ -1,6 +1,8 @@
 #include "wvtest.h"
 #include "wvstringlist.h"
+#ifndef _WIN32
 #include "wvregex.h"
+#endif
 
 WVTEST_MAIN("basic")
 {
@@ -91,6 +93,7 @@ WVTEST_MAIN("basic")
 
 }
 
+#ifndef _WIN32
 WVTEST_MAIN("regex split")
 {
     WvRegex re1("/"), re2("/+"), re3("/*"), re4("");
@@ -129,3 +132,4 @@ WVTEST_MAIN("regex split")
     TEST_SPLIT("tmpfile", re4, "tmpfile");
     TEST_SPLIT("", re4, "");
 }
+#endif

@@ -12,7 +12,9 @@
 #include "wvfork.h"
 #include <time.h>
 #include <sys/types.h>
+#ifndef _WIN32
 #include <sys/wait.h>
+#endif
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 

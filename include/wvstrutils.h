@@ -15,7 +15,9 @@
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvhex.h"
+#ifndef _WIN32
 #include "wvregex.h"
+#endif
 
 /** \file
  * Various little string functions
@@ -320,6 +322,7 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
 }
 
 
+#ifndef _WIN32 // don't have regex on win32
 /**
  * Splits a string and adds each substring to a collection.
  *   coll       : the collection of strings to add to
@@ -356,6 +359,7 @@ void strcoll_split(StringCollection &coll, WvStringParm s,
     	coll.add(last, true);
     }
 }
+#endif
 
 
 /**

@@ -12,6 +12,7 @@
 #include "wvfile.h"
 #include "wvpipe.h"
 #include "wvstringlist.h"
+#include "wvfileutils.h"
 #include <signal.h>
 
 /**** Generic daemon testing helpers ****/
@@ -206,8 +207,7 @@ WVTEST_MAIN("daemon multimount")
     expected_quit_response.append("OK ");
     expected_responses.add(&expected_quit_response, false);
 
-    WvString pipename("/tmp/uniconfd-t-%s", getpid());
-    unlink(pipename);
+    WvString pipename = wvtmpfilename("uniconfd.t-pipe");
     WVPASS(daemon.setupunixsocket(pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
@@ -257,8 +257,7 @@ WVTEST_MAIN("daemon quit")
     expected_quit_response.append("OK ");
     expected_responses.add(&expected_quit_response, false);
 
-    WvString pipename("/tmp/uniconfd-t-%s", getpid());
-    unlink(pipename);
+    WvString pipename = wvtmpfilename("uniconfd.t-pipe");
     WVPASS(daemon.setupunixsocket(pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
@@ -288,21 +287,14 @@ WVTEST_MAIN("daemon quit")
 static WvPipe * setup_master_daemon(bool implicit_root, 
         WvString &masterpipename, WvString &ininame)
 {
-    int fd;
+    ininame = wvtmpfilename("uniconfd.t-ini");
 
-    ininame = "/tmp/iniXXXXXX";
-    if ((fd = mkstemp(ininame.edit())) == (-1))
-        return NULL;
-
-    WvFile stuff(fd);
+    WvFile stuff(ininame, (O_CREAT | O_WRONLY));
     stuff.print("pickles/apples/foo=1\n");
     stuff.print("pickles/mangos/bar=1\n");
     stuff.close();
 
-    masterpipename = "/tmp/sockXXXXXX";
-    if ((fd = mkstemp(masterpipename.edit())) == (-1))
-        return NULL;
-    close(fd);
+    masterpipename = wvtmpfilename("uniconfd.t-sock");
 
     WvString inimount("/cfg=ini:%s", ininame);    
     WvString mount1, mount2;
@@ -336,11 +328,7 @@ static WvPipe * setup_master_daemon(bool implicit_root,
 static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipename, 
                             WvString &slavepipename)
 {
-    int fd;
-    slavepipename = "/tmp/sockXXXXXX";
-    if ((fd = mkstemp(slavepipename.edit())) == (-1))
-        return NULL;    
-    close(fd);
+    slavepipename = wvtmpfilename("uniconfd.t-sock");
 
     WvString rootmount;
     if (implicit_root)

@@ -110,6 +110,13 @@ int write(int fd, const void *buf, size_t count)
 }
 
 
+unsigned int sleep(unsigned int seconds)
+{
+    Sleep(seconds * 1000);
+    return 0;
+}
+
+
 int socketpair(int family, int type, int protocol, int *sb)
 {
     SOCKET insock, outsock, newsock;

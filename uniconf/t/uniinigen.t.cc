@@ -1,6 +1,10 @@
 #include "wvtest.h"
 #include "wvfile.h"
+#include "wvfileutils.h"
 #include "uniconfroot.h"
+#ifdef _WIN32
+#include <sys/stat.h>
+#endif
 
 
 // Returns the filename where the content was written.  This file must be
@@ -8,17 +12,14 @@
 // the file.
 WvString inigen(WvStringParm content)
 {
-    int fd;
-    WvString ininame = "/tmp/inigen_test.ini-XXXXXX";
-    if ((fd = mkstemp(ininame.edit())) == (-1))
-        return WvString::null;
-    WvFile file(fd);
+    WvString ininame = wvtmpfilename("inigen_test.ini");
+    WvFile file;
+    WVPASS(file.open(ininame, O_RDWR));
     file.write(content);
     WVPASS(file.isok());
 
     return ininame;
 }
-
 
 static int childcount(UniConf cfg)
 {

@@ -65,12 +65,15 @@ public:
      */
     void splitstrict(WvStringParm s, const char *splitchars = " \t\r\n",
 	       int limit = 0);
+
+#ifndef _WIN32
     /**
      * split s and form a list ignoring regex (except at beginning and end)
      * Note that there is no splitstrict for regexes, since the differece is
      * taken care of through the regex (...)+ syntax
      */
     void split(WvStringParm s, const WvRegex &regex, int limit = 0);
+#endif
     
     /*
      * populate the list from an array of strings

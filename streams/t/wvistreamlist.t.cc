@@ -1,6 +1,9 @@
 #include "wvistreamlist.h"
 #include "wvtest.h"
 #include "wvloopback.h"
+#ifdef _WIN32
+#include "streams.h"
+#endif
 
 static void cb(WvStream &s, void *userdata)
 {
