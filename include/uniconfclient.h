@@ -10,10 +10,10 @@
 #include "uniconf.h"
 #include "uniconfiter.h"
 #include "uniconfconn.h"
+#include "uniconfconnfactory.h"
 #include "wvlog.h"
 #include "wvstream.h"
 #include "wvtclstring.h"
-//#include <wvstreamclone.h>
 
 struct waitingdata
 {
@@ -24,14 +24,16 @@ struct waitingdata
 DeclareWvDict(waitingdata, UniConfString, key);
 
 
-class UniConfClient : public UniConfGen, UniConfConn//WvStreamClone
+class UniConfClient : public UniConfGen//, UniConfConn
 {
 public:
     UniConf *top;
+    UniConfConnFactory *fctry;
+    UniConfConn *conn;
     WvLog log;
     waitingdataDict dict;
     
-    UniConfClient(UniConf *_top, WvStream *conn);
+    UniConfClient(UniConf *_top, UniConfConnFactory *_fctry);//WvStream *conn);
     ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);

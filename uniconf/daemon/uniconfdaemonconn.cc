@@ -52,8 +52,13 @@ void UniConfDaemonConn::execute()
 
             if (*cmd == "get") // return the specified value
             {
-                WvString response("RETN %s %s\n", wvtcl_escape(*key), wvtcl_escape(source->mainconf.get(*key)));
-                print(response);
+                WvString *response;
+                if (!!source->mainconf.get(*key))
+                    response = new WvString("RETN %s %s\n", wvtcl_escape(*key), wvtcl_escape(source->mainconf.get(*key)));
+                else
+                    response = new WvString("RETN %s \\0\n", wvtcl_escape(*key));
+
+                print(*response);
                 delete cmd;
                 source->events.add(wvcallback(UniConfCallback, *source, UniConfDaemon::keychanged), this, *key);
                 keys.append(key, false);

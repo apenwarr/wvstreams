@@ -9,29 +9,29 @@
 
 #include <uniconfclient.h>
 
-UniConfClient::UniConfClient(UniConf *_top, WvStream *conn) : UniConfConn/*WvStreamClone*/(conn),
-    top(_top), log("UniConfClient"), dict(5)
+UniConfClient::UniConfClient(UniConf *_top, UniConfConnFactory *_fctry/*WvStream *conn*/) : /*UniConfConn(conn),*/
+    top(_top), fctry(_fctry), log("UniConfClient"), dict(5)
 {
+    conn = fctry->open();
 }
 
 UniConfClient::~UniConfClient()
 {
+    conn->close();
+    delete conn;
 }
 
 void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
 {
-    // Ok, check to see if *THIS* subtree is dirty.
-    if (tree->dirty)
+    if (tree->dirty && !tree->obsolete)
     {
-        // Ok, we're dirty, send our information to the daemon.
         WvString data("set %s %s\n", wvtcl_escape(key), wvtcl_escape(*tree));
-        print(data);
+        conn->print(data);
     }
     
-    // No, we're not... what about our children.. do we have dirty children?
+    // What about our children.. do we have dirty children?
     if (tree->child_dirty)
     {
-        // yes?  shame shame.. save them  clean them up.
 	UniConf::Iter i(*tree);
 
         for (i.rewind(); i.next();)
@@ -57,17 +57,27 @@ void UniConfClient::save()
         return;
 
     // check our connection...
-    if (isok())
-        // working.. yay, great, good.  Now, ship this subtree off to savesubtree
-        savesubtree(top, "/");
-    else
-        log(WvLog::Error, "Connection was unuseable to save data.\n");
+    if (!conn->isok())
+    {
+        log(WvLog::Debug2, "Connection was unuseable.  Creating another.\n");
+        conn = fctry->open();
+        if (!conn->isok()) // we're borked
+        {
+            log(WvLog::Error, "Unable to create new connection.  Save aborted.\n");
+            return;
+        }
+    }
+    
+    if (conn->select(0, true, false, false))
+        execute();
+    // working.. yay, great, good.  Now, ship this subtree off to savesubtree
+    savesubtree(top, "/");
 }
 
 UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
 {
    // Now, do a get on the key from the daemon
-    write(WvString("get %s\n", wvtcl_escape(key)));
+    conn->print(WvString("get %s\n", wvtcl_escape(key)));
     // Get the node which we're actually going to return...
     UniConf *toreturn = UniConfGen::make_tree(parent, key);
     // Now wait for the response regarding this key.
@@ -78,18 +88,18 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
 
 void UniConfClient::update_tree()
 {
-    if (select(0, true, false, false))
-        callback();
+    if (conn->select(0, true, false, false))
+        conn->callback();
 }
 
 void UniConfClient::update(UniConf *&h)
 {
-    wvcon->print("Key:  %s.\n", h->gen_full_key());
     waitingdata *data = dict[(WvString)h->gen_full_key()];
-
-    if (select(0,true, false, false) || (h->waiting && !data && select(-1, true, false, false)))
+    if (conn->select(0,true, false, false) 
+    || (h->waiting && !data && conn->select(-1, true, false, false)))
     {
-        callback();
+        //conn->callback();
+        execute();
         data = dict[(WvString)h->gen_full_key()];
     }
     
@@ -106,12 +116,12 @@ void UniConfClient::update(UniConf *&h)
     h->dirty = false;
 }
 
+
 void UniConfClient::execute()
 {
-    UniConfConn::execute();
-    fillbuffer();
+    conn->fillbuffer();
 
-    WvString *line = gettclline();
+    WvString *line = conn->gettclline();
     
     if (!line) return;
 
@@ -129,6 +139,10 @@ void UniConfClient::execute()
             if (*cmd == "RETN") 
             {
                 WvString *value = wvtcl_getword(fromline);
+                if (!value)
+                {
+                    value = new WvString();
+                }
                 dict.add(new waitingdata(key->unique(), value->unique()), true);
             }
             // A set has happened on a key we requested.
@@ -151,7 +165,7 @@ void UniConfClient::execute()
             cmd = wvtcl_getword(fromline);
             key = wvtcl_getword(fromline);
         }
-        line = gettclline();
+        line = conn->gettclline();
     }
    
 }

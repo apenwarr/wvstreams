@@ -3,12 +3,12 @@
 #include <signal.h>
 #include <strutils.h>
 
-#include <wvtclstring.h>
-#include <wvunixsocket.h>
-#include <wvaddr.h>
-#include <uniconf.h>
-#include <uniconfclient.h>
-#include <wvtcp.h>
+#include "wvtclstring.h"
+#include "wvunixsocket.h"
+#include "wvaddr.h"
+#include "uniconf.h"
+#include "uniconfclient.h"
+#include "wvtcp.h"
 
 // Control variable
 bool want_to_die = false;
@@ -28,16 +28,6 @@ void sighandler_die(int sig)
     signal(sig, SIG_DFL);
 }
 
-void errorcheck(WvStream &s)
-{
-    wvcon->print("Could not create WvUnixConnection.\n");
-    wvcon->print("Error number:  %s\n", s.geterr());
-    wvcon->print("Error string:  %s\n", s.errstr());
-    exit(s.geterr());
-}
-
-int received = 0;
-
 void wvconcallback(WvStream &s, void *userdata)
 {
     char *line = s.getline(0);
@@ -51,49 +41,52 @@ void wvconcallback(WvStream &s, void *userdata)
 int main(int argc, char **argv)
 {
     UniConf mainconf;
-   // WvUnixConn *conn = new WvUnixConn(addr);
-    WvTCPConn *conn = new WvTCPConn(addr);
-    if (!conn->isok())
-    {
-        // uhm, why not?
-        errorcheck(*conn);
-    }
 
-    // Test data setting / retrieval from a mount at /
+    UniConfConnFactory *fctry = NULL;
+    
+    // Via TCP Connection factory
     {
-        UniConf *mounted = &mainconf["/nerf"];
-        mounted->generator = new UniConfClient(mounted, conn);
-        mounted->generator->load();     // This should do nothing.
+        fctry = new UniConfTCPFactory(addr);
 
-        // just test getting a few keys
+        // Test data setting / retrieval from a mount at /
         {
-            UniConf *narf = &mainconf["/nerf/chickens/bob"];
-            wvcon->print("/chickens/bob = %s.\n", *narf);
-            narf = &mainconf["/wacky\ntest\nsection/  goose  "];
-            wvcon->print("/wacky\ntest\nsection/  goose  = %s\n", *narf);
-            narf = &mainconf[("/this key should not exist/ bcscso ")];
-            wvcon->print("/this key should not exist/ bcscso = %s.\n", *narf);
+            UniConf *mounted = &mainconf["/"];
+            mounted->generator = new UniConfClient(mounted, fctry);//conn);
+            mounted->generator->load();     // This should do nothing.
+
+            // just test getting a few keys
+            {
+                WvString key("/chickens/bob");
+                WvString result("goof");
+                UniConf *narf = &mainconf[key];
+                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+                key = "/wacky\ntest\nsection/  goose  ";
+                result = "bluebayou";
+                narf = &mainconf[key];
+                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+                key = "/this key should not exist/ bcscso ";
+                narf = &mainconf[key];
+                result = WvString();
+                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            }
+
+            // Test getting & setting a key
+            {
+                WvString key("/chickens/bob");
+                WvString result("goof");
+                UniConf *narf = &mainconf[key];
+                wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+                result = "Well isn't this just DANDY!";
+                narf->set(result);
+                wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+                result = "goof";
+                narf->set(wvtcl_escape(result));
+                wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+            }
+
+            mounted->save();
         }
 
-        // Test getting & setting a key
-        {
-            UniConf *narf = &mainconf["/chickens/bob"];
-            wvcon->print("original:  /chickens/bob = %s.\n", *narf);
-            narf->set(wvtcl_escape("Well isn't this just DANDY!"));
-            wvcon->print("/chickens/bob = %s.\n", *narf);
-        }
-        
-        mounted->generator->update_tree();
-        if (!mounted->child_obsolete)
-            wvcon->print("Notifications are not working.\n");
     }
-
-    // Test notification retrieval.
-/*    {
-        UniConf *mounted = &mainconf["/"];
-        mounted->generator = new UniConfClient(mounted,conn);
-        mounted->generator->load();
-    }*/
-
     return 0;
 }
