@@ -2,12 +2,12 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Several kinds of WvHConf iterators.
+ * Several kinds of UniConf iterators.
  */
-#include "wvhconfiter.h"
+#include "uniconfiter.h"
 
 
-WvLink *WvHConf::RecursiveIter::_next()
+WvLink *UniConf::RecursiveIter::_next()
 { 
     if (!subiter && i.ptr() && i->children)
     {
@@ -26,10 +26,10 @@ WvLink *WvHConf::RecursiveIter::_next()
 }
 
 
-static int find_wildcard_depth(const WvHConfKey &k)
+static int find_wildcard_depth(const UniConfKey &k)
 {
     int depth = 0;
-    WvHConfKey::Iter ki(k);
+    UniConfKey::Iter ki(k);
     for (ki.rewind(); ki.next(); )
     {
 	if (*ki == "*") // wildcard element found!
@@ -41,7 +41,7 @@ static int find_wildcard_depth(const WvHConfKey &k)
     
 
 // I hate constructors.
-WvHConf::XIter::XIter(WvHConf &_top, const WvHConfKey &_key) 
+UniConf::XIter::XIter(UniConf &_top, const UniConfKey &_key) 
 	: skiplevel(find_wildcard_depth(_key)),
           top(_top.find(_key.header(skiplevel))),
           key(_key.skip(skiplevel)),
@@ -52,7 +52,7 @@ WvHConf::XIter::XIter(WvHConf &_top, const WvHConfKey &_key)
 }
 
 
-WvLink *WvHConf::XIter::_next()
+WvLink *UniConf::XIter::_next()
 {
     if (key.isempty()) // we're the innermost object
     {

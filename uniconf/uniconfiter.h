@@ -2,24 +2,24 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Several kinds of WvHConf iterators.
+ * Several kinds of UniConf iterators.
  */
-#ifndef __WVHCONFITER_H
-#define __WVHCONFITER_H
+#ifndef __UNICONFITER_H
+#define __UNICONFITER_H
 
-#include "wvhconf.h"
+#include "uniconf.h"
 
 
 // this iterator walks through all the immediate children of a
-// WvHConf node.
-class WvHConf::Iter : public WvHConfDict::Iter
+// UniConf node.
+class UniConf::Iter : public UniConfDict::Iter
 {
 public:
-    Iter(WvHConf &h)
-	: WvHConfDict::Iter(h.children ? *h.children : null_wvhconfdict)
+    Iter(UniConf &h)
+	: UniConfDict::Iter(h.children ? *h.children : null_wvhconfdict)
 	{ }
-    Iter(WvHConfDict &children)
-	: WvHConfDict::Iter(children)
+    Iter(UniConfDict &children)
+	: UniConfDict::Iter(children)
 	{ }
     
     // we want to skip empty-valued elements in the list, even if
@@ -27,7 +27,7 @@ public:
     WvLink *next()
     {
 	WvLink *l;
-	while ((l = WvHConfDict::Iter::next()) != NULL 
+	while ((l = UniConfDict::Iter::next()) != NULL 
 	       && !*ptr() && !ptr()->children)
 	    ;
 	return l;
@@ -37,16 +37,16 @@ public:
 
 // this iterator recursively walks through _all_ children, direct and indirect,
 // of this node.
-class WvHConf::RecursiveIter
+class UniConf::RecursiveIter
 {
 public:
-    WvHConfDict::Iter i;
+    UniConfDict::Iter i;
     RecursiveIter *subiter;
     
-    RecursiveIter(WvHConf &h)
+    RecursiveIter(UniConf &h)
 	: i(h.children ? *h.children : null_wvhconfdict)
 	{ subiter = NULL; }
-    RecursiveIter(WvHConfDict &children)
+    RecursiveIter(UniConfDict &children)
 	: i(children)
 	{ subiter = NULL; }
     ~RecursiveIter()
@@ -74,25 +74,25 @@ public:
 	return l;
     }
     
-    WvHConf *ptr() const
+    UniConf *ptr() const
         { return subiter ? subiter->ptr() : i.ptr(); }
     
-    WvIterStuff(WvHConf);
+    WvIterStuff(UniConf);
 };
 
 
-class WvHConf::XIter
+class UniConf::XIter
 {
 public:
     int skiplevel;
-    WvHConf *top;
-    WvHConfKey key;
+    UniConf *top;
+    UniConfKey key;
     WvLink _toplink, *toplink;
-    WvHConfDict::Iter i;
+    UniConfDict::Iter i;
     XIter *subiter;
     int going;
     
-    XIter(WvHConf &_top, const WvHConfKey &_key);
+    XIter(UniConf &_top, const UniConfKey &_key);
     ~XIter()
         { unsub(); }
     
@@ -117,37 +117,37 @@ public:
 	return l;
     }
     
-    WvHConf *ptr() const
+    UniConf *ptr() const
         { return key.isempty() ? top : (subiter ? subiter->ptr() : NULL); }
     
-    WvIterStuff(WvHConf);
+    WvIterStuff(UniConf);
 };
 
 
-// WvHConf::Sorter is like WvHConf::Iter, but allows you to sort the list.
-typedef WvSorter<WvHConf, WvHConfDict, WvHConf::Iter>
-    _WvHConfSorter;
-class WvHConf::Sorter : public _WvHConfSorter
+// UniConf::Sorter is like UniConf::Iter, but allows you to sort the list.
+typedef WvSorter<UniConf, UniConfDict, UniConf::Iter>
+    _UniConfSorter;
+class UniConf::Sorter : public _UniConfSorter
 {
 public:
-    Sorter(WvHConf &h, RealCompareFunc *cmp)
-	: _WvHConfSorter(h.children ? *h.children : null_wvhconfdict,
+    Sorter(UniConf &h, RealCompareFunc *cmp)
+	: _UniConfSorter(h.children ? *h.children : null_wvhconfdict,
 			 cmp)
 	{ }
 };
 
 
-// WvHConf::RecursiveSorter is the recursive version of WvHConf::Sorter.
-typedef WvSorter<WvHConf, WvHConfDict, WvHConf::RecursiveIter> 
-    _WvHConfRecursiveSorter;
-class WvHConf::RecursiveSorter : public _WvHConfRecursiveSorter
+// UniConf::RecursiveSorter is the recursive version of UniConf::Sorter.
+typedef WvSorter<UniConf, UniConfDict, UniConf::RecursiveIter> 
+    _UniConfRecursiveSorter;
+class UniConf::RecursiveSorter : public _UniConfRecursiveSorter
 {
 public:
-    RecursiveSorter(WvHConf &h, RealCompareFunc *cmp)
-	: _WvHConfRecursiveSorter(h.children ? *h.children : null_wvhconfdict,
+    RecursiveSorter(UniConf &h, RealCompareFunc *cmp)
+	: _UniConfRecursiveSorter(h.children ? *h.children : null_wvhconfdict,
 				  cmp)
 	{ }
 };
 
 
-#endif // __WVHCONFITER_H
+#endif // __UNICONFITER_H

@@ -2,15 +2,15 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * Test program for the WvConf emulation in WvHConf.
+ * Test program for the WvConf emulation in UniConf.
  */
 #if 0
 # include "wvconf.h"
 #else
 
 //# include "wvconfemu.h"
-#include "wvhconfini.h"
-#include "wvhconfiter.h"
+#include "uniconfini.h"
+#include "uniconfiter.h"
 
 class WvConfigEntryEmu;
 class WvConfigSectionEmu;
@@ -42,20 +42,20 @@ public:
 // AVERY IS INCREDIBLY EVIL ALARM!!
 // We never actually create any WvConfigSection objects, so we mustn't have
 // any virtual functions or member variables.  Instead, we just typecast
-// real WvHConf objects into WvConfigSection objects so users can access
+// real UniConf objects into WvConfigSection objects so users can access
 // the special ::Iter class.  It's nasty, but it works.
-class WvConfigSection : public WvHConf
+class WvConfigSection : public UniConf
 {
 public:
     class Iter
     {
     public:
-	WvHConf &h;
-	WvHConf::RecursiveIter i;
+	UniConf &h;
+	UniConf::RecursiveIter i;
 	WvLink l;
 	WvConfigEntry *e;
 	
-	Iter(WvHConf &_h)
+	Iter(UniConf &_h)
 	    : h(_h), i(h), l(NULL, false)
 	    { e = NULL; }
 	
@@ -97,7 +97,7 @@ public:
 class WvConf
 {
 public:
-    WvHConf h;
+    UniConf h;
     WvString filename;
     
     WvConf(WvStringParm _filename, int _create_mode = 0666);
@@ -157,14 +157,14 @@ public:
     WvConfigSection *operator[] (WvStringParm sect)
         { return (WvConfigSection *)h.find_make(sect); }
     
-    class Iter : public WvHConf::Iter
+    class Iter : public UniConf::Iter
     {
     public:
-	Iter(WvConf &cfg) : WvHConf::Iter(cfg.h)
+	Iter(WvConf &cfg) : UniConf::Iter(cfg.h)
 	    { }
 	
 	WvConfigSection *ptr() const
-	    { return (WvConfigSection *)WvHConf::Iter::ptr(); }
+	    { return (WvConfigSection *)UniConf::Iter::ptr(); }
 	
 	WvIterStuff(WvConfigSection);
     };
@@ -174,7 +174,7 @@ public:
 WvConf::WvConf(WvStringParm _filename, int _create_mode)
     : filename(_filename)
 {
-    h.generator = new WvHConfIniFile(&h, filename);
+    h.generator = new UniConfIniFile(&h, filename);
     h.load();
 }
 
@@ -188,7 +188,7 @@ WvConf::~WvConf()
 const char *WvConf::get(WvStringParm section, WvStringParm entry,
 			const char *def_val = NULL)
 {
-    WvHConf *res = h.find(WvHConfKey(section, entry));
+    UniConf *res = h.find(UniConfKey(section, entry));
     if (!res)
 	return def_val;
     else
@@ -198,13 +198,13 @@ const char *WvConf::get(WvStringParm section, WvStringParm entry,
 
 void WvConf::setint(WvStringParm section, WvStringParm entry, int value)
 {
-    h.find_make(WvHConfKey(section, entry))->set(value);
+    h.find_make(UniConfKey(section, entry))->set(value);
 }
 
 
 void WvConf::set(WvStringParm section, WvStringParm entry, const char *value)
 {
-    h.find_make(WvHConfKey(section, entry))->set(value);
+    h.find_make(UniConfKey(section, entry))->set(value);
 }
 
 

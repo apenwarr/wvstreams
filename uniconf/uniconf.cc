@@ -2,18 +2,18 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * WvHConf is the new, improved, hierarchical version of WvConf.  It stores
+ * UniConf is the new, improved, hierarchical version of WvConf.  It stores
  * strings in a hierarchy and can load/save them from "various places."
  * 
- * See wvhconf.h.
+ * See uniconf.h.
  */
-#include "wvhconf.h"
+#include "uniconf.h"
 #include "wvstream.h"
 
-WvHConfDict null_wvhconfdict(1);
+UniConfDict null_wvhconfdict(1);
 
 
-bool WvHConfString::operator== (WvStringParm s2) const
+bool UniConfString::operator== (WvStringParm s2) const
 {
     return (cstr()==s2.cstr())
 	|| (cstr() && s2.cstr() && !strcasecmp(cstr(), s2.cstr()));
@@ -21,7 +21,7 @@ bool WvHConfString::operator== (WvStringParm s2) const
 
 
 // basic constructor, generally used for toplevel config file
-WvHConf::WvHConf()
+UniConf::UniConf()
     : name("")
 {
     parent = NULL;
@@ -29,7 +29,7 @@ WvHConf::WvHConf()
 }
 
 
-WvHConf::WvHConf(WvHConf *_parent, WvStringParm _name)
+UniConf::UniConf(UniConf *_parent, WvStringParm _name)
     : name(_name)
 {
     parent = _parent;
@@ -37,7 +37,7 @@ WvHConf::WvHConf(WvHConf *_parent, WvStringParm _name)
 }
 
 
-void WvHConf::init()
+void UniConf::init()
 {
     children = NULL;
     defaults = NULL;
@@ -50,7 +50,7 @@ void WvHConf::init()
 }
 
 
-WvHConf::~WvHConf()
+UniConf::~UniConf()
 {
     if (children)
 	delete children;
@@ -59,12 +59,12 @@ WvHConf::~WvHConf()
 }
 
 
-// find the topmost WvHConf object in this tree.  Using this too often might
+// find the topmost UniConf object in this tree.  Using this too often might
 // upset the clever transparency of hierarchical nesting, but sometimes it's
 // a good idea (particularly if you need to use full_key()).
-WvHConf *WvHConf::top()
+UniConf *UniConf::top()
 {
-    WvHConf *h = this;
+    UniConf *h = this;
     while (h->parent)
 	h = h->parent;
     return h;
@@ -73,10 +73,10 @@ WvHConf *WvHConf::top()
 
 // this method of returning the object is pretty inefficient - lots of extra
 // copying stuff around.
-WvHConfKey WvHConf::full_key(WvHConf *top) const
+UniConfKey UniConf::full_key(UniConf *top) const
 {
-    WvHConfKey k;
-    const WvHConf *h = this;
+    UniConfKey k;
+    const UniConf *h = this;
     
     do
     {
@@ -88,11 +88,11 @@ WvHConfKey WvHConf::full_key(WvHConf *top) const
 }
 
 
-// find the topmost WvHConf object in the tree that's still owned by the
-// same WvHConfGen object.
-WvHConf *WvHConf::gen_top()
+// find the topmost UniConf object in the tree that's still owned by the
+// same UniConfGen object.
+UniConf *UniConf::gen_top()
 {
-    WvHConf *h = this;
+    UniConf *h = this;
     while (h->parent && !h->generator)
 	h = h->parent;
     
@@ -105,21 +105,21 @@ WvHConf *WvHConf::gen_top()
 // 
 // like with gen_key, this method of returning the object is pretty
 // inefficient - lots of extra copying stuff around.
-WvHConfKey WvHConf::gen_full_key()
+UniConfKey UniConf::gen_full_key()
 {
     return full_key(gen_top());
 }
 
 
 // find a key in the subtree.  If it doesn't already exist, return NULL.
-WvHConf *WvHConf::find(const WvHConfKey &key)
+UniConf *UniConf::find(const UniConfKey &key)
 {
     if (key.isempty())
 	return this;
     if (!children)
 	return NULL;
     
-    WvHConf *h = (*children)[*key.first()];
+    UniConf *h = (*children)[*key.first()];
     if (!h)
 	return NULL;
     else
@@ -128,23 +128,23 @@ WvHConf *WvHConf::find(const WvHConfKey &key)
 
 
 // find a key in the subtree.  If it doesn't already exist, create it.
-WvHConf *WvHConf::find_make(const WvHConfKey &key)
+UniConf *UniConf::find_make(const UniConfKey &key)
 {
     if (key.isempty())
 	return this;
     if (children)
     {
-	WvHConf *h = (*children)[*key.first()];
+	UniConf *h = (*children)[*key.first()];
 	if (h)
 	    return h->find_make(key.skip(1));
     }
 	
     // we need to actually create the key
-    WvHConf *htop = gen_top();
+    UniConf *htop = gen_top();
     if (htop->generator)
 	return htop->generator->make_tree(this, key);
     else
-	return WvHConfGen().make_tree(this, key); // generate an empty tree
+	return UniConfGen().make_tree(this, key); // generate an empty tree
 }
 
 
@@ -154,11 +154,11 @@ WvHConf *WvHConf::find_make(const WvHConfKey &key)
 // 
 // If there's no available default value for this key, return NULL.
 // 
-WvHConf *WvHConf::find_default(WvHConfKey *_k) const
+UniConf *UniConf::find_default(UniConfKey *_k) const
 {
-    WvHConfKey tmp_key;
-    WvHConfKey &k = (_k ? *_k : tmp_key);
-    WvHConf *def;
+    UniConfKey tmp_key;
+    UniConfKey &k = (_k ? *_k : tmp_key);
+    UniConf *def;
     
     //wvcon->print("find_default for '%s'\n", full_key());
 	
@@ -193,13 +193,13 @@ WvHConf *WvHConf::find_default(WvHConfKey *_k) const
 }
 
 
-void WvHConf::set_without_notify(WvStringParm s)
+void UniConf::set_without_notify(WvStringParm s)
 {
     value = s;
 }
 
 
-void WvHConf::set(WvStringParm s)
+void UniConf::set(WvStringParm s)
 {
     if (s == value)
 	return; // nothing to change - no notifications needed
@@ -215,9 +215,9 @@ void WvHConf::set(WvStringParm s)
 
 // set the dirty and notify flags on this object, and inform all parent
 // objects that their child is dirty.
-void WvHConf::mark_notify()
+void UniConf::mark_notify()
 {
-    WvHConf *h;
+    UniConf *h;
     
     dirty = notify = true;
     
@@ -230,9 +230,9 @@ void WvHConf::mark_notify()
 }
 
 
-const WvString &WvHConf::printable() const
+const WvString &UniConf::printable() const
 {
-    WvHConf *def;
+    UniConf *def;
     
     if (!!value)
 	return value;
@@ -246,20 +246,20 @@ const WvString &WvHConf::printable() const
 }
 
 
-void WvHConf::load()
+void UniConf::load()
 {
     if (generator)
 	generator->load();
     else if (children)
     {
-	WvHConfDict::Iter i(*children);
+	UniConfDict::Iter i(*children);
 	for (i.rewind(); i.next(); )
 	    i->load();
     }
 }
 
 
-void WvHConf::save()
+void UniConf::save()
 {
     if (!dirty && !child_dirty)
 	return; // done!
@@ -268,14 +268,14 @@ void WvHConf::save()
 	generator->save();
     else if (children && child_dirty)
     {
-	WvHConfDict::Iter i(*children);
+	UniConfDict::Iter i(*children);
 	for (i.rewind(); i.next(); )
 	    i->save();
     }
 }
 
 
-void WvHConf::dump(WvStream &s, bool everything)
+void UniConf::dump(WvStream &s, bool everything)
 {
     if (everything || !!value)
     {
@@ -288,7 +288,7 @@ void WvHConf::dump(WvStream &s, bool everything)
 
     if (children)
     {
-	WvHConfDict::Iter i(*children);
+	UniConfDict::Iter i(*children);
 	for (i.rewind(); i.next(); )
 	    i->dump(s, everything);
     }

@@ -2,31 +2,31 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * WvHConfEvents is a class that uses the notify/child_notify fields of
- * WvHConf objects to run callback functions automatically.
+ * UniConfEvents is a class that uses the notify/child_notify fields of
+ * UniConf objects to run callback functions automatically.
  */
-#include "wvhconfevents.h"
-#include "wvhconfiter.h"
+#include "unievents.h"
+#include "uniconfiter.h"
 #include "wvlog.h"
 
 
-WvHConfEvents::WvHConfEvents(WvHConf &_cfg)
+UniConfEvents::UniConfEvents(UniConf &_cfg)
     : cfg(_cfg)
 {
     // nothing to do
 }
 
 
-static WvHConf *find_match(WvHConf *h, const WvHConfKey &key)
+static UniConf *find_match(UniConf *h, const UniConfKey &key)
 {
-    WvHConf *h2;
+    UniConf *h2;
     
-    WvHConfKey::Iter ki(key);
+    UniConfKey::Iter ki(key);
     for (ki.rewind(); h && ki.next(); )
     {
 	if (*ki == "*") // wildcard
 	{
-	    WvHConf::Iter i(*h);
+	    UniConf::Iter i(*h);
 	    for (i.rewind(); i.next(); )
 	    {
 		h2 = find_match(i.ptr(), key.skip(1));
@@ -51,9 +51,9 @@ static WvHConf *find_match(WvHConf *h, const WvHConfKey &key)
 
 // run all registered callbacks, then set all the 'notify' flags in the
 // HConf tree back to false.
-void WvHConfEvents::do_callbacks()
+void UniConfEvents::do_callbacks()
 {
-    WvHConf *h;
+    UniConf *h;
     
     CallbackInfoList::Iter i(callbacks);
     for (i.rewind(); i.next(); )
@@ -67,11 +67,11 @@ void WvHConfEvents::do_callbacks()
 }
 
 
-static void clear_sub(WvHConf &h)
+static void clear_sub(UniConf &h)
 {
     h.child_notify = false;
     
-    WvHConf::Iter i(h);
+    UniConf::Iter i(h);
     for (i.rewind(); i.next(); )
     {
 	i->notify = false;
@@ -81,7 +81,7 @@ static void clear_sub(WvHConf &h)
 }
 
 
-void WvHConfEvents::clear_notify()
+void UniConfEvents::clear_notify()
 {
     cfg.notify = false;
     if (cfg.child_notify)
@@ -89,8 +89,8 @@ void WvHConfEvents::clear_notify()
 }
 
 
-void WvHConfEvents::del(WvHConfCallback cb,
-			    void *userdata, const WvHConfKey &key)
+void UniConfEvents::del(UniConfCallback cb,
+			    void *userdata, const UniConfKey &key)
 {
     CallbackInfoList::Iter i(callbacks);
     for (i.rewind(); i.next(); )
@@ -102,7 +102,7 @@ void WvHConfEvents::del(WvHConfCallback cb,
 }
 
 
-void WvHConfEvents::setbool(void *userdata, WvHConf &h)
+void UniConfEvents::setbool(void *userdata, UniConf &h)
 {
     if (!*(bool *)userdata)
     {

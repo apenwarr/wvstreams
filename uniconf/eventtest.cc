@@ -2,16 +2,16 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Test for the WvHConf default event handler system.
+ * Test for the UniConf default event handler system.
  */
-#include "wvhconfevents.h"
-#include "wvhconfini.h"
+#include "unievents.h"
+#include "uniconfini.h"
 
 int main()
 {
     WvLog log("eventtest", WvLog::Info);
-    WvHConf h;
-    WvHConfEvents ev(h);
+    UniConf h;
+    UniConfEvents ev(h);
     bool b1 = false, b2 = false, b3 = false;
     
     ev.add_setbool(&b1, "/foo/blah/weasels");

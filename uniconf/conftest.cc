@@ -4,7 +4,7 @@
  *
  * Test program for the new, hierarchical WvConf.
  */
-#include "wvhconfini.h"
+#include "uniconfini.h"
 #include "wvlog.h"
 #include "wvconf.h"
 #include "wvdiriter.h"
@@ -12,7 +12,7 @@
 #include "wvtclstring.h"
 
 
-class HelloGen : public WvHConfGen
+class HelloGen : public UniConfGen
 {
 public:
     WvString defstr;
@@ -20,11 +20,11 @@ public:
     
     HelloGen(WvStringParm _def = "Hello World")
 	: defstr(_def) { count = 0; }
-    virtual void update(WvHConf *h);
+    virtual void update(UniConf *h);
 };
 
 
-void HelloGen::update(WvHConf *h)
+void HelloGen::update(UniConf *h)
 {
     wvcon->print("Hello: updating %s\n", h->full_key());
     *h = WvString("%s #%s", defstr, ++count);
@@ -32,20 +32,20 @@ void HelloGen::update(WvHConf *h)
 }
 
 
-class WvHConfFileTree : public WvHConfGen
+class UniConfFileTree : public UniConfGen
 {
 public:
     WvString basedir;
-    WvHConf *top;
+    UniConf *top;
     WvLog log;
     
-    WvHConfFileTree(WvHConf *_top, WvStringParm _basedir);
-    virtual void update(WvHConf *h);
+    UniConfFileTree(UniConf *_top, WvStringParm _basedir);
+    virtual void update(UniConf *h);
     virtual void load();
 };
 
 
-WvHConfFileTree::WvHConfFileTree(WvHConf *_top, WvStringParm _basedir)
+UniConfFileTree::UniConfFileTree(UniConf *_top, WvStringParm _basedir)
     : basedir(_basedir), log("FileTree", WvLog::Info)
 {
     top = _top;
@@ -56,7 +56,7 @@ WvHConfFileTree::WvHConfFileTree(WvHConf *_top, WvStringParm _basedir)
 
 
 // use the first nonblank line in the file as the config contents.
-void WvHConfFileTree::update(WvHConf *h)
+void UniConfFileTree::update(UniConf *h)
 {
     char *line;
     WvString name("/%s", h->gen_full_key());
@@ -81,9 +81,9 @@ void WvHConfFileTree::update(WvHConf *h)
 }
 
 
-void WvHConfFileTree::load()
+void UniConfFileTree::load()
 {
-    WvHConf *h;
+    UniConf *h;
     WvDirIter i(basedir, true);
     
     for (i.rewind(); i.next(); )
@@ -99,7 +99,7 @@ int main()
     WvLog log("hconftest", WvLog::Info);
     WvLog quiet("*", WvLog::Debug1);
     
-    log("An hconf instance is %s bytes long.\n", sizeof(WvHConf));
+    log("An hconf instance is %s bytes long.\n", sizeof(UniConf));
     log("A wvconf instance is %s/%s/%s bytes long.\n",
 	sizeof(WvConf), sizeof(WvConfigSection), sizeof(WvConfigEntry));
     log("A stringlist is %s bytes long.\n", sizeof(WvStringList));
@@ -108,8 +108,8 @@ int main()
 	wvcon->print("\n\n");
 	log("-- Key test begins\n");
 	
-	WvHConfKey key("/a/b/c/d/e/f/ghij////k/l/m");
-	WvHConfKey key2(key), key3(key, 5), key4(key, 900);
+	UniConfKey key("/a/b/c/d/e/f/ghij////k/l/m");
+	UniConfKey key2(key), key3(key, 5), key4(key, 900);
 	log("key : %s\nkey2: %s\nkey3: %s\nkey4: %s\n", key, key2, key3, key4);
     }
     
@@ -117,12 +117,12 @@ int main()
 	wvcon->print("\n\n");
 	log("-- Basic config test begins\n");
 	
-	WvHConf cfg;
+	UniConf cfg;
 	cfg.set("/foo/blah/weasels", "chickens");
 	
 	cfg["foo"]["pah"]["meatballs"] = 6;
 	
-	WvHConf &x = cfg["snort/fish/munchkins"];
+	UniConf &x = cfg["snort/fish/munchkins"];
 	x.set("big/bad/weasels", 7);
 	x["foo"] = x["blue"] = x["true"] = "sneeze";
 	
@@ -134,7 +134,7 @@ int main()
 	wvcon->print("\n\n");
 	log("-- Inheritence test begins\n");
 	
-	WvHConf cfg, *h;
+	UniConf cfg, *h;
 	
 	cfg.set("/default/users/*/comment", "defuser comment");
 	cfg.set("/default/users/bob/comment", "defbob comment");
@@ -168,7 +168,7 @@ int main()
 	wvcon->print("\n\n");
 	log("-- Hello Generator test begins\n");
 	
-	WvHConf cfg;
+	UniConf cfg;
 	
 	cfg["/hello"].generator = new HelloGen("Hello world!");
 	cfg["/bonjour"].generator = new HelloGen("Bonjour tout le monde!");
@@ -188,9 +188,9 @@ int main()
 	wvcon->print("\n\n");
 	log("-- FileTree test begins\n");
 	
-	WvHConf cfg;
+	UniConf cfg;
 	
-	cfg.generator = new WvHConfFileTree(&cfg, "/etc/modutils");
+	cfg.generator = new UniConfFileTree(&cfg, "/etc/modutils");
 	cfg.generator->load();
 	
 	log("Config dump:\n");
@@ -201,13 +201,13 @@ int main()
 	wvcon->print("\n\n");
 	log("-- IniFile test begins\n");
 	
-	WvHConf cfg;
-	WvHConf *cfg2 = &cfg["/weaver ini test"];
+	UniConf cfg;
+	UniConf *cfg2 = &cfg["/weaver ini test"];
 	
-	cfg.generator = new WvHConfIniFile(&cfg, "test.ini");
+	cfg.generator = new UniConfIniFile(&cfg, "test.ini");
 	cfg.generator->load();
 	
-	cfg2->generator = new WvHConfIniFile(cfg2, "/tmp/weaver.ini");
+	cfg2->generator = new UniConfIniFile(cfg2, "/tmp/weaver.ini");
 	cfg2->generator->load();
 	
 	log("Config dump:\n");
@@ -218,13 +218,13 @@ int main()
 	wvcon->print("\n\n");
 	log("-- IniFile test2 begins\n");
 	
-	WvHConf cfg;
-	WvHConf &h1 = cfg["/1"], &h2 = cfg["/"];
+	UniConf cfg;
+	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
 	
-	h1.generator = new WvHConfIniFile(&h1, "test.ini");
+	h1.generator = new UniConfIniFile(&h1, "test.ini");
 	h1.generator->load();
 	
-	h2.generator = new WvHConfIniFile(&h2, "test2.ini");
+	h2.generator = new UniConfIniFile(&h2, "test2.ini");
 	h2.generator->load();
 	
 	log("Partial config dump (branch 1 only):\n");

@@ -2,19 +2,19 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * WvHConfIniFile is a WvHConfGen for ".ini"-style files like the ones used
+ * UniConfIniFile is a UniConfGen for ".ini"-style files like the ones used
  * by Windows and the original WvConf.
  * 
- * See wvhconfini.h.
+ * See uniconfini.h.
  */
-#include "wvhconfini.h"
-#include "wvhconfiter.h"
+#include "uniconfini.h"
+#include "uniconfiter.h"
 #include "wvtclstring.h"
 #include "strutils.h"
 #include "wvfile.h"
 
 
-WvHConfIniFile::WvHConfIniFile(WvHConf *_top, WvStringParm _filename)
+UniConfIniFile::UniConfIniFile(UniConf *_top, WvStringParm _filename)
     : filename(_filename), log(filename)
 {
     top = _top;
@@ -73,10 +73,10 @@ static void inisplit(WvStringParm s, WvString &key, WvString &value)
 }
 
 
-void WvHConfIniFile::load()
+void UniConfIniFile::load()
 {
     char *cptr, *line;
-    WvHConf *h;
+    UniConf *h;
     WvFile f(filename, O_RDONLY);
     WvBuffer b;
     WvString section = "";
@@ -131,7 +131,7 @@ void WvHConfIniFile::load()
 }
 
 
-void WvHConfIniFile::save()
+void UniConfIniFile::save()
 {
     if (!top->dirty && !top->child_dirty)
 	return; // no need to rewrite!
@@ -146,9 +146,9 @@ void WvHConfIniFile::save()
 
 // find the number of non-empty-valued nodes under 'h', not including 'h'
 // itself.  Store a pointer to the first one in 'ret'.
-static int count_children(WvHConf *h, WvHConf *&ret)
+static int count_children(UniConf *h, UniConf *&ret)
 {
-    WvHConf *tmp = NULL;
+    UniConf *tmp = NULL;
     int n, nchildren = 0;
     
     ret = NULL;
@@ -156,7 +156,7 @@ static int count_children(WvHConf *h, WvHConf *&ret)
     if (!h->has_children())
 	return 0;
     
-    WvHConf::Iter i(*h);
+    UniConf::Iter i(*h);
     for (i.rewind(); i.next(); )
     {
 	n = count_children(i.ptr(), tmp);
@@ -181,14 +181,14 @@ static int count_children(WvHConf *h, WvHConf *&ret)
 // maximum of one non-empty-valued node per direct child.  The idea here
 // is to let us collapse inifile branches to minimize the number of
 // single-entry sections.
-static bool any_interesting_children(WvHConf *h)
+static bool any_interesting_children(UniConf *h)
 {
-    WvHConf *junk;
+    UniConf *junk;
     
     if (!h->has_children())
 	return false;
     
-    WvHConf::Iter i(*h);
+    UniConf::Iter i(*h);
     for (i.rewind(); i.next(); )
     {
 	if (!!*i)
@@ -201,9 +201,9 @@ static bool any_interesting_children(WvHConf *h)
 }
 
 
-void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
+void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 {
-    WvHConf *interesting;
+    UniConf *interesting;
     
     // special case: the root node of this generator shouldn't get its own
     // section unless there are _really_ nodes directly in that section.
@@ -216,7 +216,7 @@ void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
     {
 	out("\n[%s]\n", inicode(key));
     
-	WvHConf::Iter i(*h);
+	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
 	    if (i->generator && i->generator != this) continue;
@@ -228,7 +228,7 @@ void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
 	    {
 		// exactly one interesting child: don't bother with a
 		// subsection.
-		WvHConfKey deepkey(interesting->full_key(h));
+		UniConfKey deepkey(interesting->full_key(h));
 		out("%s = %s\n", inicode(deepkey), inicode(*interesting));
 	    }
 	}
@@ -237,7 +237,7 @@ void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
     // dump subtrees into their own sections
     if (h->has_children())
     {
-	WvHConf::Iter i(*h);
+	UniConf::Iter i(*h);
 	for (i.rewind(); i.next(); )
 	{
 	    if (i->generator && i->generator != this)
@@ -246,7 +246,7 @@ void WvHConfIniFile::save_subtree(WvStream &out, WvHConf *h, WvHConfKey key)
 		     && (top_special
 			 || count_children(i.ptr(), interesting) > 1))
 	    {
-		WvHConfKey key2(key);
+		UniConfKey key2(key);
 		key2.append(&i->name, false);
 		save_subtree(out, i.ptr(), key2);
 	    }
