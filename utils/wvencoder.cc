@@ -364,17 +364,57 @@ bool WvEncoderChain::_reset()
 }
 
 
-void WvEncoderChain::append(WvEncoder *enc, bool auto_free)
+void WvEncoderChain::append(WvEncoder *enc, bool autofree)
 {
-    encoders.append(new WvEncoderChainElem(enc, auto_free), true);
+    encoders.append(new WvEncoderChainElem(enc, autofree), true);
 }
 
 
-void WvEncoderChain::prepend(WvEncoder *enc, bool auto_free)
+void WvEncoderChain::prepend(WvEncoder *enc, bool autofree)
 {
-    encoders.prepend(new WvEncoderChainElem(enc, auto_free), true);
+    encoders.prepend(new WvEncoderChainElem(enc, autofree), true);
 }
 
+bool WvEncoderChain::get_autofree(WvEncoder *enc)
+{
+//    WvEncoderChainElemListBase::Iter i(encoders);
+//    for (i.rewind(); i.next(); )
+//    {
+//	if ((i.ptr()->enc == enc) && (i.get_autofree()))
+//	    return true;
+//    }
+//    return false;
+}
+
+void WvEncoderChain::set_autofree(WvEncoder *enc, bool autofree)
+{
+//    WvEncoderChainElemListBase::Iter i(encoders);
+//    if (autofree)
+//    {
+//	// Ensure only the first encoder has autofree set
+//	bool first = true;
+//	for (i.rewind(); i.next(); )
+//	{
+//	    if (i.ptr()->enc == enc)
+//	    {
+//		if (first)
+//		{
+//		    i.set_autofree(true);
+//		    first = false;
+//		}
+//		else
+//		    i.set_autofree(false);
+//	    }
+//	}
+//    }
+//    else
+//    {
+//	// Clear autofree for all encoders
+//	for (i.rewind(); i.next(); )
+//	    if (i.ptr()->enc == enc)
+//		i.set_autofree(false);
+//    }
+}
 
 void WvEncoderChain::unlink(WvEncoder *enc)
 {
