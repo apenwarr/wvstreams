@@ -29,9 +29,9 @@ void WvStreamsDaemon::start_cb(WvDaemon &daemon, void *)
 
 void WvStreamsDaemon::run_cb(WvDaemon &daemon, void *)
 {
-    if (listeners.count() == 0)
+    if (streams.count() == 0)
     {
-        log(WvLog::Error, "No listeners; exiting\n");
+        log(WvLog::Error, "No streams; exiting\n");
         die();
     }
 
@@ -41,21 +41,37 @@ void WvStreamsDaemon::run_cb(WvDaemon &daemon, void *)
 
 void WvStreamsDaemon::stop_cb(WvDaemon &daemon, void *)
 {
-    listeners.zap();
+    streams.zap();
 }
 
 void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *)
 {
     WvIStreamList::globallist.zap();
+    streams.zap();
 }
 
-void WvStreamsDaemon::add_listener(IWvStream *istream)
+void WvStreamsDaemon::add_stream(IWvStream *istream, const char *id)
 {
-    istream->setclosecallback(
-            WvStreamCallback(this, &WvStreamsDaemon::listener_close_cb), NULL);
-
-    listeners.append(istream, true);
+    streams.append(istream, true);
     WvIStreamList::globallist.append(istream, false);
+}
+
+void WvStreamsDaemon::add_reset_stream(IWvStream *istream, const char *id)
+{
+    add_stream(istream);
+    
+    istream->setclosecallback(
+            WvStreamCallback(this, &WvStreamsDaemon::reset_close_cb),
+                    (void *)id);
+}
+
+void WvStreamsDaemon::add_die_stream(IWvStream *istream, const char *id)
+{
+    add_stream(istream);
+    
+    istream->setclosecallback(
+            WvStreamCallback(this, &WvStreamsDaemon::die_close_cb), 
+                    (void *)id);
 }
 
 void WvStreamsDaemon::close_existing_connections_on_restart()
@@ -64,11 +80,24 @@ void WvStreamsDaemon::close_existing_connections_on_restart()
         WvDaemonCallback(this, &WvStreamsDaemon::stop_full_close_cb);
 }
 
-void WvStreamsDaemon::listener_close_cb(WvStream &, void *)
+void WvStreamsDaemon::reset_close_cb(WvStream &, void *ud)
 {
     if (should_run())
     {
-        log(WvLog::Error, "Listener is stale; restarting\n");
+        const char *id = (const char *)ud;
+        log(WvLog::Error, "%s is stale; restarting\n",
+                id? id: "Stream");
+        restart();
+    }
+}
+
+void WvStreamsDaemon::die_close_cb(WvStream &, void *ud)
+{
+    if (should_run())
+    {
+        const char *id = (const char *)ud;
+        log(WvLog::Error, "%s is stale; dying\n",
+                id? id: "Stream");
         restart();
     }
 }
