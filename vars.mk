@@ -160,5 +160,5 @@ libwvoggspeex.so: -logg -lspeex
 
 libwvfft.so: -lfftw -lrfftw
 
-libwvqt.so: -lqt
+libwvqt.so: ${QTLIB}
 

@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.15 2003/01/16 21:09:10 ppatters Exp $)
+AC_REVISION($Id: configure.ac,v 1.16 2003/02/26 00:01:22 ilguiz Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -74,7 +74,12 @@ AC_ARG_WITH(fftw,
 
 AC_ARG_WITH(qt,
             AC_HELP_STRING([--with-qt],
-                           [Qt]))
+                           [Qt]),
+	    [test "$withval" = "yes" || { 
+	    	QTDIR="$withval"
+		with_qt="yes"
+		}],
+	    [])
 
 AC_ARG_WITH(xplc,
             AC_HELP_STRING([--with-xplc],
@@ -141,17 +146,24 @@ fi
 
 # qt
 if test "$with_qt" != "no"; then
-AC_CHECK_LIB(qt, main,, [with_qt=no])
-if test -n "$with_qt"; then
-    QTDIR=$with_qt
+  AC_CHECK_LIB(qt-mt, main, 
+    [QTLIB="-lqt-mt" ; QTVER="qt3"], 
+    [
+      AC_CHECK_LIB(qt, main, 
+        [QTLIB="-lqt" ; QTVER="qt"], 
+	[with_qt=no])
+    ])
 fi
-if test -n "$QTDIR"; then
-    QTINCLUDE="$QTDIR/include"
-else
-    QTINCLUDE="/usr/include/qt"
-fi
-CPPFLAGS="$CPPFLAGS -I$QTINCLUDE"
-AC_CHECK_HEADERS(qt/qobject.h,, [with_qt=no])
+if test "$with_qt" != "no"; then
+  if test -n "${QTDIR}"; then
+    QTINCLUDE="-I${QTDIR}/include"
+  else
+    QTINCLUDE="-I/usr/include/${QTVER}"
+  fi
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
+  AC_CHECK_HEADERS([${QTVER}/qobject.h], [], [with_qt=no])
+  CPPFLAGS="$save_CPPFLAGS"
 fi
 
 # xplc
@@ -224,6 +236,8 @@ AC_SUBST(with_vorbis)
 AC_SUBST(with_speex)
 AC_SUBST(with_fftw)
 AC_SUBST(with_qt)
+AC_SUBST(QTINCLUDE)
+AC_SUBST(QTLIB)
 AC_SUBST(with_xplc)
 
 AC_CONFIG_FILES(config.mk)

@@ -64,11 +64,12 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac include/wvautoconf.h.in
+configure: configure.ac
 	autoconf
 
 include/wvautoconf.h.in: configure.ac
 	autoheader
+	touch include/wvautoconf.h.in
 endif
 
 ChangeLog:
