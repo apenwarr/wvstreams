@@ -334,6 +334,7 @@ bool WvFile::open(const WvString &filename, int mode, int create_mode)
 	seterr(errno);
 	return false;
     }
-    else
-	return true;
+
+    fcntl(fd, F_SETFD, 1);
+    return true;
 }
