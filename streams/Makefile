@@ -2,18 +2,18 @@ include $(TOPDIR)/rules.mk
 
 XPATH=.. ../utils
 
-default: all watchtest pipetest clonetest modemtest logtest logbuftest \
-		looptest timetest
+default: all watchtest pipetest clonetest modemtest \
+		logtest logbuftest syslogtest looptest timetest
 
 all: streams.a
 
 streams.a: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
-	wvlog.o wvlogbuffer.o \
+	wvlog.o wvlogbuffer.o wvsyslog.o \
 	wvwatcher.o wvpipe.o wvloopback.o wvmodem.o wvtimestream.o
 
-watchtest pipetest clonetest modemtest logtest logbuftest \
+watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
 	looptest timetest: streams.a ../utils/utils.a
 
 clean:
-	rm -f watchtest pipetest clonetest modemtest logtest logbuftest \
-		looptest timetest
+	rm -f watchtest pipetest clonetest modemtest \
+		logtest logbuftest syslogtest looptest timetest
