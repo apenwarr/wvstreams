@@ -43,6 +43,19 @@
 
 #include <stdlib.h>  // for 'NULL'
 
+
+#define WvIterStuff(_type_) \
+	operator _type_& () const \
+	    { return *ptr(); } \
+	_type_ &operator () () const \
+	    { return *ptr(); } \
+	_type_ *operator -> () const \
+	    { return ptr(); } \
+        _type_ &operator* () const \
+            { return *ptr(); }
+	
+
+
 // note: auto_free behaviour is a little bit weird; since WvLink does not
 // know what data type it has received, there is no way it can call the
 // right destructor.  So, the WvList needs to handle the data deletion
@@ -121,6 +134,8 @@ public:
     class SorterBase
     {
     public:
+	typedef int (CompareFunc)(const void *a, const void *b);
+	    
         WvListBase *list;
         WvLink **array;
         WvLink **lptr;
@@ -135,7 +150,7 @@ public:
         WvLink *cur() const
             { return lptr ? *lptr : &list->head; }
     protected:
-        void rewind(int (*cmp)(const void *, const void *));
+        void rewind(CompareFunc *cmp);
     };
 };
 
@@ -190,14 +205,8 @@ public:
             { }
         _type_ *ptr() const
             { return (_type_ *)link->data; }
-	operator _type_& () const
-	    { return *ptr(); }
-	_type_ &operator () () const
-	    { return *ptr(); }
-	_type_ *operator -> () const
-	    { return ptr(); }
-	_type_ &operator*() const
-	    { return *ptr(); }
+	WvIterStuff(_type_);
+	
         void unlink()
         {
 	    if (prev) ((WvList *)list)->unlink_after(prev);
@@ -208,29 +217,22 @@ public:
     class Sorter : public WvListBase::SorterBase
     {
     public:
-        int (*cmp)(const _type_ **, const _type_ **);
+	typedef int (RealCompareFunc)(const _type_ *a, const _type_ *b);
+	RealCompareFunc *cmp;
 
-        Sorter(WvList &l, int (*_cmp)(const _type_ **, const _type_ **))
+        Sorter(WvList &l, RealCompareFunc *_cmp)
             : SorterBase(l), cmp(_cmp)
             { }
         _type_ *ptr() const
             { return (_type_ *)(*lptr)->data; }
-        operator _type_& () const
-            { return *ptr(); }
-        _type_ &operator () () const
-            { return *ptr(); }
-        _type_ *operator -> () const
-            { return ptr(); }
-	_type_ &operator*() const
-	    { return *ptr(); }
+	WvIterStuff(_type_);
         void unlink()
         {
             ((WvList *)list)->unlink(ptr());
             lptr += sizeof(WvLink *);
         }
         void rewind()
-            { SorterBase::rewind((int (*)(const void *, const void *))
-                                 ((void *)cmp)); }
+            { SorterBase::rewind((CompareFunc *)cmp); }
     };
 };
 

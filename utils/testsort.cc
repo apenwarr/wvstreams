@@ -19,16 +19,16 @@
 DeclareWvList( WvString )
 DeclareWvTable( WvString )
 
-int apples_to_oranges( const WvString ** a, const WvString ** b )
+int apples_to_oranges( const WvString *a, const WvString *b )
 /***************************************************************/
 {
-    return( strcmp( **a, **b ) );
+    return( strcmp( *a, *b ) );
 }
 
-int oranges_to_apples( const WvString ** a, const WvString ** b )
+int oranges_to_apples( const WvString *a, const WvString *b )
 /***************************************************************/
 {
-    return( -strcmp( **a, **b ) );
+    return( -strcmp( *a, *b ) );
 }
 
 int main()

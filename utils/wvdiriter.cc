@@ -52,17 +52,6 @@ void WvDirIter::rewind()
     }
 }
 
-const WvDirEnt& WvDirIter::operator () () const
-/*********************************************/
-{
-    return( info );
-}
-
-const WvDirEnt * WvDirIter::operator -> () const
-/**********************************************/
-{
-    return( &info );
-}
 
 bool WvDirIter::next()
 /********************/

@@ -28,17 +28,6 @@ struct WvDirEnt : public stat
 class WvDirIter
 /*************/
 {
-public:
-    WvDirIter( WvString dirname, bool _recurse=true );
-    ~WvDirIter();
-
-    bool isok() const;
-    void rewind();
-    bool next();
-
-    const WvDirEnt& operator () () const;
-    const WvDirEnt * operator -> () const;
-
 private:
     bool        recurse;
 
@@ -58,6 +47,18 @@ private:
     DeclareWvList( Dir );
     DirList       dirs;
     DirList::Iter dir;
+
+public:
+    WvDirIter( WvString dirname, bool _recurse=true );
+    ~WvDirIter();
+
+    bool isok() const;
+    void rewind();
+    bool next();
+    
+    const WvDirEnt *ptr() const { return &info; }
+    WvIterStuff(const WvDirEnt);
+    
 };
 
 #endif

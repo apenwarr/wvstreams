@@ -122,6 +122,8 @@ public:
     class SorterBase
     {
     public:
+	typedef int (CompareFunc)(const void *a, const void *b);
+	
         WvHashTableBase *tbl;
         WvLink **array;
         WvLink **lptr;
@@ -136,7 +138,7 @@ public:
         WvLink *cur()
             { return lptr ? *lptr : &tbl->slots[0].head; }
     protected:
-        void rewind(int (*cmp)(const void *, const void *));
+        void rewind(CompareFunc *cmp);
     };
 };
 
@@ -192,38 +194,23 @@ public:
 	    { }
 	_type_ *ptr() const
 	    { return (_type_ *)link->data; }
-	operator _type_& () const
-	    { return *ptr(); }
-	_type_ &operator () () const
-	    { return *ptr(); }
-	_type_ *operator -> () const
-	    { return ptr(); }
-        _type_ &operator* () const
-            { return *ptr(); }
+	WvIterStuff(_type_);
     };
 
     class Sorter : public WvHashTableBase::SorterBase
     {
     public:
-        int (*cmp)(const _type_ **, const _type_ **);
+	typedef int (RealCompareFunc)(const _type_ *a, const _type_ *b);
+	RealCompareFunc *cmp;
 
-        Sorter(WvHashTable &_tbl,
-               int (*_cmp)(const _type_ **, const _type_ **))
+        Sorter(WvHashTable &_tbl, RealCompareFunc *_cmp)
             : SorterBase(_tbl), cmp(_cmp)
             { }
         _type_ *ptr() const
             { return (_type_ *)(*lptr)->data; }
-        operator _type_& () const
-            { return *ptr(); }
-        _type_ &operator () () const
-            { return *ptr(); }
-        _type_ *operator -> () const
-            { return ptr(); }
-        _type_ &operator* () const
-            { return *ptr(); }
+	WvIterStuff(_type_);
         void rewind()
-            { SorterBase::rewind((int (*)(const void *, const void *))
-                                 ((void *)cmp)); }
+            { SorterBase::rewind((CompareFunc *)cmp); }
     };
 };
 

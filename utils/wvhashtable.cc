@@ -94,54 +94,47 @@ WvLink *WvHashTableBase::IterBase::next()
     return link;
 }
 
+
+static WvHashTableBase::SorterBase::CompareFunc *actual_compare = NULL;
+
+static int magic_compare(const void *_a, const void *_b)
+{
+    WvLink *a = *(WvLink **)_a, *b = *(WvLink **)_b;
+    return actual_compare(a->data, b->data);
+}
+
+
 // Note that this is largely the same as WvLink::SorterBase::rewind(),
 // except we iterate through a bunch of lists instead of a single one.
-void WvHashTableBase::SorterBase::rewind( int (*cmp)( const void *, const void * ) )
+void WvHashTableBase::SorterBase::rewind(CompareFunc *cmp)
 {
-    if( array )
+    if (array)
         delete array;
     array = lptr = NULL;
 
     int n = tbl->count();
-    void ** varray = new void * [n+1];
-    array = (WvLink **) varray;
+    array = new WvLink * [n+1];
+    WvLink **aptr = array;
 
     // fill the array with data pointers for sorting, so that the user doesn't
-    // have to deal with the WvLink objects.  Put the WvLink pointers back
+    // have to deal with the WvLink objects.  Put the WvLink pointers back 
     // in after sorting.
-    void ** vptr = varray;
-    unsigned sl;
-    WvLink * src;
-    for( sl=0; sl < tbl->numslots; sl++ ) {
-        src = tbl->slots[ sl ].head.next;
-        while( src ) {
-            *vptr = src->data;
-            vptr++;
-            src = src->next;
-        }
+    IterBase i(*tbl);
+    aptr = array;
+    for (i.rewind(); i.next(); )
+    {
+        *aptr = i.cur();
+        aptr++;
     }
-    *vptr = NULL;
+    
+    *aptr = NULL;
 
-    // sort the array
-    qsort( array, n, sizeof( WvLink * ), cmp );
+    // sort the array.  "Very nearly re-entrant" (unless the compare function
+    // ends up being called recursively or something really weird...)
+    CompareFunc *old_compare = actual_compare;
+    actual_compare = cmp;
+    qsort(array, n, sizeof(WvLink *), magic_compare);
+    actual_compare = old_compare;
 
-    // go through the array, find the WvLink corresponding to each element,
-    // and substitute.
-    for( sl=0; sl < tbl->numslots; sl++ ) {
-        src = tbl->slots[ sl ].head.next;
-        while( src ) {
-            lptr = (WvLink **) vptr = varray;
-            while( lptr != NULL ) {
-                if( *vptr == src->data ) {
-                    *lptr = src;
-                    break;
-                }
-                lptr++;
-                vptr++;
-            }
-            src = src->next;
-        }
-    }
-
-    lptr = NULL;    // subsequent next() will set it to the first element.
+    lptr = NULL;    // subsequent next() will set it to first element.
 }
