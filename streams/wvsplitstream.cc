@@ -105,6 +105,11 @@ bool WvSplitStream::isok() const
 
 bool WvSplitStream::select_setup(SelectInfo &si)
 {
+    time_t alarmleft = alarm_remaining();
+    
+    if (alarmleft == 0 && !select_ignores_buffer)
+	return true; // alarm has rung
+    
     if (si.readable)
     {
 	if (!select_ignores_buffer && inbuf.used())
@@ -121,6 +126,10 @@ bool WvSplitStream::select_setup(SelectInfo &si)
     
     if (si.max_fd < rfd) si.max_fd = rfd;
     if (si.max_fd < wfd) si.max_fd = wfd;
+    
+    if (alarmleft >= 0
+      && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
+	si.msec_timeout = alarmleft;
     
     return false;
 }

@@ -62,13 +62,8 @@ WvStream::~WvStream()
     
     if (task)
     {
-	fprintf(stderr, "Killing object %p\n", this);
 	while (task->isrunning())
-	{
-	    fprintf(stderr, "(still) Killing object %p\n", this);
 	    taskman->run(*task);
-	}
-	fprintf(stderr, "Dead object %p\n", this);
 	task->recycle();
 	task = NULL;
     }
@@ -110,8 +105,6 @@ void WvStream::_callback(void *stream)
 
 void WvStream::callback()
 {
-    fprintf(stderr, "callback object %p\n", this);
-    
     // if the alarm has gone off and we're calling callback... good!
     if (alarm_remaining() == 0)
     {

@@ -89,10 +89,18 @@ const char *WvStreamClone::errstr() const
 bool WvStreamClone::select_setup(SelectInfo &si)
 {
     bool oldwr, result;
+    time_t alarmleft = alarm_remaining();
+    
+    if (alarmleft == 0 && !select_ignores_buffer)
+	return true; // alarm has rung
     
     if (si.readable && !select_ignores_buffer && inbuf.used() 
 	   && inbuf.used() >= queue_min)
 	return true;   // sure_thing if anything in WvStream buffer
+    
+    if (alarmleft >= 0
+      && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
+	si.msec_timeout = alarmleft;
     
     if (s() && s()->isok())
     {
@@ -104,8 +112,8 @@ bool WvStreamClone::select_setup(SelectInfo &si)
 	
 	si.writable = oldwr;
 	return result;
-	
     }
+    
     return false;
 }
 
