@@ -11,15 +11,14 @@
  */
 
 #include "wvlinklist.h"
-#include "wvstring.h"
+#include "wvstringlist.h"
 #include <stdio.h>
 
-DeclareWvList(WvString);
 DeclareWvList(int);
 
 int main()
 {
-    WvString x("foo"), y("blue"), z("true");
+    WvString x("foo"), y("blue"), z("true"), bob("Foo: bar: baz: bob");
 
     WvStringList l;
     WvStringList::Iter i(l);
@@ -31,6 +30,21 @@ int main()
     for (i.rewind(); i.next();)
 	printf("Thingy: %s\n", (const char *)(WvString&)i);
 
+    l.zap();
+    l.split(bob, ": ");
+    for (i.rewind(); i.next();)
+	printf("Stingy: %s\n", (const char *)(WvString&)i);
+
+    l.zap();
+    l.split(bob, ": ", 2);
+    for (i.rewind(); i.next();)
+	printf("Stingy(2): %s\n", (const char *)(WvString&)i);
+
+    l.zap();
+    l.split(bob, ": ", 3);
+    for (i.rewind(); i.next();)
+	printf("Stingy(3): %s\n", (const char *)(WvString&)i);
+
     int a=5, b=6;
     intList il;
     intList::Iter ii(il);
@@ -41,6 +55,6 @@ int main()
     ii.rewind();
     while (ii.next())
 	printf("Dingy: %d\n", ii());
-    
+
     return 0;
 }

@@ -42,15 +42,25 @@ WvString WvStringList::join(const char *joinchars) const
 }
 
 
-void WvStringList::split(const WvString &_s, const char *splitchars)
+void WvStringList::split(const WvString &_s, const char *splitchars,
+			 int limit)
 {
     WvString s(_s);
     char *sptr = s.edit(), *eptr, oldc;
-    
+
     while (sptr && *sptr)
     {
-	sptr += strspn(sptr, splitchars);
-	eptr = sptr + strcspn(sptr, splitchars);
+	--limit;
+	if( limit )
+	{
+	    sptr += strspn(sptr, splitchars);
+	    eptr = sptr + strcspn(sptr, splitchars);
+	}
+	else
+	{
+	    sptr += strspn(sptr, splitchars);
+	    eptr = sptr + strlen(sptr);
+	}
 	
 	oldc = *eptr;
 	*eptr = 0;

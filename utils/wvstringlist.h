@@ -14,7 +14,8 @@
 
 DeclareWvList2(WvString,
 	       WvString join(const char *joinchars = " \t") const;
-	       void split(const WvString &s, const char *splitchars = " \t");
+	       void split(const WvString &s, const char *splitchars = " \t",
+			  int limit = 0);
 	       );
 
 #endif // __WVSTRINGLIST_H
