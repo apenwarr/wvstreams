@@ -106,7 +106,6 @@ WvString fix_acl(WvStringParm shortform)
 	    mask_write = true;
 	if (strchr(i(), 'x'))
 	    mask_execute = true;
-	break;
     }
 
     if (!mask_found && !mask_needed)
