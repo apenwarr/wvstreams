@@ -326,3 +326,4 @@ WvString encode_hostname_as_DN(WvString &hostname)
 
    return dn.unique();
 }
+
