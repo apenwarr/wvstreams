@@ -15,6 +15,10 @@ class WvStream;
 class WvHConf;
 class WvHConfDict;
 
+/**
+ * a WvHConfKey is a convenient structure that uniquely identifies a point
+ * in the HConf tree and can be converted to/from a WvString.
+ */
 class WvHConfKey : public WvStringList
 {
 public:
@@ -32,6 +36,39 @@ public:
 };
 
 
+/**
+ * A WvHConfGen knows how to generate new WvHConf objects in its tree.  It
+ * may also know how to load/save its tree using some kind of permanent
+ * storage (like a disk file, a central HConf server, or whatever).
+ */
+class WvHConfGen
+{
+public:
+    WvHConfGen() {}
+    virtual ~WvHConfGen();
+    
+    // both of these functions may return NULL if the object "shouldn't"
+    // exist.
+    virtual WvHConf *make_tree(WvHConf *parent, const WvHConfKey &key);
+    virtual WvHConf *make_obj(WvHConf *parent, const WvString &name);
+    
+    virtual void update(WvHConf *h);
+    
+    // the default load/save functions don't do anything... you might not
+    // need them to.
+    virtual void load();
+    virtual void save();
+};
+
+
+/**
+ * WvHConf objects are the root, branches, and leaves of the configuration
+ * tree.  Each one has a parent, name=value, and children, all of which are
+ * optional (although the name is usually useful).
+ * 
+ * The nice thing about this is you can write classes that use a WvHConf
+ * configuration tree, and then instead hand them a subtree if you want.
+ */
 class WvHConf
 {
 private:
@@ -41,6 +78,7 @@ public:
     WvString name;         // the name of this entry
     WvHConfDict *children; // list of all child nodes of this node (subkeys)
     WvHConf *defaults;     // a tree possibly containing default values
+    WvHConfGen *generator; // subtree generator for this tree
     
     bool 
 	child_dirty:1,     // some data in the subtree has dirty=1
@@ -63,6 +101,9 @@ public:
     WvHConf *top();
     WvHConfKey full_key() const;
     
+    WvHConf *gen_top();
+    WvHConfKey gen_full_key() const;
+    
     WvHConf *find(const WvHConfKey &key);
     WvHConf *find_make(const WvHConfKey &key);
     WvHConf &operator[](const WvHConfKey &key) { return *find_make(key); }
@@ -71,15 +112,15 @@ public:
     
     WvHConf &get(const WvHConfKey &key)
         { return *find_make(key); }
-    
     void set(const WvHConfKey &key, const WvString &v)
         { get(key) = v; }
     
     void set(const WvString &s);
     const WvHConf &operator= (const WvString &s) { set(s); return *this; }
+    const WvHConf &operator= (const WvHConf &s) { set(s); return *this; }
     
     const WvString& printable() const;
-    operator const WvString& () { return printable(); }
+    operator const WvString& () const { return printable(); }
     
     void dump(WvStream &s);
 };

@@ -9,11 +9,12 @@ all:
 
 hconftest: hconftest.o hconf.a
 
-hconf.libs: wvhconfkey.o wvhconf.o ../streams/streams.libs ../utils/utils.libs
+hconf.libs: wvhconfkey.o wvhconf.o wvhconfgen.o \
+	../streams/streams.libs ../utils/utils.libs
 
 hconf.a: hconf.libs
 
-#LIBS = ${EFENCE}
+LIBS = ${EFENCE}
 
 clean:
 	rm -f hconftest

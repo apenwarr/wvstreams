@@ -30,8 +30,9 @@ WvHConf::WvHConf(WvHConf *_parent, const WvString &_name)
 
 void WvHConf::init()
 {
-    defaults = NULL;
     children = NULL;
+    defaults = NULL;
+    generator = NULL;
     
     dirty  = child_dirty  = false;
     notify = child_notify = false;
@@ -77,6 +78,42 @@ WvHConfKey WvHConf::full_key() const
 }
 
 
+// find the topmost WvHConf object in the tree that's still owned by the
+// same WvHConfGen object.
+WvHConf *WvHConf::gen_top()
+{
+    WvHConf *h = this;
+    wvcon->print("in gen_top for '%s'\n", (int)h);
+    while (h->parent && !h->generator)
+    {
+	wvcon->print("gen_top searching '%s'\n", h->full_key());
+	h = h->parent;
+    }
+    
+    return h; // we reached the top of the tree without finding a generator.
+}
+
+
+// Figure out the full key for this location, but based from the gen_top()
+// instead of the top().
+// 
+// like with gen_key, this method of returning the object is pretty
+// inefficient - lots of extra copying stuff around.
+WvHConfKey WvHConf::gen_full_key() const
+{
+    WvHConfKey k;
+    const WvHConf *h = this;
+    
+    while (h && !h->generator)
+    {
+	k.prepend(new WvString(h->name), true);
+	h = h->parent;
+    };
+    
+    return k;
+}
+
+
 // find a key in the subtree.  If it doesn't already exist, return NULL.
 WvHConf *WvHConf::find(const WvHConfKey &key)
 {
@@ -98,20 +135,19 @@ WvHConf *WvHConf::find_make(const WvHConfKey &key)
 {
     if (key.isempty())
 	return this;
-    if (!children)
-	children = new WvHConfDict(10);
-    
-    WvHConf *h = (*children)[*key.first()];
-    
-    if (h)
-	return h->find_make(key.skip(1));
-    else
+    if (children)
     {
-	// create a subkey, then call it recursively.
-	WvHConf *child = new WvHConf(this, *key.first());
-	children->add(child, true);
-	return child->find_make(key.skip(1));
+	WvHConf *h = (*children)[*key.first()];
+	if (h)
+	    return h->find_make(key.skip(1));
     }
+	
+    // we need to actually create the key
+    WvHConf *htop = gen_top();
+    if (htop->generator)
+	return htop->generator->make_tree(this, key);
+    else
+	return WvHConfGen().make_tree(this, key); // generate an empty tree
 }
 
 
@@ -196,9 +232,9 @@ const WvString &WvHConf::printable() const
 
 void WvHConf::dump(WvStream &s)
 {
-    if (1 || !!value)
+    if (!!value)
     {
-	s.print("\t%s%s%s%s%s%s%s %s = %s\n",
+	s.print("  %s%s%s%s%s%s%s %s = %s\n",
 	        child_dirty, dirty,
 		child_notify, notify,
 		autogen,

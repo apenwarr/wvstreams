@@ -8,6 +8,26 @@
 #include "wvlog.h"
 #include "wvconf.h"
 
+
+class HelloGen : public WvHConfGen
+{
+public:
+    WvString defstr;
+    int count;
+    
+    HelloGen(const WvString &_def = "Hello World")
+	: defstr(_def) { count = 0; }
+    virtual void update(WvHConf *h);
+};
+
+
+void HelloGen::update(WvHConf *h)
+{
+    wvcon->print("Hello: updating %s\n", h->full_key());
+    *h = WvString("%s #%s", defstr, ++count);
+}
+
+
 int main()
 {
     WvLog log("hconftest", WvLog::Info);
@@ -63,7 +83,28 @@ int main()
 	log("New comment settings are: %s/%s\n",
 	    cfg["/users/noperson/comment"], cfg["/users/bob/comment"]);
 	
+	cfg["/users/bob/someone/comment"] = "fork";
+	
 	log("Config dump 2:\n");
+	cfg.dump(*wvcon);
+    }
+    
+    {
+	log("-- Generator test begins\n");
+	
+	WvHConf cfg;
+	
+	cfg["/hello"].generator = new HelloGen("Hello world!");
+	cfg["/bonjour"].generator = new HelloGen("Bonjour tout le monde!");
+	
+	cfg.get("/bonjour/1");
+	cfg.get("/bonjour/2");
+	cfg.get("/bonjour/3");
+	cfg.get("/hello/3");
+	cfg.get("/hello/2");
+	cfg.get("/hello/1");
+	
+	log("Config dump:\n");
 	cfg.dump(*wvcon);
     }
     
