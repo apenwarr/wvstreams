@@ -24,6 +24,7 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _headers,
     WvBufHttpStream *x = new WvBufHttpStream;
     outstream = x;
     x->death_notify = (WvStream **)&outstream;
+    x->url = url;
 }
 
 

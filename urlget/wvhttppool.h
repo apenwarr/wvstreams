@@ -44,6 +44,7 @@ DeclareWvList(WvUrlRequest);
 class WvBufHttpStream : public WvBufStream
 {
 public:
+    WvString url;
     WvString version;
     int status;
     WvHTTPHeaderDict headers; 
