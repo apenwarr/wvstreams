@@ -10,10 +10,11 @@
 int main()
 {
 	free(malloc(1)); // For Electric Fence...
+
 	WvX509Mgr *x509mgr = new WvX509Mgr();
 	WvString request;
 
-	WvLog log("certtest", WvLog::Info);
+	WvLog log("reqtest", WvLog::Info);
 	log("Starting...\n");
 	
 	// Setup a new DN entry, like a server would set.

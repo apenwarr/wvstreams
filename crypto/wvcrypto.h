@@ -13,7 +13,9 @@
 #define WVCRYPTO_BUFSIZE  2048     // max bytes to encrypt at once
 
 
-/* a very simple stream that returns randomness from /dev/urandom */
+/**
+ * a very simple stream that returns randomness from /dev/urandom
+ */
 class WvRandomStream : public WvFile
 {
 public:
@@ -21,7 +23,7 @@ public:
 };
 
 
-/*
+/**
  * base class for other cryptographic streams.  Presumably subclasses will
  * want to redefine uread/uwrite.
  */
@@ -40,7 +42,7 @@ public:
 };
 
 
-/*
+/**
  * a CryptoStream implementing completely braindead 8-bit XOR encryption.
  * Mainly useful for testing.
  */
@@ -56,7 +58,7 @@ protected:
 };
 
 
-/*
+/**
  * A CryptoStream implementing the fast, symmetric Blowfish encryption via
  * the SSLeay library.  They key is an arbitrary-length sequence of bytes.
  */
@@ -78,7 +80,7 @@ protected:
 };
 
 
-/*
+/**
  * An RSA public key (or public/private key pair) that can be used for
  * encryption.  Knows how to encode/decode itself into a stream of hex
  * digits for easy transport.
@@ -103,7 +105,7 @@ public:
 };
 
 
-/*
+/**
  * A CryptoStream implementing RSA public/private key encryption.  This is
  * really slow, so should only be used to exchange information about a faster
  * symmetric key (like Blowfish).  RSA needs to know the public key from
@@ -124,7 +126,7 @@ public:
     virtual ~WvRSAStream();
 };
 
-/*
+/**
  * MD5 Hash of either a string or a File 
  */
 class WvMD5
@@ -133,12 +135,31 @@ class WvMD5
 
 public:
 
+   /**
+    * Create the MD5 Hash of a String
+    */
    WvMD5(WvString &StringToHash);
+
+   /**
+    * Create the MD5 Hash of a File
+    */
    WvMD5(FILE *FileToHash);
    ~WvMD5();
    
+   /**
+    * MD5 seems to like unsigned char * for some reason, so make it easy
+    * to return that type (Probably only be usefull inside other crypto
+    * routines, but you never know ;)
+    */
    operator const unsigned char *() const
    	{ return MD5HashValue; }
+
+   /**
+    * Sometimes we just want to easily get the text MD5 hash for whatever
+    * Type of object that we're constructing...
+    */
+   operator const WvString () const
+        { return MD5Hash(); }
 
    WvString MD5Hash() const;
 };
