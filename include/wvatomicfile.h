@@ -21,24 +21,20 @@
 class WvAtomicFile : public WvFile
 {
 private:
-    WvString atomic_file, tmp_file;
-    int tmpfd;
-    bool atomic;
+    WvString atomic_file;   
+    WvString tmp_file;
 
 public:
-    WvAtomicFile(int rwfd = -1);
-    WvAtomicFile(WvStringParm filename, int mode, int create_mode = 0666);
+    WvAtomicFile(WvStringParm filename, mode_t create_mode = 0666);
     ~WvAtomicFile();
 
-    bool open(WvStringParm filename, int mode, int create_mode = 0666);
+    bool open(WvStringParm filename, mode_t create_mode = 0666);
     void close();
-
-    bool isatomic()
-        { return atomic; }
-
-    /* For users hoping to get a filename for chmod/chown purposes */
-    WvString gettmpfname() const
-        { return tmp_file; }
+    
+    // Like chmod(2), does *not* respect umask
+    bool chmod(mode_t mode);
+    
+    bool chown(uid_t owner, gid_t group);
 };
 
 #endif // __WVATOMFILE_H

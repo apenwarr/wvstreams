@@ -11,14 +11,10 @@
 #include "wvfileutils.h"
 #include "wvstrutils.h"
 
-WvAtomicFile::WvAtomicFile(int rwfd)
-    : WvFile(rwfd), atomic(false)
+WvAtomicFile::WvAtomicFile(WvStringParm filename, mode_t create_mode)
+    : tmp_file(WvString::null)
 {
-}
-
-WvAtomicFile::WvAtomicFile(WvStringParm filename, int mode, int create_mode)
-{
-    open(filename, mode, create_mode);
+    open(filename, create_mode);
 }
 
 WvAtomicFile::~WvAtomicFile()
@@ -29,64 +25,76 @@ WvAtomicFile::~WvAtomicFile()
 
 /* Mimics behaviour of wvfile except that it uses a tmp file and stores the
    real name */
-bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
+bool WvAtomicFile::open(WvStringParm filename, mode_t create_mode)
 {
+    close();
+
     atomic_file = filename;
-    atomic = true;
 
-    if (mode & O_RDWR || mode & O_WRONLY)
-        writable = true;
+    // Ensure that if the file exists it is a regular file
+    struct stat st;
+    if (lstat(atomic_file, &st) == 0 && !S_ISREG(st.st_mode))
+        return false;
+ 
+    WvString new_tmp_file("%s/WvAtomicFile-XXXXXX", getdirname(filename));
     
-    if (writable)
-    { 
-        struct stat old_file;
-        int fexists = lstat(atomic_file, &old_file);
-        if (!fexists && !S_ISREG(old_file.st_mode))
-        {
-            close();
-            unlink(tmp_file);
-            return false;
-        }
+    // Get the current umask and guarantee that mkstemp() creates
+    // a file with maximal restrictions
+    mode_t old_umask = ::umask(077);
+    int tmp_fd = ::mkstemp(new_tmp_file.edit());
+    ::umask(old_umask);
+    if (tmp_fd == -1)
+         return false;
+ 
+    // Set the permissions as specified using the original umask
+    // We will only possibly be adding permissions here...
+    ::fchmod(tmp_fd, create_mode & ~old_umask);
 
-        tmp_file = WvString("%s/WvAtomicFile-XXXXXX", getdirname(filename));
-        tmpfd = mkstemp(tmp_file.edit());
-        fcntl(tmpfd, F_SETFL, mode);
-
-        if (!WvFile::open(tmpfd))
-            return false;
-
-        if (!fexists && (mode & O_APPEND))
-        {
-            // copy the contents from one file to another
-            int fd = open(atomic_file, O_RDONLY | O_NONBLOCK);
-            char buffer[256];
-            int count;
-            while ((count = ::read(fd, buffer, 256)) > 0)
-                ::write(tmpfd, buffer, count);
-            ::close(fd);
-        }
-
-        fchmod(tmpfd, create_mode);
-    }
-    else
+    if (!WvFile::open(tmp_fd))
     {
-        atomic = false;
-        return WvFile::open(filename, mode, create_mode);
+        ::close(tmp_fd);
+        return false;
     }
+    
+    tmp_file = new_tmp_file;
 
-    // retain rights
-    //chown(tmp_file, old_file.st_uid, old_file.st_gid);
     return true;
 }
 
 void WvAtomicFile::close()
 {
+    if (!tmp_file) return;
+
     WvFdStream::close();
 
-    // this value is only filled if we OPENED the file otherwise
-    //  we mimic the behaviour of a WvFile
-    if (atomic)
-        if (rename(tmp_file, atomic_file) < 0)
-            ::unlink(tmp_file);
+    if (::rename(tmp_file, atomic_file) == -1)
+        ::unlink(tmp_file);
+    
+    tmp_file = WvString::null;
+}
 
+bool WvAtomicFile::chmod(mode_t mode)
+{
+    if (getfd() == -1) return false;
+    
+    if (fchmod(getfd(), mode) == -1)
+    {
+    	seterr(errno);
+    	return false;
+    }
+    
+    return true;
+}
+
+bool WvAtomicFile::chown(uid_t owner, gid_t group)
+{
+    if (getfd() == -1) return false;
+    
+    if (fchown(getfd(), owner, group) == -1)
+    {
+    	seterr(errno);
+    	return false;
+    }
+    
+    return true;
 }
