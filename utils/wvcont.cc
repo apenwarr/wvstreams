@@ -24,7 +24,7 @@ struct WvCont::Data
     P1 p1;
     
     Data(const Callback &_cb, size_t _stacksize) : cb(_cb)
-        { links = 1; finishing = false; stacksize = _stacksize;
+        { links = 1; finishing = false; stacksize = _stacksize; mydepth = 0;
 	     taskman = WvTaskMan::get(); 
 	     task = NULL; report(); }
     ~Data()
