@@ -30,6 +30,10 @@ public:
     WvFile(WvStringParm filename, int mode, int create_mode = 0666)
         { open(filename, mode, create_mode); }
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
+    
+    bool readable, writable;
+    
+    virtual bool pre_select(SelectInfo &si);
 };
 
 

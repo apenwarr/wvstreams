@@ -83,7 +83,7 @@ bool WvURL::resolve()
     numaddrs = dns.findaddr(0, hostname, &ip);
     if (!numaddrs) // error condition
     {
-	err = WvString("Host %s could not be found.", hostname);
+	err = WvString("Host '%s' could not be found.", hostname);
 	resolving = false;
 	return false;
     }

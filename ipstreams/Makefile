@@ -5,7 +5,7 @@ XPATH=.. ../utils ../streams
 
 TESTS=tcptest udptest udp2test listentest unixtest ulistentest \
 	resolvertest routetest \
-	conttest aliastest simpleconn httptest
+	conttest aliastest simpleconn httptest http2test
 
 default: all $(TESTS)
 
@@ -17,11 +17,8 @@ ipstreams.libs: wvaddr.o wvtcp.o wvudp.o wvresolver.o wvhttp.o wvinterface.o \
 
 ipstreams.a: ipstreams.libs
 
-#LIBS=$(EFENCE)
-tcptest udptest udp2test listentest unixtest ulistentest \
-	resolvertest routetest \
-	conttest aliastest simpleconn httptest simpleconn: \
-		ipstreams.a
+LIBS=$(EFENCE)
+$(TESTS): ipstreams.a
 
 clean:
 	rm -f $(TESTS)

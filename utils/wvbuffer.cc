@@ -18,7 +18,7 @@
 #define Dprintf if (0) printf
 #endif
 
-#define MINSIZE 128
+#define MINSIZE 1024
 
 ///////////////////// WvMiniBuffer
 
