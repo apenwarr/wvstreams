@@ -237,8 +237,7 @@ UniConf::Iter::Iter(const UniConf &_top)
     : IterBase(_top)
 {
     it = _top.rootobj()->mounts.iterator(top.fullkey());
-    if (!it)
-	it = new UniConfGen::NullIter;
+    if (!it) it = new UniConfGen::NullIter;
 }
 
 
