@@ -65,6 +65,7 @@ public:
     }
     ~WvDelayedCallback()
     {
+        stream->setcallback(0, 0);
         delete frozen;
     }
     R operator()()

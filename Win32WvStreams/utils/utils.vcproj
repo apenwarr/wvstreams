@@ -353,6 +353,9 @@
 				RelativePath="..\..\include\wvdailyevent.h">
 			</File>
 			<File
+				RelativePath="..\..\include\wvdelayedcallback.h">
+			</File>
+			<File
 				RelativePath="..\..\include\wvdiffiehellman.h">
 			</File>
 			<File
