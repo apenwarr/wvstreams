@@ -53,8 +53,7 @@ public:
     // read or write a data block on the stream.  Returns the actual amount
     // read/written.
     size_t read(void *buf, size_t count);
-    size_t write(const void *buf, size_t count)
-        { return uwrite(buf, count); }  // no write buffer
+    size_t write(const void *buf, size_t count);
     
     // read up to one line of data from the stream and return a pointer
     // to the internal buffer containing this line.  If the end-of-line \n
@@ -81,6 +80,16 @@ public:
     // drain the input buffer (read and discard data until select(0)
     // returns false)
     void drain();
+    
+    // force write() to always buffer output.  This can be more efficient
+    // if you write a lot of small segments and want to "coagulate" them
+    // automatically.  To flush the output buffer, use flush() or select().
+    void delay_output(bool is_delayed)
+        { outbuf_delayed_flush = is_delayed; }
+    
+    // flush the output buffer, if we can do it without delaying more than
+    // msec_timeout milliseconds at a time.  (-1 means wait forever)
+    void flush(time_t msec_timeout);
     
     // print a preformatted WvString to the stream
     size_t write(const WvString &s)
@@ -155,8 +164,8 @@ protected:
     void *userdata;
     int fd, errnum;
     WvString errstring;
-    WvBuffer inbuf;
-    bool select_ignores_buffer;
+    WvBuffer inbuf, outbuf;
+    bool select_ignores_buffer, outbuf_delayed_flush;
     size_t queue_min;
 
     // plain internal constructor to just set up internal variables.

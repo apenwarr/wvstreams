@@ -9,6 +9,7 @@
 #include "wvstreamlist.h"
 #include "wvtcp.h"
 #include "wvlog.h"
+#include <signal.h>
 
 
 static void bouncer(WvStream &s, void *userdata)
@@ -28,8 +29,10 @@ static void bouncer(WvStream &s, void *userdata)
 	if (&s == &out)
 	    continue;
 	
-	if (!out.isok() || !out.select(10000, false, true)) 
+	if (!out.isok())
 	    continue;
+	
+	out.delay_output(true);
 	out.write(buf, len);
     }
 }
@@ -42,6 +45,8 @@ int main(int argc, char **argv)
     char *cptr;
     WvLog log("simpleconn", WvLog::Info);
     
+    signal( SIGPIPE, SIG_IGN );
+
     if (argc < 2)
     {
 	fprintf(stderr, "Usage: %s file [file...]\n"

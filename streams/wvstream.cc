@@ -26,7 +26,7 @@ void WvStream::init()
     callfunc = NULL;
     userdata = NULL;
     errnum = 0;
-    select_ignores_buffer = false;
+    select_ignores_buffer = outbuf_delayed_flush = false;
     queue_min = 0;
 }
 
@@ -39,6 +39,7 @@ WvStream::~WvStream()
 
 void WvStream::close()
 {
+    flush(2000);
     if (fd >= 0) ::close(fd);
     fd = -1;
 }
@@ -72,9 +73,16 @@ int WvStream::getfd() const
 
 bool WvStream::test_set(SelectInfo &si)
 {
-    return fd >= 0 && (FD_ISSET(getfd(), &si.read)
-	    || FD_ISSET(getfd(), &si.write)
-	    || FD_ISSET(getfd(), &si.except));
+    if (fd < 0) return false;
+    
+    // flush the output buffer if possible
+    if (outbuf.used() && FD_ISSET(getfd(), &si.write))
+	flush(0);
+    
+    return fd >= 0  // flush() might have closed the file!
+	&& (FD_ISSET(getfd(), &si.read)
+	 || FD_ISSET(getfd(), &si.write)
+	 || FD_ISSET(getfd(), &si.except));
 }
 
 
@@ -170,26 +178,41 @@ size_t WvStream::uread(void *buf, size_t count)
 }
 
 
+size_t WvStream::write(const void *buf, size_t count)
+{
+    if (!isok() || !buf || !count) return 0;
+
+    
+    size_t wrote = 0;
+    
+    // FIXME - re-enable this once the other tests are complete
+    if (!outbuf_delayed_flush && outbuf.used())
+	flush(0);
+    
+    if (!outbuf_delayed_flush && !outbuf.used())
+	wrote = uwrite(buf, count);
+    
+    outbuf.put((unsigned char *)buf + wrote, count - wrote);
+    
+    return count;
+}
+
+
 size_t WvStream::uwrite(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
-    // usually people ignore the return value of write(), so we make
-    // a feeble attempt to continue even if interrupted.
-    select(5000, false, true);
-    int out;
-    do
-	out = ::write(getfd(), buf, count);
-    while (out < 0 && errno==EINTR);
+    int out = ::write(getfd(), buf, count);
     
     if (out < 0 && (errno == ENOBUFS || errno==EAGAIN))
-	return 0; // buffer full - data not written
+	return 0; // kernel buffer full - data not written
     
     if (out < 0 || (count && out==0))
     {
 	seterr(out < 0 ? errno : 0); // a more critical error
 	return 0;
     }
+    
     return out;
 }
 
@@ -255,6 +278,29 @@ void WvStream::drain()
 }
 
 
+void WvStream::flush(time_t msec_timeout)
+{
+    size_t attempt, real;
+    
+    if (!isok()) return;
+    
+    while (outbuf.used())
+    {
+	attempt = outbuf.used();
+	if (attempt > 1400)
+	    attempt = 1400;
+	real = uwrite(outbuf.get(attempt), attempt);
+	if (real < attempt)
+	    outbuf.unget(attempt - real);
+	
+	// since test_set() can call us, and select() calls test_set(),
+	// we need to be careful not to call select() if it is unnecessary!
+	if (!msec_timeout || !select(msec_timeout, false, true))
+	    break;
+    }
+}
+
+
 bool WvStream::select_setup(SelectInfo &si)
 {
     int fd;
@@ -265,10 +311,15 @@ bool WvStream::select_setup(SelectInfo &si)
     fd = getfd();
     if (fd < 0) return false;
     
-    if (si.readable)    FD_SET(fd, &si.read);
-    if (si.writable)    FD_SET(fd, &si.write);
-    if (si.isexception) FD_SET(fd, &si.except);
-    if (si.max_fd < fd) si.max_fd = fd;
+    if (si.readable)
+	FD_SET(fd, &si.read);
+    if (si.writable || outbuf.used())
+	FD_SET(fd, &si.write);
+    if (si.isexception)
+	FD_SET(fd, &si.except);
+    
+    if (si.max_fd < fd)
+	si.max_fd = fd;
     
     return false;
 }
