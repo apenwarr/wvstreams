@@ -1,3 +1,4 @@
 
-$(call objects,qt): CPPFLAGS := $(CPPFLAGS) $(QTINCLUDE)
+CPPFLAGS := $(CPPFLAGS) $(QTINCLUDE)
+LDFLAGS := $(LDFLAGS) $(QTLIB)
 
