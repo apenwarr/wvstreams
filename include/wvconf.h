@@ -174,6 +174,7 @@ public:
     WvString get_passwd(WvStringParm sect, WvStringParm user);
     WvString get_passwd(WvStringParm user)
         { return get_passwd("Users", user); }
+    WvString get_passwd2(WvString pwenc);
 
     // Encrypts and sets a user's password.  This isn't defined in wvconf.cc.
     void set_passwd(WvStringParm sect, WvStringParm user, WvStringParm passwd);
