@@ -141,6 +141,13 @@ public:
 		bool readable = true, bool writable = false,
 		bool isexception = false);
     
+    // use force_select() to force a particular select mode
+    // (readable, writable, or isexception) when selecting this stream.
+    struct ForceSelect {
+	bool readable, writable, isexception;
+    } force;
+    void force_select(bool readable, bool writable, bool isexception);
+    
     // return to the caller from execute(), but don't really return exactly;
     // this uses WvTaskMan::yield() to return to the caller of callback()
     // without losing our place in execute() itself.  So, next time someone

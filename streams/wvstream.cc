@@ -45,6 +45,7 @@ void WvStream::init()
     userdata = NULL;
     errnum = 0;
     select_ignores_buffer = outbuf_delayed_flush = alarm_was_ticking = false;
+    force.readable = force.writable = force.isexception = false;
     running_callback = false;
     queue_min = 0;
     autoclose_time = 0;
@@ -306,11 +307,9 @@ size_t WvStream::uread(void *buf, size_t count)
 size_t WvStream::write(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
-
     
     size_t wrote = 0;
     
-    // FIXME - re-enable this once the other tests are complete
     if (!outbuf_delayed_flush && outbuf.used())
 	flush(0);
     
@@ -476,11 +475,11 @@ bool WvStream::select_setup(SelectInfo &si)
     fd = getfd();
     if (fd < 0) return false;
     
-    if (si.readable)
+    if (si.readable || force.readable)
 	FD_SET(fd, &si.read);
-    if (si.writable || outbuf.used() || autoclose_time)
+    if (si.writable || outbuf.used() || autoclose_time || force.writable)
 	FD_SET(fd, &si.write);
-    if (si.isexception)
+    if (si.isexception || force.isexception)
 	FD_SET(fd, &si.except);
     
     if (si.max_fd < fd)
@@ -506,9 +505,10 @@ bool WvStream::test_set(SelectInfo &si)
 	flush(0);
     }
     
-    return fd >= 0  // flush() might have closed the file!
+    return getfd() >= 0  // flush() might have closed the file!
 	&&  (FD_ISSET(getfd(), &si.read)
-	 || (FD_ISSET(getfd(), &si.write) && (!outbuf_used || si.writable))
+	 || (FD_ISSET(getfd(), &si.write)
+	     && (!outbuf_used || si.writable || force.writable))
 	 ||  FD_ISSET(getfd(), &si.except));
 }
 
@@ -559,6 +559,14 @@ bool WvStream::select(time_t msec_timeout,
 	return sure;	// timed out
     
     return isok() && test_set(si);
+}
+
+
+void WvStream::force_select(bool readable, bool writable, bool isexception)
+{
+    force.readable = readable;
+    force.writable = writable;
+    force.isexception = isexception;
 }
 
 

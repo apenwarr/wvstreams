@@ -88,7 +88,7 @@ const char *WvStreamClone::errstr() const
 
 bool WvStreamClone::select_setup(SelectInfo &si)
 {
-    bool oldwr, result;
+    bool oldrd, oldwr, oldex, result;
     time_t alarmleft = alarm_remaining();
     
     if (alarmleft == 0 && !select_ignores_buffer)
@@ -104,13 +104,22 @@ bool WvStreamClone::select_setup(SelectInfo &si)
     
     if (s() && s()->isok())
     {
+	oldrd = si.readable;
 	oldwr = si.writable;
-	if (outbuf.used() || autoclose_time)
+	oldex = si.isexception;
+	
+	if (force.readable)
+	    si.readable = true;
+	if (outbuf.used() || autoclose_time || force.writable)
 	    si.writable = true;
+	if (force.isexception)
+	    si.isexception = true;
 	
 	result = s()->select_setup(si);
 	
+	si.readable = oldrd;
 	si.writable = oldwr;
+	si.isexception = oldex;
 	return result;
     }
     
@@ -120,11 +129,25 @@ bool WvStreamClone::select_setup(SelectInfo &si)
 
 bool WvStreamClone::test_set(SelectInfo &si)
 {
+    bool oldrd, oldwr, oldex, val;
+    
     if (s() && (outbuf.used() || autoclose_time))
 	flush(0);
 
     if (s() && s()->isok())
-	return s()->test_set(si);
+    {
+	oldrd = si.readable;
+	oldwr = si.writable;
+	oldex = si.isexception;
+	
+	val = s()->test_set(si);
+	
+	si.readable = oldrd;
+	si.writable = oldwr;
+	si.isexception = oldex;
+	
+	return val;
+    }
     return false;
 }
 

@@ -37,6 +37,7 @@ bool WvStreamList::isok() const
 bool WvStreamList::select_setup(SelectInfo &si)
 {
     bool one_dead = false;
+    bool oldrd, oldwr, oldex;
     
     // usually because of WvTask, we might get here without having finished
     // the _last_ set of sure_thing streams...
@@ -44,6 +45,16 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	return true;
     
     sure_thing.zap();
+    
+    oldrd = si.readable;
+    oldwr = si.writable;
+    oldex = si.isexception;
+    if (force.readable)
+	si.readable = true;
+    if (force.writable)
+	si.writable = true;
+    if (force.isexception)
+	si.isexception = true;
 
     Iter i(*this);
     for (i.rewind(), i.next(); i.cur(); )
@@ -72,6 +83,10 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	i.next();
     }
     
+    si.readable = oldrd;
+    si.writable = oldwr;
+    si.isexception = oldex;
+    
     return one_dead || !sure_thing.isempty();
 }
 
@@ -79,6 +94,18 @@ bool WvStreamList::select_setup(SelectInfo &si)
 bool WvStreamList::test_set(SelectInfo &si)
 {
     bool one_dead = false;
+    bool oldrd, oldwr, oldex;
+
+    oldrd = si.readable;
+    oldwr = si.writable;
+    oldex = si.isexception;
+    if (force.readable)
+	si.readable = true;
+    if (force.writable)
+	si.writable = true;
+    if (force.isexception)
+	si.isexception = true;
+    
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
@@ -91,6 +118,11 @@ bool WvStreamList::test_set(SelectInfo &si)
 	else
 	    one_dead = true;
     }
+    
+    si.readable = oldrd;
+    si.writable = oldwr;
+    si.isexception = oldex;
+    
     return one_dead || !sure_thing.isempty();
 }
 

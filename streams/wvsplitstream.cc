@@ -110,15 +110,15 @@ bool WvSplitStream::select_setup(SelectInfo &si)
     if (alarmleft == 0 && !select_ignores_buffer)
 	return true; // alarm has rung
     
-    if (si.readable)
+    if (si.readable || force.readable)
     {
 	if (!select_ignores_buffer && inbuf.used())
 	    return true; // already ready
 	FD_SET(rfd, &si.read);
     }
-    if (si.writable || outbuf.used())
+    if (si.writable || outbuf.used() || force.writable)
 	FD_SET(wfd, &si.write);
-    if (si.isexception)
+    if (si.isexception || force.isexception)
     {
 	FD_SET(rfd, &si.except);
 	FD_SET(wfd, &si.except);
@@ -146,7 +146,7 @@ bool WvSplitStream::test_set(SelectInfo &si)
     return (rfd >= 0 && (FD_ISSET(rfd, &si.read) 
 		      || FD_ISSET(rfd, &si.except)))
 	|| (wfd >= 0 && (FD_ISSET(wfd, &si.write) 
-			 	&& (!outbuf_used || si.writable)
+			 && (!outbuf_used || si.writable || force.writable)
 		      || FD_ISSET(wfd, &si.except)));
 }
 
