@@ -4,6 +4,7 @@
 #include "wvautoconf.h"
 
 #define _SYS_GUID_OPERATOR_EQ_ 1
+#define SIGPIPE 13
 
 #include <basetyps.h>
 #include <objbase.h>

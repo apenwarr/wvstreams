@@ -817,7 +817,7 @@ bool WvX509Mgr::signedbyCAinfile(WvStringParm certfile)
 	return false;
 }
 
-
+#ifndef _WIN32
 bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
 {
     WvDirIter i(certdir,false);
@@ -828,7 +828,7 @@ bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
     }    
     return true;
 }
-
+#endif
 
 bool WvX509Mgr::signedbyCA(WvX509Mgr *cacert)
 {

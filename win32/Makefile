@@ -5,17 +5,16 @@ all: mytest.exe tcptest.exe
 
 %.exe: %
 	rm -f $@
-	ln -s $^ $@
+	ln -s $(shell basename $<) $@
 	
-LIBS+=-lwsock32 $(with_xplc)/libxplc.a -lsupc++
+LIBS+=-lssl -lcrypto -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++
 
 -lxplc -lxplc-cxx:
 
-mytest: mytest.o libwvutils.a
+mytest tcptest resolvertest \
+  ../ipstreams/tests/tcptest ../crypto/tests/ssltest: libwvutils.a
 
-tcptest: tcptest.o libwvutils.a
-
-resolvertest: libwvutils.a
+default: ../ipstreams/tests/tcptest ../crypto/tests/ssltest
 
 DIRS=utils streams ipstreams uniconf crypto urlget configfile
 
