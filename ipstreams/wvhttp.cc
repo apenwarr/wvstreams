@@ -120,7 +120,8 @@ WvURL::operator WvString () const
 
 
 WvHTTPStream::WvHTTPStream(WvURL &_url)
-	: WvStreamClone((WvStream **)&http), headers(7), url(_url)
+	: WvStreamClone((WvStream **)&http), headers(7), client_headers(7),
+          url(_url)
 {
     state = Resolving;
     http = NULL;
@@ -192,7 +193,15 @@ bool WvHTTPStream::select_setup(SelectInfo &si)
 
 	// otherwise, we just finished connecting:  start transfer.
 	state = ReadHeader1;
-	print("GET %s HTTP/1.0\n\n", url.getfile());
+	print("GET %s HTTP/1.0\n", url.getfile());
+        {
+            WvHTTPHeaderDict::Iter i(client_headers);
+            for (i.rewind(); i.next(); )
+            {
+                print("%s: %s\n", i().name, i().value);
+            }
+        }
+        print("\n");
 	
 	// FALL THROUGH!
 	

@@ -62,12 +62,13 @@ public:
     enum State {Resolving = 0, Connecting, ReadHeader1, ReadHeader, ReadData,
     		Done};
     WvHTTPHeaderDict headers;
+    WvHTTPHeaderDict client_headers;
     size_t num_received;
 
     // do not delete '_url' before you delete this stream!
     WvHTTPStream(WvURL &_url);
     ~WvHTTPStream();
-    
+
     virtual bool isok() const;
     virtual int geterr() const;
     virtual const char *errstr() const;
