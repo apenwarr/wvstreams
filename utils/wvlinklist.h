@@ -164,7 +164,7 @@ public: 						\
          if (after->next) after->next->unlink(after); 	\
     } 							\
 							\
-    class Iter : public IterBase			\
+    class Iter : public WvList::IterBase		\
     { 							\
     public: 						\
         Iter(_newname_ &l) : IterBase(l)		\

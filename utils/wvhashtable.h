@@ -161,7 +161,7 @@ public:									\
 	slots = new _type_##List[numslots];				\
     }									\
 									\
-    class Iter : public IterBase					\
+    class Iter : public WvHashTable::IterBase				\
     {									\
     public:								\
 	Iter(_classname_ &_tbl) : IterBase(_tbl)			\
