@@ -65,11 +65,11 @@ include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
 configure: configure.ac
+	autoheader
 	autoconf
 
-include/wvautoconf.h.in: configure.ac
+include/wvautoconf.h.in:
 	autoheader
-	touch include/wvautoconf.h.in
 endif
 
 ChangeLog:

@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.17 2003/02/26 00:54:32 ilguiz Exp $)
+AC_REVISION($Id: configure.ac,v 1.18 2003/03/03 08:57:34 ilguiz Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -72,15 +72,6 @@ AC_ARG_WITH(fftw,
             AC_HELP_STRING([--with-fftw],
                            [FFTW]))
 
-AC_ARG_WITH(qt,
-            AC_HELP_STRING([--with-qt],
-                           [Qt]),
-	    [test "$withval" = "yes" || { 
-	    	QTDIR="$withval"
-		with_qt="yes"
-		}],
-	    [])
-
 AC_ARG_WITH(xplc,
             AC_HELP_STRING([--with-xplc],
                            [XPLC]),
@@ -145,28 +136,126 @@ AC_CHECK_HEADERS(rfftw.h,, [with_fftw=no])
 fi
 
 # qt
-if test "$with_qt" != "no"; then
+AC_ARG_WITH(qt,
+            AC_HELP_STRING([--with-qt],
+                           [Qt]),
+	    [test "$withval" = "yes" -o "$withval" = "" || {
+	    	QTDIR="$withval"
+		with_qt="yes"
+		}],
+	    [])
+
+if test "$with_qt" != "no" ; then
   AC_CHECK_LIB(qt-mt, main, 
     [QTLIB="-lqt-mt"], 
     [
       AC_CHECK_LIB(qt, main, 
         [QTLIB="-lqt"], 
-	[with_qt=no])
+	[with_qt="no"])
     ])
 fi
-if test "$with_qt" != "no"; then
+
+if test "$with_qt" != "no" ; then
   if test -n "${QTDIR}"; then
     QTINCLUDE="-I${QTDIR}/include"
   else
-    QTVER="qt3"
-    test -d /usr/include/${QTVER} || QTVER="qt"
-    QTINCLUDE="-I/usr/include/${QTVER}"
+    QTINC="qt3"
+    test -d /usr/include/${QTINC} || QTINC="qt"
+    QTINCLUDE="-I/usr/include/${QTINC}"
   fi
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
-  AC_CHECK_HEADERS([${QTVER}/qobject.h], [], [with_qt=no])
+  AC_CHECK_HEADERS([qobject.h], [], [with_qt="no"])
   CPPFLAGS="$save_CPPFLAGS"
 fi
+
+
+if test "$with_qt" != "no" ; then
+  AC_MSG_CHECKING([for Qt vs. $CXX ABI compatibility])
+
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
+  save_LIBS="$LIBS"
+  LIBS="${LIBS} ${QTLIB}"
+
+  function qt_test() {
+	AC_LINK_IFELSE([
+	    AC_LANG_SOURCE([[
+		#include <qapplication.h>
+
+		int main( int argc, char **argv )
+		{
+		    QApplication a(argc,argv);
+		    return a.exec();
+		}
+		]])
+	    ],
+	    [qt_compatible="yes"],
+	    [qt_compatible="no"])
+  }
+
+  qt_test
+  if [[ "$qt_compatible" = "yes" ]] ; then
+	QTCXX="$CXX"
+	AC_MSG_RESULT([ok])
+  else
+	AC_MSG_RESULT([no])
+	this_compiler=`type -p $CXX`
+	filter="\(^$CXX$"
+	this_compiler_deref=`stat --format "%N" "$this_compiler" \
+		| awk '{print $3}' | sed -e "s/\\\`\(.*\)'/\1/"`
+	if [[ -n "$this_compiler_deref" ]] ; then
+		filter="${filter}\|${this_compiler_deref}$"
+	else
+		gpp_compiler=`type -p g++`
+		gpp_compiler_deref=`stat --format "%N" "$gpp_compiler" \
+			| awk '{print $3}' | sed -e "s/\\\`\(.*\)'/\1/"`
+		if [[ -n "$gpp_compiler_deref" ]] ; then
+			filter="${filter}\|g++$"
+		fi
+	fi
+	filter="${filter}\)"
+	other_compilers=`find /usr/bin -name "g++*" -printf "%f\n" | \
+		sort | \
+		grep -v "$filter"`
+	other_compilers_list=`echo $other_compilers`
+		
+	QTCXX=""
+	test -n "$other_compilers" && {
+		for comp in $other_compilers ; do
+			save_CXX="$CXX"
+			CXX="$comp"
+			AC_MSG_CHECKING([for Qt vs. $comp ABI compatibility])
+			qt_test
+			CXX="$save_CXX"
+			if test "$qt_compatible" = "yes" ; then
+				QTCXX="$comp"
+				break
+			else
+				AC_MSG_RESULT([no])
+			fi
+		done
+	}
+	if [[ -n "$QTCXX" ]] ; then
+		AC_MSG_RESULT([ok])
+	else
+		AC_MSG_ERROR([The Qt library $QTLIB doesn't match any C++ compiler])
+	fi
+  fi
+
+  LIBS="$save_LIBS"
+  CPPFLAGS="$save_CPPFLAGS"
+  CXX="$QTCXX"
+  CC=`echo "$QTCXX" | tr \'+\' \'c\'`
+
+  dnl AC_MSG_NOTICE([with_qt=$with_qt QTINCLUDE=$QTINCLUDE QTLIB=$QTLIB CXX=$CXX CC=$CC])
+fi
+
+AC_SUBST(with_qt)
+AC_SUBST(QTINCLUDE)
+AC_SUBST(QTLIB)
+AC_SUBST(CXX)
+AC_SUBST(CC)
 
 # xplc
 if test "$with_xplc" != "no"; then

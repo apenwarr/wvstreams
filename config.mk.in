@@ -24,7 +24,10 @@ exec_prefix:=@exec_prefix@
 includedir:=@includedir@
 libdir:=@libdir@
 PACKAGE_VERSION:=@PACKAGE_VERSION@
-CXX:=@CXX@
-CC:=@CC@
+
+with_qt:=@with_qt@
 QTINCLUDE:=@QTINCLUDE@
 QTLIB:=@QTLIB@
+CXX:=@CXX@
+CC:=@CC@
+
