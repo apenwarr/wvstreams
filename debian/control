@@ -47,7 +47,7 @@ Description: C++ network libraries for rapid application development
 
 Package: libwvstreams-dev
 Architecture: any
-Section: devel
+Section: libdevel
 Depends: libwvstreams3-base, libwvstreams3-fft, libwvstreams3-gtk, libwvstreams3-qt, libwvstreams3-vorbis, libwvstreams3-speex
 Description: Development libraries and header files for libwvstreams3
  Contains the header files and static libraries for use in rapid 

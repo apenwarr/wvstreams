@@ -39,6 +39,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 %.so:
 	$(LINK_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) \
 		$(SOFLAGS) $^ -o $@
+	$(LN_S) -f $@ $(SONAME)
 
 %.moc: %.h
 	$(COMPILE_MSG)moc $< -o $@
@@ -104,7 +105,7 @@ install: install-shared install-dev
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	for i in $(TARGETS_SO); do \
-	    $(INSTALL_PROGRAM) $$i $(DESTDIR)$(libdir)/$$i.$(RELEASE); \
+	    $(INSTALL_PROGRAM) $$i.$(RELEASE) $(DESTDIR)$(libdir)/ ; \
 	done
 
 install-dev: $(TARGETS_SO) $(TARGETS_A)

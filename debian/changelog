@@ -2,6 +2,8 @@ wvstreams (3.73+20030321-1) unstable; urgency=high
 
   * Synchronised with Upstream CVS.
 
+  * Move libwvstreams3-dev to the new libdevel section.
+
   * Acknowledge NMU. (Closes: #141409)
   
   * Add Debian revision number. (Closes: #141456)
