@@ -25,7 +25,7 @@ WV_LINK_TO(UniSubtreeGen);
 WV_LINK_TO(UniUnwrapGen);
 
 #ifdef _WIN32
-//WV_LINK_TO(UniPStoreGen);
+WV_LINK_TO(UniPStoreGen);
 WV_LINK_TO(UniRegistryGen);
 #endif
 

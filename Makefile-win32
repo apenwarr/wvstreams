@@ -16,7 +16,8 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 	
-LIBS+=-lssl -lcrypto -lz -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++ -lstdc++
+LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 \
+	$(with_xplc)/libxplc.a -lsupc++ -lstdc++
 
 -lxplc -lxplc-cxx: ;
 
@@ -80,8 +81,8 @@ $(patsubst %.t.cc,%.t,$(wildcard */t/*.cc)): libwvwin32.a
 
 W=$(WVSTREAMS)/Win32WvStreams
 libwvwin32.a: \
-  $(call objects,$W/libwvutils $W/libwvstreams) \
-	$W/libuniconf/uniregistrygen.o $(OBJFILES)
+  $(call objects,$W/libwvutils $W/libwvstreams $W/libuniconf) \
+	$(OBJFILES)
 
 fake-libs: libwvwin32.a
 	for d in libwvbase libwvutils libwvstreams libuniconf; do \
