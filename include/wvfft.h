@@ -33,16 +33,28 @@
 struct fftw_plan_struct;
 class WvRealToComplexFFTEncoder : public WvEncoder
 {
-    struct fftw_plan_struct *plan;
-    size_t n, nbytes;
-    
 public:
-    WvRealToComplexFFTEncoder(size_t _n);
+    enum WindowFunction {
+        WND_NONE,  // no windowing
+        WND_BOXCAR // after one FFT step, returns half of the sample
+                   // to the input buffer to be processed again in
+                   // the next step
+    };
+    WvRealToComplexFFTEncoder(size_t _n,
+        WindowFunction _wnd = WND_NONE);
     virtual ~WvRealToComplexFFTEncoder();
 
 protected:
+    /**
+     * If not flushing, only processes at most one block of data.
+     */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
     virtual bool _reset();
+
+private:
+    struct fftw_plan_struct *plan;
+    size_t n, nbytes;
+    WindowFunction wnd;
 };
 
 
@@ -67,6 +79,9 @@ public:
     virtual ~WvComplexToRealFFTEncoder();
 
 protected:
+    /**
+     * If not flushing, only processes at most one block of data.
+     */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
     virtual bool _reset();
 };
@@ -97,6 +112,9 @@ public:
     WvPowerSpectrumEncoder(size_t _n);
 
 protected:
+    /**
+     * If not flushing, only processes at most one block of data.
+     */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
     virtual bool _reset();
 };

@@ -9,7 +9,6 @@
 #define __WVOGGVORBIS_H
 
 #include "wvencoder.h"
-#include "wvfunctorencoder.h"
 #include "wvstringlist.h"
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>

@@ -8,6 +8,7 @@
 #define __WVPCMUTILS_H
 
 #include "wvencoder.h"
+#include "wvfunctorencoder.h"
 
 /**
  * Data type conversion and renormalization functors.
@@ -44,37 +45,37 @@ struct WvPCMDoubleToSigned16Functor
 /**
  * Data type conversion and renormalization encoders.
  */
-class WvPCMFloatToSigned16 : public WvFunctorEncoder
+class WvPCMFloatToSigned16Encoder : public WvFunctorEncoder
     <signed short int, float, WvPCMFloatToSigned16Functor>
 {
 public:
-    WvPCMFloatToSigned16() :
+    WvPCMFloatToSigned16Encoder() :
         WvFunctorEncoder<OT, IT, FT>(FT()) { }
 };
 
 
-class WvPCMSigned16ToFloat : public WvFunctorEncoder
+class WvPCMSigned16ToFloatEncoder : public WvFunctorEncoder
     <float, signed short int, WvPCMSigned16ToFloatFunctor>
 {
 public:
-    WvPCMSigned16ToFloat() :
+    WvPCMSigned16ToFloatEncoder() :
         WvFunctorEncoder<OT, IT, FT>(FT()) { }
 };
 
-class WvPCMDoubleToSigned16 : public WvFunctorEncoder
+class WvPCMDoubleToSigned16Encoder : public WvFunctorEncoder
     <signed short int, double, WvPCMDoubleToSigned16Functor>
 {
 public:
-    WvPCMDoubleToSigned16() :
+    WvPCMDoubleToSigned16Encoder() :
         WvFunctorEncoder<OT, IT, FT>(FT()) { }
 };
 
 
-class WvPCMSigned16ToDouble : public WvFunctorEncoder
+class WvPCMSigned16ToDoubleEncoder : public WvFunctorEncoder
     <double, signed short int, WvPCMSigned16ToDoubleFunctor>
 {
 public:
-    WvPCMSigned16ToDouble() :
+    WvPCMSigned16ToDoubleEncoder() :
         WvFunctorEncoder<OT, IT, FT>(FT()) { }
 };
 
