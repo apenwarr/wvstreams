@@ -76,20 +76,14 @@ WvUnixConn::WvUnixConn(const WvUnixAddr &_addr) :
 	return;
     }
     
-    sockaddr *sa = addr.sockaddr();
-    if (connect(getfd(), sa, addr.sockaddr_len()) < 0)
-    {
-	seterr(errno);
-	delete sa;
-	return;
-    }
-    
-    delete sa;
-    
-    // all is well and we're connected.  Make it non-blocking 
-    // and close-on-exec.
+    // Make the socket non-blocking and close-on-exec.
     fcntl(getfd(), F_SETFD, FD_CLOEXEC);
     fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
+    
+    sockaddr *sa = addr.sockaddr();
+    if (connect(getfd(), sa, addr.sockaddr_len()) < 0)
+	seterr(errno);
+    delete sa;
 }
 
 
