@@ -67,20 +67,6 @@ void WvPipe::setup(const char *program, const char **argv,
 {
     int socks[2];
 
-    /* I think I know where you might be going with that, but sorry,
-     * it doesn't work. You probably gave us stdin and stdout file
-     * descriptors, so you don't need to deal with it yourself, right?
-     * If you do that, the child end of the socketpair gets closed
-     * right at the exec, so the WvPipe goes !isok(), and you might be
-     * having some problems with that. The solution is to enable
-     * catch_stderr, which will make the child end of the socketpair
-     * be the stderr of the process, which it will close when it
-     * dies. As an added bonus, you can see what's happening on
-     * stderr, but you have to read from it or something to notice
-     * that it gets closed.
-     */
-    assert(writable || readable || catch_stderr);
-    
     pid = 0;
     estatus = -1;
 
@@ -134,6 +120,14 @@ void WvPipe::setup(const char *program, const char **argv,
 	fcntl(0, F_SETFD, 0);  // never close stdin
 	fcntl(1, F_SETFD, 0);  // never close stdout
 	fcntl(2, F_SETFD, 0);  // never close stderr
+
+	/* If we're not capturing any of these through the socket, it
+	 * means that the child end of the socket will be closed right
+	 * at the execvp, which is bad. If we set the close-on-exec to
+	 * false, the child end of the socket will be closed when the
+	 * child (or sub-) process exits. */
+	if(!writable && !readable && !catch_stderr)
+	    fcntl(socks[1], F_SETFD, 0);  // never close the socketpair
 	
 	// this will often fail, but when it does work it is probably
 	// the Right Thing To Do (tm)
