@@ -135,7 +135,7 @@ void WvStreamList::execute()
 	WvStream &s(*i);
 	
 	id = i.link->id;
-	TRACE("[%p:%s]", s, id);
+	TRACE("[%p:%s]", &s, id);
 	
 	i.xunlink();
 	
