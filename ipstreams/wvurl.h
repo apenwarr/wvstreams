@@ -51,7 +51,6 @@ protected:
     WvString proto, hostname, user;
     int port;
     bool resolving;
-    bool use_slashes;
     WvResolver dns;
     WvIPPortAddr *addr;
     WvString file, err;

@@ -77,9 +77,7 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     *cptr = 0;
     proto = wptr;
     
-    use_slashes = protocol_uses_slashes(proto);
-
-    wptr = cptr + (use_slashes ? 3 : 1);
+    wptr = cptr + (protocol_uses_slashes(proto) ? 3 : 1);
 
     cptr = strchr(wptr, '@');
     if (!cptr) // no user given
@@ -125,7 +123,7 @@ WvUrl::WvUrl(const WvUrl &url) : err("No error")
     hostname = url.hostname;
     file = url.file;
     port = url.port;
-    
+
     resolve();
 }
 
@@ -171,7 +169,7 @@ WvUrl::operator WvString () const
 	return WvString("(Invalid URL: %s)", err);
 
     WvString protostr;
-    if (use_slashes)
+    if (protocol_uses_slashes(proto))
         protostr = WvString("%s://", proto);
     else
         protostr = WvString("%s:", proto);

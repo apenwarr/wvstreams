@@ -28,10 +28,11 @@ int main()
     for (s = urls; *s != NULL; s++)
     {
         WvUrl url(*s);
-        wvcon->print("%s -> %s\n", *s, url);
+        WvUrl url2(url);
+        wvcon->print("%s -> %s\n", *s, url2);
         wvcon->print("proto: %s, host: %s, port:%s, file: %s, user: %s\n",
-                     url.getproto(), url.gethost(), url.getport(),
-                     url.getfile(), url.getuser());
+                     url2.getproto(), url2.gethost(), url2.getport(),
+                     url2.getfile(), url2.getuser());
         wvcon->print("\n");
     }
 }
