@@ -70,7 +70,7 @@ public:
 	WvCallback##n(GlobalFunc _func) \
 	    : WvCallbackBase<RET>((FakeGlobalFunc)_func) { } \
     public: \
-	RET operator() decls  \
+	RET operator() decls const \
 	    { \
 	      if (obj) \
 		return ((*obj).*(Func)func) parms; \
