@@ -5,7 +5,7 @@ default: all teststr testlist testhash stresshash testbuffer \
 		testbase64 testver testtask
 all: utils.a
 
-utils.a: base64.o verstring.o strutils.o wvstring.o \
+utils.a: base64.o verstring.o strutils.o wvstring.o wvstringtable.o \
 		wvlinklist.o wvhashtable.o wvbuffer.o wvtask.o
 
 
