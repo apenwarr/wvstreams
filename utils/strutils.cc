@@ -523,7 +523,7 @@ WvString sizetoa(long long blocks, int blocksize)
 
     // Test if we are dealing in just bytes.  Plus, we should ensure
     // that we didn't overflow.  (Although that is highly unlikely,
-    // with a 64-bit integer.
+    // with a 64-bit integer.)
     if ((bytes < 1000) && !(blocks * blocksize / 1000))
         return WvString("%s bytes", blocks * blocksize);
 

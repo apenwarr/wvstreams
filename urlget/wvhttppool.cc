@@ -97,8 +97,8 @@ void WvUrlStream::delurl(WvUrlRequest *url)
 }
 
 
-WvHttpPool::WvHttpPool() : log("HTTP Pool", WvLog::Debug), conns(10),
-pipeline_incompatible(50)
+WvHttpPool::WvHttpPool() 
+    : log("HTTP Pool", WvLog::Debug), conns(10), pipeline_incompatible(50)
 {
     log("Pool initializing.\n");
     num_streams_created = 0;

@@ -42,6 +42,12 @@ UniCacheGen::~UniCacheGen()
 }
 
 
+bool UniCacheGen::isok()
+{
+    return inner->isok();
+}
+
+
 bool UniCacheGen::refresh()
 {
     bool ret = inner->refresh();

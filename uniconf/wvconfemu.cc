@@ -5,6 +5,7 @@
  * Basic WvConf emulation layer for UniConf.
  */
 #include "wvconfemu.h"
+#include "uniinigen.h"
 #include "wvstringtable.h"
 #include "wvfile.h"
 #include "strutils.h"
@@ -267,9 +268,9 @@ void WvConfEmu::load_file(WvStringParm filename)
 }
 
 
-void WvConfEmu::save(WvStringParm filename)
+void WvConfEmu::save(WvStringParm filename, int _create_mode)
 {
-    UniConfRoot tmp_uniconf(WvString("ini:%s", filename), false);
+    UniConfRoot tmp_uniconf(new UniIniGen(filename, _create_mode), false);
 
     uniconf.copy(tmp_uniconf, true);
 
