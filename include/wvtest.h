@@ -26,18 +26,16 @@ public:
     static int run_all(const char *prefix = "");
     static void start(const char *file, int line, const char *condstr);
     static void check(bool cond);
+    static inline bool start_check(const char *file, int line,
+				   const char *condstr, bool cond)
+        { start(file, line, condstr); check(cond); return cond; }
 };
 
 
-#define WVPASS(cond) do { \
-    WvTest::start(__FILE__, __LINE__, #cond); \
-    WvTest::check((cond)); \
-  } while (0)
-
-#define WVFAIL(cond) do { \
-    WvTest::start(__FILE__, __LINE__, "NOT(" #cond ")"); \
-    WvTest::check(!(cond)); \
-  } while (0)
+#define WVPASS(cond) \
+    WvTest::start_check(__FILE__, __LINE__, #cond, (cond))
+#define WVFAIL(cond) \
+    WvTest::start_check(__FILE__, __LINE__, "NOT(" #cond ")", !(cond))
 
 #define WVTEST_MAIN3(descr, ff, ll) \
     static void _wvtest_main_##ll(); \

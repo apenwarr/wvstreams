@@ -14,8 +14,9 @@ NO_CONFIGURE_TARGETS:=
 NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist \
 		distclean realclean
 
-TARGETS += libwvstreams.so libwvstreams.a
+TARGETS += xplc-stamp
 TARGETS += libwvutils.so libwvutils.a
+TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
 GARBAGE += wvtestmain.o
 
@@ -124,9 +125,9 @@ ifneq ("$(with_bdb)", "no")
 endif
 
 ifneq ("$(with_xplc)", "no")
-  CPPFLAGS+=-DUNSTABLE
+  #CPPFLAGS+=-DUNSTABLE
   ifneq ("$(with_xplc)", "yes")
-    VPATH+=$(with_xplc)
+    #VPATH+=$(with_xplc)
     LDFLAGS+=-L$(with_xplc)
     CPPFLAGS+=-I$(with_xplc)/include
     libwvstreams.so: -lxplc -lxplc-cxx
@@ -180,3 +181,12 @@ libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
 libuniconf_tcl.so: bindings/uniconf_tcl.o -ltcl8.3 -luniconf
 
+xplc-stamp: $(wildcard $(with_xplc)/libxplc.*)
+	rm -f xplc-stamp
+	rm -f libxplc.a libxplc.so* libxplc-cxx.a libxplc-cxx.so*
+	if [ "$(with_xplc)" != "no" -a -n "$(with_xplc)" ]; then \
+		ldconfig -n "$(with_xplc)"; \
+		ln -s $(with_xplc)/libxplc-cxx.* .; \
+		ln -s $(with_xplc)/libxplc.* .; \
+	fi
+	touch xplc-stamp

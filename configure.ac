@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.40.2.1 2003/11/11 19:55:10 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.40.2.2 2003/11/28 19:32:36 apenwarr Exp $)
 
 rm -f reconfigure
 echo $0 "$@" '"$@"' >reconfigure
@@ -264,8 +264,19 @@ fi
 
 # xplc
 if test "$with_xplc" != "no"; then
+    test "$with_xplc" = yes && with_xplc=
+    CPPFLAGS_save="$CPPFLAGS"
+    LDFLAGS_save="$LDFLAGS"
+    if test "$with_xplc"; then
+        WV_APPEND(CPPFLAGS, [-I$with_xplc/include -DUNSTABLE])
+        WV_APPEND(LDFLAGS, [-L$with_xplc -lxplc -lxplc-cxx])
+    fi
     AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no])
     AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no], -lxplc-cxx)
+    if test "$with_xplc" = no; then
+        CPPFLAGS="$CPPFLAGS_save"
+        LDFLAGS="$LDFLAGS_save"
+    fi
 fi
 
 # zlib

@@ -133,23 +133,23 @@ void WvFDStream::maybe_autoclose()
     if (stop_write && !shutdown_write && !outbuf.used())
     {
 	shutdown_write = true;
-	if (rfd < 0)
+	if (wfd < 0)
 	    return;
 	if (rfd != wfd)
-	    ::close(rfd);
+	    ::close(wfd);
 	else
-	    ::shutdown(rfd, SHUT_RD); // might be a socket        
-	rfd = -1;
+	    ::shutdown(wfd, SHUT_RD); // might be a socket        
+	wfd = -1;
     }
     
     if (stop_read && !shutdown_read && !inbuf.used())
     {
 	shutdown_read = true;
         if (rfd != wfd)
-            ::close(wfd);
+            ::close(rfd);
         else
-            ::shutdown(wfd, SHUT_WR); // might be a socket
-        wfd = -1;
+            ::shutdown(rfd, SHUT_WR); // might be a socket
+        rfd = -1;
     }
     
     WvStream::maybe_autoclose();
@@ -164,12 +164,18 @@ bool WvFDStream::pre_select(SelectInfo &si)
     {
 	if (si.wants.readable && (rfd >= 0))
 	    FD_SET(rfd, &si.read);
-    } else result |= si.wants.readable;
+    } 
+    else
+	result |= si.wants.readable;
+    
     if (isselectable(wfd))
     {
-	if ((si.wants.writable || outbuf.used() || autoclose_time) && (wfd >= 0))
+	if ((si.wants.writable || outbuf.used() || autoclose_time) 
+	      && (wfd >= 0))
 	    FD_SET(wfd, &si.write);
-    } else result |= si.wants.writable ;
+    }
+    else
+	result |= si.wants.writable;
     
     if (si.wants.isexception)
     {
