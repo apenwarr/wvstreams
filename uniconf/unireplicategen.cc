@@ -144,10 +144,15 @@ void UniReplicateGen::commit()
 void UniReplicateGen::deltacallback(const UniConfKey &key, WvStringParm value,
                                 void *userdata)
 {
+    DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
+            key.cstr(), value.cstr());
+
+    if (key == "" && value.isnull())
+        return;
+    
     if (!processing_callback)
     {
-    	DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
-    	    	key.cstr(), value.cstr());
+    	DPRINTF("UniReplicateGen::deltacallback(): !processing_callback\n");
 
     	processing_callback = true;
     	
@@ -160,12 +165,20 @@ void UniReplicateGen::deltacallback(const UniConfKey &key, WvStringParm value,
     	    	continue;
     	    	
     	    if (j.ptr() != src_gen)
+            {
+                DPRINTF("UniReplicateGen::deltacallback: %p->set(%s, %s)\n",
+                        j.ptr(), key.cstr(), value.cstr());
     	    	j->gen->set(key, value);
+            }
     	}
         
     	delta(key, value);
     	
     	processing_callback = false;
+    }
+    else
+    {
+    	DPRINTF("UniReplicateGen::deltacallback(): processing_callback\n");
     }
 }
 
@@ -250,27 +263,42 @@ void UniReplicateGen::replicate(const UniConfKey &key)
     GenList::Iter j(gens);
     for (j.rewind(); j.next(); )
     {
+        DPRINTF("UniReplicateGen::replicate: %p\n", j.ptr());
+        
     	if (!j->isok())
+        {
+            DPRINTF("UniReplicateGen::replicate: !isok()\n");
     	    continue;
+        }
     	    
     	UniConfGen::Iter *i = j->gen->recursiveiterator(key);
-    	if (!i) return;
+    	if (!i)
+        {
+            DPRINTF("UniReplicateGen::replicate: no iterator\n");
+            continue;
+        }
     
     	for (i->rewind(); i->next(); )
     	{
-            WvString value(i->value());
-    	
 	    DPRINTF("UniReplicateGen::replicate: key=%s, value=%s\n",
-	    	    i->key().cstr(), value.cstr());
+	    	    i->key().cstr(), i->value().cstr());
 
     	    if (j.ptr() == first)
     	    {
-    	    	deltacallback(i->key(), value, first);
+                DPRINTF("UniReplicateGen::replicate: deltacallback()\n");
+    	    	deltacallback(i->key(), i->value(), first);
     	    }
     	    else
     	    {
     	    	if (!first->gen->exists(i->key()))
-    	    	    first->gen->set(i->key(), value);
+                {
+                    DPRINTF("UniReplicateGen::replicate: !exists()\n");
+    	    	    first->gen->set(i->key(), i->value());
+                }
+                else
+                {
+                    DPRINTF("UniReplicateGen::replicate: exists()\n");
+                }
     	    }
     	}
     
@@ -278,6 +306,8 @@ void UniReplicateGen::replicate(const UniConfKey &key)
     }
     
     unhold_delta();
+
+    DPRINTF("UniReplicateGen::replicate: done\n");
 }
 
 void UniReplicateGen::replicate_if_any_have_become_ok()

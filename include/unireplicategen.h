@@ -48,7 +48,7 @@ private:
     void replicate_if_any_have_become_ok();
     
 protected:
-    void replicate(const UniConfKey &key = "");
+    void replicate(const UniConfKey &key = "/");
     void deltacallback(const UniConfKey &key, WvStringParm value,
                        void *userdata);
 
