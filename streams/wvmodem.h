@@ -27,8 +27,9 @@ protected:
     struct termios	t;
     int			baud;
 
-    int get_real_speed();
     WvModemBase() { }
+    
+    int get_real_speed();
 
 public:
     bool die_fast;
@@ -36,16 +37,17 @@ public:
     WvModemBase(int _fd);
     virtual ~WvModemBase();
     
-    // do-nothing methods that aren't needed in WvModemBase
+    // do-nothing methods that are not needed in WvModemBase
     virtual void close();
     virtual bool carrier();
     virtual int speed(int _baud);
 
+    // this one really is needed
+    int getspeed()
+	{ return baud; }
+
     // may need to hangup for redial reasons
     virtual void hangup();
-
-    virtual int speed()
-	{ return get_real_speed(); }
 };
 
 
@@ -66,12 +68,8 @@ public:
     virtual ~WvModem();
     
     virtual void close();
-    
-    bool carrier();
-    
-    int speed(int _baud);
-    int speed()
-	{ return baud; }
+    virtual bool carrier();
+    virtual int speed(int _baud);
 };
 
 #endif

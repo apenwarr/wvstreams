@@ -80,9 +80,9 @@ bool WvModemBase::carrier()
 }
 
 
-int WvModemBase::speed(int _baud)
+int WvModemBase::speed(int)
 {
-    return get_real_speed();
+    return baud;
 }
 
 
@@ -101,7 +101,7 @@ void WvModemBase::hangup()
 	write( "\r", 1 );
     drain();
 
-    // drop DTR for a while, if we're still online
+    // drop DTR for a while, if still online
     if (carrier())
     {
 	cfsetospeed( &t, B0 );
@@ -124,8 +124,6 @@ void WvModemBase::hangup()
 	    usleep( 100 * 1000 );
     }
 }
-
-
 
 
 
@@ -161,7 +159,6 @@ WvModem::~WvModem()
 
 
 void WvModem::setup_modem()
-/*************************/
 {
     if (!isok()) return;
 
