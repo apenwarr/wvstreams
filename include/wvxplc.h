@@ -35,7 +35,7 @@ struct XUUID
     unsigned short b, c;
     unsigned char d[8];
     
-    bool operator== (const XUUID &other) const
+    bool equals(const XUUID &other) const
         { return !memcmp(this, &other, sizeof(*this)); }
 };
 
