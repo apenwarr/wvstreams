@@ -197,6 +197,7 @@ BASEOBJS_EXTRA= \
 	utils/wvencoder.o \
 	utils/wvtclstring.o \
 	uniconf/uniinigen.o \
+	uniconf/unilistiter.o \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o

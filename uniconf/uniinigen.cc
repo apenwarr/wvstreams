@@ -212,6 +212,7 @@ bool UniIniGen::refresh()
 
     WVRELEASE(newgen);
 
+    UniTempGen::refresh();
     return true;
 }
 
@@ -252,6 +253,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 void UniIniGen::commit()
 {
     if (!dirty) return;
+    UniTempGen::commit();
 
 #ifdef _WIN32
     // Windows doesn't support all that fancy stuff, just open the file

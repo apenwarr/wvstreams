@@ -15,23 +15,17 @@
 #define REBUILD_LOAD_FACTOR 0.45
 #define RESIZE_LOAD_FACTOR 0.4
 
-#define IS_OCCUPIED(x) (x.status >> 1)
-#define IS_AUTO_FREE(x) (x.status == 3)
-#define IS_DELETED(x) (x.status == 1)
+#define IS_OCCUPIED(x) ((x) >> 1)
+#define IS_AUTO_FREE(x) ((x) == 3)
+#define IS_DELETED(x) ((x) == 1)
 
 class WvScatterHashBase
 {
 public:
     WvScatterHashBase(unsigned _numslots);
-    virtual ~WvScatterHashBase() { deletev xslots; }
+    virtual ~WvScatterHashBase() { deletev xslots; deletev xstatus; }
 
-    struct pair
-    {
-        void *data;
-        unsigned status : 2;
-    };
-
-    static struct pair null_pair;
+    static const unsigned null_idx = (unsigned)-1;
     static const unsigned prime_numbers[];
 
     size_t count() const { return num; }
@@ -60,19 +54,19 @@ public:
 
 	    /* FIXME: Couldn't this be a *little* clearer? */
             while (++index <= table->numslots &&
-                   !IS_OCCUPIED(table->xslots[index-1])) { }
+                   !IS_OCCUPIED(table->xstatus[index-1])) { }
 
 	    return index <= table->numslots;
         }
 
         bool get_autofree()
-            { return IS_AUTO_FREE(table->xslots[index-1]); }
+            { return IS_AUTO_FREE(table->xstatus[index-1]); }
 
         void set_autofree(bool auto_free)
-            { table->xslots[index-1].status = auto_free ? 3 : 2; }
+            { table->xstatus[index-1] = auto_free ? 3 : 2; }
 
     protected:
-        void *get() const { return table->xslots[index-1].data; }
+        void *get() const { return table->xslots[index-1]; }
 
         WvScatterHashBase *table;
         unsigned index;
@@ -84,12 +78,17 @@ protected:
     virtual void do_delete(void *data) = 0;
 
     friend class IterBase;
+    
+    typedef void *Slot;
+    typedef unsigned char Status;
 
-    pair *xslots;
+    Slot *xslots;
+    Status *xstatus;
     int prime_index;
     unsigned numslots;
 
-    pair *genfind(const void *data, unsigned hash) const;
+    unsigned genfind(const void *data, unsigned hash) const;
+    Slot genfind_or_null(const void *data, unsigned hash) const;
     void _add(void *data, bool auto_free);
     void _add(void *data, unsigned hash, bool auto_free);
     void _remove(const void *data, unsigned hash);
@@ -142,7 +141,7 @@ public:
     virtual ~WvScatterHash() { _zap(); }
 
     T *operator[] (const K &key) const
-        { return (T *)(genfind(&key, WvHash(key))->data); }
+        { return (T *)(genfind_or_null(&key, WvHash(key))); }
 
     void add(const T *data, bool auto_free = false)
         { _add((void *)data, hash(data), auto_free); }
@@ -166,7 +165,7 @@ public:
         Iter(WvScatterHash &_table) : IterBase(_table) { }
         Iter(const Iter &other) : IterBase(other) { }
 
-        int *getstatus() { return &xslots[index-1].status; }
+        unsigned char *getstatus() { return &xstatus[index-1]; }
 
         T *ptr() const
             { return (T *)(get()); }
