@@ -170,14 +170,12 @@ bool WvAddr::comparator(const WvAddr *a2) const
 WvStringAddr::WvStringAddr(WvStringParm s, const WvEncap &_cap)
 	: addr(s), cap(_cap)
 {
-    addr.unique();
 }
 
 
 WvStringAddr::WvStringAddr(const sockaddr_bin *_addr)
 	: addr((char *)_addr->sa_data), cap(_addr->sa_family)
 {
-    addr.unique();
 }
 
 
@@ -731,7 +729,6 @@ WvUnixAddr::WvUnixAddr(const char *_sockname)
     : sockname(_sockname)
 {
     assert(!!sockname);
-    sockname.unique();
 }
 
 
@@ -739,7 +736,6 @@ WvUnixAddr::WvUnixAddr(WvStringParm _sockname)
     : sockname(_sockname)
 {
     assert(!!sockname);
-    sockname.unique();
 }
 
 

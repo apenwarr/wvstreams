@@ -21,6 +21,5 @@ WvString passwd_crypt(const char *str)
 	return "*";
 
     WvString s(result);
-    s.unique();
     return s;
 }

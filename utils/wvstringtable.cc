@@ -53,7 +53,6 @@ void WvStringTable::split(WvStringParm _s, const char *splitchars)
 	*eptr = 0;
 	
 	WvString *newstr = new WvString(sptr);
-	newstr->unique();
 	add(newstr, true);
 	
 	*eptr = oldc;

@@ -72,7 +72,6 @@ bool WvDirIter::next()
             if( dent ) {
                 info.fullname = WvString( "%s/%s", dir->dirname, dent->d_name );
                 info.name = dent->d_name;
-                info.name.unique();
                 ok = ( lstat( info.fullname, &info ) == 0
                             && strcmp( dent->d_name, "." )
                             && strcmp( dent->d_name, ".." ) );

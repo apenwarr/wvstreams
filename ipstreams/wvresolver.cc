@@ -28,7 +28,7 @@ public:
     time_t last_tried;
     
     WvResolverHost(WvStringParm _name) : name(_name)
-        { init(); name.unique(); addr = NULL; }
+        { init(); addr = NULL; }
     ~WvResolverHost()
         {   
             // Don't need to delete addr, as deleting the list will take care

@@ -13,7 +13,6 @@
 WvConfigSection::WvConfigSection(WvStringParm _name)
 	: name(_name)
 {
-    name.unique();
 }
 
 
@@ -58,10 +57,7 @@ void WvConfigSection::set(WvStringParm entry, WvStringParm value)
 
     // otherwise, add the entry requested
     if (e)
-    {
 	e->set(value);
-	e->value.unique();
-    }
     else
 	append(new WvConfigEntry(entry, value), true);
 }

@@ -22,7 +22,6 @@ WvIPRoute::WvIPRoute(WvStringParm _ifc, const WvIPNet &_net,
 		     WvStringParm _table)
 	: ifc(_ifc), ip(_net), gateway(_gate), table(_table)
 {
-    ifc.unique();
     metric = _metric;
 }
 

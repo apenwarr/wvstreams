@@ -196,7 +196,6 @@ WvHConf *WvHConf::find_default(WvHConfKey *_k) const
 void WvHConf::set_without_notify(WvStringParm s)
 {
     value = s;
-    value.unique();
 }
 
 

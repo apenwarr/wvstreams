@@ -31,7 +31,6 @@ WvURL::WvURL(WvStringParm url) : err("No error")
     wptr += 7;
     
     hostname = wptr;
-    hostname.unique();
     
     cptr = strchr(wptr, '/');
     if (!cptr) // no path given
@@ -39,7 +38,6 @@ WvURL::WvURL(WvStringParm url) : err("No error")
     else
     {
 	file = cptr;
-	file.unique();
 	*cptr = 0;
     }
     
@@ -53,7 +51,6 @@ WvURL::WvURL(WvStringParm url) : err("No error")
     }
 
     hostname = wptr;
-    hostname.unique();
     
     resolve();
 }

@@ -27,7 +27,6 @@ WvConf::WvConf(WvStringParm _filename, int _create_mode)
 	: filename(_filename), log(filename), globalsection("")
 {
     create_mode = _create_mode;
-    filename.unique();
     dirty = error = loaded_once = false;
     load_file();
 }

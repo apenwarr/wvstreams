@@ -66,7 +66,6 @@ void WvStringList::split(WvStringParm _s, const char *splitchars,
 	*eptr = 0;
 	
 	WvString *newstr = new WvString(sptr);
-	newstr->unique();
 	append(newstr, true);
 	
 	*eptr = oldc;

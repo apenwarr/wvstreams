@@ -56,7 +56,6 @@ void WvTask::start(WvStringParm _name, TaskFunc *_func, void *_userdata)
 {
     assert(!recycled);
     name = _name;
-    name.unique();
     Dprintf("task %d (%s) starting\n", tid, (const char *)name);
     func = _func;
     userdata = _userdata;

@@ -29,7 +29,7 @@ public:
     ~WvConfigEntry();
     
     void set(WvStringParm _value)
-        { value = _value; value.unique(); }
+        { value = _value; }
     
     WvString name, value;
 };

@@ -54,7 +54,7 @@ struct WvHTTPHeader
     
     WvHTTPHeader(WvStringParm _name, WvStringParm _value)
 	: name(_name), value(_value) 
-    		{ name.unique(); value.unique(); }
+    		{}
 };
 
 

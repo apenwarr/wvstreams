@@ -327,6 +327,6 @@ WvString encode_hostname_as_DN(WvString &hostname)
    char *ptr = dn.edit() + strlen(dn) - 1;
    *ptr = '\0';
 
-   return dn.unique();
+   return dn;
 }
 

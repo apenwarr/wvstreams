@@ -83,7 +83,6 @@ static WvString set_name_entry(X509_NAME *name, WvString dn)
 	{
 	    nid = NID_commonName;
 	    force_fqdn = value;
-	    force_fqdn.unique();
 	}
 	else if (sid == "dc")
 	{
@@ -96,7 +95,6 @@ static WvString set_name_entry(X509_NAME *name, WvString dn)
 	{
 	    nid = NID_Domain;
 	    force_fqdn = value;
-	    force_fqdn.unique();
 	}
 	else
 	    nid = NID_domainComponent;

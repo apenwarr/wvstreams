@@ -28,7 +28,6 @@ int WvInterfaceDict::links = 0;
 WvInterface::WvInterface(WvStringParm _name) 
 	: err("Net Interface", WvLog::Error), name(_name)
 {
-    name.unique();
     my_hwaddr = my_ipaddr = NULL;
     valid = true;
 }

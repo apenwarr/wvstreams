@@ -139,7 +139,6 @@ void WvHConfIniFile::load()
 	{
 	    line[strlen(line)-1] = 0;
 	    section = line+1;
-	    section.unique();
 	    continue;
 	}
 	
