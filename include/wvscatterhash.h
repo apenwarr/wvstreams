@@ -1,7 +1,17 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
+ *
+ * A hash table container.
+ */
+
+
 #ifndef __WVSCATTERHASH_H
 #define __WVSCATTERHASH_H
 
 #include <sys/types.h>
+
+// Some standard WvHash functions are useful from wvhashtable.h
 #include "wvhashtable.h"
 
 #define REBUILD_LOAD_FACTOR 0.5
@@ -17,7 +27,7 @@ class WvScatterHashBase
 public:
 
     WvScatterHashBase(unsigned _numslots);
-    virtual ~WvScatterHashBase() { }
+    virtual ~WvScatterHashBase() { delete[] slots; }
 
     struct pair
     {
@@ -44,6 +54,9 @@ public:
         void rewind() { index = 0; }
         bool next()
         {
+            if (!table)
+                return false;
+
             while (++index <= table->numslots &&
                    !IS_OCCUPIED(table->slots[index-1])) { }
 
@@ -79,7 +92,7 @@ protected:
     void _add(void *data, bool auto_free);
     void _add(void *data, unsigned hash, bool auto_free);
     void _remove(const void *data, unsigned hash);
-    void _zap(bool destructor = false);
+    void _zap();
     void _set_autofree(const void *data, unsigned hash, bool auto_free);
     bool _get_autofree(const void *data, unsigned hash);
 
@@ -125,7 +138,7 @@ protected:
 
 public:
     WvScatterHash(unsigned _numslots = 0) : WvScatterHashBase(_numslots) { }
-    virtual ~WvScatterHash() { _zap(true); }
+    virtual ~WvScatterHash() { _zap(); }
 
     T *operator[] (const K &key)
         { return (T *)(genfind(&key, WvHash(key))->data); }
