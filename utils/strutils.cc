@@ -234,3 +234,26 @@ WvString rfc822_date(time_t when)
 
     return out;
 }
+
+
+WvString backslash_escape(const WvString &s1)
+{
+    // stick a backslash in front of every !isalnum() character in s1
+    if (!s1)
+        return "";
+
+    WvString s2;
+    s2.setsize(s1.len() * 2 + 1);
+
+    const char *p1 = s1;
+    char *p2 = s2.edit();
+    memset(p2, '\0', s2.len());
+    while (*p1)
+    {
+        if (!isalnum(*p1))
+            *p2++ = '\\';
+        *p2++ = *p1++;
+    }
+
+    return s2;
+}

@@ -23,6 +23,7 @@ void unhexify(unsigned char *obuf, char *ibuf);
 WvString web_unescape(const char *str);
 WvString rfc822_date(time_t when=-1);
 WvString passwd_crypt(const char *str);
+WvString backslash_escape(const WvString &s1);
 
 
 #endif // __STRUTILS_H
