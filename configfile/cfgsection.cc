@@ -27,6 +27,9 @@ WvConfigEntry *WvConfigSection::operator[] (WvStringParm ename)
 {
     Iter i(*this);
 
+    if (!ename)
+	return NULL;
+
     for (i.rewind(); i.next();)
     {
 	if (strcasecmp(i().name, ename) == 0)
