@@ -55,17 +55,45 @@ WvString wvssl_errstr()
 
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : dname("I'm a broken thingy"), debug("X509", WvLog::Debug5)
+    : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
     cert = _cert;
     rsa = NULL;
+    if (cert)
+    {
+	char buffer[1024];
+
+	X509_NAME_oneline(X509_get_subject_name(cert), buffer, 1024);
+	buffer[sizeof(buffer)-1] = 0;
+	dname = buffer;
+	
+	EVP_PKEY *pk;
+	pk = X509_get_pubkey(cert);
+
+        if ((pk = X509_get_pubkey(cert)) != NULL)
+	{
+ 	    size_t size;
+            unsigned char *keybuf, *iend;
+	    WvString tmppub;
+
+	    size = i2d_RSAPublicKey(pk->pkey.rsa, NULL);
+            iend = keybuf = new unsigned char[size];
+            i2d_RSAPublicKey(pk->pkey.rsa, &iend);
+
+            tmppub.setsize(size * 2 + 1);
+	    ::hexify(tmppub.edit(), keybuf, size);
+	    rsa = new WvRSAKey(tmppub,false);
+
+	    delete[] keybuf;
+	}
+    }
 }
 
 
-WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvStringParm hexified_cert,
+WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
 		     WvStringParm hexified_rsa)
-    : dname(_dname), debug("X509", WvLog::Debug5)
+    : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
     
@@ -78,6 +106,15 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvStringParm hexified_cert,
     }
 
     unhexify(hexified_cert);
+
+    if (cert)
+    {
+	char buffer[1024];
+
+    	X509_NAME_oneline(X509_get_subject_name(cert), buffer, 1024);
+    	buffer[sizeof(buffer)-1] = 0;
+    	dname = buffer;
+    }
 }
 
 
@@ -361,7 +398,7 @@ WvString WvX509Mgr::certreq()
   
     return file_hack_end(stupid);
 }
-
+ 
 
 bool WvX509Mgr::test()
 {

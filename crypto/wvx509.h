@@ -41,15 +41,22 @@ public:
     * Initialize a blank X509 Object with the certificate *cert
     * (used for client side operations...)
     * 
-    * FIXME: this sets rsa=NULL and doesn't set dname.
+    * This either initializes a completely empty object, or takes _cert, and extracts
+    * the distinguished name into dname, and the the RSA public key into rsa. rsa->prv is empty.
     */
     WvX509Mgr(X509 *_cert = NULL);
 
     /**
+     * Constructor to initialize this object with a pre-existing certificate and key
+     */
+    WvX509Mgr(WvStringParm hexcert, WvStringParm hexrsa);
+
+    /**
      * Constructor to create a selfsigned certificate for dn dname
      * NOTE: If you already have an RSAKey, then you can shove it
-     * in here in the third parameter (i.e.: If you wanted to generate a
-     * cert for an existing TunnelVision connection).
+     * in here in the second parameter (i.e.: If you wanted to generate a
+     * cert for an existing TunnelVision connection), or if you don't have an RSA Key
+     * yet, you can just give it a number of bits, and it will create one for you.
      *
      * Also: For SSL Servers:
      * the dname MUST be in the form: cn=FQDN,o=foo,c=CA
@@ -62,7 +69,6 @@ public:
      * valid without this... If you want to generate invalid certs, that's up
      * to you.
      */
-    WvX509Mgr(WvStringParm _dname, WvStringParm hexcert, WvStringParm hexrsa);
     WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa);
     WvX509Mgr(WvStringParm _dname, int bits);
     
@@ -107,15 +113,15 @@ public:
     
     /**
      * test to make sure that a certificate and a keypair go together.
-     * called internally by decodecert() although you can call it if 
-     * you want to load a certificate yourself
+     * called internally by unhexify() although you can call it if 
+     * you want to test a certificate yourself
      */
     bool test();
 
     /**
-     * Given a hexified encodedcert, fill the cert member NOTE: ALWAYS load
+     * Given a hexified certificate, fill the cert member NOTE: ALWAYS load
      * your RSA Keys before calling this! It is best if you have hexify()'d
-     * keys to simply use the load() method. 
+     * keys to simply use the proper constructor. 
      */
     void unhexify(WvString encodedcert);
     
