@@ -22,7 +22,7 @@ class WvAddr;
 class WvStream
 {
 public:
-    typedef int Callback(WvStream &s, void *userdata);
+    typedef void Callback(WvStream &s, void *userdata);
 
     // constructor to create a WvStream from an existing file descriptor.
     // The file descriptor is closed automatically by the destructor.  If
@@ -119,16 +119,20 @@ public:
     void setcallback(Callback *_callfunc, void *_userdata)
         { callfunc = _callfunc; userdata = _userdata; }
     
+    // if no callback function is defined, we call execute() instead.
+    // the default execute() function does nothing.
+    virtual void execute();
+    
     // set the callback function for this stream to an internal routine
     // that auto-forwards all incoming stream data to the given output
     // stream.
     void autoforward(WvStream &s)
         { callfunc = autoforward_callback; userdata = &s; }
-    static int autoforward_callback(WvStream &s, void *userdata);
+    static void autoforward_callback(WvStream &s, void *userdata);
     
     // if the stream has a callback function defined, call it now.
-    int callback()
-        { return callfunc ? callfunc(*this, userdata) : 0; }
+    void callback()
+        { if (callfunc) callfunc(*this, userdata); else execute(); }
     
     // preformat and print a string.
     size_t print(const WvString &s)

@@ -25,7 +25,7 @@ public:
     // NOTE: we must NOT use *cloned at this point since the caller may
     //  not have had a chance to initialize it yet!
     WvStreamClone(WvStream **_cloned)
-        { cloned = _cloned; setcallback(default_callback, this); }
+        { cloned = _cloned; }
     virtual ~WvStreamClone();
     
     virtual void close();
@@ -39,12 +39,12 @@ public:
     virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
 			      bool readable, bool writable, bool isexception);
     virtual const WvAddr *src() const;
+    virtual void execute();
 
 protected:
     WvStream **cloned;
     WvStream *s() const
         { return cloned ? *cloned : (WvStream*)NULL; }
-    static WvStream::Callback default_callback;
 };
 
 #endif // __WVSTREAMCLONE_H

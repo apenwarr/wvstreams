@@ -112,14 +112,13 @@ void WvTCPListener::auto_accept(WvStreamList *list,
 }
 
 
-int WvTCPListener::accept_callback(WvStream &, void *userdata)
+void WvTCPListener::accept_callback(WvStream &, void *userdata)
 {
     WvTCPListener &l = *(WvTCPListener *)userdata;
 
     WvTCPConn *connection = l.accept();
     connection->setcallback(l.auto_callback, l.auto_userdata);
     l.auto_list->append(connection, true);
-    return 0;
 }
 
 

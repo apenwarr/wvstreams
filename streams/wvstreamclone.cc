@@ -121,12 +121,7 @@ const WvAddr *WvStreamClone::src() const
 }
 
 
-int WvStreamClone::default_callback(WvStream &, void *userdata)
+void WvStreamClone::execute()
 {
-    WvStreamClone &s = *(WvStreamClone *)userdata;
-    
-    if (s.s())
-	return s.s()->callback();
-    else
-	return 0;
+    if (s()) s()->callback();
 }

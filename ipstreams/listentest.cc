@@ -6,7 +6,7 @@
 #include "wvstreamlist.h"
 #include "wvlog.h"
 
-static int stream_bounce_to_list(WvStream &s, void *userdata)
+static void stream_bounce_to_list(WvStream &s, void *userdata)
 {
     WvStreamList &l = *(WvStreamList *)userdata;
     WvStreamList::Iter i(l);
@@ -30,8 +30,6 @@ static int stream_bounce_to_list(WvStream &s, void *userdata)
 			   line);
 	}
     }
-    
-    return 0;
 }
 
 

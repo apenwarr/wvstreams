@@ -38,7 +38,7 @@ void WvStream::close()
 }
 
 
-int WvStream::autoforward_callback(WvStream &s, void *userdata)
+void WvStream::autoforward_callback(WvStream &s, void *userdata)
 {
     WvStream &s2 = *(WvStream *)userdata;
     char buf[1024];
@@ -49,8 +49,12 @@ int WvStream::autoforward_callback(WvStream &s, void *userdata)
 	len = s.read(buf, sizeof(buf));
 	s2.write(buf, len);
     }
-    
-    return 0;
+}
+
+
+void WvStream::execute()
+{
+    // do nothing by default
 }
 
 

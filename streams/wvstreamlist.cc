@@ -94,7 +94,7 @@ WvStream *WvStreamList::select_one(int msec_timeout, bool readable,
 
 
 // distribute the callback() request to all children that select 'true'
-int WvStreamList::dist_callback(WvStream &, void *userdata)
+void WvStreamList::dist_callback(WvStream &, void *userdata)
 {
     WvStreamList &l = *(WvStreamList *)userdata;
     WvStream *s;
@@ -102,8 +102,8 @@ int WvStreamList::dist_callback(WvStream &, void *userdata)
     if (!l.sets_valid)
     {
 	if (l.sure_thing)
-	    return l.sure_thing->callback();
-	return 0;
+	    l.sure_thing->callback();
+	return;
     }
 	
     WvStreamList::Iter i(l);
@@ -124,5 +124,4 @@ int WvStreamList::dist_callback(WvStream &, void *userdata)
     
     l.sure_thing = NULL;
     l.sets_valid = false;
-    return 0;
 }
