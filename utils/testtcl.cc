@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     
     printf("\nList split results:\n");
     WvStringList l2;
-    wvtcl_decode(l2, ls, nasties, splitchars);
+    wvtcl_decode(l2, ls, splitchars);
     
     WvStringList::Iter i(l), i2(l2);
     for (i.rewind(), i2.rewind(); i.next(), i2.next(), true; )

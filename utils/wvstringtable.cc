@@ -32,9 +32,6 @@ WvString WvStringTable::join(const char *joinchars)
 	strcat(te, s());
     }
     
-    if (te[0])
-	trim_string(te);
-    
     return total;
 }
 

@@ -35,9 +35,6 @@ WvString WvStringList::join(const char *joinchars) const
 	strcat(te, s());
     }
     
-    if (te[0])
-	trim_string(te);
-    
     return total;
 }
 

@@ -118,12 +118,64 @@ WvHConfIniFile::WvHConfIniFile(WvHConf *_top, WvStringParm _filename)
 }
 
 
+static WvFastString inicode(WvStringParm s)
+{
+    static const char white[] = " \t\r\n";
+    
+    if (!!s && (strchr(white, *s) || strchr(white, s[strlen(s)-1])))
+	return wvtcl_escape(s, " \t\r\n=[]");
+    else
+	return wvtcl_escape(s, "\r\n=[]");
+}
+
+
+static WvString inidecode(WvStringParm _s)
+{
+    WvString s(_s);
+    return wvtcl_unescape(trim_string(s.edit()));
+}
+
+
+static void inisplit(WvStringParm s, WvString &key, WvString &value)
+{
+    WvStringList l;
+    wvtcl_decode(l, s, "=", false);
+    
+    if (l.count() < 2) // couldn't split
+    {
+	key = value = WvString();
+	return;
+    }
+    
+    WvStringList::Iter i(l);
+    i.rewind(); i.next();
+    key = wvtcl_unescape(trim_string(i->edit()));
+    
+    WvString tval("");
+    while (i.next())
+    {
+	// handle embedded equal signs that got split.
+	// FIXME: in lines like 'foo = blah == weasels', we'll read as if
+	//   it were 'foo = blah = weasels', which is kinda bad...
+	if (!!tval)
+	    tval.append("=");
+	tval.append(*i);
+    }
+    
+    value = wvtcl_unescape(trim_string(tval.edit()));
+    printf(" split '%s' to '%s'='%s'\n", (const char *)s, 
+	   key.cstr(), value.cstr());
+}
+
+
 void WvHConfIniFile::load()
 {
-    char *line, *cptr;
+    char *cptr, *line;
     WvHConf *h;
     WvFile f(filename, O_RDONLY);
+    WvBuffer b;
     WvString section = "";
+    size_t len;
     
     if (!f.isok())
     {
@@ -131,29 +183,40 @@ void WvHConfIniFile::load()
 	return;
     }
     
-    while ((line = f.getline(-1)) != NULL)
+    while (f.isok())
     {
-	line = trim_string(line);
+	cptr = (char *)b.alloc(1024);
+	len = f.read(cptr, 1024);
+	b.unalloc(1024-len);
+    }
+    
+    WvStringList l;
+    wvtcl_decode(l, b.getstr(), "\r\n", "\r\n");
+    
+    WvStringList::Iter i(l);
+    for (i.rewind(); i.next(); )
+    {
+	line = trim_string(i->edit());
+	log("-*- '%s'\n", line);
 	
 	// beginning of a new section?
 	if (line[0] == '[' && line[strlen(line)-1] == ']')
 	{
 	    line[strlen(line)-1] = 0;
-	    section = line+1;
+	    WvString ss(line+1);
+	    section = inidecode(ss);
 	    continue;
 	}
 	
 	// name = value setting?
-	cptr = strchr(line, '=');
-	if (cptr)
+	WvString key, value;
+	inisplit(line, key, value);
+	if (!!key && !!value)
 	{
-	    *cptr++ = 0;
-	    line = trim_string(line);
-	    cptr = trim_string(cptr);
-	    h = make_tree(top, WvString("%s/%s", section, line));
+	    h = make_tree(top, WvString("%s/%s", section, key));
 	    
 	    bool d1 = h->dirty, d2 = h->child_dirty;
-	    h->set_without_notify(cptr);
+	    h->set_without_notify(value);
 	    
 	    // loaded _from_ the config file, so that didn't make it dirty!
 	    h->dirty = d1;
@@ -189,17 +252,6 @@ static bool any_direct_children(WvHConf *h)
     }
     
     return false;
-}
-
-
-static WvFastString inicode(WvStringParm s)
-{
-    static const char white[] = " \t\r\n";
-    
-    if (!!s && (strchr(white, *s) || strchr(white, s[strlen(s)-1])))
-	return wvtcl_escape(s, " \t\r\n=[]");
-    else
-	return wvtcl_escape(s, "\r\n=[]");
 }
 
 

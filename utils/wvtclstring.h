@@ -88,8 +88,8 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties = WVTCL_NASTIES,
 // Zero-length elements must be represented by 
 // 
 void wvtcl_decode(WvStringList &l, WvStringParm _s,
-		  const char *nasties = WVTCL_NASTIES,
-		  const char *splitchars = WVTCL_SPLITCHARS);
+		  const char *splitchars = WVTCL_SPLITCHARS,
+		  bool do_unescape = true);
 
 
 #endif // __WVTCLSTRING_H

@@ -164,7 +164,7 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties,
 
 
 void wvtcl_decode(WvStringList &l, WvStringParm _s,
-		  const char *nasties, const char *splitchars)
+		  const char *splitchars, bool do_unescape)
 {
     // empty or null strings are empty lists
     if (!_s)
@@ -189,7 +189,12 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
 	    olde = *eptr;
 	    *eptr = 0;
 	    if (*sptr)
-		l.append(new WvString(wvtcl_unescape(sptr)), true);
+	    {
+		if (do_unescape)
+		    l.append(new WvString(wvtcl_unescape(sptr)), true);
+		else
+		    l.append(new WvString(sptr), true);
+	    }
 	    *eptr = olde; // make sure the loop doesn't exit!
 	    if (inquote)
 		eptr--;
@@ -214,7 +219,12 @@ void wvtcl_decode(WvStringList &l, WvStringParm _s,
     
     // finished the string - get the terminating element, if any.
     if (*sptr)
-	l.append(new WvString(wvtcl_unescape(sptr)), true);
+    {
+	if (do_unescape)
+	    l.append(new WvString(wvtcl_unescape(sptr)), true);
+	else
+	    l.append(new WvString(sptr), true);
+    }
 }
 
 
