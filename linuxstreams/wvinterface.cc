@@ -22,7 +22,11 @@
 #include <linux/sockios.h>
 #include <linux/wireless.h>
 
-#define min(x,y) ((x) < (y) ? (x) : (y))
+#define min(x,y) ({ \
+    const typeof(x) _x = (x); \
+    const typeof(y) _y = (y); \
+    (void) (&_x == &_y); \
+    _x < _y ? _x : _y; })
 
 WvInterfaceDictBase WvInterfaceDict::slist(15);
 int WvInterfaceDict::links = 0;
