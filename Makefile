@@ -105,5 +105,5 @@ test: runconfigure wvtestmain
 	$(VALGRIND) ./wvtestmain
 
 wvtestmain: wvtestmain.o $(call objects, $(shell find . -type d -name t)) \
-	libwvstreams.so libwvutils.so
+	libwvstreams.so libwvutils.so libuniconf.so
 
