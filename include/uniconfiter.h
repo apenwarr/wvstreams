@@ -9,135 +9,152 @@
 #ifndef __UNICONFITER_H
 #define __UNICONFITER_H
 
-#include "uniconf.h"
-#include "wvlinklist.h"
+#include "uniconfkey.h"
+
+/**
+ * An abstract iterator over keys and values.
+ * <p>
+ * Unlike other WvStreams iterators, this one declares virtual
+ * methods so that the various UniConf components can supply
+ * the right behaviour through a common interface that does not
+ * depend on static typing.
+ * </p><p>
+ * The precise traversal sequence is defined by the iterator
+ * implementation.  For instance, the same interface is used for
+ * flat, recursive and filtered queries but the instantiation method
+ * may differ for each.
+ * </p><p>
+ * UniConf supports concurrent modifications to the same tree
+ * so long as they occur in distinct subtrees.
+ * </p>
+ */
+class UniConfAbstractIter
+{
+protected:
+    UniConfAbstractIter() { }
+    UniConfAbstractIter(const UniConfAbstractIter &iter) { }
+
+public:
+    /**
+     * Destroys the iterator.
+     */
+    virtual ~UniConfAbstractIter() { }
+
+    /**
+     * Clones the iterator.
+     */
+    virtual UniConfAbstractIter *clone() const = 0;
+
+    /**
+     * Rewinds the iterator.
+     */
+    virtual void rewind() = 0;
+
+    /**
+     * Seeks to the next element in the controlled sequence.
+     * @return true if there is another element
+     */
+    virtual bool next() = 0;
+
+    /**
+     * Returns the current key.
+     * @return the key
+     */
+    virtual UniConfKey key() const = 0;
+
+#if 0
+    /**
+     * Returns the current value as a string.
+     * @return the value
+     */
+    virtual WvString get() const = 0;
+
+    /**
+     * Sets the current value as a string.
+     * <p>
+     * If the key is deleted, the iteration sequence resumes at
+     * the next available element without repeating any that
+     * were previously encountered.
+     * </p>
+     * @param value the value, if WvString::null deletes the key
+     *        and all of its children
+     * @return true on success
+     */
+    virtual bool set(WvString value) = 0;
+
+    /**
+     * Removes the current key without advancing the iterator.
+     * @return true on success
+     */
+    bool remove()
+    {
+        return set(WvString::null);
+    }
+#endif
+};
 
 
 /**
- * This iterator walks through all the immediate children of a
- * UniConf node.
+ * This wrapper manages the lifetime of an abstract iterator
+ * and provides a base upon which subclasses may be constructed
+ * that provide a the more familiar statically typed WvStream
+ * iterator interface.
  */
-class UniConf::Iter
+class UniConfIterWrapper
 {
-    UniConf &root;
-    UniConfNotifyTree::Iter it;
+protected:
+    UniConfAbstractIter *xabstractiter;
 
 public:
-    Iter(UniConf &root);
+    /**
+     * Constructs a wrapper from an abstract iterator.
+     * @param iter the iterator
+     */
+    UniConfIterWrapper(UniConfAbstractIter *abstractiter) :
+        xabstractiter(abstractiter)
+    {
+    }
+    
+    /**
+     * Constructs a copy of another wrapper.
+     * @param other the other wrapper
+     */
+    UniConfIterWrapper(const UniConfIterWrapper &other) :
+        xabstractiter(other.abstractiter()->clone())
+    {
+    }
 
-    void rewind();
+    /**
+     * Destroys the wrapper along with its abstract iterator.
+     */
+    ~UniConfIterWrapper()
+    {
+        delete xabstractiter;
+    }
+
+    /**
+     * Returns a pointer to the abstract iterator.
+     * @return the abstract iterator
+     */
+    inline UniConfAbstractIter *abstractiter() const
+    {
+        return xabstractiter;
+    }
+
+    inline void rewind()
+    {
+        xabstractiter->rewind();
+    }
 
     inline bool next()
     {
-        return it.next();
+        return xabstractiter->next();
     }
-    inline UniConf *ptr() const
+    
+    inline UniConfKey key() const
     {
-        return static_cast<UniConf*>(it.ptr());
+        return xabstractiter->key();
     }
-    WvIterStuff(UniConf);
 };
-
-
-
-/**
- * This iterator performs pre-order traversal of all of the
- * children in a UniConf tree.
- */
-class UniConf::RecursiveIter
-{
-    DeclareWvList3(UniConf::Iter, IterList, )
-    UniConf::Iter top;
-    UniConf *current;
-    IterList itlist;
-
-public:
-    RecursiveIter(UniConf &h);
-
-    void rewind();
-    bool next();
-
-    inline UniConf *ptr() const
-    {
-        return current;
-    }
-    WvIterStuff(UniConf);
-};
-
-
-#if 0
-/**
- * FIXME: WHAT DOES THIS DO?
- */
-class UniConf::XIter
-{
-public:
-    int skiplevel;
-    UniConf *top;
-    UniConfKey key;
-    WvLink _toplink, *toplink;
-    UniConfDict::Iter i;
-    XIter *subiter;
-    int going;
-    
-    XIter(UniConf &_top, const UniConfKey &_key);
-    ~XIter()
-        { unsub(); }
-    
-    void unsub()
-        { if (subiter) delete subiter; subiter = NULL; }
-    
-    void rewind()
-        { unsub(); i.rewind(); going = 0; }
-    
-    WvLink *cur()
-        { return subiter ? subiter->cur() : (going==1 ? toplink : NULL); }
-    
-    WvLink *_next();
-    
-    WvLink *next()
-    {
-	WvLink *l;
-	while ((l = _next()) != NULL && ptr() == NULL);
-	return l;
-    }
-    
-    UniConf *ptr() const
-    {
-        return key.isempty() ?
-            top : (subiter ? subiter->ptr() : NULL);
-    }
-    
-    WvIterStuff(UniConf);
-};
-#endif
-
-
-#if 0
-// UniConf::Sorter is like UniConf::Iter, but allows you to sort the list.
-typedef WvSorter<UniConf, UniConfDict, UniConf::Iter>
-    _UniConfSorter;
-class UniConf::Sorter : public _UniConfSorter
-{
-public:
-    Sorter(UniConf &h, RealCompareFunc *cmp)
-	: _UniConfSorter(h.check_children() ? *h.children : null_wvhconfdict,
-			 cmp)
-	{ }
-};
-
-
-// UniConf::RecursiveSorter is the recursive version of UniConf::Sorter.
-typedef WvSorter<UniConf, UniConfDict, UniConf::RecursiveIter> 
-    _UniConfRecursiveSorter;
-class UniConf::RecursiveSorter : public _UniConfRecursiveSorter
-{
-public:
-    RecursiveSorter(UniConf &h, RealCompareFunc *cmp)
-	: _UniConfRecursiveSorter(h.check_children() ? *h.children : null_wvhconfdict,
-				  cmp)
-	{ }
-};
-#endif
 
 #endif // __UNICONFITER_H

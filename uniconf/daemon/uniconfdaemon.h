@@ -7,7 +7,6 @@
 #include "wvlogrcv.h"
 #include "wvlog.h"
 #include "wvstreamlist.h"
-#include "unievents.h"
 #include "uniconf.h"
 #include "wvtclstring.h"
 
@@ -32,12 +31,14 @@ public:
         WvConstStringBuffer &fromline, UniConfDaemonConn *s);
     void dook(const WvString cmd, const UniConfKey &key,
         UniConfDaemonConn *s);
+    void dofail(const WvString cmd, const UniConfKey &key,
+        UniConfDaemonConn *s);
     void registerforchange(const UniConfKey &,
         UniConfDaemonConn *s);
     void deletesubtree(const UniConfKey &, UniConfDaemonConn *s);
-    void myvaluechanged(void *userdata, UniConf &conf);
-    void me_or_imm_child_changed(void *userdata, UniConf &conf);
-    void me_or_any_child_changed(void *userdata, UniConf &conf);
+    void myvaluechanged(UniConf &conf, void *userdata);
+    void me_or_imm_child_changed(UniConf &conf, void *userdata);
+    void me_or_any_child_changed(UniConf &conf, void *userdata);
 
     // The depth parameter is for:  
     // 0 - notify me only if my value has changed
@@ -53,9 +54,8 @@ public:
     bool want_to_die;
     WvLog log;
     UniConf mainconf;
-    UniConfNotifier notifier;
-    UniConfEvents events;
     bool keymodified;
+
 protected:
     void connection_callback(WvStream &s, void *userdata);
     void accept_connection(WvStream *s);

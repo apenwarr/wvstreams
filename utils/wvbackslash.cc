@@ -155,6 +155,13 @@ bool WvBackslashDecoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
                         tmpbuf.putch(c);
                         state = Hex1;
                     }
+                    else if (c == '\n')
+                    {
+                        // line continuation sequence
+                        tmpbuf.unalloc(1);
+                        tmpbuf.putch(' ');
+                        state = Initial;
+                    }
                     else
                     {
                         const char *found = strchr(escapeout, c);

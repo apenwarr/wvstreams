@@ -18,31 +18,17 @@
  * moniker of the generator to wrap.
  * </p>
  */
-class UniConfReadOnlyGen : public UniConfGen
+class UniConfReadOnlyGen : public UniConfFilterGen
 {
-    UniConfGen *inner;
-
 public:
-    UniConfReadOnlyGen(const UniConfLocation &location,
-        UniConfGen *inner);
-    virtual ~UniConfReadOnlyGen();
+    UniConfReadOnlyGen(UniConfGen *inner);
 
-    virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key)
-        { return inner->make_tree(parent, key); }
-    virtual void enumerate_subtrees(UniConf *conf, bool recursive)
-        { inner->enumerate_subtrees(conf, recursive); }
-    virtual void update(UniConf *&h)
-        { inner->update(h); }
-    virtual void pre_get(UniConf *&h)
-        { inner->pre_get(h); }
-    virtual bool isok()
-        { return inner->isok(); }
-    virtual void update_all()
-        { inner->update_all(); }
-    virtual void load()
-        { inner->load(); }
-    virtual void save()
-        { }
+    /***** Overridden members *****/
+
+    virtual UniConfLocation location() const;
+    virtual bool set(const UniConfKey &key, WvStringParm value);
+    virtual bool zap(const UniConfKey &key);
+    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
 };
 
 
@@ -52,8 +38,7 @@ public:
 class UniConfReadOnlyGenFactory : public UniConfGenFactory
 {
 public:
-    virtual UniConfGen *newgen(const UniConfLocation &location,
-        UniConf *top);
+    virtual UniConfReadOnlyGen *newgen(const UniConfLocation &location);
 };
 
 

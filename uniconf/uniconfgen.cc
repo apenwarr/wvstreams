@@ -7,13 +7,12 @@
  * A UniConf key management abstraction.
  */
 #include "uniconfgen.h"
-#include "uniconf.h"
+#include "uniconfiter.h"
 
 
 /***** UniConfGen *****/
 
-UniConfGen::UniConfGen(const UniConfLocation &location) :
-    _location(location)
+UniConfGen::UniConfGen()
 {
 }
 
@@ -23,60 +22,134 @@ UniConfGen::~UniConfGen()
 }
 
 
-UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
+bool UniConfGen::commit(const UniConfKey &key, UniConf::Depth depth)
 {
-    int segments = key.numsegments();
-    for (int i = 0; i < segments; ++i)
-    {
-        UniConf *child = parent->find(key.segment(i));
-        if (!child)
-	{
-	    child = new UniConf(parent, key.segment(i));
-            child->waiting = true;
-	    pre_get(child);
-	}
-	
-	parent = child;
-    }
- 
-    update(parent);
-    return parent;
-}
-
-void UniConfGen::enumerate_subtrees(UniConf *conf, bool recursive)
-{
-    // do nothing by default.
-}
-
-void UniConfGen::pre_get(UniConf *&h)
-{
-    // do nothing by default.
-}
-
-void UniConfGen::update_all()
-{
-    // do nothing 
-}
-
-void UniConfGen::update(UniConf *&h)
-{
-    // do nothing by default.
-    h->dirty = false;
-    h->waiting = false;
-    h->obsolete = false;
+    return true;
 }
 
 
-void UniConfGen::load()
+bool UniConfGen::refresh(const UniConfKey &key, UniConf::Depth depth)
 {
-    // do nothing by default
+    return true;
 }
 
 
-void UniConfGen::save()
+bool UniConfGen::remove(const UniConfKey &key)
 {
-    // do nothing by default
+    return set(key, WvString::null);
 }
+
+
+bool UniConfGen::exists(const UniConfKey &key)
+{
+    return ! get(key).isnull();
+}
+
+
+void UniConfGen::attach(WvStreamList *streamlist)
+{
+}
+
+
+void UniConfGen::detach(WvStreamList *streamlist)
+{
+}
+
+
+bool UniConfGen::isok()
+{
+    return true;
+}
+
+
+
+/***** UniConfFilterGen *****/
+
+UniConfFilterGen::UniConfFilterGen(UniConfGen *inner) :
+    xinner(inner)
+{
+}
+
+
+UniConfFilterGen::~UniConfFilterGen()
+{
+    delete xinner;
+}
+
+
+UniConfLocation UniConfFilterGen::location() const
+{
+    return xinner->location();
+}
+
+
+bool UniConfFilterGen::commit(const UniConfKey &key,
+    UniConf::Depth depth)
+{
+    return xinner->commit(key, depth);
+}
+
+
+bool UniConfFilterGen::refresh(const UniConfKey &key,
+    UniConf::Depth depth)
+{
+    return xinner->refresh(key, depth);
+}
+
+
+WvString UniConfFilterGen::get(const UniConfKey &key)
+{
+    return xinner->get(key);
+}
+
+
+bool UniConfFilterGen::set(const UniConfKey &key, WvStringParm value)
+{
+    return xinner->set(key, value);
+}
+
+
+bool UniConfFilterGen::zap(const UniConfKey &key)
+{
+    return xinner->zap(key);
+}
+
+
+bool UniConfFilterGen::exists(const UniConfKey &key)
+{
+    return xinner->exists(key);
+}
+
+
+bool UniConfFilterGen::haschildren(const UniConfKey &key)
+{
+    return xinner->haschildren(key);
+}
+
+
+void UniConfFilterGen::attach(WvStreamList *streamlist)
+{
+    xinner->attach(streamlist);
+}
+
+
+void UniConfFilterGen::detach(WvStreamList *streamlist)
+{
+    xinner->detach(streamlist);
+}
+
+
+bool UniConfFilterGen::isok()
+{
+    return xinner->isok();
+}
+
+
+UniConfGen::Iter *UniConfFilterGen::iterator(const UniConfKey &key)
+{
+    return xinner->iterator(key);
+}
+
 
 
 /***** UniConfGenFactory *****/
@@ -168,12 +241,12 @@ UniConfGenFactory *UniConfGenFactoryRegistry::find(WvStringParm proto)
 
 
 UniConfGen *UniConfGenFactoryRegistry::newgen(
-    const UniConfLocation &location, UniConf *top)
+    const UniConfLocation &location)
 {
     UniConfGenFactory *factory = find(location.proto());
     if (! factory)
         return NULL;
-    return factory->newgen(location, top);
+    return factory->newgen(location);
 }
 
 
@@ -191,7 +264,11 @@ UniConfGen *UniConfGenFactoryRegistry::newgen(
 #include "uniconfnull.h"
 static UniConfGenFactoryRegistration nullreg("null",
     new UniConfNullGenFactory(), true);
-    
+
+#include "uniconftemp.h"
+static UniConfGenFactoryRegistration tempreg("temp",
+    new UniConfTempGenFactory(), true);
+
 #include "uniconfreadonly.h"
 static UniConfGenFactoryRegistration readonlyreg("readonly",
     new UniConfReadOnlyGenFactory(), true);

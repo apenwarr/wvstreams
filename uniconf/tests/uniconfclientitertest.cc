@@ -10,12 +10,9 @@
 #include "uniconfclient.h"
 #include "wvtcp.h"
 
-// Control variable
-bool want_to_die = false;
-
 void printheader(WvString h, WvString mountpoint)
 {
-    WvString header("%s WITH MOUNTPOINT %s", h, mountpoint);
+    WvString header("\n\n%s WITH MOUNTPOINT %s", h, mountpoint);
     wvcon->print("%s\n",header);
     
     for (size_t i = 0; i < header.len(); i++)

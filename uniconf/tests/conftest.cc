@@ -5,14 +5,33 @@
  * Test program for the new, hierarchical WvConf.
  */
 #include "wvlog.h"
+#include "wvlogrcv.h"
 #include "wvdiriter.h"
 #include "wvfile.h"
 #include "wvtclstring.h"
 #include "uniconf.h"
 #include "strutils.h"
 #include "wvconf.h"
+#include "uniconftree.h"
+#include "uniconfgen.h"
+
+#include <sys/stat.h>
+
+static void copyall(UniConf &src, UniConf &dest)
+{
+    UniConf::RecursiveIter it(src);
+    for (it.rewind(); it.next(); )
+    {
+        if (it->value().isnull())
+            continue;
+        //wverr->print("set: \"%s\" = \"%s\"\n", it->fullkey(), it->value());
+        dest.set(it->fullkey(), it->value());
+        //wverr->print("get: \"%s\"\n", dest.get(it->fullkey()));
+    }
+}
 
 
+#if 0
 class HelloGen : public UniConfGen
 {
 public:
@@ -37,75 +56,232 @@ void HelloGen::update(UniConf *&h)
     h->obsolete = false;
     h->waiting = false;
 }
+#endif
 
 
-class UniConfFileTree : public UniConfGen
+class UniConfFileTreeGen : public UniConfGen
 {
 public:
     WvString basedir;
-    UniConf *top;
     WvLog log;
+    UniConfTree root;
     
-    UniConfFileTree(UniConf *_top, WvStringParm _basedir);
-    virtual void update(UniConf *&h);
-    virtual void load();
+    UniConfFileTreeGen(WvStringParm _basedir);
+    virtual ~UniConfFileTreeGen() { }
+
+    /***** Overridden members *****/
+
+    virtual UniConfLocation location() const;
+    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
+    virtual WvString get(const UniConfKey &key);
+    virtual bool exists(const UniConfKey &key);
+    virtual bool haschildren(const UniConfKey &key);
+    virtual bool set(const UniConfKey &key, WvStringParm)
+        { return false; }
+    virtual bool zap(const UniConfKey &key)
+        { return false; }
+
+    virtual Iter *iterator(const UniConfKey &key);
+
+private:
+    UniConfTree *maketree(const UniConfKey &key);
+    class NodeIter;
 };
 
 
-UniConfFileTree::UniConfFileTree(UniConf *_top, WvStringParm _basedir) :
-    UniConfGen(WvString("tree://%s", _basedir)),
-    basedir(_basedir), log("FileTree", WvLog::Info)
+class UniConfFileTreeGen::NodeIter : public UniConfFileTreeGen::Iter
 {
-    top = _top;
+protected:
+    UniConfTree::Iter xit;
+
+public:
+    NodeIter(UniConfTree &node) : xit(node)
+        { }
+    NodeIter(const NodeIter &other) : xit(other.xit)
+        { }
+    virtual ~NodeIter()
+        { }
+
+    /***** Overridden methods *****/
+
+    virtual NodeIter *clone() const
+        { return new NodeIter(*this); }
+    virtual void rewind()
+        { xit.rewind(); }
+    virtual bool next()
+        { return xit.next(); }
+    virtual UniConfKey key() const
+        { return xit->key(); }
+};
+
+
+UniConfFileTreeGen::UniConfFileTreeGen(WvStringParm _basedir) :
+    basedir(_basedir), log("FileTree", WvLog::Info),
+    root(NULL, UniConfKey::EMPTY, "")
+{
     log(WvLog::Notice,
-	"Creating a new FileTree based on '%s' at location '%s'.\n",
-	basedir, top->fullkey());
+	"Creating a new FileTree based on '%s'.\n", basedir);
+    refresh(UniConfKey::EMPTY, UniConf::INFINITE);
 }
 
 
-// use the first nonblank line in the file as the config contents.
-void UniConfFileTree::update(UniConf *&h)
+UniConfLocation UniConfFileTreeGen::location() const
 {
-    char *line;
-    WvString name(h->gen_full_key());
-    WvFile f(name, O_RDONLY);
+    return WvString("filetree://%s", basedir);
+}
+
+
+bool UniConfFileTreeGen::refresh(const UniConfKey &key,
+    UniConf::Depth depth)
+{
+    WvString filename("%s%s", basedir, key);
     
-    if (!f.isok())
-	log(WvLog::Warning, "Error reading %s: %s\n", name, f.errstr());
-    
-    while (f.isok())
+    if (depth == UniConf::ZERO || depth == UniConf::ONE ||
+        depth == UniConf::INFINITE)
     {
-	line = f.getline(-1);
-	if (!line)
-	    continue;
-	line = trim_string(line);
-	if (!line[0])
-	    continue;
-	
-	h->setvalue(line);
-	h->dirty = false;
-	return;
+        struct stat statbuf;
+        bool exists = lstat(filename.cstr(), & statbuf) == 0;
+        
+        UniConfTree *node = root.find(key);
+        if (! exists)
+        {
+            if (node != & root)
+                delete node;
+            return true;
+        }
+        node = maketree(key);
+        node->zap();
     }
-}
-
-
-void UniConfFileTree::load()
-{
-    UniConf *h;
-    WvDirIter i(basedir, true);
     
-    for (i.rewind(); i.next(); )
+    bool recurse = false;
+    switch (depth)
+    {
+        case UniConf::ZERO:
+            return true;
+        case UniConf::ONE:
+        case UniConf::CHILDREN:
+            break;
+        case UniConf::INFINITE:
+        case UniConf::DESCENDENTS:
+            recurse = true;
+            break;
+    }
+
+    WvDirIter dirit(filename, recurse);
+    UniConfKey dirkey(filename);
+    for (dirit.rewind(); dirit.next(); )
     {
 	log(WvLog::Debug2, ".");
-	h = make_tree(top, i->fullname);
+        UniConfKey filekey(dirit->fullname);
+        filekey = filekey.removefirst(dirkey.numsegments());
+        maketree(filekey);
     }
+    return true;
 }
+
+
+WvString UniConfFileTreeGen::get(const UniConfKey &key)
+{
+    // check the cache
+    UniConfTree *node = root.find(key);
+    if (node && ! node->value().isnull())
+        return node->value();
+
+    // read the file and extract the first non-black line
+    WvString filename("%s%s", basedir, key);
+    WvFile file(filename, O_RDONLY);
+    
+    char *line;
+    for (;;)
+    {
+        line = NULL;
+        if (! file.isok())
+            break;
+	line = file.getline(-1);
+	if (!line)
+            break;
+	line = trim_string(line);
+	if (line[0])
+            break;
+    }
+
+    if (file.geterr())
+    {
+	log("Error reading %s: %s\n", filename, file.errstr());
+        line = "";
+    }
+
+    if (! node)
+        node = maketree(key);
+    WvString value(line);
+    value.unique();
+    node->setvalue(value);
+    file.close();
+    return value;
+}
+
+
+bool UniConfFileTreeGen::exists(const UniConfKey &key)
+{
+    UniConfTree *node = root.find(key);
+    if (! node)
+    {
+        refresh(key, UniConf::ZERO);
+        node = root.find(key);
+    }
+    return node != NULL;
+}
+
+
+bool UniConfFileTreeGen::haschildren(const UniConfKey &key)
+{
+    UniConfTree *node = root.find(key);
+    if (! node || ! node->haschildren())
+    {
+        refresh(key, UniConf::CHILDREN);
+        node = root.find(key);
+    }
+    return node != NULL && node->haschildren();
+}
+
+
+UniConfFileTreeGen::Iter *UniConfFileTreeGen::iterator(const UniConfKey &key)
+{
+    if (haschildren(key))
+    {
+        UniConfTree *node = root.find(key);
+        if (node)
+            return new NodeIter(*node);
+    }
+    return new NullIter();
+}
+
+
+UniConfTree *UniConfFileTreeGen::maketree(const UniConfKey &key)
+{
+    // construct a node for the file with a null value
+    UniConfTree *node = & root;
+    UniConfKey::Iter it(key);
+    it.rewind();
+    while (it.next())
+    {
+        UniConfTree *prev = node;
+        node = node->findchild(it());
+        if (! node)
+            node = new UniConfTree(prev, it(), WvString::null);
+    }
+    return node;
+}
+
 
 
 int main()
 {
-    WvLog log("hconftest", WvLog::Info);
+    WvLog log("conftest", WvLog::Info);
     WvLog quiet("*", WvLog::Debug1);
+    // try Debug5 for lots of messages
+    //WvLogConsole rcv(2, WvLog::Debug5);
+    WvLogConsole rcv(2, WvLog::Debug4);
     
     log("An hconf instance is %s bytes long.\n", sizeof(UniConf));
     log("A wvconf instance is %s/%s/%s bytes long.\n",
@@ -128,6 +304,7 @@ int main()
 	log("-- Basic config test begins\n");
 	
 	UniConf cfg;
+        cfg.mount(UniConfLocation("temp://"));
 	cfg.set("/foo/blah/weasels", "chickens");
 	
 	cfg["foo"]["pah"]["meatballs"] = 6;
@@ -140,6 +317,7 @@ int main()
 	cfg.dump(quiet);
     }
     
+#if 0
     {
 	wvcon->print("\n\n");
 	log("-- Inheritence test begins\n");
@@ -155,7 +333,7 @@ int main()
             cfg.get("/users/bob/comment"));
 	
 	cfg["/users"].defaults = &cfg["/default/users"];
-       
+
 	// should be defuser comment
 	h = cfg["/users/randomperson/comment"].find_default();
 	log("Default for randomperson(%s): '%s'\n",
@@ -177,7 +355,9 @@ int main()
 	log("Config dump 2:\n");
 	cfg.dump(quiet);
     }
+#endif
     
+#if 0
     {
 	wvcon->print("\n\n");
 	log("-- Hello Generator test begins\n");
@@ -197,13 +377,14 @@ int main()
 	log("Config dump:\n");
 	cfg.dump(quiet);
     }
+#endif
     
     {
 	wvcon->print("\n\n");
 	log("-- FileTree test begins\n");
 	
 	UniConf cfg;
-        cfg.mount(new UniConfFileTree(&cfg, "/etc/modutils"));
+        cfg.mountgen(new UniConfFileTreeGen("/etc/modutils"));
 	
 	log("Config dump:\n");
 	cfg.dump(quiet);
@@ -230,31 +411,41 @@ int main()
 	UniConf cfg;
 	UniConf &h1 = cfg["/1"], &h2 = cfg["/"];
 	
-	h1.mount(UniConfLocation("readonly://ini://test.ini"));
-        h2.mount(UniConfLocation("readonly://ini://test2.ini"));
-        cfg.load();
+	h1.mount(UniConfLocation("ini://test.ini"));
+        h2.mount(UniConfLocation("ini://test2.ini"));
+        cfg.refresh();
 
-        h1.unmount();
-	h1.mount(UniConfLocation("ini://test.ini.new"));
-        h2.unmount();
-        h2.mount(UniConfLocation("ini://test2.ini.new"));
+        UniConf newcfg;
+        UniConf &newh1 = newcfg["/1"], &newh2 = newcfg["/"];
+        
+	newh1.mount(UniConfLocation("ini://test.ini.new"));
+        newh2.mount(UniConfLocation("ini://test2.ini.new"));
+        newcfg.zap();
 	
 	log("Partial config dump (branch 1 only):\n");
 	h1.dump(quiet);
-	
+        
 	log("Trying to save unchanged branches:\n");
-	cfg.save();
+	cfg.commit();
+
+        copyall(cfg, newcfg);
+        newh1.dump(quiet);
+
+        log("Trying to save copy:\n");
+	newcfg.commit();
 	
 	log("Changing some data:\n");
-	if (! h1.exists("big/fat/bob"))
-	    h1.setint("big/fat/bob", 0);
-	h1["big/fat/bob"] = h1.getint("big/fat/bob") + 1;
-	h1["chicken/hammer\ndesign"] = "simple test";
-	h1["chicken/whammer/designer\\/code\nweasel"] = "this\n\tis a test  ";
-	h1.dump(quiet);
+	if (! newh1.exists("big/fat/bob"))
+	    newh1.setint("big/fat/bob", 0);
+	newh1["big/fat/bob"] = newh1.getint("big/fat/bob") + 1;
+	newh1["chicken/hammer\ndesign"] = "simple test";
+	newh1["chicken/whammer/designer\\/code\nweasel"] = "this\n\tis a test  ";
+
+        log("Full config dump:\n");
+	newcfg.dump(quiet);
 	
-	log("Saving changed data:\n");
-	cfg.save();
+	log("Saving changed copy:\n");
+	newcfg.commit();
     }
     
     return 0;

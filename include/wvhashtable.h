@@ -64,8 +64,11 @@ public:
 	unsigned tblindex;
 	WvLink *link;
 	
-	IterBase(WvHashTableBase &_tbl)
-            { tbl = &_tbl; }
+	IterBase(WvHashTableBase &_tbl) : tbl(& _tbl)
+            { }
+        IterBase(const IterBase &other) : tbl(other.tbl),
+            tblindex(other.tblindex), link(other.link)
+            { }
 	void rewind()
             { tblindex = 0; link = &tbl->wvslots[0].head; }
 	WvLink *next();
@@ -195,6 +198,8 @@ public:
     public:
 	Iter(WvHashTable &_tbl) : IterBase(_tbl)
 	    { }
+        Iter(const Iter &other) : IterBase(other)
+            { }
 	T *ptr() const
 	    { return (T *)link->data; }
 	WvIterStuff(T);

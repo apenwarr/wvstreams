@@ -56,6 +56,7 @@ protected:
  * <li>0: substitutes null (ascii 0)</li>
  * <li>0xyz: substitutes character with octal encoding xyz</li>
  * <li>xxy: substitutes character with hex encoding xy</li>
+ * <li>newline: substitutes space (line continuation sequence)</li>
  * <li>\\: substitutes backslash</li>
  * <li>otherwise substitutes the next character (strips the backslash)</li>
  * </ul>

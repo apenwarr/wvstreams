@@ -95,7 +95,7 @@ UniConfTreeBase *UniConfTreeBase::_find(
     it.rewind();
     while (it.next())
     {
-        node = node->findchild(it());
+        node = node->_findchild(it());
         if (! node)
             break;
     }
@@ -103,30 +103,14 @@ UniConfTreeBase *UniConfTreeBase::_find(
 }
 
 
-UniConfTreeBase *UniConfTreeBase::_findormake(const UniConfKey &key,
-    _MakeNodeFunc func)
-{
-    UniConfTreeBase *node = this;
-    UniConfKey::Iter it(key);
-    it.rewind();
-    while (it.next())
-    {
-        UniConfTreeBase *prev = node;
-        node = node->findchild(it());
-        if (! node)
-            node = func(prev, it());
-    }
-    return node;
-}
-
-
-UniConfTreeBase *UniConfTreeBase::findchild(
+UniConfTreeBase *UniConfTreeBase::_findchild(
     const UniConfKey &key) const
 {
     if (! xchildren)
         return NULL;
     return (*xchildren)[key];
 }
+
 
 void UniConfTreeBase::link(UniConfTreeBase *node)
 {
@@ -149,6 +133,12 @@ void UniConfTreeBase::unlink(UniConfTreeBase *node)
 UniConfTreeBase::Iter::Iter(UniConfTreeBase &_tree) :
     tree(_tree), it(* reinterpret_cast<UniConfTreeBaseDict*>(
         & null_UniConfPairDict))
+{
+}
+
+
+UniConfTreeBase::Iter::Iter(const Iter &other) :
+    tree(other.tree), it(other.it)
 {
 }
 

@@ -10,28 +10,46 @@
 
 /***** UniConfReadOnlyGen *****/
 
-UniConfReadOnlyGen::UniConfReadOnlyGen(
-    const UniConfLocation &_location, UniConfGen *_inner) :
-    UniConfGen(_location), inner(_inner)
+UniConfReadOnlyGen::UniConfReadOnlyGen(UniConfGen *inner) :
+    UniConfFilterGen(inner)
 {
 }
 
 
-UniConfReadOnlyGen::~UniConfReadOnlyGen()
+UniConfLocation UniConfReadOnlyGen::location() const
 {
-    delete inner;
+    return WvString("readonly://%s", UniConfFilterGen::location());
+}
+
+
+bool UniConfReadOnlyGen::set(const UniConfKey &key, WvStringParm value)
+{
+    return false;
+}
+
+
+bool UniConfReadOnlyGen::zap(const UniConfKey &key)
+{
+    return false;
+}
+
+
+bool UniConfReadOnlyGen::commit(const UniConfKey &key,
+    UniConf::Depth depth)
+{
+    return false;
 }
 
 
 
 /***** UniConfReadOnlyGenFactory *****/
 
-UniConfGen *UniConfReadOnlyGenFactory::newgen(
-    const UniConfLocation &location, UniConf *top)
+UniConfReadOnlyGen *UniConfReadOnlyGenFactory::newgen(
+    const UniConfLocation &location)
 {
     UniConfGen *inner = UniConfGenFactoryRegistry::instance()->
-        newgen(location.payload(), top);
+        newgen(location.payload());
     if (inner)
-        return new UniConfReadOnlyGen(location, inner);
+        return new UniConfReadOnlyGen(inner);
     return NULL;
 }

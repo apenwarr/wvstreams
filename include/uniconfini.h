@@ -9,7 +9,8 @@
 #ifndef __UNICONFINI_H
 #define __UNICONFINI_H
 
-#include "uniconf.h"
+#include "uniconfgen.h"
+#include "uniconftemp.h"
 #include "wvlog.h"
 
 /**
@@ -21,19 +22,23 @@
  * path of the .ini file.
  * </p>
  */
-class UniConfIniFileGen : public UniConfGen
+class UniConfIniFileGen : public UniConfTempGen
 {
-public:
     WvString filename;
-    UniConf *top;
     WvLog log;
     
-    UniConfIniFileGen(UniConf *_top, WvStringParm _filename);
+public:
+    UniConfIniFileGen(WvStringParm _filename);
     virtual ~UniConfIniFileGen();
-    virtual void load();
-    virtual void save();
     
-    void save_subtree(WvStream &out, UniConf *h, UniConfKey key);
+    /***** Overridden members *****/
+
+    virtual UniConfLocation location() const;
+    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
+
+private:
+    void save(WvStream &file, UniConfTree &parent);
 };
 
 
@@ -43,8 +48,7 @@ public:
 class UniConfIniFileGenFactory : public UniConfGenFactory
 {
 public:
-    virtual UniConfGen *newgen(const UniConfLocation &location,
-        UniConf *top);
+    virtual UniConfIniFileGen *newgen(const UniConfLocation &location);
 };
 
 

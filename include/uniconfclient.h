@@ -10,13 +10,13 @@
 #ifndef __UNICONFCLIENT_H
 #define __UNICONFCLIENT_H
 
-#include "uniconf.h"
-#include "uniconfpair.h"
-#include "uniconfiter.h"
+#include "uniconfgen.h"
 #include "uniconfconn.h"
+#include "uniconfpair.h"
 #include "wvlog.h"
 #include "wvstream.h"
 #include "wvstreamlist.h"
+#include "wvstringlist.h"
 
 
 /**
@@ -32,36 +32,69 @@
  */
 class UniConfClientGen : public UniConfGen
 {
-public:
-    UniConf *top;
+    UniConfLocation xlocation;
     UniConfConn *conn;
     WvLog log;
     UniConfPairDict waiting;
-    
-    UniConfClientGen(const UniConfLocation &location,
-        UniConf *_top, WvStream *stream, WvStreamList *l = NULL);
-    ~UniConfClientGen();
 
-    virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
-    virtual void enumerate_subtrees(UniConf *conf, bool recursive);
-    virtual void update(UniConf *&h);
-    virtual void pre_get(UniConf *&h);
-    // updates all data I am responsible for.
-    virtual void update_all();
+    bool inprogress; /*!< true while a command is in progress */
+    bool success; /*!< true when a command completed successfully */
+    bool justneedok; /*!< true when a command just needs okay
+        rather than an extended response */
+
+public:
+    UniConfClientGen(const UniConfLocation &location,
+        WvStream *stream);
+    virtual ~UniConfClientGen();
+
+    /***** Overridden members *****/
+
+    virtual UniConfLocation location() const;
     virtual bool isok();
-    virtual void save();
+    virtual void attach(WvStreamList *streamlist);
+    virtual void detach(WvStreamList *streamlist);
+
+    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
+    virtual WvString get(const UniConfKey &key);
+    virtual bool set(const UniConfKey &key, WvStringParm value);
+    virtual bool zap(const UniConfKey &key);
+    virtual bool haschildren(const UniConfKey &key);
+    virtual Iter *iterator(const UniConfKey &key);
+
+    class RemoteKeyIter;
 
 protected:
     void execute(WvStream &s, void *userdata);
-    void executereturn(UniConfKey &key, WvConstStringBuffer &fromline);
+    void executereturn(UniConfKey &key, WvBuffer &fromline);
     void executeforget(UniConfKey &key);
-    void executesubtree(UniConfKey &key, WvConstStringBuffer &fromline);
-    void executeok(WvConstStringBuffer &fromline);
-    void executefail(WvConstStringBuffer &fromline);
-    void savesubtree(UniConf *tree, UniConfKey key);
-    bool waitforsubt;
-private:
-    WvStreamList *list;
+    void executesubtree(UniConfKey &key, WvBuffer &fromline);
+    void executeok(WvBuffer &fromline);
+    void executefail(WvBuffer &fromline);
+    
+    bool wait(bool justneedok = false);
+};
+
+
+/**
+ * An iterator over remote keys.
+ */
+class UniConfClientGen::RemoteKeyIter : public UniConfClientGen::Iter
+{
+protected:
+    WvStringList *xlist;
+    WvStringList::Iter xit;
+
+public:
+    RemoteKeyIter(WvStringList *list);
+    virtual ~RemoteKeyIter();
+
+    /***** Overridden methods *****/
+
+    virtual RemoteKeyIter *clone() const;
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
 };
 
 
@@ -71,8 +104,7 @@ private:
 class UniConfClientGenFactory : public UniConfGenFactory
 {
 public:
-    virtual UniConfGen *newgen(const UniConfLocation &location,
-        UniConf *top);
+    virtual UniConfGen *newgen(const UniConfLocation &location);
 };
 
 #endif // __UNICONFCLIENT_H

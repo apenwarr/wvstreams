@@ -23,11 +23,21 @@ void WvBufferBase<unsigned char>::putstr(WvStringParm str)
 }
 
 
-WvFastString WvBufferBase<unsigned char>::getstr()
+WvString WvBufferBase<unsigned char>::getstr()
 {
-    put('\0');
-    const unsigned char *str = get(used());
-    return WvFastString((const char*)str);
+    /* Copy the contents into the string.
+     * We used to just return a reference to those bytes, but
+     * that required modifying the buffer to append a null
+     * terminator, which does not work with read-only buffers.
+     * This method is also somewhat safer if a little slower.
+     */ 
+    WvString result;
+    size_t len = used();
+    result.setsize(len + 1);
+    char *str = result.edit();
+    move(str, len);
+    str[len] = '\0';
+    return result;
 }
 
 

@@ -16,25 +16,17 @@
 
 /***** UniConf *****/
 
-// basic constructor, generally used for toplevel config file
 UniConf::UniConf() :
-    UniConfNotifyTree(NULL, UniConfKey::EMPTY, WvString::null)
+    Tree(NULL, UniConfKey::EMPTY, ""),
+    generator(NULL), defaults(NULL)
 {
-    init();
 }
 
 
-UniConf::UniConf(UniConf *_parent, const UniConfKey &_name) :
-    UniConfNotifyTree(_parent, _name, WvString::null)
+UniConf::UniConf(UniConf *parent, const UniConfKey &name) :
+    Tree(parent, name, ""),
+    generator(NULL), defaults(NULL)
 {
-    init();
-}
-
-
-void UniConf::init()
-{
-    defaults = NULL;
-    generator = NULL;
 }
 
 
@@ -45,198 +37,125 @@ UniConf::~UniConf()
 }
 
 
-// Find the controlling generator instance
-UniConf *UniConf::gen_top()
+bool UniConf::haschildren()
 {
-    UniConf *h = this;
-    while (h->parent() && ! h->hasgen())
-	h = h->parent();
-    return h; // we reached the top of the tree without finding a generator.
-}
-
-
-// Figure out the full key for this location, but based from the gen_top()
-// instead of the top().
-// 
-// like with gen_key, this method of returning the object is pretty
-// inefficient - lots of extra copying stuff around.
-UniConfKey UniConf::gen_full_key()
-{
-    return fullkey(gen_top());
-}
-
-bool UniConf::check_children()
-{
-    if (hasgen())
-    {
-        generator->enumerate_subtrees(this, false);
-    }
-    else
-    {
-        // quick hack for now
-        UniConf *top = gen_top();
-        if (top != this && top->hasgen())
-            top->generator->enumerate_subtrees(top, true);
-    }
-    return haschildren();
-}
-
-void UniConf::remove(const UniConfKey &key)
-{
-    UniConf *toremove = find(key);
-    
-    if (!toremove)
-    {
-        wvcon->print("Could not remove %s.\n", key);
-        return;
-    }
-
-    toremove->setvalue(WvString::null);
-    toremove->dirty = true;
-    //toremove->deleted = true;
-    UniConf::RecursiveIter i(*toremove);
-
-    for (i.rewind(); i.next();)
-    {
-        i->setvalue(WvString::null);
-        i->dirty = true;
-//        i->deleted = true;
-//        i->child_deleted = true;
-    }
-
-/*    for (UniConf *par = toremove->parent; par != NULL; par = par->parent)
-    {
-        par->child_deleted = true;
-    }*/
-}
-
-// find a key in the subtree.  If it doesn't already exist, create it.
-UniConf *UniConf::findormake(const UniConfKey &key)
-{
-    UniConf *tree = static_cast<UniConf*>(UniConfNotifyTree::find(key));
-    if (tree)
-        return tree;
-
-    // we need to actually create the key
-    UniConf *htop = gen_top();
-    if (htop->generator)
-    {
-        UniConf *toreturn = htop->generator->make_tree(this, key);
-       
-        // avoid an infinite loop... but at the same time check to see
-        // that we can get our info.
-        while(toreturn->waiting || toreturn->obsolete)
-        {
-            htop->generator->update(toreturn);
-        }
-        return toreturn;
-    }
-    else
-    {
-        // generate an empty tree
-	return UniConfNullGen().make_tree(this, key);
-    }
-}
-
-void UniConf::update()
-{
-    UniConf *htop = gen_top();
-    UniConf *me = this;
-    while (obsolete || waiting && !dirty)
-    {
-        htop->generator->update(me);
-    }
-}
-
-// find a key that contains the default value for this key, regardless of
-// whether this key _needs_ a default value or not.  (If !!value, we no longer
-// need a default, but this function still can return non-NULL.)
-// 
-// If there's no available default value for this key, return NULL.
-// 
-UniConf *UniConf::find_default(const UniConfKey &k) const
-{
-    //wvcon->print("find_default for '%s'\n", full_key());
-	
-    if (defaults)
-    {
-	//wvcon->print("  find key '%s' in '%s'\n", k, defaults->full_key());
-	UniConf *def = defaults->find(k);
-	if (def)
-	    return def;
-    }
-    
-    if (parent())
-    {
-	// go up a level and try again
-	UniConf *def = parent()->find_default(UniConfKey(key(), k));
-	if (def)
-	    return def;
-	
-	// try with a wildcard instead
-	def = parent()->find_default(UniConfKey(UniConfKey::ANY, k));
-	if (def)
-	    return def;
-    }
-    
-    return NULL;
+    UniConfKey genkey(UniConfKey::EMPTY);
+    UniConfGen *gen = findgen(genkey);
+    if (gen)
+        return gen->haschildren(genkey);
+    return false;
 }
 
 
 WvString UniConf::get(const UniConfKey &key)
 {
-    UniConf *tree = find(key);
-    if (tree && tree->value())
-        return tree->value();
-
-    UniConf *def = find_default();
-    if (def)
-        return def->get(key);
+    UniConfKey genkey(key);
+    UniConfGen *gen = findgen(genkey);
+    if (gen)
+        return gen->get(genkey);
     return WvString::null;
 }
 
 
-void UniConf::set(const UniConfKey &key, WvStringParm _value)
+bool UniConf::set(const UniConfKey &key, WvStringParm value)
 {
-    if (! key.isempty())
-    {
-        findormake(key)->set(UniConfKey::EMPTY, _value);
-        return;
-    }
-    if (value() == _value)
-	return; // nothing to change - no notifications needed
-    setvalue(_value);
-
-    marknotify();
+    UniConfKey genkey(key);
+    UniConfGen *gen = findgen(genkey);
+    if (gen)
+        return gen->set(genkey, value);
+    return false;
 }
 
 
-void UniConf::load()
+bool UniConf::zap(const UniConfKey &key)
 {
-    if (generator)
-	generator->load();
-    else if (haschildren())
-    {
-	UniConf::Iter it(*this);
-	for (it.rewind(); it.next(); )
-	    it->load();
-    }
+    UniConf *node = find(key);
+    if (node)
+        node->zap_recursive();
+    return true;
 }
 
 
-void UniConf::save()
+bool UniConf::zap_recursive()
 {
-    if (!dirty && !child_dirty)
-	return; // done!
-    
-    if (generator)
-	generator->save();
-    else if (haschildren() && child_dirty)
+    UniConf::Tree::Iter it(*this);
+    for (it.rewind(); it.next(); )
     {
-        UniConf::Iter it(*this);
-	for (it.rewind(); it.next(); )
-	    it->save();
+        UniConf *node = it.ptr();
+        if (! node->zap_recursive())
+            delete node;
     }
+    return generator != NULL;
+}
+
+
+bool UniConf::commit(const UniConfKey &key, UniConf::Depth depth)
+{
+    UniConfKey genkey(key);
+    UniConfGen *gen = findgen(genkey);
+    bool success;
+    if (gen)
+        success = gen->commit(genkey, depth);
+    else
+        success = true;
+
+    // AWFUL HACK
+    UniConf::Tree::Iter it(*this);
+    switch (depth)
+    {
+        case UniConf::ZERO:
+            break;
+            
+        case UniConf::ONE:
+        case UniConf::CHILDREN:
+            for (it.rewind(); it.next(); )
+                success = it->commit(key.removefirst(),
+                    UniConf::ZERO) && success;
+            break;
+            
+        case UniConf::INFINITE:
+        case UniConf::DESCENDENTS:
+            for (it.rewind(); it.next(); )
+                success = it->commit(key.removefirst(),
+                    UniConf::DESCENDENTS) && success;
+            break;
+    }
+    return success;
+}
+
+
+bool UniConf::refresh(const UniConfKey &key, UniConf::Depth depth)
+{
+    UniConfKey genkey(key);
+    UniConfGen *gen = findgen(genkey);
+    bool success;
+    if (gen)
+        success = gen->refresh(genkey, depth);
+    else
+        success = true;
+        
+    // AWFUL HACK
+    UniConf::Tree::Iter it(*this);
+    switch (depth)
+    {
+        case UniConf::ZERO:
+            break;
+            
+        case UniConf::ONE:
+        case UniConf::CHILDREN:
+            for (it.rewind(); it.next(); )
+                success = it->refresh(key.removefirst(),
+                    UniConf::ZERO) && success;
+            break;
+            
+        case UniConf::INFINITE:
+        case UniConf::DESCENDENTS:
+            for (it.rewind(); it.next(); )
+                success = it->refresh(key.removefirst(),
+                    UniConf::DESCENDENTS) && success;
+            break;
+    }
+    return success;
 }
 
 
@@ -250,28 +169,221 @@ void UniConf::dump(WvStream &stream, bool everything)
     }
 }
 
-bool UniConf::mount(const UniConfLocation &location)
+UniConfGen *UniConf::mount(const UniConfLocation &location)
 {
-    unmount();
-    return mount(UniConfGenFactoryRegistry::instance()->
-        newgen(location, this));
+    return mountgen(UniConfGenFactoryRegistry::instance()->
+        newgen(location));
 }
 
 
-bool UniConf::mount(UniConfGen *gen)
+UniConfGen *UniConf::mountgen(UniConfGen *gen)
 {
     unmount();
+    generator = gen;
+    return gen;
+}
+
+
+void UniConf::unmount()
+{
+    if (generator)
+    {
+        delete generator;
+        generator = NULL;
+    }
+}
+
+
+bool UniConf::isok()
+{
+    UniConf *node = genroot();
+    if (node->generator)
+        return node->generator->isok();
+    return false;
+}
+
+
+/***** UniConf::Iter *****/
+
+UniConf::Iter::Iter(UniConf &root) :
+    xroot(& root), it(root), genit(NULL), hack(13)
+{
+}
+
+
+UniConf::Iter::~Iter()
+{
+    delete genit;
+}
+
+
+void UniConf::Iter::rewind()
+{
+    delete genit;
+    genit = NULL;
+    UniConfKey genkey(UniConfKey::EMPTY);
+    UniConfGen *gen = xroot->findgen(genkey);
     if (gen)
     {
-        generator = gen;
-        generator->load();
-        return true;
+        genit = gen->iterator(genkey);
+        genit->rewind();
+    }
+    
+    it.rewind();
+    hack.zap();
+    current = NULL;
+}
+
+
+bool UniConf::Iter::next()
+{
+    if (genit)
+    {
+        if (genit->next())
+        {
+            hack.add(new WvString(genit->key()), true);
+            current = xroot->findormake(genit->key());
+            return true;
+        }
+        delete genit;
+        genit = NULL;
+    }
+
+    // look at other mounted subtrees
+    while (it.next())
+    {
+        if (! hack[it->key()])
+        {
+            current = it.ptr();
+            return true;
+        }
     }
     return false;
 }
 
-void UniConf::unmount()
+
+
+/***** UniConf::RecursiveIter *****/
+
+UniConf::RecursiveIter::RecursiveIter(UniConf &_root,
+    UniConf::Depth _depth) :
+    top(_root), depth(_depth)
 {
-    delete generator;
-    generator = NULL;
 }
+
+
+void UniConf::RecursiveIter::rewind()
+{
+    itlist.zap();
+    first = false;
+    switch (depth)
+    {
+        case UniConf::ZERO:
+            first = true;
+            break;
+
+        case UniConf::ONE:
+        case UniConf::INFINITE:
+            first = true;
+            // fall through
+
+        case UniConf::CHILDREN:
+        case UniConf::DESCENDENTS:
+            itlist.append(& top, false);
+            top.rewind();
+            break;
+    }
+}
+
+
+bool UniConf::RecursiveIter::next()
+{
+    if (first)
+    {
+        first = false;
+        current = root();
+        return true;
+    }
+
+    IterList::Iter itlistit(itlist);
+    for (itlistit.rewind(); itlistit.next(); )
+    {
+        UniConf::Iter &it = itlistit();
+        if (it.next())
+        {
+            current = it.ptr();
+            if ((depth == UniConf::INFINITE ||
+                depth == UniConf::DESCENDENTS) &&
+                current->haschildren())
+            {
+                UniConf::Iter *subit = new UniConf::Iter(*current);
+                subit->rewind();
+                itlist.prepend(subit, true);
+            }
+            return true;
+        }
+        itlistit.xunlink();
+    }
+    return false;
+}
+
+
+
+#if 0
+static int find_wildcard_depth(const UniConfKey &k)
+{
+    int depth = 0;
+    int segments = k.numsegments();
+    while (depth < segments)
+    {
+        if (k.segment(depth) == UniConfKey::ANY)
+            break;
+	depth++;
+    }
+    return depth;
+}
+    
+
+// I hate constructors.
+UniConf::XIter::XIter(UniConf &_top, const UniConfKey &_key) :
+    skiplevel(find_wildcard_depth(_key)),
+    top(_top.find(_key.first(skiplevel))),
+    key(_key.removefirst(skiplevel)),
+    _toplink(top, false),
+    toplink(top ? &_toplink : NULL),
+    i((top && top->check_children()) ?
+        *top->children : null_wvhconfdict)
+{
+    subiter = NULL; 
+}
+
+
+WvLink *UniConf::XIter::_next()
+{
+    if (key.isempty()) // we're the innermost object
+    {
+	if (++going == 1)
+	    return toplink;
+	else
+	    return NULL;
+    }
+    
+    do
+    {
+	if (!subiter && i.ptr())
+	{
+	    subiter = new XIter(*i, key.removefirst(1));
+	    subiter->rewind();
+	}
+	
+	if (subiter)
+	{
+	    WvLink *l = subiter->next();
+	    if (l) return l;
+	    unsub();
+	}
+    } while (i.next());
+    
+    return NULL;
+}
+#endif

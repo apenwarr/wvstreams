@@ -29,6 +29,7 @@ public:
 
     /**
      * Copies a WvString into the buffer, excluding the null-terminator.
+     * @param str the string
      */
     void putstr(WvStringParm str);
     void putstr(WVSTRING_FORMAT_DECL)
@@ -36,41 +37,93 @@ public:
 
     /**
      * Returns the entire buffer as a null-terminated WvString.
+     * <p>
      * If the buffer contains null characters, they will seem to
-     *   terminate the string.
-     * The returned string is only valid until the next non-const
-     *   buffer member is called.  Copy the string if you need to
-     *   keep it for longer than that.
-     *
+     * prematurely terminate the string.
+     * </p><p>
      * After this operation, ungettable() >= length of the string.
+     * </p>
+     * @return the buffer contents as a string
      */
-    WvFastString getstr();
+    WvString getstr();
 
     /*** Get/put characters as integer values ***/
 
-    inline int getch() { return int(get()); }
-    inline void putch(int ch) { put((unsigned char)ch); }
-    inline int peekch(int offset = 0) { return int(peek(offset)); }
+    /**
+     * Returns a single character from the buffer as an int.
+     * <p>
+     * The same constraints apply as for get(1).
+     * </p>
+     * @return the character
+     */
+    inline int getch()
+        { return int(get()); }
+
+    /**
+     * Puts a single character into the buffer as an int.
+     * <p>
+     * The same constraints apply as for alloc(1).
+     * </p>
+     * @param ch the character
+     */
+    inline void putch(int ch)
+        { put((unsigned char)ch); }
+
+    /**
+     * Peeks a single character from the buffer as an int.
+     * <p>
+     * The same constraints apply as for peek(offset, 1).
+     * </p>
+     * @param offset the offset
+     * @return the character
+     */
+    inline int peekch(int offset = 0)
+        { return int(peek(offset)); }
     
     /**
-     * Returns the number of bytes that would have to be read to find
-     * the first character 'ch', or zero if 'ch' is not in the buffer.
+     * Returns the number of characters that would have to be read
+     * to find the first instance of the character.
+     * @param ch the character
+     * @return the number of bytes, or zero if the character is not
+     *         in the buffer
      */
     size_t strchr(int ch);
 
     /**
-     * Returns the number of leading bytes that match any in the list.
+     * Returns the number of leading buffer elements that match
+     * any of those in the list.
+     * @param bytelist the list bytes to search for
+     * @param numbytes the number of bytes in the list
+     * @return the number of leading buffer elements that match
      */
     inline size_t match(const void *bytelist, size_t numbytes)
         { return _match(bytelist, numbytes, false); }
+        
+    /**
+     * Returns the number of leading buffer elements that match
+     * any of those in the list.
+     * @param chlist a string of characters to search for
+     * @return the number of leading buffer elements that match
+     */
     size_t match(const char *chlist)
         { return match(chlist, strlen(chlist)); }
 
     /**
-     * Returns the number of leading bytes that do not match any in the list.
+     * Returns the number of leading buffer elements that do not
+     * match any of those in the list.
+     * @param bytelist the list bytes to search for
+     * @param numbytes the number of bytes in the list
+     * @return the number of leading buffer elements that don't match
      */
     inline size_t notmatch(const void *bytelist, size_t numbytes)
         { return _match(bytelist, numbytes, true); }
+
+    /**
+     * Returns the number of leading buffer elements that do not
+     * match any of those in the list.
+     * @param chlist a string of characters to search for
+     * @return the number of leading buffer elements that don't match
+     */
     size_t notmatch(const char *chlist)
         { return notmatch(chlist, strlen(chlist)); }
 

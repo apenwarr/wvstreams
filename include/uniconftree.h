@@ -24,7 +24,7 @@ protected:
     UniConfTreeBaseDict *xchildren; /*!< the children of this node */
 
     UniConfTreeBase(UniConfTreeBase *parent, const UniConfKey &key,
-        WvStringParm value = WvString::null);
+        WvStringParm value);
 
 public:
     ~UniConfTreeBase();
@@ -38,12 +38,8 @@ protected:
 
     UniConfTreeBase *_find(const UniConfKey &key) const;
     
-    typedef UniConfTreeBase *(* _MakeNodeFunc)(
-        UniConfTreeBase *, const UniConfKey &key);
-
-    UniConfTreeBase *_findormake(const UniConfKey &key,
-        _MakeNodeFunc func);
-
+    UniConfTreeBase *_findchild(const UniConfKey &key) const;
+    
     class Iter;
     friend class Iter;
         
@@ -57,7 +53,6 @@ public:
 private:
     void link(UniConfTreeBase *node);
     void unlink(UniConfTreeBase *node);
-    UniConfTreeBase *findchild(const UniConfKey &key) const;
 };
 
 DeclareWvDict(UniConfTreeBase, UniConfKey, key());
@@ -75,6 +70,8 @@ class UniConfTreeBase::Iter
 
 public:
     Iter(UniConfTreeBase &tree);
+
+    Iter(const Iter &other);
 
     void rewind();
 
@@ -98,7 +95,7 @@ public:
  * @param T the name of the concrete subclass of UniConfTree
  */
 template<class T>
-class UniConfTree : public UniConfTreeBase
+class UniConfTreeGeneric : public UniConfTreeBase
 {
     DeclareWvDict3(T, Dict, UniConfKey, key(),);
 
@@ -107,10 +104,10 @@ public:
      * Creates a node and links it to a subtree.
      * @param parent the parent node, or NULL
      * @param key the key
-     * @param value the value, defaults to WvString::null
+     * @param value the value
      */
-    UniConfTree(T *parent, const UniConfKey &key,
-        WvStringParm value = WvString::null) :
+    inline UniConfTreeGeneric(T *parent, const UniConfKey &key,
+        WvStringParm value) :
         UniConfTreeBase(parent, key, value)
     {
     }
@@ -119,7 +116,7 @@ public:
      * Unlinks the node from its parent, destroys it along with
      * its contents and children.
      */
-    inline ~UniConfTree()
+    inline ~UniConfTreeGeneric()
     {
         zap();
     }
@@ -170,27 +167,20 @@ public:
     {
         return static_cast<T*>(UniConfTreeBase::_find(key));
     }
-
-    /**
-     * A function that is used to construct new nodes.
-     */
-    typedef T *(* MakeNodeFunc)(T *, const UniConfKey &key);
     
-    static UniConfTreeBase *defaultmakenodefunc(
-        UniConfTreeBase *parent, const UniConfKey &key)
-    {
-        return new T(parent, key);
-    }
-
     /**
-     * Finds the node for the specified key or creates a new one
-     * with a null value in its place.
+     * Finds the direct child node for the specified key.
+     * <p>
+     * If key.numsegments() == 1, then performs the same task
+     * as find(key), but a little faster.  Otherwise returns NULL.
+     * </p>
      * @param key the key
-     * @param func a function that is used to construct new node
-     * @return the node
+     * @return the node, or NULL
      */
-    inline T *findormake(const UniConfKey &key,
-        MakeNodeFunc func = defaultmakenodefunc);
+    inline T *findchild(const UniConfKey &key) const
+    {
+        return static_cast<T*>(UniConfTreeBase::_findchild(key));
+    }
 
     /**
      * Removes the node for the specified key from the tree
@@ -206,7 +196,7 @@ public:
     }
     
     /**
-     * Removes and deletes all nodes in this subtree.
+     * Removes and deletes all children of this node.
      */
     void zap()
     {
@@ -224,11 +214,24 @@ public:
     class Iter : private UniConfTreeBase::Iter
     {
     public:
+        /**
+         * Creates an iterator over the specified tree.
+         */
         Iter(T &tree) : UniConfTreeBase::Iter(tree) { }
+
+        /**
+         * Creates a copy of another iterator that begins iteration
+         * at the same position as the other left off if rewind()
+         * is not called.
+         */
+        Iter(const Iter &other) : UniConfTreeBase::Iter(other) { }
 
         using UniConfTreeBase::Iter::rewind;
         using UniConfTreeBase::Iter::next;
 
+        /**
+         * Returns a pointer to the current node.
+         */
         inline T *ptr() const
         {
             return static_cast<T*>(UniConfTreeBase::Iter::ptr());
@@ -237,6 +240,20 @@ public:
     };
 };
 
+
+/**
+ * A plain UniConfTree.
+ */
+class UniConfTree : public UniConfTreeGeneric<UniConfTree>
+{
+public:
+    inline UniConfTree(UniConfTree *parent,
+        const UniConfKey &key,
+        WvStringParm value) :
+        UniConfTreeGeneric<UniConfTree>(parent, key, value)
+    {
+    }
+};
 
 
 #endif //__UNICONFTREE_H

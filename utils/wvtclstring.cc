@@ -123,91 +123,94 @@ WvString wvtcl_getword(WvBuffer &buf, const char *splitchars, bool do_unescape)
     if (origsize == 0)
         return WvString::null;
 
-    bool inescape = false, inquote = false;
+    bool inescape = false;
+    bool inquote = false;
+    bool incontinuation = false;
     int bracecount = 0;
-    char *sptr = (char *)buf.get(origsize);
-    char *eptr = sptr;
+    const char *sptr = (const char*)buf.get(origsize);
+    int len = 0;
 
-    inquote = (*sptr == '"');
-    
-    // If the first character is a quote, we need to move
-    // eptr so we don't get just an empty 0 character string.
-    if (inquote)
-        eptr++;
-    
-    for (; *eptr && (eptr - sptr < origsize); eptr++)
+    // detect initial quote
+    if (*sptr == '"')
     {
-	// end of a quoted/unquoted string
-	if (!bracecount && !inescape 
-	    && ((inquote && *eptr == '"')
-		|| (!inquote && strchr(splitchars, *eptr))))
-	{
-	    if (inquote)
-		eptr++;
-          
-	    char olde = *eptr;
-	    *eptr = 0;
-            WvString toreturn;  // NULL string
-	    if (*sptr)
-	    {
-                // This new stuff here was added to deal with a memory 
-                // corruption issue.
-                char newstring[(eptr - sptr)+1];
-                strncpy(newstring, sptr, (eptr - sptr));
-                newstring[(eptr - sptr)] = '\0';
-		if (do_unescape)
-		    toreturn = wvtcl_unescape(newstring);
-		else
-		    toreturn = newstring;
-	    }
-	    *eptr = olde; // make sure the loop doesn't exit!
-	    if (inquote)
-		eptr--;
-            origsize -= (eptr - sptr) + 1;
-            if (! toreturn.isnull())
+        inquote = true;
+        len = 1;
+    }
+    
+    // loop over string until something satisfactory is found
+    for (; len < origsize; ++len)
+    {
+        char ch = sptr[len];
+        
+        // handle escapes and line continuations
+        // we wait until we receive the next character after these
+        // before returning any data
+        incontinuation = false;
+        if (inescape)
+        {
+            inescape = false;
+            if (ch == '\n')
             {
-                buf.unget(origsize);
-                return toreturn;
+                incontinuation = true;
+                continue; // need a character from the next line
+            }
+        }
+        else
+        {
+            if (ch == '\\')
+            {
+                inescape = true;
+                continue; // need a character to complete escape
+            }
+        }
+
+        // detect end of a quoted/unquoted string
+        if (bracecount == 0)
+        {
+            if (inquote)
+            {
+                if (ch == '"')
+                {
+                    len += 1; // include the quote
+                    goto returnstring;
+                }
             }
             else
             {
-                sptr = eptr + 1;
-                // if the next string begins with a quote, remember that.
-                inquote = (*sptr == '"');
-                if (inquote)
-                    eptr++;
+                if (strchr(splitchars, ch))
+                {
+                    origsize -= 1; // consume the delimiter
+                    goto returnstring;
+                }
             }
-	    continue;
-	}
-	
-	if (!inquote && !inescape && *eptr == '{')
-	    bracecount++;
-	else if (!inquote && !inescape && *eptr == '}')
-	    bracecount--;
-	
-	if (*eptr == '\\')
-	    inescape = !inescape;
-	else
-	    inescape = false;
+        }
+        // match braces
+        if (! inquote)
+        {
+            if (ch == '{')
+                bracecount += 1;
+            else if (ch == '}')
+                bracecount -= 1;
+        }
     }
     
     // finished the string - get the terminating element, if any.
-    if (*sptr && !bracecount && !inquote)
-    {
-        // This new stuff here was added due to a memory corruption issue.
-        char newstring[(eptr - sptr)+1];
-        strncpy(newstring, sptr, (eptr - sptr));
-        newstring[(eptr - sptr)] = '\0';
-        if (do_unescape)
-            return wvtcl_unescape(newstring);
-        else
-            return newstring;
-    }
-    else
-    {
-        buf.unget(origsize);
-    }
-   return WvString::null;
+    if (bracecount == 0 && !inquote && !inescape && !incontinuation)
+        goto returnstring;
+
+    // give up
+    buf.unget(origsize);
+    return WvString::null;
+
+returnstring:
+    char str[len + 1];
+    memcpy(str, sptr, len);
+    str[len] = '\0';
+    buf.unget(origsize - len);
+
+    if (do_unescape)
+        return wvtcl_unescape(str).unique();
+    return WvString(str).unique();
 }
 
 void wvtcl_decode(WvStringList &l, WvStringParm _s,

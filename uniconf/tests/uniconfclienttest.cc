@@ -10,9 +10,6 @@
 #include "uniconfclient.h"
 #include "wvtcp.h"
 
-// Control variable
-bool want_to_die = false;
-
 WvString printheader(WvString h, WvString mountpoint)
 {
     WvString header("%s WITH MOUNTPOINT %s", h, mountpoint);
@@ -75,10 +72,10 @@ bool testgetfromsections(UniConf &mainconf, WvString prefix)
 {
     bool pass = true;
     WvString key("%s/chickens", prefix);
-    UniConf *neep = mainconf.findormake(key);
+    UniConf *neep = & mainconf[key];
     WvString subkey("bob");
     WvString result("goof");
-    UniConf *narf = neep->findormake(subkey);
+    UniConf *narf = & (*neep)[subkey];
     pass &= compareresults(result, narf->value());
     wvcon->print("\"%s/%s\" should be:%s.Real Value:%s.\n",
         key, subkey, result, narf->value());
@@ -88,8 +85,8 @@ bool testgetfromsections(UniConf &mainconf, WvString prefix)
     subkey = "apenwarr";
     WvString sub_subkey("ftp");
     result = "1";
-    narf = neep->findormake(subkey);
-    narf = narf->findormake(sub_subkey);
+    narf = & (*neep)[subkey];
+    narf = & (*narf)[sub_subkey];
     pass &= compareresults(result, narf->value());
     wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n",
         key, subkey, sub_subkey, result, narf->value());
@@ -110,7 +107,7 @@ bool testgetsetkey(UniConf &mainconf, WvString prefix)
     
     WvString key("%s/chickens/bob", prefix);
     WvString result("goof");
-    UniConf *narf = mainconf.findormake(key);
+    UniConf *narf = & mainconf[key];
 
     pass &= compareresults(result, narf->value());
     
@@ -168,7 +165,7 @@ int main(int argc, char **argv)
         if ("all" == totest || "get" == totest)
         {
             UniConf mainconf;
-            UniConf *mounted = mainconf.findormake(mountpoint);
+            UniConf *mounted = & mainconf[mountpoint];
             mounted->mount(location);
 
             h = printheader("TEST GETTING KEYS", mountpoint);
@@ -179,7 +176,7 @@ int main(int argc, char **argv)
         if ("all" == totest || "section" == totest) 
         {
             UniConf mainconf;
-            UniConf *mounted = mainconf.findormake(mountpoint);
+            UniConf *mounted = & mainconf[mountpoint];
             mounted->mount(location);
 
             h = printheader("TEST GETTING FROM A SECTION", mountpoint);
@@ -190,7 +187,7 @@ int main(int argc, char **argv)
         if ("all" == totest || "set" == totest) 
         {
                 UniConf mainconf;
-                UniConf *mounted = mainconf.findormake(mountpoint);
+                UniConf *mounted = & mainconf[mountpoint];
                 mounted->mount(location);
 
                 h = printheader("TEST SETTING KEYS", mountpoint);

@@ -7,71 +7,34 @@
  * A generator for .ini files.
  */
 #include "uniconfini.h"
-#include "uniconfiter.h"
 #include "wvtclstring.h"
 #include "strutils.h"
 #include "wvfile.h"
 
-static WvFastString inicode(WvStringParm s)
+static void printsection(WvStream &file, const UniConfKey &key)
 {
-    static const char white[] = " \t\r\n";
-    
-    // we need braces if the string starts/ends with whitespace
-    if (!!s && (strchr(white, *s) || strchr(white, s[strlen(s)-1])))
-	return wvtcl_escape(s, " \t\r\n=[]");
-    else
-	return wvtcl_escape(s, "\r\n=[]");
+    file.print("[%s]\n", wvtcl_escape(key.strip(), "\t\r\n[]"));
 }
 
-
-static WvString inidecode(WvStringParm _s)
+static void printkey(WvStream &file, const UniConfKey &key,
+    WvStringParm value)
 {
-    WvString s(_s);
-    return wvtcl_unescape(trim_string(s.edit()));
-}
-
-
-static void inisplit(WvStringParm s, WvString &key, WvString &value)
-{
-    WvStringList l;
-    wvtcl_decode(l, s, "=", false);
-    
-    if (l.count() < 2) // couldn't split
-    {
-	key = value = WvString();
-	return;
-    }
-    
-    WvStringList::Iter i(l);
-    i.rewind(); i.next();
-    key = wvtcl_unescape(trim_string(i->edit()));
-    
-    WvString tval("");
-    while (i.next())
-    {
-	// handle embedded equal signs that got split.
-	// FIXME: in lines like 'foo = blah == weasels', we'll read as if
-	//   it were 'foo = blah = weasels', which is kinda bad...
-	if (!!tval)
-	    tval.append("=");
-	tval.append(*i);
-    }
-    
-    value = wvtcl_unescape(trim_string(tval.edit()));
-    //printf(" split '%s' to '%s'='%s'\n", (const char *)s, 
-    //    key.cstr(), value.cstr());
+    // need to escape []#= in key only to distinguish a key/value
+    // pair from a section name or comment and to delimit the value
+    file.print("%s = %s\n",
+        wvtcl_escape(key.strip(), " \t\r\n[]=#"),
+        wvtcl_escape(value, " \t\r\n"));
 }
 
 
 /***** UniConfIniFileGen *****/
 
 UniConfIniFileGen::UniConfIniFileGen(
-    UniConf *_top, WvStringParm _filename) :
-    UniConfGen(WvString("ini://%s", _filename)),
+    WvStringParm _filename) :
     filename(_filename), log(filename)
 {
-    top = _top;
-    log(WvLog::Debug1, "Using IniFile '%s' at location '%s'.\n", filename, top->fullkey());
+    log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
+    refresh(UniConfKey::EMPTY, UniConf::INFINITE);
 }
 
 
@@ -80,187 +43,194 @@ UniConfIniFileGen::~UniConfIniFileGen()
 }
 
 
-void UniConfIniFileGen::load()
+UniConfLocation UniConfIniFileGen::location() const
 {
-    char *cptr, *line;
-    UniConf *h;
-    WvFile f(filename, O_RDONLY);
-    WvDynamicBuffer b;
-    WvString section = "";
-    size_t len;
-    
-    if (!f.isok())
-    {
-	log("Can't open config file: %s\n", f.errstr());
-	return;
-    }
-    
-    while (f.isok())
-    {
-	cptr = (char *)b.alloc(1024);
-	len = f.read(cptr, 1024);
-	b.unalloc(1024-len);
-    }
-    
-    WvStringList l;
-    wvtcl_decode(l, b.getstr(), "\r\n", "\r\n");
-    
-    WvStringList::Iter i(l);
-    for (i.rewind(); i.next(); )
-    {
-	line = trim_string(i->edit());
-	//log("-*- '%s'\n", line);
-	
-	// beginning of a new section?
-	if (line[0] == '[' && line[strlen(line)-1] == ']')
-	{
-	    line[strlen(line)-1] = 0;
-	    WvString ss(line+1);
-	    section = inidecode(ss);
-	    continue;
-	}
-	
-	// name = value setting?
-	WvString key, value;
-	inisplit(line, key, value);
-	if (!!key && !!value)
-	{
-	    h = make_tree(top, UniConfKey(section, key));
-	    
-	    bool d1 = h->dirty, d2 = h->child_dirty;
-	    h->setvalue(value);
-	    
-	    // loaded _from_ the config file, so that didn't make it dirty!
-	    h->dirty = d1;
-	    h->child_dirty = d2;
-	}
-    }
+    return UniConfLocation(WvString("ini://%s", filename));
 }
 
 
-void UniConfIniFileGen::save()
+bool UniConfIniFileGen::refresh(const UniConfKey &key,
+    UniConf::Depth depth)
 {
-    WvString newfile(filename);
-    if (!top->dirty && !top->child_dirty)
-	return; // no need to rewrite!
-    
-    log("Saving %s...\n", newfile);
-    
-    WvFile out(WvString("%s", newfile), O_WRONLY|O_CREAT|O_TRUNC);
-    if (out.isok())
+    /** open the file **/
+    WvFile file(filename, O_RDONLY);
+    if (! file.isok())
     {
-        save_subtree(out, top, UniConfKey::EMPTY);
-        out("\n");
+        log("Cannot open config file for reading: \"%s\"\n",
+            file.errstr());
+        file.close();
+        return false;
     }
-    else
-        log("Error writing to config file: %s\n", out.errstr());
-}
 
-
-// find the number of non-empty-valued nodes under 'h', not including 'h'
-// itself.  Store a pointer to the first one in 'ret'.
-static int count_children(UniConf *h, UniConf *&ret)
-{
-    UniConf *tmp = NULL;
-    ret = NULL;
+    /** wipe out all known data **/
+    UniConfTempGen::remove(UniConfKey::EMPTY);
     
-    int nchildren = 0;
-    UniConf::Iter it(*h);
-    for (it.rewind(); it.next(); )
+    /** loop over all Tcl words in the file **/
+    UniConfKey section;
+    WvDynamicBuffer buf;
+    for (bool eof = false; ! eof; )
     {
-	nchildren += count_children(it.ptr(), tmp);
-	if (! it->value().isnull())
-	    nchildren++;
-	
-	if (!ret)
-	{
-	    if (! it->value().isnull())
-		ret = it.ptr();
-	    else
-		ret = tmp;
-	}
-    }
-    
-    return nchildren;
-}
+        if (file.isok())
+        {
+            // read entire lines to ensure that we get whole values
+            char *line = file.getline(-1);
+            if (line)
+                buf.putstr(line);
+            else
+                eof = true;
+        }
+        else
+            eof = true;
 
-
-// true if 'h' has any non-empty-valued child nodes beneath it, with a
-// maximum of one non-empty-valued node per direct child.  The idea here
-// is to let us collapse inifile branches to minimize the number of
-// single-entry sections.
-static bool any_interesting_children(UniConf *h)
-{
-    UniConf *junk;
-    
-    UniConf::Iter it(*h);
-    for (it.rewind(); it.next(); )
-    {
-	if (! it->value().isnull())
-	    return true; // a direct value exists: we have to write it.
-	else if (h->parent() && count_children(it.ptr(), junk) == 1)
-	    return true; // exactly one indirect value exists for this child.
-    }
-    
-    return false;
-}
-
-
-void UniConfIniFileGen::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
-{
-    UniConf *interesting;
-    
-    // special case: the root node of this generator shouldn't get its own
-    // section unless there are _really_ nodes directly in that section.
-    // (ie. single-entry subsections should still get their own subsections
-    // in the file, for compatibility with the old WvConf).
-    bool top_special = h->comparegen(this); //(h->generator==this);
-    
-    // dump the "root level" of this tree into one section
-    if (any_interesting_children(h))
-    {
-	// we could use inicode here, but then section names containing
-	// '=' signs get quoted unnecessarily.
-        /** note: we strip off leading slashes here **/
-	out("\n[%s]\n", wvtcl_escape(key.strip(), " \t\r\n[]"));
-    
-	UniConf::Iter it(*h);
-	for (it.rewind(); it.next(); )
-	{
-	    if (it->hasgen() && ! it->comparegen(this))
-	        continue;
-                
-	    if (! it->value().isnull())
+        if (eof)
+        {
+            // detect missing newline at end of file
+            size_t avail = buf.used();
+            if (avail == 0)
+                break;
+            if (buf.peek(avail - 1) == '\n')
+                break;
+            // run the loop one more time to compensate
+        }
+        buf.put('\n');
+        
+        for (WvString word;
+            ! (word = wvtcl_getword(buf, "\r\n", false)).isnull(); )
+        {
+            char *str = trim_string(word.edit());
+            int len = strlen(str);
+            if (len == 0)
             {
-		out("%s = %s\n", inicode(it->key().strip()),
-                    inicode(it->value()));
+                // we have an empty line
+                continue;
             }
-	    
-	    if (!top_special && count_children(it.ptr(), interesting) == 1)
-	    {
-		// exactly one interesting child: don't bother with a
-		// subsection.
-                out("%s = %s\n",
-                    inicode(interesting->fullkey(h).strip()),
-                    inicode(interesting->value()));
-	    }
-	}
+            if (str[0] == '#')
+            {
+                // we have a comment line
+                log(WvLog::Debug5, "Comment: \"%s\"\n", str + 1);
+                continue;
+            }
+            if (str[0] == '[' && str[len - 1] == ']')
+            {
+                // we have a section name line
+                str[len - 1] = '\0';
+                WvString name(wvtcl_unescape(trim_string(str + 1)));
+                section = UniConfKey(name.unique());
+                log(WvLog::Debug5, "Section: \"%s\"\n", section);
+                continue;
+            }
+            // we possibly have a key = value line
+            WvConstStringBuffer line(word);
+            WvString temp = wvtcl_getword(line, "=", false);
+            if (! temp.isnull() && line.peek(-1) == '=')
+            {
+                WvString name(wvtcl_unescape(trim_string(temp.edit())));
+                UniConfKey key(name.unique());
+                if (! key.isempty())
+                {
+                    key.prepend(section);
+                    temp = line.getstr();
+                    WvString value(wvtcl_unescape(trim_string(temp.edit())));
+                    UniConfTempGen::set(key, value.unique());
+                    log(WvLog::Debug5, "Set: (\"%s\", \"%s\")\n",
+                        key, value);
+                    continue;
+                }
+            }
+            log("Ignoring malformed input line: \"%s\"\n", word);
+        }
     }
-    
-    // dump subtrees into their own sections
-    if (h->haschildren())
+    dirty = false;
+
+    /** close the file **/
+    file.close();
+    if (file.geterr())
     {
-	UniConf::Iter it(*h);
-	for (it.rewind(); it.next(); )
-	{
-	    if (it->hasgen() && ! it->comparegen(this))
-		it->save();
-	    else if (it->haschildren() && (top_special ||
-		count_children(it.ptr(), interesting) > 1))
-	    {
-		save_subtree(out, it.ptr(), UniConfKey(key, it->key()));
-	    }
-	}
+        log("Error reading from config file: \"%s\"\n", file.errstr());
+        return false;
+    }
+
+    /** handle unparsed input **/
+    size_t avail = buf.used();
+    while (avail > 0 && buf.peek(avail - 1) == '\n')
+    {
+        buf.unalloc(1); // strip off uninteresting trailing newlines
+        avail -= 1;
+    }
+
+    if (avail > 0)
+    {
+        // last line must have contained junk
+        log("XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
+    }
+
+    /** done **/
+    return true;
+}
+
+
+bool UniConfIniFileGen::commit(const UniConfKey &key,
+    UniConf::Depth depth)
+{
+    /** check dirtiness **/
+    if (! dirty)
+        return true;
+    dirty = false;
+
+    /** open the file **/
+    WvFile file(filename, O_WRONLY | O_TRUNC | O_CREAT);
+    if (! file.isok())
+    {
+        log("Cannot open config file for writing: \"%s\"\n",
+            file.errstr());
+        return false;
+    }
+
+    /** iterate over all keys **/
+    save(file, root);
+
+    /** close the file **/
+    file.close();
+    if (file.geterr())
+    {
+        log("Error writing to config file: \"%s\"\n", file.errstr());
+        return false;
+    }
+
+    /** done **/
+    return true;
+}
+
+
+void UniConfIniFileGen::save(WvStream &file, UniConfTree &parent)
+{
+    UniConfTree::Iter it(parent);
+    
+    /** output values for non-empty direct or barren nodes **/
+    // we want to ensure that a key with an empty value will
+    // get created either by writing its value or by ensuring
+    // that some subkey will create it implictly with empty value
+    bool printedsection = false;
+    for (it.rewind(); it.next() && file.isok(); )
+    {
+        UniConfTree *node = it.ptr();
+        if (!! node->value() || ! node->haschildren())
+        {
+            if (! printedsection)
+            {
+                printsection(file, parent.fullkey());
+                printedsection = true;
+            }
+            printkey(file, node->key(), node->value());
+        }
+    }
+    if (printedsection)
+        file.print("\n");
+
+    /** output child sections **/
+    for (it.rewind(); it.next() && file.isok(); )
+    {
+        save(file, *it);
     }
 }
 
@@ -268,8 +238,8 @@ void UniConfIniFileGen::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
 
 /***** UniConfIniFileGenFactory *****/
 
-UniConfGen *UniConfIniFileGenFactory::newgen(
-    const UniConfLocation &location, UniConf *top)
+UniConfIniFileGen *UniConfIniFileGenFactory::newgen(
+    const UniConfLocation &location)
 {
-    return new UniConfIniFileGen(top, location.payload());
+    return new UniConfIniFileGen(location.payload());
 }

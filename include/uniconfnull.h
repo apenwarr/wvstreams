@@ -22,6 +22,15 @@ class UniConfNullGen : public UniConfGen
 public:
     UniConfNullGen();
     virtual ~UniConfNullGen();
+
+    /***** Overridden methods *****/
+
+    virtual UniConfLocation location() const;
+    virtual WvString get(const UniConfKey &key);
+    virtual bool set(const UniConfKey &key, WvStringParm value);
+    virtual bool zap(const UniConfKey &key);
+    virtual bool haschildren(const UniConfKey &key);
+    virtual Iter *iterator(const UniConfKey &key);
 };
 
 
@@ -31,8 +40,7 @@ public:
 class UniConfNullGenFactory : public UniConfGenFactory
 {
 public:
-    virtual UniConfGen *newgen(const UniConfLocation &location,
-        UniConf *top);
+    virtual UniConfNullGen *newgen(const UniConfLocation &location);
 };
 
 

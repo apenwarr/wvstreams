@@ -33,6 +33,11 @@ class UniConfPair
     UniConfPair &operator= (const UniConfPair &);
 
 public:
+    /**
+     * Creates a UniConfPair.
+     * @param key the key
+     * @param value the value
+     */
     UniConfPair(const UniConfKey &key, WvStringParm value);
 
     /**

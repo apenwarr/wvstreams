@@ -16,16 +16,17 @@ const WvString UniConfDaemon::LEAVING = "Leaving";
 
 UniConfDaemon::UniConfDaemon(WvLog::LogLevel level) :
     log("UniConfDaemon"),
-    notifier(mainconf), events(mainconf, "UniConfDaemon"),
     logcons(1, level)
 {
     want_to_die = false;
     keymodified = false;
+    mainconf.attach(& l);
 }
+
 
 UniConfDaemon::~UniConfDaemon()
 {
-    // nothing special
+    mainconf.detach(& l);
 }
 
 
@@ -33,7 +34,7 @@ UniConf *UniConfDaemon::domount(const UniConfKey &mountpoint,
     const UniConfLocation &location)
 {
     dolog(WvLog::Debug1, "domount", ENTERING);
-    UniConf *mounted = mainconf.findormake(mountpoint);
+    UniConf *mounted = & mainconf[mountpoint];
     dolog(WvLog::Debug3, "domount", WvString("Mounting "
         "\"%s\" from \"%s\"\n", mountpoint, location));
     if (mounted->mount(location))
@@ -90,6 +91,22 @@ void UniConfDaemon::dook(const WvString cmd,
     dolog(WvLog::Debug1, "dook", LEAVING);
 }
 
+
+void UniConfDaemon::dofail(const WvString cmd,
+    const UniConfKey &key, UniConfDaemonConn *s)
+{
+    dolog(WvLog::Debug1, "dofail", ENTERING);
+    dolog(WvLog::Debug2, "dofail", WvString("Connection:  %s", *s->src()));
+    if (s->isok())
+    {
+        WvString okmsg("%s %s %s\n", UniConfConn::UNICONF_FAIL, cmd, key);
+        dolog(WvLog::Debug3, "dofail", WvString("MSG TO %s:  %s\n", *s->src(),okmsg));
+        s->print(okmsg);
+    }
+    dolog(WvLog::Debug1, "dofail", LEAVING);
+}
+
+
 void UniConfDaemon::doget(const UniConfKey &key, UniConfDaemonConn *s)
 {
     dolog(WvLog::Debug1, "doget", ENTERING);
@@ -106,6 +123,7 @@ void UniConfDaemon::doget(const UniConfKey &key, UniConfDaemonConn *s)
     }
     dolog(WvLog::Debug1, "doget", LEAVING);
 }
+
 
 void UniConfDaemon::dosubtree(const UniConfKey &key,
     UniConfDaemonConn *s)
@@ -129,9 +147,9 @@ void UniConfDaemon::dosubtree(const UniConfKey &key,
             {
                 dolog(WvLog::Debug3, "dosubtree",
                     WvString("Sending Key:%s.With val:%s.\n",
-                    it->key(), it->value()));
+                    it->fullkey(), it->value()));
                 send.append("{%s %s} ",
-                    wvtcl_escape(it->fullkey(nerf)),
+                    wvtcl_escape(it->fullkey()),
                     wvtcl_escape(it->value()));
             }
         }
@@ -145,6 +163,7 @@ void UniConfDaemon::dosubtree(const UniConfKey &key,
     }
     dolog(WvLog::Debug1, "dosubtree", LEAVING);
 }
+
 
 void UniConfDaemon::dorecursivesubtree(const UniConfKey &key,
     UniConfDaemonConn *s)
@@ -184,6 +203,7 @@ void UniConfDaemon::dorecursivesubtree(const UniConfKey &key,
     dolog(WvLog::Debug1, "dorecursivesubtree", LEAVING);
 }
 
+
 void UniConfDaemon::doset(const UniConfKey &key,
     WvConstStringBuffer &fromline, UniConfDaemonConn *s)
 {
@@ -191,14 +211,22 @@ void UniConfDaemon::doset(const UniConfKey &key,
     dolog(WvLog::Debug2, "doset", WvString("Connection:  %s", *s->src()));
    
     WvString newvalue = wvtcl_getword(fromline);
-    mainconf.set(key, wvtcl_unescape(newvalue));
+    bool success = mainconf.set(key, wvtcl_unescape(newvalue));
     
-    dolog(WvLog::Debug3, "doset",
-        WvString("New value for %s %s", key, mainconf.get(key)));
-
-    keymodified = true;
-    modifiedkeys.append(new UniConfKey(key), true);
-    dook(UniConfConn::UNICONF_SET, key, s);
+    if (success)
+    {
+        dolog(WvLog::Debug3, "doset",
+            WvString("New value for %s %s", key, mainconf.get(key)));
+        keymodified = true;
+        modifiedkeys.append(new UniConfKey(key), true);
+        dook(UniConfConn::UNICONF_SET, key, s);
+    }
+    else
+    {
+        dolog(WvLog::Debug3, "doset",
+            WvString("Could not set value for %s", key));
+        dofail(UniConfConn::UNICONF_SET, key, s);
+    }
     dolog(WvLog::Debug1, "doset", LEAVING);
 }
 
@@ -209,7 +237,7 @@ void UniConfDaemon::doset(const UniConfKey &key,
 /*
  * Callback related methods for UniConfKeys begin here
  */
-void UniConfDaemon::myvaluechanged(void *userdata, UniConf &conf)
+void UniConfDaemon::myvaluechanged(UniConf &conf, void *userdata)
 {
     dolog(WvLog::Debug1, "myvaluechanged", ENTERING);
     // All the following is irrelevant if we have a null pointer, so check
@@ -218,19 +246,24 @@ void UniConfDaemon::myvaluechanged(void *userdata, UniConf &conf)
         return;
     
     UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
-    dolog(WvLog::Debug2, "myvaluechanged", WvString("Connection:  %s", *s->src()));
-    WvString keyname(conf.gen_full_key()); 
+    dolog(WvLog::Debug2, "myvaluechanged",
+        WvString("Connection:  %s", *s->src()));
+    UniConfKey keyname(conf.fullkey()); 
 
-    if (s->isok() && conf.notify)
+    // FIXME: sending spurious notifications
+    if (s->isok())
     {
-        dolog(WvLog::Debug3, "myvaluechanged", WvString("SENDING: %s.  TO:%s", create_return_string(keyname), *s->src()));
+        dolog(WvLog::Debug3, "myvaluechanged",
+            WvString("SENDING: %s.  TO:%s",
+            create_return_string(keyname), *s->src()));
         s->print(create_return_string(keyname));
     }
     dolog(WvLog::Debug1, "myvaluechanged", LEAVING);
 }
 
-void UniConfDaemon::me_or_imm_child_changed(void *userdata,
-    UniConf &conf)
+
+void UniConfDaemon::me_or_imm_child_changed(UniConf &conf,
+    void *userdata)
 {
     dolog(WvLog::Debug1, "me_or_imm_child_changed", ENTERING);
     // All the following is irrelevant if we have a null pointer, so check
@@ -239,11 +272,10 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata,
         return;
 
     UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
-    UniConfKey key = conf.gen_full_key();
+    UniConfKey key = conf.fullkey();
 
-    WvString response;
-    if (conf.dirty && conf.notify)
-        response.append(create_return_string(key.printable()));
+    // FIXME: sending spurious notifications
+    WvString response(create_return_string(key.printable()));
 
     UniConfKeyList::Iter i(modifiedkeys);
 
@@ -277,7 +309,8 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata,
         if (match)
         {
             UniConf *subtree = mainconf.find(i());
-            if (subtree && subtree->notify)
+            // FIXME: sending spurious notifications
+            if (subtree)
                 response.append(create_return_string(i()));
         }   
     }
@@ -290,8 +323,9 @@ void UniConfDaemon::me_or_imm_child_changed(void *userdata,
     dolog(WvLog::Debug1, "me_or_imm_child_changed", LEAVING);
 }
 
-void UniConfDaemon::me_or_any_child_changed(void *userdata,
-    UniConf &conf)
+
+void UniConfDaemon::me_or_any_child_changed(UniConf &conf,
+    void *userdata)
 {
     dolog(WvLog::Debug1, "me_or_any_child_changed", ENTERING);
     // All the following is irrelevant if we have a null pointer, so check
@@ -300,12 +334,10 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata,
         return;
 
     UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
+    UniConfKey key = conf.fullkey();
 
-    UniConfKey key = conf.gen_full_key();
-
-    WvString response;
-    if (conf.dirty && conf.notify)
-        response.append(create_return_string(key.printable()));
+    // FIXME: sending spurious notifications
+    WvString response(create_return_string(key.printable()));
 
     UniConfKeyList::Iter i(modifiedkeys);
 
@@ -332,9 +364,10 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata,
         if (match)
         {
             UniConf *subtree = mainconf.find(i());
-            if (subtree && subtree->notify)
+            // FIXME: sending spurious notifications
+            if (subtree)
                 response.append(create_return_string(i()));
-        }   
+        }
     }
 
     if (s->isok())
@@ -345,6 +378,7 @@ void UniConfDaemon::me_or_any_child_changed(void *userdata,
     dolog(WvLog::Debug1, "me_or_any_child_changed", LEAVING);
 }
 
+
 void UniConfDaemon::update_callbacks(const UniConfKey &key,
     UniConfDaemonConn *s, bool one_shot, int depth)
 {
@@ -354,6 +388,7 @@ void UniConfDaemon::update_callbacks(const UniConfKey &key,
     dolog(WvLog::Debug1, "update_callbacks",LEAVING); 
 }
 
+
 void UniConfDaemon::del_callback(const UniConfKey &key,
     UniConfDaemonConn *s, int depth)
 {
@@ -361,16 +396,19 @@ void UniConfDaemon::del_callback(const UniConfKey &key,
     switch (depth)
     {
         case 0:
-            events.del(wvcallback(UniConfCallback, *this,
-                    UniConfDaemon::myvaluechanged), s, key);
+            mainconf.delwatch(key, UniConf::ZERO,
+                wvcallback(UniConfCallback, *this,
+                UniConfDaemon::myvaluechanged), s);
             break;
         case 1:
-            events.del(wvcallback(UniConfCallback, *this,
-                    UniConfDaemon::me_or_imm_child_changed), s, key);
+            mainconf.delwatch(key, UniConf::ONE,
+                wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_imm_child_changed), s);
             break;
         case 2:
-            events.del(wvcallback(UniConfCallback, *this,
-                    UniConfDaemon::me_or_any_child_changed), s, key);
+            mainconf.delwatch(key, UniConf::INFINITE,
+                wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_any_child_changed), s);
             break;
         default:
             dolog(WvLog::Warning, "del_callback", "Attempting to delete call back with unsupported depth");
@@ -378,23 +416,28 @@ void UniConfDaemon::del_callback(const UniConfKey &key,
     dolog(WvLog::Debug1, "del_callback", LEAVING);
 }
 
+
 void UniConfDaemon::add_callback(const UniConfKey &key,
     UniConfDaemonConn *s, bool one_shot, int depth)
 {
     dolog(WvLog::Debug1, "add_callback",ENTERING);
+    // FIXME: we don't handle oneshot notifications correctly
     switch (depth)
     {
-        case 0: // Myself only
-            events.add(wvcallback(UniConfCallback, *this, 
-                UniConfDaemon::myvaluechanged), s, key, one_shot);
+        case 0:
+            mainconf.addwatch(key, UniConf::ZERO,
+                wvcallback(UniConfCallback, *this,
+                UniConfDaemon::myvaluechanged), s);
             break;
-        case 1:  // Myself & my immediate children
-            events.add(wvcallback(UniConfCallback, *this,
-                UniConfDaemon::me_or_imm_child_changed), s, key, one_shot);
+        case 1:
+            mainconf.addwatch(key, UniConf::ONE,
+                wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_imm_child_changed), s);
             break;
-        case 2: // Myself and any children below me
-            events.add(wvcallback(UniConfCallback, *this,
-                UniConfDaemon::me_or_any_child_changed), s, key, one_shot);
+        case 2:
+            mainconf.addwatch(key, UniConf::INFINITE,
+                wvcallback(UniConfCallback, *this,
+                UniConfDaemon::me_or_any_child_changed), s);
             break;
         default:
             dolog(WvLog::Warning, "add_callback", "Attempting to add call back with unsupported depth");
@@ -404,6 +447,7 @@ void UniConfDaemon::add_callback(const UniConfKey &key,
     dolog(WvLog::Debug1, "add_callback", LEAVING);
 }
 
+
 void UniConfDaemon::registerforchange(const UniConfKey &key,
     UniConfDaemonConn *s)
 {
@@ -412,6 +456,7 @@ void UniConfDaemon::registerforchange(const UniConfKey &key,
     update_callbacks(key, s);
     dolog(WvLog::Debug1, "registerforchange", LEAVING);
 }
+
 
 void UniConfDaemon::deletesubtree(const UniConfKey &key,
     UniConfDaemonConn *s)
@@ -429,7 +474,8 @@ void UniConfDaemon::deletesubtree(const UniConfKey &key,
  */
 
 // Look after all of the handling of incoming connections
-void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
+void UniConfDaemon::connection_callback(WvStream &stream,
+    void *userdata)
 {
     dolog(WvLog::Debug1, "connection_callback", ENTERING);
 
@@ -512,6 +558,7 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
     dolog(WvLog::Debug1, "connection_callback", LEAVING);
 }
 
+
 void UniConfDaemon::accept_connection(WvStream *stream)
 {
     WvStringParm myname("accept_connection");
@@ -528,6 +575,7 @@ void UniConfDaemon::accept_connection(WvStream *stream)
 
     dolog(WvLog::Debug1, myname, LEAVING);
 }
+
 
 // Daemon looks after running
 void UniConfDaemon::run()
@@ -575,7 +623,8 @@ void UniConfDaemon::run()
             l.callback();
         if (keymodified)
         {
-	    notifier.run();
+            // FIXME: not sure what to do here now that we're
+            //        using the new watch mechanism
             keymodified = false;
             modifiedkeys.zap();
         }
