@@ -916,7 +916,7 @@ bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size)
     {
     	char unesc;
         if (!cstr_unescape_char(q, unesc)) goto misformatted;
-        if (size++ < max_size) *cdata++ = unesc;
+        if (size++ < max_size && cdata) *cdata++ = unesc;
     }
     if (*q++ != '\"' || *q != '\0') goto misformatted;
     

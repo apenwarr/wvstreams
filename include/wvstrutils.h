@@ -428,11 +428,11 @@ WvString cstr_escape(const void *data, size_t size);
 // 
 // If cstr is correctly formatted and max_size is large enough for the
 // resulting data, returns true and size will equal the size of the
-// resulting data.
+// resulting data.  If data is not NULL it will contain this data.
 //
 // If cstr is correctly formatted but max_size is too small for the resulting
 // data, returns false and size will equal the minimum value of min_size
-// for this function to have returned true.  In this case, data will also
+// for this function to have returned true.  If data is non-NULL it will
 // contain the first max_size bytes of resulting data.
 // 
 // If cstr is incorrectly formatted, returns false and size will equal 0.

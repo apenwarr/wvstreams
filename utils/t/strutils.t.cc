@@ -792,5 +792,8 @@ WVTEST_MAIN("cstr_unescape")
     // Test for correctly formatted string without enough space
     WVPASS(!cstr_unescape("\"nsixteencharacter\"", data, max_size, size)
             && size == 17 && memcmp(data, "nsixteencharacter", max_size) == 0);
+    
+    // Test for passing data as a NULL
+    WVPASS(cstr_unescape("\"four\"", NULL, max_size, size) && size == 4);
 }
 
