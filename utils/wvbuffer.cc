@@ -307,6 +307,23 @@ void WvBuffer::put(const WvString &str)
 }
 
 
+// to merge another WvBuffer into this one, simply move all of its
+// WvMiniBuffer objects into our own list.
+void WvBuffer::merge(WvBuffer &buf)
+{
+    WvMiniBufferList::Iter i(buf.list);
+    
+    for (i.rewind(); i.next(); )
+    {
+	i.cur()->auto_free = false;
+	list.append(&i(), true);
+    }
+    
+    inuse += buf.used();
+    buf.zap();
+}
+
+
 WvString WvBuffer::getstr()
 {
     WvString s;

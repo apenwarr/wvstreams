@@ -164,6 +164,11 @@ public:
     void put(const WvString &str);
     
     /*
+     * _move_ (not copy) the contents of another WvBuffer into this buffer.
+     */
+    void merge(WvBuffer &buf);
+    
+    /*
      * Return the entire buffer as a nul-terminated WvString.  If the buffer
      * contains nul characters, they'll seem to terinate the string.
      */
