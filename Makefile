@@ -42,8 +42,8 @@ dist-hack-clean:
 dist-hook: dist-hack-clean configure
 	@rm -rf autom4te.cache
 	@if test -d .xplc; then \
-	    echo '--> Preparing XPLC for dist...' \
-	    $(MAKE) -C .xplc clean patch; \
+	    echo '--> Preparing XPLC for dist...'; \
+	    $(MAKE) -C .xplc clean patch && \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
 
