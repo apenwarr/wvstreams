@@ -438,7 +438,7 @@ public:
      * see the simple version of write() way up above.
      */
     size_t write(WvStringParm s)
-        { return write(s, s.len()); }
+        { return write(s.cstr(), s.len()); }
     size_t print(WvStringParm s)
         { return write(s); }
 

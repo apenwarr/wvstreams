@@ -235,7 +235,7 @@ bool WvTCPConn::isok() const
 size_t WvTCPConn::uwrite(const void *buf, size_t count)
 {
     if (connected)
-	return WvStream::uwrite(buf, count);
+	return WvFDStream::uwrite(buf, count);
     else
 	return 0; // can't write yet; let them enqueue it instead
 }

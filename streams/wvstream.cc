@@ -348,10 +348,9 @@ char *WvStream::getline(time_t wait_msec, char separator,
         }
 
         // make select not return true until more data is available
-        queuemin(inbuf.used() + 1);
+        size_t needed = inbuf.used() + 1;
+        queuemin(needed);
         
-        // note: this _always_ does the select, even if wait_msec < 0.
-        // That's good, because the fd might be nonblocking!
         bool hasdata;
         if (uses_continue_select)
             hasdata = continue_select(wait_msec);
@@ -366,7 +365,7 @@ char *WvStream::getline(time_t wait_msec, char separator,
             unsigned char *buf = inbuf.alloc(readahead);
             size_t len = uread(buf, readahead);
             inbuf.unalloc(readahead - len);
-            hasdata = len != 0; // did we actually read anything?
+            hasdata = inbuf.used() >= needed; // enough?
         }
 
         if (! hasdata && wait_msec >= 0)
