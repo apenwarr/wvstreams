@@ -375,12 +375,28 @@ void UniTransactionGen::apply_changes(UniConfChangeTree *node,
 	    // ... and the current value in the underlying generator doesn't
 	    // exist, then create it.
 	    base->set(section, WvString::empty);
+	// Note: This *is* necessary. We can't ignore this change and have
+	// the underlying generator handle it, because it's possible that
+	// this NEWNODE was the result of a set() which was later deleted.
     }
     
     // Repeat for each child in the change tree.
     UniConfChangeTree::Iter i(*node);
     for (i.rewind(); i.next();)
 	apply_changes(i.ptr(), UniConfKey(section, i->key()));
+}
+
+struct my_userdata
+{
+    UniConfValueTree *node;
+    const UniConfKey &key;
+};
+
+void UniTransactionGen::deletion_visitor(const UniConfValueTree *node,
+					 void *userdata)
+{
+    my_userdata *data = (my_userdata *)userdata;
+    delta(UniConfKey(data->key, node->fullkey(data->node)), WvString::null);
 }
 
 // Mirror image of apply_values() that issues all of the callbacks associated
@@ -399,7 +415,13 @@ void UniTransactionGen::cancel_values(UniConfValueTree *newcontents,
 	{
 	    UniConfKey subkey(section, i->key());
 	    if (!base->exists(subkey))
-		delta(subkey, WvString::null);
+	    {
+		my_userdata data = { i.ptr(), subkey };
+		i->visit(
+		    UniConfValueTree::Visitor(
+			this, &UniTransactionGen::deletion_visitor),
+		    (void *)&data, false, true);
+	    }
 	}
     }
 
@@ -424,27 +446,34 @@ void UniTransactionGen::cancel_changes(UniConfChangeTree *node,
 	if (!base->exists(section))
 	{
 	    if (node->newtree != NULL)
-		delta(section, WvString::null);
+	    {
+		my_userdata data = { node->newtree, section };
+		node->newtree->visit(
+		    UniConfValueTree::Visitor(
+			this, &UniTransactionGen::deletion_visitor),
+		    (void *)&data, false, true);
+	    }
 	}
 	else
 	    cancel_values(node->newtree, section);
 	return;
     }
-    else if (node->mode == NEWVALUE)
-    {
-	WvString value(base->get(section));
-	if (value != *node->newvalue)
-	    delta(section, value);
-    }
-    else if (node->mode == NEWNODE)
-    {
-	if (!base->exists(section))
-	    delta(section, WvString::null);
-    }
-    
+
+    WvString value;
+    if (node->mode != BLANK)
+	value = base->get(section);
+
+    if (node->mode == NEWVALUE &&
+	!value.isnull() &&
+	value != *node->newvalue)
+	delta(section, value);
+
     UniConfChangeTree::Iter i(*node);
     for (i.rewind(); i.next();)
-	cancel_changes(i.ptr(), UniConfKey(section, i->key()));    
+	cancel_changes(i.ptr(), UniConfKey(section, i->key()));
+
+    if (node->mode != BLANK && value.isnull())
+	delta(section, WvString::null);
 }
 
 void UniTransactionGen::gencallback(const UniConfKey &key,
@@ -467,132 +496,36 @@ void UniTransactionGen::gencallback(const UniConfKey &key,
 	    return;
 	else if (seg == key.numsegments())
 	{
-	    // Else if this is the last node, then figure out whether we
-	    // should do a callback or not.
-	    if (value.isnull())
-	    {
-		/*
-		  FIXME:
-		
-		  This case really sucks. Why? Because the UniConfGen
-		  callback semantics allow deletion callbacks to be issued
-		  without having to issue deletion callbacks for the
-		  children. As a result, to issue the callbacks necessary
-		  to inform our callback function of precisely what has
-		  changed, we have no choice (given our current data
-		  structure) but to say that the key was deleted and to
-		  then issue additional callbacks for the things that our
-		  changes will later add back to it. While we're at it, we
-		  also have to set the "was_null_or_empty" flags on all of
-		  the NEWNODE trees we see.
-		  
-		  With the current UniConfGen callback semantics, the only
-		  way to fix this (i.e. to issue only the needed
-		  callbacks) is to, whenever our root exists with mode of
-		  NEWVALUE or NEWNODE, store a list of every key that exists
-		  in the underlying generator whose existence will not be
-		  changed by any of our changes. This could be done by
-		  adding an EXISTS mode to the UniConfChangeTree and storing
-		  this information in our change tree. However, this
-		  would require the UniTransactionGen to do almost as much
-		  work as the UniCacheGen, and a major reason for having
-		  the UniTransactionGen at all was to not have to incur
-		  the performance penalty associated with loading all the
-		  data from the underlying generator, since combining that
-		  with a simple modification to the apply_values() function
-		  would reproduce almost all of the UniTransactionGen's
-		  functionality.
-		  
-		  To be honest, I think that changing the callback semanics
-		  is the "right" solution.
-		*/
-
-		// Temporarily unlink this change node and issue the
-		// deletion callback without any holding so that our callback
-		// function gets to see our generator with the key deleted
-		// for a moment.
-		if (node == root)
-		{
-		    root = NULL;
-		    delta(key, WvString::null);
-		    root = node;
-		}
-		else
-		{
-		    UniConfChangeTree *parent = node->parent();
-		    node->setparent(NULL);
-		    delta(key, WvString::null);
-		    node->setparent(parent);
-		}
-
-		// Now issue all of the other callbacks we need, and set
-		// the was_null_or_empty flags on all the NEWNODE trees.
-		hold_delta();
-		if (node->mode != BLANK)
-		    was_removed(node, key);
-		unhold_delta();
+	    // Else if this is the last node, then figure out what we 
+	    // should do.
+	    if (node->mode == NEWVALUE)
+		// If we're replacing this key's value, then we should
+		// ignore the callback.
 		return;
-	    }
-	    else
+	    else if (node->mode == NEWNODE)
 	    {
-		if (node->mode == NEWVALUE)
-		    // If we're replacing this key's value, then we should
-		    // ignore the callback.
+		// Else if we want to create this key, then use its
+		// was_null_or_empty flag to figure out if we need
+		// to issue a callback, and update it if necessary.
+		if (node->was_null_or_empty && !value)
 		    return;
-		else if (node->mode == NEWNODE)
+		node->was_null_or_empty = !value;
+		if (value.isnull())
 		{
-		    // Else if we want to create this key, then use its
-		    // was_null_or_empty flag to figure out if we need
-		    // to issue a callback, and update it if necessary.
-		    if (node->was_null_or_empty && !value)
-			return;
-		    node->was_null_or_empty = !value;
-		    break;
+		    delta(key, WvString::empty);
+		    return;
 		}
-		else // i.e. node->mode == BLANK
-		    // Else if we're doing nothing to this key, then a
-		    // callback should be made.
-		    break;
+		break;
 	    }
+	    else // i.e. node->mode == BLANK
+		// Else if we're doing nothing to this key, then a
+		// callback should be made.
+		break;
 	}
     }
     
-    // Make the callback.
+    // Make a normal callback.
     delta(key, value);
-}
-
-void UniTransactionGen::was_removed(UniConfChangeTree *node,
-				    const UniConfKey &key)
-{
-    if (node->mode == NEWVALUE)
-	delta(key, *node->newvalue);
-    else // i.e. node->mode == NEWNODE
-    {
-	node->was_null_or_empty = true;
-	delta(key, WvString::empty);
-    }
-
-    UniConfChangeTree::Iter i(*node);
-    for (i.rewind(); i.next();)
-    {
-	if (i.ptr()->mode == NEWTREE)
-	{
-	    if (i.ptr()->newtree)
-		was_removed(i.ptr()->newtree, UniConfKey(key, i->key()));
-	}
-	else if (i.ptr()-> mode != BLANK)
-	    was_removed(i.ptr(), UniConfKey(key, i->key()));
-    }
-}
-
-void UniTransactionGen::was_removed(UniConfValueTree *node,
-				    const UniConfKey &key)
-{
-    delta(key, node->value());
-    
-    UniConfValueTree::Iter i(*node);
-    for (i.rewind(); i.next();)
-	was_removed(i.ptr(), UniConfKey(key, i->key()));
 }
 
 // Create and return a UniConfValueTree containing the value 'value' for
@@ -627,6 +560,18 @@ UniConfValueTree *UniTransactionGen::create_value(UniConfValueTree *parent,
     return tree;
 }
 
+void UniTransactionGen::deletion_simulator(const UniConfKey &key)
+{
+    UniConfGen::Iter *i = base->iterator(key);
+    if (i)
+    {
+	for (i->rewind(); i->next();)
+	    deletion_simulator(UniConfKey(key, i->key()));
+	delete i;
+    }
+    delta(key, WvString::null);
+}
+
 // Like create_value(), but make a UniConfChangeTree containing a *change*
 // to value 'value'.
 UniConfChangeTree *UniTransactionGen::create_change(UniConfChangeTree *parent,
@@ -654,14 +599,14 @@ UniConfChangeTree *UniTransactionGen::create_change(UniConfChangeTree *parent,
 	if (!tree)
 	    tree = parent;
     }
-    parent = new UniConfChangeTree(parent, key.segment(seg-1));    
+    parent = new UniConfChangeTree(parent, key.segment(seg-1));
     // Create the last node with the specified change.
     if (value.isnull())
     {
 	parent->mode = NEWTREE;
 	parent->newtree = 0;
 	if (base->exists(key))
-	    delta(key, WvString::null);
+	    deletion_simulator(key);
     }
     else
     {
@@ -693,8 +638,14 @@ UniConfValueTree *UniTransactionGen::set_value(UniConfValueTree *node,
 		key.last(key.numsegments() - seg));
 	    if (subnode)
 	    {
+		hold_delta();
+		my_userdata data = { subnode, key };
+		subnode->visit(
+		    UniConfValueTree::Visitor(
+			this, &UniTransactionGen::deletion_visitor),
+		    (void *)&data, false, true);
 		delete subnode;
-		delta(key, WvString::null);
+		unhold_delta();
 		return subnode == node ? NULL : node;
 	    }
 	    else
@@ -733,6 +684,18 @@ UniConfValueTree *UniTransactionGen::set_value(UniConfValueTree *node,
     }
 }
 
+void UniTransactionGen::deletion_simulator2(const UniConfKey &key)
+{
+    UniConfGen::Iter *i = this->iterator(key);
+    if (i)
+    {
+	for (i->rewind(); i->next();)
+	    deletion_simulator2(UniConfKey(key, i->key()));
+	delete i;
+    }
+    delta(key, WvString::null);
+}
+
 // Like set_value(), but, again, for UniConfChangeTrees instead.
 UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
 						 const UniConfKey &key,
@@ -754,7 +717,7 @@ UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
     {
 	if (subnode->mode == BLANK && !value.isnull())
 	{
-	    // If we're setting non-null value and we weren't previously
+	    // If we're setting a non-null value and we weren't previously
 	    // doing anything to this node, then now we want to create it.
 	    subnode->mode = NEWNODE;
 	    UniConfKey nodekey(key.first(seg));
@@ -786,21 +749,11 @@ UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
     // found it; change it.
     if (value.isnull())
     {
-	if (subnode->mode == NEWVALUE)
-	{
-	    delete subnode->newvalue;
-	    delta(key, WvString::null);
-	}
-	else if (subnode->mode == BLANK)
-	{
-	    if (base->exists(key))
-		delta(key, WvString::null);
-	}
-	else // i.e. subnode->mode == NEWNODE
-	    delta(key, WvString::null);
+	if (subnode->mode != BLANK || base->exists(key))
+	    deletion_simulator2(key);
+	subnode->zap();
 	subnode->mode = NEWTREE;
 	subnode->newtree = 0;
-	subnode->zap();
     }
     else if (subnode->mode == NEWVALUE)
     {

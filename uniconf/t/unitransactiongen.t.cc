@@ -178,17 +178,17 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Have Disk/Really Have Disk", 1);
     check_iterator(callbacks2, two);
 
-    // Test that deleting trees in the underlying generator to which we
-    // are making changes other than a tree replacement causes a deletion
-    // callback followed by callbacks for everything that we will add
-    // back to that tree.
+    // Test that it changes back to the empty string. Also, in r4_2
+    // and below, test that deleting keys in the underlying generator
+    // to which we are making changes other than a tree replacement
+    // fails to cause the necessary callbacks for children of that
+    // key.
 
-    callbacks2.add("cfg", WvString::null);
     callbacks2.add("cfg", "");
-    callbacks2.add("cfg/Global", "");
-    callbacks2.add("cfg/Global/Have Disk", 1);
+    callbacks2.add("cfg/Global/Have Disk/Really Have Disk", WvString::null);
     one.xset("cfg", WvString::null);
-    WVPASS(callbacks2.isempty());
+    WVPASS(!callbacks2.exists("cfg"));
+    WVFAIL(!callbacks2.exists("cfg/Global/Have Disk/Really Have Disk"));
     callbacks2.zap();
     WVPASS(two.xget("cfg") == "");
 
@@ -209,11 +209,8 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Have Disk", 1);
     check_iterator(callbacks2, two);
 
-    // Test deletion callbacks again (for no reason).
+    // Test we don't get callbacks when we change them back, either.
 
-    callbacks2.add("cfg/Global", WvString::null);
-    callbacks2.add("cfg/Global", "");
-    callbacks2.add("cfg/Global/Have Disk", 1);
     one.xset("cfg/Global", WvString::null);
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
@@ -228,12 +225,13 @@ WVTEST_MAIN("UniTransactionGen functionality test")
 
     // Test reception of callbacks due to deletions
 
+    callbacks2.add("cfg/Global/Have Disk", WvString::null);
     callbacks2.add("cfg/Global", WvString::null);
     two.xset("cfg/Global", WvString::null);
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg/Global") == WvString::null);
     WVPASS(two.xget("cfg/Global/Have Disk") == WvString::null);
+    WVPASS(two.xget("cfg/Global") == WvString::null);
 
     callbacks2.add("cfg", "");
     check_iterator(callbacks2, two);
@@ -327,6 +325,10 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     one.xset("cfg/OpenWall/Harden Proc", 1);
     one.xset("cfg/Global/Servers/Funfs", 1);
     one.xset("cfg/Global/Servers/NFS", 0);
+    callbacks2.add("cfg/OpenWall/Harden Stack", WvString::null);
+    callbacks2.add("cfg/OpenWall/Harden Link", WvString::null);
+    callbacks2.add("cfg/OpenWall/Harden FIFO", WvString::null);
+    callbacks2.add("cfg/OpenWall/Harden Proc", WvString::null);
     callbacks2.add("cfg/OpenWall", WvString::null);
     two.xset("cfg/OpenWall", WvString::null);
     callbacks2.add("cfg/OpenWall", "");
