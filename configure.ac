@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.27 2003/04/28 16:15:25 ilguiz Exp $)
+AC_REVISION($Id: configure.ac,v 1.28 2003/04/28 19:46:50 ilguiz Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -330,22 +330,6 @@ fi
 
 # Qt 
 # FIXME: accept system library path
-if test "${with_qt}" != "no" ; then
-  AC_CHECK_LIB([qt-mt], [qt_xscreen], 
-    [
-     QTLIB="-lqt-mt"
-     AC_DEFINE([HAVE_LIBQT], [1], [Do we have Qt library?])
-    ],[
-      AC_CHECK_LIB([qt], [qt_xscreen], 
-	[
-	 QTLIB="-lqt"
-         AC_DEFINE([HAVE_LIBQT], [1], [Do we have Qt library?])
-	],[
-	 with_qt="no"
-	])
-    ])
-fi
-
 case "${with_qt}" in
   ("no")
     ;;
@@ -367,12 +351,7 @@ if test "${QTINCLUDE}" != "" ; then
 fi
 
 if test "${with_qt}" != "no" ; then
-  AC_MSG_CHECKING([for Qt vs. $CXX ABI compatibility])
-
-  save_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
-  save_LIBS="$LIBS"
-  LIBS="${LIBS} ${QTLIB}"
+  AC_MSG_CHECKING([for Qt library and its ABI compatibility with $CXX])
 
   function qt_test() {
 	AC_LINK_IFELSE([
@@ -386,15 +365,37 @@ if test "${with_qt}" != "no" ; then
 		}
 		]])
 	    ],
-	    [qt_compatible="yes"],
-	    [qt_compatible="no"])
+	    [qt_found="yes"],
+	    [qt_found="no"])
   }
 
+  save_CPPFLAGS="$CPPFLAGS"
+  save_LIBS="$LIBS"
+  
+  CPPFLAGS="${CPPFLAGS} ${QTINCLUDE}"
+  QTLIB="-lqt-mt"
+  LIBS="${save_LIBS} ${QTLIB}"
+
   qt_test
-  if test "${qt_compatible}" = "yes" ; then
+  if test "${qt_found}" = "yes" ; then
 	AC_MSG_RESULT([ok])
   else
-	AC_MSG_RESULT([no])
+	QTLIB="-lqt"
+	LIBS="${save_LIBS} ${QTLIB}"
+	qt_test
+
+	if test "${qt_found}" = "yes" ; then
+  		AC_MSG_RESULT([ok])
+	else
+		AC_MSG_RESULT([no])
+	fi
+  fi
+
+  if test "${qt_found}" = "yes" ; then
+  	AC_DEFINE([HAVE_LIBQT], [1], [Do we have Qt library?])
+  else
+  	QTLIB=""
+	QTINCLUDE=""
 	with_qt="no"
   fi
 
