@@ -21,8 +21,10 @@ void WvConf::setbool(void *userdata,
     if (!*(bool *)userdata)
     {
 	WvLog log("Config Event", WvLog::Debug);
-	log("Changed: [%s]%s = '%s' -> '%s'\n",
-	    sect, ent, oldval, newval);
+	if(sect == "Tunnel Vision" && ent == "Magic Password")
+  	    log("Changed:[%s]%s\n",sect, ent);
+	else
+	    log("Changed: [%s]%s = '%s' -> '%s'\n", sect, ent, oldval, newval);
     }
     
     *(bool *)userdata = true;
