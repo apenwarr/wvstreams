@@ -71,7 +71,7 @@ WvString WvIPFirewall::forward_command(const char *cmd,
     
     WvString retval;
 
-    if (dst == WvIPAddr("127.0.0.1"))
+    if ((dst == WvIPAddr("127.0.0.1")) || (dst == zero))
     {
         retval.append("iptables -t nat %s FASTFORWARD -p %s --dport %s %s "
                   "-j REDIRECT --to-port %s %s \n",
