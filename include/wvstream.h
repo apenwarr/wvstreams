@@ -84,6 +84,18 @@ public:
     // really be safe, if we include these.
     virtual size_t read(WvBuf &outbuf, size_t count) = 0;
     virtual size_t write(WvBuf &inbuf, size_t count = INT_MAX) = 0;
+
+    /**
+     * Shuts down the reading side of the stream.
+     * Subsequent calls to read() will fail.
+     */
+    virtual void noread() = 0;
+
+    /**
+     * Shuts down the writing side of the stream.
+     * Subsequent calls to write() will fail.
+     */
+    virtual void nowrite() = 0;
     
     /**
      * flush the output buffer, if we can do it without delaying more than
@@ -220,6 +232,9 @@ public:
      */
     void outbuf_limit(size_t size)
         { max_outbuf_size = size; }
+
+    virtual void noread() {}
+    virtual void nowrite();
     
     /**
      * unbuffered I/O functions; these ignore the buffer, which is
@@ -503,7 +518,7 @@ public:
      * been hit and will be cleared by the next callback().
      */
     time_t alarm_remaining();
-    
+
     /**
      * print a preformatted WvString to the stream.
      * see the simple version of write() way up above.
@@ -574,6 +589,7 @@ protected:
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;
+    bool want_nowrite;
 
     // Used to guard against excessive flushing when using delay_flush
     bool want_to_flush;

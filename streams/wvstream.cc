@@ -367,7 +367,7 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
 size_t WvStream::write(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!isok() || !buf || !count || getwfd() < 0) return 0;
     
     size_t wrote = 0;
     if (!outbuf_delayed_flush && !outbuf.used())
@@ -397,6 +397,15 @@ size_t WvStream::write(const void *buf, size_t count)
     }
 
     return wrote;
+}
+
+
+void WvStream::nowrite()
+{
+    if (getwfd() < 0)
+        return;
+
+    want_nowrite = true;
 }
 
 

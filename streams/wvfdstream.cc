@@ -58,30 +58,6 @@ void WvFDStream::close()
 }
 
 
-void WvFDStream::noread()
-{
-    if (rfd < 0)
-        return;
-    if (rfd != wfd)
-        ::close(rfd);
-    else
-        ::shutdown(rfd, SHUT_RD); // might be a socket
-    rfd = -1;
-}
-
-
-void WvFDStream::nowrite()
-{
-    if (wfd < 0)
-        return;
-    if (rfd != wfd)
-        ::close(wfd);
-    else
-        ::shutdown(rfd, SHUT_WR); // might be a socket
-    wfd = -1;
-}
-
-
 bool WvFDStream::isok() const
 {
     return WvStream::isok() && (rfd != -1 || wfd != -1);
@@ -110,7 +86,7 @@ size_t WvFDStream::uread(void *buf, size_t count)
 
 size_t WvFDStream::uwrite(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!isok() || !buf || !count || wfd < 0) return 0;
     
     int out = ::write(wfd, buf, count);
     
@@ -122,9 +98,50 @@ size_t WvFDStream::uwrite(const void *buf, size_t count)
 	seterr(out < 0 ? errno : 0); // a more critical error
 	return 0;
     }
+
+    if (!outbuf.used() && want_nowrite)
+    {
+        // copied from nowrite()
+        if (rfd != wfd)
+            ::close(wfd);
+        else
+            ::shutdown(wfd, SHUT_WR); // might be a socket
+
+        want_nowrite = false;
+        wfd = -1;
+    }
     
     //TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
     return out;
+}
+
+
+void WvFDStream::noread()
+{
+    if (rfd < 0)
+        return;
+    if (rfd != wfd)
+        ::close(rfd);
+    else
+        ::shutdown(rfd, SHUT_RD); // might be a socket        
+    rfd = -1;
+}
+
+
+void WvFDStream::nowrite()
+{
+    if (!outbuf.used())
+    {
+        if (rfd != wfd)
+            ::close(wfd);
+        else
+            ::shutdown(wfd, SHUT_WR); // might be a socket
+
+        want_nowrite = false;
+        wfd = -1;
+    }
+    else
+        WvStream::nowrite();
 }
 
 

@@ -78,7 +78,7 @@ public:
 
     /** kill the child process and close the stream. */
     virtual ~WvPipe();
-    
+
     /**
      * send the child a signal
      * (signal names are defined in signal.h)
