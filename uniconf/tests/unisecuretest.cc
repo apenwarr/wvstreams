@@ -12,9 +12,13 @@
 /**
  * FIXME: this doesn't test the following:
  * - exec permissions
- * - drilldown (ie. intermediate keys missing exec)
- * - default permissions (ie. users / * / foo) 
  */
+
+
+/**
+ * Setup/teardown
+ */
+
 
 struct Objects
 {
@@ -46,7 +50,9 @@ Objects *setup(WvStringParm perms)
                 for (int world = 0; world < 8; world++)
                 {
                     WvString key("%s%s%s", user, group, world);
-                    u[key].set(key);
+                    u["nondef"][key].set(key);
+                    u["defaults/1"][key].set(key);
+                    u["defaults/2"][key].set(key);
                 }
 
         u.commit();
@@ -55,16 +61,26 @@ Objects *setup(WvStringParm perms)
     // create and populate the perms gen
     UniPermGen *p = new UniPermGen(perms);
     UniSecureGen *s = new UniSecureGen("ini:secure.ini", p);
-    
+
+    p->setowner("defaults/*/*", "clampy");
+    p->setgroup("defaults/*/*", "cloggers");
     for (int user = 0; user < 8; user++)
         for (int group = 0; group < 8; group++)
             for (int world = 0; world < 8; world++)
             {
                 WvString key("%s%s%s", user, group, world);
-                p->setowner(key, "clampy");
-                p->setgroup(key, "cloggers");
-                p->chmod(key, user, group, world);
+                WvString nondef("nondef/%s", key);
+                WvString defaults("defaults/*/%s", key);
+                p->setowner(nondef, "clampy");
+                p->setgroup(nondef, "cloggers");
+                p->chmod(nondef, user, group, world);
+                p->chmod(defaults, user, group, world);
             }
+
+    // all access to the defaults/2 tree should fail due to missing exec
+    p->setexec("defaults/2", UniPermGen::USER, false);
+    p->setexec("defaults/2", UniPermGen::GROUP, false);
+    p->setexec("defaults/2", UniPermGen::WORLD, false);
 
     // create the uniconf obj and mount the generators
     Objects *o = new Objects(p, s);
@@ -77,6 +93,11 @@ void teardown(Objects *o)
     delete o;
     unlink("secure.ini");
 }
+
+
+/**
+ * Headers/footers
+ */
 
 
 void printheader(WvStringParm h)
@@ -97,32 +118,87 @@ void printfooter(bool pass)
 }
 
 
-bool testget(const UniConf &u, WvStringParm key, bool expectsucc)
+void printfinal(bool pass)
+{
+    WvString footer("===   ALL TESTS %s   ===", pass ? "PASSED" : "FAILED");
+    wvcon->print("%s\n",footer);
+}
+
+
+/**
+ * Test get/set of a single key
+ */
+
+
+bool testaget(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expectsucc)
 {
     WvString expect = expectsucc ? key : WvString("nothing");
-    WvString got = u[key].get("nothing");
+    WvString got = u[prefix][key].get("nothing");
     if (expect != got)
-        wvcon->print("FAILED: get %s expected %s, got %s\n", key, expect, got);
+        wvcon->print("FAILED: get %s/%s expected %s, got %s\n", prefix, key, expect, got);
     return (expect == got);
 }
 
 
-bool testset(const UniConf &u, WvStringParm key, bool expectsucc)
+bool testaset(const UniConf &u, WvStringParm prefix, WvStringParm key, bool expectsucc)
 {
-    WvString val = "test";
-    WvString orig = u[key].get();
+    WvString val = "brandnew";
+    WvString orig = u[prefix][key].get();
     WvString expect = expectsucc ? val : orig;
-    u[key].set(val);
-    WvString got = u[key].get();
+    u[prefix][key].set(val);
+    WvString got = u[prefix][key].get();
     if (got != expect)
-        wvcon->print("FAILED: set %s expected %s, got %s (orig was %s)\n",
-                key, expect, got, orig);
+        wvcon->print("FAILED: set %s/%s expected %s, got %s (orig was %s)\n",
+                prefix, key, expect, got, orig);
     return (got == expect);
 }
 
 
+/**
+ * Test get/set of a single key in 3 branches (nondef / foo, defaults / 1 /
+ * foo, defaults / 2 / foo
+ */
+
+
+bool testget(const UniConf &u, WvStringParm key, bool expectsucc, bool noperms)
+{
+    bool pass = true;
+    // no default
+    pass = testaget(u, "nondef", key, expectsucc) && pass;
+    if (!noperms)
+    {
+        // with default
+        pass = testaget(u, "defaults/1", key, expectsucc) && pass;
+        // drilldown
+        pass = testaget(u, "defaults/2", key, false) && pass;
+    }
+    return pass;
+}
+
+
+bool testset(const UniConf &u, WvStringParm key, bool expectsucc, bool noperms)
+{
+    bool pass = true;
+    // no default
+    pass = testaset(u, "nondef", key, expectsucc) && pass;
+    if (!noperms)
+    {
+        // with default
+        pass = testaset(u, "defaults/1", key, expectsucc) && pass;
+        // drilldown
+        pass = testaset(u, "defaults/2", key, false) && pass;
+    }
+    return pass;
+}
+
+
+/**
+ * Test a variety of keys for the given permissions
+ */
+
+
 bool testreadable(const UniConf &u, bool none, bool o, bool g, bool w, bool og,
-        bool ow, bool gw, bool ogw)
+        bool ow, bool gw, bool ogw, bool noperms = false)
 {
     bool pass = true;
 
@@ -130,43 +206,43 @@ bool testreadable(const UniConf &u, bool none, bool o, bool g, bool w, bool og,
     //unreadable: 0123
 
     // all unreadable
-    pass = testget(u, "000", none) && pass;
-    pass = testget(u, "123", none) && pass;
+    pass = testget(u, "000", none, noperms) && pass;
+    pass = testget(u, "123", none, noperms) && pass;
 
     // user readable
-    pass = testget(u, "400", o) && pass;
-    pass = testget(u, "700", o) && pass;
-    pass = testget(u, "512", o) && pass;
+    pass = testget(u, "400", o, noperms) && pass;
+    pass = testget(u, "700", o, noperms) && pass;
+    pass = testget(u, "512", o, noperms) && pass;
 
     // group readable
-    pass = testget(u, "040", g) && pass;
-    pass = testget(u, "070", g) && pass;
-    pass = testget(u, "152", g) && pass;
+    pass = testget(u, "040", g, noperms) && pass;
+    pass = testget(u, "070", g, noperms) && pass;
+    pass = testget(u, "152", g, noperms) && pass;
 
     // world readable
-    pass = testget(u, "004", w) && pass;
-    pass = testget(u, "007", w) && pass;
-    pass = testget(u, "236", w) && pass;
+    pass = testget(u, "004", w, noperms) && pass;
+    pass = testget(u, "007", w, noperms) && pass;
+    pass = testget(u, "236", w, noperms) && pass;
 
     // user, group readable
-    pass = testget(u, "440", og) && pass;
-    pass = testget(u, "770", og) && pass;
-    pass = testget(u, "561", og) && pass;
+    pass = testget(u, "440", og, noperms) && pass;
+    pass = testget(u, "770", og, noperms) && pass;
+    pass = testget(u, "561", og, noperms) && pass;
  
     // user, world readable
-    pass = testget(u, "404", ow) && pass;
-    pass = testget(u, "707", ow) && pass;
-    pass = testget(u, "625", ow) && pass;
+    pass = testget(u, "404", ow, noperms) && pass;
+    pass = testget(u, "707", ow, noperms) && pass;
+    pass = testget(u, "625", ow, noperms) && pass;
   
     // group, world readable
-    pass = testget(u, "044", gw) && pass;
-    pass = testget(u, "077", gw) && pass;
-    pass = testget(u, "265", gw) && pass;
+    pass = testget(u, "044", gw, noperms) && pass;
+    pass = testget(u, "077", gw, noperms) && pass;
+    pass = testget(u, "265", gw, noperms) && pass;
      
     // all readable
-    pass = testget(u, "444", ogw) && pass;
-    pass = testget(u, "777", ogw) && pass;
-    pass = testget(u, "465", ogw) && pass;
+    pass = testget(u, "444", ogw, noperms) && pass;
+    pass = testget(u, "777", ogw, noperms) && pass;
+    pass = testget(u, "465", ogw, noperms) && pass;
    
     return pass;
 }
@@ -174,7 +250,7 @@ bool testreadable(const UniConf &u, bool none, bool o, bool g, bool w, bool og,
 
 /** Make sure this is called last - it updates the keys */
 bool testwriteable(const UniConf &u, bool none, bool o, bool g, bool w, bool og,
-        bool ow, bool gw, bool ogw)
+        bool ow, bool gw, bool ogw, bool noperms = false)
 {
     bool pass = true;
 
@@ -185,39 +261,44 @@ bool testwriteable(const UniConf &u, bool none, bool o, bool g, bool w, bool og,
     //convenient
 
     // all unwriteable
-    pass = testset(u, "000", none) && pass;
-    pass = testset(u, "145", none) && pass;
+    pass = testset(u, "000", none, noperms) && pass;
+    pass = testset(u, "145", none, noperms) && pass;
 
     // user writeable
-    pass = testset(u, "700", o) && pass;
-    pass = testset(u, "614", o) && pass;
+    pass = testset(u, "700", o, noperms) && pass;
+    pass = testset(u, "614", o, noperms) && pass;
 
     // group writeable
-    pass = testset(u, "070", g) && pass;
-    pass = testset(u, "164", g) && pass;
+    pass = testset(u, "070", g, noperms) && pass;
+    pass = testset(u, "164", g, noperms) && pass;
 
     // world writeable
-    pass = testset(u, "007", w) && pass;
-    pass = testset(u, "516", w) && pass;
+    pass = testset(u, "007", w, noperms) && pass;
+    pass = testset(u, "516", w, noperms) && pass;
 
     // user, group writeable
-    pass = testset(u, "770", og) && pass;
-    pass = testset(u, "661", og) && pass;
+    pass = testset(u, "770", og, noperms) && pass;
+    pass = testset(u, "661", og, noperms) && pass;
  
     // user, world writeable
-    pass = testset(u, "707", ow) && pass;
-    pass = testset(u, "646", ow) && pass;
+    pass = testset(u, "707", ow, noperms) && pass;
+    pass = testset(u, "646", ow, noperms) && pass;
   
     // group, world writeable
-    pass = testset(u, "077", gw) && pass;
-    pass = testset(u, "566", gw) && pass;
+    pass = testset(u, "077", gw, noperms) && pass;
+    pass = testset(u, "566", gw, noperms) && pass;
      
     // all writeable
-    pass = testset(u, "777", ogw) && pass;
-    pass = testset(u, "666", ogw) && pass;
+    pass = testset(u, "777", ogw, noperms) && pass;
+    pass = testset(u, "666", ogw, noperms) && pass;
  
     return pass;
 }
+
+
+/**
+ * Main test suite
+ */
 
 
 int main(int argc, char **argv)
@@ -226,17 +307,21 @@ int main(int argc, char **argv)
 
     WvString ini("ini:secure.ini");
 
+    bool allpassed = true;
+    
     {
         printheader("DEFAULT PERMISSIONS");
         Objects *o = setup("null");
 
         /** All reads succeed, all writes fail */
         bool pass = true;
-        pass = testreadable(o->u, true, true, true, true, true, true, true, true) && pass;
-        pass = testwriteable(o->u, false, false, false, false, false, false, false, false) && pass;
+        pass = testreadable(o->u, true, true, true, true, true, true, true, true, true) && pass;
+        pass = testwriteable(o->u, false, false, false, false, false, false, false, false, true) && pass;
 
         teardown(o);
         printfooter(pass);
+
+        allpassed = pass && allpassed;
     }
 
     {
@@ -255,6 +340,8 @@ int main(int argc, char **argv)
             
         teardown(o);
         printfooter(pass);
+
+        allpassed = pass && allpassed;
     }
 
     {
@@ -273,6 +360,8 @@ int main(int argc, char **argv)
         
         teardown(o);
         printfooter(pass);
+
+        allpassed = pass && allpassed;
     }
 
     {
@@ -291,6 +380,8 @@ int main(int argc, char **argv)
 
         teardown(o);
         printfooter(pass);
+
+        allpassed = pass && allpassed;
     }
 
     {
@@ -309,6 +400,10 @@ int main(int argc, char **argv)
 
         teardown(o);
         printfooter(pass);
+
+        allpassed = pass && allpassed;
     }
+
+    printfinal(allpassed);
 
 }

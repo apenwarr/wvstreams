@@ -89,7 +89,7 @@ void UniSecureGen::gencallback(const UniConfKey &key, WvStringParm value,
 
 bool UniSecureGen::findperm(const UniConfKey &key, UniPermGen::Type type)
 {
-    if (!drilldown(key.removelast()))
+    if (!drilldown(key))
         return false;
     else
         return perms->getperm(key, cred, type);
@@ -98,13 +98,21 @@ bool UniSecureGen::findperm(const UniConfKey &key, UniPermGen::Type type)
 
 bool UniSecureGen::drilldown(const UniConfKey &key)
 {
-    UniConfKey::Iter i(key);
-    for (i.rewind(); i.next(); )
+    UniConfKey check;
+    UniConfKey left = key;
+
+    while (!left.isempty())
     {
-        bool ok = perms->getperm(*i, cred, UniPermGen::EXEC);
-        wvcon->print("Checking path %s: %s\n", *i, ok ? "ok" : "no");
-        if (!ok)
+        // check the exec perm
+        if (!perms->getperm(check, cred, UniPermGen::EXEC))
             return false;
+
+        // move the first segment of left to check
+        // note that when left is empty, we exit the loop before checking the
+        // last segment.  That's on purpose: the last segment is the 'file'
+        // and we only need to check the 'directories'
+        check.append(left.first());
+        left = left.removefirst();
     }
     return true;
 }

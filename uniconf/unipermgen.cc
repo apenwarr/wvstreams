@@ -7,13 +7,15 @@
  */
 
 #include "unipermgen.h"
+#include "unidefgen.h"
+
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
-#include "wvlog.h"
+
 
 UniPermGen::UniPermGen(UniConfGen *_gen) :
-    UniFilterGen(_gen)
+    UniFilterGen(new UniDefGen(_gen))
 {
 }
 
@@ -23,7 +25,7 @@ UniPermGen::UniPermGen(WvStringParm moniker) :
 {
     UniConfGen *gen = wvcreate<UniConfGen>(moniker);
     assert(gen && "Moniker doesn't get us a generator!");
-    setinner(gen);
+    setinner(new UniDefGen(gen));
 }
 
 
