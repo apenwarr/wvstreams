@@ -141,7 +141,6 @@ void get_simple_acl_permissions(WvStringParm filename,
     {
         // Library and kernel support.
         acl_free(aclchk);
-	WvSimpleAclEntry *mask_entry;
         WvString short_form(get_acl_short_form(filename));
 	
 	struct passwd *pw;
@@ -155,6 +154,12 @@ void get_simple_acl_permissions(WvStringParm filename,
 	    WvStringList this_entry;
 	    this_entry.splitstrict(i(), ":");
 	    WvString this_type(this_entry.popstr());
+
+            // Since get_acl_short_form() calls fix_acl(), our ACL should
+            // have a mask of rwx, which means that we can ignore it.
+            if (this_type[0] == 'm')
+                continue;
+
 	    WvString this_qualifier(this_entry.popstr());
 	    WvString this_permission(this_entry.popstr());
 
@@ -184,10 +189,8 @@ void get_simple_acl_permissions(WvStringParm filename,
 	    case 'o':
 		simple_entry->type = WvSimpleAclEntry::AclOther;
 		break;
-	    case 'm':
-		mask_entry = simple_entry;
-		break;
 	    default:
+                log(WvLog::Error, "Unknown ACL type %s.\n", this_type[0]);
 		break;
 	    }
 
@@ -208,8 +211,7 @@ void get_simple_acl_permissions(WvStringParm filename,
 		simple_entry->name, simple_entry->type, simple_entry->read,
 		simple_entry->write, simple_entry->execute);
 
-	    if (this_type[0] != 'm')
-		acl_entries.append(simple_entry, true);
+            acl_entries.append(simple_entry, true);
 	}
 
         return;
