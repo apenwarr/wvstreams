@@ -238,9 +238,8 @@ void WvModem::setup_modem(bool rtscts)
 
 void WvModem::close()
 {
-    if (isok())
+    if (!closed)
     {
-	log("WvModem is OK!\n");
 	if (!closing)
 	{
 	    closing = true;
@@ -256,14 +255,9 @@ void WvModem::close()
 	}
     
 	closing = true;
-	log("WvModem closing with no_reset: %s\n", 
-		no_reset ? "true" : "false");
 	tcflush(getrfd(), TCIOFLUSH);
-	log("WvModem called tcflush().\n");
 	tcsetattr(getrfd(), TCSANOW, &old_t);
-	log("WvModem called tcsetattr().\n");
 	WvFile::close();
-	log("WvModem called WvFile::close()\n");
 	closing = false;
     }
 }
