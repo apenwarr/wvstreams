@@ -18,6 +18,10 @@
 
 typedef struct timeval WvTime;
 
+static const WvTime wvtime_zero = {
+    0, 0
+};
+
 /** Returns the number of milliseconds between times a and b. */
 time_t msecdiff(const WvTime &a, const WvTime &b);
 
@@ -40,6 +44,12 @@ inline bool operator< (const WvTime &a,
 {
     return a.tv_sec < b.tv_sec || (a.tv_sec == b.tv_sec
         && a.tv_usec < b.tv_usec);
+}
+
+inline bool operator== (const WvTime &a,
+    const struct timeval &b)
+{
+    return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec;
 }
 
 #endif // __WVTIMEUTILS_H
