@@ -222,7 +222,7 @@ void get_simple_acl_permissions(WvStringParm filename,
                 continue;
 
 	    WvSimpleAclEntry *simple_entry = new WvSimpleAclEntry;
-	    simple_entry->owner = true;
+	    simple_entry->owner = false;
 	    if (!!this_qualifier)
 		simple_entry->name = this_qualifier;
 
