@@ -117,6 +117,10 @@ ifeq ("$(enable_efence)", "yes")
 LDLIBS+=-lefence
 endif
 
+ifneq ("$(with_acl)", "no")
+  libwvstreams.so: -lacl
+endif
+
 ifneq ("$(with_fam)", "no")
   libwvstreams.so: -lfam
 endif

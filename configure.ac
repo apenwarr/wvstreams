@@ -69,6 +69,7 @@ AC_ARG_ENABLE(warnings,
               AC_HELP_STRING([--disable-warnings],
                              [extra warnings]))
 
+AC_ARG_WITH(acl, AC_HELP_STRING([--with-acl], [ACL]))
 AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
@@ -123,6 +124,29 @@ fi
 # rtti
 if test "$enable_rtti" != "yes"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
+fi
+
+# acl
+if test "$with_acl" != "no"; then
+    test "$with_acl" = yes && with_acl=
+    CPPFLAGS_save="$CPPFLAGS"
+    LDFLAGS_save="$LDFLAGS"
+    if test "$with_acl"; then
+        WV_APPEND(CPPFLAGS, [-I$with_acl/include])
+        WV_APPEND(LDFLAGS, [-L$with_acl/libacl/.libs])
+    fi
+    # check for the acl headers
+    AC_CHECK_HEADERS(acl.h,, [with_acl=no])
+    # check for acl library
+    AC_CHECK_LIB(acl, acl_set_file,, [with_acl=no])
+
+    if test "$with_acl" = "no"; then
+        CPPFLAGS="$CPPFLAGS_save"
+        LDFLAGS="$LDFLAGS_save"
+    else
+        AC_DEFINE(WITH_ACL,,
+                  [Define to enable ACL support.])
+    fi
 fi
 
 # fam
@@ -323,6 +347,10 @@ fi
 # check for missing packages
 missing_required=
 missing_devel=
+if test "$with_acl" = "no"; then
+    AC_MSG_WARN([ACL is missing.])
+    missing_devel=yes
+fi
 if test "$with_fam" = "no"; then
     AC_MSG_WARN([FAM is missing.])
     missing_devel=yes
@@ -399,6 +427,7 @@ AC_SUBST(enable_rtti)
 AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 
+AC_SUBST(with_acl)
 AC_SUBST(with_bdb)
 AC_SUBST(with_fam)
 AC_SUBST(with_fftw)
