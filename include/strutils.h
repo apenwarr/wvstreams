@@ -9,7 +9,7 @@
 #ifndef __STRUTILS_H
 #define __STRUTILS_H
 
-#if 0
+#if 0 /* Use autoconf for this */
 // FIXME: this is needed on BSD and Win32
 #include <time.h>
 #endif
@@ -78,7 +78,7 @@ bool is_word(const char *string);
  * This is used mostly for debugging purposes. You can send the returned 
  * WvString object directly to a WvLog or any other WvStream for output.
  */
-WvString hexdump_buffer(const void *buf, size_t len);
+WvString hexdump_buffer(const void *buf, size_t len, bool charRep = true);
 
 /**
  * Returns true if 'c' is a newline or carriage return character. 

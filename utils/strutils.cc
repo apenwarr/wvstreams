@@ -154,7 +154,7 @@ bool is_word(const char *p)
 // produce a hexadecimal dump of the data buffer in 'buf' of length 'len'.
 // it is formatted with 16 bytes per line; each line has an address offset,
 // hex representation, and printable representation.
-WvString hexdump_buffer(const void *_buf, size_t len)
+WvString hexdump_buffer(const void *_buf, size_t len, bool charRep)
 {
     const unsigned char *buf = (const unsigned char *)_buf;
     size_t count, count2, top;
@@ -194,9 +194,11 @@ WvString hexdump_buffer(const void *_buf, size_t len)
 	*cptr++ = ' ';
 	
 	// dump character representation
-	for (count2 = 0; count2 < top; count2++)
-	    *cptr++ = (isprint(buf[count+count2])
-			     ? buf[count+count2] : '.');
+	if (charRep)
+	    for (count2 = 0; count2 < top; count2++)
+	        *cptr++ = (isprint(buf[count+count2])
+			   ? buf[count+count2] : '.');
+
 	*cptr++ = '\n';
     }
     *cptr = 0;
