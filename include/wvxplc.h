@@ -11,6 +11,6 @@
 
 #include <xplc/IObject.h>
 
-#include <xplc/utils.h>
+#include <xplc/xplc.h>
 
 #endif // __WVXPLC_H
