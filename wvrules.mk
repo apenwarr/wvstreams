@@ -207,6 +207,13 @@ endif
 .PHONY: FORCE
 FORCE:
 
+ifeq ($(LN_S),)
+LN_S := ln -s
+endif
+ifeq ($(LN),)
+LN := ln
+endif
+
 # Create symbolic links
 # usage: $(wvlns,source,dest)
 wvlns=$(SYMLINK_MSG)$(LN_S) -f $1 $2
