@@ -8,7 +8,11 @@
 #define WVCONFEMU
 
 #include "uniconfroot.h"
+#ifdef WVCONFEMU
 #include "wvconfemu.h"
+#else
+#include "wvconf.h"
+#endif
 #include "wvlog.h"
 
 int main()
@@ -88,6 +92,6 @@ int main()
     assert(c1 && c2 && c3);
 
     //log("Number of entries in [Global]: %s\n", cfg["Global"]->count());
-  
+
     return 0;
 }
