@@ -68,6 +68,9 @@ public:
     // and set a route to the local net.
     int setipaddr(const WvIPNet &addr);
     
+    // Set the MTU of the interface.
+    int setmtu(int mtu);
+    
     // add a route to the given network through this interface.
     int addroute(const WvIPNet &dest, int metric = 0);
     int addroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0);

@@ -267,6 +267,31 @@ int WvInterface::setipaddr(const WvIPNet &addr)
 }
 
 
+int WvInterface::setmtu(int mtu)
+{
+    struct ifreq ifr;
+    int sock, errnum;
+    
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
+    ifr.ifr_name[IFNAMSIZ-1] = 0;
+
+    ifr.ifr_mtu = mtu;
+    
+    if (ioctl(sock, SIOCSIFMTU, &ifr))
+    {
+	errnum = errno;
+	if (errnum != EACCES && errnum != EPERM)
+	    err.perror(WvString("SetMTU %s", name));
+	close(sock);
+	return errnum;
+    }
+    
+    close(sock);
+    return 0;
+}
+
+
 void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
 			   const WvIPNet &dest, const WvIPAddr &gw,
 			   int metric)
