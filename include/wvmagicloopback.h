@@ -7,7 +7,6 @@
 
 #include "wvmagiccircle.h"
 #include "wvloopback.h"
-#include "wvlog.h"
 
 class WvMagicLoopback : public WvStream
 {
@@ -26,7 +25,6 @@ private:
  
     WvMagicCircle circle;
     WvLoopback loop;
-    WvLog log;
 };
 
 #endif // __WVMAGICLOOPBACK_H
