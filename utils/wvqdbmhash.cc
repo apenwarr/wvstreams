@@ -16,6 +16,7 @@ extern "C" {
 #include <cabin.h>
 #include <villa.h>
 #include <stdlib.h>
+#include <unistd.h>
 }
 
 
@@ -63,7 +64,7 @@ void WvQdbmHash::closedb()
 
 void WvQdbmHash::opendb(WvStringParm dbfile, bool _persist)
 {
-    static char tmpbuf[L_tmpnam];
+    static char tmpbuf[] = "/var/tmp/qdbm-annoymousdb-XXXXXX";
     static int tmpbuf_inited = 0;
     closedb();
 
@@ -73,7 +74,8 @@ void WvQdbmHash::opendb(WvStringParm dbfile, bool _persist)
     //jdeboer: If this is an anonymous hash, we don't want it to persist!
     if (dbfile.isnull()) {
         persist_dbfile = false;
-        tmpnam(tmpbuf);
+        int fd = mkstemp(tmpbuf);
+        close(fd);
         tmpbuf_inited = 1;
     }
     if (tmpbuf_inited > 0 && dbfile == WvString(tmpbuf)) {
