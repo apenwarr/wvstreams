@@ -56,6 +56,26 @@ char * trim_string( char * string )
     return( p );
 }
 
+char * trim_string( char * string, char c )
+// Searchs the string for c and removes it plus everything afterwards.
+// Modifies the string and returns NULL if string == NULL.
+{
+    char * p;
+
+    if ( string == NULL )
+        return( NULL );
+
+    p = string;
+
+    while( *p != 0 && *p != c )
+        p++;
+
+    while( *p )
+        *(p++) = 0;
+
+    return( string );
+}
+
 void replace_char( void * _string, char c1, char c2, int length )
 /**************************************************************/
 // Searches _string (up to length bytes), replacing any occurrences of c1
