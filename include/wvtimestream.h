@@ -21,6 +21,7 @@
  */
 class WvTimeStream : public WvStream
 {
+    WvTime last;
     WvTime next;
     time_t ms_per_tick;
 

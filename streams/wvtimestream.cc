@@ -7,15 +7,18 @@
 #include "wvtimestream.h"
 
 WvTimeStream::WvTimeStream():
-    next(wvtime()), ms_per_tick(0)
+    last(wvtime_zero), next(wvtime_zero), ms_per_tick(0)
 {
 }
 
 
 void WvTimeStream::set_timer(time_t msec)
 {
+    WvTime now = wvtime();
+
     ms_per_tick = msec > 0 ? msec : 0;
-    next = msecadd(wvtime(), ms_per_tick);
+    next = msecadd(now, ms_per_tick);
+    last = now;
 }
 
 
@@ -35,7 +38,13 @@ bool WvTimeStream::pre_select(SelectInfo &si)
     {
 	now = wvtime();
 
-	if (next < now)
+	/* Are we going back in time? If so, assume we're due. */
+	if (now < last)
+	    next = now;
+
+	last = now;
+
+	if (next < now || next == now)
 	{
 	    si.msec_timeout = 0;
 	    return true;
