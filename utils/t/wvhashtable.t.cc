@@ -116,8 +116,9 @@ WVTEST_MAIN("stresshash")
     WVPASS(slow_iter_passed);
 }
 
-// some things are commented out here because I believe the memory addresses are
-// not absolute.. I'll admit I can be wrong, so modify if you wish
+// some things are commented out here because I believe the memory
+// addresses are not absolute.. I'll admit I can be wrong, so modify
+// if you wish
 WVTEST_MAIN("hashtest.cc")
 {
     WvString x("foo"), y("blue"), z("true");
@@ -270,20 +271,28 @@ WVTEST_MAIN("WvMap zapping")
 
     WVPASS(zapmap.exists("Febtober"));
     zapmap.zap();
-    /*** FAILURE: This doesn't pass as of 2004-07-13.  See BUGZID: 6281 ***/
-    /*
     WVFAIL(zapmap.exists("Febtober"));
-    */
 
     WvMap<WvString, WvString*> ptrmap(5);
 
-    ptrmap.set("Smarch", new WvString("Mapril"));
+    ptrmap.set("Smarch", new WvString("Mapril"), true);
     WVPASS(ptrmap.exists("Smarch"));
     ptrmap.zap();
-    /*** FAILURE: This doesn't pass as of 2004-07-13.  See BUGZID: 6281 ***/
-    /*
-    WVFAIL(listmap.exists("Smarch"));
-    */
+    WVFAIL(ptrmap.exists("Smarch"));
+}
 
+WVTEST_MAIN("WvMap removing")
+{
+    WvMap<WvString, WvString> remmap(5);
+    remmap.add("ruff", "This is the sound a dog makes");
+    WVPASS(remmap.exists("ruff"));
+    remmap.remove("ruff");
+    WVFAIL(remmap.exists("ruff"));
+
+    WvMap<WvString, WvString*> remmap2(5);
+    remmap2.add("moo", new WvString("This is the sound a dog makes"), true);
+    WVPASS(remmap2.exists("moo"));
+    remmap2.remove("moo");
+    WVFAIL(remmap2.exists("moo"));
 }
 

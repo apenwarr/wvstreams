@@ -385,6 +385,11 @@ public:
         last_accessed = NULL;
         MyHashTable::remove(MyHashTable::operator[](key));
     } 
+    void zap()
+    {
+	MyHashTable::zap();
+	last_accessed = NULL;
+    }
     typedef typename MyHashTable::Iter Iter;
 }; 
 

@@ -10,14 +10,18 @@
 #include "wvunixsocket.h"
 #include "wvtcp.h"
 #include "wvsslstream.h"
+#include "uninullgen.h"
 
 
-UniConfDaemon::UniConfDaemon(const UniConf &_cfg, bool auth)
-    : cfg(_cfg), log("UniConfDaemon"), debug(log.split(WvLog::Debug1)),
-      closed(false), authenticate(auth)
+UniConfDaemon::UniConfDaemon(const UniConf &_cfg,
+			     bool auth, IUniConfGen *_permgen)
+    : cfg(_cfg), log("UniConf Daemon"), debug(log.split(WvLog::Debug1))
 {
+    authenticate = auth;
+    permgen = _permgen ? _permgen : new UniNullGen();
     debug("Starting.\n");
 }
+
 
 UniConfDaemon::~UniConfDaemon()
 {
@@ -27,27 +31,27 @@ UniConfDaemon::~UniConfDaemon()
 
 void UniConfDaemon::close()
 {
-    if (! closed)
+    if (!closed)
     {
-        closed = true;
         debug("Saving changes.\n");
         cfg.commit();
         debug("Done saving changes.\n");
     }
-}
-
-
-bool UniConfDaemon::isok() const
-{
-    return !closed && WvIStreamList::isok();
+    
+    WvIStreamList::close();
 }
 
 
 void UniConfDaemon::accept(WvStream *stream)
 {
     debug("Accepting connection from %s.\n", *stream->src());
+    
+    // FIXME: permgen should be used regardless of whether we authenticate,
+    // and there should be a command to authenticate explicitly.  That way we
+    // can support access control for anonymous connections.
     if (authenticate)
-        append(new UniConfPamConn(stream, cfg), true);
+        append(new UniConfPamConn(stream, cfg,
+				  new UniPermGen(permgen)), true);
     else
         append(new UniConfDaemonConn(stream, cfg), true);
 }
@@ -93,7 +97,7 @@ bool UniConfDaemon::setupunixsocket(WvStringParm path, int create_mode)
     }
     listener->setcallback(WvStreamCallback(this,
         &UniConfDaemon::unixcallback), NULL);
-    append(listener, true, "WvUnixListener");
+    append(listener, true, "unix listen");
     debug("Listening on Unix socket '%s'\n", path);
     return true;
 }
@@ -111,7 +115,7 @@ bool UniConfDaemon::setuptcpsocket(const WvIPPortAddr &addr)
     }
     listener->setcallback(WvStreamCallback(this,
         &UniConfDaemon::tcpcallback), NULL);
-    append(listener, true, "WvTCPListener");
+    append(listener, true, "tcp listen");
     debug("Listening for TCP at %s.\n", addr);
     return true;
 }
@@ -129,7 +133,7 @@ bool UniConfDaemon::setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509)
     }
     listener->setcallback(WvStreamCallback(this,
         &UniConfDaemon::sslcallback), x509);
-    append(listener, true, "WvTCPListener(SSL)");
+    append(listener, true, "ssl listen");
     debug("Listening for TCP/SSL at %s.\n", addr);
     return true;
 }

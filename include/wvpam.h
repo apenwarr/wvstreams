@@ -8,33 +8,35 @@
  * constructor will go through before authentication begins.
  *
  * For now, this only works for PAM modules that don't require any user
- * interaction.
+ * interaction (not even a password!), such as ssoya.
  */
 #ifndef __WVPAM_H
 #define __WVPAM_H
 
 #include "wvstreamclone.h"
 #include "wvstringlist.h"
+#include "wvlog.h"
 
 class WvPamData;
 
 class WvPamStream : public WvStreamClone
 {
     WvPamData *d;
+    WvLog log;
 
 public:
-    
     /**
      * Require PAM authentication for the cloned stream.  name is the PAM
      * service name.  success and fail are optional messages to write to the
      * cloned stream on success or failure.
      */
-    WvPamStream(WvStream *cloned, WvStringParm name, WvStringParm success =
-            WvString::null, WvStringParm fail = WvString::null);
+    WvPamStream(WvStream *cloned, WvStringParm name,
+		WvStringParm success = WvString::null,
+		WvStringParm fail = WvString::null);
     virtual ~WvPamStream();
 
     /** Goes not ok if authentication fails */
-    virtual bool isok() const;
+    // virtual bool isok() const;
 
     /** Return the user */
     WvString getuser() const;
@@ -43,7 +45,6 @@ public:
     void getgroups(WvStringList &l) const;
 
 private:
-
     /**
      * Log the result of the last PAM step, based on the pam_status flag,and
      * write a failure message to the cloned stream on error.  step is the
@@ -51,6 +52,9 @@ private:
      * succeeded, false if it failed.
      */
     bool check_pam_status(WvStringParm step);
+    
+    bool authenticate(WvStringParm name,
+		      WvStringParm successmsg, WvStringParm failmsg);
 };
 
 #endif // __WVPAM_H
