@@ -2,7 +2,8 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * A class for reliably starting/stopping subprocesses.  See wvsubproc.h.
+ * A class for reliably starting/stopping subprocesses.  See
+ * wvsubproc.h.
  */
 #include "wvsubproc.h"
 #include "wvtimeutils.h"
@@ -77,8 +78,9 @@ int WvSubProc::startv(const char cmd[], const char * const *argv)
     {
 	// child process
 	 
-	// set the process group of this process, so "negative" kill will kill
-	// everything in the whole session, not just the main process.
+	// set the process group of this process, so "negative" kill
+	// will kill everything in the whole session, not just the
+	// main process.
 	setpgid(0,0);
 	
 	// set up any extra environment variables
@@ -89,9 +91,9 @@ int WvSubProc::startv(const char cmd[], const char * const *argv)
 	// run the subprocess.
 	execvp(cmd, (char * const *)argv);
 	
-	// if we get this far, just make sure we exit, not return.  The code 242
-	// should be somewhat recognizable by the calling process so we know
-	// something is up.
+	// if we get this far, just make sure we exit, not return.
+	// The code 242 should be somewhat recognizable by the calling
+	// process so we know something is up.
 	_exit(242);
     }
     else if (pid > 0)
@@ -112,7 +114,8 @@ void WvSubProc::kill(int sig)
     
     if (running)
     {
-	// if the process group has disappeared, kill the main process instead
+	// if the process group has disappeared, kill the main process
+	// instead
 	if (::kill(-pid, sig) < 0 && errno == ESRCH)
 	    kill_primary(sig);
     }
@@ -164,14 +167,14 @@ void WvSubProc::wait(time_t msec_delay)
     
     do
     {
-	// note: there's a small chance that the child process
-	// hasn't run setpgrp() yet, so no processes will be available
-	// for "-pid".  Wait on pid if it fails.
+	// note: there's a small chance that the child process hasn't
+	// run setpgrp() yet, so no processes will be available for
+	// "-pid".  Wait on pid if it fails.
 	// 
-	// also note: waiting on a process group is actually useless since you
-	// can only get notifications for your direct descendants.  We have
-	// to "kill" with a zero signal instead to try to detect whether they've
-	// died or not.
+	// also note: waiting on a process group is actually useless
+	// since you can only get notifications for your direct
+	// descendants.  We have to "kill" with a zero signal instead
+	// to try to detect whether they've died or not.
 	dead_pid = waitpid(-pid, &status, 
 			   (msec_delay >= 0) ? WNOHANG : 0);
 	if (dead_pid < 0 && errno == ECHILD)

@@ -22,7 +22,7 @@
 
 #include "wvfork.h"
 
-#define MAX_FD sysconf(_SC_OPEN_MAX)+1
+#define MAX_FD sysconf(_SC_OPEN_MAX) + 1
 
 pid_t wvfork(int dontclose1, int dontclose2)
 {
@@ -39,6 +39,7 @@ pid_t wvfork(int dontclose1, int dontclose2)
 pid_t wvfork_start(int *waitfd)
 {
     int waitpipe[2];
+
     if (pipe(waitpipe) < 0)
         return -1;
 
