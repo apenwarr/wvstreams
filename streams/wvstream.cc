@@ -37,7 +37,6 @@ extern RunWinSockInitialize __runinitialize;
 #endif
 #endif
 
-WvTaskMan *WvStream::taskman;
 WvStream *WvStream::globalstream = NULL;
 
 XUUID_MAP_BEGIN(IWvStream)
@@ -66,6 +65,7 @@ WvStream::WvStream()
     queue_min = 0;
     autoclose_time = 0;
     alarm_time.tv_sec = alarm_time.tv_usec = 0;
+    taskman = 0;
     
     // magic multitasking support
     uses_continue_select = false;
@@ -106,7 +106,7 @@ WvStream::~WvStream()
 	task = NULL;
     }
     TRACE("done destroying %p\n", this);
-    if (!taskman)
+    if (taskman)
 	taskman->unlink();
 }
 

@@ -602,7 +602,7 @@ private:
 
 
 protected:
-    static WvTaskMan *taskman;
+    WvTaskMan *taskman;
 
     WvDynBuf inbuf, outbuf;
     WvStreamCallback callfunc;
