@@ -42,7 +42,9 @@ bool WvEncoderStream::isok() const
     // handle encoder error conditions
     if (! WvStream::isok())
         return false;
-    if (cloned->geterr() != 0)
+
+    // handle substream error conditions
+    if (! cloned || cloned->geterr() != 0)
         return false;
         
     // handle deferred EOF condition
