@@ -330,6 +330,8 @@ size_t WvDsp::ospace()
 
 size_t WvDsp::do_uread(void *buf, size_t len)
 {
+    if (!len) return 0;
+
     if (len < frag_size)
         log(WvLog::Warning, "reading less than frag size: %s/%s\n", len, frag_size);
 
@@ -376,6 +378,8 @@ size_t WvDsp::do_uread(void *buf, size_t len)
 
 size_t WvDsp::do_uwrite(const void *buf, size_t len)
 {
+    if (!len) return 0;
+
     if (len < frag_size)
         log(WvLog::Warning, "writing less than frag size: %s/%s\n",
 	    len, frag_size);
