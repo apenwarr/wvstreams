@@ -285,16 +285,19 @@ UniMountGen::UniGenMount *UniMountGen::findmountunder(const UniConfKey &key)
     MountList::Iter i(mounts);
     for (i.rewind(); i.next(); )
     {
-        // key lies beneath mount
-        if (i->key.suborsame(key))
+        // key lies beneath mount (only care about the first)
+        if (i->key.suborsame(key) && !foundmount)
         {
-            if (!foundmount)
-                foundmount = i.ptr();
+            foundmount = i.ptr();
             num_found_mounts++;
+            //fprintf(stderr, "key %s lies beneath mount %s\n", key.cstr(), i->key.cstr());
         }
         // mount lies beneath key
         else if (key.suborsame(i->key))
+        {
             num_found_mounts++;
+            //fprintf(stderr, "mount %s lies beneath key %s\n", i->key.cstr(), key.cstr());
+        }
     }
 
     if (num_found_mounts == 1 && foundmount)
