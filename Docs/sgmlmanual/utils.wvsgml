@@ -394,16 +394,15 @@ printf(buf.get(14));)
  WVCHAPTER(wvcrash, WvCrash - automatic stack backtrace generation,
  
    WvCrash is a simple way to get useful information when a program dies.
-   It automatically generates a stack trace including function names of
-   not only your program's functions but also library functions.
+   It automatically generates a stack trace, including names of not only your
+   program's functions but also library functions.
 
-   Setting up WvCrash involves running wvcrash_setup(), passing it the name
+   Setting up WvCrash involves running wvcrash_setup() and passing it the name
    of your program (generally you'll want want to pass argv[0]).  When the
-   program dies, it automatically executes the wvcrash() function, which in
-   turn executes the user-defined program "wvcrash", if it exists, and pipes
-   the WvCrash stack trace to its stdin.  If there's no program called
-   "wvcrash" in the path, it writes the stack trace to a file named
-   "wvcrash.txt" in the current directory. 
+   program dies, it automatically executes the user-defined program "wvcrash",
+   if it exists, and pipes the WvCrash stack trace to its stdin.  If there's no
+   program called "wvcrash" in the path, it writes the stack trace to a file
+   named "wvcrash.txt" in the current directory. 
  )
 
 )
