@@ -13,12 +13,11 @@
 
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
     UniClientConn(_s),
-    root(_root), watches(NUM_WATCHES), started(false)
+    root(_root), watches(NUM_WATCHES)
 {
     root.add_callback(wvcallback(UniConfCallback, *this,
             UniConfDaemonConn::deltacallback), NULL, true);
-    // need to wait for the stream to be writable to send the banner
-    force_select(false, true);
+    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
 }
 
 
@@ -29,22 +28,8 @@ UniConfDaemonConn::~UniConfDaemonConn()
 }
 
 
-void UniConfDaemonConn::startup()
-{
-    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
-}
-
-
 void UniConfDaemonConn::execute()
 {
-    if (!started)
-    {
-        // now start reading
-        force_select(true, false);
-        startup();
-        started = true;
-    }
-
     UniClientConn::execute();
     
     for (;;)

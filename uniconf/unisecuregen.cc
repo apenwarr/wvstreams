@@ -40,6 +40,16 @@ void UniSecureGen::setcredentials(const UniPermGen::Credentials &_cred)
 }
 
 
+void UniSecureGen::setcredentials(WvStringParm user, const WvStringList &groups)
+{
+    cred.user = user;
+    cred.groups.zap();
+    WvStringList::Iter i(groups);
+    for (i.rewind(); i.next(); )
+        cred.groups.add(new WvString(*i), true);
+}
+
+
 WvString UniSecureGen::get(const UniConfKey &key)
 {
     if (findperm(key, UniPermGen::READ))

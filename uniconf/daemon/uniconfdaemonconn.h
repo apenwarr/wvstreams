@@ -48,15 +48,12 @@ class UniConfDaemonConn : public UniClientConn
 {
     UniConf root;
     UniConfDaemonWatchTable watches;
-    bool started;
 
 public:
     UniConfDaemonConn(WvStream *s, const UniConf &root);
     virtual ~UniConfDaemonConn();
 
     virtual void execute();
-
-    virtual void startup();
 
 protected:
     virtual void do_malformed();

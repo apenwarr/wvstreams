@@ -128,6 +128,11 @@ CPPFLAGS+=-I$(with_xplc)/include
 endif
 endif
 
+ifneq ("$(with_pam)", "no")
+LDFLAGS += -lpam
+endif
+
+
 LDLIBS := $(LDLIBS) \
 	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++")

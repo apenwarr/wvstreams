@@ -9,6 +9,8 @@
 
 #include "unifiltergen.h"
 #include "unipermgen.h"
+#include "wvstring.h"
+#include "wvstringlist.h"
 
 /**
  * UniSecureGen wraps a given generator and checks permissions (using a
@@ -36,7 +38,8 @@ public:
     UniSecureGen(WvStringParm moniker, UniPermGen *_perms);
 
     void setcredentials(const UniPermGen::Credentials &_cred);
-
+    void setcredentials(WvStringParm user, const WvStringList &groups);
+    
     /** Overridden methods */
     virtual WvString get(const UniConfKey &key);
     virtual bool exists(const UniConfKey &key);
