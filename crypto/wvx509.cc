@@ -861,3 +861,39 @@ WvString WvX509Mgr::get_issuer()
 { 
     return WvString(X509_NAME_oneline(X509_get_issuer_name(cert),0,0)); 
 }
+
+
+bool WvX509Mgr::isok() const
+{
+    return cert && rsa && WvError::isok();
+}
+
+
+WvString WvX509Mgr::errstr() const
+{
+    WvString ret = WvError::errstr();
+    if (!ret)
+    {
+        // only use a custom string if there's not an error set
+        if (!cert && !rsa)
+            ret = "No certificate or RSA key assigned";
+        else if (!cert)
+            ret = "No certificate assigned";
+        else if (!rsa)
+            ret = "No RSA key assigned";
+    }
+    return ret;
+}
+
+
+int WvX509Mgr::geterr() const
+{
+    int ret = WvError::geterr();
+    if (ret == 0 && !cert || !rsa)
+    {
+        // unless there's a regular error set, we'll be returning a custom
+        // string: see errstr()
+        ret = -1;
+    }
+    return ret;
+}

@@ -9,6 +9,7 @@
 
 #include "wvrsa.h"
 #include "wvlog.h"
+#include "wverror.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
@@ -25,7 +26,7 @@ WvString wvssl_errstr();
  * X509 Class to handle certificates and their related
  * functions
  */
-class WvX509Mgr
+class WvX509Mgr : public WvError
 {
 public:
    /** Distinguished Name to be used in the certificate. */
@@ -201,17 +202,12 @@ public:
 
     WvLog debug;
     
-    WvString errstring;
+    virtual bool isok() const;
     
-    bool isok() const
-        { return cert && rsa && !errstring; }
-    const WvString &errstr()
-        { return errstring; }
+    virtual WvString errstr() const;
 
-    void seterr(WvStringParm s)
-        { errstring = s; }
-    void seterr(WVSTRING_FORMAT_DECL)
-        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
+    virtual int geterr() const;
+
 private:
    /** Password for PKCS12 dump */
     WvString pkcs12pass;

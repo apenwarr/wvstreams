@@ -55,6 +55,7 @@ void WvError::seterr(int _errnum)
 
 void WvError::seterr(WvStringParm specialerr)
 {
+    assert(!!specialerr);
     if (!errnum)
     {
 	errstring = specialerr;
