@@ -9,48 +9,6 @@
 
 
 /**
- * SWIG extensions
- */
-
-
-#ifdef SWIG
-
-%{
-#include "uniconf.h"
-%}
-
-%typemap(typecheck) WvStringParm = char *;
-
-%typemap(in) WvStringParm (WvString temp)
-{
-#if (defined SWIGPYTHON)
-    if ($input == NULL)
-        temp = WvString::null;
-    else
-    {
-        temp = PyString_AsString($input);
-        $1 = &temp;
-    }
-#else
-#   error "Unknown SWIG target language"
-#endif
-}
-
-%typemap(out) WvString
-{
-#if (defined SWIGPYTHON)
-    $result = PyString_FromString($1);
-#else
-#   error "Unknown SWIG target language"
-#endif
-}
-
-%import "wvstring.h"
-
-#endif  // SWIG
-
-
-/**
  * C++ Interface
  */
 
