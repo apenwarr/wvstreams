@@ -51,18 +51,18 @@ class WvTaskMan
     static WvTaskMan *singleton;
     static int links;
 
-    int magic_number;
-    WvTask *current_task;
-    WvTaskList free_tasks;
+    static int magic_number;
+    static WvTaskList free_tasks;
     
-    void get_stack(WvTask &task, size_t size);
-    void stackmaster();
-    void _stackmaster();
-    void do_task();
+    static void get_stack(WvTask &task, size_t size);
+    static void stackmaster();
+    static void _stackmaster();
+    static void do_task();
     
-    WvTask *stack_target;
+    static WvTask *stack_target;
     
-    LPVOID toplevel;
+    static WvTask *current_task;
+    static LPVOID toplevel;
     
     WvTaskMan();
     virtual ~WvTaskMan();
@@ -78,10 +78,10 @@ public:
     
     // run() and yield() return the 'val' passed to run() when this task
     // was started.
-    int run(WvTask &task, int val = 1);
-    int yield(int val = 1);
+    static int run(WvTask &task, int val = 1);
+    static int yield(int val = 1);
     
-    WvTask *whoami() const
+    static WvTask *whoami()
         { return current_task; }
 };
 

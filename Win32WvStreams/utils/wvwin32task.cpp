@@ -16,10 +16,10 @@
 #include <malloc.h> // for alloca()
 #include <stdlib.h> // for alloca() on non-Linux platforms?
 
-int WvTask::taskcount = 0;
-int WvTask::numtasks = 0;
-int WvTask::numrunning = 0;
+int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 
+WvTaskMan *WvTaskMan::singleton = NULL;
+int WvTaskMan::links = 1; // never delete singleton
 
 WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
 {
@@ -89,9 +89,6 @@ void WvTask::recycle()
 	recycled = true;
     }
 }
-
-WvTaskMan *WvTaskMan::singleton = NULL;
-int WvTaskMan::links = 1; // never delete singleton
 
 WvTaskMan *WvTaskMan::get()
 {

@@ -3,7 +3,11 @@
  */
 #include "wvtest.h"
 #include "wvtask.h"
+#ifdef _WIN32
+#define usleep(t) Sleep((t) / 1000 + 1) // not exactly right but it will do
+#else
 #include <unistd.h> // for sleep()
+#endif
 
 // BEGIN simple definition
 int glob;
