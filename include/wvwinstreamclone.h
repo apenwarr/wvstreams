@@ -3,6 +3,9 @@
 #include "wvstreamclone.h"
 #include <map>
 #include <vector>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
 
 #define WM_SELECT (WM_USER)
 #define WM_DONESELECT (WM_USER+1)
