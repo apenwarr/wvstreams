@@ -701,6 +701,7 @@ bool WvStream::continue_select(time_t msec_timeout)
     // msec_delay was zero.  Note that running select() here isn't
     // inefficient, because if the alarm was expired then pre_select()
     // returned true anyway and short-circuited the previous select().
+    TRACE("hello-%p\n", this);
     return !alarm_was_ticking || select(0);
 }
 
