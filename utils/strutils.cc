@@ -297,7 +297,6 @@ WvString backslash_escape(WvStringParm s1)
 }
 
 
-// how many times does 'c' occur in "s"?
 int strcount(WvStringParm s, const char c)
 {
     int n=0;
@@ -308,9 +307,7 @@ int strcount(WvStringParm s, const char c)
     return n;
 }
 
-// Example: encode_hostname_as_DN("www.fizzle.com")
-// will result in cn=www.fizzle.com,dc=www,dc=fizzle,dc=com
-// (I think ;)
+
 WvString encode_hostname_as_DN(WvString &hostname)
 {
    WvString dn("cn=%s,",hostname);
@@ -328,5 +325,51 @@ WvString encode_hostname_as_DN(WvString &hostname)
    *ptr = '\0';
 
    return dn;
+}
+
+
+WvString nice_hostname(WvString name)
+{
+    WvString nice;
+    char *optr, *optr_start;
+    const char *iptr;
+    bool last_was_dash;
+    
+    nice.setsize(name.len() + 2);
+
+    iptr = name;
+    optr = optr_start = nice.edit();
+    if (!isascii(*iptr) || !isalnum(*(const unsigned char *)iptr))
+	*optr++ = 'x'; // DNS names must start with a letter!
+    
+    last_was_dash = false;
+    for (; *iptr; iptr++)
+    {
+	if (!isascii(*iptr))
+	    continue; // skip it entirely
+	
+	if (*iptr == '-' || *iptr == '_')
+	{
+	    if (last_was_dash)
+		continue;
+	    last_was_dash = true;
+	    *optr++ = '-';
+	}
+	else if (isalnum(*(const unsigned char *)iptr) || *iptr == '.')
+	{
+	    *optr++ = *iptr;
+	    last_was_dash = false;
+	}
+    }
+    
+    if (optr > optr_start && !isalnum(*(const unsigned char *)(optr-1)))
+	*optr++ = 'x'; // must _end_ in a letter/number too!
+    
+    *optr++ = 0;
+    
+    if (!nice.len())
+	return "UNKNOWN";
+    
+    return nice;
 }
 

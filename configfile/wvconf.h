@@ -62,8 +62,8 @@ public:
 // parameters are: userdata, section, entry, oldval, newval
 DeclareWvCallback(5, void, WvConfCallback,
 		  void *,
-		  WvStringParm , WvStringParm ,
-		  WvStringParm , WvStringParm );
+		  WvStringParm, WvStringParm,
+		  WvStringParm, WvStringParm);
 
 class WvConfCallbackInfo
 {
@@ -102,10 +102,14 @@ public:
 
     WvConfigSection *operator[] (WvStringParm s);
 
+    int parse_wvconf_request(char *request, char *&section, char *&entry,
+			     char *&value);
+
     int getint(WvStringParm section, WvStringParm entry, int def_val);
     
     const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL);
+    WvString getraw(WvString wvconfstr, int &parse_error);
 
     int fuzzy_getint(WvStringList &sect, WvStringParm entry,
 		  int def_val);
@@ -120,6 +124,7 @@ public:
     void setint(WvStringParm section, WvStringParm entry, int value);
     void set(WvStringParm section, WvStringParm entry,
 	     const char *value);
+    void setraw(WvString wvconfstr, const char *&value, int &parse_error);
     
     void maybesetint(WvStringParm section, WvStringParm entry,
 		     int value);

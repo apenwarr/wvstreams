@@ -93,7 +93,15 @@ public:
     WvString createcertreq(WvString dName, int keysize);
     
     /**
+     * test to make sure that a certificate and a keypair go together.
+     * called internally by decodecert() although you can call it if 
+     * you want to load a certificate yourself
+     */
+    bool WvX509Mgr::testcert(X509 *newcert);
+
+    /**
      * Given a hexified encodedcert, fill the cert member
+     * NOTE: ALWAYS load your RSA Keys before calling this!
      */
     void decodecert(WvString encodedcert);
     

@@ -15,9 +15,16 @@
 
 
 void WvConf::setbool(void *userdata,
-		     WvStringParm , WvStringParm ,
-		     WvStringParm , WvStringParm )
+		     WvStringParm sect, WvStringParm ent,
+		     WvStringParm oldval, WvStringParm newval)
 {
+    if (!*(bool *)userdata)
+    {
+	WvLog log("Config Event", WvLog::Debug);
+	log("Changed: [%s]%s = '%s' -> '%s'\n",
+	    sect, ent, oldval, newval);
+    }
+    
     *(bool *)userdata = true;
 }
 		     
@@ -46,6 +53,55 @@ static int check_for_bool_string(const char *s)
 
     // not a special bool case, so just return the number
     return (atoi(s));
+}
+
+// parse the WvConf string "request"; pointers to the found section,
+// entry, and value fields are stored in *section, *entry, and *value
+// respectively, and request[] is modified.
+//
+// For example, the string:
+//         [silly]billy=willy
+// is parsed into:
+//         section="silly"; entry="billy"; value="willy";
+//
+// Returns 0 on success, -1 if the command is missing the '[', -2 if the
+// string is missing a ']', or -3 if the section or entry is blank.  If a
+// "value" is not found (ie. there is no equal sign outside the [] brackets)
+// this does not qualify as an error, but *value is set to NULL.
+//
+int WvConf::parse_wvconf_request(char *request, char *&section,
+				 char *&entry, char *&value)
+{
+    //printf("parsing %s\n", request);
+    entry = value = NULL;
+    
+    section = strchr(request, '[');
+    if (!section)
+	return -1;
+
+    section++;
+    
+    entry = strchr(section, ']');
+    if (!entry)
+	return -2;
+
+    *entry++ = 0;
+    
+    value = strchr(entry, '=');
+    if (value)
+    {
+	*value++ = 0;
+	value = trim_string(value);
+    }
+    
+    //printf("section: %s\nentry: %s\n", section, entry);
+    section = trim_string(section);
+    entry = trim_string(entry);
+    
+    if (!*section || !*entry)
+	return -3;
+    
+    return 0;
 }
 
 
@@ -186,6 +242,22 @@ const char *WvConf::get(WvStringParm section, WvStringParm entry,
 }
 
 
+// Gets an entry, given a string in the form [section]entry=value.  Returns
+// the value or NULL if not found.  The parameter parse_error is set to the
+// return value of parse_wvconf_request.
+WvString WvConf::getraw(WvString wvconfstr, int &parse_error)
+{
+    char *section, *entry, *value;
+    parse_error = parse_wvconf_request(wvconfstr.edit(),
+				       section, entry, value);
+
+    if (parse_error)
+	return WvString();
+
+    return get(section, entry, value);
+}
+
+
 const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
 			      const char *def_val)
 {
@@ -263,6 +335,20 @@ void WvConf::set(WvStringParm section, WvStringParm entry,
     
     s->set(entry, value);
     dirty = true;
+}
+
+
+// Takes a string in the form [section]entry=value and sets it.  Returns an
+// error code as defined in parse_wvconf_request.  The value parameter is
+// also set to the value (useful in rcommand, when we display the value after
+// it has been set).
+void WvConf::setraw(WvString wvconfstr, const char *&xvalue, int &parse_error)
+{
+    char *section, *entry, *value;
+    parse_error = parse_wvconf_request(wvconfstr.edit(),
+				       section, entry, value);
+    set(section, entry, value);
+    xvalue = get(section, entry, value);
 }
 
 

@@ -9,6 +9,7 @@
 
 #include "pem.h"
 #include "x509v3.h"
+#include "err.h"
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
     : debug("X509",WvLog::Debug5), errstr("")
@@ -16,6 +17,8 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
     err = false;
     cert = _cert;
     keypair = NULL;
+    OpenSSL_add_all_algorithms();
+    ERR_load_crypto_strings();
 }
 
 WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair)
@@ -25,13 +28,16 @@ WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_keypair)
     keypair = _keypair;
     cert = NULL;
     err = false;
+    ERR_load_crypto_strings();
     createSScert(dName, bits);
+
 }
 
 
 WvX509Mgr::~WvX509Mgr()
 {
     X509_free(cert);
+    ERR_free_strings();
 }
 
 // The people who designed this garbage should be shot!
@@ -202,7 +208,7 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
     X509_EXTENSION_free(ex);
 
     // Sign the certificate with our own key ("Self Sign")
-    if (!X509_sign(cert, pk, EVP_md5()))
+    if (!X509_sign(cert, pk, EVP_sha1()))
     {
 	seterr("Could not self sign the certificate");
 	X509_free(cert);
@@ -230,7 +236,7 @@ WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
 
     // First thing to do is to generate an RSA Keypair if the
     // Manager doesn't already have one:
-    if ( keypair == NULL)
+    if (keypair == NULL)
     {
 	keypair = new WvRSAKey(keysize);
     }
@@ -280,6 +286,43 @@ WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
     return pkcs10;
 }
 
+bool WvX509Mgr::testcert(X509 *newcert)
+{
+    EVP_PKEY *pk;
+
+    if (keypair != NULL && ((pk=EVP_PKEY_new()) != NULL))
+    {
+	if (!EVP_PKEY_assign_RSA(pk, keypair->rsa))
+    	{
+            seterr("Error setting RSA keys");
+            return false;
+    	}
+	else
+	{
+	    int verify_return = X509_verify(newcert, pk);
+	    switch (verify_return)
+	    {
+		case 1:
+		    return true;
+		// This looks wierd, but it works... 0 is an error, as is
+		// -1, as is any other result...
+		default:
+		    debug(WvLog::Error, "Result was: %s\n",verify_return);
+		    ERR_print_errors_fp(stderr);
+		    seterr("Certificate does not match RSA keypair\n");
+		    return false;
+	    }
+	}
+    }
+    else
+    {
+	debug("Must load RSA Key before setting X509 key\n");
+	seterr("No RSA Key");
+	return false;
+    }
+}
+
+
 void WvX509Mgr::decodecert(WvString encodedcert)
 {
     int hexbytes = strlen((const char *)encodedcert);
@@ -291,6 +334,12 @@ void WvX509Mgr::decodecert(WvString encodedcert)
     ct = cert = X509_new();
     cert = d2i_X509(&ct, &cp, hexbytes/2);
 
+    // make sure that the cert is valid
+    if (!testcert(cert))
+    {
+	X509_free(cert);
+	cert = NULL;
+    }
     delete[] certbuf;
 }
 

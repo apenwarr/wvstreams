@@ -15,13 +15,13 @@
 #include <unistd.h>
 
 
-bool WvIPFirewall::enable = false;
+bool WvIPFirewall::enable = false, WvIPFirewall::ignore_errors = true;
 
 
 WvIPFirewall::WvIPFirewall()
 {
-    system("iptables -F Services");
-    system("iptables -t nat -F TProxy");
+    system(WvString("iptables -F Services %s", shutup()));
+    system(WvString("iptables -t nat -F TProxy %s", shutup()));
 }
 
 
@@ -37,10 +37,12 @@ WvString WvIPFirewall::port_command(const char *cmd, const char *proto,
     WvIPAddr ad(addr), none;
     
     return WvString("iptables %s Services -j ACCEPT -p %s "
-		    "%s --dport %s",
+		    "%s --dport %s "
+		    "%s",
 		    cmd, proto,
 		    ad == none ? WvString("") : WvString("-d %s", ad),
-		    addr.port);
+		    addr.port,
+		    shutup());
 }
 
 
@@ -51,10 +53,20 @@ WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
     
     return WvString("iptables -t nat %s TProxy "
 		    "-p tcp %s --dport %s "
-		    "-j REDIRECT --to-ports %s",
+		    "-j REDIRECT --to-ports %s "
+		    "%s",
 		    cmd,
 		    ad == none ? WvString("") : WvString("-d %s", ad),
-		    src.port, dstport);
+		    src.port, dstport,
+		    shutup());
+}
+
+
+WvString WvIPFirewall::proto_command(const char *cmd, const char *proto)
+{
+    return WvString("iptables %s Services -p %s -j ACCEPT "
+		    "%s",
+		    cmd, proto, shutup());
 }
 
 
@@ -115,9 +127,26 @@ void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
 }
 
 
-void WvIPFirewall::add_proto(const WvString proto)
+void WvIPFirewall::add_proto(WvStringParm proto)
 {
-    system(WvString("iptables -A Services -p %s -j ACCEPT", proto));
+    protos.append(new WvString(proto), true);
+    WvString s(proto_command("-A", proto));
+    if (enable) system(s);
+}
+
+
+void WvIPFirewall::del_proto(WvStringParm proto)
+{
+    WvStringList::Iter i(protos);
+    for (i.rewind(); i.next(); )
+    {
+	if (*i == proto)
+	{
+	    WvString s(proto_command("-D", proto));
+	    if (enable) system(s);
+	    return;
+	}
+    }
 }
 
 
