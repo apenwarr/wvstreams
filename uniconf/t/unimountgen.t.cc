@@ -146,9 +146,9 @@ WVTEST_MAIN("multiple generators - iterators")
         }
         WVPASSEQ(num_values, 5);
     }
+    delete i; 
 
 #if 0 // FIXME: unimountgen deals badly with nested mounts
-    delete i; 
     i = g.recursiveiterator("/");
     if (WVPASS(i))
     {
@@ -192,4 +192,5 @@ WVTEST_MAIN("multiple generators - iterating with gaps")
         }
         WVPASSEQ(num_values, 2);
     }
+    delete i;
 }
