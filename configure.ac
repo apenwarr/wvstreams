@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.28 2003/04/28 19:46:50 ilguiz Exp $)
+AC_REVISION($Id: configure.ac,v 1.29 2003/04/29 15:37:29 jim Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -25,7 +25,7 @@ AC_MSG_RESULT([$enable_debug])
 AC_ARG_ENABLE(efence,
 	      AC_HELP_STRING([--enable-efence],
 			     [link against Electric Fence]),
-	      [],
+	      [enable_debug="yes"],
 	      [enable_efence="$enable_debug"])
 AC_SUBST(enable_efence)
 AC_MSG_CHECKING([for --enable-efence])
@@ -104,14 +104,14 @@ AC_ARG_WITH(ogg,
 AC_ARG_WITH(vorbis,
             AC_HELP_STRING([--with-vorbis],
                            [Vorbis]),
-	    [],
+	    [with_ogg="yes"],
 	    [with_vorbis="no"])
 
 AC_ARG_WITH(speex,
             AC_HELP_STRING([--with-speex],
                            [Speex]),
-	    [],
-	    [with_speex="no"])
+	    [with_ogg="yes"],
+	    [with_speex="yes"])
 
 AC_ARG_WITH(fam,
             AC_HELP_STRING([--with-fam],
@@ -144,7 +144,7 @@ AC_ARG_WITH(pam,
 AC_ARG_WITH(gtk,
             AC_HELP_STRING([--with-gtk],
                            [GTK]),
-	    [],
+	    [with_glib="yes"],
 	    [with_gtk="no"])
 
 AC_ARG_WITH(glib,
@@ -271,8 +271,8 @@ case "${with_glib}" in
     ;;
   ("yes" | "")
     GLIBINC="glib"
-    test -d /usr/include/${GLIBINC} || GLIBINC="glib-1.2"
-    GLIBINCLUDE="-I/usr/include/${GLIBINC} -I/usr/lib/${GLIBINC}"
+    test -d "/usr/include/${GLIBINC}" || GLIBINC="glib-1.2"
+    GLIBINCLUDE="-I/usr/include/${GLIBINC} -I/usr/lib/glib/include"
     ;;
   (*)
     GLIBINCLUDE="-I${with_glib}/include"
@@ -297,7 +297,7 @@ if test "$with_gtk" != "no"; then
   if test "$with_gtk" != "yes"; then
     GTKDIR=$with_gtk
   fi
-  if test -n "$GTKDIR"; then
+  if test -n "$GTKDIR" -a -d "$GTKDIR/include"; then
     GTKINCLUDE="-I$GTKDIR/include"
   else
     GTKINCLUDE="-I/usr/include/gtk-1.2"
