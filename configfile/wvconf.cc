@@ -347,8 +347,13 @@ void WvConf::setraw(WvString wvconfstr, const char *&xvalue, int &parse_error)
     char *section, *entry, *value;
     parse_error = parse_wvconf_request(wvconfstr.edit(),
 				       section, entry, value);
-    set(section, entry, value);
-    xvalue = get(section, entry, value);
+    if (!parse_error)
+    {
+	set(section, entry, value);
+	xvalue = get(section, entry, value);
+    }
+    else
+	xvalue = NULL;
 }
 
 
