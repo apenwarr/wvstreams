@@ -8,17 +8,6 @@
 #include "wvmoniker.h"
 #include <sys/socket.h>
 
-// console streams
-static WvFDStream _wvcon(dup(0), dup(1));
-static WvFDStream _wvin(dup(0), -1);
-static WvFDStream _wvout(-1, dup(1));
-static WvFDStream _wverr(-1, dup(2));
-
-WvStream *wvcon = &_wvcon;
-WvStream *wvin = &_wvin;
-WvStream *wvout = &_wvout;
-WvStream *wverr = &_wverr;
-
 /***** WvFDStream *****/
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)
