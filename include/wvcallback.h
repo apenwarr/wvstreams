@@ -319,6 +319,9 @@ public:
     WvCallback(): impl(0)
     {
     }
+    WvCallback(int): impl(0)
+    {
+    }
     WvCallback(const WvCallback& cb): impl(0)
     {
 	if(cb.impl)

@@ -97,7 +97,7 @@ void WvStream::close()
     if (!! closecb_func)
     {
         WvStreamCallback cb = closecb_func;
-        closecb_func = WvStreamCallback(); // ensure callback is only called once
+        closecb_func = 0; // ensure callback is only called once
         cb(*this, closecb_data);
     }
 }
@@ -112,7 +112,7 @@ void WvStream::autoforward(WvStream &s)
 
 void WvStream::noautoforward()
 {
-    setcallback(WvStreamCallback(), NULL);
+    setcallback(0, NULL);
     read_requires_writable = NULL;
 }
 
