@@ -51,10 +51,6 @@ public:
         { tail = &head; }
     WvListBase(const WvListBase &l); // copy constructor - not actually defined anywhere!
     WvListBase& operator= (const WvListBase &l);
-    void setup()
-        { /* default: do nothing */ }
-    void shutdown()
-        { /* default: do nothing */ }
     size_t count() const;
 
     // this could be done with count() but it would be slow
@@ -88,10 +84,14 @@ class WvList : public WvListBase
 {
 public:
     WvList()
-	{ setup(); }
-
+	{ }
+	
     ~WvList()
-	{ shutdown(); zap(); }
+	{ zap(); }
+	
+    // default implementations
+    void setup() {}
+    void shutdown() {}
 
     void zap()
     {
@@ -163,6 +163,9 @@ public:
     class _newname_ : public WvList<_type_> 		\
     { 							\
     public: 						\
+        _newname_() { setup(); }			\
+        						\
+        ~##_newname_() { shutdown(); }			\
 	_extra_ 					\
     };
 
