@@ -364,9 +364,8 @@ size_t WvARCnetAddr::sockaddr_len() const
 /* create an IP address from a dotted-quad string.  Maybe someday we'll
  * support hostnames too with gethostbyname, but not yet.
  * If a partial address is given, this sets WvIPAddr the missing quarter
- * to 0 (i.e. 192.4 becomes 192.4.0.0).  An invalid character in the string
- * sets the object to 0.0.0.0, unless a colon, slash, space, or tab is
- * encountered, which ends the address.
+ * to 0 (i.e. 192.4 becomes 192.4.0.0).  An alphabetic character in the string
+ * sets the object to 0.0.0.0.
  */
 void WvIPAddr::string_init(const char string[])
 {
@@ -374,23 +373,26 @@ void WvIPAddr::string_init(const char string[])
     unsigned char *cptr = binaddr;
 
     memset(binaddr, 0, 4);
+    if (!string)
+        return;
     nptr = string;
     for (int count=0; count < 4 && nptr; count++)
     {
 	iptr = nptr;
-        while (nptr && (*nptr != '.') && (*nptr != ' ') && (*nptr != '\t') &&
-            (*nptr != ':') && (*nptr != '/'))
+        while (nptr && (*nptr != '.'))
         {
             if (*nptr == '\0')
                 nptr = NULL;
-            else if (!isdigit(*nptr))
+            else if (isalpha(*nptr))
             {
                 memset(binaddr, 0, 4);
                 return;
             }
+            else if (!isdigit(*nptr))
+                break;
             else
                 nptr++;
-        }    
+        }
 	if (nptr && (*nptr == '.')) nptr++;
 	*cptr++ = strtol(iptr, NULL, 10);
 	if (!nptr) break;
