@@ -174,10 +174,9 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
 WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug2, "Deleting.\n");
-    close();
-    
     if (geterr())
 	log("Error was: %s\n", errstr());
+    close();
 }
 
 
