@@ -127,7 +127,7 @@ public:
     void zap();
     bool isok() const;
     void load_file(WvStringParm filename);
-    void save(WvStringParm filename);
+    void save(WvStringParm filename, int _create_mode = 0666);
     void save();
     void flush();
 
