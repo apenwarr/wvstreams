@@ -14,17 +14,25 @@
 
 /**
  * This template facilitates the creation and use of encoders
- * that manipulate typed buffers.  Such encoders accept both
- * typed and untyped buffers, but are implementated in terms
- * of typed buffers only where untyped buffers are automatically
- * wrapped into the required form.
+ * that manipulate typed buffers.
+ * <p>
+ * A typed encoder accepts both typed and untyped buffers, but
+ * is implementated in terms of typed buffers.  Untyped buffers
+ * are automatically wrapped into the required form before being
+ * passed on to the implementation.
+ * </p><p>
+ * This type is designed to function as a statically bound mixin
+ * to make it easier to incorporate typed encoders into untyped
+ * encoder hierarchies.  This is somewhat ugly, but necessary.
+ * </p>
  *
  * @param IT the input buffer datatype
  * @param OT the output buffer datatype
+ * @param S the WvEncoder supertype
  * @see WvEncoder
  */
-template<class IT, class OT>
-class WvTypedEncoder : public WvEncoder
+template<class IT, class OT, class S = WvEncoder>
+class WvTypedEncoder : public S
 {
 public:
     typedef IT IType;
@@ -43,7 +51,7 @@ public:
     {
         WvBufferView inview(inbuf);
         WvBufferView outview(outbuf);
-        return WvEncoder::encode(inview, outview, flush, finish);
+        return S::encode(inview, outview, flush, finish);
     }
 
     /**
@@ -54,7 +62,7 @@ public:
     {
         WvBufferView inview(inbuf);
         WvBufferView outview(outbuf);
-        return WvEncoder::flush(inview, outview, finish);
+        return S::flush(inview, outview, finish);
     }
 
     /**
@@ -64,22 +72,22 @@ public:
     bool finish(OBuffer &outbuf)
     {
         WvBufferView outview(outbuf);
-        return WvEncoder::finish(outview);
+        return S::finish(outview);
     }
     
     inline bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush = false, bool finish = false)
     {
-        return WvEncoder::encode(inbuf, outbuf, flush, finish);
+        return S::encode(inbuf, outbuf, flush, finish);
     }
     inline bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
         bool finish = false)
     {
-        return WvEncoder::flush(inbuf, outbuf, finish);
+        return S::flush(inbuf, outbuf, finish);
     }
     inline bool finish(WvBuffer &outbuf)
     {
-        return WvEncoder::finish(outbuf);
+        return S::finish(outbuf);
     }
 
 protected:
@@ -98,7 +106,7 @@ protected:
         { return true; }
 
     /**
-     * Wrapper implementations of _encode().
+     * Wrapper implementation of _encode().
      */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush)
@@ -109,7 +117,7 @@ protected:
     }
     
     /**
-     * Wrapper implementations of _finish().
+     * Wrapper implementation of _finish().
      */
     virtual bool _finish(WvBuffer &outbuf)
     {
@@ -124,14 +132,16 @@ protected:
  *
  * @param IType the input buffer datatype
  */
-template<class IType>
-class WvTypedEncoder<IType, unsigned char> : public WvEncoder
+template<class IT, class S>
+class WvTypedEncoder<IT, unsigned char, S> : public S
 {
 public:
+    typedef IT IType;
+    typedef unsigned char OType;
     typedef WvBufferBase<IType> IBuffer;
-    typedef WvBuffer OBuffer;
+    typedef WvBufferBase<OType> OBuffer;
     typedef WvBufferViewBase<IType> IBufferView;
-    typedef WvBufferView OBufferView;
+    typedef WvBufferViewBase<OType> OBufferView;
 
     /**
      * Typed variant of encode().
@@ -141,7 +151,7 @@ public:
         bool finish = false)
     {
         WvBufferView inview(inbuf);
-        return WvEncoder::encode(inview, outbuf, flush, finish);
+        return S::encode(inview, outbuf, flush, finish);
     }
 
     /**
@@ -151,18 +161,18 @@ public:
     bool flush(IBuffer &inbuf, OBuffer &outbuf, bool finish = false)
     {
         WvBufferView inview(inbuf);
-        return WvEncoder::flush(inview, outbuf, finish);
+        return S::flush(inview, outbuf, finish);
     }
     
     inline bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush = false, bool finish = false)
     {
-        return WvEncoder::encode(inbuf, outbuf, flush, finish);
+        return S::encode(inbuf, outbuf, flush, finish);
     }
     inline bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
         bool finish = false)
     {
-        return WvEncoder::flush(inbuf, outbuf, finish);
+        return S::flush(inbuf, outbuf, finish);
     }
 
 protected:
@@ -181,7 +191,7 @@ protected:
         { return true; }
     
     /**
-     * Wrapper implementations of _encode().
+     * Wrapper implementation of _encode().
      */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush)
@@ -191,7 +201,7 @@ protected:
     }
     
     /**
-     * Wrapper implementations of _finish().
+     * Wrapper implementation of _finish().
      */
     virtual bool _finish(WvBuffer &outbuf)
     {
@@ -204,14 +214,16 @@ protected:
  * Partial template specialization for unsigned char input
  * and output buffer types to avoid compilation errors.
  */
-template<>
-class WvTypedEncoder<unsigned char, unsigned char> : public WvEncoder
+template<class S>
+class WvTypedEncoder<unsigned char, unsigned char, S> : public S
 {
 public:
-    typedef WvBuffer IBuffer;
-    typedef WvBuffer OBuffer;
-    typedef WvBufferView IBufferView;
-    typedef WvBufferView OBufferView;
+    typedef unsigned char IType;
+    typedef unsigned char OType;
+    typedef WvBufferBase<IType> IBuffer;
+    typedef WvBufferBase<OType> OBuffer;
+    typedef WvBufferViewBase<IType> IBufferView;
+    typedef WvBufferViewBase<OType> OBufferView;
 
 protected:
     /**
@@ -229,7 +241,7 @@ protected:
         { return true; }
 
     /**
-     * Wrapper implementations of _encode().
+     * Wrapper implementation of _encode().
      */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush)
@@ -238,7 +250,7 @@ protected:
     }
     
     /**
-     * Wrapper implementations of _finish().
+     * Wrapper implementation of _finish().
      */
     virtual bool _finish(WvBuffer &outbuf)
     {

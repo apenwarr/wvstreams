@@ -49,28 +49,29 @@
  *     state and thereby recycled at minimum cost</li>
  * </ul>
  * </p><p>
- *
  * Helper functions are provided for encoding data from plain
  * memory buffers and from strings.  Some have no encode(...)
  * equivalent because they cannot incrementally encode from
  * the input, hence they always use the flush option.
- *
+ * </p><p>
  * The 'mem' suffix has been tacked on to these functions to
  * resolve ambiguities dealing with 'char *' that should be
  * promoted to WvString.  For instance, consider the signatures
  * of strflushmem(const void*, size_t) and strflushstr(WvStringParm,
  * bool).
- *
+ * </p><p>
  * Another reason for these suffixes is to simplify overloading
  * the basic methods in subclasses since C++ would require the
  * subclass to redeclare all of the other signatures for
  * an overloaded method.
+ * </p>
  */
 class WvEncoder
 {
-    bool okay; // false iff setnotok() was called
-    bool finished; // true iff setfinished()/finish() was called
-    WvString errstr;
+protected:
+    bool okay; /*!< false iff setnotok() was called */
+    bool finished; /*!< true iff setfinished()/finish() was called */
+    WvString errstr; /*!< the error message */
 
 public:
     /**

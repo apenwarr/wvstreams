@@ -293,6 +293,8 @@ bool WvSpeexDecoder::_typedfinish(OBuffer &outbuf)
 
 bool WvSpeexDecoder::missing(OBuffer &outbuf)
 {
+    if (! isok() || isfinished())
+        return false;
     if (outbuf.free() < size_t(_samplesperframe))
         return false; // not enough room
     speex_decode(spxstate, NULL, outbuf.alloc(_samplesperframe));
