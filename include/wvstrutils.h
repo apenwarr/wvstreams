@@ -114,6 +114,12 @@ WvString url_encode(WvStringParm stuff);
  
 
 /**
+ * Returns the difference between to dates in a human readable format
+ */
+WvString  diff_dates(time_t t1, time_t t2);
+
+
+/**
  * Returns an RFC822-compatible date made out of _when, or, if _when < 0, out of
  * the current time.
  */
