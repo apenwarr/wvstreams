@@ -45,16 +45,13 @@ int UniConf::getint(int defvalue) const
     const size_t numtruestrs = 4;
 
     WvString value = get();
-    if (! value.isnull())
+    if (!value.isnull())
     {
         // try to recognize an integer
-        if (* value.cstr())
-        {
-            char *end;
-            int num = strtol(value.cstr(), & end, 0);
-            if (*end)
-                return num; // was a valid integer
-        }
+        char *end;
+        int num = strtol(value.cstr(), &end, 0);
+        if (end != value.cstr())
+            return num; // was a valid integer
         
         // try to recognize a special string
         for (size_t i = 0; i < sizeof(strs) / sizeof(const char*); ++i)
