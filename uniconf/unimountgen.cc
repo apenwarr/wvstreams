@@ -11,48 +11,55 @@
 
 WvString UniMountGen::get(const UniConfKey &key)
 {
-    if (!findgen(key))
+    UniGenMount *found = findmount(key);
+    if (!found)
         return WvString::null;
 
-    return foundgen->get(trimkey(key));
+    return found->gen->get(trimkey(found->key, key));
 }
 
 
 void UniMountGen::set(const UniConfKey &key, WvStringParm value)
 {
-    if (!findgen(key))
+    UniGenMount *found = findmount(key);
+    if (!found)
         return;
 
-    foundgen->set(trimkey(key), value);
+    found->gen->set(trimkey(found->key, key), value);
 }
 
 
 bool UniMountGen::exists(const UniConfKey &key)
 {
-    if (!findgen(key))
+    UniGenMount *found = findmount(key);
+    if (!found)
         return false;
 
-    return foundgen->exists(trimkey(key));
+    return found->gen->exists(trimkey(found->key, key));
 }
 
 
 bool UniMountGen::haschildren(const UniConfKey &key)
 {
-    if (!findgen(key))
+    UniGenMount *found = findmount(key);
+    if (!found)
         return false;
 
-    if (foundgen->haschildren(trimkey(key)));
+    if (found->gen->haschildren(trimkey(found->key, key)))
         return true;
 
-    //FIXME: Perhaps this should be optimized later
+    // if we get here, the generator we used didn't have a subkey.  We want
+    // to see if there's anyone mounted at a subkey of the requested key; if
+    // so, then we definitely have a subkey.
     MountList::Iter i(mounts);
-
     for (i.rewind(); i.next(); )
     {
         if (key.suborsame(i->key))
             return true;
 
-        if (i->gen == foundgen)
+	// the list is sorted innermost-first.  So if we find the key
+	// we started with, we've finished searching all children of it.
+        if (i->gen == found->gen)
             break;
     }
 
@@ -67,8 +74,7 @@ bool UniMountGen::refresh()
     bool result = true;
 
     MountList::Iter i(mounts);
-
-    for (i.rewind(); i.next();)
+    for (i.rewind(); i.next(); )
         result = result && i->gen->refresh();
 
     unhold_delta();
@@ -194,28 +200,24 @@ bool UniMountGen::ismountpoint(const UniConfKey &key)
 
 UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 {
-    if (findgen(key))
-        return foundgen->iterator(trimkey(key));
+    UniGenMount *found = findmount(key);
+    if (found)
+        return found->gen->iterator(trimkey(found->key, key));
     return new NullIter;
 }
 
 
-bool UniMountGen::findgen(const UniConfKey &key)
+UniMountGen::UniGenMount *UniMountGen::findmount(const UniConfKey &key)
 {
-    MountList::Iter i(mounts);
-
     // Find the needed generator and keep it as a lastfound
+    MountList::Iter i(mounts);
     for (i.rewind(); i.next(); )
     {
         if (i->key.suborsame(key))
-        {
-            foundgen = i->gen;
-            foundkey = i->key;
-            return true;
-        }
+	    return i.ptr();
     } 
 
-    return false;
+    return NULL;
 }
 
 
@@ -244,9 +246,10 @@ void UniMountGen::makemount(const UniConfKey &key)
     // Set the mountpoint in the sub generator instead of on the generator
     // itself (since set will set it on the generator, instead of making the
     // mountpoint)
-    if (!findgen(points.removelast()))
+    UniGenMount *found = findmount(points.removelast());
+    if (!found)
         return;
 
-    if (foundgen->get(trimkey(key)).isnull())
-        foundgen->set(trimkey(key), "");
+    if (found->gen->get(trimkey(found->key, key)).isnull())
+        found->gen->set(trimkey(found->key, key), "");
 }

@@ -83,7 +83,7 @@ void UniClientConn::close()
 WvString UniClientConn::readmsg()
 {
     WvString word;
-    while ((word = wvtcl_getword(msgbuf, "\n", false)).isnull())
+    while ((word = wvtcl_getword(msgbuf, "\r\n", false)).isnull())
     {
         char *line = getline(0);
         if (line)
@@ -125,7 +125,7 @@ UniClientConn::Command UniClientConn::readcmd()
         payloadbuf.reset(msg);
         WvString cmd(readarg());
         if (cmd.isnull())
-            return INVALID;
+            return NONE;
 
         for (int i = 0; i < NUM_COMMANDS; ++i)
             if (strcasecmp(cmdinfos[i].name, cmd.cstr()) == 0)
@@ -137,7 +137,7 @@ UniClientConn::Command UniClientConn::readcmd()
 
 WvString UniClientConn::readarg()
 {
-    return wvtcl_getword(payloadbuf, " ");
+    return wvtcl_getword(payloadbuf);
 }
 
 

@@ -15,7 +15,7 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
     UniClientConn(_s), root(_root)
 {
     addcallback();
-    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
+    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready."));
 }
 
 
@@ -55,62 +55,63 @@ void UniConfDaemonConn::execute()
         WvString arg2(readarg());
         switch (command)
         {
-            case UniClientConn::INVALID:
-                do_malformed();
-                break;
+	case UniClientConn::NONE:
+	    break;
+	    
+	case UniClientConn::INVALID:
+	    do_malformed();
+	    break;
             
-            case UniClientConn::REQ_NOOP:
-                do_noop();
-                break;
-
-            case UniClientConn::REQ_GET:
-            {
-                if (arg1.isnull())
-                    do_malformed();
-                else
-                    do_get(arg1);
-                break;
-            }
+	case UniClientConn::REQ_NOOP:
+	    do_noop();
+	    break;
+	    
+	case UniClientConn::REQ_GET:
+	    if (arg1.isnull())
+		do_malformed();
+	    else
+		do_get(arg1);
+	    break;
             
-            case UniClientConn::REQ_SET:
-                if (arg1.isnull() || arg2.isnull())
-                    do_malformed();
-                else
-                    do_set(arg1, arg2);
-                break;
-
-            case UniClientConn::REQ_REMOVE:
-                if (arg1.isnull())
-                    do_malformed();
-                else
-                    do_remove(arg1);
-                break;
-
-            case UniClientConn::REQ_SUBTREE:
-                if (arg1.isnull())
-                    do_malformed();
-                else
-                    do_subtree(arg1);
-                break;
-
-            case UniClientConn::REQ_HASCHILDREN:
-                if (arg1.isnull())
-                    do_malformed();
-                else
-                    do_haschildren(arg1);
-                break;
-
-            case UniClientConn::REQ_QUIT:
-                do_quit();
-                break;
-
-            case UniClientConn::REQ_HELP:
-                do_help();
-                break;
-
-            default:
-                do_malformed();
-                break;
+	case UniClientConn::REQ_SET:
+	    if (arg1.isnull() || arg2.isnull())
+		do_malformed();
+	    else
+		do_set(arg1, arg2);
+	    break;
+	    
+	case UniClientConn::REQ_REMOVE:
+	    if (arg1.isnull())
+		do_malformed();
+	    else
+		do_remove(arg1);
+	    break;
+	    
+	case UniClientConn::REQ_SUBTREE:
+	    if (arg1.isnull())
+		do_malformed();
+	    else
+		do_subtree(arg1);
+	    break;
+	    
+	case UniClientConn::REQ_HASCHILDREN:
+	    if (arg1.isnull())
+		do_malformed();
+	    else
+		do_haschildren(arg1);
+	    break;
+	    
+	case UniClientConn::REQ_QUIT:
+	    do_quit();
+	    break;
+	    
+	case UniClientConn::REQ_HELP:
+	    do_help();
+	    break;
+	    
+	default:
+	    do_malformed();
+	    break;
         }
     }
 }

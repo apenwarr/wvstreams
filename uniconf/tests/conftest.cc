@@ -289,6 +289,9 @@ int main()
 	
 	cfg["foo"]["pah"]["meatballs"].setint(6);
 	
+	assert(cfg["/foo/blah"].haschildren());
+	assert(!cfg["/foo/blah/weasels"].haschildren());
+	
 	UniConf x(cfg["snort/fish/munchkins"]);
 	x["big/bad/weasels"].setint(7);
 	x["foo"].set("sneeze");
