@@ -116,7 +116,7 @@ time_t WvDailyEvent::next_event() const
     if (!num_per_day) // disabled
 	return 0;
     
-    time_t start, now, next, interval = 24*60*60/num_per_day;
+    time_t start, next, interval = 24*60*60/num_per_day;
     struct tm *tm;
     
     assert(prev);
@@ -126,14 +126,14 @@ time_t WvDailyEvent::next_event() const
     tm = localtime(&start);
     if (tm->tm_hour < first_hour)
     {
-	start = now - 24*60*60; // this time yesterday
+	start = prev - 24*60*60 + 1; // this time yesterday
 	tm = localtime(&start);
     }
     tm->tm_hour = first_hour; // always start at the given hour
     tm->tm_min = tm->tm_sec = 0; // right on the hour
     start = mktime(tm); // convert back into a time_t
     
-    // find the next event after 'now' that's a multiple of 'interval'
+    // find the next event after prev that's a multiple of 'interval'
     // since 'start'
     next = prev + interval;
     if ((next - start)%interval != 0)
