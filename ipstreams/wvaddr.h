@@ -40,6 +40,7 @@ public:
 	
 	// protocol encapsulation
 	IPv4,
+	Unix,
 	
 	// END
 	NUM_ENCAP_TYPES
@@ -342,5 +343,28 @@ public:
     virtual unsigned WvHash() const;
     virtual bool comparator(const WvAddr *a2) const;
 };
+
+
+/* A Unix domain socket address is really just a filename. */
+class WvUnixAddr : public WvAddr
+{
+protected:
+    WvString sockname;
+    virtual WvString printable() const;
+    
+public:
+    WvUnixAddr(const char *_sockname);
+    WvUnixAddr(const WvString &_sockname);
+    WvUnixAddr(const WvUnixAddr &_addr);
+    virtual ~WvUnixAddr();
+    
+    virtual WvEncap encap() const;
+
+    virtual struct sockaddr *sockaddr() const;
+    virtual size_t sockaddr_len() const;
+    virtual const unsigned char *rawdata() const;
+    virtual size_t rawdata_len() const;
+};
+
 
 #endif // __WVADDR_H

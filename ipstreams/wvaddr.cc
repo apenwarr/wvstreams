@@ -8,7 +8,9 @@
  */
 #include "wvaddr.h"
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <net/if_arp.h>
+#include <assert.h>
 
 // workaround for functions called sockaddr() -- oops.
 typedef struct sockaddr sockaddr_bin;
@@ -27,6 +29,7 @@ int WvEncap::extypes[] = {
     
     // protocol encapsulation
     AF_INET, // IPv4
+    AF_UNIX  // Unix domain socket
 };
 
 
@@ -44,6 +47,7 @@ char WvEncap::strings[][20] = {
     
     // protocol encapsulation
     "IP", // IPv4
+    "Unix", // Unix domain socket
 };
 
 
@@ -715,3 +719,72 @@ bool WvIPPortAddr::comparator(const WvAddr *a2) const
 }
 
 
+WvUnixAddr::WvUnixAddr(const char *_sockname)
+    : sockname(_sockname)
+{
+    assert(!!sockname);
+    sockname.unique();
+}
+
+
+WvUnixAddr::WvUnixAddr(const WvString &_sockname)
+    : sockname(_sockname)
+{
+    assert(!!sockname);
+    sockname.unique();
+}
+
+
+WvUnixAddr::WvUnixAddr(const WvUnixAddr &_addr)
+    : sockname(_addr.sockname)
+{
+    // nothing else needed
+}
+
+
+WvUnixAddr::~WvUnixAddr()
+{
+    // nothing special
+}
+
+
+WvString WvUnixAddr::printable() const
+{
+    return sockname;
+}
+
+
+WvEncap WvUnixAddr::encap() const
+{
+    return WvEncap::Unix;
+}
+
+
+/* don't forget to delete the returned object when you're done! */
+sockaddr_bin *WvUnixAddr::sockaddr() const
+{
+    sockaddr_un *sun = new sockaddr_un;
+    
+    memset(sun, 0, sizeof(*sun));
+    sun->sun_family = AF_UNIX;
+    strncpy(sun->sun_path, sockname, sizeof(sun->sun_path) - 2);
+    return (sockaddr_bin *)sun;
+}
+
+
+size_t WvUnixAddr::sockaddr_len() const
+{
+    return sizeof(sockaddr_un);
+}
+
+
+const unsigned char *WvUnixAddr::rawdata() const
+{
+    return (const unsigned char *)(const char *)sockname;
+}
+
+
+size_t WvUnixAddr::rawdata_len() const
+{
+    return strlen(sockname);
+}
