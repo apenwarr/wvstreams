@@ -332,8 +332,8 @@ public:
      * Get the 'base IP address' component, netmask, network, and broadcast
      */
     WvIPAddr base() const
-        { return WvIPAddr(binaddr); }
-    const WvIPAddr &netmask() const
+        { return *this; }
+    WvIPAddr netmask() const
         { return mask; }
     WvIPAddr network() const
         { return *this & mask; }

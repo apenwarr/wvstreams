@@ -601,8 +601,8 @@ void WvIPNet::include(const WvIPNet &addr)
 
 bool WvIPNet::includes(const WvIPNet &addr) const
 {
-    return ((addr.base() & mask) == network()
-	    &&  mask == (mask & addr.mask));
+    return (addr.base() & netmask()) == network() &&
+        (addr.netmask() & netmask()) == netmask();
 }
 
 
