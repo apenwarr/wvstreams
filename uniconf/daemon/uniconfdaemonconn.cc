@@ -25,7 +25,3 @@ UniConfDaemonConn::~UniConfDaemonConn()
     }
 }
 
-void UniConfDaemonConn::execute()
-{
-    UniConfConn::execute();
-}

@@ -59,6 +59,11 @@ void UniConfDaemon::errorcheck(WvStream *s, WvString type)
     }
 }
 
+
+/*
+ * Methods for actual data retrieval/manipulation via connections begin here
+ */
+
 void UniConfDaemon::dook(const WvString cmd, const WvString key, UniConfDaemonConn *s)
 {
     if (s->isok())
@@ -140,6 +145,13 @@ void UniConfDaemon::doset(WvString key, WvConstStringBuffer &fromline, UniConfDa
     dook(UniConfConn::UNICONF_SET, key, s);
 }
 
+/*
+ * Methods for actual data retrieval/manipulation via connections end here
+ */
+
+/*
+ * Callback related methods for UniConfKeys begin here
+ */
 void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
 {
     // All the following is irrelevant if we have a null pointer, so check
@@ -149,7 +161,6 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
     
     UniConfDaemonConn *s = (UniConfDaemonConn *)userdata;
     WvString keyname(conf.gen_full_key()); 
-//    log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
 
     WvString response("%s %s %s\n", UniConfConn::UNICONF_RETURN, wvtcl_escape(keyname),
             !!mainconf.get(keyname) ? wvtcl_escape(mainconf.get(keyname)) :
@@ -158,7 +169,6 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
         s->print(response);
 }
 
-/* Functions to look after UniEvents callback setting / removing */
 void UniConfDaemon::update_callbacks(WvString key, UniConfDaemonConn *s, bool one_shot)
 {
     del_callback(key, s);
@@ -167,7 +177,6 @@ void UniConfDaemon::update_callbacks(WvString key, UniConfDaemonConn *s, bool on
 
 void UniConfDaemon::del_callback(WvString key, UniConfDaemonConn *s)
 {
-//    log("About to delete callbacks for %s.\n", key);
     events.del(wvcallback(UniConfCallback, *this,
                 UniConfDaemon::keychanged), s, key);
 
@@ -175,15 +184,11 @@ void UniConfDaemon::del_callback(WvString key, UniConfDaemonConn *s)
 
 void UniConfDaemon::add_callback(WvString key, UniConfDaemonConn *s, bool one_shot)
 {
-//    log("About to add callbacks for %s.\n", key);
     events.add(wvcallback(UniConfCallback, *this, 
                 UniConfDaemon::keychanged), s, key, one_shot);
 
+    // Let the connection track what keys it knows about.
     s->appendkey(new WvString(key));
-
-    // Now track what keys I know of.
-//    log("Now adding key:%s, to the list of keys.\n",key);
-//    keys.append(new WvString(key), true);
 }
 
 void UniConfDaemon::registerforchange(WvString key, UniConfDaemonConn *s)
@@ -192,7 +197,11 @@ void UniConfDaemon::registerforchange(WvString key, UniConfDaemonConn *s)
     update_callbacks(key, s);
 }
 
-// This looks after all of the handling of incoming connections
+/*
+ * Callback related methods for UniConfKeys end here
+ */
+
+// Look after all of the handling of incoming connections
 void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
 {
     UniConfDaemonConn *s = (UniConfDaemonConn *) &stream;
@@ -203,8 +212,6 @@ void UniConfDaemon::connection_callback(WvStream &stream, void *userdata)
     while (!(line = s->gettclline()).isnull())
     {
         WvConstStringBuffer fromline(line);
-
-//	log(WvLog::Debug5, "Got command: '%s'\n", line);
 
         while (!(cmd = wvtcl_getword(fromline)).isnull())
         {

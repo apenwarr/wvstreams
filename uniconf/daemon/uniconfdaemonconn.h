@@ -13,7 +13,6 @@ class UniConfDaemonConn : public UniConfConn
 public:
     UniConfDaemonConn(WvStream *_s, UniConfDaemon *_source);
     virtual ~UniConfDaemonConn();
-    virtual void execute();
 
     void appendkey(WvString *key) { keys.append(key, true); }
 

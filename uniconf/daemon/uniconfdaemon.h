@@ -22,16 +22,6 @@ public:
     void alertmodified();
     void run();
 
-    bool want_to_die;
-    WvLog log;
-    UniConf mainconf;
-    UniConfNotifier notifier;
-    UniConfEvents events;
-    bool keymodified;
-protected:
-    void connection_callback(WvStream &s, void *userdata);
-    void accept_connection(WvStream *s);
-
     void doget(WvString key, UniConfDaemonConn *s);
     void dosubtree(WvString key, UniConfDaemonConn *s);
     void dorecursivesubtree(WvString key, UniConfDaemonConn *s);
@@ -43,15 +33,22 @@ protected:
     void del_callback(WvString key, UniConfDaemonConn *s);
     void add_callback(WvString key, UniConfDaemonConn *s, bool one_shot);
 
+
+    bool want_to_die;
+    WvLog log;
+    UniConf mainconf;
+    UniConfNotifier notifier;
+    UniConfEvents events;
+    bool keymodified;
+protected:
+    void connection_callback(WvStream &s, void *userdata);
+    void accept_connection(WvStream *s);
+
 private:
     void errorcheck(WvStream *s, WvString type);
     
     WvStreamList l;
     static const WvString DEFAULT_CONFIG_FILE;
-   
-    //Temporary friendship for refactoring of methods from UniConfDaemonConn
-    //into UniConfDaemon
-    friend class UniConfDaemonConn;
 };
 
 #endif // __UNICONFDAEMON_H
