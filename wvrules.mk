@@ -254,10 +254,12 @@ define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
 	echo $2 >$(patsubst %.a,%.libs,$1); \
 	ar q $1 $(filter %.o,$2); \
-	for d in $(filter %.libs,$2); do \
-		cd $$(dirname "$$d"); \
-		ar q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
-		cd $(shell pwd); \
+	for d in "" $(filter %.libs,$2); do \
+	    if [ "$d" != "" ]; then \
+			cd `dirname "$$d"`; \
+			ar q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
+			cd $(shell pwd); \
+		fi; \
 	done; \
 	ranlib $1
 endef

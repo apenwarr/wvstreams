@@ -1,14 +1,34 @@
 #include <cstdlib>
 
+#ifdef _WIN32
+#define snprintf _snprintf
+#endif
+
+#ifdef __GNUC__
+# define alloca __builtin_alloca
+#else
+# ifdef _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
+# else
+#  if HAVE_ALLOCA_H
+#   include <alloca.h>
+#  else
+#   ifdef _AIX
+#pragma alloca
+#   else
+#    ifndef alloca /* predefined by HP cc +Olibcalls */
+char *alloca ();
+#    endif
+#   endif
+#  endif
+# endif
+#endif
+
 #include "wvtest.h"
 #include "wvbuf.h"
 #include "wvhex.h"
 #include "wvstream.h"
-#include <malloc.h>
-#ifdef _WIN32
-#define alloca _alloca
-#define snprintf _snprintf
-#endif
 
 #define THREE_LETTERS 		"abz"
 #define THREE_LETTERS_ENC_LC	"61627a"

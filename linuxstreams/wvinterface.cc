@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <linux/sockios.h>
+
+#define _LINUX_IF_H /* Hack to prevent loading linux/if.h */
 #include <linux/wireless.h>
 
 #define min(x,y) ({ \
