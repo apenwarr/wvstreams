@@ -215,15 +215,18 @@ int main()
     keyvals.add(new KeyVal("/foo/bar", "baz"), true);
     keyvals.add(new KeyVal("/", "slash"), true);
     keyvals.add(new KeyVal("/foo", "kung foo!"), true);
- 
+
+#if defined(WITH_BDB)  
     HashTester< WvOnDiskHash<WvString,WvString,WvBdbHash> >
         ::go("Named BDB hash", "test.db");
 
     HashTester< WvOnDiskHash<WvString,WvString,WvBdbHash> >
         ::go("Anonymous BDB hash", "");
-
+#endif
+#if defined(WITH_QDBM)
     HashTester< WvOnDiskHash<WvString,WvString,WvQdbmHash> >
         ::go("QDBM hash", "test.db");
+#endif
 }
 #else
 int main() {

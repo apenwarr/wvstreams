@@ -4,7 +4,7 @@
  */
 #include "wvautoconf.h"
 
-#if defined(WITH_QDBM) || defined(WITH_BDB)
+#if defined(WITH_BDB)
 #include "wvondiskhash.h"
 #include "wvstring.h"
 

@@ -3,7 +3,7 @@
  * qdbmtest.cc, because the APIs should be identical.
  */
 #include "wvautoconf.h"
-#if defined(WITH_QDBM) || defined(WITH_BDB)
+#if defined(WITH_BDB)
 #include "wvondiskhash.h"
 #include "wvstringlist.h"
 
