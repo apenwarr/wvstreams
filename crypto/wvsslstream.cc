@@ -224,8 +224,8 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         {
 	    error_t err = errno;
             read_bouncebuf.unalloc(avail);
-            int errcode = SSL_get_error(ssl, result);
-            switch (errcode)
+            int sslerrcode = SSL_get_error(ssl, result);
+	    switch (sslerrcode)
             {
                 case SSL_ERROR_WANT_READ:
 		    debug("<< SSL_read() needs to wait for writable.\n");
@@ -265,14 +265,16 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 		    }
 		    else
 		    {
-			debug("<< SSL_read() %s\n", strerror(errno));
-			seterr(err);
+			debug("<< SSL_read() err=%s (%s)\n",
+			    err, strerror(err));
+			seterr_both(err, WvString("SSL read: %s",
+			    strerror(err)));
 		    }
 		    break;
                     
                 default:
                     printerr("SSL_read");
-                    seterr("SSL read error #%s", errcode);
+                    seterr("SSL read error #%s", sslerrcode);
                     break;
             }
             read_pending = false;
@@ -348,9 +350,9 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         int result = SSL_write(ssl, data, used);
         if (result <= 0)
         {
-            int errcode = SSL_get_error(ssl, result);
+            int sslerrcode = SSL_get_error(ssl, result);
             write_bouncebuf.unget(used);
-            switch (errcode)
+            switch (sslerrcode)
             {
                 case SSL_ERROR_WANT_READ:
                     debug(">> SSL_write() needs to wait for readable.\n");
@@ -381,7 +383,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
                     
                 default:
                     printerr("SSL_write");
-                    seterr(WvString("SSL write error #%s", errcode));
+                    seterr(WvString("SSL write error #%s", sslerrcode));
                     break;
             }
             break; // wait for next iteration

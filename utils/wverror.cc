@@ -86,6 +86,44 @@ WvErrorBase::~WvErrorBase()
 }
 
 
+// win32's strerror() function is incredibly weak, so we'll provide a better
+// one.
+WvString WvErrorBase::strerror(int errnum)
+{
+    assert(errnum >= 0);
+
+#ifndef _WIN32
+    return ::strerror(errnum);
+#else
+    const char *wverr = wv_errmap(errnum);
+    if (wverr)
+        return wverr;
+    else if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
+    {
+        // otherwise, an unrecognized winsock error: try getting the error
+        // message from win32.
+        char msg[4096];
+        const HMODULE module = GetModuleHandle("winsock.dll");
+        DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+    			 module, errnum, 0, msg, sizeof(msg), 0);
+        if (result)
+    	    return msg;
+	    
+	DWORD e = GetLastError();
+	return WvString("Unknown format %s for error %s", e, errnum);
+    }
+    else
+    {
+        const char *str = ::strerror(errnum);
+        if (!strcmp(str, "Unknown error"))
+    	    return WvString("Unknown win32 error #%s", errnum);
+	else
+	    return str;
+    }
+#endif
+}
+
+
 WvString WvErrorBase::errstr() const
 {
     int errnum = geterr();
@@ -98,35 +136,7 @@ WvString WvErrorBase::errstr() const
     else
     {
 	if (!!errstring) return errstring;
-#ifndef _WIN32
-	return strerror(errnum);
-#else
-	const char *wverr = wv_errmap(errnum);
-	if (wverr)
-	    return wverr;
-	else if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
-	{
-	    // otherwise, an unrecognized winsock error: try getting the error
-	    // message from win32.
-	    char msg[4096];
-	    const HMODULE module = GetModuleHandle("winsock.dll");
-	    DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
-				 module, errnum, 0, msg, sizeof(msg), 0);
-	    if (result)
-		return msg;
-	    
-	    DWORD e = GetLastError();
-	    return WvString("Unknown format %s for error %s", e, errnum);
-	}
-	else
-	{
-	    const char *str = strerror(errnum);
-	    if (!strcmp(str, "Unknown error"))
-		return WvString("Unknown win32 error #%s", errnum);
-	    else
-		return str;
-	}
-#endif
+	return WvErrorBase::strerror(errnum);
     }
 }
 
