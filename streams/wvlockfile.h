@@ -1,31 +1,50 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
- * Some handy functions to create/remove /var/lock lockfiles.
+ * 
+ * A simple lockfile class using WvStreams.
  */
+
 #ifndef __WVLOCKFILE_H
 #define __WVLOCKFILE_H
 
-#include "wvstring.h"
+#include "wvfile.h"
 
-/**
- * Class to handle Lock files - usefull for WvDial, and other places where we 
- * need to guarantee exclusive access to a file or device. Creates/Removes lockfiles
- * in /var/lock
- */
+
 class WvLockFile
 {
-    WvString devicename, filename;
-    int lock_count;
 public:
-    WvLockFile(WvString _devicename);
-    ~WvLockFile();
-    
-    bool lock();
-    void unlock();
-    bool islocked() const
-       { return lock_count != 0; }
+    WvLockFile(WvStringParm _lockname);
+
+    /**
+     * Check to make sure no lock is established, and that we can acess
+     * the lockfile.
+     */
+    bool isok();
+
+    /**
+     * Creates the lockfile with the given pid. Returns success/failure.
+     */
+    bool lock(WvStringParm pid);
+
+    /**
+     * Removes the lockfile if present. If there's no lockfile after,
+     * returns true, otherwise false.
+     */
+    bool unlock();
+
+    /**
+     * Returns one of three things:
+     *   => -1 if the lockfile exists, but is inaccessible.
+     *   => 0 if there is no lockfile, or the process is not running.
+     *   => The pid of the process if running and a lock is
+     *      established and accessible.
+     */
+    int getpid();
+
+protected:
+    WvFile lockfile;
+    WvString lockname;
 };
 
 #endif // __WVLOCKFILE_H

@@ -1,139 +1,86 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
- * Some handy functions to create/remove /var/lock lockfiles.
+ * 
+ * A simple lockfile class using WvStreams.
  */
+
 #include "wvlockfile.h"
-#include "wvfile.h"
-#include "strutils.h"
 #include <signal.h>
-#include <string.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <errno.h>
 
-WvLockFile::WvLockFile(WvString _devicename)
-	: devicename(_devicename)
+WvLockFile::WvLockFile(WvStringParm _lockname)
+    : lockname(_lockname)
+{ }
+
+
+bool WvLockFile::isok()
 {
-    const char *p = strrchr(devicename, '/');
-    if (p)
-	p++;
-    else
-	p = devicename;
-    
-    lock_count = 0;
-    filename = WvString("/var/lock/LCK..%s", p);
+    int pid = getpid();
+
+    if ((pid > 0  && kill(pid, 0)) || !pid)
+    {
+        unlink(lockname);
+        return true;
+    }
+
+    return false;
 }
 
 
-WvLockFile::~WvLockFile()
+bool WvLockFile::lock(WvStringParm pid)
 {
-    if (lock_count)
+    if (!isok())
+        return false;
+
+    unlink(lockname);
+    lockfile.open(lockname, O_WRONLY|O_CREAT|O_EXCL);
+
+    if (!lockfile.isok())
     {
-	lock_count = 1;
-	unlock();
+        lockfile.close();
+        return false;
     }
-}
 
-
-#if USE_LOCKDEV /* use the liblockdev.a locking routines */
-
-#include <lockdev.h>
-
-bool WvLockFile::lock()
-{
-    if (lock_count)
-    {
-	lock_count++;
-	return true;
-    }
-    
-    if (dev_lock(devicename))
-	return false;
-
-    lock_count++;
+    lockfile.print("%s\n", pid);
+    lockfile.close();
     return true;
 }
 
 
-void WvLockFile::unlock()
+bool WvLockFile::unlock()
 {
-    if (!lock_count) return;
+    unlink(lockname);
 
-    if (!--lock_count)
-	dev_unlock(devicename, getpid());
-}
+    if (!access(lockname, F_OK))
+        return false;
 
-
-#else /* !USE_LOCKDEV -- implement our own locking routines */
-
-
-// note: this function uses the O_EXCL flag to open(), and thus assumes
-// that /var/lock is not an NFS-mounted drive (according to the open() man
-// page, you need to follow a special procedure to ensure successful NFS
-// locking)
-//
-// Actually there may be other race conditions that we should look into.
-bool WvLockFile::lock()
-{
-    pid_t pid;
-    
-    if (lock_count)
-    {
-	lock_count++;
-    	return true;
-    }
-
-    WvFile fd(filename, O_RDWR | O_EXCL | O_CREAT, 0644);
-
-    if (fd.isok()) 
-    {
-	// We made a lock file...
-	fd.print( "%10s\n", getpid() );
-    }
-    else
-    {
-	char *inbuf;
-	
-    	// Lock file is already there!  Check for staleness...
-    	sleep( 1 );	// preventing race condition...
- 	
-	fd.open(filename, O_RDONLY);
-	inbuf = trim_string(fd.getline(0));
-	
-	if (inbuf)
-	    pid = atoi(inbuf);
-	else
-	    pid = 0;
-	
- 	if(pid != 0  &&  kill(pid, 0) == -1  &&  errno == ESRCH)
-	{
- 	    // we can create a lockfile now
-	    fd.close();
- 	    if (unlink(filename))
-		return false; // cannot remove lockfile
- 	    fd.open(filename, O_RDWR | O_EXCL | O_CREAT, 0644);
-	    fd.print("%10s\n", getpid());
- 	}
-	else
- 	    return false; // device already locked
-    }
-
-    lock_count++;
     return true;
 }
 
 
-
-void WvLockFile::unlock()
+int WvLockFile::getpid()
 {
-    if (!lock_count) return;
+    char* line;
+    int pid;
 
-    if (!--lock_count)
-	unlink( filename );
+    if (!access(lockname, W_OK))
+        pid = -1;
+    else
+    {
+        lockfile.open(lockname, O_RDONLY|O_CREAT);
+
+        if (lockfile.isok())
+        {
+            // Get the pid from the file to make sure the process is still alive
+            if ((line = lockfile.getline(0)) != NULL)
+                pid = atoi(line);
+            else
+                pid = 0;
+        }
+        else
+            pid = -1;
+
+        lockfile.close();
+    }
+    return pid;
 }
-
-
-#endif /* !USE_LOCKDEV */

@@ -12,7 +12,7 @@
 #ifndef __WVMODEM_H
 #define __WVMODEM_H
 
-#include "wvlockfile.h"
+#include "wvlockdev.h"
 #include "wvfile.h"
 #include <termios.h>
 
@@ -85,7 +85,7 @@ public:
 class WvModem : public WvModemBase
 {
 private:
-    WvLockFile		lock;
+    WvLockDev		lock;
     struct termios	old_t;
     bool		closing;
 
