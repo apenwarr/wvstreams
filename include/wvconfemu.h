@@ -84,6 +84,7 @@ public:
     Iter(WvConfigSectionEmu& _sect):
 	iter(_sect.uniconf), link(NULL, false), entry(NULL)
     {}
+    ~Iter();
     void rewind();
     WvLink *next();
     WvLink *cur();

@@ -105,6 +105,8 @@ public:
         typename Base::Container::Iter i(*oldchildren);
         for (i.rewind(); i.next();)
             delete static_cast<Sub*>(i.ptr());
+
+        delete oldchildren;
     }
 
     /**

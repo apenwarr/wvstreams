@@ -137,6 +137,13 @@ bool WvConfigSectionEmu::isempty() const
 }
 
 
+WvConfigSectionEmu::Iter::~Iter()
+{
+    if (entry)
+        delete entry;
+}
+
+
 void WvConfigSectionEmu::Iter::rewind()
 {
     iter.rewind();
@@ -147,6 +154,9 @@ WvLink *WvConfigSectionEmu::Iter::next()
 {
     if (iter.next())
     {
+        if (entry)
+            delete entry;
+
 	entry = new WvConfigEntryEmu(iter->key(), iter->get());
 	link.data = static_cast<void*>(entry);
 	return &link;
