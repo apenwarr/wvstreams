@@ -33,8 +33,8 @@ int main( int argc, char * argv[] )
 
     WvDirIter i( dirname, recurse );
     for( i.rewind(); i.next(); ) {
-        printf( "%s -- mode %u -- size %" PRIu64 "\n", 
-		(const char *) i->fullname, i->st_mode, 
+        printf( "%s -- (filename = [%s]) -- mode %u -- size %" PRIu64 "\n", 
+		(const char *) i->fullname, i->name.cstr(), i->st_mode, 
 		u_int64_t(i->st_size) );
     }
 
