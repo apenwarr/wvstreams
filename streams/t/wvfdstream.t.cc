@@ -3,12 +3,8 @@
 #include "wvfdstream.h"
 #include "wvlog.h"
 
-#define TEST_IS_FULLY_CONVERTED 1
 //FIXME: absolutely simple simple test right now, built from closeflushtest
-
-
-#ifdef TEST_IS_FULLY_CONVERTED
-
+// BEGIN closeflushtest.cc definition
 class SillyStream : public WvFDStream
 {
 public:
@@ -46,38 +42,25 @@ public:
         return outbuf.used();
     }
 };
+// END closeflushtest.cc definition
 
-
-WVTEST_MAIN("old-style")
+WVTEST_MAIN("closeflushtest.cc")
 {
-//    WvLog log("closeflushtest");
-    
-//    log("Starting.\n");
-    
     {
 	SillyStream s;
 	
 	s.delay_output(true);
 	s.write("Hello world\n");
-//	log("Said hello -- %s\n", s.obu());
         WVPASS(s.obu() == 12);
 	
 	s.delay_output(false);
-//	log("Cancelled delay -- %s\n", s.obu());
 	WVPASS(s.obu() == 12);
 	
 	s.flush_then_close(10000);
-//	log("Scheduled close -- %s\n", s.obu());
 	WVPASS(s.obu() == 12);
         
-//	log("Select...\n");
 	s.select(100);
 	
-//	log("Destroying -- %s\n", s.obu());
 	WVPASS(s.obu() == 0);
     }
-//    log("Didn't crash.\n");
 }
-#else
-#warning "Skipping old-style section of unittest until it is converted"
-#endif
