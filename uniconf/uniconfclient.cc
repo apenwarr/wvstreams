@@ -19,7 +19,7 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l, b
     conn->setcallback(wvcallback(WvStreamCallback, *this, UniConfClient::execute), NULL);
 
     if (list)
-        list->append(conn, true);
+        list->append(conn, false);
 
     waitforsubt = false;
     if (automount)
@@ -32,7 +32,9 @@ UniConfClient::~UniConfClient()
     {
         if (conn->isok())
             conn->write(WvString("%s\n", UniConfConn::UNICONF_QUIT));
-    }
+        list->unlink(conn);
+        delete conn;
+     }
 }
 
 bool UniConfClient::isok()

@@ -517,7 +517,7 @@ void UniConfDaemon::run()
     l.append(tlist, true);
 
     // Now run the actual daemon.
-    log(WvLog::Debug2, "Uniconf Daemon starting.\n");
+    dolog(WvLog::Info, "run", "Uniconf Daemon starting.\n");
     while (!want_to_die)
     {
         if (list->select(0))

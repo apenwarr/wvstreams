@@ -19,8 +19,7 @@ UniConfIniFile::UniConfIniFile(UniConf *_top, WvStringParm _filename, bool autom
 {
     top = _top;
     save_test = false;
-    log(WvLog::Notice, "Using IniFile '%s' at location '%s'.\n", 
-	filename, top->full_key());
+    log(WvLog::Debug1, "Using IniFile '%s' at location '%s'.\n", filename, top->full_key());
     if (automount)
         top->mount(this);
 }

@@ -114,7 +114,7 @@ UniConfKey UniConf::gen_full_key()
 
 bool UniConf::check_children(bool recursive)
 {
-    if (this->generator)
+    if (checkgen())
     {
         this->generator->enumerate_subtrees(this, recursive);
     }
