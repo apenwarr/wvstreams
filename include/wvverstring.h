@@ -47,4 +47,7 @@ unsigned int string_to_ver(const char *str, unsigned int my_watershed = 0);
  */
 unsigned int string_to_old_ver(const char *str);
 
+/// Trims zeroes off the end of a version string.
+char *trim_verstr(char *verstr);
+
 #endif // __WVVERSTRING_H
