@@ -89,9 +89,8 @@ WVTEST_MAIN("deltas")
             // in case a signal is in the process of being delivered..
             if (rv == -1 && errno != EINTR)
                 break;
-        }       
+        }
         WVPASS(rv == child);
-        unlink(sockname);
     }
 }
 
