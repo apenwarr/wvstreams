@@ -100,6 +100,13 @@ WvStream::~WvStream()
     }
     close();
     
+    if (!! closecb_func)
+    {
+        WvStreamCallback cb = closecb_func;
+        closecb_func = 0; // ensure callback is only called once
+        cb(*this, closecb_data);
+    }
+
     if (task)
     {
 	while (task->isrunning())
@@ -116,12 +123,6 @@ WvStream::~WvStream()
 void WvStream::close()
 {
     flush(2000); // fixme: should not hardcode this stuff
-    if (!! closecb_func)
-    {
-        WvStreamCallback cb = closecb_func;
-        closecb_func = 0; // ensure callback is only called once
-        cb(*this, closecb_data);
-    }
 }
 
 
