@@ -181,8 +181,7 @@ public:
      */
     bool alarm_was_ticking;
     
-   
-    /* Basic constructor for just a do-nothing WvStream */ 
+    /** Basic constructor for just a do-nothing WvStream */
     WvStream();
     virtual ~WvStream();
 
@@ -692,7 +691,7 @@ protected:
     bool wvstream_execute_called;
     
     WvTask *task;
-    
+
     /** Prevent accidental copying of WvStreams. */
     WvStream(const WvStream &s) { }
     WvStream& operator= (const WvStream &s) { return *this; }
