@@ -4,7 +4,7 @@
  *
  * Implementation of the WvConfigFile class.
  *
- * Created:	Sept 12 1997		D. Coombs
+ * Created:     Sept 12 1997            D. Coombs
  *
  */
 #include "wvconf.h"
@@ -12,59 +12,118 @@
 #include <string.h>
 #include <unistd.h>
 
-WvConf::WvConf( char * file_name )
-/********************************/
-: config_file( file_name ), log( config_file ),
-    globalsection( "" )
+
+WvConf::WvConf(const WvString &_filename)
+	: filename(_filename), log(filename), globalsection("")
 {
-    last_found_section = NULL;
     dirty = error = false;
     load_file();
 }
 
-void WvConf::load_file()
-/**********************/
-{
-    WvFile		file;
-    char *		p;
-    char *		from_file;
-    WvConfigSection *	sect	= &globalsection;
 
-    file.open( config_file.str, O_RDONLY );
-    if( !file.isok() ) {
-    	// Could not open for read.
-	log( WvLog::Warning, "Can't read config file: %s\n", file.errstr() );
-	if( file.geterr() != ENOENT )
+static int check_for_bool_string(const char *s)
+{
+    if (strcasecmp(s, "off") == 0
+     || strcasecmp(s, "false") == 0
+     || strncasecmp(s, "no", 2) == 0)	// also handles "none"
+	return (0);
+
+    if (strcasecmp(s, "on") == 0
+     || strcasecmp(s, "true") == 0
+     || strcasecmp(s, "yes") == 0)
+	return (1);
+
+    // not a special bool case, so just return the number
+    return (atoi(s));
+}
+
+
+// This "int" version of get is smart enough to interpret words like on/off,
+// true/false, and yes/no.
+int WvConf::get(const WvString &section, const WvString &entry, int def_val)
+{
+    WvString def_str(def_val);
+    return check_for_bool_string(get(section, entry, def_str.str));
+}
+
+
+// This "int" version of fuzzy_get is smart enough to interpret words like 
+// on/off, true/false, and yes/no.
+int WvConf::fuzzy_get(WvStringList &section, WvStringList &entry,
+		      int def_val)
+{
+    WvString def_str(def_val);
+    return check_for_bool_string(fuzzy_get(section, entry, def_str.str));
+}
+
+
+// This "int" version of fuzzy_get is smart enough to interpret words like 
+// on/off, true/false, and yes/no.
+int WvConf::fuzzy_get(WvStringList &section, const WvString &entry,
+		      int def_val)
+{
+    WvString def_str(def_val);
+    return check_for_bool_string(fuzzy_get(section, entry, def_str.str));
+}
+
+
+void WvConf::set(const WvString &section, const WvString &entry, int value)
+{
+    WvString def_str(value);
+    set(section, entry, def_str.str);
+}
+
+ 
+void WvConf::load_file()
+{
+    WvFile file;
+    char *p;
+    char *from_file;
+    WvConfigSection *sect = &globalsection;
+
+    file.open(filename.str, O_RDONLY);
+    if (!file.isok())
+    {
+	// Could not open for read.
+        log(WvLog::Warning, "Can't read config file: %s\n", file.errstr());
+	if (file.geterr() != ENOENT)
 	    error = true;
 	return;
     }
 
-    while( ( from_file = trim_string( file.getline(0) ) ) != NULL ) {
-	if( ( p = parse_section( from_file ) ) != NULL ) { 
+    while ((from_file = trim_string(file.getline(0))) != NULL)
+    {
+	if ((p = parse_section(from_file)) != NULL)
+	{
 	    // a new section?
-	    if( !p[0] ) // blank name: global section
+	    if (!p[0])		// blank name: global section
 		sect = &globalsection;
-	    else if( get_section( p ) )
-		sect = get_section( p );
 	    else
 	    {
-		sect = new WvConfigSection( p );
-		sections.append( sect, true );
+		sect = (*this)[p];
+		if (!sect)
+		{
+		    sect = new WvConfigSection(p);
+		    append(sect, true);
+		}
 	    }
-	} else { 
+	}
+	else
+	{
 	    // it must be an element for the current section *sect.
-	    p = parse_value( from_file) ;
-	    if( !p ) p = ""; // allow empty entries
+	    p = parse_value(from_file);
+	    if (!p)
+		p = "";		// allow empty entries
 
-	    from_file = trim_string( from_file );
-	    if( from_file[0] ) // nonblank option name
-		sect->set_entry( from_file, p );
+	    from_file = trim_string(from_file);
+	    if (from_file[0])	// nonblank option name
+		sect->set(from_file, p);
 	}
     }
 }
 
+
 WvConf::~WvConf()
-/***************/
 {
     // We don't really have to do anything here.  sections's destructor
     // will go through and delete all its entries, so we should be fine.
@@ -72,202 +131,160 @@ WvConf::~WvConf()
     flush();
 }
 
-char *	WvConf::get( char * a_section, char * a_name, char * def_val )
-/********************************************************************/
+
+const char *WvConf::get(const WvString &section, const WvString &entry,
+			const char *def_val)
 {
-    WvConfigSection *	sect;
-    WvConfigEntry *	ent;
-
-    char *	section = trim_string( a_section );
-    char *	name 	= trim_string( a_name );
-
-    sect = get_section( section );
+    WvConfigSection *s = (*this)[section];
+    if (!s) return def_val;
     
-    ent = NULL;
-    if( sect )
-	ent = sect->get_entry( name );
-    if( !ent )
-	ent = globalsection.get_entry( name );
-    
-    return( ent ? ent->get_value() : def_val );
+    WvConfigEntry *e = (*s)[entry];
+    if (!e)
+	return globalsection.get(entry, def_val);
+    else
+	return e->value.str;
 }
 
-char *	WvConf::fuzzy_get( WvStringList&	sect,
-			   WvStringList&	ent,
-			   char *		def_val )
-/*******************************************************/
+
+const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
+			      const char *def_val)
 {
-    WvStringList::Iter	iter( sect );
-    WvStringList::Iter	iter2( ent );
-    char *		ret;
+    WvStringList::Iter i(sections), i2(entries);
 
-    for( iter.rewind(); iter.next(); ) {
-	char *	p         = strdup( iter.data()->str );
-	char *	this_sect = trim_string( p );
+    for (i.rewind(); i.next(); )
+    {
+	WvConfigSection *s = (*this)[*i.data()];
+	if (!s) continue; // no such section
 
-	for( iter2.rewind(); iter2.next(); ) {
-	    char * q	  	= strdup( iter.data()->str );
-	    char * this_ent	= trim_string( q );
-
-	    ret = get( this_sect, this_ent );
-	    if( ret != NULL ) {
-	    	free( p );
-	    	free( q );
-	    	return( ret );
-	    }
-	    free( q );
-	}
-	free( p );
-    }
-    return( def_val );
-}
-
-char *	WvConf::fuzzy_get( WvStringList &	sect,
-			   char *		ent,
-			   char *		def_val )
-/*******************************************************/
-{
-    WvStringList::Iter	iter( sect );
-    char *		ret;
-
-    for( iter.rewind(); iter.next(); ) {
-    	char *	p	  = strdup( iter.data()->str );
-    	char *	this_sect = trim_string( p );
-
-	ret = get( this_sect, ent );
-	if( ret != NULL ) {
-	    free( p );
-	    return( ret );
-	}
-	free( p );
-    }
-    return( def_val );
-}
-
-void WvConf::set( char * section, char * name, char * value )
-/***********************************************************/
-{
-    WvConfigSection *	sect;
-    WvConfigEntry *	ent;
-    char *		p;
-
-    // First find a matching section....
-    sect = get_section( section );
-    if( !sect ) {
-    	// Make one...
-    	sect = new WvConfigSection( section );
-    	sections.add_after( sections.tail, sect, true );
-    }
-    
-    if( !value ) {
-	// delete the entry
-	sect->delete_entry( name );
-	dirty = true;
-    } else {
-	// add/modify the entry 
-	WvString tmp_string( value );
-	ent = sect->get_entry( name );
-	p = trim_string( tmp_string.str );
-	if( !ent || strcasecmp( ent->get_value(), p ) ) {
-	    if( !ent )
-		sect->set_entry( name, p ); // appends the entry
-	    else
-		ent->set_value( p );	// more efficient otherwise
-	    dirty = true;    // !!! NOTE:  Don't forget to flush() !!!
+	for (i2.rewind(); i2.next();)
+	{
+	    WvConfigEntry *e = (*s)[*i.data()];
+	    if (e) return e->value.str;
 	}
     }
+    
+    return def_val;
 }
 
-WvConfigSection * WvConf::get_section( char * section )
-/*****************************************************/
+
+const char *WvConf::fuzzy_get(WvStringList &sections, const WvString &entry,
+			      const char *def_val)
 {
-    WvConfigSectionList::Iter	iter( sections );
-    WvConfigSection *		sect;
+    WvStringList::Iter i(sections);
+
+    for (i.rewind(); i.next(); )
+    {
+	WvConfigSection *s = (*this)[*i.data()];
+	if (!s) continue;
+	
+	WvConfigEntry *e = (*s)[entry];
+	if (e) return e->value.str;
+    }
+
+    return def_val;
+}
+
+
+void WvConf::set(const WvString &section, const WvString &entry,
+		 const char *value)
+{
+    WvConfigSection *s = (*this)[section];
     
-    // short circuit the usual case, when we access the same section
-    // several times in a row.
-    if( last_found_section && last_found_section->is_this( section ) )
-	return( last_found_section );
+    // section does not exist yet
+    if (!s)
+    {
+	if (!value || !value[0])
+	    return; // no section, no entry, no problem!
+	
+	s = new WvConfigSection(section);
+	append(s, true);
+    }
+    
+    s->set(entry, value);
+    dirty = true;
+}
+
+
+WvConfigSection *WvConf::operator[] (const WvString &section)
+{
+    Iter i(*this);
 
     // otherwise, search the whole list.
-    for( iter.rewind(); iter.next(); ) {
-    	sect = iter.data();
-    	if( sect->is_this( section ) == true ) {
-	    last_found_section = sect;
-    	    return( sect );
-    	}
+    for (i.rewind(); i.next(); )
+    {
+	if (strcasecmp(i.data()->name.str, section.str) == 0)
+	    return i.data();
     }
-    return( NULL );
+
+    return NULL;
 }
 
-void WvConf::delete_section( char * section )
-/*******************************************/
+
+void WvConf::delete_section(const WvString &section)
 {
-    WvConfigSectionList::Iter i( sections );
-    
-    for( i.rewind(); i.cur() && i.next(); ) {
-	if( i.data()->is_this( section ) ) {
-	    if( last_found_section == i.data() )
-		last_found_section = NULL;
-	    i.unlink(); // may make i.cur()==0, so i.next() would segfault
-	    dirty = true;
-	}
-    }
+    WvConfigSection *s = (*this)[section];
+    if (s)
+	unlink(s);
+    dirty = true;
 }
 
-char *	WvConf::parse_section( char * s )
-/***************************************/
+
+char *WvConf::parse_section(char *s)
 {
-    char *	q;
+    char *q;
 
-    if( s[0] != '[' )
-    	return( NULL );
+    if (s[0] != '[')
+	return (NULL);
 
-    q = strchr( s, ']' );
-    if( !q || q[1] )
-	return( NULL );
+    q = strchr(s, ']');
+    if (!q || q[1])
+	return (NULL);
 
     *q = 0;
-    return trim_string( s + 1 );
+    return trim_string(s + 1);
 }
 
-char *	WvConf::parse_value( char * s )
-/*************************************/
+
+char *WvConf::parse_value(char *s)
 {
-    char *	q;
+    char *q;
 
-    q = strchr( s, '=' );
-    if( q == NULL )
-    	return( NULL );
+    q = strchr(s, '=');
+    if (q == NULL)
+	return (NULL);
 
-    *q++ = 0; // 's' points to option name, 'q' points to value
-    return( trim_string( q ) );
+    *q++ = 0;			// 's' points to option name, 'q' points to value
+
+    return (trim_string(q));
 }
+
 
 void WvConf::flush()
-/******************/
 {
-    FILE *	fp;
+    FILE *fp;
 
-    if( dirty && !error ) {
-    	fp = fopen( config_file.str, "w" );
-    	if( !fp ) {
-	    log( WvLog::Error, "Can't write to config file: %s\n",
-		strerror( errno ) );
+    if (dirty && !error)
+    {
+	fp = fopen(filename.str, "w");
+	if (!fp)
+	{
+	    log(WvLog::Error, "Can't write to config file: %s\n",
+		strerror(errno));
 	    error = true;
-    	    return;
+	    return;
 	}
-	
-	globalsection.dump( fp );
 
-	WvConfigSectionList::Iter i( sections );
-	for( i.rewind(); i.next(); ) {
-	    WvConfigSection &sect = *i.data();
-	    fprintf( fp, "\n[%s]\n", sect.get_name() );
-	    sect.dump( fp );
+	globalsection.dump(fp);
+
+        Iter i(*this);
+	for (i.rewind(); i.next();)
+	{
+	    WvConfigSection & sect = *i.data();
+	    fprintf(fp, "\n[%s]\n", sect.name.str);
+	    sect.dump(fp);
 	}
-	
-	fclose( fp );
+
+	fclose(fp);
 	dirty = false;
     }
 }

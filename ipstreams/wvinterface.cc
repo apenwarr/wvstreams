@@ -151,16 +151,19 @@ int WvInterface::setflags(int clear, int set)
 	return errnum;
     }
     
-    ifr.ifr_flags &= ~clear;
-    ifr.ifr_flags |= set;
-    
-    if (ioctl(sock, SIOCSIFFLAGS, &ifr))
+    if (((ifr.ifr_flags & ~clear) | set) != ifr.ifr_flags)
     {
-	errnum = errno;
-	if (errnum != EACCES && errnum != EPERM)
-	    err.perror(WvString("SetFlags %s", name));
-	close(sock);
-	return errnum;
+	ifr.ifr_flags &= ~clear;
+	ifr.ifr_flags |= set;
+	
+	if (ioctl(sock, SIOCSIFFLAGS, &ifr))
+	{
+	    errnum = errno;
+	    if (errnum != EACCES && errnum != EPERM)
+		err.perror(WvString("SetFlags %s", name));
+	    close(sock);
+	    return errnum;
+	}
     }
     
     close(sock);

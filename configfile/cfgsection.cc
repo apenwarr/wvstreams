@@ -4,92 +4,75 @@
  *
  * Implementation of the WvConfigSection class. 
  *
- * Created:	Sept 28 1997		D. Coombs
+ * Created:     Sept 28 1997            D. Coombs
  *
  */
 #include "wvconf.h"
 
-WvConfigSection::WvConfigSection( char * n )
-/******************************************/
+
+WvConfigSection::WvConfigSection(const WvString &_name)
+	: name(_name)
 {
-    name = new char[ strlen( n ) + 1 ];
-    strcpy( name, n );
 }
+
 
 WvConfigSection::~WvConfigSection()
-/*********************************/
 {
     // the WvConfigEntryList destructor automatically deletes all its
-    // entries, so we don't need to worry about doing that.
-
-    delete[] name;
+    // entries, so no need to worry about doing that.
 }
 
-WvConfigEntry *	WvConfigSection::get_entry( char * e )
-/****************************************************/
-{
-    WvConfigEntryList::Iter	iter( entries );
 
-    for( iter.rewind(); iter.next(); ) {
-    	if( strcasecmp( iter.data()->get_name(), e ) == 0 ) {
-            return( iter.data() );
-        }
+WvConfigEntry *WvConfigSection::operator[] (const WvString &ename)
+{
+    Iter i(*this);
+
+    for (i.rewind(); i.next();)
+    {
+	if (strcasecmp(i.data()->name.str, ename.str) == 0)
+	    return i.data();
     }
 
-    return( NULL );
+    return NULL;
 }
 
-void WvConfigSection::set_entry( char * e, char * v )
-/***************************************************/
+
+const char *WvConfigSection::get(const WvString &entry, const char *def_val)
 {
-    WvConfigEntryList::Iter	iter( entries );
-    WvConfigEntry *		ent;
-
-    // First check to see if the entry is already in this section.
-    iter.rewind();
-    while( iter.next() ) {
-    	ent = iter.data();
-    	if( strcasecmp( ent->get_name(), e ) == 0 ) {
-    	    ent->set_value( v );
-	    return;
-        }
-    }
-
-    // The entry is not in the list, so now we must append it.
-    ent = new WvConfigEntry( e, v );
-    entries.append( ent, true );
-
-    return;
+    WvConfigEntry *e = (*this)[entry];
+    return e ? e->value.str : def_val;
 }
 
-void WvConfigSection::append_entry( WvConfigEntry * ent )
-/*******************************************************/
-{
-    entries.append( ent, true );
-}
 
-void WvConfigSection::delete_entry( char * entry )
-/************************************************/
+void WvConfigSection::set(const WvString &entry, const WvString &value)
 {
-    WvConfigEntryList::Iter i ( entries );
+    WvConfigEntry *e = (*this)[entry];
     
-    for( i.rewind(); i.cur() && i.next(); ) {
-    	if( !strcasecmp( i.data()->get_name(), entry ) )
-            i.unlink(); // i.cur() may become NULL!
+    // need to delete the entry?
+    if (!value.str || !value.str[0])
+    {
+	if (e) unlink(e);
+	return;
     }
+
+    // otherwise, add the entry requested
+    if (e)
+	e->set(value);
+    else
+	append(new WvConfigEntry(entry, value), true);
 }
 
-void WvConfigSection::dump( FILE * fp )
-/*************************************/
-{
-    WvConfigEntryList::Iter i( entries );
 
-    for( i.rewind(); i.next(); ) {
-	WvConfigEntry &	ent = *i.data();
-	char *		val = ent.get_value();
-	if( val[0] )
-	    fprintf( fp, "%s = %s\n", ent.get_name(), val );
+void WvConfigSection::dump(FILE *fp)
+{
+    Iter i(*this);
+
+    for (i.rewind(); i.next(); )
+    {
+	WvConfigEntry &e = *i.data();
+	if (e.value.str && e.value.str[0])
+	    fprintf(fp, "%s = %s\n", e.name.str, e.value.str);
 	else
-	    fprintf( fp, "%s\n", ent.get_name() );
+	    fprintf(fp, "%s\n", e.name.str);
     }
 }

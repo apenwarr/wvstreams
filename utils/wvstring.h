@@ -48,8 +48,9 @@ class WvString
 {
     void fillme(const char *_str)
     { 
+	if (_str == NULL) { str = NULL; return; }
 	str = new char[strlen(_str) + WVSTRING_EXTRA];
-	if (_str) strcpy(str, _str); 
+	strcpy(str, _str); 
     }
 
     // when this is called, we assume output.str == NULL; it will be filled.
