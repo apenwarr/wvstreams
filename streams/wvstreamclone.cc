@@ -48,10 +48,8 @@ void WvStreamClone::close()
 
 void WvStreamClone::flush_internal(time_t msec_timeout)
 {
-#if 0 // FIXME: not supported by IWvStream
     if (cloned)
         cloned->flush(msec_timeout);
-#endif
 }
 
 
@@ -137,7 +135,7 @@ bool WvStreamClone::post_select(SelectInfo &si)
     bool val, want_write;
     
     if (cloned)
-	flush_outbuf(0);
+	flush(0);
 
     if (cloned && cloned->isok())
     {
@@ -152,24 +150,20 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	want_write = si.wants.writable;
 	si.wants = oldwant;
 	
-	// don't return true if they're looking for writable and we still
-	// have data in outbuf - we're not ready to flush yet.
-#if 0 /* I don't understand the logic here... */
+	// return false if they're looking for writable and we still
+	// have data in outbuf - the writable is for flushing, not for you!
 	if (want_write && outbuf.used())
 	    return false;
+	else if (val && si.wants.readable && read_requires_writable
+		 && !read_requires_writable->select(0, false, true))
+	    return false;
+	else if (val && si.wants.writable && write_requires_readable
+		 && !write_requires_readable->select(0, true, false))
+	    return false;
 	else
-#endif
-	{
-	    if (val && si.wants.readable && read_requires_writable
-	      && !read_requires_writable->select(0, false, true))
-		return false;
-	    if (val && si.wants.writable && write_requires_readable
-	      && !write_requires_readable->select(0, true, false))
-		return false;
-
 	    return val;
-	}
     }
+    
     return false;
 }
 

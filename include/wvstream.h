@@ -85,6 +85,15 @@ public:
     virtual size_t read(WvBuffer &outbuf, size_t count) = 0;
     virtual size_t write(WvBuffer &inbuf, size_t count = INT_MAX) = 0;
     
+    /**
+     * flush the output buffer, if we can do it without delaying more than
+     * msec_timeout milliseconds at a time.  (-1 means wait forever)
+     * 
+     * FIXME: Something like this probably belongs in IWvStream, but
+     * probably not exactly this.
+     */
+    virtual void flush(time_t msec_timeout) = 0;
+    
     // IObject
     static const UUID IID;
 };
@@ -279,7 +288,7 @@ public:
      * flush the output buffer, if we can do it without delaying more than
      * msec_timeout milliseconds at a time.  (-1 means wait forever)
      */
-    void flush(time_t msec_timeout);
+    virtual void flush(time_t msec_timeout);
     
     /**
      * flush the output buffer automatically as select() is called.  If

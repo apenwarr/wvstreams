@@ -301,6 +301,7 @@ void WvSSLStream::close()
 	SSL_shutdown(ssl);
 	SSL_free(ssl);
 	ssl = NULL;
+	sslconnected = false;
     }
     
     WvStreamClone::close();
@@ -310,6 +311,12 @@ void WvSSLStream::close()
 	SSL_CTX_free(ctx);
 	ctx = NULL;
     }
+}
+
+
+bool WvSSLStream::isok() const
+{
+    return ssl && WvStreamClone::isok();
 }
 
 

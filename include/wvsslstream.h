@@ -46,10 +46,9 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     
-    /**
-     * Close down the SSL Connection
-     */
     virtual void close();
+    
+    virtual bool isok() const;
     
 protected:
     /**
@@ -73,35 +72,35 @@ protected:
      * Overrides the standard write function, and use
      * SSL_write() instead...
      */
-    virtual size_t     uwrite(const void *buf, size_t len);
+    virtual size_t uwrite(const void *buf, size_t len);
     
     /**
      * Overrides for the standard read function, so that SSL_read() will
      * get called...
      */
-    virtual size_t     uread(void *buf, size_t len);
+    virtual size_t uread(void *buf, size_t len);
     
 private:
     /**
      * Connection Status Flag, since SSL takes a few seconds to
      * initialize itself.
      */
-    volatile bool       sslconnected;
+    volatile bool sslconnected;
     
     /**
      * Keep track of whether we are a client or a server
      */
-    bool	is_server;
+    bool is_server;
     
     /**
      * Keep track of whether we want to check the peer who connects to us
      */
-    bool	verify;
+    bool verify;
     
     /**
      * Internal Log Object
      */
-    WvLog      debug;
+    WvLog debug;
 
     /**
      * SSL_write() may return an SSL_ERROR_WANT_WRITE code which
