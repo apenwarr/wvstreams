@@ -34,7 +34,7 @@ private:
     	
     	Gen(IUniConfGen *_gen, bool _auto_free)
     	    	: gen(_gen), was_ok(gen->isok()), auto_free(_auto_free) {}
-    	~Gen() { if (auto_free) RELEASE(gen); }
+    	~Gen() { if (auto_free) WVRELEASE(gen); }
     	
     	bool isok() { return was_ok = gen->isok(); }
     };

@@ -52,8 +52,8 @@ int main(int argc, char **argv)
             slist->callback();
     }
     stream->flush(0);
-    RELEASE(stream);
-    RELEASE(slist);
+    WVRELEASE(stream);
+    WVRELEASE(slist);
     
     return 0;
 }

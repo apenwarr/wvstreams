@@ -35,7 +35,7 @@ UniConfDaemon::UniConfDaemon(const UniConf &_cfg,
 UniConfDaemon::~UniConfDaemon()
 {
     close();
-    RELEASE(permgen);
+    WVRELEASE(permgen);
 }
 
 
@@ -107,7 +107,7 @@ bool UniConfDaemon::setupunixsocket(WvStringParm path, int create_mode)
     {
         log(WvLog::Error, "Could not create Unix domain socket: %s\n",
             listener->errstr());
-        RELEASE(listener);
+        WVRELEASE(listener);
         return false;
     }
     listener->setcallback(WvStreamCallback(this,
@@ -126,7 +126,7 @@ bool UniConfDaemon::setuptcpsocket(const WvIPPortAddr &addr)
     {
         log(WvLog::Error, "Could not create TCP socket: %s\n",
             listener->errstr());
-        RELEASE(listener);
+        WVRELEASE(listener);
         return false;
     }
     listener->setcallback(WvStreamCallback(this,
@@ -144,7 +144,7 @@ bool UniConfDaemon::setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509)
     {
         log(WvLog::Error, "Could not create SSL socket: %s\n",
             listener->errstr());
-        RELEASE(listener);
+        WVRELEASE(listener);
         return false;
     }
     listener->setcallback(WvStreamCallback(this,

@@ -33,7 +33,7 @@ void WvFtpStream::doneurl()
 
     curl->done();
     curl = NULL;
-    RELEASE(data);
+    WVRELEASE(data);
     urls.unlink_first();
     last_request_time = time(0);
     alarm(60000);

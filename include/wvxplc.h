@@ -24,12 +24,7 @@
 #include <xplc/ptr.h>
 #include <xplc/uuidops.h>
 
-/*
- * There is another definition of DELETE in <arpa/nameser_compat.h>,
- * but we don't care about it.
- */
-#undef DELETE
-#define RELEASE(ptr) do { if (ptr) ptr->release(); ptr = 0; } while (0)
-#define DELETE(ptr) do { delete ptr; ptr = 0; } while (0)
+#define WVRELEASE(ptr) do { if (ptr) ptr->release(); ptr = 0; } while (0)
+#define WVDELETE(ptr) do { delete ptr; ptr = 0; } while (0)
 
 #endif // __WVXPLC_H

@@ -177,12 +177,12 @@ int main(int argc, char **argv)
 	    break;
             
         case 'i':
-            RELEASE(in);
+            WVRELEASE(in);
             in = new WvFile(optarg, O_RDONLY);
             break;
             
         case 'o':
-            RELEASE(out);
+            WVRELEASE(out);
             out = new WvFile(optarg, O_WRONLY | O_CREAT);
             break;
 	}
@@ -341,11 +341,11 @@ int main(int argc, char **argv)
         total = copy(crypto, out);
     }
     crypto->close();
-    RELEASE(crypto);
+    WVRELEASE(crypto);
     if (in != base && in != wvin)
-        RELEASE(in);
+        WVRELEASE(in);
     if (out != base && out != wvout)
-        RELEASE(out);
+        WVRELEASE(out);
     
     gettimeofday(&stop, &tz);
     long tdiff = msecdiff(stop, start);
