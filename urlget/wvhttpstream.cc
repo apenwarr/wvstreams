@@ -54,8 +54,6 @@ WvHttpStream::~WvHttpStream()
 
 void WvHttpStream::close()
 {
-    log("close called\n");
-    log_urls();
     // assume pipelining is broken if we're closing without doing at least
     // one successful pipelining test and a following non-test request.
     if (enable_pipelining && max_requests > 1
@@ -77,16 +75,11 @@ void WvHttpStream::close()
         if (!msgurl && !waiting_urls.isempty())
             msgurl = waiting_urls.first();
         if (msgurl)
-            log("URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
-                errstr());
+            log("URL '%s' is FAILED\n", msgurl->url);
     }
     waiting_urls.zap();
     if (curl)
-    {
-        log("curl is %s\n", curl->url);
         doneurl();
-    }
-    log("close done\n");
 }
 
 
@@ -95,7 +88,6 @@ void WvHttpStream::doneurl()
     assert(curl != NULL);
     WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
-    log_urls();
 
     http_response = "";
     encoding = Unknown;
@@ -130,7 +122,6 @@ void WvHttpStream::doneurl()
         close();
 
     request_next();
-    log("done doneurl()\n");
 }
 
 
