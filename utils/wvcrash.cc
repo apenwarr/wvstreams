@@ -13,11 +13,14 @@
 
 static const char *argv0 = "UNKNOWN";
 
+// write a string 'str' to fd
 static void wr(int fd, const char *str)
 {
     write(fd, str, strlen(str));
 }
 
+
+// convert 'num' to a string and write it to fd.
 static void wrn(int fd, int num)
 {
     int tmp;
@@ -61,6 +64,16 @@ static void wvcrash_real(int sig, int fd)
     wr(fd, "\n\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
+    
+    // we want to create a coredump, and the kernel seems to not want to do
+    // that if we send ourselves the same signal that we're already in.
+    // Whatever... just send a different one :)
+    if (sig == SIGSEGV)
+	sig = SIGBUS;
+    else
+	sig = SIGSEGV;
+    
+    signal(sig, SIG_DFL);
     kill(getpid(), sig);
 }
 
@@ -110,6 +123,7 @@ void wvcrash(int sig)
 	}
     }
     
+    // child (usually)
     _exit(126);
 }
 
