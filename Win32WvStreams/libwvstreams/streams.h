@@ -33,7 +33,8 @@ protected:
     SOCKET m_socket;
     bool m_wait;
 public:
-    SocketFromFDMaker(int fd, LPTHREAD_START_ROUTINE lpt, bool wait_for_termination = false);
+    SocketFromFDMaker(int fd, LPTHREAD_START_ROUTINE lpt,
+		      bool wait_for_termination = false);
     ~SocketFromFDMaker();
     SOCKET GetSocket() { return m_socket; }
 };

@@ -4,6 +4,7 @@
 #include "wvstring.h"
 #include <assert.h>
 #include <errno.h>
+#include <conio.h>
 
 // these versions of close/read/write try to work with both sockets and
 // msvcrt file descriptors! (I hope we never get a socket with the same
@@ -65,34 +66,34 @@ int socketpair(int family, int type, int protocol, int *sb)
     if (type != SOCK_STREAM)
 	return -1;
 
-    newsock = socket (AF_INET, type, 0);
+    newsock = socket(AF_INET, type, 0);
     if (newsock == INVALID_SOCKET)
 	return -1;
 
     sock_in.sin_family = AF_INET;
     sock_in.sin_port = 0;
     sock_in.sin_addr.s_addr = INADDR_ANY;
-    if (bind (newsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) < 0)
+    if (bind(newsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) < 0)
 	return -1;
 
     int len = sizeof (sock_in);
-    if (getsockname (newsock, (struct sockaddr *) &sock_in, &len) < 0)
+    if (getsockname(newsock, (struct sockaddr *)&sock_in, &len) < 0)
 	return -1;
 
-    if (listen (newsock, 2) < 0)
+    if (listen(newsock, 2) < 0)
 	return -1;
 
-    outsock = socket (AF_INET, type, 0);
+    outsock = socket(AF_INET, type, 0);
     if (outsock == INVALID_SOCKET)
 	return -1;
 
-    sock_in.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
-    if (connect(outsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) < 0)
+    sock_in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (connect(outsock, (struct sockaddr *)&sock_in, sizeof(sock_in)) < 0)
 	return -1;
 
     /* For stream sockets, accept the connection and close the listener */
-    len = sizeof (sock_in);
-    insock = accept (newsock, (struct sockaddr *) &sock_in, &len);
+    len = sizeof(sock_in);
+    insock = accept(newsock, (struct sockaddr *)&sock_in, &len);
     if (insock == INVALID_SOCKET)
 	return -1;
 
@@ -109,13 +110,17 @@ DWORD WINAPI fd2socket_fwd(LPVOID lpThreadParameter)
 {
     DWORD retval = 0;
     const int BUFSIZE = 512;
-    socket_fd_pair *pair = (socket_fd_pair *) lpThreadParameter;
-
+    socket_fd_pair *pair = (socket_fd_pair *)lpThreadParameter;
+    
+    // fprintf(stderr, "forwarding %d -> %d\n", 
+    //         pair->fd, pair->socket); fflush(stderr);
+    
     char buf[BUFSIZE];
     while (true)
     {
 	char *ptr = buf;
-	int bytes = _read(pair->fd, ptr, BUFSIZE);
+	
+	size_t bytes = _read(pair->fd, ptr, BUFSIZE);
 	if (bytes <= 0) { retval = bytes; break; }
 	while (bytes > 0)
 	{
@@ -129,6 +134,7 @@ DWORD WINAPI fd2socket_fwd(LPVOID lpThreadParameter)
 
     shutdown(pair->socket, SD_BOTH);
     closesocket(pair->socket);
+    // fprintf(stderr, "TERMINATING-%d\n", pair->fd); fflush(stderr);
     return retval;
 }
 
@@ -137,7 +143,7 @@ DWORD WINAPI socket2fd_fwd(LPVOID lpThreadParameter)
 {
     DWORD retval = 0;
     const int BUFSIZE = 512;
-    socket_fd_pair *pair = (socket_fd_pair *) lpThreadParameter;
+    socket_fd_pair *pair = (socket_fd_pair *)lpThreadParameter;
 
     char buf[BUFSIZE];
     while (true)
@@ -155,11 +161,13 @@ DWORD WINAPI socket2fd_fwd(LPVOID lpThreadParameter)
     }
     shutdown(pair->socket, SD_BOTH);
     closesocket(pair->socket);
+    // fprintf(stderr, "TERMINATING-%d\n", pair->fd); fflush(stderr);
     return retval;
 }
 
 
-SocketFromFDMaker::SocketFromFDMaker(int fd, LPTHREAD_START_ROUTINE lpStartAddress, bool wait)
+SocketFromFDMaker::SocketFromFDMaker(int fd,
+		     LPTHREAD_START_ROUTINE lpStartAddress, bool wait)
     : m_hThread(0), m_socket(INVALID_SOCKET), m_wait(wait)
 {
     // might do this twice
@@ -169,7 +177,7 @@ SocketFromFDMaker::SocketFromFDMaker(int fd, LPTHREAD_START_ROUTINE lpStartAddre
     int s[2];
     socketpair(AF_INET, SOCK_STREAM, 0, s);
 
-    m_pair.fd = _dup(fd);
+    m_pair.fd = fd;
     m_pair.socket = s[0];
     m_socket = s[1];
 
@@ -192,13 +200,35 @@ SocketFromFDMaker::~SocketFromFDMaker()
     if (m_socket != INVALID_SOCKET)
     {
 	result = shutdown(m_socket, SD_BOTH);
-	// ugly ugly ugly workaround for bug 5449
-	for (int i = 0; i != 10; ++i)
-	    Sleep(50);
-//	assert(result == 0);
-	// wait for thread to terminate
-	// if (m_wait)
-	//	WaitForSingleObject(m_hThread, /* INFINITE */ 2000);
+	
+	// this assertion will fail if someone has already closed the
+	// socket; eg. if you give the socket to a WvFDStream and then let
+	// him close it.  But you shouldn't do that, because nobody is
+	// supposed to close stdin/stdout/stderr!
+	assert(result == 0);
+	    
+	if (m_wait) // wait for socket->fd copier
+	{
+	    // wait for thread to terminate.  Since it's reading from a
+	    // socket (m_wait==true), this will be safe, because we know
+	    // it'll die politely when it should.
+	    WaitForSingleObject(m_hThread, INFINITE);
+	}
+	else
+	{
+	    // FIXME: fd->socket copier will never die politely.  It gets
+	    // stuck in _read(), which enters a critical section and
+	    // then blocks until input is available.  Unfortunately, it's
+	    // impossible to make input *not* available.
+	    // 
+	    // TerminateThread() is generally evil, and doesn't help here
+	    // anyway: it just leaves that critical section locked forever, so
+	    // no operation on that fd will *ever* finish.
+	    // 
+	    // Answer: just do nothing.  Someone will clean up the broken
+	    // thread eventually, I guess.  (ExitProcess() claims to do
+	    // this, but I hope it doesn't get stuck in a critical section...)
+	}
         
 	close(m_socket);
     }

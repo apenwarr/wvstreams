@@ -6,6 +6,9 @@
 
 static bool fd_is_valid(int fd)
 {
+#ifdef _WIN32
+    if (fd == 0) return true; // see wvwin32/stream.cc for this insanity
+#endif
     int nfd = dup(fd);
     if (nfd >= 0)
     {
@@ -29,6 +32,7 @@ static int fd_count(const char *when)
 	{
 	    count++;
 	    printf(" %d", fd);
+	    fflush(stdout);
 	}
     }
     printf("\n");

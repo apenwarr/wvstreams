@@ -314,6 +314,9 @@ public:
     /** Determines if any generators are mounted at this key. */
     bool ismountpoint() const;
     
+    /** Returns true if the generator at this key isok(). */
+    bool isok() const;
+    
     /**
      * Finds the generator that owns this key.
      * 
