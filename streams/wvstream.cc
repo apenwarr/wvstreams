@@ -14,6 +14,10 @@
 #include <time.h>
 #include <sys/types.h>
 #include <assert.h>
+#include <algorithm>
+
+using std::min;
+using std::max;
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
@@ -413,25 +417,6 @@ bool WvStream::iswritable()
     return !stop_write && isok() && select(0, false, true, false);
 }
 
-// FIXME: these should be elsewhere...
-template <class T>
-T max(T a, T b)
-{
-    if (a > b)
-        return a;
-    else
-        return b;
-}
-
-template <class T>
-T min(T a, T b)
-{
-    if (a < b)
-        return a;
-    else
-        return b;
-}
-// END FIXME
 
 size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char separator)
 {
