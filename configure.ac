@@ -330,19 +330,19 @@ fi
 
 # xplc
 if test "$with_xplc" != "no"; then
-    if test -d xplc && test "$with_xplc" = ""; then
+    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+    xplc_version=`pkg-config --modversion xplc 2>/dev/null`
+    if test "$xplc_version" != ""; then xplc_version=" == $xplc_version"; fi
+    xplc_pc="xplc${xplc_version}"
+    # What if we can't find it?
+    if test "$with_xplc" = "no" && test -d xplc; then
         WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
         WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
         AC_CONFIG_SUBDIRS(xplc)
         build_xplc=yes
         with_xplc='$(WVSTREAMS)/xplc'
 	xplc_pc='wvxplc'
-    else
-        AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
-        AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
-	xplc_version=`pkg-config --modversion xplc 2>/dev/null`
-	if test "$xplc_version" != ""; then xplc_version=" >= $xplc_version"; fi
-	xplc_pc="xplc${xplc_version}"
     fi
 fi
 
