@@ -569,3 +569,8 @@ public:
 };
 
 #endif // __UNICONF_H
+
+
+// This is pretty evil, but is rather convenient. By including uniconfroot.h
+// here, we make it so people can #include uniconf.h instead of uniconfroot.h.
+#include "uniconfroot.h"
