@@ -54,12 +54,12 @@ public:
     {
 	datumize(datumize &); // not defined
 
-        void init(const T &t)
-        {
+	void init(const T &t)
+	{
 	    wv_serialize(buf, t);
-	    dsize = buf.used();
-	    dptr = (char *)buf.peek(0, buf.used());
-        }
+	    this->dsize = buf.used();
+	    this->dptr = (char *)buf.peek(0, buf.used());
+	}
 
     public:
 	WvDynBuf buf;
@@ -68,10 +68,16 @@ public:
             { init(t); }
 
 	datumize(const T *t)
-        {
-            if (t) { init(*t); }
-            else { dsize = 0; dptr = 0; }
-        }
+	{
+	    if (t)
+		init(*t);
+	    else
+	    {
+		this->dsize = 0;
+		this->dptr = 0;
+	    }
+	}
+
     };
     
     template <typename T>
@@ -158,10 +164,11 @@ public:
 
 	void rewind(const K &firstkey)
         {
-            MyType::datumize<K> key(k);
-            MyType::datumize<D> data(d);
+            typename MyType::template datumize<K> key(k);
+            typename MyType::template datumize<D> data(d);
 
-            BackendIterBase::rewind(MyType::datumize<K>(firstkey), key, data);
+            BackendIterBase::rewind(typename MyType::template datumize<K>(
+					firstkey), key, data);
             delete k;
             delete d;
             if (data.dptr)
@@ -178,7 +185,7 @@ public:
 
         bool next()
         {
-            MyType::datumize<K> key(k);
+            typename MyType::template datumize<K> key(k);
             datum data = { 0, 0 };
             BackendIterBase::next(key, data);
             delete k;
@@ -198,11 +205,15 @@ public:
             { xunlink(); next(); }
         
         void xunlink()
-            { BackendIterBase::xunlink(MyType::datumize<K>(k)); }
+	{
+	    BackendIterBase::xunlink(typename MyType::template datumize<K>(k));
+	}
 
         void save()
-            { BackendIterBase::update(MyType::datumize<K>(k),
-                    MyType::datumize<D>(d)); }
+	{
+	    BackendIterBase::update(typename MyType::template datumize<K>(k),
+				    typename MyType::template datumize<D>(d));
+	}
 
 	bool cur()
             { return d; }
