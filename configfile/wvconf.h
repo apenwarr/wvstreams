@@ -16,6 +16,7 @@
 #include "wvlinklist.h"
 #include "wvlog.h"
 #include "wvstringlist.h"
+#include "wvcallback.h"
 
 class WvConf;
 
@@ -58,21 +59,23 @@ public:
 };
 
 
-typedef void WvConfCallback(WvConf &cfg, void *userdata,
-			    const WvString &section, const WvString &entry,
-			    const WvString &oldval, const WvString &newval);
+// parameters are: userdata, section, entry, oldval, newval
+DeclareWvCallback(5, void, WvConfCallback,
+		  void *,
+		  const WvString &, const WvString &,
+		  const WvString &, const WvString &);
 
 class WvConfCallbackInfo
 {
 public:
-    WvConfCallback *callback;
+    WvConfCallback callback;
     void *userdata;
     const WvString section, entry;
     
-    WvConfCallbackInfo(WvConfCallback *_callback, void *_userdata,
+    WvConfCallbackInfo(WvConfCallback _callback, void *_userdata,
 		       const WvString &_section, const WvString &_entry)
-	: section(_section), entry(_entry)
-        { callback = _callback; userdata = _userdata; }
+	: callback(_callback), section(_section), entry(_entry)
+        { userdata = _userdata; }
 };
 
 
@@ -123,20 +126,25 @@ public:
     void delete_section(const WvString &section);
 
     // section and entry may be blank -- that means _all_ sections/entries!
-    void add_callback(WvConfCallback *callback, void *userdata,
+    void add_callback(WvConfCallback callback, void *userdata,
 		      const WvString &section, const WvString &entry);
-    void del_callback(WvConfCallback *callback, void *userdata,
+    void del_callback(WvConfCallback callback, void *userdata,
 		      const WvString &section, const WvString &entry);
     void run_callbacks(const WvString &section, const WvString &entry,
 		       const WvString &oldvalue, const WvString &newvalue);
     void run_all_callbacks();
     
     // generic callback function for setting a bool to "true" when changed
-    static WvConfCallback setbool;
+    void setbool(void *userdata,
+		 const WvString &section, const WvString &entry,
+		 const WvString &oldval, const WvString &newval);
+    
     void add_setbool(bool *b, const WvString &section, const WvString &entry)
-        { add_callback(setbool, b, section, entry); }
+        { add_callback(wvcallback(WvConfCallback, *this, WvConf::setbool),
+		       b, section, entry); }
     void del_setbool(bool *b, const WvString &section, const WvString &entry)
-        { del_callback(setbool, b, section, entry); }
+        { del_callback(wvcallback(WvConfCallback, *this, WvConf::setbool),
+		       b, section, entry); }
 		    
     void load_file() // append the contents of the real config file
         { load_file(filename); }

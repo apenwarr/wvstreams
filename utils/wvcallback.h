@@ -25,6 +25,9 @@ public:
     WvCallbackBase::WvCallbackBase(void *_obj, FakeFunc _func)
 	: obj((Fake *)_obj), func(_func)
 	{ }
+    
+    bool operator== (const WvCallbackBase &cb) const
+        { return obj==cb.obj && func==cb.func; }
 };
 
 
@@ -90,6 +93,21 @@ template <class RET, class P1, class P2, class P3, class P4>
 template <class RET, class T, class P1, class P2, class P3, class P4>
     __MakeWvBoundCallback(4, (P1 p1, P2 p2, P3 p3, P4 p4),
 			  WvCallback4<RET, P1, P2, P3, P4>);
+
+template <class RET, class P1, class P2, class P3, class P4, class P5>
+    __MakeWvCallback(5, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5),
+		     (p1, p2, p3, p4, p5));
+template <class RET, class T, class P1, class P2, class P3, class P4, class P5>
+    __MakeWvBoundCallback(5, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5),
+			  WvCallback5<RET, P1, P2, P3, P4, P5>);
+
+template <class RET, class P1, class P2, class P3, class P4, class P5, class P6>
+    __MakeWvCallback(6, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6),
+		     (p1, p2, p3, p4, p5, p6));
+template <class RET, class T, class P1, class P2, class P3, class P4, class P5,
+    		class P6>
+    __MakeWvBoundCallback(6, (P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6),
+			  WvCallback6<RET, P1, P2, P3, P4, P5, P6>);
 
 
 // DeclareWvCallback is how you create a new type of callback.  The options

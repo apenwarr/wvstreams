@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 
 
-void WvConf::setbool(WvConf &, void *userdata,
+void WvConf::setbool(void *userdata,
 		     const WvString &, const WvString &,
 		     const WvString &, const WvString &)
 {
@@ -452,7 +452,7 @@ void WvConf::flush()
 }
 
 
-void WvConf::add_callback(WvConfCallback *callback, void *userdata,
+void WvConf::add_callback(WvConfCallback callback, void *userdata,
 			  const WvString &section, const WvString &entry)
 {
     callbacks.append(new WvConfCallbackInfo(callback, userdata,
@@ -460,7 +460,7 @@ void WvConf::add_callback(WvConfCallback *callback, void *userdata,
 }
 
 
-void WvConf::del_callback(WvConfCallback *callback, void *userdata,
+void WvConf::del_callback(WvConfCallback callback, void *userdata,
 			  const WvString &section, const WvString &entry)
 {
     WvConfCallbackInfoList::Iter i(callbacks);
@@ -486,11 +486,11 @@ void WvConf::run_callbacks(const WvString &section, const WvString &entry,
     
     for (i.rewind(); i.next(); )
     {
-	if (!i().section || !strcasecmp(i().section, section))
+	if (!i->section || !strcasecmp(i->section, section))
 	{
-	    if (!i().entry || !strcasecmp(i().entry, entry))
-		i().callback(*this, i().userdata, section, entry,
-			     oldvalue, newvalue);
+	    if (!i->entry || !strcasecmp(i->entry, entry))
+		i->callback(i->userdata, section, entry,
+			    oldvalue, newvalue);
 	}
     }
 }
@@ -501,7 +501,5 @@ void WvConf::run_all_callbacks()
     WvConfCallbackInfoList::Iter i(callbacks);
 
     for (i.rewind(); i.next(); )
-    {
-        i().callback(*this, i().userdata, "", "", "", "");
-    }
+        i->callback(i->userdata, "", "", "", "");
 }
