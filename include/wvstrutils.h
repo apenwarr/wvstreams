@@ -346,8 +346,14 @@ WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
 /** Replace any consecutive instances of character c with a single one */
 WvString undupe(WvStringParm s, char c);
 
+/** Do gethostname() without a fixed-length buffer */
 WvString hostname();
+
+/** Get the fqdn of the local host, using gethostbyname() and gethostname() */
 WvString fqdomainname();
+
+/** Get the current working directory without a fixed-length buffer */
+WvString wvgetcwd();
 
 /**
  * Inserts SI-style spacing into a number

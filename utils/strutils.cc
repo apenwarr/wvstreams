@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #ifndef _WIN32
 //#include <uuid.h>
@@ -22,6 +23,10 @@
 #define errno GetLastError()
 #define strcasecmp _stricmp
 #include <winsock2.h>
+#include <direct.h>
+#ifndef EACCESS
+#define EACCESS 0xfff
+#endif
 #endif
 
 char *terminate_string(char *string, char c)
@@ -675,6 +680,27 @@ WvString fqdomainname()
 	return myhost->h_name;
     else
 	return WvString::null;
+}
+
+
+WvString wvgetcwd()
+{
+    int maxlen = 0;
+    for (;;)
+    {
+        maxlen += 80;
+        char *name = new char[maxlen];
+        char *res = getcwd(name, maxlen);
+        if (res)
+        {
+            WvString s(name);
+            deletev name;
+            return s;
+        }
+	if (errno == EACCESS || errno == ENOENT)
+	    return "."; // can't deal with those errors
+        assert(errno == ERANGE); // buffer too small
+    }
 }
 
 

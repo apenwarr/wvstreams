@@ -100,8 +100,8 @@ int WvTest::run_all(const char * const *prefixes)
     int old_valgrind_leaks = 0, new_valgrind_leaks;
     
 #ifdef _WIN32
-    /* I should be doing something to do with SetTimer here, not sure exactly what just yet */
-
+    /* I should be doing something to do with SetTimer here, 
+     * not sure exactly what just yet */
 #else
     signal(SIGALRM, alarm_handler);
     // signal(SIGALRM, SIG_IGN);
@@ -109,6 +109,15 @@ int WvTest::run_all(const char * const *prefixes)
 #endif
     start_time = time(NULL);
     
+    // make sure we can always start out in the same directory, so tests have
+    // access to their files.  If a test uses chdir(), we want to be able to
+    // reverse it.
+    char wd[1024];
+    if (!getcwd(wd, sizeof(wd)))
+	strcpy(wd, ".");
+    
+    // there are lots of fflush() calls in here because stupid win32 doesn't
+    // flush very often by itself.
     fails = runs = 0;
     for (WvTest *cur = first; cur; cur = cur->next)
     {
@@ -118,7 +127,9 @@ int WvTest::run_all(const char * const *prefixes)
 	{
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    fflush(stdout);
+	    
 	    cur->main();
+	    chdir(wd);
 	    
 	    new_valgrind_errs = memerrs();
 	    WVPASS(new_valgrind_errs == old_valgrind_errs);
