@@ -8,7 +8,6 @@
 #include "uniconfroot.h"
 #include <assert.h>
 
-
 uniconf_t uniconf_init(const char* _moniker)
 {
     return new UniConfRoot(_moniker);
