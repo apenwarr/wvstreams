@@ -200,8 +200,10 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
     if (!sslconnected)
     {
 	debug(">> writing, but not connected yet (%s); enqueue.\n", getwfd());
-	return 0;
+        unconnected_buf.put(buf, len);
+	return len;
     }
+
     if (len == 0) return 0;
 
 //    debug(">> I want to write %s bytes.\n", len);
@@ -339,7 +341,7 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 bool WvSSLStream::post_select(SelectInfo &si)
 {
     bool result = WvStreamClone::post_select(si);
-    
+
 //    debug("in post_select (%s)\n", result);
 
     // SSL takes a few round trips to
@@ -388,7 +390,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    	WvX509Mgr peercert(SSL_get_peer_certificate(ssl));
 	    	if (peercert.isok() && peercert.validate())
 	    	{
-		    sslconnected = true;
+                    setconnected(true);
 	    	    debug("SSL finished negotiating - certificate is valid.\n");
 	    	}
 	    	else
@@ -401,7 +403,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    }
 	    else
 	    {
-		sslconnected = true;
+                setconnected(true);
 		debug("SSL finished negotiating "
 		      "- certificate validation disabled.\n");
 	    }	
@@ -413,3 +415,10 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	return result;
 }
 
+
+void WvSSLStream::setconnected(bool conn)
+{
+    sslconnected = conn;
+    if (conn) write(unconnected_buf);
+}
+    
