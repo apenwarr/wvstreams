@@ -21,7 +21,7 @@
 
 // The assorted WvPipe::WvPipe() constructors are described in wvpipe.h
 
-WvPipe::WvPipe(const char *program, const char **argv,
+WvPipe::WvPipe(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       int stdin_fd, int stdout_fd, int stderr_fd)
 {
@@ -30,7 +30,7 @@ WvPipe::WvPipe(const char *program, const char **argv,
 }
 
 
-WvPipe::WvPipe(const char *program, const char **argv,
+WvPipe::WvPipe(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       WvStream *stdin_str, WvStream *stdout_str,
 	       WvStream *stderr_str)
@@ -61,7 +61,7 @@ WvPipe::WvPipe(const char *program, const char **argv,
 }
 
 
-void WvPipe::setup(const char *program, const char **argv,
+void WvPipe::setup(const char *program, const char * const *argv,
 	      bool writable, bool readable, bool catch_stderr,
 	      int stdin_fd, int stdout_fd, int stderr_fd)
 {
@@ -139,7 +139,7 @@ void WvPipe::setup(const char *program, const char **argv,
 	
 	// now run the program.  If it fails, use _exit() so no destructors
 	// get called and make a mess.
-	execvp(program, (char **)argv);
+	execvp(program, (char * const *)argv);
 	_exit(242);
     }
 

@@ -33,7 +33,7 @@ class WvPipe : public WvStream
     pid_t pid;
     int estatus;
 protected:
-    void setup(const char *program, const char **argv,
+    void setup(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       int stdin_fd, int stdout_fd, int stderr_fd);
 public:
@@ -46,7 +46,7 @@ public:
      *    - redirect it to any open file descriptor (std*_fd are only
      *       used if the corresponding bool is false, however)
      */
-    WvPipe(const char *program, const char **argv,
+    WvPipe(const char *program, const char * const *argv,
 	   bool writable, bool readable, bool catch_stderr,
 	   int stdin_fd = 0, int stdout_fd = 1, int stderr_fd = 2);
     
@@ -63,7 +63,7 @@ public:
      * you must naturally make sure that the stream doesn't disappear
      * before WvPipe does!
      */
-    WvPipe(const char *program, const char **argv,
+    WvPipe(const char *program, const char * const *argv,
 	   bool writable, bool readable, bool catch_stderr,
 	   WvStream *stdin_str, WvStream *stdout_str = NULL,
 	   WvStream *stderr_str = NULL);

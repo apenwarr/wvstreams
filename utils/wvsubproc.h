@@ -34,7 +34,7 @@ public:
     
     WvSubProc();
 
-    WvSubProc(const char cmd[], char * const *argv) {
+    WvSubProc(const char cmd[], const char * const *argv) {
 	startv(cmd, argv);
     }
 
@@ -42,7 +42,7 @@ public:
     
     // launch a subprocess, which will be owned by this object.
     int start(const char cmd[], ...);
-    int startv(const char cmd[], char * const *argv);
+    int startv(const char cmd[], const char * const *argv);
     
     // stop (kill -TERM or -KILL as necessary) the subprocess and
     // all its children.

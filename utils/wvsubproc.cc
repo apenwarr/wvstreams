@@ -63,7 +63,7 @@ int WvSubProc::start(const char cmd[], ...)
 }
 
 
-int WvSubProc::startv(const char cmd[], char * const *argv)
+int WvSubProc::startv(const char cmd[], const char * const *argv)
 {
     running = false;
     estatus = 0;
@@ -85,7 +85,7 @@ int WvSubProc::startv(const char cmd[], char * const *argv)
 	    putenv(i().edit());
 	
 	// run the subprocess.
-	execvp(cmd, argv);
+	execvp(cmd, (char * const *)argv);
 	
 	// if we get this far, just make sure we exit, not return.  The code 242
 	// should be somewhat recognizable by the calling process so we know
