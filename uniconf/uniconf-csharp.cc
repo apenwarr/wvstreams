@@ -2,8 +2,12 @@
 #include "uniconfiter-csharp.h"
 #include "uniconfroot.h"
 #include "uniconf.h"
+#include "wvistreamlist.h"
 
-//typedef void * uniconf_t;
+void uniconf_rungloballist(int msec)
+{
+    WvIStreamList::globallist.runonce(msec);
+}
 
 uniconf_t uniconf_init()
 {
