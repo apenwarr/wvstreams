@@ -28,11 +28,6 @@ install-xplc: xplc
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) xplc/libxplc-cxx.a $(DESTDIR)$(libdir)
 
-# Prevent complaints that Make can't find these two linker options.
--lxplc-cxx: ;
-
--lxplc: ;
-
 endif
 
 %.so: SONAME=$@.$(RELEASE)
@@ -92,6 +87,7 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
+	@rm -f pkgconfig/*.pc
 	@rm -f .xplc
 
 clean: depend dust xplc/clean
