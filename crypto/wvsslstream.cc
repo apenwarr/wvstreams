@@ -9,14 +9,16 @@
 #include <err.h>
 #include <assert.h>
 
-WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
-		         bool _is_server)
-    : WvStreamClone(_slave), debug("WvSSLStream",WvLog::Debug5)
+#define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record
+
+WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509,
+    bool _verify, bool _is_server) :
+    WvStreamClone(_slave), debug("WvSSLStream",WvLog::Debug5),
+    write_bouncebuf(MAX_BOUNCE_AMOUNT), write_eat(0),
+    read_bouncebuf(MAX_BOUNCE_AMOUNT), read_again(false)
 {
     verify = _verify;
     is_server = _is_server;
-    read_again = false;
-    writeonly = 1400;
     
     wvssl_init();
 
@@ -106,32 +108,72 @@ WvSSLStream::~WvSSLStream()
 size_t WvSSLStream::uread(void *buf, size_t len)
 {
     if (!sslconnected)
-	return 0;
-    
-    int result = SSL_read(ssl, (char *)buf, len);
-    
-    if (len > 0 && result == 0) // read no bytes, though we wanted some
-	close(); // EOF
-    else if (result < 0)
-    {
-	if (errno != EAGAIN)
-	    seterr(errno);
-	else
-	    read_again = false;
         return 0;
-    }
-    
-    if (len)
+    if (len == 0) return 0;
+
+    size_t total = 0;
+    bool read_pending = true;
+    for (;;)
     {
-	if (len && (size_t)result == len)
-	    read_again = true;
-	else
-	    read_again = false;
+        // handle SSL_read quirk
+        if (read_bouncebuf.used() != 0)
+        {
+            // copy out cached data
+            size_t amount = len < read_bouncebuf.used() ?
+                len : read_bouncebuf.used();
+            unsigned char *data = read_bouncebuf.get(amount);
+            memcpy(buf, data, amount);
+
+            // locate next chunk in buffer
+            len -= amount;
+            total += amount;
+            if (len == 0)
+            {
+                read_again = read_pending;
+                break;
+            }
+            (unsigned char *)buf += amount;
+        }
+
+        // attempt to read
+        read_bouncebuf.zap(); // force use of same position in buffer
+        size_t avail = read_bouncebuf.free();
+        unsigned char *data = read_bouncebuf.alloc(avail);
+        read_again = false;
+        
+        int result = SSL_read(ssl, data, avail);
+        if (result <= 0)
+        {
+            int errcode = SSL_get_error(ssl, result);
+            read_bouncebuf.unalloc(avail);
+            switch (errcode)
+            {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    debug("<< SSL_read() needs to wait for readable.\n");
+                    read_again = true;
+                    break; // wait for later
+                    
+                case SSL_ERROR_NONE:
+                    break; // no error, but can't make progress
+                    
+                case SSL_ERROR_ZERO_RETURN:
+                    close(); // EOF
+                    break;
+                    
+                default:
+                    debug("<< ERROR: SSL_read() call failed.\n");
+                    seterr(WvString("SSL read error #%s", errcode));
+                    break;
+            }
+            break; // wait for next iteration
+        }
+        read_bouncebuf.unalloc(avail - size_t(result));
+        read_pending = false;
     }
-    
-    debug("<< %s bytes\n", result);
-    
-    return result;
+
+    debug("<< read %s bytes\n", total);
+    return total;
 }
 
 
@@ -142,46 +184,95 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
 	debug(">> writing, but not connected yet; enqueue.\n");
 	return 0;
     }
+    if (len == 0) return 0;
 
     debug(">> I want to write %s bytes.\n", len);
 
-    // copy buf into the bounce buffer...
-
-    memcpy(bouncebuffer,buf,(writeonly < len) ? writeonly : len); 
-
-    int result = SSL_write(ssl, bouncebuffer,
-			   (writeonly < len) ? writeonly : len);
-
-    if (result < 0)
+    size_t total = 0;
+    
+    // eat any data that was precached and already written
+    if (write_eat >= len)
     {
-	int errcode = SSL_get_error(ssl, result);
-	
-        switch (errcode)
-	{
-	case SSL_ERROR_WANT_WRITE:
-	    debug(">> SSL_write() needs to wait for writable.\n");
-	    writeonly = len;
-	    break;
-	    
-	case SSL_ERROR_NONE:
-	    // We shouldn't ever get here, but handle it nicely anyway... 
-	    debug(">> SSL_write non-error!\n");
-	    break;
-	    
-	default:
-	    debug(">> ERROR: SSL_write() call failed.\n");
-	    seterr(WvString("SSL write error #%s", errcode));
-	    break;
-	}
-	return 0;
+        write_eat -= len;
+        total = len;
+        len = 0;
     }
     else
-        writeonly = 1400;
+    {
+        (const unsigned char *)buf += write_eat;
+        total = write_eat;
+        len -= write_eat;
+        write_eat = 0;
+    }
 
-    debug(">> SSL wrote %s bytes; wanted to write %s bytes.\n",
-	   result, len);
+    for (;;) {
+        // handle SSL_write quirk
+        if (write_bouncebuf.used() == 0)
+        {
+            if (len == 0) break;
 
-    return result;
+            // copy new data into the bounce buffer only if empty
+            // if it were not empty, then SSL_write probably returned
+            // SSL_ERROR_WANT_WRITE on the previous call and we
+            // must invoke it with precisely the same arguments
+            size_t amount = len < write_bouncebuf.free() ?
+                len : write_bouncebuf.free();
+            write_bouncebuf.put(buf, amount);
+            // note: we don't adjust the total yet...
+        } // otherwise we use what we cached last time in bounce buffer
+        
+        // attempt to write
+        size_t used = write_bouncebuf.used();
+        unsigned char *data = write_bouncebuf.get(used);
+        
+        int result = SSL_write(ssl, data, used);
+        if (result <= 0)
+        {
+            int errcode = SSL_get_error(ssl, result);
+            write_bouncebuf.unget(used);
+            switch (errcode)
+            {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    debug(">> SSL_write() needs to wait for writable.\n");
+                    break; // wait for later
+                    
+                case SSL_ERROR_NONE:
+                    break; // no error, but can't make progress
+                    
+                case SSL_ERROR_ZERO_RETURN:
+                    close(); // EOF
+                    break;
+                    
+                default:
+                    debug(">> ERROR: SSL_write() call failed.\n");
+                    seterr(WvString("SSL write error #%s", errcode));
+                    break;
+            }
+            break; // wait for next iteration
+        }
+        write_bouncebuf.zap(); // force use of same position in buffer
+        
+        // locate next chunk to be written
+        // note: we assume that initial contents of buf and of the
+        //       bouncebuf match since if we got SSL_ERROR_WANT_WRITE
+        //       we did not claim to actually have written the chunk
+        //       that we cached so we will have gotten it again here
+        if (size_t(result) >= len)
+        {
+            // if we cached more previously than we were given, claim
+            // we wrote what we got and remember to eat the rest later
+            write_eat = result - len;
+            total += len;
+            break;
+        }
+        total += size_t(result);
+        len -= size_t(result);
+        (const unsigned char *)buf += size_t(result);
+    }
+    
+    debug(">> wrote %s bytes\n", total);
+    return total;
 }
  
 
@@ -208,7 +299,7 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 {
     // the SSL library might be keeping its own internal buffers - try
     // reading again if we were full the last time.
-    if (si.wants.readable && read_again)
+    if (si.wants.readable && (read_again || read_bouncebuf.used()))
     {
 	debug("pre_select: try reading again immediately.\n");
 	return true;

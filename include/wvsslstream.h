@@ -96,24 +96,26 @@ private:
     bool	verify;
     
     /**
-     * SSL may keep its own internal read buffers, so we need to
-     * avoid doing a real select() until these are definitely empty (SSL_read
-     * returns EAGAIN).
-     */
-    bool       read_again;
-    
-    /**
      * Internal Log Object
      */
     WvLog      debug;
 
     /**
-     * Buffer to handle SSL_write() stupidity... if you're really curious, 
-     * read the SSL_write() man page, and you'll know why.
+     * SSL_write() may return an SSL_ERROR_WANT_WRITE code which
+     * indicates that the function should be called again with
+     * precisely the same arguments as the last time.  To ensure that
+     * this can happen, we must unfortunately copy data into a bounce
+     * buffer and remeber the fact.  We use a WvBuffer here to allow
+     * an arbitrary amount of data to be set aside.
      */
-    char       bouncebuffer[1400];
-    size_t     writeonly;
+    WvMiniBuffer write_bouncebuf;
+    size_t write_eat;
 
+    /**
+     * Similar nastiness happens with SSL_read()
+     */
+    WvMiniBuffer read_bouncebuf;
+    bool read_again;
 };
 
 #endif // __WVSSLSTREAM_H
