@@ -40,7 +40,8 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %.so: SONAME=$@.$(RELEASE)
 %.so:
-	$(LINK_MSG)$(CC) $(LDFLAGS) $(SOFLAGS) $^ $(LDLIBS) -o $@
+	$(LINK_MSG)$(CC) $(LDFLAGS) $(SOFLAGS) $(filter-out %.so, $^) \
+		-lgcc $(filter %.so, $^) $(LDLIBS) -o $@
 	$(LN_S) -f $@ $(SONAME)
 
 %.moc: %.h

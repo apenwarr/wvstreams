@@ -31,6 +31,11 @@ WvUnixConn::WvUnixConn(int _fd, const WvUnixAddr &_addr) :
     WvFDStream(_fd), addr(_addr)
 {
     // already connected...
+    
+    // all is well and we're connected.  Make it non-blocking 
+    // and close-on-exec.
+    fcntl(getfd(), F_SETFD, 1);
+    fcntl(getfd(), F_SETFL, O_RDWR|O_NONBLOCK);
 }
 
 

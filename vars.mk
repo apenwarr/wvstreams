@@ -25,7 +25,7 @@ endif
 
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
-TARGETS += uniconf/daemon/uniconfdaemon
+TARGETS += uniconf/daemon/uniconfdaemon crypto/tests/ssltest
 
 ifneq ("$(with_ogg)", "no")
 ifneq ("$(with_vorbis)", "no")
@@ -130,15 +130,15 @@ endif
 endif
 
 ifneq ("$(with_fam)", "no")
-LDFLAGS+=-lfam
+libwvstreams.so: -lfam
 endif
 
 ifneq ("$(with_pam)", "no")
-LDFLAGS += -lpam
+libwvstreams.so: -lpam
 endif
 
 
-LDLIBS := $(LDLIBS) \
+LDLIBS := -lgcc $(LDLIBS) \
 	$(shell $(CC) -lsupc++ 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++")
 

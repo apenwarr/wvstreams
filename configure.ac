@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.74, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.15.2.3.2.1 2003/07/07 20:53:06 jnc Exp $)
+AC_REVISION($Id: configure.ac,v 1.15.2.3.2.2 2003/07/10 22:34:52 mcote Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -140,6 +140,7 @@ if test "$with_zlib" == "no"; then
 fi
 
 # fam
+with_fam=no
 if test "$with_fam" != "no"; then
     AC_CHECK_LIB(fam, FAMOpen,, [with_fam=no])
     AC_CHECK_HEADERS(fam.h,, [with_fam=no])
@@ -179,6 +180,7 @@ AC_CHECK_HEADERS(rfftw.h,, [with_fftw=no])
 fi
 
 # pam
+with_pam=no
 if test "$with_pam" != "no"; then
 AC_CHECK_LIB([pam], [pam_start], [], [with_pam=no])
 AC_CHECK_HEADERS([security/pam_appl.h], [], [with_pam=no])
