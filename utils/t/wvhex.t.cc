@@ -4,6 +4,11 @@
 #include "wvbuf.h"
 #include "wvhex.h"
 #include "wvstream.h"
+#include <malloc.h>
+#ifdef _WIN32
+#define alloca _alloca
+#define snprintf _snprintf
+#endif
 
 #define THREE_LETTERS 		"abz"
 #define THREE_LETTERS_ENC_LC	"61627a"
@@ -153,7 +158,7 @@ WVTEST_MAIN("legacy hexify function")
     {
 	const char *ibuf = INPUTS[i];
 	size_t n = strlen(ibuf);
-	char obuf[2*n + 1];
+	char *obuf = (char *) alloca(2*n + 1);
 	hexify(obuf, ibuf, n);
 	WVPASS(strcmp(obuf, OUTPUTS[i])==0);
     }
@@ -302,7 +307,7 @@ void legacy_unhexify_test(const char *INPUTS[],
     {
 	const char* ibuf = INPUTS[i];
 	const size_t n = (strlen(ibuf)/2) + 1;
-	char obuf[n];
+	char *obuf = (char *) alloca(n);
 	memset(obuf, 0, n); // make sure it's all zeros
 	unhexify(obuf, ibuf);
 	WVPASS(strcmp(obuf, OUTPUTS[i]) == 0);
@@ -313,7 +318,7 @@ void legacy_unhexify_test(const char *INPUTS[],
     {
 	const char* ibuf = INPUTS[i];
 	const size_t n = (strlen(ibuf)/2) + 3;
-	char obuf[n];
+	char *obuf = (char *) alloca(n);
 	memset(obuf, 'K', n); // fill it up with something non-zero
 	unhexify(obuf+1, ibuf); // allow one 'K' at the beginning
 	WvString actual_output("K%sKK", OUTPUTS[i]);
@@ -389,7 +394,7 @@ WVTEST_MAIN("nothing to encode/decode")
     for (int i = 1; i <= 2; i++ )
     {
 	{ // "null" WvString
-	    WvEncoder *enc = (i == 1) ? new WvHexEncoder : new WvHexDecoder;
+	    WvEncoder *enc = (i == 1) ? (WvEncoder *)new WvHexEncoder : new WvHexDecoder;
 	    WvString nul, result("stuff there");
 	    enc->flushstrstr(nul, result, true);
 
@@ -398,7 +403,7 @@ WVTEST_MAIN("nothing to encode/decode")
 	}
 
 	{ // empty WvString
-	    WvEncoder *enc = (i == 1) ? new WvHexEncoder : new WvHexDecoder;
+	    WvEncoder *enc = (i == 1) ? (WvEncoder *)new WvHexEncoder : new WvHexDecoder;
 	    WvString empty(""), result("stuff there");
 	    enc->flushstrstr(empty, result, true);
 
@@ -407,7 +412,7 @@ WVTEST_MAIN("nothing to encode/decode")
 	}
 
 	{ // empty WvBuf
-	    WvEncoder *enc = (i == 1) ? new WvHexEncoder : new WvHexDecoder;
+	    WvEncoder *enc = (i == 1) ? (WvEncoder *)new WvHexEncoder : new WvHexDecoder;
 	    WvDynBuf empty, dest;
 	    empty.zap(); // ... just to be sure
 	    dest.put("stuff there", 11);
@@ -419,7 +424,7 @@ WVTEST_MAIN("nothing to encode/decode")
 	}
 
 	{ // empty char*
-	    WvEncoder *enc = (i == 1) ? new WvHexEncoder : new WvHexDecoder;
+	    WvEncoder *enc = (i == 1) ? (WvEncoder *)new WvHexEncoder : new WvHexDecoder;
 	    char *empty = "";
 	    WvDynBuf dest;
 	    dest.put("stuff there",11);
