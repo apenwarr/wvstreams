@@ -7,16 +7,19 @@
 #include <grp.h>
 #include <pwd.h>
 
-#if 0
-
 WvLogConsole logrcv(1);
 
 WVTEST_MAIN("default get_simple_acl_permissions()")
 {
+    acl_check();
     WvFile tmp("/tmp/wvacltest", O_WRONLY | O_CREAT | O_TRUNC, 0754);
     WvString username(getpwuid(getuid())->pw_name);
+    if (!username)
+        username = getuid();
     WvString groupname(getgrgid(getgid())->gr_name);
-    
+    if (!groupname)
+        groupname = getgid();
+
     WvSimpleAclEntryList acls;
     get_simple_acl_permissions("/tmp/wvacltest", acls);
  
@@ -27,6 +30,7 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 	switch (i().type)
 	{
 	case WvSimpleAclEntry::AclUser:
+            printf("user entry for %s\n", i().name.cstr());
 	    WVPASS(!u_chk);
 	    WVPASS(i().name == username);
 	    WVPASS(i().read);
@@ -37,6 +41,7 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 	    break;
 
 	case WvSimpleAclEntry::AclGroup:
+            printf("group entry for %s\n", i().name.cstr());
 	    WVPASS(!g_chk);
 	    WVPASS(i().name == groupname);
 	    WVPASS(i().read);
@@ -47,6 +52,7 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 	    break;
 
 	case WvSimpleAclEntry::AclOther:
+            printf("other entry\n");
 	    WVPASS(!o_chk);
 	    WVPASS(!i().name.len());
 	    WVPASS(i().read);
@@ -62,4 +68,3 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
     WVPASS(o_chk);
 }
 
-#endif

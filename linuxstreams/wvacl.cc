@@ -26,6 +26,27 @@ int wvsimpleaclentry_sort(const WvSimpleAclEntry *a, const WvSimpleAclEntry *b)
 }
 
 
+void acl_check()
+{
+    WvLog log("ACL", WvLog::Info);
+
+#ifndef WITH_ACL
+    log("No ACL library support detected.  Not checking for kernel "
+        "support.\n");
+#else
+    log("ACL library support detected.\n");
+    acl_t aclchk = acl_get_file("/", ACL_TYPE_ACCESS);
+    if (aclchk)
+    {
+        log("ACL kernel support detected.\n");
+        acl_free(aclchk);
+    }
+    else
+        log("No ACL kernel support detected.\n");
+#endif
+}
+
+
 void get_simple_acl_permissions(WvStringParm filename,
 				WvSimpleAclEntryList &acl_entries)
 {
@@ -122,7 +143,10 @@ void get_simple_acl_permissions(WvStringParm filename,
     // owners
     WvSimpleAclEntry *acl = new WvSimpleAclEntry;
     struct passwd *pw = getpwuid(st.st_uid);
-    acl->name = pw->pw_name;
+    if (!strlen(pw->pw_name))
+        acl->name = WvString(st.st_uid);
+    else
+        acl->name = pw->pw_name;
     acl->type = WvSimpleAclEntry::AclUser;
     acl->read = st.st_mode & S_IRUSR;
     acl->write = st.st_mode & S_IWUSR;
@@ -131,7 +155,10 @@ void get_simple_acl_permissions(WvStringParm filename,
 
     acl = new WvSimpleAclEntry;
     struct group *gr = getgrgid(st.st_gid);
-    acl->name = gr->gr_name;
+    if (!strlen(gr->gr_name))
+        acl->name = WvString(st.st_gid);
+    else
+        acl->name = gr->gr_name;
     acl->type = WvSimpleAclEntry::AclGroup;
     acl->read = st.st_mode & S_IRGRP;
     acl->write = st.st_mode & S_IWGRP;

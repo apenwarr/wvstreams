@@ -26,6 +26,8 @@ DeclareWvList(WvSimpleAclEntry);
 
 int wvsimpleaclentry_sort(const WvSimpleAclEntry *a, const WvSimpleAclEntry *b);
 
+/// Prints log messages indicating if we have library and/or kernel support.
+void acl_check();
 
 /// Assemble a default, short-form ACL from 'mode'.
 WvString build_default_acl(mode_t mode);
