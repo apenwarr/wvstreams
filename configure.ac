@@ -278,12 +278,14 @@ fi
 
 # swig
 if test "$with_swig" != "no"; then
-    AC_CHECK_PROG(SWIG, swig, yes, no)
-    if test "$with_swig" != "no"; then
-        AC_PATH_PROG(SWIG, swig, [swig not found], $with_swig)
-    else
+     AC_CHECK_PROG(SWIG, swig, swig, no, $with_swig:$PATH)
+     if test "$SWIG" = "no"; then
         with_swig=no
-    fi
+     else 
+        if test "$with_swig"; then
+           SWIG="$with_swig/swig"
+        fi
+     fi
 fi
 
 # qt
