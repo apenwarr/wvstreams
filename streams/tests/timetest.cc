@@ -26,7 +26,7 @@ int main()
     {
 	if (!(count % 10)) log("\n");
 	
-	while (!t.select(5*(100-count))) 
+	while (!t.select(-1))
 	    ;
 	t.callback();
 	
