@@ -22,13 +22,13 @@ UniConfGen::~UniConfGen()
 }
 
 
-bool UniConfGen::commit(const UniConfKey &key, UniConf::Depth depth)
+bool UniConfGen::commit(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return true;
 }
 
 
-bool UniConfGen::refresh(const UniConfKey &key, UniConf::Depth depth)
+bool UniConfGen::refresh(const UniConfKey &key, UniConfDepth::Type depth)
 {
     return true;
 }
@@ -84,14 +84,14 @@ UniConfLocation UniConfFilterGen::location() const
 
 
 bool UniConfFilterGen::commit(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     return xinner->commit(key, depth);
 }
 
 
 bool UniConfFilterGen::refresh(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     return xinner->refresh(key, depth);
 }

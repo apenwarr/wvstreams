@@ -4,29 +4,25 @@
  */
 
 /** \file
- * UniConf is the new, improved, hierarchical version of WvConf.  It stores
- * strings in a hierarchy and can load/save them from "various places."
+ * Defines a hierarchical registry abstraction.
  */
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
+#include "uniconfdefs.h"
+#include "uniconfroot.h"
 #include "uniconflocation.h"
 #include "uniconfkey.h"
 #include "uniconftree.h"
 #include "uniconfiter.h"
-#include "wvstream.h"
-#include "wvstreamlist.h"
+#include "uniconfgen.h"
 #include "wvstringtable.h"
-#include "wvcallback.h"
 
 class WvStream;
 class UniConfGen;
 class UniConf;
 class UniConfRoot;
-
-// parameters are: UniConf object, userdata
-DeclareWvCallback(2, void, UniConfCallback, const UniConf &, void *);
-
+class UniConfMount;
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -54,19 +50,6 @@ class UniConf
     UniConfKey xfullkey;
 
 public:
-    /**
-     * An enumeration that represents the traversal depth for recursive
-     * operations.
-     */
-    enum Depth
-    {
-        ZERO = 0, /*!< considers this key only */
-        ONE = 1,  /*!< considers this key and all direct children */
-        INFINITE = 2, /*!< considers this key and all descendents */
-        CHILDREN = 3, /*!< considers all direct children */
-        DESCENDENTS = 4 /*!< considers all descendents */
-    };
-
     /**
      * Creates a handle to the specified subtree.
      * @param manager the UniConfRoot that manages the subtree,
@@ -163,7 +146,7 @@ public:
     }
 
     /**
-     * Changes the target of the handle.
+     * Reassigns the target of the handle.
      * @param other the new target
      * @return a reference to self
      */
@@ -254,45 +237,29 @@ public:
      * </p>
      * @param depth the recursion depth, default is INFINITE
      * @return true on success
-     * @see UniConf::Depth
+     * @see UniConfDepth::Type
      */
-    bool refresh(Depth depth = INFINITE) const;
+    bool refresh(UniConfDepth::Type depth =
+        UniConfDepth::INFINITE) const;
     
     /**
      * Commits information about this key recursively.
      * @param depth the recursion depth, default is INFINITE
      * @return true on success
-     * @see UniConf::Depth
+     * @see UniConfDepth::Type
      */
-    bool commit(Depth depth = INFINITE) const;
+    bool commit(UniConfDepth::Type depth =
+        UniConfDepth::INFINITE) const;
 
-    /**
-     * Requests notification when any the keys covered by the
-     * recursive depth specification changes.
-     * @param depth the recursion depth identifying keys of interest
-     * @param callback the callback
-     * @param userdata the user data
-     */
-    void addwatch(UniConf::Depth depth,
-        const UniConfCallback &callback, void *userdata) const { }
-
-    /**
-     * Cancels a previously registered notification request.
-     * @param depth the recursion depth identifying keys of interest
-     * @param callback the callback
-     * @param userdata the user data
-     */
-    void delwatch(UniConf::Depth depth,
-        const UniConfCallback &callback, void *userdata) const { }
-    
     /**
      * Mounts a generator at this key using a moniker.
      * @param location the generator moniker
      * @param refresh if true, automatically refreshes the
      *        generator after mounting, defaults to true
-     * @return the generator instance pointer, or NULL on failure
+     * @return a handle to the mounted generator, check
+     *         ! UniConfMount::isnull() to determine success
      */
-    UniConfGen *mount(const UniConfLocation &location,
+    UniConfMount mount(const UniConfLocation &location,
         bool refresh = true) const;
     
     /**
@@ -303,8 +270,51 @@ public:
      * @param generator the generator instance
      * @param refresh if true, automatically refreshes the
      *        generator after mounting, defaults to true
+     * @return a handle to the mounted generator, check
+     *         ! UniConfMount::isnull() to determine success
      */
-    void mountgen(UniConfGen *gen, bool refresh = true) const;
+    UniConfMount mountgen(UniConfGen *gen,
+        bool refresh = true) const;
+    
+    /**
+     * Determines if any generators are mounted at this key.
+     * <p>
+     * This is a convenience function.
+     * </p>
+     * @return true if at least one generator is mounted here
+     * @see UniConf::MountIter
+     */
+    bool ismountpoint() const;
+
+    /**
+     * Finds the generator that owns this key.
+     * <p>
+     * If the key exists, returns the generator that provides its
+     * contents.  Otherwise returns the generator that would be
+     * updated if a value were set.
+     * </p>
+     * @return the handle, or a null handle if none
+     */
+    UniConfMount whichmount() const;
+
+    /**
+     * Requests notification when any the keys covered by the
+     * recursive depth specification changes.
+     * @param depth the recursion depth identifying keys of interest
+     * @param callback the callback
+     * @param userdata the user data
+     */
+    void addwatch(UniConfDepth::Type depth,
+        const UniConfCallback &callback, void *userdata) const { }
+
+    /**
+     * Cancels a previously registered notification request.
+     * @param depth the recursion depth identifying keys of interest
+     * @param callback the callback
+     * @param userdata the user data
+     */
+    void delwatch(UniConfDepth::Type depth,
+        const UniConfCallback &callback, void *userdata) const { }
     
     /**
      * @internal
@@ -315,333 +325,125 @@ public:
      */
     void dump(WvStream &stream, bool everything = false) const;
 
-    // FIXME: temporary placeholders
-    void unmount(bool commit = true) const;
-    bool ismountpoint() const;
-    bool isok() const;
-
     // FIXME: not final API!
     void setdefaults(const UniConf &subtree) const { }
 
+    /*** Iterators (see comments in class declaration) ***/
+
+    // iterates over direct children
     class Iter;
+    // iterates over all descendents in preorder traversal
     class RecursiveIter;
-    
-    friend class Iter;
-    friend class RecursiveIter;
-};
-
-
-
-/**
- * @internal
- * Used by UniConfRoot to maintain information about mounted
- * subtrees.
- */
-class UniConfInfoTree : public UniConfTree<UniConfInfoTree>
-{
-public:
-    UniConfGen *generator;
-
-    UniConfInfoTree(UniConfInfoTree *parent, const UniConfKey &key);
-    ~UniConfInfoTree();
-
-    /**
-     * Returns true if the node should not be pruned.
-     */
-    bool isessential()
-    {
-        return haschildren() || generator;
-    }
-
-    /**
-     * Returns the nearest node in the info tree to the key.
-     * @param key the key
-     * @param split set to the number of leading segments used
-     * @return the node
-     */
-    UniConfInfoTree *findnearest(const UniConfKey &key,
-        int &split);
-
-    /**
-     * Finds or makes an info node for the specified key.
-     */
-    UniConfInfoTree *findormake(const UniConfKey &key);
-   
-    class NodeIter;
-    class GenIter;
-};
-
-/**
- * @internal
- * An iterator over the info nodes that might know something
- * about a key, starting with the nearest match.
- */
-class UniConfInfoTree::NodeIter
-{
-    int bestsplit;
-    UniConfInfoTree *bestnode;
-
-    int xsplit;
-    UniConfInfoTree *xnode;
-    UniConfKey xkey;
-
-public:
-    NodeIter(UniConfInfoTree &root, const UniConfKey &key);
-    
-    void rewind();
-    bool next();
-    
-    inline UniConfKey key() const
-    {
-        return xkey;
-    }
-    inline int split() const
-    {
-        return xsplit;
-    }
-    inline UniConfKey head() const
-    {
-        return xkey.first(xsplit);
-    }
-    inline UniConfKey tail() const
-    {
-        return xkey.removefirst(xsplit);
-    }
-    inline UniConfInfoTree *node() const
-    {
-        return xnode;
-    }
-    inline UniConfInfoTree *ptr() const
-    {
-        return node();
-    }
-    WvIterStuff(UniConfInfoTree);
+    // iterates over mounts at this location
+    class MountIter;
 };
 
 
 /**
- * @internal
- * An iterator over the generators that might provide a key
- * starting with the nearest match.
- */
-class UniConfInfoTree::GenIter : private UniConfInfoTree::NodeIter
-{
-public:
-    GenIter(UniConfInfoTree &root, const UniConfKey &key);
-
-    using UniConfInfoTree::NodeIter::key;
-    using UniConfInfoTree::NodeIter::split;
-    using UniConfInfoTree::NodeIter::head;
-    using UniConfInfoTree::NodeIter::tail;
-    using UniConfInfoTree::NodeIter::node;
-    
-    void rewind();
-    bool next();
-
-    inline UniConfGen *ptr() const
-    {
-        return node()->generator;
-    }
-    WvIterStuff(UniConfGen);
-};
-
-/**
- * Represents the root of a hierarhical registry consisting of pairs
- * of UniConfKeys and associated string values.
+ * UniConfMount functions as a handle for a mounted generator.
  * <p>
- * Any number of data containers may be mounted into the tree at any
- * number of mount points to provide a backing store from which
- * registry keys and values are fetched and into which they are
- * stored.
+ * This is safer and more flexible than would be directly exposing
+ * generator pointers as the primary interface.  Once a generator
+ * has been unmounted, all UniConfMount objects that refer to it
+ * become invalid.
  * </p>
- * FIXME: only one mount per subtree for the moment
  */
-class UniConfRoot
+class UniConfMount
 {
-    UniConfInfoTree root;
-    WvStreamList *streamlist;
-
-    /**
-     * undefined.
-     */
-    UniConfRoot(const UniConfRoot &other);
+    UniConf xmountpoint;
+    UniConfGen *xgen;
 
 public:
     /**
-     * Creates an empty UniConf tree with no mounted stores.
+     * Creates an unassigned handle.
      */
-    UniConfRoot();
+    UniConfMount() :
+        xmountpoint(NULL), xgen(NULL)
+    {
+    }
 
     /**
-     * Destroys the UniConf tree along with all uncommitted data.
+     * @internal
+     * Constructs a UniConfMount handle.
+     * @param xmountpoint the mount point
+     * @param xgen the generator mounted there
      */
-    ~UniConfRoot();
+    UniConfMount(const UniConf &mountpoint, UniConfGen *gen) :
+        xmountpoint(mountpoint), xgen(gen)
+    {
+    }
 
     /**
-     * Returns true if a key exists without fetching its value.
-     * <p>
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the value.
-     * </p>
-     * @param key the key
-     * @return true if the key exists
+     * Copies a UniConfMount handle.
+     * @param other the handle to copy
      */
-    bool exists(const UniConfKey &key);
+    UniConfMount(const UniConfMount &other) :
+        xmountpoint(other.xmountpoint), xgen(other.xgen)
+    {
+    }
+
+    /**
+     * Destroys the UniConf handle.
+     */
+    ~UniConfMount()
+    {
+    }
+
+    /**
+     * Returns a handle to the generator mountpoint.
+     * @return the handle
+     */
+    inline UniConf mountpoint() const
+    {
+        return xmountpoint;
+    }
+
+    /**
+     * Returns a pointer to the generator.
+     * @return the generator, may be NULL to signal an invalid handle
+     */
+    inline UniConfGen *gen() const
+    {
+        return xgen;
+    }
     
     /**
-     * Returns true if a key has children.
-     * <p>
-     * This is provided because it is often more efficient to
-     * test existance than to actually retrieve the keys.
-     * </p>
-     * @param key the key
-     * @return true if the key has children
+     * Returns true if the handle is invalid (NULL).
+     * @return true in that case
      */
-    bool haschildren(const UniConfKey &key);
+    inline bool isnull() const
+    {
+        return xgen == NULL;
+    }
 
     /**
-     * Fetches a string value for a key from the registry.
-     * @param key the key
-     * @return the value, or WvString::null if the key does not exist
+     * Reassigns the target of the handle.
+     * @param other the new target
+     * @return a reference to self
      */
-    WvString get(const UniConfKey &key);
+    UniConfMount &operator= (const UniConfMount &other)
+    {
+        xmountpoint = other.xmountpoint;
+        xgen = other.xgen;
+        return *this;
+    }
     
     /**
-     * Stores a string value for a key into the registry.
-     * @param key the key
-     * @param value the value, if WvString::null deletes the key
-     *        and all of its children
-     * @return true on success
+     * Returns true if the generator is ok.
+     * Synonym for !isnull() && gen()->isok().
+     * @return true in that case
      */
-    bool set(const UniConfKey &key, WvStringParm value);
-    
-    /**
-     * Removes the children of a key from the registry.
-     * @param key the key
-     * @return true on success
-     */
-    bool zap(const UniConfKey &key);
+    bool isok() const;
 
     /**
-     * Refreshes information about a key recursively.
-     * <p>
-     * May discard uncommitted data.
-     * </p>
-     * @param key the key
-     * @param depth the recursion depth, default is INFINITE
-     * @return true on success
-     * @see UniConf::Depth
+     * Unmounts the generator and destroys it.
+     * Does nothing if the handle is invalid, otherwise destroys
+     * the generator and causes the handle to become invalid.
+     *
+     * @param commit if true, automatically commits the generator
+     *        before unmounting, defaults to true
      */
-    bool refresh(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConf::Depth depth = UniConf::INFINITE);
-
-    /**
-     * Commits information about a key recursively.
-     * @param key the key
-     * @param depth the recursion depth, default is INFINITE
-     * @return true on success
-     * @see UniConf::Depth
-     */
-    bool commit(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConf::Depth depth = UniConf::INFINITE);
-
-    /**
-     * Gives UniConf an opportunity to append streams to a streamlist.
-     * <p>
-     * This method must be called at most once until the next
-     * detach().
-     * </p>
-     * @param streamlist the stream list, non-NULL
-     * @see detach(WvStreamList*)
-     */
-    void attach(WvStreamList *streamlist);
-
-    /**
-     * Gives UniConf an opportunity to unlink streams from a streamlist.
-     * <p>
-     * This method must be called exactly once for each attach().
-     * </p>
-     * @param streamlist the stream list, non-NULL
-     * @see attach(WvStreamList*)
-     */
-    void detach(WvStreamList *streamlist);
-    
-    /**
-     * Mounts a generator at a key using a moniker.
-     * @param key the key
-     * @param location the generator moniker
-     * @param refresh if true, automatically refreshes the
-     *        generator after mounting
-     * @return the generator instance pointer, or NULL on failure
-     */
-    UniConfGen *mount(const UniConfKey &key,
-        const UniConfLocation &location, bool refresh);
-    
-    /**
-     * Mounts a generator at a key.
-     * <p>
-     * Takes ownership of the supplied generator instance.
-     * </p>
-     * @param key the key
-     * @param generator the generator instance
-     * @param refresh if true, automatically refreshes the
-     *        generator after mounting
-     */
-    void mountgen(const UniConfKey &key, UniConfGen *gen,
-        bool refresh);
-     
-    // FIXME: need a better interface for mount point stuff
-    void unmount(const UniConfKey &key, bool commit);
-    bool ismountpoint(const UniConfKey &key);
-    bool isok(const UniConfKey &key);
-
-    class Iter;
-    friend class Iter;
-
-private:
-    /**
-     * Prunes a branch of the tree beginning at the specified node
-     * and moving towards the root.
-     * @param node the node
-     */
-    void prune(UniConfInfoTree *node);
-
-    typedef bool (*GenFunc)(UniConfGen*, const UniConfKey&,
-        UniConf::Depth);
-    bool dorecursive(GenFunc func,
-        const UniConfKey &key, UniConf::Depth depth);
-    bool dorecursivehelper(GenFunc func,
-        UniConfInfoTree *node, UniConf::Depth depth);
-
-    static bool genrefreshfunc(UniConfGen *gen,
-        const UniConfKey &key, UniConf::Depth depth);
-    static bool gencommitfunc(UniConfGen *gen,
-        const UniConfKey &key, UniConf::Depth depth);
-
-    void recursiveattach(UniConfInfoTree *node);
-    void recursivedetach(UniConfInfoTree *node);
-};
-
-
-/**
- * This iterator walks through all immediate children of a
- * UniConf subtree.
- */
-class UniConfRoot::Iter
-{
-    UniConfRoot *xroot;
-    UniConfKey xkey;
-
-    UniConfInfoTree::GenIter genit;
-    WvStringTable hack; // FIXME: ugly hack
-    WvStringTable::Iter hackit;
-
-public:
-    Iter(UniConfRoot &root, const UniConfKey &key);
-
-    void rewind();
-    bool next();
-    UniConfKey key() const;
+    void unmount(bool commit = true);
 };
 
 
@@ -679,14 +481,14 @@ class UniConf::RecursiveIter
     DeclareWvList3(UniConf::Iter, IterList, )
     UniConf xroot;
     UniConf::Iter top;
-    UniConf::Depth depth;
+    UniConfDepth::Type depth;
     UniConf current;
     IterList itlist;
     bool first;
 
 public:
     RecursiveIter(const UniConf &root,
-        UniConf::Depth depth = UniConf::INFINITE);
+        UniConfDepth::Type depth = UniConfDepth::INFINITE);
 
     void rewind();
     bool next();

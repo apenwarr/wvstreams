@@ -186,7 +186,10 @@ public:
     }
 
     /**
-     * Finds the node for the specified key.
+     * Finds the node with the specified key.
+     * <p>
+     * If key.isempty(), returns this node.
+     * </p>
      * @param key the key
      * @return the node, or NULL
      */
@@ -196,7 +199,7 @@ public:
     }
     
     /**
-     * Finds the direct child node for the specified key.
+     * Finds the direct child node with the specified key.
      * <p>
      * If key.numsegments() == 1, then performs the same task
      * as find(key), but a little faster.  Otherwise returns NULL.

@@ -70,7 +70,7 @@ void UniConfClientGen::detach(WvStreamList *streamlist)
 
 
 bool UniConfClientGen::refresh(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     // TODO: no caching so nothing to be done here right now
     if (! isok())
@@ -83,7 +83,7 @@ bool UniConfClientGen::refresh(const UniConfKey &key,
 
 
 bool UniConfClientGen::commit(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     // TODO: no caching so nothing to be done here right now
     if (! isok())

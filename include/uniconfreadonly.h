@@ -28,7 +28,8 @@ public:
     virtual UniConfLocation location() const;
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);
-    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool commit(const UniConfKey &key,
+        UniConfDepth::Type depth);
 };
 
 

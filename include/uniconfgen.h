@@ -9,6 +9,7 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
+#include "uniconfdefs.h"
 #include "uniconflocation.h"
 #include "uniconfkey.h"
 #include "uniconfiter.h"
@@ -56,9 +57,10 @@ public:
      * @param key the key
      * @param depth the recursion depth
      * @return true on success
-     * @see UniConf::Depth
+     * @see UniConfDepth::Type
      */
-    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool commit(const UniConfKey &key,
+        UniConfDepth::Type depth);
     
     /**
      * Refreshes information about a key recursively.
@@ -70,9 +72,10 @@ public:
      * @param key the key
      * @param depth the recursion depth
      * @return true on success
-     * @see UniConf::Depth
+     * @see UniConfDepth::Type
      */
-    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool refresh(const UniConfKey &key,
+        UniConfDepth::Type depth);
 
     /**
      * Fetches a string value for a key from the registry.
@@ -216,8 +219,10 @@ public:
     /***** Overridden methods *****/
 
     virtual UniConfLocation location() const;
-    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
-    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool commit(const UniConfKey &key,
+        UniConfDepth::Type depth);
+    virtual bool refresh(const UniConfKey &key,
+        UniConfDepth::Type depth);
     virtual WvString get(const UniConfKey &key);
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);

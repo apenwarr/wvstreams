@@ -73,7 +73,8 @@ public:
     /***** Overridden members *****/
 
     virtual UniConfLocation location() const;
-    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool refresh(const UniConfKey &key,
+        UniConfDepth::Type depth);
     virtual WvString get(const UniConfKey &key);
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
@@ -132,12 +133,13 @@ UniConfLocation UniConfFileTreeGen::location() const
 
 
 bool UniConfFileTreeGen::refresh(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     WvString filename("%s%s", basedir, key);
     
-    if (depth == UniConf::ZERO || depth == UniConf::ONE ||
-        depth == UniConf::INFINITE)
+    if (depth == UniConfDepth::ZERO ||
+        depth == UniConfDepth::ONE ||
+        depth == UniConfDepth::INFINITE)
     {
         struct stat statbuf;
         bool exists = lstat(filename.cstr(), & statbuf) == 0;
@@ -156,13 +158,13 @@ bool UniConfFileTreeGen::refresh(const UniConfKey &key,
     bool recurse = false;
     switch (depth)
     {
-        case UniConf::ZERO:
+        case UniConfDepth::ZERO:
             return true;
-        case UniConf::ONE:
-        case UniConf::CHILDREN:
+        case UniConfDepth::ONE:
+        case UniConfDepth::CHILDREN:
             break;
-        case UniConf::INFINITE:
-        case UniConf::DESCENDENTS:
+        case UniConfDepth::INFINITE:
+        case UniConfDepth::DESCENDENTS:
             recurse = true;
             break;
     }
@@ -226,7 +228,7 @@ bool UniConfFileTreeGen::exists(const UniConfKey &key)
     UniConfValueTree *node = root.find(key);
     if (! node)
     {
-        refresh(key, UniConf::ZERO);
+        refresh(key, UniConfDepth::ZERO);
         node = root.find(key);
     }
     return node != NULL;
@@ -238,7 +240,7 @@ bool UniConfFileTreeGen::haschildren(const UniConfKey &key)
     UniConfValueTree *node = root.find(key);
     if (! node || ! node->haschildren())
     {
-        refresh(key, UniConf::CHILDREN);
+        refresh(key, UniConfDepth::CHILDREN);
         node = root.find(key);
     }
     return node != NULL && node->haschildren();

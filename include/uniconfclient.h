@@ -62,8 +62,10 @@ public:
     virtual void attach(WvStreamList *streamlist);
     virtual void detach(WvStreamList *streamlist);
 
-    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
-    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool refresh(const UniConfKey &key,
+        UniConfDepth::Type depth);
+    virtual bool commit(const UniConfKey &key,
+        UniConfDepth::Type depth);
     virtual WvString get(const UniConfKey &key);
     virtual bool set(const UniConfKey &key, WvStringParm value);
     virtual bool zap(const UniConfKey &key);

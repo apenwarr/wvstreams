@@ -39,8 +39,10 @@ public:
     /***** Overridden members *****/
 
     virtual UniConfLocation location() const;
-    virtual bool commit(const UniConfKey &key, UniConf::Depth depth);
-    virtual bool refresh(const UniConfKey &key, UniConf::Depth depth);
+    virtual bool commit(const UniConfKey &key,
+        UniConfDepth::Type depth);
+    virtual bool refresh(const UniConfKey &key,
+        UniConfDepth::Type depth);
 
 private:
     void save(WvStream &file, UniConfValueTree &parent);

@@ -51,7 +51,7 @@ UniConfLocation UniConfIniFileGen::location() const
 
 
 bool UniConfIniFileGen::refresh(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     /** open the file **/
     WvFile file(filename, O_RDONLY);
@@ -172,7 +172,7 @@ bool UniConfIniFileGen::refresh(const UniConfKey &key,
 
 
 bool UniConfIniFileGen::commit(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     /** check dirtiness **/
     if (! dirty)

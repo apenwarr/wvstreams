@@ -35,7 +35,7 @@ bool UniConfReadOnlyGen::zap(const UniConfKey &key)
 
 
 bool UniConfReadOnlyGen::commit(const UniConfKey &key,
-    UniConf::Depth depth)
+    UniConfDepth::Type depth)
 {
     return false;
 }

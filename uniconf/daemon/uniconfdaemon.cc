@@ -38,7 +38,8 @@ UniConf UniConfDaemon::domount(const UniConfKey &mountpoint,
     UniConf mounted(mainconf[mountpoint]);
     dolog(WvLog::Debug3, "domount", WvString("Mounting "
         "\"%s\" from \"%s\"\n", mountpoint, location));
-    if (mounted.mount(location))
+    UniConfMount mount = mounted.mount(location);
+    if (! mount.isnull())
         return mounted;
 
     dolog(WvLog::Error, "domount", WvString("Could not mount "
@@ -394,17 +395,17 @@ void UniConfDaemon::del_callback(const UniConfKey &key,
     switch (depth)
     {
         case 0:
-            mainconf[key].delwatch(UniConf::ZERO,
+            mainconf[key].delwatch(UniConfDepth::ZERO,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::myvaluechanged), s);
             break;
         case 1:
-            mainconf[key].delwatch(UniConf::ONE,
+            mainconf[key].delwatch(UniConfDepth::ONE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_imm_child_changed), s);
             break;
         case 2:
-            mainconf[key].delwatch(UniConf::INFINITE,
+            mainconf[key].delwatch(UniConfDepth::INFINITE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_any_child_changed), s);
             break;
@@ -423,17 +424,17 @@ void UniConfDaemon::add_callback(const UniConfKey &key,
     switch (depth)
     {
         case 0:
-            mainconf[key].addwatch(UniConf::ZERO,
+            mainconf[key].addwatch(UniConfDepth::ZERO,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::myvaluechanged), s);
             break;
         case 1:
-            mainconf[key].addwatch(UniConf::ONE,
+            mainconf[key].addwatch(UniConfDepth::ONE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_imm_child_changed), s);
             break;
         case 2:
-            mainconf[key].addwatch(UniConf::INFINITE,
+            mainconf[key].addwatch(UniConfDepth::INFINITE,
                 wvcallback(UniConfCallback, *this,
                 UniConfDaemon::me_or_any_child_changed), s);
             break;
