@@ -10,8 +10,13 @@
 #include "wvhashtable.h"
 #include "wvstring.h"
 #include <stdio.h>
-#include <malloc.h>
 #include <assert.h>
+
+#ifndef  ISDARWIN
+# include <malloc.h>
+#else
+# include <stdlib.h>
+#endif
 
 struct Intstr
 {

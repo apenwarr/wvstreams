@@ -11,10 +11,11 @@
 #include "wvaddr.h"
 #include "wvresolver.h"
 
-#ifdef ISBSD
-#include <netinet/in_systm.h>
-#define SOL_TCP 6
-#define SOL_IP 4
+#if defined(ISBSD) || defined(ISDARWIN)
+# include <netinet/in_systm.h>
+# define socklen_t int
+# define SOL_TCP 6
+# define SOL_IP 4
 #endif
 
 class WvStreamList;

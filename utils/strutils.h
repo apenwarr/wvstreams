@@ -151,4 +151,10 @@ WvString encode_hostname_as_DN(WvStringParm hostname);
  */
 WvString nice_hostname(WvStringParm name);
 
+/**
+ * Seperates the filename and directory name within a path.
+ */
+WvString getfilename(WvStringParm fullname);
+WvString getdirname(WvStringParm fullname);
+
 #endif // __STRUTILS_H
