@@ -45,7 +45,8 @@ unsigned int string_to_ver(const char *str)
     int bits;
     
     // do the major number
-    for (cptr = (unsigned char *)str; *cptr && *cptr != '.'; cptr++)
+    cptr = (unsigned char *)str;
+    for (; *cptr && *cptr != '.' && *cptr != '_'; cptr++)
     {
 	idx = (unsigned char *)strchr(lookup, tolower(*cptr));
 	if (!idx)

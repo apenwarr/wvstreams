@@ -244,7 +244,14 @@ void WvConf::set(const WvString &section, const WvString &entry,
     const char *oldval = s->get(entry, "");
     if (!value) value = "";
     if (strcmp(oldval, value)) // case sensitive
+    {
 	run_callbacks(section, entry, oldval, value);
+
+	fprintf(stderr, "cfg.set: set [%s]%s = %s\n",
+		(const char *)section, (const char *)entry,
+		(const char *)value ?: "!!!");
+    }
+    
     s->set(entry, value);
     dirty = true;
 }

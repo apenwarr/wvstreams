@@ -56,11 +56,20 @@ WvTCPConn::WvTCPConn(const WvString &_hostname, __u16 _port)
 	remaddr.port = atoi(cptr);
     }
     
-    resolved = connected = false;
-    
-    dns.findaddr(0, hostname, NULL);
     if (_port)
 	remaddr.port = _port;
+    
+    resolved = connected = false;
+    
+    WvIPAddr x(hostname);
+    if (x != WvIPAddr())
+    {
+	remaddr = WvIPPortAddr(x, remaddr.port);
+	resolved = true;
+	do_connect();
+    }
+    else
+	dns.findaddr(0, hostname, NULL);
 }
 
 

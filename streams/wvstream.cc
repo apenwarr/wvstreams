@@ -134,8 +134,8 @@ void WvStream::callback()
     else
 	alarm_was_ticking = false;
     
-    if (1)
-//    if (uses_continue_select && personal_stack_size >= 1024)
+//    if (1)
+    if (uses_continue_select && personal_stack_size >= 1024)
     {
 	if (!taskman)
 	    taskman = new WvTaskMan;
