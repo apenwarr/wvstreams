@@ -13,46 +13,33 @@ WvMagicLoopback::WvMagicLoopback(size_t size)
 
 bool WvMagicLoopback::pre_select(SelectInfo &si)
 {
-    bool result = loop.pre_select(si);
-    
     loop.drain();
-    
-    if (!result)
+
+    loop.pre_select(si);
+
+    if (si.wants.readable)
     {
-    	if (si.wants.readable)
-    	{
-	    if (circle.used())
-	    	result = true;
-    	}
-        
-    	if (si.wants.writable)
-    	{
-	    if (circle.left())
-	    	result = true;
-    	}
+        if (circle.used() > 0)
+            return true;
+    }
+    
+    if (si.wants.writable)
+    {   
+        if (circle.left() > 0)
+            return true;
     }
 
-    return result;
+    return false;
 }  
 
 size_t WvMagicLoopback::uread(void *buf, size_t len)
 {
-    size_t avail = circle.used();
-
-    if (avail < len)
-    	len = avail;
-    
     return circle.get(buf, len);
 }
 
 
 size_t WvMagicLoopback::uwrite(const void *buf, size_t len)
 {
-    size_t howmuch = circle.left();
-    
-    if (len > howmuch)
-	len = howmuch;
-    
     len = circle.put(buf, len);
     
     if (len > 0)

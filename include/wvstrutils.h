@@ -11,6 +11,7 @@
 
 #include <sys/types.h> // for off_t
 #include <time.h>
+#include <ctype.h>
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvhex.h"
@@ -396,5 +397,28 @@ inline WvString substr(WvString line, unsigned int pos, unsigned int len)
     return ret;
 }
 
+// Converts a string in decimal to an arbitrary numeric type
+template<class T>
+bool wvstring_to_num(WvStringParm str, T &n)
+{
+    bool neg = false;
+    n = 0;
 
+    for (const char *p = str; *p; ++p)
+    {
+        if (isdigit(*p))
+        {
+            n = n * T(10) + T(*p - '0');
+        }
+        else if ((const char *)str == p
+                && *p == '-')
+        {
+            neg = true;
+        }
+        else return false;
+    }
+
+    return neg? -n: n;
+}
+        
 #endif // __WVSTRUTILS_H
