@@ -251,7 +251,7 @@ public:
      * Unlike unix mv(), this is *not* currently atomic.  It's more like
      * cp-then-rm.
      */
-    void move(const UniConf &dst);
+    void move(const UniConf &dst) const;
 
     /**
      * Removes this key and all of its children from the registry.
