@@ -25,9 +25,9 @@ WvIPFirewall::~WvIPFirewall()
 }
 
 
-WvString WvIPFirewall::command(const char *cmd, const WvIPPortAddr &addr)
+WvString WvIPFirewall::port_command(const char *cmd, const WvIPPortAddr &addr)
 {
-    WvIPAddr ad = addr, none;
+    WvIPAddr ad(addr), none;
     
     return WvString("ipchains %s WvDynam -j ACCEPT -p tcp -s %s %s -d 0/0 -b",
 		    cmd, ad == none ? WvString("0/0") : (WvString)ad,
@@ -35,18 +35,45 @@ WvString WvIPFirewall::command(const char *cmd, const WvIPPortAddr &addr)
 }
 
 
-void WvIPFirewall::add(const WvIPPortAddr &addr)
+WvString WvIPFirewall::redir_command(const char *cmd, const WvIPPortAddr &src,
+				     int dstport)
+{
+    WvIPAddr ad(src), none;
+    
+    return WvString("ipchains %s WvRedir -j REDIRECT %s -p tcp -d %s %s",
+		    cmd, dstport, 
+		    ad == none ? WvString("0/0") : (WvString)ad,
+		    src.port);
+}
+
+
+void WvIPFirewall::add_port(const WvIPPortAddr &addr)
 {
     addrs.append(new WvIPPortAddr(addr), true);
-    WvString s(command("-I", addr));
+    WvString s(port_command("-A", addr));
     if (enable) system(s);
 }
 
 
-// note!  This does not remove the address from the list!
-void WvIPFirewall::del(const WvIPPortAddr &addr)
+// note!  This does not remove the address from the list, only the kernel!
+void WvIPFirewall::del_port(const WvIPPortAddr &addr)
 {
-    WvString s(command("-D", addr));
+    WvString s(port_command("-D", addr));
+    if (enable) system(s);
+}
+
+
+void WvIPFirewall::add_redir(const WvIPPortAddr &src, int dstport)
+{
+    redirs.append(new Redir(src, dstport), true);
+    WvString s(redir_command("-A", src, dstport));
+    if (enable) system(s);
+}
+
+
+void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
+{
+    WvString s(redir_command("-D", src, dstport));
     if (enable) system(s);
 }
 
@@ -54,11 +81,18 @@ void WvIPFirewall::del(const WvIPPortAddr &addr)
 void WvIPFirewall::zap()
 {
     WvIPPortAddrList::Iter i(addrs);
-    
     i.rewind(); i.next();
     while (i.cur())
     {
-	del(i);
+	del_port(i);
 	i.unlink();
+    }
+    
+    RedirList::Iter i2(redirs);
+    i2.rewind(); i2.next();
+    while (i2.cur())
+    {
+	del_redir(i2().src, i2().dstport);
+	i2.unlink();
     }
 }
