@@ -1,0 +1,31 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
+ * 
+ * DNS name resolver with support for background lookups.
+ */
+#ifndef __WVRESOLVER_H
+#define __WVRESOLVER_H
+
+#include "wvaddr.h"
+
+class WvResolverHostDict;
+class WvResolverAddrDict;
+
+class WvResolver
+{
+    static int numresolvers;
+    static WvResolverHostDict *hostmap;
+    static WvResolverAddrDict *addrmap;
+public:
+    WvResolver();
+    ~WvResolver();
+    
+    // Return -1 on timeout, or the number of addresses found, which may
+    // be 0 if the address does not exist.
+    int findaddr(int msec_timeout, const WvString &name,
+		 WvIPAddr const **addr);
+    int findname(int msec_timeout, WvIPAddr *ipaddr, char **name);
+};
+
+#endif // __WVRESOLVER_H

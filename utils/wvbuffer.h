@@ -1,0 +1,151 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ * 
+ * Declarations for WvMiniBuffer (a statically-sized data buffer with
+ * get/put functions) and WvBuffer (a dynamically-sized buffer made from
+ * a list of WvMiniBuffers).
+ */
+#ifndef __WVBUFFER_H
+#define __WVBUFFER_H
+
+#include "wvlinklist.h"
+
+class WvMiniBuffer
+{
+    unsigned char *buffer, *head, *tail;
+    size_t size;
+    
+public:
+    WvMiniBuffer(size_t _size)
+	{ buffer = head = tail = new unsigned char[(size = _size) + 16]; }
+    ~WvMiniBuffer()
+        { delete buffer; }
+    
+    /*
+     * return number of bytes total/used/left in minibuffer. Note that
+     * used+left != total, because bytes cannot be "recycled" until we do a
+     * zap().  That is, the sequence put(15); get(15); causes used() to
+     * return the same value as before, and free() to be reduced by 15 bytes.
+     */
+    size_t total() const
+        { return size; }
+    size_t used() const
+        { return tail - head; }
+    size_t free() const
+        { return buffer + size - tail; }
+    
+    /*
+     * remove all data from the minibuffer by setting head/tail to buffer
+     * start
+     */
+    void zap()
+       { head = tail = buffer; }
+    
+    
+    /*
+     * NO ERROR CHECKING in any of the following!!
+     */
+   
+
+    /*
+     * return a pointer to the next 'num' bytes in the minibuffer; valid
+     * until buffer is zapped.
+     */
+    unsigned char *get(size_t num)
+        { return (head += num) - num; }
+    
+    /*
+     * Reverse a previous get() operation, making the last 'num' bytes read
+     * available for a subsequent get().
+     */
+    void unget(size_t num)
+        { head -= num; }
+    
+    /*
+     * allocate the next 'num' bytes of the minibuffer (presumably for
+     * writing)
+     */
+    unsigned char *alloc(size_t num)
+        { return (tail += num) - num; }
+
+    /*
+     * Reverse a previous alloc() operation, making the last 'num' bytes
+     * allocated available for a subsequent alloc() or put().
+     */
+    void unalloc(size_t num)
+        { tail -= num; }
+    
+    /*
+     * copy the given data into the next 'num' bytes of the minibuffer.
+     */
+    void put(const void *data, size_t num)
+        { memcpy(alloc(num), data, num); }
+    
+    /*
+     * return the number of bytes that must be retrieved with get() in order
+     * to find the first instance of 'ch'.  A return value of 0 means that
+     * there is no 'ch' in the minibuffer.
+     */
+    size_t strchr(unsigned char ch) const;
+    size_t strchr(char ch) const
+	{ return strchr((unsigned char)ch); }
+};
+
+
+DeclareWvList(WvMiniBuffer);
+
+
+class WvBuffer
+{
+    WvMiniBufferList list;
+    size_t inuse;
+    
+public:
+    WvBuffer()
+        { inuse = 0; }
+    
+    size_t used() const
+        { return inuse; }
+
+    /*
+     * Clear the entire buffer.
+     */
+    void zap();
+    
+    /*
+     * Return the next 'num' bytes in the buffer.  Pointer is valid until
+     * next zap() or get().  Returns NULL if there are not enough bytes
+     * in the buffer.
+     */
+    unsigned char *get(size_t num);
+    
+    /*
+     * allocate 'num' bytes in the buffer and return a pointer to its start.
+     * Pointer is valid until next zap() or get().
+     */
+    unsigned char *alloc(size_t num);
+
+    /*
+     * unallocate the last 'num' bytes in the buffer that were previously
+     * allocated using alloc() or put().  They are then available for a
+     * subsequent alloc() or put().
+     */
+    void unalloc(size_t num);
+    
+    /* 
+     * copy 'buf' into the next 'num' bytes of buffer.
+     */
+    void put(const void *buf, size_t num);
+
+    /*
+     * return the number of bytes that would have to be read to find the
+     * first character 'ch', or zero if 'ch' is not in the buffer.
+     */
+    size_t strchr(unsigned char ch);
+    size_t strchr(char ch)
+        { return strchr((unsigned char)ch); }
+};
+
+
+#endif // __WVBUFFER_H

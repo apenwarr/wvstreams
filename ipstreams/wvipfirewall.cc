@@ -1,0 +1,60 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
+ * 
+ * WvIPFirewall is an extremely simple hackish class that handles the Linux
+ * 2.1 "ipchains" firewall.  Someday, this should be rewritten and much
+ * improved.
+ */
+#include "wvipfirewall.h"
+#include "wvinterface.h"
+#include <unistd.h>
+
+
+WvIPFirewall::WvIPFirewall()
+{
+}
+
+
+WvIPFirewall::~WvIPFirewall()
+{
+    zap();
+}
+
+
+WvString WvIPFirewall::command(const char *cmd, const WvIPPortAddr &addr)
+{
+    WvIPAddr ad = addr, none;
+    
+    return WvString("ipchains %s input -j ACCEPT -p tcp -s %s %s -d 0/0 -b",
+		    cmd, ad == none ? "0/0" : (WvString)ad, addr.port);
+}
+
+
+void WvIPFirewall::add(const WvIPPortAddr &addr)
+{
+    addrs.append(new WvIPPortAddr(addr), true);
+    WvString s(command("-I", addr));
+    system(s.str);
+}
+
+
+// note!  This does not remove the address from the list!
+void WvIPFirewall::del(const WvIPPortAddr &addr)
+{
+    WvString s(command("-D", addr));
+    system(s.str);
+}
+
+
+void WvIPFirewall::zap()
+{
+    WvIPPortAddrList::Iter i(addrs);
+    
+    i.rewind(); i.next();
+    while (i.cur())
+    {
+	del(*i.data());
+	i.unlink();
+    }
+}
