@@ -27,6 +27,7 @@ void HelloGen::update(WvHConf *h)
 {
     wvcon->print("Hello: updating %s\n", h->full_key());
     *h = WvString("%s #%s", defstr, ++count);
+    h->dirty = false;
 }
 
 
@@ -73,6 +74,7 @@ void WvHConfFileTree::update(WvHConf *h)
 	    continue;
 	
 	*h = line;
+	h->dirty = false;
 	return;
     }
 }

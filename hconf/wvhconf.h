@@ -71,15 +71,17 @@ public:
  */
 class WvHConf
 {
-private:
-    WvString value;        // the contents of this entry
 public:
     WvHConf *parent;       // the 'parent' of this subtree
     WvString name;         // the name of this entry
+private:
+    WvString value;        // the contents of this entry
+public:    
     WvHConfDict *children; // list of all child nodes of this node (subkeys)
     WvHConf *defaults;     // a tree possibly containing default values
     WvHConfGen *generator; // subtree generator for this tree
     
+public:
     bool 
 	child_dirty:1,     // some data in the subtree has dirty=1
 	dirty:1,	   // this data is unsaved
@@ -95,7 +97,6 @@ public:
     WvHConf();
     WvHConf(WvHConf *_parent, const WvString &_name);
     ~WvHConf();
-    
     void init();
     
     WvHConf *top();
@@ -110,18 +111,27 @@ public:
     
     WvHConf *find_default(WvHConfKey *_k = NULL) const;
     
+    // exactly the same as find_make() and operator[]... hmm.
+    // Unnecessary?
     WvHConf &get(const WvHConfKey &key)
         { return *find_make(key); }
-    void set(const WvHConfKey &key, const WvString &v)
-        { get(key) = v; }
     
+    // another convenience function, suspiciously similar to cfg[key] = v.
+    // Also unnecessary?
+    void set(const WvHConfKey &key, const WvString &v)
+        { get(key).set(v); }
+    
+    // Reassign the 'value' of this object to something.
     void set(const WvString &s);
     const WvHConf &operator= (const WvString &s) { set(s); return *this; }
     const WvHConf &operator= (const WvHConf &s) { set(s); return *this; }
     
+    // retrieve the value.  Normally you don't need to call printable()
+    // explicitly, since the WvString cast operator does it for you.
     const WvString& printable() const;
     operator const WvString& () const { return printable(); }
     
+    // a handy function to print a copy of this subtree to a stream.
     void dump(WvStream &s);
 };
 
