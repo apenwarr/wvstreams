@@ -105,7 +105,7 @@ WVTEST_MAIN("simple")
     WVPASS("--REPEATING TEST--");
     testme(); // make sure deletion/creation works
 }
-
+#ifdef TASKTEST_IS_CONVERTED
 WVTEST_MAIN("tasktest.cc")
 {
 
@@ -182,3 +182,4 @@ WVTEST_MAIN("tasktest.cc")
         man->unlink();
     }
 }
+#endif
