@@ -43,7 +43,7 @@ WVTEST_MAIN()
     WVPASS(s.isok());
     WVFAIL(s.write(buf, 1024) != 0);
     s.noread();
-    WVPASS(s.isok());
+    WVPASS(!s.isok());
 }
 
 

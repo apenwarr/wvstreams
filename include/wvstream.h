@@ -95,16 +95,34 @@ public:
     virtual size_t write(WvBuf &inbuf, size_t count = INT_MAX) = 0;
 
     /**
-     * Shuts down the reading side of the stream.
-     * Subsequent calls to read() will fail.
+     * Shuts down the reading side of the stream.  This is the opposite
+     * of nowrite(), but the name is actually slightly misleading; subsequent
+     * calls to read() *might not* fail; rather, if the other end of the
+     * connection tries to write to us, they should fail.
+     *
+     * After noread(), if the read buffer (if any) is empty once, we promise
+     * that it will never refill.
+     * 
+     * If you call both noread() and nowrite(), then the stream does close()
+     * automatically once all buffers are empty.
      */
     virtual void noread() = 0;
 
     /**
      * Shuts down the writing side of the stream.
-     * Subsequent calls to write() will fail.
+     * Subsequent calls to write() will fail.  But if there's data in the
+     * output buffer, it will still be flushed.
+     * 
+     * If you call both noread() and nowrite(), then the stream does close()
+     * automatically once all buffers are empty.
      */
     virtual void nowrite() = 0;
+    
+    /**
+     * Auto-close the stream if the time is right.  If noread() and nowrite()
+     * and all buffers are empty, then we can probably close.
+     */
+    virtual void maybe_autoclose() = 0;
     
     /** Returns true if the stream is readable. */
     virtual bool isreadable() = 0;
@@ -181,6 +199,9 @@ public:
      * callback was triggered by the alarm going off.
      */
     bool alarm_was_ticking;
+    
+    /** True if noread()/nowrite()/close() have been called, respectively. */
+    bool stop_read, stop_write, closed;
     
     /** Basic constructor for just a do-nothing WvStream */
     WvStream();
@@ -275,6 +296,7 @@ public:
 
     virtual void noread();
     virtual void nowrite();
+    virtual void maybe_autoclose();
     
     virtual bool isreadable();
     virtual bool iswritable();
@@ -297,7 +319,7 @@ public:
      * This is what you would override in a derived class.
      */ 
     virtual size_t uwrite(const void *buf, size_t count)
-        { return 0; /* basic WvStream doesn't actually do anything! */ }
+        { return count; /* basic WvStream doesn't actually do anything! */ }
     
     /**
      * read up to one line of data from the stream and return a pointer
@@ -677,7 +699,6 @@ protected:
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;
-    bool want_nowrite;
 
     // Used to guard against excessive flushing when using delay_flush
     bool want_to_flush;

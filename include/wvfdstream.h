@@ -25,6 +25,9 @@ protected:
 
     /** The file descriptor for writing. */
     int wfd;
+    
+    /** Have we actually shut down the read/write sides? */
+    bool shutdown_read, shutdown_write;
 
     /**
      * Sets the file descriptor for both reading and writing.
@@ -97,8 +100,7 @@ public:
     virtual size_t uwrite(const void *buf, size_t count);
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
-    virtual void noread();
-    virtual void nowrite();
+    virtual void maybe_autoclose();
 };
 
 #endif // __WVFDSTREAM_H

@@ -62,7 +62,7 @@ WvStream::WvStream()
     force.writable = force.isexception = false;
     read_requires_writable = write_requires_readable = NULL;
     running_callback = false;
-    want_nowrite = false;
+    stop_read = stop_write = closed = false;
     queue_min = 0;
     autoclose_time = 0;
     alarm_time = wvtime_zero;
@@ -119,6 +119,8 @@ void WvStream::close()
         closecb_func = 0; // ensure callback is only called once
         cb(*this, closecb_data);
     }
+    
+    closed = true;
 }
 
 
@@ -262,7 +264,7 @@ void WvStream::execute()
 
 bool WvStream::isok() const
 {
-    return WvError::isok();
+    return !closed && WvError::isok();
 }
 
 
@@ -337,7 +339,10 @@ size_t WvStream::read(void *buf, size_t count)
     }
     
     if (bufu < queue_min)
+    {
+	maybe_autoclose();
 	return 0;
+    }
         
     // if buffer is empty, do a hard read
     if (!bufu)
@@ -352,6 +357,7 @@ size_t WvStream::read(void *buf, size_t count)
     }
     
     TRACE("read  obj 0x%08x, bytes %d/%d\n", (unsigned int)this, bufu, count);
+    maybe_autoclose();
     return bufu;
 }
 
@@ -393,14 +399,14 @@ size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
 
 size_t WvStream::write(const void *buf, size_t count)
 {
-    if (!isok() || !buf || !count) return 0;
+    if (!isok() || !buf || !count || stop_write) return 0;
     
     size_t wrote = 0;
     if (!outbuf_delayed_flush && !outbuf.used())
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
-        buf = (const unsigned char*)buf + wrote;
+        buf = (const unsigned char *)buf + wrote;
     }
     if (max_outbuf_size != 0)
     {
@@ -428,17 +434,22 @@ size_t WvStream::write(const void *buf, size_t count)
 
 void WvStream::noread()
 {
-    // FIXME: this really ought to be symmetrical with nowrite(), but instead
-    // it's empty for some reason.
+    stop_read = true;
+    maybe_autoclose();
 }
 
 
 void WvStream::nowrite()
 {
-    if (getwfd() < 0)
-        return;
+    stop_write = true;
+    maybe_autoclose();
+}
 
-    want_nowrite = true;
+
+void WvStream::maybe_autoclose()
+{
+    if (isok() && stop_read && stop_write && !outbuf.used() && !inbuf.used())
+	close();
 }
 
 
@@ -450,7 +461,7 @@ bool WvStream::isreadable()
 
 bool WvStream::iswritable()
 {
-    return isok() && select(0, false, true, false);
+    return !stop_write && isok() && select(0, false, true, false);
 }
 
 
@@ -475,7 +486,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 	    *eol = 0;
             return (char *)inbuf.get(i);
         }
-        else if (!isok())    // uh oh, stream is in trouble.
+        else if (!isok() || stop_read)    // uh oh, stream is in trouble.
         {
             if (inbuf.used())
             {
@@ -483,8 +494,8 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 		// FIXME: it's very silly that buffers can't return editable
 		// char* arrays.
                 inbuf.alloc(1)[0] = 0; // null-terminate it
-                return const_cast<char*>(
-                    (const char*)inbuf.get(inbuf.used()));
+                return const_cast<char *>(
+                    (const char *)inbuf.get(inbuf.used()));
             }
             else
                 break; // nothing else to do!
@@ -522,6 +533,7 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
         if (!hasdata && wait_msec == 0)
             break; // handle timeout
     }
+    
     // we timed out or had a socket error
     return NULL;
 }
@@ -596,6 +608,7 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
     if (!isok())
 	outbuf.zap();
 
+    maybe_autoclose();
     return !outbuf.used();
 }
 

@@ -49,12 +49,14 @@ static WvMoniker<IWvStream> reg("fd", creator);
 WvFDStream::WvFDStream(int _rwfd)
     : rfd(_rwfd), wfd(_rwfd)
 {
+    shutdown_read = shutdown_write = false;
 }
 
 
 WvFDStream::WvFDStream(int _rfd, int _wfd)
     : rfd(_rfd), wfd(_wfd)
 {
+    shutdown_read = shutdown_write = false;
 }
 
 
@@ -117,49 +119,36 @@ size_t WvFDStream::uwrite(const void *buf, size_t count)
 	return 0;
     }
 
-    if (!outbuf.used() && want_nowrite && wfd < 0)
-    {
-        // copied from nowrite()
-        if (rfd != wfd)
-            ::close(wfd);
-        else
-            ::shutdown(rfd, SHUT_WR); // might be a socket
-
-        want_nowrite = false;
-        wfd = -1;
-    }
-    
     //TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
     return out;
 }
 
 
-void WvFDStream::noread()
+void WvFDStream::maybe_autoclose()
 {
-    if (rfd < 0)
-        return;
-    if (rfd != wfd)
-        ::close(rfd);
-    else
-        ::shutdown(rfd, SHUT_RD); // might be a socket        
-    rfd = -1;
-}
-
-
-void WvFDStream::nowrite()
-{
-    if (!outbuf.used())
+    if (stop_write && !shutdown_write && !outbuf.used())
     {
+	shutdown_write = true;
+	if (rfd < 0)
+	    return;
+	if (rfd != wfd)
+	    ::close(rfd);
+	else
+	    ::shutdown(rfd, SHUT_RD); // might be a socket        
+	rfd = -1;
+    }
+    
+    if (stop_read && !shutdown_read && !inbuf.used())
+    {
+	shutdown_read = true;
         if (rfd != wfd)
             ::close(wfd);
         else
-            ::shutdown(rfd, SHUT_WR); // might be a socket
-
-        want_nowrite = false;
+            ::shutdown(wfd, SHUT_WR); // might be a socket
         wfd = -1;
     }
-    else
-        WvStream::nowrite();
+    
+    WvStream::maybe_autoclose();
 }
 
 
