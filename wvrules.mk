@@ -22,6 +22,7 @@ ifeq ($(WVSTREAMS_SRC),)
   WVSTREAMS_INC=$(WVSTREAMS)/include
   WVSTREAMS_BIN=$(WVSTREAMS)
 endif
+export WVSTREAMS WVSTREAMS_SRC WVSTREAMS_LIB WVSTREAMS_INC WVSTREAMS_BIN
 
 SHELL=/bin/bash
 
@@ -51,7 +52,7 @@ LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 #
 # Initial C compilation flags
 #
-CPPFLAGS += -DUNSTABLE    # for xplc
+CPPFLAGS += -DUNSTABLE   # for xplc
 CPPFLAGS += $(CPPOPTS)
 C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
 		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
@@ -119,6 +120,9 @@ objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
 objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
 objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
 
+# macro that expands to the subdir.mk files to include
+xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
+
 # we need a default rule, since the 'includes' below causes trouble
 .PHONY: default all
 default: all
@@ -178,10 +182,10 @@ ifeq ($(STATIC),1)
   LDFLAGS += -static
 endif
 
-INCFLAGS = $(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
-CPPFLAGS += $(INCFLAGS)
-CFLAGS += $(CPPFLAGS)
-CXXFLAGS += $(CPPFLAGS)
+INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
+CPPFLAGS+=$(INCFLAGS)
+CFLAGS+=$(CPPFLAGS)
+CXXFLAGS+=$(CPPFLAGS)
 
 ifeq ($(VERBOSE),1)
   COMPILE_MSG = 
@@ -207,8 +211,8 @@ define wvcc_base
 	$(DEPEND_MSG)$4 -M -E $< \
 		| sed -e 's|^[^:]*:|$1:|' >$(DEPFILE)
 endef
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
+wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
 
 define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
@@ -359,6 +363,6 @@ ChangeLog: FORCE
 #
 # Make 'tags' file using the ctags program - useful for editing
 #
-tags: $(shell find -name '*.cc' -o -name '*.[ch]')
-	@echo '(creating "tags")'
-	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
+#tags: $(shell find -name '*.cc' -o -name '*.[ch]')
+#	@echo '(creating "tags")'
+#	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi

@@ -67,7 +67,7 @@ distclean: clean
 
 clean: depend dust
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
-		$(GARBAGE) $(TESTS) \
+		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
 
 depend:
@@ -109,7 +109,7 @@ $(TESTS): $(LIBUNICONF)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
-include $(filter-out xplc/%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
+include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
@@ -119,7 +119,6 @@ test: runconfigure all tests wvtestmain
 runtests:
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
 	cd uniconf/tests && ./unitest.sh
-	rm -f tmp.ini
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

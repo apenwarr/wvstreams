@@ -44,8 +44,9 @@ UniIniGen::~UniIniGen()
 bool UniIniGen::refresh()
 {
     WvFile file(filename, O_RDONLY);
-    struct stat statbuf;
 
+    #ifndef _WIN32
+    struct stat statbuf;
     if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
     {
 	log(WvLog::Warning, "Can't stat '%s': %s\n",
@@ -58,6 +59,7 @@ bool UniIniGen::refresh()
 	file.close();
 	file.seterr(EAGAIN);
     }
+    #endif
 
     if (!file.isok())
     {
@@ -238,29 +240,43 @@ void UniIniGen::commit()
 {
     if (!dirty) return;
 
-    WvString alt_filename(".%s.pid%s", filename, getpid());
+#ifdef _WIN32
+    // Windows doesn't support all that fancy stuff, just open the file
+    //   and be done with it
+    WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+#else
+    char resolved_path[PATH_MAX];
+    WvString real_filename(filename);
+
+    if (realpath(filename, resolved_path) != NULL)
+	real_filename = resolved_path;
+	
+    WvString alt_filename("%s.tmp%s", real_filename, getpid());
     WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
     struct stat statbuf;
 
     if (file.geterr()
-	|| lstat(filename, &statbuf) == -1
+	|| lstat(real_filename, &statbuf) == -1
 	|| !S_ISREG(statbuf.st_mode))
     {
-	log(WvLog::Warning, "couldn't create %s\n", alt_filename);
+	if (file.geterr())
+	    log(WvLog::Warning, "couldn't create '%s'\n", alt_filename);
+
 	unlink(alt_filename);
 	alt_filename = WvString::null;
 
-	file.open(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+	file.open(real_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
 
 	if (fstat(file.getwfd(), &statbuf) == -1)
 	{
-	    log(WvLog::Warning, "Can't write '%s': %s\n",
-		filename, strerror(errno));
+	    log(WvLog::Warning, "Can't write '%s' ('%s'): %s\n",
+		filename, real_filename, strerror(errno));
 	    return;
 	}
 
 	fchmod(file.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
     }
+#endif
     
     if (root) // the tree may be empty, so NULL root is okay
     {
@@ -274,6 +290,7 @@ void UniIniGen::commit()
 	save(file, *root);
     }
 
+#ifndef _WIN32
     if (alt_filename.isnull())
     {
 	if (!file.geterr())
@@ -284,9 +301,10 @@ void UniIniGen::commit()
 	    fchmod(file.getwfd(), statbuf.st_mode & 07777);
 	}
 	else
-	    log(WvLog::Warning, "Error writing '%s': %s\n",
-		filename, file.errstr());
+	    log(WvLog::Warning, "Error writing '%s' ('%s'): %s\n",
+		filename, real_filename, file.errstr());
     }
+#endif
 
     file.close();
 
@@ -297,9 +315,10 @@ void UniIniGen::commit()
 	return;
     }
 
+#ifndef _WIN32
     if (!alt_filename.isnull())
     {
-	if (rename(alt_filename, filename) == -1)
+	if (rename(alt_filename, real_filename) == -1)
 	{
 	    log(WvLog::Warning, "Can't write '%s': %s\n",
 		filename, strerror(errno));
@@ -307,6 +326,7 @@ void UniIniGen::commit()
 	    return;
 	}
     }
+#endif
 
     dirty = false;
 }

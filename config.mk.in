@@ -48,7 +48,6 @@ enable_verbose=@enable_verbose@
 enable_warnings=@enable_warnings@
 enable_testgui=@enable_testgui@
 
-with_acl=@with_acl@
 with_fam=@with_fam@
 with_fftw=@with_fftw@
 with_bdb=@with_bdb@
