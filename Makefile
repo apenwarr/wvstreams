@@ -38,14 +38,15 @@ include:
 
 $(wildcard *.so) $(wildcard *.a): Makefile
 
-libwvutils.so: utils/utils.libs -lz
+libwvutils.so-LIBS=-lcrypto -lz
+libwvutils.so: utils/utils.libs
 libwvutils.a: utils/utils.libs
 
-libwvstreams.so-LIBS=libwvutils.so
+libwvstreams.so-LIBS=-lcrypto -lz
 libwvstreams.so: ipstreams/ipstreams.libs
 libwvstreams.a: ipstreams/ipstreams.libs
 
-libwvcrypto.so-LIBS=libwvstreams.so -lssl -lcrypto
+libwvcrypto.so-LIBS=libwvstreams.so -lssl
 libwvcrypto.so: crypto/crypto.libs
 libwvcrypto.a: crypto/crypto.libs
 
