@@ -388,8 +388,11 @@ void WvIPAddr::string_init(const char string[])
                 memset(binaddr, 0, 4);
                 return;
             }
-            else if (!isdigit(*nptr))
+            else if (!isdigit(*nptr) && (*nptr != '.'))
+            {
+                nptr = NULL;
                 break;
+            }
             else
                 nptr++;
         }
