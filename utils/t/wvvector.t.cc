@@ -246,4 +246,31 @@ WVTEST_MAIN("wvvector - iter")
 //     {
 // 	WVPASSEQ(*j, i++);
 //     }
+
+    i = 0;
+    for (j.rewind(); j.next(); )
+    {
+	++i;
+    }
+    WVPASSEQ(v.count(), i);
+}
+
+WVTEST_MAIN("wvvector - iter2")
+{
+    WvVector<int> v;
+
+    int i;
+    for (i = 0; i < 10; i++)
+	v.append(new int(i), true);
+    WVPASSEQ(v.count(), 10);
+
+    i = 0;
+    WvVector<int>::Iter j(v);
+    for (j.rewind(); j.next(); )
+    {
+	int *x = j.ptr();
+	fprintf(stderr, "count: %i\n", *x);
+ 	WVPASSEQ(*j.ptr(), i++);
+    }
+    WVPASSEQ(v.count(), i);
 }
