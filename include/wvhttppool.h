@@ -22,6 +22,7 @@ class WvBufUrlStream;
 class WvUrlStream;
 class WvHttpStream;
 
+static WvString DEFAULT_ANON_PW("weasels@");
 
 class WvUrlRequest
 {
@@ -64,15 +65,14 @@ public:
 
 DeclareWvTable(WvIPPortAddr);
 
-
-// For looking up WvUrlStreams in a WvDict.
-struct WvUrlStreamInfo
+class WvUrlStreamInfo
 {
+public:
     WvIPPortAddr remaddr;
-    WvString proto;
+    WvString username;
 
-    bool operator== (const WvUrlStreamInfo &n2) const
-    { return (proto == n2.proto && remaddr == n2.remaddr); }
+    bool operator== (const WvUrlStreamInfo &n2)
+    { return (username == n2.username && remaddr == n2.remaddr); }
 };
 unsigned WvHash(const WvUrlStreamInfo &n);
 
@@ -94,7 +94,12 @@ protected:
 public:
     WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm logname)
 	: WvStreamClone(new WvTCPConn(_remaddr)), log(logname, WvLog::Debug)
-    {}
+    {
+	request_count = 0;
+	info.remaddr = _remaddr;
+	curl = NULL;
+    }
+
     virtual ~WvUrlStream() {};
 
     virtual void close() = 0;
@@ -133,6 +138,36 @@ public:
 		 WvIPPortAddrTable &_pipeline_incompatible);
     virtual ~WvHttpStream();
 
+    virtual void close();
+    virtual void execute();
+};
+
+
+class WvFtpStream : public WvUrlStream
+{
+    bool logged_in, pasv_acked;
+    WvString password;
+    WvTCPConn *data;
+    time_t last_request_time;
+
+    virtual void doneurl();
+    virtual void request_next();
+
+    // Disregard all lines that are of the form "xxx-", meaning that another
+    // line follows.  Only the last line is important for us.
+    char *get_important_line(int timeout);
+
+    // Parse response to "PASV" command and returns a pointer to the address
+    // of the data port (or NULL if it can't parse the response)..
+    // This mucks about with line.
+    WvIPPortAddr *parse_pasv_response(char *line);
+
+public:
+    WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
+		WvStringParm _password);
+    virtual ~WvFtpStream();
+
+    virtual bool pre_select(SelectInfo &si);
     virtual void close();
     virtual void execute();
 };

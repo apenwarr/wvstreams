@@ -7,6 +7,7 @@
 #include "wvhttppool.h"
 #include "wvfile.h"
 #include "strutils.h"
+#include "wvcrash.h"
 #include <signal.h>
 
 
@@ -28,7 +29,8 @@ int main(int argc, char **argv)
     WvHttpPool p;
     WvString headers("");
     char *line;
-    
+   
+    wvcrash_setup(argv[0]);
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sighandler_die);
     

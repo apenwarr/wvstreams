@@ -6,6 +6,8 @@
  * 
  * See wvhttppool.h.
  */
+#include <ctype.h>
+#include <time.h>
 #include "wvhttppool.h"
 #include "wvbufstream.h"
 #include "wvtcp.h"
@@ -17,7 +19,7 @@ int WvUrlStream::max_requests = 100;
 
 unsigned WvHash(const WvUrlStreamInfo &n)
 {
-    WvString key("%s%s", n.remaddr, n.proto);
+    WvString key("%s%s", n.remaddr, n.username);
     return (WvHash(key));
 }
 
@@ -81,16 +83,34 @@ static WvString fixnl(WvStringParm nonl)
 
 WvString WvUrlRequest::request_str(bool keepalive)
 {
-    return fixnl(WvString("%s %s HTTP/1.1\n"
-			  "Host: %s:%s\n"
-			  "Connection: %s\n"
-			  "%s%s"
-			  "\n",
-			  headers_only ? "HEAD" : "GET",
-			  url.getfile(),
-			  url.gethost(), url.getport(),
-			  keepalive ? "keep-alive" : "close",
-			  trim_string(headers.edit()), !!headers ? "\n" : ""));
+    WvString request;
+    if (!strncasecmp(url.getproto(), "http", 4))
+	request = fixnl(WvString("%s %s HTTP/1.1\n"
+				 "Host: %s:%s\n"
+				 "Connection: %s\n"
+				 "%s%s"
+				 "\n",
+				 headers_only ? "HEAD" : "GET",
+				 url.getfile(),
+				 url.gethost(), url.getport(),
+				 keepalive ? "keep-alive" : "close",
+				 trim_string(headers.edit()),
+				 !!headers ? "\n" : ""));
+    return request;
+}
+
+
+void WvUrlStream::addurl(WvUrlRequest *url)
+{
+    log(WvLog::Debug4, "Adding a new url: '%s'\n", url->url);
+    
+    assert(url->outstream);
+    
+    if (!url->url.isok())
+	return;
+    
+    waiting_urls.append(url, false);
+    request_next();
 }
 
 
@@ -100,13 +120,12 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
 	pipeline_incompatible(_pipeline_incompatible)
 {
     log("Opening server connection.\n");
-    info.remaddr = _remaddr;
-    curl = NULL;
     http_response = "";
+    info.username = "";
     encoding = Unknown;
     remaining = 0;
     in_chunk_trailer = false;
-    request_count = pipeline_test_count = 0;
+    pipeline_test_count = 0;
     last_was_pipeline_test = false;
     
     enable_pipelining = global_enable_pipelining 
@@ -114,12 +133,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
     ssl = _ssl;
     
     if (ssl)
-    {
-	info.proto = "https";
 	cloned = new WvSSLStream(static_cast<WvFDStream*>(cloned));
-    }
-    else
-	info.proto = "http";
     
     alarm(60000); // timeout if no connection, or something goes wrong
 }
@@ -143,7 +157,7 @@ void WvHttpStream::close()
 	&& (pipeline_test_count < 1
 	    || (pipeline_test_count==1 && last_was_pipeline_test)))
 	pipelining_is_broken(2);
-    
+
     if (isok())
 	log("Closing.\n");
     WvStreamClone::close();
@@ -164,20 +178,6 @@ void WvHttpStream::close()
     
     if (curl)
 	curl->done();
-}
-
-
-void WvUrlStream::addurl(WvUrlRequest *url)
-{
-    log(WvLog::Debug4, "Adding a new url: '%s'\n", url->url);
-    
-    assert(url->outstream);
-    
-    if (!url->url.isok())
-	return;
-    
-    waiting_urls.append(url, false);
-    request_next();
 }
 
 
@@ -487,6 +487,305 @@ void WvHttpStream::execute()
 }
 
 
+WvFtpStream::WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
+			 WvStringParm _password)
+    : WvUrlStream(_remaddr, WvString("HTTP %s", _remaddr))
+{
+    data = NULL;
+    logged_in = false;
+    info.username = _username;
+    password = _password;
+    uses_continue_select = true;
+    last_request_time = time(0);
+    alarm(60000); // timeout if no connection, or something goes wrong
+}
+
+
+WvFtpStream::~WvFtpStream()
+{
+    close();
+}
+
+
+void WvFtpStream::doneurl()
+{
+    log("Done URL: %s\n", curl->url);
+    
+    curl->done();
+    curl = NULL;
+    if (data)
+    {
+	delete data;
+	data = NULL;
+    }
+    urls.unlink_first();
+    last_request_time = time(0);
+    alarm(60000);
+    request_next();
+}
+
+
+void WvFtpStream::request_next()
+{
+    // don't do a request if we've done too many already or we have none
+    // waiting.
+    if (request_count >= max_requests || waiting_urls.isempty())
+	return;
+    
+    if (!urls.isempty())
+	return;
+    
+    // okay then, we really do want to send a new request.
+    WvUrlRequest *url = waiting_urls.first();
+    
+    waiting_urls.unlink_first();
+
+    request_count++;
+    log("Request #%s: %s\n", request_count, url->url);
+    urls.append(url, false);
+    alarm(0);
+}
+
+
+void WvFtpStream::close()
+{
+    if (isok())
+	log("Closing.\n");
+    WvStreamClone::close();
+    
+    if (geterr())
+    {
+	// if there was an error, count the first URL as done.  This prevents
+	// retrying indefinitely.
+	if (!curl && !urls.isempty())
+	    curl = urls.first();
+	if (!curl && !waiting_urls.isempty())
+	    curl = waiting_urls.first();
+	if (curl)
+	    log("URL '%s' is FAILED\n", curl->url);
+	if (curl) 
+	    curl->done();
+    }
+    
+    if (curl)
+	curl->done();
+}
+
+
+char *WvFtpStream::get_important_line(int timeout)
+{
+    char *line;
+    do
+    {
+	line = getline(timeout);
+	if (!line)
+	    return NULL;
+    }
+    while (line[3] == '-');
+    return line;
+}
+
+
+bool WvFtpStream::pre_select(SelectInfo &si)
+{
+    if (data && data->select(0))
+	return true;
+
+    return WvUrlStream::pre_select(si);
+}
+
+
+void WvFtpStream::execute()
+{
+    char buf[1024], *line;
+    WvStreamClone::execute();
+
+    if (alarm_was_ticking && ((last_request_time + 60) <= time(0)))
+    {
+	log(WvLog::Debug4, "urls count: %s\n", urls.count());
+	if (urls.isempty())
+	    close(); // timed out, but not really an error
+
+	return;
+    }
+
+    if (!logged_in)
+    {
+	line = get_important_line(60000);
+	if (!line)
+	    return;
+	if (strncmp(line, "220", 3))
+	{
+	    log("Server rejected connection: %s\n", line);
+	    seterr("server rejected connection");
+	    return;
+	}
+
+	log("Got greeting: %s\n", line);
+	write(WvString("USER %s\r\n",
+		       !info.username ? "anonymous" : info.username.cstr()));
+	line = get_important_line(60000);
+	if (!line)
+	    return;
+
+	if (!strncmp(line, "230", 3))
+	{
+	    log("Server doesn't need password.\n");
+	    logged_in = true;        // No password needed;
+	}
+	else if (!strncmp(line, "33", 2))
+	{
+	    write(WvString("PASS %s\r\n", !password ? DEFAULT_ANON_PW :
+		      password));
+	    line = get_important_line(60000);
+	    if (!line)
+		return;
+	    
+	    if (line[0] == '2')
+	    {
+		log("Authenticated.\n");
+		logged_in = true;
+	    }
+	    else
+	    {
+		log("Strange response to PASS command: %s\n", line);
+		seterr("strange response to PASS command");
+		return;
+	    }
+	}
+	else
+	{
+	    log("Strange response to USER command: %s\n", line);
+	    seterr("strange response to USER command");
+	    return;
+	}
+
+	write("TYPE I\r\n");
+	line = get_important_line(60000);
+	if (!line)
+	    return;
+
+	if (strncmp(line, "200", 3))
+	{
+	    log("Strange response to TYPE I command: %s\n", line);
+	    seterr("strange response to TYPE I command");
+	    return;
+	}
+    }
+
+    if (!curl && !urls.isempty())
+    {
+	write("PASV\r\n");
+	line = get_important_line(60000);
+	if (!line)
+	    return;
+
+	WvIPPortAddr *dataip = parse_pasv_response(line);
+
+	if (!dataip)
+	    return;
+
+	log("Data port is %s.\n", *dataip);
+	// Open data connection.
+	data = new WvTCPConn(*dataip);
+	if (!data)
+	{
+	    log("Can't open data connection.\n");
+	    seterr("can't open data connection");
+	    return;
+	}
+
+	curl = urls.first();
+	write(WvString("RETR %s\r\n", curl->url.getfile()));
+	line = get_important_line(60000);
+	if (!line)
+	    doneurl();
+
+	if (strncmp(line, "150", 3))
+	{
+	    log("Strange response to RETR command: %s\n", line);
+	    seterr("strange response to RETR command");
+	    doneurl();
+	}
+    }
+
+    if (curl)
+    {
+	int len = data->read(buf, sizeof(buf));
+	log(WvLog::Debug5, "Read %s bytes.\n", len);
+
+	if (len)
+	{
+	    if (curl->outstream)
+		curl->outstream->write(buf, len);
+	}
+	if (!data->isok())
+	{
+	    line = get_important_line(60000);
+	    if (!line)
+		return;
+
+	    if (strncmp(line, "226", 3))
+		log("Unexpected message: %s\n", line);
+
+	    doneurl();
+	}
+    }
+}
+
+
+WvIPPortAddr *WvFtpStream::parse_pasv_response(char *line)
+{
+    if (strncmp(line, "227 ", 4))
+    {
+	log("Strange response to PASV command: %s\n", line);
+	seterr("strange response to PASV command");
+	return NULL;
+    }
+
+    char *p = &line[3];
+    while (!isdigit(*p))
+    {
+	if (*p == '\0' || *p == '\r' || *p == '\n')
+	{
+	    log("Couldn't parse PASV response: %s\n", line);
+	    seterr("couldn't parse response to PASV command");
+	    return NULL;
+	}
+	p++;
+    }
+    char *ipstart = p;
+
+    for (int i = 0; i < 4; i++)
+    {
+	p = strchr(p, ',');
+	if (!p)
+	{
+	    log("Couldn't parse PASV IP: %s\n", line);
+	    seterr("couldn't parse PASV IP");
+	    return NULL;
+	}
+	*p = '.';
+    }
+    *p = '\0';
+    WvString pasvip(ipstart);
+    p++;
+    int pasvport;
+    pasvport = atoi(p)*256;
+    p = strchr(p, ',');
+    if (!p)
+    {
+	log("Couldn't parse PASV IP port: %s\n", line);
+	seterr("couldn't parse PASV IP port");
+	return NULL;
+    }
+    pasvport += atoi(++p);
+
+    WvIPPortAddr *res = new WvIPPortAddr(pasvip.cstr(), pasvport);
+
+    return res;
+}
+
 
 WvHttpPool::WvHttpPool() : log("HTTP Pool", WvLog::Debug), conns(10),
 				pipeline_incompatible(50)
@@ -498,8 +797,8 @@ WvHttpPool::WvHttpPool() : log("HTTP Pool", WvLog::Debug), conns(10),
 
 WvHttpPool::~WvHttpPool()
 {
-    log("Created %s individual HTTP session(s) during this run.\n",
-	num_streams_created);
+    log("Created %s individual session%s during this run.\n",
+	num_streams_created, num_streams_created == 1 ? "" : "s");
     if (geterr())
 	log("Error was: %s\n", errstr());
     
@@ -516,7 +815,8 @@ bool WvHttpPool::pre_select(SelectInfo &si)
     WvUrlStreamDict::Iter ci(conns);
     for (ci.rewind(); ci.next(); )
     {
-	if (!ci->isok() || urls.isempty())
+//	if (!ci->isok() || urls.isempty())
+	if (!ci->isok())
 	{
 	    unconnect(ci.ptr());
 	    ci.rewind();
@@ -577,15 +877,13 @@ void WvHttpPool::execute()
 	if (!i->outstream || !i->url.isok() || !i->url.resolve())
 	    continue; // skip it for now
 
-	WvUrlStreamInfo ui;
-	ui.remaddr = i->url.getaddr();
-	ui.proto = "http";
-	s = conns[ui];
-	if (!s)
-	{
-	    ui.proto = "https";
-	    s = conns[ui];
-	}
+	WvUrlStreamInfo info;
+	info.remaddr = i->url.getaddr();
+	info.username = i->url.getuser();
+
+	//log(WvLog::Info, "remaddr is %s; username is %s\n", info.remaddr,
+	//    info.username);
+	s = conns[info];
 	//if (!s) log("conn for '%s' is not found.\n", ip);
 	
 	if (s && !s->isok())
@@ -600,8 +898,13 @@ void WvHttpPool::execute()
 	if (!s)
 	{
 	    num_streams_created++;
-	    s = new WvHttpStream(ui.remaddr, i->url.getproto() == "https",
-				 pipeline_incompatible);
+	    if (!strncasecmp(i->url.getproto(), "http", 4))
+		s = new WvHttpStream(info.remaddr,
+				     i->url.getproto() == "https",
+				     pipeline_incompatible);
+	    else if (!strcasecmp(i->url.getproto(), "ftp"))
+		s = new WvFtpStream(info.remaddr, info.username,
+				    i->url.getpassword());
 	    conns.add(s, true);
 	    
 	    // add it to the streamlist, so it can do things
@@ -630,7 +933,11 @@ WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
 
 void WvHttpPool::unconnect(WvUrlStream *s)
 {
-    log("Unconnecting stream to %s.\n", s->info.remaddr);
+    if (!s->info.username)
+	log("Unconnecting stream to %s%s.\n", s->info.remaddr);
+    else
+	log("Unconnecting stream to %s@%s.\n", s->info.username,
+	    s->info.remaddr);
     
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )
