@@ -62,12 +62,15 @@ class WvLink
 public:
     void *data;
     WvLink *next;
+    char *id;
     unsigned auto_free : 1;
     
-    WvLink(void *_data, bool _auto_free)
-        { data = _data; next = NULL; auto_free = (unsigned)_auto_free; }
+    WvLink(void *_data, bool _auto_free, char *_id = NULL)
+        { data = _data; next = NULL; auto_free = (unsigned)_auto_free; 
+	    id = _id; }
     
-    WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _auto_free);
+    WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _auto_free,
+	   char *_id = NULL);
 
     void unlink(WvLink *prev)
     {
@@ -140,14 +143,15 @@ public: 						\
 	} 						\
     }							\
 							\
-    void add_after(WvLink *after, _type_ *data, bool auto_free)		\
-        { (void)new WvLink((void *)data, after, tail, auto_free); }	\
+    void add_after(WvLink *after, _type_ *data, bool auto_free, \
+			char *id = NULL )		\
+        { (void)new WvLink((void *)data, after, tail, auto_free, id); }	\
 							\
-    void append(_type_ *data, bool auto_free)		\
-	{ add_after(tail, data, auto_free); }		\
+    void append(_type_ *data, bool auto_free, char *id = NULL) \
+	{ add_after(tail, data, auto_free, id); }	\
 							\
-    void prepend(_type_ *data, bool auto_free)		\
-	{ add_after(&head, data, auto_free); }		\
+    void prepend(_type_ *data, bool auto_free, char *id = NULL) \
+	{ add_after(&head, data, auto_free, id); }	\
 							\
     void unlink(_type_ *data)				\
         { Iter i(*this); while (i.find(data)) i.unlink(); }\
