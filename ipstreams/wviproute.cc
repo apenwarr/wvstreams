@@ -88,7 +88,7 @@ static char *next_col(char *str)
 /////////////////////////////////////// WvIPRouteList
 
 
-WvIPRouteList::WvIPRouteList() : log("Routing Table")
+WvIPRouteList::WvIPRouteList() : log("Route Table")
 {
     // nothing else to do
 }

@@ -31,6 +31,7 @@ public:
 	// hardware encapsulation
 	Unknown = 0,
 	Loopback,
+	Ethertap,
 	Ethernet,
 	ARCnet,
 	SLIP,

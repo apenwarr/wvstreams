@@ -19,6 +19,7 @@ int WvEncap::extypes[] = {
     0, // Unknown
     ARPHRD_LOOPBACK,
     ARPHRD_ETHER,
+    ARPHRD_ETHER,
     ARPHRD_ARCNET,
     ARPHRD_SLIP,
     ARPHRD_CSLIP,
@@ -34,6 +35,7 @@ char WvEncap::strings[][20] = {
     // hardware encapsulation
     "Unknown",
     "Loopback",
+    "Ethertap",
     "Ethernet",
     "ARCnet",
     "SLIP",
@@ -98,6 +100,7 @@ WvAddr *WvAddr::gen(struct sockaddr *addr)
     case WvEncap::ARCnet:
 	return new WvARCnetAddr(addr);
 	
+    case WvEncap::Ethertap:
     case WvEncap::Ethernet:
 	return new WvEtherAddr(addr);
 
