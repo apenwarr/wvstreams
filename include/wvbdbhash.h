@@ -31,6 +31,13 @@ public:
     
     WvBdbHashBase(WvStringParm dbfile = WvString::null);
     ~WvBdbHashBase();
+
+    /**
+     * Open a new db file.  This will instantly change the contents of the
+     * db, and probably mess up all your iterators.  Best used just aftter
+     * creation.
+     */
+    void opendb(WvStringParm dbfile = WvString::null);
     
     bool isok() const
         { return dbf; }

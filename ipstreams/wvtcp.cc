@@ -130,6 +130,12 @@ void WvTCPConn::low_delay()
 }
 
 
+void WvTCPConn::debug_mode()
+{
+    int value = 0;
+    setsockopt(getfd(), SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+}
+
 void WvTCPConn::do_connect()
 {
     int rwfd = socket(PF_INET, SOCK_STREAM, 0);

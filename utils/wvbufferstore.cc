@@ -795,6 +795,7 @@ bool WvLinkedBufferStore::unlinksubbuffer(WvBufStore *buffer,
 
 size_t WvLinkedBufferStore::used() const
 {
+    assert(!totalused || !list.isempty());
     return totalused;
 }
 
@@ -812,6 +813,7 @@ size_t WvLinkedBufferStore::optgettable() const
 
 const void *WvLinkedBufferStore::get(size_t count)
 {
+    assert(!totalused || !list.isempty());
     if (count == 0)
         return NULL;
     totalused -= count;
@@ -843,10 +845,12 @@ const void *WvLinkedBufferStore::get(size_t count)
 
 void WvLinkedBufferStore::unget(size_t count)
 {
+    assert(!totalused || !list.isempty());
     if (count == 0)
         return;
-    assert(! list.isempty() || count > maxungettable ||
-        !"attempted to unget() more than ungettable()");
+    assert(count > 0);
+    assert(!list.isempty());
+    assert(count <= maxungettable);
     totalused += count;
     maxungettable -= count;
     list.first()->unget(count);
@@ -855,6 +859,7 @@ void WvLinkedBufferStore::unget(size_t count)
 
 size_t WvLinkedBufferStore::ungettable() const
 {
+    assert(!totalused || !list.isempty());
     if (list.isempty())
         return 0;
     size_t avail = list.first()->ungettable();
