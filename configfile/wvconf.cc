@@ -93,6 +93,7 @@ int WvConf::parse_wvconf_request(char *request, char *&section,
 	*value++ = 0;
 	value = trim_string(value);
     }
+    
     //printf("section: %s\nentry: %s\n", section, entry);
     section = trim_string(section);
     entry = trim_string(entry);
@@ -244,14 +245,14 @@ const char *WvConf::get(WvStringParm section, WvStringParm entry,
 // Gets an entry, given a string in the form [section]entry=value.  Returns
 // the value or NULL if not found.  The parameter parse_error is set to the
 // return value of parse_wvconf_request.
-const char *WvConf::getraw(WvString wvconfstr, int &parse_error)
+WvString WvConf::getraw(WvString wvconfstr, int &parse_error)
 {
     char *section, *entry, *value;
     parse_error = parse_wvconf_request(wvconfstr.edit(),
 				       section, entry, value);
 
     if (parse_error)
-	return NULL;
+	return WvString();
 
     return get(section, entry, value);
 }
@@ -341,12 +342,13 @@ void WvConf::set(WvStringParm section, WvStringParm entry,
 // error code as defined in parse_wvconf_request.  The value parameter is
 // also set to the value (useful in rcommand, when we display the value after
 // it has been set).
-void WvConf::setraw(WvString wvconfstr, char *&value, int &parse_error)
+void WvConf::setraw(WvString wvconfstr, const char *&xvalue, int &parse_error)
 {
-    char *section, *entry;
+    char *section, *entry, *value;
     parse_error = parse_wvconf_request(wvconfstr.edit(),
 				       section, entry, value);
     set(section, entry, value);
+    xvalue = get(section, entry, value);
 }
 
 

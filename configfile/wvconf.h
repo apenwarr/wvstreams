@@ -109,7 +109,7 @@ public:
     
     const char *get(WvStringParm section, WvStringParm entry,
 		    const char *def_val = NULL);
-    const char *getraw(WvString wvconfstr, int &parse_error);
+    WvString getraw(WvString wvconfstr, int &parse_error);
 
     int fuzzy_getint(WvStringList &sect, WvStringParm entry,
 		  int def_val);
@@ -124,7 +124,7 @@ public:
     void setint(WvStringParm section, WvStringParm entry, int value);
     void set(WvStringParm section, WvStringParm entry,
 	     const char *value);
-    void setraw(WvString wvconfstr, char *&value, int &parse_error);
+    void setraw(WvString wvconfstr, const char *&value, int &parse_error);
     
     void maybesetint(WvStringParm section, WvStringParm entry,
 		     int value);
