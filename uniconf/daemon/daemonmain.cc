@@ -24,9 +24,7 @@ int main(int argc, char **argv)
     signal(SIGINT,  sighandler_die);
     signal(SIGTERM, sighandler_die);
 
-//    WvStreamClone *wclone = new WvStreamClone(wvcon);
     daem = new UniConfDaemon();
-//    daem->addstream(wclone);
 
     if (argc == 4)
     {

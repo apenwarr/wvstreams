@@ -10,72 +10,6 @@
 #include "uniconfdaemon.h"
 
 const WvString UniConfDaemon::DEFAULT_CONFIG_FILE = "uniconf.ini";
-//const int UniConfDaemon::OPCODE_LENGTH = 4;
-
-// Daemon Connection
-/*UniConfDConn::UniConfDConn(WvStream *s, UniConfDaemon *parent) : UniConfConn(s), owner(parent)
-{
-    uses_continue_select = true;
-}
-
-UniConfDConn::~UniConfDConn()
-{
-    // end our continue_select here
-    terminate_continue_select();
-    close();
-}
-
-void UniConfDConn::execute()
-{
-    UniConfConn::execute();
-    
-    char opcode[UniConfConn::OPCODE_LENGTH+1];
-    long stringsize = -1;
-
-    // FIXME: The do read function returns false if the stream craps out on us
-    // in the middle of a read attempt.  Needed to prevent the daemon from
-    // locking up if a stream dies.  I have a gut feeling there's a better
-    // way to do this, but I'm not sure how yet.
-    if (!doread(opcode, UniConfConn::OPCODE_LENGTH, sizeof(stringsize))
-     || !doread(&stringsize))
-        return;
-    char key[stringsize+1];
-    if (!doread(key, stringsize, UniConfConn::OPCODE_LENGTH))
-        return;
-    key[stringsize] = '\0';
-
-    if (!strcmp(opcode, "GETK"))
-    {
-        // Ok get and return the values....
-        // SOMEWHERE in here though, we need to set the notify data.
-        WvString value("%s",owner->mainconf[key]);
-        long size = value.len();
-        long tsize = htonl(size);
-        wvcon->print("Value:  %s\n", value);
-        //print("Value: %s\n", value);
-        
-        //print("RETN%s%s", strlen(owner->mainconf[key]));
-        write("RETN");
-        write(&tsize, sizeof(size));
-        write(value, size);
-        queuemin(UniConfConn::OPCODE_LENGTH);
-    }
-    else if (!strcmp(opcode, "SETK"))
-    {
-        // get the value to set [key] to.
-        queuemin(sizeof(stringsize));
-        if (!doread(&stringsize))
-            return;
-
-        char value[stringsize+1];
-
-        if (!doread(value, stringsize, UniConfConn::OPCODE_LENGTH))
-            return;
-        owner->mainconf[key] = value;
-    }
-}
-*/
-
 // Daemon
 
 UniConfDaemon::UniConfDaemon() : 
@@ -86,7 +20,7 @@ UniConfDaemon::UniConfDaemon() :
 
 UniConfDaemon::~UniConfDaemon()
 {
-    delete l;
+    if (l) delete l;
 }
 
 // Look after the actual mounting, where mode indicates the type of config file
@@ -94,7 +28,7 @@ UniConfDaemon::~UniConfDaemon()
 // where we want to mount the contents into the config tree.
 UniConf *UniConfDaemon::domount(WvString mode, WvString file, WvString mp)
 {
-    wvcon->print("Attempting to mount the %s file %s to point:  %s.\n",
+    log(WvLog::Debug2, "Attempting to mount the %s file %s to point:  %s.\n",
             mode, file, mp);
     UniConf *mounted = &mainconf[mp];
     if (mode == "ini")
@@ -121,35 +55,54 @@ void UniConfDaemon::handlerequest(WvStream &s, void *userdata)
     }
 
     WvString *line = wvtcl_getword(*buf, "\n");
+    WvString *cmd = NULL;
+    WvString *key = NULL;
     while (line)
     {
-        WvBuffer foo;
-        foo.put(*line);
+        WvBuffer fromline;
+        fromline.put(*line);
 
         // get the command
-        WvString *cmd = wvtcl_getword(foo);
-        WvString *key = wvtcl_getword(foo);
-        while(cmd && key)
+        if (!cmd)
+            cmd = wvtcl_getword(fromline);
+        while(cmd)
         {
             // check the command
+            if (*cmd == "quit")
+            {
+                delete cmd, key;
+                cmd = key = 0;
+                s.close();
+                return;
+            }
+            else
+                key = wvtcl_getword(fromline);
+
+            if (!key)
+                break;
+
             if (*cmd == "get") // return the specified value
             {
                 WvString response("RETN %s %s\n", wvtcl_escape(*key), wvtcl_escape(mainconf[*key]));
                 s.print(response);
+                delete cmd, key;
+                cmd = key = 0;
             }
             else if (*cmd == "set") // set the specified value
             {
-                WvString *newvalue = wvtcl_getword(foo);
+                WvString *newvalue = wvtcl_getword(fromline);
                 mainconf[*key] = *newvalue;
+                delete cmd, key;
+                cmd = key = 0;
             }
             else
             {
-                wvcon->print("Received unrecognized command:  %s and key: %s.\n", *cmd, *key);
+                log(WvLog::Debug2, "Received unrecognized command:  %s and key: %s.\n", *cmd, *key);
             }
 
             // get a new command & key
-            cmd = wvtcl_getword(foo);
-            key = wvtcl_getword(foo);
+            cmd = wvtcl_getword(fromline);
+            key = wvtcl_getword(fromline);
             
             // We don't need to unget here, since if we broke on a \n,
             // that means that we were at the end of a word, and since all
@@ -173,41 +126,50 @@ void UniConfDaemon::addstream(WvStream *s)
 // Daemon looks after running
 void UniConfDaemon::run()
 {
-    WvBuffer *newbuf = new WvBuffer; // new
+    WvBuffer *newbuf = new WvBuffer; 
     // Mount our initial config file.
+    // FIXME:  When we decide to mount configurations from various locations,
+    // the domount command can be used, combined with data read in from the
+    // configuration file which tells us where to find information.
     domount("ini", DEFAULT_CONFIG_FILE, "/");
-//    mainconf.dump(*wvcon);
-    // Now listen on our unix socket.
-    // but first, make sure that everything was cleaned up nicely before.
+
+    // Make sure that everything was cleaned up nicely before.
     system("mkdir -p /tmp/uniconf");
     system("rm -fr /tmp/uniconf/uniconfsocket");
+    
+    // Now listen on our unix socket.
     WvUnixListener *list = new WvUnixListener(WvUnixAddr("/tmp/uniconf/uniconfsocket"), 0755);
     if (!list->isok())
     {
-        wvcon->print("ERROR:  WvUnixListener could not be created.\n");
-        wvcon->print("Error Reason:  %s\n", list->errstr());
+        log(WvLog::Error, "ERROR:  WvUnixListener could not be created.\n");
+        log(WvLog::Error, "Error Reason:  %s\n", list->errstr());
         exit(2);
     }
     list->auto_accept(l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
-    l->append(list, true); // new
+    l->append(list, true); 
 
     // Now listen on the correct TCP port
     WvTCPListener *tlist = new WvTCPListener(WvIPPortAddr("0.0.0.0", 4111));
     if (!tlist->isok())
     {
-        wvcon->print("ERROR:  WvTCPListener could not be created.\n");
-        wvcon->print("Error Reason:  %s\n", tlist->errstr());
+        log(WvLog::Error,"ERROR:  WvTCPListener could not be created.\n");
+        log(WvLog::Error,"Error Reason:  %s\n", tlist->errstr());
         exit(2);
     }
     tlist->auto_accept(l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
     l->append(tlist, true);
-    wvcon->print("RUNNING\n");
+
+    // Now run the actual daemon.
+    log(WvLog::Debug2, "Uniconf Daemon starting.\n");
     while (!want_to_die)
     {
         if(l->select(250, true, false))
             l->callback();
     }
+
+    // Make sure all of our listeners are closed
     list->close();
     tlist->close();
-    if (l) delete l;
+    // Save any changes
+    mainconf.save();
 }

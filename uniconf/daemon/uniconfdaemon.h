@@ -27,7 +27,6 @@ public:
     void run();
     void addstream(WvStream *s);
 
-//    static const int OPCODE_LENGTH;
     bool want_to_die;
     WvLog log;
     UniConf mainconf;
@@ -36,19 +35,9 @@ protected:
 private:
     WvStreamList *l;
     static const WvString DEFAULT_CONFIG_FILE;
+    // For when we want to link daemons together, we can
+    // add a tcp connection to our parent here, and pass it as a parameter
+    // to main.
 };
 
-/*class UniConfDConn : public UniConfConn
-{
-public:
-    UniConfDConn(WvStream *s, UniConfDaemon *owner);
-    ~UniConfDConn();
-//    bool doread(char *buffer, long length, int nextsize=0);
-//    bool doread(long *size, int nextsize=0);
-protected:
-    virtual void execute();
-private:
-    UniConfDaemon *owner;
-};
-*/
 #endif
