@@ -6,12 +6,17 @@
 #include <stdio.h>
 #include <io.h>
 
+#if WIN32
+// MS Visual C++ doesn't support varags preproc macros
+# define DPRINTF
+#else
 #if 0
 # define DPRINTF(x, args...) do { \
         printf(x, ## args); fflush(stdout); \
     } while (0)
 #else
 # define DPRINTF(x, args...) do { } while(0)
+#endif
 #endif
 
 // these versions of close/read/write try to work with both sockets and
