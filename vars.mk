@@ -81,6 +81,10 @@ ifneq ("$(enable_exceptions)", "yes")
 CXXFLAGS+=-fno-exceptions
 endif
 
+ifeq ("$(enable_efence)", "yes")
+LDFLAGS+=-lefence
+endif
+
 RELEASE?=$(PACKAGE_VERSION)
 
 include $(call doinclude,vars.mk)

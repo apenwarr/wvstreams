@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.3 2002/09/10 16:39:56 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.4 2002/10/04 05:51:52 jbrown Exp $)
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
 
@@ -34,6 +34,11 @@ AC_ARG_ENABLE(exceptions,
               AC_HELP_STRING([--enable-exceptions],
                              [C++ exceptions (compiler)]))
 AC_SUBST(enable_exceptions)
+
+AC_ARG_ENABLE(efence,
+              AC_HELP_STRING([--enable-efence],
+                             [electric fence]))
+AC_SUBST(enable_efence)
 
 AC_PROG_CXX
 AC_PROG_CC
