@@ -10,9 +10,10 @@
 #include <signal.h>
 
 
-bool want_to_die = false;
+static WvLog log("http2test", WvLog::Info);
+static bool want_to_die = false;
 
-void sighandler_die(int signum)
+static void sighandler_die(int signum)
 {
     fprintf(stderr, "Caught signal %d; cleaning up and terminating.\n",
 	    signum);
@@ -21,9 +22,15 @@ void sighandler_die(int signum)
 }
 
 
+static void close_callback(WvStream& s, void* userdata)
+{
+    if (!s.isok())
+	log(WvLog::Error, "%s", s.geterr());
+}
+
+
 int main(int argc, char **argv)
 {
-    WvLog log("http2test", WvLog::Info);
     WvStreamList l;
     WvHttpPool p;
     WvString headers("");
@@ -64,6 +71,7 @@ int main(int argc, char **argv)
 					   O_CREAT|O_WRONLY|O_TRUNC);
 		    assert(!f->readable);
 		    s->autoforward(*f);
+		    s->setclosecallback(close_callback, NULL);
 		    l.append(s, true);
 		    l.append(f, true);
 		}
