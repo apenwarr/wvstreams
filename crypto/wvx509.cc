@@ -338,6 +338,9 @@ void WvX509Mgr::create_selfsigned()
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 
+// Don't set this at all (since it appears OpenSSL has problems
+// encoding it properly if you do!! Stupid, broken programmers...)
+// FIXME:
 //    ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,"CA:FALSE");
 //    X509_add_ext(cert, ex, -1);
 //    X509_EXTENSION_free(ex);
@@ -417,6 +420,15 @@ WvString WvX509Mgr::certreq()
     name = X509_REQ_get_subject_name(certreq);   
     set_name_entry(name, dname);
     X509_REQ_set_subject_name(certreq, name);
+
+    if (!X509_REQ_sign(certreq, pk, EVP_sha1()))
+    {
+	seterr("Could not self sign the request");
+	X509_REQ_free(certreq);
+	EVP_PKEY_free(pk);
+        return WvString("");
+    }
+
 
     // Horribly involuted hack to get around the fact that the
     // OpenSSL people are too braindead to have a PEM_write function
