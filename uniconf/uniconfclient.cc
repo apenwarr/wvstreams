@@ -18,11 +18,16 @@ UniConfClient::UniConfClient(UniConf *_top, UniConfConnFactory *_fctry) :
 
 UniConfClient::~UniConfClient()
 {
-    if (conn->isok())
+    if (conn && conn->isok())
     {
         conn->print("quit\n");   
+        delete conn;
     }
-    delete conn;
+}
+
+bool UniConfClient::isok()
+{
+    return (conn && conn->isok());
 }
 
 void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
@@ -68,7 +73,7 @@ void UniConfClient::save()
     {
         log(WvLog::Debug2, "Connection was unuseable.  Creating another.\n");
         conn = fctry->open();
-        if (!conn->isok()) // we're borked
+        if (!conn || !conn->isok()) // we're borked
         {
             log(WvLog::Error, "Unable to create new connection.  Save aborted.\n");
             return;

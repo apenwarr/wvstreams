@@ -40,7 +40,7 @@ public:
     virtual void enumerate_subtrees(UniConf *conf);
     virtual void update(UniConf *&h);
     virtual bool deleteable();
-    virtual bool isok() { return conn->isok(); }
+    virtual bool isok();
     virtual void save();
 protected:
     void execute();
