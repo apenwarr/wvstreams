@@ -33,19 +33,20 @@ UUID_MAP_BEGIN(IWvStream)
   UUID_MAP_END
 
 WvStream::WvStream()
-	: callfunc(NULL), closecb_func(NULL)
 {
     wvstream_execute_called = false;
     userdata = closecb_data = NULL;
     errnum = 0;
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
+    want_to_flush = true;
     is_auto_flush = true;
     alarm_was_ticking = false;
     force.readable = true;
     force.writable = force.isexception = false;
     read_requires_writable = write_requires_readable = NULL;
     running_callback = false;
+    want_nowrite = false;
     queue_min = 0;
     autoclose_time = 0;
     alarm_time.tv_sec = alarm_time.tv_usec = 0;
@@ -98,7 +99,7 @@ void WvStream::close()
     if (!! closecb_func)
     {
         WvStreamCallback cb = closecb_func;
-        closecb_func = NULL; // ensure callback is only called once
+        closecb_func = 0; // ensure callback is only called once
         cb(*this, closecb_data);
     }
 }
@@ -113,7 +114,7 @@ void WvStream::autoforward(WvStream &s)
 
 void WvStream::noautoforward()
 {
-    setcallback(NULL, NULL);
+    setcallback(0, NULL);
     read_requires_writable = NULL;
 }
 
@@ -271,6 +272,19 @@ size_t WvStream::read(WvBuf &outbuf, size_t count)
 }
 
 
+size_t WvStream::continue_read(time_t wait_msec, WvBuf &outbuf, size_t count)
+{
+    // for now, just wrap the older read function
+    size_t free = outbuf.free();
+    if (count > free)
+        count = free;
+    unsigned char *buf = outbuf.alloc(count);
+    size_t len = continue_read(wait_msec, buf, count);
+    outbuf.unalloc(count - len);
+    return len;
+}
+
+
 size_t WvStream::write(WvBuf &inbuf, size_t count)
 {
     // for now, just wrap the older write function
@@ -319,12 +333,45 @@ size_t WvStream::read(void *buf, size_t count)
 }
 
 
+size_t WvStream::continue_read(time_t wait_msec, void *buf, size_t count)
+{
+    assert(uses_continue_select);
+
+    if (!count)
+        return 0;
+
+    if (wait_msec >= 0)
+        alarm(wait_msec);
+
+    queuemin(count);
+
+    int got = 0;
+
+    while (isok())
+    {
+        if ((got = read(buf, count)))
+            break;
+        if (alarm_was_ticking) 
+            break;
+
+        continue_select(-1);
+    }
+
+    if (wait_msec >= 0)
+        alarm(-1);
+
+    queuemin(0);
+    
+    return got;
+}
+
+
 size_t WvStream::write(const void *buf, size_t count)
 {
     if (!isok() || !buf || !count) return 0;
     
     size_t wrote = 0;
-    if (! outbuf_delayed_flush && ! outbuf.used())
+    if (!outbuf_delayed_flush && !outbuf.used())
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
@@ -341,19 +388,29 @@ size_t WvStream::write(const void *buf, size_t count)
         outbuf.put(buf, count);
         wrote += count;
     }
-    if (! outbuf_delayed_flush)
+
+    if (should_flush())
     {
         if (is_auto_flush)
             flush(0);
-        else
+        else 
             flush_outbuf(0);
     }
+
     return wrote;
 }
 
 
-char *WvStream::getline(time_t wait_msec, char separator,
-    int readahead)
+void WvStream::nowrite()
+{
+    if (getwfd() < 0)
+        return;
+
+    want_nowrite = true;
+}
+
+
+char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 {
     struct timeval timeout_time;
     if (wait_msec > 0)
@@ -369,17 +426,19 @@ char *WvStream::getline(time_t wait_msec, char separator,
         size_t i = inbuf.strchr(separator);
         if (i > 0)
         {
-            // the following cast is of dubious quality...
-            char *buf = const_cast<char*>((const char*)inbuf.get(i));
-            buf[i - 1] = '\0';
-            return buf;
+	    char *eol = (char *)inbuf.mutablepeek(i - 1, 1);
+	    assert(eol);
+	    *eol = 0;
+            return (char *)inbuf.get(i);
         }
-        else if (! isok())    // uh oh, stream is in trouble.
+        else if (!isok())    // uh oh, stream is in trouble.
         {
             if (inbuf.used())
             {
                 // handle "EOF without newline" condition
-                inbuf.alloc(1)[0] = '\0'; // null-terminate it
+		// FIXME: it's very silly that buffers can't return editable
+		// char* arrays.
+                inbuf.alloc(1)[0] = 0; // null-terminate it
                 return const_cast<char*>(
                     (const char*)inbuf.get(inbuf.used()));
             }
@@ -404,7 +463,7 @@ char *WvStream::getline(time_t wait_msec, char separator,
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
-        if (! isok())
+        if (!isok())
             break;
 
         if (hasdata)
@@ -416,7 +475,7 @@ char *WvStream::getline(time_t wait_msec, char separator,
             hasdata = inbuf.used() >= needed; // enough?
         }
 
-        if (! hasdata && wait_msec == 0)
+        if (!hasdata && wait_msec == 0)
             break; // handle timeout
     }
     // we timed out or had a socket error
@@ -432,17 +491,21 @@ void WvStream::drain()
 }
 
 
-void WvStream::flush(time_t msec_timeout)
+bool WvStream::flush(time_t msec_timeout)
 {
-    // flush any other internal buffers a stream might have
-    flush_internal(msec_timeout);
-
-    // flush outbuf
-    flush_outbuf(msec_timeout);
+    want_to_flush = true;
+    return flush_internal(msec_timeout) // any other internal buffers
+	&& flush_outbuf(msec_timeout);  // our own outbuf
 }
 
 
-void WvStream::flush_outbuf(time_t msec_timeout)
+bool WvStream::should_flush()
+{
+    return want_to_flush;
+}
+
+
+bool WvStream::flush_outbuf(time_t msec_timeout)
 {
     // flush outbuf
     while (isok() && outbuf.used())
@@ -461,27 +524,30 @@ void WvStream::flush_outbuf(time_t msec_timeout)
         }
     }
 
-    if (isok())
+    // handle autoclose
+    if (isok() && autoclose_time)
     {
-        // handle autoclose
-        if (autoclose_time)
-        {
-            time_t now = time(NULL);
-            TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
-                    (unsigned int)this, now - autoclose_time, outbuf.used());
-            if (!outbuf.used() || now > autoclose_time)
-            {
-                autoclose_time = 0; // avoid infinite recursion!
-                close();
-            }
-        }
+	time_t now = time(NULL);
+	TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
+	      (unsigned int)this, now - autoclose_time, outbuf.used());
+	if ((flush_internal(0) && !outbuf.used()) || now > autoclose_time)
+	{
+	    autoclose_time = 0; // avoid infinite recursion!
+	    close();
+	}
     }
+
+    if (!outbuf.used() && outbuf_delayed_flush)
+        want_to_flush = false;
+
+    return !outbuf.used();
 }
 
 
-void WvStream::flush_internal(time_t msec_timeout)
+bool WvStream::flush_internal(time_t msec_timeout)
 {
     // once outbuf emptied, that's it for most streams
+    return true;
 }
 
 
@@ -590,9 +656,14 @@ int WvStream::_do_select(SelectInfo &si)
     int sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
         si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
 
-    // handle errors
-    if (sel < 0 &&
-        errno != EAGAIN && errno != EINTR && errno != ENOBUFS)
+    // handle errors.
+    //   EAGAIN and EINTR don't matter because they're totally normal.
+    //   ENOBUFS is hopefully transient.
+    //   EBADF is kind of gross and might imply that something is wrong,
+    //      but it happens sometimes...
+    if (sel < 0 
+      && errno != EAGAIN && errno != EINTR && errno != ENOBUFS
+      && errno != EBADF)
         seterr(errno);
     return sel;
 }
@@ -622,6 +693,14 @@ bool WvStream::_select(time_t msec_timeout,
 				  readable, writable, isexcept, forceable);
     
     if (!isok()) return false;
+    
+    // the eternal question: if 'sure' is true already, do we need to do the
+    // rest of this stuff?  If we do, it might increase fairness a bit, but
+    // it encourages select()ing when we know something fishy has happened -
+    // when a stream is !isok() in a list, for example, pre_select() returns
+    // true.  If that's the case, our SelectInfo structure might not be
+    // quite right (eg. it might be selecting on invalid fds).  That doesn't
+    // sound *too* bad, so let's go for the fairness.
 
     int sel = _do_select(si);
     if (sel > 0)
@@ -690,6 +769,7 @@ bool WvStream::continue_select(time_t msec_timeout)
     // msec_delay was zero.  Note that running select() here isn't
     // inefficient, because if the alarm was expired then pre_select()
     // returned true anyway and short-circuited the previous select().
+    TRACE("hello-%p\n", this);
     return !alarm_was_ticking || select(0);
 }
 

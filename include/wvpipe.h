@@ -78,7 +78,7 @@ public:
 
     /** kill the child process and close the stream. */
     virtual ~WvPipe();
-    
+
     /**
      * send the child a signal
      * (signal names are defined in signal.h)
@@ -99,10 +99,13 @@ public:
      *   if child_killed()==true, the signal that killed the child.
      *   if child_killed()==false, the return code of the program.
      */
-    int exit_status() const;
-    
+    int exit_status();
+
     // returns pid
     int getpid() const { return proc.pid; };
+
+    // callback to ignore everything.  see comment in wvpipe.cc.
+    static void ignore_read(WvStream& s, void *userdata);
 };
 
 #endif // __WVPIPE_H

@@ -4,8 +4,8 @@
  * 
  * Defines a UniConfGen that manages a tree of UniConfGen instances.
  */
-#ifndef __UNICONFMOUNTTREE_H
-#define __UNICONFMOUNTTREE_H
+#ifndef __UNIMOUNTTREEGEN_H
+#define __UNIMOUNTTREEGEN_H
 
 #include "uniconfgen.h"
 #include "uniconftree.h"
@@ -118,6 +118,9 @@ public:
 /** The UniMountTree implementation realized as a UniConfGen. */
 class UniMountTreeGen : public UniConfGen
 {
+    class KeyIter;
+    friend class KeyIter;
+    
     UniMountTree *mounts;
 
     /** undefined. */
@@ -178,33 +181,12 @@ public:
     
     /***** Overridden members *****/
     
-    friend class Iter : public UniConfAbstractIter
-    {
-        UniMountTreeGen *xroot;
-        UniConfKey xkey;
-
-        UniMountTree::GenIter genit;
-        WvStringTable hack; // FIXME: ugly hack
-        WvStringTable::Iter hackit;
-
-    public:
-        Iter(UniMountTreeGen &root, const UniConfKey &key);
-
-        virtual void rewind();
-        virtual bool next();
-        
-        virtual UniConfKey key() const;
-    };
-    
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual WvString get(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
-    virtual bool refresh(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
-    virtual bool commit(const UniConfKey &key = UniConfKey::EMPTY,
-        UniConfDepth::Type depth = UniConfDepth::INFINITE);
+    virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual bool refresh();
+    virtual void commit();
     virtual Iter *iterator(const UniConfKey &key);
 
 private:
@@ -215,21 +197,31 @@ private:
      */
     void prune(UniMountTree *node);
 
-    typedef bool (*GenFunc)(UniConfGen*, const UniConfKey&,
-        UniConfDepth::Type);
-    bool dorecursive(GenFunc func,
-        const UniConfKey &key, UniConfDepth::Type depth);
-    bool dorecursivehelper(GenFunc func,
-        UniMountTree *node, UniConfDepth::Type depth);
-
-    static bool genrefreshfunc(UniConfGen *gen,
-        const UniConfKey &key, UniConfDepth::Type depth);
-    static bool gencommitfunc(UniConfGen *gen,
-        const UniConfKey &key, UniConfDepth::Type depth);
-
     /** Called by generators when a key changes. */
-    void gencallback(const UniConfGen &gen, const UniConfKey &key,
-        UniConfDepth::Type depth, void *userdata);
+    void gencallback(const UniConfKey &key, WvStringParm value, void *userdata);
 };
 
-#endif //__UNICONFMOUNTTREE_H
+
+/**
+ * An iterator over the keys in a tree of mounted generators.
+ */
+class UniMountTreeGen::KeyIter : public UniConfGen::Iter
+{
+    UniMountTreeGen *xroot;
+    UniConfKey xkey;
+
+    UniMountTree::GenIter genit;
+    WvStringTable hack; // FIXME: ugly hack
+    WvStringTable::Iter hackit;
+
+public:
+    KeyIter(UniMountTreeGen &root, const UniConfKey &key);
+
+    /***** Overridden members *****/
+    
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
+};
+
+#endif //__UNIMOUNTTREEGEN_H

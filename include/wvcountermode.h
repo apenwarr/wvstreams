@@ -47,7 +47,7 @@ public:
     virtual void incrcounter();
     
 private:
-    WvConstInPlaceBuffer counterbuf;
+    WvConstInPlaceBuf counterbuf;
 
 protected:
     unsigned char *counter; // auto-incrementing counter

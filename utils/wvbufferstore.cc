@@ -405,9 +405,9 @@ void *WvInPlaceBufStore::mutablepeek(int offset, size_t count)
 
 
 
-/***** WvConstInPlaceBufferStore *****/
+/***** WvConstInPlaceBufStore *****/
 
-WvConstInPlaceBufferStore::WvConstInPlaceBufferStore(int _granularity,
+WvConstInPlaceBufStore::WvConstInPlaceBufStore(int _granularity,
     const void *_data, size_t _avail) :
     WvReadOnlyBufferStoreMixin<WvBufStore>(_granularity), data(NULL)
 {
@@ -415,7 +415,7 @@ WvConstInPlaceBufferStore::WvConstInPlaceBufferStore(int _granularity,
 }
 
 
-void WvConstInPlaceBufferStore::reset(const void *_data, size_t _avail)
+void WvConstInPlaceBufStore::reset(const void *_data, size_t _avail)
 {
     assert(_data != NULL || _avail == 0);
     data = _data;
@@ -423,20 +423,20 @@ void WvConstInPlaceBufferStore::reset(const void *_data, size_t _avail)
 }
 
 
-size_t WvConstInPlaceBufferStore::used() const
+size_t WvConstInPlaceBufStore::used() const
 {
     return avail - readidx;
 }
 
 
-void WvConstInPlaceBufferStore::setavail(size_t _avail)
+void WvConstInPlaceBufStore::setavail(size_t _avail)
 {
     avail = _avail;
     readidx = 0;
 }
 
 
-const void *WvConstInPlaceBufferStore::get(size_t count)
+const void *WvConstInPlaceBufStore::get(size_t count)
 {
     assert(count <= avail - readidx ||
         ! "attempted to get() more than used()");
@@ -446,7 +446,7 @@ const void *WvConstInPlaceBufferStore::get(size_t count)
 }
 
 
-void WvConstInPlaceBufferStore::unget(size_t count)
+void WvConstInPlaceBufStore::unget(size_t count)
 {
     assert(count <= readidx ||
         ! "attempted to unget() more than ungettable()");
@@ -454,13 +454,13 @@ void WvConstInPlaceBufferStore::unget(size_t count)
 }
 
 
-size_t WvConstInPlaceBufferStore::ungettable() const
+size_t WvConstInPlaceBufStore::ungettable() const
 {
     return readidx;
 }
 
 
-const void *WvConstInPlaceBufferStore::peek(int offset, size_t count)
+const void *WvConstInPlaceBufStore::peek(int offset, size_t count)
 {
     if (count == 0)
         return NULL;
@@ -472,7 +472,7 @@ const void *WvConstInPlaceBufferStore::peek(int offset, size_t count)
 }
 
 
-void WvConstInPlaceBufferStore::zap()
+void WvConstInPlaceBufStore::zap()
 {
     readidx = avail = 0;
 }

@@ -131,6 +131,7 @@ void WvQtStreamClone::post_poll()
     {
         pending_callback = false;
         callback();
+        if (globalstream) globalstream->callback();
     }
 }
 

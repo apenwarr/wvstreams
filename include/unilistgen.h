@@ -11,6 +11,7 @@
 #define __UNICONFLISTGEN_H
 
 #include "uniconfgen.h"
+#include "wvscatterhash.h"
 
 /*
  * Accepts a list of UniConf generators, and stacks them, treating them as one
@@ -37,15 +38,33 @@ public:
 
     /***** Overridden members *****/
 
-    virtual bool commit(const UniConfKey &key, UniConfDepth::Type depth); 
-    virtual bool refresh(const UniConfKey &key, UniConfDepth::Type depth);
+    virtual void commit(); 
+    virtual bool refresh();
     virtual WvString get(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual bool isok();
     virtual Iter *iterator(const UniConfKey &key);
+
+    class IterIter : public UniConfGen::Iter
+    {
+    protected:
+        DeclareWvScatterTable(UniConfKey);
+        DeclareWvList2(IterList, UniConfGen::Iter);
+
+        IterList l;
+        IterList::Iter *i;
+        UniConfKeyTable d;
+
+    public:
+        IterIter(UniConfGenList::Iter &geniter, const UniConfKey &key);
+        virtual ~IterIter() { delete i; }
+
+        virtual void rewind();
+        virtual bool next();
+        virtual UniConfKey key() const;
+    };
 };
 
 

@@ -80,6 +80,9 @@ private:
      * initialize itself.
      */
     volatile bool sslconnected;
+
+    /** Set the connected flag and flush the unconnected_buf */
+    void setconnected(bool conn);
     
     /** Keep track of whether we are a client or a server */
     bool is_server;
@@ -104,6 +107,9 @@ private:
     /** Similar nastiness happens with SSL_read() */
     WvInPlaceBuf read_bouncebuf;
     bool read_pending;
+
+    /** Need to buffer writes until sslconnected */
+    WvDynBuf unconnected_buf;
 };
 
 #endif // __WVSSLSTREAM_H

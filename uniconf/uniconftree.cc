@@ -129,7 +129,7 @@ void UniConfTreeBase::link(UniConfTreeBase *child)
     int slot = bsearch(child->key(), found);
     assert (!found);
     if (!xchildren)
-        xchildren = new Vector(true);
+        xchildren = new Container(true);
     xchildren->insert(slot, child);
 }
 
@@ -179,7 +179,7 @@ void UniConfTreeBase::_recursivecompare(
     // don't bother comparing subtree if this returns false
     if (! comparator(a, b, userdata))
         return;
-
+    
     // begin iteration sequence
     Iter ait(*const_cast<UniConfTreeBase*>(a));
     if (a != NULL)
@@ -187,6 +187,8 @@ void UniConfTreeBase::_recursivecompare(
         ait.rewind();
         if (ait.next())
             a = ait.ptr();
+	else
+	    a = NULL;
     }
     Iter bit(*const_cast<UniConfTreeBase*>(b));
     if (b != NULL)
@@ -194,6 +196,8 @@ void UniConfTreeBase::_recursivecompare(
         bit.rewind();
         if (bit.next())
             b = bit.ptr();
+	else
+	    b = NULL;
     }
 
     // loop
@@ -207,6 +211,7 @@ void UniConfTreeBase::_recursivecompare(
         }
         else if (order == 0)
         {
+	    // keys are equal
             _recursivecompare(a, b, comparator, userdata);
             a = ait.next() ? ait.ptr() : NULL;
             b = bit.next() ? bit.ptr() : NULL;

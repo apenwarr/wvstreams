@@ -9,7 +9,6 @@
 
 #if 0
 
-#include "uniconfiter.h"
 #include "unievents.h"
 
 class WvConfigEntryEmu;

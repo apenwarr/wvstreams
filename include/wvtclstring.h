@@ -74,7 +74,7 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties = WVTCL_NASTIES,
 
 // Get a single tcl word from an input buffer, and return the rest of the
 // buffer untouched.  If no word can be created from the buffer, return
-// a null string and reset the buffer to it's original state.
+// a null string and reset the buffer to its original state.
 WvString wvtcl_getword(WvBuf &buf, const char *splitchars = WVTCL_SPLITCHARS,
     bool do_unescape = true);
 
@@ -90,7 +90,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars = WVTCL_SPLITCHARS,
 // That is, '"\ "' becomes ' ', whereas '{\ }' becomes '\ ' (ie. the backslash
 // wouldn't be removed).
 // 
-// Zero-length elements must be represented by 
+// Zero-length elements must be represented by {}
 // 
 void wvtcl_decode(WvStringList &l, WvStringParm _s,
     const char *splitchars = WVTCL_SPLITCHARS, bool do_unescape = true);

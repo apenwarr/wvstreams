@@ -12,6 +12,8 @@
 WvStringBuf WvFastString::nullbuf = { 0, 1 };
 const WvFastString WvFastString::null;
 
+const WvString WvString::empty("");
+
 
 // always a handy function
 static inline int _max(int x, int y)
@@ -95,7 +97,10 @@ WvFastString::~WvFastString()
 void WvFastString::unlink()
 { 
     if (buf && ! --buf->links)
+    {
 	free(buf);
+        buf = NULL;
+    }
 }
     
 

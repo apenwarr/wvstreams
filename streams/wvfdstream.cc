@@ -28,14 +28,14 @@ static IWvStream *creator(WvStringParm s, IObject *, void *)
 
 static WvMoniker<IWvStream> reg("fd", creator);
 
-WvFDStream::WvFDStream(int _rwfd) :
-    rfd(_rwfd), wfd(_rwfd)
+WvFDStream::WvFDStream(int _rwfd)
+    : rfd(_rwfd), wfd(_rwfd)
 {
 }
 
 
-WvFDStream::WvFDStream(int _rfd, int _wfd) :
-    rfd(_rfd), wfd(_wfd)
+WvFDStream::WvFDStream(int _rfd, int _wfd)
+    : rfd(_rfd), wfd(_wfd)
 {
 }
 
@@ -49,35 +49,12 @@ WvFDStream::~WvFDStream()
 void WvFDStream::close()
 {
     WvStream::close();
+    //fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
     if (rfd >= 0)
 	::close(rfd);
     if (wfd >= 0 && wfd != rfd)
 	::close(wfd);
     rfd = wfd = -1;
-}
-
-
-void WvFDStream::noread()
-{
-    if (rfd < 0)
-        return;
-    if (rfd != wfd)
-        ::close(rfd);
-    else
-        ::shutdown(rfd, SHUT_RD); // might be a socket
-    rfd = -1;
-}
-
-
-void WvFDStream::nowrite()
-{
-    if (wfd < 0)
-        return;
-    if (rfd != wfd)
-        ::close(wfd);
-    else
-        ::shutdown(rfd, SHUT_WR); // might be a socket
-    wfd = -1;
 }
 
 
@@ -96,6 +73,7 @@ size_t WvFDStream::uread(void *buf, size_t count)
     if (in < 0 && (errno==EINTR || errno==EAGAIN || errno==ENOBUFS))
 	return 0; // interrupted
 
+    // a read that returns zero bytes signifies end-of-file (EOF).
     if (in < 0 || (count && in==0))
     {
 	seterr(in < 0 ? errno : 0);
@@ -120,9 +98,50 @@ size_t WvFDStream::uwrite(const void *buf, size_t count)
 	seterr(out < 0 ? errno : 0); // a more critical error
 	return 0;
     }
+
+    if (!outbuf.used() && want_nowrite && wfd < 0)
+    {
+        // copied from nowrite()
+        if (rfd != wfd)
+            ::close(wfd);
+        else
+            ::shutdown(rfd, SHUT_WR); // might be a socket
+
+        want_nowrite = false;
+        wfd = -1;
+    }
     
     //TRACE("write obj 0x%08x, bytes %d/%d\n", (unsigned int)this, out, count);
     return out;
+}
+
+
+void WvFDStream::noread()
+{
+    if (rfd < 0)
+        return;
+    if (rfd != wfd)
+        ::close(rfd);
+    else
+        ::shutdown(rfd, SHUT_RD); // might be a socket        
+    rfd = -1;
+}
+
+
+void WvFDStream::nowrite()
+{
+    if (!outbuf.used())
+    {
+        if (rfd != wfd)
+            ::close(wfd);
+        else
+            ::shutdown(rfd, SHUT_WR); // might be a socket
+
+        want_nowrite = false;
+        wfd = -1;
+    }
+    else
+        WvStream::nowrite();
 }
 
 
@@ -153,9 +172,8 @@ bool WvFDStream::post_select(SelectInfo &si)
     
     // flush the output buffer if possible
     size_t outbuf_used = outbuf.used();
-    if (wfd >= 0 
-	&& (outbuf_used || autoclose_time)
-	&& FD_ISSET(wfd, &si.write))
+    if (wfd >= 0 && (outbuf_used || autoclose_time)
+	&& FD_ISSET(wfd, &si.write) && should_flush())
     {
         flush_outbuf(0);
 	

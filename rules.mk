@@ -2,11 +2,13 @@
 default: $(TARGETS)
 
 ifdef VERBOSE
-COMPILE_MSG:=
-LINK_MSG:=
+PREPROC_MSG :=
+COMPILE_MSG :=
+LINK_MSG :=
 else
-COMPILE_MSG=@echo compiling $@;
-LINK_MSG=@echo linking $@;
+PREPROC_MSG = @echo preprocessing $@;
+COMPILE_MSG = @echo compiling $@;
+LINK_MSG = @echo linking $@;
 endif
 
 SONAMEOPT=-Wl,-soname,$(SONAME)
@@ -15,29 +17,31 @@ SOFLAGS=-shared $(if $(SONAME),$(SONAMEOPT))
 DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.o
-	$(LINK_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
+	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %: %.cc
-	@$(LINK.cc) -M -E $< | \
-		sed -e 's|^$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
-	$(COMPILE_MSG)$(LINK.cc) $< $(LOADLIBES) $(LDLIBS) -o $@
+	$(PREPROC_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
+		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
+	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ \
+		$(LOADLIBES) $(LDLIBS) -o $@
 
 %.o: %.cc
-	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
+	$(PREPROC_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
-	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.o: %.c
-	@$(CXX) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
 	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.a:
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
-%.so: SONAME=$@
+%.so: SONAME=$@.$(RELEASE)
 %.so:
-	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SOFLAGS) $^ -o $@
+	$(LINK_MSG)$(CC) $(LDFLAGS) $(SOFLAGS) $^ $(LDLIBS) -o $@
+	$(LN_S) -f $@ $(SONAME)
 
 %.moc: %.h
 	$(COMPILE_MSG)moc $< -o $@
@@ -63,10 +67,11 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac include/wvautoconf.h.in
+configure: configure.ac
+	autoheader
 	autoconf
 
-include/wvautoconf.h.in: configure.ac
+include/wvautoconf.h.in:
 	autoheader
 endif
 
@@ -97,12 +102,12 @@ doxygen:
 	doxygen
 
 install: install-shared install-dev
+#FIXME: We need to install uniconfd somewhere.
 
-# FIXME: these should be built with their suffix, and the rule automated
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	for i in $(TARGETS_SO); do \
-	    $(INSTALL_PROGRAM) $$i $(DESTDIR)$(libdir)/$$i.$(RELEASE); \
+	    $(INSTALL_PROGRAM) $$i.$(RELEASE) $(DESTDIR)$(libdir)/ ; \
 	done
 
 install-dev: $(TARGETS_SO) $(TARGETS_A)
@@ -120,7 +125,6 @@ uninstall:
 	$(tbd)
 
 $(TESTS): libwvstreams.so libwvutils.so
-$(TESTS): LDLIBS+=libwvstreams.so libwvutils.so
 tests: $(TESTS)
 
 dishes:

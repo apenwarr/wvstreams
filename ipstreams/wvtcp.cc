@@ -219,7 +219,7 @@ bool WvTCPConn::post_select(SelectInfo &si)
 	    
 	    if (!retval || (retval < 0 && errno == EISCONN))
 		connected = result = true;
-	    else if (retval < 0 && errno != EINPROGRESS)
+	    else if (retval < 0 && errno != EINPROGRESS && errno != EALREADY)
 	    {
 		seterr(errno);
 		result = true;
@@ -253,7 +253,7 @@ size_t WvTCPConn::uwrite(const void *buf, size_t count)
 
 
 WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
-	: listenport(_listenport), auto_callback(0)
+	: listenport(_listenport)
 {
     listenport = _listenport;
     auto_list = NULL;

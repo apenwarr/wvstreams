@@ -7,6 +7,7 @@
 #include "wvcrypto.h"
 #include "wvmoniker.h"
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <assert.h>
 
 static IWvStream *creator(WvStringParm s, IObject *obj, void *userdata)
@@ -67,6 +68,10 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
 	
 	// Allow SSL Writes to only write part of a request...
 	SSL_CTX_set_mode(ctx,SSL_MODE_ENABLE_PARTIAL_WRITE);
+
+	// Tell SSL to use 128 bit ciphers - this appears to
+	// be necessary for some reason... *sigh*
+	SSL_CTX_set_cipher_list(ctx,"HIGH");
 
 	// Enable the workarounds for broken clients and servers
 	// and disable the insecure SSLv2 protocol
@@ -169,7 +174,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-                    debug("<< SSL_read() needs to wait for readable.\n");
+//                    debug("<< SSL_read() needs to wait for readable.\n");
                     break; // wait for later
                     
                 case SSL_ERROR_NONE:
@@ -190,7 +195,7 @@ size_t WvSSLStream::uread(void *buf, size_t len)
         read_bouncebuf.unalloc(avail - size_t(result));
     }
 
-    debug("<< read %s bytes\n", total);
+//    debug("<< read %s bytes\n", total);
     return total;
 }
 
@@ -200,11 +205,13 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
     if (!sslconnected)
     {
 	debug(">> writing, but not connected yet (%s); enqueue.\n", getwfd());
-	return 0;
+        unconnected_buf.put(buf, len);
+	return len;
     }
+
     if (len == 0) return 0;
 
-    debug(">> I want to write %s bytes.\n", len);
+//    debug(">> I want to write %s bytes.\n", len);
 
     size_t total = 0;
     
@@ -223,7 +230,10 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         write_eat = 0;
     }
 
-    for (;;) {
+    // FIXME: WOW!!! Ummm... hope this never spins...
+    // 
+    for (;;) 
+    {
         // handle SSL_write quirk
         if (write_bouncebuf.used() == 0)
         {
@@ -255,7 +265,19 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
                     debug(">> SSL_write() needs to wait for writable.\n");
                     break; // wait for later
                     
-                case SSL_ERROR_NONE:
+	        case SSL_ERROR_SYSCALL:
+		    debug(">> ERROR: SSL_write() failed on socket error.\n");
+		    seterr(WvString("SSL write error: %s", strerror(errno)));
+		    break;
+	    
+	        // This case can cause truncated web pages... give more info
+	        case SSL_ERROR_SSL:
+		    debug(">> ERROR: SSL_write() failed on internal error.\n");
+		    seterr(WvString("SSL write error: %s", 
+				    ERR_error_string(ERR_get_error(), NULL)));
+		    break;
+		
+	        case SSL_ERROR_NONE:
                     break; // no error, but can't make progress
                     
                 case SSL_ERROR_ZERO_RETURN:
@@ -289,7 +311,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         (const unsigned char *)buf += size_t(result);
     }
     
-    debug(">> wrote %s bytes\n", total);
+//    debug(">> wrote %s bytes\n", total);
     return total;
 }
  
@@ -326,12 +348,12 @@ bool WvSSLStream::pre_select(SelectInfo &si)
     // or we might have left buffered data behind deliberately
     if (si.wants.readable && (read_pending || read_bouncebuf.used()))
     {
-	debug("pre_select: try reading again immediately.\n");
+//	debug("pre_select: try reading again immediately.\n");
 	return true;
     }
 
     bool result = WvStreamClone::pre_select(si);
-    debug("in pre_select (%s)\n", result);
+//    debug("in pre_select (%s)\n", result);
     return result;
 }
 
@@ -339,8 +361,8 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 bool WvSSLStream::post_select(SelectInfo &si)
 {
     bool result = WvStreamClone::post_select(si);
-    
-    debug("in post_select (%s)\n", result);
+
+//    debug("in post_select (%s)\n", result);
 
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep
@@ -348,7 +370,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
     // to do the validation of the connection ;)
     if (!sslconnected && cloned && cloned->isok() && result)
     {
-	debug("!sslconnected in post_select\n");
+//	debug("!sslconnected in post_select\n");
 	
 	undo_force_select(false, true, false);
 	
@@ -358,7 +380,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
         int fd = fdstream->getfd();
         assert(fd >= 0);
 	SSL_set_fd(ssl, fd);
-	debug("SSL connected on fd %s.\n", fd);
+//	debug("SSL connected on fd %s.\n", fd);
 	
 	int err;
     
@@ -388,7 +410,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    	WvX509Mgr peercert(SSL_get_peer_certificate(ssl));
 	    	if (peercert.isok() && peercert.validate())
 	    	{
-		    sslconnected = true;
+                    setconnected(true);
 	    	    debug("SSL finished negotiating - certificate is valid.\n");
 	    	}
 	    	else
@@ -401,7 +423,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    }
 	    else
 	    {
-		sslconnected = true;
+                setconnected(true);
 		debug("SSL finished negotiating "
 		      "- certificate validation disabled.\n");
 	    }	
@@ -413,3 +435,10 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	return result;
 }
 
+
+void WvSSLStream::setconnected(bool conn)
+{
+    sslconnected = conn;
+    if (conn) write(unconnected_buf);
+}
+    

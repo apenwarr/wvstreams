@@ -27,8 +27,7 @@ void bounce_to_list(WvStream &s, void *_list)
     WvStreamList::Iter i(list);
     for (i.rewind(); i.next(); )
     {
-	if (i.ptr() != &s && i->select(0, false, true))
-	    i->write(buf, len);
+	if (i.ptr() != &s) i->write(buf, len);
     }
 }
  

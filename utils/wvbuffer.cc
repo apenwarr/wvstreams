@@ -11,7 +11,7 @@
 // Instantiate some commonly used templates
 template WvBufBaseCommonImpl<unsigned char>;
 template WvInPlaceBufBase<unsigned char>;
-template WvConstInPlaceBufferBase<unsigned char>;
+template WvConstInPlaceBufBase<unsigned char>;
 template WvCircularBufBase<unsigned char>;
 template WvDynBufBase<unsigned char>;
 template WvNullBufBase<unsigned char>;
@@ -33,6 +33,17 @@ WvString WvBufBase<unsigned char>::getstr()
      */ 
     WvString result;
     size_t len = used();
+    result.setsize(len + 1);
+    char *str = result.edit();
+    move(str, len);
+    str[len] = '\0';
+    return result;
+}
+
+
+WvString WvBufBase<unsigned char>::getstr(size_t len)
+{
+    WvString result;
     result.setsize(len + 1);
     char *str = result.edit();
     move(str, len);
@@ -109,5 +120,5 @@ WvConstStringBuffer::WvConstStringBuffer()
 void WvConstStringBuffer::reset(WvStringParm _str)
 {
     xstr = _str;
-    WvConstInPlaceBuffer::reset(xstr.cstr(), xstr.len());
+    WvConstInPlaceBuf::reset(xstr.cstr(), xstr.len());
 }

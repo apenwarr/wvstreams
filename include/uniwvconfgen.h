@@ -10,43 +10,41 @@
 
 #include "uniconfgen.h"
 #include "wvconf.h"
-#include "uniconfiter.h"
 
 class UniWvConfGen : public UniConfGen
 {
 protected:
     WvConf &cfg;
 
-public:
-    UniWvConfGen(WvConf &_cfg) : cfg(_cfg) { }
+    class WvConfIter;
 
-    typedef UniConfAbstractIter Iter;
+public:
+    UniWvConfGen(WvConf &_cfg);
+
+    /***** Overridden members *****/
 
     virtual WvString get(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm value);
-    virtual bool zap(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
+};
 
-    /**
-    * WvConfIter
-    *
-    * A wrapper class for the wvconf iters to provide a uniconf iter.
-    */
-    class WvConfIter : public Iter
-    {
-    protected:
-        WvConfigSection::Iter *i;
+/**
+ * A wrapper class for the wvconf iters to provide a UniConfGen iter.
+ */
+class UniWvConfGen::WvConfIter : public UniConfGen::Iter
+{
+protected:
+    WvConfigSection::Iter i;
 
-    public:
-        WvConfIter(WvConfigSection::Iter *_i) : i(_i) { }
-        virtual ~WvConfIter();
+public:
+    WvConfIter(WvConfigSection *sect);
 
-        virtual Iter *clone() const;
-        virtual void rewind();
-        virtual bool next();
-        virtual UniConfKey key() const;
-    };
+    /***** Overridden members *****/
+
+    virtual void rewind();
+    virtual bool next();
+    virtual UniConfKey key() const;
 };
 
 #endif //__UNICONFWVGEN_H

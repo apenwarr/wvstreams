@@ -39,10 +39,7 @@ int main(int argc, char **argv)
                 latency = WvString(optarg).num();
                 break;
             case 'd':
-                debuglvl = 1;
-                break;
-            case 'D':
-                debuglvl = 2;
+                debuglvl++;
                 break;
             case 'h':
             case '?':
@@ -55,9 +52,11 @@ int main(int argc, char **argv)
     WvLog::LogLevel loglvl = WvLog::Info;
     switch (debuglvl)
     {
-        case 0: loglvl = WvLog::Info; break;
-        case 1: loglvl = WvLog::Debug; break;
-        case 2: loglvl = WvLog::Debug2; break;
+    case 0: loglvl = WvLog::Info; break;
+    case 1: loglvl = WvLog::Debug; break;
+    case 2: loglvl = WvLog::Debug2; break;
+    default:
+	loglvl = WvLog::Debug5; break;
     };
     WvLogConsole clog(1, loglvl);
 

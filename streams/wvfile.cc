@@ -16,6 +16,10 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 
     skip_select = false;
     
+    // don't do the default force_select of read if we're not readable!
+    if (!readable)
+	undo_force_select(true, false, false);
+    
     close();
     int rwfd = ::open(filename, mode | O_NONBLOCK, create_mode);
     if (rwfd < 0)

@@ -15,12 +15,22 @@
  * 
  * Handy for making virtual streams, like WvHttpPool.
  * 
+ * After seteof(), the stream closes itself (without error) once the inbuf
+ * is emptied out by read().
+ * 
+ * FIXME: WvStream itself should probably deal better with streams that go
+ * !isok() with stuff still in inbuf.  Then we could skip seteof() altogether,
+ * and just do close() when we're done write()ing data.  For now, it's just
+ * too unreliable to do that, since streams do things like drop out of
+ * WvStreamLists automatically when they're !isok(), even if they still have
+ * data in inbuf.
  */
 class WvBufStream : public WvStream
 {
-    bool dead, eof;
-public:
+    bool dead, /*!< true if the stream has been closed */
+	 eof;  /*!< true if the sender has no more data to write(). */
     
+public:
     // when we close, set this pointer to NULL.  A bit hacky...
     WvStream **death_notify;
     

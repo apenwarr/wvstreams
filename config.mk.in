@@ -1,20 +1,26 @@
 
-enable_debug:=@enable_debug@
 enable_optimization:=@enable_optimization@
 enable_warnings:=@enable_warnings@
 enable_fatal_warnings:=@enable_fatal_warnings@
-enable_verbose:=@enable_verbose@
 enable_rtti:=@enable_rtti@
 enable_exceptions:=@enable_exceptions@
+
+enable_debug:=@enable_debug@
 enable_efence:=@enable_efence@
+enable_verbose:=@enable_verbose@
+
 with_openssl:=@with_openssl@
 with_zlib:=@with_zlib@
 with_ogg:=@with_ogg@
 with_speex:=@with_speex@
 with_vorbis:=@with_vorbis@
 with_fftw:=@with_fftw@
-with_qt:=@with_qt@
+with_pam:=@with_pam@
+with_glib:=@with_glib@
+with_gtk:=@with_gtk@
 with_xplc:=@with_xplc@
+with_fam:=@with_fam@
+
 INSTALL:=@INSTALL@
 INSTALL_PROGRAM:=@INSTALL_PROGRAM@
 INSTALL_DATA:=@INSTALL_DATA@
@@ -24,6 +30,10 @@ exec_prefix:=@exec_prefix@
 includedir:=@includedir@
 libdir:=@libdir@
 PACKAGE_VERSION:=@PACKAGE_VERSION@
+
+with_qt:=@with_qt@
+QTINCLUDE:=@QTINCLUDE@
+QTLIB:=@QTLIB@
 CXX:=@CXX@
 CC:=@CC@
 

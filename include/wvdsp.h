@@ -11,6 +11,7 @@
 #include "wvmagiccircle.h"
 #include "wvloopback.h"
 #include "wvlog.h"
+#include "wvrateadjust.h"
 
 /**
  * Class to access the /dev/dsp device in a way that's sane enough for
@@ -19,7 +20,6 @@
  * This is still rather heavily under construction at this time, so
  * please don't count on any side-effects to make anything
  * built with this class to work.
- * 
  */
 class WvDsp : public WvStream
 {
@@ -62,8 +62,10 @@ private:
     
     size_t frag_size, num_frags;
     WvLog log;
-    WvMagicCircle rbuf, wbuf;
+    WvMagicCircle rcircle, wcircle;
+    WvDynBuf rbuf, wbuf;
     WvLoopback rloop, wloop;
+    WvRateAdjust inrate, outrate;
     int fd;
     bool is_realtime;
 };

@@ -7,11 +7,12 @@
 #include "wvlog.h"
 #include "wvlogrcv.h"
 #include "wvdiriter.h"
+#include "wvconf.h"
 #include "wvfile.h"
 #include "wvtclstring.h"
 #include "uniconf.h"
 #include "strutils.h"
-#include "wvconf.h"
+#include "uniconfroot.h"
 #include "uniconftree.h"
 #include "uniconfgen.h"
 
@@ -59,7 +60,8 @@ void HelloGen::update(UniConf *&h)
 }
 #endif
 
-
+// FIXME: This class *REALLY* should be merged out.
+#if 0
 class UniConfFileTreeGen : public UniConfGen
 {
 public:
@@ -72,15 +74,11 @@ public:
 
     /***** Overridden members *****/
 
-    virtual bool refresh(const UniConfKey &key,
-        UniConfDepth::Type depth);
+    virtual bool refresh();
     virtual WvString get(const UniConfKey &key);
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
-    virtual bool set(const UniConfKey &key, WvStringParm)
-        { return false; }
-    virtual bool zap(const UniConfKey &key)
-        { return false; }
+    virtual void set(const UniConfKey &key, WvStringParm) { }
 
     virtual Iter *iterator(const UniConfKey &key);
 
@@ -98,15 +96,9 @@ protected:
 public:
     NodeIter(UniConfValueTree &node) : xit(node)
         { }
-    NodeIter(const NodeIter &other) : xit(other.xit)
-        { }
-    virtual ~NodeIter()
-        { }
 
     /***** Overridden methods *****/
 
-    virtual NodeIter *clone() const
-        { return new NodeIter(*this); }
     virtual void rewind()
         { xit.rewind(); }
     virtual bool next()
@@ -125,44 +117,24 @@ UniConfFileTreeGen::UniConfFileTreeGen(WvStringParm _basedir) :
 }
 
 
-bool UniConfFileTreeGen::refresh(const UniConfKey &key,
-    UniConfDepth::Type depth)
+bool UniConfFileTreeGen::refresh()
 {
     WvString filename("%s%s", basedir, key);
     
-    if (depth == UniConfDepth::ZERO ||
-        depth == UniConfDepth::ONE ||
-        depth == UniConfDepth::INFINITE)
-    {
-        struct stat statbuf;
-        bool exists = lstat(filename.cstr(), &statbuf) == 0;
-        
-        UniConfValueTree *node = root.find(key);
-        if (!exists)
-        {
-            if (node != &root)
-                delete node;
-            return true;
-        }
-        node = maketree(key);
-        node->zap();
-    }
-    
-    bool recurse = false;
-    switch (depth)
-    {
-        case UniConfDepth::ZERO:
-            return true;
-        case UniConfDepth::ONE:
-        case UniConfDepth::CHILDREN:
-            break;
-        case UniConfDepth::INFINITE:
-        case UniConfDepth::DESCENDENTS:
-            recurse = true;
-            break;
-    }
+    struct stat statbuf;
+    bool exists = lstat(filename.cstr(), &statbuf) == 0;
 
-    WvDirIter dirit(filename, recurse);
+    UniConfValueTree *node = root.find(key);
+    if (!exists)
+    {
+        if (node != &root)
+            delete node;
+        return true;
+    }
+    node = maketree(key);
+    node->zap();
+    
+    WvDirIter dirit(filename, true);
     UniConfKey dirkey(filename);
     for (dirit.rewind(); dirit.next(); )
     {
@@ -221,7 +193,7 @@ bool UniConfFileTreeGen::exists(const UniConfKey &key)
     UniConfValueTree *node = root.find(key);
     if (!node)
     {
-        refresh(key, UniConfDepth::ZERO);
+        refresh();
         node = root.find(key);
     }
     return node != NULL;
@@ -267,7 +239,7 @@ UniConfValueTree *UniConfFileTreeGen::maketree(const UniConfKey &key)
     }
     return node;
 }
-
+#endif
 
 
 int main()
@@ -406,7 +378,8 @@ int main()
 	cfg.dump(quiet);
     }
 #endif
-    
+
+#if 0 
     {
 	wvcon->print("\n\n");
 	log("-- FileTree test begins\n");
@@ -417,7 +390,8 @@ int main()
 	log("Config dump:\n");
 	cfg.dump(quiet);
     }
-    
+#endif
+
     {
 	wvcon->print("\n\n");
 	log("-- IniFile test begins\n");
@@ -446,6 +420,9 @@ int main()
         root["users/apenwarr"].set("ooga booga");
         root["users/apenwarr/chicken/hammer"].set("smashy!");
         root["users/apenwarr/ftp"].set("1");
+        root["wild/*/*/blink"].set("*1");
+        root["wild/*/*/blank"].set("*2");
+        root["wild/*/*/plunk"].set("*3");
         root.commit();
 
         log("Starting tests...\n");
@@ -462,6 +439,15 @@ int main()
 
         result = root["/users/silly/chicken/die"].get();
         log("/users/silly/chicken/die = %s (should = happy)\n", result);
+
+        result = root["/wild/foo/bar/blink"].get("outtaspace");
+        log("/wild/foo/bar/blink = %s (should = bar)\n", result);
+        
+        result = root["/wild/foo/bar/blank"].get("outtaspace");
+        log("/wild/foo/bar/blank = %s (should = foo)\n", result);
+        
+        result = root["/wild/foo/bar/plunk"].get("outtaspace");
+        log("/wild/foo/bar/plunk = %s (should = outtaspace)\n", result);
     }
 
     {
