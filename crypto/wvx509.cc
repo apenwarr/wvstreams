@@ -770,6 +770,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    if (!rsa->isok())
 		seterr("RSA Key failed to import\n");
 	    break;
+	    
 	case RsaPubPEM:
 	    debug("Importing RSA Public Key.\n");
 	    debug("Are you REALLY sure that you want to do this?\n");
@@ -779,6 +780,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    if (!rsa->isok())
 		seterr("RSA Public Key failed to import\n");
 	    break;
+	    
 	case RsaRaw:
 	    debug("Importing raw RSA keypair not supported.\n");
 	    break;
