@@ -211,6 +211,9 @@ void WvDsp::close()
     if (fd >= 0)
 	::close(fd);
     fd = -1;
+
+    // wake up subprocess
+    wloop.write("", 1);
 }
 
 
