@@ -28,6 +28,7 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
     
     tid = ++taskcount;
     numtasks++;
+    magic_number = WVTASK_MAGIC;
     
     Dprintf("task %d initializing\n", tid);
     man.get_stack(*this, stacksize);
@@ -46,6 +47,8 @@ WvTask::~WvTask()
 	       tid);
 	numrunning--;
     }
+    
+    magic_number = 42;
 }
 
 
@@ -76,6 +79,7 @@ WvTaskMan::WvTaskMan()
 {
     Dprintf("task manager up\n");
     current_task = NULL;
+    magic_number = -WVTASK_MAGIC;
     
     if (setjmp(get_stack_return) == 0)
     {
@@ -92,6 +96,7 @@ WvTaskMan::~WvTaskMan()
     if (WvTask::numrunning != 0)
 	Dprintf("WARNING!  %d tasks still running at WvTaskMan shutdown!\n",
 	       WvTask::numrunning);
+    magic_number = -42;
 }
 
 
@@ -124,6 +129,10 @@ WvTask *WvTaskMan::start(const WvString &name,
 
 int WvTaskMan::run(WvTask &task, int val)
 {
+    assert(magic_number == -WVTASK_MAGIC);
+    assert(task.magic_number == WVTASK_MAGIC);
+    assert(!task.recycled);
+    
     if (&task == current_task)
 	return val; // that's easy!
     
@@ -181,12 +190,18 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
 {
     if (setjmp(get_stack_return) == 0)
     {
+	assert(magic_number == -WVTASK_MAGIC);
+	assert(task.magic_number == WVTASK_MAGIC);
+	
 	// initial setup
 	stack_target = &task;
 	longjmp(stackmaster_task, size/1024 + (size%1024 > 0));
     }
     else
     {
+	assert(magic_number == -WVTASK_MAGIC);
+	assert(task.magic_number == WVTASK_MAGIC);
+	
 	// back from stackmaster - the task is now set up.
 	return;
     }
@@ -210,10 +225,14 @@ void WvTaskMan::_stackmaster()
     
     for (;;)
     {
+	assert(magic_number == -WVTASK_MAGIC);
+	
 	Dprintf("stackmaster 2\n");
 	val = setjmp(stackmaster_task);
 	if (val == 0)
 	{
+	    assert(magic_number == -WVTASK_MAGIC);
+	    
 	    // just did setjmp; save stackmaster's current state (with
 	    // all current stack allocations) and go back to get_stack
 	    // (or the constructor, if that's what called us)
@@ -222,8 +241,12 @@ void WvTaskMan::_stackmaster()
 	}
 	else
 	{
+	    assert(magic_number == -WVTASK_MAGIC);
+	    
 	    // set up a stack frame for the task
 	    do_task();
+	    
+	    assert(magic_number == -WVTASK_MAGIC);
 	    
 	    // allocate the stack area so we never use it again
 	    alloca(val * (size_t)1024);
@@ -234,8 +257,10 @@ void WvTaskMan::_stackmaster()
 
 void WvTaskMan::do_task()
 {
+    assert(magic_number == -WVTASK_MAGIC);
     WvTask *task = stack_target;
-    
+    assert(task->magic_number == WVTASK_MAGIC);
+	
     // back here from longjmp; someone wants stack space.
     Dprintf("stackmaster 4\n");
     if (setjmp(task->mystate) == 0)
@@ -254,6 +279,9 @@ void WvTaskMan::do_task()
 	for (;;)
 	{
 	    Dprintf("stackmaster 6\n");
+	    assert(magic_number == -WVTASK_MAGIC);
+	    assert(task->magic_number == WVTASK_MAGIC);
+	    
 	    if (task->func && task->running)
 	    {
 		task->func(task->userdata);
