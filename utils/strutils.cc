@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 
 char *terminate_string(char *string, char c)
@@ -440,4 +442,30 @@ int lookup(const char *str, const char * const *table,
         return i;
     }
     return -1;
+}
+
+
+bool mkdirp(WvStringParm _dir, int create_mode)
+{
+    if (!access(_dir, X_OK))
+        return true;
+
+    WvString dir(_dir);
+    char *p = dir.edit();
+
+    while ((p = strchr(++p, '/')))
+    {
+        *p = '\0';
+        if (access(dir.cstr(), X_OK) && mkdir(dir.cstr(), create_mode))
+            return false;
+        *p = '/';
+    }
+
+
+    // You're probably creating the directory to write to it? Perhaps the
+    // permissions we're looking for should be changed.
+    if (access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr(), create_mode))
+        return false;
+
+    return true;
 }

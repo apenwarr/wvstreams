@@ -225,4 +225,14 @@ WvString strcoll_join(const StringCollection &coll,
  */
 WvString strreplace(WvStringParm s, WvStringParm a, WvStringParm b);
 
+/**
+ * Create a directory and any subdirectories required along the way. (Equivalent
+ * to mkdir -p). This command probably doesn't belong in strutils, but I
+ * couldn't think of a better place to put it.
+ *
+ * The default permissions on created directories is 0700, but this can be
+ * changed at will.
+ */
+bool mkdirp(WvStringParm _dir, int create_mode = 0700);
+
 #endif // __STRUTILS_H
