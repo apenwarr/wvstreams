@@ -8,7 +8,7 @@
 #export DH_VERBOSE=1
 export DH_OPTIONS
 
-base=libwvstreams3.80
+base=libwvstreams4.0
 # This is used the wvstreams makefile to set the .so links
 PKG=`pwd`/debian/${base}
 PKG_OGG=`pwd`/debian/${base}-ogg
@@ -25,7 +25,7 @@ configure-stamp:
         # Add here commands to configure the package.
         # There is no configuration necessary to build WvStreams
 	./configure --prefix=/usr --disable-debug --disable-verbose \
-		    --with-gtk --with-qt --with-vorbis --with-speex \
+		    --with-qt --with-vorbis --with-speex \
 		    --with-fam --with-fftw
 	touch configure-stamp
 
@@ -125,9 +125,11 @@ binary-arch: build install
 	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
-	dh_makeshlibs -a -plibwvstreams3.80-base -V -plibwvstreams3.80-gtk -V \
-                         -plibwvstreams3.80-qt -V -plibwvstreams3.80-fft -V \
-                         -plibwvstreams3.80-vorbis -V -plibwvstreams3.80-speex -V
+	dh_makeshlibs -a -plibwvstreams4.0-base -V \
+                         -plibwvstreams4.0-qt -V \
+			 -plibwvstreams4.0-fft -V \
+                         -plibwvstreams4.0-vorbis -V \
+			 -plibwvstreams4.0-speex -V
 	dh_installdeb -a   
 	dh_shlibdeps -a
 	dh_gencontrol -a
