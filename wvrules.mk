@@ -103,9 +103,11 @@ objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
 objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
 
 # we need a default rule, since the 'includes' below causes trouble
+.PHONY: default all
 default: all
 
 # default "test" rule does nothing...
+.PHONY: test
 test:
 
 %/test:

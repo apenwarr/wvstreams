@@ -101,7 +101,7 @@ include $(wildcard */rules.mk */*/rules.mk) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
-test: wvtestmain
+test: runconfigure wvtestmain
 	$(VALGRIND) ./wvtestmain
 
 wvtestmain: wvtestmain.o $(call objects, $(shell find -type d -name t)) \
