@@ -15,6 +15,8 @@
 
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
+    closed = stop_read = stop_write = false;
+    
     errnum = 0;
     
     int xmode = (mode & (O_RDONLY | O_WRONLY | O_RDWR));

@@ -73,9 +73,9 @@ WVTEST_MAIN()
     WVPASS(msecdiff(t2, t1) >= 0);
     WVPASS(msecdiff(t2, t1) < 400); // noread().  shouldn't actually wait!
     
-    ::alarm(5);
-    // FIXME: avoid aborting the entire test here
-    //WVPASS(!s.getline(-1));
+    // FIXME: avoid aborting the entire test here on a freezeup!
+    ::alarm(5); // crash after 5 seconds
+    WVPASS(!s.getline(-1));
     ::alarm(0);
 }
 

@@ -37,6 +37,7 @@ inline bool isselectable(int s)
 
 #endif // _WIN32
 
+
 /***** WvFDStream *****/
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)
@@ -68,13 +69,16 @@ WvFDStream::~WvFDStream()
 
 void WvFDStream::close()
 {
-    WvStream::close();
-    //fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
-    if (rfd >= 0)
-	::close(rfd);
-    if (wfd >= 0 && wfd != rfd)
-	::close(wfd);
-    rfd = wfd = -1;
+    if (!closed)
+    {
+	WvStream::close();
+	//fprintf(stderr, "closing:%d/%d\n", rfd, wfd);
+	if (rfd >= 0)
+	    ::close(rfd);
+	if (wfd >= 0 && wfd != rfd)
+	    ::close(wfd);
+	rfd = wfd = -1;
+    }
 }
 
 
