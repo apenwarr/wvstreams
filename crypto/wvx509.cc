@@ -236,8 +236,8 @@ static WvString set_name_entry(X509_NAME *name, WvStringParm dn)
     
     if (!!force_fqdn)
 	return force_fqdn;
-    else
-	return fqdn;
+
+    return fqdn;
 }
 
 
