@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     slist->append(wvin, false);
     wvin->autoforward(*stream);
     
-    while (wvin->isok())
+    while (wvin->isok() && stream->isok())
     {
         if (slist->select(-1))
             slist->callback();

@@ -33,7 +33,8 @@ static int lookup(char ch)
         return 63;
     if (ch == '=')
         return 64; // padding
-    if (ch == '\n' || ch == ' ' || ch == '\r' || ch == '\t')
+    if (ch == '\n' || ch == ' ' || ch == '\r' || ch == '\t' ||
+        ch == '\f' || ch == '\v')
         return 65; // whitespace
     return -1;
 }
@@ -188,99 +189,3 @@ bool WvBase64Decoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
         return false; // insufficient padding to flush!
     return true;
 }
-
-
-#if 0
-WvString base64_encode(const void *buf, size_t length)
-{
-    WvBuffer in, out;
-    size_t out_length = length * 4/3 + ((length%3) != 0);
-    size_t out_pos = 0, in_pos = 0;
-    
-    in.put(buf, length);
-    in.put("\0\0", 3); // add some extra bytes for the algorithm
-    unsigned char *iptr = in.get(in.used());
-
-    for (in_pos = out_pos = 0; ; in_pos += 3, out_pos += 4)
-    {
-        if (out_pos < out_length)
-            out.putch(alphabet[iptr[0] >> 2]);
-        else
-            break;
-
-        if (out_pos+1 < out_length)
-            out.putch(alphabet[((iptr[0] & 0x03) << 4) | (iptr[1] >> 4)]);
-	else
-	    break;
-	
-	if (out_pos+2 < out_length)
-            out.putch(alphabet[((iptr[1] & 0x0f) << 2) | (iptr[2] >> 6)]);
-	else
-	    break;
-	
-	if (out_pos+3 < out_length)
-	    out.putch(alphabet[iptr[2] & 0x3f]);
-	else
-	    break;
-	
-	iptr += 3;
-    }
-
-    // Now how many '=' signs should we have had at the end?
-    switch (length % 3) 
-    {
-    case 1:
-	out.putch('=');
-	// FALL THROUGH
-    case 2:
-	out.putch('=');
-	break;
-    case 0:
-    default:
-	break;
-    }
-    
-    return out.getstr();
-}
-
-
-// Takes a base-64 alpha p, and returns its offset in the alphabet, 0-64.
-static inline char ofs(char p)
-{
-    char *ptr = strchr(alphabet, p);
-    if (ptr)
-	return ptr - alphabet;
-    else
-	return 0;
-}
-
-
-// No error checking is performed!  Assume str really is a Base64 stream!
-WvBuffer &base64_decode(WvStringParm str, WvBuffer &out)
-{
-    size_t length = strlen(str);
-    int	out_length, out_pos = 0, in_pos = 0;
-
-    // First find out how long the decoded string will be.
-    out_length = length / 4 * 3;
-    if (str[length - 1] == '=')
-    	out_length--;
-    if (str[length - 2] == '=')
-    	out_length--;
-
-    for (;;)
-    {
-    	if (str[in_pos] == '\0')  break;
-	out.putch((ofs(str[in_pos]) << 2) | (ofs(str[in_pos+1]) >> 4));
-	if (str[in_pos+2] == '=') break;
-	out.putch(((ofs(str[in_pos+1]) & 0x0f ) << 4)
-		  | (ofs(str[in_pos+2]) >> 2));
-	if (str[in_pos+3] == '=') break;
-	out.putch(((ofs(str[in_pos+2]) & 0x03) << 6) | ofs(str[in_pos+3]));
-	in_pos  += 4;
-	out_pos += 3;
-    }
-    
-    return out;
-}
-#endif

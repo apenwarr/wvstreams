@@ -4,8 +4,8 @@
  *
  * Base64 encoder and decoder implementations.
  */
-#ifndef __BASE64_H
-#define __BASE64_H
+#ifndef __WVBASE64_H
+#define __WVBASE64_H
 
 #include "wvencoder.h"
 
@@ -41,4 +41,4 @@ public:
     virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
-#endif // __BASE64_H
+#endif // __WVBASE64_H
