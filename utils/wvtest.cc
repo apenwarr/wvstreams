@@ -165,7 +165,7 @@ void WvTest::start(const char *file, int line, const char *condstr)
 {
     // strip path from filename
     const char *file2 = strrchr(file, '/');
-    if (file2)
+    if (!file2)
 	file2 = strrchr(file, '\\');
     if (!file2)
 	file2 = file;

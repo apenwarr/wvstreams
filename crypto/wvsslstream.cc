@@ -474,7 +474,14 @@ bool WvSSLStream::pre_select(SelectInfo &si)
 	return true;
     }
 
+    // if we're not ssl_connected yet, I can guarantee we're not actually
+    // writable, so don't ask WvStreamClone to wake up just because *he's*
+    // writable.
+    bool oldwr = si.wants.writable;
+    if (!sslconnected)
+	si.wants.writable = !!writecb;
     bool result = WvStreamClone::pre_select(si);
+    si.wants.writable = oldwr;
 //    debug("in pre_select (%s)\n", result);
     return result;
 }
@@ -490,7 +497,10 @@ bool WvSSLStream::post_select(SelectInfo &si)
     // to do the validation of the connection ;)
     if (!sslconnected && cloned && cloned->isok() && result)
     {
-//	debug("!sslconnected in post_select\n");
+	debug("!sslconnected in post_select (r=%s/%s, w=%s/%s, t=%s)\n",
+	    cloned->isreadable(), si.wants.readable,
+	    cloned->iswritable(), si.wants.writable,
+	    si.msec_timeout);
 	
 	undo_force_select(false, true, false);
 	
