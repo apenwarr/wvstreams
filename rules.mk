@@ -2,11 +2,13 @@
 default: $(TARGETS)
 
 ifdef VERBOSE
-COMPILE_MSG:=
-LINK_MSG:=
+PREPROC_MSG :=
+COMPILE_MSG :=
+LINK_MSG :=
 else
-COMPILE_MSG=@echo compiling $@;
-LINK_MSG=@echo linking $@;
+PREPROC_MSG = @echo preprocessing $@;
+COMPILE_MSG = @echo compiling $@;
+LINK_MSG = @echo linking $@;
 endif
 
 SONAMEOPT=-Wl,-soname,$(SONAME)
@@ -15,20 +17,21 @@ SOFLAGS=-shared $(if $(SONAME),$(SONAMEOPT))
 DEPFILE = $(notdir $(@:.o=.d))
 
 %: %.o
-	$(LINK_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
+	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %: %.cc
-	@$(LINK.cc) -M -E $< | \
+	$(PREPROC_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
-	$(COMPILE_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
+	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ \
+		$(LOADLIBES) $(LDLIBS) -o $@
 
 %.o: %.cc
-	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
+	$(PREPROC_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
-	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.o: %.c
-	@$(CXX) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
 	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
@@ -37,8 +40,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 
 %.so: SONAME=$@.$(RELEASE)
 %.so:
-	$(LINK_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) \
-		$(SOFLAGS) $^ -o $@
+	$(LINK_MSG)$(CC) $(LDFLAGS) $(SOFLAGS) $^ $(LDLIBS) -o $@
 	$(LN_S) -f $@ $(SONAME)
 
 %.moc: %.h
@@ -122,9 +124,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
-# FIXME: this fucks up
 $(TESTS): libwvstreams.so libwvutils.so
-#$(TESTS): LDLIBS+=libwvstreams.so libwvutils.so
 tests: $(TESTS)
 
 dishes:
