@@ -22,21 +22,23 @@ void sighandler_die(int sig)
     signal(sig, SIG_DFL);
 }
 
-void printheader(WvString header)
+WvString printheader(WvString h, WvString mountpoint, bool automount)
 {
+    WvString header("%s WITH MOUNTPOINT %s, %s", h, mountpoint, (automount ? "WITH AUTOMOUNT" : "NO AUTOMOUNT"));
     wvcon->print("%s\n",header);
     
     for (size_t i = 0; i < header.len(); i++)
         wvcon->print("=");
     wvcon->print("\n\n");
+    return header;
 }
 
 void printresult(bool pass, WvString header)
 {
     if (pass)
-        wvcon->print("\n***** Tests for %s: PASSED *****\n\n", header);
+        wvcon->print("\n***** %s: PASSED *****\n\n", header);
     else
-        wvcon->print("\n///// Tests for %s: FAILED /////\n\n", header);
+        wvcon->print("\n///// %s: FAILED /////\n\n", header);
 }
 
 bool compareresults(WvString expected, WvString actual)
@@ -44,7 +46,7 @@ bool compareresults(WvString expected, WvString actual)
     return expected == actual;
 }
 
-bool testgetkeys(UniConf &mainconf, WvString prefix = "")
+bool testgetkeys(UniConf &mainconf, WvString prefix)
 {
     bool pass = true;
 
@@ -75,7 +77,7 @@ bool testgetkeys(UniConf &mainconf, WvString prefix = "")
  
 }
 
-bool testgetfromsections(UniConf &mainconf, WvString prefix = "")
+bool testgetfromsections(UniConf &mainconf, WvString prefix)
 {
     WvString key("%s/chickens", prefix);
     UniConf *neep = &mainconf[key];
@@ -87,7 +89,7 @@ bool testgetfromsections(UniConf &mainconf, WvString prefix = "")
     return compareresults(result,*narf);
 }
 
-bool testgetsetkey(UniConf &mainconf, WvString prefix = "")
+bool testgetsetkey(UniConf &mainconf, WvString prefix)
 {
     bool pass = true;
     
@@ -113,119 +115,111 @@ bool testgetsetkey(UniConf &mainconf, WvString prefix = "")
     return pass;
 }
 
+void usage()
+{
+    wvcon->print("uniconfclienttest usage:\n");
+    wvcon->print("uniconfclienttest [-h] [-t test_type]\n");
+    wvcon->print("\t-h - display this message\n");
+    wvcon->print("\t-t test_type:  test_type is one of all, get, set or section\n");
+    exit(0);
+}
 
 int main(int argc, char **argv)
 {
 
     system("clear");
     // Test data setting / retrieval from a mount at /
+    WvString mountpoint("/");
+    WvString h;
 
-    // just test getting a few keys
+    WvString totest = "all";
+
+    if (argc == 2 && !strcasecmp(argv[1], "-h"))
     {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf["/"];
-        mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
-        mounted->generator->load();     // This should do nothing.
-
-        printheader("TEST GETTING KEYS WITH MOUNTPOINT /, NO AUTOMOUNT");
-        printresult(testgetkeys(mainconf), "GETTING KEYS WITH MOUNTPOINT /, NO AUTOMOUNT");
+        usage();
+    }
+    else if (3 == argc)
+    {
+        if (!strcasecmp("-t",argv[1]))
+            totest = argv[2]; 
     }
 
-    // Test getting keys via automount
+    for (int i = 0; i < 2; i++)
     {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf["/"];
-        new UniConfClient(mounted, new WvTCPConn(addr), true);
+        // just test getting a few keys
+        if ("all" == totest || "get" == totest)
+        {
+            {
+                UniConf mainconf;
+                UniConf *mounted = &mainconf[mountpoint];
+                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
+                mounted->generator->load();     // This should do nothing.
 
-        printheader("TEST GETTING KEYS WITH MOUNTPOINT /, WITH AUTOMOUNT");
-        printresult(testgetkeys(mainconf), "GETTING KEYS WITH MOUNTPOINT /, WITH AUTOMOUNT");
-    }
-    // Test getting a section and then a key
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf["/"];
-        mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
-        mounted->generator->load();     // This should do nothing.
+                h = printheader("TEST GETTING KEYS", mountpoint, false);// WITH MOUNTPOINT /, NO AUTOMOUNT");
+                printresult(testgetkeys(mainconf, mountpoint), h);
+            }
 
-        printheader("TEST GETTING FROM A SECTION WITH MOUNTPOINT /, NO AUTOMOUNT");
-        printresult(testgetfromsections(mainconf), "GETTING FROM A SECTION WITH MOUNTPOINT /, NO AUTOMOUNT");
-    }
+            // Test getting keys via automount
+            {
+                UniConf mainconf;
+                UniConf *mounted = &mainconf[mountpoint];
+                new UniConfClient(mounted, new WvTCPConn(addr), true);
 
-    // Test getting a section and then a key via automount
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf["/"];
-        new UniConfClient(mounted, new WvTCPConn(addr), true);
+                h = printheader("TEST GETTING KEYS", mountpoint, true);
+                printresult(testgetkeys(mainconf,mountpoint), h);
+            }
+        }
+        // Test getting a section and then a key
+        if ("all" == totest || "section" == totest) 
+        {
+            {
+                UniConf mainconf;
+                UniConf *mounted = &mainconf[mountpoint];
+                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
+                mounted->generator->load();     // This should do nothing.
 
-        printheader("TEST GETTING FROM A SECTION WITH MOUNTPOINT /, WITH AUTOMOUNT");
-        printresult(testgetfromsections(mainconf), "GETTING FROM A SECTION WITH MOUNTPOINT /, WITH AUTOMOUNT");
-    }
-    // Test getting & setting a key
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf["/"];
-        mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
-        mounted->generator->load();     // This should do nothing.
+                h = printheader("TEST GETTING FROM A SECTION", mountpoint, false);
+                printresult(testgetfromsections(mainconf,mountpoint), h);
+            }
 
-        printheader("TEST SETTING KEYS WITH MOUNTPOINT /, NO AUTOMOUNT");
-        printresult(testgetsetkey(mainconf), "SETTING KEYS WITH MOUNTPOINT /, NO AUTOMOUNT");
+            // Test getting a section and then a key via automount
+            {
+                UniConf mainconf;
+                UniConf *mounted = &mainconf[mountpoint];
+                new UniConfClient(mounted, new WvTCPConn(addr), true);
 
-    }
+                h = printheader("TEST GETTING FROM A SECTION", mountpoint, true);
+                printresult(testgetfromsections(mainconf,mountpoint), h);
+            }
+        }
+        // Test getting & setting a key
+        
+        if ("all" == totest || "set" == totest) 
+        {
+            {
+                UniConf mainconf;
+                UniConf *mounted = &mainconf[mountpoint];
+                mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
+                mounted->generator->load();     // This should do nothing.
 
-    // Test getting & setting a key with automount
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf["/"];
-        new UniConfClient(mounted, new WvTCPConn(addr), true);
+                h = printheader("TEST SETTING KEYS", mountpoint, false);
+                printresult(testgetsetkey(mainconf,mountpoint), h);
 
-        printheader("TEST SETTING KEYS WITH MOUNTPOINT /, WITH AUTOMOUNT");
-        printresult(testgetsetkey(mainconf), "SETTING KEYS WITH MOUNTPOINT /, WITH AUTOMOUNT");
+            }
 
+            // Test getting & setting a key with automount
+            {
+                UniConf mainconf;
+                UniConf *mounted = &mainconf[mountpoint];
+                new UniConfClient(mounted, new WvTCPConn(addr), true);
+
+                h = printheader("TEST SETTING KEYS", mountpoint, true);
+                printresult(testgetsetkey(mainconf,mountpoint), h);
+
+            }
+        }
+        mountpoint = "/orino";
     }
     
-    WvString orino("/orino");
-    
-    // Test getting a key with mount point /orino, no automount
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf[orino];
-        mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
-        mounted->generator->load();     // This should do nothing.
-
-        printheader("TEST GETTING KEYS WITH MOUNTPOINT /orino, NO AUTOMOUNT");
-        printresult(testgetkeys(mainconf, orino), "GETTING KEYS WITH MOUNTPOINT /orino, NO AUTOMOUNT");
-    }
-
-    // Test getting a key with mount point /orino, with automount
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf[orino];
-        mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), true);
-        mounted->generator->load();     // This should do nothing.
-
-        printheader("TEST GETTING KEYS WITH MOUNTPOINT /orino, WITH AUTOMOUNT");
-        printresult(testgetkeys(mainconf, orino), "GETTING KEYS WITH MOUNTPOINT /orino, WITH AUTOMOUNT");
-    }
-    
-    // Test getting a section and then a key with mountpoint /orino
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf[orino];
-        mounted->generator = new UniConfClient(mounted, new WvTCPConn(addr), false);
-        mounted->generator->load();     // This should do nothing.
-
-        printheader("TEST GETTING FROM A SECTION WITH MOUNTPOINT /orino, NO AUTOMOUNT");
-        printresult(testgetfromsections(mainconf), "GETTING FROM A SECTION WITH MOUNTPOINT /orino, NO AUTOMOUNT");
-    }
-
-    // Test getting a section and then a key via automount with mountpoint /orino
-    {
-        UniConf mainconf;
-        UniConf *mounted = &mainconf[orino];
-        new UniConfClient(mounted, new WvTCPConn(addr), true);
-
-        printheader("TEST GETTING FROM A SECTION WITH MOUNTPOINT /orino, WITH AUTOMOUNT");
-        printresult(testgetfromsections(mainconf), "GETTING FROM A SECTION WITH MOUNTPOINT /orino, WITH AUTOMOUNT");
-    }
     return 0;
 }
