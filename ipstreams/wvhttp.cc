@@ -149,7 +149,6 @@ bool WvHTTPStream::isok() const
 
 int WvHTTPStream::geterr() const
 {
-    fprintf(stderr, "foo blah\n");
     if (http)
 	return WvStreamClone::geterr();
     else
