@@ -44,8 +44,10 @@ class WvOnDiskHash : public Backend
     typedef WvOnDiskHash<K, D, Backend> MyType;
     typedef typename Backend::IterBase BackendIterBase;
     typedef typename Backend::Datum datum;
-
+    
 public:
+    class Iter;
+    
     // this class is interchangeable with datum, but includes a WvDynBuf
     // object that datum.dptr points to.  So when this object goes away,
     // it frees its dptr automatically.
@@ -62,13 +64,6 @@ public:
 
     protected:
 	datumize(datumize<T> &); // not defined
-
-#if defined __GNUC__ && __GNUC__ < 3
-#warning "BROKEN_COMPILER: Workaround for GCC 2.95"
-#else
-	friend class WvOnDiskHash<K, D, Backend>;
-	friend class WvOnDiskHash<K, D, Backend>::Iter;
-#endif
 
     public:
 	WvDynBuf buf;
@@ -235,7 +230,6 @@ public:
 
 	WvIterStuff(D);
     };
-
 };
 
 template <class Parent, class Datum>
