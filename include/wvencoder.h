@@ -48,7 +48,7 @@ public:
      * Returns true if finish has been called on this encoder.
      */
     bool isfinished() const
-        { return finished && _isfinished(); }
+        { return finished || _isfinished(); }
 
     /**
      * Returns an error message if isok() == false, else the null string.
