@@ -46,6 +46,7 @@ WvString WvError::errstr() const
 
 void WvError::seterr(int _errnum)
 {
+    assert(_errnum != -1 && "Do not set error -1 directly: reserved for strings");
     if (!errnum)
 	errnum = _errnum;
 }
