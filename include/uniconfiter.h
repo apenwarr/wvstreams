@@ -39,8 +39,11 @@ public:
     virtual ~UniConfAbstractIter()
         { }
 
+#if 0
+//FIXME: not sure if this was really a good idea...
     /** Clones the iterator. */
     virtual UniConfAbstractIter *clone() const = 0;
+#endif
 
     /** Rewinds the iterator. */
     virtual void rewind() = 0;
@@ -87,16 +90,18 @@ protected:
 public:
     /** Constructs a wrapper from any other iterator. */
     UniConfIterWrapper(UniConfAbstractIter *abstractiter)
-	: xabstractiter(abstractiter)
+        : xabstractiter(abstractiter)
         { }
     
+#if 0
     /**
      * Constructs a copy of another wrapper.
      * @param other the other wrapper
      */
     UniConfIterWrapper(const UniConfIterWrapper &other) 
-	: xabstractiter(other.abstractiter()->clone())
+        : xabstractiter(other.abstractiter()->clone())
         { }
+#endif
 
     /** Destroys the wrapper along with its abstract iterator. */
     ~UniConfIterWrapper()

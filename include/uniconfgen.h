@@ -35,7 +35,6 @@ class UniConfGen : public GenericComponent<IObject>
     void *cbdata;
     
 protected:
-
     /** Creates a UniConfGen object. */
     UniConfGen();
 

@@ -7,15 +7,10 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
-#include "uniconfiter.h"
-#include "uniconfgen.h"
-#include "uniconfwatch.h"
+#include "uniconfroot.h"
 #include "wvvector.h"
 
 class WvStream;
-class UniConfGen;
-class UniConf;
-class UniConfRoot;
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -40,9 +35,8 @@ class UniConfRoot;
  */
 class UniConf
 {
-    friend class UniConfRoot;
- 
-    UniConfRoot *xroot;
+protected:
+    UniConfRootImpl *xroot;
     UniConfKey xfullkey;
 
     /**
@@ -51,7 +45,7 @@ class UniConf
      * You can't create non-NULL UniConf objects yourself - ask UniConfRoot
      * or another UniConf object to make one for you.
      */
-    UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
+    UniConf(UniConfRootImpl *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
         : xroot(root), xfullkey(fullkey)
         { }
     
@@ -61,15 +55,6 @@ public:
      */
     UniConf() 
         : xroot(NULL), xfullkey(UniConfKey::EMPTY)
-        { }
-    
-    /**
-     * Creates a UniConf handle at the base of the specified root.
-     * This is mainly for convenience, since a lot of people will want one
-     * of these.
-     */
-    UniConf(UniConfRoot &root)
-        : xroot(&root), xfullkey(UniConfKey::EMPTY)
         { }
     
     /**
@@ -95,10 +80,10 @@ public:
         { return UniConf(xroot, xfullkey.removelast()); }
     
     /**
-     * Returns a pointer to the UniConfRoot that manages this node.  This
-     * may be NULL, to signal an invalid handle.
+     * Returns a pointer to the UniConfRootImpl that manages this node.
+     * This may be NULL, to signal an invalid handle.
      */
-    UniConfRoot *rootobj() const
+    UniConfRootImpl *rootobj() const
         { return xroot; }
 
     /** Returns true if the handle is invalid (NULL). */
@@ -120,7 +105,6 @@ public:
     /** Returns the path of this node relative to its parent. */
     UniConfKey key() const
         { return xfullkey.last(); }
-
 
     /**
      * Returns a handle for a subtree below this key. 'key' is the path
@@ -226,6 +210,8 @@ public:
      * 
      * If 'refresh' is true, automatically refresh()es the generator
      * after mounting.
+     *
+     * Returns the mounted generator, or NULL on failure.
      */
     UniConfGen *mount(WvStringParm moniker, bool refresh = true) const;
     
@@ -237,8 +223,7 @@ public:
      * If 'refresh' is true, automatically refresh()es the generator
      * after mounting.
      * 
-     * Returns a handle to the mounted generator.  Check
-     * ! UniConfMount::isnull() to determine success.
+     * Returns the mounted generator, or NULL on failure.
      */
     UniConfGen *mountgen(UniConfGen *gen, bool refresh = true) const;
     
@@ -331,6 +316,49 @@ public:
 };
 
 
+
+/**
+ * Represents the root of a hierarhical registry consisting of pairs
+ * of UniConfKeys and associated string values.  This object owns
+ * a UniConfRootImpl object and acts as an immutable handle for it.
+ * 
+ * Any number of data containers may be mounted into the tree at any
+ * number of mount points to provide a backing store from which
+ * registry keys and values are fetched and into which they are
+ * stored.  Multiple data containers may be mounted at the same
+ * location.  Key conflicts are resolved via the following
+ * scoping rules:
+ *
+ * TODO: Fill in scoping rules...
+ */
+class UniConfRoot : public UniConf
+{
+    /** undefined. */
+    UniConfRoot(const UniConfRoot &other);
+
+public:
+    /** Creates an empty UniConf tree with no mounted stores. */
+    UniConfRoot();
+    
+    /** 
+     * Creates a new UniConf tree and mounts the given moniker at the root.
+     * Since most people only want to mount one generator, this should save
+     * a line of code here and there.
+     */
+    UniConfRoot(WvStringParm moniker, bool refresh = true);
+
+    /** 
+     * Creates a new UniConf tree and mounts the given generator at the root.
+     * Since most people only want to mount one generator, this should save
+     * a line of code here and there.
+     */
+    UniConfRoot(UniConfGen *gen, bool refresh = true);
+
+    /** Destroys the UniConf tree along with all uncommitted data. */
+    ~UniConfRoot();
+};
+
+
 /**
  * @internal
  * An implementation base class for key iterators.
@@ -352,34 +380,33 @@ public:
 };
 
 
-/*
- * Unfortunately, because of UniConfRoot::BasicIter, if you include uniconf.h
- * you also have to include uniconfroot.h, and vice versa.  Not only that,
- * but since UniConfRoot derives from UniConf, you have to include uniconf.h
- * before defining UniConfRoot.  But since UniConf::Iter needs 
- * UniConfRoot::BasicIter, you have to include uniconfroot.h before defining
- * the following iterators.
- * 
- * So, here's an oddly-placed #include.
- */
-#include "uniconfroot.h"
-
-
 /**
  * This iterator walks through all immediate children of a UniConf node.
  */
 class UniConf::Iter : public UniConf::IterBase
 {
-    UniConfRoot::BasicIter it;
+    UniConfAbstractIter *it;
     
 public:
     /** Creates an iterator over the direct children of a branch. */
-    Iter(const UniConf &_top);
+    Iter(const UniConf &_top)
+        : IterBase(_top), it(_top.rootobj()->iterator(top.fullkey()))
+        { }
+
+    ~Iter()
+        { delete it; }
 
     void rewind()
-        { it.rewind(); }
-    bool next();
+        { it->rewind(); }
+    bool next()
+    {
+        if (! it->next())
+            return false;
+        current = top[it->key()];
+        return true;
+    }   
 };
+
 
 /**
  * This iterator performs depth-first traversal of a subtree.
@@ -537,6 +564,5 @@ public:
     void rewind()
         { populate(i); }
 };
-
 
 #endif // __UNICONF_H

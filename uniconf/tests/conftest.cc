@@ -335,13 +335,6 @@ int main()
 	}
 	
 	{
-	    log("BasicIter dump:\n");
-	    UniConfRoot::BasicIter i(cfg, UniConfKey::EMPTY);
-	    for (i.rewind(); i.next(); )
-		quiet.print("'%s' = '%s'\n", i.key(), cfg[i.key()].get());
-	}
-
-	{
 	    log("Toplevel dump:\n");
 	    UniConf::Iter i(cfg);
 	    for (i.rewind(); i.next(); )
