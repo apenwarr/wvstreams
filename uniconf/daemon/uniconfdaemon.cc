@@ -22,8 +22,11 @@ UniConfDaemon::UniConfDaemon(const UniConf &_cfg,
     : cfg(_cfg), log("UniConf Daemon"), debug(log.split(WvLog::Debug1))
 {
     authenticate = auth;
-    if (WINVER)
-	assert(!authenticate);
+
+#ifdef _WIN32
+    assert(!authenticate);
+#endif
+
     permgen = _permgen ? _permgen : new UniNullGen();
     debug("Starting.\n");
 }
