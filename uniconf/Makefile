@@ -12,7 +12,7 @@ all: uniconf.a
 $(TESTS): uniconf.a
 
 uniconf.libs: unikey.o uniconf.o unigen.o uniconfiter.o \
-	unievents.o uniconfini.o \
+	unievents.o uniconfini.o wvconfemu.o \
 	../configfile/configfile.libs
 
 uniconf.a: uniconf.libs

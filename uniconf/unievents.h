@@ -11,13 +11,13 @@
 #include "wvcallback.h"
 #include "uniconf.h"
 
-// parameters are: userdata, changed HConf object
+// parameters are: userdata, changed UniConf object
 DeclareWvCallback(2, void, UniConfCallback, void *, UniConf &);
 
 
 class UniConfEvents
 {
-public:
+private:
     class CallbackInfo
     {
     public:
@@ -35,6 +35,7 @@ public:
     UniConf &cfg;
     CallbackInfoList callbacks;
     
+public:
     UniConfEvents(UniConf &_cfg);
     
     void do_callbacks();

@@ -42,7 +42,9 @@ static UniConf *find_match(UniConf *h, const UniConfKey &key)
 	}
     }
     
-    if (h && h->notify)
+    // if this object _or_ anything under it has changed, then we have
+    // a match.
+    if (h && (h->notify || h->child_notify))
 	return h;
     else 
 	return NULL;
@@ -112,5 +114,4 @@ void UniConfEvents::setbool(void *userdata, UniConf &h)
     
     *(bool *)userdata = true;
 }
-
 
