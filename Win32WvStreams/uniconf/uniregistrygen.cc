@@ -66,7 +66,7 @@ HKEY UniRegistryGen::follow_path(const UniConfKey &key, bool create, bool *isVal
 {
     const REGSAM samDesired = KEY_READ | KEY_WRITE;
     LONG result;
-    HKEY hLastKey = m_hRoot;
+    HKEY hLastKey = m_hRoot; // DuplicateHandle() does not work with regkeys
     int n = key.numsegments();
 
     if (isValue) *isValue = false;
@@ -153,14 +153,14 @@ WvString UniRegistryGen::get(const UniConfKey &key)
 	};
     }
 
-    RegCloseKey(hKey);
+    if (hKey != m_hRoot) RegCloseKey(hKey);
     return retval;
 }
 
 void UniRegistryGen::set(const UniConfKey &key, WvStringParm value)
 {
     LONG result;
-    HKEY hKey = follow_path(key, true, NULL);
+    HKEY hKey = follow_path(key.first( key.numsegments()-1 ), true, NULL);
     if (hKey)
     {
 	result = RegSetValueEx(
@@ -176,7 +176,7 @@ void UniRegistryGen::set(const UniConfKey &key, WvStringParm value)
 	    delta(key, value);
 	}
     }
-    RegCloseKey(hKey);
+    if (hKey != m_hRoot) RegCloseKey(hKey);
 }
 
 bool UniRegistryGen::exists(const UniConfKey &key)
@@ -199,7 +199,7 @@ bool UniRegistryGen::haschildren(const UniConfKey &key)
 	retval = ((result == ERROR_SUCCESS) || (result == ERROR_MORE_DATA));
     }
     
-    RegCloseKey(hKey);
+    if (hKey != m_hRoot) RegCloseKey(hKey);
 
     return retval;
 }
