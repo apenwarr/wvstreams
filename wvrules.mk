@@ -1,7 +1,7 @@
 #
-# wvrules.mk:  2001 11 12
+# wvrules.mk:  2003 09 09
 #
-# Copyright (C) 1998-2001 by Avery Pennarun <apenwarr@worldvisions.ca>.
+# Copyright (C) 1998-2003 by Avery Pennarun <apenwarr@worldvisions.ca>.
 #   Use, distribute, modify, and redistribute freely.  (But if you're nice,
 #   you'll send all your changes back to me.)
 #
@@ -44,6 +44,12 @@ STRIP=strip --remove-section=.note --remove-section=.comment
 
 # we need a default rule, since the 'includes' below causes trouble
 default: all
+
+# default "test" rule does nothing...
+test:
+
+%/test:
+	$(MAKE) -C $(dir $@) test
 
 $(TOPDIR)/rules.local.mk:
 	@true
