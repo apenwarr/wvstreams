@@ -50,10 +50,30 @@ char * trim_string( char * string )
 
     while( q >= p && isspace( *q ) )
     	*(q--) = 0;
-    while( q <= q && isspace( *p ) )
+    while( isspace( *p ) )
     	p++;
 
     return( p );
+}
+
+char * trim_string( char * string, char c )
+// Searches the string for c and removes it plus everything afterwards.
+// Modifies the string and returns NULL if string == NULL.
+{
+    char * p;
+
+    if ( string == NULL )
+        return( NULL );
+
+    p = string;
+
+    while( *p != 0 && *p != c )
+        p++;
+
+    while( *p )
+        *(p++) = 0;
+
+    return( string );
 }
 
 void replace_char( void * _string, char c1, char c2, int length )
@@ -274,4 +294,16 @@ WvString backslash_escape(const WvString &s1)
     }
 
     return s2;
+}
+
+
+// how many times does 'c' occur in "s"?
+int strcount(const WvString &s, const char c)
+{
+    int n=0;
+    const char *p = s;
+    while ((p=strchr(p, c)) != NULL && p++)
+        n++;
+
+    return n;
 }

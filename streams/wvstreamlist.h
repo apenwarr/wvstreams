@@ -26,6 +26,9 @@ public:
     virtual bool test_set(SelectInfo &si);
     virtual void execute();
     
+    void unlink(WvStream *data)
+        { sure_thing.unlink(data); WvStreamListBase::unlink(data); }
+    
     bool auto_prune; // remove !isok() streams from the list automatically?
     
 protected:
