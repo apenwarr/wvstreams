@@ -229,7 +229,10 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
         write_eat = 0;
     }
 
-    for (;;) {
+    // FIXME: WOW!!! Ummm... hope this never spins...
+    // 
+    for (;;) 
+    {
         // handle SSL_write quirk
         if (write_bouncebuf.used() == 0)
         {
@@ -258,10 +261,22 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-//                    debug(">> SSL_write() needs to wait for writable.\n");
+                    debug(">> SSL_write() needs to wait for writable.\n");
                     break; // wait for later
                     
-                case SSL_ERROR_NONE:
+	        case SSL_ERROR_SYSCALL:
+		    debug(">> ERROR: SSL_write() failed on socket error.\n");
+		    seterr(WvString("SSL write error: %s", strerror(errno)));
+		    break;
+	    
+	        // This case can cause truncated web pages... give more info
+	        case SSL_ERROR_SSL:
+		    debug(">> ERROR: SSL_write() failed on internal error.\n");
+		    seterr(WvString("SSL write error: %s", 
+				    ERR_error_string(ERR_get_error(), NULL)));
+		    break;
+		
+	        case SSL_ERROR_NONE:
                     break; // no error, but can't make progress
                     
                 case SSL_ERROR_ZERO_RETURN:
