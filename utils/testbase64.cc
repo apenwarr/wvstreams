@@ -23,12 +23,12 @@ int main( int argc, char ** argv )
         str = "<insert secret message here>";
 
     if( !dec ) {
-        char * enc = base64_encode( str );
+        char * enc = base64_encode( str, strlen(str) );
         printf( "before:  %s\n"
                 "encoded: %s\n"
-                "decoded: %s\n", str, enc, base64_decode( enc ) );
+                "decoded: %s\n", str, enc, base64_decode( enc, strlen(enc) ) );
     } else {
-        char * decoded = base64_decode( str );
+        char * decoded = base64_decode( str, strlen(str) );
         printf( "encoded: %s\n"
                 "decoded: %s\n", str, decoded );
     }

@@ -12,10 +12,10 @@
 /**
  * Base 64 encode str
  */
-extern char * base64_encode( char * str );
+extern char * base64_encode( char * str, int length);
 /**
  * Decode Base64 encoded str
  */
-extern char * base64_decode( char * str );
+extern char * base64_decode( char * str, int length);
 
 #endif // __BASE64_H

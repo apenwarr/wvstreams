@@ -19,11 +19,11 @@
 static char * alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 			 "0123456789+/=";
 
-char * base64_encode( char * str )
+char * base64_encode( char * str, int length )
 /********************************/
 {
-    int    out_length = ( ( strlen( str ) - 1 ) / 3 + 1 ) * 4;
-    int	   in_length  = ( ( strlen( str ) - 1 ) / 3 + 1 ) * 3;
+    int    out_length = ( ( length - 1 ) / 3 + 1 ) * 4;
+    int	   in_length  = ( ( length - 1 ) / 3 + 1 ) * 3;
     char * out;
     char * in;
     int    out_pos = 0;
@@ -32,16 +32,29 @@ char * base64_encode( char * str )
     out = new char[ out_length + 1 ];
     in  = new char[ in_length  + 1 ];
     memset( in, '\0', in_length+1 );
-    strcpy( in, str );
+    memcpy ( in, str, length*sizeof(char));
 
     for( ;; ) {
-    	if( in[ in_pos ] == '\0' ) break;
-    	out[ out_pos ]     = alphabet[ in[ in_pos ] >> 2];
-    	out[ out_pos + 1 ] = alphabet[ ( ( in[ in_pos ] & 0x03 ) << 4 )
-    				     | ( in[ in_pos+1 ] >> 4 ) ];
-    	out[ out_pos + 2 ] = alphabet[ ( ( in[ in_pos+1 ] & 0x0f ) << 2 )
-    				     | ( in[ in_pos+2 ] >> 6 ) ];
-    	out[ out_pos + 3 ] = alphabet[ in[ in_pos+2 ] & 0x3f ];
+        if (out_pos < out_length)
+            (out[ out_pos ] = alphabet[ in[ in_pos ] >> 2]);
+        else
+            break;
+
+        if (out_pos+1 < out_length)
+            (out[ out_pos + 1 ] = alphabet[ ( ( in[ in_pos ] & 0x03 ) << 4 ) | ( in[ in_pos+1 ] >> 4 ) ]);
+        else
+            break;
+
+    	if (out_pos+2 < out_length)
+            (out[ out_pos + 2 ] = alphabet[ ( ( in[ in_pos+1 ] & 0x0f ) << 2 ) | ( in[ in_pos+2 ] >> 6 ) ]);
+        else
+            break;
+
+    	if (out_pos+3 < out_length)
+            (out[ out_pos + 3 ] = alphabet[ in[ in_pos+2 ] & 0x3f ]);
+        else
+            break;
+
     	in_pos += 3;
     	out_pos += 4;
     }
@@ -50,7 +63,7 @@ char * base64_encode( char * str )
     delete in;
 
     // Now how many '=' signs should we have had at the end?
-    switch( strlen( str ) % 3 ) {
+    switch( length % 3 ) {
     	case 1:
     	    out[ out_length-2 ] = '=';
     	    // FALL THROUGH
@@ -72,7 +85,7 @@ static inline char ofs( char p )
     return( strchr( alphabet, p ) - alphabet );
 }
 
-char * base64_decode( char * str )
+char * base64_decode( char * str, int length )
 /********************************/
 // No error checking is performed!  Assume str really is a Base64 stream!
 {
@@ -82,10 +95,10 @@ char * base64_decode( char * str )
     int	   in_pos  = 0;
 
     // First found out how long the decoded string will be.
-    out_length = strlen( str ) / 4 * 3;
-    if( str[ strlen( str ) - 1 ] == '=' )
+    out_length = length / 4 * 3;
+    if( str[ length - 1 ] == '=' )
     	out_length--;
-    if( str[ strlen( str ) - 2 ] == '=' )
+    if( str[ length - 2 ] == '=' )
     	out_length--;
 
     out = new char[ out_length + 1];
