@@ -26,9 +26,6 @@ typedef WvConfEmu          WvConf;
 typedef WvConfigSection WvConfigEntryList;
 typedef WvConf          WvConfigSectionList;
 
-/*
- * FIXME: WvHConf keys are case-sensitive!!
- */
 
 class WvConfigEntry
 {
@@ -52,12 +49,13 @@ public:
     class Iter
     {
     public:
-	WvHConfDict::Iter i;
+	WvHConf &h;
+	WvHConf::RecursiveIter i;
 	WvLink l;
 	WvConfigEntry *e;
 	
-	Iter(WvHConf &h)
-	    : i(*h.needs_children()), l(NULL, false)
+	Iter(WvHConf &_h)
+	    : h(_h), i(h), l(NULL, false)
 	    { e = NULL; }
 	
 	~Iter()
@@ -73,7 +71,7 @@ public:
 	WvLink *mklink()
 	{
 	    if (e) delete e;
-	    l.data = e = new WvConfigEntry(i->name, i->printable());
+	    l.data = e = new WvConfigEntry(i->full_key(&h), i->printable());
 	    return &l;
 	}
 	
@@ -223,13 +221,13 @@ int main()
     cfg.add_setbool(&c2, "", "Bob");
     cfg.add_setbool(&c3, "Users", "Bob");
     
-    log("Test1a: '%s'\n", cfg.get("Users", "webmaster", "foo"));
-    log("Test1b: '%s'\n", cfg.get("Users", "webmaster", NULL));
+    log("Test1a: '%s'\n", cfg.get("Users", "Webmaster", "foo"));
+    log("Test1b: '%s'\n", cfg.get("Users", "Webmaster", NULL));
     log("Test2a: '%s'\n", cfg.get("Users", "Zebmaster", "foo"));
     log("Test2b: '%s'\n", cfg.get("Users", "Zebmaster", NULL));
 
     log("Section dump:\n");
-    WvConfigSection *sect = cfg["Tunnel Vision Routes"];
+    WvConfigSection *sect = cfg["tunnel vision routes"];
     if (sect)
     {
 	WvConfigEntryList::Iter i(*sect);

@@ -11,6 +11,13 @@
 #include "wvstream.h"
 
 
+bool WvHConfString::operator== (WvStringParm s2) const
+{
+    return (cstr()==s2.cstr())
+	|| (cstr() && s2.cstr() && !strcasecmp(cstr(), s2.cstr()));
+}
+
+
 // basic constructor, generally used for toplevel config file
 WvHConf::WvHConf()
     : name("")

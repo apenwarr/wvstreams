@@ -15,6 +15,21 @@ class WvStream;
 class WvHConf;
 class WvHConfDict;
 
+
+/**
+ * A class to allow case-insensitive string comparisons.  Without this,
+ * WvHConf keys are case-sensitive, which is undesirable.
+ */
+class WvHConfString : public WvString
+{
+public:
+    WvHConfString(WvStringParm s) : WvString(s)
+        { }
+    
+    bool operator== (WvStringParm s2) const;
+};
+
+
 /**
  * a WvHConfKey is a convenient structure that uniquely identifies a point
  * in the HConf tree and can be converted to/from a WvString.
@@ -73,7 +88,7 @@ class WvHConf
 {
 public:
     WvHConf *parent;       // the 'parent' of this subtree
-    WvString name;         // the name of this entry
+    WvHConfString name;    // the name of this entry
 private:
     WvString value;        // the contents of this entry
 public:    
@@ -156,7 +171,7 @@ public:
 };
 
 
-DeclareWvDict(WvHConf, WvString, name);
+DeclareWvDict(WvHConf, WvHConfString, name);
 
 
 // this iterator walks through all the immediate children of a
