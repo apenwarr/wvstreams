@@ -128,7 +128,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
         }
     }
     
-    SSL_CTX_set_read_ahead(ctx, 1);
+    //SSL_CTX_set_read_ahead(ctx, 1);
 
     ERR_clear_error();
     ssl = SSL_new(ctx);
