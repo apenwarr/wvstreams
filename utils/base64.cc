@@ -20,7 +20,7 @@ static char * alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 			 "0123456789+/=";
 
 char * base64_encode( const char * str, int length )
-/********************************/
+/**************************************************/
 {
     int    out_length = ( ( length - 1 ) / 3 + 1 ) * 4;
     int	   in_length  = ( ( length - 1 ) / 3 + 1 ) * 3;
@@ -86,7 +86,7 @@ static inline char ofs( char p )
 }
 
 char * base64_decode( const char * str, int length )
-/********************************/
+/**************************************************/
 // No error checking is performed!  Assume str really is a Base64 stream!
 {
     char * out;
