@@ -43,24 +43,17 @@ Objects *setup(WvStringParm perms)
         unlink("secure.ini");
         UniConfRoot root;
         UniConf u(root);
-        u.mount("ini:secure.ini");
+        u.mount("default:ini:secure.ini");
 
-        for (int user = 0; user < 8; user++)
-            for (int group = 0; group < 8; group++)
-                for (int world = 0; world < 8; world++)
-                {
-                    WvString key("%s%s%s", user, group, world);
-                    u["nondef"][key].set(key);
-                    u["defaults/1"][key].set(key);
-                    u["defaults/2"][key].set(key);
-                }
+        u["nondef/*"].set("*1");
+        u["defaults/*/*"].set("*1");
 
         u.commit();
     }
 
     // create and populate the perms gen
     UniPermGen *p = new UniPermGen(perms);
-    UniSecureGen *s = new UniSecureGen("ini:secure.ini", p);
+    UniSecureGen *s = new UniSecureGen("default:ini:secure.ini", p);
 
     p->setowner("defaults/*/*", "clampy");
     p->setgroup("defaults/*/*", "cloggers");
