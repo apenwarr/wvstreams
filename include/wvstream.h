@@ -409,7 +409,15 @@ public:
      */
     void setcallback(WvStreamCallback _callfunc, void *_userdata)
         { callfunc = _callfunc; userdata = _userdata; }
-    
+        
+    /**
+     * Sets a callback to be invoked on close().  Probably will not work if
+     * set on a WvStreamClone.
+     * @deprecated
+     */
+    void setclosecallback(WvStreamCallback _callfunc, void *_userdata)
+       { closecb_func = _callfunc; closecb_data = _userdata; }
+
     /**
      * set the callback function for this stream to an internal routine
      * that auto-forwards all incoming stream data to the given output
@@ -498,7 +506,9 @@ protected:
 
     WvDynamicBuffer inbuf, outbuf;
     WvStreamCallback callfunc;
+    WvStreamCallback closecb_func;
     void *userdata;
+    void *closecb_data;
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;
@@ -518,7 +528,7 @@ protected:
     /**
      * Prevent accidental copying of WvStreams.
      */
-    WvStream(const WvStream &s) : callfunc(0) { }
+    WvStream(const WvStream &s) : callfunc(0), closecb_func(0) { }
     WvStream& operator= (const WvStream &s) { return *this; }
 
     /**

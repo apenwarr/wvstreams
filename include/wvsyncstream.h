@@ -56,23 +56,10 @@ public:
      */
     WvSyncStream(WvStream *cloned, bool owner, int srate, int bits,
         int msec = 10);
-    
-    /**
-     * Sets a callback to be invoked on close().
-     * @deprecated
-     */
-    void setclosecallback(WvStreamCallback _callfunc, void *_userdata)
-       { closecb_func = _callfunc; closecb_data = _userdata; }
        
-    virtual void close();
     virtual size_t uread(void *buf, size_t count);
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
-
-protected:
-    // close callback
-    WvStreamCallback closecb_func;
-    void *closecb_data;
 
 private:
     void init(size_t _bps, size_t _avgchunk, size_t _maxchunk);

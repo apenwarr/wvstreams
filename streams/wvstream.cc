@@ -33,7 +33,8 @@ WvStream::WvStream() :
     uses_continue_select(false), personal_stack_size(65536),
     alarm_was_ticking(false),
     // protected members
-    callfunc(0), userdata(NULL),
+    callfunc(0), closecb_func(0),
+    userdata(NULL), closecb_data(NULL),
     max_outbuf_size(0), outbuf_delayed_flush(false), is_auto_flush(true),
     queue_min(0), autoclose_time(0),
     running_callback(false), wvstream_execute_called(false),
@@ -69,6 +70,12 @@ WvStream::~WvStream()
 void WvStream::close()
 {
     flush(2000); // fixme: should not hardcode this stuff
+    if (!! closecb_func)
+    {
+        WvStreamCallback cb = closecb_func;
+        closecb_func = NULL; // ensure callback is only called once
+        cb(*this, closecb_data);
+    }
 }
 
 

@@ -10,16 +10,14 @@
 
 WvSyncStream::WvSyncStream(WvStream *_cloned, size_t _bps,
     size_t _avgchunk, size_t _maxchunk) :
-    WvStreamClone(_cloned),
-    closecb_func(0), closecb_data(NULL)
+    WvStreamClone(_cloned)
 {
     init(_bps, _avgchunk, _maxchunk);
 }
 
 
 WvSyncStream::WvSyncStream(WvStream *_cloned, bool _owner, int _srate,
-    int _bits, int _msec) : WvStreamClone(_cloned),
-    closecb_func(0), closecb_data(NULL)
+    int _bits, int _msec) : WvStreamClone(_cloned)
 {
     size_t _bps = _srate * _bits / 8;
     size_t _avgchunk = _bps * _msec / 1000;
@@ -49,14 +47,6 @@ void WvSyncStream::init(size_t _bps, size_t _avgchunk, size_t _maxchunk)
 
     if (cloned)
         cloned->force_select(true, false, false);
-}
-
-
-void WvSyncStream::close()
-{
-    WvStreamClone::close();
-    if (!! closecb_func)
-        closecb_func(*this, closecb_data);
 }
 
 
