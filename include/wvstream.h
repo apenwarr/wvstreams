@@ -206,6 +206,14 @@ public:
      */
     char *getline(time_t wait_msec, char separator = '\n',
 		  int readahead = 1024);
+
+    /**
+     * This is a version of getline that uses continue_select to allow
+     * using a larger timeout (possibly infinite) without blocking
+     * other streams.
+     */
+    char *continue_getline(time_t wait_msec, char separator = '\n',
+			   int readahead = 1024);
     
     /**
      * read up to count characters into buf, up to and including the first

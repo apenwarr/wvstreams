@@ -424,6 +424,8 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
     if (wait_msec > 0)
         timeout_time = msecadd(wvtime(), wait_msec);
 
+    maybe_autoclose();
+
     // if we get here, we either want to wait a bit or there is data
     // available.
     while (isok())
@@ -450,7 +452,7 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
         }
         
         bool hasdata;
-        if (uses_continue_select)
+        if (wait_msec != 0 && uses_continue_select)
             hasdata = continue_select(wait_msec);
         else
             hasdata = select(wait_msec, true, false);
@@ -561,6 +563,15 @@ char *WvStream::getline(time_t wait_msec, char separator, int readahead)
 	inbuf.alloc(1)[0] = 0; // null-terminate it
 	return const_cast<char *>((const char *)inbuf.get(inbuf.used()));
     }
+}
+
+
+char *WvStream::continue_getline(time_t wait_msec, char separator,
+				 int readahead)
+{
+    assert(false && "not implemented, come back later!");
+    assert(uses_continue_select);
+    return NULL;
 }
 
 
