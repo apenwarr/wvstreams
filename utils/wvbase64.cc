@@ -83,23 +83,29 @@ bool WvBase64Encoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
                 break;
         }
     }
-    // pad text if flushing
-    if (flush)
+    // do not consider the data flushed if we need padding
+    if (flush && state != ATBIT0)
+        return false;
+    return true;
+}
+
+
+bool WvBase64Encoder::_finish(WvBuffer &out)
+{
+    // pad text if needed
+    switch (state)
     {
-        switch (state)
-        {
-            case ATBIT2:
-                out.putch(alphabet[bits << 4]);
-                out.putch('=');
-                out.putch('=');
-                break;
-            case ATBIT4:
-                out.putch(alphabet[bits << 2]);
-                out.putch('=');
-                break;
-            case ATBIT0:
-                break;
-        }
+        case ATBIT2:
+            out.putch(alphabet[bits << 4]);
+            out.putch('=');
+            out.putch('=');
+            break;
+        case ATBIT4:
+            out.putch(alphabet[bits << 2]);
+            out.putch('=');
+            break;
+        case ATBIT0:
+            break;
     }
     return true;
 }

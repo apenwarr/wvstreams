@@ -19,7 +19,7 @@
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #if 0
-# define TRACE(x, y...) fprintf(stderr, x, ## y)
+# define TRACE(x, y...) fprintf(stderr, x, ## y); fflush(stderr);
 #else
 # define TRACE(x, y...)
 #endif
@@ -157,7 +157,6 @@ void WvStream::callback()
 	else if (!task->isrunning())
 	{
 	    TRACE("(.)");
-	    fflush(stderr);
 	    task->start("streamexec2", _callback, this);
 	}
 	
@@ -396,7 +395,7 @@ char *WvStream::getline(time_t wait_msec, char separator,
 void WvStream::drain()
 {
     char buf[1024];
-    while (select(0))
+    while (select(0, true, false, false))
 	read(buf, sizeof(buf));
 }
 

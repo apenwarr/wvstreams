@@ -14,7 +14,7 @@
 /**
  * A base 64 encoder.
  * <p>
- * On flush(), outputs any needed pad characters.
+ * On finish(), outputs any needed pad characters.
  * </p><p>
  * Supports reset().
  * </p>
@@ -37,6 +37,7 @@ public:
 protected:
     // on flush, outputs any needed pad characters
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _finish(WvBuffer &out);
     virtual bool _reset(); // supported
 };
 
@@ -44,6 +45,8 @@ protected:
 /**
  * A base 64 decoder.
  * <p>
+ * Becomes isfinished() == true on detection of padding.
+ * </p><p>
  * Supports reset().
  * </p>
  */
