@@ -12,8 +12,16 @@
  */
 #include "wvstreamclone.h"
 
+WvStreamClone::WvStreamClone(WvStream *_cloned) :
+    cloned(_cloned), disassociate_on_close(false)
+{
+    force_select(false, false, false);
+}
+
+
 WvStreamClone::~WvStreamClone()
 {
+    close();
     if (cloned)
 	delete cloned;
 }
@@ -21,8 +29,18 @@ WvStreamClone::~WvStreamClone()
 
 void WvStreamClone::close()
 {
+    flush(2000); // fixme: should not hardcode this stuff
+    if (disassociate_on_close)
+        cloned = NULL;
     if (cloned)
 	cloned->close();
+}
+
+
+void WvStreamClone::flush_internal(time_t msec_timeout)
+{
+    if (cloned)
+        cloned->flush(msec_timeout);
 }
 
 

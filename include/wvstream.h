@@ -148,7 +148,7 @@ public:
      */ 
     void queuemin(size_t count)
         { queue_min = count; }
-    
+
     /**
      * drain the input buffer (read and discard data until select(0)
      * returns false)
@@ -456,6 +456,10 @@ protected:
     // processes the SelectInfo data structure (runs post_select)
     // returns true if there are callbacks to be dispatched
     bool _process_selectinfo(SelectInfo &si);
+
+    // called once flush() has emptied outbuf to ensure that any other
+    // internal stream buffers actually do get flushed before it returns
+    virtual void flush_internal(time_t msec_timeout);
     
 private:
     void init();

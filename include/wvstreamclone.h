@@ -28,17 +28,19 @@ public:
      * dies) of the stream you give it. If you do not want that to
      * happen, set cloned to NULL before destroying the WvStreamClone
      * (for example, in your destructor if you derive WvStreamClone).
+     *
+     * If you want to be certain that the cloned stream will not be
+     * harmed in any way by deleting or closing the wrapper stream,
+     * set disassociate_on_close to true.
      */
-    WvStreamClone(WvStream *_cloned = NULL):
-	cloned(_cloned)
-    {
-	force_select(false, false, false);
-    }
+    WvStreamClone(WvStream *_cloned = NULL);
     virtual ~WvStreamClone();
 
     WvStream *cloned;
+    bool disassociate_on_close; // defaults to false
     
     virtual void close();
+    virtual void flush_internal(time_t msec_timeout);
     virtual int getrfd() const;
     virtual int getwfd() const;
     virtual size_t uread(void *buf, size_t size);

@@ -87,7 +87,7 @@ void WvStream::close()
 {
     int rfd = getrfd(), wfd = getwfd();
     
-    flush(2000);
+    flush(2000); // fixme: should not hardcode this stuff
     if (rfd >= 0)
 	::close(getrfd());
     if (wfd >= 0 && wfd != rfd)
@@ -426,18 +426,13 @@ void WvStream::drain()
 
 void WvStream::flush(time_t msec_timeout)
 {
-    size_t attempt, real;
-    
     //TRACE("flush obj 0x%08x, time %ld, outbuf length %d\n", (unsigned int)this, msec_timeout, outbuf.used());
     
-    if (!isok()) return;
-    
+    // flush outbuf
     while (isok() && outbuf.used())
     {
-	attempt = outbuf.used();
-	if (attempt > 1400)
-	    attempt = 1400;
-	real = uwrite(outbuf.get(attempt), attempt);
+	size_t attempt = outbuf.used();
+	size_t real = uwrite(outbuf.get(attempt), attempt);
 	if (real < attempt)
 	    outbuf.unget(attempt - real);
 	
@@ -450,17 +445,29 @@ void WvStream::flush(time_t msec_timeout)
         }
     }
 
-    if (autoclose_time)
+    // flush any other internal buffers a stream might have
+    flush_internal(msec_timeout);
+    if (isok())
     {
-	time_t now = time(NULL);
-	TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
-		(unsigned int)this, now - autoclose_time, outbuf.used());
-	if (!outbuf.used() || now > autoclose_time)
-	{
-	    autoclose_time = 0; // avoid infinite recursion!
-	    close();
-	}
+        // handle autoclose
+        if (autoclose_time)
+        {
+            time_t now = time(NULL);
+            TRACE("Autoclose enabled for 0x%08X - now-time=%ld, buf %d bytes\n", 
+                    (unsigned int)this, now - autoclose_time, outbuf.used());
+            if (!outbuf.used() || now > autoclose_time)
+            {
+                autoclose_time = 0; // avoid infinite recursion!
+                close();
+            }
+        }
     }
+}
+
+
+void WvStream::flush_internal(time_t msec_timeout)
+{
+    // once outbuf emptied, that's it for most streams
 }
 
 
@@ -731,4 +738,3 @@ const WvAddr *WvStream::src() const
 {
     return NULL;
 }
-
