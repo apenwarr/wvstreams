@@ -16,6 +16,7 @@ WVTEST_MAIN("no generator")
     WVPASS(strcmp(root2["/"].getme().cstr(), "") == 0);
     WVPASS(strcmp(root2["subt"].getme().cstr(), "") == 0);
     WVPASS(strcmp(root2["subt/mayo"].getme().cstr(), "") == 0);        
+    WVFAIL(root2["dialer 2"].exists());
 
 }
 

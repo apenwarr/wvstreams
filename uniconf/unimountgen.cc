@@ -72,10 +72,10 @@ bool UniMountGen::has_subkey(const UniConfKey &key, UniGenMount *found)
     MountList::Iter i(mounts);
     for (i.rewind(); i.next(); )
     {
-        if (key < i->key)
+        if (key.suborsame(i->key) && key < i->key)
         {
-//            fprintf(stdout, "%s has_subkey %s : true\n", key.printable().cstr(), 
-//                    i->key.printable().cstr());
+            //fprintf(stdout, "%s has_subkey %s : true\n", key.printable().cstr(), 
+            //        i->key.printable().cstr());            
             return true;
         }
 
@@ -85,7 +85,7 @@ bool UniMountGen::has_subkey(const UniConfKey &key, UniGenMount *found)
             break;
     }
 
-//    fprintf(stdout, "has_subkey false\n");
+    //fprintf(stdout, "%s has_subkey false \n", key.printable().cstr());
     return false;
 }
 
