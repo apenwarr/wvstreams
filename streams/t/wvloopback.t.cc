@@ -49,5 +49,5 @@ WVTEST_MAIN("loopback non-blocking")
 
     WVPASS(loop->isok());
 
-    delete loop;
+    RELEASE(loop);
 }
