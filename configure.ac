@@ -280,7 +280,7 @@ fi
 if test "$with_swig" != "no"; then
     AC_CHECK_PROG(SWIG, swig, yes, no)
     if test "$with_swig" != "no"; then
-        SWIG=swig
+        AC_PATH_PROG(SWIG, swig, [swig not found], $with_swig)
     else
         with_swig=no
     fi
