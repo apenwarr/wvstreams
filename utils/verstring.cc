@@ -13,6 +13,8 @@
 #include <ctype.h>
 #include <string.h>
 
+unsigned int wvversion_watershed = 0;
+
 char *trim_verstr(char *verstr)
 {
     // trim off trailing zeroes
@@ -31,11 +33,11 @@ char *trim_verstr(char *verstr)
     return verstr;
 }
 
-const char *ver_to_string(unsigned int ver)
+const char *old_ver_to_string(unsigned int ver)
 {
     static char str[10];
     unsigned int maj = (ver & 0xFFFF0000) >> 16, min = (ver & 0x0000FFFF);
-    
+
     sprintf(str, "%x.%04x", maj, min);
     trim_verstr(str);
     
@@ -43,14 +45,14 @@ const char *ver_to_string(unsigned int ver)
 }
 
 
-const char *new_ver_to_string(unsigned int ver, bool convert_old)
+const char *ver_to_string(unsigned int ver, unsigned int my_watershed)
 {
     static char str[11];
     unsigned int maj = (ver & 0xFF000000) >> 24, min = (ver & 0x00FF0000) >> 16,
                  rev = (ver & 0x0000FFFF);
 
-    if (convert_old && !maj)
-	return ver_to_string(ver);
+    if ((my_watershed && ver < my_watershed) || (!my_watershed && ver < wvversion_watershed))
+	return old_ver_to_string(ver);
 
     sprintf(str, "%x.%02x.%04x", maj, min, rev);
     trim_verstr(str);
@@ -59,7 +61,7 @@ const char *new_ver_to_string(unsigned int ver, bool convert_old)
 }
 
 
-unsigned int string_to_ver(const char *str)
+unsigned int string_to_old_ver(const char *str)
 {
     static char lookup[] = "0123456789abcdef";
     unsigned int maj = 0, min = 0;
@@ -92,13 +94,13 @@ unsigned int string_to_ver(const char *str)
 }
 
 
-unsigned int string_to_new_ver(const char *str)
+unsigned int string_to_ver(const char *str, unsigned int my_watershed)
 {
     static char lookup[] = "0123456789abcdef";
-    unsigned int maj = 0, min = 0, rev = 0;
+    unsigned int maj = 0, min = 0, rev = 0, ver;
     unsigned char *cptr, *idx;
     int bits;
-    
+
     // do the major number
     cptr = (unsigned char *)str;
     for (; *cptr; cptr++)
@@ -137,5 +139,10 @@ unsigned int string_to_new_ver(const char *str)
 	bits--;
     }
 
-    return (maj << 24) | (min << 16) | (rev << (4*bits));
+    ver = (maj << 24) | (min << 16) | (rev << (4*bits));
+
+    if ((my_watershed && ver < my_watershed) || (!my_watershed && ver < wvversion_watershed))
+	return string_to_old_ver(str);
+
+    return ver;
 }
