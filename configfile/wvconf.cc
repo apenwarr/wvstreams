@@ -9,6 +9,7 @@
  */
 #include "wvconf.h"
 #include "wvstream.h"
+#include "wvstringtable.h"
 #include <string.h>
 #include <unistd.h>
 
@@ -155,14 +156,19 @@ WvConf::~WvConf()
 const char *WvConf::get(const WvString &section, const WvString &entry,
 			const char *def_val)
 {
-    WvConfigSection *s = (*this)[section];
-    if (!s) return def_val;
+    WvStringTable cache(5);
+    WvConfigSection *s;
     
-    WvConfigEntry *e = (*s)[entry];
-    if (!e)
-	return globalsection.get(entry, def_val);
-    else
-	return e->value;
+    for(s = (*this)[section];
+	s && !cache[s->name];
+	s = (*s)["Inherits"] ? (*this)[(*s)["Inherits"]->value] : NULL)
+    {
+	const char *ret = s->get(entry);
+	if (ret) return ret;
+	cache.add(&s->name, false);
+    }
+
+    return globalsection.get(entry, def_val);
 }
 
 
@@ -170,16 +176,21 @@ const char *WvConf::fuzzy_get(WvStringList &sections, WvStringList &entries,
 			      const char *def_val)
 {
     WvStringList::Iter i(sections), i2(entries);
+    WvStringTable cache(5);
+    WvConfigSection *s;
 
     for (i.rewind(); i.next(); )
     {
-	WvConfigSection *s = (*this)[i];
-	if (!s) continue; // no such section
-
 	for (i2.rewind(); i2.next();)
 	{
-	    WvConfigEntry *e = (*s)[i2];
-	    if (e) return e->value;
+	    for(s = (*this)[i];
+		s && !cache[s->name];
+		s = (*s)["Inherits"] ? (*this)[(*s)["Inherits"]->value] : NULL)
+	    {
+		const char *ret = s->get(i2);
+		if (ret) return ret;
+		cache.add(&s->name, false);
+	    }
 	}
     }
     
@@ -191,14 +202,19 @@ const char *WvConf::fuzzy_get(WvStringList &sections, const WvString &entry,
 			      const char *def_val)
 {
     WvStringList::Iter i(sections);
+    WvStringTable cache(5);
+    WvConfigSection *s;
 
     for (i.rewind(); i.next(); )
     {
-	WvConfigSection *s = (*this)[i];
-	if (!s) continue;
-	
-	WvConfigEntry *e = (*s)[entry];
-	if (e) return e->value;
+	for(s = (*this)[i];
+	    s && !cache[s->name];
+	    s = (*s)["Inherits"] ? (*this)[(*s)["Inherits"]->value] : NULL)
+	{
+	    const char *ret = s->get(entry);
+	    if (ret) return ret;
+	    cache.add(&s->name, false);
+	}
     }
 
     return def_val;
