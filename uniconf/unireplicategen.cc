@@ -12,8 +12,8 @@
 #include "wvtclstring.h"
 
 
-//#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
-#define DPRINTF(format, args...)
+#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
+//#define DPRINTF(format, args...)
 
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
@@ -53,23 +53,23 @@ static WvMoniker<IUniConfGen> reg("replicate", creator);
 
 /***** UniReplicateGen *****/
 
-UniReplicateGen::UniReplicateGen()
+UniReplicateGen::UniReplicateGen() : processing_callback(false)
 {
 }
 
 
 UniReplicateGen::UniReplicateGen(const IUniConfGenList &_gens,
-    	bool auto_free)
+    	bool auto_free) : processing_callback(false)
 {
     IUniConfGenList::Iter i(_gens);
     
     for (i.rewind(); i.next(); )
     {
-    	IUniConfGen *gen = i.ptr();
+    	Gen *gen = new Gen(i.ptr(), auto_free);
     	if (gen)
     	{
-    	    gens.append(gen, auto_free);
-            gen->setcallback(UniConfGenCallback(this,
+    	    gens.append(gen, true);
+            gen->gen->setcallback(UniConfGenCallback(this,
             	&UniReplicateGen::deltacallback), gen);
         }
     }
@@ -78,12 +78,13 @@ UniReplicateGen::UniReplicateGen(const IUniConfGenList &_gens,
 }
 
 
-void UniReplicateGen::prepend(IUniConfGen *gen, bool auto_free)
+void UniReplicateGen::prepend(IUniConfGen *_gen, bool auto_free)
 {
+    Gen *gen = new Gen(_gen, auto_free);
     if (gen)
     {
-    	gens.prepend(gen, auto_free);
-        gen->setcallback(UniConfGenCallback(this,
+    	gens.prepend(gen, true);
+        gen->gen->setcallback(UniConfGenCallback(this,
             &UniReplicateGen::deltacallback), gen);
             
         replicate();
@@ -91,12 +92,13 @@ void UniReplicateGen::prepend(IUniConfGen *gen, bool auto_free)
 }
 
 
-void UniReplicateGen::append(IUniConfGen *gen, bool auto_free)
+void UniReplicateGen::append(IUniConfGen *_gen, bool auto_free)
 {
+    Gen *gen = new Gen(_gen, auto_free);
     if (gen)
     {
-    	gens.append(gen, auto_free);
-        gen->setcallback(UniConfGenCallback(this,
+    	gens.append(gen, true);
+        gen->gen->setcallback(UniConfGenCallback(this,
             &UniReplicateGen::deltacallback), gen);
             
         replicate();
@@ -106,14 +108,7 @@ void UniReplicateGen::append(IUniConfGen *gen, bool auto_free)
 
 bool UniReplicateGen::isok()
 {
-    IUniConfGenList::Iter i(gens);
-    for (i.rewind(); i.next(); )
-    {
-    	if (i->isok())
-    	    return true;
-    }
-    
-    return false;
+    return first_ok() != NULL;
 }
 
 
@@ -121,10 +116,12 @@ bool UniReplicateGen::refresh()
 {
     bool result = true;
     
-    IUniConfGenList::Iter i(gens);
+    replicate_if_any_have_become_ok();
+    
+    GenList::Iter i(gens);
     for (i.rewind(); i.next(); )
     {
-    	if (!i->refresh())
+    	if (!i->gen->refresh())
     	    result = false;
     }
     
@@ -134,33 +131,36 @@ bool UniReplicateGen::refresh()
 
 void UniReplicateGen::commit()
 {
-    IUniConfGenList::Iter i(gens);
+    replicate_if_any_have_become_ok();
+    
+    GenList::Iter i(gens);
     for (i.rewind(); i.next(); )
-    	i->commit();
+    {
+    	i->gen->commit();
+    }
 }
 
 
 void UniReplicateGen::deltacallback(const UniConfKey &key, WvStringParm value,
                                 void *userdata)
 {
-    DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
-    	    key.cstr(), value.cstr());
-
-    static bool processing_callback = false;
     if (!processing_callback)
     {
+    	DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
+    	    	key.cstr(), value.cstr());
+
     	processing_callback = true;
     	
-    	IUniConfGen *src_gen = static_cast<IUniConfGen *>(userdata);
+    	Gen *src_gen = static_cast<Gen *>(userdata);
     
-    	IUniConfGenList::Iter j(gens);
+    	GenList::Iter j(gens);
     	for (j.rewind(); j.next(); )
     	{
     	    if (!j->isok())
     	    	continue;
     	    	
     	    if (j.ptr() != src_gen)
-    	    	j->set(key, value);
+    	    	j->gen->set(key, value);
     	}
         
     	delta(key, value);
@@ -175,9 +175,11 @@ void UniReplicateGen::set(const UniConfKey &key, WvStringParm value)
     DPRINTF("UniReplicateGen::set(%s, %s)\n",
     	    key.cstr(), value.cstr());
     
-    IUniConfGen *first = first_ok();
+    replicate_if_any_have_become_ok();
+    
+    Gen *first = first_ok();
     if (first)
-    	first->set(key, value);
+    	first->gen->set(key, value);
     else
     	DPRINTF("UniReplicateGen::set: first == NULL\n");
 }
@@ -185,30 +187,53 @@ void UniReplicateGen::set(const UniConfKey &key, WvStringParm value)
 
 WvString UniReplicateGen::get(const UniConfKey &key)
 {
-    IUniConfGen *first = first_ok();
-    if (first)
-    	return first->get(key);
-    else
-    	return WvString::null;
+    for (;;)
+    {
+    	replicate_if_any_have_become_ok();
+    
+    	Gen *first = first_ok();
+    	if (first)
+    	{
+    	    WvString result = first->gen->get(key);
+
+    	    // It's possible that first has become !isok(); we must
+    	    // take care of this case carefully
+    	    if (!result && !first->isok())
+    	    {
+    	    	Gen *new_first = first_ok();
+    	    	if (new_first == first)
+    	    	    return result;
+    	    	first = new_first; 
+    	    }
+    	    else
+    	    	return result;
+    	}
+    	else
+    	    return WvString::null;
+    }
 }
 
 
 UniConfGen::Iter *UniReplicateGen::iterator(const UniConfKey &key)
 {
-    IUniConfGen *first = first_ok();
+    replicate_if_any_have_become_ok();
+    
+    Gen *first = first_ok();
     if (first)
-    	return first->iterator(key);
+    	return first->gen->iterator(key);
     else
     	return NULL;
 }
 
 
-IUniConfGen *UniReplicateGen::first_ok() const
+UniReplicateGen::Gen *UniReplicateGen::first_ok() const
 {
-    IUniConfGenList::Iter j(gens);
+    GenList::Iter j(gens);
     for (j.rewind(); j.next(); )
+    {
     	if (j->isok())
     	    return j.ptr();
+    }
     	    
     return NULL;
 }
@@ -217,19 +242,18 @@ IUniConfGen *UniReplicateGen::first_ok() const
 void UniReplicateGen::replicate(const UniConfKey &key)
 {
     DPRINTF("UniReplicateGen::replicate(%s)\n", key.cstr());
-    
-    
+       
     hold_delta();
     
-    IUniConfGen *first = first_ok();
+    Gen *first = first_ok();
     
-    IUniConfGenList::Iter j(gens);
+    GenList::Iter j(gens);
     for (j.rewind(); j.next(); )
     {
     	if (!j->isok())
     	    continue;
     	    
-    	UniConfGen::Iter *i = j->recursiveiterator(key);
+    	UniConfGen::Iter *i = j->gen->recursiveiterator(key);
     	if (!i) return;
     
     	for (i->rewind(); i->next(); )
@@ -245,8 +269,8 @@ void UniReplicateGen::replicate(const UniConfKey &key)
     	    }
     	    else
     	    {
-    	    	if (!first->exists(i->key()))
-    	    	    first->set(i->key(), value);
+    	    	if (!first->gen->exists(i->key()))
+    	    	    first->gen->set(i->key(), value);
     	    }
     	}
     
@@ -255,3 +279,26 @@ void UniReplicateGen::replicate(const UniConfKey &key)
     
     unhold_delta();
 }
+
+void UniReplicateGen::replicate_if_any_have_become_ok()
+{
+    bool should_replicate = false;
+    
+    GenList::Iter j(gens);
+    for (j.rewind(); j.next(); )
+    {
+    	if (!j->was_ok && j->gen->isok())
+    	{
+    	    j->was_ok = true;
+    	    
+    	    should_replicate = true;
+    	}
+    }
+    
+    if (should_replicate)
+    {
+    	DPRINTF("UniReplicateGen::replicate_if_any_have_become_ok: replicating\n");
+    	replicate();
+    }
+}
+
