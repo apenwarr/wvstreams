@@ -23,6 +23,12 @@
     $1 = 1;
 }
 
+%typemap(php4, typecheck, precedence = SWIG_TYPECHECK_STRING) WvStringParm
+{
+    $1 = ($input == NULL || Z_TYPE_PP($input) == IS_NULL || Z_TYPE_PP($input) == IS_STRING) ? 1 : 0;
+}
+
+
 %typemap(python, in) WvStringParm(WvString temp)
 {
     if ($input == NULL || $input == Py_None)
@@ -45,6 +51,18 @@
         temp = Tcl_GetString($input);
     $1 = &temp;
 }
+
+%typemap(php4, in) WvStringParm(WvString temp)
+{
+    if ($input == NULL || Z_TYPE_PP($input) == IS_NULL)
+        temp = WvString::null;
+    else
+    {
+        convert_to_string_ex($input);
+        temp = Z_STRVAL_PP($input);
+    }
+    $1 = &temp;
+}
  
 %typemap(python, out) WvStringParm
 {
@@ -61,6 +79,19 @@
 {
     Tcl_SetStringObj($result, $1.edit(), $1.len());
 }
+
+%typemap(php4, out) WvStringParm
+{
+    if ($1.isnull())
+        convert_to_null($result);
+    else
+    {
+        convert_to_string($result);
+        Z_STRVAL_P($result) = $1.edit();
+    }
+}
+
+// FIXME: this breaks PHP
 
 %apply WvStringParm { WvString }
 

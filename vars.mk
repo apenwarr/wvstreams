@@ -30,6 +30,10 @@ ifneq ("$(with_swig)", "no")
     TARGETS += bindings/python/_uniconf.so
     CPPFLAGS += -I/usr/include/python2.1
   endif
+  ifneq ("$(with_php)", "no")
+    TARGETS += bindings/php/php_uniconf.so
+    CPPFLAGS += `php-config --includes`
+  endif
 endif
 
 ifneq ("$(with_ogg)", "no")
@@ -193,6 +197,7 @@ libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
 
 bindings/tcl/uniconf.so: bindings/tcl/uniconf.o libuniconf.so -ltcl8.3
 bindings/python/_uniconf.so: bindings/python/_uniconf.o libuniconf.so -lpython2.1
+bindings/php/php_uniconf.so: bindings/php/uniconf.o libuniconf.so
 
 xplc-stamp: $(wildcard $(with_xplc)/libxplc.*)
 	rm -f xplc-stamp

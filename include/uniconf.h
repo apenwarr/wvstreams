@@ -33,6 +33,11 @@ class UniConfRoot;
  */
 typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
 
+#ifdef SWIG_NO_OVERLOAD
+// FIXME: This directive doesn't work.  Why not?
+%ignore UniConf::u(const UniConfKey &key);
+#endif
+
 /**
  * UniConf instances function as handles to subtrees of a UniConf
  * tree and expose a high-level interface for clients.
@@ -114,9 +119,16 @@ public:
     
     /** Returns the full path of this node, starting at the given key.
      * Assumes that k is an ancestor of fullkey(). */
+#ifdef SWIG_NO_OVERLOAD
+    %name(fullkey_from_key)
+#endif
     UniConfKey fullkey(const UniConfKey &k) const;
     
     /** Returns the full path of this node, starting at the given handle. */
+#ifdef SWIG_NO_OVERLOAD
+    %name(fullkey_from_handle)
+#endif
+
     UniConfKey fullkey(const UniConf &cfg) const
         { return fullkey(cfg.fullkey()); }
 
@@ -142,6 +154,9 @@ public:
      * Return a subtree handle (see operator[]).  Mainly to support bindings
      * for languages that can't handle methods named [].
      */
+#ifdef SWIG_NO_OVERLOAD
+    %name(u_should_be_ignored)
+#endif
     const UniConf u(const UniConfKey &key) const
         { return (*this)[key]; }
     const UniConf u(WvStringParm key) const
