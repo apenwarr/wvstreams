@@ -8,6 +8,9 @@
  *
  */
 
+#ifndef __WVDAILYEVENT_H
+#define __WVDAILYEVENT_H
+
 #include "wvstream.h"
 
 class WvDailyEvent : public WvStream
@@ -31,3 +34,5 @@ private:
     int     hour;
     bool    need_reset;
 };
+
+#endif
