@@ -10,13 +10,15 @@
 /***** UniWvConfGen *****/
 
 UniWvConfGen::UniWvConfGen(WvConf &_cfg)
-    : cfg(cfg)
+    : cfg(_cfg)
 {
 }
 
 
 WvString UniWvConfGen::get(const UniConfKey &key)
 {
+    fprintf(stderr, "Section: %s, Key: %s", WvString(key.first()).cstr(),
+WvString(key.last(key.numsegments() - 1)).cstr());
     return cfg.get(key.first(), key.last(key.numsegments() - 1));
 }
 
