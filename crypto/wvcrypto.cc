@@ -322,36 +322,45 @@ size_t WvRSAStream::uwrite(const void *buf, size_t size)
 WvMD5::WvMD5(WvString &StringToHash)
 {
     MD5_CTX ctx;
+    unsigned char temp[20];
 
     MD5_Init(&ctx);
     MD5_Update(&ctx,StringToHash,strlen(StringToHash));
-    MD5_Final(MD5HashValue, &ctx);    
+    MD5_Final(temp, &ctx);
+    MD5HashValue = (unsigned char *)calloc(1,sizeof(temp));
+    memcpy(MD5HashValue,temp,sizeof(temp));
 }
 
 WvMD5::WvMD5(FILE *FileToHash)
 {
     unsigned char buf[1024];
+    unsigned char temp[20];
     MD5_CTX ctx;
     int n;
 
     MD5_Init(&ctx);
     while ((n = fread(buf, 1, sizeof(buf), FileToHash)) > 0)
             MD5_Update(&ctx, buf, n);
-    MD5_Final(MD5HashValue, &ctx);
+    MD5_Final(temp, &ctx);
     if (ferror(FileToHash))
 	MD5HashValue = NULL;
+    else
+    {
+    	MD5HashValue = (unsigned char *)calloc(1,sizeof(temp));
+    	memcpy(MD5HashValue,temp,sizeof(temp));
+    }
 }
 
 WvMD5::~WvMD5()
 {
-
+    free(MD5HashValue);
 }
 
 WvString WvMD5::MD5Hash() const
 {
     int count;
     unsigned char *temp;
-    WvString hashValue;
+    WvString hashValue("");
 
     temp = MD5HashValue;
     for (count = 0; count < 16; count++)

@@ -15,7 +15,7 @@ SSLINC= /usr/include/ssl /usr/include/ssleay /usr/local/include/ssl \
 SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 	-L/usr/local/ssl -L/usr/local/ssl/lib -L/usr/local/ssleay
 
-default: all cryptotest ssltest sslsrvtest certtest reqtest
+default: all cryptotest ssltest sslsrvtest certtest reqtest md5test
 all: crypto.libs
 
 LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto -L.. -lwvutils -lwvstreams
@@ -28,7 +28,7 @@ crypto.libs: wvcrypto.o wvsslstream.o wvx509.o
 
 crypto.a: crypto.libs
 
-cryptotest ssltest sslsrvtest certtest reqtest: crypto.a
+cryptotest ssltest sslsrvtest certtest reqtest md5test: crypto.a
 
 clean:
-	rm -f cryptotest ssltest sslsrvtest certtest reqtest testcert.pem
+	rm -f cryptotest ssltest sslsrvtest certtest reqtest md5test testcert.pem
