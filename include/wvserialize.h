@@ -35,6 +35,10 @@ inline int32_t _wv_htonl(int32_t i)
 {
     return htonl(i);
 }
+inline int16_t _wv_htons(int16_t i)
+{
+    return htons(i);
+}
 
 
 
@@ -63,7 +67,7 @@ void wv_serialize_scalar(WvBuf &buf, const T t)
     }
     else if (sizeof(T) == 2)
     {
-	int32_t i = htons(t);
+	int32_t i = _wv_htons(t);
 	buf.put(&i, 2);
     }
     else if (sizeof(T) == 1)
@@ -216,12 +220,16 @@ inline T wv_deserialize(WvBuf &buf)
 
 
 /**
- * This function shouldn't be necessary at all, but using it makes totally
+ * These functions shouldn't be necessary at all, but using it makes totally
  * insane assembler errors go away (gcc 2.95.4, glibc 2.3.1).
  */
 inline int32_t _wv_ntohl(int32_t i)
 {
     return ntohl(i);
+}
+inline int16_t _wv_ntohs(int16_t i)
+{
+    return ntohs(i);
 }
 
 
@@ -245,7 +253,7 @@ inline T wv_deserialize_scalar(WvBuf &buf)
     else if (sizeof(T) == 4)
 	return (T) _wv_ntohl(*(int32_t *)buf.get(4));
     else if (sizeof(T) == 2)
-	return (T) ntohs(*(int16_t *)buf.get(2));
+	return (T) _wv_ntohs(*(int16_t *)buf.get(2));
     else if (sizeof(T) == 1)
 	return (T) *(int8_t *)buf.get(1);
     else
