@@ -32,20 +32,10 @@ inline bool isselectable(int fd)
 // in win32, only sockets can be in the FD_SET for select()
 static inline bool isselectable(int s)
 {
-#if 0
-    u_long crap;
-    int ret = ioctlsocket(s, FIONREAD, &crap);
-    fprintf(stderr, "<%d-%d-%d>\n", s, ret, GetLastError()); fflush(stderr);
-    if (ret == 0)
-	return true;
-    else
-	return GetLastError() != WSAENOTSOCK;
-#else
     // if _get_osfhandle() works, it's a msvcrt fd, not a winsock handle.
     // msvcrt fds can't be select()ed on correctly.
     return ((HANDLE)_get_osfhandle(s) == INVALID_HANDLE_VALUE) 
 	? true : false;
-#endif
 }
 
 #endif // _WIN32
@@ -175,8 +165,6 @@ bool WvFdStream::pre_select(SelectInfo &si)
 {
     bool result = WvStream::pre_select(si);
     
-    fprintf(stderr, "isselectable(%d)==%d\n",
-	    rfd, isselectable(rfd)); fflush(stderr);
     if (isselectable(rfd))
     {
 	if (si.wants.readable && (rfd >= 0))

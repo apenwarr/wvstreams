@@ -6,6 +6,10 @@
  */
 #include "uninullgen.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniNullGen);
+
 
 static IUniConfGen *creator(WvStringParm, IObject *, void *)
 {

@@ -7,6 +7,10 @@
 #include "unimounttreegen.h"
 #include "wvmoniker.h"
 #include <assert.h>
+#include "wvlinkerhack.h"
+
+WV_LINK(UniMountTreeGen);
+
 
 /**
  * An iterator over the keys in a tree of mounted generators.

@@ -2,6 +2,7 @@ _WIN32=_WIN32
 
 XPATH+= $(WVSTREAMS)/Win32WvStreams \
 	$(WVSTREAMS)/Win32WvStreams/libwvstreams \
+	$(WVSTREAMS)/Win32WvStreams/libuniconf \
 	$(WVSTREAMS)/include
 
 CC=ccache i586-mingw32msvc-gcc

@@ -80,7 +80,8 @@ $(patsubst %.t.cc,%.t,$(wildcard */t/*.cc)): libwvwin32.a
 
 W=$(WVSTREAMS)/Win32WvStreams
 libwvwin32.a: \
-  $(call objects,$W/libwvutils $W/libwvstreams) $(OBJFILES)
+  $(call objects,$W/libwvutils $W/libwvstreams) \
+	$W/libuniconf/uniregistrygen.o $(OBJFILES)
 
 fake-libs: libwvwin32.a
 	for d in libwvbase libwvutils libwvstreams libuniconf; do \

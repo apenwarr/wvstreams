@@ -6,6 +6,10 @@
  */
 #include "uniregistrygen.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniRegistryGen);
+
 
 // returns a handle to the key specified by key, or, if key specifies a value,
 // a handle to the key containing that value (and setting isValue = true)

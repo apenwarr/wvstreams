@@ -9,6 +9,9 @@
 #include "wvmoniker.h"
 #include "wvtclstring.h"
 #include "wvstringlist.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniRetryGen);
 
 
 //#define DPRINTF(format, args...) fprintf(stderr, format ,##args);

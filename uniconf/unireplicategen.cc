@@ -10,6 +10,10 @@
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniReplicateGen);
+
 
 
 //#define DPRINTF(format, args...) fprintf(stderr, format ,##args);
