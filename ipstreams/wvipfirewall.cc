@@ -20,6 +20,8 @@ bool WvIPFirewall::enable = false;
 
 WvIPFirewall::WvIPFirewall()
 {
+    system("iptables -F Services");
+    system("iptables -t nat -F TProxy");
 }
 
 
@@ -110,6 +112,12 @@ void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
 	    return;
 	}
     }
+}
+
+
+void WvIPFirewall::add_proto(const WvString proto)
+{
+    system(WvString("iptables -A Services -p %s -j ACCEPT", proto));
 }
 
 

@@ -19,21 +19,6 @@
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
-#include <execinfo.h>
-void backtrace(WvLog &log)
-{
-    static void *trace[64];
-    int n = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
-    char **x = backtrace_symbols(trace, n);
-    
-    log("backtrace:\n");
-    for (int count = 0; count < n; count++)
-	log("- %s: %s\n", count, x[count]);
-    log("...backtrace done.\n");
-    
-    free(x);
-}
-
 WvInterfaceDictBase WvInterfaceDict::slist(15);
 int WvInterfaceDict::links = 0;
 
@@ -143,8 +128,7 @@ int WvInterface::getflags()
     {
 	errnum = errno;
 	//if (errnum != EACCES && errnum != EPERM)
-	    err.perror(WvString("GetFlags %s", name));
-	backtrace(err);
+	//    err.perror(WvString("GetFlags %s", name));
 	close(sock);
 	valid = false;
 	return 0;
@@ -168,8 +152,7 @@ int WvInterface::setflags(int clear, int set)
     {
 	errnum = errno;
 	//if (errnum != EACCES && errnum != EPERM)
-	    err.perror(WvString("GetFlags2 %s", name));
-	backtrace(err);
+	//    err.perror(WvString("GetFlags2 %s", name));
 	close(sock);
 	return errnum;
     }
@@ -395,7 +378,8 @@ int WvInterface::addroute(const WvIPNet &dest, const WvIPAddr &gw,
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (ioctl(sock, SIOCADDRT, &rte))
     {
-	if (errno != EACCES && errno != EPERM && errno != EEXIST)
+	if (errno != EACCES && errno != EPERM && errno != EEXIST
+	  && errno != ENOENT)
 	    err.perror(WvString("AddRoute %s %s (up=%s)",
 				name, dest, isup()));
 	close(sock);

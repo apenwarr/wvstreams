@@ -7,6 +7,7 @@
  */
 #include "wvcrypto.h"
 #include "wvlog.h"
+#include "wvtimeutils.h"
 #include <assert.h>
 
 extern char *optarg;
@@ -22,17 +23,6 @@ static void usage(WvLog &log, const char *progname)
 	"         -D decrypts stdin\n"
 	"         -B sets the number of bits in the encryption key",
 	progname);
-}
-
-
-static long msecdiff(struct timeval &a, struct timeval &b)
-{
-    long secdiff, usecdiff;
-    
-    secdiff = a.tv_sec - b.tv_sec;
-    usecdiff = a.tv_usec - b.tv_usec;
-    
-    return secdiff*1000 + usecdiff/1000;
 }
 
 

@@ -5,6 +5,7 @@
  * A class for reliably starting/stopping subprocesses.  See wvsubproc.h.
  */
 #include "wvsubproc.h"
+#include "wvtimeutils.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -143,17 +144,6 @@ void WvSubProc::stop(time_t msec_delay)
 	kill(SIGKILL);
 	wait(-1);
     }
-}
-
-
-static long msecdiff(struct timeval &a, struct timeval &b)
-{
-    long secdiff, usecdiff;
-    
-    secdiff = a.tv_sec - b.tv_sec;
-    usecdiff = a.tv_usec - b.tv_usec;
-    
-    return secdiff*1000 + usecdiff/1000;
 }
 
 

@@ -31,6 +31,12 @@ extern char *terminate_string(char *string, char c);
 extern char *trim_string(char *string);
 
 /**
+ * Similar to above, but trims the string starting at the first occurrence of
+ * c.
+ */
+extern char *trim_string(char *string, char c);
+
+/**
  * Replace all instances of c1 with c2 for the first 'length' characters in 
  * 'string'. Ignores terminating NUL, so make sure you set 'length' correctly.
  */
@@ -100,5 +106,7 @@ extern WvString web_unescape(const char *str);
 WvString rfc822_date(time_t when = -1);
 WvString passwd_crypt(const char *str);
 WvString backslash_escape(const WvString &s1);
+
+extern int strcount(const WvString &s, const char c);
 
 #endif // __STRUTILS_H
