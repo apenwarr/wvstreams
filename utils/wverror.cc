@@ -10,12 +10,12 @@
 #ifdef _WIN32
 #include "windows.h"
 
-struct WsErrMap {
+struct WvErrMap {
     int num;
     const char *str;
 };
 
-static WsErrMap wserrmap[] = {
+static WvErrMap wverrmap[] = {
     { WSAEINTR, "Interrupted" },
     { WSAEBADF, "Bad file descriptor" },
     { WSAEACCES, "Access denied" },
@@ -69,10 +69,10 @@ static WsErrMap wserrmap[] = {
     { 0, NULL }
 };
 
-const char *winsock_errmap(int errnum)
+static const char *wv_errmap(int errnum)
 {
     
-    for (WsErrMap *i = wserrmap; i->num; i++)
+    for (WvErrMap *i = wverrmap; i->num; i++)
 	if (i->num == errnum)
 	    return i->str;
     return NULL;
@@ -101,13 +101,12 @@ WvString WvErrorBase::errstr() const
 #ifndef _WIN32
 	return strerror(errnum);
 #else
-	if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
+	const char *wverr = wv_errmap(errnum);
+	if (wverr)
+	    return wverr;
+	else if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
 	{
-	    const char *wserr = winsock_errmap(errnum);
-	    if (wserr)
-		return wserr;
-	    
-	    // otherwise, a *really* weird error: try getting the error
+	    // otherwise, an unrecognized winsock error: try getting the error
 	    // message from win32.
 	    char msg[4096];
 	    const HMODULE module = GetModuleHandle("winsock.dll");
@@ -120,7 +119,13 @@ WvString WvErrorBase::errstr() const
 	    return WvString("Unknown format %s for error %s", e, errnum);
 	}
 	else
-	    return strerror(errnum);
+	{
+	    const char *str = strerror(errnum);
+	    if (!strcmp(str, "Unknown error"))
+		return WvString("Unknown win32 error #%s", errnum);
+	    else
+		return str;
+	}
 #endif
     }
 }
