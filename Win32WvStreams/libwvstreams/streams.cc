@@ -5,9 +5,11 @@
 #include <assert.h>
 #include <errno.h>
 
-// these versions of close/read/write try to work with both sockets and msvcrt 
-// file descriptors! (I hope we never get a socket with the same VALUE
-// as a file descriptor!)
+// these versions of close/read/write try to work with both sockets and
+// msvcrt file descriptors! (I hope we never get a socket with the same
+// VALUE as a file descriptor!)
+
+
 int close(int fd)
 {
     int retval = _close(fd), err = errno;
@@ -20,6 +22,7 @@ int close(int fd)
     } 
     return retval;
 }
+
 
 int read(int fd, void *buf, size_t count)
 {
@@ -34,6 +37,7 @@ int read(int fd, void *buf, size_t count)
     return retval;
 }
 
+
 int write(int fd, const void *buf, size_t count)
 {
     int retval = 0;
@@ -46,6 +50,7 @@ int write(int fd, const void *buf, size_t count)
     }
     return retval;
 }
+
 
 int socketpair(int family, int type, int protocol, int *sb)
 {
@@ -122,6 +127,7 @@ DWORD WINAPI fd2socket_fwd(LPVOID lpThreadParameter)
     return retval;
 }
 
+
 DWORD WINAPI socket2fd_fwd(LPVOID lpThreadParameter)
 {
     DWORD retval = 0;
@@ -146,6 +152,7 @@ DWORD WINAPI socket2fd_fwd(LPVOID lpThreadParameter)
     closesocket(pair->socket);
     return retval;
 }
+
 
 SocketFromFDMaker::SocketFromFDMaker(int fd, LPTHREAD_START_ROUTINE lpStartAddress, bool wait)
     : m_hThread(0), m_socket(INVALID_SOCKET), m_wait(wait)
@@ -172,6 +179,7 @@ SocketFromFDMaker::SocketFromFDMaker(int fd, LPTHREAD_START_ROUTINE lpStartAddre
     );
     assert(m_hThread);
 }
+
 
 SocketFromFDMaker::~SocketFromFDMaker()
 {

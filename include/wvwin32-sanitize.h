@@ -16,8 +16,15 @@
 #define SIGPIPE 13
 #endif
 
+typedef int socklen_t;
+
 // FIXME: this makes alarms silently fail.  They should probably fail more
 // nicely, or (better still) actually work...
 static inline unsigned int alarm(unsigned int t) { return 0; }
+
+// refer to _wvinitialize to ensure that we suck in some stuff that makes
+// wvstreams actually work properly.
+extern void *_wvinitialize;
+static void *_wvinitialize_local = _wvinitialize;
 
 #endif // __WIN32_SANITIZE_H

@@ -4,6 +4,19 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+static bool fd_is_valid(int fd)
+{
+    int nfd = dup(fd);
+    if (nfd >= 0)
+    {
+	close(nfd);
+	return true;
+    }
+    
+    return false;
+}
+
+
 static int fd_count(const char *when)
 {
     int count = 0;
@@ -12,18 +25,17 @@ static int fd_count(const char *when)
     
     for (int fd = 0; fd < 1024; fd++)
     {
-	int nfd = dup(fd);
-	if (nfd >= 0) // didn't fail: fd was open!
+	if (fd_is_valid(fd))
 	{
 	    count++;
 	    printf(" %d", fd);
-	    close(nfd);
 	}
     }
     printf("\n");
     
     return count;
 }
+
 
 int main(int argc, char **argv)
 {

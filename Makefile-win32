@@ -15,7 +15,7 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 	
-LIBS+=-lssl -lcrypto -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++
+LIBS+=-lssl -lcrypto -lz -lwsock32 -lgdi32 $(with_xplc)/libxplc.a -lsupc++
 
 -lxplc -lxplc-cxx: ;
 
@@ -32,7 +32,6 @@ OBJREPLACED=utils/wvtask.o
 # object files that we can't use in win32 for now, but which we should
 # definitely fix
 OBJFIXME=\
-	utils/wvdiriter.o \
 	streams/fileutils.o \
 	streams/wvdaemon.o \
 	streams/wvlogfile.o \

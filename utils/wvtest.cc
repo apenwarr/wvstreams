@@ -116,7 +116,9 @@ int WvTest::run_all(const char * const *prefixes)
 	    WVPASS(new_valgrind_leaks == old_valgrind_leaks);
 	    old_valgrind_leaks = new_valgrind_leaks;
 	    
+	    fflush(stderr);
 	    printf("\n");
+	    fflush(stdout);
 	}
     }
     
