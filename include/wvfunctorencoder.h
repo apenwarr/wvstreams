@@ -12,28 +12,29 @@
 #include "wvtypedencoder.h"
 
 /**
- * OType specifies the output data type.
- * IType specifies the input data type.
  * Functor specifies the functor type which must have an operator()
  * with a signature compatible with invocations of the form:
- *   const IType data = ...;
- *   OType result = func(data);
+ *   const IT data = ...;
+ *   OT result = func(data);
  *
  * The best way to use this monster is to subclass with friendly
  * names for the implementations that are needed.  For maximum
  * performance, define the functor as a struct that provides an
  * operator() inline.
+ *
+ * @param IT the input buffer datatype
+ * @param OT the output buffer datatype
+ * @param FT the functor type
  */
-template<class OType, class IType, class Functor>
-class WvFunctorEncoder : public WvTypedEncoder<IType, OType>
+template<class IT, class OT, class FT>
+class WvFunctorEncoder : public WvTypedEncoder<IT, OT>
 {
 protected:
-    typedef OType OT;
-    typedef IType IT;
-    typedef Functor FT;
-    Functor f;
+    FT f;
+    
 public:
-    WvFunctorEncoder(const Functor &f) : f(f) { }
+    typedef FT FType;
+    WvFunctorEncoder(const FType &f) : f(f) { }
     virtual ~WvFunctorEncoder() { }
 
 protected:

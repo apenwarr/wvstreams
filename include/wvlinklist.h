@@ -2,41 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * Implementation of a Linked List management class, or rather, macros that
- * declare arbitrary linked list management classes.  This looks pretty
- * horrible, but lets us do stuff like this:
- *
- *       DeclareWvList(WvString);
- *
- *       int main()
- *       {
- *           WvStringList l;
- *           WvStringList::Iter i(l);
- *           ... fill the list ...
- *
- *           i.rewind();
- *           while (i.next())
- *               printf("%s\n", i.str);
- *
- *           ...
- *       }
- *
- * NOTES:
- *    - We need to malloc memory for each WvLink as well as the data it
- *        stores; this is unnecessarily slow.  I would rather have made a
- *        base "Link" class for object types that could be stored as links
- *        in a list, and then used object->next instead of all the
- *        List Iterator stuff, but the end result was pure ugliness, so I
- *        gave up.  At least this way, the same object can be in multiple
- *        lists.
- *
- *    - DeclareWvList2() allows the user to include arbitrary lines
- *        inside the class definition.  For example:
- *             DeclareWvList2(WvString, void autofill(););
- *
- *    - Deallocating a *List object will free all the WvLinks in the list,
- *        but not necessarily all the objects that the WvLinks point to
- *        (depending on the value of link->auto_free)
+ * A linked list container.
  */
 #ifndef __WVLINKLIST_H
 #define __WVLINKLIST_H
@@ -44,6 +10,13 @@
 #include <assert.h>
 #include "wvsorter.h"
 
+/**
+ * The untyped base class of WvList<T>.
+ * <p>
+ * Putting common code in here allows us to prevent it from being
+ * replicated by each template instantiation of WvList<T>.
+ * </p>
+ */
 class WvListBase
 {
 public:
@@ -80,7 +53,56 @@ public:
     };
 };
 
-template <class _type_>
+/**
+ * A linked list container class.
+ * <p>
+ * Some rather horrible macros are used to declare actual concrete
+ * list types.
+ * </p><p>
+ * Example:
+ * <pre>
+ *   DeclareWvList(WvString);
+ *
+ *   int main()
+ *   {
+ *       WvStringList l;
+ *       WvStringList::Iter i(l);
+ *
+ *       ... fill the list ...
+ *
+ *       i.rewind();
+ *       while (i.next())
+ *           printf("%s\\n", i.str);
+ *   }
+ * </pre>
+ * </p><p>
+ * Deallocating list will free all of the WvLinks in the list, but
+ * will only free the user objects that were added with auto_free
+ * set to true.
+ * </p><p>
+ * We need to malloc memory for each WvLink as well as the data it
+ * stores; this is unnecessarily slow.  I would rather have made a
+ * base "Link" class for object types that could be stored as links
+ * in a list, and then used object->next instead of all the
+ * List Iterator stuff, but the end result was pure ugliness, so I
+ * gave up.  At least this way, the same object can be in multiple
+ * lists.
+ * </p><p>
+ * List type construction is facilitated by the following macros:
+ * <ul>
+ * <li>DeclareWvList(Type): creates a subclass named WvListType
+ *     that contains pointers to Type.</li>
+ * <li>DeclareWvList2(Type, code...): as the above, but includes the
+ *     specified block of code into the public section of the
+ *     class declaration.
+ *     eg. DeclareWvList2(WvString, void autofill(););</li>
+ * <li>DeclareWvList3(Type, name, code...): as the above, but
+ *     calls the resulting class by the specified name.</li>
+ * </ul>
+ * </p>
+ * @param T the object type
+ */
+template<class T>
 class WvList : public WvListBase
 {
 public:
@@ -100,29 +122,29 @@ public:
             unlink_after(& head);
     }
 
-    _type_ *first() const
+    T *first() const
         {
 	    assert(!isempty());
-	    return (_type_*)head.next->data;
+	    return (T*)head.next->data;
 	}
 
-    _type_ *last() const
-        { return (_type_*)tail->data; }
+    T *last() const
+        { return (T*)tail->data; }
 
-    void add_after(WvLink *after, _type_ *data, bool auto_free,
+    void add_after(WvLink *after, T *data, bool auto_free,
 			char *id = NULL )
         { (void)new WvLink((void *)data, after, tail, auto_free, id); }
 
-    void append(_type_ *data, bool auto_free, char *id = NULL)
+    void append(T *data, bool auto_free, char *id = NULL)
 	{ add_after(tail, data, auto_free, id); }
 
-    inline void add(_type_ *data, bool auto_free, char *id = NULL)
+    inline void add(T *data, bool auto_free, char *id = NULL)
         { append(data, auto_free, id); }
 
-    void prepend(_type_ *data, bool auto_free, char *id = NULL)
+    void prepend(T *data, bool auto_free, char *id = NULL)
 	{ add_after(&head, data, auto_free, id); }
 
-    void unlink(_type_ *data)
+    void unlink(T *data)
         { Iter i(*this); while (i.find(data)) i.unlink(); }
 
     void unlink_first()
@@ -131,8 +153,8 @@ public:
     void unlink_after(WvLink *after)
     {
         WvLink *next = after->next;
-        _type_ *obj = next->auto_free ?
-            static_cast<_type_*>(next->data) : NULL;
+        T *obj = next->auto_free ?
+            static_cast<T*>(next->data) : NULL;
         if (next == tail) tail = after;
         next->unlink(after);
         delete obj;
@@ -143,9 +165,9 @@ public:
     public:
         Iter(const WvList &l) : IterBase(l)
             { }
-        _type_ *ptr() const
-            { return (_type_ *)link->data; }
-	WvIterStuff(_type_);
+        T *ptr() const
+            { return (T *)link->data; }
+	WvIterStuff(T);
 	
         void unlink()
         {
@@ -166,7 +188,7 @@ public:
 	}
     };
     
-    typedef class WvSorter<_type_,WvListBase,WvListBase::IterBase> Sorter;
+    typedef class WvSorter<T, WvListBase, WvListBase::IterBase> Sorter;
 };
 
 

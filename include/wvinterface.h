@@ -33,7 +33,7 @@ class WvInterface
     /**
      * used by addroute()/delroute()
      */
-    void fill_rte(struct rtentry *rte, char *ifname,
+    void fill_rte(struct rtentry *rte, char ifname[17],
 		  const WvIPNet &dest, const WvIPAddr &gw,
 		  int metric);
     

@@ -10,9 +10,6 @@
 #include "wvencoder.h"
 #include "wvfunctorencoder.h"
 
-/**
- * Data type conversion and renormalization functors.
- */
 struct WvPCMSigned16ToFloatFunctor
 {
     inline float operator()(signed short int pcm) const
@@ -44,41 +41,55 @@ struct WvPCMDoubleToSigned16Functor
     }
 };
 
+
 /**
- * Data type conversion and renormalization encoders.
+ * An encoder that converts PCM audio from normalized floats to 
+ * 16 bit signed short ints.
  */
 class WvPCMFloatToSigned16Encoder : public WvFunctorEncoder
-    <signed short int, float, WvPCMFloatToSigned16Functor>
+    <float, signed short int, WvPCMFloatToSigned16Functor>
 {
 public:
     WvPCMFloatToSigned16Encoder() :
-        WvFunctorEncoder<OT, IT, FT>(FT()) { }
+        WvFunctorEncoder<OType, IType, FType>(FType()) { }
 };
 
 
+/**
+ * An encoder that converts PCM audio from 16 bit signed short ints
+ * to normalized floats.
+ */
 class WvPCMSigned16ToFloatEncoder : public WvFunctorEncoder
-    <float, signed short int, WvPCMSigned16ToFloatFunctor>
+    <signed short int, float, WvPCMSigned16ToFloatFunctor>
 {
 public:
     WvPCMSigned16ToFloatEncoder() :
-        WvFunctorEncoder<OT, IT, FT>(FT()) { }
+        WvFunctorEncoder<OType, IType, FType>(FType()) { }
 };
 
+/**
+ * An encoder that converts PCM audio from normalized doubles to
+ * 16 bit signed short ints.
+ */
 class WvPCMDoubleToSigned16Encoder : public WvFunctorEncoder
-    <signed short int, double, WvPCMDoubleToSigned16Functor>
+    <double, signed short int, WvPCMDoubleToSigned16Functor>
 {
 public:
     WvPCMDoubleToSigned16Encoder() :
-        WvFunctorEncoder<OT, IT, FT>(FT()) { }
+        WvFunctorEncoder<OType, IType, FType>(FType()) { }
 };
 
 
+/**
+ * An encoder that converts PCM audio from 16 bit signed short ints
+ * to normalized doubles.
+ */
 class WvPCMSigned16ToDoubleEncoder : public WvFunctorEncoder
     <double, signed short int, WvPCMSigned16ToDoubleFunctor>
 {
 public:
     WvPCMSigned16ToDoubleEncoder() :
-        WvFunctorEncoder<OT, IT, FT>(FT()) { }
+        WvFunctorEncoder<OType, IType, FType>(FType()) { }
 };
 
 #endif // __WVPCMUTILS_H

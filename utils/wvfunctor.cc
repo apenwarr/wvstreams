@@ -12,7 +12,7 @@ namespace WvGeneric
 /***** FunctorImplBase *****/
 
 #ifdef NO_RTTI
-int FunctorImplBase::NEXTTYPE = 0;
+int FunctorImplBase::PREVTYPE = 0;
 #endif
 
 FunctorImplBase::~FunctorImplBase()

@@ -10,19 +10,42 @@
 #include "wvencoder.h"
 #include "wvencoderstream.h"
 
+struct z_stream_s;
+
 /**
  * An encoder implementing Gzip encryption and decryption.
+ * <p>
+ * When compressing:
+ * <ul>
+ * <li>On flush(), the encoded data stream is synchronized such that
+ *     all data compressed up to this point can be fully decompressed.
+ *     </li>
+ * <li>On finish(), the encoded data stream is finalized an a Gzip
+ *     end of data marker is emitted.</li>
+ * </ul>
+ * </p><p>
+ * When decompressing:
+ * <ul>
+ * <li>The encoder will transition to isfinished() == true on its own
+ *     if a Gzip end of data marker is detected in the input.  After
+ *     this point, no additional data can be decompressed.</li>
+ * </ul>
+ * </p>
  */
-struct z_stream_s;
 class WvGzipEncoder : public WvEncoder
 {
 public:
     enum Mode {
-        Deflate, // compress using deflate
-        Inflate  // decompress using inflate
+        Deflate, /*!< Compress using deflate */
+        Inflate  /*!< Decompress using inflate */
     };
     
-    WvGzipEncoder(Mode _mode);
+    /**
+     * Creates a Gzip encoder.
+     *
+     * @param mode the compression mode
+     */
+    WvGzipEncoder(Mode mode);
     virtual ~WvGzipEncoder();
     
 protected:

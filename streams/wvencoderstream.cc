@@ -50,9 +50,8 @@ bool WvEncoderStream::isok() const
     // handle deferred EOF condition
     // if (! cloned->isok()) the readchain will be finished at
     //   the next uread() or pre_select().
-    if (readchain.isfinished())
-        return false;
-    return true;
+
+    return ! readchain.isfinished() && writechain.isok();
 }
 
 

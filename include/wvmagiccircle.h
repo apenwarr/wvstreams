@@ -10,10 +10,18 @@
 #include "wvshmzone.h"
 
 
+/**
+ * A circular queue that can be accessed across fork().
+ */
 class WvMagicCircle : public WvError
 {
 public:
-    WvMagicCircle(size_t _size);
+    /**
+     * Creates a shared memory circular queue.
+     *
+     * @param size the number of elements to store
+     */
+    WvMagicCircle(size_t size);
     ~WvMagicCircle();
     
 protected:

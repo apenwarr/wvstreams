@@ -2,14 +2,20 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * WvBufStream stores data written by write(), and returns it in read().
- * Handy for making virtual streams, like in WvHttpPool.
+ * A buffered loopback stream.
  */ 
 #ifndef __WVBUFSTREAM_H
 #define __WVBUFSTREAM_H
 
 #include "wvstream.h"
 
+/**
+ * WvBufStream stores data written by write(), and returns it
+ * later on in read().
+ * <p>
+ * Handy for making virtual streams, like WvHttpPool.
+ * </p>
+ */
 class WvBufStream : public WvStream
 {
     bool dead, eof;

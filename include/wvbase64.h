@@ -9,6 +9,14 @@
 
 #include "wvencoder.h"
 
+/**
+ * A base 64 encoder.
+ * <p>
+ * On flush(), outputs any needed pad characters.
+ * </p><p>
+ * Supports reset().
+ * </p>
+ */
 class WvBase64Encoder : public WvEncoder
 {
     enum State {
@@ -16,7 +24,11 @@ class WvBase64Encoder : public WvEncoder
     };
     State state;
     unsigned int bits; // remaining bits shifted left 8 bits
+    
 public:
+    /**
+     * Creates a base 64 encoder.
+     */
     WvBase64Encoder();
     virtual ~WvBase64Encoder() { }
 
@@ -27,6 +39,12 @@ protected:
 };
 
 
+/**
+ * A base 64 decoder.
+ * <p>
+ * Supports reset().
+ * </p>
+ */
 class WvBase64Decoder : public WvEncoder
 {
     enum State {
@@ -34,7 +52,11 @@ class WvBase64Decoder : public WvEncoder
     };
     State state;
     unsigned int bits; // remaining bits shifted left 6 bits
+    
 public:
+    /**
+     * Creates a base 64 decoder.
+     */
     WvBase64Decoder();
     virtual ~WvBase64Decoder() { }
 

@@ -105,6 +105,10 @@ public:
 };
 
 
+/**
+ * Captures formatted log messages and outputs them to the
+ * specified file descriptor.
+ */
 class WvLogConsole : public WvFDStream, public WvLogRcv
 {
     public:

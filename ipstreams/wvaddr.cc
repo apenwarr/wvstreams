@@ -164,7 +164,7 @@ WvStringAddr::WvStringAddr(WvStringParm s, const WvEncap &_cap)
 }
 
 
-WvStringAddr::WvStringAddr(const sockaddr_bin *_addr)
+WvStringAddr::WvStringAddr(const struct sockaddr *_addr)
 	: addr((char *)_addr->sa_data), cap(_addr->sa_family)
 {
 }

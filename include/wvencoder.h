@@ -526,7 +526,11 @@ protected:
 /**
  * A very efficient passthrough encoder that just merges the
  * input buffer into the output buffer.
+ * <p>
  * Counts the number of bytes it has processed.
+ * </p><p>
+ * Supports reset().
+ * </p>
  */
 class WvPassthroughEncoder : public WvEncoder
 {
@@ -538,6 +542,7 @@ public:
 
     /**
      * Returns the number of bytes processed so far.
+     * @return the number of bytes
      */
     size_t bytes_processed() { return total; }
     
@@ -550,6 +555,10 @@ protected:
 /**
  * An encoder chain owns a list of encoders that are used in sequence
  * to transform data from a source buffer to a target buffer.
+ * <p>
+ * Supports reset() if all the encoders it contains also support
+ * reset().
+ * </p>
  */
 class WvEncoderChain : public WvEncoder
 {
@@ -573,16 +582,46 @@ public:
      * Creates an initially empty chain of encoders.
      */
     WvEncoderChain();
+
+    /**
+     * Destroys the encoder chain.
+     * <p>
+     * Destroys any encoders that were added with auto_free == true.
+     * </p>
+     */
     virtual ~WvEncoderChain();
 
     /**
-     * Manipulate the list of encoders.
-     * It is not a good idea to change the list this unless the encoders
-     * have been flushed and finished first, but it is supported.
+     * Appends an encoder to the tail of the chain.
+     *
+     * @param enc the encoder
+     * @param auto_free if true, takes ownership of the encoder
      */
     void append(WvEncoder *enc, bool auto_free);
+
+    /**
+     * Prepends an encoder to the head of the chain.
+     *
+     * @param enc the encoder
+     * @param auto_free if true, takes ownership of the encoder
+     */
     void prepend(WvEncoder *enc, bool auto_free);
+
+    /**
+     * Unlinks the encoder from the chain.
+     * <p>
+     * Destroys the encoder if it was added with auto_free == true.
+     * </p>
+     * @param enc the encoder
+     */
     void unlink(WvEncoder *enc);
+
+    /**
+     * Clears the encoder chain.
+     * <p>
+     * Destroys any encoders that were added with auto_free == true.
+     * </p>
+     */
     void zap();
 
 protected:

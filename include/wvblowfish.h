@@ -10,34 +10,42 @@
 #include "wvencoder.h"
 #include "wvencoderstream.h"
 
-/**
- * A Blowfish encoder.
- */
 struct bf_key_st;
+
+/**
+ * An encoder implementing the Blowfish encryption method.
+ * <p>
+ * Supports reset().
+ * </p>
+ */
 class WvBlowfishEncoder : public WvEncoder
 {
 public:
     enum Mode {
-        ECBEncrypt, // electronic code book mode (avoid!)
-        ECBDecrypt,
-        CFBEncrypt, // cipher feedback mode (simulates a stream)
-        CFBDecrypt
+        ECBEncrypt, /*!< Encrypt using ECB mode (avoid) */
+        ECBDecrypt, /*!< Decrypt using ECB mode (avoid) */
+        CFBEncrypt, /*!< Encrypt using CFB mode (simulates a stream) */
+        CFBDecrypt  /*!< Decrypt using CFB mode (simulates a stream) */
     };
 
     /**
-     * Creates a new Blowfish encoder / decoder.
-     *   _mode    : the encryption mode
-     *   _key     : the initial key
-     *   _keysize : the initial key size in bytes
+     * Creates a new Blowfish cipher encoder.
+     *
+     * @param mode the encryption mode
+     * @param key the initial key
+     * @param keysize the initial key size in bytes
      */
-    WvBlowfishEncoder(Mode _mode, const void *_key, size_t _keysize);
+    WvBlowfishEncoder(Mode mode, const void *key, size_t keysize);
     virtual ~WvBlowfishEncoder();
 
     /**
      * Sets the current Blowfish key and resets the initialization
      * vector to all nulls.
+     *
+     * @param key the new key
+     * @param keysize the key size in bytes
      */
-    void setkey(const void *_key, size_t _keysize);
+    void setkey(const void *key, size_t keysize);
 
 protected:
     virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
@@ -58,9 +66,12 @@ private:
 
 /**
  * A crypto stream implementing Blowfish encryption.
- * See WvBlowfishEncoder for details.
- *
- * By default, written data is "cfbencrypted", read data is "cfbdecrypted".
+ * <p>
+ * By default, written data is encrypted using
+ * WvBlowfishEncoder::CFBEncrypt, read data is decrypted using
+ * WvBlowfishEncoder::CFBDecrypt.
+ * </p>
+ * @see WvBlowfishEncoder
  */
 class WvBlowfishStream : public WvEncoderStream
 {

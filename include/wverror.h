@@ -2,17 +2,20 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * A class for managing error numbers and strings.  It can have either a
- * system error value (like the global 'errno' and defined in errno.h) or an
- * arbitrary error string.  It can return a string representation of itself
- * in either case.
+ * A class for managing error numbers and strings.
  */ 
 #ifndef __WVERROR_H
 #define __WVERROR_H
 
 #include "wvstring.h"
 
-
+/**
+ * A class for managing error numbers and strings.
+ *
+ * It can have either a system error value, like those defined
+ * in errno.h, or an arbitrary error string.  In either case, it
+ * can return a string representation of the error message.
+ */
 class WvError
 {
 protected:

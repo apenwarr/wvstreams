@@ -11,7 +11,7 @@
  
 /**
  * Trivial word wrapper.
- * Recognizes '\n' in input stream as end of line.
+ * Recognizes newlines in input stream as end of line.
  * Words are output until no more will fit, in which case a newline
  * is output and the word is presented on the next line.  Wrapped
  * word delimiter characters are discarded such that a wrapped word

@@ -29,6 +29,8 @@ class WvBufferBase;
  * use the WvBufferBase<T> type rather than WvBufferBaseCommonImpl<T>.
  *
  * @see WvBufferBase<T>
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvBufferBaseCommonImpl
@@ -627,11 +629,13 @@ public:
 
 
 /**
- * The REAL generic buffer base type.
+ * The generic buffer base type.
  * To specialize buffers to add new functionality, declare a template
  * specialization of this type that derives from WvBufferBaseCommonImpl.
  *
  * @see WvBufferBaseCommonImpl<T>
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvBufferBase : public WvBufferBaseCommonImpl<T>
@@ -646,6 +650,9 @@ public:
 /**
  * A buffer that wraps a pre-allocated array and provides
  * read-write access to its elements.
+ *
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvInPlaceBufferBase : public WvBufferBase<T>
@@ -767,6 +774,9 @@ public:
 /**
  * A buffer that wraps a pre-allocated array and provides
  * read-only access to its elements.
+ *
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvConstInPlaceBufferBase : public WvBufferBase<T>
@@ -850,6 +860,9 @@ public:
  * sufficiently large chunks.  The process may also be manually
  * triggered to explicitly renormalize the array and shift its
  * contents to the front.
+ *
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvCircularBufferBase : public WvBufferBase<T>
@@ -987,6 +1000,9 @@ public:
 
 /**
  * A buffer that dynamically grows and shrinks based on demand.
+ *
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvDynamicBufferBase : public WvBufferBase<T>
@@ -1028,6 +1044,9 @@ public:
 
 /**
  * A buffer that is always empty.
+ *
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvEmptyBufferBase : public WvBufferBase<T>
@@ -1050,6 +1069,9 @@ public:
  * A buffer that acts like a cursor over a portion of another buffer.
  * The underlying buffer's get() position is not affected by
  * reading from this buffer.
+ *
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvBufferCursorBase : public WvBufferBase<T>
@@ -1083,6 +1105,9 @@ public:
  * on each element.
  *
  * Most useful for manipulating data backed by a raw memory buffer.
+ *
+ * @param T the type of object to store, must be a primitive or a struct
+ *        without special initialization, copy, or assignment semantics
  */
 template<class T>
 class WvBufferViewBase : public WvBufferBase<T>

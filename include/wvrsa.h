@@ -11,12 +11,17 @@
 #include "wvencoder.h"
 #include "wvencoderstream.h"
 
-/**
- * An RSA public key (or public/private key pair) that can be used for
- * encryption.  Knows how to encode/decode itself into a stream of hex
- * digits for easy transport.
- */
 struct rsa_st;
+
+/**
+ * An RSA public key or public/private key pair that can be used for
+ * encryption.
+ * <p>
+ * Knows how to encode/decode itself into a string of hex digits
+ * for easy transport.
+ * </p>
+ * @see WvRSAEncoder
+ */
 class WvRSAKey : public WvError
 {
     int errnum;
@@ -44,30 +49,34 @@ public:
 
 
 /**
- * An encoder implementing RSA public/private key encryption.
- * This is really slow, so should only be used to exchange information
- * about a faster symmetric key (like Blowfish).
- *
- * RSA needs to know the public key from the remote end (to encrypt data) and
- * the private key on this end (to decrypt data).
+ * An encoder implementing the RSA public key encryption method.
+ * <p>
+ * This encoder really slow, particularly for decryption, so should
+ * only be used to negotiate session initiation information.  For
+ * more intensive work, consider exchanging a key for use with a
+ * faster symmetric cipher like Blowfish.
+ * </p><p>
+ * Supports reset().
+ * </p>
  */
 class WvRSAEncoder : public WvEncoder
 {
 public:
     enum Mode {
-        Encrypt, // encrypt with public key
-        Decrypt, // decrypt with private key
-        SignEncrypt, // encrypt signature with public key 
-        SignDecrypt  // decrypt signature with private key
+        Encrypt,     /*!< Encrypt with public key */
+        Decrypt,     /*!< Decrypt with private key */
+        SignEncrypt, /*!< Encrypt digital signature with private key */
+        SignDecrypt  /*!< Decrypt digital signature with public key */
     };
 
     /**
-     * Creates a new RSA encoder / decoder.
-     *   _mode : the encryption mode
-     *   _key  : the public key for encryption if _encrypt == true,
-     *           otherwise the private key for decryption
+     * Creates a new RSA cipher encoder.
+     * 
+     * @param mode the encryption mode
+     * @param key the public key if mode is Encrypt or SignDecrypt,
+     *            otherwise the private key
      */
-    WvRSAEncoder(Mode _mode, const WvRSAKey &_key);
+    WvRSAEncoder(Mode mode, const WvRSAKey &key);
     virtual ~WvRSAEncoder();
 
 protected:
@@ -82,10 +91,12 @@ private:
 
 
 /**
- * A crypto stream implementing RSA public/private key encryption.
- * See WvRSAEncoder for details.
- *
- * By default, written data is "encrypted", read data is "decrypted".
+ * A crypto stream implementing RSA public key encryption.
+ * <p>
+ * By default, written data is encrypted using WvRSAEncoder::Encrypt,
+ * read data is decrypted using WvRSAEncoder::Decrypt.
+ * </p>
+ * @see WvRSAEncoder
  */
 class WvRSAStream : public WvEncoderStream
 {

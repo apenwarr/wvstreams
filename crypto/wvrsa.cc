@@ -122,7 +122,7 @@ void WvRSAKey::pem2hex(WvStringParm filename)
 #endif
 
 
-WvString WvRSAKey::hexifypub(RSA *rsa)
+WvString WvRSAKey::hexifypub(struct rsa_st *rsa)
 {
     WvDynamicBuffer keybuf;
     size_t size = i2d_RSAPublicKey(rsa, NULL);
@@ -135,7 +135,7 @@ WvString WvRSAKey::hexifypub(RSA *rsa)
 }
 
 
-WvString WvRSAKey::hexifyprv(RSA *rsa)
+WvString WvRSAKey::hexifyprv(struct rsa_st *rsa)
 {
     WvDynamicBuffer keybuf;
     size_t size = i2d_RSAPrivateKey(rsa, NULL);

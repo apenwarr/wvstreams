@@ -2,20 +2,24 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * WvLink is one element of a linked list.  Used by wvlinklist.h, wvhashtable.h,
- * and so on.
+ * WvLink is one element of a linked list.
+ * Used by wvlinklist.h.
  */
 #ifndef __WVLINK_H
 #define __WVLINK_H
 
 #include <stdlib.h>  // for 'NULL'
 
-// note: auto_free behaviour is a little bit weird; since WvLink does not
-// know what data type it has received, there is no way it can call the
-// right destructor.  So, the WvList needs to handle the data deletion
-// by itself.  On the other hand, the auto_free flag needs to be stored in
-// the WvLink.  <sigh>...
-//
+/**
+ * WvLink is one elements of a WvList<T>.
+ * <p>
+ * Note that WvLink itself is untyped to minimize the amount of
+ * generated code.  This means that WvLink cannot handle the
+ * auto_free behaviour itself which would require static type
+ * information.  Instead, it defers this behaviour to the
+ * template instantiation of WvList<T> that uses it.
+ * </p>
+ */
 class WvLink
 {
 public:

@@ -14,9 +14,12 @@
 
 /**
  * Class to access the /dev/dsp device in a way that's sane enough for
- * full-duplex access. This is still rather heavily under construction at
- * this time, so please don't count on any side-effects to make anything
+ * full-duplex access.
+ * <p>
+ * This is still rather heavily under construction at this time, so
+ * please don't count on any side-effects to make anything
  * built with this class to work.
+ * </p>
  */
 class WvDsp : public WvStream
 {
@@ -37,39 +40,18 @@ public:
           bool _realtime = false, bool _oss = false);
     virtual ~WvDsp();
 
-    /**
-     * Reimplemented from @ref WvStreams for internal reasons
-     */
-    virtual bool pre_select(SelectInfo &si);
-
-    /**
-     * Reimplemented from @ref WvStreams for internal reasons
-     */
-    virtual bool post_select(SelectInfo &si);
-
-    /**
-     * Reimplemented from @ref WvStreams for internal reasons
-     */
-    virtual size_t uread(void *buf, size_t len);
-
-    /**
-     * Reimplemented from @ref WvStreams for internal reasons
-     */
-    virtual size_t uwrite(const void *buf, size_t len);
-
-    /**
-     * Reimplemented from @ref WvStreams for internal reasons
-     */
-    virtual bool isok() const;
-
-    /**
-     * Reimplemented from @ref WvStreams for internal reasons
-     */
-    virtual void close();
-
     size_t ispace();
     size_t ospace();
     void realtime();
+    
+    /*** Overridden members ***/
+    
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
+    virtual size_t uread(void *buf, size_t len);
+    virtual size_t uwrite(const void *buf, size_t len);
+    virtual bool isok() const;
+    virtual void close();
 
 private:
     bool setioctl(int ctl, int param);

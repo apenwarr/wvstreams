@@ -23,35 +23,6 @@
  *     is to be instantiated to handle each type of functor.  This
  *     permits us to be more clever with pointers to member functions.
  *   - No dependence on the C++ STL.
- *
- *
- * Example:
- * class Test {
- *     // create function pointer member
- *     WvFunctor<void, int> ptr;
- *
- *     // declare callback
- *     void defcallback(const char* str, int status);
- *
- * public:
- *     // initialize the pointer to the default callback bound
- *     // to this object and a debugging string
- *     Test() : ptr(&Test::defcallback, this, "default") { }
- *
- *     // let somebody else change it
- *     void setcallback(WvFunctor<void, int> newptr) {
- *         ptr = newptr;
- *     }
- *
- *     // use it
- *     void dosomething() {
- *         if (ptr) ptr(42); // eg. by default, defcallback("default", 42)
- *     }
- *
- *     // clear it
- *     void clearcallback() {
- *         ptr = 0;
- *     }
  */
 #ifndef __WVFUNCTOR_H
 #define __WVFUNCTOR_H
@@ -68,6 +39,15 @@ namespace WvGeneric
 {
 
 #ifdef NO_RTTI
+
+/**
+ * @internal
+ * Returns true if the instances t and s have compatible types.
+ * <p>
+ * When RTTI support is not enabled, this merely checks for type
+ * equality, not strict compatibility.
+ * </p>
+ */
 template<class T, class S>
 inline T* check_type(T* t, S* s)
 {
@@ -75,11 +55,19 @@ inline T* check_type(T* t, S* s)
 }
 #define DECLARE_TYPE \
 virtual int type() const { \
-    static int TYPE = ++NEXTTYPE; \
+    static int TYPE = ++PREVTYPE; \
     return TYPE; \
 }
 
 #else
+/**
+ * @internal
+ * Returns true if the instances t and s have compatible types.
+ * <p>
+ * When RTTI support is not enabled, this merely checks for type
+ * equality, not strict compatibility.
+ * </p>
+ */
 template<class T, class S>
 inline T* check_type(T* t, S* s)
 {
@@ -91,6 +79,7 @@ inline T* check_type(T* t, S* s)
    
 
 /**
+ * @internal
  * The FunctorInfo template describes properties of an abstract
  * functor, including its parameter and return types.
  *
@@ -112,6 +101,7 @@ struct FunctorInfo
 
 
 /**
+ * @internal
  * The FunctorImplBase class just defines the virtual clone and
  * destructor, so we can later build a FunctorBase defined in terms
  * of these methods to minimize the amount of code generated.
@@ -124,18 +114,47 @@ class FunctorImplBase
 {
 public:
     virtual ~FunctorImplBase();
+
+    /**
+     * Returns a new clone of this functor implementation.
+     * @return the clone, non-null
+     */
     virtual FunctorImplBase* clone() const = 0;
+
+    /**
+     * Returns true if the functors are equal.
+     * <p>
+     * Considers the deep structure of both objects.  Functors may
+     * be considered non-equal because their structures differ
+     * due to their manner of construction such as the order by
+     * which arguments may have been bound.
+     * </p>
+     * @param other the functor to compare against
+     * @return true if equal
+     */
     virtual bool equals(const FunctorImplBase& other) const = 0;
     
 #ifdef NO_RTTI
+    /**
+     * @internal
+     * Returns a unique dynamically assigned type code to identify
+     * objects of this class when RTTI support is not enabled.
+     * @return a unique type code
+     */
     virtual int type() const = 0;
+
 protected:
-    static int NEXTTYPE;
+    /**
+     * @internal
+     * The most recently issued type code.
+     */
+    static int PREVTYPE;
 #endif
 };
 
 
 /**
+ * @internal
  * The FunctorImpl template represents the base class for
  * implementations of function call dispatchers.
  *
@@ -182,6 +201,7 @@ DECLARE_FUNCTORIMPL(6, A1, A2, A3, A4, A5, A6)
 
 
 /**
+ * @internal
  * The FunctorHandler template implements FunctorImpl to invoke a
  * generic functor, ie any object that declares an operator().
  *
@@ -260,6 +280,7 @@ public:
 
 
 /**
+ * @internal
  * The StaticFunHandler template implements FunctorImpl to invoke a
  * static (global) function through a function pointer.
  * 
@@ -357,6 +378,7 @@ public:
     
 
 /**
+ * @internal
  * The MemFunHandler template implements FunctorImpl to invoke a
  * member function or const member function on an object.
  *
@@ -455,6 +477,7 @@ public:
 
 
 /**
+ * @internal
  * The Binder1stHandler template implements FunctorImpl to invoke a
  * functor with the first argument bound to a particular value.
  *
@@ -531,6 +554,7 @@ public:
 
 
 /**
+ * @internal
  * Binds the first argument of a functor and returns an
  * instance of a suitable bound functor implementation.
  */
@@ -545,6 +569,7 @@ inline FunctorImpl<FunctorInfo<typename BoundInfo::Ret,
 
 
 /**
+ * @internal
  * The FunctorImplChooser matches the supplied functor type with
  * a suitable implementation of FunctorImpl.
  *
@@ -625,8 +650,8 @@ DECLARE_STATICFUN_FUNCTORIMPLCHOOSER(A1, A2, A3, A4, A5, A6)
 #undef DECLARE_MEMFUN_FUNCTORIMPLCHOOSER
 #undef DECLARE_STATICFUN_FUNCTORIMPLCHOOSER
 
-
 /**
+ * @internal
  * The FunctorBase class just defines the common storage
  * management semantics of WvFunctor to minimize generated code.
  */
@@ -690,10 +715,75 @@ public:
 
 
 /**
- * The Functor template wraps a FunctorImpl and provides creation, binding,
- * copying, invocation, and null-testing semantics.  The implementation
- * is chosen according to partial template instantiations of FunctorHandler.
- * Parameters supplied in the constructor are bound from left to right.
+ * The WvFunctor template wraps a FunctorImpl and provides creation,
+ * binding, copying, invocation, null-testing and comparison semantics.
+ *
+ * Argument values may be bound directly in the constructor,
+ * allowing a functor with many arguments to be transformed into
+ * one with fewer.  The values supplied are bound to arguments
+ * in sequence beginning with the first one in the argument list.
+ *
+ * Binding of arguments from last to first or in arbitrary order
+ * is not currently supported.
+ *
+ * The following C++ functor types may be wrapped:
+ * <ul>
+ * <li>A pointer to a static or global function.</li>
+ * <li>A pointer to a member function.  The first argument is taken
+ *     to be a pointer to an instance of the object that defines the
+ *     member function.  Often this argument is bound to an instance
+ *     when the object is created.</li>
+ * <li>Any other type that defines an operator().</li>
+ * </ul>
+ *
+ *
+ * <em>Example:</em>
+ * <pre>
+ * class Test {
+ *     // create function pointer member
+ *     WvFunctor<void, int> ptr;
+ *
+ *     // declare callback
+ *     void defcallback(const char* str, int status);
+ *
+ * public:
+ *     // initialize the pointer to the default callback bound
+ *     // to this object and a debugging string
+ *     Test() : ptr(&Test::defcallback, this, "bound to const char*") { }
+ *
+ *     // let somebody else change it
+ *     void setcallback(WvFunctor<void, int> newptr) {
+ *         ptr = newptr;
+ *     }
+ *
+ *     // use it
+ *     void dosomething() {
+ *         // null test
+ *         if (!! ptr)
+ *         {
+ *             // invocation
+ *             ptr(42); // eg. by default, defcallback("default", 42)
+ *         }
+ *         // comparison
+ *         if (ptr == WvFunctor<void, int>(&Test::defcallback, this,
+ *             "bound to const char*"))
+ *             puts("Boring!");
+ *     }
+ *
+ *     // clear it
+ *     void clearcallback() {
+ *         ptr = 0;
+ *     }
+ * };
+ * </pre>
+ *
+ * @param R the return type, possibly void
+ * @param A1 the first argument type, or NullType if none
+ * @param A2 the second argument type, or NullType if none
+ * @param A3 the third argument type, or NullType if none
+ * @param A4 the fourth argument type, or NullType if none
+ * @param A5 the fifth argument type, or NullType if none
+ * @param A6 the sixth argument type, or NullType if none
  */
 template<class R,
     class A1=NullType, class A2=NullType,
@@ -714,7 +804,7 @@ public:
         FunctorBase() { }
        
     /**
-     * Creates a functor.
+     * Creates a copy of a functor.
      * @param other the functor to copy
      */
     inline WvFunctor(const WvFunctor& other) :
@@ -723,6 +813,7 @@ public:
     /**
      * Sets the functor to a copy of the other functor.
      * @param other the functor to copy
+     * @return reference to self
      */
     inline WvFunctor& operator= (const WvFunctor& other)
     {
@@ -732,6 +823,7 @@ public:
     
     /**
      * Sets the functor to null.
+     * @return reference to self
      */
     inline WvFunctor& operator= (int)
     {
@@ -741,6 +833,14 @@ public:
 
     /**
      * Returns true if the functors are equal.
+     * <p>
+     * Considers the deep structure of both objects.  Functors may
+     * be considered non-equal because their structures differ
+     * due to their manner of construction such as the order by
+     * which arguments may have been bound.
+     * </p>
+     * @param other the functor to compare against
+     * @return true if equal
      */
     inline bool operator== (const WvFunctor& other)
     {
@@ -748,7 +848,15 @@ public:
     }
 
     /**
-     * Returns true if the functors are equal.
+     * Returns true if the functors are not equal.
+     * <p>
+     * Considers the deep structure of both objects.  Functors may
+     * be considered non-equal because their structures differ
+     * due to their manner of construction such as the order by
+     * which arguments may have been bound.
+     * </p>
+     * @param other the functor to compare against
+     * @return true if non-equal
      */
     inline bool operator!= (const WvFunctor& other)
     {
@@ -758,7 +866,7 @@ public:
     /*** Functor binding ***/
     
     /**
-     * Creates a functor with 0 bound parameters.
+     * Creates a functor with 0 bound arguments.
      * @param fun the functor
      */
     template<class Fun>
@@ -766,9 +874,9 @@ public:
         FunctorImplChooser<Info, Fun>::Result::create(fun)) { }
 
     /**
-     * Creates a functor with 1 bound parameter.
+     * Creates a functor with 1 bound argument.
      * @param fun the functor
-     * @param b1 the value to bind to the first parameter
+     * @param b1 the value to bind to the first argument
      */
     template<class B1, class Fun>
     WvFunctor(Fun fun, B1 b1) :
@@ -779,10 +887,10 @@ public:
             b1)) { }
 
     /**
-     * Creates a functor with 2 bound parameters.
+     * Creates a functor with 2 bound arguments.
      * @param fun the functor
-     * @param b1 the value to bind to the first parameter
-     * @param b2 the value to bind to the second parameter
+     * @param b1 the value to bind to the first argument
+     * @param b2 the value to bind to the second argument
      */
     template<class B1, class B2, class Fun>
     WvFunctor(Fun fun, B1 b1, B2 b2) :
@@ -793,11 +901,11 @@ public:
             b1), b2)) { }
     
     /**
-     * Creates a functor with 3 bound parameters.
+     * Creates a functor with 3 bound arguments.
      * @param fun the functor
-     * @param b1 the value to bind to the first parameter
-     * @param b2 the value to bind to the second parameter
-     * @param b3 the value to bind to the third parameter
+     * @param b1 the value to bind to the first argument
+     * @param b2 the value to bind to the second argument
+     * @param b3 the value to bind to the third argument
      */
     template<class B1, class B2, class B3, class Fun>
     WvFunctor(Fun fun, B1 b1, B2 b2, B3 b3) :
@@ -809,12 +917,12 @@ public:
             b1), b2), b3)) { }
             
     /**
-     * Creates a functor with 4 bound parameters.
+     * Creates a functor with 4 bound arguments.
      * @param fun the functor
-     * @param b1 the value to bind to the first parameter
-     * @param b2 the value to bind to the second parameter
-     * @param b3 the value to bind to the third parameter
-     * @param b4 the value to bind to the fourth parameter
+     * @param b1 the value to bind to the first argument
+     * @param b2 the value to bind to the second argument
+     * @param b3 the value to bind to the third argument
+     * @param b4 the value to bind to the fourth argument
      */
     template<class B1, class B2, class B3, class B4, class Fun>
     WvFunctor(Fun fun, B1 b1, B2 b2, B3 b3, B4 b4) :
@@ -827,13 +935,13 @@ public:
             b1), b2), b3), b4)) { }
 
     /**
-     * Creates a functor with 5 bound parameters.
+     * Creates a functor with 5 bound arguments.
      * @param fun the functor
-     * @param b1 the value to bind to the first parameter
-     * @param b2 the value to bind to the second parameter
-     * @param b3 the value to bind to the third parameter
-     * @param b4 the value to bind to the fourth parameter
-     * @param b5 the value to bind to the fifth parameter
+     * @param b1 the value to bind to the first argument
+     * @param b2 the value to bind to the second argument
+     * @param b3 the value to bind to the third argument
+     * @param b4 the value to bind to the fourth argument
+     * @param b5 the value to bind to the fifth argument
      */
     template<class B1, class B2, class B3, class B4, class B5,
         class Fun>
@@ -848,14 +956,14 @@ public:
             b1), b2), b3), b4), b5)) { }
             
     /**
-     * Creates a functor with 6 bound parameters.
+     * Creates a functor with 6 bound arguments.
      * @param fun the functor
-     * @param b1 the value to bind to the first parameter
-     * @param b2 the value to bind to the second parameter
-     * @param b3 the value to bind to the third parameter
-     * @param b4 the value to bind to the fourth parameter
-     * @param b5 the value to bind to the fifth parameter
-     * @param b6 the value to bind to the sixth parameter
+     * @param b1 the value to bind to the first argument
+     * @param b2 the value to bind to the second argument
+     * @param b3 the value to bind to the third argument
+     * @param b4 the value to bind to the fourth argument
+     * @param b5 the value to bind to the fifth argument
+     * @param b6 the value to bind to the sixth argument
      */
     template<class B1, class B2, class B3, class B4, class B5,
         class B6, class Fun>
@@ -902,6 +1010,10 @@ public:
 };
 
 }; // namespace
+
+/**
+ * Export WvFunctor by default.
+ */
 using WvGeneric::WvFunctor;
 
 #endif // __WVFUNCTOR_H

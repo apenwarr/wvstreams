@@ -2,22 +2,6 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Wraps another WvStream and attaches it to the normal Qt
- * event loop.  If you are using this object to manage all of your
- * streams, then you do not need to have a normal WvStreams
- * select()/callback() loop in your application at all.
- *
- * However, should you leave the Qt event loop and wish to continue
- * using this WvStream, call qt_detach() first, then run a normal
- * WvStreams event loop.  If you do not do this, events may be
- * lost!!  You may resume the Qt event loop at any time after the
- * WvStreams event loop has exited by calling qt_attach().
- *
- * Note: You do not need to add all of the WvStreams used in a Qt
- *       application to a single WvStreamList wrapped by a
- *       WvQtStreamClone so long as each top-level stream is wrapped
- *       by a WvQtStreamClone to take care of calling select()
- *       and callback() from within the Qt event loop.
  */
 #ifndef __WVQTSTREAMCLONE_H
 #define __WVQTSTREAMCLONE_H
@@ -28,6 +12,23 @@
 #include <qsocketnotifier.h>
 #include <qtimer.h>
 
+/**
+ * Wraps another WvStream and attaches it to the normal Qt event loop.
+ * <p>
+ * If you are using this object exclusively to manage all of your
+ * streams, then you do not need to have a normal WvStreams
+ * select()/callback() loop in your application at all.
+ * </p><p>
+ * However, should you leave the Qt event loop and wish to continue
+ * using this WvStream, call qt_detach() first, then run a normal
+ * WvStreams event loop.  If you do not do this, events may be
+ * lost!  Later, you may resume the Qt event loop at any time
+ * by leaving your WvStreams event loop and calling qt_attach().
+ * </p><p>
+ * Multiple instances of this object may coexist to wrap different
+ * WvStream's or WvStreamList's.
+ * </p>
+ */
 class WvQtStreamClone : public QObject, public WvStreamClone
 {
     Q_OBJECT

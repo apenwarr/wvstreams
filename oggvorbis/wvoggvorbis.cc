@@ -48,7 +48,7 @@ WvOggVorbisEncoder::WvOggVorbisEncoder(
     {
         case BitrateSpec::VBR_QUALITY:
             if ((retval = vorbis_encode_init_vbr(ovinfo, channels,
-                samplingrate, bitratespec.quality)) < 0)
+                samplingrate, bitratespec.quality_index)) < 0)
             {
                 seterror("error %s during vorbis_encode_init_vbr", retval);
                 return;

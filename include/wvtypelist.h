@@ -7,6 +7,10 @@
 #ifndef __WVTYPELIST_H
 #define __WVTYPELIST_H
 
+/**
+ * A namespace to contain generic declarations that we don't want
+ * polluting the global namespace.
+ */
 namespace WvGeneric
 {
 
@@ -19,12 +23,22 @@ class NullType;
 /**
  * The TypeList template allows the creation of arbitarily long lists
  * of types that can be inspected and manipulated in a simple generic
- * manner.  
+ * manner.
+ *
+ * @param H the head type
+ * @param T the tail type
  */
 template<class H, class T>
 struct TypeList
 {
+    /**
+     * The head type.
+     */
     typedef H Head;
+
+    /**
+     * The tail type.
+     */
     typedef T Tail;
 };
 
@@ -50,6 +64,9 @@ struct TypeList
  * The TypeAt template takes a type list and a zero-based index and
  * returns via the Result typedef the indexed type in the list, or
  * NullType if no such element is found.
+ *
+ * @param TL the type list
+ * @param index the element index
  */
 template<class TL, unsigned int index>
 struct TypeAt;
@@ -77,6 +94,8 @@ struct TypeAt<TypeList<Head, Tail>, index>
  * The TrimTypeList template takes a type list and returns via the
  * Result typedef a new type list truncated at the first occurrence
  * of NullType.
+ *
+ * @param TL the type list
  */
 template<class TL>
 struct TrimTypeList;

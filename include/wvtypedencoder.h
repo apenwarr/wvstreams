@@ -17,14 +17,16 @@
  * of typed buffers only where untyped buffers are automatically
  * wrapped into the required form.
  *
- * @param IType the input buffer datatype
- * @param OType the output buffer datatype
+ * @param IT the input buffer datatype
+ * @param OT the output buffer datatype
  * @see WvEncoder
  */
-template<class IType, class OType>
+template<class IT, class OT>
 class WvTypedEncoder : public WvEncoder
 {
 public:
+    typedef IT IType;
+    typedef OT OType;
     typedef WvBufferBase<IType> IBuffer;
     typedef WvBufferBase<OType> OBuffer;
     typedef WvBufferViewBase<IType> IBufferView;
@@ -117,6 +119,8 @@ protected:
 /**
  * Partial template specialization for unsigned char output
  * buffer type to avoid compilation errors.
+ *
+ * @param IType the input buffer datatype
  */
 template<class IType>
 class WvTypedEncoder<IType, unsigned char> : public WvEncoder
