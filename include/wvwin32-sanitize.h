@@ -34,7 +34,9 @@ static inline unsigned int alarm(unsigned int t) { return 0; }
 
 // refer to _wvinitialize to ensure that we suck in some stuff that makes
 // wvstreams actually work properly.
+#ifdef __cplusplus
 extern void *_wvinitialize;
 static void *_wvinitialize_local = _wvinitialize;
+#endif
 
 #endif // __WIN32_SANITIZE_H
