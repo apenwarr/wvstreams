@@ -28,6 +28,7 @@ public:
 
     virtual void commit();
     virtual bool refresh();
+    virtual void flush_buffers() { }
     virtual WvString get(const UniConfKey &key);
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
@@ -36,7 +37,6 @@ public:
     
     int how_slow() const
         { return slowcount; }
-
 private:
     int slowcount;
     

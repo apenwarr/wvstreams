@@ -25,12 +25,27 @@
 #define SOL_IP IPPROTO_IP
 #define FORCE_NONZERO 1
 #else
-#include <errno.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NETDB_H
+# include <netdb.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP_H
+# if HAVE_NETINET_IN_SYSTM_H
+#  include <netinet/in_systm.h>
+# endif
+# include <netinet/ip.h>
+#endif
+#if HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
 #endif
 
 #ifndef FORCE_NONZERO
@@ -72,7 +87,7 @@ WvTCPConn::WvTCPConn(int _fd, const WvIPPortAddr &_remaddr)
 }
 
 
-WvTCPConn::WvTCPConn(WvStringParm _hostname, __u16 _port)
+WvTCPConn::WvTCPConn(WvStringParm _hostname, uint16_t _port)
     : hostname(_hostname)
 {
     struct servent* serv;

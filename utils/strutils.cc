@@ -180,7 +180,7 @@ char *snip_string(char *haystack, char *needle)
 char *strlwr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
     	*p = tolower(*p);
     	p++;
@@ -193,7 +193,7 @@ char *strlwr(char *string)
 char *strupr(char *string)
 {
     char *p = string;
-    while (*p)
+    while (p && *p)
     {
 	*p = toupper(*p);
 	p++;
@@ -206,6 +206,8 @@ char *strupr(char *string)
 // true if all the characters in "string" are isalnum().
 bool is_word(const char *p)
 {
+    assert(p);
+
     while (*p)
     {
     	if(!isalnum(*p++))

@@ -153,11 +153,11 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	/* drop the O_NONBLOCK from stdin/stdout/stderr, it confuses
 	 * some programs */
 	flags = fcntl(0, F_GETFL);
-	fcntl(0, F_SETFL, flags & (O_APPEND|O_ASYNC));
+	fcntl(0, F_SETFL, flags & ~O_NONBLOCK);
 	flags = fcntl(1, F_GETFL);
-	fcntl(1, F_SETFL, flags & (O_APPEND|O_ASYNC));
+	fcntl(1, F_SETFL, flags & ~O_NONBLOCK);
 	flags = fcntl(2, F_GETFL);
-	fcntl(2, F_SETFL, flags & (O_APPEND|O_ASYNC));
+	fcntl(2, F_SETFL, flags & ~O_NONBLOCK);
 
 	/* If we're not capturing any of these through the socket, it
 	 * means that the child end of the socket will be closed right
@@ -174,7 +174,15 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	if (!readable && stdout_fd != 1)
 	{
 	    setsid();
+// Only on some OSes will we find TIOCSCTTY to set the controlling tty.
+// On others, we need to use TCSETCTTY, but we are too lazy to implement that.
+#ifdef TIOCSCTTY
 	    ioctl(1, TIOCSCTTY, 1);
+#else
+# ifdef TCSETCTTY
+#  warning You should implement TCSETCTTY here.  Thanks!
+# endif
+#endif
 	}
 
 	::close(waitfd);

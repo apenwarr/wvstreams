@@ -127,6 +127,12 @@ bool UniClientGen::refresh()
     return true;
 }
 
+void UniClientGen::flush_buffers()
+{
+    // this ensures that all keys pending notifications are dealt with
+    while (conn->isok() && conn->isreadable())
+        conn->callback();
+}
 
 WvString UniClientGen::get(const UniConfKey &key)
 {

@@ -155,7 +155,10 @@ WvLogRcvBase::~WvLogRcvBase()
 
 const char *WvLogRcvBase::appname(const WvLog *log) const
 {
-    return log->app;
+    if (log)
+	return log->app;
+    else
+	return WvString("unknown");
 }
 
 

@@ -14,17 +14,15 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/uniconfd
 NAME=uniconfd
 DESC="UniConf daemon"
-# Don't run TCP or SSL, but run a Unix socket at /var/lib/uniconf/control
-DAEMON_OPTS="-p 0 -u /var/lib/uniconf/control"
 
 test -x $DAEMON || exit 0
 
 # Include uniconf defaults if available
-if [ -f /etc/default/uniconf ] ; then
-	. /etc/default/uniconf
+if [ -f /etc/default/uniconfd ] ; then
+	. /etc/default/uniconfd
 fi
 
-set -e
+DAEMON_OPTS="$UNICONFD_OPTS $UNICONFD_MOUNTS"
 
 case "$1" in
   start)
@@ -32,12 +30,14 @@ case "$1" in
 	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
 		--make-pidfile --background \
 		--exec $DAEMON -- -f $DAEMON_OPTS
+	if [ "$?" != "0" ]; then ERR=$?; echo; exit $ERR; fi
 	echo "$NAME."
 	;;
   stop)
 	echo -n "Stopping $DESC: "
 	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
 		--exec $DAEMON
+	if [ "$?" != "0" ]; then ERR=$?; echo; exit $ERR; fi
 	echo "$NAME."
 	;;
   #reload)
@@ -60,10 +60,11 @@ case "$1" in
 	#
 	echo -n "Restarting $DESC: "
 	start-stop-daemon --stop --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON
+		/var/run/$NAME.pid --exec $DAEMON || exit $?
 	sleep 1
 	start-stop-daemon --start --quiet --pidfile \
 		/var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS
+	if [ "$?" != "0" ]; then ERR=$?; echo; exit $ERR; fi
 	echo "$NAME."
 	;;
   *)

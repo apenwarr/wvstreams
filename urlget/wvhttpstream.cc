@@ -132,7 +132,6 @@ void WvHttpStream::doneurl()
     assert(curl != NULL);
     WvString last_response(http_response);
     log("Done URL: %s\n", curl->url);
-    log_urls();
 
     http_response = "";
     encoding = Unknown;
@@ -168,7 +167,6 @@ void WvHttpStream::doneurl()
 
     request_next();
     in_doneurl = false;
-    log("done doneurl()\n");
 }
 
 
@@ -571,6 +569,9 @@ void WvHttpStream::execute()
 
 	if (bytes_remaining && !isok())
 	    seterr("connection interrupted");
+
+        if (!isok())
+            doneurl();
     }
 
     if (urls.isempty())

@@ -11,7 +11,15 @@
 #include <openssl/err.h>
 #include <assert.h>
 
-#ifdef _WIN32
+#ifndef _WIN32
+# if HAVE_ARGZ_H
+#  include <argz.h>
+# else
+#  if HAVE_ERRNO_H
+#   include <errno.h>
+#  endif
+# endif
+#else
 #undef errno
 #define errno GetLastError()
 typedef DWORD error_t;

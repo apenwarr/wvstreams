@@ -22,6 +22,10 @@ PACKAGE_STRING=@PACKAGE_STRING@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
 PACKAGE_VERSION=@PACKAGE_VERSION@
 
+target=@target@
+ARCH_SUBDIRS=@ARCH_SUBDIRS@
+LIBS+=@ac_libs@
+
 prefix=@prefix@
 datadir=@datadir@
 includedir=@includedir@

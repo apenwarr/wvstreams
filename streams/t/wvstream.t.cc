@@ -164,12 +164,12 @@ WVTEST_MAIN("getline")
    
     WvStream t;
     t.inbuf_putstr("tremfodls\nd\ndopple");
-    line = t.getline('\n', 20);
+    line = t.getline(0, '\n', 20);
     WVPASS(line && !strcmp(line, "tremfodls"));
     t.close();
-    line = t.getline('\n', 20);
+    line = t.getline(0, '\n', 20);
     WVPASS(line && !strcmp(line, "d"));
-    line = t.getline('\n', 20);
+    line = t.getline(0, '\n', 20);
     WVPASS(line && !strcmp(line, "dopple"));
 
     // FIXME: avoid aborting the entire test here on a freezeup!

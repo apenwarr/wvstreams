@@ -11,6 +11,8 @@
 #include "wvdailyevent.h"
 #include "wvfork.h"
 #include <time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 

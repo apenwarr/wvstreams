@@ -8,25 +8,45 @@
 #include "wvunixsocket.h"
 #include "wvmoniker.h"
 
-#if 0
-// FIXME: this is needed on BSD
-#include <netinet/in_systm.h>
+#if HAVE_ERRNO_H
+# include <errno.h>
 #endif
-
-#ifdef ISDARWIN
-#define socklen_t int
+#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#if HAVE_NETDB_H
+# include <netdb.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP_H
+# if HAVE_NETINET_IN_SYSTM_H
+#  include <netinet/in_systm.h>
+# endif
+# include <netinet/ip.h>
+#endif
+#if HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
 #endif
 
 #include <fcntl.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/un.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <errno.h>
-
 
 static IWvStream *creator(WvStringParm s, IObject *, void *)
 {
@@ -155,12 +175,12 @@ void WvUnixListener::close()
 
 WvUnixConn *WvUnixListener::accept()
 {
-    struct sockaddr_un sun;
-    socklen_t len = sizeof(sun);
+    struct sockaddr_un saun;
+    socklen_t len = sizeof(saun);
     int newfd;
     WvUnixConn *ret;
 
-    newfd = ::accept(getfd(), (struct sockaddr *)&sun, &len);
+    newfd = ::accept(getfd(), (struct sockaddr *)&saun, &len);
     ret = new WvUnixConn(newfd, addr);
     return ret;
 }
