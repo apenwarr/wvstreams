@@ -74,7 +74,7 @@ class WvConfigSectionEmu::Iter
 {
 private:
     WvConfigSectionEmu& sect;
-    UniConf::Iter iter;
+    UniConf::RecursiveIter iter;
     WvLink link;
     WvConfigEntryEmu* entry;
 public:
