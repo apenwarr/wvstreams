@@ -330,6 +330,9 @@
 				RelativePath="..\..\utils\wvvector.cc">
 			</File>
 			<File
+				RelativePath=".\wvwin32task.cpp">
+			</File>
+			<File
 				RelativePath="..\..\utils\wvwordwrap.cc">
 			</File>
 		</Filter>
@@ -365,6 +368,12 @@
 				RelativePath="..\..\include\uniconf.h">
 			</File>
 			<File
+				RelativePath="..\..\include\uniconfdaemon.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfdaemonconn.h">
+			</File>
+			<File
 				RelativePath="..\..\include\uniconfgen.h">
 			</File>
 			<File
@@ -372,6 +381,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\uniconfpair.h">
+			</File>
+			<File
+				RelativePath="..\..\include\uniconfpamconn.h">
 			</File>
 			<File
 				RelativePath="..\..\include\uniconfroot.h">
@@ -438,6 +450,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\verstring.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvacl.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvaddr.h">
@@ -714,6 +729,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\wvtcp.h">
+			</File>
+			<File
+				RelativePath="..\..\include\wvtelephony.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wvtest.h">
