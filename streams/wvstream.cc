@@ -119,6 +119,11 @@ void WvStream::callback()
 {
     TRACE("(?)");
     
+    // callback is already running -- don't try to start it again, or we
+    // could end up in an infinite loop!
+    if (running_callback)
+	return;
+    
     // if the alarm has gone off and we're calling callback... good!
     if (alarm_remaining() == 0)
     {
@@ -147,6 +152,24 @@ void WvStream::callback()
 	    task->start("streamexec2", _callback, this);
 	}
 	
+	// This loop is much more subtle than it looks.
+	// By implementing it this way, we provide something that works
+	// like a typical callback() stack: that is, a child callback
+	// must return before the parent's callback does.
+	// 
+	// What _actually_ happens is a child will call yield() upon returning
+	// from its callback function, which exits the taskman and returns to
+	// the top level.  The top level, though, is running this loop, which
+	// re-executes taskman->run() since its child (which is eventually
+	// the parent of the child that called yield()) hasn't finished yet.
+	// We build our way all the way back up to the first-level parent of
+	// the child calling yield(), which now notices its child has finished
+	// and continues on in its execute() function.
+	// 
+	// continue_select() will set running_callback to false, even though
+	// it doesn't actually return from the callback function.  That
+	// causes this loop to terminate, and the callback will get resumed
+	// later when select() returns true.
 	do
 	{
 	    taskman->run(*task);
