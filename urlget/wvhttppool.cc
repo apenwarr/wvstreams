@@ -121,13 +121,13 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
 WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug2, "Deleting.\n");
+    if (geterr())
+	log("Error was: %s\n", errstr());
     close();
 
     if (tcpconn)
         delete tcpconn;
-    
-    if (geterr())
-	log("Error was: %s\n", errstr());
+    tcpconn = NULL;
 }
 
 
