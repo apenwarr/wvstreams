@@ -83,6 +83,8 @@ WVTEST_MAIN("deltas")
         }
         WVPASS(rv == child);
     }
+    
+    unlink(sockname);
 }
 
 
