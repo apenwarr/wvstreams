@@ -118,8 +118,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
     unlink(sockname.cstr());
 }
 
-#if 0
-// BUGZID: 10567
+
 WVTEST_MAIN("cache:subtree:unix assertion failure")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -185,4 +184,3 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
     unlink(ininame.cstr());
     unlink(sockname.cstr());
 }
-#endif
