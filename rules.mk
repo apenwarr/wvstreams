@@ -24,8 +24,7 @@ DEPFILE = $(notdir $(@:.o=.d))
 	$(LINK_MSG)$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %: %.cc
-	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ \
-		$(LOADLIBES) $(LDLIBS) -o $@
+	$(COMPILE_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 	$(DEPEND_MSG)$(CC) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
 		sed -e 's|<$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
 
