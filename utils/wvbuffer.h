@@ -165,6 +165,8 @@ public:
     
     /*
      * _move_ (not copy) the contents of another WvBuffer into this buffer.
+     * This is done by physically taking the WvMiniBuffer objects from one
+     * buffer and adding them at the end of this one.
      */
     void merge(WvBuffer &buf);
     

@@ -128,10 +128,11 @@ int WvInterface::getflags()
     if (ioctl(sock, SIOCGIFFLAGS, &ifr))
     {
 	errnum = errno;
-	if (errnum != EACCES && errnum != EPERM)
+	//if (errnum != EACCES && errnum != EPERM)
 	    err.perror(WvString("GetFlags %s", name));
 	close(sock);
-	return errnum;
+	valid = false;
+	return 0;
     }
     
     close(sock);
@@ -151,7 +152,7 @@ int WvInterface::setflags(int clear, int set)
     if (ioctl(sock, SIOCGIFFLAGS, &ifr))
     {
 	errnum = errno;
-	if (errnum != EACCES && errnum != EPERM)
+	//if (errnum != EACCES && errnum != EPERM)
 	    err.perror(WvString("GetFlags %s", name));
 	close(sock);
 	return errnum;

@@ -101,17 +101,19 @@ unsigned char *WvBuffer::get(size_t num)
     if (firstb->used() >= num)
 	return firstb->get(num);
 
-    // nope.  Is there enough wasted room in this buffer for the rest of
+    // nope.  Is there enough empty space in this buffer to hold the rest of
     // the data?
     if (firstb->free() >= num - firstb->used())
     {
 	got = firstb->used();
 	destb = firstb;
     }
-    else    // must allocate a new "first" buffer to hold entire 'num' bytes
+    else
     {
+	// must allocate a new "first" buffer to hold entire 'num' bytes
 	got = 0;
-	list.prepend(destb = new WvMiniBuffer(num), true);
+	destb = new WvMiniBuffer(num);
+	list.prepend(destb, true);
 	Dprintf("<new-1 MiniBuffer(%d)>\n", num);
     }
 
