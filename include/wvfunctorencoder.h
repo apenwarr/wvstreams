@@ -36,6 +36,10 @@ protected:
     
 public:
     typedef FT FType;
+    typedef IT IType;
+    typedef OT OType;
+    typedef WvBufferBase<IType> IBuffer;
+    typedef WvBufferBase<OType> OBuffer;  
     WvFunctorEncoder(const FType &f) : f(f) { }
     virtual ~WvFunctorEncoder() { }
 

@@ -1185,7 +1185,7 @@ void WvHttpPool::execute()
 
 
 WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
-				    bool headers_only = false)
+				    bool headers_only)
 {
     log(WvLog::Debug4, "Adding a new url to pool: '%s'\n", _url);
     WvUrlRequest *url = new WvUrlRequest(_url, _headers, false, headers_only);
@@ -1197,7 +1197,7 @@ WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _headers,
 
 WvBufUrlStream *WvHttpPool::addputurl(WvStringParm _url,
 				      WvStringParm _headers, WvStream *s,
-				      bool create_dirs = false)
+				      bool create_dirs)
 {
     log(WvLog::Debug4, "Adding a new put url to pool: '%s'\n", _url);
     WvUrlRequest *url = new WvUrlRequest(_url, _headers, s, create_dirs);

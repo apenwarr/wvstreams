@@ -63,7 +63,7 @@ void WvMonikerRegistry::del(WvStringParm id)
 
 
 IObject *WvMonikerRegistry::create(WvStringParm _s,
-				   IObject *obj = NULL, void *userdata = NULL)
+				   IObject *obj, void *userdata)
 {
     WvString s(_s);
     char *cptr = strchr(s.edit(), ':');

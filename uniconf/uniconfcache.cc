@@ -105,8 +105,7 @@ void UniConfCache::mark_not_exist(const UniConfKey &key)
 }
 
 
-void UniConfCache::mark_exist(const UniConfKey &key,
-    WvStringParm value = WvString::null)
+void UniConfCache::mark_exist(const UniConfKey &key, WvStringParm value)
 {
     if (! cache)
         cache = new CacheTree(NULL, UniConfKey::EMPTY);

@@ -10,19 +10,20 @@
 
 // the templated base class for WvCallback.  All the other callback classes
 // come from this somehow.
+
+// Fake is a boring object type that we use for calling our "generic"
+// member function pointers.  Strangely, it crashes if Fake doesn't
+// have a virtual table, so we have an empty virtual function to make it
+// happy.  (This is all a bit evil, but only because C++ sucks.  When
+// they pass me a callback, they _know_ which function I want to call; I
+// don't need to resolve it at runtime...)
+struct Fake { virtual void silly() {} };
+
 template <class RET>
 class WvCallbackBase
 {
 protected:
 public:
-    // Fake is a boring object type that we use for calling our "generic"
-    // member function pointers.  Strangely, it crashes if Fake doesn't
-    // have a virtual table, so we have an empty virtual function to make it
-    // happy.  (This is all a bit evil, but only because C++ sucks.  When
-    // they pass me a callback, they _know_ which function I want to call; I
-    // don't need to resolve it at runtime...)
-    struct Fake { virtual void silly() {} };
-    
     // FakeFunc is a completely generic member-function pointer.  Actually the
     // functions we _really_ call aren't part of the Fake class and probably
     // have different parameters, but some hideous typecasts should fix that
@@ -66,6 +67,8 @@ public:
     { \
     protected: \
     public: \
+        typedef typename WvCallbackBase<RET>::FakeFunc FakeFunc; \
+        typedef typename WvCallbackBase<RET>::FakeGlobalFunc FakeGlobalFunc; \
 	typedef RET (Fake::*Func) decls; \
 	typedef RET (*GlobalFunc) decls; \
 	WvCallback##n(Fake *_obj, Func _func) \
@@ -93,6 +96,7 @@ public:
     class WvCallback##n##_bound : public basetype \
     { \
     public: \
+        typedef typename basetype::Func Func; \
 	typedef RET (T::*BoundFunc) decls; \
 	WvCallback##n##_bound(T &_obj, BoundFunc _func) \
 	    : basetype((Fake *)&_obj, reinterpret_cast<Func>(_func)) { } \
@@ -170,6 +174,8 @@ template <class RET, class T, class P1, class P2, class P3, class P4, class P5,
 	class type##_bound : public WvCallback##n##_bound<ret,T , ## parms> \
 	{ \
 	public: \
+            typedef typename \
+                WvCallback##n##_bound<ret,T , ## parms>::BoundFunc BoundFunc; \
 	    type##_bound(T &_obj, BoundFunc _func) \
 		: WvCallback##n##_bound<ret,T , ## parms>(_obj, _func) {} \
 	}
@@ -192,6 +198,5 @@ template <class RET, class T, class P1, class P2, class P3, class P4, class P5,
 // Some types of callbacks are so common we'll just declare them here.
 
 DeclareWvCallback(0, void, VoidCallback);
-
 
 #endif // __WVCALLBACK_H

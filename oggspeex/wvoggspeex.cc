@@ -95,7 +95,7 @@ bool WvOggSpeexEncoder::_isok() const
 
 WvString WvOggSpeexEncoder::_geterror() const
 {
-    return speexenc ? speexenc->geterror() : WvString::null;
+    return speexenc ? speexenc->geterror() : WvString(WvString::null);
 }
 
 
@@ -313,7 +313,7 @@ bool WvOggSpeexDecoder::_isok() const
 
 WvString WvOggSpeexDecoder::_geterror() const
 {
-    return speexdec ? speexdec->geterror() : WvString::null;
+    return speexdec ? speexdec->geterror() : WvString(WvString::null);
 }
 
 

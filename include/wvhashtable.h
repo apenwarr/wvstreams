@@ -312,7 +312,7 @@ public:
       /* An autocast to dict so that the iterator works */
       operator MyPairDict& ()
       { return dict; }; 
-      typedef MyPairDict::Iter Iter;
+      typedef typename MyPairDict::Iter Iter;
 }; 
 
 #endif // __WVHASHTABLE_H

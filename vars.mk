@@ -124,8 +124,6 @@ CPPFLAGS+=-I$(with_xplc)/include
 endif
 endif
 
-# Some other generally useful optimizations
-CXXFLAGS+=-fnonnull-objects
 RELEASE?=$(PACKAGE_VERSION)
 
 include $(wildcard */vars.mk */*/vars.mk) /dev/null

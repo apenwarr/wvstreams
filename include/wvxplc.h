@@ -15,6 +15,8 @@
 
 #else // not HAS_XPLC, so we'll fake it (badly)
 
+#include <string.h> // for memcmp
+
 struct UUID
 {
     int a;

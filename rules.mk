@@ -18,22 +18,19 @@ DEPFILE = $(notdir $(@:.o=.d))
 	$(LINK_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 %: %.cc
-	$(COMPILE_MSG)$(LINK.cc) -MD $< $(LOADLIBES) $(LDLIBS) -o $@
-	@test -f $(notdir $@).d
-	@sed -e 's|^$(notdir $@).o|$@|' $(notdir $@).d > $(dir $@).$(notdir $@).d
-	@rm -f $(notdir $@).d
+	@$(LINK.cc) $(LOADLIBES) $(LDLIBS) -M -E $< | \
+		sed -e 's|^$(notdir $@).o|$@|' > $(dir $@).$(notdir $@).d
+	$(COMPILE_MSG)$(LINK.cc) $< $(LOADLIBES) $(LDLIBS) -o $@
 
 %.o: %.cc
-	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
-	@test -f $(DEPFILE)
-	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
-	@rm -f $(DEPFILE)
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -M -E $< | \
+		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
+	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.o: %.c
-	$(COMPILE_MSG)$(CC) $(CFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
-	@test -f $(DEPFILE)
-	@sed -e 's|^$(notdir $@)|$@|' $(DEPFILE) > $(dir $@).$(DEPFILE)
-	@rm -f $(DEPFILE)
+	@$(CXX) $(CFLAGS) $(CPPFLAGS) -M -E $< | \
+		sed -e 's|^$(notdir $@)|$@|' > $(dir $@).$(DEPFILE)
+	$(COMPILE_MSG)$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.a:
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
@@ -77,8 +74,11 @@ ChangeLog:
 	rm -f ChangeLog ChangeLog.bak
 	cvs2cl --utc
 
+.NOTPARALLEL: clean distclean realclean dust depend install
+
 realclean: distclean
 	rm -rf $(wildcard $(REALCLEAN))
+
 
 distclean: clean
 	rm -rf $(wildcard $(DISTCLEAN))

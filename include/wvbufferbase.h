@@ -660,6 +660,8 @@ template<class T>
 class WvInPlaceBufferBase : public WvBufferBase<T>
 {
 protected:
+    typedef T Elem;
+
     WvInPlaceBufferStore mystore;
 
 public:
@@ -784,6 +786,8 @@ template<class T>
 class WvConstInPlaceBufferBase : public WvBufferBase<T>
 {
 protected:
+    typedef T Elem;
+
     WvConstInPlaceBufferStore mystore;
 
 public:
@@ -870,6 +874,8 @@ template<class T>
 class WvCircularBufferBase : public WvBufferBase<T>
 {
 protected:
+    typedef T Elem;
+
     WvCircularBufferStore mystore;
 
 public:
@@ -1010,6 +1016,8 @@ template<class T>
 class WvDynamicBufferBase : public WvBufferBase<T>
 {
 protected:
+    typedef T Elem;
+
     WvDynamicBufferStore mystore;
     
 public:
@@ -1054,6 +1062,8 @@ template<class T>
 class WvEmptyBufferBase : public WvBufferBase<T>
 {
 protected:
+    typedef T Elem;
+
     WvEmptyBufferStore mystore;
 
 public:
@@ -1079,6 +1089,8 @@ template<class T>
 class WvBufferCursorBase : public WvBufferBase<T>
 {
 protected:
+    typedef T Elem;
+
     WvBufferCursorStore mystore;
 
 public:
@@ -1123,7 +1135,7 @@ public:
      *
      * @param _buf a pointer to the buffer to be wrapped
      */
-    template<class S>
+    template<typename S>
     WvBufferViewBase(WvBufferBase<S> &_buf) :
         WvBufferBase<T>(_buf.getstore()) { }
 };

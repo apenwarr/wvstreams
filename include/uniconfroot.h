@@ -36,6 +36,7 @@ class UniConfRoot : public UniConf
 {
     friend class UniConf;
     friend class UniConfGen;
+    friend class UniConf::Iter;
     
     UniConfMountTree *mounts;
 

@@ -76,7 +76,7 @@ bool UniConfTempGen::set(const UniConfKey &key, WvStringParm value)
 		// we'll have to create the sub-node, since we couldn't
 		// find the most recent part of the key.
                 node = new UniConfValueTree(prev, prevkey,
-					    more ? WvString("") : value);
+					    more ? WvStringParm("") : value);
                 dirty = true;
                 if (!prev) // we just created the root
                     root = node;

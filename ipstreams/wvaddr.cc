@@ -638,13 +638,6 @@ WvIPPortAddr::WvIPPortAddr()
 }
 
 
-WvIPPortAddr::WvIPPortAddr(const unsigned char _ipaddr[4], __u16 _port)
-			: WvIPAddr(_ipaddr)
-{
-    port = _port;
-}
-
-
 WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port)
 			: WvIPAddr(_ipaddr)
 {
