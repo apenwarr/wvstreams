@@ -22,6 +22,8 @@ public:
     virtual bool test_set(SelectInfo &si);
     virtual void execute();
     
+    bool auto_prune; // remove !isok() streams from the list automatically?
+    
 protected:
     WvStreamListBase sure_thing;
 };

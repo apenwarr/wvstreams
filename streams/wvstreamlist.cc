@@ -10,6 +10,7 @@
 
 WvStreamList::WvStreamList()
 {
+    auto_prune = true;
 }
 
 
@@ -33,7 +34,8 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	if (!s.isok())
 	{
 	    one_dead = true;
-	    i.unlink();
+	    if (auto_prune)
+		i.unlink();
 	    continue;
 	}
 	
