@@ -172,6 +172,8 @@ bool WvDsp::post_select(SelectInfo &si)
 
 size_t WvDsp::uread(void *buf, size_t len)
 {
+    if (len == 0)
+        return 0;
     size_t avail = rbuf.used();
     
     if (avail < len)
@@ -184,6 +186,8 @@ size_t WvDsp::uread(void *buf, size_t len)
 
 size_t WvDsp::uwrite(const void *buf, size_t len)
 {
+    if (len == 0)
+        return 0;
     size_t howmuch = wbuf.left();
     
     if (howmuch > len)
@@ -250,7 +254,6 @@ void WvDsp::subproc(bool reading, bool writing)
     // otherwise, this is the child
 
     char buf[10240];
-    size_t len;
  
     realtime();
  
@@ -266,7 +269,7 @@ void WvDsp::subproc(bool reading, bool writing)
     {
 	if (reading)
 	{
-	    len = do_uread(buf, sizeof(buf));
+	    size_t len = do_uread(buf, sizeof(buf));
 	    if (len)
 	    {
 		rbuf.put(buf, len);
@@ -276,21 +279,17 @@ void WvDsp::subproc(bool reading, bool writing)
 
 	if (writing)
 	{
-	    if (wbuf.used() || reading || wloop.select(-1))
-	    {
-		wloop.drain();
-		
-		len = wbuf.used();
-		
-		// never write less than a full fragment!
-		if (len >= frag_size)
-		{
-		    if (len > frag_size)
-			len = frag_size;
-		    len = wbuf.get(buf, len);
-		    do_uwrite(buf, len);
-		}
+            wloop.drain();
+            size_t avail;
+            while ((avail = wbuf.used()) >= frag_size)
+            {
+                if (avail > frag_size)
+                    avail = frag_size;
+                size_t len = wbuf.get(buf, avail);
+                do_uwrite(buf, len);
 	    }
+            if (! reading)
+                wloop.select(-1);
 	}
     }
 
