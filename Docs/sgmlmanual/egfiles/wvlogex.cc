@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvLogRcv example.
- */
-/** \example wvlogrcvex.cc
+ *
  * Expected output:
  *	logA<*1>: a message
  *	logB<*2>: b message

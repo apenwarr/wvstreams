@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- */
- 
-/** /file
+ *
  * A UniConf generator that stores keys in memory.
  */
 #ifndef __UNICONFTEMP_H

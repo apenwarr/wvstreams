@@ -4,7 +4,6 @@
  *
  * WvUDPStream test.  Waits for data on port 19.
  */
-
 #include "wvurl.h"
 #include "wvstream.h"
 

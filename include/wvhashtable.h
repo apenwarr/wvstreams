@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A hash table container.
  */
 #ifndef __WVHASHTABLE_H
@@ -20,15 +18,15 @@ unsigned WvHash(const int &i);
 /**
  * A small, efficient, type-safe hash table (also known as dictionary)
  * container class.
- * <p>
+ * 
  * These are typically used to store a reasonably large number
  * of objects in no particular order and find them quickly when needed.
- * </p><p>
+ * 
  * Two semi-distinct types of hash tables are supported:  tables and
  * dictionaries.
- * </p><br><p>
- * <b>TABLE EXAMPLE:</b>
- * <pre>
+ * 
+ * TABLE EXAMPLE:
+ * 
  *   DeclareWvTable(WvString);
  *   int main()
  *   {
@@ -37,21 +35,21 @@ unsigned WvHash(const int &i);
  *       t.add(&s); t.add(&s2);
  *       printf("%s %s\n", t[s]->str, t[s3]->str); // prints "foo" "foo"
  *   }
- * </pre>
- * </p><p>
+ * 
+ * 
  * Here, the WvStrings "foo" and "blue" are stored in the table, and then
  * "foo" is looked up twice.  Both table searches return &amp;s.
  * The suggested table size of 10 elements places no upper bound on
  * the maximum number of elements, but optimizes the hash table for
  * holding roughly 10 elements.
- * </p><p>
+ * 
  * To match an element, the WvString operator== function is used.  That
  * means this particular example is rather contrived since if you already
  * have the search string, you do not need to find it in the table.
  * Objects with more specific operator== might have more luck.
- * </p><br><p>
- * <b>DICTIONARY EXAMPLE:</b>
- * <pre>
+ * 
+ * DICTIONARY EXAMPLE:
+ * 
  *   class IntStr
  *   {
  *       int *key;
@@ -59,34 +57,34 @@ unsigned WvHash(const int &i);
  *   }
  *   DeclareWvDict(IntStr, int, key[0]);
  *   IntStrDict d(100);
- * </pre>
- * </p><p>
+ * 
+ * 
  * Here, we are creating a dictionary that stores strings indexed by
  * integers.  d[5] might return the address of IntStr number 5, which
  * in turn contains WvString number 5.  When matching elements in this case,
  * a comparison is only done on key[0] of the two elements; thus, it is
  * not the operator== of IntStr that is important, but rather the operator==
  * for int.  (In this case, the operator== of int is predefined.)
- * </p><p>
+ * 
  * The only reason *key is declared as a pointer in this example is to
  * demonstrate how to use pointer-based keys with our syntax.  In this case
- * it would certainly make more sense to use <code>int key;</code> and
- * DeclareWvDict(IntStr, key).  Note though, that <code>int *key;</code> and
+ * it would certainly make more sense to use int key; and
+ * DeclareWvDict(IntStr, key).  Note though, that int *key; and
  * DeclareWvDict(IntStr, key) is almost certainly not what you want, since
  * it would compare the POINTERS, not their values.
- * </p><br><p>
+ * 
  * The interface of this class resembles that of WvList by design.
  * In particular, we support iterators in a similar way.
- * </p>
+ * 
  * @see WvList<T>
  */
 
 /**
  * The untyped base class of WvHashTable<T>.
- * <p>
+ * 
  * Putting common code in here allows us to prevent it from being
  * replicated by each template instantiation of WvHashTable<T>.
- * </p>
+ * 
  */
 
 class WvHashTableBase
@@ -148,7 +146,7 @@ public:
 template <class K>
 struct OpEqComp
 {
-    static inline bool compare(const K *key1, const K *key2)
+    static bool compare(const K *key1, const K *key2)
         { return *key1 == *key2; }
 };
 
@@ -243,7 +241,7 @@ public:
     template <class T, class K>                                         \
     struct _classname_##Accessor 					\
     { 									\
-        static inline const K *get_key(const T *obj)                    \
+        static const K *get_key(const T *obj)                    \
 	    { return _field_; } 		                        \
     }; 									\
 									\
@@ -307,7 +305,7 @@ protected:
 
     // accessor mothod for WvHashTable to use
     friend class MyHashTable;
-    static inline const TKey *get_key(const MyPair *obj)
+    static const TKey *get_key(const MyPair *obj)
         { return &obj->key; }
 
 public:

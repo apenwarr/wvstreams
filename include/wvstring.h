@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Implementation of a simple and efficient printable-string class.
  * 
  * It leaves out many of the notational conveniences provided by other
@@ -148,7 +146,7 @@ public:
     /**
      * Now, you're probably thinking to yourself: Boy, does this ever
      * look ridiculous.  And indeed it does.  However, it is
-     * completely type-safe and when inline functions are enabled, it
+     * completely type-safe and when functions are enabled, it
      * reduces automatically to its minimum possible implementation.
      * (ie. all extra comparisons with wv_null go away if the
      * parameter really _is_ wv_null, and that is the default!)

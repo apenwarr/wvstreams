@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvHttpStream example.
- */
-/** \example wvhttpex.cc
+ *
  * This program downloads a file via http.
  * The expected result is:
  * http<Info>: Now in state 0

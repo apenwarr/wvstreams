@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Basic WvConf emulation layer for UniConf.
  */
 #ifndef __WVCONFEMU_H

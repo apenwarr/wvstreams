@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A Gzip stream.
  */
 #ifndef __WVGZIPSTREAM_H
@@ -13,10 +11,10 @@
 
 /**
  * A stream implementing Gzip compression and decompression.
- * <p>
+ * 
  * By default, written data is compressed using WvGzipEncoder::Deflate,
  * read data is decompressed using WvGzipEncoder::Inflate.
- * </p>
+ * 
  * @see WvGzipEncoder
  */
 class WvGzipStream : public WvEncoderStream

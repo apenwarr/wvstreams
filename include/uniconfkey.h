@@ -175,13 +175,13 @@ public:
      * strings, then the string returned here will have the same
      * case information as those strings but the arrangement of
      * slashes may differ.  That is, the identity
-     * <code>UniConfKey(string).printable() == key<code> 
+     * UniConfKey(string).printable() == key 
      * does not hold.
      * 
      * @return the path as a string
      */
     WvString printable() const;
-    inline operator WvString() const
+    operator WvString() const
         { return printable(); }
 
     /**
@@ -216,7 +216,7 @@ public:
      * @param other the other path
      * @return true in that case
      */
-    inline bool operator== (const UniConfKey &other) const
+    bool operator== (const UniConfKey &other) const
         { return compareto(other) == 0; }
         
     /**
@@ -224,7 +224,7 @@ public:
      * @param other the other path
      * @return true in that case
      */
-    inline bool operator!= (const UniConfKey &other) const
+    bool operator!= (const UniConfKey &other) const
         { return ! (*this == other); }
 
     /**

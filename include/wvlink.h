@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * WvLink is one element of a linked list.
  * Used by wvlinklist.h.
  */
@@ -14,13 +12,13 @@
 
 /**
  * WvLink is one element of a WvList<T>.
- * <p>
+ * 
  * Note that WvLink itself is untyped to minimize the amount of
  * generated code.  This means that WvLink cannot handle the
  * auto_free behaviour itself which would require static type
  * information.  Instead, it defers this behaviour to the
  * template instantiation of WvList<T> that uses it.
- * </p>
+ * 
  */
 class WvLink
 {

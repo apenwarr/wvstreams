@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A buffered loopback stream.
  */ 
 #ifndef __WVBUFSTREAM_H
@@ -14,9 +12,9 @@
 /**
  * WvBufStream stores data written by write(), and returns it
  * later on in read().
- * <p>
+ * 
  * Handy for making virtual streams, like WvHttpPool.
- * </p>
+ * 
  */
 class WvBufStream : public WvStream
 {

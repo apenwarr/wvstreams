@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Interface declaring additional methods required for a WvEncoder that
  * supports packetized audio formats.
  */

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A period event stream.
  */
 
@@ -14,17 +12,17 @@
 
 /**
  * A simple class that can trigger an event on a timed basis.
- * <p>
+ * 
  * The period may be specified the following ways:
- * <ul>
- * <li>Given an hour, triggers once per day, on that hour.
- * <li>Given a number of times per day, triggers that many times
+ * 
+ *  - Given an hour, triggers once per day, on that hour.
+ *  - Given a number of times per day, triggers that many times
  *     per day, evenly, starting at the specified hour.
- * </ul>
- * </p><p>
+ * 
+ * 
  * Presently has a one-hour granularity in the first case, but that
  * can be fixed someday when someone cares.
- * </p>
+ * 
  */
 class WvDailyEvent : public WvStream
 /**********************************/

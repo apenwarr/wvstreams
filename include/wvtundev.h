@@ -1,9 +1,7 @@
 /* 
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A tun device wrapper.
  */
 #ifndef __WV_TUNDEV_H
@@ -15,10 +13,10 @@
 
 /**
  * WvTunDev provides a convenient way of using Linux tunnel devices.
- * <p>
+ * 
  * If you don't have the /dev/net/tun device, try doing:
- * <code>mknod /dev/net/tun c 10 200</pre>.
- * </p>
+ * mknod /dev/net/tun c 10 200.
+ * 
  */
 class WvTunDev : public WvFile
 {

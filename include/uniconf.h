@@ -24,7 +24,7 @@ class WvStream;
  * 
  * When handles are returned from functions, they are always marked
  * const to guard against accidentally assigning to a temporary by
- * an expression such as <code>cfg["foo"] = cfg["bar"]</code>.
+ * an expression such as cfg["foo"] = cfg["bar"].
  * Instead this must be written as
  *     cfg["foo"].set(cfg["bar"].get())
  * which is slightly

@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvCallback example.
- */
-/** \example wvcallback.cc
+ *
  */
 
 #include "wvcallback.h"

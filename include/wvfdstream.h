@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Base class for streams built on Unix file descriptors.
  */ 
 #ifndef __WVFDSTREAM_H
@@ -13,11 +11,11 @@
 
 /**
  * Base class for streams built on Unix file descriptors.
- * <p>
+ * 
  * WvFDStream distinguishes between read and write file descriptors
  * at creation time.  Additionally, the reading and writing halves
  * may be independently shut down by calling noread() or nowrite().
- * </p>
+ * 
  */
 class WvFDStream : public WvStream
 {
@@ -48,9 +46,9 @@ public:
     
     /**
      * Creates a WvStream from two existing file descriptors.
-     * <p>
+     * 
      * The file decriptors may be the same.
-     * </p>
+     * 
      * @param rfd the file descriptor for reading
      * @param wfd the file descriptor for writing
      */
@@ -77,10 +75,10 @@ public:
 
     /**
      * Returns the Unix file descriptor for reading and writing.
-     * <p>
+     * 
      * Asserts that the file descriptors for reading and writing
      * are the same before returning.
-     * <p>
+     * 
      * @return the file descriptor, or -1 if none
      */
     int getfd() const
@@ -105,11 +103,11 @@ public:
     
     /**
      * Closes the file descriptors.
-     * <p>
+     * 
      * If it is undesirable for the file descriptors to be closed by
      * this stream, duplicate the file descriptors using dup() before
      * creating the stream.
-     * </p>
+     * 
      */
     virtual void close();
     virtual bool isok() const;

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A generic data-logger class with support for multiple receivers.  If
  * no WvLogRcv objects have been created (see wvlogrcv.h) the default is
  * to log to stderr.
@@ -107,7 +105,7 @@ public:
     /**
      * change the loglevel and then print a formatted message
      */
-    inline size_t operator() (LogLevel _loglevel, WVSTRING_FORMAT_DECL)
+    size_t operator() (LogLevel _loglevel, WVSTRING_FORMAT_DECL)
     { 
 	LogLevel l = loglevel;
 	size_t x = lvl(_loglevel).print(WVSTRING_FORMAT_CALL);
@@ -121,7 +119,7 @@ public:
      */
     size_t operator() (WvStringParm s)
         { return WvStream::operator()(s); }
-    inline size_t operator() (WVSTRING_FORMAT_DECL)
+    size_t operator() (WVSTRING_FORMAT_DECL)
         { return WvStream::operator()(WVSTRING_FORMAT_CALL); }
     
     /**

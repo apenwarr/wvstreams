@@ -1,9 +1,7 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A fast, easy-to-use, parallelizing, pipelining HTTP/1.1 file retriever.
  * 
  * Just create a WvHttpPool object, add it to your list, and use pool.addurl()

@@ -18,13 +18,13 @@ class UniConfCache;
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
  * values.
- * <p>
+ * 
  * To mount, use the moniker prefix "unix:" followed by the
  * path of the Unix domain socket used by the UniConfDaemon.
  * Alternately, use the moniker prefix "tcp:" followed by the
  * hostname, a colon, and the port of a machine that serves
  * UniConfDaemon requests over TCP.
- * </p>
+ * 
  */
 class UniConfClientGen : public UniConfGen
 {

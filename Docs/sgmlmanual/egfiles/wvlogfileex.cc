@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvLogFile example.
- */
-/** \example wvlogfileex.cc
+ *
  * This program creates 2 log files.
  */
 

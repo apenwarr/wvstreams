@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvLogBuf example.
- */
-/** \example wvlogbufex.cc
+ *
  * The expected output is :
  *
  * 1043174856 logA<*1>: a message+

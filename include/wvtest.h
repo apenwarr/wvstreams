@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * The beginnings of an automated testing framework.  Makes WvLog data
  * come out in a particular format that should be useful for greps and
  * automated comparisons.

@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvPipe and WvLog example.
- */
-/** \example wvpipelogex.cc
+ *
  * This program allows you to enter bash commands, runs them, and pipes the
  * output back to you
  */

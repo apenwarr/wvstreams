@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Specializations of the generic buffering API and a few new buffers.
  */
 #ifndef __WVBUFFER_H
@@ -37,12 +35,12 @@ public:
 
     /**
      * Returns the entire buffer as a null-terminated WvString.
-     * <p>
+     * 
      * If the buffer contains null characters, they will seem to
      * prematurely terminate the string.
-     * </p><p>
+     * 
      * After this operation, ungettable() >= length of the string.
-     * </p>
+     * 
      * @return the buffer contents as a string
      */
     WvString getstr();
@@ -51,33 +49,33 @@ public:
 
     /**
      * Returns a single character from the buffer as an int.
-     * <p>
+     * 
      * The same constraints apply as for get(1).
-     * </p>
+     * 
      * @return the character
      */
-    inline int getch()
+    int getch()
         { return int(get()); }
 
     /**
      * Puts a single character into the buffer as an int.
-     * <p>
+     * 
      * The same constraints apply as for alloc(1).
-     * </p>
+     * 
      * @param ch the character
      */
-    inline void putch(int ch)
+    void putch(int ch)
         { put((unsigned char)ch); }
 
     /**
      * Peeks a single character from the buffer as an int.
-     * <p>
+     * 
      * The same constraints apply as for peek(offset, 1).
-     * </p>
+     * 
      * @param offset the offset
      * @return the character
      */
-    inline int peekch(int offset = 0)
+    int peekch(int offset = 0)
         { return int(peek(offset)); }
     
     /**
@@ -96,7 +94,7 @@ public:
      * @param numbytes the number of bytes in the list
      * @return the number of leading buffer elements that match
      */
-    inline size_t match(const void *bytelist, size_t numbytes)
+    size_t match(const void *bytelist, size_t numbytes)
         { return _match(bytelist, numbytes, false); }
         
     /**
@@ -115,7 +113,7 @@ public:
      * @param numbytes the number of bytes in the list
      * @return the number of leading buffer elements that don't match
      */
-    inline size_t notmatch(const void *bytelist, size_t numbytes)
+    size_t notmatch(const void *bytelist, size_t numbytes)
         { return _match(bytelist, numbytes, true); }
 
     /**
@@ -129,15 +127,15 @@ public:
 
     /*** Overload put() and move() to accept void pointers ***/
     
-    inline void put(unsigned char value)
+    void put(unsigned char value)
         { WvBufferBaseCommonImpl<unsigned char>::put(value); }
-    inline void put(const void *data, size_t count)
+    void put(const void *data, size_t count)
         { WvBufferBaseCommonImpl<unsigned char>::put(
             (const unsigned char*)data, count); }
-    inline void move(void *data, size_t count)
+    void move(void *data, size_t count)
         { WvBufferBaseCommonImpl<unsigned char>::move(
             (unsigned char*)data, count); }
-    inline void poke(void *data, int offset, size_t count)
+    void poke(void *data, int offset, size_t count)
         { WvBufferBaseCommonImpl<unsigned char>::poke(
             (unsigned char*)data, offset, count); }
 
@@ -157,15 +155,15 @@ private:
 class WvInPlaceBuffer : public WvInPlaceBufferBase<unsigned char>
 {
 public:
-    inline WvInPlaceBuffer(void *_data, size_t _avail, size_t _size,
+    WvInPlaceBuffer(void *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
         WvInPlaceBufferBase<unsigned char>((unsigned char*)_data,
             _avail, _size, _autofree) { }
-    explicit inline WvInPlaceBuffer(size_t _size) :
+    explicit WvInPlaceBuffer(size_t _size) :
         WvInPlaceBufferBase<unsigned char>(_size) { }
-    inline WvInPlaceBuffer() :
+    WvInPlaceBuffer() :
         WvInPlaceBufferBase<unsigned char>() { }
-    inline void reset(void *_data, size_t _avail, size_t _size,
+    void reset(void *_data, size_t _avail, size_t _size,
         bool _autofree = false)
     {
         WvInPlaceBufferBase<unsigned char>::reset(
@@ -180,12 +178,12 @@ public:
 class WvConstInPlaceBuffer : public WvConstInPlaceBufferBase<unsigned char>
 {
 public:
-    inline WvConstInPlaceBuffer(const void *_data, size_t _avail) :
+    WvConstInPlaceBuffer(const void *_data, size_t _avail) :
         WvConstInPlaceBufferBase<unsigned char>(
             (const unsigned char*)_data, _avail) { }
-    inline WvConstInPlaceBuffer() :
+    WvConstInPlaceBuffer() :
         WvConstInPlaceBufferBase<unsigned char>() { }
-    inline void reset(const void *_data, size_t _avail)
+    void reset(const void *_data, size_t _avail)
     {
         WvConstInPlaceBufferBase<unsigned char>::reset(
             (const unsigned char*)_data, _avail);
@@ -199,15 +197,15 @@ public:
 class WvCircularBuffer : public WvCircularBufferBase<unsigned char>
 {
 public:
-    inline WvCircularBuffer(void *_data, size_t _avail, size_t _size,
+    WvCircularBuffer(void *_data, size_t _avail, size_t _size,
         bool _autofree = false) :
         WvCircularBufferBase<unsigned char>((unsigned char*)_data,
             _avail, _size, _autofree) { }
-    explicit inline WvCircularBuffer(size_t _size) :
+    explicit WvCircularBuffer(size_t _size) :
         WvCircularBufferBase<unsigned char>(_size) { }
-    inline WvCircularBuffer() :
+    WvCircularBuffer() :
         WvCircularBufferBase<unsigned char>() { }
-    inline void reset(void *_data, size_t _avail, size_t _size,
+    void reset(void *_data, size_t _avail, size_t _size,
         bool _autofree = false)
     {
         WvCircularBufferBase<unsigned char>::reset(

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * The WvIPRoute and WvIPRouteList classes, which can manipulate the kernel
  * routing table in useful ways.
  */

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Provides some support for working with PCM audio.
  */
 #ifndef __WVPCMUTILS_H
@@ -14,14 +12,14 @@
 
 struct WvPCMSigned16ToNormFloatFunctor
 {
-    inline float operator()(signed short int pcm) const
+    float operator()(signed short int pcm) const
     {
         return float(pcm) / 32768;
     }
 };
 struct WvPCMNormFloatToSigned16Functor
 {
-    inline signed short int operator()(float pcm) const
+    signed short int operator()(float pcm) const
     {
         return (pcm < -1.0f) ? -32768 : (pcm >= 1.0f) ? 32767 :
             (signed short int)(pcm * 32768);
@@ -29,14 +27,14 @@ struct WvPCMNormFloatToSigned16Functor
 };
 struct WvPCMSigned16ToUnnormFloatFunctor
 {
-    inline float operator()(signed short int pcm) const
+    float operator()(signed short int pcm) const
     {
         return float(pcm);
     }
 };
 struct WvPCMUnnormFloatToSigned16Functor
 {
-    inline signed short int operator()(float pcm) const
+    signed short int operator()(float pcm) const
     {
         return (pcm < -32768.0f) ? -32768 : (pcm >= 32767.0f) ? 32767 :
             (signed short int)(pcm);
@@ -44,14 +42,14 @@ struct WvPCMUnnormFloatToSigned16Functor
 };
 struct WvPCMSigned16ToNormDoubleFunctor
 {
-    inline double operator()(signed short int pcm) const
+    double operator()(signed short int pcm) const
     {
         return double(pcm) / 32768;
     }
 };
 struct WvPCMNormDoubleToSigned16Functor
 {
-    inline signed short int operator()(double pcm) const
+    signed short int operator()(double pcm) const
     {
         return (pcm < -1.0) ? -32768 : (pcm >= 1.0f) ? 32767 :
             (signed short int)(pcm * 32768);
@@ -60,7 +58,7 @@ struct WvPCMNormDoubleToSigned16Functor
 
 
 /**
- * An encoder that converts PCM audio from <em>normalized</em>
+ * An encoder that converts PCM audio from normalized
  * floats to 16 bit signed short ints.
  */
 class WvPCMNormFloatToSigned16Encoder : public WvFunctorEncoder
@@ -74,7 +72,7 @@ public:
 
 /**
  * An encoder that converts PCM audio from 16 bit signed short ints
- * to <em>normalized</em> floats.
+ * to normalized floats.
  */
 class WvPCMSigned16ToNormFloatEncoder : public WvFunctorEncoder
     <signed short int, float, WvPCMSigned16ToNormFloatFunctor>
@@ -85,7 +83,7 @@ public:
 };
 
 /**
- * An encoder that converts PCM audio from <em>unnormalized</em>
+ * An encoder that converts PCM audio from unnormalized
  * floats to 16 bit signed short ints.
  */
 class WvPCMUnnormFloatToSigned16Encoder : public WvFunctorEncoder
@@ -99,7 +97,7 @@ public:
 
 /**
  * An encoder that converts PCM audio from 16 bit signed short ints
- * to <em>unnormalized</em> floats.
+ * to unnormalized floats.
  */
 class WvPCMSigned16ToUnnormFloatEncoder : public WvFunctorEncoder
     <signed short int, float, WvPCMSigned16ToUnnormFloatFunctor>
@@ -110,7 +108,7 @@ public:
 };
 
 /**
- * An encoder that converts PCM audio from <em>normalized</em>
+ * An encoder that converts PCM audio from normalized
  * doubles to 16 bit signed short ints.
  */
 class WvPCMNormDoubleToSigned16Encoder : public WvFunctorEncoder
@@ -124,7 +122,7 @@ public:
 
 /**
  * An encoder that converts PCM audio from 16 bit signed short ints
- * to <em>normalized</em> doubles.
+ * to normalized doubles.
  */
 class WvPCMSigned16ToNormDoubleEncoder : public WvFunctorEncoder
     <signed short int, double, WvPCMSigned16ToNormDoubleFunctor>

@@ -1,7 +1,6 @@
- /** \file
+ /*
  * A WvResolver example.
- */
-/** \example wvresolverex.cc
+ *
  * Tries to look up two host names given on the command line.
  * The expected output:
  * resolver<Err>: 1 not in DNS.

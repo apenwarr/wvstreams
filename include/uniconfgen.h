@@ -185,7 +185,7 @@ protected:
     void setinner(UniConfGen *inner);
 
 public:
-    inline UniConfGen *inner() const
+    UniConfGen *inner() const
         { return xinner; }
 
     /***** Overridden methods *****/

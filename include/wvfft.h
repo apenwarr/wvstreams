@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * An FFT abstraction.
  */
 #ifndef __WVFFT_H
@@ -16,28 +14,28 @@ struct fftw_plan_struct;
 
 /**
  * Computes the forward FFT transformation of real valued input
- * to <em>unnormalized</em> complex output.
- * <p>
+ * to unnormalized complex output.
+ * 
  * Input buffer must contain a sequence of 'double' type
  * values in machine order representing samples in the time domain.
- * </p><p>
+ * 
  * Output buffer will contain a sequence of 'double' type
  * values in machine order representing data in the frequency domain.
- * The data is ordered as follows:<pre>
+ * The data is ordered as follows:
  *    Let 'n' be the total number of values.
  *    Let 'i' be an index into the buffer.
  *
  *    buf[0]   : the DC coefficient
  *    buf[i]   : the real component of the i'th frequency band
  *    buf[n-i] : the complex component of the i'th frequency band
- * </pre>
+ * 
  *
  * Hence data for only n/2 of the n frequency bands is output.
  * This is because the latter bands are merely the complex conjugate
  * of the former.
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvRealToComplexFFTEncoder :
     public WvTypedEncoder<double, double>
@@ -76,18 +74,18 @@ private:
 
 /**
  * Computes the inverse FFT transformation of complex valued input
- * to <em>unnormalized</em> real output.
- * <p>
+ * to unnormalized real output.
+ * 
  * Input buffer must contain a sequence of 'double' type
  * values in machine order representing data in the frequency domain.
  * The data must be organized in the same fashion as that output
  * by WvRealToComplexFFTEncoder.
- * </p><p>
+ * 
  * Output buffer will contain a sequence of 'double' type
  * values in machine order representing samples in the time domain.
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvComplexToRealFFTEncoder :
     public WvTypedEncoder<double, double>
@@ -116,25 +114,25 @@ protected:
 
 /**
  * Computes a power spectrum from complex values input.
- * <p>
+ * 
  * Input buffer must contain a sequence of 'double' type
  * values in machine order representing data in the frequency domain.
  * The data must be organized in the same fashion as that output
  * by WvRealToComplexFFTEncoder.
- * </p><p>
+ * 
  * Output buffer will contain a sequence of 'double' type
  * values in machine order representing the power spectrum.
  * Only the power coefficients for (n/2)+1 bands are output.
- * The data is ordered as follows:<pre>
+ * The data is ordered as follows:
  *   Let 'n' be the total number of values.
  *   Let 'i' be an index into the buffer.
  *
  *   buf[0] : the squared DC coefficient
  *   buf[i] : the squared power of the i'th band
- * </pre>
- * </p><p>
+ * 
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvPowerSpectrumEncoder :
     public WvTypedEncoder<double, double>

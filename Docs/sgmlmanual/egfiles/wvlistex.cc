@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvStringList example.
- */
-/** \example wvlistex.cc
+ *
  * Some text about this example...
  */
 

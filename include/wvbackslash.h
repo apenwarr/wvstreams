@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * C-style backslash escaping and unescaping of strings.
  */
 #ifndef __WVBACKSLASH_H
@@ -13,13 +11,13 @@
 
 /**
  * An encoder that performs C-style backslash escaping of strings.
- * <p>
+ * 
  * Use this to escape control characters, unprintable characters,
  * and optionally quotes or any other special printable characters
  * into sequences of the form \\n, \\xFF, \\", etc...
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvBackslashEncoder : public WvEncoder
 {
@@ -43,26 +41,26 @@ protected:
 
 /**
  * An encoder that performs C-style backslash unescaping of strings.
- * <p>
+ * 
  * Recognizes the following sequences preceeded by backslash:
- * <ul>
- * <li>a: substitutes alarm bell (ascii 7)</li>
- * <li>b: substitutes backspace (ascii 8)</li>
- * <li>f: substitutes formfeed (ascii 12)</li>
- * <li>n: substitutes newline (ascii 10)</li>
- * <li>r: substitutes carriage return (ascii 13)</li>
- * <li>t: substitutes tab (ascii 9)</li>
- * <li>v: substitutes vertical tab (ascii 11)</li>
- * <li>0: substitutes null (ascii 0)</li>
- * <li>0xyz: substitutes character with octal encoding xyz</li>
- * <li>xxy: substitutes character with hex encoding xy</li>
- * <li>newline: substitutes space (line continuation sequence)</li>
- * <li>\\: substitutes backslash</li>
- * <li>otherwise substitutes the next character (strips the backslash)</li>
- * </ul>
- * </p><p>
+ * 
+ *  - a: substitutes alarm bell (ascii 7)
+ *  - b: substitutes backspace (ascii 8)
+ *  - f: substitutes formfeed (ascii 12)
+ *  - n: substitutes newline (ascii 10)
+ *  - r: substitutes carriage return (ascii 13)
+ *  - t: substitutes tab (ascii 9)
+ *  - v: substitutes vertical tab (ascii 11)
+ *  - 0: substitutes null (ascii 0)
+ *  - 0xyz: substitutes character with octal encoding xyz
+ *  - xxy: substitutes character with hex encoding xy
+ *  - newline: substitutes space (line continuation sequence)
+ *  - \\: substitutes backslash
+ *  - otherwise substitutes the next character (strips the backslash)
+ * 
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvBackslashDecoder : public WvEncoder
 {

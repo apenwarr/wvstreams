@@ -1,9 +1,7 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Blowfish cryptography abstractions.
  */
 #ifndef __WVBLOWFISH_H
@@ -16,9 +14,9 @@ struct bf_key_st;
 
 /**
  * An encoder implementing the Blowfish encryption method.
- * <p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvBlowfishEncoder : public WvEncoder
 {
@@ -75,11 +73,11 @@ private:
 
 /**
  * A crypto stream implementing Blowfish encryption.
- * <p>
+ * 
  * By default, written data is encrypted using
  * WvBlowfishEncoder::CFBEncrypt, read data is decrypted using
  * WvBlowfishEncoder::CFBDecrypt.
- * </p>
+ * 
  * @see WvBlowfishEncoder
  */
 class WvBlowfishStream : public WvEncoderStream

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Hex encoder and hex decoder.
  */
 #ifndef __WVHEX_H
@@ -13,12 +11,12 @@
 
 /**
  * A hex encoder.
- * <p>
+ * 
  * The input data is transformed into a sequence of hexadecimal
  * characters.
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvHexEncoder : public WvEncoder
 {
@@ -43,14 +41,14 @@ protected:
 
 /**
  * A hex decoder.
- * <p>
+ * 
  * The input hex characters are paired and decoded into the
  * corresponding byte stream.  Whitespace is skipped as is the
  * case of the hex codes A through Z.  Other characters cause the
  * encoder to flag an error.
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvHexDecoder : public WvEncoder
 {

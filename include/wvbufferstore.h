@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Defines basic buffer storage classes.
  * These are not intended for use directly by clients.
  * See "wvbufferbase.h" for the public API.
@@ -151,7 +149,7 @@ template<class Super>
 class WvReadOnlyBufferStoreMixin : public Super
 {
 public:
-    explicit inline WvReadOnlyBufferStoreMixin(int _granularity) :
+    explicit WvReadOnlyBufferStoreMixin(int _granularity) :
         Super(_granularity) { }
     virtual bool iswritable() const
     {
@@ -204,7 +202,7 @@ template<class Super>
 class WvWriteOnlyBufferStoreMixin : public Super
 {
 public:
-    explicit inline WvWriteOnlyBufferStoreMixin(int _granularity) :
+    explicit WvWriteOnlyBufferStoreMixin(int _granularity) :
         Super(_granularity) { }
     virtual bool isreadable() const
     {
@@ -278,13 +276,13 @@ public:
         void *_data, size_t _avail, size_t _size, bool _autofree);
     WvInPlaceBufferStore(int _granularity, size_t _size);
     virtual ~WvInPlaceBufferStore();
-    inline void *ptr() const
+    void *ptr() const
         { return data; }
-    inline size_t size() const
+    size_t size() const
         { return xsize; }
-    inline bool autofree() const
+    bool autofree() const
         { return xautofree; }
-    inline void setautofree(bool _autofree)
+    void setautofree(bool _autofree)
         { xautofree = _autofree; }
     void reset(void *_data, size_t _avail, size_t _size, bool _autofree);
     void setavail(size_t _avail);
@@ -319,7 +317,7 @@ protected:
 public:
     WvConstInPlaceBufferStore(int _granularity,
         const void *_data, size_t _avail);
-    inline const void *ptr() const
+    const void *ptr() const
         { return data; }
     void reset(const void *_data, size_t _avail);
     void setavail(size_t _avail);
@@ -354,13 +352,13 @@ public:
         void *_data, size_t _avail, size_t _size, bool _autofree);
     WvCircularBufferStore(int _granularity, size_t _size);
     virtual ~WvCircularBufferStore();
-    inline void *ptr() const
+    void *ptr() const
         { return data; }
-    inline size_t size() const
+    size_t size() const
         { return xsize; }
-    inline bool autofree() const
+    bool autofree() const
         { return xautofree; }
-    inline void setautofree(bool _autofree)
+    void setautofree(bool _autofree)
         { xautofree = _autofree; }
     void reset(void *_data, size_t _avail, size_t _size, bool _autofree);
     void setavail(size_t _avail);
@@ -411,15 +409,15 @@ protected:
 /**
  * @internal
  * The WvLinkedBuffer storage class.
- * <p>
+ * 
  * A buffer store built out of a list of other buffers linked together.
  * Buffers may be appended or prepended to the list at any time, at
  * which point they act as slaves for the master buffer.  Slaves may
  * be expunged from the list at any time when the master buffer
  * determines that they are of no further use.
- * </p><p>
+ * 
  * This is mostly useful for building other buffer storage classes.
- * </p>
+ * 
  */
 class WvLinkedBufferStore : public WvBufferStore
 {

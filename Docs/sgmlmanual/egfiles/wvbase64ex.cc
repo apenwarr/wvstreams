@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvBase64 example.
- */
-/** \example wvbase64ex.cc
+ *
  * This program encodes strings to Base64 format.
  * Typing CTRL-D will terminate this program.
  */

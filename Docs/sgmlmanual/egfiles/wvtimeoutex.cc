@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvTimeOut example.
- */
-/** \example wvtimeoutex.cc
+ *
  * Should only fire once.
  */
 

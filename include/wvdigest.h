@@ -15,19 +15,19 @@ struct hmac_ctx_st;
 
 /**
  * Superclass for all message digests.
- * <p>
+ * 
  * All message digest encoders have the following semantics:
- * <ul>
- * <li>On encode() or flush(), data from the input buffer is
+ * 
+ *  - On encode() or flush(), data from the input buffer is
  *     consumed and a message digest function is applied to
  *     incrementally update the internal digest state.
- *     No output is ever generated.</li>
- * <li>On finish(), the message digest is finalized and its value
+ *     No output is ever generated.
+ *  - On finish(), the message digest is finalized and its value
  *     is written to the output buffer.  Afterwards, no new data
- *     can be processed unless reset() is called.</li>
- * <li>On reset(), the current digest state is discarded allowing
- *     a new stream of data to be processed.</li>
- * </ul></p>
+ *     can be processed unless reset() is called.
+ *  - On reset(), the current digest state is discarded allowing
+ *     a new stream of data to be processed.
+ * 
  */
 class WvDigest : public WvEncoder
 {

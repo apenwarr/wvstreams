@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Directory iterator.  Recursively uses opendir and readdir, so you don't
  * have to.  Basically implements 'find'.
  *

@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvTimeStream example.
- */
-/** \example wvtimeex.cc
+ *
  * This program should take exactly ten seconds to run, but
  * tests how well the time stream handles being executed in bursts.
  */

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  */ 
 #ifndef __WVUNIXSOCKET_H
 #define __WVUNIXSOCKET_H

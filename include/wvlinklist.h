@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * A linked list container.
  */
 #ifndef __WVLINKLIST_H
@@ -15,10 +13,10 @@
 /**
  * @internal
  * The untyped base class of WvList<T>.
- * <p>
+ * 
  * Putting common code in here allows us to prevent it from being
  * replicated by each template instantiation of WvList<T>.
- * </p>
+ * 
  */
 class WvListBase
 {
@@ -37,19 +35,19 @@ public:
 
     /**
      * Returns the number of elements in the list.
-     * <p>
+     * 
      * This function causes a full traversal of the list which may be
      * overly inefficient depending on how and when it is used.
-     * </p>
+     * 
      * @return the number of elements
      */
     size_t count() const;
 
     /**
      * Quickly determines if the list is empty.
-     * <p>
+     * 
      * This is much faster than checking count() == 0.
-     * </p>
+     * 
      * @return true if empty
      */
     bool isempty() const
@@ -58,10 +56,10 @@ public:
     /**
      * @internal
      * The untyped base class of WvList<T>::Iter.
-     * <p>
+     * 
      * Putting common code in here allows us to prevent it from being
      * replicated by each template instantiation of WvList<T>.
-     * </p>
+     * 
      */
     class IterBase
     {
@@ -85,10 +83,10 @@ public:
 
         /**
          * Moves the iterator along the list to point to the next element.
-         * <p>
+         * 
          * If the iterator had just been rewound, it now points to the
          * first element of the list.
-         * </p>
+         * 
          * @return the current WvLink pointer, or null if there were no
          *         more elements remaining in the traversal sequence
          */
@@ -106,15 +104,15 @@ public:
         /**
          * Rewinds the iterator and repositions it over the element that
          * matches the specified value.
-         * <p>
+         * 
          * Uses pointer equality (object identity) as the criteria for
          * finding the matching element.
-         * </p><p>
+         * 
          * It is not possible to use find(const void*) to locate multiple
          * matching elements unless the list is altered between invocations
          * since it always starts searching from the head of the list
          * rather than from the current location.
-         * </p>
+         * 
          * @return the current WvLink pointer, or null if no such element
          *         was found
          */
@@ -124,12 +122,12 @@ public:
 
 /**
  * A linked list container class.
- * <p>
+ * 
  * Some rather horrible macros are used to declare actual concrete
  * list types.
- * </p><p>
+ * 
  * Example:
- * <pre>
+ * 
  *   DeclareWvList(WvString);
  *
  *   int main()
@@ -143,12 +141,12 @@ public:
  *       while (i.next())
  *           printf("%s\\n", i.str);
  *   }
- * </pre>
- * </p><p>
+ * 
+ * 
  * Deallocating list will free all of the WvLinks in the list, but
  * will only free the user objects that were added with auto_free
  * set to true.
- * </p><p>
+ * 
  * We need to malloc memory for each WvLink as well as the data it
  * stores; this is unnecessarily slow.  I would rather have made a
  * base "Link" class for object types that could be stored as links
@@ -156,19 +154,19 @@ public:
  * List Iterator stuff, but the end result was pure ugliness, so I
  * gave up.  At least this way, the same object can be in multiple
  * lists.
- * </p><p>
+ * 
  * List type construction is facilitated by the following macros:
- * <ul>
- * <li>DeclareWvList(Type): creates a subclass named WvListType
- *     that contains pointers to Type.</li>
- * <li>DeclareWvList2(Type, code...): as the above, but includes the
+ * 
+ *  - DeclareWvList(Type): creates a subclass named WvListType
+ *     that contains pointers to Type.
+ *  - DeclareWvList2(Type, code...): as the above, but includes the
  *     specified block of code into the public section of the
  *     class declaration.
- *     eg. DeclareWvList2(WvString, void autofill(););</li>
- * <li>DeclareWvList3(Type, name, code...): as the above, but
- *     calls the resulting class by the specified name.</li>
- * </ul>
- * </p>
+ *     eg. DeclareWvList2(WvString, void autofill(););
+ *  - DeclareWvList3(Type, name, code...): as the above, but
+ *     calls the resulting class by the specified name.
+ * 
+ * 
  * @param T the object type
  */
 template<class T>
@@ -183,9 +181,9 @@ public:
     
     /**
      * Destroys the linked list.
-     * <p>
+     * 
      * Destroys any elements that were added with auto_free == true.
-     * </p>
+     * 
      */
     ~WvList()
 	{ zap(); }
@@ -202,9 +200,9 @@ public:
 
     /**
      * Clears the linked list.
-     * <p>
+     * 
      * Destroys any elements that were added with auto_free == true.
-     * </p>
+     * 
      */
     void zap()
     {
@@ -214,9 +212,9 @@ public:
 
     /**
      * Returns a pointer to the first element in the linked list.
-     * <p>
+     * 
      * The list must be non-empty.
-     * </p>
+     * 
      * @return the element pointer, possibly null
      */
     T *first() const
@@ -227,9 +225,9 @@ public:
 
     /**
      * Returns a pointer to the last element in the linked list.
-     * <p>
+     * 
      * The list must be non-empty.
-     * </p>
+     * 
      * @return the element pointer, possibly null
      */
     T *last() const
@@ -262,7 +260,7 @@ public:
      * Synonym for append(T*, bool, char*).
      * @see append(T*, bool, char*)
      */
-    inline void add(T *data, bool auto_free, char *id = NULL)
+    void add(T *data, bool auto_free, char *id = NULL)
         { append(data, auto_free, id); }
 
     /**
@@ -277,9 +275,9 @@ public:
 
     /**
      * Unlinks the specified element from the list.
-     * <p>
+     * 
      * Destroys the element if it was added with auto_free == true.
-     * </p>
+     * 
      * @param data the element pointer, may be null
      */
     void unlink(T *data)
@@ -287,18 +285,18 @@ public:
 
     /**
      * Unlinks the first element from the list.
-     * <p>
+     * 
      * Destroys the element if it was added with auto_free == true.
-     * </p>
+     * 
      */ 
     void unlink_first()
         { Iter i(*this); i.rewind(); i.next(); i.unlink(); }
 
     /**
      * Unlinks the element that follows the specified link in the list.
-     * <p>
+     * 
      * Destroys the element if it was added with auto_free == true.
-     * </p>
+     * 
      * @param after the link preceeding the element to be removed, non-null
      */ 
     void unlink_after(WvLink *after)
@@ -313,14 +311,14 @@ public:
 
     /**
      * The iterator type for linked lists.
-     * <p>
+     * 
      * An iterator instance does not initially point to any valid
      * elements in a list.  Before using, it must be reset using rewind()
      * which causes it to point to an imaginary element located before
      * the first elements in the list.  Then next() must be invoked
      * to incrementally move the iterator along the list to first element,
      * and then later to the second, third, and subsequent elements.
-     * </p>
+     * 
      */
     class Iter : public WvListBase::IterBase
     {
@@ -357,13 +355,13 @@ public:
          * automatically returns the iterator to the previous link in
          * the list such that next() must be called to obtain the
          * next element.
-         * <p>
+         * 
          * This version allows for writing neater loop structures since
          * an element can be unlinked in mid-traversal while still allowing
          * the iterator to be incremented at the top of the loop as usual.
-         * </p><p>
+         * 
          * Calling xunlink() twice in a row is currently unsupported.
-         * </p>
+         * 
          */
 	void xunlink()
 	{

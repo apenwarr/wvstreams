@@ -1,9 +1,7 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Manages a connection between the UniConf client and daemon.
  */
 #include "uniconfconn.h"

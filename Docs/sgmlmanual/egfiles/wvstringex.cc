@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvString example.
- */
-/** \example wvstringex.cc
+ *
  * Some text about this example...
  */
 #include "wvstring.h"

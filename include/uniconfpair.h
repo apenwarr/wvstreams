@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * UniConf key-value pair storage abstraction.
  */
 #ifndef __UNICONFPAIR_H
@@ -44,14 +42,14 @@ public:
      * Returns the key field.
      * @param the key
      */
-    inline const UniConfKey &key() const
+    const UniConfKey &key() const
         { return xkey; }
 
     /**
      * Returns the value field.
      * @param the value
      */
-    inline const WvString &value()
+    const WvString &value()
         { return xvalue; }
 
     /**

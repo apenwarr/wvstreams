@@ -1,9 +1,7 @@
 /*
  * Worldvisions Tunnel Vision Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * RSA cryptography abstractions.
  */
 #ifndef __WVRSA_H
@@ -18,10 +16,10 @@ struct rsa_st;
 /**
  * An RSA public key or public/private key pair that can be used for
  * encryption.
- * <p>
+ * 
  * Knows how to encode/decode itself into a string of hex digits
  * for easy transport.
- * </p>
+ * 
  * @see WvRSAEncoder
  */
 class WvRSAKey : public WvError
@@ -52,14 +50,14 @@ public:
 
 /**
  * An encoder implementing the RSA public key encryption method.
- * <p>
+ * 
  * This encoder really slow, particularly for decryption, so should
  * only be used to negotiate session initiation information.  For
  * more intensive work, consider exchanging a key for use with a
  * faster symmetric cipher like Blowfish.
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvRSAEncoder : public WvEncoder
 {
@@ -94,10 +92,10 @@ private:
 
 /**
  * A crypto stream implementing RSA public key encryption.
- * <p>
+ * 
  * By default, written data is encrypted using WvRSAEncoder::Encrypt,
  * read data is decrypted using WvRSAEncoder::Decrypt.
- * </p>
+ * 
  * @see WvRSAEncoder
  */
 class WvRSAStream : public WvEncoderStream

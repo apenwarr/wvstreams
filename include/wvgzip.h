@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Gzip encoder/decoder based on zlib.
  */
 #ifndef __WVGZIP_H
@@ -16,23 +14,23 @@ struct z_stream_s;
 
 /**
  * An encoder implementing Gzip encryption and decryption.
- * <p>
+ * 
  * When compressing:
- * <ul>
- * <li>On flush(), the encoded data stream is synchronized such that
+ * 
+ *  - On flush(), the encoded data stream is synchronized such that
  *     all data compressed up to this point can be fully decompressed.
- *     </li>
- * <li>On finish(), the encoded data stream is finalized an a Gzip
- *     end of data marker is emitted.</li>
- * </ul>
- * </p><p>
+ *     
+ *  - On finish(), the encoded data stream is finalized an a Gzip
+ *     end of data marker is emitted.
+ * 
+ * 
  * When decompressing:
- * <ul>
- * <li>The encoder will transition to isfinished() == true on its own
+ * 
+ *  - The encoder will transition to isfinished() == true on its own
  *     if a Gzip end of data marker is detected in the input.  After
- *     this point, no additional data can be decompressed.</li>
- * </ul>
- * </p>
+ *     this point, no additional data can be decompressed.
+ * 
+ * 
  */
 class WvGzipEncoder : public WvEncoder
 {

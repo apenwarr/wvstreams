@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvTCP example.
- */
-/** \example wvtcpex.cc
+ *
  * Telnets to your local SMTP port, or any other port given
  * on the command line.
  */

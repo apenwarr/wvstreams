@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Shared memory zones.
  */
 #ifndef __WVSHMZONE_H
@@ -13,11 +11,11 @@
 
 /**
  * Represents a shared-memory zone via mmap().
- * <p>
- * If you create one of these, its <code>buf</code> element will be
+ * 
+ * If you create one of these, its buf element will be
  * shared across fork() and you can use it for various things
  * such as a circular queue, semaphore, etc.
- * </p>
+ * 
  */
 class WvShmZone : public WvError
 {

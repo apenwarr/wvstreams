@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Base64 encoder and decoder implementations.
  */
 #ifndef __WVBASE64_H
@@ -13,11 +11,11 @@
 
 /**
  * A base 64 encoder.
- * <p>
+ * 
  * On finish(), outputs any needed pad characters.
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvBase64Encoder : public WvEncoder
 {
@@ -44,11 +42,11 @@ protected:
 
 /**
  * A base 64 decoder.
- * <p>
+ * 
  * Becomes isfinished() == true on detection of padding.
- * </p><p>
+ * 
  * Supports reset().
- * </p>
+ * 
  */
 class WvBase64Decoder : public WvEncoder
 {

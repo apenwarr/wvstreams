@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Provides a WvEncoder abstraction for the Speex audio packet format.
  * suitable for encoding voice at low bitrates.
  *
@@ -39,10 +37,10 @@ namespace WvSpeex
 
     /**
      * Bitrate specification.
-     * <p>
+     * 
      * Identifies a particular bitrate control mechanism.
      * Use one of the subclasses to initialize a suitable BitrateSpec.
-     * </p>
+     * 
      */
     class BitrateSpec
     {
@@ -120,11 +118,11 @@ namespace WvSpeex
 
 /**
  * Encodes PCM audio using the Speex audio packet format.
- * <p>
+ * 
  * Input buffer must contain a sequence of signed 'float' type
- * values in machine order representing <em>unnormalized</em> PCM
+ * values in machine order representing unnormalized PCM
  * audio data.
- * </p><p>
+ * 
  * Outbut buffer will contain a sequence of Speex packets.  Each
  * invocation of encode() with flush == false will generate
  * precisely one Speex packet suitable for use with unreliable
@@ -132,21 +130,21 @@ namespace WvSpeex
  * order on reception.  Each packet contains one frame of exactly
  * 20ms of encoded audio in narrowband mode (sampling rate
  * <= 12.5Khz).
- * </p><p>
- * <b>Warning:</b> Never invoke encode() with flush == true unless
+ * 
+ * Warning: Never invoke encode() with flush == true unless
  * the input buffer contains exactly zero or one frame of audio.
  * Speex packets do not contain any delimiters therefore it is not
  * possible to locate the boundary between adjacent packets unless
  * they are encapsulated as individual datagrams in some fashion.
  * With flush == true, multiple adjacent generated packets will run
  * together to form one large undecodable lump.
- * </p><p>
+ * 
  * For archival purposes or for streaming, consider using
  * WvOggSpeexEncoder.
- * </p><p>
+ * 
  * For encoding music or other non-speech audio, consider using
  * WvOggVorbisEncoder.
- * </p>
+ * 
  */
 class WvSpeexEncoder : public WvAudioEncoder
 {
@@ -232,13 +230,13 @@ private:
 
 /**
  * Decodes PCM audio using the Speex audio packet format.
- * <p>
+ * 
  * Inbut buffer must contain a sequence of Speex packets.
- * </p><p>
+ * 
  * Output buffer will contain a sequence of signed 'float' type
- * values in machine order representing <em>unnormalized</em> PCM
+ * values in machine order representing unnormalized PCM
  * audio data.
- * </p><p>
+ * 
  * Missing audio due to lost or damaged packets may be filled in
  * by making predictions (guesses) based on residual energy
  * information from previous ones.  The number of lost or damaged
@@ -247,17 +245,17 @@ private:
  * occasional dropouts but not long strings of lost packets.
  * Still, Speech is still surprizingly recognizable with average
  * packet losses of up to 25% to 50%!
- * </p><p>
- * <b>Warning:</b> Never invoke encode() unless the input buffer
+ * 
+ * Warning: Never invoke encode() unless the input buffer
  * contains exactly zero or one Speex packets. Speex packets
  * do not contain any delimiters therefore it is not possible to
  * locate the boundary between adjacent packets unless they are
  * encapsulated as individual datagrams in some fashion.
  * Multiple adjacent packets cannot be decoded at once.
- * </p><p>
+ * 
  * For archival purposes or for streaming, consider using
  * WvOggSpeexDecoder.
- * </p><p>
+ * 
  * For encoding music or other non-speech audio, consider using
  * WvOggVorbisDecoder.
  */
@@ -274,10 +272,10 @@ class WvSpeexDecoder : public WvAudioDecoder
 public:
     /**
      * Creates a Speex Decoder.
-     * <p>
+     * 
      * For now, if the input bitstream is stereo, outputs the left
      * channel only.  This behaviour may change later on.
-     * </p>
+     * 
      * @param samplingrate the number of samples per second,
      *        preferably one of 8000, 16000, or 32000
      * @param channels number of channels (must be 1 for now),

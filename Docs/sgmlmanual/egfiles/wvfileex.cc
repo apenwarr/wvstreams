@@ -1,8 +1,6 @@
-/** \file
+/*
  * A WvFile example.
- */
-
-/** \example wvfileex.cc
+ *
  * Some text about this example...
  */
 

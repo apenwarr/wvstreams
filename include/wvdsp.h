@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * One more attempt at making a decent stream for Linux /dev/dsp.  This is
  * apparently much trickier than it looks.
  */
@@ -17,11 +15,11 @@
 /**
  * Class to access the /dev/dsp device in a way that's sane enough for
  * full-duplex access.
- * <p>
+ * 
  * This is still rather heavily under construction at this time, so
  * please don't count on any side-effects to make anything
  * built with this class to work.
- * </p>
+ * 
  */
 class WvDsp : public WvStream
 {

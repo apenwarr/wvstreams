@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Provides an encoder for applying a functor to data extracted
  * from a buffer and stored in another.
  * Assumes binary input is in machine order.

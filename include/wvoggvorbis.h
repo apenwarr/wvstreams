@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Provides a WvEncoder abstraction for Ogg vorbis files.
  * Only monaural audio is supported for now.
  */
@@ -18,12 +16,12 @@
 
 /**
  * Encodes PCM audio using the Ogg Vorbis stream format.
- * <p>
+ * 
  * Input buffer must contain a sequence of signed 'float' type
  * values in machine order representing normalized PCM audio data.
- * </p><p>
+ * 
  * Outbut buffer will contain part of an Ogg bitstream.
- * </p>
+ * 
  */
 class WvOggVorbisEncoder :
     public WvTypedEncoder<float, unsigned char>
@@ -33,10 +31,10 @@ public:
 
     /**
      * Bitrate specification.
-     * <p>
+     * 
      * Identifies a particular bitrate control mechanism.
      * Use one of the subclasses to initialize a suitable BitrateSpec.
-     * </p>
+     * 
      */
     class BitrateSpec
     {
@@ -106,12 +104,12 @@ public:
     
     /**
      * Creates an Ogg Vorbis Encoder.
-     * <p>
+     * 
      * The special constant RANDOM_SERIALNO may be specified as the
      * serial number to let the encoder choose one at random.  The
      * implementation uses the rand() function and assumes that
      * the PRNG was previously seeded with srand().
-     * </p>
+     * 
      * @param bitrate the bitrate specification
      * @param samplingrate the number of samples per second
      * @param channels number of channels (must be 1 for now),
@@ -127,31 +125,31 @@ public:
 
     /**
      * Adds a comment to the Ogg Vorbis stream.
-     * <p>
+     * 
      * Do not call after the first invocation of encode().
-     * </p>
+     * 
      * @param comment the comment
      */
     void add_comment(WvStringParm comment);
     
     /**
      * Adds a comment to the Ogg Vorbis stream.
-     * <p>
+     * 
      * Do not call after the first invocation of encode().
-     * </p>
+     * 
      */
     void add_comment(WVSTRING_FORMAT_DECL)
         { add_comment(WvString(WVSTRING_FORMAT_CALL)); }
     
     /**
      * Adds a tag to the Ogg Vorbis stream.
-     * <p>
+     * 
      * Ogg Vorbis tags are special comment strings of the form
-     * "<tag>=<value>" and are typically used to store artist,
+     * "=" and are typically used to store artist,
      * date, and other simple string encoded metadata.
-     * </p><p>
+     * 
      * Do not call after the first invocation of encode().
-     * </p>
+     * 
      * @param tag the tag name
      * @param value the value
      */
@@ -178,17 +176,17 @@ private:
 
 /**
  * Decodes PCM audio using the Ogg Vorbis stream format.
- * <p>
+ * 
  * Inbut buffer must contain part of an Ogg bitstream.
- * </p><p>
+ * 
  * Output buffer will contain a sequence of signed 'float' type
  * values in machine order representing normalized PCM audio data.
- * </p><p>
+ * 
  * If flush == false, then encode() will return true immediately
  * after isheaderok() becomes true without outputting any audio
  * data.  This allows the client to examine the header and to
  * tailor the actual decoding process based on that information.
- * </p>
+ * 
  */
 class WvOggVorbisDecoder :
     public WvTypedEncoder<unsigned char, float>
@@ -198,10 +196,10 @@ class WvOggVorbisDecoder :
 public:
     /**
      * Creates a new Ogg Vorbis Decoder.
-     * <p>
+     * 
      * For now, if the input bitstream is stereo, outputs the left
      * channel only.  This behaviour may change later on.
-     * </p>
+     * 
      */
     WvOggVorbisDecoder();
     virtual ~WvOggVorbisDecoder();
@@ -209,9 +207,9 @@ public:
     /**
      * Returns true when the entire stream header has been processed
      * and the comments and vendor fields are valid.
-     * <p>
+     * 
      * If false and isok(), try decoding more data.
-     * </p>
+     * 
      * @return true when the header has been decoded
      */
     bool isheaderok() const;
@@ -226,9 +224,9 @@ public:
 
     /**
      * Returns the Ogg Vorbis list of user comments.
-     * <p>
+     * 
      * The list is owned by the encoder, do not change.
-     * </p>
+     * 
      * @return the list of comments
      */
     WvStringList &comments()

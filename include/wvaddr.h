@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Device-independent and device-specific hardware/protocol address classes
  * that can store themselves efficiently as well as create a printable string
  * version of themselves.

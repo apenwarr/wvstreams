@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * An abstraction for encoders that manipulate typed buffers.
  */
 #ifndef __WVTYPEDENCODER_H
@@ -15,16 +13,16 @@
 /**
  * This template facilitates the creation and use of encoders
  * that manipulate typed buffers.
- * <p>
+ * 
  * A typed encoder accepts both typed and untyped buffers, but
  * is implementated in terms of typed buffers.  Untyped buffers
  * are automatically wrapped into the required form before being
  * passed on to the implementation.
- * </p><p>
+ * 
  * This type is designed to function as a statically bound mixin
  * to make it easier to incorporate typed encoders into untyped
  * encoder hierarchies.  This is somewhat ugly, but necessary.
- * </p>
+ * 
  *
  * @param IT the input buffer datatype
  * @param OT the output buffer datatype
@@ -75,17 +73,17 @@ public:
         return S::finish(outview);
     }
     
-    inline bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush = false, bool finish = false)
     {
         return S::encode(inbuf, outbuf, flush, finish);
     }
-    inline bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
         bool finish = false)
     {
         return S::flush(inbuf, outbuf, finish);
     }
-    inline bool finish(WvBuffer &outbuf)
+    bool finish(WvBuffer &outbuf)
     {
         return S::finish(outbuf);
     }
@@ -164,12 +162,12 @@ public:
         return S::flush(inview, outbuf, finish);
     }
     
-    inline bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush = false, bool finish = false)
     {
         return S::encode(inbuf, outbuf, flush, finish);
     }
-    inline bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
+    bool flush(WvBuffer &inbuf, WvBuffer &outbuf,
         bool finish = false)
     {
         return S::flush(inbuf, outbuf, finish);

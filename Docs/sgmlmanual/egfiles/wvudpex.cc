@@ -1,7 +1,6 @@
-/** \file
+/*
  * A WvUDP example.
- */
-/** \example wvudpex.cc
+ *
  * WvUDPStream example.  Waits for data on port 19.
  * Print something like:
  * udp<Info>: Local address is 0.0.0.0:33234 , and waits

@@ -1,9 +1,7 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- */
-
-/** \file
+ *
  * Functions to handle "tcl-style" strings and lists.
  * 
  * Using wvtcl_encode(), you can encode _any_ list of strings into a single
