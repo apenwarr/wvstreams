@@ -1,5 +1,5 @@
 TOPDIR=..
-include $(TOPDIR)/rules.mk
+include $(TOPDIR)/wvrules.mk
 
 # some crazy magic for WvLockFile to use the liblockdev library if it's
 # available, or our simpler method otherwise.

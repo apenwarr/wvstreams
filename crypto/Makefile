@@ -1,5 +1,5 @@
 TOPDIR=..
-include ${TOPDIR}/rules.mk
+include ${TOPDIR}/wvrules.mk
 
 # if you compile SSLeay yourself, change this to the base directory of the
 # package (e.g. /usr/src/SSLeay)
@@ -21,15 +21,14 @@ all: crypto.libs
 LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto
 LIBS += ${EFENCE}
 #LIBS += /usr/local/mpr/libmpr.a -static
-XPATH=.. ../utils ../streams ../configfile ../ipstreams ../netmap ../netguide \
+XPATH=.. ../utils ../streams ../configfile ../ipstreams \
 	${SSLDIR}/include ${SSLINC}
 
 crypto.libs: wvcrypto.o wvsslstream.o wvx509.o
 
 crypto.a: crypto.libs
 
-cryptotest ssltest sslsrvtest certtest: crypto.a \
-	 ../netguide/netguide.a ../netmap/netmap.a ../libwvstreams.a
+cryptotest ssltest sslsrvtest certtest: crypto.a ../ipstreams/ipstreams.a
 
 clean:
 	rm -f cryptotest ssltest sslsrvtest certtest

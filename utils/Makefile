@@ -1,5 +1,5 @@
 TOPDIR=..
-include $(TOPDIR)/rules.mk
+include $(TOPDIR)/wvrules.mk
 
 TESTS=teststr testlist testhash stresshash testbuffer testbase64 testver \
 		testtask testsort testproc testfork testencoder testdiriter \
