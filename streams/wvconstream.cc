@@ -33,9 +33,9 @@ _WvConStream::~_WvConStream()
 
 void _WvConStream::close()
 {
-    // skip over WvFDStream::close() - don't actually close the fds!
     isopen = false;
-    WvStream::close();
+    setfd(-1); // prevent WvFdStream from closing our fds
+    WvFDStream::close();
 }
 
 
