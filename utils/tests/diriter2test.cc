@@ -10,4 +10,5 @@ int main()
     WvDirIter i("/");
     WvDirIter *i2 = new WvDirIter("/");
     printf("After: %d %d %d %d\n", guard1, guard2, guard3, guard4);
+    delete i2;
 }
