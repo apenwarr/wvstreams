@@ -86,6 +86,8 @@ public:
     WvLink head, *tail;
     WvList() : head(NULL, false)
         { tail = &head; }
+    WvList(const WvList &l); // copy constructor - not actually defined anywhere!
+    WvList& operator= (const WvList &l);
     void setup()
         { /* default: do nothing */ }
     void shutdown()

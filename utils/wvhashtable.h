@@ -86,6 +86,8 @@ protected:
     typedef bool Comparator(const void *, const void *);
     
     WvHashTable(unsigned _numslots);
+    WvHashTable(const WvHashTable &t); // copy constructor - not defined anywhere!
+    WvHashTable& operator= (const WvHashTable &t);
     void setup()
         { /* default: do nothing */ }
     void shutdown()

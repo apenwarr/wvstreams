@@ -32,6 +32,11 @@ public:
     //
     WvStream(int _fd);
     virtual ~WvStream();
+   
+    // copy constructor - not actually defined anywhere.  This prevents people
+    // from accidentally trying to copy a WvStream without defining one.
+    WvStream(const WvStream &s);
+    WvStream& operator= (const WvStream &s);
     
     // close the stream if it is open; isok() becomes false from now on.
     // Note!!  If you override this function in a derived class, you must
