@@ -112,7 +112,11 @@ public:
      */
     UniConfRoot(UniConfGen *gen, bool refresh = true)
         : UniConf(this), watchroot(NULL)
-        { mounts.mountgen("/", gen, refresh); }
+    {
+	mounts.mountgen("/", gen, refresh);
+        mounts.setcallback(UniConfGenCallback(this,
+            &UniConfRoot::gen_callback), NULL);
+    }
 
     /**
      * Requests notification when any of the keys covered by the
