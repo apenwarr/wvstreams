@@ -6,8 +6,8 @@
  * handles various important details related to modems, like setting
  * the baud rate, checking carrier detect, and dropping DTR.
  *
- * Created:	29  Oct 1997		D. Coombs
  */
+
 #include "wvmodem.h"
 #include <sys/ioctl.h>
     	

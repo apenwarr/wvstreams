@@ -6,8 +6,6 @@
  * important details related to modems, like setting baud rates and dropping
  * DTR and the like.
  *
- * Created:	29  Oct 1997		D. Coombs
- *
  */
 
 #ifndef __WVMODEM_H
