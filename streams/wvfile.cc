@@ -17,9 +17,8 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
     errnum = 0;
     
-    int xmode = (mode & (O_RDONLY | O_WRONLY | O_RDWR));
-    readable = (xmode == O_RDONLY) || (xmode == O_RDWR);
-    writable = (xmode == O_WRONLY) || (xmode == O_RDWR);
+    readable = mode & (O_RDONLY | O_RDWR);
+    writable = mode & (O_WRONLY | O_RDWR);
 
     skip_select = false;
     

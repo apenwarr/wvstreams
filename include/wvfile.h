@@ -22,8 +22,19 @@
 class WvFile : public WvFDStream
 {
 public:
-    WvFile(int rwfd = -1) :
-        WvFDStream(rwfd) { }
+    WvFile(int rwfd = -1) : WvFDStream(rwfd)
+    {
+	if (rwfd > -1)
+	{
+	    mode_t xmode = fcntl (rwfd, F_GETFL);
+	    readable = xmode & (O_RDONLY | O_RDWR);
+	    writable = xmode & (O_WRONLY | O_RDWR);
+	}
+	else
+	{
+	    readable = writable = false;
+	}
+    }
     WvFile(WvStringParm filename, int mode, int create_mode = 0666)
         { open(filename, mode, create_mode); }
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
