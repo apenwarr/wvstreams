@@ -11,7 +11,7 @@ WVTEST_MAIN("scatter hashing count, add, remove")
     const int size = 100; //must be larger the 50
     WvString *strings[size];
     for(int i=0;i<size;i++)
-        strings[i] = new WvString(WvString("Test") + i);
+        strings[i] = new WvString("Test%s", i);
     TestScatter scatterHash(size);
     for(unsigned int i=0;i<(unsigned)size;i++)
     {
@@ -24,7 +24,7 @@ WVTEST_MAIN("scatter hashing count, add, remove")
         scatterHash.remove(strings[i]);
     WVPASS(scatterHash.count()==50);
     scatterHash.zap();
-    printf("scatter hash zaped");
+    printf("scatter hash zapped\n");
     WVPASS(scatterHash.isempty());
     WVPASS(scatterHash.count()==0);
     
@@ -42,7 +42,7 @@ WVTEST_MAIN("scatter hashing isempty and autofree")
     scatterHash.set_autofree(test1, true);
     WVPASS(scatterHash.get_autofree(test1));
     scatterHash.zap();
-    printf("scatter hash zaped");
+    printf("scatter hash zapped\n");
     WVPASS(scatterHash.isempty());
     WVPASS(scatterHash.count()==0);
 }
@@ -53,7 +53,7 @@ WVTEST_MAIN("scatter hashing Iter")
     const int size = 20;
     WvString *strings[size];
     for(int i=0;i<size;i++)
-        strings[i] = new WvString(WvString("Test") + i);
+        strings[i] = new WvString("Test%s", i);
     TestScatter scatterHash(size);
     for(int i=0;i<size;i++)
         scatterHash.add(strings[i], true);
@@ -72,7 +72,7 @@ WVTEST_MAIN("scatter hashing Iter")
         WVPASS(isInThere);
     }
     scatterHash.zap();
-    printf("scatter hash zaped");
+    printf("scatter hash zapped\n");
     WVPASS(scatterHash.isempty());
     WVPASS(scatterHash.count()==0);
 }
