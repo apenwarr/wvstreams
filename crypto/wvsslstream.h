@@ -77,13 +77,13 @@ protected:
      * Overrides the standard write function, and use
      * SSL_write() instead...
      */
-    size_t     uwrite(const void *buf, size_t len);
+    virtual size_t     uwrite(const void *buf, size_t len);
     
     /**
      * Overrides for the standard read function, so that SSL_read() will
      * get called...
      */
-    size_t     uread(void *buf, size_t len);
+    virtual size_t     uread(void *buf, size_t len);
     
 private:
     /**

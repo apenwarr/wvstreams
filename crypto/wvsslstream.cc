@@ -37,6 +37,9 @@ WvSSLStream::WvSSLStream(WvStream *_slave, WvX509Mgr *x509, bool _verify,
 	    seterr("Can't get SSL context!");
 	    return;
     	}
+	// Allow SSL Writes to only write part of a request...
+	SSL_CTX_set_mode(ctx,SSL_MODE_ENABLE_PARTIAL_WRITE);
+
 	if (SSL_CTX_use_certificate(ctx, x509->cert) <= 0)
 	{
 	    seterr("Error loading Certificate!");
@@ -123,29 +126,61 @@ size_t WvSSLStream::uread(void *buf, size_t len)
 
 size_t WvSSLStream::uwrite(const void *buf, size_t len)
 {
+    debug(">> I want to write %s bytes\n",len);
+
     if (!sslconnected)
+    {
+	debug(">> EEEEP! I can't find my sslconnection!\n");
 	return 0;
-    
+    }
+
     int result = SSL_write(ssl, (char *)buf, len);
 
     if (len > 0 && result == 0)
 	close();
     else if (result < 0)
     {
-	if (errno != EAGAIN)
-	    seterr(errno);
-        return 0;
+        switch(SSL_get_error(ssl,result))
+	{
+	   case SSL_ERROR_WANT_WRITE:
+		debug(">> ERROR: SSL_write() cannot complete at this time...retry!\n");
+
+        /* FIXME:
+	   Ok, this is ugly... as a matter of fact, it's probably so ugly
+	   that it's going to have to change... but, because the SSL authors
+	   don't give me a choice, I have to do this... from the SSL man
+	   page:
+
+	WARNING
+
+	When an SSL_write() operation has to be repeated because of
+	SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated 
+	with the same arguments.
+
+	   So, wvstreams usual "Back off and try again with a smaller chunk",
+	   which is perfectly sane, and usual, causes SSL to blow up...
+	*/
+		do 
+		{
+		    result = SSL_write(ssl, (char *)buf, len);
+		    debug(">> Retrying SSL Write...\n");
+		} while ( result <= 0 );
+		debug(">> SSL_write() finally wrote %s bytes!\n",result);
+		break;
+	   case SSL_ERROR_NONE:
+		debug(">> Hmmm... something got confused... no SSL Errors!\n");
+		break;
+	   default:
+		debug(">> ERROR: SSL_write() call failed\n");
+		seterr("SSL Write failed - bailing out of the SSL Session");
+		break;
+	}
+	return result;
     }
-    
-    if (len)
-    {
-	if ((size_t)result == len)
-	    write_again = true;
-	else
-	    write_again = false;
-    }
-    
-    debug(">> %s bytes\n", result);
+
+    debug(">> SSL wrote %s bytes \t WvStreams wanted to write %s bytes\n", 
+	   result, len);
+
     return result;
 }
  
@@ -173,17 +208,21 @@ bool WvSSLStream::select_setup(SelectInfo &si)
 {
     // the SSL library might be keeping its own internal buffers - try
     // reading again if we were full the last time.
-    if ((si.readable && read_again) || (si.writable && write_again))
+    if (si.readable && read_again)
+    {
+	debug("Have to try reading again!\n");
 	return true;
-    
+    }
+
     return WvStreamClone::select_setup(si);
+
 }
 
  
 bool WvSSLStream::test_set(SelectInfo &si)
 {
     bool result = WvStreamClone::test_set(si);
-    
+
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep
     // trying here... it is also turning into a rather cool place
