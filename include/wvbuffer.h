@@ -16,6 +16,9 @@ class WvBufferBase<unsigned char> :
     public WvBufferBaseCommonImpl<unsigned char>
 {
 public:
+    WvBufferBase(WvBufferStore *store) :
+        WvBufferBaseCommonImpl<unsigned char>(store) { }
+
     /**
      * Copies a WvString into the buffer, excluding the null-terminator.
      */
@@ -75,9 +78,9 @@ public:
     inline void move(void *data, size_t count)
         { WvBufferBaseCommonImpl<unsigned char>::move(
             (unsigned char*)data, count); }
-    inline void poke(int offset, void *data, size_t count)
-        { WvBufferBaseCommonImpl<unsigned char>::poke(offset,
-            (unsigned char*)data, count); }
+    inline void poke(void *data, size_t count, int offset = 0)
+        { WvBufferBaseCommonImpl<unsigned char>::poke(
+            (unsigned char*)data, count, offset); }
 
 private:
     // moved here to avoid ambiguities between the match variants
@@ -106,7 +109,6 @@ public:
             (unsigned char*)_data, _avail, _size, _autofree);
     }
 };
-typedef WvInPlaceBuffer WvMiniBuffer;
 
 class WvConstInPlaceBuffer : public WvConstInPlaceBufferBase<unsigned char>
 {
@@ -122,6 +124,8 @@ public:
             (const unsigned char*)_data, _avail);
     }
 };
+
+typedef WvInPlaceBuffer WvMiniBuffer;
 
 typedef WvBufferBase<unsigned char> WvBuffer;
 
@@ -161,6 +165,5 @@ public:
     WvString str()
         { return xstr; }
 };
-
 
 #endif // __WVBUFFER_H

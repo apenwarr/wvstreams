@@ -9,16 +9,11 @@
 #ifndef __WVBUFFERBASE_H
 #define __WVBUFFERBASE_H
 
+#include "wvbufferstore.h"
 #include "wvtraits.h"
-#include "wvlinklist.h"
-#include <assert.h>
-#include <limits.h>
 
-// This value is used internally to signal unlimited space.
-// It is merely meant to be as large as possible yet leave enough
-// room to accomodate simple arithmetic operations without overflow.
-// Clients should NOT check for the presence of this value explicitly.
-#define UNLIMITED_SPACE (INT_MAX/2)
+template<class T>
+class WvBufferBase;
 
 /**
  * An abstract generic buffer template.
@@ -33,502 +28,553 @@
  * that allows specializations to be defined to add functionality
  * to the base type.  When passing around buffer objects, you should
  * use the WvBufferBase<T> type rather than WvBufferBaseCommonImpl<T>.
+ *
+ * @see WvBufferBase<T>
  */
-template<class T>
-class WvBufferBase;
 template<class T>
 class WvBufferBaseCommonImpl
 {
 protected:
     typedef T Elem;
     typedef WvTraits<T> ElemTraits;
-    typedef typename ElemTraits::MemOps ElemMemOps;
     typedef WvBufferBase<T> Buffer;
 
+    WvBufferStore *store;
+    
     // discourage copying
     WvBufferBaseCommonImpl(const WvBufferBaseCommonImpl &other) { }
 
+protected:
+    /**
+     * Initializes the buffer.
+     * <p>
+     * Note: Does not take ownership of the storage object.
+     * </p>
+     *
+     * @param store the low-level storage object
+     */
+    WvBufferBaseCommonImpl(WvBufferStore *store) :
+        store(store) { }
+
 public:
-    WvBufferBaseCommonImpl() { }
+    /**
+     * Destroys the buffer.
+     */
     virtual ~WvBufferBaseCommonImpl() { }
+
+    /**
+     * Returns a pointer to the underlying storage class object.
+     *
+     * @return the low-level storage class object pointer, non-null
+     */
+    inline WvBufferStore *getstore()
+    {
+        return store;
+    }
 
     /*** Buffer Reading ***/
 
     /**
      * Returns true if the buffer supports reading.
+     *
+     * @return true if reading is supported
      */
-    virtual bool isreadable() const
-        { return true; }
+    inline bool isreadable() const
+    {
+        return store->isreadable();
+    }
     
     /**
      * Returns the number of elements in the buffer currently
-     *   available for reading.
+     * available for reading.
+     *
+     * @return the number of elements
      */
-    virtual size_t used() const = 0;
+    inline size_t used() const
+    {
+        return store->used() / sizeof(Elem);
+    }
 
     /**
      * Returns the optimal maximum number of elements in the
-     *   buffer currently available for reading without incurring
-     *   significant overhead.
+     * buffer currently available for reading without incurring
+     * significant overhead.
+     * <p>
      * Invariants:
-     *   usedopt() <= used()
-     *   usedopt() != 0 if used() != 0
+     * <ul>
+     * <li>usedopt() <= used()</li>
+     * <li>usedopt() != 0 if used() != 0</li>
+     * </ul></p>
+     *
+     * @return the number of elements
      */
-    virtual size_t usedopt() const
-        { return used(); }
+    size_t usedopt() const
+    {
+        size_t avail = store->usedopt();
+        size_t elems = avail / sizeof(Elem);
+        if (elems != 0) return elems;
+        return avail != 0 && store->used() >= sizeof(Elem) ? 1 : 0;
+    }
 
     /**
      * Reads exactly the specified number of elements and returns
-     *   a pointer to a storage location owned by the buffer.
+     * a pointer to a storage location owned by the buffer.
+     * <p>
      * The pointer is only valid until the next non-const buffer
-     *   member is called.
+     * member is called. eg. alloc(size_t)
+     * </p><p>
      * If count == 0, a NULL pointer may be returned.
+     * </p><p>
      * It is an error for count to be greater than used().
-     * For best results, call get(...) multiple times with count no
-     *   greater than usedopt() each time.
-     *
+     * </p><p>
+     * For best results, call this function multiple times with
+     * count no greater than usedopt() each time.
+     * </p><p>
      * After this operation, at least count elements may be ungotten.
+     * </p>
+     *
+     * @param count the number of elements
+     * @return the element storage pointer
      */
-    virtual const T *get(size_t count) = 0;
+    inline const T *get(size_t count)
+    {
+        return static_cast<const T*>(
+            store->get(count * sizeof(Elem)));
+    }
 
     /**
      * Ungets exactly the specified number of elements by returning
-     *   them to the buffer.
+     * them to the buffer for subsequent reads.
+     * <p>
      * This operation may always be safely performed with count
-     *   less than or equal to that specified in the last get(...)
-     *   if no non-const buffer members have been called since then.
+     * less than or equal to that specified in the last get(size_t)
+     * if no non-const buffer members have been called since then.
+     * </p><p>
      * If count == 0, nothing happens.
+     * </p><p>
      * It is an error for count to be greater than ungettable().
+     * </p>
+     *
+     * @param count the number of elements
      */
-    virtual void unget(size_t count) = 0;
+    inline void unget(size_t count)
+    {
+        store->unget(count * sizeof(Elem));
+    }
 
     /**
      * Returns the maximum number of elements that may be ungotten
-     *   at this time.
+     * at this time.
+     *
+     * @return the number of elements
      */
-    virtual size_t ungettable() const = 0;
+    inline size_t ungettable() const
+    {
+        return store->ungettable() / sizeof(Elem);
+    }
 
     /**
-     * Returns a pointer at the specified offset into the buffer without
-     *   actually adjusting the current get() index.
+     * Returns a pointer into the buffer at the specified offset
+     * without actually adjusting the current get() index.
+     * <p>
      * If count != NULL, *count will be filled in with the number of
-     *   elements in the returned array.  This number will always be
-     *   at least 1.
+     * elements in the returned array.  This number will always be
+     * at least mincount.
+     * </p><p>
      * If offset is greater than zero, then elements will be returned
-     *   beginning with the last one that would be returned on a
-     *   get(offset + 1).  (ie. skips 'offset' elements)
+     * beginning with the last one that would be returned by
+     * get(offset + 1).  (ie. skips 'offset' elements)
+     * </p><p>
      * If offset equals zero, then elements will be returned beginning
-     *   with the next one available for get(...).
+     * with the next one available for get(size_t).
+     * </p><p>
      * If offset is less than zero, then elements will be returned
-     *   beginning with the first one that would be returned on a
-     *   get(1) after unget(-offset).
-     * It is an error for offset >= used() or offset < -ungettable(),
-     *   thus peek(...) may not be called if used() == 0.
-     *
+     * beginning with the first one that would be returned on a
+     * get(1) after unget(-offset).
+     * </p><p>
+     * It is an error for offset + mincount > used() or
+     * for offset < -ungettable(), thus this function may not be
+     * called if used() == 0.
+     * </p><p>
+     * It is an error for mincount == 0.
+     * </p><p>
      * It may be necessary to repeatedly invoke this function in order
-     *   to scan the entire contents of the buffer.
+     * to scan the entire contents of the buffer.  For maximum
+     * efficiency, choose a mincount as small as possible.
+     * </p>
+     *
+     * @param offset the buffer offset
+     * @param count pointer to the returned element count
+     * @param mincount the minimum number of elements to peek, default 1
+     * @return the element storage pointer
      */
-    virtual const T *peek(int offset, size_t *count)
-        { return mutablepeek(offset, count); }
+    inline const T *peek(int offset, size_t *count,
+        size_t mincount = 1)
+    {
+        const T *data = static_cast<const T*>(store->peek(
+            offset * sizeof(Elem), count, mincount * sizeof(Elem)));
+        if (count) *count /= sizeof(Elem);
+        return data;
+    }
 
     /**
      * Clears the buffer.
+     * <p>
      * For many types of buffers, calling zap() will increased the
-     *   amount of free space available for writing (see below) by
-     *   an amount greater than used().  Hence it is wise to zap()
-     *   a buffer just before writing to it to maximize free space.
-     *
+     * amount of free space available for writing (see below) by
+     * an amount greater than used().  Hence it is wise to zap()
+     * a buffer just before writing to it to maximize free space.
+     * </p><p>
      * After this operation, used() == 0, and often ungettable() == 0.
+     * </p>
      */
-    virtual void zap() = 0;
+    inline void zap()
+    {
+        store->zap();
+    }
 
     /**
-     * Returns the next element from the buffer.
+     * Reads the next element from the buffer.
+     * <p>
      * It is an error to invoke this method if used() == 0.
-     * 
+     * </p><p>
      * After this operation, at least 1 element may be ungotten.
+     * </p>
+     *
+     * @return the element
+     * @see get(size_t)
      */
-    T get()
-        { return *get(1); }
+    inline T get()
+    {
+        return *get(1);
+    }
 
     /**
-     * Peeks the specified element from the buffer.
+     * Returns the element at the specified offset in the buffer.
+     * <p>
      * It is an error to invoke this method if used() == 0.
-     * See peek(...) for information about offset.
+     * </p>
+     *
+     * @param offset the offset, default 0
+     * @return the element
+     * @see peek(int, size_t*, size_t)
      */
-    T peek(int offset = 0)
-        { return *peek(offset, NULL); }
+    inline T peek(int offset = 0)
+    {
+        return *peek(offset * sizeof(Elem), NULL);
+    }
 
     /**
      * Efficiently copies the specified number of elements from the
-     *   buffer to the specified UNINITIALIZED storage location
-     *   and removes the elements from the buffer.
+     * buffer to the specified UNINITIALIZED storage location
+     * and removes the elements from the buffer.
+     * <p>
      * It is an error for count to be greater than used().
-     * For best results, call move(...) with a large count.
+     * </p><p>
+     * For maximum efficiency, choose as large a count as possible.
+     * </p><p>
      * The pointer buf may be NULL only if count == 0.
-     *
+     * </p><p>
      * After this operation, an indeterminate number of elements
-     *   may be ungotten.
+     * may be ungotten.
+     * </p>
+     *
+     * @param buf the buffer that will receive the elements
+     * @param count the number of elements
+     * @see get(size_t)
      */
-    void move(T *buf, size_t count)
+    inline void move(T *buf, size_t count)
     {
-        while (count > 0)
-        {
-            size_t amount = usedopt();
-            assert(amount != 0 ||
-                !"attempted to move() more than used()");
-            if (amount > count)
-                amount = count;
-            const T *data = get(amount);
-            ElemMemOps::uninit_copy(buf, data, amount);
-            buf += amount;
-            count -= amount;
-        }
+        store->move(buf, count * sizeof(Elem));
     }
     
     /**
      * Efficiently copies the specified number of elements from the
-     *   buffer to the specified UNINITIALIZED storage location
-     *   but does not remove the elements from the buffer.
+     * buffer to the specified UNINITIALIZED storage location
+     * but does not remove the elements from the buffer.
+     * <p>
      * It is an error for count to be greater than used().
-     * For best results, call copy(...) with a large count.
+     * </p><p>
+     * For maximum efficiency, choose as large a count as possible.
+     * </p><p>
      * The pointer buf may be NULL only if count == 0.
-     * See peek(...) for information about offset.
+     * </p>
+     *
+     * @param buf the buffer that will receive the elements
+     * @param count the number of elements
+     * @param offset the buffer offset, default 0
+     * @see peek(int, size_t*, size_t)
      */
-    void copy(T *buf, size_t count, int offset = 0)
+    inline void copy(T *buf, size_t count, int offset = 0)
     {
-        while (count > 0)
-        {
-            size_t amount;
-            const T *data = peek(offset, & amount);
-            assert(amount != 0 ||
-                !"attempted to copy() with invalid offset");
-            if (amount > count)
-                amount = count;
-            ElemMemOps::uninit_copy(buf, data, amount);
-            buf += amount;
-            count -= amount;
-            offset += amount;
-        }
+        store->copy(buf, count * sizeof(Elem), offset * sizeof(Elem));
     }
     
     /*** Buffer Writing ***/
     
     /**
      * Returns true if the buffer supports writing.
+     *
+     * @return true if writing is supported
      */
-    virtual bool iswritable() const
-        { return true; }
+    inline bool iswritable() const
+    {
+        return true;
+    }
     
     /**
      * Returns the number of elements that the buffer can currently
-     *   accept for writing.
+     * accept for writing.
+     * 
+     * @return the number of elements
      */
-    virtual size_t free() const = 0;
+    inline size_t free() const
+    {
+        return store->free() / sizeof(Elem);
+    }
     
     /**
      * Returns the optimal maximum number of elements that the
-     *   buffer can currently accept for writing without incurring
-     *   significant overhead.
+     * buffer can currently accept for writing without incurring
+     * significant overhead.
+     * <p>
      * Invariants:
-     *   freeopt() <= free()
-     *   freeopt() != 0 if free() != 0
+     * <ul>
+     * <li>freeopt() <= free()</li>
+     * <li>freeopt() != 0 if free() != 0</li>
+     * </ul></p>
+     *
+     * @return the number of elements
      */
-    virtual size_t freeopt() const
-        { return free(); }
+    size_t freeopt() const
+    {
+        size_t avail = store->freeopt();
+        size_t elems = avail / sizeof(Elem);
+        if (elems != 0) return elems;
+        return avail != 0 && store->free() >= sizeof(Elem) ? 1 : 0;
+    }
     
     /**
-     * Allocates exactly storage for the specified number of elements
-     *   and returns a pointer to an UNINITIALIZED storage location
-     *   owned by the buffer.
+     * Allocates exactly the specified number of elements and returns
+     * a pointer to an UNINITIALIZED storage location owned by the
+     * buffer.
+     * <p>
      * The pointer is only valid until the next non-const buffer
-     *   member is called.
+     * member is called. eg. alloc(size_t)
+     * </p><p>
      * If count == 0, a NULL pointer may be returned.
+     * </p><p>
      * It is an error for count to be greater than free().
-     * For best results, call alloc(...) multiple times with count no
-     *   greater than freeopt() each time.
-     *
+     * </p><p>
+     * For best results, call this function multiple times with
+     * count no greater than freeopt() each time.
+     * </p><p>
      * After this operation, at least count elements may be unallocated.
+     * </p>
+     *
+     * @param count the number of elements
+     * @return the element storage pointer
      */
-    virtual T *alloc(size_t count) = 0;
+    inline T *alloc(size_t count)
+    {
+        return static_cast<T*>(store->alloc(count * sizeof(Elem)));
+    }
 
     /**
      * Unallocates exactly the specified number of elements by removing
-     *   them from the buffer.
+     * them from the buffer and releasing their storage.
+     * <p>
      * This operation may always be safely performed with count
-     *   less than or equal to that specified in the last alloc(...)
-     *   or put(...) if no non-const buffer members have been called
-     *   since then.
+     * less than or equal to that specified in the last alloc(size_t)
+     * or put(const T*, size_t) if no non-const buffer members have
+     * been called since then.
+     * </p><p>
      * If count == 0, nothing happens.
+     * </p><p>
      * It is an error for count to be greater than unallocable().
+     * </p>
+     *
+     * @param count the number of elements
      */
-    virtual void unalloc(size_t count) = 0;
+    inline void unalloc(size_t count)
+    {
+        return store->unalloc(count * sizeof(Elem));
+    }
 
     /**
      * Returns the maximum number of elements that may be unallocated
-     *   at this time.
+     * at this time.
+     * <p>
      * For all practical purposes, this number will always be at least
-     *   as large as the amount currently in use.  It is provided
-     *   primarily for symmetry, but also to handle cases where
-     *   buffer reading is not supported by the implementation.
+     * as large as the amount currently in use.  It is provided
+     * primarily for symmetry, but also to handle cases where
+     * buffer reading (hence used()) is not supported by the
+     * implementation.
+     * </p><p>
      * Invariants:
-     *   unallocable() >= used()
-     */
-    virtual size_t unallocable() const = 0;
-    
-    /**
-     * Returns a non-const pointer at the specified offset into the
-     *   buffer without actually adjusting the current get() index.
-     * Other than the fact that the storage is mutable, functions
-     *   identically to peek().
-     */
-    virtual T *mutablepeek(int offset, size_t *count) = 0;
-    
-    /**
-     * Allocates and copies the specified element into the buffer.
-     * It is an error to invoke this method if free() == 0.
-     * 
-     * After this operation, at least 1 element may be unallocated.
-     */
-    void put(typename ElemTraits::Param value)
-        { ElemMemOps::uninit_copy1(alloc(1), value); }
-
-    /**
-     * Efficiently copies the specified number of elements from the
-     *   specified storage location into newly allocated buffer storage.
-     * It is an error for count to be greater than free().
-     * For best results, call put(...) with a large count.
-     * The pointer buf may be NULL only if count == 0.
-     * 
-     * After this operation, at least 1 element may be unallocated.
-     */
-    void put(const T *data, size_t count)
-    {
-        while (count > 0)
-        {
-            size_t amount = freeopt();
-            assert(amount != 0 || !"attempted to put() more than free()");
-            if (amount > count)
-                amount = count;
-            T *buf = alloc(amount);
-            ElemMemOps::uninit_copy(buf, data, amount);
-            data += amount;
-            count -= amount;
-        }
-    }
-
-    /**
-     * Efficiently copies the specified number of elements from the
-     *   specified storage location into a particular offset of
-     *   the buffer.
-     * If offset <= used() and offset + count > used(), the
-     *   remaining data is tacked onto the end of the buffer
-     *   with put().
-     * It is an error for count to be greater than free() - offset.
+     * <ul>
+     * <li>unallocable() >= used()</li>
+     * </ul></p>
      *
-     * See mutablepeek() and peek().
+     * @return the number of elements
      */
-    void poke(int offset, const T *data, size_t count)
+    inline size_t unallocable() const
     {
-        int limit = int(used());
-        assert(offset <= limit ||
-            !"attempted to poke() beyond end of buffer");
-        int end = offset + count;
-        if (end >= limit)
-        {
-            size_t tail = end - limit;
-            count -= tail;
-            put(data + count, tail);
-        }
-        while (count > 0)
-        {
-            size_t amount;
-            T *buf = mutablepeek(offset, & amount);
-            if (amount > count)
-                amount = count;
-            ElemMemOps::copy(buf, data, amount);
-            data += amount;
-            count -= amount;
-        }
+        return store->unallocable() / sizeof(Elem);
     }
     
+    /**
+     * Returns a non-const pointer info the buffer at the specified
+     * offset without actually adjusting the current get() index.
+     * <p>
+     * Other than the fact that the storage is mutable, functions
+     * identically to peek(int, size_t*, size_t).
+     * </p>
+     *
+     * @param offset the buffer offset
+     * @param count pointer to the returned element count
+     * @param mincount the minimum number of elements to peek, default 1
+     * @return the element storage pointer
+     * @see peek(int, size_t*, size_t)
+     */
+    inline T *mutablepeek(int offset, size_t *count,
+        size_t mincount = 1)
+    {
+        T *data = static_cast<T*>(store->mutablepeek(
+            offset * sizeof(Elem), count, mincount * sizeof(Elem)));
+        if (count) *count /= sizeof(Elem);
+        return data;
+    }
+    
+    /**
+     * Writes the specified number of elements from the specified
+     * storage location into the buffer at its tail.
+     * <p>
+     * It is an error for count to be greater than free().
+     * </p><p>
+     * For maximum efficiency, choose as large a count as possible.
+     * </p><p>
+     * The pointer buf may be NULL only if count == 0.
+     * </p><p>
+     * After this operation, at least count elements may be unallocated.
+     * </p>
+     *
+     * @param data the buffer that contains the elements
+     * @param count the number of elements
+     * @see alloc(size_t)
+     */
+    inline void put(const T *data, size_t count)
+    {
+        store->put(data, count * sizeof(Elem));
+    }
+
+    /**
+     * Efficiently copies the specified number of elements from the
+     * specified storage location into the buffer at a particular
+     * offset.
+     * <p>
+     * If offset <= used() and offset + count > used(), the
+     * remaining data is simply tacked onto the end of the buffer
+     * with put().
+     * </p><p>
+     * It is an error for count to be greater than free() - offset.
+     * </p>
+     *
+     * @param data the buffer that contains the elements
+     * @param count the number of elements
+     * @param offset the buffer offset, default 0
+     * @see mutablepeek(int, size_t*, size_t)
+     * @see put(const T*, size_t)
+     */
+    inline void poke(const T *data, size_t count, int offset = 0)
+    {
+        store->poke(data, count * sizeof(Elem), offset * sizeof(Elem));
+    }
+
+    /**
+     * Writes the element into the buffer at its tail.
+     * <p>
+     * It is an error to invoke this method if free() == 0.
+     * </p><p>
+     * After this operation, at least 1 element may be unallocated.
+     * </p>
+     *
+     * @param valid the element
+     * @see put(const T*, size_t)
+     */
+    inline void put(typename ElemTraits::Param value)
+    {
+        store->fastput(& value, sizeof(Elem));
+    }
+
+    /**
+     * Writes the element into the buffer at the specified offset.
+     * <p>
+     * It is an error to invoke this method if free() == 0.
+     * </p><p>
+     * After this operation, at least 1 element may be unallocated.
+     * </p>
+     *
+     * @param value the element
+     * @param offset the buffer offset
+     * @see poke(const T*, size_t, int)
+     */
+    inline void poke(typename ElemTraits::Param value, int offset = 0)
+    {
+        poke(& value, 1, offset);
+    }
+
 
     /*** Buffer to Buffer Transfers ***/
 
     /**
      * Efficiently moves count bytes from the specified buffer into
-     *   this one.
+     * this one.  In some cases, this may be a zero-copy operation.
+     * <p>
      * It is an error for count to be greater than inbuf.used().
-     * For best results, call merge(...) with a large count.
-     *
+     * </p><p>
+     * For maximum efficiency, choose as large a count as possible.
+     * </p><p>
      * After this operation, an indeterminate number of elements
-     *   may be ungotten from inbuf.
+     * may be ungotten from inbuf.
+     * </p>
+     *
+     * @param inbuf the buffer from which to read
+     * @param count the number of elements
      */
-    virtual void merge(Buffer &inbuf, size_t count)
+    inline void merge(Buffer &inbuf, size_t count)
     {
-        // move bytes as efficiently as we can using only the public API
-        if (count == 0)
-            return;
-        const T *indata = NULL;
-        T *outdata = NULL;
-        size_t inavail = 0;
-        size_t outavail = 0;
-        for (;;)
-        {
-            if (inavail == 0)
-            {
-                inavail = inbuf.usedopt();
-                assert(inavail != 0 ||
-                    !"attempted to merge() more than inbuf.used()");
-                if (inavail > count)
-                    inavail = count;
-                indata = inbuf.get(inavail);
-            }
-            if (outavail == 0)
-            {
-                outavail = freeopt();
-                assert(outavail != 0 ||
-                    !"attempted to merge() more than free()");
-                if (outavail > count)
-                    outavail = count;
-                outdata = alloc(outavail);
-            }
-            if (inavail < outavail)
-            {
-                ElemMemOps::uninit_copy(outdata, indata, inavail);
-                count -= inavail;
-                outavail -= inavail;
-                if (count == 0)
-                {
-                    unalloc(outavail);
-                    return;
-                }
-                outdata += inavail;
-                inavail = 0;
-            }
-            else
-            {
-                ElemMemOps::uninit_copy(outdata, indata, outavail);
-                count -= outavail;
-                if (count == 0) return;
-                inavail -= outavail;
-                indata += outavail;
-                outavail = 0;
-            }
-        }
+        store->merge(*inbuf.store, count * sizeof(Elem));
     }
 
     /**
-     * Efficiently merges an entire buffer's contents into this one.
-     * This is a convenience method.  See merge(...) for more details.
+     * Efficiently merges the entire contents of a buffer into this one.
+     *
+     * @param inbuf the buffer from which to read
+     * @see merge(Buffer &, size_t)
      */
-    void merge(Buffer &inbuf)
+    inline void merge(Buffer &inbuf)
     {
         merge(inbuf, inbuf.used());
     }
 };
 
 
+
 /**
  * The REAL generic buffer base type.
  * To specialize buffers to add new functionality, declare a template
  * specialization of this type that derives from WvBufferBaseCommonImpl.
- * See WvBufferBaseCommonImpl.
+ *
+ * @see WvBufferBaseCommonImpl<T>
  */
 template<class T>
 class WvBufferBase : public WvBufferBaseCommonImpl<T>
 {
+    WvBufferBase(WvBufferStore *store) :
+        WvBufferBaseCommonImpl<T>(store) { }
 };
 
-/**
- * A statically bound mixin template for buffer implementations that are
- * read-only.  It is an error to attempt to write to a read-only buffer.
- * Note that read-only in this context does not mean the same as "const".
- */
-template<class Super>
-class WvReadOnlyBufferMixin : public Super
-{
-public:
-    virtual bool iswritable() const
-    {
-        return false;
-    }
-    virtual size_t free() const
-    {
-        return 0;
-    }
-    virtual size_t freeopt() const
-    {
-        return 0;
-    }
-    virtual typename Super::Elem *alloc(size_t count)
-    {
-        if (count == 0) return NULL;
-        assert(! "non-zero alloc() called on non-writable buffer");
-        return NULL;
-    }
-    virtual void unalloc(size_t count)
-    {
-        if (count == 0) return;
-        assert(! "non-zero unalloc() called on non-writable buffer");
-    }
-    virtual size_t unallocable() const
-    {
-        return 0;
-    }
-    virtual typename Super::Elem *mutablepeek(int offset, size_t *count)
-    {
-        assert(! "mutablepeek() called on non-writable buffer");
-        return NULL;
-    }
-};
-
-
-/**
- * A statically bound mixin template for buffer implementations that are
- * write-only.  It is an error to attempt to read from a write-only buffer.
- */
-template<class Super>
-class WvWriteOnlyBufferMixin : public Super
-{
-public:
-    virtual bool isreadable() const
-    {
-        return false;
-    }
-    virtual size_t used() const
-    {
-        return 0;
-    }
-    virtual size_t usedopt() const
-    {
-        return 0;
-    }
-    virtual const typename Super::Elem *get(size_t count)
-    {
-        if (count == 0) return NULL;
-        assert(! "non-zero get() called on non-readable buffer");
-        return NULL;
-    }
-    virtual void unget(size_t count)
-    {
-        if (count == 0) return;
-        assert(! "non-zero unget() called on non-readable buffer");
-    }
-    virtual size_t ungettable() const
-    {
-        return 0;
-    }
-    virtual const typename Super::Elem *peek(int offset, size_t *count)
-    {
-        assert(! "peek() called on non-readable buffer");
-        return NULL;
-    }
-    virtual void zap()
-    {
-        // nothing to zap
-    }
-};
 
 
 /**
@@ -539,156 +585,117 @@ template<class T>
 class WvInPlaceBufferBase : public WvBufferBase<T>
 {
 protected:
-    T *data;
-    size_t xsize;
-    size_t readidx;
-    size_t writeidx;
-    bool xautofree;
+    WvInPlaceBufferStore mystore;
 
 public:
     /**
      * Creates a new buffer backed by the supplied array.
-     *   data  - the array of data to wrap (not copied)
-     *   avail - the amount of data available for reading
-     *   size  - the total size of the array
-     *   auto_free - if true, the buffer is freed on delete
+     *
+     * @param _data the array of data to wrap
+     * @param _avail the amount of data available for reading
+     * @param _size the size of the array
+     * @param _autofree if true, the array will be freed when discarded
      */
     WvInPlaceBufferBase(T *_data, size_t _avail, size_t _size,
-        bool _autofree = false) : data(NULL)
-        { reset(_data, _avail, _size, _autofree); }
+        bool _autofree = false) :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), _data, _avail * sizeof(Elem),
+            _size * sizeof(Elem), _autofree) { }
 
     /**
      * Creates a new empty buffer backed by a new array.
-     *   size  - the total size of the array to create
+     *
+     * @param _size the size of the array
      */
-    WvInPlaceBufferBase(size_t _size) : data(NULL)
-        { reset(new T[_size], 0, _size, true); }
+    WvInPlaceBufferBase(size_t _size) :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), _size * sizeof(Elem)) { }
 
     /**
      * Creates a new empty buffer with no backing array.
      */
-    WvInPlaceBufferBase() : data(NULL)
-        { reset(NULL, 0, 0, false); }
-        
-    virtual ~WvInPlaceBufferBase()
-    {
-        if (xautofree)
-            delete[] data;
-    }
+    WvInPlaceBufferBase() :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), NULL, 0, 0, false) { }
+
+    /**
+     * Destroys the buffer.
+     * <p>
+     * Frees the underlying array if autofree().
+     * </p>
+     */
+    virtual ~WvInPlaceBufferBase() { }
 
     /**
      * Returns the underlying array pointer.
+     *
+     * @return the element pointer
      */
-    T *ptr() const
-        { return data; }
+    inline T *ptr() const
+    {
+        return static_cast<T*>(mystore.ptr());
+    }
 
     /**
      * Returns the total size of the buffer.
+     *
+     * @return the number of elements
      */
-    size_t size() const
-        { return xsize; }
+    inline size_t size() const
+    {
+        return mystore.size() / sizeof(Elem);
+    }
 
     /**
      * Returns the autofree flag.
+     *
+     * @return the autofree flag
      */
-    bool autofree() const
-        { return xautofree; }
+    inline bool autofree() const
+    {
+        return mystore.autofree();
+    }
 
     /**
      * Sets or clears the auto_free flag.
+     *
+     * @param _autofree if true, the array will be freed when discarded
      */
-    void setautofree(bool _autofree)
-        { xautofree = _autofree; }
+    inline void setautofree(bool _autofree)
+    {
+        mystore.setautofree(_autofree);
+    }
 
     /**
      * Resets the underlying buffer pointer and properties.
+     * <p>
      * If the old and new buffer pointers differ and the old buffer
      * was specified as auto_free, the old buffer is destroyed.
+     * </p>
+     * @param _data the array of data to wrap
+     * @param _avail the amount of data available for reading
+     * @param _size the size of the array
+     * @param _autofree if true, the array will be freed when discarded
      */
-    void reset(T *_data, size_t _avail, size_t _size, bool _autofree = false)
+    inline void reset(T *_data, size_t _avail, size_t _size,
+        bool _autofree = false)
     {
-        assert(_data != NULL || _avail == 0);
-        if (_data != data && xautofree)
-            delete[] data;
-        data = _data;
-        xautofree = _autofree;
-        xsize = _size;
-        setavail(_avail);
+        mystore.reset(_data, _avail * sizeof(Elem),
+            _size * sizeof(Elem), _autofree);
     }
 
     /**
      * Sets the amount of available data using the current buffer
      * and resets the read index to the beginning of the buffer.
+     *
+     * @param _avail the amount of data available for reading
      */
-    void setavail(size_t _avail)
+    inline void setavail(size_t _avail)
     {
-        assert(_avail <= xsize);
-        readidx = 0;
-        writeidx = _avail;
-    }
-    
-    /*** Overridden Members ***/
-    virtual size_t used() const
-    {
-        return writeidx - readidx;
-    }
-    virtual const T *get(size_t count)
-    {
-        assert(count <= writeidx - readidx ||
-            !"attempted to get() more than used()");
-        const T *tmpptr = data + readidx;
-        readidx += count;
-        return tmpptr;
-    }
-    virtual void unget(size_t count)
-    {
-        assert(count <= readidx ||
-            !"attempted to unget() more than ungettable()");
-        readidx -= count;
-    }
-    virtual size_t ungettable() const
-    {
-        return readidx;
-    }
-    virtual void zap()
-    {
-        readidx = writeidx = 0;
-    }
-    virtual size_t free() const
-    {
-        return xsize - writeidx;
-    }
-    virtual T *alloc(size_t count)
-    {
-        assert(count <= xsize - writeidx ||
-            !"attempted to alloc() more than free()");
-        T *tmpptr = data + writeidx;
-        writeidx += count;
-        return tmpptr;
-    }
-    virtual void unalloc(size_t count)
-    {
-        assert(count <= writeidx - readidx ||
-            !"attempted to unalloc() more than unallocable()");
-        writeidx -= count;
-    }
-    virtual size_t unallocable() const
-    {
-        return writeidx - readidx;
-    }
-    virtual T *mutablepeek(int offset, size_t *count)
-    {
-        if (offset < 0)
-            assert(size_t(-offset) <= readidx ||
-                !"attempted to peek() with invalid offset");
-        else
-            assert(size_t(offset) < writeidx - readidx ||
-                !"attempted to peek() with invalid offset");
-        if (count)
-            *count = writeidx - readidx - offset;
-        return data + readidx + offset;
+        mystore.setavail(_avail * sizeof(Elem));
     }
 };
+
 
 
 /**
@@ -696,459 +703,134 @@ public:
  * read-only access to its elements.
  */
 template<class T>
-class WvConstInPlaceBufferBase :
-    public WvReadOnlyBufferMixin<WvBufferBase<T> >
+class WvConstInPlaceBufferBase : public WvBufferBase<T>
 {
 protected:
-    const T *data;
-    size_t avail;
-    size_t readidx;
+    WvConstInPlaceBufferStore mystore;
 
 public:
     /**
-     * Creates a new buffer.
-     *   data  - the array of data to wrap (not copied)
-     *   avail - the amount of data available for reading
+     * Creates a new buffer backed by the supplied array.
+     *
+     * @param _data the array of data to wrap
+     * @param _avail the amount of data available for reading
      */
-    WvConstInPlaceBufferBase(const T *_data, size_t _avail)
-        { reset(_data, _avail); }
+    WvConstInPlaceBufferBase(const T *_data, size_t _avail) :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), _data, _avail * sizeof(Elem)) { }
 
     /**
      * Creates a new empty buffer with no backing array.
      */
-    WvConstInPlaceBufferBase()
-        { reset(NULL, 0); }
+    WvConstInPlaceBufferBase() :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), NULL, 0) { }
 
+    /**
+     * Destroys the buffer.
+     * <p>
+     * Never frees the underlying array.
+     * </p>
+     */
     virtual ~WvConstInPlaceBufferBase() { }
 
     /**
      * Returns the underlying array pointer.
+     *
+     * @return the element pointer
      */
-    const T *ptr() const
-        { return data; }
+    inline const T *ptr() const
+    {
+        return static_cast<const T*>(mystore.ptr());
+    }
 
     /**
      * Resets the underlying buffer pointer and properties.
+     * <p>
+     * Never frees the old buffer.
+     * </p>
+     *
+     * @param _data the array of data to wrap
+     * @param _avail the amount of data available for reading
      */
-    void reset(const T *_data, size_t _avail)
+    inline void reset(const T *_data, size_t _avail)
     {
-        assert(_data != NULL || _avail == 0);
-        data = _data;
-        setavail(_avail);
+        mystore.reset(_data, _avail * sizeof(Elem));
     }
 
     /**
      * Sets the amount of available data using the current buffer
      * and resets the read index to the beginning of the buffer.
+     *
+     * @param _avail the amount of data available for reading
      */
-    void setavail(size_t _avail)
+    inline void setavail(size_t _avail)
     {
-        avail = _avail;
-        readidx = 0;
-    }
-
-    /*** Overridden Members ***/
-    virtual size_t used() const
-    {
-        return avail - readidx;
-    }
-    virtual const T *get(size_t count)
-    {
-        assert(count <= avail - readidx ||
-            !"attempted to get() more than used()");
-        const T *ptr = data + readidx;
-        readidx += count;
-        return ptr;
-    }
-    virtual void unget(size_t count)
-    {
-        assert(count <= readidx ||
-            !"attempted to unget() more than ungettable()");
-        readidx -= count;
-    }
-    virtual size_t ungettable() const
-    {
-        return readidx;
-    }
-    virtual const T *peek(int offset, size_t *count)
-    {
-        if (offset < 0)
-            assert(size_t(-offset) <= readidx ||
-                !"attempted to peek() with invalid offset");
-        else
-            assert(size_t(offset) < avail - readidx ||
-                !"attempted to peek() with invalid offset");
-        if (count)
-            *count = avail - readidx - offset;
-        return data + readidx + offset;
-    }
-    virtual void zap()
-    {
-        readidx = avail = 0;
+        mystore.setavail(_avail * sizeof(Elem));
     }
 };
 
-
-/**
- * A buffer built out of a list of other buffers linked together.
- * Buffers may be appended or prepended to the list at any time, at
- * which point they act as slaves for the master buffer.  Slaves may
- * be expunged from the list at any time when the master buffer
- * determines that they are of no further use.
- */
-template<class T>
-class WvLinkedBufferBase : public WvBufferBase<T>
-{
-protected:
-    DeclareWvList(Buffer);
-    BufferList list;
-    size_t totalused;
-
-public:
-    /**
-     * Creates a new buffer.
-     */
-    WvLinkedBufferBase() :
-        totalused(0) { }
-
-    /**
-     * Appends a buffer to the list.
-     */
-    virtual void append(Buffer *buffer, bool autofree)
-    {
-        list.append(buffer, autofree);
-        totalused += buffer->used();
-    }
-
-    /**
-     * Prepends a buffer to the list.
-     */
-    virtual void prepend(Buffer *buffer, bool autofree)
-    {
-        list.prepend(buffer, autofree);
-        totalused += buffer->used();
-    }
-
-    /**
-     * Unlinks a buffer from the list.
-     */
-    virtual void unlink(Buffer *buffer)
-    {
-        BufferList::Iter it(list);
-        if (it.find(buffer))
-        {
-            totalused -= buffer->used();
-            it.unlink(); // do not recycle the buffer
-        }
-    }
-
-    /**
-     * Returns the number of buffers in the list.
-     */
-    virtual size_t numbuffers()
-    {
-        return list.count();
-    }
-
-    /*** Overridden Members ***/
-    virtual size_t used() const
-    {
-        return totalused;
-    }
-    virtual size_t usedopt() const
-    {
-        size_t count;
-        BufferList::Iter it(list);
-        for (it.rewind(); it.next(); )
-            if ((count = it->usedopt()) != 0)
-                return count;
-        return 0;
-    }
-    virtual const T *get(size_t count)
-    {
-        if (count == 0)
-            return NULL;
-        totalused -= count;
-        // search for first non-empty buffer
-        Buffer *buf;
-        size_t availused;
-        for (;;)
-        {
-            assert(! list.isempty() ||
-                !"attempted to get() more than used()");
-            buf = list.first();
-            availused = buf->used();
-            if (availused != 0) break;
-            // unlink the leading empty buffer
-            BufferList::Iter it(list);
-            it.rewind(); it.next();
-            do_xunlink(it);
-        }
-        // return data if we have enough
-        if (availused >= count)
-            return buf->get(count);
-        // allocate a new buffer if there is not enough room to coalesce
-        size_t availfree = buf->free();
-        size_t needed = count - availused;
-        if (availfree < needed)
-        {
-            buf = newbuffer(count);
-            prepend(buf, true);
-            needed = count;
-        }
-        // coalesce subsequent buffers into the first
-        BufferList::Iter it(list);
-        it.rewind(); it.next();
-        for (;;)
-        {
-            assert(it.next() || !"attempted to get() more than used()");
-            Buffer *itbuf = it.ptr();
-            size_t chunk = itbuf->used();
-            if (chunk > 0)
-            {
-                if (chunk > needed)
-                    chunk = needed;
-                buf->merge(*itbuf, chunk);
-                needed -= chunk;
-                if (needed == 0) break;
-            }
-            do_xunlink(it); // buffer is now empty
-        }
-        return buf->get(count);
-    }
-    virtual void unget(size_t count)
-    {
-        if (count == 0)
-            return;
-        assert(! list.isempty() ||
-            !"attempted to unget() more than ungettable()");
-        totalused += count;
-        list.first()->unget(count);
-    }
-    virtual size_t ungettable() const
-    {
-        if (list.isempty())
-            return 0;
-        return list.first()->ungettable();
-    }
-    virtual void zap()
-    {
-        totalused = 0;
-        BufferList::Iter it(list);
-        for (it.rewind(); it.next(); )
-            do_xunlink(it);
-    }
-    virtual size_t free() const
-    {
-        if (! list.isempty())
-            return list.last()->free();
-        return 0;
-    }
-    virtual size_t freeopt() const
-    {
-        if (! list.isempty())
-            return list.last()->freeopt();
-        return 0;
-    }
-    virtual T *alloc(size_t count)
-    {
-        if (count == 0)
-            return NULL;
-        assert(! list.isempty() ||
-            !"attempted to alloc() more than free()");
-        totalused += count;
-        return list.last()->alloc(count);
-    }
-    virtual void unalloc(size_t count)
-    {
-        totalused -= count;
-        while (count > 0)
-        {
-            assert(! list.isempty() ||
-                !"attempted to unalloc() more than unallocable()");
-            Buffer *buf = list.last();
-            size_t avail = buf->unallocable();
-            if (count < avail)
-            {
-                buf->unalloc(count);
-                break;
-            }
-            BufferList::Iter it(list);
-            it.find(buf);
-            do_xunlink(it);
-            count -= avail;
-        }
-    }
-    virtual size_t unallocable() const
-    {
-        return totalused;
-    }
-    virtual T *mutablepeek(int offset, size_t *count)
-    {
-        if (offset < 0)
-        {
-            assert(size_t(-offset) <= ungettable() ||
-                !"attempted to peek() with invalid offset");
-            return list.first()->mutablepeek(offset, count);
-        }
-        assert(size_t(offset) < used() ||
-            !"attempted to peek() with invalid offset");
-            
-        // search for the buffer that contains the offset
-        BufferList::Iter it(list);
-        it.rewind();
-        Buffer *buf;
-        for (;;) {
-            assert(it.next());
-            buf = it.ptr();
-            size_t len = buf->used();
-            if (size_t(offset) < len)
-                break;
-            offset -= len;
-        }
-        return buf->mutablepeek(offset, count);
-    }
-
-protected:
-    /**
-     * Called when a new buffer must be allocated to coalesce chunks.
-     *   minsize : the minimum size for the new buffer
-     */
-    virtual Buffer *newbuffer(size_t minsize)
-    {
-        return new WvInPlaceBufferBase<T>(minsize);
-    }
-
-    /**
-     * Called when a buffer with autofree is removed from the list.
-     * This function is not called during object destruction.
-     */
-    virtual void recyclebuffer(Buffer *buffer)
-    {
-        delete buffer;
-    }
-
-private:
-    // unlinks and recycles the buffer pointed at by the iterator
-    void do_xunlink(BufferList::Iter &it)
-    {
-        Buffer * buf = it.ptr();
-        bool autofree = it.link->auto_free;
-        it.link->auto_free = false;
-        it.xunlink();
-        if (autofree)
-            recyclebuffer(buf);
-    }
-};
 
 
 /**
  * A buffer that dynamically grows and shrinks based on demand.
  */
 template<class T>
-class WvDynamicBufferBase : public WvLinkedBufferBase<T>
+class WvDynamicBufferBase : public WvBufferBase<T>
 {
-    typedef WvLinkedBufferBase<T> Super;
-    size_t minalloc;
-    size_t maxalloc;
-#ifdef DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
-    BufferList pool;
-#endif
+protected:
+    WvDynamicBufferStore mystore;
     
 public:
     /**
      * Creates a new buffer.
-     *   minalloc - A tuning parameter that specifies the minimum
-     *              amount of space to allocate for a new buffer.
-     *   maxalloc - A tuning parameter that specifies the maximum
-     *              amount of space to allocate for a new buffer
-     *              before reverting to a linear growth pattern.
-     *              Larger buffers may be allocated to coalesce
-     *              chunks during a get().
-     *
-     * Note that these parameters control the number of entries to
-     * be allocated.  The actual number of bytes allocated will vary
-     * in proportion with sizeof(T).
+     * <p>
+     * Provides some parameters for tuning response to buffer
+     * growth.
+     * </p>
+     * @param _minalloc the minimum number of elements to allocate
+     *      at once when creating a new internal buffer segment
+     * @param _maxalloc the maximum number of elements to allocate
+     *      at once when creating a new internal buffer segment
+     *      before before reverting to a linear growth pattern
      */
-    WvDynamicBufferBase(size_t minalloc = 1024,
-        size_t maxalloc = 1048576) :
-        minalloc(minalloc), maxalloc(maxalloc)
-    {
-        assert(maxalloc >= minalloc);
-    }
+    WvDynamicBufferBase(size_t _minalloc = 1024,
+        size_t _maxalloc = 1048576) :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), _minalloc * sizeof(Elem),
+            _maxalloc * sizeof(Elem)) { }
 
-    /*** Overridden Members ***/
-    virtual size_t free() const
+    /**
+     * Returns the number of buffer stores in the list.
+     *
+     * @return the number of buffers
+     */
+    inline size_t numbuffers()
     {
-        return UNLIMITED_SPACE;
+        return mystore.numbuffers();
     }
-    virtual size_t freeopt() const
-    {
-        size_t avail = Super::freeopt();
-        if (avail == 0)
-            avail = UNLIMITED_SPACE;
-        return avail;
-    }
-    virtual T *alloc(size_t count)
-    {
-        if (count > Super::free())
-        {
-            Buffer *buf = newbuffer(count);
-            append(buf, true);
-        }
-        return Super::alloc(count);
-    }
-
-protected:
-    virtual Buffer *newbuffer(size_t minsize)
-    {
-#ifdef DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
-        // try to find a suitable buffer in the pool
-        BufferList::Iter it(pool);
-        for (it.rewind(); it.next(); )
-        {
-            Buffer *buf = it.ptr();
-            if (buf->free() >= minsize)
-            {
-                it.link->auto_free = false;
-                it.unlink();
-                return buf;
-            }
-        }
-#endif
-        // allocate a new buffer
-        // try to approximate exponential growth by at least doubling
-        // the amount of space available for immediate use
-        size_t size = used();
-        if (size < minsize * 2)
-            size = minsize * 2;
-        if (size < minalloc)
-            size = minalloc;
-        else if (size > maxalloc)
-            size = maxalloc;
-        if (size < minsize)
-            size = minsize;
-        return Super::newbuffer(size);
-    }
-#ifdef DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
-    virtual void recyclebuffer(Buffer *buffer)
-    {
-        // add the buffer to the pool
-        buffer->zap();
-        pool.append(buffer, true);
-    }
-#endif
 };
+
 
 
 /**
  * A buffer that is always empty.
  */
 template<class T>
-class WvEmptyBufferBase : public WvWriteOnlyBufferMixin<
-    WvReadOnlyBufferMixin<WvBufferBase<T> > >
+class WvEmptyBufferBase : public WvBufferBase<T>
 {
+protected:
+    WvEmptyBufferStore mystore;
+
+public:
+    /**
+     * Creates a new buffer.
+     */
+    WvEmptyBufferBase() :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem)) { }
 };
+
 
 
 /**
@@ -1160,113 +842,21 @@ template<class T>
 class WvBufferCursorBase : public WvBufferBase<T>
 {
 protected:
-    Buffer *buf;
-    int start;
-    int end;
-    int offset;
-    WvDynamicBufferBase<T> tmpbuf;
+    WvBufferCursorStore mystore;
 
 public:
-    WvBufferCursorBase(Buffer *_buf, int _start, size_t _length) :
-        buf(_buf), start(_start), end(_start + _length), offset(0)
-    {
-    }
-
-    /*** Overridden Members ***/
-    virtual size_t used() const
-    {
-        int pos = getpos();
-        return end - pos;
-    }
-    virtual size_t usedopt() const
-    {
-        int pos = getpos();
-        size_t avail;
-        if (pos == 0)
-            avail = buf->usedopt();
-        else if (pos >= end)
-            avail = 0;
-        else
-            buf->peek(pos, & avail);
-        size_t maxavail = size_t(end - start);
-        if (avail > maxavail)
-            avail = maxavail;
-        return avail;
-    }
-    virtual const T *get(size_t count)
-    {
-        if (count == 0)
-            return NULL;
-        tmpbuf.zap();
-        int pos = getpos();
-        size_t avail;
-        const T *ptr = buf->peek(pos, & avail);
-        if (avail < count)
-        {
-            T *nptr = tmpbuf.alloc(count);
-            buf->copy(nptr, count, pos);
-            ptr = nptr;
-        }
-        offset += count;
-        return ptr;
-    }
-    virtual void unget(size_t count)
-    {
-        assert(count <= size_t(offset) ||
-            !"attempted to unget() more than ungettable()");
-        offset -= count;
-    }
-    virtual size_t ungettable() const
-    {
-        return offset;
-    }
-    virtual void zap()
-    {
-        start = end = offset = 0;
-    }
-    virtual size_t free() const
-    {
-        return 0;
-    }
-    virtual T *alloc(size_t count)
-    {
-        assert(count == 0 ||
-            !"attempted to alloc() more than free()");
-        return NULL;
-    }
-    virtual void unalloc(size_t count)
-    {
-        assert(count == 0 ||
-            !"attempted to unalloc() more than unallocable()");
-    }
-    virtual size_t unallocable() const
-    {
-        return 0;
-    }
-    virtual T *mutablepeek(int offset, size_t *count)
-    {
-        int pos = getpos();
-        size_t avail;
-        T *ptr = buf->mutablepeek(pos, & avail);
-        if (count)
-        {
-            size_t maxavail = size_t(end - start);
-            if (avail > maxavail)
-                avail = maxavail;
-            *count = avail;
-        }
-        return ptr;
-    }
-
-protected:
-    int getpos() const
-    {
-        int pos = start + offset;
-        assert(pos >= 0 && size_t(pos) <= buf->used() ||
-            size_t(pos) >= buf->ungettable() ||
-            !"attempted to operate on buffer cursor over invalid region");
-        return pos;
-    }
+    /**
+     * Creates a new buffer.
+     *
+     * @param _buf a pointer to the buffer to be wrapped
+     * @param _start the buffer offset of the window start position
+     * @param _length the length of the window
+     */
+    WvBufferCursorBase(WvBufferBase<T> *_buf, int _start,
+        size_t _length) :
+        WvBufferBase<T>(& mystore),
+        mystore(sizeof(Elem), _buf->getstore(),
+            _start * sizeof(Elem), _length * sizeof(Elem)) { }
 };
 
 #endif // __WVBUFFERBASE_H
