@@ -11,7 +11,7 @@ WvScatterHashBase::WvScatterHashBase(unsigned _numslots)
     used = 0;
 
     if (_numslots == 0)
-        prime_index = 8;
+        prime_index = 2;
     else
     {
         prime_index = 1;
