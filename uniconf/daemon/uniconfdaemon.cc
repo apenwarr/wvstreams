@@ -4,24 +4,24 @@
  *
  * Daemon program for the uniconf configuration system.
  */
-
-#include <wvtclstring.h>
-#include <wvtcp.h>
 #include "uniconfdaemon.h"
+#include "wvtcp.h"
+#include <signal.h>
 
 const WvString UniConfDaemon::DEFAULT_CONFIG_FILE = "uniconf.ini";
 // Daemon
 
-UniConfDaemon::UniConfDaemon() : 
-    want_to_die(false), log("UniConfDaemon"), events(NULL),
-    keymodified(false)
+UniConfDaemon::UniConfDaemon() 
+    : log("UniConfDaemon"), 
+	notifier(mainconf), events(mainconf, "UniConfDaemon")
 {
-    l = new WvStreamList;
+    want_to_die = false;
+    keymodified = false;
 }
 
 UniConfDaemon::~UniConfDaemon()
 {
-    if (l) delete l;
+    // nothing special
 }
 
 // Look after the actual mounting, where mode indicates the type of config file
@@ -62,7 +62,7 @@ void UniConfDaemon::keychanged(void *userdata, UniConf &conf)
     // now notify.
     log(WvLog::Debug2, "Got a callback for key %s.\n", keyname);
     s->write(WvString("FGET %s\n", keyname));
-    events->del(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), s, keyname);
+    events.del(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), s, keyname);
 
 }
 
@@ -111,7 +111,7 @@ void UniConfDaemon::handlerequest(WvStream &s, void *userdata)
                 WvString response("RETN %s %s\n", wvtcl_escape(*key), wvtcl_escape(mainconf.get(*key)));
                 s.print(response);
                 delete cmd;
-                events->add(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), &s, *key);
+                events.add(wvcallback(UniConfCallback, *this, UniConfDaemon::keychanged), &s, *key);
                 cmd = key = 0;
             }
             else if (*cmd == "set") // set the specified value
@@ -145,7 +145,7 @@ void UniConfDaemon::addstream(WvStream *s)
 {
     WvBuffer *newbuf = new WvBuffer;
     s->setcallback(wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf);
-    l->append(s, true);
+    l.append(s, true);
 }
 
 // Daemon looks after running
@@ -157,7 +157,6 @@ void UniConfDaemon::run()
     // the domount command can be used, combined with data read in from the
     // configuration file which tells us where to find information.
     domount("ini", DEFAULT_CONFIG_FILE, "/");
-    events = new UniConfEvents(mainconf);
 
     // Make sure that everything was cleaned up nicely before.
     system("mkdir -p /tmp/uniconf");
@@ -171,8 +170,8 @@ void UniConfDaemon::run()
         log(WvLog::Error, "Error Reason:  %s\n", list->errstr());
         exit(2);
     }
-    list->auto_accept(l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
-    l->append(list, true); 
+    list->auto_accept(&l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
+    l.append(list, true); 
 
     // Now listen on the correct TCP port
     WvTCPListener *tlist = new WvTCPListener(WvIPPortAddr("0.0.0.0", 4111));
@@ -182,20 +181,17 @@ void UniConfDaemon::run()
         log(WvLog::Error,"Error Reason:  %s\n", tlist->errstr());
         exit(2);
     }
-    tlist->auto_accept(l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
-    l->append(tlist, true);
+    tlist->auto_accept(&l, wvcallback(WvStreamCallback, *this, UniConfDaemon::handlerequest), newbuf); // new
+    l.append(tlist, true);
 
     // Now run the actual daemon.
     log(WvLog::Debug2, "Uniconf Daemon starting.\n");
     while (!want_to_die)
     {
-        if (l->select(5000, true, false))
-            l->callback();
+        if (l.select(5000, true, false))
+            l.callback();
         if (keymodified)
-        {
-            events->do_callbacks();
-            events->clear_notify();
-        }
+	    notifier.run();
     }
 
     // Make sure all of our listeners are closed

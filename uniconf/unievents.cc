@@ -9,11 +9,27 @@
 #include "uniconfiter.h"
 #include "wvlog.h"
 
+UniConfEvents::NotifierDict UniConfEvents::notifiers(5);
 
-UniConfEvents::UniConfEvents(UniConf &_cfg)
-    : cfg(_cfg)
+
+unsigned int WvHash(const UniConf *ptr)
 {
-    // nothing to do
+    return WvHash((int)ptr);
+}
+
+
+UniConfEvents::UniConfEvents(UniConf &_cfg, WvStringParm _label)
+    : cfg(_cfg), label(_label)
+{
+    notifier = NULL;
+    find_notifier();
+}
+
+
+UniConfEvents::~UniConfEvents()
+{
+    if (notifier)
+	notifier->events.unlink(this);
 }
 
 
@@ -51,8 +67,34 @@ static UniConf *find_match(UniConf *h, const UniConfKey &key)
 }
 
 
+// find the closest UniConfNotifier that can contain us.
+void UniConfEvents::find_notifier()
+{
+    UniConf *h;
+    Notifier *tmp;
+    
+    // unregister from old notifier, if any
+    if (notifier)
+	notifier->events.unlink(this);
+    notifier = NULL;
+    
+    for (h = &cfg; h; h = h->parent)
+    {
+	tmp = notifiers[h];
+	if (tmp)
+	{
+	    notifier = tmp->notifier;
+	    notifier->events.append(this, false);
+	    break;
+	}
+    }
+    
+    assert(notifier);
+}
+
+
 // run all registered callbacks, then set all the 'notify' flags in the
-// HConf tree back to false.
+// UniConf tree back to false.
 void UniConfEvents::do_callbacks()
 {
     UniConf *h;
@@ -64,30 +106,6 @@ void UniConfEvents::do_callbacks()
 	if (h)
 	    i->cb(i->userdata, *h);
     }
-    
-    clear_notify();
-}
-
-
-static void clear_sub(UniConf &h)
-{
-    h.child_notify = false;
-    
-    UniConf::Iter i(h);
-    for (i.rewind(); i.next(); )
-    {
-	i->notify = false;
-	if (i->child_notify)
-	    clear_sub(*i);
-    }
-}
-
-
-void UniConfEvents::clear_notify()
-{
-    cfg.notify = false;
-    if (cfg.child_notify)
-	clear_sub(cfg);
 }
 
 
@@ -108,10 +126,69 @@ void UniConfEvents::setbool(void *userdata, UniConf &h)
 {
     if (!*(bool *)userdata)
     {
-	WvLog log("Config Event", WvLog::Debug);
-	log("Changed: '%s' = '%s'\n", h.full_key(), h);
+	WvLog log(label, WvLog::Debug);
+	log("Changed: '%s' = '%s'\n", h.full_key(&cfg), h);
     }
     
     *(bool *)userdata = true;
 }
 
+
+///////////////////////////////// x
+
+
+UniConfNotifier::UniConfNotifier(UniConf &_cfgtop) : cfgtop(_cfgtop)
+{
+    UniConfEvents::Notifier *tmp = new UniConfEvents::Notifier;
+    tmp->cfgtop = &cfgtop;
+    tmp->notifier = this;
+    
+    UniConfEvents::notifiers.add(tmp, true);
+}
+
+
+UniConfNotifier::~UniConfNotifier()
+{
+    assert(events.isempty());
+    
+    UniConfEvents::NotifierDict::Iter i(UniConfEvents::notifiers);
+    for (i.rewind(); i.next(); )
+    {
+	if (i->notifier == this)
+	{
+	    UniConfEvents::notifiers.remove(i.ptr());
+	    break;
+	}
+    }
+}
+
+
+void UniConfNotifier::run()
+{
+    UniConfEventsList::Iter i(events);
+    for (i.rewind(); i.next(); )
+	i->do_callbacks();
+    clear();
+}
+
+
+static void clear_sub(UniConf &h)
+{
+    h.child_notify = false;
+    
+    UniConf::Iter i(h);
+    for (i.rewind(); i.next(); )
+    {
+	i->notify = false;
+	if (i->child_notify)
+	    clear_sub(*i);
+    }
+}
+
+
+void UniConfNotifier::clear()
+{
+    cfgtop.notify = false;
+    if (cfgtop.child_notify)
+	clear_sub(cfgtop);
+}

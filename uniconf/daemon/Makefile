@@ -1,5 +1,5 @@
 #TOPDIR = ../..
-include ../../../wvrules.mk
+include $(TOPDIR)/wvrules.mk
 
 XPATH=$(TOPDIR)/src/wvstreams/utils $(TOPDIR)/src/wvstreams/streams \
       $(TOPDIR)/src/wvstreams/ipstreams $(TOPDIR)/src/wvstreams/crypto \

@@ -8,7 +8,7 @@
 #include "uniconfini.h"
 
 WvConf::WvConf(WvStringParm _filename, int _create_mode)
-    : ev(h), filename(_filename)
+    : notifier(h), ev(h), filename(_filename)
 {
     h.generator = new UniConfIniFile(&h, filename);
     h.load();

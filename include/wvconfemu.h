@@ -96,6 +96,7 @@ class WvConf
 {
 public:
     UniConf h;
+    UniConfNotifier notifier;
     UniConfEvents ev;
     WvString filename;
     
@@ -154,7 +155,7 @@ public:
     void add_setbool(bool *b, WvStringParm section, WvStringParm entry);
     void del_setbool(bool *b, WvStringParm section, WvStringParm entry);
     void run_all_callbacks()
-        { ev.do_callbacks(); }
+        { notifier.run(); }
     
     WvConfigSection *operator[] (WvStringParm sect)
         { return (WvConfigSection *)h.find_make(sect); }

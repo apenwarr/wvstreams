@@ -15,9 +15,17 @@
 DeclareWvCallback(2, void, UniConfCallback, void *, UniConf &);
 
 
+class UniConfEvents;
+class UniConfNotifier;
+
+unsigned int WvHash(const UniConf *);
+
+
 class UniConfEvents
 {
 private:
+    friend class UniConfNotifier;
+    
     class CallbackInfo
     {
     public:
@@ -33,24 +41,63 @@ private:
     DeclareWvList(CallbackInfo);
     
     UniConf &cfg;
+    WvString label;
     CallbackInfoList callbacks;
     
-public:
-    UniConfEvents(UniConf &_cfg);
+    // stuff for tracking the UniConfNotifier object that will call our
+    // do_callbacks() function
+    struct Notifier
+    {
+	UniConf *cfgtop;
+	UniConfNotifier *notifier;
+    };
+    DeclareWvDict(Notifier, UniConf *, cfgtop);
+    static NotifierDict notifiers;
+    UniConfNotifier *notifier;
+
+    // find the best existing UniConfNotifier object that includes our subtree.
+    // crashes the program if it can't find one!
+    void find_notifier();
     
+    // actually call our registered callbacks for any objects that have
+    // changed.
     void do_callbacks();
-    void clear_notify();
+    
+public:
+    UniConfEvents(UniConf &_cfg, WvStringParm _label = "Config Event");
+    ~UniConfEvents();
     
     void add(UniConfCallback cb, void *userdata, const UniConfKey &key)
         { callbacks.append(new CallbackInfo(cb, userdata, key), true); }
     void del(UniConfCallback cb, void *userdata, const UniConfKey &key);
     
-    static void setbool(void *userdata, UniConf &h);
+    
+    // convenience functions for auto-setting a bool on an event
+    
+    void setbool(void *userdata, UniConf &h);
     
     void add_setbool(bool *b, const UniConfKey &key)
-        { add(setbool, b, key); }
+        { add(wvcallback(UniConfCallback, *this, UniConfEvents::setbool),
+	      b, key); }
     void del_setbool(bool *b, const UniConfKey &key)
-        { del(setbool, b, key); }
+        { del(wvcallback(UniConfCallback, *this, UniConfEvents::setbool),
+	      b, key); }
+};
+
+DeclareWvList(UniConfEvents);
+
+
+class UniConfNotifier
+{
+public:
+    UniConf &cfgtop;
+    UniConfEventsList events;
+    
+    UniConfNotifier(UniConf &_cfgtop);
+    ~UniConfNotifier();
+    
+    void run();
+    void clear();
 };
 
 

@@ -6,31 +6,35 @@
  */
 #include "unievents.h"
 #include "uniconfini.h"
+#include "wvtest.h"
 
 int main()
 {
-    WvLog log("eventtest", WvLog::Info);
+    WvTest test;
     UniConf h;
-    UniConfEvents ev(h);
-    bool b1 = false, b2 = false, b3 = false;
+    UniConfNotifier notifier(h);
+    UniConfEvents ev1(h, "ev1"), ev2(h["spoon"], "ev2");
+    bool b1 = false, b2 = false, b3 = false, b4 = false;
     
-    ev.add_setbool(&b1, "/foo/blah/weasels");
-    ev.add_setbool(&b2, "/*/blah/*");
-    ev.add_setbool(&b3, "/*/*/weasels");
+    ev1.add_setbool(&b1, "foo/blah/weasels");
+    ev1.add_setbool(&b2, "*/blah/*");
+    ev1.add_setbool(&b3, "*/*/weasels");
+    ev2.add_setbool(&b4, "*/weasels");
     
-    ev.do_callbacks(); log("bools: %s/%s/%s\n", b1, b2, b3);
+    notifier.run(); test("bools: %s/%s/%s/%s\n", b1, b2, b3, b4);
     
     h["/foo/blah/neat/y"] = 5;
-    ev.do_callbacks(); log("bools: %s/%s/%s\n", b1, b2, b3);
+    notifier.run(); test("bools: %s/%s/%s/%s\n", b1, b2, b3, b4);
 
     h["/fork/noodle/weaselsy"] = 6;
-    ev.do_callbacks(); log("bools: %s/%s/%s\n", b1, b2, b3);
+    notifier.run(); test("bools: %s/%s/%s/%s\n", b1, b2, b3, b4);
 
+    b1 = b2 = b3 = b4 = false;
     h["/spoon/nosed/weasels"] = 7;
-    ev.do_callbacks(); log("bools: %s/%s/%s\n", b1, b2, b3);
+    notifier.run(); test("bools: %s/%s/%s/%s\n", b1, b2, b3, b4);
     
     h["/foo/blah/weasels"] = 9;
-    ev.do_callbacks(); log("bools: %s/%s/%s\n", b1, b2, b3);
+    notifier.run(); test("bools: %s/%s/%s/%s\n", b1, b2, b3, b4);
     
     h.dump(*wvcon, true);
 }

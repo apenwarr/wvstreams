@@ -1,16 +1,14 @@
 
-#ifndef __WV_UCONFD_H
-#define __WV_UCONFD_H
+#ifndef __UNICONFDAEMON_H
+#define __UNICONFDAEMON_H
 
-#include <strutils.h>
-#include <signal.h>
-#include <netinet/in.h>
+#include "strutils.h"
+//#include <netinet/in.h>
 
-#include <unievents.h>
-#include <wvstreamlist.h>
-#include <wvlog.h>
-#include <wvunixsocket.h>
-#include <wvaddr.h>
+#include "wvlog.h"
+#include "wvunixsocket.h"
+#include "wvstreamlist.h"
+#include "unievents.h"
 #include "uniconfini.h"
 #include "uniconf.h"
 #include "wvtclstring.h"
@@ -32,13 +30,14 @@ public:
 protected:
     void handlerequest(WvStream &s, void *userdata);
 private:
-    WvStreamList *l;
+    WvStreamList l;
     static const WvString DEFAULT_CONFIG_FILE;
-    UniConfEvents *events;
+    UniConfNotifier notifier;
+    UniConfEvents events;
     bool keymodified;
     // For when we want to link daemons together, we can
     // add a tcp connection to our parent here, and pass it as a parameter
     // to main.
 };
 
-#endif
+#endif // __UNICONFDAEMON_H

@@ -1,4 +1,5 @@
 #include "uniconfdaemon.h"
+#include <signal.h>
 
 UniConfDaemon *daem;
 // we now want execution to stop
