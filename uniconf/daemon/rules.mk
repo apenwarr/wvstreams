@@ -1,3 +1,4 @@
 
-uniconf/daemon/uniconfdaemon: $(call objects,uniconf/daemon) libwvstreams.so
+uniconf/daemon/uniconfdaemon: $(call objects,uniconf/daemon) \
+	libwvstreams.so libwvutils.so
 
