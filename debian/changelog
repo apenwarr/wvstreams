@@ -18,7 +18,11 @@ wvstreams (3.71) unstable; urgency=high
 
   * Now with new AutoConf goodness ;)
 
- -- Patrick Patterson <ppatters@debian.org>  Mon, 29 Jul 2002 18:39:51 -0400
+  * Fixes to make it build with GCC-3.2 (Closes: #166662)
+
+  * Fixes to build the documentation properly (Closes: #158326)
+
+ -- Patrick Patterson <ppatters@debian.org>  Tue, 28 Jan 2003 14:35:49 -0500
 
 wvstreams (3.70.1) unstable; urgency=low
 
