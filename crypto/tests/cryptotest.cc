@@ -59,7 +59,7 @@ size_t copy(WvStream *in, WvStream *out)
     WvStreamList slist;
     slist.append(in, false);
     slist.append(out, false);
-    while (in->isok())
+    while (in->isok() && out->isok())
     {
         if (slist.select(-1))
             slist.callback();
