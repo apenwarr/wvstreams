@@ -19,12 +19,10 @@ WvDirIter::WvDirIter( WvStringParm dirname,
     : relpath(""), dir(dirs)
 /****************************************************************************/
 {
-    struct stat st;
-    
     // if this assertion fails, then you probably used different compiler
     // options for the wvstreams library and the calling program.  Check
     // for defines like _FILE_OFFSET_BITS=64 and _LARGEFILE_SOURCE.
-    assert(sizeof_stat == sizeof(st));
+    assert(sizeof_stat == sizeof(sizeof(struct stat)));
     
     recurse = _recurse;
     go_up   = false;
