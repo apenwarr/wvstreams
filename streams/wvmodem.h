@@ -60,11 +60,11 @@ private:
     struct termios	old_t;
     bool		closing;
 
-    void setup_modem();
+    void setup_modem( bool rtscts );
     int getstatus();
     
 public:
-    WvModem( const char * filename, int _baud );
+    WvModem( const char * filename, int _baud, bool rtscts = true );
     virtual ~WvModem();
     
     virtual void close();

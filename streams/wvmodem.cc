@@ -127,7 +127,7 @@ void WvModemBase::hangup()
 
 
 
-WvModem::WvModem(const char * filename, int _baud)
+WvModem::WvModem(const char * filename, int _baud, bool rtscts)
 	: WvModemBase(), lock(filename)
 {
     closing = false;
@@ -148,7 +148,7 @@ WvModem::WvModem(const char * filename, int _baud)
     open(filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
     
     if (isok())
-	setup_modem();
+	setup_modem(rtscts);
 }
 
 
@@ -158,7 +158,7 @@ WvModem::~WvModem()
 }
 
 
-void WvModem::setup_modem()
+void WvModem::setup_modem(bool rtscts)
 {
     if (!isok()) return;
 
@@ -177,7 +177,9 @@ void WvModem::setup_modem()
     t.c_iflag |= (IGNBRK | IGNPAR);
     t.c_oflag &= ~(OLCUC);
     t.c_cflag &= ~(CSIZE | CSTOPB | PARENB | PARODD);
-    t.c_cflag |= (CS8 | CREAD | HUPCL | CRTSCTS | CLOCAL);
+    t.c_cflag |= (CS8 | CREAD | HUPCL | CLOCAL);
+    if( rtscts )
+        t.c_cflag |= CRTSCTS;
     t.c_lflag &= ~(ISIG | XCASE | ECHO);
     tcsetattr( fd, TCSANOW, &t );
     
