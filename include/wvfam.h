@@ -35,8 +35,10 @@ class WvFamBase
 public:
     // These calls all take a pointer to a WvString. The WvString must exist and
     // be unmodified until the fam monitoring is removed for directory
-    // monitoring. For file monitoring you can get rid of it, but you'll
-    // probably want to use it for tracking ids anyways.
+    // monitoring.
+    //
+    // This is really evil, but if you're going to be monitoring a lot of files
+    // then duplicating the strings can be quite wasteful. 
     int _monitordir(WvString *dir);
     int _monitorfile(WvString *file);
     void _unmonitor(int reqid);
@@ -60,6 +62,11 @@ public:
     WvFamBase(WvFamCallback _cb) : cb(_cb), s(0), log("WvFam") { setup(); }
     ~WvFamBase();
 
+
+/**
+ * These should be the only calls from WvFamBase that most people ever need to
+ * look at.
+ */
     static bool fam_ok();
 
     bool isok() const;
@@ -69,6 +76,11 @@ public:
 };
 
 
+
+/**
+ * The actual WvFam class that you should be using unless you really know what
+ * you're doing and really have some reason for using WvFamBase.
+ */
 class WvFam : public WvFamBase
 {
 public:
