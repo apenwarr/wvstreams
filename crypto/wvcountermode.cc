@@ -77,7 +77,8 @@ bool WvCounterModeEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf,
     // XOR in the data
     while (avail > 0)
     {
-        unsigned char *dataout = outbuf.mutablepeek(offset, & len);
+        len = outbuf.optpeekable(offset);
+        unsigned char *dataout = outbuf.mutablepeek(offset, len);
         size_t lenopt = inbuf.optgettable();
         if (len > lenopt)
             len = lenopt;

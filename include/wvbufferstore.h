@@ -51,15 +51,20 @@ public:
     virtual size_t optgettable() const
         { return used(); }
     virtual const void *get(size_t count) = 0;
+    virtual void skip(size_t count)
+        { get(count); }
     virtual void unget(size_t count) = 0;
     virtual size_t ungettable() const = 0;
-    virtual const void *peek(int offset, size_t *count, size_t mincount)
-        { return mutablepeek(offset, count, mincount); }
+    virtual size_t peekable(int offset) const;
+    virtual size_t optpeekable(int offset) const
+        { return peekable(offset); }
+    virtual const void *peek(int offset, size_t count)
+        { return mutablepeek(offset, count); }
     virtual void zap() = 0;
     
     // helpers
     void move(void *buf, size_t count);
-    void copy(void *buf, size_t count, int offset);
+    void copy(void *buf, int offset, size_t count);
     
     /*** Buffer Writing ***/
     
@@ -71,13 +76,12 @@ public:
     virtual void *alloc(size_t count) = 0;
     virtual void unalloc(size_t count) = 0;
     virtual size_t unallocable() const = 0;
-    virtual void *mutablepeek(int offset, size_t *count,
-        size_t mincount) = 0;
+    virtual void *mutablepeek(int offset, size_t count) = 0;
     
     // helpers
     void put(const void *data, size_t count);
     void fastput(const void *data, size_t count);
-    void poke(const void *data, size_t count, int offset);
+    void poke(const void *data, int offset, size_t count);
 
     /*** Buffer to Buffer Transfers ***/
     
@@ -133,9 +137,10 @@ public:
     {
         return 0;
     }
-    virtual void *mutablepeek(int offset, size_t *count, size_t mincount)
+    virtual void *mutablepeek(int offset, size_t count)
     {
-        assert(! "mutablepeek() called on non-writable buffer");
+        assert(count == 0 ||
+            ! "mutablepeek() called on non-writable buffer");
         return NULL;
     }
     virtual void merge(WvBufferStore &instore, size_t count)
@@ -169,11 +174,24 @@ public:
     {
         return 0;
     }
+    virtual size_t peekable(int offset) const
+    {
+        return 0;
+    }
+    virtual size_t optpeekable(int offset) const
+    {
+        return 0;
+    }
     virtual const void *get(size_t count)
     {
         assert(count == 0 ||
             ! "non-zero get() called on non-readable buffer");
         return NULL;
+    }
+    virtual void skip(size_t count)
+    {
+        assert(count == 0 ||
+            ! "non-zero skip() called on non-readable buffer");
     }
     virtual void unget(size_t count)
     {
@@ -184,9 +202,10 @@ public:
     {
         return 0;
     }
-    virtual const void *peek(int offset, size_t *count, size_t mincount)
+    virtual const void *peek(int offset, size_t count)
     {
-        assert(! "peek() called on non-readable buffer");
+        assert(count == 0 ||
+            ! "peek() called on non-readable buffer");
         return NULL;
     }
     virtual void zap()
@@ -235,7 +254,7 @@ public:
     virtual void *alloc(size_t count);
     virtual void unalloc(size_t count);
     virtual size_t unallocable() const;
-    virtual void *mutablepeek(int offset, size_t *count, size_t mincount);
+    virtual void *mutablepeek(int offset, size_t count);
 };
 
 
@@ -264,7 +283,7 @@ public:
     virtual const void *get(size_t count);
     virtual void unget(size_t count);
     virtual size_t ungettable() const;
-    virtual const void *peek(int offset, size_t *count, size_t mincount);
+    virtual const void *peek(int offset, size_t count);
     virtual void zap();
 };
 
@@ -310,7 +329,8 @@ public:
     virtual void *alloc(size_t count);
     virtual void unalloc(size_t count);
     virtual size_t unallocable() const;
-    virtual void *mutablepeek(int offset, size_t *count, size_t mincount);
+    virtual size_t optpeekable(int offset) const;
+    virtual void *mutablepeek(int offset, size_t count);
 
 protected:
     /**
@@ -324,6 +344,26 @@ protected:
      * This function is not called during object destruction.
      */
     virtual void recyclebuffer(WvBufferStore *buffer);
+
+    /**
+     * Searches for the buffer containing the offset.
+     * 
+     * @param it the iterator updated to point to buffer found,
+     *        or to an invalid region if the offset is invalid
+     * @param offset the offset for which to search
+     * @return the corrected offset within the buffer at it.ptr()
+     */
+    int search(WvBufferStoreList::Iter &it, int offset) const;
+
+    /**
+     * Coalesces a sequence of buffers.
+     *
+     * @param it the iterator pointing to the first buffer
+     * @param count the required number of contiguous used bytes
+     * @return the composite buffer
+     */
+    WvBufferStore *coalesce(WvBufferStoreList::Iter &it,
+        size_t count);
 
 private:
     // unlinks and recycles the buffer pointed at by the iterator
@@ -383,27 +423,27 @@ class WvBufferCursorStore :
 protected:
     WvBufferStore *buf;
     int start;
-    int end;
-    int offset;
-    WvDynamicBufferStore tmpbuf;
+    size_t length;
+    size_t shift;
 
 public:
     WvBufferCursorStore(size_t _granularity, WvBufferStore *_buf,
         int _start, size_t _length);
 
     /*** Overridden Members ***/
+    virtual bool isreadable() const;
     virtual size_t used() const;
     virtual size_t optgettable() const;
     virtual const void *get(size_t count);
+    virtual void skip(size_t count);
     virtual void unget(size_t count);
     virtual size_t ungettable() const;
-    virtual const void *peek(int offset, size_t *count, size_t mincount);
+    virtual size_t peekable(int offset) const;
+    virtual size_t optpeekable(int offset) const;
+    virtual const void *peek(int offset, size_t count);
     virtual void zap();
     virtual bool iswritable() const;
-    virtual void *mutablepeek(int offset, size_t *count, size_t mincount);
-
-protected:
-    int getpos() const;
+    virtual void *mutablepeek(int offset, size_t count);
 };
 
 #endif // __WVBUFFERSTORE_H

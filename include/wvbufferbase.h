@@ -78,6 +78,11 @@ public:
      * Returns true if the buffer supports reading.
      *
      * @return true if reading is supported
+     * @see used(), optgettable(), get(size_t), skip(size_t)
+     * @see ungettable(), unget(size_t)
+     * @see peekable(int), optpeekable(int), peek(int, size_t)
+     * @see move(T*, size_t), copy(T*, int, size_t)
+     * @see zap()
      */
     inline bool isreadable() const
     {
@@ -87,12 +92,64 @@ public:
     /**
      * Returns the number of elements in the buffer currently
      * available for reading.
+     * <p>
+     * This function could also be called gettable().
+     * </p>
      *
      * @return the number of elements
+     * @see get(size_t), optgettable()
      */
     inline size_t used() const
     {
         return store->used() / sizeof(Elem);
+    }
+
+    /**
+     * Reads exactly the specified number of elements and returns
+     * a pointer to a storage location owned by the buffer.
+     * <p>
+     * The pointer is only valid until the next non-const buffer
+     * member is called. eg. alloc(size_t)
+     * </p><p>
+     * If count == 0, a NULL pointer may be returned.
+     * </p><p>
+     * It is an error for count to be greater than used().
+     * </p><p>
+     * For maximum efficiency, call this function multiple times
+     * with count no greater than optgettable() each time.
+     * </p><p>
+     * After this operation, at least count elements may be ungotten.
+     * </p>
+     *
+     * @param count the number of elements
+     * @return the element storage pointer
+     * @see used(), optgettable()
+     * @see skip(size_t), move(T*, size_t)
+     * @see unget(size_t)
+     */
+    inline const T *get(size_t count)
+    {
+        return static_cast<const T*>(
+            store->get(count * sizeof(Elem)));
+    }
+
+    /**
+     * Skips exactly the specified number of elements.
+     * <p>
+     * This is equivalent to invoking get(size_t) with the count
+     * and discarding the result, but may be faster for certain
+     * types of buffers.  As with get(size_t), the call may be
+     * followed up by an unget(size_t).
+     * </p>
+     *
+     * @param count the number of elements
+     * @see used()
+     * @see get(size_t)
+     * @see unget(size_t)
+     */
+    inline void skip(size_t count)
+    {
+        store->skip(count * sizeof(Elem));
     }
 
     /**
@@ -107,6 +164,7 @@ public:
      * </ul></p>
      *
      * @return the number of elements
+     * @see get(size_t), used()
      */
     size_t optgettable() const
     {
@@ -114,32 +172,6 @@ public:
         size_t elems = avail / sizeof(Elem);
         if (elems != 0) return elems;
         return avail != 0 && store->used() >= sizeof(Elem) ? 1 : 0;
-    }
-
-    /**
-     * Reads exactly the specified number of elements and returns
-     * a pointer to a storage location owned by the buffer.
-     * <p>
-     * The pointer is only valid until the next non-const buffer
-     * member is called. eg. alloc(size_t)
-     * </p><p>
-     * If count == 0, a NULL pointer may be returned.
-     * </p><p>
-     * It is an error for count to be greater than used().
-     * </p><p>
-     * For best results, call this function multiple times with
-     * count no greater than optgettable() each time.
-     * </p><p>
-     * After this operation, at least count elements may be ungotten.
-     * </p>
-     *
-     * @param count the number of elements
-     * @return the element storage pointer
-     */
-    inline const T *get(size_t count)
-    {
-        return static_cast<const T*>(
-            store->get(count * sizeof(Elem)));
     }
 
     /**
@@ -156,6 +188,8 @@ public:
      * </p>
      *
      * @param count the number of elements
+     * @see ungettable()
+     * @see get(size_t), skip(size_t)
      */
     inline void unget(size_t count)
     {
@@ -167,6 +201,7 @@ public:
      * at this time.
      *
      * @return the number of elements
+     * @see unget(size_t)
      */
     inline size_t ungettable() const
     {
@@ -174,47 +209,66 @@ public:
     }
 
     /**
-     * Returns a pointer into the buffer at the specified offset
-     * without actually adjusting the current get() index.
+     * Returns a const pointer into the buffer at the specified
+     * offset to the specified number of elements without actually
+     * adjusting the current get() index.
      * <p>
-     * If count != NULL, *count will be filled in with the number of
-     * elements in the returned array.  This number will always be
-     * at least mincount.
+     * The pointer is only valid until the next non-const buffer
+     * member is called. eg. alloc(size_t)
+     * </p><p>
+     * If count == 0, a NULL pointer may be returned.
      * </p><p>
      * If offset is greater than zero, then elements will be returned
-     * beginning with the last one that would be returned by
-     * get(offset + 1).  (ie. skips 'offset' elements)
+     * beginning with the with the offset'th element that would be
+     * returned by get(size_t).
      * </p><p>
      * If offset equals zero, then elements will be returned beginning
      * with the next one available for get(size_t).
      * </p><p>
      * If offset is less than zero, then elements will be returned
      * beginning with the first one that would be returned on a
-     * get(1) after unget(-offset).
+     * get(size_t) following an unget(-offset).
      * </p><p>
-     * It is an error for offset + mincount > used() or
-     * for offset < -ungettable(), thus this function may not be
-     * called if used() == 0.
+     * It is an error for count to be greater than peekable(offset).
      * </p><p>
-     * It is an error for mincount == 0.
-     * </p><p>
-     * It may be necessary to repeatedly invoke this function in order
-     * to scan the entire contents of the buffer.  For maximum
-     * efficiency, choose a mincount as small as possible.
+     * For maximum efficiency, call this function multiple times
+     * with count no greater than that returned by optpeekable(size_t)
+     * at incremental offsets.
      * </p>
      *
      * @param offset the buffer offset
-     * @param count pointer to the returned element count
-     * @param mincount the minimum number of elements to peek, default 1
+     * @param count the number of elements
      * @return the element storage pointer
+     * @see peekable(int), optpeekable(int)
+     * @see mutablepeek(int, size_t)
+     * @see peek(int)
+     * @see copy(T*, int, size_t)
      */
-    inline const T *peek(int offset, size_t *count,
-        size_t mincount = 1)
+    inline const T *peek(int offset, size_t count)
     {
-        const T *data = static_cast<const T*>(store->peek(
-            offset * sizeof(Elem), count, mincount * sizeof(Elem)));
-        if (count) *count /= sizeof(Elem);
-        return data;
+        return static_cast<const T*>(store->peek(
+            offset * sizeof(Elem), count * sizeof(Elem)));
+    }
+
+    /**
+     * @see peek(int, size_t), optpeekable(int)
+     */
+    size_t peekable(int offset)
+    {
+        return store->peekable(offset * sizeof(Elem)) / sizeof(Elem);
+    }
+
+    /**
+     * @see peek(int, size_t), peekable(int)
+     */
+    size_t optpeekable(int offset)
+    {
+        offset *= sizeof(Elem);
+        size_t avail = store->optpeekable(offset);
+        size_t elems = avail / sizeof(Elem);
+        if (elems != 0) return elems;
+        return avail != 0 &&
+            store->peekable(offset) >= sizeof(Elem) ? 1 : 0;
     }
 
     /**
@@ -242,7 +296,7 @@ public:
      * </p>
      *
      * @return the element
-     * @see get(size_t)
+     * @see get(size_t), used(), optgettable()
      */
     inline T get()
     {
@@ -257,11 +311,11 @@ public:
      *
      * @param offset the offset, default 0
      * @return the element
-     * @see peek(int, size_t*, size_t)
+     * @see peek(int, size_t), peekable(int), optpeekable(int)
      */
     inline T peek(int offset = 0)
     {
-        return *peek(offset * sizeof(Elem), NULL);
+        return *peek(offset * sizeof(Elem), sizeof(Elem));
     }
 
     /**
@@ -281,7 +335,7 @@ public:
      *
      * @param buf the buffer that will receive the elements
      * @param count the number of elements
-     * @see get(size_t)
+     * @see get(size_t), used()
      */
     inline void move(T *buf, size_t count)
     {
@@ -293,7 +347,7 @@ public:
      * buffer to the specified UNINITIALIZED storage location
      * but does not remove the elements from the buffer.
      * <p>
-     * It is an error for count to be greater than used().
+     * It is an error for count to be greater than peekable(offset).
      * </p><p>
      * For maximum efficiency, choose as large a count as possible.
      * </p><p>
@@ -301,13 +355,13 @@ public:
      * </p>
      *
      * @param buf the buffer that will receive the elements
+     * @param offset the buffer offset
      * @param count the number of elements
-     * @param offset the buffer offset, default 0
-     * @see peek(int, size_t*, size_t)
+     * @see peek(int, size_t), peekable(int)
      */
-    inline void copy(T *buf, size_t count, int offset = 0)
+    inline void copy(T *buf, int offset, size_t count)
     {
-        store->copy(buf, count * sizeof(Elem), offset * sizeof(Elem));
+        store->copy(buf, offset * sizeof(Elem), count * sizeof(Elem));
     }
     
     /*** Buffer Writing ***/
@@ -316,6 +370,11 @@ public:
      * Returns true if the buffer supports writing.
      *
      * @return true if writing is supported
+     * @see free(), optallocable(), alloc(size_t)
+     * @see unallocable(), unalloc(size_t)
+     * @see mutablepeek(int, size_t)
+     * @see put(const T*, size_t), poke(const T*, int, size_t)
+     * @see merge(Buffer &, size_t)
      */
     inline bool iswritable() const
     {
@@ -327,31 +386,11 @@ public:
      * accept for writing.
      * 
      * @return the number of elements
+     * @see alloc(size_t), optallocable()
      */
     inline size_t free() const
     {
         return store->free() / sizeof(Elem);
-    }
-    
-    /**
-     * Returns the optimal maximum number of elements that the
-     * buffer can currently accept for writing without incurring
-     * significant overhead.
-     * <p>
-     * Invariants:
-     * <ul>
-     * <li>optallocable() <= free()</li>
-     * <li>optallocable() != 0 if free() != 0</li>
-     * </ul></p>
-     *
-     * @return the number of elements
-     */
-    size_t optallocable() const
-    {
-        size_t avail = store->optallocable();
-        size_t elems = avail / sizeof(Elem);
-        if (elems != 0) return elems;
-        return avail != 0 && store->free() >= sizeof(Elem) ? 1 : 0;
     }
     
     /**
@@ -374,10 +413,35 @@ public:
      *
      * @param count the number of elements
      * @return the element storage pointer
+     * @see free(), optallocable()
+     * @see put(const T*, size_t)
+     * @see unalloc(size_t)
      */
     inline T *alloc(size_t count)
     {
         return static_cast<T*>(store->alloc(count * sizeof(Elem)));
+    }
+    
+    /**
+     * Returns the optimal maximum number of elements that the
+     * buffer can currently accept for writing without incurring
+     * significant overhead.
+     * <p>
+     * Invariants:
+     * <ul>
+     * <li>optallocable() <= free()</li>
+     * <li>optallocable() != 0 if free() != 0</li>
+     * </ul></p>
+     *
+     * @return the number of elements
+     * @see alloc(size_t), free()
+     */
+    size_t optallocable() const
+    {
+        size_t avail = store->optallocable();
+        size_t elems = avail / sizeof(Elem);
+        if (elems != 0) return elems;
+        return avail != 0 && store->free() >= sizeof(Elem) ? 1 : 0;
     }
 
     /**
@@ -395,6 +459,8 @@ public:
      * </p>
      *
      * @param count the number of elements
+     * @see unallocable()
+     * @see alloc(size_t)
      */
     inline void unalloc(size_t count)
     {
@@ -417,6 +483,7 @@ public:
      * </ul></p>
      *
      * @return the number of elements
+     * @see unalloc(size_t)
      */
     inline size_t unallocable() const
     {
@@ -425,27 +492,26 @@ public:
     
     /**
      * Returns a non-const pointer info the buffer at the specified
-     * offset without actually adjusting the current get() index.
+     * offset to the specified number of elements without actually
+     * adjusting the current get() index.
      * <p>
-     * Other than the fact that the storage is mutable, functions
-     * identically to peek(int, size_t*, size_t).
+     * Other than the fact that the returned storage is mutable,
+     * operates identically to peek(int, size_t).
      * </p>
      *
      * @param offset the buffer offset
-     * @param count pointer to the returned element count
-     * @param mincount the minimum number of elements to peek, default 1
+     * @param count the number of elements
      * @return the element storage pointer
-     * @see peek(int, size_t*, size_t)
+     * @see peekable(int), optpeekable(int)
+     * @see peek(int, size_t)
+     * @see poke(const T*, int, size_t)
      */
-    inline T *mutablepeek(int offset, size_t *count,
-        size_t mincount = 1)
+    inline T *mutablepeek(int offset, size_t count)
     {
-        T *data = static_cast<T*>(store->mutablepeek(
-            offset * sizeof(Elem), count, mincount * sizeof(Elem)));
-        if (count) *count /= sizeof(Elem);
-        return data;
+        return static_cast<T*>(store->mutablepeek(
+            offset * sizeof(Elem), count * sizeof(Elem)));
     }
-    
+
     /**
      * Writes the specified number of elements from the specified
      * storage location into the buffer at its tail.
@@ -483,12 +549,12 @@ public:
      * @param data the buffer that contains the elements
      * @param count the number of elements
      * @param offset the buffer offset, default 0
-     * @see mutablepeek(int, size_t*, size_t)
+     * @see mutablepeek(int, size_t)
      * @see put(const T*, size_t)
      */
-    inline void poke(const T *data, size_t count, int offset = 0)
+    inline void poke(const T *data, int offset, size_t count)
     {
-        store->poke(data, count * sizeof(Elem), offset * sizeof(Elem));
+        store->poke(data, offset * sizeof(Elem), count * sizeof(Elem));
     }
 
     /**
@@ -517,11 +583,11 @@ public:
      *
      * @param value the element
      * @param offset the buffer offset
-     * @see poke(const T*, size_t, int)
+     * @see poke(const T*, int, size_t)
      */
-    inline void poke(typename ElemTraits::Param value, int offset = 0)
+    inline void poke(typename ElemTraits::Param value, int offset)
     {
-        poke(& value, 1, offset);
+        poke(& value, offset, 1);
     }
 
 

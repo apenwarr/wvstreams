@@ -36,8 +36,8 @@ size_t WvBufferBase<unsigned char>::strchr(int ch)
     size_t avail = used();
     while (offset < avail)
     {
-        size_t len;
-        const unsigned char *str = peek(offset, & len);
+        size_t len = optpeekable(offset);
+        const unsigned char *str = peek(offset, len);
         for (size_t i = 0; i < len; ++i)
             if (str[i] == ch)
                 return offset + i + 1;
@@ -55,8 +55,8 @@ size_t WvBufferBase<unsigned char>::_match(const void *bytelist,
     const unsigned char *chlist = (const unsigned char*)bytelist;
     while (offset < avail)
     {
-        size_t len;
-        const unsigned char *str = peek(offset, & len);
+        size_t len = optpeekable(offset);
+        const unsigned char *str = peek(offset, len);
         for (size_t i = 0; i < len; ++i)
         {
             int ch = str[i];

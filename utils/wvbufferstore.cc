@@ -44,6 +44,27 @@ WvBufferStore::WvBufferStore(int _granularity) :
 }
 
 
+size_t WvBufferStore::peekable(int offset) const
+{
+    if (offset == 0)
+    {
+        return used();
+    }
+    else if (offset < 0)
+    {
+        if (size_t(-offset) <= ungettable())
+            return size_t(-offset) + used();
+    }
+    else
+    {
+        int avail = int(used()) - offset;
+        if (avail > 0)
+            return avail;
+    }
+    return 0; // out-of-bounds
+}
+
+
 void WvBufferStore::move(void *buf, size_t count)
 {
     while (count > 0)
@@ -61,16 +82,16 @@ void WvBufferStore::move(void *buf, size_t count)
 }
 
 
-void WvBufferStore::copy(void *buf, size_t count, int offset)
+void WvBufferStore::copy(void *buf, int offset, size_t count)
 {
     while (count > 0)
     {
-        size_t amount;
-        const void *data = peek(offset, & amount, 1);
+        size_t amount = optpeekable(offset);
         assert(amount != 0 ||
             !"attempted to copy() with invalid offset");
         if (amount > count)
             amount = count;
+        const void *data = peek(offset, amount);
         memops.uninit_copy(buf, data, amount);
         ((unsigned char*)buf) += amount;
         count -= amount;
@@ -103,7 +124,7 @@ void WvBufferStore::fastput(const void *data, size_t count)
 }
 
 
-void WvBufferStore::poke(const void *data, size_t count, int offset)
+void WvBufferStore::poke(const void *data, int offset, size_t count)
 {
     int limit = int(used());
     assert(offset <= limit ||
@@ -117,13 +138,16 @@ void WvBufferStore::poke(const void *data, size_t count, int offset)
     }
     while (count > 0)
     {
-        size_t amount;
-        void *buf = mutablepeek(offset, & amount, granularity);
+        size_t amount = optpeekable(offset);
+        assert(amount != 0 ||
+            !"attempted to poke() with invalid offset");
         if (amount > count)
             amount = count;
+        void *buf = mutablepeek(offset, amount);
         memops.copy(buf, data, amount);
         ((const unsigned char*)data) += amount;
         count -= amount;
+        offset += amount;
     }
 }
 
@@ -295,17 +319,14 @@ size_t WvInPlaceBufferStore::unallocable() const
 }
 
 
-void *WvInPlaceBufferStore::mutablepeek(int offset, size_t *count,
-    size_t mincount)
+void *WvInPlaceBufferStore::mutablepeek(int offset, size_t count)
 {
-    if (offset < 0)
-        assert(size_t(-offset) <= readidx ||
-            !"attempted to peek() with invalid offset");
-    else
-        assert(size_t(offset) < writeidx - readidx ||
-            !"attempted to peek() with invalid offset");
-    if (count)
-        *count = writeidx - readidx - offset;
+    if (count == 0)
+        return NULL;
+    assert(((offset <= 0) ? 
+        size_t(-offset) <= readidx :
+        size_t(offset) < writeidx - readidx) ||
+        ! "attempted to peek() with invalid offset or count");
     return ((unsigned char*)data) + readidx + offset;
 }
 
@@ -345,7 +366,7 @@ void WvConstInPlaceBufferStore::setavail(size_t _avail)
 const void *WvConstInPlaceBufferStore::get(size_t count)
 {
     assert(count <= avail - readidx ||
-        !"attempted to get() more than used()");
+        ! "attempted to get() more than used()");
     const void *ptr = ((const unsigned char*)data) + readidx;
     readidx += count;
     return ptr;
@@ -355,7 +376,7 @@ const void *WvConstInPlaceBufferStore::get(size_t count)
 void WvConstInPlaceBufferStore::unget(size_t count)
 {
     assert(count <= readidx ||
-        !"attempted to unget() more than ungettable()");
+        ! "attempted to unget() more than ungettable()");
     readidx -= count;
 }
 
@@ -366,17 +387,14 @@ size_t WvConstInPlaceBufferStore::ungettable() const
 }
 
 
-const void *WvConstInPlaceBufferStore::peek(int offset, size_t *count,
-    size_t mincount)
+const void *WvConstInPlaceBufferStore::peek(int offset, size_t count)
 {
-    if (offset < 0)
-        assert(size_t(-offset) <= readidx ||
-            !"attempted to peek() with invalid offset");
-    else
-        assert(size_t(offset) < avail - readidx ||
-            !"attempted to peek() with invalid offset");
-    if (count)
-        *count = avail - readidx - offset;
+    if (count == 0)
+        return NULL;
+    assert(((offset <= 0) ? 
+        size_t(-offset) <= readidx :
+        size_t(offset) < avail - readidx) ||
+        ! "attempted to peek() with invalid offset or count");
     return ((const unsigned char*)data) + readidx + offset;
 }
 
@@ -452,48 +470,23 @@ const void *WvLinkedBufferStore::get(size_t count)
     // search for first non-empty buffer
     WvBufferStore *buf;
     size_t availused;
+    WvBufferStoreList::Iter it(list);
     for (;;)
     {
-        assert(! list.isempty() ||
-            !"attempted to get() more than used()");
-        buf = list.first();
-        availused = buf->used();
-        if (availused != 0) break;
-        // unlink the leading empty buffer
-        WvBufferStoreList::Iter it(list);
         it.rewind(); it.next();
+        buf = it.ptr();
+        assert(buf ||
+            !"attempted to get() more than used()");
+        availused = buf->used();
+        if (availused != 0)
+            break;
+        // unlink the leading empty buffer
         do_xunlink(it);
     }
-    // return data if we have enough
-    if (availused >= count)
-        return buf->get(count);
-    // allocate a new buffer if there is not enough room to coalesce
-    size_t availfree = buf->free();
-    size_t needed = count - availused;
-    if (availfree < needed)
-    {
-        buf = newbuffer(count);
-        prepend(buf, true);
-        needed = count;
-    }
-    // coalesce subsequent buffers into the first
-    WvBufferStoreList::Iter it(list);
-    it.rewind(); it.next();
-    for (;;)
-    {
-        assert(it.next() || !"attempted to get() more than used()");
-        WvBufferStore *itbuf = it.ptr();
-        size_t chunk = itbuf->used();
-        if (chunk > 0)
-        {
-            if (chunk > needed)
-                chunk = needed;
-            buf->merge(*itbuf, chunk);
-            needed -= chunk;
-            if (needed == 0) break;
-        }
-        do_xunlink(it); // buffer is now empty
-    }
+
+    // return the data
+    if (availused < count)
+        buf = coalesce(it, count);
     return buf->get(count);
 }
 
@@ -581,31 +574,46 @@ size_t WvLinkedBufferStore::unallocable() const
 }
 
 
-void *WvLinkedBufferStore::mutablepeek(int offset, size_t *count,
-    size_t mincount)
+size_t WvLinkedBufferStore::optpeekable(int offset) const
 {
-    if (offset < 0)
-    {
-        assert(size_t(-offset) <= ungettable() ||
-            !"attempted to peek() with invalid offset");
-        return list.first()->mutablepeek(offset, count, mincount);
-    }
-    assert(size_t(offset) < used() ||
-        !"attempted to peek() with invalid offset");
-        
     // search for the buffer that contains the offset
     WvBufferStoreList::Iter it(list);
-    it.rewind();
-    WvBufferStore *buf;
-    for (;;) {
-        assert(it.next());
-        buf = it.ptr();
-        size_t len = buf->used();
-        if (size_t(offset) < len)
-            break;
-        offset -= len;
-    }
-    return buf->mutablepeek(offset, count, mincount);
+    offset = search(it, offset);
+    WvBufferStore *buf = it.ptr();
+    if (! buf)
+        return 0; // out of bounds
+    return buf->optpeekable(offset);
+}
+
+
+void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
+{
+    if (count == 0)
+        return NULL;
+    
+    // search for the buffer that contains the offset
+    WvBufferStoreList::Iter it(list);
+    offset = search(it, offset);
+    WvBufferStore *buf = it.ptr();
+    assert(buf ||
+        ! "attempted to peek() with invalid offset or count");
+    
+    // return data if we have enough
+    size_t availpeek = buf->peekable(offset);
+    if (availpeek >= count)
+        return buf->mutablepeek(offset, count);
+
+    // if the offset was negative, then we need to unget the
+    // data to ensure it will not be overwritten due to subsequent
+    // writes
+    if (offset < 0)
+        buf->unget(size_t(-offset));
+
+    // return the data
+    buf = coalesce(it, count);
+    if (offset < 0)
+        buf->skip(size_t(-offset));
+    return buf->mutablepeek(offset, count);
 }
 
 
@@ -613,13 +621,86 @@ WvBufferStore *WvLinkedBufferStore::newbuffer(size_t minsize)
 {
     minsize = roundup(minsize, granularity);
     return new WvInPlaceBufferStore(granularity, minsize);
-        
 }
 
 
 void WvLinkedBufferStore::recyclebuffer(WvBufferStore *buffer)
 {
     delete buffer;
+}
+
+
+int WvLinkedBufferStore::search(WvBufferStoreList::Iter &it,
+    int offset) const
+{
+    it.rewind();
+    if (it.next())
+    {
+        if (offset < 0)
+        {
+            // inside unget() region
+            WvBufferStore *buf = it.ptr();
+            if (size_t(-offset) <= buf->ungettable())
+                return offset;
+            it.rewind(); // mark out of bounds
+        }
+        else
+        {
+            // inside get() region
+            do
+            {
+                WvBufferStore *buf = it.ptr();
+                size_t avail = buf->used();
+                if (size_t(offset) < avail)
+                    return offset;
+                offset -= avail;
+            }
+            while (it.next());
+        }
+    }
+    return 0;
+}
+
+
+WvBufferStore *WvLinkedBufferStore::coalesce(
+    WvBufferStoreList::Iter &it, size_t count)
+{
+    WvBufferStore *buf = it.ptr();
+    size_t availused = buf->used();
+    if (count <= availused)
+        return buf;
+
+    // allocate a new buffer if there is not enough room to coalesce
+    size_t needed = count - availused;
+    size_t availfree = buf->free();
+    if (availfree < needed)
+    {
+        needed = count;
+        buf = newbuffer(needed);
+        
+        // insert the buffer before the previous link
+        list.add_after(it.prev, buf, true);
+        it.find(buf);
+    }
+    
+    // coalesce subsequent buffers into the first
+    while (it.next())
+    {
+        WvBufferStore *itbuf = it.ptr();
+        size_t chunk = itbuf->used();
+        if (chunk > 0)
+        {
+            if (chunk > needed)
+                chunk = needed;
+            buf->merge(*itbuf, chunk);
+            needed -= chunk;
+            if (needed == 0)
+                return buf;
+        }
+        do_xunlink(it); // buffer is now empty
+    }
+    assert(! "invalid count during get() or peek()");
+    return NULL;
 }
 
 
@@ -670,6 +751,7 @@ void *WvDynamicBufferStore::alloc(size_t count)
     }
     return WvLinkedBufferStore::alloc(count);
 }
+
 
 WvBufferStore *WvDynamicBufferStore::newbuffer(size_t minsize)
 {
@@ -730,121 +812,114 @@ WvEmptyBufferStore::WvEmptyBufferStore(size_t _granularity) :
 WvBufferCursorStore::WvBufferCursorStore(size_t _granularity,
     WvBufferStore *_buf, int _start, size_t _length) :
     WvReadOnlyBufferStoreMixin<WvBufferStore>(_granularity),
-    buf(_buf), start(_start), end(_start + _length), offset(0),
-    tmpbuf(_granularity, 1024 * granularity, 1024 * granularity)
+    buf(_buf), start(_start), length(_length), shift(0)
 {
+}
+
+
+bool WvBufferCursorStore::isreadable() const
+{
+    return buf->isreadable();
 }
 
 
 size_t WvBufferCursorStore::used() const
 {
-    int pos = getpos();
-    return end - pos;
+    return length - shift;
 }
 
 
 size_t WvBufferCursorStore::optgettable() const
 {
-    int pos = getpos();
-    size_t avail;
-    if (pos == 0)
-        avail = buf->optgettable();
-    else if (pos >= end)
-        avail = 0;
-    else
-        buf->peek(pos, & avail, granularity);
-    size_t maxavail = size_t(end - start);
-    if (avail > maxavail)
-        avail = maxavail;
+    size_t avail = buf->optpeekable(start + shift);
+    assert(avail != 0 || length == shift ||
+        ! "buffer cursor operating over invalid region");
+    if (avail > length)
+        avail = length;
     return avail;
 }
 
 
 const void *WvBufferCursorStore::get(size_t count)
 {
-    if (count == 0)
-        return NULL;
-    tmpbuf.zap();
-    int pos = getpos();
-    size_t avail;
-    const void *ptr = buf->peek(pos, & avail, granularity);
-    if (avail < count)
-    {
-        void *nptr = tmpbuf.alloc(count);
-        buf->copy(nptr, count, pos);
-        ptr = nptr;
-    }
-    offset += count;
-    return ptr;
+    assert(count <= length - shift ||
+        ! "attempted to get() more than used()");
+    const void *data = buf->peek(start + shift, count);
+    shift += count;
+    return data;
+}
+
+
+void WvBufferCursorStore::skip(size_t count)
+{
+    assert(count <= length - shift ||
+        ! "attempted to skip() more than used()");
+    shift += count;
 }
 
 
 void WvBufferCursorStore::unget(size_t count)
 {
-    assert(count <= size_t(offset) ||
-        !"attempted to unget() more than ungettable()");
-    offset -= count;
+    assert(count <= shift ||
+        ! "attempted to unget() more than ungettable()");
+    shift -= count;
 }
 
 
 size_t WvBufferCursorStore::ungettable() const
 {
-    return offset;
+    return shift;
 }
 
 
 void WvBufferCursorStore::zap()
 {
-    start = end = offset = 0;
+    shift = length;
 }
 
 
-const void *WvBufferCursorStore::peek(int offset, size_t *count,
-    size_t mincount)
+size_t WvBufferCursorStore::peekable(int offset) const
 {
-    int pos = getpos();
-    size_t avail;
-    const void *ptr = buf->peek(pos, & avail, granularity);
-    if (count)
-    {
-        size_t maxavail = size_t(end - start);
-        if (avail > maxavail)
-            avail = maxavail;
-        *count = avail;
-    }
-    return ptr;
+    offset += shift;
+    offset -= start;
+    if (offset < 0 || offset > int(length))
+        return 0;
+    return length - size_t(offset);
+}
+
+
+size_t WvBufferCursorStore::optpeekable(int offset) const
+{
+    size_t avail = buf->optpeekable(start + shift + offset);
+    assert(avail != 0 || length == shift ||
+        ! "buffer cursor operating over invalid region");
+    size_t max = peekable(offset);
+    if (avail > max)
+        avail = max;
+    return avail;
+}
+
+
+const void *WvBufferCursorStore::peek(int offset, size_t count)
+{
+    offset += shift;
+    assert((offset >= start && offset - start + count <= length) ||
+        ! "attempted to peek() with invalid offset or count");
+    return buf->peek(offset, count);
 }
 
 
 bool WvBufferCursorStore::iswritable() const
 {
-    // support mutablepeek() but nothing more
-    return true;
+    // check if mutablepeek() is supported
+    return buf->iswritable();
 }
 
 
-void *WvBufferCursorStore::mutablepeek(int offset, size_t *count,
-    size_t mincount)
+void *WvBufferCursorStore::mutablepeek(int offset, size_t count)
 {
-    int pos = getpos();
-    size_t avail;
-    void *ptr = buf->mutablepeek(pos, & avail, granularity);
-    if (count)
-    {
-        size_t maxavail = size_t(end - start);
-        if (avail > maxavail)
-            avail = maxavail;
-        *count = avail;
-    }
-    return ptr;
-}
-
-
-int WvBufferCursorStore::getpos() const
-{
-    int pos = start + offset;
-    assert(pos >= 0 && size_t(pos) <= buf->used() ||
-        size_t(pos) >= buf->ungettable() ||
-        !"attempted to operate on buffer cursor over invalid region");
-    return pos;
+    offset += shift;
+    assert((offset >= start && offset - start + count <= length) ||
+        ! "attempted to peek() with invalid offset or count");
+    return buf->mutablepeek(offset, count);
 }

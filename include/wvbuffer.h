@@ -78,9 +78,9 @@ public:
     inline void move(void *data, size_t count)
         { WvBufferBaseCommonImpl<unsigned char>::move(
             (unsigned char*)data, count); }
-    inline void poke(void *data, size_t count, int offset = 0)
+    inline void poke(void *data, int offset, size_t count)
         { WvBufferBaseCommonImpl<unsigned char>::poke(
-            (unsigned char*)data, count, offset); }
+            (unsigned char*)data, offset, count); }
 
 private:
     // moved here to avoid ambiguities between the match variants
