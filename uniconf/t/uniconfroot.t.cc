@@ -16,18 +16,18 @@ WVTEST_MAIN("null generator")
 // if this test compiles at all, we win!
 WVTEST_MAIN("type conversions")
 {
-    UniConfRoot root("null:");
+    UniConfRoot root("temp:");
     UniConf cfg(root);
     
     cfg.set("x");
     cfg.set(5);
-    cfg.get("x");
-    cfg.get(5);
+    WVPASSEQ("5", cfg.get("x"));
+    WVPASSEQ("5", cfg.get(5));
     
     cfg["x"].set("x");
     cfg[5].set("x");
     int x = 5;
-    cfg[x].set("x");
+    WVPASSEQ("x", cfg[x].get("x"));
     
     cfg[cfg.get(5)].set("x");
     cfg.set(cfg.get(x));
@@ -38,6 +38,22 @@ WVTEST_MAIN("type conversions")
     cfg[WvString(x)].set("x");
     cfg[WvFastString(x)].set("x");
     cfg[WvString(5)].set("x");
+    
+    cfg.set(7);
+    cfg[6].set(*cfg);
+    cfg.set(cfg->num());
+    WVPASSEQ("7", *cfg);
+    
+    cfg.xset("sub", "y");
+    WVPASSEQ("y", *cfg["sub"]);
+    WVPASSEQ("y", cfg.xget("sub", "foo"));
+    WVPASSEQ(55, cfg.xgetint("sub", 55)); // unrecognizable string
+    WVPASSEQ(7, cfg.xgetint(6));
+    
+    cfg.xsetint("sub", 99);
+    WVPASSEQ(99, cfg["sub"].getint(55));
+    
+    WVPASSEQ("zz", cfg["blah"]->ifnull("zz"));
 }
 
 
