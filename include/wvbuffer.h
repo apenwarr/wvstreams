@@ -22,7 +22,7 @@ class WvBufferBase<unsigned char> :
     public WvBufferBaseCommonImpl<unsigned char>
 {
 public:
-    WvBufferBase(WvBufferStore *store) :
+    explicit WvBufferBase(WvBufferStore *store) :
         WvBufferBaseCommonImpl<unsigned char>(store) { }
 
     /**
@@ -106,7 +106,7 @@ public:
         bool _autofree = false) :
         WvInPlaceBufferBase<unsigned char>((unsigned char*)_data,
             _avail, _size, _autofree) { }
-    inline WvInPlaceBuffer(size_t _size) :
+    explicit inline WvInPlaceBuffer(size_t _size) :
         WvInPlaceBufferBase<unsigned char>(_size) { }
     inline WvInPlaceBuffer() :
         WvInPlaceBufferBase<unsigned char>() { }
@@ -148,7 +148,7 @@ public:
         bool _autofree = false) :
         WvCircularBufferBase<unsigned char>((unsigned char*)_data,
             _avail, _size, _autofree) { }
-    inline WvCircularBuffer(size_t _size) :
+    explicit inline WvCircularBuffer(size_t _size) :
         WvCircularBufferBase<unsigned char>(_size) { }
     inline WvCircularBuffer() :
         WvCircularBufferBase<unsigned char>() { }
@@ -193,7 +193,7 @@ public:
      *
      * @param _str the string
      */
-    WvConstStringBuffer(WvStringParm _str);
+    explicit WvConstStringBuffer(WvStringParm _str);
 
     /**
      * Creates a new empty buffer backed by a null string.

@@ -872,6 +872,50 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
 }
 
 
+void WvLinkedBufferStore::merge(WvBufferStore &instore, size_t count)
+{
+    if (count == 0)
+        return;
+
+    // determine if we can just do a fast merge
+    WvLinkedBufferStore *inlinked =
+        wvdynamic_cast<WvLinkedBufferStore*>(& instore);
+    if (! inlinked)
+    {
+        basicmerge(instore, count);
+        return;
+    }
+    WvLinkedBufferStore &other = *inlinked;
+
+    // merge quickly by simply stealing internal buffers away from
+    // the other buffer
+    other.maxungettable = 0;
+    WvBufferStoreList::Iter it(other.list);
+    for (it.rewind(); it.next(); )
+    {
+        WvBufferStore *buf = it.ptr();
+        size_t avail = buf->used();
+        if (avail > count)
+        {
+            basicmerge(*buf, count);
+            return; // done!
+        }
+        // move the entire buffer
+        bool autofree = it.link->auto_free;
+        it.link->auto_free = false;
+        it.xunlink();
+        other.totalused -= avail;
+        append(buf, autofree);
+
+        count -= avail;
+        if (count == 0)
+            return;
+    }
+    assert(count == 0 ||
+        ! "attempted to merge() more than other.used()");
+}
+
+
 WvBufferStore *WvLinkedBufferStore::newbuffer(size_t minsize)
 {
     minsize = roundup(minsize, granularity);
@@ -1011,21 +1055,6 @@ void *WvDynamicBufferStore::alloc(size_t count)
 
 WvBufferStore *WvDynamicBufferStore::newbuffer(size_t minsize)
 {
-#ifdef DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
-    // try to find a suitable buffer in the pool
-    WvBufferStoreList::Iter it(pool);
-    for (it.rewind(); it.next(); )
-    {
-        WvBufferStore *buf = it.ptr();
-        if (buf->free() >= minsize)
-        {
-            it.link->auto_free = false;
-            it.unlink();
-            return buf;
-        }
-    }
-#endif
-
     // allocate a new buffer
     // try to approximate exponential growth by at least doubling
     // the amount of space available for immediate use
@@ -1040,16 +1069,6 @@ WvBufferStore *WvDynamicBufferStore::newbuffer(size_t minsize)
         size = minsize;
     return WvLinkedBufferStore::newbuffer(size);
 }
-
-
-#ifdef DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
-void WvDynamicBufferStore::recyclebuffer(WvBufferStore *buffer)
-{
-    // add the buffer to the pool
-    buffer->zap();
-    pool.append(buffer, true);
-}
-#endif
 
 
 

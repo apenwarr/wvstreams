@@ -9,25 +9,27 @@
 #ifndef __WVBUFFERSTORE_H
 #define __WVBUFFERSTORE_H
 
+#include "wvrtti.h"
 #include "wvlinklist.h"
 #include <limits.h>
 
-// This value is used internally to signal unlimited free space.
-// It is merely meant to be as large as possible yet leave enough
-// room to accomodate simple arithmetic operations without overflow.
-// Clients should NOT check for the presence of this value explicitly.
+/**
+ * This value is used internally to signal unlimited free space.
+ * It is merely meant to be as large as possible yet leave enough
+ * room to accomodate simple arithmetic operations without overflow.
+ * Clients should NOT check for the presence of this value explicitly.
+ */
 #define UNLIMITED_FREE_SPACE (INT_MAX/2)
-
-//#define DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
 
 /**
  * The abstract buffer storage base class.
  */
 class WvBufferStore
 {
-private:
+    WVTYPE(void)
+
     // discourage copying
-    WvBufferStore(const WvBufferStore &other) { }
+    explicit WvBufferStore(const WvBufferStore &other) { }
 
 protected:
     // the suggested granularity
@@ -38,7 +40,7 @@ protected:
      * @param _granularity the suggested granularity for data allocation
      *        and alignment purposes
      */
-    WvBufferStore(int _granularity);
+    explicit WvBufferStore(int _granularity);
     
 public:
     virtual ~WvBufferStore() { }
@@ -84,11 +86,9 @@ public:
     void poke(const void *data, int offset, size_t count);
 
     /*** Buffer to Buffer Transfers ***/
-    
+
     virtual void merge(WvBufferStore &instore, size_t count)
         { basicmerge(instore, count); }
-    virtual void mergeall(WvBufferStore &instore, size_t count)
-        { merge(instore, instore.used()); }
 
     // default implementation
     void basicmerge(WvBufferStore &instore, size_t count);
@@ -108,7 +108,7 @@ template<class Super>
 class WvReadOnlyBufferStoreMixin : public Super
 {
 public:
-    inline WvReadOnlyBufferStoreMixin(int _granularity) :
+    explicit inline WvReadOnlyBufferStoreMixin(int _granularity) :
         Super(_granularity) { }
     virtual bool iswritable() const
     {
@@ -160,7 +160,7 @@ template<class Super>
 class WvWriteOnlyBufferStoreMixin : public Super
 {
 public:
-    inline WvWriteOnlyBufferStoreMixin(int _granularity) :
+    explicit inline WvWriteOnlyBufferStoreMixin(int _granularity) :
         Super(_granularity) { }
     virtual bool isreadable() const
     {
@@ -221,6 +221,8 @@ public:
  */
 class WvInPlaceBufferStore : public WvBufferStore
 {
+    WVTYPE(WvBufferStore)
+    
 protected:
     void *data;
     size_t xsize;
@@ -265,6 +267,8 @@ public:
 class WvConstInPlaceBufferStore :
     public WvReadOnlyBufferStoreMixin<WvBufferStore>
 {
+    WVTYPE(WvBufferStore)
+
 protected:
     const void *data;
     size_t avail;
@@ -294,6 +298,8 @@ public:
  */
 class WvCircularBufferStore : public WvBufferStore
 {
+    WVTYPE(WvBufferStore)
+    
 protected:
     void *data;
     size_t xsize;
@@ -374,13 +380,15 @@ protected:
  */
 class WvLinkedBufferStore : public WvBufferStore
 {
+    WVTYPE(WvBufferStore)
+    
 protected:
     WvBufferStoreList list;
     size_t totalused;
     size_t maxungettable;
 
 public:
-    WvLinkedBufferStore(int _granularity);
+    explicit WvLinkedBufferStore(int _granularity);
     // Appends a buffer store to the list.
     void append(WvBufferStore *buffer, bool autofree);
     // Prepends a buffer store to the list.
@@ -404,6 +412,7 @@ public:
     virtual size_t unallocable() const;
     virtual size_t optpeekable(int offset) const;
     virtual void *mutablepeek(int offset, size_t count);
+    virtual void merge(WvBufferStore &instore, size_t count);
 
 protected:
     /**
@@ -450,11 +459,9 @@ private:
  */
 class WvDynamicBufferStore : public WvLinkedBufferStore
 {
+    WVTYPE(WvLinkedBufferStore)
     size_t minalloc;
     size_t maxalloc;
-#ifdef DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
-    WvBufferStoreList pool;
-#endif
     
 public:
     WvDynamicBufferStore(size_t _granularity,
@@ -467,10 +474,6 @@ public:
 
 protected:
     virtual WvBufferStore *newbuffer(size_t minsize);
-    
-#ifdef DYNAMIC_BUFFER_POOLING_EXPERIMENTAL
-    virtual void recyclebuffer(WvBufferStore *buffer);
-#endif
 };
 
 
@@ -481,8 +484,10 @@ protected:
 class WvEmptyBufferStore : public WvWriteOnlyBufferStoreMixin<
     WvReadOnlyBufferStoreMixin<WvBufferStore> >
 {
+    WVTYPE(WvBufferStore)
+    
 public:
-    WvEmptyBufferStore(size_t _granularity);
+    explicit WvEmptyBufferStore(size_t _granularity);
 };
 
 
@@ -493,6 +498,8 @@ public:
 class WvBufferCursorStore :
     public WvReadOnlyBufferStoreMixin<WvBufferStore>
 {
+    WVTYPE(WvBufferStore)
+    
 protected:
     WvBufferStore *buf;
     int start;

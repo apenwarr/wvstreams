@@ -42,7 +42,8 @@ protected:
     WvBufferStore *store;
     
     // discourage copying
-    WvBufferBaseCommonImpl(const WvBufferBaseCommonImpl &other) { }
+    explicit WvBufferBaseCommonImpl(
+        const WvBufferBaseCommonImpl &other) { }
 
 protected:
     /**
@@ -53,7 +54,7 @@ protected:
      *
      * @param store the low-level storage object
      */
-    WvBufferBaseCommonImpl(WvBufferStore *store) :
+    explicit WvBufferBaseCommonImpl(WvBufferStore *store) :
         store(store) { }
 
 public:
@@ -637,7 +638,7 @@ public:
 template<class T>
 class WvBufferBase : public WvBufferBaseCommonImpl<T>
 {
-    WvBufferBase(WvBufferStore *store) :
+    explicit WvBufferBase(WvBufferStore *store) :
         WvBufferBaseCommonImpl<T>(store) { }
 };
 
@@ -673,7 +674,7 @@ public:
      *
      * @param _size the size of the array
      */
-    WvInPlaceBufferBase(size_t _size) :
+    explicit WvInPlaceBufferBase(size_t _size) :
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), _size * sizeof(Elem)) { }
 
@@ -878,7 +879,7 @@ public:
      *
      * @param _size the size of the array
      */
-    WvCircularBufferBase(size_t _size) :
+    explicit WvCircularBufferBase(size_t _size) :
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), _size * sizeof(Elem)) { }
 
@@ -1007,7 +1008,7 @@ public:
      *      at once when creating a new internal buffer segment
      *      before before reverting to a linear growth pattern
      */
-    WvDynamicBufferBase(size_t _minalloc = 1024,
+    explicit WvDynamicBufferBase(size_t _minalloc = 1024,
         size_t _maxalloc = 1048576) :
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), _minalloc * sizeof(Elem),
