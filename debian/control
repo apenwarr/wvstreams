@@ -27,8 +27,8 @@ Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: C++ network libraries for rapid application development
- WvStreams is a library suite that is comprised of several parts.  Among 
- them are:
+ WvStreams is a library suite that is comprised of several parts.  Included
+ in the extras package are:
   * WvIPStreams: which includes WvTCPStream and WvUDPStream
   * WvCrypto streams: a REALLY easy way to add SSL support to applications 
  .
