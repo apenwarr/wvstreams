@@ -414,7 +414,7 @@ bool UniConf::XIter::next()
 
 UniConf::SortedIterBase::SortedIterBase(const UniConf &root,
     UniConf::SortedIterBase::Comparator comparator) 
-    : IterBase(root), xcomparator(comparator), xkeys(true)
+    : IterBase(root), xcomparator(comparator), xkeys()
 {
 }
 
@@ -435,10 +435,10 @@ int UniConf::SortedIterBase::defcomparator(const UniConf &a,
 UniConf::SortedIterBase::Comparator
     UniConf::SortedIterBase::innercomparator = NULL;
 
-int UniConf::SortedIterBase::wrapcomparator(const UniConf **a,
-    const UniConf **b)
+int UniConf::SortedIterBase::wrapcomparator(const UniConf *a,
+    const UniConf *b)
 {
-    return innercomparator(**a, **b);
+    return innercomparator(*a, *b);
 }
 
 
@@ -456,8 +456,7 @@ void UniConf::SortedIterBase::_rewind()
     
     // This code is NOT reentrant because qsort makes it too hard
     innercomparator = xcomparator;
-    qsort(xkeys.ptr(), count, sizeof(UniConf*),
-        (int (*)(const void *, const void *))wrapcomparator);
+    xkeys.qsort(&wrapcomparator);
 }
 
 

@@ -576,7 +576,7 @@ private:
     void _purge();
     void _rewind();
     
-    static int wrapcomparator(const UniConf **a, const UniConf **b);
+    static int wrapcomparator(const UniConf *a, const UniConf *b);
     static Comparator innercomparator;
 
 protected:
@@ -588,7 +588,7 @@ protected:
     {
         _purge();
         for (i.rewind(); i.next(); )
-            xkeys.append(new UniConf(*i));
+            xkeys.append(new UniConf(*i), true);
         _rewind();
     }
 };
