@@ -300,6 +300,27 @@ void WvBuffer::put(const void *data, size_t num)
 }
 
 
+void WvBuffer::put(const WvString &str)
+{
+    if (!!str)
+	put(str, strlen(str));
+}
+
+
+WvString WvBuffer::getstr()
+{
+    WvString s;
+    size_t len = used();
+    s.setsize(len + 1);
+    
+    char *cptr = s.edit();
+    memcpy(cptr, get(len), len);
+    cptr[len] = 0;
+    
+    return s;
+}
+
+
 size_t WvBuffer::strchr(unsigned char ch)
 {
     WvMiniBufferList::Iter i(list);

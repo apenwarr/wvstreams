@@ -10,7 +10,9 @@
 #define __WVBUFFER_H
 
 #include "wvlinklist.h"
+#include "wvstring.h"
 #include <string.h>
+
 
 class WvMiniBuffer
 {
@@ -155,6 +157,17 @@ public:
      * copy 'buf' into the next 'num' bytes of buffer.
      */
     void put(const void *buf, size_t num);
+    
+    /*
+     * copy a WvString into the buffer, not including the terminating nul.
+     */
+    void put(const WvString &str);
+    
+    /*
+     * Return the entire buffer as a nul-terminated WvString.  If the buffer
+     * contains nul characters, they'll seem to terinate the string.
+     */
+    WvString getstr();
 
     /*
      * return the number of bytes that would have to be read to find the
