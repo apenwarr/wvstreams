@@ -38,11 +38,11 @@ libwvcrypto.so: libwvstreams.so
 
 $(wildcard *.so) $(wildcard *.a): Makefile
 
-libwvutils.so-LIBS=-lcrypto -lz
+libwvutils.so-LIBS=-lcrypt -lz
 libwvutils.so: utils/utils.libs
 libwvutils.a: utils/utils.libs
 
-libwvstreams.so-LIBS=-lcrypto -lz
+libwvstreams.so-LIBS=-lcrypt -lz
 libwvstreams.so: ipstreams/ipstreams.libs
 libwvstreams.a: ipstreams/ipstreams.libs
 
