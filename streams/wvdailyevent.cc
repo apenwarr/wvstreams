@@ -22,13 +22,13 @@
 #include <unistd.h>
 #endif
 
-WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day)
+WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 {
     need_reset = false;
     skip_event = true;
     needs_event = false;
     prev = time(NULL);
-    configure(_first_hour, _num_per_day);
+    configure(_first_hour, _num_per_day, _skip_first);
 }
 
 
@@ -100,9 +100,10 @@ void WvDailyEvent::set_num_per_day(int _num_per_day)
 }
 
 
-void WvDailyEvent::configure(int _first_hour, int _num_per_day)
+void WvDailyEvent::configure(int _first_hour, int _num_per_day, bool _skip_first)
 {
     first_hour = _first_hour;
+    skip_first = _skip_first;
 
     // Don't let WvDailyEvents occur more than once a minute. -- use an alarm
     // instead
@@ -151,8 +152,8 @@ time_t WvDailyEvent::next_event()
         needs_event = true;
 
     if (skip_event || !needs_event)
-        while (next < not_until)
-            { next += interval; }
+        while (skip_first && next < not_until)
+            next += interval;
 
     return next;
 }
