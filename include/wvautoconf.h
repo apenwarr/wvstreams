@@ -23,7 +23,7 @@
 #define HAVE_LIBRFFTW 1
 
 /* Define to 1 if you have the `speex' library (-lspeex). */
-#define HAVE_LIBSPEEX 1
+/* #undef HAVE_LIBSPEEX */
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
 #define HAVE_LIBSSL 1
@@ -56,10 +56,10 @@
 #define HAVE_RFFTW_H 1
 
 /* Define to 1 if you have the <speex.h> header file. */
-#define HAVE_SPEEX_H 1
+/* #undef HAVE_SPEEX_H */
 
 /* Define to 1 if you have the <speex_header.h> header file. */
-#define HAVE_SPEEX_HEADER_H 1
+/* #undef HAVE_SPEEX_HEADER_H */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
