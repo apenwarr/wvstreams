@@ -23,6 +23,15 @@ WvRSAKey::WvRSAKey(const WvRSAKey &k)
 
 WvRSAKey::WvRSAKey(struct rsa_st *_rsa, bool priv)
 {
+    if (_rsa == NULL)
+    {
+        pub = WvString::null;
+        prv = WvString::null;
+        rsa = NULL;
+        seterr("Initializing with a NULL key.. are you insane?");
+        return;
+    }
+    
     rsa = _rsa;
     pub = hexifypub(rsa);
     if (priv)
@@ -53,7 +62,10 @@ WvRSAKey::~WvRSAKey()
 
 void WvRSAKey::init(WvStringParm keystr, bool priv)
 {
+    // Start out with everything nulled out...
     rsa = NULL;
+    pub = WvString::null;
+    prv = WvString::null;
     
     // unhexify the supplied key
     WvDynBuf keybuf;
