@@ -13,6 +13,15 @@
 #include <unistd.h>
 
 
+void WvConf::setbool(WvConf &, void *userdata,
+		     const WvString &, const WvString &,
+		     const WvString &, const WvString &)
+{
+    *(bool *)userdata = true;
+}
+		     
+
+
 WvConf::WvConf(const WvString &_filename)
 	: filename(_filename), log(filename), globalsection("")
 {
@@ -201,6 +210,10 @@ void WvConf::set(const WvString &section, const WvString &entry,
 	append(s, true);
     }
     
+    const char *oldval = s->get(entry, "");
+    if (!value) value = "";
+    if (strcmp(oldval, value)) // case sensitive
+	run_callbacks(section, entry, oldval, value);
     s->set(entry, value);
     dirty = true;
 }
@@ -287,5 +300,49 @@ void WvConf::flush()
 
 	fclose(fp);
 	dirty = false;
+    }
+}
+
+
+void WvConf::add_callback(WvConfCallback *callback, void *userdata,
+			  const WvString &section, const WvString &entry)
+{
+    callbacks.append(new WvConfCallbackInfo(callback, userdata,
+					    section, entry), true);
+}
+
+
+void WvConf::del_callback(WvConfCallback *callback, void *userdata,
+			  const WvString &section, const WvString &entry)
+{
+    WvConfCallbackInfoList::Iter i(callbacks);
+    
+    for (i.rewind(); i.next(); )
+    {
+	WvConfCallbackInfo &c(i);
+	
+	if (c.callback == callback && c.userdata == userdata
+	    && c.section == section && c.entry == entry)
+	{
+	    i.unlink();
+	    return;
+	}
+    }
+}
+
+
+void WvConf::run_callbacks(const WvString &section, const WvString &entry,
+			   const WvString &oldvalue, const WvString &newvalue)
+{
+    WvConfCallbackInfoList::Iter i(callbacks);
+    
+    for (i.rewind(); i.next(); )
+    {
+	if (!i().section || !strcasecmp(i().section, section))
+	{
+	    if (!i().entry || !strcasecmp(i().entry, entry))
+		i().callback(*this, i().userdata, section, entry,
+			     oldvalue, newvalue);
+	}
     }
 }

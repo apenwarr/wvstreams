@@ -19,6 +19,8 @@
 
 DeclareWvList(WvString);
 
+class WvConf;
+
 
 class WvConfigEntry
 {
@@ -55,6 +57,25 @@ public:
 };
 
 
+typedef void WvConfCallback(WvConf &cfg, void *userdata,
+			    const WvString &section, const WvString &entry,
+			    const WvString &oldval, const WvString &newval);
+
+class WvConfCallbackInfo
+{
+public:
+    WvConfCallback *callback;
+    void *userdata;
+    const WvString section, entry;
+    
+    WvConfCallbackInfo(WvConfCallback *_callback, void *_userdata,
+		       const WvString &_section, const WvString &_entry)
+	: section(_section), entry(_entry)
+        { callback = _callback; userdata = _userdata; }
+};
+
+
+DeclareWvList(WvConfCallbackInfo);
 DeclareWvList(WvConfigSection);
 
 
@@ -64,6 +85,12 @@ public:
     WvConf(const WvString &_filename);
     ~WvConf();
     
+    bool isok() const
+    	{ return !error; }
+    bool isclean() const
+    	{ return isok() && !dirty; }
+    void flush();
+
     WvConfigSection *operator[] (const WvString &s);
 
     int get(const WvString &section, const WvString &entry, int def_val);
@@ -87,12 +114,21 @@ public:
 
     void delete_section(const WvString &section);
 
-    void flush();
-
-    bool isok() const
-    	{ return !error; }
-    bool isclean() const
-    	{ return isok() && !dirty; }
+    // section and entry may be blank -- that means _all_ sections/entries!
+    void add_callback(WvConfCallback *callback, void *userdata,
+		      const WvString &section, const WvString &entry);
+    void del_callback(WvConfCallback *callback, void *userdata,
+		      const WvString &section, const WvString &entry);
+    void run_callbacks(const WvString &section, const WvString &entry,
+		       const WvString &oldvalue, const WvString &newvalue);
+    
+    // generic callback function for setting a bool to "true" when changed
+    static WvConfCallback setbool;
+    void add_setbool(bool *b, const WvString &section, const WvString &entry)
+        { add_callback(setbool, b, section, entry); }
+    void del_setbool(bool *b, const WvString &section, const WvString &entry)
+        { del_callback(setbool, b, section, entry); }
+		    
 
 private:
     bool dirty;			// true if changed since last flush()
@@ -102,6 +138,7 @@ private:
     WvLog log;
 
     WvConfigSection globalsection;
+    WvConfCallbackInfoList callbacks;
 
     void load_file();
     char *parse_section(char *s);

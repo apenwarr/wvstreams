@@ -85,13 +85,13 @@ class WvString
 
 public:
     WvString()      // fill blank strings later with operator= or setsize()
-        { buf = NULL; }
+        { buf = NULL; str = NULL; }
     void setsize(size_t i)
         { unlink(); newbuf(i); }
     WvString(const WvString &s) // Copy constructor
         { link(s.buf, s.str); }
     WvString(const char *_str)
-        { if (_str) link(&__wvs_nb, _str); else buf = NULL; }
+        { if (_str) link(&__wvs_nb, _str); else { buf = NULL; str = NULL; } }
     WvString(int i) // auto-render int 'i' into a string
         { newbuf(16); snprintf(str, 16, "%d", i); }
 
