@@ -116,7 +116,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool _ssl,
     if (ssl)
     {
 	info.proto = "https";
-	cloned = new WvSSLStream(cloned);
+	cloned = new WvSSLStream(static_cast<WvFDStream*>(cloned));
     }
     else
 	info.proto = "http";
@@ -303,7 +303,7 @@ void WvHttpStream::execute()
 	    delete cloned;
 	cloned = new WvTCPConn(info.remaddr);
         if (ssl)
-	    cloned = new WvSSLStream(cloned);
+	    cloned = new WvSSLStream((WvTCPConn*)cloned);
 	doneurl();
 	return;
     }
