@@ -1,3 +1,11 @@
+wvstreams (4.0+20040827-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * Don't install XPLC out of the source tarball.
+  * libwvstreams4.0-dev should really be libwvstreams-dev.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 27 Aug 2004 20:45:15 -0400
+
 wvstreams (4.0+20040826-1) unstable; urgency=low
 
   * New upstream snapshot.
