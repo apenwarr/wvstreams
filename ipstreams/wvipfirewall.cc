@@ -113,6 +113,12 @@ void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
 }
 
 
+void WvIPFirewall::add_proto(const WvString proto)
+{
+    system(WvString("iptables -A Services -p %s -j ACCEPT", proto));
+}
+
+
 void WvIPFirewall::zap()
 {
     WvIPPortAddrList::Iter i(addrs);
