@@ -39,6 +39,13 @@ WvIPAliaser::Alias::Alias(const WvIPAddr &_ip) : ip(_ip)
 	    }
 	    return;
 	}
+	
+	if (i.isup() && WvIPNet(i.ipaddr(),32) == ip)
+	{
+	    // a bit weird... this alias already has the right address.
+	    // Keep it.
+	    return; 
+	}
     }
     
     // got through all possible names without a free one?  Weird!
@@ -51,7 +58,7 @@ WvIPAliaser::Alias::~Alias()
     if (index >= 0)
     {
 	WvInterface i(WvString("lo:wv%s", index));
-	i.setipaddr(WvIPAddr());
+	// i.setipaddr(WvIPAddr()); // not necessary in recent kernels
 	i.up(false);
     }
 }
@@ -78,7 +85,11 @@ WvIPAliaser::~WvIPAliaser()
 
 void WvIPAliaser::start_edit()
 {
-    AliasList::Iter i(aliases), i_all(all_aliases);
+    AliasList::Iter i(aliases);
+    
+    #ifndef NDEBUG
+    AliasList::Iter i_all(all_aliases);
+    #endif
     
     interfaces.update();
     
@@ -87,12 +98,11 @@ void WvIPAliaser::start_edit()
 	assert(i_all.find(&i.data()));
 	
 	// the global alias entry goes down by one
-	i_all.data().link_count--;
+	i().link_count--;
     }
     
     // empty out the local list
-    for (i.rewind(), i.next(); i.cur(); )
-	i.unlink();
+    aliases.zap();
 }
 
 

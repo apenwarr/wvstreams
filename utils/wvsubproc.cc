@@ -38,6 +38,8 @@ int WvSubProc::start(const char cmd[], ...)
     char *cptr;
     char **argv;
     
+    assert(!running);
+    
     // count the number of arguments
     va_start(ap, cmd);
     for (nargs = 0; (cptr = va_arg(ap, char *)) != NULL; nargs++)
@@ -67,6 +69,7 @@ int WvSubProc::startv(const char cmd[], char * const *argv)
     estatus = 0;
     
     pid = fork();
+    //fprintf(stderr, "pid for '%s' is %d\n", cmd, pid);
     
     if (!pid)
     {
@@ -138,7 +141,7 @@ void WvSubProc::stop(time_t msec_delay)
     if (running)
     {
 	kill(SIGKILL);
-	wait(-1);
+	wait(0);
     }
 }
 
@@ -170,9 +173,14 @@ void WvSubProc::wait(time_t msec_delay)
     
     do
     {
-	// note: there's a small chance that the subproc hasn't run setpgrp()
-	// yet, so no processes will be available for "-pid".  Wait on pid if
-	// it fails.
+	// note: there's a small chance that the child process
+	// hasn't run setpgrp() yet, so no processes will be available
+	// for "-pid".  Wait on pid if it fails.
+	// 
+	// also note: waiting on a process group is actually useless since you
+	// can only get notifications for your direct descendants.  We have
+	// to "kill" with a zero signal instead to try to detect whether they've
+	// died or not.
 	dead_pid = waitpid(-pid, &status, 
 			   (msec_delay >= 0) ? WNOHANG : 0);
 	if (dead_pid < 0 && errno == ECHILD)
@@ -186,21 +194,25 @@ void WvSubProc::wait(time_t msec_delay)
 	    // all relevant children are dead!
 	    if (errno == ECHILD)
 	    {
-		running = false;
-		pid = -1;
+		if (::kill(-pid, 0) && errno == ESRCH)
+		{
+		    running = false;
+		    pid = -1;
+		}
 	    }
 	    else
 		perror("WvSubProc::wait");
-	}
-	else if (dead_pid == 0 && msec_delay > 0)
-	{
-	    // wait a while, so we're not spinning _too_ fast in a loop
-	    usleep(50*1000);
 	}
 	else if (dead_pid == pid)
 	{
 	    // it's the main process - save its status.
 	    estatus = status;
+	}
+	
+	if (running && msec_delay != 0)
+	{
+	    // wait a while, so we're not spinning _too_ fast in a loop
+	    usleep(50*1000);
 	}
 	
 	gettimeofday(&tv2, &tz);

@@ -5,7 +5,7 @@
 int main()
 {
     WvSubProc proc;
-    
+#if 0
     // ls should die by itself.
     fprintf(stderr, "starting ls...\n");
     proc.start("ls", "ls", "-F", "/", NULL);
@@ -48,6 +48,18 @@ int main()
     proc.stop(2400);
     fprintf(stderr, "stop done (%d/%d)...\n", proc.running, proc.estatus);
     fprintf(stderr, "\n\n");
+#endif
+    // a process that backgrounds itself
+    fprintf(stderr, "starting bash -c 'sleep 100 &'...\n");
+    proc.start("bash", "bash", "-c", "sleep 100 &", NULL);
+    fprintf(stderr, "started (%d/%d)...\n", proc.running, proc.pid);
+    proc.wait(2300);
+    fprintf(stderr, "wait done (%d/%d)...\n", proc.running, proc.estatus);
+    fprintf(stderr, "stopping process...\n");
+    proc.stop(2400);
+    fprintf(stderr, "stop done (%d/%d)...\n", proc.running, proc.estatus);
+    fprintf(stderr, "\n\n");
+    
     
     return 0;
 }
