@@ -11,8 +11,7 @@
 
 unsigned int WvHash(const UniConfGen *u)
 {
-    int i = reinterpret_cast<int>(u);
-    return WvHash(i);
+    return WvHash((int) u);
 }
 
 
