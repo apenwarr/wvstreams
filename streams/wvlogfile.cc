@@ -71,7 +71,7 @@ WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
 void WvLogFile::_make_prefix()
 {
     time_t timenow = wvtime().tv_sec;
-    struct tm *tmstamp = localtime(&timenow);
+    // struct tm *tmstamp = localtime(&timenow);
     struct stat statbuf;
 
     // Get the filesize
@@ -111,8 +111,8 @@ void WvLogFile::start_log()
     int num = 0;
     struct stat statbuf;
     time_t timenow = wvtime().tv_sec;
-    struct tm* tmstamp = localtime(&timenow);
     last_day = (timenow + gmtoffset()) / 86400;
+    struct tm* tmstamp = localtime(&timenow);
     char buf[20];
     WvString fullname;
     strftime(buf, 20, "%Y-%m-%d", tmstamp);

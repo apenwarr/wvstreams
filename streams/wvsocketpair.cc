@@ -10,6 +10,7 @@
 #ifndef _WIN32
 # include <sys/socket.h>
 #else
+# include <winsock2.h>
 # include <io.h>
 #endif
 
@@ -22,5 +23,5 @@ int wvsocketpair(int type, int socks[2])
     // NOTE: a fake socketpair() call is provided by wvstreams for win32.
     // The main advantage of wvsocketpair is it avoids the weird mess of
     // includes, ifdefs, and prototypes above.
-    return socketpair(AF_UNIX, type, 0, socks);
+    return socketpair(PF_UNIX, type, 0, socks);
 }
