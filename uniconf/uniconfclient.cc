@@ -29,11 +29,8 @@ UniConfClient::~UniConfClient()
 {
     if (conn)
     {
-        list->unlink(conn);
         if (conn->isok())
-            conn->print("%s\n", UniConfConn::UNICONF_QUIT);
-        delete conn;
-        conn = NULL;
+            conn->write(WvString("%s\n", UniConfConn::UNICONF_QUIT));
     }
 }
 
