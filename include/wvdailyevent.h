@@ -87,15 +87,7 @@ public:
         { configure( h, num_per_day ); }
 
     /// return the time when the next event will occur
-    time_t next_event();
-
-protected:
-    /**
-     * Often times events are skipped due to reconfig or reset, set this if
-     *  you do NOT want your event skipped because of the (ie., Backups)
-     *  -- timing for this is minimum 1hr from the event
-     */
-    bool skip_event;
+    time_t next_event() const;
 
 private:
     int     first_hour;
@@ -103,11 +95,9 @@ private:
     bool    need_reset;
     bool    skip_first;
     time_t  prev;
+    time_t  init;
     
     time_t  not_until;
-    
-    // needs an event to happen which is >= 1hr away
-    bool    needs_event; 
 };
 
 #endif

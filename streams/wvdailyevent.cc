@@ -22,12 +22,20 @@
 #include <unistd.h>
 #endif
 
+// This is the minimum amount of time we must wait after a WvDailyEvent
+// has been created before we can start triggering. This is to avoid
+// mass I/O at startup, especially while the RAID is rebuilding. The
+// difference between this and skip_first though is that if we're supposed
+// to trigger before the MIN_DELAY, we will trigger immediately afterwards,
+// but only once, no matter how many times we triggered during the delay.
+//
+#define MIN_DELAY	15*60
+
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 {
     need_reset = false;
-    skip_event = true;
-    needs_event = false;
     prev = time(NULL);
+    init = prev + MIN_DELAY;
     configure(_first_hour, _num_per_day, _skip_first);
 }
 
@@ -38,7 +46,6 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
     if (num_per_day && !need_reset)
     {
 	time_t now = time(NULL), next = next_event();
-
 	assert(prev);
 	assert(next);
 	assert(prev > 100000);
@@ -46,7 +53,6 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
 	if (now >= next)
 	{
 	    need_reset = true;
-            needs_event = false;
 	    prev = next;
 	}
     }
@@ -115,7 +121,7 @@ void WvDailyEvent::configure(int _first_hour, int _num_per_day, bool _skip_first
 
 // the daily event occurs each day at first_hour on the hour, or at
 // some multiple of the interval *after* that hour.
-time_t WvDailyEvent::next_event()
+time_t WvDailyEvent::next_event() const
 {
     if (!num_per_day) // disabled
 	return 0;
@@ -136,24 +142,21 @@ time_t WvDailyEvent::next_event()
     tm->tm_hour = first_hour; // always start at the given hour
     tm->tm_min = tm->tm_sec = 0; // right on the hour
     start = mktime(tm); // convert back into a time_t
-    
+
     // find the next event after prev that's a multiple of 'interval'
     // since 'start'
     next = prev + interval;
     if ((next - start)%interval != 0)
-	next = start + (next - start)/interval * interval + interval;
+	next = start + (next - start)/interval * interval;
     
     assert(next);
     assert(next > 100000);
+    while (skip_first && next < not_until)
+	next += interval;
 
-    double time_till_event = (double)((next - time(NULL)) / (60*60));
-
-    if (!skip_event && time_till_event >= 1.0)
-        needs_event = true;
-
-    if (skip_event || !needs_event)
-        while (skip_first && next < not_until)
-            next += interval;
+    // Wait at least until the init time has passed
+    if (next < init)
+	next = init;
 
     return next;
 }
