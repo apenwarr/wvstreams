@@ -8,6 +8,7 @@
 #include "wvloopback.h"
 #include "wvaddr.h"
 #include "wvhashtable.h"
+#include "wvtcp.h"
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -155,6 +156,7 @@ int WvResolver::findaddr(int msec_timeout, const WvString &name,
 	
 	if (!host->pid) // child process
 	{
+	    WvTCPListener::close_all_listeners();
 	    host->loop->noread();
 	    namelookup(name, host->loop);
 	    _exit(1);

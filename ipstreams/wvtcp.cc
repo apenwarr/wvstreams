@@ -8,6 +8,9 @@
 #include "wvtcp.h"
 #include <errno.h>
 
+WvStreamList WvTCPListener::all_listeners;
+
+
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
 {
     remaddr = _remaddr;
@@ -209,6 +212,26 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     }
     
     delete sa;
+    
+    all_listeners.append(this, false);
+}
+
+
+WvTCPListener::~WvTCPListener()
+{
+    close();
+    all_listeners.unlink(this);
+}
+
+
+//#include <wvlog.h>
+void WvTCPListener::close()
+{
+    WvStream::close();
+/*    WvLog log("ZAP!");
+    
+    log("Closing TCP LISTENER at %s!!\n", listenport);
+    abort();*/
 }
 
 
@@ -260,4 +283,12 @@ size_t WvTCPListener::uwrite(const void *, size_t)
 const WvAddr *WvTCPListener::src() const
 {
     return &listenport;
+}
+
+
+void WvTCPListener::close_all_listeners()
+{
+    WvStreamList::Iter i(all_listeners);
+    for (i.rewind(); i.next(); )
+	i().close();
 }

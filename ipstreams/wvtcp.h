@@ -69,6 +69,9 @@ class WvTCPListener : public WvStream
 {
 public:
     WvTCPListener(const WvIPPortAddr &_listenport);
+    virtual ~WvTCPListener();
+    
+    virtual void close();
     
     // return a new WvTCPConn socket corresponding to a newly-accepted
     // connection.  If no connection is ready immediately, we wait for
@@ -93,6 +96,9 @@ public:
     
     // src() is a bit of a misnomer, but it returns the listener port.
     virtual const WvAddr *src() const;
+    
+    // when we fork(), we want the child not to have any of our listeners!
+    static void close_all_listeners();
 
 protected:
     WvIPPortAddr listenport;
@@ -100,6 +106,7 @@ protected:
     static Callback accept_callback;
     Callback *auto_callback;
     void *auto_userdata;
+    static WvStreamList all_listeners;
 };
 
 
