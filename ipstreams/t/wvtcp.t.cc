@@ -69,16 +69,19 @@ WVTEST_MAIN("connection refused")
     WVPASS(tcp.isconnected()); // even if error, we're past connection phase
     WVFAIL(tcp.isok());
     WVPASSEQ(tcp.geterr(), ECONNREFUSED);
+    printf("Error string is '%s'\n", tcp.errstr().cstr());
 //    WVPASSEQ(tcp.errstr(), strerror(ECONNREFUSED)); // wrong in win32
     
     len = tcp.read(buf, sizeof(buf));
     WVPASSEQ(len, 0);
     WVFAIL(tcp.isok());
     WVPASSEQ(tcp.geterr(), ECONNREFUSED);
+    printf("Error string is '%s'\n", tcp.errstr().cstr());
 //    WVPASSEQ(tcp.errstr(), strerror(ECONNREFUSED)); // wrong in win32
     
     tcp.write("foo\n");
     WVFAIL(tcp.isok());
     WVPASSEQ(tcp.geterr(), ECONNREFUSED);
+    printf("Error string is '%s'\n", tcp.errstr().cstr());
 //    WVPASSEQ(tcp.errstr(), strerror(ECONNREFUSED)); // wrong in win32
 }

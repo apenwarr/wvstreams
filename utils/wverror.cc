@@ -9,6 +9,75 @@
 
 #ifdef _WIN32
 #include "windows.h"
+
+struct WsErrMap {
+    int num;
+    const char *str;
+};
+
+static WsErrMap wserrmap[] = {
+    { WSAEINTR, "Interrupted" },
+    { WSAEBADF, "Bad file descriptor" },
+    { WSAEACCES, "Access denied" },
+    { WSAEFAULT, "Bad address" },
+    { WSAEINVAL, "Invalid argument" },
+    { WSAEMFILE, "Too many open files" },
+    { WSAEWOULDBLOCK, "Operation would block" },
+    { WSAEINPROGRESS, "Operation now in progress" },
+    { WSAEALREADY, "Operation already in progress" },
+    { WSAENOTSOCK, "Socket operation on non-socket" },
+    { WSAEDESTADDRREQ, "Destination address required" },
+    { WSAEMSGSIZE, "Message too long" },
+    { WSAEPROTOTYPE, "Protocol wrong type for socket" },
+    { WSAENOPROTOOPT, "Protocol not available" },
+    { WSAEPROTONOSUPPORT, "Protocol not supported" },
+    { WSAESOCKTNOSUPPORT, "Socket type not supported" },
+    { WSAEOPNOTSUPP, "Operation not supported on transport endpoint" },
+    { WSAEPFNOSUPPORT, "Protocol family not supported" },
+    { WSAEAFNOSUPPORT, "Address family not supported by protocol" },
+    { WSAEADDRINUSE, "Address already in use" },
+    { WSAEADDRNOTAVAIL, "Cannot assign requested address" },
+    { WSAENETDOWN, "Network is down" },
+    { WSAENETUNREACH, "Network is unreachable" },
+    { WSAENETRESET, "Network dropped connection because of reset" },
+    { WSAECONNABORTED, "Software caused connection abort" },
+    { WSAECONNRESET, "Connection reset by peer" },
+    { WSAENOBUFS, "No buffer space available" },
+    { WSAEISCONN, "Transport endpoint is already connected" },
+    { WSAENOTCONN, "Transport endpoint is not connected" },
+    { WSAESHUTDOWN, "Cannot send after transport endpoint shutdown" },
+    { WSAETOOMANYREFS, "Too many references: cannot splice" },
+    { WSAETIMEDOUT, "Connection timed out" },
+    { WSAECONNREFUSED, "Connection refused" },
+    { WSAELOOP, "Too many symbolic links encountered" },
+    { WSAENAMETOOLONG, "File name too long" },
+    { WSAEHOSTDOWN, "Host is down" },
+    { WSAEHOSTUNREACH, "No route to host" },
+    { WSAENOTEMPTY, "Directory not empty" },
+    { WSAEPROCLIM, "Process limit reached" },
+    { WSAEUSERS, "Too many users" },
+    { WSAEDQUOT, "Disk quota exceeded" },
+    { WSAESTALE, "Stale file handle" },
+    { WSAEREMOTE, "Object is remote" },
+    { WSAEDISCON, "Disconnected" },
+    { WSAENOMORE, "No more data" },
+    { WSAECANCELLED, "Operation cancelled" },
+    { WSAEINVALIDPROCTABLE, "Invalid process table" },
+    { WSAEINVALIDPROVIDER, "Invalid provider" },
+    { WSAEPROVIDERFAILEDINIT, "Provider failed to initialize" },
+    { WSAEREFUSED, "Operation refused" },
+    { 0, NULL }
+};
+
+const char *winsock_errmap(int errnum)
+{
+    
+    for (WsErrMap *i = wserrmap; i->num; i++)
+	if (i->num == errnum)
+	    return i->str;
+    return NULL;
+}
+
 #endif
 
 WvErrorBase::~WvErrorBase()
@@ -34,16 +103,21 @@ WvString WvErrorBase::errstr() const
 #else
 	if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
 	{
+	    const char *wserr = winsock_errmap(errnum);
+	    if (wserr)
+		return wserr;
+	    
+	    // otherwise, a *really* weird error: try getting the error
+	    // message from win32.
 	    char msg[4096];
 	    const HMODULE module = GetModuleHandle("winsock.dll");
-	    DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, module, errnum, 0, msg, sizeof(msg), 0);
+	    DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+				 module, errnum, 0, msg, sizeof(msg), 0);
 	    if (result)
 		return msg;
-	    else
-	    {
-		DWORD e = GetLastError();
-		return WvString("Unknown format %s for error %s", e, errnum);
-	    }
+	    
+	    DWORD e = GetLastError();
+	    return WvString("Unknown format %s for error %s", e, errnum);
 	}
 	else
 	    return strerror(errnum);
