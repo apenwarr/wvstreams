@@ -17,7 +17,7 @@
 /* The Win32 runtime library doesn't provide fcntl so we can't
    set readable and writable reliably. Use the other constructor.
 */
-WvFile::WvFile(int rwfd = -1) : WvFDStream(rwfd)
+WvFile::WvFile(int rwfd) : WvFDStream(rwfd)
 {
     if (rwfd > -1)
     {
