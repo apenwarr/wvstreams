@@ -177,6 +177,8 @@ void WvStreamClone::setclone(IWvStream *newclone)
     cloned = newclone;
     if (cloned)
 	cloned->setclosecallback(IWvStreamCallback(this, &WvStreamClone::close_callback));
+    if (newclone)
+        closed = stop_read = stop_write = false;
 }
 
 
