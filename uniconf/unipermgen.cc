@@ -12,6 +12,10 @@
 #include "wvmoniker.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
+#include "wvlog.h"
+
+
+WvLog log("UniPermGen", WvLog::Debug);
 
 
 UniPermGen::UniPermGen(UniConfGen *_gen) :
@@ -70,11 +74,13 @@ bool UniPermGen::getperm(const UniConfKey &path, const Credentials &cred, Type t
     WvString owner = getowner(path);
     WvString group = getgroup(path);
 
-    bool w = getoneperm(path, WORLD, type);
-    bool g = getoneperm(path, GROUP, type);
-    bool u = getoneperm(path, USER, type);
+    Level level;
+    if (cred.user == owner) level = USER;
+    else if (cred.groups[group]) level = GROUP;
+    else level = WORLD;
 
-    return (w || (g && cred.groups[group]) || (u && cred.user == owner));
+    bool perm = getoneperm(path, level, type);
+    return perm;
 }
 
 
@@ -101,29 +107,34 @@ bool UniPermGen::getoneperm(const UniConfKey &path, Level level, Type type)
 }
 
 
-void UniPermGen::chmod(const UniConfKey &path, int user, int group, int world)
+void UniPermGen::chmod(const UniConfKey &path, unsigned int user, unsigned int group,
+        unsigned int world)
 {
     static const int r = 4;
     static const int w = 2;
     static const int x = 1;
 
-    inner()->set(WvString("%s/user-read", path), (user & r));
-    inner()->set(WvString("%s/user-write", path), (user & w));
-    inner()->set(WvString("%s/user-exec", path), (user & x));
+    setperm(path, USER, READ, (user & r));
+    setperm(path, USER, WRITE, (user & w));
+    setperm(path, USER, EXEC, (user & x));
 
-    inner()->set(WvString("%s/group-read", path), (group & r));
-    inner()->set(WvString("%s/group-write", path), (group & w));
-    inner()->set(WvString("%s/group-exec", path), (group & x));
+    setperm(path, GROUP, READ, (group & r));
+    setperm(path, GROUP, WRITE, (group & w));
+    setperm(path, GROUP, EXEC, (group & x));
 
-    inner()->set(WvString("%s/world-read", path), (world & r));
-    inner()->set(WvString("%s/world-write", path), (world & w));
-    inner()->set(WvString("%s/world-exec", path), (world & x));
+    setperm(path, WORLD, READ, (world & r));
+    setperm(path, WORLD, WRITE, (world & w));
+    setperm(path, WORLD, EXEC, (world & x));
 }
 
 
-void UniPermGen::chmod(const UniConfKey &path, int mode)
+void UniPermGen::chmod(const UniConfKey &path, unsigned int mode)
 {
-    chmod(path, mode & 0700, mode & 0070, mode & 0007);
+    unsigned int user =  (mode & 0700) >> 6;
+    unsigned int group = (mode & 0070) >> 3;
+    unsigned int world = (mode & 0007);
+    
+    chmod(path, user, group, world);
 }
 
 

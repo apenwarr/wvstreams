@@ -53,7 +53,10 @@ void UniSecureGen::setcredentials(WvStringParm user, const WvStringList &groups)
 WvString UniSecureGen::get(const UniConfKey &key)
 {
     if (findperm(key, UniPermGen::READ))
-        return UniFilterGen::get(key);
+    {
+        WvString val = UniFilterGen::get(key);
+        return val;
+    }
     return WvString::null;
 }
 

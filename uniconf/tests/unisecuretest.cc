@@ -88,6 +88,8 @@ Objects *setup(WvStringParm perms)
     p->setexec("defaults/2", UniPermGen::GROUP, false);
     p->setexec("defaults/2", UniPermGen::WORLD, false);
 
+    p->commit();
+
     // create the uniconf obj and mount the generators
     Objects *o = new Objects(p, s);
     return o;
@@ -342,16 +344,16 @@ int main(int argc, char **argv)
     {
         printheader("OWNER, GROUP MATCH");
         Objects *o = setup("temp");    
-            
+
         UniPermGen::Credentials c;
         c.user = "clampy";
         c.groups.add(new WvString("cloggers"), true);
         o->s->setcredentials(c);
 
-        /** All succeed except --- */
+        /** ---, -g-, --w, -gw fail; o--, og-, o-w, ogw succeed */
         bool pass = true;
-        pass = testreadable(o->u, false, true, true, true, true, true, true, true) && pass;
-        pass = testwriteable(o->u, false, true, true, true, true, true, true, true) && pass;
+        pass = testreadable(o->u, false, true, false, false, true, true, false, true) && pass;
+        pass = testwriteable(o->u, false, true, false, false, true, true, false, true) && pass;
             
         teardown(o);
         printfooter(pass);
@@ -368,10 +370,10 @@ int main(int argc, char **argv)
         c.groups.add(new WvString("froggers"), true);
         o->s->setcredentials(c);
 
-        /** ---, -g- fail; o--, --w, og-, o-w, -gw, ogw succeed */
+        /** ---, -g-, --w, -gw fail; o--, og-, o-w, ogw succeed */
         bool pass = true;
-        pass = testreadable(o->u, false, true, false, true, true, true, true, true) && pass;
-        pass = testwriteable(o->u, false, true, false, true, true, true, true, true) && pass;
+        pass = testreadable(o->u, false, true, false, false, true, true, false, true) && pass;
+        pass = testwriteable(o->u, false, true, false, false, true, true, false, true) && pass;
         
         teardown(o);
         printfooter(pass);
@@ -388,10 +390,10 @@ int main(int argc, char **argv)
         c.groups.add(new WvString("cloggers"), true);
         o->s->setcredentials(c);
 
-        /** ---, o-- fail; -g-, --w, og-, o-w, -gw, ogw succeed */ 
+        /** ---, o--, --w, o-w fail; -g-, og-, -gw, ogw succeed */ 
         bool pass = true;
-        pass = testreadable(o->u, false, false, true, true, true, true, true, true) && pass;
-        pass = testwriteable(o->u, false, false, true, true, true, true, true, true) && pass;
+        pass = testreadable(o->u, false, false, true, false, true, false, true, true) && pass;
+        pass = testwriteable(o->u, false, false, true, false, true, false, true, true) && pass;
 
         teardown(o);
         printfooter(pass);

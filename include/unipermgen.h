@@ -82,8 +82,9 @@ public:
      * Set permissions for path using Unix style chmod (with the second form,
      * be sure to use octal)
      */
-    void chmod(const UniConfKey &path, int owner, int group, int world);
-    void chmod(const UniConfKey &path, int mode);
+    void chmod(const UniConfKey &path, unsigned int owner, unsigned int group,
+            unsigned int world);
+    void chmod(const UniConfKey &path, unsigned int mode);
 
 private:
 
