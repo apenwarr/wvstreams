@@ -147,27 +147,26 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
         
         return;
     }
-    bool didone = false;
-    for (;;)
+        
+    UniClientConn::Command command = conn->readcmd();
+
+    switch (command)
     {
-        UniClientConn::Command command = conn->readcmd();
-        if (command == UniClientConn::NONE)
+        case UniClientConn::NONE:
+            // do nothing
             break;
-        didone = true;
 
-        switch (command)
-        {
-            case UniClientConn::REPLY_OK:
-                cmdsuccess = true;
-                cmdinprogress = false;
-                break;
-                
-            case UniClientConn::REPLY_FAIL:
-                cmdsuccess = false;
-                cmdinprogress = false;
-                break;
+        case UniClientConn::REPLY_OK:
+            cmdsuccess = true;
+            cmdinprogress = false;
+            break;
 
-            case UniClientConn::REPLY_CHILD:
+        case UniClientConn::REPLY_FAIL:
+            cmdsuccess = false;
+            cmdinprogress = false;
+            break;
+
+        case UniClientConn::REPLY_CHILD:
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
@@ -183,7 +182,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
             }
 
-            case UniClientConn::REPLY_ONEVAL:
+        case UniClientConn::REPLY_ONEVAL:
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
@@ -199,7 +198,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 break;
             }
 
-            case UniClientConn::PART_VALUE:
+        case UniClientConn::PART_VALUE:
             {
                 WvString key(wvtcl_getword(conn->payloadbuf, " "));
                 WvString value(wvtcl_getword(conn->payloadbuf, " "));
@@ -213,17 +212,14 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
             }
 
             // FIXME: Check that we're connected to a uniconf daemon
-            case UniClientConn::EVENT_HELLO:
-                // discard server information
-                break;
+        case UniClientConn::EVENT_HELLO:
+            // discard server information
+            break;
 
-            default:
-                // discard unrecognized commands
-                break;
-        }
+        default:
+            // discard unrecognized commands
+            break;
     }
-    if (didone)
-        conn->alarm(TIMEOUT);
 }
 
 

@@ -58,6 +58,14 @@ UniClientConn::~UniClientConn()
     close();
 }
 
+
+bool UniClientConn::pre_select(SelectInfo &si)
+{
+    if (si.wants.readable && msgbuf.used()) return true;
+    return WvStreamClone::pre_select(si);
+}
+
+    
 bool UniClientConn::isok() const
 {
     return msgbuf.used() != 0 || WvStreamClone::isok();
