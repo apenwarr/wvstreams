@@ -283,6 +283,7 @@ void get_simple_acl_permissions(WvStringParm filename,
     // owners
     WvSimpleAclEntry *acl = new WvSimpleAclEntry;
     struct passwd *pw = getpwuid(st.st_uid);
+    acl->owner = false;
     if (!pw || !pw->pw_name || !strlen(pw->pw_name))
         acl->name = WvString(st.st_uid);
     else
