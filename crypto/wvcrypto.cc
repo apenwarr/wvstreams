@@ -142,6 +142,14 @@ WvBlowfishStream::~WvBlowfishStream()
 void WvRSAKey::init(const char *_keystr, bool priv)
 {
     errnum = 0;
+    rsa = NULL;
+    pub = prv = NULL;
+    
+    if (!_keystr)
+    {
+	seterr("RSA keystring is null!");
+	return;
+    }
 
     // the ssl library segfaults if the buffer isn't big enough and our key
     // is unexpectedly short... sigh.  There's probably a security hole
@@ -167,7 +175,10 @@ void WvRSAKey::init(const char *_keystr, bool priv)
 	rsa = wv_d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
 
 	if (!rsa)
+	{
 	    seterr("RSA Key is invalid!");
+	    free(keystr);
+	}
 	else
 	{
 	    prv = keystr;
@@ -183,7 +194,10 @@ void WvRSAKey::init(const char *_keystr, bool priv)
     {
 	rsa = wv_d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
 	if (!rsa)
+	{
 	    seterr("RSA Key is invalid!");
+	    free(keystr);
+	}
 	else
 	{
 	    prv = NULL;

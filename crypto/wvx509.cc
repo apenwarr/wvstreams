@@ -31,10 +31,14 @@ void wvssl_init()
 
 void wvssl_free()
 {
-    ssl_init_count--;
-    
+    // HACK: never allow this function to actually free stuff, because I
+    // think we're doing it wrong.
+    if (ssl_init_count >= 2)
+	ssl_init_count--;
+
     if (!ssl_init_count)
     {
+	assert(0);
 	ERR_free_strings();
 	EVP_cleanup();
     }
@@ -51,22 +55,53 @@ WvString wvssl_errstr()
 
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : debug("X509",WvLog::Debug5)
+    : dname("I'm a broken thingy"), debug("X509", WvLog::Debug5)
 {
+    wvssl_init();
     cert = _cert;
     rsa = NULL;
-    wvssl_init();
 }
 
 
-WvX509Mgr::WvX509Mgr(WvString dName, int bits, WvRSAKey *_rsa)
-    : debug("X509",WvLog::Debug5)
+WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvStringParm hexified_cert,
+		     WvStringParm hexified_rsa)
+    : dname(_dname), debug("X509", WvLog::Debug5)
 {
-    debug("Creating New Certificate for %s\n",dName);
-    rsa = _rsa;
-    cert = NULL;
     wvssl_init();
-    createSScert(dName, bits);
+    
+    cert = NULL;
+    rsa = new WvRSAKey(hexified_rsa, true);
+    if (!rsa->isok())
+    {
+	seterr("RSA Error: %s\n", rsa->errstring);
+	return;
+    }
+
+    unhexify(hexified_cert);
+}
+
+
+WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa)
+    : dname(_dname), debug("X509", WvLog::Debug5)
+{
+    assert(_rsa);
+    
+    wvssl_init();
+    debug("Creating new certificate for %s\n", dname);
+    cert = NULL;
+    rsa = _rsa;
+    create_selfsigned();
+}
+
+
+WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
+    : dname(_dname), debug("X509", WvLog::Debug5)
+{
+    wvssl_init();
+    debug("Creating new certificate for %s\n", dname);
+    cert = NULL;
+    rsa = new WvRSAKey(bits);
+    create_selfsigned();
 }
 
 
@@ -165,7 +200,7 @@ static WvString set_name_entry(X509_NAME *name, WvString dn)
 }
 
 
-void WvX509Mgr::createSScert(WvString dn, int keysize)
+void WvX509Mgr::create_selfsigned()
 {
     EVP_PKEY *pk;
     X509_NAME *name = NULL;
@@ -179,12 +214,7 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
 
     WvString serverfqdn;
 
-    if (rsa == NULL)
-    {
-	debug("Need a new RSA key, so generating it...\n");
-	rsa = new WvRSAKey(keysize);
-	debug("Ok, I've got a new RSA keypair\n");
-    }
+    assert(rsa);
 
     if ((pk=EVP_PKEY_new()) == NULL)
     {
@@ -219,7 +249,7 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
     X509_set_pubkey(cert, pk);
 
     name = X509_get_subject_name(cert);
-    serverfqdn = set_name_entry(name, dn);
+    serverfqdn = set_name_entry(name, dname);
     
     if (!serverfqdn)
 	serverfqdn = "null.noname.null";
@@ -255,82 +285,85 @@ void WvX509Mgr::createSScert(WvString dn, int keysize)
 	EVP_PKEY_free(pk);
 	return;
     }
-    debug("Certificate for %s created\n", dn);
-
-    // Now that we have the certificate created,
-    // be nice and leave it in enccert, so if someone needs it, they
-    // don't have to do that step... I'm not sure that this is going
-    // to stay... it's really not that hard to call encodecert() ;)
-    // It's staying... no need to make things harder than necessary ;)
-    encodecert();
+    debug("Certificate for %s created\n", dname);
 }
 
 
-WvString WvX509Mgr::createcertreq(WvString dName, int keysize)
+static FILE *file_hack_start()
+{
+    return tmpfile();
+}
+
+
+static WvString file_hack_end(FILE *f)
+{
+    WvBuffer b;
+    size_t len;
+    
+    rewind(f);
+    while ((len = fread(b.alloc(1024), 1, 1024, f)) > 0)
+	b.unalloc(1024 - len);
+    fclose(f);
+
+    return b.getstr();
+}
+
+
+WvString WvX509Mgr::certreq()
 {
     EVP_PKEY *pk;
     X509_NAME *name = NULL;
     X509_REQ *certreq;
-    WvString pkcs10("");
-    struct stat stupidstat;
+    WvString nil;
 
-    FILE *stupidtmp = tmpfile();
-
-    // First thing to do is to generate an RSA Keypair if the
-    // Manager doesn't already have one:
-    if (rsa == NULL)
-	rsa = new WvRSAKey(keysize);
+    FILE *stupid = file_hack_start();
     
+    assert(rsa);
+
     if ((pk=EVP_PKEY_new()) == NULL)
     {
         seterr("Error creating key handler for new certificate");
-        return pkcs10;
+        return nil;
     }
     
     if ((certreq=X509_REQ_new()) == NULL)
     {
         seterr("Error creating new PKCS#10 object");
-        return pkcs10;
+	EVP_PKEY_free(pk);
+        return nil;
     }
 
-    if (!EVP_PKEY_assign_RSA(pk, rsa->rsa))
+    WvRSAKey rsa2(*rsa);
+    if (!EVP_PKEY_assign_RSA(pk, rsa2.rsa))
     {
         seterr("Error adding RSA keys to certificate");
-        return pkcs10;
+	X509_REQ_free(certreq);
+	EVP_PKEY_free(pk);
+        return nil;
     }
     
-    X509_REQ_set_pubkey(certreq, pk);
-    name = X509_REQ_get_subject_name(certreq);   
-
-    set_name_entry(name, dName);
+    // don't let rsa2 free its own RSA key... the certificate will do that
+    // for us.
+    rsa2.rsa = NULL;
     
+    X509_REQ_set_pubkey(certreq, pk);
+
+    name = X509_REQ_get_subject_name(certreq);   
+    set_name_entry(name, dname);
     X509_REQ_set_subject_name(certreq, name);
 
     // Horribly involuted hack to get around the fact that the
     // OpenSSL people are too braindead to have a PEM_write function
     // that returns a char *
-    PEM_write_X509_REQ(stupidtmp,certreq);
-    // With any luck, PEM_write won't close the file ;)
-  
-    rewind(stupidtmp);
-
-    fstat(fileno(stupidtmp),&stupidstat);
-
-    pkcs10.setsize(stupidstat.st_size + 1);
-
-    fread(pkcs10.edit(),sizeof(char),stupidstat.st_size,stupidtmp);
-
-    fclose(stupidtmp);
-
-    pkcs10.edit()[stupidstat.st_size] = 0;
+    PEM_write_X509_REQ(stupid, certreq);
     X509_REQ_free(certreq);
     EVP_PKEY_free(pk);
-
-    return pkcs10;
+  
+    return file_hack_end(stupid);
 }
 
 
-bool WvX509Mgr::testcert()
+bool WvX509Mgr::test()
 {
     bool bad = false;
     
@@ -370,20 +403,23 @@ bool WvX509Mgr::testcert()
 }
 
 
-void WvX509Mgr::decodecert(WvString encodedcert)
+void WvX509Mgr::unhexify(WvString encodedcert)
 {
     int hexbytes = strlen((const char *)encodedcert);
     int bufsize = hexbytes/2;
     unsigned char *certbuf = new unsigned char[bufsize];
     const unsigned char *cp = certbuf;
     X509 *tmpcert;
+    
+    if (cert)
+	X509_free(cert);
 
-    unhexify(certbuf,encodedcert);
+    ::unhexify(certbuf, encodedcert);
     tmpcert = cert = X509_new();
     cert = wv_d2i_X509(&tmpcert, &cp, hexbytes/2);
 
     // make sure that the cert is valid
-    if (cert && !testcert())
+    if (cert && !test())
     {
 	X509_free(cert);
 	cert = NULL;
@@ -396,19 +432,21 @@ void WvX509Mgr::decodecert(WvString encodedcert)
 }
 
 
-void WvX509Mgr::encodecert()
+WvString WvX509Mgr::hexify()
 {
     size_t size;
     unsigned char *keybuf, *iend;
+    WvString enccert;
 
     size = i2d_X509(cert, NULL);
     iend = keybuf = new unsigned char[size];
     i2d_X509(cert, &iend);
 
     enccert.setsize(size * 2 +1);
-    hexify(enccert.edit(), keybuf, size);
+    ::hexify(enccert.edit(), keybuf, size);
 
     delete[] keybuf;
+    return enccert;
 }
 
 
@@ -478,7 +516,7 @@ bool WvX509Mgr::signedbyCAinfile(WvString certfile)
 bool WvX509Mgr::signedbyCAindir(WvString certdir)
 {
     WvDirIter i(certdir,false);
-    for (i.rewind(); i.next() ; )
+    for (i.rewind(); i.next(); )
     {
 	if (!signedbyCAinfile(i->fullname))
 	    return false;
@@ -489,71 +527,48 @@ bool WvX509Mgr::signedbyCAindir(WvString certdir)
 
 bool WvX509Mgr::isinCRL()
 {
-    return true;
+    return false;
 }
 
 
-void WvX509Mgr::load(WvString hexified_cert, WvString hexified_rsa)
+WvString WvX509Mgr::encode(DumpMode mode)
 {
-    if (rsa)
-        delete rsa;
-    if (cert)
-	delete cert;
-
-    rsa = new WvRSAKey(hexified_rsa, true);
-    if (!rsa->isok())
-    {
-	seterr("RSA Error: %s\n", rsa->errstring);
-	return;
-    }
-
-    decodecert(hexified_cert);
-
-    // Don't handle errors here, because the caller should just check 
-    // isok() when load is finished anyways.
-
-    return;
-}
-
-
-void WvX509Mgr::dump(WvString filename, DumpMode mode, bool append)
-{
-    FILE *outfile;
+    FILE *stupid;
     const EVP_CIPHER *enc;
+    WvString nil;
     
-    if (append)
-    {
-	debug("Opening %s for append.\n", filename);
-	outfile = fopen(filename, "a");
-    }
-    else
-    {
-	debug("Opening %s for write.\n", filename);
-	outfile = fopen(filename, "w");
-    }
+    stupid = file_hack_start();
     
-    if (outfile)
+    if (stupid)
     {
 	switch(mode)
 	{
 	case CertPEM:
-	    debug("Dumping X509 Certificate.\n");
-	    PEM_write_X509(outfile, cert);
+	    debug("Dumping X509 certificate.\n");
+	    PEM_write_X509(stupid, cert);
 	    break;
+	    
 	case RsaPEM:
 	    debug("Dumping RSA keypair.\n");
 	    enc = EVP_get_cipherbyname("rsa");
-	    PEM_write_RSAPrivateKey(outfile, rsa->rsa, enc, NULL, 0, NULL, NULL);
+	    PEM_write_RSAPrivateKey(stupid, rsa->rsa, enc,
+				    NULL, 0, NULL, NULL);
 	    break;
+	    
 	case RsaRaw:
 	    debug("Dumping raw RSA keypair.\n");
-	    RSA_print_fp(outfile, rsa->rsa, 0);
+	    RSA_print_fp(stupid, rsa->rsa, 0);
 	    break;
+	    
 	default:
 	    seterr("Unknown Mode\n");
 	}
-	fclose(outfile);
+	
+	return file_hack_end(stupid);
     }
     else
-        seterr("fopen: %s", strerror(errno));
+    {
+	debug(WvLog::Error, "Can't create temp file in WvX509Mgr::encode!\n");
+	return nil;
+    }
 }
