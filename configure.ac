@@ -450,5 +450,3 @@ AC_CONFIG_FILES(config.mk)
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 AC_OUTPUT
 
-touch include/wvautoconf.h
-

@@ -22,7 +22,7 @@ dist: dist-hack-clean configure distclean
 
 runconfigure: config.mk include/wvautoconf.h
 
-config.mk include/wvautoconf.h: configure config.mk.in include/wvautoconf.h.in
+config.mk: configure config.mk.in include/wvautoconf.h.in
 	$(error Please run the "configure" script)
 
 # FIXME: there is some confusion here
