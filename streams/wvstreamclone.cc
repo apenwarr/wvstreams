@@ -125,18 +125,20 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	result = result || cloned->pre_select(si);
 	
 	si.wants = oldwant;
-	return result;
     }
-    return false;
+    return result;
 }
 
 
 bool WvStreamClone::post_select(SelectInfo &si)
 {
     SelectRequest oldwant;
+    // This currently always returns false, but we prolly should
+    // still have it here in case it ever becomes useful
+    bool result = WvStream::post_select(si);
     bool val, want_write;
     
-    if (cloned)
+    if (cloned && cloned->should_flush())
 	flush(0);
 
     if (cloned && cloned->isok())
@@ -152,21 +154,21 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	want_write = si.wants.writable;
 	si.wants = oldwant;
 	
-	// return false if they're looking for writable and we still
+	// return result if they're looking for writable and we still
 	// have data in outbuf - the writable is for flushing, not for you!
 	if (want_write && outbuf.used())
-	    return false;
+	    return result;
 	else if (val && si.wants.readable && read_requires_writable
 		 && !read_requires_writable->select(0, false, true))
-	    return false;
+	    return result;
 	else if (val && si.wants.writable && write_requires_readable
 		 && !write_requires_readable->select(0, true, false))
-	    return false;
+	    return result;
 	else
-	    return val;
+	    return val || result;
     }
     
-    return false;
+    return result;
 }
 
 

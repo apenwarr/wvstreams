@@ -40,6 +40,7 @@ WvStream::WvStream()
     errnum = 0;
     max_outbuf_size = 0;
     outbuf_delayed_flush = false;
+    want_to_flush = true;
     is_auto_flush = true;
     alarm_was_ticking = false;
     force.readable = true;
@@ -324,7 +325,7 @@ size_t WvStream::write(const void *buf, size_t count)
     if (!isok() || !buf || !count) return 0;
     
     size_t wrote = 0;
-    if (! outbuf_delayed_flush && ! outbuf.used())
+    if (!outbuf_delayed_flush && !outbuf.used())
     {
 	wrote = uwrite(buf, count);
         count -= wrote;
@@ -341,13 +342,15 @@ size_t WvStream::write(const void *buf, size_t count)
         outbuf.put(buf, count);
         wrote += count;
     }
-    if (! outbuf_delayed_flush)
+
+    if (should_flush())
     {
         if (is_auto_flush)
             flush(0);
-        else
+        else 
             flush_outbuf(0);
     }
+
     return wrote;
 }
 
@@ -434,11 +437,19 @@ void WvStream::drain()
 
 void WvStream::flush(time_t msec_timeout)
 {
+    want_to_flush = true;
+
     // flush any other internal buffers a stream might have
     flush_internal(msec_timeout);
 
     // flush outbuf
     flush_outbuf(msec_timeout);
+}
+
+
+bool WvStream::should_flush()
+{
+    return want_to_flush;
 }
 
 
@@ -476,6 +487,9 @@ void WvStream::flush_outbuf(time_t msec_timeout)
             }
         }
     }
+
+    if (!outbuf.used() && outbuf_delayed_flush)
+        want_to_flush = false;
 }
 
 

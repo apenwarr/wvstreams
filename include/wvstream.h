@@ -93,6 +93,8 @@ public:
      * probably not exactly this.
      */
     virtual void flush(time_t msec_timeout) = 0;
+
+    virtual bool should_flush() = 0;
     
     // IObject
     static const UUID IID;
@@ -256,7 +258,10 @@ public:
      * automatically.  To flush the output buffer, use flush() or select().
      */ 
     void delay_output(bool is_delayed)
-        { outbuf_delayed_flush = is_delayed; }
+    {
+        outbuf_delayed_flush = is_delayed;
+        want_to_flush = !is_delayed;
+    }
 
     /**
      * if true, force write() to call flush() each time, the default behavour
@@ -272,7 +277,9 @@ public:
      * msec_timeout milliseconds at a time.  (-1 means wait forever)
      */
     virtual void flush(time_t msec_timeout);
-    
+
+    virtual bool should_flush();
+
     /**
      * flush the output buffer automatically as select() is called.  If
      * the buffer empties, close the stream.  If msec_timeout seconds pass,
@@ -532,6 +539,7 @@ private:
 		 bool readable, bool writable, bool isexcept,
 		 bool forceable);
 
+
 protected:
     static WvTaskMan *taskman;
 
@@ -543,6 +551,10 @@ protected:
     size_t max_outbuf_size;
     bool outbuf_delayed_flush;
     bool is_auto_flush;
+
+    // Used to guard against excessive flushing when using delay_flush
+    bool want_to_flush;
+
     size_t queue_min;		// minimum bytes to read()
     time_t autoclose_time;	// close eventually, even if output is queued
     struct timeval alarm_time;	// select() returns true at this time
