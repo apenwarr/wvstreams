@@ -67,7 +67,7 @@ distclean: clean
 
 clean: depend dust
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
-		$(GARBAGE) $(TESTS) \
+		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
 
 depend:
@@ -117,10 +117,8 @@ test: runconfigure all tests wvtestmain
 	$(WVTESTRUN) $(MAKE) runtests
 
 runtests:
-	mkdir -p tmp-test
 	$(VALGRIND) ./wvtestmain $(TESTNAME)
 	cd uniconf/tests && ./unitest.sh
-	rm -rf tmp.ini tmp-test
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \

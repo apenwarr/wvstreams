@@ -11,7 +11,7 @@ WvLogConsole logrcv(1);
 
 WVTEST_MAIN("default get_simple_acl_permissions()")
 {
-    WvString testfn("tmp-test/wvacltest"), username, groupname;
+    WvString testfn("wvacltest.tmp"), username, groupname;
     acl_check();
     WvFile tmp(testfn, O_WRONLY | O_CREAT | O_TRUNC, 0754);
 
@@ -34,7 +34,7 @@ WVTEST_MAIN("default get_simple_acl_permissions()")
 	groupname = gr->gr_name;
 
     WvSimpleAclEntryList acls;
-    get_simple_acl_permissions("tmp-test/wvacltest", acls);
+    get_simple_acl_permissions("wvacltest.tmp", acls);
  
     bool u_chk = false, g_chk = false, o_chk = false;
     WvSimpleAclEntryList::Iter i(acls);
