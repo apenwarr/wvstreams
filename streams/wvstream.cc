@@ -664,8 +664,13 @@ bool WvStream::continue_select(time_t msec_timeout)
     running_callback = false;
     taskman->yield();
     
-    // when we get here, someone has jumped back into our task
-    return !alarm_was_ticking;
+    // when we get here, someone has jumped back into our task.
+    // We have to select(0) here because it's possible that the alarm was 
+    // ticking _and_ data was available.  This is aggravated especially if
+    // msec_delay was zero.  Note that running select() here isn't
+    // inefficient, because if the alarm was expired then select_setup()
+    // returned true anyway and short-circuited the previous select().
+    return !alarm_was_ticking || select(0);
 }
 
 
