@@ -286,6 +286,7 @@ AC_CHECK_HEADERS([netinet/tcp.h])
 
 # Check for advanced Linux-style modem support
 AC_CHECK_HEADERS([linux/serial.h])
+AC_CHECK_FUNCS([cfmakeraw])
 
 # Look for getopt
 AC_CHECK_FUNCS([getopt],,[getopt=no])

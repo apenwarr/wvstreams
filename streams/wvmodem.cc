@@ -14,7 +14,9 @@
 
 #if HAVE_LINUX_SERIAL_H
 # include <linux/serial.h>
-#else
+#endif
+
+#if ! HAVE_CFMAKERAW
 static inline void cfmakeraw(struct termios *termios_p)
 {
     termios_p->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
@@ -192,22 +194,19 @@ void WvModem::setup_modem(bool rtscts)
 #if HAVE_LINUX_SERIAL_H
     struct serial_struct old_sinfo, sinfo;
     sinfo.reserved_char[0] = 0;
-    if (ioctl(getrfd(), TIOCGSERIAL, &old_sinfo) < 0) 
-    {
+    if (ioctl(getrfd(), TIOCGSERIAL, &old_sinfo) < 0)
 	seterr("Cannot get information for serial port.");
-	return;
-    }
-    sinfo = old_sinfo;
-    // Why there are two closing wait timeouts, is beyond me
-    // but there are... apparently the second one is deprecated
-    // but why take a chance...
-    sinfo.closing_wait = ASYNC_CLOSING_WAIT_NONE;
-    sinfo.closing_wait2 = ASYNC_CLOSING_WAIT_NONE;
-
-    if (ioctl(getrfd(), TIOCSSERIAL, &sinfo) < 0) 
+    else
     {
-	seterr("Cannot set information for serial port.");
-	return;
+	sinfo = old_sinfo;
+	// Why there are two closing wait timeouts, is beyond me
+	// but there are... apparently the second one is deprecated
+	// but why take a chance...
+	sinfo.closing_wait = ASYNC_CLOSING_WAIT_NONE;
+	sinfo.closing_wait2 = ASYNC_CLOSING_WAIT_NONE;
+
+	if (ioctl(getrfd(), TIOCSSERIAL, &sinfo) < 0)
+	    seterr("Cannot set information for serial port.");
     }
 #endif
 
