@@ -42,8 +42,11 @@ pack .f2 -anchor w
 scrollbar .s -orient h -width 20
 pack .s -fill x -padx 5 -pady 5
 
-button .closebutton -command {destroy .} -text "Close" -relief groove
-pack .closebutton -side bottom
+frame .b
+button .b.logbutton -command showlogs -text "View full log" -relief groove
+button .b.closebutton -command {destroy .} -text "Close" -relief groove
+pack .b.logbutton .b.closebutton  -side left
+pack .b -side bottom
 
 frame .l
 pack .l -padx 5 -pady 5 -expand on -fill both
@@ -53,6 +56,14 @@ pack .l.s -side right -fill y
 text .l.log -font $monofont -yscrollcommand {.l.s set}
 .l.log tag configure bold -font $monobold -foreground red
 pack .l.log -fill both -expand on -side left
+
+set fulllog ""
+
+proc showlogs {} {
+    global fulllog
+    .l.log delete 1.0 end
+    .l.log insert end $fulllog
+}
 
 proc addend {text args} {
     puts -nonewline $text
@@ -65,7 +76,7 @@ proc addend {text args} {
 }
 
 proc fix_progbar {} {
-    global total xtotal pass fail
+    global total xtotal pass fail fulllog
 
     catch {
         # increment progress bar
@@ -80,6 +91,8 @@ proc fix_progbar {} {
 }
 
 fileevent stdin readable {
+    global fulllog
+
     gets stdin line
     
     if [regexp {^Testing "(.*)" in (.*):$} $line junk sub file] {
@@ -98,6 +111,7 @@ fileevent stdin readable {
     }
     
     # puts $line
+    set fulllog "$fulllog $line\n"
     
     after idle {fix_progbar}
 
