@@ -1,4 +1,5 @@
-/*
+/* -*- Mode: C++ -*-
+ *
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */ 
@@ -6,6 +7,7 @@
 #define __WVPIPE_H
 
 #include "wvstream.h"
+#include "wvsubproc.h"
 
 class WvSplitStream;
 
@@ -16,9 +18,9 @@ class WvSplitStream;
  * Unlike pipes created with the popen() system call, you can capture
  * both stdin and stdout for the given process.  This is because we
  * actually use the socketpair() call instead.  If you try this,
- * however, you must be very careful to always use the select() call before
- * reading from the stream.  (Think what would happen if both ends of the
- * pipe do a read() simultaneously!)
+ * however, you must be very careful to always use the select() call
+ * before reading from the stream.  (Think what would happen if both
+ * ends of the pipe do a read() simultaneously!)
  * 
  * Note that we do not go as far as actually using a pty.  That means
  * programs which deliberately open /dev/tty will not be redirected.
@@ -30,8 +32,7 @@ class WvSplitStream;
  */
 class WvPipe : public WvStream
 {
-    pid_t pid;
-    int estatus;
+    WvSubProc proc;
 protected:
     void setup(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
@@ -110,7 +111,7 @@ public:
     int exit_status() const;
     
     // returns pid
-    int getpid() const { return pid; };
+    int getpid() const { return proc.pid; };
 };
 
 #endif // __WVPIPE_H

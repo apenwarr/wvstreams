@@ -7,8 +7,6 @@
  * 
  * See wvpipe.h for more information.
  */
-#include "wvpipe.h"
-#include "wvsplitstream.h"
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,6 +15,8 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <assert.h>
+#include "wvpipe.h"
+#include "wvsplitstream.h"
 
 // The assorted WvPipe::WvPipe() constructors are described in wvpipe.h
 
@@ -66,9 +66,8 @@ void WvPipe::setup(const char *program, const char * const *argv,
 {
     int socks[2];
     int flags;
-
-    pid = 0;
-    estatus = -1;
+    int waitfd;
+    int pid;
 
     if (!program || !argv)
     {
@@ -82,20 +81,16 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	return;
     }
 
-    pid = fork();
-    if (pid < 0)
+    fcntl(socks[0], F_SETFL, O_RDWR|O_NONBLOCK);
+    rwfd = socks[0];
+
+    pid = proc.fork(&waitfd);
+
+    if( !pid )
     {
-	pid = 0;
-	errnum = errno;
+	// child process
 	::close(socks[0]);
-	::close(socks[1]);
-	return;
-    }
-    
-    if (!pid)   // child process
-    {
-	::close(socks[0]);
-	
+
 	if (writable)
 	    dup2(socks[1], 0); // writable means redirect child stdin
 	else if (stdin_fd == -1)
@@ -144,57 +139,49 @@ void WvPipe::setup(const char *program, const char * const *argv,
 	    setsid();
 	    ioctl(1, TIOCSCTTY, 1);
 	}
+
+	::close(waitfd);
 	
 	// now run the program.  If it fails, use _exit() so no destructors
 	// get called and make a mess.
 	execvp(program, (char * const *)argv);
 	_exit(242);
     }
-
-    // otherwise, parent process
-
-    // set non-blocking
-    fcntl(socks[0], F_SETFL, O_RDWR|O_NONBLOCK);
-
-    rwfd = socks[0];
-    ::close(socks[1]);
+    else if (pid > 0)
+    {
+	// parent process
+	::close(socks[1]);
+    }
+    else
+    {
+	::close(socks[0]);
+	::close(socks[1]);
+	return;
+    }
 }
 
 
 // send the child process a signal
 void WvPipe::kill(int signum)
 {
-    if (pid)
-	::kill(pid, signum);
+    if( proc.running )
+	proc.kill(signum);
 }
 
 
 // wait for the child to die
 int WvPipe::finish()
 {
-    while (!child_exited())
-	usleep(100*1000);
+    while( proc.running )
+	proc.wait(100*1000);
     
-    return exit_status();
+    return proc.estatus;
 }
 
 
-// determine if the child process has exited.
-// Note:  if the child forks off, this does not necessarily mean that
-//    the stream is invalid!  (use isok() for that as usual)
 bool WvPipe::child_exited()
 {
-    int status;
-    pid_t dead_pid;
-    
-    if (!pid) return true;
-    
-    dead_pid = waitpid(pid, &status, WNOHANG);
-    if (dead_pid != pid)
-	return false;
-    estatus = status;
-    pid = 0;
-    return true;
+    return !proc.running;
 }
 
 
@@ -202,7 +189,7 @@ bool WvPipe::child_exited()
 // false if it died due to a call to exit().
 bool WvPipe::child_killed() const
 {
-    int st = estatus;
+    int st = proc.estatus;
     assert (WIFEXITED(st) || WIFSIGNALED(st));
     return WIFSIGNALED(st);
 }
@@ -212,7 +199,7 @@ bool WvPipe::child_killed() const
 // signal that killed the child (if it was killed).
 int WvPipe::exit_status() const
 {
-    int st = estatus;
+    int st = proc.estatus;
     assert (WIFEXITED(st) || WIFSIGNALED(st));
     if (child_killed())
 	return WTERMSIG(st);
@@ -221,33 +208,7 @@ int WvPipe::exit_status() const
 }
 
 
-// make sure our subtask ends up dead!
 WvPipe::~WvPipe()
 {
-    int status, count;
-    pid_t dead_pid;
-    
     close();
-    
-    if (!pid) return;
-
-    dead_pid = waitpid(pid, &status, WNOHANG);
-    if (dead_pid == 0)
-    {
-	kill(SIGTERM);
-	
-	for (count = 20; count > 0; count--)
-	{
-	    dead_pid = waitpid(pid, &status, WNOHANG);
-	    if (dead_pid == pid)
-		break;
-	    usleep(100 * 1000);
-	}
-	
-	if (dead_pid == 0)
-	{
-	    kill(SIGKILL);
-	    waitpid(pid, &status, 0);
-	}
-    }
 }
