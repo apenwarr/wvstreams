@@ -146,12 +146,13 @@ UniConf *UniConf::find_make(const UniConfKey &key)
     if (htop->generator)
     {
         UniConf *toreturn = htop->generator->make_tree(this, key);
-        while (toreturn->waiting)
+       
+        // avoid an infinite loop... but at the same time check to see
+        // that we can get our info.
+        for ( int count = 0; toreturn->waiting && count <100; count++)
         {
             htop->generator->update(toreturn);
-            wvcon->print("Waiting?:%s\n", toreturn->waiting);
         }
-	//return htop->generator->make_tree(this, key);
         return toreturn;
     }
     else

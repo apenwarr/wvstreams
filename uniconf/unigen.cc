@@ -38,11 +38,16 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
     return parent;
 }
 
+void UniConfGen::update_tree()
+{
+    // do nothing by default.
+}
 
 void UniConfGen::update(UniConf *&h)
 {
     h->dirty = false;
     h->waiting = false;
+    h->obsolete = false;
 }
 
 

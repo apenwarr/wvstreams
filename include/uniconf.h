@@ -73,7 +73,8 @@ public:
     // this function may return NULL if the object "shouldn't" exist
     // (in the opinion of the generator)
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
-    
+   
+    virtual void update_tree();
     virtual void update(UniConf *&h);
     
     // the default load/save functions don't do anything... you might not

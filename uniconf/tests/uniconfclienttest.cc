@@ -58,28 +58,42 @@ int main(int argc, char **argv)
         // uhm, why not?
         errorcheck(*conn);
     }
-    UniConf *mounted = &mainconf["/"];
-    mounted->generator = new UniConfClient(mounted, conn);
-    mounted->generator->load();     // This should do nothing.
-    
-    // just test getting a key
+
+    // Test data setting / retrieval from a mount at /
     {
-        UniConf *narf = &mainconf["/chickens/bob"];
-        wvcon->print("/chickens/bob = %s.\n", *narf);
-        narf = &mainconf["/wacky\ntest\nsection/  goose  "];
-        wvcon->print("/wacky\ntest\nsection/  goose  = %s\n", *narf);
+        UniConf *mounted = &mainconf["/nerf"];
+        mounted->generator = new UniConfClient(mounted, conn);
+        mounted->generator->load();     // This should do nothing.
+
+        // just test getting a few keys
+        {
+            UniConf *narf = &mainconf["/nerf/chickens/bob"];
+            wvcon->print("/chickens/bob = %s.\n", *narf);
+            narf = &mainconf["/wacky\ntest\nsection/  goose  "];
+            wvcon->print("/wacky\ntest\nsection/  goose  = %s\n", *narf);
+            narf = &mainconf[("/this key should not exist/ bcscso ")];
+            wvcon->print("/this key should not exist/ bcscso = %s.\n", *narf);
+        }
+
+        // Test getting & setting a key
+        {
+            UniConf *narf = &mainconf["/chickens/bob"];
+            wvcon->print("original:  /chickens/bob = %s.\n", *narf);
+            narf->set(wvtcl_escape("Well isn't this just DANDY!"));
+            wvcon->print("/chickens/bob = %s.\n", *narf);
+        }
+        
+        mounted->generator->update_tree();
+        if (!mounted->child_obsolete)
+            wvcon->print("Notifications are not working.\n");
     }
 
-    // Test getting & setting a key
-    {
-        UniConf *narf = &mainconf["/chickens/bob"];
-        wvcon->print("/chickens/bob = %s.\n", *narf);
-        narf->set(wvtcl_escape("Well isn't this just DANDY!"));
-        wvcon->print("/chickens/bob = %s.\n", *narf);
-        if (mainconf.dirty || mainconf.child_dirty)
-            mainconf.save();
-    }
+    // Test notification retrieval.
+/*    {
+        UniConf *mounted = &mainconf["/"];
+        mounted->generator = new UniConfClient(mounted,conn);
+        mounted->generator->load();
+    }*/
 
-//    conn.print("quit\n");
     return 0;
 }

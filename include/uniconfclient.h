@@ -27,14 +27,15 @@ DeclareWvDict(waitingdata, UniConfString, key);
 class UniConfClient : public UniConfGen, UniConfConn//WvStreamClone
 {
 public:
-//    WvStream *daemoncon;
     UniConf *top;
     WvLog log;
     waitingdataDict dict;
     
     UniConfClient(UniConf *_top, WvStream *conn);
+    ~UniConfClient();
 
     virtual UniConf *make_tree(UniConf *parent, const UniConfKey &key);
+    virtual void update_tree();
     virtual void update(UniConf *&h);
 
     virtual void save();

@@ -23,7 +23,7 @@ void UniConfDaemonConn::execute()
     UniConfConn::execute();
     fillbuffer();
 
-    WvString *line = wvtcl_getword(incomingbuff, "\n");
+    WvString *line = gettclline();
     WvString *cmd = NULL;
     WvString *key = NULL;
     while (line)
@@ -62,7 +62,7 @@ void UniConfDaemonConn::execute()
             else if (*cmd == "set") // set the specified value
             {
                 WvString *newvalue = wvtcl_getword(fromline);
-                source->mainconf[*key] = *newvalue;
+                source->mainconf[*key] = wvtcl_unescape(*newvalue);
                 delete cmd;
                 cmd = key = 0;
                 source->keymodified = true;
@@ -76,7 +76,7 @@ void UniConfDaemonConn::execute()
             // that means that we were at the end of a word, and since all
             // requests are "single line" via tclstrings, no worries.
         }
-        line = wvtcl_getword(incomingbuff, "\n");
+        line = gettclline(); 
     }
 
 }

@@ -104,7 +104,11 @@ void UniConfEvents::do_callbacks()
     {
 	h = find_match(&cfg, i->key);
 	if (h)
+        {
+            // run the callback then delete.
 	    i->cb(i->userdata, *h);
+            i.xunlink();
+        }
     }
 }
 

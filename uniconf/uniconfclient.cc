@@ -14,6 +14,10 @@ UniConfClient::UniConfClient(UniConf *_top, WvStream *conn) : UniConfConn/*WvStr
 {
 }
 
+UniConfClient::~UniConfClient()
+{
+}
+
 void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
 {
     // Ok, check to see if *THIS* subtree is dirty.
@@ -72,8 +76,15 @@ UniConf *UniConfClient::make_tree(UniConf *parent, const UniConfKey &key)
     return toreturn;
 }
 
+void UniConfClient::update_tree()
+{
+    if (select(0, true, false, false))
+        callback();
+}
+
 void UniConfClient::update(UniConf *&h)
 {
+    wvcon->print("Key:  %s.\n", h->gen_full_key());
     waitingdata *data = dict[(WvString)h->gen_full_key()];
 
     if (select(0,true, false, false) || (h->waiting && !data && select(-1, true, false, false)))
@@ -84,8 +95,11 @@ void UniConfClient::update(UniConf *&h)
     
     if (data) 
     {
+        // If we are here, we will not longer be waiting nor will our data be
+        // obsolete.
         h->set(data->value.unique());
         h->waiting = false;
+        h->obsolete = false;
         dict.remove(data);
     }
 
