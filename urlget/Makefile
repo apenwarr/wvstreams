@@ -5,20 +5,18 @@ CXXFLAGS += -I../include
 
 XPATH=.. ../utils ../streams ../ipstreams ../crypto
 
-TESTS=http2test
-
-default: all $(TESTS)
+default: all
 
 all: urlget.libs
-
-urlget.a: urlget.libs ../ipstreams/ipstreams.libs
 
 urlget.libs: wvhttppool.o ../crypto/crypto.libs
 
 LIBS=-lssl
-#LIBS+=$(EFENCE)
-$(TESTS): wvhttppool.o urlget.a
 
 clean:
-	rm -f $(TESTS)
+	$(MAKE) -C tests clean
+
+.PHONY: tests
+tests: urlget.libs
+	$(MAKE) -C tests
 

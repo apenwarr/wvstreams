@@ -1,0 +1,17 @@
+*.d
+testlist
+testhash
+stresshash
+testbuffer
+testbase64
+testver
+teststr
+testtask
+testsort
+testproc
+testfork
+testencoder
+testdiriter
+testcallback
+testcrash
+testtcl

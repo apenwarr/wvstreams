@@ -14,8 +14,7 @@ XPATH=.. ../utils ../zlib
 
 #LIBS=$(EFENCE)
 
-default: all watchtest pipetest clonetest modemtest logtest logbuftest  \
-         syslogtest looptest timetest prototest
+default: all
 
 all: report-lock-mode streams.libs
 
@@ -35,11 +34,9 @@ streams.libs: wvstream.o wvstreamlist.o wvsplitstream.o wvstreamclone.o \
 	wvlockfile.o wvdailyevent.o wvtimeoutstream.o wvlogfile.o wvtundev.o \
 	$(LOCKDEV) ../utils/utils.libs
 
-streams.a: streams.libs $(LOCKDEV)
-
-watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
-	looptest timetest prototest: streams.a
-
 clean:
-	rm -f watchtest pipetest clonetest modemtest logtest logbuftest \
-              syslogtest looptest timetest prototest
+	$(MAKE) -C tests clean
+
+.PHONY: tests
+tests: streams.libs
+	$(MAKE) -C tests

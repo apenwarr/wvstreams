@@ -5,23 +5,18 @@ CXXFLAGS += -I../include
 
 XPATH=../utils ../streams ../configfile
 
-TESTS=conftest itertest eventtest emutest
+default: all
 
-default: all $(TESTS)
-
-all: uniconf.a
-
-$(TESTS): uniconf.a
+all: uniconf.libs
 
 uniconf.libs: unikey.o uniconf.o unigen.o uniconfiter.o \
 	unievents.o uniconfini.o wvconfemu.o \
 	../configfile/configfile.libs
 
-uniconf.a: uniconf.libs
-
-LIBS = ${EFENCE}
-
 clean:
-	rm -f $(TESTS) *.new
+	$(MAKE) -C tests clean
 
+.PHONY: tests
+tests: uniconf.libs
+	$(MAKE) -C tests
 

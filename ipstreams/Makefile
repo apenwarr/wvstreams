@@ -5,11 +5,7 @@ CXXFLAGS += -I../include
 
 XPATH=.. ../utils ../streams
 
-TESTS=tcptest udptest udp2test listentest unixtest ulistentest \
-	resolvertest routetest \
-	conttest aliastest simpleconn httptest urltest
-
-default: all $(TESTS)
+default: all
 
 all: ipstreams.libs
 
@@ -20,10 +16,10 @@ ipstreams.libs: wvaddr.o wvtcp.o wvudp.o wvresolver.o \
 
 ipstreams.a: ipstreams.libs
 
-#LIBS=$(EFENCE)
-$(TESTS): ipstreams.a
-
-
 clean:
-	rm -f $(TESTS)
+	$(MAKE) -C tests clean
+
+.PHONY: tests
+tests: ipstreams.libs
+	$(MAKE) -C tests
 
