@@ -328,7 +328,7 @@ size_t WvDsp::do_uread(void *buf, size_t len)
     if (len < frag_size)
         log(WvLog::Warning, "reading less than frag size: %s/%s\n", len, frag_size);
 
-    int i, i2;
+    size_t i, i2;
     
     if (len > frag_size)
 	len = frag_size;
