@@ -27,8 +27,8 @@ static void sslloop(WvIStreamList &list, WvX509Mgr &x509,
     s2 = new WvSSLStream(_s2);
     
     list.auto_prune = false;
-    list.append(s1, true);
-    list.append(s2, true);
+    list.append(s1, true, "s1");
+    list.append(s2, true, "s2");
 }
 
 
@@ -60,11 +60,17 @@ WVTEST_MAIN("crypto basics")
     s1->print("foostring");
     run(list, s1, s2);
     s1->close();
+    list.unlink(s1); // auto_prune disabled, so we need to do this by hand
     run(list, NULL, s2);
+    
     WvDynBuf buf;
     WVPASSEQ(s2->read(buf, 1024), 9);
     WVPASSEQ(buf.getstr(), "foostring");
     WVPASS(s2->isok());
+    run(list, NULL, s2);
+    
+    WVPASSEQ(s2->read(buf, 1024), 0);
+    WVFAIL(s2->isreadable());
     run(list, NULL, s2);
     WVPASSEQ(s2->read(buf, 1024), 0);
     WVFAIL(s2->isok());
