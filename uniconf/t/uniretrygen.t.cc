@@ -72,3 +72,14 @@ WVTEST_MAIN("uniconfd")
 
     WVPASS(!cfg["/key"].exists());
 }
+
+
+WVTEST_MAIN("mount point exists")
+{
+    // bug 9769
+    UniConfRoot uniconf("temp:");
+    
+    WVPASS(uniconf["foo"].mount("retry:unix:/tmp/foobar"));
+
+    WVPASS(uniconf["foo"].exists());
+}
