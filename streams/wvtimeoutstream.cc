@@ -8,10 +8,10 @@
 
 bool WvTimeoutStream::pre_select(SelectInfo &si)
 {
-    time_t now = getmsec();
+    int now = getmsec();
 
     /* We expired. */
-    if(now >= timeout)
+    if(now - timeout >= 0)
     {
 	return true;
     }
