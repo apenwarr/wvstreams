@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.73, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.15.2.4 2003/07/10 06:52:33 apenwarr Exp $)
+AC_REVISION($Id: configure.ac,v 1.15.2.5 2003/07/11 03:38:28 apenwarr Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -373,7 +373,7 @@ if test "$with_fftw" == "no"; then
 fi
 if test "$with_pam" == "no"; then
     AC_MSG_WARN([PAM is missing.])
-    missing_devel=yes
+#    missing_devel=yes
 fi
 if test "$with_qt" == "no"; then
     AC_MSG_WARN([Qt is missing.])
