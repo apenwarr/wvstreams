@@ -9,7 +9,7 @@
 #include "wvpam.h"
 
 
-unsigned int WvHash(const UniConfGen *u)
+unsigned int WvHash(const IUniConfGen *u)
 {
     return WvHash((int) u);
 }
