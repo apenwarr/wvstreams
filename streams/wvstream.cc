@@ -424,7 +424,10 @@ void WvStream::flush(time_t msec_timeout)
 	// since test_set() can call us, and select() calls test_set(),
 	// we need to be careful not to call select() if we don't need to!
 	if (!msec_timeout || !select(msec_timeout, false, true))
-	    break;
+        {
+            if (msec_timeout >= 0)
+                break;
+        }
     }
 
     if (autoclose_time)
