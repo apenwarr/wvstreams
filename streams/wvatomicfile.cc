@@ -48,7 +48,7 @@ bool WvAtomicFile::open(WvStringParm filename, int mode, int create_mode)
             return false;
         }
 
-        tmp_file = WvString("%s/nitixXXXXXX", getdirname(filename));
+        tmp_file = WvString("%s/WvAtomicFile-XXXXXX", getdirname(filename));
         tmpfd = mkstemp(tmp_file.edit());
         fcntl(tmpfd, F_SETFL, mode);
 
