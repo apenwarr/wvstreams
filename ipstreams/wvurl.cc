@@ -65,12 +65,12 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
 	return;
     }
 
+    use_slashes = protocol_uses_slashes(wptr);
+
     cptr = strchr(wptr, ':');
     *cptr = 0;
     proto = wptr;
     
-    use_slashes = protocol_uses_slashes(proto);
-
     wptr = cptr + (use_slashes ? 3 : 1);
 
     cptr = strchr(wptr, '@');
@@ -168,7 +168,7 @@ WvUrl::operator WvString () const
     else
         protostr = WvString("%s:", proto);
     WvString userstr("");
-    if (user)
+    if (user && user.len() != 0)
         userstr = WvString("%s@", user);
     WvString portstr("");
     if (port && port != get_default_port(proto))

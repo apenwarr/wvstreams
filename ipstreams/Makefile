@@ -5,7 +5,7 @@ XPATH=.. ../utils ../streams
 
 TESTS=tcptest udptest udp2test listentest unixtest ulistentest \
 	resolvertest routetest \
-	conttest aliastest simpleconn httptest
+	conttest aliastest simpleconn httptest urltest
 
 default: all $(TESTS)
 
