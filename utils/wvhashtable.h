@@ -58,8 +58,6 @@
  * 
  * 
  * NOTES:
- *    - g++ does templates badly, or we would use those.
- * 
  *    - This class acts a lot like the WvList class in wvlinklist.h,
  *        possibly because it is based on an array of WvLists.  You
  *        should see wvlinklist.h for many interesting usage notes.
@@ -143,104 +141,133 @@ public:
 };
 
 
-// this is ugly.
+// this used to be ugly, but now it's just kind of weird and hacky.
 
-#define __WvDict_base(_classname_, _type_, _ftype_, _field_, _extra_)	\
-class _classname_ : public WvHashTable					\
-{									\
-protected:								\
-    DeclareWvList(_type_);						\
-									\
-    unsigned hash(const _type_ *data)					\
-	{ return WvHash((*data) _field_); }				\
-    static bool comparator(const void *key, const void *elem)		\
-        { return *(_ftype_ *)key == (*(_type_ *)elem) _field_; }	\
-									\
-public:									\
-    _classname_(unsigned _numslots) : WvHashTable(_numslots)		\
-        { slots = new _type_##List[numslots]; setup(); }		\
-    									\
-    _type_##List *sl()							\
-	{ return (_type_##List *)slots; }				\
-    									\
-    ~##_classname_()							\
-        { shutdown(); delete[] sl(); }					\
-    									\
-    void add(_type_ *data, bool auto_free)				\
-        { sl()[hash(data) % numslots].append(data, auto_free); }	\
-    									\
-    _type_ *operator[] (const _ftype_ &key)				\
-        { return (_type_ *)genfind(slots, &key, WvHash(key), comparator); } \
-									\
-    void remove(const _type_ *data)					\
-    {									\
-	unsigned h = hash(data);					\
-	WvLink *l = prevlink(slots, &(*data) _field_, h, comparator);	\
-	if (l && l->next) sl()[h % numslots].unlink_after(l);		\
-    }									\
-									\
-    void zap()								\
-    {									\
-	delete[] sl();							\
-	slots = new _type_##List[numslots];				\
-    }									\
-									\
-    class Iter : public WvHashTable::IterBase				\
-    {									\
-    public:								\
-	Iter(_classname_ &_tbl) : IterBase(_tbl)			\
-	    { }								\
-	_type_ *ptr() const						\
-	    { return (_type_ *)link->data; }				\
-	operator _type_& () const					\
-	    { return *ptr(); }						\
-	_type_ &operator () () const					\
-	    { return *ptr(); }						\
-	_type_ *operator -> () const					\
-	    { return ptr(); }						\
-        _type_ &operator* () const                                      \
-            { return *ptr(); }                                          \
-    };									\
-                                                                        \
-    class Sorter : public WvHashTable::SorterBase                       \
-    {                                                                   \
-    public:                                                             \
-        int (*cmp)(const _type_ **, const _type_ **);                   \
-                                                                        \
-        Sorter(_classname_ &_tbl,                                       \
-               int (*_cmp)(const _type_ **, const _type_ **))           \
-            : SorterBase(_tbl), cmp(_cmp)                               \
-            { }                                                         \
-        _type_ *ptr() const                                             \
-            { return (_type_ *)(*lptr)->data; }                         \
-        operator _type_& () const                                       \
-            { return *ptr(); }                                          \
-        _type_ &operator () () const                                    \
-            { return *ptr(); }                                          \
-        _type_ *operator -> () const                                    \
-            { return ptr(); }                                           \
-        _type_ &operator* () const                                      \
-            { return *ptr(); }                                          \
-        void rewind()                                                   \
-            { SorterBase::rewind((int (*)(const void *, const void *))  \
-                                 ((void *)cmp)); }                      \
-    };                                                                  \
-    									\
-public:									\
-    _extra_								\
+typedef const void *WvFieldPointer(const void *obj);
+
+template <class _type_, class _ftype_, WvFieldPointer *fptr>
+class WvHashTableTmpl : public WvHashTable
+{
+protected:
+    //static const _ftype_ *fptr(const _type_ *obj)
+    //    { return (const _ftype_*)(((const char *)obj) + _fieldofs_); }
+    unsigned hash(const _type_ *data)
+	{ return WvHash(*(const _ftype_ *)fptr(data)); }
+    static bool comparator(const void *key, const void *elem)
+        { return *(_ftype_ *)key == *(const _ftype_ *)fptr((const _type_ *)elem); }
+
+public:
+    WvHashTableTmpl(unsigned _numslots) : WvHashTable(_numslots)
+        { slots = new WvListTmpl<_type_>[numslots]; setup(); }
+
+    WvListTmpl<_type_> *sl()
+	{ return (WvListTmpl<_type_> *)slots; }
+
+    ~WvHashTableTmpl()
+        { shutdown(); delete[] sl(); }
+
+    void add(_type_ *data, bool auto_free)
+        { sl()[hash(data) % numslots].append(data, auto_free); }
+
+    _type_ *operator[] (const _ftype_ &key)
+        { return (_type_ *)genfind(slots, &key, WvHash(key), comparator); }
+
+    void remove(const _type_ *data)
+    {
+	unsigned h = hash(data);
+	WvLink *l = prevlink(slots, fptr(data), h, comparator);
+	if (l && l->next) sl()[h % numslots].unlink_after(l);
+    }
+
+    void zap()
+    {
+	delete[] sl();
+	slots = new WvListTmpl<_type_>[numslots];
+    }
+
+    class Iter : public WvHashTable::IterBase
+    {
+    public:
+	Iter(WvHashTableTmpl &_tbl) : IterBase(_tbl)
+	    { }
+	_type_ *ptr() const
+	    { return (_type_ *)link->data; }
+	operator _type_& () const
+	    { return *ptr(); }
+	_type_ &operator () () const
+	    { return *ptr(); }
+	_type_ *operator -> () const
+	    { return ptr(); }
+        _type_ &operator* () const
+            { return *ptr(); }
+    };
+
+    class Sorter : public WvHashTable::SorterBase
+    {
+    public:
+        int (*cmp)(const _type_ **, const _type_ **);
+
+        Sorter(WvHashTableTmpl &_tbl,
+               int (*_cmp)(const _type_ **, const _type_ **))
+            : SorterBase(_tbl), cmp(_cmp)
+            { }
+        _type_ *ptr() const
+            { return (_type_ *)(*lptr)->data; }
+        operator _type_& () const
+            { return *ptr(); }
+        _type_ &operator () () const
+            { return *ptr(); }
+        _type_ *operator -> () const
+            { return ptr(); }
+        _type_ &operator* () const
+            { return *ptr(); }
+        void rewind()
+            { SorterBase::rewind((int (*)(const void *, const void *))
+                                 ((void *)cmp)); }
+    };
 };
 
 
-#define DeclareWvDict3(_type_, _newname_, _ftype_, _field_, _extra_) \
+// the _hack container class is necessary because if DeclareWvDict is run
+// inside a class definition, the typedef can't access this function for
+// some reason (g++ bug or c++ bug?  The world is left wondering...)
+//
+// Of course, the typedef _itself_ wouldn't be necessary if I could make the
+// new class's constructor call the template's constructor by name.  I'm
+// almost _certain_ that's a g++ bug.
+//
+#define __WvDict_base(_classname_, _type_, _ftype_, _field_, _extra_)	\
+    struct _classname_##_hack 						\
+    { 									\
+        static inline const void *_classname_##_fptr_(const void *obj) 	\
+	    { return &((*(const _type_ *)obj) _field_); } 		\
+    }; 									\
+									\
+    typedef WvHashTableTmpl<_type_, _ftype_, 				\
+			_classname_##_hack::_classname_##_fptr_> 	\
+			_classname_##Base; 				\
+    									\
+    class _classname_ : public _classname_##Base 			\
+    { 									\
+    public: 								\
+	_classname_(unsigned _numslots) : _classname_##Base(_numslots)	\
+		{ }							\
+	void add(_type_ *data, bool auto_free)				\
+		{ _classname_##Base::add(data, auto_free); };		\
+	_extra_								\
+    };
+
+
+#define DeclareWvDict3(_type_, _newname_, _ftype_, _field_, _extra_) 	\
 	__WvDict_base(_newname_, _type_, _ftype_, . _field_, _extra_)
-#define DeclareWvDict2(_type_, _ftype_, _field_, _extra_) \
+#define DeclareWvDict2(_type_, _ftype_, _field_, _extra_)		\
         DeclareWvDict3(_type_, _type_##Dict, _ftype_, _field_, _extra_)
-#define DeclareWvDict(_type_, _ftype_, _field_) \
+#define DeclareWvDict(_type_, _ftype_, _field_) 			\
 	DeclareWvDict2(_type_, _ftype_, _field_, )
 
-#define DeclareWvTable3(_type_, _newname_, _extra_) \
+#define DeclareWvTable3(_type_, _newname_, _extra_)			\
 	__WvDict_base(_newname_, _type_, _type_, , _extra_)
-#define DeclareWvTable2(_type_, _extra_) \
+#define DeclareWvTable2(_type_, _extra_) 				\
 	DeclareWvTable3(_type_, _type_##Table, _extra_)
 #define DeclareWvTable(_type_) DeclareWvTable2(_type_, )
 
