@@ -54,6 +54,8 @@ void WvLogBuffer::_end_line()
 	
 	if (lastmsg->level < WvLog::NUM_LOGLEVELS)
 	{
+	    // when we add a log message to the buffer, we need to remove 
+	    // some from the top of the buffer, if it is fills...
 	    int &nl = numlines[lastmsg->level];
 	    
 	    MsgList::Iter i(msgs);

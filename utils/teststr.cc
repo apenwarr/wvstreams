@@ -1,3 +1,26 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvString test program.  Correct results:
+ *
+ *      A WvString is 8 bytes long.
+ *      Foo Foo
+ *      0 1 0 0 1
+ *      1 0 1 1 0
+ *      1 0 0 1
+ *      0 1
+ *      0 1
+ *      Foo
+ *      1 1 0
+ *      0 1 0 0
+ *      hello
+ *      xyzzi 5                                        hello          b
+ *      uest string
+ *      vest string
+ *      vest string .. west string
+ */
+
 #include "wvstring.h"
 
 WvString test1(WvString s)

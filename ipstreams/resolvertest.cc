@@ -1,6 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvResolver test program.  Tries to look up two host names given on the
+ * command line.
  */
 #include "wvresolver.h"
 #include "wvlog.h"

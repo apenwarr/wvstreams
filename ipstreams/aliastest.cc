@@ -1,5 +1,12 @@
-#include "wvipaliaser.h"
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvIPAliaser test program.
+ *
+ */
 
+#include "wvipaliaser.h"
 
 int main()
 {

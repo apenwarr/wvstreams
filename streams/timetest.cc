@@ -1,7 +1,11 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvTimeStream test.  Should take exactly ten seconds to run, but 
+ * tests how well the time stream handles being executed in bursts.
  */
+
 #include "wvtimestream.h"
 #include "wvlog.h"
 #include <sys/time.h>

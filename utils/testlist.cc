@@ -1,3 +1,14 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvStringList test program.  Correct results:
+ * 	Thingy: foo
+ * 	Thingy: blue
+ * 	Thingy: true
+ * 	Dingy: 6
+ * 	Dingy: 5
+ */
 
 #include "wvlinklist.h"
 #include "wvstring.h"

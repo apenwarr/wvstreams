@@ -1,3 +1,12 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * Test of the WvLogBuffer class.  The expected output is shown below for each 
+ * portion of the test.
+ *
+ */
+
 #include "wvlogbuffer.h"
 #include <unistd.h>
 

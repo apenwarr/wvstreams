@@ -294,6 +294,7 @@ int WvInterface::setmtu(int mtu)
 }
 
 
+// Fill a routing table entry with the given information.
 void WvInterface::fill_rte(struct rtentry *rte, char ifname[17],
 			   const WvIPNet &dest, const WvIPAddr &gw,
 			   int metric)

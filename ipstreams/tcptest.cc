@@ -1,6 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvTCPConn test.  Telnets to your local SMTP port, or any other port given
+ * on the command line.
  */
 #include "wvtcp.h"
 #include "wvstreamlist.h"

@@ -38,6 +38,8 @@ void WvString::newbuf(size_t size)
 }
 
 
+// If the string is linked to more than once, we need to make our own copy 
+// of it.  If it was linked to only once, then it's already "unique".
 WvString &WvString::unique()
 {
     if (buf->links > 1)

@@ -1,6 +1,8 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvUDPStream test.  Waits for data on port 19.
  */
 #include "wvstreamlist.h"
 #include "wvlog.h"

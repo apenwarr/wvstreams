@@ -1,7 +1,21 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * Expected output:
+ *	logA<*1>: a message
+ *	logB<*2>: b message
+ *	logB<*2>: b message
+ *	logC<*3>: c message with extra newline
+ *	logC<*4>: c2 message
+ *	logA<Info>: a info message
+ *	logA<*1>: a normal message with [07][08] control chars
+ *	logA<*1>: a split
+ *	logB<*2>: message with stuff
+ *	logB<Info>: and other stuff.
+ *	logC<*3>: another split message.
  */
+
 #include "wvlogrcv.h"
 #include <unistd.h>
 

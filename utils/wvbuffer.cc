@@ -5,6 +5,8 @@
  * Declarations for WvMiniBuffer (a statically-sized data buffer with
  * get/put functions) and WvBuffer (a dynamically-sized buffer made from
  * a list of WvMiniBuffers).
+ *
+ * All these functions are described in wvbuffer.h
  */
 #include "wvbuffer.h"
 #include <assert.h>

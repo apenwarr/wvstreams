@@ -57,6 +57,8 @@ char * trim_string( char * string )
 
 void replace_char( void * _string, char c1, char c2, int length )
 /**************************************************************/
+// Searches _string (up to length bytes), replacing any occurrences of c1
+// with c2.
 {
     char *string = (char *)_string;
     for( int i=0; i < length; i++ )
@@ -149,6 +151,7 @@ bool isnewline(char c)
 }
 
 
+// eg: hexify(foo, "ABCDEF", 4) will set foo to "41424344".
 void hexify(char *obuf, unsigned char *ibuf, size_t len)
 {
     while (len > 0)
@@ -160,6 +163,7 @@ void hexify(char *obuf, unsigned char *ibuf, size_t len)
 }
 
 
+// eg: unhexify(foo, "41424344") sets foo to "ABCD".
 void unhexify(unsigned char *obuf, char *ibuf)
 {
     char lookup[] = "0123456789abcdef", *c, *c2;

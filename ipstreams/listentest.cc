@@ -1,6 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvTCPListener test.  Listens on a port, and bounces stdin and stdout 
+ * between all connections established to it.
  */
 #include "wvtcp.h"
 #include "wvstreamlist.h"

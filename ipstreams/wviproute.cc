@@ -100,6 +100,9 @@ WvIPRouteList::WvIPRouteList() : log("Route Table", WvLog::Debug)
 }
 
 
+// Reads the kernel routing table, from /proc/net/route, and parses it into
+// A WvIPRouteList.  Also reads the kernel 2.1.x "policy routing" tables, 
+// (via the "ip" command) and parses those routes.
 void WvIPRouteList::get_kernel()
 {
     WvFile kinfo("/proc/net/route", O_RDONLY);

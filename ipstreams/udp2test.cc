@@ -1,6 +1,8 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * UDP test program.  I don't think this works...
  */
 #include "wvstreamlist.h"
 #include "wvlog.h"

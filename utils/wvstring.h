@@ -172,7 +172,7 @@ public:
     const char *operator- (int i) const
         { return str - i; }
     
-    // auto-convert WvString to (char *), when needed.
+    // auto-convert WvString to (const char *), when needed.
     operator const char*() const
         { return str; }
     

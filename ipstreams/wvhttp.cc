@@ -13,6 +13,7 @@
 //////////////////////////////////////// WvURL
 
 
+// Split up the URL into a hostname, a port, and the rest of it.
 WvURL::WvURL(const WvString &url) : err("No error")
 {
     WvString work(url);
@@ -91,6 +92,8 @@ bool WvURL::resolve()
 }
 
 
+// Print out the URL, using the port name (if it's not 80), and either the 
+// hostname (if we know it) or the address (if we know that instead.)
 WvURL::operator WvString () const
 {
     if (!isok())

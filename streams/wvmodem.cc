@@ -78,6 +78,7 @@ void WvModem::setup_modem()
     drain();
     
     // set up the terminal characteristics.
+    // see "man tcsetattr" for more information about these options.
     t.c_iflag &= ~(BRKINT | ISTRIP | IUCLC | IXON | IXANY | IXOFF | IMAXBEL);
     t.c_iflag |= (IGNBRK | IGNPAR);
     t.c_oflag &= ~(OLCUC);

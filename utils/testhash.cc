@@ -1,3 +1,24 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvHashTable test program.  (One) correct output:
+ *
+ *    Hash table size: 15
+ *    String hash test:
+ *             000019ef 000132a5 000a4aa5 00000000
+ *             f3ad1ec0 f3ad1ec0 f3ad5ac0 f3ad1fd0
+ *    Correct answers are: 0xbffffaf0 0xbffffae8 0xbffffae0 (0xbffffac0)
+ *    
+ *    Result: 0xbffffaf0 0xbffffae8 0xbffffae0 (nil)
+ *    Full(3) contents: 0x804f167(blue) 0x804f163(foo) 0x804f16c(true)
+ *    
+ *    Result: (nil) (nil) 0xbffffae0 (nil)
+ *    Full(1) contents: 0x804f16c(true)
+ *    
+ *    Dict Result: 0xbffffaa0 0xbffffa8c 0xbffffa80 (nil)
+ *    Dict Result: 0xbffffaa0 (nil) 0xbffffa80 (nil)
+ */
 
 #include "wvhashtable.h"
 #include "wvstring.h"

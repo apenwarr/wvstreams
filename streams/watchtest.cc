@@ -1,6 +1,9 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvFileWatcher test.  Opens a file, /tmp/test.txt, and displays new
+ * additions to this file as they occur.
  */
 #include "wvlog.h"
 #include "wvwatcher.h"

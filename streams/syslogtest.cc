@@ -1,7 +1,10 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvSyslog test.  Sends information to syslog.
  */
+
 #include "wvsyslog.h"
 #include <unistd.h>
 

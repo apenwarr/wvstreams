@@ -1,7 +1,11 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvPipe test.  Allows you to enter bash commands, runs them, and pipes the
+ * output back to you.
  */
+
 #include "wvpipe.h"
 #include "wvlog.h"
 

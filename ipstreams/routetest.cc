@@ -1,6 +1,14 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvIPRoute test.  Gets the kernel routing table, adds some new routes, and
+ * writes the table.
+ *
+ */
+
 #include "wviproute.h"
 #include "wvlog.h"
-
 
 int main()
 {

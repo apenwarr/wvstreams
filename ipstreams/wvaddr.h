@@ -284,7 +284,7 @@ public:
  *     www.xxx.yyy.zzz:pppp
  * 
  * Note that the rawdata() function is inherited from WvIPAddr, so it does
- * not include the netmask in the raw data.
+ * not include the port number in the raw data.
  */
 class WvIPPortAddr : public WvIPAddr
 {

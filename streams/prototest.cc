@@ -1,3 +1,13 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvProtoStream test.  Defines a simple language consisting of the commands
+ * and states "one", "two", "three", and "four".  See if you can get to state
+ * three!  Hours of fun for the whole family!
+ *
+ */
+
 #include "wvprotostream.h"
 #include "wvlog.h"
 

@@ -1,3 +1,12 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * Test of the WvStreamClone class.  Clones stdin and stdout, prints whatever
+ * it receives, and terminates when the stream closes.  (Ctrl-D)
+ *
+ */
+
 #include "wvstreamclone.h"
 
 int main()

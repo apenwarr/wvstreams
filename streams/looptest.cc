@@ -1,6 +1,8 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvLoopback test.  Forks and has each process to write to the other.
  */
 #include "wvloopback.h"
 #include "wvlog.h"

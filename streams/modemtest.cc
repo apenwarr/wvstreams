@@ -1,6 +1,10 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997, 1998, 1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvModem test program.  Acts almost like a comm program, using WvLog to
+ * display everything received from the modem.  It should respond to AT
+ * commands.
  */
 #include "wvmodem.h"
 #include "wvstreamlist.h"

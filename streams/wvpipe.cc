@@ -18,6 +18,8 @@
 #include <assert.h>
 
 
+// The assorted WvPipe::WvPipe() constructors are described in wvpipe.h
+
 WvPipe::WvPipe(const char *program, const char **argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       int stdin_fd, int stdout_fd, int stderr_fd)
@@ -78,7 +80,8 @@ void WvPipe::setup(const char *program, const char **argv,
 	errnum = errno;
 	return;
     }
-    
+
+    // Fork.  The child process will run the program we're piping.
     pid = fork();
     if (pid < 0)
     {

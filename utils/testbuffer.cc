@@ -1,3 +1,10 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvBuffer test program.  Comments below indicate correct results.
+ *
+ */
 
 #include "wvbuffer.h"
 #include <stdio.h>

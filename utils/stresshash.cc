@@ -1,3 +1,11 @@
+/*
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-1999 Worldvisions Computer Technology, Inc.
+ *
+ * WvHashTable stress tester.  Adds a lot of elements to the table and 
+ * looks them up, iterates through them, etc.  This requires lots of memory.
+ *
+ */
 
 #include "wvhashtable.h"
 #include "wvstring.h"

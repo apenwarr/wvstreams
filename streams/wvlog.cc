@@ -75,6 +75,7 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
     {
 	if (!default_receiver)
 	{
+	    // nobody's listening -- create a receiver on the console
 	    default_receiver = new WvLogConsole(dup(2));
 	    num_receivers--; // default does not qualify!
 	}
@@ -173,7 +174,10 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
     
     if (loglevel > max_level)
 	return;
-    
+
+    // only need to start a new line with new headers if they headers have
+    // changed.  if the source and level are the same as before, just continue
+    // the previous log entry.
     if (source != last_source || loglevel != last_level)
     {
 	end_line();
@@ -184,6 +188,8 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
     
     char *buf = (char *)_buf, *bufend = buf + len, *cptr;
 
+    // loop through the buffer, printing each character or its [hex] equivalent
+    // if it is unprintable.  Also eat newlines unless they are appropriate.
     while (buf < bufend)
     {
 	if (buf[0] == '\n' || buf[0] == '\r')
@@ -194,7 +200,7 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 	}
 
 	begin_line();
-	
+
 	if (!isascii(buf[0]) || !isprint(buf[0]))
 	{
 	    snprintf(hex, 5, "[%02x]", *(unsigned char *)buf);

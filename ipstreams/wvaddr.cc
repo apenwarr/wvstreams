@@ -257,6 +257,7 @@ WvEncap WvEtherAddr::encap() const
 }
 
 
+// FF:FF:FF:FF:FF:FF is the ethernet broadcast address.
 bool WvEtherAddr::isbroadcast() const
 {
     for (int count = 0; count < ETH_ALEN; count++)
@@ -480,6 +481,7 @@ WvIPNet::WvIPNet(const WvIPNet &_net)
 }
 
 
+// If the netmask is not specified, it will default to all 1's.
 WvIPNet::WvIPNet(const char string[]) : WvIPAddr(string)
 {
     char *maskptr;
@@ -617,6 +619,7 @@ WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, __u16 _port)
 }
 
 
+// If no port is specified (after a ':' or a space or a tab) it defaults to 0.
 WvIPPortAddr::WvIPPortAddr(const char string[]) 
                               : WvIPAddr(string)
 {
