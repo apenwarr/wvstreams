@@ -185,7 +185,7 @@ void WvFtpStream::execute()
             seterr("server rejected connection");
             return;
         }
-        print("USER %s\r\n", !target.username ? "anonymous" :
+        print("USER %s\r\n", !target.username ? WvString("anonymous") :
                     target.username);
         line = get_important_line();
         if (!line)
