@@ -227,39 +227,26 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
     const char *splitchars = " \t", int limit = 0)
 {
     WvString s(_s);
-    char *sptr = s.edit(), *eptr, oldc;
+    char *cur = s.edit();
 
-	bool start = true;
-    while (sptr && *sptr)
-	{
-	  int len = strspn(sptr,splitchars);
-	    sptr += len;
+    for (;;)
+    {
+        --limit;
+        if (!limit)
+        {
+            coll.add(new WvString(cur), true);
+            break;
+        }
 
-	  --limit;
+        int len = strcspn(cur, splitchars);
 
-	  for (bool unseen = true; len > 0 && limit; (len -= strlen(splitchars)),--limit)
-	  {
-		if ((!start) && (unseen))
-		  { unseen = false; continue; }
+        char tmp = cur[len];
+        cur[len] = 0;
+        coll.add(new WvString(cur), true);
+        cur[len] = tmp;
 
-		coll.add(new WvString(""), true);
-	  }
-
-	  start = false;
-
-	  if (limit)
-        eptr = sptr + strcspn(sptr,splitchars);
-      else
-		eptr = sptr + strlen(sptr);
-
-      oldc = *eptr;
-      *eptr = '\0';
-
-      if (limit)
-		coll.add(new WvString(sptr), true);
-
-      *eptr = oldc;
-      sptr = eptr;
+        if (!cur[len]) break;
+        cur += len + 1;
     }
 }
 

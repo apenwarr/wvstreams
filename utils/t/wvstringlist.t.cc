@@ -42,9 +42,7 @@ WVTEST_MAIN("basic")
 	    printf("   because [%s] != [%s]\n", output.cstr(), desired.cstr());
     }
     
-#if SPLITSTRICT_ISNT_BROKEN    
     // splitstrict() should detect all spaces and create null entries
-    // FIXME: but it doesn't using default values
     desired = WvString("%s %s %s %s", input[0], input[1], input[2], input[3]);  
     l.splitstrict(desired);
     printf("%s\n", desired.cstr());
@@ -55,9 +53,6 @@ WVTEST_MAIN("basic")
         if (!WVPASS(output == desired))
 	    printf("   because [%s] != [%s]\n", output.cstr(), desired.cstr());
     }
-#else
-# warning "Skipping splitstrict tests: they fail because splitstrict is broken!"
-#endif    
 
     desired = WvString(" %s %s %s %s", input[0], input[1], input[2], input[3]);
     l.splitstrict(desired, " ");
