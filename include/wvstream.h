@@ -228,12 +228,8 @@ public:
      * line.
      * 
      * Returns the number of characters that were put in buf.
-     * 
-     * If uses_continue_select is true, getline() will use
-     * continue_select() rather than select() to wait for its timeout.
      */
-    size_t read_until(void *buf, size_t count, time_t wait_msec,
-                      char separator);
+    size_t read_until(void *buf, size_t count, char separator);
 
     /**
      * force read() to not return any bytes unless 'count' bytes can be

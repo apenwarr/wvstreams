@@ -413,8 +413,10 @@ bool WvStream::iswritable()
 }
 
 
-size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char separator)
+size_t WvStream::read_until(void *buf, size_t count, char separator)
 {
+    const time_t wait_msec = 0;
+
     if (count == 0)
         return 0;
 
@@ -443,19 +445,7 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
         // make select not return true until more data is available
         queuemin(needed);
 
-        // compute remaining timeout
-        if (wait_msec > 0)
-        {
-            wait_msec = msecdiff(timeout_time, wvtime());
-            if (wait_msec < 0)
-                wait_msec = 0;
-        }
-        
-        bool hasdata;
-        if (wait_msec != 0 && uses_continue_select)
-            hasdata = continue_select(wait_msec);
-        else
-            hasdata = select(wait_msec, true, false);
+        bool hasdata = isreadable();
         if (!isok())
             break;
 
@@ -476,7 +466,7 @@ size_t WvStream::read_until(void *buf, size_t count, time_t wait_msec, char sepa
             hasdata = inbuf.used() >= needed; // enough?
         }
 
-        if (!hasdata && wait_msec == 0)
+        if (!hasdata)
             break; // handle timeout
     }
     queuemin(0);

@@ -370,7 +370,7 @@ WVTEST_MAIN("Base64")
 
     while (true)
     {
-        read = input_stream.read_until(buf, sizeof(buf), 0, '\n');
+        read = input_stream.read_until(buf, sizeof(buf), '\n');
 
         if (buf[read-1] == '\n')
             buf[--read] = '\0'; 
