@@ -3,8 +3,10 @@
 showvar = @echo \"'$(1)'\" =\> \"'$($(1))'\"
 tbd = $(error "$@" not implemented yet)
 
-# include function
-doinclude = $(wildcard $(2:%=%/)*/$(1)) /dev/null
+# expands to the object files in the directories
+objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
+objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
+objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
 
 # initialization
 TARGETS:=
@@ -47,20 +49,15 @@ REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 CPPFLAGS += -Iinclude -pipe
 ARFLAGS = rs
 
-libwvstreams.so-OBJECTS:=
-libwvstreams.so-LIBS:=-lssl
+libwvstreams.so: LDFLAGS+=-lssl
 
-libwvutils.so-OBJECTS:=
-libwvutils.so-LIBS:=-lz -lcrypto
+libwvutils.so: LDFLAGS+=-lz -lcrypto
 
-libwvoggvorbis.so-OBJECTS:=
-libwvoggvorbis.so-LIBS:=-logg -lvorbis -lvorbisenc
+libwvoggvorbis.so: LDFLAGS+=-logg -lvorbis -lvorbisenc
 
-libwvfft.so-OBJECTS:=
-libwvfft.so-LIBS:=-lfftw -lrfftw
+libwvfft.so: LDFLAGS+=-lfftw -lrfftw
 
-libwvqt.so-OBJECTS:=
-libwvqt.so-LIBS:=-lqt
+libwvqt.so: LDFLAGS+=-lqt
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
@@ -113,7 +110,11 @@ ifeq ("$(enable_efence)", "yes")
 LDFLAGS+=-lefence
 endif
 
+ifeq ("$(enable_verbose)", "yes")
+VERBOSE:=yes
+endif
+
 RELEASE?=$(PACKAGE_VERSION)
 
-include $(call doinclude,vars.mk)
+include $(wildcard */vars.mk */*/vars.mk) /dev/null
 

@@ -1,30 +1,36 @@
 
-libwvoggvorbis.a libwvoggvorbis.so: $(libwvoggvorbis.so-OBJECTS)
+libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
 libwvoggvorbis.so: libwvstreams.so
 
-libwvfft.a libwvfft.so: $(libwvfft.so-OBJECTS)
+libwvfft.a libwvfft.so: $(call objects,fft)
 libwvfft.so: libwvstreams.so
 
-libwvqt.a libwvqt.so: $(libwvqt.so-OBJECTS)
+libwvqt.a libwvqt.so: $(call objects,qt)
 libwvqt.so: libwvstreams.so
 
-libwvstreams.a libwvstreams.so: $(libwvstreams.so-OBJECTS)
+libwvstreams.a libwvstreams.so: $(call objects,configfile crypto ipstreams linuxstreams streams uniconf urlget)
 libwvstreams.so: libwvutils.so
 
-libwvutils.a libwvutils.so: $(libwvutils.so-OBJECTS)
+libwvutils.a libwvutils.so: $(call objects,utils)
 
 DEPFILE = $(notdir $(@:.o=.d))
 
-ifeq ("$(enable_verbose)", "yes")
+ifdef VERBOSE
 COMPILE_MSG:=
 LINK_MSG:=
 else
 COMPILE_MSG=@echo compiling $@;
-LINK_MSG=@echo compiling $@;
+LINK_MSG=@echo linking $@;
 endif
 
 %: %.o
-	$(LINK_MSG)$(LINK.cc) $^ -MD $(LOADLIBES) $(LDLIBS) $($@-LIBS) -o $@
+	$(LINK_MSG)$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+%: %.cc
+	$(COMPILE_MSG)$(LINK.cc) -MD $< $(LOADLIBES) $(LDLIBS) -o $@
+	@test -f $(notdir $@).d
+	@sed -e 's|^$(notdir $@).o|$@|' $(notdir $@).d > $(dir $@).$(notdir $@).d
+	@rm -f $(notdir $@).d
 
 %.o: %.cc
 	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) -MD $(CPPFLAGS) -c -o $@ $<
@@ -42,7 +48,7 @@ endif
 	$(LINK_MSG)$(AR) $(ARFLAGS) $@ $^
 
 %.so:
-	$(COMPILE_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
+	$(LINK_MSG)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared $^ -o $@
 
 %.moc: %.h
 	$(COMPILE_MSG)moc $< -o $@
@@ -94,7 +100,7 @@ depend:
 	rm -rf $(shell find . -name '.*.d')
 
 dust:
-	rm -rf $(shell find . -name 'core' -o -name '*~' -o -name '.#*')
+	rm -rf $(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d)
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
@@ -125,13 +131,13 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 uninstall:
 	$(tbd)
 
-$(TESTS): libwvstreams.a libwvutils.a
+$(TESTS): LDLIBS+=libwvstreams.a libwvutils.a
 tests: $(TESTS)
 
 dishes:
 	@echo "aww, okay, but not now..."
 
-include $(call doinclude,rules.mk)
+include $(wildcard */rules.mk */*/rules.mk) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
