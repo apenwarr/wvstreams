@@ -81,7 +81,7 @@ int main()
 	    fflush(stdout);
 	}
 
-	assert(i().s == WvString(i().i));
+	assert(i->s == WvString(i->i));
 	count++;
     }
     

@@ -171,7 +171,9 @@ public:									\
 	operator _type_& () const					\
 	    { return data(); }						\
 	_type_ &operator () () const					\
-	     { return data(); }						\
+	    { return data(); }						\
+	_type_ *operator -> () const					\
+	    { return &data(); }						\
     };									\
     									\
 public:									\
