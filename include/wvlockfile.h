@@ -17,15 +17,14 @@ public:
     WvLockFile(WvStringParm _lockname);
 
     /**
-     * Check to make sure no lock is established, and that we can acess
-     * the lockfile.
+     * Check to make sure no lock is established or that it's owned by us.
      */
     bool isok();
 
     /**
-     * Creates the lockfile with the given pid. Returns success/failure.
+     * Creates the lockfile with the current pid. Returns success/failure.
      */
-    bool lock(WvStringParm pid);
+    bool lock();
 
     /**
      * Removes the lockfile if present. If there's no lockfile after,
@@ -35,15 +34,13 @@ public:
 
     /**
      * Returns one of three things:
-     *   => -1 if the lockfile exists, but is inaccessible.
-     *   => 0 if there is no lockfile, or the process is not running.
-     *   => The pid of the process if running and a lock is
-     *      established and accessible.
+     *   -1 if the lockfile exists, but is inaccessible.
+     *   0  if there is no lockfile, or the process is not running.
+     *   >0 The pid of the known-running process that owns the lock.
      */
-    int getpid();
+    pid_t readpid();
 
 protected:
-    WvFile lockfile;
     WvString lockname;
 };
 
