@@ -27,7 +27,7 @@ UniConfClient::~UniConfClient()
     if (conn)
     {
         if (conn->isok())
-            conn->print("quit\n");   
+            conn->print("%s\n", UniConfConn::UNICONF_QUIT);   
         delete conn;
     }
 }
@@ -51,7 +51,7 @@ void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
     // last save wins.
     if (tree->dirty)
     {
-        WvString data("set %s %s\n", wvtcl_escape(key), wvtcl_escape(*tree));
+        WvString data("%s %s %s\n", UniConfConn::UNICONF_SET, wvtcl_escape(key), wvtcl_escape(*tree));
         conn->print(data);
         tree->dirty = false;
     }
@@ -109,12 +109,9 @@ void UniConfClient::enumerate_subtrees(UniConf *conf, bool recursive)
     if (!conn || !conn->isok())
         return;
     
-    WvString cmd;
-    if (recursive)
-        cmd.append("rsub ");
-    else
-        cmd.append("subt ");
-    
+    WvString cmd("%s ", recursive ? UniConfConn::UNICONF_RECURSIVESUBTREE : 
+            UniConfConn::UNICONF_SUBTREE);
+
     if (conn->select(0, true, false, false))
         execute();
 
@@ -156,7 +153,7 @@ void UniConfClient::update(UniConf *&h)
     if (!data && (h->waiting || (h->obsolete && !h->dirty)))
     {
         if (conn && conn->isok())
-            conn->print(WvString("get %s\n", wvtcl_escape(lookfor)));
+            conn->print(WvString("%s %s\n", UniConfConn::UNICONF_GET, wvtcl_escape(lookfor)));
         else
         {
             h->waiting = false;
