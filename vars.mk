@@ -18,7 +18,7 @@ TARGETS += libwvbase.so libwvbase.a
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
-TARGETS += wvtestmain.o
+TARGETS += wvtestmain.o libwvtest.a
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
 GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 
@@ -156,10 +156,6 @@ ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
 endif
 
-ifneq ("$(with_popt)", "no")
-  libwvutils.so: LIBS+=-lpopt
-endif
-
 LDLIBS := -lgcc $(LDLIBS) \
 	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++ -lgcc_eh")
@@ -205,6 +201,10 @@ BASEOBJS= \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o
 
+TESTOBJS = \
+	utils/wvtest.o \
+	utils/wvtest_filecountprefix.o
+
 # print the sizes of all object files making up libwvbase, to help find
 # optimization targets.
 basesize:
@@ -216,9 +216,9 @@ libwvbase.a libwvbase.so: $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
 libwvbase.a: uniconf/unigenhack_s.o
 libwvbase.so: uniconf/unigenhack.o
 
-libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS),$(call objects,utils))
+libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
 libwvutils.so: libwvbase.so
-libwvutils.so: -lz -lcrypt
+libwvutils.so: -lz -lcrypt -lpopt
 
 libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
@@ -242,6 +242,8 @@ libwvfft.so: -lfftw -lrfftw libwvutils.so libwvbase.so
 
 libwvtelephony.a libwvtelephony.so: $(call objects,telephony)
 libwvtelephony.so: 
+
+libwvtest.a: wvtestmain.o $(TESTOBJS)
 
 ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
   libwvqt.so-LIBS+=-lqt-mt

@@ -51,6 +51,7 @@ LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
+LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
 
 #
 # Initial C compilation flags
@@ -292,7 +293,7 @@ wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2
 %.moc: %.h;	moc -o $@ $<
 
 %: %.o;		$(call wvlink,$@,$^) 
-%.t: %.t.o;	$(call wvlink,$@,$(WVSTREAMS_SRC)/wvtestmain.o $(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVUTILS))
+%.t: %.t.o;	$(call wvlink,$@,$(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVTEST))
 %.a %.libs:;	$(call wvlink_ar,$@,$^)
 %.so:;		$(call wvlink_so,$@,$^)
 

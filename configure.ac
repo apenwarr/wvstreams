@@ -711,7 +711,8 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/liboggvorbis.pc
 		 pkgconfig/libwvqt.pc
 		 pkgconfig/libwvstreams.pc
-		 pkgconfig/libwvutils.pc])
+		 pkgconfig/libwvutils.pc
+		 pkgconfig/libwvtest.pc])
 
 if test "$xplc_pc" = "wvxplc"; then
     AC_CONFIG_FILES([pkgconfig/wvxplc.pc])

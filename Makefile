@@ -169,7 +169,7 @@ install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
 uninstall:
 	$(tbd)
 
-$(TESTS): $(LIBUNICONF)
+$(TESTS): $(LIBUNICONF) $(LIBWVTEST)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
@@ -187,8 +187,8 @@ ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=1 ./unitest.sh
 endif
 
-wvtestmain: wvtestmain.o \
+wvtestmain: \
 	$(call objects, $(filter-out ./Win32WvStreams/%, \
 		$(shell find . -type d -name t))) \
-	$(LIBUNICONF) $(LIBWVSTREAMS)
+	$(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 
