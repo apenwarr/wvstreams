@@ -273,7 +273,7 @@ private:
     /**
      * Get the Extension information - returns NULL if extension doesn't exist
      */
-    WvDynBuf *get_extension(int nid);
+    WvString get_extension(int nid);
 
     /**
      * Populate dname (the distinguished name);

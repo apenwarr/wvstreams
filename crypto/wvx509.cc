@@ -953,7 +953,7 @@ WvString WvX509Mgr::get_subject()
     {
 	char *name = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
 	WvString retval(name);
-	free(name);
+	OPENSSL_free(name);
 	return retval;
     }
     else
@@ -963,47 +963,22 @@ WvString WvX509Mgr::get_subject()
 
 WvString WvX509Mgr::get_crl_dp()
 {
-    WvDynBuf *buf = get_extension(NID_crl_distribution_points);
-    if (buf)
-    {
-	WvString retval(buf->getstr());
-	delete buf;
-	return retval;
-    }
-    else
-	return WvString::null;
+    return get_extension(NID_crl_distribution_points);
 }
 
 
 WvString WvX509Mgr::get_cp_oid()
 {
-    WvDynBuf *buf = get_extension(NID_certificate_policies);
-    if (buf)
-    {
-	WvString retval(buf->getstr());
-	delete buf;
-	return retval;
-    }
-    else
-	return WvString::null;
+    return get_extension(NID_certificate_policies);
 }
 
 
 WvString WvX509Mgr::get_altsubject()
 {
-    WvDynBuf *buf = get_extension(NID_subject_alt_name);
-    if (buf)
-    {
-	WvString retval(buf->getstr());
-	delete buf;
-	return retval;
-    }
-    else
-	return WvString::null;
-
+    return get_extension(NID_subject_alt_name);
 }
 
-WvDynBuf *WvX509Mgr::get_extension(int nid)
+WvString WvX509Mgr::get_extension(int nid)
 {
     if (cert)
     {
@@ -1013,15 +988,47 @@ WvDynBuf *WvX509Mgr::get_extension(int nid)
 	    X509_EXTENSION *ext = X509_get_ext(cert, index);
 	    if (ext)
 	    {
-		WvDynBuf *buf = new WvDynBuf();
-		buf->put(ext->value->data, ext->value->length);
-		return buf;
+		X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
+		if (!method)
+		{
+		    WvDynBuf *buf = new WvDynBuf();
+		    buf->put(ext->value->data, ext->value->length);
+		    return buf->getstr();
+		}
+		else
+		{
+		    void *ext_data = NULL;
+		    if (method->it) 
+			ext_data = ASN1_item_d2i(NULL, &ext->value->data, 
+						ext->value->length, 
+						ASN1_ITEM_ptr(method->it));
+		    else
+			ext_data = method->d2i(NULL, &ext->value->data, 
+					      ext->value->length);
+		    
+		    if (method->i2s)
+		    {
+			WvString retval = method->i2s(method, ext_data);
+			if (method->it)
+			    ASN1_item_free((ASN1_VALUE *)ext_data, ASN1_ITEM_ptr(method->it));
+			else
+			    method->ext_free(ext_data);
+			if (!!retval)
+			    return retval;
+			else
+			    return WvString::null;
+		    }
+		    else if (method->i2v)
+			return WvString("Stack type!");
+		    else if (method->i2r)
+			return WvString("Guess what - it's raw..!");
+		}
 	    }
 	}
-	return NULL;
+	return WvString::null;
     }
     else
-	return NULL;
+	return WvString::null;
 }
 
 bool WvX509Mgr::isok() const
