@@ -56,7 +56,7 @@ bool WvEncoderStream::isok() const
 }
 
 
-void WvEncoderStream::flush_internal(time_t msec_timeout)
+bool WvEncoderStream::flush_internal(time_t msec_timeout)
 {
     flush_write();
 
@@ -70,6 +70,8 @@ void WvEncoderStream::flush_internal(time_t msec_timeout)
                 break;
         }
     }
+    
+    return !writeoutbuf.used();
 }
 
 

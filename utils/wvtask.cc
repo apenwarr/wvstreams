@@ -9,11 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
 #include <malloc.h> // for alloca()
-#if 0
-// FIXME: apparently, non-Linux platforms needs this (for alloca?).
-#include <stdlib.h>
+#include <stdlib.h> // for alloca() on non-Linux platforms?
+
+#define TASK_DEBUG 0
+#if TASK_DEBUG
+# define Dprintf(fmt, args...) fprintf(stderr, fmt, ##args)
+#else
+# define Dprintf(fmt, args...)
 #endif
 
 int WvTask::taskcount = 0;
@@ -31,6 +34,7 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
     tid = ++taskcount;
     numtasks++;
     magic_number = WVTASK_MAGIC;
+    stack_magic = NULL;
     
     man.get_stack(*this, stacksize);
 }
@@ -62,6 +66,8 @@ void WvTask::start(WvStringParm _name, TaskFunc *_func, void *_userdata)
 
 void WvTask::recycle()
 {
+    assert(!running);
+    
     if (!running && !recycled)
     {
 	man.free_tasks.append(this, true);
@@ -156,6 +162,27 @@ int WvTaskMan::yield(int val)
     if (!current_task)
 	return 0; // weird...
     
+    Dprintf("WvTaskMan: yielding from task #%d (%s)\n",
+	   current_task->tid, (const char *)current_task->name);
+    
+    assert(current_task->stack_magic);
+    
+    // if this fails, this task overflowed its stack.  Make it bigger!
+    assert(*current_task->stack_magic == WVTASK_MAGIC);
+
+#if TASK_DEBUG
+    size_t stackleft;
+    char *stackbottom = (char *)(current_task->stack_magic + 1);
+    for (stackleft = 0; stackleft < current_task->stacksize; stackleft++)
+    {
+	if (stackbottom[stackleft] != 0x42)
+	    break;
+    }
+    Dprintf("WvTaskMan: remaining stack after #%d (%s): %ld/%ld\n",
+	    current_task->tid, current_task->name.cstr(), (long)stackleft,
+	    (long)current_task->stacksize);
+#endif
+		
     int newval = setjmp(current_task->mystate);
     if (newval == 0)
     {
@@ -205,7 +232,12 @@ void WvTaskMan::stackmaster()
 void WvTaskMan::_stackmaster()
 {
     int val;
+    size_t total;
     
+    Dprintf("stackmaster 1\n");
+    
+    // the main loop runs once from the constructor, and then once more
+    // after each stack allocation.
     for (;;)
     {
 	assert(magic_number == -WVTASK_MAGIC);
@@ -224,13 +256,25 @@ void WvTaskMan::_stackmaster()
 	{
 	    assert(magic_number == -WVTASK_MAGIC);
 	    
-	    // set up a stack frame for the task
+	    // set up a stack frame for the new task.  This runs once
+	    // per get_stack.
 	    do_task();
 	    
 	    assert(magic_number == -WVTASK_MAGIC);
 	    
 	    // allocate the stack area so we never use it again
-	    alloca(val * (size_t)1024);
+	    total = (val+1) * (size_t)1024;
+	    alloca(total);
+
+	    // a little sentinel so we can detect stack overflows
+	    stack_target->stack_magic = (int *)alloca(sizeof(int));
+	    *stack_target->stack_magic = WVTASK_MAGIC;
+	    
+	    // clear the stack to 0x42 so we can count unused stack
+	    // space later.
+#if TASK_DEBUG
+	    memset(stack_target->stack_magic + 1, 0x42, total - 1024);
+#endif
 	}
     }
 }
@@ -247,8 +291,13 @@ void WvTaskMan::do_task()
     {
 	// done the setjmp; that means the target task now has
 	// a working jmp_buf all set up.  Leave space on the stack
-	// for his data, then repeat the loop (so we can return
-	// to get_stack(), and allocate more stack for someone later)	
+	// for his data, then repeat the loop in _stackmaster (so we can
+	// return to get_stack(), and allocate more stack for someone later)
+	// 
+	// Note that nothing on the allocated stack needs to be valid; when
+	// they longjmp to task->mystate, they'll have a new stack pointer
+	// and they'll already know what to do (in the 'else' clause, below)
+	Dprintf("stackmaster 5\n");
 	return;
     }
     else
@@ -262,7 +311,12 @@ void WvTaskMan::do_task()
 	    
 	    if (task->func && task->running)
 	    {
+		// this is the task's main function.  It can call yield()
+		// to give up its timeslice if it wants.  Either way, it
+		// only returns to *us* if the function actually finishes.
 		task->func(task->userdata);
+		
+		// the task's function terminated.
 		task->name = "DEAD";
 		task->running = false;
 		task->numrunning--;

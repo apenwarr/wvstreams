@@ -68,8 +68,6 @@ public:
      *  - Flushes and finishes the write chain
      *  - Flushes the stream output buffers
      *  - Closes the underlying stream
-     * 
-     * 
      */
     virtual void close();
 
@@ -128,7 +126,7 @@ protected:
     bool pre_select(SelectInfo &si);
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
-    virtual void flush_internal(time_t msec_timeout);
+    virtual bool flush_internal(time_t msec_timeout);
 
 private:
     void checkreadisok();

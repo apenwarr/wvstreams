@@ -136,6 +136,7 @@ void WvStreamList::execute()
 	
 	id = i.link->id;
 	TRACE("[%p:%s]", &s, id);
+	
 	i.xunlink();
 	
 	if (s.isok())

@@ -21,9 +21,10 @@ static IWvStream *creator(WvStringParm, IObject *obj, void *)
 static WvMoniker<IWvStream> reg("clone", creator);
 
 
-WvStreamClone::WvStreamClone(IWvStream *_cloned) :
-    cloned(_cloned), disassociate_on_close(false)
+WvStreamClone::WvStreamClone(IWvStream *_cloned) 
+    : cloned(_cloned), disassociate_on_close(false)
 {
+    // the sub-stream will force its own values, if it really wants.
     force_select(false, false, false);
 }
 
@@ -38,7 +39,7 @@ WvStreamClone::~WvStreamClone()
 
 void WvStreamClone::close()
 {
-    flush(2000); // fixme: should not hardcode this stuff
+    flush(2000); // FIXME: should not hardcode this stuff
     if (disassociate_on_close)
         cloned = NULL;
     if (cloned)
@@ -46,10 +47,12 @@ void WvStreamClone::close()
 }
 
 
-void WvStreamClone::flush_internal(time_t msec_timeout)
+bool WvStreamClone::flush_internal(time_t msec_timeout)
 {
     if (cloned)
-        cloned->flush(msec_timeout);
+        return cloned->flush(msec_timeout);
+    else
+	return true;
 }
 
 

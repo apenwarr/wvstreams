@@ -7,7 +7,6 @@
 #include "wvhttppool.h"
 #include "wvfile.h"
 #include "strutils.h"
-#include "wvcrash.h"
 #include <signal.h>
 
 
@@ -29,8 +28,7 @@ int main(int argc, char **argv)
     WvHttpPool p;
     WvString headers("");
     char *line;
-   
-    wvcrash_setup(argv[0]);
+    
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sighandler_die);
     
@@ -55,22 +53,8 @@ int main(int argc, char **argv)
 		    headers = WvString("%s%s\n", headers, line);
 		    continue;
 		}
-
-		WvStream *s;
-		if (line[0] != '>')
-		    s = p.addurl(line, headers);
-		else
-		{
-		    char *ptr = strchr(line, ' ');
-		    if (!ptr)
-			continue;
-		    *ptr = 0;
-		    printf("sending file %s to url %s.\n", &line[1], ptr+1);
-		    WvFile *sendfile = new WvFile(&line[1], O_RDONLY);
-		    s = p.addputurl(ptr+1, headers, sendfile, true);
-		    l.append(sendfile, true);
-		}
 		
+		WvStream *s = p.addurl(line, "GET", headers);
 		if (s)
 		{
 		    static int num = 0;

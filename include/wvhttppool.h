@@ -18,6 +18,7 @@
 #include "wvhashtable.h"
 #include "wvhttp.h"
 #include "wvbufstream.h"
+#include "wvbuf.h"
 
 class WvBufUrlStream;
 class WvUrlStream;
@@ -35,18 +36,15 @@ public:
     WvStream *putstream;
 
     bool pipeline_test;
-    bool headers_only;
     bool inuse;
     bool is_dir;
     bool create_dirs;
+    WvString method;
     
-    WvUrlRequest(WvStringParm _url, WvStringParm _headers,
-		 bool _pipeline_test, bool _headers_only);
-    WvUrlRequest(WvStringParm _url, WvStringParm _headers, WvStream *s,
-		 bool _create_dirs);
+    WvUrlRequest(WvStringParm _url, WvStringParm _method, WvStringParm _headers,
+		 WvStream *content_source, bool _create_dirs, bool _pipeline_test);
     ~WvUrlRequest();
     
-    WvString request_str(bool keepalive);
     void done();
 };
 
@@ -115,13 +113,13 @@ protected:
     virtual void request_next() = 0;
 
 public:
-    WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm logname,
-		WvStringParm _username)
+    WvUrlStream(const WvIPPortAddr &_remaddr, WvStringParm _username, 
+        WvStringParm logname)
 	: WvStreamClone(new WvTCPConn(_remaddr)), target(_remaddr, _username),
 	  log(logname, WvLog::Debug)
     {
-	request_count = 0;
-	curl = NULL;
+    	request_count = 0;
+    	curl = NULL;
     }
 
     virtual ~WvUrlStream() {};
@@ -147,8 +145,10 @@ public:
 private:
     int pipeline_test_count;
     bool ssl;
+    bool sent_url_request;      // Have we sent a request to the server yet?
     WvIPPortAddrTable &pipeline_incompatible;
     WvString http_response, pipeline_test_response;
+    WvDynBuf putstream_data;
     
     enum { Unknown, Chunked, ContentLength, Infinity } encoding;
     size_t remaining;
@@ -157,15 +157,18 @@ private:
     virtual void doneurl();
     virtual void request_next();
     void start_pipeline_test(WvUrl *url);
-    void send_request(WvUrlRequest *url, bool auto_free);
+    WvString request_str(WvUrlRequest *url, bool keep_alive);
+    void send_request(WvUrlRequest *url);
     void pipelining_is_broken(int why);
     
 public:
-    WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl,
-		 WvIPPortAddrTable &_pipeline_incompatible);
+    WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
+         bool ssl, WvIPPortAddrTable &_pipeline_incompatible);
     virtual ~WvHttpStream();
 
     virtual void close();
+    virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     virtual void execute();
 };
 
@@ -221,13 +224,15 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual void execute();
     
-    WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _headers,
-                            bool headers_only = false);
+    WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _method = "GET",
+                            WvStringParm _headers = "",
+                            WvStream *content_source = NULL,
+                            bool create_dirs = false);
 
     // For URL uploads.  create_dirs should be true if you want all
     // non-existent directories in _url to be created.
-    WvBufUrlStream *addputurl(WvStringParm _url, WvStringParm _headers,
-			      WvStream *s, bool create_dirs = false);
+//    WvBufUrlStream *addputurl(WvStringParm _url, WvStringParm _headers,
+//			      WvStream *s, bool create_dirs = false);
 private:
     void unconnect(WvUrlStream *s);
     
