@@ -1,0 +1,10 @@
+# valgrind suppressions file for known and unfixable errors caused by 
+# wvstreams
+{
+   stupid_libdl_error
+   Memcheck:Cond
+   fun:_dl_relocate_object
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:__GI__dl_open
+}

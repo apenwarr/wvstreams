@@ -1039,8 +1039,8 @@ int WvLinkedBufferStore::search(WvBufStoreList::Iter &it,
 }
 
 
-WvBufStore *WvLinkedBufferStore::coalesce(
-    WvBufStoreList::Iter &it, size_t count)
+WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
+					  size_t count)
 {
     WvBufStore *buf = it.ptr();
     size_t availused = buf->used();
@@ -1060,6 +1060,7 @@ WvBufStore *WvLinkedBufferStore::coalesce(
         {
             // use ungettable() instead of buf->ungettable() because we might
             // have reset it to 0
+	    // FIXME: uh... who might have reset it to 0, and why?
             mustskip = ungettable();
             buf->unget(mustskip);
         }
@@ -1069,7 +1070,11 @@ WvBufStore *WvLinkedBufferStore::coalesce(
 
         // make the new buffer ready for unget 
         if (mustskip != 0)
+	{
+	    buf->alloc(mustskip);
             buf->skip(mustskip);
+	    assert(buf->ungettable() >= mustskip);
+	}
 
         // insert the buffer before the previous link
         list.add_after(it.prev, buf, true);
