@@ -48,7 +48,7 @@ WvBase64Encoder::WvBase64Encoder() :
 }
 
 
-bool WvBase64Encoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvBase64Encoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     // base 64 encode the entire buffer
     while (in.used() != 0)
@@ -105,17 +105,8 @@ WvBase64Decoder::WvBase64Decoder() :
 }
 
 
-bool WvBase64Decoder::isok() const
+bool WvBase64Decoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
-    return state != ERROR;
-}
-
-
-bool WvBase64Decoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
-{
-    if (state == ERROR)
-        return false;
-
     // base 64 decode the entire buffer
     while (in.used() != 0)
     {
@@ -124,7 +115,7 @@ bool WvBase64Decoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
         switch (symbol)
         {
             case -1: // invalid character
-                state = ERROR;
+                seterror("invalid character '%s' in base64 input", next);
                 return false;
                 
             case 64: // padding
@@ -133,7 +124,6 @@ bool WvBase64Decoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
                 switch (state)
                 {
                     case PAD:
-                    case ERROR:
                         continue;
                     case ATBIT0:
                         break;
@@ -147,6 +137,7 @@ bool WvBase64Decoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
                         out.putch(bits << 6);
                         break;
                 }
+                setfinished();
                 state = PAD;
                 break;
 
@@ -177,8 +168,8 @@ bool WvBase64Decoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
                         break;
                         
                     case PAD:
-                        state = ERROR;
-                    case ERROR:
+                        seterror("invalid character '%s' "
+                            "after base64 padding", next);
                         return false;
                 }
                 break;

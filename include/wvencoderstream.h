@@ -32,20 +32,60 @@ public:
     WvEncoderChain readchain;
     WvEncoderChain writechain;
 
-    // sets the minimum number of bytes the encoder should try to read
-    // at once, to optimize performance of block-oriented protocols
-    // if 0, the encoder will only whatever is specified in uread()
+    /**
+     * Controls the minimum number of unencoded bytes the encoder
+     * should try to read at once from the underlying stream,
+     * to optimize performance of block-oriented protocols.
+     * This is not the same as queuemin() which guarantees how much
+     * encoded input must be generated before select() returns true.
+     * if 0, the encoder will only whatever is specified in uread()
+     */
     size_t min_readsize;
 
     WvEncoderStream(WvStream *_cloned);
     virtual ~WvEncoderStream();
 
+    /**
+     * Safely shuts down the stream.
+     *   flushes and finishes the read chain;
+     *   then flushes and finishes the write chain;
+     *   then flushes the stream output buffers;
+     *   then closes the stream
+     */
     virtual void close();
 
-    // causes data passing through the read chain of encoders to be
-    // flushed to the input buffer
-    // note: the regular flush() operates on the write chain of encoders
-    virtual void flushread();
+    /**
+     * Flushes the read chain through to the stream's input buffer.
+     * The regular flush() only operates on the write chain.
+     * Returns true iff the encoder chain returned true.
+     */
+    bool flush_read();
+
+    /**
+     * Flushes the write chain through to the stream's output buffer.
+     * The regular flush() invokes this, then attempts to
+     * synchronously push the buffered data to the stream, which
+     * may not always be desirable since it can be quite costly.
+     *
+     * To simply cause the write chain to be flushed but allow
+     * WvStreams to drain the output buffer at its leisure, use
+     * this function.
+     * Returns true iff the encoder chain returned true.
+     */
+    bool flush_write();
+
+    /**
+     * Calls flush() then finish() on the read chain of encoders.
+     * Returns true iff the encoder chain returned true.
+     */
+    bool finish_read();
+
+    /**
+     * Calls flush() then finish() on the write chain of encoders.
+     * Does not synchronously flush() the output buffer.
+     * Returns true iff the encoder chain returned true.
+     */
+    bool finish_write();
 
 protected:
     bool pre_select(SelectInfo &si);
@@ -60,7 +100,7 @@ private:
     void pull(size_t size);
 
     // pushes a chunk to the underlying stream
-    void push(bool flush);
+    bool push(bool flush, bool finish);
 };
 
 #endif // __WVENCODERSTREAM_H

@@ -20,6 +20,10 @@
  */
 class WvEncoder
 {
+    bool okay; // false iff setnotok() was called
+    bool finished; // true iff setfinished()/finish() was called
+    WvString errstr;
+
 public:
     /**
      * Creates a new WvEncoder.
@@ -36,10 +40,20 @@ public:
      * This should only be used to record permanent failures.
      * Transient errors (eg. bad block, but recoverable) should be
      * detected in a different fashion.
-     *
-     * The default implementation always returns true.
      */
-    virtual bool isok() const;
+    bool isok() const
+        { return okay && _isok(); }
+
+    /**
+     * Returns true if finish has been called on this encoder.
+     */
+    bool isfinished() const
+        { return finished && _isfinished(); }
+
+    /**
+     * Returns an error message if isok() == false, else the null string.
+     */
+    WvString geterror() const;
 
     /**
      * Reads data from the input buffer, encodes it, and writes the result
@@ -68,15 +82,41 @@ public:
      * problematic data from the input buffer and return false from this
      * function, but isok() will remain true.
      *
+     * A stream might become isfinished() == true if an encoder-
+     * specific end-of-data marker was detected in the input.
+     *
      * Returns true on success or false if an error occurs.
+     * Returns isok() if the stream had previously been finished, unless
+     * the input buffer is not empty, in which case returns false.
+     *
+     * See _encode() for the actual implementation.
      */
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush = false) = 0;
+    bool encode(WvBuffer &in, WvBuffer &out, bool flush = false);
 
     /**
      * Flushes the encoder (convenience function).
      */
     bool flush(WvBuffer &in, WvBuffer &out)
         { return encode(in, out, true); }
+
+    /**
+     * Tells the encoder that NO MORE DATA will ever be encoded.
+     * It should flush out any and all internally buffered data
+     * and write out whatever end-of-data marking it needs before
+     * returning.
+     *
+     * Clients should invoke flush() on the input buffer before
+     * finish() if the input buffer was not yet empty.
+     *
+     * It is safe to call this function multiple times.
+     * The implementation will simply return isok() and do nothing else.
+     *
+     * Returns true on success or false if an error occurs.
+     * Returns isok() if the stream had previously been finished.
+     *
+     * See _finish() for the actual implementation.
+     */
+    bool finish(WvBuffer &out);
 
     /**
      * Helper functions for encoding strings.
@@ -111,10 +151,84 @@ public:
     inline bool flush(WvBuffer &inbuf, void *outmem, size_t *outlen)
         { return encode(inbuf, outmem, outlen, true); }
 
-    /**
-     * Helper functions for other interesting cases.
-     */
     bool flush(WvStringParm instr, void *outmem, size_t *outlen);
+
+protected:
+    /**
+     * Sets 'okay' to false explicitly.
+     */
+    void setnotok()
+        { okay = false; }
+
+    /**
+     * Sets an error condition, then setnotok().
+     */
+    void seterror(WvStringParm message)
+        { errstr = message; setnotok(); }
+    void seterror(WVSTRING_FORMAT_DECL)
+        { seterror(WvString(WVSTRING_FORMAT_CALL)); }
+
+    /**
+     * Sets 'finished' to true explicitly.
+     */
+    void setfinished()
+        { finished = true; }
+
+protected:
+    /**
+     * Template method implementation of isok().
+     * Not be called if any of the following cases are true:
+     *   okay == false
+     *
+     * Most implementations do not need to override this.
+     * See setnotok().
+     */
+    virtual bool _isok() const
+        { return true; }
+
+    /**
+     * Template method implementation of isfinished().
+     * Not be called if any of the following cases are true:
+     *   finished == true
+     *
+     * Most implementations do not need to override this.
+     * See setfinished().
+     */
+    virtual bool _isfinished() const
+        { return false; }
+
+    /**
+     * Template method implementation of geterror().
+     * Not be called if any of the following cases are true:
+     *
+     * Most implementations do not need to override this.
+     * See seterror().
+     */
+    virtual WvString _geterror() const
+        { return WvString::null; }
+
+    /**
+     * Template method implementation of encode().
+     * Not be called if any of the following cases are true:
+     *   isok() == false
+     *   isfinished() == true
+     *   in.used() == 0 && flush == false
+     *
+     * All implementations MUST define this.
+     */
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush) = 0;
+
+    /**
+     * Template method implementation of finish().
+     * Not be called if any of the following cases are true:
+     *   isok() == false
+     *   isfinished() == true
+     * The encoder is marked finished AFTER this function exits.
+     *
+     * Many implementations do not need to override this.
+     */
+    virtual bool _finish(WvBuffer &out)
+        { return true; }
 };
 
 
@@ -123,19 +237,30 @@ public:
  */
 class WvNullEncoder : public WvEncoder
 {
-public:
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 
 /**
- * A very efficient null encoder that just sends its input to its output
- * without actually copying any data.
+ * A very efficient passthrough encoder that just sends its input
+ * to its output without actually copying any data.
+ * Counts the number of bytes it has processed.
  */
 class WvPassthroughEncoder : public WvEncoder
 {
+    size_t total;
+    
 public:
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+    WvPassthroughEncoder() : total(0) { }
+
+    /**
+     * Returns the number of bytes processed so far.
+     */
+    size_t bytes_processed() { return total; }
+    
+protected:
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 
@@ -169,22 +294,60 @@ public:
 
     /**
      * Manipulate the list of encoders.
-     * Probably should not do this unless the encoders have been flushed.
+     * It is not a good idea to change the list this unless the encoders
+     * have been flushed and finished first, but it is supported.
      */
     void append(WvEncoder *enc, bool auto_free);
     void prepend(WvEncoder *enc, bool auto_free);
     void unlink(WvEncoder *enc);
+    void zap();
 
+protected:
     /**
      * Returns true if and only if all encoders return true.
+     *
+     * WvEncoderChain is special in that it may transition from
+     * isok() == false to isok() == true if the offending encoders
+     * are removed from the list.
      */
-    virtual bool isok() const;
+    virtual bool _isok() const;
+    
+    /**
+     * Returns false if and only if all encoders return false.
+     *
+     * WvEncoderChain is special in that it may transition from
+     * isfinished() == true to isfinished() == false if the offending
+     * encoders are removed from the list, but not if finish() is
+     * called.
+     */
+    virtual bool _isfinished() const;
 
+    /**
+     * Returns the first non-null error message found in the list.
+     *
+     * WvEncoderChain is special in that it may transition from
+     * !geterror() = false to !geterror() = true if the offending
+     * encoders are removed from the list.
+     */
+    virtual WvString _geterror() const;
+    
     /**
      * Passes the data through the entire chain of encoders.
+     *
      * Returns true if and only if all encoders return true.
      */
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
+    
+    /**
+     * Invokes finish() on the first encoder in the chain, then
+     * flush() on the second encoder if new data was generated,
+     * then finish() on the second encoder, and so on until all
+     * encoders have been flushed and finished (assuming the first
+     * encoder had already been flushed).
+     *
+     * Returns true if and only if all encoders return true.
+     */
+    virtual bool _finish(WvBuffer & out);
 };
 
 #endif // __WVENCODER_H

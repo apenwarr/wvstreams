@@ -23,7 +23,7 @@ WvXOREncoder::~WvXOREncoder()
 }
 
 
-bool WvXOREncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+bool WvXOREncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 {
     size_t len = inbuf.used();
     unsigned char *data = inbuf.get(len);

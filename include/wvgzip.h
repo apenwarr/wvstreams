@@ -25,14 +25,17 @@ public:
     WvGzipEncoder(Mode _mode);
     virtual ~WvGzipEncoder();
     
-    virtual bool isok() const;
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush);
+    virtual bool _finish(WvBuffer &outbuf);
 
 private:
-    bool okay;
     struct z_stream_s *zstr;
     WvMiniBuffer tmpbuf;
     Mode mode;
+
+    void prepare(WvBuffer *inbuf);
+    bool process(WvBuffer &outbuf, bool flush, bool finish);
 };
 
 

@@ -22,8 +22,9 @@ WvEncoderStream::~WvEncoderStream()
 
 void WvEncoderStream::close()
 {
-    // flush read chain
-    flushread();
+    // finish encoders
+    finish_read();
+    finish_write();
     // flush write chain and close the stream
     WvStreamClone::close();
 }
@@ -31,11 +32,8 @@ void WvEncoderStream::close()
 
 void WvEncoderStream::flush_internal(time_t msec_timeout)
 {
-    // flush outbuf through encoder
-    writeinbuf.merge(outbuf);
-    push(true /*flush*/);
-    assert(outbuf.used() == 0);
- 
+    flush_write();
+
     // flush underlying stream
     while (isok() && writeoutbuf.used())
     {
@@ -49,12 +47,36 @@ void WvEncoderStream::flush_internal(time_t msec_timeout)
 }
 
 
-void WvEncoderStream::flushread()
+bool WvEncoderStream::flush_read()
 {
-    // flush read chain then merge the input buffers
-    readchain.encode(readinbuf, readoutbuf, true /*flush*/);
+    bool success = readchain.flush(readinbuf, readoutbuf);
     checkisok();
     inbuf.merge(readoutbuf);
+    return success;
+}
+
+
+bool WvEncoderStream::flush_write()
+{
+    bool success = push(true /*flush*/, false /*finish*/);
+    return success;
+}
+
+
+bool WvEncoderStream::finish_read()
+{
+    bool success = readchain.flush(readinbuf, readoutbuf);
+    if (! readchain.finish(readoutbuf))
+        success = false;
+    checkisok();
+    inbuf.merge(readoutbuf);
+    return success;
+}
+
+
+bool WvEncoderStream::finish_write()
+{
+    return push(true /*flush*/, true /*finish*/);
 }
 
 
@@ -75,11 +97,16 @@ void WvEncoderStream::pull(size_t size)
 }
 
 
-void WvEncoderStream::push(bool flush)
+bool WvEncoderStream::push(bool flush, bool finish)
 {
     // encode the output
-    writechain.encode(writeinbuf, writeoutbuf, flush);
+    if (flush)
+        writeinbuf.merge(outbuf);
+    bool success = writechain.encode(writeinbuf, writeoutbuf, flush);
     checkisok();
+    if (finish)
+        if (! writechain.finish(writeoutbuf))
+            success = false;
 
     // push encoded output to cloned stream
     size_t size = writeoutbuf.used();
@@ -89,6 +116,7 @@ void WvEncoderStream::push(bool flush)
         size_t len = WvStreamClone::uwrite(writeout, size);
         writeoutbuf.unget(size - len);
     }
+    return success;
 }
 
 
@@ -105,7 +133,7 @@ size_t WvEncoderStream::uread(void *buf, size_t size)
 size_t WvEncoderStream::uwrite(const void *buf, size_t size)
 {
     writeinbuf.put(buf, size);
-    push(false /*flush*/);
+    push(false /*flush*/, false /*finish*/);
     return size;
 }
 
@@ -117,20 +145,15 @@ bool WvEncoderStream::pre_select(SelectInfo &si)
 
     // try to push pending encoded output to cloned stream
     // outbuf_delayed_flush condition already handled by uwrite()
-    push(false /*flush*/);
+    push(false /*flush*/, false /*finish*/);
     return WvStreamClone::pre_select(si);
 }
 
 
 void WvEncoderStream::checkisok()
 {
-    bool readisok = readchain.isok();
-    bool writeisok = writechain.isok();
-    if (! readisok)
-        if (! writeisok)
-            seterr("Error occurred in read and write encoder chains");
-        else
-            seterr("Error occurred in read encoder chain");
-    else if (! writeisok)
-        seterr("Error occurred in write encoder chain");
+    if (! readchain.isok())
+        seterr(WvString("read chain: %s", readchain.geterror()));
+    if (! writechain.isok())
+        seterr(WvString("write chain: %s", writechain.geterror()));
 }

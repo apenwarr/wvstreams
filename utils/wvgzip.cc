@@ -13,7 +13,7 @@
 /***** GzipEncoder *****/
 
 WvGzipEncoder::WvGzipEncoder(Mode _mode) :
-    okay(true), tmpbuf(ZBUFSIZE), mode(_mode)
+    tmpbuf(ZBUFSIZE), mode(_mode)
 {
     zstr = new z_stream;
     memset(zstr, 0, sizeof(*zstr));
@@ -29,10 +29,10 @@ WvGzipEncoder::WvGzipEncoder(Mode _mode) :
     
     if (retval != Z_OK)
     {
-	okay = false;
-	return;
+        seterror("error %s initializing gzip %s", retval,
+            mode == Deflate ? "compressor" : "decompressor");
+        return;
     }
-    
     zstr->next_in = zstr->next_out = NULL;
     zstr->avail_in = zstr->avail_out = 0;
 }
@@ -49,55 +49,74 @@ WvGzipEncoder::~WvGzipEncoder()
 }
 
 
-bool WvGzipEncoder::isok() const
+bool WvGzipEncoder::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 {
-    return okay;
+    prepare(& inbuf);
+    bool success = process(outbuf, flush, false);
+    if (zstr->avail_in != 0)
+    {
+        // unget unused data
+        inbuf.unget(zstr->avail_in);
+        zstr->avail_in = 0;
+    }
+    return success;
 }
 
 
-bool WvGzipEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvGzipEncoder::_finish(WvBuffer &outbuf)
 {
-    if (! okay) return false;
-    assert(zstr->avail_in == 0);
+    prepare(NULL);
+    return process(outbuf, false, true);
+}
 
-    if (in.used() == 0)
+
+void WvGzipEncoder::prepare(WvBuffer *inbuf)
+{
+    assert(zstr->avail_in == 0);
+    if (inbuf && inbuf->used() != 0)
     {
-        if (! flush) return true; // nothing to do!
-        zstr->avail_in = 0;
-        zstr->next_in = (Bytef*)""; // so it's not NULL
+        zstr->avail_in = inbuf->used();
+        zstr->next_in = inbuf->get(inbuf->used());
     }
     else
     {
-        zstr->avail_in = in.used();
-        zstr->next_in = in.get(in.used());
-    }    
+        zstr->avail_in = 0;
+        zstr->next_in = (Bytef*)""; // so it's not NULL
+    }
+}
 
+
+bool WvGzipEncoder::process(WvBuffer &outbuf, bool flush, bool finish)
+{
+    int flushmode = finish ? Z_FINISH :
+        flush ? Z_SYNC_FLUSH : Z_NO_FLUSH;
     int retval;
     do
     {
-	if (zstr->avail_out == 0)
-	{
-	    tmpbuf.zap();
-	    assert(tmpbuf.free() == ZBUFSIZE);
-	    zstr->avail_out = tmpbuf.free();
-	    zstr->next_out = tmpbuf.alloc(tmpbuf.free());
-	}
-
-	tmpbuf.alloc(tmpbuf.free());
+        // process the next chunk
+        zstr->avail_out = tmpbuf.free();
+	zstr->next_out = tmpbuf.alloc(tmpbuf.free());
 	if (mode == Deflate)
-	    retval = deflate(zstr, flush ? Z_SYNC_FLUSH : Z_NO_FLUSH);
+	    retval = deflate(zstr, flushmode);
 	else
-	    retval = inflate(zstr, flush ? Z_SYNC_FLUSH : Z_NO_FLUSH);
+	    retval = inflate(zstr, flushmode);
 	tmpbuf.unalloc(zstr->avail_out);
-        
-	size_t tmpused = tmpbuf.used();
-	out.put(tmpbuf.get(tmpused), tmpused);
-    } while (retval == Z_OK && zstr->avail_out == 0);
 
-    if (retval != Z_OK && retval != Z_STREAM_END &&
-        retval != Z_BUF_ERROR)
-        okay = false;
-    return okay;
+        // consume pending output
+	size_t tmpused = tmpbuf.used();
+	outbuf.put(tmpbuf.get(tmpused), tmpused);
+        tmpbuf.zap();
+    } while (retval == Z_OK);
+
+    if (retval == Z_STREAM_END)
+        setfinished();
+    else if (retval != Z_OK && retval != Z_BUF_ERROR)
+    {
+        seterror("error %s during gzip %s", retval,
+            mode == Deflate ? "compression" : "decompression");
+        return false;
+    }
+    return true;
 }
 
 

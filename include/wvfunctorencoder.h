@@ -34,7 +34,8 @@ public:
     WvFunctorEncoder(const Functor &f) : f(f) { }
     virtual ~WvFunctorEncoder() { }
 
-    virtual bool encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+protected:
+    virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
     {
         size_t count = inbuf.used() / sizeof(IType);
         if (count != 0)
@@ -47,7 +48,7 @@ public:
                 IType *indata = reinterpret_cast<IType*>(indataraw);
                 OType *outdata = reinterpret_cast<OType*>(outdataraw);
                 *outdata = f(*indata);
-                if (count-- == 0) break;
+                if (--count == 0) break;
                 indataraw += sizeof(IType);
                 outdataraw += sizeof(OType);
             }

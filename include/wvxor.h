@@ -26,7 +26,8 @@ public:
     WvXOREncoder(const void *_key, size_t _keylen);
     virtual ~WvXOREncoder();
     
-    bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 
 private:
     unsigned char *key;

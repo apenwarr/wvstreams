@@ -8,7 +8,7 @@
 
 /***** WvEncoder *****/
 
-WvEncoder::WvEncoder()
+WvEncoder::WvEncoder() : okay(true), finished(false)
 {
 }
 
@@ -18,9 +18,36 @@ WvEncoder::~WvEncoder()
 }
 
 
-bool WvEncoder::isok() const
+WvString WvEncoder::geterror() const
 {
-    return true;
+    if (isok())
+        return WvString::null;
+    if (!! errstr)
+        return errstr;
+    WvString message = _geterror();
+    if (!! message)
+        return message;
+    return "unknown error";
+}
+
+
+bool WvEncoder::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+{
+    bool success = isok() && ! isfinished() &&
+        (inbuf.used() != 0 || flush);
+    if (success)
+        success = _encode(inbuf, outbuf, flush);
+    return success;
+}
+
+
+bool WvEncoder::finish(WvBuffer &outbuf)
+{
+    bool success = isok() && ! isfinished();
+    if (success)
+        success = _finish(outbuf);
+    setfinished();
+    return success;
 }
 
 
@@ -118,22 +145,26 @@ bool WvEncoder::flush(WvStringParm instr, void *outmem, size_t *outlen)
 }
 
 
+
 /***** WvNullEncoder *****/
 
-bool WvNullEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvNullEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     in.zap();
     return true;
 }
 
 
+
 /***** WvPassthroughEncoder *****/
 
-bool WvPassthroughEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvPassthroughEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
+    total += in.used();
     out.merge(in);
     return true;
 }
+
 
 
 /***** WvEncoderChain *****/
@@ -148,7 +179,7 @@ WvEncoderChain::~WvEncoderChain()
 }
 
 
-bool WvEncoderChain::isok() const
+bool WvEncoderChain::_isok() const
 {
     WvEncoderChainElemListBase::Iter it(
         const_cast<WvEncoderChainElemListBase&>(encoders));
@@ -162,19 +193,48 @@ bool WvEncoderChain::isok() const
 }
 
 
-bool WvEncoderChain::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvEncoderChain::_isfinished() const
+{
+    WvEncoderChainElemListBase::Iter it(
+        const_cast<WvEncoderChainElemListBase&>(encoders));
+    for (it.rewind(); it.next(); )
+    {
+        WvEncoderChainElem *encelem = it.ptr();
+        if (encelem->enc->isfinished())
+            return true;
+    }
+    return false;
+}
+
+
+WvString WvEncoderChain::_geterror() const
+{
+    WvEncoderChainElemListBase::Iter it(
+        const_cast<WvEncoderChainElemListBase&>(encoders));
+    for (it.rewind(); it.next(); )
+    {
+        WvEncoderChainElem *encelem = it.ptr();
+        WvString message = encelem->enc->geterror();
+        if (!! message)
+            return message;
+    }
+    return WvString::null;
+}
+
+
+bool WvEncoderChain::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     if (encoders.isempty())
         return passthrough.encode(in, out, flush);
 
     // iterate over all encoders in the list
     bool success = true;
-
     WvEncoderChainElemListBase::Iter it(encoders);
     it.rewind();
     it.next();
     for (WvBuffer *tmpin = & in;;)
     {
+        // merge pending output and select an output buffer
         WvEncoderChainElem *encelem = it.ptr();
         bool hasnext = it.next();
         WvBuffer *tmpout;
@@ -186,8 +246,59 @@ bool WvEncoderChain::encode(WvBuffer &in, WvBuffer &out, bool flush)
         else
             tmpout = & encelem->out;
 
+        // encode
         if (! encelem->enc->encode(*tmpin, *tmpout, flush))
             success = false;
+
+        if (! hasnext)
+            break;
+        tmpin = & encelem->out;
+    }
+    return success;
+}
+
+
+bool WvEncoderChain::_finish(WvBuffer &out)
+{
+    if (encoders.isempty())
+        return true;
+    
+    // iterate over all encoders in the list
+    bool success = true;
+    WvEncoderChainElemListBase::Iter it(encoders);
+    it.rewind();
+    it.next();
+    bool needs_flush = false;
+    for (WvBuffer *tmpin = NULL;;)
+    {
+        // merge pending output and select an output buffer
+        WvEncoderChainElem *encelem = it.ptr();
+        bool hasnext = it.next();
+        WvBuffer *tmpout;
+        if (! hasnext)
+        {
+            out.merge(encelem->out);
+            tmpout = & out;
+        }
+        else
+            tmpout = & encelem->out;
+
+        // do we need to flush first due to new input?
+        size_t oldused = tmpout->used();
+        if (needs_flush)
+        {
+            if (! encelem->enc->flush(*tmpin, *tmpout))
+                success = false;
+            needs_flush = true;
+        }
+        
+        // tell the encoder to finish
+        if (! encelem->enc->finish(*tmpout))
+            success = false;
+            
+        // check whether any new data was generated
+        if (oldused != tmpout->used())
+            needs_flush = true;
 
         if (! hasnext)
             break;
@@ -218,4 +329,9 @@ void WvEncoderChain::unlink(WvEncoder *enc)
         if (encelem->enc == enc)
             it.xunlink();
     }
+}
+
+void WvEncoderChain::zap()
+{
+    encoders.zap();
 }

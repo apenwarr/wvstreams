@@ -29,7 +29,7 @@ WvHexEncoder::WvHexEncoder(bool use_uppercase)
 }
 
 
-bool WvHexEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvHexEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     while (in.used() != 0)
     {
@@ -44,22 +44,13 @@ bool WvHexEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
 /***** WvHexDecoder *****/
 
 WvHexDecoder::WvHexDecoder() :
-    iserror(false), issecond(false), first(0)
+    issecond(false), first(0)
 {
 }
 
 
-bool WvHexDecoder::isok() const
+bool WvHexDecoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
-    return ! iserror;
-}
-
-
-bool WvHexDecoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
-{
-    if (iserror)
-        return false;
-        
     while (in.used() != 0)
     {
         char ch = (char) in.getch();
@@ -74,8 +65,7 @@ bool WvHexDecoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
         }
         if (isspace(ch))
             continue;
-        // invalid character encountered
-        iserror = true;
+        seterror("invalid character '%s' in hex input", ch);
         return false;
     }
     if (flush && issecond)

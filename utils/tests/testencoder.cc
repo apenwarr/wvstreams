@@ -15,7 +15,8 @@ public:
     WvXOR(const void *_key, size_t _keylen);
     virtual ~WvXOR();
     
-    bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 
@@ -34,7 +35,7 @@ WvXOR::~WvXOR()
 }
 
 
-bool WvXOR::encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
+bool WvXOR::_encode(WvBuffer &inbuf, WvBuffer &outbuf, bool flush)
 {
     size_t len = inbuf.used();
     unsigned char *data = inbuf.get(len);
@@ -70,7 +71,6 @@ int main(int argc, char **argv)
 {
     WvEncoder *enc = NULL;
     char buf[2048];
-    size_t rlen, wlen;
     enum { NoMode, Gzip, Gunzip, XOR } mode = NoMode;
     bool flush_often = false;
     int c;
@@ -127,27 +127,33 @@ int main(int argc, char **argv)
     WvBuffer inbuf;
     WvBuffer outbuf;
     
-    while (enc->isok() && (rlen = read(0, buf, sizeof(buf))) >= 0)
+    while (enc->isok())
     {
-	fprintf(stderr, "[read %d bytes]\n", rlen);
-        inbuf.put(buf, rlen);
-	
-	enc->encode(inbuf, outbuf, (rlen==0 || flush_often));
-	
-	wlen = outbuf.used();
+        size_t rlen = read(0, buf, sizeof(buf));
+        fprintf(stderr, "[read %d bytes]\n", rlen);
+        if (rlen > 0)
+        {
+            inbuf.put(buf, rlen);
+            enc->encode(inbuf, outbuf, flush_often);
+        }
+        else
+        {
+            enc->finish(outbuf);
+        }
+        
+	size_t wlen = outbuf.used();
 	write(1, outbuf.get(wlen), wlen);
 	fprintf(stderr, "[wrote %d bytes]\n", wlen);
 	
-	if (!rlen)
+	if (rlen <= 0)
 	    break;
     }
     
     fprintf(stderr, "exiting...\n");
     
-    if (rlen < 0)
-	perror("read stdin");
     if (!enc->isok())
-	fprintf(stderr, "encoder is not okay!\n");
+	fprintf(stderr, "encoder is not okay! %s\n",
+            enc->geterror().cstr());
     
     delete enc;
     

@@ -17,23 +17,21 @@ public:
     WvHexEncoder(bool use_uppercase = false);
     virtual ~WvHexEncoder() { }
 
-    // on flush, outputs any needed pad characters
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 
 class WvHexDecoder : public WvEncoder
 {
-    bool iserror;
     bool issecond;
     int first;
 public:
     WvHexDecoder();
     virtual ~WvHexDecoder() { }
 
-    // returns false if an error was detected in the input
-    virtual bool isok() const;
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 /*** For compatibility with older code. ***/

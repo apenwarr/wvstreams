@@ -39,7 +39,8 @@ public:
      */
     void setkey(const void *_key, size_t _keysize);
 
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 
 private:
     Mode mode;

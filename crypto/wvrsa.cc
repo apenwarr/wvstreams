@@ -164,7 +164,7 @@ WvRSAEncoder::~WvRSAEncoder()
 }
 
 
-bool WvRSAEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvRSAEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     if (rsasize == 0)
     {

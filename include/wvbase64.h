@@ -20,15 +20,16 @@ public:
     WvBase64Encoder();
     virtual ~WvBase64Encoder() { }
 
+protected:
     // on flush, outputs any needed pad characters
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 
 class WvBase64Decoder : public WvEncoder
 {
     enum State {
-        ATBIT0, ATBIT2, ATBIT4, ATBIT6, PAD, ERROR
+        ATBIT0, ATBIT2, ATBIT4, ATBIT6, PAD
     };
     State state;
     unsigned int bits; // remaining bits shifted left 6 bits
@@ -36,9 +37,8 @@ public:
     WvBase64Decoder();
     virtual ~WvBase64Decoder() { }
 
-    // returns false if an error was detected in the input
-    virtual bool isok() const;
-    virtual bool encode(WvBuffer &in, WvBuffer &out, bool flush);
+protected:
+    virtual bool _encode(WvBuffer &in, WvBuffer &out, bool flush);
 };
 
 #endif // __WVBASE64_H

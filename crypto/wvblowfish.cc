@@ -36,7 +36,7 @@ void WvBlowfishEncoder::setkey(const void *_key, size_t _keysize)
 }
 
 
-bool WvBlowfishEncoder::encode(WvBuffer &in, WvBuffer &out, bool flush)
+bool WvBlowfishEncoder::_encode(WvBuffer &in, WvBuffer &out, bool flush)
 {
     size_t len = in.used();
     bool success = true;
