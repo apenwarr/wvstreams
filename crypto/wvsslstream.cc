@@ -24,7 +24,7 @@ static IWvStream *creator(WvStringParm s, IObject *obj, void *userdata)
     if (!obj)
 	obj = wvcreate<IWvStream>(s);
     return new WvSSLStream(mutate<IWvStream>(obj),
-			   (WvX509Mgr *)userdata, false, false);
+			   (WvX509Mgr *)userdata, 0, false);
 }
 
 static IWvStream *screator(WvStringParm s, IObject *obj, void *userdata)
@@ -32,23 +32,29 @@ static IWvStream *screator(WvStringParm s, IObject *obj, void *userdata)
     if (!obj)
 	obj = wvcreate<IWvStream>(s);
     return new WvSSLStream(mutate<IWvStream>(obj),
-			   (WvX509Mgr *)userdata, false, true);
+			   (WvX509Mgr *)userdata, 0, true);
 }
 
 static WvMoniker<IWvStream> reg("ssl", creator);
 static WvMoniker<IWvStream> sreg("sslserv", screator);
 
 
-
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record
 
+static int wv_verify_cb(int preverify_ok, X509_STORE_CTX *ctx) 
+{
+   // This is just returns true, since what we really want
+   // is for the WvSSLValidateCallback to do this work
+   return 1;
+}
+
 WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
-    bool _verify, bool _is_server) :
-    WvStreamClone(_slave), debug("WvSSLStream",WvLog::Debug5),
+    WvSSLValidateCallback _vcb, bool _is_server) :
+    WvStreamClone(_slave), debug("WvSSLStream", WvLog::Debug5),
     write_bouncebuf(MAX_BOUNCE_AMOUNT), write_eat(0),
     read_bouncebuf(MAX_BOUNCE_AMOUNT), read_pending(false)
 {
-    verify = _verify;
+    vcb = _vcb;
     is_server = _is_server;
     ctx = NULL;
     ssl = NULL;
@@ -82,11 +88,11 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
     	}
 	
 	// Allow SSL Writes to only write part of a request...
-	SSL_CTX_set_mode(ctx,SSL_MODE_ENABLE_PARTIAL_WRITE);
+	SSL_CTX_set_mode(ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
 
-	// Tell SSL to use 128 bit ciphers - this appears to
+	// Tell SSL to use 128 bit or better ciphers - this appears to
 	// be necessary for some reason... *sigh*
-	SSL_CTX_set_cipher_list(ctx,"HIGH");
+	SSL_CTX_set_cipher_list(ctx, "HIGH");
 
 	// Enable the workarounds for broken clients and servers
 	// and disable the insecure SSLv2 protocol
@@ -97,6 +103,10 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
 	    seterr("Unable to bind Certificate to SSL Context!");
 	    return;
 	}
+	
+	if (!!vcb)
+            SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, 
+                               wv_verify_cb);
 	
 	debug("Server mode ready.\n");
     }
@@ -111,6 +121,11 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
 	    seterr("Can't get SSL context!");
 	    return;
     	}
+        if (x509 && !x509->bind_ssl(ctx))
+        {
+            seterr("Unable to bind Certificate to SSL Context!");
+            return;
+        }
     }
     
     ERR_clear_error();
@@ -120,6 +135,10 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
     	seterr("Can't create SSL object!");
 	return;
     }
+
+    if (!!vcb)
+	SSL_set_verify(ssl, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, 
+                       wv_verify_cb);
 
     debug("SSL stream initialized.\n");
 
@@ -466,21 +485,23 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	else  // We're connected, so let's do some checks ;)
 	{
 	    debug("SSL connection using cipher %s.\n", SSL_get_cipher(ssl));
-	    if (verify)
+	    if (!!vcb)
 	    {
-	    	WvX509Mgr peercert(SSL_get_peer_certificate(ssl));
-	    	if (peercert.isok() && peercert.validate())
+	    	WvX509Mgr *peercert = new WvX509Mgr(SSL_get_peer_certificate(ssl));
+		debug("SSL Peer is: %s\n", peercert->get_subject());
+	    	if (peercert->isok() && peercert->validate() && vcb(peercert))
 	    	{
                     setconnected(true);
 	    	    debug("SSL finished negotiating - certificate is valid.\n");
 	    	}
 	    	else
 	    	{
-		    if (!peercert.isok())
-			seterr("Peer cert: %s", peercert.errstr());
+		    if (!peercert->isok())
+			seterr("Peer cert: %s", peercert->errstr());
 		    else
 			seterr("Peer certificate is invalid!");
 	    	}
+		delete peercert;
 	    }
 	    else
 	    {

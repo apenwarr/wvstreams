@@ -81,7 +81,7 @@ void UniConfDaemon::sslcallback(WvStream &l, void *userdata)
     WvTCPListener *listener = static_cast<WvTCPListener *>(&l);
     WvStream *s = listener->accept();
     debug("Incoming TCP/SSL connection from %s.\n", *s->src());
-    accept(new WvSSLStream(s, x509, false, true));
+    accept(new WvSSLStream(s, x509, 0, true));
 }
 
 

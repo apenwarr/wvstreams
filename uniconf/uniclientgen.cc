@@ -45,7 +45,7 @@ static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_SSL_PORT);
     
-    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL, true), _s);
+    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), _s);
 }
 
 
