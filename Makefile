@@ -176,5 +176,5 @@ endif
 
 wvtestmain: wvtestmain.o \
 	$(call objects, $(shell find . -type d -name t)) \
-	$(LIBUNICONF)
+	$(LIBUNICONF) $(LIBWVSTREAMS)
 
