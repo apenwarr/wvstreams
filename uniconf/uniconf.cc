@@ -24,19 +24,19 @@ UniConfKey UniConf::fullkey(const UniConfKey &k) const
 
 bool UniConf::exists() const
 {
-    return xroot->exists(xfullkey);
+    return xroot->mounts.exists(xfullkey);
 }
 
 
 bool UniConf::haschildren() const
 {
-    return xroot->haschildren(xfullkey);
+    return xroot->mounts.haschildren(xfullkey);
 }
 
 
 WvString UniConf::get(WvStringParm defvalue) const
 {
-    WvString value = xroot->get(xfullkey);
+    WvString value = xroot->mounts.get(xfullkey);
     if (value.isnull())
         return defvalue;
     return value;
@@ -45,13 +45,13 @@ WvString UniConf::get(WvStringParm defvalue) const
 
 int UniConf::getint(int defvalue) const
 {
-    return xroot->str2int(get(), defvalue);
+    return xroot->mounts.str2int(get(), defvalue);
 }
 
 
 void UniConf::set(WvStringParm value) const
 {
-    xroot->set(xfullkey, value);
+    xroot->mounts.set(xfullkey, value);
 }
 
 
@@ -75,43 +75,43 @@ void UniConf::copy(UniConfKey dst, bool force)
 
 bool UniConf::refresh() const
 {
-    return xroot->refresh();
+    return xroot->mounts.refresh();
 }
 
 
 void UniConf::commit() const
 {
-    xroot->commit();
+    xroot->mounts.commit();
 }
 
 
 UniConfGen *UniConf::mount(WvStringParm moniker, bool refresh) const
 {
-    return xroot->mount(xfullkey, moniker, refresh);
+    return xroot->mounts.mount(xfullkey, moniker, refresh);
 }
 
 
 UniConfGen *UniConf::mountgen(UniConfGen *gen, bool refresh) const
 {
-    return xroot->mountgen(xfullkey, gen, refresh);
+    return xroot->mounts.mountgen(xfullkey, gen, refresh);
 }
 
 
 void UniConf::unmount(UniConfGen *gen, bool commit) const
 {
-    return xroot->unmount(xfullkey, gen, commit);
+    return xroot->mounts.unmount(gen, commit);
 }
 
 
 bool UniConf::ismountpoint() const
 {
-    return xroot->ismountpoint(xfullkey);
+    return xroot->mounts.ismountpoint(xfullkey);
 }
 
 
 UniConfGen *UniConf::whichmount(UniConfKey *mountpoint) const
 {
-    return xroot->whichmount(xfullkey, mountpoint);
+    return xroot->mounts.whichmount(xfullkey, mountpoint);
 }
 
 
@@ -143,25 +143,25 @@ void UniConf::del_setbool(bool *flag, bool recurse) const
 
 void UniConf::hold_delta()
 {
-    xroot->hold_delta();
+    xroot->mounts.hold_delta();
 }
 
 
 void UniConf::unhold_delta()
 {
-    xroot->unhold_delta();
+    xroot->mounts.unhold_delta();
 }
 
 
 void UniConf::clear_delta()
 {
-    xroot->clear_delta();
+    xroot->mounts.clear_delta();
 }
 
 
 void UniConf::flush_delta()
 {
-    xroot->flush_delta();
+    xroot->mounts.flush_delta();
 }
 
 
@@ -181,7 +181,7 @@ void UniConf::dump(WvStream &stream, bool everything) const
 /***** UniConf::Iter *****/
 
 UniConf::Iter::Iter(const UniConf &_top)
-    : IterBase(_top), it(_top.rootobj()->iterator(top.fullkey()))
+    : IterBase(_top), it(_top.rootobj()->mounts.iterator(top.fullkey()))
 {
 }
 
@@ -453,33 +453,4 @@ bool UniConf::SortedIterBase::next()
     current = *xkeys[index];
     index += 1;
     return true;
-}
-
-
-
-/***** UniConfRoot *****/
-
-UniConfRoot::UniConfRoot()
-    : UniConf(new UniConfRootImpl(), UniConfKey::EMPTY)
-{
-}
-
-
-UniConfRoot::UniConfRoot(WvStringParm moniker, bool refresh)
-    : UniConf(new UniConfRootImpl(), UniConfKey::EMPTY)
-{
-    mount(moniker, refresh);
-}
-
-
-UniConfRoot::UniConfRoot(UniConfGen *gen, bool refresh)
-    : UniConf(new UniConfRootImpl(), UniConfKey::EMPTY)
-{
-    mountgen(gen, refresh);
-}
-
-
-UniConfRoot::~UniConfRoot()
-{
-    delete xroot;
 }

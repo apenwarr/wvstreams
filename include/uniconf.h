@@ -14,18 +14,10 @@
 
 class WvStream;
 class UniConf;
-class UniConfRootImpl;
+class UniConfRoot;
 
 /**
  * The callback type for signalling key changes from UniConf.
- *
- * For the moment, notifications can be seen as invalidating the
- * entire subtree of keys rooted at the specified config object.
- * This is because there may be complex key aliasing and shadowing
- * interactions between mounted generators.
- * 
- * TODO: Enhance the API using a change type code to discriminate
- *       between different effects from changes.
  * 
  * Parameters: key, userdata
  *   cfg - the UniConf config object representing the key that has changed
@@ -56,10 +48,10 @@ DeclareWvCallback(2, void, UniConfCallback, const UniConf &, void *);
  */
 class UniConf
 {
-    friend class UniConfRootImpl;
+    friend class UniConfRoot;
     
 protected:
-    UniConfRootImpl *xroot;
+    UniConfRoot *xroot;
     UniConfKey xfullkey;
 
     /**
@@ -68,29 +60,23 @@ protected:
      * You can't create non-NULL UniConf objects yourself - ask UniConfRoot
      * or another UniConf object to make one for you.
      */
-    UniConf(UniConfRootImpl *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
-        : xroot(root), xfullkey(fullkey)
-        { }
+    UniConf(UniConfRoot *root, const UniConfKey &fullkey = UniConfKey::EMPTY)
+        : xroot(root), xfullkey(fullkey) { }
     
 public:
     /** Creates a NULL UniConf handle, useful for reporting errors. */
     UniConf() 
-        : xroot(NULL), xfullkey(UniConfKey::EMPTY)
-        { }
+        : xroot(NULL), xfullkey(UniConfKey::EMPTY) { }
     
     /**
      * Copies a UniConf handle.
      * "other" is the handle to copy
      */
     UniConf(const UniConf &other)
-        : xroot(other.xroot), xfullkey(other.xfullkey)
-    {
-    }
+        : xroot(other.xroot), xfullkey(other.xfullkey) { }
     
     /** Destroys the UniConf handle. */
-    ~UniConf()
-    {
-    }
+    ~UniConf() { }
 
     
     /***** Handle Manipulation API *****/
@@ -104,10 +90,10 @@ public:
         { return UniConf(xroot, xfullkey.removelast()); }
     
     /**
-     * Returns a pointer to the UniConfRootImpl that manages this node.
+     * Returns a pointer to the UniConfRoot that manages this node.
      * This may be NULL, to signal an invalid handle.
      */
-    UniConfRootImpl *rootobj() const
+    UniConfRoot *rootobj() const
         { return xroot; }
 
     /** Returns true if the handle is invalid (NULL). */
@@ -380,51 +366,7 @@ public:
 };
 
 
-
 /**
- * Represents the root of a hierarhical registry consisting of pairs
- * of UniConfKeys and associated string values.  This object owns
- * a UniConfRootImpl object and acts as an immutable handle for it.
- * 
- * Any number of data containers may be mounted into the tree at any
- * number of mount points to provide a backing store from which
- * registry keys and values are fetched and into which they are
- * stored.  Multiple data containers may be mounted at the same
- * location.  Key conflicts are resolved via the following
- * scoping rules:
- *
- * TODO: Fill in scoping rules...
- */
-class UniConfRoot : public UniConf
-{
-    /** undefined. */
-    UniConfRoot(const UniConfRoot &other);
-
-public:
-    /** Creates an empty UniConf tree with no mounted stores. */
-    UniConfRoot();
-    
-    /** 
-     * Creates a new UniConf tree and mounts the given moniker at the root.
-     * Since most people only want to mount one generator, this should save
-     * a line of code here and there.
-     */
-    UniConfRoot(WvStringParm moniker, bool refresh = true);
-
-    /** 
-     * Creates a new UniConf tree and mounts the given generator at the root.
-     * Since most people only want to mount one generator, this should save
-     * a line of code here and there.
-     */
-    UniConfRoot(UniConfGen *gen, bool refresh = true);
-
-    /** Destroys the UniConf tree along with all uncommitted data. */
-    ~UniConfRoot();
-};
-
-
-/**
- * @internal
  * An implementation base class for key iterators.
  */
 class UniConf::IterBase
@@ -528,7 +470,6 @@ private:
 
 
 /**
- * @internal
  * An implementation base class for sorted key iterators.
  * 
  * Unfortunately WvSorter is too strongly tied down to lists and pointers

@@ -7,24 +7,10 @@
  */
 #include "uniconfroot.h"
 
-/***** UniConfRootImpl *****/
 
-UniConfRootImpl::UniConfRootImpl()
-    : watchroot(NULL, UniConfKey::EMPTY)
-{
-    setcallback(wvcallback(UniConfGenCallback, *this,
-        UniConfRootImpl::gen_callback), NULL);
-}
+/***** UniConfRoot *****/
 
-
-UniConfRootImpl::~UniConfRootImpl()
-{
-    // clear callback before superclasses are destroyed
-    setcallback(NULL, NULL);
-}
-
-
-void UniConfRootImpl::add_callback(const UniConfKey &key,
+void UniConfRoot::add_callback(const UniConfKey &key,
     const UniConfCallback &callback, void *userdata, bool recurse)
 {
     UniWatch *w = new UniWatch(recurse, callback, userdata);
@@ -42,7 +28,7 @@ void UniConfRootImpl::add_callback(const UniConfKey &key,
 }
 
 
-void UniConfRootImpl::del_callback(const UniConfKey &key,
+void UniConfRoot::del_callback(const UniConfKey &key,
     const UniConfCallback &callback, void *userdata, bool recurse)
 {
     UniWatch needle(recurse, callback, userdata);
@@ -65,23 +51,23 @@ void UniConfRootImpl::del_callback(const UniConfKey &key,
 }
 
 
-void UniConfRootImpl::add_setbool(const UniConfKey &key, bool *flag,
+void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag,
                                   bool recurse)
 {
     add_callback(key, wvcallback(UniConfCallback, *this,
-        UniConfRootImpl::setbool_callback), flag, recurse);
+        UniConfRoot::setbool_callback), flag, recurse);
 }
 
 
-void UniConfRootImpl::del_setbool(const UniConfKey &key, bool *flag,
+void UniConfRoot::del_setbool(const UniConfKey &key, bool *flag,
                                   bool recurse)
 {
     del_callback(key, wvcallback(UniConfCallback, *this,
-        UniConfRootImpl::setbool_callback), flag, recurse);
+        UniConfRoot::setbool_callback), flag, recurse);
 }
 
 
-void UniConfRootImpl::check(UniWatchTree *node,
+void UniConfRoot::check(UniWatchTree *node,
     const UniConfKey &key, int segleft)
 {
     UniWatchList::Iter it(node->watches);
@@ -96,7 +82,7 @@ void UniConfRootImpl::check(UniWatchTree *node,
 }
 
 
-void UniConfRootImpl::deletioncheck(UniWatchTree *node, const UniConfKey &key)
+void UniConfRoot::deletioncheck(UniWatchTree *node, const UniConfKey &key)
 {
     UniWatchTree::Iter it(*node);
     for (it.rewind(); it.next(); )
@@ -111,7 +97,7 @@ void UniConfRootImpl::deletioncheck(UniWatchTree *node, const UniConfKey &key)
 }
 
 
-void UniConfRootImpl::prune(UniWatchTree *node)
+void UniConfRoot::prune(UniWatchTree *node)
 {
     while (node != & watchroot && ! node->isessential())
     {
@@ -122,14 +108,14 @@ void UniConfRootImpl::prune(UniWatchTree *node)
 }
 
 
-void UniConfRootImpl::setbool_callback(const UniConf &cfg, void *userdata)
+void UniConfRoot::setbool_callback(const UniConf &cfg, void *userdata)
 {
     bool *flag = static_cast<bool*>(userdata);
     *flag = true;
 }
 
 
-void UniConfRootImpl::gen_callback(const UniConfKey &key, WvStringParm value,
+void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value,
                                    void *userdata)
 {
     hold_delta();

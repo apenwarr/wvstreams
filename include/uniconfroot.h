@@ -8,7 +8,8 @@
 #define __UNICONFROOT_H
 
 #include "uniconf.h"
-#include "unimounttreegen.h"
+#include "uniconftree.h"
+#include "unimountgen.h"
 
 /**
  * @internal
@@ -51,7 +52,8 @@ class UniWatchTree : public UniConfTree<UniWatchTree>
 public:
     UniWatchList watches;
     
-    UniWatchTree(UniWatchTree *parent, const UniConfKey &key)
+    UniWatchTree(UniWatchTree *parent,
+        const UniConfKey &key = UniConfKey::EMPTY)
         : UniConfTree<UniWatchTree>(parent, key) { }
 
     /** Returns true if the node should not be pruned. */
@@ -61,29 +63,56 @@ public:
 
 
 /**
- * The UniConfRoot implementation.
+ * Represents the root of a hierarhical registry consisting of pairs
+ * of UniConfKeys and associated string values.  * 
  *
- * Wires together all of the bits and pieces that make up the core structure
- * of a UniConf tree.  These pieces are factored to make them easier to
- * understand as independent units.  They may also be used independently
- * to achieve a variety of interesting effects.
- * 
- * For tree contents and mounting support see UniMountTreeGen.
+ * Any number of data containers may be mounted into the tree at any
+ * number of mount points to provide a backing store from which
+ * registry keys and values are fetched and into which they are
+ * stored.  Multiple data containers may be mounted at the same
+ * location using standard unix semantics.
+ *
  */
-class UniConfRootImpl : public UniMountTreeGen
+class UniConfRoot : public UniConf
 {
+    friend class UniConf;
+    friend class UniConf::Iter;
+
     UniWatchTree watchroot;
     
     /** undefined. */
-    UniConfRootImpl(const UniConfRootImpl &other);
+    UniConfRoot(const UniConfRoot &other);
 
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
-    UniConfRootImpl();
+    UniConfRoot() : UniConf(this), watchroot(NULL)
+    {
+        mounts.setcallback(wvcallback(UniConfGenCallback, *this,
+            UniConfRoot::gen_callback), NULL);
+    }
 
     /** Destroys the UniConf tree along with all uncommitted data. */
-    ~UniConfRootImpl();
-    
+    ~UniConfRoot()
+        { mounts.setcallback(NULL, NULL); }
+
+    /** 
+     * Creates a new UniConf tree and mounts the given moniker at the root.
+     * Since most people only want to mount one generator, this should save
+     * a line of code here and there.
+     */
+    UniConfRoot(WvStringParm moniker, bool refresh = true)
+        : UniConf(this), watchroot(NULL)
+        { mounts.mount("/", moniker, refresh); }
+
+    /** 
+     * Creates a new UniConf tree and mounts the given generator at the root.
+     * Since most people only want to mount one generator, this should save
+     * a line of code here and there.
+     */
+    UniConfRoot(UniConfGen *gen, bool refresh = true)
+        : UniConf(this), watchroot(NULL)
+        { mounts.mountgen("/", gen, refresh); }
+
     /**
      * Requests notification when any of the keys covered by the
      * recursive depth specification change by invoking a callback.
@@ -133,6 +162,9 @@ private:
     /** Callback from UniMountTreeGen */
     void gen_callback(const UniConfKey &key, WvStringParm value,
                       void *userdata);
+
+protected:
+    UniMountGen mounts;
 };
 
 #endif //__UNICONFROOT_H
