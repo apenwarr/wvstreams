@@ -99,7 +99,7 @@ WvPty::WvPty(const char *program, const char * const *argv)
                 || ::ioctl(rfd, TIOCSCTTY, NULL)
                 || ::dup2(rfd, STDIN_FILENO) < 0
                 || ::dup2(wfd, STDOUT_FILENO) < 0
-                || ::dup2(wfd, STDOUT_FILENO) < 0
+                || ::dup2(wfd, STDERR_FILENO) < 0
                 || (rfd > STDERR_FILENO && ::close(rfd) < 0))
             goto _error;
         
