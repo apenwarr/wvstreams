@@ -11,9 +11,11 @@
 #include <syslog.h>
 
 WvSyslog::WvSyslog(const WvString &_prefix, bool _include_appname,
+		   WvLog::LogLevel _first_debug,
 		   WvLog::LogLevel _max_level)
 	: WvLogRcv(_max_level), syslog_prefix(_prefix)
 {
+    first_debug = _first_debug;
     include_appname = _include_appname;
     openlog(syslog_prefix, 0, LOG_DAEMON);
 }
@@ -68,6 +70,9 @@ void WvSyslog::_end_line()
 	    if (last_level >= levmap[count].wvlog_lvl)
 		lev = levmap[count].syslog_lvl;
 	}
+	
+	if (last_level < first_debug && lev == LOG_DEBUG)
+	    lev = LOG_INFO;
 	
 	if (lev >= 0)
 	{

@@ -14,10 +14,12 @@ class WvSyslog : public WvLogRcv
 {
 public:
     WvSyslog(const WvString &_prefix, bool _include_appname,
+	     WvLog::LogLevel _first_debug = WvLog::Debug,
 	     WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
     virtual ~WvSyslog();
 
 protected:
+    WvLog::LogLevel first_debug;
     WvBuffer current;
     WvString syslog_prefix;
     bool include_appname;
