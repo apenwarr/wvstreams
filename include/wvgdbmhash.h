@@ -13,9 +13,8 @@
 # error "Sorry, no gdbm support in wvstreams!"
 #endif
 
-#include <wvhashtable.h>
-#include <wvstring.h>
-#include <wvbuf.h>
+#include "wvhashtable.h"
+#include "wvbuf.h"
 
 #include <gdbm.h>
 
@@ -112,7 +111,7 @@ public:
     void add(const K &key, const D &data, bool replace = false)
     {
         int r = WvGdbmHashBase::add(DatumAdapter<K>(key),
-				    DatumAdapter<K>(data), replace);
+				    DatumAdapter<D>(data), replace);
         assert(!r && "Set the replace flag to replace existing elements.");
     }
 
@@ -131,7 +130,7 @@ public:
     typename DatumAdapter<D>::ReturnType operator[] (const K &key)
         { return find(key); }
         
-    bool exists(const K & key)
+    bool exists(const K &key)
         { return WvGdbmHashBase::exists(DatumAdapter<K>(key)); }
 
     class Iter : public WvGdbmHashBase::IterBase
