@@ -72,12 +72,20 @@ void WvIPFirewall::add_port(const WvIPPortAddr &addr)
 // note!  This does not remove the address from the list, only the kernel!
 void WvIPFirewall::del_port(const WvIPPortAddr &addr)
 {
-    WvString s(port_command("-D", "tcp", addr)),
-    	    s2(port_command("-D", "udp", addr));
-    if (enable)
+    WvIPPortAddrList::Iter i(addrs);
+    for (i.rewind(); i.next(); )
     {
-	system(s);
-	system(s2);
+	if (*i == addr)
+	{
+	    WvString s(port_command("-D", "tcp", addr)),
+		    s2(port_command("-D", "udp", addr));
+	    if (enable)
+	    {
+		system(s);
+		system(s2);
+	    }
+	    return;
+	}
     }
 }
 
@@ -92,26 +100,32 @@ void WvIPFirewall::add_redir(const WvIPPortAddr &src, int dstport)
 
 void WvIPFirewall::del_redir(const WvIPPortAddr &src, int dstport)
 {
-    WvString s(redir_command("-D", src, dstport));
-    if (enable) system(s);
+    RedirList::Iter i(redirs);
+    for (i.rewind(); i.next(); )
+    {
+	if (i->src == src && i->dstport == dstport)
+	{
+	    WvString s(redir_command("-D", src, dstport));
+	    if (enable) system(s);
+	    return;
+	}
+    }
 }
 
 
 void WvIPFirewall::zap()
 {
     WvIPPortAddrList::Iter i(addrs);
-    i.rewind(); i.next();
-    while (i.cur())
+    for (i.rewind(); i.next(); )
     {
-	del_port(i);
-	i.unlink();
+	del_port(*i);
+	i.xunlink();
     }
     
     RedirList::Iter i2(redirs);
-    i2.rewind(); i2.next();
-    while (i2.cur())
+    for (i2.rewind(); i2.next(); )
     {
-	del_redir(i2().src, i2().dstport);
-	i2.unlink();
+	del_redir(i2->src, i2->dstport);
+	i2.xunlink();
     }
 }

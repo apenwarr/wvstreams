@@ -39,9 +39,6 @@ class WvIPFirewall
     WvString redir_command(const char *cmd,
 			   const WvIPPortAddr &src, int dstport);
     
-    void del_port(const WvIPPortAddr &addr);
-    void del_redir(const WvIPPortAddr &src, int dstport);
-    
 public:
     WvIPFirewall();
     ~WvIPFirewall();
@@ -51,6 +48,8 @@ public:
     void zap();
     void add_port(const WvIPPortAddr &addr);
     void add_redir(const WvIPPortAddr &src, int dstport);
+    void del_port(const WvIPPortAddr &addr);
+    void del_redir(const WvIPPortAddr &src, int dstport);
 };
 
 #endif // __WVIPFIREWALL_H

@@ -68,17 +68,15 @@ bool WvStreamList::select_setup(SelectInfo &si)
     }
 
     Iter i(*this);
-    for (i.rewind(), i.next(); i.cur(); )
+    for (i.rewind(); i.next(); )
     {
-	WvStream &s = i;
+	WvStream &s(*i);
 	
 	if (!s.isok())
 	{
 	    one_dead = true;
 	    if (auto_prune)
-		i.unlink();
-	    else
-		i.next();
+		i.xunlink();
 	    continue;
 	}
 	
@@ -90,8 +88,6 @@ bool WvStreamList::select_setup(SelectInfo &si)
 	
 	if (s.isok() && s.select_setup(si))
 	    sure_thing.append(&s, false, i.link->id);
-	
-	i.next();
     }
     
     si.readable = oldrd;
@@ -156,7 +152,7 @@ void WvStreamList::execute()
     TRACE("\n%*sList@%p: (%d sure) ", level, "", this, sure_thing.count());
     
     WvStreamListBase::Iter i(sure_thing);
-    for (i.rewind(), i.next(); i.cur(); )
+    for (i.rewind(); i.next(); )
     {
 #if STREAMTRACE
 	WvStreamListBase::Iter x(*this);
@@ -164,17 +160,15 @@ void WvStreamList::execute()
 	    TRACE("Yikes! %p in sure_thing, but not in main list!\n",
 		  i.cur());
 #endif
+	WvStream &s(*i);
 	
-	WvStream &s(i);
+	TRACE("[%p:%s]", s, i.link->id);
 	
-	TRACE("[%p:%s]", &s, i.link->id);
-	
-	i.unlink();
+	i.xunlink();
 	s.callback();
 	
 	// list might have changed!
 	i.rewind();
-	i.next();
     }
     
     sure_thing.zap();

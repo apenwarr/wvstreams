@@ -212,6 +212,18 @@ public:
 	    if (prev) ((WvList *)list)->unlink_after(prev);
 	    link = prev->next;
         }
+	
+	// like unlink(), except it leaves the iterator semi-invalid so
+	// you have to do a next() before accessing it again.  In retrospect,
+	// this is probably a nicer API than unlink() (since you can then
+	// just do next() at the top of the loop regardless of whether you
+	// did unlink()) but it would be too painful to change it everywhere
+	// right now.
+	void xunlink()
+	{
+	    if (prev) ((WvList *)list)->unlink_after(prev);
+	    link = prev;
+	}
     };
 
     class Sorter : public WvListBase::SorterBase
