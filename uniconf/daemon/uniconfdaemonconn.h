@@ -17,30 +17,6 @@
 
 class UniConfDaemon;
 
-/** Data structure to track requested watches */
-struct UniConfDaemonWatch
-{
-    UniConfKey key;
-    bool recurse;
-
-    UniConfDaemonWatch(const UniConfKey &_key, bool _recurse)
-        : key(_key), recurse(_recurse) { }
-
-    bool operator== (const UniConfDaemonWatch &other) const
-    {
-        return key == other.key && recurse == other.recurse;
-    }
-
-    // annoying identity function
-    static const UniConfDaemonWatch *get_key(const UniConfDaemonWatch *e)
-        { return e; }
-};
-extern unsigned WvHash(const UniConfDaemonWatch &watch);
-
-typedef WvHashTable<UniConfDaemonWatch, UniConfDaemonWatch,
-    UniConfDaemonWatch> UniConfDaemonWatchTable;
-
-
 /**
  * Retains all state and behavior related to a single UniConf daemon
  * connection.
@@ -57,7 +33,6 @@ public:
 
 protected:
     UniConf root;
-    UniConfDaemonWatchTable watches;
 
     virtual void do_malformed();
     virtual void do_noop();

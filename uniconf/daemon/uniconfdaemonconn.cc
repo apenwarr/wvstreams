@@ -12,8 +12,7 @@
 /***** UniConfDaemonConn *****/
 
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
-    UniClientConn(_s),
-    root(_root), watches(NUM_WATCHES)
+    UniClientConn(_s), root(_root)
 {
     addcallback();
     writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
