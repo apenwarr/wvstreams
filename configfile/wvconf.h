@@ -15,9 +15,7 @@
 #include "strutils.h"
 #include "wvlinklist.h"
 #include "wvlog.h"
-#include "wvstring.h"
-
-DeclareWvList(WvString);
+#include "wvstringlist.h"
 
 class WvConf;
 
