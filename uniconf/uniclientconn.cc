@@ -41,7 +41,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
 
 UniClientConn::UniClientConn(IWvStream *_s, WvStringParm dst) :
     WvStreamClone(_s),
-    log(WvString("UniConf to %s", dst.isnull() ? *_s->src() : WvString(dst)),
+    log(WvString("UniConf to %s", dst.isnull() && _s->src() ? *_s->src() : WvString(dst)),
     WvLog::Debug5), closed(false), payloadbuf("")
 {
     WvIStreamList::globallist.append(this, false);
