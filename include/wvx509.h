@@ -32,8 +32,12 @@ public:
     WvString dname;
 
    /**
-    * Type for the @ref dump() method, which can output the information
-    * in this class in a variety of formats
+    * Type for the @ref encode() and decode() methods.
+    * CertPEM   = PEM Encoded X.509 Certificate
+    * RsaPEM    = PEM Encoded RSA Private Key
+    * RsaPubPEM = PEM Encoded RSA Public Key
+    * RsaRaw    = Raw form of RSA Key (unused by most programs, FreeS/WAN
+    * being the notable exception)
     */
     enum DumpMode { CertPEM = 0, RsaPEM, RsaPubPEM, RsaRaw };
 
@@ -42,11 +46,15 @@ public:
     * (used for client side operations...)
     * 
     * This either initializes a completely empty object, or takes _cert, and extracts
-    * the distinguished name into dname, and the the RSA public key into rsa. rsa->prv is empty.
+    * the distinguished name into dname, and the the RSA public key into rsa. 
+    * rsa->prv is empty.
     */
     WvX509Mgr(X509 *_cert = NULL);
 
-    /** Constructor to initialize this object with a pre-existing certificate and key */
+    /** 
+     * Constructor to initialize this object with a pre-existing 
+     * certificate and key 
+     */
     WvX509Mgr(WvStringParm hexcert, WvStringParm hexrsa);
 
     /**
@@ -101,13 +109,16 @@ public:
      * valid when you get it back. Returns a PEM Encoded PKCS#10 certificate
      * request, and leaves the RSA keypair in rsa, and a self-signed temporary
      * certificate in cert.
+     * 
+     * It uses dname as the Distinguished name to create this Request.
+     * Make sure that it has what you want in it first.
      */    
     WvString certreq();
     
     /**
-     * test to make sure that a certificate and a keypair go together.
+     * Test to make sure that a certificate and a keypair go together.
      * called internally by unhexify() although you can call it if 
-     * you want to test a certificate yourself
+     * you want to test a certificate yourself. (Such as after a decode)
      */
     bool test();
 
@@ -139,14 +150,14 @@ public:
    
     /**
      * Check the certificate in cert against the CA certificates in
-     * certfile - returns true if cert was signed by one of the CA
+     * certdir - returns true if cert was signed by one of the CA
      * certificates.
      */
     bool signedbyCAindir(WvStringParm certdir);
    
     /**
-     * Check the certificate in cert against the CA certificates in certdir
-     * - returns true if cert was signed by one of the CA certificates. 
+     * Check the certificate in cert against the CA certificate in certfile
+     * - returns true if cert was signed by that CA certificate. 
      */
    bool signedbyCAinfile(WvStringParm certfile);
 
@@ -181,7 +192,7 @@ public:
      * And of course, since PKCS12 files are in the rediculous DER encoding 
      * format, which is binary, we can't use the encode/decode functions, so
      * we deal straight with files... *sigh*
-     *  
+     * 
      * As should be obvious, this writes the certificate and RSA keys in PKCS12
      * format to the file specified by filename.
      */
@@ -198,7 +209,7 @@ public:
     	{ pkcs12pass = passwd; }
 
     /** 
-     * Return the Certificate Issuer (usually the CA who issued 
+     * Return the Certificate Issuer (usually the CA who signed 
      * the certificate)
      */
     WvString get_issuer();
