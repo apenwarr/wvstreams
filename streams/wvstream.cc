@@ -705,6 +705,8 @@ bool WvStream::_select(time_t msec_timeout,
         sure = _process_selectinfo(si, forceable) || sure; // note the order
     if (sure && globalstream && forceable)
 	globalstream->callback();
+    /* FIXME: we should NOT return true if it was the globalstream
+     * that made 'sure' true. See bug 2145. */
     return sure;
 }
 
