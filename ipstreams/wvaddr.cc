@@ -533,7 +533,10 @@ WvIPNet::WvIPNet(const WvIPAddr &base, int bits)
 
 WvString WvIPNet::printable() const
 {
-    return WvString("%s/%s", WvIPAddr::printable(), bits());
+    if (bits() < 32)
+	return WvString("%s/%s", network(), bits());
+    else
+	return WvIPAddr::printable();
 }
 
 

@@ -210,7 +210,8 @@ int WvInterface::setipaddr(const WvIPNet &addr)
     int sock;
     
     if (addr != ipaddr())
-	err(WvLog::Info, "Changing %s address to %s\n", name, addr);
+	err(WvLog::Info, "Changing %s address to %s (%s bits)\n", name,
+	    addr.base(), addr.bits());
     
     sock = socket(AF_INET, SOCK_STREAM, 0);
     strncpy(ifr.ifr_name, name, IFNAMSIZ-1);
