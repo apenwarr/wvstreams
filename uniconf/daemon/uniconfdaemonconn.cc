@@ -15,13 +15,26 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
     UniClientConn(_s),
     root(_root), watches(NUM_WATCHES)
 {
-    root.add_callback(wvcallback(UniConfCallback, *this,
-            UniConfDaemonConn::deltacallback), NULL, true);
+    addcallback();
     writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready"));
 }
 
 
-UniConfDaemonConn::~UniConfDaemonConn()
+void UniConfDaemonConn::close()
+{
+    delcallback();
+    UniClientConn::close();
+}
+
+
+void UniConfDaemonConn::addcallback()
+{
+    root.add_callback(wvcallback(UniConfCallback, *this,
+            UniConfDaemonConn::deltacallback), NULL, true);
+}
+
+
+void UniConfDaemonConn::delcallback()
 {
     root.del_callback(wvcallback(UniConfCallback, *this,
             UniConfDaemonConn::deltacallback), NULL, true);

@@ -9,6 +9,7 @@
 
 #include "uniconf.h"
 #include "uniclientconn.h"
+#include "unipermgen.h"
 #include "wvlog.h"
 #include "wvhashtable.h"
 
@@ -46,16 +47,16 @@ typedef WvHashTable<UniConfDaemonWatch, UniConfDaemonWatch,
  */
 class UniConfDaemonConn : public UniClientConn 
 {
-    UniConf root;
-    UniConfDaemonWatchTable watches;
-
 public:
     UniConfDaemonConn(WvStream *s, const UniConf &root);
-    virtual ~UniConfDaemonConn();
+    virtual void close();
 
     virtual void execute();
 
 protected:
+    UniConf root;
+    UniConfDaemonWatchTable watches;
+
     virtual void do_malformed();
     virtual void do_noop();
     virtual void do_reply(WvStringParm reply);
@@ -66,6 +67,9 @@ protected:
     virtual void do_haschildren(const UniConfKey &key);
     virtual void do_quit();
     virtual void do_help();
+
+    virtual void addcallback();
+    virtual void delcallback();
 
     void deltacallback(const UniConf &key, void *userdata);
 };

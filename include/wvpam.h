@@ -14,6 +14,7 @@
 #define __WVPAM_H
 
 #include "wvstreamclone.h"
+#include "wvstringlist.h"
 
 class WvPamData;
 
@@ -34,6 +35,12 @@ public:
 
     /** Goes not ok if authentication fails */
     virtual bool isok() const;
+
+    /** Return the user */
+    WvString getuser() const;
+
+    /** Return the list of groups */
+    void getgroups(WvStringList &l) const;
 
 private:
 

@@ -6,10 +6,10 @@
  */
 #include "uniconfdaemon.h"
 #include "uniconfdaemonconn.h"
+#include "uniconfpamconn.h"
 #include "wvunixsocket.h"
 #include "wvtcp.h"
 #include "wvsslstream.h"
-#include "wvpam.h"
 
 
 #define debug(msg) \
@@ -49,14 +49,10 @@ bool UniConfDaemon::isok() const
 void UniConfDaemon::accept(WvStream *stream)
 {
     debug(WvString("Accepting connection from: %s\n", *stream->src()));
-    UniConfDaemonConn *conn = new UniConfDaemonConn(stream, cfg);
-    WvStream *s;
     if (authenticate)
-        s = new WvPamStream(conn, "uniconfdaemon", WvString::null,
-                "FAIL { Authorization failed. }\n");
+        append(new UniConfPamConn(stream, cfg), true);
     else
-        s = conn;
-    append(s, true);
+        append(new UniConfDaemonConn(stream, cfg), true);
 }
 
 

@@ -40,10 +40,21 @@ bool WvPamStream::check_pam_status(WvStringParm step)
     return false;
 }
 
+WvString WvPamStream::getuser() const
+{
+    return WvString::null;
+}
+
+void WvPamStream::getgroups(WvStringList &l) const
+{
+}
+
 #else   // HAVE_SECURITY_PAM_APPL_H
 
 #include <security/pam_appl.h>
+#include <sys/types.h>
 #include <pwd.h>
+#include <grp.h>
 
 #include "wvaddr.h"
 
@@ -54,6 +65,8 @@ public:
     pam_handle_t *pamh;
     int status;
     WvStringParm failmsg;
+    WvString user;
+    WvStringList groups;
 
     WvPamData(WvStringParm _failmsg) :
         pamh(NULL), status(PAM_SUCCESS), failmsg(_failmsg)
@@ -86,11 +99,13 @@ WvPamStream::WvPamStream(WvStream *cloned, WvStringParm name,
     // find the user
     struct passwd *pw = getpwuid(getuid());
     assert(pw);
- 
+    d->user = pw->pw_name;
+
     // find the host and port
     WvString rhost(*src());
  
-    d->status = pam_start(name, pw->pw_name, &c, &d->pamh);
+    // authenticate through PAM
+    d->status = pam_start(name, d->user, &c, &d->pamh);
     if (!check_pam_status("startup")) return;
 
     d->status = pam_set_item(d->pamh, PAM_RHOST, rhost);
@@ -105,7 +120,24 @@ WvPamStream::WvPamStream(WvStream *cloned, WvStringParm name,
     d->status = pam_open_session(d->pamh, 0);
     if (!check_pam_status("session open")) return;
 
+    // write the success message if necessary
     if (cloned && !!successmsg) cloned->write(successmsg.cstr(), successmsg.len());
+    
+    // get the groups
+    setgrent();
+    struct group *gr;
+    while ((gr = getgrent()))
+    {
+        for (char **i = gr->gr_mem; *i != NULL; i++)
+        {
+            if (strcmp(*i, d->user))
+            {
+                d->groups.append(new WvString(gr->gr_name), true);
+                break;
+            }
+        }
+    }
+    endgrent();
 }
 
 
@@ -135,8 +167,25 @@ bool WvPamStream::check_pam_status(WvStringParm s)
     {
         log("PAM %s FAILED: %s\n", s, d->status);
         if (cloned && !!d->failmsg) cloned->write(d->failmsg.cstr(), d->failmsg.len());
+        d->user = WvString::null;
+        d->groups.zap();
         return false;
     }
+}
+
+
+WvString WvPamStream::getuser() const
+{
+    return d->user;
+}
+
+
+void WvPamStream::getgroups(WvStringList &l) const
+{
+    assert(l.isempty());
+    WvStringList::Iter i(d->groups);
+    for (i.rewind(); i.next(); )
+        l.append(new WvString(*i), true);
 }
 
 
