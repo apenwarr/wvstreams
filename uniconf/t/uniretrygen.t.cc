@@ -83,4 +83,8 @@ WVTEST_MAIN("mount point exists")
     WVPASS(uniconf["foo"].mount("retry:unix:/tmp/foobar"));
 
     WVPASS(uniconf["foo"].exists());
+    WVPASSEQ(uniconf["foo"].xget("", WvString::null), "");
+
+    WVFAIL(uniconf["foo/bar"].exists());
+    WVPASSEQ(uniconf["foo"].xget(""), WvString::null);    
 }
