@@ -15,6 +15,7 @@
 #include <sys/types.h>
 
 #include "wvstring.h"
+#include "wvlinklist.h"
 
 struct WvDirEnt : public stat
 /***************************/
@@ -28,7 +29,7 @@ class WvDirIter
 /*************/
 {
 public:
-    WvDirIter( WvString _dirname, bool _recurse=true );
+    WvDirIter( WvString dirname, bool _recurse=true );
     ~WvDirIter();
 
     bool isok() const;
@@ -39,17 +40,24 @@ public:
     const WvDirEnt * operator -> () const;
 
 private:
-    WvString    dirname;
     bool        recurse;
-
-    WvDirIter * child;
-
-    struct dirent * dent;
-    DIR * d;
 
     WvDirEnt        info;
 
-    void fill_info( WvString& fullname, struct stat& st );
+    struct Dir {
+        Dir( DIR * _d, WvString _dirname )
+            : d( _d ), dirname( _dirname )
+            {}
+        ~Dir()
+            { if( d ) closedir( d ); }
+
+        DIR *    d;
+        WvString dirname;
+    };
+
+    DeclareWvList( Dir );
+    DirList       dirs;
+    DirList::Iter dir;
 };
 
 #endif

@@ -9,104 +9,108 @@
 
 #include "wvdiriter.h"
 
-WvDirIter::WvDirIter( WvString _dirname, bool _recurse )
-/******************************************************/
-: dirname( _dirname )
+WvDirIter::WvDirIter( WvString dirname, bool _recurse )
+/*****************************************************/
+: dir( dirs )
 {
     recurse = _recurse;
 
-    dent = NULL;
-    child = NULL;
-
-    d = opendir( dirname );
+    DIR * d = opendir( dirname );
+    if( d ) {
+        Dir * dd = new Dir( d, dirname );
+        dirs.prepend( dd, true );
+    }
 }
 
 WvDirIter::~WvDirIter()
 /*********************/
 {
-    if( child ) {
-        delete child;
-        child = NULL;
-    }
-
-    if( d ) {
-        closedir( d );
-        d = NULL;
-    }
+    dirs.zap();
 }
 
 bool WvDirIter::isok() const
 /**************************/
 {
-    return( d != NULL );
+    return( dirs.count() > 0 );
 }
 
 void WvDirIter::rewind()
 /**********************/
 {
-    if( d )
-        rewinddir( d );
+    // have to closedir() everything that isn't the one we started with,
+    // and rewind that.
+    while( dirs.count() > 1 ) {
+        dir.rewind();
+        dir.next();
+        dir.unlink();
+    }
+
+    if( isok() ) {
+        dir.rewind();
+        dir.next();
+        rewinddir( dir->d );
+    }
 }
 
 const WvDirEnt& WvDirIter::operator () () const
 /*********************************************/
-// if we have a child, call ITS operator ()... otherwise use 'info'.
 {
-    if( child )
-        return( (*child) () );
-    else
-        return( info );
+    return( info );
 }
 
 const WvDirEnt * WvDirIter::operator -> () const
 /**********************************************/
 {
-    if( child )
-        return( &(*child) () );
-    else
-        return( &info );
+    return( &info );
 }
 
 bool WvDirIter::next()
 /********************/
-// use readdir... and if that returns a directory, make a child and recurse
-// into it.  If there's already a child, call ITS next() instead of ours.
+// use readdir... and if that returns a directory, opendir() it and prepend
+// it to dirs, so we start reading it until it's done.
 {
-    // recurse?
-    if( recurse && !child && dent && S_ISDIR( info.st_mode ) )
-        child = new WvDirIter( info.fullname );
+    struct dirent * dent = NULL;
 
-    if( child ) {
-        if( child->next() ) {
-            return true;
-        } else {
-            delete child;
-            child = NULL;   // fall through!
-        }
-    }
+    if( !isok() )
+        return( false );
 
-    if( d ) {
+    bool tryagain;
+    do {
         bool ok = false;
-        WvString fname;
+        tryagain = false;
         do {
-            dent = readdir( d );
+            dent = readdir( dir->d );
             if( dent ) {
-                fname = WvString( "%s/%s", dirname, dent->d_name );
-                ok = ( lstat( fname, &info ) == 0
+                info.fullname = WvString( "%s/%s", dir->dirname, dent->d_name );
+                ok = ( lstat( info.fullname, &info ) == 0
                             && strcmp( dent->d_name, "." )
                             && strcmp( dent->d_name, ".." ) );
             }
         } while( dent && !ok );
 
-        if( dent )
-            info.fullname = fname;
-        else {
-            closedir( d );
-            d = NULL;
+        if( dent ) {
+            // recurse?
+            if( recurse && S_ISDIR( info.st_mode ) ) {
+                DIR * d = opendir( info.fullname );
+                if( d ) {
+                    Dir * dd = new Dir( d, info.fullname );
+                    dirs.prepend( dd, true );
+                    dir.rewind();
+                    dir.next();
+                }
+            }
+        } else {
+            // end of directory.  if we recursed, unlink it and go up a 
+            // notch.  if this is the top level, DON'T close it, so that
+            // the user can ::rewind() again if he wants.
+            if( dirs.count() > 1 ) {
+                dir.unlink();
+                dir.rewind();
+                tryagain = dir.next();
+            }
         }
 
-    } else
-        dent = NULL;
+    } while( tryagain );
 
     return( dent != NULL );
 }
