@@ -31,9 +31,13 @@ public:
     // not actually defined - this just prevents accidental copying
     const WvUrl &operator= (const WvUrl &);
     
-    // ONLY valid if resolve() returns true!
+    WvStringParm getproto() const
+        { return proto; }
+    
+    // this one is ONLY valid if resolve() returns true!
     const WvIPPortAddr &getaddr() const
         { return *addr; }
+    
     WvStringParm getfile() const
         { return file; }
     WvStringParm gethost() const
@@ -42,7 +46,7 @@ public:
         { return port; }
     
 protected:
-    WvString hostname;
+    WvString proto, hostname;
     int port;
     bool resolving;
     WvResolver dns;

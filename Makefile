@@ -26,7 +26,7 @@ export CC CXX CXXOPTS
 
 -include wvrules.mk
 
-SUBDIRS=utils streams configfile uniconf ipstreams crypto Docs
+SUBDIRS=utils streams configfile uniconf ipstreams crypto urlget Docs
 
 all: include $(SUBDIRS) $(LIBFILES)
 
@@ -47,8 +47,8 @@ libwvstreams.so: ipstreams/ipstreams.libs
 libwvstreams.a: ipstreams/ipstreams.libs
 
 libwvcrypto.so-LIBS=libwvstreams.so -lssl
-libwvcrypto.so: crypto/crypto.libs
-libwvcrypto.a: crypto/crypto.libs
+libwvcrypto.so: urlget/urlget.libs
+libwvcrypto.a: urlget/urlget.libs
 
 wvrules.mk:
 	-[ -e ../../wvrules.mk ] && ln -s ../../wvrules.mk .

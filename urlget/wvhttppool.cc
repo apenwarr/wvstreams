@@ -8,6 +8,8 @@
  */
 #include "wvhttppool.h"
 #include "wvbufstream.h"
+#include "wvtcp.h"
+#include "../crypto/wvsslstream.h"
 #include "strutils.h"
 
 bool WvHttpStream::enable_pipelining = true;
@@ -74,17 +76,19 @@ WvString WvUrlRequest::request_str(bool keepalive)
 }
 
 
-WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr)
+WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl)
     : WvStreamClone(&cloned), remaddr(_remaddr),
-	log(WvString("HTTP %s", remaddr), WvLog::Debug),
-	tcp(remaddr)
+	log(WvString("HTTP %s", remaddr), WvLog::Debug)
 {
     log("Opening server connection.\n");
-    cloned = &tcp;
     curl = NULL;
     remaining = 0;
     chunked = in_chunk_trailer = false;
     request_count = 0;
+    
+    cloned = new WvTCPConn(remaddr);
+    if (ssl)
+	cloned = new WvSSLStream(cloned);
     
     alarm(60000); // timeout if no connection, or something goes wrong
 }
@@ -93,10 +97,13 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr)
 WvHttpStream::~WvHttpStream()
 {
     log("Deleting.\n");
-    if (isok())
-	close();
+    close();
+    
     if (geterr())
 	log("Error was: %s\n", errstr());
+    
+    if (cloned)
+	delete cloned;
 }
 
 
@@ -105,17 +112,30 @@ void WvHttpStream::close()
     log("Closing.\n");
     WvStreamClone::close();
     
-    if (curl && curl->outstream)
+    if (geterr())
     {
-	curl->outstream->seterr(EIO);
-	curl->done();
+	// if there was an error, count the first URL as done.  This prevents
+	// retrying indefinitely.
+	if (!curl && !urls.isempty())
+	    curl = urls.first();
+	if (!curl && !waiting_urls.isempty())
+	    curl = waiting_urls.first();
+	if (curl)
+	    log("URL '%s' is FAILED\n", curl->url);
+	if (curl) 
+	    curl->done();
     }
+    
+    if (curl)
+	curl->done();
 }
 
 
 void WvHttpStream::addurl(WvUrlRequest *url)
 {
     log("Adding a new url: '%s'\n", url->url);
+    
+    assert(url->outstream);
     
     if (!url->url.isok())
 	return;
@@ -365,10 +385,13 @@ void WvHttpPool::execute()
 	    s = NULL;
 	}
 	
+	if (!i->outstream)
+	    continue; // unconnect might have caused this URL to be marked bad
+	
 	if (!s)
 	{
 	    num_streams_created++;
-	    s = new WvHttpStream(ip);
+	    s = new WvHttpStream(ip, i->url.getproto() == "https");
 	    conns.add(s, true);
 	    
 	    // add it to the streamlist, so it can do things

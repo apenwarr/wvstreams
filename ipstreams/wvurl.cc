@@ -19,14 +19,20 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     port = 0; // error condition by default
     addr = NULL;
     resolving = true;
-    
-    if (strncmp(wptr, "http://", 7)) // NOT equal
+
+    // if it's not one of these easy prefixes, give up.  Our URL parser is
+    // pretty dumb.
+    if (strncmp(wptr, "http://", 7) && strncmp(wptr, "https://", 8))
     {
 	err = "WvUrl can only handle HTTP URLs.";
 	return;
     }
-    wptr += 7;
     
+    cptr = strchr(wptr, ':');
+    *cptr = 0;
+    proto = wptr;
+    
+    wptr = cptr + 3;
     hostname = wptr;
     
     cptr = strchr(wptr, '/');
@@ -40,7 +46,7 @@ WvUrl::WvUrl(WvStringParm url) : err("No error")
     
     cptr = strchr(wptr, ':');
     if (!cptr)
-	port = 80;
+	port = (proto=="http" ? 80 : (proto=="https" ? 443 : 0));
     else
     {
 	port = atoi(cptr+1);
@@ -58,6 +64,7 @@ WvUrl::WvUrl(const WvUrl &url) : err("No error")
     addr = NULL;
     resolving = true;
     
+    proto = url.proto;
     hostname = url.hostname;
     file = url.file;
     port = url.port;

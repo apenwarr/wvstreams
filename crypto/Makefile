@@ -16,7 +16,7 @@ SSLLIB= -L/usr/lib/ssl -L/usr/lib/ssleay -L/usr/local/lib/ssleay \
 	-L/usr/local/ssl -L/usr/local/ssl/lib -L/usr/local/ssleay
 
 default: all cryptotest ssltest sslsrvtest certtest reqtest md5test
-all: crypto.libs
+all: crypto.libs crypto.a
 
 LIBS += -L${SSLDIR} ${SSLLIB} -lssl -lcrypto -L.. -lwvutils -lwvstreams
 LIBS += ${EFENCE}

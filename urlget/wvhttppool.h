@@ -13,7 +13,6 @@
 #include "wvurl.h"
 #include "wvstreamlist.h"
 #include "wvstreamclone.h"
-#include "wvtcp.h"
 #include "wvlog.h"
 #include "wvhashtable.h"
 
@@ -51,7 +50,6 @@ public:
     
 private:
     WvLog log;
-    WvTCPConn tcp;
     WvUrlRequestList urls, waiting_urls;
     int request_count;
     
@@ -60,7 +58,7 @@ private:
     bool chunked, in_chunk_trailer;
 
 public:
-    WvHttpStream(const WvIPPortAddr &_remaddr);
+    WvHttpStream(const WvIPPortAddr &_remaddr, bool ssl);
     virtual ~WvHttpStream();
     virtual void close();
     
