@@ -217,12 +217,22 @@ int main(int argc, char **argv)
             exit(1);
     }
     
-    while (globdaemon->isok())
+    // since we're a daemon, we should now background ourselves.
+    pid_t pid = fork();
+    if (pid <= 0) // child or failed
     {
-        if (globdaemon->select(-1))
-            globdaemon->callback();
+	while (globdaemon->isok())
+	{
+	    if (globdaemon->select(-1))
+		globdaemon->callback();
+	}
+	globdaemon->close();
+	delete globdaemon;
     }
-    globdaemon->close();
-    delete globdaemon;
+    else // parent
+    {
+	_exit(0);
+    }
+    
     return 0;
 }
