@@ -10,9 +10,11 @@
 #include "wvlog.h"
 
 static WvLog log("globaltest");
+static int count = 0;
 
 void callback1(WvStream& s, void*)
 {
+    ++count;
     log("callback called for s1 (rearming alarm)\n");
     s.alarm(0);
 }
@@ -45,8 +47,9 @@ int main()
 
     assert(s1.select(0));
     assert(!s2.select(0));
-
     assert(WvIStreamList::globallist.select(0));
+
+    assert(count == 3);
 
     log("test passed!\n");
 }
