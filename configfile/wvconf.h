@@ -132,6 +132,9 @@ public:
     void del_setbool(bool *b, const WvString &section, const WvString &entry)
         { del_callback(setbool, b, section, entry); }
 		    
+    void load_file() // append the contents of the real config file
+        { load_file(filename); }
+    void load_file(const WvString &filename); // append any config file
 
 private:
     bool dirty;			// true if changed since last flush()
@@ -144,7 +147,6 @@ private:
     WvConfigSection globalsection;
     WvConfCallbackInfoList callbacks;
 
-    void load_file();
     char *parse_section(char *s);
     char *parse_value(char *s);
 };

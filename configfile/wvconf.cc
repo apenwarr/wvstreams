@@ -86,7 +86,7 @@ void WvConf::setint(const WvString &section, const WvString &entry, int value)
 }
 
  
-void WvConf::load_file()
+void WvConf::load_file(const WvString &filename)
 {
     WvFile file;
     char *p;
@@ -98,7 +98,8 @@ void WvConf::load_file()
     if (!file.isok())
     {
 	// Could not open for read.
-        log(WvLog::Warning, "Can't read config file: %s\n", file.errstr());
+        log(WvLog::Warning, "Can't read config file %s: %s\n",
+	    filename, file.errstr());
 	if (file.geterr() != ENOENT)
 	    error = true;
 	return;
