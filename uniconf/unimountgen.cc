@@ -108,7 +108,7 @@ IUniConfGen *UniMountGen::mount(const UniConfKey &key,
 
 
 IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
-				  IUniConfGen *gen, bool refresh)
+				   IUniConfGen *gen, bool refresh)
 {
     if (!gen)
 	return NULL;

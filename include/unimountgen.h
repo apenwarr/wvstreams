@@ -68,7 +68,7 @@ public:
 				  bool refresh);
 
     /**
-     * Unmounts the generator at a key and destroys it.
+     * Unmounts the generator at a key and releases it.
      *
      * "gen" is the generator instance
      * "commit" is if true, commits the generator before unmount
