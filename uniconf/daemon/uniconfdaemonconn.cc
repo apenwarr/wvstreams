@@ -38,7 +38,7 @@ void UniConfDaemonConn::keychanged(void *userdata, UniConf &conf)
 
     WvString response("%s %s %s\n", UNICONF_RETURN, wvtcl_escape(keyname),
             !!source->mainconf.get(keyname) ? wvtcl_escape(source->mainconf.get(keyname)) :
-            WvString("\\0"));
+            WvString());
     if (s->isok())
         s->print(response);
 }
