@@ -176,13 +176,12 @@ void WvConf::maybesetint(WvStringParm section, WvStringParm entry,
  
 void WvConf::load_file(WvStringParm filename)
 {
-    WvFile file;
     char *p;
     char *from_file;
     WvConfigSection *sect = &globalsection;
     bool quick_mode = false;
 
-    file.open(filename, O_RDONLY);
+    WvFile file(filename, O_RDONLY);
 
     #ifdef _WIN32
     //FIXME: Windows doesn't have a sticky bit so we can't use that to signal other processes that

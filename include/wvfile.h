@@ -22,22 +22,7 @@
 class WvFile : public WvFDStream
 {
 public:
-    WvFile(int rwfd = -1) : WvFDStream(rwfd)
-    {
-	if (rwfd > -1)
-	{
-	    /* We have to do it this way since O_RDONLY is defined as 0
-	       in linux. */
-	    mode_t xmode = fcntl (rwfd, F_GETFL);
-	    xmode = xmode & (O_RDONLY | O_WRONLY | O_RDWR);
-	    readable = (xmode == O_RDONLY) || (xmode == O_RDWR);
-	    writable = (xmode == O_WRONLY) || (xmode == O_RDWR);
-	}
-	else
-	{
-	    readable = writable = false;
-	}
-    }
+    WvFile(int rwfd = -1);
     WvFile(WvStringParm filename, int mode, int create_mode = 0666)
         { open(filename, mode, create_mode); }
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
