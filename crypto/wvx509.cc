@@ -5,6 +5,7 @@
  * X.509 certificate management classes.
  */ 
 #include "wvx509.h"
+#include "wvsslhacks.h"
 #include "wvdiriter.h"
 #include "wvcrypto.h"
 #include "wvstringlist.h"
@@ -372,12 +373,13 @@ void WvX509Mgr::decodecert(WvString encodedcert)
 {
     int hexbytes = strlen((const char *)encodedcert);
     int bufsize = hexbytes/2;
-    unsigned char *certbuf = new unsigned char[bufsize], *cp = certbuf;
+    unsigned char *certbuf = new unsigned char[bufsize];
+    const unsigned char *cp = certbuf;
     X509 *tmpcert;
 
     unhexify(certbuf,encodedcert);
     tmpcert = cert = X509_new();
-    cert = d2i_X509(&tmpcert, &cp, hexbytes/2);
+    cert = wv_d2i_X509(&tmpcert, &cp, hexbytes/2);
 
     // make sure that the cert is valid
     if (cert && !testcert())
