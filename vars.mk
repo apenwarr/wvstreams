@@ -180,6 +180,7 @@ BASEOBJS= \
 	utils/wvhash.o \
 	utils/wvlinklist.o \
 	utils/wvmoniker.o \
+	utils/wvregex.o \
 	utils/wvscatterhash.o utils/wvsorter.o \
 	utils/wvstring.o utils/wvstringlist.o \
 	utils/strutils.o \

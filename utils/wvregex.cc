@@ -19,7 +19,8 @@ void WvRegex::seterr(int errcode)
         WvString error_desc;
         error_desc.setsize(error_desc_len);
         ::regerror(errcode, &preg, error_desc.edit(), error_desc_len);
-        WvErrorBase::seterr_both(errcode, error_desc);
+        WvErrorBase::seterr(error_desc);
+        WvErrorBase::seterr(errcode);
     }
     else WvErrorBase::seterr(errcode);
 }
