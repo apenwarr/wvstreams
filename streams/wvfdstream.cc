@@ -139,7 +139,7 @@ void WvFdStream::maybe_autoclose()
 	if (rfd != wfd)
 	    ::close(wfd);
 	else
-	    ::shutdown(wfd, SHUT_RD); // might be a socket        
+	    ::shutdown(wfd, SHUT_WR); // might be a socket        
 	wfd = -1;
     }
     
@@ -149,7 +149,7 @@ void WvFdStream::maybe_autoclose()
         if (rfd != wfd)
             ::close(rfd);
         else
-            ::shutdown(rfd, SHUT_WR); // might be a socket
+            ::shutdown(rfd, SHUT_RD); // might be a socket
         rfd = -1;
     }
     
