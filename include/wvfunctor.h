@@ -199,7 +199,6 @@ DECLARE_FUNCTORIMPL(6, A1, A2, A3, A4, A5, A6)
 
 #undef DECLARE_FUNCTORIMPL
 
-
 /**
  * @internal
  * The FunctorHandler template implements FunctorImpl to invoke a
