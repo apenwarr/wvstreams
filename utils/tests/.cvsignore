@@ -1,4 +1,4 @@
-*.d
+.*.d
 testlist
 testhash
 stresshash

@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(wvstreams, 3.71, wvstreams-dev@nit.ca)
 
-AC_REVISION($Id: configure.ac,v 1.2 2002/09/09 19:45:02 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.3 2002/09/10 16:39:56 pphaneuf Exp $)
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
 
@@ -37,6 +37,8 @@ AC_SUBST(enable_exceptions)
 
 AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
 
 AC_CHECK_LIB(crypto, crypt)
 AC_CHECK_LIB(ssl, SSL_CTX_new)

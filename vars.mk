@@ -9,10 +9,12 @@ doinclude = $(wildcard $(2:%=%/)*/$(1)) /dev/null
 # initialization
 TARGETS:=
 GARBAGES:=
+DISTCLEAN:=
+REALCLEAN:=
 TESTS:=
 NO_CONFIGURE_TARGETS:=
 
-NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist
+NO_CONFIGURE_TARGETS+=clean ChangeLog depend dust configure dist distclean realclean
 
 ifneq "$(filter-out $(NO_CONFIGURE_TARGETS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),default))" ""
 include config.mk
@@ -21,7 +23,11 @@ endif
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libwvutils.so libwvutils.a
 
-GARBAGES += autom4te.cache config.log config.status ChangeLog
+GARBAGES += ChangeLog
+
+DISTCLEAN += autom4te.cache config.mk config.log config.status include/wvautoconf.h
+
+REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
 CPPFLAGS += -MD -Iinclude
 CXXFLAGS += -pipe
@@ -67,6 +73,8 @@ endif
 ifneq ("$(enable_exceptions)", "yes")
 CXXFLAGS+=-fno-exceptions
 endif
+
+RELEASE?=$(PACKAGE_VERSION)
 
 include $(call doinclude,vars.mk)
 

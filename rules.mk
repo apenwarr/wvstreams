@@ -26,13 +26,20 @@ DEPFILE = $(notdir $(@:.o=.d))
 %.so:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $($@-LIBS) -shared $^ -o $@
 
-.PHONY: ChangeLog clean depend dust kdoc doxygen install uninstall tests dishes dist
+.PHONY: ChangeLog clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean
 
-dist: configure
+# FIXME: little trick to ensure that the wvautoconf.h.in file is there
+.PHONY: dist-hack-clean
+dist-hack-clean:
+	rm -f stamp-h.in
 
-config.mk include/wvautoconf.h: configure
+dist: dist-hack-clean configure distclean
+	rm -rf autom4te.cache
+
+config.mk include/wvautoconf.h: configure config.mk.in include/wvautoconf.h.in
 	$(error Please run the "configure" script)
 
+# FIXME: there is some confusion here
 ifdef WE_ARE_DIST
 configure: configure.ac config.mk.in include/wvautoconf.h.in
 	$(warning "$@" is old, please run "autoconf")
@@ -40,7 +47,7 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac config.mk.in include/wvautoconf.h.in
+configure: configure.ac
 	autoconf
 
 include/wvautoconf.h.in: stamp-h.in
@@ -53,15 +60,20 @@ ChangeLog:
 	rm -f ChangeLog ChangeLog.bak
 	cvs2cl --utc
 
+realclean: distclean
+	rm -rf $(wildcard $(REALCLEAN))
+
+distclean: clean
+	rm -rf $(wildcard $(DISTCLEAN))
+
 clean: depend dust
-	rm -f $(shell find . -name '*.o')
-	rm -rf $(wildcard $(TARGETS) $(GARBAGES) $(TESTS))
+	rm -rf $(wildcard $(TARGETS) $(GARBAGES) $(TESTS)) $(shell find . -name '*.o')
 
 depend:
-	rm -f $(shell find . -name '.*.d')
+	rm -rf $(shell find . -name '.*.d')
 
 dust:
-	rm -f $(shell find . -name 'core' -o -name '*~' -o -name '.#*')
+	rm -rf $(shell find . -name 'core' -o -name '*~' -o -name '.#*')
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
@@ -69,8 +81,21 @@ kdoc:
 doxygen:
 	doxygen
 
-install: all
-	$(tbd)
+install: install-shared install-dev
+
+# FIXME: these should be built with their suffix, and the rule automated
+install-shared: libwvstreams.so libwvutils.so
+	$(INSTALL) -d $(libdir)
+	$(INSTALL_PROGRAM) libwvstreams.so $(libdir)/libwvstreams.so.$(RELEASE)
+	$(INSTALL_PROGRAM) libwvutils.so $(libdir)/libwvutils.so.$(RELEASE)
+
+install-dev: libwvstreams.a libwvutils.a
+	$(INSTALL) -d $(includedir)/wvstreams
+	$(INSTALL_DATA) $(wildcard include/*.h) $(includedir)/wvstreams
+	$(INSTALL) -d $(libdir)
+	$(INSTALL_DATA) libwvstreams.a libwvutils.a $(libdir)
+	cd $(libdir) && $(LN_S) libwvstreams.so.$(RELEASE) libwvstreams.so
+	cd $(libdir) && $(LN_S) libwvutils.so.$(RELEASE) libwvutils.so
 
 uninstall:
 	$(tbd)
