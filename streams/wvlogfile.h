@@ -22,8 +22,6 @@ class WvLogFile : public WvLogRcv
     public:
         WvLogFile(WvString _dirpath, WvString _basefname,
             int _keep_for, WvLog::LogLevel _max_level);
-        void set_debug_level(WvLog::LogLevel _max_level)
-            { max_level = _max_level; };
 
     protected:
         virtual void _make_prefix(); 
