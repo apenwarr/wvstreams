@@ -18,6 +18,8 @@
 #define Dprintf if (0) printf
 #endif
 
+#define MINSIZE 128
+
 ///////////////////// WvMiniBuffer
 
 
@@ -180,7 +182,7 @@ unsigned char *WvBuffer::alloc(size_t num)
     
     // otherwise, we need a new MiniBuffer so we can provide contiguous 'num'
     // bytes.  New buffers grow in size exponentially, and have minimum size
-    // of 10.
+    // of MINSIZE.
     newsize = 0;
     if (lastb)
     {
@@ -188,8 +190,8 @@ unsigned char *WvBuffer::alloc(size_t num)
 	if (lastb->used() > lastb->total() / 2)
 	    newsize *= 2;
     }
-    if (newsize < 10)
-	newsize = 10;
+    if (newsize < MINSIZE)
+	newsize = MINSIZE;
     if (newsize < num)
 	newsize = num;
     b = new WvMiniBuffer(newsize);
