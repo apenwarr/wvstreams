@@ -126,7 +126,7 @@ libwvutils.so: -lgdbm
 endif
 
 ifneq ("$(with_bdb)", "no")
-libwvutils.so: -ldb
+libwvutils.so: LDLIBS+=-ldb
 endif
 
 ifeq ("$(enable_verbose)", "yes")

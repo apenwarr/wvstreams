@@ -47,7 +47,7 @@ enable_warnings:=@enable_warnings@
 
 with_fam:=@with_fam@
 with_fftw:=@with_fftw@
-with_bdb:=@with_gdbm@
+with_bdb:=@with_bdb@
 with_gdbm:=@with_gdbm@
 with_gtk:=@with_gtk@
 with_ogg:=@with_ogg@

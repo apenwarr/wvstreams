@@ -9,8 +9,13 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#ifdef HAVE_DB_H
+#include <db.h>
+#else
+#ifdef HAVE_DB_185_H
 #include <db_185.h>
-//#include </tmp/db1-compat-2.1.3/db.h>
+#endif
+#endif
 
 
 WvBdbHashBase::WvBdbHashBase(WvStringParm dbfile)

@@ -10,8 +10,8 @@
 
 #include "wvautoconf.h"
 
-#ifndef HAVE_GDBM_H
-# error "Sorry, no libdb support in wvstreams!"
+#if !defined(HAVE_DB_H) && !defined(HAVE_DB_185_H)
+# error "Sorry, no Berkeley DB support in WvStreams!"
 #endif
 
 #include "wvhashtable.h"

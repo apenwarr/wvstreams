@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 3.74, wvstreams-dev@nit.ca, wvstreams)
 
-AC_REVISION($Id: configure.ac,v 1.15.2.3.2.4 2003/08/05 18:32:44 pphaneuf Exp $)
+AC_REVISION($Id: configure.ac,v 1.15.2.3.2.5 2003/09/18 02:50:05 pphaneuf Exp $)
 
 echo $0 "$*" > reconfigure
 chmod +x reconfigure
@@ -72,6 +72,7 @@ AC_ARG_ENABLE(warnings,
 
 AC_ARG_WITH(fam, AC_HELP_STRING([--with-fam], [FAM]))
 AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
+AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(gdbm, AC_HELP_STRING([--with-gdbm], [GDBM]))
 AC_ARG_WITH(gtk, AC_HELP_STRING([--with-gtk], [GTK+]))
 AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
@@ -134,6 +135,30 @@ if test "$with_fftw" != "no"; then
     AC_CHECK_HEADERS(rfftw.h,, [with_fftw=no])
     AC_CHECK_LIB(fftw, fftw,, [with_fftw=no])
     AC_CHECK_LIB(rfftw, rfftw,, [with_fftw=no])
+fi
+
+# bdb
+if test "$with_bdb" != "no"; then
+    test "$with_bdb" = yes && with_bdb=
+    CPPFLAGS_save="$CPPFLAGS"
+    LDFLAGS_save="$LDFLAGS"
+    if test "$with_bdb"; then
+        WV_APPEND(CPPFLAGS, [-I$with_bdb/include])
+        WV_APPEND(LDFLAGS, [-L$with_bdb])
+    fi
+    AC_CHECK_HEADERS(db.h,, [with_bdb_1=no],
+                     [#include <db.h>
+                      #ifdef DB_VERSION_MAJOR
+                      #error "this is Berkeley DB 2.x or newer"
+                      #endif])
+    if test "$with_bdb_1" = "no"; then
+        AC_CHECK_HEADERS(db_185.h,, [with_bdb=no])
+    fi
+    AC_CHECK_LIB(db, dbopen,, [with_bdb=no])
+    if test "$with_bdb" = "no"; then
+        CPPFLAGS="$CPPFLAGS_save"
+        LDFLAGS="$LDFLAGS_save"
+    fi
 fi
 
 # gdbm
@@ -289,6 +314,7 @@ AC_SUBST(enable_rtti)
 AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 
+AC_SUBST(with_bdb)
 AC_SUBST(with_fam)
 AC_SUBST(with_fftw)
 AC_SUBST(with_gdbm)
