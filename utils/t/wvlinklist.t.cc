@@ -1,6 +1,6 @@
 #include "wvtest.h"
-#include "wvlinklist.h"
 #include "wvstringlist.h"
+#include "wvlinklist.h"
 
 DeclareWvList(int);
 DeclareWvList2(numberList, int);

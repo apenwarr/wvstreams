@@ -12,10 +12,10 @@
 #include "time.h"
 #endif
 
-#include "wvxplc.h"
 #include "wverror.h"
 #include "wvcallback.h"
 #include "wvbuf.h"
+#include "wvxplc.h"
 
 
 class WvAddr;

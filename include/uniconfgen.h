@@ -7,11 +7,11 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
-#include "wvxplc.h"
 #include "uniconfkey.h"
 #include "wvcallback.h"
 #include "wvlinklist.h"
 #include "uniconfpair.h"
+#include "wvxplc.h"
 
 class UniConfGen;
 
