@@ -182,7 +182,7 @@ WvString getdirname(WvStringParm fullname);
  * Given a number of blocks and a blocksize (default==1 byte), return a 
  * WvString containing a human-readable representation of blocks*blocksize.
  */
-WvString sizetoa(long long blocks, int blocksize=1);
+WvString sizetoa(unsigned long long blocks, unsigned int blocksize=1);
 
 /** Give a size in Kilobyes gives a human readable size */
 WvString sizektoa(unsigned int kbytes);
@@ -399,5 +399,68 @@ bool wvstring_to_num(WvStringParm str, T &n)
 
     return true;
 }
-        
+
+/*
+ * Before using the C-style string escaping functions below, please consider
+ * using the functions in wvtclstring.h instead; they usualy lead to much more
+ * human readable and manageable results, and allow representation of
+ * lists of strings.
+ */
+
+struct CStrExtraEscape
+{
+    char ch;
+    const char *esc;
+};
+extern const CStrExtraEscape CSTR_TCLSTR_ESCAPES[];
+
+// Converts data into a C-style string constant.
+//
+// If data is NULL, returns WvString::null; otherwise, returns an allocated
+// WvString containing the C-style string constant that represents the data.
+//
+// All printable characters including space except " and \ are represented with
+// escaping.
+//
+// The usual C escapes are performed, such as \n, \r, \", \\ and \0.
+//
+// All other characters are escaped in uppercase hex form, eg. \x9E
+//
+// The extra_escapes parameter allows for additional characters beyond
+// the usual ones escaped in C; setting it to CSTR_TCLSTR_ESCAPES will
+// escape { and } as \< and \>, which allows the resulting strings to be
+// TCL-string coded without ridiculous double-escaping.
+//
+WvString cstr_escape(const void *data, size_t size,
+        const CStrExtraEscape extra_escapes[] = NULL);
+
+// Converts a C-style string constant into data.
+// 
+// This function does *not* include the trailing null that a C compiler would --
+//   if you want this null, put \0 at the end of the C-style string
+// 
+// If cstr is correctly formatted and max_size is large enough for the
+// resulting data, returns true and size will equal the size of the
+// resulting data.  If data is not NULL it will contain this data.
+//
+// If cstr is correctly formatted but max_size is too small for the resulting
+// data, returns false and size will equal the minimum value of min_size
+// for this function to have returned true.  If data is non-NULL it will
+// contain the first max_size bytes of resulting data.
+// 
+// If cstr is incorrectly formatted, returns false and size will equal 0.
+//
+// This functions works just as well on multiple, whitespace-separated
+// C-style strings as well.  This allows you to concatenate strings produced
+// by cstr_escape, and the result of cstr_unescape will be the data blocks
+// concatenated together.  This implies that the empty string corresponds
+// to a valid data block of length zero; however, a null string still returns
+// an error.
+//
+// The extra_escapes parameter must match that used in the call to 
+// cstr_escape used to produce the escaped strings.
+//
+bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size,
+        const CStrExtraEscape extra_escapes[] = NULL);
+
 #endif // __WVSTRUTILS_H

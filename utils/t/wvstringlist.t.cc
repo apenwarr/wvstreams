@@ -4,7 +4,7 @@
 WVTEST_MAIN("basic")
 {
     WvString output, desired;
-    char * input[] = {"mahoooey", "", "kablooey", "mafooey"};
+    char * input[] = {"mahoooey", "", "kablooey", "mafooey",0};
     WvStringList l;
 
     
