@@ -111,6 +111,9 @@ WvAddr *WvAddr::gen(struct sockaddr *addr)
     case WvEncap::Ethertap:
     case WvEncap::Ethernet:
 	return new WvEtherAddr(addr);
+
+    case WvEncap::IPsec:
+	return new WvStringAddr("IPsec", WvEncap::IPsec);
 #endif
     default:
 	return new WvStringAddr("Unknown", WvEncap::Unknown);
