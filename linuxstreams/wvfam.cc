@@ -11,7 +11,7 @@ void WvFamBase::close()
         return;
 
     WvIStreamList::globallist.unlink(s);
-    delete s;
+    s->release();
     s = 0;
 
     if (FAMClose(&fc) == -1)
