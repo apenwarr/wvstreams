@@ -12,11 +12,14 @@
 #include "wvdiriter.h"
 #include "wvfile.h"
 #include "wvtclstring.h"
+#include <wvlist.h>
 #include <wvstreamlist.h>
 #include <wvstreamclone.h>
 #include <wvlog.h>
 #include <wvunixsocket.h>
 #include <wvaddr.h>
+
+DeclareWvDict(notifystruct, WvString, key);
 
 class UniConfDaemon
 {
