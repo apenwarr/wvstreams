@@ -227,7 +227,6 @@ void UniIniGen::commit()
     /** check dirtiness **/
     if (! dirty)
         return;
-    dirty = false;
 
     /** open the file **/
     WvFile file(filename, O_WRONLY | O_TRUNC | O_CREAT, create_mode);
@@ -251,6 +250,8 @@ void UniIniGen::commit()
         log("Error writing to config file: \"%s\"\n", file.errstr());
         return;
     }
+
+    dirty = false;
 
     /** done **/
     return;
