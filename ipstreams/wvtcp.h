@@ -14,6 +14,7 @@
 #include "wvstream.h"
 #include "wvaddr.h"
 
+class WvStreamList;
 class WvTCPListener;
 
 class WvTCPConn : public WvStream

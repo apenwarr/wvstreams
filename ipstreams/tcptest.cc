@@ -3,6 +3,7 @@
  *   Copyright (C) 1997, 1998 Worldvisions Computer Technology, Inc.
  */
 #include "wvtcp.h"
+#include "wvstreamlist.h"
 #include "wvlog.h"
 
 

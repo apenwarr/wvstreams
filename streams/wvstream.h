@@ -6,8 +6,7 @@
  * may not be ready for read/write at any given time.
  * 
  * We provide typical read and write routines, as well as a select() function
- * for each stream and a WvStreamList::select() for multiple simultaneous
- * streams.
+ * for each stream.
  */
 #ifndef __WVSTREAM_H
 #define __WVSTREAM_H
@@ -18,7 +17,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-class WvStreamList;
 class WvAddr;
 
 class WvStream
@@ -187,32 +185,9 @@ public:
 };
 
 
-// Create the WvStreamListBase class - a simple linked list of WvStreams
-DeclareWvList3(WvStream, WvStreamListBase, );
-
-class WvStreamList : public WvStream, public WvStreamListBase
-{
-public:
-    WvStreamList();
-    virtual bool isok() const;
-    virtual bool select_setup(fd_set &r, fd_set &w, fd_set &x, int &max_fd,
-			      bool readable, bool writable, bool isexception);
-    virtual bool test_set(fd_set &r, fd_set &w, fd_set &x);
-    WvStream *select_one(int msec_timeout, bool readable = true,
-			 bool writable = false, bool isexception = false);
-    
-protected:
-    bool sets_valid;
-    fd_set sel_r, sel_w, sel_x;
-    WvStream *sure_thing;
-    static Callback dist_callback;
-};
-
-
 // console stream, typically a WvSplitStream made from fd's 0 and 1.  This
 // can be reassigned while the program is running, if desired, but MUST NOT
 // be NULL.
 extern WvStream *wvcon;
-
 
 #endif // __WVSTREAM_H

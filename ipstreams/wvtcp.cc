@@ -4,6 +4,7 @@
  * 
  * WvStream-based TCP connection class.
  */
+#include "wvstreamlist.h"
 #include "wvtcp.h"
 #include <errno.h>
 

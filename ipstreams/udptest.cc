@@ -3,6 +3,7 @@
  *   Copyright (C) 1998 Worldvisions Computer Technology, Inc.
  */
 #include "wvudp.h"
+#include "wvstreamlist.h"
 #include "wvlog.h"
 
 int main(int argc, char **argv)
