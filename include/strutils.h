@@ -229,18 +229,14 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
 	  int len = strspn(sptr,splitchars);
 	    sptr += len;
 
-	  if (len > 0)
-		--limit;
+	  --limit;
 
-	  for (bool unseen = true; len > 0; (len -= strlen(splitchars)),--limit)
+	  for (bool unseen = true; len > 0 && limit; (len -= strlen(splitchars)),--limit)
 	  {
 		if ((!start) && (unseen))
 		  { unseen = false; continue; }
 
-		if (limit)
-		  coll.add(new WvString(""), true);
-		else
-		  break;
+		coll.add(new WvString(""), true);
 	  }
 
 	  start = false;
