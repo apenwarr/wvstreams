@@ -245,7 +245,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    if (errno == EAGAIN)
 		debug("Still waiting for SSL negotiation.\n");
 	    else if (!errno)
-		seterr("SSL negotiation failed (%s)!", err);
+		seterr(WvString("SSL negotiation failed (%s)!", err));
 	    else
 		seterr(errno);
 	}
