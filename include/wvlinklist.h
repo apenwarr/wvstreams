@@ -27,9 +27,7 @@ protected:
 public:
     WvLink head, *tail;
 
-    /**
-     * Creates an empty linked list.
-     */
+    /** Creates an empty linked list. */
     WvListBase() : head(NULL, false)
         { tail = &head; }
 
@@ -173,9 +171,7 @@ template<class T>
 class WvList : public WvListBase
 {
 public:
-    /**
-     * Creates an empty linked list.
-     */
+    /** Creates an empty linked list. */
     WvList()
 	{ }
     
@@ -188,14 +184,10 @@ public:
     ~WvList()
 	{ zap(); }
 	
-    /**
-     * Invoked by subclasses after the linked list is first created.
-     */
+    /** Invoked by subclasses after the linked list is first created. */
     void setup() {}
     
-    /**
-     * Invoked by subclasses before the linked list is destroyed.
-     */
+    /** Invoked by subclasses before the linked list is destroyed. */
     void shutdown() {}
 
     /**
@@ -370,9 +362,7 @@ public:
 	}
     };
     
-    /**
-     * The sorted iterator type for linked lists.
-     */
+    /** The sorted iterator type for linked lists. */
     typedef class WvSorter<T, WvListBase, WvListBase::IterBase> Sorter;
 };
 

@@ -26,9 +26,7 @@ class WvBase64Encoder : public WvEncoder
     unsigned int bits; // remaining bits shifted left 8 bits
     
 public:
-    /**
-     * Creates a base 64 encoder.
-     */
+    /** Creates a base 64 encoder. */
     WvBase64Encoder();
     virtual ~WvBase64Encoder() { }
 
@@ -57,9 +55,7 @@ class WvBase64Decoder : public WvEncoder
     unsigned int bits; // remaining bits shifted left 6 bits
     
 public:
-    /**
-     * Creates a base 64 decoder.
-     */
+    /** Creates a base 64 decoder. */
     WvBase64Decoder();
     virtual ~WvBase64Decoder() { }
 

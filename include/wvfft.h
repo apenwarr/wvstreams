@@ -59,9 +59,7 @@ public:
     virtual ~WvRealToComplexFFTEncoder();
 
 protected:
-    /**
-     * If not flushing, only processes at most one block of data.
-     */
+    /** If not flushing, only processes at most one block of data. */
     virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf, bool flush);
     virtual bool _reset();
 
@@ -104,9 +102,7 @@ public:
     virtual ~WvComplexToRealFFTEncoder();
 
 protected:
-    /**
-     * If not flushing, only processes at most one block of data.
-     */
+    /** If not flushing, only processes at most one block of data. */
     virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf, bool flush);
     virtual bool _reset();
 };
@@ -148,9 +144,7 @@ public:
     WvPowerSpectrumEncoder(size_t n);
 
 protected:
-    /**
-     * If not flushing, only processes at most one block of data.
-     */
+    /** If not flushing, only processes at most one block of data. */
     virtual bool _typedencode(IBuffer &inbuf, OBuffer &outbuf, bool flush);
     virtual bool _reset();
 };

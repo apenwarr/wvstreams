@@ -20,9 +20,7 @@ DeclareWvDict(WvResolverAddr, WvIPAddr, addr[0]);
 
 DeclareWvList(WvIPAddr);
 
-/**
- * ASynchronous DNS resolver functions, so that we can do non-blocking lookups
- */
+/** ASynchronous DNS resolver functions, so that we can do non-blocking lookups */
 class WvResolver
 {
     static int numresolvers;
@@ -44,9 +42,7 @@ public:
 
     void clearhost(WvStringParm hostname);
     
-    /**
-     * add all of our waiting fds to an fd_set for use with select().
-     */
+    /** add all of our waiting fds to an fd_set for use with select(). */
     bool pre_select(WvStringParm hostname, WvStream::SelectInfo &si);
 };
 

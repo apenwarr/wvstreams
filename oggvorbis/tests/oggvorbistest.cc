@@ -1,6 +1,4 @@
-/**
- * Tests Ogg Vorbis decoding.
- */
+/** Tests Ogg Vorbis decoding. */
 #include "wvoggvorbis.h"
 #include "wvstreamlist.h"
 #include "wvencoderstream.h"

@@ -25,9 +25,7 @@ protected:
     int xslots; /*!< the capacity of the array */
     bool auto_free; /*!< whether to auto-delete the elements when removed */
 
-    /**
-     * Creates an empty vector.
-     */
+    /** Creates an empty vector. */
     WvVectorBase(bool _auto_free);
 
     /** Computes the number of slots needed to grow to at least minslots. */

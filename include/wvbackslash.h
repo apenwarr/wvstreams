@@ -71,9 +71,7 @@ class WvBackslashDecoder : public WvEncoder
     int value;
 
 public:
-    /**
-     * Creates a C-style backslash decoder.
-     */
+    /** Creates a C-style backslash decoder. */
     WvBackslashDecoder();
     virtual ~WvBackslashDecoder() { }
 

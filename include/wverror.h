@@ -61,9 +61,7 @@ public:
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
     void seterr(const WvError &err);
     
-    /**
-     * Reset our error state - there's no error condition anymore.
-     */
+    /** Reset our error state - there's no error condition anymore. */
     void noerr()
         { errnum = 0; }
 };

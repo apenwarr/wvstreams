@@ -11,9 +11,7 @@
 #include "uniconftree.h"
 #include "uniconfiter.h"
 
-/**
- * A UniConf generator that stores keys in memory.
- */
+/** A UniConf generator that stores keys in memory. */
 class UniConfTempGen : public UniConfGen
 {
 protected:
@@ -38,9 +36,7 @@ public:
 };
 
 
-/**
- * An iterator over keys stored in a UniConfTempGen.
- */
+/** An iterator over keys stored in a UniConfTempGen. */
 class UniConfTempGen::NodeIter : public UniConfTempGen::Iter
 {
 protected:

@@ -18,17 +18,13 @@
  */
 struct MemOps
 {
-    /**
-     * Copies initialized region to uninitialized region.
-     */
+    /** Copies initialized region to uninitialized region. */
     inline void uninit_copy(void *target, const void *source,
         size_t count)
     {
         memcpy(target, source, count);
     }
-    /**
-     * Copies initialized region to initialized region.
-     */
+    /** Copies initialized region to initialized region. */
     inline void copy(void *target, const void *source, size_t count)
     {
         uninit(target, count);
@@ -44,9 +40,7 @@ struct MemOps
         memmove(target, source, count);
         uninit(source, count);
     }
-    /**
-     * Swaps initialized regions.
-     */
+    /** Swaps initialized regions. */
     inline void swap(void *target, void *source, size_t count)
     {
         register unsigned char *t1 = (unsigned char*)target;
@@ -59,31 +53,23 @@ struct MemOps
             *(t2++) = temp;
         }
     }
-    /**
-     * Uninitializes a region.
-     */
+    /** Uninitializes a region. */
     inline void uninit(void *target, size_t count)
     {
     }
-    /**
-     * Creates a new array.
-     */
+    /** Creates a new array. */
     inline void *newarray(size_t count)
     {
         return new unsigned char[count];
     }
-    /**
-     * Deletes an uninitialized array.
-     */
+    /** Deletes an uninitialized array. */
     inline void deletearray(void *buf)
     {
         delete[] (unsigned char*)buf;
     }
 } memops;
 
-/**
- * Rounds the value up to the specified boundary.
- */
+/** Rounds the value up to the specified boundary. */
 inline size_t roundup(size_t value, size_t boundary)
 {
     size_t mod = value % boundary;

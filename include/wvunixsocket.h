@@ -33,15 +33,11 @@ class WvUnixConn : public WvFDStream
 protected:
     WvUnixAddr addr;
     
-    /**
-     * connect an already-open socket (used by WvUnixListener)
-     */
+    /** connect an already-open socket (used by WvUnixListener) */
     WvUnixConn(int _fd, const WvUnixAddr &_addr);
     
 public:
-    /**
-     * connect a new socket
-     */
+    /** connect a new socket */
     WvUnixConn(const WvUnixAddr &_addr);
 
     virtual ~WvUnixConn();
@@ -62,9 +58,7 @@ public:
     virtual const WvUnixAddr *src() const;
 };
 
-/**
- * Server end of a Unix Sockets stream
- */
+/** Server end of a Unix Sockets stream */
 class WvUnixListener : public WvFDStream
 {
 public:
@@ -100,9 +94,7 @@ public:
     virtual size_t uread(void *buf, size_t len);
     virtual size_t uwrite(const void *buf, size_t len);
     
-    /**
-     * src() is a bit of a misnomer, but it returns the socket address.
-     */
+    /** src() is a bit of a misnomer, but it returns the socket address. */
     virtual const WvUnixAddr *src() const;
     
 protected:

@@ -17,9 +17,7 @@ struct SpeexBits;
 
 namespace WvSpeex
 {
-    /**
-     * The default encoder complexity level.
-     */
+    /** The default encoder complexity level. */
     static const int DEFAULT_COMPLEXITY = -1;
     
     /**

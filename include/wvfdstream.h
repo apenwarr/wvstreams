@@ -20,14 +20,10 @@
 class WvFDStream : public WvStream
 {
 protected:
-    /**
-     * The file descriptor for reading.
-     */
+    /** The file descriptor for reading. */
     int rfd;
 
-    /**
-     * The file descriptor for writing.
-     */
+    /** The file descriptor for writing. */
     int wfd;
 
     /**
@@ -54,9 +50,7 @@ public:
      */
     WvFDStream(int rfd, int wfd);
 
-    /**
-     * Destroys the stream and invokes close().
-     */
+    /** Destroys the stream and invokes close(). */
     virtual ~WvFDStream();
 
     /**

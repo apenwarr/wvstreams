@@ -32,9 +32,7 @@ struct hmac_ctx_st;
 class WvDigest : public WvEncoder
 {
 public:
-    /**
-     * Returns the number of bytes in the message digest.
-     */
+    /** Returns the number of bytes in the message digest. */
     virtual size_t digestsize() const = 0;
 };
 
@@ -76,9 +74,7 @@ private:
 class WvMD5Digest : public WvEVPMDDigest
 {
 public:
-    /**
-     * Creates an MD5 digest encoder.
-     */
+    /** Creates an MD5 digest encoder. */
     WvMD5Digest();
     virtual ~WvMD5Digest() { }
 };
@@ -91,9 +87,7 @@ public:
 class WvSHA1Digest : public WvEVPMDDigest
 {
 public:
-    /**
-     * Creates an MD5 digest encoder.
-     */
+    /** Creates an MD5 digest encoder. */
     WvSHA1Digest();
     virtual ~WvSHA1Digest() { }
 };

@@ -35,14 +35,10 @@ class WvEncoderStream : public WvStreamClone
     WvDynamicBuffer writeoutbuf;
 
 public:
-    /**
-     * Encoder chain through which input data is passed.
-     */
+    /** Encoder chain through which input data is passed. */
     WvEncoderChain readchain;
 
-    /**
-     * Encoder chain through which output data is passed.
-     */
+    /** Encoder chain through which output data is passed. */
     WvEncoderChain writechain;
 
     /**

@@ -36,9 +36,7 @@ public:
     WvSSLStream(IWvStream *_slave, WvX509Mgr *x509 = NULL, 
     		bool _verify = false, bool _is_server = false);
     
-    /**
-     * Cleans up everything (calls close + frees up the SSL Objects used)
-     */
+    /** Cleans up everything (calls close + frees up the SSL Objects used) */
     virtual ~WvSSLStream();
     
     virtual bool pre_select(SelectInfo &si);
@@ -49,9 +47,7 @@ public:
     virtual bool isok() const;
     
 protected:
-    /**
-     * SSL Context - used to create SSL Object
-     */
+    /** SSL Context - used to create SSL Object */
     SSL_CTX *ctx;
     
     /**
@@ -85,19 +81,13 @@ private:
      */
     volatile bool sslconnected;
     
-    /**
-     * Keep track of whether we are a client or a server
-     */
+    /** Keep track of whether we are a client or a server */
     bool is_server;
     
-    /**
-     * Keep track of whether we want to check the peer who connects to us
-     */
+    /** Keep track of whether we want to check the peer who connects to us */
     bool verify;
     
-    /**
-     * Internal Log Object
-     */
+    /** Internal Log Object */
     WvLog debug;
 
     /**
@@ -111,9 +101,7 @@ private:
     WvInPlaceBuffer write_bouncebuf;
     size_t write_eat;
 
-    /**
-     * Similar nastiness happens with SSL_read()
-     */
+    /** Similar nastiness happens with SSL_read() */
     WvInPlaceBuffer read_bouncebuf;
     bool read_pending;
 };

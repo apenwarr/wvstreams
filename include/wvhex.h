@@ -56,9 +56,7 @@ class WvHexDecoder : public WvEncoder
     int first;
     
 public:
-    /**
-     * Creates a hex decoder.
-     */
+    /** Creates a hex decoder. */
     WvHexDecoder();
     virtual ~WvHexDecoder() { }
 

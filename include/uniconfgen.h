@@ -44,9 +44,7 @@ protected:
      */
     void delta(const UniConfKey &key, UniConfDepth::Type depth);
 
-    /**
-     * Raises an error condition.
-     */
+    /** Raises an error condition. */
     void seterror(WvStringParm error)
         { } // FIXME: decide on final API for this probably WvError
 
@@ -127,9 +125,7 @@ public:
      */
     virtual bool isok();
 
-    /**
-     * Sets the callback for change notification.
-     */
+    /** Sets the callback for change notification. */
     void setcallback(const UniConfGenCallback &callback, void *userdata);
     
     /** Base type for all UniConfGen iterators. */
@@ -179,9 +175,7 @@ protected:
     UniConfFilterGen(UniConfGen *inner);
     virtual ~UniConfFilterGen();
 
-    /**
-     * Rebinds the inner generator.
-     */
+    /** Rebinds the inner generator. */
     void setinner(UniConfGen *inner);
 
 public:

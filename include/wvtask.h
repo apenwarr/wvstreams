@@ -21,9 +21,7 @@
 
 class WvTaskMan;
 
-/**
- * Represents a single thread of control.
- */
+/** Represents a single thread of control. */
 class WvTask
 {
     friend class WvTaskMan;
@@ -57,9 +55,7 @@ public:
 
 DeclareWvList(WvTask);
 
-/**
- * Provides co-operative multitasking support among WvTask instances.
- */
+/** Provides co-operative multitasking support among WvTask instances. */
 class WvTaskMan
 {
     friend class WvTask;

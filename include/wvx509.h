@@ -28,9 +28,7 @@ WvString wvssl_errstr();
 class WvX509Mgr
 {
 public:
-   /**
-    * Distinguished Name to be used in the certificate.
-    */
+   /** Distinguished Name to be used in the certificate. */
     WvString dname;
 
    /**
@@ -48,9 +46,7 @@ public:
     */
     WvX509Mgr(X509 *_cert = NULL);
 
-    /**
-     * Constructor to initialize this object with a pre-existing certificate and key
-     */
+    /** Constructor to initialize this object with a pre-existing certificate and key */
     WvX509Mgr(WvStringParm hexcert, WvStringParm hexrsa);
 
     /**
@@ -75,19 +71,13 @@ public:
     WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa);
     WvX509Mgr(WvStringParm _dname, int bits);
     
-    /**
-     * Placeholder: this doesn't exist yet.
-     */
+    /** Placeholder: this doesn't exist yet. */
     WvX509Mgr(const WvX509Mgr &mgr);
 
-    /**
-     * Destructor
-     */
+    /** Destructor */
     virtual ~WvX509Mgr();
 
-    /**
-     * X.509v3 Certificate - this is why this class exists
-     */
+    /** X.509v3 Certificate - this is why this class exists */
     X509     *cert;
 
     /**
@@ -176,9 +166,7 @@ public:
      */
     bool isinCRL();
 
-    /**
-     * Return the information requested by mode as a WvString.
-     */
+    /** Return the information requested by mode as a WvString. */
     WvString encode(DumpMode mode);
 
     /**
@@ -205,9 +193,7 @@ public:
      */
     void read_p12(WvStringParm filename);
 
-    /**
-     * Sets the PKCS12 password
-     */
+    /** Sets the PKCS12 password */
     void setPkcs12Password(WvStringParm passwd)
     	{ pkcs12pass = passwd; }
 
@@ -225,9 +211,7 @@ public:
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
 private:
-   /**
-    * Password for PKCS12 dump
-    */
+   /** Password for PKCS12 dump */
     WvString pkcs12pass;
 };
 

@@ -51,30 +51,20 @@ public:
     WvModemBase(int _fd);
     virtual ~WvModemBase();
     
-    /**
-     * do-nothing method that is not needed in WvModemBase
-     */
+    /** do-nothing method that is not needed in WvModemBase */
     virtual void close();
 
-    /**
-     * do-nothing method that is not needed in WvModemBase
-     */
+    /** do-nothing method that is not needed in WvModemBase */
     virtual bool carrier();
 
-    /**
-     * do-nothing method that is not needed in WvModemBase
-     */
+    /** do-nothing method that is not needed in WvModemBase */
     virtual int speed(int _baud);
 
-    /**
-     * this one really is needed
-     */
+    /** this one really is needed */
     int getspeed()
 	{ return baud; }
 
-    /**
-     * may need to hangup for redial reasons
-     */
+    /** may need to hangup for redial reasons */
     virtual void hangup();
 };
 
@@ -96,23 +86,17 @@ private:
      */
     void setup_modem( bool rtscts );
     
-    /**
-     * Check the status of the modem
-     */
+    /** Check the status of the modem */
     int getstatus();
     
 public:
     WvModem( const char * filename, int _baud, bool rtscts = true );
     virtual ~WvModem();
     
-    /**
-     * Close the connection to the modem
-     */
+    /** Close the connection to the modem */
     virtual void close();
     
-    /**
-     * Is there a carrier present?
-     */
+    /** Is there a carrier present? */
     virtual bool carrier();
     
     /**

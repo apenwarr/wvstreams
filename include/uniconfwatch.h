@@ -19,9 +19,7 @@ class UniConf;
 DeclareWvCallback(3, void, UniConfCallback, const UniConf &,
     UniConfDepth::Type, void *);
 
-/**
- * Observes a particular key.
- */
+/** Observes a particular key. */
 class UniConfWatch
 {
 protected:
@@ -40,9 +38,7 @@ public:
 };
 
 
-/**
- * A UniConfWatch that sets a boolean flag on notify.
- */
+/** A UniConfWatch that sets a boolean flag on notify. */
 class UniConfWatchSetBool : public UniConfWatch
 {
     bool *xflag;
@@ -71,9 +67,7 @@ public:
 };
 
 
-/**
- * A UniConfWatch that invokes a callback.
- */
+/** A UniConfWatch that invokes a callback. */
 class UniConfWatchCallback : public UniConfWatch
 {
     UniConfCallback xcallback;

@@ -42,9 +42,7 @@ public:
     static UniConfKey ANY;   /*!< represents "*" */
     static UniConfKey RECURSIVE_ANY; /*!< represents "..." */
 
-    /**
-     * Constructs an empty UniConfKey (the 'root').
-     */
+    /** Constructs an empty UniConfKey (the 'root'). */
     UniConfKey();
 
     /**
@@ -70,9 +68,7 @@ public:
     UniConfKey(const char *key)
         { init(key); }   
     
-    /**
-     * Constructs a UniConfKey from an int.
-     */
+    /** Constructs a UniConfKey from an int. */
     UniConfKey(int key)
         { init(key); }
 
@@ -107,9 +103,7 @@ public:
      */
     bool isempty() const;
 
-    /**
-     * Returns true if the key contains a wildcard.
-     */
+    /** Returns true if the key contains a wildcard. */
     bool iswild() const;
 
     /**
@@ -244,9 +238,7 @@ protected:
 
 DeclareWvList(UniConfKey);
 
-/**
- * An iterator over the segments of a key.
- */
+/** An iterator over the segments of a key. */
 class UniConfKey::Iter
 {
     const UniConfKey &key;

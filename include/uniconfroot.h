@@ -10,9 +10,7 @@
 #include "uniconfmounttree.h"
 #include "uniconfwatch.h"
 
-/**
- * The UniConfRoot implementation.
- */
+/** The UniConfRoot implementation. */
 class UniConfRootImpl : public UniConfMountTreeGen
 {
     /** undefined. */

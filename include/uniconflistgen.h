@@ -52,9 +52,7 @@ public:
 
 
 
-/**
- * An iterator over UniConf iterators.
- */
+/** An iterator over UniConf iterators. */
 /*class UniConfListGen::IterIter : public UniConfListGen::Iter
 {
 protected:

@@ -72,14 +72,10 @@ protected:
     WvString errstr; /*!< the error message */
 
 public:
-    /**
-     * Creates a new WvEncoder.
-     */
+    /** Creates a new WvEncoder. */
     WvEncoder();
 
-    /**
-     * Destroys the encoder.  Unflushed data is lost.
-     */
+    /** Destroys the encoder.  Unflushed data is lost. */
     virtual ~WvEncoder();
     
     /**
@@ -371,27 +367,19 @@ public:
     WvString strflushmem(const void *inmem, size_t inlen, bool finish = false);
 
 protected:
-    /**
-     * Sets 'okay' to false explicitly.
-     */
+    /** Sets 'okay' to false explicitly. */
     void setnotok()
         { okay = false; }
 
-    /**
-     * Sets an error condition, then setnotok().
-     */
+    /** Sets an error condition, then setnotok(). */
     void seterror(WvStringParm message)
         { errstr = message; setnotok(); }
 
-    /**
-     * Sets an error condition, then setnotok().
-     */
+    /** Sets an error condition, then setnotok(). */
     void seterror(WVSTRING_FORMAT_DECL)
         { seterror(WvString(WVSTRING_FORMAT_CALL)); }
 
-    /**
-     * Sets 'finished' to true explicitly.
-     */
+    /** Sets 'finished' to true explicitly. */
     void setfinished()
         { finished = true; }
 
@@ -513,9 +501,7 @@ protected:
 };
 
 
-/**
- * An encoder that discards all of its input.
- */
+/** An encoder that discards all of its input. */
 class WvNullEncoder : public WvEncoder
 {
 protected:
@@ -579,9 +565,7 @@ class WvEncoderChain : public WvEncoder
     WvEncoderChainElemListBase encoders;
     WvPassthroughEncoder passthrough;
 public:
-    /**
-     * Creates an initially empty chain of encoders.
-     */
+    /** Creates an initially empty chain of encoders. */
     WvEncoderChain();
 
     /**

@@ -118,9 +118,7 @@ public:
 };
 
 
-/**
- * The UniConfMountTree implementation realized as a UniConfGen.
- */
+/** The UniConfMountTree implementation realized as a UniConfGen. */
 class UniConfMountTreeGen : public UniConfGen
 {
     UniConfMountTree *mounts;
@@ -178,9 +176,7 @@ public:
      */
     virtual UniConfGen *whichmount(const UniConfKey &key, UniConfKey *mountpoint);
 
-    /**
-     * Determines if a key is a mountpoint.
-     */
+    /** Determines if a key is a mountpoint. */
     virtual bool ismountpoint(const UniConfKey &key);
     
     /***** Overridden members *****/
@@ -234,9 +230,7 @@ private:
     static bool gencommitfunc(UniConfGen *gen,
         const UniConfKey &key, UniConfDepth::Type depth);
 
-    /**
-     * Called by generators when a key changes.
-     */
+    /** Called by generators when a key changes. */
     void gencallback(const UniConfGen &gen, const UniConfKey &key,
         UniConfDepth::Type depth, void *userdata);
 };

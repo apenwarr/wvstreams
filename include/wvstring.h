@@ -136,9 +136,7 @@ public:
      */
     WvFastString(int i);
     
-    /**
-     * when this is called, we assume output.str == NULL; it will be filled.
-     */
+    /** when this is called, we assume output.str == NULL; it will be filled. */
     static void do_format(WvFastString &output, const char *format,
 			  const WvFastString * const *a);
     
@@ -216,9 +214,7 @@ public:
     bool operator== (const char *s2) const;
     bool operator!= (const char *s2) const;
     
-    /**
-     * the not operator is 'true' if string is empty
-     */
+    /** the not operator is 'true' if string is empty */
     bool operator! () const;
 
     // pointer arithmetic
@@ -227,9 +223,7 @@ public:
     const char *operator- (int i) const
         { return str - i; }
     
-    /**
-     * auto-convert WvString to (const char *), when needed.
-     */
+    /** auto-convert WvString to (const char *), when needed. */
     operator const char*() const
         { return str; }
     
@@ -254,9 +248,7 @@ public:
     int num() const
         { return str ? atoi(str) : 0; }
 
-    /**
-     * returns true if this string is null
-     */
+    /** returns true if this string is null */
     bool isnull() const
         { return str == NULL; }
 };
@@ -336,14 +328,10 @@ public:
     WvString &operator= (const char *s2)
         { return *this = WvFastString(s2); }
     
-    /** 
-     * make the buf and str pointers owned only by this WvString.
-     */
+    /** make the buf and str pointers owned only by this WvString. */
     WvString &unique();
 
-    /**
-     * make the string editable, and return a non-const (char*)
-     */
+    /** make the string editable, and return a non-const (char*) */
     char *edit()
         { return unique().str; }
     

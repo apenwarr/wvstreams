@@ -34,9 +34,7 @@ public:
 
     virtual bool isok() const;
     
-    /**
-     * notify timestream that we have "ticked" once
-     */
+    /** notify timestream that we have "ticked" once */
     void tick();
     virtual void execute();
 };

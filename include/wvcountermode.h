@@ -9,9 +9,7 @@
 
 #include "wvencoder.h"
 
-/**
- * A counter mode encryption encoder.
- */
+/** A counter mode encryption encoder. */
 class WvCounterModeEncoder : public WvEncoder
 {
 public:
@@ -41,15 +39,11 @@ public:
      */
     void getcounter(void *counter) const;
 
-    /**
-     * Returns the counter size.
-     */
+    /** Returns the counter size. */
     size_t getcountersize() const
         { return countersize; }
     
-    /**
-     * Increments the counter.
-     */
+    /** Increments the counter. */
     virtual void incrcounter();
     
 private:

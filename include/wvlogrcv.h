@@ -50,19 +50,13 @@ protected:
     virtual void log(const WvLog *source, int loglevel,
 		     const char *_buf, size_t len);
     
-    /**
-     * Set the Prefix and Prefix Length (size_t prelen)
-     */
+    /** Set the Prefix and Prefix Length (size_t prelen) */
     virtual void _make_prefix();
     
-    /**
-     * Start a new log line (print prefix)
-     */
+    /** Start a new log line (print prefix) */
     virtual void _begin_line();
     
-    /**
-     * End this (Guaranteed NonEmpty) log line
-     */
+    /** End this (Guaranteed NonEmpty) log line */
     virtual void _end_line();
     
     /**

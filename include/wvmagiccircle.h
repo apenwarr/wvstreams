@@ -10,9 +10,7 @@
 #include "wvshmzone.h"
 
 
-/**
- * A circular queue that can be accessed across fork().
- */
+/** A circular queue that can be accessed across fork(). */
 class WvMagicCircle : public WvError
 {
 public:

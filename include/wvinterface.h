@@ -27,14 +27,10 @@ class WvInterface
     
     WvLog err;
     
-    /**
-     * get/set information about an interface
-     */
+    /** get/set information about an interface */
     int req(int ioctl_num, struct ifreq *ifr);
     
-    /**
-     * used by addroute()/delroute()
-     */
+    /** used by addroute()/delroute() */
     void fill_rte(struct rtentry *rte, char ifname[17],
 		  const WvIPNet &dest, const WvIPAddr &gw,
 		  int metric);
@@ -46,45 +42,29 @@ public:
     WvInterface(WvStringParm _name);
     ~WvInterface();
     
-    /**
-     * forget all stored information about the address(es) of this interface
-     */
+    /** forget all stored information about the address(es) of this interface */
     void rescan();
     
-    /**
-     * get the hardware address of this interface
-     */
+    /** get the hardware address of this interface */
     const WvAddr &hwaddr();
     
-    /**
-     * get the local IP net of this interface
-     */
+    /** get the local IP net of this interface */
     const WvIPNet &ipaddr();
     
-    /**
-     * get the point-to-point IP address of this interface
-     */
+    /** get the point-to-point IP address of this interface */
     const WvIPAddr dstaddr();
     
-    /**
-     * get the current kernel flags
-     */
+    /** get the current kernel flags */
     int getflags();
     
-    /**
-     * toggle kernel flags on this netdevice.  Be careful!
-     */
+    /** toggle kernel flags on this netdevice.  Be careful! */
     int setflags(int clear, int set);
 
-    /**
-     * set the interface state up or down.
-     */
+    /** set the interface state up or down. */
     bool isup();
     void up(bool enable);
 
-    /**
-     * turn promiscuous (see-all-packets) mode on or off.
-     */
+    /** turn promiscuous (see-all-packets) mode on or off. */
     bool ispromisc();
     void promisc(bool enable);
     
@@ -110,25 +90,19 @@ public:
      */
     int sethwaddr(const WvAddr &addr);
     
-    /**
-     * add a route to the given network through this interface.
-     */
+    /** add a route to the given network through this interface. */
     int addroute(const WvIPNet &dest, int metric = 0,
 		 WvStringParm table = "default");
     int addroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0,
 		 WvStringParm table = "default");
 
-    /**
-     * delete a route to the given network through this interface.
-     */
+    /** delete a route to the given network through this interface. */
     int delroute(const WvIPNet &dest, int metric = 0,
 		 WvStringParm table = "default");
     int delroute(const WvIPNet &dest, const WvIPAddr &gw, int metric = 0,
 		 WvStringParm table = "default");
     
-    /**
-     * add an ARP entry on this interface
-     */
+    /** add an ARP entry on this interface */
     bool isarp();
     int addarp(const WvIPNet &proto, const WvAddr &hw, bool proxy);
 };

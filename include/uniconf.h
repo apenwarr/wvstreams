@@ -50,9 +50,7 @@ protected:
         { }
     
 public:
-    /**
-     * Creates a NULL UniConf handle, useful for reporting errors.
-     */
+    /** Creates a NULL UniConf handle, useful for reporting errors. */
     UniConf() 
         : xroot(NULL), xfullkey(UniConfKey::EMPTY)
         { }
@@ -227,14 +225,10 @@ public:
      */
     UniConfGen *mountgen(UniConfGen *gen, bool refresh = true) const;
     
-    /**
-     * Unmounts the generator providing this key and destroys it.
-     */
+    /** Unmounts the generator providing this key and destroys it. */
     void unmount(UniConfGen *gen, bool commit) const;
     
-    /**
-     * Determines if any generators are mounted at this key.
-     */
+    /** Determines if any generators are mounted at this key. */
     bool ismountpoint() const;
     
     /**
@@ -255,20 +249,14 @@ public:
      */
     void addwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
 
-    /**
-     * Cancels a previously registered notification request.
-     */
+    /** Cancels a previously registered notification request. */
     void delwatch(UniConfDepth::Type depth, UniConfWatch *watch) const;
 
-    /**
-     * Shortcut for registering a callback-style watch.
-     */
+    /** Shortcut for registering a callback-style watch. */
     void addwatchcallback(UniConfDepth::Type depth,
         const UniConfCallback &callback, void *userdata) const { }
     
-    /**
-     * Shortcut for canceling a watch added with addwatchcallback().
-     */
+    /** Shortcut for canceling a watch added with addwatchcallback(). */
     void delwatchcallback(UniConfDepth::Type depth,
         const UniConfCallback &callback, void *userdata) const { }
 
@@ -276,9 +264,7 @@ public:
      */
     void addwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
     
-    /**
-     * Shortcut for canceling a watch added with addwatchsetbool().
-     */
+    /** Shortcut for canceling a watch added with addwatchsetbool(). */
     void delwatchsetbool(UniConfDepth::Type depth, bool *flag) const { }
     
     /**
@@ -380,9 +366,7 @@ public:
 };
 
 
-/**
- * This iterator walks through all immediate children of a UniConf node.
- */
+/** This iterator walks through all immediate children of a UniConf node. */
 class UniConf::Iter : public UniConf::IterBase
 {
     UniConfAbstractIter *it;
@@ -408,9 +392,7 @@ public:
 };
 
 
-/**
- * This iterator performs depth-first traversal of a subtree.
- */
+/** This iterator performs depth-first traversal of a subtree. */
 class UniConf::RecursiveIter : public UniConf::IterBase
 {
     UniConf::IterList itlist;
@@ -513,9 +495,7 @@ protected:
 };
 
 
-/**
- * A sorted variant of UniConf::Iter.
- */
+/** A sorted variant of UniConf::Iter. */
 class UniConf::SortedIter : public UniConf::SortedIterBase
 {
     UniConf::Iter i;
@@ -530,9 +510,7 @@ public:
 };
 
 
-/**
- * A sorted variant of UniConf::RecursiveIter.
- */
+/** A sorted variant of UniConf::RecursiveIter. */
 class UniConf::SortedRecursiveIter : public UniConf::SortedIterBase
 {
     UniConf::RecursiveIter i;
@@ -548,9 +526,7 @@ public:
 };
 
 
-/**
- * A sorted variant of UniConf::XIter.
- */
+/** A sorted variant of UniConf::XIter. */
 class UniConf::SortedXIter : public UniConf::SortedIterBase
 {
     UniConf::XIter i;

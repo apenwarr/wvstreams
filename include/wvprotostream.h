@@ -39,9 +39,7 @@ public:
     WvProtoStream(WvStream *_cloned, WvLog *_debuglog = NULL);
     virtual ~WvProtoStream();
     
-    /**
-     * override uwrite() so we can log all output
-     */
+    /** override uwrite() so we can log all output */
     virtual size_t uwrite(const void *buffer, size_t size);
 
     // Routines to convert an input line into a set of Tokens.
@@ -52,9 +50,7 @@ public:
     size_t list_to_array(TokenList *tl, Token **array);
     Token *tokline(const char *line);
     
-    /**
-     * Convert token strings to enum values
-     */
+    /** Convert token strings to enum values */
     int tokanal(const Token &t, char **lookup,
 		bool case_sensitive = false);
     
@@ -63,9 +59,7 @@ public:
     virtual void do_state(Token &t1);
     virtual void switch_state(int newstate);
     
-    /**
-     * pass input through to the state machine, one line at a time
-     */
+    /** pass input through to the state machine, one line at a time */
     virtual void execute();
     
 protected:

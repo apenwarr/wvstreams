@@ -16,14 +16,10 @@ class WvLockFile
 public:
     WvLockFile(WvStringParm _lockname);
 
-    /**
-     * Check to make sure no lock is established or that it's owned by us.
-     */
+    /** Check to make sure no lock is established or that it's owned by us. */
     bool isok();
 
-    /**
-     * Creates the lockfile with the current pid. Returns success/failure.
-     */
+    /** Creates the lockfile with the current pid. Returns success/failure. */
     bool lock();
 
     /**

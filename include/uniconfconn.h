@@ -67,9 +67,7 @@ public:
     };
     static const CommandInfo cmdinfos[NUM_COMMANDS];
 
-    /**
-     * Create a wrapper around the supplied WvStream.
-     */
+    /** Create a wrapper around the supplied WvStream. */
     UniConfConn(IWvStream *_s);
     virtual ~UniConfConn();
 
@@ -116,14 +114,10 @@ public:
     void writetext(WvStringParm text);
 
 private:
-    /**
-     * Reads a message from the connection.
-     */
+    /** Reads a message from the connection. */
     WvString readmsg();
 
-    /**
-     * Writes a message to the connection.
-     */
+    /** Writes a message to the connection. */
     void writemsg(WvStringParm message);
 };
 

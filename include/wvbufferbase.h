@@ -58,9 +58,7 @@ protected:
         store(store) { }
 
 public:
-    /**
-     * Destroys the buffer.
-     */
+    /** Destroys the buffer. */
     virtual ~WvBufferBaseCommonImpl() { }
 
     /**
@@ -251,17 +249,13 @@ public:
             offset * sizeof(Elem), count * sizeof(Elem)));
     }
 
-    /**
-     * @see peek(int, size_t), optpeekable(int)
-     */
+    /** @see peek(int, size_t), optpeekable(int) */
     size_t peekable(int offset)
     {
         return store->peekable(offset * sizeof(Elem)) / sizeof(Elem);
     }
 
-    /**
-     * @see peek(int, size_t), peekable(int)
-     */
+    /** @see peek(int, size_t), peekable(int) */
     size_t optpeekable(int offset)
     {
         offset *= sizeof(Elem);
@@ -686,9 +680,7 @@ public:
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), _size * sizeof(Elem)) { }
 
-    /**
-     * Creates a new empty buffer with no backing array.
-     */
+    /** Creates a new empty buffer with no backing array. */
     WvInPlaceBufferBase() :
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), NULL, 0, 0, false) { }
@@ -799,9 +791,7 @@ public:
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), _data, _avail * sizeof(Elem)) { }
 
-    /**
-     * Creates a new empty buffer with no backing array.
-     */
+    /** Creates a new empty buffer with no backing array. */
     WvConstInPlaceBufferBase() :
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), NULL, 0) { }
@@ -901,9 +891,7 @@ public:
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), _size * sizeof(Elem)) { }
 
-    /**
-     * Creates a new empty buffer with no backing array.
-     */
+    /** Creates a new empty buffer with no backing array. */
     WvCircularBufferBase() :
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem), NULL, 0, 0, false) { }
@@ -1065,9 +1053,7 @@ protected:
     WvEmptyBufferStore mystore;
 
 public:
-    /**
-     * Creates a new buffer.
-     */
+    /** Creates a new buffer. */
     WvEmptyBufferBase() :
         WvBufferBase<T>(& mystore),
         mystore(sizeof(Elem)) { }

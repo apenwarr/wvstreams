@@ -15,9 +15,7 @@
 
 #define OGG_SPEEX_DECODER_BUF_SIZE 16384 // at most 16k at once
 
-/**
- * Extracts a little endian integer from a buffer.
- */
+/** Extracts a little endian integer from a buffer. */
 static unsigned long int getint_le(WvBuffer &inbuf)
 {
     // FIXME: a little sloppy
@@ -26,9 +24,7 @@ static unsigned long int getint_le(WvBuffer &inbuf)
 }
 
 
-/**
- * Appends a little endian integer to a buffer.
- */
+/** Appends a little endian integer to a buffer. */
 static void putint_le(WvBuffer &outbuf, unsigned long int value)
 {
     // FIXME: a little sloppy

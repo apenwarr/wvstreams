@@ -23,14 +23,10 @@ namespace UniConfDepth
     };
     static const int NUM_DEPTHS = DESCENDENTS + 1;
         
-    /**
-     * Returns a (non-localized) string corresponding to a depth type.
-     */
+    /** Returns a (non-localized) string corresponding to a depth type. */
     const char *nameof(Type depth);
 
-    /**
-     * Returns a depth given its (non-localized) name, -1 if unrecognized.
-     */
+    /** Returns a depth given its (non-localized) name, -1 if unrecognized. */
     Type fromname(const char *name);
 };
 

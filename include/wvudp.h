@@ -31,9 +31,7 @@
 class WvUDPStream : public WvFDStream
 {
 public:
-    /**
-     * connect a new socket
-     */
+    /** connect a new socket */
     WvUDPStream(const WvIPPortAddr &_local, const WvIPPortAddr &_rem);
     virtual ~WvUDPStream();
     

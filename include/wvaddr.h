@@ -191,9 +191,7 @@ public:
 };
 
 
-/**
- * An ARCnet address is made up of a single hex number. 
- */
+/** An ARCnet address is made up of a single hex number.  */
 class WvARCnetAddr : public WvAddr
 {
     unsigned char binaddr;
@@ -316,21 +314,15 @@ public:
      */
     WvIPNet(const WvIPAddr &base, int bits = 32);
     
-    /**
-     * construct an empty IPNet for later copying (probably by operator=)
-     */
+    /** construct an empty IPNet for later copying (probably by operator=) */
     WvIPNet();
     
     virtual ~WvIPNet();
     
-    /**
-     * Override the hash and comparison functions
-     */
+    /** Override the hash and comparison functions */
     virtual unsigned WvHash() const;
     
-    /** 
-     * Get the 'base IP address' component, netmask, network, and broadcast
-     */
+    /** Get the 'base IP address' component, netmask, network, and broadcast */
     WvIPAddr base() const
         { return *this; }
     WvIPAddr netmask() const
@@ -340,14 +332,10 @@ public:
     WvIPAddr broadcast() const
         { return *this | ~mask; }
     
-    /**
-     * adjust the netmask so that 'addr' would be included in this network
-     */
+    /** adjust the netmask so that 'addr' would be included in this network */
     void include(const WvIPNet &addr);
     
-    /**
-     * determine whether the given address is already included in this net
-     */
+    /** determine whether the given address is already included in this net */
     bool includes(const WvIPNet &addr) const;
     
     /**
@@ -363,15 +351,11 @@ public:
     int bits() const;
     void normalize();
     
-    /**
-     * is this net the default gateway? (0.0.0.0/0)
-     */
+    /** is this net the default gateway? (0.0.0.0/0) */
     bool is_default() const
         { return mask.binaddr[0] == 0; }
     
-    /**
-     * is it a plain host? (x.x.x.x/32)
-     */
+    /** is it a plain host? (x.x.x.x/32) */
     bool is_host() const
         { return mask.binaddr[3] == 255; }
 };
@@ -420,9 +404,7 @@ public:
 };
 
 
-/**
- * A Unix domain socket address is really just a filename. 
- */
+/** A Unix domain socket address is really just a filename.  */
 class WvUnixAddr : public WvAddr
 {
 protected:

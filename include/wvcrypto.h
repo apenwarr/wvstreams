@@ -10,9 +10,7 @@
 #include "wvfile.h"
 
 
-/**
- * A very simple stream that returns randomness from /dev/urandom
- */
+/** A very simple stream that returns randomness from /dev/urandom */
 class WvRandomStream : public WvFile
 {
 public:

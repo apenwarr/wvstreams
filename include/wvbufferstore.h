@@ -93,15 +93,11 @@ public:
 
     /*** Support for buffers with subbuffers ***/
 
-    /**
-     * Returns true if the buffer uses subbuffers for storage.
-     */
+    /** Returns true if the buffer uses subbuffers for storage. */
     virtual bool usessubbuffers() const
         { return false; }
 
-    /**
-     * Returns the number of subbuffers in the buffer.
-     */
+    /** Returns the number of subbuffers in the buffer. */
     virtual size_t numsubbuffers() const
         { return 0; }
 
@@ -112,15 +108,11 @@ public:
     virtual WvBufferStore *firstsubbuffer() const
         { return NULL; }
 
-    /**
-     * Appends a subbuffer to the buffer.
-     */
+    /** Appends a subbuffer to the buffer. */
     virtual void appendsubbuffer(WvBufferStore *buffer, bool autofree)
         { assert(! "not supported"); }
 
-    /**
-     * Prepends a subbuffer to the buffer.
-     */
+    /** Prepends a subbuffer to the buffer. */
     virtual void prependsubbuffer(WvBufferStore *buffer, bool autofree)
         { assert(! "not supported"); }
 

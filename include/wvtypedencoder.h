@@ -103,9 +103,7 @@ protected:
     virtual bool _typedfinish(OBuffer &outbuf)
         { return true; }
 
-    /**
-     * Wrapper implementation of _encode().
-     */
+    /** Wrapper implementation of _encode(). */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush)
     {
@@ -114,9 +112,7 @@ protected:
         return _typedencode(inview, outview, flush);
     }
     
-    /**
-     * Wrapper implementation of _finish().
-     */
+    /** Wrapper implementation of _finish(). */
     virtual bool _finish(WvBuffer &outbuf)
     {
         OBufferView outview(outbuf);
@@ -188,9 +184,7 @@ protected:
     virtual bool _typedfinish(OBuffer &outbuf)
         { return true; }
     
-    /**
-     * Wrapper implementation of _encode().
-     */
+    /** Wrapper implementation of _encode(). */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush)
     {
@@ -198,9 +192,7 @@ protected:
         return _typedencode(inview, outbuf, flush);
     }
     
-    /**
-     * Wrapper implementation of _finish().
-     */
+    /** Wrapper implementation of _finish(). */
     virtual bool _finish(WvBuffer &outbuf)
     {
         return _typedfinish(outbuf);
@@ -238,18 +230,14 @@ protected:
     virtual bool _typedfinish(OBuffer &outbuf)
         { return true; }
 
-    /**
-     * Wrapper implementation of _encode().
-     */
+    /** Wrapper implementation of _encode(). */
     virtual bool _encode(WvBuffer &inbuf, WvBuffer &outbuf,
         bool flush)
     {
         return _typedencode(inbuf, outbuf, flush);
     }
     
-    /**
-     * Wrapper implementation of _finish().
-     */
+    /** Wrapper implementation of _finish(). */
     virtual bool _finish(WvBuffer &outbuf)
     {
         return _typedfinish(outbuf);

@@ -29,9 +29,7 @@ public:
      */
     WvTunDev(const WvIPNet &addr, int mtu = 1400);
 
-    /**
-     * Contains the name of the interface associated with the device.
-     */
+    /** Contains the name of the interface associated with the device. */
     WvString ifcname;
 
 private:

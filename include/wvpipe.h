@@ -76,9 +76,7 @@ public:
 	   bool writable, bool readable, bool catch_stderr,
 	   WvFDStream *stdio_str);
 
-    /**
-     * kill the child process and close the stream.
-     */
+    /** kill the child process and close the stream. */
     virtual ~WvPipe();
     
     /**
@@ -87,19 +85,13 @@ public:
      */
     void kill(int signum);
     
-    /**
-     * wait for child to die.  Returns exit_status()
-     */
+    /** wait for child to die.  Returns exit_status() */
     int finish(bool wait_children = true);
     
-    /**
-     * returns true if child is dead.
-     */
+    /** returns true if child is dead. */
     bool child_exited();
 
-    /**
-     * returns true if child is dead because of a signal.
-     */
+    /** returns true if child is dead because of a signal. */
     bool child_killed() const;
     
     /**

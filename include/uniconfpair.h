@@ -12,22 +12,16 @@
 #include "wvhashtable.h"
 
 
-/**
- * Represents a simple key-value pair.
- */
+/** Represents a simple key-value pair. */
 class UniConfPair
 {
     UniConfKey xkey;  /*!< the name of this entry */
     WvString xvalue;  /*!< the value of this entry */
 
-    /**
-     * undefined.
-     */
+    /** undefined. */
     UniConfPair(const UniConfPair &);
 
-    /**
-     * undefined.
-     */
+    /** undefined. */
     UniConfPair &operator= (const UniConfPair &);
 
 public:

@@ -67,9 +67,7 @@ char *strlwr(char *string);
  */
 char *strupr(char *string);
 
-/**
- * Returns true if all characters in 'string' are isalnum() (alphanumeric).
- */
+/** Returns true if all characters in 'string' are isalnum() (alphanumeric). */
 bool is_word(const char *string);
 
 /**
@@ -100,9 +98,7 @@ WvString web_unescape(const char *str);
  */
 WvString rfc822_date(time_t _when = -1);
 
-/**
- * Returns an RFC1123-compatible date made out of _when
- */
+/** Returns an RFC1123-compatible date made out of _when */
 WvString rfc1123_date(time_t _when);
 
 /**
@@ -117,9 +113,7 @@ WvString passwd_crypt(const char *str);
  */
 WvString backslash_escape(WvStringParm s1);
 
-/**
- * How many times does 'c' occur in "s"?
- */
+/** How many times does 'c' occur in "s"? */
 int strcount(WvStringParm s, const char c);
 
 /**
@@ -136,9 +130,7 @@ WvString encode_hostname_as_DN(WvStringParm hostname);
  */
 WvString nice_hostname(WvStringParm name);
 
-/**
- * Separates the filename and directory name within a path.
- */
+/** Separates the filename and directory name within a path. */
 WvString getfilename(WvStringParm fullname);
 WvString getdirname(WvStringParm fullname);
 

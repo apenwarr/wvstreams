@@ -213,34 +213,22 @@ public:
     }
 };
 
-/**
- * The base raw memory buffer type.
- */
+/** The base raw memory buffer type. */
 typedef WvBufferBase<unsigned char> WvBuffer;
 
-/**
- * The dynamically resizing raw memory buffer type.
- */
+/** The dynamically resizing raw memory buffer type. */
 typedef WvDynamicBufferBase<unsigned char> WvDynamicBuffer;
 
-/**
- * The empty raw memory buffer type.
- */
+/** The empty raw memory buffer type. */
 typedef WvEmptyBufferBase<unsigned char> WvEmptyBuffer;
 
-/**
- * The raw memory buffer cursor type.
- */
+/** The raw memory buffer cursor type. */
 typedef WvBufferCursorBase<unsigned char> WvBufferCursor;
 
-/**
- * The raw memory buffer view type.
- */
+/** The raw memory buffer view type. */
 typedef WvBufferViewBase<unsigned char> WvBufferView;
 
-/**
- * A raw memory read-only buffer backed by a constant WvString
- */
+/** A raw memory read-only buffer backed by a constant WvString */
 class WvConstStringBuffer : public WvConstInPlaceBuffer
 {
     WvString xstr;
@@ -253,9 +241,7 @@ public:
      */
     explicit WvConstStringBuffer(WvStringParm _str);
 
-    /**
-     * Creates a new empty buffer backed by a null string.
-     */
+    /** Creates a new empty buffer backed by a null string. */
     WvConstStringBuffer();
 
     /**

@@ -76,9 +76,7 @@ public:
     WvLog(const WvLog &l);
     virtual ~WvLog();
 
-    /**
-     * fd==-1, but this stream is always ok
-     */
+    /** fd==-1, but this stream is always ok */
     virtual bool isok() const;
     
     /* always writable */
@@ -91,9 +89,7 @@ public:
     WvLog &lvl(LogLevel _loglevel)
         { loglevel = _loglevel; return *this; }
     
-    /**
-     * change the loglevel and then print a message.
-     */
+    /** change the loglevel and then print a message. */
     size_t operator() (LogLevel _loglevel, WvStringParm s)
     { 
 	LogLevel l = loglevel; 
@@ -102,9 +98,7 @@ public:
 	return x;
     }
     
-    /**
-     * change the loglevel and then print a formatted message
-     */
+    /** change the loglevel and then print a formatted message */
     size_t operator() (LogLevel _loglevel, WVSTRING_FORMAT_DECL)
     { 
 	LogLevel l = loglevel;
@@ -136,9 +130,7 @@ public:
      */
     virtual size_t uwrite(const void *buf, size_t len);
     
-    /**
-     * a useful substitute for the normal C perror() function
-     */
+    /** a useful substitute for the normal C perror() function */
     void perror(WvStringParm s)
         { print("%s: %s\n", s, strerror(errno)); }
 };

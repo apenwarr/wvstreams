@@ -1,6 +1,4 @@
-/**
- * Tests Ogg Speex encoding and decoding.
- */
+/** Tests Ogg Speex encoding and decoding. */
 #include "wvoggspeex.h"
 #include "wvstreamlist.h"
 #include "wvencoderstream.h"

@@ -45,19 +45,13 @@ protected:
     WvIPPortAddr remaddr;
     WvResolver dns;
     
-    /**
-     * Start a WvTCPConn on an already-open socket (used by WvTCPListener)
-     */
+    /** Start a WvTCPConn on an already-open socket (used by WvTCPListener) */
     WvTCPConn(int _fd, const WvIPPortAddr &_remaddr);
     
-    /**
-     * Connect to the remote end - note the "Protected" above ;)
-     */
+    /** Connect to the remote end - note the "Protected" above ;) */
     void do_connect();
     
-    /**
-     * Resolve the remote address, if it was fed in non-IP form
-     */
+    /** Resolve the remote address, if it was fed in non-IP form */
     void check_resolver();
     
 public:
@@ -68,9 +62,7 @@ public:
     */
     WvTCPConn(const WvIPPortAddr &_remaddr);
     
-    /**
-     * Resolve the hostname, then connect a new socket
-     */
+    /** Resolve the hostname, then connect a new socket */
     WvTCPConn(WvStringParm _hostname, __u16 _port = 0);
 
     /**
@@ -104,15 +96,11 @@ public:
      */
     virtual const WvIPPortAddr *src() const;
 
-    /**
-     * has the connection been completed yet?
-     */
+    /** has the connection been completed yet? */
     bool isconnected() const
         { return connected; }
     
-    /**
-     * override pre_select() to cause select() results when resolving names.
-     */
+    /** override pre_select() to cause select() results when resolving names. */
     virtual bool pre_select(SelectInfo &si);
     
     /**
@@ -131,9 +119,7 @@ protected:
     virtual size_t uwrite(const void *buf, size_t count);
 };
 
-/**
- * Class to easily create the Server side of a TCPConn...
- */
+/** Class to easily create the Server side of a TCPConn... */
 class WvTCPListener : public WvFDStream
 {
 public:
@@ -143,14 +129,10 @@ public:
      */
     WvTCPListener(const WvIPPortAddr &_listenport);
 
-    /**
-     * Destructor - remember - close() is your friend ;)
-     */
+    /** Destructor - remember - close() is your friend ;) */
     virtual ~WvTCPListener();
     
-    /**
-     * Shut down the server, and disconnect from the port
-     */
+    /** Shut down the server, and disconnect from the port */
     virtual void close();
     
     /**
@@ -180,9 +162,7 @@ public:
     virtual size_t uread(void *buf, size_t len);
     virtual size_t uwrite(const void *buf, size_t len);
     
-    /**
-     * src() is a bit of a misnomer, but it returns the listener port.
-     */
+    /** src() is a bit of a misnomer, but it returns the listener port. */
     virtual const WvIPPortAddr *src() const;
     
 protected:

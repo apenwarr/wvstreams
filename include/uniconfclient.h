@@ -70,9 +70,7 @@ protected:
 };
 
 
-/**
- * An iterator over remote keys.
- */
+/** An iterator over remote keys. */
 class UniConfClientGen::RemoteKeyIter : public UniConfClientGen::Iter
 {
 protected:

@@ -207,9 +207,7 @@ public:
 };
 
 
-/**
- * A plain UniConfTree that holds keys and values.
- */
+/** A plain UniConfTree that holds keys and values. */
 class UniConfValueTree : public UniConfTree<UniConfValueTree>
 {
     WvString xvalue;  /*!< the value of this entry */

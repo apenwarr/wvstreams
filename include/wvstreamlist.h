@@ -9,9 +9,7 @@
 
 #include "wvstream.h"
 
-/**
- * Create the WvStreamListBase class - a simple linked list of WvStreams
- */
+/** Create the WvStreamListBase class - a simple linked list of WvStreams */
 DeclareWvList2(WvStreamListBase, WvStream);
 
 /**

@@ -129,14 +129,10 @@ public:
      */
     WvStream *write_requires_readable;
     
-    /**
-     * If this is set, enables the use of continue_select().
-     */
+    /** If this is set, enables the use of continue_select(). */
     bool uses_continue_select;
 
-    /**
-     * Specifies the stack size to reserve for continue_select().
-     */
+    /** Specifies the stack size to reserve for continue_select(). */
     size_t personal_stack_size;
 
     /**
@@ -157,28 +153,20 @@ public:
      */ 
     virtual void close();
 
-    /**
-     * Override seterr() from WvError so that it auto-closes the stream.
-     */
+    /** Override seterr() from WvError so that it auto-closes the stream. */
     virtual void seterr(int _errnum);
     void seterr(WvStringParm specialerr)
         { WvError::seterr(specialerr); }
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
     
-    /**
-     * return true if the stream is actually usable right now
-     */
+    /** return true if the stream is actually usable right now */
     virtual bool isok() const;
     
-    /**
-     * read a data block on the stream.  Returns the actual amount read.
-     */
+    /** read a data block on the stream.  Returns the actual amount read. */
     virtual size_t read(void *buf, size_t count);
 
-    /**
-     * write a data block on the stream.  Returns the actual amount written.
-     */
+    /** write a data block on the stream.  Returns the actual amount written. */
     virtual size_t write(const void *buf, size_t count);
 
     /**
@@ -457,9 +445,7 @@ public:
     void setcallback(WvStreamCallback _callfunc, void *_userdata)
         { callfunc = _callfunc; userdata = _userdata; }
         
-    /**
-     * Sets a callback to be invoked on close(). 
-     */
+    /** Sets a callback to be invoked on close().  */
     void setclosecallback(WvStreamCallback _callfunc, void *_userdata)
        { closecb_func = _callfunc; closecb_data = _userdata; }
 
@@ -470,9 +456,7 @@ public:
      */
     void autoforward(WvStream &s);
 
-    /**
-     * Stops autoforwarding.
-     */
+    /** Stops autoforwarding. */
     void noautoforward();
     static void autoforward_callback(WvStream &s, void *userdata);
     
@@ -504,9 +488,7 @@ public:
     size_t print(WvStringParm s)
         { return write(s); }
 
-    /**
-     * preformat and print a string.
-     */
+    /** preformat and print a string. */
     size_t print(WVSTRING_FORMAT_DECL)
 	{ return write(WvString(WVSTRING_FORMAT_CALL)); }
     size_t operator() (WvStringParm s)
@@ -550,9 +532,7 @@ protected:
     virtual int getwfd() const;
     
 private:
-    /**
-     * The function that does the actual work of select().
-     */
+    /** The function that does the actual work of select(). */
     bool _select(time_t msec_timeout,
 		 bool readable, bool writable, bool isexcept,
 		 bool forceable);
@@ -576,14 +556,10 @@ protected:
     
     WvTask *task;
 
-    /**
-     * plain internal constructor to just set up internal variables.
-     */
+    /** plain internal constructor to just set up internal variables. */
     WvStream();
     
-    /**
-     * Prevent accidental copying of WvStreams.
-     */
+    /** Prevent accidental copying of WvStreams. */
     WvStream(const WvStream &s) : callfunc(0), closecb_func(0) { }
     WvStream& operator= (const WvStream &s) { return *this; }
 
