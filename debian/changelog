@@ -1,6 +1,7 @@
 wvstreams (4.0.1-1) unstable; urgency=low
 
   * New upstream version.  (Closes: Bug#276571)
+    - Fixes OpenSSL FTBFS.  (Closes: Bug#281772)
   * Depend on a newer version of BDB.  (Closes: Bug#248522)
   * We now depend on XPLC 0.3.10.
 
