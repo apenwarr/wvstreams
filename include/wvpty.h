@@ -30,6 +30,7 @@ class WvPty : public WvFDStream
     public:
 
         WvPty(const char *program, const char * const *argv);
+        ~WvPty();
 
         void kill(int signum);
         bool child_exited();
