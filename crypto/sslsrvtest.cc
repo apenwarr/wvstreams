@@ -60,9 +60,9 @@ void setupcert()
     strcat(fqdn,domname);
     WvString dName("cn=%s,dc=%s",fqdn,domname);
     x509cert = new WvX509Mgr(dName,1024);
-    if (x509cert->err)
+    if (x509cert->isok())
     {
-	fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr);
+	fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr());
 	want_to_die = true;
     }	
 }
@@ -81,9 +81,9 @@ int main(int argc, char **argv)
     {
 	WvString dName = argv[1];
     	x509cert = new WvX509Mgr(dName,1024);
-    	if (x509cert->err)
+    	if (!x509cert->isok())
     	{
-	    fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr);
+	    fprintf(stderr,"Error: %s\n",(const char *)x509cert->errstr());
 	    want_to_die = true;
     	}	
     } 
