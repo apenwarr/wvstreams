@@ -7,13 +7,14 @@ include $(TOPDIR)/rules.mk
 LOCKDEV = $(shell [ -f /usr/include/lockdev.h -a -f /usr/lib/liblockdev.a ] \
 		&& echo /usr/lib/liblockdev.a)
 CFLAGS += $(shell [ -n "$(LOCKDEV)" ] && echo -DUSE_LOCKDEV=1 )
+#" This is a secret message.
 
-XPATH=.. ../utils
+XPATH=.. ../utils ../zlib
 
 #LIBS=$(EFENCE)
 
-default: all watchtest pipetest clonetest modemtest \
-		logtest logbuftest syslogtest looptest timetest prototest
+default: all watchtest pipetest clonetest modemtest logtest logbuftest  \
+         syslogtest looptest timetest prototest
 
 all: report-lock-mode streams.a
 
@@ -36,5 +37,5 @@ watchtest pipetest clonetest modemtest logtest logbuftest syslogtest \
 	looptest timetest prototest: streams.a ../utils/utils.a
 
 clean:
-	rm -f watchtest pipetest clonetest modemtest \
-		logtest logbuftest syslogtest looptest timetest prototest
+	rm -f watchtest pipetest clonetest modemtest logtest logbuftest     \
+              syslogtest looptest timetest prototest
