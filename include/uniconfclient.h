@@ -10,6 +10,7 @@
 #define __UNICONFCLIENT_H
 
 #include "uniconf.h"
+#include "uniconfpair.h"
 #include "uniconfiter.h"
 #include "uniconfconn.h"
 #include "wvlog.h"
@@ -17,24 +18,13 @@
 #include "wvstreamlist.h"
 #include "wvtclstring.h"
 
-struct waitingdata
-{
-    UniConfKey key;
-    WvString value;
-    waitingdata(UniConfKey _key, WvString _value) :
-        key(_key), value(_value) { }
-};
-
-DeclareWvDict(waitingdata, UniConfKey, key);
-
-
 class UniConfClient : public UniConfGen
 {
 public:
     UniConf *top;
     UniConfConn *conn;
     WvLog log;
-    waitingdataDict dict;
+    UniConfPairDict waiting;
     
     // pass false to automount if you don't want to automatically set _top's generator to this.
     UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l = NULL);

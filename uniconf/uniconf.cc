@@ -13,29 +13,23 @@
 #include "uniconfiter.h"
 #include <assert.h>
 
-UniConfDict null_wvhconfdict(1);
-
-
 // basic constructor, generally used for toplevel config file
-UniConf::UniConf()
-    : name("")
+UniConf::UniConf() :
+    UniConfTree(NULL, UniConfKey::EMPTY, WvString::null)
 {
-    parent = NULL;
     init();
 }
 
 
-UniConf::UniConf(UniConf *_parent, const UniConfKey &_name)
-    : name(_name)
+UniConf::UniConf(UniConf *_parent, const UniConfKey &_name) :
+    UniConfTree(_parent, _name, WvString::null)
 {
-    parent = _parent;
     init();
 }
 
 
 void UniConf::init()
 {
-    children = NULL;
     defaults = NULL;
     generator = NULL;
     
@@ -48,8 +42,6 @@ void UniConf::init()
 
 UniConf::~UniConf()
 {
-    if (children)
-	delete children;
     if (generator)
 	delete generator;
 }
@@ -61,8 +53,8 @@ UniConf::~UniConf()
 UniConf *UniConf::top()
 {
     UniConf *h = this;
-    while (h->parent)
-	h = h->parent;
+    while (h->parent())
+	h = h->parent();
     return h;
 }
 
@@ -76,8 +68,8 @@ UniConfKey UniConf::full_key(UniConf *top) const
     
     while (h && h != top)
     {
-	k.prepend(h->name);
-	h = h->parent;
+	k.prepend(h->key());
+	h = h->parent();
     }
     return k;
 }
@@ -87,8 +79,8 @@ UniConfKey UniConf::full_key(UniConf *top) const
 UniConf *UniConf::gen_top()
 {
     UniConf *h = this;
-    while (h->parent && ! h->hasgen())
-	h = h->parent;
+    while (h->parent() && ! h->hasgen())
+	h = h->parent();
     return h; // we reached the top of the tree without finding a generator.
 }
 
@@ -103,28 +95,20 @@ UniConfKey UniConf::gen_full_key()
     return full_key(gen_top());
 }
 
-bool UniConf::check_children(bool recursive)
+bool UniConf::check_children()
 {
-    if (checkgen())
+    if (hasgen())
     {
-        this->generator->enumerate_subtrees(this, recursive);
+        generator->enumerate_subtrees(this, false);
     }
-    return (children != NULL);
-}
-
-// find a key in the subtree.  If it doesn't already exist, return NULL.
-UniConf *UniConf::find(const UniConfKey &key)
-{
-    if (key.isempty())
-	return this;
-    if (!children)
-	return NULL;
-    
-    UniConf *h = (*children)[key.first(1)];
-    if (!h)
-	return NULL;
     else
-	return h->find(key.removefirst(1));
+    {
+        // quick hack for now
+        UniConf *top = gen_top();
+        if (top != this)
+            top->generator->enumerate_subtrees(top, true);
+    }
+    return haschildren();
 }
 
 void UniConf::remove(const UniConfKey &key)
@@ -137,14 +121,14 @@ void UniConf::remove(const UniConfKey &key)
         return;
     }
 
-    toremove->set(WvString());
+    toremove->setvalue(WvString::null);
     toremove->dirty = true;
     //toremove->deleted = true;
     UniConf::RecursiveIter i(*toremove);
 
-    for (i.rewind(); i._next();)
+    for (i.rewind(); i.next();)
     {
-        i->set(WvString());
+        i->setvalue(WvString::null);
         i->dirty = true;
 //        i->deleted = true;
 //        i->child_deleted = true;
@@ -157,19 +141,12 @@ void UniConf::remove(const UniConfKey &key)
 }
 
 // find a key in the subtree.  If it doesn't already exist, create it.
-UniConf *UniConf::find_make(const UniConfKey &key)
+UniConf *UniConf::findormake(const UniConfKey &key)
 {
-    if (key.isempty())
-	return this;
+    UniConf *tree = static_cast<UniConf*>(UniConfTree::find(key));
+    if (tree)
+        return tree;
 
-
-    if (children)
-    {
-	UniConf *h = (*children)[key.first(1)];
-	if (h)
-	    return h->find_make(key.removefirst(1));
-    }
-	
     // we need to actually create the key
     UniConf *htop = gen_top();
     if (htop->generator)
@@ -216,15 +193,15 @@ UniConf *UniConf::find_default(const UniConfKey &k) const
 	    return def;
     }
     
-    if (parent)
+    if (parent())
     {
 	// go up a level and try again
-	UniConf *def = parent->find_default(UniConfKey(name, k));
+	UniConf *def = parent()->find_default(UniConfKey(key(), k));
 	if (def)
 	    return def;
 	
 	// try with a wildcard instead
-	def = parent->find_default(UniConfKey(UniConfKey::ANY, k));
+	def = parent()->find_default(UniConfKey(UniConfKey::ANY, k));
 	if (def)
 	    return def;
     }
@@ -233,22 +210,32 @@ UniConf *UniConf::find_default(const UniConfKey &k) const
 }
 
 
-void UniConf::set_without_notify(WvStringParm s)
+WvString UniConf::get(const UniConfKey &key)
 {
-    value = s;
+    UniConf *tree = find(key);
+    if (tree && tree->value())
+        return tree->value();
+
+    UniConf *def = find_default();
+    if (def)
+        return def->get(key);
+    return WvString::null;
 }
 
 
-void UniConf::set(WvStringParm s)
+void UniConf::set(const UniConfKey &key, WvStringParm _value)
 {
-    if (s == value)
+    if (! key.isempty())
+    {
+        findormake(key)->set(UniConfKey::EMPTY, _value);
+        return;
+    }
+    if (value() == _value)
 	return; // nothing to change - no notifications needed
-    
-    set_without_notify(s);
+    setvalue(_value);
     
     if (dirty && notify)
 	return; // nothing more needed
-    
     mark_notify();
 }
 
@@ -261,28 +248,12 @@ void UniConf::mark_notify()
     
     dirty = notify = true;
     
-    h = parent;
+    h = parent();
     while (h && (!h->child_dirty || !h->child_notify))
     {
 	h->child_dirty = h->child_notify = true;
-	h = h->parent;
+	h = h->parent();
     }
-}
-
-
-const WvString &UniConf::printable() const
-{
-    UniConf *def;
-   
-    if (!!value)
-	return value;
-    
-    def = find_default();
-    if (def)
-	return def->printable();
-    
-    // no default found: return the value (basically NULL) anyway
-    return value;
 }
 
 
@@ -290,11 +261,11 @@ void UniConf::load()
 {
     if (generator)
 	generator->load();
-    else if (children)
+    else if (haschildren())
     {
-	UniConfDict::Iter i(*children);
-	for (i.rewind(); i.next(); )
-	    i->load();
+	UniConf::Iter it(*this);
+	for (it.rewind(); it.next(); )
+	    it->load();
     }
 }
 
@@ -306,11 +277,11 @@ void UniConf::save()
     
     if (generator)
 	generator->save();
-    else if (children && child_dirty)
+    else if (haschildren() && child_dirty)
     {
-	UniConfDict::Iter i(*children);
-	for (i.rewind(); i.next(); )
-	    i->save();
+        UniConf::Iter it(*this);
+	for (it.rewind(); it.next(); )
+	    it->save();
     }
 }
 
@@ -319,13 +290,13 @@ void UniConf::_dump(WvStream &s, bool everything, WvStringTable &keytable)
 {
     WvString key(full_key());
     
-    if (everything || !!value || keytable[key])
+    if (everything || !!value() || keytable[key])
     {
 	s.print("  %s%s%s%s%s%s %s = %s\n",
 	        child_dirty, dirty,
 		child_notify, notify,
 		child_obsolete, obsolete,
-		key, value);
+		key, value());
     }
 
     // this key better not exist yet!
@@ -333,11 +304,11 @@ void UniConf::_dump(WvStream &s, bool everything, WvStringTable &keytable)
     
     keytable.add(new WvString(key), true);
     
-    if (children)
+    if (haschildren())
     {
-	UniConfDict::Iter i(*children);
-	for (i.rewind(); i.next(); )
-	    i->_dump(s, everything, keytable);
+	UniConf::Iter it(*this);
+	for (it.rewind(); it.next(); )
+	    it->_dump(s, everything, keytable);
     }
 }
 

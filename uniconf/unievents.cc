@@ -88,7 +88,7 @@ void UniConfEvents::find_notifier()
 	notifier->events.unlink(this);
     notifier = NULL;
     
-    for (h = &cfg; h; h = h->parent)
+    for (h = &cfg; h; h = h->parent())
     {
 	tmp = notifiers[h];
 	if (tmp)
@@ -149,7 +149,7 @@ void UniConfEvents::setbool(void *userdata, UniConf &h)
     if (!*(bool *)userdata)
     {
 	WvLog log(label, WvLog::Debug);
-	log("Changed: '%s' = '%s'\n", h.full_key(&cfg), h);
+	log("Changed: '%s' = '%s'\n", h.full_key(&cfg), h.value());
     }
     
     *(bool *)userdata = true;

@@ -7,6 +7,8 @@
 #include "wvconfemu.h"
 #include "uniconfini.h"
 
+#if 0
+
 WvConf::WvConf(WvStringParm _filename, int _create_mode)
     : notifier(h), ev(h), filename(_filename)
 {
@@ -61,4 +63,4 @@ void WvConf::del_setbool(bool *b, WvStringParm section, WvStringParm entry)
     ev.del_setbool(b, UniConfKey(s, e));
 }
 
-
+#endif

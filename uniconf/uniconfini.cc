@@ -122,7 +122,7 @@ void UniConfIniFile::load()
 	    h = make_tree(top, UniConfKey(section, key));
 	    
 	    bool d1 = h->dirty, d2 = h->child_dirty;
-	    h->set_without_notify(value);
+	    h->setvalue(value);
 	    
 	    // loaded _from_ the config file, so that didn't make it dirty!
 	    h->dirty = d1;
@@ -159,25 +159,20 @@ void UniConfIniFile::save()
 static int count_children(UniConf *h, UniConf *&ret)
 {
     UniConf *tmp = NULL;
-    int n, nchildren = 0;
-    
     ret = NULL;
     
-    if (!h->has_children())
-	return 0;
-    
-    UniConf::Iter i(*h);
-    for (i.rewind(); i.next(); )
+    int nchildren = 0;
+    UniConf::Iter it(*h);
+    for (it.rewind(); it.next(); )
     {
-	n = count_children(i.ptr(), tmp);
-	if (!!*i)
+	nchildren += count_children(it.ptr(), tmp);
+	if (! it->value().isnull())
 	    nchildren++;
-	nchildren += n;
 	
 	if (!ret)
 	{
-	    if (!!*i)
-		ret = i.ptr();
+	    if (! it->value().isnull())
+		ret = it.ptr();
 	    else
 		ret = tmp;
 	}
@@ -195,15 +190,12 @@ static bool any_interesting_children(UniConf *h)
 {
     UniConf *junk;
     
-    if (!h->has_children())
-	return false;
-    
-    UniConf::Iter i(*h);
-    for (i.rewind(); i.next(); )
+    UniConf::Iter it(*h);
+    for (it.rewind(); it.next(); )
     {
-	if (!!*i)
+	if (! it->value().isnull())
 	    return true; // a direct value exists: we have to write it.
-	else if (h->parent && count_children(i.ptr(), junk) == 1)
+	else if (h->parent() && count_children(it.ptr(), junk) == 1)
 	    return true; // exactly one indirect value exists for this child.
     }
     
@@ -229,41 +221,41 @@ void UniConfIniFile::save_subtree(WvStream &out, UniConf *h, UniConfKey key)
         /** note: we strip off leading slashes here **/
 	out("\n[%s]\n", wvtcl_escape(key.strip(), " \t\r\n[]"));
     
-	UniConf::Iter i(*h);
-	for (i.rewind(); i.next(); )
+	UniConf::Iter it(*h);
+	for (it.rewind(); it.next(); )
 	{
-	    if (i->hasgen() && !i->comparegen(this))
+	    if (it->hasgen() && ! it->comparegen(this))
 	        continue;
                 
-	    if (!!*i)
+	    if (! it->value().isnull())
             {
-		out("%s = %s\n", inicode(i->name.strip()), inicode(*i));
+		out("%s = %s\n", inicode(it->key().strip()),
+                    inicode(it->value()));
             }
 	    
-	    if (!top_special && count_children(i.ptr(), interesting) == 1)
+	    if (!top_special && count_children(it.ptr(), interesting) == 1)
 	    {
 		// exactly one interesting child: don't bother with a
 		// subsection.
                 out("%s = %s\n",
                     inicode(interesting->full_key(h).strip()),
-                    inicode(*interesting));
+                    inicode(interesting->value()));
 	    }
 	}
     }
     
     // dump subtrees into their own sections
-    if (h->has_children())
+    if (h->haschildren())
     {
-	UniConf::Iter i(*h);
-	for (i.rewind(); i.next(); )
+	UniConf::Iter it(*h);
+	for (it.rewind(); it.next(); )
 	{
-	    if (i->hasgen() && !i->comparegen(this))
-		i->save();
-	    else if (i->has_children()
-		     && (top_special
-			 || count_children(i.ptr(), interesting) > 1))
+	    if (it->hasgen() && ! it->comparegen(this))
+		it->save();
+	    else if (it->haschildren() && (top_special ||
+		count_children(it.ptr(), interesting) > 1))
 	    {
-		save_subtree(out, i.ptr(), UniConfKey(key, i->name));
+		save_subtree(out, it.ptr(), UniConfKey(key, it->key()));
 	    }
 	}
     }

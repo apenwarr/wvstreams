@@ -4,7 +4,7 @@
  *
  * Test program for the WvConf emulation in UniConf.
  */
-#if 0
+#if 1
 # include "wvconf.h"
 #else
 # include "wvconfemu.h"

@@ -32,7 +32,8 @@ void testnormaliter(UniConf &mainconf)
     UniConf::Iter i(*nerf);
     for (i.rewind(); i.next();)
     {
-        wvcon->print("Key:%s has value:%s.\n", i().full_key(), *i);
+        wvcon->print("Key:%s has value:%s.\n",
+            i().full_key(), i->value());
     }
 }
 
@@ -42,9 +43,11 @@ void testrecursiveiter(UniConf &mainconf)
     UniConf::RecursiveIter i(*nerf);
     for (i.rewind(); i.next();)
     {
-        wvcon->print("Key:%s has value:%s.\n", i().full_key(), *i);
+        wvcon->print("Key:%s has value:%s.\n",
+            i().full_key(), i->value());
     }
 }
+#if 0
 void testxiter(UniConf &mainconf)
 {
     UniConf *nerf = &mainconf["/"];
@@ -54,6 +57,7 @@ void testxiter(UniConf &mainconf)
         wvcon->print("Key:%s has value:%s.\n", i().full_key(), *i);
     }
 }
+#endif
 int main(int argc, char **argv)
 {
     WvString mountpoint("/");
@@ -79,7 +83,7 @@ int main(int argc, char **argv)
             printheader("TEST RECURSIVE ITERATORS", mountpoint);
             testrecursiveiter(mainconf);
         }
-
+#if 0
         // Test an XIter
         
         {
@@ -89,6 +93,7 @@ int main(int argc, char **argv)
             printheader("TEST X ITERATORS", mountpoint);
             testxiter(mainconf);
         }
+#endif
         mountpoint = "/orino";
     }
     return 0;

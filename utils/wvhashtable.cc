@@ -86,6 +86,15 @@ size_t WvHashTableBase::count() const
 }
 
 
+bool WvHashTableBase::isempty() const
+{
+    for (unsigned i = 0; i < numslots; i++)
+        if (! wvslots[i].isempty())
+            return false;
+    return true;
+}
+
+
 WvLink *WvHashTableBase::IterBase::next()
 {
     link = link->next;

@@ -20,20 +20,10 @@ UniConf *UniConfGen::make_tree(UniConf *parent, const UniConfKey &key)
     int segments = key.numsegments();
     for (int i = 0; i < segments; ++i)
     {
-        UniConf *child;
-	if (!parent->children)
-        {
-            // FIXME: BAD SIZE ASSUMPTION!
-	    parent->children = new UniConfDict(11);
-            child = NULL;
-        }
-	else
-            child = (*parent->children)[key.segment(i)];
-
+        UniConf *child = parent->find(key.segment(i));
         if (!child)
 	{
 	    child = new UniConf(parent, key.segment(i));
-	    parent->children->add(child, true);
             child->waiting = true;
 	    pre_get(child);
 	}

@@ -10,6 +10,7 @@
 #define __UNICONFKEY_H
 
 #include "wvstring.h"
+#include "wvlinklist.h"
 
 /**
  * Represents a UniConf key which is a path in a hierarchy structured much
@@ -217,6 +218,9 @@ public:
 protected:
     void init(WvStringParm key);
 };
+
+
+DeclareWvList(UniConfKey);
 
 /**
  * An iterator over the segments of a key.

@@ -10,81 +10,62 @@
 #define __UNICONFITER_H
 
 #include "uniconf.h"
+#include "wvlinklist.h"
 
 
 /**
  * This iterator walks through all the immediate children of a
  * UniConf node.
  */
-class UniConf::Iter : public UniConfDict::Iter
+class UniConf::Iter
 {
+    UniConf &root;
+    UniConfTree::Iter it;
+
 public:
-    Iter(UniConf &h) :
-        UniConfDict::Iter(
-            h.check_children() ? *h.children : null_wvhconfdict)
-	{ }
-    Iter(UniConfDict &children) :
-	UniConfDict::Iter(children)
-	{ }
-    
-    WvLink *next()
+    Iter(UniConf &root);
+
+    void rewind();
+
+    inline bool next()
     {
-	WvLink *l;
-	while ((l = UniConfDict::Iter::next()) != NULL &&
-            ptr() == NULL);
-	return l;
+        return it.next();
     }
-
-};
-
-
-/**
- * This iterator recursively walks through _all_ children, direct
- * and indirect, of this node.
- */
-class UniConf::RecursiveIter
-{
-public:
-    UniConfDict::Iter i;
-    RecursiveIter *subiter;
-    bool recursed_children; // FIXME:  Quick hack to speed up recursive iterators for huge lists.
-    
-    RecursiveIter(UniConf &h)
-	: i(h.check_children(true) ? *h.children : null_wvhconfdict), recursed_children(false)
-	{ subiter = NULL; }
-    RecursiveIter(UniConfDict &children)
-	: i(children)
-	{ subiter = NULL; }
-    ~RecursiveIter()
-        { unsub(); }
-    
-    void unsub()
-        { if (subiter) delete subiter; subiter = NULL; }
-    
-    void rewind()
-        { unsub(); i.rewind(); }
-    
-    WvLink *cur()
-        { return subiter ? subiter->cur() : i.cur(); }
-    
-    // return the next element, either from subiter or, if subiter is done,
-    // the next immediate child of our own.
-    WvLink *_next();
-    
-    WvLink *next()
+    inline UniConf *ptr() const
     {
-	WvLink *l;
-	while ((l = _next()) != NULL && ptr() == NULL);
-	return l;
+        return static_cast<UniConf*>(it.ptr());
     }
-    
-    UniConf *ptr() const
-        { return subiter ? subiter->ptr() : i.ptr(); }
-    
     WvIterStuff(UniConf);
 };
 
 
+
+/**
+ * This iterator performs pre-order traversal of all of the
+ * children in a UniConf tree.
+ */
+class UniConf::RecursiveIter
+{
+    DeclareWvList3(UniConf::Iter, IterList, )
+    UniConf::Iter top;
+    UniConf *current;
+    IterList itlist;
+
+public:
+    RecursiveIter(UniConf &h);
+
+    void rewind();
+    bool next();
+
+    inline UniConf *ptr() const
+    {
+        return current;
+    }
+    WvIterStuff(UniConf);
+};
+
+
+#if 0
 /**
  * FIXME: WHAT DOES THIS DO?
  */
@@ -129,8 +110,10 @@ public:
     
     WvIterStuff(UniConf);
 };
+#endif
 
 
+#if 0
 // UniConf::Sorter is like UniConf::Iter, but allows you to sort the list.
 typedef WvSorter<UniConf, UniConfDict, UniConf::Iter>
     _UniConfSorter;
@@ -155,6 +138,6 @@ public:
 				  cmp)
 	{ }
 };
-
+#endif
 
 #endif // __UNICONFITER_H

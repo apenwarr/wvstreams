@@ -10,6 +10,7 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
+#include "uniconftree.h"
 #include "wvhashtable.h"
 #include "wvstringlist.h"
 #include "uniconfkey.h"
@@ -19,8 +20,6 @@ class WvStringTable;
 
 class UniConf;
 class UniConfDict;
-
-extern UniConfDict null_wvhconfdict;
 
 
 /**
@@ -62,16 +61,10 @@ public:
  * The nice thing about this is you can write classes that use a UniConf
  * configuration tree, and then instead hand them a subtree if you want.
  */
-class UniConf
+class UniConf : private UniConfTree
 {
-public:
-    UniConf *parent;       // the 'parent' of this subtree
-    UniConfKey name;       // the name of this entry
-
-private:
-    WvString value;        // the contents of this entry
-    UniConfDict *children; // list of all child nodes of this node (subkeys)
     UniConfGen *generator; // subtree generator for this tree
+
 public:    
     UniConf *defaults;     // a tree possibly containing default values
     
@@ -114,48 +107,64 @@ public:
     
     UniConf *gen_top();
     UniConfKey gen_full_key();
-    
-    bool has_children() const
-        { return (children != NULL); }
+
+    /* overridden from UniConfTree */
+    UniConf *parent() const
+    {
+        return static_cast<UniConf*>(UniConfTree::parent());
+    }
+    UniConf *find(const UniConfKey &key)
+    {
+        return static_cast<UniConf*>(UniConfTree::find(key));
+    }
+    UniConf *findormake(const UniConfKey &key);
+
+    using UniConfTree::value;
+    using UniConfTree::key;
+    using UniConfTree::setvalue;
+    using UniConfTree::haschildren;
+
     // checks generator, then returns children != NULL
     // Needed for iterator over client connection
-    bool check_children(bool recursive = false);
-    UniConf *find(const UniConfKey &key);
-    UniConf *find_make(const UniConfKey &key);
-    UniConf &operator[](const UniConfKey &key)
-        { return *find_make(key); }
+    bool check_children();
 
     // Updates me
     void update();
-    void remove(const UniConfKey &key = UniConfKey::EMPTY);
+    void remove(const UniConfKey &key);
     
     UniConf *find_default(const UniConfKey &key = UniConfKey::EMPTY) const;
     
-    // exactly the same as find_make() and operator[]... hmm.
-    // Unnecessary?
-    UniConf &get(const UniConfKey &key)
-        { return *find_make(key); }
-    
-    // another convenience function, suspiciously similar to cfg[key] = v.
-    // Also unnecessary?
-    void set(const UniConfKey &key, WvStringParm v)
-        { get(key).set(v); }
-    
-    // Reassign the 'value' of this object to something.
-    void set_without_notify(WvStringParm s);
-    void set(WvStringParm s);
+    bool exists(const UniConfKey &key)
+    {
+        return ! get(key).isnull();
+    }
+    WvString get(const UniConfKey &key);
+    void set(const UniConfKey &key, WvStringParm value);
+    void setint(const UniConfKey &key, int value)
+    {
+        set(key, WvString(value));
+    }
+    int getint(const UniConfKey &key)
+    {
+        return get(key).num();
+    }
+
+    // can't quite remove this yet
+    UniConf &operator[] (const UniConfKey &key)
+    {
+        return *findormake(key);
+    }
+    WvStringParm operator= (WvStringParm value)
+    {
+        set(UniConfKey::EMPTY, value);
+        return value;
+    }
+
+
+private:
     void mark_notify();
-    const UniConf &operator= (WvStringParm s) { set(s); return *this; }
-    const UniConf &operator= (const UniConf &s) { set(s); return *this; }
     
-    // retrieve the value.  Normally you don't need to call printable()
-    // explicitly, since the WvString cast operator does it for you.
-    const WvString &printable() const;
-    operator const WvString& () const { return printable(); }
-    bool operator! () const { return !printable(); }
-    const char *cstr() const { return printable().cstr(); }
-    int num() const { return printable().num(); }
-    
+public:
     // load/save the entire tree (including subtrees).
     // Only save if the data is marked 'dirty'.
     void load();
@@ -166,11 +175,10 @@ public:
     void _dump(WvStream &s, bool everything, WvStringTable &keytable);
     void dump(WvStream &s, bool everything = false);
 
-    // Functions to enable the masking of generators
-    // Set my generator to be gen, then run load.
     bool hasgen()   { return generator != NULL; }
     bool checkgen() { return hasgen() && generator->isok(); }
     bool comparegen(UniConfGen *gen) { return gen == generator; }
+    
     void mount(UniConfGen *gen);
     void unmount();
 
@@ -188,9 +196,5 @@ public:
     
     friend class UniConfGen;
 };
-
-
-DeclareWvDict(UniConf, UniConfKey, name);
-
 
 #endif // __UNICONF_H

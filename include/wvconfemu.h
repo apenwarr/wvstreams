@@ -9,6 +9,8 @@
 #ifndef __WVCONFEMU_H
 #define __WVCONFEMU_H
 
+#if 0
+
 #include "uniconfiter.h"
 #include "unievents.h"
 
@@ -47,6 +49,9 @@ public:
 class WvConfigSection : public UniConf
 {
 public:
+    WvString name;
+
+
     class Iter
     {
     public:
@@ -174,6 +179,8 @@ public:
 	WvIterStuff(WvConfigSection);
     };
 };
+
+#endif
 
 
 #endif // __WVCONFEMU_H

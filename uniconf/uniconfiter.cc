@@ -1,38 +1,70 @@
 /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ */
+ 
+/** \file
  * Several kinds of UniConf iterators.
  */
 #include "uniconfiter.h"
-#include "wvstream.h"
 
-WvLink *UniConf::RecursiveIter::_next()
-{ 
-    if (i.ptr() && i->generator && !recursed_children)
-    {
-//        wvcon->print("Recursively checking children for %s.\n", (int)i.ptr());
-        i->check_children(true);
-        recursed_children = true;
-    }
+/***** UniConf::Iter *****/
 
-    if (!subiter && i.ptr() && i->children)
-    {
-	subiter = new RecursiveIter(*i->children);
-	subiter->rewind();
-    }
-    
-    if (subiter)
-    {
-	WvLink *l = subiter->next();
-	if (l) return l;
-	unsub();
-    }
-    
-    return i.next();
+UniConf::Iter::Iter(UniConf &_root) :
+    root(_root), it(_root)
+{
 }
 
 
+void UniConf::Iter::rewind()
+{
+    root.check_children();
+    it.rewind();
+}
+
+
+
+/***** UniConf::RecursiveIter *****/
+
+UniConf::RecursiveIter::RecursiveIter(UniConf &h) :
+    top(h)
+{
+}
+
+
+void UniConf::RecursiveIter::rewind()
+{
+    itlist.zap();
+    itlist.append(& top, false);
+    top.rewind();
+}
+
+
+bool UniConf::RecursiveIter::next()
+{
+    IterList::Iter itlistit(itlist);
+    for (itlistit.rewind(); itlistit.next(); )
+    {
+        UniConf::Iter &it = itlistit();
+        if (it.next())
+        {
+            current = it.ptr();
+            if (current->check_children())
+            {
+                UniConf::Iter *subit = new UniConf::Iter(*current);
+                subit->rewind();
+                itlist.prepend(subit, true);
+            }
+            return true;
+        }
+        itlistit.xunlink();
+    }
+    return false;
+}
+
+
+
+#if 0
 static int find_wildcard_depth(const UniConfKey &k)
 {
     int depth = 0;
@@ -89,3 +121,4 @@ WvLink *UniConf::XIter::_next()
     
     return NULL;
 }
+#endif

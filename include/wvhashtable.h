@@ -44,7 +44,17 @@ public:
     unsigned numslots;
     WvListBase *wvslots;
 
+    /**
+     * Returns the number of elements in the hash table.
+     * @return the number of elements
+     */
     size_t count() const;
+
+    /**
+     * Returns true if the hash table is empty.
+     * @return true if empty
+     */
+    bool isempty() const;
 
     // base class for the auto-declared hash table iterators
     class IterBase

@@ -10,7 +10,7 @@
 #include <uniconfclient.h>
 
 UniConfClient::UniConfClient(UniConf *_top, WvStream *stream, WvStreamList *l) :
-    top(_top), log("UniConfClient"), dict(5), list(l)
+    top(_top), log("UniConfClient"), waiting(13), list(l)
 {
     // FIXME:  This is required b/c some WvStreams (i.e. WvTCPConn) don't
     // actually try to finish connecting until in the first pre_select.
@@ -57,8 +57,9 @@ void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
     if (tree->dirty)
     {
         WvString data("%s %s", UniConfConn::UNICONF_SET, wvtcl_escape(key));
-        if (!!*tree)
-            data.append(" %s", wvtcl_escape(*tree));
+        WvString value = tree->value();
+        if (!!value)
+            data.append(" %s", wvtcl_escape(value));
         data.append("\n");
         conn->print(data);
         tree->dirty = false;
@@ -68,16 +69,16 @@ void UniConfClient::savesubtree(UniConf *tree, UniConfKey key)
     if (tree->child_dirty)
     {
         tree->child_dirty = false;
-	UniConf::RecursiveIter i(*tree);
+	UniConf::RecursiveIter it(*tree);
 
-        for (i.rewind(); i._next();)
+        for (it.rewind(); it.next();)
         {
-            if (i->hasgen() && !i->comparegen(this))
-                i->save();
+            if (it->hasgen() && ! it->comparegen(this))
+                it->save();
 
-            else if (i->dirty || i->child_dirty)
+            else if (it->dirty || it->child_dirty)
             {
-                savesubtree(i.ptr(), UniConfKey(key, i->name));
+                savesubtree(it.ptr(), UniConfKey(key, it->key()));
             }
         }
     }
@@ -148,15 +149,15 @@ void UniConfClient::update_all()
         conn->callback();
 
     //wvcon->print("There are %s items waiting.\n", dict.count());
-    waitingdataDict::Iter i(dict);
-    for (i.rewind(); i.next();)
+    UniConfPairDict::Iter it(waiting);
+    for (it.rewind(); it.next();)
     {
-        UniConf *toupdate = top->find(i->key);
+        UniConf *toupdate = top->find(it->key());
         //wvcon->print("About to update:  %s\n", i->key);
         if (toupdate && !toupdate->dirty)
             update(toupdate);
     }
-    dict.zap();
+    waiting.zap();
     //wvcon->print("There are %s items after the zap.\n", dict.count());
 }
 
@@ -167,12 +168,11 @@ void UniConfClient::update(UniConf *&h)
     if ( h->full_key(top).printable().isnull() )
         return;
 
-    WvString lookfor("%s",h->full_key(top));
-
     if (conn->select(0,true,false,false))
         conn->callback();
 
-    waitingdata *data = dict[lookfor];
+    UniConfKey lookfor(h->full_key(top));
+    UniConfPair *data = waiting[lookfor];
     
     if (!data)
     {
@@ -181,7 +181,7 @@ void UniConfClient::update(UniConf *&h)
         {
             if (conn->select(0, true, false, false))
                 conn->callback();
-            data = dict[lookfor];
+            data = waiting[lookfor];
         }
 
         if (!conn->isok())
@@ -192,8 +192,8 @@ void UniConfClient::update(UniConf *&h)
     {
         // If we are here, we will not longer be waiting nor will our data be
         // obsolete.
-        h->set(data->value.unique());
-        dict.remove(data);
+        h->setvalue(data->value());
+        waiting.remove(data);
         h->waiting = false;
         h->obsolete = false;
     }
@@ -204,18 +204,19 @@ void UniConfClient::update(UniConf *&h)
 void UniConfClient::executereturn(UniConfKey &key, WvConstStringBuffer &fromline)
 {
     WvString value = wvtcl_getword(fromline);
-    waitingdata *data = dict[key.printable()];
+    UniConfPair *data = waiting[key];
     if (data == NULL)
-        dict.add(new waitingdata(key.printable(), value.unique()),true);
+        waiting.add(new UniConfPair(key, value), true);
     else
-        data->value = value.unique();
+        data->setvalue(value);
 
     UniConf *temp = top->find(key);
     if (temp && !temp->dirty)
     {
         temp->obsolete = true;
         temp->notify = true;
-        for (UniConf *par = temp->parent; par != NULL; par = par->parent)
+        for (UniConf *par = temp->parent(); par != NULL;
+            par = par->parent())
         {
             par->child_notify = true;
         }
@@ -224,16 +225,18 @@ void UniConfClient::executereturn(UniConfKey &key, WvConstStringBuffer &fromline
 
 void UniConfClient::executeforget(UniConfKey &key)
 {
-    dict.remove(dict[key.printable()]);
-    UniConf *obs = &(*top)[key];
+    UniConfPair *data = waiting[key];
+    if (data)
+        waiting.remove(data);
+    UniConf *obs = top->find(key);
     if (obs)
     {
         obs->obsolete = true;
-        UniConf *par = obs->parent;
+        UniConf *par = obs->parent();
         while (par)
         {
             par->child_obsolete = true;
-            par = par->parent;
+            par = par->parent();
         }
     }
 }
@@ -248,13 +251,12 @@ void UniConfClient::executesubtree(UniConfKey &key, WvConstStringBuffer &fromlin
         WvString pair = wvtcl_getword(fromline);
         WvDynamicBuffer temp;
         temp.putstr(pair);
-        WvString newkey = wvtcl_getword(temp);
+        UniConfKey newkey(wvtcl_getword(temp));
         WvString newval = wvtcl_getword(temp);
-        dict.add(new waitingdata(newkey.unique(),
-                    newval.unique()), true);
+        waiting.add(new UniConfPair(newkey, newval), true);
         UniConf *narf = top->find(key);
         if (narf)
-            narf = narf->find_make(newkey);
+            narf = narf->findormake(newkey);
     }
     conn->alarm(ticks_left);
 }
@@ -322,7 +324,7 @@ void UniConfClient::execute(WvStream &stream, void *userdata)
     }
     if (stream.alarm_remaining() <= 0 && stream.alarm_was_ticking)
     {
-        if (dict.count())
+        if (waiting.count())
             update_all();
         stream.alarm(15000);
     }

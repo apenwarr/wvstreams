@@ -49,23 +49,26 @@ bool testgetkeys(UniConf &mainconf, WvString prefix)
     WvString result("goof");
     UniConf *narf = &mainconf[key];
     
-    pass &= compareresults(result,*narf);
+    pass &= compareresults(result, narf->value());
     
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
+        key, result, (result == narf->value() ? "Yes" : "No"));
     key = WvString("%s/wacky\ntest\nsection/  goose  ", prefix);
     result = "bluebayou";
     narf = &mainconf[key];
 
-    pass &= compareresults(result,*narf);
+    pass &= compareresults(result, narf->value());
     
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
+        key, result, (result == narf->value() ? "Yes" : "No"));
     key = WvString("%s/this key should not exist/ bcscso ", prefix);
     narf = &mainconf[key];
     result = WvString();
     
-    pass &= compareresults(result,*narf);
+    pass &= compareresults(result, narf->value());
     
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
+        key, result, (result == narf->value() ? "Yes" : "No"));
 
     return pass;
  
@@ -75,29 +78,31 @@ bool testgetfromsections(UniConf &mainconf, WvString prefix)
 {
     bool pass = true;
     WvString key("%s/chickens", prefix);
-    UniConf *neep = &mainconf[key];
+    UniConf *neep = mainconf.findormake(key);
     WvString subkey("bob");
     WvString result("goof");
-    UniConf *narf = &neep->get(subkey);
-    pass &= compareresults(result, *narf);
-    wvcon->print("\"%s/%s\" should be:%s.Real Value:%s.\n", key, subkey, result, *narf );
+    UniConf *narf = neep->findormake(subkey);
+    pass &= compareresults(result, narf->value());
+    wvcon->print("\"%s/%s\" should be:%s.Real Value:%s.\n",
+        key, subkey, result, narf->value());
 
     key = WvString("%s/users", prefix);
     neep = &mainconf[key];
     subkey = "apenwarr";
     WvString sub_subkey("ftp");
     result = "1";
-    narf = &neep->get(subkey);
-    narf = &narf->get(sub_subkey);
-    pass &= compareresults(result, *narf);
-    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n", key, subkey, sub_subkey, result, *narf );
+    narf = neep->findormake(subkey);
+    narf = narf->findormake(sub_subkey);
+    pass &= compareresults(result, narf->value());
+    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n",
+        key, subkey, sub_subkey, result, narf->value());
 
     sub_subkey = "pptp";
     result = "0";
     narf = &mainconf[key][subkey][sub_subkey];
-    pass &= compareresults(result, *narf);
-    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n", key, subkey, sub_subkey, result, *narf );
-
+    pass &= compareresults(result, narf->value());
+    wvcon->print("\"%s/%s/%s\" should be:%s.Real Value:%s.\n",
+        key, subkey, sub_subkey, result, narf->value());
 
     return pass;
 }
@@ -108,22 +113,25 @@ bool testgetsetkey(UniConf &mainconf, WvString prefix)
     
     WvString key("%s/chickens/bob", prefix);
     WvString result("goof");
-    UniConf *narf = &mainconf[key];
+    UniConf *narf = mainconf.findormake(key);
 
-    pass &= compareresults(result,*narf);
+    pass &= compareresults(result, narf->value());
     
-    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+    wvcon->print("\"%s\" should be:%s.Is it?  %s.\n",
+        key, result, (result == narf->value() ? "Yes" : "No"));
     result = "Well isn't this just DANDY!";
-    narf->set(result);
+    narf->set(UniConfKey::EMPTY, result);
 
-    pass &= compareresults(result,*narf);
+    pass &= compareresults(result, narf->value());
     
-    wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+    wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n",
+        key, result, (result == narf->value() ? "Yes" : "No"));
     result = "goof";
-    narf->set(wvtcl_escape(result));
-    wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n", key, result, (result == *narf ? "Yes" : "No"));
+    narf->set(UniConfKey::EMPTY, wvtcl_escape(result));
+    wvcon->print("\"%s\" should now be:%s.Is it?  %s.\n",
+        key, result, (result == narf->value() ? "Yes" : "No"));
 
-    pass &= compareresults(result,*narf);
+    pass &= compareresults(result, narf->value());
 
     return pass;
 }
@@ -163,7 +171,7 @@ int main(int argc, char **argv)
         if ("all" == totest || "get" == totest)
         {
             UniConf mainconf;
-            UniConf *mounted = &mainconf[mountpoint];
+            UniConf *mounted = mainconf.findormake(mountpoint);
             mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
 
             h = printheader("TEST GETTING KEYS", mountpoint);
@@ -174,22 +182,23 @@ int main(int argc, char **argv)
         if ("all" == totest || "section" == totest) 
         {
             UniConf mainconf;
-            UniConf *mounted = &mainconf[mountpoint];
+            UniConf *mounted = mainconf.findormake(mountpoint);
             mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
 
             h = printheader("TEST GETTING FROM A SECTION", mountpoint);
-            printresult(testgetfromsections(mainconf,mountpoint), h);
+            printresult(testgetfromsections(mainconf, mountpoint), h);
         }
         // Test getting & setting a key
         
         if ("all" == totest || "set" == totest) 
         {
                 UniConf mainconf;
-                UniConf *mounted = &mainconf[mountpoint];
-                mounted->mount(new UniConfClient(mounted, new WvTCPConn(addr), NULL));
+                UniConf *mounted = mainconf.findormake(mountpoint);
+                mounted->mount(new UniConfClient(mounted,
+                    new WvTCPConn(addr), NULL));
 
                 h = printheader("TEST SETTING KEYS", mountpoint);
-                printresult(testgetsetkey(mainconf,mountpoint), h);
+                printresult(testgetsetkey(mainconf, mountpoint), h);
 
         }
     }

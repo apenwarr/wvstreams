@@ -27,7 +27,7 @@ public:
 void HelloGen::update(UniConf *&h)
 {
     wvcon->print("Hello: updating %s\n", h->full_key());
-    *h = WvString("%s #%s", defstr, ++count);
+    h->setvalue(WvString("%s #%s", defstr, ++count));
     h->dirty = false;
     h->obsolete = false;
     h->waiting = false;
@@ -76,7 +76,7 @@ void UniConfFileTree::update(UniConf *&h)
 	if (!line[0])
 	    continue;
 	
-	*h = line;
+	h->setvalue(line);
 	h->dirty = false;
 	return;
     }
@@ -145,24 +145,28 @@ int main()
 	
 	// should be (nil)/(nil)
 	log("Old comment settings are: %s/%s\n",
-	    cfg["/users/randomperson/comment"], cfg["/users/bob/comment"]);
+	    cfg.get("/users/randomperson/comment"),
+            cfg.get("/users/bob/comment"));
 	
 	cfg["/users"].defaults = &cfg["/default/users"];
        
 	// should be defuser comment
 	h = cfg["/users/randomperson/comment"].find_default();
-	log("Default for randomperson(%s): '%s'\n", h ? h->full_key() : "",
-	    h ? *h : WvString("NONE"));
+	log("Default for randomperson(%s): '%s'\n",
+            h ? h->full_key() : "",
+	    h ? h->value() : WvString("NONE"));
 	
 	// should be defbob comment
 	h = cfg["/users/bob/comment"].find_default();
-	log("Default for bob: '%s'\n", h ? *h : WvString("NONE"));
+	log("Default for bob: '%s'\n",
+            h ? h->value() : WvString("NONE"));
 	
 	// should be defuser comment/defbob comment
 	log("New comment settings are: %s/%s\n",
-	    cfg["/users/noperson/comment"], cfg["/users/bob/comment"]);
+	    cfg.get("/users/noperson/comment"),
+            cfg.get("/users/bob/comment"));
 	
-	cfg["/users/bob/someone/comment"] = "fork";
+	cfg.set("/users/bob/someone/comment", "fork");
 	
 	log("Config dump 2:\n");
 	cfg.dump(quiet);
@@ -242,9 +246,9 @@ int main()
 	cfg.save();
 	
 	log("Changing some data:\n");
-	if (!h1["big/fat/bob"])
-	    h1["big/fat/bob"] = 0;
-	h1["big/fat/bob"] = h1["big/fat/bob"].num() + 1;
+	if (! h1.exists("big/fat/bob"))
+	    h1.setint("big/fat/bob", 0);
+	h1["big/fat/bob"] = h1.getint("big/fat/bob") + 1;
 	h1["chicken/hammer\ndesign"] = "simple test";
 	h1["chicken/whammer/designer\\/code\nweasel"] = "this\n\tis a test  ";
 	h1.dump(quiet);
