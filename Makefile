@@ -33,7 +33,7 @@ all: include $(SUBDIRS) $(LIBFILES)
 include:
 	rm -rf $@
 	mkdir $@.new
-	ln -s $(foreach d,$(SUBDIRS),$(wildcard $(d)/*.h)) $@.new
+	ln -s $(addprefix ../,$(foreach d,$(SUBDIRS),$(wildcard $(d)/*.h))) $@.new
 	mv $@.new $@
 
 $(wildcard *.so) $(wildcard *.a): Makefile
