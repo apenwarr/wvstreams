@@ -151,7 +151,7 @@ WvString wvtcl_encode(WvStringList &l, const char *nasties,
 	    b.put(splitchars, 1);
 	
 	// escape and add the element
-	b.put(wvtcl_escape(*i));
+	b.put(wvtcl_escape(*i, nasties));
     }
     
     return b.getstr();

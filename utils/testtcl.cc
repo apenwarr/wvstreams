@@ -5,8 +5,11 @@
 #include "wvtclstring.h"
 
 
-int main()
+int main(int argc, char **argv)
 {
+    const char *nasties    = (argc>1 ? argv[1] : WVTCL_NASTIES);
+    const char *splitchars = (argc>2 ? argv[2] : WVTCL_SPLITCHARS);
+    
     bool bad = false;
     
     // correct output (all on one line):
@@ -26,7 +29,7 @@ int main()
     WvStringList l;
     l.fill(strarray);
     
-    WvString ls(wvtcl_encode(l));
+    WvString ls(wvtcl_encode(l, nasties, splitchars));
     printf("     List: '%s'\n", ls.cstr());
     printf("Unescaped: '%s'\n", wvtcl_unescape(ls).cstr());
     
@@ -49,7 +52,7 @@ int main()
     
     printf("\nList split results:\n");
     WvStringList l2;
-    wvtcl_decode(l2, ls);
+    wvtcl_decode(l2, ls, nasties, splitchars);
     
     WvStringList::Iter i(l), i2(l2);
     for (i.rewind(), i2.rewind(); i.next(), i2.next(), true; )
