@@ -10,6 +10,7 @@
 #include <execinfo.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 static const char *argv0 = "UNKNOWN";
 
