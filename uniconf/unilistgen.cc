@@ -97,10 +97,13 @@ WvString UniListGen::get(const UniConfKey &key)
     return WvString::null;
 }
 
+//FIXME: We want to attemt to set only until we succeed, since we don't
+//       know if the set succeeds we assume the first generator is writeable
 void UniListGen::set(const UniConfKey &key, WvStringParm value)
 {
-    for (i.rewind(); i.next();)
-        i().set(key, value);
+    i.rewind();
+    i.next();
+    i().set(key, value);
 }
 
 bool UniListGen::exists(const UniConfKey &key)
