@@ -6,7 +6,6 @@
  */
 #include "wvtest.h"
 #include "wvautoconf.h"
-#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
