@@ -104,3 +104,23 @@ WVTEST_MAIN("cloned inbuf after read error")
 }
 
 
+WVTEST_MAIN("WvStreamClone setclone behaviour")
+{
+    WvStream s1;
+    WvStream s2;
+    WvStreamClone s(&s1);
+
+    s.disassociate_on_close = true;
+
+    WVPASS(s.isok());
+    s.noread();
+    WVPASS(s.isok());
+    s.nowrite();
+    WVPASS(!s.isok());
+    WVPASS(!s1.isok());
+    WVPASS(s2.isok());
+    s.setclone(&s2);
+    WVPASS(s.isok());
+    WVPASS(s2.isok());
+}
+
