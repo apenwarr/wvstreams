@@ -119,7 +119,6 @@ WVTEST_MAIN("wvconfemu iterating while not mounted at root of UniConf tree")
     UniConfGen *unigen = new UniTempGen;
     UniConfRoot uniconf(unigen);
     WvConfEmu cfg(uniconf["/branch"]);
-    unigen = new UniTempGen;
     WvString section = "TestSection", entry = "TestEntry",
         value = "TestValue", notValue = "NotTestValue";
         

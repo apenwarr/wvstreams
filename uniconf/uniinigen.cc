@@ -33,6 +33,7 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
+    memset(&old_st, 0, sizeof(old_st));
 }
 
 
@@ -59,6 +60,18 @@ bool UniIniGen::refresh()
 	file.close();
 	file.seterr(EAGAIN);
     }
+    
+    if (file.isok() // guarantes statbuf is valid from above
+	&& statbuf.st_ctime == old_st.st_ctime
+	&& statbuf.st_dev == old_st.st_dev
+	&& statbuf.st_ino == old_st.st_ino
+	&& statbuf.st_blocks == old_st.st_blocks
+	&& statbuf.st_size == old_st.st_size)
+    {
+	log(WvLog::Debug, "refresh: file hasn't changed; do nothing.\n");
+	return true;
+    }
+    memcpy(&old_st, &statbuf, sizeof(statbuf));
     #endif
 
     if (!file.isok())
@@ -199,6 +212,7 @@ bool UniIniGen::refresh()
 
     WVRELEASE(newgen);
 
+    UniTempGen::refresh();
     return true;
 }
 
@@ -275,6 +289,7 @@ bool UniIniGen::commit_atomic(WvString real_filename)
 void UniIniGen::commit()
 {
     if (!dirty) return;
+    UniTempGen::commit();
 
 #ifdef _WIN32
     // Windows doesn't support all that fancy stuff, just open the file
