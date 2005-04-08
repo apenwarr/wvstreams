@@ -210,11 +210,11 @@ FILE *wvtmpfile()
 
 WvString wvtmpfilename(WvStringParm prefix)
 {
-#ifndef _WIN32
-    WvString tmpname("%sXXXXXX", prefix);
+#ifndef _WIN32 // tmpfile() is really the best choice, when it works
+    WvString tmpname("/tmp/%sXXXXXX", prefix);
     int fd;
     if ((fd = mkstemp(tmpname.edit())) == (-1))
-        return WvString();
+        return WvString();    
     close(fd);
 #else
     WvString tmpname(_tempnam("c:\\temp", prefix.cstr()));

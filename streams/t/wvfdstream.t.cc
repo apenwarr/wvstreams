@@ -14,6 +14,7 @@
 #include "wvsocketpair.h"
 #include "wvstreamclone.h"
 #include "wvtest.h"
+#include "wvfileutils.h"
 
 //FIXME: absolutely simple simple test right now, built from closeflushtest
 // BEGIN closeflushtest.cc definition

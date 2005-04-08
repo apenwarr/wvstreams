@@ -53,7 +53,7 @@ public:
      * REVOKED = the certificate has been revoked (it's serial number is in this CRL)
      */
     
-    enum Valid { ERROR = -1, VALID , NOT_THIS_CA, NO_VALID_SIGNATURE, BEFORE_VALID, AFTER_VALID, REVOKED };
+    enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, BEFORE_VALID, AFTER_VALID, REVOKED };
     
     /**
      * Initialize a blank CRL Object

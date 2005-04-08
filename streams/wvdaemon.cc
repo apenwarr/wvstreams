@@ -10,6 +10,7 @@
 #include "wvdaemon.h"
 
 #include "wvlinklist.h"
+#ifndef _WIN32
 #include "wvsyslog.h"
 #include "wvcrash.h"
 #include "wvfile.h"
@@ -19,9 +20,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#else
+#include "wvlogrcv.h"
+#endif
 
 DeclareWvList(WvDaemon);
 static WvDaemonList daemons;
+
+#ifndef _WIN32
 
 static void sighup_handler(int signum)
 {
@@ -54,13 +60,17 @@ static void sigquit_handler(int signum)
     exit(1);
 }
 
+#endif // _WIN32
+
 WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
         WvDaemonCallback _start_callback,
         WvDaemonCallback _run_callback,
         WvDaemonCallback _stop_callback,
         void *_ud)
     : name(_name), version(_version),
+#ifndef _WIN32
             pid_file("/var/run/%s.pid", _name),
+#endif
             log(_name, WvLog::Debug),
             log_level(WvLog::Info),
             syslog(false),
@@ -76,10 +86,12 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
     args.add_option('v', "verbose",
             "Increase log level (can be used multiple times)",
             WvArgs::NoArgCallback(this, &WvDaemon::inc_log_level));
+#ifndef _WIN32
     args.add_set_bool_option('d', "daemonize",
             "Fork into background and return (implies -s)", daemonize);
     args.add_set_bool_option('s', "syslog",
             "Write log entries to syslog", syslog);
+#endif
     args.add_option('V', "version",
             "Display version and exit",
             WvArgs::NoArgCallback(this, &WvDaemon::display_version_and_exit));
@@ -87,6 +99,7 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
 
 int WvDaemon::run(const char *argv0)
 {
+#ifndef _WIN32
     if (daemonize)
     {
         pid_t pid = ::fork();
@@ -145,14 +158,20 @@ int WvDaemon::run(const char *argv0)
         return 0;
     }
     else
+#else
+    if (1)
+#endif
     {
         WvLogConsole console_log(STDOUT_FILENO, log_level);
+#ifndef _WIN32
         if (syslog)
         {
             WvSyslog syslog(name, false);
             return _run(argv0);
         }
-        else return _run(argv0);
+        else 
+#endif
+	    return _run(argv0);
     }
 }
 
@@ -166,6 +185,7 @@ int WvDaemon::run(int argc, char **argv)
 
 int WvDaemon::_run(const char *argv0)
 {
+#ifndef _WIN32
     wvcrash_setup(argv0);
 
     if (!!pid_file)
@@ -199,12 +219,13 @@ int WvDaemon::_run(const char *argv0)
                     pid_file, pid_fd.errstr());
         pid_fd.close();
     }
-
+#endif
     log(WvLog::Notice, "Starting\n");
     log(WvLog::Info, "%s version %s\n", name, version);
 
     daemons.append(this, false);
-    
+
+#ifndef _WIN32    
     if (daemonize)
         signal(SIGINT, SIG_IGN);
     else
@@ -212,6 +233,7 @@ int WvDaemon::_run(const char *argv0)
     signal(SIGTERM, sigterm_handler);
     signal(SIGQUIT, sigquit_handler);
     signal(SIGHUP, sighup_handler);
+#endif
 
     _want_to_die = false;
     while (!want_to_die())
@@ -230,6 +252,7 @@ int WvDaemon::_run(const char *argv0)
     }
 
     daemons.unlink(this);
+#ifndef _WIN32
     if (daemons.count() == 0)
     {
         signal(SIGHUP, SIG_DFL);
@@ -237,11 +260,13 @@ int WvDaemon::_run(const char *argv0)
         signal(SIGINT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);
     }
-
+#endif
     log(WvLog::Notice, "Exiting\n");
-    
+
+#ifndef _WIN32    
     if (!!pid_file)
         ::unlink(pid_file);
+#endif
 
     return 0;
 }

@@ -9,7 +9,9 @@
 
 #include "wvstreamsdaemon.h"
 
+#ifndef _WIN32
 #include <signal.h>
+#endif
 
 WvStreamsDaemon::WvStreamsDaemon(WvStringParm name, WvStringParm version,
         WvStreamsDaemonCallback cb, void *ud)
@@ -19,7 +21,9 @@ WvStreamsDaemon::WvStreamsDaemon(WvStringParm name, WvStringParm version,
                 WvDaemonCallback(this, &WvStreamsDaemon::stop_cb)),
                 callback(cb), userdata(ud)
 {
+#ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
+#endif
 }
 
 void WvStreamsDaemon::start_cb(WvDaemon &daemon, void *)

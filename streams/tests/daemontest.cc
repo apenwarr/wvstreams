@@ -1,5 +1,8 @@
 #include "wvdaemon.h"
 #include "wvlog.h"
+#ifdef _WIN32
+#include "streams.h"
+#endif
 
 class MyWvDaemon : public WvDaemon
 {
