@@ -102,12 +102,14 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
     conn = new UniClientConn(stream, dst);
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
+    WvIStreamList::globallist.append(conn, false, "uniclientconn-via-gen");
 }
 
 
 UniClientGen::~UniClientGen()
 {
     conn->writecmd(UniClientConn::REQ_QUIT, "");
+    WvIStreamList::globallist.unlink(conn);
     WVRELEASE(conn);
 }
 
