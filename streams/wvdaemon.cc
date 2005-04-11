@@ -217,11 +217,11 @@ int WvDaemon::_run(const char *argv0)
     {
         _want_to_restart = false;
 
-        start_callback(*this, ud);
+        if (!!start_callback) start_callback(*this, ud);
 
         run_callback(*this, ud);
 
-        stop_callback(*this, ud);
+        if (!!stop_callback) stop_callback(*this, ud);
     }
 
     daemons.unlink(this);
