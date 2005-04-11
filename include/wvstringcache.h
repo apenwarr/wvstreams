@@ -33,6 +33,7 @@ class WvStringCache
 {
     static WvStringTable *t;
     static int refcount;
+    static size_t clean_threshold;
     
 public:
     WvStringCache();
