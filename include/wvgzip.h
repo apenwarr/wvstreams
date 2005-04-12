@@ -45,7 +45,7 @@ public:
      *
      * "mode" is the compression mode
      */
-    WvGzipEncoder(Mode mode);
+    WvGzipEncoder(Mode mode, size_t _out_limit = 0);
     virtual ~WvGzipEncoder();
 
     /**
