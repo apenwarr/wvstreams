@@ -7,16 +7,18 @@
 #include "wvstringcache.h"
 #include "wvstringlist.h"
 
-
 WvStringTable *WvStringCache::t;
 int WvStringCache::refcount;
-
+size_t WvStringCache::clean_threshold;
 
 WvStringCache::WvStringCache()
 {
     refcount++;
     if (!t)
+    {
 	t = new WvStringTable;
+	clean_threshold = 0;
+    }
 }
 
 
@@ -27,6 +29,7 @@ WvStringCache::~WvStringCache()
     {
 	delete t;
 	t = NULL;
+	clean_threshold = 0;
     }
     else
 	clean();
@@ -54,9 +57,16 @@ WvString WvStringCache::get(WvStringParm s)
 
 void WvStringCache::clean()
 {
+    // do we actually need to clean yet?  Skip it if we haven't added too
+    // many items since the last clean, since cleaning is pretty slow.
+    if (t->count() < clean_threshold)
+	return;
+    
     WvStringList l;
     
     // use a two-stage process so the iterator doesn't get messed up
+    // FIXME: this might actually be unnecessary with WvScatterHash, but
+    // someone should actually confirm that before taking this out.
     {
 	WvStringTable::Iter i(*t);
 	for (i.rewind(); i.next(); )
@@ -69,13 +79,19 @@ void WvStringCache::clean()
 	}
     }
     
+//    printf("CLEANUP-1: %d elements at start (%d to remove)\n",
+//	   (int)t->count(), (int)l.count());
+    
     {
 	WvStringList::Iter i(l);
 	for (i.rewind(); i.next(); )
 	    t->remove(i.ptr());
     }
     
-    // printf("CLEANUP: %d elements left.\n", (int)t.count());
+    clean_threshold = t->count() + t->count()/10 + 1;
+    
+//    printf("CLEANUP-2: %d elements left (thres=%d).\n", 
+//	   (int)t->count(), (int)clean_threshold);
 }
 
 
