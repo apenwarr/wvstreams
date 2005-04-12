@@ -1,34 +1,71 @@
 #include "wvgzip.h"
 #include "wvtest.h"
 
-// currently disabled: see bug 3856
-#if 0
-const int PATTERN_LENGTH = 2;
-const int NUM_REPEATS = 500;
-const size_t STRING_LENGTH = PATTERN_LENGTH * NUM_REPEATS;
-
-WVTEST_MAIN("wvgzip trivial encode + decode")
+WVTEST_MAIN("output limiting")
 {
-    WvString str;
-    for (int i=0; i<NUM_REPEATS; i++)
-        str.append("10");
+    size_t bufsize;
+    char buf[32768];
+    memset(buf, 0, 32768);
 
-    WvDynBuf inbuf;
-    inbuf.putstr(str);
-    WvDynBuf zippedbuf;
-    WvDynBuf unzippedbuf;
-    printf("inbuf: %i zippedbuf: %i\n", inbuf.used(), zippedbuf.used());
+    WvDynBuf uncomp, comp;
+    uncomp.put(buf, 32768);
 
-    WvGzipEncoder zipper(WvGzipEncoder::Deflate);
-    zipper.encode(inbuf, zippedbuf, true, true);
-    WVPASS(zippedbuf.used() < STRING_LENGTH);
-    WVPASS(zippedbuf.used() > 0);
+    WvGzipEncoder gzencdef(WvGzipEncoder::Deflate);
+    gzencdef.encode(uncomp, comp, true);
 
-    WvGzipEncoder unzipper(WvGzipEncoder::Inflate);
-    unzipper.encode(zippedbuf, unzippedbuf, true, true);
-    printf("inbuf: %i unzippedbuf: %i\n", inbuf.used(), unzippedbuf.used());
-    WVPASS(unzippedbuf.used() == STRING_LENGTH);
-    WvString unzippedstr = unzippedbuf.getstr(); 
-    WVPASS(unzippedstr == str);
+    // Make sure it read everything.
+    WVPASSEQ(uncomp.used(), 0);
+
+    // Store compressed data for later tests.
+    bufsize = comp.used();
+    memcpy(buf, comp.get(bufsize), bufsize);
+
+    comp.put(buf, bufsize);
+
+    // Test without output limiting.  Should do everything in one step.
+    WvGzipEncoder gzencinf(WvGzipEncoder::Inflate);
+    gzencinf.encode(comp, uncomp, true);
+
+    WVPASSEQ(uncomp.used(), 32768);
+    WVPASSEQ(comp.used(), 0);
+
+    uncomp.zap();
+    comp.put(buf, bufsize);
+    gzencinf.reset();
+
+    // Test with an out_limit by which the buffer is evenly divisible.
+    gzencinf.out_limit = 1024;
+
+    for (int i = 1; i <= 32; i++)
+    {
+        gzencinf.encode(comp, uncomp, true);
+        WVPASSEQ(uncomp.used(), i*1024);
+        WVPASS(gzencinf.isok());
+    }
+
+    uncomp.zap();
+    comp.put(buf, bufsize);
+    gzencinf.reset();
+
+    // Test with an out_limit by which the buffer isn't evenly divisible
+    // (i.e. with a remainder).
+    gzencinf.out_limit = 10240-1;
+
+    for (int i = 1; i <= 3; i++)
+    {
+        gzencinf.encode(comp, uncomp, true);
+        WVPASSEQ(uncomp.used(), i*(10240-1));
+        WVPASS(gzencinf.isok());
+    }
+
+    // The remainder.
+    gzencinf.encode(comp, uncomp, true);
+    WVPASSEQ(uncomp.used(), 32768);
+    WVPASS(gzencinf.isok());
+
+    // Further encoding shouldn't do anything.
+    gzencinf.encode(comp, uncomp, true);
+    WVPASSEQ(uncomp.used(), 32768);
+    WVPASS(gzencinf.isok());
 }
-#endif
+

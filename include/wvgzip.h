@@ -47,6 +47,12 @@ public:
      */
     WvGzipEncoder(Mode mode);
     virtual ~WvGzipEncoder();
+
+    /**
+     * Limit the amount of output produced in one call to encode().
+     * Defaults to 0, meaning no limit (empty the input buffer).
+     */
+    size_t out_limit;
     
 protected:
     virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);

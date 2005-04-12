@@ -12,7 +12,7 @@
 
 
 WvGzipEncoder::WvGzipEncoder(Mode _mode) :
-    tmpbuf(ZBUFSIZE), mode(_mode)
+    out_limit(0), tmpbuf(ZBUFSIZE), mode(_mode)
 {
     init();
 }
@@ -118,6 +118,8 @@ void WvGzipEncoder::prepare(WvBuf *inbuf)
 
 bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
 {
+    size_t max_out = out_limit;
+
     int flushmode = finish ? Z_FINISH :
         flush ? Z_SYNC_FLUSH : Z_NO_FLUSH;
     int retval;
@@ -125,17 +127,23 @@ bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
     {
         // process the next chunk
         tmpbuf.zap();
-        zstr->avail_out = tmpbuf.free();
-	zstr->next_out = tmpbuf.alloc(tmpbuf.free());
+        size_t avail_out = tmpbuf.free();
+        if (out_limit)
+            avail_out = tmpbuf.free() < max_out ? tmpbuf.free() : max_out;
+
+        zstr->avail_out = avail_out;
+	zstr->next_out = tmpbuf.alloc(avail_out);
 	if (mode == Deflate)
 	    retval = deflate(zstr, flushmode);
 	else
 	    retval = inflate(zstr, flushmode);
 	tmpbuf.unalloc(zstr->avail_out);
 
+        max_out -= avail_out - zstr->avail_out;
+
         // consume pending output
         outbuf.merge(tmpbuf);
-    } while (retval == Z_OK);
+    } while (retval == Z_OK && (!out_limit || max_out));
 
     if (retval == Z_STREAM_END)
         setfinished();
