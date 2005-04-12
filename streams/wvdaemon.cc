@@ -112,28 +112,28 @@ int WvDaemon::run(const char *argv0)
                 
                 ::umask(0);
                 
-                int null_fd = ::open("/dev/null", O_RDWR);
-                if (null_fd == -1)
+                int null_fd;
+                do
                 {
-                    log(WvLog::Error, "Failed to open /dev/null: %s\n",
-                            strerror(errno));
-                    _exit(1);
-                }
+                    null_fd = ::open("/dev/null", O_RDWR);
+                    if (null_fd == -1)
+                    {
+                        log(WvLog::Error, "Failed to open /dev/null: %s\n",
+                                strerror(errno));
+                        _exit(1);
+                    }
+                } while (null_fd == 0 || null_fd == 1 || null_fd == 2);
                 
-                if (null_fd != 0 && (::close(0)
-                            || ::dup2(null_fd, 0) == -1)
-                        || null_fd != 1 && (::close(1)
-                                || ::dup2(null_fd, 1) == -1)
-                        || null_fd != 2 && (::close(2)
-                                || ::dup2(null_fd, 2) == -1)
-                        || null_fd != 0 && null_fd != 1 && null_fd != 2
-                                && ::close(null_fd))
+                if (::dup2(null_fd, 0) == -1
+                        || ::dup2(null_fd, 1) == -1
+                        || ::dup2(null_fd, 2) == -1)
                 {
                     // Can no longer write to syslog...
-                    log(WvLog::Error, "Failed to close/dup2(0,1,2): %s\n",
+                    log(WvLog::Error, "Failed to dup2(null_fd, (0|1|2)): %s\n",
                             strerror(errno));
                     _exit(1);
                 }
+                ::close(null_fd);
                 
                 _run(argv0);
             }
