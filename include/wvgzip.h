@@ -63,6 +63,7 @@ private:
     struct z_stream_s *zstr;
     WvInPlaceBuf tmpbuf;
     Mode mode;
+    bool limit_reached;
 
     void init();
     void close();

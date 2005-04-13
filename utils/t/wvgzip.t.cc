@@ -4,7 +4,7 @@
 WVTEST_MAIN("output limiting")
 {
     size_t bufsize;
-    char buf[32768];
+    char buf[40000];
     memset(buf, 0, 32768);
 
     WvDynBuf uncomp, comp;
@@ -62,6 +62,40 @@ WVTEST_MAIN("output limiting")
     gzencinf.encode(comp, uncomp, true);
     WVPASSEQ(uncomp.used(), 32768);
     WVPASS(gzencinf.isok());
+
+    // Further encoding shouldn't do anything.
+    gzencinf.encode(comp, uncomp, true);
+    WVPASSEQ(uncomp.used(), 32768);
+    WVPASS(gzencinf.isok());
+
+    // Try with a random-content buffer.
+    srand(time(NULL));
+    for (int i = 0; i < 32768; i++)
+        buf[i] = rand() % 256;
+
+    comp.zap();
+    uncomp.zap();
+    uncomp.put(buf, 32768);
+
+    gzencdef.reset();
+    gzencdef.encode(uncomp, comp, true);
+
+    // Make sure it read everything.
+    WVPASSEQ(uncomp.used(), 0);
+
+    gzencinf.reset();
+    gzencinf.out_limit = 10240-1;
+
+    unsigned int i = 0;
+    do
+    {
+        i++;
+        gzencinf.encode(comp, uncomp, true);
+        WVPASS(uncomp.used() <= i*(10240-1));
+        WVPASS(gzencinf.isok());
+    } while (comp.used());
+
+    WVPASSEQ(uncomp.used(), 32768);
 
     // Further encoding shouldn't do anything.
     gzencinf.encode(comp, uncomp, true);
