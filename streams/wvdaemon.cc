@@ -67,7 +67,8 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
             stop_callback(_stop_callback),
             ud(_ud),
             log_level(WvLog::Info),
-            daemonize(false)
+            daemonize(false),
+            syslog(false)
 {
     args.add_option('q', "quiet",
             "Decrease log level (can be used multiple times)",
