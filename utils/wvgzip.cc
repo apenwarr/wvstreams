@@ -64,7 +64,6 @@ void WvGzipEncoder::close()
 bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 {
     bool success;
-    limit_reached = false;
     for (;;)
     {
         prepare(& inbuf);
@@ -78,9 +77,7 @@ bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
         }
         if (! success)
             return false;
-        if (alldata)
-            return true;
-        if (limit_reached)
+        if (alldata || out_limit)
             return true;
     }
 }
@@ -157,8 +154,6 @@ bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
             zstr->msg ? zstr->msg : "unknown");
         return false;
     }
-    else if (out_limit && !max_out)
-        limit_reached = true;
 
     return true;
 }

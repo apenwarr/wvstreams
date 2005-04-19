@@ -3,7 +3,6 @@
 
 WVTEST_MAIN("output limiting")
 {
-#if 0
     size_t bufsize;
     char buf[40000];
     memset(buf, 0, 32768);
@@ -102,6 +101,5 @@ WVTEST_MAIN("output limiting")
     gzencinf.encode(comp, uncomp, true);
     WVPASSEQ(uncomp.used(), 32768);
     WVPASS(gzencinf.isok());
-#endif
 }
 
