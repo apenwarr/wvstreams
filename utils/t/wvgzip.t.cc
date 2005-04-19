@@ -68,6 +68,7 @@ WVTEST_MAIN("output limiting")
     WVPASSEQ(uncomp.used(), 32768);
     WVPASS(gzencinf.isok());
 
+#if 0
     // Try with a random-content buffer.
     srand(time(NULL));
     for (int i = 0; i < 32768; i++)
@@ -101,5 +102,6 @@ WVTEST_MAIN("output limiting")
     gzencinf.encode(comp, uncomp, true);
     WVPASSEQ(uncomp.used(), 32768);
     WVPASS(gzencinf.isok());
+#end
 }
 
