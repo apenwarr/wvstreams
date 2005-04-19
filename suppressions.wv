@@ -79,6 +79,13 @@
     fun:_IOvfprintf
 }
 {
+   stupid_zlib_stuff   
+   Memcheck:Cond  
+   obj:/usr/lib/libz.so*  
+   obj:/usr/lib/libz.so* 
+   fun:deflate
+}
+{
    <insert a suppression name here>
    Memcheck:Param
    sigaction(act)
