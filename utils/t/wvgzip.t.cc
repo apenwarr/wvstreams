@@ -102,6 +102,6 @@ WVTEST_MAIN("output limiting")
     gzencinf.encode(comp, uncomp, true);
     WVPASSEQ(uncomp.used(), 32768);
     WVPASS(gzencinf.isok());
-#end
+#endif
 }
 
