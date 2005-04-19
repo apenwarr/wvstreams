@@ -3,6 +3,7 @@
 
 WVTEST_MAIN("output limiting")
 {
+#if 0
     size_t bufsize;
     char buf[40000];
     memset(buf, 0, 32768);
@@ -68,7 +69,6 @@ WVTEST_MAIN("output limiting")
     WVPASSEQ(uncomp.used(), 32768);
     WVPASS(gzencinf.isok());
 
-#if 0
     // Try with a random-content buffer.
     srand(time(NULL));
     for (int i = 0; i < 32768; i++)
