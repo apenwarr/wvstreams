@@ -2,7 +2,7 @@ wvstreams (4.1.0-1) unstable; urgency=low
 
   * New upstream version.
   * We now depend on XPLC 0.3.11.
-  * Remove fam dependancy
+  * Remove fam, fftw, vorbis, speex dependancies
 
  -- William Lachance <wlach@nit.ca>  Web,  6 Apr 2005 19:31:07 -0500
 

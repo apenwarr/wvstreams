@@ -1,22 +1,22 @@
 Summary: C++ network libraries for rapid application development.
-Name: wvstreams4.0
+Name: wvstreams4.1
 Version: @PKGVER@
 Release: 1
 Source: http://open.nit.ca/download/wvstreams-%{version}.tar.gz
 URL: http://open.nit.ca/wvstreams
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: fam-devel, fftw-devel, libogg-devel, libvorbis-devel, openssl-devel, openslp-devel, pam-devel, qdbm-devel, speex-devel, xplc-devel >= 0.3.7
+BuildRequires: openssl-devel, openslp-devel, pam-devel, popt, xplc-devel >= 0.3.7
 Group: None
 License: LGPL
 
 %description
 None
 
-%package -n libwvstreams4.0-base
+%package -n libwvstreams4.1-base
 Summary: C++ network libraries for rapid application development.
 Group: System Environment/Libraries
 
-%description -n libwvstreams4.0-base
+%description -n libwvstreams4.1-base
 C++ network libraries for rapid application development.
 
 WvStreams is a library suite that is comprised of several parts.  Included
@@ -29,12 +29,12 @@ in the base package are:
  * WvLog: a log files handler
  * UniIniGen: a tiny version of UniConf for simple configuration systems
 
-%package -n libwvstreams4.0-extras
+%package -n libwvstreams4.1-extras
 Summary: C++ network libraries for rapid application development.
 Group: System Environment/Libraries
-Requires: libwvstreams4.0-base, fam, openssl, openslp, pam, qdbm
+Requires: libwvstreams4.1-base, fam, openssl, openslp, pam, qdbm
 
-%description -n libwvstreams4.0-extras
+%description -n libwvstreams4.1-extras
 C++ network libraries for rapid application development.
 
 WvStreams is a library suite that is comprised of several parts.  Included
@@ -44,61 +44,32 @@ in the extras package are:
 
 These are the base classes used to build programs such as the ever popular
 WvDial, TunnelVision, FastForward, KWvDial, retchmail, and many more yet
-to come. ;)
+to come.
 
-%package -n libwvstreams4.0-fft
+%package -n libwvstreams4.1-qt
 Summary: C++ network libraries for rapid application development.
 Group: System Environment/Libraries
-Requires: libwvstreams4.0-base, libwvstreams4.0-extras, fftw
+Requires: libwvstreams4.1-base, libwvstreams4.1-extras, qt
 
-%description -n libwvstreams4.0-fft
-This package contains the library necessary for the WvStreams to libfftw
-wrapper. It enables WvStreams programs to easily handle Fast-Fourier
-transforms, instead of forcing the programmer to use the much harder to use
-libfftw interface.
-
-%package -n libwvstreams4.0-qt
-Summary: C++ network libraries for rapid application development.
-Group: System Environment/Libraries
-Requires: libwvstreams4.0-base, libwvstreams4.0-extras, qt
-
-%description -n libwvstreams4.0-qt
+%description -n libwvstreams4.1-qt
 This package contains the library necessary to tie WvStreams and Qt program
 event loops together to enable WvStreams to act as the I/O and configuration
 back end for Qt and KDE.
 
-%package -n libwvstreams4.0-speex
+%package -n libwvstreams4.1-telephony
 Summary: C++ network libraries for rapid application development.
 Group: System Environment/Libraries
-Requires: libwvstreams4.0-base, libwvstreams4.0-extras, libogg, speex
+Requires: libwvstreams4.1-base
 
-%description -n libwvstreams4.0-speex
-This library contains the WvSpeexEncoder and WvSpexxDecoder to enable quick 
-and painless creation of audio streams using the Speex Voice over IP CODEC
-
-%package -n libwvstreams4.0-vorbis
-Summary: C++ network libraries for rapid application development.
-Group: System Environment/Libraries
-Requires: libwvstreams4.0-base, libwvstreams4.0-extras, libogg, libvorbis
-
-%description -n libwvstreams4.0-vorbis
-This library contains the WvOggEncoder and WvOggDecoder to enable quick and
-painless creation of audio streams using the OggVorbis CODEC
-
-%package -n libwvstreams4.0-telephony
-Summary: C++ network libraries for rapid application development.
-Group: System Environment/Libraries
-Requires: libwvstreams4.0-base
-
-%description -n libwvstreams4.0-telephony
+%description -n libwvstreams4.1-telephony
 This library provides adaptive echo cancellation for 16-bit PCM samples.
 
-%package -n libuniconf4.0
+%package -n libuniconf4.1
 Summary: C++ network libraries for rapid application development.
 Group: System Environment/Libraries
-Requires: libwvstreams4.0-base, libwvstreams4.0-extras
+Requires: libwvstreams4.1-base, libwvstreams4.1-extras
 
-%description -n libuniconf4.0
+%description -n libuniconf4.1
 C++ network libraries for rapid application development.
 
 UniConf is a configuration system that can serve as the centrepiece among
@@ -111,12 +82,12 @@ many other, existing configuration systems, such as:
 UniConf can also be accessed over the network, with authentication, allowing
 easy replication of configuration data via the UniReplicateGen.
 
-%package -n libwvstreams4.0-devel
+%package -n libwvstreams4.1-devel
 Summary: Headers, development libraries and documentation for the WvStreams library
 Group: Development/Libraries
-Requires: libuniconf4.0, libwvstreams4.0-base, libwvstreams4.0-extras, libwvstreams4.0-fft, libwvstreams4.0-qt, libwvstreams4.0-speex, libwvstreams4.0-vorbis
+Requires: libuniconf4.1, libwvstreams4.1-base, libwvstreams4.1-extras, libwvstreams4.1-qt
 
-%description -n libwvstreams4.0-devel
+%description -n libwvstreams4.1-devel
 C++ network libraries for rapid application development.
 
 This package contains header files and development libraries needed to
@@ -125,7 +96,7 @@ develop programs using the WvStreams networking library.
 %package -n uniconf-tools
 Summary: Tools to interface with UniConf
 Group: Applications/Utilities
-Requires: libuniconf4.0
+Requires: libuniconf4.1
 
 %description -n uniconf-tools
 UniConf is a configuration system that can serve as the centrepiece among many other, existing configuration systems.
@@ -135,7 +106,7 @@ This package contains utilities that allow users to interface with UniConf manua
 %package -n uniconfd
 Summary: Server that manages UniConf elements
 Group: System Environment/Libraries
-Requires: libuniconf4.0
+Requires: libuniconf4.1
 
 %description -n uniconfd
 UniConf is a configuration system that can serve as the centrepiece among
@@ -163,10 +134,7 @@ fi
 %build
 export CXXFLAGS=-I/usr/kerberos/include # stupid redhat 9 kerberos..
 %configure \
-    --disable-debug --disable-verbose \
-    --with-qt --with-vorbis --with-speex --with-openslp \
-    --with-fam --with-fftw \
-#    --with-xplc-0.3.10
+    --disable-debug --disable-verbose --with-qt --with-openslp
 make
 
 %install
@@ -177,58 +145,48 @@ install -m 755 redhat/uniconfd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/uniconfd
 chmod 755 $RPM_BUILD_ROOT/usr/lib/*.so.*
 install -d 644 $RPM_BUILD_ROOT/usr/share/man/man8
 gzip $RPM_BUILD_ROOT/usr/share/man/man8/uniconfd.8
-#mv $RPM_BUILD_ROOT/usr/share/man/man8/uniconfd.8.gz $RPM_BUILD_ROOT/usr/share/man/man8
+gzip $RPM_BUILD_ROOT/usr/share/man/man8/uni.8
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%files -n libwvstreams4.0-base
+%files -n libwvstreams4.1-base
 %defattr(-,root,root,-)
 %doc COPYING.LIB README
-/usr/lib/libwvbase.so.4.0
+/usr/lib/libwvbase.so.4.1
 
-%files -n libwvstreams4.0-extras
+%files -n libwvstreams4.1-extras
 %defattr(-,root,root,-)
 %doc COPYING.LIB
-/usr/lib/libwvstreams.so.4.0
-/usr/lib/libwvutils.so.4.0
+/usr/lib/libwvstreams.so.4.1
+/usr/lib/libwvutils.so.4.1
 
-%files -n libwvstreams4.0-fft
+%files -n libwvstreams4.1-qt
 %defattr(-,root,root,-)
 %doc COPYING.LIB
-/usr/lib/libwvfft.so.4.0
+/usr/lib/libwvqt.so.4.1
 
-%files -n libwvstreams4.0-qt
+%files -n libuniconf4.1
 %defattr(-,root,root,-)
 %doc COPYING.LIB
-/usr/lib/libwvqt.so.4.0
+/usr/lib/libuniconf.so.4.1
 
-%files -n libwvstreams4.0-speex
+%files -n libwvstreams4.1-telephony
 %defattr(-,root,root,-)
 %doc COPYING.LIB
-/usr/lib/libwvoggspeex.so.4.0
+/usr/lib/libwvtelephony.so.4.1
 
-%files -n libwvstreams4.0-vorbis
-%defattr(-,root,root,-)
-%doc COPYING.LIB
-/usr/lib/libwvoggvorbis.so.4.0
-
-%files -n libuniconf4.0
-%defattr(-,root,root,-)
-%doc COPYING.LIB
-/usr/lib/libuniconf.so.4.0
-
-%files -n libwvstreams4.0-telephony
-%defattr(-,root,root,-)
-%doc COPYING.LIB README
-/usr/lib/libwvtelephony.so.4.0
-
-%files -n libwvstreams4.0-devel
+%files -n libwvstreams4.1-devel
 %defattr(-,root,root)
 /usr/include/wvstreams
 /usr/lib/*.a
 /usr/lib/*.so
-/usr/lib/pkgconfig/*pc
+/usr/lib/pkgconfig/libuniconf.pc
+/usr/lib/pkgconfig/libwvbase.pc
+/usr/lib/pkgconfig/libwvutils.pc
+/usr/lib/pkgconfig/libwvqt.pc
+/usr/lib/pkgconfig/libwvstreams.pc
+/usr/lib/pkgconfig/libwvtest.pc
 
 %files -n uniconf-tools
 %defattr(-,root,root)
@@ -247,6 +205,9 @@ rm -rf $RPM_BUILD_ROOT
 /var/lib/uniconf/uniconfd.ini
 
 %changelog
+* Wed Apr 20 2005 William Lachance <wlach@nit.ca>
+- New upstream release.
+
 * Thu Sep 30 2004 Steven Di Rocco <dirocco@nit.ca>
 - Updated to package things that have appeared in current snapshots, namely
   libwvstreams4.0-telephony and uniconf-tools.

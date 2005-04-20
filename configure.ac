@@ -28,12 +28,14 @@ AC_DEFUN(WV_APPEND,
 QT_SEARCH_PATH="
 $prefix
 /usr
+$libdir/qt-3.1
 $libdir/qt3
 $libdir/qt
 $datadir/qt3
 $datadir/qt
 /usr
 /usr/lib/qt3
+/usr/lib/qt-3.1
 /usr/share/qt3
 /usr/lib/qt
 /usr/share/qt
@@ -89,10 +91,8 @@ AC_ARG_ENABLE(testgui,
               AC_HELP_STRING([--disable-testgui],
                              [GUI for unit tests]))
 
-AC_ARG_WITH(fftw, AC_HELP_STRING([--with-fftw], [FFTW]))
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
-AC_ARG_WITH(ogg, AC_HELP_STRING([--with-ogg], [Ogg]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
 AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
@@ -101,8 +101,6 @@ AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
-AC_ARG_WITH(speex, AC_HELP_STRING([--with-speex], [Speex]))
-AC_ARG_WITH(vorbis, AC_HELP_STRING([--with-vorbis], [Vorbis]))
 xplc_version='0.3.11'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
@@ -354,13 +352,6 @@ if test "$enable_rtti" = "no"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
-# fftw
-if test "$with_fftw" != "no"; then
-    AC_CHECK_HEADERS(rfftw.h,, [with_fftw=no])
-    AC_CHECK_LIB(fftw, fftw,, [with_fftw=no])
-    AC_CHECK_LIB(rfftw, rfftw,, [with_fftw=no])
-fi
-
 # bdb
 if test "$with_bdb" != "no"; then
     AC_CHECK_HEADERS(db.h,, [with_bdb_header=no],
@@ -415,13 +406,6 @@ fi
 #    AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
 #    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
 #fi
-
-# ogg
-if test "$with_ogg" != "no"; then
-    AC_CHECK_HEADERS(ogg/ogg.h,, [with_ogg=no])
-    AC_CHECK_LIB(ogg, ogg_stream_init,, [with_ogg=no])
-fi
-
 
 # openslp
 if test "$with_openslp" != "no"; then
@@ -532,22 +516,9 @@ if test "$with_qt" != "no"; then
     AC_PATH_PROG(MOC, moc, [moc not found], $with_qt/bin)
 fi
 
-# speex
-if test "$with_speex" != "no"; then
-    AC_CHECK_HEADERS(speex.h speex_header.h,, [with_speex=no])
-    AC_CHECK_LIB(speex, speex_encoder_init,, [with_speex=no])
-fi
-
 # valgrind
 AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
 AC_CHECK_HEADERS(valgrind/memcheck.h)
-
-# vorbis
-if test "$with_vorbis" != "no"; then
-    AC_CHECK_HEADERS(vorbis/codec.h vorbis/vorbisenc.h,, [with_vorbis=no])
-    AC_CHECK_LIB(vorbis, vorbis_info_init,, [with_vorbis=no])
-    AC_CHECK_LIB(vorbisenc, vorbis_encode_init,, [with_vorbis=no])
-fi
 
 # xplc
 if test "$with_xplc" != "no"; then
@@ -588,10 +559,6 @@ fi
 # check for missing packages
 missing_required=
 missing_devel=
-if test "$with_fftw" = "no"; then
-    AC_MSG_WARN([FFTW is missing.])
-    missing_devel=yes
-fi
 if test "$with_qdbm" = "no"; then
     AC_MSG_WARN([QDBM is missing.])
     missing_devel=yes
@@ -599,10 +566,6 @@ fi
 if test "$with_popt" = "no"; then
     AC_MSG_WARN([Popt is missing.])
     missing_required="$missing_required popt"
-fi
-if test "$with_ogg" = "no"; then
-    AC_MSG_WARN([Ogg is missing.])
-    missing_devel=yes
 fi
 if test "$with_pam" = "no"; then
     AC_MSG_WARN([PAM is missing.])
@@ -614,14 +577,6 @@ if test "$with_telephony" = "no"; then
 fi
 if test "$with_qt" = "no"; then
     AC_MSG_WARN([Qt is missing.])
-    missing_devel=yes
-fi
-if test "$with_speex" = "no"; then
-    AC_MSG_WARN([Speex is missing.])
-    missing_devel=yes
-fi
-if test "$with_vorbis" = "no"; then
-    AC_MSG_WARN([Vorbis is missing.])
     missing_devel=yes
 fi
 if test "$with_xplc" = "no"; then
@@ -671,19 +626,15 @@ AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
 
 AC_SUBST(with_bdb)
-AC_SUBST(with_fftw)
 AC_SUBST(with_qdbm)
 AC_SUBST(with_gtk)
-AC_SUBST(with_ogg)
 AC_SUBST(with_openslp)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
 AC_SUBST(with_telephony)
 AC_SUBST(with_qt)
-AC_SUBST(with_speex)
 AC_SUBST(with_swig)
 AC_SUBST(with_tcl)
-AC_SUBST(with_vorbis)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
 
@@ -699,10 +650,6 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/libwvbase-uninstalled.pc
 		 pkgconfig/libwvfft.pc
 		 pkgconfig/libwvfft-uninstalled.pc
-		 pkgconfig/liboggspeex.pc
-		 pkgconfig/liboggspeex-uninstalled.pc
-		 pkgconfig/liboggvorbis.pc
-		 pkgconfig/liboggvorbis-uninstalled.pc
 		 pkgconfig/libwvqt.pc
 		 pkgconfig/libwvqt-uninstalled.pc
 		 pkgconfig/libwvstreams.pc
