@@ -1,9 +1,0 @@
-version=@PACKAGE_VERSION@
-top_builddir=@abs_top_builddir@
-
-Name: WvStreams Ogg Vorbis
-Description: WvStreams Ogg Vorbis codec library
-Version: ${version}
-Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
-Libs: -L${top_builddir} -loggvorbis
-Cflags: -I${top_builddir}/include
