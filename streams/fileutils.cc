@@ -8,13 +8,16 @@
 #include "fileutils.h"
 #include "wvfile.h"
 #include <string.h>
-#include <unistd.h>
 #include <sys/stat.h>
-#include <utime.h>
 #ifndef _WIN32
 #include <fnmatch.h>
 #endif
+#ifndef _MSC_VER
+#include <unistd.h>
+#include <utime.h>
+#endif
 
+#ifndef _MSC_VER
 bool mkdirp(WvStringParm _dir, int create_mode)
 {
     if (!access(_dir, X_OK))
@@ -46,8 +49,9 @@ bool mkdirp(WvStringParm _dir, int create_mode)
     return  !(access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr()));
 #endif
 }
+#endif
 
-
+#ifndef _MSC_VER
 bool fcopy(WvStringParm src, WvStringParm dst)
 {
     struct stat buf;
@@ -82,12 +86,12 @@ bool fcopy(WvStringParm src, WvStringParm dst)
     return true;
 }
 
-
 bool fcopy(WvStringParm srcdir, WvStringParm dstdir, WvStringParm relname)
 {
     return fcopy(WvString("%s/%s", srcdir, relname),
         WvString("%s/%s", dstdir, relname));
 }
+#endif
 
 
 bool samedate(WvStringParm file1, WvStringParm file2)

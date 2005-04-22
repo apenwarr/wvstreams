@@ -20,8 +20,9 @@
  * The default permissions on created directories is 0700, but this can be
  * changed at will.
  */
+#ifndef _MSC_VER
 bool mkdirp(WvStringParm _dir, int create_mode = 0700);
-
+#endif
 
 /**
  * Copy from src to dst preserving permissions and time stamp. This does not
@@ -30,9 +31,10 @@ bool mkdirp(WvStringParm _dir, int create_mode = 0700);
  * Two versions of this are provided. One for giving two filenames/paths, and
  * another for giving two starting directories and a relative path from there.
  */
+#ifndef _MSC_VER
 bool fcopy(WvStringParm src, WvStringParm dst);
 bool fcopy(WvStringParm srcdir, WvStringParm dstdir, WvStringParm relname);
-
+#endif
 
 /**
  * Check whether two files have the same date/time stamp. This can be used as a

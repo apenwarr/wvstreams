@@ -6,8 +6,9 @@
  */
 #include "unislowgen.h"
 #include "wvmoniker.h"
+#ifndef _MSC_VER // FIXME:WLACH Is unistd even needed here?!
 #include <unistd.h>
-
+#endif
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
