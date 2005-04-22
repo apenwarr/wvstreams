@@ -10,6 +10,9 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+# Don't rebuild the configure script
+export WE_ARE_DIST=1
+
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)

@@ -6,20 +6,78 @@ wvstreams (4.1.0-1) unstable; urgency=low
 
  -- William Lachance <wlach@nit.ca>  Web,  6 Apr 2005 19:31:07 -0500
 
+wvstreams (4.0.2-4) unstable; urgency=low
+
+  * Export WE_ARE_DIST so that don't rebuild the configure script.
+
+ -- James Morrison <phython@debian.org>  Sun,  3 Apr 2005 13:35:50 -0400
+
+wvstreams (4.0.2-3) unstable; urgency=low
+
+  * Depend on libxplc0.3.11 now that it is in the archive. (Closes: #302370)
+  * Use log instead of seterr for messages in wvmodem.cc
+
+ -- James Morrison <phython@debian.org>  Sat,  2 Apr 2005 10:52:21 -0500
+
+wvstreams (4.0.2-2) unstable; urgency=low
+
+  * Depend on libxplc0.3.10. (Closes: #301168)
+
+ -- James Morrison <phython@debian.org>  Wed, 24 Mar 2005 07:50:07 -0500
+
 wvstreams (4.0.2-1) unstable; urgency=low
+
+  * New upstream release.  (Closes: #297485)
+  * Moved /etc/uniconf.conf to libuniconf4.0.
+  * Added /etc/default/uniconfd to uniconfd's init script.
+  -- Simon Law
+
+  * Acknowledge NMUs.  (Closes: #292618, #297694, #297554, #286593, #289237)
+  * We now depend on XPLC 0.3.11.
+
+ -- James Morrison <phython@debian.org>  Wed, 23 Mar 2005 22:20:07 -0500
+
+wvstreams (4.0.1-1.4) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Further setup_modem fixes: don't depend on TIOCSSERIAL or
+    TIOCGSERIAL working at all, since they apparently don't with USB
+    modems and some WinModems.  (Closes: #297694, #297554)
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 21 Mar 2005 21:40:51 -0800
+
+wvstreams (4.0.1-1.3) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * High-urgency upload for sarge-targetted RC bugfix
+  * Fix WvModem::setup_modem to not expect TIOCSSERIAL to work if we're not
+    root.  (Closes: #292618)
+
+ -- Steve Langasek <vorlon@debian.org>  Sat,  5 Feb 2005 02:45:25 -0800
+
+wvstreams (4.0.1-1.2) unstable; urgency=high
+
+  * NMU with maintainer's permission
+  * Use high urgency as the version in testing has unfixed
+    RC bugs (#281772)
+  * libwvstreams.dev has to depend on libxplc0.3.10-dev
+    (Closes: #289237)
+
+ -- Frank Lichtenheld <djpig@debian.org>  Sun,  9 Jan 2005 14:40:02 +0100
+
+wvstreams (4.0.1-1.1) unstable; urgency=low
+
+  * NMU at request of maintainer
+  * add doxygen to build-depends (Cloeses: #286593)
+
+ -- Blars Blarson <blarson@blars.org>  Mon, 27 Dec 2004 18:51:32 -0800
+
+wvstreams (4.0.1-1) unstable; urgency=low
 
   * New upstream version.  (Closes: Bug#276571)
     - Fixes OpenSSL FTBFS.  (Closes: Bug#281772)
   * Depend on a newer version of BDB.  (Closes: Bug#248522)
   * We now depend on XPLC 0.3.10.
-  * Moved /etc/uniconf.conf to libuniconf4.0.
-  * Added /etc/default/uniconfd to uniconfd's init script.
-
- -- Simon Law <sfllaw@debian.org>  Fri, 26 Nov 2004 22:20:07 -0500
-
-wvstreams (4.0.1-1) unstable; urgency=low
-
-  * New upstream version.
 
  -- Simon Law <sfllaw@debian.org>  Wed, 17 Nov 2004 15:17:09 -0500
 
@@ -103,7 +161,7 @@ wvstreams (3.73+20030404-2) unstable; urgency=low
 
   * Added -fPIC -DPIC back into the build.
 
- -- James A. Morrison <jim@debian>  Mon, 14 Apr 2003 11:50:20 -0400
+ -- James A. Morrison <phython@debian.org>  Mon, 14 Apr 2003 11:50:20 -0400
 
 wvstreams (3.73+20030404-1) unstable; urgency=low
 

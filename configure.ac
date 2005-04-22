@@ -284,6 +284,7 @@ AC_CHECK_HEADERS([netinet/tcp.h])
 
 # Check for advanced Linux-style modem support
 AC_CHECK_HEADERS([linux/serial.h])
+AC_CHECK_FUNCS([cfmakeraw])
 
 # Look for getopt
 AC_CHECK_FUNCS([getopt],,[getopt=no])
@@ -523,9 +524,9 @@ AC_CHECK_HEADERS(valgrind/memcheck.h)
 # xplc
 if test "$with_xplc" != "no"; then
     if test "$with_xplc" = ""; then
-	if pkg-config --modversion xplc-0.3.11 2>/dev/null >/dev/null; then
-            WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-0.3.11`])
-	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-0.3.11`])
+	if pkg-config --modversion ${xplc_version} 2>/dev/null >/dev/null; then
+            WV_APPEND(CPPFLAGS, [`pkg-config --cflags ${xplc_version}`])
+	    WV_APPEND(LDFLAGS, [`pkg-config --libs ${xplc_version}`])
 	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
 	    xplc_pc="xplc-${xplc_version}"
