@@ -12,7 +12,7 @@
 
 
 WvGzipEncoder::WvGzipEncoder(Mode _mode) :
-    tmpbuf(ZBUFSIZE), mode(_mode)
+    zstr(NULL), tmpbuf(ZBUFSIZE), mode(_mode)
 {
     init();
 }

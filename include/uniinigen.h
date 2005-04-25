@@ -9,6 +9,7 @@
 
 #include "unitempgen.h"
 #include "wvlog.h"
+#include <sys/stat.h>
 
 class WvFile;
 
@@ -26,6 +27,7 @@ class UniIniGen : public UniTempGen
     WvString filename;
     int create_mode;
     WvLog log;
+    struct stat old_st;
     
 public:
     /**

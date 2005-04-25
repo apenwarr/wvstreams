@@ -108,6 +108,13 @@ bool UniConfKey::iswild() const
 }
 
 
+bool UniConfKey::hastrailingslash() const
+{
+    const char *s = path.cstr();
+    return s[strlen(s) - 1] == '/';
+}
+
+
 int UniConfKey::numsegments() const
 {
     if (!path)

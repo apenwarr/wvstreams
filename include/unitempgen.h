@@ -9,6 +9,7 @@
 
 #include "uniconfgen.h"
 #include "uniconftree.h"
+#include "wvstringcache.h"
 
 /**
  * A UniConf generator that stores keys in memory.
@@ -18,6 +19,8 @@
  */
 class UniTempGen : public UniConfGen
 {
+    WvStringCache scache;
+
 public:
     UniConfValueTree *root; /*!< the root of the tree */
     bool dirty; /*!< set whenever the tree actually changes */
@@ -33,6 +36,8 @@ public:
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
+    virtual void commit();
+    virtual bool refresh();
 
 protected:
     void notify_deleted(const UniConfValueTree *node, void *);

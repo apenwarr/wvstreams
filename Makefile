@@ -178,7 +178,7 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 test: runconfigure all tests wvtestmain
-	LD_LIBRARY_PATH="$(WVSTREAMS_LIB):$$LD_LIBRARY_PATH" $(WVTESTRUN) $(MAKE) runtests
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
 	$(VALGRIND) ./wvtestmain '$(TESTNAME)'

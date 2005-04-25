@@ -26,7 +26,7 @@ void check_callback2(const UniConf &handle,
     WVPASS(expected = callbacks2.exists(key));
     if (expected)
     {
-	WVPASS(callbacks2[key] == handle[key].getme());
+	WVPASSEQ(callbacks2[key], handle[key].getme());
 	callbacks2.remove(key);
     }
 }
@@ -40,7 +40,7 @@ void check_callback1(const UniConf &handle,
     WVPASS(expected = callbacks1.exists(key));
     if (expected)
     {
-	WVPASS(callbacks1[key] == handle[key].getme());
+	WVPASSEQ(callbacks1[key], handle[key].getme());
 	callbacks1.remove(key);
     }
 }
@@ -57,7 +57,7 @@ void check_iterator(WvMap<UniConfKey, WvString> &map, const UniConf &handle)
 	WVPASS(expected = map.exists(i.ptr()->fullkey()));
 	if (expected)
 	{
-	    WVPASS(map[i.ptr()->fullkey()] == i.ptr()->getme());
+	    WVPASSEQ(map[i.ptr()->fullkey()], i.ptr()->getme());
 	    map.remove(i.ptr()->fullkey());
 	}
     }
@@ -92,14 +92,14 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
 
-    WVPASS(two.xget("") == "");
-    WVPASS(two.xget("cfg") == "Filled");
-    WVPASS(two.xget("cfg/OpenWall") == "");
-    WVPASS(two.xget("cfg/OpenWall/Harden Proc") == 1);
-    WVPASS(two.xget("cfg/OpenWall/Harden RLIMIT") == 1);
-    WVPASS(two.xget("cfg/OpenWall/Harden Link") == 1);
-    WVPASS(two.xget("cfg/OpenWall/Harden Stack") == 1);
-    WVPASS(two.xget("cfg/foo") == WvString::null);
+    WVPASSEQ(two.xget(""), "");
+    WVPASSEQ(two.xget("cfg"), "Filled");
+    WVPASSEQ(two.xget("cfg/OpenWall"), "");
+    WVPASSEQ(two.xget("cfg/OpenWall/Harden Proc"), "1");
+    WVPASSEQ(two.xget("cfg/OpenWall/Harden RLIMIT"), "1");
+    WVPASSEQ(two.xget("cfg/OpenWall/Harden Link"), "1");
+    WVPASSEQ(two.xget("cfg/OpenWall/Harden Stack"), "1");
+    WVPASSEQ(two.xget("cfg/foo"), WvString::null);
 
     callbacks2.add("cfg", "Filled");
     callbacks2.add("cfg/OpenWall", "");
@@ -133,11 +133,11 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
 
-    WVPASS(two.xget("") == "");
-    WVPASS(two.xget("cfg") == "");
-    WVPASS(two.xget("cfg/Global") == "");
-    WVPASS(two.xget("cfg/Global/Have Disk") == 1);
-    WVPASS(two.xget("cfg/bar") == WvString::null);
+    WVPASSEQ(two.xget(""), "");
+    WVPASSEQ(two.xget("cfg"), "");
+    WVPASSEQ(two.xget("cfg/Global"), "");
+    WVPASSEQ(two.xget("cfg/Global/Have Disk"), "1");
+    WVPASSEQ(two.xget("cfg/bar"), WvString::null);
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -147,7 +147,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     // Test that our changes override their changes.
 
     one.xset("cfg/Global/Have Disk", 0);
-    WVPASS(two.xget("cfg/Global/Have Disk") == 1);
+    WVPASSEQ(two.xget("cfg/Global/Have Disk"), "1");
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -160,7 +160,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     one.xset("cfg/Global/Have Disk/Really Have Disk", 1);
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg/Global/Have Disk/Really Have Disk") == 1);
+    WVPASSEQ(two.xget("cfg/Global/Have Disk/Really Have Disk"), "1");
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -176,7 +176,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     one.xset("cfg", "exists");
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg") == "exists");
+    WVPASSEQ(two.xget("cfg"), "exists");
 
     callbacks2.add("cfg", "exists");
     callbacks2.add("cfg/Global", "");
@@ -195,7 +195,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     WVPASS(!callbacks2.exists("cfg"));
     WVPASS(!callbacks2.exists("cfg/Global/Have Disk/Really Have Disk"));
     callbacks2.zap();
-    WVPASS(two.xget("cfg") == "");
+    WVPASSEQ(two.xget("cfg"), "");
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -207,7 +207,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     // received.
 
     one.xset("cfg/Global", "");
-    WVPASS(two.xget("cfg/Global") == "");
+    WVPASSEQ(two.xget("cfg/Global"), "");
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -220,7 +220,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
 
-    WVPASS(two.xget("cfg/Global") == "");
+    WVPASSEQ(two.xget("cfg/Global"), "");
 
 
     callbacks2.add("cfg", "");
@@ -235,8 +235,8 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     two.xset("cfg/Global", WvString::null);
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg/Global/Have Disk") == WvString::null);
-    WVPASS(two.xget("cfg/Global") == WvString::null);
+    WVPASSEQ(two.xget("cfg/Global/Have Disk"), WvString::null);
+    WVPASSEQ(two.xget("cfg/Global"), WvString::null);
 
     callbacks2.add("cfg", "");
     check_iterator(callbacks2, two);
@@ -246,9 +246,9 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     
     one.xset("cfg/Global/Servers/FunFS", 1);
     one.xset("cfg/Global/Servers", WvString::null);
-    WVPASS(two.xget("cfg/Global") == WvString::null);
-    WVPASS(two.xget("cfg/Global/Servers") == WvString::null);
-    WVPASS(two.xget("cfg/Global/Servers/FunFS") == WvString::null);
+    WVPASSEQ(two.xget("cfg/Global"), WvString::null);
+    WVPASSEQ(two.xget("cfg/Global/Servers"), WvString::null);
+    WVPASSEQ(two.xget("cfg/Global/Servers/FunFS"), WvString::null);
 
     callbacks2.add("cfg", "");
     check_iterator(callbacks2, two);
@@ -260,8 +260,8 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     two.xset("cfg/Global/Have Disk", 0);
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg/Global") == "");
-    WVPASS(two.xget("cfg/Global/Have Disk") == "0");
+    WVPASSEQ(two.xget("cfg/Global"), "");
+    WVPASSEQ(two.xget("cfg/Global/Have Disk"), "0");
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -271,8 +271,8 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     // Test non-creation of keys when deleting subkeys.
 
     two.xset("cfg/foo/bar", WvString::null);
-    WVPASS(two.xget("cfg/foo") == WvString::null);
-    WVPASS(two.xget("cfg/foo/bar") == WvString::null);
+    WVPASSEQ(two.xget("cfg/foo"), WvString::null);
+    WVPASSEQ(two.xget("cfg/foo/bar"), WvString::null);
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -286,8 +286,8 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     one.xset("cfg/foo/bar", "");
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg/foo") == "");
-    WVPASS(two.xget("cfg/foo/bar") == WvString::null);
+    WVPASSEQ(two.xget("cfg/foo"), "");
+    WVPASSEQ(two.xget("cfg/foo/bar"), WvString::null);
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/foo", "");
@@ -301,8 +301,8 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     two.refresh();
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg/foo/bar") == "");
-    WVPASS(two.xget("cfg/Global/Have Disk/") == WvString::null);
+    WVPASSEQ(two.xget("cfg/foo/bar"), "");
+    WVPASSEQ(two.xget("cfg/Global/Have Disk/"), WvString::null);
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/foo", "");
@@ -342,18 +342,18 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     two.xset("cfg/OpenWall", WvString::null);
     callbacks2.add("cfg/OpenWall", "");
     callbacks2.add("cfg/OpenWall/Harden Stack", 0);
-    callbacks2.add("cfg/OpenWall/Harden FIFO", 0);    
+    callbacks2.add("cfg/OpenWall/Harden FIFO", "");    
     callbacks2.add("cfg/OpenWall/Harden Proc", 1);
     callbacks2.add("cfg/Global/Servers/FunFS", 0);
     two.xset("cfg/OpenWall/Harden Stack", 0);
-    two.xset("cfg/OpenWall/Harden FIFO", 0);
+    two.xset("cfg/OpenWall/Harden FIFO", "");
     two.xset("cfg/OpenWall/Harden Proc", 1);
     two.xset("cfg/Global/Servers/FunFS", 0);
     two.xset("cfg/Global/Servers/NFS", 0);
     UniWatch mywatch1(one, callback1);
     callbacks1.add("cfg/OpenWall/Harden Link", WvString::null);
     callbacks1.add("cfg/OpenWall/Harden Stack", 0);
-    callbacks1.add("cfg/OpenWall/Harden FIFO", 0);
+    callbacks1.add("cfg/OpenWall/Harden FIFO", "");
     callbacks1.add("cfg/Global/Servers/FunFS", 0);
     // Here we go.
     two.commit();
@@ -365,13 +365,24 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/OpenWall", "");
     callbacks2.add("cfg/OpenWall/Harden Stack", 0);
-    callbacks2.add("cfg/OpenWall/Harden FIFO", 0);    
+    callbacks2.add("cfg/OpenWall/Harden FIFO", "");    
     callbacks2.add("cfg/OpenWall/Harden Proc", 1);
     callbacks2.add("cfg/Global", "");
     callbacks2.add("cfg/Global/Servers", "");
     callbacks2.add("cfg/Global/Servers/Funfs", 0);
     callbacks2.add("cfg/Global/Servers/NFS", 0);
     check_iterator(callbacks2, two);
+
+    callbacks1.add("cfg", "");
+    callbacks1.add("cfg/OpenWall", "");
+    callbacks1.add("cfg/OpenWall/Harden Stack", 0);
+    callbacks1.add("cfg/OpenWall/Harden FIFO", "");    
+    callbacks1.add("cfg/OpenWall/Harden Proc", 1);
+    callbacks1.add("cfg/Global", "");
+    callbacks1.add("cfg/Global/Servers", "");
+    callbacks1.add("cfg/Global/Servers/Funfs", 0);
+    callbacks1.add("cfg/Global/Servers/NFS", 0);
+    check_iterator(callbacks1, one);
 }
 
 // Test that UniTransactionGen works when mounted on a UniConf subtree.

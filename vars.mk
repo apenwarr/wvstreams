@@ -174,8 +174,10 @@ BASEOBJS= \
 	utils/wvbackslash.o \
 	utils/wvencoder.o \
 	utils/wvtclstring.o \
+	utils/wvstringcache.o \
 	uniconf/uniinigen.o \
 	uniconf/unigenhack.o \
+	uniconf/unilistiter.o \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o

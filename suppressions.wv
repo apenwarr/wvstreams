@@ -69,6 +69,13 @@
     fun:_IOvfprintf
 }
 {
+   stupid_zlib_stuff
+   Memcheck:Cond
+   obj:/usr/lib/libz.so*
+   obj:/usr/lib/libz.so*
+   fun:deflate
+}
+{
    sigaction_bites_my_nuts
    Memcheck:Param
    sigaction(act)

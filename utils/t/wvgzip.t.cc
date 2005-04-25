@@ -1,8 +1,6 @@
 #include "wvgzip.h"
 #include "wvtest.h"
 
-// currently disabled: see bug 3856
-#if 0
 const int PATTERN_LENGTH = 2;
 const int NUM_REPEATS = 500;
 const size_t STRING_LENGTH = PATTERN_LENGTH * NUM_REPEATS;
@@ -31,4 +29,3 @@ WVTEST_MAIN("wvgzip trivial encode + decode")
     WvString unzippedstr = unzippedbuf.getstr(); 
     WVPASS(unzippedstr == str);
 }
-#endif

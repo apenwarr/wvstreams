@@ -223,7 +223,7 @@ int main(int argc, char **argv)
     
     IUniConfGen *permgen = !!permmon ? wvcreate<IUniConfGen>(permmon) : NULL;
     UniConfDaemon daemon(cfg, needauth, permgen);
-    WvIStreamList::globallist.append(&daemon, false);
+    WvIStreamList::globallist.append(&daemon, false, "ucdaemon");
 
 #ifndef _WIN32
     if (!!unixport)

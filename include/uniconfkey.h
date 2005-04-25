@@ -112,6 +112,9 @@ public:
     /** Returns true if the key contains a wildcard. */
     bool iswild() const;
 
+    /** Returns true if the key has a trailing slash. */
+    bool UniConfKey::hastrailingslash() const;
+
     /**
      * Returns the number of segments in this path.
      * 
