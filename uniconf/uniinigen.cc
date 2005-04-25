@@ -45,7 +45,7 @@ bool UniIniGen::refresh()
 {
     WvFile file(filename, O_RDONLY);
 
-    #ifndef _WIN32
+#ifndef _WIN32
     struct stat statbuf;
     if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
     {
@@ -59,7 +59,7 @@ bool UniIniGen::refresh()
 	file.close();
 	file.seterr(EAGAIN);
     }
-    #endif
+#endif
 
     if (!file.isok())
     {
