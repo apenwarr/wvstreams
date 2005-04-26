@@ -146,5 +146,5 @@ UniConfGen::Iter *UniUnwrapGen::recursiveiterator(const UniConfKey &key)
 
 void UniUnwrapGen::gencallback(const UniConf &cfg, const UniConfKey &key)
 {
-    delta(cfg[key].fullkey(), cfg[key].getme());
+    delta(cfg[key].fullkey(xinner), cfg[key].getme());
 }
