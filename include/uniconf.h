@@ -668,6 +668,7 @@ public:
  * C Interface
  */
 
+#ifdef ASHLEY
 
 #ifdef __cplusplus
 extern "C" {
@@ -697,6 +698,6 @@ void uniconf_set(uniconf_t _uniconf,
 #ifdef	__cplusplus
 }
 #endif  // __cplusplus
-
+#endif
 
 #endif // __UNICONF_H

@@ -50,6 +50,9 @@ private:
 
     HRESULT create_types(WvString type_name, WvString subtype_name);
 
+protected:
+    virtual void flush_buffers() { }
+
 public:
     UniPStoreGen(WvString _base);
     virtual ~UniPStoreGen();

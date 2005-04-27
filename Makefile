@@ -150,7 +150,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	    $(LN_S) $$i.$(RELEASE) $$i; \
 	done
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
-	$(INSTALL_DATA) $(wildcard pkgconfig/*.pc) $(DESTDIR)$(libdir)/pkgconfig
+	$(INSTALL_DATA) $(filter-out %-uninstalled.pc, $(wildcard pkgconfig/*.pc)) $(DESTDIR)$(libdir)/pkgconfig
 
 uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
@@ -169,7 +169,7 @@ install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
 uninstall:
 	$(tbd)
 
-$(TESTS): $(LIBUNICONF)
+$(TESTS): $(LIBUNICONF) $(LIBWVTEST)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
@@ -178,7 +178,7 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 -include $(shell find . -name '.*.d') /dev/null
 
 test: runconfigure all tests wvtestmain
-	LD_LIBRARY_PATH="$(WVSTREAMS_LIB):$$LD_LIBRARY_PATH" $(WVTESTRUN) $(MAKE) runtests
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
 	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
@@ -187,8 +187,8 @@ ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=1 ./unitest.sh
 endif
 
-wvtestmain: wvtestmain.o \
+wvtestmain: \
 	$(call objects, $(filter-out ./Win32WvStreams/%, \
 		$(shell find . -type d -name t))) \
-	$(LIBUNICONF) $(LIBWVSTREAMS)
+	$(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 

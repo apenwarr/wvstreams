@@ -1,7 +1,7 @@
 #include "wvtest.h"
-#include "wvlinklist.h"
 #include "wvfile.h"
 #include "strutils.h"
+#include "wvlinklist.h"
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -911,3 +911,18 @@ WVTEST_MAIN("spacecat")
     WVPASSEQ(spacecat("", "yy", ';', true), ";yy");
     WVPASSEQ(spacecat("", ";;yy", ';', true), ";yy");
 }
+
+WVTEST_MAIN("depunctuate")
+{
+    WVPASSEQ(depunctuate(""), "");
+    WVPASSEQ(depunctuate("."), "");
+    WVPASSEQ(depunctuate("?"), "");
+    WVPASSEQ(depunctuate("!"), "");
+    WVPASSEQ(depunctuate("a"), "a");
+    WVPASSEQ(depunctuate("a."), "a");
+    WVPASSEQ(depunctuate("a?"), "a");
+    WVPASSEQ(depunctuate("a!"), "a");
+    WVPASSEQ(depunctuate("a.."), "a.");
+    WVPASSEQ(depunctuate("a. "), "a. ");
+}
+

@@ -48,6 +48,12 @@ public:
     virtual int geterr() const
         { return errnum; }
     virtual WvString errstr() const;
+
+    /**
+     * A replacement for the operating system ::strerror() function that
+     * can map more kinds of error strings (especially in win32).
+     */
+    static WvString strerror(int errnum);
     
     /**
      * Set the errnum variable -- we have an error.  If called more than

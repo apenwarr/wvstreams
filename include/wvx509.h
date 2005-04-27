@@ -144,7 +144,7 @@ public:
      */
     WvString signcert(WvStringParm pkcs10req);
 
-    
+
     /**
      * Take the CRL in crl, and sign it. returns true if successfull, and false if not.
      * if false, check crl.err.geterr() for reason.

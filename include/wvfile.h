@@ -38,6 +38,7 @@ public:
     /** Create a WvFile given options like ::open() */
     WvFile(WvStringParm filename, int mode, int create_mode = 0666);
     bool open(WvStringParm filename, int mode, int create_mode = 0666);
+    bool open(int _rwfd);
     
     bool readable, writable;
 

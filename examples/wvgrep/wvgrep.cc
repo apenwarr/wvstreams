@@ -64,54 +64,54 @@ int main(int argc, char **argv)
     WvArgs args;
     
     bool opt_count = false;
-    args.add_set_bool_option('c', "count", NULL, opt_count);
+    args.add_set_bool_option('c', "count", WvString::null, opt_count);
     
     bool opt_extended_regexp = false;
-    args.add_set_bool_option('E', "extended-regexp", NULL, opt_extended_regexp);
+    args.add_set_bool_option('E', "extended-regexp", WvString::null, opt_extended_regexp);
     
     WvString opt_regexp;
-    args.add_option('e', "regexp", NULL, NULL, opt_regexp);
+    args.add_option('e', "regexp", WvString::null, WvString::null, opt_regexp);
   
     bool opt_basic_regexp = false;
-    args.add_set_bool_option('G', "basic-regexp", NULL, opt_basic_regexp);
+    args.add_set_bool_option('G', "basic-regexp", WvString::null, opt_basic_regexp);
     
     bool opt_with_filename = false;
-    args.add_set_bool_option('H', "with-filename", NULL, opt_with_filename);
+    args.add_set_bool_option('H', "with-filename", WvString::null, opt_with_filename);
     
     bool opt_no_filename = false;
-    args.add_set_bool_option('h', "no-filename", NULL, opt_no_filename);
+    args.add_set_bool_option('h', "no-filename", WvString::null, opt_no_filename);
     
     bool opt_ignore_case = false;
-    args.add_set_bool_option('i', "ignore-case", NULL, opt_ignore_case);
-    args.add_set_bool_option('y', NULL, "Synonym for -i", opt_ignore_case);
+    args.add_set_bool_option('i', "ignore-case", WvString::null, opt_ignore_case);
+    args.add_set_bool_option('y', WvString::null, "Synonym for -i", opt_ignore_case);
     
     bool opt_files_without_match = false;
-    args.add_set_bool_option('L', "files-without-match", NULL, opt_files_without_match);
+    args.add_set_bool_option('L', "files-without-match", WvString::null, opt_files_without_match);
     
     bool opt_files_with_matches = false;
-    args.add_set_bool_option('l', "files-with-matches", NULL, opt_files_with_matches);
+    args.add_set_bool_option('l', "files-with-matches", WvString::null, opt_files_with_matches);
     
     bool opt_line_number = false;
-    args.add_set_bool_option('n', "line-number", NULL, opt_line_number);
+    args.add_set_bool_option('n', "line-number", WvString::null, opt_line_number);
     
     bool opt_quiet = false;
-    args.add_set_bool_option('q', "quiet", NULL, opt_quiet);
+    args.add_set_bool_option('q', "quiet", WvString::null, opt_quiet);
     args.add_set_bool_option(0, "silent", "Synonym for --quiet", opt_quiet);
     
     bool opt_no_messages = false;
-    args.add_set_bool_option('s', "no-message", NULL, opt_no_messages);
+    args.add_set_bool_option('s', "no-message", WvString::null, opt_no_messages);
     
     bool opt_version = false;
-    args.add_set_bool_option('V', "version", NULL, opt_version);
+    args.add_set_bool_option('V', "version", WvString::null, opt_version);
     
     bool opt_invert_match = false;
-    args.add_set_bool_option('v', "invert-match", NULL, opt_invert_match);
+    args.add_set_bool_option('v', "invert-match", WvString::null, opt_invert_match);
     
     bool opt_line_regexp = false;
-    args.add_set_bool_option('x', "line-regexp", NULL, opt_line_regexp);
+    args.add_set_bool_option('x', "line-regexp", WvString::null, opt_line_regexp);
     
     bool opt_null = false;
-    args.add_set_bool_option('Z', "null", NULL, opt_null);
+    args.add_set_bool_option('Z', "null", WvString::null, opt_null);
 
     WvStringList remaining_args;    
     args.process(argc, argv, &remaining_args);

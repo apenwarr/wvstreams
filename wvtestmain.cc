@@ -1,14 +1,14 @@
 #include "wvtest.h"
 #include "wvstring.h"
 #include <stdlib.h>
+#include <stdio.h>
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
 #else
 #include <unistd.h>
-#endif
 #include <fcntl.h>
-#include <stdio.h>
+#endif
 
 static bool fd_is_valid(int fd)
 {
@@ -66,11 +66,12 @@ int main(int argc, char **argv)
     endfd = fd_count("end");
     
     WVPASS(startfd == endfd);
-    //if (startfd != endfd)
+#ifndef _WIN32
+    if (startfd != endfd)
     {
 	system(WvString("ls -l /proc/%s/fd", getpid()));
     }
-    
+#endif    
     // keep 'make' from aborting if this environment variable is set
     if (getenv("WVTEST_NO_FAIL"))
 	return 0;

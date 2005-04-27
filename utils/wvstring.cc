@@ -48,7 +48,7 @@ WvFastString::WvFastString(const WvString &s)
 }
 
 
-inline void WvFastString::construct(const char *_str)
+void WvFastString::construct(const char *_str)
 {
     // just copy the pointer - no need to allocate memory!
     str = (char *)_str; // I promise not to change anything!
@@ -71,17 +71,6 @@ void WvString::copy_constructor(const WvFastString &s)
     }
     else
 	link(s.buf, s.str); // already in a nice, safe WvStreamBuf
-}
-
-
-inline void WvString::construct(const char *_str)
-{
-    link(&nullbuf, _str);
-    
-    // apenwarr (2002/04/24): from now on, all WvString objects are created
-    // with unique(), so you should _never_ have to call it explicitly.  We
-    // still can (and should!) use fast parameter passing via WvFastString.
-    unique();
 }
 
 
@@ -191,8 +180,8 @@ void WvFastString::link(WvStringBuf *_buf, const char *_str)
 
 WvStringBuf *WvFastString::alloc(size_t size)
 { 
-    WvStringBuf *abuf = (WvStringBuf *)malloc(WVSTRINGBUF_SIZE(buf)
-					     + size + WVSTRING_EXTRA);
+    WvStringBuf *abuf = (WvStringBuf *)malloc(
+		      (WVSTRINGBUF_SIZE(buf) + size + WVSTRING_EXTRA) | 3);
     abuf->links = 0;
     abuf->size = size;
     return abuf;
@@ -231,7 +220,7 @@ void WvFastString::newbuf(size_t size)
 // of it.  If it was linked to only once, then it's already "unique".
 WvString &WvString::unique()
 {
-    if (buf->links > 1 && str)
+    if (!is_unique() && str)
     {
 	WvStringBuf *newb = alloc(len() + 1);
 	memcpy(newb->data, str, newb->size);
@@ -240,6 +229,12 @@ WvString &WvString::unique()
     }
 	    
     return *this; 
+}
+
+
+bool WvString::is_unique() const
+{
+    return (buf->links <= 1);
 }
 
 

@@ -15,7 +15,9 @@
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvhex.h"
+#ifndef _WIN32
 #include "wvregex.h"
+#endif
 
 /** \file
  * Various little string functions
@@ -320,6 +322,7 @@ void strcoll_splitstrict(StringCollection &coll, WvStringParm _s,
 }
 
 
+#ifndef _WIN32 // don't have regex on win32
 /**
  * Splits a string and adds each substring to a collection.
  *   coll       : the collection of strings to add to
@@ -336,7 +339,7 @@ void strcoll_split(StringCollection &coll, WvStringParm s,
     int count = 0;
     
     while ((limit == 0 || count < limit)
-    	    && regex.match(&s[start], match_start, match_end)
+    	    && regex.continuable_match(&s[start], match_start, match_end)
     	    && match_end > 0)
     {
     	WvString *substr = new WvString;
@@ -356,6 +359,7 @@ void strcoll_split(StringCollection &coll, WvStringParm s,
     	coll.add(last, true);
     }
 }
+#endif
 
 
 /**
@@ -440,6 +444,12 @@ WvString beforestr(WvStringParm line, WvStringParm a);
  * if pos+len > line.len() simply return from pos to end of line
  */
 WvString substr(WvString line, unsigned int pos, unsigned int len);
+
+/** 
+ * Removes any trailing punctuation ('.', '?', or '!') from the line, and
+ * returns it in a new string.  Does not modify line.
+ */
+WvString depunctuate(WvStringParm line);
 
 // Converts a string in decimal to an arbitrary numeric type
 template<class T>

@@ -130,7 +130,7 @@ void listener_callback(WvStream &s, void *userdata)
     WvTCPConn *newconn = l.accept();
     printf("Incoming connection (%u)\n", http_conns);
     newconn->setcallback(tcp_callback, NULL);
-    list.append(newconn, false, "incoming http conn");
+    list.append(newconn, true, "incoming http conn");
     expecting_request = true;
 }
 
@@ -174,6 +174,7 @@ static void do_test(WvIStreamList &l, unsigned int port,
     l.runonce(10);
     l.runonce(10);
     WVPASSEQ(bufs.count(), 0);
+
     l.unlink(&bufs);
     l.unlink(&pool);
 }

@@ -49,16 +49,29 @@ bool samedate(WvStringParm dir1, WvStringParm dir2, WvStringParm relname);
  * Runs fnmatch against everything in the patterns list.  We also interpret
  * .cvsignore-style '!' patterns, which makes us very fancy.
  */
+#ifndef _WIN32
 bool wvfnmatch(WvStringList &patterns, WvStringParm name, int flags = 0);
+#endif
 
 /**
  * Replacement for tmpfile() that works correctly in win32 as well as Unix.
  */
 FILE *wvtmpfile();
 
+
+/* Returns a unique filename suitable for a temporary file. Obviously there is
+ * the caveat that someone else may claim this file name before you open it:
+ * do not use this routine where that race may be a real concern (this would
+ * apply only to security-sensitive code)
+ */
+WvString wvtmpfilename(WvStringParm prefix);
+
+
 /**
  * Basically our own implementation of the NetBSD lchmod() call.
  */
+#ifndef _WIN32
 int wvchmod(const char *path, mode_t mode);
+#endif
 
 #endif // __WVFILEUTILS_H

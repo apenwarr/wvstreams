@@ -39,6 +39,7 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
+    memset(&old_st, 0, sizeof(old_st));
 }
 
 void UniIniGen::set(const UniConfKey &key, WvStringParm value)
@@ -72,6 +73,18 @@ bool UniIniGen::refresh()
 	file.close();
 	file.seterr(EAGAIN);
     }
+    
+    if (file.isok() // guarantes statbuf is valid from above
+	&& statbuf.st_ctime == old_st.st_ctime
+	&& statbuf.st_dev == old_st.st_dev
+	&& statbuf.st_ino == old_st.st_ino
+	&& statbuf.st_blocks == old_st.st_blocks
+	&& statbuf.st_size == old_st.st_size)
+    {
+	log(WvLog::Debug, "refresh: file hasn't changed; do nothing.\n");
+	return true;
+    }
+    memcpy(&old_st, &statbuf, sizeof(statbuf));
     #endif
 
     if (!file.isok())
@@ -200,12 +213,14 @@ bool UniIniGen::refresh()
     newgen->root = NULL;
     dirty = false;
     oldtree->compare(newtree, UniConfValueTree::Comparator
-        (this, &UniIniGen::refreshcomparator), NULL);
+            (this, &UniIniGen::refreshcomparator), NULL);
+    
     delete oldtree;
     unhold_delta();
 
     WVRELEASE(newgen);
 
+    UniTempGen::refresh();
     return true;
 }
 
@@ -284,6 +299,7 @@ bool UniIniGen::commit_atomic(WvString real_filename)
 void UniIniGen::commit()
 {
     if (!dirty) return;
+    UniTempGen::commit();
 
 #ifdef _WIN32
     // Windows doesn't support all that fancy stuff, just open the file
@@ -392,7 +408,11 @@ static void printsection(WvStream &file, const UniConfKey &key)
 	s = wvtcl_escape(key, "\r\n[]");
     else
 	s = key;
-    file.print("\n[%s]\n", s);
+    // broken up for optimization, no temp wvstring created
+    //file.print("\n[%s]\n", s);
+    file.print("\n[");
+    file.print(s);
+    file.print("]\n");
 }
 
 
@@ -417,7 +437,12 @@ static void printkey(WvStream &file, const UniConfKey &_key,
     
     // need to escape []#= in key only to distinguish a key/value
     // pair from a section name or comment and to delimit the value
-    file.print("%s = %s\n", key, value);
+    // broken up for optimization, no temp wvstring created
+    //file.print("%s = %s\n", key, value);
+    file.print(key);
+    file.print(" = ");
+    file.print(value);
+    file.print("\n");
 }
 
 

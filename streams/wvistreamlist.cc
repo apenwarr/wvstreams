@@ -74,14 +74,14 @@ private:
 bool WvIStreamList::pre_select(SelectInfo &si)
 {
     //BoolGuard guard(in_select);
-    bool one_dead = false;
+    bool already_sure = false;
     SelectRequest oldwant;
     
     sure_thing.zap();
     
     time_t alarmleft = alarm_remaining();
     if (alarmleft == 0)
-	return true; // alarm has rung
+	already_sure = true;
     
     oldwant = si.wants;
     
@@ -94,7 +94,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 
 	if (!s.isok())
 	{
-	    one_dead = true;
+	    already_sure = true;
 	    if (auto_prune)
 		i.xunlink();
 	    continue;
@@ -107,7 +107,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	si.msec_timeout = alarmleft;
     
     si.wants = oldwant;
-    return one_dead || !sure_thing.isempty();
+    return already_sure || !sure_thing.isempty();
 }
 
 

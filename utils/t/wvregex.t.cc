@@ -47,17 +47,17 @@ WVTEST_MAIN("registers")
 }
 
 
-WVTEST_MAIN("match start/end")
+WVTEST_MAIN("continuable_match")
 {
     WvRegex re("Wv(Stream|String)");
     int match_start, match_end;
     WvString reg;
     
-    WVPASS(re.match("This is WvStreams", match_start, match_end));
+    WVPASS(re.continuable_match("This is WvStreams", match_start, match_end));
     WVPASS(match_start == 8);
     WVPASS(match_end == 16);
     
-    WVPASS(re.match("WvString is part of WvStreams",
+    WVPASS(re.continuable_match("WvString is part of WvStreams",
     	    match_start, match_end, reg));
     WVPASS(match_start == 0);
     WVPASS(match_end == 8);
@@ -83,6 +83,6 @@ WVTEST_MAIN("all match arguments at once")
     int match_start, match_end;
     WvString reg;
     
-    WVPASS(re.match("WvStream", match_start, match_end, reg));
-    WVFAIL(re.match("WvStream", WvRegex::NOTBOL, match_start, match_end, reg));
+    WVPASS(re.continuable_match("WvStream", match_start, match_end, reg));
+    WVFAIL(re.continuable_match("WvStream", WvRegex::NOTBOL, match_start, match_end, reg));
 }

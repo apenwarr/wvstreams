@@ -62,7 +62,10 @@ WvString WvStringList::popstr()
     return s;
 }
 
+
+#ifndef _WIN32
 void WvStringList::split(WvStringParm s, const WvRegex &regex, int limit)
 {
     return ::strcoll_split(*this, s, regex, limit);
 }
+#endif

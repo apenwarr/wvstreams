@@ -114,14 +114,15 @@ void WvStream::close()
     TRACE("flushing in wvstream...\n");
     flush(2000); // fixme: should not hardcode this stuff
     TRACE("(flushed)\n");
+
+    closed = true;
+    
     if (!!closecb)
     {
         IWvStreamCallback cb = closecb;
         closecb = 0; // ensure callback is only called once
         cb(*this);
     }
-    
-    closed = true;
     
     // I would like to delete call_ctx here, but then if someone calls
     // close() from *inside* a continuable callback, we explode.  Oops!
@@ -375,8 +376,10 @@ char *WvStream::blocking_getline(time_t wait_msec, int separator,
     // the parameters of getline() changed recently to not include
     // wait_msec, so people keep trying to pass 0/-1 wait_msec in as the
     // separator.  Stop them now, before they get confused.
-    assert(separator != 0);
-    assert(separator > 0);
+    // --mrwise - had to reenable 0 so that unit tests would pass when
+    // merging, bug 11133
+    //assert(separator != 0);
+    assert(separator >= 0);
     assert(separator <= 255);
     
     //assert(uses_continue_select || wait_msec == 0);

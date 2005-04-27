@@ -192,5 +192,7 @@ WVTEST_MAIN("multiple generators - iterating with gaps")
         }
         WVPASSEQ(num_values, 2);
     }
+    
     delete i;
 }
+

@@ -18,7 +18,7 @@ TARGETS += libwvbase.so libwvbase.a
 TARGETS += libwvutils.so libwvutils.a
 TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
-TARGETS += wvtestmain.o
+TARGETS += wvtestmain.o libwvtest.a
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
 GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 
@@ -36,19 +36,6 @@ GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 #    CPPFLAGS += `php-config --includes`
 #  endif
 #endif
-
-ifneq ("$(with_ogg)", "no")
-  ifneq ("$(with_vorbis)", "no")
-    TARGETS += libwvoggvorbis.so libwvoggvorbis.a
-  endif
-  ifneq ("$(with_speex)", "no")
-    TARGETS += libwvoggspeex.so libwvoggspeex.a
-  endif
-endif
-
-ifneq ("$(with_fftw)", "no")
-  TARGETS += libwvfft.so libwvfft.a
-endif
 
 ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so libwvqt.a
@@ -130,10 +117,6 @@ ifeq ("$(enable_efence)", "yes")
 LDLIBS+=-lefence
 endif
 
-ifneq ("$(with_fam)", "no")
-  libwvstreams.so: -lfam
-endif
-
 ifneq ("$(with_bdb)", "no")
   libwvutils.so-LIBS+=-ldb
 endif
@@ -144,10 +127,6 @@ endif
 
 libwvbase.so: LIBS+=-lxplc-cxx
 
-ifneq ("$(with_fam)", "no")
-  libwvstreams.so: -lfam
-endif
-
 ifneq ("$(with_openslp)", "no")
   libwvstreams.so: -lslp
 endif
@@ -156,11 +135,7 @@ ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
 endif
 
-ifneq ("$(with_popt)", "no")
-  libwvutils.so: LIBS+=-lpopt
-endif
-
-LDLIBS := -lgcc $(LDLIBS) \
+LDLIBS := $(LDLIBS) \
 	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++ -lgcc_eh")
 
@@ -199,11 +174,17 @@ BASEOBJS= \
 	utils/wvbackslash.o \
 	utils/wvencoder.o \
 	utils/wvtclstring.o \
+	utils/wvstringcache.o \
 	uniconf/uniinigen.o \
 	uniconf/unigenhack.o \
+	uniconf/unilistiter.o \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o
+
+TESTOBJS = \
+	utils/wvtest.o \
+	utils/wvtest_filecountprefix.o
 
 # print the sizes of all object files making up libwvbase, to help find
 # optimization targets.
@@ -216,9 +197,9 @@ libwvbase.a libwvbase.so: $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
 libwvbase.a: uniconf/unigenhack_s.o
 libwvbase.so: uniconf/unigenhack.o
 
-libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS),$(call objects,utils))
+libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
 libwvutils.so: libwvbase.so
-libwvutils.so: -lz -lcrypt
+libwvutils.so: -lz -lcrypt -lpopt
 
 libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
@@ -231,17 +212,10 @@ libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 libuniconf.a: uniconf/uniconfroot.o
 libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
 
-libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
-libwvoggvorbis.so: -logg -lvorbis -lvorbisenc libwvutils.so libwvbase.so
-
-libwvoggspeex.a libwvoggspeex.so: $(call objects,oggspeex)
-libwvoggspeex.so: -logg -lspeex libwvutils.so libwvbase.so
-
-libwvfft.a libwvfft.so: $(call objects,fft)
-libwvfft.so: -lfftw -lrfftw libwvutils.so libwvbase.so
-
 libwvtelephony.a libwvtelephony.so: $(call objects,telephony)
 libwvtelephony.so: 
+
+libwvtest.a: wvtestmain.o $(TESTOBJS)
 
 ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
   libwvqt.so-LIBS+=-lqt-mt

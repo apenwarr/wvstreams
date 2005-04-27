@@ -51,6 +51,7 @@ LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
+LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
 
 #
 # Initial C compilation flags
@@ -61,6 +62,9 @@ C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
 CFLAGS += $(COPTS) $(C_AND_CXX_FLAGS) 
 CXXFLAGS += $(CXXOPTS) $(C_AND_CXX_FLAGS)
 LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
+
+# Default compiler we use for linking
+WVLINK_CC = gcc
 
 # FIXME: what does this do??
 XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" && echo " -lsupc++ -lgcc_eh")
@@ -265,7 +269,7 @@ define wvlink_ar
 endef
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
-	$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
+	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
 	$(if $(filter-out $(call wvsoname,$1),$1),$(call wvlns,$1,$(call wvsoname,$1)))
 endef
 
@@ -292,7 +296,7 @@ wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2
 %.moc: %.h;	moc -o $@ $<
 
 %: %.o;		$(call wvlink,$@,$^) 
-%.t: %.t.o;	$(call wvlink,$@,$(WVSTREAMS_SRC)/wvtestmain.o $(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVUTILS))
+%.t: %.t.o;	$(call wvlink,$@,$(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVTEST))
 %.a %.libs:;	$(call wvlink_ar,$@,$^)
 %.so:;		$(call wvlink_so,$@,$^)
 
@@ -400,7 +404,7 @@ distclean: clean
 PKGNAME := $(notdir $(shell pwd))
 PPKGNAME := $(shell echo $(PKGNAME) | tr a-z A-Z | tr - _)
 PKGVER := $(shell test -f wvver.h \
-	    && cat wvver.h | sed -ne "s/\#define $(PPKGNAME)_VER_STRING.*\"\([^ ]*\).*\"/\1/p")
+	    && cat wvver.h | sed -ne "s/\#define $(PPKGNAME)_VER_STRING.*\"\([^ ]*\).*\".*/\1/p")
 ifneq ($(PKGVER),)
 PKGDIR := $(PKGNAME)-$(PKGVER)
 else

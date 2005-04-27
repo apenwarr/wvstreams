@@ -8,11 +8,13 @@
 
 #include "wvfdstream.h"
 #include "wvfile.h"
+#include "wvfileutils.h"
 #include "wvistreamlist.h"
 #include "wvlog.h"
 #include "wvsocketpair.h"
 #include "wvstreamclone.h"
 #include "wvtest.h"
+#include "wvfileutils.h"
 
 //FIXME: absolutely simple simple test right now, built from closeflushtest
 // BEGIN closeflushtest.cc definition
@@ -280,7 +282,7 @@ public:
 WVTEST_MAIN("Test undo_force_select() on a WvFDStream")
 {
     // create our test file
-    WvString testfile("/tmp/wvfdstream-testfile-%s", getpid());
+    WvString testfile = wvtmpfilename("wvfdstream-testfile-");
     WvFile x(testfile, O_CREAT|O_RDWR, 0666);
     x.print("moo\n");
     x.print("mow\n");

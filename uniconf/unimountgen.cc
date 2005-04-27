@@ -8,9 +8,9 @@
 #include "wvmoniker.h"
 #include "wvhash.h"
 #include "wvstrutils.h"
+#include "unilistiter.h"
+#include "wvstringtable.h"
 #include <assert.h>
-
-DeclareWvTable(WvString);
 
 /***** UniMountGen *****/
 
@@ -122,8 +122,9 @@ IUniConfGen *UniMountGen::mount(const UniConfKey &key,
     IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
-
-    // assert(gen && "Moniker doesn't get us a generator!");
+#if DEBUG
+    assert(gen && "Moniker doesn't get us a generator!");
+#endif
     if (gen && !gen->exists("/"))
         gen->set("/", "");
     return gen;
@@ -270,9 +271,7 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 	}
         WvStringTable::Sorter s(t, &::wvstrcmp);
         for (s.rewind(); s.next();)
-        {
-		it->keys.append(new WvString(s()), true);
-        }
+	    it->add(*s);
 
 	return it;
     }

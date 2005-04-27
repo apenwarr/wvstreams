@@ -44,14 +44,12 @@ UniClientConn::UniClientConn(IWvStream *_s, WvStringParm dst) :
     log(WvString("UniConf to %s", dst.isnull() && _s->src() ? *_s->src() : WvString(dst)),
     WvLog::Debug5), closed(false), payloadbuf("")
 {
-    WvIStreamList::globallist.append(this, false);
     log("Opened\n");
 }
 
 
 UniClientConn::~UniClientConn()
 {
-    WvIStreamList::globallist.unlink(this);
     close();
 }
 

@@ -6,21 +6,11 @@
 #include "uniclientgen.h"
 #include "wvfork.h"
 #include "wvunixsocket.h"
+#include "wvfileutils.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
-
-static WvString get_sockname()
-{
-    int fd;
-    WvString sockname = "/tmp/sockXXXXXX";
-    if ((fd = mkstemp(sockname.edit())) == (-1))
-        return "";
-    close(fd);
-
-    return sockname;
-}
 
 static int delta_count;
 static void callback(const UniConf &, const UniConfKey &)
@@ -35,7 +25,7 @@ WVTEST_MAIN("deltas")
 
     signal(SIGPIPE, SIG_IGN);
 
-    WvString sockname = get_sockname();
+    WvString sockname = wvtmpfilename("uniclientgen.t-sock");
 
     pid_t child = fork();
     WVPASS(child >= 0);
@@ -93,6 +83,8 @@ WVTEST_MAIN("deltas")
         }
         WVPASS(rv == child);
     }
+    
+    unlink(sockname);
 }
 
 

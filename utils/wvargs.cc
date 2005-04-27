@@ -4,8 +4,6 @@
  *
  * WvStreams interface for popt argument processing
  */
-#include "wvautoconf.h"
-#ifdef WITH_POPT
 
 #include "wvargs.h"
 
@@ -16,8 +14,8 @@ class WvArgsOption
     public:
     	    
     	char short_option;
-    	const char *long_option;
-    	const char *desc;
+    	WvString long_option;
+    	WvString desc;
         	    
     	WvArgsOption(char _short_option,
     	    	WvStringParm _long_option,
@@ -180,7 +178,7 @@ class WvArgsArgOption : public WvArgsOption
 {
     private:
     	    
-     	WvStringParm arg_desc;
+     	WvString arg_desc;
         	    
     public:
     	    
@@ -649,7 +647,7 @@ void WvArgs::remove_option(WvStringParm long_option)
     for (i.rewind(); i.next(); )
     {
         if (i->long_option && (long_option == i->long_option))
-            i->long_option = NULL;
+            i->long_option = WvString::null;
     }
 }
 
@@ -674,5 +672,3 @@ void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
     if (multiple)
 	args_desc.append("...");
 }
-
-#endif // WITH_POPT

@@ -66,14 +66,20 @@ void WvTest::alarm_handler(int)
 }
 
 
-WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
+static const char *pathstrip(const char *filename)
 {
     const char *cptr;
-    idstr = _idstr;
-    cptr = strrchr(idstr, '/');
-    if (cptr) idstr = cptr + 1;
-    cptr = strrchr(idstr, '\\');
-    if (cptr) idstr = cptr + 1;
+    cptr = strrchr(filename, '/');
+    if (cptr) filename = cptr + 1;
+    cptr = strrchr(filename, '\\');
+    if (cptr) filename = cptr + 1;
+    return filename;
+}
+
+
+WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
+{
+    idstr = pathstrip(_idstr);
     descr = _descr;
     main = _main;
     next = NULL;
@@ -163,14 +169,7 @@ int WvTest::run_all(const char * const *prefixes)
 
 void WvTest::start(const char *file, int line, const char *condstr)
 {
-    // strip path from filename
-    const char *file2 = strrchr(file, '/');
-    if (file2)
-	file2 = strrchr(file, '\\');
-    if (!file2)
-	file2 = file;
-    else
-	file2++;
+    const char *file2 = pathstrip(file);
     
     char *condstr2 = strdup(condstr);
     for (char *cptr = condstr2; *cptr; cptr++)

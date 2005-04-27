@@ -6,10 +6,12 @@ PORTS=$PWD/../../ports
 	CPPFLAGS="\
 		-I$PORTS/xplc/build/xplc/include \
 		-I$PORTS/zlib/build/zlib \
-		-I$PORTS/openssl/build/openssl/include" \
+		-I$PORTS/openssl/build/openssl/include \
+		-I$PORTS/popt/build/popt-1.7/" \
 	LDFLAGS="\
 		-L$PORTS/xplc/build/xplc \
 		-L$PORTS/zlib/build/zlib \
-		-L$PORTS/openssl/build/openssl" \
+		-L$PORTS/openssl/build/openssl \
+		-L$PORTS/popt/build/popt-1.7/.libs" \
 	LIBS="-lwsock32 -lgdi32" \
 	$@

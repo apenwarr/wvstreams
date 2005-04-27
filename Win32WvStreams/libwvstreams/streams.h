@@ -7,6 +7,8 @@ extern "C" {
     int close(int fd);
     int read(int fd, void *buf, size_t count);
     int write(int fd, const void *buf, size_t count);
+
+    unsigned int sleep(unsigned int seconds); // does this belong here?
 }
 
 #ifndef __GNUC__

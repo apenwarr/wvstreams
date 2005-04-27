@@ -3,6 +3,7 @@
 #include "wvtcp.h"
 #include "strutils.h"
 #include "wvx509.h"
+#include "wvargs.h"
 #include <signal.h>
 
 volatile bool want_to_die = false;
@@ -23,9 +24,18 @@ int main(int argc, char **argv)
     
     WvLog log("ssltest", WvLog::Info);
     log("SSL Test Starting...\n");
+
+    WvArgs args;
+    args.add_optional_arg("HOST:PORT", false);
+    
+    WvStringList remaining_args;
+    if (!args.process(argc, argv, &remaining_args))
+        return 1;
     
     // For this test, we default connect to mars's POP3-SSL server...
-    WvString target(argc >= 2 ? argv[1] : "mars.net-itech.com:995");
+    WvString target;
+    if (!(target = remaining_args.popstr()))
+        target = "mars.net-itech.com:995";
     log("Connecting to %s...\n", target);
     
     WvSSLStream cli(new WvTCPConn(target), NULL);

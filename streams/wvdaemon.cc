@@ -10,16 +10,24 @@
 #include "wvdaemon.h"
 
 #include "wvlinklist.h"
+#ifndef _WIN32
 #include "wvsyslog.h"
 #include "wvcrash.h"
+#include "wvfile.h"
+#include "wvatomicfile.h"
 
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#else
+#include "wvlogrcv.h"
+#endif
 
 DeclareWvList(WvDaemon);
 static WvDaemonList daemons;
+
+#ifndef _WIN32
 
 static void sighup_handler(int signum)
 {
@@ -52,18 +60,24 @@ static void sigquit_handler(int signum)
     exit(1);
 }
 
+#endif // _WIN32
+
 WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
         WvDaemonCallback _start_callback,
         WvDaemonCallback _run_callback,
         WvDaemonCallback _stop_callback,
         void *_ud)
     : name(_name), version(_version),
+#ifndef _WIN32
+            pid_file("/var/run/%s.pid", _name),
+#endif
             log(_name, WvLog::Debug),
+            log_level(WvLog::Info),
+            syslog(false),
             start_callback(_start_callback),
             run_callback(_run_callback),
             stop_callback(_stop_callback),
             ud(_ud),
-            log_level(WvLog::Info),
             daemonize(false)
 {
     args.add_option('q', "quiet",
@@ -72,10 +86,12 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
     args.add_option('v', "verbose",
             "Increase log level (can be used multiple times)",
             WvArgs::NoArgCallback(this, &WvDaemon::inc_log_level));
+#ifndef _WIN32
     args.add_set_bool_option('d', "daemonize",
             "Fork into background and return (implies -s)", daemonize);
     args.add_set_bool_option('s', "syslog",
             "Write log entries to syslog", syslog);
+#endif
     args.add_option('V', "version",
             "Display version and exit",
             WvArgs::NoArgCallback(this, &WvDaemon::display_version_and_exit));
@@ -83,6 +99,7 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
 
 int WvDaemon::run(const char *argv0)
 {
+#ifndef _WIN32
     if (daemonize)
     {
         pid_t pid = ::fork();
@@ -109,28 +126,28 @@ int WvDaemon::run(const char *argv0)
                 
                 ::umask(0);
                 
-                int null_fd = ::open("/dev/null", O_RDWR);
-                if (null_fd == -1)
+                int null_fd;
+                do
                 {
-                    log(WvLog::Error, "Failed to open /dev/null: %s\n",
-                            strerror(errno));
-                    _exit(1);
-                }
+                    null_fd = ::open("/dev/null", O_RDWR);
+                    if (null_fd == -1)
+                    {
+                        log(WvLog::Error, "Failed to open /dev/null: %s\n",
+                                strerror(errno));
+                        _exit(1);
+                    }
+                } while (null_fd == 0 || null_fd == 1 || null_fd == 2);
                 
-                if (null_fd != 0 && (::close(0)
-                            || ::dup2(null_fd, 0) == -1)
-                        || null_fd != 1 && (::close(1)
-                                || ::dup2(null_fd, 1) == -1)
-                        || null_fd != 2 && (::close(2)
-                                || ::dup2(null_fd, 2) == -1)
-                        || null_fd != 0 && null_fd != 1 && null_fd != 2
-                                && ::close(null_fd))
+                if (::dup2(null_fd, 0) == -1
+                        || ::dup2(null_fd, 1) == -1
+                        || ::dup2(null_fd, 2) == -1)
                 {
                     // Can no longer write to syslog...
-                    log(WvLog::Error, "Failed to close/dup2(0,1,2): %s\n",
+                    log(WvLog::Error, "Failed to dup2(null_fd, (0|1|2)): %s\n",
                             strerror(errno));
                     _exit(1);
                 }
+                ::close(null_fd);
                 
                 _run(argv0);
             }
@@ -141,14 +158,20 @@ int WvDaemon::run(const char *argv0)
         return 0;
     }
     else
+#else
+    if (1)
+#endif
     {
         WvLogConsole console_log(STDOUT_FILENO, log_level);
+#ifndef _WIN32
         if (syslog)
         {
             WvSyslog syslog(name, false);
             return _run(argv0);
         }
-        else return _run(argv0);
+        else 
+#endif
+	    return _run(argv0);
     }
 }
 
@@ -162,13 +185,47 @@ int WvDaemon::run(int argc, char **argv)
 
 int WvDaemon::_run(const char *argv0)
 {
+#ifndef _WIN32
     wvcrash_setup(argv0);
 
+    if (!!pid_file)
+    {
+        // FIXME: this is racy!
+        
+        // First, make sure we aren't already running
+        WvFile old_pid_fd(pid_file, O_RDONLY);
+        if (old_pid_fd.isok())
+        {
+            WvString line = old_pid_fd.getline(0);
+            if (!!line)
+            {
+                pid_t old_pid = line.num();
+                if (old_pid > 0 && (kill(old_pid, 0) == 0 || errno == EPERM))
+                {
+                    log(WvLog::Error,
+                            "%s is already running (pid %s); exiting\n",
+                            name, old_pid);
+                    return 1;
+                }
+            }
+        }
+        old_pid_fd.close();
+
+        // Now write our new PID file
+        WvAtomicFile pid_fd(pid_file, 0666);
+        pid_fd.print("%s\n", getpid());
+        if (!pid_fd.isok())
+            log(WvLog::Warning, "Failed to write PID file %s: %s\n",
+                    pid_file, pid_fd.errstr());
+        pid_fd.close();
+    }
+#endif
     log(WvLog::Notice, "Starting\n");
     log(WvLog::Info, "%s version %s\n", name, version);
 
     daemons.append(this, false);
-    
+
+#ifndef _WIN32    
     if (daemonize)
         signal(SIGINT, SIG_IGN);
     else
@@ -176,20 +233,28 @@ int WvDaemon::_run(const char *argv0)
     signal(SIGTERM, sigterm_handler);
     signal(SIGQUIT, sigquit_handler);
     signal(SIGHUP, sighup_handler);
+#endif
 
     _want_to_die = false;
     while (!want_to_die())
     {
         _want_to_restart = false;
 
-        start_callback(*this, ud);
+        if (!!start_callback)
+	    start_callback(*this, ud);
+
+	if (want_to_die())
+	    continue;
 
         run_callback(*this, ud);
+	if (want_to_die())
+	    continue;
 
-        stop_callback(*this, ud);
+        if (!!stop_callback) stop_callback(*this, ud);
     }
 
     daemons.unlink(this);
+#ifndef _WIN32
     if (daemons.count() == 0)
     {
         signal(SIGHUP, SIG_DFL);
@@ -197,9 +262,14 @@ int WvDaemon::_run(const char *argv0)
         signal(SIGINT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);
     }
-
+#endif
     log(WvLog::Notice, "Exiting\n");
-    
+
+#ifndef _WIN32    
+    if (!!pid_file)
+        ::unlink(pid_file);
+#endif
+
     return 0;
 }
 

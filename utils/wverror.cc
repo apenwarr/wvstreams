@@ -10,12 +10,12 @@
 #ifdef _WIN32
 #include "windows.h"
 
-struct WsErrMap {
+struct WvErrMap {
     int num;
     const char *str;
 };
 
-static WsErrMap wserrmap[] = {
+static WvErrMap wverrmap[] = {
     { WSAEINTR, "Interrupted" },
     { WSAEBADF, "Bad file descriptor" },
     { WSAEACCES, "Access denied" },
@@ -69,10 +69,10 @@ static WsErrMap wserrmap[] = {
     { 0, NULL }
 };
 
-const char *winsock_errmap(int errnum)
+static const char *wv_errmap(int errnum)
 {
     
-    for (WsErrMap *i = wserrmap; i->num; i++)
+    for (WvErrMap *i = wverrmap; i->num; i++)
 	if (i->num == errnum)
 	    return i->str;
     return NULL;
@@ -83,6 +83,44 @@ const char *winsock_errmap(int errnum)
 WvErrorBase::~WvErrorBase()
 {
     // nothing special
+}
+
+
+// win32's strerror() function is incredibly weak, so we'll provide a better
+// one.
+WvString WvErrorBase::strerror(int errnum)
+{
+    assert(errnum >= 0);
+
+#ifndef _WIN32
+    return ::strerror(errnum);
+#else
+    const char *wverr = wv_errmap(errnum);
+    if (wverr)
+        return wverr;
+    else if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
+    {
+        // otherwise, an unrecognized winsock error: try getting the error
+        // message from win32.
+        char msg[4096];
+        const HMODULE module = GetModuleHandle("winsock.dll");
+        DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+    			 module, errnum, 0, msg, sizeof(msg), 0);
+        if (result)
+    	    return msg;
+	    
+	DWORD e = GetLastError();
+	return WvString("Unknown format %s for error %s", e, errnum);
+    }
+    else
+    {
+        const char *str = ::strerror(errnum);
+        if (!strcmp(str, "Unknown error"))
+    	    return WvString("Unknown win32 error #%s", errnum);
+	else
+	    return str;
+    }
+#endif
 }
 
 
@@ -98,30 +136,7 @@ WvString WvErrorBase::errstr() const
     else
     {
 	if (!!errstring) return errstring;
-#ifndef _WIN32
-	return strerror(errnum);
-#else
-	if (errnum >= WSABASEERR && errnum < WSABASEERR+2000)
-	{
-	    const char *wserr = winsock_errmap(errnum);
-	    if (wserr)
-		return wserr;
-	    
-	    // otherwise, a *really* weird error: try getting the error
-	    // message from win32.
-	    char msg[4096];
-	    const HMODULE module = GetModuleHandle("winsock.dll");
-	    DWORD result = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
-				 module, errnum, 0, msg, sizeof(msg), 0);
-	    if (result)
-		return msg;
-	    
-	    DWORD e = GetLastError();
-	    return WvString("Unknown format %s for error %s", e, errnum);
-	}
-	else
-	    return strerror(errnum);
-#endif
+	return WvErrorBase::strerror(errnum);
     }
 }
 

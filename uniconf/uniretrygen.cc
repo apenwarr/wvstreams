@@ -174,6 +174,11 @@ WvString UniRetryGen::get(const UniConfKey &key)
     	result = UniFilterGen::get(key);
     	DPRINTF("UniRetryGen::get(%s) returns %s\n", key.cstr(), result.cstr());
     }
+    else if (key == "")
+    {
+        result = "";
+    	DPRINTF("UniRetryGen::get(%s) returns %s because it is root key\n", key.cstr(), result.cstr());        
+    }
     else
     {
     	DPRINTF("UniRetryGen::get(%s): !isok()\n", key.cstr());

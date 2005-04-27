@@ -966,11 +966,11 @@ size_t WvLinkedBufferStore::optpeekable(int offset) const
 {
     // search for the buffer that contains the offset
     WvBufStoreList::Iter it(list);
-    offset = search(it, offset);
+    int newoffset = search(it, offset);
     WvBufStore *buf = it.ptr();
     if (!buf)
         return 0; // out of bounds
-    return buf->optpeekable(offset);
+    return buf->optpeekable(newoffset);
 }
 
 
@@ -1050,12 +1050,12 @@ WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
     // allocate a new buffer if there is not enough room to coalesce
     size_t needed = count - availused;
     size_t availfree = buf->free();
+    size_t mustskip = 0;
     if (availfree < needed)
     {
         // if this is the first buffer, then we need to unget as
         // much as possible to ensure it does not get discarded
         // during the coalescing phase
-        size_t mustskip = 0;
         if (buf == list.first() && totalused != 0)
         {
             // use ungettable() instead of buf->ungettable() because we might
@@ -1067,14 +1067,6 @@ WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
 
         needed = count + mustskip;
         buf = newbuffer(needed);
-
-        // make the new buffer ready for unget 
-        if (mustskip != 0)
-	{
-	    buf->alloc(mustskip);
-            buf->skip(mustskip);
-	    assert(buf->ungettable() >= mustskip);
-	}
 
         // insert the buffer before the previous link
         list.add_after(it.prev, buf, true);
@@ -1093,7 +1085,10 @@ WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
             buf->merge(*itbuf, chunk);
             needed -= chunk;
             if (needed == 0)
+            {
+                buf->skip(mustskip);
                 return buf;
+            }
         }
         do_xunlink(it); // buffer is now empty
     }

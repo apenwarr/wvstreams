@@ -12,7 +12,9 @@
 #include "wvfork.h"
 #include <time.h>
 #include <sys/types.h>
+#ifndef _WIN32
 #include <sys/wait.h>
+#endif
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 
@@ -48,12 +50,18 @@ void WvLogFileBase::_mid_line(const char *str, size_t len)
     WvFile::write(str, len);
 }
 
+#ifdef _WIN32
+#define TIME_FORMAT "%b %d %H:%M:%S" // timezones in win32 look stupid
+#else
+#define TIME_FORMAT "%b %d %H:%M:%S %Z"
+#endif
+
 void WvLogFileBase::_make_prefix()
 {
     time_t timenow = wvtime().tv_sec;
     struct tm* tmstamp = localtime(&timenow);
     char timestr[30];
-    strftime(&timestr[0], 30, "%b %d %T %Z", tmstamp);
+    strftime(&timestr[0], 30, TIME_FORMAT, tmstamp);
 
     prefix = WvString("%s: %s<%s>: ", timestr, appname(last_source),
         loglevels[last_level]);

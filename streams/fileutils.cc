@@ -11,7 +11,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <utime.h>
+#ifndef _WIN32
 #include <fnmatch.h>
+#endif
 
 bool mkdirp(WvStringParm _dir, int create_mode)
 {
@@ -27,14 +29,22 @@ bool mkdirp(WvStringParm _dir, int create_mode)
     while ((p = strchr(++p, '/')))
     {
         *p = '\0';
+#ifndef _WIN32
         if (access(dir.cstr(), X_OK) && mkdir(dir.cstr(), create_mode))
+#else
+        if (access(dir.cstr(), X_OK) && mkdir(dir.cstr()))
+#endif
             return false;
         *p = '/';
     }
 
     // You're probably creating the directory to write to it? Maybe this should
     // look for R_OK&X_OK instead of X_OK&W_OK...
+#ifndef _WIN32
     return  !(access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr(), create_mode));
+#else
+    return  !(access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr()));
+#endif
 }
 
 
@@ -102,6 +112,7 @@ bool samedate(WvStringParm dir1, WvStringParm dir2, WvStringParm relname)
 }
 
 
+#ifndef _WIN32
 // runs fnmatch against everything in patterns.  We also interpret 
 // CVS-style '!' patterns, which makes us very fancy.
 bool wvfnmatch(WvStringList& patterns, WvStringParm name, int flags)
@@ -178,4 +189,36 @@ int wvchmod(const char *path, mode_t mode)
     close(filedes);
 
     return retval;
+}
+#endif
+
+
+FILE *wvtmpfile()
+{
+#ifndef _WIN32 // tmpfile() is really the best choice, when it works
+    return tmpfile();
+#else
+    // in win32, tmpfile() creates files in c:\...
+    // and that directory isn't always writable!  Idiots.
+    char *name = _tempnam("c:\\temp", "wvtmp");
+    FILE *f = fopen(name, "wb+");
+    free(name);
+    return f;
+#endif
+}
+
+
+WvString wvtmpfilename(WvStringParm prefix)
+{
+#ifndef _WIN32 // tmpfile() is really the best choice, when it works
+    WvString tmpname("/tmp/%sXXXXXX", prefix);
+    int fd;
+    if ((fd = mkstemp(tmpname.edit())) == (-1))
+        return WvString();    
+    close(fd);
+#else
+    WvString tmpname(_tempnam("c:\\temp", prefix.cstr()));
+#endif
+
+    return tmpname;
 }

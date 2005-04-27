@@ -55,7 +55,7 @@ WvCRLMgr::Valid  WvCRLMgr::validate(WvX509Mgr *cert)
     assert(cacert);
     
     if (!cert)
-	return ERROR;
+	return CRLERROR;
     
     if (!(cert->get_issuer() == cacert->get_subject()))
 	return NOT_THIS_CA;

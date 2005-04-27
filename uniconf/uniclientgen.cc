@@ -13,6 +13,7 @@
 #include "wvresolver.h"
 #include "wvmoniker.h"
 #include "wvsslstream.h"
+#include "unilistiter.h"
 #include "wvlinkerhack.h"
 
 WV_LINK(UniClientGen);
@@ -105,12 +106,14 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
     conn = new UniClientConn(stream, dst);
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
+    WvIStreamList::globallist.append(conn, false, "uniclientconn-via-gen");
 }
 
 
 UniClientGen::~UniClientGen()
 {
     conn->writecmd(UniClientConn::REQ_QUIT, "");
+    WvIStreamList::globallist.unlink(conn);
     WVRELEASE(conn);
 }
 
@@ -190,23 +193,15 @@ UniClientGen::Iter *UniClientGen::do_iterator(const UniConfKey &key,
 					      bool recursive)
 {
     assert(!result_list);
-    result_list = new KeyValList;
+    result_list = new UniListIter(this);
     conn->writecmd(UniClientConn::REQ_SUBTREE,
 		   WvString("%s %s", wvtcl_escape(key), WvString(recursive)));
 
     if (do_select())
     {
-	ListIter *it = new ListIter(this);
-	KeyValList::Iter i(*result_list);
-	for (i.rewind(); i.next(); )
-	{
-	    it->keys.append(new WvString(i->key), true);
-	    it->values.append(new WvString(i->val), true);
-	}
-	
-	delete result_list;
+	ListIter *it = result_list;
 	result_list = NULL;
-        return it;
+	return it;
     }
     else
     {
@@ -300,7 +295,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
                 if (!key.isnull() && !value.isnull())
                 {
                     if (result_list)
-                        result_list->append(new KeyVal(key, value), true);
+			result_list->add(key, value);
                 }
                 break;
             }

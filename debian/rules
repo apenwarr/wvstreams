@@ -10,18 +10,18 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+# Don't rebuild the configure script
+export WE_ARE_DIST=1
+
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-base=libwvstreams4.0
+base=libwvstreams4.1
 # This is used the wvstreams makefile to set the .so links
 PKG=`pwd`/debian/${base}
-PKG_OGG=`pwd`/debian/${base}-ogg
 PKG_QT=`pwd`/debian/${base}-qt
-PKG_SPEEX=`pwd`/debian/${base}-speex
-PKG_FFT=`pwd`/debian/${base}-fft
 PKGDEV=`pwd`/debian/libwvstreams-dev
 PKGDOC=`pwd`/debian/${base}-doc
 DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc
@@ -49,8 +49,7 @@ config.status: configure
 		--infodir=\$${prefix}/share/info \
 		--sysconfdir=/etc --localstatedir=/var \
 		--disable-debug --disable-verbose \
-		--with-qt --with-vorbis --with-speex --with-openslp \
-		--with-fftw
+		--with-qt --with-openslp
 
 
 #Architecture
@@ -167,24 +166,21 @@ binary-common:
 #       dh_installinfo
 	dh_installman
 	dh_link
-	dh_strip
+	dh_strip --exclude=libwvtest.a
 	dh_compress
 	dh_fixperms
 #       dh_perl
 #       dh_python
-	dh_makeshlibs -plibwvstreams4.0-base \
-		      -plibwvstreams4.0-extras \
-		      -plibwvstreams4.0-qt \
-		      -plibwvstreams4.0-fft \
-		      -plibwvstreams4.0-speex \
-		      -plibwvstreams4.0-vorbis \
-		      -plibuniconf4.0 \
+	dh_makeshlibs -plibwvstreams4.1-base \
+		      -plibwvstreams4.1-extras \
+		      -plibwvstreams4.1-qt \
+		      -plibuniconf4.1 \
 	dh_installdeb
 	dh_installdeb
-	dh_shlibdeps -L libwvstreams4.0-base \
-		     -L libwvstreams4.0-extras \
-		     -L libuniconf4.0 \
-		     -l debian/libwvstreams4.0-base/usr/lib:debian/libwvstreams4.0-extras/usr/lib:debian/libuniconf4.0/usr/lib
+	dh_shlibdeps -L libwvstreams4.1-base \
+		     -L libwvstreams4.1-extras \
+		     -L libuniconf4.1 \
+		     -l debian/libwvstreams4.1-base/usr/lib:debian/libwvstreams4.1-extras/usr/lib:debian/libuniconf4.1/usr/lib
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

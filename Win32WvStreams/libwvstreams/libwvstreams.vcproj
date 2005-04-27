@@ -62,7 +62,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=".\;..\;..\..\include"
+				AdditionalIncludeDirectories=".;..\;..\..\include;..\..\..\..\ports\xplc\build\xplc\include;..\..\..\..\ports\zlib\build\zlib;..\..\..\openssl\inc32"
 				PreprocessorDefinitions="strcasecmp=_stricmp;strncasecmp=_strnicmp;WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				RuntimeLibrary="2"
 				TreatWChar_tAsBuiltInType="TRUE"
@@ -258,11 +258,6 @@
 			</File>
 			<File
 				RelativePath="..\..\streams\wvlogfile.cc">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\streams\wvloopback.cc">

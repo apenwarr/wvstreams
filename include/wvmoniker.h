@@ -9,8 +9,8 @@
 #ifndef __WVMONIKER_H
 #define __WVMONIKER_H
 
-#include "wvxplc.h"
 #include "wvstring.h"
+#include "wvxplc.h"
 
 class WvMonikerRegistry;
 

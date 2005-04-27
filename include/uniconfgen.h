@@ -7,13 +7,14 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
-#include "wvxplc.h"
 #include "uniconfkey.h"
 #include "wvcallback.h"
 #include "wvlinklist.h"
 #include "uniconfpair.h"
+#include "wvxplc.h"
 
 class UniConfGen;
+class UniListIter;
 
 /**
  * The callback type for signalling key changes from a UniConfGen.
@@ -154,7 +155,7 @@ public:
     class NullIter;
     
     /** An iterator over a constant list of keys (see below) */
-    class ListIter;
+    typedef ::UniListIter ListIter;
 
     /**
      * Returns an iterator over the children of the specified key.
@@ -353,32 +354,5 @@ public:
     virtual WvString value() const { return WvString(); }
 };
 
-
-/**
- * An iterator that iterates through a constant list of keys.  This is
- * handy if you know the list of keys is relatively short, and you don't
- * want to write your own iterator and/or you know your own object state
- * might change during iteration, so you would have to pregenerate the list
- * of keys anyway.
- * 
- * The creator of the iter is responsible for filling the 'keys' and 'values'
- * lists.  If the 'values' list runs out of values before 'keys', the
- * remaining values will be retrieved from the given generator instead.
- */
-class UniConfGen::ListIter : public UniConfGen::Iter
-{
-public:
-    IUniConfGen *gen;
-    WvList<WvString> keys, values;
-    WvList<WvString>::Iter ki, vi;
-    
-    ListIter(IUniConfGen *_gen);
-
-    /***** Overridden members *****/
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-    virtual WvString value() const;
-};
 
 #endif // __UNICONFGEN_H
