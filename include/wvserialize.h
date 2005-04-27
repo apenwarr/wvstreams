@@ -21,7 +21,7 @@
 # endif
 #include <netinet/in.h>
 #else
-#if 0 // FIXME: WLACH: This seems to break stuff with mingw32 3.4.2-- still needed?
+#if _MSC_VER
 typedef __int8 int8_t;
 typedef unsigned __int8 uint8_t;
 typedef __int16 int16_t;

@@ -12,6 +12,7 @@
 #include "wvbufstream.h"
 #include "wvtcp.h"
 #include "strutils.h"
+#include "wvwin32-sanitize.h"
 
 bool WvHttpStream::global_enable_pipelining = true;
 int WvUrlStream::max_requests = 100;

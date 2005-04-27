@@ -1,9 +1,9 @@
 #!/bin/bash
 PORTS=$PWD/../../ports
-./configure --host=i586-mingw32msvc \
+./configure \
 	--enable-exceptions \
 	--with-xplc=$PORTS/xplc/build/xplc \
-	CPPFLAGS="\
+	CPPFLAGS="-mno-cygwin \
 		-I$PORTS/xplc/build/xplc/include \
 		-I$PORTS/zlib/build/zlib \
 		-I$PORTS/openssl/build/openssl/include \

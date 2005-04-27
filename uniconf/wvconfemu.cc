@@ -567,4 +567,3 @@ WvConfigSectionEmu *WvConfEmu::Iter::ptr() const
 {
     return conf[iter->key()];
 }
-

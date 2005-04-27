@@ -14,7 +14,7 @@ WvString inigen(WvStringParm content)
 {
     WvString ininame = wvtmpfilename("inigen_test.ini");
     WvFile file;
-    WVPASS(file.open(ininame, O_RDWR));
+    WVPASS(file.open(ininame, O_CREAT|O_RDWR));
     file.write(content);
     WVPASS(file.isok());
 

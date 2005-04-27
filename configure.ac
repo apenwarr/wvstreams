@@ -657,6 +657,9 @@ if test "$VALGRIND" != ""; then
     VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
 
+# Compiler is always posix if invoking this configure script
+COMPILER_STANDARD=posix
+
 AC_SUBST(enable_debug)
 AC_SUBST(enable_devel)
 AC_SUBST(enable_efence)
@@ -691,6 +694,8 @@ AC_SUBST(build_xplc)
 AC_SUBST(xplc_pc)
 
 AC_SUBST(ac_libs)
+
+AC_SUBST(COMPILER_STANDARD)
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc

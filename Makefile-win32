@@ -4,22 +4,13 @@ WVSTREAMS=.
 
 include $(WVSTREAMS)/wvrules.mk
 include vars.mk
+include vars-$(COMPILER_STANDARD).mk
 
-all: fake-libs wvtestmain.exe
-
-%.exe: %
-	rm -f $@
-	ln -s $(shell basename $<) $@
+all: fake-libs
 	
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
-
-	
-LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 \
-	$(with_xplc)/libxplc.a -lpopt -lstdc++
-
--lxplc -lxplc-cxx: ;
 
 default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni
 

@@ -164,14 +164,14 @@ int WvProtoStream::tokanal(const Token &t, char **lookup,
     assert(lookup);
     
     char **i;
-    
+
     for (i = lookup; *i; i++)
     {
 	if ( (!case_sensitive && !strcasecmp(t.data, *i))
 	  || ( case_sensitive && !strcmp(t.data, *i)) )
 	    return i - lookup;
     }
-    
+
     return -1;
 }
 

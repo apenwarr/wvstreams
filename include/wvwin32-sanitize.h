@@ -1,6 +1,7 @@
 #ifndef __WIN32_SANITIZE_H
 #define __WIN32_SANITIZE_H
 
+#ifdef _WIN32
 #ifdef __GNUC__
 #include "wvautoconf.h"
 #endif
@@ -10,6 +11,8 @@
 #include <signal.h>
 #include <winsock.h>
 #include <malloc.h>
+#include <stdio.h>
+#include <string.h>
 
 #ifndef _SYS_GUID_OPERATOR_EQ_
 #define _SYS_GUID_OPERATOR_EQ_ 1
@@ -46,5 +49,7 @@ static void *_wvinitialize_local = _wvinitialize;
 #endif
 
 // #define _alloca(x) alloca(x)
+
+#endif // _WIN32
 
 #endif // __WIN32_SANITIZE_H

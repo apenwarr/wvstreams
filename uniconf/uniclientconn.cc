@@ -120,6 +120,7 @@ UniClientConn::Command UniClientConn::readcmd()
         for (int i = 0; i < NUM_COMMANDS; ++i)
             if (strcasecmp(cmdinfos[i].name, cmd.cstr()) == 0)
                 return Command(i);
+
         return INVALID;
     }
 }

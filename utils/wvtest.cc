@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include <ctype.h>
 #ifdef _WIN32
+#include "wvwin32-sanitize.h"
 #include <io.h>
 #include <direct.h>
 #else

@@ -162,6 +162,9 @@ int WvDaemon::run(const char *argv0)
     if (1)
 #endif
     {
+#ifdef _MSC_VER
+	int STDOUT_FILENO = 0;
+#endif
         WvLogConsole console_log(STDOUT_FILENO, log_level);
 #ifndef _WIN32
         if (syslog)

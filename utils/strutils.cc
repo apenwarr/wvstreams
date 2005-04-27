@@ -143,7 +143,7 @@ WvString spacecat(WvStringParm a, WvStringParm b, char sep, bool onesep)
     }
 
     // Now copy the second half of the string in and terminate with a NUL.
-    memcpy(cptr+alen+1, b+boffset, blen-boffset);
+    memcpy(cptr+alen+1, b.cstr()+boffset, blen-boffset);
     cptr[alen+1+blen-boffset] = 0;
 
     return s;

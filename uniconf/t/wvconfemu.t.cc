@@ -260,4 +260,3 @@ WVTEST_MAIN("wvconfemu setbool")
     cfg.del_setbool(&c2, "", "Bar");
     cfg.del_setbool(&c3, "Foo", "Bar");
 }
-

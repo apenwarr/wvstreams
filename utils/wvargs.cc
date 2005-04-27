@@ -408,7 +408,7 @@ static bool create_popt_context(int argc, char **argv,
     }
     
     const struct poptOption extras[2] = {
-    	POPT_AUTOHELP
+	POPT_AUTOHELP
     	POPT_TABLEEND
     };
 

@@ -23,7 +23,7 @@
 #undef errno
 #define errno GetLastError()
 // FIXME: WLACH: seems to cause an error on mingw32 3.4.2.. is this needed?
-//typedef DWORD error_t;
+typedef DWORD error_t;
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
 #endif

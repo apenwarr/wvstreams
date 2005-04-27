@@ -46,6 +46,10 @@
 #define ETHER_ADDR_LEN		6
 #define IP_ALEN			4
 #endif
+#ifdef _MSC_VER
+typedef unsigned int uint32_t;
+typedef unsigned short uint16_t;
+#endif
 
 #include "wvstring.h"
 
