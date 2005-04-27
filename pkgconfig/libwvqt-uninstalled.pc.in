@@ -1,0 +1,10 @@
+version=@PACKAGE_VERSION@
+top_builddir=@abs_top_builddir@
+
+Name: WvStreams Qt
+Description: WvStreams and Qt event integration lbirary
+Version: ${version}
+Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
+Libs: -L${top_builddir} -lwvqt
+Cflags: -I${top_builddir}/include
+
