@@ -28,32 +28,19 @@ int main(int argc, char **argv)
     WvString target(argc >= 2 ? argv[1] : "mars.net-itech.com:995");
     log("Connecting to %s...\n", target);
     
-    // We want to connect with both an anonymous connection, as well
-    // as with a certificate.
     WvSSLStream cli(new WvTCPConn(target), NULL);
     
-    WvString dName = encode_hostname_as_DN(fqdomainname());
-    WvX509Mgr *cert = new WvX509Mgr(dName, 1024);
-    WvSSLStream cli2(new WvTCPConn(target), cert);
-    
     WvIStreamList::globallist.append(&cli, false);
-    WvIStreamList::globallist.append(&cli2, false);
     WvIStreamList::globallist.append(wvin, false);
     
     cli.autoforward(*wvout);
-    cli2.autoforward(*wvout);
     wvin->autoforward(cli);
-    wvin->autoforward(cli2);
     
-    while ((cli.isok() || cli2.isok()) && !want_to_die)
-    {
-	if (WvIStreamList::globallist.isreadable())
-	    WvIStreamList::globallist.runonce();
-    }
+    while (cli.isok() && !want_to_die)
+	WvIStreamList::globallist.runonce();
     
-    if (cli.geterr() || cli2.geterr())
-	log("Stream closed with error:\ncli: %s\ncli2: %s\n", 
-	    cli.errstr(), cli2.errstr());
+    if (cli.geterr())
+	log("Stream closed with error: %s\n", cli.errstr());
 
     log("Done!\n");
     return 0;

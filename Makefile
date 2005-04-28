@@ -3,6 +3,8 @@ WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
 include wvrules.mk
 override enable_efence=no
 
+export WVSTREAMS
+
 XPATH=include
 
 include vars.mk
@@ -160,7 +162,7 @@ test: runconfigure all tests wvtestmain
 	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
-	$(VALGRIND) ./wvtestmain $(TESTNAME)
+	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
 ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=0 ./unitest.sh
 	cd uniconf/tests && DAEMON=1 ./unitest.sh

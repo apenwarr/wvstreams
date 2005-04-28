@@ -9,9 +9,7 @@
 #include "wvtest.h"
 #include "wvfile.h"
 
-#include <unistd.h>
-
-static WvString fn("test-%s.tmp", getpid());
+static WvString fn("test.tmp");
 static WvString cmd1("echo cmd1 >>%s", fn), 
 	cmd2("echo cmd2 >>%s", fn),
 	cmd2s("sleep 1; %s", cmd2);
@@ -24,7 +22,7 @@ static int c1, c2; // cookies that we can point to - value doesn't matter
 
 static WvString contents(WvStringParm fn)
 {
-    return WvFile(fn, O_RDONLY).blocking_getline(-1, 0);
+    return WvFile(fn, O_RDONLY).getline(-1, 0);
 }
 
 

@@ -178,11 +178,17 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Have Disk/Really Have Disk", 1);
     check_iterator(callbacks2, two);
 
-    // And back again.
+    // Test that it changes back to the empty string. Also, in r4_2
+    // and below, test that deleting keys in the underlying generator
+    // to which we are making changes other than a tree replacement
+    // fails to cause the necessary callbacks for children of that
+    // key.
 
     callbacks2.add("cfg", "");
+    callbacks2.add("cfg/Global/Have Disk/Really Have Disk", WvString::null);
     one.xset("cfg", WvString::null);
-    WVPASS(callbacks2.isempty());
+    WVPASS(!callbacks2.exists("cfg"));
+    WVFAIL(!callbacks2.exists("cfg/Global/Have Disk/Really Have Disk"));
     callbacks2.zap();
     WVPASS(two.xget("cfg") == "");
 
@@ -203,10 +209,14 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Have Disk", 1);
     check_iterator(callbacks2, two);
 
-    // And back again.
+    // Test we don't get callbacks when we change them back, either.
 
     one.xset("cfg/Global", WvString::null);
+    WVPASS(callbacks2.isempty());
+    callbacks2.zap();
+
     WVPASS(two.xget("cfg/Global") == "");
+
 
     callbacks2.add("cfg", "");
     callbacks2.add("cfg/Global", "");
@@ -215,12 +225,13 @@ WVTEST_MAIN("UniTransactionGen functionality test")
 
     // Test reception of callbacks due to deletions
 
+    callbacks2.add("cfg/Global/Have Disk", WvString::null);
     callbacks2.add("cfg/Global", WvString::null);
     two.xset("cfg/Global", WvString::null);
     WVPASS(callbacks2.isempty());
     callbacks2.zap();
-    WVPASS(two.xget("cfg/Global") == WvString::null);
     WVPASS(two.xget("cfg/Global/Have Disk") == WvString::null);
+    WVPASS(two.xget("cfg/Global") == WvString::null);
 
     callbacks2.add("cfg", "");
     check_iterator(callbacks2, two);
@@ -314,6 +325,10 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     one.xset("cfg/OpenWall/Harden Proc", 1);
     one.xset("cfg/Global/Servers/Funfs", 1);
     one.xset("cfg/Global/Servers/NFS", 0);
+    callbacks2.add("cfg/OpenWall/Harden Stack", WvString::null);
+    callbacks2.add("cfg/OpenWall/Harden Link", WvString::null);
+    callbacks2.add("cfg/OpenWall/Harden FIFO", WvString::null);
+    callbacks2.add("cfg/OpenWall/Harden Proc", WvString::null);
     callbacks2.add("cfg/OpenWall", WvString::null);
     two.xset("cfg/OpenWall", WvString::null);
     callbacks2.add("cfg/OpenWall", "");
@@ -349,3 +364,22 @@ WVTEST_MAIN("UniTransactionGen functionality test")
     callbacks2.add("cfg/Global/Servers/NFS", 0);
     check_iterator(callbacks2, two);
 }
+
+WVTEST_MAIN("UniTransactionGen submount test")
+{
+    UniConfRoot root("temp:");
+    UniConf subtree = root["subtree"];
+
+    UniConfRoot transaction(new UniTransactionGen(new UniUnwrapGen(subtree)));
+
+    transaction.remove();
+    transaction.xset("key", "value");
+    WVPASSEQ(transaction["key"].getme("default"), WvString("value"));
+    WVPASSEQ(subtree["key"].getme("default"), WvString("default"));
+
+    transaction.commit();
+
+    WVPASSEQ(transaction["key"].getme("default"), WvString("value"));
+    WVPASSEQ(subtree["key"].getme("default"), WvString("value"));
+}
+

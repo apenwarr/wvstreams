@@ -42,29 +42,36 @@ class UniConfValueTree;
  * not support concurrent modification (regardless of whether the underlying
  * generator's iterators do).
  *
- * The UniTransactionGen properly issues callbacks due to calls to set()
- * and refresh() and also due to changes to the underlying generator from
- * other sources. If the underlying generator issues callbacks conservatively,
- * then so will the UniTransactionGen.
+ * The UniTransactionGen issues callbacks due to calls to set() and refresh()
+ * and also due to changes to the underlying generator from other sources. If
+ * the underlying generator issues precisely the callbacks needed to indicate
+ * a change in state, then so will the UniTransactionGen.
  *
- * The UniTransactionGen caches nothing. Wrap the underlying generator in
- * a UniCacheGen if it's a slow generator.
+ * The UniTransactionGen assumes that the underlying generator recursively
+ * issues deletion callbacks whenever someone deletes a key from it that has
+ * children, but the semantics in r4_2 and below don't require that. In those
+ * versions, or when wrapping a generator with a broken callback system, the
+ * UniTransactionGen won't issue callbacks properly, but everything else
+ * should work.
  *
  * In order to work properly, the UniTransactionGen has to assume that the
- * underlying generator completely obeys the UniConf semantics. If it does
- * not, then the UniTransactionGen might not obey them or its own class
- * contract. Incidentally though, breaking callbacks in the underlying
- * generator cannot break anything in the UniTransactionGen other than its
- * own callbacks.
+ * underlying generator completely obeys the UniConfGen semantics. If that
+ * is not true, then the UniTransactionGen might not obey its own class
+ * contract or even the UniConfGen semantics either. (Note that few
+ * generators completely obey the UniConfGen semantics.) However, provided
+ * that the underlying generator's personal semantics are at least sane, the
+ * UniTransactionGen's get()-like methods will probably show the underlying
+ * generator as how your uncommitted set()s indicate you want it to be,
+ * commit() will probably try and make it be like that (without any callbacks
+ * made for things it couldn't commit), and refresh() will probably work as
+ * designed.
  *
  * Using a UniTransactionGen and/or its underlying generator in multiple
  * threads will probably break it.
- * 
+ *
  * Though similar in concept to a UniFilterGen, the UniTransactionGen
  * doesn't derive from it because we have basically no need for any of
- * its functionality. The exception is our isok() method, which does the
- * same thing as in the UniFilterGen: delegates to the underlying
- * generator.
+ * its functionality.
  */
 class UniTransactionGen : public UniConfGen
 {
@@ -128,12 +135,6 @@ protected:
 		     void *userdata);
 
     /**
-     * A recursive helper function for gencallback().
-     */
-    void was_removed(UniConfChangeTree *node,
-		     const UniConfKey &key);
-
-    /**
      * Four functions to implement the functionality of set() so
      * that it isn't two pages long.
      */
@@ -156,6 +157,22 @@ protected:
 				  const UniConfKey &key,
 				  int seg,
 				  WvStringParm value);
+
+    /**
+     * A recursive helper function for create_change().
+     */
+    void deletion_simulator(const UniConfKey &key);
+
+    /**
+     * A recursive helper function for set_change().
+     */
+    void deletion_simulator2(const UniConfKey &key);
+
+    /**
+     * A UniConfTree visitor function for set_value(), cancel_values(), and
+     * cancel_changes().
+     */
+    void deletion_visitor(const UniConfValueTree *node, void *userdata);
 };
 
 #endif

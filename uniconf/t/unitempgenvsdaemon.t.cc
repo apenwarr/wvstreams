@@ -33,6 +33,9 @@ static bool write_ini()
 
 WVTEST_MAIN("tempgen/cachegen basics")
 {
+    WvString socket("%s-%s,", UNICONFD_SOCK, getpid());
+    WvString ini("%s-%s,", UNICONFD_INI, getpid());
+
     signal(SIGPIPE, SIG_IGN);
 
     if (!write_ini())
@@ -44,16 +47,14 @@ WVTEST_MAIN("tempgen/cachegen basics")
     pid_t cfg_handler = fork();
     if (!cfg_handler) // child only
     {
-        UniIniGen *unigen = new UniIniGen(UNICONFD_INI, 0666);
+        UniIniGen *unigen = new UniIniGen(ini, 0666);
 
         UniConfRoot uniconf;
         uniconf["cfg"].mountgen(unigen);
         uniconf["tmp"].mount("temp:");
 
-        UniConf defcfg(uniconf["default"]);
-
         UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(UNICONFD_SOCK, 0777);
+        daemon.setupunixsocket(socket, 0777);
 
         WvIStreamList::globallist.append(&daemon, false);
         while (daemon.isok())
@@ -66,7 +67,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
 
     // Wait for child to become responsive
     {
-        UniConfRoot cfg_ok("retry:unix:" UNICONFD_SOCK);
+        UniConfRoot cfg_ok(WvString("retry:unix:%s", socket));
         for (;;)
         {
             cfg_ok.xset("/tmp/dummy", "foo");
@@ -76,11 +77,10 @@ WVTEST_MAIN("tempgen/cachegen basics")
     }
 
     /* Setup subtree root */
-    UniConfRoot cfg("cache:subtree:unix:" UNICONFD_SOCK " cfg");
+    UniConfRoot cfg(WvString("cache:subtree:unix:%s cfg", socket));
     
     int initial_value = cfg["eth0"].xgetint("dhcpd", 0);
     cfg["eth0"].xsetint("dhcpd", !initial_value);
-    //usleep(50); // compensate for latency in propogation
     cfg.commit();
     int new_value = cfg["eth0"].xgetint("dhcpd", 0);
 
@@ -88,6 +88,6 @@ WVTEST_MAIN("tempgen/cachegen basics")
    
     // kill off the daemon
     kill(cfg_handler, 15);
-    unlink(UNICONFD_INI);
-    unlink(UNICONFD_SOCK);
+    ::unlink(socket);
+    ::unlink(ini);
 }

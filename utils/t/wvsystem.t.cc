@@ -5,9 +5,7 @@
 
 WVTEST_MAIN("wvsystem")
 {
-    WvString fn("test-%s.tmp", getpid()); 
-    WvString fn2("test2-%s.tmp", getpid()); 
-    WvString fn3("test3-%s.tmp", getpid());
+    WvString fn("test.tmp"), fn2("test2.tmp"), fn3("test3.tmp");
     WvString teststring("test \t string");
     
     ::unlink(fn);
@@ -44,9 +42,9 @@ WVTEST_MAIN("wvsystem")
     WvSystem("echo", teststring, "x\n", teststring).outfile(fn);
     WvSystem("cat", "-", "stupid").infile(fn).outfile(fn2).errfile(fn3);
     WvString outstr("%s x\n %s\n", teststring, teststring);
-    WVPASSEQ(WvFile(fn, O_RDONLY).blocking_getline(-1, 0), outstr);
-    WVPASSEQ(WvFile(fn2, O_RDONLY).blocking_getline(-1, 0), outstr);
-    WVPASS(!!WvString(WvFile(fn3, O_RDONLY).blocking_getline(-1)));
+    WVPASSEQ(WvFile(fn, O_RDONLY).getline(-1, 0), outstr);
+    WVPASSEQ(WvFile(fn2, O_RDONLY).getline(-1, 0), outstr);
+    WVPASS(!!WvString(WvFile(fn3, O_RDONLY).getline(-1)));
     
     ::unlink(fn);
     ::unlink(fn2);
