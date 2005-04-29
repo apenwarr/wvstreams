@@ -43,14 +43,6 @@ ifneq ("$(with_xplc)", "no")
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
-LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
-LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
-LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
-LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
-LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
-LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
-LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
-
 STRIP=strip --remove-section=.note --remove-section=.comment
 #STRIP=echo
 
@@ -81,8 +73,6 @@ $(WVSTREAMS_SRC)/rules.local.mk:
 
 -include $(WVSTREAMS_SRC)/rules.local.mk
 
-XPATH+=/cygdrive/e/mingw/include
-INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
 CPPFLAGS+=$(INCFLAGS)
 CFLAGS+=$(CPPFLAGS)
 CXXFLAGS+=$(CPPFLAGS)

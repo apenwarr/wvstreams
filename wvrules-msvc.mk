@@ -1,3 +1,9 @@
+LIBWVBASE=$(shell cygpath -m $(WVSTREAMS)/libwvwin32.a)
+LIBWVUTILS=$(LIBWVBASE)
+LIBWVSTREAMS=$(LIBWVBASE)
+LIBUNICONF=$(LIBWVBASE)
+LIBWVTEST=$(LIBWVBASE) $(shell cygpath -m $(WVSTREAMS)/wvtestmain.o)
+
 define wvcc_base
 	@rm -f "$1"
 	$(COMPILE_MSG)$4 $5 $2 /Fo$1

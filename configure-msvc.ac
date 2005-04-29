@@ -7,9 +7,14 @@ CPP=cl
 CXX=cl
 CFLAGS=
 CXXFLAGS=
-CPPFLAGS="/nologo /I../../ports/popt/build/popt-1.9.1 /I../../ports/zlib/build/zlib-1.2.1.2 /I../../ports/xplc/build/xplc-0.3.11/include /I../../ports/openssl/build/openssl-0.9.7d/inc32 /FD /EHsc /MD /D \"strcasecmp=_stricmp\" /D \"strncasecmp=_strnicmp\""
+CPPFLAGS="/nologo /I`cygpath -m ../../ports/popt/build/popt-1.9.1` /I`cygpath -m ../../ports/zlib/build/zlib-1.2.1.2` /I `cygpath -m ../../ports/xplc/build/xplc-0.3.11/include` /I`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/inc32` /I`cygpath -m ./include` /FD /EHsc /MD /D \"strcasecmp=_stricmp\" /D \"strncasecmp=_strnicmp\""
 LDFLAGS=
-ac_libs="../../ports/popt/build/popt-1.9.1/popt.lib ../../ports/zlib/build/zlib-1.2.1.2/zlib.lib ../../ports/openssl/build/openssl-0.9.7d/out32/ssleay32.lib ../../ports/openssl/build/openssl-0.9.7d/out32/libeay32.lib ../../ports/xplc/build/xplc-0.3.11/libxplc-cxx.a ole32.lib rpcrt4.lib wsock32.lib gdi32.lib /MD /link /NODEFAULTLIB:LIBC"
+ac_libs="`cygpath -m ../../ports/popt/build/popt-1.9.1/popt.lib` \
+`cygpath -m ../../ports/zlib/build/zlib-1.2.1.2/zlib.lib` \
+`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/out32/ssleay32.lib` \
+`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/out32/libeay32.lib` \
+`cygpath -m ../../ports/xplc/build/xplc-0.3.11/xplc.lib` \
+ole32.lib rpcrt4.lib wsock32.lib gdi32.lib /MD /link /NODEFAULTLIB:LIBC"
 COMPILER_STANDARD=msvc
 
 AC_SUBST(EXEEXT)
