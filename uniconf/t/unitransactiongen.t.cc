@@ -407,10 +407,10 @@ WVTEST_MAIN("excessive callbacks")
     int i1 = 0, i2 = 0, i3 = 0;
     UniConfRoot uni("temp:");
     UniWatch w1(uni,
-		WvBoundCallback<UniConfCallback,int *>(incr_callback, &i1),
+		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i1),
 		true);
     UniWatch w2(uni["a/b"],
-		WvBoundCallback<UniConfCallback,int *>(incr_callback, &i2),
+		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i2),
 		true);
     
     uni.xsetint("/a/b/c/1", 11); // a, b, c, 1
@@ -425,7 +425,7 @@ WVTEST_MAIN("excessive callbacks")
     UniConfRoot temp("temp:");
     UniConf t(temp["t"]);
     UniWatch w3(temp,
-		WvBoundCallback<UniConfCallback,int *>(incr_callback, &i3),
+		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i3),
 		true);
     WVPASSEQ(i3, 0);
     t.mountgen(new UniTransactionGen(new UniUnwrapGen(uni["a"])), true);
