@@ -10,15 +10,19 @@
 #include "unifiltergen.h"
 
 /**
- * A UniConfGen that makes all "potentially synchronous" operations *really*
- * slow, so you'll know for sure if you're calling UniConf synchronous
+ * A UniConfGen that counts all "potentially synchronous" (ie. slow)
+ * operations, so you'll know for sure if you're calling UniConf synchronous
  * operations when you shouldn't be.  Hint: wrapping this one in a
- * UniCacheGen is supposed to make your program fast again, so a good test
- * is to try a moniker like this:
+ * UniCacheGen is supposed to cut slow operations to a bare minimum, so a
+ * good test is to try a moniker like this:
  * 
  *   cache:slow:tcp:localhost
  * 
- * ...and see if everything still works without major delays.
+ * ...and see if everything still works but there are no slow operations.
+ * 
+ * (A previous version of this used to actually make things slow by doing
+ * a deliberate sleep() on synchronous operations, but that wasn't really
+ * needed.  Now it just logs them instead.)
  */
 class UniSlowGen : public UniFilterGen
 {
@@ -37,6 +41,10 @@ public:
     
     int how_slow() const
         { return slowcount; }
+    
+    void reset_slow()
+        { slowcount = 0; }
+    
 private:
     int slowcount;
     

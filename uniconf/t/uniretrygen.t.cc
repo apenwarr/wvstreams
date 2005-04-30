@@ -29,7 +29,7 @@ WVTEST_MAIN("uniconfd")
     
     unlink(ini);
     
-    UniConfRoot cfg(WvString("retry:{unix:%s 100}", socket));
+    UniConfRoot cfg(WvString("retry:unix:%s 100", socket));
     cfg["/key"].setme("value");
     WVPASS(!cfg["/key"].exists());
 
