@@ -35,17 +35,20 @@ public:
 				   const char *condstr, bool cond)
         { start(file, line, condstr); check(cond); return cond; }
     static bool start_check_eq(const char *file, int line,
-			       const char *a, const char *b);
-    static bool start_check_eq(const char *file, int line, int a, int b);
+			       const char *a, const char *b, bool expect_pass);
+    static bool start_check_eq(const char *file, int line, int a, int b,
+                               bool expect_pass);
 };
 
 
 #define WVPASS(cond) \
     WvTest::start_check(__FILE__, __LINE__, #cond, (cond))
 #define WVPASSEQ(a, b) \
-    WvTest::start_check_eq(__FILE__, __LINE__, (a), (b))
+    WvTest::start_check_eq(__FILE__, __LINE__, (a), (b), true)
 #define WVFAIL(cond) \
     WvTest::start_check(__FILE__, __LINE__, "NOT(" #cond ")", !(cond))
+#define WVFAILEQ(a, b) \
+    WvTest::start_check_eq(__FILE__, __LINE__, (a), (b), false)
 
 #define WVTEST_MAIN3(descr, ff, ll) \
     static void _wvtest_main_##ll(); \
