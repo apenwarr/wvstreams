@@ -272,9 +272,10 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
     save(file, *root); // write the changes out to our temp file
     
     fchmod(file.getwfd(), create_mode & ~get_umask());
+
     file.close();
-    if (rename(tmp_filename, real_filename) == -1
-	|| file.geterr())
+
+    if (file.geterr() || rename(tmp_filename, real_filename) == -1)
     {
         log(WvLog::Warning, "Can't write '%s': %s\n",
 	    filename, strerror(errno));
