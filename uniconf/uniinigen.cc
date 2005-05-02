@@ -254,23 +254,29 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 #ifndef _WIN32
 bool UniIniGen::commit_atomic(WvStringParm real_filename)
 {
+    struct stat statbuf;
+
+    if (lstat(real_filename, &statbuf) == -1)
+	if (errno != ENOENT)
+	    return false;
+    else
+	if (!S_ISREG(statbuf.st_mode))
+	    return false;
+
     WvString tmp_filename("%s.tmp%s", real_filename, getpid());
     WvFile file(tmp_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
-    struct stat statbuf;
-    
-    if (file.geterr()
-	|| lstat(real_filename, &statbuf) == -1
-	|| !S_ISREG(statbuf.st_mode))
+
+    if (file.geterr())
     {
-        log(WvLog::Warning, "Can't write '%s': %s\n",
+	log(WvLog::Warning, "Can't write '%s': %s\n",
 	    filename, strerror(errno));
 	unlink(tmp_filename);
-        file.close();
-        return false;
+	file.close();
+	return false;
     }
-    
+
     save(file, *root); // write the changes out to our temp file
-    
+
     fchmod(file.getwfd(), create_mode & ~get_umask());
 
     file.close();
@@ -308,16 +314,14 @@ void UniIniGen::commit()
 	return;
     }
 #else
-    char resolved_path[PATH_MAX];
     WvString real_filename(filename);
+    char resolved_path[PATH_MAX];
 
     if (realpath(filename, resolved_path) != NULL)
 	real_filename = resolved_path;
 
-    // first try to overwrite the file atomically
     if (!commit_atomic(real_filename))
     {
-        // if not, overwrite it in place
         WvFile file(real_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
         struct stat statbuf;
 
@@ -329,7 +333,8 @@ void UniIniGen::commit()
         }
 
         fchmod(file.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
-        save(file, *root); // write the changes out to our file
+
+        save(file, *root);
     
         if (!file.geterr())
         {
