@@ -5,11 +5,12 @@
  * A generator for .ini files.
  */
 #include "uniinigen.h"
-#include "unitempgen.h"
-#include "wvtclstring.h"
 #include "strutils.h"
+#include "unitempgen.h"
 #include "wvfile.h"
+#include "wvfileutils.h"
 #include "wvmoniker.h"
+#include "wvtclstring.h"
 #include <ctype.h>
 
 static IUniConfGen *creator(WvStringParm s, IObject *, void *)
@@ -251,7 +252,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 
 
 #ifndef _WIN32
-bool UniIniGen::commit_atomic(WvString real_filename)
+bool UniIniGen::commit_atomic(WvStringParm real_filename)
 {
     WvString tmp_filename("%s.tmp%s", real_filename, getpid());
     WvFile file(tmp_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
@@ -271,7 +272,7 @@ bool UniIniGen::commit_atomic(WvString real_filename)
     save(file, *root); // write the changes out to our temp file
     
     file.close();
-    chmod(tmp_filename, create_mode);
+    chmod(tmp_filename, create_mode & ~get_umask());
     if (rename(tmp_filename, real_filename) == -1
             || file.geterr())
     {
@@ -305,7 +306,6 @@ void UniIniGen::commit()
     }
 #else
     char resolved_path[PATH_MAX];
-    WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
     WvString real_filename(filename);
 
     if (realpath(filename, resolved_path) != NULL)
@@ -340,7 +340,6 @@ void UniIniGen::commit()
 		filename, real_filename, file.errstr());
 
     }
-    file.close();
 #endif
 
     dirty = false;

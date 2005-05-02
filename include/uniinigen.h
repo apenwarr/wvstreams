@@ -44,8 +44,10 @@ public:
     virtual bool refresh();
 
 private:
+#ifndef _WIN32
     // helper methods for commit
-    bool commit_atomic(WvString real_filename);
+    bool commit_atomic(WvStringParm real_filename);
+#endif
     
     void save(WvStream &file, UniConfValueTree &parent);
     bool refreshcomparator(const UniConfValueTree *a,

@@ -46,11 +46,13 @@ WVTEST_MAIN("ini file permissions")
     system("touch perm.ini");
     UniConfRoot cfg("ini:perm.ini");
     cfg["foo"].setme("bar");
+    mode_t oldmask = umask(02);
     cfg.commit();
+    umask(oldmask);
     
     struct stat statbuf;
     WVPASS(stat("perm.ini", &statbuf) == 0);
-    WVPASSEQ(statbuf.st_mode, 0100666); //file and permissions 0666
+    WVPASSEQ(statbuf.st_mode, 0100664); //file and permissions 0666
     system("rm -f perm.ini");
 }
 
