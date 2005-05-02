@@ -263,7 +263,7 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
 	|| !S_ISREG(statbuf.st_mode))
     {
         log(WvLog::Warning, "Can't write '%s': %s\n",
-                filename, strerror(errno));
+	    filename, strerror(errno));
 	unlink(tmp_filename);
         file.close();
         return false;
@@ -271,13 +271,13 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
     
     save(file, *root); // write the changes out to our temp file
     
+    fchmod(file.getwfd(), create_mode & ~get_umask());
     file.close();
-    chmod(tmp_filename, create_mode & ~get_umask());
     if (rename(tmp_filename, real_filename) == -1
-            || file.geterr())
+	|| file.geterr())
     {
         log(WvLog::Warning, "Can't write '%s': %s\n",
-                filename, strerror(errno));
+	    filename, strerror(errno));
         unlink(tmp_filename);
 	return false;
     }
@@ -289,12 +289,14 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
 
 void UniIniGen::commit()
 {
-    if (!dirty) return;
+    if (!dirty)
+	return;
+
     UniTempGen::commit();
 
 #ifdef _WIN32
-    // Windows doesn't support all that fancy stuff, just open the file
-    //   and be done with it
+    // Windows doesn't support all that fancy stuff, just open the
+    // file and be done with it
     WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
     save(file, *root); // write the changes out to our file
     file.close();
@@ -338,7 +340,6 @@ void UniIniGen::commit()
 	else
 	    log(WvLog::Warning, "Error writing '%s' ('%s'): %s\n",
 		filename, real_filename, file.errstr());
-
     }
 #endif
 
