@@ -56,4 +56,10 @@ bool wvfnmatch(WvStringList &patterns, WvStringParm name, int flags = 0);
  */
 int wvchmod(const char *path, mode_t mode);
 
+
+/**
+ * A simple helper function to get the current umask.
+ */
+mode_t get_umask();
+
 #endif // __WVFILEUTILS_H

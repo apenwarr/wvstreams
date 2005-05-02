@@ -179,3 +179,13 @@ int wvchmod(const char *path, mode_t mode)
 
     return retval;
 }
+
+
+mode_t get_umask()
+{
+    mode_t rv = umask(0);
+    umask(rv);
+
+    return rv;
+}
+
