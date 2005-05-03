@@ -8,7 +8,6 @@
 #include "strutils.h"
 #include "unitempgen.h"
 #include "wvfile.h"
-#include "wvfileutils.h"
 #include "wvmoniker.h"
 #include "wvtclstring.h"
 #include <ctype.h>
@@ -279,7 +278,9 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
 
     save(file, *root); // write the changes out to our temp file
 
-    fchmod(file.getwfd(), create_mode & ~get_umask());
+    mode_t theumask = umask(0);
+    umask(theumask);
+    fchmod(file.getwfd(), create_mode & ~theumask);
 
     file.close();
 
