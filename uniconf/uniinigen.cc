@@ -257,8 +257,10 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
     struct stat statbuf;
 
     if (lstat(real_filename, &statbuf) == -1)
+    {
 	if (errno != ENOENT)
 	    return false;
+    }
     else
 	if (!S_ISREG(statbuf.st_mode))
 	    return false;
