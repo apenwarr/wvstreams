@@ -73,9 +73,8 @@ $(WVSTREAMS_SRC)/rules.local.mk:
 
 -include $(WVSTREAMS_SRC)/rules.local.mk
 
-CPPFLAGS+=$(INCFLAGS)
 CFLAGS+=$(CPPFLAGS)
-CXXFLAGS+=$(CPPFLAGS)
+CXXFLAGS=
 
 ifeq ($(VERBOSE),1)
   COMPILE_MSG :=
@@ -112,8 +111,8 @@ wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 # usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
 #    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
 DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(INCFLAGS) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
+wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(INCFLAGS) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
 
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so

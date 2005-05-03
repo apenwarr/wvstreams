@@ -7,7 +7,8 @@ CPP=cl
 CXX=cl
 CFLAGS=
 CXXFLAGS=
-CPPFLAGS="/nologo /I`cygpath -m ../../ports/popt/build/popt-1.9.1` /I`cygpath -m ../../ports/zlib/build/zlib-1.2.1.2` /I `cygpath -m ../../ports/xplc/build/xplc-0.3.11/include` /I`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/inc32` /I`cygpath -m ./include` /FD /EHsc /MD /D \"strcasecmp=_stricmp\" /D \"strncasecmp=_strnicmp\""
+INCFLAGS="/I`cygpath -m ../../ports/popt/build/popt-1.9.1` /I`cygpath -m ../../ports/zlib/build/zlib-1.2.1.2` /I `cygpath -m ../../ports/xplc/build/xplc-0.3.11/include` /I`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/inc32` /I`cygpath -m ./include`"
+CPPFLAGS="/nologo /FD /EHsc /MD /D \"strcasecmp=_stricmp\" /D \"strncasecmp=_strnicmp\""
 LDFLAGS=
 ac_libs="`cygpath -m ../../ports/popt/build/popt-1.9.1/popt.lib` \
 `cygpath -m ../../ports/zlib/build/zlib-1.2.1.2/zlib.lib` \
