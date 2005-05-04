@@ -64,6 +64,7 @@ void WvGzipEncoder::close()
 bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 {
     bool success;
+    size_t start_out_used = outbuf.used();
     for (;;)
     {
         prepare(& inbuf);
@@ -77,7 +78,8 @@ bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
         }
         if (! success)
             return false;
-        if (alldata || out_limit)
+        if (alldata || (out_limit &&
+                        (outbuf.used() - start_out_used == out_limit)))
             return true;
     }
 }
@@ -139,7 +141,8 @@ bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
 	    retval = inflate(zstr, flushmode);
 	tmpbuf.unalloc(zstr->avail_out);
 
-        max_out = zstr->avail_out;
+        max_out -= avail_out;
+        max_out += zstr->avail_out;
 
         // consume pending output
         outbuf.merge(tmpbuf);
