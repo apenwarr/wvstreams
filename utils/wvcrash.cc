@@ -9,7 +9,6 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <string.h>
-#include <stdio.h>
 
 // FIXME: this file mostly only works in Linux
 #ifdef __linux
@@ -103,14 +102,12 @@ void wvcrash_real(int sig, int fd)
 // kernel syscalls (ie. don't fiddle with FILE* or streams or lists, just
 // use straight file descriptors.)
 // 
-// We fork a subprogram to do the fancy stuff like sending email, and we
-// send the pid of the program that crashed to the subprogram in case it
-// wants to do something with it.
+// We fork a subprogram to do the fancy stuff like sending email.
 // 
 void wvcrash(int sig)
 {
     int fds[2];
-    pid_t pid, parentpid;
+    pid_t pid;
     
     signal(sig, SIG_DFL);
     wr(2, "\n\nwvcrash: crashing!\n");
@@ -119,7 +116,6 @@ void wvcrash(int sig)
 	wvcrash_real(sig, 2); // just use stderr instead
     else
     {
-        parentpid = getpid();
 	pid = fork();
 	if (pid < 0)
 	    wvcrash_real(sig, 2); // just use stderr instead
@@ -129,9 +125,7 @@ void wvcrash(int sig)
 	    dup2(fds[0], 0); // make stdin read from pipe
 	    fcntl(0, F_SETFD, 0);
 	    
-            char buf[80];
-            sprintf(buf, "%u", parentpid);
-	    execlp("wvcrash", "wvcrash", buf, NULL);
+	    execlp("wvcrash", "wvcrash", NULL);
 	    
 	    // if we get here, we couldn't exec wvcrash
 	    wr(2, "wvcrash: can't exec wvcrash binary "
