@@ -9,7 +9,6 @@
 
 #include "wvistreamlist.h"
 #include "wvfile.h"
-#include "wvfileutils.h"
 #include "wvunixsocket.h"
 #include "wvtest.h"
 
@@ -20,7 +19,12 @@
 // write out a temporary ini file for use, saves flushing entries
 static bool write_ini(WvString &ininame)
 {
-    ininame = wvtmpfilename("ini");
+    int fd;
+    ininame = "/tmp/iniXXXXXX";
+    if ((fd = mkstemp(ininame.edit())) == (-1))
+        return false;    
+    close(fd);
+
 
     WvFile outfile(ininame, O_CREAT | O_WRONLY | O_TRUNC);
     if (outfile.isok())
@@ -32,6 +36,16 @@ static bool write_ini(WvString &ininame)
     return false;
 }
 
+static WvString get_sockname()
+{
+    int fd;
+    WvString sockname = "/tmp/sockXXXXXX";
+    if ((fd = mkstemp(sockname.edit())) == (-1))
+        return "";    
+    close(fd);
+
+    return sockname;
+}
 
 WVTEST_MAIN("tempgen/cachegen basics")
 {
@@ -44,8 +58,8 @@ WVTEST_MAIN("tempgen/cachegen basics")
         exit(1); 
     }
 
-    WvString sockname;
-    if (!(sockname = wvtmpfilename("sock")))
+    WvString sockname = get_sockname();
+    if (!sockname)
     {
         WVFAIL(true || "Could not get socket filename");
         exit(1); 
@@ -113,7 +127,7 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
         exit(1); 
     }
 
-    WvString sockname = wvtmpfilename("unitempgenvsdaemon.t-sock");
+    WvString sockname = get_sockname();
     if (!sockname)
     {
         WVFAIL(true || "Could not get socket filename");
