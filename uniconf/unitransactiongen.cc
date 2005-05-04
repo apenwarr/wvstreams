@@ -197,6 +197,12 @@ UniTransactionGen::UniTransactionGen(IUniConfGen *_base)
 {
     base->setcallback(
 	UniConfGenCallback(this, &UniTransactionGen::gencallback), NULL);
+    
+    printf("exists: %d %d/%p %d/%p %d/%p\n",
+	   exists("/"),
+	   exists("b"), get("b").cstr(),
+	   exists("b/"), get("b/").cstr(),
+	   base->exists("b/"), base->get("b/").cstr());
 }
 
 UniTransactionGen::~UniTransactionGen()

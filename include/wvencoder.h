@@ -629,6 +629,11 @@ public:
      */
     void zap();
 
+    /**
+     * Returns true if there is data in an internal buffer.
+     */
+    bool buffered();
+
 protected:
     /**
      * Returns true if the encoder has not encountered an error.

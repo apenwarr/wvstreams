@@ -431,3 +431,14 @@ void WvEncoderChain::zap()
 {
     encoders.zap();
 }
+
+bool WvEncoderChain::buffered()
+{
+    WvEncoderChainElemListBase::Iter it(encoders);
+    for (it.rewind(); it.next(); )
+    {
+        if (it().out.used())
+            return true;
+    }
+    return false;
+}

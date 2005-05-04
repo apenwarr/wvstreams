@@ -1,6 +1,7 @@
 #include "wvtest.h"
 #include "wvfile.h"
 #include "uniconfroot.h"
+#include "uniwatch.h"
 
 
 // Returns the filename where the content was written.  This file must be
@@ -131,6 +132,52 @@ WVTEST_MAIN("Trailing slashes")
     WVPASSEQ(cfg["sfllaw/"].getme(), "");
 }
 
+static void count_cb(int *i, const UniConf &cfg, const UniConfKey &key)
+{
+    (*i)++;
+}
+
+
+WVTEST_MAIN("ini callbacks")
+{
+    int i = 0;
+    WvString ininame = inigen("a/b/c/1 = 11\n"
+			      "a/b/c/2 = 22\n");
+    UniConfRoot cfg(WvString("ini:%s", ininame));
+    UniWatch w(cfg,
+	       WvBoundCallback<UniConfCallback,int*>(&count_cb, &i), true);
+
+    WVPASSEQ(i, 0);
+    cfg.refresh();
+    WVPASSEQ(i, 0);
+    
+    {
+	WvFile f(ininame, O_WRONLY|O_TRUNC);
+	f.print("a/b/c/1 = 111\n"
+		"a/b/c/2 = 222\n");
+	cfg.refresh();
+	WVPASSEQ(i, 2);
+	
+	f.print("a/b/c/3 = 333\n");
+	cfg.refresh();
+	WVPASSEQ(i, 3);
+	
+	f.print("\n");
+	cfg.refresh();
+	WVPASSEQ(i, 3);
+    }
+    
+    cfg.xset("x", "y");
+    WVPASSEQ(i, 4);
+    cfg.commit();
+    WVPASSEQ(i, 4);
+    cfg.refresh();
+    WVPASSEQ(i, 4);
+    
+    ::unlink(ininame);
+}
+
+
 static void inicmp(WvStringParm key, WvStringParm val, WvStringParm content)
 {
     WvString ininame = inigen("");
@@ -172,4 +219,5 @@ WVTEST_MAIN("writing")
     inicmp("/foo/blah", "",
 	   "");
 }
+
 
