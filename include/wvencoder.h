@@ -632,7 +632,7 @@ public:
     /**
      * Returns true if there is data in an internal buffer.
      */
-    bool buffered();
+    size_t buffered();
 
 protected:
     /**

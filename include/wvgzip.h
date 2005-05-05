@@ -63,6 +63,7 @@ private:
     struct z_stream_s *zstr;
     WvInPlaceBuf tmpbuf;
     Mode mode;
+    size_t output;
 
     void init();
     void close();

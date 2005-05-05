@@ -432,13 +432,11 @@ void WvEncoderChain::zap()
     encoders.zap();
 }
 
-bool WvEncoderChain::buffered()
+size_t WvEncoderChain::buffered()
 {
+    size_t used = 0;
     WvEncoderChainElemListBase::Iter it(encoders);
     for (it.rewind(); it.next(); )
-    {
-        if (it().out.used())
-            return true;
-    }
-    return false;
+        used += it().out.used();
+    return used;
 }
