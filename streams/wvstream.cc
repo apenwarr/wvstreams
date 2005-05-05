@@ -744,6 +744,12 @@ bool WvStream::_select(time_t msec_timeout,
 }
 
 
+IWvStream::SelectRequest WvStream::get_select_request()
+{
+    return IWvStream::SelectRequest(readcb, writecb, exceptcb);
+}
+
+
 void WvStream::force_select(bool readable, bool writable, bool isexception)
 {
     if (readable)
