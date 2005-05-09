@@ -1,22 +1,65 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 4.1, wvstreams-dev@nit.ca, wvstreams)
 
+AC_ARG_WITH(popt, AC_HELP_STRING([--with-popt], [popt (required)]))
+AC_ARG_WITH(popt, AC_HELP_STRING([--with-zlib], [zlib (required)]))
+
+if test "$with_popt" != "no" && test "$with_popt" != ""; then
+    POPT_CFLAGS="/I`cygpath -m $with_popt`"
+    POPT_LIBS="`cygpath -m $with_popt/popt.lib`"
+else
+    AC_MSG_WARN([Popt is missing.])
+    missing_required="$missing_required popt"
+fi
+
+if test "$with_zlib" != "no" && test "$with_zlib" != ""; then
+    ZLIB_CFLAGS="/I`cygpath -m $with_zlib`"
+    ZLIB_LIBS="`cygpath -m $with_zlib/zlib.lib`"
+else
+    AC_MSG_WARN([zlib is missing.])
+    missing_required="$missing_required zlib"
+fi
+
+if test "$with_xplc" != "no" && test "$with_xplc" != ""; then
+    XPLC_CFLAGS="/I`cygpath -m $with_xplc/include`"
+    XPLC_LIBS="`cygpath -m $with_xplc/xplc.lib`"
+else
+    AC_MSG_WARN([XPLC is missing.])
+    missing_required="$missing_required xplc"
+fi
+
+if test "$with_openssl" != "no" && test "$with_openssl" != ""; then
+    OPENSSL_CFLAGS="/I`cygpath -m $with_openssl/inc32`"
+    OPENSSL_LIBS="`cygpath -m $with_openssl/out32/ssleay32.lib` \
+$with_openssl/out32/libeay32.lib"
+else
+    AC_MSG_WARN([openssl is missing.])
+    missing_required="$missing_required openssl"
+fi
+
+if test -n "$missing_required"; then
+    AC_MSG_ERROR([Required dependencies missing:$missing_required])
+fi
+
+
 EXEEXT=.exe
 CC=cl
 CPP=cl
 CXX=cl
 CFLAGS=
 CXXFLAGS=
-INCFLAGS="/I`cygpath -m ../../ports/popt/build/popt-1.9.1` /I`cygpath -m ../../ports/zlib/build/zlib-1.2.1.2` /I `cygpath -m ../../ports/xplc/build/xplc-0.3.11/include` /I`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/inc32` /I`cygpath -m ./include`"
+# /I`cygpath -m ../../ports/popt/build/popt-1.9.1`
+INCFLAGS="$POPT_CFLAGS $ZLIB_CFLAGS $XPLC_CFLAGS $OPENSSL_CFLAGS \
+/I`cygpath -m ./include` /I`cygpath -m ./Win32WvStreams` \
+/I`cygpath -m ./Win32WvStreams/libwvstreams`"
 CPPFLAGS="/nologo /FD /EHsc /MD /D \"strcasecmp=_stricmp\" /D \"strncasecmp=_strnicmp\""
 LDFLAGS=
-ac_libs="`cygpath -m ../../ports/popt/build/popt-1.9.1/popt.lib` \
-`cygpath -m ../../ports/zlib/build/zlib-1.2.1.2/zlib.lib` \
-`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/out32/ssleay32.lib` \
-`cygpath -m ../../ports/openssl/build/openssl-0.9.7d/out32/libeay32.lib` \
-`cygpath -m ../../ports/xplc/build/xplc-0.3.11/xplc.lib` \
+# `cygpath -m ../../ports/popt/build/popt-1.9.1/popt.lib`
+ac_libs="$POPT_LIBS $ZLIB_LIBS $XPLC_LIBS $OPENSSL_LIBS \
 ole32.lib rpcrt4.lib wsock32.lib gdi32.lib /MD /link /NODEFAULTLIB:LIBC"
 COMPILER_STANDARD=msvc
+
+
 
 AC_SUBST(EXEEXT)
 AC_SUBST(CC)
@@ -25,6 +68,7 @@ AC_SUBST(CXX)
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CPPFLAGS)
+AC_SUBST(INCFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(ac_libs)
 AC_SUBST(COMPILER_STANDARD)
