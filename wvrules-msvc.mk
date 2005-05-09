@@ -9,7 +9,7 @@ define wvcc_base
 	$(COMPILE_MSG)$4 $5 $2 /Fo$1
 	@# The Perl script here generates the proper dependencies, including
 	@# null dependencies so Make doesn't complain
-	$(DEPEND_MSG)gcc -MM -I./include -E $< \
+	$(DEPEND_MSG)gcc -MM $(DEPFLAGS) -E $< \
                 | perl -we \
                 '$$a = '"'"'$1'"'"'; \
                 $$\ = $$/; \

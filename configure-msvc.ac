@@ -31,7 +31,7 @@ fi
 if test "$with_openssl" != "no" && test "$with_openssl" != ""; then
     OPENSSL_CFLAGS="/I`cygpath -m $with_openssl/inc32`"
     OPENSSL_LIBS="`cygpath -m $with_openssl/out32/ssleay32.lib` \
-$with_openssl/out32/libeay32.lib"
+`cygpath -m $with_openssl/out32/libeay32.lib`"
 else
     AC_MSG_WARN([openssl is missing.])
     missing_required="$missing_required openssl"
@@ -48,13 +48,13 @@ CPP=cl
 CXX=cl
 CFLAGS=
 CXXFLAGS=
-# /I`cygpath -m ../../ports/popt/build/popt-1.9.1`
 INCFLAGS="$POPT_CFLAGS $ZLIB_CFLAGS $XPLC_CFLAGS $OPENSSL_CFLAGS \
-/I`cygpath -m ./include` /I`cygpath -m ./Win32WvStreams` \
-/I`cygpath -m ./Win32WvStreams/libwvstreams`"
+/I`cygpath -m -a ./include` /I`cygpath -m -a ./Win32WvStreams` \
+/I`cygpath -m -a ./Win32WvStreams/libwvstreams`"
+DEPFLAGS="-I`cygpath -u -a ./include` -I`cygpath -u -a ./Win32WvStreams` \
+-I`cygpath -u -a ./Win32WvStreams/libwvstreams`"
 CPPFLAGS="/nologo /FD /EHsc /MD /D \"strcasecmp=_stricmp\" /D \"strncasecmp=_strnicmp\""
 LDFLAGS=
-# `cygpath -m ../../ports/popt/build/popt-1.9.1/popt.lib`
 ac_libs="$POPT_LIBS $ZLIB_LIBS $XPLC_LIBS $OPENSSL_LIBS \
 ole32.lib rpcrt4.lib wsock32.lib gdi32.lib /MD /link /NODEFAULTLIB:LIBC"
 COMPILER_STANDARD=msvc
@@ -69,6 +69,7 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(INCFLAGS)
+AC_SUBST(DEPFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(ac_libs)
 AC_SUBST(COMPILER_STANDARD)
