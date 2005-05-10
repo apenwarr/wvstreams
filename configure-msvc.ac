@@ -30,8 +30,8 @@ fi
 
 if test "$with_openssl" != "no" && test "$with_openssl" != ""; then
     OPENSSL_CFLAGS="/I`cygpath -m $with_openssl/inc32`"
-    OPENSSL_LIBS="`cygpath -m $with_openssl/out32/ssleay32.lib` \
-`cygpath -m $with_openssl/out32/libeay32.lib`"
+    OPENSSL_LIBS="`cygpath -m $with_openssl/out32/ssl.lib` \
+`cygpath -m $with_openssl/out32/crypto.lib`"
 else
     AC_MSG_WARN([openssl is missing.])
     missing_required="$missing_required openssl"
