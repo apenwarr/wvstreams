@@ -1,0 +1,247 @@
+/* include/wvautoconf.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
+   systems. This function is required for `alloca.c' support on those systems.
+   */
+#undef CRAY_STACKSEG_END
+
+/* Define to 1 if using `alloca.c'. */
+#undef C_ALLOCA
+
+/* Define to enable the XPLC delete detector. */
+#undef ENABLE_DELETE_DETECTOR
+
+/* Size of ethernet address */
+#undef ETHER_ADDR_LEN
+
+/* Define to 1 if you have `alloca', as a function or macro. */
+#undef HAVE_ALLOCA
+
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
+#undef HAVE_ALLOCA_H
+
+/* Define to 1 if you have the <argz.h> header file. */
+#undef HAVE_ARGZ_H
+
+/* Solaris has a broken PAM implementation */
+#undef HAVE_BROKEN_PAM
+
+/* Define to 1 if you have the <db_185.h> header file. */
+#undef HAVE_DB_185_H
+
+/* Define to 1 if you have the <db.h> header file. */
+#undef HAVE_DB_H
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the `getopt' function. */
+#undef HAVE_GETOPT
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `crypto' library (-lcrypto). */
+#undef HAVE_LIBCRYPTO
+
+/* Define to 1 if you have the `db' library (-ldb). */
+#undef HAVE_LIBDB
+
+/* Define to 1 if you have the `fftw' library (-lfftw). */
+#undef HAVE_LIBFFTW
+
+/* Define to 1 if you have the `ogg' library (-logg). */
+#undef HAVE_LIBOGG
+
+/* Define to 1 if you have the `pam' library (-lpam). */
+#undef HAVE_LIBPAM
+
+/* Define to 1 if you have the `popt' library (-lpopt). */
+#undef HAVE_LIBPOPT
+
+/* Define to 1 if you have the `qdbm' library (-lqdbm). */
+#undef HAVE_LIBQDBM
+
+/* Define to 1 if you have the `rfftw' library (-lrfftw). */
+#undef HAVE_LIBRFFTW
+
+/* Define to 1 if you have the `slp' library (-lslp). */
+#undef HAVE_LIBSLP
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#undef HAVE_LIBSOCKET
+
+/* Define to 1 if you have the `speex' library (-lspeex). */
+#undef HAVE_LIBSPEEX
+
+/* Define to 1 if you have the `ssl' library (-lssl). */
+#undef HAVE_LIBSSL
+
+/* Define to 1 if you have the `tcl8.3' library (-ltcl8.3). */
+#undef HAVE_LIBTCL8_3
+
+/* Define to 1 if you have the `vorbis' library (-lvorbis). */
+#undef HAVE_LIBVORBIS
+
+/* Define to 1 if you have the `vorbisenc' library (-lvorbisenc). */
+#undef HAVE_LIBVORBISENC
+
+/* Define to 1 if you have the `xplc' library (-lxplc). */
+#undef HAVE_LIBXPLC
+
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
+/* Define to 1 if you have the <linux/serial.h> header file. */
+#undef HAVE_LINUX_SERIAL_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/if_ether.h> header file. */
+#undef HAVE_NETINET_IF_ETHER_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netinet/in_systm.h> header file. */
+#undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define to 1 if you have the <netinet/ip.h> header file. */
+#undef HAVE_NETINET_IP_H
+
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+#undef HAVE_NETINET_TCP_H
+
+/* Define to 1 if you have the <net/ethernet.h> header file. */
+#undef HAVE_NET_ETHERNET_H
+
+/* Define to 1 if you have the <net/if.h> header file. */
+#undef HAVE_NET_IF_H
+
+/* Define to 1 if you have the <ogg/ogg.h> header file. */
+#undef HAVE_OGG_OGG_H
+
+/* Define to 1 if you have the <openssl/ssl.h> header file. */
+#undef HAVE_OPENSSL_SSL_H
+
+/* Define to 1 if you have the <popt.h> header file. */
+#undef HAVE_POPT_H
+
+/* Define to 1 if you have the <rfftw.h> header file. */
+#undef HAVE_RFFTW_H
+
+/* Define to 1 if you have the <security/pam_appl.h> header file. */
+#undef HAVE_SECURITY_PAM_APPL_H
+
+/* Define to 1 if you have the <slp.h> header file. */
+#undef HAVE_SLP_H
+
+/* Define to 1 if you have the <speex.h> header file. */
+#undef HAVE_SPEEX_H
+
+/* Define to 1 if you have the <speex_header.h> header file. */
+#undef HAVE_SPEEX_HEADER_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <tcl.h> header file. */
+#undef HAVE_TCL_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <valgrind/memcheck.h> header file. */
+#undef HAVE_VALGRIND_MEMCHECK_H
+
+/* Define to 1 if you have the <villa.h> header file. */
+#undef HAVE_VILLA_H
+
+/* Define to 1 if you have the <vorbis/codec.h> header file. */
+#undef HAVE_VORBIS_CODEC_H
+
+/* Define to 1 if you have the <vorbis/vorbisenc.h> header file. */
+#undef HAVE_VORBIS_VORBISENC_H
+
+/* Define to 1 if you have the <xplc/core.h> header file. */
+#undef HAVE_XPLC_CORE_H
+
+/* Define to 1 if you have the <zlib.h> header file. */
+#undef HAVE_ZLIB_H
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
+#undef STACK_DIRECTION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Extra version string. */
+#undef VER_STRING_EXTRA
+
+/* Define to enable Berkeley DB support. */
+#undef WITH_BDB
+
+/* Define to enable popt support. */
+#undef WITH_POPT
+
+/* Define to enable QDBM support. */
+#undef WITH_QDBM
+
+/* Define to enable SLP support. */
+#undef WITH_SLP
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
+/* Define to disable WvResolver forking for debugging with gdb. */
+#undef WVRESOLVER_SKIP_FORK
+
+/* Define to a type to use for `error_t' if it is not otherwise available. */
+#undef error_t
