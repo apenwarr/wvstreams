@@ -23,12 +23,11 @@ WV_LINK(UniRetryGen);
 
 // Wrap the given moniker.  For the retry generator, obj is useless since
 // it gives us no idea as to how to recreate itself.
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm encoded_params, IObject *obj, void *)
 {
     if (obj)
     	return NULL;
     
-    WvString encoded_params = wvtcl_unescape(s);
     DPRINTF("encoded_params = %s\n", encoded_params.cstr());
     WvStringList params;
     wvtcl_decode(params, encoded_params);

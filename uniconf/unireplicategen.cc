@@ -36,10 +36,9 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
     }
     if (gens.isempty())
     {
-    	WvString encoded_monikers = wvtcl_unescape(s);
-    	DPRINTF("encoded_monikers = %s\n", encoded_monikers.cstr());
+    	DPRINTF("encoded_monikers = %s\n", s.cstr());
     	WvStringList monikers;
-    	wvtcl_decode(monikers, encoded_monikers);
+    	wvtcl_decode(monikers, s);
     	DPRINTF("monikers = %s\n", monikers.join(",").cstr());
     	
     	WvStringList::Iter i(monikers);

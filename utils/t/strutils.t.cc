@@ -926,3 +926,68 @@ WVTEST_MAIN("depunctuate")
     WVPASSEQ(depunctuate("a. "), "a. ");
 }
 
+WVTEST_MAIN("sizetoa rounding")
+{
+    struct
+    {
+        unsigned long long value;
+        const char *round_down;
+        const char *round_down_at_point_five;
+        const char *round_up_at_point_five;
+        const char *round_up;
+    } tests[] =
+    {
+        { 0, "0 bytes", "0 bytes", "0 bytes", "0 bytes" },
+        { 999, "999 bytes", "999 bytes", "999 bytes", "999 bytes" },
+        { 1000, "1.0 KB", "1.0 KB", "1.0 KB", "1.0 KB" },
+        { 1001, "1.0 KB", "1.0 KB", "1.0 KB", "1.1 KB" },
+        { 1049, "1.0 KB", "1.0 KB", "1.0 KB", "1.1 KB" },
+        { 1050, "1.0 KB", "1.0 KB", "1.1 KB", "1.1 KB" },
+        { 1051, "1.0 KB", "1.1 KB", "1.1 KB", "1.1 KB" },
+        { 1099, "1.0 KB", "1.1 KB", "1.1 KB", "1.1 KB" },
+        { 1100, "1.1 KB", "1.1 KB", "1.1 KB", "1.1 KB" },
+        { 9900, "9.9 KB", "9.9 KB", "9.9 KB", "9.9 KB" },
+        { 9901, "9.9 KB", "9.9 KB", "9.9 KB", "10.0 KB" },
+        { 9949, "9.9 KB", "9.9 KB", "9.9 KB", "10.0 KB" },
+        { 9950, "9.9 KB", "9.9 KB", "10.0 KB", "10.0 KB" },
+        { 9951, "9.9 KB", "10.0 KB", "10.0 KB", "10.0 KB" },
+        { 9999, "9.9 KB", "10.0 KB", "10.0 KB", "10.0 KB" },
+        { 10000, "10.0 KB", "10.0 KB", "10.0 KB", "10.0 KB" },
+        { 10049, "10.0 KB", "10.0 KB", "10.0 KB", "10.1 KB" },
+        { 10050, "10.0 KB", "10.0 KB", "10.1 KB", "10.1 KB" },
+        { 10051, "10.0 KB", "10.1 KB", "10.1 KB", "10.1 KB" },
+        { 10099, "10.0 KB", "10.1 KB", "10.1 KB", "10.1 KB" },
+        { 10100, "10.1 KB", "10.1 KB", "10.1 KB", "10.1 KB" },
+        { 100000, "100.0 KB", "100.0 KB", "100.0 KB", "100.0 KB" },
+        { 100049, "100.0 KB", "100.0 KB", "100.0 KB", "100.1 KB" },
+        { 100050, "100.0 KB", "100.0 KB", "100.1 KB", "100.1 KB" },
+        { 100051, "100.0 KB", "100.1 KB", "100.1 KB", "100.1 KB" },
+        { 100099, "100.0 KB", "100.1 KB", "100.1 KB", "100.1 KB" },
+        { 100100, "100.1 KB", "100.1 KB", "100.1 KB", "100.1 KB" },
+        { 1000000, "1.0 MB", "1.0 MB", "1.0 MB", "1.0 MB" },
+        { 1000049, "1.0 MB", "1.0 MB", "1.0 MB", "1.1 MB" },
+        { 1000050, "1.0 MB", "1.0 MB", "1.0 MB", "1.1 MB" },
+        { 1000051, "1.0 MB", "1.0 MB", "1.0 MB", "1.1 MB" },
+        { 1000099, "1.0 MB", "1.0 MB", "1.0 MB", "1.1 MB" },
+        { 1000100, "1.0 MB", "1.0 MB", "1.0 MB", "1.1 MB" },
+        { 1049000, "1.0 MB", "1.0 MB", "1.0 MB", "1.1 MB" },
+        { 1050000, "1.0 MB", "1.0 MB", "1.1 MB", "1.1 MB" },
+        { 1051000, "1.0 MB", "1.1 MB", "1.1 MB", "1.1 MB" },
+        { 1099000, "1.0 MB", "1.1 MB", "1.1 MB", "1.1 MB" },
+        { 1100000, "1.1 MB", "1.1 MB", "1.1 MB", "1.1 MB" },
+        { 0, NULL, NULL, NULL, NULL }
+    };
+
+    int i;
+    for (i=0; tests[i].round_down; ++i)
+    {
+        wvout->print("ROUND_DOWN %s:\n", tests[i].value);
+        WVPASSEQ(sizetoa(tests[i].value, 1, ROUND_DOWN), tests[i].round_down);
+        wvout->print("ROUND_DOWN_AT_POINT_FIVE %s:\n", tests[i].value);
+        WVPASSEQ(sizetoa(tests[i].value, 1, ROUND_DOWN_AT_POINT_FIVE), tests[i].round_down_at_point_five);
+        wvout->print("ROUND_UP_AT_POINT_FIVE %s:\n", tests[i].value);
+        WVPASSEQ(sizetoa(tests[i].value, 1, ROUND_UP_AT_POINT_FIVE), tests[i].round_up_at_point_five);
+        wvout->print("ROUND_UP %s:\n", tests[i].value);
+        WVPASSEQ(sizetoa(tests[i].value, 1, ROUND_UP), tests[i].round_up);
+    }
+}

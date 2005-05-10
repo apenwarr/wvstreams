@@ -528,74 +528,97 @@ WvString getdirname(WvStringParm fullname)
 // bunch of digits, and the default unit (indexed by size); and turns
 // them into a WvString that's formatted to human-readable rounded
 // sizes, with one decimal place.
-WvString _sizetoa(unsigned long long digits, int size = 0)
+static WvString _sizetoa(unsigned long long size, int shift,
+        RoundingMethod rounding_method)
 {
     // Programmatically determine the units.  In order, these are:
     // bytes, kilobytes, megabytes, gigabytes, terabytes, petabytes,
     // exabytes, zettabytes, yottabytes.  Note that these are SI
     // prefixes, not binary ones.
-    static char* size_name[] = { "B", "KB", "MB", "GB", "TB",
-				 "PB", "EB", "ZB", "YB", NULL };
+    static const struct
+    {
+        const char *name;
+        unsigned long long base_over_10;
+    } units[] =
+    {
+        { "KB", 100ull },
+        { "MB", 100000ull },
+        { "GB", 100000000ull },
+        { "TB", 100000000000ull },
+        { "PB", 100000000000000ull },
+        { "EB", 100000000000000000ull },
+        { NULL, 0 }
+    };
 
-    // Let's loop, until we can get our "units" to less-than 1000.
-    // But we also have to keep enough significant figures for two
-    // decimal places, in order to round properly.  Therefore, we
-    // should stop looping at 1000000.
-    while (digits >= 1000000) {
-	// We'll make an exception for 1000 TB and higher, since we
-	// have no larger unit.  Well, I guess we can use exabytes,
-	// but that's a little futher in the future.
-	if (size_name[size + 1] == NULL)
-	    break;
+    // To understand rounding, consider the display of the value 999949.
+    // For each rounding method the string displayed should be:
+    // ROUND_DOWN: 999.9 KB
+    // ROUND_UP_AT_POINT_FIVE: 999.9 KB 
+    // ROUND_UP: 1.0 MB
+    // On the other hand, for the value 999950, the strings should be:
+    // ROUND_DOWN: 999.9 KB
+    // ROUND_DOWN_AT_POINT_FIVE: 999.9 KB 
+    // ROUND_UP_AT_POINT_FIVE: 1.0 MB
+    // ROUND_UP: 1.0 MB
+    
+    int unit = 0;
+    unsigned long long significant_digits;
+    while (true)
+    {
+        switch (rounding_method)
+        {
+            case ROUND_DOWN:
+                significant_digits =
+                    size / units[unit].base_over_10;
+                break;
+                             
+            case ROUND_DOWN_AT_POINT_FIVE:
+                significant_digits =
+                    (size + units[unit].base_over_10 / 2 - 1) / units[unit].base_over_10;
+                break;
 
-	// OK.  Let's go up another unit.
-	digits /= 1000;
-	size += 1;
-    }
+            case ROUND_UP_AT_POINT_FIVE:
+                significant_digits =
+                    (size + units[unit].base_over_10 / 2) / units[unit].base_over_10;
+                break;
 
-    // Now we can perform our rounding calculation.  We use the
-    // algorithm derived from grade school.  If it is a 5 or higher,
-    // round up.
-    unsigned long long units = digits / 1000;
-    unsigned tenths = digits % 1000 / 100;
-    unsigned hundredths = digits % 100 / 10;
-    if (hundredths >= 5)
-	tenths += 1;
-    if (tenths >= 10) {
-	tenths = 0;
-	units += 1;
-    }
-    if (units >= 1000 && (size_name[size + 1] != NULL)) {
-	units /= 1000;
-	tenths = 0;
-	size += 1;
+            case ROUND_UP:
+                significant_digits =
+                    (size + units[unit].base_over_10 - 1) / units[unit].base_over_10;
+                break;
+        }
+        if (significant_digits < 10000 || !units[unit+shift+1].name)
+            break;
+        ++unit;
     }
 
     // Now we can return our result.
-    return WvString("%s.%s %s", units, tenths, size_name[size]);
+    return WvString("%s.%s %s",
+            significant_digits / 10,
+            significant_digits % 10,
+            units[unit+shift].name);
 }
 
-WvString sizetoa(unsigned long long blocks, unsigned int blocksize)
+WvString sizetoa(unsigned long long blocks, unsigned int blocksize,
+        RoundingMethod rounding_method)
 {
     unsigned long long bytes = blocks * blocksize;
 
-    // Test if we are dealing in just bytes.  Plus, we should ensure
-    // that we didn't overflow.  (Although that is highly unlikely,
-    // with a 64-bit integer.)
-    if ((bytes < 1000) && !(blocks * blocksize / 1000))
+    // Test if we are dealing in just bytes.
+    if (bytes < 1000)
         return WvString("%s bytes", blocks * blocksize);
 
-    return _sizetoa(bytes, 1);
+    return _sizetoa(bytes, 0, rounding_method);
 }
 
 
-WvString sizektoa(unsigned int kbytes)
+WvString sizektoa(unsigned int kbytes, RoundingMethod rounding_method)
 {
     // Test if we are dealing in just kilobytes.
     if (kbytes < 1000)
         return WvString("%s KB", kbytes);
 
-    return _sizetoa(kbytes, 2);
+    return _sizetoa(kbytes, 1, rounding_method);
 }
 
 WvString secondstoa(unsigned int total_seconds)

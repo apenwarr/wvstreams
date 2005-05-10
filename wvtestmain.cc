@@ -68,10 +68,9 @@ int main(int argc, char **argv)
     WVPASS(startfd == endfd);
 #ifndef _WIN32
     if (startfd != endfd)
-    {
 	system(WvString("ls -l /proc/%s/fd", getpid()));
-    }
 #endif    
+    
     // keep 'make' from aborting if this environment variable is set
     if (getenv("WVTEST_NO_FAIL"))
 	return 0;

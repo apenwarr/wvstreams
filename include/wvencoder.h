@@ -627,6 +627,11 @@ public:
      */
     bool continue_encode(WvBuf &inbuf, WvBuf &outbuf);
 
+    /**
+     * Returns true if there is data in an internal buffer.
+     */
+    size_t buffered();
+
 protected:
     /**
      * Returns true if the encoder has not encountered an error.

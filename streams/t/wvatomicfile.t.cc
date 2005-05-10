@@ -11,7 +11,7 @@ WVTEST_MAIN("atomic file test")
 
     WVPASS(lstat(filename, &st) == -1);
     
-    WvAtomicFile g(filename, 0666);
+    WvAtomicFile g(filename, O_WRONLY|O_CREAT|O_TRUNC, 0660);
     WVPASS(g.iswritable());
     WVPASS(g.isok());
     WVPASS(lstat(filename, &st) == -1);
@@ -37,9 +37,9 @@ WVTEST_MAIN("atomic file chmod")
     mode_t old_umask = umask(022);
     unlink(filename);
 
-    WvAtomicFile g(filename, 0666);
+    WvAtomicFile g(filename, O_WRONLY|O_CREAT|O_TRUNC, 0660);
     WVPASS(g.isok());
-    WVPASS(fstat(g.getfd(), &st) == 0 && (st.st_mode & 0777) == 0644);
+    WVPASS(fstat(g.getfd(), &st) == 0 && (st.st_mode & 0777) == 0640);
     WVPASS(g.chmod(0666));
     WVPASS(fstat(g.getfd(), &st) == 0 && (st.st_mode & 0777) == 0666);
     g.close();
@@ -51,6 +51,15 @@ WVTEST_MAIN("atomic file chmod")
     unlink(filename);
 }
 
+WVTEST_MAIN("atomic errors")
+{
+    WvString filename("/this/directory/had/better/not/exist/filename.txt");
+    WvAtomicFile f(filename, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+    WVFAIL(f.isok());
+    WVPASSEQ(f.geterr(), ENOENT);
+    printf("error string: '%s'\n", f.errstr().cstr());
+}
+
 #if 0
 // This only works as root...
 WVTEST_MAIN("atomic file chown")
@@ -58,7 +67,7 @@ WVTEST_MAIN("atomic file chown")
     WvString filename("/tmp/testfile.%s", getpid());
     struct stat st;
 
-    WvAtomicFile g(filename, 0666);
+    WvAtomicFile g(filename, O_WRONLY|O_CREAT|O_TRUNC, 0666);
     WVPASS(g.isok());
     WVPASS(fstat(g.getfd(), &st) == 0
     	    && st.st_uid == getuid()
