@@ -194,6 +194,9 @@ public:
         args.add_option('V', "version",
                 "Print version number and exit",
                 WvArgs::NoArgCallback(this, &UniConfd::display_version_and_exit));
+        args.add_option(0, "pid-file",
+                "Specify the .pid file to use", "filename",
+                pid_file);
         args.add_set_bool_option('a', "need-auth",
                 "Require authentication on incoming connections", needauth);
         args.add_option('A', "check-access",
