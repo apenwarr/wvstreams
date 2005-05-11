@@ -42,6 +42,8 @@ protected:
     virtual void do_remove(const UniConfKey &key);
     virtual void do_subtree(const UniConfKey &key, bool recursive);
     virtual void do_haschildren(const UniConfKey &key);
+    virtual void do_commit();
+    virtual void do_refresh();
     virtual void do_quit();
     virtual void do_help();
 

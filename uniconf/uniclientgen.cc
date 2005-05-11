@@ -122,9 +122,8 @@ bool UniClientGen::isok()
 
 bool UniClientGen::refresh()
 {
-    // make sure everything in the queue has been flushed
-    get("");
-    return true;
+    conn->writecmd(UniClientConn::REQ_REFRESH);
+    return do_select();
 }
 
 void UniClientGen::flush_buffers()
@@ -136,8 +135,8 @@ void UniClientGen::flush_buffers()
 
 void UniClientGen::commit()
 {
-   UniConfKey tempkey("dummykey");
-   get(tempkey); // NOOP command, to ensure that all requests are flushed
+    conn->writecmd(UniClientConn::REQ_COMMIT);
+    do_select();
 }
 
 WvString UniClientGen::get(const UniConfKey &key)
