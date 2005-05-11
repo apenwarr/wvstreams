@@ -41,13 +41,16 @@ void WvStreamsDaemon::run_cb(WvDaemon &daemon, void *)
 
 void WvStreamsDaemon::stop_cb(WvDaemon &daemon, void *)
 {
+    WvIStreamList::Iter stream(streams);
+    for (stream.rewind(); stream.next(); )
+        WvIStreamList::globallist.unlink(stream.ptr());
     streams.zap();
 }
 
-void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *)
+void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *ud)
 {
+    stop_cb(daemon, ud);
     WvIStreamList::globallist.zap();
-    streams.zap();
 }
 
 void WvStreamsDaemon::add_stream(IWvStream *istream,
