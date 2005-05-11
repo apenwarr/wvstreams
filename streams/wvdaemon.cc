@@ -160,7 +160,7 @@ int WvDaemon::run(const char *argv0)
 
 int WvDaemon::run(int argc, char **argv)
 {
-    if (!args.process(argc, argv))
+    if (!args.process(argc, argv, &extra_args))
         return 1;
 
     return run(argv[0]);
