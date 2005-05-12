@@ -8,6 +8,7 @@
 #include "strutils.h"
 #include "wvbuf.h"
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -524,101 +525,199 @@ WvString getdirname(WvStringParm fullname)
     }
 }
 
+// Programmatically determine the units.  In order, these are:
+// bytes, kilobytes, megabytes, gigabytes, terabytes, petabytes,
+// exabytes, zettabytes, yottabytes.  Note that these are SI
+// prefixes, not binary ones.
+
+// This structure allows us to choose between SI-prefixes which are
+// powers of 10, and IEC-prefixes which are powers of 2.
+struct prefix_t
+{
+    const char *name;
+    unsigned long long base;
+};
+
+// SI-prefixes:
+// kilo, mega, giga, tera, peta, and exa.
+static const prefix_t si[] =
+{
+    { "k", 1000ull },
+    { "M", 1000ull * 1000ull },
+    { "G", 1000ull * 1000ull * 1000ull },
+    { "T", 1000ull * 1000ull * 1000ull * 1000ull },
+    { "P", 1000ull * 1000ull * 1000ull * 1000ull * 1000ull},
+    { "E", 1000ull * 1000ull * 1000ull * 1000ull * 1000ull * 1000ull},
+    { "Z", 0 },
+    { "Y", 0 },
+    { NULL, 0 }
+};
+
+// IEC-prefixes:
+// kibi, mebi, gibi, tebi, pebi, and exbi.
+static const prefix_t iec[] =
+{
+    { "Ki", 1024ull },
+    { "Mi", 1024ull * 1024ull},
+    { "Gi", 1024ull * 1024ull * 1024ull },
+    { "Ti", 1024ull * 1024ull * 1024ull * 1024ull },
+    { "Pi", 1024ull * 1024ull * 1024ull * 1024ull * 1024ull},
+    { "Ei", 1024ull * 1024ull * 1024ull * 1024ull * 1024ull * 1024ull},
+    { "Zi", 0 },
+    { "Yi", 0 },
+    { NULL, 0 }
+};
+
+
+// This function expects size to be ten-times the actual number.
+static inline unsigned long long _sizetoa_rounder(RoundingMethod method,
+						  unsigned long long size,
+						  unsigned long long remainder,
+						  unsigned long long base)
+{
+    unsigned long long half = base / 2;
+    unsigned long long significant_digits = size / base;
+    switch (method)
+    {
+    case ROUND_DOWN:
+	break;
+
+    case ROUND_UP:
+	if (remainder || (size % base))
+	    ++significant_digits;
+	break;
+
+    case ROUND_UP_AT_POINT_FIVE:
+	if ((size % base) >= half)
+	    ++significant_digits;
+	break;
+
+    case ROUND_DOWN_AT_POINT_FIVE:
+	unsigned long long r = size % base;
+	if ((r > half) || (remainder && (r == half)))
+	    ++significant_digits;
+	break;
+    }
+    return significant_digits;
+}
+
+
 // This function helps sizetoa() and sizektoa() below.  It takes a
 // bunch of digits, and the default unit (indexed by size); and turns
 // them into a WvString that's formatted to human-readable rounded
 // sizes, with one decimal place.
-static WvString _sizetoa(unsigned long long size, int shift,
-        RoundingMethod rounding_method)
+//
+// You must be very careful here never to add anything to size.
+// Otherwise, you might cause an overflow to occur.  Similarly, you
+// must be careful when you subtract or you might cause an underflow.
+static WvString _sizetoa(unsigned long long size, unsigned long blocksize,
+			 RoundingMethod rounding_method,
+			 const prefix_t *prefixes, WvStringParm unit)
 {
-    // Programmatically determine the units.  In order, these are:
-    // bytes, kilobytes, megabytes, gigabytes, terabytes, petabytes,
-    // exabytes, zettabytes, yottabytes.  Note that these are SI
-    // prefixes, not binary ones.
-    static const struct
-    {
-        const char *name;
-        unsigned long long base_over_10;
-    } units[] =
-    {
-        { "KB", 100ull },
-        { "MB", 100000ull },
-        { "GB", 100000000ull },
-        { "TB", 100000000000ull },
-        { "PB", 100000000000000ull },
-        { "EB", 100000000000000000ull },
-        { NULL, 0 }
-    };
+    assert(blocksize);
 
     // To understand rounding, consider the display of the value 999949.
     // For each rounding method the string displayed should be:
-    // ROUND_DOWN: 999.9 KB
-    // ROUND_UP_AT_POINT_FIVE: 999.9 KB 
+    // ROUND_DOWN: 999.9 kB
+    // ROUND_UP_AT_POINT_FIVE: 999.9 kB
     // ROUND_UP: 1.0 MB
     // On the other hand, for the value 999950, the strings should be:
-    // ROUND_DOWN: 999.9 KB
-    // ROUND_DOWN_AT_POINT_FIVE: 999.9 KB 
+    // ROUND_DOWN: 999.9 kB
+    // ROUND_DOWN_AT_POINT_FIVE: 999.9 kB
     // ROUND_UP_AT_POINT_FIVE: 1.0 MB
     // ROUND_UP: 1.0 MB
-    
-    int unit = 0;
-    unsigned long long significant_digits;
-    while (true)
+
+    // Deal with blocksizes without overflowing.
+    const unsigned long long group_base = prefixes[0].base;
+    int shift = static_cast<int>(log(blocksize) / log(group_base));
+    if (shift)
+	blocksize /= exp(shift * log(group_base));
+
+    int p = -1;
+    unsigned long long significant_digits = size * 10;
+    unsigned int remainder = 0;
+    if (significant_digits < size)
     {
-        switch (rounding_method)
-        {
-            case ROUND_DOWN:
-                significant_digits =
-                    size / units[unit].base_over_10;
-                break;
-                             
-            case ROUND_DOWN_AT_POINT_FIVE:
-                significant_digits =
-                    (size + units[unit].base_over_10 / 2 - 1) / units[unit].base_over_10;
-                break;
+	// A really big size.  We'll divide by a grouping before going up one.
+	remainder = size % group_base;
+	size /= group_base;
+	++shift;
+    }
+    while (size >= group_base)
+    {
+	++p;
+	significant_digits = _sizetoa_rounder(rounding_method,
+					      size * 10,
+					      remainder,
+					      prefixes[p].base);
+	if (significant_digits < (group_base * 10)
+	    || !prefixes[p + shift + 1].name)
+	    break;
+    }
 
-            case ROUND_UP_AT_POINT_FIVE:
-                significant_digits =
-                    (size + units[unit].base_over_10 / 2) / units[unit].base_over_10;
-                break;
-
-            case ROUND_UP:
-                significant_digits =
-                    (size + units[unit].base_over_10 - 1) / units[unit].base_over_10;
-                break;
-        }
-        if (significant_digits < 10000 || !units[unit+shift+1].name)
-            break;
-        ++unit;
+    // Correct for blocksizes that aren't powers of group_base.
+    if (blocksize > 1)
+    {
+	significant_digits *= blocksize;
+	if (significant_digits >= group_base
+	    && prefixes[p + shift + 1].name)
+	{
+	    significant_digits = _sizetoa_rounder(rounding_method,
+						  significant_digits,
+						  0,
+						  group_base);
+	    ++p;
+	}
     }
 
     // Now we can return our result.
-    return WvString("%s.%s %s",
-            significant_digits / 10,
-            significant_digits % 10,
-            units[unit+shift].name);
+    return WvString("%s.%s %s%s",
+		    significant_digits / 10,
+		    significant_digits % 10,
+		    prefixes[p + shift].name,
+		    unit);
 }
 
-WvString sizetoa(unsigned long long blocks, unsigned int blocksize,
-        RoundingMethod rounding_method)
+WvString sizetoa(unsigned long long blocks, unsigned long blocksize,
+		 RoundingMethod rounding_method)
 {
     unsigned long long bytes = blocks * blocksize;
 
     // Test if we are dealing in just bytes.
-    if (bytes < 1000)
-        return WvString("%s bytes", blocks * blocksize);
+    if (bytes < 1000 && bytes >= blocks)
+	return WvString("%s bytes", bytes);
 
-    return _sizetoa(bytes, 0, rounding_method);
+    return _sizetoa(blocks, blocksize, rounding_method, si, "B");
 }
 
 
-WvString sizektoa(unsigned int kbytes, RoundingMethod rounding_method)
+WvString sizektoa(unsigned long long kbytes, RoundingMethod rounding_method)
 {
-    // Test if we are dealing in just kilobytes.
     if (kbytes < 1000)
-        return WvString("%s KB", kbytes);
+	return WvString("%s kB", kbytes);
 
-    return _sizetoa(kbytes, 1, rounding_method);
+    return sizetoa(kbytes, 1000, rounding_method);
+}
+
+WvString sizeitoa(unsigned long long blocks, unsigned long blocksize,
+		  RoundingMethod rounding_method)
+{
+    unsigned long long bytes = blocks * blocksize;
+
+    // Test if we are dealing in just bytes.
+    if (bytes < 1024 && bytes >= blocks)
+	return WvString("%s bytes", bytes);
+
+    return _sizetoa(blocks, blocksize, rounding_method, iec, "B");
+}
+
+
+WvString sizekitoa(unsigned long long kbytes, RoundingMethod rounding_method)
+{
+    if (kbytes < 1024)
+	return WvString("%s KiB", kbytes);
+
+    return sizeitoa(kbytes, 1024, rounding_method);
 }
 
 WvString secondstoa(unsigned int total_seconds)
