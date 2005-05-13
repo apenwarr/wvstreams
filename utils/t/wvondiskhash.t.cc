@@ -50,3 +50,72 @@ WVTEST_MAIN("dont create files in /tmp")
 
 }
 
+template<class Backend>
+void itertest()
+{
+    WvOnDiskHash<int, int, Backend> *hash = new WvOnDiskHash<int, int, Backend>();
+    WVPASS(hash->isok());
+
+    //Add a bunch of elements
+    int elements = 10;
+    int data[elements];
+
+    for (int i=0;i<elements;i++)
+    {
+        data[i] = i;
+        hash->add(data[i], data[i]);
+    }
+
+    WVPASS(hash->isok());
+    
+    WvOnDiskHash<int, int, Backend>::Iter i(*hash);
+    bool found[elements];
+    memset(found,0,sizeof(found));
+
+    bool passedIterate = true;
+    //Iterate through, ensure that every data element is still there
+    for (i.rewind();i.next();)
+    {
+        if (found[i()])
+            passedIterate = false;
+        found[i()] = true;
+    }
+    WVPASS(passedIterate); 
+
+    bool passedExists = true;
+    for (int j=0;j<elements;j++)
+    {
+        if (!hash->exists(j))
+            passedExists = false;
+    }
+    WVPASS(passedExists);
+
+    //Test removing elements
+    hash->remove(1);
+    hash->remove(2);
+    
+    WVPASS(hash->exists(0));
+    WVFAIL(hash->exists(1));
+    WVFAIL(hash->exists(2));
+
+    WVPASS(hash->count() == elements-2);
+
+    WVPASS((*hash)[0] == 0);
+    WVPASS(hash->find(3) == 3);
+
+    hash->zap();
+
+    WVPASS(hash->isempty());
+
+    delete hash;
+}
+
+WVTEST_MAIN("WvOnDiskHash (BdbHash backend)  with iteration and removal")
+{
+    itertest<WvBdbHash>();
+}
+
+WVTEST_MAIN("WvOnDiskHash (QdbmHash backend)  with iteration and removal")
+{
+    itertest<WvQdbmHash>();
+}
