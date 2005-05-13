@@ -125,7 +125,8 @@ ifneq ("$(with_qdbm)", "no")
   libwvutils.so-LIBS+=-L. -lqdbm
 endif
 
-libwvbase.so: LIBS+=-lxplc-cxx
+libwvbase.so-LIBS+=-lxplc-cxx -lm
+libwvbase.so:
 
 ifneq ("$(with_openslp)", "no")
   libwvstreams.so: -lslp
