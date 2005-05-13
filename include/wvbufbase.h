@@ -103,7 +103,8 @@ public:
      * 
      * If count == 0, a NULL pointer may be returned.
      * 
-     * It is an error for count to be greater than used().
+     * It is an error for count to be greater than the number of
+     * available elements in the buffer.
      * 
      * For maximum efficiency, call this function multiple times
      * with count no greater than optgettable() each time.
@@ -125,9 +126,11 @@ public:
      * This is equivalent to invoking get(size_t) with the count
      * and discarding the result, but may be faster for certain
      * types of buffers.  As with get(size_t), the call may be
-     * followed up by an unget(size_t).
+     * followed up by an unget(size_t). 
      * 
-     *
+     * It is an error for count to be greater than the number of
+     * available elements in the buffer.
+     * 
      * "count" is the number of elements
      */
     void skip(size_t count)
