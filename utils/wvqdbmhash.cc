@@ -72,15 +72,17 @@ void WvQdbmHash::opendb(WvStringParm dbfile, bool _persist)
 
     persist_dbfile = _persist;
     //jdeboer: If this is an anonymous hash, we don't want it to persist!
-    if (dbfile.isnull()) {
-        persist_dbfile = false;
-        int fd = mkstemp(tmpbuf);
-        close(fd);
-        tmpbuf_inited = 1;
-    }
     if (tmpbuf_inited > 0 && dbfile == WvString(tmpbuf)) {
         // sometime people reopen the database with the same name.
         persist_dbfile = false;
+    }
+    else if (dbfile.isnull()) {
+        persist_dbfile = false;
+        strcpy(tmpbuf+26, "XXXXXX");
+        int fd = mkstemp(tmpbuf);
+        assert(fd != -1);
+        close(fd);
+        tmpbuf_inited = 1;
     }
 
     int mode = VL_OWRITER | VL_OCREAT;

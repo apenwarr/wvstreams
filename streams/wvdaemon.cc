@@ -150,6 +150,8 @@ int WvDaemon::run(const char *argv0)
                 ::close(null_fd);
                 
                 _run(argv0);
+
+                exit(0); // Make sure destructors are called
             }
 
             _exit(0);

@@ -74,4 +74,10 @@ WvString wvtmpfilename(WvStringParm prefix);
 int wvchmod(const char *path, mode_t mode);
 #endif
 
+
+/**
+ * A simple helper function to get the current umask.
+ */
+mode_t get_umask();
+
 #endif // __WVFILEUTILS_H

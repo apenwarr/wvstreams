@@ -64,6 +64,9 @@ private:
      */
     virtual void gencallback(const UniConf &cfg, const UniConfKey &key);
     
+    /** Like xinner[key], but skips calling [] if key.isnull(). */
+    UniConf _sub(const UniConfKey &key);
+    
     class Iter;
     class RecursiveIter;
     

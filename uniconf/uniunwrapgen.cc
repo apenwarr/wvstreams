@@ -36,6 +36,15 @@ void UniUnwrapGen::setinner(const UniConf &inner)
 }
 
 
+UniConf UniUnwrapGen::_sub(const UniConfKey &key)
+{
+    if (key.isempty())
+	return xinner;
+    else
+	return xinner[key];
+}
+
+
 void UniUnwrapGen::commit()
 {
     if (!committing)
@@ -62,31 +71,31 @@ bool UniUnwrapGen::refresh()
 
 void UniUnwrapGen::prefetch(const UniConfKey &key, bool recursive)
 {
-    xinner[key].prefetch(recursive);
+    _sub(key).prefetch(recursive);
 }
 
 
 WvString UniUnwrapGen::get(const UniConfKey &key)
 {
-    return xinner[key].getme();
+    return _sub(key).getme();
 }
 
 
 void UniUnwrapGen::set(const UniConfKey &key, WvStringParm value)
 {
-    xinner[key].setme(value);
+    _sub(key).setme(value);
 }
 
 
 bool UniUnwrapGen::exists(const UniConfKey &key)
 {
-    return xinner[key].exists();
+    return _sub(key).exists();
 }
 
 
 bool UniUnwrapGen::haschildren(const UniConfKey &key)
 {
-    return xinner[key].haschildren();
+    return _sub(key).haschildren();
 }
 
 
@@ -137,17 +146,17 @@ public:
 
 UniConfGen::Iter *UniUnwrapGen::iterator(const UniConfKey &key)
 {
-    return new Iter(xinner[key]);
+    return new Iter(_sub(key));
 }
 
 
 UniConfGen::Iter *UniUnwrapGen::recursiveiterator(const UniConfKey &key)
 {
-    return new RecursiveIter(xinner[key]);
+    return new RecursiveIter(_sub(key));
 }
 
 
 void UniUnwrapGen::gencallback(const UniConf &cfg, const UniConfKey &key)
 {
-    delta(cfg[key].fullkey(), cfg[key].getme());
+    delta(cfg[key].fullkey(xinner), cfg[key].getme());
 }

@@ -45,6 +45,10 @@ public:
      *    - redirect it through the WvPipe (eg. if writable==true)
      *    - redirect it to any open file descriptor (std*_fd are only
      *       used if the corresponding bool is false, however)
+     * Note that you need either writable or readable set to true if you
+     * want the pipe to close automatically (for instance, when it's
+     * appened to the globallist).  Use the ignore_read() callback if
+     * you really don't care about its output.
      */
     WvPipe(const char *program, const char * const *argv,
 	   bool writable, bool readable, bool catch_stderr,

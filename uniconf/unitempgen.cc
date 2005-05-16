@@ -138,17 +138,6 @@ void UniTempGen::set(const UniConfKey &_key, WvStringParm _value)
 }
 
 
-bool UniTempGen::exists(const UniConfKey &key)
-{
-    if (root)
-    {
-        UniConfValueTree *node = root->find(key);
-        return node != NULL;
-    }
-    return false;
-}
-
-
 bool UniTempGen::haschildren(const UniConfKey &key)
 {
     if (root)
