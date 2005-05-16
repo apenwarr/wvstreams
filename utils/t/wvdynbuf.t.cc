@@ -2,8 +2,6 @@
 #include "wvtest.h"
 #include "wvstrutils.h"
 
-#if 0
-// FIXME: valgrind failure here. Bug 12173.
 WVTEST_MAIN("DynBuf")
 {
     {
@@ -60,14 +58,14 @@ WVTEST_MAIN("DynBuf")
 
     {
         WvDynBuf buf;
-        buf.put("get ", 4);
-        buf.put("not ", 4);
-        buf.put("this", 4);
+        buf.put("get \0", 5);
+        buf.put("not \0", 5);
+        buf.put("this\0", 5);
         
         WvString s;
-        s.append((char *)buf.get(4));
-        buf.skip(4);
-        s.append((char *)buf.get(4));
+        s.append((char *)buf.get(5));
+        buf.skip(5);
+        s.append((char *)buf.get(5));
         
         WVPASS(strcmp(s.cstr(), "Get this"));
     }
@@ -89,7 +87,6 @@ WVTEST_MAIN("DynBuf")
         WVPASS(ok);
     }
 }
-#endif
 
 
 const int NUM_ZEROS = 4096;
