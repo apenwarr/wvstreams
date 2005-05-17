@@ -54,7 +54,7 @@ template<class Backend>
 void itertest_check(WvOnDiskHash<int, int, Backend> &hash, bool *seen,
 		    size_t sizeof_seen, size_t &count)
 {
-    WvOnDiskHash<int, int, Backend>::Iter i(hash);
+    typename WvOnDiskHash<int, int, Backend>::Iter i(hash);
 
     memset(seen, 0, sizeof(seen));
     count = 0;
@@ -92,7 +92,7 @@ template<class Backend>
 void itertest_new()
 {
     WvOnDiskHash<int, int, Backend> hash;
-    WvOnDiskHash<int, int, Backend>::Iter i(hash);
+    typename WvOnDiskHash<int, int, Backend>::Iter i(hash);
     bool seen[3];
     size_t count;
 
