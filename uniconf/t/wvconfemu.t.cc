@@ -249,3 +249,36 @@ WVTEST_MAIN("wvconfemu isempty")
     }
     WVPASS(never_ran);
 }
+
+WVTEST_MAIN("wvconfemu empty section")
+{
+    int pass;
+    for (pass=0; pass<2; ++pass)
+    {
+        UniConfRoot uni("temp:");
+        switch (pass)
+        {
+            case 0:
+                uni.xset("Users/test", "passwd");
+                break;
+
+            case 1:
+                uni.xset("Users/test", "");
+                break;
+        }
+
+        WvConfEmu cfg(uni);
+        
+        int num_items = 0;
+        WvConfigSectionList::Iter sect(cfg);
+        for (sect.rewind(); sect.next(); )
+        {
+            WvConfigEntryList::Iter ent(*sect);
+            for (ent.rewind(); ent.next(); )
+            {
+                ++num_items;
+            }
+        }
+        WVPASS(num_items == 1);
+    }
+}
