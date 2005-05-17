@@ -610,7 +610,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --log-file=valgrind.log --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile=valgrind.log --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
 
 AC_SUBST(enable_debug)
