@@ -8,5 +8,5 @@ Name: WvStreams Base
 Description: Basic subset of the WvStreams library
 Version: ${version}
 Requires: @xplc_pc@
-Libs: -L${libdir} -lwvbase -lm
+Libs: -L${libdir} -lwvbase
 Cflags: -I${includedir}/wvstreams
