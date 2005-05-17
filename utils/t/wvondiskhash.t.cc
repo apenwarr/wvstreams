@@ -5,8 +5,6 @@
 #include "wvtest_filecountprefix.h"
 
 
-typedef WvOnDiskHash<int, int> IntMap;
-
 WVTEST_MAIN("dont create files in /tmp")
 {
     WVPASS("start of test");
@@ -14,112 +12,150 @@ WVTEST_MAIN("dont create files in /tmp")
     // loads /tmp into cache to make things run consistantly fast.
     time_t s = time(NULL);
     system("ls /tmp |wc");
-    printf("ls /tmp: elasped %d\n", time(NULL) - s);
+    printf("ls /tmp: elasped %d\n", static_cast<int>(time(NULL) - s));
     
     WVPASS("after reading /tmp");
     
     s = time(NULL);
     int before_count = wvtest_file_count_prefix("/tmp", "file");
-    printf("before_count: elasped %d\n", time(NULL) - s);
+    printf("before_count: elasped %d\n", static_cast<int>(time(NULL) - s));
     
     WVPASS("tick 2");
 
     s = time(NULL);
     int before_count_var = wvtest_file_count_prefix("/var/tmp", "qdbm-annoy");
-    printf("before_count_var: elasped %d\n", time(NULL) - s);
+    printf("before_count_var: elasped %d\n", static_cast<int>(time(NULL) - s));
     
     WVPASS("tick 3");
 
-    IntMap *im = new IntMap;    
-    WVPASS("tick 4");
-    delete im;
+    {
+	WvOnDiskHash<int, int> im;
+	WVPASS("tick 4");
+    }
     WVPASS("tick 5");
 
     s = time(NULL);
     int after_count = wvtest_file_count_prefix("/tmp", "file");
-    printf("after_count: elasped %d\n", time(NULL) - s);
+    printf("after_count: elasped %d\n", static_cast<int>(time(NULL) - s));
     
     WVPASS("tick 6");
     
     s = time(NULL);
     int after_count_var = wvtest_file_count_prefix("/var/tmp", "qdbm-annoy");
-    printf("after_count_var: elasped %d\n", time(NULL) - s);
+    printf("after_count_var: elasped %d\n", static_cast<int>(time(NULL) - s));
     
     WVPASSEQ(before_count, after_count);
     WVPASSEQ(before_count_var, after_count_var);
 
 }
 
+
 template<class Backend>
-void itertest()
+void itertest_check(WvOnDiskHash<int, int, Backend> &hash, bool *seen,
+		    size_t sizeof_seen, size_t &count)
 {
-    WvOnDiskHash<int, int, Backend> *hash = new WvOnDiskHash<int, int, Backend>();
-    WVPASS(hash->isok());
+    WvOnDiskHash<int, int, Backend>::Iter i(hash);
 
-    //Add a bunch of elements
-    int elements = 10;
-    int data[elements];
+    memset(seen, 0, sizeof(seen));
+    count = 0;
 
-    for (int i=0;i<elements;i++)
+    for (i.rewind(); i.next(); )
     {
-        data[i] = i;
-        hash->add(data[i], data[i]);
+	int key = i.key();
+	int value = *i;
+
+	if (key == 1 && value == 11)
+	{
+	    WVFAIL(seen[0]);
+	    seen[0] = true;
+	}
+	else if (key == 3 && value == 13)
+	{
+	    WVFAIL(seen[1]);
+	    seen[1] = true;
+	}
+	else if (key == 7 && value == 17)
+	{
+	    WVFAIL(seen[2]);
+	    seen[2] = true;
+	}
+	else
+	{
+	    WVFAIL("unknown key!");
+	}
+	++count;
     }
-
-    WVPASS(hash->isok());
-    
-    WvOnDiskHash<int, int, Backend>::Iter i(*hash);
-    bool found[elements];
-    memset(found,0,sizeof(found));
-
-    bool passedIterate = true;
-    //Iterate through, ensure that every data element is still there
-    for (i.rewind();i.next();)
-    {
-        if (found[i()])
-            passedIterate = false;
-        found[i()] = true;
-    }
-    WVPASS(passedIterate); 
-
-    bool passedExists = true;
-    for (int j=0;j<elements;j++)
-    {
-        if (!hash->exists(j))
-            passedExists = false;
-    }
-    WVPASS(passedExists);
-
-    //Test removing elements
-    hash->remove(1);
-    hash->remove(2);
-    
-    WVPASS(hash->exists(0));
-    WVFAIL(hash->exists(1));
-    WVFAIL(hash->exists(2));
-
-    WVPASS(hash->count() == elements-2);
-
-    WVPASS((*hash)[0] == 0);
-    WVPASS(hash->find(3) == 3);
-
-    hash->zap();
-
-    WVPASS(hash->isempty());
-
-    delete hash;
 }
+
+
+template<class Backend>
+void itertest_new()
+{
+    WvOnDiskHash<int, int, Backend> hash;
+    WvOnDiskHash<int, int, Backend>::Iter i(hash);
+    bool seen[3];
+    size_t count;
+
+    WVPASS(hash.isok());
+
+    hash.add(1, 11);
+    hash.add(3, 13);
+    hash.add(7, 17);
+
+    WVPASS(hash.isok());
+    WVPASS(hash.exists(1));
+    WVPASS(hash.exists(3));
+    WVPASS(hash.exists(7));
+    WVFAIL(hash.exists(42));
+
+    itertest_check(hash, seen, sizeof(seen), count);
+
+    WVPASSEQ(count, 3);
+    WVPASSEQ(hash.count(), 3);
+    WVPASS(seen[0]);
+    WVPASS(seen[1]);
+    WVPASS(seen[2]);
+
+    hash.remove(3);
+    WVPASS(hash.exists(1));
+    WVFAIL(hash.exists(3));
+    WVPASS(hash.exists(7));
+
+    itertest_check(hash, seen, sizeof(seen), count);
+
+    WVPASSEQ(count, 2);
+    WVPASSEQ(hash.count(), 2);
+    WVPASS(seen[0]);
+    WVFAIL(seen[1]);
+    WVPASS(seen[2]);
+
+    WVPASS(hash[1] == 11);
+    WVPASS(hash.find(7) == 17);
+
+    hash.zap();
+
+    itertest_check(hash, seen, sizeof(seen), count);
+
+    WVPASSEQ(count, 0);
+    WVPASS(hash.isempty());
+    WVPASSEQ(hash.count(), 0);
+    WVFAIL(seen[0]);
+    WVFAIL(seen[1]);
+    WVFAIL(seen[2]);
+}
+
 
 #if 0
-// FIXME: leaks and trips valgrind. Bug 7300.
-WVTEST_MAIN("WvOnDiskHash (BdbHash backend)  with iteration and removal")
+// FIXME: there's an evil leak, bug 7300
+WVTEST_MAIN("WvOnDiskHash with WvQdbmHash backend")
 {
-    itertest<WvBdbHash>();
-}
-
-WVTEST_MAIN("WvOnDiskHash (QdbmHash backend)  with iteration and removal")
-{
-    itertest<WvQdbmHash>();
+    itertest_new<WvQdbmHash>();
 }
 #endif
+
+
+WVTEST_MAIN("WvOnDiskHash with WvBdbHash backend")
+{
+    itertest_new<WvBdbHash>();
+}
 
