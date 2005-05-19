@@ -11,4 +11,8 @@
 void wvcrash_setup(const char *_argv0, const char *_desc = 0);
 void wvcrash(int sig);
 
+#if defined(_WIN32)
+extern void setup_console_crash();
+#endif
+
 #endif // __WVCRASH_H

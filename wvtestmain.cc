@@ -1,4 +1,5 @@
 #include "wvtest.h"
+#include "wvcrash.h"
 #include "wvstring.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,6 +50,10 @@ static int fd_count(const char *when)
 
 int main(int argc, char **argv)
 {
+#ifdef _WIN32
+    setup_console_crash();
+#endif
+
     // test wvtest itself.  Not very thorough, but you have to draw the
     // line somewhere :)
     WVPASS(true);

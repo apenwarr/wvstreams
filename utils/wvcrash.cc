@@ -158,6 +158,49 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
     signal(SIGILL,  wvcrash);
 }
 
+#elif defined(_WIN32)
+
+#include <Windows.h>
+#include <stdio.h>
+
+static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPointers )
+{
+#if 0
+    TCHAR * psz = GetFullPathToFaultrepDll()
+    if ( psz )
+    {
+        HMODULE hFaultRepDll = LoadLibrary( psz ) ;
+        if ( hFaultRepDll )
+        {
+            pfn_REPORTFAULT pfn = (pfn_REPORTFAULT)GetProcAddress( hFaultRepDll,
+                    _T("ReportFault") ) ;
+
+            if ( pfn )
+            {
+                EFaultRepRetVal rc = pfn( pExceptionPointers, 0) ;
+                lRet = EXCEPTION_EXECUTE_HANDLER;
+            }
+            FreeLibrary(hFaultRepDll );
+        }
+    }
+#endif
+    fprintf(stderr, "Exception!\n");
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static bool have_global_exception_handler = false;
+void setup_console_crash()
+{
+    if (!have_global_exception_handler)
+    {
+        SetUnhandledExceptionFilter(ExceptionFilter);
+        have_global_exception_handler = true;
+    }
+}
+
+void wvcrash(int sig) {}
+void wvcrash_setup(const char *_argv0, const char *_desc) {}
+
 #else // Not Linux
 
 void wvcrash(int sig) {}
