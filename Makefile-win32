@@ -81,6 +81,10 @@ TOBJFILES=$(filter-out $(TOBJSKIP),$(_TOBJFILES))
 
 wvtestmain: $(TOBJFILES) libwvwin32.a
 
+$(TESTS): libwvwin32.a
+$(addsuffix .o,$(TESTS)):
+tests: $(TESTS)
+
 test: wvtestmain
 	./wvtestmain '$(TESTNAME)'
 
