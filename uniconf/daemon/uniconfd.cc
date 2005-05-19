@@ -97,7 +97,6 @@ class UniConfd : public WvStreamsDaemon
         permgen = !!permmon ? wvcreate<IUniConfGen>(permmon) : NULL;
         
         UniConfDaemon *daemon = new UniConfDaemon(cfg, needauth, permgen);
-        WvIStreamList::globallist.append(daemon, false, "ucdaemon");
         add_die_stream(daemon, true, "uniconfd");
 
 #ifndef _WIN32
