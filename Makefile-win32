@@ -12,7 +12,7 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
-default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain.o
+default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain
 
 # object files that we replace completely for win32
 OBJREPLACED=utils/wvtask.o
@@ -81,9 +81,8 @@ TOBJFILES=$(filter-out $(TOBJSKIP),$(_TOBJFILES))
 
 wvtestmain: $(TOBJFILES) libwvwin32.a
 
-$(TESTS): libwvwin32.a
-$(addsuffix .o,$(TESTS)):
-tests: $(TESTS)
+test: wvtestmain
+	./wvtestmain '$(TESTNAME)'
 
 $(patsubst %.t.cc,%.t,$(wildcard */t/*.cc)): libwvwin32.a
 
