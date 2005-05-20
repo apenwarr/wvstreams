@@ -158,17 +158,16 @@ void WvConfigSectionEmu::Iter::rewind()
 WvLink *WvConfigSectionEmu::Iter::next()
 {
     while (iter.next())
-	if (!!iter->getme())
-	{
-	    /*
-	     * FIXME: if the WvConfEmu is not at the root of the
-	     * UniConf tree, this will give an incorrect result.
-	     */
-	    entry = sect[iter->fullkey(sect.uniconf)];
-	    link.data = static_cast<void*>(entry);
-	    assert(entry);
-	    return &link;
-	}
+    {
+        /*
+         * FIXME: if the WvConfEmu is not at the root of the
+         * UniConf tree, this will give an incorrect result.
+         */
+        entry = sect[iter->fullkey(sect.uniconf)];
+        link.data = static_cast<void*>(entry);
+        assert(entry);
+        return &link;
+    }
 
     return NULL;
 }

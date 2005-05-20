@@ -111,6 +111,10 @@ class WvDaemon
         volatile bool _want_to_die;
         volatile bool _want_to_restart;
 
+        int _run(const char *argv0);
+
+    protected:
+    
         bool daemonize;
 
         void dec_log_level(void *)
@@ -130,8 +134,8 @@ class WvDaemon
             wvout->print("%s version %s\n", name, version);
             ::exit(0);
         }
-
-        int _run(const char *argv0);
+        
+        WvStringList extra_args;
 
     public:
 

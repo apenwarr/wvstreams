@@ -36,7 +36,7 @@ bool WvAtomicFile::open(WvStringParm filename, int flags, mode_t create_mode)
     if (lstat(atomic_file, &st) == 0 && !S_ISREG(st.st_mode))
         return false;
  
-    WvString new_tmp_file("%s/WvAtomicFile-XXXXXX", getdirname(filename));
+    WvString new_tmp_file("%s/WvXXXXXX", getdirname(filename));
     
     // Get the current umask and guarantee that mkstemp() creates
     // a file with maximal restrictions
