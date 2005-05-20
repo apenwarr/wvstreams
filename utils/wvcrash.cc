@@ -163,6 +163,44 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 #include <Windows.h>
 #include <stdio.h>
 
+static void exception_desc(FILE *file, unsigned exception,
+        unsigned data1, unsigned data2)
+{
+    switch (exception)
+    {
+        case 0xC0000005:
+        {
+            switch (data1)
+            {
+                case 0:
+                    fprintf(file,
+                            "invalid memory read from address 0x%08X",
+                            data2);
+                    break;
+                case 1:
+                    fprintf(file,
+                            "invalid memory write to address 0x%08X",
+                            data2);
+                    break;
+                default:
+                    fprintf(file,
+                            "invalid memory access (unknown type %d) at address 0x%08X",
+                            data1, data2);
+                    break;
+            }
+        }
+        break;
+
+        case 0xC0000094:
+            fprintf(file, "integer division by zero");
+            break;
+
+        default:
+            fprintf(file, "unknown exception (data1=0x%08X, data2=0x%08X)");
+            break;
+    }
+}
+
 static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPointers )
 {
 #if 0
@@ -184,7 +222,37 @@ static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPoint
         }
     }
 #endif
-    fprintf(stderr, "Exception!\n");
+    struct ExceptionInfo
+    {
+        unsigned exception;
+        unsigned unknown[2];
+        void *ip;
+        unsigned more_unknown;
+        unsigned data1;
+        unsigned data2;
+    };
+    ExceptionInfo *info = *(ExceptionInfo **)pExceptionPointers;
+    fprintf(stderr, "--------------------------------------------------------\n");
+    fprintf(stderr, "Exception 0x%08X:\n  ", info->exception);
+    exception_desc(stderr, info->exception, info->data1, info->data2);
+    fprintf(stderr, "\n  at instruction 0x%08X\n", info->ip);
+    fprintf(stderr, "--------------------------------------------------------\n");
+
+#if 0
+    int i;
+    for (i=0; i<1; ++i)
+    {
+        int *p = (int *)pExceptionPointers;
+        fprintf(stderr, "pep[%d] = 0x%08X\n", i, p[i]);
+        int j;
+        for (j=0; j<8; ++j)
+        {
+            int *q = *(int **)p;
+            fprintf(stderr, "  pep[%d][%d] = 0x%08X\n", i, j, q[j]);
+        }
+    }
+#endif
+                
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
