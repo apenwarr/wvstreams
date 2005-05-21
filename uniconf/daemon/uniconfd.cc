@@ -40,6 +40,22 @@
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
 
+static WvMap<WvString, IUniConfGen*> namedgens(42);
+
+
+static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+{
+    IUniConfGen* gen = namedgens[s];
+
+    if (gen)
+	gen->addRef();
+
+    return gen;
+}
+
+WvMoniker<IUniConfGen> UniNamedMoniker("named", creator);
+
+
 class UniConfd : public WvStreamsDaemon
 {
     bool needauth;
@@ -53,6 +69,23 @@ class UniConfd : public WvStreamsDaemon
     IUniConfGen *permgen;
     WvSlp slp;
     
+    void namedgen_cb(WvStringParm option, void *)
+    {
+	WvString name(option);
+	WvString moniker;
+	char* ptr;
+
+	ptr = strchr(name.edit(), '=');
+
+	if (!ptr)
+	    return;
+
+	*ptr = 0;
+	moniker = ptr + 1;
+
+	namedgens.add(name, wvcreate<IUniConfGen>("temp:"), true);
+    }
+
     void commit_stream_cb(WvStream &s, void *)
     {
 	cfg.commit();
@@ -214,6 +247,10 @@ public:
         args.add_option('m', "unix-mode",
                 "Set the Unix socket to 'mode' (default to uniconfd users umask)", "mode",
                 unix_mode);
+	args.add_option('n', "named-gen",
+		"creates a \"named\" moniker 'name' from 'moniker'",
+		"name=moniker",
+		WvArgs::ArgCallback(this, &UniConfd::namedgen_cb), NULL);
 #endif    
     }
     
