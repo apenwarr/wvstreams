@@ -100,7 +100,10 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	    continue;
 	}
 	else if (s.pre_select(si))
+	{
+	    // printf("pre_select sure_thing: '%s'\n", i.link->id);
 	    sure_thing.append(&s, false, i.link->id);
+	}
     }
 
     if (alarmleft >= 0 && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
