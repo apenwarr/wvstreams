@@ -12,6 +12,8 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
+.PHONY: clean test
+
 default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain
 
 # object files that we replace completely for win32
@@ -99,5 +101,18 @@ fake-libs: libwvwin32.a
 		ln -s libwvwin32.a $$d.so; \
 	done
 
+ifeq ($(VERBOSE),)
+define wild_clean
+	@list=`echo $(wildcard $(1))`; \
+		test -z "$${list}" || sh -c "rm -rf $${list}"
+endef
+else
+define wild_clean
+	@list=`echo $(wildcard $(1))`; \
+		test -z "$${list}" || sh -cx "rm -rf $${list}"
+endef
+endif
+
 clean:
-	rm -f *test *.exe
+	$(call wild_clean,$(shell find . -name '*.o') \
+		$(shell find . -name '*.exe') $(shell find . -name '*.a'))
