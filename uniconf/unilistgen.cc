@@ -72,8 +72,7 @@ static WvMoniker<IUniConfGen> reg("list", creator);
 
 UniListGen::UniListGen(UniConfGenList *_l) : l(_l), i(*_l) 
 {
-    i.rewind();
-    if (i.next())
+    for (i.rewind(); i.next(); )
         i->setcallback(UniConfGenCallback(this, &UniListGen::gencallback), cbdata);
 }
     
@@ -145,7 +144,7 @@ bool UniListGen::isok()
 
 void UniListGen::gencallback(const UniConfKey &key, WvStringParm value, void *userdata)
 {
-    delta(key, value);
+    delta(key, get(key));
 }
 
 UniConfGen::Iter *UniListGen::iterator(const UniConfKey &key)
