@@ -4,6 +4,16 @@ LIBWVSTREAMS=$(LIBWVBASE)
 LIBUNICONF=$(LIBWVBASE)
 LIBWVTEST=$(LIBWVBASE) $(shell cygpath -m $(WVSTREAMS)/wvtestmain.o)
 
+ifeq ($(DEBUG),1)
+  CPPFLAGS += /Zi /DDEBUG=1
+  CFLAGS += /Zi /DDEBUG=1
+  LDFLAGS += /Zi
+else
+  CPPFLAGS += /DDEBUG=0
+  CFLAGS += /DDEBUG=0
+  #CFLAGS += /DNDEBUG=1    # I don't like disabling assertions...
+endif
+
 define wvcc_base
 	@rm -f "$1"
 	$(COMPILE_MSG)$4 $5 $2 /Fo$1
