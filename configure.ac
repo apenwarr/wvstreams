@@ -1,5 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(WvStreams, 4.1, wvstreams-dev@nit.ca, wvstreams)
+SO_VERSION=4.1
 
 save_args() {
     ARGS=""
@@ -612,6 +613,8 @@ fi
 if test "$VALGRIND" != ""; then
     VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile=valgrind.log --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
+
+AC_SUBST(SO_VERSION)
 
 AC_SUBST(enable_debug)
 AC_SUBST(enable_devel)
