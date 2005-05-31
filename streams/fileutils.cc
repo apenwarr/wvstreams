@@ -222,3 +222,13 @@ WvString wvtmpfilename(WvStringParm prefix)
 
     return tmpname;
 }
+
+
+mode_t get_umask()
+{
+    mode_t rv = umask(0);
+    umask(rv);
+
+    return rv;
+}
+

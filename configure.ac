@@ -524,9 +524,9 @@ AC_CHECK_HEADERS(valgrind/memcheck.h)
 # xplc
 if test "$with_xplc" != "no"; then
     if test "$with_xplc" = ""; then
-	if pkg-config --modversion ${xplc_version} 2>/dev/null >/dev/null; then
-            WV_APPEND(CPPFLAGS, [`pkg-config --cflags ${xplc_version}`])
-	    WV_APPEND(LDFLAGS, [`pkg-config --libs ${xplc_version}`])
+	if pkg-config --modversion xplc-${xplc_version}; then
+            WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-${xplc_version}`])
+	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-${xplc_version}`])
 	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
 	    xplc_pc="xplc-${xplc_version}"
@@ -610,7 +610,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile-fd=-1 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile=valgrind.log --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
 fi
 
 AC_SUBST(enable_debug)

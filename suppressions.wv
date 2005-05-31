@@ -99,3 +99,10 @@
    fun:__static_initialization_and_destruction_0
    fun:_GLOBAL_.I._15WvInterfaceDict.links
 }
+{
+   statfs_has_issues
+   Memcheck:Param
+   statfs64(buf)
+   fun:statfs64
+}
+

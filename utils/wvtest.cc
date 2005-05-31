@@ -214,34 +214,41 @@ void WvTest::check(bool cond)
 
 
 bool WvTest::start_check_eq(const char *file, int line,
-			    const char *a, const char *b)
+			    const char *a, const char *b, bool expect_pass)
 {
     if (!a) a = "";
     if (!b) b = "";
     
     size_t len = strlen(a) + strlen(b) + 8 + 1;
     char *str = new char[len];
-    sprintf(str, "[%s] == [%s]", a, b);
+    sprintf(str, "[%s] %s [%s]", a, expect_pass ? "==" : "!=", b);
     
     start(file, line, str);
     delete[] str;
     
     bool cond = !strcmp(a, b);
+    if (!expect_pass)
+        cond = !cond;
+
     check(cond);
     return cond;
 }
 
 
-bool WvTest::start_check_eq(const char *file, int line, int a, int b)
+bool WvTest::start_check_eq(const char *file, int line, 
+                            int a, int b, bool expect_pass)
 {
     size_t len = 128 + 128 + 8 + 1;
     char *str = new char[len];
-    sprintf(str, "%d == %d", a, b);
+    sprintf(str, "%d %s %d", a, expect_pass ? "==" : "!=", b);
     
     start(file, line, str);
     delete[] str;
     
     bool cond = (a == b);
+    if (!expect_pass)
+        cond = !cond;
+
     check(cond);
     return cond;
 }

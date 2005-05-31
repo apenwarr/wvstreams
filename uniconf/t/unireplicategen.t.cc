@@ -108,7 +108,7 @@ WVTEST_MAIN("retry:uniconfd")
 
     unlink(uniconfd_ini.cstr());
         
-    UniConfRoot cfg(WvString("replicate:{retry:{unix:%s 100} temp:}", 
+    UniConfRoot cfg(WvString("replicate:{retry:unix:%s 100} temp:", 
                              uniconfd_sock));
     cfg.add_callback(&callback_count, "/", callback, true);
     WVPASS(callback_count == 0);

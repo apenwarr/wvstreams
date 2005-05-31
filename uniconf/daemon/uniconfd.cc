@@ -25,7 +25,7 @@
 #include "uniconfroot.h"
 #include "wvstrutils.h"
 #include "wvfileutils.h"
-#include "wvcrash.h"
+#include "wvstreamsdaemon.h"
 
 #ifdef WITH_SLP
 #include "slp.h"
@@ -39,271 +39,190 @@
 
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
-static volatile bool want_to_die = false;
 
-#ifndef _WIN32
-void signal_handler(int signum)
+class UniConfd : public WvStreamsDaemon
 {
-    fprintf(stderr, "\nCaught signal %d; cleaning up and terminating.\n",
-	    signum);
-    want_to_die = true;
-    signal(signum, SIG_DFL);
-}
-#endif
+    bool needauth;
+    int port;
+    int sslport;
+    WvString unixport, permmon, unix_mode;
+    time_t commit_interval;
 
-
-static void usage(WvStringParm argv0)
-{
-#ifndef _WIN32
-    wverr->print(
-	"\n"
-        "Usage: %s [-fdVa] [-A moniker] [-p port] [-s sslport] [-u unixsocket] "
-		 "<mounts...>\n"
-	"     -f   Run in foreground (non-forking)\n"
-	"     -d   Print debug messages\n"
-        "     -dd  Print lots of debug messages\n"
-	"     -V   Print version number and exit\n"
-	"     -a   Require authentication on incoming connections\n"
-	"     -A   Check all accesses against perms moniker\n"
-	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
-	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
-	"     -u   Listen on given Unix socket filename (default=disabled)\n"
-	"     -m   Set the Unix socket to 'mode' (default to uniconfd users umask)\n"
-	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
-	argv0);
-#else
-    wverr->print(
-	"\n"
-	"Usage: %s [-dV] [-l moniker] [-p port] [-s sslport] "
-		 "<mounts...>\n"
-	"     -d   Print debug messages\n"
-        "     -dd  Print lots of debug messages\n"
-	"     -V   Print version number and exit\n"
-	"     -p   Listen on given TCP port (default=4111; 0 to disable)\n"
-	"     -s   Listen on given TCP/SSL port (default=4112; 0 to disable)\n"
-	" <mounts> UniConf path=moniker.  eg. \"/foo=ini:/tmp/foo.ini\"\n",
-	argv0);
-#endif
-    exit(1);
-}
-
-#ifndef _WIN32
-extern char *optarg;
-extern int optind;
-#else
-char *optarg;
-int optind = 1;
-
-int getopt(int argc, char *argv[], const char *opts)
-{
-    static int i = 1;
-    for (char *p = argv[optind] + i; optind < argc && argv[optind][0] == '-'; )
+    UniConfRoot cfg;
+    bool first_time;
+    IUniConfGen *permgen;
+    WvSlp slp;
+    
+    void commit_stream_cb(WvStream &s, void *)
     {
-	if (!*p)
-	{
-	    ++optind;
-	    i = 1;
-	    p = argv[optind] + i;
-	    continue;
-	}
-	char *opt = strchr(opts, *p);
-	if (!opt)
-	    return -1;
-	switch (opt[1])
-	{
-	case ':':
-	    optarg = argv[optind + 1];
-	    optind += 2;
-	    i = 1;
-	    return *p;
-	default:
-	    optarg = 0;
-	    ++i;
-	    return *p;
-	}
+	cfg.commit();
+	cfg.refresh();
+	if (permgen)
+	    permgen->refresh();
+	    
+        s.alarm(commit_interval * 1000);
     }
-    return -1;
-}
+    
+    void startup(WvStreamsDaemon &, void *)
+    {
+        if (first_time)
+        {
+            WvStringList::Iter i(extra_args);
+            for (i.rewind(); i.next(); )
+            {
+	        WvString path = *i, moniker;
+	        char *cptr = strchr(path.edit(), '=');
+	        if (!cptr)
+	        {
+	            moniker = path;
+	            path = "/";
+	        }
+	        else
+	        {
+	            *cptr = 0;
+	            moniker = cptr+1;
+	        }
+	        
+	        log("Mounting '%s' on '%s': ", moniker, path);
+	        IUniConfGen *gen = cfg[path].mount(moniker, false);
+	        if (gen && gen->isok())
+	            log("ok.\n");
+	        else
+	            log("FAILED!\n");
+            }
+            
+            cfg.refresh();
+        }
+
+        permgen = !!permmon ? wvcreate<IUniConfGen>(permmon) : NULL;
+        
+        UniConfDaemon *daemon = new UniConfDaemon(cfg, needauth, permgen);
+        add_die_stream(daemon, true, "uniconfd");
+
+#ifndef _WIN32
+        if (!!unixport)
+        {
+	    // FIXME: THIS IS NOT SAFE!
+	    mkdirp(getdirname(unixport));
+	    ::unlink(unixport);
+	    if (!daemon->setupunixsocket(unixport))
+	        exit(3);
+	    if (!!unix_mode && unix_mode.num())
+	    {
+	        log("Setting mode on %s to: %s\n", unixport, unix_mode);
+	        mode_t mode;
+	        sscanf(unix_mode.edit(), "%o", &mode);
+	        chmod(unixport, mode);
+	    }
+        }
 #endif
+
+        if (port && !daemon->setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
+        {
+	    die();
+	    return;
+	}
+
+        if (sslport)
+        {
+            WvString dName = encode_hostname_as_DN(fqdomainname());
+            WvX509Mgr *x509cert = new WvX509Mgr(dName, 1024);
+            if (!x509cert->isok())
+            {
+                log(WvLog::Critical,
+		    "Couldn't generate X509 certificate: SSL not available.\n");
+	        die();
+	        return;
+            }
+            else if (!daemon->setupsslsocket(
+		        WvIPPortAddr("0.0.0.0", sslport), x509cert))
+	    {
+	        die();
+	        return;
+	    }
+        }
+
+        WvString svc, sslsvc;
+    
+#ifdef WITH_SLP
+        if (first_time)
+        {
+            // Now that we're this far...
+            
+            // Register UniConf service with SLP 
+            if (port)
+	        slp.add_service("uniconf.niti", fqdomainname(), port);
+        
+            // Register UniConf SSL service with SLP 
+            if (sslport)
+	        slp.add_service("uniconfs.niti", fqdomainname(), sslport);
+	}
+#endif
+    
+        WvStream *commit_stream = new WvStream;
+        commit_stream->setcallback(WvStreamCallback(this,
+                &UniConfd::commit_stream_cb), NULL);
+        commit_stream->alarm(commit_interval * 1000);
+        add_die_stream(commit_stream, true, "commit");
+        
+        if (first_time)
+            first_time = false;
+    }
+    
+public:
+
+    UniConfd() :
+            WvStreamsDaemon("UniConfDaemon", WVSTREAMS_RELEASE,
+                WvStreamsDaemonCallback(this, &UniConfd::startup)),
+            needauth(false),
+            port(DEFAULT_UNICONF_DAEMON_TCP_PORT),
+            sslport(DEFAULT_UNICONF_DAEMON_SSL_PORT),
+            commit_interval(5*60),
+            first_time(true),
+            permgen(NULL)
+    {
+        args.zap();
+        
+        daemonize = true;
+
+        args.add_reset_bool_option('f', "foreground",
+                "Run in foreground (non-forking)", daemonize);
+        args.add_option('d', "debug",
+                "Print debug messages (can be used multiple times)",
+                WvArgs::NoArgCallback(this, &UniConfd::inc_log_level));
+        args.add_option('V', "version",
+                "Print version number and exit",
+                WvArgs::NoArgCallback(this, &UniConfd::display_version_and_exit));
+        args.add_option(0, "pid-file",
+                "Specify the .pid file to use", "filename",
+                pid_file);
+        args.add_set_bool_option('a', "need-auth",
+                "Require authentication on incoming connections", needauth);
+        args.add_option('A', "check-access",
+                "Check all accesses against perms moniker", "moniker",
+                permmon);
+        args.add_option('p', "tcp",
+                "Listen on given TCP port (default=4111; 0 to disable)", "port",
+                port);
+        args.add_option('s', "ssl",
+                "Listen on given TCP/SSL port (default=4112; 0 to disable)", "port",
+                sslport);
+#ifndef _WIN32
+        args.add_option('u', "unix",
+                "Listen on given Unix socket filename (default=disabled)", "filename",
+                unixport);
+        args.add_option('m', "unix-mode",
+                "Set the Unix socket to 'mode' (default to uniconfd users umask)", "mode",
+                unix_mode);
+#endif    
+    }
+    
+    
+};
 
 int main(int argc, char **argv)
 {
-#ifndef _WIN32
-    signal(SIGINT,  signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGPIPE, SIG_IGN);
-    wvcrash_setup(argv[0]);
-#endif
-
-    int c, buglevel = 0;
-    bool dontfork = false, needauth = false;
-    unsigned int port = DEFAULT_UNICONF_DAEMON_TCP_PORT;
-    unsigned int sslport = DEFAULT_UNICONF_DAEMON_SSL_PORT;
-    WvString unixport, permmon, unix_mode;
-
-    while ((c = getopt(argc, argv, "fdVam:A:p:s:u:h?")) >= 0)
-    {
-	switch (c)
-	{
-	case 'f':
-	    dontfork = true;
-	    break;
-	    
-	case 'd':
-	    buglevel++;
-	    break;
-	    
-	case 'V':
-	    wverr->print("UniConfDaemon %s\n", WVSTREAMS_RELEASE);
-	    exit(0);
-	    break;
-	    
-	case 'a':
-	    needauth = true;
-	    break;
-	    
-	case 'A':
-	    // needauth = true; // sometimes it makes sense to skip auth...
-	    permmon = optarg;
-	    break;
-	case 'p':
-	    port = atoi(optarg);
-	    break;
-	case 's':
-	    sslport = atoi(optarg);
-	    break;
-	case 'u':
-	    unixport = optarg;
-	    break;
-	case 'm':
-	    unix_mode = optarg;
-	    break;
-	    
-	case 'h':
-	case '?':
-	default:
-	    usage(argv[0]);
-	    break;
-	}
-    }
-    
-    // start log output to stderr
-    WvLogConsole logcons(2,
-			 buglevel >= 2 ? WvLog::Debug5
-			 : buglevel == 1 ? WvLog::Debug1
-			 : WvLog::Info);
-    WvLog log(argv[0], WvLog::Debug);
-    
-    UniConfRoot cfg;
-
-    for (int i = optind; i < argc; i++)
-    {
-	WvString path = argv[i], moniker;
-	char *cptr = strchr(path.edit(), '=');
-	if (!cptr)
-	{
-	    moniker = path;
-	    path = "/";
-	}
-	else
-	{
-	    *cptr = 0;
-	    moniker = cptr+1;
-	}
-	
-	log("Mounting '%s' on '%s': ", moniker, path);
-	IUniConfGen *gen = cfg[path].mount(moniker, false);
-	if (gen && gen->isok())
-	    log("ok.\n");
-	else
-	    log("FAILED!\n");
-    }
-    
-    cfg.refresh();
-    
-    IUniConfGen *permgen = !!permmon ? wvcreate<IUniConfGen>(permmon) : NULL;
-    UniConfDaemon daemon(cfg, needauth, permgen);
-    WvIStreamList::globallist.append(&daemon, false, "ucdaemon");
-
-#ifndef _WIN32
-    if (!!unixport)
-    {
-	// FIXME: THIS IS NOT SAFE!
-	mkdirp(getdirname(unixport));
-	::unlink(unixport);
-	if (!daemon.setupunixsocket(unixport))
-	    exit(3);
-	if (!!unix_mode && unix_mode.num())
-	{
-	    log("Setting mode on %s to: %s\n", unixport, unix_mode);
-	    mode_t mode;
-	    sscanf(unix_mode.edit(), "%o", &mode);
-	    chmod(unixport, mode);
-	}
-    }
-#endif
-
-    if (port && !daemon.setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
-	exit(4);
-
-    if (sslport)
-    {
-        WvString dName = encode_hostname_as_DN(fqdomainname());
-        WvX509Mgr *x509cert = new WvX509Mgr(dName, 1024);
-        if (!x509cert->isok())
-        {
-            log(WvLog::Critical,
-		"Couldn't generate X509 certificate: SSL not available.\n");
-	    exit(5);
-        }
-        else if (!daemon.setupsslsocket(
-		     WvIPPortAddr("0.0.0.0", sslport), x509cert))
-            exit(6);
-    }
-
-#ifndef _WIN32
-    if (!dontfork)
-    {
-	// since we're a daemon, we should now background ourselves.
-	pid_t pid = fork();
-	if (pid > 0) // parent
-	    _exit(0);
-    }
-#endif
-
-    WvString svc, sslsvc;
-    
-#ifdef WITH_SLP
-    // Now that we're this far...
-    WvSlp slp;
-    
-    // Register UniConf service with SLP 
-    if (port)
-	slp.add_service("uniconf.niti", fqdomainname(), port);
-
-    // Register UniConf SSL service with SLP 
-    if (sslport)
-	slp.add_service("uniconfs.niti", fqdomainname(), sslport);
-#endif
-    
-    // main loop
-    time_t now, last = 0;
-    while (!want_to_die && daemon.isok())
-    {
-	WvIStreamList::globallist.runonce(5000);
-	
-	// only commit every five seconds or so
-	now = time(NULL);
-	if (now - last >= 5)
-	{
-	    cfg.commit();
-	    cfg.refresh();
-	    if (permgen) permgen->refresh();
-	    last = now;
-	}
-    }
-    
-    WvIStreamList::globallist.unlink(&daemon);
-
-    return 0;
+    UniConfd uniconfd;
+   
+    return uniconfd.run(argc, argv);
 }

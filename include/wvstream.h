@@ -424,7 +424,14 @@ public:
     bool select(time_t msec_timeout,
 		bool readable, bool writable, bool isex = false)
         { return _select(msec_timeout, readable, writable, isex, false); }
-    
+
+    /**
+     * Use get_select_request() to save the current state of the
+     * selection state of this stream.  That way, you can call
+     * force_select() and undo_force_select() to restore this properly.
+     */
+    IWvStream::SelectRequest get_select_request();
+
     /**
      * Use force_select() to force one or more particular modes (readable,
      * writable, or isexception) to true when selecting on this stream.

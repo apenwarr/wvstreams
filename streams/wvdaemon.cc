@@ -150,6 +150,8 @@ int WvDaemon::run(const char *argv0)
                 ::close(null_fd);
                 
                 _run(argv0);
+
+                exit(0); // Make sure destructors are called
             }
 
             _exit(0);
@@ -177,7 +179,7 @@ int WvDaemon::run(const char *argv0)
 
 int WvDaemon::run(int argc, char **argv)
 {
-    if (!args.process(argc, argv))
+    if (!args.process(argc, argv, &extra_args))
         return 1;
 
     return run(argv[0]);
@@ -243,14 +245,10 @@ int WvDaemon::_run(const char *argv0)
         if (!!start_callback)
 	    start_callback(*this, ud);
 
-	if (want_to_die())
-	    continue;
-
         run_callback(*this, ud);
-	if (want_to_die())
-	    continue;
 
-        if (!!stop_callback) stop_callback(*this, ud);
+        if (!!stop_callback)
+	    stop_callback(*this, ud);
     }
 
     daemons.unlink(this);

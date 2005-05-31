@@ -121,6 +121,7 @@ depend:
 
 dust:
 	$(call wild_clean,$(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d))
+	$(call wild_clean,$(wildcard valgrind.log.pid*))
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h

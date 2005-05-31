@@ -245,7 +245,7 @@ void WvEtherAddr::string_init(char const string[])
     for (unsigned int count=0; count < ETHER_ADDR_LEN; count++)
     {
 	*cptr++ = strtoul(endptr ? endptr : string, &endptr, 16);
-	if (!endptr || endptr==string) break;
+	if (!endptr || !*endptr || endptr==string) break;
 	endptr++;
     }
 }

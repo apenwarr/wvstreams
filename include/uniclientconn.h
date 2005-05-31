@@ -45,6 +45,8 @@ public:
         REQ_REMOVE, /*!< del <key> ==> OK / FAIL */
         REQ_SUBTREE, /*!< subt <key> ==> VAL ... OK / FAIL <*/
         REQ_HASCHILDREN, /*!< hchild <key> => HCHILD <key> TRUE / FALSE */
+        REQ_COMMIT, /*!< commit => OK */
+        REQ_REFRESH, /*!< refresh => OK / FAIL */
         REQ_QUIT, /*!< quit ==> OK */
         REQ_HELP, /*!< help ==> TEXT ... OK / FAIL */
 

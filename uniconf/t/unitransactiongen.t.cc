@@ -7,18 +7,11 @@
 #include "wvhashtable.h"
 #include "wvtest.h"
 
-void dump(const UniConf &handle)
-{
-    UniConf::RecursiveIter i(handle);
-    for (i.rewind(); i.next();)
-	printf("%s = %s\n", i.ptr()->fullkey().cstr(), i.ptr()->getme().cstr());
-}
+static WvMap<UniConfKey, WvString> callbacks2(5);
+static WvMap<UniConfKey, WvString> callbacks1(5);
 
-WvMap<UniConfKey, WvString> callbacks2(5);
-WvMap<UniConfKey, WvString> callbacks1(5);
-
-void check_callback2(const UniConf &handle,
-		     const UniConfKey &key)
+static void check_callback2(const UniConf &handle,
+			    const UniConfKey &key)
 {
     fprintf(stderr, "Callback on key \"%s\" with value \"%s\".\n",
 	   key.cstr(), handle[key].getme().cstr());
@@ -31,8 +24,8 @@ void check_callback2(const UniConf &handle,
     }
 }
 
-void check_callback1(const UniConf &handle,
-		     const UniConfKey &key)
+static void check_callback1(const UniConf &handle,
+			    const UniConfKey &key)
 {
     fprintf(stderr, "Callback on key \"%s\" with value \"%s\".\n",
 	   key.cstr(), handle[key].getme().cstr());
@@ -45,10 +38,11 @@ void check_callback1(const UniConf &handle,
     }
 }
 
-UniConfCallback callback2(check_callback2);
-UniConfCallback callback1(check_callback1);
+static UniConfCallback callback2(check_callback2);
+static UniConfCallback callback1(check_callback1);
 
-void check_iterator(WvMap<UniConfKey, WvString> &map, const UniConf &handle)
+static void check_iterator(WvMap<UniConfKey, WvString> &map,
+			   const UniConf &handle)
 {
     UniConf::RecursiveIter i(handle);
     for (i.rewind(); i.next();)
@@ -404,3 +398,112 @@ WVTEST_MAIN("UniTransactionGen submount test")
     WVPASSEQ(subtree["key"].getme("default"), WvString("value"));
 }
 
+
+static WvString last_key;
+
+static void incr_callback(int *i,
+			  const UniConf &handle, const UniConfKey &key)
+{
+    (*i)++;
+    last_key = handle[key].fullkey();
+    printf("callback %p '%s' = '%s'\n", 
+	   i, last_key.cstr(), handle[key].getme().cstr());
+}
+
+
+WVTEST_MAIN("excessive callbacks")
+{
+    int i1 = 0, i2 = 0, i3 = 0;
+    UniConfRoot uni("temp:");
+    UniWatch w1(uni,
+		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i1),
+		true);
+    UniWatch w2(uni["a/b"],
+		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i2),
+		true);
+    
+    uni.xsetint("/a/b/c/1", 11); // a, b, c, 1
+    uni.xsetint("/a/b/c/2", 22); // 2
+    uni.xsetint("/a/e/c/3", 33); // e, c, 3
+    uni.xsetint("/a/e/c/4", 44); // 4
+    
+    WVPASSEQ(i1, 9);
+    WVPASSEQ(i2, 4);
+    WVPASSEQ(last_key, "a/e/c/4");
+    
+    UniConfRoot temp("temp:");
+    UniConf t(temp["t"]);
+    UniWatch w3(temp,
+		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i3),
+		true);
+    WVPASSEQ(i3, 0);
+    t.mountgen(new UniTransactionGen(new UniUnwrapGen(uni["a"])), true);
+    t.mountgen(new UniTransactionGen(new UniUnwrapGen(uni["a"])), true);
+    i3 = 0; // FIXME uncertain what value should be at this point
+    WVPASS(t.exists());
+    WVPASS(t["b"].exists());
+    WVPASSEQ(i3, 0);
+    
+    // start with fresh counters
+    i1 = i2 = i3 = 0;
+    
+    temp.refresh();
+    WVPASSEQ(i3, 0);
+    temp.commit();
+    WVPASSEQ(i3, 0);
+    i3 = 0;
+    
+    uni.xsetint("/a/b/c/1", 111);
+    WVPASSEQ(i1, 1);
+    WVPASSEQ(i2, 1);
+    WVPASSEQ(i3, 2); // both unwrapgens notify us
+
+    i1 = i2 = i3 = 0;
+    t.xsetint("/b/c/2", 222);
+    WVPASSEQ(i1, 0);
+    WVPASSEQ(i2, 0);
+    WVPASSEQ(i3, 1); // only one transactiongen sees the change
+    
+    i1 = i2 = i3 = 0;
+    t.commit();
+    WVPASSEQ(i1, 1);
+    WVPASSEQ(i2, 1);
+    WVPASSEQ(i3, 1); // opposite transactiongen now sees the change
+    WVPASSEQ(last_key, "t/b/c/2");
+    WVPASSEQ(uni.xgetint("/a/b/c/2", 0), 222);
+    
+    i1 = i2 = i3 = 0;
+    t.refresh();
+    WVPASSEQ(i1, 0);
+    WVPASSEQ(i2, 0);
+    WVPASSEQ(i3, 0);
+    
+    t.remove();
+    i1 = i2 = i3 = 0;
+    t.xsetint("b/c/1", 111); // /, b, c, 1
+    t.xsetint("b/c/2", 222);  // 2
+    t.xsetint("e/c/3", 33);  // e, c, 3
+    t.xsetint("e/c/4", 44);  // 4
+    WVPASSEQ(i1, 0);
+    WVPASSEQ(i2, 0);
+    WVPASSEQ(i3, 9);
+    
+    i1 = i2 = i3 = 0;
+    t.commit();
+    WVPASSEQ(i1, 0); // no actual changes made here
+    WVPASSEQ(i2, 0);
+    WVPASSEQ(i3, 0);
+    
+    t.remove();
+    i1 = i2 = i3 = 0;
+    t.refresh();
+    WVPASSEQ(i1, 0);
+    WVPASSEQ(i2, 0);
+    WVPASSEQ(i3, 9);
+    
+    i1 = i2 = i3 = 0;
+    uni.refresh();
+    WVPASSEQ(i1, 0);
+    WVPASSEQ(i2, 0);
+    WVPASSEQ(i3, 0);
+}
