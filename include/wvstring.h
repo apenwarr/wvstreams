@@ -21,11 +21,8 @@
 #include <string> // no code is actually used from here
 
 
-/*
- * 1 byte for terminating NUL, 4 more to kludge around libc5+efence
- * incompatibility with strcat().
- */
-#define WVSTRING_EXTRA 5
+/* 1 byte for terminating NUL */
+#define WVSTRING_EXTRA 1
 
 
 #define __WVS_FORM(n) WvStringParm __wvs_##n = WvFastString::null
@@ -376,6 +373,9 @@ public:
     
     /** make the buf and str pointers owned only by this WvString. */
     WvString &unique();
+    
+    /** returns true if this string is already unique() */
+    bool is_unique() const;
 
     /** make the string editable, and return a non-const (char*) */
     char *edit()

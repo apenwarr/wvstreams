@@ -133,7 +133,7 @@ WvPty::WvPty(const char *program, const char * const *argv,
             	goto _error;
 	    }
 	}
-       
+
         if (pre_exec_cb && !pre_exec_cb(*this)) goto _error;
         execvp(program, (char * const *)argv);
         if (post_exec_cb) post_exec_cb(*this);
@@ -164,7 +164,7 @@ void WvPty::monitor_child(bool wait)
     if (_pid != -1)
     {
         int status;
-        if (waitpid(_pid, &status, wait? 0: WNOHANG) == _pid)
+        if (::waitpid(_pid, &status, wait? 0: WNOHANG) == _pid)
         {
             _pid = -1;
             _exit_status = status;

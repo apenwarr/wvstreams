@@ -1,6 +1,8 @@
 CPPFLAGS += -Iinclude -pipe
 ARFLAGS = rs
 
+DEBUG:=$(filter-out no,$(enable_debug))
+
 # for O_LARGEFILE
 CXXFLAGS+=${CXXOPTS}
 CFLAGS+=${COPTS}
@@ -66,7 +68,8 @@ ifneq ("$(with_qdbm)", "no")
   libwvutils.so-LIBS+=-L. -lqdbm
 endif
 
-libwvbase.so: LIBS+=-lxplc-cxx
+libwvbase.so-LIBS+=-lxplc-cxx -lm
+libwvbase.so:
 
 ifneq ("$(with_openslp)", "no")
   libwvstreams.so: -lslp
@@ -79,3 +82,4 @@ endif
 LDLIBS := $(LDLIBS) \
 	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
 		&& echo " -lsupc++ -lgcc_eh")
+

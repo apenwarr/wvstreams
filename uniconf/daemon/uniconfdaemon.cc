@@ -62,10 +62,10 @@ void UniConfDaemon::accept(WvStream *stream)
 #ifndef _WIN32
     if (authenticate)
         append(new UniConfPamConn(stream, cfg,
-				  new UniPermGen(permgen)), true);
+				  new UniPermGen(permgen)), true, "ucpamconn");
     else
 #endif
-        append(new UniConfDaemonConn(stream, cfg), true);
+        append(new UniConfDaemonConn(stream, cfg), true, "ucdaemonconn");
 }
 
 

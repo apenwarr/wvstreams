@@ -34,20 +34,38 @@ WvLogFileBase::WvLogFileBase(WvStringParm _filename, WvLog::LogLevel _max_level)
     : WvLogRcv(_max_level),
       WvFile(_filename, O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0644)
 {
-    // nothing special
+    fsync_every = fsync_count = 0;
 }
 
 
 WvLogFileBase::WvLogFileBase(WvLog::LogLevel _max_level) 
     : WvLogRcv(_max_level) 
 { 
-    // nothing special
+    fsync_every = fsync_count = 0;
 }
 
 
 void WvLogFileBase::_mid_line(const char *str, size_t len)
 {
     WvFile::write(str, len);
+}
+
+
+void WvLogFileBase::_end_line()
+{
+    if (fsync_every)
+    {
+        fsync_count--;
+        if (fsync_count <= 0 || fsync_count > fsync_every)
+        {
+            fsync_count = fsync_every;
+            //WvFile::print("tick!\n");
+#ifndef _WIN32
+            WvFile::flush(1000);
+            fsync(getwfd());
+#endif
+        }
+    }
 }
 
 #ifdef _WIN32
@@ -71,8 +89,9 @@ void WvLogFileBase::_make_prefix()
 //----------------------------------- WvLogFile ----------------------
 
 WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
-     int _keep_for, bool _force_new_line) : WvLogFileBase(_max_level), keep_for(_keep_for),
-					    filename(_filename)
+                     int _keep_for, bool _force_new_line, bool _allow_append)
+    : WvLogFileBase(_max_level), keep_for(_keep_for), filename(_filename),
+      allow_append(_allow_append)
 {
     WvLogRcv::force_new_line = _force_new_line;
     start_log();
@@ -130,7 +149,8 @@ void WvLogFile::start_log()
     // Get the next filename
     do
         fullname = WvString("%s.%s.%s", filename, buf, num++);
-    while (stat(fullname, &statbuf) != -1 && statbuf.st_size >= MAX_LOGFILE_SZ);
+    while (stat(fullname, &statbuf) != -1
+                && (statbuf.st_size >= MAX_LOGFILE_SZ || !allow_append));
 
     WvString curname("%s.current", filename);
     WvString base = getfilename(filename);

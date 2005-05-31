@@ -10,6 +10,9 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+# Don't rebuild the configure script
+export WE_ARE_DIST=1
+
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
@@ -18,10 +21,7 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 base=libwvstreams4.1
 # This is used the wvstreams makefile to set the .so links
 PKG=`pwd`/debian/${base}
-PKG_OGG=`pwd`/debian/${base}-ogg
 PKG_QT=`pwd`/debian/${base}-qt
-PKG_SPEEX=`pwd`/debian/${base}-speex
-PKG_FFT=`pwd`/debian/${base}-fft
 PKGDEV=`pwd`/debian/libwvstreams-dev
 PKGDOC=`pwd`/debian/${base}-doc
 DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc
@@ -49,8 +49,7 @@ config.status: configure
 		--infodir=\$${prefix}/share/info \
 		--sysconfdir=/etc --localstatedir=/var \
 		--disable-debug --disable-verbose \
-		--with-qt --with-vorbis --with-speex --with-openslp \
-		--with-fftw
+		--with-qt --with-openslp
 
 
 #Architecture
@@ -175,9 +174,6 @@ binary-common:
 	dh_makeshlibs -plibwvstreams4.1-base \
 		      -plibwvstreams4.1-extras \
 		      -plibwvstreams4.1-qt \
-		      -plibwvstreams4.1-fft \
-		      -plibwvstreams4.1-speex \
-		      -plibwvstreams4.1-vorbis \
 		      -plibuniconf4.1 \
 	dh_installdeb
 	dh_installdeb

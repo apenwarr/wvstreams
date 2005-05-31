@@ -114,6 +114,8 @@ DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
 wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(INCFLAGS) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
 wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(INCFLAGS) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
 
+%.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
+
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)

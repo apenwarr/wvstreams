@@ -260,3 +260,85 @@ WVTEST_MAIN("wvconfemu setbool")
     cfg.del_setbool(&c2, "", "Bar");
     cfg.del_setbool(&c3, "Foo", "Bar");
 }
+
+WVTEST_MAIN("wvconfemu addname")
+{
+    UniConfRoot uniconf("temp:");
+    WvConfEmu cfg(uniconf);
+    WvStringList sl;
+
+    cfg.add_addname(&sl, "sect1", "");
+    cfg.add_addname(&sl, "sect2", "foo");
+    cfg.add_addname(&sl, "sect3", "bar");
+
+    cfg.set("sect1", "bar", "x");
+    cfg.set("sect2", "foo", "x");
+    cfg.set("sect2", "foo", "y");
+    cfg.set("sect3", "baz", "x"); // should not get notified!
+
+    WVPASS(strcmp(sl.popstr().cstr(), "bar") == 0);
+    WVPASS(strcmp(sl.popstr().cstr(), "foo") == 0);
+    WVPASS(strcmp(sl.popstr().cstr(), "foo") == 0);
+    WVPASS(sl.isempty());
+            
+    cfg.del_addname(&sl, "sect1", "");
+    cfg.del_addname(&sl, "sect2", "foo");
+    cfg.del_addname(&sl, "sect3", "bar");
+}
+
+WVTEST_MAIN("wvconfemu isempty")
+{
+    UniConfGen *unigen = new UniTempGen;
+    UniConfRoot uniconf(unigen);
+    WvConfEmu cfg(uniconf["cfg"]);
+
+    cfg.setint("Montreal", "dcoombs", 1);
+
+    WvConfigSectionEmu *sect = cfg["Montreal"];
+    WVPASS(sect && !sect->isempty());
+
+    cfg.set("Montreal", "dcoombs", NULL);
+    WVPASS(!sect || sect->isempty());
+
+    bool never_ran = true;
+    if (sect)
+    {
+	WvConfigSectionEmu::Iter i(*sect);
+	for (i.rewind(); i.next(); )
+	    never_ran = false;
+    }
+    WVPASS(never_ran);
+}
+
+WVTEST_MAIN("wvconfemu empty section")
+{
+    int pass;
+    for (pass=0; pass<2; ++pass)
+    {
+        UniConfRoot uni("temp:");
+        switch (pass)
+        {
+            case 0:
+                uni.xset("Users/test", "passwd");
+                break;
+
+            case 1:
+                uni.xset("Users/test", "");
+                break;
+        }
+
+        WvConfEmu cfg(uni);
+        
+        int num_items = 0;
+        WvConfigSectionList::Iter sect(cfg);
+        for (sect.rewind(); sect.next(); )
+        {
+            WvConfigEntryList::Iter ent(*sect);
+            for (ent.rewind(); ent.next(); )
+            {
+                ++num_items;
+            }
+        }
+        WVPASS(num_items == 1);
+    }
+}

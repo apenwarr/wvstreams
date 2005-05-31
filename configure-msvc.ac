@@ -41,6 +41,7 @@ if test -n "$missing_required"; then
     AC_MSG_ERROR([Required dependencies missing:$missing_required])
 fi
 
+DIRENT_LIBS="`cygpath -m -a ./Win32WvStreams/dirent.lib`"
 
 EXEEXT=.exe
 CC=cl
@@ -55,7 +56,7 @@ DEPFLAGS="-I`cygpath -u -a ./include` -I`cygpath -u -a ./Win32WvStreams` \
 -I`cygpath -u -a ./Win32WvStreams/libwvstreams`"
 CPPFLAGS="/nologo /FD /EHsc /MD /D \"strcasecmp=_stricmp\" /D \"strncasecmp=_strnicmp\""
 LDFLAGS=
-ac_libs="$POPT_LIBS $ZLIB_LIBS $XPLC_LIBS $OPENSSL_LIBS \
+ac_libs="$POPT_LIBS $ZLIB_LIBS $XPLC_LIBS $OPENSSL_LIBS $DIRENT_LIBS \
 ole32.lib rpcrt4.lib wsock32.lib gdi32.lib /MD /link /NODEFAULTLIB:LIBC"
 COMPILER_STANDARD=msvc
 

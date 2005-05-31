@@ -199,14 +199,46 @@ WvString nice_hostname(WvStringParm name);
 WvString getfilename(WvStringParm fullname);
 WvString getdirname(WvStringParm fullname);
 
+/*
+ * Possible rounding methods for numbers -- remember from school?
+ */
+enum RoundingMethod
+{
+    ROUND_DOWN,
+    ROUND_DOWN_AT_POINT_FIVE,
+    ROUND_UP_AT_POINT_FIVE,
+    ROUND_UP
+};
+
 /**
  * Given a number of blocks and a blocksize (default==1 byte), return a 
  * WvString containing a human-readable representation of blocks*blocksize.
+ * This function uses SI prefixes.
  */
-WvString sizetoa(unsigned long long blocks, unsigned int blocksize=1);
+WvString sizetoa(unsigned long long blocks, unsigned long blocksize = 1,
+		 RoundingMethod rounding_method = ROUND_UP_AT_POINT_FIVE);
 
-/** Give a size in Kilobyes gives a human readable size */
-WvString sizektoa(unsigned int kbytes);
+/**
+ * Given a size in kilobyes, return a human readable size.
+ * This function uses SI prefixes.
+ */
+WvString sizektoa(unsigned long long kbytes,
+		  RoundingMethod rounding_method = ROUND_UP_AT_POINT_FIVE);
+
+/**
+ * Given a number of blocks and a blocksize (default==1 byte), return a 
+ * WvString containing a human-readable representation of blocks*blocksize.
+ * This function uses IEC prefixes.
+ */
+WvString sizeitoa(unsigned long long blocks, unsigned long blocksize = 1,
+		  RoundingMethod rounding_method = ROUND_UP_AT_POINT_FIVE);
+
+/**
+ * Given a size in kilobytes, return a human readable size.
+ * This function uses IEC prefixes.
+ */
+WvString sizekitoa(unsigned long long kbytes,
+		   RoundingMethod rounding_method = ROUND_UP_AT_POINT_FIVE);
 
 /** Given a number of seconds, returns a formatted human-readable string
  * saying how long the period is.

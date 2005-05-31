@@ -23,12 +23,11 @@ WV_LINK(UniRetryGen);
 
 // Wrap the given moniker.  For the retry generator, obj is useless since
 // it gives us no idea as to how to recreate itself.
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm encoded_params, IObject *obj, void *)
 {
     if (obj)
     	return NULL;
     
-    WvString encoded_params = wvtcl_unescape(s);
     DPRINTF("encoded_params = %s\n", encoded_params.cstr());
     WvStringList params;
     wvtcl_decode(params, encoded_params);
@@ -173,6 +172,11 @@ WvString UniRetryGen::get(const UniConfKey &key)
     {
     	result = UniFilterGen::get(key);
     	DPRINTF("UniRetryGen::get(%s) returns %s\n", key.cstr(), result.cstr());
+    }
+    else if (key == "")
+    {
+        result = "";
+    	DPRINTF("UniRetryGen::get(%s) returns %s because it is root key\n", key.cstr(), result.cstr());        
     }
     else
     {

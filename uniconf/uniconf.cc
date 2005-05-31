@@ -42,10 +42,15 @@ UniConf::~UniConf()
 UniConfKey UniConf::fullkey(const UniConfKey &k) const
 {
     int n = k.numsegments();
-    
+
+    // Compensate for the directory-style naming convention of the
+    // tailing slash.
+    if (k.hastrailingslash())
+	n -= 1;
+
     // this function is undefined if k isn't an ancestor!
-    assert(k == xfullkey.first(n));
-    
+    assert(k.first(n) == xfullkey.first(n));
+
     return xfullkey.removefirst(n);
 }
 

@@ -38,19 +38,6 @@ GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 #  endif
 #endif
 
-ifneq ("$(with_ogg)", "no")
-  ifneq ("$(with_vorbis)", "no")
-    TARGETS += libwvoggvorbis.so libwvoggvorbis.a
-  endif
-  ifneq ("$(with_speex)", "no")
-    TARGETS += libwvoggspeex.so libwvoggspeex.a
-  endif
-endif
-
-ifneq ("$(with_fftw)", "no")
-  TARGETS += libwvfft.so libwvfft.a
-endif
-
 ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so libwvqt.a
 endif
@@ -104,8 +91,10 @@ BASEOBJS= \
 	utils/wvbackslash.o \
 	utils/wvencoder.o \
 	utils/wvtclstring.o \
+	utils/wvstringcache.o \
 	uniconf/uniinigen.o \
 	uniconf/unigenhack.o \
+	uniconf/unilistiter.o \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o
@@ -139,15 +128,6 @@ libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 	$(call objects,uniconf))
 libuniconf.a: uniconf/uniconfroot.o
 libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
-
-libwvoggvorbis.a libwvoggvorbis.so: $(call objects,oggvorbis)
-libwvoggvorbis.so: -logg -lvorbis -lvorbisenc libwvutils.so libwvbase.so
-
-libwvoggspeex.a libwvoggspeex.so: $(call objects,oggspeex)
-libwvoggspeex.so: -logg -lspeex libwvutils.so libwvbase.so
-
-libwvfft.a libwvfft.so: $(call objects,fft)
-libwvfft.so: -lfftw -lrfftw libwvutils.so libwvbase.so
 
 libwvtelephony.a libwvtelephony.so: $(call objects,telephony)
 libwvtelephony.so: 

@@ -45,6 +45,8 @@ void wait_for_connect()
 	if (another_cfg.xget("wait") == "pong") break;
 	sleep(1);
     }
+
+    fprintf(stderr, "managed to connect\n");
 }
 
 
@@ -56,7 +58,7 @@ WVTEST_MAIN("uniconfd")
     
     unlink(ini);
     
-    UniConfRoot cfg(WvString("retry:{unix:%s 100}", socket));
+    UniConfRoot cfg(WvString("retry:unix:%s 100", socket));
     cfg["/key"].setme("value");
     WVPASS(!cfg["/key"].exists());
 
@@ -122,7 +124,7 @@ WVTEST_MAIN("immediate reconnect")
     unlink(ini);
 
     // Need to set the reconnect delay to 0 to read immediately
-    UniConfRoot cfg(WvString("retry:{unix:%s 0}", socket));
+    UniConfRoot cfg(WvString("retry:unix:%s 0", socket));
 
     start_uniconfd(uniconfd_pid);
     wait_for_connect();
@@ -157,5 +159,9 @@ WVTEST_MAIN("mount point exists")
     WVPASS(uniconf["foo"].mount("retry:unix:/tmp/foobar"));
 
     WVPASS(uniconf["foo"].exists());
+    WVPASSEQ(uniconf["foo"].xget("", WvString::null), "");
+
+    WVFAIL(uniconf["foo/bar"].exists());
+    WVPASSEQ(uniconf["foo"].xget(""), WvString::null);    
 }
 

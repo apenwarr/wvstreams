@@ -36,8 +36,6 @@ install-xplc: xplc
 
 endif
 
-%.so: SONAME=$@.$(RELEASE)
-
 .PHONY: clean depend dust kdoc doxygen install install-shared install-dev install-xplc uninstall tests dishes dist distclean realclean test
 
 # FIXME: little trick to ensure that the wvautoconf.h.in file is there
@@ -121,6 +119,7 @@ depend:
 
 dust:
 	$(call wild_clean,$(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d))
+	$(call wild_clean,$(wildcard valgrind.log.pid*))
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
@@ -133,7 +132,7 @@ install: install-shared install-dev install-xplc install-uniconfd
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	for i in $(TARGETS_SO); do \
-	    $(INSTALL_PROGRAM) $$i.$(RELEASE) $(DESTDIR)$(libdir)/ ; \
+	    $(INSTALL_PROGRAM) $$i.$(SO_VERSION) $(DESTDIR)$(libdir)/ ; \
 	done
 	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
 	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
@@ -147,7 +146,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	done
 	cd $(DESTDIR)$(libdir) && for i in $(TARGETS_SO); do \
 	    rm -f $$i; \
-	    $(LN_S) $$i.$(RELEASE) $$i; \
+	    $(LN_S) $$i.$(SO_VERSION) $$i; \
 	done
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL_DATA) $(filter-out %-uninstalled.pc, $(wildcard pkgconfig/*.pc)) $(DESTDIR)$(libdir)/pkgconfig
@@ -171,14 +170,14 @@ uninstall:
 
 $(TESTS): $(LIBUNICONF) $(LIBWVTEST)
 $(addsuffix .o,$(TESTS)):
-tests: $(TESTS)
+tests: #$(TESTS)
 
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
 test: runconfigure all tests wvtestmain
-	LD_LIBRARY_PATH="$(WVSTREAMS_LIB):$$LD_LIBRARY_PATH" $(WVTESTRUN) $(MAKE) runtests
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
 	$(VALGRIND) ./wvtestmain '$(TESTNAME)'

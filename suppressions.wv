@@ -69,6 +69,13 @@
     fun:_IOvfprintf
 }
 {
+   stupid_zlib_stuff
+   Memcheck:Cond
+   obj:/usr/lib/libz.so*
+   obj:/usr/lib/libz.so*
+   fun:deflate
+}
+{
    sigaction_bites_my_nuts
    Memcheck:Param
    sigaction(act)
@@ -92,3 +99,10 @@
    fun:__static_initialization_and_destruction_0
    fun:_GLOBAL_.I._15WvInterfaceDict.links
 }
+{
+   statfs_has_issues
+   Memcheck:Param
+   statfs64(buf)
+   fun:statfs64
+}
+

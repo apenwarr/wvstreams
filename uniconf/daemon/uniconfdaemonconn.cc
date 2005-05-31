@@ -15,6 +15,7 @@
 UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root)
     : UniClientConn(_s), root(_root)
 {
+    uses_continue_select = true;
     addcallback();
     writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready."));
 }
@@ -23,6 +24,7 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root)
 UniConfDaemonConn::~UniConfDaemonConn()
 {
     close();
+    terminate_continue_select();
     delcallback();
 }
 
@@ -50,12 +52,9 @@ void UniConfDaemonConn::execute()
 {
     UniClientConn::execute();
     
-    for (;;)
+    UniClientConn::Command command = readcmd();
+    if (command != UniClientConn::NONE)
     {
-        UniClientConn::Command command = readcmd();
-        if (command == UniClientConn::NONE)
-            break;
-
         // parse and execute command
         WvString arg1(readarg());
         WvString arg2(readarg());
@@ -105,6 +104,14 @@ void UniConfDaemonConn::execute()
 		do_malformed();
 	    else
 		do_haschildren(arg1);
+	    break;
+	    
+	case UniClientConn::REQ_COMMIT:
+            do_commit();
+	    break;
+	    
+	case UniClientConn::REQ_REFRESH:
+            do_refresh();
 	    break;
 	    
 	case UniClientConn::REQ_QUIT:
@@ -172,13 +179,29 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 	{
 	    UniConf::RecursiveIter it(cfg);
 	    for (it.rewind(); it.next(); )
+	    {
 		writevalue(it->fullkey(cfg), it._value());
+		
+		// the output might be totally gigantic.  Don't hog the
+		// entire daemon while fulfilling it; give up our timeslice
+		// after each entry.
+		if (!isok()) break;
+		continue_select(0);
+	    }
 	}
 	else
 	{
 	    UniConf::Iter it(cfg);
 	    for (it.rewind(); it.next(); )
+	    {
 		writevalue(it->fullkey(cfg), it._value());
+		
+		// the output might be totally gigantic.  Don't hog the
+		// entire daemon while fulfilling it; give up our timeslice
+		// after each entry.
+		if (!isok()) break;
+		continue_select(0);
+	    }
 	}
 	writeok();
     }
@@ -192,6 +215,22 @@ void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
     bool haschild = root[key].haschildren();
     writecmd(REPLY_CHILD,
 	     spacecat(wvtcl_escape(key), haschild ? "TRUE" : "FALSE"));
+}
+
+
+void UniConfDaemonConn::do_commit()
+{
+    root.commit();
+    writeok();
+}
+
+
+void UniConfDaemonConn::do_refresh()
+{
+    if (root.refresh())
+        writeok();
+    else
+        writefail();
 }
 
 

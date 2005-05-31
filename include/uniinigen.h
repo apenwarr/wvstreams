@@ -9,6 +9,7 @@
 
 #include "unitempgen.h"
 #include "wvlog.h"
+#include <sys/stat.h>
 
 class WvFile;
 
@@ -26,6 +27,7 @@ class UniIniGen : public UniTempGen
     WvString filename;
     int create_mode;
     WvLog log;
+    struct stat old_st;
     
 public:
     /**
@@ -43,8 +45,10 @@ public:
     virtual void set(const UniConfKey &key, WvStringParm value);
 
 private:
+#ifndef _WIN32
     // helper methods for commit
-    bool commit_atomic(WvString real_filename);
+    bool commit_atomic(WvStringParm real_filename);
+#endif
     
     void save(WvStream &file, UniConfValueTree &parent);
     bool refreshcomparator(const UniConfValueTree *a,

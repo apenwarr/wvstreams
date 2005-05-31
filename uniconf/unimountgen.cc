@@ -8,9 +8,9 @@
 #include "wvmoniker.h"
 #include "wvhash.h"
 #include "wvstrutils.h"
+#include "unilistiter.h"
+#include "wvstringtable.h"
 #include <assert.h>
-
-DeclareWvTable(WvString);
 
 /***** UniMountGen *****/
 
@@ -272,9 +272,7 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 	}
         WvStringTable::Sorter s(t, &::wvstrcmp);
         for (s.rewind(); s.next();)
-        {
-		it->keys.append(new WvString(s()), true);
-        }
+	    it->add(*s);
 
 	return it;
     }

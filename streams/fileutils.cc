@@ -220,9 +220,21 @@ WvString wvtmpfilename(WvStringParm prefix)
     if ((fd = mkstemp(tmpname.edit())) == (-1))
         return WvString();    
     close(fd);
+    if (unlink(tmpname.cstr()) == (-1))
+	return WvString();
 #else
     WvString tmpname(_tempnam("c:\\temp", prefix.cstr()));
 #endif
 
     return tmpname;
 }
+
+#ifndef _WIN32
+mode_t get_umask()
+{
+    mode_t rv = umask(0);
+    umask(rv);
+
+    return rv;
+}
+#endif

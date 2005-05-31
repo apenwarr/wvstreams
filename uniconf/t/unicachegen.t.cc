@@ -1,10 +1,9 @@
 #include "unitempgen.h"
 #include "unicachegen.h"
 #include "uniconfroot.h"
+#include "unislowgen.h"
 #include "uniwatch.h"
 #include "wvtest.h"
-
-int temp_cbs_received = 0;
 
 class WatchReceiver
 {
@@ -30,9 +29,13 @@ private:
 WVTEST_MAIN("cache basics")
 {
     UniTempGen *t = new UniTempGen;
+    UniSlowGen *slow = new UniSlowGen(t);
     UniConfRoot cacheroot;
-    UniCacheGen *c = new UniCacheGen(t);
+    UniCacheGen *c = new UniCacheGen(slow);
     cacheroot.mountgen(c, true);
+    
+    WVPASSEQ(slow->how_slow(), 2);
+    slow->reset_slow();
     
     // 1 level of hierarchy
     t->set("foo", "bar");
@@ -66,4 +69,8 @@ WVTEST_MAIN("cache basics")
     // key is not a subkey of the one we are watching
     t->set("foo", "foo");
     WVPASS(cache_received.cbs == 1);
+    
+    // if the cache works correctly, nothing we did since the constructor
+    // should have incurred any slow operations at all.
+    WVPASSEQ(slow->how_slow(), 0);
 }

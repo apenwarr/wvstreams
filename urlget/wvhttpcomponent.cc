@@ -17,7 +17,7 @@ static void pool_init()
     if (!pool)
     {
 	pool = new WvHttpPool;
-	WvIStreamList::globallist.append(pool, false);
+	WvIStreamList::globallist.append(pool, false, "pool_init urlpool");
     }
 }
 

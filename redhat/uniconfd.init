@@ -4,7 +4,7 @@
 #
 # chkconfig: 345 97 03
 # description: Server that manages UniConf elements
-# processname: uniconf-daemon-1
+# processname: uniconfd
 # pidfile: /var/run/uniconfd.pid
 #
 # modelled after the D-BUS initscript

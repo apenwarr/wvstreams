@@ -51,8 +51,6 @@ class WvPty : public WvFDStream
             { return _slave; }
         pid_t pid() const
             { return _pid; }
-            
-        bool isok() const { return true; }        
         
 };
 

@@ -969,11 +969,11 @@ size_t WvLinkedBufferStore::optpeekable(int offset) const
 {
     // search for the buffer that contains the offset
     WvBufStoreList::Iter it(list);
-    offset = search(it, offset);
+    int newoffset = search(it, offset);
     WvBufStore *buf = it.ptr();
     if (!buf)
         return 0; // out of bounds
-    return buf->optpeekable(offset);
+    return buf->optpeekable(newoffset);
 }
 
 
@@ -1091,13 +1091,7 @@ WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
             needed -= chunk;
             if (needed == 0)
             {
-                // make the new buffer ready for unget 
-                if (mustskip != 0)
-                {
-                    buf->skip(mustskip);
-                    assert(buf->ungettable() >= mustskip);
-                }
-
+                buf->skip(mustskip);
                 return buf;
             }
         }
