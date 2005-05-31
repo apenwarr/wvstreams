@@ -450,7 +450,7 @@ char *WvStream::blocking_getline(time_t wait_msec, int separator,
     i = inbuf.strchr(separator);
     if (i > 0) {
 	char *eol = (char *)inbuf.mutablepeek(i - 1, 1);
-	assert(eol);
+	assert(eol && *eol == separator);
 	*eol = 0;
 	return const_cast<char*>((const char *)inbuf.get(i));
     } else {

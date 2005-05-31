@@ -208,3 +208,21 @@ WVTEST_MAIN("Stress")
         }
     }*/
 }
+
+WVTEST_MAIN("wvdynbuf big lines")
+{
+   WvDynBuf buf;
+      char cdata[4096];
+         int i;
+            for (i=0; i<4096; ++i)
+                   cdata[i] = '0' + (i%10);
+
+                      buf.put(cdata, 4090);
+                         buf.put(cdata, 4090);
+                            WVPASS(*buf.get(101) == '0');
+                            unsigned char *p = buf.mutablepeek(4101, 1);
+                            WVPASS(p);
+                            WVPASS(p && *p == '2');
+                               WVPASS(*buf.get(4096) == '1');
+                               }
+

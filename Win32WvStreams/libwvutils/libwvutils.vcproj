@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\;..\..\include;..\..\..\..\ports\xplc\build\xplc\include;..\..\..\..\ports\zlib\build\zlib;..\..\..\openssl\inc32"
+				AdditionalIncludeDirectories=".;..\;..\..\include;..\..\..\..\ports\xplc\build\xplc\include;&quot;..\..\..\..\ports\xplc\build\xplc-0.3.11\include&quot;;..\..\..\..\ports\zlib\build\zlib;&quot;..\..\..\..\ports\zlib\build\zlib-1.2.1.2\&quot;;..\..\..\openssl\inc32;&quot;..\..\..\..\ports\openssl\build\openssl-0.9.7d\inc32&quot;"
 				PreprocessorDefinitions="strcasecmp=_stricmp;strncasecmp=_strnicmp;WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -316,10 +316,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\utils\dirent.h">
+				RelativePath=".\dirent.h">
 			</File>
 			<File
-				RelativePath=".\dirent.h">
+				RelativePath="..\utils\dirent.h">
 			</File>
 			<File
 				RelativePath="..\..\include\fileutils.h">

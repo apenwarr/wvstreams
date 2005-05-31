@@ -7,6 +7,7 @@
  * See "wvbufbase.h" for the public API.
  */
 #include "wvbufstore.h"
+#include "wvstream.h"
 #include <string.h>
 #include <sys/types.h>
 
@@ -848,7 +849,9 @@ const void *WvLinkedBufferStore::get(size_t count)
 
     // return the data
     if (availused < count)
+    {
         buf = coalesce(it, count);
+    }
 
     maxungettable += count;
     return buf->get(count);
@@ -988,7 +991,9 @@ void *WvLinkedBufferStore::mutablepeek(int offset, size_t count)
     // return data if we have enough
     size_t availpeek = buf->peekable(offset);
     if (availpeek < count)
+    {
         buf = coalesce(it, count);
+    }
     return buf->mutablepeek(offset, count);
 }
 
@@ -1050,12 +1055,12 @@ WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
     // allocate a new buffer if there is not enough room to coalesce
     size_t needed = count - availused;
     size_t availfree = buf->free();
+    size_t mustskip = 0;
     if (availfree < needed)
     {
         // if this is the first buffer, then we need to unget as
         // much as possible to ensure it does not get discarded
         // during the coalescing phase
-        size_t mustskip = 0;
         if (buf == list.first() && totalused != 0)
         {
             // use ungettable() instead of buf->ungettable() because we might
@@ -1067,14 +1072,6 @@ WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
 
         needed = count + mustskip;
         buf = newbuffer(needed);
-
-        // make the new buffer ready for unget 
-        if (mustskip != 0)
-	{
-	    buf->alloc(mustskip);
-            buf->skip(mustskip);
-	    assert(buf->ungettable() >= mustskip);
-	}
 
         // insert the buffer before the previous link
         list.add_after(it.prev, buf, true);
@@ -1093,7 +1090,16 @@ WvBufStore *WvLinkedBufferStore::coalesce(WvBufStoreList::Iter &it,
             buf->merge(*itbuf, chunk);
             needed -= chunk;
             if (needed == 0)
+            {
+                // make the new buffer ready for unget 
+                if (mustskip != 0)
+                {
+                    buf->skip(mustskip);
+                    assert(buf->ungettable() >= mustskip);
+                }
+
                 return buf;
+            }
         }
         do_xunlink(it); // buffer is now empty
     }
