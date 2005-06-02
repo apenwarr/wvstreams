@@ -6,15 +6,15 @@ include $(WVSTREAMS)/wvrules.mk
 include vars.mk
 include vars-$(COMPILER_STANDARD).mk
 
-all: fake-libs
+default: all
+
+all: fake-libs ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain
 	
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
 .PHONY: clean test
-
-default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain
 
 # object files that we replace completely for win32
 OBJREPLACED=utils/wvtask.o
