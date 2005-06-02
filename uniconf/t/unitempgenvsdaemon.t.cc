@@ -13,38 +13,26 @@
 #include "wvtest.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/signal.h>
 
+
 // write out a temporary ini file for use, saves flushing entries
-static bool write_ini(WvString &ininame)
+static int write_ini(WvString &ininame)
 {
-    int fd;
-    ininame = "/tmp/iniXXXXXX";
-    if ((fd = mkstemp(ininame.edit())) == (-1))
-        return false;    
-    close(fd);
+    ininame = WvString("/tmp/unitempgenvsdaemonini-%s", getpid());
 
-
-    WvFile outfile(ininame, O_CREAT | O_WRONLY | O_TRUNC);
+    WvFile outfile(ininame, O_CREAT | O_WRONLY);
     if (outfile.isok())
     {
         outfile.print("%s\n%s\n", "[eth0]", "dhcpd = 1");
+        outfile.close();
         return true;
     }
 
+    outfile.close();
     return false;
-}
-
-static WvString get_sockname()
-{
-    int fd;
-    WvString sockname = "/tmp/sockXXXXXX";
-    if ((fd = mkstemp(sockname.edit())) == (-1))
-        return "";    
-    close(fd);
-
-    return sockname;
 }
 
 WVTEST_MAIN("tempgen/cachegen basics")
@@ -54,14 +42,17 @@ WVTEST_MAIN("tempgen/cachegen basics")
     WvString ininame;
     if (!write_ini(ininame))
     {
-        WVFAIL(true || "Could not write ini file");
+        WVFAIL("Could not write ini file");
         exit(1); 
     }
 
-    WvString sockname = get_sockname();
-    if (!sockname)
+    WvString sockname = WvString("/tmp/unitempgensock-%s", getpid());
+    
+    struct stat sock_exist;
+    if (stat(sockname, &sock_exist) == 0)
     {
-        WVFAIL(true || "Could not get socket filename");
+        WVFAIL(true || "Socket filename already exists");
+        unlink(ininame);
         exit(1); 
     }
 
@@ -111,8 +102,8 @@ WVTEST_MAIN("tempgen/cachegen basics")
    
     // kill off the daemon
     kill(cfg_handler, 15);
-    unlink(ininame.cstr());
-    unlink(sockname.cstr());
+    unlink(ininame);
+    unlink(sockname);
 }
 
 
@@ -127,12 +118,7 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
         exit(1); 
     }
 
-    WvString sockname = get_sockname();
-    if (!sockname)
-    {
-        WVFAIL(true || "Could not get socket filename");
-        exit(1); 
-    }
+    WvString sockname = WvString("/tmp/unitempgensock2-%s", getpid());
 
     pid_t cfg_handler = fork();
     if (!cfg_handler) // child only
@@ -178,6 +164,6 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
    
     // kill off the daemon
     kill(cfg_handler, 15);
-    unlink(ininame.cstr());
-    unlink(sockname.cstr());
+    unlink(ininame);
+    unlink(sockname);
 }
