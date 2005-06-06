@@ -159,14 +159,19 @@ WvLink *WvConfigSectionEmu::Iter::next()
 {
     while (iter.next())
     {
-        /*
-         * FIXME: if the WvConfEmu is not at the root of the
-         * UniConf tree, this will give an incorrect result.
-         */
-        entry = sect[iter->fullkey(sect.uniconf)];
-        link.data = static_cast<void*>(entry);
-        assert(entry);
-        return &link;
+        // WvConf-enabled code expects all set keys to be non-empty;
+        // enforce this behaviour
+	if (!!iter->getme())
+	{
+	    /*
+	     * FIXME: if the WvConfEmu is not at the root of the
+	     * UniConf tree, this will give an incorrect result.
+	     */
+	    entry = sect[iter->fullkey(sect.uniconf)];
+	    link.data = static_cast<void*>(entry);
+	    assert(entry);
+	    return &link;
+	}
     }
 
     return NULL;
