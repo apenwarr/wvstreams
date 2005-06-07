@@ -1,0 +1,13 @@
+version=@PACKAGE_VERSION@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/wvstreams
+
+Name: WvStreams FFT
+Description: WvStreams wrapper for libfftw
+Version: ${version}
+Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
+Libs: -L${libdir} -lwvfft
+Cflags: -I${includedir}
+

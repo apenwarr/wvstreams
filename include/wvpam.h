@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2003 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
  *
  * A WvStream that authenticates with PAM.  If WvStreams is compiled without
  * PAM, it just fails.  Note that if you don't check isok, you can still read
@@ -13,38 +13,19 @@
 #ifndef __WVPAM_H
 #define __WVPAM_H
 
-#include "wvstreamclone.h"
 #include "wvstringlist.h"
 #include "wvlog.h"
 
 class WvPamData;
 
-class WvPamStream : public WvStreamClone
+class WvPam
 {
+private:
+    bool init();
     WvPamData *d;
     WvLog log;
-
-public:
-    /**
-     * Require PAM authentication for the cloned stream.  name is the PAM
-     * service name.  success and fail are optional messages to write to the
-     * cloned stream on success or failure.
-     */
-    WvPamStream(WvStream *cloned, WvStringParm name,
-		WvStringParm success = WvString::null,
-		WvStringParm fail = WvString::null);
-    virtual ~WvPamStream();
-
-    /** Goes not ok if authentication fails */
-    // virtual bool isok() const;
-
-    /** Return the user */
-    WvString getuser() const;
-
-    /** Return the list of groups */
-    void getgroups(WvStringList &l) const;
-
-private:
+    WvString appname;
+    
     /**
      * Log the result of the last PAM step, based on the pam_status flag,and
      * write a failure message to the cloned stream on error.  step is the
@@ -53,8 +34,44 @@ private:
      */
     bool check_pam_status(WvStringParm step);
     
-    bool authenticate(WvStringParm name,
-		      WvStringParm successmsg, WvStringParm failmsg);
+public:
+    /**
+     * Start up PAM (presumably you will want to call authenticate()
+     * later.
+     */      
+    WvPam(WvStringParm svcname);
+    
+    /**
+     * Start up PAM, and authenticate user from rhost with password
+     */
+    WvPam(WvStringParm svcname, WvStringParm rhost,
+	  WvStringParm user = WvString::null,      
+	  WvStringParm password = WvString::null);
+    
+    virtual ~WvPam();
+    
+    /**
+     * Authenticate the user from rhost with password.
+     */
+    bool authenticate(WvStringParm rhost = WvString::null,
+		      WvStringParm user = WvString::null, 
+		      WvStringParm password = WvString::null);
+    
+    /**
+     * Get the groups that the currently sessioned user is logged
+     * in with
+     */       
+    void getgroups(WvStringList &groups) const;
+    
+    /**
+     * Get the user's name
+     */
+    WvString getuser() const;
+    
+    /**
+     * Check here to see if the user is validated or not
+     */
+    WvError err;
 };
 
 #endif // __WVPAM_H

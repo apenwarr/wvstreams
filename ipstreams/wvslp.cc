@@ -10,6 +10,8 @@
 #include "wvstringlist.h"
 #include "wvslp.h"
 
+
+
 #ifdef WITH_SLP
 #include "slp.h"
 
@@ -76,4 +78,74 @@ bool slp_get_servs(WvStringParm service, WvStringList &servlist)
     return true;
 }
 
+// Use the below for servers that want to advertise via SLP
+
+static void sillyslpcb(SLPHandle hslp, SLPError errcode, void* cookie)
+{ 
+    /* return the error code in the cookie */ 
+    *(SLPError*)cookie = errcode; 
+}
+
+WvSlp::WvSlp()
+    : log("WvSlp", WvLog::Info)
+{
+    SLPError slperr = SLPOpen("en", SLP_FALSE, &hslp);
+    if(slperr != SLP_OK)
+    { 
+        log(WvLog::Critical, "Error opening SLP handle: %s\n", slperr);
+        err.seterr("SLP Startup Broken: %s", slperr);
+    }
+}
+
+WvSlp::~WvSlp()
+{
+    SLPError callbackerr;
+
+    WvStringList::Iter i(services);
+    
+    for (i.rewind(); i.next(); )
+	SLPDereg(hslp, *i, sillyslpcb, &callbackerr);
+    
+    SLPClose(hslp);
+    services.zap();
+}
+
+void WvSlp::add_service(WvStringParm name, WvStringParm hostname, WvStringParm port)
+{
+    SLPError callbackerr;
+    
+    WvString *svc = new WvString("service:%s://%s:%s", name, hostname, port);
+    SLPError slperr = SLPReg(hslp, *svc, SLP_LIFETIME_MAXIMUM, 0, "", SLP_TRUE,
+			     sillyslpcb, &callbackerr);
+    
+    if(slperr != SLP_OK)
+    { 
+	log(WvLog::Notice, "Error registering %s: %s\n", *svc, slperr);
+	err.seterr("SLP Registration Broken: %s", slperr);
+    }
+    else
+	services.add(svc, true);
+}
+
+#else
+bool slp_get_servs(WvStringParm service, WvStringList &servlist)
+{ 
+    return true;
+}
+
+WvSlp::WvSlp()
+    : log("WvSlp", WvLog::Info)
+{
+    log("WvSlp compiled without SLP Library..\n");
+    log("Not registering\n");
+}
+
+WvSlp::~WvSlp()
+{
+}
+
+void WvSlp::add_service(WvStringParm name, WvStringParm hostname, WvStringParm port)
+{
+    
+}
 #endif

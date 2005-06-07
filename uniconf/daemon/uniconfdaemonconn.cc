@@ -7,13 +7,15 @@
 #include "uniconfdaemonconn.h"
 #include "uniconfdaemon.h"
 #include "wvtclstring.h"
+#include "wvstrutils.h"
 
 
 /***** UniConfDaemonConn *****/
 
-UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
-    UniClientConn(_s), root(_root)
+UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root)
+    : UniClientConn(_s), root(_root)
 {
+    uses_continue_select = true;
     addcallback();
     writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready."));
 }
@@ -22,6 +24,7 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root) :
 UniConfDaemonConn::~UniConfDaemonConn()
 {
     close();
+    terminate_continue_select();
     delcallback();
 }
 
@@ -49,12 +52,9 @@ void UniConfDaemonConn::execute()
 {
     UniClientConn::execute();
     
-    for (;;)
+    UniClientConn::Command command = readcmd();
+    if (command != UniClientConn::NONE)
     {
-        UniClientConn::Command command = readcmd();
-        if (command == UniClientConn::NONE)
-            break;
-
         // parse and execute command
         WvString arg1(readarg());
         WvString arg2(readarg());
@@ -171,13 +171,29 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 	{
 	    UniConf::RecursiveIter it(cfg);
 	    for (it.rewind(); it.next(); )
-		writevalue(it->fullkey(cfg), it->getme());
+	    {
+		writevalue(it->fullkey(cfg), it._value());
+		
+		// the output might be totally gigantic.  Don't hog the
+		// entire daemon while fulfilling it; give up our timeslice
+		// after each entry.
+		if (!isok()) break;
+		continue_select(0);
+	    }
 	}
 	else
 	{
 	    UniConf::Iter it(cfg);
 	    for (it.rewind(); it.next(); )
-		writevalue(it->fullkey(cfg), it->getme());
+	    {
+		writevalue(it->fullkey(cfg), it._value());
+		
+		// the output might be totally gigantic.  Don't hog the
+		// entire daemon while fulfilling it; give up our timeslice
+		// after each entry.
+		if (!isok()) break;
+		continue_select(0);
+	    }
 	}
 	writeok();
     }
@@ -189,8 +205,8 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
 {
     bool haschild = root[key].haschildren();
-    WvString msg("%s %s", wvtcl_escape(key), haschild ? "TRUE" : "FALSE");
-    writecmd(REPLY_CHILD, msg);
+    writecmd(REPLY_CHILD,
+	     spacecat(wvtcl_escape(key), haschild ? "TRUE" : "FALSE"));
 }
 
 
@@ -221,10 +237,10 @@ void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
     fullkey.append(key);
 
     if (value.isnull())
-        msg = WvString("%s", wvtcl_escape(fullkey));
+        msg = wvtcl_escape(fullkey);
     else
-        msg = WvString("%s %s", wvtcl_escape(fullkey),
-                                wvtcl_escape(cfg[key].getme()));
+        msg = spacecat(wvtcl_escape(fullkey),
+		       wvtcl_escape(cfg[key].getme()));
 
     writecmd(UniClientConn::EVENT_NOTICE, msg);
 }

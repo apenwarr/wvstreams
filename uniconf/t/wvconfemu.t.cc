@@ -119,7 +119,6 @@ WVTEST_MAIN("wvconfemu iterating while not mounted at root of UniConf tree")
     UniConfGen *unigen = new UniTempGen;
     UniConfRoot uniconf(unigen);
     WvConfEmu cfg(uniconf["/branch"]);
-    unigen = new UniTempGen;
     WvString section = "TestSection", entry = "TestEntry",
         value = "TestValue", notValue = "NotTestValue";
         
@@ -162,24 +161,30 @@ WVTEST_MAIN("Multiple Generators mounted on the Uniconf")
     WVPASS(sect);
     }
 }
+#endif
 
 WVTEST_MAIN("Editing while iterating")
 {
-    UniIniGen *unigen = new UniIniGen("weaver.ini", 0600);
-    UniConfRoot uniconf(unigen);
+    UniConfRoot uniconf("temp:");
+    uniconf["section"].xset("ICRASH/24", "crash1");
+    uniconf["section"].xset("UCRASH/MeCRASH", "crash2");
+    uniconf["section"].xset("WECRASH", "crash3");
+
     WvConfEmu cfg(uniconf);
 
-    WvConfigSection *sect = cfg["Network Routes"];
-    WvConfigEntryList::Iter ent(*sect);
-    for (ent.rewind(); ent.next();)
+    WvConfigSection *sect = cfg["section"];
+    if (WVPASS(sect))
     {
-        WVPASS(cfg.get("Network Routes", ent->name, ""));
-        cfg.set("Network Routes", ent->name, NULL);
-        ent.rewind();
+        WvConfigEntryList::Iter i(*sect);
+        for (i.rewind(); i.next();)
+        {
+            WVPASS(cfg.get("section", i->name, ""));
+            cfg.set("section", i->name, NULL);
+            i.rewind();
+        }
+        WVPASS("Didn't crash, or cause valgrind errors?");
     }
-    WVPASS("Didn't crash, or cause valgrind errors?");
 }
-#endif
 
 WVTEST_MAIN("wvconfemu setbool")
 {

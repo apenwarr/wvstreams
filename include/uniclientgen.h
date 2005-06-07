@@ -13,7 +13,6 @@
 #include "wvstringlist.h"
 #include "uniclientconn.h"
 
-
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
  * values.
@@ -27,41 +26,19 @@
  */
 class UniClientGen : public UniConfGen
 {
-    class RemoteKeyIter;
-
     UniClientConn *conn;
 
-    struct KeyVal
-    {
-	UniConfKey key;
-	WvString val;
-	
-	KeyVal(const UniConfKey &_key, WvStringParm _val)
-	    : key(_key), val(_val)
-	    { }
-    };
-    DeclareWvList(KeyVal);
-
-    /*
-     * To make sure we don't deliver notifications while we're already in the
-     * callback (as this could result in trying to call it again before
-     * completion), we instead have an empty stream handle this using alarm(0).
-     */
-    UniConfPairList deltas;
-    WvStream deltastream;
-
-    //WvStringList set_queue;
     WvLog log;
 
     WvString result_key;        /*!< the key that the current result is from */
     WvString result;            /*!< the result from the current key */
     
-    KeyValList *result_list;    /*!< result list for iterations */
+    UniListIter *result_list;   /*!< result list for iterations */
 
     bool cmdinprogress;     /*!< true while a command is in progress */
     bool cmdsuccess;        /*!< true when a command completed successfully */
 
-    static const int TIMEOUT = 30000; // command timeout in ms
+    static const int TIMEOUT = 60000; // command timeout in ms
 
 public:
     /**
@@ -78,6 +55,8 @@ public:
     virtual bool isok();
 
     virtual bool refresh();
+    virtual void flush_buffers();
+    virtual void commit(); 
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual bool haschildren(const UniConfKey &key);
@@ -88,8 +67,6 @@ protected:
     virtual Iter *do_iterator(const UniConfKey &key, bool recursive);
     void conncallback(WvStream &s, void *userdata);
     bool do_select();
-    void clientdelta(const UniConfKey &key, WvStringParm value);
-    void deltacb(WvStream &, void *);
 };
 
 

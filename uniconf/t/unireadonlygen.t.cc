@@ -5,17 +5,17 @@
 #include "wvtest.h"
 
 // defined in uniinigen.t.cc
-extern void inigen(WvStringParm content);
+extern WvString inigen(WvStringParm content);
 
 WVTEST_MAIN("reading and (not)writing")
 {
-    inigen("[S1]\n"
+    WvString inifile = inigen("[S1]\n"
            "a = b\n"
            "[{S2}]  \n"
            "c=d  \n"
            "[{S\n3}]\n"
            "e=f\n");
-    UniConfRoot cfg("readonly:ini:tmp.ini");
+    UniConfRoot cfg(WvString("readonly:ini:%s", inifile));
 
     WVPASSEQ(cfg["S1/a"].getme(), "b");
     WVPASSEQ(cfg["S2/c"].getme(), "d");
@@ -27,4 +27,6 @@ WVTEST_MAIN("reading and (not)writing")
     // values shouldn't have changed
     WVPASSEQ(cfg["S1/a"].getme(), "b");
     WVPASSEQ(cfg["S2/c"].getme(), "d");
+
+    ::unlink(inifile);
 }

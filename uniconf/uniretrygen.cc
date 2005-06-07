@@ -86,7 +86,7 @@ void UniRetryGen::maybe_reconnect()
     	    {
     	    	DPRINTF("UniRetryGen::maybe_reconnect: !gen->isok()\n");
     	    	
-    	    	RELEASE(gen);
+    	    	WVRELEASE(gen);
             	
     	    	next_reconnect_attempt =
     	    	    	msecadd(next_reconnect_attempt, retry_interval_ms);
@@ -108,7 +108,7 @@ void UniRetryGen::maybe_disconnect()
     	
     	setinner(NULL);
     	
-    	RELEASE(old_inner);
+    	WVRELEASE(old_inner);
 
         next_reconnect_attempt = msecadd(wvtime(), retry_interval_ms);
     }
@@ -201,7 +201,17 @@ bool UniRetryGen::exists(const UniConfKey &key)
     else
     {
     	DPRINTF("UniRetryGen::exists: !isok()\n");
-    	result = false;
+        if (key == "")
+        {
+            // here we assume that at least the mount point exists
+            // see void UniMountGen::makemount() that create all the keys with
+            // an empty string
+            result = true;
+        }
+        else 
+        {
+            result = false;
+        }
     }
     
     maybe_disconnect();

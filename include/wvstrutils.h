@@ -47,6 +47,18 @@ char *trim_string(char *string);
 char *trim_string(char *string, char c);
 
 /**
+ * return the string formed by concatenating string 'a' and string 'b' with
+ * the 'sep' character between them.  For example,
+ *     spacecat("xx", "yy", ";");
+ * returns "xx;yy".
+ * 
+ * This function is much faster than the more obvious WvString("%s;%s", a, b),
+ * so it's useful when you're producing a *lot* of string data.
+ */
+WvString spacecat(WvStringParm a, WvStringParm b, char sep = ' ');
+
+    
+/**
  * Replaces all whitespace characters in the string with non-breaking spaces
  * (&nbsp;) for use with web stuff.
  */
@@ -131,9 +143,17 @@ WvString rfc1123_date(time_t _when);
 
 /**
  * Similar to crypt(), but this randomly selects its own salt.
- * This function is defined in strcrypt.cc.
+ * This function is defined in strcrypt.cc.  It chooses to use the DES
+ * engine.
  */
 WvString passwd_crypt(const char *str);
+
+/**
+ * Similar to crypt(), but this randomly selects its own salt.
+ * This function is defined in strcrypt.cc.  It chooses to use the MD5
+ * engine.
+ */
+WvString passwd_md5(const char *str);
 
 /**
  * Returns a string with a backslash in front of every non alphanumeric
@@ -170,10 +190,15 @@ WvString getdirname(WvStringParm fullname);
  * Given a number of blocks and a blocksize (default==1 byte), return a 
  * WvString containing a human-readable representation of blocks*blocksize.
  */
-WvString sizetoa(long long blocks, int blocksize=1);
+WvString sizetoa(unsigned long long blocks, unsigned int blocksize=1);
 
 /** Give a size in Kilobyes gives a human readable size */
 WvString sizektoa(unsigned int kbytes);
+
+/** Given a number of seconds, returns a formatted human-readable string
+ * saying how long the period is.
+ */
+WvString secondstoa(unsigned int total_seconds);
 
 /**
  * Finds a string in an array and returns its index.
@@ -360,6 +385,12 @@ WvString beforestr(WvStringParm line, WvStringParm a);
  * if pos+len > line.len() simply return from pos to end of line
  */
 WvString substr(WvString line, unsigned int pos, unsigned int len);
+
+/** 
+ * Removes any trailing punctuation ('.', '?', or '!') from the line, and
+ * returns it in a new string.  Does not modify line.
+ */
+WvString depunctuate(WvStringParm line);
 
 // Converts a string in decimal to an arbitrary numeric type
 template<class T>

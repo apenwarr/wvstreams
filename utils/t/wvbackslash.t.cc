@@ -37,8 +37,8 @@ WVTEST_MAIN("backslashtest.cc")
         }
        
         stream->flush(0);
-        RELEASE(stream);
-        RELEASE(ostream);
+        WVRELEASE(stream);
+        WVRELEASE(ostream);
     }
     
     // Test decoding
@@ -68,7 +68,7 @@ WVTEST_MAIN("backslashtest.cc")
         }
        
         stream->flush(0);
-        RELEASE(stream);
-        RELEASE(ostream);
+        WVRELEASE(stream);
+        WVRELEASE(ostream);
     }
 }

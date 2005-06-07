@@ -33,8 +33,9 @@ public:
 
     /***** Overridden members *****/
     virtual bool isok();
-    virtual bool refresh();
     virtual void commit();
+    virtual bool refresh();
+    virtual void flush_buffers() { }
     virtual void set(const UniConfKey &key, WvStringParm value);
     virtual WvString get(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);

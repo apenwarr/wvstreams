@@ -77,7 +77,18 @@ WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
 }
 
 
-int WvTest::run_all(const char *prefix)
+static bool prefix_match(const char *s, const char * const *prefixes)
+{
+    for (const char * const *prefix = prefixes; prefix && *prefix; prefix++)
+    {
+	if (!strncasecmp(s, *prefix, strlen(*prefix)))
+	    return true;
+    }
+    return false;
+}
+
+
+int WvTest::run_all(const char * const *prefixes)
 {
     int old_valgrind_errs = 0, new_valgrind_errs;
     int old_valgrind_leaks = 0, new_valgrind_leaks;
@@ -90,9 +101,9 @@ int WvTest::run_all(const char *prefix)
     fails = runs = 0;
     for (WvTest *cur = first; cur; cur = cur->next)
     {
-	if (!prefix
-	    || !strncasecmp(cur->idstr, prefix, strlen(prefix))
-	    || !strncasecmp(cur->descr, prefix, strlen(prefix)))
+	if (!prefixes
+	    || prefix_match(cur->idstr, prefixes)
+	    || prefix_match(cur->descr, prefixes))
 	{
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    cur->main();
@@ -109,8 +120,9 @@ int WvTest::run_all(const char *prefix)
 	}
     }
     
-    if (prefix && prefix[0])
-	printf("WvTest: only ran tests starting with '%s'.\n", prefix);
+    if (prefixes && *prefixes)
+	printf("WvTest: WARNING: only ran tests starting with "
+	       "specifed prefix(es).\n");
     else
 	printf("WvTest: ran all tests.\n");
     printf("WvTest: %d test%s, %d failure%s.\n",
@@ -170,34 +182,41 @@ void WvTest::check(bool cond)
 
 
 bool WvTest::start_check_eq(const char *file, int line,
-			    const char *a, const char *b)
+			    const char *a, const char *b, bool expect_pass)
 {
     if (!a) a = "";
     if (!b) b = "";
     
     size_t len = strlen(a) + strlen(b) + 8 + 1;
     char *str = new char[len];
-    sprintf(str, "[%s] == [%s]", a, b);
+    sprintf(str, "[%s] %s [%s]", a, expect_pass ? "==" : "!=", b);
     
     start(file, line, str);
     delete[] str;
     
     bool cond = !strcmp(a, b);
+    if (!expect_pass)
+        cond = !cond;
+
     check(cond);
     return cond;
 }
 
 
-bool WvTest::start_check_eq(const char *file, int line, int a, int b)
+bool WvTest::start_check_eq(const char *file, int line, 
+                            int a, int b, bool expect_pass)
 {
     size_t len = 128 + 128 + 8 + 1;
     char *str = new char[len];
-    sprintf(str, "%d == %d", a, b);
+    sprintf(str, "%d %s %d", a, expect_pass ? "==" : "!=", b);
     
     start(file, line, str);
     delete[] str;
     
     bool cond = (a == b);
+    if (!expect_pass)
+        cond = !cond;
+
     check(cond);
     return cond;
 }

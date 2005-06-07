@@ -33,6 +33,7 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
     // consider the generator dirty until it is first refreshed
     dirty = true;
+    memset(&old_st, 0, sizeof(old_st));
 }
 
 
@@ -45,7 +46,7 @@ bool UniIniGen::refresh()
 {
     WvFile file(filename, O_RDONLY);
 
-    #ifndef _WIN32
+#ifndef _WIN32
     struct stat statbuf;
     if (file.isok() && fstat(file.getrfd(), &statbuf) == -1)
     {
@@ -59,7 +60,19 @@ bool UniIniGen::refresh()
 	file.close();
 	file.seterr(EAGAIN);
     }
-    #endif
+    
+    if (file.isok() // guarantes statbuf is valid from above
+	&& statbuf.st_ctime == old_st.st_ctime
+	&& statbuf.st_dev == old_st.st_dev
+	&& statbuf.st_ino == old_st.st_ino
+	&& statbuf.st_blocks == old_st.st_blocks
+	&& statbuf.st_size == old_st.st_size)
+    {
+	log(WvLog::Debug, "refresh: file hasn't changed; do nothing.\n");
+	return true;
+    }
+    memcpy(&old_st, &statbuf, sizeof(statbuf));
+#endif
 
     if (!file.isok())
     {
@@ -160,7 +173,7 @@ bool UniIniGen::refresh()
     {
         log(WvLog::Warning, 
 	    "Error reading from config file: \"%s\"\n", file.errstr());
-        RELEASE(newgen);
+        WVRELEASE(newgen);
         return false;
     }
 
@@ -197,8 +210,9 @@ bool UniIniGen::refresh()
     }
     unhold_delta();
 
-    RELEASE(newgen);
+    WVRELEASE(newgen);
 
+    UniTempGen::refresh();
     return true;
 }
 
@@ -239,6 +253,7 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
 void UniIniGen::commit()
 {
     if (!dirty) return;
+    UniTempGen::commit();
 
 #ifdef _WIN32
     // Windows doesn't support all that fancy stuff, just open the file
@@ -253,7 +268,7 @@ void UniIniGen::commit()
 	real_filename = resolved_path;
 	
     WvString alt_filename("%s.tmp%s", real_filename, getpid());
-    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
+    WvFile file(alt_filename, O_WRONLY|O_TRUNC|O_CREAT, 0000);
     struct stat statbuf;
 
     if (file.geterr()
@@ -319,6 +334,7 @@ void UniIniGen::commit()
 #ifndef _WIN32
     if (!alt_filename.isnull())
     {
+	chmod(alt_filename, create_mode);
 	if (rename(alt_filename, real_filename) == -1)
 	{
 	    log(WvLog::Warning, "Can't write '%s': %s\n",

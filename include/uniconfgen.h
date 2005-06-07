@@ -14,6 +14,7 @@
 #include "uniconfpair.h"
 
 class UniConfGen;
+class UniListIter;
 
 /**
  * The callback type for signalling key changes from a UniConfGen.
@@ -72,7 +73,14 @@ public:
      */
     virtual bool refresh() = 0;
 
-    
+    /** 
+     * Flushes any commitment/notification buffers . 
+     *
+     * The default implementation always returns true.
+     *  NOTE: This method should be 'protected'
+     */
+    virtual void flush_buffers() = 0;
+
     /***** Key Retrieval API *****/
     
     /**
@@ -145,6 +153,9 @@ public:
 
     /** A concrete null iterator type (see below) */
     class NullIter;
+    
+    /** An iterator over a constant list of keys (see below) */
+    typedef ::UniListIter ListIter;
 
     /**
      * Returns an iterator over the children of the specified key.
@@ -270,6 +281,8 @@ public:
     /***** Key Storage API *****/
     virtual void set(const UniConfKey &key, WvStringParm value) = 0;
 
+    virtual void flush_buffers() = 0;
+
     /***** Key Enumeration API *****/
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key) = 0;
@@ -341,4 +354,5 @@ public:
     virtual WvString value() const { return WvString(); }
 };
 
-#endif // UNICONFGEN_H
+
+#endif // __UNICONFGEN_H

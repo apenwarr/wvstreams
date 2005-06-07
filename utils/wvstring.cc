@@ -179,8 +179,8 @@ void WvFastString::link(WvStringBuf *_buf, const char *_str)
 
 WvStringBuf *WvFastString::alloc(size_t size)
 { 
-    WvStringBuf *abuf = (WvStringBuf *)malloc(WVSTRINGBUF_SIZE(buf)
-					     + size + WVSTRING_EXTRA);
+    WvStringBuf *abuf = (WvStringBuf *)malloc(
+		      (WVSTRINGBUF_SIZE(buf) + size + WVSTRING_EXTRA) | 3);
     abuf->links = 0;
     abuf->size = size;
     return abuf;
@@ -219,7 +219,7 @@ void WvFastString::newbuf(size_t size)
 // of it.  If it was linked to only once, then it's already "unique".
 WvString &WvString::unique()
 {
-    if (buf->links > 1 && str)
+    if (!is_unique() && str)
     {
 	WvStringBuf *newb = alloc(len() + 1);
 	memcpy(newb->data, str, newb->size);
@@ -228,6 +228,12 @@ WvString &WvString::unique()
     }
 	    
     return *this; 
+}
+
+
+bool WvString::is_unique() const
+{
+    return (buf->links <= 1);
 }
 
 
@@ -255,10 +261,25 @@ WvString &WvString::operator= (int i)
 
 WvString &WvString::operator= (const WvFastString &s2)
 {
-    if (s2.buf == buf && s2.str == str)
+    if (s2.str == str && (!s2.buf || s2.buf == buf))
 	return *this; // no change
     else if (!s2.buf)
     {
+	// We have a string, and we're about to free() it.
+	if (str && buf && buf->links == 1)
+	{
+	    // Set buf->size, if we don't already know it.
+	    if (buf->size == 0)
+		buf->size = strlen(str);
+
+	    if (str < s2.str && s2.str <= (str + buf->size))
+	    {
+		// If the two strings overlap, we'll just need to
+		// shift s2.str over to here.
+		memmove(buf->data, s2.str, buf->size);
+		return *this;
+	    }
+	}
 	// assigning from a non-copied string - copy data if needed.
 	unlink();
 	link(&nullbuf, s2.str);

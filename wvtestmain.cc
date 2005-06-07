@@ -33,13 +33,13 @@ int main(int argc, char **argv)
     WVFAIL(false);
     WVFAIL(0);
     int startfd, endfd;
-    const char *prefix = "";
+    char * const *prefixes = NULL;
     
     if (argc > 1)
-	prefix = argv[1];
+	prefixes = argv + 1;
     
     startfd = fd_count("start");
-    int ret = WvTest::run_all(prefix);
+    int ret = WvTest::run_all(prefixes);
     endfd = fd_count("end");
     
     WVPASS(startfd == endfd);

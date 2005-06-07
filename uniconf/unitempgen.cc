@@ -1,32 +1,14 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 2002 Net Integration Technologies, Inc.
+ *   Copyright (C) 2002-2005 Net Integration Technologies, Inc.
  * 
  * A UniConf generator that stores keys in memory.
  */
 #include "unitempgen.h"
 #include "wvmoniker.h"
 #include "wvlog.h"
-
-/** An iterator over keys stored in a UniTempGen. */
-class UniTempGen::NodeIter : public UniTempGen::Iter
-{
-protected:
-    UniTempGen *xgen;
-    UniConfValueTree::Iter xit;
-
-public:
-    NodeIter(UniTempGen *gen, const UniConfValueTree::Iter &it);
-    virtual ~NodeIter();
-
-    /***** Overridden methods *****/
-
-    virtual void rewind();
-    virtual bool next();
-    virtual UniConfKey key() const;
-    virtual WvString value() const;
-};
-
+#include "wvstringcache.h"
+#include "unilistiter.h"
 
 static IUniConfGen *creator(WvStringParm, IObject *, void *)
 {
@@ -34,6 +16,7 @@ static IUniConfGen *creator(WvStringParm, IObject *, void *)
 }
 
 static WvMoniker<IUniConfGen> reg("temp", creator);
+
 
 /***** UniTempGen *****/
 
@@ -60,9 +43,10 @@ WvString UniTempGen::get(const UniConfKey &key)
     return WvString::null;
 }
 
-
-void UniTempGen::set(const UniConfKey &key, WvStringParm value)
+void UniTempGen::set(const UniConfKey &key, WvStringParm _value)
 {
+    WvString value(scache.get(_value));
+    
     hold_delta();
     if (value.isnull())
     {
@@ -96,8 +80,8 @@ void UniTempGen::set(const UniConfKey &key, WvStringParm value)
             {
 		// we'll have to create the sub-node, since we couldn't
 		// find the most recent part of the key.
-                node = new UniConfValueTree(prev, prevkey,
-					    more ? WvStringParm("") : value);
+                node = new UniConfValueTree(prev, scache.get(prevkey),
+					    more ? scache.get("") : value);
                 dirty = true;
                 if (!prev) // we just created the root
                     root = node;
@@ -157,48 +141,27 @@ UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
     {
         UniConfValueTree *node = root->find(key);
         if (node)
-            return new NodeIter(this, UniConfValueTree::Iter(*node));
+	{
+	    ListIter *it = new ListIter(this);
+	    UniConfValueTree::Iter i(*node);
+	    for (i.rewind(); i.next(); )
+		it->add(i->key(), i->value());
+            return it;
+	}
     }
     return NULL;
 }
 
 
-
-/***** UniTempGen::NodeIter *****/
-
-UniTempGen::NodeIter::NodeIter(UniTempGen *gen,
-    const UniConfValueTree::Iter &it) :
-    xgen(gen), xit(it)
+void UniTempGen::commit()
 {
+    scache.clean();
+    UniConfGen::commit();
 }
 
 
-UniTempGen::NodeIter::~NodeIter()
+bool UniTempGen::refresh()
 {
+    scache.clean();
+    return UniConfGen::refresh();
 }
-
-
-void UniTempGen::NodeIter::rewind()
-{
-    xit.rewind();
-}
-
-
-bool UniTempGen::NodeIter::next()
-{
-    return xit.next();
-}
-
-
-UniConfKey UniTempGen::NodeIter::key() const
-{
-    return xit->key();
-}
-
-
-WvString UniTempGen::NodeIter::value() const
-{
-    return xit->value();
-}
-
-
