@@ -172,10 +172,15 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
 		// in order to prove that there's a next line somewhere
 		// in the buffer.  Otherwise we might stop parsing before
 		// we're "really" done if we're given input line-by-line.
+		// 
+		// A better way to do this would be for getword() to *never*
+		// return a string unless it contains a separator character;
+		// then we wouldn't need this weird special case.  But it
+		// don't work like that; we'll return the last word in the
+		// buffer even if it *doesn't* end in a separator character.
                 incontinuation = true;
 	    }
-            else
-                inescape = false;
+	    inescape = false;
         }
         else if (ch == '\\')
 	{
@@ -204,7 +209,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
 	    {
 		if (ch == '{')
 		    bracecount++;
-		else if (ch == '}')
+		else if (bracecount > 0 && ch == '}')
 		    bracecount--;
 	    }
 	}
