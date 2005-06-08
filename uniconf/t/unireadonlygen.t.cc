@@ -15,7 +15,9 @@ WVTEST_MAIN("reading and (not)writing")
            "c=d  \n"
            "[{S\n3}]\n"
            "e=f\n");
-    UniConfRoot cfg(WvString("readonly:ini:%s", inifile));
+    WvString mon("readonly:ini:%s", inifile);
+    IUniConfGen *gen = wvcreate<IUniConfGen>(mon);
+    UniConfRoot cfg((UniConfGen*)gen);
 
     WVPASSEQ(cfg["S1/a"].getme(), "b");
     WVPASSEQ(cfg["S2/c"].getme(), "d");

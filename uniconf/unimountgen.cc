@@ -14,6 +14,18 @@
 
 /***** UniMountGen *****/
 
+UniMountGen::UniMountGen()
+{
+    // nothing special
+}
+
+
+UniMountGen::~UniMountGen()
+{
+    zap();
+}
+
+
 WvString UniMountGen::get(const UniConfKey &key)
 {
     UniGenMount *found = findmount(key);
@@ -138,7 +150,7 @@ IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 	return NULL;
     
     UniGenMount *newgen = new UniGenMount(gen, key);
-    gen->setcallback(UniConfGenCallback(this,
+    gen->add_callback(this, UniConfGenCallback(this,
 				&UniMountGen::gencallback), &newgen->key);
 
     hold_delta();
@@ -176,7 +188,7 @@ void UniMountGen::unmount(IUniConfGen *gen, bool commit)
     
     if (commit)
         gen->commit();
-    gen->setcallback(UniConfGenCallback(), NULL);
+    gen->del_callback(this);
 
     UniConfKey key(i->key);
     IUniConfGen *next = NULL;
@@ -201,6 +213,13 @@ void UniMountGen::unmount(IUniConfGen *gen, bool commit)
     } 
 
     unhold_delta();
+}
+
+
+void UniMountGen::zap()
+{
+    while (!mounts.isempty())
+	unmount(mounts.first()->gen, false);
 }
 
 

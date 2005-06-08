@@ -17,17 +17,19 @@ UniFilterGen::UniFilterGen(IUniConfGen *inner)
 
 UniFilterGen::~UniFilterGen()
 {
-    WVRELEASE(xinner);
+    IUniConfGen *gen = xinner;
+    setinner(NULL);
+    WVRELEASE(gen);
 }
 
 
 void UniFilterGen::setinner(IUniConfGen *inner)
 {
     if (xinner)
-        xinner->setcallback(UniConfGenCallback(), NULL);
+	xinner->del_callback(this);
     xinner = inner;
     if (xinner)
-        xinner->setcallback(UniConfGenCallback(this,
+        xinner->add_callback(this, UniConfGenCallback(this,
             &UniFilterGen::gencallback), NULL);
 }
 

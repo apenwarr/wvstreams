@@ -38,15 +38,12 @@ protected:
 
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
-    UniMountGen() 
-        { }
+    UniMountGen();
 
     /** Destroys the UniConf tree along with all uncommitted data. */
-    virtual ~UniMountGen()
-        { }
+    virtual ~UniMountGen();
     
-    void zap()
-        { mounts.zap(); }
+    void zap();
     
     /**
      * Mounts a generator at a key using a moniker.
