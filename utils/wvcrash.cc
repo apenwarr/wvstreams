@@ -232,6 +232,16 @@ static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPoint
         unsigned data2;
     };
     ExceptionInfo *info = *(ExceptionInfo **)pExceptionPointers;
+
+    // handle a special exception.  Number 3 = forced breakpoint
+    // having __asm int 3; in code will cause windows to ask if
+    // you want to debug the application nicely.
+    if (info->exception==0x80000003)
+    {
+        fprintf(stderr, "Preparing to debug!\n");
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    
     fprintf(stderr, "--------------------------------------------------------\n");
     fprintf(stderr, "Exception 0x%08X:\n  ", info->exception);
     exception_desc(stderr, info->exception, info->data1, info->data2);
