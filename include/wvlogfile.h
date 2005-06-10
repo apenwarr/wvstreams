@@ -19,10 +19,16 @@ public:
     WvLogFileBase(WvStringParm _filename,
 		  WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
     
+    // run fsync() every so many log messages.  0 never fsyncs.
+    int fsync_every;
+
 protected:
     WvLogFileBase(WvLog::LogLevel _max_level);
     virtual void _make_prefix(); 
     virtual void _mid_line(const char *str, size_t len);
+    virtual void _end_line();
+
+    int fsync_count;
 };
 
 
@@ -33,13 +39,16 @@ class WvLogFile : public WvLogFileBase
 public:
     WvLogFile(WvStringParm _filename,
 	      WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS,
-	      int _keep_for = 7, bool _force_new_line = false);
+	      int _keep_for = 7, bool _force_new_line = false,
+              bool _allow_append = true);
     
+    void start_log();
+
 private:
     virtual void _make_prefix(); 
-    void start_log();
     int keep_for, last_day;
     WvString filename;
+    bool allow_append;
 };
 
 #endif // __WVLOGFILE_H

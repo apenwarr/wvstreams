@@ -16,7 +16,7 @@
 #define lstat stat
 #endif
 
-WvDirIter::WvDirIter( WvStringParm dirname,
+WvDirIter::WvDirIter( WvStringParm _dirname,
 		      bool _recurse, bool _skip_mounts, size_t sizeof_stat )
     : relpath(""), dir(dirs)
 /****************************************************************************/
@@ -30,6 +30,11 @@ WvDirIter::WvDirIter( WvStringParm dirname,
     go_up   = false;
     skip_mounts = _skip_mounts;
     found_top = false;
+
+    WvString dirname(_dirname);
+    int dl = strlen(dirname);
+    if (dl != 0 && dirname[dl-1] == '/')
+        dirname.edit()[dl-1] = 0;
 
     DIR * d = opendir( dirname );
     if( d ) {

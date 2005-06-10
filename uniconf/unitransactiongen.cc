@@ -197,12 +197,6 @@ UniTransactionGen::UniTransactionGen(IUniConfGen *_base)
 {
     base->setcallback(
 	UniConfGenCallback(this, &UniTransactionGen::gencallback), NULL);
-    
-    printf("exists: %d %d/%p %d/%p %d/%p\n",
-	   exists("/"),
-	   exists("b"), get("b").cstr(),
-	   exists("b/"), get("b/").cstr(),
-	   base->exists("b/"), base->get("b/").cstr());
 }
 
 UniTransactionGen::~UniTransactionGen()
@@ -269,7 +263,12 @@ void UniTransactionGen::commit()
 	root = NULL;
 	base->setcallback(
 	    UniConfGenCallback(this, &UniTransactionGen::gencallback), NULL);
+	
+	// make sure the inner generator also commits
+	base->commit();
     }
+    
+    // no need to base->commit() if we know we haven't changed anything!
 }
 
 bool UniTransactionGen::refresh()
@@ -281,8 +280,13 @@ bool UniTransactionGen::refresh()
 	delete root;
 	root = NULL;
 	unhold_delta();
+	
+	// no need to base->commit() here, since the inner generator never
+	// saw any changes
     }
-    return true;
+    
+    // must always base->refresh(), even if we didn't change anything
+    return base->refresh();
 }
 
 UniConfGen::Iter *UniTransactionGen::iterator(const UniConfKey &key)

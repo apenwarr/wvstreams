@@ -415,7 +415,8 @@ public:
         {
 	    Impl *oldimp = impl;
 	    impl = 0;
-	    delete oldimp;
+	    if (oldimp != 0)
+                delete oldimp;
 	    if (cb.impl)
 	        impl = cb.impl->clone();
 	    else

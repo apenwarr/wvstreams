@@ -8,7 +8,6 @@
 #include "strutils.h"
 #include "wvbuf.h"
 #include <ctype.h>
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -629,9 +628,15 @@ static WvString _sizetoa(unsigned long long size, unsigned long blocksize,
 
     // Deal with blocksizes without overflowing.
     const unsigned long long group_base = prefixes[0].base;
-    int shift = static_cast<int>(log(blocksize) / log(group_base));
-    if (shift)
-	blocksize /= exp(shift * log(group_base));
+    int shift = -1;
+    unsigned long prev_blocksize;
+    while (blocksize)
+    {
+	prev_blocksize = blocksize;
+	blocksize /= group_base;
+	++shift;
+    }
+    blocksize = prev_blocksize;
 
     int p = -1;
     unsigned long long significant_digits = size * 10;
