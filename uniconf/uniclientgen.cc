@@ -108,7 +108,7 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
 
 UniClientGen::~UniClientGen()
 {
-    //if (isok())
+    if (isok())
 	conn->writecmd(UniClientConn::REQ_QUIT, "");
     WvIStreamList::globallist.unlink(conn);
     WVRELEASE(conn);
