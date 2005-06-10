@@ -54,7 +54,7 @@ template<class Backend>
 void itertest_check(WvOnDiskHash<int, int, Backend> &hash, bool *seen,
 		    size_t sizeof_seen, size_t &count)
 {
-    WvOnDiskHash<int, int, Backend>::Iter i(hash);
+    typename WvOnDiskHash<int, int, Backend>::Iter i(hash);
 
     memset(seen, 0, sizeof(seen));
     count = 0;
@@ -89,10 +89,10 @@ void itertest_check(WvOnDiskHash<int, int, Backend> &hash, bool *seen,
 
 
 template<class Backend>
-void itertest_new()
+void itertest()
 {
     WvOnDiskHash<int, int, Backend> hash;
-    WvOnDiskHash<int, int, Backend>::Iter i(hash);
+    typename WvOnDiskHash<int, int, Backend>::Iter i(hash);
     bool seen[3];
     size_t count;
 
@@ -149,13 +149,13 @@ void itertest_new()
 // FIXME: there's an evil leak, bug 7300
 WVTEST_MAIN("WvOnDiskHash with WvQdbmHash backend")
 {
-    itertest_new<WvQdbmHash>();
+    itertest<WvQdbmHash>();
 }
 #endif
 
 
 WVTEST_MAIN("WvOnDiskHash with WvBdbHash backend")
 {
-    itertest_new<WvBdbHash>();
+    itertest<WvBdbHash>();
 }
 

@@ -106,6 +106,14 @@ void UniConfDaemonConn::execute()
 		do_haschildren(arg1);
 	    break;
 	    
+	case UniClientConn::REQ_COMMIT:
+            do_commit();
+	    break;
+	    
+	case UniClientConn::REQ_REFRESH:
+            do_refresh();
+	    break;
+	    
 	case UniClientConn::REQ_QUIT:
 	    do_quit();
 	    break;
@@ -207,6 +215,22 @@ void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
     bool haschild = root[key].haschildren();
     writecmd(REPLY_CHILD,
 	     spacecat(wvtcl_escape(key), haschild ? "TRUE" : "FALSE"));
+}
+
+
+void UniConfDaemonConn::do_commit()
+{
+    root.commit();
+    writeok();
+}
+
+
+void UniConfDaemonConn::do_refresh()
+{
+    if (root.refresh())
+        writeok();
+    else
+        writefail();
 }
 
 

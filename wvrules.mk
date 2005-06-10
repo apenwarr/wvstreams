@@ -267,6 +267,7 @@ define wvlink_ar
 	done; \
 	$(AR) s $1
 endef
+%.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
