@@ -35,7 +35,7 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
     : log("UniCache", WvLog::Debug1), inner(_inner)
 {
     if (inner)
-        inner->setcallback(UniConfGenCallback(this,
+        inner->add_callback(this, UniConfGenCallback(this,
             &UniCacheGen::deltacallback), NULL);
     refreshed_once = false;
 }
@@ -43,6 +43,7 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
 
 UniCacheGen::~UniCacheGen()
 {
+    inner->del_callback(this);
     WVRELEASE(inner);
 }
 

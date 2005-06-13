@@ -159,7 +159,7 @@ bool WvBackslashDecoder::_encode(WvBuf &inbuf, WvBuf &outbuf,
                     {
                         // line continuation sequence
                         tmpbuf.unalloc(1);
-                        tmpbuf.putch(' ');
+                        tmpbuf.putch('\n');
                         state = Initial;
                     }
                     else

@@ -200,12 +200,18 @@ WVTEST_MAIN("getword")
 }
 
 
-static void do_word(WvBuf &buf, WvStringParm word, size_t expect)
+static void _do_word(WvBuf &buf, WvStringParm word, size_t expect)
 {
-    buf.putstr("%s\n", word);
     WvString new_word = wvtcl_getword(buf, "\r\n");
     WVPASSEQ(buf.used(), expect);
     WVPASSEQ(word, new_word);
+}
+
+
+static void do_word(WvBuf &buf, WvStringParm word, size_t expect)
+{
+    buf.putstr("%s\n", word);
+    _do_word(buf, word, expect);
 }
 
 
@@ -227,6 +233,7 @@ WVTEST_MAIN("getword with dynamic buffer")
     do_word(buf, "Enable = 0", 1);
 }
 
+
 WVTEST_MAIN("wvtcl_encode specific failures")
 {
     WvStringList words;
@@ -240,3 +247,39 @@ WVTEST_MAIN("wvtcl_encode specific failures")
     words.append("{{2304 5853099} Fontmap} 1098721283 REG");
     wvout->print(wvtcl_encode(words));
 }
+
+
+WVTEST_MAIN("mismatched braces")
+{
+    WvDynBuf buf;
+    buf.putstr("close}\n{brace}\n{me\n");
+    _do_word(buf, "close}", 13); // first closebrace isn't "special"
+    _do_word(buf, "brace", 5);   // second word is in braces
+    _do_word(buf, WvString(), 5); // last word is incomplete
+}
+
+
+WVTEST_MAIN("backslashed braces")
+{
+    WvString line("VAL a b\\}\\\n\\{c\\}\\ =\\ d\\\ne\\ =\\ f\\{");
+    WvString encoded("%s\n", line);
+    WvString word1("VAL"), word2("a"), word3("b}\n{c} = d\ne = f{");
+    
+    WvDynBuf buf;
+    buf.putstr(encoded);
+    WVPASSEQ(buf.used(), 34);
+    
+    WvString oline = wvtcl_getword(buf, "\r\n", false);
+    WVPASSEQ(line, oline);
+    WVPASSEQ(buf.used(), 1); // trailing newline
+    
+    buf.zap();
+    buf.putstr(line);
+    WvString w1 = wvtcl_getword(buf, " ");
+    WvString w2 = wvtcl_getword(buf, " ");
+    WvString w3 = wvtcl_getword(buf, " ");
+    WVPASSEQ(w1, word1);
+    WVPASSEQ(w2, word2);
+    WVPASSEQ(w3, word3);
+}
+

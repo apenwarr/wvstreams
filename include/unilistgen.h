@@ -31,10 +31,9 @@ class UniListGen : public UniConfGen
 {
 public:
     UniListGen(UniConfGenList *_l);
-    virtual UniListGen::~UniListGen() { delete l; }
+    virtual ~UniListGen();
 
     UniConfGenList *l;
-    UniConfGenList::Iter i;
 
     /***** Overridden members *****/
 

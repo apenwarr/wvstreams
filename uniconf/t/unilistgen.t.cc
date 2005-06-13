@@ -23,11 +23,13 @@ WVTEST_MAIN("Testing for use with weaver")
     UniTempGen *tmp1 = new UniTempGen();
     UniTempGen *tmp2 = new UniTempGen();
     UniConfGenList *l = new UniConfGenList();
-    l->append(tmp1, false);
-    l->append(tmp2, false);
+    l->append(tmp1, true);
+    l->append(tmp2, true);
     UniListGen *unigen = new UniListGen(l);
-    
     UniConfRoot uniconf(unigen);
+    
+    tmp1->addRef();
+    tmp2->addRef();
     UniConfRoot front(tmp1);
     UniConfRoot back(tmp2);
 

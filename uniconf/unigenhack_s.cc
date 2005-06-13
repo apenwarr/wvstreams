@@ -15,7 +15,6 @@ WV_LINK_TO(UniDefGen);
 WV_LINK_TO(UniClientGen);
 WV_LINK_TO(UniAutoGen);
 WV_LINK_TO(UniCacheGen);
-WV_LINK_TO(UniMountTreeGen);
 WV_LINK_TO(UniNullGen);
 WV_LINK_TO(UniPermGen);
 WV_LINK_TO(UniReadOnlyGen);
