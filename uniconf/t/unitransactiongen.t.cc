@@ -578,7 +578,7 @@ WVTEST_MAIN("double notifications with daemon")
 	printf("have ncount = %d\n", ncount);
 
 	// FIXME This is the problem
-	//WVPASS(ncount == 1);
+	WVPASS(ncount == 1);
 	
 	delete foo;
 
