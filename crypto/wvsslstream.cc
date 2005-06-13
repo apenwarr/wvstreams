@@ -343,7 +343,7 @@ size_t WvSSLStream::uwrite(const void *buf, size_t len)
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-                    debug(">> SSL_write() needs to wait for writable.\n");
+                    // debug(">> SSL_write() needs to wait for writable.\n");
                     break; // wait for later
                     
 	        case SSL_ERROR_SYSCALL:
