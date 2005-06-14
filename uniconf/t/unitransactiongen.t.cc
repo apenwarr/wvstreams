@@ -1,5 +1,6 @@
 #include "unitransactiongen.h"
 #include "uniconf.h"
+#include "uniconftransaction.h"
 #include "unitempgen.h"
 #include "uniunwrapgen.h"
 #include "uniconfroot.h"
@@ -594,4 +595,40 @@ WVTEST_MAIN("double notifications with daemon")
     }
 
     unlink(sockname);
+}
+
+WVTEST_MAIN("transaction wrapper")
+{
+    UniConfRoot uni("temp:");
+
+    UniConfTransaction trans(uni);
+
+    uni.xset("a/b/c", "foo");
+    uni.xset("a/c/d", "bar");
+    uni.xset("b/b", "baz");
+    WVPASSEQ(uni.xget("a/b/c"), "foo");
+    WVPASSEQ(uni.xget("a/c/d"), "bar");
+    WVPASSEQ(uni.xget("b/b"), "baz");
+    WVPASSEQ(trans.xget("a/b/c"), "foo");
+    WVPASSEQ(trans.xget("a/c/d"), "bar");
+    WVPASSEQ(trans.xget("b/b"), "baz");
+
+    trans.xset("a/b/c", "baz");
+    trans.xset("b/b", "foo");
+    WVPASSEQ(uni.xget("a/b/c"), "foo");
+    WVPASSEQ(uni.xget("b/b"), "baz");
+    WVPASSEQ(trans.xget("a/b/c"), "baz");
+    WVPASSEQ(trans.xget("b/b"), "foo");
+
+    trans.refresh();
+    WVPASSEQ(trans.xget("a/b/c"), "foo");
+    WVPASSEQ(trans.xget("b/b"), "baz");
+
+    trans.xset("a/b/c", "baz");
+    trans.xset("b/b", "foo");
+    trans.commit();
+    WVPASSEQ(uni.xget("a/b/c"), "baz");
+    WVPASSEQ(uni.xget("b/b"), "foo");
+    WVPASSEQ(trans.xget("a/b/c"), "baz");
+    WVPASSEQ(trans.xget("b/b"), "foo");
 }
