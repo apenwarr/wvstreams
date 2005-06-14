@@ -1,6 +1,6 @@
 #include "unitransactiongen.h"
 #include "uniconf.h"
-#include "uniconftransaction.h"
+#include "unitransaction.h"
 #include "unitempgen.h"
 #include "uniunwrapgen.h"
 #include "uniconfroot.h"
@@ -601,7 +601,7 @@ WVTEST_MAIN("transaction wrapper")
 {
     UniConfRoot uni("temp:");
 
-    UniConfTransaction trans(uni);
+    UniTransaction trans(uni);
 
     uni.xset("a/b/c", "foo");
     uni.xset("a/c/d", "bar");
