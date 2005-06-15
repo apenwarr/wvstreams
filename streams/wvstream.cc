@@ -254,6 +254,8 @@ size_t WvStream::write(WvBuf &inbuf, size_t count)
 
 size_t WvStream::read(void *buf, size_t count)
 {
+    assert(!count || buf);
+    
     size_t bufu, i;
     unsigned char *newbuf;
 
@@ -261,6 +263,7 @@ size_t WvStream::read(void *buf, size_t count)
     if (bufu < queue_min)
     {
 	newbuf = inbuf.alloc(queue_min - bufu);
+	assert(newbuf);
 	i = uread(newbuf, queue_min - bufu);
 	inbuf.unalloc(queue_min - bufu - i);
 	
@@ -293,6 +296,7 @@ size_t WvStream::read(void *buf, size_t count)
 
 size_t WvStream::write(const void *buf, size_t count)
 {
+    assert(!count || buf);
     if (!isok() || !buf || !count || stop_write) return 0;
     
     size_t wrote = 0;
@@ -407,6 +411,7 @@ char *WvStream::blocking_getline(time_t wait_msec, char separator,
         {
             // read a few bytes
             unsigned char *buf = inbuf.alloc(readahead);
+	    assert(buf);
             size_t len = uread(buf, readahead);
             inbuf.unalloc(readahead - len);
             hasdata = len > 0; // enough?
