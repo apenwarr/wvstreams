@@ -1,4 +1,3 @@
-#include "wvtest.h"
 #include "wvfile.h"
 #include "wvfileutils.h"
 #include "uniconfroot.h"
@@ -6,6 +5,8 @@
 #include <sys/stat.h>
 #endif
 #include "uniwatch.h"
+#include "wvsystem.h"
+#include "wvtest.h"
 
 
 // Returns the filename where the content was written.  This file must be
@@ -223,3 +224,65 @@ WVTEST_MAIN("writing")
 }
 
 
+static ino_t inode_of(const char *fname)
+{
+    struct stat st;
+    if (stat(fname, &st) != 0)
+	return 0;
+    else
+	return st.st_ino;
+}
+
+
+static off_t size_of(const char *fname)
+{
+    struct stat st;
+    if (stat(fname, &st) != 0)
+	return 0;
+    else
+	return st.st_size;
+}
+
+
+WVTEST_MAIN("atomic updates")
+{
+    WvString dirname("atomic-update-dir.tmp"), fname("%s/test.ini", dirname);
+    chmod(dirname, 0700);
+    WvSystem("rm", "-rf", dirname);
+    WVPASS(!mkdir(dirname, 0700)); // honours umask
+    WVPASS(!chmod(dirname, 0700)); // doesn't include umask
+    
+    // the directory is writable, so we can safely do atomic file replacement.
+    // That means the file inode number will be *different* after doing
+    // a second commit().
+    UniConfRoot ini(WvString("ini:%s", fname));
+    ini.xset("useless key", "useless value");
+    ini.commit();
+    ino_t inode1 = inode_of(fname);
+    off_t size1 = size_of(fname);
+    WVFAILEQ(inode1, 0);
+    WVFAILEQ(size1, 0);
+    ini.xset("1", "2");
+    ini.commit();
+    ino_t inode2 = inode_of(fname);
+    off_t size2 = size_of(fname);
+    WVFAILEQ(inode2, 0);
+    WVFAILEQ(inode1, inode2);
+    WVPASS(size2 > size1);
+    
+    // now let's make the directory non-writable.  The inifile inside the
+    // directory is still writable, which means we can update it, but not
+    // atomically.  Therefore its inode number *won't* change.
+    WVPASS(!chmod(dirname, 0500));
+    ini.xset("3", "4");
+    ini.commit();
+    ino_t inode3 = inode_of(fname);
+    off_t size3 = size_of(fname);
+    WVFAILEQ(inode3, 0);
+    WVPASSEQ(inode2, inode3);
+    WVPASS(size3 > size2);
+    
+    // clean up
+    chmod(dirname, 0700);
+    WvSystem("rm", "-rf", dirname);
+}

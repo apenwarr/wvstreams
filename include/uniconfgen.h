@@ -46,9 +46,13 @@ public:
     
     /***** Notification API *****/
     
-    /** Sets the callback for change notification. */
-    virtual void setcallback(const UniConfGenCallback &callback,
-			     void *userdata) = 0;
+    /** Adds a callback for change notification. */
+    virtual void add_callback(void *cookie,
+			      const UniConfGenCallback &callback,
+			      void *userdata) = 0;
+    
+    /** Removes a callback for change notification. */
+    virtual void del_callback(void *cookie) = 0;
     
 
     /***** Status API *****/
@@ -198,8 +202,17 @@ class UniConfGen : public IUniConfGen
     // These fields are deliberately hidden to encourage use of the
     // special notification members
 
-    UniConfGenCallback cb; //!< gets called whenever a key changes its value.
-    void *cbdata;
+    struct CbInfo
+    {
+	void *cookie;
+	UniConfGenCallback cb;
+	void *userdata;
+	
+	CbInfo(void *_cookie, const UniConfGenCallback &_cb, void *_userdata)
+	    : cb(_cb)
+	    { cookie = _cookie; userdata = _userdata; }
+    };
+    WvList<CbInfo> cblist;
     int hold_nesting;
     UniConfPairList deltas;
     
@@ -214,10 +227,13 @@ public:
     /***** Notification API *****/
     
     /**
-     * Sets the callback for change notification.
-     * Must not be reimplemented by subclasses.
+     * Adds a callback for change notification.
+     * Must *not* be reimplemented by subclasses of UniConfGen.
      */
-    void setcallback(const UniConfGenCallback &callback, void *userdata);
+    virtual void add_callback(void *cookie, 
+			      const UniConfGenCallback &callback,
+			      void *userdata);
+    virtual void del_callback(void *cookie);
     
     /**
      * Immediately sends notification that a key has possibly changed.

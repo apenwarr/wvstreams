@@ -55,6 +55,7 @@ protected:
 public:
     UniReplicateGen();
     UniReplicateGen(const IUniConfGenList &_gens, bool autofree = true);
+    virtual ~UniReplicateGen();
     
     void prepend(IUniConfGen *gen, bool autofree = true);
     void append(IUniConfGen *gen, bool autofree = true);

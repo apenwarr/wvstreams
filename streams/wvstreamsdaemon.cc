@@ -18,9 +18,9 @@ WvStreamsDaemon::WvStreamsDaemon(WvStringParm name, WvStringParm version,
     : WvDaemon(name, version,
                 WvDaemonCallback(this, &WvStreamsDaemon::start_cb),
                 WvDaemonCallback(this, &WvStreamsDaemon::run_cb),
-                WvDaemonCallback(this, &WvStreamsDaemon::stop_cb)),
-                callback(cb), userdata(ud)
+                WvDaemonCallback(this, &WvStreamsDaemon::stop_cb))
 {
+    setcallback(cb, ud);
 #ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
 #endif
@@ -108,5 +108,11 @@ void WvStreamsDaemon::die_close_cb(const char *id, WvStream &)
                 id ? id : "Stream");
         die();
     }
+}
+
+void WvStreamsDaemon::setcallback(WvStreamsDaemonCallback cb, void *ud)
+{
+    callback = cb;
+    userdata = ud;
 }
 
