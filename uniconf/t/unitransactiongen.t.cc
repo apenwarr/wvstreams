@@ -632,3 +632,41 @@ WVTEST_MAIN("transaction wrapper")
     WVPASSEQ(trans.xget("a/b/c"), "baz");
     WVPASSEQ(trans.xget("b/b"), "foo");
 }
+
+WVTEST_MAIN("bachelor generator")
+{
+    UniConfRoot a("transaction:temp:");
+    UniTransaction b(a);
+
+    a.xset("a/b", "foo");
+    WVPASSEQ(a.xget("a/b"), "foo");
+    WVPASSEQ(b.xget("a/b"), "foo");
+    a.refresh();
+    WVPASSEQ(a.xget("a/b"), WvString::null);
+    WVPASSEQ(b.xget("a/b"), WvString::null);
+
+    a.xset("a/b", "foo");
+    WVPASSEQ(a.xget("a/b"), "foo");
+    WVPASSEQ(b.xget("a/b"), "foo");
+    a.commit();
+    WVPASSEQ(a.xget("a/b"), "foo");
+    WVPASSEQ(b.xget("a/b"), "foo");
+
+    a.xset("a/b", "bar");
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "bar");
+
+    b.xset("a/b", "baz");
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "baz");
+    b.refresh();
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "bar");
+
+    b.xset("a/b", "baz");
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "baz");
+    b.commit();
+    WVPASSEQ(a.xget("a/b"), "baz");
+    WVPASSEQ(b.xget("a/b"), "baz");
+}

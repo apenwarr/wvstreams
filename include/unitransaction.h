@@ -10,6 +10,7 @@
 #ifndef _UNITRANSACTION_H
 #define _UNITRANSACTION_H
 
+#include "unibachelorgen.h"
 #include "uniconfroot.h"
 #include "unitransactiongen.h"
 #include "uniunwrapgen.h"
@@ -22,10 +23,12 @@ class UniTransaction : public UniConfRoot
 
 public:
     /**
-     * Wraps an existing UniConf tree with 
+     * Wraps an existing UniConf tree with a transaction generator.
      */
-    UniTransaction(const UniConf &base, bool refresh = true)
-	: UniConfRoot(new UniTransactionGen(new UniUnwrapGen(base)), refresh)
+    UniTransaction(const UniConf &base)
+	: UniConfRoot(new UniTransactionGen(
+			  new UniBachelorGen(
+			      new UniUnwrapGen(base))), false)
     {
     }
 };
