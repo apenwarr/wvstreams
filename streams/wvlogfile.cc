@@ -171,10 +171,16 @@ void WvLogFile::start_log()
     pid_t forky = wvfork();
     if (!forky)
     {
-	// Child will Look for old logs and purge them
-	trim_old_logs(filename, base, keep_for);
+        // ForkTwiceSoTheStupidThingWorksRight
+        if (!wvfork())
+        {
+            // Child will Look for old logs and purge them
+            trim_old_logs(filename, base, keep_for);
+            _exit(0);
+        }
 	_exit(0);
     }
+    waitpid(forky, NULL, 0);
 #else
     // just do it in the foreground on Windows
     trim_old_logs(filename, base, keep_for);
