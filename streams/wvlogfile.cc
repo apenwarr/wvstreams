@@ -46,7 +46,7 @@ void WvLogFileBase::_make_prefix()
     char timestr[30];
     strftime(&timestr[0], 30, "%b %d %T %Z", tmstamp);
 
-    prefix = WvString("%s: %s<%s>: ", timestr, appname(last_source),
+    prefix = WvString("%s: %s<%s>: ", timestr, last_source_appname,
         loglevels[last_level]);
     prelen = prefix.len();
 }

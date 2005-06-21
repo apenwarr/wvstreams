@@ -28,7 +28,8 @@
 class WvLogRcv : public WvLogRcvBase
 {
 protected:  
-    const WvLog *last_source;
+    const void *last_source;
+    WvString last_source_appname;
     WvLog::LogLevel max_level, last_level;
     bool at_newline;
     WvString prefix;
