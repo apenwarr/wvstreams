@@ -259,10 +259,10 @@ void WvPam::getgroups(WvStringList &l) const
         {
             for (char **i = gr->gr_mem; *i != NULL; i++)
             {
-                if (strcmp(*i, d->user))
-                {                       
+                if (strcmp(*i, d->user) == 0)
+                {
                     d->groups.append(new WvString(gr->gr_name), true);
-                    break;                                            
+                    break;
                 }
             }
         }    

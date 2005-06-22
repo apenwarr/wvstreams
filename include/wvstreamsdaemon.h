@@ -105,5 +105,8 @@ public:
     //! added *after* the WvStreamsDaemonCallback was executed will be closed
     //! if the daemon restarts; otherwise, they will persist after the restart.
     void close_existing_connections_on_restart();
+
+    //! Change the callback function and userdata
+    void setcallback(WvStreamsDaemonCallback cb, void *ud = NULL);
 };
 #endif // __WVSTREAMSDAEMON_H

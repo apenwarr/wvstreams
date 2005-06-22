@@ -180,6 +180,7 @@ test: runconfigure all tests wvtestmain
 	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
+	$(call wild_clean,$(wildcard valgrind.log.pid*))
 	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
 ifeq ("$(TESTNAME)", "unitest")
 	cd uniconf/tests && DAEMON=0 ./unitest.sh

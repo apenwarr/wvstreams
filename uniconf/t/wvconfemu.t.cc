@@ -339,6 +339,16 @@ WVTEST_MAIN("wvconfemu empty section")
                 ++num_items;
             }
         }
-        WVPASS(num_items == 1);
+
+        switch (pass)
+        {
+            case 0:
+                WVPASS(num_items == 1);
+                break;
+
+            case 1:
+                WVPASS(num_items == 0);
+                break;
+        }
     }
 }

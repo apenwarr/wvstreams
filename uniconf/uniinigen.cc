@@ -280,7 +280,7 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
     if (file.geterr())
     {
 	log(WvLog::Warning, "Can't write '%s': %s\n",
-	    filename, strerror(errno));
+	    tmp_filename, strerror(errno));
 	unlink(tmp_filename);
 	file.close();
 	return false;
@@ -492,6 +492,10 @@ static void save_sect(WvStream &file, UniConfValueTree &toplevel,
 
 void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
 {
+    // parent might be NULL, so it really should be a pointer, not
+    // a reference.  Oh well...
+    if (!&parent) return;
+    
     if (parent.fullkey() == root->fullkey())
     {
 	// the root itself is a special case, since it's not in a section,

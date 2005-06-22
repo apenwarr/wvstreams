@@ -27,7 +27,7 @@ protected:
     UniConfKeyTable d;
     
 public:
-    IterIter(UniConfGenList::Iter &geniter, const UniConfKey &key);
+    IterIter(UniListGen *gen, const UniConfKey &key);
     virtual ~IterIter() { delete i; }
     
     virtual void rewind();
@@ -75,29 +75,46 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
  
 static WvMoniker<IUniConfGen> reg("list", creator);
 
-UniListGen::UniListGen(UniConfGenList *_l) : l(_l), i(*_l) 
+UniListGen::UniListGen(UniConfGenList *_l) : l(_l)
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next(); )
-        i->setcallback(UniConfGenCallback(this, &UniListGen::gencallback), cbdata);
+        i->add_callback(this, 
+		UniConfGenCallback(this, &UniListGen::gencallback), NULL);
 }
-    
+
+
+UniListGen::~UniListGen()
+{
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+        i->del_callback(this);
+    delete l;
+}
+
+
 void UniListGen::commit()
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
         i().commit();
 }
+
 
 bool UniListGen::refresh()
 {
     bool result = true;
 
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
         result = i().refresh() && result;
     return result;
 }
 
+
 WvString UniListGen::get(const UniConfKey &key)
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
         if (i().exists(key))
@@ -112,13 +129,14 @@ WvString UniListGen::get(const UniConfKey &key)
 //       (and therefore succeeds)
 void UniListGen::set(const UniConfKey &key, WvStringParm value)
 {
-    i.rewind();
-    i.next();
-    i().set(key, value);
+    if (!l->isempty())
+	l->first()->set(key, value);
 }
+
 
 bool UniListGen::exists(const UniConfKey &key)
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
         if (i().exists(key))
@@ -127,8 +145,10 @@ bool UniListGen::exists(const UniConfKey &key)
     return false;
 }
 
+
 bool UniListGen::haschildren(const UniConfKey &key)
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
         if (i().haschildren(key))
@@ -137,8 +157,10 @@ bool UniListGen::haschildren(const UniConfKey &key)
     return false;
 }
 
+
 bool UniListGen::isok()
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
         if (!i().isok())
@@ -147,22 +169,24 @@ bool UniListGen::isok()
     return true;
 }
 
+
 void UniListGen::gencallback(const UniConfKey &key, WvStringParm value, void *userdata)
 {
     delta(key, get(key));
 }
 
+
 UniConfGen::Iter *UniListGen::iterator(const UniConfKey &key)
 {
-    return new IterIter(i, key);
+    return new IterIter(this, key);
 }
 
 
 /***** UniListGen::IterIter *****/
 
-UniListGen::IterIter::IterIter(UniConfGenList::Iter &geniter,
-    const UniConfKey &key)
+UniListGen::IterIter::IterIter(UniListGen *gen, const UniConfKey &key)
 {
+    UniConfGenList::Iter geniter(*gen->l);
     for (geniter.rewind(); geniter.next(); )
     {
 	Iter *it = geniter->iterator(key);
@@ -172,6 +196,7 @@ UniListGen::IterIter::IterIter(UniConfGenList::Iter &geniter,
 
     i = new IterList::Iter(l);
 }
+
 
 void UniListGen::IterIter::rewind()
 {
