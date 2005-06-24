@@ -112,6 +112,21 @@ void wvcrash(int sig)
     signal(sig, SIG_DFL);
     wr(2, "\n\nwvcrash: crashing!\n");
     
+    // close some fds, just in case the reason we're crashing is fd
+    // exhaustion!  Otherwise we won't be able to create our pipe to a
+    // subprocess.  Probably only closing two fds is possible, but the
+    // subproc could get confused if all the fds are non-close-on-exec and
+    // it needs to open a few files.
+    // 
+    // Don't close fd 0, 1, or 2, however, since those might be useful to
+    // the child wvcrash script.  Also, let's skip 3 and 4, in case someone
+    // uses them for something.  But don't close fd numbers that are *too*
+    // big; if someone ulimits the number of fds we can use, and *that's*
+    // why we're crashing, there's no guarantee that high fd numbers are in
+    // use even if we've run out.
+    for (int count = 5; count < 15; count++)
+	close(count);
+    
     if (pipe(fds))
 	wvcrash_real(sig, 2); // just use stderr instead
     else
