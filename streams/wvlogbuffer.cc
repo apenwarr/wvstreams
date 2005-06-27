@@ -56,7 +56,7 @@ void WvLogBuffer::handle_msg(Msg *lastmsg)
     msgs.append(lastmsg, true);
         
     // Check if we already have any messages of this source/level
-    WvString type(WvString("%s:%s", last_source->app, last_level));
+    WvString type(WvString("%s:%s", last_source_appname, last_level));
     MsgCounter* msgcounter = counters[type];
     // If not create a new tracking list for it
     if (!msgcounter)
@@ -77,7 +77,7 @@ void WvLogBuffer::_end_line()
     if (last_level < WvLog::NUM_LOGLEVELS)
     {
         current.put('\0'); // terminating NULL
-        Msg *lastmsg = new Msg(last_level, last_source->app,
+        Msg *lastmsg = new Msg(last_level, last_source_appname,
             trim_string((char *)current.get(current.used())));
         
 	handle_msg(lastmsg);

@@ -1,3 +1,4 @@
 .*.d
 *test
 bdbtest2
+crashtest-nofd
