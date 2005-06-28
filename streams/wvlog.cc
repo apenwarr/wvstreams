@@ -193,7 +193,7 @@ WvLogRcv::~WvLogRcv()
 void WvLogRcv::_make_prefix()
 {
     prefix = WvString("%s<%s>: ",
-        appname(last_source), loglevels[last_level]);
+        last_source, loglevels[last_level]);
     prelen = prefix.len();
 }
 
