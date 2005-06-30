@@ -1,17 +1,19 @@
-#include "unitransactiongen.h"
+#include "uniclientgen.h"
+#include "uniconfdaemon.h"
 #include "uniconf.h"
-#include "unitransaction.h"
-#include "unitempgen.h"
-#include "uniunwrapgen.h"
 #include "uniconfroot.h"
+#include "unilistgen.h"
+#include "unitempgen.h"
+#include "unitransactiongen.h"
+#include "unitransaction.h"
+#include "uniunwrapgen.h"
 #include "uniwatch.h"
+
+#include "wvfile.h"
+#include "wvfork.h"
 #include "wvhashtable.h"
 #include "wvtest.h"
-#include "uniconfdaemon.h"
-#include "uniclientgen.h"
-#include "wvfork.h"
 #include "wvunixsocket.h"
-#include "uniwatch.h"
 
 #include <signal.h>
 #include <sys/types.h>
@@ -670,3 +672,51 @@ WVTEST_MAIN("bachelor generator")
     WVPASSEQ(a.xget("a/b"), "baz");
     WVPASSEQ(b.xget("a/b"), "baz");
 }
+
+
+#if 0 // BUGZID: 13167
+static int callback_count;
+
+static void callback(const UniConf keyconf, const UniConfKey key)
+{
+    printf("Handling callback with fullkey '%s', value '%s'\n",
+	   keyconf[key].fullkey().printable().cstr(),
+	   keyconf[key].getme().cstr());
+    ++callback_count;
+}
+
+
+WVTEST_MAIN("transaction and list interaction")
+{
+    ::unlink("tmp.ini");
+    WvFile file("tmp.ini", O_WRONLY|O_TRUNC|O_CREAT);
+    file.write("[a]\n"
+	       "b = c\n");
+    WVPASS(file.isok());
+
+    UniTempGen *ini = new UniTempGen();
+    UniTempGen *def = new UniTempGen();
+    UniConfGenList *l = new UniConfGenList();
+    l->append(ini, true);
+    l->append(def, true);
+    UniListGen *cfg = new UniListGen(l);
+
+    UniConfRoot uniconf;
+    uniconf["ini"].mountgen(ini);
+    uniconf["default"].mountgen(def);
+    uniconf["cfg"].mountgen(cfg);
+
+    UniTransaction uni(uniconf);
+
+    callback_count = 0;
+    UniWatchList watches;
+    watches.add(uni["ini/a/b"], &callback);
+    watches.add(uni["cfg/a/b"], &callback);
+
+    (void)UniConfRoot("ini:tmp.ini").copy(uni["/ini"], true);
+
+    WVPASSEQ(uni.xget("/ini/a/b"), "c");
+    WVPASSEQ(uni.xget("/cfg/a/b"), "c");
+    WVPASSEQ(callback_count, 2);
+}
+#endif
