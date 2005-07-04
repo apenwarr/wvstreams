@@ -5,6 +5,7 @@
 #include "uniinigen.h"
 #include "unilistgen.h"
 #include "unitempgen.h"
+#include "unireadonlygen.h"
 
 WVTEST_MAIN("Testing refresh()")
 {
@@ -24,7 +25,7 @@ WVTEST_MAIN("Testing for use with weaver")
     UniTempGen *tmp2 = new UniTempGen();
     UniConfGenList *l = new UniConfGenList();
     l->append(tmp1, true);
-    l->append(tmp2, true);
+    l->append(new UniReadOnlyGen(tmp2), true);
     UniListGen *unigen = new UniListGen(l);
     UniConfRoot uniconf(unigen);
     

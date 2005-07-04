@@ -525,7 +525,7 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 //	fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
 //		this, getrfd(), getwfd(), outbuf.used());
 	
-	size_t attempt = outbuf.used();
+	size_t attempt = outbuf.optgettable();
 	size_t real = uwrite(outbuf.get(attempt), attempt);
 	
 	// WARNING: uwrite() may have messed up our outbuf!

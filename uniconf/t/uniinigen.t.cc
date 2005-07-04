@@ -107,6 +107,17 @@ WVTEST_MAIN("parsing3")
 }
 
 
+WVTEST_MAIN("parsing4")
+{
+    // first line should be dropped to try to recover, since the entire
+    // file is invalid tcl-encoding.
+    WvString ininame = inigen("{ broken\n/ = boo\n");
+    UniConfRoot cfg(WvString("ini:%s", ininame));
+    WVPASSEQ(cfg.getme(), "boo");
+    WVFAIL(cfg.haschildren());
+}
+
+
 WVTEST_MAIN("Setting and getting (bug 6090)")
 {
     WvString ininame = inigen("");

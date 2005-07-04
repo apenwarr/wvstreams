@@ -172,6 +172,8 @@ void UniConfDaemonConn::do_remove(const UniConfKey &key)
 
 void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 {
+    static int niceness = 0;
+    
     UniConf cfg(root[key]);
     if (cfg.exists())
     {
@@ -186,7 +188,11 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 		// entire daemon while fulfilling it; give up our timeslice
 		// after each entry.
 		if (!isok()) break;
-		continue_select(0);
+		if (++niceness > 100)
+		{
+		    niceness = 0;
+		    continue_select(0);
+		}
 	    }
 	}
 	else

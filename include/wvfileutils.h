@@ -14,14 +14,20 @@
 
 
 /**
- * Create a directory and any subdirectories required along the way. (Equivalent
- * to mkdir -p).
- *
+ * Create a directory and any subdirectories required along the way.
+ * (Equivalent to mkdir -p).
+ * 
  * The default permissions on created directories is 0700, but this can be
  * changed at will.
  */
 bool mkdirp(WvStringParm _dir, int create_mode = 0700);
 
+/**
+ * Safely remove an entire filesystem directory hierarchy.
+ * (Equivalent to rm -rf).  Just like "rm -rf", it may or may not successfully
+ * delete everything.  It's your job to check that afterwards.
+ */
+void rm_rf(WvStringParm _dir);
 
 /**
  * Copy from src to dst preserving permissions and time stamp. This does not

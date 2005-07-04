@@ -3,4 +3,4 @@
 uniconf/tests: $(patsubst %.cc,%,$(wildcard uniconf/tests/*.cc))
 
 %: %.in
-	@sed -e 's/#VERSION#/$(RELEASE)/g' < $< > $@
+	@sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
