@@ -431,9 +431,9 @@ dist: dist-hook ChangeLog
 	@echo '--> Created tarball in ../build/$(PKGDIR).tar.gz.'
 
 ChangeLog: FORCE
-	@echo '--> Generating ChangeLog from CVS...'
+	@echo '--> Generating ChangeLog from Subversion...'
 	@rm -f ChangeLog ChangeLog.bak
-	@cvs2cl --utc
+	@svn log --xml --verbose | xsltproc svn2cl.xsl - > ChangeLog
 
 #
 # Make 'tags' file using the ctags program - useful for editing
