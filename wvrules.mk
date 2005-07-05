@@ -134,9 +134,12 @@ xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
 default: all
 
 # default "test" rule does nothing...
-.PHONY: test runtests
+.PHONY: test runtests clean-valgrind
 test:
-runtests:
+runtests: clean-valgrind
+
+clean-valgrind:
+	@rm -f valgrind.log.pid*
 
 %/test:
 	$(MAKE) -C $(dir $@) test
@@ -395,6 +398,7 @@ _wvclean:
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
+	@rm -f valgrind.log.pid*
 	@rm -f semantic.cache tags
 	@rm -rf debian/tmp
 
