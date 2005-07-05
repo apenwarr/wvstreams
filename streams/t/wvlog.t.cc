@@ -1,6 +1,8 @@
 /* FIXME: horribly incomplete */
 #include "wvtest.h"
 #include "wvlog.h"
+#include "wvlogbuffer.h"
+
 
 WVTEST_MAIN("extremely basic test")
 {
@@ -12,35 +14,48 @@ WVTEST_MAIN("extremely basic test")
 }
 
 
-WVTEST_MAIN("log copying 1")
+WVTEST_MAIN("line-breaking logic")
 {
-    WvLog *l1 = new WvLog("foo");
-    WVPASS(l1->isok());
-    WvLog *l2 = new WvLog("blah");
-    WVPASS(l2->isok());
-    *l2 = *l1;
-    WVPASS(l2->isok());
-    l1->release();
-    WVPASS(l2->isok());
-    WvLog *l3 = new WvLog("weasels");
-    WVPASS(l3->isok());
-    *l3 = *l2;
-    WVPASS(l3->isok());
-    l2->release();
-    l3->print("yak!");
-    l3->release();
+    WvLogBuffer logbuffer(10);
+    WvLog log1("log", WvLog::Info);
+    WvLog log2(log1.split(WvLog::Debug));
+    WvLog log3("other log", WvLog::Info);
+
+    log1("first part");
+    log2("second part");
+    log1("third part");
+    log3("fourth part");
+    log2("Message: ");
+    log1(WvLog::Debug, "this is the message\n");
+
+    WvLogBuffer::MsgList::Iter i(logbuffer.messages());
+    i.rewind();
+
+    WVPASS(i.next());
+    WVPASSEQ(i->level, WvLog::Info);
+    WVPASSEQ(i->source, "log");
+    WVPASSEQ(i->message, "first part");
+
+    WVPASS(i.next());
+    WVPASSEQ(i->level, WvLog::Debug);
+    WVPASSEQ(i->source, "log");
+    WVPASSEQ(i->message, "second part");
+
+    WVPASS(i.next());
+    WVPASSEQ(i->level, WvLog::Info);
+    WVPASSEQ(i->source, "log");
+    WVPASSEQ(i->message, "third part");
+
+    WVPASS(i.next());
+    WVPASSEQ(i->level, WvLog::Info);
+    WVPASSEQ(i->source, "other log");
+    WVPASSEQ(i->message, "fourth part");
+
+    WVPASS(i.next());
+    WVPASSEQ(i->level, WvLog::Debug);
+    WVPASSEQ(i->source, "log");
+    WVPASSEQ(i->message, "Message: this is the message");
+
+    WVFAIL(i.next());
 }
 
-WVTEST_MAIN("log copying 2")
-{
-    WvLog *l1 = new WvLog("foo");
-    WVPASS(l1->isok());
-    WvLog *l2 = new WvLog(*l1);
-    WVPASS(l2->isok());
-    l1->release();
-    WvLog *l3 = new WvLog(*l2);
-    l3->print("yak!");
-    l2->release();
-    l3->print("yak2!");
-    l3->release();
-}

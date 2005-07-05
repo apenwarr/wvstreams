@@ -1,11 +1,23 @@
-#include "unitransactiongen.h"
+#include "uniclientgen.h"
+#include "uniconfdaemon.h"
 #include "uniconf.h"
-#include "unitempgen.h"
-#include "uniunwrapgen.h"
 #include "uniconfroot.h"
+#include "unilistgen.h"
+#include "unitempgen.h"
+#include "unitransactiongen.h"
+#include "unitransaction.h"
+#include "uniunwrapgen.h"
 #include "uniwatch.h"
+
+#include "wvfile.h"
+#include "wvfork.h"
 #include "wvhashtable.h"
 #include "wvtest.h"
+#include "wvunixsocket.h"
+
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 static WvMap<UniConfKey, WvString> callbacks2(5);
 static WvMap<UniConfKey, WvString> callbacks1(5);
@@ -507,3 +519,213 @@ WVTEST_MAIN("excessive callbacks")
     WVPASSEQ(i2, 0);
     WVPASSEQ(i3, 0);
 }
+
+static int ncount = 0;
+class NCounter {
+public:
+    void callback(const UniConf keyconf, const UniConfKey _key)
+    {
+	ncount++;
+	wvcon->print("got callback for '%s' '%s'\n",
+		keyconf[_key].fullkey(), keyconf[_key].getme());
+    }
+};
+
+// judiciously stolen from uniclientgen.t.cc
+WVTEST_MAIN("double notifications with daemon")
+{
+    UniConfRoot uniconf;
+
+    signal(SIGPIPE, SIG_IGN);
+
+    WvString sockname("/tmp/unitransgen-%s", getpid());
+
+    pid_t child = wvfork();
+    if (child == 0)
+    {
+        uniconf.mountgen(new UniTempGen());
+        UniConfDaemon daemon(uniconf, false, NULL);
+        daemon.setupunixsocket(sockname);
+        WvIStreamList::globallist.append(&daemon, false);
+        while (true)
+        {
+            uniconf.setmeint(uniconf.getmeint()+1);
+            WvIStreamList::globallist.runonce();
+            usleep(1000);
+        }
+        _exit(0);
+    }
+    else
+    {
+        WVPASS(child >= 0);
+        UniClientGen *client_gen;
+        while (true)
+        {
+            WvUnixConn *unix_conn;
+            client_gen = new UniClientGen(
+                    unix_conn = new WvUnixConn(sockname));
+            if (!unix_conn || !unix_conn->isok()
+                    || !client_gen || !client_gen->isok())
+            {
+                WVRELEASE(client_gen);
+                wvout->print("Failed to connect, retrying...\n");
+                sleep(1);
+            }
+            else break;
+        }
+        uniconf.mountgen(new UniTransactionGen(client_gen));
+
+        UniWatchList watches;
+        NCounter *foo = new NCounter;
+        UniConfCallback uc(foo, &NCounter::callback);
+        watches.add(uniconf["Users"], uc);
+
+        uniconf["users"]["x"].setme("1");
+        uniconf.commit();
+
+	ncount = 0;
+        uniconf["users"]["y"].setme("1");
+        uniconf.commit();
+
+	printf("have ncount = %d\n", ncount);
+
+	// FIXME This is the problem
+	WVPASS(ncount == 1);
+	
+	delete foo;
+
+        kill(child, 15);
+        pid_t rv;
+        while ((rv = waitpid(child, NULL, 0)) != child)
+        {
+            // in case a signal is in the process of being delivered..
+            if (rv == -1 && errno != EINTR)
+                break;
+        }
+        WVPASS(rv == child);
+    }
+
+    unlink(sockname);
+}
+
+WVTEST_MAIN("transaction wrapper")
+{
+    UniConfRoot uni("temp:");
+
+    UniTransaction trans(uni);
+
+    uni.xset("a/b/c", "foo");
+    uni.xset("a/c/d", "bar");
+    uni.xset("b/b", "baz");
+    WVPASSEQ(uni.xget("a/b/c"), "foo");
+    WVPASSEQ(uni.xget("a/c/d"), "bar");
+    WVPASSEQ(uni.xget("b/b"), "baz");
+    WVPASSEQ(trans.xget("a/b/c"), "foo");
+    WVPASSEQ(trans.xget("a/c/d"), "bar");
+    WVPASSEQ(trans.xget("b/b"), "baz");
+
+    trans.xset("a/b/c", "baz");
+    trans.xset("b/b", "foo");
+    WVPASSEQ(uni.xget("a/b/c"), "foo");
+    WVPASSEQ(uni.xget("b/b"), "baz");
+    WVPASSEQ(trans.xget("a/b/c"), "baz");
+    WVPASSEQ(trans.xget("b/b"), "foo");
+
+    trans.refresh();
+    WVPASSEQ(trans.xget("a/b/c"), "foo");
+    WVPASSEQ(trans.xget("b/b"), "baz");
+
+    trans.xset("a/b/c", "baz");
+    trans.xset("b/b", "foo");
+    trans.commit();
+    WVPASSEQ(uni.xget("a/b/c"), "baz");
+    WVPASSEQ(uni.xget("b/b"), "foo");
+    WVPASSEQ(trans.xget("a/b/c"), "baz");
+    WVPASSEQ(trans.xget("b/b"), "foo");
+}
+
+WVTEST_MAIN("bachelor generator")
+{
+    UniConfRoot a("transaction:temp:");
+    UniTransaction b(a);
+
+    a.xset("a/b", "foo");
+    WVPASSEQ(a.xget("a/b"), "foo");
+    WVPASSEQ(b.xget("a/b"), "foo");
+    a.refresh();
+    WVPASSEQ(a.xget("a/b"), WvString::null);
+    WVPASSEQ(b.xget("a/b"), WvString::null);
+
+    a.xset("a/b", "foo");
+    WVPASSEQ(a.xget("a/b"), "foo");
+    WVPASSEQ(b.xget("a/b"), "foo");
+    a.commit();
+    WVPASSEQ(a.xget("a/b"), "foo");
+    WVPASSEQ(b.xget("a/b"), "foo");
+
+    a.xset("a/b", "bar");
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "bar");
+
+    b.xset("a/b", "baz");
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "baz");
+    b.refresh();
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "bar");
+
+    b.xset("a/b", "baz");
+    WVPASSEQ(a.xget("a/b"), "bar");
+    WVPASSEQ(b.xget("a/b"), "baz");
+    b.commit();
+    WVPASSEQ(a.xget("a/b"), "baz");
+    WVPASSEQ(b.xget("a/b"), "baz");
+}
+
+
+#if 0 // BUGZID: 13167
+static int callback_count;
+
+static void callback(const UniConf keyconf, const UniConfKey key)
+{
+    printf("Handling callback with fullkey '%s', value '%s'\n",
+	   keyconf[key].fullkey().printable().cstr(),
+	   keyconf[key].getme().cstr());
+    ++callback_count;
+}
+
+
+WVTEST_MAIN("transaction and list interaction")
+{
+    ::unlink("tmp.ini");
+    WvFile file("tmp.ini", O_WRONLY|O_TRUNC|O_CREAT);
+    file.write("[a]\n"
+	       "b = c\n");
+    WVPASS(file.isok());
+
+    UniTempGen *ini = new UniTempGen();
+    UniTempGen *def = new UniTempGen();
+    UniConfGenList *l = new UniConfGenList();
+    l->append(ini, true);
+    l->append(def, true);
+    UniListGen *cfg = new UniListGen(l);
+
+    UniConfRoot uniconf;
+    uniconf["ini"].mountgen(ini);
+    uniconf["default"].mountgen(def);
+    uniconf["cfg"].mountgen(cfg);
+
+    UniTransaction uni(uniconf);
+
+    callback_count = 0;
+    UniWatchList watches;
+    watches.add(uni["ini/a/b"], &callback);
+    watches.add(uni["cfg/a/b"], &callback);
+
+    (void)UniConfRoot("ini:tmp.ini").copy(uni["/ini"], true);
+
+    WVPASSEQ(uni.xget("/ini/a/b"), "c");
+    WVPASSEQ(uni.xget("/cfg/a/b"), "c");
+    WVPASSEQ(callback_count, 2);
+}
+#endif
