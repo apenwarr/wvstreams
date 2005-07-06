@@ -48,7 +48,6 @@ endif
 LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
 LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
-LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
@@ -427,7 +426,7 @@ dist: dist-hook ChangeLog
 	@echo '--> Making dist in ../build/$(PKGDIR)...'
 	@test -d ../build || mkdir ../build
 	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
-	@find '../build/$(PKGDIR)' -name CVS -type d -print0 | xargs -0 rm -rf --
+	@find '../build/$(PKGDIR)' -name .svn -type d -print0 | xargs -0 rm -rf --
 	@find '../build/$(PKGDIR)' -name .cvsignore -type f -print0 | xargs -0 rm -f --
 	@$(MAKE) -C '../build/$(PKGDIR)' distclean
 	@rm -f '../build/$(PKGDIR).tar.gz'
