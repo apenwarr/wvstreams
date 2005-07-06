@@ -194,7 +194,7 @@ void WvModem::setup_modem(bool rtscts)
     sinfo.reserved_char[0] = 0;
     if (ioctl(getrfd(), TIOCGSERIAL, &old_sinfo) < 0) 
     {
-	seterr("Cannot get information for serial port.");
+	log("Cannot get information for serial port.");
 	return;
     }
     sinfo = old_sinfo;
@@ -206,7 +206,7 @@ void WvModem::setup_modem(bool rtscts)
 
     if (ioctl(getrfd(), TIOCSSERIAL, &sinfo) < 0) 
     {
-	seterr("Cannot set information for serial port.");
+	log("Cannot set information for serial port.");
 	return;
     }
 #endif
