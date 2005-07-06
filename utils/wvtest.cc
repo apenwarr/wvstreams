@@ -92,18 +92,19 @@ WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
 }
 
 
-static bool prefix_match(const char *s, const char * const *prefixes)
+static bool prefix_match(const char *s, WvStringList &prefixes)
 {
-    for (const char * const *prefix = prefixes; prefix && *prefix; prefix++)
+    WvStringList::Iter i(prefixes);
+    for (i.rewind(); i.next();)
     {
-	if (!strncasecmp(s, *prefix, strlen(*prefix)))
+	if (!strncasecmp(s, i().cstr(), i().len()))
 	    return true;
     }
     return false;
 }
 
 
-int WvTest::run_all(const char * const *prefixes)
+int WvTest::run_all(WvStringList &prefixes)
 {
     int old_valgrind_errs = 0, new_valgrind_errs;
     int old_valgrind_leaks = 0, new_valgrind_leaks;
@@ -130,7 +131,7 @@ int WvTest::run_all(const char * const *prefixes)
     fails = runs = 0;
     for (WvTest *cur = first; cur; cur = cur->next)
     {
-	if (!prefixes
+	if (prefixes.count() == 0
 	    || prefix_match(cur->idstr, prefixes)
 	    || prefix_match(cur->descr, prefixes))
 	{
@@ -154,7 +155,7 @@ int WvTest::run_all(const char * const *prefixes)
 	}
     }
     
-    if (prefixes && *prefixes)
+    if (prefixes.count() > 0)
 	printf("WvTest: WARNING: only ran tests starting with "
 	       "specifed prefix(es).\n");
     else

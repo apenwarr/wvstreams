@@ -1,3 +1,4 @@
+#include "wvargs.h"
 #include "wvtest.h"
 #include "wvcrash.h"
 #include "wvstring.h"
@@ -50,8 +51,23 @@ static int fd_count(const char *when)
 
 int main(int argc, char **argv)
 {
+    WvArgs args;
+    WvStringList prefixes;
+    
 #ifdef _WIN32
-    setup_console_crash();
+    bool ccrash = true;
+    args.add_reset_bool_option('w', "wcrash", "enable windows crash", ccrash);
+#endif
+
+    if (!args.process(argc, argv, &prefixes))
+    {
+	args.print_usage(argc, argv);
+        return 1;
+    }
+
+#ifdef _WIN32
+    if (ccrash)
+	setup_console_crash();
 #endif
 
     // test wvtest itself.  Not very thorough, but you have to draw the
@@ -61,11 +77,7 @@ int main(int argc, char **argv)
     WVFAIL(false);
     WVFAIL(0);
     int startfd, endfd;
-    char * const *prefixes = NULL;
-    
-    if (argc > 1)
-	prefixes = argv + 1;
-    
+        
     startfd = fd_count("start");
     int ret = WvTest::run_all(prefixes);
     endfd = fd_count("end");
