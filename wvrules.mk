@@ -236,7 +236,7 @@ clean: _wvclean
 
 _wvclean:
 	@echo '--> Cleaning $(shell pwd)...'
-	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.moc *.d .*.d .depend \
+	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.dll *.lib *.moc *.d .*.d .depend \
 		 .\#* .tcl_paths pkgIndex.tcl gmon.out core build-stamp \
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
