@@ -133,7 +133,7 @@ ifneq ("$(with_openslp)", "no")
 endif
 
 ifneq ("$(with_pam)", "no")
-  libwvstreams.so: -lpam
+  libwvutils.so: -lpam
 endif
 
 LDLIBS := $(LDLIBS) \
