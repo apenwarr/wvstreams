@@ -233,7 +233,7 @@ IUniConfGen *UniMountGen::whichmount(const UniConfKey &key,
         if (i->key.suborsame(key))
         {
             if (mountpoint)
-                *mountpoint = key;
+                *mountpoint = i->key;
             return i->gen;
         }
     }

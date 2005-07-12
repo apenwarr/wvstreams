@@ -97,7 +97,7 @@ void UniListGen::commit()
 {
     UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
-        i().commit();
+        i->commit();
 }
 
 
@@ -107,7 +107,7 @@ bool UniListGen::refresh()
 
     UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
-        result = i().refresh() && result;
+        result = i->refresh() && result;
     return result;
 }
 
@@ -115,22 +115,19 @@ bool UniListGen::refresh()
 WvString UniListGen::get(const UniConfKey &key)
 {
     UniConfGenList::Iter i(*l);
-    for (i.rewind(); i.next();)
-    {
-        if (i().exists(key))
-            return i().get(key);
-    }
-
+    for (i.rewind(); i.next(); )
+        if (i->exists(key))
+            return i->get(key);
     return WvString::null;
 }
 
-//FIXME: We want to attemt to set only until we succeed, since we don't
-//       know if the set succeeds we assume the first generator is writeable
-//       (and therefore succeeds)
+
+// we try to set *all* our generators.  Read-only ones will ignore us.
 void UniListGen::set(const UniConfKey &key, WvStringParm value)
 {
-    if (!l->isempty())
-	l->first()->set(key, value);
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+	i->set(key, value);
 }
 
 
@@ -139,7 +136,7 @@ bool UniListGen::exists(const UniConfKey &key)
     UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
-        if (i().exists(key))
+        if (i->exists(key))
             return true;
     }
     return false;
@@ -151,7 +148,7 @@ bool UniListGen::haschildren(const UniConfKey &key)
     UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
-        if (i().haschildren(key))
+        if (i->haschildren(key))
             return true;
     }
     return false;
@@ -163,7 +160,7 @@ bool UniListGen::isok()
     UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
-        if (!i().isok())
+        if (!i->isok())
             return false;
     }
     return true;
@@ -212,15 +209,13 @@ void UniListGen::IterIter::rewind()
 
 bool UniListGen::IterIter::next()
 {
-    //FIXME: There has to be a nicer way of stopping iterators from crashing 
-    //FIXME: than this if statement
     if (l.isempty())
         return false;
 
     if ((*i)->next())
     {
-        // When iterating, make sure each key value is only returned once (from
-        // the top item in the list)
+        // When iterating, make sure each key value is only returned once
+        // (from the top item in the list)
         if (!d[(*i)->key()])
         {
             d.add(new UniConfKey((*i)->key()), true);
@@ -234,19 +229,6 @@ bool UniListGen::IterIter::next()
         return false;
 
     return next();
-/*    
-    //iterative!
-    if (!l.isempty())
-        while (i->next())
-            while((*i)->next())
-                if (!d[(*i)->key()])
-                {
-                    d.add(new UniConfKey((*i)->key()), true);
-                    return true;
-                }
-
-    return false;
-*/
 }
 
 

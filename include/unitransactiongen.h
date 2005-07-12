@@ -30,6 +30,10 @@ class UniConfValueTree;
  * When you call refresh(), all set() calls since the last commit() or
  * refresh() (or since creation if none) are discarded.
  *
+ * WARNING!!!  Your calls to commit() and refresh() will propogate to
+ * any upstream generators.  To prevent this, you will want to use a
+ * UniBachelorGen.
+ *
  * When you use get(), exists(), haschildren(), iterator(), or
  * recursiveiterator(), the results that you get are equivalent to the results
  * that you would have gotten if you had called commit() and then used these

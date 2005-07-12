@@ -41,32 +41,17 @@ char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
 
 
 
-WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, const WvLog *par)
-	: app(_app)
+WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
+    : app(_app), loglevel(_loglevel)
 {
-    parent = par;
-    loglevel = _loglevel;
     num_logs++;
 }
 
 
 WvLog::WvLog(const WvLog &l)
+    : app(l.app), loglevel(l.loglevel)
 {
-    parent = l.parent ? l.parent : NULL;
-    app = l.app;
-    loglevel = l.loglevel;
     num_logs++;
-}
-
-
-WvLog &WvLog::operator= (const WvLog &l)
-{
-    if (&l == this) return *this; // already done!
-    parent = l.parent ? l.parent : NULL;
-    app = l.app;
-    loglevel = l.loglevel;
-    // don't increment num_logs, because we already existed before
-    return *this;
 }
 
 
@@ -109,7 +94,7 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
 	    default_receiver = new WvLogConsole(xfd);
 	    num_receivers--; // default does not qualify!
 	}
-	default_receiver->log(parent ? parent : this, loglevel,
+	default_receiver->log(app, loglevel,
 			      (const char *)_buf, len);
 	return len;
     }
@@ -125,7 +110,7 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
     for (i.rewind(); i.next(); )
     {
 	WvLogRcvBase &rc = *i;
-	rc.log(parent ? parent : this, loglevel, (const char *)_buf, len);
+	rc.log(app, loglevel, (const char *)_buf, len);
     }
     
     return len;
@@ -153,12 +138,12 @@ WvLogRcvBase::~WvLogRcvBase()
 }
 
 
-const char *WvLogRcvBase::appname(const WvLog *log) const
+const char *WvLogRcvBase::appname(WvStringParm log) const
 {
     if (log)
-	return log->app;
+	return log;
     else
-	return WvString("unknown");
+	return "unknown";
 }
 
 
@@ -193,7 +178,7 @@ void WvLogRcvBase::cleanup_on_fork(pid_t p)
 
 WvLogRcv::WvLogRcv(WvLog::LogLevel _max_level) : custom_levels(5)
 {
-    last_source = NULL;
+    last_source = WvString();
     last_level = WvLog::NUM_LOGLEVELS;
     max_level = _max_level;
     at_newline = true;
@@ -208,7 +193,7 @@ WvLogRcv::~WvLogRcv()
 void WvLogRcv::_make_prefix()
 {
     prefix = WvString("%s<%s>: ",
-        appname(last_source), loglevels[last_level]);
+        last_source, loglevels[last_level]);
     prelen = prefix.len();
 }
 
@@ -237,13 +222,13 @@ static bool my_isprint(char _c)
 }
 
 
-void WvLogRcv::log(const WvLog *source, int _loglevel,
+void WvLogRcv::log(WvStringParm source, int _loglevel,
 			const char *_buf, size_t len)
 {
     WvLog::LogLevel loglevel = (WvLog::LogLevel)_loglevel;
     char hex[5];
     WvLog::LogLevel threshold = max_level;
-    WvString srcname = source->app;
+    WvString srcname(source);
     strlwr(srcname.edit());
 
     Src_LvlDict::Iter i(custom_levels);

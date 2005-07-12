@@ -1,9 +1,0 @@
-*.ini.new
-uniconf.ini
-.*.d
-*test
-uni
-uni.8
-.wvtest-total
-unistress
-unimem

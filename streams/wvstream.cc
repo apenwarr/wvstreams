@@ -263,6 +263,8 @@ size_t WvStream::write(WvBuf &inbuf, size_t count)
 
 size_t WvStream::read(void *buf, size_t count)
 {
+    assert(!count || buf);
+    
     size_t bufu, i;
     unsigned char *newbuf;
 
@@ -270,6 +272,7 @@ size_t WvStream::read(void *buf, size_t count)
     if (bufu < queue_min)
     {
 	newbuf = inbuf.alloc(queue_min - bufu);
+	assert(newbuf);
 	i = uread(newbuf, queue_min - bufu);
 	inbuf.unalloc(queue_min - bufu - i);
 	
@@ -302,6 +305,7 @@ size_t WvStream::read(void *buf, size_t count)
 
 size_t WvStream::write(const void *buf, size_t count)
 {
+    assert(!count || buf);
     if (!isok() || !buf || !count || stop_write) return 0;
     
     size_t wrote = 0;
@@ -372,13 +376,6 @@ bool WvStream::iswritable()
 char *WvStream::blocking_getline(time_t wait_msec, int separator,
 				 int readahead)
 {
-    // in fact, a separator of 0 would probably work fine.  Unfortunately,
-    // the parameters of getline() changed recently to not include
-    // wait_msec, so people keep trying to pass 0/-1 wait_msec in as the
-    // separator.  Stop them now, before they get confused.
-    // --mrwise - had to reenable 0 so that unit tests would pass when
-    // merging, bug 11133
-    //assert(separator != 0);
     assert(separator >= 0);
     assert(separator <= 255);
     
@@ -430,6 +427,7 @@ char *WvStream::blocking_getline(time_t wait_msec, int separator,
             // read a few bytes
 	    WvDynBuf tmp;
             unsigned char *buf = tmp.alloc(readahead);
+	    assert(buf);
             size_t len = uread(buf, readahead);
             tmp.unalloc(readahead - len);
 	    inbuf.merge(tmp);
@@ -525,7 +523,7 @@ bool WvStream::flush_outbuf(time_t msec_timeout)
 //	fprintf(stderr, "%p: fd:%d/%d, used:%d\n", 
 //		this, getrfd(), getwfd(), outbuf.used());
 	
-	size_t attempt = outbuf.used();
+	size_t attempt = outbuf.optgettable();
 	size_t real = uwrite(outbuf.get(attempt), attempt);
 	
 	// WARNING: uwrite() may have messed up our outbuf!

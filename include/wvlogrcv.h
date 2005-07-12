@@ -28,7 +28,7 @@
 class WvLogRcv : public WvLogRcvBase
 {
 protected:  
-    const WvLog *last_source;
+    WvString last_source;
     WvLog::LogLevel max_level, last_level;
     bool at_newline;
     WvString prefix;
@@ -47,7 +47,7 @@ protected:
     
     Src_LvlDict custom_levels;
     
-    virtual void log(const WvLog *source, int loglevel,
+    virtual void log(WvStringParm source, int loglevel,
 		     const char *_buf, size_t len);
     
     /** Set the Prefix and Prefix Length (size_t prelen) */

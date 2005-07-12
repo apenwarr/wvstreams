@@ -139,6 +139,7 @@ bool WvFdStream::isok() const
 
 size_t WvFdStream::uread(void *buf, size_t count)
 {
+    assert(!count || buf);
     if (!count || !buf || !isok()) return 0;
     
     int in = ::read(rfd, buf, count);
@@ -160,6 +161,7 @@ size_t WvFdStream::uread(void *buf, size_t count)
 
 size_t WvFdStream::uwrite(const void *buf, size_t count)
 {
+    assert(!count || buf);
     if (!buf || !count || !isok()) return 0;
     // fprintf(stderr, "write %d bytes\n", count);
     
