@@ -8,7 +8,13 @@
 #ifndef __WVCRASH_H
 #define __WVCRASH_H
 
+#include <wvcallback.h>
+
+typedef WvCallback<void> WvCrashCallback;
+
 void wvcrash_setup(const char *_argv0, const char *_desc = 0);
 void wvcrash(int sig);
+void wvcrash_add_signal(int sig);
+WvCrashCallback wvcrash_set_callback(WvCrashCallback callback);
 
 #endif // __WVCRASH_H
