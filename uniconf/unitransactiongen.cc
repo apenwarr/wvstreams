@@ -258,6 +258,7 @@ void UniTransactionGen::commit()
 	// Apply our changes to the inner generator.  We can't optimise
 	// away callbacks at this point, because we may get notified of
 	// changes caused by our changes.
+	hold_delta();
 	apply_changes(root, UniConfKey());
 
 	// make sure the inner generator also commits
@@ -267,6 +268,7 @@ void UniTransactionGen::commit()
 	// redundant notifications caused by the base->commit()
 	delete root;
 	root = NULL;
+	unhold_delta();
     }
     
     // no need to base->commit() if we know we haven't changed anything!
