@@ -10,7 +10,7 @@
 
 #include <wvcallback.h>
 
-typedef WvCallback<void> WvCrashCallback;
+typedef WvCallback<void, int> WvCrashCallback;
 
 void wvcrash_setup(const char *_argv0, const char *_desc = 0);
 void wvcrash(int sig);

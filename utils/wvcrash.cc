@@ -133,7 +133,7 @@ void wvcrash(int sig)
     wr(2, "\n\nwvcrash: crashing!\n");
     
     if (!!callback)
-        callback();
+        callback(sig);
     
     // close some fds, just in case the reason we're crashing is fd
     // exhaustion!  Otherwise we won't be able to create our pipe to a
