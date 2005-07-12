@@ -43,7 +43,7 @@ static void sighup_handler(int signum)
 
 static void sigterm_handler(int signum)
 {
-    signal(signum, SIG_IGN);
+    signal(signum, SIG_DFL);
 
     WvDaemonList::Iter i(daemons);
     for (i.rewind(); i.next(); )
@@ -222,8 +222,7 @@ int WvDaemon::_run(const char *argv0)
         pid_fd.close();
     }
 #endif
-    log(WvLog::Notice, "Starting\n");
-    log(WvLog::Info, "%s version %s\n", name, version);
+    log(WvLog::Notice, "Starting %s version %s.\n", name, version);
 
     daemons.append(this, false);
 

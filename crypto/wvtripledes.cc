@@ -102,7 +102,8 @@ bool WvTripleDESEncoder::_encode(WvBuf &in, WvBuf &out, bool flush)
 	// ECB works 64bits at a time
 	while (len >= 8)
 	{
-#if OPENSSL_VERSION_NUMBER >= 0x0090705FL
+#if OPENSSL_VERSION_NUMBER >= 0x0090705fL \
+    && OPENSSL_VERSION_NUMBER < 0x0090800fL
 	    DES_ecb3_encrypt(data, crypt,
 			     &deskey1, &deskey2, &deskey3,
 			     mode == ECBEncrypt ? DES_ENCRYPT : DES_DECRYPT);

@@ -67,7 +67,6 @@ class UniConfd : public WvStreamsDaemon
     UniConfRoot cfg;
     bool first_time;
     IUniConfGen *permgen;
-    WvSlp slp;
     
     void namedgen_cb(WvStringParm option, void *)
     {
@@ -174,10 +173,10 @@ class UniConfd : public WvStreamsDaemon
 	        return;
 	    }
         }
-
-        WvString svc, sslsvc;
     
 #ifdef WITH_SLP
+        WvSlp slp;
+
         if (first_time)
         {
             // Now that we're this far...
@@ -205,7 +204,7 @@ class UniConfd : public WvStreamsDaemon
 public:
 
     UniConfd() :
-            WvStreamsDaemon("UniConfDaemon", WVSTREAMS_RELEASE,
+            WvStreamsDaemon("uniconfd", WVSTREAMS_RELEASE,
                 WvStreamsDaemonCallback(this, &UniConfd::startup)),
             needauth(false),
             port(DEFAULT_UNICONF_DAEMON_TCP_PORT),

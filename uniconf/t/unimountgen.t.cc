@@ -29,10 +29,15 @@ WVTEST_MAIN("mounting multiple generators")
     g.set("/foo/gah", "goop");
     WVPASSEQ(t1->get("gah"), "goop");
 
-    IUniConfGen *t3 = g.mount("/foo/mink", "temp:", true);
+    UniTempGen *tg = new UniTempGen;
+    IUniConfGen *t3 = g.mountgen("/foo/mink", tg, true);
     t3->set("moo", "foo");
     WVPASSEQ(g.get("/foo/mink/moo"), "foo");
     WVFAIL(t1->get("mink/moo"));
+    
+    UniConfKey topkey;
+    WVPASS(g.whichmount("/foo/mink/fork/bork", &topkey) == tg);
+    WVPASSEQ(WvString(topkey), "foo/mink");
 
     // generator t3 should take precedence
     t1->set("mink/moo", "cabbage");

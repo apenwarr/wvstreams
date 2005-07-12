@@ -260,13 +260,16 @@ void UniTransactionGen::commit()
 	// apply_changes().
 	base->del_callback(this);
 	apply_changes(root, UniConfKey());
-	delete root;
-	root = NULL;
 	base->add_callback(this,
 	    UniConfGenCallback(this, &UniTransactionGen::gencallback), NULL);
 	
 	// make sure the inner generator also commits
 	base->commit();
+
+	// save deleting the root till now so we can hide any
+	// redundant notifications caused by the base->commit()
+	delete root;
+	root = NULL;
     }
     
     // no need to base->commit() if we know we haven't changed anything!

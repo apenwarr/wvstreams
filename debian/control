@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Simon Law <sfllaw@debian.org>
 Uploaders: James Morrison <phython@debian.org>, Patrick Patterson <ppatters@debian.org>
-Build-Depends: debhelper (>> 4.0.0), libdb4.2-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libspeex-dev, libssl-dev, libvorbis-dev, libxplc0.3.11-dev, libpopt-dev, zlib1g-dev, doxygen
+Build-Depends: debhelper (>> 4.0.0), libdb4.2-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libssl-dev, libxplc0.3.11-dev, libpopt-dev, zlib1g-dev, doxygen
 Build-Depends-Indep: doxygen
 Standards-Version: 3.6.1
 
@@ -61,16 +61,6 @@ Description: Documentation for WvStreams
  The WvStreams library suite is a set of C++ network libraries that
  make it fast and simple to develop network applications.
 
-Package: libwvstreams4.1-fft
-Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: WvStreams wrapper for libfftw
- This package contains the library necessary for the WvStreams to libfftw
- wrapper. It enables WvStreams programs to easily handle Fast-Fourier
- transforms, instead of forcing the programmer to use the much harder to use
- libfftw interface.
-
 Package: libwvstreams4.1-qt
 Architecture: any
 Section: libs
@@ -79,22 +69,6 @@ Description: WvStreams and Qt Event Integration Library
  This package contains the library necessary to tie WvStreams and Qt program
  event loops together to enable WvStreams to act as the I/O and configuration
  back end for Qt and KDE.
-
-Package: libwvstreams4.1-vorbis
-Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: WvStreams OggVorbis Encoder/Decoder Library
- This library contains the WvOggEncoder and WvOggDecoder to enable quick and
- painless creation of audio streams using the OggVorbis CODEC
-
-Package: libwvstreams4.1-speex
-Architecture: any
-Section: libs
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: WvStreams Speex Encoder/Decoder Library
- This library contains the WvSpeexEncoder and WvSpexxDecoder to enable quick 
- and painless creation of audio streams using the Speex Voice over IP CODEC
 
 Package: libwvstreams-dev
 Architecture: any

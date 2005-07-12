@@ -7,6 +7,7 @@
  */
 #include "fileutils.h"
 #include "wvfile.h"
+#include "wvdiriter.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -45,6 +46,21 @@ bool mkdirp(WvStringParm _dir, int create_mode)
 #else
     return  !(access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr()));
 #endif
+}
+
+
+void rm_rf(WvStringParm dir)
+{
+    WvDirIter i(dir, false, false); // non-recursive, don't skip_mounts
+    for (i.rewind(); i.next(); )
+    {
+	if (i.isdir())
+	    rm_rf(i->fullname);
+	else
+	    ::unlink(i->fullname);
+    }
+    ::rmdir(dir);
+    ::unlink(dir);
 }
 
 

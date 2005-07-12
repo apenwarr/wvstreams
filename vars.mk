@@ -133,7 +133,7 @@ ifneq ("$(with_openslp)", "no")
 endif
 
 ifneq ("$(with_pam)", "no")
-  libwvstreams.so: -lpam
+  libwvutils.so: -lpam
 endif
 
 LDLIBS := $(LDLIBS) \
@@ -195,6 +195,7 @@ micro: micro.o libwvbase.so
 libwvbase.a libwvbase.so: $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
 libwvbase.a: uniconf/unigenhack_s.o
 libwvbase.so: uniconf/unigenhack.o
+libwvbase.so: LIBS+=$(LIBXPLC)
 
 libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
 libwvutils.so: libwvbase.so
