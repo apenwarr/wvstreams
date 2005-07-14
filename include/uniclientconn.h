@@ -14,6 +14,7 @@
 #include "wvbuf.h"
 #include "wvlog.h"
 
+#define UNICONF_PROTOCOL_VERSION UniClientConn::NUM_COMMANDS
 #define DEFAULT_UNICONF_DAEMON_TCP_PORT 4111
 #define DEFAULT_UNICONF_DAEMON_SSL_PORT 4112
 
@@ -30,6 +31,7 @@ class UniClientConn : public WvStreamClone
 protected:
     WvLog log;
     bool closed;
+    int version;
     
 public:
     WvConstStringBuffer payloadbuf; /*!< holds the previous command payload */
@@ -80,10 +82,12 @@ public:
 
     /**
      * Reads a command from the connection.
+     * "command" is the command that was read.
      * The payload is stored in UniClientConn::payloadbuf.
      * Returns: the command code, NONE, or INVALID
      */
     Command readcmd();
+    Command readcmd(WvString &command);
 
     /**
      * Reads the next argument from the command payload.
