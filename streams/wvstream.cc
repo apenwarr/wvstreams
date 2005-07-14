@@ -376,13 +376,6 @@ bool WvStream::iswritable()
 char *WvStream::blocking_getline(time_t wait_msec, int separator,
 				 int readahead)
 {
-    // in fact, a separator of 0 would probably work fine.  Unfortunately,
-    // the parameters of getline() changed recently to not include
-    // wait_msec, so people keep trying to pass 0/-1 wait_msec in as the
-    // separator.  Stop them now, before they get confused.
-    // --mrwise - had to reenable 0 so that unit tests would pass when
-    // merging, bug 11133
-    //assert(separator != 0);
     assert(separator >= 0);
     assert(separator <= 255);
     
