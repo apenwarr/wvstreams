@@ -318,12 +318,12 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 		}
 		else
 		{
-		    int version = -1;
+		    int version = 0;
 		    sscanf(version_string, "%d", &version);
 		    if (version < 0)
 			log(WvLog::Error, "Invalid UniConf server!\n");
 		    else
-			log(WvLog::Info, "UniConf version %s.\n", version);
+			log(WvLog::Debug2, "UniConf version %s.\n", version);
 		}
                 break;
             }
