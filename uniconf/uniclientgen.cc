@@ -302,17 +302,29 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::EVENT_HELLO:
             {
-                WvString server(wvtcl_getword(conn->payloadbuf, " "));
+		WvStringList greeting;
+		wvtcl_decode(greeting, conn->payloadbuf.getstr(), " ");
+		WvString server(greeting.popstr());
+		WvString version_string(greeting.popstr());
 
-                if (server.isnull() || strncmp(server, "UniConf", 7))
-                {
-                    // wrong type of server!
-                    log(WvLog::Error, "Connected to a non-UniConf serer!\n");
+		if (server.isnull() || strncmp(server, "UniConf", 7))
+		{
+		    // wrong type of server!
+		    log(WvLog::Error, "Connected to a non-UniConf serrer!\n");
 
-                    cmdinprogress = false;
-                    cmdsuccess = false;
-                    conn->close();
-                }                    
+		    cmdinprogress = false;
+		    cmdsuccess = false;
+		    conn->close();
+		}
+		else
+		{
+		    int version = -1;
+		    sscanf(version_string, "%d", &version);
+		    if (version < 0)
+			log(WvLog::Error, "Invalid UniConf server!\n");
+		    else
+			log(WvLog::Info, "UniConf version %s.\n", version);
+		}
                 break;
             }
 
