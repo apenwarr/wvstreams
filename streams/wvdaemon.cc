@@ -190,7 +190,7 @@ int WvDaemon::_run(const char *argv0)
 #ifndef _WIN32
     wvcrash_setup(argv0);
 
-    if (!!pid_file)
+    if (!!pid_file && daemonize)
     {
         // FIXME: this is racy!
         
