@@ -129,7 +129,7 @@ private:
     bool has_subkey(const UniConfKey &key, UniGenMount *found = NULL);
 
     struct UniGenMountPairs;
-    DeclareWvDict(UniGenMountPairs, WvFastString, mount->key.printable());
+    DeclareWvDict(UniGenMountPairs, WvFastString, key);
 
 };
 

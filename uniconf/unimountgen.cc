@@ -55,11 +55,14 @@ void UniMountGen::set(const UniConfKey &key, WvStringParm value)
 struct UniMountGen::UniGenMountPairs
 {
     UniGenMount *mount;
+    WvString key;
     UniConfPairList pairs;
 
     UniGenMountPairs(UniGenMount *_mount)
 	: mount(_mount)
     {
+	if (mount)
+	    key = mount->key;
     }
 };
 
