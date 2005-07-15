@@ -149,9 +149,7 @@ int WvDaemon::run(const char *argv0)
                 }
                 ::close(null_fd);
                 
-                _run(argv0);
-
-                exit(0); // Make sure destructors are called
+                exit(_run(argv0)); // Make sure destructors are called
             }
 
             _exit(0);
@@ -260,13 +258,13 @@ int WvDaemon::_run(const char *argv0)
         signal(SIGTERM, SIG_DFL);
     }
 #endif
-    log(WvLog::Notice, "Exiting\n");
+    log(WvLog::Notice, "Exiting with status %s\n", _exit_status);
 
 #ifndef _WIN32    
     if (!!pid_file)
         ::unlink(pid_file);
 #endif
 
-    return 0;
+    return _exit_status;
 }
 
