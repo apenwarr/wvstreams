@@ -83,6 +83,12 @@ void UniWvConfGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
+void UniWvConfGen::setv(const UniConfPairList &pairs)
+{
+    setv_naive(pairs);
+}
+
+
 bool UniWvConfGen::haschildren(const UniConfKey &key)
 {
     WvConfigSection *sect = cfg[key];

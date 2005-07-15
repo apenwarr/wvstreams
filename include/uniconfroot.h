@@ -163,6 +163,7 @@ private:
     void gen_callback(const UniConfKey &key, WvStringParm value, void *userdata);
 
 protected:
+    friend class UniUnwrapGen;
     UniMountGen mounts;
     
 public:

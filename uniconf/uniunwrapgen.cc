@@ -5,6 +5,7 @@
  * A totally evil UniConfGen that "unwraps" a UniConf object by turning it
  * back into a UniConfGen.  See uniunwrapgen.h.
  */
+#include "uniconfroot.h"
 #include "uniunwrapgen.h"
 #include "wvlinkerhack.h"
 
@@ -84,6 +85,14 @@ WvString UniUnwrapGen::get(const UniConfKey &key)
 void UniUnwrapGen::set(const UniConfKey &key, WvStringParm value)
 {
     _sub(key).setme(value);
+}
+
+
+void UniUnwrapGen::setv(const UniConfPairList &pairs)
+{
+    // Extremely evil.  This pokes directly into UniMountGen, because we
+    // don't want to expose setv to users.
+    xinner.rootobj()->mounts.setv(pairs);
 }
 
 

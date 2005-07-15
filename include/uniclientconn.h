@@ -40,31 +40,32 @@ public:
         NONE = -2, /*!< used to signal no command received */
         INVALID = -1, /*!< used to signal invalid command */
         
-        // requests
-        REQ_NOOP, /*!< noop ==> OK */
-        REQ_GET, /*!< get <key> ==> VAL ... OK / FAIL */
-        REQ_SET, /*!< set <key> <value> ==> OK / FAIL */
-        REQ_REMOVE, /*!< del <key> ==> OK / FAIL */
-        REQ_SUBTREE, /*!< subt <key> ==> VAL ... OK / FAIL <*/
-        REQ_HASCHILDREN, /*!< hchild <key> => HCHILD <key> TRUE / FALSE */
-        REQ_COMMIT, /*!< commit => OK */
-        REQ_REFRESH, /*!< refresh => OK / FAIL */
-        REQ_QUIT, /*!< quit ==> OK */
-        REQ_HELP, /*!< help ==> TEXT ... OK / FAIL */
+	// requests
+	REQ_NOOP, /*!< noop ==> OK v18 */
+	REQ_GET, /*!< get <key> ==> VAL ... OK / FAIL v18 */
+	REQ_SET, /*!< set <key> <value> ==> OK / FAIL v18 */
+	REQ_SETV, /*!< setv <key> <value> v19 */
+	REQ_REMOVE, /*!< del <key> ==> OK / FAIL v18 */
+	REQ_SUBTREE, /*!< subt <key> ==> VAL ... OK / FAIL v18 */
+	REQ_HASCHILDREN, /*!< hchild <key> => HCHILD <key> TRUE / FALSE v18 */
+	REQ_COMMIT, /*!< commit => OK v18 */
+	REQ_REFRESH, /*!< refresh => OK / FAIL v18 */
+	REQ_QUIT, /*!< quit ==> OK v18 */
+	REQ_HELP, /*!< help ==> TEXT ... OK / FAIL v18 */
 
-        // command completion replies
-        REPLY_OK, /*!< OK */
-        REPLY_FAIL, /*!< FAIL */
-        REPLY_CHILD, /*!< HCHILD <key> TRUE / FALSE */
-        REPLY_ONEVAL, /*!< ONEVAL <key> <value> */
+	// command completion replies
+	REPLY_OK, /*!< OK v18 */
+	REPLY_FAIL, /*!< FAIL <payload> v18 */
+	REPLY_CHILD, /*!< HCHILD <key> TRUE / FALSE v18 */
+	REPLY_ONEVAL, /*!< ONEVAL <key> <value> v18 */
 
-        // partial replies
-        PART_VALUE, /*!< VAL <key> <value> */
-        PART_TEXT, /*!< TEXT <text> */
+	// partial replies
+	PART_VALUE, /*!< VAL <key> <value> v18 */
+	PART_TEXT, /*!< TEXT <text> v18 */
 
-        // events
-        EVENT_HELLO, /*!< HELLO <message> */
-        EVENT_NOTICE, /*!< NOTICE <key> <oldval> <newval> */
+	// events
+	EVENT_HELLO, /*!< HELLO <message> v18 */
+	EVENT_NOTICE, /*!< NOTICE <key> <oldval> <newval> v18 */
     };
     static const int NUM_COMMANDS = EVENT_NOTICE + 1;
     struct CommandInfo

@@ -131,6 +131,14 @@ void UniListGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
+void UniListGen::setv(const UniConfPairList &pairs)
+{
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+	i->setv(pairs);
+}
+
+
 bool UniListGen::exists(const UniConfKey &key)
 {
     UniConfGenList::Iter i(*l);

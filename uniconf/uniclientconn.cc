@@ -25,6 +25,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "noop", "noop: verify that the connection is active" },
     { "get", "get <key>: get the value of a key" },
     { "set", "set <key> <value>: sets the value of a key" },
+    { "setv", "setv <key> <value> ...: set multiple key-value pairs" },
     { "del", "del <key>: deletes the key" },
     { "subt", "subt <key> <recurse?>: enumerates the children of a key" },
     { "hchild", "hchild <key>: returns whether a key has children" },

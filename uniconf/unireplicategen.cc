@@ -211,6 +211,20 @@ void UniReplicateGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
+void UniReplicateGen::setv(const UniConfPairList &pairs)
+{
+    DPRINTF("UniReplicateGen::setv\n");
+
+    replicate_if_any_have_become_ok();
+
+    Gen *first = first_ok();
+    if (first)
+	first->gen->setv(pairs);
+    else
+	DPRINTF("UniReplicateGen::setv: first == NULL\n");
+}
+
+
 WvString UniReplicateGen::get(const UniConfKey &key)
 {
     for (;;)

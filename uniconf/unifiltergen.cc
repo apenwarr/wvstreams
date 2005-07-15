@@ -93,6 +93,13 @@ void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
+void UniFilterGen::setv(const UniConfPairList &pairs)
+{
+    if (xinner)
+	xinner->setv(pairs);
+}
+
+
 bool UniFilterGen::exists(const UniConfKey &key)
 {
     if (xinner)

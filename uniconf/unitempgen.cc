@@ -138,6 +138,12 @@ void UniTempGen::set(const UniConfKey &_key, WvStringParm _value)
 }
 
 
+void UniTempGen::setv(const UniConfPairList &pairs)
+{
+    setv_naive(pairs);
+}
+
+
 bool UniTempGen::haschildren(const UniConfKey &key)
 {
     if (root)

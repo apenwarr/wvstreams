@@ -95,13 +95,14 @@ public:
 
     /***** Overridden methods *****/
     
-    WvString get(const UniConfKey &key);
-    void set(const UniConfKey &key, WvStringParm value);
-    void commit();
-    bool refresh();
-    Iter *iterator(const UniConfKey &key);
-    bool isok();
-    void flush_buffers();
+    virtual WvString get(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
+    virtual void commit();
+    virtual bool refresh();
+    virtual Iter *iterator(const UniConfKey &key);
+    virtual bool isok();
+    virtual void flush_buffers();
     
 protected:
     UniConfChangeTree *root;

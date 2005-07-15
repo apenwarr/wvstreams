@@ -132,10 +132,15 @@ public:
     /**
      * Stores a string value for a key into the registry.  If the value is
      * WvString::null, the key is deleted.
-     * 
-     * Returns true on success.
      */
     virtual void set(const UniConfKey &key, WvStringParm value) = 0;
+
+
+    /**
+     * Stores multiple key-value pairs into the registry.  If the value is
+     * WvString::null, the key is deleted.
+     */
+    virtual void setv(const UniConfPairList &pairs) = 0;
 
 
     /***** Key Enumeration API *****/
@@ -296,6 +301,7 @@ public:
 
     /***** Key Storage API *****/
     virtual void set(const UniConfKey &key, WvStringParm value) = 0;
+    virtual void setv(const UniConfPairList &pairs) = 0;
 
     virtual void flush_buffers() = 0;
 
@@ -305,6 +311,10 @@ public:
     
     // a helpful default that just calls iterator() recursively
     virtual Iter *recursiveiterator(const UniConfKey &key);
+
+protected:
+    // A naive implementation of setv() that uses only set().
+    void setv_naive(const UniConfPairList &pairs);
 };
 
 DeclareWvList(IUniConfGen);

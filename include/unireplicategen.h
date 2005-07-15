@@ -66,6 +66,7 @@ public:
     virtual bool refresh();
     virtual void flush_buffers() { }
     virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
     virtual WvString get(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
 };

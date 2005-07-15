@@ -251,6 +251,15 @@ void UniTransactionGen::set(const UniConfKey &key, WvStringParm value)
     unhold_delta();
 }
 
+void UniTransactionGen::setv(const UniConfPairList &pairs)
+{
+    hold_delta();
+    UniConfPairList::Iter i(pairs);
+    for (i.rewind(); i.next(); )
+	root = set_change(root, i->key(), 0, i->value());
+    unhold_delta();
+}
+
 void UniTransactionGen::commit()
 {
     if (root)

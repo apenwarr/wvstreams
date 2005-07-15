@@ -92,6 +92,14 @@ void UniConfGen::delta(const UniConfKey &key, WvStringParm value)
 }
 
 
+void UniConfGen::setv_naive(const UniConfPairList &pairs)
+{
+    UniConfPairList::Iter pair(pairs);
+    for (pair.rewind(); pair.next(); )
+	set(pair->key(), pair->value());
+}
+
+
 bool UniConfGen::haschildren(const UniConfKey &key)
 {
     bool children = false;
