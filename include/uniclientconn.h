@@ -35,11 +35,22 @@ protected:
     
 public:
     WvConstStringBuffer payloadbuf; /*!< holds the previous command payload */
+
+    /* This table is _very_ important!!!
+     *
+     * With UniConf, we promise to never remove or modify the behaviour of
+     * any of the commands listed here.  If you want to modify anything,
+     * you'd better just add a new command instead.  We keep track of the
+     * version of the UniConf protocol by the number of commands supported
+     * by the server.
+     *
+     * @see UniClientConn::cmdinfos
+     */
     enum Command
     {
-        NONE = -2, /*!< used to signal no command received */
-        INVALID = -1, /*!< used to signal invalid command */
-        
+	NONE = -2, /*!< used to signal no command received */
+	INVALID = -1, /*!< used to signal invalid command */
+
 	// requests
 	REQ_NOOP, /*!< noop ==> OK v18 */
 	REQ_GET, /*!< get <key> ==> VAL ... OK / FAIL v18 */

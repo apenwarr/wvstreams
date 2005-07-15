@@ -18,6 +18,8 @@
  * you'd better just add a new command instead.  We keep track of the
  * version of the UniConf protocol by the number of commands supported
  * by the server.
+ *
+ * @see UniClientConn::Commands
  */
 const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     UniClientConn::NUM_COMMANDS] = {
