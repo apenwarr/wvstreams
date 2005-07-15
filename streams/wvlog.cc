@@ -258,6 +258,7 @@ void WvLogRcv::log(const WvLog *source, int _loglevel,
 	end_line();
 	last_source = source;
         last_source_appname = source->app;
+        last_source_appname.unique();
 	last_level = loglevel;
 	_make_prefix();
     }
