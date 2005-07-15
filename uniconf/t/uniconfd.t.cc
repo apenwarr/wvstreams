@@ -196,7 +196,7 @@ WVTEST_MAIN("daemon multimount")
     commands.append("subt / 1");
     WvStringListList expected_responses;
     WvStringList hello_response;
-    hello_response.append(WvString("HELLO {UniConf %s Server ready.}",
+    hello_response.append(WvString("HELLO {UniConf Server ready.} %s",
 				   UNICONF_PROTOCOL_VERSION));
     expected_responses.add(&hello_response, false);
     WvStringList expected_quit_response;
@@ -253,7 +253,7 @@ WVTEST_MAIN("daemon quit")
     commands.append("quit");
     WvStringListList expected_responses;
     WvStringList hello_response;
-    hello_response.append(WvString("HELLO {UniConf %s Server ready.}",
+    hello_response.append(WvString("HELLO {UniConf Server ready.} %s",
 				   UNICONF_PROTOCOL_VERSION));
     expected_responses.add(&hello_response, false);
     WvStringList expected_quit_response;
@@ -397,7 +397,7 @@ static void daemon_proxy_test(bool implicit_root)
     commands.append("subt /");
     WvStringListList expected_responses;
     WvStringList hello_response;
-    hello_response.append(WvString("HELLO {UniConf %s Server ready.}",
+    hello_response.append(WvString("HELLO {UniConf Server ready.} %s",
 				   UNICONF_PROTOCOL_VERSION));
     expected_responses.add(&hello_response, false);
     WvStringList expected_get_response;
