@@ -13,6 +13,7 @@
 #include "wvvector.h"
 
 class WvArgsOption;
+DeclareWvVector(WvArgsOption);
 
 /*!
 @brief WvArgs - Sane command-line argument processing for WvStreams
@@ -77,7 +78,7 @@ class WvArgs
     	
     private:
     
-    	WvVector<WvArgsOption> *options;
+    	WvArgsOptionVector options;
         WvString args_desc;
         unsigned int num_required_args;
     

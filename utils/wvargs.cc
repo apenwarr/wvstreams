@@ -374,33 +374,29 @@ class WvArgsArgCallbackOption : public WvArgsArgOption
     	}
 };
 
-typedef WvVector<WvArgsOption> WvArgsOptionVector;
-
 WvArgs::WvArgs() :
     num_required_args(0)
 {
-    options = new WvArgsOptionVector();
 }
 
 WvArgs::~WvArgs()
 {
-    delete options;
 }    	
 
 static bool create_popt_context(int argc, char **argv, 
-				WvVector<WvArgsOption> *options, 
+				WvArgsOptionVector &options, 
 				WvStringParm args_desc,
 				poptContext &popt_context, 
 				struct poptOption **popt_options)
 {
-    (*popt_options) = new struct poptOption[options->count() + 2];
+    (*popt_options) = new struct poptOption[options.count() + 2];
     if (!popt_options)
     	return false;
     
     int j;
     for (j=0; ; ++j)
     {
-    	WvArgsOption *option = (*options)[j];
+    	WvArgsOption *option = options[j];
     	if (!option) break;
    
         if (option->short_option || option->long_option)
@@ -419,7 +415,7 @@ static bool create_popt_context(int argc, char **argv,
 				  (*popt_options), 0);
 
     WvString usage_desc;
-    if (options->count() > 0)
+    if (options.count() > 0)
 	usage_desc = "[OPTION...] ";
     usage_desc.append(args_desc);
 
@@ -462,7 +458,7 @@ bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
      	    break;
        	}
     	else
-    	    (*options)[opt-1]->process(poptGetOptArg(popt_context));
+    	    options[opt-1]->process(poptGetOptArg(popt_context));
     }
     if (result && remaining_args)
     {
@@ -518,7 +514,7 @@ void WvArgs::add_set_bool_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsSetBoolOption(short_option, long_option, desc,
+    options.append(new WvArgsSetBoolOption(short_option, long_option, desc,
 					    val), true);
 }
 
@@ -529,7 +525,7 @@ void WvArgs::add_reset_bool_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsResetBoolOption(short_option, long_option, desc,
+    options.append(new WvArgsResetBoolOption(short_option, long_option, desc,
 					      val), true);
 }
 
@@ -540,7 +536,7 @@ void WvArgs::add_flip_bool_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsFlipBoolOption(short_option, long_option, desc,
+    options.append(new WvArgsFlipBoolOption(short_option, long_option, desc,
 					     val), true);
 }
 
@@ -551,7 +547,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsNoArgCallbackOption(short_option, long_option, desc,
+    options.append(new WvArgsNoArgCallbackOption(short_option, long_option, desc,
     	    cb, ud), true);
 }
 
@@ -561,7 +557,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsIntOption(short_option, long_option, desc,
+    options.append(new WvArgsIntOption(short_option, long_option, desc,
     	    arg_desc, val), true);
 }
 
@@ -571,7 +567,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsLongOption(short_option, long_option, desc,
+    options.append(new WvArgsLongOption(short_option, long_option, desc,
     	    arg_desc, val), true);
 }
 
@@ -581,7 +577,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsFloatOption(short_option, long_option, desc,
+    options.append(new WvArgsFloatOption(short_option, long_option, desc,
     	    arg_desc, val), true);
 }
 
@@ -591,7 +587,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsDoubleOption(short_option, long_option, desc,
+    options.append(new WvArgsDoubleOption(short_option, long_option, desc,
     	    arg_desc, val), true);
 }
 
@@ -601,7 +597,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsStringOption(short_option, long_option, desc,
+    options.append(new WvArgsStringOption(short_option, long_option, desc,
     	    arg_desc, val), true);
 }
 
@@ -611,7 +607,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsStringListAppendOption(short_option, long_option, desc,
+    options.append(new WvArgsStringListAppendOption(short_option, long_option, desc,
     	    arg_desc, val), true);
 }
 
@@ -621,7 +617,7 @@ void WvArgs::add_option(char short_option, WvStringParm long_option,
     remove_option(short_option);
     remove_option(long_option);
 
-    options->append(new WvArgsArgCallbackOption(short_option, long_option, desc,
+    options.append(new WvArgsArgCallbackOption(short_option, long_option, desc,
     	    arg_desc, cb, ud), true);
 }
 
@@ -630,7 +626,7 @@ void WvArgs::remove_option(char short_option)
     if (short_option == 0)
         return;
 
-    WvArgsOptionVector::Iter i(*options);
+    WvArgsOptionVector::Iter i(options);
     for (i.rewind(); i.next(); )
     {
         if (i->short_option == short_option)
@@ -643,7 +639,7 @@ void WvArgs::remove_option(WvStringParm long_option)
     if (long_option == NULL)
         return;
 
-    WvArgsOptionVector::Iter i(*options);
+    WvArgsOptionVector::Iter i(options);
     for (i.rewind(); i.next(); )
     {
         if (i->long_option && (long_option == i->long_option))
@@ -653,8 +649,7 @@ void WvArgs::remove_option(WvStringParm long_option)
 
 void WvArgs::remove_all_options()
 {
-    delete options;
-    options = new WvArgsOptionVector();
+    options.zap();
 }
 
 void WvArgs::add_required_arg(WvStringParm desc)
