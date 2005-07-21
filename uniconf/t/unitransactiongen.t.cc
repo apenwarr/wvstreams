@@ -683,7 +683,7 @@ WVTEST_MAIN("bachelor generator")
 }
 
 
-#if 1 // BUGZID: 13167
+#if 0 // BUGZID: 13167
 static int callback_count;
 
 static void callback(const UniConf keyconf, const UniConfKey key)
@@ -706,8 +706,8 @@ WVTEST_MAIN("transaction and list interaction")
     UniTempGen *ini = new UniTempGen();
     UniTempGen *def = new UniTempGen();
     UniConfGenList *l = new UniConfGenList();
-    l->append(ini, false);
-    l->append(def, false);
+    l->append(ini, true);
+    l->append(def, true);
     UniListGen *cfg = new UniListGen(l);
 
     UniConfRoot uniconf;
@@ -723,7 +723,6 @@ WVTEST_MAIN("transaction and list interaction")
     watches.add(uni["cfg/a/b"], &callback);
 
     (void)UniConfRoot("ini:tmp.ini").copy(uni["/ini"], true);
-    uni.commit();
 
     WVPASSEQ(uni.xget("/ini/a/b"), "c");
     WVPASSEQ(uni.xget("/cfg/a/b"), "c");
