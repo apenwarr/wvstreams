@@ -683,6 +683,37 @@ WVTEST_MAIN("bachelor generator")
 }
 
 
+// this reproduces a really convoluted crash caused by nested generators
+// when commit() on the outer generator creates an iterator on a subtree
+// of the inner generator, and then that subtree gets deleted while the
+// iterator still exists.  Nowadays this crash shouldn't be around anymore,
+// because UniTransactionGen returns only "safe" iterators that can handle
+// changes to the underlying data structure during their existence.
+WVTEST_MAIN("nested transaction commit/replace")
+{
+    UniConfRoot root("temp:");
+    UniTransaction t1(root);
+    UniTransaction t2(t1);
+    
+    t1[5].remove();
+    t1[5].xset(6, "hello");
+    
+    t2[5].remove();
+    t2[5].xset(6, "yank");
+    t2[5][6].remove();
+    WVPASSEQ(t2[5].xget(6), NULL);
+    WVPASSEQ(t1[5].xget(6), "hello");
+    
+    WVPASS("committing");
+    t2.commit();
+    WVPASS("commit done");
+    
+    WVPASSEQ(t1[6].xget(6), NULL);
+    
+    WVPASS("didn't crash");
+}
+
+
 #if 1 // BUGZID: 13167
 static int callback_count;
 

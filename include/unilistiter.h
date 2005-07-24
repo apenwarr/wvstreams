@@ -63,7 +63,26 @@ class UniListIter : public UniConfGen::Iter
 public:
     UniListIter(IUniConfGen *_gen);
     
+    /**
+     * Add a key/value pair to the list that gets returned by this iterator.
+     * If v is 'noval' (the default), the value of the returned item is
+     * retrieved by calling get(k).  Otherwise the value is v.
+     * 
+     * This function should only be called by the creator of the iterator,
+     * not the end user.
+     */
     void add(WvStringParm k, WvStringParm v = noval);
+    
+    /**
+     * Automatically fill the contents of this iterator by calling add()
+     * for each element of the 'source' iterator.  This is handy if the
+     * source iterator might be unsafe (eg. can't handle set() type
+     * operations on the generator without restarting the iteration).
+     * 
+     * This function should only be called by the creator of the iterator,
+     * not the end user.
+     */
+    void autofill(IUniConfGen::Iter *source);
 
     /***** Overridden members *****/
     virtual void rewind();

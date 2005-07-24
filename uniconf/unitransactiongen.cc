@@ -1,5 +1,6 @@
 #include "unitransactiongen.h"
 #include "uniconftree.h"
+#include "unilistiter.h"
 #include "wvmoniker.h"
 
 // If 'obj' is an IUniConfGen, then we build the UniTransactionGen around
@@ -80,7 +81,15 @@ class GenStyleValueTreeIter : public UniConfGen::Iter
 {
 public:
     GenStyleValueTreeIter(UniConfValueTree *node)
-	: i(*node) {}
+	: i(*node)
+    {
+	// printf("GenStyleValueTreeIter\n");
+    }
+    
+    ~GenStyleValueTreeIter()
+    {
+	// printf("~GenStyleValueTreeIter\n");
+    }
 
     void rewind() { i.rewind(); }
     bool next() { return i.next(); }
@@ -103,10 +112,14 @@ public:
 			   const UniConfKey &_section,
 			   IUniConfGen *_base)
 	: root(_root), section(_section), base(_base),
-	  doing_i1(true), i1(*root), i2(base->iterator(section)) {}
+	  doing_i1(true), i1(*root), i2(base->iterator(section))
+    {
+	// printf("GenStyleChangeTreeIter(%s)\n", WvString(section).cstr());
+    }
 
     ~GenStyleChangeTreeIter()
     {
+	// printf("~GenStyleChangeTreeIter(%s)\n", WvString(section).cstr());
 	if (i2) delete i2;
     }
 
@@ -321,14 +334,26 @@ UniConfGen::Iter *UniTransactionGen::iterator(const UniConfKey &key)
 		UniConfValueTree *subnode = node->newtree->find(
 		    key.last(key.numsegments() - seg));
 		if (subnode)
-		    return new GenStyleValueTreeIter(subnode);
+		{
+		    UniConfGen::Iter *i = new GenStyleValueTreeIter(subnode);
+		    UniListIter *i2 = new UniListIter(this);
+		    i2->autofill(i);
+		    delete i;
+		    return i2;
+		}
 	    }
 	    return new UniConfGen::NullIter();
 	}
 	else if (seg == key.numsegments())
+	{
 	    // Else if this is the last node, then iterate over its direct
 	    // children.
-	    return new GenStyleChangeTreeIter(node, key, base);
+	    UniConfGen::Iter *i = new GenStyleChangeTreeIter(node, key, base);
+	    UniListIter *i2 = new UniListIter(this);
+	    i2->autofill(i);
+	    delete i;
+	    return i2;
+	}
     }
 }
 
@@ -650,6 +675,7 @@ UniConfValueTree *UniTransactionGen::set_value(UniConfValueTree *node,
 					       int seg,
 					       WvStringParm value)
 {
+    // printf("set_value('%s', %d)\n", WvString(key).cstr(), value.isnull());
     if (value.isnull())
     {
 	// Delete the key if it exists.
@@ -665,6 +691,7 @@ UniConfValueTree *UniTransactionGen::set_value(UniConfValueTree *node,
 		    UniConfValueTree::Visitor(
 			this, &UniTransactionGen::deletion_visitor),
 		    (void *)&data, false, true);
+		// printf("DELETE SUBNODE!\n");
 		delete subnode;
 		unhold_delta();
 		return subnode == node ? NULL : node;
@@ -723,6 +750,9 @@ UniConfChangeTree *UniTransactionGen::set_change(UniConfChangeTree *node,
 						 int seg,
 						 WvStringParm value)
 {
+    // printf("set_change(key=%s,mode=%d) = '%s'\n",
+    //        WvString(key).cstr(), node ? node->mode : 999, value.cstr());
+    
     // Switch to create_change() if we ever can't find the next node,
     // and switch to set_value() if we ever find a NEWTREE.
     if (!node)
