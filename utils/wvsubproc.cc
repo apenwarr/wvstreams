@@ -324,12 +324,17 @@ void WvSubProc::wait(time_t msec_delay, bool wait_children)
 	    // descendants.  We have to "kill" with a zero signal instead
 	    // to try to detect whether they've died or not.
 	    dead_pid = waitpid(pid, &status, (msec_delay >= 0) ? WNOHANG : 0);
+                
+            // This will happen if we get straced... so check whether it's
+            // really dead; if so, kill will set errno to ESRCH
+            if (dead_pid < 0 && errno == ECHILD) 
+                ::kill(pid, 0);
 	
 	    //fprintf(stderr, "%ld: dead_pid=%d; pid=%d\n",
 	    //	msecdiff(tv2, tv1), dead_pid, pid);
 	    
 	    if (dead_pid == pid 
-		|| (dead_pid < 0 && (errno == ECHILD || errno == ESRCH)))
+		|| (dead_pid < 0 && errno == ESRCH))
 	    {
 		// the main process is dead - save its status.
 		estatus = status;
