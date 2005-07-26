@@ -329,7 +329,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$enable_debug" != "no"; then
-    AC_DEFINE_UNQUOTED(VER_STRING_EXTRA, [" (`whoami`@`hostname`)"], [Extra version string.])
+    AC_DEFINE_UNQUOTED(VER_STRING_EXTRA, [" (`whoami`@`hostname`$VER_STRING_EXTRA)"], [Extra version string.])
 fi
 
 # exceptions
