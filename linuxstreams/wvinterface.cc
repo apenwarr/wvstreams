@@ -122,6 +122,7 @@ const WvIPNet &WvInterface::ipaddr()
     {
         ifr.ifr_addr.sa_family = AF_INET;
         ifr2.ifr_netmask.sa_family = AF_INET;
+
         if (req(SIOCGIFADDR, &ifr) || req(SIOCGIFNETMASK, &ifr2))
             my_ipaddr = new WvIPNet();
         else
@@ -179,10 +180,131 @@ void WvInterface::up(bool enable)
     rescan();
 }
 
+void WvInterface::force_link_speed(int speed) {
+    // Options:  
+    // 1 = 100full
+    // 2 = 100half
+    // 3 = 10full
+    // 4 = 10half
+
+    err(WvLog::Info, "Setting linkspeed on %s\n");
+    
+    if (speed == 0)
+        return;
+    
+    struct ifreq ifr;
+    int newioctl = supports_new_mii_ioctl(&ifr); 
+   
+    if (newioctl < 0)
+        return; // We cant set the speed if it doesnt support MII
+
+    //SIOCSMIIREG: set MII register 
+    int ioctlnum = newioctl ? 0x8949 : SIOCDEVPRIVATE+2;
+    
+    int reg0val = 0; // Default: 10 mb / half duplex
+    int hundredmb = 0x2000;
+    int fullduplex = 0x0100;
+   
+    if (speed <= 2) // hundred mb
+        reg0val |= hundredmb;
+    if ((speed % 2) != 0) // full duplex 
+        reg0val |= fullduplex;
+   
+    u_int16_t *data = (u_int16_t *)(&ifr.ifr_data);
+    data[1] = 0;  // We want to set Basic Mode Control Register (reg 0)
+    data[2] = reg0val;
+
+    req(ioctlnum, &ifr);
+}
+
 
 bool WvInterface::isup()
 {
-    return (valid && (getflags() & IFF_UP)) ? 1 : 0;
+    bool oldretval = (valid && (getflags() & IFF_UP)) ? 1 : 0;
+
+    if (!(strncmp(name, "eth", 3) == 0))
+        return oldretval;
+    
+    struct ifreq ifr;
+    int newnum = supports_new_mii_ioctl(&ifr);
+    if (newnum < 0)
+        return oldretval;
+    
+    int mii_status = if_up(&ifr, newnum);
+    
+    if (mii_status < 0) // Failed to get MII Status
+        return oldretval;
+    
+    return (mii_status && oldretval); // True iff physical link is up
+                                    // And "administrative status"
+                                    // of link == UP
+}
+
+
+int WvInterface::supports_new_mii_ioctl(struct ifreq *ifr) {
+    
+    if (!(strncmp(name, "eth", 3) == 0)) // This isnt going to support MII
+        return -1;
+    
+    u_int16_t *data = (u_int16_t *)(&ifr->ifr_data);
+    data[0] = 0;
+    
+    //strncpy(ifr->ifr_name, name, IFNAMSIZ);
+    //
+    
+    strncpy(ifr->ifr_name, name, IFNAMSIZ-1);
+    ifr->ifr_name[IFNAMSIZ-1] = 0;
+        
+    
+    if(req(0x8947, ifr) >= 0) 
+    {
+        //err(WvLog::Info, "Interface %s supports NEW mii ioctl\n", name);
+        return 1;
+    } else if (req(SIOCDEVPRIVATE, ifr) >= 0) 
+    {
+        //err(WvLog::Info, "Interface %s supports OLD mii ioctl\n", name);
+        return 0;
+    } else 
+    {
+        //err(WvLog::Info, "Interface %s doesn't support MII\n", name);
+        return -1;
+    }
+}
+
+bool WvInterface::supports_mii() {
+    struct ifreq ifr;
+    if (supports_new_mii_ioctl(&ifr) >= 0)
+        return 1;
+    return 0;
+}
+
+int WvInterface::if_up(struct ifreq *ifr, bool newnums) {
+    u_int16_t *data = (u_int16_t *)(&ifr->ifr_data);
+    data[1] = 1; // We want to read the basic mode status register 0x01
+    //unsigned short uszero = 0;
+    //data[3] = uszero;
+    
+    int ioctlnum = newnums ? 0x8948 : SIOCDEVPRIVATE+1;
+    
+    if (req(ioctlnum, ifr) < 0) 
+    {
+        err(WvLog::Debug4, "SIOCGMIIREG failed on %s\n", name);
+        return -1; //SIOCGMIIREG failed
+    }
+    
+    unsigned short status = data[3];
+
+    if (status == 0xffff) 
+    {
+        err(WvLog::Debug4, "status == 0xffff for %s\n", name);
+        return 0;
+    } else if (status & 0x04) 
+    {
+        err(WvLog::Debug4, "status & 0x04 for %s\n", name);        
+        return 1;
+    }
+    err(WvLog::Debug4, "status !& 0x04 for %s\n", name);
+    return 0;
 }
 
 
@@ -283,7 +405,7 @@ int WvInterface::sethwaddr(const WvAddr &addr)
     sockaddr *saddr = addr.sockaddr();
     memcpy(& ifr.ifr_hwaddr, saddr, addr.sockaddr_len());
     delete saddr;
-
+    
     bool wasup = isup();
     if (wasup)
         up(false);
@@ -689,9 +811,9 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
+        
 	WvInterface &ifc(*i);
 	if (!ifc.valid) continue;
-	
 	if (ifc.ipaddr() == addr || ifc.ipaddr().base() == addr
 	  || ifc.ipaddr().broadcast() == addr)
 	    return true;
