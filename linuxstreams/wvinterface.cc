@@ -225,7 +225,7 @@ bool WvInterface::isup()
     if (!(strncmp(name, "eth", 3) == 0))
         return oldretval;
     
-    struct ifreq ifr;
+    struct ifreq ifr = {0};
     int newnum = supports_new_mii_ioctl(&ifr);
     if (newnum < 0)
         return oldretval;
