@@ -2,8 +2,6 @@
 #include "wvtcp.h"
 #include "wvistreamlist.h"
 
-#define BASEPORT	11223
-
 static void lcallback(WvStream&, void *userdata)
 {
     WvTCPListener *l = (WvTCPListener *)userdata;
@@ -13,7 +11,7 @@ static void lcallback(WvStream&, void *userdata)
 
 WVTEST_MAIN("tcp establish connection")
 {
-    int port = BASEPORT + getpid();
+    int port = 0;
 
     WvString laddrstr("0.0.0.0:%s", port);
     WvIPPortAddr laddr(laddrstr);
@@ -25,12 +23,23 @@ WVTEST_MAIN("tcp establish connection")
 
     WVPASS(l.isok());
 
+    if (!l.isok())
+	wvcon->print("Error was: %s\n", l.errstr());
+
+    // get port we actually bound to
+    port = l.src()->port;
+
+    printf("Using port %d\n", port);
+
     WvString caddrstr("127.0.0.1:%s", port);
     WvIPPortAddr caddr(caddrstr);
     WvTCPConn c(caddr);
     WvIStreamList::globallist.append(&c, false);
 
     WVPASS(c.isok());
+
+    if (!c.isok())
+	wvcon->print("Error was: %s\n", c.errstr());
 
     WVPASS(c.select(0));
 }

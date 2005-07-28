@@ -6,7 +6,6 @@
 #include "wvsslstream.h"
 #include "wvcrypto.h"
 
-#define BASEPORT	11223
 #define MSG		"fubar"
 
 WvX509Mgr *x509;
@@ -45,7 +44,7 @@ WVTEST_MAIN("ssl establish connection")
 {
     WvIStreamList::globallist.zap();
 
-    int port = BASEPORT + getpid();
+    int port = 0;
 
     char hname[32];
     char dname[128];
@@ -68,6 +67,14 @@ WVTEST_MAIN("ssl establish connection")
 
     WVPASS(l.isok());
 
+    if (!l.isok())
+	wvcon->print("Error was: %s\n", l.errstr());
+
+    // get the port we actually bound to
+    port = l.src()->port;
+
+    printf("Using port %d\n", port);
+
     WvString caddrstr("127.0.0.1:%s", port);
     WvIPPortAddr caddr(caddrstr);
     WvTCPConn *c = new WvTCPConn(caddr);
@@ -76,6 +83,9 @@ WVTEST_MAIN("ssl establish connection")
     WvIStreamList::globallist.append(ssl, true);
 
     WVPASS(ssl->isok());
+
+    if (!ssl->isok())
+	wvcon->print("Error was: %s\n", ssl->errstr());
 
     // oh the humanity! i'm not wasting time making this do
     // something more sane though FIXME FIXME FIXME
