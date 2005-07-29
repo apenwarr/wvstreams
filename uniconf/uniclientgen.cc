@@ -352,7 +352,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 		{
 		    version = 0;
 		    sscanf(version_string, "%d", &version);
-		    log(WvLog::Info, "UniConf version %s.\n", version);
+		    log(WvLog::Debug3, "UniConf version %s.\n", version);
 		}
                 break;
             }
