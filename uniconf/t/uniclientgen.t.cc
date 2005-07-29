@@ -190,7 +190,7 @@ WVTEST_MAIN("commit")
         WVPASS(rv == child);
     }
 
-    //unlink(ini_file);
+    unlink(ini_file);
 }
 
 
@@ -257,6 +257,6 @@ WVTEST_MAIN("refresh")
         WVPASS(rv == child);
     }
 
-    //unlink(ini_file);
+    unlink(ini_file);
 }
 
