@@ -162,10 +162,12 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 
 #include <Windows.h>
 #include <stdio.h>
+#include <dbghelp.h>
 
 static void exception_desc(FILE *file, unsigned exception,
         unsigned data1, unsigned data2)
 {
+
     switch (exception)
     {
         case 0xC0000005:
@@ -203,25 +205,6 @@ static void exception_desc(FILE *file, unsigned exception,
 
 static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPointers )
 {
-#if 0
-    TCHAR * psz = GetFullPathToFaultrepDll()
-    if ( psz )
-    {
-        HMODULE hFaultRepDll = LoadLibrary( psz ) ;
-        if ( hFaultRepDll )
-        {
-            pfn_REPORTFAULT pfn = (pfn_REPORTFAULT)GetProcAddress( hFaultRepDll,
-                    _T("ReportFault") ) ;
-
-            if ( pfn )
-            {
-                EFaultRepRetVal rc = pfn( pExceptionPointers, 0) ;
-                lRet = EXCEPTION_EXECUTE_HANDLER;
-            }
-            FreeLibrary(hFaultRepDll );
-        }
-    }
-#endif
     struct ExceptionInfo
     {
         unsigned exception;
@@ -242,26 +225,31 @@ static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPoint
         return EXCEPTION_CONTINUE_SEARCH;
     }
     
+    HANDLE hProcess = GetCurrentProcess();
+    SymInitialize(hProcess, NULL, TRUE);
+    DWORD disp = 0;
+    PIMAGEHLP_LINE64 line = new IMAGEHLP_LINE64;
+    memset(line, 0, sizeof(IMAGEHLP_LINE64));
+    line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+    if (!SymGetLineFromAddr64(hProcess, (DWORD64)info->ip, &disp, line))
+    {
+        delete line;
+        line = 0;
+    }
+    
     fprintf(stderr, "--------------------------------------------------------\n");
     fprintf(stderr, "Exception 0x%08X:\n  ", info->exception);
     exception_desc(stderr, info->exception, info->data1, info->data2);
     fprintf(stderr, "\n  at instruction 0x%08X\n", info->ip);
+    if (line)
+        fprintf(stderr, "  source file: %s line %d\n", line->FileName, line->LineNumber);
+    else
+        fprintf(stderr, "  could not determine the source file and line number.\n");
     fprintf(stderr, "--------------------------------------------------------\n");
 
-#if 0
-    int i;
-    for (i=0; i<1; ++i)
-    {
-        int *p = (int *)pExceptionPointers;
-        fprintf(stderr, "pep[%d] = 0x%08X\n", i, p[i]);
-        int j;
-        for (j=0; j<8; ++j)
-        {
-            int *q = *(int **)p;
-            fprintf(stderr, "  pep[%d][%d] = 0x%08X\n", i, j, q[j]);
-        }
-    }
-#endif
+    if (line)
+        delete line;
+    SymCleanup(hProcess);
                 
     return EXCEPTION_EXECUTE_HANDLER;
 }
