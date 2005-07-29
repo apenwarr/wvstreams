@@ -64,13 +64,6 @@ public:
 
     /** set the interface state up or down. */
     bool isup();
-
-    // MII Features
-    void force_link_speed(int speed);
-    int supports_new_mii_ioctl(struct ifreq *ifr);
-    bool supports_mii();
-    int if_up(struct ifreq *ifr, bool newnums);
-
     void up(bool enable);
 
     /** turn promiscuous (see-all-packets) mode on or off. */
