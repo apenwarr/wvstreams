@@ -26,9 +26,6 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
 	return 2;
     }
     
-    WvString allnasties(WVTCL_ALWAYS_NASTY);
-    allnasties.append(nasties);
-    
     bool backslashify = false, inescape = false;
     int len = 0, unprintables = 0, bracecount = 0;
     const char *cptr, *cptr_end = s + s_len;
@@ -49,7 +46,7 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
 	if (bracecount < 0)
 	    backslashify = true;
 	
-	if (strchr(allnasties.cstr(), *cptr))
+	if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
 	    unprintables++;
 
 	if (*cptr == '\\')
@@ -75,7 +72,10 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
             len = 0;
             for (cptr = s; cptr != cptr_end; ++cptr)
             {
-                if (strchr(allnasties, *cptr)) dst[len++] = '\\';
+                if (strchr(WVTCL_ALWAYS_NASTY, *cptr)
+                                            || strchr(nasties, *cptr))
+                    dst[len++] = '\\';
+
                 dst[len++] = *cptr;
             }
             return len;
