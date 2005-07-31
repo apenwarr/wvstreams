@@ -37,7 +37,7 @@ public:
      * is optional for a client, and mandatory for a server.  You need to
      * keep the X509 object around for the entire life of this object!
      */
-    WvSSLStream(IWvStream *_slave, WvX509Mgr *x509 = NULL, 
+    WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509 = NULL, 
     		WvSSLValidateCallback _vcb = 0, bool _is_server = false);
     
     /** Cleans up everything (calls close + frees up the SSL Objects used) */
@@ -52,6 +52,8 @@ public:
     virtual void nowrite();
     
 protected:
+    WvX509Mgr *x509;
+    
     /** SSL Context - used to create SSL Object */
     SSL_CTX *ctx;
     
