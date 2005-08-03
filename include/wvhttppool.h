@@ -145,6 +145,7 @@ class WvHttpStream : public WvUrlStream
 public:
     static bool global_enable_pipelining;
     bool enable_pipelining;
+    bool sure;
     
 private:
     int pipeline_test_count;
@@ -187,6 +188,7 @@ class WvFtpStream : public WvUrlStream
     WvString password;
     WvTCPConn *data;
     time_t last_request_time;
+    bool sure;
 
     virtual void doneurl();
     virtual void request_next();
@@ -224,6 +226,7 @@ class WvHttpPool : public WvIStreamList
     WvUrlStreamDict conns;
     WvUrlRequestList urls;
     int num_streams_created;
+    bool sure;
     
     WvIPPortAddrTable pipeline_incompatible;
     
@@ -232,6 +235,7 @@ public:
     virtual ~WvHttpPool();
     
     virtual bool pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     virtual void execute();
     
     WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _method = "GET",

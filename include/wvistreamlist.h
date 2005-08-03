@@ -38,6 +38,7 @@ protected:
 
 private:
     bool in_select;
+    bool dead_stream;
 
 #ifndef _WIN32
     static void onfork(pid_t p);

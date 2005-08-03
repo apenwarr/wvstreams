@@ -27,7 +27,7 @@
 WvIStreamList WvIStreamList::globallist;
 
 WvIStreamList::WvIStreamList():
-    in_select(false)
+    in_select(false), dead_stream(false)
 {
     readcb = writecb = exceptcb = 0;
     auto_prune = true;
@@ -76,6 +76,8 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     //BoolGuard guard(in_select);
     bool already_sure = false;
     SelectRequest oldwant;
+
+    dead_stream = false;
     
     sure_thing.zap();
     
@@ -94,6 +96,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 
 	if (!s.isok())
 	{
+	    dead_stream = true;
 	    already_sure = true;
 	    if (auto_prune)
 		i.xunlink();
@@ -103,6 +106,10 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	{
 	    // printf("pre_select sure_thing: '%s'\n", i.link->id);
 	    sure_thing.append(&s, false, i.link->id);
+	    if (si.msec_timeout != 0)
+		fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), &s,
+			i.link->id);
+	    assert(si.msec_timeout == 0);
 	}
     }
 
@@ -110,6 +117,10 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	si.msec_timeout = alarmleft;
     
     si.wants = oldwant;
+
+    if (already_sure)
+	si.msec_timeout = 0;
+
     return already_sure || !sure_thing.isempty();
 }
 
@@ -117,9 +128,11 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 bool WvIStreamList::post_select(SelectInfo &si)
 {
     //BoolGuard guard(in_select);
-    bool one_dead = false;
+    bool one_dead = dead_stream;
     SelectRequest oldwant = si.wants;
-    
+
+    dead_stream = false;
+
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
@@ -130,6 +143,16 @@ bool WvIStreamList::post_select(SelectInfo &si)
 	    {
 		sure_thing.unlink(&s); // don't add it twice!
 		sure_thing.append(&s, false, i.link->id);
+	    }
+	    else
+	    {
+		WvIStreamListBase::Iter j(sure_thing);
+		WvLink* link = j.find(&s);
+
+		if (link)
+		    fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), link->data, link->id);
+
+		assert(!link);
 	    }
 	}
 	else
