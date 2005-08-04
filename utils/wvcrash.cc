@@ -164,6 +164,102 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 #include <stdio.h>
 #include <dbghelp.h>
 
+inline char* last_part(char* in)
+{
+    int len = strlen(in);
+    char* tmp = in+len;
+    while (tmp > in)
+    {
+        if (*tmp == '/' || *tmp == '\\')
+            return tmp+1;
+        tmp--;
+    }
+    return in;
+}
+
+
+/**
+ * Call this with a thread context to get a nice callstack.  You can get a 
+ * thread context either from an exception or by using this code:
+ *   CONTEXT ctx;
+ *   memset(&ctx, 0, sizeof(CONTEXT));
+ *   ctx.ContextFlags = CONTEXT_FULL;
+ *   GetThreadContext(hThread, &ctx);
+ */
+int backtrace(CONTEXT &ctx)
+{
+    HANDLE hProcess = (HANDLE)GetCurrentProcess();
+    HANDLE hThread = (HANDLE)GetCurrentThread();
+
+    SymInitialize(hProcess, NULL, TRUE);
+
+    STACKFRAME64 sf64;
+    memset(&sf64, 0, sizeof(STACKFRAME64));
+
+    sf64.AddrPC.Offset = ctx.Eip;
+    sf64.AddrPC.Mode = AddrModeFlat;
+    sf64.AddrFrame.Offset = ctx.Ebp;
+    sf64.AddrFrame.Mode = AddrModeFlat;
+    sf64.AddrStack.Offset = ctx.Esp;
+    sf64.AddrStack.Mode = AddrModeFlat;
+    sf64.AddrBStore.Offset = ctx.Ebp;
+    sf64.AddrBStore.Mode = AddrModeFlat;
+
+    fprintf(stderr, "Generating stack trace......\n");
+    fprintf(stderr, "%3s  %16s:%-10s %32s:%3s %s\n", "Num", "Module", "Addr", "Filename", "Line", "Function Name");
+    int i = 0;
+    while (StackWalk64(IMAGE_FILE_MACHINE_I386,
+        hProcess,
+        hThread,
+        &sf64,
+        &ctx,
+        NULL,
+        SymFunctionTableAccess64,
+        SymGetModuleBase64,
+        NULL))
+    {
+        if (sf64.AddrPC.Offset == 0)
+            break;
+
+        // info about module
+        IMAGEHLP_MODULE64 modinfo;
+        memset(&modinfo, 0, sizeof(IMAGEHLP_MODULE64));
+        modinfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE64);
+        SymGetModuleInfo64(hProcess, sf64.AddrPC.Offset, &modinfo);
+
+        // get some symbols
+        BYTE buffer[1024];
+        DWORD64 disp = 0;
+        memset(buffer, 0, sizeof(buffer));
+        PSYMBOL_INFO sym = (PSYMBOL_INFO)buffer;
+        sym->SizeOfStruct = sizeof(SYMBOL_INFO);
+        sym->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO) + 1;
+        SymFromAddr(hProcess, sf64.AddrPC.Offset, &disp, sym);
+
+        // line numbers anyone?
+        IMAGEHLP_LINE64 line;
+        SymSetOptions(SYMOPT_LOAD_LINES);
+        DWORD disp2 = 0;
+        memset(&line, 0, sizeof(IMAGEHLP_LINE64));
+        line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+        SymGetLineFromAddr64(hProcess, sf64.AddrPC.Offset, &disp2, &line);
+
+        // output some info now then
+        fprintf(stderr, "%3d. %16s:0x%08X %32s:%-3d %s\n",
+                ++i,
+                modinfo.LoadedImageName[0]?modinfo.LoadedImageName:"unknown",
+                (DWORD)sf64.AddrPC.Offset,
+                (line.FileName && line.FileName[0])?last_part(line.FileName):"unknown",
+                (line.FileName && line.FileName[0])?line.LineNumber:0,
+                sym->Name[0]?sym->Name:"unknown");
+    }
+
+    SymCleanup(hProcess);
+
+    return 1;
+}
+
+
 static void exception_desc(FILE *file, unsigned exception,
         unsigned data1, unsigned data2)
 {
@@ -225,31 +321,13 @@ static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPoint
         return EXCEPTION_CONTINUE_SEARCH;
     }
     
-    HANDLE hProcess = GetCurrentProcess();
-    SymInitialize(hProcess, NULL, TRUE);
-    DWORD disp = 0;
-    PIMAGEHLP_LINE64 line = new IMAGEHLP_LINE64;
-    memset(line, 0, sizeof(IMAGEHLP_LINE64));
-    line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-    if (!SymGetLineFromAddr64(hProcess, (DWORD64)info->ip, &disp, line))
-    {
-        delete line;
-        line = 0;
-    }
-    
     fprintf(stderr, "--------------------------------------------------------\n");
     fprintf(stderr, "Exception 0x%08X:\n  ", info->exception);
     exception_desc(stderr, info->exception, info->data1, info->data2);
-    fprintf(stderr, "\n  at instruction 0x%08X\n", info->ip);
-    if (line)
-        fprintf(stderr, "  source file: %s line %d\n", line->FileName, line->LineNumber);
-    else
-        fprintf(stderr, "  could not determine the source file and line number.\n");
+    fprintf(stderr, "\n  at instruction 0x%08X in thread 0x%08X\n", info->ip, GetCurrentThreadId());
+    backtrace(*pExceptionPointers->ContextRecord);
     fprintf(stderr, "--------------------------------------------------------\n");
 
-    if (line)
-        delete line;
-    SymCleanup(hProcess);
                 
     return EXCEPTION_EXECUTE_HANDLER;
 }
