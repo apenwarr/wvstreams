@@ -12,6 +12,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/syscall.h>
+
+#ifndef WVCRASH_USE_SIGALTSTACK
+#define WVCRASH_USE_SIGALTSTACK 0
+#endif
 
 // FIXME: this file mostly only works in Linux
 #ifdef __linux
@@ -192,15 +200,48 @@ WvCrashCallback wvcrash_set_callback(WvCrashCallback _callback)
     return old_callback;
 }
 
+static void wvcrash_setup_alt_stack()
+{
+#if WVCRASH_USE_SIGALTSTACK
+    const size_t stack_size = 1048576; // wvstreams can be a pig
+    static char stack[stack_size];
+    stack_t ss;
+    
+    ss.ss_sp = stack;
+    ss.ss_flags = 0;
+    ss.ss_size = stack_size;
+    
+    if (ss.ss_sp == NULL || sigaltstack(&ss, NULL))
+        fprintf(stderr, "Failed to setup sigaltstack for wvcrash: %s\n",
+                strerror(errno)); 
+#endif //WVCRASH_USE_SIGALTSTACK
+}
+
 void wvcrash_add_signal(int sig)
 {
+#if WVCRASH_USE_SIGALTSTACK
+    struct sigaction act;
+    
+    act.sa_handler = wvcrash;
+    sigfillset(&act.sa_mask);
+    act.sa_flags = SA_ONSTACK | SA_RESTART;
+    act.sa_restorer = NULL;
+    
+    if (sigaction(sig, &act, NULL))
+        fprintf(stderr, "Failed to setup wvcrash handler for signal %d: %s\n",
+                sig, strerror(errno));
+#else //!WVCRASH_USE_SIGALTSTACK
     signal(sig, wvcrash);
+#endif //WVCRASH_USE_SIGALTSTACK
 }
 
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
     argv0 = _argv0;
     desc = _desc;
+    
+    wvcrash_setup_alt_stack();
+    
     wvcrash_add_signal(SIGSEGV);
     wvcrash_add_signal(SIGBUS);
     wvcrash_add_signal(SIGABRT);
