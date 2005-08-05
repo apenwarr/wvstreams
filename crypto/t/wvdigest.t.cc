@@ -47,3 +47,16 @@ WVTEST_MAIN("HMAC Test")
     delete sha1;
 }
 */
+
+WVTEST_MAIN("CRC32 Test")
+{
+    WvCrc32Digest crc32;
+    WvDynBuf inbuf, crc32buf;
+    inbuf.put("floogle", 7);
+    crc32.encode(inbuf, crc32buf);
+    crc32.finish(crc32buf);
+
+    WvString crc32str = WvHexEncoder().strflushbuf(crc32buf, true);
+
+    WVPASSEQ(crc32str, "cb130290");
+}
