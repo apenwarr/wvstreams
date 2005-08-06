@@ -123,7 +123,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     
     si.wants = oldwant;
 
-    if (already_sure)
+    if (already_sure || !sure_thing.isempty())
 	si.msec_timeout = 0;
 
     return already_sure || !sure_thing.isempty();
@@ -133,10 +133,14 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 bool WvIStreamList::post_select(SelectInfo &si)
 {
     //BoolGuard guard(in_select);
-    bool one_dead = dead_stream;
+    bool already_sure = dead_stream;
     SelectRequest oldwant = si.wants;
 
     dead_stream = false;
+
+    time_t alarmleft = alarm_remaining();
+    if (alarmleft == 0)
+	already_sure = true;
 
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
@@ -163,11 +167,11 @@ bool WvIStreamList::post_select(SelectInfo &si)
 	    }
 	}
 	else
-	    one_dead = true;
+	    already_sure = true;
     }
     
     si.wants = oldwant;
-    return one_dead || !sure_thing.isempty();
+    return already_sure || !sure_thing.isempty();
 }
 
 
