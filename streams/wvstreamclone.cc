@@ -206,6 +206,10 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	
 	si.wants = oldwant;
     }
+
+    if (result)
+	si.msec_timeout = 0;
+
     return result;
 }
 

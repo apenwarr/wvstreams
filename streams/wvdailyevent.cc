@@ -53,6 +53,10 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
     }
     bool ret = WvStream::pre_select(si) || need_reset;
     // printf("%p ret=%d msd=%d\n", this, ret, si.msec_timeout);
+
+    if (ret)
+	si.msec_timeout = 0;
+
     return ret;
 }
 
