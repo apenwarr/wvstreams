@@ -19,6 +19,8 @@
 # include <execinfo.h>
 #include <unistd.h>
 
+const char *wvcrash_last_words = NULL;
+
 static const char *argv0 = "UNKNOWN";
 static const char *desc = NULL;
 WvCrashCallback callback;
@@ -87,6 +89,13 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, "\n\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
+
+    if (wvcrash_last_words)
+    {
+	wr(fd, "\nLast words: ");
+	wr(fd, wvcrash_last_words);
+	wr(fd, "\n");
+    }
     
     if (pid > 0)
     {

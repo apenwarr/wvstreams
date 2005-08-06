@@ -17,4 +17,6 @@ void wvcrash(int sig);
 void wvcrash_add_signal(int sig);
 WvCrashCallback wvcrash_set_callback(WvCrashCallback callback);
 
+extern const char *wvcrash_last_words;
+
 #endif // __WVCRASH_H
