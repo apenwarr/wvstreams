@@ -63,7 +63,7 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
 
 bool WvDailyEvent::post_select(SelectInfo& si)
 {
-    return need_reset;
+    return WvStream::post_select(si) || need_reset;
 }
 
 
