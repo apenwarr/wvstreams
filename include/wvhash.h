@@ -13,6 +13,7 @@
 unsigned WvHash(WvStringParm s);
 unsigned WvHash(const char *s);
 unsigned WvHash(const int &i);
+unsigned WvHash(const void *p);
 
 
 // Default comparison function used by WvHashTable
