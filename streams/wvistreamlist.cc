@@ -7,6 +7,8 @@
  */
 #include "wvistreamlist.h"
 
+#include "wvcrash.h"
+
 #ifndef _WIN32
 #include "wvfork.h"
 #endif
@@ -107,9 +109,12 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	    // printf("pre_select sure_thing: '%s'\n", i.link->id);
 	    sure_thing.append(&s, false, i.link->id);
 	    if (si.msec_timeout != 0)
+	    {
 		fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), &s,
 			i.link->id);
-	    assert(si.msec_timeout == 0);
+		wvcrash_last_words = i.link->id;
+		abort();
+	    }
 	}
     }
 
@@ -150,9 +155,11 @@ bool WvIStreamList::post_select(SelectInfo &si)
 		WvLink* link = j.find(&s);
 
 		if (link)
+		{
 		    fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), link->data, link->id);
-
-		assert(!link);
+		    wvcrash_last_words = link->id;
+		    abort();
+		}
 	    }
 	}
 	else
