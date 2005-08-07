@@ -21,8 +21,12 @@ WVTEST_MAIN("WvCallbackList sanity")
     char jar[numcb];
     int count;
 
+    WVPASS(list.isempty());
+
     for (unsigned int i = 0; i < numcb; ++i)
 	list.add(testcb, &jar[i]);
+
+    WVPASS(!list.isempty());
 
     count = 0;
     list(count);
@@ -38,6 +42,8 @@ WVTEST_MAIN("WvCallbackList sanity")
 
     for (unsigned int i = 1; i < numcb; ++i)
 	list.del(&jar[i]);
+
+    WVPASS(list.isempty());
 
     count = 0;
     list(count);

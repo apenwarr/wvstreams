@@ -41,6 +41,10 @@ public:
 	assert(list.exists(cookie));
 	list.remove(cookie);
     }
+    bool isempty() const
+    {
+	return list.isempty();
+    }
     void operator()()
     {
 	WvMap<void*, InnerCallback>::Iter i(list);
