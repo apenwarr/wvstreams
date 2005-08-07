@@ -30,7 +30,7 @@ class UniConfValueTree;
  * When you call refresh(), all set() calls since the last commit() or
  * refresh() (or since creation if none) are discarded.
  *
- * WARNING!!!  Your calls to commit() and refresh() will propogate to
+ * WARNING!!!  Your calls to commit() and refresh() will propagate to
  * any upstream generators.  To prevent this, you will want to use a
  * UniBachelorGen.
  *
@@ -109,13 +109,13 @@ protected:
     IUniConfGen *base;
 
     /**
-     * A recursive helper functions for commit().
+     * A recursive helper function for commit().
      */
     void apply_changes(UniConfChangeTree *node,
 		       const UniConfKey &section);
 
     /**
-     * A recursive helper functions for apply_changes().
+     * A recursive helper function for apply_changes().
      */
     void apply_values(UniConfValueTree *newcontents,
 		      const UniConfKey &section);
