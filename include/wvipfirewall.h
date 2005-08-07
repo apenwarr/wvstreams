@@ -46,6 +46,17 @@ public:
 /** Class to handle Linux 2.4 IPTables */
 class WvIPFirewall : public IWvIPFirewall
 {
+    class FFwd
+    {
+    public:
+        WvIPPortAddr src;
+        WvIPPortAddr dst;
+        bool snat;
+
+        FFwd(const WvIPPortAddr &_src, const WvIPPortAddr &_dst, bool _snat) : src(_src), dst(_dst) 
+            { snat = _snat; } 
+    };
+    
     class Redir
     {
     public:
@@ -78,10 +89,12 @@ class WvIPFirewall : public IWvIPFirewall
 	    { dstport = _dstport; }
     };
 
+    DeclareWvList(FFwd);
     DeclareWvList(Redir);
     DeclareWvList(RedirAll);
     DeclareWvList(RedirPortRange);
 
+    FFwdList ffwds;
     RedirList redirs;
     RedirAllList redir_alls;
     RedirPortRangeList redir_port_ranges;
