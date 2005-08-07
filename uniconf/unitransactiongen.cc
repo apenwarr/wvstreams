@@ -209,7 +209,7 @@ UniTransactionGen::UniTransactionGen(IUniConfGen *_base)
     : root(NULL), base(_base)
 {
     base->add_callback(this,
-	UniConfGenCallback(this, &UniTransactionGen::gencallback), NULL);
+	UniConfGenCallback(this, &UniTransactionGen::gencallback));
 }
 
 UniTransactionGen::~UniTransactionGen()
@@ -523,8 +523,7 @@ void UniTransactionGen::cancel_changes(UniConfChangeTree *node,
 }
 
 void UniTransactionGen::gencallback(const UniConfKey &key,
-				    WvStringParm value,
-				    void *userdata)
+				    WvStringParm value)
 {
     UniConfChangeTree *node = root;
     for (int seg = 0;; node = node->findchild(key.segment(seg++)))

@@ -80,7 +80,7 @@ UniListGen::UniListGen(UniConfGenList *_l) : l(_l)
     UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next(); )
         i->add_callback(this, 
-		UniConfGenCallback(this, &UniListGen::gencallback), NULL);
+		UniConfGenCallback(this, &UniListGen::gencallback));
 }
 
 
@@ -175,7 +175,7 @@ bool UniListGen::isok()
 }
 
 
-void UniListGen::gencallback(const UniConfKey &key, WvStringParm value, void *userdata)
+void UniListGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
     delta(key, get(key));
 }

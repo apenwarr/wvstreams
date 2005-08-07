@@ -55,8 +55,7 @@ protected:
      * Called by first generator when a key changes.
      * The default implementation calls delta(key).
      */
-    virtual void gencallback(const UniConfKey &key, WvStringParm value, 
-                                void *userdata);
+    virtual void gencallback(const UniConfKey &key, WvStringParm value);
 };
 
 

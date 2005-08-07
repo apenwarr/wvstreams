@@ -136,8 +136,7 @@ protected:
      * The callback function for the underlying generator.
      */
     void gencallback(const UniConfKey &key,
-		     WvStringParm value,
-		     void *userdata);
+		     WvStringParm value);
 
     /**
      * Four functions to implement the functionality of set() so

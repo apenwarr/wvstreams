@@ -13,7 +13,7 @@ WV_LINK_TO(UniGenHack);
 UniConfRoot::UniConfRoot() : UniConf(this), watchroot(NULL)
 {
     mounts.add_callback(this, UniConfGenCallback(this,
-			  &UniConfRoot::gen_callback), NULL);
+			  &UniConfRoot::gen_callback));
 }
 
 
@@ -22,7 +22,7 @@ UniConfRoot::UniConfRoot(WvStringParm moniker, bool refresh)
 {
     mounts.mount("/", moniker, refresh);
     mounts.add_callback(this, UniConfGenCallback(this,
-			  &UniConfRoot::gen_callback), NULL);
+			  &UniConfRoot::gen_callback));
 }
 
 
@@ -31,7 +31,7 @@ UniConfRoot::UniConfRoot(UniConfGen *gen, bool refresh)
 {
     mounts.mountgen("/", gen, refresh);
     mounts.add_callback(this, UniConfGenCallback(this,
-			  &UniConfRoot::gen_callback), NULL);
+			  &UniConfRoot::gen_callback));
 }
 
 
@@ -175,8 +175,7 @@ void UniConfRoot::prune(UniWatchInfoTree *node)
 }
 
 
-void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value,
-                                   void *userdata)
+void UniConfRoot::gen_callback(const UniConfKey &key, WvStringParm value)
 {
     hold_delta();
     UniWatchInfoTree *node = & watchroot;

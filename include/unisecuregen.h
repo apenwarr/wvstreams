@@ -65,8 +65,7 @@ private:
     bool drilldown(const UniConfKey &key);
 
     /** Override gencallback to check for permissions before sending a delta */
-    virtual void gencallback(const UniConfKey &key, WvStringParm value,
-            void *userdata);
+    virtual void gencallback(const UniConfKey &key, WvStringParm value);
 };
 
 

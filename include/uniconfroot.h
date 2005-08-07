@@ -160,7 +160,7 @@ private:
     void prune(UniWatchInfoTree *node);
     
     /** Callback from UniMountTreeGen (FIXME: that's a lie.) */
-    void gen_callback(const UniConfKey &key, WvStringParm value, void *userdata);
+    void gen_callback(const UniConfKey &key, WvStringParm value);
 
 protected:
     friend class UniUnwrapGen;

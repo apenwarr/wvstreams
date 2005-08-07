@@ -70,9 +70,7 @@ void UniConfGen::flush_delta()
 
 void UniConfGen::dispatch_delta(const UniConfKey &key, WvStringParm value)
 {
-    WvList<CbInfo>::Iter i(cblist);
-    for (i.rewind(); i.next(); )
-	i->cb(key, value, i->userdata);
+    cblist(key, value);
 }
 
 
@@ -158,19 +156,15 @@ bool UniConfGen::isok()
 
 
 void UniConfGen::add_callback(void *cookie,
-			      const UniConfGenCallback &callback,
-			      void *userdata)
+			      const UniConfGenCallback &callback)
 {
-    cblist.append(new CbInfo(cookie, callback, userdata), true);
+    cblist.add(callback, cookie);
 }
 
 
 void UniConfGen::del_callback(void *cookie)
 {
-    WvList<CbInfo>::Iter i(cblist);
-    for (i.rewind(); i.next(); )
-	if (i->cookie == cookie)
-	    i.xunlink();
+    cblist.del(cookie);
 }
 
 

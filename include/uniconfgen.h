@@ -7,11 +7,9 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
-#include "uniconfkey.h"
 #include "wvcallback.h"
-#include "wvlinklist.h"
+#include "wvcallbacklist.h"
 #include "uniconfpair.h"
-#include "wvxplc.h"
 
 class UniConfGen;
 class UniListIter;
@@ -28,9 +26,8 @@ class UniListIter;
  * Parameters: gen, key, userdata
  *   gen - the externally visible generator whose key has changed
  *   key - the key that has changed
- *   userdata - the userdata supplied during setcallback
  */
-typedef WvCallback<void, const UniConfKey &, WvStringParm, void *> 
+typedef WvCallback<void, const UniConfKey &, WvStringParm> 
     UniConfGenCallback;
 
 /**
@@ -48,8 +45,7 @@ public:
     
     /** Adds a callback for change notification. */
     virtual void add_callback(void *cookie,
-			      const UniConfGenCallback &callback,
-			      void *userdata) = 0;
+			      const UniConfGenCallback &callback) = 0;
     
     /** Removes a callback for change notification. */
     virtual void del_callback(void *cookie) = 0;
@@ -207,17 +203,7 @@ class UniConfGen : public IUniConfGen
     // These fields are deliberately hidden to encourage use of the
     // special notification members
 
-    struct CbInfo
-    {
-	void *cookie;
-	UniConfGenCallback cb;
-	void *userdata;
-	
-	CbInfo(void *_cookie, const UniConfGenCallback &_cb, void *_userdata)
-	    : cb(_cb)
-	    { cookie = _cookie; userdata = _userdata; }
-    };
-    WvList<CbInfo> cblist;
+    WvCallbackList<UniConfGenCallback> cblist;
     int hold_nesting;
     UniConfPairList deltas;
     
@@ -236,8 +222,7 @@ public:
      * Must *not* be reimplemented by subclasses of UniConfGen.
      */
     virtual void add_callback(void *cookie, 
-			      const UniConfGenCallback &callback,
-			      void *userdata);
+			      const UniConfGenCallback &callback);
     virtual void del_callback(void *cookie);
     
     /**
