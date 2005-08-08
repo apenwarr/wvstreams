@@ -47,63 +47,63 @@ public:
     }
     void operator()()
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data();
     }
     void operator()(P1 p1)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1);
     }
     void operator()(P1 p1, P2 p2)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1, p2);
     }
     void operator()(P1 p1, P2 p2, P3 p3)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1, p2, p3);
     }
     void operator()(P1 p1, P2 p2, P3 p3, P4 p4)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1, p2, p3, p4);
     }
     void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1, p2, p3, p4, p5);
     }
     void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1, p2, p3, p4, p5, p6);
     }
     void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1, p2, p3, p4, p5, p6, p7);
     }
     void operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8)
     {
-	WvMap<void*, InnerCallback>::Iter i(list);
+	typename WvMap<void*, InnerCallback>::Iter i(list);
 
 	for (i.rewind(); i.next(); )
 	    i().data(p1, p2, p3, p4, p5, p6, p7, p8);
