@@ -30,6 +30,10 @@ class UniConfValueTree;
  * When you call refresh(), all set() calls since the last commit() or
  * refresh() (or since creation if none) are discarded.
  *
+ * WARNING!!!  Your calls to commit() and refresh() will propagate to
+ * any upstream generators.  To prevent this, you will want to use a
+ * UniBachelorGen.
+ *
  * When you use get(), exists(), haschildren(), iterator(), or
  * recursiveiterator(), the results that you get are equivalent to the results
  * that you would have gotten if you had called commit() and then used these
@@ -91,26 +95,27 @@ public:
 
     /***** Overridden methods *****/
     
-    WvString get(const UniConfKey &key);
-    void set(const UniConfKey &key, WvStringParm value);
-    void commit();
-    bool refresh();
-    Iter *iterator(const UniConfKey &key);
-    bool isok();
-    void flush_buffers();
+    virtual WvString get(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
+    virtual void commit();
+    virtual bool refresh();
+    virtual Iter *iterator(const UniConfKey &key);
+    virtual bool isok();
+    virtual void flush_buffers();
     
 protected:
     UniConfChangeTree *root;
     IUniConfGen *base;
 
     /**
-     * A recursive helper functions for commit().
+     * A recursive helper function for commit().
      */
     void apply_changes(UniConfChangeTree *node,
 		       const UniConfKey &section);
 
     /**
-     * A recursive helper functions for apply_changes().
+     * A recursive helper function for apply_changes().
      */
     void apply_values(UniConfValueTree *newcontents,
 		      const UniConfKey &section);
@@ -131,8 +136,7 @@ protected:
      * The callback function for the underlying generator.
      */
     void gencallback(const UniConfKey &key,
-		     WvStringParm value,
-		     void *userdata);
+		     WvStringParm value);
 
     /**
      * Four functions to implement the functionality of set() so

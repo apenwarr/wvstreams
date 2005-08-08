@@ -39,13 +39,12 @@ UniFastRegetGen::~UniFastRegetGen()
 }
 
 
-void UniFastRegetGen::gencallback(const UniConfKey &key, WvStringParm value,
-				  void *userdata)
+void UniFastRegetGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
     UniConfValueTree *t = tree->find(key);
     if (t) // never previously retrieved; don't cache it
 	t->setvalue(value);
-    UniFilterGen::gencallback(key, value, userdata);
+    UniFilterGen::gencallback(key, value);
 }
 
 

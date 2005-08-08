@@ -27,7 +27,7 @@ protected:
     UniConfKeyTable d;
     
 public:
-    IterIter(UniConfGenList::Iter &geniter, const UniConfKey &key);
+    IterIter(UniListGen *gen, const UniConfKey &key);
     virtual ~IterIter() { delete i; }
     
     virtual void rewind();
@@ -75,95 +75,123 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
  
 static WvMoniker<IUniConfGen> reg("list", creator);
 
-UniListGen::UniListGen(UniConfGenList *_l) : l(_l), i(*_l) 
+UniListGen::UniListGen(UniConfGenList *_l) : l(_l)
 {
-    i.rewind();
-    if (i.next())
-        i->setcallback(UniConfGenCallback(this, &UniListGen::gencallback), cbdata);
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+        i->add_callback(this, 
+		UniConfGenCallback(this, &UniListGen::gencallback));
 }
-    
+
+
+UniListGen::~UniListGen()
+{
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+        i->del_callback(this);
+    delete l;
+}
+
+
 void UniListGen::commit()
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
-        i().commit();
+        i->commit();
 }
+
 
 bool UniListGen::refresh()
 {
     bool result = true;
 
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
-        result = i().refresh() && result;
+        result = i->refresh() && result;
     return result;
 }
 
+
 WvString UniListGen::get(const UniConfKey &key)
 {
-    for (i.rewind(); i.next();)
-    {
-        if (i().exists(key))
-            return i().get(key);
-    }
-
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+        if (i->exists(key))
+            return i->get(key);
     return WvString::null;
 }
 
-//FIXME: We want to attemt to set only until we succeed, since we don't
-//       know if the set succeeds we assume the first generator is writeable
-//       (and therefore succeeds)
+
+// we try to set *all* our generators.  Read-only ones will ignore us.
 void UniListGen::set(const UniConfKey &key, WvStringParm value)
 {
-    i.rewind();
-    i.next();
-    i().set(key, value);
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+	i->set(key, value);
 }
+
+
+void UniListGen::setv(const UniConfPairList &pairs)
+{
+    UniConfGenList::Iter i(*l);
+    for (i.rewind(); i.next(); )
+	i->setv(pairs);
+}
+
 
 bool UniListGen::exists(const UniConfKey &key)
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
-        if (i().exists(key))
+        if (i->exists(key))
             return true;
     }
     return false;
 }
+
 
 bool UniListGen::haschildren(const UniConfKey &key)
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
-        if (i().haschildren(key))
+        if (i->haschildren(key))
             return true;
     }
     return false;
 }
 
+
 bool UniListGen::isok()
 {
+    UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next();)
     {
-        if (!i().isok())
+        if (!i->isok())
             return false;
     }
     return true;
 }
 
-void UniListGen::gencallback(const UniConfKey &key, WvStringParm value, void *userdata)
+
+void UniListGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
-    delta(key, value);
+    delta(key, get(key));
 }
+
 
 UniConfGen::Iter *UniListGen::iterator(const UniConfKey &key)
 {
-    return new IterIter(i, key);
+    return new IterIter(this, key);
 }
 
 
 /***** UniListGen::IterIter *****/
 
-UniListGen::IterIter::IterIter(UniConfGenList::Iter &geniter,
-    const UniConfKey &key)
+UniListGen::IterIter::IterIter(UniListGen *gen, const UniConfKey &key)
 {
+    UniConfGenList::Iter geniter(*gen->l);
     for (geniter.rewind(); geniter.next(); )
     {
 	Iter *it = geniter->iterator(key);
@@ -173,6 +201,7 @@ UniListGen::IterIter::IterIter(UniConfGenList::Iter &geniter,
 
     i = new IterList::Iter(l);
 }
+
 
 void UniListGen::IterIter::rewind()
 {
@@ -188,15 +217,13 @@ void UniListGen::IterIter::rewind()
 
 bool UniListGen::IterIter::next()
 {
-    //FIXME: There has to be a nicer way of stopping iterators from crashing 
-    //FIXME: than this if statement
     if (l.isempty())
         return false;
 
     if ((*i)->next())
     {
-        // When iterating, make sure each key value is only returned once (from
-        // the top item in the list)
+        // When iterating, make sure each key value is only returned once
+        // (from the top item in the list)
         if (!d[(*i)->key()])
         {
             d.add(new UniConfKey((*i)->key()), true);
@@ -210,19 +237,6 @@ bool UniListGen::IterIter::next()
         return false;
 
     return next();
-/*    
-    //iterative!
-    if (!l.isempty())
-        while (i->next())
-            while((*i)->next())
-                if (!d[(*i)->key()])
-                {
-                    d.add(new UniConfKey((*i)->key()), true);
-                    return true;
-                }
-
-    return false;
-*/
 }
 
 

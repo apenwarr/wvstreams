@@ -40,6 +40,8 @@ class UniClientGen : public UniConfGen
 
     static const int TIMEOUT = 60000; // command timeout in ms
 
+    int version; /*!< version number of the protocol */
+
 public:
     /**
      * Creates a generator which can communicate with a daemon using
@@ -59,6 +61,7 @@ public:
     virtual void commit(); 
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
     virtual bool haschildren(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
     virtual Iter *recursiveiterator(const UniConfKey &key);

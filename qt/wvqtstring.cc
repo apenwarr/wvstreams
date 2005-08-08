@@ -26,7 +26,7 @@ WvFastString::WvFastString(const QString &s)
 
 WvFastString::WvFastString(const QCString &s)
 {
-    fprintf(stderr, "ffqcs: '%s'\n", (const char *)s);
+//    fprintf(stderr, "ffqcs: '%s'\n", (const char *)s);
     
 #if 1
     link(&nullbuf, NULL);
@@ -56,7 +56,7 @@ WvString::WvString(const QString &s)
 
 WvString::WvString(const QCString &s)
 {
-    fprintf(stderr, "ssqcs: '%s'\n", (const char *)s);
+// fprintf(stderr, "ssqcs: '%s'\n", (const char *)s);
     
     link(&nullbuf, s);
     unique();

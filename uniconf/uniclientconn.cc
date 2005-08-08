@@ -11,12 +11,23 @@
 
 /***** UniClientConn *****/
 
+/* This table is _very_ important!!!
+ *
+ * With UniConf, we promise to never remove or modify the behaviour of
+ * any of the commands listed here.  If you want to modify anything,
+ * you'd better just add a new command instead.  We keep track of the
+ * version of the UniConf protocol by the number of commands supported
+ * by the server.
+ *
+ * @see UniClientConn::Commands
+ */
 const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     UniClientConn::NUM_COMMANDS] = {
     // requests
     { "noop", "noop: verify that the connection is active" },
     { "get", "get <key>: get the value of a key" },
     { "set", "set <key> <value>: sets the value of a key" },
+    { "setv", "setv <key> <value> ...: set multiple key-value pairs" },
     { "del", "del <key>: deletes the key" },
     { "subt", "subt <key> <recurse?>: enumerates the children of a key" },
     { "hchild", "hchild <key>: returns whether a key has children" },
@@ -24,7 +35,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "refresh", "refresh: refresh contents from disk" },
     { "quit", "quit: kills the session nicely" },
     { "help", "help: returns this help text" },
-    
+
     // command completion replies
     { "OK", "OK <payload>: reply on command success" },
     { "FAIL", "FAIL <payload>: reply on command failure" },
@@ -36,7 +47,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "TEXT", "TEXT <text>: intermediate reply of a text message" },
 
     // events
-    { "HELLO", "HELLO <message>: sent by server on connection" },
+    { "HELLO", "HELLO <version> <message>: sent by server on connection" },
     { "NOTICE", "NOTICE <key> <oldval> <newval>: forget key and its children" },
 };
 
@@ -44,7 +55,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
 UniClientConn::UniClientConn(IWvStream *_s, WvStringParm dst) :
     WvStreamClone(_s),
     log(WvString("UniConf to %s", dst.isnull() && _s->src() ? *_s->src() : WvString(dst)),
-    WvLog::Debug5), closed(false), payloadbuf("")
+    WvLog::Debug5), closed(false), version(-1), payloadbuf("")
 {
     log("Opened\n");
 }
@@ -105,23 +116,27 @@ void UniClientConn::writemsg(WvStringParm msg)
 
 UniClientConn::Command UniClientConn::readcmd()
 {
-    for (;;)
-    {
-        WvString msg(readmsg());
-        if (msg.isnull())
-            return NONE;
+    WvString buf;
+    return readcmd(buf);
+}
 
-        // extract command, leaving the remainder in payloadbuf
-        payloadbuf.reset(msg);
-        WvString cmd(readarg());
-        if (cmd.isnull())
-            return NONE;
+UniClientConn::Command UniClientConn::readcmd(WvString &command)
+{
+    WvString msg(readmsg());
+    if (msg.isnull())
+	return NONE;
 
-        for (int i = 0; i < NUM_COMMANDS; ++i)
-            if (strcasecmp(cmdinfos[i].name, cmd.cstr()) == 0)
-                return Command(i);
-        return INVALID;
-    }
+    // extract command, leaving the remainder in payloadbuf
+    payloadbuf.reset(msg);
+    command = readarg();
+
+    if (command.isnull())
+	return NONE;
+
+    for (int i = 0; i < NUM_COMMANDS; ++i)
+	if (strcasecmp(cmdinfos[i].name, command.cstr()) == 0)
+	    return Command(i);
+    return INVALID;
 }
 
 

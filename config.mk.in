@@ -21,6 +21,7 @@ PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_STRING=@PACKAGE_STRING@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
 PACKAGE_VERSION=@PACKAGE_VERSION@
+SO_VERSION=@SO_VERSION@
 
 target=@target@
 ARCH_SUBDIRS=@ARCH_SUBDIRS@
@@ -54,7 +55,6 @@ enable_warnings=@enable_warnings@
 enable_testgui=@enable_testgui@
 
 with_fam=@with_fam@
-with_fftw=@with_fftw@
 with_bdb=@with_bdb@
 with_qdbm=@with_qdbm@
 with_gtk=@with_gtk@
@@ -66,8 +66,6 @@ with_tcl=@with_tcl@
 with_swig=@with_swig@
 with_qt=@with_qt@
 with_telephony=@with_telephony@
-with_speex=@with_speex@
-with_vorbis=@with_vorbis@
 with_xplc=@with_xplc@
 with_zlib=@with_zlib@
 

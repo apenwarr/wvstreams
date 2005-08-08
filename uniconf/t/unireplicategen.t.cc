@@ -210,5 +210,7 @@ WVTEST_MAIN("retry:uniconfd")
     kill_and_harvest(uniconfd_pid);
 
     WVPASS(cfg["/key"].getme() == "value four");
+
+    unlink(uniconfd_ini);
 }
 

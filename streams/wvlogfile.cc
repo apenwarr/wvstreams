@@ -79,7 +79,7 @@ void WvLogFileBase::_make_prefix()
     char timestr[30];
     strftime(&timestr[0], 30, TIME_FORMAT, tmstamp);
 
-    prefix = WvString("%s: %s<%s>: ", timestr, appname(last_source),
+    prefix = WvString("%s: %s<%s>: ", timestr, last_source,
         loglevels[last_level]);
     prelen = prefix.len();
 }
@@ -171,10 +171,16 @@ void WvLogFile::start_log()
     pid_t forky = wvfork();
     if (!forky)
     {
-	// Child will Look for old logs and purge them
-	trim_old_logs(filename, base, keep_for);
+        // ForkTwiceSoTheStupidThingWorksRight
+        if (!wvfork())
+        {
+            // Child will Look for old logs and purge them
+            trim_old_logs(filename, base, keep_for);
+            _exit(0);
+        }
 	_exit(0);
     }
+    waitpid(forky, NULL, 0);
 #else
     // just do it in the foreground on Windows
     trim_old_logs(filename, base, keep_for);

@@ -77,11 +77,13 @@ static const char *pathstrip(const char *filename)
 }
 
 
-WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main)
+WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main,
+	       int _slowness)
 {
     idstr = pathstrip(_idstr);
     descr = _descr;
     main = _main;
+    slowness = _slowness;
     next = NULL;
     if (first)
 	last->next = this;
@@ -124,14 +126,22 @@ int WvTest::run_all(const char * const *prefixes)
     if (!getcwd(wd, sizeof(wd)))
 	strcpy(wd, ".");
     
+    const char *slowstr1 = getenv("WVTEST_MIN_SLOWNESS");
+    const char *slowstr2 = getenv("WVTEST_MAX_SLOWNESS");
+    int min_slowness = 0, max_slowness = 65535;
+    if (slowstr1) min_slowness = atoi(slowstr1);
+    if (slowstr2) max_slowness = atoi(slowstr2);
+    
     // there are lots of fflush() calls in here because stupid win32 doesn't
     // flush very often by itself.
     fails = runs = 0;
     for (WvTest *cur = first; cur; cur = cur->next)
     {
-	if (!prefixes
-	    || prefix_match(cur->idstr, prefixes)
-	    || prefix_match(cur->descr, prefixes))
+	if (cur->slowness <= max_slowness
+	    && cur->slowness >= min_slowness
+	    && (!prefixes
+		|| prefix_match(cur->idstr, prefixes)
+		|| prefix_match(cur->descr, prefixes)))
 	{
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    fflush(stdout);
@@ -203,13 +213,19 @@ void WvTest::check(bool cond)
     runs++;
     
     if (cond)
+    {
 	printf("ok\n");
+	fflush(stdout);
+    }
     else
     {
 	printf("FAILED\n");
+	fflush(stdout);
 	fails++;
+	
+	if (getenv("WVTEST_DIE_FAST"))
+	    abort();
     }
-    fflush(stdout);
 }
 
 

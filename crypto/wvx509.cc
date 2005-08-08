@@ -22,6 +22,10 @@
 #include <openssl/sha.h>
 #include <openssl/pkcs12.h>
 
+UUID_MAP_BEGIN(WvX509Mgr)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_END
+
 static int ssl_init_count = 0;
 
 namespace {
@@ -165,6 +169,8 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
 
 WvX509Mgr::~WvX509Mgr()
 {
+    debug("Deleting.\n");
+    
     if (rsa)
 	delete rsa;
 
@@ -1193,12 +1199,19 @@ WvString WvX509Mgr::get_extension(int nid)
 		else
 		{
 		    void *ext_data = NULL;
+#if OPENSSL_VERSION_NUMBER >= 0x0090800fL
+		    const unsigned char **ext_value_data;
+		    ext_value_data = (const_cast<const unsigned char **>
+				      (&ext->value->data));
+#else
+		    unsigned char **ext_value_data = &ext->value->data;
+#endif
 		    if (method->it) 
-			ext_data = ASN1_item_d2i(NULL, &ext->value->data, 
+			ext_data = ASN1_item_d2i(NULL, ext_value_data,
 						ext->value->length, 
 						ASN1_ITEM_ptr(method->it));
 		    else
-			ext_data = method->d2i(NULL, &ext->value->data, 
+			ext_data = method->d2i(NULL, ext_value_data,
 					      ext->value->length);
 		    
 		    if (method->i2s)

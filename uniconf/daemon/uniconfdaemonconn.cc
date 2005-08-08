@@ -17,7 +17,9 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root)
 {
     uses_continue_select = true;
     addcallback();
-    writecmd(EVENT_HELLO, wvtcl_escape("UniConf Server ready."));
+    writecmd(EVENT_HELLO,
+	     spacecat(wvtcl_escape("UniConf Server ready."),
+		      wvtcl_escape(UNICONF_PROTOCOL_VERSION)));
 }
 
 
@@ -51,8 +53,9 @@ void UniConfDaemonConn::delcallback()
 void UniConfDaemonConn::execute()
 {
     UniClientConn::execute();
-    
-    UniClientConn::Command command = readcmd();
+
+    WvString command_string;
+    UniClientConn::Command command = readcmd(command_string);
     if (command != UniClientConn::NONE)
     {
         // parse and execute command
@@ -64,7 +67,7 @@ void UniConfDaemonConn::execute()
 	    break;
 	    
 	case UniClientConn::INVALID:
-	    do_malformed();
+	    do_invalid(command_string);
 	    break;
             
 	case UniClientConn::REQ_NOOP:
@@ -73,35 +76,35 @@ void UniConfDaemonConn::execute()
 	    
 	case UniClientConn::REQ_GET:
 	    if (arg1.isnull())
-		do_malformed();
+		do_malformed(command);
 	    else
 		do_get(arg1);
 	    break;
             
 	case UniClientConn::REQ_SET:
 	    if (arg1.isnull() || arg2.isnull())
-		do_malformed();
+		do_malformed(command);
 	    else
 		do_set(arg1, arg2);
 	    break;
 	    
 	case UniClientConn::REQ_REMOVE:
 	    if (arg1.isnull())
-		do_malformed();
+		do_malformed(command);
 	    else
 		do_remove(arg1);
 	    break;
 	    
 	case UniClientConn::REQ_SUBTREE:
 	    if (arg1.isnull())
-		do_malformed();
+		do_malformed(command);
 	    else
 		do_subtree(arg1, arg2.num() == 1);
 	    break;
 	    
 	case UniClientConn::REQ_HASCHILDREN:
 	    if (arg1.isnull())
-		do_malformed();
+		do_malformed(command);
 	    else
 		do_haschildren(arg1);
 	    break;
@@ -123,16 +126,23 @@ void UniConfDaemonConn::execute()
 	    break;
 	    
 	default:
-	    do_malformed();
+	    do_invalid(command_string);
 	    break;
         }
     }
 }
 
 
-void UniConfDaemonConn::do_malformed()
+void UniConfDaemonConn::do_invalid(WvStringParm c)
 {
-    writefail("malformed request");
+    writefail(WvString("unknown command: %s", c));
+}
+
+
+void UniConfDaemonConn::do_malformed(UniClientConn::Command c)
+{
+    writefail(WvString("malformed request: %s",
+		       UniClientConn::cmdinfos[c].name));
 }
 
 
@@ -172,6 +182,8 @@ void UniConfDaemonConn::do_remove(const UniConfKey &key)
 
 void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 {
+    static int niceness = 0;
+    
     UniConf cfg(root[key]);
     if (cfg.exists())
     {
@@ -186,7 +198,11 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 		// entire daemon while fulfilling it; give up our timeslice
 		// after each entry.
 		if (!isok()) break;
-		continue_select(0);
+		if (++niceness > 100)
+		{
+		    niceness = 0;
+		    continue_select(0);
+		}
 	    }
 	}
 	else

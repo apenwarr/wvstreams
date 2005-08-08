@@ -43,7 +43,7 @@ static void sighup_handler(int signum)
 
 static void sigterm_handler(int signum)
 {
-    signal(signum, SIG_IGN);
+    signal(signum, SIG_DFL);
 
     WvDaemonList::Iter i(daemons);
     for (i.rewind(); i.next(); )
@@ -149,9 +149,7 @@ int WvDaemon::run(const char *argv0)
                 }
                 ::close(null_fd);
                 
-                _run(argv0);
-
-                exit(0); // Make sure destructors are called
+                return _run(argv0); // Make sure destructors are called
             }
 
             _exit(0);
@@ -190,7 +188,7 @@ int WvDaemon::_run(const char *argv0)
 #ifndef _WIN32
     wvcrash_setup(argv0);
 
-    if (!!pid_file)
+    if (!!pid_file && daemonize)
     {
         // FIXME: this is racy!
         
@@ -214,7 +212,7 @@ int WvDaemon::_run(const char *argv0)
         old_pid_fd.close();
 
         // Now write our new PID file
-        WvAtomicFile pid_fd(pid_file, 0666);
+        WvAtomicFile pid_fd(pid_file, O_WRONLY, 0600);
         pid_fd.print("%s\n", getpid());
         if (!pid_fd.isok())
             log(WvLog::Warning, "Failed to write PID file %s: %s\n",
@@ -222,8 +220,7 @@ int WvDaemon::_run(const char *argv0)
         pid_fd.close();
     }
 #endif
-    log(WvLog::Notice, "Starting\n");
-    log(WvLog::Info, "%s version %s\n", name, version);
+    log(WvLog::Notice, "Starting %s version %s.\n", name, version);
 
     daemons.append(this, false);
 
@@ -261,13 +258,13 @@ int WvDaemon::_run(const char *argv0)
         signal(SIGTERM, SIG_DFL);
     }
 #endif
-    log(WvLog::Notice, "Exiting\n");
+    log(WvLog::Notice, "Exiting with status %s\n", _exit_status);
 
 #ifndef _WIN32    
     if (!!pid_file)
         ::unlink(pid_file);
 #endif
 
-    return 0;
+    return _exit_status;
 }
 

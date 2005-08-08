@@ -53,7 +53,24 @@ public:
      * Defaults to 0, meaning no limit (empty the input buffer).
      */
     size_t out_limit;
-    
+
+    /**
+     * Continue decompression if errors are found.
+     * If true, upon running into a decompression error, the encoder will
+     * seek to the next unbroken block.  Most useful if at least some blocks
+     * are fully flushed (see 'full_flush' below).  Defaults to false.
+     */
+    bool ignore_decompression_errors;
+
+    /**
+     * Do full flushes.
+     * Makes the encoder use Z_FULL_FLUSH instead of Z_SYNC_FLUSH, which
+     * resets the compression state to improve chances of recovering
+     * corrupted compressed data.  Degrades compression, so don't use it too
+     * often.  Defaults to false.
+     */
+    bool full_flush;
+
 protected:
     virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf, bool flush);
     virtual bool _finish(WvBuf &outbuf);

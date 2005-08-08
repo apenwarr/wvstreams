@@ -135,3 +135,46 @@ WVTEST_MAIN("wvgzip trivial encode + decode x2")
     WVPASSEQ(uncomp.used(), 65536);
     WVPASS(gzencinf.isok());
 }
+
+
+WVTEST_MAIN("compression errors")
+{
+    WvDynBuf comp, uncomp;
+    WvGzipEncoder gzipdef(WvGzipEncoder::Deflate),
+                  gzipinf(WvGzipEncoder::Inflate);
+    gzipdef.full_flush = true;
+    gzipinf.ignore_decompression_errors = true;
+
+    char inbuf[101], outbuf[101];
+    srand(time(NULL));
+    for (int i = 0; i < 100; i++)
+        inbuf[i] = (rand() % 10) + 0x30;
+    inbuf[100] = '\0';
+
+    // Deflate data in two separate, fully flushed blocks.
+    uncomp.put(inbuf, 50);
+    gzipdef.encode(uncomp, comp, true);
+    uncomp.put(&inbuf[50], 50);
+    gzipdef.encode(uncomp, comp, true);
+    WVPASS(gzipdef.isok());
+
+    // Corrupting the first two bytes will result in completely broken
+    // data, so corrupt byte 3 to test partially recoverable data.
+    size_t comp_used = comp.used();
+    memcpy(outbuf, comp.get(comp_used), comp_used);
+    WVPASSEQ(comp.used(), 0);
+    outbuf[2] = '!';
+
+    comp.put(outbuf, comp_used);
+    gzipinf.encode(comp, uncomp, true, true);
+    WVPASS(gzipinf.isok());
+
+    size_t uncomp_used = uncomp.used();
+    memcpy(outbuf, uncomp.get(uncomp_used), uncomp_used);
+    outbuf[uncomp_used] = '\0';
+
+    // We should end up with just the second block completely decompressed
+    // with no errors.
+    WVPASSEQ(uncomp_used, 50);
+    WVPASSEQ(memcmp(&inbuf[50], outbuf, uncomp_used), 0);
+}

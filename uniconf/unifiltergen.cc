@@ -17,18 +17,20 @@ UniFilterGen::UniFilterGen(IUniConfGen *inner)
 
 UniFilterGen::~UniFilterGen()
 {
-    WVRELEASE(xinner);
+    IUniConfGen *gen = xinner;
+    setinner(NULL);
+    WVRELEASE(gen);
 }
 
 
 void UniFilterGen::setinner(IUniConfGen *inner)
 {
     if (xinner)
-        xinner->setcallback(UniConfGenCallback(), NULL);
+	xinner->del_callback(this);
     xinner = inner;
     if (xinner)
-        xinner->setcallback(UniConfGenCallback(this,
-            &UniFilterGen::gencallback), NULL);
+        xinner->add_callback(this, UniConfGenCallback(this,
+            &UniFilterGen::gencallback));
 }
 
 
@@ -91,6 +93,13 @@ void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
+void UniFilterGen::setv(const UniConfPairList &pairs)
+{
+    if (xinner)
+	xinner->setv(pairs);
+}
+
+
 bool UniFilterGen::exists(const UniConfKey &key)
 {
     if (xinner)
@@ -136,8 +145,7 @@ UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value,
-                               void *userdata)
+void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
     if (xinner)
         delta(reversekeymap(key), value);

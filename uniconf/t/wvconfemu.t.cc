@@ -163,25 +163,24 @@ WVTEST_MAIN("Multiple Generators mounted on the Uniconf")
 }
 #endif
 
+// emulate bug 9769
+class UniBuggyGen: public UniTempGen
+{
+public:
+    UniBuggyGen():
+	UniTempGen()
+    {
+    }
+    virtual bool exists(const UniConfKey &)
+    {
+	return false;
+    }
+};
+
 // see bug 9664 and bug 9769
 WVTEST_MAIN("UniRetryGen not ready")
 {
     UniConfRoot cfg("temp:");
-
-    // emulate bug 9769
-    class UniBuggyGen
-        : public UniTempGen
-    {
-    public:
-        UniBuggyGen()
-            : UniTempGen()
-            {
-            }
-        virtual bool exists(const UniConfKey &)
-            {
-                return false;
-            }
-    };
 
     cfg["foo"].setme("bar");
     cfg["retrygen"].mountgen(new UniBuggyGen());
@@ -339,6 +338,16 @@ WVTEST_MAIN("wvconfemu empty section")
                 ++num_items;
             }
         }
-        WVPASS(num_items == 1);
+
+        switch (pass)
+        {
+            case 0:
+                WVPASS(num_items == 1);
+                break;
+
+            case 1:
+                WVPASS(num_items == 0);
+                break;
+        }
     }
 }

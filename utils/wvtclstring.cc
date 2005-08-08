@@ -26,9 +26,6 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
 	return 2;
     }
     
-    WvString allnasties(WVTCL_ALWAYS_NASTY);
-    allnasties.append(nasties);
-    
     bool backslashify = false, inescape = false;
     int len = 0, unprintables = 0, bracecount = 0;
     const char *cptr, *cptr_end = s + s_len;
@@ -49,7 +46,7 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
 	if (bracecount < 0)
 	    backslashify = true;
 	
-	if (strchr(allnasties.cstr(), *cptr))
+	if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
 	    unprintables++;
 
 	if (*cptr == '\\')
@@ -75,7 +72,10 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
             len = 0;
             for (cptr = s; cptr != cptr_end; ++cptr)
             {
-                if (strchr(allnasties, *cptr)) dst[len++] = '\\';
+                if (strchr(WVTCL_ALWAYS_NASTY, *cptr)
+                                            || strchr(nasties, *cptr))
+                    dst[len++] = '\\';
+
                 dst[len++] = *cptr;
             }
             return len;
@@ -256,10 +256,15 @@ static size_t wvtcl_getword(char *dst, const char *s, size_t s_len,
 		// in order to prove that there's a next line somewhere
 		// in the buffer.  Otherwise we might stop parsing before
 		// we're "really" done if we're given input line-by-line.
+		// 
+		// A better way to do this would be for getword() to *never*
+		// return a string unless it contains a separator character;
+		// then we wouldn't need this weird special case.  But it
+		// don't work like that; we'll return the last word in the
+		// buffer even if it *doesn't* end in a separator character.
                 incontinuation = true;
 	    }
-            else
-                inescape = false;
+	    inescape = false;
         }
         else if (ch == '\\')
 	{
@@ -288,7 +293,7 @@ static size_t wvtcl_getword(char *dst, const char *s, size_t s_len,
 	    {
 		if (ch == '{')
 		    bracecount++;
-		else if (ch == '}')
+		else if (bracecount > 0 && ch == '}')
 		    bracecount--;
 	    }
 	}

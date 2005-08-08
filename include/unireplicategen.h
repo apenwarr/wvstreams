@@ -49,12 +49,13 @@ private:
     
 protected:
     void replicate(const UniConfKey &key = "/");
-    void deltacallback(const UniConfKey &key, WvStringParm value,
-                       void *userdata);
+    void deltacallback(Gen *src_gen, const UniConfKey &key,
+		       WvStringParm value);
 
 public:
     UniReplicateGen();
     UniReplicateGen(const IUniConfGenList &_gens, bool autofree = true);
+    virtual ~UniReplicateGen();
     
     void prepend(IUniConfGen *gen, bool autofree = true);
     void append(IUniConfGen *gen, bool autofree = true);
@@ -65,6 +66,7 @@ public:
     virtual bool refresh();
     virtual void flush_buffers() { }
     virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
     virtual WvString get(const UniConfKey &key);
     virtual Iter *iterator(const UniConfKey &key);
 };

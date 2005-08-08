@@ -74,12 +74,21 @@ UniReplicateGen::UniReplicateGen(const IUniConfGenList &_gens,
     	if (gen)
     	{
     	    gens.append(gen, true);
-            gen->gen->setcallback(UniConfGenCallback(this,
-            	&UniReplicateGen::deltacallback), gen);
+            gen->gen->add_callback(
+		this, WvBoundCallback<UniConfGenCallback, Gen*>(
+		    this, &UniReplicateGen::deltacallback, gen));
         }
     }
     
     replicate();
+}
+
+
+UniReplicateGen::~UniReplicateGen()
+{
+    GenList::Iter i(gens);
+    for (i.rewind(); i.next(); )
+	i->gen->del_callback(this);
 }
 
 
@@ -89,8 +98,9 @@ void UniReplicateGen::prepend(IUniConfGen *_gen, bool auto_free)
     if (gen)
     {
     	gens.prepend(gen, true);
-        gen->gen->setcallback(UniConfGenCallback(this,
-            &UniReplicateGen::deltacallback), gen);
+        gen->gen->add_callback(
+	    this, WvBoundCallback<UniConfGenCallback, Gen*>(
+		this, &UniReplicateGen::deltacallback, gen));
             
         replicate();
     }
@@ -103,8 +113,9 @@ void UniReplicateGen::append(IUniConfGen *_gen, bool auto_free)
     if (gen)
     {
     	gens.append(gen, true);
-        gen->gen->setcallback(UniConfGenCallback(this,
-            &UniReplicateGen::deltacallback), gen);
+        gen->gen->add_callback(
+	    this, WvBoundCallback<UniConfGenCallback, Gen*>(
+		this, &UniReplicateGen::deltacallback, gen));
             
         replicate();
     }
@@ -146,8 +157,8 @@ void UniReplicateGen::commit()
 }
 
 
-void UniReplicateGen::deltacallback(const UniConfKey &key, WvStringParm value,
-                                void *userdata)
+void UniReplicateGen::deltacallback(Gen *src_gen, const UniConfKey &key,
+				    WvStringParm value)
 {
     DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
             key.cstr(), value.cstr());
@@ -161,8 +172,6 @@ void UniReplicateGen::deltacallback(const UniConfKey &key, WvStringParm value,
 
     	processing_callback = true;
     	
-    	Gen *src_gen = static_cast<Gen *>(userdata);
-    
     	GenList::Iter j(gens);
     	for (j.rewind(); j.next(); )
     	{
@@ -200,6 +209,20 @@ void UniReplicateGen::set(const UniConfKey &key, WvStringParm value)
     	first->gen->set(key, value);
     else
     	DPRINTF("UniReplicateGen::set: first == NULL\n");
+}
+
+
+void UniReplicateGen::setv(const UniConfPairList &pairs)
+{
+    DPRINTF("UniReplicateGen::setv\n");
+
+    replicate_if_any_have_become_ok();
+
+    Gen *first = first_ok();
+    if (first)
+	first->gen->setv(pairs);
+    else
+	DPRINTF("UniReplicateGen::setv: first == NULL\n");
 }
 
 
@@ -291,7 +314,7 @@ void UniReplicateGen::replicate(const UniConfKey &key)
     	    if (j.ptr() == first)
     	    {
                 DPRINTF("UniReplicateGen::replicate: deltacallback()\n");
-    	    	deltacallback(i->key(), i->value(), first);
+    	    	deltacallback(first, i->key(), i->value());
     	    }
     	    else
     	    {

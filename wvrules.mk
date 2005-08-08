@@ -48,7 +48,6 @@ endif
 LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
 LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
-LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
@@ -134,9 +133,12 @@ xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
 default: all
 
 # default "test" rule does nothing...
-.PHONY: test runtests
+.PHONY: test runtests clean-valgrind
 test:
-runtests:
+runtests: clean-valgrind
+
+clean-valgrind:
+	@rm -f valgrind.log.pid*
 
 %/test:
 	$(MAKE) -C $(dir $@) test
@@ -267,6 +269,7 @@ define wvlink_ar
 	done; \
 	$(AR) s $1
 endef
+%.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
@@ -394,6 +397,7 @@ _wvclean:
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
+	@rm -f valgrind.log.pid*
 	@rm -f semantic.cache tags
 	@rm -rf debian/tmp
 
@@ -422,7 +426,7 @@ dist: dist-hook ChangeLog
 	@echo '--> Making dist in ../build/$(PKGDIR)...'
 	@test -d ../build || mkdir ../build
 	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
-	@find '../build/$(PKGDIR)' -name CVS -type d -print0 | xargs -0 rm -rf --
+	@find '../build/$(PKGDIR)' -name .svn -type d -print0 | xargs -0 rm -rf --
 	@find '../build/$(PKGDIR)' -name .cvsignore -type f -print0 | xargs -0 rm -f --
 	@$(MAKE) -C '../build/$(PKGDIR)' distclean
 	@rm -f '../build/$(PKGDIR).tar.gz'
@@ -430,9 +434,9 @@ dist: dist-hook ChangeLog
 	@echo '--> Created tarball in ../build/$(PKGDIR).tar.gz.'
 
 ChangeLog: FORCE
-	@echo '--> Generating ChangeLog from CVS...'
+	@echo '--> Generating ChangeLog from Subversion...'
 	@rm -f ChangeLog ChangeLog.bak
-	@cvs2cl --utc
+	@svn log --xml --verbose | xsltproc svn2cl.xsl - > ChangeLog
 
 #
 # Make 'tags' file using the ctags program - useful for editing

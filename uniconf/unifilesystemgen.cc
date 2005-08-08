@@ -1,243 +1,139 @@
 #include "unifilesystemgen.h"
-#include "uniconfkey.h"
+#include "wvfile.h"
+#include "wvdiriter.h"
+#include "wvfileutils.h"
+#include "wvmoniker.h"
+#include "wvlinkerhack.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <dirent.h>
-#include <errno.h>
-#include <string.h>
 
-// Don't make this too big; we put the whole thing on the stack.
-#define BYTES_PER_READ 2048
+WV_LINK(UniFileSystemGen);
 
-UniFileSystemGen::UniFileSystemGen(WvStringParm _dir, WvStringParm _file,
-				   mode_t _mode)
-    : dir(_dir), file(_file), mode(_mode)
+
+static IUniConfGen *creator(WvStringParm s, IObject *, void *)
 {
-    assert(0 && "The UniFileSystemGen is unfinished; please do not use it.");
+    return new UniFileSystemGen(s, 0777);
 }
+
+WvMoniker<IUniConfGen> UniFileSystemGenMoniker("fs", creator);
+
+
+UniFileSystemGen::UniFileSystemGen(WvStringParm _dir, mode_t _mode)
+    : dir(_dir), mode(_mode)
+{
+}
+
+
+static bool key_safe(const UniConfKey &key)
+{
+    UniConfKey::Iter i(key);
+    for (i.rewind(); i.next(); )
+    {
+	if (*i == "." || *i == ".." || *i == "")
+	    return false; // unsafe key segments
+    }
+    
+    // otherwise a safe filename
+    return true;
+}
+
 
 WvString UniFileSystemGen::get(const UniConfKey &key)
 {
-    WvString path(dir);
-    UniConfKey mykey(UniConfKey(file.cstr()), key);
-    while (!mykey.isempty())
+    WvString null;
+    
+    if (!key_safe(key))
+	return null;
+    
+    WvString path("%s/%s", dir, key);
+    
+    // WARNING: this code depends on the ability to open() a directory
+    // as long as we don't read it, because we want to fstat() it after.
+    WvFile file(path, O_RDONLY);
+    if (!file.isok())
+	return null; // unreadable; pretend it doesn't exist
+    
+    struct stat st;
+    if (fstat(file.getrfd(), &st) < 0)
+	return null; // openable but can't stat?  That's odd.
+
+    if (S_ISREG(st.st_mode))
     {
-	WvString seg(mykey.pop().printable());
-	if (seg == "." || seg == "..")
-	    return WvString();
-
-	path.append("/%s", seg);
+	WvDynBuf buf;
+	while (file.isok())
+	    file.read(buf, 4096);
+	if (file.geterr())
+	    return null;
+	else
+	    return buf.getstr();
     }
-
-    struct stat buf;
-    if (stat(path.cstr(), &buf) == -1)
-	// Fail.
-	return WvString();
-
-    if (S_ISREG(buf.st_mode))
-    {
-	// We actually just keep reading until end of file instead of, say,
-	// reading an amount of bytes equal to the length of the file, because
-	// the UniFileSystemGen was created to expose some /proc/sys files to
-	// UniConf, which are magical and claim to have length of zero.
-	char tmpbuf[BYTES_PER_READ+1];
-	WvString ret;
-	int fd = open(path.cstr(), O_RDONLY);	
-	while (1)
-	// Yes, really read the entire contents of a file into a WvString.
-	{
-            // Read the file for a bit.
-	    int res = ::read(fd, tmpbuf, BYTES_PER_READ);
-	    
-	    // Break on end of file or error
-            if (res <= 0)
-		break;
-	    
-	    // Put everything we read into our string
-	    tmpbuf[res] = '\0';
-	    ret.append(tmpbuf);
-	}
-	close(fd);
-	return ret;
-    }
-
-    return WvString::empty;
+    else
+	return ""; // exists, but pretend it's an empty file
 }
+
 
 void UniFileSystemGen::set(const UniConfKey &key, WvStringParm value)
 {
-    WvString path(dir);
-    UniConfKey mykey(UniConfKey(file.cstr()), key);
-    while (mykey.numsegments() > 1)
-    {
-	WvString seg(mykey.pop().printable());
-	if (seg == "." || seg == "..")
-	    return;
-
-	path.append("/%s", seg);
-	struct stat buf;
-	if (stat(path.cstr(), &buf) == -1)
-	{
-	    if (errno != ENOENT || value.isnull())
-		// Fail or finish early, as appropriate.
-		return;
-	    else
-		goto do_mkdir;
-	}
-	else if (S_ISREG(buf.st_mode))
-	{
-	    if (buf.st_size != 0 || value.isnull())
-		// Fail or finish early, as appropriate.
-		return;
-	    else
-		goto do_unlink;
-	}
-	else if (!S_ISDIR(buf.st_mode))
-	    goto do_unlink;
-	else
-	    continue;
-
-    do_unlink:
-	if (unlink(path.cstr()) == -1)
-	    // Fail.
-	    return;
-
-    do_mkdir:
-	if (mkdir(path.cstr(), mode) == -1)
-	    // Fail.
-	    return;
-    }
-
-    WvString seg(mykey.printable());
-    if (seg == "." || seg == "..")
-        return;
-
-    path.append("/%s", seg);
-    struct stat buf;
-    if (stat(path.cstr(), &buf) == -1)
-    {
-	if (errno != ENOENT)
-            // Fail.
-	    return;
-    }
-    else if (value.isnull())
-    {
-	if (S_ISDIR(buf.st_mode))
-	{
-	    system(WvString("rm -Rf %s", path).cstr());
-	    return;
-	}
-	else
-	{
-	    unlink(path.cstr());
-	    return;
-	}
-    }
-    else if (!value && !S_ISREG(buf.st_mode))
-    {
+    if (!key_safe(key))
 	return;
-    }
+    
+    WvString base("%s/%s", dir, key.removelast(1));
+    WvString path("%s/%s", dir, key);
+    
+    mkdirp(base, mode);
+    
+    if (value.isnull())
+	rm_rf(path);
     else
     {
-	if (S_ISDIR(buf.st_mode))
-	{
-	    if (rmdir(path.cstr()) == -1) return;
-        }
-	else if (!S_ISREG(buf.st_mode))
-	{
-	    if (unlink(path.cstr()) == -1) return;
-	}
+	WvFile file(path, O_WRONLY|O_CREAT|O_TRUNC, mode & 0666);
+	file.write(value);
     }
-
-    // Write.
-    int remaining = value.len();
-    const char *where = value.cstr();
-    int fd = creat(path.cstr(), mode);
-    for (int res = 0; remaining > 0; where += res, remaining -= res)
-    {
-	res = ::write(fd, where, remaining);
-	
-	// Break on end of file or error
-	if (res <= 0)
-	    break;
-    }
-    close(fd);
-    
-    return;
 }
+
+
+void UniFileSystemGen::setv(const UniConfPairList &pairs)
+{
+    setv_naive(pairs);
+}
+
 
 class UniFileSystemGenIter : public UniConfGen::Iter
 {
+private:
+    UniFileSystemGen *gen;
+    WvDirIter i;
+    UniConfKey rel;
+    
 public:
-    UniFileSystemGenIter(UniFileSystemGen *_that, DIR *_dir,
+    UniFileSystemGenIter(UniFileSystemGen *_gen, WvStringParm path,
 			 const UniConfKey &_rel)
-	: that(_that), dir(_dir), rel(_rel)
-    {
-    }
+	: gen(_gen), i(path, false), rel(_rel)
+	{ }
 
     ~UniFileSystemGenIter()
-    {
-	closedir(dir);
-    }
+        { }
 
     void rewind()
-    {
-	rewinddir(dir);
-    }
+        { i.rewind(); }
 
-    bool next()
-    {
-	struct dirent *entry = readdir(dir);
-	if (entry)
-	{
-	    WvString entryname(entry->d_name);
-	    if (entryname == "." || entryname == "..")
-		return next();
-	    else
-	    {
-                name = UniConfKey(entryname);
-	        return true;
-	    }
-	}
-	else
-	    return false;
-    }
+    bool next() 
+        { return i.next(); }
 
     UniConfKey key() const
-    {
-	return UniConfKey(rel, name);
-    }
+        { return i->relname; }
 
     WvString value() const
-    {
-	return that->get(key());
-    }
-
-private:
-    UniFileSystemGen *that;
-    DIR *dir;
-    UniConfKey rel;
-    UniConfKey name;
+        { return gen->get(WvString("%s/%s", rel, i->relname)); }
 };
+
 
 UniConfGen::Iter *UniFileSystemGen::iterator(const UniConfKey &key)
 {
-    WvString path(dir);
-    UniConfKey mykey(UniConfKey(file.cstr()), key);
-    while (!mykey.isempty())
-    {
-	WvString seg(mykey.pop().printable());
-	if (seg == "." || seg == "..")
-	    return NULL;
-
-	path.append("/%s", seg);
-    }
-
-    DIR *dh = opendir(path.cstr());
-    if (dh == NULL)
+    if (!key_safe(key))
 	return NULL;
-    else
-	return new UniFileSystemGenIter(this, dh, key);
+    
+    return new UniFileSystemGenIter(this, WvString("%s/%s", dir, key), key);
 }

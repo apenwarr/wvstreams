@@ -31,8 +31,7 @@ protected:
     bool refreshed_once; //< we cache forever, so no need to re-refresh()
 
     void loadtree(const UniConfKey &key = "");
-    void deltacallback(const UniConfKey &key, WvStringParm value,
-                       void *userdata);
+    void deltacallback(const UniConfKey &key, WvStringParm value);
 
 public:
     UniCacheGen(IUniConfGen *_inner);

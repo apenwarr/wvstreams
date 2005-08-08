@@ -30,8 +30,8 @@ class WvLogRcvBase
 {
     friend class WvLog;
 protected:
-    const char *appname(const WvLog *log) const;
-    virtual void log(const WvLog *source, int loglevel,
+    const char *appname(WvStringParm log) const;
+    virtual void log(WvStringParm source, int loglevel,
 		     const char *_buf, size_t len) = 0;
 
 private:
@@ -73,21 +73,16 @@ public:
     WvString app;
 
 protected:
-    const WvLog *parent;
     LogLevel loglevel;
     static WvLogRcvBaseList receivers;
     static int num_receivers, num_logs;
     static WvLogRcvBase *default_receiver;
 
 public:
-    WvLog(WvStringParm _app, LogLevel _loglevel = Info,
-	  const WvLog *par = NULL);
+    WvLog(WvStringParm _app, LogLevel _loglevel = Info);
     WvLog(const WvLog &l);
     virtual ~WvLog();
     
-    /** copy another WvLog into this one */
-    WvLog &operator= (const WvLog &l);
-
     /** fd==-1, but this stream is always ok */
     virtual bool isok() const;
     
@@ -134,7 +129,7 @@ public:
      * log.lvl(WvLog::blahblah) all the time.
      */
     WvLog split(LogLevel _loglevel) const
-        { return WvLog(app, _loglevel, this); }
+        { return WvLog(app, _loglevel); }
     
     /**
      * we override the unbuffered write function, so lines also include the

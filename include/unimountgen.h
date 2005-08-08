@@ -38,15 +38,12 @@ protected:
 
 public:
     /** Creates an empty UniConf tree with no mounted stores. */
-    UniMountGen() 
-        { }
+    UniMountGen();
 
     /** Destroys the UniConf tree along with all uncommitted data. */
-    virtual ~UniMountGen()
-        { }
+    virtual ~UniMountGen();
     
-    void zap()
-        { mounts.zap(); }
+    void zap();
     
     /**
      * Mounts a generator at a key using a moniker.
@@ -102,6 +99,7 @@ public:
     virtual bool haschildren(const UniConfKey &key);
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
     virtual void commit();
     virtual bool refresh();
     virtual void flush_buffers() { }
@@ -120,8 +118,8 @@ private:
         { return key.removefirst(foundkey.numsegments()); }
 
     /** Called by generators when a key changes. */
-    void gencallback(const UniConfKey &key, WvStringParm value,
-		     void *userdata);
+    void gencallback(const UniConfKey &base, const UniConfKey &key,
+		     WvStringParm value);
 
     void makemount(const UniConfKey &key);
 
@@ -129,6 +127,10 @@ private:
      *  if you used findmount first, give the result as a parameter to
      *  improve efficiency*/
     bool has_subkey(const UniConfKey &key, UniGenMount *found = NULL);
+
+    struct UniGenMountPairs;
+    DeclareWvDict(UniGenMountPairs, WvFastString, key);
+
 };
 
 #endif //__UNIMOUNTGEN_H

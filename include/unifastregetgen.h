@@ -46,8 +46,7 @@ private:
     UniConfValueTree *tree;
     
 protected:
-    virtual void gencallback(const UniConfKey &key, WvStringParm value,
-			     void *userdata);
+    virtual void gencallback(const UniConfKey &key, WvStringParm value);
 };
 
 

@@ -36,11 +36,10 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
 {
     // Create the root, since this generator can't handle it not existing.
     UniTempGen::set(UniConfKey::EMPTY, WvString::empty);
-    //log(WvLog::Debug1, "Using IniFile \"%s\"\n", filename);
-    // consider the generator dirty until it is first refreshed
-    dirty = true;
     memset(&old_st, 0, sizeof(old_st));
+    refresh();
 }
+
 
 void UniIniGen::set(const UniConfKey &key, WvStringParm value)
 {
@@ -49,6 +48,7 @@ void UniIniGen::set(const UniConfKey &key, WvStringParm value)
     if (!(value.isnull() && key.isempty()))
         UniTempGen::set(key, value);
 }
+
 
 UniIniGen::~UniIniGen()
 {
@@ -81,7 +81,7 @@ bool UniIniGen::refresh()
 	&& statbuf.st_blocks == old_st.st_blocks
 	&& statbuf.st_size == old_st.st_size)
     {
-	log(WvLog::Debug, "refresh: file hasn't changed; do nothing.\n");
+	log(WvLog::Debug3, "refresh: file hasn't changed; do nothing.\n");
 	return true;
     }
     memcpy(&old_st, &statbuf, sizeof(statbuf));
@@ -101,31 +101,18 @@ bool UniIniGen::refresh()
     newgen->set(UniConfKey::EMPTY, WvString::empty);
     UniConfKey section;
     WvDynBuf buf;
-    for (bool eof = false; !eof; )
+    while (buf.used() || file.isok())
     {
         if (file.isok())
         {
             // read entire lines to ensure that we get whole values
             char *line = file.blocking_getline(-1);
             if (line)
+	    {
                 buf.putstr(line);
-            else
-                eof = true;
+		buf.put('\n'); // this was auto-stripped by getline()
+	    }
         }
-        else
-            eof = true;
-
-        if (eof)
-        {
-            // detect missing newline at end of file
-            size_t avail = buf.used();
-            if (avail == 0)
-                break;
-            if (buf.peek(avail - 1) == '\n')
-                break;
-            // run the loop one more time to compensate
-        }
-        buf.put('\n');
 
         WvString word;
 	while (!(word = wvtcl_getword(buf, "\r\n", false)).isnull())
@@ -176,33 +163,30 @@ bool UniIniGen::refresh()
                 }
             }
 	    
+	    // if we get here, the line was tcl-decoded but not useful.
             log(WvLog::Warning,
 		"Ignoring malformed input line: \"%s\"\n", word);
         }
+	
+	if (buf.used() && !file.isok())
+	{
+	    // EOF and some of the data still hasn't been used.  Weird.
+	    // Let's remove a line of data and try again.
+	    size_t offset = buf.strchr('\n');
+	    assert(offset); // the last thing we put() is *always* a newline!
+	    WvString line1(trim_string(buf.getstr(offset).edit()));
+	    if (!!line1) // not just whitespace
+		log(WvLog::Warning,
+		    "XXX Ignoring malformed input line: \"%s\"\n", line1);
+	}
     }
 
-    // close the file
-    file.close();
     if (file.geterr())
     {
         log(WvLog::Warning, 
-	    "Error reading from config file: \"%s\"\n", file.errstr());
+	    "Error reading from config file: %s\n", file.errstr());
         WVRELEASE(newgen);
         return false;
-    }
-
-    // handle unparsed input
-    size_t avail = buf.used();
-    while (avail > 0 && buf.peek(avail - 1) == '\n')
-    {
-        buf.unalloc(1); // strip off uninteresting trailing newlines
-        avail -= 1;
-    }
-    if (avail > 0)
-    {
-        // last line must have contained junk
-        log(WvLog::Warning,
-	    "XXX Ignoring malformed input line: \"%s\"\n", buf.getstr());
     }
 
     // switch the trees and send notifications
@@ -280,7 +264,7 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
     if (file.geterr())
     {
 	log(WvLog::Warning, "Can't write '%s': %s\n",
-	    filename, strerror(errno));
+	    tmp_filename, strerror(errno));
 	unlink(tmp_filename);
 	file.close();
 	return false;
@@ -492,6 +476,10 @@ static void save_sect(WvStream &file, UniConfValueTree &toplevel,
 
 void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
 {
+    // parent might be NULL, so it really should be a pointer, not
+    // a reference.  Oh well...
+    if (!&parent) return;
+    
     if (parent.fullkey() == root->fullkey())
     {
 	// the root itself is a special case, since it's not in a section,

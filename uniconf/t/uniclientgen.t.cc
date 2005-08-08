@@ -29,13 +29,12 @@ WVTEST_MAIN("deltas")
 
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
 
-    pid_t child = fork();
-    WVPASS(child >= 0);
+    pid_t child = wvfork();
     if (child == 0)
     {
         uniconf.mountgen(new UniTempGen());
         UniConfDaemon daemon(uniconf, false, NULL);
-        WVPASS(daemon.setupunixsocket(sockname));
+        daemon.setupunixsocket(sockname);
         WvIStreamList::globallist.append(&daemon, false);
         while (true)
         {
@@ -43,9 +42,11 @@ WVTEST_MAIN("deltas")
             WvIStreamList::globallist.runonce();
             usleep(1000);
         }
+	_exit(0);
     }
     else
     {
+	WVPASS(child >= 0);
         UniClientGen *client_gen;
         while (true)
         {
@@ -126,23 +127,24 @@ WVTEST_MAIN("commit")
 
     WvString sockname = get_sockname();
 
-    pid_t child = fork();
-    WVPASS(child >= 0);
+    pid_t child = wvfork();
     if (child == 0)
     {
         UniIniGen *ini_gen = new UniIniGen(ini_file);
         fprintf(stderr, "new UniIniGen() = %p\n", (void *)ini_gen);
         uniconf.mountgen(ini_gen);
         UniConfDaemon daemon(uniconf, false, NULL);
-        WVPASS(daemon.setupunixsocket(sockname));
+        daemon.setupunixsocket(sockname);
         WvIStreamList::globallist.append(&daemon, false);
         while (true)
         {
             WvIStreamList::globallist.runonce();
         }
+	_exit(0);
     }
     else
     {
+	WVPASS(child >= 0);
         UniClientGen *client_gen;
         while (true)
         {
@@ -188,7 +190,7 @@ WVTEST_MAIN("commit")
         WVPASS(rv == child);
     }
 
-    //unlink(ini_file);
+    unlink(ini_file);
 }
 
 
@@ -202,23 +204,24 @@ WVTEST_MAIN("refresh")
 
     WvString sockname = get_sockname();
 
-    pid_t child = fork();
-    WVPASS(child >= 0);
+    pid_t child = wvfork();
     if (child == 0)
     {
         UniIniGen *ini_gen = new UniIniGen(ini_file);
         fprintf(stderr, "new UniIniGen() = %p\n", (void *)ini_gen);
         uniconf.mountgen(ini_gen);
         UniConfDaemon daemon(uniconf, false, NULL);
-        WVPASS(daemon.setupunixsocket(sockname));
+        daemon.setupunixsocket(sockname);
         WvIStreamList::globallist.append(&daemon, false);
         while (true)
         {
             WvIStreamList::globallist.runonce();
         }
+	_exit(0);
     }
     else
     {
+	WVPASS(child >= 0);
         UniClientGen *client_gen;
         while (true)
         {
@@ -254,6 +257,6 @@ WVTEST_MAIN("refresh")
         WVPASS(rv == child);
     }
 
-    //unlink(ini_file);
+    unlink(ini_file);
 }
 

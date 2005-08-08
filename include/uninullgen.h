@@ -26,6 +26,7 @@ public:
     virtual void flush_buffers() { }
     virtual WvString get(const UniConfKey &key) { return WvString::null; }
     virtual void set(const UniConfKey &key, WvStringParm value) { }
+    virtual void setv(const UniConfPairList &pairs) { }
     virtual bool haschildren(const UniConfKey &key) { return false; }
     virtual Iter *iterator(const UniConfKey &key) { return new NullIter(); }
 };
