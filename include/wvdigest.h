@@ -150,4 +150,24 @@ public:
     virtual bool _reset(); // supported: resets digest value
 };
 
+
+/**
+ * Adler32 checksum
+ * Digest length of 4 bytes.
+ */
+class WvAdler32Digest : public WvDigest
+{
+    unsigned long int crc;
+
+public:
+    WvAdler32Digest();
+    virtual ~WvAdler32Digest() { }
+
+    virtual size_t digestsize() const;
+    virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
+                         bool flush); // consumes input
+    virtual bool _finish(WvBuf &outbuf); // outputs digest
+    virtual bool _reset(); // supported: resets digest value
+};
+
 #endif // __WVDIGEST_H
