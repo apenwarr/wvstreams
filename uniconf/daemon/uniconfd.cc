@@ -99,7 +99,7 @@ class UniConfd : public WvStreamsDaemon
     {
         if (first_time)
         {
-            WvStringList::Iter i(extra_args);
+            WvStringList::Iter i(_extra_args);
             for (i.rewind(); i.next(); )
             {
 	        WvString path = *i, moniker;
