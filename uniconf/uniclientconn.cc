@@ -109,7 +109,8 @@ WvString UniClientConn::readmsg()
 
 void UniClientConn::writemsg(WvStringParm msg)
 {
-    write(spacecat(msg, "", '\n'));
+    write(msg);
+    write("\n");
     // log("Wrote: %s\n", msg);
 }
 
@@ -148,10 +149,13 @@ WvString UniClientConn::readarg()
 
 void UniClientConn::writecmd(UniClientConn::Command cmd, WvStringParm msg)
 {
+    write(cmdinfos[cmd].name);
     if (msg)
-        writemsg(spacecat(cmdinfos[cmd].name, msg));
-    else
-        writemsg(cmdinfos[cmd].name);
+    {
+	write(" ");
+	write(msg);
+    }
+    write("\n");
 }
 
 
