@@ -174,6 +174,7 @@ void UniClientGen::set(const UniConfKey &key, WvStringParm newvalue)
 		       spacecat(wvtcl_escape(key),
 				wvtcl_escape(newvalue), ' '));
 
+    flush_buffers();
     unhold_delta();
 }
 
