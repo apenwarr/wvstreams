@@ -45,8 +45,32 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
 	    bracecount--;
 	if (bracecount < 0)
 	    backslashify = true;
-	
-	if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
+
+	bool doit = false;
+	switch (*cptr)
+	{
+	case WVTCL_ALWAYS_NASTY:
+	    doit = true;
+	    break;
+	default:
+	    if (nasties)
+	    {
+		if (!strcmp(nasties, WVTCL_NASTIES))
+		{
+		    switch (*cptr)
+		    {
+		    case WVTCL_NASTIES_CASE:
+			doit = true;
+			break;
+		    default:
+			;
+		    }
+		}
+		else if (strchr(nasties, *cptr))
+		    doit = true;
+	    }
+	}
+	if (doit)
 	    unprintables++;
 
 	if (*cptr == '\\')
@@ -71,10 +95,33 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
         {
             len = 0;
             for (cptr = s; cptr != cptr_end; ++cptr)
-            {
-                if (strchr(WVTCL_ALWAYS_NASTY, *cptr)
-                                            || strchr(nasties, *cptr))
-                    dst[len++] = '\\';
+	    {
+		bool doit = false;
+		switch (*cptr)
+		{
+		case WVTCL_ALWAYS_NASTY:
+		    doit = true;
+		    break;
+		default:
+		    if (nasties)
+		    {
+			if (!strcmp(nasties, WVTCL_NASTIES))
+			{
+			    switch (*cptr)
+			    {
+			    case WVTCL_NASTIES_CASE:
+				doit = true;
+				break;
+			    default:
+				;
+			    }
+			}
+			else if (strchr(nasties, *cptr))
+			    doit = true;
+		    }
+		}
+		if (doit)
+		    dst[len++] = '\\';
 
                 dst[len++] = *cptr;
             }

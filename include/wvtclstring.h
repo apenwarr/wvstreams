@@ -39,10 +39,10 @@
 // the default set of "nasties", ie. characters that need to be escaped if
 // they occur somewhere in a string.
 #define WVTCL_NASTIES    " \t\n\r"
-
+#define WVTCL_NASTIES_CASE ' ': case '\t': case '\n': case '\r'
 
 // {, }, \, and " are always considered "nasty."
-#define WVTCL_ALWAYS_NASTY "{}\\\""
+#define WVTCL_ALWAYS_NASTY '{': case '}': case '\\': case '"'
 
 
 // the default set of split characters, ie. characters that separate elements
