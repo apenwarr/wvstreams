@@ -69,8 +69,29 @@ bool WvHashTableBase::isempty() const
 
 WvLink *WvHashTableBase::IterBase::next()
 {
+    // In the best case, we can just look at the next item in the bucket.
     link = link->next;
-    while (!link && tblindex < tbl->numslots - 1)
-	link = tbl->wvslots[++tblindex].head.next;
+    if (link)
+	return link;
+
+    // Keep local copies of information, so we don't have to poke into the
+    // data structure.
+    WvLink *_link = NULL;	// we would have returned if link were non-NULL
+    WvListBase *begin = tbl->wvslots;
+    WvListBase *cur = begin + tblindex;
+    WvListBase *end = begin + tbl->numslots - 1;
+
+    // We'll go from the current bucket to the last bucket, in hopes that
+    // one of them will contain something.
+    while (cur < end)
+    {
+	++cur;
+	_link = cur->head.next;
+	if (_link)
+	    break;
+    }
+
+    tblindex = cur - begin;	// Compute the tblindex.
+    link = _link;		// Save the link
     return link;
 }
