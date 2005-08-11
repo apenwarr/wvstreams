@@ -81,7 +81,9 @@ void UniClientConn::close()
 WvString UniClientConn::readmsg()
 {
     WvString word;
-    while ((word = wvtcl_getword(msgbuf, "\r\n", false)).isnull())
+    while ((word = wvtcl_getword(msgbuf,
+				 WVTCL_NASTY_NEWLINES,
+				 false)).isnull())
     {
 	// use lots of readahead to prevent unnecessary runs through select()
 	// during heavy data transfers.

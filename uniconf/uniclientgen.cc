@@ -14,6 +14,7 @@
 #include "wvresolver.h"
 #include "wvsslstream.h"
 #include "wvstrutils.h"
+#include "wvstringmask.h"
 #include "wvtclstring.h"
 #include "wvtcp.h"
 
@@ -271,6 +272,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
     }
 
     UniClientConn::Command command = conn->readcmd();
+    static const WvStringMask nasty_space(' ');
     switch (command)
     {
         case UniClientConn::NONE:
@@ -290,8 +292,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::REPLY_CHILD:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
 
                 if (!key.isnull() && !value.isnull())
                 {
@@ -306,8 +308,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::REPLY_ONEVAL:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
 
                 if (!key.isnull() && !value.isnull())
                 {
@@ -322,8 +324,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::PART_VALUE:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
 
                 if (!key.isnull() && !value.isnull())
                 {
@@ -336,7 +338,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
         case UniClientConn::EVENT_HELLO:
             {
 		WvStringList greeting;
-		wvtcl_decode(greeting, conn->payloadbuf.getstr(), " ");
+		wvtcl_decode(greeting, conn->payloadbuf.getstr(), nasty_space);
 		WvString server(greeting.popstr());
 		WvString version_string(greeting.popstr());
 
@@ -360,8 +362,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::EVENT_NOTICE:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
                 delta(key, value);
             }   
 

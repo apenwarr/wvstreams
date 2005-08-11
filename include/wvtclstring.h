@@ -35,20 +35,26 @@
 #define __WVTCLSTRING_H
 
 #include "wvbuf.h"
+class WvStringMask;
 
 // the default set of "nasties", ie. characters that need to be escaped if
 // they occur somewhere in a string.
-#define WVTCL_NASTIES    " \t\n\r"
-#define WVTCL_NASTIES_CASE ' ': case '\t': case '\n': case '\r'
+#define WVTCL_NASTY_SPACES_STR    " \t\n\r"
+extern const WvStringMask WVTCL_NASTY_SPACES;
+
+// Another default set of nasties, but only splitting on newlines
+#define WVTCL_NASTY_NEWLINES_STR  "\n\r"
+extern const WvStringMask WVTCL_NASTY_NEWLINES;
 
 // {, }, \, and " are always considered "nasty."
-#define WVTCL_ALWAYS_NASTY '{': case '}': case '\\': case '"'
+#define WVTCL_ALWAYS_NASTY_CASE '{': case '}': case '\\': case '"'
 
 
 // the default set of split characters, ie. characters that separate elements
 // in a list.  If these characters appear unescaped and not between {} or ""
 // in a list, they signify the end of the current element.
-#define WVTCL_SPLITCHARS " \t\n\r"
+#define WVTCL_SPLITCHARS_STR " \t\n\r"
+extern const WvStringMask WVTCL_SPLITCHARS;
 
 
 /**
@@ -60,7 +66,8 @@
  *   3) Strings containing nasties _and_ unmatched braces are encoded using
  *         backslash notation.  (For example, " foo} " becomes "\ foo\}\ "
  */
-WvString wvtcl_escape(WvStringParm s, const char *nasties = WVTCL_NASTIES);
+WvString wvtcl_escape(WvStringParm s,
+		      const WvStringMask &nasties = WVTCL_NASTY_SPACES);
 
 
 /**
@@ -77,16 +84,18 @@ WvString wvtcl_unescape(WvStringParm s);
  * string in 'l', then appending the escaped strings together, separated by
  * the first char in splitchars.
  */
-WvString wvtcl_encode(WvList<WvString> &l, const char *nasties = WVTCL_NASTIES,
-		      const char *splitchars = WVTCL_SPLITCHARS);
+WvString wvtcl_encode(WvList<WvString> &l,
+		      const WvStringMask &nasties = WVTCL_NASTY_SPACES,
+		      const WvStringMask &splitchars = WVTCL_SPLITCHARS);
 
 /**
  * Get a single tcl word from an input buffer, and return the rest of the
  * buffer untouched.  If no word can be created from the buffer, return
  * a null string and leave the buffer unmodified.
  */
-WvString wvtcl_getword(WvBuf &buf, const char *splitchars = WVTCL_SPLITCHARS,
-    bool do_unescape = true);
+WvString wvtcl_getword(WvBuf &buf,
+		       const WvStringMask &splitchars = WVTCL_SPLITCHARS,
+		       bool do_unescape = true);
 
 /**
  * split a tcl-style list.  There are some special "convenience" features
@@ -105,7 +114,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars = WVTCL_SPLITCHARS,
  * 
  */
 void wvtcl_decode(WvList<WvString> &l, WvStringParm _s,
-		  const char *splitchars = WVTCL_SPLITCHARS,
+		  const WvStringMask &splitchars = WVTCL_SPLITCHARS,
 		  bool do_unescape = true);
 
 #endif // __WVTCLSTRING_H
