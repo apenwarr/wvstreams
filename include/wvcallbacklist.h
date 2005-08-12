@@ -26,6 +26,7 @@ private:
 
     /* The idea of copying this gives me a headache. */
     WvCallbackList(const WvCallbackList &);
+    WvCallbackList& operator=(const WvCallbackList&);
 public:
     WvCallbackList():
 	list(42)

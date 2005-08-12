@@ -80,69 +80,142 @@ WvString::WvString(const char *_str)
 }
 
 
+// This function returns the NULL of a reversed string representation
+// for unsigned integers
+template <typename T>
+inline static char *wv_uitoar(char *begin, T i)
+{
+    if (!begin)
+	return NULL;
+
+    char *end = begin;
+
+    if (i == 0)
+	*end++ = '0';
+    else
+    {
+	while (i > 0)
+	{
+	    switch (i % 10)
+	    {
+	    case 0: *end++ = '0'; break;
+	    case 1: *end++ = '1'; break;
+	    case 2: *end++ = '2'; break;
+	    case 3: *end++ = '3'; break;
+	    case 4: *end++ = '4'; break;
+	    case 5: *end++ = '5'; break;
+	    case 6: *end++ = '6'; break;
+	    case 7: *end++ = '7'; break;
+	    case 8: *end++ = '8'; break;
+	    case 9: *end++ = '9'; break;
+	    default: ;
+	    }
+	    i /= 10;
+	}
+    }
+
+    *end = '\0';
+    return end;
+}
+
+// This function returns the NULL of a reversed string representation
+// for signed integers
+template <typename T>
+inline static char *wv_itoar(char *begin, T i)
+{
+    if (!begin)
+	return NULL;
+
+    bool negative = false;
+    if (i < 0)
+    {
+	negative = true;
+	i = -i;
+    }
+    char *end = wv_uitoar(begin, i);
+    if (negative)
+    {
+	*end++ = '-';
+	*end = '\0';
+    }
+    return end;
+}
+
+
+inline static void wv_strrev(char *begin, char *end)
+{
+    if (!begin && !end)
+	return;
+
+    --end;
+
+    while (begin < end)
+    {
+	*begin ^= *end;
+	*end ^= *begin;
+	*begin ^= *end;
+	++begin;
+	--end;
+    }
+}
+
+
+
 // NOTE: make sure that 32 bytes is big enough for your longest int.
 // This is true up to at least 64 bits.
 WvFastString::WvFastString(short i)
 {
     newbuf(32);
-    sprintf(str, "%hd", i);
+    wv_strrev(str, wv_itoar(str, i));
 }
 
 
 WvFastString::WvFastString(unsigned short i)
 {
     newbuf(32);
-    sprintf(str, "%hu", i);
+    wv_strrev(str, wv_uitoar(str, i));
 }
 
 
 WvFastString::WvFastString(int i)
 {
     newbuf(32);
-    sprintf(str, "%d", i);
+    wv_strrev(str, wv_itoar(str, i));
 }
 
 
 WvFastString::WvFastString(unsigned int i)
 {
     newbuf(32);
-    sprintf(str, "%u", i);
+    wv_strrev(str, wv_uitoar(str, i));
 }
 
 
 WvFastString::WvFastString(long i)
 {
     newbuf(32);
-    sprintf(str, "%ld", i);
+    wv_strrev(str, wv_itoar(str, i));
 }
 
 
 WvFastString::WvFastString(unsigned long i)
 {
     newbuf(32);
-    sprintf(str, "%lu", i);
+    wv_strrev(str, wv_uitoar(str, i));
 }
 
 
 WvFastString::WvFastString(long long i)
 {
     newbuf(32);
-#ifdef _WIN32
-    sprintf(str, "%I64d", i);
-#else
-    sprintf(str, "%lld", i);
-#endif
+    wv_strrev(str, wv_itoar(str, i));
 }
 
 
 WvFastString::WvFastString(unsigned long long i)
 {
     newbuf(32);
-#ifdef _WIN32
-    sprintf(str, "%I64u", i);
-#else
-    sprintf(str, "%llu", i);
-#endif
+    wv_strrev(str, wv_uitoar(str, i));
 }
 
 

@@ -142,3 +142,17 @@ WVTEST_MAIN("fancy formatting")
     WVPASS(WvString("%6.3s", "hello") == "   hel");
     WVPASS(WvString("%6.3s", "a") == "     a");
 }
+
+WVTEST_MAIN("conversion from int")
+{
+    for (int i = 0; i < 1000000; ++i)
+    {
+	WvString number(i);
+    }
+    WVPASSEQ(WvString(0), "0");
+    WVPASSEQ(WvString(1), "1");
+    WVPASSEQ(WvString(-1), "-1");
+    WVPASSEQ(WvString(12), "12");
+    WVPASSEQ(WvString(32767), "32767");
+    WVPASSEQ(WvString(65535), "65535");
+}

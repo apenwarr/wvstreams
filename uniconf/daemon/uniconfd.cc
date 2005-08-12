@@ -16,6 +16,7 @@
 #include "wvslp.h"
 #endif
 
+#include "wvcrash.h"
 #include "wvlogrcv.h"
 #include "uniconfdaemon.h"
 #include "uniclientconn.h"
@@ -99,7 +100,7 @@ class UniConfd : public WvStreamsDaemon
     {
         if (first_time)
         {
-            WvStringList::Iter i(extra_args);
+            WvStringList::Iter i(_extra_args);
             for (i.rewind(); i.next(); )
             {
 	        WvString path = *i, moniker;
@@ -258,6 +259,8 @@ public:
 
 int main(int argc, char **argv)
 {
+    wvcrash_setup(argv[0], "uniconfd" ": " WVSTREAMS_RELEASE);
+
     UniConfd uniconfd;
    
     return uniconfd.run(argc, argv);

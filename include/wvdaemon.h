@@ -136,7 +136,7 @@ class WvDaemon
             ::exit(0);
         }
         
-        WvStringList extra_args;
+        WvStringList _extra_args;
 
     public:
 
@@ -180,6 +180,12 @@ class WvDaemon
         bool should_run() const
         {
             return !_want_to_die && !_want_to_restart;
+        }
+
+        //! Remaining args
+        const WvStringList &extra_args() const
+        {
+            return _extra_args;
         }
 };
 
