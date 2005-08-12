@@ -362,18 +362,18 @@ void UniTransactionGen::apply_values(UniConfValueTree *newcontents,
 {
     base->set(section, newcontents->value());
 
-    UniConfGen::Iter *i = base->iterator(section);
-    if (i)
+    UniConfGen::Iter *j = base->iterator(section);
+    if (j)
     {
-	for (i->rewind(); i->next();)
+	for (j->rewind(); j->next();)
 	{
-	    if (newcontents->findchild(i->key()) == NULL)
+	    if (newcontents->findchild(j->key()) == NULL)
 		// Delete all children of the current value in the
 		// underlying generator that do not exist in our
 		// replacement tree.
-		base->set(UniConfKey(section, i->key()), WvString::null);
+		base->set(UniConfKey(section, j->key()), WvString::null);
 	}
-	delete i;
+	delete j;
     }
 
     // Repeat for each child in the replacement tree.
