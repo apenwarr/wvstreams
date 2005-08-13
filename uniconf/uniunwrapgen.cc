@@ -21,19 +21,24 @@ UniUnwrapGen::UniUnwrapGen(const UniConf &inner)
 
 UniUnwrapGen::~UniUnwrapGen()
 {
-    xinner.del_callback(this, true);
+    UniConfRoot *root = xinner.rootobj();
+    if (root)
+	root->mounts.del_callback(this);
 }
 
 
 void UniUnwrapGen::setinner(const UniConf &inner)
 {
-    if (xinner.rootobj())
-	xinner.del_callback(this, true);
+    UniConfRoot *root = xinner.rootobj();
+    if (root)
+	root->mounts.del_callback(this);
     xinner = inner;
-    if (xinner.rootobj())
-	xinner.add_callback(this,
-			    UniConfCallback(this, &UniUnwrapGen::gencallback),
-			    true);
+    xfullkey = xinner.fullkey();
+    if (root = xinner.rootobj())
+    {
+	UniConfGenCallback cb(this, &UniUnwrapGen::gencallback);
+	root->mounts.add_callback(this, cb);
+    }
 }
 
 
@@ -165,7 +170,9 @@ UniConfGen::Iter *UniUnwrapGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-void UniUnwrapGen::gencallback(const UniConf &cfg, const UniConfKey &key)
+void UniUnwrapGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
-    delta(cfg[key].fullkey(xinner), cfg[key].getme());
+    WvString subkey;
+    if (xfullkey.suborsame(key, subkey))
+	delta(subkey, value);
 }
