@@ -228,10 +228,17 @@ public:
 
 
     /**
-     * Returns true if this key is either the same key as the key specified
-     * or a subkey of that key.
+     * Returns true if 'key' is a the same, or a subkey, or this UniConfKey.
      */
     bool suborsame(const UniConfKey &key) const;
+    bool suborsame(const UniConfKey &key, WvString &subkey) const;
+
+    /**
+     * If this UniConfKey is a subkey of 'key', then return the subkey
+     * portion.  Behaviour is undefined when this is not the same.  Use
+     * suborsame() to check.
+     */
+    UniConfKey subkey(const UniConfKey &key) const;
 
     /**
      * Determines if two paths are equal.
