@@ -110,9 +110,13 @@ void UniTempGen::set(const UniConfKey &_key, WvStringParm _value)
                 dirty = true;
                 if (!prev) // we just created the root
                     root = node;
-                delta(node->fullkey(), value); // ADDED
-                if (!more)
-                    break; // done!
+		if (more)
+		    delta(node->fullkey(), WvString::empty); // AUTO-VIVIFIED
+		else
+		{
+		    delta(node->fullkey(), value); // ADDED
+		    break; // done!
+		}
             }
             else if (!more)
             {
