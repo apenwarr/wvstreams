@@ -32,9 +32,12 @@ void UniUnwrapGen::setinner(const UniConf &inner)
     UniConfRoot *root = xinner.rootobj();
     if (root)
 	root->mounts.del_callback(this);
+
     xinner = inner;
     xfullkey = xinner.fullkey();
-    if (root = xinner.rootobj())
+
+    root = xinner.rootobj();
+    if (root)
     {
 	UniConfGenCallback cb(this, &UniUnwrapGen::gencallback);
 	root->mounts.add_callback(this, cb);
