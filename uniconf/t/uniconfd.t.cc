@@ -1,4 +1,5 @@
 #include "wvtest.h"
+#include "uniclientconn.h"
 #include "uniconfdaemon.h"
 #include "uniconfroot.h"
 #include "unitempgen.h"
@@ -195,7 +196,8 @@ WVTEST_MAIN("daemon multimount")
     commands.append("subt / 1");
     WvStringListList expected_responses;
     WvStringList hello_response;
-    hello_response.append("HELLO {UniConf Server ready.}");
+    hello_response.append(WvString("HELLO {UniConf Server ready.} %s",
+				   UNICONF_PROTOCOL_VERSION));
     expected_responses.add(&hello_response, false);
     WvStringList expected_quit_response;
     expected_quit_response.append("VAL subtree {}");
@@ -251,7 +253,8 @@ WVTEST_MAIN("daemon quit")
     commands.append("quit");
     WvStringListList expected_responses;
     WvStringList hello_response;
-    hello_response.append("HELLO {UniConf Server ready.}");
+    hello_response.append(WvString("HELLO {UniConf Server ready.} %s",
+				   UNICONF_PROTOCOL_VERSION));
     expected_responses.add(&hello_response, false);
     WvStringList expected_quit_response;
     expected_quit_response.append("OK ");
@@ -394,7 +397,8 @@ static void daemon_proxy_test(bool implicit_root)
     commands.append("subt /");
     WvStringListList expected_responses;
     WvStringList hello_response;
-    hello_response.append("HELLO {UniConf Server ready.}");
+    hello_response.append(WvString("HELLO {UniConf Server ready.} %s",
+				   UNICONF_PROTOCOL_VERSION));
     expected_responses.add(&hello_response, false);
     WvStringList expected_get_response;
     expected_get_response.append("ONEVAL cfg/pickles/apples/foo 1");

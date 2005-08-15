@@ -5,16 +5,18 @@
  * UniClientGen is a UniConfGen for retrieving data from the
  * UniConfDaemon.
  */
-#include "wvfile.h"
 #include "uniclientgen.h"
+#include "unilistiter.h"
+#include "wvaddr.h"
+#include "wvfile.h"
+#include "wvlinkerhack.h"
+#include "wvmoniker.h"
+#include "wvresolver.h"
+#include "wvsslstream.h"
+#include "wvstrutils.h"
+#include "wvstringmask.h"
 #include "wvtclstring.h"
 #include "wvtcp.h"
-#include "wvaddr.h"
-#include "wvresolver.h"
-#include "wvmoniker.h"
-#include "wvsslstream.h"
-#include "unilistiter.h"
-#include "wvlinkerhack.h"
 
 WV_LINK(UniClientGen);
 
@@ -98,7 +100,8 @@ static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) 
     : log(WvString("UniClientGen to %s",
 		   dst.isnull() && stream->src() 
-		   ? *stream->src() : WvString(dst)))
+		   ? *stream->src() : WvString(dst))),
+      version(0)
 {
     cmdinprogress = cmdsuccess = false;
     result_list = NULL;
@@ -166,10 +169,41 @@ void UniClientGen::set(const UniConfKey &key, WvStringParm newvalue)
     hold_delta();
 
     if (newvalue.isnull())
-        conn->writecmd(UniClientConn::REQ_REMOVE, wvtcl_escape(key));
+	conn->writecmd(UniClientConn::REQ_REMOVE, wvtcl_escape(key));
     else
-        conn->writecmd(UniClientConn::REQ_SET,
-            WvString("%s %s", wvtcl_escape(key), wvtcl_escape(newvalue)));
+	conn->writecmd(UniClientConn::REQ_SET,
+		       spacecat(wvtcl_escape(key),
+				wvtcl_escape(newvalue), ' '));
+
+    flush_buffers();
+    unhold_delta();
+}
+
+
+void UniClientGen::setv(const UniConfPairList &pairs)
+{
+    hold_delta();
+
+    UniConfPairList::Iter i(pairs);
+    if (version >= 19)
+    {
+	// Much like how VAL works, SETV continues sending key-value pairs
+	// until it sends a terminating SETV, which has no arguments.
+	for (i.rewind(); i.next(); )
+	{
+	    conn->writecmd(UniClientConn::REQ_SETV,
+			   spacecat(wvtcl_escape(i->key()),
+				    wvtcl_escape(i->value()), ' '));
+	}
+	conn->writecmd(UniClientConn::REQ_SETV);
+    }
+    else
+    {
+	for (i.rewind(); i.next(); )
+	{
+	    set(i->key(), i->value());
+	}
+    }
 
     unhold_delta();
 }
@@ -238,6 +272,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
     }
 
     UniClientConn::Command command = conn->readcmd();
+    static const WvStringMask nasty_space(' ');
     switch (command)
     {
         case UniClientConn::NONE:
@@ -257,8 +292,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::REPLY_CHILD:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
 
                 if (!key.isnull() && !value.isnull())
                 {
@@ -273,8 +308,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::REPLY_ONEVAL:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
 
                 if (!key.isnull() && !value.isnull())
                 {
@@ -289,8 +324,8 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 
         case UniClientConn::PART_VALUE:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
 
                 if (!key.isnull() && !value.isnull())
                 {
@@ -303,7 +338,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
         case UniClientConn::EVENT_HELLO:
             {
 		WvStringList greeting;
-		wvtcl_decode(greeting, conn->payloadbuf.getstr(), " ");
+		wvtcl_decode(greeting, conn->payloadbuf.getstr(), nasty_space);
 		WvString server(greeting.popstr());
 		WvString version_string(greeting.popstr());
 
@@ -318,20 +353,17 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 		}
 		else
 		{
-		    int version = -1;
+		    version = 0;
 		    sscanf(version_string, "%d", &version);
-		    if (version < 0)
-			log(WvLog::Error, "Invalid UniConf server!\n");
-		    else
-			log(WvLog::Info, "UniConf version %s.\n", version);
+		    log(WvLog::Debug3, "UniConf version %s.\n", version);
 		}
                 break;
             }
 
         case UniClientConn::EVENT_NOTICE:
             {
-                WvString key(wvtcl_getword(conn->payloadbuf, " "));
-                WvString value(wvtcl_getword(conn->payloadbuf, " "));
+                WvString key(wvtcl_getword(conn->payloadbuf, nasty_space));
+                WvString value(wvtcl_getword(conn->payloadbuf, nasty_space));
                 delta(key, value);
             }   
 

@@ -17,8 +17,9 @@ UniConfDaemonConn::UniConfDaemonConn(WvStream *_s, const UniConf &_root)
 {
     uses_continue_select = true;
     addcallback();
-    writecmd(EVENT_HELLO, wvtcl_escape(WvString("UniConf %s Server ready.",
-						UNICONF_PROTOCOL_VERSION)));
+    writecmd(EVENT_HELLO,
+	     spacecat(wvtcl_escape("UniConf Server ready."),
+		      wvtcl_escape(UNICONF_PROTOCOL_VERSION)));
 }
 
 

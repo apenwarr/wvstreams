@@ -35,8 +35,9 @@ WvString wvssl_errstr();
  * X509 Class to handle certificates and their related
  * functions
  */
-class WvX509Mgr : public WvError
+class WvX509Mgr : public WvError, public IObject
 {
+    IMPLEMENT_IOBJECT(WvX509Mgr);
 public:
    /**
     * Type for the @ref encode() and @ref decode() methods.

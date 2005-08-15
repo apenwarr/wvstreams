@@ -179,6 +179,7 @@ void WvIPFirewall::del_port(const WvIPPortAddr &addr)
 void WvIPFirewall::add_forward(const WvIPPortAddr &src,
 			       const WvIPPortAddr &dst, bool snat)
 {
+    ffwds.append(new FFwd(src, dst, snat), true);
     WvString s(forward_command("-A", "tcp", src, dst, snat)),
     	    s2(forward_command("-A", "udp", src, dst, snat));
 
@@ -194,15 +195,22 @@ void WvIPFirewall::add_forward(const WvIPPortAddr &src,
 void WvIPFirewall::del_forward(const WvIPPortAddr &src,
 			       const WvIPPortAddr &dst, bool snat)
 {
-    WvString s(forward_command("-D", "tcp", src, dst, snat)),
-	    s2(forward_command("-D", "udp", src, dst, snat));
-
-    log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
-
-    if (enable) 
+    FFwdList::Iter i(ffwds);
+    for (i.rewind(); i.next();) 
     {
-	system(s);
-	system(s2);
+        if (i->src == src && i->dst == dst && i->snat == snat) 
+        {
+            WvString s(forward_command("-D", "tcp", src, dst, snat)),
+	            s2(forward_command("-D", "udp", src, dst, snat));
+
+            log("Delete Forward (%s):\n%s\n%s\n", enable, s, s2);
+    
+            if (enable) 
+            {
+	        system(s);
+                system(s2);
+            }
+        }
     }
 }
 
@@ -307,6 +315,13 @@ void WvIPFirewall::zap()
     {
 	del_port(*i);
 	i.xunlink();
+    }
+
+    FFwdList::Iter ifwd(ffwds);
+    for (ifwd.rewind(); ifwd.next();)
+    {
+        del_forward(ifwd->src, ifwd->dst, ifwd->snat);
+        ifwd.xunlink();
     }
     
     RedirList::Iter i2(redirs);

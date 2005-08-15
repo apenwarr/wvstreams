@@ -683,7 +683,38 @@ WVTEST_MAIN("bachelor generator")
 }
 
 
-#if 0 // BUGZID: 13167
+// this reproduces a really convoluted crash caused by nested generators
+// when commit() on the outer generator creates an iterator on a subtree
+// of the inner generator, and then that subtree gets deleted while the
+// iterator still exists.  Nowadays this crash shouldn't be around anymore,
+// because UniTransactionGen returns only "safe" iterators that can handle
+// changes to the underlying data structure during their existence.
+WVTEST_MAIN("nested transaction commit/replace")
+{
+    UniConfRoot root("temp:");
+    UniTransaction t1(root);
+    UniTransaction t2(t1);
+    
+    t1[5].remove();
+    t1[5].xset(6, "hello");
+    
+    t2[5].remove();
+    t2[5].xset(6, "yank");
+    t2[5][6].remove();
+    WVPASSEQ(t2[5].xget(6), NULL);
+    WVPASSEQ(t1[5].xget(6), "hello");
+    
+    WVPASS("committing");
+    t2.commit();
+    WVPASS("commit done");
+    
+    WVPASSEQ(t1[6].xget(6), NULL);
+    
+    WVPASS("didn't crash");
+}
+
+
+#if 1 // BUGZID: 13167
 static int callback_count;
 
 static void callback(const UniConf keyconf, const UniConfKey key)
@@ -706,8 +737,8 @@ WVTEST_MAIN("transaction and list interaction")
     UniTempGen *ini = new UniTempGen();
     UniTempGen *def = new UniTempGen();
     UniConfGenList *l = new UniConfGenList();
-    l->append(ini, true);
-    l->append(def, true);
+    l->append(ini, false);
+    l->append(def, false);
     UniListGen *cfg = new UniListGen(l);
 
     UniConfRoot uniconf;
@@ -723,9 +754,131 @@ WVTEST_MAIN("transaction and list interaction")
     watches.add(uni["cfg/a/b"], &callback);
 
     (void)UniConfRoot("ini:tmp.ini").copy(uni["/ini"], true);
+    uni.commit();
 
     WVPASSEQ(uni.xget("/ini/a/b"), "c");
     WVPASSEQ(uni.xget("/cfg/a/b"), "c");
     WVPASSEQ(callback_count, 2);
 }
-#endif
+#endif // BUGZID: 13167
+
+
+#if 1 // BUGZID: 14057
+template <int place>
+int digit(int num)
+{
+    for (int i = place; i > 1; --i)
+	num /= 10;
+    return num % 10;
+}
+
+template <>
+int digit<1>(int num)
+{
+    return num % 10;
+}
+
+template <>
+int digit<2>(int num)
+{
+    return num / 10 % 10;
+}
+
+template <>
+int digit<3>(int num)
+{
+    return num / 100 % 10;
+}
+
+template <>
+int digit<4>(int num)
+{
+    return num / 1000 % 10;
+}
+
+template <>
+int digit<5>(int num)
+{
+    return num / 10000 % 10;
+}
+
+static void cb(const UniConf &conf, const UniConfKey &key)
+{
+}
+
+WVTEST_MAIN("processing many keys")
+{
+    //signal(SIGALRM, SIG_IGN);
+//     ::alarm(1000);
+    signal(SIGPIPE, SIG_IGN);
+
+    WvString sockname("/tmp/unitransgen-%s", getpid());
+
+    pid_t child = wvfork();
+    if (child == 0)
+    {
+	printf("Child\n");
+	fflush(stdout);
+
+	UniConfRoot uniconf("temp:");
+	UniConfDaemon daemon(uniconf, false, NULL);
+	daemon.setupunixsocket(sockname);
+	WvIStreamList::globallist.append(&daemon, false);
+	while (true)
+	{
+	    uniconf.setmeint(uniconf.getmeint()+1);
+	    WvIStreamList::globallist.runonce();
+	}
+	_exit(0);
+    }
+    else
+    {
+	sleep(1);
+	printf("Parent\n");
+	fflush(stdout);
+
+	WVPASS(child >= 0);
+
+	UniConfRoot cfg(WvString("transaction:unix:%s", sockname));
+
+	printf("Add Callback\n");
+	fflush(stdout);
+	cfg.add_callback(NULL, "/", UniConfCallback(cb));
+
+	printf("Setting\n");
+	fflush(stdout);
+	for (int i = 0; i < 200; ++i)
+	{
+	    int a = digit<5>(i);
+	    int b = digit<4>(i);
+	    int c = digit<3>(i);
+	    int d = digit<2>(i);
+	    int e = digit<1>(i);
+	    cfg[a][b][c][d][e].setmeint(i);
+	}
+
+	printf("Committing\n");
+	fflush(stdout);
+	cfg.commit();
+
+	printf("Del Callback\n");
+	fflush(stdout);
+	cfg.del_callback(NULL, "/");
+
+	printf("Kill Daemon\n");
+	fflush(stdout);
+
+	kill(child, 15);
+	pid_t rv;
+	while ((rv = waitpid(child, NULL, 0)) != child)
+	{
+	    // in case a signal is in the process of being delivered..
+	    if (rv == -1 && errno != EINTR)
+		break;
+	}
+	WVPASS(rv == child);
+    }
+
+    unlink(sockname);
+}
+#endif // BUGZID: 14057

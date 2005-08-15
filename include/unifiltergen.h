@@ -60,6 +60,7 @@ public:
     virtual void prefetch(const UniConfKey &key, bool recursive);
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
     virtual bool exists(const UniConfKey &key);
     virtual bool haschildren(const UniConfKey &key);
     virtual bool isok();
@@ -71,8 +72,7 @@ protected:
      * Called by inner generator when a key changes.
      * The default implementation calls delta(key).
      */
-    virtual void gencallback(const UniConfKey &key, WvStringParm value,
-                             void *userdata);
+    virtual void gencallback(const UniConfKey &key, WvStringParm value);
 };
 
 #endif //__UNIFILTERGEN_H

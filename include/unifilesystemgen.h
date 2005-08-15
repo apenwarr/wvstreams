@@ -42,10 +42,11 @@ class UniFileSystemGen : public UniConfGen
 {
 public:
     UniFileSystemGen(WvStringParm _dir, mode_t _mode);
-    WvString get(const UniConfKey &key);
-    void set(const UniConfKey &key, WvStringParm value);
-    Iter *iterator(const UniConfKey &key);
-    void flush_buffers() {}
+    virtual WvString get(const UniConfKey &key);
+    virtual void set(const UniConfKey &key, WvStringParm value);
+    virtual void setv(const UniConfPairList &pairs);
+    virtual void flush_buffers() {}
+    virtual Iter *iterator(const UniConfKey &key);
 private:
     WvString dir;
     mode_t mode;

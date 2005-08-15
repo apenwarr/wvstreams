@@ -18,6 +18,8 @@
  * you'd better just add a new command instead.  We keep track of the
  * version of the UniConf protocol by the number of commands supported
  * by the server.
+ *
+ * @see UniClientConn::Commands
  */
 const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     UniClientConn::NUM_COMMANDS] = {
@@ -25,6 +27,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "noop", "noop: verify that the connection is active" },
     { "get", "get <key>: get the value of a key" },
     { "set", "set <key> <value>: sets the value of a key" },
+    { "setv", "setv <key> <value> ...: set multiple key-value pairs" },
     { "del", "del <key>: deletes the key" },
     { "subt", "subt <key> <recurse?>: enumerates the children of a key" },
     { "hchild", "hchild <key>: returns whether a key has children" },
@@ -78,7 +81,9 @@ void UniClientConn::close()
 WvString UniClientConn::readmsg()
 {
     WvString word;
-    while ((word = wvtcl_getword(msgbuf, "\r\n", false)).isnull())
+    while ((word = wvtcl_getword(msgbuf,
+				 WVTCL_NASTY_NEWLINES,
+				 false)).isnull())
     {
 	// use lots of readahead to prevent unnecessary runs through select()
 	// during heavy data transfers.
@@ -106,7 +111,8 @@ WvString UniClientConn::readmsg()
 
 void UniClientConn::writemsg(WvStringParm msg)
 {
-    write(spacecat(msg, "", '\n'));
+    write(msg);
+    write("\n");
     // log("Wrote: %s\n", msg);
 }
 
@@ -145,10 +151,13 @@ WvString UniClientConn::readarg()
 
 void UniClientConn::writecmd(UniClientConn::Command cmd, WvStringParm msg)
 {
+    write(cmdinfos[cmd].name);
     if (msg)
-        writemsg(spacecat(cmdinfos[cmd].name, msg));
-    else
-        writemsg(cmdinfos[cmd].name);
+    {
+	write(" ");
+	write(msg);
+    }
+    write("\n");
 }
 
 

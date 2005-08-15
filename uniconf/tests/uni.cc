@@ -1,6 +1,7 @@
 #include "uniconfroot.h"
 #include "wvlogrcv.h"
 #include "strutils.h"
+#include "wvstringmask.h"
 #include "wvtclstring.h"
 
 #ifdef _WIN32
@@ -61,7 +62,8 @@ int main(int argc, char **argv)
 	       *arg2 = argc > 3 ? argv[3] : NULL;
     WvString cmd(_cmd);
     strlwr(cmd.edit());
-    
+
+    static const WvStringMask nasties("\r\n[]=");
     if (cmd == "get")
     {
 	WvString val = cfg[arg1].getme(arg2);
@@ -100,20 +102,23 @@ int main(int argc, char **argv)
     {
 	UniConf::Iter i(cfg[arg1]);
 	for (i.rewind(); i.next(); )
-	    wvcon->print("%s\n", wvtcl_escape(i->key(), "\r\n"));
+	    wvcon->print("%s\n", wvtcl_escape(i->key(),
+					      WVTCL_NASTY_NEWLINES));
     }
     else if (cmd == "hkeys")
     {
 	UniConf sub(cfg[arg1]);
 	UniConf::RecursiveIter i(sub);
 	for (i.rewind(); i.next(); )
-	    wvcon->print("%s\n", wvtcl_escape(i->fullkey(sub), "\r\n"));
+	    wvcon->print("%s\n", wvtcl_escape(i->fullkey(sub),
+					      WVTCL_NASTY_NEWLINES));
     }
     else if (cmd == "xkeys")
     {
 	UniConf::XIter i(cfg, arg1);
 	for (i.rewind(); i.next(); )
-	    wvcon->print("%s\n", wvtcl_escape(i->fullkey(cfg), "\r\n"));
+	    wvcon->print("%s\n", wvtcl_escape(i->fullkey(cfg),
+					      WVTCL_NASTY_NEWLINES));
     }
     else if (cmd == "dump")
     {
@@ -122,8 +127,8 @@ int main(int argc, char **argv)
 	UniConf::Iter i(cfg[arg1]);
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s = %s\n",
-			 wvtcl_escape(i->key(), "\r\n[]="),
-			 wvtcl_escape(i->getme(""), "\r\n[]="));
+			 wvtcl_escape(i->key(), nasties),
+			 wvtcl_escape(i->getme(""), nasties));
     }
     else if (cmd == "hdump")
     {
@@ -133,8 +138,8 @@ int main(int argc, char **argv)
 	UniConf::RecursiveIter i(sub);
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s = %s\n",
-			 wvtcl_escape(i->fullkey(sub), "\r\n[]="),
-			 wvtcl_escape(i->getme(""), "\r\n[]="));
+			 wvtcl_escape(i->fullkey(sub), nasties),
+			 wvtcl_escape(i->getme(""), nasties));
     }
     else if (cmd == "xdump")
     {
@@ -143,8 +148,8 @@ int main(int argc, char **argv)
 	UniConf::XIter i(cfg, arg1);
 	for (i.rewind(); i.next(); )
 	    wvcon->print("%s = %s\n",
-			 wvtcl_escape(i->fullkey(cfg), "\r\n[]="),
-			 wvtcl_escape(i->getme(""), "\r\n[]="));
+			 wvtcl_escape(i->fullkey(cfg), nasties),
+			 wvtcl_escape(i->getme(""), nasties));
     }
     else if (cmd == "del")
     {

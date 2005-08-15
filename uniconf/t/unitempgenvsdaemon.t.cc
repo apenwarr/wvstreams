@@ -19,20 +19,13 @@
 
 
 // write out a temporary ini file for use, saves flushing entries
-static int write_ini(WvString &ininame)
+static void write_ini(WvString &ininame)
 {
     ininame = WvString("/tmp/unitempgenvsdaemonini-%s", getpid());
 
-    WvFile outfile(ininame, O_CREAT | O_WRONLY);
-    if (outfile.isok())
-    {
-        outfile.print("%s\n%s\n", "[eth0]", "dhcpd = 1");
-        outfile.close();
-        return true;
-    }
-
+    WvFile outfile(ininame, O_CREAT | O_RDWR | O_TRUNC);
+    outfile.print("%s\n%s\n", "[eth0]", "dhcpd = 1");
     outfile.close();
-    return false;
 }
 
 WVTEST_MAIN("tempgen/cachegen basics")
@@ -40,11 +33,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
     signal(SIGPIPE, SIG_IGN);
 
     WvString ininame;
-    if (!write_ini(ininame))
-    {
-        WVFAIL("Could not write ini file");
-        exit(1); 
-    }
+    write_ini(ininame);
 
     WvString sockname = WvString("/tmp/unitempgensock-%s", getpid());
     
@@ -112,11 +101,7 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
     signal(SIGPIPE, SIG_IGN);
 
     WvString ininame;
-    if (!write_ini(ininame))
-    {
-        WVFAIL(true || "Could not write ini file");
-        exit(1); 
-    }
+    write_ini(ininame);
 
     WvString sockname = WvString("/tmp/unitempgensock2-%s", getpid());
 

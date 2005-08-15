@@ -44,6 +44,7 @@ char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
 WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
     : app(_app), loglevel(_loglevel)
 {
+//    printf("log: %s create\n", app.cstr());
     num_logs++;
 }
 
@@ -51,6 +52,7 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
 WvLog::WvLog(const WvLog &l)
     : app(l.app), loglevel(l.loglevel)
 {
+//    printf("log: %s create\n", app.cstr());
     num_logs++;
 }
 
@@ -64,6 +66,8 @@ WvLog::~WvLog()
 	delete default_receiver;
 	default_receiver = NULL;
     }
+//    printf("log: %s delete\n", app.cstr());
+//    printf("num_logs is now %d\n", num_logs);
 }
 
 

@@ -113,7 +113,7 @@ fileevent stdin readable {
     }
     
     # puts $line
-    set fulllog "$fulllog $line\n"
+    append fulllog " $line\n"
     
     after idle {fix_progbar}
 

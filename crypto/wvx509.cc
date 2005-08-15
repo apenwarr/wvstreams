@@ -22,6 +22,10 @@
 #include <openssl/sha.h>
 #include <openssl/pkcs12.h>
 
+UUID_MAP_BEGIN(WvX509Mgr)
+  UUID_MAP_ENTRY(IObject)
+  UUID_MAP_END
+
 static int ssl_init_count = 0;
 
 namespace {
@@ -165,6 +169,8 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
 
 WvX509Mgr::~WvX509Mgr()
 {
+    debug("Deleting.\n");
+    
     if (rsa)
 	delete rsa;
 

@@ -44,7 +44,14 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
     	}
     }
     
-    WVPASS(waitpid(pid, NULL, 0) == pid);
+    pid_t rv;
+    while ((rv = waitpid(pid, NULL, 0)) != pid)
+    {
+        // in case a signal is in the process of being delivered..
+        if (rv == -1 && errno != EINTR)
+            break;
+    }
+    WVPASS(rv == pid);
 }
 
 WVTEST_MAIN("WvMagicLoopback Non-Blocking Writes") 
