@@ -16,7 +16,6 @@
 #include "wvslp.h"
 #endif
 
-#include "wvcrash.h"
 #include "wvlogrcv.h"
 #include "uniconfdaemon.h"
 #include "uniclientconn.h"
@@ -251,7 +250,7 @@ public:
 		"creates a \"named\" moniker 'name' from 'moniker'",
 		"name=moniker",
 		WvArgs::ArgCallback(this, &UniConfd::namedgen_cb), NULL);
-#endif    
+#endif
     }
     
     
@@ -259,8 +258,6 @@ public:
 
 int main(int argc, char **argv)
 {
-    wvcrash_setup(argv[0], "uniconfd" ": " WVSTREAMS_RELEASE);
-
     UniConfd uniconfd;
    
     return uniconfd.run(argc, argv);

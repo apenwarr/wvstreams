@@ -1,7 +1,11 @@
-#include "uniunwrapgen.h"
+#include "uniconfdaemon.h"
 #include "uniconfroot.h"
 #include "unitempgen.h"
+#include "uniunwrapgen.h"
+#include "wvfork.h"
 #include "wvtest.h"
+
+#include <signal.h>
 
 static int itcount(UniConfGen::Iter *i)
 {
@@ -75,3 +79,53 @@ WVTEST_MAIN("unwrapgen root")
     WVFAIL(gcfg["b/"].exists());
     WVFAIL(gcfg["b"][""].exists());
 }
+
+#if 1 // BUGZID: 14286
+WVTEST_MAIN("unwrapgen callbacks")
+{
+    signal(SIGPIPE, SIG_IGN);
+
+    WvString sockname("/tmp/unitransgen-%s", getpid());
+
+    pid_t child = wvfork();
+    if (child == 0)
+    {
+	printf("Child\n");
+	fflush(stdout);
+
+	UniConfRoot uniconf("temp:");
+	UniConfDaemon daemon(uniconf, false, NULL);
+	daemon.setupunixsocket(sockname);
+	WvIStreamList::globallist.append(&daemon, false);
+	while (true)
+	{
+	    uniconf.setmeint(uniconf.getmeint()+1);
+	    WvIStreamList::globallist.runonce();
+	}
+	_exit(0);
+    }
+    else
+    {
+	sleep(1);
+	printf("Parent\n");
+	fflush(stdout);
+
+	WVPASS(child >= 0);
+
+	printf("Creating a unix: gen\n");
+	UniConfRoot cfg(WvString("unix:%s", sockname));
+
+	WVPASSEQ(cfg.xget("a"), WvString::null);
+	WVPASSEQ(cfg.xget("a"), WvString::null);
+	cfg.xset("a", "foo");
+	WVPASSEQ(cfg.xget("a"), "foo");
+
+	printf("Wrapping it in an unwrap: gen\n");
+	UniConfRoot unwrap(new UniUnwrapGen(cfg));
+
+	WVPASSEQ(unwrap.xget("a"), "foo");
+
+	unlink(sockname);
+    }
+}
+#endif

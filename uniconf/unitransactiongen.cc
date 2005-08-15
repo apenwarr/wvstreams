@@ -360,29 +360,22 @@ UniConfGen::Iter *UniTransactionGen::iterator(const UniConfKey &key)
 void UniTransactionGen::apply_values(UniConfValueTree *newcontents,
 				     const UniConfKey &section)
 {
-    WvString value(base->get(section));
-    if (value != newcontents->value())
-	// If the current value in the underlying generator isn't what
-	// we want it to be, then change it.
-	base->set(section, newcontents->value());
-    
-    if (!value.isnull())
+    base->set(section, newcontents->value());
+
+    UniConfGen::Iter *j = base->iterator(section);
+    if (j)
     {
-	UniConfGen::Iter *i = base->iterator(section);
-	if (i)
+	for (j->rewind(); j->next();)
 	{
-	    for (i->rewind(); i->next();)
-	    {
-		if (newcontents->findchild(i->key()) == NULL)
-		    // Delete all children of the current value in the
-		    // underlying generator that do not exist in our
-		    // replacement tree.
-		    base->set(UniConfKey(section, i->key()), WvString::null);
-	    }
-	    delete i;
+	    if (newcontents->findchild(j->key()) == NULL)
+		// Delete all children of the current value in the
+		// underlying generator that do not exist in our
+		// replacement tree.
+		base->set(UniConfKey(section, j->key()), WvString::null);
 	}
+	delete j;
     }
-    
+
     // Repeat for each child in the replacement tree.
     UniConfValueTree::Iter i(*newcontents);
     for (i.rewind(); i.next();)
@@ -397,10 +390,7 @@ void UniTransactionGen::apply_changes(UniConfChangeTree *node,
 	// If the current change is a NEWTREE change, then replace the
 	// tree in the underlying generator with the stored one.
 	if (node->newtree == NULL)
-	{
-	    if (base->exists(section))
-		base->set(section, WvString::null);
-	}
+	    base->set(section, WvString::null);
 	else
 	    apply_values(node->newtree, section);
 	// Since such changes have no children, return immediately.
@@ -409,10 +399,7 @@ void UniTransactionGen::apply_changes(UniConfChangeTree *node,
     else if (node->mode == NEWVALUE)
     {
 	// Else if the current change is a NEWVALUE change, ...
-	if (base->get(section) != node->newvalue)
-	    // ... and the current value in the underlying generator isn't
-	    // what we want it to be, then change it.
-	    base->set(section, node->newvalue);
+	base->set(section, node->newvalue);
     }
     else if (node->mode == NEWNODE)
     {

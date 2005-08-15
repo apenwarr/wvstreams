@@ -82,3 +82,22 @@ WVTEST_MAIN("composition")
     WVPASSEQ(UniConfKey(UniConfKey("simon/"), UniConfKey("law")).printable(),
 	     "simon/law");
 }
+
+WVTEST_MAIN("subkeys")
+{
+    WVPASS(UniConfKey().suborsame(UniConfKey("")));
+    WVPASS(UniConfKey().suborsame(UniConfKey("cfg/ini")));
+    WVPASS(UniConfKey("").suborsame(UniConfKey("cfg/ini")));
+    WVPASS(UniConfKey("/").suborsame(UniConfKey("cfg/ini")));
+    WVPASS(UniConfKey("cfg").suborsame(UniConfKey("cfg/ini")));
+    WVPASS(UniConfKey("cfg/").suborsame(UniConfKey("cfg/ini")));
+    WVPASS(UniConfKey("/cfg/ini").suborsame(UniConfKey("cfg/ini")));
+    WVFAIL(UniConfKey("/cfg/ini/foo").suborsame(UniConfKey("cfg/ini")));
+    WVFAIL(UniConfKey("/ini/cfg").suborsame(UniConfKey("cfg/ini")));
+
+    WVPASSEQ(UniConfKey().subkey(UniConfKey("")).cstr(), "");
+    WVPASSEQ(UniConfKey().subkey(UniConfKey("cfg/ini")).cstr(), "cfg/ini");
+    WVPASSEQ(UniConfKey("/").subkey(UniConfKey("cfg/ini")).cstr(), "cfg/ini");
+    WVPASSEQ(UniConfKey("cfg").subkey(UniConfKey("cfg/ini")).cstr(), "ini");
+    WVPASSEQ(UniConfKey("/cfg/ini").subkey(UniConfKey("cfg/ini")).cstr(), "");
+}

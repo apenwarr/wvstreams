@@ -418,7 +418,7 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 		     WvStringParm _value)
 {
     WvString key, value;
-    static const WvStringMask nasties("\r\n[]=#\"");
+    static const WvStringMask nasties("\r\n\t []=#");
 
     if (absolutely_needs_escape(_key, "\r\n[]=#\""))
 	key = wvtcl_escape(_key, nasties);
