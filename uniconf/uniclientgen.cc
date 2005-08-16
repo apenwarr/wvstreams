@@ -256,11 +256,20 @@ UniClientGen::Iter *UniClientGen::recursiveiterator(const UniConfKey &key)
 {
     return do_iterator(key, true);
 }
-    
+
+
+time_t uptime()
+{
+    WvFile f("/proc/uptime", O_RDONLY);
+    if (f.isok())
+        return WvString(f.getline(0)).num();
+    return 0;
+}
+
 
 void UniClientGen::conncallback(WvStream &stream, void *userdata)
 {
-    if (conn->alarm_was_ticking)
+    if (conn->alarm_was_ticking && timeout_activity+(TIMEOUT/1000) < uptime())
     {
         // command response took too long!
         log(WvLog::Warning, "Command timeout; connection closed.\n");
@@ -382,6 +391,7 @@ bool UniClientGen::do_select()
     cmdinprogress = true;
     cmdsuccess = false;
 
+    timeout_activity = uptime();
     conn->alarm(TIMEOUT);
     while (conn->isok() && cmdinprogress)
     {
@@ -392,6 +402,7 @@ bool UniClientGen::do_select()
         if (conn->select(-1, true, false))
         {
             conn->callback();
+            timeout_activity = uptime();
             conn->alarm(TIMEOUT);
         }
     }
