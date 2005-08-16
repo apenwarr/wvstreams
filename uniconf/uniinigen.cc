@@ -38,7 +38,6 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     // Create the root, since this generator can't handle it not existing.
     UniTempGen::set(UniConfKey::EMPTY, WvString::empty);
     memset(&old_st, 0, sizeof(old_st));
-    refresh();
 }
 
 
