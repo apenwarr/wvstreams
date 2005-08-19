@@ -33,6 +33,7 @@
 class UniUnwrapGen : public UniConfGen
 {
     UniConf xinner;
+    UniConfKey xfullkey;
 
 public:
     UniUnwrapGen(const UniConf &inner);
@@ -63,7 +64,7 @@ private:
      * Called by inner generator when a key changes.
      * The default implementation calls delta(key).
      */
-    virtual void gencallback(const UniConf &cfg, const UniConfKey &key);
+    virtual void gencallback(const UniConfKey &key, WvStringParm value);
     
     /** Like xinner[key], but skips calling [] if key.isnull(). */
     UniConf _sub(const UniConfKey &key);
