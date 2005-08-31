@@ -94,6 +94,7 @@ AC_ARG_ENABLE(testgui,
 
 AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
+AC_ARG_WITH(dbus, AC_HELP_STRING([--with-dbus], [DBUS]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
 AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
@@ -388,6 +389,17 @@ if test "$with_qdbm" != "no"; then
     fi
 fi
 
+# dbus
+if test "$with_dbus" != "no"; then
+    AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
+    AC_CHECK_LIB(dbus-1, dbus_connection_open,, [with_dbus=no])
+
+    if test "$with_dbus" != "no"; then
+        AC_DEFINE(WITH_DBUS,,
+                  [Define to enable DBUS support.])
+    fi
+fi
+
 # popt
 if test "$with_popt" != "no"; then
     AC_CHECK_HEADERS(popt.h,, [with_popt=no])
@@ -565,6 +577,10 @@ if test "$with_qdbm" = "no"; then
     AC_MSG_WARN([QDBM is missing.])
     missing_devel=yes
 fi
+if test "$with_dbus" = "no"; then
+    AC_MSG_WARN([DBUS is missing.])
+    missing_devel=yes
+fi
 if test "$with_popt" = "no"; then
     AC_MSG_WARN([Popt is missing.])
     missing_required="$missing_required popt"
@@ -631,6 +647,7 @@ AC_SUBST(enable_testgui)
 
 AC_SUBST(with_bdb)
 AC_SUBST(with_qdbm)
+AC_SUBST(with_dbus)
 AC_SUBST(with_gtk)
 AC_SUBST(with_openslp)
 AC_SUBST(with_openssl)
