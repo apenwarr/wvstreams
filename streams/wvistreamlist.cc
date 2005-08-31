@@ -169,7 +169,14 @@ void WvIStreamList::execute()
 	i.xunlink();
 	
 	if (s.isok())
+        {
+#if DEBUG
+            WvString strace_node("execute %s",
+                    id? id: "(unidentified stream)");
+            ::write(-1, strace_node, strace_node.len()); 
+#endif
 	    s.callback();
+        }
 	
 	// list might have changed!
 	i.rewind();
