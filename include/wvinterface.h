@@ -114,13 +114,6 @@ public:
 
     /** get/set information about a wireless interface */
     int req(int ioctl_num, struct iwreq *ifr);
-
-    int do_ioctl(int ioctl_num, struct ifreq *ifr);
-    void force_link_speed(int speed);
-    int supports_new_mii_ioctl(struct ifreq *ifr);
-    bool supports_mii();
-    int if_up(struct ifreq *ifr, bool newnums);
-
 };
 
 DeclareWvDict2(WvInterfaceDictBase, WvInterface, WvString, name);
