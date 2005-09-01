@@ -57,6 +57,7 @@ enable_testgui=@enable_testgui@
 with_fam=@with_fam@
 with_bdb=@with_bdb@
 with_qdbm=@with_qdbm@
+with_dbus=@with_dbus@
 with_gtk=@with_gtk@
 with_ogg=@with_ogg@
 with_openslp=@with_openslp@

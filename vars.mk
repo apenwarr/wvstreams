@@ -125,6 +125,10 @@ ifneq ("$(with_qdbm)", "no")
   libwvutils.so-LIBS+=-L. -lqdbm
 endif
 
+ifneq ("$(with_dbus)", "no")
+  libwvstreams.so-LIBS+=-L. -ldbus-1
+endif
+
 libwvbase.so-LIBS+=-lxplc-cxx -lm
 libwvbase.so:
 
