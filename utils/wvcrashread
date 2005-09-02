@@ -1,0 +1,238 @@
+#!/usr/bin/perl
+#
+# Worldvisions Weaver Software:
+#   Copyright (C) 2005 Net Integration Technologies, Inc.
+#
+# Post-process WvCrash output using GDB, to try to figure out exactly
+# which line things died upon.
+#
+# The advantage of using this programme over a plain stack dump is
+# that it is clever enough to figure out relative offsets to a
+# function, so you don't need the exact same object file as the one
+# that crashed.  With extra cleverness, we even span symbol manging
+# across different versions of G++.
+
+use strict;
+use warnings;
+
+use FileHandle;
+use IPC::Open2;
+
+my $DEBUG = $ENV{DEBUG};
+sub debug
+{
+    print(STDERR @_) if $DEBUG;
+}
+
+sub gdb_init($)
+{
+    my ($programme) = @_;
+
+    my $gdb_prompt = qr/(?:\(gdb\) )+/;
+    my $gdb_flush = "echo \\n\n"; # Flush gdb's stdout
+
+    my $gdb_addr = sub ($$$) {
+	my ($Reader, $Writer, $function) = @_;
+
+	debug("-> info addr $function\n");
+	print($Writer "info addr $function\n");
+	print($Writer $gdb_flush);
+	my $first = 0;
+	while (<$Reader>)
+	{
+	    debug("<- $_");
+	    if (/^$gdb_prompt\s*Symbol "(.*?)" is .* (0x[0-9A-Fa-f]+)/) {
+		return ($1, $2);
+	    }
+	    last if (/^$gdb_prompt$/ && $first);
+	    $first = 1;
+	}
+
+	# Returns the human-readable function name, and the starting address
+	return ($function, undef);
+    };
+
+    my $gdb_line = sub ($$$$)
+    {
+	my ($Reader, $Writer, $addr, $offset) = @_;
+
+	debug("-> info line *$addr+$offset\n");
+	print($Writer "info line *$addr+$offset\n");
+	print($Writer $gdb_flush);
+	my $first = 0;
+	while (<$Reader>) {
+	    debug("<- $_");
+	    if (/^$gdb_prompt\s*Line ([0-9]+) of "(.*?)" starts at /) {
+		return ($2, $1);
+	    }
+	    last if (/^$gdb_prompt$/ && $first);
+	    $first = 1;
+	}
+
+	# Returns the filename and line number.
+	return (undef, undef);
+    };
+
+    # Initialise GDB
+    my ($Reader, $Writer);
+    my $pid = open2($Reader, $Writer, "gdb '$programme' 2>&1") or die;
+    print($Writer "set width 2000\n");
+    print($Writer "set height 20000\n");
+    print($Writer "break main\n");
+    print($Writer "run\n");
+    print($Writer $gdb_flush);
+    while (<$Reader>) {
+	debug("<- $_");
+	last if (/^$gdb_prompt$/);
+    }
+
+    return sub ($) {
+	my ($string) = @_;
+
+	# Parse the input string.
+	my ($binary, $absolute) = ($string =~ /^(.*?)([\[\(].*)/);
+	my ($function, $offset) = ($absolute =~ /^\((.*?)\+(.*?)\)/);
+	$absolute =~ s/.*\[(.*?)\].*/$1/;
+
+	my ($file, $line) = ("--", "--");
+
+	unless (defined($function)) {
+	    $function = "file: $binary";
+	}
+	else {
+	    my $addr;
+
+	    # Try with the mangled function name
+	    ($function, $addr) = &$gdb_addr($Reader, $Writer, $function);
+
+	    unless (defined($addr))
+	    {
+		# Try with c++filt mangled function
+		my $filtered = `c++filt $function` or return ($function,
+							      undef, undef);
+		chomp($filtered);
+		($function, $addr) = &$gdb_addr($Reader, $Writer, $filtered);
+
+		unless (defined($addr))
+		{
+		    # Try turning (void) into ()
+		    $function =~ s/\(void\)/()/g;
+		    ($function, $addr) = &$gdb_addr($Reader, $Writer,
+						    $function);
+		}
+
+		return ($function, undef, undef) unless (defined($addr));
+	    }
+
+	    ($file, $line) = &$gdb_line($Reader, $Writer, $addr, $offset);
+	    $file = "--" unless defined($file);
+	    $line = "--" unless defined($line);
+	}
+
+	return ($function, $file, $line);
+    };
+}
+
+# Main variables
+my $programme;			# Name of the programme
+my $signum;			# Signal number that it died on
+my $gdb_parse;			# Handle to GDB conversation
+
+# Main programme
+my $state = "begin";
+while (my $string = <>)
+{
+    chomp($string);
+
+    # We drive a state machine here, to figure out what we should do next.
+    STATE: for ($state)
+    {
+	if (/begin/)
+	{
+	    undef $programme;
+	    undef $signum;
+	    # We will want to skip anything that isn't the beginning
+	    # of a WvCrash file.
+	    if ($string =~ / dying on signal \d+/)
+	    {
+		$state = "new";
+		goto STATE;
+	    }
+	}
+	elsif (/new/)
+	{
+	    # Extract the information out of the first line of the header.
+	    if ($string =~ /^(.*?) dying on signal (\d+)(.*)?/)
+	    {
+		$programme = $1;
+		$signum = $2;
+		my $signame = $3 || "";
+		print("$programme dying on signal $signum$signame\n\n");
+		if (-x $programme) {
+		    $state = "header";
+		}
+		else {
+		    $state = "missing";
+		}
+	    }
+	}
+	elsif (/header/)
+	{
+	    # We don't actually have much of a header right now, so this
+	    # merely transitions to the backtrace.
+	    if ($string =~ /^Backtrace:/)
+	    {
+		unless (defined($programme) && defined($signum)) {
+		    $state = "corrupt";
+		}
+		else
+		{
+		    $gdb_parse = gdb_init($programme);
+		    $state = "backtrace";
+		}
+	    }
+	}
+	elsif (/backtrace/)
+	{
+	    # Keep reading backtrace information until we stop seeing
+	    # stack traces.
+	    if ($string =~ /^\S+\[0x[0-9A-Fa-f]+\]$/)
+	    {
+		my ($function, $file, $line) = &$gdb_parse($string);
+
+		# Eat up some extra spaces
+		$function =~ s/,\s+/,/g;
+		$function =~ s/\s+\*/*/g;
+		$function =~ s/\s+&/&/g;
+		$function =~ s/\s+&/&/g;
+
+		$state = "backtrace";
+		if (not defined($file)) {
+		    printf("%-40s --:--\n", $function);
+		}
+		else {
+		    printf("%-40s %s:%s\n", $function, $file, $line);
+		}
+	    }
+	    else
+	    {
+		$state = "begin";
+		goto STATE;
+	    }
+	}
+	elsif (/missing/)
+	{
+	    print(STDERR "File '$programme' is not executable!  Aborting.\n");
+	    exit(1);
+	}
+	elsif (/corrupt/)
+	{
+	    print(STDERR "Unrecognized WvCrash output.  Aborting.\n");
+	    exit(1);
+	}
+	else
+	{
+	    die("Internal wvcrashread error.  Aborting.");
+	}
+    }
+}
