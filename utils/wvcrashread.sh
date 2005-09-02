@@ -22,8 +22,8 @@ agdb()
 		echo "run"
 		cat
 		echo "quit"
-	) | gdb --noasync -q --command=/dev/stdin "$1" \
-	  | (read; read; read; read; cat)
+	) | gdb -q --command=/dev/stdin "$1" \
+	  | perl -ne 'unless ($a) { $a++ if (m/^\d+\s+/) } else { print; }'
 }
 
 
