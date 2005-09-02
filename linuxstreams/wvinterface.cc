@@ -192,6 +192,12 @@ void WvInterface::promisc(bool enable)
 }
 
 
+void WvInterface::ptp(bool enable)
+{
+    setflags(IFF_POINTOPOINT, enable ? IFF_POINTOPOINT : 0);
+}
+
+
 bool WvInterface::ispromisc()
 {
     return (getflags() & IFF_PROMISC) ? 1 : 0;
