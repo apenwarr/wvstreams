@@ -71,7 +71,7 @@ public:
     void promisc(bool enable);
     
     /** turn point-to-point mode on or off.*/
-    void ptp(bool enable);
+    int ptp(bool enable, const WvIPNet &addr);
     
     /**
      * Sets the local address, netmask, and broadcast of this interface

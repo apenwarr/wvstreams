@@ -192,9 +192,20 @@ void WvInterface::promisc(bool enable)
 }
 
 
-void WvInterface::ptp(bool enable)
+int WvInterface::ptp(bool enable, const WvIPNet &addr)
 {
-    setflags(IFF_POINTOPOINT, enable ? IFF_POINTOPOINT : 0);
+    struct ifreq ifr;
+    sockaddr *saddr = addr.sockaddr();
+    memcpy(&ifr.ifr_dstaddr, saddr, addr.sockaddr_len());
+
+    int retval = req(SIOCSIFDSTADDR, &ifr);
+    if (retval && retval != EACCES && retval != EPERM)
+    {
+        err.perror(WvString("Set PointoPoint %s", name));
+	return retval;
+    }
+    
+    return setflags(IFF_POINTOPOINT, enable ? IFF_POINTOPOINT : 0);
 }
 
 
