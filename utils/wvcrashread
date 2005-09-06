@@ -167,7 +167,11 @@ while (my $string = <>)
 		$programme = $1;
 		$signum = $2;
 		my $signame = $3 || "";
-		print("$programme dying on signal $signum$signame\n\n");
+		my $version = "";
+		if ($programme =~ s/\s+\((.*)\)//) {
+		    $version = " ($1)" if $1;
+	        }
+		print("$programme$version dying on signal $signum$signame\n\n");
 		if (-x $programme) {
 		    $state = "header";
 		}
