@@ -102,7 +102,7 @@ AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
-xplc_version='0.3.11'
+xplc_version='0.3.12'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
