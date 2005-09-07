@@ -39,6 +39,7 @@ class UniClientGen : public UniConfGen
     bool cmdsuccess;        /*!< true when a command completed successfully */
 
     static const int TIMEOUT = 60000; // command timeout in ms
+    time_t timeout_activity;          // last time something happened relative to uptime
 
     int version; /*!< version number of the protocol */
 

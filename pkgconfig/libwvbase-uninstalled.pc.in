@@ -4,6 +4,6 @@ top_builddir=@abs_top_builddir@
 Name: WvStreams Base
 Description: Basic subset of the WvStreams library
 Version: ${version}
-Requires: xplc = 0.3.11
+Requires: xplc = 0.3.12
 Libs: -L${top_builddir} -lwvbase
 Cflags: -I${top_builddir}/include
