@@ -6,6 +6,8 @@
 #include "wvtest.h"
 
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 static int itcount(UniConfGen::Iter *i)
 {
@@ -80,7 +82,6 @@ WVTEST_MAIN("unwrapgen root")
     WVFAIL(gcfg["b"][""].exists());
 }
 
-#if 1 // BUGZID: 14286
 WVTEST_MAIN("unwrapgen callbacks")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -90,18 +91,22 @@ WVTEST_MAIN("unwrapgen callbacks")
     pid_t child = wvfork();
     if (child == 0)
     {
-	printf("Child\n");
-	fflush(stdout);
+        // Make sure everything leaves scope before we call _exit(), otherwise
+        // destructors won't be run.
+        {
+            printf("Child\n");
+            fflush(stdout);
 
-	UniConfRoot uniconf("temp:");
-	UniConfDaemon daemon(uniconf, false, NULL);
-	daemon.setupunixsocket(sockname);
-	WvIStreamList::globallist.append(&daemon, false);
-	while (true)
-	{
-	    uniconf.setmeint(uniconf.getmeint()+1);
-	    WvIStreamList::globallist.runonce();
-	}
+            UniConfRoot uniconf("temp:");
+            UniConfDaemon daemon(uniconf, false, NULL);
+            daemon.setupunixsocket(sockname);
+            WvIStreamList::globallist.append(&daemon, false);
+            while (!uniconf["killme"].exists())
+            {
+                uniconf.setmeint(uniconf.getmeint()+1);
+                WvIStreamList::globallist.runonce();
+            }
+        }
 	_exit(0);
     }
     else
@@ -125,7 +130,14 @@ WVTEST_MAIN("unwrapgen callbacks")
 
 	WVPASSEQ(unwrap.xget("a"), "foo");
 
+        // Tell the child to clean itself up
+        cfg.xset("killme", "now");
+
+        // Make sure the child exited normally
+        int status;
+        waitpid(child, &status, 0);
+        WVPASS(WIFEXITED(status));
+
 	unlink(sockname);
     }
 }
-#endif
