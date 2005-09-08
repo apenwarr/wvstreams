@@ -135,7 +135,7 @@ WVTEST_MAIN("unwrapgen callbacks")
 
         // Make sure the child exited normally
         int status;
-        waitpid(child, &status, 0);
+        WVPASSEQ(waitpid(child, &status, 0), child);
         WVPASS(WIFEXITED(status));
 
 	unlink(sockname);
