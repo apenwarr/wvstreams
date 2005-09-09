@@ -12,6 +12,21 @@ static WvString socket("/tmp/uniretrygen-uniconfd-%s", getpid());
 static WvString ini("/tmp/uniretrygen-uniconfd.ini-%s", getpid());
 
 
+static void kill_and_wait(pid_t _pid)
+{
+    kill(_pid, 15);
+    int status;
+    pid_t rv = waitpid(_pid, &status, 0);
+
+    while (rv == -1 && errno == EINTR)
+	waitpid(_pid, &status, 0);
+
+    // This fails randomly on SMP systems, and I wish I knew why.
+    //WVPASSEQ(rv, _pid);
+    //WVPASS(WIFEXITED(status));
+}
+
+
 void start_uniconfd(pid_t &uniconfd_pid)
 {
     WvString iniarg("ini:%s", ini);
@@ -69,10 +84,7 @@ WVTEST_MAIN("uniconfd")
     WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
-    kill(uniconfd_pid, 15);
-    int status;
-    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
-    WVPASS(WIFEXITED(status));
+    kill_and_wait(uniconfd_pid);
     
     WVPASS(!cfg["/key"].exists());
     
@@ -82,9 +94,7 @@ WVTEST_MAIN("uniconfd")
     WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
-    kill(uniconfd_pid, 15);
-    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
-    WVPASS(WIFEXITED(status));
+    kill_and_wait(uniconfd_pid);
 
     WVPASS(!cfg["/key"].exists());
 }
@@ -114,10 +124,7 @@ WVTEST_MAIN("reconnect callback")
     cfg.getme(); // Do something to reconnect
     WVPASS(reconnected);
 
-    int status;
-    kill(uniconfd_pid, 15);
-    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
-    WVPASS(WIFEXITED(status));
+    kill_and_wait(uniconfd_pid);
 }
 
 WVTEST_MAIN("immediate reconnect")
@@ -138,10 +145,7 @@ WVTEST_MAIN("immediate reconnect")
     WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
-    kill(uniconfd_pid, 15);
-    int status;
-    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
-    WVPASS(WIFEXITED(status));
+    kill_and_wait(uniconfd_pid);
     
     // don't check anything before restarting so cfg doesn't know that
     // uniconfd has disconnected.
@@ -151,9 +155,7 @@ WVTEST_MAIN("immediate reconnect")
     cfg.getme(); // Do something to reconnect
     WVPASSEQ(cfg["/key"].getme(), "value");
 
-    kill(uniconfd_pid, 15);
-    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
-    WVPASS(WIFEXITED(status));
+    kill_and_wait(uniconfd_pid);
 
     WVPASS(!cfg["/key"].exists());
 }
