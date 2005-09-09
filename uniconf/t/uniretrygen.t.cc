@@ -70,7 +70,9 @@ WVTEST_MAIN("uniconfd")
     
     cfg.commit();
     kill(uniconfd_pid, 15);
-    waitpid(uniconfd_pid, NULL, 0);
+    int status;
+    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
+    WVPASS(WIFEXITED(status));
     
     WVPASS(!cfg["/key"].exists());
     
@@ -81,7 +83,8 @@ WVTEST_MAIN("uniconfd")
     
     cfg.commit();
     kill(uniconfd_pid, 15);
-    waitpid(uniconfd_pid, NULL, 0);
+    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
+    WVPASS(WIFEXITED(status));
 
     WVPASS(!cfg["/key"].exists());
 }
@@ -111,8 +114,10 @@ WVTEST_MAIN("reconnect callback")
     cfg.getme(); // Do something to reconnect
     WVPASS(reconnected);
 
+    int status;
     kill(uniconfd_pid, 15);
-    waitpid(uniconfd_pid, NULL, 0);
+    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
+    WVPASS(WIFEXITED(status));
 }
 
 WVTEST_MAIN("immediate reconnect")
@@ -134,7 +139,9 @@ WVTEST_MAIN("immediate reconnect")
     
     cfg.commit();
     kill(uniconfd_pid, 15);
-    waitpid(uniconfd_pid, NULL, 0);
+    int status;
+    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
+    WVPASS(WIFEXITED(status));
     
     // don't check anything before restarting so cfg doesn't know that
     // uniconfd has disconnected.
@@ -145,7 +152,8 @@ WVTEST_MAIN("immediate reconnect")
     WVPASSEQ(cfg["/key"].getme(), "value");
 
     kill(uniconfd_pid, 15);
-    waitpid(uniconfd_pid, NULL, 0);
+    WVPASSEQ(waitpid(uniconfd_pid, &status, 0), uniconfd_pid);
+    WVPASS(WIFEXITED(status));
 
     WVPASS(!cfg["/key"].exists());
 }
