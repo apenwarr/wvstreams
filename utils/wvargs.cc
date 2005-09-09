@@ -416,7 +416,7 @@ static bool create_popt_context(int argc, char **argv,
     memcpy(&(*popt_options)[j++], &extras[1], sizeof(struct poptOption));
         
     popt_context = poptGetContext(argv[0], argc, (const char **)argv, 
-				  (*popt_options), 0);
+				  (*popt_options), POPT_CONTEXT_POSIXMEHARDER);
 
     WvString usage_desc;
     if (options->count() > 0)
