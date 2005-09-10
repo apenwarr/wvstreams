@@ -154,7 +154,7 @@ int WvDaemon::run(const char *argv0)
                 // assume that they are open after exec()
                 if (::fcntl(0, F_SETFD, 0) == -1
                         || ::fcntl(1, F_SETFD, 0) == -1
-                        || ::fcntl(2, F_SETFD, 0))
+                        || ::fcntl(2, F_SETFD, 0) == -1)
                 {
                     log(WvLog::Warning, "Failed to fcntl((0|1|2), F_SETFD, 0): %s\n",
                             strerror(errno));
