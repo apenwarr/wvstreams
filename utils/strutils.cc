@@ -761,6 +761,9 @@ WvString metriculate(const off_t i)
 
 WvString afterstr(WvStringParm line, WvStringParm a)
 {
+    if (!line || !a)
+	return WvString::null;
+
     char *loc = strstr(line, a);
     if (loc == 0)
 	return "";
@@ -774,6 +777,9 @@ WvString afterstr(WvStringParm line, WvStringParm a)
 
 WvString beforestr(WvStringParm line, WvStringParm a)
 {
+    if (!line || !a)
+	return WvString::null;
+
     WvString ret = line;
     ret.unique();    
     char *loc = strstr(ret, a);

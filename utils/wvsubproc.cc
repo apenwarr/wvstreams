@@ -196,7 +196,13 @@ int WvSubProc::fork(int *waitfd)
 				     getenv("LD_PRELOAD") + 11);
 		putenv(ldpreload.edit());
 	    }
-	    else
+	    else if (!strstr(*i, "="))
+	    {
+	    	// no equals? then we must want to unset it!
+	    	// This is evil, but this is the most simple
+	    	unsetenv(*i);
+	    } 
+	    else 
 		putenv(i->edit());
 	}
     }
