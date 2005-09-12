@@ -108,7 +108,7 @@ sub gdb_init($)
 	    unless (defined($addr))
 	    {
 		# Try with c++filt mangled function
-		my $filtered = `c++filt $function` or return ($function,
+		my $filtered = `c++filt '$function'` or return ($function,
 							      undef, undef);
 		chomp($filtered);
 		($function, $addr) = &$gdb_addr($Reader, $Writer, $filtered);
@@ -200,7 +200,7 @@ while (my $string = <>)
 	{
 	    # Keep reading backtrace information until we stop seeing
 	    # stack traces.
-	    if ($string =~ /^\S+\[0x[0-9A-Fa-f]+\]$/)
+	    if ($string =~ /\[0x[0-9A-Fa-f]+\]$/)
 	    {
 		my ($function, $file, $line) = &$gdb_parse($string);
 
