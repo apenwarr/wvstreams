@@ -307,7 +307,7 @@ WVTEST_MAIN("getdirname")
  * sizetoa() should return an appropriate text description of the size
  * of a given number of blocks with a given blocksize.
  */
-WVTEST_MAIN("sizetoa")
+WVTEST_MAIN("sizetoa simple")
 {
     // Check various blocksizes
     {
@@ -416,6 +416,12 @@ WVTEST_MAIN("sizetoa")
     WVPASSEQ(sizetoa(1099999999999999999ull, 1000000000), "1100.0 YB");
     WVPASSEQ(sizetoa(1999999999999999999ull, 1000000000), "2000.0 YB");
     WVPASSEQ(sizetoa(18446744073709551615ull, 1000000000), "18446.7 YB");
+
+    // Check that irregular block sizes round properly
+    WVPASSEQ(sizetoa(73887, 1000), "73.9 MB");
+    WVPASSEQ(sizetoa(73887, 1999), "147.7 MB");
+    WVPASSEQ(sizetoa(73887, 2000), "147.8 MB");
+    WVPASSEQ(sizetoa(73887, 4096), "302.7 MB");
 }
 
 /** Tests sizektoa(),

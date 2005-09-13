@@ -148,6 +148,17 @@ int WvDaemon::run(const char *argv0)
                     _exit(1);
                 }
                 ::close(null_fd);
+
+                // Make sure the close-on-exec flag is not set for
+                // the first three descriptors, since many programs
+                // assume that they are open after exec()
+                if (::fcntl(0, F_SETFD, 0) == -1
+                        || ::fcntl(1, F_SETFD, 0) == -1
+                        || ::fcntl(2, F_SETFD, 0) == -1)
+                {
+                    log(WvLog::Warning, "Failed to fcntl((0|1|2), F_SETFD, 0): %s\n",
+                            strerror(errno));
+                }
                 
                 return _run(argv0); // Make sure destructors are called
             }
