@@ -111,11 +111,13 @@ sub gdb_init($)
 		my $filtered = `c++filt '$function'` or return ($function,
 							      undef, undef);
 		chomp($filtered);
+		# Turn () into (void) for old GDB
+		$filtered =~ s/\(\)/(void)/g;
 		($function, $addr) = &$gdb_addr($Reader, $Writer, $filtered);
 
 		unless (defined($addr))
 		{
-		    # Try turning (void) into ()
+		    # Try turning (void) into () for new GDB
 		    $function =~ s/\(void\)/()/g;
 		    ($function, $addr) = &$gdb_addr($Reader, $Writer,
 						    $function);
