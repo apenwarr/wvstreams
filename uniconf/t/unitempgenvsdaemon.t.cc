@@ -89,11 +89,16 @@ WVTEST_MAIN("tempgen/cachegen basics")
 
     WVPASS(initial_value != new_value);
    
-    int status;
-
     // kill off the daemon and clean up the zombie
     kill(cfg_handler, 15);
-    WVPASSEQ(waitpid(cfg_handler, &status, 0), cfg_handler);
+
+    // In case a signal is in the process of being delivered..
+    pid_t rv;
+    while ((rv = waitpid(cfg_handler, NULL, 0)) != cfg_handler)
+        if (rv == -1 && errno != EINTR)
+            break;
+    WVPASSEQ(rv, cfg_handler);
+
     unlink(ininame);
     unlink(sockname);
 }
@@ -150,11 +155,16 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
     WvUnixConn unixconn(sockname);
     WVPASS(unixconn.isok());
 
-    int status;
-   
     // kill off the daemon and clean up the zombie
     kill(cfg_handler, 15);
-    WVPASSEQ(waitpid(cfg_handler, &status, 0), cfg_handler);
+
+    // In case a signal is in the process of being delivered...
+    pid_t rv;
+    while ((rv = waitpid(cfg_handler, NULL, 0)) != cfg_handler)
+        if (rv == -1 && errno != EINTR)
+            break;
+    WVPASSEQ(rv, cfg_handler);
+
     unlink(ininame);
     unlink(sockname);
 }
