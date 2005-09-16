@@ -95,6 +95,18 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
 	wr(fd, ")\n");
     }
 
+    // Write out the PID and PPID.
+    static char pid_str[32];
+    wr(fd, "\nProcess ID: ");
+    snprintf(pid_str, sizeof(pid_str), "%d", getpid());
+    pid_str[31] = '\0';
+    wr(fd, pid_str);
+    wr(fd, "\nParent's process ID: ");
+    snprintf(pid_str, sizeof(pid_str), "%d", getppid());
+    pid_str[31] = '\0';
+    wr(fd, pid_str);
+    wr(fd, "\n");
+
     // Write out the assertion message, as logged by __assert*_fail(), if any.
     if (assert_msg)
     {
