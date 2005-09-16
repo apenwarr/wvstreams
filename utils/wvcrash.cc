@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 static const char *argv0 = "UNKNOWN";
+static char *assert_msg = NULL;
 static const char *desc = NULL;
 WvCrashCallback callback;
 
@@ -91,9 +92,17 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     {
 	wr(fd, " (");
 	wr(fd, signame);
-	wr(fd, ")");
+	wr(fd, ")\n");
     }
-    wr(fd, "\n\nBacktrace:\n");
+
+    // Write out the assertion message, as logged by __assert*_fail(), if any.
+    if (assert_msg)
+    {
+	wr(fd, "\nAssert:\n");
+	wr(fd, assert_msg);
+    }
+
+    wr(fd, "\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
     
@@ -111,6 +120,12 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
                 break;
             nanosleep(&ts, NULL);
         }
+    }
+
+    if (assert_msg)
+    {
+	free(assert_msg);
+	assert_msg = NULL;
     }
 
     // we want to create a coredump, and the kernel seems to not want to do
@@ -238,7 +253,8 @@ void wvcrash_add_signal(int sig)
 
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
-    argv0 = _argv0;
+    argv0 = basename(_argv0);
+    assert_msg = NULL;
     desc = _desc;
     
     wvcrash_setup_alt_stack();
@@ -249,6 +265,48 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
     wvcrash_add_signal(SIGFPE);
     wvcrash_add_signal(SIGILL);
 }
+
+
+extern "C"
+{
+    // Support assert().
+    void __assert_fail(const char *__assertion, const char *__file,
+		       unsigned int __line, const char *__function)
+    {
+	// Set the assert message that WvCrash will dump.
+	asprintf(&assert_msg, "%s: %s:%u: %s: Assertion `%s' failed.\n",
+		 argv0, __file, __line, __function, __assertion);
+
+	// Emulate the GNU C library's __assert_fail().
+	fprintf(stderr, "%s: %s:%u: %s: Assertion `%s' failed.\n",
+		argv0, __file, __line, __function, __assertion);
+	abort();
+    }
+
+
+    // Wrapper for standards compliance.
+    void __assert(const char *__assertion, const char *__file,
+		  unsigned int __line, const char *__function)
+    {
+	__assert_fail(__assertion, __file, __line, __function);
+    }
+
+
+    // Support the GNU assert_perror() extension.
+    void __assert_perror_fail(int __errnum, const char *__file,
+			      unsigned int __line, const char *__function)
+    {
+	// Set the assert message that WvCrash will dump.
+	asprintf(&assert_msg, "%s: %s:%u: %s: %s\n",
+		 argv0, __file, __line, __function, strerror(__errnum));
+
+	// Emulate the GNU C library's __assert_perror_fail().
+	fprintf(stderr, "%s: %s:%u: %s: %s\n",
+		argv0, __file, __line, __function, strerror(__errnum));
+	abort();
+    }
+} // extern "C"
+
 
 #else // Not Linux
 

@@ -175,7 +175,7 @@ while (my $string = <>)
 		    $version = " ($1)" if $1;
 	        }
 		$programme = basename($programme); # Relative path
-		print("$programme$version dying on signal $signum$signame\n\n");
+		print("$programme$version dying on signal $signum$signame\n");
 		if (-x $programme) {
 		    $state = "header";
 		}
@@ -199,6 +199,9 @@ while (my $string = <>)
 		    $state = "backtrace";
 		}
 	    }
+	    # Echo back header information.  It's not important to parse,
+	    # but it might be nice to display.
+	    print "$string\n";
 	}
 	elsif (/backtrace/)
 	{
