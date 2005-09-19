@@ -15,6 +15,7 @@
 use strict;
 use warnings;
 
+use Cwd;
 use File::Basename;
 use File::Find ();
 use FileHandle;
@@ -31,6 +32,7 @@ sub find_programme($)
     my $target = shift(@_);
     my $result;
     my $endtime = time() + 20;	# Stop searching after 20 seconds.
+    my $cwd = cwd();		# Save the working dir so we can go back.
 
     my $wanted = sub {
 	if ($_ eq $target && -f $_ && -x $_) {
@@ -48,6 +50,7 @@ sub find_programme($)
 			  follow_fast => 1,
 			  follow_skip => 2}, '.');
     };
+    chdir($cwd);
     return $result;
 }
 
