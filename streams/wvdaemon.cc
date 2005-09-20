@@ -87,10 +87,13 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
             "Increase log level (can be used multiple times)",
             WvArgs::NoArgCallback(this, &WvDaemon::inc_log_level));
 #ifndef _WIN32
-    args.add_set_bool_option('d', "daemonize",
-            "Fork into background and return (implies -s)", daemonize);
+    args.add_option('d', "daemonize",
+            "Fork into background and return (implies --syslog)",
+            WvArgs::NoArgCallback(this, &WvDaemon::set_daemonize));
     args.add_set_bool_option('s', "syslog",
             "Write log entries to syslog", syslog);
+    args.add_reset_bool_option(0, "no-syslog",
+            "Do not write log entries to syslog", syslog);
 #endif
     args.add_option('V', "version",
             "Display version and exit",
@@ -120,8 +123,6 @@ int WvDaemon::run(const char *argv0)
             }
             else if (pid == 0)
             {
-                WvSyslog syslog(name, false);
-                
                 ::chdir("/");
                 
                 ::umask(0);
@@ -174,15 +175,7 @@ int WvDaemon::run(const char *argv0)
 #endif
     {
         WvLogConsole console_log(STDOUT_FILENO, log_level);
-#ifndef _WIN32
-        if (syslog)
-        {
-            WvSyslog syslog(name, false);
-            return _run(argv0);
-        }
-        else 
-#endif
-	    return _run(argv0);
+        return _run(argv0);
     }
 }
 
@@ -191,7 +184,13 @@ int WvDaemon::run(int argc, char **argv)
     if (!args.process(argc, argv, &_extra_args))
         return 1;
 
-    return run(argv[0]);
+    if (syslog)
+    {
+        WvSyslog syslog(name, false);
+        return run(argv[0]);
+    }
+    else
+        return run(argv[0]);
 }
 
 int WvDaemon::_run(const char *argv0)
@@ -279,3 +278,8 @@ int WvDaemon::_run(const char *argv0)
     return _exit_status;
 }
 
+void WvDaemon::set_daemonize(void *)
+{
+    daemonize = true;
+    syslog = true;
+}

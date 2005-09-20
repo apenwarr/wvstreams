@@ -30,8 +30,9 @@ command line options:
 
 -q|--quit: decrease the log level by one
 -v|--verbose: increase the log level by one
--d|--daemonize: fork into the background.
+-d|--daemonize: fork into the background (implies --syslog)
 -s|--syslog: write log entries to the syslog() facility
+--no-syslog: do not write log entries to the syslog() facility
 -V|--version: print the program name and version number and exit immediately
 
 These default arguments can be changed or appended to through the public member
@@ -113,6 +114,8 @@ class WvDaemon
 	volatile int _exit_status;
 
         int _run(const char *argv0);
+
+        void set_daemonize(void *);
 
     protected:
     
