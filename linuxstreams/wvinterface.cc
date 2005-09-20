@@ -495,7 +495,7 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     
     if (dest.is_default() || table != "default")
     {
-	err(WvLog::Debug2, "addroute: ");
+	err(WvLog::Debug2, "delroute: ");
 	for (int i = 0; argv[i]; i++)
 	    err(WvLog::Debug2, "%s ", argv[i]);
 	err(WvLog::Debug2, "\n");
