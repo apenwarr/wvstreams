@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
  *
  * Provides support for managing network interfaces.
  */
@@ -69,6 +69,9 @@ public:
     /** turn promiscuous (see-all-packets) mode on or off. */
     bool ispromisc();
     void promisc(bool enable);
+    
+    /** turn point-to-point mode on or off.*/
+    int ptp(bool enable, const WvIPNet &addr);
     
     /**
      * Sets the local address, netmask, and broadcast of this interface
