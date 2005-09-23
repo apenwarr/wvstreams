@@ -149,7 +149,7 @@ public:
     ~WvInterfaceDict();
     
     void update();
-    bool islocal(const WvAddr &addr);
+    WvString islocal(const WvAddr &addr);
     bool on_local_net(const WvIPNet &addr);
 
     WvInterface *operator[] (WvStringParm str)
