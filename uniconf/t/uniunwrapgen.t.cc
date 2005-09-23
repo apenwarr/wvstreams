@@ -97,11 +97,15 @@ WVTEST_MAIN("unwrapgen callbacks")
             printf("Child\n");
             fflush(stdout);
 
+            time_t start = time(NULL);
+
             UniConfRoot uniconf("temp:");
             UniConfDaemon daemon(uniconf, false, NULL);
             daemon.setupunixsocket(sockname);
             WvIStreamList::globallist.append(&daemon, false);
-            while (!uniconf["killme"].exists())
+            uniconf.xsetint("started", 1);
+            // Make sure to commit suicide after an hour, just in case
+            while (!uniconf["killme"].exists() && time(NULL) < start + 60*60)
             {
                 uniconf.setmeint(uniconf.getmeint()+1);
                 WvIStreamList::globallist.runonce();
@@ -119,6 +123,27 @@ WVTEST_MAIN("unwrapgen callbacks")
 
 	printf("Creating a unix: gen\n");
 	UniConfRoot cfg(WvString("unix:%s", sockname));
+        
+        printf("Waiting for daemon to start.\n");
+	fflush(stdout);
+        int num_tries = 0;
+        const int max_tries = 20;
+        while (!cfg.isok() && num_tries < max_tries)
+        {
+            num_tries++;
+            WVFAIL(cfg.isok());
+            sleep(1);
+
+            // Try again...
+            cfg.unmount(cfg.whichmount(), true);
+            cfg.mount(WvString("unix:%s", sockname));
+        }
+
+        if (WVPASS(cfg.isok()))
+            printf("Connected to daemon.\n");
+        else
+            printf("Connection failed.\n");
+	fflush(stdout);
 
 	WVPASSEQ(cfg.xget("a"), WvString::null);
 	WVPASSEQ(cfg.xget("a"), WvString::null);
@@ -130,13 +155,17 @@ WVTEST_MAIN("unwrapgen callbacks")
 
 	WVPASSEQ(unwrap.xget("a"), "foo");
 
-        // Tell the child to clean itself up
-        cfg.xset("killme", "now");
+        kill(child, 15);
 
-        // Make sure the child exited normally
+        // Make sure the child exited as expected
         int status;
-        WVPASSEQ(waitpid(child, &status, 0), child);
-        WVPASS(WIFEXITED(status));
+        pid_t rv;
+        // In case a signal is in the process of being delivered...
+        while ((rv = waitpid(child, &status, 0)) != child)
+            if (rv == -1 && errno != EINTR)
+                break;
+        WVPASSEQ(rv, child);
+        WVPASS(WIFSIGNALED(status));
 
 	unlink(sockname);
     }

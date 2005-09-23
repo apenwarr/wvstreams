@@ -127,26 +127,30 @@ bool WvIPAliaser::add(const WvIPAddr &ip)
 
     if (WvIPAddr(ip) == WvIPAddr() || ipsearch(aliases, ip))
 	return false;     // already done.
-    
+
+    // If the alias is already a local address, there is no need for an alias
+    if (interfaces.islocal(WvIPAddr(ip)))
+	return false;
+
     a = ipsearch(all_aliases, ip);
-    if (a)			    // already in global list?
+    if (a)
     {
-	// add global entry to our list and increase link count
+	// It's already in the global list, so we add its entry to
+	// our list and increase the link count.
 	aliases.append(a, false);
 	a->link_count++;
 	return false;
     }
-    else if (!interfaces.islocal(WvIPAddr(ip)))
+    else
     {
-	// if already local, no need for alias
-	// if non-local, create a new entry and add to both lists
-        a = new Alias(ip);
+	// It's not there, so we add a new alias to the global list and
+	// our local list.
+	a = new Alias(ip);
 	aliases.append(a, false);
 	all_aliases.append(a, true);
 	a->link_count++;
 	return true;
     }
-    return false;
 }
 
 

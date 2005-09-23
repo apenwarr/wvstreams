@@ -47,7 +47,7 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
     pid_t rv;
     while ((rv = waitpid(pid, NULL, 0)) != pid)
     {
-        // in case a signal is in the process of being delivered..
+        // In case a signal is in the process of being delivered...
         if (rv == -1 && errno != EINTR)
             break;
     }

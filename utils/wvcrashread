@@ -15,6 +15,9 @@
 use strict;
 use warnings;
 
+use Cwd;
+use File::Basename;
+use File::Find ();
 use FileHandle;
 use IPC::Open2;
 
@@ -22,6 +25,36 @@ my $DEBUG = $ENV{DEBUG};
 sub debug
 {
     print(STDERR @_) if $DEBUG;
+}
+
+sub find_programme($)
+{
+    my $target = shift(@_);
+
+    return $target if -x $target;
+
+    my $result;
+    my $endtime = time() + 20;	# Stop searching after 20 seconds.
+    my $cwd = cwd();		# Save the working dir so we can go back.
+
+    my $wanted = sub {
+	if ($_ eq $target && -f $_ && -x $_) {
+	    $result = $File::Find::name;
+	    die;		# Break out of the File::Find::find.
+	}
+	elsif (time() > $endtime){
+	    die;		# Took too long.
+	}
+    };
+
+    # Traverse desired filesystems
+    eval {
+	File::Find::find({wanted => $wanted,
+			  follow_fast => 1,
+			  follow_skip => 2}, '.');
+    };
+    chdir($cwd);
+    return $result;
 }
 
 sub gdb_init($)
@@ -75,6 +108,7 @@ sub gdb_init($)
 
     # Initialise GDB
     my ($Reader, $Writer);
+    debug("gdb '$programme'\n");
     my $pid = open2($Reader, $Writer, "gdb '$programme' 2>&1") or die;
     print($Writer "set width 2000\n");
     print($Writer "set height 20000\n");
@@ -111,11 +145,13 @@ sub gdb_init($)
 		my $filtered = `c++filt '$function'` or return ($function,
 							      undef, undef);
 		chomp($filtered);
+		# Turn () into (void) for old GDB
+		$filtered =~ s/(?<!operator)\(\)/(void)/g;
 		($function, $addr) = &$gdb_addr($Reader, $Writer, $filtered);
 
 		unless (defined($addr))
 		{
-		    # Try turning (void) into ()
+		    # Try turning (void) into () for new GDB
 		    $function =~ s/\(void\)/()/g;
 		    ($function, $addr) = &$gdb_addr($Reader, $Writer,
 						    $function);
@@ -134,7 +170,8 @@ sub gdb_init($)
 }
 
 # Main variables
-my $programme;			# Name of the programme
+my $programme;			# Base name of the programme
+my $programme_path;		# Relative path to the location of programme
 my $signum;			# Signal number that it died on
 my $gdb_parse;			# Handle to GDB conversation
 
@@ -171,8 +208,9 @@ while (my $string = <>)
 		if ($programme =~ s/\s+\((.*)\)//) {
 		    $version = " ($1)" if $1;
 	        }
-		print("$programme$version dying on signal $signum$signame\n\n");
-		if (-x $programme) {
+		$programme = basename($programme); # Relative path
+		print("$programme$version dying on signal $signum$signame\n");
+		if ($programme_path = find_programme($programme)) {
 		    $state = "header";
 		}
 		else {
@@ -191,10 +229,13 @@ while (my $string = <>)
 		}
 		else
 		{
-		    $gdb_parse = gdb_init($programme);
+		    $gdb_parse = gdb_init($programme_path);
 		    $state = "backtrace";
 		}
 	    }
+	    # Echo back header information.  It's not important to parse,
+	    # but it might be nice to display.
+	    print "$string\n";
 	}
 	elsif (/backtrace/)
 	{
@@ -209,6 +250,7 @@ while (my $string = <>)
 		$function =~ s/\s+\*/*/g;
 		$function =~ s/\s+&/&/g;
 		$function =~ s/\s+&/&/g;
+		$function =~ s/\s+\(/\(/g;
 
 		$state = "backtrace";
 		if (not defined($file)) {
@@ -226,7 +268,9 @@ while (my $string = <>)
 	}
 	elsif (/missing/)
 	{
-	    print(STDERR "File '$programme' is not executable!  Aborting.\n");
+	    print(STDERR
+		  "Could not find the '$programme' program!  ",
+		  "Aborting.\n");
 	    exit(1);
 	}
 	elsif (/corrupt/)

@@ -31,7 +31,13 @@ WVTEST_MAIN("loopback")
     const char *line = loop.blocking_getline(10000);
     WVPASS(line);
     printf("line is '%s'\n", line);
-    WVPASS(waitpid(pid, NULL, 0) == pid);
+
+    pid_t rv;
+    // In case a signal is in the process of being delivered...
+    while ((rv = waitpid(pid, NULL, 0)) != pid)
+        if (rv == -1 && errno != EINTR)
+            break;
+    WVPASSEQ(rv, pid);
 
     loop.nowrite();
 }
