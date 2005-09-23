@@ -29,7 +29,7 @@
 #include <unistd.h>
 
 static const char *argv0 = "UNKNOWN";
-static char *assert_msg = NULL;
+static char *wvcrash_assert = NULL;
 static const char *desc = NULL;
 WvCrashCallback callback;
 
@@ -108,10 +108,10 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, "\n");
 
     // Write out the assertion message, as logged by __assert*_fail(), if any.
-    if (assert_msg)
+    if (wvcrash_assert)
     {
 	wr(fd, "\nAssert:\n");
-	wr(fd, assert_msg);
+	wr(fd, wvcrash_assert);
     }
 
     wr(fd, "\nBacktrace:\n");
@@ -134,10 +134,10 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
         }
     }
 
-    if (assert_msg)
+    if (wvcrash_assert)
     {
-	free(assert_msg);
-	assert_msg = NULL;
+	free(wvcrash_assert);
+	wvcrash_assert = NULL;
     }
 
     // we want to create a coredump, and the kernel seems to not want to do
@@ -266,7 +266,7 @@ void wvcrash_add_signal(int sig)
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
     argv0 = basename(_argv0);
-    assert_msg = NULL;
+    wvcrash_assert = NULL;
     desc = _desc;
     
     wvcrash_setup_alt_stack();
@@ -286,7 +286,7 @@ extern "C"
 		       unsigned int __line, const char *__function)
     {
 	// Set the assert message that WvCrash will dump.
-	asprintf(&assert_msg, "%s: %s:%u: %s: Assertion `%s' failed.\n",
+	asprintf(&wvcrash_assert, "%s: %s:%u: %s: Assertion `%s' failed.\n",
 		 argv0, __file, __line, __function, __assertion);
 
 	// Emulate the GNU C library's __assert_fail().
@@ -309,7 +309,7 @@ extern "C"
 			      unsigned int __line, const char *__function)
     {
 	// Set the assert message that WvCrash will dump.
-	asprintf(&assert_msg, "%s: %s:%u: %s: %s\n",
+	asprintf(&wvcrash_assert, "%s: %s:%u: %s: %s\n",
 		 argv0, __file, __line, __function, strerror(__errnum));
 
 	// Emulate the GNU C library's __assert_perror_fail().
