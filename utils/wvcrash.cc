@@ -28,10 +28,14 @@
 # include <execinfo.h>
 #include <unistd.h>
 
+#ifdef __USE_GNU
+static const char *argv0 = program_invocation_short_name;
+#else
+static const char *argv0 = "UNKNOWN";
+#endif // __USE_GNU
+
 // Reserve enough buffer for a screenful of programme.
 static const int buffer_size = 2048;
-
-static const char *argv0 = "UNKNOWN";
 static char assert_msg[buffer_size];
 static char desc[buffer_size];
 WvCrashCallback callback;
