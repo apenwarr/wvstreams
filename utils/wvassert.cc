@@ -13,7 +13,7 @@ WvCrashWill::WvCrashWill(const char *will)
     wvcrash_leave_will(will);
 }
 
-WvCrashWill::WvCrashWill(WVSTRING_FORMAT_DECL)
+WvCrashWill::WvCrashWill(WVSTRING_FORMAT_DEFN)
     : old_will(wvcrash_read_will())
 {
     // We use a WvFastString here, because it is a temporary.  init()
@@ -28,7 +28,7 @@ void WvCrashWill::rewrite(const char *will)
     wvcrash_leave_will(will);
 }
 
-void WvCrashWill::rewrite(WVSTRING_FORMAT_DECL)
+void WvCrashWill::rewrite(WVSTRING_FORMAT_DEFN)
 {
     // Again, since wvcrash_leave_will will duplicate the string, we
     // can use a WvFastString.
