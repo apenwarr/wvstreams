@@ -1,3 +1,4 @@
+#include "wvassert.h"
 #include "wvcrash.h"
 #include <assert.h>
 #include <unistd.h>
@@ -59,6 +60,13 @@ int main(int argc, char **argv)
 	printf("sig = atoi(argv[1]);\n");
         sig = atoi(argv[1]);
     }
+
+    printf("wvassert(argc < 6);\n");
+    wvassert(argc < 6, "%s '%s' '%s' '%s' '%s' '%s'",
+	     argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+
+    printf("wvassert(argc < 5);\n");
+    wvassert(argc < 5);
 
     printf("assert(argc < 4);\n");
     assert(argc < 4);

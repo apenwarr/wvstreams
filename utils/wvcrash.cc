@@ -36,6 +36,7 @@ static const char *argv0 = "UNKNOWN";
 
 // Reserve enough buffer for a screenful of programme.
 static const int buffer_size = 2048;
+static char will_msg[buffer_size];
 static char assert_msg[buffer_size];
 static char desc[buffer_size];
 WvCrashCallback callback;
@@ -119,6 +120,14 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     {
 	wr(fd, "\nAssert:\n");
 	wr(fd, assert_msg);
+    }
+
+    // Write out the note, if any.
+    if (will_msg[0])
+    {
+	wr(fd, "\nLast Will and Testament:\n");
+	wr(fd, will_msg);
+	wr(fd, "\n");
     }
 
     wr(fd, "\nBacktrace:\n");
@@ -267,6 +276,7 @@ void wvcrash_add_signal(int sig)
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
     argv0 = basename(_argv0);
+    will_msg[0] = '\0';
     assert_msg[0] = '\0';
     if (_desc)
     {
@@ -330,6 +340,25 @@ extern "C"
     }
 } // extern "C"
 
+// This function is meant to support people who wish to leave a last will
+// and testament in the WvCrash.
+void wvcrash_leave_will(const char *will)
+{
+    if (will)
+    {
+	strncpy(will_msg, will, buffer_size);
+	will_msg[buffer_size - 1] = '\0';
+    }
+    else
+	will_msg[0] = '\0';
+}
+
+
+const char *wvcrash_read_will()
+{
+    return will_msg;
+}
+
 
 #else // Not Linux
 
@@ -337,5 +366,8 @@ void wvcrash(int sig) {}
 void wvcrash_add_signal(int sig) {}
 WvCrashCallback wvcrash_set_callback(WvCrashCallback cb) {}
 void wvcrash_setup(const char *_argv0, const char *_desc) {}
+
+void wvcrash_leave_will(const char *will) {}
+const char *wvcrash_read_will() { return NULL; }
 
 #endif // Not Linux
