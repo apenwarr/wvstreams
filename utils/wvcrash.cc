@@ -28,9 +28,12 @@
 # include <execinfo.h>
 #include <unistd.h>
 
+// Reserve enough buffer for a screenful of programme.
+static const int buffer_size = 2048;
+
 static const char *argv0 = "UNKNOWN";
-static char *wvcrash_assert = NULL;
-static const char *desc = NULL;
+static char assert_msg[buffer_size];
+static char desc[buffer_size];
 WvCrashCallback callback;
 
 // write a string 'str' to fd
@@ -80,7 +83,7 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     static char *signame = strsignal(sig);
     
     wr(fd, argv0);
-    if (desc)
+    if (desc[0])
     {
 	wr(fd, " (");
 	wr(fd, desc);
@@ -108,10 +111,10 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, "\n");
 
     // Write out the assertion message, as logged by __assert*_fail(), if any.
-    if (wvcrash_assert)
+    if (assert_msg[0])
     {
 	wr(fd, "\nAssert:\n");
-	wr(fd, wvcrash_assert);
+	wr(fd, assert_msg);
     }
 
     wr(fd, "\nBacktrace:\n");
@@ -132,12 +135,6 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
                 break;
             nanosleep(&ts, NULL);
         }
-    }
-
-    if (wvcrash_assert)
-    {
-	free(wvcrash_assert);
-	wvcrash_assert = NULL;
     }
 
     // we want to create a coredump, and the kernel seems to not want to do
@@ -266,8 +263,9 @@ void wvcrash_add_signal(int sig)
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
     argv0 = basename(_argv0);
-    wvcrash_assert = NULL;
-    desc = _desc;
+    assert_msg[0] = '\0';
+    strncpy(desc, _desc, buffer_size);
+    desc[buffer_size - 1] = '\0';
     
     wvcrash_setup_alt_stack();
     
@@ -286,8 +284,10 @@ extern "C"
 		       unsigned int __line, const char *__function)
     {
 	// Set the assert message that WvCrash will dump.
-	asprintf(&wvcrash_assert, "%s: %s:%u: %s: Assertion `%s' failed.\n",
+	snprintf(assert_msg, buffer_size,
+		 "%s: %s:%u: %s: Assertion `%s' failed.\n",
 		 argv0, __file, __line, __function, __assertion);
+	assert_msg[buffer_size - 1] = '\0';
 
 	// Emulate the GNU C library's __assert_fail().
 	fprintf(stderr, "%s: %s:%u: %s: Assertion `%s' failed.\n",
@@ -309,8 +309,10 @@ extern "C"
 			      unsigned int __line, const char *__function)
     {
 	// Set the assert message that WvCrash will dump.
-	asprintf(&wvcrash_assert, "%s: %s:%u: %s: Unexpected error: %s.\n",
+	snprintf(assert_msg, buffer_size,
+		 "%s: %s:%u: %s: Unexpected error: %s.\n",
 		 argv0, __file, __line, __function, strerror(__errnum));
+	assert_msg[buffer_size - 1] = '\0';
 
 	// Emulate the GNU C library's __assert_perror_fail().
 	fprintf(stderr, "%s: %s:%u: %s: Unexpected error: %s.\n",
