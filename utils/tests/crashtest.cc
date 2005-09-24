@@ -1,4 +1,5 @@
 #include "wvcrash.h"
+#include <assert.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -39,11 +40,29 @@ void xfunc()
 
 int main(int argc, char **argv)
 {
-    wvcrash_setup(argv[0]);
+    if (argc > 2)
+    {
+	printf("wvcrash_setup(argv[0], argv[2]);\n");
+	wvcrash_setup(argv[0], argv[2]);
+    }
+    else
+    {
+	printf("wvcrash_setup(argv[0]);\n");
+	wvcrash_setup(argv[0]);
+    }
+
+    printf("free(malloc(1));\n");
     free(malloc(1));
 
     if (argc > 1)
+    {
+	printf("sig = atoi(argv[1]);\n");
         sig = atoi(argv[1]);
+    }
+
+    printf("assert(argc < 4);\n");
+    assert(argc < 4);
     
+    printf("xfunc();\n");
     xfunc();
 }
