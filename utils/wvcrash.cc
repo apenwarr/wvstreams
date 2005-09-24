@@ -268,8 +268,13 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 {
     argv0 = basename(_argv0);
     assert_msg[0] = '\0';
-    strncpy(desc, _desc, buffer_size);
-    desc[buffer_size - 1] = '\0';
+    if (_desc)
+    {
+	strncpy(desc, _desc, buffer_size);
+	desc[buffer_size - 1] = '\0';
+    }
+    else
+	desc[0] = '\0';
     
     wvcrash_setup_alt_stack();
     
