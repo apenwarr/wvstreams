@@ -309,11 +309,11 @@ extern "C"
 			      unsigned int __line, const char *__function)
     {
 	// Set the assert message that WvCrash will dump.
-	asprintf(&wvcrash_assert, "%s: %s:%u: %s: %s\n",
+	asprintf(&wvcrash_assert, "%s: %s:%u: %s: Unexpected error: %s.\n",
 		 argv0, __file, __line, __function, strerror(__errnum));
 
 	// Emulate the GNU C library's __assert_perror_fail().
-	fprintf(stderr, "%s: %s:%u: %s: %s\n",
+	fprintf(stderr, "%s: %s:%u: %s: Unexpected error: %s.\n",
 		argv0, __file, __line, __function, strerror(__errnum));
 	abort();
     }
