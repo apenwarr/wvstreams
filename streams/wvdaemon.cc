@@ -196,7 +196,7 @@ int WvDaemon::run(int argc, char **argv)
 int WvDaemon::_run(const char *argv0)
 {
 #ifndef _WIN32
-    wvcrash_setup(argv0);
+    wvcrash_setup(argv0, version);
 
     if (!!pid_file && daemonize)
     {
