@@ -16,6 +16,8 @@
 #else
 #include <unistd.h>
 #endif
+#include <wait.h>
+#include <errno.h>
 #include <signal.h>
 
 #include <cstdlib>
@@ -49,6 +51,38 @@ static int memleaks()
     // dubious+reachable are normally non-zero because of globals...
     // return leaked+dubious+reachable;
     return leaked;
+}
+
+// Return 1 if no children are running or zombies, 0 if there are any running
+// or zombie children.
+// Will wait for any already-terminated children first.
+// Passes if no rogue children were running, fails otherwise.
+// If your test gets a failure in here, either you're not killing all your
+// children, or you're not calling waitpid(2) on all of them.
+static int no_running_children()
+{
+    int status = 0;
+    pid_t wait_result;
+
+    // Acknowledge and complain about any zombie children
+    do 
+    {
+        wait_result = waitpid(-1, &status, WNOHANG);
+
+        if (wait_result > 0)
+        {
+            char buf[256];
+            snprintf(buf, sizeof(buf) - 1, "%d", wait_result);
+            buf[sizeof(buf)-1] = '\0';
+            WVFAILEQ("Unclaimed dead child process", buf);
+        }
+    } 
+    while (wait_result > 0);
+        
+    // There should not be any running children, so waitpid should return -1
+    WVPASSEQ(errno, ECHILD);
+    WVPASSEQ(wait_result, -1);
+    return (wait_result == -1 && errno == ECHILD);
 }
 
 
@@ -156,6 +190,8 @@ int WvTest::run_all(const char * const *prefixes)
 	    new_valgrind_leaks = memleaks();
 	    WVPASS(new_valgrind_leaks == old_valgrind_leaks);
 	    old_valgrind_leaks = new_valgrind_leaks;
+
+            WVPASS(no_running_children());
 	    
 	    fflush(stderr);
 	    printf("\n");

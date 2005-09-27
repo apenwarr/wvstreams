@@ -22,9 +22,11 @@ WvSubProcQueueStream::~WvSubProcQueueStream()
 void WvSubProcQueueStream::execute()
 {
     int started = WvSubProcQueue::go();
-    log("Started %s processes (%s running, %s waiting)\n",
-	started, running(), remaining() - running());
-    if (!remaining())
+    int run = running(), remain = remaining();
+    if (started || run || remain)
+	log("Started %s processes (%s running, %s waiting)\n",
+	    started, run, remain - run);
+    if (!remain)
 	alarm(1000); // nothing is even in the queue; come back later.
     else if (started)
 	alarm(0); // we're busy; go fast if possible

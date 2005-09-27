@@ -180,7 +180,11 @@ void WvLogFile::start_log()
         }
 	_exit(0);
     }
-    waitpid(forky, NULL, 0);
+    // In case a signal is in the process of being delivered...
+    pid_t rv;
+    while ((rv = waitpid(forky, NULL, 0)) != forky)
+        if (rv == -1 && errno != EINTR)
+            break;
 #else
     // just do it in the foreground on Windows
     trim_old_logs(filename, base, keep_for);

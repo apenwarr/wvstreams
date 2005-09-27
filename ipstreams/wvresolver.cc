@@ -46,7 +46,11 @@ public:
             if (pid && pid != -1)
             {
                 kill(pid, SIGKILL);
-                waitpid(pid, NULL, 0);
+                pid_t rv;
+                // In case a signal is in the process of being delivered...
+                while ((rv = waitpid(pid, NULL, 0)) != pid)
+                    if (rv == -1 && errno != EINTR)
+                        break;
             }
 #endif
         }

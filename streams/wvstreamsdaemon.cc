@@ -49,6 +49,8 @@ void WvStreamsDaemon::stop_cb(WvDaemon &daemon, void *)
     for (stream.rewind(); stream.next(); )
         WvIStreamList::globallist.unlink(stream.ptr());
     streams.zap();
+    if (want_to_die())
+        WvIStreamList::globallist.zap();
 }
 
 void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *ud)
