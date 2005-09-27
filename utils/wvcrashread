@@ -31,7 +31,7 @@ sub find_programme($)
 {
     my $target = shift(@_);
 
-    return $target if -x $target;
+    return $target if (-f $target && -x $target);
 
     my $result;
     my $endtime = time() + 20;	# Stop searching after 20 seconds.
