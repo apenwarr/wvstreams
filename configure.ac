@@ -139,6 +139,31 @@ AC_SUBST(ARCH_SUBDIRS)
 # Detect endianness
 AC_C_BIGENDIAN
 
+# Look for __attribute__ ((deprecated))
+CPPFLAGS_save="$CPPFLAGS"
+WV_APPEND(CPPFLAGS, -Werror)
+AC_MSG_CHECKING(for __attribute__ ((deprecated)))
+AC_COMPILE_IFELSE(
+[#include "confdefs.h"
+void f() __attribute__ ((deprecated));
+void f()
+{
+}
+
+int main()
+{
+    return 0;
+}
+],
+		  [AC_MSG_RESULT([yes])
+		   AC_DEFINE([ATTR_DEPRECATED],
+			     [__attribute__ ((deprecated))],
+			     [Compiler warning on deprecated functions])],
+		  [AC_MSG_RESULT([no])
+		   AC_DEFINE([ATTR_DEPRECATED], [],
+			     [Compiler warning on deprecated functions])])
+CPPFLAGS="$CPPFLAGS_save"
+
 # Function checks
 AC_FUNC_ALLOCA
 
