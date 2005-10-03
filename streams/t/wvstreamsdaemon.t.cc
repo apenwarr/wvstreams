@@ -24,6 +24,7 @@ void startup(WvStreamsDaemon &daemon, void *)
     daemon.add_die_stream(listener, true, "Listener");
 }
 
+#if 0
 WVTEST_MAIN("Checking Daemon created")
 {
     //Forking the server (daemon) and client processes
@@ -106,3 +107,5 @@ WVTEST_MAIN("Checking Daemon created")
     
     }
 }
+#endif
+
