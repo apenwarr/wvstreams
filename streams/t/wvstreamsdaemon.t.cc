@@ -1,7 +1,11 @@
 #include <wvstreamsdaemon.h>
 #include <wvtest.h>
 #include <wvfork.h>
+#include <wvfile.h>
 #include <wvunixsocket.h>
+#include <stdio.h>
+#include <signal.h>
+#include <sys/types.h>
 
 //Callback for the accepted client conection at the server
 void client_cb(WvStream &stream, void *)
@@ -22,33 +26,32 @@ void startup(WvStreamsDaemon &daemon, void *)
 
 WVTEST_MAIN("Checking Daemon created")
 {
-    int numTries = 0; 
-
     //Forking the server (daemon) and client processes
     pid_t child = wvfork();
 
+    WvStreamsDaemon *daemon= NULL;
+    WvUnixConn *client = NULL;
+    
     //This is for server process
     if(child == 0)
     {
         wvout->print("Running code for server\n");
-        WvStreamsDaemon daemon("Sample Daemon", "0.1", startup);
-	daemon.pid_file = "/tmp/faked.pid";
+        daemon= new WvStreamsDaemon("Sample Daemon", "0.1", startup);
+	daemon->pid_file = "/tmp/faked.pid";
 	int fake_argc = 2;
 	char *fake_argv[] = { "faked", "-d", NULL };
-	_exit(daemon.run(fake_argc, fake_argv));
+	_exit(daemon->run(fake_argc, fake_argv));
     }
 
     //This is for client process
     else
     {
         wvout->print("Running code for client\n");
-        WvUnixConn *client = NULL;
-        
+                
         //Will wait for 10 sec at max for the Daemon to load
         for (int i = 0; i < 10 ; i++)
         { 
-            printf("Trying to connect %d \n", numTries);
-            numTries++;
+            printf("Trying to connect %d \n", i);
             client = new WvUnixConn("/tmp/faked");
 	    if (client->isok())
 	    {
@@ -69,5 +72,37 @@ WVTEST_MAIN("Checking Daemon created")
 	    WVPASS(line != NULL && strcmp(line, "Client said: hello") == 0);
 	    WVRELEASE(client);
 	}
+
+        pid_t pid_daemon = -1;   
+ 
+        WvFile *has_pid = new WvFile("/tmp/faked.pid", O_RDONLY);
+
+        if(has_pid->isok())
+        {
+            char *line = has_pid->getline(0);
+            pid_daemon = atoi(line);
+            WVRELEASE(has_pid);
+        }
+      
+        printf("%d\n", pid_daemon);
+      
+        kill (pid_daemon, SIGTERM);
+  
+        for (int i = 0; i < 10 ; i++)
+        { 
+            printf("Trying to connect %d \n", i);
+            client = new WvUnixConn("/tmp/faked");
+            if (!client->isok())
+            {
+                printf("Disconnected! and Daemon Process Killed\n");
+                break;
+	    }
+            else printf("Still connecting\n");
+	
+            WVRELEASE(client);
+	    client = NULL;
+            sleep(1);
+        }
+    
     }
 }
