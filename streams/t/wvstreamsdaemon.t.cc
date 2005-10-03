@@ -24,7 +24,6 @@ void startup(WvStreamsDaemon &daemon, void *)
     daemon.add_die_stream(listener, true, "Listener");
 }
 
-#if 0
 WVTEST_MAIN("Checking Daemon created")
 {
     //Forking the server (daemon) and client processes
@@ -72,12 +71,14 @@ WVTEST_MAIN("Checking Daemon created")
 	    wvout->print("Server said: %s\n", line);
 	    WVPASS(line != NULL && strcmp(line, "Client said: hello") == 0);
 	    WVRELEASE(client);
+	    client = NULL;
 	}
 
         pid_t pid_daemon = -1;   
  
         WvFile *has_pid = new WvFile("/tmp/faked.pid", O_RDONLY);
 
+        WVPASS(has_pid->isok());
         if(has_pid->isok())
         {
             char *line = has_pid->getline(0);
@@ -85,27 +86,32 @@ WVTEST_MAIN("Checking Daemon created")
             WVRELEASE(has_pid);
         }
       
-        printf("%d\n", pid_daemon);
+        printf("Process id for deamon is %d\n", pid_daemon);
       
         kill (pid_daemon, SIGTERM);
   
-        for (int i = 0; i < 10 ; i++)
+        for (int i = 1; i <=10 ; i++)
         { 
             printf("Trying to connect %d \n", i);
-            client = new WvUnixConn("/tmp/faked");
-            if (!client->isok())
+
+	    WvUnixConn check_conn("/tmp/faked");
+
+            if (!check_conn.isok())
             {
-                printf("Disconnected! and Daemon Process Killed\n");
+                WVPASS(!check_conn.isok());
+                WVPASS("Disconnected! and Daemon Process Killed\n");
                 break;
 	    }
-            else printf("Still connecting\n");
-	
-            WVRELEASE(client);
-	    client = NULL;
+            else 
+            {
+                WVPASS("Still connecting\n");
+                WVFAIL(i == 10);  //same as i ==10 && client.isok()
+            }
+	               
             sleep(1);
         }
     
     }
 }
-#endif
+
 
