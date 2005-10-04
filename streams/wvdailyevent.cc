@@ -12,8 +12,9 @@
  * extended one day when someone cares.
  *
  */
-#include "wvstream.h"
 #include "wvdailyevent.h"
+#include "wvstream.h"
+#include "wvtimeutils.h"
 
 #include <time.h>
 
@@ -26,59 +27,34 @@
 #define NUM_SECS_IN_DAY (60*NUM_MINS_IN_DAY)
 
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
+    : prev(time(NULL))
 {
-    need_reset = false;
-    prev = time(NULL);
     configure(_first_hour, _num_per_day, _skip_first);
 }
 
 
-// we're ready if now is later than the next scheduled event
+// Compute the next time this stream should select()
 bool WvDailyEvent::pre_select(SelectInfo &si)
 {
-    if (num_per_day && !need_reset)
-    {
-	time_t now = time(NULL);
-	time_t next = next_event();
-
-	assert(prev);
-	assert(next);
-	assert(prev > 100000);
-	assert(next > 100000);
-	if (now >= next)
-	{
-	    need_reset = true;
-	    prev = next;
-	}
-    }
-    bool ret = WvStream::pre_select(si) || need_reset;
-    // printf("%p ret=%d msd=%d\n", this, ret, si.msec_timeout);
-    return ret;
+    WvTime next(next_event(), 0);
+    if (next)
+	si.msec_timeout = msecdiff(next, wvtime());
+    return WvStream::pre_select(si);
 }
 
 
+// Test to see if the timer has gone off
 bool WvDailyEvent::post_select(SelectInfo& si)
 {
-    return need_reset;
-}
+    bool timer_rang = false;
+    WvTime next(next_event(), 0);
+    if (next < wvtime())
+    {
+	timer_rang = true;
+	prev = next;
+    }
 
-
-void WvDailyEvent::execute()
-{
-    WvStream::execute();
-    reset();
-}
-
-
-void WvDailyEvent::reset()
-{
-    need_reset = false;
-}
-
-
-bool WvDailyEvent::isok() const
-{
-    return true;
+    return WvStream::post_select(si) || timer_rang;
 }
 
 

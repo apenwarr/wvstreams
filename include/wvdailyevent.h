@@ -43,7 +43,8 @@ public:
      */
     WvDailyEvent( int _first_hour, int _num_per_day=0, bool _skip_first=true );
 
-    /** Returns true if the time is right for the event to occur.
+    /** Munges SelectInfo such that the stream will select when the
+     *  time is right for the event to occur.
      *  "The time is right" means that it is the first hour in some arbitrary 
      *  day that the event should occur or it is the first hour + 
      *  (number-of-minutes-in-a-day mod number of occurrences in a day) minutes
@@ -51,18 +52,6 @@ public:
      */
     virtual bool pre_select( SelectInfo& si );
     virtual bool post_select( SelectInfo& si );
-
-    // execute() and any overridden versions of it must call reset().
-    virtual void execute();
-    
-    /** 
-     * Resets the object so that its execute() function will only be called if
-     * it's time for the event to occur.
-     */
-    void reset();
-
-    /// Always returns true.
-    virtual bool isok() const;
 
     /**
      * Modifies the first hour in which the event should occur and the number of
