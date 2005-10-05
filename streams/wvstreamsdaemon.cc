@@ -49,6 +49,8 @@ void WvStreamsDaemon::stop_cb(WvDaemon &daemon, void *)
     for (stream.rewind(); stream.next(); )
         WvIStreamList::globallist.unlink(stream.ptr());
     streams.zap();
+    if (want_to_die())
+        WvIStreamList::globallist.zap();
 }
 
 void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *ud)
@@ -60,10 +62,10 @@ void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *ud)
 void WvStreamsDaemon::add_stream(IWvStream *istream,
     	bool autofree, const char *id)
 {
-    streams.append(istream, false);
+    streams.append(istream, false, "WvStreamsDaemon stream");
     // FIXME: we should pass in "id" here, but things are not happy in
     // const-correctness-land.
-    WvIStreamList::globallist.append(istream, autofree);
+    WvIStreamList::globallist.append(istream, autofree, "WvStreamsDaemon stream");
 }
 
 void WvStreamsDaemon::add_restart_stream(IWvStream *istream,

@@ -74,8 +74,9 @@ UniReplicateGen::UniReplicateGen(const IUniConfGenList &_gens,
     	if (gen)
     	{
     	    gens.append(gen, true);
-            gen->gen->add_callback(this, UniConfGenCallback(this,
-            	&UniReplicateGen::deltacallback), gen);
+            gen->gen->add_callback(
+		this, WvBoundCallback<UniConfGenCallback, Gen*>(
+		    this, &UniReplicateGen::deltacallback, gen));
         }
     }
     
@@ -97,8 +98,9 @@ void UniReplicateGen::prepend(IUniConfGen *_gen, bool auto_free)
     if (gen)
     {
     	gens.prepend(gen, true);
-        gen->gen->add_callback(this, UniConfGenCallback(this,
-            &UniReplicateGen::deltacallback), gen);
+        gen->gen->add_callback(
+	    this, WvBoundCallback<UniConfGenCallback, Gen*>(
+		this, &UniReplicateGen::deltacallback, gen));
             
         replicate();
     }
@@ -111,8 +113,9 @@ void UniReplicateGen::append(IUniConfGen *_gen, bool auto_free)
     if (gen)
     {
     	gens.append(gen, true);
-        gen->gen->add_callback(this, UniConfGenCallback(this,
-            &UniReplicateGen::deltacallback), gen);
+        gen->gen->add_callback(
+	    this, WvBoundCallback<UniConfGenCallback, Gen*>(
+		this, &UniReplicateGen::deltacallback, gen));
             
         replicate();
     }
@@ -154,8 +157,8 @@ void UniReplicateGen::commit()
 }
 
 
-void UniReplicateGen::deltacallback(const UniConfKey &key, WvStringParm value,
-                                void *userdata)
+void UniReplicateGen::deltacallback(Gen *src_gen, const UniConfKey &key,
+				    WvStringParm value)
 {
     DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
             key.cstr(), value.cstr());
@@ -169,8 +172,6 @@ void UniReplicateGen::deltacallback(const UniConfKey &key, WvStringParm value,
 
     	processing_callback = true;
     	
-    	Gen *src_gen = static_cast<Gen *>(userdata);
-    
     	GenList::Iter j(gens);
     	for (j.rewind(); j.next(); )
     	{
@@ -313,7 +314,7 @@ void UniReplicateGen::replicate(const UniConfKey &key)
     	    if (j.ptr() == first)
     	    {
                 DPRINTF("UniReplicateGen::replicate: deltacallback()\n");
-    	    	deltacallback(i->key(), i->value(), first);
+    	    	deltacallback(first, i->key(), i->value());
     	    }
     	    else
     	    {

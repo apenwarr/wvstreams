@@ -2,7 +2,7 @@
 #include "uniconfgen.h"
 #include "wvmoniker.h"
 
-static void cb(const UniConfKey &, WvStringParm, void *)
+static void cb(const UniConfKey &, WvStringParm)
 {
 }
 
@@ -13,7 +13,7 @@ WVTEST_MAIN("null generator, setcallback, delete")
     WVPASS(gen);
     if (gen)
     {
-	gen->add_callback(gen, cb, NULL);
+	gen->add_callback(gen, cb);
 	gen->del_callback(gen);
     }
     WVRELEASE(gen);

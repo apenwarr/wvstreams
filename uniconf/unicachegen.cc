@@ -36,7 +36,7 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
 {
     if (inner)
         inner->add_callback(this, UniConfGenCallback(this,
-            &UniCacheGen::deltacallback), NULL);
+            &UniCacheGen::deltacallback));
     refreshed_once = false;
 }
 
@@ -95,8 +95,7 @@ void UniCacheGen::loadtree(const UniConfKey &key)
 }
 
 
-void UniCacheGen::deltacallback(const UniConfKey &key, WvStringParm value,
-                                void *userdata)
+void UniCacheGen::deltacallback(const UniConfKey &key, WvStringParm value)
 {
     UniTempGen::set(key, value);
 }

@@ -8,6 +8,8 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <assert.h>
+#include <netinet/in.h>
+#include <zlib.h>
 
 /***** WvEVPMDDigest *****/
 
@@ -164,4 +166,76 @@ void WvHMACDigest::cleanup()
 size_t WvHMACDigest::digestsize() const
 {
     return digest->digestsize();
+}
+
+
+WvCrc32Digest::WvCrc32Digest()
+{
+    _reset();
+}
+
+
+bool WvCrc32Digest::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
+{
+    size_t len;
+    while ((len = inbuf.optgettable()) != 0)
+        crc = crc32(crc, inbuf.get(len), len);
+    return true;
+}
+
+
+bool WvCrc32Digest::_finish(WvBuf &outbuf)
+{
+    unsigned long int crcout = htonl(crc);
+    outbuf.put(&crcout, sizeof(crcout));
+    return true;
+}
+
+
+bool WvCrc32Digest::_reset()
+{
+    crc = crc32(0, NULL, 0);
+    return true;
+}
+
+
+size_t WvCrc32Digest::digestsize() const
+{
+    return sizeof(crc);
+}
+
+
+WvAdler32Digest::WvAdler32Digest()
+{
+    _reset();
+}
+
+
+bool WvAdler32Digest::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
+{
+    size_t len;
+    while ((len = inbuf.optgettable()) != 0)
+        crc = adler32(crc, inbuf.get(len), len);
+    return true;
+}
+
+
+bool WvAdler32Digest::_finish(WvBuf &outbuf)
+{
+    unsigned long int crcout = htonl(crc);
+    outbuf.put(&crcout, sizeof(crcout));
+    return true;
+}
+
+
+bool WvAdler32Digest::_reset()
+{
+    crc = adler32(0, NULL, 0);
+    return true;
+}
+
+
+size_t WvAdler32Digest::digestsize() const
+{
+    return sizeof(crc);
 }

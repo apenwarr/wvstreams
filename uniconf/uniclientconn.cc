@@ -81,7 +81,9 @@ void UniClientConn::close()
 WvString UniClientConn::readmsg()
 {
     WvString word;
-    while ((word = wvtcl_getword(msgbuf, "\r\n", false)).isnull())
+    while ((word = wvtcl_getword(msgbuf,
+				 WVTCL_NASTY_NEWLINES,
+				 false)).isnull())
     {
 	// use lots of readahead to prevent unnecessary runs through select()
 	// during heavy data transfers.
@@ -109,7 +111,8 @@ WvString UniClientConn::readmsg()
 
 void UniClientConn::writemsg(WvStringParm msg)
 {
-    write(spacecat(msg, "", '\n'));
+    write(msg);
+    write("\n");
     // log("Wrote: %s\n", msg);
 }
 
@@ -148,10 +151,13 @@ WvString UniClientConn::readarg()
 
 void UniClientConn::writecmd(UniClientConn::Command cmd, WvStringParm msg)
 {
+    write(cmdinfos[cmd].name);
     if (msg)
-        writemsg(spacecat(cmdinfos[cmd].name, msg));
-    else
-        writemsg(cmdinfos[cmd].name);
+    {
+	write(" ");
+	write(msg);
+    }
+    write("\n");
 }
 
 

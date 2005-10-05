@@ -112,7 +112,6 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	    {
 		fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), &s,
 			i.link->id);
-		wvcrash_last_words = i.link->id;
 		abort();
 	    }
 	}
@@ -161,7 +160,6 @@ bool WvIStreamList::post_select(SelectInfo &si)
 		if (link)
 		{
 		    fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), link->data, link->id);
-		    wvcrash_last_words = link->id;
 		    abort();
 		}
 	    }
@@ -203,7 +201,14 @@ void WvIStreamList::execute()
 	i.xunlink();
 	
 	if (s.isok())
+        {
+#if DEBUG
+            WvString strace_node("execute %s",
+                    id? id: "(unidentified stream)");
+            ::write(-1, strace_node, strace_node.len()); 
+#endif
 	    s.callback();
+        }
 	
 	// list might have changed!
 	i.rewind();

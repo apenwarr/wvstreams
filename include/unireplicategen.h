@@ -49,8 +49,8 @@ private:
     
 protected:
     void replicate(const UniConfKey &key = "/");
-    void deltacallback(const UniConfKey &key, WvStringParm value,
-                       void *userdata);
+    void deltacallback(Gen *src_gen, const UniConfKey &key,
+		       WvStringParm value);
 
 public:
     UniReplicateGen();

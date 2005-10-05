@@ -220,7 +220,7 @@ WvString sizetoa(unsigned long long blocks, unsigned long blocksize = 1,
 
 /**
  * Given a size in kilobyes, return a human readable size.
- * This function uses SI prefixes.
+ * This function uses SI prefixes (1 MB = 1 000 KB = 1 000 000 B).
  */
 WvString sizektoa(unsigned long long kbytes,
 		  RoundingMethod rounding_method = ROUND_UP_AT_POINT_FIVE);

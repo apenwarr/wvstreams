@@ -118,8 +118,8 @@ private:
         { return key.removefirst(foundkey.numsegments()); }
 
     /** Called by generators when a key changes. */
-    void gencallback(const UniConfKey &key, WvStringParm value,
-		     void *userdata);
+    void gencallback(const UniConfKey &base, const UniConfKey &key,
+		     WvStringParm value);
 
     void makemount(const UniConfKey &key);
 

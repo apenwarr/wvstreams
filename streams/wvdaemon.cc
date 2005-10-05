@@ -71,14 +71,14 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
 #ifndef _WIN32
             pid_file("/var/run/%s.pid", _name),
 #endif
+            daemonize(false),
             log(_name, WvLog::Debug),
             log_level(WvLog::Info),
             syslog(false),
             start_callback(_start_callback),
             run_callback(_run_callback),
             stop_callback(_stop_callback),
-            ud(_ud),
-            daemonize(false)
+            ud(_ud)
 {
     args.add_option('q', "quiet",
             "Decrease log level (can be used multiple times)",
@@ -87,10 +87,13 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
             "Increase log level (can be used multiple times)",
             WvArgs::NoArgCallback(this, &WvDaemon::inc_log_level));
 #ifndef _WIN32
-    args.add_set_bool_option('d', "daemonize",
-            "Fork into background and return (implies -s)", daemonize);
+    args.add_option('d', "daemonize",
+            "Fork into background and return (implies --syslog)",
+            WvArgs::NoArgCallback(this, &WvDaemon::set_daemonize));
     args.add_set_bool_option('s', "syslog",
             "Write log entries to syslog", syslog);
+    args.add_reset_bool_option(0, "no-syslog",
+            "Do not write log entries to syslog", syslog);
 #endif
     args.add_option('V', "version",
             "Display version and exit",
@@ -120,8 +123,6 @@ int WvDaemon::run(const char *argv0)
             }
             else if (pid == 0)
             {
-                WvSyslog syslog(name, false);
-                
                 ::chdir("/");
                 
                 ::umask(0);
@@ -148,6 +149,17 @@ int WvDaemon::run(const char *argv0)
                     _exit(1);
                 }
                 ::close(null_fd);
+
+                // Make sure the close-on-exec flag is not set for
+                // the first three descriptors, since many programs
+                // assume that they are open after exec()
+                if (::fcntl(0, F_SETFD, 0) == -1
+                        || ::fcntl(1, F_SETFD, 0) == -1
+                        || ::fcntl(2, F_SETFD, 0) == -1)
+                {
+                    log(WvLog::Warning, "Failed to fcntl((0|1|2), F_SETFD, 0): %s\n",
+                            strerror(errno));
+                }
                 
                 return _run(argv0); // Make sure destructors are called
             }
@@ -163,30 +175,28 @@ int WvDaemon::run(const char *argv0)
 #endif
     {
         WvLogConsole console_log(STDOUT_FILENO, log_level);
-#ifndef _WIN32
-        if (syslog)
-        {
-            WvSyslog syslog(name, false);
-            return _run(argv0);
-        }
-        else 
-#endif
-	    return _run(argv0);
+        return _run(argv0);
     }
 }
 
 int WvDaemon::run(int argc, char **argv)
 {
-    if (!args.process(argc, argv, &extra_args))
+    if (!args.process(argc, argv, &_extra_args))
         return 1;
 
-    return run(argv[0]);
+    if (syslog)
+    {
+        WvSyslog syslog(name, false);
+        return run(argv[0]);
+    }
+    else
+        return run(argv[0]);
 }
 
 int WvDaemon::_run(const char *argv0)
 {
 #ifndef _WIN32
-    wvcrash_setup(argv0);
+    wvcrash_setup(argv0, version);
 
     if (!!pid_file && daemonize)
     {
@@ -268,3 +278,8 @@ int WvDaemon::_run(const char *argv0)
     return _exit_status;
 }
 
+void WvDaemon::set_daemonize(void *)
+{
+    daemonize = true;
+    syslog = true;
+}

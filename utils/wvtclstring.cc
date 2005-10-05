@@ -2,13 +2,19 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */
-#include "wvtclstring.h"
 #include "wvbackslash.h"
 #include "wvbuf.h"
-#include <wvstream.h>
+#include "wvstream.h"
+#include "wvstring.h"
+#include "wvstringmask.h"
+#include "wvtclstring.h"
+
+const WvStringMask WVTCL_NASTY_SPACES(WVTCL_NASTY_SPACES_STR);
+const WvStringMask WVTCL_NASTY_NEWLINES(WVTCL_NASTY_NEWLINES_STR);
+const WvStringMask WVTCL_SPLITCHARS(WVTCL_SPLITCHARS_STR);
 
 static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
-        const char *nasties, bool *verbatim = NULL)
+			   const WvStringMask &nasties, bool *verbatim = NULL)
 {
     if (verbatim) *verbatim = false;
 
@@ -45,8 +51,18 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
 	    bracecount--;
 	if (bracecount < 0)
 	    backslashify = true;
-	
-	if (strchr(WVTCL_ALWAYS_NASTY, *cptr) || strchr(nasties, *cptr))
+
+	bool doit = false;
+	switch (*cptr)
+	{
+	case WVTCL_ALWAYS_NASTY_CASE:
+	    doit = true;
+	    break;
+	default:
+	    if (nasties[*cptr])
+		doit = true;
+	}
+	if (doit)
 	    unprintables++;
 
 	if (*cptr == '\\')
@@ -71,10 +87,19 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
         {
             len = 0;
             for (cptr = s; cptr != cptr_end; ++cptr)
-            {
-                if (strchr(WVTCL_ALWAYS_NASTY, *cptr)
-                                            || strchr(nasties, *cptr))
-                    dst[len++] = '\\';
+	    {
+		bool doit = false;
+		switch (*cptr)
+		{
+		case WVTCL_ALWAYS_NASTY_CASE:
+		    doit = true;
+		    break;
+		default:
+		    if (nasties[*cptr])
+			doit = true;
+		}
+		if (doit)
+		    dst[len++] = '\\';
 
                 dst[len++] = *cptr;
             }
@@ -99,7 +124,7 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
 }
 
 
-WvString wvtcl_escape(WvStringParm s, const char *nasties)
+WvString wvtcl_escape(WvStringParm s, const WvStringMask &nasties)
 {
     size_t s_len = s.len();
 
@@ -179,8 +204,8 @@ WvString wvtcl_unescape(WvStringParm s)
 }
 
 
-WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
-		      const char *splitchars)
+WvString wvtcl_encode(WvList<WvString> &l, const WvStringMask &nasties,
+		      const WvStringMask &splitchars)
 {
     int size = 0;
 
@@ -201,7 +226,7 @@ WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
     {
         p += wvtcl_escape(p, *i, i->len(), nasties);
         if (j < count - 1)
-            *p++ = splitchars[0];
+	    *p++ = splitchars.first();
     }
     *p = '\0';
     
@@ -211,7 +236,8 @@ WvString wvtcl_encode(WvList<WvString> &l, const char *nasties,
 const size_t WVTCL_GETWORD_NONE (UINT_MAX);
 
 static size_t wvtcl_getword(char *dst, const char *s, size_t s_len,
-        const char *splitchars, bool do_unescape, size_t *end = NULL)
+			    const WvStringMask &splitchars,
+			    bool do_unescape, size_t *end = NULL)
 {
     //printf("      used=%d\n", origsize);
     if (!s_len) return WVTCL_GETWORD_NONE;
@@ -224,7 +250,7 @@ static size_t wvtcl_getword(char *dst, const char *s, size_t s_len,
     // skip leading separators
     for (sptr = s; sptr != origend; sptr++)
     {
-	if (!strchr(splitchars, *sptr))
+	if (!splitchars[*sptr])
 	    break;
     }
 
@@ -284,7 +310,7 @@ static size_t wvtcl_getword(char *dst, const char *s, size_t s_len,
 			break;
 		    }
 		}
-		else if (strchr(splitchars, ch))
+		else if (splitchars[ch])
 		    break;
 	    }
 	    
@@ -316,7 +342,8 @@ static size_t wvtcl_getword(char *dst, const char *s, size_t s_len,
 }
 
 
-WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
+WvString wvtcl_getword(WvBuf &buf, const WvStringMask &splitchars,
+		       bool do_unescape)
 {
     int origsize = buf.used();
     const char *origptr = (const char *)buf.get(origsize);
@@ -343,7 +370,7 @@ WvString wvtcl_getword(WvBuf &buf, const char *splitchars, bool do_unescape)
 
 
 void wvtcl_decode(WvList<WvString> &l, WvStringParm _s,
-		  const char *splitchars, bool do_unescape)
+		  const WvStringMask &splitchars, bool do_unescape)
 {
     const char *s = _s;
     size_t s_len = _s.len();

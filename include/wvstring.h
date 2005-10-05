@@ -25,6 +25,7 @@
 #define WVSTRING_EXTRA 1
 
 
+#define __WVS_F(n) WvStringParm __wvs_##n
 #define __WVS_FORM(n) WvStringParm __wvs_##n = WvFastString::null
 #define WVSTRING_FORMAT_DECL WvStringParm __wvs_format, \
 		WvStringParm __wvs_a0, \
@@ -35,6 +36,15 @@
 		__WVS_FORM(a13), __WVS_FORM(a14), __WVS_FORM(a15), \
 		__WVS_FORM(a16), __WVS_FORM(a17), __WVS_FORM(a18), \
 		__WVS_FORM(a19)
+#define WVSTRING_FORMAT_DEFN WvStringParm __wvs_format, \
+		WvStringParm __wvs_a0, \
+		__WVS_F( a1), __WVS_F( a2), __WVS_F( a3), \
+		__WVS_F( a4), __WVS_F( a5), __WVS_F( a6), \
+		__WVS_F( a7), __WVS_F( a8), __WVS_F( a9), \
+		__WVS_F(a10), __WVS_F(a11), __WVS_F(a12), \
+		__WVS_F(a13), __WVS_F(a14), __WVS_F(a15), \
+		__WVS_F(a16), __WVS_F(a17), __WVS_F(a18), \
+		__WVS_F(a19)
 #define WVSTRING_FORMAT_CALL __wvs_format, __wvs_a0, \
 		__wvs_a1, __wvs_a2, __wvs_a3, __wvs_a4, __wvs_a5, \
 		__wvs_a6, __wvs_a7, __wvs_a8, __wvs_a9, __wvs_a10, \

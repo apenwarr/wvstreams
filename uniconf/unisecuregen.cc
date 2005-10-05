@@ -186,8 +186,7 @@ UniConfGen::Iter *UniSecureGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-void UniSecureGen::gencallback(const UniConfKey &key, WvStringParm value,
-        void *userdata)
+void UniSecureGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
     if (findperm(key, UniPermGen::READ))
         delta(key, value);

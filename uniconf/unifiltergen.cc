@@ -30,7 +30,7 @@ void UniFilterGen::setinner(IUniConfGen *inner)
     xinner = inner;
     if (xinner)
         xinner->add_callback(this, UniConfGenCallback(this,
-            &UniFilterGen::gencallback), NULL);
+            &UniFilterGen::gencallback));
 }
 
 
@@ -145,8 +145,7 @@ UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value,
-                               void *userdata)
+void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
     if (xinner)
         delta(reversekeymap(key), value);

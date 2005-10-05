@@ -26,14 +26,14 @@ static void run(WvStream &list, WvStream *s1, WvStream *s2)
 
 
 static void sslloop(WvIStreamList &list, WvX509Mgr &x509,
-		    WvSSLStream *&s1, WvSSLStream *&s2)
+		    WvSSLStream *&s1, WvSSLStream *&s2, bool clicert = false)
 {
     signal(SIGPIPE, SIG_IGN);
     IWvStream *_s1, *_s2;
     wvloopback2(_s1, _s2);
     
     s1 = new WvSSLStream(_s1, &x509, 0, true);
-    s2 = new WvSSLStream(_s2);
+    s2 = new WvSSLStream(_s2, clicert ? &x509 : NULL);
     
     list.auto_prune = false;
     list.append(s1, true, "s1");
@@ -323,7 +323,24 @@ WVTEST_MAIN("ssl establish connection")
     // if this fails, it's BUGZID:10781
     WVPASS(tlen == wlen);
 
-    delete x509;
+    WVRELEASE(x509);
     WvIStreamList::globallist.zap();
 }
 
+
+WVTEST_MAIN("x509 refcounting")
+{
+    WvX509Mgr *x509 = new WvX509Mgr("cn=random_stupid_dn", 1024);
+    WvIStreamList list;
+    WvSSLStream *s1, *s2;
+    sslloop(list, *x509, s1, s2, true);
+    WVRELEASE(x509);
+    
+    run(list, s1, s2);
+    s1->write("Hello\n");
+    run(list, s1, s2);
+    WVPASSEQ(s2->getline(-1), "Hello");
+    s2->write("Yellow\n");
+    run(list, s1, s2);
+    WVPASSEQ(s1->getline(-1), "Yellow");
+}

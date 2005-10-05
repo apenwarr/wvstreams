@@ -192,6 +192,23 @@ void WvInterface::promisc(bool enable)
 }
 
 
+int WvInterface::ptp(bool enable, const WvIPNet &addr)
+{
+    struct ifreq ifr;
+    sockaddr *saddr = addr.sockaddr();
+    memcpy(&ifr.ifr_dstaddr, saddr, addr.sockaddr_len());
+
+    int retval = req(SIOCSIFDSTADDR, &ifr);
+    if (retval && retval != EACCES && retval != EPERM)
+    {
+        err.perror(WvString("Set PointoPoint %s", name));
+	return retval;
+    }
+    
+    return setflags(IFF_POINTOPOINT, enable ? IFF_POINTOPOINT : 0);
+}
+
+
 bool WvInterface::ispromisc()
 {
     return (getflags() & IFF_PROMISC) ? 1 : 0;
@@ -478,7 +495,7 @@ int WvInterface::delroute(const WvIPNet &dest, const WvIPAddr &gw,
     
     if (dest.is_default() || table != "default")
     {
-	err(WvLog::Debug2, "addroute: ");
+	err(WvLog::Debug2, "delroute: ");
 	for (int i = 0; argv[i]; i++)
 	    err(WvLog::Debug2, "%s ", argv[i]);
 	err(WvLog::Debug2, "\n");
@@ -679,12 +696,12 @@ void WvInterfaceDict::update()
 
 
 // determine if the given address belongs to the local system
-bool WvInterfaceDict::islocal(const WvAddr &addr)
+WvString WvInterfaceDict::islocal(const WvAddr &addr)
 {
     static WvIPAddr bcast("255.255.255.255"); // always a local address!
     
     if (addr == bcast)
-	return true;
+	return "lo";
     
     Iter i(*this);
     for (i.rewind(); i.next(); )
@@ -693,14 +710,14 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
 	if (!ifc.valid) continue;
 	
 	if (ifc.ipaddr() == addr || ifc.ipaddr().base() == addr
-	  || ifc.ipaddr().broadcast() == addr)
-	    return true;
+	    || ifc.ipaddr().broadcast() == addr)
+	    return ifc.name;
 
 	if (ifc.hwaddr() == addr)
-	    return true;
+	    return ifc.name;
     }
     
-    return false;
+    return WvString::null;
 }
 
 
