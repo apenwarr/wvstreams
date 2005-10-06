@@ -59,6 +59,13 @@ static int match(const WvRegex &regex, WvStringParm filename, WvStream *file,
 }
 
 
+static void print_version(void *)
+{
+    wvout->print("wvgrep (WvStreams grep) %s\n", VERSION);
+    exit(0);
+}
+
+
 int main(int argc, char **argv)
 {
     WvArgs args;
@@ -101,8 +108,8 @@ int main(int argc, char **argv)
     bool opt_no_messages = false;
     args.add_set_bool_option('s', "no-message", WvString::null, opt_no_messages);
     
-    bool opt_version = false;
-    args.add_set_bool_option('V', "version", WvString::null, opt_version);
+    args.add_option('V', "version", WvString::null,
+			WvArgs::NoArgCallback(&print_version));
     
     bool opt_invert_match = false;
     args.add_set_bool_option('v', "invert-match", WvString::null, opt_invert_match);
@@ -113,24 +120,15 @@ int main(int argc, char **argv)
     bool opt_null = false;
     args.add_set_bool_option('Z', "null", WvString::null, opt_null);
 
+    args.add_required_arg("PATTERN");
+    args.add_optional_arg("FILE", true);
+
     WvStringList remaining_args;    
     args.process(argc, argv, &remaining_args);
 
-    if (opt_version)
-    {
-    	wvout->print("wvgrep (WvStreams grep) %s\n", VERSION);
-    	return 0;
-    }
-    
     if (!opt_regexp && !remaining_args.isempty())
     	opt_regexp = remaining_args.popstr();
-    if (!opt_regexp)
-    {
-    	wverr->print("Usage: %s [OPTION]... PATTERN [FILE]...\n", argv[0]);
-    	wverr->print("Try `%s --help' for more information.\n", argv[0]);
-    	return 2;
-    }
-  
+
     int cflags = WvFastString(argv[0]) == "egrep"?
     	    WvRegex::EXTENDED: WvRegex::BASIC;
     if (opt_extended_regexp) cflags = WvRegex::EXTENDED;
@@ -164,7 +162,11 @@ int main(int argc, char **argv)
     for (filename.rewind(); filename.next(); )
     {
     	WvStream *file;
-    	if (!!*filename) file = new WvFile(*filename, O_RDONLY);
+    	if (!!*filename)
+	    file = new WvFile(*filename, O_RDONLY);
+	else
+	    file = wvcon;
+
     	if (!file->isok())
     	{
     	    if (!opt_no_messages)
