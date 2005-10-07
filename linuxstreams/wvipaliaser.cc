@@ -128,8 +128,11 @@ bool WvIPAliaser::add(const WvIPAddr &ip)
     if (WvIPAddr(ip) == WvIPAddr() || ipsearch(aliases, ip))
 	return false;     // already done.
 
-    // If the alias is already a local address, there is no need for an alias
-    if (interfaces.islocal(WvIPAddr(ip)))
+    // If the alias is already a local address, there is no need for an alias.
+    // We have to be careful that we don't find an existing alias as the
+    // local interface.  Otherwise, we'll toggle that alias on and off.
+    WvString ifc(interfaces.islocal(WvIPAddr(ip)));
+    if (!!ifc && !strchr(ifc, ':')) // Make sure it is a real interface
 	return false;
 
     a = ipsearch(all_aliases, ip);

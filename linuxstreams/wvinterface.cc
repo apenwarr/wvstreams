@@ -696,12 +696,12 @@ void WvInterfaceDict::update()
 
 
 // determine if the given address belongs to the local system
-bool WvInterfaceDict::islocal(const WvAddr &addr)
+WvString WvInterfaceDict::islocal(const WvAddr &addr)
 {
     static WvIPAddr bcast("255.255.255.255"); // always a local address!
     
     if (addr == bcast)
-	return true;
+	return "lo";
     
     Iter i(*this);
     for (i.rewind(); i.next(); )
@@ -710,14 +710,14 @@ bool WvInterfaceDict::islocal(const WvAddr &addr)
 	if (!ifc.valid) continue;
 	
 	if (ifc.ipaddr() == addr || ifc.ipaddr().base() == addr
-	  || ifc.ipaddr().broadcast() == addr)
-	    return true;
+	    || ifc.ipaddr().broadcast() == addr)
+	    return ifc.name;
 
 	if (ifc.hwaddr() == addr)
-	    return true;
+	    return ifc.name;
     }
     
-    return false;
+    return WvString::null;
 }
 
 

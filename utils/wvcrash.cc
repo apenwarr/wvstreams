@@ -28,9 +28,17 @@
 # include <execinfo.h>
 #include <unistd.h>
 
+#ifdef __USE_GNU
+static const char *argv0 = program_invocation_short_name;
+#else
 static const char *argv0 = "UNKNOWN";
-static char *assert_msg = NULL;
-static const char *desc = NULL;
+#endif // __USE_GNU
+
+// Reserve enough buffer for a screenful of programme.
+static const int buffer_size = 2048;
+static char will_msg[buffer_size];
+static char assert_msg[buffer_size];
+static char desc[buffer_size];
 WvCrashCallback callback;
 
 // write a string 'str' to fd
@@ -80,7 +88,7 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     static char *signame = strsignal(sig);
     
     wr(fd, argv0);
-    if (desc)
+    if (desc[0])
     {
 	wr(fd, " (");
 	wr(fd, desc);
@@ -108,10 +116,18 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, "\n");
 
     // Write out the assertion message, as logged by __assert*_fail(), if any.
-    if (assert_msg)
+    if (assert_msg[0])
     {
 	wr(fd, "\nAssert:\n");
 	wr(fd, assert_msg);
+    }
+
+    // Write out the note, if any.
+    if (will_msg[0])
+    {
+	wr(fd, "\nLast Will and Testament:\n");
+	wr(fd, will_msg);
+	wr(fd, "\n");
     }
 
     wr(fd, "\nBacktrace:\n");
@@ -132,12 +148,6 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
                 break;
             nanosleep(&ts, NULL);
         }
-    }
-
-    if (assert_msg)
-    {
-	free(assert_msg);
-	assert_msg = NULL;
     }
 
     // we want to create a coredump, and the kernel seems to not want to do
@@ -266,8 +276,15 @@ void wvcrash_add_signal(int sig)
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
     argv0 = basename(_argv0);
-    assert_msg = NULL;
-    desc = _desc;
+    will_msg[0] = '\0';
+    assert_msg[0] = '\0';
+    if (_desc)
+    {
+	strncpy(desc, _desc, buffer_size);
+	desc[buffer_size - 1] = '\0';
+    }
+    else
+	desc[0] = '\0';
     
     wvcrash_setup_alt_stack();
     
@@ -286,8 +303,10 @@ extern "C"
 		       unsigned int __line, const char *__function)
     {
 	// Set the assert message that WvCrash will dump.
-	asprintf(&assert_msg, "%s: %s:%u: %s: Assertion `%s' failed.\n",
+	snprintf(assert_msg, buffer_size,
+		 "%s: %s:%u: %s: Assertion `%s' failed.\n",
 		 argv0, __file, __line, __function, __assertion);
+	assert_msg[buffer_size - 1] = '\0';
 
 	// Emulate the GNU C library's __assert_fail().
 	fprintf(stderr, "%s: %s:%u: %s: Assertion `%s' failed.\n",
@@ -309,15 +328,36 @@ extern "C"
 			      unsigned int __line, const char *__function)
     {
 	// Set the assert message that WvCrash will dump.
-	asprintf(&assert_msg, "%s: %s:%u: %s: %s\n",
+	snprintf(assert_msg, buffer_size,
+		 "%s: %s:%u: %s: Unexpected error: %s.\n",
 		 argv0, __file, __line, __function, strerror(__errnum));
+	assert_msg[buffer_size - 1] = '\0';
 
 	// Emulate the GNU C library's __assert_perror_fail().
-	fprintf(stderr, "%s: %s:%u: %s: %s\n",
+	fprintf(stderr, "%s: %s:%u: %s: Unexpected error: %s.\n",
 		argv0, __file, __line, __function, strerror(__errnum));
 	abort();
     }
 } // extern "C"
+
+// This function is meant to support people who wish to leave a last will
+// and testament in the WvCrash.
+void wvcrash_leave_will(const char *will)
+{
+    if (will)
+    {
+	strncpy(will_msg, will, buffer_size);
+	will_msg[buffer_size - 1] = '\0';
+    }
+    else
+	will_msg[0] = '\0';
+}
+
+
+const char *wvcrash_read_will()
+{
+    return will_msg;
+}
 
 
 #else // Not Linux
@@ -326,5 +366,8 @@ void wvcrash(int sig) {}
 void wvcrash_add_signal(int sig) {}
 WvCrashCallback wvcrash_set_callback(WvCrashCallback cb) {}
 void wvcrash_setup(const char *_argv0, const char *_desc) {}
+
+void wvcrash_leave_will(const char *will) {}
+const char *wvcrash_read_will() { return NULL; }
 
 #endif // Not Linux
