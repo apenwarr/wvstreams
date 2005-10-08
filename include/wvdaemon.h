@@ -30,8 +30,9 @@ command line options:
 
 -q|--quit: decrease the log level by one
 -v|--verbose: increase the log level by one
--d|--daemonize: fork into the background.
+-d|--daemonize: fork into the background (implies --syslog)
 -s|--syslog: write log entries to the syslog() facility
+--no-syslog: do not write log entries to the syslog() facility
 -V|--version: print the program name and version number and exit immediately
 
 These default arguments can be changed or appended to through the public member
@@ -88,6 +89,9 @@ class WvDaemon
         //! The path to the pid file to use for the daemon; defaults
         //! to /var/run/name.pid, where name is above
         WvString pid_file;
+        //! Whether the daemon should daemonize by default (it can
+        //! be changed by the default options); defaults to false
+        bool daemonize;
 
         //! The arguments the daemon accepts; the defaults are described
         //! above.
@@ -114,10 +118,10 @@ class WvDaemon
 
         int _run(const char *argv0);
 
+        void set_daemonize(void *);
+
     protected:
     
-        bool daemonize;
-
         void dec_log_level(void *)
         {
             if ((int)log_level > (int)WvLog::Critical)

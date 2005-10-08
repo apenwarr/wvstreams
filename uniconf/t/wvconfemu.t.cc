@@ -253,7 +253,13 @@ WVTEST_MAIN("wvconfemu setbool")
 
     cfg.setint("Foo", "Bar", 1);
     WVPASS(c1 && c2 && c3);
-    c3 = false;
+    c1 = c2 = c3 = false;
+
+    cfg.delete_section("Foo");
+    WVPASS(c1 && c2 && c3);
+    WVPASS(c1);
+    WVPASS(c2);
+    WVPASS(c3);
 
     cfg.del_setbool(&c1, "Foo", "");
     cfg.del_setbool(&c2, "", "Bar");

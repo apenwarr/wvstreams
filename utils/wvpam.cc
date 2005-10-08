@@ -155,17 +155,22 @@ bool WvPam::init()
 
 bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm password)
 {
+    // Just in case...
+    assert(d);
+    
     if (!!rhost)
     {
         d->status = pam_set_item(d->pamh, PAM_RHOST, rhost);
-        if (!check_pam_status("rhost setup")) return false; 
+        if (!check_pam_status("rhost setup")) 
+	    return false; 
     }
 
     if (!!user)
     {
         d->user = user;
         d->status = pam_set_item(d->pamh, PAM_USER, user);
-        if (!check_pam_status("user setup")) return false;
+        if (!check_pam_status("user setup")) 
+	    return false;
     }
 
     if (!!password)
@@ -174,10 +179,12 @@ bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm pas
         c.conv = passconv;
         c.appdata_ptr = strdup(password);
         d->status = pam_set_item(d->pamh, PAM_CONV, &c);
-        if (!check_pam_status("conversation setup")) return false;
+        if (!check_pam_status("conversation setup")) 
+	    return false;
         
         d->status = pam_set_item(d->pamh, PAM_AUTHTOK, password);
-        if (!check_pam_status("password setup")) return false;   
+        if (!check_pam_status("password setup")) 
+	    return false;   
     }
 
 #if HAVE_BROKEN_PAM
@@ -186,11 +193,13 @@ bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm pas
     const void *x = NULL;
 #endif
     d->status = pam_get_item(d->pamh, PAM_USER, &x);
-    if (!check_pam_status("get username")) return false;
+    if (!check_pam_status("get username")) 
+	return false;
     d->user = (const char *)x;
+    d->user.unique();
 
     log("Starting Authentication for %s@%s\n", d->user, rhost);
-
+    
     d->status = pam_authenticate(d->pamh, PAM_DISALLOW_NULL_AUTHTOK | PAM_SILENT);
     if (!check_pam_status("authentication")) return false;
 
@@ -209,7 +218,8 @@ bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm pas
         const void *x = NULL;
         d->status = pam_get_item(d->pamh, PAM_USER, &x);
         if (!check_pam_status("get username")) return false;
-        d->user = (const char *)x;        
+        d->user = (const char *)x;
+	d->user.unique();
     }
     log("Session open as user '%s'\n", d->user);
     
