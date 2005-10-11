@@ -65,12 +65,10 @@ void wait_for_child(pid_t child)
     int max_tries = 10;
     pid_t rv;
     do
-    {
-        errno = 0;
         rv = waitpid(child, &status, 0);
-    }
     while (rv == -1 && errno == EINTR && ++count < max_tries);
-    WVPASSEQ(errno, 0);
+    // Print out any error we received, to aid debugging
+    WVPASSEQ(errno, errno);
     WVFAILEQ(count, max_tries);
     WVPASSEQ(rv, child);
     WVPASS(WIFEXITED(status));
