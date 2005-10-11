@@ -1,8 +1,7 @@
 /* -*- Mode: C++ -*-
- * Worldvisions Tunnel Vision Software:
- *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
+ *   Copyright (C) 2004-2005 Net Integration Technologies, Inc.
  *
- * WvStreams interface for popt argument processing
+ * WvStreams interface for command-line argument processing
  */
 #ifndef __WVARGS_H
 #define __WVARGS_H
@@ -13,6 +12,7 @@
 #include "wvvector.h"
 
 class WvArgsOption;
+class WvArgsData;
 
 /*!
   @brief WvArgs - Sane command-line argument processing for WvStreams
@@ -25,7 +25,7 @@ class WvArgsOption;
   Sample usage:
 
   @code
-  #include <wvstreams/wvargs.h>
+  #include "wvargs.h"
 
   static void callback(void *userdata, WvStringParm value)
   {
@@ -74,9 +74,12 @@ public:
 
 private:
 
-    WvVector<WvArgsOption> *options;
-    WvString args_desc;
-    unsigned int num_required_args;
+    WvArgsData *data;
+    WvString args_doc;
+    WvString version;
+    WvString email;
+    WvString header;
+    WvString footer;
 
 public:
 
@@ -91,6 +94,18 @@ public:
     //!
     bool process(int argc, char **argv,
 		 WvStringList *remaining_args = NULL);
+
+    //! Set the --version string
+    void set_version(WvStringParm version);
+
+    //! Set the e-mail address for bug reports
+    void set_email(WvStringParm email);
+
+    //! Set the introductory help message, printed at the beginning of --help
+    void set_help_header(WvStringParm header);
+
+    //! Set the descriptive help message, printed at the end of --help
+    void set_help_footer(WvStringParm footer);
 
     //!
     //! Output the short usage message based on the provided options.
@@ -238,7 +253,8 @@ public:
     //! \param val The string list to which the argument is appended
     //!
     void add_option(char short_option, WvStringParm long_option,
-		    WvStringParm desc, WvStringParm arg_desc, WvStringList &val);
+		    WvStringParm desc, WvStringParm arg_desc,
+		    WvStringList &val);
     //!
     //! Add a switch which does not take an argument which invokes a
     //! callback when it is specified.
@@ -311,7 +327,10 @@ public:
     //!
     //! An alias for remove_all_options()
     //!
-    void zap() { remove_all_options(); }
+    void zap()
+    {
+	remove_all_options();
+    }
 };
 
 #endif // __WVARGS_H

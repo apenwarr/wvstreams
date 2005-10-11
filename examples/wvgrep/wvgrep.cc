@@ -59,17 +59,13 @@ static int match(const WvRegex &regex, WvStringParm filename, WvStream *file,
 }
 
 
-static void print_version(void *)
-{
-    wvout->print("wvgrep (WvStreams grep) %s\n", VERSION);
-    exit(0);
-}
-
-
 int main(int argc, char **argv)
 {
     WvArgs args;
-    
+
+    args.set_version("wvgrep (WvStreams grep) " VERSION "\n");
+    args.set_email("wvstreams-dev@lists.nit.ca");
+
     bool opt_count = false;
     args.add_set_bool_option('c', "count", WvString::null, opt_count);
     
@@ -108,9 +104,6 @@ int main(int argc, char **argv)
     bool opt_no_messages = false;
     args.add_set_bool_option('s', "no-message", WvString::null, opt_no_messages);
     
-    args.add_option('V', "version", WvString::null,
-			WvArgs::NoArgCallback(&print_version));
-    
     bool opt_invert_match = false;
     args.add_set_bool_option('v', "invert-match", WvString::null, opt_invert_match);
     
@@ -122,6 +115,9 @@ int main(int argc, char **argv)
 
     args.add_required_arg("PATTERN");
     args.add_optional_arg("FILE", true);
+
+    args.set_help_header("Search for PATTERN in each FILE or standard input.");
+    args.set_help_footer("With no FILE, this program reads standard input.");
 
     WvStringList remaining_args;    
     args.process(argc, argv, &remaining_args);

@@ -55,7 +55,7 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-CPPFLAGS += -Iinclude -pipe
+CPPFLAGS += -Iinclude -Ignulib -pipe
 ARFLAGS = rs
 
 DEBUG:=$(filter-out no,$(enable_debug))
@@ -198,7 +198,7 @@ libwvbase.a: uniconf/unigenhack_s.o
 libwvbase.so: uniconf/unigenhack.o
 libwvbase.so: LIBS+=$(LIBXPLC)
 
-libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
+libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils)) gnulib/libgnu.a
 libwvutils.so: libwvbase.so
 libwvutils.so: -lz -lcrypt -lpopt
 

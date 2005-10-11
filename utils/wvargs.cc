@@ -1,23 +1,24 @@
 /* -*- Mode: C++ -*-
- * Worldvisions Tunnel Vision Software:
- *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
+ *   Copyright (C) 2004-2005 Net Integration Technologies, Inc.
  *
- * WvStreams interface for popt argument processing
+ * WvStreams interface for command-line argument processing
  */
 
 #include "wvargs.h"
+#include "wvscatterhash.h"
 
-#include <popt.h>
+#include <argp.h>
+
 
 class WvArgsOption
 {
 public:
 
-    char short_option;
+    int short_option;
     WvString long_option;
     WvString desc;
 
-    WvArgsOption(char _short_option,
+    WvArgsOption(int _short_option,
 		 WvStringParm _long_option,
 		 WvStringParm _desc)
 	: short_option(_short_option), long_option(_long_option), desc(_desc)
@@ -32,36 +33,83 @@ public:
     {
     }
 
-    virtual void fill_popt_table(struct poptOption *popt_option, int popt_val)
-    {
-	memset(popt_option, 0, sizeof(struct poptOption));
-
-	popt_option->longName = long_option;
-	popt_option->shortName = short_option;
-	popt_option->descrip = desc;
-	popt_option->val = popt_val;
-    }
+    virtual void add_to_argp(WvArgsData &data);
 };
+
+
+DeclareWvList(WvArgsOption);
+DeclareWvScatterDict(WvArgsOption, int, short_option);
+
+class WvArgsData
+{
+public:
+    WvArgsData();
+    ~WvArgsData();
+
+    argp_option *argp() const;
+    void *self() const;
+
+    void add(WvArgsOption *option);
+    void remove(char short_option, WvStringParm long_option);
+    void zap();
+
+    void add_required_arg();
+    const WvStringList &args() const;
+
+    static error_t parser(int key, char *arg, argp_state *state);
+
+protected:
+    friend class WvArgsOption;
+    friend class WvArgsArgOption;
+    friend class WvArgs;
+
+    void argp_build();
+    bool argp_add(const char *name, int key, const char *arg, int flags,
+		  const char *doc, int group);
+private:
+    void argp_init(size_t size = 0);
+
+    bool argp_add(const argp_option &option);
+    bool argp_double();
+
+    argp_option *argp_;
+    size_t argp_index;		// Last element in the options array
+    size_t argp_size;		// Size of the options array
+
+    // I create two data-structures, only one of them actually owning
+    // the objects, of course.  The List is for ordered construction
+    // of argp_.  The Dict is for constant-time lookups when
+    // process()ing options.
+    WvArgsOptionList options_list; // An ordered list of WvArgsOptions
+    WvArgsOptionDict options_dict; // A constant-time lookup of them
+
+    WvStringList args_;		// Arguments after all options have been parsed
+    size_t required_args;       // Number of these mandatory arguments.
+    size_t maximum_args;	// Number of maximum arguments.
+
+    int last_no_key;		// Last key for options with no short_option
+};
+
+
+void WvArgsOption::add_to_argp(WvArgsData &data)
+{
+    data.argp_add(long_option, short_option, 0, 0, desc, 0);
+}
+
 
 class WvArgsNoArgOption : public WvArgsOption
 {
 
 public:
 
-    WvArgsNoArgOption(char _short_option,
+    WvArgsNoArgOption(int _short_option,
 		      WvStringParm _long_option,
 		      WvStringParm _desc)
 	: WvArgsOption(_short_option, _long_option, _desc)
     {
     }
-
-    virtual void fill_popt_table(struct poptOption *popt_option, int popt_val)
-    {
-	WvArgsOption::fill_popt_table(popt_option, popt_val);
-
-	popt_option->argInfo = POPT_ARG_NONE;
-    }
 };
+
 
 class WvArgsSetBoolOption : public WvArgsNoArgOption
 {
@@ -72,7 +120,7 @@ private:
 
 public:
 
-    WvArgsSetBoolOption(char _short_option,
+    WvArgsSetBoolOption(int _short_option,
 			WvStringParm _long_option,
 			WvStringParm _desc,
 			bool &_flag)
@@ -81,11 +129,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	flag = true;
     }
 };
+
 
 class WvArgsResetBoolOption : public WvArgsNoArgOption
 {
@@ -96,7 +145,7 @@ private:
 
 public:
 
-    WvArgsResetBoolOption(char _short_option,
+    WvArgsResetBoolOption(int _short_option,
 			  WvStringParm _long_option,
 			  WvStringParm _desc,
 			  bool &_flag)
@@ -105,11 +154,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	flag = false;
     }
 };
+
 
 class WvArgsFlipBoolOption : public WvArgsNoArgOption
 {
@@ -120,7 +170,7 @@ private:
 
 public:
 
-    WvArgsFlipBoolOption(char _short_option,
+    WvArgsFlipBoolOption(int _short_option,
 			 WvStringParm _long_option,
 			 WvStringParm _desc,
 			 bool &_flag)
@@ -129,11 +179,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	flag = !flag;
     }
 };
+
 
 class WvArgsIncIntOption : public WvArgsNoArgOption
 {
@@ -141,7 +192,7 @@ private:
     int &val;
 
 public:
-    WvArgsIncIntOption(char _short_option,
+    WvArgsIncIntOption(int _short_option,
 		       WvStringParm _long_option,
 		       WvStringParm _desc,
 		       int &_val)
@@ -150,11 +201,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	val++;
     }
 };
+
 
 class WvArgsNoArgCallbackOption : public WvArgsNoArgOption
 {
@@ -166,7 +218,7 @@ private:
 
 public:
 
-    WvArgsNoArgCallbackOption(char _short_option,
+    WvArgsNoArgCallbackOption(int _short_option,
 			      WvStringParm _long_option,
 			      WvStringParm _desc,
 			      WvArgs::NoArgCallback _cb,
@@ -176,11 +228,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	cb(ud);
     }
 };
+
 
 class WvArgsArgOption : public WvArgsOption
 {
@@ -190,7 +243,7 @@ private:
 
 public:
 
-    WvArgsArgOption(char _short_option,
+    WvArgsArgOption(int _short_option,
 		    WvStringParm _long_option,
 		    WvStringParm _desc,
 		    WvStringParm _arg_desc)
@@ -199,14 +252,12 @@ public:
     {
     }
 
-    virtual void fill_popt_table(struct poptOption *popt_option, int popt_val)
+    virtual void add_to_argp(WvArgsData &data)
     {
-	WvArgsOption::fill_popt_table(popt_option, popt_val);
-
-	popt_option->argDescrip = arg_desc;
-	popt_option->argInfo = POPT_ARG_STRING;
+	data.argp_add(long_option, short_option, arg_desc, 0, desc, 0);
     }
 };
+
 
 class WvArgsIntOption : public WvArgsArgOption
 {
@@ -216,7 +267,7 @@ private:
 
 public:
 
-    WvArgsIntOption(char _short_option,
+    WvArgsIntOption(int _short_option,
 		    WvStringParm _long_option,
 		    WvStringParm _desc,
 		    WvStringParm _arg_desc,
@@ -226,14 +277,24 @@ public:
     {
     }
 
-    virtual void fill_popt_table(struct poptOption *popt_option, int popt_val)
+    virtual void process(WvStringParm arg)
     {
-	WvArgsArgOption::fill_popt_table(popt_option, popt_val);
-
-	popt_option->arg = (void *)&val;
-	popt_option->argInfo = POPT_ARG_INT;
+	char *tailptr = NULL;
+	errno = 0;
+	long int tmp = strtol(arg, &tailptr, 10);
+	if (errno == ERANGE || tmp > INT_MAX || tmp < INT_MIN )
+	{
+	    // Out of range
+	}
+	else if (*tailptr)
+	{
+	    // Invalid number
+	}
+	else
+	    val = tmp;
     }
 };
+
 
 class WvArgsLongOption : public WvArgsArgOption
 {
@@ -243,7 +304,7 @@ private:
 
 public:
 
-    WvArgsLongOption(char _short_option,
+    WvArgsLongOption(int _short_option,
 		     WvStringParm _long_option,
 		     WvStringParm _desc,
 		     WvStringParm _arg_desc,
@@ -253,14 +314,24 @@ public:
     {
     }
 
-    virtual void fill_popt_table(struct poptOption *popt_option, int popt_val)
+    virtual void process(WvStringParm arg)
     {
-	WvArgsArgOption::fill_popt_table(popt_option, popt_val);
-
-	popt_option->arg = (void *)&val;
-	popt_option->argInfo = POPT_ARG_LONG;
+	char *tailptr = NULL;
+	errno = 0;
+	long int tmp = strtol(arg, &tailptr, 10);
+	if (errno == ERANGE)
+	{
+	    // Out of range
+	}
+	else if (*tailptr)
+	{
+	    // Invalid number
+	}
+	else
+	    val = tmp;
     }
 };
+
 
 class WvArgsFloatOption : public WvArgsArgOption
 {
@@ -270,7 +341,7 @@ private:
 
 public:
 
-    WvArgsFloatOption(char _short_option,
+    WvArgsFloatOption(int _short_option,
 		      WvStringParm _long_option,
 		      WvStringParm _desc,
 		      WvStringParm _arg_desc,
@@ -280,14 +351,24 @@ public:
     {
     }
 
-    virtual void fill_popt_table(struct poptOption *popt_option, int popt_val)
+    virtual void process(WvStringParm arg)
     {
-	WvArgsArgOption::fill_popt_table(popt_option, popt_val);
-
-	popt_option->arg = (void *)&val;
-	popt_option->argInfo = POPT_ARG_FLOAT;
+	char *tailptr = NULL;
+	errno = 0;
+	float tmp = strtof(arg, &tailptr);
+	if (errno == ERANGE)
+	{
+	    // Out of range
+	}
+	else if (*tailptr)
+	{
+	    // Invalid number
+	}
+	else
+	    val = tmp;
     }
 };
+
 
 class WvArgsDoubleOption : public WvArgsArgOption
 {
@@ -297,7 +378,7 @@ private:
 
 public:
 
-    WvArgsDoubleOption(char _short_option,
+    WvArgsDoubleOption(int _short_option,
 		       WvStringParm _long_option,
 		       WvStringParm _desc,
 		       WvStringParm _arg_desc,
@@ -307,14 +388,24 @@ public:
     {
     }
 
-    virtual void fill_popt_table(struct poptOption *popt_option, int popt_val)
+    virtual void process(WvStringParm arg)
     {
-	WvArgsArgOption::fill_popt_table(popt_option, popt_val);
-
-	popt_option->arg = (void *)&val;
-	popt_option->argInfo = POPT_ARG_DOUBLE;
+	char *tailptr = NULL;
+	errno = 0;
+	double tmp = strtod(arg, &tailptr);
+	if (errno == ERANGE)
+	{
+	    // Out of range
+	}
+	else if (*tailptr)
+	{
+	    // Invalid number
+	}
+	else
+	    val = tmp;
     }
 };
+
 
 class WvArgsStringOption : public WvArgsArgOption
 {
@@ -324,7 +415,7 @@ private:
 
 public:
 
-    WvArgsStringOption(char _short_option,
+    WvArgsStringOption(int _short_option,
 		       WvStringParm _long_option,
 		       WvStringParm _desc,
 		       WvStringParm _arg_desc,
@@ -334,11 +425,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	val = arg;
     }
 };
+
 
 class WvArgsStringListAppendOption : public WvArgsArgOption
 {
@@ -348,7 +440,7 @@ private:
 
 public:
 
-    WvArgsStringListAppendOption(char _short_option,
+    WvArgsStringListAppendOption(int _short_option,
 				 WvStringParm _long_option,
 				 WvStringParm _desc,
 				 WvStringParm _arg_desc,
@@ -358,11 +450,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	val.append(arg);
     }
 };
+
 
 class WvArgsArgCallbackOption : public WvArgsArgOption
 {
@@ -373,7 +466,7 @@ private:
 
 public:
 
-    WvArgsArgCallbackOption(char _short_option,
+    WvArgsArgCallbackOption(int _short_option,
 			    WvStringParm _long_option,
 			    WvStringParm _desc,
 			    WvStringParm _arg_desc,
@@ -384,324 +477,439 @@ public:
     {
     }
 
-    virtual void process(WvStringParm  arg)
+    virtual void process(WvStringParm arg)
     {
 	cb(arg, ud);
     }
 };
 
-typedef WvVector<WvArgsOption> WvArgsOptionVector;
+
+WvArgsData::WvArgsData()
+    : argp_(NULL), argp_index(0), argp_size(0),
+      required_args(0), maximum_args(0), last_no_key(-1)
+{
+}
+
+
+WvArgsData::~WvArgsData()
+{
+    if (argp_)
+	free(argp_);
+}
+
+
+argp_option *WvArgsData::argp() const
+{
+    return argp_;
+}
+
+
+void *WvArgsData::self() const
+{
+    return (void *)this;
+}
+
+
+void WvArgsData::add(WvArgsOption *option)
+{
+    if (!option)
+	return;
+
+    if (!option->short_option)
+	option->short_option = last_no_key--;
+
+    options_list.append(option, true);
+    options_dict.add(option, false);
+}
+
+
+// This method removes both short_option and long_option from the
+// options_* structures.  Completely.
+void WvArgsData::remove(char short_option, WvStringParm long_option)
+{
+    // First, look through options_list, and remove them from
+    // options_dict once we find them.
+    WvArgsOptionList::Iter i(options_list);
+    for (i.rewind(); i.next(); )
+    {
+	bool matches_short = false;
+	bool matches_long = false;
+
+	if (short_option != '\0' && i->short_option == short_option)
+	    matches_short = true;
+	if (!long_option.isnull() && i->long_option == long_option)
+	    matches_long = true;
+
+	if (matches_short && matches_long
+	    || matches_short && i->long_option.isnull()
+	    || matches_long && i->short_option == '\0')
+	{
+	    // Delete this item from the data-structures
+	    options_dict.remove(i.ptr());
+	    i.xunlink();
+	    if (argp_)
+	    {
+		free(argp_);
+		argp_ = NULL;
+	    }
+	}
+	else if (matches_short)
+	{
+	    // Update the short description and change how it's filed
+	    // in the dictionary.
+	    i->short_option = '\0';
+	    options_dict.remove(i.ptr());
+	    options_dict.add(i.ptr(), false);
+	}
+	else if (matches_long)
+	{
+	    // Update the long description only
+	    i->long_option = WvString::null;
+	}
+    }
+}
+
+
+void WvArgsData::zap()
+{
+    options_dict.zap();
+    options_list.zap();
+
+    if (argp_)
+    {
+	free(argp_);
+	argp_ = NULL;
+    }
+}
+
+
+void WvArgsData::argp_init(size_t size)
+{
+    argp_size = size;
+    if (argp_size < 1)
+	argp_size = 1;
+
+    // I'm sorry to use malloc(), but this argp is a C library
+    argp_ = (argp_option *)malloc(argp_size * sizeof(argp_option));
+    // Terminate the empty array
+    memset(argp_, 0, sizeof(argp_option));
+}
+
+
+void WvArgsData::argp_build()
+{
+    if (!argp_)
+	argp_init(options_list.count() + 2);
+
+    WvArgsOptionList::Iter i(options_list);
+    for (i.rewind(); i.next(); )
+	i->add_to_argp(*this);
+}
+
+
+bool WvArgsData::argp_add(const argp_option &option)
+{
+    if (argp_index >= (argp_size - 1))
+    {
+	if (!argp_double())
+	    return false;
+    }
+
+    // Make a copy of the option that we're building.
+    memcpy(argp_ + argp_index, &option, sizeof(argp_option));
+    // Terminate the array.
+    ++argp_index;
+    memset(argp_ + argp_index, 0, sizeof(argp_option));
+    return true;
+}
+
+
+bool WvArgsData::argp_add(const char *name, int key, const char *arg,
+			  int flags, const char *doc, int group)
+{
+    if (argp_index >= (argp_size - 1))
+    {
+	if (!argp_double())
+	    return false;
+    }
+
+    // Set the elements.
+    argp_option *option = argp_ + argp_index;
+    option->name = name;
+    option->key = key;
+    option->arg = arg;
+    option->flags = flags;
+    option->doc = doc;
+    option->group = group;
+    // Terminate the array.
+    ++argp_index;
+    memset(argp_ + argp_index + 1, 0, sizeof(argp_option));
+    return true;
+}
+
+
+bool WvArgsData::argp_double()
+{
+    // We won't be able to fit the next entry into the array
+    void *tmp = realloc(argp_, 2 * argp_size * sizeof(argp_option));
+    if (!tmp)
+	return false;
+
+    argp_ = (argp_option *)tmp;
+    argp_size *= 2;
+    return true;
+}
+
+
+void WvArgsData::add_required_arg()
+{
+    ++required_args;
+}
+
+
+const WvStringList &WvArgsData::args() const
+{
+    return args_;
+}
+
+
+error_t WvArgsData::parser(int key, char *arg, struct argp_state *state)
+{
+    WvArgsData *data = (WvArgsData *)state->input;
+
+    switch (key)
+    {
+    case ARGP_KEY_ARG:
+	if (state->arg_num >= data->maximum_args)
+	{
+	    // Too many arguments
+	    argp_usage(state);
+	}
+	data->args_.append(arg);
+	break;
+
+    case ARGP_KEY_NO_ARGS:
+    case ARGP_KEY_END:
+	if (state->arg_num < data->required_args)
+	{
+	    // Too few arguments
+	    argp_usage(state);
+	}
+	break;
+
+    default:
+	WvArgsOption *option = data->options_dict[key];
+	if (option)
+	    option->process(arg);
+	else
+	    return ARGP_ERR_UNKNOWN;
+    }
+
+    return 0;
+}
+
 
 WvArgs::WvArgs()
-    : num_required_args(0)
+    : data(new WvArgsData())
 {
-    options = new WvArgsOptionVector();
 }
+
 
 WvArgs::~WvArgs()
 {
-    delete options;
+    if (data)
+	delete data;
 }
 
-static bool create_popt_context(int argc, char **argv,
-				WvVector<WvArgsOption> *options,
-				WvStringParm args_desc,
-				poptContext &popt_context,
-				struct poptOption **popt_options)
+
+bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
 {
-    (*popt_options) = new struct poptOption[options->count() + 2];
-    if (!popt_options)
-	return false;
+    if (!data->argp())
+	data->argp_build();
 
-    int j;
-    for (j=0; ; ++j)
+    WvString prog_doc("%s\v%s", header, footer);
+    struct argp argp = { data->argp(), &WvArgsData::parser, args_doc, prog_doc,
+			 0, 0, 0 };
+
+    argp_parse(&argp, argc, argv, 0, 0, data->self());
+
+    if (remaining_args)
     {
-	WvArgsOption *option = (*options)[j];
-	if (!option)
-	    break;
-
-	if (option->short_option || option->long_option)
-	    option->fill_popt_table(&(*popt_options)[j], j+1);
+	remaining_args->zap();
+	WvStringList::Iter i(data->args());
+	for (i.rewind(); i.next(); )
+	    remaining_args->add(new WvString(*i), true);
     }
-
-    const struct poptOption extras[2] = {
-	POPT_AUTOHELP
-	POPT_TABLEEND
-    };
-
-    memcpy(&(*popt_options)[j++], &extras[0], sizeof(struct poptOption));
-    memcpy(&(*popt_options)[j++], &extras[1], sizeof(struct poptOption));
-
-    popt_context = poptGetContext(argv[0], argc, (const char **)argv,
-				  (*popt_options), 0);
-
-    WvString usage_desc;
-    if (options->count() > 0)
-	usage_desc = "[OPTION...] ";
-    usage_desc.append(args_desc);
-
-    poptSetOtherOptionHelp(popt_context, usage_desc.cstr());
 
     return true;
 }
 
-bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
+
+void WvArgs::set_version(WvStringParm version)
 {
-    poptContext popt_context;
-    struct poptOption *popt_options;
-    if (!create_popt_context(argc, argv, options, args_desc, popt_context,
-			     &popt_options))
-	return false;
-
-    bool result = true;
-
-    for (;;)
-    {
-	int opt = poptGetNextOpt(popt_context);
-	if (opt == -1)
-	    break;
-	else if (opt == POPT_ERROR_NOARG
-		 || opt == POPT_ERROR_BADOPT
-		 || opt == POPT_ERROR_OPTSTOODEEP
-		 || opt == POPT_ERROR_BADQUOTE
-		 || opt == POPT_ERROR_BADNUMBER
-		 || opt == POPT_ERROR_OVERFLOW)
-	{
-	    result = false;
-
-	    printf("%s: %s\n\n",
-		   poptBadOption(popt_context, POPT_BADOPTION_NOALIAS),
-		   poptStrerror(opt));
-
-	    poptPrintUsage(popt_context, stdout, 0);
-
-	    printf("\nFor detailed options, %s --help\n", argv[0]);
-
-	    break;
-	}
-	else
-	    (*options)[opt-1]->process(poptGetOptArg(popt_context));
-    }
-    if (result && remaining_args)
-    {
-	for (;;)
-	{
-	    WvStringParm leftover_arg = poptGetArg(popt_context);
-	    if (!leftover_arg) break;
-	    remaining_args->append(leftover_arg);
-	}
-
-	if (remaining_args->count() < num_required_args)
-	{
-	    result = false;
-
-	    poptPrintUsage(popt_context, stdout, 0);
-	}
-    }
-
-    poptFreeContext(popt_context);
-    deletev popt_options;
-
-    return result;
+    argp_program_version = version;
 }
+
+
+void WvArgs::set_email(WvStringParm email)
+{
+    argp_program_bug_address = email;
+}
+
+
+void WvArgs::set_help_header(WvStringParm header)
+{
+    this->header = header;
+}
+
+
+void WvArgs::set_help_footer(WvStringParm footer)
+{
+    this->footer = footer;
+}
+
 
 void WvArgs::print_usage(int argc, char **argv)
 {
-    poptContext popt_context;
-    struct poptOption *popt_options;
-
-    create_popt_context(argc, argv, options, args_desc, popt_context,
-			&popt_options);
-
-    poptPrintUsage(popt_context, stdout, 0);
-
-    poptFreeContext(popt_context);
-    deletev popt_options;
+    struct argp argp = { data->argp(), 0, 0, 0, 0, 0, 0 };
+    argp_help(&argp, stdout, ARGP_HELP_STD_USAGE, argv[0]);
 }
+
 
 void WvArgs::print_help(int argc, char **argv)
 {
-    poptContext popt_context;
-    struct poptOption *popt_options;
-    create_popt_context(argc, argv, options, args_desc, popt_context,
-			&popt_options);
-
-    poptPrintHelp(popt_context, stdout, 0);
-
-    poptFreeContext(popt_context);
-    deletev popt_options;
+    struct argp argp = { data->argp(), 0, 0, 0, 0, 0, 0 };
+    argp_help(&argp, stdout, ARGP_HELP_STD_HELP, argv[0]);
 }
 
 void WvArgs::add_set_bool_option(char short_option, WvStringParm long_option,
 				 WvStringParm desc, bool &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsSetBoolOption(short_option, long_option, desc,
-					    val), true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsSetBoolOption(short_option, long_option, desc, val));
 }
 
 
 void WvArgs::add_reset_bool_option(char short_option, WvStringParm long_option,
 				   WvStringParm desc, bool &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsResetBoolOption(short_option, long_option, desc,
-					      val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsResetBoolOption(short_option, long_option, desc, val));
 }
 
 
 void WvArgs::add_flip_bool_option(char short_option, WvStringParm long_option,
 				  WvStringParm desc, bool &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsFlipBoolOption(short_option, long_option, desc,
-					     val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsFlipBoolOption(short_option, long_option, desc, val));
 }
 
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, NoArgCallback cb, void *ud)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsNoArgCallbackOption(short_option, long_option,
-						  desc, cb, ud),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsNoArgCallbackOption(short_option, long_option, desc,
+					    cb, ud));
 }
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, WvStringParm arg_desc, int &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsIntOption(short_option, long_option, desc,
-					arg_desc, val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsIntOption(short_option, long_option, desc, arg_desc,
+				  val));
 }
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, WvStringParm arg_desc, long &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsLongOption(short_option, long_option, desc,
-					 arg_desc, val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsLongOption(short_option, long_option, desc, arg_desc,
+				   val));
 }
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, WvStringParm arg_desc, float &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsFloatOption(short_option, long_option, desc,
-					  arg_desc, val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsFloatOption(short_option, long_option, desc, arg_desc,
+				    val));
 }
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, WvStringParm arg_desc, double &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsDoubleOption(short_option, long_option, desc,
-					   arg_desc, val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsDoubleOption(short_option, long_option, desc,
+				     arg_desc, val));
 }
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, WvStringParm arg_desc,
 			WvString &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsStringOption(short_option, long_option, desc,
-					   arg_desc, val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsStringOption(short_option, long_option, desc,
+				     arg_desc, val));
 }
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, WvStringParm arg_desc,
 			WvStringList &val)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsStringListAppendOption(short_option, long_option,
-						     desc, arg_desc, val),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsStringListAppendOption(short_option, long_option,
+					       desc, arg_desc, val));
 }
 
 void WvArgs::add_option(char short_option, WvStringParm long_option,
 			WvStringParm desc, WvStringParm arg_desc,
 			ArgCallback cb, void *ud)
 {
-    remove_option(short_option);
-    remove_option(long_option);
-
-    options->append(new WvArgsArgCallbackOption(short_option, long_option,
-						desc, arg_desc, cb, ud),
-		    true);
+    data->remove(short_option, long_option);
+    data->add(new WvArgsArgCallbackOption(short_option, long_option, desc,
+					  arg_desc, cb, ud));
 }
+
 
 void WvArgs::remove_option(char short_option)
 {
-    if (short_option == 0)
-	return;
-
-    WvArgsOptionVector::Iter i(*options);
-    for (i.rewind(); i.next(); )
-    {
-	if (i->short_option == short_option)
-	    i->short_option = 0;
-    }
+    data->remove(short_option, WvString::null);
 }
+
 
 void WvArgs::remove_option(WvStringParm long_option)
 {
-    if (long_option == NULL)
-	return;
-
-    WvArgsOptionVector::Iter i(*options);
-    for (i.rewind(); i.next(); )
-    {
-	if (i->long_option && (long_option == i->long_option))
-	    i->long_option = WvString::null;
-    }
+    data->remove(0, long_option);
 }
+
 
 void WvArgs::remove_all_options()
 {
-    delete options;
-    options = new WvArgsOptionVector();
+    data->zap();
 }
+
 
 void WvArgs::add_required_arg(WvStringParm desc)
 {
-    num_required_args++;
-    add_optional_arg(desc);
+    data->add_required_arg();
+    add_optional_arg(desc, false);
 }
+
 
 void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
 {
     // an optional arg is a required arg without the requirement :-)
-    if (args_desc.len() > 0)
-	args_desc.append(" ");
-    args_desc.append("[%s]", desc);
+    if (!!args_doc)
+	args_doc.append(" ");
+    args_doc.append("[%s]", desc);
     if (multiple)
-	args_desc.append("...");
+    {
+	args_doc.append("...");
+	data->maximum_args = LONG_MAX;
+    }
+    if (data->maximum_args < LONG_MAX)
+	++(data->maximum_args);
 }

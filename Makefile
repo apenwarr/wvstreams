@@ -13,7 +13,9 @@ XPATH=include
 
 include vars.mk
 
-all: config.mk xplc $(TARGETS)
+SUBDIRS = gnulib
+
+all: runconfigure xplc $(TARGETS)
 
 .PHONY: xplc xplc/clean install-xplc
 xplc:
@@ -43,6 +45,9 @@ endif
 dist-hack-clean:
 	@rm -f stamp-h.in
 
+gnulib/libgnu.a:
+	$(call subdirs_func,libgnu.a,gnulib)
+
 # Comment this assignment out for a release.
 ifdef PKGSNAPSHOT
 SNAPDATE=+$(shell date +%Y%m%d)
@@ -58,7 +63,7 @@ dist-hook: dist-hack-clean configure
 	@sed -e "s/@PKGVER@/$(PKGVER)$(SNAPDATE)/g" \
 	 redhat/wvstreams.spec.in > redhat/wvstreams.spec
 
-runconfigure: config.mk include/wvautoconf.h
+runconfigure: config.mk include/wvautoconf.h gnulib/Makefile
 
 ifndef CONFIGURING
 configure=$(error Please run the "configure" script)
@@ -72,16 +77,24 @@ config.mk: configure config.mk.in
 include/wvautoconf.h: include/wvautoconf.h.in
 	$(call configure)
 
+gnulib/Makefile: gnulib/Makefile.in
+	$(call configure)
+
 # FIXME: there is some confusion here
 ifdef WE_ARE_DIST
-configure: configure.ac config.mk.in include/wvautoconf.h.in
+aclocal.m4: $(wildcard gnulib/m4/*.m4)
+	$(warning "$@" is old, please run "autoconf")
+
+configure: configure.ac config.mk.in include/wvautoconf.h.in aclocal.m4
 	$(warning "$@" is old, please run "autoconf")
 
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac
-	autoheader
+aclocal.m4: $(wildcard gnulib/m4/*.m4)
+	aclocal -I gnulib/m4
+
+configure: configure.ac include/wvautoconf.h.in aclocal.m4
 	autoconf
 
 include/wvautoconf.h.in:
@@ -106,10 +119,12 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
+	@rm -f aclocal.m4
 	@rm -f pkgconfig/*.pc
 	@rm -f .xplc
 
 clean: depend dust xplc/clean
+	$(subdirs)
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))

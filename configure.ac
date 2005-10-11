@@ -118,6 +118,11 @@ AC_PROG_CPP
 AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+
+# Poke gnulib
+gl_EARLY
 
 # Detect target build environment
 AC_CANONICAL_TARGET
@@ -166,6 +171,9 @@ CPPFLAGS="$CPPFLAGS_save"
 
 # Function checks
 AC_FUNC_ALLOCA
+
+# Initialise gnulib
+gl_INIT
 
 # Check for error_t
 AC_CHECK_HEADERS([argz.h errno.h])
@@ -673,6 +681,7 @@ AC_SUBST(xplc_pc)
 AC_SUBST(ac_libs)
 
 AC_CONFIG_FILES(config.mk)
+AC_CONFIG_FILES(gnulib/Makefile)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc
                  pkgconfig/libuniconf-uninstalled.pc
 		 pkgconfig/libwvbase.pc
