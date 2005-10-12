@@ -1,6 +1,7 @@
 #include "wvtest.h"
 #include "uniconfroot.h"
 #include "unitempgen.h"
+#include "uniwatch.h"
 
 WVTEST_MAIN("even more basic")
 {
@@ -102,6 +103,51 @@ WVTEST_MAIN("trailing slashes")
     WVFAIL(cfg[""]["simon"]["/"].haschildren());
 
     WVPASSEQ(cfg[""].getme(), "xyzzy");
+}
+
+static int count;
+static void callback(const UniConf keyconf, const UniConfKey key)
+{
+    printf("callback: '%s', '%s'\n",
+	   keyconf[key].fullkey().cstr(), keyconf.xget(key).cstr());
+
+    ++count;
+}
+
+WVTEST_MAIN("UniTempGen callbacks")
+{
+    UniConfRoot root(new UniTempGen());
+    UniConf uni(root["tmp/idbd"]);
+    int prev = count = 0;
+
+    WVPASSEQ(count, prev);
+    prev = count;
+    UniWatch watch(uni["cmd"], &callback);
+    WVPASSEQ(count, prev);
+    prev = count;
+
+    uni["cmd"].remove();
+    WVPASSEQ(count, prev);
+    prev = count;
+
+    uni["cmd"].remove();
+    WVPASSEQ(count, prev);
+    prev = count;
+
+    uni["cmd"].xset("tmp", "foo");
+    WVPASSEQ(count, prev += 2);
+    prev = count;
+
+    uni["cmd"]["bar"].remove();
+    WVPASSEQ(count, prev);
+    prev = count;
+    uni["cmd"].xset("bar", "baz");
+    WVPASSEQ(count, prev += 1);
+    prev = count;
+
+    uni["cmd"].remove();
+    WVPASSEQ(count, prev += 3);
+    prev = count;
 }
 
 // FIXME: could test lots more stuff here...
