@@ -9,6 +9,7 @@
 
 #include "wvlog.h"
 #include "wverror.h"
+#include "wvstringlist.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct x509_st;
@@ -17,6 +18,9 @@ struct ssl_ctx_st;
 typedef struct ssl_ctx_st SSL_CTX;
 struct X509_crl_st;
 typedef struct X509_crl_st X509_CRL;
+
+struct X509_name_st;
+typedef struct X509_name_st X509_NAME;
 
 struct asn1_string_st;
 typedef struct asn1_string_st ASN1_TIME;
@@ -52,7 +56,15 @@ public:
     */
     enum DumpMode { CertPEM = 0, CertDER, RsaPEM, RsaPubPEM, RsaRaw };
 
-   /**
+    /**
+     * Initialize a completely empty X509 Object with an X509 certificate
+     * that doesn't have anything it it... good for building custom 
+     * certificates.
+     */
+    WvX509Mgr();
+    
+    
+    /**
     * Initialize a blank X509 Object with the certificate *cert
     * (used for client side operations...)
     * 
@@ -60,7 +72,7 @@ public:
     * and extracts the distinguished name into dname, and the the RSA
     * public key into rsa. rsa->prv is empty.
     */
-    WvX509Mgr(X509 *_cert = NULL);
+    WvX509Mgr(X509 *_cert);
 
     /** 
      * Constructor to initialize this object with a pre-existing 
@@ -118,8 +130,23 @@ public:
     const WvRSAKey &get_rsa();
     
     /**
+     * Allow us to access the certificate member - this will be going away 
+     * eventually, but for now, it gets us out of a couple of issues :/
+     */
+    X509 *get_cert() const { return cert; }
+
+    /**
+     * Set the public key of the certificate to the public key rsa_pubkey.
+     * Does NOT affect the rsa member... (FIXME!)
+     */
+    void set_pubkey(WvRSAKey *rsa_pubkey);
+    
+    /**
      * Given the Distinguished Name dname and an already generated keypair in 
      * rsa, return a Self Signed Certificate in cert.
+     * If is_ca, it will generate a self signed certificate with the 
+     * appropriate values for a certificate authority (or at least the most
+     * common ones).
      */
     void create_selfsigned(bool is_ca = false);
 
@@ -145,10 +172,17 @@ public:
      */
     WvString signcert(WvStringParm pkcs10req);
 
+    /**
+     * Sign the certificate with our keys... this is what you want when 
+     * the signcert above doesn't set up the various parameters that you
+     * may need in your environment.
+     */
+    bool signcert(X509 *cert);
+    
 
     /**
-     * Take the CRL in crl, and sign it. returns true if successfull, and false if not.
-     * if false, check crl.err.geterr() for reason.
+     * Take the CRL in crl, and sign it. returns true if successfull, and 
+     * false if not. If false, check crl.err.geterr() for reason.
      */
     bool signcrl(WvCRLMgr *crl);
 
@@ -211,7 +245,7 @@ public:
      */
     WvString sign(WvBuf &data);
     WvString sign(WvStringParm data);
-
+        
     /**
      * Verify that the contents of data were signed
      * by the certificate currently in cert. This only
@@ -255,33 +289,80 @@ public:
     	{ pkcs12pass = passwd; }
 
     /** 
-     * Return the Certificate Issuer (usually the CA who signed 
-     * the certificate)
+     * Get and set the Certificate Issuer (usually the CA who signed 
+     * the certificate).
      */
     WvString get_issuer();
-
+    void set_issuer(WvStringParm name);
+    
     /**
-     * Return the Subject field of the certificate
+     * get and set the Subject field of the certificate
      */
     WvString get_subject();
-
+    void set_subject(WvStringParm name);
+    void set_subject(X509_NAME *name);
     /**
-     * Return the serialNumber field of the certificate
+     * get and set the serialNumber field of the certificate
      */
     WvString get_serial();
+    void set_serial(long serial_no);
 
+    /** 
+     * get and set the Netscape Comment extension
+     */
+    WvString get_nscomment();
+    void set_nscomment(WvStringParm comment);
+    
     /**
-     * Return the CRL Distribution points if they exist, WvString::null
+     * get and set the Netscape SSL Server extension
+     */
+    WvString get_nsserver();
+    void set_nsserver(WvStringParm server_fqdn);
+    
+    /**
+     * get the CRL Distribution points if they exist, WvString::null
      * if they don't.
      */
     WvString get_crl_dp();
 
     /**
+     * Set a list of CRL Distribution points - can be any valid URI
+     * but usually is either LDAP or HTTP
+     */
+    void set_crl_dp(WvStringList &list);
+    
+    /**
      * Return the Certificate Policy OID if it exists, and WvString::null
      * it if doesn't.
      */
     WvString get_cp_oid();
+    
+    /**
+     * Set the Certificate Policy OID from the string given by OID
+     * i.e: 1.2.3.4.5.6.7.8, and an optional URL that points to it's
+     * CPS.
+     */
+    void set_cp_oid(WvStringParm oid, WvStringParm url);
 
+
+    /**
+     * Set the Certificate to use X509v3, since that's all modern
+     * PKI uses anyways :)
+     */
+    void WvX509Mgr::set_version();
+
+    /**
+     * Get and set the keyUsage field.
+     */
+    WvString WvX509Mgr::get_key_usage();
+    void WvX509Mgr::set_key_usage(WvStringParm values);
+
+    /**
+     * Get and set the extendedKeyUsage field.
+     */
+    WvString WvX509Mgr::get_ext_key_usage();
+    void WvX509Mgr::set_ext_key_usage(WvStringParm values);
+    
     /**
      * Return the Subject alt name if it exists, and WvString::null if
      * it doesn't.
@@ -289,11 +370,27 @@ public:
     WvString get_altsubject();
 
     /**
-     * Return the 
+     * Set the Subject Alt Name.
+     */
+    void set_altsubject(WvStringParm name);
+    
+    /**
+     * Get and Set the Policy Constraints extension
+     */
+    WvString get_constraints();
+    void set_constraints(WvStringParm constraint);
+    
+    /**
+     * Return the not before and not after 
      */
     ASN1_TIME *get_notvalid_before();
-    
     ASN1_TIME *get_notvalid_after();
+    
+    /**
+     * Set the lifetime to be used for this certificate... the lifetime starts
+     * from the minute that the certificate is signed...
+     */
+    void set_lifetime(long seconds);
     
     /**
      * Is this certificate Object valid, and in a non-error state
@@ -327,11 +424,12 @@ private:
     WvString pkcs12pass;
 
     /**
-     * Get the Extension information - returns NULL if extension doesn't exist
-     * Used internally by all of the get_??? functions (crl_dp, cp_oid, etc.).
+     * Get and the Extension information - returns NULL if extension doesn't exist
+     * Used internally by all of the get_??? and set_??? functions (crl_dp, cp_oid, etc.).
      */
     WvString get_extension(int nid);
-
+    void set_extension(int nid, WvStringParm values);
+    
     /**
      * Populate dname (the distinguished name);
      */
