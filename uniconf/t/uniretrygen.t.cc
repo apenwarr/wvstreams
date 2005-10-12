@@ -32,7 +32,7 @@ static void kill_and_wait(pid_t _pid)
     pid_t rv = waitpid(_pid, &status, 0);
 
     while (rv == -1 && errno == EINTR)
-	waitpid(_pid, &status, 0);
+	rv = waitpid(_pid, &status, 0);
 
     // This fails randomly on SMP systems, and I wish I knew why.
     //WVPASSEQ(rv, _pid);

@@ -38,21 +38,30 @@ void startup(WvStreamsDaemon &daemon, void *)
 }
 
 // Returns a new WvUnixConn connected to name.  Returns NULL if it could not
-// connect.
-WvUnixConn *connect_to_daemon(WvString name, int num_retries)
+// connect.  If expect_connect is false, will retry until it cannot connect
+// (up to num_retries times).
+WvUnixConn *connect_to_daemon(WvString name, int num_retries, 
+        bool expect_connect)
 {
     WvUnixConn *conn = NULL;
     for (int i = 0; i < num_retries ; i++)
     { 
         WVFAILEQ(WvString("Trying to connect %s \n", i).cstr(), "");
         conn = new WvUnixConn(name);
-        if (conn->isok())
+        bool is_connected = conn->isok();
+        if (is_connected && expect_connect)
         {
             WVPASS("Connected!\n");
             break;
         }
         WVRELEASE(conn);
         conn = NULL;
+
+        if (!is_connected && !expect_connect)
+        {
+            WVPASS("Connection unavailable.");
+            break;
+        }
         sleep(1);
     }
     return conn;
@@ -99,7 +108,7 @@ WVTEST_MAIN("Checking Daemon created")
         wvout->print("Running code for client\n");
                 
         // Will wait for 10 sec at max for the daemon to load
-        WvUnixConn *client = connect_to_daemon(sock_name, 10);
+        WvUnixConn *client = connect_to_daemon(sock_name, 10, true);
 
 	if (WVPASS(client != NULL))
 	{
@@ -144,7 +153,7 @@ WVTEST_MAIN("Checking Daemon created")
   
         // connect_to_daemon returns NULL if it couldn't connect (i.e. if the
         // stream is not isok()); this is what we expect.
-        WvUnixConn *check_conn = connect_to_daemon(sock_name, 1);
+        WvUnixConn *check_conn = connect_to_daemon(sock_name, 10, false);
         WVFAIL(check_conn);
         WVRELEASE(check_conn);
     }
