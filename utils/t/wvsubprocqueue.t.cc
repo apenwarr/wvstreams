@@ -11,16 +11,29 @@
 
 #include <unistd.h>
 
-static WvString fn("test-%s.tmp", getpid());
-static WvString cmd1("echo cmd1 >>%s", fn), 
-	cmd2("echo cmd2 >>%s", fn),
-	cmd2s("sleep 1; %s", cmd2);
-static const char *argv1[] = { "sh", "-c", cmd1, NULL };
-static const char *argv2[] = { "sh", "-c", cmd2, NULL };
-static const char *argv2s[] = { "sh", "-c", cmd2s, NULL };
-static const char *argv3[] = { "rm", "-f", fn, NULL };
-static int c1, c2; // cookies that we can point to - value doesn't matter
+struct WvSubProcQueueTester
+{
+    WvString fn;
+    WvString cmd1, cmd2, cmd2s;
+    const char *argv1[4];
+    const char *argv2[4];
+    const char *argv2s[4];
+    const char *argv3[4];
+    int c1, c2; // cookies that we can point to - value doesn't matter
 
+    WvSubProcQueueTester() : 
+        fn("test-%s.tmp", getpid()),
+        cmd1("echo cmd1 >>%s", fn), 
+        cmd2("echo cmd2 >>%s", fn),
+        cmd2s("sleep 1; %s", cmd2)
+    { 
+        argv1[0] = "sh"; argv1[1] = "-c", argv1[2] = cmd1, argv1[3] = NULL;
+        argv2[0] = "sh"; argv2[1] = "-c", argv2[2] = cmd2, argv2[3] = NULL;
+        argv2s[0]= "sh"; argv2s[1]= "-c", argv2s[2]= cmd2s, argv2s[3]= NULL;
+        argv3[0] = "rm"; argv3[1] = "-f", argv3[2] = fn, argv3[3] = NULL;
+    }
+
+};
 
 static WvString contents(WvStringParm fn)
 {
@@ -36,16 +49,17 @@ static bool exists(WvStringParm fn)
 
 WVTEST_MAIN("wvsubprocqueue1")
 {
-    ::unlink(fn);
-    WVFAIL(exists(fn));
+    WvSubProcQueueTester t;
+    ::unlink(t.fn);
+    WVFAIL(exists(t.fn));
 
     WvSubProcQueue q(1);
     
     // basic sequencing
-    ::unlink(fn);
-    q.add(NULL, argv1[0], argv1);
-    q.add(NULL, argv3[0], argv3);
-    q.add(NULL, argv2[0], argv2);
+    ::unlink(t.fn);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(NULL, t.argv3[0], t.argv3);
+    q.add(NULL, t.argv2[0], t.argv2);
     WVPASSEQ(q.remaining(), 3);
     q.go();
     WVPASSEQ(q.running(), 1);
@@ -53,81 +67,82 @@ WVTEST_MAIN("wvsubprocqueue1")
     q.finish();
     WVPASSEQ(q.remaining(), 0);
     WVPASS(q.isempty());
-    WVPASS(exists(fn));
-    WVPASSEQ(contents(fn), "cmd2\n");
+    WVPASS(exists(t.fn));
+    WVPASSEQ(contents(t.fn), "cmd2\n");
     
     // cookie sequencing and duplicate detection
-    ::unlink(fn);
-    q.add(&c1, argv1[0], argv1);
-    q.add(&c1, argv1[0], argv1);
-    q.add(NULL, argv2[0], argv2);
-    q.add(&c1, argv1[0], argv1);
-    q.add(NULL, argv2[0], argv2);
-    q.add(&c1, argv1[0], argv1);
+    ::unlink(t.fn);
+    q.add(&t.c1, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv1[0], t.argv1);
+    q.add(NULL, t.argv2[0], t.argv2);
+    q.add(&t.c1, t.argv1[0], t.argv1);
+    q.add(NULL, t.argv2[0], t.argv2);
+    q.add(&t.c1, t.argv1[0], t.argv1);
     q.finish();
-    WVPASSEQ(contents(fn), "cmd1\ncmd2\ncmd2\ncmd1\n");
+    WVPASSEQ(contents(t.fn), "cmd1\ncmd2\ncmd2\ncmd1\n");
     
     // enqueuing a cookie that is already running
-    ::unlink(fn);
-    q.add(&c1, argv1[0], argv1);
+    ::unlink(t.fn);
+    q.add(&t.c1, t.argv1[0], t.argv1);
     q.go();
-    q.add(NULL, argv2[0], argv2);
-    q.add(&c1, argv1[0], argv1);
-    q.add(&c1, argv1[0], argv1);
-    q.add(&c1, argv1[0], argv1);
+    q.add(NULL, t.argv2[0], t.argv2);
+    q.add(&t.c1, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv1[0], t.argv1);
     q.finish();
-    WVPASSEQ(contents(fn), "cmd1\ncmd2\ncmd1\n");
+    WVPASSEQ(contents(t.fn), "cmd1\ncmd2\ncmd1\n");
 
-    ::unlink(fn);
+    ::unlink(t.fn);
 }
 
 
 WVTEST_MAIN("wvsubprocqueue2")
 {
+    WvSubProcQueueTester t;
     WvSubProcQueue q(2);
     
-    ::unlink(fn);
+    ::unlink(t.fn);
     
     // parallelism with guaranteed ordering
-    ::unlink(fn);
-    q.add(NULL, argv1[0], argv1);
-    q.add(NULL, argv1[0], argv1);
-    q.add(&c1, argv2s[0], argv2s);
-    q.add(&c1, argv2s[0], argv2s);
-    q.add(NULL, argv1[0], argv1);
+    ::unlink(t.fn);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv2s[0], t.argv2s);
+    q.add(&t.c1, t.argv2s[0], t.argv2s);
+    q.add(NULL, t.argv1[0], t.argv1);
     q.go();
     WVPASSEQ(q.running(), 2);
     q.finish();
-    WVPASSEQ(contents(fn), "cmd1\ncmd1\ncmd2\ncmd1\n");
+    WVPASSEQ(contents(t.fn), "cmd1\ncmd1\ncmd2\ncmd1\n");
     
     // sequencing multiple cookies
-    ::unlink(fn);
-    q.add(NULL, argv1[0], argv1);
-    q.add(NULL, argv1[0], argv1);
-    q.add(&c1, argv2[0], argv2);
+    ::unlink(t.fn);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv2[0], t.argv2);
     q.go();
     WVPASSEQ(q.running(), 2);
-    q.add(NULL, argv1[0], argv1);
-    q.add(&c1, argv2[0], argv2);
-    q.add(NULL, argv1[0], argv1);
-    q.add(&c2, argv2s[0], argv2s);
-    q.add(NULL, argv1[0], argv1);
-    q.add(&c1, argv2[0], argv2);
-    q.add(NULL, argv1[0], argv1);
-    q.add(&c1, argv2[0], argv2);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv2[0], t.argv2);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(&t.c2, t.argv2s[0], t.argv2s);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv2[0], t.argv2);
+    q.add(NULL, t.argv1[0], t.argv1);
+    q.add(&t.c1, t.argv2[0], t.argv2);
     q.finish();
-    WVPASSEQ(contents(fn),
+    WVPASSEQ(contents(t.fn),
 	     "cmd1\ncmd1\ncmd2\ncmd1\ncmd1\ncmd2\ncmd1\ncmd1\ncmd2\n");
     
     // enqueuing cookies while running
-    ::unlink(fn);
-    q.add(&c1, argv2[0], argv2);
+    ::unlink(t.fn);
+    q.add(&t.c1, t.argv2[0], t.argv2);
     q.go();
     WVPASSEQ(q.running(), 1);
-    q.add(&c1, argv2[0], argv2);
-    q.add(&c1, argv2[0], argv2);
+    q.add(&t.c1, t.argv2[0], t.argv2);
+    q.add(&t.c1, t.argv2[0], t.argv2);
     q.finish();
-    WVPASSEQ(contents(fn), "cmd2\ncmd2\n");
+    WVPASSEQ(contents(t.fn), "cmd2\ncmd2\n");
 
-    ::unlink(fn);
+    ::unlink(t.fn);
 }
