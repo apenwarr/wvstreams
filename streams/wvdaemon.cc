@@ -95,9 +95,8 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
     args.add_reset_bool_option(0, "no-syslog",
             "Do not write log entries to syslog", syslog);
 #endif
-    args.add_option('V', "version",
-            "Display version and exit",
-            WvArgs::NoArgCallback(this, &WvDaemon::display_version_and_exit));
+    args.set_version(WvString("%s version %s", name, version).cstr());
+    args.set_email("wvstreams-dev@lists.nit.ca");
 }
 
 int WvDaemon::run(const char *argv0)
@@ -278,8 +277,9 @@ int WvDaemon::_run(const char *argv0)
     return _exit_status;
 }
 
-void WvDaemon::set_daemonize(void *)
+bool WvDaemon::set_daemonize(void *)
 {
     daemonize = true;
     syslog = true;
+    return true;
 }

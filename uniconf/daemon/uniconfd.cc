@@ -68,7 +68,7 @@ class UniConfd : public WvStreamsDaemon
     bool first_time;
     IUniConfGen *permgen;
     
-    void namedgen_cb(WvStringParm option, void *)
+    bool namedgen_cb(WvStringParm option, void *)
     {
 	WvString name(option);
 	WvString moniker;
@@ -77,12 +77,13 @@ class UniConfd : public WvStreamsDaemon
 	ptr = strchr(name.edit(), '=');
 
 	if (!ptr)
-	    return;
+	    return false;
 
 	*ptr = 0;
 	moniker = ptr + 1;
 
 	namedgens.add(name, wvcreate<IUniConfGen>("temp:"), true);
+	return true;
     }
 
     void commit_stream_cb(WvStream &s, void *)
@@ -222,9 +223,7 @@ public:
         args.add_option('d', "debug",
                 "Print debug messages (can be used multiple times)",
                 WvArgs::NoArgCallback(this, &UniConfd::inc_log_level));
-        args.add_option('V', "version",
-                "Print version number and exit",
-                WvArgs::NoArgCallback(this, &UniConfd::display_version_and_exit));
+
         args.add_option(0, "pid-file",
                 "Specify the .pid file to use", "filename",
                 pid_file);

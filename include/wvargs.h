@@ -64,13 +64,15 @@ class WvArgs
 public:
 
     //!
-    //! The callback type used for switches that do not take a parameter
+    //! The callback type used for switches that do not take a parameter.
+    //! It returns true if the switch was parsed correctly.
     //!
-    typedef WvCallback<void, void *> NoArgCallback;
+    typedef WvCallback<bool, void *> NoArgCallback;
     //!
     //! The callback type used for switches that take a parameter
+    //! It returns true if the switch was parsed correctly.
     //!
-    typedef WvCallback<void, WvStringParm, void *> ArgCallback;
+    typedef WvCallback<bool, WvStringParm, void *> ArgCallback;
 
 private:
 
@@ -331,6 +333,21 @@ public:
     {
 	remove_all_options();
     }
+
+    //! These flags control the behaviour of WvArgs.  By default, they are
+    //! all set to false.
+    enum flags_t
+    {
+	NO_EXIT_ON_ERRORS,	// Do not exit when an error is encountered
+	FLAGS_SIZE		// Number of flags that exist
+    };
+
+    //!
+    //! Get and set flags.
+    //!
+    bool get_flag(const flags_t flag) const;
+    void set_flag(const flags_t flag, const bool value);
+
 };
 
 #endif // __WVARGS_H
