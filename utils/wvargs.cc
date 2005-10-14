@@ -29,8 +29,9 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
+	return WvString::null;
     }
 
     virtual void add_to_argp(WvArgsData &data);
@@ -57,6 +58,8 @@ public:
     const WvStringList &args() const;
 
     static error_t parser(int key, char *arg, argp_state *state);
+
+    unsigned int flags;
 
 protected:
     friend class WvArgsOption;
@@ -129,9 +132,10 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	flag = true;
+	return WvString::null;
     }
 };
 
@@ -154,9 +158,10 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	flag = false;
+	return WvString::null;
     }
 };
 
@@ -179,9 +184,10 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	flag = !flag;
+	return WvString::null;
     }
 };
 
@@ -201,9 +207,10 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	val++;
+	return WvString::null;
     }
 };
 
@@ -228,9 +235,12 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
-	cb(ud);
+	if (cb(ud))
+	    return WvString::null;
+	else
+	    return WvString("invalid option `%s'", arg);
     }
 };
 
@@ -277,7 +287,7 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	char *tailptr = NULL;
 	errno = 0;
@@ -285,13 +295,18 @@ public:
 	if (errno == ERANGE || tmp > INT_MAX || tmp < INT_MIN )
 	{
 	    // Out of range
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else if (*tailptr)
 	{
 	    // Invalid number
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else
+	{
 	    val = tmp;
+	    return WvString::null;
+	}
     }
 };
 
@@ -314,7 +329,7 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	char *tailptr = NULL;
 	errno = 0;
@@ -322,13 +337,18 @@ public:
 	if (errno == ERANGE)
 	{
 	    // Out of range
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else if (*tailptr)
 	{
 	    // Invalid number
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else
+	{
 	    val = tmp;
+	    return WvString::null;
+	}
     }
 };
 
@@ -351,7 +371,7 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	char *tailptr = NULL;
 	errno = 0;
@@ -359,13 +379,18 @@ public:
 	if (errno == ERANGE)
 	{
 	    // Out of range
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else if (*tailptr)
 	{
 	    // Invalid number
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else
+	{
 	    val = tmp;
+	    return WvString::null;
+	}
     }
 };
 
@@ -388,7 +413,7 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	char *tailptr = NULL;
 	errno = 0;
@@ -396,13 +421,18 @@ public:
 	if (errno == ERANGE)
 	{
 	    // Out of range
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else if (*tailptr)
 	{
 	    // Invalid number
+	    return WvString("`%s': invalid number.", arg);
 	}
 	else
+	{
 	    val = tmp;
+	    return WvString::null;
+	}
     }
 };
 
@@ -425,9 +455,10 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	val = arg;
+	return WvString::null;
     }
 };
 
@@ -450,9 +481,10 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
 	val.append(arg);
+	return WvString::null;
     }
 };
 
@@ -477,15 +509,18 @@ public:
     {
     }
 
-    virtual void process(WvStringParm arg)
+    virtual WvString process(WvStringParm arg)
     {
-	cb(arg, ud);
+	if (cb(arg, ud))
+	    return WvString::null;
+	else
+	    return WvString("invalid option: '%s', arg");
     }
 };
 
 
 WvArgsData::WvArgsData()
-    : argp_(NULL), argp_index(0), argp_size(0),
+    : flags(0), argp_(NULL), argp_index(0), argp_size(0),
       required_args(0), maximum_args(0), last_no_key(-1)
 {
 }
@@ -700,7 +735,15 @@ error_t WvArgsData::parser(int key, char *arg, struct argp_state *state)
     default:
 	WvArgsOption *option = data->options_dict[key];
 	if (option)
-	    option->process(arg);
+	{
+	    WvString error = option->process(arg);
+	    if (!error.isnull())
+	    {
+		argp_failure(state, argp_err_exit_status, 0,
+			     "%s", error.cstr());
+		return EINVAL;
+	    }
+	}
 	else
 	    return ARGP_ERR_UNKNOWN;
     }
@@ -727,11 +770,23 @@ bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
     if (!data->argp())
 	data->argp_build();
 
-    WvString prog_doc("%s\v%s", header, footer);
+    // Setup --help headers and footers
+    WvString prog_doc;
+    if (header && footer)
+	prog_doc = WvString("%s\v%s", header, footer);
+    else if (header)
+	prog_doc = WvString("%s", header);
+    else if (footer)
+	prog_doc = WvString("\v%s", footer);
+
+    // Setup the constant version number and e-mail address
+    argp_program_version = version;
+    argp_program_bug_address = email;
+
     struct argp argp = { data->argp(), &WvArgsData::parser, args_doc, prog_doc,
 			 0, 0, 0 };
 
-    argp_parse(&argp, argc, argv, 0, 0, data->self());
+    bool error = argp_parse(&argp, argc, argv, data->flags, 0, data->self());
 
     if (remaining_args)
     {
@@ -741,19 +796,19 @@ bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
 	    remaining_args->add(new WvString(*i), true);
     }
 
-    return true;
+    return !error;
 }
 
 
 void WvArgs::set_version(WvStringParm version)
 {
-    argp_program_version = version;
+    this->version = version;
 }
 
 
 void WvArgs::set_email(WvStringParm email)
 {
-    argp_program_bug_address = email;
+    this->email = email;
 }
 
 
@@ -912,4 +967,38 @@ void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
     }
     if (data->maximum_args < LONG_MAX)
 	++(data->maximum_args);
+}
+
+
+bool WvArgs::get_flag(const flags_t flag) const
+{
+    switch (flag)
+    {
+    case NO_EXIT_ON_ERRORS:
+	return data->flags & ARGP_NO_EXIT;
+    default:
+	return false;
+    }
+}
+
+
+void WvArgs::set_flag(const flags_t flag, const bool value)
+{
+    printf("set_flag(%d, %d)\n", flag, value);
+    unsigned int mask;
+    switch (flag)
+    {
+    case NO_EXIT_ON_ERRORS:
+	mask = ARGP_NO_EXIT;
+	break;
+    default:
+	return;
+    }
+
+    if (value)
+	data->flags |= mask;
+    else
+	data->flags &= ~mask;
+
+    printf("set_flag(%d, %d) = %d\n", flag, value, data->flags);
 }
