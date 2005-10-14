@@ -678,7 +678,7 @@ bool WvArgsData::argp_add(const char *name, int key, const char *arg,
     option->group = group;
     // Terminate the array.
     ++argp_index;
-    memset(argp_ + argp_index + 1, 0, sizeof(argp_option));
+    memset(argp_ + argp_index, 0, sizeof(argp_option));
     return true;
 }
 
