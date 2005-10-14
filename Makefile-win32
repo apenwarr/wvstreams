@@ -17,7 +17,7 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 	
 LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 \
-	$(with_xplc)/libxplc.a -lpopt -lstdc++
+	$(with_xplc)/libxplc.a -lstdc++
 
 -lxplc -lxplc-cxx: ;
 

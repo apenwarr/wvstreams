@@ -200,7 +200,7 @@ libwvbase.so: LIBS+=$(LIBXPLC)
 
 libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils)) gnulib/libgnu.a
 libwvutils.so: libwvbase.so
-libwvutils.so: -lz -lcrypt -lpopt
+libwvutils.so: -lz -lcrypt
 
 libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
