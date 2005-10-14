@@ -97,7 +97,6 @@ AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
 AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
-AC_ARG_WITH(popt, AC_HELP_STRING([--with-popt], [popt (required)]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
@@ -320,12 +319,6 @@ AC_CHECK_HEADERS([netinet/tcp.h])
 AC_CHECK_HEADERS([linux/serial.h])
 AC_CHECK_FUNCS([cfmakeraw])
 
-# Look for getopt
-AC_CHECK_FUNCS([getopt],,[getopt=no])
-if test "$getopt" = "no"; then
-    AC_CHECK_HEADERS([getopt.h])
-fi
-
 # Detect hard-linking based on LN_S's behaviour
 AC_MSG_CHECKING([whether ln works...])
 case "$LN_S" in
@@ -418,17 +411,6 @@ if test "$with_qdbm" != "no"; then
     if test "$with_qdbm" != "no"; then
         AC_DEFINE(WITH_QDBM,,
                   [Define to enable QDBM support.])
-    fi
-fi
-
-# popt
-if test "$with_popt" != "no"; then
-    AC_CHECK_HEADERS(popt.h,, [with_popt=no])
-    AC_CHECK_LIB(popt, poptGetContext,, [with_popt=no])
-
-    if test "$with_popt" != "no"; then
-        AC_DEFINE(WITH_POPT,,
-                  [Define to enable popt support.])
     fi
 fi
 
@@ -597,10 +579,6 @@ missing_devel=
 if test "$with_qdbm" = "no"; then
     AC_MSG_WARN([QDBM is missing.])
     missing_devel=yes
-fi
-if test "$with_popt" = "no"; then
-    AC_MSG_WARN([Popt is missing.])
-    missing_required="$missing_required popt"
 fi
 if test "$with_pam" = "no"; then
     AC_MSG_WARN([PAM is missing.])
