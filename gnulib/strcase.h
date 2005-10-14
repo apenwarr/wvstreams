@@ -18,6 +18,7 @@
 #ifndef _STRCASE_H
 #define _STRCASE_H
 
+#define strcasecmp rpl_strcasecmp
 #include <stddef.h>
 
 

@@ -399,6 +399,8 @@ getopt.h: getopt_.h
 	cp $(srcdir)/getopt_.h $@-t
 	mv $@-t $@
 
+getopt.o getopt1.o argp-parse.o: getopt.h
+
 # We need the following in order to create <stdbool.h> when the system
 # doesn't have one that works.
 stdbool.h: stdbool_.h

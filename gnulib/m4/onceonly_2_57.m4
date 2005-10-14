@@ -26,8 +26,8 @@ dnl DEFAULTS and INIT_PREPARE in order to check all requested headers at once,
 dnl thus reducing the size of 'configure'. Works with autoconf-2.57. The
 dnl size reduction is ca. 9%.
 
-dnl Autoconf version 2.57 or newer is recommended.
-AC_PREREQ(2.57)
+dnl Autoconf version 2.53 or newer is recommended.
+AC_PREREQ(2.53)
 
 # AC_CHECK_HEADERS_ONCE(HEADER1 HEADER2 ...) is a once-only variant of
 # AC_CHECK_HEADERS(HEADER1 HEADER2 ...).

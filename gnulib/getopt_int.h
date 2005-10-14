@@ -20,6 +20,8 @@
 #ifndef _GETOPT_INT_H
 #define _GETOPT_INT_H	1
 
+#include <config.h>
+
 extern int _getopt_internal (int ___argc, char **___argv,
 			     const char *__shortopts,
 		             const struct option *__longopts, int *__longind,

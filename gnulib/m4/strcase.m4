@@ -15,7 +15,7 @@ AC_DEFUN([gl_FUNC_STRCASECMP],
   dnl No known system has a strcasecmp() function that works correctly in
   dnl multibyte locales. Therefore we use our version always.
   AC_LIBOBJ(strcasecmp)
-  AC_DEFINE(strcasecmp, rpl_strcasecmp, [Define to rpl_strcasecmp always.])
+  dnl AC_DEFINE(strcasecmp, rpl_strcasecmp, [Define to rpl_strcasecmp always.])
   gl_PREREQ_STRCASECMP
 ])
 

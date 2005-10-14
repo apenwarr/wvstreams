@@ -82,7 +82,7 @@ gnulib/Makefile: gnulib/Makefile.in
 
 # FIXME: there is some confusion here
 ifdef WE_ARE_DIST
-aclocal.m4: $(wildcard gnulib/m4/*.m4)
+aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
 	$(warning "$@" is old, please run "autoconf")
 
 configure: configure.ac config.mk.in include/wvautoconf.h.in aclocal.m4
@@ -91,14 +91,18 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in aclocal.m4
 include/wvautoconf.h.in: configure.ac
 	$(warning "$@" is old, please run "autoheader")
 else
-aclocal.m4: $(wildcard gnulib/m4/*.m4)
+aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
 	aclocal -I gnulib/m4
+	@touch $@
 
 configure: configure.ac include/wvautoconf.h.in aclocal.m4
 	autoconf
+	@rm -f config.mk include/wvautoconf.h gnulib/Makefile
+	@touch $@
 
-include/wvautoconf.h.in:
+include/wvautoconf.h.in: configure.ac
 	autoheader
+	@touch $@
 endif
 
 ifeq ($(VERBOSE),)
