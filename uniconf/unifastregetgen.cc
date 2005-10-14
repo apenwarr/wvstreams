@@ -4,6 +4,8 @@
  * 
  * A lightweight but slightly dangerous version of UniCacheGen.
  */
+#include <wvassert.h>
+
 #include "unifastregetgen.h"
 #include "uniconftree.h"
 #include "wvmoniker.h"
@@ -35,12 +37,18 @@ UniFastRegetGen::UniFastRegetGen(IUniConfGen *_inner)
 UniFastRegetGen::~UniFastRegetGen()
 {
     if (tree)
+    {
 	delete tree;
+	tree = NULL;
+    }
 }
 
 
 void UniFastRegetGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
+    if (!tree)
+	return;
+
     UniConfValueTree *t = tree->find(key);
     if (t) // never previously retrieved; don't cache it
 	t->setvalue(value);
@@ -50,6 +58,12 @@ void UniFastRegetGen::gencallback(const UniConfKey &key, WvStringParm value)
 
 WvString UniFastRegetGen::get(const UniConfKey &key)
 {
+    if (!tree)
+    {
+	wvassert(tree, "key: '%s'", key);
+	abort();
+    }
+
     UniConfValueTree *t = tree->find(key);
     if (!t)
     {
@@ -78,6 +92,12 @@ bool UniFastRegetGen::exists(const UniConfKey &key)
 
 bool UniFastRegetGen::haschildren(const UniConfKey &key)
 {
+    if (!tree)
+    {
+	wvassert(tree, "key: '%s'", key);
+	abort();
+    }
+
     // if we already know the node is null, we can short circuit this one
     UniConfValueTree *t = tree->find(key);
     if (t && t->value().isnull())
