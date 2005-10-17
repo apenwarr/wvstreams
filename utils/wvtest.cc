@@ -165,6 +165,10 @@ int WvTest::run_all(const char * const *prefixes)
     int min_slowness = 0, max_slowness = 65535;
     if (slowstr1) min_slowness = atoi(slowstr1);
     if (slowstr2) max_slowness = atoi(slowstr2);
+
+    int run_twice = 0;
+    char *run_twice_str = getenv("WVTEST_PARALLEL");
+    if (run_twice_str) run_twice = atoi(run_twice_str);
     
     // there are lots of fflush() calls in here because stupid win32 doesn't
     // flush very often by itself.
@@ -177,6 +181,14 @@ int WvTest::run_all(const char * const *prefixes)
 		|| prefix_match(cur->idstr, prefixes)
 		|| prefix_match(cur->descr, prefixes)))
 	{
+            pid_t child;
+            if (run_twice)
+            {
+                // I see everything twice!
+                printf("Running test in parallel.\n");
+                child = fork();
+            }
+
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    fflush(stdout);
 	    
@@ -190,12 +202,30 @@ int WvTest::run_all(const char * const *prefixes)
 	    new_valgrind_leaks = memleaks();
 	    WVPASS(new_valgrind_leaks == old_valgrind_leaks);
 	    old_valgrind_leaks = new_valgrind_leaks;
-
-            WVPASS(no_running_children());
 	    
 	    fflush(stderr);
 	    printf("\n");
 	    fflush(stdout);
+
+            if (run_twice)
+            {
+                if (!child)
+                {
+                    // I see everything once!
+                    printf("Child exiting.\n");
+                    _exit(0);
+                }
+                else
+                {
+                    printf("Waiting for child to exit.\n");
+                    int result;
+                    while ((result = waitpid(child, NULL, 0)) == -1 && 
+                            errno == EINTR)
+                        printf("Waitpid interrupted, retrying.\n");
+                }
+            }
+
+            WVPASS(no_running_children());
 	}
     }
     

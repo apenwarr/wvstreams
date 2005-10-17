@@ -89,6 +89,9 @@ class WvDaemon
         //! The path to the pid file to use for the daemon; defaults
         //! to /var/run/name.pid, where name is above
         WvString pid_file;
+        //! Whether the daemon should daemonize by default (it can
+        //! be changed by the default options); defaults to false
+        bool daemonize;
 
         //! The arguments the daemon accepts; the defaults are described
         //! above.
@@ -119,8 +122,6 @@ class WvDaemon
 
     protected:
     
-        bool daemonize;
-
         bool dec_log_level(void *)
         {
             if ((int)log_level > (int)WvLog::Critical)

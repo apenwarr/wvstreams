@@ -71,14 +71,14 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
 #ifndef _WIN32
             pid_file("/var/run/%s.pid", _name),
 #endif
+            daemonize(false),
             log(_name, WvLog::Debug),
             log_level(WvLog::Info),
             syslog(false),
             start_callback(_start_callback),
             run_callback(_run_callback),
             stop_callback(_stop_callback),
-            ud(_ud),
-            daemonize(false)
+            ud(_ud)
 {
     args.add_option('q', "quiet",
             "Decrease log level (can be used multiple times)",
