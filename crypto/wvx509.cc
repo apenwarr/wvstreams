@@ -1242,6 +1242,28 @@ void WvX509Mgr::set_constraints(WvStringParm constraint)
 }
 
 
+void WvX509Mgr::set_aia(WvStringParm identifier)
+{
+    WvStringList list;
+    list.append(identifier);
+    
+    AUTHORITY_INFO_ACCESS *ainfo = sk_ACCESS_DESCRIPTION_new_null();
+    ACCESS_DESCRIPTION *acc = ACCESS_DESCRIPTION_new();
+    sk_ACCESS_DESCRIPTION_push(ainfo, acc);
+    GENERAL_NAME_free(acc->location);
+    i2d_GENERAL_NAME(acc->location, list);
+    
+    X509_EXTENSION *ex = X509V3_EXT_i2d(NID_info_access, 0, ainfo);
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+    sk_ACCESS_DESCRIPTION_free(ainfo);
+}
+
+WvString WvX509Mgr::get_aia()
+{
+    return get_extension(NID_info_access);
+}
+
 WvString WvX509Mgr::get_extension(int nid)
 {
     WvString retval = WvString::null;

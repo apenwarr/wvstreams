@@ -393,6 +393,12 @@ public:
     void set_lifetime(long seconds);
     
     /**
+     * Get and Set the Authority Identifier information...
+     */
+    void set_aia(WvStringParm identifier);
+    WvString get_aia();
+
+    /**
      * Is this certificate Object valid, and in a non-error state
      */
     virtual bool isok() const;
