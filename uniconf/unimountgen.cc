@@ -52,6 +52,51 @@ void UniMountGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
+struct UniMountGen::UniGenMountPairs
+{
+    UniGenMount *mount;
+    WvString key;
+    UniConfPairList pairs;
+
+    UniGenMountPairs(UniGenMount *_mount)
+	: mount(_mount)
+    {
+	if (mount)
+	    key = mount->key;
+    }
+};
+
+
+void UniMountGen::setv(const UniConfPairList &pairs)
+{
+    UniGenMountPairsDict mountpairs(mounts.count());
+
+    {
+	MountList::Iter m(mounts);
+	for (m.rewind(); m.next(); )
+	    mountpairs.add(new UniGenMountPairs(m.ptr()), true);
+    }
+
+    {
+	UniConfPairList::Iter pair(pairs);
+	for (pair.rewind(); pair.next(); )
+	{
+	    UniGenMount *found = findmount(pair->key());
+	    if (!found)
+		continue;
+	    UniConfPair *trimmed = new UniConfPair(trimkey(found->key,
+							   pair->key()),
+						   pair->value());
+	    mountpairs[found->key]->pairs.add(trimmed, true);
+	}
+    }
+
+    UniGenMountPairsDict::Iter i(mountpairs);
+    for (i.rewind(); i.next(); )
+	i->mount->gen->setv(i->pairs);
+}
+
+
 bool UniMountGen::exists(const UniConfKey &key)
 {
     UniGenMount *found = findmount(key);
@@ -150,8 +195,9 @@ IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 	return NULL;
     
     UniGenMount *newgen = new UniGenMount(gen, key);
-    gen->add_callback(this, UniConfGenCallback(this,
-				&UniMountGen::gencallback), &newgen->key);
+    gen->add_callback(this,
+		      WvBoundCallback<UniConfGenCallback, const UniConfKey&>
+		      (this, &UniMountGen::gencallback, newgen->key));
 
     hold_delta();
     delta(key, WvString());
@@ -353,11 +399,10 @@ UniMountGen::UniGenMount *UniMountGen::findmountunder(const UniConfKey &key)
 }
 
 
-void UniMountGen::gencallback(const UniConfKey &key, WvStringParm value,
-                                  void *userdata)
+void UniMountGen::gencallback(const UniConfKey &base, const UniConfKey &key,
+			      WvStringParm value)
 {
-    UniConfKey *base = static_cast<UniConfKey*>(userdata);
-    delta(UniConfKey(*base, key), value);
+    delta(UniConfKey(base, key), value);
 }
 
 

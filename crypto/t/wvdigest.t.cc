@@ -47,3 +47,40 @@ WVTEST_MAIN("HMAC Test")
     delete sha1;
 }
 */
+
+WVTEST_MAIN("CRC32 Test")
+{
+    WvCrc32Digest crc32;
+    WvDynBuf inbuf, crc32buf;
+    inbuf.put("floogle", 7);
+    crc32.encode(inbuf, crc32buf);
+    crc32.finish(crc32buf);
+
+    WvString crc32str = WvHexEncoder().strflushbuf(crc32buf, true);
+
+    WVPASSEQ(crc32str, "cb130290");
+
+    inbuf.put("hoopy frood", 11);
+    crc32.reset();
+    crc32.encode(inbuf, crc32buf);
+    crc32.finish(crc32buf);
+
+    crc32str = WvHexEncoder().strflushbuf(crc32buf, true);
+
+    WVPASSEQ(crc32str, "ccdf6289");
+}
+
+
+WVTEST_MAIN("Adler32 Test")
+{
+    // Example taken from Adler32 wikipedia entry.
+    WvAdler32Digest adler32;
+    WvDynBuf inbuf, adler32buf;
+    inbuf.put("Wikipedia", 9);
+    adler32.encode(inbuf, adler32buf);
+    adler32.finish(adler32buf);
+
+    WvString adler32str = WvHexEncoder().strflushbuf(adler32buf, true);
+
+    WVPASSEQ(adler32str, "11e60398");
+}

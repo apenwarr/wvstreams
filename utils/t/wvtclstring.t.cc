@@ -2,7 +2,10 @@
 #include "wvtclstring.h"
 #include "wvstring.h"
 #include "wvstringlist.h"
+#include "wvstringmask.h"
 #include "wvstream.h"
+
+#include <signal.h>
 
 WVTEST_MAIN("escaping and unescaping")
 {
@@ -89,7 +92,7 @@ WVTEST_MAIN("escaping and unescaping")
 
 
     //escaping with our own nasties
-    result = wvtcl_escape(j, "o-\nu");
+    result = wvtcl_escape(j, WvStringMask("o-\nu"));
     desired = WvString("{wagloo-mas\nuffle}");
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
@@ -97,7 +100,7 @@ WVTEST_MAIN("escaping and unescaping")
     if (!WVPASS(result == j))
         printf("   because [%s] != [%s]\n", result.cstr(), j.cstr());
 
-    result = wvtcl_escape(k, "$ky");
+    result = wvtcl_escape(k, WvStringMask("$ky"));
     desired = WvString("nast\\y\\{bad\\{\\}\\}\\}\\$brea\\k");
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
@@ -110,13 +113,14 @@ WVTEST_MAIN("escaping and unescaping")
 
 WVTEST_MAIN("encoding and decoding")
 {
+    signal(SIGALRM, SIG_IGN);
     WvString a("jabba"), b("crab poody-doo"), c("pooky{doo"), result, desired;
     WvStringList list;
     list.append(&a, false);
     list.append(&b, false);
     list.append(&c, false); 
     list.append(new WvString(), true);
-    result = wvtcl_encode(list, " ", " ");
+    result = wvtcl_encode(list, WvStringMask(' '), WvStringMask(' '));
     desired = WvString("%s {%s} pooky\\{doo ", a, b);
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
@@ -151,7 +155,7 @@ WVTEST_MAIN("getword")
     // set buffer
     buf.putstr(test);
     // don't unescape
-    result = wvtcl_getword(buf, " ", false);
+    result = wvtcl_getword(buf, WvStringMask(" "), false);
     desired = WvString("jabba");
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
@@ -164,12 +168,12 @@ WVTEST_MAIN("getword")
     // reset buffer
     buf.putstr(test);
     // unescape
-    result = wvtcl_getword(buf, " ");
+    result = wvtcl_getword(buf, WvStringMask(" "));
     desired = WvString("jabba");
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
     // buffer should be updated properly
-    result = wvtcl_getword(buf, " ");
+    result = wvtcl_getword(buf, WvStringMask(" "));
     desired = WvString("crab poody-doo");
     if (!WVPASS(result == desired))
         printf("   because [%s] != [%s]\n", result.cstr(), desired.cstr());
@@ -181,7 +185,7 @@ WVTEST_MAIN("getword")
     // test no word possible
     test = WvString("---{incomplete-");
     buf.putstr(test);
-    result = wvtcl_getword(buf, "-");
+    result = wvtcl_getword(buf, WvStringMask("-"));
     // should return null
     WVFAIL(result);
     result = buf.getstr();
@@ -190,7 +194,7 @@ WVTEST_MAIN("getword")
     // test no word possible and whitespace eating
     test = WvString("    ");
     buf.putstr(test);
-    result = wvtcl_getword(buf, " ");
+    result = wvtcl_getword(buf, WvStringMask(" "));
     // should return null
     WVFAIL(result);
     result = buf.getstr();
@@ -202,7 +206,7 @@ WVTEST_MAIN("getword")
 
 static void _do_word(WvBuf &buf, WvStringParm word, size_t expect)
 {
-    WvString new_word = wvtcl_getword(buf, "\r\n");
+    WvString new_word = wvtcl_getword(buf, WVTCL_NASTY_NEWLINES);
     WVPASSEQ(buf.used(), expect);
     WVPASSEQ(word, new_word);
 }
@@ -269,15 +273,15 @@ WVTEST_MAIN("backslashed braces")
     buf.putstr(encoded);
     WVPASSEQ(buf.used(), 34);
     
-    WvString oline = wvtcl_getword(buf, "\r\n", false);
+    WvString oline = wvtcl_getword(buf, WVTCL_NASTY_NEWLINES, false);
     WVPASSEQ(line, oline);
     WVPASSEQ(buf.used(), 1); // trailing newline
     
     buf.zap();
     buf.putstr(line);
-    WvString w1 = wvtcl_getword(buf, " ");
-    WvString w2 = wvtcl_getword(buf, " ");
-    WvString w3 = wvtcl_getword(buf, " ");
+    WvString w1 = wvtcl_getword(buf, WvStringMask(" "));
+    WvString w2 = wvtcl_getword(buf, WvStringMask(" "));
+    WvString w3 = wvtcl_getword(buf, WvStringMask(" "));
     WVPASSEQ(w1, word1);
     WVPASSEQ(w2, word2);
     WVPASSEQ(w3, word3);

@@ -5,6 +5,7 @@
  * A totally evil UniConfGen that "unwraps" a UniConf object by turning it
  * back into a UniConfGen.  See uniunwrapgen.h.
  */
+#include "uniconfroot.h"
 #include "uniunwrapgen.h"
 #include "wvlinkerhack.h"
 
@@ -20,19 +21,27 @@ UniUnwrapGen::UniUnwrapGen(const UniConf &inner)
 
 UniUnwrapGen::~UniUnwrapGen()
 {
-    xinner.del_callback(this, true);
+    UniConfRoot *root = xinner.rootobj();
+    if (root)
+	root->mounts.del_callback(this);
 }
 
 
 void UniUnwrapGen::setinner(const UniConf &inner)
 {
-    if (xinner.rootobj())
-	xinner.del_callback(this, true);
+    UniConfRoot *root = xinner.rootobj();
+    if (root)
+	root->mounts.del_callback(this);
+
     xinner = inner;
-    if (xinner.rootobj())
-	xinner.add_callback(this,
-			    UniConfCallback(this, &UniUnwrapGen::gencallback),
-			    true);
+    xfullkey = xinner.fullkey();
+
+    root = xinner.rootobj();
+    if (root)
+    {
+	UniConfGenCallback cb(this, &UniUnwrapGen::gencallback);
+	root->mounts.add_callback(this, cb);
+    }
 }
 
 
@@ -84,6 +93,14 @@ WvString UniUnwrapGen::get(const UniConfKey &key)
 void UniUnwrapGen::set(const UniConfKey &key, WvStringParm value)
 {
     _sub(key).setme(value);
+}
+
+
+void UniUnwrapGen::setv(const UniConfPairList &pairs)
+{
+    // Extremely evil.  This pokes directly into UniMountGen, because we
+    // don't want to expose setv to users.
+    xinner.rootobj()->mounts.setv(pairs);
 }
 
 
@@ -156,7 +173,9 @@ UniConfGen::Iter *UniUnwrapGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-void UniUnwrapGen::gencallback(const UniConf &cfg, const UniConfKey &key)
+void UniUnwrapGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
-    delta(cfg[key].fullkey(xinner), cfg[key].getme());
+    WvString subkey;
+    if (xfullkey.suborsame(key, subkey))
+	delta(subkey, value);
 }

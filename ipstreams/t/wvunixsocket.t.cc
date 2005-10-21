@@ -43,7 +43,12 @@ WVTEST_MAIN("non-blocking connect BUGZID:10714")
         sleep(1);
 
         kill(pid, SIGTERM);
-        WVPASS(waitpid(pid, NULL, 0) == pid);
+        // In case a signal is in the process of being delivered...
+        pid_t rv;
+        while ((rv = waitpid(pid, NULL, 0)) != pid)
+            if (rv == -1 && errno != EINTR)
+                break;
+        WVPASSEQ(rv, pid);
     }
     else WVFAIL("fork() failed");
 

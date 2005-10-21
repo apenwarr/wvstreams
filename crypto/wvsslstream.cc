@@ -57,12 +57,16 @@ static int wv_verify_cb(int preverify_ok, X509_STORE_CTX *ctx)
    return 1;
 }
 
-WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *x509,
+WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     WvSSLValidateCallback _vcb, bool _is_server) :
     WvStreamClone(_slave), debug("WvSSLStream", WvLog::Debug5),
     write_bouncebuf(MAX_BOUNCE_AMOUNT), write_eat(0),
     read_bouncebuf(MAX_BOUNCE_AMOUNT), read_pending(false)
 {
+    x509 = _x509;
+    if (x509)
+	x509->addRef(); // openssl may keep a pointer to this object
+    
     vcb = _vcb;
     is_server = _is_server;
     ctx = NULL;
@@ -168,6 +172,7 @@ WvSSLStream::~WvSSLStream()
     if (geterr())
 	debug("Error was: %s\n", errstr());
     
+    WVRELEASE(x509);
     wvssl_free();
 }
 
@@ -585,7 +590,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 		    else
 			seterr("Peer certificate is invalid!");
 	    	}
-		delete peercert;
+		WVRELEASE(peercert);
 	    }
 	    else
 	    {

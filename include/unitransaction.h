@@ -6,7 +6,6 @@
  * UniTransaction::commit() to commit, and
  * UniTransaction::refresh() to rollback.
  */
-
 #ifndef _UNITRANSACTION_H
 #define _UNITRANSACTION_H
 
@@ -15,6 +14,9 @@
 #include "unitransactiongen.h"
 #include "uniunwrapgen.h"
 
+/**
+ * Wraps an existing UniConf tree with a transaction generator.
+ */
 class UniTransaction : public UniConfRoot
 {
     friend class UniConf;
@@ -22,13 +24,18 @@ class UniTransaction : public UniConfRoot
     friend class UniConf::RecursiveIter;
 
 public:
-    /**
-     * Wraps an existing UniConf tree with a transaction generator.
-     */
     UniTransaction(const UniConf &base)
-	: UniConfRoot(new UniTransactionGen(
-			  new UniBachelorGen(
-			      new UniUnwrapGen(base))), false)
+	: UniConfRoot(new UniTransactionGen(new UniBachelorGen(
+		      new UniUnwrapGen(base))), false)
+    {
+    }
+    
+    // C++ would auto-generate a "copy constructor" for this function, but
+    // what we really want is just to wrap a new transaction around the
+    // base, just like any other UniConf object.
+    UniTransaction(const UniTransaction &base)
+	: UniConfRoot(new UniTransactionGen(new UniBachelorGen(
+		      new UniUnwrapGen(base))), false)
     {
     }
 };

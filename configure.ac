@@ -102,7 +102,7 @@ AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
-xplc_version='0.3.11'
+xplc_version='0.3.12'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
@@ -138,6 +138,31 @@ AC_SUBST(ARCH_SUBDIRS)
 
 # Detect endianness
 AC_C_BIGENDIAN
+
+# Look for __attribute__ ((deprecated))
+CPPFLAGS_save="$CPPFLAGS"
+WV_APPEND(CPPFLAGS, -Werror)
+AC_MSG_CHECKING(for __attribute__ ((deprecated)))
+AC_COMPILE_IFELSE(
+[#include "confdefs.h"
+void f() __attribute__ ((deprecated));
+void f()
+{
+}
+
+int main()
+{
+    return 0;
+}
+],
+		  [AC_MSG_RESULT([yes])
+		   AC_DEFINE([ATTR_DEPRECATED],
+			     [__attribute__ ((deprecated))],
+			     [Compiler warning on deprecated functions])],
+		  [AC_MSG_RESULT([no])
+		   AC_DEFINE([ATTR_DEPRECATED], [],
+			     [Compiler warning on deprecated functions])])
+CPPFLAGS="$CPPFLAGS_save"
 
 # Function checks
 AC_FUNC_ALLOCA
@@ -329,7 +354,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$enable_debug" != "no"; then
-    AC_DEFINE_UNQUOTED(VER_STRING_EXTRA, [" (`whoami`@`hostname`)"], [Extra version string.])
+    AC_DEFINE_UNQUOTED(VER_STRING_EXTRA, [" (`whoami`@`hostname`$VER_STRING_EXTRA)"], [Extra version string.])
 fi
 
 # exceptions
@@ -667,3 +692,13 @@ fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
 AC_OUTPUT
+
+# Now remove PACKAGE_* macros from include/wvautoconf.h
+sed 's,^#.*define.*PACKAGE_.*$,/* & */,' include/wvautoconf.h > include/wvautoconf.h.new
+if test "x$?" = "x0"; then
+    if ! diff include/wvautoconf.h include/wvautoconf.h >/dev/null; then
+	mv include/wvautoconf.h.new include/wvautoconf.h
+    else
+	rm include/wvautoconf.h.new
+    fi
+fi

@@ -297,3 +297,18 @@ WVTEST_MAIN("atomic updates")
     chmod(dirname, 0700);
     WvSystem("rm", "-rf", dirname);
 }
+
+
+WVTEST_MAIN("do not refresh if not requested")
+{
+    WvString ininame = inigen("[foo]\n"
+			      "bar = baz\n");
+    UniConfRoot cfg(WvString("ini:%s", ininame), false);
+
+    WVFAIL(cfg["foo/bar"].exists());
+    WVFAILEQ(cfg["foo/bar"].getme(), "baz");
+    WVPASSEQ(childcount(cfg), 0);
+
+    ::unlink(ininame);
+}
+

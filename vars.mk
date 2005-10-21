@@ -158,6 +158,7 @@ BASEOBJS= \
 	utils/wvregex.o \
 	utils/wvscatterhash.o utils/wvsorter.o \
 	utils/wvstring.o utils/wvstringlist.o \
+	utils/wvstringmask.o \
 	utils/strutils.o \
 	utils/wvtask.o \
 	utils/wvtimeutils.o \

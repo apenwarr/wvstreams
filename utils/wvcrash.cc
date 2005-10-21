@@ -6,9 +6,21 @@
  * crashes.
  */
 #include "wvcrash.h"
-#include <signal.h>
+
+#include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <time.h>
+
+#ifndef WVCRASH_USE_SIGALTSTACK
+#define WVCRASH_USE_SIGALTSTACK 0
+#endif
 
 // FIXME: this file mostly only works in Linux
 #ifdef __linux
@@ -16,8 +28,18 @@
 # include <execinfo.h>
 #include <unistd.h>
 
+#ifdef __USE_GNU
+static const char *argv0 = program_invocation_short_name;
+#else
 static const char *argv0 = "UNKNOWN";
-static const char *desc = NULL;
+#endif // __USE_GNU
+
+// Reserve enough buffer for a screenful of programme.
+static const int buffer_size = 2048;
+static char will_msg[buffer_size];
+static char assert_msg[buffer_size];
+static char desc[buffer_size];
+WvCrashCallback callback;
 
 // write a string 'str' to fd
 static void wr(int fd, const char *str)
@@ -60,13 +82,13 @@ static void wrn(int fd, int num)
 }
 
 
-void wvcrash_real(int sig, int fd)
+static void wvcrash_real(int sig, int fd, pid_t pid)
 {
     static void *trace[64];
     static char *signame = strsignal(sig);
     
     wr(fd, argv0);
-    if (desc)
+    if (desc[0])
     {
 	wr(fd, " (");
 	wr(fd, desc);
@@ -78,12 +100,56 @@ void wvcrash_real(int sig, int fd)
     {
 	wr(fd, " (");
 	wr(fd, signame);
-	wr(fd, ")");
+	wr(fd, ")\n");
     }
-    wr(fd, "\n\nBacktrace:\n");
+
+    // Write out the PID and PPID.
+    static char pid_str[32];
+    wr(fd, "\nProcess ID: ");
+    snprintf(pid_str, sizeof(pid_str), "%d", getpid());
+    pid_str[31] = '\0';
+    wr(fd, pid_str);
+    wr(fd, "\nParent's process ID: ");
+    snprintf(pid_str, sizeof(pid_str), "%d", getppid());
+    pid_str[31] = '\0';
+    wr(fd, pid_str);
+    wr(fd, "\n");
+
+    // Write out the assertion message, as logged by __assert*_fail(), if any.
+    if (assert_msg[0])
+    {
+	wr(fd, "\nAssert:\n");
+	wr(fd, assert_msg);
+    }
+
+    // Write out the note, if any.
+    if (will_msg[0])
+    {
+	wr(fd, "\nLast Will and Testament:\n");
+	wr(fd, will_msg);
+	wr(fd, "\n");
+    }
+
+    wr(fd, "\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
     
+    if (pid > 0)
+    {
+        // Wait up to 10 seconds for child to write wvcrash file in case there
+        // is limited space availible on the device; wvcrash file is more
+        // useful than core dump
+        int i;
+        struct timespec ts = { 0, 100*1000*1000 };
+        close(fd);
+        for (i=0; i < 100; ++i)
+        {
+            if (waitpid(pid, NULL, WNOHANG) == pid)
+                break;
+            nanosleep(&ts, NULL);
+        }
+    }
+
     // we want to create a coredump, and the kernel seems to not want to do
     // that if we send ourselves the same signal that we're already in.
     // Whatever... just send a different one :)
@@ -91,7 +157,7 @@ void wvcrash_real(int sig, int fd)
 	sig = SIGBUS;
     else if (sig != 0)
 	sig = SIGABRT;
-    
+   
     signal(sig, SIG_DFL);
     raise(sig);
 }
@@ -108,9 +174,12 @@ void wvcrash(int sig)
 {
     int fds[2];
     pid_t pid;
-    
+
     signal(sig, SIG_DFL);
     wr(2, "\n\nwvcrash: crashing!\n");
+    
+    if (!!callback)
+        callback(sig);
     
     // close some fds, just in case the reason we're crashing is fd
     // exhaustion!  Otherwise we won't be able to create our pipe to a
@@ -128,12 +197,12 @@ void wvcrash(int sig)
 	close(count);
     
     if (pipe(fds))
-	wvcrash_real(sig, 2); // just use stderr instead
+	wvcrash_real(sig, 2, 0); // just use stderr instead
     else
     {
 	pid = fork();
 	if (pid < 0)
-	    wvcrash_real(sig, 2); // just use stderr instead
+	    wvcrash_real(sig, 2, 0); // just use stderr instead
 	else if (pid == 0) // child
 	{
 	    close(fds[1]);
@@ -153,7 +222,7 @@ void wvcrash(int sig)
 	else if (pid > 0) // parent
 	{
 	    close(fds[0]);
-	    wvcrash_real(sig, fds[1]);
+	    wvcrash_real(sig, fds[1], pid);
 	}
     }
     
@@ -162,20 +231,143 @@ void wvcrash(int sig)
 }
 
 
+WvCrashCallback wvcrash_set_callback(WvCrashCallback _callback)
+{
+    WvCrashCallback old_callback = callback;
+    callback = _callback;
+    return old_callback;
+}
+
+static void wvcrash_setup_alt_stack()
+{
+#if WVCRASH_USE_SIGALTSTACK
+    const size_t stack_size = 1048576; // wvstreams can be a pig
+    static char stack[stack_size];
+    stack_t ss;
+    
+    ss.ss_sp = stack;
+    ss.ss_flags = 0;
+    ss.ss_size = stack_size;
+    
+    if (ss.ss_sp == NULL || sigaltstack(&ss, NULL))
+        fprintf(stderr, "Failed to setup sigaltstack for wvcrash: %s\n",
+                strerror(errno)); 
+#endif //WVCRASH_USE_SIGALTSTACK
+}
+
+void wvcrash_add_signal(int sig)
+{
+#if WVCRASH_USE_SIGALTSTACK
+    struct sigaction act;
+    
+    act.sa_handler = wvcrash;
+    sigfillset(&act.sa_mask);
+    act.sa_flags = SA_ONSTACK | SA_RESTART;
+    act.sa_restorer = NULL;
+    
+    if (sigaction(sig, &act, NULL))
+        fprintf(stderr, "Failed to setup wvcrash handler for signal %d: %s\n",
+                sig, strerror(errno));
+#else //!WVCRASH_USE_SIGALTSTACK
+    signal(sig, wvcrash);
+#endif //WVCRASH_USE_SIGALTSTACK
+}
+
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
-    argv0 = _argv0;
-    desc = _desc;
-    signal(SIGSEGV, wvcrash);
-    signal(SIGBUS,  wvcrash);
-    signal(SIGABRT, wvcrash);
-    signal(SIGFPE,  wvcrash);
-    signal(SIGILL,  wvcrash);
+    argv0 = basename(_argv0);
+    will_msg[0] = '\0';
+    assert_msg[0] = '\0';
+    if (_desc)
+    {
+	strncpy(desc, _desc, buffer_size);
+	desc[buffer_size - 1] = '\0';
+    }
+    else
+	desc[0] = '\0';
+    
+    wvcrash_setup_alt_stack();
+    
+    wvcrash_add_signal(SIGSEGV);
+    wvcrash_add_signal(SIGBUS);
+    wvcrash_add_signal(SIGABRT);
+    wvcrash_add_signal(SIGFPE);
+    wvcrash_add_signal(SIGILL);
 }
+
+
+extern "C"
+{
+    // Support assert().
+    void __assert_fail(const char *__assertion, const char *__file,
+		       unsigned int __line, const char *__function)
+    {
+	// Set the assert message that WvCrash will dump.
+	snprintf(assert_msg, buffer_size,
+		 "%s: %s:%u: %s: Assertion `%s' failed.\n",
+		 argv0, __file, __line, __function, __assertion);
+	assert_msg[buffer_size - 1] = '\0';
+
+	// Emulate the GNU C library's __assert_fail().
+	fprintf(stderr, "%s: %s:%u: %s: Assertion `%s' failed.\n",
+		argv0, __file, __line, __function, __assertion);
+	abort();
+    }
+
+
+    // Wrapper for standards compliance.
+    void __assert(const char *__assertion, const char *__file,
+		  unsigned int __line, const char *__function)
+    {
+	__assert_fail(__assertion, __file, __line, __function);
+    }
+
+
+    // Support the GNU assert_perror() extension.
+    void __assert_perror_fail(int __errnum, const char *__file,
+			      unsigned int __line, const char *__function)
+    {
+	// Set the assert message that WvCrash will dump.
+	snprintf(assert_msg, buffer_size,
+		 "%s: %s:%u: %s: Unexpected error: %s.\n",
+		 argv0, __file, __line, __function, strerror(__errnum));
+	assert_msg[buffer_size - 1] = '\0';
+
+	// Emulate the GNU C library's __assert_perror_fail().
+	fprintf(stderr, "%s: %s:%u: %s: Unexpected error: %s.\n",
+		argv0, __file, __line, __function, strerror(__errnum));
+	abort();
+    }
+} // extern "C"
+
+// This function is meant to support people who wish to leave a last will
+// and testament in the WvCrash.
+void wvcrash_leave_will(const char *will)
+{
+    if (will)
+    {
+	strncpy(will_msg, will, buffer_size);
+	will_msg[buffer_size - 1] = '\0';
+    }
+    else
+	will_msg[0] = '\0';
+}
+
+
+const char *wvcrash_read_will()
+{
+    return will_msg;
+}
+
 
 #else // Not Linux
 
 void wvcrash(int sig) {}
+void wvcrash_add_signal(int sig) {}
+WvCrashCallback wvcrash_set_callback(WvCrashCallback cb) {}
 void wvcrash_setup(const char *_argv0, const char *_desc) {}
+
+void wvcrash_leave_will(const char *will) {}
+const char *wvcrash_read_will() { return NULL; }
 
 #endif // Not Linux

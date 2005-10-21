@@ -30,8 +30,9 @@ command line options:
 
 -q|--quit: decrease the log level by one
 -v|--verbose: increase the log level by one
--d|--daemonize: fork into the background.
+-d|--daemonize: fork into the background (implies --syslog)
 -s|--syslog: write log entries to the syslog() facility
+--no-syslog: do not write log entries to the syslog() facility
 -V|--version: print the program name and version number and exit immediately
 
 These default arguments can be changed or appended to through the public member
@@ -88,6 +89,9 @@ class WvDaemon
         //! The path to the pid file to use for the daemon; defaults
         //! to /var/run/name.pid, where name is above
         WvString pid_file;
+        //! Whether the daemon should daemonize by default (it can
+        //! be changed by the default options); defaults to false
+        bool daemonize;
 
         //! The arguments the daemon accepts; the defaults are described
         //! above.
@@ -110,13 +114,14 @@ class WvDaemon
 
         volatile bool _want_to_die;
         volatile bool _want_to_restart;
+	volatile int _exit_status;
 
         int _run(const char *argv0);
 
+        void set_daemonize(void *);
+
     protected:
     
-        bool daemonize;
-
         void dec_log_level(void *)
         {
             if ((int)log_level > (int)WvLog::Critical)
@@ -135,7 +140,7 @@ class WvDaemon
             ::exit(0);
         }
         
-        WvStringList extra_args;
+        WvStringList _extra_args;
 
     public:
 
@@ -158,9 +163,10 @@ class WvDaemon
             _want_to_restart = true;
         }
         //! Force the daemon to exit as soon as the run callback exits
-        void die()
+        void die(int status = 0)
         {
             _want_to_die = true;
+	    _exit_status = status;
         }
 
         //! Whether the daemon will restart when the run callback exits
@@ -178,6 +184,12 @@ class WvDaemon
         bool should_run() const
         {
             return !_want_to_die && !_want_to_restart;
+        }
+
+        //! Remaining args
+        const WvStringList &extra_args() const
+        {
+            return _extra_args;
         }
 };
 

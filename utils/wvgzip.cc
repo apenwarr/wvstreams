@@ -14,6 +14,8 @@
 WvGzipEncoder::WvGzipEncoder(Mode _mode, size_t _out_limit) :
     out_limit(_out_limit), tmpbuf(ZBUFSIZE), mode(_mode)
 {
+    ignore_decompression_errors = false;
+    full_flush = false;
     init();
 }
 
@@ -120,7 +122,7 @@ void WvGzipEncoder::prepare(WvBuf *inbuf)
 bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
 {
     int flushmode = finish ? Z_FINISH :
-        flush ? Z_SYNC_FLUSH : Z_NO_FLUSH;
+        flush ? (full_flush ? Z_FULL_FLUSH : Z_SYNC_FLUSH) : Z_NO_FLUSH;
     int retval;
     do
     {
@@ -143,11 +145,17 @@ bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
 
         // consume pending output
         outbuf.merge(tmpbuf);
+
+        if (retval == Z_DATA_ERROR && mode == Inflate
+            && ignore_decompression_errors)
+            retval = inflateSync(zstr);
     } while (retval == Z_OK && (!out_limit || (out_limit == output)));
 
     if (retval == Z_STREAM_END)
         setfinished();
-    else if (retval != Z_OK && retval != Z_BUF_ERROR)
+    else if (retval != Z_OK && retval != Z_BUF_ERROR &&
+             !(retval == Z_DATA_ERROR && mode == Inflate
+               && ignore_decompression_errors))
     {
         seterror("error %s during gzip %s: %s", retval,
             mode == Deflate ? "compression" : "decompression",

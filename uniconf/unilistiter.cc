@@ -71,6 +71,14 @@ void UniListIter::add(WvStringParm k, WvStringParm v)
 }
 
 
+void UniListIter::autofill(IUniConfGen::Iter *_source)
+{
+    IUniConfGen::Iter &source(*_source);
+    for (source.rewind(); source.next(); )
+	add(source.key(), source.value());
+}
+
+
 void UniListIter::rewind()
 {
     ki.rewind();

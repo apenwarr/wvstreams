@@ -94,6 +94,12 @@ void UniFileSystemGen::set(const UniConfKey &key, WvStringParm value)
 }
 
 
+void UniFileSystemGen::setv(const UniConfPairList &pairs)
+{
+    setv_naive(pairs);
+}
+
+
 class UniFileSystemGenIter : public UniConfGen::Iter
 {
 private:

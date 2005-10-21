@@ -8,7 +8,18 @@
 #ifndef __WVCRASH_H
 #define __WVCRASH_H
 
+#include <wvcallback.h>
+
+typedef WvCallback<void, int> WvCrashCallback;
+
 void wvcrash_setup(const char *_argv0, const char *_desc = 0);
 void wvcrash(int sig);
+void wvcrash_add_signal(int sig);
+WvCrashCallback wvcrash_set_callback(WvCrashCallback callback);
+
+// Leave a last will and testament in the WvCrash, if your program dies.
+void wvcrash_leave_will(const char *will);
+// Read the will back.
+const char *wvcrash_read_will();
 
 #endif // __WVCRASH_H

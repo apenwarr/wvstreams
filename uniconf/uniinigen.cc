@@ -9,6 +9,7 @@
 #include "unitempgen.h"
 #include "wvfile.h"
 #include "wvmoniker.h"
+#include "wvstringmask.h"
 #include "wvtclstring.h"
 #include <ctype.h>
 #include "wvlinkerhack.h"
@@ -37,7 +38,6 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
     // Create the root, since this generator can't handle it not existing.
     UniTempGen::set(UniConfKey::EMPTY, WvString::empty);
     memset(&old_st, 0, sizeof(old_st));
-    refresh();
 }
 
 
@@ -115,7 +115,9 @@ bool UniIniGen::refresh()
         }
 
         WvString word;
-	while (!(word = wvtcl_getword(buf, "\r\n", false)).isnull())
+	while (!(word = wvtcl_getword(buf,
+				      WVTCL_NASTY_NEWLINES,
+				      false)).isnull())
         {
 	    //log(WvLog::Info, "LINE: '%s'\n", word);
 	    
@@ -142,7 +144,8 @@ bool UniIniGen::refresh()
 	    
             // we possibly have a key = value line
             WvConstStringBuffer line(word);
-            WvString name = wvtcl_getword(line, "=", false);
+	    static const WvStringMask nasty_equals("=");
+            WvString name = wvtcl_getword(line, nasty_equals, false);
             if (!name.isnull() && line.used())
             {
                 name = wvtcl_unescape(trim_string(name.edit()));
@@ -396,9 +399,10 @@ static bool absolutely_needs_escape(WvStringParm s, const char *sepchars)
 static void printsection(WvStream &file, const UniConfKey &key)
 {
     WvString s;
-    
+    static const WvStringMask nasties("\r\n[]");
+
     if (absolutely_needs_escape(key, "\r\n[]"))
-	s = wvtcl_escape(key, "\r\n[]");
+	s = wvtcl_escape(key, nasties);
     else
 	s = key;
     // broken up for optimization, no temp wvstring created
@@ -413,9 +417,10 @@ static void printkey(WvStream &file, const UniConfKey &_key,
 		     WvStringParm _value)
 {
     WvString key, value;
-    
+    static const WvStringMask nasties("\r\n\t []=#");
+
     if (absolutely_needs_escape(_key, "\r\n[]=#\""))
-	key = wvtcl_escape(_key, "\r\n\t []=#");
+	key = wvtcl_escape(_key, nasties);
     else if (_key == "")
 	key = "/";
     else
@@ -424,7 +429,7 @@ static void printkey(WvStream &file, const UniConfKey &_key,
     // value is more relaxed, since we don't use wvtcl_getword after we grab
     // the "key=" part of each line
     if (absolutely_needs_escape(_value, "\r\n"))
-	value = wvtcl_escape(_value, "\r\n\t ");
+	value = wvtcl_escape(_value, WVTCL_NASTY_SPACES);
     else
 	value = _value;
     

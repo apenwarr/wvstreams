@@ -19,20 +19,13 @@
 
 
 // write out a temporary ini file for use, saves flushing entries
-static int write_ini(WvString &ininame)
+static void write_ini(WvString &ininame)
 {
     ininame = WvString("/tmp/unitempgenvsdaemonini-%s", getpid());
 
-    WvFile outfile(ininame, O_CREAT | O_WRONLY);
-    if (outfile.isok())
-    {
-        outfile.print("%s\n%s\n", "[eth0]", "dhcpd = 1");
-        outfile.close();
-        return true;
-    }
-
+    WvFile outfile(ininame, O_CREAT | O_RDWR | O_TRUNC);
+    outfile.print("%s\n%s\n", "[eth0]", "dhcpd = 1");
     outfile.close();
-    return false;
 }
 
 WVTEST_MAIN("tempgen/cachegen basics")
@@ -40,11 +33,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
     signal(SIGPIPE, SIG_IGN);
 
     WvString ininame;
-    if (!write_ini(ininame))
-    {
-        WVFAIL("Could not write ini file");
-        exit(1); 
-    }
+    write_ini(ininame);
 
     WvString sockname = WvString("/tmp/unitempgensock-%s", getpid());
     
@@ -100,8 +89,16 @@ WVTEST_MAIN("tempgen/cachegen basics")
 
     WVPASS(initial_value != new_value);
    
-    // kill off the daemon
+    // kill off the daemon and clean up the zombie
     kill(cfg_handler, 15);
+
+    // In case a signal is in the process of being delivered..
+    pid_t rv;
+    while ((rv = waitpid(cfg_handler, NULL, 0)) != cfg_handler)
+        if (rv == -1 && errno != EINTR)
+            break;
+    WVPASSEQ(rv, cfg_handler);
+
     unlink(ininame);
     unlink(sockname);
 }
@@ -112,11 +109,7 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
     signal(SIGPIPE, SIG_IGN);
 
     WvString ininame;
-    if (!write_ini(ininame))
-    {
-        WVFAIL(true || "Could not write ini file");
-        exit(1); 
-    }
+    write_ini(ininame);
 
     WvString sockname = WvString("/tmp/unitempgensock2-%s", getpid());
 
@@ -161,9 +154,17 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
     
     WvUnixConn unixconn(sockname);
     WVPASS(unixconn.isok());
-   
-    // kill off the daemon
+
+    // kill off the daemon and clean up the zombie
     kill(cfg_handler, 15);
+
+    // In case a signal is in the process of being delivered...
+    pid_t rv;
+    while ((rv = waitpid(cfg_handler, NULL, 0)) != cfg_handler)
+        if (rv == -1 && errno != EINTR)
+            break;
+    WVPASSEQ(rv, cfg_handler);
+
     unlink(ininame);
     unlink(sockname);
 }
