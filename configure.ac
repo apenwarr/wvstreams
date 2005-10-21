@@ -101,7 +101,7 @@ AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
-xplc_version='0.3.12'
+xplc_version='0.3.13'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
@@ -544,7 +544,9 @@ if test "$with_xplc" != "no"; then
             WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-${xplc_version}`])
 	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-${xplc_version}`])
 	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	    LIBS_save="$LIBS"
 	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	    LIBS="$LIBS_save"
 	    xplc_pc="xplc-${xplc_version}"
 	else
 	    with_xplc='no'
@@ -553,7 +555,9 @@ if test "$with_xplc" != "no"; then
         WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
 	WV_APPEND(LDFLAGS, [-L$with_xplc])
 	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	LIBS_save="$LIBS"
 	AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	LIBS="$LIBS_save"
 	xplc_pc="xplc-${xplc_version}"
     fi
     # What if we can't find it?

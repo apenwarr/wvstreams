@@ -1,4 +1,4 @@
 
 TESTS+=$(patsubst %.cc,%,$(wildcard ipstreams/tests/*.cc))
 
-ipstreams/tests/xplctest: LIBS+=-lxplc -lxplc-cxx
+ipstreams/tests/xplctest: LIBS+=-lxplc-cxx

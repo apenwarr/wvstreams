@@ -42,7 +42,7 @@ ifneq ("$(with_xplc)", "no")
 ifneq ("$(with_xplc)", "")
   LDFLAGS:=-L$(with_xplc) $(LDFLAGS)
 endif
-  LIBXPLC=-lxplc-cxx -lxplc
+  LIBXPLC=-lxplc-cxx
 endif
 
 LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
