@@ -386,7 +386,7 @@ public:
          */
         void remove(bool destroy = true)
         {
-	    vec.remove(i, destroy);
+	    WvVector::vec.remove(i, destroy);
         }
 
         /**
@@ -404,7 +404,7 @@ public:
          */
 	void xremove(bool destroy = true)
 	{
-	    vec.remove(i, destroy);
+	    WvVector::vec.remove(i, destroy);
 	    prev();
 	}
     };
