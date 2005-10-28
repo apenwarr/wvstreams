@@ -106,7 +106,7 @@ void WvLogFile::_make_prefix()
         statbuf.st_size = 0;
 
     // Make sure we are calculating last_day in the current time zone.
-    if (last_day < ((timenow + gmtoffset())/86400) 
+    if (last_day != ((timenow + gmtoffset())/86400) 
 	|| statbuf.st_size > MAX_LOGFILE_SZ)
         start_log();
 
