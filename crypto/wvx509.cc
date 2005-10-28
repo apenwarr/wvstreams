@@ -1251,7 +1251,7 @@ void WvX509Mgr::set_aia(WvStringParm identifier)
     ACCESS_DESCRIPTION *acc = ACCESS_DESCRIPTION_new();
     sk_ACCESS_DESCRIPTION_push(ainfo, acc);
     GENERAL_NAME_free(acc->location);
-    i2d_GENERAL_NAME(acc->location, list);
+//    i2d_GENERAL_NAME(acc->location, list);
     
     X509_EXTENSION *ex = X509V3_EXT_i2d(NID_info_access, 0, ainfo);
     X509_add_ext(cert, ex, -1);
