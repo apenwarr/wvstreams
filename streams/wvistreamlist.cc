@@ -7,7 +7,8 @@
  */
 #include "wvistreamlist.h"
 
-#include "wvcrash.h"
+#include "wvassert.h"
+#include "wvstrutils.h"
 
 #ifndef _WIN32
 #include "wvfork.h"
@@ -108,12 +109,9 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	{
 	    // printf("pre_select sure_thing: '%s'\n", i.link->id);
 	    sure_thing.append(&s, false, i.link->id);
-	    if (si.msec_timeout != 0)
-	    {
-		fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), &s,
-			i.link->id);
-		abort();
-	    }
+	    wvassert(si.msec_timeout == 0, "pre_select for \"%s\" (%s) "
+		     "returned true, but has non-zero timeout",
+		     i.link->id, ptr2str(&s));
 	}
     }
 
@@ -157,11 +155,9 @@ bool WvIStreamList::post_select(SelectInfo &si)
 		WvIStreamListBase::Iter j(sure_thing);
 		WvLink* link = j.find(&s);
 
-		if (link)
-		{
-		    fprintf(stderr, "%i: oops: %p (%s)\n", getpid(), link->data, link->id);
-		    abort();
-		}
+		wvassert(!link, "stream \"%s\" (%s) was ready in "
+			 "pre_select, but not in post_select",
+			 link->id, ptr2str(link->data));
 	    }
 	}
 	else

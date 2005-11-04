@@ -573,4 +573,7 @@ WvString cstr_escape(const void *data, size_t size,
 bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size,
         const CStrExtraEscape extra_escapes[] = NULL);
 
+// Converts a pointer into a string, like glibc's %p formatter would do.
+WvString ptr2str(void* ptr);
+
 #endif // __WVSTRUTILS_H

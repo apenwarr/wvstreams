@@ -4,12 +4,13 @@
  */
 #include "wvtclstring.h"
 #include "wvstringlist.h"
+#include "wvstringmask.h"
 
 int main(int argc, char **argv)
 {
-    const char *nasties    = (argc>1 ? argv[1] : WVTCL_NASTIES);
-    const char *splitchars = (argc>2 ? argv[2] : WVTCL_SPLITCHARS);
-    
+    WvStringMask nasties(WVTCL_NASTY_SPACES);
+    WvStringMask splitchars(WVTCL_SPLITCHARS);
+
     bool bad = false;
     
     // correct output (all on one line):

@@ -1240,3 +1240,17 @@ WvString depunctuate(WvStringParm line)
 
     return ret;
 }
+
+
+WvString ptr2str(void* ptr)
+{
+    char buf[(sizeof(ptr) * 2) + 3];
+    int rv;
+
+    rv = snprintf(buf, sizeof(buf), "%p", ptr);
+
+    assert(rv != -1);
+
+    return buf;
+}
+
