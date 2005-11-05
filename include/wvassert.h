@@ -43,16 +43,16 @@ private:
 
 #else  // Not NDEBUG
 
-void __wvcrash_leave_will()
+static inline void __wvcrash_leave_will()
 {
 }
 
-void __wvcrash_leave_will(const char *will)
+static inline void __wvcrash_leave_will(const char *will)
 {
     wvcrash_leave_will(will);
 }
 
-void __wvcrash_leave_will(WVSTRING_FORMAT_DECL)
+static inline void __wvcrash_leave_will(WVSTRING_FORMAT_DECL)
 {
     wvcrash_leave_will(WvFastString(WVSTRING_FORMAT_CALL));
 }
