@@ -430,7 +430,7 @@ char *WvStream::blocking_getline(time_t wait_msec, int separator,
 	    assert(buf);
             size_t len = uread(buf, readahead);
             tmp.unalloc(readahead - len);
-	    inbuf.put(tmp.get(tmp.used()), tmp.used());
+	    inbuf.put(tmp.get(len), len);
             hasdata = len > 0; // enough?
         }
 
