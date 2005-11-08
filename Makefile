@@ -188,7 +188,7 @@ uninstall:
 
 $(TESTS): $(LIBUNICONF) $(LIBWVTEST)
 $(addsuffix .o,$(TESTS)):
-tests: #$(TESTS)
+tests: $(TESTS)
 
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
