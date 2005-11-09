@@ -3,11 +3,11 @@ Section: libs
 Priority: optional
 Maintainer: Simon Law <sfllaw@debian.org>
 Uploaders: James Morrison <phython@debian.org>, Patrick Patterson <ppatters@debian.org>
-Build-Depends: debhelper (>> 4.0.0), libdb4.2-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libssl-dev, libxplc0.3.11-dev, libpopt-dev, zlib1g-dev, doxygen
+Build-Depends: debhelper (>> 4.1.0), libdb4.2-dev, libpam0g-dev, libqt3-mt-dev, libslp-dev, libssl-dev, libxplc0.3.13-dev, libpopt-dev, zlib1g-dev, doxygen
 Build-Depends-Indep: doxygen
-Standards-Version: 3.6.1
+Standards-Version: 3.6.2.1
 
-Package: libwvstreams4.1-base
+Package: libwvstreams4.2-base
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -22,7 +22,7 @@ Description: C++ network libraries for rapid application development
   * WvLog: a log files handler 
   * UniIniGen: a tiny version of UniConf for simple configuration systems
 
-Package: libwvstreams4.1-extras
+Package: libwvstreams4.2-extras
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -36,7 +36,7 @@ Description: C++ network libraries for rapid application development
  WvDial, TunnelVision, FastForward, KWvDial, retchmail, and many more yet 
  to come.  ;) 
 
-Package: libuniconf4.1
+Package: libuniconf4.2
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -51,7 +51,7 @@ Description: C++ network libraries for rapid application development
  UniConf can also be accessed over the network, with authentication, allowing
  easy replication of configuration data via the UniReplicateGen.
 
-Package: libwvstreams4.1-doc
+Package: libwvstreams4.2-doc
 Architecture: all
 Section: doc
 Suggests: libwvstreams-dev (= ${Source-Version})
@@ -61,7 +61,7 @@ Description: Documentation for WvStreams
  The WvStreams library suite is a set of C++ network libraries that
  make it fast and simple to develop network applications.
 
-Package: libwvstreams4.1-qt
+Package: libwvstreams4.2-qt
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -73,7 +73,7 @@ Description: WvStreams and Qt Event Integration Library
 Package: libwvstreams-dev
 Architecture: any
 Section: libdevel
-Depends: libwvstreams4.1-base, libwvstreams4.1-extras, libuniconf4.1, libwvstreams4.1-qt, libxplc0.3.11-dev, ${misc:Depends}
+Depends: libwvstreams4.1-base, libwvstreams4.1-extras, libuniconf4.1, libwvstreams4.1-qt, libxplc0.3.13-dev, ${misc:Depends}
 Provides: libwvstreams4.1-dev
 Description: Development libraries and header files for libwvstreams4.1
  Contains the header files and static libraries for use in rapid 

@@ -105,7 +105,8 @@ install-indep:
 	#INSTALLDOC#
 	install -d $(DOCDIR)
 	install -d $(DOCDIR)/html-api
-	install -m644 Docs/doxy-html/* $(DOCDIR)/html-api/
+	find Docs/doxy-html -type f -exec install -m644 '{}' $(DOCDIR)/html-api/ ';'
+
 	@# Don't install the SGML documentation.
 	@#install -d $(DOCDIR)/html-manual
 	@#install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
