@@ -45,6 +45,8 @@ endif
 dist-hack-clean:
 	@rm -f stamp-h.in
 
+export AM_CFLAGS
+AM_CFLAGS=-fPIC
 gnulib/libgnu.a:
 	$(call subdirs_func,libgnu.a,gnulib)
 
