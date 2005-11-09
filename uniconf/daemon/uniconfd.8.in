@@ -118,7 +118,7 @@ a network address,
 .br
 \(bu
 or even an empty string
-.R (tmp:).
+(tmp:).
 .PP
 .B Examples:
 .RS
