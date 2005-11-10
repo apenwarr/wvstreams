@@ -3,3 +3,4 @@ usr/lib
 usr/sbin
 etc
 etc/default
+usr/share/lintian/overrides

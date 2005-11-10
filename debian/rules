@@ -146,6 +146,11 @@ install-arch:
 	install -d $(CURDIR)/debian/tmp/etc/default
 	install -m644 debian/uniconfd.default debian/tmp/etc/default/uniconfd
 
+	# Install lintian overrides
+	install -m644 debian/libwvstreams$(version)-base.lintian-override debian/libwvstreams$(version)-base/usr/share/lintian/overrides/libwvstreams$(version)-base
+	install -m644 debian/libwvstreams$(version)-extras.lintian-override debian/libwvstreams$(version)-extras/usr/share/lintian/overrides/libwvstreams$(version)-extras
+	install -m644 debian/libwvstreams$(version)-qt.lintian-override debian/libwvstreams$(version)-qt/usr/share/lintian/overrides/libwvstreams$(version)-qt
+
 	dh_install -s
 
 # Must not depend on anything. This is to be called by

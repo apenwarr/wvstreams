@@ -73,9 +73,9 @@ Description: WvStreams and Qt Event Integration Library
 Package: libwvstreams-dev
 Architecture: any
 Section: libdevel
-Depends: libwvstreams4.1-base, libwvstreams4.1-extras, libuniconf4.1, libwvstreams4.1-qt, libxplc0.3.13-dev, ${misc:Depends}
-Provides: libwvstreams4.1-dev
-Description: Development libraries and header files for libwvstreams4.1
+Depends: libwvstreams4.2-base, libwvstreams4.2-extras, libuniconf4.2, libwvstreams4.2-qt, libxplc0.3.13-dev, ${misc:Depends}
+Provides: libwvstreams4.2-dev
+Description: Development libraries and header files for libwvstreams4.2
  Contains the header files and static libraries for use in rapid 
  application development using the WvStreams set of libraries.  It 
  includes everything that is needed to compile a program that needs 
