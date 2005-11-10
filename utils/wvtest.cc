@@ -335,3 +335,35 @@ bool WvTest::start_check_eq(const char *file, int line,
     return cond;
 }
 
+bool WvTest::start_check_lt(const char *file, int line,
+			    const char *a, const char *b)
+{
+    if (!a) a = "";
+    if (!b) b = "";
+    
+    size_t len = strlen(a) + strlen(b) + 8 + 1;
+    char *str = new char[len];
+    sprintf(str, "[%s] < [%s]", a, b);
+    
+    start(file, line, str);
+    delete[] str;
+
+    bool cond = strcmp(a, b) < 0;
+    check(cond);
+    return cond;
+}
+
+
+bool WvTest::start_check_lt(const char *file, int line, int a, int b)
+{
+    size_t len = 128 + 128 + 8 + 1;
+    char *str = new char[len];
+    sprintf(str, "%d < %d", a, b);
+    
+    start(file, line, str);
+    delete[] str;
+    
+    bool cond = a < b;
+    check(cond);
+    return cond;
+}
