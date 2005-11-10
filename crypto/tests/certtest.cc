@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     wvcon->print("Certificate Test Starting...\n");
     
     // Setup a new DN entry, like a server would set.
-    WvString dName("cn=test.foo.com,dc=foo,dc=com");
+    WvString dName("email=foo@foo.com,cn=test.foo.com,dc=foo,dc=com");
     
     test(dName);
 
