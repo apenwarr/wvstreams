@@ -20,10 +20,10 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 base=libwvstreams4.1
 # This is used the wvstreams makefile to set the .so links
-PKG=`pwd`/debian/${base}
-PKG_QT=`pwd`/debian/${base}-qt
-PKGDEV=`pwd`/debian/libwvstreams-dev
-PKGDOC=`pwd`/debian/${base}-doc
+PKG=$(CURDIR)/debian/${base}
+PKG_QT=$(CURDIR)/debian/${base}-qt
+PKGDEV=$(CURDIR)/debian/libwvstreams-dev
+PKGDOC=$(CURDIR)/debian/${base}-doc
 DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc
 
 CFLAGS = -Wall
@@ -131,7 +131,7 @@ install-arch:
 
 #	$(MAKE) installshared PREFIX=$(PKG)/usr
 	# Temporary Fix to work around a bug in Debhelper
-	$(MAKE) install-shared DESTDIR=`pwd`/debian/tmp
+	$(MAKE) install-shared DESTDIR=$(CURDIR)/debian/tmp
 
 	# Install development package
 	$(MAKE) install-dev DESTDIR=$(PKGDEV)
@@ -141,8 +141,8 @@ install-arch:
 	rm -f $(PKGDEV)/usr/lib/libxplc.so*
 
 	# Install UniConf daemon
-	$(MAKE) install-uniconfd DESTDIR=`pwd`/debian/tmp
-	install -d `pwd`/debian/tmp/etc/default
+	$(MAKE) install-uniconfd DESTDIR=$(CURDIR)/debian/tmp
+	install -d $(CURDIR)/debian/tmp/etc/default
 	install -m644 debian/uniconfd.default debian/tmp/etc/default/uniconfd
 
 	dh_install -s
