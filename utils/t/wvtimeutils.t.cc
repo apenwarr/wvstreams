@@ -61,6 +61,12 @@ WVTEST_MAIN("msecdiff()")
     tmp.tv_usec = 854;
     result = msecdiff(tmp, tmp);
     WVPASS(result == 0);
+
+    // Test for integer overflow in msecdiff()
+    WvTime t1(1109780720, 0);
+    WvTime t2(1126725000, 0);
+    time_t tdiff = msecdiff(t1, t2);
+    // WVPASS(tdiff < 0); BUGZID:16357
 }
 
 /* 
