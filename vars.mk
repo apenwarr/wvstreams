@@ -180,7 +180,8 @@ BASEOBJS= \
 	uniconf/unilistiter.o \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
-	streams/wvconstream.o
+	streams/wvconstream.o \
+	utils/wvcrashbase.o
 
 TESTOBJS = \
 	utils/wvtest.o \

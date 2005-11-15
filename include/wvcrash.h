@@ -21,5 +21,7 @@ WvCrashCallback wvcrash_set_callback(WvCrashCallback callback);
 void wvcrash_leave_will(const char *will);
 // Read the will back.
 const char *wvcrash_read_will();
+// Read the assertion back.
+const char *wvcrash_read_assert();
 
 #endif // __WVCRASH_H

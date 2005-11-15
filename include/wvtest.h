@@ -39,6 +39,9 @@ public:
 			       const char *a, const char *b, bool expect_pass);
     static bool start_check_eq(const char *file, int line, int a, int b,
                                bool expect_pass);
+    static bool start_check_lt(const char *file, int line,
+                               const char *a, const char *b);
+    static bool start_check_lt(const char *file, int line, int a, int b);
 };
 
 
@@ -46,6 +49,8 @@ public:
     WvTest::start_check(__FILE__, __LINE__, #cond, (cond))
 #define WVPASSEQ(a, b) \
     WvTest::start_check_eq(__FILE__, __LINE__, (a), (b), true)
+#define WVPASSLT(a, b) \
+    WvTest::start_check_lt(__FILE__, __LINE__, (a), (b))
 #define WVFAIL(cond) \
     WvTest::start_check(__FILE__, __LINE__, "NOT(" #cond ")", !(cond))
 #define WVFAILEQ(a, b) \
