@@ -40,6 +40,7 @@ Package: libuniconf4.2
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: libuniconf4.0 (<< 4.0.2-5)
 Description: C++ network libraries for rapid application development
  UniConf is a configuration system that can serve as the centrepiece among
  many other, existing configuration systems, such as:
