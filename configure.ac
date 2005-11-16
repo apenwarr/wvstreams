@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 4.1, wvstreams-dev@nit.ca, wvstreams)
-SO_VERSION=4.1
+AC_INIT(WvStreams, 4.2, wvstreams-dev@nit.ca, wvstreams)
+SO_VERSION=4.2
 
 save_args() {
     ARGS=""
