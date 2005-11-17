@@ -1,0 +1,19 @@
+Using valgrind 2.0.0 and valgrind-calltree 0.9.6-2 I've created these 
+callgrind outputs you can open with kcachegrind to look at.  Ones labelled
+deep were created with nested keys, ones like out.10k are just the keys
+and values 1-1000, and ones labelled save involve writing out that many
+entries and then saving them.
+
+Opening (opening.cc)
+                    Times
+           Straight         Deep
+10k         0.279s          0.306s
+100k        2.95s           3.02s
+1000k       33.1s           31.463s
+
+Saving (saving.cc)
+            Times           Size(disk)  Size(RAM)
+10k         0.390s          115k
+100k        3.997s          1.3M        16M
+1000k       42.76s          15M         170M
+1000kdeep   45.65           9.3M        139M

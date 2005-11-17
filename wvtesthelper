@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Try to run the given command in a pipe to the test meter, but if that
+# fails, just dump it to stdout instead.  Also make sure nobody *inside*
+# us runs the testhelper script again.
+#
+export WVTESTRUN="env"
+
+reportcode()
+{
+    CODE=$1
+    if [ "$CODE" = "0" ]; then
+        echo "! wvtesthelper   Test program exited ok    ok"
+    else
+        echo "! wvtesthelper   Test program aborted (code $CODE)   FAILED"
+    fi
+    return $CODE
+}
+
+exec 3>&1
+
+if [ -z "$DISPLAY" ]; then
+    exec "$@"
+else
+    ( "$@"; reportcode $?) \
+    	| tee /dev/fd/3 | ($WVSTREAMS_SRC/wvtestmeter || cat)
+    exit ${PIPESTATUS[0]}
+fi
