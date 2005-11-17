@@ -74,6 +74,15 @@ void WvString::copy_constructor(const WvFastString &s)
 }
 
 
+WvFastString WvFastString::offset(size_t i) const
+{ 
+    WvFastString retval(*this);
+    size_t l = retval.len(); 
+    retval.str += (i < l ? i : l); 
+    return retval;
+}
+
+
 WvString::WvString(const char *_str)
 {
     construct(_str);

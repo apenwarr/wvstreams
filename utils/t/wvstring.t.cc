@@ -156,3 +156,27 @@ WVTEST_MAIN("conversion from int")
     WVPASSEQ(WvString(32767), "32767");
     WVPASSEQ(WvString(65535), "65535");
 }
+
+WVTEST_MAIN("offset")
+{
+    WvString emptystr("");
+
+    WVPASSEQ(emptystr.offset(0), "");
+    WVPASSEQ(emptystr.offset(1), "");
+    WVPASSEQ(emptystr.offset(1000), "");
+
+    WvString nullstr(WvString::null);
+
+    WVPASSEQ(nullstr.offset(0), WvString::null);
+    WVPASSEQ(nullstr.offset(1), WvString::null);
+    WVPASSEQ(nullstr.offset(2), WvString::null);
+
+    WvString str("foobar");
+
+    WVPASSEQ(str.offset(0), "foobar");
+    WVPASSEQ(str.offset(1), "oobar");
+    WVPASSEQ(str.offset(1).offset(2), "bar");
+    WVPASSEQ(str.offset(3), str.offset(1).offset(2));
+    WVPASSEQ(str.offset(6), "");
+    WVPASSEQ(str.offset(100), "");
+}

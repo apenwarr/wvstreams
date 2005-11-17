@@ -101,3 +101,23 @@ WVTEST_MAIN("subkeys")
     WVPASSEQ(UniConfKey("cfg").subkey(UniConfKey("cfg/ini")).cstr(), "ini");
     WVPASSEQ(UniConfKey("/cfg/ini").subkey(UniConfKey("cfg/ini")).cstr(), "");
 }
+
+WVTEST_MAIN("range")
+{
+    WVPASSEQ(UniConfKey().range(0,0).cstr(), "");
+    WVPASSEQ(UniConfKey().range(0,1).cstr(), "");
+    WVPASSEQ(UniConfKey().range(1,2).cstr(), "");
+    WVPASSEQ(UniConfKey("").range(0,0).cstr(), "");
+    WVPASSEQ(UniConfKey("").range(0,1).cstr(), "");
+    WVPASSEQ(UniConfKey("").range(1,2).cstr(), "");
+    WVPASSEQ(UniConfKey("fred").range(0,0).cstr(), "");
+    WVPASSEQ(UniConfKey("fred").range(0,1).cstr(), "fred");
+    WVPASSEQ(UniConfKey("fred").range(1,2).cstr(), "");
+    WVPASSEQ(UniConfKey("fred/barney").range(0,0).cstr(), "");
+    WVPASSEQ(UniConfKey("fred/barney").range(0,1).cstr(), "fred");
+    WVPASSEQ(UniConfKey("fred/barney").range(1,2).cstr(), "barney");
+    WVPASSEQ(UniConfKey("fred/barney").range(0,2).cstr(), "fred/barney");
+    WVPASSEQ(UniConfKey("fred/barney/betty").range(0,2).cstr(), "fred/barney");
+    WVPASSEQ(UniConfKey("fred/barney/betty").range(1,3).cstr(), "barney/betty");
+    WVPASSEQ(UniConfKey("fred/barney/betty").range(2,3).cstr(), "betty");
+}

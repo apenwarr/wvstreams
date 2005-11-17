@@ -202,10 +202,19 @@ UniConfKey UniConfKey::range(int i, int j) const
     int len = eptr - sptr;
     if (len)
     {
-        result.path.setsize(len + 1);
-        char *cptr = result.path.edit();
-        strncpy(cptr, sptr, len);
-        cptr[len] = 0;
+        if (*eptr)
+        {
+            result.path.setsize(len + 1);
+            char *cptr = result.path.edit();
+            strncpy(cptr, sptr, len);
+            cptr[len] = 0;
+        }
+        else
+        {
+            // optimization: they got the end of the key, so we can share the
+            // buffer and avoid a copy.
+            result.path = path.offset(sptr - path.cstr());
+        }
     }
     return result;
 }
