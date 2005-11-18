@@ -1,3 +1,9 @@
+wvstreams (4.2.1-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 18 Nov 2005 15:38:40 -0500
+
 wvstreams (4.2-1) unstable; urgency=low
 
   * New upstream version.
