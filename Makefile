@@ -125,12 +125,15 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
-	@rm -f aclocal.m4
+	@rm -rf autom4te.cache
+	@rm -f gnulib/Makefile
 	@rm -f pkgconfig/*.pc
 	@rm -f .xplc
 
 clean: depend dust xplc/clean
+	@if ! test -f gnulib/Makefile; then echo 'clean:' >gnulib/Makefile; fi
 	$(subdirs)
+	@if test `wc -c <gnulib/Makefile` = '7'; then rm gnulib/Makefile; fi
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
