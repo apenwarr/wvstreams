@@ -259,8 +259,8 @@ void WvLogRcv::log(WvStringParm source, int _loglevel,
 	end_line();
 	last_source = source;
 	last_level = loglevel;
-	_make_prefix();
     }
+    _make_prefix();
     
     const char *buf = (const char *)_buf, *bufend = buf + len, *cptr;
 

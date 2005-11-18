@@ -2,6 +2,8 @@
 #include "wvtest.h"
 #include "wvlog.h"
 #include "wvlogbuffer.h"
+#include "wvlogfile.h"
+#include "wvfileutils.h"
 
 
 WVTEST_MAIN("extremely basic test")
@@ -57,5 +59,32 @@ WVTEST_MAIN("line-breaking logic")
     WVPASSEQ(i->message, "Message: this is the message");
 
     WVFAIL(i.next());
+}
+
+WVTEST_MAIN("timestamps")
+{
+    WvString logfilename = wvtmpfilename("wvlog-timestamps");
+    WvLogFileBase logfile(logfilename, WvLog::Debug);
+    WvLog log(__FUNCTION__, WvLog::Debug);
+    time_t first_time = time(NULL);
+    log("First message\n");
+    while (time(NULL) - first_time < 2)
+        sleep(1);
+    log("Second message\n");
+    logfile.close();
+
+    WvFile file(logfilename, O_RDONLY);
+    WVPASS(file.isok());
+    // 0123456789012345678901
+    // Nov 10 10:13:15 GMT-4: 
+    WvString first_timestamp = file.getline();
+    first_timestamp.edit()[21] = '\0';
+    wvout->print("first timestamp: %s\n", first_timestamp);    
+    WvString second_timestamp = file.getline();
+    second_timestamp.edit()[21] = '\0';
+    wvout->print("second timestamp: %s\n", second_timestamp);    
+    WVFAILEQ(first_timestamp, second_timestamp);
+
+    WVPASS(unlink(logfilename) == 0);
 }
 
