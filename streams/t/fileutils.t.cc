@@ -65,3 +65,34 @@ WVTEST_MAIN("wvchmod test")
     rmdir(testdir);
     rmdir(basedir);
 }
+
+
+WVTEST_MAIN("ftouch test")
+{
+    WvString basedir("/tmp/wvstat-test-%s", getpid());
+    WVPASS(mkdir(basedir, 0775) != -1);
+
+    struct stat st1;
+    struct stat st2;
+
+    // test running against a file which already exists
+    WvString testfile1("%s/file1", basedir);
+    WvFile f(testfile1, O_CREAT | O_RDWR, 0755);
+    WVPASS(f.isok());
+    f.close();    
+    WVPASS(stat(testfile1.cstr(), &st1) == 0);
+    sleep(1);    
+    WVPASS(ftouch(testfile1));
+    WVPASS(stat(testfile1.cstr(), &st2) == 0);
+    WVPASS(st1.st_atime < st2.st_atime);
+    WVPASS(st1.st_mtime < st2.st_mtime);
+
+    // test creating a file
+    WvString testfile2("%s/file1", basedir);
+    WVPASS(ftouch(testfile2));
+    WVPASS(stat(testfile2.cstr(), &st1) == 0);    
+
+    unlink(testfile1);
+    unlink(testfile2);
+    rmdir(basedir);
+}

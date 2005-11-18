@@ -106,6 +106,18 @@ bool fcopy(WvStringParm srcdir, WvStringParm dstdir, WvStringParm relname)
 }
 
 
+bool ftouch(WvStringParm file)
+{
+    if (!WvFile(file, O_WRONLY|O_CREAT).isok())
+        return false;
+
+    if (utime(file, NULL) == 0)
+        return true;
+
+    return false;
+}
+
+
 bool samedate(WvStringParm file1, WvStringParm file2)
 {
     struct stat buf;
