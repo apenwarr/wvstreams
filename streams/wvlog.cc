@@ -184,6 +184,7 @@ WvLogRcv::WvLogRcv(WvLog::LogLevel _max_level) : custom_levels(5)
 {
     last_source = WvString();
     last_level = WvLog::NUM_LOGLEVELS;
+    last_time = 0;
     max_level = _max_level;
     at_newline = true;
 }
@@ -194,7 +195,7 @@ WvLogRcv::~WvLogRcv()
 }
 
 
-void WvLogRcv::_make_prefix()
+void WvLogRcv::_make_prefix(time_t now)
 {
     prefix = WvString("%s<%s>: ",
         last_source, loglevels[last_level]);
@@ -254,13 +255,18 @@ void WvLogRcv::log(WvStringParm source, int _loglevel,
     // only need to start a new line with new headers if they headers have
     // changed.  if the source and level are the same as before, just continue
     // the previous log entry.
-    if (source != last_source || loglevel != last_level || WvLogRcvBase::force_new_line)
+    time_t now = wvtime().tv_sec;
+    if (source != last_source
+            || loglevel != last_level
+            || last_time == 0 || now != last_time
+            || WvLogRcvBase::force_new_line)
     {
 	end_line();
 	last_source = source;
 	last_level = loglevel;
+        last_time = now;
+        _make_prefix(now);
     }
-    _make_prefix();
     
     const char *buf = (const char *)_buf, *bufend = buf + len, *cptr;
 

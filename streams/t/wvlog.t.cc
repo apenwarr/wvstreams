@@ -88,3 +88,25 @@ WVTEST_MAIN("timestamps")
     WVPASS(unlink(logfilename) == 0);
 }
 
+#if 0
+WVTEST_MAIN("wvlog performance")
+{
+    WvString logfilename = wvtmpfilename("wvlog-timestamps");
+    WvLogFileBase logfile(logfilename, WvLog::Debug);
+    WvLog log(__FUNCTION__, WvLog::Debug);
+    
+    time_t start;
+    start = time(NULL);
+    while (time(NULL) == start)
+        usleep(1000);
+    start = time(NULL);
+
+    int count = 0;
+    while (time(NULL) - start < 10)
+        log("Message %s\n", count++);
+
+    wvout->print("Total %s log messages\n", count);
+
+    WVPASS(unlink(logfilename) == 0);
+}
+#endif
