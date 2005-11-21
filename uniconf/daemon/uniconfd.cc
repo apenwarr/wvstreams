@@ -204,7 +204,7 @@ class UniConfd : public WvStreamsDaemon
 public:
 
     UniConfd() :
-            WvStreamsDaemon("uniconfd", WVSTREAMS_RELEASE,
+            WvStreamsDaemon("uniconfd", VERBOSE_PACKAGE_VERSION,
                 WvStreamsDaemonCallback(this, &UniConfd::startup)),
             needauth(false),
             port(DEFAULT_UNICONF_DAEMON_TCP_PORT),

@@ -1,6 +1,4 @@
 
-CXXFLAGS+=-DWVSTREAMS_RELEASE=\"$(PACKAGE_VERSION)\"
-
 libuniconf.so libuniconf.a: \
 	$(filter-out uniconf/daemon/uniconfd.o, \
 	     $(call objects,uniconf/daemon))

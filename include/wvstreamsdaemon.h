@@ -93,19 +93,6 @@ public:
         init(cb, ud);
     }
 
-    //! Construct a new WvStreamsDaemon with given name and
-    //! use the cb function to populate the daemon with its initial streams
-    WvStreamsDaemon(WvStringParm name, 
-            WvStreamsDaemonCallback cb,
-            void *ud = NULL) :
-        WvDaemon(name,
-            WvDaemonCallback(this, &WvStreamsDaemon::start_cb),
-            WvDaemonCallback(this, &WvStreamsDaemon::run_cb),
-            WvDaemonCallback(this, &WvStreamsDaemon::stop_cb))
-    {
-        init(cb, ud);
-    }
-
     //! Add a stream to the daemon; don't do anything if it goes !isok().
     //! This should be called from the WvStreamsDaemonCallback function
     //! passed to the constructor.

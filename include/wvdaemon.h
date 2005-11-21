@@ -17,20 +17,6 @@ class WvDaemon;
 
 typedef WvCallback<void, WvDaemon &, void *> WvDaemonCallback;
 
-#ifdef WEAVER_CODENAME
-#ifdef WEAVER_VER_STRING
-#define WVDAEMON_DEFAULT_VERSION WEAVER_CODENAME ": " WEAVER_VER_STRING
-#else
-#define WVDAEMON_DEFAULT_VERSION WEAVER_CODENAME
-#endif
-#else
-#ifdef WEAVER_VER_STRING
-#define WVDAEMON_DEFAULT_VERSION WEAVER_VER_STRING
-#else
-#define WVDAEMON_DEFAULT_VERSION "(unknown version)"
-#endif
-#endif
-    	
 /*!
 @brief WvDaemon - High-level abstraction for creating daemon processes.
 
@@ -175,17 +161,6 @@ class WvDaemon
             log(_name, WvLog::Debug)
         {
             init(_name, _version, _start_callback, _run_callback, _stop_callback, _ud);
-        }
-        //! Construct a new daemon; requires the name
-        //! and three callbacks for the functionality of the daemon
-    	WvDaemon(WvStringParm _name,
-                WvDaemonCallback _start_callback,
-    	    	WvDaemonCallback _run_callback,
-    	    	WvDaemonCallback _stop_callback,
-                void *_ud = NULL) :
-            log(_name, WvLog::Debug)
-        {
-            init(_name, WVDAEMON_DEFAULT_VERSION, _start_callback, _run_callback, _stop_callback, _ud);
         }
     	
     	//! Run the daemon with no argument processing.  Returns exit status.
