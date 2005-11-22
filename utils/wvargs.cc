@@ -660,12 +660,14 @@ void WvArgs::remove_all_options()
 void WvArgs::add_required_arg(WvStringParm desc)
 {
     num_required_args++;
-    add_optional_arg(desc); 
+
+    if (args_desc.len() > 0)
+	args_desc.append(" ");
+    args_desc.append("%s", desc);
 }
 
 void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
 {
-    // an optional arg is a required arg without the requirement :-)
     if (args_desc.len() > 0)
 	args_desc.append(" ");
     args_desc.append("[%s]", desc);
