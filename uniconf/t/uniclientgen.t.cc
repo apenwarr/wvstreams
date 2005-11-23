@@ -260,3 +260,32 @@ WVTEST_MAIN("refresh")
     unlink(ini_file);
 }
 
+int save_callback_calls;
+void save_callback()
+{
+    ++save_callback_calls;
+}
+
+WVTEST_MAIN("SaveCallback")
+{
+    UniConfRoot uniconf;
+
+    WvString ini_file("/tmp/wvtest-uniclientgen-refresh-%s.ini", getpid());
+    unlink(ini_file);
+
+    UniIniGen *ini_gen = new UniIniGen(ini_file, 0600, save_callback);
+    uniconf.mountgen(ini_gen);
+    
+    int items = 0;
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+
+    save_callback_calls = 0;
+    uniconf.commit();
+    WVPASS(save_callback_calls >= items);
+    
+    unlink(ini_file);
+}
