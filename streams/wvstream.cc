@@ -684,6 +684,8 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
 
     if (!isok()) return false;
 
+    wvstime_sync();
+
     bool sure = pre_select(si);
     if (globalstream && forceable && (globalstream != this))
     {
@@ -739,7 +741,9 @@ int WvStream::_do_select(SelectInfo &si)
 bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 {
     if (!isok()) return false;
-    
+
+    wvstime_sync();
+        
     bool sure = post_select(si);
     if (globalstream && forceable && (globalstream != this))
     {
@@ -811,7 +815,7 @@ void WvStream::undo_force_select(bool readable, bool writable, bool isexception)
 void WvStream::alarm(time_t msec_timeout)
 {
     if (msec_timeout >= 0)
-        alarm_time = msecadd(wvtime(), msec_timeout);
+        alarm_time = msecadd(wvstime(), msec_timeout);
     else
 	alarm_time = wvtime_zero;
 }
@@ -821,7 +825,7 @@ time_t WvStream::alarm_remaining()
 {
     if (alarm_time.tv_sec)
     {
-	WvTime now = wvtime();
+	WvTime now = wvstime();
 
 	// Time is going backward!
 	if (now < last_alarm_check)

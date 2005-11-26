@@ -61,3 +61,14 @@ WvTime tvdiff(const WvTime &a, const WvTime &b)
     return c;
 }
 
+static WvTime wvstime_cur = wvtime();
+
+const WvTime &wvstime()
+{
+    return wvstime_cur;
+}
+
+void wvstime_sync()
+{
+    wvstime_cur = wvtime();
+}
