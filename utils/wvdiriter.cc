@@ -117,11 +117,11 @@ bool WvDirIter::next()
                 else
                     info.relname = WvString("%s%s", relpath, info.name);
 
-                ok = ( lstat( info.fullname, &info ) == 0
-                            && strcmp( dent->d_name, "." )
+                bool statsucceeded = lstat( info.fullname, &info ) == 0;
+                ok = (statsucceeded && strcmp( dent->d_name, "." )
                             && strcmp( dent->d_name, ".." ) );
 
-                if (ok && !found_top)
+                if (statsucceeded && !strcmp( dent->d_name, "." ) && !found_top)
                 {
                     lstat(info.fullname, &topdir);
                     topdir.fullname = info.fullname;
