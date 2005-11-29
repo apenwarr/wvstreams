@@ -41,6 +41,7 @@ WvDirIter::WvDirIter( WvStringParm _dirname,
         Dir * dd = new Dir( d, dirname );
         dirs.prepend( dd, true );
     }
+
 }
 
 WvDirIter::~WvDirIter()
@@ -76,6 +77,11 @@ void WvDirIter::rewind()
         dir.rewind();
         dir.next();
         rewinddir( dir->d );
+
+        lstat(dir->dirname, &topdir);
+        topdir.fullname = WvString("%s/.", dir->dirname);
+        topdir.name = WvString(".");
+        topdir.relname = WvString(".");
     }
 }
 
@@ -116,19 +122,10 @@ bool WvDirIter::next()
                     info.relname = info.name;
                 else
                     info.relname = WvString("%s%s", relpath, info.name);
-
-                bool statsucceeded = lstat( info.fullname, &info ) == 0;
-                ok = (statsucceeded && strcmp( dent->d_name, "." )
-                            && strcmp( dent->d_name, ".." ) );
-
-                if (statsucceeded && !strcmp( dent->d_name, "." ) && !found_top)
-                {
-                    lstat(info.fullname, &topdir);
-                    topdir.fullname = info.fullname;
-                    topdir.name = info.name;
-                    topdir.relname = info.relname;
-                    found_top = true;
-                }
+                
+                ok = (lstat( info.fullname, &info ) == 0
+                        && strcmp( dent->d_name, "." )
+                        && strcmp( dent->d_name, ".." ) );
             }
         } while( dent && !ok );
 
