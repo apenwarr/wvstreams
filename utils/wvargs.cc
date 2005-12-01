@@ -950,23 +950,23 @@ void WvArgs::remove_all_options()
 void WvArgs::add_required_arg(WvStringParm desc)
 {
     data->add_required_arg();
-    add_optional_arg(desc, false);
+    if (!!args_doc)
+	args_doc.append(" ");
+    args_doc.append(desc);
+    if (data->maximum_args < LONG_MAX)
+	++(data->maximum_args);
 }
 
 
 void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
 {
     // an optional arg is a required arg without the requirement :-)
-    if (!!args_doc)
-	args_doc.append(" ");
-    args_doc.append("[%s]", desc);
+    add_required_arg(WvString("[%s]", desc));
     if (multiple)
     {
 	args_doc.append("...");
 	data->maximum_args = LONG_MAX;
     }
-    if (data->maximum_args < LONG_MAX)
-	++(data->maximum_args);
 }
 
 
