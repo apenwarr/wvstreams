@@ -514,7 +514,7 @@ public:
 	if (cb(arg, ud))
 	    return WvString::null;
 	else
-	    return WvString("invalid option: '%s', arg");
+	    return WvString("invalid option: `%s'", arg);
     }
 };
 
@@ -777,7 +777,7 @@ bool WvArgs::process(int argc, char **argv, WvStringList *remaining_args)
     else if (header)
 	prog_doc = WvString("%s", header);
     else if (footer)
-	prog_doc = WvString("\v%s", footer);
+	prog_doc = WvString(" \v%s", footer);
 
     // Setup the constant version number and e-mail address
     argp_program_version = version;
