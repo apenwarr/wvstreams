@@ -18,6 +18,27 @@
 #define snprintf _snprintf
 #endif
 
+class WvDefaultLogRcv : public WvLogRcv
+{
+public:
+    WvDefaultLogRcv::WvDefaultLogRcv(WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS) :
+        WvLogRcv(_max_level)
+    {
+    }
+
+
+    WvDefaultLogRcv::~WvDefaultLogRcv()
+    {
+        end_line();
+    }
+
+
+    void WvDefaultLogRcv::_mid_line(const char *str, size_t len)
+    {
+        ::write(2, str, len);
+    }
+};
+
 WvLogRcvBaseList WvLog::receivers;
 int WvLog::num_receivers = 0, WvLog::num_logs = 0;
 WvLogRcvBase *WvLog::default_receiver = NULL;
@@ -93,9 +114,8 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
     {
 	if (!default_receiver)
 	{
-	    // nobody's listening -- create a receiver on the console
-	    int xfd = dup(2);
-	    default_receiver = new WvLogConsole(xfd);
+        // nobody's listening -- create a default receiver
+        default_receiver = new WvDefaultLogRcv();
 	    num_receivers--; // default does not qualify!
 	}
 	default_receiver->log(app, loglevel,
