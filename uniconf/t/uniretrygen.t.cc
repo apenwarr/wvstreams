@@ -8,18 +8,31 @@
 #include <signal.h>
 
 
-static WvString socket("/tmp/uniretrygen-uniconfd-%s", getpid());
-static WvString ini("/tmp/uniretrygen-uniconfd.ini-%s", getpid());
+struct UniRetryGenTester
+{
+    WvString socket;
+    WvString ini;
+    pid_t uniconfd_pid;
+    UniRetryGenTester() :
+        socket("/tmp/uniretrygen-uniconfd-%s", getpid()),
+        ini("/tmp/uniretrygen-uniconfd.ini-%s", getpid()),
+        uniconfd_pid(0)
+    { }
+};
 
 
 static void kill_and_wait(pid_t _pid)
 {
+    // Never ever try to fiddle with pid 0 or -1
+    if (_pid <=  0)
+        return;
+
     kill(_pid, 15);
     int status;
     pid_t rv = waitpid(_pid, &status, 0);
 
     while (rv == -1 && errno == EINTR)
-	waitpid(_pid, &status, 0);
+	rv = waitpid(_pid, &status, 0);
 
     // This fails randomly on SMP systems, and I wish I knew why.
     //WVPASSEQ(rv, _pid);
@@ -27,21 +40,21 @@ static void kill_and_wait(pid_t _pid)
 }
 
 
-void start_uniconfd(pid_t &uniconfd_pid)
+void start_uniconfd(UniRetryGenTester &t)
 {
-    WvString iniarg("ini:%s", ini);
+    WvString iniarg("ini:%s", t.ini);
     char *argv[] = {
 	"uniconfd",
 	"-f",
 	"-p", "0",
 	"-s", "0",
-	"-u", socket.edit(),
+	"-u", t.socket.edit(),
 	iniarg.edit(),
 	NULL
     };
 
-    unlink(socket);
-    if ((uniconfd_pid = fork()) == 0)
+    unlink(t.socket);
+    if ((t.uniconfd_pid = fork()) == 0)
     {
     	execv("uniconf/daemon/uniconfd", argv);
     	_exit(1);
@@ -50,9 +63,9 @@ void start_uniconfd(pid_t &uniconfd_pid)
 }
 
 
-void wait_for_connect()
+void wait_for_connect(UniRetryGenTester t)
 {
-    UniConfRoot another_cfg(WvString("retry:unix:%s", socket));
+    UniConfRoot another_cfg(WvString("retry:unix:%s", t.socket));
     
     for (;;)
     {
@@ -65,36 +78,36 @@ void wait_for_connect()
 }
 
 
-WVTEST_MAIN("uniconfd")
+WVTEST_MAIN("UniRetryGen: uniconfd")
 {
     signal(SIGPIPE, SIG_IGN);
 
-    pid_t uniconfd_pid;
+    UniRetryGenTester t;
     
-    unlink(ini);
+    unlink(t.ini);
     
-    UniConfRoot cfg(WvString("retry:unix:%s 100", socket));
+    UniConfRoot cfg(WvString("retry:unix:%s 100", t.socket));
     cfg["/key"].setme("value");
     WVPASS(!cfg["/key"].exists());
 
-    start_uniconfd(uniconfd_pid);
-    wait_for_connect();
+    start_uniconfd(t);
+    wait_for_connect(t);
 
     cfg["/key"].setme("value");
     WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
-    kill_and_wait(uniconfd_pid);
+    kill_and_wait(t.uniconfd_pid);
     
     WVPASS(!cfg["/key"].exists());
     
-    start_uniconfd(uniconfd_pid);
-    wait_for_connect();
+    start_uniconfd(t);
+    wait_for_connect(t);
     
     WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
-    kill_and_wait(uniconfd_pid);
+    kill_and_wait(t.uniconfd_pid);
 
     WVPASS(!cfg["/key"].exists());
 }
@@ -103,65 +116,64 @@ bool reconnected = false;
 void reconnect_cb(UniRetryGen &uni)
     { reconnected = true; }
 
-WVTEST_MAIN("reconnect callback")
+WVTEST_MAIN("UniRetryGen: reconnect callback")
 {
     signal(SIGPIPE, SIG_IGN);
+    UniRetryGenTester t;
 
-    pid_t uniconfd_pid;
-    
-    unlink(ini);
+    unlink(t.ini);
     
     UniConfRoot cfg;
-    cfg.mountgen(new UniRetryGen(WvString("unix:%s", socket),
+    cfg.mountgen(new UniRetryGen(WvString("unix:%s", t.socket),
                 UniRetryGen::ReconnectCallback(reconnect_cb), 100));
 
     reconnected = false;
 
-    start_uniconfd(uniconfd_pid);
+    start_uniconfd(t);
 
-    wait_for_connect();
+    wait_for_connect(t);
     
     cfg.getme(); // Do something to reconnect
     WVPASS(reconnected);
 
-    kill_and_wait(uniconfd_pid);
+    kill_and_wait(t.uniconfd_pid);
 }
 
-WVTEST_MAIN("immediate reconnect")
+WVTEST_MAIN("UniRetryGen: immediate reconnect")
 {
     signal(SIGPIPE, SIG_IGN);
 
-    pid_t uniconfd_pid;
+    UniRetryGenTester t;
     
-    unlink(ini);
+    unlink(t.ini);
 
     // Need to set the reconnect delay to 0 to read immediately
-    UniConfRoot cfg(WvString("retry:unix:%s 0", socket));
+    UniConfRoot cfg(WvString("retry:unix:%s 0", t.socket));
 
-    start_uniconfd(uniconfd_pid);
-    wait_for_connect();
+    start_uniconfd(t);
+    wait_for_connect(t);
 
     cfg["/key"].setme("value");
     WVPASSEQ(cfg["/key"].getme(), "value");
     
     cfg.commit();
-    kill_and_wait(uniconfd_pid);
+    kill_and_wait(t.uniconfd_pid);
     
     // don't check anything before restarting so cfg doesn't know that
     // uniconfd has disconnected.
-    start_uniconfd(uniconfd_pid);
-    wait_for_connect();
+    start_uniconfd(t);
+    wait_for_connect(t);
 
     cfg.getme(); // Do something to reconnect
     WVPASSEQ(cfg["/key"].getme(), "value");
 
-    kill_and_wait(uniconfd_pid);
+    kill_and_wait(t.uniconfd_pid);
 
     WVPASS(!cfg["/key"].exists());
 }
 
 
-WVTEST_MAIN("mount point exists")
+WVTEST_MAIN("UniRetryGen: mount point exists")
 {
     // bug 9769
     UniConfRoot uniconf("temp:");

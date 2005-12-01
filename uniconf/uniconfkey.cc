@@ -4,6 +4,7 @@
  *
  * A UniConf hierarchical key path abstraction.
  */
+#include "wvassert.h"
 #include "wvstream.h"
 #include "uniconfkey.h"
 #include <climits>
@@ -302,6 +303,7 @@ bool UniConfKey::suborsame(const UniConfKey &key, WvString &subkey) const
 UniConfKey UniConfKey::subkey(const UniConfKey &key) const
 {
     WvString answer;
-    assert(suborsame(key, answer));
+    wvassert(suborsame(key, answer),
+	     "this = '%s'\nkey = '%s'", printable(), key);
     return answer;
 }
