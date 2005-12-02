@@ -962,6 +962,8 @@ void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
 {
     // an optional arg is a required arg without the requirement :-)
     add_required_arg(WvString("[%s]", desc));
+    if (data->maximum_args < LONG_MAX)
+	--(data->maximum_args);
     if (multiple)
     {
 	args_doc.append("...");
