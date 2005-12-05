@@ -25,7 +25,12 @@ WV_LINK(UniClientGen);
 #include "wvunixsocket.h"
 static IUniConfGen *unixcreator(WvStringParm s, IObject *, void *)
 {
-    return new UniClientGen(new WvUnixConn(s));
+    WvConstInPlaceBuf buf(s, s.len());
+    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
+    if (!one) one = "";
+    if (!two) two = "";
+
+    return new UniClientGen(new WvUnixConn(one), one, two);
 }
 static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 #endif
@@ -33,25 +38,35 @@ static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 
 static IUniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
 {
-    WvString s(_s);
+    WvConstInPlaceBuf buf(_s, _s.len());
+    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
+    if (!one) one = "";
+    if (!two) two = "";
+
+    WvString s = one;
     char *cptr = s.edit();
     
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_TCP_PORT);
     
-    return new UniClientGen(new WvTCPConn(s), _s);
+    return new UniClientGen(new WvTCPConn(s), one, two);
 }
 
 
 static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
 {
-    WvString s(_s);
+    WvConstInPlaceBuf buf(_s, _s.len());
+    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
+    if (!one) one = "";
+    if (!two) two = "";
+
+    WvString s = one;
     char *cptr = s.edit();
     
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_SSL_PORT);
     
-    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), _s);
+    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), one, two);
 }
 
 
@@ -97,7 +112,8 @@ static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 /***** UniClientGen *****/
 
-UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) 
+UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst,
+        const UniConfKey &restrict_key) 
     : log(WvString("UniClientGen to %s",
 		   dst.isnull() && stream->src() 
 		   ? *stream->src() : WvString(dst))),
@@ -110,6 +126,11 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, "uniclientconn-via-gen");
+
+    conn->writecmd(UniClientConn::REQ_RESTRICT,
+            wvtcl_escape(restrict_key));
+    if (!do_select())
+        log(WvLog::Warning, "Failed to send restrict key\n");
 }
 
 

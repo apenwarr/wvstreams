@@ -12,6 +12,7 @@
 #include "wvlog.h"
 #include "wvstringlist.h"
 #include "uniclientconn.h"
+#include "uniconfkey.h"
 
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
@@ -49,7 +50,8 @@ public:
      * the specified stream.
      * "stream" is the raw connection
      */
-    UniClientGen(IWvStream *stream, WvStringParm dst = WvString::null);
+    UniClientGen(IWvStream *stream, WvStringParm dst = WvString::null,
+            const UniConfKey &restrict_key = UniConfKey());
 
     virtual ~UniClientGen();
 
