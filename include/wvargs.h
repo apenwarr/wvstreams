@@ -284,7 +284,7 @@ class WvArgs
     	//!
     	//! \param The description of the parameter
     	//!
-        void add_required_arg(WvStringParm desc);
+        void add_required_arg(WvStringParm desc, bool multiple = false);
     	//!
     	//! Add an optional argument to the list of parameters.
     	//!
