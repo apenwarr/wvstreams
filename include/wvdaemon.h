@@ -28,7 +28,7 @@ and SIGHUP signals.
 By default, daemons implemented through WvDaemon provide the following
 command line options:
 
--q|--quit: decrease the log level by one
+-q|--quiet: decrease the log level by one
 -v|--verbose: increase the log level by one
 -d|--daemonize: fork into the background (implies --syslog)
 -s|--syslog: write log entries to the syslog() facility
