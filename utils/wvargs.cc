@@ -55,6 +55,7 @@ public:
     void zap();
 
     void add_required_arg();
+    void subtract_required_arg();
     const WvStringList &args() const;
 
     static error_t parser(int key, char *arg, argp_state *state);
@@ -702,6 +703,12 @@ void WvArgsData::add_required_arg()
 }
 
 
+void WvArgsData::subtract_required_arg()
+{
+    --required_args;
+}
+
+
 const WvStringList &WvArgsData::args() const
 {
     return args_;
@@ -947,6 +954,10 @@ void WvArgs::remove_all_options()
 }
 
 
+static inline void add_arg_helper(WvArgs *args, WvStringParm desc)
+{
+}
+
 void WvArgs::add_required_arg(WvStringParm desc)
 {
     data->add_required_arg();
@@ -962,8 +973,7 @@ void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
 {
     // an optional arg is a required arg without the requirement :-)
     add_required_arg(WvString("[%s]", desc));
-    if (data->maximum_args < LONG_MAX)
-	--(data->maximum_args);
+    data->subtract_required_arg();
     if (multiple)
     {
 	args_doc.append("...");
