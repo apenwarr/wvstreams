@@ -128,10 +128,13 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst,
         &UniClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, "uniclientconn-via-gen");
 
-    conn->writecmd(UniClientConn::REQ_RESTRICT,
-            wvtcl_escape(restrict_key));
-    if (!do_select())
-        log(WvLog::Warning, "Failed to send restrict key\n");
+    if (conn->isok())
+    {
+        conn->writecmd(UniClientConn::REQ_RESTRICT,
+                wvtcl_escape(restrict_key));
+        if (!do_select())
+            log(WvLog::Warning, "Failed to send restrict key\n");
+    }
 }
 
 
