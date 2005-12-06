@@ -221,7 +221,7 @@ bool WvStreamClone::post_select(SelectInfo &si)
     // still have it here in case it ever becomes useful
     bool result = WvStream::post_select(si);
     bool val, want_write;
-
+    
     if (cloned && cloned->should_flush())
 	flush(0);
 

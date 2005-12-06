@@ -136,7 +136,7 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, "\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
-
+    
     if (pid > 0)
     {
         // Wait up to 10 seconds for child to write wvcrash file in case there

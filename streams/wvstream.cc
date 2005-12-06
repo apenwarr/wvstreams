@@ -633,7 +633,7 @@ bool WvStream::pre_select(SelectInfo &si)
 	si.wants.writable |= writecb;
 	si.wants.isexception |= exceptcb;
     }
-
+    
     // handle read-ahead buffering
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
     {

@@ -79,7 +79,7 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     //BoolGuard guard(in_select);
     bool already_sure = false;
     SelectRequest oldwant;
-
+    
     dead_stream = false;
     
     sure_thing.zap();
@@ -132,7 +132,7 @@ bool WvIStreamList::post_select(SelectInfo &si)
     //BoolGuard guard(in_select);
     bool already_sure = dead_stream;
     SelectRequest oldwant = si.wants;
-
+    
     dead_stream = false;
 
     time_t alarmleft = alarm_remaining();
