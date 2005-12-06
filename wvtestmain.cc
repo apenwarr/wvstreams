@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     WVFAIL(0);
     int startfd, endfd;
     char * const *prefixes = NULL;
-
+    
     if (argc > 1)
 	prefixes = argv + 1;
     
