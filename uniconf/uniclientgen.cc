@@ -117,6 +117,7 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst,
     : log(WvString("UniClientGen to %s",
 		   dst.isnull() && stream->src() 
 		   ? *stream->src() : WvString(dst))),
+      timeout(60*1000),
       version(0)
 {
     cmdinprogress = cmdsuccess = false;
@@ -140,6 +141,16 @@ UniClientGen::~UniClientGen()
 	conn->writecmd(UniClientConn::REQ_QUIT, "");
     WvIStreamList::globallist.unlink(conn);
     WVRELEASE(conn);
+}
+
+
+time_t UniClientGen::set_timeout(time_t _timeout)
+{
+    if (_timeout < 1000)
+        timeout = 1000;
+    else
+        timeout = _timeout;
+    return timeout;
 }
 
 
@@ -279,28 +290,8 @@ UniClientGen::Iter *UniClientGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-time_t uptime()
-{
-    WvFile f("/proc/uptime", O_RDONLY);
-    if (f.isok())
-        return WvString(f.getline(0)).num();
-    return 0;
-}
-
-
 void UniClientGen::conncallback(WvStream &stream, void *userdata)
 {
-    if (conn->alarm_was_ticking && timeout_activity+(TIMEOUT/1000) < uptime())
-    {
-        // command response took too long!
-        log(WvLog::Warning, "Command timeout; connection closed.\n");
-        cmdinprogress = false;
-        cmdsuccess = false;
-        conn->close();
-        
-        return;
-    }
-
     UniClientConn::Command command = conn->readcmd();
     static const WvStringMask nasty_space(' ');
     switch (command)
@@ -407,27 +398,51 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 // FIXME: horribly horribly evil!!
 bool UniClientGen::do_select()
 {
+    wvstime_sync();
+
     hold_delta();
     
     cmdinprogress = true;
     cmdsuccess = false;
 
-    timeout_activity = uptime();
-    conn->alarm(TIMEOUT);
+    time_t remaining = timeout;
+    const time_t clock_error = 10*1000;
+    WvTime timeout_at = msecadd(wvstime(), timeout);
     while (conn->isok() && cmdinprogress)
     {
 	// We would really like to run the "real" wvstreams globallist
 	// select loop here, but we can't because we may already be inside
 	// someone else's callback or something.  So we'll wait on *only* this
 	// connection.
-        if (conn->select(-1, true, false))
-        {
+        //
+        // We could do this using alarm()s, but because of very strage behaviour
+        // due to inherit_request in post_select when calling the long WvStream::select()
+        // prototype as we do here we have to do the remaining stuff outselves
+        time_t last_remaining = remaining;
+        bool result = conn->select(remaining, true, false);
+        remaining = msecdiff(timeout_at, wvstime());
+        if (result)
             conn->callback();
-            timeout_activity = uptime();
-            conn->alarm(TIMEOUT);
+        else if (remaining <= 0 && remaining > -clock_error)
+        {
+            log(WvLog::Warning, "Command timeout; connection closed.\n");
+            cmdinprogress = false;
+            cmdsuccess = false;
+            conn->close();
+        }
+
+        if (result
+                || remaining <= -clock_error
+                || remaining >= last_remaining + clock_error)
+        {
+            if (!result)
+                log(WvLog::Debug,
+                        "Clock appears to have jumped; resetting"
+                        " connection remaining.\n");
+            remaining = timeout;
+            timeout_at = msecadd(wvstime(), timeout);
         }
     }
-    conn->alarm(-1);
 
 //    if (!cmdsuccess)
 //        seterror("Error: server timed out on response.");
