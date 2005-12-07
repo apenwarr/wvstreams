@@ -250,6 +250,7 @@ public:
 		"name=moniker",
 		WvArgs::ArgCallback(this, &UniConfd::namedgen_cb), NULL);
 #endif
+	args.add_optional_arg("MONIKERS", true);
     }
     
     
