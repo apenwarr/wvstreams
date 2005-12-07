@@ -31,7 +31,7 @@
 # define VALGRIND_COUNT_LEAKS(a,b,c,d) (a=b=c=d=0)
 #endif
 
-#define MAX_TEST_TIME 40     // max seconds for a single test to run
+#define MAX_TEST_TIME 40      // max seconds for a single test to run
 #define MAX_TOTAL_TIME 120*60 // max seconds for the entire suite to run
 
 static int memerrs()
@@ -318,11 +318,11 @@ bool WvTest::start_check_eq(const char *file, int line,
 
 
 bool WvTest::start_check_eq(const char *file, int line, 
-                            int a, int b, bool expect_pass)
+                            off_t a, off_t b, bool expect_pass)
 {
     size_t len = 128 + 128 + 8 + 1;
     char *str = new char[len];
-    sprintf(str, "%d %s %d", a, expect_pass ? "==" : "!=", b);
+    sprintf(str, "%llu %s %llu", a, expect_pass ? "==" : "!=", b);
     
     start(file, line, str);
     delete[] str;
@@ -334,6 +334,7 @@ bool WvTest::start_check_eq(const char *file, int line,
     check(cond);
     return cond;
 }
+
 
 bool WvTest::start_check_lt(const char *file, int line,
 			    const char *a, const char *b)
