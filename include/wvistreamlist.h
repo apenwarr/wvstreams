@@ -35,15 +35,15 @@ public:
     {
 	WvIStreamListBase::add_after(after, data, autofree, id);
     }
-    void append(IWvStream *data, bool autofree, const char *id)
+    void append(IWvStream *data, bool autofree, char *id)
     {
 	WvIStreamListBase::append(data, autofree, id);
     }
-    void add(IWvStream *data, bool autofree, const char *id)
+    void add(IWvStream *data, bool autofree, char *id)
     {
 	WvIStreamListBase::add(data, autofree, id);
     }
-    void prepend(IWvStream *data, bool autofree, const char *id)
+    void prepend(IWvStream *data, bool autofree, char *id)
     {
 	WvIStreamListBase::prepend(data, autofree, id);
     }

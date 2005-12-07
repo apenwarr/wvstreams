@@ -261,7 +261,7 @@ public:
      * "id" is an optional string to associate with the element, or null
      */
     void add_after(WvLink *after, T *data, bool autofree,
-			const char *id = NULL )
+			char *id = NULL )
     {
 	(void)new WvLink((void *)data, after, tail, autofree, id);
     }
@@ -273,14 +273,14 @@ public:
      * "autofree" is if true, takes ownership of the element
      * "id" is an optional string to associate with the element, or null
      */
-    void append(T *data, bool autofree, const char *id = NULL)
+    void append(T *data, bool autofree, char *id = NULL)
 	{ add_after(tail, data, autofree, id); }
 
     /**
      * Synonym for append(T*, bool, char*).
      * @see append(T*, bool, char*)
      */
-    void add(T *data, bool autofree, const char *id = NULL)
+    void add(T *data, bool autofree, char *id = NULL)
         { append(data, autofree, id); }
 
     /**
@@ -290,7 +290,7 @@ public:
      * "autofree" is if true, takes ownership of the element
      * "id" is an optional string to associate with the element, or null
      */
-    void prepend(T *data, bool autofree, const char *id = NULL)
+    void prepend(T *data, bool autofree, char *id = NULL)
 	{ add_after(&head, data, autofree, id); }
 
     /**
