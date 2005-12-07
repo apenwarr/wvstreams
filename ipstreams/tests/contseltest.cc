@@ -66,8 +66,8 @@ int main()
 
     log("Listening on port %s\n", *listen.src());
     
-    l.append(&listen, false);
-    l.append(wvcon, false);
+    l.append(&listen, false, "listener");
+    l.append(wvcon, false, "wvcon");
     
     while (listen.isok() && wvcon->isok())
     {
