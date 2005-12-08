@@ -69,8 +69,7 @@ void WvMonikerRegistry::del(WvStringParm id)
 }
 
 
-void *WvMonikerRegistry::create(WvStringParm _s,
-				IObject *obj, void *userdata)
+void *WvMonikerRegistry::create(WvStringParm _s)
 {
     WvString t(_s);
     WvString s(trim_string(t.edit()));
@@ -85,7 +84,7 @@ void *WvMonikerRegistry::create(WvStringParm _s,
     
     Registration *r = dict[s];
     if (r)
-	return r->func(cptr, obj, userdata);
+	return r->func(cptr);
     else
 	return NULL;
 }
@@ -185,14 +184,13 @@ WvMonikerBase::~WvMonikerBase()
 }
 
 
-void *wvcreate(const UUID &iid,
-	       WvStringParm moniker, IObject *obj, void *userdata)
+void *wvcreate(const UUID &iid, WvStringParm moniker)
 {
     assert(!moniker.isnull());
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);
     if (reg)
     {
-	void *ret = reg->create(moniker, obj, userdata);
+	void *ret = reg->create(moniker);
 	WVRELEASE(reg);
 	return ret;
     }

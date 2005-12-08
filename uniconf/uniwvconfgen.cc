@@ -28,13 +28,9 @@ public:
 };
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *obj)
+static IUniConfGen *creator(WvStringParm s)
 {
-    if (!obj)
-	obj = new WvConf(s);
-    
-    // FIXME EEK!  This never deletes the WvConf object!
-    return new UniWvConfGen(*(WvConf *)obj);
+    return new UniWvConfGen(new WvConf(s));
 }
 
 static WvMoniker<IUniConfGen> reg("wvconf", creator);
@@ -53,11 +49,18 @@ void UniWvConfGen::notify(void *userdata, WvStringParm section,
 }
 
 
-UniWvConfGen::UniWvConfGen(WvConf &_cfg):
+UniWvConfGen::UniWvConfGen(WvConf *_cfg):
     tempkey(NULL), tempvalue(), cfg(_cfg)
 {
-    cfg.add_callback(WvConfCallback(this, &UniWvConfGen::notify), NULL,
-		     "", "", this);
+    cfg->add_callback(WvConfCallback(this, &UniWvConfGen::notify), NULL,
+		      "", "", this);
+}
+
+
+UniWvConfGen::~UniWvConfGen()
+{
+    if (cfg)
+	delete cfg;
 }
 
 
@@ -66,7 +69,7 @@ WvString UniWvConfGen::get(const UniConfKey &key)
     if (tempkey && key == *tempkey)
 	return tempvalue;
     else
-	return cfg.get(key.first(), key.last(key.numsegments() - 1));
+	return cfg->get(key.first(), key.last(key.numsegments() - 1));
 }
 
 
@@ -75,11 +78,11 @@ void UniWvConfGen::set(const UniConfKey &key, WvStringParm value)
     WvString section = key.first();
     WvString keyname = key.last(key.numsegments() - 1);
 
-    WvConfigSection *sect = cfg[section];
+    WvConfigSection *sect = (*cfg)[section];
     if (value == WvString::null && sect)
-        cfg.delete_section(key);
+        cfg->delete_section(key);
     else
-        cfg.set(section, keyname, value);
+        cfg->set(section, keyname, value);
 }
 
 
@@ -91,7 +94,7 @@ void UniWvConfGen::setv(const UniConfPairList &pairs)
 
 bool UniWvConfGen::haschildren(const UniConfKey &key)
 {
-    WvConfigSection *sect = cfg[key];
+    WvConfigSection *sect = (*cfg)[key];
     if (sect)
         return true;
     return false;
@@ -100,7 +103,7 @@ bool UniWvConfGen::haschildren(const UniConfKey &key)
 
 UniWvConfGen::Iter *UniWvConfGen::iterator(const UniConfKey &key)
 {
-    WvConfigSection *sect = cfg[key];
+    WvConfigSection *sect = (*cfg)[key];
 
     if (sect)
         return new WvConfIter(sect);

@@ -38,36 +38,19 @@ public:
 
 
 
-// if 'obj' is non-NULL and is a UniConfGen then whoever invoked this is being
-// silly. we'll make a list and add the single generator to it anyways, for the
-// sake of not breaking things
-//
-// otherwise, treat the moniker as a tcl list of monikers and add the generator
-// made by each moniker to the generator list
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     UniConfGenList *l = new UniConfGenList();
-    IUniConfGen *gen = NULL;
 
-    if (obj)
+    WvStringList gens;
+    wvtcl_decode(gens, s);
+    WvStringList::Iter i(gens);
+
+    for (i.rewind(); i.next();)
     {
-        gen = mutate<IUniConfGen>(obj);
-        if (gen)
-            l->append(gen, true);
-    }
-
-    if (!gen)
-    {
-        WvStringList gens;
-        wvtcl_decode(gens, s);
-        WvStringList::Iter i(gens);
-
-        for (i.rewind(); i.next();)
-        {
-            gen = wvcreate<IUniConfGen>(i());
-            if (gen)
-                l->append(gen, true);
-        }
+	IUniConfGen *gen = wvcreate<IUniConfGen>(i());
+	if (gen)
+	    l->append(gen, true);
     }
 
     return new UniListGen(l);

@@ -22,14 +22,14 @@ static void pool_init()
 }
 
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
+static IWvStream *creator(WvStringParm s)
 {
     pool_init();
     return pool->addurl(WvString("http:%s", s), "", false);
 }
 
 
-static IWvStream *screator(WvStringParm s, IObject *, void *)
+static IWvStream *screator(WvStringParm s)
 {
     pool_init();
     return pool->addurl(WvString("https:%s", s), "", false);

@@ -75,9 +75,7 @@ WVTEST_MAIN("UniTransactionGen functionality test")
 {
     UniTempGen *gen = new UniTempGen();
     UniConfRoot one(gen);
-    UniConfRoot two((UniConfGen*)
-		    wvcreate<IUniConfGen>("transaction",
-					  new UniUnwrapGen(one)));
+    UniConfRoot two(new UniTransactionGen(new UniUnwrapGen(one)));
     UniWatch mywatch2(two, callback2);
 
     // Test a TransactionGen with no changes.

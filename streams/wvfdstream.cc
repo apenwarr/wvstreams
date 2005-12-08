@@ -44,7 +44,7 @@ static inline bool isselectable(int s)
 
 /***** WvFdStream *****/
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
+static IWvStream *creator(WvStringParm s)
 {
     return new WvFdStream(s.num());
 }

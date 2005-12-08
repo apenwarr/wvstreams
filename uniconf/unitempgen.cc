@@ -10,7 +10,7 @@
 #include "wvstringcache.h"
 #include "unilistiter.h"
 
-static IUniConfGen *creator(WvStringParm, IObject *, void *)
+static IUniConfGen *creator(WvStringParm)
 {
     return new UniTempGen();
 }
