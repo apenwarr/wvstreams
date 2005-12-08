@@ -43,17 +43,17 @@ WvFile::WvFile(WvStringParm filename, int mode, int create_mode)
 }
 
 
-static IWvStream *increator(WvStringParm s, IObject *, void *)
+static IWvStream *increator(WvStringParm s)
 {
     return new WvFile(s, O_RDONLY, 0666);
 }
 
-static IWvStream *outcreator(WvStringParm s, IObject *, void *)
+static IWvStream *outcreator(WvStringParm s)
 {
     return new WvFile(s, O_WRONLY|O_CREAT|O_TRUNC, 0666);
 }
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
+static IWvStream *creator(WvStringParm s)
 {
     return new WvFile(s, O_RDWR|O_CREAT, 0666);
 }

@@ -76,7 +76,7 @@ public:
 WV_LINK(UniFsTreeGen);
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     return new UniAutoMountGen(s);
 }

@@ -18,11 +18,9 @@
 #pragma init_seg(lib)
 #endif
 
-static IWvStream *creator(WvStringParm s, IObject *obj, void *)
+static IWvStream *creator(WvStringParm s)
 {
-    if (!obj)
-	obj = wvcreate<IWvStream>(s);
-    return new WvStreamClone(mutate<IWvStream>(obj));
+    return new WvStreamClone(wvcreate<IWvStream>(s));
 }
 
 static WvMoniker<IWvStream> reg("clone", creator);

@@ -24,12 +24,13 @@ private:
 		WvStringParm oldval, WvStringParm newval);
 
 protected:
-    WvConf &cfg;
+    WvConf *cfg;
 
     class WvConfIter;
 
 public:
-    UniWvConfGen(WvConf &_cfg);
+    UniWvConfGen(WvConf *_cfg);
+    ~UniWvConfGen();
 
     /***** Overridden members *****/
 

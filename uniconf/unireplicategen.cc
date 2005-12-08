@@ -22,18 +22,10 @@ WV_LINK(UniReplicateGen);
 #endif
 
 
-// if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
-// given moniker.
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     IUniConfGenList gens;
 
-    if (obj)
-    {
-        IUniConfGen *gen = mutate<IUniConfGen>(obj);
-        if (gen)
-            gens.append(gen, false);
-    }
     if (gens.isempty())
     {
     	DPRINTF("encoded_monikers = %s\n", s.cstr());

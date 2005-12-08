@@ -12,7 +12,7 @@
 WV_LINK(UniFileSystemGen);
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     return new UniFileSystemGen(s, 0777);
 }

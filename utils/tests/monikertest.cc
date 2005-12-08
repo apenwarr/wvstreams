@@ -33,19 +33,19 @@ UUID_MAP_BEGIN(Test)
   UUID_MAP_END
 
 
-static IObject *createfunc(WvStringParm s, IObject *obj, void *userdata)
+static IObject *createfunc(WvStringParm s)
 {
     return new Test(s);
 }
 
 
-static IObject *createfunc2(WvStringParm s, IObject *obj, void *userdata)
+static IObject *createfunc2(WvStringParm s)
 {
     return new Test(WvString("bunk(%s)", s));
 }
 
 
-static ITest *createfunc3(WvStringParm s, IObject *obj, void *userdata)
+static ITest *createfunc3(WvStringParm s)
 {
     return new Test(WvString("stunk(%s)", s));
 }
