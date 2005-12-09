@@ -30,6 +30,20 @@ WVTEST_MAIN("WvHash(string) case insensitivity")
     WVPASS(WvHash("a") == WvHash("A"));
 }
 
+
+WVTEST_MAIN("hash table replacement")
+{
+    Intstr *a = new Intstr(5, "big");
+    Intstr *b = new Intstr(5, "small");
+    IntstrDict2 d(10);
+
+    d.add(a, true);
+    WVPASSEQ(d[5]->s, "big");
+    d.remove(a);
+    d.add(b, true);
+    WVPASSEQ(d[5]->s, "small");
+}
+
  
 WVTEST_MAIN("stresshash")
 {
