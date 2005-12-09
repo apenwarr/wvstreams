@@ -8,8 +8,6 @@
 #include "wvcont.h"
 #include "wvtimeutils.h"
 
-#include <sys/wait.h>
-
 class ReadableStream : public WvStream
 {
 public:
@@ -642,32 +640,4 @@ WVTEST_MAIN("self-redirection")
     s.runonce(0);
     WVPASS(rn == 2);
     s.terminate_continue_select();
-}
-
-WVTEST_MAIN("free detection")
-{
-    pid_t child = fork();
-    if (child == 0)
-    {
-        WvStream *t;
-        {
-            WvStream s;
-            t = &s;
-        }
-        t->runonce();
-        _exit(0);
-    }
-    WVPASS(child > 0);
-
-    pid_t rv;
-    int status;
-    while ((rv = waitpid(child, &status, 0)) != child)
-    {
-        // in case a signal is in the process of being delivered..
-        if (rv == -1 && errno != EINTR)
-            break;
-    }
-    WVPASS(rv == child);
-    WVPASS(WIFSIGNALED(status));
-    WVPASS(WTERMSIG(status) == 6);
 }

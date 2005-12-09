@@ -52,12 +52,6 @@ UUID_MAP_BEGIN(WvStream)
   UUID_MAP_END
 
 
-#ifdef DEBUG
-#include "wvhashtable.h"
-static WvMap<WvStream *, bool> *allocated_pointers = NULL;
-#endif
-
-
 WvStream::WvStream():
     read_requires_writable(NULL),
     write_requires_readable(NULL),
@@ -81,13 +75,6 @@ WvStream::WvStream():
 {
     TRACE("Creating wvstream %p\n", this);
     
-#ifdef DEBUG
-    if (allocated_pointers == NULL)
-        allocated_pointers = new WvMap<WvStream *, bool>(64);
-    assert(!allocated_pointers->exists(this) && "Double-allocated WvStream");
-    allocated_pointers->set(this, true);
-#endif
-
 #ifdef _WIN32
     WSAData wsaData;
     int result = WSAStartup(MAKEWORD(2,0), &wsaData); 
@@ -118,17 +105,6 @@ WvStream::~WvStream()
     assert(!uses_continue_select || !call_ctx);
     
     call_ctx = 0; // finish running the suspended callback, if any
-
-#ifdef DEBUG
-    assert(allocated_pointers->find(this) && "Double-freed WvStream");
-    allocated_pointers->remove(this);
-    if (allocated_pointers->isempty())
-    {
-        delete allocated_pointers;
-        allocated_pointers = NULL;
-    }
-#endif
-
     TRACE("done destroying %p\n", this);
 }
 
@@ -641,8 +617,6 @@ void WvStream::flush_then_close(int msec_timeout)
 
 bool WvStream::pre_select(SelectInfo &si)
 {
-    assert(allocated_pointers->find(this) && "pre_select freed stream");
-
     maybe_autoclose();
     
     time_t alarmleft = alarm_remaining();
@@ -669,8 +643,6 @@ bool WvStream::pre_select(SelectInfo &si)
 
 bool WvStream::post_select(SelectInfo &si)
 {
-    assert(allocated_pointers->find(this) && "post_select freed stream");
-
     // FIXME: need sane buffer flush support for non FD-based streams
     // FIXME: need read_requires_writable and write_requires_readable
     //        support for non FD-based streams
@@ -988,12 +960,4 @@ void WvStream::unread(WvBuf &unreadbuf, size_t count)
     tmp.merge(inbuf);
     inbuf.zap();
     inbuf.merge(tmp);
-}
-
-
-void WvStream::execute()
-{
-#ifdef DEBUG
-    assert(allocated_pointers->find(this) && "Executing freed stream");
-#endif
 }

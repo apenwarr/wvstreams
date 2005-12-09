@@ -638,7 +638,8 @@ protected:
      * Note: If you override this function in a derived class, you must
      * call the parent execute() yourself from the derived class.
      */
-    virtual void execute();
+    virtual void execute()
+        { }
     
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
