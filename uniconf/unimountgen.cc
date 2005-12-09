@@ -1,7 +1,7 @@
 /*
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- * 
+ *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
+ *
  * Defines a UniConfGen that manages a tree of UniConfGen instances.
  */
 #include "unimountgen.h"
@@ -177,13 +177,11 @@ IUniConfGen *UniMountGen::mount(const UniConfKey &key,
 			       WvStringParm moniker, bool refresh)
 {
     IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
-    if (gen)
-        mountgen(key, gen, refresh); // assume always succeeds for now
 #if DEBUG
     assert(gen && "Moniker doesn't get us a generator!");
 #endif
-    if (gen && !gen->exists("/"))
-        gen->set("/", "");
+    if (gen)
+	mountgen(key, gen, refresh); // assume always succeeds for now
     return gen;
 }
 
@@ -193,7 +191,7 @@ IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 {
     if (!gen)
 	return NULL;
-    
+
     UniGenMount *newgen = new UniGenMount(gen, key);
     gen->add_callback(this,
 		      WvBoundCallback<UniConfGenCallback, const UniConfKey&>
@@ -204,15 +202,16 @@ IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 
     makemount(key);
 
-    if (gen && refresh)
-        gen->refresh();
+    if (refresh)
+	gen->refresh();
 
     mounts.prepend(newgen, true);
-    
+
     delta(key, get(key));
     unhold_delta();
+
     if (!gen->exists("/"))
-        gen->set("/", "");
+	gen->set("/", "");
     return gen;
 }
 
