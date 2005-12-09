@@ -20,7 +20,10 @@ bool WvColorLogConsole::can_colorize(int fd, const char *TERM)
 {
     return is_tty(fd)
             && TERM != NULL
-            && (strcmp(TERM, "linux") == 0 || strcmp(TERM, "ansi") == 0);
+            && (strcmp(TERM, "linux") == 0
+                    || strcmp(TERM, "ansi") == 0
+                    || strcmp(TERM, "xterm") == 0
+                    || strcmp(TERM, "rxvt") == 0);
 }
 
 
