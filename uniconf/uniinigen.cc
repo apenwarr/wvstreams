@@ -151,7 +151,12 @@ bool UniIniGen::refresh()
                     key.prepend(section);
 		    
                     WvString value = line.getstr();
-		    assert(*value == '=');
+                    if (*value != '=')
+                    {
+                        log(WvLog::Error, "Internal error at %s:%s: value = %s\n",
+                                __FILE__, __LINE__, value);
+                        assert(*value == '=');
+                    }
                     value = wvtcl_unescape(trim_string(value.edit() + 1));
                     newgen->set(key, value.unique());
 

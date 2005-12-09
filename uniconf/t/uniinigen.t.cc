@@ -1,6 +1,7 @@
 #include "wvfile.h"
 #include "wvfileutils.h"
 #include "uniconfroot.h"
+#include "uniinigen.h"
 #ifdef _WIN32
 #include <sys/stat.h>
 #endif
@@ -310,5 +311,11 @@ WVTEST_MAIN("do not refresh if not requested")
     WVPASSEQ(childcount(cfg), 0);
 
     ::unlink(ininame);
+}
+
+WVTEST_MAIN("tricky characters")
+{
+    UniConfRoot u;
+    UniConfRoot("ini:uniconf/t/tricky.ini").copy(u, true);
 }
 
