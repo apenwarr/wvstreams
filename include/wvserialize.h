@@ -154,6 +154,10 @@ inline void _wv_serialize(WvBuf &buf, WvStringParm s)
 	buf.putstr(s);
     buf.put("", 1); // terminating nul
 }
+inline void _wv_serialize(WvBuf &buf, const char *s)
+{
+    _wv_serialize(buf, WvFastString(s));
+}
 
 
 /**
