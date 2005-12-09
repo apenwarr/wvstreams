@@ -203,6 +203,9 @@ void WvIStreamList::execute()
                     id? id: "(unidentified stream)");
             ::write(-1, strace_node, strace_node.len()); 
 #endif
+	    WvCrashWill my_will("executing stream: %s\n%s",
+				id ? id : "unknown stream",
+				wvcrash_read_will());
 	    s.callback();
         }
 	
