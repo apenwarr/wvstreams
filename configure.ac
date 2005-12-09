@@ -392,7 +392,10 @@ if test "$with_bdb" != "no"; then
     fi
     AC_CHECK_LIB(db, dbopen,, [with_bdb_lib=no])
     if test "$with_bdb_lib" = "no"; then
-        AC_CHECK_LIB(db1, dbopen, [with_bdb_lib=yes],)
+	AC_CHECK_LIB(db, __db185_open, [with_bdb_lib=yes],)
+	if test "$with_dbd_lib" = "no"; then
+            AC_CHECK_LIB(db1, dbopen, [with_bdb_lib=yes],)
+	fi
     fi
     if test "$with_bdb_lib" = "no"; then
         with_bdb=no
