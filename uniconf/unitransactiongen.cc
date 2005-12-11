@@ -3,15 +3,9 @@
 #include "unilistiter.h"
 #include "wvmoniker.h"
 
-// If 'obj' is an IUniConfGen, then we build the UniTransactionGen around
-// it, else we create our underlying generator from 's'.
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
-    IUniConfGen *base = NULL;
-    if (obj)
-	base = mutate<IUniConfGen>(obj);
-    if (!base)
-	base = wvcreate<IUniConfGen>(s);
+    IUniConfGen *base = wvcreate<IUniConfGen>(s);
     if (base)
 	return new UniTransactionGen(base);
     else

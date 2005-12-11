@@ -13,7 +13,7 @@
 WV_LINK(UniSubtreeGen);
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     WvConstInPlaceBuf buf(s, s.len());
     WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
@@ -21,12 +21,7 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
     if (!one) one = "";
     if (!two) two = "";
     
-    if (obj)
-	return new UniSubtreeGen(mutate<IUniConfGen>(obj), one);
-    else
-    {
-	return new UniSubtreeGen(wvcreate<IUniConfGen>(one), two);
-    }
+    return new UniSubtreeGen(wvcreate<IUniConfGen>(one), two);
 }
 
 static WvMoniker<IUniConfGen> subtreereg("subtree", creator);

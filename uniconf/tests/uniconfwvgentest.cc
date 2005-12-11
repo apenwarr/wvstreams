@@ -7,7 +7,8 @@ WvLog log("WvGenTest");
 
 int main()
 {
-    WvConf cfg("../../configfile/tests/testfile.ini");
+    WvConf *_cfg = new WvConf("../../configfile/tests/testfile.ini");
+    WvConf &cfg = *_cfg;
     const char *test_str;
 
     if (!cfg.isok())
@@ -50,7 +51,7 @@ int main()
     log("Now testing uniconf wrapper.\n");
     wvcon->print("\n");
 
-    UniConfRoot root(new UniWvConfGen(cfg));
+    UniConfRoot root(new UniWvConfGen(_cfg));
 
     log("[intl]sLanguage = %s\n", root["intl"]["sLanguage"].getme());
     log("[blah]bork = %s\n", root["blah"]["bork"].getme());

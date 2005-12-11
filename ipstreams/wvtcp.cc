@@ -55,7 +55,7 @@
 WV_LINK(WvTCPConn);
 
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
+static IWvStream *creator(WvStringParm s)
 {
     return new WvTCPConn(s);
 }

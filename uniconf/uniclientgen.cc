@@ -23,7 +23,7 @@ WV_LINK(UniClientGen);
 
 #ifndef _WIN32
 #include "wvunixsocket.h"
-static IUniConfGen *unixcreator(WvStringParm s, IObject *, void *)
+static IUniConfGen *unixcreator(WvStringParm s)
 {
     return new UniClientGen(new WvUnixConn(s));
 }
@@ -31,7 +31,7 @@ static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 #endif
 
 
-static IUniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
+static IUniConfGen *tcpcreator(WvStringParm _s)
 {
     WvString s(_s);
     char *cptr = s.edit();
@@ -43,7 +43,7 @@ static IUniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
 }
 
 
-static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
+static IUniConfGen *sslcreator(WvStringParm _s)
 {
     WvString s(_s);
     char *cptr = s.edit();
@@ -55,23 +55,16 @@ static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
 }
 
 
-// if 'obj' is a WvStream, build the uniconf connection around that;
-// otherwise, create a new WvStream using 's' as the wvstream moniker.
-static IUniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *wvstreamcreator(WvStringParm s)
 {
-    IWvStream *stream = NULL;
-    if (obj)
-	stream = mutate<IWvStream>(obj);
-    if (!stream)
-	stream = wvcreate<IWvStream>(s);
-    return new UniClientGen(stream);
+    return new UniClientGen(wvcreate<IWvStream>(s));
 }
 
 #ifdef WITH_SLP
 #include "wvslp.h"
 
 // FIXME: Only gets the first
-static IUniConfGen *slpcreator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *slpcreator(WvStringParm s)
 {
     WvStringList serverlist;
     
