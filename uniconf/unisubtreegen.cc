@@ -24,7 +24,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniSubtreeGen(wvcreate<IUniConfGen>(one), two);
 }
 
-static WvMoniker<IUniConfGen> subtreereg("subtree", creator);
+static const UUID uuid = {0x7daeda00, 0x5752, 0x420d,
+			  {0x83, 0x68, 0x12, 0xce, 0x6e, 0x89, 0x89, 0x40}};
+static WvMoniker<IUniConfGen> subtreereg("subtree", uuid, creator);
 
 
 UniSubtreeGen::UniSubtreeGen(IUniConfGen *gen, const UniConfKey &_subkey)

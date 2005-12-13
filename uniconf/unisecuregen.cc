@@ -21,7 +21,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniSecureGen(s);
 }
 
-static WvMoniker<IUniConfGen> reg("perm", creator);
+static const UUID uuid = {0xe3013360, 0xdeac, 0x4d78,
+			  {0xb6, 0x1d, 0xd2, 0xf8, 0x21, 0x54, 0x9b, 0x0e}};
+static WvMoniker<IUniConfGen> reg("perm", uuid, creator);
 
 
 UniSecureGen::UniSecureGen(WvStringParm moniker, UniPermGen *_perms)

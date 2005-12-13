@@ -81,6 +81,8 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniAutoMountGen(s);
 }
 
-WvMoniker<IUniConfGen> UniFsTreeGenMoniker("fstree", creator);
+static const UUID uuid = {0x569c3927, 0x7c4e, 0x4570,
+			  {0x81, 0xe2, 0x3f, 0x94, 0x59, 0x11, 0x91, 0xbc}};
+WvMoniker<IUniConfGen> UniFsTreeGenMoniker("fstree", uuid, creator);
 
 

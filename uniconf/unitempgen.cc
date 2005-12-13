@@ -15,7 +15,9 @@ static IUniConfGen *creator(WvStringParm)
     return new UniTempGen();
 }
 
-static WvMoniker<IUniConfGen> reg("temp", creator);
+static const UUID uuid = {0xaa60e6dd, 0x2f7f, 0x4014,
+			  {0x91, 0x0e, 0xef, 0xbe, 0xce, 0xaf, 0xa5, 0x33}};
+static WvMoniker<IUniConfGen> reg("temp", uuid, creator);
 
 
 /***** UniTempGen *****/

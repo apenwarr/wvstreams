@@ -19,7 +19,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniCacheGen(wvcreate<IUniConfGen>(s));
 }
 
-static WvMoniker<IUniConfGen> reg("cache", creator);
+static const UUID uuid = {0x9d34236e, 0x3cf2, 0x4626,
+			  {0x9c, 0x16, 0x69, 0xe7, 0xf6, 0xcc, 0xb1, 0xc1}};
+static WvMoniker<IUniConfGen> reg("cache", uuid, creator);
 
 
 /***** UniCacheGen *****/

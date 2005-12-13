@@ -38,8 +38,13 @@ static IWvStream *screator(WvStringParm s)
     return new WvSSLStream(wvcreate<IWvStream>(s), NULL, 0, true);
 }
 
-static WvMoniker<IWvStream> reg("ssl", creator);
-static WvMoniker<IWvStream> sreg("sslserv", screator);
+static const UUID uuid = {0x8ee1d50b, 0x8713, 0x4a0a,
+			  {0x8b, 0x25, 0x4e, 0x05, 0x79, 0x97, 0xca, 0x67}};
+static WvMoniker<IWvStream> reg("ssl", uuid, creator);
+
+static const UUID suuid = {0x23740531, 0x98ff, 0x49d1,
+			   {0x8b, 0x6d, 0x45, 0x3e, 0x40, 0x32, 0x77, 0xfc}};
+static WvMoniker<IWvStream> sreg("sslserv", suuid, screator);
 
 
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record

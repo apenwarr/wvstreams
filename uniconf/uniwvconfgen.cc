@@ -33,7 +33,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniWvConfGen(new WvConf(s));
 }
 
-static WvMoniker<IUniConfGen> reg("wvconf", creator);
+static const UUID uuid = {0xe7d6cc69, 0x494e, 0x408d,
+			  {0xae, 0x5e, 0xce, 0x8e, 0x73, 0x6a, 0x31, 0xd6}};
+static WvMoniker<IUniConfGen> reg("wvconf", uuid, creator);
 
 
 void UniWvConfGen::notify(void *userdata, WvStringParm section,

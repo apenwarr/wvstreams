@@ -40,10 +40,21 @@ static IWvStream *create_stdio(WvStringParm s)
     return new _WvConStream(0, 1);
 }
 
-static WvMoniker<IWvStream> reg0("stdin",  create_stdin);
-static WvMoniker<IWvStream> reg1("stdout", create_stdout);
-static WvMoniker<IWvStream> reg2("stderr", create_stderr);
-static WvMoniker<IWvStream> reg3("stdio",  create_stdio);
+static const UUID uuid0 = {0x1d51a28f, 0x2c8b, 0x4a08,
+			  {0x8d, 0xf9, 0x13, 0x4f, 0x36, 0xfe, 0x9f, 0xc4}};
+static WvMoniker<IWvStream> reg0("stdin",  uuid0, create_stdin);
+
+static const UUID uuid1 = {0x270e4a5b, 0x5611, 0x41c0,
+			   {0x81, 0xef, 0x47, 0x52, 0x3a, 0x41, 0x8c, 0x78}};
+static WvMoniker<IWvStream> reg1("stdout", uuid1, create_stdout);
+
+static const UUID uuid2 = {0x4924aa4b, 0x2f8b, 0x4eab,
+			   {0xb3, 0xa9, 0x53, 0x1a, 0xbc, 0x29, 0x8e, 0xa7}};
+static WvMoniker<IWvStream> reg2("stderr", uuid2, create_stderr);
+
+static const UUID uuid3 = {0x0c3a926e, 0x4f96, 0x4a1c,
+			   {0xad, 0xe9, 0xc0, 0x66, 0x2f, 0xa4, 0x8b, 0xa1}};
+static WvMoniker<IWvStream> reg3("stdio",  uuid3, create_stdio);
 
 
 

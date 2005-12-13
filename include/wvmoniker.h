@@ -12,32 +12,58 @@
 #include "wvstring.h"
 #include "wvxplc.h"
 
-class WvMonikerRegistry;
-
 typedef void *WvMonikerCreateFunc(WvStringParm parms);
 
 /**
+ * WvMonikerCreateFuncStore is an IObject that gets registered with
+ * XPLC, so that you can have a WvMonikerCreateFunc that creates a new
+ * object.
+ */
+class WvMonikerCreateFuncStore : public IObject
+{
+    IMPLEMENT_IOBJECT(WvMonikerCreateFuncStore);
+    WvMonikerCreateFunc *func;
+
+public:
+    WvMonikerCreateFuncStore(WvMonikerCreateFunc *_func)
+	: func(_func)
+    {
+    }
+
+    virtual ~WvMonikerCreateFuncStore()
+    {
+    }
+
+    void *create(WvStringParm parms)
+    {
+	return func(parms);
+    }
+};
+
+
+
+/**
  * WvMonikerBase is an auto-registration class for putting things into
- * a WvMonikerRegistry.  When a WvMonikerBase instance is created, it
- * registers a moniker prefix ("test:", "ssl:", "ini:", etc) and a factory
+ * XPLC.  When a WvMonikerBase instance is created, it registers a
+ * moniker prefix ("test:", "ssl:", "ini:", etc) and a factory
  * function that can be used to create an IObject using that prefix.
- * 
+ *
  * When the instance is destroyed, it auto-unregisters the moniker prefix
- * from the registry.
- * 
+ * from XPLC.
+ *
  * You can't actually create one of these, because it's not typesafe.  See
  * WvMoniker<T> instead.
  */
 class WvMonikerBase
 {
 protected:
-    WvMonikerBase(const UUID &iid, WvStringParm _id,
-		  WvMonikerCreateFunc *func);
+    WvMonikerBase(const UUID &category, WvStringParm _id,
+		  const UUID &iid, WvMonikerCreateFunc *func);
     ~WvMonikerBase();
-    
+
 public:
-    WvString id;
-    WvMonikerRegistry *reg;
+    UUID oid;
+    WvMonikerCreateFuncStore func;
 };
 
 
@@ -45,16 +71,15 @@ public:
  * A type-safe version of WvMonikerBase that lets you provide create functions
  * for object types other than IObject.  (The objects themselves have to
  * be derived from IObject, however.)
- * 
+ *
  * See WvMonikerBase for details.
- * 
+ *
  * Example:
- *    static IWvStream *createfunc(WvStringParm s, IObject *obj,
- *                                 void *userdata)
+ *    static IWvStream *createfunc(WvStringParm s)
  *    {
  *        return new WvStream;
  *    }
- * 
+ *
  *    static WvMoniker<IWvStream> registration("ssl", createfunc);
  */
 template <class T>
@@ -63,8 +88,9 @@ class WvMoniker : public WvMonikerBase
 public:
     typedef T *CreateFunc(WvStringParm parms);
     
-    WvMoniker(WvStringParm _id, CreateFunc *_func)
-	: WvMonikerBase(XPLC_IID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
+    WvMoniker(WvStringParm _id, const UUID &_oid, CreateFunc *_func)
+	: WvMonikerBase(XPLC_IID<T>::get(), _id, _oid,
+			reinterpret_cast<WvMonikerCreateFunc *>(_func))
     { 
 	// this looks pointless, but it ensures that T* can be safely,
 	// automatically downcast to IObject*.  That means T is really derived

@@ -53,7 +53,9 @@ static IUniConfGen *creator(WvStringParm s)
     return gen;
 }
 
-WvMoniker<IUniConfGen> UniNamedMoniker("named", creator);
+static const UUID uuid = {0xd34a3af8, 0x9cd4, 0x4ce8,
+			  {0xa0, 0x6a, 0xbf, 0x27, 0x43, 0x2a, 0xf1, 0x41}};
+WvMoniker<IUniConfGen> UniNamedMoniker("named", uuid, creator);
 
 
 class UniConfd : public WvStreamsDaemon

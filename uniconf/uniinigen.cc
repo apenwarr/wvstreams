@@ -22,7 +22,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniIniGen(s);
 }
 
-WvMoniker<IUniConfGen> UniIniGenMoniker("ini", creator);
+static const UUID uuid = {0x56ba01a9, 0xc2d3, 0x4f71,
+			  {0xa6, 0xf6, 0x4e, 0xba, 0x5f, 0x09, 0x88, 0x57}};
+WvMoniker<IUniConfGen> UniIniGenMoniker("ini", uuid, creator);
 
 
 // forward declarations

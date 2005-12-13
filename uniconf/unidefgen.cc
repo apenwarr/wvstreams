@@ -22,11 +22,12 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniDefGen(wvcreate<IUniConfGen>(s));
 }
 
+static const UUID uuid = {0x0b210d06, 0x2a98, 0x45fa,
+			  {0xa9, 0x08, 0xa0, 0xa3, 0x60, 0x10, 0x7a, 0x99}};
 // this name is too confusing.  We should deprecate it.
-static WvMoniker<IUniConfGen> reg("default", creator);
-
+static WvMoniker<IUniConfGen> reg("default", uuid, creator);
 // a better name for the same thing.
-static WvMoniker<IUniConfGen> reg2("wildcard", creator);
+static WvMoniker<IUniConfGen> reg2("wildcard", uuid, creator);
 
 
 UniConfKey UniDefGen::finddefault(const UniConfKey &key, char *p, char *q)

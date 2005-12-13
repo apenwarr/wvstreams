@@ -60,4 +60,6 @@ static IUniConfGen *creator(WvStringParm s)
 }
 
 
-static WvMoniker<IUniConfGen> autoreg("auto", creator);
+static const UUID uuid = {0x17e61672, 0x8607, 0x4faa,
+			  {0x9e, 0x87, 0x9e, 0xba, 0x0e, 0xd3, 0xbc, 0x4d}};
+static WvMoniker<IUniConfGen> autoreg("auto", uuid, creator);

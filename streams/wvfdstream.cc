@@ -49,7 +49,9 @@ static IWvStream *creator(WvStringParm s)
     return new WvFdStream(s.num());
 }
 
-static WvMoniker<IWvStream> reg("fd", creator);
+static const UUID uuid = {0xf920f182, 0x1220, 0x4d69,
+			  {0xa3, 0xfe, 0x74, 0xd5, 0x28, 0x28, 0xd6, 0x23}};
+static WvMoniker<IWvStream> reg("fd", uuid, creator);
 
 WvFdStream::WvFdStream(int _rwfd)
     : rfd(_rwfd), wfd(_rwfd)

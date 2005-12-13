@@ -17,7 +17,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniFastRegetGen(wvcreate<IUniConfGen>(s));
 }
 
-static WvMoniker<IUniConfGen> reg("fast-reget", creator);
+static const UUID uuid = {0xcca300ee, 0xad66, 0x4201,
+			  {0xb7, 0xde, 0xe5, 0xdd, 0xc8, 0x41, 0x30, 0x98}};
+static WvMoniker<IUniConfGen> reg("fast-reget", uuid, creator);
 
 
 UniFastRegetGen::UniFastRegetGen(IUniConfGen *_inner)

@@ -41,7 +41,9 @@ static IUniConfGen *creator(WvStringParm encoded_params)
             retry_interval_ms);
 }
 
-static WvMoniker<IUniConfGen> reg("retry", creator);
+static const UUID uuid = {0x10273494, 0xd050, 0x46a8,
+			  {0x9c, 0xbc, 0xe6, 0x1a, 0xf0, 0x67, 0x77, 0xfa}};
+static WvMoniker<IUniConfGen> reg("retry", uuid, creator);
 
 
 /***** UniRetryGen *****/

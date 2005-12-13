@@ -27,7 +27,9 @@ static IUniConfGen *unixcreator(WvStringParm s)
 {
     return new UniClientGen(new WvUnixConn(s));
 }
-static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
+static const UUID unixuuid = {0xdaa005cd, 0x275f, 0x42f0,
+			      {0xaf, 0x40, 0xc6, 0xe6, 0x70, 0xef, 0x17, 0xd6}};
+static WvMoniker<IUniConfGen> unixreg("unix", unixuuid, unixcreator);
 #endif
 
 
@@ -78,12 +80,22 @@ static IUniConfGen *slpcreator(WvStringParm s)
         return NULL;
 }
 
-static WvMoniker<IUniConfGen> slpreg("slp", slpcreator);
+static const UUID slpuuid = {0xd7010389, 0x332b, 0x43d8,
+			     {0xae, 0xf2, 0x71, 0x66, 0x18, 0xb5, 0x9f, 0x96}};
+static WvMoniker<IUniConfGen> slpreg("slp", slpuuid, slpcreator);
 #endif
 
-static WvMoniker<IUniConfGen> tcpreg("tcp", tcpcreator);
-static WvMoniker<IUniConfGen> sslreg("ssl", sslcreator);
-static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
+static const UUID tcpuuid = {0x464011ac, 0xa73f, 0x4087,
+			    {0xa1, 0xed, 0x35, 0x0b, 0xfc, 0x5f, 0x0e, 0xc5}};
+static WvMoniker<IUniConfGen> tcpreg("tcp", tcpuuid, tcpcreator);
+
+static const UUID ssluuid = {0x494fd6a2, 0x7da2, 0x4feb,
+			     {0xbf, 0x12, 0x7e, 0x60, 0xbf, 0xc5, 0x3a, 0xc7}};
+static WvMoniker<IUniConfGen> sslreg("ssl", ssluuid, sslcreator);
+
+static const UUID wvuuid = {0x9d70ff2f, 0x4ae8, 0x48e3,
+			    {0xae, 0xa7, 0x3a, 0x99, 0x59, 0x09, 0x63, 0xb2}};
+static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvuuid, wvstreamcreator);
 
 
 

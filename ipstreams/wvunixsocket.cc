@@ -53,7 +53,9 @@ static IWvStream *creator(WvStringParm s)
     return new WvUnixConn(s);
 }
 
-static WvMoniker<IWvStream> reg("unix", creator);
+static const UUID uuid = {0x53923930, 0xfcbd, 0x427e,
+			  {0xa6, 0xdb, 0x01, 0x14, 0x8a, 0x30, 0x83, 0xd6}};
+static WvMoniker<IWvStream> reg("unix", uuid, creator);
 
 
 WvUnixConn::WvUnixConn(int _fd, const WvUnixAddr &_addr)

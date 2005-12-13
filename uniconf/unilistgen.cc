@@ -55,8 +55,10 @@ static IUniConfGen *creator(WvStringParm s)
 
     return new UniListGen(l);
 }
- 
-static WvMoniker<IUniConfGen> reg("list", creator);
+
+static const UUID uuid = {0xbacc5301, 0x3097, 0x418a,
+			  {0xbf, 0xe9, 0xce, 0xae, 0xbe, 0x48, 0xab, 0xc2}};
+static WvMoniker<IUniConfGen> reg("list", uuid, creator);
 
 UniListGen::UniListGen(UniConfGenList *_l) : l(_l)
 {

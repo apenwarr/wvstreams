@@ -36,5 +36,10 @@ static IWvStream *screator(WvStringParm s)
 }
 
 
-static WvMoniker<IWvStream> reg("http", creator);
-static WvMoniker<IWvStream> regs("https", screator);
+static const UUID uuid = {0x2da3d708, 0x037e, 0x4209,
+			  {0x8d, 0x8a, 0x70, 0x63, 0xf8, 0x28, 0xd5, 0x43}};
+static WvMoniker<IWvStream> reg("http", uuid, creator);
+
+static const UUID uuids = {0x3f04edb7, 0x92a9, 0x4be3,
+			   {0xa0, 0xb3, 0xb8, 0x4f, 0x8e, 0x7e, 0x90, 0x5d}};
+static WvMoniker<IWvStream> regs("https", uuids, screator);

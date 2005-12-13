@@ -13,8 +13,9 @@ static IUniConfGen *creator(WvStringParm s)
 {
     return new UniSlowGen(wvcreate<IUniConfGen>(s));
 }
-
-static WvMoniker<IUniConfGen> reg("slow", creator);
+static const UUID uuid = {0xac748a2c, 0x59e8, 0x4ecf,
+			  {0x81, 0x9f, 0xe5, 0xc8, 0xc3, 0xa6, 0xc1, 0x3d}};
+static WvMoniker<IUniConfGen> reg("slow", uuid, creator);
 
 
 UniSlowGen::UniSlowGen(IUniConfGen *inner) : UniFilterGen(inner)

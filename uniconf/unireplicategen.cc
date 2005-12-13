@@ -45,7 +45,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniReplicateGen(gens);
 }
 
-static WvMoniker<IUniConfGen> reg("replicate", creator);
+static const UUID uuid = {0x149e29b0, 0xd1cd, 0x415c,
+			  {0x87, 0xe7, 0x97, 0xef, 0x71, 0x19, 0x93, 0x1a}};
+static WvMoniker<IUniConfGen> reg("replicate", uuid, creator);
 
 
 /***** UniReplicateGen *****/

@@ -58,9 +58,17 @@ static IWvStream *creator(WvStringParm s)
     return new WvFile(s, O_RDWR|O_CREAT, 0666);
 }
 
-static WvMoniker<IWvStream> reg0("infile", increator);
-static WvMoniker<IWvStream> reg1("outfile", outcreator);
-static WvMoniker<IWvStream> reg3("file", creator);
+static const UUID uuid0 = {0x7a959fe1, 0xb845, 0x4520,
+			  {0xbf, 0x4b, 0xc0, 0xda, 0xe4, 0xf4, 0xf4, 0x4e}};
+static WvMoniker<IWvStream> reg0("infile", uuid0, increator);
+
+static const UUID uuid1 = {0x0043cedc, 0xd748, 0x48c4,
+			   {0xa1, 0x9c, 0x63, 0xfc, 0xb8, 0x8d, 0xa5, 0x24}};
+static WvMoniker<IWvStream> reg1("outfile", uuid1, outcreator);
+
+static const UUID uuid3 = {0x0c5db556, 0xe399, 0x4e80,
+			   {0x80, 0x89, 0x8c, 0xc6, 0x06, 0x3a, 0x2b, 0x38}};
+static WvMoniker<IWvStream> reg3("file", uuid3, creator);
 
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {

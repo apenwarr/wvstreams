@@ -60,7 +60,9 @@ static IWvStream *creator(WvStringParm s)
     return new WvTCPConn(s);
 }
 
-static WvMoniker<IWvStream> reg("tcp", creator);
+static const UUID uuid = {0x11016184, 0x2017, 0x4713,
+			  {0x8b, 0x8c, 0xe6, 0xb0, 0xb6, 0x8f, 0xd6, 0xf9}};
+static WvMoniker<IWvStream> reg("tcp", uuid, creator);
 
 
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)

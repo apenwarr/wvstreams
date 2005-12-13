@@ -15,7 +15,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniBachelorGen(s);
 }
 
-static WvMoniker<IUniConfGen> moniker("bachelor", creator);
+static const UUID uuid = {0x44b2e49f, 0x3c42, 0x4915,
+			  {0xb1, 0xc7, 0x1f, 0xdb, 0xf9, 0x35, 0x5e, 0xde}};
+static WvMoniker<IUniConfGen> moniker("bachelor", uuid, creator);
 
 UniBachelorGen::UniBachelorGen(IUniConfGen *inner)
     : UniFilterGen(inner)

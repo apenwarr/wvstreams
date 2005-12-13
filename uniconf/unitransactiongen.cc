@@ -12,7 +12,9 @@ static IUniConfGen *creator(WvStringParm s)
 	return NULL;
 }
 
-static WvMoniker<IUniConfGen> moniker("transaction", creator);
+static const UUID uuid = {0xc6dacec1, 0xe6b4, 0x46a0,
+			  {0x94, 0xea, 0x8f, 0xb0, 0x0f, 0xe3, 0xbd, 0x57}};
+static WvMoniker<IUniConfGen> moniker("transaction", uuid, creator);
 
 /* This enum is a field of UniConfChangeTree. It indicates the type of
    change represented by a node in a UniConfChangeTree. */

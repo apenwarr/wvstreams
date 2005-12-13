@@ -17,7 +17,9 @@ static IUniConfGen *creator(WvStringParm s)
     return new UniFileSystemGen(s, 0777);
 }
 
-WvMoniker<IUniConfGen> UniFileSystemGenMoniker("fs", creator);
+static const UUID uuid = {0xc88e55e3, 0x64cc, 0x4966,
+			  {0xac, 0x4c, 0x49, 0x49, 0x38, 0x4c, 0x02, 0x8b}};
+WvMoniker<IUniConfGen> UniFileSystemGenMoniker("fs", uuid, creator);
 
 
 UniFileSystemGen::UniFileSystemGen(WvStringParm _dir, mode_t _mode)

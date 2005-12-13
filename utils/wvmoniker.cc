@@ -7,6 +7,13 @@
  */
 #include "wvmonikerregistry.h"
 #include "strutils.h"
+
+#include "xplc/core.h"
+#include "xplc/ICategory.h"
+#include "xplc/ICategoryIterator.h"
+#include "xplc/ICategoryManager.h"
+#include "xplc/IStaticServiceHandler.h"
+
 #include <assert.h>
 #include <stdio.h>
 
@@ -21,179 +28,94 @@
 #endif
 
 
-static unsigned WvHash(const UUID &_uuid)
-{
-    unsigned val = 0;
-    unsigned int *uuid = (unsigned int *)&_uuid;
-    int max = sizeof(UUID)/sizeof(*uuid);
-    
-    for (int count = 0; count < max; count++)
-	val += uuid[count];
-    
-    return val;
-}
+UUID_MAP_BEGIN(WvMonikerCreateFuncStore)
+  UUID_MAP_ENTRY(IObject)
+UUID_MAP_END
 
 
-DeclareWvScatterDict(WvMonikerRegistry, UUID, reg_iid);
-static WvMonikerRegistryDict *regs;
-  
-
-
-WvMonikerRegistry::WvMonikerRegistry(const UUID &iid) 
-    : reg_iid(iid), dict(10)
-{
-    DEBUGLOG("WvMonikerRegistry creating.\n");
-    refcount = 0;
-}
-
-
-WvMonikerRegistry::~WvMonikerRegistry()
-{
-    DEBUGLOG("WvMonikerRegistry destroying.\n");
-}
-
-
-void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func)
-{
-    DEBUGLOG("WvMonikerRegistry register(%s).\n", id.cstr());
-    assert(!dict[id]);
-    dict.add(new Registration(id, func), true);
-}
-
-
-void WvMonikerRegistry::del(WvStringParm id)
-{
-    DEBUGLOG("WvMonikerRegistry unregister(%s).\n", id.cstr());
-    assert(dict[id]);
-    dict.remove(dict[id]);
-}
-
-
-void *WvMonikerRegistry::create(WvStringParm _s)
-{
-    WvString t(_s);
-    WvString s(trim_string(t.edit()));
-
-    char *cptr = strchr(s.edit(), ':');
-    if (cptr)
-	*cptr++ = 0;
-    else
-	cptr = "";
-    
-    DEBUGLOG("WvMonikerRegistry create object ('%s' '%s').\n", s.cstr(), cptr);
-    
-    Registration *r = dict[s];
-    if (r)
-	return r->func(cptr);
-    else
-	return NULL;
-}
-
-
-WvMonikerRegistry *WvMonikerRegistry::find_reg(const UUID &iid)
-{
-    DEBUGLOG("WvMonikerRegistry find_reg.\n");
-    
-    if (!regs)
-	regs = new WvMonikerRegistryDict(10);
-    
-    WvMonikerRegistry *reg = (*regs)[iid];
-    
-    if (!reg)
-    {
-	// we have to make one!
-	reg = new WvMonikerRegistry(iid);
-	regs->add(reg, true);
-	reg->addRef(); // one reference for being in the list at all
-    }
-    
-    reg->addRef();
-    return reg;
-}
-
-
-IObject *WvMonikerRegistry::getInterface(const UUID &uuid)
-{
-#if 0
-    if (uuid.equals(IObject_IID))
-    {
-	addRef();
-	return this;
-    }
-#endif
-    
-    // we don't really support any interfaces for now.
-    
-    return 0;
-}
-
-
-unsigned int WvMonikerRegistry::addRef()
-{
-    DEBUGLOG("WvMonikerRegistry addRef.\n");
-    return ++refcount;
-}
-
-
-unsigned int WvMonikerRegistry::release()
-{
-    DEBUGLOG("WvMonikerRegistry release.\n");
-    
-    if (--refcount > 1)
-	return refcount;
-    
-    if (refcount == 1)
-    {
-	// the list has one reference to us, but it's no longer needed.
-	// Note: remove() will delete this object!
-	regs->remove(this);
-	if (regs->isempty())
-	{
-	    delete regs;
-	    regs = NULL;
-	}
-	return 0;
-    }
-    
-    /* protect against re-entering the destructor */
-    refcount = 1;
-    delete this;
-    return 0;
-}
-
-
-WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm _id, 
-			     WvMonikerCreateFunc *func)
-    : id(_id)
+WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm id,
+			     const UUID &_oid, WvMonikerCreateFunc *_func)
+  : oid(_oid), func(_func)
 {
     DEBUGLOG("WvMoniker creating(%s).\n", id.cstr());
-    reg = WvMonikerRegistry::find_reg(iid);
-    if (reg)
-	reg->add(id, func);
+
+    IServiceManager *srvmgr = XPLC_getServiceManager();
+    if (srvmgr)
+    {
+	ICategoryManager *catmgr;
+	catmgr = static_cast<ICategoryManager *>(
+	    srvmgr->getObject(XPLC_categoryManager));
+	IStaticServiceHandler *ssrvhdlr;
+	ssrvhdlr = static_cast<IStaticServiceHandler *>(
+	    srvmgr->getObject(XPLC_staticServiceHandler));
+	if (catmgr && ssrvhdlr)
+	{
+	    catmgr->registerComponent(iid, oid, id);
+	    ssrvhdlr->addObject(oid, &func);
+	}
+    }
 }
 
 
 WvMonikerBase::~WvMonikerBase()
 {
     DEBUGLOG("WvMoniker destroying(%s).\n", id.cstr());
-    if (reg)
+    IServiceManager *srvmgr = XPLC_getServiceManager();
+    if (srvmgr)
     {
-	reg->del(id);
-	WVRELEASE(reg);
+	IStaticServiceHandler *ssrvhdlr;
+	ssrvhdlr = static_cast<IStaticServiceHandler *>(
+	    srvmgr->getObject(XPLC_staticServiceHandler));
+	if (ssrvhdlr)
+	    ssrvhdlr->removeObject(oid);
     }
 }
 
 
-void *wvcreate(const UUID &iid, WvStringParm moniker)
+void *wvcreate(const UUID &category, WvStringParm _moniker)
 {
-    assert(!moniker.isnull());
-    WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);
-    if (reg)
-    {
-	void *ret = reg->create(moniker);
-	WVRELEASE(reg);
-	return ret;
-    }
+    assert(!_moniker.isnull());
+
+    WvString moniker(_moniker);
+    moniker = trim_string(moniker.edit());
+
+    char *cptr = strchr(moniker.edit(), ':');
+    if (cptr)
+	*cptr++ = 0;
     else
+	cptr = "";
+
+    DEBUGLOG("wvcreate create object ('%s' '%s').\n", moniker.cstr(), cptr);
+
+    IServiceManager *srvmgr = XPLC_getServiceManager();
+    if (!srvmgr)
 	return NULL;
+
+    ICategoryManager *catmgr;
+    catmgr = static_cast<ICategoryManager *>(
+	srvmgr->getObject(XPLC_categoryManager));
+    if (!catmgr)
+	return NULL;
+
+    ICategory *cat = catmgr->getCategory(category);
+    if (!cat)
+	return NULL;
+
+    ICategoryIterator *i = cat->getIterator();
+    if (!i)
+	return NULL;
+
+    for (; !i->done(); i->next())
+    {
+	if (moniker == WvString(i->getString()))
+	{
+	    UUID oid = i->getUuid();
+	    WvMonikerCreateFuncStore *func;
+	    func = static_cast<WvMonikerCreateFuncStore *>(
+		srvmgr->getObject(oid));
+	    if (func)
+		return func->create(cptr);
+	}
+    }
+    return NULL;
 }

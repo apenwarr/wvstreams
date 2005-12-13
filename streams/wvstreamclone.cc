@@ -23,7 +23,9 @@ static IWvStream *creator(WvStringParm s)
     return new WvStreamClone(wvcreate<IWvStream>(s));
 }
 
-static WvMoniker<IWvStream> reg("clone", creator);
+static const UUID uuid = {0x6162042d, 0xf7ab, 0x459d,
+			  {0x8a, 0x2e, 0xfc, 0xba, 0x28, 0x36, 0x70, 0x5f}};
+static WvMoniker<IWvStream> reg("clone", uuid, creator);
 
 
 WvStreamClone::WvStreamClone(IWvStream *_cloned) 
