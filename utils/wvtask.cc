@@ -66,6 +66,16 @@ static bool alloc_stack_and_switch(size_t size)
         return false;
 
     // **WARNING** This is very machine and OS specific.
+    // 
+    // This code has been tested to work with both gcc 2.95.4 and
+    // gcc 3.3.5.  It has been tested both with and without
+    // optimizations in both cases.
+    // 
+    // Note that doing any of the following may (or may not)
+    // cause this to break:
+    // - Changing the kernel/userspace memory split (kernel configuration)
+    // - Compiling with the -fomit-frame-pointer switch (gcc)
+
     register char *ebp asm("ebp");
     register char *esp asm("esp");
     static size_t stack_header_size;
