@@ -32,6 +32,8 @@ char *alloca ();
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <sys/mman.h>
+#include <signal.h>
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
@@ -55,6 +57,58 @@ jmp_buf WvTaskMan::stackmaster_task, WvTaskMan::get_stack_return,
     WvTaskMan::toplevel;
 WvTask *WvTaskMan::current_task, *WvTaskMan::stack_target;
 char *WvTaskMan::stacktop;
+
+
+static bool alloc_stack_and_switch(size_t size)
+{
+#if defined(__linux__) && (defined(__386__) || defined(__i386) || defined(__i386__))
+    if (RUNNING_ON_VALGRIND)
+        return false;
+
+    // **WARNING** This is very machine and OS specific.
+    register char *ebp asm("ebp");
+    register char *esp asm("esp");
+    static size_t stack_header_size;
+    static size_t stack_header_copy_size;
+    static size_t size_plus_magic;
+    static char *new_stack;
+    static char *next_stack_addr = NULL;
+    static const size_t stack_shift = 0x00100000;
+    static const char *top_of_stack = (const char *)0xC0000000;
+
+    if (next_stack_addr == NULL)
+        next_stack_addr = (char *)((unsigned)esp & 0xF0000000);
+    next_stack_addr -= stack_shift;
+
+    // See memmove below
+    stack_header_size = ebp - esp; // must grab return address
+    stack_header_copy_size = stack_header_size + 4096;
+    if ((unsigned)(esp + stack_header_copy_size) > (unsigned)top_of_stack)
+        stack_header_copy_size = top_of_stack - esp;
+
+    // Do the actual mmap to get a new stack frame
+    size_plus_magic = size + 4096 + stack_header_copy_size;
+    new_stack = (char *)mmap(next_stack_addr, size_plus_magic,
+            PROT_READ | PROT_WRITE,
+            MAP_PRIVATE | MAP_ANONYMOUS | MAP_GROWSDOWN,
+            -1, 0);
+    assert(new_stack != NULL);
+    new_stack += size_plus_magic - stack_header_copy_size;
+
+    // Copy any locals as well as a few bytes extra into
+    // the new frame.  Ignore SEGV so we can walk off the
+    // top of the stack.
+    memcpy(new_stack, esp, stack_header_copy_size);
+
+    // Switch!!
+    esp = new_stack;
+    ebp = new_stack + stack_header_size;
+
+    return true;
+#else
+    return false;
+#endif
+}
 
 
 static void valgrind_fix(char *stacktop)
@@ -332,15 +386,17 @@ void WvTaskMan::_stackmaster()
 	    valgrind_fix(stacktop);
 	    assert(magic_number == -WVTASK_MAGIC);
 	    
+	    total = (val+1) * (size_t)1024;
+
 	    // set up a stack frame for the new task.  This runs once
 	    // per get_stack.
+            alloc_stack_and_switch(total);
 	    do_task();
 	    
 	    assert(magic_number == -WVTASK_MAGIC);
 	    
 	    // allocate the stack area so we never use it again
-	    total = (val+1) * (size_t)1024;
-	    alloca(total);
+            alloca(total);
 
 	    // a little sentinel so we can detect stack overflows
 	    stack_target->stack_magic = (int *)alloca(sizeof(int));
