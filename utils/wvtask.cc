@@ -75,14 +75,14 @@ static bool alloc_stack_and_switch(size_t size)
     static char *next_stack_addr = NULL;
     static const size_t stack_shift = 0x00100000;
     static const char *top_of_stack = (const char *)0xC0000000;
+    static char *save_esp, *save_ebp;
 
     if (next_stack_addr == NULL)
         next_stack_addr = (char *)((unsigned)esp & 0xF0000000);
     next_stack_addr -= stack_shift;
 
     // See memmove below
-    stack_header_size = ebp - esp; // must grab return address
-    stack_header_copy_size = stack_header_size + 4096;
+    stack_header_copy_size = 4096;
     if ((unsigned)(esp + stack_header_copy_size) > (unsigned)top_of_stack)
         stack_header_copy_size = top_of_stack - esp;
 
@@ -96,11 +96,13 @@ static bool alloc_stack_and_switch(size_t size)
     new_stack += size_plus_magic - stack_header_copy_size;
 
     // Copy any locals as well as a few bytes extra into
-    // the new frame.  Ignore SEGV so we can walk off the
-    // top of the stack.
-    memcpy(new_stack, esp, stack_header_copy_size);
+    // the new frame.
+    save_ebp = ebp;
+    save_esp = esp;
+    memcpy(new_stack, save_esp, stack_header_copy_size);
 
     // Switch!!
+    stack_header_size = save_ebp - save_esp;
     esp = new_stack;
     ebp = new_stack + stack_header_size;
 
