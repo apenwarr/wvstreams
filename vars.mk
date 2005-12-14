@@ -146,42 +146,49 @@ include $(filter-out xplc/% linuxstreams/%,$(wildcard */vars.mk */*/vars.mk)) \
 # LDFLAGS+=-z defs
 
 BASEOBJS= \
-	utils/wvbuffer.o utils/wvbufferstore.o \
-	utils/wvcont.o \
-	utils/wverror.o \
+	streams/wvconstream.o \
 	streams/wvfdstream.o \
+	streams/wvfile.o \
+	streams/wvistreamlist.o \
+	streams/wvlog.o \
+	streams/wvstream.o \
+	streams/wvstreamclone.o  \
+	uniconf/uniconf.o \
+	uniconf/uniconf_c.o \
+	uniconf/uniconfgen.o \
+	uniconf/uniconfkey.o \
+	uniconf/uniconfroot.o \
+	uniconf/unigenhack.o \
+	uniconf/unihashtree.o \
+	uniconf/uniinigen.o \
+	uniconf/unilistiter.o \
+	uniconf/unimountgen.o \
+	uniconf/unitempgen.o \
+	utils/strutils.o \
+	utils/wvassert.o \
+	utils/wvbackslash.o \
+	utils/wvbuffer.o \
+	utils/wvbufferstore.o \
+	utils/wvcont.o \
+	utils/wvcrashbase.o \
+	utils/wvencoder.o \
+	utils/wverror.o \
 	utils/wvfork.o \
 	utils/wvhash.o \
 	utils/wvhashtable.o \
 	utils/wvlinklist.o \
 	utils/wvmoniker.o \
 	utils/wvregex.o \
-	utils/wvscatterhash.o utils/wvsorter.o \
-	utils/wvstring.o utils/wvstringlist.o \
-	utils/wvstringmask.o \
-	utils/strutils.o \
-	utils/wvtask.o \
-	utils/wvtimeutils.o \
-	utils/wvvector.o \
-	streams/wvistreamlist.o \
-	streams/wvlog.o \
-	streams/wvstream.o \
-	uniconf/uniconf.o uniconf/uniconf_c.o \
-	uniconf/uniconfgen.o uniconf/uniconfkey.o uniconf/uniconfroot.o \
-	uniconf/unihashtree.o \
-	uniconf/unimountgen.o \
-	uniconf/unitempgen.o \
-	utils/wvbackslash.o \
-	utils/wvencoder.o \
-	utils/wvtclstring.o \
+	utils/wvscatterhash.o \
+	utils/wvsorter.o \
+	utils/wvstring.o \
 	utils/wvstringcache.o \
-	uniconf/uniinigen.o \
-	uniconf/unigenhack.o \
-	uniconf/unilistiter.o \
-	streams/wvfile.o \
-	streams/wvstreamclone.o  \
-	streams/wvconstream.o \
-	utils/wvcrashbase.o
+	utils/wvstringlist.o \
+	utils/wvstringmask.o \
+	utils/wvtask.o \
+	utils/wvtclstring.o \
+	utils/wvtimeutils.o \
+	utils/wvvector.o
 
 TESTOBJS = \
 	utils/wvtest.o \
