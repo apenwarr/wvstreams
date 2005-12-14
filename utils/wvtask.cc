@@ -39,6 +39,7 @@ char *alloca ();
 #include <valgrind/memcheck.h>
 #else
 #define VALGRIND_MAKE_READABLE(x, y)
+#define RUNNING_ON_VALGRIND 0
 #endif
 
 #define TASK_DEBUG 0
