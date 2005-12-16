@@ -292,7 +292,7 @@ static size_t wvtcl_getword(char *dst, const char *s, size_t s_len,
 	    }
 	    inescape = false;
         }
-        else if (ch == '\\')
+        else if (ch == '\\' && bracecount == 0)
 	{
 	    inescape = true;
 	    // now we need a character to complete the escape

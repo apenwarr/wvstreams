@@ -287,3 +287,14 @@ WVTEST_MAIN("backslashed braces")
     WVPASSEQ(w3, word3);
 }
 
+WVTEST_MAIN("BUGZID:17077")
+{
+    const char *dirname = "{directory name ending in backslash \\}";
+    WvDynBuf buf;
+    buf.putstr(dirname);
+    WVPASSEQ(wvtcl_getword(buf, WVTCL_NASTY_NEWLINES, false), dirname);
+
+    const char *another_dirname = "directory name ending in backslash \\\\";
+    buf.putstr(another_dirname);
+    WVPASSEQ(wvtcl_getword(buf, WVTCL_NASTY_NEWLINES, false), another_dirname);
+}
