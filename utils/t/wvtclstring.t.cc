@@ -289,12 +289,67 @@ WVTEST_MAIN("backslashed braces")
 
 WVTEST_MAIN("BUGZID:17077")
 {
-    const char *dirname = "{directory name ending in backslash \\}";
+    const char *dirname = "directory name ending in backslash \\";
+    WvString encoded_dirname = wvtcl_escape(dirname);
     WvDynBuf buf;
-    buf.putstr(dirname);
-    WVPASSEQ(wvtcl_getword(buf, WVTCL_NASTY_NEWLINES, false), dirname);
+    buf.putstr(encoded_dirname);
+    WVPASSEQ(wvtcl_getword(buf, WVTCL_NASTY_NEWLINES, false), encoded_dirname);
+}
 
-    const char *another_dirname = "directory name ending in backslash \\\\";
-    buf.putstr(another_dirname);
-    WVPASSEQ(wvtcl_getword(buf, WVTCL_NASTY_NEWLINES, false), another_dirname);
+WVTEST_MAIN("wvtcl_getword comprehensive nounescape")
+{
+    WvDynBuf buf;
+    const int slen = 4;
+    char str[slen+1], last[slen+1] = "goo";
+    struct
+    {
+        const char *chars;
+        const WvStringMask *mask;
+    } const *test_set, test_sets[] = {
+        { "a{}\\\"", &WVTCL_NASTY_SPACES },
+        { "a {}\\\"", &WVTCL_NASTY_NEWLINES },
+        { NULL, NULL }
+    };
+    for (test_set = &test_sets[0]; test_set->chars; ++test_set)
+    {
+        const WvStringMask &mask = *test_set->mask;
+        const char *chars = test_set->chars;
+        const int len = strlen(chars) + 1;
+        for (int i=0; i<len; ++i)
+        {
+            str[0] = chars[i];
+            if (mask[str[0]])
+                continue;
+            for (int j=0; j<len; ++j)
+            {
+                str[1] = chars[j];
+                if (mask[str[1]])
+                    continue;
+                for (int k=0; k<len; ++k)
+                {
+                    str[2] = chars[k];
+                    if (mask[str[2]])
+                        continue;
+                    for (int l=0; l<len; ++l)
+                    {
+                        str[3] = chars[l];
+                        if (mask[str[3]])
+                            continue;
+                        str[slen] = '\0';
+
+                        if (strcmp(last, str) == 0)
+                            continue;
+
+                        WvString estr = wvtcl_escape(str, mask);
+                        WVPASSEQ(wvtcl_unescape(estr), str);
+                        buf.putstr(estr);
+                        WVPASSEQ(wvtcl_getword(buf, mask, false), estr);
+                        buf.zap();
+
+                        strcpy(last, str);
+                    }
+                }
+            }
+        }
+    }
 }
