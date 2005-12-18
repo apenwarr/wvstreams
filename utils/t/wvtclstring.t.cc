@@ -346,6 +346,12 @@ WVTEST_MAIN("wvtcl_getword comprehensive nounescape")
                         WVPASSEQ(wvtcl_getword(buf, mask, false), estr);
                         buf.zap();
 
+                        WvString eestr = wvtcl_escape(estr, mask);
+                        WVPASSEQ(wvtcl_unescape(eestr), estr);
+                        buf.putstr(eestr);
+                        WVPASSEQ(wvtcl_getword(buf, mask, false), eestr);
+                        buf.zap();
+                        
                         strcpy(last, str);
                     }
                 }
