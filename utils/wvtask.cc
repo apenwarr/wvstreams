@@ -62,6 +62,13 @@ char *WvTaskMan::stacktop;
 static int context_return;
 
 
+static bool use_shared_stack()
+{
+    //return RUNNING_ON_VALGRIND;
+    return true;
+}
+
+
 static void valgrind_fix(char *stacktop)
 {
 #ifdef HAVE_VALGRIND_MEMCHECK_H
@@ -254,7 +261,7 @@ int WvTaskMan::yield(int val)
     assert(*current_task->stack_magic == WVTASK_MAGIC);
 
 #if TASK_DEBUG
-    if (RUNNING_ON_VALGRIND)
+    if (use_shared_stack())
     {
         size_t stackleft;
         char *stackbottom = (char *)(current_task->stack_magic + 1);
@@ -298,7 +305,7 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
 	assert(magic_number == -WVTASK_MAGIC);
 	assert(task.magic_number == WVTASK_MAGIC);
 
-        if (!RUNNING_ON_VALGRIND)
+        if (!use_shared_stack())
         {
 #if defined(__linux__) && (defined(__386__) || defined(__i386) || defined(__i386__))
             static char *next_stack_addr = (char *)0xB0000000;
@@ -375,7 +382,7 @@ void WvTaskMan::_stackmaster()
 	    
 	    total = (val+1) * (size_t)1024;
 	    
-            if (!RUNNING_ON_VALGRIND)
+            if (!use_shared_stack())
                 total = 1024; // enough to save the do_task stack frame
 
 	    // set up a stack frame for the new task.  This runs once
@@ -448,7 +455,7 @@ void WvTaskMan::do_task()
 	    
 	    if (task->func && task->running)
 	    {
-                if (RUNNING_ON_VALGRIND)
+                if (use_shared_stack())
                 {
                     // this is the task's main function.  It can call yield()
                     // to give up its timeslice if it wants.  Either way, it
