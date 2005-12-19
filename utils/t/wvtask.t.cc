@@ -37,22 +37,28 @@ void testme()
     WVPASS(b->isrunning());
     
     taskman->run(*a);
-    WVPASS(glob == 1001);
+    WVPASSEQ(glob, 1001);
+    WVPASS(a->isrunning());
+    WVPASS(b->isrunning());
     taskman->run(*b);
     taskman->run(*a);
-    WVPASS(glob == 1002);
-    taskman->run(*b);
-    taskman->run(*b);
-    WVPASS(glob == 2003);
-    WVPASS(b->isrunning());
+    WVPASSEQ(glob, 1002);
     WVPASS(a->isrunning());
+    WVPASS(b->isrunning());
     taskman->run(*b);
-    WVPASS(glob == 2003);
+    taskman->run(*b);
+    WVPASSEQ(glob, 2003);
+    WVPASS(a->isrunning());
+    WVPASS(b->isrunning());
+    taskman->run(*b);
+    WVPASSEQ(glob, 2003);
+    WVPASS(a->isrunning());
     WVPASS(!b->isrunning());
     taskman->run(*a);
     taskman->run(*a);
-    WVPASS(glob == 1003);
+    WVPASSEQ(glob, 1003);
     WVPASS(!a->isrunning());
+    WVPASS(!b->isrunning());
     a->recycle();
     b->recycle();
     
