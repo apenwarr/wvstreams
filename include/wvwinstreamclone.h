@@ -45,6 +45,8 @@ private:
     HWND alloc_wnd();
     void free_wnd(HWND w);
 
+public:
+    void setclone(IWvStream *newclone);
 };
 
 

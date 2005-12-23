@@ -49,6 +49,9 @@ private:
     int keep_for, last_day;
     WvString filename;
     bool allow_append;
+
+public:
+    const char *wstype() const { return "WvLogFileBase"; }
 };
 
 #endif // __WVLOGFILE_H

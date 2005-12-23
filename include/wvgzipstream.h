@@ -29,6 +29,9 @@ public:
 	    writechain.append(new WvGzipEncoder(writemode), true);
 	}
     virtual ~WvGzipStream() { }
+
+public:
+    const char *wstype() const { return "WvGzipStream"; }   
 };
 
 

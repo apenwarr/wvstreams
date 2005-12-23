@@ -225,3 +225,14 @@ void WvQtStreamClone::execute()
 {
     WvStreamClone::execute();
 }
+
+
+void WvQtStreamClone::setclone(IWvStream *newclone)
+{
+    WvStreamClone::setclone(newclone);
+    
+    if (newclone != NULL)
+        my_type = WvString("WvQtStreamClone:%s", newclone->wstype());
+    else
+        my_type = "WvQtStreamClone:(none)";
+}

@@ -64,6 +64,9 @@ public:
     
 protected:
     WvLog *logp;
+    
+public:
+    const char *wstype() const { return "WvProtoStream"; }
 };
 
 

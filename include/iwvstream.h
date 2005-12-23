@@ -24,7 +24,7 @@ class WvStream;
 
 /* The stream gets passed back as a parameter. */
 typedef WvCallback<void, WvStream&> IWvStreamCallback;
-
+typedef unsigned short WSID;
 
 class IWvStream : public WvErrorBase, public IObject
 {
@@ -161,6 +161,12 @@ public:
 
     /** Sets a callback to be invoked on close().  */
     virtual IWvStreamCallback setclosecallback(IWvStreamCallback _callfunc) = 0;
+
+    /* Stream identification/debugging */
+    virtual const char *wsname() const = 0;
+    virtual void set_wsname(WvStringParm name) = 0;
+    virtual const char *wstype() const = 0; // This is not static due to, eg, WvStreamClone
+    virtual WSID wsid() const = 0;
 };
 
 

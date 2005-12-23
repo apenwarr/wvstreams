@@ -42,6 +42,23 @@ private:
 #ifndef _WIN32
     static void onfork(pid_t p);
 #endif
+
+public:
+    void append(IWvStream *s, bool auto_free, const char *id = NULL)
+    {
+        if (s->wsname() == NULL)
+            s->set_wsname(id);
+        WvIStreamListBase::append(s, auto_free, id);
+    }
+    void append(IWvStream *s, bool auto_free, WVSTRING_FORMAT_DECL)
+    {
+        if (s->wsname() == NULL)
+            s->set_wsname(WvString(WVSTRING_FORMAT_CALL));
+        WvIStreamListBase::append(s, auto_free, s->wsname());
+    }
+
+public:
+    const char *wstype() const { return "WvIStreamList"; }
 };
 
 #endif // __WVISTREAMLIST_H

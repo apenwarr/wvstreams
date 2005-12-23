@@ -6,6 +6,9 @@
  * callback() functions know how to handle multiple simultaneous streams.
  */
 #include "wvistreamlist.h"
+#include "wvstringlist.h"
+#include "wvstreamsdebugger.h"
+#include "wvstrutils.h"
 
 #ifndef _WIN32
 #include "wvfork.h"
@@ -25,6 +28,7 @@
 #endif
 
 WvIStreamList WvIStreamList::globallist;
+
 
 WvIStreamList::WvIStreamList():
     in_select(false)
@@ -164,6 +168,7 @@ void WvIStreamList::execute()
 	IWvStream &s(*i);
 	
 	id = i.link->id;
+
 	TRACE("[%p:%s]", &s, id);
 	
 	i.xunlink();
@@ -171,8 +176,7 @@ void WvIStreamList::execute()
 	if (s.isok())
         {
 #if DEBUG
-            WvString strace_node("execute %s",
-                    id? id: "(unidentified stream)");
+            WvString strace_node("%s: %s", s.wstype(), s.wsname());
             ::write(-1, strace_node, strace_node.len()); 
 #endif
 	    s.callback();

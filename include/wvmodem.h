@@ -67,6 +67,9 @@ public:
 
     /** may need to hangup for redial reasons */
     virtual void hangup();
+    
+public:
+    const char *wstype() const { return "WvModemBase"; }
 };
 
 
@@ -108,6 +111,9 @@ public:
      * and this method returns the actual speed that the modem managed to achieve.
      */
     virtual int speed(int _baud);
+    
+public:
+    const char *wstype() const { return "WvModem"; }
 };
 
 #endif

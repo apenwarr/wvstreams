@@ -164,6 +164,7 @@ BASEOBJS= \
 	utils/wvtimeutils.o \
 	utils/wvvector.o \
 	streams/wvistreamlist.o \
+	utils/wvstreamsdebugger.o \
 	streams/wvlog.o \
 	streams/wvstream.o \
 	uniconf/uniconf.o uniconf/uniconf_c.o \

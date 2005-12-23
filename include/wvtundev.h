@@ -34,6 +34,9 @@ public:
 
 private:
     void init(const WvIPNet &addr, int mtu);
+    
+public:
+    const char *wstype() const { return "WvTunDev"; }
 };
 
 

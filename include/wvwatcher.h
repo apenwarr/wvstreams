@@ -38,6 +38,9 @@ public:
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
     virtual bool pre_select(SelectInfo &si);
+    
+public:
+    const char *wstype() const { return "WvFileWatcher"; }
 };
 
 #endif // __WVWATCHER_H

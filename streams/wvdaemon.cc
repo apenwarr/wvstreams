@@ -24,33 +24,24 @@
 #include "wvlogrcv.h"
 #endif
 
-DeclareWvList(WvDaemon);
-static WvDaemonList daemons;
-
 #ifndef _WIN32
+
+WvDaemon *WvDaemon::singleton = NULL;
 
 static void sighup_handler(int signum)
 {
     signal(signum, SIG_IGN);
 
-    WvDaemonList::Iter i(daemons);
-    for (i.rewind(); i.next(); )
-    {
-        i->log(WvLog::Notice, "Restarting on signal %s.\n", signum);
-        i->restart();
-    }
+    WvDaemon::me()->log(WvLog::Notice, "Restarting on signal %s.\n", signum);
+    WvDaemon::me()->restart();
 }
 
 static void sigterm_handler(int signum)
 {
     signal(signum, SIG_DFL);
 
-    WvDaemonList::Iter i(daemons);
-    for (i.rewind(); i.next(); )
-    {
-        i->log(WvLog::Notice, "Dying on signal %s.\n", signum);
-        i->die();
-    }
+    WvDaemon::me()->log(WvLog::Notice, "Dying on signal %s.\n", signum);
+    WvDaemon::me()->die();
 }
 
 static void sigquit_handler(int signum)
@@ -63,11 +54,12 @@ static void sigquit_handler(int signum)
 #endif // _WIN32
 
 WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
-        WvDaemonCallback _start_callback,
-        WvDaemonCallback _run_callback,
-        WvDaemonCallback _stop_callback,
-        void *_ud)
-    : name(_name), version(_version),
+                WvDaemonCallback _start_callback,
+    	    	WvDaemonCallback _run_callback,
+    	    	WvDaemonCallback _stop_callback,
+    	    	void *_ud) :
+            name(_name),
+            version(_version),
 #ifndef _WIN32
             pid_file("/var/run/%s.pid", _name),
 #endif
@@ -80,6 +72,9 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
             stop_callback(_stop_callback),
             ud(_ud)
 {
+    assert(singleton == NULL);
+    singleton = this;
+    
     args.add_option('q', "quiet",
             "Decrease log level (can be used multiple times)",
             WvArgs::NoArgCallback(this, &WvDaemon::dec_log_level));
@@ -98,6 +93,10 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
     args.add_option('V', "version",
             "Display version and exit",
             WvArgs::NoArgCallback(this, &WvDaemon::display_version_and_exit));
+}
+
+WvDaemon::~WvDaemon()
+{
 }
 
 int WvDaemon::run(const char *argv0)
@@ -197,7 +196,35 @@ int WvDaemon::_run(const char *argv0)
 {
 #ifndef _WIN32
     wvcrash_setup(argv0, version);
+#endif
 
+    _want_to_die = false;
+    do_load();
+    while (!want_to_die())
+    {
+        _want_to_restart = false;
+
+        do_start();
+        
+        while (should_run())
+            do_run();
+        
+        do_stop();
+    }
+    do_unload();
+
+    return _exit_status;
+}
+
+void WvDaemon::set_daemonize(void *)
+{
+    daemonize = true;
+    syslog = true;
+}
+
+void WvDaemon::do_load()
+{
+#ifndef _WIN32
     if (!!pid_file && daemonize)
     {
         // FIXME: this is racy!
@@ -215,11 +242,13 @@ int WvDaemon::_run(const char *argv0)
                     log(WvLog::Error,
                             "%s is already running (pid %s); exiting\n",
                             name, old_pid);
-                    return 1;
+                    die();
                 }
             }
         }
         old_pid_fd.close();
+        if (want_to_die())
+            return;
 
         // Now write our new PID file
         WvAtomicFile pid_fd(pid_file, O_WRONLY, 0600);
@@ -232,8 +261,6 @@ int WvDaemon::_run(const char *argv0)
 #endif
     log(WvLog::Notice, "Starting %s version %s.\n", name, version);
 
-    daemons.append(this, false);
-
 #ifndef _WIN32    
     if (daemonize)
         signal(SIGINT, SIG_IGN);
@@ -244,42 +271,44 @@ int WvDaemon::_run(const char *argv0)
     signal(SIGHUP, sighup_handler);
 #endif
 
-    _want_to_die = false;
-    while (!want_to_die())
-    {
-        _want_to_restart = false;
+    if (!!load_callback)
+        load_callback(*this, ud);
+}
 
-        if (!!start_callback)
-	    start_callback(*this, ud);
+void WvDaemon::do_start()
+{
+    if (!!start_callback)
+        start_callback(*this, ud);
+}
 
+void WvDaemon::do_run()
+{
+    if (!!run_callback)
         run_callback(*this, ud);
+}
 
-        if (!!stop_callback)
-	    stop_callback(*this, ud);
-    }
+void WvDaemon::do_stop()
+{
+    if (!!stop_callback)
+        stop_callback(*this, ud);
+}
 
-    daemons.unlink(this);
+void WvDaemon::do_unload()
+{
+    if (!!unload_callback)
+        unload_callback(*this, ud);
+
 #ifndef _WIN32
-    if (daemons.count() == 0)
-    {
-        signal(SIGHUP, SIG_DFL);
-        signal(SIGQUIT, SIG_DFL);
-        signal(SIGINT, SIG_DFL);
-        signal(SIGTERM, SIG_DFL);
-    }
+    signal(SIGHUP, SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
 #endif
+
     log(WvLog::Notice, "Exiting with status %s\n", _exit_status);
 
 #ifndef _WIN32    
     if (!!pid_file)
         ::unlink(pid_file);
 #endif
-
-    return _exit_status;
-}
-
-void WvDaemon::set_daemonize(void *)
-{
-    daemonize = true;
-    syslog = true;
 }
