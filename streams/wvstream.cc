@@ -83,10 +83,10 @@ static bool contains_insensitive(const char *haystack, const char *needle)
 }
 
 
-static const char *list_format = "%6s %3s%-3s %-20s %s";
-static inline const char *list_format_bool(bool val)
+static const char *list_format = "%6s%s%3s%s%3s%s%20s%s%s";
+static inline const char *Yes_No(bool val)
 {
-    return val? "++": "--";
+    return val? "Yes": "No";
 }
 
 
@@ -94,7 +94,8 @@ void WvStream::debugger_list_display_header(WvStringParm cmd,
         WvStreamsDebugger::ResultCallback result_cb)
 {
     WvStringList result;
-    result.append(list_format, "-WSID-", "-Ok", "Cs-", "-Type-----", "-Name-----");
+    result.append(list_format, "--WSID", "-", "-Ok", "-", "-Cs", "-",
+            "Type----------------", "-", "Name--------------------");
     result_cb(cmd, result);
 }
 
@@ -105,9 +106,11 @@ void WvStream::debugger_list_display_one_stream(WvStream *s,
 {
     WvStringList result;
     result.append(list_format,
-            s->wsid(), list_format_bool(s->isok()),
-            list_format_bool(s->uses_continue_select),
-            s->wstype(), s->wsname());
+            s->wsid(), " ",
+            Yes_No(s->isok()), " ",
+            Yes_No(s->uses_continue_select), " ",
+            s->wstype(), " ",
+            s->wsname());
     result_cb(cmd, result);
 }
 

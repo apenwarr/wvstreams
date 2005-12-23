@@ -21,6 +21,8 @@
 
 #include "wvstring.h"
 #include "wvlinklist.h"
+#include "wvstreamsdebugger.h"
+#include "wvstringlist.h"
 #include "setjmp.h"
 
 #define WVTASK_MAGIC 0x123678
@@ -78,7 +80,7 @@ class WvTaskMan
     static int links;
     
     static int magic_number;
-    static WvTaskList free_tasks;
+    static WvTaskList all_tasks, free_tasks;
     
     static void get_stack(WvTask &task, size_t size);
     static void stackmaster();
@@ -117,6 +119,10 @@ public:
     
     static WvTask *whoami()
         { return current_task; }
+
+private:
+    static WvString debugger_tasks_run_cb(WvStringParm, WvStringList &,
+            WvStreamsDebugger::ResultCallback, void *);
 };
 
 

@@ -50,7 +50,7 @@ int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 
 WvTaskMan *WvTaskMan::singleton;
 int WvTaskMan::links, WvTaskMan::magic_number;
-WvTaskList WvTaskMan::free_tasks;
+WvTaskList WvTaskMan::all_tasks, WvTaskMan::free_tasks;
 jmp_buf WvTaskMan::stackmaster_task, WvTaskMan::get_stack_return,
     WvTaskMan::toplevel;
 WvTask *WvTaskMan::current_task, *WvTaskMan::stack_target;
@@ -81,6 +81,8 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
     stack_magic = NULL;
     
     man.get_stack(*this, stacksize);
+
+    man.all_tasks.append(this, true);
 }
 
 
@@ -136,8 +138,43 @@ void WvTaskMan::unlink()
 }
 
 
+static inline const char *Yes_No(bool val)
+{
+    return val? "Yes": "No";
+}
+
+
+WvString WvTaskMan::debugger_tasks_run_cb(WvStringParm cmd, WvStringList &args,
+        WvStreamsDebugger::ResultCallback result_cb, void *)
+{
+    const char *format_str = "%5s%s%3s%s%3s%s%6s%s%s";
+    WvStringList result;
+    result.append(format_str, "--TID", "-", "Rng", "-", "Rcy", "-", "-StkSz", "-", "Name-----");
+    result_cb(cmd, result);
+    WvTaskList::Iter i(all_tasks);
+    for (i.rewind(); i.next(); )
+    {
+        result.zap();
+        result.append(format_str, i->tid, " ",
+                Yes_No(i->running), " ",
+                Yes_No(i->recycled), " ",
+                i->stacksize, " ",
+                i->name);
+        result_cb(cmd, result);
+    }
+    return WvString::null;
+}
+
+
 WvTaskMan::WvTaskMan()
 {
+    static bool first = true;
+    if (first)
+    {
+        first = false;
+        WvStreamsDebugger::add_command("tasks", 0, debugger_tasks_run_cb, 0);
+    }
+
     stack_target = NULL;
     current_task = NULL;
     magic_number = -WVTASK_MAGIC;
