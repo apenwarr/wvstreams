@@ -25,6 +25,12 @@ static const int buffer_size = 2048;
 static char will_msg[buffer_size];
 static char assert_msg[buffer_size];
 
+static const int ring_buffer_order = wvcrash_ring_buffer_order;
+static const int ring_buffer_size = wvcrash_ring_buffer_size;
+static const int ring_buffer_mask = ring_buffer_size - 1;
+static char ring_buffer[ring_buffer_size+1];
+static int ring_buffer_start = 0, ring_buffer_used = 0;
+
 extern "C"
 {
     // Support assert().
@@ -93,6 +99,50 @@ const char *wvcrash_read_will()
 const char *wvcrash_read_assert()
 {
     return assert_msg;
+}
+
+
+void wvcrash_ring_buffer_put(const char *str)
+{
+    wvcrash_ring_buffer_put(str, strlen(str));
+}
+
+
+void wvcrash_ring_buffer_put(const char *str, size_t len)
+{
+    while (len > 0)
+    {
+        int pos = (ring_buffer_start + ring_buffer_used) & ring_buffer_mask;
+        ring_buffer[pos] = *str++;
+        --len;
+        if (ring_buffer_used == ring_buffer_size)
+            ring_buffer_start = (ring_buffer_start + 1) & ring_buffer_mask;
+        else
+            ++ring_buffer_used;
+    }
+}
+
+
+const char *wvcrash_ring_buffer_get()
+{
+    if (ring_buffer_used == 0)
+        return NULL;
+    const char *result;
+    if (ring_buffer_start + ring_buffer_used >= ring_buffer_size)
+    {
+        ring_buffer[ring_buffer_size] = '\0';
+        result = &ring_buffer[ring_buffer_start];
+        ring_buffer_used -= ring_buffer_size - ring_buffer_start;
+        ring_buffer_start = 0;
+    }
+    else
+    {
+        ring_buffer[ring_buffer_start + ring_buffer_used] = '\0';
+        result = &ring_buffer[ring_buffer_start];
+        ring_buffer_start += ring_buffer_used;
+        ring_buffer_used = 0;
+    }
+    return result;
 }
 
 
