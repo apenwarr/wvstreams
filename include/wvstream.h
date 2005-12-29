@@ -683,7 +683,7 @@ public:
     unsigned short wsid() const { return my_wsid; }
     
 private:
-    static WvMap<WSID, IWvStream *> *wsid_map;
+    static WvMap<WSID, WvStream *> *wsid_map;
     static WSID next_wsid_to_try;
 public:
     static IWvStream *find_by_wsid(WSID wsid);
@@ -691,13 +691,17 @@ public:
 private:
     static void add_debugger_commands();
 protected:
-    static void debugger_list_display_header(WvStringParm cmd,
+    static void debugger_streams_display_header(WvStringParm cmd,
             WvStreamsDebugger::ResultCallback result_cb);
-    static void debugger_list_display_one_stream(WvStream *s,
+    static void debugger_streams_display_one_stream(WvStream *s,
             WvStringParm cmd,
             WvStreamsDebugger::ResultCallback result_cb);
+    static void debugger_streams_maybe_display_one_stream(WvStream *s,
+            WvStringParm cmd,
+            const WvStringList &args,
+            WvStreamsDebugger::ResultCallback result_cb);
 private:
-    static WvString debugger_list_run_cb(WvStringParm cmd,
+    static WvString debugger_streams_run_cb(WvStringParm cmd,
         WvStringList &args,
         WvStreamsDebugger::ResultCallback result_cb, void *);
     static WvString debugger_close_run_cb(WvStringParm cmd,

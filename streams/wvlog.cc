@@ -46,6 +46,7 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
+    set_wsname(app);
 }
 
 
@@ -54,6 +55,7 @@ WvLog::WvLog(const WvLog &l)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
+    set_wsname(app);
 }
 
 

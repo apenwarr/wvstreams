@@ -59,6 +59,13 @@ public:
 
 public:
     const char *wstype() const { return "WvIStreamList"; }
+    
+private:
+    static void add_debugger_commands();
+private:
+    static WvString debugger_globallist_run_cb(WvStringParm cmd,
+        WvStringList &args,
+        WvStreamsDebugger::ResultCallback result_cb, void *);
 };
 
 #endif // __WVISTREAMLIST_H

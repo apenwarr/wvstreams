@@ -41,6 +41,8 @@ WvIStreamList::WvIStreamList():
 #ifndef _WIN32
         add_wvfork_callback(WvIStreamList::onfork);
 #endif
+        set_wsname("globallist");
+        add_debugger_commands();
     }
 }
 
@@ -202,3 +204,24 @@ void WvIStreamList::onfork(pid_t p)
     }
 }
 #endif
+
+
+void WvIStreamList::add_debugger_commands()
+{
+    WvStreamsDebugger::add_command("globallist", 0, debugger_globallist_run_cb, 0);
+}
+
+
+WvString WvIStreamList::debugger_globallist_run_cb(WvStringParm cmd,
+    WvStringList &args,
+    WvStreamsDebugger::ResultCallback result_cb, void *)
+{
+    debugger_streams_display_header(cmd, result_cb);
+    WvIStreamList::Iter i(globallist);
+    for (i.rewind(); i.next(); )
+        debugger_streams_maybe_display_one_stream(static_cast<WvStream *>(i.ptr()),
+                cmd, args, result_cb);
+    
+    return WvString::null;
+}
+

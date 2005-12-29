@@ -54,7 +54,7 @@ UUID_MAP_BEGIN(WvStream)
   UUID_MAP_END
 
 
-WvMap<WSID, IWvStream *> *WvStream::wsid_map;
+WvMap<WSID, WvStream *> *WvStream::wsid_map;
 WSID WvStream::next_wsid_to_try = 0;
 
 
@@ -83,30 +83,33 @@ static bool contains_insensitive(const char *haystack, const char *needle)
 }
 
 
-static const char *list_format = "%6s%s%3s%s%3s%s%20s%s%s";
+static const char *list_format = "%6s%s%2s%s%3s%s%3s%s%20s%s%s";
 static inline const char *Yes_No(bool val)
 {
     return val? "Yes": "No";
 }
 
 
-void WvStream::debugger_list_display_header(WvStringParm cmd,
+void WvStream::debugger_streams_display_header(WvStringParm cmd,
         WvStreamsDebugger::ResultCallback result_cb)
 {
     WvStringList result;
-    result.append(list_format, "--WSID", "-", "-Ok", "-", "-Cs", "-",
-            "Type----------------", "-", "Name--------------------");
+    result.append(list_format, "--WSID", "-", "RC", "-", "-Ok", "-", "-Cs", "-",
+            "----------------Type", "-", "Name--------------------");
     result_cb(cmd, result);
 }
 
 
-void WvStream::debugger_list_display_one_stream(WvStream *s,
+void WvStream::debugger_streams_display_one_stream(WvStream *s,
         WvStringParm cmd,
         WvStreamsDebugger::ResultCallback result_cb)
 {
     WvStringList result;
+    s->addRef();
+    unsigned refcount = s->release();
     result.append(list_format,
             s->wsid(), " ",
+            refcount, " ",
             Yes_No(s->isok()), " ",
             Yes_No(s->uses_continue_select), " ",
             s->wstype(), " ",
@@ -115,45 +118,52 @@ void WvStream::debugger_list_display_one_stream(WvStream *s,
 }
 
 
-WvString WvStream::debugger_list_run_cb(WvStringParm cmd,
+void WvStream::debugger_streams_maybe_display_one_stream(WvStream *s,
+        WvStringParm cmd,
+        const WvStringList &args,
+        WvStreamsDebugger::ResultCallback result_cb)
+{
+    bool show = args.isempty();
+    WvStringList::Iter arg(args);
+    for (arg.rewind(); arg.next(); )
+    {
+        WSID wsid;
+        bool is_num = wvstring_to_num(*arg, wsid);
+        
+        if (is_num)
+        {
+            if (s->wsid() == wsid)
+            {
+                show = true;
+                break;
+            }
+        }
+        else
+        {
+            if (s->wsname() && contains_insensitive(s->wsname(), *arg)
+                    || s->wstype() && contains_insensitive(s->wstype(), *arg))
+            {
+                show = true;
+                break;
+            }
+        }
+    }
+    if (show)
+        debugger_streams_display_one_stream(s, cmd, result_cb);
+}
+
+
+WvString WvStream::debugger_streams_run_cb(WvStringParm cmd,
         WvStringList &args,
         WvStreamsDebugger::ResultCallback result_cb, void *)
 {
-    debugger_list_display_header(cmd, result_cb);
+    debugger_streams_display_header(cmd, result_cb);
     if (WvStream::wsid_map)
     {
-        WvMap<WSID, IWvStream *>::Iter i(*WvStream::wsid_map);
+        WvMap<WSID, WvStream *>::Iter i(*WvStream::wsid_map);
         for (i.rewind(); i.next(); )
-        {
-            WvStream *s = (WvStream *)i->data;
-            bool show = args.isempty();
-            WvStringList::Iter arg(args);
-            for (arg.rewind(); arg.next(); )
-            {
-                WSID wsid;
-                bool is_num = wvstring_to_num(*arg, wsid);
-                
-                if (is_num)
-                {
-                    if (s->wsid() == wsid)
-                    {
-                        show = true;
-                        break;
-                    }
-                }
-                else
-                {
-                    if (s->wsname() && contains_insensitive(s->wsname(), *arg)
-                            || s->wstype() && contains_insensitive(s->wstype(), *arg))
-                    {
-                        show = true;
-                        break;
-                    }
-                }
-            }
-            if (show)
-                debugger_list_display_one_stream(s, cmd, result_cb);
-        }
+            debugger_streams_maybe_display_one_stream(i->data,
+                    cmd, args, result_cb);
     }
     
     return WvString::null;
@@ -180,7 +190,7 @@ WvString WvStream::debugger_close_run_cb(WvStringParm cmd,
 
 void WvStream::add_debugger_commands()
 {
-    WvStreamsDebugger::add_command("ls", 0, debugger_list_run_cb, 0);
+    WvStreamsDebugger::add_command("streams", 0, debugger_streams_run_cb, 0);
     WvStreamsDebugger::add_command("close", 0, debugger_close_run_cb, 0);
 }
 
@@ -217,7 +227,7 @@ WvStream::WvStream():
     
     // Choose a wsid;
     if (!wsid_map)
-        wsid_map = new WvMap<WSID, IWvStream *>(256);
+        wsid_map = new WvMap<WSID, WvStream *>(256);
     WSID first_wsid_tried = next_wsid_to_try;
     do
     {
@@ -228,7 +238,6 @@ WvStream::WvStream():
     my_wsid = next_wsid_to_try++;
     assert(!wsid_map->exists(my_wsid));
     wsid_map->add(my_wsid, this);
-    
     
 #ifdef _WIN32
     WSAData wsaData;
@@ -260,13 +269,15 @@ WvStream::~WvStream()
     assert(!uses_continue_select || !call_ctx);
     
     call_ctx = 0; // finish running the suspended callback, if any
-    
+
+    assert(wsid_map);
     wsid_map->remove(my_wsid);
     if (wsid_map->isempty())
     {
         delete wsid_map;
         wsid_map = NULL;
     }
+    
     TRACE("done destroying %p\n", this);
 }
 
@@ -1123,7 +1134,7 @@ void WvStream::unread(WvBuf &unreadbuf, size_t count)
 
 IWvStream *WvStream::find_by_wsid(WSID wsid)
 {
-    IWvStream **presult = wsid_map? wsid_map->find(wsid): NULL;
+    WvStream **presult = wsid_map? wsid_map->find(wsid): NULL;
     if (presult)
         return *presult;
     else
