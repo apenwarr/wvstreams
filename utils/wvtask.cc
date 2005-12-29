@@ -82,7 +82,7 @@ WvTask::WvTask(WvTaskMan &_man, size_t _stacksize) : man(_man)
     
     man.get_stack(*this, stacksize);
 
-    man.all_tasks.append(this, true);
+    man.all_tasks.append(this, false);
 }
 
 
@@ -147,9 +147,9 @@ static inline const char *Yes_No(bool val)
 WvString WvTaskMan::debugger_tasks_run_cb(WvStringParm cmd, WvStringList &args,
         WvStreamsDebugger::ResultCallback result_cb, void *)
 {
-    const char *format_str = "%5s%s%3s%s%3s%s%6s%s%s";
+    const char *format_str = "%5s%s%7s%s%8s%s%6s%s%s";
     WvStringList result;
-    result.append(format_str, "--TID", "-", "Rng", "-", "Rcy", "-", "-StkSz", "-", "Name-----");
+    result.append(format_str, "--TID", "-", "Running", "-", "Recycled", "-", "-StkSz", "-", "Name-----");
     result_cb(cmd, result);
     WvTaskList::Iter i(all_tasks);
     for (i.rewind(); i.next(); )
