@@ -53,6 +53,7 @@ WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm id,
 	    catmgr->registerComponent(iid, oid, id);
 	    ssrvhdlr->addObject(oid, &func);
 	}
+	if (catmgr) WVRELEASE(catmgr);
     }
 }
 
@@ -114,8 +115,14 @@ void *wvcreate(const UUID &category, WvStringParm _moniker)
 	    func = static_cast<WvMonikerCreateFuncStore *>(
 		srvmgr->getObject(oid));
 	    if (func)
+	    {
+		WVRELEASE(i);
+		WVRELEASE(cat);
 		return func->create(cptr);
+	    }
 	}
     }
+    WVRELEASE(i);
+    WVRELEASE(cat);
     return NULL;
 }

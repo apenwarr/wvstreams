@@ -1,5 +1,6 @@
 #include "wvtest.h"
 #include "uniconfroot.h"
+#include "wvstream.h"
 
 WVTEST_MAIN("no generator")
 {
@@ -13,9 +14,11 @@ WVTEST_MAIN("no generator")
     root2["/"].setme("foo");
     root2["subt"].setme("bar");
     root2["subt/mayo"].setme("moo");
-    WVPASS(strcmp(root2["/"].getme().cstr(), "") == 0);
-    WVPASS(strcmp(root2["subt"].getme().cstr(), "") == 0);
-    WVPASS(strcmp(root2["subt/mayo"].getme().cstr(), "") == 0);        
+    root2["subt/mayo/baz"].setme("MOO");
+    WVPASS(root2["/"].getme() == WvString::empty);
+    WVPASS(root2["subt"].getme() == WvString::empty);
+    WVPASS(root2["subt/mayo"].getme() == WvString::empty);
+    WVPASS(root2["subt/mayo/baz"].getme() == "MOO");
     WVFAIL(root2["dialer 2"].exists());
 
 }
@@ -35,6 +38,7 @@ WVTEST_MAIN("type conversions")
     
     cfg.setme("x");
     cfg.setme(5);
+    WVPASSEQ("5", cfg.getme());
     WVPASSEQ("5", cfg.getme("x"));
     WVPASSEQ("5", cfg.getme(5));
     
