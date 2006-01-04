@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "Request:\n%s", certreq.cstr());
 
-    WvString signedcert(cacert.signcert(certreq));
+    WvString signedcert(cacert.signreq(certreq));
 
     fprintf(stderr, "Cert:\n%s", signedcert.cstr());
 

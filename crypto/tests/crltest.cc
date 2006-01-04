@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     WvX509Mgr user("cn=user,o=ca", 1024);
     WvString request = user.certreq();
     fprintf(stderr,"Request:\n%s\n", request.cstr());
-    WvString srequest = ca.signcert(request);
+    WvString srequest = ca.signreq(request);
     fprintf(stderr,"Got past the signing bit\n");
     user.decode(WvX509Mgr::CertPEM, srequest);   
     fprintf(stderr,"Imported the certificate\n");

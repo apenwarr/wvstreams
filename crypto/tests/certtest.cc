@@ -23,9 +23,11 @@
 void test(WvStringParm _dN)
 {
     // Create a new certificate
-    WvX509Mgr x509cert(_dN, 1024);
+    WvX509Mgr x509cert;
+    x509cert.set_dname(_dN);
+    x509cert.set_rsakey(new WvRSAKey(1024));
     x509cert.setPkcs12Password("Foo");
-    
+    x509cert.create_selfsigned(true);
     wvcon->print("Consistancy Test result: %s\n", 
 		 x509cert.test() ? "Ok" : "Inconsistant");
 
@@ -44,6 +46,7 @@ void test(WvStringParm _dN)
     // check and make sure that the PKCS12 wrote properly...
     if (!x509cert.isok())
         wverr->print("Errors after the write: %s\n", x509cert.errstr());
+    
 }
 
 int main(int argc, char *argv[])
@@ -54,8 +57,7 @@ int main(int argc, char *argv[])
     
     wvcon->print("Certificate Test Starting...\n");
     
-    // Setup a new DN entry, like a server would set.
-    WvString dName("email=foo@foo.com,cn=test.foo.com,dc=foo,dc=com");
+    WvString dName("cn=Test CA, o=TESTING DO NOT USE");
     
     test(dName);
 
