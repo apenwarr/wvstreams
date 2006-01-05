@@ -58,6 +58,8 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(WvUnixAddr unix_addr,
     tcp_listener(NULL),
     auth_cb(_auth_cb)
 {
+    WvIStreamList::globallist.append(&streams, false);
+
     if (true)
     {
         unix_listener = new WvUnixListener(unix_addr, 0700);
@@ -66,8 +68,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(WvUnixAddr unix_addr,
                 &WvStreamsDebuggerServer::unix_listener_cb), NULL);
         unix_listener->setclosecallback(IWvStreamCallback(this,
                 &WvStreamsDebuggerServer::unix_listener_close_cb));
-        WvIStreamList::globallist.append(unix_listener, true);
-        streams.append(unix_listener, false);
+        streams.append(unix_listener, true);
         log("Listening on %s\n", unix_addr);
     }
     
@@ -79,8 +80,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(WvUnixAddr unix_addr,
                 &WvStreamsDebuggerServer::tcp_listener_cb), NULL);
         tcp_listener->setclosecallback(IWvStreamCallback(this,
                 &WvStreamsDebuggerServer::tcp_listener_close_cb));
-        WvIStreamList::globallist.append(tcp_listener, true);
-        streams.append(tcp_listener, false);
+        streams.append(tcp_listener, true);
         log("Listening on %s\n", tcp_addr);
     }
 }
@@ -88,9 +88,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(WvUnixAddr unix_addr,
 
 WvStreamsDebuggerServer::~WvStreamsDebuggerServer()
 {
-    WvIStreamList::Iter i(streams);
-    for (i.rewind(); i.next(); )
-        i->close();
+    WvIStreamList::globallist.unlink(&streams);
 }
 
 
@@ -103,8 +101,7 @@ void WvStreamsDebuggerServer::unix_listener_cb(WvStream &, void *)
     Connection *conn = new Connection(unix_conn);
     conn->setcallback(WvStreamCallback(this,
             &WvStreamsDebuggerServer::ready_cb), NULL);
-    WvIStreamList::globallist.append(conn, true);
-    streams.append(conn, false);
+    streams.append(conn, true);
 }
 
 
@@ -123,8 +120,7 @@ void WvStreamsDebuggerServer::tcp_listener_cb(WvStream &, void *)
     Connection *conn = new Connection(tcp_conn);
     conn->setcallback(WvStreamCallback(this,
             &WvStreamsDebuggerServer::ready_cb), NULL);
-    WvIStreamList::globallist.append(conn, true);
-    streams.append(conn, false);
+    streams.append(conn, true);
 }
 
 
