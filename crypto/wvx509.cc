@@ -271,6 +271,8 @@ static WvString set_name_entry(X509_NAME *name, WvStringParm dn)
 	    nid = NID_Domain;
 	    force_fqdn = value;
 	}
+	else if (sid == "email")
+	    nid = NID_pkcs9_emailAddress;
 	else
 	    nid = NID_domainComponent;
 	
