@@ -150,7 +150,7 @@ int WvInterface::getflags()
     int retval = req(SIOCGIFFLAGS, &ifr);
     if (retval)
         valid = false;
-    return ifr.ifr_flags;
+    return retval? 0: ifr.ifr_flags;
 }
 
 

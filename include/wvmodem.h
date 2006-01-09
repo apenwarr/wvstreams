@@ -82,6 +82,7 @@ class WvModem : public WvModemBase
 private:
     WvLockDev		lock;
     WvLog               log;
+    bool                have_old_t;
     struct termios	old_t;
     bool		closing;
     bool                no_reset;

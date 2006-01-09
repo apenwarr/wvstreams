@@ -14,6 +14,12 @@
 #include "wvfork.h"
 #endif
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#else
+#define RUNNING_ON_VALGRIND false
+#endif
+
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #define STREAMTRACE 0
@@ -178,8 +184,11 @@ void WvIStreamList::execute()
 	if (s.isok())
         {
 #if DEBUG
-            WvString strace_node("%s: %s", s.wstype(), s.wsname());
-            ::write(-1, strace_node, strace_node.len()); 
+            if (!RUNNING_ON_VALGRIND)
+            {
+                WvString strace_node("%s: %s", s.wstype(), s.wsname());
+                ::write(-1, strace_node, strace_node.len()); 
+            }
 #endif
 	    s.callback();
         }
