@@ -170,7 +170,7 @@ public:
      * private key in rsa, and then spit back a new X509 Certificate in
      * PEM format.
      */
-    WvString signcert(WvStringParm pkcs10req);
+    WvString signreq(WvStringParm pkcs10req);
 
     /**
      * Sign the certificate with our keys... this is what you want when 
@@ -397,6 +397,14 @@ public:
      */
     void set_aia(WvStringParm identifier);
     WvString get_aia();
+
+    void set_dname(WvStringParm _dname)
+    {	dname = _dname; }
+
+    // Takes ownership..
+    // Fixme: Implement RefCounting in WvRSAKey!
+    void set_rsakey(WvRSAKey *_rsa)
+    {   rsa = _rsa; }
 
     /**
      * Is this certificate Object valid, and in a non-error state

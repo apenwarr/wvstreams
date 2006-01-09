@@ -113,7 +113,7 @@ WvX509Mgr::WvX509Mgr()
     : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
 {
     wvssl_init();
-    cert = X509_new();
+    cert = NULL;
     rsa = NULL;
 }
 
@@ -356,15 +356,17 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
     set_issuer(dname);
     set_subject(dname);
     
-    // Set the RFC2459-mandated keyUsage field to critical, and restrict
-    // the usage of this cert to digital signature, key agreement, and 
-    // key encipherment.
     if (is_ca)
     {
-	debug("Setting Extensions with CA Parameters\n");
+	debug("Setting Extensions with CA Parameters.\n");
+	debug("Setting Key Usage.\n");
 	set_key_usage("critical, keyCertSign, cRLSign");
+	debug("Setting Basic Constraints.\n");
 	set_extension(NID_basic_constraints, "critical, CA:TRUE");
-	set_constraints("requireExplicitPolicy");
+	debug("Setting Netscape Certificate Type.\n");
+	set_extension(NID_netscape_cert_type, "SSL CA, S/MIME CA, Object Signing CA");
+//	debug("Setting Constraints.\n");
+//	set_constraints("requireExplicitPolicy");
     }
     else
     {
@@ -376,6 +378,7 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
 			  "TLS Web Client Authentication");
     }
     
+    debug("Ok - Parameters set... now signing certificate.\n");
     signcert(cert);
     
     debug("Certificate for %s created\n", dname);
@@ -495,7 +498,7 @@ WvString WvX509Mgr::certreq()
 }
 
 
-WvString WvX509Mgr::signcert(WvStringParm pkcs10req)
+WvString WvX509Mgr::signreq(WvStringParm pkcs10req)
 {
     assert(rsa);
     assert(cert);
@@ -1254,7 +1257,7 @@ void WvX509Mgr::set_aia(WvStringParm _identifier)
     sk_ACCESS_DESCRIPTION_push(ainfo, acc);
     GENERAL_NAME_free(acc->location);
     i2d_GENERAL_NAME(acc->location, &list);
-    
+    d2i_GENERAL_NAME(&acc->location, &list, identifier.len());
     X509_EXTENSION *ex = X509V3_EXT_i2d(NID_info_access, 0, ainfo);
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
@@ -1342,8 +1345,6 @@ void WvX509Mgr::set_extension(int nid, WvStringParm _values)
 {
     WvString values(_values);
     X509_EXTENSION *ex = NULL;
-    // Set the RFC2459-mandated keyUsage field to critical, and restrict
-    // the usage of this cert to digital signature and key encipherment.
     ex = X509V3_EXT_conf_nid(NULL, NULL, nid, values.edit());
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
@@ -1387,20 +1388,32 @@ int WvX509Mgr::geterr() const
 
 bool WvX509Mgr::signcert(X509 *unsignedcert)
 {
-    if (!(cert == unsignedcert) || 
-	!((cert->ex_flags & EXFLAG_KUSAGE) && 
-	  (cert->ex_kusage & KU_KEY_CERT_SIGN)))
+    if (unsignedcert == NULL)
     {
-	debug("Certificate not allowed to sign Certificates!\n");
+	debug("No certificate to sign??\n");
 	return false;
     }
 
+    if (cert == unsignedcert)
+    {
+	debug("Self Signing!\n");
+	printf("Looks like:\n%s\n", encode(WvX509Mgr::CertPEM).cstr());
+    }
+    else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
+	  (cert->ex_kusage & KU_KEY_CERT_SIGN)))
+    {
+	debug("This Certificate is not allowed to sign Certificates!\n");
+	return false;
+    }
     
-    // Ok, now sign the new cert with the current RSA key
+    debug("Ok, now sign the new cert with the current RSA key.\n");
     EVP_PKEY *certkey = EVP_PKEY_new();
     bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);
     if (cakeyok)
+    {
+	
 	X509_sign(unsignedcert, certkey, EVP_sha1());
+    }
     else
     {
 	debug("No keys??\n");
