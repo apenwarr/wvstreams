@@ -72,7 +72,7 @@ static size_t wvtcl_escape(char *dst, const char *s, size_t s_len,
     }
     
     // if the braces aren't balanced, backslashify
-    if (bracecount != 0)
+    if (bracecount != 0 || inescape)
         backslashify = true;
 
     if (!backslashify && !unprintables)
@@ -175,10 +175,23 @@ static size_t wvtcl_unescape(char *dst, const char *s, size_t s_len,
         --end;
     }
     size_t len = 0;
+    bool inescape = false;
     for (; start != end; ++start)
     {
-        if (*start != '\\')
+        if (*start == '\\')
         {
+            if (inescape)
+            {
+                if (dst) dst[len] = *start;
+                len++;
+                inescape = false;
+            }
+            else
+                inescape = true;
+        }
+        else
+        {
+            inescape = false;
             if (dst) dst[len] = *start;
             len++;
         }
