@@ -155,6 +155,7 @@ void WvCRLMgr::decode(const DumpMode mode, WvStringParm PemEncoded)
 	crl = NULL;
     }
     
+    size_t output_size;
     switch (mode)
     {
     case PEM:
@@ -165,7 +166,8 @@ void WvCRLMgr::decode(const DumpMode mode, WvStringParm PemEncoded)
     case DER:
 	debug("Decoding CRL from DER format:\n");
 	dec.flushstrbuf(PemEncoded, output, true);
-	BIO_write(bufbio, output.get(output.used()), output.used());
+	output_size = output.used();
+	BIO_write(bufbio, output.get(output_size), output_size);
 	crl = d2i_X509_CRL_bio(bufbio, NULL);
 	break;
     case TEXT:
