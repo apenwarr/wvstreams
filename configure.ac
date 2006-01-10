@@ -382,25 +382,28 @@ fi
 
 # bdb
 if test "$with_bdb" != "no"; then
-    AC_CHECK_HEADERS(db.h,, [with_bdb_header=no],
+    AC_CHECK_HEADERS(db.h, [with_bdb_header=db.h], [with_bdb_header=no],
                      [#include <db.h>
                       #ifdef DB_VERSION_MAJOR
                       #error "this is Berkeley DB 2.x or newer"
                       #endif])
     if test "$with_bdb_header" = "no"; then
-        AC_CHECK_HEADERS(db_185.h,, [with_bdb=no])
+        AC_CHECK_HEADERS(db_185.h, [with_bdb_header=db_185.h], [with_bdb=no])
     fi
-    AC_CHECK_LIB(db, dbopen,, [with_bdb_lib=no])
+fi
+if test "$with_bdb" != "no"; then
+    dbopen=`echo -e "#include <$with_bdb_header>\ndbopen" | gcc -E - | tail -1`
+    AC_CHECK_LIB(db, $dbopen,, [with_bdb_lib=no])
     if test "$with_bdb_lib" = "no"; then
-        AC_CHECK_LIB(db1, dbopen, [with_bdb_lib=yes],)
+        AC_CHECK_LIB(db1, $dbopen, [with_bdb_lib=yes],)
     fi
     if test "$with_bdb_lib" = "no"; then
         with_bdb=no
     fi
-    if test "$with_bdb" != "no"; then
-        AC_DEFINE(WITH_BDB,,
-                  [Define to enable Berkeley DB support.])
-    fi
+fi
+if test "$with_bdb" != "no"; then
+    AC_DEFINE(WITH_BDB,,
+	      [Define to enable Berkeley DB support.])
 fi
 
 # qdbm
