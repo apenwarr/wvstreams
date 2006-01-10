@@ -1257,7 +1257,12 @@ void WvX509Mgr::set_aia(WvStringParm _identifier)
     sk_ACCESS_DESCRIPTION_push(ainfo, acc);
     GENERAL_NAME_free(acc->location);
     i2d_GENERAL_NAME(acc->location, &list);
-    d2i_GENERAL_NAME(&acc->location, &list, identifier.len());
+#if OPENSSL_VERSION_NUMBER >= 0x0090800fL
+    const unsigned char** plist = const_cast<const unsigned char**>(&list);
+#else
+    unsigned char** plist = &list;
+#endif
+    d2i_GENERAL_NAME(&acc->location, plist, identifier.len());
     X509_EXTENSION *ex = X509V3_EXT_i2d(NID_info_access, 0, ainfo);
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
