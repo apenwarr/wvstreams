@@ -629,7 +629,12 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile=valgrind.log --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    if valgrind --help | grep log-file >/dev/null; then
+	VALGRIND="$VALGRIND --log-file=valgrind.log"
+    else
+	VALGRIND="$VALGRIND --logfile=valgrind.log"
+    fi
 fi
 
 AC_SUBST(SO_VERSION)
