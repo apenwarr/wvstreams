@@ -96,7 +96,6 @@ WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
             "Do not write log entries to syslog", syslog);
 #endif
     args.set_version(WvString("%s version %s", name, version).cstr());
-    args.set_email("wvstreams-dev@lists.nit.ca");
 }
 
 int WvDaemon::run(const char *argv0)
