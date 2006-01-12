@@ -1240,3 +1240,25 @@ WvString depunctuate(WvStringParm line)
 
     return ret;
 }
+
+// Reads the contents of a symlink.  Returns WvString::null on error.
+WvString wvreadlink(WvStringParm path)
+{
+    WvString result;
+    int size = 64;
+    for (;;)
+    {
+        result.setsize(size);
+        int readlink_result = readlink(path, result.edit(), size);
+        if (readlink_result == -1)
+            return WvString::null;
+        if (readlink_result < size)
+        {
+            result.edit()[readlink_result] = '\0';
+            break;
+        }
+        size = 2*size; // increase buffer size
+    }
+    return result;
+}
+
