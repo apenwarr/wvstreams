@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     WvArgs args;
 
     args.set_version("wvgrep (WvStreams grep) " VERSION "\n");
-    args.set_email("wvstreams-dev@lists.nit.ca");
+    args.set_email("<" PACKAGE_BUGREPORT ">");
 
     bool opt_count = false;
     args.add_set_bool_option('c', "count", WvString::null, opt_count);

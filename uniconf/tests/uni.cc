@@ -1,3 +1,4 @@
+#include "wvautoconf.h"
 #include "uniconfroot.h"
 #include "wvlogrcv.h"
 #include "strutils.h"
@@ -28,7 +29,9 @@ void usage()
 	    "   help  - this text\n"
 	    "\n"
 	    "You must set the UNICONF environment variable to a valid "
-	    "UniConf moniker.\n");
+	    "UniConf moniker.\n"
+	    "\n"
+	    "Report bugs to <" PACKAGE_BUGREPORT ">.\n");
 }
 
 int main(int argc, char **argv)
