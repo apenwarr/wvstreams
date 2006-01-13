@@ -1,3 +1,10 @@
+wvstreams (4.2.2-1) unstable; urgency=low
+
+  * New upstream version.
+    - Builds on AMD64.  (Closes: Bug#343710)
+
+ -- Simon Law <sfllaw@debian.org>  Mon,  9 Jan 2006 18:05:16 -0500
+
 wvstreams (4.2.1-1) unstable; urgency=low
 
   * New upstream version.
