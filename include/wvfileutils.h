@@ -43,7 +43,7 @@ bool fcopy(WvStringParm srcdir, WvStringParm dstdir, WvStringParm relname);
  * access times if it does.
  * (Equivalent to touch).
  */
-bool ftouch(WvStringParm file);
+bool ftouch(WvStringParm file, time_t mtime = 0);
 
 /**
  * Check whether two files have the same date/time stamp. This can be used as a

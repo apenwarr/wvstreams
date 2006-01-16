@@ -92,6 +92,11 @@ WVTEST_MAIN("ftouch test")
     WVPASS(ftouch(testfile2));
     WVPASS(stat(testfile2.cstr(), &st1) == 0);    
 
+    // test touching with an old modification time
+    WVPASS(ftouch(testfile2, 100));
+    WVPASS(stat(testfile2.cstr(), &st1) == 0);    
+    WVPASSEQ(st1.st_mtime, (time_t)100);
+
     unlink(testfile1);
     unlink(testfile2);
     rmdir(basedir);

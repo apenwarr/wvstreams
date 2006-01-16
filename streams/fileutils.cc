@@ -106,14 +106,26 @@ bool fcopy(WvStringParm srcdir, WvStringParm dstdir, WvStringParm relname)
 }
 
 
-bool ftouch(WvStringParm file)
+bool ftouch(WvStringParm file, time_t mtime)
 {
     if (!WvFile(file, O_WRONLY|O_CREAT).isok())
         return false;
 
-    if (utime(file, NULL) == 0)
-        return true;
+    struct utimbuf *buf = NULL;
+    if (mtime != 0)
+    {
+        buf = (struct utimbuf *)malloc(sizeof(struct utimbuf));
+        buf->actime = time(NULL);
+        buf->modtime = mtime;
+    }
 
+    if (utime(file, buf) == 0)
+    {
+        free(buf);
+        return true;
+    }
+
+    free(buf);
     return false;
 }
 
