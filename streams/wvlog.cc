@@ -263,6 +263,7 @@ void WvLogRcv::log(WvStringParm source, int _loglevel,
 	end_line();
 	last_source = source;
 	last_level = loglevel;
+        last_time = now;
         _make_prefix(now);
     }
     else if (last_time == 0 || now != last_time)
