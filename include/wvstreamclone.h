@@ -59,6 +59,8 @@ public:
 
 private:
     void close_callback(WvStream &s);
+
+    bool pre_select_result;
 };
 
 #endif // __WVSTREAMCLONE_H
