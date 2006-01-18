@@ -88,6 +88,34 @@ WVTEST_MAIN("timestamps")
     WVPASS(unlink(logfilename) == 0);
 }
 
+WVTEST_MAIN("keep single log lines together")
+{
+    WvString logfilename = wvtmpfilename("wvlog-together");
+    WvLogFileBase logfile(logfilename, WvLog::Debug);
+    WvLog log(__FUNCTION__, WvLog::Debug);
+    time_t first_time = time(NULL);
+    log("First message: ");
+    while (time(NULL) - first_time < 2)
+        sleep(1);
+    log("Second message\n");
+    logfile.close();
+
+    WvFile file(logfilename, O_RDONLY);
+    WVPASS(file.isok());
+
+    WvString line1 = file.getline();
+    WvString line2 = file.getline();
+
+    wvout->print("line 1: %s\n", line1);
+
+    // we want both messages on a single log line
+    WVPASS(!line2);
+    WVPASS(strstr(line1.cstr(), "First"));
+    WVPASS(strstr(line1.cstr(), "Second"));
+
+    WVPASS(unlink(logfilename) == 0);
+}
+
 #if 0
 WVTEST_MAIN("wvlog performance")
 {

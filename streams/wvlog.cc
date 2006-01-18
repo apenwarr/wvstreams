@@ -258,14 +258,22 @@ void WvLogRcv::log(WvStringParm source, int _loglevel,
     time_t now = wvtime().tv_sec;
     if (source != last_source
             || loglevel != last_level
-            || last_time == 0 || now != last_time
             || WvLogRcvBase::force_new_line)
     {
 	end_line();
 	last_source = source;
 	last_level = loglevel;
-        last_time = now;
         _make_prefix(now);
+    }
+    else if (last_time == 0 || now != last_time)
+    {
+	// ensure that even with the same source and level, logs will
+	// properly get the right time associated with them. however,
+	// don't split up log messages that should appear in a single
+	// log line.
+        last_time = now;
+	if (at_newline)
+	    _make_prefix(now);
     }
     
     const char *buf = (const char *)_buf, *bufend = buf + len, *cptr;
