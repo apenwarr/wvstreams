@@ -94,6 +94,8 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     for (i.rewind(); i.next(); )
     {
 	IWvStream &s(*i);
+	WvCrashWill will("doing pre_select for \"%s\" (%s)\n%s",
+			 i.link->id, ptr2str(&s), wvcrash_read_will());
 	
         si.wants = oldwant;
 
@@ -143,6 +145,9 @@ bool WvIStreamList::post_select(SelectInfo &si)
     for (i.rewind(); i.cur() && i.next(); )
     {
 	IWvStream &s(*i);
+	WvCrashWill will("doing post_select for \"%s\" (%s)\n%s",
+			 i.link->id, ptr2str(&s), wvcrash_read_will());
+
 	if (s.isok())
 	{
 	    if (s.post_select(si))
