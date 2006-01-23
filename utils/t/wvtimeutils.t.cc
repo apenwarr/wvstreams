@@ -1,6 +1,7 @@
 #include "wvtest.h"
 #include "wvtimeutils.h"
 #include "wvstring.h"
+#include "wvstream.h"
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -272,4 +273,29 @@ WVTEST_MAIN("operator<()")
     b.tv_sec = -1;
     b.tv_usec = -2000000;
     WVPASS(b < a);
+}
+
+WVTEST_MAIN("wvstime")
+{
+    WvTime now = wvstime();
+
+    sleep(1);
+
+    WVPASS(now == wvstime());
+    WVFAIL(now == wvtime());
+    WVPASS(now < wvtime());
+
+    wvstime_sync();
+    WVFAIL(now == wvstime());
+    WVPASS(now < wvstime());
+    
+    now = wvstime();
+    WvStream s;
+    s.select(0, true, true);
+    WVFAIL(now == wvstime());
+    WVPASS(now < wvstime());
+
+    now = wvstime();
+    s.callback();
+    WVPASS(now == wvstime());
 }

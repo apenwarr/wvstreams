@@ -51,7 +51,7 @@ public:
 
     /***** Overridden members *****/
 
-    virtual UniConfKey keymap(const UniConfKey &key);
+    virtual bool keymap(const UniConfKey &unmapped_key, UniConfKey &mapped_key);
     virtual void flush_buffers() { }
     virtual WvString get(const UniConfKey &key);
     virtual void set(const UniConfKey &key, WvStringParm value);

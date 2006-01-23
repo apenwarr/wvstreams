@@ -24,17 +24,23 @@ class WvFile;
  */
 class UniIniGen : public UniTempGen
 {
+public:
+    typedef WvCallback<void> SaveCallback;
+
+private:
     WvString filename;
     int create_mode;
     WvLog log;
     struct stat old_st;
+    SaveCallback save_cb;
     
 public:
     /**
      * Creates a generator which can load/modify/save a .ini file.
      * "filename" is the local path of the .ini file
      */
-    UniIniGen(WvStringParm filename, int _create_mode = 0666);
+    UniIniGen(WvStringParm filename, int _create_mode = 0666,
+            SaveCallback _save_cb = SaveCallback());
 
     virtual ~UniIniGen();
     
