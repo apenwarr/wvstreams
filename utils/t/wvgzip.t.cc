@@ -224,7 +224,6 @@ WVTEST_MAIN("severe compression errors")
 
     wvcon->print("Decoded %s bytes.\n", decoded);
     gzipinf.finish(uncomp);
-    WVPASS(gzipinf.isok());
     if (!gzipinf.isok())
         wvcon->print("GzipEncoder error: %s\n", gzipinf.geterror());
 }
