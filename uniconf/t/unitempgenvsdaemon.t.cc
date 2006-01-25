@@ -57,7 +57,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname, 0777);
 
-        WvIStreamList::globallist.append(&daemon, false);
+        WvIStreamList::globallist.append(&daemon, false, "daemon");
         while (daemon.isok())
         {
             WvIStreamList::globallist.runonce(5000);
@@ -127,7 +127,7 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname, 0777);
 
-        WvIStreamList::globallist.append(&daemon, false);
+        WvIStreamList::globallist.append(&daemon, false, "daemon");
         while (daemon.isok())
         {
             WvIStreamList::globallist.runonce(5000);

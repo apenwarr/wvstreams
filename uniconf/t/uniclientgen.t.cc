@@ -35,7 +35,7 @@ WVTEST_MAIN("deltas")
         uniconf.mountgen(new UniTempGen());
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
+        WvIStreamList::globallist.append(&daemon, false, "uniconf daemon");
         while (true)
         {
             uniconf.setmeint(uniconf.getmeint()+1);
@@ -135,7 +135,7 @@ WVTEST_MAIN("commit")
         uniconf.mountgen(ini_gen);
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
+        WvIStreamList::globallist.append(&daemon, false, "uniconf daemon");
         while (true)
         {
             WvIStreamList::globallist.runonce();
@@ -212,7 +212,7 @@ WVTEST_MAIN("refresh")
         uniconf.mountgen(ini_gen);
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
+        WvIStreamList::globallist.append(&daemon, false, "uniconf daemon");
         while (true)
         {
             WvIStreamList::globallist.runonce();

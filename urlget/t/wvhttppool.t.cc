@@ -16,14 +16,14 @@ WVTEST_MAIN("WvHttpPool GET")
 	WvHttpPool pool;
 
 	WvIStreamList l;
-	l.append(&pool, false);
+	l.append(&pool, false, "WvHttpPool");
 
 	WvStream *buf;
 	WVPASS(buf = pool.addurl("http://www.google.com"));
 	WVPASS(buf->isok());
 	buf->autoforward(*wvcon);
 	buf->setclosecallback(close_callback);
-	l.append(buf, true);
+	l.append(buf, true, "buf stream");
 	while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	    l.runonce();
 	WVPASS(!(buf->isok()));
@@ -41,14 +41,14 @@ WVTEST_MAIN("WvHttpPool HEAD")
 	WvHttpPool pool;
 
 	WvIStreamList l;
-	l.append(&pool, false);
+	l.append(&pool, false, "WvHttpPool");
 
 	WvStream *buf;
 	WVPASS(buf = pool.addurl("http://www.google.com", "HEAD"));
 	WVPASS(buf->isok());
 	buf->autoforward(*wvcon);
 	buf->setclosecallback(close_callback);
-	l.append(buf, true);
+	l.append(buf, true, "buf stream");
 	while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	{
 	    if (l.select(-1))
@@ -142,8 +142,8 @@ static void do_test(WvIStreamList &l, unsigned int port,
            num_requests);
     WvHttpPool pool;
     WvIStreamList bufs;
-    l.append(&pool, false);
-    l.append(&bufs, false);
+    l.append(&pool, false, "WvHttpPool");
+    l.append(&bufs, false, "list of bufs");
 
     http_conns = 0;
     WvStream *buf;

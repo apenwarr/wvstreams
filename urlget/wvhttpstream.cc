@@ -23,7 +23,8 @@
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
-      pipeline_incompatible(_pipeline_incompatible), in_doneurl(false)
+      sure(false), pipeline_incompatible(_pipeline_incompatible),
+      in_doneurl(false)
 {
     log("Opening server connection.\n");
     http_response = "";
@@ -292,14 +293,24 @@ bool WvHttpStream::pre_select(SelectInfo &si)
     SelectRequest oldwant = si.wants;
     WvUrlRequest *url;
 
+    sure = false;
+
     if (WvUrlStream::pre_select(si))
+    {
+	sure = true;
+	si.msec_timeout = 0;
         return true;
+    }
 
     if (!urls.isempty())
     {
         url = urls.first();
         if(url && url->putstream && url->putstream->pre_select(si))
+	{
+	    sure = true;
+	    si.msec_timeout = 0;
             return true;
+	}
     }
    
     si.wants = oldwant;
@@ -323,7 +334,7 @@ bool WvHttpStream::post_select(SelectInfo &si)
     }
 
     si.wants = oldwant;
-    return false;
+    return sure;
 }
 
 

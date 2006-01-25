@@ -102,7 +102,7 @@ WVTEST_MAIN("unwrapgen callbacks")
             UniConfRoot uniconf("temp:");
             UniConfDaemon daemon(uniconf, false, NULL);
             daemon.setupunixsocket(sockname);
-            WvIStreamList::globallist.append(&daemon, false);
+            WvIStreamList::globallist.append(&daemon, false, "daemon");
             uniconf.xsetint("started", 1);
             // Make sure to commit suicide after an hour, just in case
             while (!uniconf["killme"].exists() && time(NULL) < start + 60*60)

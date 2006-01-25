@@ -60,16 +60,16 @@ void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *ud)
 }
 
 void WvStreamsDaemon::add_stream(IWvStream *istream,
-    	bool autofree, const char *id)
+    	bool autofree, char *id)
 {
-    streams.append(istream, false);
+    streams.append(istream, false, id);
     // FIXME: we should pass in "id" here, but things are not happy in
     // const-correctness-land.
-    WvIStreamList::globallist.append(istream, autofree);
+    WvIStreamList::globallist.append(istream, autofree, id);
 }
 
 void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
-    	bool autofree, const char *id)
+    	bool autofree, char *id)
 {
     add_stream(istream, autofree, id);
     
@@ -78,7 +78,7 @@ void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
 }
 
 void WvStreamsDaemon::add_die_stream(IWvStream *istream,
-    	bool autofree, const char *id)
+    	bool autofree, char *id)
 {
     add_stream(istream, autofree, id);
     
