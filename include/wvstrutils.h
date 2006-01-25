@@ -543,6 +543,11 @@ extern const CStrExtraEscape CSTR_TCLSTR_ESCAPES[];
 //
 WvString cstr_escape(const void *data, size_t size,
         const CStrExtraEscape extra_escapes[] = NULL);
+inline WvString cstr_escape(const char *str,
+        const CStrExtraEscape extra_escapes[] = NULL)
+{
+    return cstr_escape(str, strlen(str), extra_escapes);
+}
 
 // Converts a C-style string constant into data.
 // 
