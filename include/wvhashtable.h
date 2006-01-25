@@ -123,11 +123,11 @@ public:
     class IterBase
     {
     public:
-	WvHashTableBase *tbl;
+	const WvHashTableBase *tbl;
 	unsigned tblindex;
 	WvLink *link;
 	
-	IterBase(WvHashTableBase &_tbl) : tbl(& _tbl)
+	IterBase(const WvHashTableBase &_tbl) : tbl(& _tbl)
             { }
         IterBase(const IterBase &other) : tbl(other.tbl),
             tblindex(other.tblindex), link(other.link)
@@ -250,7 +250,7 @@ public:
     class Iter : public WvHashTableBase::IterBase
     {
     public:
-	Iter(WvHashTable &_tbl) : IterBase(_tbl)
+	Iter(const WvHashTable &_tbl) : IterBase(_tbl)
 	    { }
         Iter(const Iter &other) : IterBase(other)
             { }
