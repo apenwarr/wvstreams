@@ -283,8 +283,6 @@ bool UniConfKey::suborsame(const UniConfKey &key) const
     if (hastrailingslash())
 	n -= 1;
 
-    UniConfKey k = key.first(numsegments());
-
     if (key.first(n) == first(n))
 	return true;
     return false;
