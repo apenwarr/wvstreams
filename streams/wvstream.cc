@@ -100,6 +100,23 @@ void WvStream::debugger_streams_display_header(WvStringParm cmd,
 }
 
 
+// Set to fit in 6 chars
+static WvString friendly_ms(time_t ms)
+{
+    if (ms <= 0)
+        return WvString("(%s)", ms);
+    else if (ms < 1000)
+        return WvString("%sms", ms);
+    else if (ms < 60*1000)
+        return WvString("%ss", ms/1000);
+    else if (ms < 60*60*1000)
+        return WvString("%sm", ms/(60*1000));
+    else if (ms <= 24*60*60*1000)
+        return WvString("%sh", ms/(60*60*1000));
+    else
+        return WvString("%sd", ms/(24*60*60*1000));
+}
+
 void WvStream::debugger_streams_display_one_stream(WvStream *s,
         WvStringParm cmd,
         WvStreamsDebugger::ResultCallback result_cb)
@@ -112,7 +129,7 @@ void WvStream::debugger_streams_display_one_stream(WvStream *s,
             refcount, " ",
             Yes_No(s->isok()), " ",
             Yes_No(s->uses_continue_select), " ",
-            s->alarm_remaining(), " ",
+            friendly_ms(s->alarm_remaining()), " ",
             s->wstype(), " ",
             s->wsname());
     result_cb(cmd, result);

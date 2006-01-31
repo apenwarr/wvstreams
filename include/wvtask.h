@@ -24,6 +24,7 @@
 #include "wvstreamsdebugger.h"
 #include "wvstringlist.h"
 #include "setjmp.h"
+#include <ucontext.h>
 
 #define WVTASK_MAGIC 0x123678
 
@@ -49,10 +50,12 @@ class WvTask
     int tid;
     
     size_t stacksize;
+    void *stack;
     bool running, recycled;
     
     WvTaskMan &man;
-    jmp_buf mystate;	// used for resuming the task
+    ucontext_t mystate;	// used for resuming the task
+    ucontext_t func_call, func_return;
     
     TaskFunc *func;
     void *userdata;
@@ -88,15 +91,16 @@ class WvTaskMan
     static void stackmaster();
     static void _stackmaster();
     static void do_task();
+    static void call_func(WvTask *task);
 
     static char *stacktop;
-    static jmp_buf stackmaster_task;
+    static ucontext_t stackmaster_task;
     
     static WvTask *stack_target;
-    static jmp_buf get_stack_return;
+    static ucontext_t get_stack_return;
     
     static WvTask *current_task;
-    static jmp_buf toplevel;
+    static ucontext_t toplevel;
     
     WvTaskMan();
     virtual ~WvTaskMan();
