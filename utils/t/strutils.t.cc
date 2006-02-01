@@ -1091,3 +1091,22 @@ WVTEST_MAIN("sizetoa rounding")
 	WVPASSEQ(sizetoa(tests[i].value, 1, ROUND_UP), tests[i].round_up);
     }
 }
+
+WVTEST_MAIN("wvreadlink")
+{
+    WvString symlink_name("/tmp/wvreadlink.%s", getpid());
+
+    unlink(symlink_name);
+
+    WVPASS(wvreadlink(symlink_name).isnull());
+
+    const char *old_paths[] = { "foo", "/usr/bin/cat", "wioaeboiabetiobawioebtgoaiwbegiouabvgibasdjbgaulsdbguavweovgaiuvgasuidvgiouavegiawoevgao;usvgo;uvaweo;gvawoevgaiowveeeeeeeeeeeeeeeeeeeeeeeeee;vgsdkkkkkkkkkkkkkkkkkkkkkkkjaasbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'ooooooooooaskklsdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddwaaaaaaaaaaabgopppppbooooooawgbopppppeeeboopasdopfbopasopdbfasbopdfoasopdbfasbdpfasdbfpoabsdopfbaopsbdfpasbdopfbapsobdfpoasbdopfbaspodbfpasodbfopasbopdfasdfabsdbopfasdfoasdfbopasopdfabsopdfabopsdfabopsdfaopsdfasdfpboooooooooasdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddpasdfasdpopsbdfpbasopdbfpaosdbfopasbdfopabsdfobasopdbfapsodbfpasbdfpaosbdfopabsdpfobasopdbfapsobfoasbdpfasbdpfbasopdbfpasbdfpoasbdfpabsdopfbasopdbfpaosdbfpaosbdfpbaspdbfopasbdfpasbdfopasbdfpabsdpfbaspdfbaspodbfopasdbfpoasbdfpasbdpfbaspdbfaspodbfpoasbdpfobapsdbfaopsdfbasdpofbaspdfpqwepfobapwoebfapwebfapwbefp", NULL };
+    const char **old_path;
+    for (old_path = &old_paths[0]; *old_path; ++old_path)
+    {
+        symlink(*old_path, symlink_name);
+        WVPASSEQ(wvreadlink(symlink_name), *old_path);
+        unlink(symlink_name);
+    }
+}
+    

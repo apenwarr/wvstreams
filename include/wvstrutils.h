@@ -591,4 +591,7 @@ static inline bool is_int(const char *str)
     return true;
 }
 
+// Reads the contents of a symlink.  Returns the contents, or WvString::null on error.
+WvString wvreadlink(WvStringParm path);
+
 #endif // __WVSTRUTILS_H
