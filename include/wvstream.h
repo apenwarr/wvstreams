@@ -678,9 +678,9 @@ public:
     const char *wstype() const { return "WvStream"; }
     
 private:
-    unsigned short my_wsid;
+    WSID my_wsid;
 public:
-    unsigned short wsid() const { return my_wsid; }
+    WSID wsid() const { return my_wsid; }
     
 private:
     static WvMap<WSID, WvStream *> *wsid_map;
