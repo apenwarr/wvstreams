@@ -173,7 +173,7 @@ int WvDaemon::run(const char *argv0)
     if (1)
 #endif
     {
-        WvLogConsole console_log(STDOUT_FILENO, log_level);
+        WvLogConsole console_log(dup(STDOUT_FILENO), log_level);
         return _run(argv0);
     }
 }
