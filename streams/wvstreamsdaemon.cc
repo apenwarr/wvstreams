@@ -13,12 +13,9 @@
 #include <signal.h>
 #endif
 
-WvStreamsDaemon::WvStreamsDaemon(WvStringParm name, WvStringParm version,
-        WvStreamsDaemonCallback cb, void *ud) :
-    WvDaemon(name, version,
-            WvDaemonCallback(), WvDaemonCallback(), WvDaemonCallback(), ud),
-    do_full_close(false)
+void WvStreamsDaemon::init(WvStreamsDaemonCallback cb, void *ud)
 {
+    do_full_close = false;
     setcallback(cb, ud);
 #ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);

@@ -53,25 +53,26 @@ static void sigquit_handler(int signum)
 
 #endif // _WIN32
 
-WvDaemon::WvDaemon(WvStringParm _name, WvStringParm _version,
-                WvDaemonCallback _start_callback,
-    	    	WvDaemonCallback _run_callback,
-    	    	WvDaemonCallback _stop_callback,
-    	    	void *_ud) :
-            name(_name),
-            version(_version),
-#ifndef _WIN32
-            pid_file("/var/run/%s.pid", _name),
-#endif
-            daemonize(false),
-            log(_name, WvLog::Debug),
-            log_level(WvLog::Info),
-            syslog(false),
-            start_callback(_start_callback),
-            run_callback(_run_callback),
-            stop_callback(_stop_callback),
-            ud(_ud)
+void WvDaemon::init(WvStringParm _name,
+        WvStringParm _version,
+        WvDaemonCallback _start_callback,
+        WvDaemonCallback _run_callback,
+        WvDaemonCallback _stop_callback,
+        void *_ud)
 {
+    name = _name;
+    version = _version;
+#ifndef _WIN32
+    pid_file = WvString("/var/run/%s.pid", _name);
+#endif
+    daemonize = false;
+    log_level = WvLog::Info;
+    syslog = false;
+    start_callback = _start_callback;
+    run_callback = _run_callback;
+    stop_callback = _stop_callback;
+    ud = _ud;
+
     assert(singleton == NULL);
     singleton = this;
     
@@ -308,7 +309,7 @@ void WvDaemon::do_unload()
     log(WvLog::Notice, "Exiting with status %s\n", _exit_status);
 
 #ifndef _WIN32    
-    if (!!pid_file)
+    if (!!pid_file && daemonize)
         ::unlink(pid_file);
 #endif
 }

@@ -68,6 +68,8 @@ private:
     bool do_full_close;
     WvIStreamList streams;
 
+    void init(WvStreamsDaemonCallback cb, void *ud);
+
 protected:
 
     virtual void do_start();
@@ -83,8 +85,26 @@ public:
 
     //! Construct a new WvStreamsDaemon with given name and version, and
     //! use the cb function to populate the daemon with its initial streams
-    WvStreamsDaemon(WvStringParm name, WvStringParm version,
-		    WvStreamsDaemonCallback cb, void *ud = NULL);
+    WvStreamsDaemon(WvStringParm name,
+            WvStringParm version,
+            WvStreamsDaemonCallback cb,
+            void *ud = NULL) :
+        WvDaemon(name, version, WvDaemonCallback(),
+                WvDaemonCallback(), WvDaemonCallback())
+    {
+        init(cb, ud);
+    }
+
+    //! Construct a new WvStreamsDaemon with given name and
+    //! use the cb function to populate the daemon with its initial streams
+    WvStreamsDaemon(WvStringParm name, 
+            WvStreamsDaemonCallback cb,
+            void *ud = NULL) :
+        WvDaemon(name, WvDaemonCallback(),
+                WvDaemonCallback(), WvDaemonCallback())
+    {
+        init(cb, ud);
+    }
 
     //! Add a stream to the daemon; don't do anything if it goes !isok().
     //! This should be called from the WvStreamsDaemonCallback function
