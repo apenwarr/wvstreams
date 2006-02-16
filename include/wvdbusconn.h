@@ -93,16 +93,6 @@ public:
 
 
 // private!! hide me soon
-class WvDBusWatch : public WvFdStream
-{
-public:
-    WvDBusWatch(DBusWatch *_watch, unsigned int flags);
-    virtual void execute();
-    // disable reading/writing: we want dbus to do that for us
-    virtual size_t uread(void *buf, size_t count) { return 0; }
-    virtual size_t uwrite(const void *buf, size_t count) { return 0; }
-    DBusWatch *watch;
-};
 
 class WvDBusConnPrivate;
 
@@ -118,7 +108,7 @@ public:
 
     virtual bool isok() const
     {
-        return conn;
+        return true; //conn;
     }
 
     virtual void execute();
@@ -128,16 +118,18 @@ public:
 
     operator DBusConnection* () const
     {
-        return conn;
+        return NULL;
+        //return conn;
     }
 
     void add_interface_filter(WvDBusInterface *_iface);
 
     // this should go into WvDBusWatch, or some similar private class
+#if 0
     static dbus_bool_t add_watch(DBusWatch *watch, void *data);
     static void remove_watch(DBusWatch *watch, void *data);
     WvDBusWatch * get_watch(int fd);
-
+#endif
     // this also should be privatized/hidden somehow
     static DBusHandlerResult filter_func(DBusConnection *conn,
 					 DBusMessage *msg,
@@ -148,7 +140,6 @@ public:
 private:
     WvDBusConnPrivate *priv;
 
-    DBusConnection *conn;
     WvLog log;
 };
 
