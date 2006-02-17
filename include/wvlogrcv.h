@@ -30,6 +30,7 @@ class WvLogRcv : public WvLogRcvBase
 protected:  
     WvString last_source;
     WvLog::LogLevel max_level, last_level;
+    time_t last_time;
     bool at_newline;
     WvString prefix;
     size_t prelen;
@@ -51,7 +52,7 @@ protected:
 		     const char *_buf, size_t len);
     
     /** Set the Prefix and Prefix Length (size_t prelen) */
-    virtual void _make_prefix();
+    virtual void _make_prefix(time_t now);
     
     /** Start a new log line (print prefix) */
     virtual void _begin_line();

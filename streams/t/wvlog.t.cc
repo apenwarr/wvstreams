@@ -2,6 +2,8 @@
 #include "wvtest.h"
 #include "wvlog.h"
 #include "wvlogbuffer.h"
+#include "wvlogfile.h"
+#include "wvfileutils.h"
 
 
 WVTEST_MAIN("extremely basic test")
@@ -59,3 +61,80 @@ WVTEST_MAIN("line-breaking logic")
     WVFAIL(i.next());
 }
 
+WVTEST_MAIN("timestamps")
+{
+    WvString logfilename = wvtmpfilename("wvlog-timestamps");
+    WvLogFileBase logfile(logfilename, WvLog::Debug);
+    WvLog log(__FUNCTION__, WvLog::Debug);
+    time_t first_time = time(NULL);
+    log("First message\n");
+    while (time(NULL) - first_time < 2)
+        sleep(1);
+    log("Second message\n");
+    logfile.close();
+
+    WvFile file(logfilename, O_RDONLY);
+    WVPASS(file.isok());
+    // 0123456789012345678901
+    // Nov 10 10:13:15 GMT-4: 
+    WvString first_timestamp = file.getline();
+    first_timestamp.edit()[21] = '\0';
+    wvout->print("first timestamp: %s\n", first_timestamp);    
+    WvString second_timestamp = file.getline();
+    second_timestamp.edit()[21] = '\0';
+    wvout->print("second timestamp: %s\n", second_timestamp);    
+    WVFAILEQ(first_timestamp, second_timestamp);
+
+    WVPASS(unlink(logfilename) == 0);
+}
+
+WVTEST_MAIN("keep single log lines together")
+{
+    WvString logfilename = wvtmpfilename("wvlog-together");
+    WvLogFileBase logfile(logfilename, WvLog::Debug);
+    WvLog log(__FUNCTION__, WvLog::Debug);
+    time_t first_time = time(NULL);
+    log("First message: ");
+    while (time(NULL) - first_time < 2)
+        sleep(1);
+    log("Second message\n");
+    logfile.close();
+
+    WvFile file(logfilename, O_RDONLY);
+    WVPASS(file.isok());
+
+    WvString line1 = file.getline();
+    WvString line2 = file.getline();
+
+    wvout->print("line 1: %s\n", line1);
+
+    // we want both messages on a single log line
+    WVPASS(!line2);
+    WVPASS(strstr(line1.cstr(), "First"));
+    WVPASS(strstr(line1.cstr(), "Second"));
+
+    WVPASS(unlink(logfilename) == 0);
+}
+
+#if 0
+WVTEST_MAIN("wvlog performance")
+{
+    WvString logfilename = wvtmpfilename("wvlog-timestamps");
+    WvLogFileBase logfile(logfilename, WvLog::Debug);
+    WvLog log(__FUNCTION__, WvLog::Debug);
+    
+    time_t start;
+    start = time(NULL);
+    while (time(NULL) == start)
+        usleep(1000);
+    start = time(NULL);
+
+    int count = 0;
+    while (time(NULL) - start < 10)
+        log("Message %s\n", count++);
+
+    wvout->print("Total %s log messages\n", count);
+
+    WVPASS(unlink(logfilename) == 0);
+}
+#endif

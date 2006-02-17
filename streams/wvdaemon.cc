@@ -13,6 +13,7 @@
 #ifndef _WIN32
 #include "wvsyslog.h"
 #include "wvcrash.h"
+#include "wvcrashlog.h"
 #include "wvfile.h"
 #include "wvatomicfile.h"
 
@@ -196,6 +197,7 @@ int WvDaemon::run(int argc, char **argv)
 int WvDaemon::_run(const char *argv0)
 {
 #ifndef _WIN32
+    WvCrashLog crashlog;
     wvcrash_setup(argv0, version);
 #endif
 

@@ -18,7 +18,7 @@
 #include <time.h>
 
 #ifndef WVCRASH_USE_SIGALTSTACK
-#define WVCRASH_USE_SIGALTSTACK 0
+#define WVCRASH_USE_SIGALTSTACK 1
 #endif
 
 // FIXME: this file mostly only works in Linux
@@ -34,9 +34,8 @@ static const char *argv0 = "UNKNOWN";
 #endif // __USE_GNU
 
 // Reserve enough buffer for a screenful of programme.
-static const int buffer_size = 2048;
+static const int buffer_size = 2048 + wvcrash_ring_buffer_size;
 static char desc[buffer_size];
-WvCrashCallback callback;
 
 // write a string 'str' to fd
 static void wr(int fd, const char *str)
@@ -112,6 +111,21 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, pid_str);
     wr(fd, "\n");
 
+    // Write out the contents of the ring buffer
+    {
+        const char *ring;
+        bool first = true;
+        while ((ring = wvcrash_ring_buffer_get()) != NULL)
+        {
+            if (first)
+            {
+                first = false;
+                wr(fd, "\nRing buffer:\n");
+            }
+            wr(fd, ring);
+        }
+    }
+    
     // Write out the assertion message, as logged by __assert*_fail(), if any.
     {
 	const char *assert_msg = wvcrash_read_assert();
@@ -181,9 +195,6 @@ void wvcrash(int sig)
     signal(sig, SIG_DFL);
     wr(2, "\n\nwvcrash: crashing!\n");
     
-    if (!!callback)
-        callback(sig);
-    
     // close some fds, just in case the reason we're crashing is fd
     // exhaustion!  Otherwise we won't be able to create our pipe to a
     // subprocess.  Probably only closing two fds is possible, but the
@@ -233,13 +244,6 @@ void wvcrash(int sig)
     _exit(126);
 }
 
-
-WvCrashCallback wvcrash_set_callback(WvCrashCallback _callback)
-{
-    WvCrashCallback old_callback = callback;
-    callback = _callback;
-    return old_callback;
-}
 
 static void wvcrash_setup_alt_stack()
 {
@@ -305,7 +309,6 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 
 void wvcrash(int sig) {}
 void wvcrash_add_signal(int sig) {}
-WvCrashCallback wvcrash_set_callback(WvCrashCallback cb) {}
 void wvcrash_setup(const char *_argv0, const char *_desc) {}
 
 #endif // Not Linux
