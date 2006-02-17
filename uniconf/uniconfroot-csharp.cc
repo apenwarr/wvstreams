@@ -9,7 +9,7 @@ void uniconf_notify(const UniConf &uni, const UniConfKey &key)
 {
     if (cc)
     {
-        callback(key.cstr());
+        callback(key.printable());
     }
 }
     

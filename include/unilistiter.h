@@ -10,23 +10,7 @@
 #include "uniconfgen.h"
 #include "wvscatterhash.h"
 #include "wvstringcache.h"
-
-// FIXME: put this class definition somewhere else
-class UniSmartKey
-{
-public:
-    const UniSmartKey *parent;
-    UniConfKey child;
-    
-    UniSmartKey(const UniSmartKey *_parent, const UniConfKey &_child);
-    
-    UniConfKey key() const;
-    bool operator== (const UniSmartKey &k) const;
-};
-
-
-unsigned WvHash(const UniSmartKey &k);
-
+#include "wvstringlist.h"
 
 /**
  * An iterator that iterates through a constant list of keys.  This is
@@ -44,21 +28,17 @@ class UniListIter : public UniConfGen::Iter
 {
     IUniConfGen *gen;
     
-    DeclareWvScatterTable(UniSmartKey);
-    UniSmartKeyTable keylook;
+    DeclareWvScatterTable(UniConfKey);
+    UniConfKeyTable keylook;
 
-    WvList<UniSmartKey> keys;
-    WvList<WvString> values;
-    bool no_more_values;
+
+    UniConfKeyList keys;
+    WvStringList values;
     
-    WvList<UniSmartKey>::Iter ki;
-    WvList<WvString>::Iter vi;
+    UniConfKeyList::Iter ki;
+    WvStringList::Iter vi;
     
     WvStringCache scache;
-    
-    static const WvString noval;
-    
-    UniSmartKey *new_smart_key(const UniConfKey &k);
     
 public:
     UniListIter(IUniConfGen *_gen);
@@ -71,7 +51,7 @@ public:
      * This function should only be called by the creator of the iterator,
      * not the end user.
      */
-    void add(WvStringParm k, WvStringParm v = noval);
+    void add(const UniConfKey &k, WvStringParm v = WvString::null);
     
     /**
      * Automatically fill the contents of this iterator by calling add()

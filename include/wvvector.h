@@ -84,8 +84,10 @@ protected:
 
     void qsort(comparison_type_t comparator)
     {
+        comparison_type_t old_innercomparator = innercomparator;
 	innercomparator = comparator;
 	::qsort(xseq, xcount, sizeof(WvLink*), &WvVectorBase::wrapcomparator);
+	innercomparator = old_innercomparator;
     }
 
 public:
@@ -149,7 +151,7 @@ public:
 	void rewind()
 	{
 	    i = -1;
-	    link = (vec.xcount >= 0) ? vec.xseq[0] : NULL;
+	    link = NULL;
 	}
 
 	/**
@@ -158,8 +160,8 @@ public:
 	 */
 	void unwind()
 	{
-	    i = vec.xcount - 1;
-	    link = (i >= 0) ? vec.xseq[i] : NULL;
+	    i = vec.xcount;
+	    link = NULL;
 	}
 
 	/**
@@ -173,7 +175,8 @@ public:
 	 */
 	WvLink *next()
 	{
-	    if (++i > vec.xcount - 1)
+	    ++i;
+	    if (i < 0 || i >= vec.xcount)
 		return NULL;
 	    else
 	    {
@@ -190,10 +193,14 @@ public:
 	 */
 	WvLink *prev()
 	{
-	    if (--i < 0)
+	    --i;
+	    if (i < 0 || i >= vec.xcount)
 		return NULL;
 	    else
-		return vec.xseq[i];
+	    {
+		link = vec.xseq[i];
+		return link;
+	    }
 	}
 
 	/**
@@ -272,32 +279,40 @@ public:
     {
 	if (slot >= 0 && slot < xcount)
 	    return static_cast<T *>(xseq[slot]->data);
-	return NULL;
+	else
+	    return NULL;
     }
-
-    /** Removes all elements from the vector. */
-    void zap(bool destroy = true)
+    const T *operator[] (int slot) const
     {
-	if (xcount > 0)
-	    for (int i = xcount - 1; i >= 0; --i)
-		remove(i, destroy);
+	if (slot >= 0 && slot < xcount)
+	    return static_cast<T *>(xseq[slot]->data);
+	else
+	    return NULL;
     }
 
     /** Returns the first element */
     T *first()
     {
-	return (*this)[0];
+        if (xcount > 0)
+	    return (*this)[0];
+	else
+	    return NULL;
     }
 
     /** Returns the last element */
     T *last()
     {
-	return (*this)[xcount - 1];
+	if (xcount > 0)
+	    return (*this)[xcount - 1];
+	else
+	    return NULL;
     }
 
     /** Removes a particular slot from the vector. */
     void remove(int slot, bool destroy = true)
     {
+	if (slot < 0 || slot >= xcount)
+	    return;
         WvLink *l = xseq[slot];
         T *obj = ((destroy && l->get_autofree())
 		  ? static_cast<T*>(l->data)
@@ -311,8 +326,15 @@ public:
     /** Removes the last element */
     void remove_last(bool destroy = true)
     {
-	if (xcount)
+	if (xcount > 0)
 	    remove(xcount - 1, destroy);
+    }
+
+    /** Removes all elements from the vector. */
+    void zap(bool destroy = true)
+    {
+        while (xcount > 0)
+	    remove_last(destroy);
     }
 
     /** Insert an element into a slot, and shifts the others to the right. */

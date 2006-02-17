@@ -105,8 +105,8 @@ void UniTempGen::set(const UniConfKey &_key, WvStringParm _value)
             {
 		// we'll have to create the sub-node, since we couldn't
 		// find the most recent part of the key.
-                node = new UniConfValueTree(prev, scache.get(prevkey),
-					    more ? scache.get("") : value);
+                node = new UniConfValueTree(prev, prevkey,
+					    more ? WvString::empty : value);
                 dirty = true;
                 if (!prev) // we just created the root
                     root = node;
@@ -179,13 +179,11 @@ UniConfGen::Iter *UniTempGen::iterator(const UniConfKey &key)
 
 void UniTempGen::commit()
 {
-    scache.clean();
     UniConfGen::commit();
 }
 
 
 bool UniTempGen::refresh()
 {
-    scache.clean();
     return UniConfGen::refresh();
 }

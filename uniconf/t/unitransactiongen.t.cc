@@ -25,8 +25,8 @@ static WvMap<UniConfKey, WvString> callbacks1(5);
 static void check_callback2(const UniConf &handle,
 			    const UniConfKey &key)
 {
-    fprintf(stderr, "Callback on key \"%s\" with value \"%s\".\n",
-	   key.cstr(), handle[key].getme().cstr());
+    wverr->print("Callback on key \"%s\" with value \"%s\".\n",
+	   key, handle[key].getme());
     bool expected;
     WVPASS(expected = callbacks2.exists(key));
     if (expected)
@@ -39,8 +39,8 @@ static void check_callback2(const UniConf &handle,
 static void check_callback1(const UniConf &handle,
 			    const UniConfKey &key)
 {
-    fprintf(stderr, "Callback on key \"%s\" with value \"%s\".\n",
-	   key.cstr(), handle[key].getme().cstr());
+    wverr->print("Callback on key \"%s\" with value \"%s\".\n",
+	   key, handle[key].getme());
     bool expected;
     WVPASS(expected = callbacks1.exists(key));
     if (expected)
@@ -418,8 +418,8 @@ static void incr_callback(int *i,
 {
     (*i)++;
     last_key = handle[key].fullkey();
-    printf("callback %p '%s' = '%s'\n", 
-	   i, last_key.cstr(), handle[key].getme().cstr());
+    wvout->print("callback '%s' = '%s'\n", 
+	   handle[key].fullkey(), handle[key].getme());
 }
 
 
@@ -719,9 +719,9 @@ static int callback_count;
 
 static void callback(const UniConf keyconf, const UniConfKey key)
 {
-    printf("Handling callback with fullkey '%s', value '%s'\n",
-	   keyconf[key].fullkey().printable().cstr(),
-	   keyconf[key].getme().cstr());
+    wvout->print("Handling callback with fullkey '%s', value '%s'\n",
+	   keyconf[key].fullkey(),
+	   keyconf[key].getme());
     ++callback_count;
 }
 

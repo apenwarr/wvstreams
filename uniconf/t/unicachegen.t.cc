@@ -15,7 +15,7 @@ public:
         expected_value(_expected_value) {}
     void callback(const UniConf keyconf, const UniConfKey key) 
         { 
-            printf("key: %s expected key: %s\n", key.cstr(), expected_key.cstr());
+            printf("key: %s expected key: %s\n", key.printable().cstr(), expected_key.cstr());
             WVPASS(key == expected_key);
             WVPASS(keyconf[key].getme() == expected_value);
             cbs++;

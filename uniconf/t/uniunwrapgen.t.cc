@@ -12,8 +12,13 @@
 static int itcount(UniConfGen::Iter *i)
 {
     int count = 0;
+    wverr->print("start\n");
     for (i->rewind(); i->next(); )
+    {
+        wverr->print("visited %s\n", i->key());
 	count++;
+    }
+    wverr->print("end\n");
     delete i;
     return count;
 }
