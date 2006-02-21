@@ -1,0 +1,9 @@
+version=@PACKAGE_VERSION@
+top_builddir=@abs_top_builddir@
+
+Name: UniConf
+Description: The One True Configuration System
+Version: ${version}
+Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
+Libs: -L${top_builddir} -luniconf
+Cflags: -I${top_builddir}/include

@@ -1,0 +1,9 @@
+version=@PACKAGE_VERSION@
+top_builddir=@abs_top_builddir@
+
+Name: WvStreams utilities
+Description: WvStreams utility library
+Version: ${version}
+Requires: libwvbase = ${version}
+Libs: -L${top_builddir} -lwvutils
+Cflags: -I${top_builddir}/include

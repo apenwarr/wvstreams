@@ -1,0 +1,10 @@
+HELLO UniConf Server ready
+OK get /chickens/bob
+RETN /chickens/bob goof
+OK set /chickens/bob
+OK subt /chickens
+SUBT /chickens {bob nerf} {bill weasel} {nob bon} 
+OK set /chickens/bob
+OK subt /chickens
+SUBT /chickens {bob goof} {bill weasel} {nob bon} 
+OK quit <null>

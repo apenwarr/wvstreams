@@ -1,0 +1,21 @@
+WVPART(tutorial, Getting Started (Really Fast),
+
+ WVPARTINTRO(A WvStreams Tutorial,
+
+  In this part, we dive quickly into some example programs that will give
+  you a feel for the concepts behind WvStreams before you need to deal with
+  all the gory details.  We'll show you how to compile your own
+  applications, then we'll write a network client and server, and
+  demonstrate how to read and write some config files.
+
+  In later chapters, we'll go into more detail about the techniques used to
+  write these programs, and why they really work.  For now, just try out the
+  programs as we present them and think about how the different parts might
+  fit together.
+ )
+
+ WVCHAPTER(telnet, A Cheesy Replacement for Telnet,x)
+ WVCHAPTER(chat, A Multi-User Chat Program,x)
+ WVCHAPTER(cfgexample, Configuration (.ini) Files,x)
+)
+
