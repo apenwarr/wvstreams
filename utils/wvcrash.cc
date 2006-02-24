@@ -6,6 +6,7 @@
  * crashes.
  */
 #include "wvcrash.h"
+#include "wvtask.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -36,7 +37,6 @@ static const char *argv0 = "UNKNOWN";
 #if WVCRASH_USE_SIGALTSTACK
 static const size_t altstack_size = 1048576; // wvstreams can be a pig
 static char altstack[altstack_size];
-extern const void *__libc_stack_end;
 #endif
 
 // Reserve enough buffer for a screenful of programme.
@@ -165,19 +165,20 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     {
         wr(fd, "\nLast real stack frame: ");
         wra(fd, last_real_stack_frame);
+        const void *top_of_stack = WvTaskMan::current_top_of_stack();
         wr(fd, "\nTop of stack: ");
-        wra(fd, __libc_stack_end);
-        rlim_t stack_size = rlim_t(__libc_stack_end) - rlim_t(last_real_stack_frame);
+        wra(fd, top_of_stack);
+        size_t stack_size = size_t(top_of_stack) - size_t(last_real_stack_frame);
         wr(fd, "\nStack size: ");
         wrn(fd, int(stack_size));
-        struct rlimit rl;
-        if (getrlimit(RLIMIT_STACK, &rl) == 0)
+        size_t stack_size_limit = WvTaskMan::current_stacksize_limit();
+        if (stack_size_limit > 0)
         {
             wr(fd, "\nStack size rlimit: ");
-            wrn(fd, int(rl.rlim_cur));
-            if (stack_size > rl.rlim_cur)
+            wrn(fd, int(stack_size_limit));
+            if (stack_size > stack_size_limit)
                 wr(fd, "  DEFINITE STACK OVERFLOW");
-            else if (stack_size > rl.rlim_cur * 95 / 100)
+            else if (stack_size + 16384 > stack_size_limit)
                 wr(fd, "  PROBABLE STACK OVERFLOW");
         }
         wr(fd, "\n");

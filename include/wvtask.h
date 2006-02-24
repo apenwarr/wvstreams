@@ -126,6 +126,9 @@ public:
     static WvTask *whoami()
         { return current_task; }
 
+    static const void *current_top_of_stack();
+    static size_t current_stacksize_limit();
+
 private:
     static WvString debugger_tasks_run_cb(WvStringParm, WvStringList &,
             WvStreamsDebugger::ResultCallback, void *);
