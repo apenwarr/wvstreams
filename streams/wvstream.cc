@@ -951,6 +951,8 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 bool WvStream::_select(time_t msec_timeout,
     bool readable, bool writable, bool isexcept, bool forceable)
 {
+    assert(wsid_map && wsid_map->exists(my_wsid)); // Detect use of deleted stream
+        
     SelectInfo si;
     bool sure = _build_selectinfo(si, msec_timeout,
 				  readable, writable, isexcept, forceable);
