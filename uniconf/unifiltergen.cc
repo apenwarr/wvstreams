@@ -34,16 +34,18 @@ void UniFilterGen::setinner(IUniConfGen *inner)
 }
 
 
-UniConfKey UniFilterGen::keymap(const UniConfKey &key)
+bool UniFilterGen::keymap(const UniConfKey &unmapped_key, UniConfKey &mapped_key)
 {
     // by default, don't rename the key
-    return key;
+    mapped_key = unmapped_key;
+    return true;
 }
 
-UniConfKey UniFilterGen::reversekeymap(const UniConfKey &key)
+bool UniFilterGen::reversekeymap(const UniConfKey &mapped_key, UniConfKey &unmapped_key)
 {
     // by default, don't rename the key
-    return key;
+    unmapped_key = mapped_key;
+    return true;
 }
 
 
@@ -65,15 +67,17 @@ bool UniFilterGen::refresh()
 
 void UniFilterGen::prefetch(const UniConfKey &key, bool recursive)
 {
-    if (xinner)
-    	xinner->prefetch(keymap(key), recursive);
+    UniConfKey mapped_key;
+    if (xinner && keymap(key, mapped_key))
+        xinner->prefetch(mapped_key, recursive);
 }
 
 
 WvString UniFilterGen::get(const UniConfKey &key)
 {
-    if (xinner)
-    	return xinner->get(keymap(key));
+    UniConfKey mapped_key;
+    if (xinner && keymap(key, mapped_key))
+    	return xinner->get(mapped_key);
     else
     	return WvString::null;
 }
@@ -88,8 +92,9 @@ void UniFilterGen::flush_buffers()
 
 void UniFilterGen::set(const UniConfKey &key, WvStringParm value)
 {
-    if (xinner)
-    	xinner->set(keymap(key), value);
+    UniConfKey mapped_key;
+    if (xinner && keymap(key, mapped_key))
+    	xinner->set(mapped_key, value);
 }
 
 
@@ -102,8 +107,9 @@ void UniFilterGen::setv(const UniConfPairList &pairs)
 
 bool UniFilterGen::exists(const UniConfKey &key)
 {
-    if (xinner)
-    	return xinner->exists(keymap(key));
+    UniConfKey mapped_key;
+    if (xinner && keymap(key, mapped_key))
+    	return xinner->exists(mapped_key);
     else
     	return false;
 }
@@ -111,8 +117,9 @@ bool UniFilterGen::exists(const UniConfKey &key)
 
 bool UniFilterGen::haschildren(const UniConfKey &key)
 {
-    if (xinner)
-    	return xinner->haschildren(keymap(key));
+    UniConfKey mapped_key;
+    if (xinner && keymap(key, mapped_key))
+    	return xinner->haschildren(mapped_key);
     else
     	return false;
 }
@@ -129,8 +136,9 @@ bool UniFilterGen::isok()
 
 UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 {
-    if (xinner)
-    	return xinner->iterator(keymap(key));
+    UniConfKey mapped_key;
+    if (xinner && keymap(key, mapped_key))
+    	return xinner->iterator(mapped_key);
     else
     	return NULL;
 }
@@ -138,8 +146,9 @@ UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 
 UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 {
-    if (xinner)
-    	return xinner->recursiveiterator(keymap(key));
+    UniConfKey mapped_key;
+    if (xinner && keymap(key, mapped_key))
+    	return xinner->recursiveiterator(mapped_key);
     else
     	return NULL;
 }
@@ -147,8 +156,7 @@ UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 
 void UniFilterGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
-    if (xinner)
-        delta(reversekeymap(key), value);
-    else
-        delta(keymap(key), value);
+    UniConfKey unmapped_key;
+    if (xinner && reversekeymap(key, unmapped_key))
+        delta(unmapped_key, value);
 }

@@ -178,3 +178,52 @@ WVTEST_MAIN("compression errors")
     WVPASSEQ(uncomp_used, 50);
     WVPASSEQ(memcmp(&inbuf[50], outbuf, uncomp_used), 0);
 }
+
+
+WVTEST_MAIN("severe compression errors")
+{
+    WvDynBuf comp, uncomp;
+    WvGzipEncoder gzipdef(WvGzipEncoder::Deflate),
+    gzipinf(WvGzipEncoder::Inflate);
+    gzipdef.full_flush = true;
+    gzipinf.ignore_decompression_errors = true;
+    
+    char inbuf[32000], outbuf[32768];
+    srand(time(NULL)); 
+    for (int i = 0; i < 31999; i++)
+        inbuf[i] = (rand() % 10) + 0x30;
+    inbuf[31999] = '\0';
+    
+    uncomp.put(inbuf, 32000);
+    gzipdef.encode(uncomp, comp, true);
+    gzipdef.finish(comp);
+    WVPASS(gzipdef.isok());
+    
+    size_t comp_used = comp.used();
+    wvcon->print("comp_used is %s\n", comp_used);
+    comp.get(12);
+    comp_used -= 12;
+    memcpy(outbuf, comp.get(comp_used), comp_used);
+    WVPASSEQ(comp.used(), 0);
+    
+    char *outbufp = outbuf;
+    uncomp.zap(); 
+    WVPASS(gzipinf.isok());
+    
+    size_t decoded = 0;
+    do
+    {
+        size_t to_decode = comp_used - (outbufp - outbuf) < 1024
+        ? comp_used - (outbufp - outbuf) : 1024;
+        decoded += to_decode;
+        comp.put(outbufp, to_decode);
+        outbufp += to_decode;
+        wvcon->print("Decoding %s bytes.\n", to_decode);
+        gzipinf.encode(comp, uncomp, true);
+    } while (outbufp < outbuf + comp_used);
+
+    wvcon->print("Decoded %s bytes.\n", decoded);
+    gzipinf.finish(uncomp);
+    if (!gzipinf.isok())
+        wvcon->print("GzipEncoder error: %s\n", gzipinf.geterror());
+}
