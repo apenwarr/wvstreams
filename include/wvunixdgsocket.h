@@ -43,6 +43,8 @@ protected:
      
 public:
     const char *wstype() const { return "WvUnixDGSocket"; }
+
+    size_t bufsize;
 };
 
 /** 
