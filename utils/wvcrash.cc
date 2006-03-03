@@ -145,7 +145,12 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
             break;
         last_real_stack_frame = __builtin_frame_address(2);
         if (last_real_stack_frame == NULL
-                || last_real_stack_frame < &altstack[3]
+                || last_real_stack_frame < &altstack[0]
+                || last_real_stack_frame >= &altstack[altstack_size])
+            break;
+        last_real_stack_frame = __builtin_frame_address(3);
+        if (last_real_stack_frame == NULL
+                || last_real_stack_frame < &altstack[0]
                 || last_real_stack_frame >= &altstack[altstack_size])
             break;
         last_real_stack_frame = __builtin_frame_address(4);
