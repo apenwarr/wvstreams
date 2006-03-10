@@ -217,7 +217,7 @@ WvStream::WvStream():
     read_requires_writable(NULL),
     write_requires_readable(NULL),
     uses_continue_select(false),
-    personal_stack_size(65536),
+    personal_stack_size(131072),
     alarm_was_ticking(false),
     stop_read(false),
     stop_write(false),
