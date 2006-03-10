@@ -167,7 +167,7 @@ install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
 uninstall:
 	$(tbd)
 
-$(TESTS): $(LIBUNICONF) $(LIBWVTEST)
+$(TESTS): $(LIBUNICONF) $(LIBWVTEST) $(LIBWVDBUS)
 $(addsuffix .o,$(TESTS)):
 tests: #$(TESTS)
 

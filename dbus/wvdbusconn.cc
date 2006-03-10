@@ -39,11 +39,14 @@ void WvDBusWatch::execute()
 }
 
 
+DeclareWvDict(WvDBusInterface, WvString, name);
+
 class WvDBusConnPrivate
 {
 public:
     WvDBusConnPrivate(WvDBusConn *_conn, DBusBusType bus) :
         conn(_conn),
+        ifacedict(10),
         dbusconn(NULL),
         log("WvDBusConnPrivate")
     {
@@ -58,12 +61,13 @@ public:
                                                      watch_toggled,
                                                      this, NULL))
             {
+                log(WvLog::Error, "Couldn't set up watch functions!\n");
                 // set isok to false or something
             }
             log("Done..\n");
-            dbus_bus_add_match(dbusconn, "type='signal',interface='ca.nit.foo'",  &error);
+
             dbus_connection_add_filter(dbusconn, filter_func, this, NULL);
-        }
+        }        
     }
 
     ~WvDBusConnPrivate()
@@ -120,30 +124,49 @@ public:
 
         return NULL;
     }
-
+ 
     static DBusHandlerResult filter_func(DBusConnection *_conn,
                                          DBusMessage *_msg,
                                          void *userdata)
     {
+        
         fprintf(stderr, "Got message. Sender %s. Path: %s. Interface: %s. Is signal: %i\n", 
                 dbus_message_get_sender(_msg),
                 dbus_message_get_path(_msg), 
                 dbus_message_get_interface(_msg),
                 dbus_message_is_signal(_msg, dbus_message_get_interface(_msg), 
                                        dbus_message_get_path(_msg)));
-#if 0
-        WvDBusConn *c = (WvDBusConn *)userdata;
-        assert(*c == _conn);
-        
-        dbus_message_ref(_msg);
-        WvDBusMsg msg(_msg);
-        
-        if (c->callback)
-            c->callback(*c, msg);
-#endif
-        
+
+        WvDBusConnPrivate *priv = (WvDBusConnPrivate *)userdata;
+        WvString ifacename = dbus_message_get_interface(_msg);
+        WvStringParm path = dbus_message_get_path(_msg);
+
+        if (priv->ifacedict[ifacename])
+        {
+            fprintf(stderr, "Interface exists for message. Sending.\n");
+            priv->ifacedict[ifacename]->handle_signal(path, priv->conn, _msg);
+        }
+
         return DBUS_HANDLER_RESULT_HANDLED;
     }
+
+
+    static void pending_call_notify(DBusPendingCall *pending, void *user_data)
+    {
+        IWvDBusMarshaller * marshaller = (IWvDBusMarshaller *) user_data;
+        DBusMessage *msg = dbus_pending_call_steal_reply(pending);
+
+        marshaller->dispatch(msg);
+    }
+
+
+    static void remove_marshaller_cb(void *memory)
+    {
+        IWvDBusMarshaller * marshaller = (IWvDBusMarshaller *) memory;
+        delete marshaller;
+    }
+
+
 
     void execute()
     {
@@ -160,15 +183,15 @@ public:
         }
     }
 
-
     WvDBusConn *conn;
+    WvDBusInterfaceDict ifacedict;
     DBusConnection *dbusconn;
     WvLog log;
 };
 
 
 WvDBusConn::WvDBusConn(DBusBusType bus)
-    : ifacedict(10), log("WvDBusConn")
+    : log("WvDBusConn")
 {
     log("Starting up..\n");
     priv = new WvDBusConnPrivate(this, bus);
@@ -177,13 +200,13 @@ WvDBusConn::WvDBusConn(DBusBusType bus)
 
 #if 0
 WvDBusConn::WvDBusConn(DBusConnection *c)
-    : ifacedict(10), conn(c), log("WvDBusConn")
+    : conn(c), log("WvDBusConn")
 {
 }
 
 
 WvDBusConn::WvDBusConn(WvDBusConn &c)
-    : ifacedict(10), conn(c), log("WvDBusConn")
+    : conn(c), log("WvDBusConn")
 {
     dbus_connection_ref(c);
 }
@@ -205,4 +228,99 @@ void WvDBusConn::execute()
 void WvDBusConn::close()
 {
     priv->close();
+}
+
+
+void WvDBusConn::send(WvDBusMsg &msg)
+{
+    dbus_uint32_t serial = 0;
+
+    if (!dbus_connection_send(priv->dbusconn, msg, &serial)) 
+    { 
+        log(WvLog::Error, "Out Of Memory!\n"); 
+        // FIXME: what do we do NOW?
+    }
+    else
+        log(WvLog::Debug, "DBus message sent with serial %s\n", serial);
+}
+
+
+void WvDBusConn::send(WvDBusMsg &msg, IWvDBusMarshaller *reply, bool autofree_reply)
+{
+    DBusPendingCall * pending;
+
+    // FIXME: allow custom timeouts?
+    if (!dbus_connection_send_with_reply(priv->dbusconn, msg, &pending, 1000)) 
+    { 
+        log(WvLog::Error, "Out Of Memory!\n"); 
+        // FIXME: what do we do NOW?
+        return;
+    }
+
+    if (pending == NULL) 
+    { 
+        log(WvLog::Error, "Pending Call Null\n"); 
+        // FIXME: what do we do NOW?
+    }
+
+    DBusFreeFunction free_user_data = NULL;    
+    if (autofree_reply)
+        free_user_data = &WvDBusConnPrivate::remove_marshaller_cb;
+
+    if (!dbus_pending_call_set_notify(pending, 
+                                      &WvDBusConnPrivate::pending_call_notify,
+                                      reply, free_user_data))
+    {
+        log(WvLog::Error, "Setting NOTIFY failed..\n"); 
+        // FIXME: what do we do NOW?
+    }
+
+}
+
+
+void WvDBusConn::add_marshaller(WvStringParm ifacename, IWvDBusMarshaller *marshaller)
+{
+    if (!priv->ifacedict[ifacename])
+    {
+        DBusError error;
+        dbus_bus_add_match(priv->dbusconn, WvString("type='signal',interface='%s'", 
+                                              ifacename),  &error);
+        if (dbus_error_is_set(&error)) 
+        { 
+            log(WvLog::Error, "Oh no! Couldn't add a match on the bus!\n");
+        }
+        priv->ifacedict.add(new WvDBusInterface(ifacename), true);
+    }
+
+    priv->ifacedict[ifacename]->d.add(marshaller, true);
+}
+
+
+void WvDBusConn::add_method(WvStringParm ifacename, IWvDBusMarshaller *listener)
+{
+    if (!priv->ifacedict[ifacename])
+    {
+        priv->ifacedict.add(new WvDBusInterface(ifacename), true);
+
+        // request a name on the bus
+        DBusError error;
+        dbus_error_init(&error);
+        
+        const char *tmp = ifacename;
+
+        int ret = dbus_bus_request_name(priv->dbusconn, "ca.nit.foo", 
+                                        DBUS_NAME_FLAG_REPLACE_EXISTING, 
+                                        &error);
+        if (dbus_error_is_set(&error)) 
+        { 
+            log(WvLog::Error, "Name Error (%s)\n", error.message); 
+            dbus_error_free(&error); 
+        }
+        
+        if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret)
+            log(WvLog::Error, "Oh no! DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret!\n");
+
+        dbus_error_free(&error);
+    }
+    priv->ifacedict[ifacename]->d.add(listener, true);
 }

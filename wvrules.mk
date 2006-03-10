@@ -45,10 +45,18 @@ endif
   LIBXPLC=-lxplc-cxx -lxplc
 endif
 
+ifneq ("$(with_dbus)", "no")
+ifneq ("$(with_dbus)", "")
+  LDFLAGS:=-L$(with_dbus) $(LDFLAGS)
+endif
+  LIBDBUS=-ldbus-1
+endif
+
 LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
 LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
+LIBWVDBUS=$(WVSTREAMS_LIB)/libwvdbus.so $(LIBWVSTREAMS) $(LIBDBUS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
 

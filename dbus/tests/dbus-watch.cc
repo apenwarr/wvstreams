@@ -1,4 +1,5 @@
 #include "wvdbusconn.h"
+#include "wvdbusmarshaller.h"
 #include "wvistreamlist.h"
 
 #if 0
@@ -30,9 +31,19 @@ static void myfilter(WvDBus &conn, const WvDBus::Msg &msg)
 }
 #endif
 
+static void foo(WvDBusConn &conn, int b)
+{
+    fprintf(stderr, "wow! foo called! (%i)\n", b);
+}
+
 int main (int argc, char *argv[])
 {
     WvDBusConn conn;
+    
+    WvDBusMarshaller<int> m("/ca/nit/foo/bar", WvCallback<void, WvDBusConn&, int>(foo));
+    conn.add_marshaller("ca.nit.foo", &m);
+
+
 //     conn.setcallback(myfilter);
 //     conn.request_name("ca.nit.dbustest");
 
