@@ -206,6 +206,21 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
         }
     }
     
+    // Write out the contents of the ring buffer
+    {
+        const char *ring;
+        bool first = true;
+        while ((ring = wvcrash_ring_buffer_get()) != NULL)
+        {
+            if (first)
+            {
+                first = false;
+                wr(fd, "\nRing buffer:\n");
+            }
+            wr(fd, ring);
+        }
+    }
+    
     // Write out the assertion message, as logged by __assert*_fail(), if any.
     {
 	const char *assert_msg = wvcrash_read_assert();
