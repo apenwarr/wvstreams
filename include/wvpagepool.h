@@ -75,7 +75,7 @@ private:
         if (fd != -1)
             return MAP_SHARED;
         else
-            return MAP_SHARED | MAP_ANONYMOUS;
+            return MAP_PRIVATE | MAP_ANONYMOUS;
     }    
     
     void debug_map() const;

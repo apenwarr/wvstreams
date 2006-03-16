@@ -17,11 +17,9 @@ static void dump_maps()
 }
 
 
-WVTEST_MAIN("on-disk")
+static void test_pagepool(WvPagePool &pp)
 {
     int i;
-    WvString filename = wvtmpfilename("on-disk");
-    WvPagePool pp(filename, O_RDWR | O_CREAT | O_TRUNC);
     const int count = 16, max_num_pages = 64, iterations = 4096;
     WvPagePool::page_id_t page_id[count];
     int num_pages[count];
@@ -57,7 +55,26 @@ WVTEST_MAIN("on-disk")
         }
     }
     
-    //unlink(filename);
+    WVPASS(pp.isok());
+}
+
+
+WVTEST_MAIN("on-disk")
+{
+    WvString filename = wvtmpfilename("on-disk");
+    WvPagePool pp(filename, O_RDWR | O_CREAT | O_TRUNC);
+    
+    test_pagepool(pp);
+    
+    unlink(filename);
+}
+
+
+WVTEST_MAIN("in-memory")
+{
+    WvPagePool pp(WvString::null, O_RDWR);
+    
+    test_pagepool(pp);
 }
 
 

@@ -49,6 +49,10 @@ WvPagePool::WvPagePool(WvStringParm filename, int flags, mode_t mode) :
             return;
         }
     }
+    else
+    {
+        page_count = min_page_count;
+    }
     
     pool = ::mmap(NULL, page_count<<PAGE_SHIFT, mmap_prot(flags),
             mmap_flags(), fd, 0);
