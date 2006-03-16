@@ -228,7 +228,7 @@ public:
 
 
     /**
-     * Returns true if 'key' is a the same, or a subkey, or this UniConfKey.
+     * Returns true if 'key' is a the same, or a subkey, of this UniConfKey.
      */
     bool suborsame(const UniConfKey &key) const;
     bool suborsame(const UniConfKey &key, WvString &subkey) const;

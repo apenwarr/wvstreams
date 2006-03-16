@@ -20,6 +20,7 @@ TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
 TARGETS += wvtestmain.o libwvtest.a
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
+TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
 GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 
 #ifneq ("$(with_swig)", "no")

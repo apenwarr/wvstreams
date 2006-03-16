@@ -32,10 +32,10 @@ int main(int argc, char **argv)
     if (!args.process(argc, argv, &remaining_args))
         return 1;
     
-    // For this test, we default connect to mars's POP3-SSL server...
+    // For this test, we default connect to localhost's POP3-SSL server...
     WvString target;
     if (!(target = remaining_args.popstr()))
-        target = "mars.net-itech.com:995";
+        target = "localhost:995";
     log("Connecting to %s...\n", target);
     
     WvSSLStream cli(new WvTCPConn(target), NULL);

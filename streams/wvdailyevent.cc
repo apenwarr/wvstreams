@@ -28,7 +28,7 @@
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 {
     need_reset = false;
-    prev = time(NULL);
+    prev = wvstime().tv_sec;
     configure(_first_hour, _num_per_day, _skip_first);
 }
 
@@ -38,7 +38,7 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
 {
     if (num_per_day && !need_reset)
     {
-	time_t now = time(NULL);
+	time_t now = wvstime().tv_sec;
 	time_t next = next_event();
 
 	assert(prev);
@@ -100,7 +100,7 @@ void WvDailyEvent::set_num_per_day(int _num_per_day)
 	max = 6*60*60; // unless that's a very long time, 6 hrs
 
     // don't start until at least one period has gone by
-    prev = time(NULL);
+    prev = wvstime().tv_sec;
     not_until = prev + max;
 }
 
