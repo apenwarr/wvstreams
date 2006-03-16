@@ -17,10 +17,8 @@ public:
     WvPagePool(WvStringParm filename, int flags, mode_t mode = 0666);
     ~WvPagePool();
 
-    size_t page_size() const
-        { return PAGE_SIZE; }
-    int page_shift() const
-        { return PAGE_SHIFT; }
+    int num_pages_needed_for(size_t amount)
+        { return (amount + PAGE_SIZE - 1) / PAGE_SIZE; }
 
     void *addr(page_id_t page_id) const
     { 

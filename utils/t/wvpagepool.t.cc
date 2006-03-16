@@ -20,7 +20,7 @@ static void dump_maps()
 static void test_pagepool(WvPagePool &pp)
 {
     int i;
-    const int count = 16, max_num_pages = 64, iterations = 4096;
+    const int count = 16, max_num_pages = 64, iterations = 1024;
     WvPagePool::page_id_t page_id[count];
     int num_pages[count];
 
