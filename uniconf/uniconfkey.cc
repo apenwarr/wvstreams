@@ -154,10 +154,10 @@ void UniConfKey::prepend(const UniConfKey &_key)
     unique();
     int shift = 0;
     for (int j=_key.left; j<_key.right; ++j)
-     {
+    {
         if (!!_key.store->segments[j])
             ++shift;
-     }
+    }
     store->segments.resize(shift + right - left, shift);
     for (int j=_key.left; j<_key.right; ++j)
     {

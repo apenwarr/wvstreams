@@ -16,7 +16,7 @@
 class WvDaemon;
 
 typedef WvCallback<void, WvDaemon &, void *> WvDaemonCallback;
-    	
+
 /*!
 @brief WvDaemon - High-level abstraction for creating daemon processes.
 
@@ -116,6 +116,13 @@ class WvDaemon
         volatile bool _want_to_restart;
 	volatile int _exit_status;
 
+    	void init(WvStringParm _name,
+                WvStringParm _version,
+                WvDaemonCallback _start_callback,
+    	    	WvDaemonCallback _run_callback,
+    	    	WvDaemonCallback _stop_callback,
+                void *_ud);
+
         int _run(const char *argv0);
 
         void set_daemonize(void *);
@@ -150,7 +157,11 @@ class WvDaemon
                 WvDaemonCallback _start_callback,
     	    	WvDaemonCallback _run_callback,
     	    	WvDaemonCallback _stop_callback,
-                void *_ud = NULL);
+                void *_ud = NULL) :
+            log(_name, WvLog::Debug)
+        {
+            init(_name, _version, _start_callback, _run_callback, _stop_callback, _ud);
+        }
     	
     	//! Run the daemon with no argument processing.  Returns exit status.
     	int run(const char *argv0);

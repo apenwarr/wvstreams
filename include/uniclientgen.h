@@ -12,6 +12,7 @@
 #include "wvlog.h"
 #include "wvstringlist.h"
 #include "uniclientconn.h"
+#include "uniconfkey.h"
 
 /**
  * Communicates with a UniConfDaemon to fetch and store keys and
@@ -38,8 +39,7 @@ class UniClientGen : public UniConfGen
     bool cmdinprogress;     /*!< true while a command is in progress */
     bool cmdsuccess;        /*!< true when a command completed successfully */
 
-    static const int TIMEOUT = 60000; // command timeout in ms
-    time_t timeout_activity;          // last time something happened relative to uptime
+    time_t timeout; // command timeout in ms
 
     int version; /*!< version number of the protocol */
 
@@ -49,9 +49,12 @@ public:
      * the specified stream.
      * "stream" is the raw connection
      */
-    UniClientGen(IWvStream *stream, WvStringParm dst = WvString::null);
+    UniClientGen(IWvStream *stream, WvStringParm dst = WvString::null,
+            const UniConfKey &restrict_key = UniConfKey());
 
     virtual ~UniClientGen();
+
+    time_t set_timeout(time_t _timeout);
 
     /***** Overridden members *****/
 
