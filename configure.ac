@@ -107,6 +107,7 @@ AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
+AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
 
 # avoid autoconf's default values, but keep those the user might have given
 CFLAGS="$CFLAGS"
@@ -671,6 +672,8 @@ AC_SUBST(build_xplc)
 AC_SUBST(xplc_pc)
 
 AC_SUBST(ac_libs)
+
+AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc

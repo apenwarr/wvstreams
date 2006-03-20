@@ -25,7 +25,12 @@ WV_LINK(UniClientGen);
 #include "wvunixsocket.h"
 static IUniConfGen *unixcreator(WvStringParm s, IObject *, void *)
 {
-    return new UniClientGen(new WvUnixConn(s));
+    WvConstInPlaceBuf buf(s, s.len());
+    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
+    if (!one) one = "";
+    if (!two) two = "";
+
+    return new UniClientGen(new WvUnixConn(one), one, two);
 }
 static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 #endif
@@ -33,25 +38,35 @@ static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 
 static IUniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
 {
-    WvString s(_s);
+    WvConstInPlaceBuf buf(_s, _s.len());
+    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
+    if (!one) one = "";
+    if (!two) two = "";
+
+    WvString s = one;
     char *cptr = s.edit();
     
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_TCP_PORT);
     
-    return new UniClientGen(new WvTCPConn(s), _s);
+    return new UniClientGen(new WvTCPConn(s), one, two);
 }
 
 
 static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
 {
-    WvString s(_s);
+    WvConstInPlaceBuf buf(_s, _s.len());
+    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
+    if (!one) one = "";
+    if (!two) two = "";
+
+    WvString s = one;
     char *cptr = s.edit();
     
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_SSL_PORT);
     
-    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), _s);
+    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), one, two);
 }
 
 
@@ -97,10 +112,12 @@ static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 /***** UniClientGen *****/
 
-UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) 
+UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst,
+        const UniConfKey &restrict_key) 
     : log(WvString("UniClientGen to %s",
 		   dst.isnull() && stream->src() 
 		   ? *stream->src() : WvString(dst))),
+      timeout(60*1000),
       version(0)
 {
     cmdinprogress = cmdsuccess = false;
@@ -110,6 +127,14 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, "uniclientconn-via-gen");
+
+    if (conn->isok())
+    {
+        conn->writecmd(UniClientConn::REQ_RESTRICT,
+                wvtcl_escape(restrict_key));
+        if (!do_select())
+            log(WvLog::Warning, "Failed to send restrict key\n");
+    }
 }
 
 
@@ -119,6 +144,16 @@ UniClientGen::~UniClientGen()
 	conn->writecmd(UniClientConn::REQ_QUIT, "");
     WvIStreamList::globallist.unlink(conn);
     WVRELEASE(conn);
+}
+
+
+time_t UniClientGen::set_timeout(time_t _timeout)
+{
+    if (_timeout < 1000)
+        timeout = 1000;
+    else
+        timeout = _timeout;
+    return timeout;
 }
 
 
@@ -258,15 +293,6 @@ UniClientGen::Iter *UniClientGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-time_t uptime()
-{
-    WvFile f("/proc/uptime", O_RDONLY);
-    if (f.isok())
-        return WvString(f.getline(0)).num();
-    return 0;
-}
-
-
 void UniClientGen::conncallback(WvStream &stream, void *userdata)
 {
     UniClientConn::Command command = conn->readcmd();
@@ -375,12 +401,16 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 // FIXME: horribly horribly evil!!
 bool UniClientGen::do_select()
 {
+    wvstime_sync();
+
     hold_delta();
     
     cmdinprogress = true;
     cmdsuccess = false;
 
-    timeout_activity = uptime();
+    time_t remaining = timeout;
+    const time_t clock_error = 10*1000;
+    WvTime timeout_at = msecadd(wvstime(), timeout);
     while (conn->isok() && cmdinprogress)
     {
 	// We would really like to run the "real" wvstreams globallist
@@ -390,19 +420,30 @@ bool UniClientGen::do_select()
         //
         // We could do this using alarm()s, but because of very strage behaviour
         // due to inherit_request in post_select when calling the long WvStream::select()
-        // prototype as we do here we have to do the timeout stuff outselves
-        if (conn->select(TIMEOUT, true, false))
-        {
+        // prototype as we do here we have to do the remaining stuff outselves
+        time_t last_remaining = remaining;
+        bool result = conn->select(remaining, true, false);
+        remaining = msecdiff(timeout_at, wvstime());
+        if (result)
             conn->callback();
-            timeout_activity = uptime();
-        }
-        else if (timeout_activity+3*(TIMEOUT/1000)/4 <= uptime())
+        else if (remaining <= 0 && remaining > -clock_error)
         {
-            // command response took too long!
             log(WvLog::Warning, "Command timeout; connection closed.\n");
             cmdinprogress = false;
             cmdsuccess = false;
             conn->close();
+        }
+
+        if (result
+                || remaining <= -clock_error
+                || remaining >= last_remaining + clock_error)
+        {
+            if (!result)
+                log(WvLog::Debug,
+                        "Clock appears to have jumped; resetting"
+                        " connection remaining.\n");
+            remaining = timeout;
+            timeout_at = msecadd(wvstime(), timeout);
         }
     }
 

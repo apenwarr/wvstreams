@@ -105,4 +105,11 @@
    statfs64(buf)
    fun:statfs64
 }
+{
+   popt_is_leaky
+   Memcheck:Leak
+   fun:realloc
+   fun:expandNextArg
+   fun:poptGetNextOpt
+}
 

@@ -13,12 +13,7 @@
 #include <signal.h>
 #endif
 
-WvStreamsDaemon::WvStreamsDaemon(WvStringParm name, WvStringParm version,
-        WvStreamsDaemonCallback cb, void *ud)
-    : WvDaemon(name, version,
-                WvDaemonCallback(this, &WvStreamsDaemon::start_cb),
-                WvDaemonCallback(this, &WvStreamsDaemon::run_cb),
-                WvDaemonCallback(this, &WvStreamsDaemon::stop_cb))
+void WvStreamsDaemon::init(WvStreamsDaemonCallback cb, void *ud)
 {
     setcallback(cb, ud);
 #ifndef _WIN32
