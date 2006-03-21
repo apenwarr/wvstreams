@@ -34,6 +34,8 @@ char *alloca ();
 #include <assert.h>
 #include <sys/mman.h>
 #include <signal.h>
+#include <unistd.h>
+#include <sys/resource.h>
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
@@ -354,7 +356,7 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
         
             task.stack = mmap(next_stack_addr, task.stacksize,
                 PROT_READ | PROT_WRITE,
-                MAP_PRIVATE | MAP_ANONYMOUS | MAP_GROWSDOWN,
+                MAP_PRIVATE | MAP_ANONYMOUS,
                 -1, 0);
         }
 	
@@ -525,3 +527,30 @@ void WvTaskMan::do_task()
 	}
     }
 }
+
+
+const void *WvTaskMan::current_top_of_stack()
+{
+    extern const void *__libc_stack_end;
+    if (use_shared_stack() || current_task == NULL)
+        return __libc_stack_end;
+    else
+        return (const char *)current_task->stack + current_task->stacksize;
+}
+
+
+size_t WvTaskMan::current_stacksize_limit()
+{
+    if (use_shared_stack() || current_task == NULL)
+    {
+        struct rlimit rl;
+        if (getrlimit(RLIMIT_STACK, &rl) == 0)
+            return size_t(rl.rlim_cur);
+        else
+            return 0;
+    }
+    else
+        return size_t(current_task->stacksize);
+}
+
+    

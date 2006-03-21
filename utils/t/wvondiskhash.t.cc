@@ -18,34 +18,21 @@ WVTEST_MAIN("dont create files in /tmp")
     WVPASS("after reading /tmp");
     
     s = time(NULL);
-    int before_count = wvtest_file_count_prefix("/tmp", "file");
-    printf("before_count: elapsed %d\n", static_cast<int>(time(NULL) - s));
-    
-    WVPASS("tick 2");
-
-    s = time(NULL);
     int before_count_var = wvtest_file_count_prefix("/var/tmp", "qdbm-annoy");
     printf("before_count_var: elapsed %d\n", static_cast<int>(time(NULL) - s));
     
-    WVPASS("tick 3");
+    WVPASS("tick 2");
 
     {
 	WvOnDiskHash<int, int> im;
-	WVPASS("tick 4");
+	WVPASS("tick 3");
     }
-    WVPASS("tick 5");
+    WVPASS("tick 4");
 
-    s = time(NULL);
-    int after_count = wvtest_file_count_prefix("/tmp", "file");
-    printf("after_count: elapsed %d\n", static_cast<int>(time(NULL) - s));
-    
-    WVPASS("tick 6");
-    
     s = time(NULL);
     int after_count_var = wvtest_file_count_prefix("/var/tmp", "qdbm-annoy");
     printf("after_count_var: elapsed %d\n", static_cast<int>(time(NULL) - s));
     
-    WVPASSEQ(before_count, after_count);
     WVPASSEQ(before_count_var, after_count_var);
 
 }

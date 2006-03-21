@@ -217,7 +217,7 @@ WvStream::WvStream():
     read_requires_writable(NULL),
     write_requires_readable(NULL),
     uses_continue_select(false),
-    personal_stack_size(65536),
+    personal_stack_size(131072),
     alarm_was_ticking(false),
     stop_read(false),
     stop_write(false),
@@ -951,6 +951,8 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 bool WvStream::_select(time_t msec_timeout,
     bool readable, bool writable, bool isexcept, bool forceable)
 {
+    assert(wsid_map && wsid_map->exists(my_wsid)); // Detect use of deleted stream
+        
     SelectInfo si;
     bool sure = _build_selectinfo(si, msec_timeout,
 				  readable, writable, isexcept, forceable);
