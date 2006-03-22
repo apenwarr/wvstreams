@@ -4,6 +4,7 @@
 #include "wvstream.h"
 #include "wvfile.h"
 
+#if 0
 static void dump_maps()
 {
     WvFile f("/proc/self/maps", O_RDONLY);
@@ -76,5 +77,5 @@ WVTEST_MAIN("in-memory")
     
     test_pagepool(pp);
 }
-
+#endif
 
