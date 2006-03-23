@@ -51,7 +51,7 @@ class WvDBusConnPrivate;
 class WvDBusConn : public WvIStreamList
 {
 public:
-    WvDBusConn(DBusBusType bus = DBUS_BUS_SESSION);
+    WvDBusConn(WvStringParm name, DBusBusType bus = DBUS_BUS_SESSION);
     WvDBusConn(DBusConnection *c);
     WvDBusConn(WvDBusConn &c);
     virtual ~WvDBusConn();

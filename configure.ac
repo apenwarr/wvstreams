@@ -391,6 +391,12 @@ fi
 
 # dbus
 if test "$with_dbus" != "no"; then
+    if test "$with_dbus" = ""; then
+        WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
+        WV_APPEND(CPPFLAGS, ["-DDBUS_API_SUBJECT_TO_CHANGE"])
+        WV_APPEND(LDFLAGS, [`pkg-config --libs dbus-1`])
+    fi
+
     AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
     AC_CHECK_LIB(dbus-1, dbus_connection_open,, [with_dbus=no])
 

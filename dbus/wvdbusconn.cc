@@ -44,18 +44,19 @@ DeclareWvDict(WvDBusInterface, WvString, name);
 class WvDBusConnPrivate
 {
 public:
-    WvDBusConnPrivate(WvDBusConn *_conn, DBusBusType bus) :
+    WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name, DBusBusType bus) :
         conn(_conn),
         ifacedict(10),
         dbusconn(NULL),
+        name(_name),
         log("WvDBusConnPrivate")
     {
         DBusError error;
+        dbus_error_init(&error);
         dbusconn = dbus_bus_get(bus, &error);
         
         if (dbusconn)
         {
-            log("Setting watch functions..\n");
             if (!dbus_connection_set_watch_functions(dbusconn, add_watch, 
                                                      remove_watch, 
                                                      watch_toggled,
@@ -64,6 +65,17 @@ public:
                 log(WvLog::Error, "Couldn't set up watch functions!\n");
                 // set isok to false or something
             }
+
+            int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT | 
+                         DBUS_NAME_FLAG_REPLACE_EXISTING);
+            if (!!name && (dbus_bus_request_name (dbusconn, name, flags, 
+                                                  &error) == (-1)))
+            {
+                log(WvLog::Error, "Couldn't set name '%s' for connection!\n", 
+                    name);
+                // set isok to false or something
+            }
+
             log("Done..\n");
 
             dbus_connection_add_filter(dbusconn, filter_func, this, NULL);
@@ -72,6 +84,14 @@ public:
 
     ~WvDBusConnPrivate()
      {
+         DBusError error;
+         dbus_error_init(&error);
+         if (dbus_bus_release_name(dbusconn, name, &error) == (-1))
+         {
+             log(WvLog::Error, "Error releasing name '%s' for connection!\n",
+                 name);
+         }
+
          close();
      }
 
@@ -130,10 +150,13 @@ public:
                                          void *userdata)
     {
         
-        fprintf(stderr, "Got message. Sender %s. Path: %s. Interface: %s. Is signal: %i\n", 
+        fprintf(stderr, "Got message. Sender %s. Destination: %s. Path: %s. "
+                "Interface: %s. Member: %s. Is signal: %i\n", 
                 dbus_message_get_sender(_msg),
+                dbus_message_get_destination(_msg),
                 dbus_message_get_path(_msg), 
                 dbus_message_get_interface(_msg),
+                dbus_message_get_member(_msg),
                 dbus_message_is_signal(_msg, dbus_message_get_interface(_msg), 
                                        dbus_message_get_path(_msg)));
 
@@ -186,15 +209,16 @@ public:
     WvDBusConn *conn;
     WvDBusInterfaceDict ifacedict;
     DBusConnection *dbusconn;
+    WvString name;
     WvLog log;
 };
 
 
-WvDBusConn::WvDBusConn(DBusBusType bus)
+WvDBusConn::WvDBusConn(WvStringParm name, DBusBusType bus)
     : log("WvDBusConn")
 {
     log("Starting up..\n");
-    priv = new WvDBusConnPrivate(this, bus);
+    priv = new WvDBusConnPrivate(this, name, bus);
 
 }
 
@@ -299,28 +323,7 @@ void WvDBusConn::add_marshaller(WvStringParm ifacename, IWvDBusMarshaller *marsh
 void WvDBusConn::add_method(WvStringParm ifacename, IWvDBusMarshaller *listener)
 {
     if (!priv->ifacedict[ifacename])
-    {
         priv->ifacedict.add(new WvDBusInterface(ifacename), true);
 
-        // request a name on the bus
-        DBusError error;
-        dbus_error_init(&error);
-        
-        const char *tmp = ifacename;
-
-        int ret = dbus_bus_request_name(priv->dbusconn, "ca.nit.foo", 
-                                        DBUS_NAME_FLAG_REPLACE_EXISTING, 
-                                        &error);
-        if (dbus_error_is_set(&error)) 
-        { 
-            log(WvLog::Error, "Name Error (%s)\n", error.message); 
-            dbus_error_free(&error); 
-        }
-        
-        if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret)
-            log(WvLog::Error, "Oh no! DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret!\n");
-
-        dbus_error_free(&error);
-    }
     priv->ifacedict[ifacename]->d.add(listener, true);
 }

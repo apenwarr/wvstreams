@@ -1,40 +1,36 @@
+/* -*- Mode: C++ -*-
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
+ *
+ * Test program which listens for a simple message with one argument (a 
+ * string) and sends a reply, a single string. Best used in conjunction with 
+ * the dbus-send program.
+ * 
+ */ 
 #include "wvdbusconn.h"
 #include "wvdbusmarshaller.h"
 #include "wvistreamlist.h"
 
-static void msg_received(WvDBusReplyMsg &reply, int arg1)
+
+static void msg_received(WvDBusReplyMsg &reply, WvString arg1)
 {
     fprintf(stderr, "Message received, loud and clear.\n");
-    reply.append("baz");
+    reply.append(WvString("baz %s", arg1));
 }
 
 
 int main (int argc, char *argv[])
 {
-    WvDBusConn conn;
+    WvDBusConn conn("ca.nit.MyListener");
     
-    // prototype for receiving + replying to messages
-    WvDBusListener<int> l(&conn, "/ca/nit/foo", msg_received);
+    // Create a "/ca/nit/foo" object to listen on, and add the "ca.nit.foo"
+    // method to it..
+    WvDBusListener<WvString> l(&conn, "/ca/nit/foo", msg_received);
     conn.add_method("ca.nit.foo", &l);
-
-//     conn.setcallback(myfilter);
-//     conn.request_name("ca.nit.dbustest");
-
     WvIStreamList::globallist.append(&conn, false);
-    
-//     WvDBus::CallMsg msg("ca.nit.dbustest", "/ca/nit/dbustest",
-// 			"ca.nit.dbustest", "StupidMember");
-//     msg.append("yes", "hello", "world");
-    
-//     {
-// 	WvDBus::Msg reply(conn.sendsync(msg, 1000));
-// 	wvcon->print("reply: %s\n", (int)(DBusMessage*)reply);
-//     }
     
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();
     
     return 0;
-
-
 }

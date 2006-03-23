@@ -17,20 +17,26 @@
 class WvDBusMsg
 {
 public:
+    /*
+     * Constructs a new DBus message. If destination is blank, no destination 
+     * is set; this is appropriate when using D-BUS in a peer-to-peer context 
+     * (no message bus).
+     *
+     * @param destination name that the message should be sent to or #NULL
+     * @param path object path the message should be sent to
+     * @param interface interface to invoke method on
+     * @param method method to invoke
+     *
+     */
+    WvDBusMsg(WvStringParm busname, WvStringParm objectname, 
+              WvStringParm interface, WvStringParm method);
+
     WvDBusMsg(DBusMessage *_msg)
     {
         msg = _msg;
         dbus_message_ref(msg);
     }
-    WvDBusMsg(WvStringParm busname, WvStringParm objectname, 
-              WvStringParm interface, WvStringParm method);
 
-#if 0
-    WvDBusMsg(const WvDBusMsg &m)
-    {
-        dbus_message_ref(m);
-    }
-#endif
     virtual ~WvDBusMsg()
     {
         if (msg) dbus_message_unref(msg);
