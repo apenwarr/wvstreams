@@ -751,7 +751,12 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 {
     if (!isok()) return false;
 
-    wvstime_sync();
+    // We cannot move the clock backward here, because timers that
+    // were expired in pre_select could then not be expired anymore,
+    // and while time going backward is rather unsettling in general,
+    // for it to be happening between pre_select and post_select is
+    // just outright insanity.
+    wvstime_sync_forward();
         
     bool sure = post_select(si);
     if (globalstream && forceable && (globalstream != this))

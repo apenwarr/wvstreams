@@ -87,4 +87,8 @@ inline bool operator== (const WvTime &a,
 const WvTime &wvstime(); 
 void wvstime_sync();
 
+// This function is just like wvstime_sync(), but will never make the
+// time go backward.
+void wvstime_sync_forward();
+
 #endif // __WVTIMEUTILS_H
