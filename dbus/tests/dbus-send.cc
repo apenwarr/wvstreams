@@ -29,7 +29,8 @@ int main (int argc, char *argv[])
     msg.append("bee");
 
     // expect a reply with a single string as an argument
-    WvDBusMarshaller<WvString> reply("/ca/nit/foo/bar", WvCallback<void, WvString>(foo));
+    WvDBusMarshaller<WvString> reply("/ca/nit/foo/bar", 
+                                     WvCallback<void, WvString>(foo));
     conn.send(msg, &reply, false);
 
     WvIStreamList::globallist.append(&conn, false);

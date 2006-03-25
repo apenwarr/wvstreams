@@ -23,10 +23,10 @@ int main (int argc, char *argv[])
 {
     WvDBusConn conn("ca.nit.MyListener");
     
-    // Create a "/ca/nit/foo" object to listen on, and add the "ca.nit.foo"
-    // method to it..
-    WvDBusListener<WvString> l(&conn, "/ca/nit/foo", msg_received);
-    conn.add_method("ca.nit.foo", &l);
+    // Create a "/ca/nit/foo" object to listen on, and add the "bar"
+    // method (part of the 31337 "ca.nit.foo" interface) to it..
+    WvDBusListener<WvString> l(&conn, "bar", msg_received);
+    conn.add_method("ca.nit.foo", "/ca/nit/foo", &l);
     WvIStreamList::globallist.append(&conn, false);
     
     while (WvIStreamList::globallist.isok())

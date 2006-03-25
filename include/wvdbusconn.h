@@ -15,9 +15,23 @@
 #include <dbus/dbus.h>
 
 
-DeclareWvDict(IWvDBusMarshaller, WvString, path);
+DeclareWvDict(IWvDBusMarshaller, WvString, member);
+
 
 class WvDBusConn;
+
+
+class WvDBusObject
+{
+public:
+    WvDBusObject(WvStringParm _path) : d(10) { path = _path; }
+    WvString path;
+    IWvDBusMarshallerDict d;
+};
+
+
+DeclareWvDict(WvDBusObject, WvString, path);
+
 
 class WvDBusInterface 
 {
@@ -28,21 +42,29 @@ public:
         name = _name;
     }
 
-    void add_marshaller(IWvDBusMarshaller *marshaller)
+    void add_marshaller(WvString path, IWvDBusMarshaller *marshaller)
     {
+        if (!d[path])
+            d.add(new WvDBusObject(path), true);
+
         // FIXME: what about duplicates?
-        d.add(marshaller, true);
+        d[path]->d.add(marshaller, true);
     }
 
-    void handle_signal(WvStringParm path, WvDBusConn *conn, DBusMessage *msg)
+    void handle_signal(WvStringParm objname, WvStringParm member, 
+                       WvDBusConn *conn, DBusMessage *msg)
     {
-        fprintf(stderr, "path is '%s'\n", path.cstr());
-        if (d[path])
-            d[path]->dispatch(msg);
+        fprintf(stderr, "objname is '%s'\n", objname.cstr());
+        if (d[objname])
+        {
+            WvDBusObject *obj = d[objname];
+            if (obj->d[member])
+                obj->d[member]->dispatch(msg);
+        }
     }
 
     WvString name; // FIXME: ideally wouldn't be public
-    IWvDBusMarshallerDict d; // FIXME: ditto
+    WvDBusObjectDict d;
 };
 
 
@@ -66,8 +88,10 @@ public:
     virtual void send(WvDBusMsg &msg);
     virtual void send(WvDBusMsg &msg, IWvDBusMarshaller *reply, bool autofree_reply);
 
-    void add_marshaller(WvStringParm ifacename, IWvDBusMarshaller *marshaller);
-    void add_method(WvStringParm ifacename, IWvDBusMarshaller *listener);
+    void add_marshaller(WvStringParm interface, WvStringParm path, 
+                        IWvDBusMarshaller *marshaller);
+    void add_method(WvStringParm interface, WvStringParm path, 
+                    IWvDBusMarshaller *listener);
 
     operator DBusConnection* () const;
 

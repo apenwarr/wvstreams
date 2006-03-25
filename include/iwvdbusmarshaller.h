@@ -16,11 +16,11 @@ class WvDBusConn;
 class IWvDBusMarshaller
 {
 public:
-    IWvDBusMarshaller(WvStringParm _path) { path = _path; }
+    IWvDBusMarshaller(WvStringParm _member) { member = _member; }
     virtual ~IWvDBusMarshaller() {}
     virtual void dispatch(DBusMessage *_msg) = 0;
 
-    WvString path;
+    WvString member;
 };
 
 #endif // __IWVDBUSMARSHALLER_H

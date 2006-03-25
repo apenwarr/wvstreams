@@ -161,13 +161,15 @@ public:
                                        dbus_message_get_path(_msg)));
 
         WvDBusConnPrivate *priv = (WvDBusConnPrivate *)userdata;
-        WvString ifacename = dbus_message_get_interface(_msg);
+        WvStringParm interface = dbus_message_get_interface(_msg);
         WvStringParm path = dbus_message_get_path(_msg);
+        WvStringParm member = dbus_message_get_member(_msg);
 
-        if (priv->ifacedict[ifacename])
+        if (priv->ifacedict[interface])
         {
             fprintf(stderr, "Interface exists for message. Sending.\n");
-            priv->ifacedict[ifacename]->handle_signal(path, priv->conn, _msg);
+            priv->ifacedict[interface]->handle_signal(path, member, 
+                                                      priv->conn, _msg);
         }
 
         return DBUS_HANDLER_RESULT_HANDLED;
@@ -302,28 +304,30 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusMarshaller *reply, bool autofree_re
 }
 
 
-void WvDBusConn::add_marshaller(WvStringParm ifacename, IWvDBusMarshaller *marshaller)
+void WvDBusConn::add_marshaller(WvStringParm interface, WvStringParm path, 
+                                IWvDBusMarshaller *marshaller)
 {
-    if (!priv->ifacedict[ifacename])
+    if (!priv->ifacedict[interface])
     {
         DBusError error;
         dbus_bus_add_match(priv->dbusconn, WvString("type='signal',interface='%s'", 
-                                              ifacename),  &error);
+                                              interface),  &error);
         if (dbus_error_is_set(&error)) 
         { 
             log(WvLog::Error, "Oh no! Couldn't add a match on the bus!\n");
         }
-        priv->ifacedict.add(new WvDBusInterface(ifacename), true);
+        priv->ifacedict.add(new WvDBusInterface(interface), true);
     }
 
-    priv->ifacedict[ifacename]->d.add(marshaller, true);
+    priv->ifacedict[interface]->add_marshaller(path, marshaller);
 }
 
 
-void WvDBusConn::add_method(WvStringParm ifacename, IWvDBusMarshaller *listener)
+void WvDBusConn::add_method(WvStringParm interface, WvStringParm path, 
+                            IWvDBusMarshaller *listener)
 {
-    if (!priv->ifacedict[ifacename])
-        priv->ifacedict.add(new WvDBusInterface(ifacename), true);
+    if (!priv->ifacedict[interface])
+        priv->ifacedict.add(new WvDBusInterface(interface), true);
 
-    priv->ifacedict[ifacename]->d.add(listener, true);
+    priv->ifacedict[interface]->add_marshaller(path, listener);
 }
