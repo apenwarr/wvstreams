@@ -1,6 +1,7 @@
 #include "unitempgen.h"
 #include "unicachegen.h"
 #include "uniconfroot.h"
+#include "uniconfgen-sanitytest.h"
 #include "unislowgen.h"
 #include "uniwatch.h"
 #include "wvtest.h"
@@ -25,6 +26,13 @@ private:
     WvString expected_key;
     WvString expected_value;
 };
+
+WVTEST_MAIN("UniCacheGen Sanity Test")
+{
+    UniCacheGen *gen = new UniCacheGen(new UniTempGen());
+    UniConfGenSanityTester::sanity_test(gen, "cache:temp:");
+    WVRELEASE(gen);
+}
 
 WVTEST_MAIN("cache basics")
 {

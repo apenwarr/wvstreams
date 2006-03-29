@@ -3,14 +3,23 @@
 #include "unitempgen.h"
 #include "unireplicategen.h"
 #include "wvistreamlist.h"
+#include "uniconfgen-sanitytest.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/signal.h>
 
+WVTEST_MAIN("UniReplicateGen Sanity Test")
+{
+    UniReplicateGen *gen = new UniReplicateGen();
+    gen->append(new UniTempGen(), true);
+    UniConfGenSanityTester::sanity_test(gen, "replicate:temp: temp:");
+    WVRELEASE(gen);
+}
+
 WVTEST_MAIN("basic")
 {
-    UniConfRoot cfg("replicate:{temp: temp:}");
+    UniConfRoot cfg("replicate:temp: temp:");
     WVFAIL(cfg.haschildren());
     WVPASS(cfg["/key"].getme().isnull());
     

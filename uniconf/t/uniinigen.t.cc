@@ -1,3 +1,4 @@
+#include "uniinigen.h"
 #include "wvfile.h"
 #include "wvfileutils.h"
 #include "uniconfroot.h"
@@ -7,6 +8,7 @@
 #include "uniwatch.h"
 #include "wvsystem.h"
 #include "wvtest.h"
+#include "uniconfgen-sanitytest.h"
 
 
 // Returns the filename where the content was written.  This file must be
@@ -32,6 +34,15 @@ static int childcount(UniConf cfg)
     return count;
 }
 
+
+WVTEST_MAIN("UniIniGen Sanity Test")
+{
+    WvString inifile("/tmp/inigen-test-%s.ini", getpid());
+    UniIniGen *gen = new UniIniGen(inifile);
+    UniConfGenSanityTester::sanity_test(gen, WvString("ini:%s", inifile));
+    WVRELEASE(gen);
+    unlink(inifile);
+}
 
 WVTEST_MAIN("commit-without-refresh")
 {
@@ -133,6 +144,8 @@ WVTEST_MAIN("Setting and getting (bug 6090)")
     ::unlink(ininame);
 }
 
+// This is probably covered by sanity tests now.  OTOH, more tests is more
+// better.
 WVTEST_MAIN("Trailing slashes")
 {
     UniConfRoot cfg("ini:tmp.ini");

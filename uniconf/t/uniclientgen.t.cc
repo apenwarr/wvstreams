@@ -74,7 +74,8 @@ static void boring_server_cb(WvStringParm sockname, WvStringParm server_moniker)
 }
 
 
-static void autoincrement_server_cb(WvStringParm sockname, WvStringParm server_moniker)
+static void autoincrement_server_cb(WvStringParm sockname, 
+        WvStringParm server_moniker)
 {
     wverr->close();
     UniConfRoot uniconf(server_moniker);
@@ -106,7 +107,12 @@ static pid_t setup_server(WvStringParm sockname, WvStringParm server_moniker,
 
 static void cleanup_server(pid_t pid, WvStringParm sockname)
 {
-    kill(pid, 15);
+    // Never, ever, try to kill pids -1 or 0.
+    if (pid <= 0)
+        fprintf(stderr, "Refusing to kill pid %s.\n", pid);
+    else
+        kill(pid, 15);
+
     pid_t rv;
     while ((rv = waitpid(pid, NULL, 0)) != pid)
     {
@@ -153,8 +159,8 @@ static UniClientGen *quiet_client_factory(WvStringParm name,
 }
 
 
-// Set the default client_factory to debug_client_factory to see what goes
-// through the connection.
+// Set the default client_factory to debug_client_factory if you want to see
+// what goes through the connection.
 static UniClientGen *create_client_conn(WvString name, WvString sockname,
        client_factory_t client_factory = quiet_client_factory) 
 {
@@ -174,6 +180,20 @@ static UniClientGen *create_client_conn(WvString name, WvString sockname,
     }
 
     return client_gen;
+}
+
+
+WVTEST_MAIN("UniClientGen Sanity Test")
+{
+    WvString sockname = wvtmpfilename("uniclientgen.t-sock");
+    pid_t server_pid = setup_server(sockname, "temp:");
+
+    UniClientGen *gen = create_client_conn("sanity", sockname);
+
+    UniConfGenSanityTester::sanity_test(gen, WvString("unix:%s", sockname));
+    WVRELEASE(gen);
+
+    cleanup_server(server_pid, sockname);
 }
 
 

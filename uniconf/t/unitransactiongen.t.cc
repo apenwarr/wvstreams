@@ -8,6 +8,7 @@
 #include "unitransaction.h"
 #include "uniunwrapgen.h"
 #include "uniwatch.h"
+#include "uniconfgen-sanitytest.h"
 
 #include "wvfile.h"
 #include "wvfork.h"
@@ -18,6 +19,13 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
+WVTEST_MAIN("UniTransactionGen Sanity Test")
+{
+    UniTransactionGen *gen = new UniTransactionGen(new UniTempGen());
+    UniConfGenSanityTester::sanity_test(gen, "transaction:temp:");
+    WVRELEASE(gen);
+}
 
 static WvMap<UniConfKey, WvString> callbacks2(5);
 static WvMap<UniConfKey, WvString> callbacks1(5);

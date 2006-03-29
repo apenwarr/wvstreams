@@ -3,8 +3,16 @@
 #include "unitempgen.h"
 #include "uniconfroot.h"
 #include "wvtest.h"
+#include "uniconfgen-sanitytest.h"
 
     
+WVTEST_MAIN("UniFastRegetGen Sanity Test")
+{
+    UniFastRegetGen *gen = new UniFastRegetGen(new UniTempGen);
+    UniConfGenSanityTester::sanity_test(gen, "fast-reget:temp:");
+    WVRELEASE(gen);
+}
+
 WVTEST_MAIN("fast-reget")
 {
     UniTempGen *t = new UniTempGen;

@@ -4,12 +4,20 @@
 #include "unitempgen.h"
 #include "unisubtreegen.h"
 #include "uniconfdaemon.h"
+#include "uniconfgen-sanitytest.h"
 #include "wvfileutils.h"
 #include "wvfork.h"
 #include "uniclientgen.h"
 #include "wvunixsocket.h"
 
 #include <sys/wait.h>
+
+WVTEST_MAIN("UniSubtreeGen Sanity Test")
+{
+    UniSubtreeGen *gen = new UniSubtreeGen(new UniTempGen(), "/");
+    UniConfGenSanityTester::sanity_test(gen, "subtree:temp: /");
+    WVRELEASE(gen);
+}
 
 int callback_count;
 void callback(const UniConf &uniconf, const UniConfKey &key)
@@ -112,7 +120,9 @@ WVTEST_MAIN("callbacks")
     sub_uniconf.getme();
     WVPASSEQ(sub_callback_count, 0); // Should not have received callbacks
 
-    kill(child, 15);
+    // Never, ever kill a pid <= 0, unless you want all your processes dead...
+    if (child > 0)
+        kill(child, 15);
     pid_t rv;
     while ((rv = waitpid(child, NULL, 0)) != child)
     {

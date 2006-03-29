@@ -2,12 +2,21 @@
 #include "uniconfroot.h"
 #include "unitempgen.h"
 #include "uniunwrapgen.h"
+#include "uniconfgen-sanitytest.h"
 #include "wvfork.h"
 #include "wvtest.h"
 
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
+WVTEST_MAIN("UniUnwrapGen Sanity Test")
+{
+    UniConfRoot cfg("temp:");
+    UniUnwrapGen *gen = new UniUnwrapGen(cfg["/"]);
+    UniConfGenSanityTester::sanity_test(gen, "");
+    WVRELEASE(gen);
+}
 
 static int itcount(UniConfGen::Iter *i)
 {

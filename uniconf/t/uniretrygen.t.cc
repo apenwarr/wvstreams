@@ -2,6 +2,8 @@
 #include "uniconfroot.h"
 #include "unitempgen.h"
 #include "uniretrygen.h"
+#include "uniclientgen.h"
+#include "uniconfgen-sanitytest.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -77,6 +79,13 @@ void wait_for_connect(UniRetryGenTester t)
     fprintf(stderr, "managed to connect\n");
 }
 
+
+WVTEST_MAIN("UniRetryGen Sanity Test")
+{
+    UniRetryGen *gen = new UniRetryGen("temp:");
+    UniConfGenSanityTester::sanity_test(gen, "retry:temp:");
+    WVRELEASE(gen);
+}
 
 WVTEST_MAIN("UniRetryGen: uniconfd")
 {

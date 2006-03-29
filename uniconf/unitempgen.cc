@@ -57,6 +57,7 @@ void UniTempGen::set(const UniConfKey &_key, WvStringParm _value)
     
     hold_delta();
     UniConfKey key = _key;
+    // FIXME: Use key.hastrailingslash(), it's shorter and easier and faster
     bool trailing_slash = false;
     if (!key.isempty())
     {

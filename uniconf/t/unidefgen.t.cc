@@ -1,7 +1,16 @@
 #include "wvtest.h"
 #include "uniconfroot.h"
 #include "unidefgen.h"
+#include "unitempgen.h"
+#include "uniconfgen-sanitytest.h"
 
+
+WVTEST_MAIN("UniDefGen Sanity Test")
+{
+    UniDefGen *gen = new UniDefGen(new UniTempGen());
+    UniConfGenSanityTester::sanity_test(gen, "default:temp:");
+    WVRELEASE(gen);
+}
 
 WVTEST_MAIN("single")
 {
