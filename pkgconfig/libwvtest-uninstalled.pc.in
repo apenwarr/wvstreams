@@ -1,0 +1,9 @@
+version=@PACKAGE_VERSION@
+top_builddir=@abs_top_builddir@
+
+Name: WvStreams test
+Description: WvStreams test library
+Version: ${version}
+Requires: libwvbase = ${version} libwvutils = ${version}
+Libs: -L${top_builddir} -lwvtest
+Cflags: -I${top_builddir}/include

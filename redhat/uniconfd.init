@@ -1,0 +1,76 @@
+#! /bin/sh
+#
+# uniconfd: Server that manages UniConf elements
+#
+# chkconfig: 345 97 03
+# description: Server that manages UniConf elements
+# processname: uniconfd
+# pidfile: /var/run/uniconfd.pid
+#
+# modelled after the D-BUS initscript
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# so we can rearrange this easily
+processname=uniconfd
+pidfile="/var/run/uniconfd.pid"
+# Don't run TCP or SSL, but run a Unix socket at /var/lib/uniconf/control
+daemonopts="-p 0 -u /var/lib/uniconf/control"
+
+RETVAL=0
+
+start() {
+    echo -n $"Starting uniconf daemon: "
+    daemon $processname $daemonopts
+    RETVAL=$?
+    echo
+
+    [ $RETVAL -eq 0 ]
+    touch /var/lock/subsys/$processname
+    pidofproc $processname > $pidfile
+}
+
+stop() {
+    echo -n $"Stopping uniconf daemon: "
+
+    killproc $processname -TERM
+    RETVAL=$?
+    echo
+    if [ $RETVAL -eq 0 ]; then
+        rm -f /var/lock/subsys/$processname
+        rm -f $pidfile
+    fi
+}
+
+# See how we were called.
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $processname
+        RETVAL=$?
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    condrestart)
+        if [ -f /var/lock/subsys/$processname ]; then
+            stop
+            start
+        fi
+        ;;
+    reload)
+        echo "Uniconf daemon can't reload its configuration, you have to restart it"
+        RETVAL=$?
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+        ;;
+esac
+exit $RETVAL
