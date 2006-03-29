@@ -10,8 +10,9 @@
 #ifndef __WVQTHOOK_H
 #define __WVQTHOOK_H
 
-#include <qobject.h>
-#include <qevent.h>
+#include <QtCore/qobject.h>
+#include <Qt/qevent.h>
+#include <QtCore/qcoreevent.h>
 #include "wvcallback.h"
 
 class WvQtHook;

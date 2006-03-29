@@ -519,9 +519,9 @@ if test "$with_qt" != "no"; then
         LDFLAGS_save="$LDFLAGS"
         for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
             eval wv_qtdir="$wv_qtdir"
-            CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include -I$wv_qtdir/include/qt3"
-            LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib -lqt-mt"
-            AC_TRY_LINK([#include <qstring.h>],
+            CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include"
+            LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib -lQtCore"
+            AC_TRY_LINK([#include <Qt/qstring.h>],
                         [QString x("hello"); return 0; ],
                         [wv_cv_with_qt=$wv_qtdir; break])
         done

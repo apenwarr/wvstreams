@@ -7,6 +7,9 @@
  * Qt event loop.  Use it to avoid problems resulting from the
  * non-reentrant nature of WvStream::execute().
  */
+#include <Qt/qcoreevent.h>
+#include <Qt/qapplication.h>
+#include "wvqtevent.h"
 #include "wvqthook.moc"
 
 WvQtHook::WvQtHook(WvQtHookCallback _callback) :
@@ -28,8 +31,8 @@ bool WvQtHook::event(QEvent *event)
     QEvent::Type eventtype = event->type();
     if (eventtype < QEvent::User || eventtype > QEvent::MaxUser)
         return false;
-    QCustomEvent *ce = static_cast<QCustomEvent*>(event);
-    callback(*this, eventtype - QEvent::User, ce->data());
+    WvQtEvent *ce = static_cast<WvQtEvent*>(event);
+    callback(*this, eventtype - QEvent::User, ce->getData());
     return true;
 }
 
@@ -38,7 +41,7 @@ void WvQtHook::post(int type, void *data)
 {
     // event must be allocated on heap for postEvent
     QEvent::Type eventtype = QEvent::Type(QEvent::User + type);
-    QCustomEvent *event = new QCustomEvent(eventtype, data);
+    WvQtEvent *event = new WvQtEvent(eventtype, data);
     QApplication::postEvent(this, event);
 }
 
@@ -46,6 +49,6 @@ void WvQtHook::post(int type, void *data)
 void WvQtHook::send(int type, void *data)
 {
     QEvent::Type eventtype = QEvent::Type(QEvent::User + type);
-    QCustomEvent event(eventtype, data);
+    WvQtEvent event(eventtype, data);
     QApplication::sendEvent(this, & event);
 }

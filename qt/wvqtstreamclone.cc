@@ -62,8 +62,10 @@ void WvQtStreamClone::pre_poll()
     // we don't try to catch the timer signal; we use it only to force
     // Qt's event loop to restart so our hook gets called again
     select_timer.stop();
-    if (si.msec_timeout >= 0)
-        select_timer.start(si.msec_timeout, true /*singleshot*/);
+    if (si.msec_timeout >= 0) {
+        select_timer.start(si.msec_timeout);
+        select_timer.setSingleShot(true);
+    }
 
     // set up necessary QSocketNotifiers, unfortunately there is no
     // better way to iterate over the set of file descriptors
@@ -171,12 +173,15 @@ void WvQtStreamClone::qt_detach()
         first_time = true;
     }
     // remove any remaining Qt objects
+    zero_timer.stop();
     select_timer.stop();
     notify_readable.clear();
     notify_writable.clear();
     notify_exception.clear();
-    QObject::disconnect(qApp, SIGNAL(guiThreadAwake()),
-        this, SLOT(qt_begin_event_loop_hook()));
+    //QObject::disconnect(qApp, SIGNAL(guiThreadAwake()),
+    //    this, SLOT(qt_begin_event_loop_hook()));
+    QObject::disconnect(&zero_timer, SIGNAL(timeout()),
+            this, SLOT(qt_begin_event_loop_hook()));
     QObject::disconnect(& select_timer, SIGNAL(timeout()),
         this, SLOT(select_timer_expired()));
 }
@@ -185,8 +190,12 @@ void WvQtStreamClone::qt_detach()
 void WvQtStreamClone::qt_attach()
 {
     // hook into the Qt event loop before each iteration
-    QObject::connect(qApp, SIGNAL(guiThreadAwake()),
-        this, SLOT(qt_begin_event_loop_hook()));
+
+    QObject::connect(&zero_timer, SIGNAL(timeout()),
+            this, SLOT(qt_begin_event_loop_hook()));
+    zero_timer.start();
+    //QObject::connect(qApp, SIGNAL(guiThreadAwake()),
+    //    this, SLOT(qt_begin_event_loop_hook()));
     QObject::connect(& select_timer, SIGNAL(timeout()),
         this, SLOT(select_timer_expired()));
 }

@@ -6,12 +6,14 @@
 #ifndef __WVQTSTREAMCLONE_H
 #define __WVQTSTREAMCLONE_H
 
-#include <qobject.h>
-#include <qintdict.h>
-#include <qsocketnotifier.h>
-#include <qtimer.h>
-#include <qmetaobject.h>
+#include <Qt/qobject.h>
+#include <Qt/q3intdict.h>
+#include <Qt/qsocketnotifier.h>
+#include <Qt/qtimer.h>
+#include <Qt/qmetaobject.h>
+#include <Qt/qapplication.h>
 #include "wvstreamclone.h"
+#include "wvlog.h"
 
 /**
  * Wraps another WvStream and attaches it to the normal Qt event loop.
@@ -40,11 +42,11 @@ class WvQtStreamClone : public QObject, public WvStreamClone
     bool first_time;
     bool select_in_progress;
     int last_max_fd;
-    QIntDict<QSocketNotifier> notify_readable;
-    QIntDict<QSocketNotifier> notify_writable;
-    QIntDict<QSocketNotifier> notify_exception;
+    Q3IntDict<QSocketNotifier> notify_readable;
+    Q3IntDict<QSocketNotifier> notify_writable;
+    Q3IntDict<QSocketNotifier> notify_exception;
     QTimer select_timer;
-
+    QTimer zero_timer;
 public:
     /**
      * WvQtStreamClone takes ownership of the stream you give it
@@ -75,6 +77,7 @@ private:
     // Called after the Qt event loop has finished its notifications
     void post_poll();
 
+//    WvLog log;
 private slots:
     /** These things mark the beginning of a select pass **/
     // Qt event loop hook (happens before each iteration)
