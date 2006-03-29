@@ -163,9 +163,6 @@ void UniReplicateGen::deltacallback(Gen *src_gen, const UniConfKey &key,
     DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
             key.printable().cstr(), value.cstr());
 
-    if (key == "" && value.isnull())
-        return;
-    
     if (!processing_callback)
     {
     	DPRINTF("UniReplicateGen::deltacallback(): !processing_callback\n");
