@@ -38,10 +38,12 @@ UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode, UniIniGen::SaveCa
 
 void UniIniGen::set(const UniConfKey &key, WvStringParm value)
 {
-    // Don't allow people to delete the root, since this generator can't
-    // handle it not existing.
-    if (!(value.isnull() && key.isempty()))
-        UniTempGen::set(key, value);
+    UniTempGen::set(key, value);
+
+    // Re-create the root, since this generator can't handle it not existing.
+    if (value.isnull() && key.isempty())
+        UniTempGen::set(UniConfKey::EMPTY, WvString::empty);
+
 }
 
 
