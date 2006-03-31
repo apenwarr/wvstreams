@@ -7,10 +7,10 @@
  * Best used in conjunction with the dbus-msg-listen program.
  * 
  */ 
+#include "wvargs.h"
 #include "wvdbusconn.h"
 #include "wvdbusmarshaller.h"
 #include "wvistreamlist.h"
-
 
 
 static void foo(WvString foo)
@@ -21,7 +21,17 @@ static void foo(WvString foo)
 
 int main (int argc, char *argv[])
 {
-    WvDBusConn conn("ca.nit.MySender");
+    WvArgs args;
+    WvStringList remaining_args;
+    args.add_optional_arg("MONIKER");
+    args.process(argc, argv, &remaining_args);
+    WvString moniker = remaining_args.popstr();
+
+    WvDBusConn *conn;
+    if (!!moniker)
+        conn = new WvDBusConn("ca.nit.MySender", moniker);
+    else
+        conn = new WvDBusConn("ca.nit.MySender");
 
     // Create a message, bound for "ca.nit.MyApplication"'s "/ca/nit/foo" object, with
     // the "ca.nit.foo" interface's "bar" method.
@@ -31,9 +41,10 @@ int main (int argc, char *argv[])
     // expect a reply with a single string as an argument
     WvDBusMarshaller<WvString> reply("/ca/nit/foo/bar", 
                                      WvCallback<void, WvString>(foo));
-    conn.send(msg, &reply, false);
+    fprintf(stderr, "Sending message..?\n");
+    conn->send(msg, &reply, false);
 
-    WvIStreamList::globallist.append(&conn, false);
+    WvIStreamList::globallist.append(conn, true);
     
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();

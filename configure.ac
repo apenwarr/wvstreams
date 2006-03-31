@@ -380,6 +380,10 @@ fi
 
 # qdbm
 if test "$with_qdbm" != "no"; then
+    if test "$with_qdbm" = ""; then
+        WV_APPEND(CPPFLAGS, [`pkg-config --cflags qdbm`])
+    fi
+
     AC_CHECK_HEADERS(villa.h,, [with_qdbm=no])
     AC_CHECK_LIB(qdbm, vlopen,, [with_qdbm=no])
 

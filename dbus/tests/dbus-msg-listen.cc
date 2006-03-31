@@ -7,6 +7,7 @@
  * the dbus-send program.
  * 
  */ 
+#include "wvargs.h"
 #include "wvdbusconn.h"
 #include "wvdbusmarshaller.h"
 #include "wvistreamlist.h"
@@ -21,13 +22,23 @@ static void msg_received(WvDBusReplyMsg &reply, WvString arg1)
 
 int main (int argc, char *argv[])
 {
-    WvDBusConn conn("ca.nit.MyListener");
+    WvArgs args;
+    WvStringList remaining_args;
+    args.add_optional_arg("MONIKER");
+    args.process(argc, argv, &remaining_args);
+    WvString moniker = remaining_args.popstr();
+
+    WvDBusConn *conn;
+    if (!!moniker)
+        conn = new WvDBusConn("ca.nit.MyListener", moniker);
+    else
+        conn = new WvDBusConn("ca.nit.MyListener");
     
     // Create a "/ca/nit/foo" object to listen on, and add the "bar"
     // method (part of the 31337 "ca.nit.foo" interface) to it..
-    WvDBusListener<WvString> l(&conn, "bar", msg_received);
-    conn.add_method("ca.nit.foo", "/ca/nit/foo", &l);
-    WvIStreamList::globallist.append(&conn, false);
+    WvDBusListener<WvString> l(conn, "bar", msg_received);
+    conn->add_method("ca.nit.foo", "/ca/nit/foo", &l);
+    WvIStreamList::globallist.append(conn, true);
     
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();

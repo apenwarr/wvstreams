@@ -188,5 +188,5 @@ endif
 wvtestmain: \
 	$(call objects, $(filter-out ./Win32WvStreams/%, \
 		$(shell find . -type d -name t))) \
-	$(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
+	$(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 

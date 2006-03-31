@@ -1,42 +1,10 @@
+/* -*- Mode: C++ -*-
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
+ * 
+ */ 
 #include "wvdbusconn.h"
-
-
-class WvDBusWatch : public WvFdStream
-{
-public:
-    WvDBusWatch(DBusWatch *_watch, unsigned int flags);
-    virtual void execute();
-    // disable reading/writing: we want dbus to do that for us
-    virtual size_t uread(void *buf, size_t count) { return 0; }
-    virtual size_t uwrite(const void *buf, size_t count) { return 0; }
-    DBusWatch *watch;
-};
-
-
-WvDBusWatch::WvDBusWatch(DBusWatch *_watch, unsigned int flags) :
-    watch(_watch)
-{
-    int fd = dbus_watch_get_fd(watch);
-    if (flags & DBUS_WATCH_READABLE)
-        rfd = fd;
-    else if (flags & DBUS_WATCH_WRITABLE)
-        wfd = fd;
-}
-
-
-void WvDBusWatch::execute()
-{
-    unsigned int dbus_condition = 0;
-//     fprintf(stderr, "Execute. %i %i\n", isreadable(), iswritable());
-
-    if (isreadable())
-        dbus_condition |= DBUS_WATCH_READABLE;
-     if (iswritable())
-         dbus_condition |= DBUS_WATCH_WRITABLE;
-    // FIXME: Handle errors, HUP
-
-    dbus_watch_handle(watch, dbus_condition);
-}
+#include "wvdbuswatch.h"
 
 
 DeclareWvDict(WvDBusInterface, WvString, name);
@@ -49,37 +17,44 @@ public:
         ifacedict(10),
         dbusconn(NULL),
         name(_name),
-        log("WvDBusConnPrivate")
+        log("WvDBusConnPrivate", WvLog::Debug)
     {
         DBusError error;
         dbus_error_init(&error);
         dbusconn = dbus_bus_get(bus, &error);
         
-        if (dbusconn)
+        init_dbusconn();
+    }
+
+    WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name, 
+                      WvStringParm _address) :
+        conn(_conn),
+        ifacedict(10),
+        dbusconn(NULL),
+        name(_name),
+        log("WvDBusConnPrivate", WvLog::Debug)
+    {
+        DBusError error;
+        dbus_error_init(&error);
+        dbusconn = dbus_connection_open(_address, &error);
+        if (dbus_error_is_set(&error))
         {
-            if (!dbus_connection_set_watch_functions(dbusconn, add_watch, 
-                                                     remove_watch, 
-                                                     watch_toggled,
-                                                     this, NULL))
-            {
-                log(WvLog::Error, "Couldn't set up watch functions!\n");
-                // set isok to false or something
-            }
+            log(WvLog::Error, "bad news! dbus error is set! %s %s\n",
+                error.name, error.message);
+        }
 
-            int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT | 
-                         DBUS_NAME_FLAG_REPLACE_EXISTING);
-            if (!!name && (dbus_bus_request_name (dbusconn, name, flags, 
-                                                  &error) == (-1)))
-            {
-                log(WvLog::Error, "Couldn't set name '%s' for connection!\n", 
-                    name);
-                // set isok to false or something
-            }
+        init_dbusconn();
+    }
 
-            log("Done..\n");
-
-            dbus_connection_add_filter(dbusconn, filter_func, this, NULL);
-        }        
+    WvDBusConnPrivate(WvDBusConn *_conn, DBusConnection *_c) :
+        conn(_conn),
+        ifacedict(10),
+        dbusconn(_c),
+        name(""),
+        log("WvDBusConnPrivate", WvLog::Debug)
+    {
+        dbus_connection_ref(dbusconn);
+        init_dbusconn();
     }
 
     ~WvDBusConnPrivate()
@@ -95,16 +70,55 @@ public:
          close();
      }
 
+    void init_dbusconn()
+    {
+        if (dbusconn)
+        {
+            DBusError error;
+            dbus_error_init(&error);
+
+            if (!dbus_connection_set_watch_functions(dbusconn, add_watch, 
+                                                     remove_watch, 
+                                                     watch_toggled,
+                                                     this, NULL))
+            {
+                log(WvLog::Error, "Couldn't set up watch functions!\n");
+                // set isok to false or something
+            }
+
+            int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT | 
+                         DBUS_NAME_FLAG_REPLACE_EXISTING);
+            if (!!name && (dbus_bus_request_name (dbusconn, name, flags, 
+                                                  &error) == (-1)))
+            {
+                log(WvLog::Error, "Couldn't set name '%s' for connection! "
+                    "(error name: %s message: %s)\n", name, error.name, 
+                    error.message);
+                // set isok to false or something
+            }
+            else
+                log(WvLog::Debug5, "Set name '%s' for connection!\n",
+                    name);
+
+            log("Done..\n");
+
+            dbus_connection_add_filter(dbusconn, filter_func, this, NULL);
+        }
+        
+    }
+
     static dbus_bool_t add_watch(DBusWatch *watch, void *data)
     {
         WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
-
         unsigned int flags = dbus_watch_get_flags(watch);
+
         WvDBusWatch *wwatch = new WvDBusWatch(watch, flags);
         connp->conn->append(wwatch, true);
 
-        // FIXME: do we need to explicitly say whether we are readable and writable?
-        // (see below)
+        dbus_watch_set_data(watch, wwatch, NULL);
+
+        // FIXME: do we need to explicitly say whether we are readable and 
+        // writable? (see below)
         bool isreadable = (flags & DBUS_WATCH_READABLE);
         bool iswritable = (flags & DBUS_WATCH_WRITABLE);
 
@@ -117,9 +131,8 @@ public:
 
     static void remove_watch(DBusWatch *watch, void *data)
     {
-        WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
-        
-        WvDBusWatch *wwatch = connp->get_watch(dbus_watch_get_fd(watch));
+        WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
+        assert(wwatch);
         fprintf(stderr, "Removing watch (stream->fd: %i)\n", wwatch->getfd());
         wwatch->close();
     }
@@ -127,24 +140,12 @@ public:
     static void watch_toggled(DBusWatch *watch, void *data)
     {
         fprintf(stderr, "toggle watch\n");
+        if (dbus_watch_get_enabled(watch))
+            add_watch(watch, data);
+        else
+            remove_watch(watch, data);
     }
 
-    WvDBusWatch * get_watch(int fd)
-    {
-        WvIStreamList::Iter i(*conn);
-        for (i.rewind(); i.next();)
-        {
-            // FIXME: gross
-            WvDBusWatch *wwatch = (WvDBusWatch *)&i();
-            if (wwatch->getfd() == fd)
-            {
-                return wwatch;
-            }
-        }
-
-        return NULL;
-    }
- 
     static DBusHandlerResult filter_func(DBusConnection *_conn,
                                          DBusMessage *_msg,
                                          void *userdata)
@@ -195,6 +196,7 @@ public:
 
     void execute()
     {
+        log("Execute.\n");
         while (dbus_connection_dispatch(dbusconn) == DBUS_DISPATCH_DATA_REMAINS);
     }
 
@@ -224,17 +226,27 @@ WvDBusConn::WvDBusConn(WvStringParm name, DBusBusType bus)
 
 }
 
-#if 0
-WvDBusConn::WvDBusConn(DBusConnection *c)
-    : conn(c), log("WvDBusConn")
+
+WvDBusConn::WvDBusConn(WvStringParm name, WvStringParm address)
+    : log("WvDBusConn")
 {
+    log("Starting up..\n");
+    priv = new WvDBusConnPrivate(this, name, address);
+
 }
 
 
+WvDBusConn::WvDBusConn(DBusConnection *c)
+    : log("WvDBusConn")
+{
+    priv = new WvDBusConnPrivate(this, c);
+}
+
+
+#if 0
 WvDBusConn::WvDBusConn(WvDBusConn &c)
     : conn(c), log("WvDBusConn")
 {
-    dbus_connection_ref(c);
 }
 #endif
 
@@ -273,6 +285,7 @@ void WvDBusConn::send(WvDBusMsg &msg)
 
 void WvDBusConn::send(WvDBusMsg &msg, IWvDBusMarshaller *reply, bool autofree_reply)
 {
+    log(WvLog::Debug, "Sending message.\n");
     DBusPendingCall * pending;
 
     // FIXME: allow custom timeouts?
