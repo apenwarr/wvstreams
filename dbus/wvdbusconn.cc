@@ -43,6 +43,14 @@ public:
                 error.name, error.message);
         }
 
+        // dbus_bus_get(..) does the following for us.. but we aren't using 
+        // dbus_bus_get
+        dbus_connection_set_exit_on_disconnect(dbusconn, TRUE);
+        if (!dbus_bus_register(dbusconn, &error))
+        {
+            log(WvLog::Error, "Error registering with the bus!\n");
+        }
+
         init_dbusconn();
     }
 
@@ -85,6 +93,13 @@ public:
                 log(WvLog::Error, "Couldn't set up watch functions!\n");
                 // set isok to false or something
             }
+
+            // FIXME: need to add this, timeouts won't work until we do
+            dbus_connection_set_timeout_functions(dbusconn, add_timeout,
+                                                  remove_timeout, 
+                                                  timeout_toggled,
+                                                  this, NULL);
+
 
             int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT | 
                          DBUS_NAME_FLAG_REPLACE_EXISTING);
@@ -144,6 +159,23 @@ public:
             add_watch(watch, data);
         else
             remove_watch(watch, data);
+    }
+
+    static dbus_bool_t add_timeout(DBusTimeout *timeout, void *data)
+    {
+        fprintf(stderr, "Add timeout.\n");
+
+        return TRUE;
+    }
+
+    static void remove_timeout(DBusTimeout *timeout, void *data)
+    {
+        fprintf(stderr, "Remove timeout.\n");
+    }
+
+    static void timeout_toggled(DBusTimeout *timeout, void *data)
+    {
+        fprintf(stderr, "Timeout toggled.\n");
     }
 
     static DBusHandlerResult filter_func(DBusConnection *_conn,
