@@ -568,16 +568,23 @@ protected:
     bool _build_selectinfo(SelectInfo &si, time_t msec_timeout,
         bool readable, bool writable, bool isexcept,
         bool forceable);
+    bool _build_selectinfo_x(SelectInfo &si, time_t msec_timeout,
+        bool readable, bool writable, bool isexcept,
+        bool forceable); // BUGZID:16076
 
     // runs the actual select() function over the given
     // SelectInfo data structure, returns the number of descriptors
     // in the set, and sets the error code if a problem occurs
     int _do_select(SelectInfo &si);
+    int _do_select_x(SelectInfo &si); // BUGZID:16076
 
     // processes the SelectInfo data structure (runs post_select)
     // returns true if there are callbacks to be dispatched
     bool _process_selectinfo(SelectInfo &si, bool forceable);
+    bool _process_selectinfo_x(SelectInfo &si, bool forceable); // BUGZID:16076
 
+    void _select_extra_x(SelectInfo &si, bool forceable); // BUGZID:16076
+    
     // tries to empty the output buffer if the stream is writable
     // not quite the same as flush() since it merely empties the output
     // buffer asynchronously whereas flush() might have other semantics
