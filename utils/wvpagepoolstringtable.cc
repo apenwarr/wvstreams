@@ -8,7 +8,7 @@
 #define TRACE(format, args...)
 #endif
 
-
+#if 0
 WvPagePoolStringTable::WvPagePoolStringTable(WvPagePool *_pp,
         WvPagePool::page_id_t _header_page_id) :
     pp(_pp),
@@ -335,4 +335,4 @@ WvPagePool::page_id_t WvPagePoolStringTable::get_header_page_id() const
     return header_page_id;
 }
 
-
+#endif
