@@ -1,5 +1,6 @@
 #include "wvpagepoolstringtable.h"
 #include "wvstream.h"
+#include "wvhash.h"
 
 
 #if 0
@@ -8,7 +9,7 @@
 #define TRACE(format, args...)
 #endif
 
-#if 0
+
 WvPagePoolStringTable::WvPagePoolStringTable(WvPagePool *_pp,
         WvPagePool::page_id_t _header_page_id) :
     pp(_pp),
@@ -289,16 +290,12 @@ void WvPagePoolStringTable::debug_dump_entry(WvStringParm where, int i, int j) c
     TRACE("dump: %s: %s: %s: len=%s ref_count=%s",
             where, i, j, e->len(), e->ref_count);
     if (e->is_direct())
-    {
-        const DirectEntry *de = static_cast<const DirectEntry *>(e);
-        TRACE(" direct str='%s'", de->str);
-    }
+        TRACE(" direct str='%s'", static_cast<const DirectEntry *>(e)->str);
     else
     {
-        const IndirectEntry *ie = static_cast<const IndirectEntry *>(e);
         TRACE(" indirect start_page_id=%s num_pages=%s str='%s'",
-                ie->start_page_id, ie->num_pages,
-                (const char *)pp->addr(ie->start_page_id));
+                static_cast<const IndirectEntry *>(e)->start_page_id, 
+                ie->num_pages, (const char *)pp->addr(ie->start_page_id));
     }
     TRACE("\n");
 }
@@ -335,4 +332,3 @@ WvPagePool::page_id_t WvPagePoolStringTable::get_header_page_id() const
     return header_page_id;
 }
 
-#endif

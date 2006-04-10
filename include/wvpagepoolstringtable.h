@@ -4,7 +4,6 @@
 #include "wverror.h"
 #include "wvpagepool.h"
 
-#if 0
 class WvPagePoolStringTable : public WvError
 {
 public:
@@ -96,6 +95,5 @@ private:
     void debug_dump_header(WvStringParm where, int i) const;
     void debug_dump_entry(WvStringParm where, int i, int j) const;
 };
-#endif
 
 #endif //__WVPAGEPOOLSTRINGTABLE_H
