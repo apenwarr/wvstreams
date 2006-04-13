@@ -38,10 +38,6 @@ public:
             // set isok to false or something
         }
         
-
-        dbus_server_set_watch_functions(dbusserver, add_watch, remove_watch,
-                                        watch_toggled, this, NULL);
-
         // FIXME: need to add this, timeouts won't work until we do
         dbus_server_set_timeout_functions(dbusserver, add_timeout,
                                           remove_timeout, timeout_toggled,
@@ -55,6 +51,10 @@ public:
     bool isok()
     {
         return (dbusserver != NULL);
+    }
+
+    void execute()
+    {
     }
 
     static dbus_bool_t add_watch(DBusWatch *watch, void *data)
@@ -76,7 +76,7 @@ public:
                 "writable: %i data: %p)\n", dbus_watch_get_fd(watch), 
                 isreadable, iswritable, data);
     
-        return FALSE;
+        return TRUE;
     }
 
     static void remove_watch(DBusWatch *watch, void *data)
@@ -115,22 +115,6 @@ public:
         fprintf(stderr, "Timeout toggled.\n");
     }
 
-    WvDBusWatch * get_watch(int fd)
-    {
-        WvIStreamList::Iter i(*server);
-        for (i.rewind(); i.next();)
-        {
-            // FIXME: gross
-            WvDBusWatch *wwatch = (WvDBusWatch *)&i();
-            if (wwatch->getfd() == fd)
-            {
-                return wwatch;
-            }
-        }
-
-        return NULL;
-    }
-
     static void new_connection_cb(DBusServer *dbusserver, 
                                   DBusConnection *new_connection,
                                   void *userdata)
@@ -139,6 +123,12 @@ public:
         WvDBusConn *c = new WvDBusConn(new_connection);
         fprintf(stderr, "New connection..\n");
         server->append(c, true);
+
+        if (dbus_connection_get_dispatch_status(new_connection) != 
+            DBUS_DISPATCH_COMPLETE)
+        {
+            dbus_connection_dispatch(new_connection);
+        }
     }
 
     WvDBusServer *server;
@@ -157,4 +147,11 @@ WvDBusServer::WvDBusServer(WvStringParm addr) :
 WvDBusServer::~WvDBusServer()
 {
     WVDELETE(priv);
+}
+
+
+void WvDBusServer::execute()
+{
+    WvIStreamList::execute();
+    priv->execute();
 }

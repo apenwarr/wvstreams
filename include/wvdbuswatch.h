@@ -6,6 +6,7 @@
 #ifndef __WVDBUSWATCH_H
 #define __WVDBUSWATCH_H
 #include "wvfdstream.h"
+#include "wvlog.h"
 #include <dbus/dbus.h>
 
 
@@ -17,8 +18,11 @@ public:
     // disable reading/writing: we want dbus to do that for us
     virtual size_t uread(void *buf, size_t count) { return 0; }
     virtual size_t uwrite(const void *buf, size_t count) { return 0; }
+    virtual bool pre_select(SelectInfo &si);
     DBusWatch *watch;
-    unsigned int flags;
+
+private:
+    WvLog log;
 };
 
 #endif // __WVDBUSWATCH_H

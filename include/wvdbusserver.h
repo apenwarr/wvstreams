@@ -38,6 +38,8 @@ public:
         return true; 
     }
 
+    virtual void execute();
+
 private:
     WvDBusServerPrivate *priv;
     WvLog log;

@@ -23,7 +23,7 @@ public:
         dbus_error_init(&error);
         dbusconn = dbus_bus_get(bus, &error);
         
-        init_dbusconn();
+        init_dbusconn(true);
     }
 
     WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name, 
@@ -51,7 +51,7 @@ public:
             log(WvLog::Error, "Error registering with the bus!\n");
         }
 
-        init_dbusconn();
+        init_dbusconn(true);
     }
 
     WvDBusConnPrivate(WvDBusConn *_conn, DBusConnection *_c) :
@@ -62,7 +62,7 @@ public:
         log("WvDBusConnPrivate", WvLog::Debug)
     {
         dbus_connection_ref(dbusconn);
-        init_dbusconn();
+        init_dbusconn(false);
     }
 
     ~WvDBusConnPrivate()
@@ -78,16 +78,20 @@ public:
          close();
      }
 
-    void init_dbusconn()
+    void init_dbusconn(bool client)
     {
         if (dbusconn)
         {
             DBusError error;
             dbus_error_init(&error);
 
+            DBusWatchToggledFunction toggled_function = NULL;
+            if (client)
+                toggled_function = watch_toggled;
+
             if (!dbus_connection_set_watch_functions(dbusconn, add_watch, 
                                                      remove_watch, 
-                                                     watch_toggled,
+                                                     toggled_function,
                                                      this, NULL))
             {
                 log(WvLog::Error, "Couldn't set up watch functions!\n");
@@ -100,15 +104,14 @@ public:
                                                   timeout_toggled,
                                                   this, NULL);
 
-
             int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT | 
                          DBUS_NAME_FLAG_REPLACE_EXISTING);
             if (!!name && (dbus_bus_request_name (dbusconn, name, flags, 
                                                   &error) == (-1)))
             {
                 log(WvLog::Error, "Couldn't set name '%s' for connection! "
-                    "(error name: %s message: %s)\n", name, error.name, 
-                    error.message);
+                    "(error name: %s)\n", name, error.name);
+                log(WvLog::Error, "Error message is: %s", error.message);
                 // set isok to false or something
             }
             else
@@ -117,7 +120,8 @@ public:
 
             log("Done..\n");
 
-            dbus_connection_add_filter(dbusconn, filter_func, this, NULL);
+            if (client)
+                dbus_connection_add_filter(dbusconn, filter_func, this, NULL);
         }
         
     }
@@ -148,7 +152,8 @@ public:
     {
         WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
         assert(wwatch);
-        fprintf(stderr, "Removing watch (stream->fd: %i)\n", wwatch->getfd());
+//        fprintf(stderr, "Removing watch (stream->fd: %i)\n", wwatch->getfd());
+//         wwatch->dissociate_fds();
         wwatch->close();
     }
 
