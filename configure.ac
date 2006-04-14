@@ -103,11 +103,12 @@ AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
 AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
-xplc_version='0.3.11'
+xplc_version='0.3.12'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
+AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
 
 # avoid autoconf's default values, but keep those the user might have given
 CFLAGS="$CFLAGS"
@@ -139,6 +140,31 @@ AC_SUBST(ARCH_SUBDIRS)
 
 # Detect endianness
 AC_C_BIGENDIAN
+
+# Look for __attribute__ ((deprecated))
+CPPFLAGS_save="$CPPFLAGS"
+WV_APPEND(CPPFLAGS, -Werror)
+AC_MSG_CHECKING(for __attribute__ ((deprecated)))
+AC_COMPILE_IFELSE(
+[#include "confdefs.h"
+void f() __attribute__ ((deprecated));
+void f()
+{
+}
+
+int main()
+{
+    return 0;
+}
+],
+		  [AC_MSG_RESULT([yes])
+		   AC_DEFINE([ATTR_DEPRECATED],
+			     [__attribute__ ((deprecated))],
+			     [Compiler warning on deprecated functions])],
+		  [AC_MSG_RESULT([no])
+		   AC_DEFINE([ATTR_DEPRECATED], [],
+			     [Compiler warning on deprecated functions])])
+CPPFLAGS="$CPPFLAGS_save"
 
 # Function checks
 AC_FUNC_ALLOCA
@@ -674,6 +700,8 @@ AC_SUBST(xplc_pc)
 
 AC_SUBST(ac_libs)
 
+AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
+
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc
                  pkgconfig/libuniconf-uninstalled.pc
@@ -694,3 +722,13 @@ fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
 AC_OUTPUT
+
+# Now remove PACKAGE_* macros from include/wvautoconf.h
+sed 's,^#.*define.*PACKAGE_.*$,/* & */,' include/wvautoconf.h > include/wvautoconf.h.new
+if test "x$?" = "x0"; then
+    if ! diff include/wvautoconf.h include/wvautoconf.h >/dev/null; then
+	mv include/wvautoconf.h.new include/wvautoconf.h
+    else
+	rm include/wvautoconf.h.new
+    fi
+fi

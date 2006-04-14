@@ -628,15 +628,22 @@ static WvString _sizetoa(unsigned long long size, unsigned long blocksize,
 
     // Deal with blocksizes without overflowing.
     const unsigned long long group_base = prefixes[0].base;
-    int shift = -1;
-    unsigned long prev_blocksize;
-    while (blocksize)
+    int shift = 0;
+    unsigned long prev_blocksize = 0;
+    while (blocksize >= group_base)
     {
 	prev_blocksize = blocksize;
 	blocksize /= group_base;
 	++shift;
     }
-    blocksize = prev_blocksize;
+
+    // If we have a very large blocksize, make sure to keep enough of
+    // it to make rounding possible.
+    if (prev_blocksize && prev_blocksize != group_base)
+    {
+	blocksize = prev_blocksize;
+	--shift;
+    }
 
     int p = -1;
     unsigned long long significant_digits = size * 10;
@@ -664,8 +671,8 @@ static WvString _sizetoa(unsigned long long size, unsigned long blocksize,
     if (blocksize > 1)
     {
 	significant_digits *= blocksize;
-	if (significant_digits >= group_base
-	    && prefixes[p + shift + 1].name)
+	while (significant_digits >= (group_base * 10)
+	       && prefixes[p + shift + 1].name)
 	{
 	    significant_digits = _sizetoa_rounder(rounding_method,
 						  significant_digits,
@@ -944,7 +951,7 @@ WvString afterstr(WvStringParm line, WvStringParm a)
 {
     if (!line || !a)
 	return WvString::null;
-	
+
     char *loc = strstr(line, a);
     if (loc == 0)
 	return "";
@@ -959,7 +966,7 @@ WvString afterstr(WvStringParm line, WvStringParm a)
 WvString beforestr(WvStringParm line, WvStringParm a)
 {
     if (!line || !a)
-       return WvString::null;
+	return WvString::null;
 
     WvString ret = line;
     ret.unique();     
@@ -1233,3 +1240,39 @@ WvString depunctuate(WvStringParm line)
 
     return ret;
 }
+
+
+WvString ptr2str(void* ptr)
+{
+    char buf[(sizeof(ptr) * 2) + 3];
+    int rv;
+
+    rv = snprintf(buf, sizeof(buf), "%p", ptr);
+
+    assert(rv != -1);
+
+    return buf;
+}
+
+
+// Reads the contents of a symlink.  Returns WvString::null on error.
+WvString wvreadlink(WvStringParm path)
+{
+    WvString result;
+    int size = 64;
+    for (;;)
+    {
+        result.setsize(size);
+        int readlink_result = readlink(path, result.edit(), size);
+        if (readlink_result == -1)
+            return WvString::null;
+        if (readlink_result < size)
+        {
+            result.edit()[readlink_result] = '\0';
+            break;
+        }
+        size = 2*size; // increase buffer size
+    }
+    return result;
+}
+

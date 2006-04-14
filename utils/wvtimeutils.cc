@@ -4,13 +4,24 @@
  *
  * Various little time functions...
  */
+#include <limits.h>
+
 #include "wvtimeutils.h"
 
 time_t msecdiff(const WvTime &a, const WvTime &b)
 {
-    time_t secdiff = a.tv_sec - b.tv_sec;
-    time_t usecdiff = a.tv_usec - b.tv_usec;
-    return secdiff * 1000 + usecdiff / 1000;
+    long long secdiff = a.tv_sec - b.tv_sec;
+    long long usecdiff = a.tv_usec - b.tv_usec;
+    long long msecs = secdiff * 1000 + usecdiff / 1000;
+
+    time_t rval;
+    if (msecs > INT_MAX)
+	rval = INT_MAX;
+    else if (msecs < INT_MIN)
+	rval = INT_MIN;
+    else
+	rval = msecs;
+    return rval;
 }
 
 
@@ -48,5 +59,41 @@ WvTime tvdiff(const WvTime &a, const WvTime &b)
 
     normalize(c);
     return c;
+}
+
+
+static WvTime wvstime_cur = wvtime();
+
+
+const WvTime &wvstime()
+{
+    return wvstime_cur;
+}
+
+
+static void do_wvstime_sync(bool forward_only)
+{
+    if (!forward_only)
+    {
+	wvstime_cur = wvtime();
+    }
+    else
+    {
+	WvTime now = wvtime();
+	if (wvstime_cur < now)
+	    wvstime_cur = now;
+    }
+}
+
+
+void wvstime_sync()
+{
+    do_wvstime_sync(false);
+}
+
+
+void wvstime_sync_forward()
+{
+    do_wvstime_sync(true);
 }
 

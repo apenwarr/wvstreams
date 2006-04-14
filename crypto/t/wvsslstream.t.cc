@@ -235,7 +235,7 @@ static void lcallback(WvStream&, void *userdata)
     WvTCPConn *conn = l->accept();
     WvSSLStream *ssl = new WvSSLStream(conn, x509, 0, true);
     ssl->setcallback(getmessage, ssl);
-    WvIStreamList::globallist.append(ssl, true);
+    WvIStreamList::globallist.append(ssl, true, "ssl stream");
 }
 
 
@@ -260,7 +260,7 @@ WVTEST_MAIN("ssl establish connection")
     WvTCPListener l(laddr);
     l.setcallback(lcallback, &l);
 
-    WvIStreamList::globallist.append(&l, false);
+    WvIStreamList::globallist.append(&l, false, "listener");
 
     printf("Starting listener on %s\n", laddrstr.cstr());
 
@@ -279,7 +279,7 @@ WVTEST_MAIN("ssl establish connection")
     WvTCPConn *c = new WvTCPConn(caddr);
     WvSSLStream *ssl = new WvSSLStream(c, NULL);
 
-    WvIStreamList::globallist.append(ssl, true);
+    WvIStreamList::globallist.append(ssl, true, "ssl stream");
 
     WVPASS(ssl->isok());
 

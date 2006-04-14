@@ -72,9 +72,8 @@ void WvLogFileBase::_end_line()
 #define TIME_FORMAT "%b %d %H:%M:%S %Z"
 #endif
 
-void WvLogFileBase::_make_prefix()
+void WvLogFileBase::_make_prefix(time_t timenow)
 {
-    time_t timenow = wvtime().tv_sec;
     struct tm* tmstamp = localtime(&timenow);
     char timestr[30];
     strftime(&timestr[0], 30, TIME_FORMAT, tmstamp);
@@ -95,9 +94,8 @@ WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
     start_log();
 }
 
-void WvLogFile::_make_prefix()
+void WvLogFile::_make_prefix(time_t timenow)
 {
-    time_t timenow = wvtime().tv_sec;
     // struct tm *tmstamp = localtime(&timenow);
     struct stat statbuf;
 
@@ -106,11 +104,11 @@ void WvLogFile::_make_prefix()
         statbuf.st_size = 0;
 
     // Make sure we are calculating last_day in the current time zone.
-    if (last_day < ((timenow + gmtoffset())/86400) 
+    if (last_day != ((timenow + gmtoffset())/86400) 
 	|| statbuf.st_size > MAX_LOGFILE_SZ)
         start_log();
 
-    WvLogFileBase::_make_prefix();
+    WvLogFileBase::_make_prefix(timenow);
 }
 
 static void trim_old_logs(WvStringParm filename, WvStringParm base,
@@ -180,7 +178,11 @@ void WvLogFile::start_log()
         }
 	_exit(0);
     }
-    waitpid(forky, NULL, 0);
+    // In case a signal is in the process of being delivered...
+    pid_t rv;
+    while ((rv = waitpid(forky, NULL, 0)) != forky)
+        if (rv == -1 && errno != EINTR)
+            break;
 #else
     // just do it in the foreground on Windows
     trim_old_logs(filename, base, keep_for);

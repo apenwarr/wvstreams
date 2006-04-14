@@ -63,7 +63,7 @@ public:
 
         unsigned int flags = dbus_watch_get_flags(watch);
         WvDBusWatch *wwatch = new WvDBusWatch(watch, flags);
-        serverp->server->append(wwatch, true);
+        serverp->server->append(wwatch, true, "wvdbuswatch");
 
         dbus_watch_set_data(watch, wwatch, NULL);
 
@@ -81,8 +81,6 @@ public:
 
     static void remove_watch(DBusWatch *watch, void *data)
     {
-        WvDBusServerPrivate *servp = (WvDBusServerPrivate *)data;
-
         WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
         assert(wwatch);
         fprintf(stderr, "Removing watch (stream->fd: %i)\n", wwatch->getfd());
@@ -122,7 +120,7 @@ public:
         WvDBusServer *server = (WvDBusServer *) userdata;
         WvDBusConn *c = new WvDBusConn(new_connection);
         fprintf(stderr, "New connection..\n");
-        server->append(c, true);
+        server->append(c, true, "wvdbus connection");
 
         if (dbus_connection_get_dispatch_status(new_connection) != 
             DBUS_DISPATCH_COMPLETE)

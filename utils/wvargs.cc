@@ -416,7 +416,7 @@ static bool create_popt_context(int argc, char **argv,
     memcpy(&(*popt_options)[j++], &extras[1], sizeof(struct poptOption));
         
     popt_context = poptGetContext(argv[0], argc, (const char **)argv, 
-				  (*popt_options), 0);
+				  (*popt_options), POPT_CONTEXT_POSIXMEHARDER);
 
     WvString usage_desc;
     if (options->count() > 0)
@@ -660,12 +660,14 @@ void WvArgs::remove_all_options()
 void WvArgs::add_required_arg(WvStringParm desc)
 {
     num_required_args++;
-    add_optional_arg(desc); 
+
+    if (args_desc.len() > 0)
+	args_desc.append(" ");
+    args_desc.append("%s", desc);
 }
 
 void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)
 {
-    // an optional arg is a required arg without the requirement :-)
     if (args_desc.len() > 0)
 	args_desc.append(" ");
     args_desc.append("[%s]", desc);

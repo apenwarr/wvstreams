@@ -132,7 +132,7 @@ public:
         unsigned int flags = dbus_watch_get_flags(watch);
 
         WvDBusWatch *wwatch = new WvDBusWatch(watch, flags);
-        connp->conn->append(wwatch, true);
+        connp->conn->append(wwatch, true, "dbuswatch");
 
         dbus_watch_set_data(watch, wwatch, NULL);
 

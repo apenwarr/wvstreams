@@ -69,6 +69,7 @@ bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
     output = 0;
     for (;;)
     {
+        size_t starting_size = inbuf.used();
         prepare(& inbuf);
         bool alldata = inbuf.used() == 0;
         success = process(outbuf, flush && alldata, false);
@@ -80,7 +81,8 @@ bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
         }
         if (! success)
             return false;
-        if (alldata || (out_limit && (output == out_limit)))
+        if (alldata || (starting_size == inbuf.used()) ||
+            (out_limit && (output == out_limit)))
             return true;
     }
 }

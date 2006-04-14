@@ -546,7 +546,7 @@ WVTEST_MAIN("double notifications with daemon")
         uniconf.mountgen(new UniTempGen());
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
+        WvIStreamList::globallist.append(&daemon, false, "daemon");
         while (true)
         {
             uniconf.setmeint(uniconf.getmeint()+1);
@@ -598,7 +598,7 @@ WVTEST_MAIN("double notifications with daemon")
         pid_t rv;
         while ((rv = waitpid(child, NULL, 0)) != child)
         {
-            // in case a signal is in the process of being delivered..
+            // In case a signal is in the process of being delivered...
             if (rv == -1 && errno != EINTR)
                 break;
         }
@@ -823,7 +823,7 @@ WVTEST_MAIN("processing many keys")
 	UniConfRoot uniconf("temp:");
 	UniConfDaemon daemon(uniconf, false, NULL);
 	daemon.setupunixsocket(sockname);
-	WvIStreamList::globallist.append(&daemon, false);
+	WvIStreamList::globallist.append(&daemon, false, "daemon");
 	while (true)
 	{
 	    uniconf.setmeint(uniconf.getmeint()+1);
@@ -872,7 +872,7 @@ WVTEST_MAIN("processing many keys")
 	pid_t rv;
 	while ((rv = waitpid(child, NULL, 0)) != child)
 	{
-	    // in case a signal is in the process of being delivered..
+	    // In case a signal is in the process of being delivered...
 	    if (rv == -1 && errno != EINTR)
 		break;
 	}

@@ -35,6 +35,7 @@ const UniClientConn::CommandInfo UniClientConn::cmdinfos[
     { "refresh", "refresh: refresh contents from disk" },
     { "quit", "quit: kills the session nicely" },
     { "help", "help: returns this help text" },
+    { "restrict", "restrict <key>: make all commands and notifications relative to a key" },
 
     // command completion replies
     { "OK", "OK <payload>: reply on command success" },

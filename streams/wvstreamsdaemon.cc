@@ -13,12 +13,7 @@
 #include <signal.h>
 #endif
 
-WvStreamsDaemon::WvStreamsDaemon(WvStringParm name, WvStringParm version,
-        WvStreamsDaemonCallback cb, void *ud)
-    : WvDaemon(name, version,
-                WvDaemonCallback(this, &WvStreamsDaemon::start_cb),
-                WvDaemonCallback(this, &WvStreamsDaemon::run_cb),
-                WvDaemonCallback(this, &WvStreamsDaemon::stop_cb))
+void WvStreamsDaemon::init(WvStreamsDaemonCallback cb, void *ud)
 {
     setcallback(cb, ud);
 #ifndef _WIN32
@@ -49,6 +44,8 @@ void WvStreamsDaemon::stop_cb(WvDaemon &daemon, void *)
     for (stream.rewind(); stream.next(); )
         WvIStreamList::globallist.unlink(stream.ptr());
     streams.zap();
+    if (want_to_die())
+        WvIStreamList::globallist.zap();
 }
 
 void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *ud)
@@ -58,16 +55,16 @@ void WvStreamsDaemon::stop_full_close_cb(WvDaemon &daemon, void *ud)
 }
 
 void WvStreamsDaemon::add_stream(IWvStream *istream,
-    	bool autofree, const char *id)
+    	bool autofree, char *id)
 {
-    streams.append(istream, false);
+    streams.append(istream, false, id);
     // FIXME: we should pass in "id" here, but things are not happy in
     // const-correctness-land.
-    WvIStreamList::globallist.append(istream, autofree);
+    WvIStreamList::globallist.append(istream, autofree, id);
 }
 
 void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
-    	bool autofree, const char *id)
+    	bool autofree, char *id)
 {
     add_stream(istream, autofree, id);
     
@@ -76,7 +73,7 @@ void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
 }
 
 void WvStreamsDaemon::add_die_stream(IWvStream *istream,
-    	bool autofree, const char *id)
+    	bool autofree, char *id)
 {
     add_stream(istream, autofree, id);
     

@@ -38,7 +38,7 @@ int main (int argc, char *argv[])
     // method (part of the 31337 "ca.nit.foo" interface) to it..
     WvDBusListener<WvString> l(conn, "bar", msg_received);
     conn->add_method("ca.nit.foo", "/ca/nit/foo", &l);
-    WvIStreamList::globallist.append(conn, true);
+    WvIStreamList::globallist.append(conn, true, "wvdbus conn");
     
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();

@@ -6,19 +6,19 @@
  * crashes.
  */
 #include "wvcrash.h"
-#include <signal.h>
+
+#include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/syscall.h>
 
 #ifndef WVCRASH_USE_SIGALTSTACK
-#define WVCRASH_USE_SIGALTSTACK 0
+#define WVCRASH_USE_SIGALTSTACK 1
 #endif
 
 // FIXME: this file mostly only works in Linux
@@ -27,9 +27,15 @@
 # include <execinfo.h>
 #include <unistd.h>
 
+#ifdef __USE_GNU
+static const char *argv0 = program_invocation_short_name;
+#else
 static const char *argv0 = "UNKNOWN";
-static const char *desc = NULL;
-WvCrashCallback callback;
+#endif // __USE_GNU
+
+// Reserve enough buffer for a screenful of programme.
+static const int buffer_size = 2048 + wvcrash_ring_buffer_size;
+static char desc[buffer_size];
 
 // write a string 'str' to fd
 static void wr(int fd, const char *str)
@@ -78,7 +84,7 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     static char *signame = strsignal(sig);
     
     wr(fd, argv0);
-    if (desc)
+    if (desc[0])
     {
 	wr(fd, " (");
 	wr(fd, desc);
@@ -90,9 +96,58 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     {
 	wr(fd, " (");
 	wr(fd, signame);
-	wr(fd, ")");
+	wr(fd, ")\n");
     }
-    wr(fd, "\n\nBacktrace:\n");
+
+    // Write out the PID and PPID.
+    static char pid_str[32];
+    wr(fd, "\nProcess ID: ");
+    snprintf(pid_str, sizeof(pid_str), "%d", getpid());
+    pid_str[31] = '\0';
+    wr(fd, pid_str);
+    wr(fd, "\nParent's process ID: ");
+    snprintf(pid_str, sizeof(pid_str), "%d", getppid());
+    pid_str[31] = '\0';
+    wr(fd, pid_str);
+    wr(fd, "\n");
+
+    // Write out the contents of the ring buffer
+    {
+        const char *ring;
+        bool first = true;
+        while ((ring = wvcrash_ring_buffer_get()) != NULL)
+        {
+            if (first)
+            {
+                first = false;
+                wr(fd, "\nRing buffer:\n");
+            }
+            wr(fd, ring);
+        }
+    }
+    
+    // Write out the assertion message, as logged by __assert*_fail(), if any.
+    {
+	const char *assert_msg = wvcrash_read_assert();
+	if (assert_msg && assert_msg[0])
+	{
+	    wr(fd, "\nAssert:\n");
+	    wr(fd, assert_msg);
+	}
+    }
+
+    // Write out the note, if any.
+    {
+	const char *will_msg = wvcrash_read_will();
+	if (will_msg && will_msg[0])
+	{
+	    wr(fd, "\nLast Will and Testament:\n");
+	    wr(fd, will_msg);
+	    wr(fd, "\n");
+	}
+    }
+
+    wr(fd, "\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
     
@@ -139,9 +194,6 @@ void wvcrash(int sig)
 
     signal(sig, SIG_DFL);
     wr(2, "\n\nwvcrash: crashing!\n");
-    
-    if (!!callback)
-        callback(sig);
     
     // close some fds, just in case the reason we're crashing is fd
     // exhaustion!  Otherwise we won't be able to create our pipe to a
@@ -193,13 +245,6 @@ void wvcrash(int sig)
 }
 
 
-WvCrashCallback wvcrash_set_callback(WvCrashCallback _callback)
-{
-    WvCrashCallback old_callback = callback;
-    callback = _callback;
-    return old_callback;
-}
-
 static void wvcrash_setup_alt_stack()
 {
 #if WVCRASH_USE_SIGALTSTACK
@@ -235,10 +280,21 @@ void wvcrash_add_signal(int sig)
 #endif //WVCRASH_USE_SIGALTSTACK
 }
 
+// Secret symbol for initialising the will and assert buffers
+extern void __wvcrash_init_buffers(const char *program_name);
+
 void wvcrash_setup(const char *_argv0, const char *_desc)
 {
-    argv0 = _argv0;
-    desc = _desc;
+    if (_argv0)
+	argv0 = basename(_argv0);
+    __wvcrash_init_buffers(argv0);
+    if (_desc)
+    {
+	strncpy(desc, _desc, buffer_size);
+	desc[buffer_size - 1] = '\0';
+    }
+    else
+	desc[0] = '\0';
     
     wvcrash_setup_alt_stack();
     
@@ -253,7 +309,6 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 
 void wvcrash(int sig) {}
 void wvcrash_add_signal(int sig) {}
-WvCrashCallback wvcrash_set_callback(WvCrashCallback cb) {}
 void wvcrash_setup(const char *_argv0, const char *_desc) {}
 
 #endif // Not Linux

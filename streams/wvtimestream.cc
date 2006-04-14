@@ -14,7 +14,7 @@ WvTimeStream::WvTimeStream():
 
 void WvTimeStream::set_timer(time_t msec)
 {
-    WvTime now = wvtime();
+    WvTime now = wvstime();
 
     ms_per_tick = msec > 0 ? msec : 0;
     next = msecadd(now, ms_per_tick);
@@ -39,7 +39,7 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 
     if (ms_per_tick)
     {
-	now = wvtime();
+	now = wvstime();
 	
 	/* Are we going back in time? If so, adjust the due time. */
 	if (now < last)
@@ -65,7 +65,7 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 
 bool WvTimeStream::post_select(SelectInfo &si)
 {
-    WvTime now = wvtime();
+    WvTime now = wvstime();
 
     return WvStream::post_select(si) || (ms_per_tick && next < now);
 }
@@ -80,7 +80,7 @@ void WvTimeStream::execute()
      * than because our timer expired. */
     if (!alarm_was_ticking)
     {
-	WvTime now = wvtime();
+	WvTime now = wvstime();
 
         next = msecadd(next, ms_per_tick);
         

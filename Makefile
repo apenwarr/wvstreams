@@ -169,7 +169,7 @@ uninstall:
 
 $(TESTS): $(LIBUNICONF) $(LIBWVTEST) $(LIBWVDBUS)
 $(addsuffix .o,$(TESTS)):
-tests: #$(TESTS)
+tests: $(TESTS)
 
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 

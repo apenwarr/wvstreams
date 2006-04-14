@@ -430,7 +430,7 @@ char *WvStream::blocking_getline(time_t wait_msec, int separator,
 	    assert(buf);
             size_t len = uread(buf, readahead);
             tmp.unalloc(readahead - len);
-	    inbuf.merge(tmp);
+	    inbuf.put(tmp.get(len), len);
             hasdata = len > 0; // enough?
         }
 
@@ -622,7 +622,10 @@ bool WvStream::pre_select(SelectInfo &si)
     time_t alarmleft = alarm_remaining();
     
     if (!si.inherit_request && alarmleft == 0)
+    {
+	si.msec_timeout = 0;
 	return true; // alarm has rung
+    }
 
     if (!si.inherit_request)
     {
@@ -633,7 +636,10 @@ bool WvStream::pre_select(SelectInfo &si)
     
     // handle read-ahead buffering
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
-	return true; // already ready
+    {
+	si.msec_timeout = 0; // already ready
+	return true;
+    }
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft + 10;
@@ -653,6 +659,9 @@ bool WvStream::post_select(SelectInfo &si)
 	flush(0);
     if (!si.inherit_request && alarm_remaining() == 0)
 	return true; // alarm ticked
+    if ((si.wants.readable || (!si.inherit_request && readcb))
+	&& inbuf.used() && inbuf.used() >= queue_min)
+	return true; // already ready
     return false;
 }
 
@@ -683,6 +692,8 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     si.global_sure = false;
 
     if (!isok()) return false;
+
+    wvstime_sync();
 
     bool sure = pre_select(si);
     if (globalstream && forceable && (globalstream != this))
@@ -739,7 +750,14 @@ int WvStream::_do_select(SelectInfo &si)
 bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 {
     if (!isok()) return false;
-    
+
+    // We cannot move the clock backward here, because timers that
+    // were expired in pre_select could then not be expired anymore,
+    // and while time going backward is rather unsettling in general,
+    // for it to be happening between pre_select and post_select is
+    // just outright insanity.
+    wvstime_sync_forward();
+        
     bool sure = post_select(si);
     if (globalstream && forceable && (globalstream != this))
     {
@@ -811,7 +829,7 @@ void WvStream::undo_force_select(bool readable, bool writable, bool isexception)
 void WvStream::alarm(time_t msec_timeout)
 {
     if (msec_timeout >= 0)
-        alarm_time = msecadd(wvtime(), msec_timeout);
+        alarm_time = msecadd(wvstime(), msec_timeout);
     else
 	alarm_time = wvtime_zero;
 }
@@ -821,7 +839,7 @@ time_t WvStream::alarm_remaining()
 {
     if (alarm_time.tv_sec)
     {
-	WvTime now = wvtime();
+	WvTime now = wvstime();
 
 	// Time is going backward!
 	if (now < last_alarm_check)

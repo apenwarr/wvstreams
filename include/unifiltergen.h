@@ -41,15 +41,19 @@ public:
      * the requests on to the inner generator.
      * 
      * The default implementation of this function doesn't change the key.
+     *
+     * Returns true if the key can be mapped, else false.
      */
-    virtual UniConfKey keymap(const UniConfKey &key);
+    virtual bool keymap(const UniConfKey &unmapped_key, UniConfKey &mapped_key);
 
     /**
      * A mapping function for filters that unmap a keyspace.
      *
      * The default implementation of this function doesn't change the key.
+     * 
+     * Returns true if the key can be reverse-mapped, else false.
      */
-    virtual UniConfKey reversekeymap(const UniConfKey &key);
+    virtual bool reversekeymap(const UniConfKey &mapped_key, UniConfKey &unmapped_key);
     
 
     /***** Overridden methods *****/

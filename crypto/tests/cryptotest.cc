@@ -71,8 +71,8 @@ size_t copy(WvStream *in, WvStream *out)
     char buf[10240];
 
     WvIStreamList slist;
-    slist.append(in, false);
-    slist.append(out, false);
+    slist.append(in, false, "in");
+    slist.append(out, false, "out");
     while (in->isok() && out->isok())
     {
         if (slist.select(-1))

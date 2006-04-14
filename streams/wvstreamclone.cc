@@ -28,8 +28,10 @@ static IWvStream *creator(WvStringParm s, IObject *obj, void *)
 static WvMoniker<IWvStream> reg("clone", creator);
 
 
-WvStreamClone::WvStreamClone(IWvStream *_cloned) 
-    : cloned(0), disassociate_on_close(false)
+WvStreamClone::WvStreamClone(IWvStream *_cloned):
+    cloned(0),
+    disassociate_on_close(false),
+    pre_select_result(false)
 {
     setclone(_cloned);
     // the sub-stream will force its own values, if it really wants.
@@ -187,6 +189,9 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 {
     SelectRequest oldwant;
     bool result = WvStream::pre_select(si);
+
+    pre_select_result = false;
+
     if (cloned && cloned->isok())
     {
 	oldwant = si.wants;
@@ -201,11 +206,17 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	
 	if (outbuf.used() || autoclose_time)
 	    si.wants.writable = true;
-	
-	result = result || cloned->pre_select(si);
+
+	pre_select_result = cloned->pre_select(si);
+	assert(!pre_select_result || si.msec_timeout == 0);
+	result = result || pre_select_result;
 	
 	si.wants = oldwant;
     }
+
+    if (result)
+	si.msec_timeout = 0;
+
     return result;
 }
 
@@ -233,6 +244,7 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	}
 
 	val = cloned->post_select(si);
+	assert(!pre_select_result || val);
 	want_write = si.wants.writable;
 	si.wants = oldwant;
 	

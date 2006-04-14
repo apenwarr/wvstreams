@@ -13,6 +13,7 @@
 #define __WVTEST_H
 
 #include <time.h>
+#include <sys/types.h>
 
 class WvTest
 {
@@ -37,8 +38,11 @@ public:
         { start(file, line, condstr); check(cond); return cond; }
     static bool start_check_eq(const char *file, int line,
 			       const char *a, const char *b, bool expect_pass);
-    static bool start_check_eq(const char *file, int line, int a, int b,
+    static bool start_check_eq(const char *file, int line, off_t a, off_t b,
                                bool expect_pass);
+    static bool start_check_lt(const char *file, int line,
+                               const char *a, const char *b);
+    static bool start_check_lt(const char *file, int line, int a, int b);
 };
 
 
@@ -46,6 +50,8 @@ public:
     WvTest::start_check(__FILE__, __LINE__, #cond, (cond))
 #define WVPASSEQ(a, b) \
     WvTest::start_check_eq(__FILE__, __LINE__, (a), (b), true)
+#define WVPASSLT(a, b) \
+    WvTest::start_check_lt(__FILE__, __LINE__, (a), (b))
 #define WVFAIL(cond) \
     WvTest::start_check(__FILE__, __LINE__, "NOT(" #cond ")", !(cond))
 #define WVFAILEQ(a, b) \
