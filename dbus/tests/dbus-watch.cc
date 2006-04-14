@@ -19,14 +19,16 @@ static void foo(WvDBusConn &conn, int b)
 
 int main (int argc, char *argv[])
 {
+#if 0
     WvDBusConn conn("ca.nit.MySignalListener");
     
-    WvDBusMarshaller<int> m("/ca/nit/foo/bar", WvCallback<void, WvDBusConn&, int>(foo));
-    conn.add_marshaller("ca.nit.foo", &m);
-    WvIStreamList::globallist.append(&conn, false);
+    WvDBusMarshaller<int> m("bar", WvCallback<void, WvDBusConn&, int>(foo));
+    conn.add_marshaller("ca.nit.foo", "/ca/nit/foo", &m);
+    WvIStreamList::globallist.append(&conn, false, "wvdbus conn");
     
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();
+#endif
     
     return 0;
 }
