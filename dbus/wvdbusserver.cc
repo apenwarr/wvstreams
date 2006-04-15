@@ -1,9 +1,9 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
+ *   Copyright (C) 2005-2006 Net Integration Technologies, Inc.
  * 
  */ 
-#include "wvdbusconn.h"
+#include "wvdbusservconn.h"
 #include "wvdbusserver.h"
 #include "wvdbuswatch.h"
 
@@ -83,7 +83,8 @@ public:
     {
         WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
         assert(wwatch);
-        fprintf(stderr, "Removing watch (stream->fd: %i)\n", wwatch->getfd());
+        fprintf(stderr, "Removing watch (rfd: %i wfd: $i)\n", wwatch->getrfd(),
+                wwatch->getwfd());
         wwatch->close();
     }
 
@@ -118,7 +119,7 @@ public:
                                   void *userdata)
     {
         WvDBusServer *server = (WvDBusServer *) userdata;
-        WvDBusConn *c = new WvDBusConn(new_connection);
+        WvDBusServConn *c = new WvDBusServConn(new_connection);
         fprintf(stderr, "New connection..\n");
         server->append(c, true, "wvdbus connection");
 

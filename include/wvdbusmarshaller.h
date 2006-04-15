@@ -12,33 +12,11 @@
 
 #include <assert.h>
 #include <dbus/dbus.h>
-
-#if 0
-template<typename P1 = E,
-	 typename P2 = E,
-	 typename P3 = E,
-	 typename P4 = E,
-	 typename P5 = E,
-	 typename P6 = E,
-	 typename P7 = E,
-	 typename P8 = E>
-class WvDBusMarshaller : public IWvDBusMarshaller
-{
-public:
-    WvDBusMarshaller(WvStringParm _path, 
-                     WvCallback<void, P1, P2, P3, P4, P5, P6, P7, P8> _cb) :
-        IWvDBusMarshaller(_path)
-    {
-        cb = _cb;
-    }
-    virtual void dispatch(DBusMessage *_msg) = 0;
-
-    WvCallback<void, P1, P2, P3, P4, P5, P6, P7, P8> cb;
-};
-#endif
+#include <stdint.h>
 
 
 bool convert_next(DBusMessageIter *iter, int &i);
+bool convert_next(DBusMessageIter *iter, uint32_t &i);
 bool convert_next(DBusMessageIter *iter, WvString &s);
 
 
@@ -66,8 +44,48 @@ public:
 };
 
 
-template<typename P1>
+template<typename P1 = E, typename P2 = E, typename P3 = E>
 class WvDBusListener : public IWvDBusMarshaller
+{
+public:
+    WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
+                   WvCallback<void, WvDBusReplyMsg&> _cb) :
+        IWvDBusMarshaller(_path)
+    {}
+
+    virtual void dispatch(DBusMessage *_msg)
+    {}
+};
+
+
+template <>
+class WvDBusListener<E, E, E>  : public IWvDBusMarshaller
+{
+public:
+    WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
+                   WvCallback<void, WvDBusReplyMsg&> _cb) :
+        IWvDBusMarshaller(_path)
+    {
+        cb = _cb;
+        conn = _conn;
+    }
+
+    virtual void dispatch(DBusMessage *_msg)
+    {
+        fprintf(stderr, "Hello?\n");
+        WvDBusReplyMsg msg(_msg);
+        cb(msg);
+        fprintf(stderr, "Dispatching reply..\n");
+        conn->send(msg);
+    }
+
+    WvCallback<void, WvDBusReplyMsg&> cb;
+    WvDBusConn *conn;
+};
+
+
+template<typename P1>
+class WvDBusListener<P1, E, E> : public IWvDBusMarshaller
 {
 public:
     WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
@@ -94,6 +112,40 @@ public:
     }
 
     WvCallback<void, WvDBusReplyMsg&, P1> cb;
+    WvDBusConn *conn;
+};
+
+
+template<typename P1, typename P2>
+class WvDBusListener<P1, P2, E> : public IWvDBusMarshaller
+{
+public:
+    WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
+                   WvCallback<void, WvDBusReplyMsg&, P1, P2> _cb) :
+        IWvDBusMarshaller(_path)
+    {
+        cb = _cb;
+        conn = _conn;
+    }
+
+    virtual void dispatch(DBusMessage *_msg)
+    {
+        fprintf(stderr, "Hello?\n");
+
+        WvDBusReplyMsg msg(_msg);
+        DBusMessageIter iter;
+        dbus_message_iter_init(_msg, &iter);
+        //assert(dbus_message_iter_has_next(&iter));
+        P1 p1;
+        bool error = convert_next(&iter, p1);
+        P2 p2;
+        error = convert_next(&iter, p2);
+        cb(msg, p1, p2);
+        fprintf(stderr, "Dispatching reply..\n");
+        conn->send(msg);
+    }
+
+    WvCallback<void, WvDBusReplyMsg&, P1, P2> cb;
     WvDBusConn *conn;
 };
 

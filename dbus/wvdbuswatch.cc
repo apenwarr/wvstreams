@@ -30,7 +30,7 @@ WvDBusWatch::WvDBusWatch(DBusWatch *_watch, unsigned int _flags) :
 
 bool WvDBusWatch::pre_select(SelectInfo &si)
 {
-    log("preselect.. enabled: %s\n", dbus_watch_get_enabled(watch));
+    //log("preselect.. enabled: %s\n", dbus_watch_get_enabled(watch));
     si.wants.writable |= (wfd >= 0 && dbus_watch_get_enabled(watch));
 
     return WvFdStream::pre_select(si);
@@ -40,7 +40,7 @@ bool WvDBusWatch::pre_select(SelectInfo &si)
 void WvDBusWatch::execute()
 {
     unsigned int dbus_condition = 0;
-    log("executing watch (rfd: %s wfd: %s)\n", rfd, wfd);
+    //log("executing watch (rfd: %s wfd: %s)\n", rfd, wfd);
 
     if (isreadable())
         dbus_condition |= DBUS_WATCH_READABLE;

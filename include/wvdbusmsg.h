@@ -12,6 +12,7 @@
 #include "wvlog.h"
 #include "wvstringlist.h"
 #include <dbus/dbus.h>
+#include <stdint.h>
 
 
 class WvDBusMsg
@@ -48,6 +49,7 @@ public:
     }
 
     void append(WvStringParm s);
+    void append(uint32_t i);
 
 private:
     mutable WvStringList args;

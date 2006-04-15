@@ -15,59 +15,6 @@
 #include <dbus/dbus.h>
 
 
-DeclareWvDict(IWvDBusMarshaller, WvString, member);
-
-
-class WvDBusConn;
-
-
-class WvDBusObject
-{
-public:
-    WvDBusObject(WvStringParm _path) : d(10) { path = _path; }
-    WvString path;
-    IWvDBusMarshallerDict d;
-};
-
-
-DeclareWvDict(WvDBusObject, WvString, path);
-
-
-class WvDBusInterface 
-{
-public:
-    WvDBusInterface(WvStringParm _name) :
-        d(10)
-    {
-        name = _name;
-    }
-
-    void add_marshaller(WvString path, IWvDBusMarshaller *marshaller)
-    {
-        if (!d[path])
-            d.add(new WvDBusObject(path), true);
-
-        // FIXME: what about duplicates?
-        d[path]->d.add(marshaller, true);
-    }
-
-    void handle_signal(WvStringParm objname, WvStringParm member, 
-                       WvDBusConn *conn, DBusMessage *msg)
-    {
-        fprintf(stderr, "objname is '%s'\n", objname.cstr());
-        if (d[objname])
-        {
-            WvDBusObject *obj = d[objname];
-            if (obj->d[member])
-                obj->d[member]->dispatch(msg);
-        }
-    }
-
-    WvString name; // FIXME: ideally wouldn't be public
-    WvDBusObjectDict d;
-};
-
-
 class WvDBusConnPrivate;
 
 class WvDBusConn : public WvIStreamList
@@ -87,7 +34,8 @@ public:
     virtual void execute();
     virtual void close();
     virtual void send(WvDBusMsg &msg);
-    virtual void send(WvDBusMsg &msg, IWvDBusMarshaller *reply, bool autofree_reply);
+    virtual void send(WvDBusMsg &msg, IWvDBusMarshaller *reply, 
+                      bool autofree_reply);
 
     void add_marshaller(WvStringParm interface, WvStringParm path, 
                         IWvDBusMarshaller *marshaller);
@@ -96,7 +44,7 @@ public:
 
     operator DBusConnection* () const;
 
-private:
+protected:
     WvDBusConnPrivate *priv;
     WvLog log;
 };

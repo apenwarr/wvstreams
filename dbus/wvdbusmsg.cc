@@ -25,6 +25,12 @@ void WvDBusMsg::append(WvStringParm s1)
 }
 
 
+void WvDBusMsg::append(uint32_t i)
+{
+    dbus_message_append_args(msg, DBUS_TYPE_UINT32, &i, DBUS_TYPE_INVALID);
+}
+
+
 // WvDBusReplyMsg::WvDBusReplyMsg(WvDBusMsg *_msg) :
 //     WvDBusMsg(dbus_message_new_method_return(_msg->msg))
 // {

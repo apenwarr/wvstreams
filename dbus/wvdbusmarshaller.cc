@@ -18,7 +18,18 @@ int convert_to_type(DBusMessageIter *iter, bool &success)
     return 0;
 }
 
+
 bool convert_next(DBusMessageIter *iter, int &i)
+{
+    dbus_int32_t x;
+    dbus_message_iter_get_basic(iter, &x);
+    
+    i = x;
+    return true;
+}
+
+
+bool convert_next(DBusMessageIter *iter, uint32_t &i)
 {
     dbus_int32_t x;
     dbus_message_iter_get_basic(iter, &x);
