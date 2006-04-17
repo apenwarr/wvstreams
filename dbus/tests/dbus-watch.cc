@@ -11,10 +11,12 @@
 #include "wvistreamlist.h"
 
 
+#if 0
 static void foo(WvDBusConn &conn, int b)
 {
     fprintf(stderr, "wow! foo called! (%i)\n", b);
 }
+#endif
 
 
 int main (int argc, char *argv[])
