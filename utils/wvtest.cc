@@ -181,7 +181,7 @@ int WvTest::run_all(const char * const *prefixes)
 		|| prefix_match(cur->idstr, prefixes)
 		|| prefix_match(cur->descr, prefixes)))
 	{
-            pid_t child;
+            pid_t child = 0;
             if (run_twice)
             {
                 // I see everything twice!

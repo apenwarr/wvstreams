@@ -35,7 +35,8 @@ class WvPipe : public WvFDStream
 protected:
     void setup(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
-	       int stdin_fd, int stdout_fd, int stderr_fd);
+	       int stdin_fd, int stdout_fd, int stderr_fd,
+	       WvStringList *env);
 public:
     /**
      * default pipe constructor; if you just want to use a pipe, use this.
@@ -52,7 +53,8 @@ public:
      */
     WvPipe(const char *program, const char * const *argv,
 	   bool writable, bool readable, bool catch_stderr,
-	   int stdin_fd = 0, int stdout_fd = 1, int stderr_fd = 2);
+	   int stdin_fd = 0, int stdout_fd = 1, int stderr_fd = 2,
+           WvStringList *env = NULL);
     
     /**
      * This constructor does much the same thing as the previous one,
@@ -70,7 +72,7 @@ public:
     WvPipe(const char *program, const char * const *argv,
 	   bool writable, bool readable, bool catch_stderr,
 	   WvFDStream *stdin_str, WvFDStream *stdout_str = NULL,
-	   WvFDStream *stderr_str = NULL);
+	   WvFDStream *stderr_str = NULL, WvStringList *env = NULL);
     
     /**
      * This constructor is the same again, except that it uses the features
@@ -78,7 +80,7 @@ public:
      */
     WvPipe(const char *program, const char **argv,
 	   bool writable, bool readable, bool catch_stderr,
-	   WvFDStream *stdio_str);
+	   WvFDStream *stdio_str, WvStringList *env = NULL);
 
     /** kill the child process and close the stream. */
     virtual ~WvPipe();

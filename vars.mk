@@ -46,6 +46,10 @@ ifneq ("$(with_telephony)", "no")
   TARGETS += libwvtelephony.so libwvtelephony.a
 endif
 
+ifneq ("$(with_dbus)", "no")
+  TARGETS += libwvdbus.so libwvdbus.a
+endif
+
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
@@ -124,6 +128,10 @@ endif
 
 ifneq ("$(with_qdbm)", "no")
   libwvutils.so-LIBS+=-L. -lqdbm
+endif
+
+ifneq ("$(with_dbus)", "no")
+  libwvdbus.so-LIBS+=-L. -ldbus-1
 endif
 
 libwvbase.so-LIBS+=-lxplc-cxx -lm
@@ -218,6 +226,10 @@ libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
 
 libwvtelephony.a libwvtelephony.so: $(call objects,telephony)
 libwvtelephony.so: 
+
+libwvdbus.a libwvdbus.so: $(call objects,dbus)
+libwvdbus.so: libwvstreams.so libwvutils.so libwvbase.so
+libwvdbus.so: LIBS+=-ldbus-1
 
 libwvtest.a: wvtestmain.o $(TESTOBJS)
 

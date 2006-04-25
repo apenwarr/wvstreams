@@ -164,7 +164,10 @@ int main(int argc, char **argv)
     for (filename.rewind(); filename.next(); )
     {
     	WvStream *file;
-    	if (!!*filename) file = new WvFile(*filename, O_RDONLY);
+    	if (!!*filename)
+	    file = new WvFile(*filename, O_RDONLY);
+	else
+	    continue;
     	if (!file->isok())
     	{
     	    if (!opt_no_messages)

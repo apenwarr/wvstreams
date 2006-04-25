@@ -96,8 +96,8 @@ static IUniConfGen *slpcreator(WvStringParm s, IObject *obj, void *)
 	printf("Creating connection to: %s\n", server.cstr());
 	return new UniClientGen(new WvTCPConn(server), s);
     }
-    else
-        return NULL;
+
+    return NULL;
 }
 
 static WvMoniker<IUniConfGen> slpreg("slp", slpcreator);
