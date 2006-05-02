@@ -364,7 +364,7 @@ public:
         { return ((*obj).*member)(p1, p2, p3, p4, p5, p6, p7, p8); }
 };
 
-template<typename R,
+template<typename R = void,
 	 typename P1 = E,
 	 typename P2 = E,
 	 typename P3 = E,
