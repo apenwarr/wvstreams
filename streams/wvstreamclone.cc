@@ -209,12 +209,21 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 
 	pre_select_result = cloned->pre_select(si);
 	assert(!pre_select_result || si.msec_timeout == 0);
-	result = result || pre_select_result;
+
+	// At this point, one would be tempted to combine
+	// "pre_select_result" with "result" (that's what we used to
+	// do, anyway). Don't. The problem is that if we are trying to
+	// flush our outbuf or autoclose, we'll have twiddled the
+	// interest set, and post_select will "eat" that result. So we
+	// have to "eat" it as well, to prevent the assert in
+	// WvIStreamList::post_select from tripping. But it's okay,
+	// we'll just set the msec_timeout to zero and take care of
+	// things in our post_select...
 	
 	si.wants = oldwant;
     }
 
-    if (result)
+    if (result || pre_select_result)
 	si.msec_timeout = 0;
 
     return result;
