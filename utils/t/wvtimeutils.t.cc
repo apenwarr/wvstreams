@@ -70,12 +70,12 @@ WVTEST_MAIN("msecdiff()")
     WVPASS(tdiff < 0);
 }
 
-/* 
- * FIXME: I don't know if there is any way to test this.
-WVTEST_MAIN("wvtime()")
+#if 0
+ /* FIXME: I don't know if there is any way to test this.
+  * WVTEST_MAIN("wvtime()") */
 {
 }
-*/
+#endif
 
 
 WVTEST_MAIN("msecadd()")
