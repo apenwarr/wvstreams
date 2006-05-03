@@ -91,4 +91,8 @@ void wvstime_sync();
 // time go backward.
 void wvstime_sync_forward();
 
+// This sets the time returned by wvstime() to the specified value. To
+// be used for unit testing.
+void wvstime_set(const WvTime &);
+
 #endif // __WVTIMEUTILS_H

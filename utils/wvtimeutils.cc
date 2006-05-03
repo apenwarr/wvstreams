@@ -97,3 +97,9 @@ void wvstime_sync_forward()
     do_wvstime_sync(true);
 }
 
+
+void wvstime_set(const WvTime &_new_time)
+{
+    wvstime_cur = _new_time;
+}
+
