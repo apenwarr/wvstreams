@@ -61,28 +61,6 @@ inline void normalize(WvTime &tv)
     tv.tv_usec += tv.tv_usec < 0 ? 1000000 : 0;
 }
 
-/** Compares two time values. */
-inline bool operator< (const WvTime &a,
-		       const WvTime &b)
-{
-    // These normalizes need to be here in case a.tv_sec < b.tv_sec but
-    // b.tv_usec is big enough to make a < b be false.
-    // I left this as an inline function but maybe it shouldn't be since
-    // there are many lines here, feel free to adjust.
-    WvTime norma = a;
-    WvTime normb = b;
-    normalize(norma);
-    normalize(normb);
-    return norma.tv_sec < normb.tv_sec || (norma.tv_sec == normb.tv_sec
-					   && norma.tv_usec < normb.tv_usec);
-}
-
-inline bool operator== (const WvTime &a,
-			const WvTime &b)
-{
-    return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec;
-}
-
 // Stepped time functions.  Used to synchronize wvstreams.
 const WvTime &wvstime(); 
 void wvstime_sync();
