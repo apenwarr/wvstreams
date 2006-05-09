@@ -954,7 +954,7 @@ bool WvStream::_select(time_t msec_timeout,
     assert(wsid_map && wsid_map->exists(my_wsid)); // Detect use of deleted stream
         
     SelectInfo si;
-    bool sure = _build_selectinfo_x(si, msec_timeout,
+    bool sure = _build_selectinfo(si, msec_timeout,
 				  readable, writable, isexcept, forceable);
     
     if (!isok())
@@ -968,11 +968,11 @@ bool WvStream::_select(time_t msec_timeout,
     // quite right (eg. it might be selecting on invalid fds).  That doesn't
     // sound *too* bad, so let's go for the fairness.
 
-    int sel = _do_select_x(si);
+    int sel = _do_select(si);
     if (sel >= 0)
-        sure = _process_selectinfo_x(si, forceable) || sure; // note the order
-
-    _select_extra_x(si, forceable);
+        sure = _process_selectinfo(si, forceable) || sure; // note the order
+    if (si.global_sure && globalstream && forceable && (globalstream != this))
+	globalstream->callback();
     return sure;
 }
 
@@ -1163,30 +1163,4 @@ IWvStream *WvStream::find_by_wsid(WSID wsid)
         return *presult;
     else
         return NULL;   
-}
-
-// these are all ridiculous functions here because of a missing stack
-// frame for BUZID:16076. these will be removed after the first lime bounce.
-//
-bool WvStream::_build_selectinfo_x(SelectInfo &si, time_t msec_timeout,
-	bool readable, bool writable, bool isexcept, bool forceable)
-{
-    return _build_selectinfo(si, msec_timeout, readable,
-		    writable, isexcept, forceable);
-}
-
-int WvStream::_do_select_x(SelectInfo &si)
-{
-    return _do_select(si);
-}
-
-bool WvStream::_process_selectinfo_x(SelectInfo &si, bool forceable)
-{
-    return _process_selectinfo(si, forceable);
-}
-
-void WvStream::_select_extra_x(SelectInfo &si, bool forceable)
-{
-    if (si.global_sure && globalstream && forceable && (globalstream != this))
-	globalstream->callback();
 }
