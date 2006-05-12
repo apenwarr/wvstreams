@@ -1,0 +1,119 @@
+# valgrind suppressions file for known and unfixable errors caused by 
+# wvstreams' interactions with other libraries.
+{
+   zlib_deflate_error
+   Memcheck:Cond
+   fun:_tr_flush_block
+   obj:/usr/lib/libz.so.1.2.1.1
+   fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   stupid_libdl_error
+   Memcheck:Cond
+   fun:_dl_relocate_object
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:__GI__dl_open
+}
+{
+   stupid_libdl_error_2
+   Memcheck:Cond
+   fun:_dl_relocate_object
+   obj:/lib/libc-2.3.*.so
+   fun:_dl_catch_error
+   fun:_dl_open
+}
+{
+   stupid_ld_error
+   Memcheck:Cond
+   obj:/lib/ld-2.3.*.so
+}
+{
+   stupid_ecard_stuff
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/evolution/1.4/libicalvcal-evolution.so.0.0.0
+   fun:lookupStr
+   fun:lookupProp
+   fun:addGroup
+   obj:/usr/lib/evolution/1.4/libicalvcal-evolution.so.0.0.0
+   fun:mime_parse
+   obj:/usr/lib/evolution/1.4/libicalvcal-evolution.so.0.0.0
+   fun:e_card_new_with_default_charset
+   fun:e_card_new
+}
+{
+   stupid_elist_stuff
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:g_type_create_instance
+   obj:/usr/lib/libgobject-2.0.*
+   fun:g_object_newv
+   fun:g_object_new_valist
+   fun:e_list_new
+}
+{
+    stupid_libc_stuff
+    Memcheck:Leak
+    fun:malloc
+    fun:my_malloc
+    fun:get_or_allocate_specifics_ptr
+    fun:pthread_key_create
+    obj:/lib/libdl-2.3.*.so
+    fun:pthread_once
+    obj:/lib/libdl-2.3.*.so
+    fun:dlvsym
+    fun:__errno_location
+    fun:_IOvfprintf
+}
+{
+   stupid_zlib_stuff
+   Memcheck:Cond
+   obj:/usr/lib/libz.so*
+   obj:/usr/lib/libz.so*
+   fun:deflate
+}
+{
+   sigaction_bites_my_nuts
+   Memcheck:Param
+   sigaction(act)
+   fun:__libc_sigaction
+}
+{
+   more_fun_libcrypto_junk
+   Memcheck:Value4
+   fun:BF_encrypt
+}
+{
+   more_fun_libcrypto_junk_2
+   Memcheck:Value4
+   fun:AES_encrypt
+}
+{
+   WvInterface has a static WvInterfaceDict
+   Memcheck:Leak
+   fun:__builtin_vec_new
+   fun:__t11WvHashTable4Z11WvInterfaceZ8WvStringZt27WvInterfaceDictBaseAccessor2Z11WvInterfaceZ8WvStringz1Z8OpEqCompUi
+   fun:__static_initialization_and_destruction_0
+   fun:_GLOBAL_.I._15WvInterfaceDict.links
+}
+{
+   statfs_has_issues
+   Memcheck:Param
+   statfs64(buf)
+   fun:statfs64
+}
+{
+   popt_is_leaky
+   Memcheck:Leak
+   fun:realloc
+   fun:expandNextArg
+   fun:poptGetNextOpt
+}
+{
+   WvHashTableBase_has_issues
+   Memcheck:Cond
+   fun:_ZN15WvHashTableBaseC2Ej
+}
