@@ -236,7 +236,7 @@ WvStream::WvStream():
 {
     TRACE("Creating wvstream %p\n", this);
     
-    bool first = true;
+    static bool first = true;
     if (first)
     {
         first = false;
