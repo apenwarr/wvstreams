@@ -80,6 +80,9 @@ public:
         {}
     virtual ~WvBufUrlStream()
         {}
+
+public:
+    const char *wstype() const { return "WvBufUrlStream"; }
 };
 
 DeclareWvTable(WvIPPortAddr);
@@ -133,6 +136,9 @@ public:
     { return 0; }
     
     virtual void execute() = 0;
+    
+public:
+    const char *wstype() const { return "WvUrlStream"; }
 };
 
 unsigned WvHash(const WvUrlStream::Target &n);
@@ -178,6 +184,9 @@ public:
     virtual void execute();
     virtual size_t remaining()
     { return bytes_remaining; }
+    
+public:
+    const char *wstype() const { return "WvHttpStream"; }
 };
 
 
@@ -213,6 +222,9 @@ public:
     virtual bool post_select(SelectInfo &si);
     virtual void close();
     virtual void execute();
+    
+public:
+    const char *wstype() const { return "WvFtpStream"; }
 };
 
 
@@ -249,6 +261,9 @@ private:
 public:
     bool idle() const 
         { return !urls.count(); }
+    
+public:
+    const char *wstype() const { return "WvHttpPool"; }
 };
 
 

@@ -7,6 +7,7 @@
  */
 #include "wvcont.h"
 #include "wvtask.h"
+#include "wvlinklist.h"
 #include <assert.h>
  
 // private data that doesn't need to be in the header
@@ -27,7 +28,11 @@ struct WvCont::Data
     Data(const WvContCallback &_cb, size_t _stacksize) : cb(_cb)
         { links = 1; finishing = false; stacksize = _stacksize; mydepth = 0;
 	     taskman = WvTaskMan::get(); 
-	     task = NULL; report(); }
+	     task = NULL; report();
+        if (data_list == NULL)
+            data_list = new DataList;
+        data_list->append(this, false);
+        }
     ~Data();
 
     void link()
@@ -44,8 +49,19 @@ WvCont::Data *WvCont::curdata = NULL;
 int WvCont::taskdepth = 0;
 
 
+WvCont::DataList *WvCont::data_list = NULL;
+
+
 WvCont::WvCont(const WvCont &cb)
 {
+    static bool first = true;
+    if (first)
+    {
+        first = false;
+        WvStreamsDebugger::add_command("conts", 0,
+                debugger_conts_run_cb, 0);
+    }
+
     data = cb.data;
     data->link();
 }
@@ -87,6 +103,47 @@ WvCont::Data::~Data()
     taskman->unlink();
     //printf("%p: deleting\n", this);
     report();
+
+    data_list->unlink(this);
+    if (data_list->isempty())
+    {
+        delete data_list;
+        data_list = NULL;
+    }
+}
+
+
+static inline const char *Yes_No(bool val)
+{
+    return val? "Yes": "No";
+}
+
+
+WvString WvCont::debugger_conts_run_cb(WvStringParm cmd, WvStringList &args,
+        WvStreamsDebugger::ResultCallback result_cb, void *)
+{
+    const char *format = "%5s%s%5s%s%9s%s%10s%s%7s%s%s";
+    WvStringList result;
+    result.append(format, "Links", "-", "Depth", "-", "Finishing", "-", "Stack Size",
+            "-", "Task ID", "-", "Task Name------");
+    result_cb(cmd, result);
+    
+    if (!data_list)
+        return WvString::null;
+
+    DataList::Iter i(*data_list);
+    for (i.rewind(); i.next(); )
+    {
+        result.zap();
+        result.append(format,
+                i->links, " ", i->mydepth, " ", Yes_No(i->finishing), " ",
+                i->stacksize, " ",
+                i->task? WvString(i->task->get_tid()): WvString("n/a"), " ",
+                i->task? i->task->get_name(): WvString("n/a"));
+        result_cb(cmd, result);
+    }
+
+    return WvString::null;
 }
 
 

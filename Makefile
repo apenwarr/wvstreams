@@ -175,7 +175,9 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
-test: runconfigure all tests wvtestmain
+test: runconfigure all tests qtest
+
+qtest: runconfigure all wvtestmain
 	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:

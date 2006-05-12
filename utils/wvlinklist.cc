@@ -10,7 +10,7 @@
 #include "wvlinklist.h"
 
 WvLink::WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _autofree,
-	       char *_id)
+	       const char *_id)
 {
     data = _data;
     next = prev->next;

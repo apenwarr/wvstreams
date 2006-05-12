@@ -107,6 +107,9 @@ public:
     virtual bool pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void maybe_autoclose();
+
+public:
+    const char *wstype() const { return "WvFdStream"; }
 };
 
 typedef WvFdStream WvFDStream;

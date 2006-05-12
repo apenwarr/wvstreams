@@ -67,6 +67,9 @@ public:
 
     /** may need to hangup for redial reasons */
     virtual void hangup();
+    
+public:
+    const char *wstype() const { return "WvModemBase"; }
 };
 
 
@@ -79,6 +82,7 @@ class WvModem : public WvModemBase
 private:
     WvLockDev		lock;
     WvLog               log;
+    bool                have_old_t;
     struct termios	old_t;
     bool		closing;
     bool                no_reset;
@@ -108,6 +112,9 @@ public:
      * and this method returns the actual speed that the modem managed to achieve.
      */
     virtual int speed(int _baud);
+    
+public:
+    const char *wstype() const { return "WvModem"; }
 };
 
 #endif

@@ -125,6 +125,9 @@ public:
 
 protected:
     virtual size_t uwrite(const void *buf, size_t count);
+
+public:
+    const char *wstype() const { return "WvTCPConn"; }
 };
 
 /** Class to easily create the Server side of a TCPConn... */
@@ -192,6 +195,9 @@ protected:
     
     static void accept_callback(WvStream &s, void *userdata);
     static void accept_global_callback(WvStream &s, void *userdata);
+
+public:
+    const char *wstype() const { return "WvTCPListener"; }
 };
 
 
