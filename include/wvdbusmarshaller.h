@@ -36,7 +36,7 @@ public:
         dbus_message_iter_init(_msg, &iter);
         //assert(dbus_message_iter_has_next(&iter));
         P1 p1;
-        bool error = convert_next(&iter, p1); 
+        convert_next(&iter, p1); 
         cb(p1);
     }
 
