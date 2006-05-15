@@ -64,6 +64,8 @@ WvFastString::WvFastString(const char *_str)
 
 void WvString::copy_constructor(const WvFastString &s)
 {
+    unlink();	// WvFastString has already been created by now
+
     if (!s.buf)
     {
 	link(&nullbuf, s.str);
@@ -76,6 +78,7 @@ void WvString::copy_constructor(const WvFastString &s)
 
 WvString::WvString(const char *_str)
 {
+    unlink();	// WvFastString has already been created by now
     construct(_str);
 }
 
