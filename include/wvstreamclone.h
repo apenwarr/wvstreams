@@ -61,6 +61,11 @@ private:
     void close_callback(WvStream &s);
 
     bool pre_select_result;
+    
+protected:
+    WvString my_type;
+public:
+    const char *wstype() const { return my_type; }
 };
 
 #endif // __WVSTREAMCLONE_H

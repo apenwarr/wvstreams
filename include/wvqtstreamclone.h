@@ -92,6 +92,9 @@ private slots:
 
     // Needed or certain assertions fail ;)
     virtual void execute();
+
+public:
+    virtual void setclone(IWvStream *clone);
 };
 
 #endif // __WVQTSTREAMCLONE_H

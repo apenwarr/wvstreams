@@ -22,6 +22,9 @@ public:
     
 private:
     WvLog log;
+    
+public:
+    const char *wstype() const { return "WvSubProcQueueStream"; }
 };
 
 #endif // __WVSUBPROCQUEUESTREAM_H

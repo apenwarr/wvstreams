@@ -189,7 +189,27 @@ BASEOBJS= \
 	utils/wvtask.o \
 	utils/wvtclstring.o \
 	utils/wvtimeutils.o \
-	utils/wvvector.o
+	utils/wvvector.o \
+	streams/wvistreamlist.o \
+	utils/wvstreamsdebugger.o \
+	streams/wvlog.o \
+	streams/wvstream.o \
+	uniconf/uniconf.o uniconf/uniconf_c.o \
+	uniconf/uniconfgen.o uniconf/uniconfkey.o uniconf/uniconfroot.o \
+	uniconf/unihashtree.o \
+	uniconf/unimountgen.o \
+	uniconf/unitempgen.o \
+	utils/wvbackslash.o \
+	utils/wvencoder.o \
+	utils/wvtclstring.o \
+	utils/wvstringcache.o \
+	uniconf/uniinigen.o \
+	uniconf/unigenhack.o \
+	uniconf/unilistiter.o \
+	streams/wvfile.o \
+	streams/wvstreamclone.o  \
+	streams/wvconstream.o \
+	utils/wvcrashbase.o
 
 TESTOBJS = \
 	utils/wvtest.o \

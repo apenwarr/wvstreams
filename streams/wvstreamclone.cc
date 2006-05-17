@@ -28,10 +28,9 @@ static IWvStream *creator(WvStringParm s, IObject *obj, void *)
 static WvMoniker<IWvStream> reg("clone", creator);
 
 
-WvStreamClone::WvStreamClone(IWvStream *_cloned):
-    cloned(0),
-    disassociate_on_close(false),
-    pre_select_result(false)
+WvStreamClone::WvStreamClone(IWvStream *_cloned) 
+    : cloned(0), disassociate_on_close(false),
+      pre_select_result(false), my_type("WvStreamClone:(none)")
 {
     setclone(_cloned);
     // the sub-stream will force its own values, if it really wants.
@@ -182,6 +181,11 @@ void WvStreamClone::setclone(IWvStream *newclone)
 	cloned->setclosecallback(IWvStreamCallback(this, &WvStreamClone::close_callback));
     if (newclone)
         closed = stop_read = stop_write = false;
+    
+    if (newclone != NULL)
+        my_type = WvString("WvStreamClone:%s", newclone->wstype());
+    else
+        my_type = "WvStreamClone:(none)";
 }
 
 

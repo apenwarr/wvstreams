@@ -581,4 +581,22 @@ WvString ptr2str(void* ptr);
 // WvString::null on error.
 WvString wvreadlink(WvStringParm path);
 
+static inline bool is_int(const char *str)
+{
+    if (!str)
+        return false;
+    
+    if (*str == '-')
+        ++str;
+    
+    if (!*str)
+        return false;
+    
+    while (*str)
+    	if (!isdigit(*str++))
+    	    return false;
+    	    
+    return true;
+}
+
 #endif // __WVSTRUTILS_H

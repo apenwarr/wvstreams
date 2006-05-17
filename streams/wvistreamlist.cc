@@ -6,12 +6,21 @@
  * callback() functions know how to handle multiple simultaneous streams.
  */
 #include "wvistreamlist.h"
+#include "wvstringlist.h"
+#include "wvstreamsdebugger.h"
+#include "wvstrutils.h"
 
 #include "wvassert.h"
 #include "wvstrutils.h"
 
 #ifndef _WIN32
 #include "wvfork.h"
+#endif
+
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#else
+#define RUNNING_ON_VALGRIND false
 #endif
 
 // enable this to add some read/write trace messages (this can be VERY
@@ -29,6 +38,7 @@
 
 WvIStreamList WvIStreamList::globallist;
 
+
 WvIStreamList::WvIStreamList():
     in_select(false), dead_stream(false)
 {
@@ -40,6 +50,8 @@ WvIStreamList::WvIStreamList():
 #ifndef _WIN32
         add_wvfork_callback(WvIStreamList::onfork);
 #endif
+        set_wsname("globallist");
+        add_debugger_commands();
     }
 }
 
@@ -197,6 +209,7 @@ void WvIStreamList::execute()
 	IWvStream &s(*i);
 	
 	id = i.link->id;
+
 	TRACE("[%p:%s]", &s, id);
 	
 	i.xunlink();
@@ -204,9 +217,11 @@ void WvIStreamList::execute()
 	if (s.isok())
         {
 #if DEBUG
-            WvString strace_node("execute %s",
-                    id? id: "(unidentified stream)");
-            ::write(-1, strace_node, strace_node.len()); 
+            if (!RUNNING_ON_VALGRIND)
+            {
+                WvString strace_node("%s: %s", s.wstype(), s.wsname());
+                ::write(-1, strace_node, strace_node.len()); 
+            }
 #endif
 	    WvCrashWill my_will("executing stream: %s\n%s",
 				id ? id : "unknown stream",
@@ -234,3 +249,24 @@ void WvIStreamList::onfork(pid_t p)
     }
 }
 #endif
+
+
+void WvIStreamList::add_debugger_commands()
+{
+    WvStreamsDebugger::add_command("globallist", 0, debugger_globallist_run_cb, 0);
+}
+
+
+WvString WvIStreamList::debugger_globallist_run_cb(WvStringParm cmd,
+    WvStringList &args,
+    WvStreamsDebugger::ResultCallback result_cb, void *)
+{
+    debugger_streams_display_header(cmd, result_cb);
+    WvIStreamList::Iter i(globallist);
+    for (i.rewind(); i.next(); )
+        debugger_streams_maybe_display_one_stream(static_cast<WvStream *>(i.ptr()),
+                cmd, args, result_cb);
+    
+    return WvString::null;
+}
+

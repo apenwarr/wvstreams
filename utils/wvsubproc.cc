@@ -180,27 +180,36 @@ int WvSubProc::fork(int *waitfd)
 	WvStringList::Iter i(env);
 	for (i.rewind(); i.next(); )
 	{
-	    if (!strncmp(*i, "LD_LIBRARY_PATH=", 16)
-		&& getenv("LD_LIBRARY_PATH"))
+            WvStringList words;
+            words.splitstrict(*i, "=");
+            WvString name = words.popstr();
+            WvString value = words.join("=");
+	    if (name == "LD_LIBRARY_PATH" && getenv("LD_LIBRARY_PATH"))
 	    {
-		// don't override - merge!
-		ldlibrary = WvString("%s:%s", *i,
-				     getenv("LD_LIBRARY_PATH") + 16);
-		putenv(ldlibrary.edit());
+                if (!!value)
+                {
+                    // don't override - merge!
+                    ldlibrary = WvString("%s=%s:%s", name,
+                            value, getenv("LD_LIBRARY_PATH"));
+                    putenv(ldlibrary.edit());
+                }
 	    }
-	    else if (!strncmp(*i, "LD_PRELOAD=", 11)
-		  && getenv("LD_PRELOAD"))
+	    else if (name == "LD_PRELOAD" && getenv("LD_PRELOAD"))
 	    {
-		// don't override - merge!
-		ldpreload = WvString("%s:%s", *i,
-				     getenv("LD_PRELOAD") + 11);
-		putenv(ldpreload.edit());
+                if (!!value)
+                {
+                    // don't override - merge!
+                    ldpreload = WvString("%s=%s:%s", name,
+                            value, getenv("LD_PRELOAD"));
+                    putenv(ldpreload.edit());
+                }
 	    }
-	    else if (!strstr(*i, "="))
+	    else if (!value)
 	    {
-	    	// no equals? then we must want to unset it!
+	    	// no equals or setting to empty string?
+                // then we must want to unset it!
 	    	// This is evil, but this is the most simple
-	    	unsetenv(*i);
+	    	unsetenv(name);
 	    } 
 	    else 
 		putenv(i->edit());
