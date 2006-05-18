@@ -64,18 +64,18 @@ WvDBusServConn::WvDBusServConn(DBusConnection *_c, WvDBusServer *_s) :
 
     WvCallback<void, WvDBusReplyMsg &> cb1(
         this, &WvDBusServConn::hello_cb);
-    WvDBusListener<> *l1 =
-        new WvDBusListener<>(this, "Hello", cb1);
+    WvDBusMethodListener<> *l1 =
+        new WvDBusMethodListener<>(this, "Hello", cb1);
 
     WvCallback<void, WvDBusReplyMsg &, WvString, uint32_t> cb2(
         this, &WvDBusServConn::request_name_cb);
-    WvDBusListener<WvString, uint32_t> *l2 =
-        new WvDBusListener<WvString, uint32_t>(this, "RequestName", cb2);
+    WvDBusMethodListener<WvString, uint32_t> *l2 =
+        new WvDBusMethodListener<WvString, uint32_t>(this, "RequestName", cb2);
 
     WvCallback<void, WvDBusReplyMsg &, WvString> cb3(
         this, &WvDBusServConn::release_name_cb);
-    WvDBusListener<WvString> *l3 =
-        new WvDBusListener<WvString>(this, "ReleaseName", cb3);
+    WvDBusMethodListener<WvString> *l3 =
+        new WvDBusMethodListener<WvString>(this, "ReleaseName", cb3);
 
     add_marshaller("org.freedesktop.DBus", "/org/freedesktop/DBus", l1);
     add_marshaller("org.freedesktop.DBus", "/org/freedesktop/DBus", l2);

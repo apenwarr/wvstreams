@@ -60,7 +60,6 @@ public:
     void append(WvStringParm s);
     void append(uint32_t i);
 
-protected:
     mutable DBusMessage *msg;
 };
 

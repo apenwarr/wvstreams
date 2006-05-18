@@ -38,8 +38,19 @@ public:
     virtual void send(WvDBusMsg &msg, IWvDBusMarshaller *reply, 
                       bool autofree_reply);
 
-    void add_marshaller(WvStringParm interface, WvStringParm path, 
-                        IWvDBusMarshaller *marshaller);
+    /**
+     * Adds a signal listener to the bus connection: all signals matching 
+     * the interface and path specification will be forwarded to the
+     * appropriate marshaller.
+     */
+    void add_listener(WvStringParm interface, WvStringParm path, 
+                      IWvDBusMarshaller *marshaller);
+
+    /**
+     * Adds a method to the bus connection: all method calls matching
+     * the interface and path specification will be forwarded to the 
+     * appropriate marshaller. 
+     */
     void add_method(WvStringParm interface, WvStringParm path, 
                     IWvDBusMarshaller *listener);
 

@@ -33,14 +33,14 @@ int main (int argc, char *argv[])
     else
         conn = new WvDBusConn("ca.nit.MySender");
 
-    // Create a message, bound for "ca.nit.MyApplication"'s "/ca/nit/foo" object, with
-    // the "ca.nit.foo" interface's "bar" method.
+    // Create a message, bound for "ca.nit.MyApplication"'s "/ca/nit/foo" 
+    // object, with the "ca.nit.foo" interface's "bar" method.
     WvDBusMsg msg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
     msg.append("bee");
 
     // expect a reply with a single string as an argument
-    WvDBusMarshaller<WvString> reply("/ca/nit/foo/bar", 
-                                     WvCallback<void, WvString>(foo));
+    WvDBusMethodListener<WvString> reply("/ca/nit/foo/bar", 
+                                         WvCallback<void, WvString>(foo));
     fprintf(stderr, "Sending message..?\n");
     conn->send(msg, &reply, false);
 

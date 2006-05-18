@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 2005 Net Integration Technologies, Inc.
+ *   Copyright (C) 2005-2006 Net Integration Technologies, Inc.
  * 
  */ 
 #ifndef __WVDBUSMARSHALLER_H
@@ -21,10 +21,10 @@ bool convert_next(DBusMessageIter *iter, WvString &s);
 
 
 template<typename P1>
-class WvDBusMarshaller : public IWvDBusMarshaller
+class WvDBusSignalListener : public IWvDBusMarshaller
 {
 public:
-    WvDBusMarshaller(WvStringParm _path, WvCallback<void, P1> _cb) :
+    WvDBusSignalListener(WvStringParm _path, WvCallback<void, P1> _cb) :
         IWvDBusMarshaller(_path)
     {
         cb = _cb;
@@ -34,7 +34,6 @@ public:
     {
         DBusMessageIter iter;
         dbus_message_iter_init(_msg, &iter);
-        //assert(dbus_message_iter_has_next(&iter));
         P1 p1;
         convert_next(&iter, p1); 
         cb(p1);
@@ -45,10 +44,10 @@ public:
 
 
 template<typename P1 = E, typename P2 = E, typename P3 = E>
-class WvDBusListener : public IWvDBusMarshaller
+class WvDBusMethodListener : public IWvDBusMarshaller
 {
 public:
-    WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
+    WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
                    WvCallback<void, WvDBusReplyMsg&> _cb) :
         IWvDBusMarshaller(_path)
     {}
@@ -59,11 +58,11 @@ public:
 
 
 template <>
-class WvDBusListener<E, E, E>  : public IWvDBusMarshaller
+class WvDBusMethodListener<E, E, E>  : public IWvDBusMarshaller
 {
 public:
-    WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
-                   WvCallback<void, WvDBusReplyMsg&> _cb) :
+    WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
+                         WvCallback<void, WvDBusReplyMsg&> _cb) :
         IWvDBusMarshaller(_path)
     {
         cb = _cb;
@@ -84,10 +83,10 @@ public:
 
 
 template<typename P1>
-class WvDBusListener<P1, E, E> : public IWvDBusMarshaller
+class WvDBusMethodListener<P1, E, E> : public IWvDBusMarshaller
 {
 public:
-    WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
+    WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
                    WvCallback<void, WvDBusReplyMsg&, P1> _cb) :
         IWvDBusMarshaller(_path)
     {
@@ -116,11 +115,11 @@ public:
 
 
 template<typename P1, typename P2>
-class WvDBusListener<P1, P2, E> : public IWvDBusMarshaller
+class WvDBusMethodListener<P1, P2, E> : public IWvDBusMarshaller
 {
 public:
-    WvDBusListener(WvDBusConn *_conn, WvStringParm _path, 
-                   WvCallback<void, WvDBusReplyMsg&, P1, P2> _cb) :
+    WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
+                         WvCallback<void, WvDBusReplyMsg&, P1, P2> _cb) :
         IWvDBusMarshaller(_path)
     {
         cb = _cb;

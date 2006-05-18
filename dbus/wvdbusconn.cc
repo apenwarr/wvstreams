@@ -108,11 +108,12 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusMarshaller *reply,
 }
 
 
-void WvDBusConn::add_marshaller(WvStringParm interface, WvStringParm path, 
-                                IWvDBusMarshaller *marshaller)
+void WvDBusConn::add_listener(WvStringParm interface, WvStringParm path, 
+                              IWvDBusMarshaller *marshaller)
 {
-    // FIXME: only relevant for signal listeners..
     DBusError error;
+    dbus_error_init(&error);
+
     dbus_bus_add_match(priv->dbusconn, WvString("type='signal',interface='%s'",
                                                 interface),  &error);
     if (dbus_error_is_set(&error))
