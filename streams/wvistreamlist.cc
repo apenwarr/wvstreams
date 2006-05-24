@@ -106,10 +106,10 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     for (i.rewind(); i.next(); )
     {
 	IWvStream &s(*i);
-        #if I_ENJOY_FORMATTING_STRINGS
+#if I_ENJOY_FORMATTING_STRINGS
 	WvCrashWill will("doing pre_select for \"%s\" (%s)\n%s",
 			 i.link->id, ptr2str(&s), wvcrash_read_will());
-        #endif
+#endif
 	
         si.wants = oldwant;
 
@@ -125,11 +125,9 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	{
 	    // printf("pre_select sure_thing: '%s'\n", i.link->id);
 	    sure_thing.append(&s, false, i.link->id);
-            #if I_ENJOY_FORMATTING_STRINGS
 	    wvassert(si.msec_timeout == 0, "pre_select for \"%s\" (%s) "
 		     "returned true, but has non-zero timeout",
 		     i.link->id, ptr2str(&s));
-            #endif
 	}
     }
 
@@ -161,10 +159,10 @@ bool WvIStreamList::post_select(SelectInfo &si)
     for (i.rewind(); i.cur() && i.next(); )
     {
 	IWvStream &s(*i);
-        #if I_ENJOY_FORMATTING_STRINGS
+#if I_ENJOY_FORMATTING_STRINGS
 	WvCrashWill will("doing post_select for \"%s\" (%s)\n%s",
 			 i.link->id, ptr2str(&s), wvcrash_read_will());
-        #endif
+#endif
 
 	if (s.isok())
 	{
@@ -178,11 +176,9 @@ bool WvIStreamList::post_select(SelectInfo &si)
 		WvIStreamListBase::Iter j(sure_thing);
 		WvLink* link = j.find(&s);
 
-                #if I_ENJOY_FORMATTING_STRINGS
 		wvassert(!link, "stream \"%s\" (%s) was ready in "
 			 "pre_select, but not in post_select",
 			 link->id, ptr2str(link->data));
-                #endif
 	    }
 	}
 	else
@@ -231,11 +227,11 @@ void WvIStreamList::execute()
                 ::write(-1, strace_node, strace_node.len()); 
             }
 #endif
-            #if I_ENJOY_FORMATTING_STRINGS
+#if I_ENJOY_FORMATTING_STRINGS
 	    WvCrashWill my_will("executing stream: %s\n%s",
 				id ? id : "unknown stream",
 				wvcrash_read_will());
-            #endif
+#endif
 	    s.callback();
         }
 	
