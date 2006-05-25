@@ -18,13 +18,13 @@ save_args() {
 save_args "$@"
 
 # append to a variable without introducing superfluous white space
-AC_DEFUN(WV_APPEND,
+AC_DEFUN([WV_APPEND],[
     if test -z "$$1"; then
         $1="$2"
     else
         $1="$$1 $2"
     fi
-)
+])
 
 QT_SEARCH_PATH="
 $prefix
