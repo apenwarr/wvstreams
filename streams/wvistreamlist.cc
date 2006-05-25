@@ -101,7 +101,13 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	already_sure = true;
     
     oldwant = si.wants;
-    
+
+
+    IWvStream *old_in_stream = WvCrashInfo::in_stream;
+    const char *old_in_stream_id = WvCrashInfo::in_stream_id;
+    WvCrashInfo::InStreamState old_in_stream_state = WvCrashInfo::in_stream_state;
+    WvCrashInfo::in_stream_state = WvCrashInfo::PRE_SELECT;
+
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
@@ -109,8 +115,11 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 #if I_ENJOY_FORMATTING_STRINGS
 	WvCrashWill will("doing pre_select for \"%s\" (%s)\n%s",
 			 i.link->id, ptr2str(&s), wvcrash_read_will());
+#else
+	WvCrashInfo::in_stream = &s;
+	WvCrashInfo::in_stream_id = i.link->id;
 #endif
-	
+
         si.wants = oldwant;
 
 	if (!s.isok())
@@ -130,6 +139,10 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 		     i.link->id, ptr2str(&s));
 	}
     }
+
+    WvCrashInfo::in_stream = old_in_stream;
+    WvCrashInfo::in_stream_id = old_in_stream_id;
+    WvCrashInfo::in_stream_state = old_in_stream_state;
 
     if (alarmleft >= 0 && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft;
@@ -155,6 +168,11 @@ bool WvIStreamList::post_select(SelectInfo &si)
     if (alarmleft == 0)
 	already_sure = true;
 
+    IWvStream *old_in_stream = WvCrashInfo::in_stream;
+    const char *old_in_stream_id = WvCrashInfo::in_stream_id;
+    WvCrashInfo::InStreamState old_in_stream_state = WvCrashInfo::in_stream_state;
+    WvCrashInfo::in_stream_state = WvCrashInfo::POST_SELECT;
+
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
@@ -162,6 +180,9 @@ bool WvIStreamList::post_select(SelectInfo &si)
 #if I_ENJOY_FORMATTING_STRINGS
 	WvCrashWill will("doing post_select for \"%s\" (%s)\n%s",
 			 i.link->id, ptr2str(&s), wvcrash_read_will());
+#else
+	WvCrashInfo::in_stream = &s;
+	WvCrashInfo::in_stream_id = i.link->id;
 #endif
 
 	if (s.isok())
@@ -185,6 +206,10 @@ bool WvIStreamList::post_select(SelectInfo &si)
 	    already_sure = true;
     }
     
+    WvCrashInfo::in_stream = old_in_stream;
+    WvCrashInfo::in_stream_id = old_in_stream_id;
+    WvCrashInfo::in_stream_state = old_in_stream_state;
+
     si.wants = oldwant;
     return already_sure || !sure_thing.isempty();
 }
@@ -201,6 +226,11 @@ void WvIStreamList::execute()
     
     TRACE("\n%*sList@%p: (%d sure) ", level, "", this, sure_thing.count());
     
+    IWvStream *old_in_stream = WvCrashInfo::in_stream;
+    const char *old_in_stream_id = WvCrashInfo::in_stream_id;
+    WvCrashInfo::InStreamState old_in_stream_state = WvCrashInfo::in_stream_state;
+    WvCrashInfo::in_stream_state = WvCrashInfo::EXECUTE;
+
     WvIStreamListBase::Iter i(sure_thing);
     for (i.rewind(); i.next(); )
     {
@@ -231,7 +261,11 @@ void WvIStreamList::execute()
 	    WvCrashWill my_will("executing stream: %s\n%s",
 				id ? id : "unknown stream",
 				wvcrash_read_will());
+#else
+	    WvCrashInfo::in_stream = &s;
+	    WvCrashInfo::in_stream_id = id;
 #endif
+
 	    s.callback();
         }
 	
@@ -239,6 +273,10 @@ void WvIStreamList::execute()
 	i.rewind();
     }
     
+    WvCrashInfo::in_stream = old_in_stream;
+    WvCrashInfo::in_stream_id = old_in_stream_id;
+    WvCrashInfo::in_stream_state = old_in_stream_state;
+
     sure_thing.zap();
 
     level--;

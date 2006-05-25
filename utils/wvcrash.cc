@@ -227,6 +227,41 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
 	}
     }
 
+    if (WvCrashInfo::in_stream_state != WvCrashInfo::UNUSED
+	&& WvCrashInfo::in_stream)
+    {
+	const char *state = NULL;
+	switch (WvCrashInfo::in_stream_state)
+	{
+	case WvCrashInfo::UNUSED:
+	    // Can't possibly get here.
+	    break;
+	case WvCrashInfo::PRE_SELECT:
+	    state = "\nStream in pre_select: ";
+	    break;
+	case WvCrashInfo::POST_SELECT:
+	    state = "\nStream in post_select: ";
+	    break;
+	case WvCrashInfo::EXECUTE:
+	    state = "\nStream in execute: ";
+	    break;
+	}
+
+	if (state)
+	{
+	    static char ptr_str[32];
+	    snprintf(ptr_str, sizeof(ptr_str), "%p", WvCrashInfo::in_stream);
+	    ptr_str[sizeof(ptr_str) - 1] = '\0';
+
+	    wr(fd, state);
+	    wr(fd, WvCrashInfo::in_stream_id && WvCrashInfo::in_stream_id[0]
+	       ? WvCrashInfo::in_stream_id : "unknown stream");
+	    wr(fd, " (");
+	    wr(fd, ptr_str);
+	    wr(fd, ")\n");
+	}
+    }
+
     wr(fd, "\nBacktrace:\n");
     backtrace_symbols_fd(trace,
 		 backtrace(trace, sizeof(trace)/sizeof(trace[0])), fd);
