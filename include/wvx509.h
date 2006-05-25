@@ -349,19 +349,19 @@ public:
      * Set the Certificate to use X509v3, since that's all modern
      * PKI uses anyways :)
      */
-    void WvX509Mgr::set_version();
+    void set_version();
 
     /**
      * Get and set the keyUsage field.
      */
-    WvString WvX509Mgr::get_key_usage();
-    void WvX509Mgr::set_key_usage(WvStringParm values);
+    WvString get_key_usage();
+    void set_key_usage(WvStringParm values);
 
     /**
      * Get and set the extendedKeyUsage field.
      */
-    WvString WvX509Mgr::get_ext_key_usage();
-    void WvX509Mgr::set_ext_key_usage(WvStringParm values);
+    WvString get_ext_key_usage();
+    void set_ext_key_usage(WvStringParm values);
     
     /**
      * Return the Subject alt name if it exists, and WvString::null if

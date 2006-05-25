@@ -113,7 +113,7 @@ public:
     bool iswild() const;
 
     /** Returns true if the key has a trailing slash. */
-    bool UniConfKey::hastrailingslash() const;
+    bool hastrailingslash() const;
 
     /**
      * Returns the number of segments in this path.

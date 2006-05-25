@@ -57,7 +57,7 @@ struct WvUrlLink
     WvString linkname;
     WvUrl url;
 
-    WvUrlLink::WvUrlLink(WvStringParm _linkname, WvStringParm _url)
+    WvUrlLink(WvStringParm _linkname, WvStringParm _url)
 	: linkname(_linkname), url(_url)
     {}
 };

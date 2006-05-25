@@ -393,7 +393,7 @@ public:
     
 protected:
     void copy_constructor(const WvFastString &s);
-    inline void WvString::construct(const char *_str)
+    inline void construct(const char *_str)
         {
             link(&nullbuf, _str);
     
