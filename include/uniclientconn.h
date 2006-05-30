@@ -147,6 +147,8 @@ public:
      */
     void writetext(WvStringParm text);
 
+    bool pre_select(SelectInfo &si);
+
 private:
     /** Reads a message from the connection. */
     WvString readmsg();
