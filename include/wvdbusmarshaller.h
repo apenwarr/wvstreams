@@ -21,10 +21,10 @@ bool convert_next(DBusMessageIter *iter, WvString &s);
 
 
 template<typename P1>
-class WvDBusSignalListener : public IWvDBusMarshaller
+class WvDBusListener : public IWvDBusMarshaller
 {
 public:
-    WvDBusSignalListener(WvStringParm _path, WvCallback<void, P1> _cb) :
+    WvDBusListener(WvStringParm _path, WvCallback<void, P1> _cb) :
         IWvDBusMarshaller(_path)
     {
         cb = _cb;

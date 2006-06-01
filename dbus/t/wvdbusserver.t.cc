@@ -29,11 +29,11 @@ static void msg_received(WvDBusReplyMsg &reply, WvString arg1)
     messages_received++;
 }
 
-
 #if 0
-// FIXME: we can't run this test through valgrind because it complains
-// (erroneously, I think) about a leaking message. i think it's just
-// d-bus caching the message and not freeing it, but i'm not 100% sure
+// FIXME: we can't run this test through valgrind without a dumb suppression 
+// because it complains (erroneously, I think) about a leaking message. i think
+// it's just d-bus caching the message and not freeing it, but i'm not 100% 
+// sure
 WVTEST_SLOW_MAIN("basic sanity")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -67,20 +67,18 @@ WVTEST_SLOW_MAIN("basic sanity")
 
     WvDBusConn conn1("ca.nit.MySender", addr);
     WvDBusConn conn2("ca.nit.MyListener", addr);
-    WvDBusListener<WvString> *l = 
-        new WvDBusListener<WvString>(&conn2, "bar", msg_received);
+    WvDBusMethodListener<WvString> *l = 
+        new WvDBusMethodListener<WvString>(&conn2, "bar", msg_received);
     conn2.add_method("ca.nit.foo", "/ca/nit/foo", l);
 
-    WvDBusMsg msg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
-    msg.append("bee");
+    // needed if we're going to be using dbus_shutdown
+    WvDBusMsg *msg = new WvDBusMsg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
+    msg->append("bee");
 
-    WvDBusMarshaller<WvString> reply("/ca/nit/foo/bar",
-                                     WvCallback<void, WvString>(reply_received));
-    conn1.send(msg, &reply, false);
+    WvDBusListener<WvString> reply("/ca/nit/foo/bar", reply_received);
+    conn1.send(*msg, &reply, false);
     WvIStreamList::globallist.append(&conn1, false);
     WvIStreamList::globallist.append(&conn2, false);
-
-    time_t now = time(NULL);
 
     fprintf(stderr, "Spinning..\n");
     while (replies_received < 1 || messages_received < 1)
@@ -103,10 +101,9 @@ WVTEST_SLOW_MAIN("basic sanity")
     WVPASS(rv == child);
 
     unlink(busfname);
-    // see FIXME above. this doesn't help, although maybe it should?
-    // note that "msg" above would have to be turned into a pointer and
-    // explicitly freed first.
-    // dbus_shutdown()
-}
+    WVDELETE(msg);
 
+    // see FIXME above. this doesn't help, although maybe it should?
+    dbus_shutdown();
+}
 #endif

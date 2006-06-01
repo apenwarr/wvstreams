@@ -39,7 +39,7 @@ int main (int argc, char *argv[])
     msg.append("bee");
 
     // expect a reply with a single string as an argument
-    WvDBusSignalListener<WvString> reply("/ca/nit/foo/bar", foo);
+    WvDBusListener<WvString> reply("/ca/nit/foo/bar", foo);
     fprintf(stderr, "Sending message..?\n");
     conn->send(msg, &reply, false);
 

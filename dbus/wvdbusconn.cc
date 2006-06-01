@@ -126,8 +126,33 @@ void WvDBusConn::add_listener(WvStringParm interface, WvStringParm path,
 }
 
 
+void WvDBusConn::del_listener(WvStringParm interface, WvStringParm path,
+                              WvStringParm name)
+{
+    DBusError error;
+    dbus_error_init(&error);
+
+    dbus_bus_remove_match(priv->dbusconn, 
+                          WvString("type='signal',interface='%s'", interface),  &error);
+    if (dbus_error_is_set(&error))
+    {
+        log(WvLog::Error, "Oh no! Couldn't remove a match on the bus!\n");
+        return;
+    }
+
+    priv->del_marshaller(interface, path, name);
+}
+
+
 void WvDBusConn::add_method(WvStringParm interface, WvStringParm path, 
                             IWvDBusMarshaller *listener)
 {
     priv->add_marshaller(interface, path, listener);
+}
+
+
+void WvDBusConn::del_method(WvStringParm interface, WvStringParm path,
+                            WvStringParm name)
+{
+    priv->del_marshaller(interface, path, name);
 }

@@ -15,7 +15,7 @@
 
 static void foo(int b)
 {
-    fprintf(stderr, "wow! foo called! (%i)\n", b);
+    fprintf(stderr, "wow! ca.nit.foo.bar called! (%i)\n", b);
 }
 
 
@@ -23,8 +23,9 @@ int main (int argc, char *argv[])
 {
     WvDBusConn conn("ca.nit.MySignalListener");
     
-    WvDBusSignalListener<int> m("bar", &foo);
+    WvDBusListener<int> m("bar", &foo);
     conn.add_listener("ca.nit.foo", "/ca/nit/foo", &m);
+
     WvIStreamList::globallist.append(&conn, false, "wvdbus conn");
     
     while (WvIStreamList::globallist.isok())

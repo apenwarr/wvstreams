@@ -47,12 +47,24 @@ public:
                       IWvDBusMarshaller *marshaller);
 
     /**
+     * Removes a signal listener from the bus connection.
+     */
+    void del_listener(WvStringParm interface, WvStringParm path,
+                      WvStringParm name);
+
+    /**
      * Adds a method to the bus connection: all method calls matching
      * the interface and path specification will be forwarded to the 
      * appropriate marshaller. 
      */
     void add_method(WvStringParm interface, WvStringParm path, 
                     IWvDBusMarshaller *listener);
+
+    /**
+     * Removes a method from the bus connection.
+     */
+    void del_method(WvStringParm interface, WvStringParm path,
+                    WvStringParm name);
 
     operator DBusConnection* () const;
 

@@ -202,6 +202,20 @@ void WvDBusConnPrivate::add_marshaller(WvStringParm interface,
 }
 
 
+void WvDBusConnPrivate::del_marshaller(WvStringParm interface, 
+                                       WvStringParm path, WvStringParm name)
+{
+    if (!ifacedict[interface])
+    {
+        log(WvLog::Warning, "Attempted to delete marshaller with interface "
+            "'%s', but interface does not exist! (path: %s name: %s)\n",
+            path, name);
+        return;
+    }
+    
+}
+
+
 void WvDBusConnPrivate::pending_call_notify(DBusPendingCall *pending, 
                                             void *user_data)
 {

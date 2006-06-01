@@ -29,7 +29,8 @@ class WvDBusInterface
 {
 public:
     WvDBusInterface(WvStringParm _name) :
-        d(10)
+        d(10),
+        log("DBus Interface", WvLog::Debug)
     {
         name = _name;
     }
@@ -43,10 +44,30 @@ public:
         d[path]->d.add(marshaller, true);
     }
 
+    void del_marshaller(WvStringParm path, WvStringParm name)
+    {
+        WvDBusObject *o = d[path];
+        if (!o)
+        {
+            log(WvLog::Warning, "Attempted to delete marshaller from object "
+                "'%s', but object does not exist! (name: %s)\n", path, name);
+            return;
+        }
+
+        IWvDBusMarshaller *m = o->d[name];
+        if (!m)
+        {
+            log(WvLog::Warning, "Attempted to delete marshaller from object "
+                "'%s', but name does not exist! (name: %s)\n", path, name);
+            return;
+        }
+
+        o->d.remove(m);
+    }
+
     void handle_signal(WvStringParm objname, WvStringParm member, 
                        WvDBusConn *conn, DBusMessage *msg)
     {
-        fprintf(stderr, "objname is '%s'\n", objname.cstr());
         if (d[objname])
         {
             WvDBusObject *obj = d[objname];
@@ -57,6 +78,7 @@ public:
 
     WvString name; // FIXME: ideally wouldn't be public
     WvDBusObjectDict d;
+    WvLog log;
 };
 
 DeclareWvDict(WvDBusInterface, WvString, name);
@@ -76,6 +98,8 @@ public:
 
     void add_marshaller(WvStringParm interface, WvStringParm path, 
                         IWvDBusMarshaller *marshaller);
+    void del_marshaller(WvStringParm interface,  WvStringParm path, 
+                        WvStringParm name);
 
     virtual dbus_bool_t add_watch(DBusWatch *watch);
     virtual void remove_watch(DBusWatch *watch);
