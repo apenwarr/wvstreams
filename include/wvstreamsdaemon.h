@@ -109,21 +109,19 @@ public:
     //! Add a stream to the daemon; don't do anything if it goes !isok().
     //! This should be called from the WvStreamsDaemonCallback function
     //! passed to the constructor.
-    void add_stream(IWvStream *istream,
-		    bool auto_free, char *id);
+    void add_stream(IWvStream *istream, bool auto_free, const char *id);
     //! Add a stream to the daemon; the daemon will restart, re-populating
     //! the initial streams using the callback passed to the constructor,
     //! if the stream goes !isok().
     //! This should be called from the WvStreamsDaemonCallback function
     //! passed to the constructor.
-    void add_restart_stream(IWvStream *istream,
-			    bool auto_free, char *id);
+    void add_restart_stream(IWvStream *istream, bool auto_free, 
+                            const char *id);
     //! Add a stream to the daemon; if the stream goes !isok() the daemon
     //! will exit.
     //! This should be called from the WvStreamsDaemonCallback function
     //! passed to the constructor.
-    void add_die_stream(IWvStream *istream,
-			bool auto_free, char *id);
+    void add_die_stream(IWvStream *istream, bool auto_free, const char *id);
 
     //! If this member is called then any existing streams on the globallist 
     //! added *after* the WvStreamsDaemonCallback was executed will be closed
