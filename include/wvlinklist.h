@@ -310,8 +310,10 @@ public:
      * 
      */ 
     void unlink_first()
+    { 
+        if(head.next != NULL)   
         { Iter i(*this); i.rewind(); i.next(); i.unlink(); }
-
+    }
     /**
      * Unlinks the element that follows the specified link in the list.
      * 
@@ -323,12 +325,15 @@ public:
     void unlink_after(WvLink *after, bool destroy = true)
     {
         WvLink *next = after->next;
-        T *obj = (destroy && next->get_autofree()) ?
+        if(next != NULL)
+        {
+            T *obj = (destroy && next->get_autofree()) ?
             static_cast<T*>(next->data) : NULL;
-        if (next == tail) tail = after;
-        next->unlink(after);
-	if (obj)
-	    WvTraits<T>::release(obj);
+            if (next == tail) tail = after;
+            next->unlink(after);
+	    if (obj)
+	        WvTraits<T>::release(obj);
+        }
     }
 
     /**
