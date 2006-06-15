@@ -1228,6 +1228,20 @@ WvString local_date(time_t when)
     return out;
 }
 
+WvString intl_date(time_t when)
+{
+    WvString out;
+    out.setsize(24);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when); 
+    strftime(out.edit(), 24, "%F %H:%M:%S", tmwhen);
+
+    return out;
+}
+
 
 // Removes any trailing punctuation ('.', '?', or '!') from the line
 WvString depunctuate(WvStringParm line)

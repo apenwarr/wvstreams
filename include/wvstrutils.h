@@ -152,6 +152,9 @@ WvString rfc1123_date(time_t _when);
 /** Return the local date (TZ applied) out of _when */
 WvString local_date(time_t _when = -1);
 
+/** Return the local date (in format of ISO 8601) out of _when */
+WvString intl_date(time_t _when = -1);
+
 #ifndef _WIN32
 /**
  * Similar to crypt(), but this randomly selects its own salt.
