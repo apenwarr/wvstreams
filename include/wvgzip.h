@@ -9,6 +9,7 @@
 
 #include "wvencoder.h"
 #include "wvencoderstream.h"
+#include "wvlog.h"
 
 struct z_stream_s;
 
@@ -84,6 +85,7 @@ private:
     WvInPlaceBuf tmpbuf;
     Mode mode;
     size_t output;
+    WvLog log;
 
     void init();
     void close();
