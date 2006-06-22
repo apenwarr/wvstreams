@@ -1228,7 +1228,35 @@ WvString local_date(time_t when)
     return out;
 }
 
+WvString intl_time(time_t when)
+{
+    WvString out;
+    out.setsize(12);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when); 
+    strftime(out.edit(), 12, "%H:%M:%S", tmwhen);
+
+    return out;
+}
+
 WvString intl_date(time_t when)
+{
+    WvString out;
+    out.setsize(16);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when); 
+    strftime(out.edit(), 16, "%F", tmwhen);
+
+    return out;
+}
+
+WvString intl_datetime(time_t when)
 {
     WvString out;
     out.setsize(24);
