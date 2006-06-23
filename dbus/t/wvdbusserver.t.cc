@@ -1,6 +1,6 @@
 #include "uniconfroot.h"
 #include "wvdbusconn.h"
-#include "wvdbusmarshaller.h"
+#include "wvdbuslistener.h"
 #include "wvdbusserver.h"
 #include "wvfile.h"
 #include "wvfileutils.h"
@@ -29,10 +29,7 @@ static void msg_received(WvDBusReplyMsg &reply, WvString arg1)
     messages_received++;
 }
 
-// FIXME: we can't run this test through valgrind without a dumb suppression 
-// because it complains (erroneously, I think) about a leaking message. i think
-// it's just d-bus caching the message and not freeing it, but i'm not 100% 
-// sure
+
 WVTEST_SLOW_MAIN("basic sanity")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -104,6 +101,5 @@ WVTEST_SLOW_MAIN("basic sanity")
 
     WvIStreamList::globallist.zap();
 
-    // see FIXME above. this doesn't help, although maybe it should?
     dbus_shutdown();
 }

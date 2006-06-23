@@ -9,7 +9,7 @@
  *   'dbus-send /ca/nit/foo ca.nit.foo.bar int32:12'
  */ 
 #include "wvdbusconn.h"
-#include "wvdbusmarshaller.h"
+#include "wvdbuslistener.h"
 #include "wvistreamlist.h"
 
 

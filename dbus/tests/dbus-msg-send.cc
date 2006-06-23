@@ -9,7 +9,7 @@
  */ 
 #include "wvargs.h"
 #include "wvdbusconn.h"
-#include "wvdbusmarshaller.h"
+#include "wvdbuslistener.h"
 #include "wvistreamlist.h"
 
 

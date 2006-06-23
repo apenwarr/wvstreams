@@ -5,7 +5,7 @@
  */ 
 #ifndef __WVDBUSCONN_H
 #define __WVDBUSCONN_H
-#include "iwvdbusmarshaller.h"
+#include "iwvdbuslistener.h"
 #include "wvdbusmsg.h"
 #include "wvfdstream.h"
 #include "wvhashtable.h"
@@ -35,16 +35,16 @@ public:
     virtual void close();
     virtual void send(WvDBusMsg &msg);
     virtual void send(WvDBusMsg &msg, uint32_t &serial);
-    virtual void send(WvDBusMsg &msg, IWvDBusMarshaller *reply, 
+    virtual void send(WvDBusMsg &msg, IWvDBusListener *reply, 
                       bool autofree_reply);
 
     /**
      * Adds a signal listener to the bus connection: all signals matching 
      * the interface and path specification will be forwarded to the
-     * appropriate marshaller.
+     * appropriate listener.
      */
     void add_listener(WvStringParm interface, WvStringParm path, 
-                      IWvDBusMarshaller *marshaller);
+                      IWvDBusListener *listener);
 
     /**
      * Removes a signal listener from the bus connection.
@@ -55,10 +55,10 @@ public:
     /**
      * Adds a method to the bus connection: all method calls matching
      * the interface and path specification will be forwarded to the 
-     * appropriate marshaller. 
+     * appropriate listener. 
      */
     void add_method(WvStringParm interface, WvStringParm path, 
-                    IWvDBusMarshaller *listener);
+                    IWvDBusListener *listener);
 
     /**
      * Removes a method from the bus connection.

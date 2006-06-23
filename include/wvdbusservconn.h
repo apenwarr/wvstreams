@@ -22,10 +22,10 @@ public:
         return true; //conn;
     }
 
-    virtual void add_marshaller(WvStringParm interface, WvStringParm path,
-                                IWvDBusMarshaller *marshaller);
+    virtual void add_listener(WvStringParm interface, WvStringParm path,
+                                IWvDBusListener *listener);
 //     virtual void add_method(WvStringParm interface, WvStringParm path,
-//                     IWvDBusMarshaller *listener);
+//                     IWvDBusListener *listener);
 
 private:
     void proxy_msg(WvDBusMsg &msg);

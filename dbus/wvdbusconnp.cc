@@ -189,25 +189,25 @@ void WvDBusConnPrivate::request_name(WvStringParm name)
 }
 
 
-void WvDBusConnPrivate::add_marshaller(WvStringParm interface, 
+void WvDBusConnPrivate::add_listener(WvStringParm interface, 
                                        WvStringParm path,
-                                       IWvDBusMarshaller *marshaller)
+                                       IWvDBusListener *listener)
 {
     if (!ifacedict[interface])
     {
         ifacedict.add(new WvDBusInterface(interface), true);
     }
 
-    ifacedict[interface]->add_marshaller(path, marshaller);
+    ifacedict[interface]->add_listener(path, listener);
 }
 
 
-void WvDBusConnPrivate::del_marshaller(WvStringParm interface, 
+void WvDBusConnPrivate::del_listener(WvStringParm interface, 
                                        WvStringParm path, WvStringParm name)
 {
     if (!ifacedict[interface])
     {
-        log(WvLog::Warning, "Attempted to delete marshaller with interface "
+        log(WvLog::Warning, "Attempted to delete listener with interface "
             "'%s', but interface does not exist! (path: %s name: %s)\n",
             path, name);
         return;
@@ -219,19 +219,19 @@ void WvDBusConnPrivate::del_marshaller(WvStringParm interface,
 void WvDBusConnPrivate::pending_call_notify(DBusPendingCall *pending, 
                                             void *user_data)
 {
-    IWvDBusMarshaller * marshaller = (IWvDBusMarshaller *) user_data;
+    IWvDBusListener * listener = (IWvDBusListener *) user_data;
     DBusMessage *msg = dbus_pending_call_steal_reply(pending);
 
-    marshaller->dispatch(msg);
+    listener->dispatch(msg);
     dbus_pending_call_unref(pending);
     dbus_message_unref(msg);
 }
 
 
-void WvDBusConnPrivate::remove_marshaller_cb(void *memory)
+void WvDBusConnPrivate::remove_listener_cb(void *memory)
 {
-    IWvDBusMarshaller * marshaller = (IWvDBusMarshaller *) memory;
-    delete marshaller;
+    IWvDBusListener * listener = (IWvDBusListener *) memory;
+    delete listener;
 }
 
 

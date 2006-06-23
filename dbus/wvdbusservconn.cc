@@ -5,7 +5,7 @@
  */ 
 #include "wvdbusconnp.h"
 #include "wvdbusservconn.h"
-#include "wvdbusmarshaller.h"
+#include "wvdbuslistener.h"
 
 
 class WvDBusServConnPrivate : public WvDBusConnPrivate
@@ -77,9 +77,9 @@ WvDBusServConn::WvDBusServConn(DBusConnection *_c, WvDBusServer *_s) :
     WvDBusMethodListener<WvString> *l3 =
         new WvDBusMethodListener<WvString>(this, "ReleaseName", cb3);
 
-    add_marshaller("org.freedesktop.DBus", "/org/freedesktop/DBus", l1);
-    add_marshaller("org.freedesktop.DBus", "/org/freedesktop/DBus", l2);
-    add_marshaller("org.freedesktop.DBus", "/org/freedesktop/DBus", l3);
+    add_listener("org.freedesktop.DBus", "/org/freedesktop/DBus", l1);
+    add_listener("org.freedesktop.DBus", "/org/freedesktop/DBus", l2);
+    add_listener("org.freedesktop.DBus", "/org/freedesktop/DBus", l3);
 }
 
 
@@ -108,8 +108,8 @@ void WvDBusServConn::release_name_cb(WvDBusReplyMsg &reply, WvString _name)
 }
 
 
-void WvDBusServConn::add_marshaller(WvStringParm interface, WvStringParm path, 
-                                    IWvDBusMarshaller *marshaller)
+void WvDBusServConn::add_listener(WvStringParm interface, WvStringParm path, 
+                                    IWvDBusListener *listener)
 {
-    priv->add_marshaller(interface, path, marshaller);
+    priv->add_listener(interface, path, listener);
 }

@@ -5,7 +5,7 @@
  */ 
 #ifndef __WVDBUSMSG_H
 #define __WVDBUSMSG_H
-#include "iwvdbusmarshaller.h"
+#include "iwvdbuslistener.h"
 #include "wvfdstream.h"
 #include "wvhashtable.h"
 #include "wvistreamlist.h"

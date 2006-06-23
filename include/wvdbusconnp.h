@@ -6,21 +6,21 @@
 #ifndef __WVDBUSCONNP_H
 #define __WVDBUSCONNP_H
 #include <dbus/dbus.h>
-#include "iwvdbusmarshaller.h"
+#include "iwvdbuslistener.h"
 #include "wvhashtable.h"
 #include "wvlog.h"
 #include "wvstring.h"
 
 class WvDBusConn;
 
-DeclareWvDict(IWvDBusMarshaller, WvString, member);
+DeclareWvDict(IWvDBusListener, WvString, member);
 
 class WvDBusObject
 {
 public:
     WvDBusObject(WvStringParm _path) : d(10) { path = _path; }
     WvString path;
-    IWvDBusMarshallerDict d;
+    IWvDBusListenerDict d;
 };
 
 DeclareWvDict(WvDBusObject, WvString, path);
@@ -35,29 +35,29 @@ public:
         name = _name;
     }
 
-    void add_marshaller(WvString path, IWvDBusMarshaller *marshaller)
+    void add_listener(WvString path, IWvDBusListener *listener)
     {
         if (!d[path])
             d.add(new WvDBusObject(path), true);
 
         // FIXME: what about duplicates?
-        d[path]->d.add(marshaller, true);
+        d[path]->d.add(listener, true);
     }
 
-    void del_marshaller(WvStringParm path, WvStringParm name)
+    void del_listener(WvStringParm path, WvStringParm name)
     {
         WvDBusObject *o = d[path];
         if (!o)
         {
-            log(WvLog::Warning, "Attempted to delete marshaller from object "
+            log(WvLog::Warning, "Attempted to delete listener from object "
                 "'%s', but object does not exist! (name: %s)\n", path, name);
             return;
         }
 
-        IWvDBusMarshaller *m = o->d[name];
+        IWvDBusListener *m = o->d[name];
         if (!m)
         {
-            log(WvLog::Warning, "Attempted to delete marshaller from object "
+            log(WvLog::Warning, "Attempted to delete listener from object "
                 "'%s', but name does not exist! (name: %s)\n", path, name);
             return;
         }
@@ -96,9 +96,9 @@ public:
     void init(bool client);
     void request_name(WvStringParm name);
 
-    void add_marshaller(WvStringParm interface, WvStringParm path, 
-                        IWvDBusMarshaller *marshaller);
-    void del_marshaller(WvStringParm interface,  WvStringParm path, 
+    void add_listener(WvStringParm interface, WvStringParm path, 
+                        IWvDBusListener *listener);
+    void del_listener(WvStringParm interface,  WvStringParm path, 
                         WvStringParm name);
 
     virtual dbus_bool_t add_watch(DBusWatch *watch);
@@ -115,7 +115,7 @@ public:
 
 
     static void pending_call_notify(DBusPendingCall *pending, void *user_data);
-    static void remove_marshaller_cb(void *memory);
+    static void remove_listener_cb(void *memory);
 
     void execute();
     void close();

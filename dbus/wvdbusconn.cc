@@ -73,7 +73,7 @@ void WvDBusConn::send(WvDBusMsg &msg, uint32_t &serial)
 }
 
 
-void WvDBusConn::send(WvDBusMsg &msg, IWvDBusMarshaller *reply, 
+void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply, 
                       bool autofree_reply)
 {
     log(WvLog::Debug, "Sending message.\n");
@@ -95,7 +95,7 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusMarshaller *reply,
 
     DBusFreeFunction free_user_data = NULL;
     if (autofree_reply)
-        free_user_data = &WvDBusConnPrivate::remove_marshaller_cb;
+        free_user_data = &WvDBusConnPrivate::remove_listener_cb;
 
     if (!dbus_pending_call_set_notify(pending, 
                                       &WvDBusConnPrivate::pending_call_notify,
@@ -109,7 +109,7 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusMarshaller *reply,
 
 
 void WvDBusConn::add_listener(WvStringParm interface, WvStringParm path, 
-                              IWvDBusMarshaller *marshaller)
+                              IWvDBusListener *listener)
 {
     DBusError error;
     dbus_error_init(&error);
@@ -122,7 +122,7 @@ void WvDBusConn::add_listener(WvStringParm interface, WvStringParm path,
         return;
     }
 
-    priv->add_marshaller(interface, path, marshaller);    
+    priv->add_listener(interface, path, listener);    
 }
 
 
@@ -140,19 +140,19 @@ void WvDBusConn::del_listener(WvStringParm interface, WvStringParm path,
         return;
     }
 
-    priv->del_marshaller(interface, path, name);
+    priv->del_listener(interface, path, name);
 }
 
 
 void WvDBusConn::add_method(WvStringParm interface, WvStringParm path, 
-                            IWvDBusMarshaller *listener)
+                            IWvDBusListener *listener)
 {
-    priv->add_marshaller(interface, path, listener);
+    priv->add_listener(interface, path, listener);
 }
 
 
 void WvDBusConn::del_method(WvStringParm interface, WvStringParm path,
                             WvStringParm name)
 {
-    priv->del_marshaller(interface, path, name);
+    priv->del_listener(interface, path, name);
 }
