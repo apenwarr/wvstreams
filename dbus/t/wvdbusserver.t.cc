@@ -29,7 +29,6 @@ static void msg_received(WvDBusReplyMsg &reply, WvString arg1)
     messages_received++;
 }
 
-#if 0
 // FIXME: we can't run this test through valgrind without a dumb suppression 
 // because it complains (erroneously, I think) about a leaking message. i think
 // it's just d-bus caching the message and not freeing it, but i'm not 100% 
@@ -103,7 +102,8 @@ WVTEST_SLOW_MAIN("basic sanity")
     unlink(busfname);
     WVDELETE(msg);
 
+    WvIStreamList::globallist.zap();
+
     // see FIXME above. this doesn't help, although maybe it should?
     dbus_shutdown();
 }
-#endif

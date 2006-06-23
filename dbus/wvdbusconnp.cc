@@ -224,6 +224,7 @@ void WvDBusConnPrivate::pending_call_notify(DBusPendingCall *pending,
 
     marshaller->dispatch(msg);
     dbus_pending_call_unref(pending);
+    dbus_message_unref(msg);
 }
 
 
