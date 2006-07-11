@@ -1109,4 +1109,81 @@ WVTEST_MAIN("wvreadlink")
         unlink(symlink_name);
     }
 }
+
+bool checkdateformat(WvString dtstr)
+{
+
+    char * head = dtstr.edit();
+    char * p = head;
+
+    p += 4;
+    if(*p == '-')
+        *p = '0';
+    p += 3;
+    if(*p == '-')
+        *p = '0';
+    p = head;
+
+    for(int i = 0; i < 10; i++,p++)
+        if(!isdigit(*p))
+            return false;
     
+    return true;
+}
+
+bool checktimeformat(WvString dtstr)
+{
+
+    char * head = dtstr.edit();
+    char * p = head;
+
+    p += 2;
+    if(*p == ':')
+        *p = '0';
+    p += 3;
+    if(*p == ':')
+        *p = '0';
+    p = head;
+
+    for(int i = 0; i < 8; i++,p++)
+        if(!isdigit(*p))
+            return false;
+
+   return true;         
+}
+
+bool checkdatetimeformat(WvString dtstr)
+{
+    bool res = false;
+    char * head, *p ;
+
+    head = p = dtstr.edit(); p += 10;
+    if(*p == ' ')
+    {
+        *p = 0;
+        p++;
+        WvString ds(head);
+        WvString ts(p);
+        if(checktimeformat(ts) && checkdateformat(ds))
+            res = true;
+    }
+
+    return res;
+}
+
+    
+WVTEST_MAIN("intl_datetime")
+{
+    time_t dt = 1152558117;
+    
+    WVPASS(intl_date(dt) == "2006-07-10");
+    WVPASS(intl_time(dt) == "19:01:57");
+    WVPASS(intl_datetime(dt) == "2006-07-10 19:01:57");
+
+    WVPASS(checktimeformat(intl_time(dt)));
+    WVPASS(checkdateformat(intl_date(dt)));
+    WVPASS(checkdatetimeformat(intl_datetime(dt)));
+
+}
+
+
