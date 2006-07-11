@@ -7,6 +7,7 @@
 #else
 #include <unistd.h>
 #endif
+#include <stdio.h>
 
 /**
  * Functions in strutils.h left untested:
@@ -1177,8 +1178,13 @@ WVTEST_MAIN("intl_datetime")
     time_t dt = 1152558117;
     
     WVPASS(intl_date(dt) == "2006-07-10");
+    printf("intl_date(dt) is: [%s]\n\n", intl_date(dt).cstr());
+
     WVPASS(intl_time(dt) == "19:01:57");
+    printf("intl_time(dt) is: [%s]\n\n", intl_time(dt).cstr());
+
     WVPASS(intl_datetime(dt) == "2006-07-10 19:01:57");
+    printf("intl_datetime(dt) is: [%s]\n\n", intl_datetime(dt).cstr());
 
     WVPASS(checktimeformat(intl_time(dt)));
     WVPASS(checkdateformat(intl_date(dt)));
