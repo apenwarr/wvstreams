@@ -1175,6 +1175,11 @@ bool checkdatetimeformat(WvString dtstr)
     
 WVTEST_MAIN("intl_datetime")
 {
+    // In order to make this test not depend on the local 
+    // time zone, dt is initialized as a number in time zone
+    // UTC, then minus the offset of current between current
+    // time zone and UTC. So that it can be compared with 
+    // those string describing UTC time. 
     time_t dt = 1152558117;
     struct tm *dtm = localtime(&dt);
     dt -= dtm->tm_gmtoff;
