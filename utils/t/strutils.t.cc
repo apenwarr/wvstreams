@@ -1183,11 +1183,10 @@ WVTEST_MAIN("intl_datetime")
     time_t dt = 1152558117;
     struct tm *dtm = localtime(&dt);
     dt -= dtm->tm_gmtoff;
-
     
-    WVPASS(intl_date(dt) == "2006-07-10");
-    WVPASS(intl_time(dt) == "19:01:57");
-    WVPASS(intl_datetime(dt) == "2006-07-10 19:01:57");
+    WVPASSEQ(intl_date(dt), "2006-07-10");
+    WVPASSEQ(intl_time(dt), "19:01:57");
+    WVPASSEQ(intl_datetime(dt), "2006-07-10 19:01:57");
 
 
     WVPASS(checktimeformat(intl_time(dt)));
