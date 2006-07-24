@@ -21,7 +21,7 @@ const char *wvcrash_read_will();
 // Read the assertion back.
 const char *wvcrash_read_assert();
 
-const int wvcrash_ring_buffer_order = 10;
+const int wvcrash_ring_buffer_order = 12;
 const int wvcrash_ring_buffer_size = 1 << wvcrash_ring_buffer_order;
 void wvcrash_ring_buffer_put(const char *str);
 void wvcrash_ring_buffer_put(const char *str, size_t len);

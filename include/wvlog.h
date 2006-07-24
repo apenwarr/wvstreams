@@ -140,6 +140,9 @@ public:
     /** a useful substitute for the normal C perror() function */
     void perror(WvStringParm s)
         { print("%s: %s\n", s, strerror(errno)); }
+
+public:
+    const char *wstype() const { return "WvLog"; }
 };
 
 

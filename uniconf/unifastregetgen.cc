@@ -25,10 +25,12 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
 static WvMoniker<IUniConfGen> reg("fast-reget", creator);
 
 
-UniFastRegetGen::UniFastRegetGen(IUniConfGen *_inner)
-    : UniFilterGen(_inner)
+UniFastRegetGen::UniFastRegetGen(IUniConfGen *_inner) :
+    UniFilterGen(_inner)
 {
+    hold_delta(); // Guard against callbacks firing before tree is initialised
     tree = new UniConfValueTree(NULL, "/", UniFilterGen::get("/"));
+    unhold_delta();
 }
 
 

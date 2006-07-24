@@ -17,6 +17,9 @@ class WvLoopback : public WvFDStream
 {
 public:
     WvLoopback();
+
+public:
+    const char *wstype() const { return "WvLoopback"; }
 };
 
 #endif // __WVLOOPBACK_H

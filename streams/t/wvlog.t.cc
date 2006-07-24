@@ -116,6 +116,57 @@ WVTEST_MAIN("keep single log lines together")
     WVPASS(unlink(logfilename) == 0);
 }
 
+class WvNoisyLogRcv : public WvLogConsole
+{
+    WvString noise;
+    WvLog sublog;
+    
+public:
+    WvNoisyLogRcv(WvStringParm _noise, int fd, WvLog::LogLevel max_level) : 
+        WvLogConsole(fd, max_level),
+        noise(_noise),
+        sublog("WvNoisyLogRcv", max_level)
+    {
+    }
+
+    void WvNoisyLogRcv::log(WvStringParm source, int _loglevel,
+            const char *_buf, size_t len)
+    {
+        sublog("%s\n", noise);
+        return WvLogConsole::log(source, _loglevel, _buf, len);
+    }
+};
+
+// Test that if a log receiver generates a log message itself while logging,
+// that we log a warning about it and don't recurse endlessly.
+WVTEST_MAIN("Recursion avoidance")
+{
+    WvString noise("Recursive noise");
+    WvNoisyLogRcv noisy(noise, dup(1), WvLog::Debug5);
+
+    WvString logfilename("/tmp/wvlog-recursive-test.%s", getpid());
+    WvLogFileBase logfile(logfilename, WvLog::Debug5);
+
+    WvLog log("Regular log", WvLog::Error);
+    WvString logmsg("The pebble that starts an avalanche...");
+    log(logmsg);
+
+    WvFile file(logfilename, O_RDONLY);
+    WVPASS(file.isok());
+
+    // Test that we received all the log messages we were due
+    WVPASS(strstr(file.getline(), "Too many extra log messages "
+                "written while writing to the log.  Suppressing "
+                "additional messages."));
+    for (int i = 0; i < 6; ++i)
+        WVPASS(strstr(file.getline(), noise.cstr()));
+
+    WVPASS(strstr(file.getline(), logmsg.cstr()));
+
+    // Cleanup
+    WVPASSEQ(unlink(logfilename), 0);
+}
+
 #if 0
 WVTEST_MAIN("wvlog performance")
 {

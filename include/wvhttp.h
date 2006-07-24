@@ -58,6 +58,9 @@ public:
 public:
     WvURL url;
     State state;
+
+public:
+    const char *wstype() const { return "WvHTTPStream"; }
 };
 
 #endif // __WVHTTP_H

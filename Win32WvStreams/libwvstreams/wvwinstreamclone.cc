@@ -194,3 +194,15 @@ LRESULT CALLBACK WvWinStreamClone::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     }
     return 0;
 }
+
+
+
+void WvWinStreamClone::setclone(IWvStream *newclone)
+{
+    WvStreamClone::setclone(newclone);
+    
+    if (newclone != NULL)
+        my_type = WvString("WvWinStreamClone:%s", newclone->wstype());
+    else
+        my_type = "WvWinStreamClone:(none)";
+}

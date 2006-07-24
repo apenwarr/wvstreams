@@ -21,7 +21,10 @@
 
 #include "wvstring.h"
 #include "wvlinklist.h"
+#include "wvstreamsdebugger.h"
+#include "wvstringlist.h"
 #include "setjmp.h"
+#include <ucontext.h>
 
 #define WVTASK_MAGIC 0x123678
 
@@ -47,10 +50,12 @@ class WvTask
     int tid;
     
     size_t stacksize;
+    void *stack;
     bool running, recycled;
     
     WvTaskMan &man;
-    jmp_buf mystate;	// used for resuming the task
+    ucontext_t mystate;	// used for resuming the task
+    ucontext_t func_call, func_return;
     
     TaskFunc *func;
     void *userdata;
@@ -64,6 +69,8 @@ public:
     bool isrunning() const
         { return running; }
     void recycle();
+    int get_tid() const { return tid; }
+    WvString get_name() const { return name; }
 };
 
 
@@ -78,21 +85,22 @@ class WvTaskMan
     static int links;
     
     static int magic_number;
-    static WvTaskList free_tasks;
+    static WvTaskList all_tasks, free_tasks;
     
     static void get_stack(WvTask &task, size_t size);
     static void stackmaster();
     static void _stackmaster();
     static void do_task();
+    static void call_func(WvTask *task);
 
     static char *stacktop;
-    static jmp_buf stackmaster_task;
+    static ucontext_t stackmaster_task;
     
     static WvTask *stack_target;
-    static jmp_buf get_stack_return;
+    static ucontext_t get_stack_return;
     
     static WvTask *current_task;
-    static jmp_buf toplevel;
+    static ucontext_t toplevel;
     
     WvTaskMan();
     virtual ~WvTaskMan();
@@ -117,6 +125,13 @@ public:
     
     static WvTask *whoami()
         { return current_task; }
+
+    static const void *current_top_of_stack();
+    static size_t current_stacksize_limit();
+
+private:
+    static WvString debugger_tasks_run_cb(WvStringParm, WvStringList &,
+            WvStreamsDebugger::ResultCallback, void *);
 };
 
 
