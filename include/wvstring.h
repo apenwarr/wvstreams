@@ -183,6 +183,8 @@ public:
     {
 	const WvFastString *x[20];
 	
+        bzero(x, 20);
+
 	if (&__wvs_a0  != &null) x[ 0] = &__wvs_a0;
 	if (&__wvs_a1  != &null) x[ 1] = &__wvs_a1;
 	if (&__wvs_a2  != &null) x[ 2] = &__wvs_a2;
