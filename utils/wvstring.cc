@@ -601,7 +601,11 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	}
 	if (*iptr++ == 'c')
 	{
-            arg = (argnum > 0 ) ? **(argv + argnum -1): **argptr++;
+            argP = (argnum > 0 ) ?  (argv + argnum -1): argptr++;
+	    if (!*argP || !(**argP))
+		arg = " ";
+	    else
+		arg = (**argP);
 	    *optr++ = (char)atoi(arg);
 	}
     }
