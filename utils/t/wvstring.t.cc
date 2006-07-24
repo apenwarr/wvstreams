@@ -143,6 +143,37 @@ WVTEST_MAIN("fancy formatting")
     WVPASS(WvString("%6.3s", "a") == "     a");
 }
 
+
+WVTEST_MAIN("%$ns and %$nc formatting")
+{
+    WvString a("Hello"), b("World"), c("To"), d("The");
+     
+    // basic formatter
+    WvString x("%$1s %$3s %$4s %$2s.", a, b, c, d); 
+    WVPASS( x == "Hello To The World.");
+
+    x = WvString("%s %$3s %$4s %s.", a, b, c, d); 
+    WVPASS( x == "Hello To The World.");
+
+    x = WvString("%s %$3s ", a , b , c , d);
+    x.append("%$4s %$2s%$5c", a , b , c , d, '.');
+    WVPASS( x == "Hello To The World.");
+
+    x = WvString("This %$2s be %$4s%c %$19s", ':', "must", c, "nil"); 
+    WVPASS(x == "This must be nil: (nil)");
+
+    x = WvString("\"%$2s %$1s\" is same as \"%$2s %$1s\".", b, a, d, c); 
+    WVPASS( x == "\"Hello World\" is same as \"Hello World\".");
+
+    x = WvString("%c%$4c%$2c%$2c%$3c", 'H', 'l' , 'o' , 'e');
+    WVPASS(x == "Hello");
+    
+    x = WvString("%-10$1s%5$3$2s%4$4s %-7$2s.", a, b, c, d); 
+    WVPASS( x == "Hello        To The World  .");
+    
+}
+
+
 WVTEST_MAIN("conversion from int")
 {
     for (int i = 0; i < 1000000; ++i)
