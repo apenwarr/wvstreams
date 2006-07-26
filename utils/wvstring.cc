@@ -482,7 +482,7 @@ static const char *pparse(const char *cptr, bool &zeropad,
  * This function is usually called from some other function which allocates
  * the array automatically.
  *
- * %$ns ia also supported for internationalization purposes:
+ * %$ns (n > 0) is also supported for internationalization purposes. e.g.
  *   ("%$2s is arg2, and %$1s ia arg1", arg1, arg2) 
  */
 void WvFastString::do_format(WvFastString &output, const char *format,
@@ -598,7 +598,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	    }
 	    
 	    if ( argnum <= 0 ) 
-                argptr++;
+               argptr++;
 	    iptr++;
 	    continue;
 	}
