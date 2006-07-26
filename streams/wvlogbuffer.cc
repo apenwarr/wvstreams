@@ -86,6 +86,18 @@ void WvLogBuffer::_end_line()
         current.zap();
 }
 
+void WvLogBuffer::feed_receiver(WvLogRcv& receiver)
+{
+    WvLogBuffer::MsgList::Iter i(msgs);
+    i.rewind();
+    while (i.next())
+    {
+        WvLogBuffer::Msg &msg = *i;
+        receiver.log(msg.source, msg.level,
+	    msg.message.cstr(), msg.message.len());
+    }
+}
+
 
 void WvLogBuffer::dump(WvStream &s)
 {

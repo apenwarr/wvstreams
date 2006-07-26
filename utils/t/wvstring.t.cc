@@ -187,3 +187,29 @@ WVTEST_MAIN("conversion from int")
     WVPASSEQ(WvString(32767), "32767");
     WVPASSEQ(WvString(65535), "65535");
 }
+
+class WvFooString : public WvFastString
+{
+public:
+	static unsigned get_nullbuf_links()
+	{ return nullbuf.links; }
+};
+WVTEST_MAIN("nullbuf link counting")
+{
+    const WvString &ws = "WvString";
+    const WvFastString &wfs = "WvString";
+
+    unsigned before = WvFooString::get_nullbuf_links();
+    printf("nullbuf has %u links before\n", before);
+    {
+	WvString a("b");
+	WvString b(ws);
+	WvString c(wfs);
+    }
+    unsigned after = WvFooString::get_nullbuf_links();
+    printf("nullbuf has %u links after\n", after);
+
+    // BUGZID:20626
+    // ensure that we don't leak references when creating WvStrings
+    WVPASS(before == after);
+}

@@ -29,7 +29,6 @@ public:
      * Look up a character.  This will return true if 'c' is in 'set'.
      */
     bool operator[](const char c) const;
-    bool operator[](const int i) const;
 
     /**
      * Get the first character set into the mask

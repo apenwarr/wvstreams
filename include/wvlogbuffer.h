@@ -72,6 +72,9 @@ public:
 
     MsgList &messages()
     	{ end_line(); return msgs; }
+
+    void feed_receiver(WvLogRcv& receiver);
+
     void dump(WvStream &s);
 };
 
