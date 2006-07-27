@@ -2,6 +2,9 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  * 
+ * A WvDBusConn represents a connection to another application. Messages
+ * can be sent and received via this connection. In most cases, the
+ * other application is a message bus. 
  */ 
 #ifndef __WVDBUSCONN_H
 #define __WVDBUSCONN_H
@@ -20,16 +23,18 @@ class WvDBusConnPrivate;
 class WvDBusConn : public WvIStreamList
 {
 public:
+    /**
+     * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
+     * DBUS_BUS_SYSTEM).
+     */
     WvDBusConn(WvStringParm _name, DBusBusType bus = DBUS_BUS_SESSION);
+    /**
+     * Creates a new dbus connection on a bus with the prescribed address.
+     * Useful when you want to set up a connection to a custom server.
+     */
     WvDBusConn(WvStringParm _name, WvStringParm address);
-    WvDBusConn(DBusConnection *c);
-    WvDBusConn(WvDBusConn &c);
-    virtual ~WvDBusConn();
 
-    virtual bool isok() const
-    {
-        return true; //conn;
-    }
+    virtual ~WvDBusConn();
 
     virtual void execute();
     virtual void close();
@@ -43,14 +48,14 @@ public:
      * the interface and path specification will be forwarded to the
      * appropriate listener.
      */
-    void add_listener(WvStringParm interface, WvStringParm path, 
-                      IWvDBusListener *listener);
+    virtual void add_listener(WvStringParm interface, WvStringParm path,
+                              IWvDBusListener *listener);
 
     /**
      * Removes a signal listener from the bus connection.
      */
-    void del_listener(WvStringParm interface, WvStringParm path,
-                      WvStringParm name);
+    virtual void del_listener(WvStringParm interface, WvStringParm path,
+                              WvStringParm name);
 
     /**
      * Adds a method to the bus connection: all method calls matching
@@ -71,6 +76,12 @@ public:
     WvString name; // needs to be public for lookup
 
 protected:
+    /**
+     * Dummy constructor for WvDBusConn. Most useful for special applications, 
+     * which want to set up the priv class themselves (e.g.: WvDBusServConn).
+     */
+    WvDBusConn();
+
     WvDBusConnPrivate *priv;
     WvLog log;
 };

@@ -12,9 +12,7 @@ WvDBusConn::WvDBusConn(WvStringParm _name, DBusBusType bus)
     : name(_name), 
       log("WvDBusConn")
 {
-    log("Starting up..\n");
     priv = new WvDBusConnPrivate(this, name, bus);
-
 }
 
 
@@ -22,16 +20,13 @@ WvDBusConn::WvDBusConn(WvStringParm _name, WvStringParm address)
     : name(_name), 
       log("WvDBusConn")
 {
-    log("Starting up..\n");
     priv = new WvDBusConnPrivate(this, name, address);
-
 }
 
 
-WvDBusConn::WvDBusConn(DBusConnection *_c)
+WvDBusConn::WvDBusConn()
     : log("WvDBusConn")
 {
-    log("Starting up..");
 }
 
 
@@ -65,11 +60,8 @@ void WvDBusConn::send(WvDBusMsg &msg, uint32_t &serial)
 {
     if (!dbus_connection_send(priv->dbusconn, msg, &serial)) 
     { 
-        log(WvLog::Error, "Out Of Memory!\n"); 
-        // FIXME: what do we do NOW?
+        seterr_both(ENOMEM, "Out of memory.\n");
     }
-    else
-        log(WvLog::Debug, "DBus message sent with serial %s\n", serial);
 }
 
 
@@ -82,15 +74,8 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply,
     // FIXME: allow custom timeouts?
     if (!dbus_connection_send_with_reply(priv->dbusconn, msg, &pending, 1000)) 
     { 
-        log(WvLog::Error, "Out Of Memory!\n"); 
-        // FIXME: what do we do NOW?
+        seterr_both(ENOMEM, "Out of memory.\n");
         return;
-    }
-
-    if (pending == NULL) 
-    { 
-        log(WvLog::Error, "Pending Call Null\n"); 
-        // FIXME: what do we do NOW?
     }
 
     DBusFreeFunction free_user_data = NULL;
@@ -100,11 +85,7 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply,
     if (!dbus_pending_call_set_notify(pending, 
                                       &WvDBusConnPrivate::pending_call_notify,
                                       reply, free_user_data))
-    {
-        log(WvLog::Error, "Setting NOTIFY failed..\n"); 
-        // FIXME: what do we do NOW?
-    }
-
+        seterr_both(ENOMEM, "Out of memory.\n");
 }
 
 
@@ -133,7 +114,8 @@ void WvDBusConn::del_listener(WvStringParm interface, WvStringParm path,
     dbus_error_init(&error);
 
     dbus_bus_remove_match(priv->dbusconn, 
-                          WvString("type='signal',interface='%s'", interface),  &error);
+                          WvString("type='signal',interface='%s'", interface),  
+                          &error);
     if (dbus_error_is_set(&error))
     {
         log(WvLog::Error, "Oh no! Couldn't remove a match on the bus!\n");

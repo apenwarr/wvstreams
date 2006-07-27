@@ -2,6 +2,9 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  * 
+ * This class handles some private implementation details which I didn't
+ * want to clutter up WvDBusConn with. Its API is COMPLETELY SUBJECT TO CHANGE
+ * and SHOULD NOT BE USED by your application.
  */ 
 #ifndef __WVDBUSCONNP_H
 #define __WVDBUSCONNP_H

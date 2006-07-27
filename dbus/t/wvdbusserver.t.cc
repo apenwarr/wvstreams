@@ -14,7 +14,7 @@
 
 static int replies_received = 0;
 
-static void reply_received(WvString foo)
+static void reply_received(WvString foo, WvError err)
 {
     fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
     replies_received++;
@@ -22,7 +22,7 @@ static void reply_received(WvString foo)
 
 static int messages_received = 0;
 
-static void msg_received(WvDBusReplyMsg &reply, WvString arg1)
+static void msg_received(WvDBusReplyMsg &reply, WvString arg1, WvError err)
 {
     fprintf(stderr, "Message received, loud and clear.\n");
     reply.append(WvString("baz %s", arg1));

@@ -1,6 +1,11 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
+ *
+ * This class represents a dbus server, which may have multiple connections
+ * at the same time. It is intended purely for unit testing and debugging
+ * purposes and by no means should be used in production code (use the
+ * dbus daemon for that).
  * 
  */ 
 #ifndef __WVDBUSSERVER_H
@@ -42,8 +47,6 @@ public:
      *
      * For example:
      *    WvDBusServer s("unix:path=/tmp/foo");
-     *
-     * @param address moniker to construct the server
      *
      */
     WvDBusServer(WvStringParm addr);

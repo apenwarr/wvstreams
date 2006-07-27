@@ -13,9 +13,13 @@
 #include "wvistreamlist.h"
 
 
-static void foo(WvString foo)
+static void foo(WvString foo, WvError err)
 {
-    fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
+    if (err.isok())
+        fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
+    else
+        fprintf(stderr, "Received a message, but there was an error (%s).\n",
+                err.errstr().cstr());
 }
 
 

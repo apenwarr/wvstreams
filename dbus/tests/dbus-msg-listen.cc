@@ -4,7 +4,7 @@
  *
  * Test program which listens for a simple message with one argument (a 
  * string) and sends a reply, a single string. Best used in conjunction with 
- * the dbus-send program.
+ * the dbus-msg-send program.
  * 
  */ 
 #include "wvargs.h"
@@ -13,10 +13,16 @@
 #include "wvistreamlist.h"
 
 
-static void msg_received(WvDBusReplyMsg &reply, WvString arg1)
+static void msg_received(WvDBusReplyMsg &reply, WvString arg1, WvError err)
 {
-    fprintf(stderr, "Message received, loud and clear.\n");
-    reply.append(WvString("baz %s", arg1));
+    if (err.isok())
+    {
+        fprintf(stderr, "Message received, loud and clear.\n");
+        reply.append(WvString("baz %s", arg1));
+    }
+    else
+        fprintf(stderr, "Received a message, but there was an error (%s).\n",
+                err.errstr().cstr());
 }
 
 

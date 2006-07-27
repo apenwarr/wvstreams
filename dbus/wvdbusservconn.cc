@@ -56,60 +56,65 @@ public:
 
 
 WvDBusServConn::WvDBusServConn(DBusConnection *_c, WvDBusServer *_s) :
-    WvDBusConn(_c),
+    WvDBusConn(),
     server(_s),
     log("WvDBusServConn")
 {
     priv = new WvDBusServConnPrivate(this, _c, _s);
 
-    WvCallback<void, WvDBusReplyMsg &> cb1(
+    WvCallback<void, WvDBusReplyMsg &, WvError> cb1(
         this, &WvDBusServConn::hello_cb);
     WvDBusMethodListener<> *l1 =
         new WvDBusMethodListener<>(this, "Hello", cb1);
 
-    WvCallback<void, WvDBusReplyMsg &, WvString, uint32_t> cb2(
+    WvCallback<void, WvDBusReplyMsg &, WvString, uint32_t, WvError> cb2(
         this, &WvDBusServConn::request_name_cb);
     WvDBusMethodListener<WvString, uint32_t> *l2 =
         new WvDBusMethodListener<WvString, uint32_t>(this, "RequestName", cb2);
 
-    WvCallback<void, WvDBusReplyMsg &, WvString> cb3(
+    WvCallback<void, WvDBusReplyMsg &, WvString, WvError> cb3(
         this, &WvDBusServConn::release_name_cb);
     WvDBusMethodListener<WvString> *l3 =
         new WvDBusMethodListener<WvString>(this, "ReleaseName", cb3);
 
-    add_listener("org.freedesktop.DBus", "/org/freedesktop/DBus", l1);
-    add_listener("org.freedesktop.DBus", "/org/freedesktop/DBus", l2);
-    add_listener("org.freedesktop.DBus", "/org/freedesktop/DBus", l3);
+    add_method("org.freedesktop.DBus", "/org/freedesktop/DBus", l1);
+    add_method("org.freedesktop.DBus", "/org/freedesktop/DBus", l2);
+    add_method("org.freedesktop.DBus", "/org/freedesktop/DBus", l3);
 }
 
 
-void WvDBusServConn::hello_cb(WvDBusReplyMsg &reply)
-{
-    // whee!
+void WvDBusServConn::hello_cb(WvDBusReplyMsg &reply, WvError err)
+{    
     reply.append(WvString(":%s", rand()));
 }
 
 
 void WvDBusServConn::request_name_cb(WvDBusReplyMsg &reply, WvString _name, 
-                                     uint32_t flags)
+                                     uint32_t flags, WvError err)
 {
-    // whee!
+    if (!err.isok())
+    {
+        log("RequestName method called, but there was an error (%s).\n",
+            err.errstr());
+        return;
+    }
     reply.append(DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER);
     name = _name;
     server->register_conn(this);
 }
 
 
-void WvDBusServConn::release_name_cb(WvDBusReplyMsg &reply, WvString _name)
+void WvDBusServConn::release_name_cb(WvDBusReplyMsg &reply, WvString _name, 
+                                     WvError err)
 {
-    // whee!
+    if (!err.isok())
+    {
+        log("ReleaseName method called, but there was an error (%s).\n",
+            err.errstr());
+        return;
+    }
+
     reply.append(DBUS_RELEASE_NAME_REPLY_RELEASED);
     name = "";
 }
 
-
-void WvDBusServConn::add_listener(WvStringParm interface, WvStringParm path, 
-                                    IWvDBusListener *listener)
-{
-    priv->add_listener(interface, path, listener);
-}

@@ -13,9 +13,13 @@
 #include "wvistreamlist.h"
 
 
-static void foo(int b)
+static void foo(int b, WvError err)
 {
-    fprintf(stderr, "wow! ca.nit.foo.bar called! (%i)\n", b);
+    if (err.isok())
+        fprintf(stderr, "wow! ca.nit.foo.bar called! (%i)\n", b);
+    else
+        fprintf(stderr, "oops, our signal was called, but there was a "
+                "problem! (%s)", err.errstr().cstr());
 }
 
 
