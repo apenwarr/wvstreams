@@ -123,6 +123,13 @@ WVTEST_MAIN("formatting")
     d = WvString(d);
     WVPASS(d == "hellohellohellohello");
     WVPASS(d.len() == 20);
+
+    WvString str("%c%c%c%c%c", 'H', 'E', 'L', 'L', 'O'); 
+    WVPASSEQ(str, "HELLO");
+
+    WvString str1("%s %s %s", "Hello", "World"); // insufficient argumenst 
+    WVPASSEQ(str1, "Hello World (nil)");
+    
 }
 
 
@@ -150,26 +157,35 @@ WVTEST_MAIN("%$ns and %$nc formatting")
      
     // basic formatter
     WvString x("%$1s %$3s %$4s %$2s.", a, b, c, d); 
-    WVPASS( x == "Hello To The World.");
+    WVPASSEQ( x, "Hello To The World.");
 
     x = WvString("%s %$3s %$4s %s.", a, b, c, d); 
-    WVPASS( x == "Hello To The World.");
+    WVPASSEQ( x, "Hello To The World.");
 
     x = WvString("%s %$3s ", a , b , c , d);
     x.append("%$4s %$2s%$5c", a , b , c , d, '.');
-    WVPASS( x == "Hello To The World.");
+    WVPASSEQ( x, "Hello To The World.");
 
-    x = WvString("This %$2s be %$4s%c %$19s", ':', "must", c, "nil"); 
-    WVPASS(x == "This must be nil: (nil)");
+    x = WvString("This %$2s be %$4s%c %$5s", ':', "must", c, "nil"); 
+    WVPASSEQ( x, "This must be nil: (nil)");
+
+    x = WvString("This also %$2s be %$4s%c %$20s", ':', "must", c, "nil"); 
+    WVPASSEQ( x, "This also must be nil: (nil)");
+
+    x = WvString("But this %$3s be %$4s%$2c %$0s", "Ok", ':', "should", "OK");
+    WVPASSEQ( x, "But this should be OK: Ok");
+
+    x = WvString("%$4s this %s%$3c %$-1s", "one", "Ok", ':', "Same as", c );
+    WVPASSEQ( x, "Same as this one: Ok");
 
     x = WvString("\"%$2s %$1s\" is same as \"%$2s %$1s\".", b, a, d, c); 
-    WVPASS( x == "\"Hello World\" is same as \"Hello World\".");
+    WVPASSEQ( x, "\"Hello World\" is same as \"Hello World\".");
 
     x = WvString("%c%$4c%$2c%$2c%$3c", 'H', 'l' , 'o' , 'e');
-    WVPASS(x == "Hello");
+    WVPASSEQ( x, "Hello");
     
     x = WvString("%-10$1s%5$3$2s%4$4s %-7$2s.", a, b, c, d); 
-    WVPASS( x == "Hello        To The World  .");
+    WVPASSEQ( x, "Hello        To The World  .");
     
 }
 
