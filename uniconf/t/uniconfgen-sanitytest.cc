@@ -1,3 +1,9 @@
+/* -*- Mode: C++ -*-
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 1997-2006 Net Integration Technologies, Inc.
+ * 
+ * Basic sanity tests that all UniConf generators should probably pass
+ */ 
 #include "uniconfgen-sanitytest.h"
 
 #include "uniconf.h"
@@ -131,6 +137,40 @@ void UniConfGenSanityTester::test_trailing_slashes(IUniConfGen *g,
     WVPASSEQ(g->get("/simon/law"), WvString::null);
     WVFAIL(g->haschildren("simon///"));
 
+    // Test that we delete immediate and recursive children when we delete a
+    // section
+    g->set("//simon/law", "1");
+    g->set("//simon/law/foo", "1");
+    g->set("//simon/law/foo/bar", "1");
+    g->commit();
+    WVPASSEQ(g->get("/simon/law"), "1");
+    WVPASSEQ(g->get("/simon/law/foo"), "1");
+    WVPASSEQ(g->get("/simon/law/foo/bar"), "1");
+    g->set("//simon/", WvString::null);
+    g->commit();
+    WVPASSEQ(g->get("/simon/law"), WvString::null);
+    WVPASSEQ(g->get("/simon/law/foo"), WvString::null);
+    WVPASSEQ(g->get("/simon/law/foo/bar"), WvString::null);
+    WVFAIL(g->haschildren("simon///law//foo"));
+    WVFAIL(g->haschildren("simon///law//"));
+    WVFAIL(g->haschildren("simon///"));
+
+    // Test that we delete immediate and recursive autovivified children when
+    // we delete a section
+    g->set("//simon/law/foo/bar", "1");
+    g->commit();
+    WVPASSEQ(g->get("/simon/law"), WvString::null);
+    WVPASSEQ(g->get("/simon/law/foo"), WvString::null);
+    WVPASSEQ(g->get("/simon/law/foo/bar"), "1");
+    g->set("//simon/", WvString::null);
+    g->commit();
+    WVPASSEQ(g->get("/simon/law"), WvString::null);
+    WVPASSEQ(g->get("/simon/law/foo"), WvString::null);
+    WVPASSEQ(g->get("/simon/law/foo/bar"), WvString::null);
+    WVFAIL(g->haschildren("simon///law//foo/"));
+    WVFAIL(g->haschildren("simon///law//"));
+    WVFAIL(g->haschildren("simon///"));
+
     if (!!moniker)
     {
         UniConfRoot cfg(moniker);
@@ -225,17 +265,28 @@ void UniConfGenSanityTester::test_recursive_iter_sanity(WvStringParm moniker)
     root.xset("Foo/a", "1");
     root.xset("Foo/b", "2");
     root.xset("Foo/b/c", "3");
-    root.xset("Foo/d/e", "4");
+    root.xset("Foo/d/e", "5");
     root.xset("Bar/q", "Baz");
 
     UniConf::RecursiveIter ii(root["/Foo"]);
-    int jj;
-    for (jj = 0, ii.rewind(); ii.next(); jj++)
+    int jj = 0;
+    for (ii.rewind(); ii.next(); )
     {
-        WVFAILEQ(ii->fullkey().printable(), root[ii->fullkey()].getme());
-        //WVPASSEQ(root[ii->fullkey()].getmeint(), jj);
+        jj++;
+        int val = ii->getmeint();
+        if (ii->fullkey().printable() == "Foo/d")
+        {
+            WVPASSEQ(val, 0);
+            // The fourth value we read is Foo/d, which is autovivified
+            val = 4;
+        }
+
+        WVFAILEQ(ii->fullkey().printable(), ii->getme());
+        WVPASSEQ(val, jj);
+        //WVPASSEQ(ii->fullkey().printable(), ii->getme());
     }
-    // Check that we iterated over five entries (the four created, plus /Foo/d)
+    // Check that we iterated over the four entries under Foo, as well as the
+    // auto-vivified Foo/d
     WVPASSEQ(jj, 5);
 }
 
