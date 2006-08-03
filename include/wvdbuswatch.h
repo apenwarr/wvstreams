@@ -24,9 +24,6 @@ public:
     virtual size_t uwrite(const void *buf, size_t count) { return 0; }
     virtual bool pre_select(SelectInfo &si);
     DBusWatch *watch;
-
-private:
-    WvLog log;
 };
 
 #endif // __WVDBUSWATCH_H

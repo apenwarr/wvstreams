@@ -7,6 +7,11 @@
 #include "wvdbusserver.h"
 #include "wvdbuswatch.h"
 
+#if 0
+#define LOG_TRACE(info...) fprintf(stderr, info)
+#else
+#define LOG_TRACE(info...)
+#endif
 
 class WvDBusServerPrivate 
 {
@@ -65,14 +70,10 @@ public:
 
         dbus_watch_set_data(watch, wwatch, NULL);
 
-        // FIXME: do we need to explicitly say whether we are readable and 
-        // writable? (see below)
-        bool isreadable = (flags & DBUS_WATCH_READABLE);
-        bool iswritable = (flags & DBUS_WATCH_WRITABLE);
-
-        fprintf(stderr, "Watch updated successfully (fd: %i, readable: %i, "
-                "writable: %i data: %p)\n", dbus_watch_get_fd(watch), 
-                isreadable, iswritable, data);
+        LOG_TRACE("Watch updated successfully (fd: %i, readable: %i, "
+                  "writable: %i)\n", dbus_watch_get_fd(watch),
+                  (flags & DBUS_WATCH_READABLE), 
+                  (flags & DBUS_WATCH_WRITABLE));
     
         return TRUE;
     }
@@ -81,14 +82,14 @@ public:
     {
         WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
         assert(wwatch);
-        fprintf(stderr, "Removing watch (rfd: %i wfd: $i)\n", wwatch->getrfd(),
-                wwatch->getwfd());
+        LOG_TRACE("Removing watch (rfd: %i wfd: %i)\n", wwatch->getrfd(),
+                  wwatch->getwfd());
         wwatch->close();
     }
 
     static void watch_toggled(DBusWatch *watch, void *data)
     {
-        fprintf(stderr, "toggle watch\n");
+        LOG_TRACE("toggle watch\n");
         if (dbus_watch_get_enabled(watch))
             add_watch(watch, data);
         else
@@ -97,19 +98,19 @@ public:
 
     static dbus_bool_t add_timeout(DBusTimeout *timeout, void *data)
     {
-        fprintf(stderr, "Add timeout.\n");
+        LOG_TRACE("Add timeout.\n");
 
         return TRUE;
     }
 
     static void remove_timeout(DBusTimeout *timeout, void *data)
     {
-        fprintf(stderr, "Remove timeout.\n");
+        LOG_TRACE("Remove timeout.\n");
     }
 
     static void timeout_toggled(DBusTimeout *timeout, void *data)
     {
-        fprintf(stderr, "Timeout toggled.\n");
+        LOG_TRACE("Timeout toggled.\n");
     }
 
     static void new_connection_cb(DBusServer *dbusserver, 
@@ -118,7 +119,7 @@ public:
     {
         WvDBusServer *server = (WvDBusServer *) userdata;
         WvDBusServConn *c = new WvDBusServConn(new_connection, server);
-        fprintf(stderr, "New connection..\n");
+        LOG_TRACE("New connection..\n");
         server->append(c, true, "wvdbus connection");
 
         if (dbus_connection_get_dispatch_status(new_connection) != 

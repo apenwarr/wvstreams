@@ -7,8 +7,7 @@
 
 
 WvDBusWatch::WvDBusWatch(DBusWatch *_watch, unsigned int _flags) :
-    watch(_watch),
-    log("WvDBusWatch", WvLog::Debug)
+    watch(_watch)
 {
     int fd = dbus_watch_get_fd(watch);
     rfd = wfd = fd;
@@ -23,8 +22,6 @@ WvDBusWatch::WvDBusWatch(DBusWatch *_watch, unsigned int _flags) :
         stop_write = true;
         wfd = -1;
     }
-
-    log("created watch (rfd: %s wfd: %s)\n", rfd, wfd);
 }
 
 

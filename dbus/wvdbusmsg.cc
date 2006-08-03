@@ -1,3 +1,8 @@
+/* -*- Mode: C++ -*-
+ * Worldvisions Weaver Software:
+ *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
+ * 
+ */ 
 #include "wvdbusmsg.h"
 
 
@@ -74,4 +79,11 @@ WvDBusReplyMsg::WvDBusReplyMsg(DBusMessage *_msg)
 {
     assert(msg);
     msg = dbus_message_new_method_return(_msg);
+}
+
+
+WvDBusSignal::WvDBusSignal(WvStringParm objectname, WvStringParm interface,
+                           WvStringParm name)
+{
+    msg = dbus_message_new_signal(objectname, interface, name);
 }

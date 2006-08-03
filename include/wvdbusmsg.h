@@ -90,4 +90,12 @@ public:
     virtual ~WvDBusReplyMsg() {}
 };
 
+
+class WvDBusSignal : public WvDBusMsg
+{
+public:
+    WvDBusSignal(WvStringParm objectname, WvStringParm interface, 
+                 WvStringParm name);
+};
+
 #endif // __WVDBUSMSG_H
