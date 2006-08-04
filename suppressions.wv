@@ -112,4 +112,8 @@
    fun:expandNextArg
    fun:poptGetNextOpt
 }
-
+{
+   WvHashTableBase_has_issues
+   Memcheck:Cond
+   fun:_ZN15WvHashTableBaseC2Ej
+}

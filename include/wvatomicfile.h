@@ -37,6 +37,9 @@ public:
     bool chmod(mode_t mode);
     
     bool chown(uid_t owner, gid_t group);
+
+public:
+    const char *wstype() const { return "WvAtomicFile"; }
 };
 
 #endif // __WVATOMFILE_H

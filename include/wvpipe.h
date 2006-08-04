@@ -110,6 +110,9 @@ public:
 
     // callback to ignore everything.  see comment in wvpipe.cc.
     static void ignore_read(WvStream& s, void *userdata);
+    
+public:
+    const char *wstype() const { return "WvPipe"; }
 };
 
 #endif // __WVPIPE_H

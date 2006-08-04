@@ -16,7 +16,7 @@ class _WvConStream : public WvFDStream
 public:
     bool isopen;
     
-    _WvConStream(int _rfd, int _wfd);
+    _WvConStream(int _rfd, int _wfd, WvStringParm name = WvString::null);
     virtual ~_WvConStream();
     virtual void close();
     virtual bool isok() const;
@@ -47,9 +47,13 @@ static WvMoniker<IWvStream> reg3("stdio",  create_stdio);
 
 
 
-_WvConStream::_WvConStream(int _rfd, int _wfd) : WvFDStream(_rfd, _wfd)
+_WvConStream::_WvConStream(int _rfd, int _wfd,
+        WvStringParm name)
+    : WvFDStream(_rfd, _wfd)
 {
     isopen = true;
+    if (!name.isnull())
+        set_wsname(name);
 }
 
 
@@ -81,17 +85,17 @@ SocketFromFDMaker _zero(_dup(0), fd2socket_fwd, false);
 SocketFromFDMaker _one(1, socket2fd_fwd, true);
 SocketFromFDMaker _two(2, socket2fd_fwd, true);
 
-static _WvConStream _wvcon(_zero.GetSocket(), _one.GetSocket());
-static _WvConStream _wvin(_zero.GetSocket(), -1);
-static _WvConStream _wvout(-1, _one.GetSocket());
-static _WvConStream _wverr(-1, _two.GetSocket());
+static _WvConStream _wvcon(_zero.GetSocket(), _one.GetSocket(), "wvcon");
+static _WvConStream _wvin(_zero.GetSocket(), -1, "wvin");
+static _WvConStream _wvout(-1, _one.GetSocket(), "wvout");
+static _WvConStream _wverr(-1, _two.GetSocket(), "wverr");
 
 #else // _WIN32
 
-static _WvConStream _wvcon(0, 1);
-static _WvConStream _wvin(0, -1);
-static _WvConStream _wvout(-1, 1);
-static _WvConStream _wverr(-1, 2);
+static _WvConStream _wvcon(0, 1, "wvcon");
+static _WvConStream _wvin(0, -1, "wvin");
+static _WvConStream _wvout(-1, 1, "wvout");
+static _WvConStream _wverr(-1, 2, "wverr");
 
 #endif // !_WIN32
 

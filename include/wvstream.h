@@ -9,6 +9,8 @@
 
 #include "iwvstream.h"
 #include "wvtimeutils.h"
+#include "wvhashtable.h"
+#include "wvstreamsdebugger.h"
 #include <errno.h>
 #include <limits.h>
 
@@ -661,6 +663,51 @@ private:
     /** Prevent accidental copying of WvStream.  These don't actually exist. */
     WvStream(const WvStream &s);
     WvStream& operator= (const WvStream &s);
+
+private:
+    WvString my_wsname;
+public:
+    const char *wsname() const
+        { return my_wsname; }
+    void set_wsname(WvStringParm wsname)
+        { my_wsname = wsname; }
+    void set_wsname(WVSTRING_FORMAT_DECL)
+        { set_wsname(WvString(WVSTRING_FORMAT_CALL)); }
+        
+public:
+    const char *wstype() const { return "WvStream"; }
+    
+private:
+    WSID my_wsid;
+public:
+    WSID wsid() const { return my_wsid; }
+    
+private:
+    static WvMap<WSID, WvStream *> *wsid_map;
+    static WSID next_wsid_to_try;
+public:
+    static IWvStream *find_by_wsid(WSID wsid);
+    
+private:
+    static void add_debugger_commands();
+protected:
+    static void debugger_streams_display_header(WvStringParm cmd,
+            WvStreamsDebugger::ResultCallback result_cb);
+    static void debugger_streams_display_one_stream(WvStream *s,
+            WvStringParm cmd,
+            WvStreamsDebugger::ResultCallback result_cb);
+    static void debugger_streams_maybe_display_one_stream(WvStream *s,
+            WvStringParm cmd,
+            const WvStringList &args,
+            WvStreamsDebugger::ResultCallback result_cb);
+private:
+    static WvString debugger_streams_run_cb(WvStringParm cmd,
+        WvStringList &args,
+        WvStreamsDebugger::ResultCallback result_cb, void *);
+    static WvString debugger_close_run_cb(WvStringParm cmd,
+        WvStringList &args,
+        WvStreamsDebugger::ResultCallback result_cb, void *);
+
 };
 
 /**

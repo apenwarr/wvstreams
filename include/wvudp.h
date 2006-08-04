@@ -53,6 +53,9 @@ protected:
     
     virtual size_t uread(void *buf, size_t count);
     virtual size_t uwrite(const void *buf, size_t count);
+    
+public:
+    const char *wstype() const { return "WvUDPStream"; }
 };
 
 

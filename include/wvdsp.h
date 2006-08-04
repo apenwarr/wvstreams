@@ -68,6 +68,9 @@ private:
     WvRateAdjust inrate, outrate;
     int fd;
     bool is_realtime;
+
+public:
+    const char *wstype() const { return "WvDsp"; }
 };
 
 
