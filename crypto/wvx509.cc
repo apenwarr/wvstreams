@@ -1320,7 +1320,31 @@ WvString WvX509Mgr::get_extension(int nid)
 			    method->ext_free(ext_data);
 		    }
 		    else if (method->i2v)
-			retval = "Stack type!";
+		    {
+		        CONF_VALUE *val = NULL;
+		        STACK_OF(CONF_VALUE) *svals = NULL;
+		        svals = method->i2v(method, ext_data, NULL);
+		        if (!sk_CONF_VALUE_num(svals))
+                            retval = "EMPTY";
+                        else
+                        {
+                            WvStringList list;
+                            for(int i = 0; i < sk_CONF_VALUE_num(svals); i++)
+                            {
+                                val = sk_CONF_VALUE_value(svals, i);
+                                if (!val->name)
+                                    list.append(WvString(val->value));
+                                else if (!val->value)
+                                    list.append(WvString(val->name));
+                                else 
+                                {
+                                    WvString pair("%s:%s", val->name, val->value);
+                                    list.append(pair);
+                                }
+                            }
+                            retval = list.join(",");
+                        }
+		    }
 		    else if (method->i2r)
 		    {
 			WvDynBuf retvalbuf;
