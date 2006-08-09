@@ -429,7 +429,7 @@ bool WvFastString::operator! () const
  *        "%-15s"          false    -15         0     0         "s"
  *        "%15.5s"         false     15         5     0         "s"
  *        "%015.5s"        true      15         5     0         "s"
- *        "%15$2s"         true      15         0     2         "s"
+ *        "%15$2s"         false     15         0     2         "s"
  * and so on.  On entry, cptr should _always_ point at a percent '%' char.
  * argnum is the argument number.
  */
