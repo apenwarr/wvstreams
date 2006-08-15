@@ -23,12 +23,8 @@ WvStringMask::WvStringMask(char c)
 
 bool WvStringMask::operator[](const char c) const
 {
-    return _set[unsigned(c)];
-}
-
-bool WvStringMask::operator[](const int i) const
-{
-    return _set[int(i)];
+    unsigned char uc = c;
+    return _set[uc];
 }
 
 const char WvStringMask::first() const

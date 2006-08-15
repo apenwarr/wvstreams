@@ -160,9 +160,10 @@ WVTEST_MAIN("conversion from int")
 class WvFooString : public WvFastString
 {
 public:
-    static unsigned get_nullbuf_links()
-        { return nullbuf.links; }
+	static unsigned get_nullbuf_links()
+	{ return nullbuf.links; }
 };
+
 WVTEST_MAIN("nullbuf link counting")
 {
     const WvString &ws = "WvString";
@@ -171,9 +172,9 @@ WVTEST_MAIN("nullbuf link counting")
     unsigned before = WvFooString::get_nullbuf_links();
     printf("nullbuf has %u links before\n", before);
     {
-        WvString a("b");
-        WvString b(ws);
-        WvString c(wfs);
+	WvString a("b");
+	WvString b(ws);
+	WvString c(wfs);
     }
     unsigned after = WvFooString::get_nullbuf_links();
     printf("nullbuf has %u links after\n", after);
