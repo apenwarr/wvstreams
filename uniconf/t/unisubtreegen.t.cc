@@ -6,11 +6,10 @@
 #include "uniconfdaemon.h"
 #include "uniconfgen-sanitytest.h"
 #include "wvfileutils.h"
-#include "wvfork.h"
 #include "uniclientgen.h"
 #include "wvunixsocket.h"
 
-#include <sys/wait.h>
+#include <signal.h>
 
 WVTEST_MAIN("UniSubtreeGen Sanity Test")
 {
@@ -42,40 +41,28 @@ WVTEST_MAIN("callbacks")
     WvString sockname = wvtmpfilename("unisubtreegen.t-sock");
     unlink(sockname);
 
-    pid_t child = wvfork();
-    if (child == 0)
-    {
-        UniConfRoot uniconf("temp:");
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
-        while (true)
-            WvIStreamList::globallist.runonce();
-	_exit(0);
-    }
-    WVPASS(child > 0);
+    UniConfTestDaemon daemon(sockname, "temp:");
     
     UniConfRoot uniconf;
-    UniClientGen *client_gen;
-    while (true)
+    
+    printf("Waiting for daemon to start.\n");
+    fflush(stdout);
+    int num_tries = 0;
+    const int max_tries = 20;
+    while (!uniconf.isok() && num_tries++ < max_tries)
     {
-        WvUnixConn *unix_conn;
-        client_gen = new UniClientGen(
-                unix_conn = new WvUnixConn(sockname));
-        if (!unix_conn || !unix_conn->isok()
-                || !client_gen || !client_gen->isok())
-        {
-            WVRELEASE(client_gen);
-            wvout->print("Failed to connect, retrying...\n");
-            sleep(1);
-        }
-        else break;
-    }
-    uniconf.mountgen(client_gen); 
+        WVFAIL(uniconf.isok());
 
+        // Try again...
+        uniconf.unmount(uniconf.whichmount(), true);
+        uniconf.mount(WvString("unix:%s", sockname));
+        sleep(1);
+    }
+
+    num_tries = 0;
     UniConfRoot sub_uniconf;
     UniClientGen *sub_client_gen;
-    while (true)
+    while (num_tries++ < max_tries)
     {
         WvUnixConn *unix_conn;
         sub_client_gen = new UniClientGen(
@@ -119,18 +106,6 @@ WVTEST_MAIN("callbacks")
     WVPASSEQ(callback_count, 1);
     sub_uniconf.getme();
     WVPASSEQ(sub_callback_count, 0); // Should not have received callbacks
-
-    // Never, ever kill a pid <= 0, unless you want all your processes dead...
-    if (child > 0)
-        kill(child, 15);
-    pid_t rv;
-    while ((rv = waitpid(child, NULL, 0)) != child)
-    {
-        // in case a signal is in the process of being delivered..
-        if (rv == -1 && errno != EINTR)
-            break;
-    }
-    WVPASS(rv == child);
 
     unlink(sockname);
 }

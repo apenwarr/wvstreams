@@ -16,7 +16,6 @@
 #include "wvlog.h"
 #include "uniconfgen-sanitytest.h"
 #include "uniconfdaemon.h"
-#include "wvfork.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>

@@ -45,5 +45,36 @@ public:
     };
 };
 
+// Create a UniConfDaemon upon instantiation.  By default, the server listens
+// to the given socket name, and mounts the given moniker, and doesn't do much
+// else.  The server is killed and its socket is unlinked by the destructor.
+class UniConfTestDaemon
+{
+    pid_t server_pid;
+    WvString sockname;
+    WvString server_moniker;
+public:
+    typedef WvCallback<void, WvStringParm, WvStringParm> UniConfDaemonServerCb;
+
+    // A default server callback that doesn't do anything interesting, just
+    // mounts the given moniker on the given socket.
+    static void boring_server_cb(WvStringParm sockname, 
+            WvStringParm server_moniker);
+
+    // Just like the boring server, but increments a key every time through
+    // its select loop, to generate some notifications.
+    static void autoinc_server_cb(WvStringParm sockname, 
+            WvStringParm server_moniker);
+
+    // server_cb is the main body of the server.  It must not return.
+    UniConfTestDaemon(WvStringParm _sockname, WvStringParm _server_moniker, 
+        UniConfDaemonServerCb server_cb = boring_server_cb);
+    ~UniConfTestDaemon();
+
+    pid_t get_pid() { return server_pid; }
+    WvString get_sockname() { return sockname; }
+    WvString get_moniker() { return server_moniker; }
+};
+
 #endif
 

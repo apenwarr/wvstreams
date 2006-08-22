@@ -7,11 +7,108 @@
 #include "uniconfgen-sanitytest.h"
 
 #include "uniconf.h"
-#include "uniconfroot.h"
+#include "uniconfdaemon.h"
 #include "uniconfgen.h"
+#include "uniconfroot.h"
 #include "uniwatch.h"
-#include "wvtest.h"
+#include "wvfork.h"
+#include "wvistreamlist.h"
 #include "wvlog.h"
+#include "wvtest.h"
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <time.h>
+
+void UniConfTestDaemon::boring_server_cb(WvStringParm sockname, 
+        WvStringParm server_moniker)
+{
+    {
+        wverr->close();
+        time_t start = time(NULL);
+
+        UniConfRoot uniconf(server_moniker);
+        UniConfDaemon daemon(uniconf, false, NULL);
+
+        unlink(sockname);
+        daemon.setupunixsocket(sockname);
+
+        WvIStreamList::globallist.append(&daemon, false);
+        // Make sure to commit suicide after half an hour, just in case
+        while (time(NULL) < start + 30*60)
+        {
+            WvIStreamList::globallist.runonce();
+            usleep(1000);
+        }
+    }
+    _exit(0);
+}
+
+
+void UniConfTestDaemon::autoinc_server_cb(WvStringParm sockname, 
+        WvStringParm server_moniker)
+{
+    {
+        wverr->close();
+        time_t start = time(NULL);
+
+        UniConfRoot uniconf(server_moniker);
+        UniConfDaemon daemon(uniconf, false, NULL);
+
+        unlink(sockname);
+        daemon.setupunixsocket(sockname);
+
+        WvIStreamList::globallist.append(&daemon, false);
+        // Make sure to commit suicide after half an hour, just in case
+        while (time(NULL) < start + 30*60)
+        {
+            uniconf.setmeint(uniconf.getmeint()+1);
+            WvIStreamList::globallist.runonce();
+            usleep(1000);
+        }
+    }
+    _exit(0);
+}
+
+
+UniConfTestDaemon::UniConfTestDaemon(WvStringParm _sockname, 
+        WvStringParm _server_moniker, 
+        UniConfDaemonServerCb server_cb) :
+    sockname(_sockname),
+    server_moniker(_server_moniker)
+{
+    pid_t child = wvfork();
+    if (child == 0)
+        server_cb(sockname, server_moniker);
+    WVPASS(child > 0);
+
+    server_pid = child;
+
+    return;
+}
+
+UniConfTestDaemon::~UniConfTestDaemon()
+{
+    // Never, ever, try to kill pids -1 or 0.
+    if (server_pid <= 0)
+        fprintf(stderr, "Refusing to kill pid %s.\n", server_pid);
+    else
+        kill(server_pid, 15);
+
+    int status;
+    pid_t rv;
+    while ((rv = waitpid(server_pid, &status, 0)) != server_pid)
+    {
+        // in case a signal is in the process of being delivered...
+        if (rv == -1 && errno != EINTR)
+            break;
+    }
+    WVPASSEQ(rv, server_pid);
+    WVPASS(WIFSIGNALED(status));
+    
+    unlink(sockname);
+}
 
 void UniConfGenSanityTester::clear_generator(IUniConfGen *g)
 {

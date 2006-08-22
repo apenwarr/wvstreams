@@ -6,17 +6,13 @@
 #include "uniconfgen-sanitytest.h"
 #include "uniclientgen.h"
 #include "uniinigen.h"
-#include "wvfork.h"
 #include "wvunixsocket.h"
 #include "wvfileutils.h"
 #include "wvfile.h"
 #include "uniwatch.h"
 #include "wvstrutils.h"
 
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <signal.h>
-
 
 class WvDebugUnixConn : public WvUnixConn
 {
@@ -59,72 +55,6 @@ static void delta_callback(const UniConf &, const UniConfKey &)
 {
     ++delta_count;
 }
-
-
-static void boring_server_cb(WvStringParm sockname, WvStringParm server_moniker)
-{
-    wverr->close();
-    UniConfRoot uniconf(server_moniker);
-    UniConfDaemon daemon(uniconf, false, NULL);
-    daemon.setupunixsocket(sockname);
-    WvIStreamList::globallist.append(&daemon, false);
-    while (true)
-        WvIStreamList::globallist.runonce();
-    _exit(0);
-}
-
-
-static void autoincrement_server_cb(WvStringParm sockname, 
-        WvStringParm server_moniker)
-{
-    wverr->close();
-    UniConfRoot uniconf(server_moniker);
-    UniConfDaemon daemon(uniconf, false, NULL);
-    daemon.setupunixsocket(sockname);
-    WvIStreamList::globallist.append(&daemon, false);
-    while (true)
-    {
-        uniconf.setmeint(uniconf.getmeint()+1);
-        WvIStreamList::globallist.runonce();
-        usleep(1000);
-    }
-    _exit(0);
-}
-
-
-// server_cb is the main body of the server.  It must not return.
-static pid_t setup_server(WvStringParm sockname, WvStringParm server_moniker, 
-    WvCallback<void, WvStringParm, WvStringParm> server_cb = boring_server_cb)
-{
-    pid_t child = wvfork();
-    if (child == 0)
-        server_cb(sockname, server_moniker);
-    WVPASS(child > 0);
-
-    return child;
-}
-
-
-static void cleanup_server(pid_t pid, WvStringParm sockname)
-{
-    // Never, ever, try to kill pids -1 or 0.
-    if (pid <= 0)
-        fprintf(stderr, "Refusing to kill pid %s.\n", pid);
-    else
-        kill(pid, 15);
-
-    pid_t rv;
-    while ((rv = waitpid(pid, NULL, 0)) != pid)
-    {
-        // in case a signal is in the process of being delivered..
-        if (rv == -1 && errno != EINTR)
-            break;
-    }
-    WVPASS(rv == pid);
-    
-    unlink(sockname);
-}
-
 
 typedef WvCallback<UniClientGen*, WvStringParm, WvStringParm, 
         WvUnixConn *&> client_factory_t;
@@ -186,14 +116,12 @@ static UniClientGen *create_client_conn(WvString name, WvString sockname,
 WVTEST_MAIN("UniClientGen Sanity Test")
 {
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
-    pid_t server_pid = setup_server(sockname, "temp:");
+    UniConfTestDaemon daemon(sockname, "temp:");
 
     UniClientGen *gen = create_client_conn("sanity", sockname);
 
     UniConfGenSanityTester::sanity_test(gen, WvString("unix:%s", sockname));
     WVRELEASE(gen);
-
-    cleanup_server(server_pid, sockname);
 }
 
 
@@ -206,7 +134,8 @@ WVTEST_MAIN("deltas")
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
     unlink(sockname);
 
-    pid_t server_pid = setup_server(sockname, "temp:", autoincrement_server_cb);
+    UniConfTestDaemon daemon(sockname, "temp:", 
+            UniConfTestDaemon::autoinc_server_cb);
     UniClientGen *client_gen = create_client_conn("deltas", sockname);
     uniconf.mountgen(client_gen); 
 
@@ -221,8 +150,6 @@ WVTEST_MAIN("deltas")
     }
 
     WVPASS(delta_count > old_delta_count);
-    
-    cleanup_server(server_pid, sockname);
 }
 
 
@@ -250,7 +177,7 @@ WVTEST_MAIN("commit")
 
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
 
-    pid_t server_pid = setup_server(sockname, WvString("ini:%s", ini_file));
+    UniConfTestDaemon daemon(sockname, WvString("ini:%s", ini_file));
 
     UniClientGen *client_gen = create_client_conn("commit", sockname);
     uniconf.mountgen(client_gen); 
@@ -272,7 +199,6 @@ WVTEST_MAIN("commit")
     WVPASS(new_file_time != -1);
     WVPASS(new_file_time > old_file_time);
 
-    cleanup_server(server_pid, sockname);
     unlink(ini_file);
 }
 
@@ -287,7 +213,7 @@ WVTEST_MAIN("refresh")
 
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
 
-    pid_t server_pid = setup_server(sockname, WvString("ini:%s", ini_file));
+    UniConfTestDaemon daemon(sockname, WvString("ini:%s", ini_file));
 
     UniClientGen *client_gen = create_client_conn("refresh", sockname);
     uniconf.mountgen(client_gen); 
@@ -298,8 +224,6 @@ WVTEST_MAIN("refresh")
     ini_fd.close();
     WVPASS(uniconf.refresh());
     WVPASS(uniconf.xget("key") == "value");
-
-    cleanup_server(server_pid, sockname);
 
     unlink(ini_file);
 }
@@ -357,7 +281,7 @@ WVTEST_MAIN("restrict")
     WvString sockname = wvtmpfilename("unisubtreegen.t-sock");
     unlink(sockname);
 
-    pid_t server_pid = setup_server(sockname, "temp:");
+    UniConfTestDaemon daemon(sockname, "temp:");
     
     UniConfRoot uniconf;
     UniClientGen *client_gen = create_client_conn("top", sockname, 
@@ -396,8 +320,6 @@ WVTEST_MAIN("restrict")
     WVPASSEQ(restrict_callback_count, 1);
     sub_uniconf.getme();
     WVPASSEQ(sub_restrict_callback_count, 0); // Should not have received callbacks
-
-    cleanup_server(server_pid, sockname);
 }
 
 
@@ -408,7 +330,7 @@ WVTEST_MAIN("timeout")
     WvString sockname = wvtmpfilename("unisubtreegen.t-sock");
     unlink(sockname);
 
-    pid_t server_pid = setup_server(sockname, "temp:");
+    UniConfTestDaemon daemon(sockname, "temp:");
     
     UniConfRoot uniconf;
     UniClientGen *client_gen = create_client_conn("timeout", sockname);
@@ -418,10 +340,9 @@ WVTEST_MAIN("timeout")
 
     uniconf.getme();
     WVPASS(client_gen->isok());
-    kill(server_pid, SIGSTOP);
+    kill(daemon.get_pid(), SIGSTOP);
     uniconf.getme();
     WVPASS(!client_gen->isok());
 
-    kill(server_pid, SIGCONT);
-    cleanup_server(server_pid, sockname);
+    kill(daemon.get_pid(), SIGCONT);
 }
