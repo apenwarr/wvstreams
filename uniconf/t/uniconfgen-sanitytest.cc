@@ -204,7 +204,7 @@ void UniConfGenSanityTester::test_haschildren_moniker(WvStringParm moniker)
     // We should get notifications for both /x and / being deleted
     WVPASSLT(3, notifywatcher.cbs);
 
-    // FIXME: UniIniGen fails this test.  
+    // FIXME: UniIniGen fails this test.  See BUGZID:22439
 #if 0
     // Don't send notifications if the key doesn't change
     old_cbs = notifywatcher.cbs;
