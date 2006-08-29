@@ -191,12 +191,27 @@ void UniConfGenSanityTester::test_haschildren_moniker(WvStringParm moniker)
     WVPASS(cfg.haschildren());
     WVFAIL(cfg["x"].haschildren());
     WVPASSLT(1, notifywatcher.cbs);
+
+    // Don't send notifications if the key doesn't change
+    int old_cbs = notifywatcher.cbs;
+    cfg["x"].setme("pah");
+    cfg.commit();
+    WVPASSEQ(notifywatcher.cbs, old_cbs);
     
     cfg.remove();
     cfg.commit();
     WVFAIL(cfg.haschildren());
     // We should get notifications for both /x and / being deleted
     WVPASSLT(3, notifywatcher.cbs);
+
+    // FIXME: UniIniGen fails this test.  
+#if 0
+    // Don't send notifications if the key doesn't change
+    old_cbs = notifywatcher.cbs;
+    cfg.remove();
+    cfg.commit();
+    WVPASSEQ(notifywatcher.cbs, old_cbs);
+#endif
 }
 
 void UniConfGenSanityTester::test_trailing_slashes(IUniConfGen *g, 
