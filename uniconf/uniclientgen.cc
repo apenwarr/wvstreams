@@ -369,7 +369,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 		if (server.isnull() || strncmp(server, "UniConf", 7))
 		{
 		    // wrong type of server!
-		    log(WvLog::Error, "Connected to a non-UniConf serrer!\n");
+		    log(WvLog::Error, "Connected to a non-UniConf server!\n");
 
 		    cmdinprogress = false;
 		    cmdsuccess = false;
