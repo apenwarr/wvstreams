@@ -153,7 +153,16 @@ void UniOnDiskGen::set(const UniConfKey &key, WvStringParm value)
         // Autovivify any required elements
         if (mykey.numsegments() > 0 && !exists(mykey))
             set(mykey, WvString::empty);
-        vlput(dbh, keystr.cstr(), -1, value.cstr(), -1, VL_DOVER);
+
+        char *oldval = vlget(dbh, keystr.cstr(), -1, NULL);
+        if (oldval == NULL || WvFastString(oldval) != value)
+        {
+            vlput(dbh, keystr.cstr(), -1, value.cstr(), -1, VL_DOVER);
+            delta(key, value);
+        }
+
+        if (oldval != NULL)
+            free(oldval);
     }
     else
     {
@@ -179,9 +188,13 @@ void UniOnDiskGen::set(const UniConfKey &key, WvStringParm value)
         delete it;
         unhold_delta();
 
-        vlout(dbh, keystr.cstr(), -1);
+        int num_recs = vlvnum(dbh, keystr, -1);
+        if (num_recs > 0)
+        {
+            vlout(dbh, keystr.cstr(), -1);
+            delta(key, value);
+        }
     }
-    delta(key, value);
 
     unhold_delta();
 
