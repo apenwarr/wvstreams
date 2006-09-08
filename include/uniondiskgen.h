@@ -25,14 +25,17 @@ extern "C" {
 class UniOnDiskGen : public UniConfGen
 {
 public:
-    UniOnDiskGen(WvStringParm filename);
+    UniOnDiskGen() { init(WvString::null); }
+    UniOnDiskGen(WvStringParm filename) { init(filename); }
     virtual ~UniOnDiskGen();
+
+    void init(WvStringParm filename);
 
     /***** Overridden members *****/
 
     virtual bool exists(const UniConfKey &key) 
     { 
-        return exists(key.printable()); 
+        return exists_str(key.printable()); 
     }
     virtual bool haschildren(const UniConfKey &key);
     virtual WvString get(const UniConfKey &key);
@@ -52,7 +55,7 @@ public:
 
 protected:
     virtual void flush_buffers() { }
-    virtual bool exists(WvString keystr);
+    virtual bool exists_str(WvString keystr);
 
 private:
     VILLA *dbh;

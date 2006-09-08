@@ -66,9 +66,11 @@ static WvMoniker<IUniConfGen> reg("ondisk", creator);
 
 /***** UniOnDiskGen *****/
 
-UniOnDiskGen::UniOnDiskGen(WvStringParm filename) :
-    persist(true), dbfile(filename), cache()
+void UniOnDiskGen::init(WvStringParm filename)
 {
+    persist = true; 
+    dbfile = filename; 
+
     if (!filename)
     {
         dbfile = "/var/tmp/uni-ondisk-db-XXXXXX";
@@ -103,8 +105,13 @@ UniOnDiskGen::~UniOnDiskGen()
 }
 
 
-bool UniOnDiskGen::exists(const WvString keystr)
+bool UniOnDiskGen::exists_str(const WvString keystr)
 {
+#if 0
+    WvLog log("Exists", WvLog::Error);
+    log("Checking %s\n", keystr);
+#endif
+
     int num_recs = vlvnum(dbh, keystr, -1);
     return num_recs != 0;
 }
@@ -123,9 +130,8 @@ WvString UniOnDiskGen::get(const UniConfKey &key)
 
     WvString keystr(key.printable());
 
-    //log("Returning %s\n", hash.exists(keystr) ? hash[keystr] : WvString("(null)"));
     WvString retval(WvString::null);
-    char *val = vlget(dbh, keystr.cstr(), -1, NULL);
+    char *val = vlget(dbh, keystr, -1, NULL);
     if (val != NULL)
     {
         retval = cache.get(val);
@@ -154,10 +160,10 @@ void UniOnDiskGen::set(const UniConfKey &key, WvStringParm value)
         if (mykey.numsegments() > 0 && !exists(mykey))
             set(mykey, WvString::empty);
 
-        char *oldval = vlget(dbh, keystr.cstr(), -1, NULL);
+        char *oldval = vlget(dbh, keystr, -1, NULL);
         if (oldval == NULL || WvFastString(oldval) != value)
         {
-            vlput(dbh, keystr.cstr(), -1, value.cstr(), -1, VL_DOVER);
+            vlput(dbh, keystr, -1, value, -1, VL_DOVER);
             delta(key, value);
         }
 
@@ -182,7 +188,7 @@ void UniOnDiskGen::set(const UniConfKey &key, WvStringParm value)
             log("Also deleting %s\n", delkey.printable());
 #endif
             WvString delkeystr(delkey.printable());
-            vlout(dbh, delkeystr.cstr(), -1);
+            vlout(dbh, delkeystr, -1);
             delta(delkeystr, WvString::null);
         }
         delete it;
@@ -191,7 +197,7 @@ void UniOnDiskGen::set(const UniConfKey &key, WvStringParm value)
         int num_recs = vlvnum(dbh, keystr, -1);
         if (num_recs > 0)
         {
-            vlout(dbh, keystr.cstr(), -1);
+            vlout(dbh, keystr, -1);
             delta(key, value);
         }
     }
@@ -218,10 +224,10 @@ bool UniOnDiskGen::haschildren(const UniConfKey &key)
     log("Checking children of %s\n", keystr);
 #endif
     
-    vlcurjump(dbh, keystr.cstr(), -1, VL_JFORWARD);
+    vlcurjump(dbh, keystr, -1, VL_JFORWARD);
     char *curkey = vlcurkey(dbh, NULL);
     //log("curkey=%s, keystr=%s\n", curkey, keystr);
-    if (curkey != NULL && strstr(curkey, keystr.cstr()) == curkey)
+    if (curkey != NULL && strcasestr(curkey, keystr.cstr()) == curkey)
     {
         // It's possible that vlcurjump() already took us to the next key,
         // if we're checking for haschildren("/")
@@ -229,7 +235,7 @@ bool UniOnDiskGen::haschildren(const UniConfKey &key)
             vlcurnext(dbh);
         char *nextkey = vlcurkey(dbh, NULL);
 
-        if (nextkey != NULL && strstr(nextkey, keystr.cstr()) == nextkey)
+        if (nextkey != NULL && strcasestr(nextkey, keystr.cstr()) == nextkey)
             retval = true;
 
         if (nextkey != NULL)
@@ -254,7 +260,7 @@ UniConfGen::Iter *UniOnDiskGen::iterator(const UniConfKey &key)
 
     ListIter *it = new ListIter(this);
 
-    if (vlcurjump(dbh, keystr.cstr(), -1, VL_JFORWARD))
+    if (vlcurjump(dbh, keystr, -1, VL_JFORWARD))
         do
         {
             // Check if it's a (strict) subkey of the given key, and it itself has
@@ -262,7 +268,7 @@ UniConfGen::Iter *UniOnDiskGen::iterator(const UniConfKey &key)
             // FIXME: Deal with trailing slashes properly
 
             char *curkey = vlcurkey(dbh, NULL);
-            char *subloc = strstr(curkey, keystr.cstr()); 
+            char *subloc = strcasestr(curkey, keystr.cstr()); 
             char *cursubkey = curkey + keystr.len();
 
             // Check if we've passed any possible place for a subkey
@@ -290,7 +296,9 @@ UniConfGen::Iter *UniOnDiskGen::iterator(const UniConfKey &key)
                     // allocate one at the same time as the char*.  Mashing
                     // this into QDBM would be disgusting.
                     char* curval = vlcurval(dbh, NULL);
-                    //log("Adding key=%s, val=%s\n", cursubkey, curval);
+#if 0
+                    log("Adding key=%s, val=%s\n", cursubkey, curval);
+#endif
                     it->add(cache.get(cursubkey), cache.get(curval));
                     free(curval);
                 }
@@ -307,18 +315,21 @@ UniConfGen::Iter *UniOnDiskGen::recursiveiterator(const UniConfKey &key)
 {
     WvString keystr(key.printable());
 
-    //WvLog log("Recursive Iterator", WvLog::Error);
+#if 0
+    WvLog log("Recursive Iterator", WvLog::Error);
+    log("Recursively iterating over %s\n", keystr);
+#endif
 
     ListIter *it = new ListIter(this);
 
-    if (vlcurjump(dbh, keystr.cstr(), -1, VL_JFORWARD))
+    if (vlcurjump(dbh, keystr, -1, VL_JFORWARD))
         do
         {
             // Check if it's a (strict) subkey of the given key, and it itself
             // has no subkeys
             // FIXME: Deal with trailing slashes properly
             char *curkey = vlcurkey(dbh, NULL);
-            char *subloc = strstr(curkey, keystr.cstr()); 
+            char *subloc = strcasestr(curkey, keystr.cstr()); 
 
 #if 0
             log("keystr:%s; subloc:%s; itkey:%s;\n",
@@ -339,6 +350,9 @@ UniConfGen::Iter *UniOnDiskGen::recursiveiterator(const UniConfKey &key)
             if (subloc == curkey && strlen(cursubkey) > 0)
             {
                 char *curval = vlcurval(dbh, NULL);
+#if 0
+                log("Adding key=%s, val=%s\n", cursubkey, curval);
+#endif
                 it->add(cache.get(cursubkey), cache.get(curval));
                 free(curval);
             }
