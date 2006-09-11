@@ -80,7 +80,7 @@ bool UniFastRegetGen::exists(const UniConfKey &key)
 {
     // even if inner generator has a more efficient version of exists(),
     // do it this way so we can cache the result.
-    return !!get(key);
+    return !get(key).isnull();
 }
 
 
