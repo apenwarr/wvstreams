@@ -178,22 +178,31 @@ void UniConfGenSanityTester::test_haschildren_moniker(WvStringParm moniker)
     UniWatch watcher(cfg["/"], UniConfCallback(&notifywatcher,
                  &UniConfGenSanityTester::CbCounter::callback));
     WVFAIL(cfg.haschildren());
+
+    WVPASSEQ(cfg.getme(), WvString::empty);
+    WVPASS(cfg.exists());
+    WVFAIL(cfg["x"].exists());
+
+    notifywatcher.cbs = 0;
     
     cfg.setme("blah");
     cfg.commit();
     WVFAIL(cfg.haschildren());
+    WVPASS(cfg.exists());
     // Note: We might get more than one notification for the change, e.g. if
     // we are using a UniListGen.
     WVPASSLT(0, notifywatcher.cbs);
+    int old_cbs = notifywatcher.cbs;
     
     cfg["x"].setme("pah");
     cfg.commit();
+    WVPASS(cfg["x"].exists());
     WVPASS(cfg.haschildren());
     WVFAIL(cfg["x"].haschildren());
-    WVPASSLT(1, notifywatcher.cbs);
+    WVPASSLT(old_cbs, notifywatcher.cbs);
 
     // Don't send notifications if the key doesn't change
-    int old_cbs = notifywatcher.cbs;
+    old_cbs = notifywatcher.cbs;
     cfg["x"].setme("pah");
     cfg.commit();
     WVPASSEQ(notifywatcher.cbs, old_cbs);
@@ -202,7 +211,7 @@ void UniConfGenSanityTester::test_haschildren_moniker(WvStringParm moniker)
     cfg.commit();
     WVFAIL(cfg.haschildren());
     // We should get notifications for both /x and / being deleted
-    WVPASSLT(3, notifywatcher.cbs);
+    WVPASSLT(old_cbs + 1, notifywatcher.cbs);
 
     // FIXME: UniIniGen fails this test.  See BUGZID:22439
 #if 0
@@ -211,6 +220,11 @@ void UniConfGenSanityTester::test_haschildren_moniker(WvStringParm moniker)
     cfg.remove();
     cfg.commit();
     WVPASSEQ(notifywatcher.cbs, old_cbs);
+
+    WVFAIL(cfg.exists());
+    WVPASSEQ(cfg.getme(), WvString::null);
+    WVFAIL(cfg["x"].exists());
+    WVPASSEQ(cfg["x"].getme(), WvString::null);
 #endif
 }
 
