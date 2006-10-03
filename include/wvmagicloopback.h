@@ -25,6 +25,9 @@ private:
  
     WvMagicCircle circle;
     WvLoopback loop;
+    
+public:
+    const char *wstype() const { return "WvMagicLoopback"; }
 };
 
 #endif // __WVMAGICLOOPBACK_H

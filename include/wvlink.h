@@ -25,18 +25,18 @@ class WvLink
 public:
     void *data;
     WvLink *next;
-    char *id;
+    const char *id;
 
 private:
     bool autofree : 1;
 
 public:
-    WvLink(void *_data, bool _autofree, char *_id = NULL):
+    WvLink(void *_data, bool _autofree, const char *_id = NULL):
 	data(_data), next(NULL), id(_id), autofree(_autofree)
     {}
 
     WvLink(void *_data, WvLink *prev, WvLink *&tail, bool _autofree,
-	   char *_id = NULL);
+	   const char *_id = NULL);
 
     bool get_autofree()
     {

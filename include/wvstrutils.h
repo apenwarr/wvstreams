@@ -573,6 +573,24 @@ WvString cstr_escape(const void *data, size_t size,
 bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size,
         const CStrExtraEscape extra_escapes[] = NULL);
 
+static inline bool is_int(const char *str)
+{
+    if (!str)
+        return false;
+    
+    if (*str == '-')
+        ++str;
+    
+    if (!*str)
+        return false;
+    
+    while (*str)
+    	if (!isdigit(*str++))
+    	    return false;
+    	    
+    return true;
+}
+
 // Reads the contents of a symlink.  Returns the contents, or WvString::null on error.
 WvString wvreadlink(WvStringParm path);
 

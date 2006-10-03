@@ -67,6 +67,7 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
+    set_wsname(app);
 }
 
 
@@ -75,6 +76,7 @@ WvLog::WvLog(const WvLog &l)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
+    set_wsname(app);
 }
 
 
@@ -110,6 +112,15 @@ bool WvLog::pre_select(SelectInfo &si)
 
 size_t WvLog::uwrite(const void *_buf, size_t len)
 {
+    // Writing the log message to a stream might cause it to emit its own log
+    // messages, causing recursion.  Don't let it get out of hand.
+    static const int recursion_max = 8;
+    static int recursion_count = 0;
+    static WvString recursion_msg("Too many extra log messages written while "
+            "writing to the log.  Suppressing additional messages.\n");
+
+    ++recursion_count;
+
     if (!num_receivers)
     {
 	if (!default_receiver)
@@ -118,8 +129,14 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
         default_receiver = new WvDefaultLogRcv();
 	    num_receivers--; // default does not qualify!
 	}
-	default_receiver->log(app, loglevel,
-			      (const char *)_buf, len);
+
+        if (recursion_count < recursion_max)
+            default_receiver->log(app, loglevel, (const char *)_buf, len);
+        else if (recursion_count == recursion_max)
+            default_receiver->log(app, WvLog::Warning, recursion_msg.cstr(),
+                    recursion_msg.len());
+
+        --recursion_count;
 	return len;
     }
     else if (default_receiver)
@@ -134,9 +151,15 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
     for (i.rewind(); i.next(); )
     {
 	WvLogRcvBase &rc = *i;
-	rc.log(app, loglevel, (const char *)_buf, len);
+
+        if (recursion_count < recursion_max)
+            rc.log(app, loglevel, (const char *)_buf, len);
+        else if (recursion_count == recursion_max)
+            rc.log(app, WvLog::Warning, recursion_msg.cstr(), 
+                    recursion_msg.len());
     }
     
+    --recursion_count;
     return len;
 }
 

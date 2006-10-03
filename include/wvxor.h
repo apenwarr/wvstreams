@@ -45,6 +45,8 @@ class WvXORStream : public WvEncoderStream
 public:
     WvXORStream(WvStream *_cloned, const void *key, size_t _keysize);
     virtual ~WvXORStream() { }
+public:
+    const char *wstype() const { return "WvXORStream"; }
 };
 
 #endif /// __WVXOR_H

@@ -46,6 +46,9 @@ public:
     bool skip_select;
     
     virtual bool pre_select(SelectInfo &si);
+
+public:
+    const char *wstype() const { return "WvFile"; }
 };
 
 #endif // __WVFILE_H

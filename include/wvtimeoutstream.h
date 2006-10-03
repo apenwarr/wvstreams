@@ -26,6 +26,9 @@ public:
     virtual bool isok() const { return ok; }
 
     virtual void execute();
+    
+private:
+    const char *wstype() const { return "WvTimeoutStream"; }
 };
 
 #endif // __WVTIMEOUTSTREAM_H

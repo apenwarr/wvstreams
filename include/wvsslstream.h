@@ -114,7 +114,9 @@ private:
 
     /** Prints out the entire SSL error queue */
     void printerr(WvStringParm func);
-    
+
+public:
+    const char *wstype() const { return "WvSSLStream"; }
 };
 
 #endif // __WVSSLSTREAM_H
