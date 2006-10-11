@@ -52,8 +52,8 @@ int main(int argc, char **argv)
 	
 	log("Listening on port %s\n", *sock.src());
 	
-	l.append(&sock, false);
-	l.append(wvcon, false);
+	l.append(&sock, false, "socket");
+	l.append(wvcon, false, "wvcon");
 	
 	while (sock.isok() && wvcon->isok())
 	{

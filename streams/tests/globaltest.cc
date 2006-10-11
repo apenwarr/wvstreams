@@ -40,7 +40,7 @@ int main()
     assert(s1.select(0));
     assert(!s2.select(0));
 
-    WvIStreamList::globallist.append(&s1, false);
+    WvIStreamList::globallist.append(&s1, false, "s1");
 
     assert(s1.isok());
     assert(s2.isok());
