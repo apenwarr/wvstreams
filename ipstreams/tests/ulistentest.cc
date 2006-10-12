@@ -50,8 +50,8 @@ int main(int argc, char **argv)
 	
 	log("Listening on port %s\n", *sock.src());
 	
-	l.append(&sock, false, "socket");
-	l.append(wvin, false, "wvin");
+	l.append(&sock, false);
+	l.append(wvin, false);
 	
 	while (sock.isok() && wvin->isok())
 	{

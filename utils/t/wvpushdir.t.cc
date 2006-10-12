@@ -62,7 +62,7 @@ WVTEST_MAIN("pushdir is allocated on the STACK only")
 
     if (child == 0)
     {
-	(void)new WvPushDir("anyfile");
+        WvPushDir *newpushdir = new WvPushDir("anyfile");
 
         // should never be reached, if it does, it should return good so
         //  that we'll fail when we check for a fail

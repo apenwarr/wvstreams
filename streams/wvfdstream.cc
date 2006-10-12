@@ -248,7 +248,6 @@ bool WvFdStream::pre_select(SelectInfo &si)
 	si.max_fd = rfd;
     if (si.max_fd < wfd)
 	si.max_fd = wfd;
-
     return result;
 }
 
@@ -265,8 +264,7 @@ bool WvFdStream::post_select(SelectInfo &si)
         flush_outbuf(0);
 	
 	// flush_outbuf() might have closed the file!
-	if (!isok())
-	    return result;
+	if (!isok()) return result;
     }
     
     bool val = ((rfd >= 0 && FD_ISSET(rfd, &si.read)) ||

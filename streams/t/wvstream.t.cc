@@ -377,7 +377,7 @@ WVTEST_MAIN("force_select and globallist")
     WVFAIL(s.select(0));
     
     x.setcallback(val_cb, &val);
-    WvIStreamList::globallist.append(&x, false, "countstream");
+    WvIStreamList::globallist.append(&x, false);
     WVFAIL(s.select(0));
     WVPASS(!val);
     x.inbuf_putstr("yikes");

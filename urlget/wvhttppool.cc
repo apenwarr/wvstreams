@@ -98,9 +98,7 @@ void WvUrlStream::delurl(WvUrlRequest *url)
 
 
 WvHttpPool::WvHttpPool() 
-    : log("HTTP Pool", WvLog::Debug), conns(10),
-      sure(false),
-      pipeline_incompatible(50)
+    : log("HTTP Pool", WvLog::Debug), conns(10), pipeline_incompatible(50)
 {
     log("Pool initializing.\n");
     num_streams_created = 0;
@@ -123,7 +121,7 @@ WvHttpPool::~WvHttpPool()
 
 bool WvHttpPool::pre_select(SelectInfo &si)
 {
-    sure = false;
+    bool sure = false;
 
     WvUrlStreamDict::Iter ci(conns);
     for (ci.rewind(); ci.next(); )
@@ -179,19 +177,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
         sure = true;
     }
 
-    if (sure)
-	si.msec_timeout = 0;
-
     return sure;
-}
-
-
-bool WvHttpPool::post_select(SelectInfo &si)
-{
-    bool save_sure = sure;
-    sure = false;
-
-    return WvIStreamList::post_select(si) || save_sure;
 }
 
 

@@ -27,8 +27,8 @@ int main()
     
     // create a list of them (in fact, we could use a WvStreamList here...)
     WvIStreamList l;
-    l.append(&a, false, "a");
-    l.append(&b, false, "b");
+    l.append(&a, false);
+    l.append(&b, false);
   
     while (a.isok() || b.isok())
     {

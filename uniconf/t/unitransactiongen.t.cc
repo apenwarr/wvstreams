@@ -546,7 +546,7 @@ WVTEST_MAIN("double notifications with daemon")
         uniconf.mountgen(new UniTempGen());
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false, "daemon");
+        WvIStreamList::globallist.append(&daemon, false);
         while (true)
         {
             uniconf.setmeint(uniconf.getmeint()+1);
@@ -823,7 +823,7 @@ WVTEST_MAIN("processing many keys")
 	UniConfRoot uniconf("temp:");
 	UniConfDaemon daemon(uniconf, false, NULL);
 	daemon.setupunixsocket(sockname);
-	WvIStreamList::globallist.append(&daemon, false, "daemon");
+	WvIStreamList::globallist.append(&daemon, false);
 	while (true)
 	{
 	    uniconf.setmeint(uniconf.getmeint()+1);

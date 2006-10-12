@@ -10,7 +10,7 @@ public:
             alarm(0);
             uses_continue_select = true;
 	    //personal_stack_size = 16384;
-            WvIStreamList::globallist.append(this, true, "silly");
+            WvIStreamList::globallist.append(this, true);
         }
     virtual void execute()
         {

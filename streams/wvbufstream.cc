@@ -57,16 +57,5 @@ bool WvBufStream::isok() const
 
 bool WvBufStream::pre_select(SelectInfo &si)
 {
-    bool ready = WvStream::pre_select(si) || si.wants.writable || eof;
-
-    if (ready)
-	si.msec_timeout = 0;
-
-    return ready;
-}
-
-
-bool WvBufStream::post_select(SelectInfo &si)
-{
-    return WvStream::post_select(si) || si.wants.writable || eof;
+    return WvStream::pre_select(si) || si.wants.writable || eof;
 }

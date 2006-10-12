@@ -502,7 +502,6 @@ bool WvSSLStream::pre_select(SelectInfo &si)
     if (si.wants.readable && (read_pending || read_bouncebuf.used()))
     {
 //	debug("pre_select: try reading again immediately.\n");
-	si.msec_timeout = 0;
 	return true;
     }
 
@@ -603,12 +602,8 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	
 	return false;
     }
-
-    if ((si.wants.readable || readcb)
-	&& (read_pending || read_bouncebuf.used()))
-	result = true;
-
-    return result;
+    else
+	return result;
 }
 
 

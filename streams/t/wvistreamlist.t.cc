@@ -21,7 +21,7 @@ WVTEST_MAIN("spinning list")
     
     WvIStreamList l;
     l.setcallback(cb, &lcount);
-    l.append(&s, false, "stream");
+    l.append(&s, false);
     
     l.alarm(0);
     l.runonce(0);
@@ -57,7 +57,7 @@ WVTEST_MAIN("spinning list 2")
     
     WvIStreamList l;
     l.setcallback(cb, &lcount);
-    l.append(&s, false, "stream");
+    l.append(&s, false);
     
     l.alarm(0);
     l.runonce(0);

@@ -59,12 +59,12 @@ void WvStreamsDaemon::do_stop()
 void WvStreamsDaemon::add_stream(IWvStream *istream, bool autofree, 
                                  const char *id)
 {
-    streams.append(istream, false, id);
-    WvIStreamList::globallist.append(istream, autofree, id);
+    streams.append(istream, false);
+    WvIStreamList::globallist.append(istream, autofree);
 }
 
-void WvStreamsDaemon::add_restart_stream(IWvStream *istream, bool autofree, 
-                                         const char *id)
+void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
+    	bool autofree, const char *id)
 {
     add_stream(istream, autofree, id);
     

@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 	return 1;
     }
     
-    biglist.append(&l, false, "list");
+    biglist.append(&l, false);
     
     for (count = 1; count < argc; count++)
     {
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 	{
 	    log("File %s is stdin/stdout\n", count);
 	    f = wvcon;
-	    l.append(f, false, "wvcon");
+	    l.append(f, false);
 	    f->setcallback(bouncer, &l);
 	}
 	else if (!strncasecmp(argv[count], "tcp:", 4))
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 	    {
 		log("File %s is a TCP client\n", count);
 		f = new WvTCPConn(WvIPPortAddr(cptr));
-		l.append(f, true, "TCP client");
+		l.append(f, true);
 		f->setcallback(bouncer, &l);
 	    }
 	    else // server mode
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 		WvTCPListener *listen = new WvTCPListener(WvIPPortAddr("",
 							 atoi(cptr)));
 		listen->auto_accept(&l, bouncer, &l);
-		biglist.append(listen, true, "TCP server");
+		biglist.append(listen, true);
 	    }
 	}
 	else
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 		}
 	    }
 	    
-	    l.append(f, true, "file");
+	    l.append(f, true);
 	    f->setcallback(bouncer, &l);
 	}
     }

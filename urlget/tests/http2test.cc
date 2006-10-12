@@ -41,8 +41,8 @@ int main(int argc, char **argv)
     signal(SIGINT, sighandler_die);
 #endif
     
-    l.append(wvcon, false, "wvcon");
-    l.append(&p, false, "WvHttpPool");
+    l.append(wvcon, false);
+    l.append(&p, false);
     
     while (!want_to_die && p.isok() && (wvcon->isok() || !p.idle()))
     {
@@ -72,8 +72,8 @@ int main(int argc, char **argv)
 		    assert(!f->readable);
 		    s->autoforward(*f);
 		    s->setclosecallback(close_callback);
-		    l.append(s, true, "url");
-		    l.append(f, true, "file");
+		    l.append(s, true);
+		    l.append(f, true);
 		}
 	    }
 	}

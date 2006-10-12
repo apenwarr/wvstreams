@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     
     log("Listening on %s.\n", *tcplisten.src());
     l.append(&tcplisten, false, "ss tcp listener"); 
-    l.append(wvcon, false, "wvcon");
+    l.append(wvcon, false);
     
     wvcon->setcallback(bounce_to_list, &l);
     

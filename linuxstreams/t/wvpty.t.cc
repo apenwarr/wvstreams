@@ -11,7 +11,7 @@ WVTEST_MAIN("stty")
 	WvIStreamList l;
 	WvPty pty(argv[0], argv);
 	pty.autoforward(*wvout);
-	l.append(&pty, false, "pty");
+	l.append(&pty, false);
 	while (!pty.child_exited() || pty.isok())
 	{
 	    printf("runonce\n");
@@ -27,7 +27,7 @@ WVTEST_MAIN("stty")
 	WvIStreamList l;
 	WvPipe pipe(argv[0], argv, true, true, true);
 	pipe.autoforward(*wvout);
-	l.append(&pipe, false, "pipe");
+	l.append(&pipe, false);
 	while (!pipe.child_exited() || pipe.isok())
 	{
 	    printf("runonce\n");

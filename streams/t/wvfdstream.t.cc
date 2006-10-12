@@ -262,7 +262,7 @@ public:
         called = false;
         y.setcallback(WvStreamCallback(this,
         	&FooFD::fooback), NULL);
-        WvIStreamList::globallist.append(&y, false, "FooFD");
+        WvIStreamList::globallist.append(&y, false);
     }
 
     ~FooFD()

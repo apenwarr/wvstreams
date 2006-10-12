@@ -215,8 +215,8 @@ WVTEST_MAIN("daemon multimount")
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
 
-    WvIStreamList::globallist.append(&conn, false, "connection");
-    WvIStreamList::globallist.append(&daemon, false, "daemon");
+    WvIStreamList::globallist.append(&conn, false);
+    WvIStreamList::globallist.append(&daemon, false);
     printf("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
@@ -266,8 +266,8 @@ WVTEST_MAIN("daemon quit")
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
 
-    WvIStreamList::globallist.append(&conn, false, "conn");
-    WvIStreamList::globallist.append(&daemon, false, "daemon");
+    WvIStreamList::globallist.append(&conn, false);
+    WvIStreamList::globallist.append(&daemon, false);
     printf("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
@@ -411,7 +411,7 @@ static void daemon_proxy_test(bool implicit_root)
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
     
-    WvIStreamList::globallist.append(&conn, false, "conn");
+    WvIStreamList::globallist.append(&conn, false);
 
     printf("Spinning: streams left: %i\n", 
            WvIStreamList::globallist.count());

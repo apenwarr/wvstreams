@@ -28,8 +28,8 @@ int main(int argc,  char **argv)
     sock.autoforward(*wvcon);
 
     WvIStreamList l;
-    l.add_after(l.tail, wvcon, false, "wvcon");
-    l.add_after(l.tail, &sock, false, "socket"); 
+    l.add_after(l.tail, wvcon, false);
+    l.add_after(l.tail, &sock, false); 
 
     while (wvcon->isok() && sock.isok())
     {

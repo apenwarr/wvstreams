@@ -813,10 +813,7 @@ bool WvStream::pre_select(SelectInfo &si)
     time_t alarmleft = alarm_remaining();
     
     if (!si.inherit_request && alarmleft == 0)
-    {
-	si.msec_timeout = 0;
 	return true; // alarm has rung
-    }
 
     if (!si.inherit_request)
     {
@@ -827,10 +824,7 @@ bool WvStream::pre_select(SelectInfo &si)
     
     // handle read-ahead buffering
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
-    {
-	si.msec_timeout = 0; // already ready
-	return true;
-    }
+	return true; // already ready
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft + 10;
@@ -850,9 +844,6 @@ bool WvStream::post_select(SelectInfo &si)
 	flush(0);
     if (!si.inherit_request && alarm_remaining() == 0)
 	return true; // alarm ticked
-    if ((si.wants.readable || (!si.inherit_request && readcb))
-	&& inbuf.used() && inbuf.used() >= queue_min)
-	return true; // already ready
     return false;
 }
 

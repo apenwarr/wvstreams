@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     size_t len;
     
     WvIStreamList l;
-    l.add_after(l.tail, &http, false, "WvHTTPStream");
+    l.add_after(l.tail, &http, false);
     
     while (http.isok() && out.isok())
     {

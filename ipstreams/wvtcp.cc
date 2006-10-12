@@ -441,7 +441,7 @@ void WvTCPListener::accept_global_callback(WvStream &s, void *userdata)
     WvTCPListener &l = *(WvTCPListener *)userdata; 
     WvTCPConn *connection = l.accept();
     connection->setcallback(l.auto_callback, l.auto_userdata);
-    WvIStreamList::globallist.append(connection, true, "WvTCPConn");
+    WvIStreamList::globallist.append(connection, true);
 }
 
 
@@ -451,7 +451,7 @@ void WvTCPListener::accept_callback(WvStream &s, void *userdata)
 
     WvTCPConn *connection = l.accept();
     connection->setcallback(l.auto_callback, l.auto_userdata);
-    l.auto_list->append(connection, true, "WvTCPConn");
+    l.auto_list->append(connection, true);
 }
 
 
