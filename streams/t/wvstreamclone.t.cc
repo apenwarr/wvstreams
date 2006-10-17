@@ -122,5 +122,7 @@ WVTEST_MAIN("WvStreamClone setclone behaviour")
     s.setclone(&s2);
     WVPASS(s.isok());
     WVPASS(s2.isok());
+    s.setclone(NULL);
+    WVPASS(!s.isok());
 }
 
