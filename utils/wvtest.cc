@@ -34,6 +34,8 @@
 #define MAX_TEST_TIME 40      // max seconds for a single test to run
 #define MAX_TOTAL_TIME 120*60 // max seconds for the entire suite to run
 
+#define TEST_START_FORMAT "! %s:%-5d %-40s "
+
 static int memerrs()
 {
     return (int)VALGRIND_COUNT_ERRORS;
@@ -89,7 +91,7 @@ static int no_running_children()
 WvTest *WvTest::first, *WvTest::last;
 int WvTest::fails, WvTest::runs;
 time_t WvTest::start_time;
-
+bool WvTest::run_twice = false;
 
 void WvTest::alarm_handler(int)
 {
@@ -112,13 +114,13 @@ static const char *pathstrip(const char *filename)
 
 
 WvTest::WvTest(const char *_descr, const char *_idstr, MainFunc *_main,
-	       int _slowness)
+	       int _slowness) :
+    descr(_descr), 
+    idstr(pathstrip(_idstr)), 
+    main(_main), 
+    slowness(_slowness),
+    next(NULL)
 {
-    idstr = pathstrip(_idstr);
-    descr = _descr;
-    main = _main;
-    slowness = _slowness;
-    next = NULL;
     if (first)
 	last->next = this;
     else
@@ -166,10 +168,10 @@ int WvTest::run_all(const char * const *prefixes)
     if (slowstr1) min_slowness = atoi(slowstr1);
     if (slowstr2) max_slowness = atoi(slowstr2);
 
-    int run_twice = 0;
-    char *run_twice_str = getenv("WVTEST_PARALLEL");
-    if (run_twice_str) run_twice = atoi(run_twice_str);
-    
+    char *parallel_str = getenv("WVTEST_PARALLEL");
+    if (parallel_str) 
+        run_twice = atoi(parallel_str) > 0;
+
     // there are lots of fflush() calls in here because stupid win32 doesn't
     // flush very often by itself.
     fails = runs = 0;
@@ -243,21 +245,71 @@ int WvTest::run_all(const char * const *prefixes)
 }
 
 
-void WvTest::start(const char *file, int line, const char *condstr)
+// If we aren't running in parallel, we want to output the name of the test
+// before we run it, so we know what happened if it crashes.  If we are
+// running in parallel, outputting this information in multiple printf()s
+// can confuse parsers, so we want to output everything in one printf().
+//
+// This function gets called by both start() and check().  If we're not
+// running in parallel, just print the data.  If we're running in parallel,
+// and we're starting a test, save a copy of the file/line/description until
+// the test is done and we can output it all at once.
+//
+// Yes, this is probably the worst API of all time.
+void WvTest::print_result(bool start, const char *_file, int _line, 
+        const char *_condstr, bool result)
 {
-    const char *file2 = pathstrip(file);
+    static char *file;
+    static char *condstr;
+    static int line;
     
-    char *condstr2 = strdup(condstr);
-    for (char *cptr = condstr2; *cptr; cptr++)
+    if (start)
     {
-	if (!isprint((unsigned char)*cptr))
-	    *cptr = '!';
+        if (file) 
+            free(file);
+        if (condstr) 
+            free(condstr);
+        file = strdup(pathstrip(_file));
+        condstr = strdup(_condstr);
+        line = _line;
+
+        for (char *cptr = condstr; *cptr; cptr++)
+        {
+            if (!isprint((unsigned char)*cptr))
+                *cptr = '!';
+        }
     }
-    
-    printf("! %s:%-5d %-40s ", file2, line, condstr2);
+            
+    const char *result_str = result ? "ok\n" : "FAILED\n";
+    if (run_twice)
+    {
+        if (!start)
+            printf(TEST_START_FORMAT "%s", file, line, condstr, result_str);
+    }
+    else
+    {
+        if (start)
+            printf(TEST_START_FORMAT, file, line, condstr);
+        else
+            printf("%s", result_str);
+    }
     fflush(stdout);
 
-    free(condstr2);
+    if (!start)
+    {
+        if (file)
+            free(file);
+        if (condstr)
+            free(condstr);
+        file = condstr = NULL;
+    }
+}
+
+
+void WvTest::start(const char *file, int line, const char *condstr)
+{
+    // Either print the file, line, and condstr, or save them for later.
+    print_result(true, file, line, condstr, 0);
 }
 
 
@@ -277,16 +329,11 @@ void WvTest::check(bool cond)
     }
     
     runs++;
-    
-    if (cond)
+
+    print_result(false, NULL, 0, NULL, cond);
+
+    if (!cond)
     {
-	printf("ok\n");
-	fflush(stdout);
-    }
-    else
-    {
-	printf("FAILED\n");
-	fflush(stdout);
 	fails++;
 	
 	if (getenv("WVTEST_DIE_FAST"))

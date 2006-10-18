@@ -167,6 +167,13 @@ public:
     virtual void set_wsname(WvStringParm name) = 0;
     virtual const char *wstype() const = 0; // This is not static due to, eg, WvStreamClone
     virtual WSID wsid() const = 0;
+
+    /**
+     ** set the maximum size of outbuf, beyond which a call to write() will
+     ** return 0.  
+     **/
+
+     virtual void outbuf_limit(size_t size) = 0;
 };
 
 
