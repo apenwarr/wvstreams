@@ -5,7 +5,6 @@
  * Implementation of a simple and efficient printable-string class.  Most
  * of the class is actually inlined and can be found in wvstring.h.
  */
-#include "wvassert.h"
 #include "wvstring.h"
 #include <ctype.h>
 #include <assert.h>
@@ -517,8 +516,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	    continue;
 	}
 	
-        //assert(*iptr == 's' || *iptr == 'c');
-        wvassert((*iptr == 's' || *iptr == 'c'), "format='%s'", format);
+        assert(*iptr == 's' || *iptr == 'c');
 
 	if (*iptr == 's')
 	{
