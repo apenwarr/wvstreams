@@ -916,11 +916,11 @@ WvString metriculate(const off_t i)
     long long int j=i;
     char *p;
 
-    while (j)
+    do
     {
         digits++;
         j/=10;
-    }
+    } while (j);
 
     j=i;
     // setsize says it takes care of the terminating NULL char
