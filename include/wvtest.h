@@ -24,9 +24,12 @@ class WvTest
     static WvTest *first, *last;
     static int fails, runs;
     static time_t start_time;
+    static bool run_twice;
     
     static void alarm_handler(int sig);
    
+    static void print_result(bool start, const char *file, int line, 
+            const char *condstr, bool result);
 public:
     WvTest(const char *_descr, const char *_idstr, MainFunc *_main, int _slow);
     static int run_all(const char * const *prefixes = NULL);

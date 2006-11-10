@@ -374,7 +374,13 @@ public:
     WvString printable() const;
     operator WvString() const
         { return printable(); }
-    
+
+    /**
+     * Returns a (const char *) of printable() directly.
+     */
+    const char *cstr() const
+        { return printable(); }
+
     /**
      * Assigns this path to equal another.
      * "other" is the other path
