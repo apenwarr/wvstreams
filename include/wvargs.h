@@ -106,7 +106,7 @@ class WvArgs
     	void print_help(int argc, char **argv);
     	
     	//!
-    	//! Add a boolean option, which, when spefied, sets the specified 
+    	//! Add a boolean option, which, when specified, sets the specified 
     	//! boolean variable to true.
     	//!
     	//! \param short_option The single-character version of the switch;
