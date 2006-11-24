@@ -62,8 +62,8 @@ char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
 
 
 
-WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
-    : app(_app), loglevel(_loglevel)
+WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, WvLogFilter* _filter)
+    : app(_app), loglevel(_loglevel), filter(_filter)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
@@ -72,7 +72,7 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
 
 
 WvLog::WvLog(const WvLog &l)
-    : app(l.app), loglevel(l.loglevel)
+    : app(l.app), loglevel(l.loglevel), filter(l.filter)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
