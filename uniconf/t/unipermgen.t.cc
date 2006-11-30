@@ -6,6 +6,15 @@
 #include "unisecuregen.h"
 #include "uniunwrapgen.h"
 #include "unidefgen.h"
+#include "uniconfgen-sanitytest.h"
+
+WVTEST_MAIN("UniPermGen Sanity Test")
+{
+    UniPermGen *gen = new UniPermGen("temp:");
+    // No moniker for the PermGen, sigh.
+    UniConfGenSanityTester::sanity_test(gen, WvString::null);
+    WVRELEASE(gen);
+}
 
 // Same as the one in unicachegen.t.cc
 class CbCounter

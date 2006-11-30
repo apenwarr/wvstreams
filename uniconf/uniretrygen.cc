@@ -171,16 +171,16 @@ WvString UniRetryGen::get(const UniConfKey &key)
     if (UniFilterGen::isok())
     {
     	result = UniFilterGen::get(key);
-    	DPRINTF("UniRetryGen::get(%s) returns %s\n", key.cstr(), result.cstr());
+    	DPRINTF("UniRetryGen::get(%s) returns %s\n", key.printable().cstr(), result.cstr());
     }
     else if (key == "")
     {
         result = "";
-    	DPRINTF("UniRetryGen::get(%s) returns %s because it is root key\n", key.cstr(), result.cstr());        
+    	DPRINTF("UniRetryGen::get(%s) returns %s because it is root key\n", key.printable().cstr(), result.cstr());        
     }
     else
     {
-    	DPRINTF("UniRetryGen::get(%s): !isok()\n", key.cstr());
+    	DPRINTF("UniRetryGen::get(%s): !isok()\n", key.printable().cstr());
     	result = WvString::null;
     }
     
@@ -205,7 +205,7 @@ bool UniRetryGen::exists(const UniConfKey &key)
 {
     maybe_reconnect();
     
-    DPRINTF("UniRetryGen::exists(%s)\n", key.cstr());
+    DPRINTF("UniRetryGen::exists(%s)\n", key.printable().cstr());
     
     bool result;
     if (UniFilterGen::isok())

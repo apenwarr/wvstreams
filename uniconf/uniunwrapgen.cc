@@ -175,7 +175,7 @@ UniConfGen::Iter *UniUnwrapGen::recursiveiterator(const UniConfKey &key)
 
 void UniUnwrapGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
-    WvString subkey;
+    UniConfKey subkey;
     if (xfullkey.suborsame(key, subkey))
 	delta(subkey, value);
 }

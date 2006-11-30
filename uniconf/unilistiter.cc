@@ -6,68 +6,20 @@
  */
 #include "unilistiter.h"
 
-const WvString UniListIter::noval = "whatever";
-
-
-UniSmartKey::UniSmartKey(const UniSmartKey *_parent, const UniConfKey &_child)
-    : parent(_parent), child(_child)
-{ 
-    // nothing special
-}
-
-
-UniConfKey UniSmartKey::key() const
-{
-    if (parent)
-	return UniConfKey(parent->key(), child);
-    else
-	return child;
-}
-    
-
-bool UniSmartKey::operator== (const UniSmartKey &k) const
-{
-    return &k == this || k.key() == key();
-}
-
-
-unsigned WvHash(const UniSmartKey &k)
-{
-    return ::WvHash(k.key());
-}
-
-
 UniListIter::UniListIter(IUniConfGen *_gen)
     : ki(keys), vi(values)
 {
     gen = _gen;
-    no_more_values = false;
 }
 
 
-UniSmartKey *UniListIter::new_smart_key(const UniConfKey &k)
-{
-    UniSmartKey *s = keylook[UniSmartKey(NULL, k.removelast())];
-    if (s)
-	return new UniSmartKey(s, scache.get(k.last()));
-    else
-	return new UniSmartKey(NULL, scache.get(k));
-}
-    
-
-void UniListIter::add(WvStringParm k, WvStringParm v)
+void UniListIter::add(const UniConfKey &k, WvStringParm v)
 { 
-    UniSmartKey *sk = new_smart_key(k);
-    // UniSmartKey *sk = new UniSmartKey(NULL, k);
-    keys.append(sk, true);
-    keylook.add(sk, false);
-    if (v.cstr() != noval.cstr())
-    {
-	assert(!no_more_values);
-	values.append(new WvString(scache.get(v)), true);
-    }
-    else
-	no_more_values = true;
+    UniConfKey *nk = new UniConfKey(k);
+    keys.append(nk, true);
+    keylook.add(nk, false);
+    if (!v.isnull())
+        values.append(new WvString(scache.get(v)), true);
 }
 
 
@@ -96,7 +48,7 @@ bool UniListIter::next()
 
 UniConfKey UniListIter::key() const
 {
-    return ki->key();
+    return *ki;
 }
 
 
@@ -105,5 +57,5 @@ WvString UniListIter::value() const
     if (vi.cur())
 	return *vi;
     else
-	return gen->get(ki->key());
+	return gen->get(*ki);
 }

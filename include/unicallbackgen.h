@@ -58,14 +58,15 @@ public:
             set_callbacks.remove(key);
     }
 
-    virtual void update(const UniConfKey &key)
+    virtual void update(const UniConfKey &key, 
+            WvStringParm value = WvString::null)
     {
         if (get_callbacks.exists(key))
         {
             UniCallbackGenGetCallback &get_callback = get_callbacks[key];
             UniTempGen::set(key, get_callback(key));
         }
-        else UniTempGen::set(key, WvString::null);
+        else UniTempGen::set(key, value);
     }
 
     /***** Overridden members *****/
@@ -83,7 +84,7 @@ public:
             set_callback(key, value);
         }
 
-        if (update_after_set) update(key);
+        if (update_after_set) update(key, value);
     }
 };
 
