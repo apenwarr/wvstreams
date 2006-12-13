@@ -86,6 +86,9 @@ private:
     time_t  prev;
     
     time_t  not_until;
+
+public:
+    const char *wstype() const { return "WvDailyEvent"; }
 };
 
 #endif

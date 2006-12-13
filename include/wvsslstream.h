@@ -63,12 +63,6 @@ protected:
      */
     SSL *ssl;
     
-    /**
-     * Again, used to setup the SSL Object - The Method is set so that this
-     * client can Connect to, and understand SSLv2, SSLv3, and TLS servers
-     */
-    SSL_METHOD *meth;
-    
     virtual size_t uwrite(const void *buf, size_t len);
     virtual size_t uread(void *buf, size_t len);
     
@@ -114,7 +108,9 @@ private:
 
     /** Prints out the entire SSL error queue */
     void printerr(WvStringParm func);
-    
+
+public:
+    const char *wstype() const { return "WvSSLStream"; }
 };
 
 #endif // __WVSSLSTREAM_H

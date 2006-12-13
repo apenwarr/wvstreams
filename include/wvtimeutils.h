@@ -83,4 +83,8 @@ inline bool operator== (const WvTime &a,
     return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec;
 }
 
+// Stepped time functions.  Used to synchronize wvstreams.
+const WvTime &wvstime(); 
+void wvstime_sync();
+
 #endif // __WVTIMEUTILS_H

@@ -41,19 +41,21 @@ char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
 
 
 
-WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
-    : app(_app), loglevel(_loglevel)
+WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, WvLogFilter* _filter)
+    : app(_app), loglevel(_loglevel), filter(_filter)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
+    set_wsname(app);
 }
 
 
 WvLog::WvLog(const WvLog &l)
-    : app(l.app), loglevel(l.loglevel)
+    : app(l.app), loglevel(l.loglevel), filter(l.filter)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
+    set_wsname(app);
 }
 
 
@@ -89,6 +91,15 @@ bool WvLog::pre_select(SelectInfo &si)
 
 size_t WvLog::uwrite(const void *_buf, size_t len)
 {
+    // Writing the log message to a stream might cause it to emit its own log
+    // messages, causing recursion.  Don't let it get out of hand.
+    static const int recursion_max = 8;
+    static int recursion_count = 0;
+    static WvString recursion_msg("Too many extra log messages written while "
+            "writing to the log.  Suppressing additional messages.\n");
+
+    ++recursion_count;
+
     if (!num_receivers)
     {
 	if (!default_receiver)
@@ -98,8 +109,14 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
 	    default_receiver = new WvLogConsole(xfd);
 	    num_receivers--; // default does not qualify!
 	}
-	default_receiver->log(app, loglevel,
-			      (const char *)_buf, len);
+
+        if (recursion_count < recursion_max)
+            default_receiver->log(app, loglevel, (const char *)_buf, len);
+        else if (recursion_count == recursion_max)
+            default_receiver->log(app, WvLog::Warning, recursion_msg.cstr(),
+                    recursion_msg.len());
+
+        --recursion_count;
 	return len;
     }
     else if (default_receiver)
@@ -114,9 +131,15 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
     for (i.rewind(); i.next(); )
     {
 	WvLogRcvBase &rc = *i;
-	rc.log(app, loglevel, (const char *)_buf, len);
+
+        if (recursion_count < recursion_max)
+            rc.log(app, loglevel, (const char *)_buf, len);
+        else if (recursion_count == recursion_max)
+            rc.log(app, WvLog::Warning, recursion_msg.cstr(), 
+                    recursion_msg.len());
     }
     
+    --recursion_count;
     return len;
 }
 
@@ -184,6 +207,7 @@ WvLogRcv::WvLogRcv(WvLog::LogLevel _max_level) : custom_levels(5)
 {
     last_source = WvString();
     last_level = WvLog::NUM_LOGLEVELS;
+    last_time = 0;
     max_level = _max_level;
     at_newline = true;
 }
@@ -194,7 +218,7 @@ WvLogRcv::~WvLogRcv()
 }
 
 
-void WvLogRcv::_make_prefix()
+void WvLogRcv::_make_prefix(time_t now)
 {
     prefix = WvString("%s<%s>: ",
         last_source, loglevels[last_level]);
@@ -254,12 +278,26 @@ void WvLogRcv::log(WvStringParm source, int _loglevel,
     // only need to start a new line with new headers if they headers have
     // changed.  if the source and level are the same as before, just continue
     // the previous log entry.
-    if (source != last_source || loglevel != last_level || WvLogRcvBase::force_new_line)
+    time_t now = wvtime().tv_sec;
+    if (source != last_source
+            || loglevel != last_level
+            || WvLogRcvBase::force_new_line)
     {
 	end_line();
 	last_source = source;
 	last_level = loglevel;
-	_make_prefix();
+        last_time = now;
+        _make_prefix(now);
+    }
+    else if (last_time == 0 || now != last_time)
+    {
+	// ensure that even with the same source and level, logs will
+	// properly get the right time associated with them. however,
+	// don't split up log messages that should appear in a single
+	// log line.
+        last_time = now;
+	if (at_newline)
+	    _make_prefix(now);
     }
     
     const char *buf = (const char *)_buf, *bufend = buf + len, *cptr;

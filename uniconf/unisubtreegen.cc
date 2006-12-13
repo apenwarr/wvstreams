@@ -34,20 +34,20 @@ UniSubtreeGen::UniSubtreeGen(IUniConfGen *gen, const UniConfKey &_subkey)
 }
 
 
-UniConfKey UniSubtreeGen::keymap(const UniConfKey &key)
+bool UniSubtreeGen::keymap(const UniConfKey &unmapped_key, UniConfKey &mapped_key)
 {
-    if (key == UniConfKey())
-        return subkey;
-    else if (subkey == UniConfKey())
-        return key;
+    if (unmapped_key.isempty())
+        mapped_key = subkey;
     else
-        return UniConfKey(subkey, key);
+        mapped_key = UniConfKey(subkey, unmapped_key);
+    return true;
 }
 
-UniConfKey UniSubtreeGen::reversekeymap(const UniConfKey &key)
+bool UniSubtreeGen::reversekeymap(const UniConfKey &mapped_key, UniConfKey &unmapped_key)
 {
-    if (key.numsegments() >= subkey.numsegments())
-        return UniConfKey(key.removefirst(subkey.numsegments()));
-
-    return key;
+    WvString _unmapped_key;
+    bool result = subkey.suborsame(mapped_key, _unmapped_key);
+    if (result)
+        unmapped_key = UniConfKey(_unmapped_key);
+    return result;
 }

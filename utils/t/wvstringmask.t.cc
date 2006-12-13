@@ -9,7 +9,7 @@ WVTEST_MAIN("wvstringmask")
 
     // null
     bool empty = true;
-    for (int i = 0; i < 256; ++i)
+    for (int i = CHAR_MIN; i < 256; ++i)
     {
 	if (a[i])
 	{
@@ -22,7 +22,7 @@ WVTEST_MAIN("wvstringmask")
 
     // empty string
     empty = true;
-    for (int i = 0; i < 256; ++i)
+    for (int i = CHAR_MIN; i < 256; ++i)
     {
 	if (b[i])
 	{
@@ -35,7 +35,7 @@ WVTEST_MAIN("wvstringmask")
 
     // space character
     empty = true;
-    for (int i = 0; i < 256; ++i)
+    for (int i = CHAR_MIN; i < 256; ++i)
     {
 	if (c[i])
 	{
@@ -48,7 +48,7 @@ WVTEST_MAIN("wvstringmask")
 
     // string
     empty = true;
-    for (int i = 0; i < 256; ++i)
+    for (int i = CHAR_MIN; i < 256; ++i)
     {
 	switch (i)
 	{

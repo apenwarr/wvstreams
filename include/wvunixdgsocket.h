@@ -40,6 +40,11 @@ public:
    
 protected:
      WvString socketfile;
+     
+public:
+    const char *wstype() const { return "WvUnixDGSocket"; }
+
+    size_t bufsize;
 };
 
 /** 
@@ -54,7 +59,9 @@ public:
     WvUnixDGConn(WvStringParm filename)
         : WvUnixDGSocket(filename, false)
         {}
-
+        
+public:
+    const char *wstype() const { return "WvUnixDGConn"; }
 };
 
 /** 
@@ -72,6 +79,8 @@ public:
         : WvUnixDGSocket(filename, true, perms)
         {}
 
+public:
+    const char *wstype() const { return "WvUnixDGListener"; }
 };
 
 

@@ -28,10 +28,10 @@ public:
 	log("Stopping.\n");
     }
     
-    virtual UniConfKey keymap(const UniConfKey &key)
+    virtual bool keymap(const UniConfKey &key, UniConfKey &mapped_key)
     {
 	automount(key);
-	return UniFilterGen::keymap(key);
+	return UniFilterGen::keymap(key, mapped_key);
     }
     
     void automount(const UniConfKey &key)

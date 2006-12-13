@@ -1,6 +1,4 @@
 
-CXXFLAGS+=-DWVSTREAMS_RELEASE=\"$(PACKAGE_VERSION)\"
-
 DISTCLEAN+=uniconf/daemon/uniconfd.8
 
 libuniconf.so libuniconf.a: \

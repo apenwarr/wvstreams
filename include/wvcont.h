@@ -13,6 +13,8 @@
 #define __WVCONT_H
 
 #include "wvcallback.h"
+#include "wvlinklist.h"
+#include "wvstreamsdebugger.h"
 
 typedef WvCallback<void*, void*> WvContCallback;
 
@@ -28,6 +30,7 @@ class WvCont
 {
     struct Data;
     friend struct Data;
+    typedef WvList<Data> DataList;
     
 private:
     /**
@@ -36,6 +39,7 @@ private:
      * callback object still refers to the same WvTask.
      */
     Data *data;
+    static DataList *data_list;
 
     static Data *curdata;
     static int taskdepth;
@@ -150,6 +154,10 @@ public:
 	    WvCont &cont = *(WvCont *)_cont;
 	    return (R)cont(0);
 	}
+
+private:
+    static WvString debugger_conts_run_cb(WvStringParm cmd, WvStringList &args,
+        WvStreamsDebugger::ResultCallback result_cb, void *);
 };
 
 #endif // __WVCONT_H

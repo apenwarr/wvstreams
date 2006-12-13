@@ -65,12 +65,18 @@ private:
     WvStreamsDaemonCallback callback;
     void *userdata;
 
+    bool do_full_close;
     WvIStreamList streams;
 
-    void start_cb(WvDaemon &daemon, void *);
-    void run_cb(WvDaemon &daemon, void *);
-    void stop_cb(WvDaemon &daemon, void *);
-    void stop_full_close_cb(WvDaemon &daemon, void *);
+    void init(WvStreamsDaemonCallback cb, void *ud);
+
+protected:
+
+    virtual void do_start();
+    virtual void do_run();
+    virtual void do_stop();
+
+private:
 
     void restart_close_cb(const char *, WvStream &);
     void die_close_cb(const char *, WvStream &);
@@ -79,8 +85,26 @@ public:
 
     //! Construct a new WvStreamsDaemon with given name and version, and
     //! use the cb function to populate the daemon with its initial streams
-    WvStreamsDaemon(WvStringParm name, WvStringParm version,
-		    WvStreamsDaemonCallback cb, void *ud = NULL);
+    WvStreamsDaemon(WvStringParm name,
+            WvStringParm version,
+            WvStreamsDaemonCallback cb,
+            void *ud = NULL) :
+        WvDaemon(name, version, WvDaemonCallback(),
+                WvDaemonCallback(), WvDaemonCallback())
+    {
+        init(cb, ud);
+    }
+
+    //! Construct a new WvStreamsDaemon with given name and
+    //! use the cb function to populate the daemon with its initial streams
+    WvStreamsDaemon(WvStringParm name, 
+            WvStreamsDaemonCallback cb,
+            void *ud = NULL) :
+        WvDaemon(name, WvDaemonCallback(),
+                WvDaemonCallback(), WvDaemonCallback())
+    {
+        init(cb, ud);
+    }
 
     //! Add a stream to the daemon; don't do anything if it goes !isok().
     //! This should be called from the WvStreamsDaemonCallback function
@@ -104,9 +128,15 @@ public:
     //! If this member is called then any existing streams on the globallist 
     //! added *after* the WvStreamsDaemonCallback was executed will be closed
     //! if the daemon restarts; otherwise, they will persist after the restart.
-    void close_existing_connections_on_restart();
+    void close_existing_connections_on_restart()
+    {
+        do_full_close = true;
+    }
 
     //! Change the callback function and userdata
     void setcallback(WvStreamsDaemonCallback cb, void *ud = NULL);
+
+public:
+    const char *wstype() const { return "WvStreamsDaemon"; }
 };
 #endif // __WVSTREAMSDAEMON_H

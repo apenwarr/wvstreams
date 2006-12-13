@@ -29,6 +29,8 @@
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
     : prev(time(NULL))
 {
+    need_reset = false;
+    prev = wvstime().tv_sec;
     configure(_first_hour, _num_per_day, _skip_first);
 }
 
@@ -36,10 +38,28 @@ WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 // Compute the next time this stream should select()
 bool WvDailyEvent::pre_select(SelectInfo &si)
 {
-    WvTime next(next_event(), 0);
-    if (next)
-	si.msec_timeout = msecdiff(next, wvtime());
-    return WvStream::pre_select(si);
+    if (num_per_day)
+    {
+	time_t now = wvstime().tv_sec;
+	time_t next = next_event();
+
+	assert(prev);
+	assert(next);
+	assert(prev > 100000);
+	assert(next > 100000);
+
+        //printf("%d %d %d\n", now, next, msecdiff(now, next));
+        if (now < next)
+            si.msec_timeout = msecdiff(now, next);
+	else if (!need_reset)
+	{
+            need_reset = true;
+	    prev = next;
+	}
+    }
+    bool ret = WvStream::pre_select(si) || need_reset;
+    //printf("%p ret=%d msd=%d\n", this, ret, si.msec_timeout);
+    return ret;
 }
 
 
@@ -72,7 +92,7 @@ void WvDailyEvent::set_num_per_day(int _num_per_day)
 	max = 6*60*60; // unless that's a very long time, 6 hrs
 
     // don't start until at least one period has gone by
-    prev = time(NULL);
+    prev = wvstime().tv_sec;
     not_until = prev + max;
 }
 

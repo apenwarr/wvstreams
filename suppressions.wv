@@ -105,4 +105,15 @@
    statfs64(buf)
    fun:statfs64
 }
-
+{
+   popt_is_leaky
+   Memcheck:Leak
+   fun:realloc
+   fun:expandNextArg
+   fun:poptGetNextOpt
+}
+{
+   WvHashTableBase_has_issues
+   Memcheck:Cond
+   fun:_ZN15WvHashTableBaseC2Ej
+}

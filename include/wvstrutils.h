@@ -152,6 +152,15 @@ WvString rfc1123_date(time_t _when);
 /** Return the local date (TZ applied) out of _when */
 WvString local_date(time_t _when = -1);
 
+/** Return the local time (in format of ISO 8601) out of _when */
+WvString intl_time(time_t _when = -1);
+
+/** Return the local date (in format of ISO 8601) out of _when */
+WvString intl_date(time_t _when = -1);
+
+/** Return the local date and time (in format of ISO 8601) out of _when */
+WvString intl_datetime(time_t _when = -1);
+
 #ifndef _WIN32
 /**
  * Similar to crypt(), but this randomly selects its own salt.
@@ -572,6 +581,24 @@ WvString cstr_escape(const void *data, size_t size,
 //
 bool cstr_unescape(WvStringParm cstr, void *data, size_t max_size, size_t &size,
         const CStrExtraEscape extra_escapes[] = NULL);
+
+static inline bool is_int(const char *str)
+{
+    if (!str)
+        return false;
+    
+    if (*str == '-')
+        ++str;
+    
+    if (!*str)
+        return false;
+    
+    while (*str)
+    	if (!isdigit(*str++))
+    	    return false;
+    	    
+    return true;
+}
 
 // Reads the contents of a symlink.  Returns the contents, or WvString::null on error.
 WvString wvreadlink(WvStringParm path);

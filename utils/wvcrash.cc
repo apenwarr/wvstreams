@@ -6,6 +6,7 @@
  * crashes.
  */
 #include "wvcrash.h"
+#include "wvtask.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -18,7 +19,7 @@
 #include <time.h>
 
 #ifndef WVCRASH_USE_SIGALTSTACK
-#define WVCRASH_USE_SIGALTSTACK 0
+#define WVCRASH_USE_SIGALTSTACK 1
 #endif
 
 // FIXME: this file mostly only works in Linux
@@ -33,10 +34,15 @@ static const char *argv0 = program_invocation_short_name;
 static const char *argv0 = "UNKNOWN";
 #endif // __USE_GNU
 
+#if WVCRASH_USE_SIGALTSTACK
+static const size_t altstack_size = 1048576; // wvstreams can be a pig
+static char altstack[altstack_size];
+#endif
+
 // Reserve enough buffer for a screenful of programme.
-static const int buffer_size = 2048;
+static const int buffer_size = 2048 + wvcrash_ring_buffer_size;
+
 static char desc[buffer_size];
-WvCrashCallback callback;
 
 // write a string 'str' to fd
 static void wr(int fd, const char *str)
@@ -79,6 +85,17 @@ static void wrn(int fd, int num)
 }
 
 
+// convert 'addr' to hex and write it to fd.
+static void wra(int fd, const void *addr)
+{
+    char digits[] = "0123456789ABCDEF";
+    
+    write(fd, "0x", 2);
+    for (int shift=28; shift>=0; shift-=4)
+        write(fd, &digits[(((unsigned)addr)>>shift)&0xF], 1);
+}
+
+
 static void wvcrash_real(int sig, int fd, pid_t pid)
 {
     static void *trace[64];
@@ -112,6 +129,84 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, pid_str);
     wr(fd, "\n");
 
+#if WVCRASH_USE_SIGALTSTACK
+    // Determine if this has likely been a stack overflow
+    const void *last_real_stack_frame;
+    for (;;)
+    {
+        last_real_stack_frame = __builtin_frame_address(0);
+        if (last_real_stack_frame == NULL
+                || last_real_stack_frame < &altstack[0]
+                || last_real_stack_frame >= &altstack[altstack_size])
+            break;
+        last_real_stack_frame = __builtin_frame_address(1);
+        if (last_real_stack_frame == NULL
+                || last_real_stack_frame < &altstack[0]
+                || last_real_stack_frame >= &altstack[altstack_size])
+            break;
+        last_real_stack_frame = __builtin_frame_address(2);
+        if (last_real_stack_frame == NULL
+                || last_real_stack_frame < &altstack[0]
+                || last_real_stack_frame >= &altstack[altstack_size])
+            break;
+        last_real_stack_frame = __builtin_frame_address(3);
+        if (last_real_stack_frame == NULL
+                || last_real_stack_frame < &altstack[0]
+                || last_real_stack_frame >= &altstack[altstack_size])
+            break;
+        last_real_stack_frame = __builtin_frame_address(4);
+        if (last_real_stack_frame == NULL
+                || last_real_stack_frame < &altstack[0]
+                || last_real_stack_frame >= &altstack[altstack_size])
+            break;
+        last_real_stack_frame = __builtin_frame_address(5);
+        if (last_real_stack_frame == NULL
+                || last_real_stack_frame < &altstack[0]
+                || last_real_stack_frame >= &altstack[altstack_size])
+            break;
+        last_real_stack_frame = NULL;
+        break;
+    }
+    if (last_real_stack_frame != NULL)
+    {
+        wr(fd, "\nLast real stack frame: ");
+        wra(fd, last_real_stack_frame);
+        const void *top_of_stack = WvTaskMan::current_top_of_stack();
+        wr(fd, "\nTop of stack: ");
+        wra(fd, top_of_stack);
+        size_t stack_size = size_t(top_of_stack) - size_t(last_real_stack_frame);
+        wr(fd, "\nStack size: ");
+        wrn(fd, int(stack_size));
+        size_t stack_size_limit = WvTaskMan::current_stacksize_limit();
+        if (stack_size_limit > 0)
+        {
+            wr(fd, "\nStack size rlimit: ");
+            wrn(fd, int(stack_size_limit));
+            if (stack_size > stack_size_limit)
+                wr(fd, "  DEFINITE STACK OVERFLOW");
+            else if (stack_size + 16384 > stack_size_limit)
+                wr(fd, "  PROBABLE STACK OVERFLOW");
+        }
+        wr(fd, "\n");
+    }
+#endif
+                
+
+    // Write out the contents of the ring buffer
+    {
+        const char *ring;
+        bool first = true;
+        while ((ring = wvcrash_ring_buffer_get()) != NULL)
+        {
+            if (first)
+            {
+                first = false;
+                wr(fd, "\nRing buffer:\n");
+            }
+            wr(fd, ring);
+        }
+    }
+    
     // Write out the assertion message, as logged by __assert*_fail(), if any.
     {
 	const char *assert_msg = wvcrash_read_assert();
@@ -181,9 +276,6 @@ void wvcrash(int sig)
     signal(sig, SIG_DFL);
     wr(2, "\n\nwvcrash: crashing!\n");
     
-    if (!!callback)
-        callback(sig);
-    
     // close some fds, just in case the reason we're crashing is fd
     // exhaustion!  Otherwise we won't be able to create our pipe to a
     // subprocess.  Probably only closing two fds is possible, but the
@@ -234,23 +326,14 @@ void wvcrash(int sig)
 }
 
 
-WvCrashCallback wvcrash_set_callback(WvCrashCallback _callback)
-{
-    WvCrashCallback old_callback = callback;
-    callback = _callback;
-    return old_callback;
-}
-
 static void wvcrash_setup_alt_stack()
 {
 #if WVCRASH_USE_SIGALTSTACK
-    const size_t stack_size = 1048576; // wvstreams can be a pig
-    static char stack[stack_size];
     stack_t ss;
     
-    ss.ss_sp = stack;
+    ss.ss_sp = altstack;
     ss.ss_flags = 0;
-    ss.ss_size = stack_size;
+    ss.ss_size = altstack_size;
     
     if (ss.ss_sp == NULL || sigaltstack(&ss, NULL))
         fprintf(stderr, "Failed to setup sigaltstack for wvcrash: %s\n",
@@ -305,7 +388,6 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
 
 void wvcrash(int sig) {}
 void wvcrash_add_signal(int sig) {}
-WvCrashCallback wvcrash_set_callback(WvCrashCallback cb) {}
 void wvcrash_setup(const char *_argv0, const char *_desc) {}
 
 #endif // Not Linux

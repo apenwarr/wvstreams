@@ -110,29 +110,32 @@ WvString UniDefGen::replacewildcard(const UniConfKey &key,
 }
 
 
-UniConfKey UniDefGen::keymap(const UniConfKey &key)
+bool UniDefGen::keymap(const UniConfKey &unmapped_key, UniConfKey &mapped_key)
 {
-    WvString tmp_key(key), tmp("");
+    WvString tmp_key(unmapped_key), tmp("");
     char *p = tmp_key.edit();
 
     tmp.setsize(strlen(tmp_key) * 2);
     char *q = tmp.edit();
     *q = '\0';
 
-    UniConfKey result = finddefault(key, p, q);
-    if (!result.numsegments())
-	result = key;
+    mapped_key = finddefault(unmapped_key, p, q);
+    if (!mapped_key.numsegments())
+	mapped_key = unmapped_key;
     // fprintf(stderr, "mapping '%s' -> '%s'\n", key.cstr(), result.cstr());
-    return result;
+    
+    return true;
 }
 
 
 WvString UniDefGen::get(const UniConfKey &key)
 {
-    UniConfKey defkey = keymap(key);
-
-    return replacewildcard(key, defkey,
- 			   inner() ? inner()->get(defkey) : WvString());
+    UniConfKey mapped_key;
+    if (keymap(key, mapped_key))
+        return replacewildcard(key, mapped_key,
+ 			    inner() ? inner()->get(mapped_key) : WvString());
+    else
+        return WvString::null;
 }
 
 

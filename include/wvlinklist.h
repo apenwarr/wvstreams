@@ -261,7 +261,7 @@ public:
      * "id" is an optional string to associate with the element, or null
      */
     void add_after(WvLink *after, T *data, bool autofree,
-			char *id = NULL )
+			const char *id = NULL )
     {
 	(void)new WvLink((void *)data, after, tail, autofree, id);
     }
@@ -273,14 +273,14 @@ public:
      * "autofree" is if true, takes ownership of the element
      * "id" is an optional string to associate with the element, or null
      */
-    void append(T *data, bool autofree, char *id = NULL)
+    void append(T *data, bool autofree, const char *id = NULL)
 	{ add_after(tail, data, autofree, id); }
 
     /**
      * Synonym for append(T*, bool, char*).
      * @see append(T*, bool, char*)
      */
-    void add(T *data, bool autofree, char *id = NULL)
+    void add(T *data, bool autofree, const char *id = NULL)
         { append(data, autofree, id); }
 
     /**
@@ -290,7 +290,7 @@ public:
      * "autofree" is if true, takes ownership of the element
      * "id" is an optional string to associate with the element, or null
      */
-    void prepend(T *data, bool autofree, char *id = NULL)
+    void prepend(T *data, bool autofree, const char *id = NULL)
 	{ add_after(&head, data, autofree, id); }
 
     /**
@@ -310,8 +310,10 @@ public:
      * 
      */ 
     void unlink_first()
+    { 
+        if(head.next != NULL)   
         { Iter i(*this); i.rewind(); i.next(); i.unlink(); }
-
+    }
     /**
      * Unlinks the element that follows the specified link in the list.
      * 
@@ -323,12 +325,15 @@ public:
     void unlink_after(WvLink *after, bool destroy = true)
     {
         WvLink *next = after->next;
-        T *obj = (destroy && next->get_autofree()) ?
+        if(next != NULL)
+        {
+            T *obj = (destroy && next->get_autofree()) ?
             static_cast<T*>(next->data) : NULL;
-        if (next == tail) tail = after;
-        next->unlink(after);
-	if (obj)
-	    WvTraits<T>::release(obj);
+            if (next == tail) tail = after;
+            next->unlink(after);
+	    if (obj)
+	        WvTraits<T>::release(obj);
+        }
     }
 
     /**

@@ -59,6 +59,9 @@ public:
      * If true, upon running into a decompression error, the encoder will
      * seek to the next unbroken block.  Most useful if at least some blocks
      * are fully flushed (see 'full_flush' below).  Defaults to false.
+     * Note that it may be impossible to ignore really bad decompression
+     * errors, in which case the encoder will go !isok(), as it would
+     * if this boolean is false.
      */
     bool ignore_decompression_errors;
 

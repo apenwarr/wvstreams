@@ -51,7 +51,9 @@ class WvPty : public WvFDStream
             { return _slave; }
         pid_t pid() const
             { return _pid; }
-        
+            
+    public:
+        const char *wstype() const { return "WvPty"; }
 };
 
 #endif // __WVPTY_H

@@ -68,6 +68,9 @@ private:
     void poll();
     // resets the timing information
     void resettimer();
+    
+public:
+    const char *wstype() const { return "WvSyncStream"; }
 };
 
 #endif  // __WVSYNCSTREAM_H

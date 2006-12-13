@@ -16,6 +16,20 @@
 class WvDaemon;
 
 typedef WvCallback<void, WvDaemon &, void *> WvDaemonCallback;
+
+#ifdef WEAVER_CODENAME
+#ifdef WEAVER_VER_STRING
+#define WVDAEMON_DEFAULT_VERSION WEAVER_CODENAME ": " WEAVER_VER_STRING
+#else
+#define WVDAEMON_DEFAULT_VERSION WEAVER_CODENAME
+#endif
+#else
+#ifdef WEAVER_VER_STRING
+#define WVDAEMON_DEFAULT_VERSION WEAVER_VER_STRING
+#else
+#define WVDAEMON_DEFAULT_VERSION "(unknown version)"
+#endif
+#endif
     	
 /*!
 @brief WvDaemon - High-level abstraction for creating daemon processes.
@@ -41,16 +55,20 @@ WvDaemon::args of type WvArgs.
 By default, daemons run in the foreground for debugging purposes; you must
 pass the -d parameter to force them into the background.
 
-The actual functionality of WvDaemon is implemented through three protected
+The actual functionality of WvDaemon is implemented through five protected
 member callbacks:
 
-WvDaemon::start_callback: Called when the daemon first runs or after
+WvDaemon::load_callback: Called as soon as the arguments are processed
+and the process has (optionally) daemonized
+WvDaemon::start_callback: Called after WvDaemon::load_callback and after
 restarting due to SIGHUP
-WvDaemon::run_callback: The main loop callback.  It should return if
-it ever expects that the daemon should exit or restart, ie. after having called
-WvDaemon::die() or WvDaemon::restart()
+WvDaemon::run_callback: The main loop callback.
+  - It must return if it ever expects that the daemon should 
+    exit or restart, ie. after having called WvDaemon::die() 
+    or WvDaemon::restart(); otherwise the daemon will never exit
 WvDaemon::stop_callback: Called when the daemon is exiting or right before
 restarting due to SIGHUP
+WvDaemon::unload_callback: Called right before the daemon exits
 
 Sample usage:
 
@@ -81,6 +99,8 @@ int main(int argc, char **argv)
 class WvDaemon
 {
     
+        static WvDaemon *singleton;
+
     public:
 
         //! The name and version of the daemon; used for -V and logging
@@ -101,12 +121,22 @@ class WvDaemon
         WvLog::LogLevel log_level;
         bool syslog;
     
-    protected:
+    public:
 
         //! See the class description
+        WvDaemonCallback load_callback;
         WvDaemonCallback start_callback;
         WvDaemonCallback run_callback;
         WvDaemonCallback stop_callback;
+        WvDaemonCallback unload_callback;
+        
+    protected:
+
+        virtual void do_load();
+        virtual void do_start();
+        virtual void do_run();
+        virtual void do_stop();
+        virtual void do_unload();
 
     private:
 
@@ -115,6 +145,13 @@ class WvDaemon
         volatile bool _want_to_die;
         volatile bool _want_to_restart;
 	volatile int _exit_status;
+
+    	void init(WvStringParm _name,
+                WvStringParm _version,
+                WvDaemonCallback _start_callback,
+    	    	WvDaemonCallback _run_callback,
+    	    	WvDaemonCallback _stop_callback,
+                void *_ud);
 
         int _run(const char *argv0);
 
@@ -141,12 +178,28 @@ class WvDaemon
     public:
 
         //! Construct a new daemon; requires the name, version,
-        //! and three callbacks for the functionality of the daemon
+        //! and optional userdata to be passed to the callbacks
     	WvDaemon(WvStringParm _name, WvStringParm _version,
                 WvDaemonCallback _start_callback,
     	    	WvDaemonCallback _run_callback,
     	    	WvDaemonCallback _stop_callback,
-                void *_ud = NULL);
+                void *_ud = NULL) :
+            log(_name, WvLog::Debug)
+        {
+            init(_name, _version, _start_callback, _run_callback, _stop_callback, _ud);
+        }
+        //! Construct a new daemon; requires the name
+        //! and three callbacks for the functionality of the daemon
+    	WvDaemon(WvStringParm _name,
+                WvDaemonCallback _start_callback,
+    	    	WvDaemonCallback _run_callback,
+    	    	WvDaemonCallback _stop_callback,
+                void *_ud = NULL) :
+            log(_name, WvLog::Debug)
+        {
+            init(_name, WVDAEMON_DEFAULT_VERSION, _start_callback, _run_callback, _stop_callback, _ud);
+        }
+    	virtual ~WvDaemon();
     	
     	//! Run the daemon with no argument processing.  Returns exit status.
     	int run(const char *argv0);
@@ -187,6 +240,14 @@ class WvDaemon
         {
             return _extra_args;
         }
+        
+        static WvDaemon *me()
+        {
+            return singleton;
+        }
+
+    public:
+        const char *wstype() const { return "WvDaemon"; }
 };
 
 #endif // __WVDAEMON_H

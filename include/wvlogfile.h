@@ -24,7 +24,7 @@ public:
 
 protected:
     WvLogFileBase(WvLog::LogLevel _max_level);
-    virtual void _make_prefix(); 
+    virtual void _make_prefix(time_t now_sec); 
     virtual void _mid_line(const char *str, size_t len);
     virtual void _end_line();
 
@@ -45,10 +45,13 @@ public:
     void start_log();
 
 private:
-    virtual void _make_prefix(); 
+    virtual void _make_prefix(time_t now_sec); 
     int keep_for, last_day;
     WvString filename;
     bool allow_append;
+
+public:
+    const char *wstype() const { return "WvLogFileBase"; }
 };
 
 #endif // __WVLOGFILE_H

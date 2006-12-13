@@ -106,6 +106,7 @@ AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
+AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
 
 # avoid autoconf's default values, but keep those the user might have given
 CFLAGS="$CFLAGS"
@@ -447,6 +448,12 @@ if test "$with_openssl" != "no"; then
     AC_CHECK_LIB(ssl, SSL_has_matching_session_id,, [with_openssl=no])
 fi
 
+# readline
+if test "$with_readline" != "no"; then
+    AC_CHECK_HEADERS(readline/readline.h,, [with_readline=no])
+    AC_CHECK_LIB(readline, readline,, [with_readline=no])
+fi
+
 # pam
 if test "$with_pam" != "no"; then
     AC_CHECK_HEADERS(security/pam_appl.h,, [with_pam=no])
@@ -613,6 +620,9 @@ if test "$with_openssl" = "no"; then
     AC_MSG_WARN([OpenSSL is missing.])
     missing_required="$missing_required OpenSSL>=0.9.7"
 fi
+if test "$with_readline" = "no"; then
+    AC_MSG_WARN([readline is missing.])
+fi
 if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing.])
     missing_required="$missing_required zlib"
@@ -658,6 +668,7 @@ AC_SUBST(with_gtk)
 AC_SUBST(with_openslp)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
+AC_SUBST(with_readline)
 AC_SUBST(with_telephony)
 AC_SUBST(with_qt)
 AC_SUBST(with_swig)
@@ -669,6 +680,8 @@ AC_SUBST(build_xplc)
 AC_SUBST(xplc_pc)
 
 AC_SUBST(ac_libs)
+
+AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 
 AC_CONFIG_FILES(config.mk)
 AC_CONFIG_FILES(gnulib/Makefile)

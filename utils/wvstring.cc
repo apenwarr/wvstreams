@@ -64,6 +64,8 @@ WvFastString::WvFastString(const char *_str)
 
 void WvString::copy_constructor(const WvFastString &s)
 {
+    unlink();	// WvFastString has already been created by now
+
     if (!s.buf)
     {
 	link(&nullbuf, s.str);
@@ -76,6 +78,7 @@ void WvString::copy_constructor(const WvFastString &s)
 
 WvString::WvString(const char *_str)
 {
+    unlink();	// WvFastString has already been created by now
     construct(_str);
 }
 
@@ -421,15 +424,17 @@ bool WvFastString::operator! () const
 
 /** 
  * parse a 'percent' operator from a format string.  For example:
- *        cptr      out:  zeropad  justify   maxlen  return pointer
- *        "%s"             false      0         0    "s"
- *        "%-15s"          false    -15         0    "s"
- *        "%15.5s"         false     15         5    "s"
- *        "%015.5s"        true      15         5    "s"
+ *        cptr      out:  zeropad  justify   maxlen argnum  return pointer
+ *        "%s"             false      0         0     0         "s"
+ *        "%-15s"          false    -15         0     0         "s"
+ *        "%15.5s"         false     15         5     0         "s"
+ *        "%015.5s"        true      15         5     0         "s"
+ *        "%15$2s"         false     15         0     2         "s"
  * and so on.  On entry, cptr should _always_ point at a percent '%' char.
+ * argnum is the argument number.
  */
-static const char *pparse(const char *cptr,
-			  bool &zeropad, int &justify, int &maxlen)
+static const char *pparse(const char *cptr, bool &zeropad,
+			  int &justify, int &maxlen, int &argnum)
 {
     assert(*cptr == '%');
     cptr++;
@@ -438,7 +443,8 @@ static const char *pparse(const char *cptr,
 
     justify = atoi(cptr);
     
-    for (; *cptr && *cptr!='.' && *cptr!='%' && !isalpha(*cptr); cptr++)
+    for (; *cptr && *cptr!='.' && *cptr!='%' && *cptr!='$' 
+                                        && !isalpha(*cptr); cptr++)
 	;
     if (!*cptr) return cptr;
     
@@ -447,9 +453,18 @@ static const char *pparse(const char *cptr,
     else
 	maxlen = 0;
     
+    for (; *cptr && *cptr!='%' && *cptr!='$' && !isalpha(*cptr); cptr++)
+	;
+    if (!*cptr) return cptr;
+    
+    if (*cptr == '$')
+	argnum = atoi(cptr+1);
+    else
+	argnum = 0;
+
     for (; *cptr && *cptr!='%' && !isalpha(*cptr); cptr++)
 	;
-    
+
     return cptr;
 }
 
@@ -466,15 +481,19 @@ static const char *pparse(const char *cptr,
  *
  * This function is usually called from some other function which allocates
  * the array automatically.
+ *
+ * %$ns (n > 0) is also supported for internationalization purposes. e.g.
+ *   ("%$2s is arg2, and %$1s ia arg1", arg1, arg2) 
  */
 void WvFastString::do_format(WvFastString &output, const char *format,
-			     const WvFastString * const *a)
+			     const WvFastString * const *argv)
 {
     static const char blank[] = "(nil)";
-    const WvFastString * const *argptr = a;
+    const WvFastString * const *argptr = argv;
+    const WvFastString * const *argP;
     const char *iptr = format, *arg;
     char *optr;
-    int total = 0, aplen, ladd, justify, maxlen;
+    int total = 0, aplen, ladd, justify, maxlen, argnum;
     bool zeropad;
     
     // count the number of bytes we'll need
@@ -488,7 +507,8 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	}
 	
 	// otherwise, iptr is at a percent expression
-	iptr = pparse(iptr, zeropad, justify, maxlen);
+        argnum=0;
+	iptr = pparse(iptr, zeropad, justify, maxlen, argnum);
 	if (*iptr == '%') // literal percent
 	{
 	    total++;
@@ -500,22 +520,25 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 
 	if (*iptr == 's')
 	{
-	    if (!*argptr || !(**argptr).cstr())
+            argP = (argnum > 0 ) ?  (argv + argnum -1): argptr;
+	    if (!*argP || !(**argP).cstr())
 		arg = blank;
 	    else
-		arg = (**argptr).cstr();
+		arg = (**argP).cstr();
 	    ladd = _max(abs(justify), strlen(arg));
 	    if (maxlen && maxlen < ladd)
 		ladd = maxlen;
 	    total += ladd;
-	    argptr++;
+	    if ( argnum <= 0 ) 
+                argptr++;
 	    iptr++;
 	    continue;
 	}
 	
 	if (*iptr++ == 'c')
 	{
-	    argptr++;
+	    if ( argnum <= 0 ) 
+                argptr++;
 	    total++;
 	}
     }
@@ -525,7 +548,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
     // actually render the final string
     iptr = format;
     optr = output.str;
-    argptr = a;
+    argptr = argv;
     while (*iptr)
     {
 	if (*iptr != '%')
@@ -535,7 +558,8 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	}
 	
 	// otherwise, iptr is at a "percent expression"
-	iptr = pparse(iptr, zeropad, justify, maxlen);
+        argnum=0;
+	iptr = pparse(iptr, zeropad, justify, maxlen, argnum);
 	if (*iptr == '%')
 	{
 	    *optr++ = *iptr++;
@@ -543,10 +567,11 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	}
 	if (*iptr == 's')
 	{
-	    if (!*argptr || !(**argptr).cstr())
+            argP = (argnum > 0 ) ?  (argv + argnum -1): argptr;
+	    if (!*argP || !(**argP).cstr())
 		arg = blank;
 	    else
-		arg = (**argptr).cstr();
+		arg = (**argP).cstr();
 	    aplen = strlen(arg);
 	    if (maxlen && maxlen < aplen)
 		aplen = maxlen;
@@ -572,16 +597,19 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 		optr += -justify - aplen;
 	    }
 	    
-	    argptr++;
+	    if ( argnum <= 0 ) 
+               argptr++;
 	    iptr++;
 	    continue;
 	}
 	if (*iptr++ == 'c')
 	{
-	    arg = **argptr++;
+            argP = (argnum > 0 ) ?  (argv + argnum -1): argptr++;
+	    if (!*argP || !(**argP))
+		arg = " ";
+	    else
+		arg = (**argP);
 	    *optr++ = (char)atoi(arg);
-	        
-	    argptr++;
 	}
     }
     *optr = 0;

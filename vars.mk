@@ -20,6 +20,10 @@ TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
 TARGETS += wvtestmain.o libwvtest.a
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
+TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest 
+ifneq ("$(with_readline)", "no")
+TARGETS += ipstreams/tests/wsd
+endif
 GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 
 #ifneq ("$(with_swig)", "no")
@@ -164,6 +168,7 @@ BASEOBJS= \
 	utils/wvtimeutils.o \
 	utils/wvvector.o \
 	streams/wvistreamlist.o \
+	utils/wvstreamsdebugger.o \
 	streams/wvlog.o \
 	streams/wvstream.o \
 	uniconf/uniconf.o uniconf/uniconf_c.o \
@@ -207,7 +212,7 @@ libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
 		$(ARCH_SUBDIRS) streams urlget))
 libwvstreams.so: libwvutils.so libwvbase.so
-libwvstreams.so: LIBS+=-lssl -lcrypto
+libwvstreams.so: LIBS+=-lssl -lcrypto 
 
 libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 	$(call objects,uniconf))

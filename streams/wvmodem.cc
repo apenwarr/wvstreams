@@ -153,6 +153,7 @@ WvModem::WvModem(WvStringParm filename, int _baud, bool rtscts, bool _no_reset)
     baud = _baud;
     die_fast = false;
     no_reset = _no_reset;
+    have_old_t = false;
     
     if (!lock.lock())
     {
@@ -188,6 +189,7 @@ void WvModem::setup_modem(bool rtscts)
 	seterr(errno);
 	return;
     }
+    have_old_t = true;
     
     drain();
     
@@ -273,7 +275,8 @@ void WvModem::close()
 	if (getrfd() >= 0)
 	{
 	    tcflush(getrfd(), TCIOFLUSH);
-	    tcsetattr(getrfd(), TCSANOW, &old_t);
+            if (have_old_t)
+                tcsetattr(getrfd(), TCSANOW, &old_t);
 	    tcflush(getrfd(), TCIOFLUSH);
 	}
 	WvFile::close();

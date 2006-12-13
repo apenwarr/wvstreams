@@ -36,6 +36,9 @@ public:
     size_t put(const void *data, size_t len);
     size_t get(void *data, size_t len);
     size_t skip(size_t len);
+    
+public:
+    const char *wstype() const { return "WvMagicCircle"; }
 };
 
 

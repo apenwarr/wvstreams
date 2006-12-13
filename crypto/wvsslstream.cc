@@ -65,7 +65,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     is_server = _is_server;
     ctx = NULL;
     ssl = NULL;
-    meth = NULL;
+    //meth = NULL;
     sslconnected = ssl_stop_read = ssl_stop_write = false;
     
     wvssl_init();
@@ -84,12 +84,14 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
 
     if (is_server)
     {
-	meth = SSLv23_server_method();
     	debug("Configured algorithms and methods for server mode.\n");
 
-	ctx = SSL_CTX_new(meth);
+	ctx = SSL_CTX_new(SSLv23_server_method());
     	if (!ctx)
     	{
+            ERR_print_errors_fp(stderr);
+            debug("Can't get SSL context! Error: %s\n", 
+                  ERR_reason_error_string(ERR_get_error()));
 	    seterr("Can't get SSL context!");
 	    return;
     	}
@@ -119,10 +121,9 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     }
     else
     {
-    	meth = SSLv23_client_method();
     	debug("Configured algorithms and methods for client mode.\n");
     
-    	ctx = SSL_CTX_new(meth);
+    	ctx = SSL_CTX_new(SSLv23_client_method());
     	if (!ctx)
     	{
 	    seterr("Can't get SSL context!");

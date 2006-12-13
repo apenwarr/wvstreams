@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Try to run the given command in a pipe to the test meter, but if that
 # fails, just dump it to stdout instead.  Also make sure nobody *inside*

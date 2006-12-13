@@ -330,7 +330,7 @@ WVTEST_MAIN("ssl establish connection")
 
 WVTEST_MAIN("x509 refcounting")
 {
-    WvX509Mgr *x509 = new WvX509Mgr("cn=random_stupid_dn", 1024);
+    WvX509Mgr *x509 = new WvX509Mgr("cn=random_stupid_dn,dn=foo", 512);
     WvIStreamList list;
     WvSSLStream *s1, *s2;
     sslloop(list, *x509, s1, s2, true);

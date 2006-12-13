@@ -22,8 +22,8 @@ class UniSubtreeGen : public UniFilterGen
 public:
     UniSubtreeGen(IUniConfGen *gen, const UniConfKey &_subkey);
     
-    virtual UniConfKey keymap(const UniConfKey &key);
-    virtual UniConfKey reversekeymap(const UniConfKey &key);
+    virtual bool keymap(const UniConfKey &unmapped_key, UniConfKey &mapped_key);
+    virtual bool reversekeymap(const UniConfKey &mapped_key, UniConfKey &unmapped_key);
 };
 
 

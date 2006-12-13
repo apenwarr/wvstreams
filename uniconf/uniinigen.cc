@@ -25,15 +25,10 @@ static IUniConfGen *creator(WvStringParm s)
 WvMoniker<IUniConfGen> UniIniGenMoniker("ini", creator);
 
 
-// forward declarations
-static void printkey(WvStream &file, const UniConfKey &_key,
-		     WvStringParm _value);
-
-
 /***** UniIniGen *****/
 
-UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode)
-    : filename(_filename), create_mode(_create_mode), log(_filename)
+UniIniGen::UniIniGen(WvStringParm _filename, int _create_mode, UniIniGen::SaveCallback _save_cb)
+    : filename(_filename), create_mode(_create_mode), log(_filename), save_cb(_save_cb)
 {
     // Create the root, since this generator can't handle it not existing.
     UniTempGen::set(UniConfKey::EMPTY, WvString::empty);
@@ -396,7 +391,7 @@ static bool absolutely_needs_escape(WvStringParm s, const char *sepchars)
 }
 
 
-static void printsection(WvStream &file, const UniConfKey &key)
+static void printsection(WvStream &file, const UniConfKey &key, UniIniGen::SaveCallback save_cb)
 {
     WvString s;
     static const WvStringMask nasties("\r\n[]");
@@ -410,11 +405,14 @@ static void printsection(WvStream &file, const UniConfKey &key)
     file.print("\n[");
     file.print(s);
     file.print("]\n");
+
+    if (!!save_cb)
+        save_cb();
 }
 
 
 static void printkey(WvStream &file, const UniConfKey &_key,
-		     WvStringParm _value)
+		     WvStringParm _value, UniIniGen::SaveCallback save_cb)
 {
     WvString key, value;
     static const WvStringMask nasties("\r\n\t []=#");
@@ -441,12 +439,15 @@ static void printkey(WvStream &file, const UniConfKey &_key,
     file.print(" = ");
     file.print(value);
     file.print("\n");
+
+    if (!!save_cb)
+        save_cb();
 }
 
 
 static void save_sect(WvStream &file, UniConfValueTree &toplevel,
 		      UniConfValueTree &sect, bool &printedsection,
-		      bool recursive)
+		      bool recursive, UniIniGen::SaveCallback save_cb)
 {
     UniConfValueTree::Iter it(sect);
     for (it.rewind(); it.next(); )
@@ -466,15 +467,15 @@ static void save_sect(WvStream &file, UniConfValueTree &toplevel,
         {
             if (!printedsection)
             {
-                printsection(file, toplevel.fullkey());
+                printsection(file, toplevel.fullkey(), save_cb);
                 printedsection = true;
             }
-            printkey(file, node.fullkey(&toplevel), node.value());
+            printkey(file, node.fullkey(&toplevel), node.value(), save_cb);
         }
 
 	// print all children, if requested
 	if (recursive && node.haschildren())
-	    save_sect(file, toplevel, node, printedsection, recursive);
+	    save_sect(file, toplevel, node, printedsection, recursive, save_cb);
     }
 }
 
@@ -491,12 +492,12 @@ void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
 	// and it's never NULL (so we don't need to write it if it's just
 	// blank)
 	if (!!parent.value())
-	    printkey(file, parent.key(), parent.value());
+	    printkey(file, parent.key(), parent.value(), save_cb);
     }
 
     bool printedsection = false;
     
-    save_sect(file, parent, parent, printedsection, false);
+    save_sect(file, parent, parent, printedsection, false, save_cb);
     
     UniConfValueTree::Iter it(parent);
     for (it.rewind(); it.next(); )
@@ -504,6 +505,6 @@ void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
         UniConfValueTree &node = *it;
 	
 	printedsection = false;
-	save_sect(file, node, node, printedsection, true);
+	save_sect(file, node, node, printedsection, true, save_cb);
     }
 }
