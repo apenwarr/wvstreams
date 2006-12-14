@@ -1,3 +1,9 @@
+wvstreams (4.3) unstable; urgency=low
+
+  * New upstream version.
+
+ -- William Lachance <wlach@nit.ca>  Thu, 14 Dec 2006 17:28:09 -0500
+
 wvstreams (4.2.2-2) unstable; urgency=low
 
   * Fix FTBFS due to new GNU Make.  (Closes: Bug#348190)
