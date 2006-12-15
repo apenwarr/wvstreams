@@ -188,6 +188,10 @@ install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
 	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/man8
 	$(INSTALL_DATA) uniconf/tests/uni.8 $(DESTDIR)$(mandir)/man8
 
+install-wsd: ipstreams/tests/wsd
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) ipstreams/tests/wsd $(DESTDIR)$(bindir)/
+
 uninstall:
 	$(tbd)
 
