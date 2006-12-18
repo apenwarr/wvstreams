@@ -150,7 +150,11 @@ kdoc:
 doxygen:
 	doxygen
 
+ifeq ("$(with_readline)", "no")
 install: install-shared install-dev install-xplc install-uniconfd
+else
+install: install-shared install-dev install-xplc install-uniconfd install-wsd
+endif
 
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
