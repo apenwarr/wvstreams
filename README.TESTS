@@ -1,0 +1,4 @@
+Note that the unit tests (invoked through 'make test') will fail if WvStreams 
+is linked against the default version of OpenSSL 0.9.8. To get around this, 
+you need to use a version of OpenSSL built with the PURIFY define enabled 
+(-DPURIFY).
