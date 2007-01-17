@@ -381,10 +381,10 @@ public:
     void set_constraints(WvStringParm constraint);
     
     /**
-     * Return the not before and not after 
+     * Return the not before and not after in a format we're more able to easily use.
      */
-    ASN1_TIME *get_notvalid_before();
-    ASN1_TIME *get_notvalid_after();
+    time_t get_notvalid_before();
+    time_t get_notvalid_after();
     
     /**
      * Set the lifetime to be used for this certificate... the lifetime starts
@@ -397,6 +397,30 @@ public:
      */
     void set_aia(WvStringParm identifier);
     WvString get_aia();
+
+
+    /**
+     * Get a list of OCSP Responders for this certificate
+     */
+     
+    WvStringList *get_ocsp(WvStringList *responders);
+    
+    /**
+     * Get a list of URLS that have the Certificate 
+     * of the CA that issued this certificate
+     */
+    WvStringList *get_ca_urls(WvStringList *urls); 
+    
+    /**
+     * Get the Subject Key Info
+     */
+   
+    WvString get_ski();
+    
+    /**
+     * Get the Authority key Info
+     */
+    WvString get_aki();
 
     void set_dname(WvStringParm _dname)
     {	dname = _dname; }

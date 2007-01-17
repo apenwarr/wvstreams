@@ -20,7 +20,8 @@ TARGETS += libwvstreams.so libwvstreams.a
 TARGETS += libuniconf.so libuniconf.a
 TARGETS += wvtestmain.o libwvtest.a
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
-TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest 
+TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
+TARGETS += crypto/tests/printcert
 ifneq ("$(with_readline)", "no")
 TARGETS += ipstreams/tests/wsd
 endif

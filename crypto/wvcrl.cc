@@ -66,10 +66,10 @@ WvCRLMgr::Valid  WvCRLMgr::validate(WvX509Mgr *cert)
     if (isrevoked(cert))
 	return REVOKED;
     
-    if (X509_cmp_current_time(cert->get_notvalid_before()) > 0)
+    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) > 0)
 	return BEFORE_VALID;
 
-    if (X509_cmp_current_time(cert->get_notvalid_after()) < 0)
+    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) < 0)
 	return AFTER_VALID;
     
     return VALID;

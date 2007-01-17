@@ -54,9 +54,13 @@ void wvssl_init()
 {
     if (!ssl_init_count)
     {
-	OpenSSL_add_ssl_algorithms();
-	OpenSSL_add_all_algorithms();
+	SSL_library_init();
+	SSL_load_error_strings();
+	ERR_load_BIO_strings();
 	ERR_load_crypto_strings();
+	OpenSSL_add_all_algorithms();
+	OpenSSL_add_all_ciphers();
+	OpenSSL_add_all_digests();
     }
     
     ssl_init_count++;
@@ -65,14 +69,11 @@ void wvssl_init()
 
 void wvssl_free()
 {
-    // HACK: never allow this function to actually free stuff, because I
-    // think we're doing it wrong.
-    if (ssl_init_count >= 2)
+    if (ssl_init_count >= 1)
 	ssl_init_count--;
 
     if (!ssl_init_count)
     {
-	assert(0);
 	ERR_free_strings();
 	EVP_cleanup();
     }
@@ -845,20 +846,10 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	debug(WvLog::Error, "Not decoding an empty string. - Sorry!\n");
 	return;
     }
+
+    BIO *membuf = BIO_new(BIO_s_mem());
+    BIO_puts(membuf, pemEncoded);
     
-    // Let the fun begin... ;)
-    AutoClose stupid(tmpfile());
-    WvString outstring = pemEncoded;
-    
-    // I HATE OpenSSL... this is SO Stupid!!!
-    rewind(stupid);
-    unsigned int written = fwrite(outstring.edit(), 1, outstring.len(), stupid);
-    if (written != outstring.len())
-    {
-	debug(WvLog::Error,"Couldn't write full amount to temp file!\n");
-	return;
-    }
-    rewind(stupid);
     switch(mode)
     {
     case CertPEM:
@@ -869,7 +860,8 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	    X509_free(cert);
 	    cert = NULL;
 	}
-	cert = PEM_read_X509(stupid, NULL, NULL, NULL);
+	
+	cert = PEM_read_bio_X509(membuf, NULL, NULL, NULL);
 	if (cert)
 	{
 	    filldname();
@@ -884,7 +876,8 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	debug("Make sure that you load or generate a new Certificate!\n");
 	if (rsa) delete rsa;
 
-	rsa = new WvRSAKey(PEM_read_RSAPrivateKey(stupid, NULL, NULL, NULL), 
+	
+	rsa = new WvRSAKey(PEM_read_bio_RSAPrivateKey(membuf, NULL, NULL, NULL), 
 			   true);
 	if (!rsa->isok())
 	    seterr("RSA Key failed to import\n");
@@ -893,7 +886,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	debug("Importing RSA Public Key.\n");
 	debug("Are you REALLY sure that you want to do this?\n");
 	if (rsa) delete rsa;
-	rsa = new WvRSAKey(PEM_read_RSAPublicKey(stupid, NULL, NULL, NULL), 
+	rsa = new WvRSAKey(PEM_read_bio_RSAPublicKey(membuf, NULL, NULL, NULL), 
 			   true);
 	if (!rsa->isok())
 	    seterr("RSA Public Key failed to import\n");
@@ -905,6 +898,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
     default:
 	seterr("Unknown Mode\n");
     }
+    BIO_free_all(membuf);
 }
 
 
@@ -1157,12 +1151,14 @@ void WvX509Mgr::set_serial(long serial)
 
 WvString WvX509Mgr::get_crl_dp()
 {
+    assert(cert);
     return get_extension(NID_crl_distribution_points);
 }
 
 
 WvString WvX509Mgr::get_cp_oid()
 {
+    assert(cert);
     return get_extension(NID_certificate_policies);
 }
 
@@ -1225,18 +1221,21 @@ void WvX509Mgr::set_ext_key_usage(WvStringParm values)
 
 WvString WvX509Mgr::get_ext_key_usage()
 {
+    assert(cert);
     return get_extension(NID_ext_key_usage);
 }
 
 
 WvString WvX509Mgr::get_altsubject()
 {
+    assert(cert);
     return get_extension(NID_subject_alt_name);
 }
 
 
 WvString WvX509Mgr::get_constraints()
 {
+    assert(cert);
     return get_extension(NID_policy_constraints);
 }
 
@@ -1270,10 +1269,42 @@ void WvX509Mgr::set_aia(WvStringParm _identifier)
     sk_ACCESS_DESCRIPTION_free(ainfo);
 }
 
+
 WvString WvX509Mgr::get_aia()
 {
     return get_extension(NID_info_access);
 }
+
+
+WvStringList *parse_stack(WvStringParm ext, 
+			 WvStringList *list, WvStringParm prefix)
+{
+    WvStringList whole_aia;
+    whole_aia.split(ext, "\n");
+    WvStringList::Iter i(whole_aia);
+    for (i.rewind();i.next();)
+    {
+      WvString stack_entry(*i);
+      if (strstr(stack_entry, prefix))
+      {
+          WvString uri(stack_entry.edit() + prefix.len());
+          list->append(uri);  
+      }
+    }
+    return list;
+}
+
+WvStringList *WvX509Mgr::get_ocsp(WvStringList *responders)
+{
+    return parse_stack(get_aia(), responders, "OCSP - URI:");
+}
+
+
+WvStringList *WvX509Mgr::get_ca_urls(WvStringList *urls)
+{
+    return parse_stack(get_aia(), urls, "CA Issuers - URI:");
+}
+
 
 WvString WvX509Mgr::get_extension(int nid)
 {
@@ -1281,10 +1312,11 @@ WvString WvX509Mgr::get_extension(int nid)
     
     if (cert)
     {
-	int index = X509_get_ext_by_NID(cert, nid, -1);
+        X509 *copy = X509_dup(cert);
+	int index = X509_get_ext_by_NID(copy, nid, -1);
 	if (index >= 0)
 	{
-	    X509_EXTENSION *ext = X509_get_ext(cert, index);
+	    X509_EXTENSION *ext = X509_get_ext(copy, index);
 	    if (ext)
 	    {
 		X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
@@ -1304,24 +1336,28 @@ WvString WvX509Mgr::get_extension(int nid)
 #else
 		    unsigned char **ext_value_data = &ext->value->data;
 #endif
-		    if (method->it) 
+		    if (method->it)
+		    {
 			ext_data = ASN1_item_d2i(NULL, ext_value_data,
 						ext->value->length, 
 						ASN1_ITEM_ptr(method->it));
+			debug("Applied generic conversion!\n");
+		    }
 		    else
+		    {
 			ext_data = method->d2i(NULL, ext_value_data,
 					      ext->value->length);
+			debug("Applied method specific conversion!\n");
+		    }
 		    
 		    if (method->i2s)
 		    {
+			debug("String Extension!\n");
 			retval = method->i2s(method, ext_data);
-			if (method->it)
-			    ASN1_item_free((ASN1_VALUE *)ext_data, ASN1_ITEM_ptr(method->it));
-			else
-			    method->ext_free(ext_data);
 		    }
 		    else if (method->i2v)
 		    {
+			debug("Stack Extension!\n");
 		        CONF_VALUE *val = NULL;
 		        STACK_OF(CONF_VALUE) *svals = NULL;
 		        svals = method->i2v(method, ext_data, NULL);
@@ -1343,11 +1379,13 @@ WvString WvX509Mgr::get_extension(int nid)
                                     list.append(pair);
                                 }
                             }
-                            retval = list.join(",");
+                            retval = list.join(";\n");
                         }
+                        sk_CONF_VALUE_pop_free(svals, X509V3_conf_free);
 		    }
 		    else if (method->i2r)
 		    {
+			debug("Raw Extension!\n");
 			WvDynBuf retvalbuf;
 			BIO *bufbio = BIO_new(BIO_s_mem());
 			BUF_MEM *bm;
@@ -1356,17 +1394,30 @@ WvString WvX509Mgr::get_extension(int nid)
 			retvalbuf.put(bm->data, bm->length);
 			BIO_free(bufbio);
 			retval = retvalbuf.getstr();
-			if (method->it)
-			    ASN1_item_free((ASN1_VALUE *)ext_data, 
-					   ASN1_ITEM_ptr(method->it));
 		    }
+		    
+		    if (method->it)
+			ASN1_item_free((ASN1_VALUE *)ext_data, 
+				       ASN1_ITEM_ptr(method->it));
+		    else
+			method->ext_free(ext_data);
+
 		}
 	    }
 	}
+	else
+	{
+	    debug("Extension not present!\n");
+	}
+	if (copy)
+	  X509_free(copy);
     }
 
     if (!!retval)
+    {
+	debug("Returning: %s\n", retval);
 	return retval;
+    }
     else
 	return WvString::null;
 }
@@ -1541,17 +1592,52 @@ bool WvX509Mgr::verify(WvBuf &original, WvStringParm signature)
 }
 
 
-ASN1_TIME *WvX509Mgr::get_notvalid_before()
+time_t ASN1_TIME_to_time_t(ASN1_TIME *t)
+{
+    struct tm newtime;
+    char *p = NULL;
+    char d[18];
+    memset(&d,'\0',sizeof(d));    
+    memset(&newtime,'\0',sizeof newtime);
+    
+    if (t->type == V_ASN1_GENERALIZEDTIME) 
+    {
+         // For time values >= 2050, OpenSSL uses
+         // ASN1_GENERALIZEDTIME - which we'll worry about
+         // later.
+	return 0;
+    }
+
+    p = (char *)t->data;
+    sscanf(p,"%2s%2s%2s%2s%2s%2sZ", d, &d[3], &d[6], &d[9], &d[12], &d[15]);
+    
+    int year = strtol(d, (char **)NULL, 10);
+    if (year < 49)
+	year += 100;
+    else
+	year += 50;
+    
+    newtime.tm_year = year;
+    newtime.tm_mon = strtol(&d[3], (char **)NULL, 10) - 1;
+    newtime.tm_mday = strtol(&d[6], (char **)NULL, 10);
+    newtime.tm_hour = strtol(&d[9], (char **)NULL, 10);
+    newtime.tm_min = strtol(&d[12], (char **)NULL, 10);
+    newtime.tm_sec = strtol(&d[15], (char **)NULL, 10);
+
+    return mktime(&newtime);
+}
+
+time_t WvX509Mgr::get_notvalid_before()
 {
     assert(cert);
-    return X509_get_notBefore(cert);
+    return ASN1_TIME_to_time_t(X509_get_notBefore(cert));
 }
 
 
-ASN1_TIME *WvX509Mgr::get_notvalid_after()
+time_t WvX509Mgr::get_notvalid_after()
 {
     assert(cert);
-    return X509_get_notAfter(cert);
+    return ASN1_TIME_to_time_t(X509_get_notAfter(cert));
 }
 
 
@@ -1603,3 +1689,14 @@ bool WvX509Mgr::signcrl(WvCRLMgr *crl)
 }
 
 
+WvString WvX509Mgr::get_ski()
+{
+    assert(cert);
+    return get_extension(NID_subject_key_identifier);
+}
+
+WvString WvX509Mgr::get_aki()
+{
+    assert(cert);
+    return get_extension(NID_authority_key_identifier);
+}
