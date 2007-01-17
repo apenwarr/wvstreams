@@ -92,6 +92,16 @@
    fun:AES_encrypt
 }
 {
+   more_fun_licrypto_junk_3
+   Memcheck:Addr4
+   fun:AES_cbc_encrypt
+}
+{
+   more_fun_licrypto_junk_4
+   Memcheck:Value4
+   fun:_x86_AES_encrypt
+}
+{
    WvInterface has a static WvInterfaceDict
    Memcheck:Leak
    fun:__builtin_vec_new
