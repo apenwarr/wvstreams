@@ -64,12 +64,13 @@ WVTEST_MAIN("wvgzip trivial encode + decode x2")
     gzencinf.reset();
 
     // Test with an out_limit by which the buffer is evenly divisible.
-    gzencinf.out_limit = 1024;
+    const int EVEN_OUT_LIMIT = 1024;
+    gzencinf.out_limit = EVEN_OUT_LIMIT;
 
     for (int i = 1; i <= 32; i++)
     {
         gzencinf.encode(comp, uncomp, true);
-        WVPASSEQ(uncomp.used(), i*1024);
+        WVPASSEQ(uncomp.used(), i*EVEN_OUT_LIMIT);
         WVPASS(gzencinf.isok());
     }
 
@@ -78,13 +79,15 @@ WVTEST_MAIN("wvgzip trivial encode + decode x2")
     gzencinf.reset();
 
     // Test with an out_limit by which the buffer isn't evenly divisible
-    // (i.e. with a remainder).
-    gzencinf.out_limit = 10240-1;
+    // (i.e. with a remainder). Also make it bigger than the buffer,
+    // to be sure that we keep on decompressing (BUGZID:20720).
+    const int UNEVEN_OUT_LIMIT = (10240+16);
+    gzencinf.out_limit = UNEVEN_OUT_LIMIT;
 
     for (int i = 1; i <= 3; i++)
     {
         gzencinf.encode(comp, uncomp, true);
-        WVPASSEQ(uncomp.used(), i*(10240-1));
+        WVPASSEQ(uncomp.used(), i*(UNEVEN_OUT_LIMIT));
         WVPASS(gzencinf.isok());
     }
 
