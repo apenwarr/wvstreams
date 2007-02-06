@@ -442,8 +442,10 @@ AC_CHECK_LIB(socket, bind)
 
 # openssl
 if test "$with_openssl" != "no"; then
-    WV_APPEND(CPPFLAGS, [-I$with_openssl/include])
-    WV_APPEND(LDFLAGS, [-L$with_openssl])
+    if test "$with_openssl" != ""; then
+        WV_APPEND(CPPFLAGS, [-I$with_openssl/include])
+        WV_APPEND(LDFLAGS, [-L$with_openssl])
+    fi
     AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
                      [#define OPENSSL_NO_KRB5])
     AC_CHECK_LIB(crypto, X509_free)
