@@ -347,7 +347,7 @@ public:
     }
 
     /** A simple iterator that walks through all elements in the list. */
-    class Iter : public WvVector::IterBase
+    class Iter : public WvVectorBase::IterBase
     {
     public:
 	/** Binds the iterator to the specified vector. */
