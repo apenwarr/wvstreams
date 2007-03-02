@@ -1,0 +1,2 @@
+get /chickens/bob
+quit

@@ -1,0 +1,9 @@
+version=@PACKAGE_VERSION@
+top_builddir=@abs_top_builddir@
+
+Name: WvStreams
+Description: C++ network libraries for rapid application development
+Version: ${version}
+Requires: libwvbase = ${version}, libwvutils = ${version}, xplc = 0.3.12
+Libs: -L${top_builddir} -lwvstreams
+Cflags: -I${top_builddir}/include

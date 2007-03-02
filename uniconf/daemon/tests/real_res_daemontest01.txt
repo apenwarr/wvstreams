@@ -1,0 +1,2 @@
+HELLO UniConf Server ready
+OK quit <null>
