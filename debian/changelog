@@ -1,8 +1,11 @@
 wvstreams (4.3) unstable; urgency=low
 
   * New upstream version.
+    - Builds with gcc 4.2.  (Closes: Bug#387989)
+  * Remove useless lintian override in source for "source-contains-CVS-dir".
+  * Update uniconfd initscript to conform to LSB standards.
 
- -- William Lachance <wlach@nit.ca>  Thu, 14 Dec 2006 17:28:09 -0500
+ -- William Lachance <wrlach@gmail.com>  Fri, 2 Mar 2007 00:42:09 -0500
 
 wvstreams (4.2.2-2) unstable; urgency=low
 

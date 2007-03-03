@@ -1,13 +1,18 @@
 #! /bin/sh
 #
-# skeleton	example file to build /etc/init.d/ scripts.
-#		This file should be used to construct scripts for /etc/init.d.
-#
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian 
-#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#
-# Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
+### BEGIN INIT INFO
+# Provides:          uniconfd
+# Required-Start:    $local_fs 
+# Required-Stop:     $local_fs
+# Should-Start:      $local_fs
+# Should-Stop:       $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      S 0 1 6
+# Short-Description: Server that manages UniConf elements
+# Description:       A server that accepts incoming TCP or Unix
+#                    connections, and gets or sets UniConf elements 
+#                    at the request of a UniConf client.
+### END INIT INFO
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
