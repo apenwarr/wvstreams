@@ -657,10 +657,10 @@ void WvArgs::remove_all_options()
     options = new WvArgsOptionVector();
 }
 
-void WvArgs::add_required_arg(WvStringParm desc)
+void WvArgs::add_required_arg(WvStringParm desc, bool multiple)
 {
     num_required_args++;
-    add_optional_arg(desc); 
+    add_optional_arg(desc, multiple); 
 }
 
 void WvArgs::add_optional_arg(WvStringParm desc, bool multiple)

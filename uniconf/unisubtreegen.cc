@@ -50,9 +50,9 @@ bool UniSubtreeGen::keymap(const UniConfKey &unmapped_key, UniConfKey &mapped_ke
 
 bool UniSubtreeGen::reversekeymap(const UniConfKey &mapped_key, UniConfKey &unmapped_key)
 {
-    WvString _unmapped_key;
+    UniConfKey _unmapped_key;
     bool result = subkey.suborsame(mapped_key, _unmapped_key);
     if (result)
-        unmapped_key = UniConfKey(_unmapped_key);
+        unmapped_key = _unmapped_key;
     return result;
 }

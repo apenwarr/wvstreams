@@ -12,14 +12,13 @@ WvVectorBase::comparison_type_t WvVectorBase::innercomparator;
 WvVectorBase::WvVectorBase(int slots)
     : xseq(NULL), xcount(0), xslots(0)
 {
-    innercomparator = NULL;
     set_capacity(slots);
 }
 
 void WvVectorBase::remove(int slot)
 {
     --xcount;
-    if (xcount - slot)
+    if (xcount - slot > 0)
 	memmove(xseq + slot, xseq + slot + 1,
 		(xcount - slot) * sizeof(WvLink *));
 }
@@ -28,11 +27,14 @@ void WvVectorBase::insert(int slot, WvLink *elem)
 {
     if (++xcount > xslots)
     {
-	xslots *= 2;
-	set_capacity(xslots);
+        int newslots = 2*xslots;
+        if (newslots < xcount)
+            newslots = xcount;
+	set_capacity(newslots);
     }
-    memmove(xseq + slot + 1, xseq + slot,
-	    (xcount - slot - 1) * sizeof(WvLink *));
+    if (xcount > slot + 1)
+        memmove(xseq + slot + 1, xseq + slot,
+	        (xcount - slot - 1) * sizeof(WvLink *));
     xseq[slot] = elem;
 }
 
@@ -40,8 +42,10 @@ void WvVectorBase::append(WvLink *elem)
 {
     if (++xcount > xslots)
     {
-	xslots *= 2;
-	set_capacity(xslots);
+        int newslots = 2*xslots;
+        if (newslots < xcount)
+            newslots = xcount;
+	set_capacity(newslots);
     }
     xseq[xcount - 1] = elem;
 }
@@ -56,17 +60,26 @@ void WvVectorBase::set_capacity(int newslots)
     if (newslots <= 0)
     {
 	xslots = 0;
-	free(xseq);
-	xseq = NULL;
+	if (xseq != NULL)
+	{
+	    free(xseq);
+	    xseq = NULL;
+	}
 	return;
     }
-
-    // Allocate memory, if we want it
-    xslots = newslots;
-    void *newseq = realloc(xseq, xslots * sizeof(WvLink *));
-    assert(newseq != NULL || xslots == 0);
-    if (newseq != NULL || xslots == 0)
-	xseq = static_cast<WvLink **>(newseq);
+    else
+    {
+        // Allocate memory, if we want it
+        xslots = newslots;
+        void *newseq;
+        if (xseq != NULL)
+            newseq = realloc(xseq, xslots * sizeof(WvLink *));
+        else
+            newseq = malloc(xslots * sizeof(WvLink *));
+        assert(newseq != NULL || xslots == 0);
+        if (newseq != NULL || xslots == 0)
+	    xseq = static_cast<WvLink **>(newseq);
+    }
 }
 
 WvLink *WvVectorBase::IterBase::find(const void *data)

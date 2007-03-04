@@ -1,6 +1,7 @@
 #include "unitempgen.h"
 #include "unicachegen.h"
 #include "uniconfroot.h"
+#include "uniconfgen-sanitytest.h"
 #include "unislowgen.h"
 #include "uniwatch.h"
 #include "wvtest.h"
@@ -15,7 +16,7 @@ public:
         expected_value(_expected_value) {}
     void callback(const UniConf keyconf, const UniConfKey key) 
         { 
-            printf("key: %s expected key: %s\n", key.cstr(), expected_key.cstr());
+            printf("key: %s expected key: %s\n", key.printable().cstr(), expected_key.cstr());
             WVPASS(key == expected_key);
             WVPASS(keyconf[key].getme() == expected_value);
             cbs++;
@@ -25,6 +26,13 @@ private:
     WvString expected_key;
     WvString expected_value;
 };
+
+WVTEST_MAIN("UniCacheGen Sanity Test")
+{
+    UniCacheGen *gen = new UniCacheGen(new UniTempGen());
+    UniConfGenSanityTester::sanity_test(gen, "cache:temp:");
+    WVRELEASE(gen);
+}
 
 WVTEST_MAIN("cache basics")
 {

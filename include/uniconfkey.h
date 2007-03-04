@@ -41,7 +41,135 @@
  */
 class UniConfKey
 {
-    WvString path;
+    class Segment : public WvString
+    {
+    public:
+        Segment() :
+            WvString(WvString::empty)
+        {
+        }
+        Segment(WvStringParm str) :
+            WvString((!str)? WvString::empty: str)
+        {
+        }
+        Segment(const Segment &segment) :
+            WvString(segment)
+        {
+        }
+        
+        bool iswild() const
+        {
+            return *this == "*" || *this == "...";
+        }
+    };
+
+    class SegmentVector
+    {
+        int _size, _used;
+        Segment *vec;
+    public:
+        SegmentVector(int size) :
+            _size(size),
+            _used(0),
+            vec(new Segment[_size])
+        {
+        }
+        ~SegmentVector()
+        {
+            deletev vec;
+        }
+        
+        void resize(int size, int shift = 0)
+        {
+            if (size <= _size)
+            {
+                if (shift > 0)
+                {
+                    for (int i=_used-1; i>=0; --i)
+                        vec[i+shift] = vec[i];
+                    _used += shift;
+                }
+                return;
+            }
+            Segment *old_vec = vec;
+            vec = new Segment[size];
+            if (old_vec)
+            {
+                int limit = size-shift;
+                if (limit > _size)
+                    limit = _size;
+                if (limit > _used)
+                    limit = _used;
+                for (int i=0; i<limit; ++i)
+                    vec[i+shift] = old_vec[i];
+                deletev old_vec;
+            }
+            _size = size;
+            _used += shift;
+        }
+        void zap()
+        {
+            _used = 0;
+        }
+        int size() const
+        {
+            return _size;
+        }
+        int used() const
+        {
+            return _used;
+        }
+        
+        void append(const Segment &segment)
+        {
+            vec[_used++] = segment;
+        }
+        void append(WvStringParm string)
+        {
+            append(Segment(string));
+        }
+        void replace(int index, const Segment &segment)
+        {
+            vec[index] = segment;
+            if (index >= _used)
+                _used = index + 1;
+        }
+        void replace(int index, WvStringParm string)
+        {
+            replace(index, Segment(string));
+        }
+        const Segment &operator [](int index) const
+        {
+            return vec[index];
+        }
+    };
+    
+    struct Store
+    {
+        SegmentVector segments;
+        int ref_count;
+        
+        Store(int size, int _ref_count, WvStringParm key = WvString::null);
+    };
+
+    Store *store;
+    int left, right;
+    
+    static Store EMPTY_store; /*!< represents "" (root) */
+    static Store ANY_store;   /*!< represents "*" */
+    static Store RECURSIVE_ANY_store; /*!< represents "..." */
+
+    UniConfKey(Store *_store, int _left, int _right) :
+        store(_store),
+        left(_left),
+        right(_right)
+    {
+        store->ref_count++;
+    }
+        
+    void unique();
+    void normalize();
+    UniConfKey &collapse();
 
 public:
     static UniConfKey EMPTY; /*!< represents "" (root) */
@@ -49,7 +177,13 @@ public:
     static UniConfKey RECURSIVE_ANY; /*!< represents "..." */
 
     /** Constructs an empty UniConfKey (the 'root'). */
-    UniConfKey();
+    UniConfKey() :
+        store(&EMPTY_store),
+        left(0),
+        right(0)
+    {
+        store->ref_count++;
+    }
 
     /**
      * Constructs a UniConfKey from a string.
@@ -59,8 +193,12 @@ public:
      * 
      * "key" is the key as a string
      */
-    UniConfKey(WvStringParm key)
-        { init(key); }
+    UniConfKey(WvStringParm key) :
+        store(new Store(4, 1, key)),
+        left(0),
+        right(store->segments.used())
+    {
+    }
 
     /**
      * Constructs a UniConfKey from a string.
@@ -71,18 +209,32 @@ public:
      * 
      * "key" is the key as a string
      */
-    UniConfKey(const char *key)
-        { init(key); }   
+    UniConfKey(const char *key) :
+        store(new Store(4, 1, WvFastString(key))),
+        left(0),
+        right(store->segments.used())
+    {
+    }   
     
     /** Constructs a UniConfKey from an int. */
-    UniConfKey(int key)
-        { init(key); }
+    UniConfKey(int key) :
+        store(new Store(1, 1, WvFastString(key))),
+        left(0),
+        right(store->segments.used())
+    {
+    }
 
     /**
      * Copies a UniConfKey.
      * "other" is the key to copy
      */
-    UniConfKey(const UniConfKey &other);
+    UniConfKey(const UniConfKey &other) :
+        store(other.store),
+        left(other.left),
+        right(other.right)
+    {
+        store->ref_count++;
+    }
 
     /**
      * Constructs a UniConfKey by concatenating two keys.
@@ -90,6 +242,12 @@ public:
      * "key" is the tail of the new path
      */
     UniConfKey(const UniConfKey &path, const UniConfKey &key);
+
+    ~UniConfKey()
+    {
+        if (--store->ref_count == 0)
+            delete store;
+    }
 
     /**
      * Appends a path to this path.
@@ -107,13 +265,19 @@ public:
      * Returns true if this path has zero segments (also known as root).
      * Returns: numsegments() == 0
      */
-    bool isempty() const;
+    bool isempty() const
+    {
+        return right == left;
+    }
 
     /** Returns true if the key contains a wildcard. */
     bool iswild() const;
 
     /** Returns true if the key has a trailing slash. */
-    bool UniConfKey::hastrailingslash() const;
+    bool UniConfKey::hastrailingslash() const
+    {
+        return right > left && !store->segments[right-1];
+    }
 
     /**
      * Returns the number of segments in this path.
@@ -124,14 +288,20 @@ public:
      * 
      * Returns: the number of segments
      */
-    int numsegments() const;
+    int numsegments() const
+    {
+        return right - left;
+    }
 
     /**
      * Returns the specified segment of the path.
      * "i" is the segment index
      * Returns: the segment
      */
-    UniConfKey segment(int i) const;
+    UniConfKey segment(int n) const
+    {
+        return range(n, n + 1);
+    }
 
     /**
      * Returns the path formed by the first n segments of this path and 
@@ -145,14 +315,20 @@ public:
      * "n" is the number of segments
      * Returns: the path
      */
-    UniConfKey first(int n = 1) const;
+    UniConfKey first(int n = 1) const
+    {
+        return range(0, n);
+    }
 
     /**
      * Returns the path formed by the n last segments of this path.
      * "n" is the number of segments
      * Returns: the path
      */
-    UniConfKey last(int n = 1) const;
+    UniConfKey last(int n = 1) const
+    {
+        return range(numsegments() - n, INT_MAX);
+    }
 
     /**
      * Returns the path formed by removing the first n segments of
@@ -160,7 +336,10 @@ public:
      * "n" is the number of segments
      * Returns: the path
      */
-    UniConfKey removefirst(int n = 1) const;
+    UniConfKey removefirst(int n = 1) const
+    {
+        return range(n, INT_MAX);
+    }
 
     /**
      * Returns the path formed by removing the last n segments of
@@ -168,7 +347,10 @@ public:
      * "n" is the number of segments
      * Returns: the path
      */
-    UniConfKey removelast(int n = 1) const;
+    UniConfKey removelast(int n = 1) const
+    {
+        return range(0, numsegments() - n);
+    }
 
     /**
      * Returns a range of segments.
@@ -192,7 +374,7 @@ public:
     WvString printable() const;
     operator WvString() const
         { return printable(); }
-    
+
     /**
      * Returns a (const char *) of printable() directly.
      */
@@ -203,7 +385,16 @@ public:
      * Assigns this path to equal another.
      * "other" is the other path
      */
-    UniConfKey &operator= (const UniConfKey &other);
+    UniConfKey &operator= (const UniConfKey &other)
+    {
+        if (--store->ref_count == 0)
+            delete store;
+        store = other.store;
+        left = other.left;
+        right = other.right;
+        ++store->ref_count;
+        return *this;
+    }
 
     /**
      * Compares two paths lexicographically.
@@ -231,7 +422,7 @@ public:
      * Returns true if 'key' is a the same, or a subkey, of this UniConfKey.
      */
     bool suborsame(const UniConfKey &key) const;
-    bool suborsame(const UniConfKey &key, WvString &subkey) const;
+    bool suborsame(const UniConfKey &key, UniConfKey &subkey) const;
 
     /**
      * If this UniConfKey is a subkey of 'key', then return the subkey
@@ -254,7 +445,7 @@ public:
      * Returns: true in that case
      */
     bool operator!= (const UniConfKey &other) const
-        { return ! (*this == other); }
+        { return compareto(other) != 0; }
 
     /**
      * Determines if this path precedes the other lexicographically.
@@ -266,8 +457,7 @@ public:
 
     class Iter;
 
-protected:
-    void init(WvStringParm key);
+    friend unsigned WvHash(const UniConfKey &k);
 };
 
 

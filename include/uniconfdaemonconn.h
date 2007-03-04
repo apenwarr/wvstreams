@@ -14,6 +14,7 @@
 #include "wvhashtable.h"
 
 #define NUM_WATCHES 113
+#define CONTINUE_SELECT_AT 100
 
 class UniConfDaemon;
 

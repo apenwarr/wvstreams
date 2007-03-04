@@ -3,14 +3,23 @@
 #include "unitempgen.h"
 #include "unireplicategen.h"
 #include "wvistreamlist.h"
+#include "uniconfgen-sanitytest.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/signal.h>
 
+WVTEST_MAIN("UniReplicateGen Sanity Test")
+{
+    UniReplicateGen *gen = new UniReplicateGen();
+    gen->append(new UniTempGen(), true);
+    UniConfGenSanityTester::sanity_test(gen, "replicate:temp: temp:");
+    WVRELEASE(gen);
+}
+
 WVTEST_MAIN("basic")
 {
-    UniConfRoot cfg("replicate:{temp: temp:}");
+    UniConfRoot cfg("replicate:temp: temp:");
     WVFAIL(cfg.haschildren());
     WVPASS(cfg["/key"].getme().isnull());
     
@@ -76,6 +85,10 @@ static void callback(const UniConf &uniconf, const UniConfKey &key)
 
 static void kill_and_harvest(const pid_t pid)
 {
+    // Never, ever try to kill pid 0 or -1.
+    if (pid <= 0)
+        return;
+
     kill(pid, 15);
     pid_t rv;
     while ((rv = waitpid(pid, NULL, 0)) != pid)
@@ -120,6 +133,10 @@ WVTEST_MAIN("retry:uniconfd")
     WVPASS(cfg["/key"].getme() == "value");
     WVPASS(callback_count > old_callback_count);
 
+    // FIXME: This is a lot more complicated than using the UniConfTestDaemon
+    // class.  However, using it breaks the unit tests a tiny bit and I don't
+    // have time to figure it out.  But whatever you do, don't copy this code!
+    // Use the UniConfTestDaemon!
     if ((uniconfd_pid = fork()) == 0)
     {
     	execv("uniconf/daemon/uniconfd", uniconfd_argv);
