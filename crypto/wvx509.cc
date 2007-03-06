@@ -100,7 +100,7 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
 	filldname();
 	rsa = fillRSAPubKey();
 	if (!rsa->isok())
-	    seterr("RSA Public Key Error: %s", rsa->errstr());
+	    seterr("RSA public key error: %s", rsa->errstr());
     }
     else
 	;
@@ -130,7 +130,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
     rsa = new WvRSAKey(hexified_rsa, true);
     if (!rsa->isok())
     {
-	seterr("RSA Error: %s\n", rsa->errstr());
+	seterr("RSA error: %s", rsa->errstr());
 	return;
     }
 
@@ -138,7 +138,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
 	unhexify(hexified_cert);
     else
     {
-	seterr("No Hexified Cert.. aborting!\n");
+	seterr("No hexified certificate");
 	return;
     }
 
@@ -174,7 +174,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
 	create_selfsigned();
     }
     else
-	seterr("Sorry, can't create an anonymous Certificate\n");
+	seterr("Sorry, can't create an anonymous certificate");
 }
 
 
@@ -328,7 +328,7 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
 	debug("RSA Key is fine.\n");
     else
     {
-	seterr("RSA Key is bad!\n");
+	seterr("RSA Key is bad");
 	return;
     }
 
@@ -421,7 +421,7 @@ WvString WvX509Mgr::certreq()
 	debug("RSA Key is fine.\n");
     else
     {
-	seterr("RSA Key is bad!\n");
+	seterr("RSA Key is bad");
 	return WvString::null;
     }
 
@@ -471,7 +471,7 @@ WvString WvX509Mgr::certreq()
     int verify_result = X509_REQ_verify(certreq, pk);
     if (verify_result == 0)
     {
-	seterr("Self Signed Request failed!");
+	seterr("Self signed request failed");
 	X509_REQ_free(certreq);
 	EVP_PKEY_free(pk);
         return WvString::null;
@@ -594,7 +594,7 @@ bool WvX509Mgr::test()
     
     if (!cert)
     {
-	seterr("no Certificate in X509 Manager!");
+	seterr("No certificate in X509 manager");
 	bad = true;
     }
     
@@ -630,7 +630,7 @@ bool WvX509Mgr::test()
     }
     else
     {
-	seterr("no RSA keypair in X509 manager");
+	seterr("No RSA keypair in X509 manager");
 	bad = true;
     }
     
@@ -645,7 +645,7 @@ void WvX509Mgr::unhexify(WvStringParm encodedcert)
 {
     if (!encodedcert)
     {
-	seterr("X.509 certificate can't be decoded from nothing!\n");
+	seterr("X509 certificate can't be decoded from nothing");
 	return;
     }
     
@@ -670,7 +670,7 @@ void WvX509Mgr::unhexify(WvStringParm encodedcert)
     }
     
     if (!cert)
-	seterr("X.509 certificate decode failed!");
+	seterr("X509 certificate decode failed");
     
     deletev certbuf;
 }
@@ -703,7 +703,7 @@ bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
 	// Check and make sure that the certificate is still valid
 	if (X509_cmp_current_time(X509_get_notAfter(cert)) == -1)
 	{
-	    seterr("Certificate has expired!");
+	    seterr("Certificate has expired");
 	    retval = false;
 	}
 	
@@ -733,14 +733,14 @@ bool WvX509Mgr::signedbyCAinfile(WvStringParm certfile)
     cert_ctx = X509_STORE_new();
     if (cert_ctx == NULL)
     {
-	seterr("Unable to create Certificate Store Context");
+	seterr("Unable to create certificate store context");
 	return false;
     }
 
     lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
     if (lookup == NULL)
     {
-	seterr("Can't add lookup method...\n");
+	seterr("Can't add lookup method");
 	return false;
     }  
 
@@ -821,7 +821,7 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 	break;
 	
     default:
-	seterr("Unknown Mode\n");
+	seterr(EINVAL);
 	return nil;
     }
 
@@ -869,7 +869,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 		rsa = fillRSAPubKey();
 	}
 	else
-	    seterr("Certificate failed to import!");
+	    seterr("Certificate failed to import");
 	break;
     case RsaPEM:
 	debug("Importing RSA keypair.\n");
@@ -880,7 +880,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	rsa = new WvRSAKey(PEM_read_bio_RSAPrivateKey(membuf, NULL, NULL, NULL), 
 			   true);
 	if (!rsa->isok())
-	    seterr("RSA Key failed to import\n");
+	    seterr("RSA key failed to import");
 	break;
     case RsaPubPEM:
 	debug("Importing RSA Public Key.\n");
@@ -889,14 +889,14 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
 	rsa = new WvRSAKey(PEM_read_bio_RSAPublicKey(membuf, NULL, NULL, NULL), 
 			   true);
 	if (!rsa->isok())
-	    seterr("RSA Public Key failed to import\n");
+	    seterr("RSA public key failed to import");
 	break;
     case RsaRaw:
 	debug("Importing raw RSA keypair not supported.\n");
 	break;
 	
     default:
-	seterr("Unknown Mode\n");
+	seterr(EINVAL);
     }
     BIO_free_all(membuf);
 }
@@ -910,7 +910,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 
     if (!fp)
     {
-        seterr("Unable to create: %s\n", filename);
+        seterr(errno);
         return;
     }
 
@@ -921,13 +921,13 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 	    EVP_PKEY *pk = EVP_PKEY_new();
 	    if (!pk)
 	    {
-		seterr("Unable to create PKEY object.\n");
+		seterr("Unable to create PKEY object");
 		return;
 	    }
 
 	    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
 	    {
-		seterr("Error setting RSA keys.\n");
+		seterr("Error setting RSA keys");
 		EVP_PKEY_free(pk);
 		return;
 	    }
@@ -944,7 +944,7 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 		}
 		else
 		{
-		    seterr("Unable to create PKCS12 object.\n");
+		    seterr("Unable to create PKCS12 object");
 		    EVP_PKEY_free(pk);
 		    return;
 		}
@@ -952,13 +952,13 @@ void WvX509Mgr::write_p12(WvStringParm filename)
 	}
 	else
 	{
-	    seterr("Either the RSA key or the Certificate is not present\n");
+	    seterr("Either the RSA key or the certificate is not present");
 	    return;
 	}
     }
     else
     {
-        seterr("No Password specified for PKCS12 dump\n");
+        seterr("No password specified for PKCS12 dump");
         return; 
     }
 }
@@ -971,7 +971,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 
     if (!fp)
     {
-        seterr("Unable to read from: %s\n", filename);
+        seterr(errno);
         return;
     }
 
@@ -983,7 +983,7 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	    EVP_PKEY *pk = EVP_PKEY_new();
 	    if (!pk)
 	    {
-		seterr("Unable to create PKEY object.\n");
+		seterr("Unable to create PKEY object");
 		return;
 	    }
 	    
@@ -999,20 +999,20 @@ void WvX509Mgr::read_p12(WvStringParm filename)
 	    // Now that we have both, check to make sure that they match
 	    if (!rsa || !cert || test())
 	    {
-		seterr("Could not fill in RSA and Cert with matching values.\n");
+		seterr("Could not fill in RSA and certificate with matching values");
 		return;
 	    }
 	    EVP_PKEY_free(pk);
 	}
 	else
 	{
-	    seterr("Read in of PKCS12 file '%s' failed - aborting!\n", filename);
+	    seterr("Read in of PKCS12 file '%s' failed", filename);
 	    return;
 	}
     }
     else
     {
-        seterr("No Password specified for PKCS12 file - aborting!\n");
+        seterr("No password specified for PKCS12 file");
         return;
     }
 }
@@ -1523,13 +1523,13 @@ WvString WvX509Mgr::sign(WvBuf &data)
     EVP_PKEY *pk = EVP_PKEY_new();
     if (!pk)
     {
-	seterr("Unable to create PKEY object.\n");
+	seterr("Unable to create PKEY object");
 	return WvString::null;
     }
     
     if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
     {
-	seterr("Error setting RSA keys.\n");
+	seterr("Error setting RSA keys");
 	EVP_PKEY_free(pk);
 	return WvString::null;
     }
@@ -1541,7 +1541,7 @@ WvString WvX509Mgr::sign(WvBuf &data)
 				&sig_len, pk);
     if (sig_err != 1)
     {
-	seterr("Error while signing!\n");
+	seterr("Error while signing");
 	EVP_PKEY_free(pk);
 	return WvString::null;
     }
@@ -1571,7 +1571,7 @@ bool WvX509Mgr::verify(WvBuf &original, WvStringParm signature)
     EVP_PKEY *pk = X509_get_pubkey(cert);
     if (!pk) 
     {
-        seterr("Couldn't allocate PKEY for verify()\n");
+        seterr("Couldn't allocate PKEY for verification");
         return false;
     }
     
