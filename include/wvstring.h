@@ -113,6 +113,12 @@ public:
      */
     WvFastString();
     void setsize(size_t i);
+
+    /**
+     * Returns a copy of string pointed i bytes into this.  Will not make it point
+     * past the trailing null byte.
+     */
+    WvFastString offset(size_t i) const;
     
     /**
      * Copy constructor.  We can safely copy from a normal WvString like this
@@ -375,7 +381,7 @@ public:
     WvString &append(WvStringParm s);
     WvString &append(WVSTRING_FORMAT_DECL)
         { return append(WvString(WVSTRING_FORMAT_CALL)); }
-    
+
     WvString &operator= (int i);
     WvString &operator= (const WvFastString &s2);
     WvString &operator= (const char *s2)

@@ -8,16 +8,21 @@
 #include "unitransaction.h"
 #include "uniunwrapgen.h"
 #include "uniwatch.h"
+#include "uniconfgen-sanitytest.h"
 
 #include "wvfile.h"
-#include "wvfork.h"
 #include "wvhashtable.h"
 #include "wvtest.h"
 #include "wvunixsocket.h"
 
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+
+WVTEST_MAIN("UniTransactionGen Sanity Test")
+{
+    UniTransactionGen *gen = new UniTransactionGen(new UniTempGen());
+    UniConfGenSanityTester::sanity_test(gen, "transaction:temp:");
+    WVRELEASE(gen);
+}
 
 static WvMap<UniConfKey, WvString> callbacks2(5);
 static WvMap<UniConfKey, WvString> callbacks1(5);
@@ -25,8 +30,8 @@ static WvMap<UniConfKey, WvString> callbacks1(5);
 static void check_callback2(const UniConf &handle,
 			    const UniConfKey &key)
 {
-    fprintf(stderr, "Callback on key \"%s\" with value \"%s\".\n",
-	   key.cstr(), handle[key].getme().cstr());
+    wverr->print("Callback on key \"%s\" with value \"%s\".\n",
+	   key, handle[key].getme());
     bool expected;
     WVPASS(expected = callbacks2.exists(key));
     if (expected)
@@ -39,8 +44,8 @@ static void check_callback2(const UniConf &handle,
 static void check_callback1(const UniConf &handle,
 			    const UniConfKey &key)
 {
-    fprintf(stderr, "Callback on key \"%s\" with value \"%s\".\n",
-	   key.cstr(), handle[key].getme().cstr());
+    wverr->print("Callback on key \"%s\" with value \"%s\".\n",
+	   key, handle[key].getme());
     bool expected;
     WVPASS(expected = callbacks1.exists(key));
     if (expected)
@@ -416,8 +421,8 @@ static void incr_callback(int *i,
 {
     (*i)++;
     last_key = handle[key].fullkey();
-    printf("callback %p '%s' = '%s'\n", 
-	   i, last_key.cstr(), handle[key].getme().cstr());
+    wvout->print("callback '%s' = '%s'\n", 
+	   handle[key].fullkey(), handle[key].getme());
 }
 
 
@@ -529,7 +534,6 @@ public:
     }
 };
 
-// judiciously stolen from uniclientgen.t.cc
 WVTEST_MAIN("double notifications with daemon")
 {
     UniConfRoot uniconf;
@@ -538,72 +542,41 @@ WVTEST_MAIN("double notifications with daemon")
 
     WvString sockname("/tmp/unitransgen-%s", getpid());
 
-    pid_t child = wvfork();
-    if (child == 0)
+    UniConfTestDaemon daemon(sockname, "temp:", 
+            UniConfTestDaemon::autoinc_server_cb);
+
+    int num_tries = 0;
+    const int max_tries = 20;
+    while (!uniconf.isok() && num_tries < max_tries)
     {
-        uniconf.mountgen(new UniTempGen());
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
-        while (true)
-        {
-            uniconf.setmeint(uniconf.getmeint()+1);
-            WvIStreamList::globallist.runonce();
-            usleep(1000);
-        }
-        _exit(0);
+        num_tries++;
+        WVFAIL(uniconf.isok());
+
+        // Try again...
+        uniconf.unmount(uniconf.whichmount(), true);
+        uniconf.mount(WvString("unix:%s", sockname));
+        sleep(1);
     }
-    else
-    {
-        WVPASS(child >= 0);
-        UniClientGen *client_gen;
-        while (true)
-        {
-            WvUnixConn *unix_conn;
-            client_gen = new UniClientGen(
-                    unix_conn = new WvUnixConn(sockname));
-            if (!unix_conn || !unix_conn->isok()
-                    || !client_gen || !client_gen->isok())
-            {
-                WVRELEASE(client_gen);
-                wvout->print("Failed to connect, retrying...\n");
-                sleep(1);
-            }
-            else break;
-        }
-        uniconf.mountgen(new UniTransactionGen(client_gen));
+    WVPASS(uniconf.isok());
 
-        UniWatchList watches;
-        NCounter *foo = new NCounter;
-        UniConfCallback uc(foo, &NCounter::callback);
-        watches.add(uniconf["Users"], uc);
+    UniWatchList watches;
+    NCounter *foo = new NCounter;
+    UniConfCallback uc(foo, &NCounter::callback);
+    watches.add(uniconf["Users"], uc);
 
-        uniconf["users"]["x"].setme("1");
-        uniconf.commit();
+    uniconf["users"]["x"].setme("1");
+    uniconf.commit();
 
-	ncount = 0;
-        uniconf["users"]["y"].setme("1");
-        uniconf.commit();
+    ncount = 0;
+    uniconf["users"]["y"].setme("1");
+    uniconf.commit();
 
-	printf("have ncount = %d\n", ncount);
+    printf("have ncount = %d\n", ncount);
 
-	// FIXME This is the problem
-	WVPASS(ncount == 1);
-	
-	delete foo;
-
-        kill(child, 15);
-        pid_t rv;
-        while ((rv = waitpid(child, NULL, 0)) != child)
-        {
-            // In case a signal is in the process of being delivered...
-            if (rv == -1 && errno != EINTR)
-                break;
-        }
-        WVPASS(rv == child);
-    }
-
-    unlink(sockname);
+    // FIXME This is the problem
+    WVPASSEQ(ncount, 1);
+    
+    delete foo;
 }
 
 WVTEST_MAIN("transaction wrapper")
@@ -717,9 +690,9 @@ static int callback_count;
 
 static void callback(const UniConf keyconf, const UniConfKey key)
 {
-    printf("Handling callback with fullkey '%s', value '%s'\n",
-	   keyconf[key].fullkey().printable().cstr(),
-	   keyconf[key].getme().cstr());
+    wvout->print("Handling callback with fullkey '%s', value '%s'\n",
+	   keyconf[key].fullkey(),
+	   keyconf[key].getme());
     ++callback_count;
 }
 
@@ -812,71 +785,33 @@ WVTEST_MAIN("processing many keys")
 
     WvString sockname("/tmp/unitransgen-%s", getpid());
 
-    pid_t child = wvfork();
-    if (child == 0)
+    UniConfTestDaemon daemon(sockname, "temp:", 
+            UniConfTestDaemon::autoinc_server_cb);
+
+    UniConfRoot cfg(WvString("transaction:unix:%s", sockname));
+
+    printf("Add Callback\n");
+    fflush(stdout);
+    cfg.add_callback(NULL, "/", UniConfCallback(cb));
+
+    printf("Setting\n");
+    fflush(stdout);
+    for (int i = 0; i < 200; ++i)
     {
-	printf("Child\n");
-	fflush(stdout);
-
-	UniConfRoot uniconf("temp:");
-	UniConfDaemon daemon(uniconf, false, NULL);
-	daemon.setupunixsocket(sockname);
-	WvIStreamList::globallist.append(&daemon, false);
-	while (true)
-	{
-	    uniconf.setmeint(uniconf.getmeint()+1);
-	    WvIStreamList::globallist.runonce();
-	}
-	_exit(0);
-    }
-    else
-    {
-	sleep(1);
-	printf("Parent\n");
-	fflush(stdout);
-
-	WVPASS(child >= 0);
-
-	UniConfRoot cfg(WvString("transaction:unix:%s", sockname));
-
-	printf("Add Callback\n");
-	fflush(stdout);
-	cfg.add_callback(NULL, "/", UniConfCallback(cb));
-
-	printf("Setting\n");
-	fflush(stdout);
-	for (int i = 0; i < 200; ++i)
-	{
-	    int a = digit<5>(i);
-	    int b = digit<4>(i);
-	    int c = digit<3>(i);
-	    int d = digit<2>(i);
-	    int e = digit<1>(i);
-	    cfg[a][b][c][d][e].setmeint(i);
-	}
-
-	printf("Committing\n");
-	fflush(stdout);
-	cfg.commit();
-
-	printf("Del Callback\n");
-	fflush(stdout);
-	cfg.del_callback(NULL, "/");
-
-	printf("Kill Daemon\n");
-	fflush(stdout);
-
-	kill(child, 15);
-	pid_t rv;
-	while ((rv = waitpid(child, NULL, 0)) != child)
-	{
-	    // In case a signal is in the process of being delivered...
-	    if (rv == -1 && errno != EINTR)
-		break;
-	}
-	WVPASS(rv == child);
+        int a = digit<5>(i);
+        int b = digit<4>(i);
+        int c = digit<3>(i);
+        int d = digit<2>(i);
+        int e = digit<1>(i);
+        cfg[a][b][c][d][e].setmeint(i);
     }
 
-    unlink(sockname);
+    printf("Committing\n");
+    fflush(stdout);
+    cfg.commit();
+
+    printf("Del Callback\n");
+    fflush(stdout);
+    cfg.del_callback(NULL, "/");
 }
 #endif // BUGZID: 14057

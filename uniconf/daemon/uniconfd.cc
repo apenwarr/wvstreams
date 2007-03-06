@@ -82,7 +82,7 @@ class UniConfd : public WvStreamsDaemon
 	*ptr = 0;
 	moniker = ptr + 1;
 
-	namedgens.add(name, wvcreate<IUniConfGen>("temp:"), true);
+	namedgens.add(name, wvcreate<IUniConfGen>(moniker), true);
 	return true;
     }
 

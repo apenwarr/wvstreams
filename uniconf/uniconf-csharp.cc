@@ -65,15 +65,15 @@ uniconfkey_t uniconf_key(uniconf_t uni)
 const char * uniconf_key_str(uniconf_t uni)
 {
     UniConfKey r = ((UniConf*)uni)->key();
-    printf("DBG: %s\n", r.cstr());
-    WvString *foo = new WvString(r.cstr());
+    printf("DBG: %s\n", r.printable().cstr());
+    WvString *foo = new WvString(r.printable());
     return foo->cstr();
 }
 
 const char * uniconf_fullkey_str(uniconf_t uni)
 {
     UniConfKey r = ((UniConf*)uni)->fullkey();
-    WvString *foo = new WvString(r.cstr());
+    WvString *foo = new WvString(r.printable());
     return foo->cstr();
 }
 

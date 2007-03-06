@@ -120,7 +120,7 @@ public:
     void print_help(int argc, char **argv);
 
     //!
-    //! Add a boolean option, which, when spefied, sets the specified
+    //! Add a boolean option, which, when specified, sets the specified
     //! boolean variable to true.
     //!
     //! \param short_option The single-character version of the switch;
@@ -299,7 +299,7 @@ public:
     //!
     //! \param The description of the parameter
     //!
-    void add_required_arg(WvStringParm desc);
+    void add_required_arg(WvStringParm desc, bool multiple = false);
     //!
     //! Add an optional argument to the list of parameters.
     //!
