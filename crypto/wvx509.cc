@@ -182,8 +182,7 @@ WvX509Mgr::~WvX509Mgr()
 {
     debug("Deleting.\n");
     
-    if (rsa)
-	delete rsa;
+    WVDELETE(rsa);
 
     if (cert)
 	X509_free(cert);
@@ -322,7 +321,7 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
 	X509_free(cert);
 	cert = NULL;
     }
-    
+
     // double check RSA key
     if (rsa->isok())
 	debug("RSA Key is fine.\n");
@@ -874,8 +873,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
     case RsaPEM:
 	debug("Importing RSA keypair.\n");
 	debug("Make sure that you load or generate a new Certificate!\n");
-	if (rsa) delete rsa;
-
+	WVDELETE(rsa);
 	
 	rsa = new WvRSAKey(PEM_read_bio_RSAPrivateKey(membuf, NULL, NULL, NULL), 
 			   true);
@@ -1312,11 +1310,11 @@ WvString WvX509Mgr::get_extension(int nid)
     
     if (cert)
     {
-        X509 *copy = X509_dup(cert);
-	int index = X509_get_ext_by_NID(copy, nid, -1);
+	int index = X509_get_ext_by_NID(cert, nid, -1);
 	if (index >= 0)
 	{
-	    X509_EXTENSION *ext = X509_get_ext(copy, index);
+	    X509_EXTENSION *ext = X509_get_ext(cert, index);
+
 	    if (ext)
 	    {
 		X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
@@ -1329,24 +1327,26 @@ WvString WvX509Mgr::get_extension(int nid)
 		else
 		{
 		    void *ext_data = NULL;
+                    // we NEED to use a temporary pointer for ext_value_data,
+                    // as openssl's ASN1_item_d2i will muck around with it, 
+                    // even though it's const (at least as of version 0.9.8e). 
+                    // gah.
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
-		    const unsigned char **ext_value_data;
-		    ext_value_data = (const_cast<const unsigned char **>
-				      (&ext->value->data));
+                    const unsigned char * ext_value_data = ext->value->data;
 #else
-		    unsigned char **ext_value_data = &ext->value->data;
+                    unsigned char *ext_value_data = ext->value->data;
 #endif
 		    if (method->it)
 		    {
-			ext_data = ASN1_item_d2i(NULL, ext_value_data,
-						ext->value->length, 
-						ASN1_ITEM_ptr(method->it));
+ 			ext_data = ASN1_item_d2i(NULL, &ext_value_data,
+ 						ext->value->length, 
+ 						ASN1_ITEM_ptr(method->it));
 			debug("Applied generic conversion!\n");
 		    }
 		    else
 		    {
-			ext_data = method->d2i(NULL, ext_value_data,
-					      ext->value->length);
+			ext_data = method->d2i(NULL, &ext_value_data,
+                                               ext->value->length);
 			debug("Applied method specific conversion!\n");
 		    }
 		    
@@ -1409,8 +1409,7 @@ WvString WvX509Mgr::get_extension(int nid)
 	{
 	    debug("Extension not present!\n");
 	}
-	if (copy)
-	  X509_free(copy);
+
     }
 
     if (!!retval)

@@ -124,7 +124,10 @@ WVTEST_MAIN("X509")
 "453ec9a3cdbe2fe17e86b32e998fe8713066ed254a60390f7898e4e536dea92af7"
 "743d55a35fad75c14fe1e239251c471e133ca8e85ef3a1d3c5b6b288bfda";
     
-    const WvString signature = "jmvlFrrXiXOkDzhlPQMvASEMc+ImuJFUmc/6X8vXujNqbbjerQVZvwOHx35lBcOx9gCcB089gDhPOD3Wi4RhHWZ0vWysdUimnDl65EKEl3OS2anc8Pqi43+Tj7HVIxWB+nLI1m+wDTKqkx+3e1a4q0YjDqWTAT54zTP1SHxKG5E=";
+    const WvString signature = "jmvlFrrXiXOkDzhlPQMvASEMc+ImuJFUmc/"
+    "6X8vXujNqbbjerQVZvwOHx35lBcOx9gCcB089gDhPOD3Wi4RhHWZ0vWysdUimn"
+    "Dl65EKEl3OS2anc8Pqi43+Tj7HVIxWB+nLI1m+wDTKqkx+3e1a4q0YjDqWTAT5"
+    "4zTP1SHxKG5E=";
 
     // Setup a new DN entry, like a server would set.
     const WvString dName("cn=test.foo.com,dc=foo,dc=com");
@@ -213,7 +216,8 @@ WVTEST_MAIN("X509")
 	// This test is currently invalid, since 
 	// strcert doesn't have the right keyUsage set, and we
 	// check for that now.
-	// I'll fix it when I fix BUG:9969
+	// I'll fix it when I fix niti BUG:9969 (not publically
+        // available...)
 #if 0	
 	WvX509Mgr t509(strcert, strrsa);
 	
@@ -227,4 +231,53 @@ WVTEST_MAIN("X509")
 	WVPASS(n509.validate(&t509));
 #endif
     }
+}
+
+
+WVTEST_MAIN("Get extensions memory corruption")
+{
+    // this test validates a workaround for a bug
+    // in openssl 0.9.8 -- where getting certain attributes using
+    // ASN1_item_d2i could cause openssl to shuffle around
+    // const pointers, leading to weird memory behaviour on
+    // destroys
+
+    static const char triggercert[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIFSzCCBDOgAwIBAgIBAzANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCQ0Ex\n"
+    "KzApBgNVBAoTIkNhcmlsbG9uIEluZm9ybWF0aW9uIFNlY3VyaXR5IEluYy4xHzAd\n"
+    "BgNVBAsTFkNlcnRpZmljYXRpb24gU2VydmljZXMxIzAhBgNVBAMTGlRlc3QgQ2Vy\n"
+    "dGlmaWNhdGUgQXV0aG9yaXR5MB4XDTA2MTIyNDIyMzgzNVoXDTA5MTIyMzIyMzgz\n"
+    "NVowgYIxCzAJBgNVBAYTAkNBMSswKQYDVQQKDCJDYXJpbGxvbiBJbmZvcm1hdGlv\n"
+    "biBTZWN1cml0eSBJbmMuMQ4wDAYDVQQLDAVVc2VyczEVMBMGA1UEAwwMVGVzdGlu\n"
+    "ZyBVc2VyMR8wHQYJKoZIhvcNAQkBFhB0ZXN0QGNhcmlsbG9uLmNhMIGfMA0GCSqG\n"
+    "SIb3DQEBAQUAA4GNADCBiQKBgQCwYnEgxl9uly9EeXg6N/SLzx6ZB5iU/REgB1bi\n"
+    "9u/4O7S7ebAh5VKO8JIo+0JaHW7pBFM0ywe3KvHwpvdsHvmRCQ4+Qze8itFuhDSS\n"
+    "TFJ7eP9bxiyroYIaRuS9G3xrM6jGdkw1IhmN2FDpWXBTWtfF/8Lor4p9TemGUARl\n"
+    "prfDjQIDAQABo4ICTjCCAkowCQYDVR0TBAIwADAOBgNVHQ8BAf8EBAMCB4AwUAYJ\n"
+    "YIZIAYb4QgENBEMWQURvIE5vdCB0cnVzdCAtIENlcnRpUGF0aCBjb21wbGlhbnQg\n"
+    "SUQgQ2VydCBmb3IgVEVTVCBwdXJwb3NlcyBvbmx5MB0GA1UdDgQWBBRI8EWCS88U\n"
+    "Hug1TLLei5iiJGJSXTAfBgNVHSMEGDAWgBQZ8G5V0iRoGnd6l8LUaI01I0M3+jAb\n"
+    "BgNVHREEFDASgRB0ZXN0QGNhcmlsbG9uLmNhMEsGCCsGAQUFBwEBBD8wPTA7Bggr\n"
+    "BgEFBQcwAoYvaHR0cDovL3d3dy5jYXJpbGxvbi5jYS9jYW9wcy9tZWRpdW0tdGVz\n"
+    "dC1jYS5jcnQwPQYDVR0fBDYwNDAyoDCgLoYsaHR0cDovL3d3dy5jYXJpbGxvbi5j\n"
+    "YS9jYW9wcy9tZWRpdW0tY3JsMS5jcmwwgfEGA1UdIASB6TCB5jBuBgsrBgEEAYHD\n"
+    "XgEBZTBfMF0GCCsGAQUFBwICMFEwKRoiQ2FyaWxsb24gSW5mb3JtYXRpb24gU2Vj\n"
+    "dXJpdHkgSW5jLjADAgEBGiRURVNUIG1lZGl1bSBzdyBwb2xpY3kgLSBkbyBub3Qg\n"
+    "dHJ1c3QwdAYLKwYBBAGBw14BAWYwZTBjBggrBgEFBQcCAjBXMCkaIkNhcmlsbG9u\n"
+    "IEluZm9ybWF0aW9uIFNlY3VyaXR5IEluYy4wAwIBARoqVEVTVCBtZWRpdW0gaGFy\n"
+    "ZHdhcmUgcG9saWN5IC0gZG8gbm90IHRydXN0MA0GCSqGSIb3DQEBBQUAA4IBAQAH\n"
+    "NnhF+cbDe2jCPZ8J36Vb9p7QBFhGHiPQKpWVgEISjfYDqyilDUMvqo1RshBnxdTt\n"
+    "cPMu1MxcQOOvU1f3jRCJPngzzZXW91zOZKQREPanekUcil7ZrY9MPgpIPqMgGw5h\n"
+    "rX5R/RyAG/vkfJXe5SMd4GeUOuPuDVCxM3y2cylT0TS5zaWSYNdmERDm5tp2fHlj\n"
+    "rqE1w9PZDeLz9ZhKfo/pcxCvE7RdS1Zhpi3KMUEtDXq9RN2D81mvo1TyzHvm84QB\n"
+    "R7Z/1y/HH8vZj7q//xJrJt/IqPuXcYUacaS520ouzPhXNRkMxl4VZ8fCGnbrqPig\n"
+    "0KUUwRu2l4LDN9drx+L5\n"
+    "-----END CERTIFICATE-----\n";
+
+    WvX509Mgr t509(NULL);
+    t509.decode(WvX509Mgr::CertPEM, triggercert);
+
+    WVPASS(t509.isok());
+    printf("%s", t509.get_aia().cstr());
 }
