@@ -45,7 +45,7 @@ endif
   LIBXPLC=-lxplc-cxx
 endif
 
-LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
+LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so
 LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
@@ -142,8 +142,6 @@ clean-valgrind:
 
 %/test:
 	$(MAKE) -C $(dir $@) test
-
-$(LIBXPLC):
 
 $(WVSTREAMS_SRC)/rules.local.mk:
 	@true
