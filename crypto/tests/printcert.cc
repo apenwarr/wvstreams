@@ -1,11 +1,9 @@
-#include "wvx509.h"                        
+#include "wvargs.h"
+#include "wvcrash.h"
 #include "wvfile.h"
 #include "wvlog.h"   
 #include "wvstrutils.h"
-#include "wvcrash.h"
-
-#include <openssl/pem.h>   
-#include <openssl/x509v3.h>
+#include "wvx509.h"                        
 
 void print_details(WvX509Mgr *x509)
 {
@@ -24,38 +22,43 @@ void print_details(WvX509Mgr *x509)
     wvcon->print("CA Issuers available from:\n%s\n", x509->get_ca_urls(&urls)->join("\n"));
     urls.zap();
     wvcon->print("OCSP Responders available from:\n%s\n", x509->get_ocsp(&urls)->join("\n"));
+    wvcon->print("Getting CRL dist point\n");
     wvcon->print("CRL Distribution Point:\n%s\n", x509->get_crl_dp());
     wvcon->print("Certificate Policy: %s\n", x509->get_cp_oid());
 }
 
 
-
 int main(int argc, char **argv)
 {
     wvcrash_setup(argv[0]);
-    
-    WvDynBuf buffer;
-    
-    if (argc < 2)
+
+    WvString certtype = "pem";
+    WvStringList remaining_args;
+
+    WvArgs args;
+    args.add_required_arg("certificate");
+    args.add_option('t', "type", "Certificate type: asn1 or pem (default: pem)", "type", certtype);
+    if (!args.process(argc, argv, &remaining_args) || remaining_args.count() < 1)
     {
-	wvcon->print("You must specify a certificate in PEM format\n");
-	return -1;
+        args.print_help(argc, argv);
+        return -1;
     }
-    
-    WvFile f(argv[1], O_RDONLY);
-    
-    while (f.isok())
-    {
-	f.read(buffer, 1000);
-    }
-    f.close();
-    
+
     WvX509Mgr x509;
-    x509.decode(WvX509Mgr::CertPEM, buffer.getstr());
-    
-    print_details(&x509);
-    
-    
+    if (certtype == "asn1")
+        x509.load(WvX509Mgr::CertASN1, remaining_args.popstr());   
+    else if (certtype == "pem")
+        x509.load(WvX509Mgr::CertPEM, remaining_args.popstr());
+    else
+    {
+        wverr->print("Invalid certificate type '%s'\n", certtype);
+        return -1;
+    }
+
+    if (x509.isok())
+        print_details(&x509);
+    else
+        wverr->print("X509 certificate not valid\n");
     
     return 0;
 }

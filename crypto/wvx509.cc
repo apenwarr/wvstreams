@@ -1,4 +1,4 @@
-/*
+ /*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
  * 
@@ -117,6 +117,45 @@ WvX509Mgr::WvX509Mgr()
     wvssl_init();
     cert = NULL;
     rsa = NULL;
+}
+
+
+void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
+{
+    if (mode == CertASN1)
+    {
+        BIO *bio = BIO_new(BIO_s_file());
+        if (BIO_read_filename(bio, fname.cstr()) <= 0)
+        {
+            seterr(errno);
+        }
+
+        if (!(cert = d2i_X509_bio(bio, NULL)))
+        {
+            seterr("Can't read certificate from file");
+            return;
+        }
+
+        BIO_free(bio);
+
+        if (!rsa)
+        {
+            rsa = fillRSAPubKey();
+            if (!rsa->isok())
+                seterr("RSA public key error: %s", rsa->errstr());
+        }
+    }
+    else
+    {
+        WvDynBuf buffer;    
+        WvFile f(fname, O_RDONLY);    
+        while (f.isok())
+        {
+            f.read(buffer, 1000);
+        }
+        f.close();
+        decode(mode, buffer.getstr());
+    }
 }
 
 
@@ -722,61 +761,11 @@ bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
 }
 
 
-bool WvX509Mgr::signedbyCAinfile(WvStringParm certfile)
-{
-    X509_STORE *cert_ctx = NULL;
-    X509_STORE_CTX csc;
-    X509_LOOKUP *lookup = NULL;
-    int result = 0;
-
-    cert_ctx = X509_STORE_new();
-    if (cert_ctx == NULL)
-    {
-	seterr("Unable to create certificate store context");
-	return false;
-    }
-
-    lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
-    if (lookup == NULL)
-    {
-	seterr("Can't add lookup method");
-	return false;
-    }  
-
-    if (!X509_LOOKUP_load_file(lookup, certfile, X509_FILETYPE_PEM))
-        X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
-
-    X509_STORE_CTX_init(&csc, cert_ctx, cert, NULL);
-    result = X509_verify_cert(&csc);
-    X509_STORE_CTX_cleanup(&csc);
-    
-    X509_STORE_free(cert_ctx);
-
-    if (result == 1)
-    	return true;
-    else
-	return false;
-}
-
-
-#ifndef _WIN32
-bool WvX509Mgr::signedbyCAindir(WvStringParm certdir)
-{
-    WvDirIter i(certdir,false);
-    for (i.rewind(); i.next(); )
-    {
-	if (!signedbyCAinfile(i->fullname))
-	    return false;
-    }    
-    return true;
-}
-#endif
-
-
 bool WvX509Mgr::signedbyCA(WvX509Mgr *cacert)
 {
     int ret = X509_check_issued(cacert->cert, cert);
-    if (ret == X509_V_OK)
+    debug("signedByCA: %s==X509_V_OK(%s)\n", ret, X509_V_OK);
+    if (ret == X509_V_OK)    
 	return true;
     else
 	return false;

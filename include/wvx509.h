@@ -46,6 +46,7 @@ public:
    /**
     * Type for the @ref encode() and @ref decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
+    * CertASN1  = ASN1 Encoded X.509 Certificate
     * CertDER   = DER Encoded X.509 Certificate returned in Base64
     * CertSMIME = SMIME "Certificate" usable for userSMIMECertificate ldap entry 
     *             again in Base64
@@ -54,7 +55,8 @@ public:
     * RsaRaw    = Raw form of RSA Key (unused by most programs, FreeS/WAN
     * being the notable exception)
     */
-    enum DumpMode { CertPEM = 0, CertDER, RsaPEM, RsaPubPEM, RsaRaw };
+    enum DumpMode { CertPEM = 0, CertASN1, CertDER, RsaPEM, RsaPubPEM, RsaRaw };
+
 
     /**
      * Initialize a completely empty X509 Object with an X509 certificate
@@ -63,15 +65,14 @@ public:
      */
     WvX509Mgr();
     
-    
     /**
-    * Initialize a blank X509 Object with the certificate *cert
-    * (used for client side operations...)
-    * 
-    * This either initializes a completely empty object, or takes _cert,
-    * and extracts the distinguished name into dname, and the the RSA
-    * public key into rsa. rsa->prv is empty.
-    */
+     * Initialize a blank X509 Object with the certificate *cert
+     * (used for client side operations...)
+     * 
+     * This either initializes a completely empty object, or takes _cert,
+     * and extracts the distinguished name into dname, and the the RSA
+     * public key into rsa. rsa->prv is empty.
+     */
     WvX509Mgr(X509 *_cert);
 
     /** 
@@ -220,19 +221,6 @@ public:
      */
     bool validate(WvX509Mgr *cacert = NULL, X509_CRL *crl = NULL);
 
-    /**
-     * Check the certificate in cert against the CA certificates in
-     * certdir - returns true if cert was signed by one of the CA
-     * certificates.
-     */
-    bool signedbyCAindir(WvStringParm certdir);
-   
-    /**
-     * Check the certificate in cert against the CA certificate in certfile
-     * - returns true if cert was signed by that CA certificate. 
-     */
-    bool signedbyCAinfile(WvStringParm certfile);
-
    /**
     * Check the certificate in cert against the CA certificate in cacert
     * - returns true if cert was signed by that CA certificate.
@@ -254,6 +242,8 @@ public:
      */
     bool verify(WvBuf &original, WvStringParm signature);
     bool verify(WvStringParm original, WvStringParm signature);
+
+    void load(const DumpMode mode, WvStringParm fname);
     
     /** 
      * Return the information requested by mode as a WvString. 
@@ -409,7 +399,7 @@ public:
      * Get a list of URLS that have the Certificate 
      * of the CA that issued this certificate
      */
-    WvStringList *get_ca_urls(WvStringList *urls); 
+    WvStringList *get_ca_urls(WvStringList *urls);
     
     /**
      * Get the Subject Key Info
@@ -472,6 +462,16 @@ private:
      * Populate dname (the distinguished name);
      */
     void filldname();
+
+    /**
+     * Create an X509 certificate from an ASN1-encoded file
+     */
+    void load_asn1_from_file(WvStringParm fname);
+
+    /**
+     * Create an X509 certificate from a PEM-encoded file
+     */
+    void load_pem_from_file(WvStringParm fname);
 
     /**
      * Return a WvRSAKey filled with the public key from the
