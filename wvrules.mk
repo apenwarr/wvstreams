@@ -92,7 +92,7 @@ ifneq ("$(enable_warnings)", "no")
   CFLAGS+=-Wall
 endif
 
-ifneq ("$(enable_rtti)", "yes")
+ifeq ("$(enable_rtti)", "no")
   CXXFLAGS+=-fno-rtti
 endif
 
