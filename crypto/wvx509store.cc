@@ -35,7 +35,8 @@ void WvX509Store::load(WvStringParm _dir)
 {
     // FIXME: This is stupid. We should be using X509_STORE_load_locations
     // instead, only problem is that assumes we're only interested in PEM-encoded
-    // files.
+    // files. (work around this by providing a method which allows the user
+    // of this class to load files individually)
     WvDirIter d(_dir);
     for (d.rewind(); d.next();)
     {
@@ -51,10 +52,11 @@ void WvX509Store::load(WvStringParm _dir)
 }
 
 
-bool WvX509Store::is_signed(WvX509Mgr *cert)
+bool WvX509Store::is_signed(WvX509Mgr *cert, WvX509Path *path)
 {
     X509_STORE_CTX csc;
-    X509_STORE_CTX_init(&csc, store, cert->get_cert(), NULL);
+    X509_STORE_CTX_init(&csc, store, cert->get_cert(), 
+                        path ? path->get_stack() : NULL);
     int result = X509_verify_cert(&csc);
     X509_STORE_CTX_cleanup(&csc);
 
