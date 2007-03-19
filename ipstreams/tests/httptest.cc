@@ -1,49 +1,37 @@
 /*
- * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
- *
- * WvHTTPStream test.  Downloads a file via http.
+ * WvHTTPStream test.  Downloads a file via http and dumps it to stdout.
  */
+#include "wvargs.h"
 #include "wvhttp.h"
-#include "wvistreamlist.h"
-#include "wvlog.h"
 #include "wvfile.h"
+#include "wvlog.h"
+#include "strutils.h"
+#include <signal.h>
 
 
 int main(int argc, char **argv)
 {
+    signal(SIGPIPE, SIG_IGN);
+
     WvLog log("httptest", WvLog::Info);
-    WvURL url("http://www.net-itech.com/");
+
+    WvStringList extra_args;
+    WvArgs args;
+    args.add_required_arg("URL");
+
+    if (!args.process(argc, argv, &extra_args))
+        return 1;
+    
+    WvURL url(extra_args.popstr());
+
     WvHTTPStream http(url);
-    WvFile out("httptest.out", O_WRONLY | O_TRUNC | O_CREAT);
-    WvHTTPStream::State last_state = WvHTTPStream::Done;
-    static char buf[10240];
-    size_t len;
+    http.autoforward(*wvcon);
     
-    WvIStreamList l;
-    l.add_after(l.tail, &http, false);
-    
-    while (http.isok() && out.isok())
-    {
-	if (last_state != http.state)
-	{
-	    log("\nNow in state %s\n", http.state);
-	    last_state = http.state;
-	}
-	    
-	if (l.select(100))
-	    l.callback();
-	    
-	if (http.select(0))
-	{
-	    len = http.read(buf, sizeof(buf));
-	    out.write(buf, len);
-	    log("[%6s]", len);
-	}
-    }
-    
+    while (http.isok())
+        http.runonce();
+        
     if (!http.isok() && http.geterr())
 	log("http: %s\n", http.errstr());
-    
+
     return 0;
 }
