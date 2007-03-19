@@ -83,7 +83,7 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	}
         break;
     case ReadHeader:
-	while (line = trim_string(conn->getline()))
+	while ((line = trim_string(conn->getline())))
 	{
 	    if (!line[0])
             {
