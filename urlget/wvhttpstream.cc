@@ -50,6 +50,7 @@ WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug2, "Deleting.\n");
 
+#if 0
 #ifdef HAVE_EXECINFO_H
     void* trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
@@ -59,6 +60,7 @@ WvHttpStream::~WvHttpStream()
         log(WvLog::Debug, ":%s", tracedump[i]);
     log(WvLog::Debug, "\n");
     free(tracedump);
+#endif
 #endif
 
     if (geterr())
@@ -70,7 +72,8 @@ WvHttpStream::~WvHttpStream()
 void WvHttpStream::close()
 {
     log("close called\n");
-    
+
+#if 0    
 #ifdef HAVE_EXECINFO_H
     void *trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
@@ -80,6 +83,7 @@ void WvHttpStream::close()
         log(WvLog::Debug, ":%s", tracedump[i]);
     log(WvLog::Debug, "\n");
     free(tracedump);
+#endif
 #endif
 
     // assume pipelining is broken if we're closing without doing at least
