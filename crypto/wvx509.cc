@@ -827,16 +827,16 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 	return retval.getstr();
 }
 
-void WvX509Mgr::decode(const DumpMode mode, WvStringParm pemEncoded)
+void WvX509Mgr::decode(const DumpMode mode, WvStringParm encoded)
 {
-    if (!pemEncoded)
+    if (!encoded)
     {
 	debug(WvLog::Error, "Not decoding an empty string. - Sorry!\n");
 	return;
     }
 
     BIO *membuf = BIO_new(BIO_s_mem());
-    BIO_puts(membuf, pemEncoded);
+    BIO_puts(membuf, encoded);
     
     switch(mode)
     {
