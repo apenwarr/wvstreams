@@ -15,11 +15,11 @@ WVTEST_MAIN("wvconfemu set and get")
 
     // get existing key
     cfg.set(section, entry, value);
-    WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), value);
 
     // get nonexistant key
-    WVPASS(strcmp(cfg.get(section, notEntry, notValue), notValue) == 0);
-    WVPASS(strcmp(cfg.get(notSection, entry, notValue), notValue) == 0);
+    WVPASSEQ(cfg.get(section, notEntry, notValue), notValue);
+    WVPASSEQ(cfg.get(notSection, entry, notValue), notValue);
 }
 
 WVTEST_MAIN("wvconfemu delete with empty key name")
@@ -30,13 +30,13 @@ WVTEST_MAIN("wvconfemu delete with empty key name")
     WvString section = "TestSection", entry = "TestEntry",
         value = "TestValue", notValue = "NotTestValue";
     
-    WVPASS(strcmp(cfg.get(section, entry, notValue), notValue) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), notValue);
 
     cfg.set(section, entry, value);
-    WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), value);
 
     cfg.set(section, "", value);
-    WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), value);
 
     {
     WvConfigSection *sect = cfg[section];
@@ -45,15 +45,15 @@ WVTEST_MAIN("wvconfemu delete with empty key name")
     int count = 0;
     for (i.rewind(); i.next(); )
     {
-        WVFAIL(strcmp(i->value, value) != 0);
-        WVFAIL(strcmp(i->name, entry) != 0);
+        WVPASSEQ(i->value, value);
+        WVPASSEQ(i->name, entry);
         ++count;
     }
     WVPASS(count == 1);
     }
 
     cfg.set(section, "", "");
-    WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), value);
 
     {
     WvConfigSection *sect = cfg[section];
@@ -62,8 +62,8 @@ WVTEST_MAIN("wvconfemu delete with empty key name")
     int count = 0;
     for (i.rewind(); i.next(); )
     {
-        WVFAIL(strcmp(i->value, value) != 0);
-        WVFAIL(strcmp(i->name, entry) != 0);
+        WVPASSEQ(i->value, value);
+        WVPASSEQ(i->name, entry);
         ++count;
     }
     WVPASS(count==1);
@@ -79,17 +79,17 @@ WVTEST_MAIN("wvconfemu delete with NULL")
         value = "TestValue", notValue = "NotTestValue";
     
     cfg.set(section, entry, value);
-    WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), value);
 
     cfg.set(section, entry, NULL);
-    WVPASS(strcmp(cfg.get(section, entry, notValue), notValue) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), notValue);
 
     WvConfigSection *sect = cfg[section];
     WVPASS(sect != NULL);
 
     WvConfigEntryList::Iter i(*sect);
     for (i.rewind(); i.next(); )
-        WVFAIL(strcmp(i->name, entry) == 0);
+        WVFAILEQ(i->name, entry);
 }
 
 WVTEST_MAIN("wvconfemu delete with empty string")
@@ -101,17 +101,17 @@ WVTEST_MAIN("wvconfemu delete with empty string")
         value = "TestValue", notValue = "NotTestValue";
     
     cfg.set(section, entry, value);
-    WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), value);
 
     cfg.set(section, entry, "");
-    WVPASS(strcmp(cfg.get(section, entry, notValue), notValue) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), notValue);
 
     WvConfigSection *sect = cfg[section];
     WVPASS(sect != NULL);
 
     WvConfigEntryList::Iter i(*sect);
     for (i.rewind(); i.next(); )
-        WVFAIL(strcmp(i->name, entry) == 0);
+        WVFAILEQ(i->name, entry);
 }
 
 WVTEST_MAIN("wvconfemu iterating while not mounted at root of UniConf tree")
@@ -123,7 +123,7 @@ WVTEST_MAIN("wvconfemu iterating while not mounted at root of UniConf tree")
         value = "TestValue", notValue = "NotTestValue";
         
     cfg.set(section, entry, value);
-    WVPASS(strcmp(cfg.get(section, entry, notValue), value) == 0);
+    WVPASSEQ(cfg.get(section, entry, notValue), value);
     
     WvConfigSection *sect = cfg[section];
     WvConfigSection::Iter i(*sect);
@@ -131,7 +131,7 @@ WVTEST_MAIN("wvconfemu iterating while not mounted at root of UniConf tree")
     {
         printf("name: %s\n", i->name.cstr());
         printf("value: %s\n", i->value.cstr());
-        WVPASS(strcmp(i->name, entry) == 0);
+        WVPASSEQ(i->name, entry);
     }
 
 #if 0
@@ -281,9 +281,9 @@ WVTEST_MAIN("wvconfemu addname")
     cfg.set("sect2", "foo", "y");
     cfg.set("sect3", "baz", "x"); // should not get notified!
 
-    WVPASS(strcmp(sl.popstr().cstr(), "bar") == 0);
-    WVPASS(strcmp(sl.popstr().cstr(), "foo") == 0);
-    WVPASS(strcmp(sl.popstr().cstr(), "foo") == 0);
+    WVPASSEQ(sl.popstr(), "bar");
+    WVPASSEQ(sl.popstr(), "foo");
+    WVPASSEQ(sl.popstr(), "foo");
     WVPASS(sl.isempty());
             
     cfg.del_addname(&sl, "sect1", "");

@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2007 Net Integration Technologies, Inc. and others.
  *
  */ 
 #ifndef __WVHTTP_H
@@ -34,30 +34,18 @@ class WvSSLStream;
 class WvHTTPStream : public WvStreamClone
 {
 public:
-    enum State {Resolving = 0, Connecting, ReadHeader1, ReadHeader, ReadData,
-    		Done};
+    WvHTTPStream(const WvURL &_url);
+    virtual void execute();
+    virtual size_t uread(void *buf, size_t count);
+
+private:
+    WvURL url;
+    WvStream *conn;  // Can't use 'cloned' since it has no getline
+    enum State {Connecting=0, ReadHeader1, ReadHeader, ReadData,
+    		Done} state;
     WvHTTPHeaderDict headers;
     WvHTTPHeaderDict client_headers;
     size_t num_received;
-    WvTCPConn *tcp;
-    WvSSLStream *ssl;
-    WvStream *conn;  // Can't use 'cloned' since it has no select()
-
-    /**
-     * Changed: now we copy _url in the constructor, so you can (and must)
-     * delete it whenever you want.
-     */
-    WvHTTPStream(const WvURL &_url);
-
-    virtual bool isok() const;
-    virtual int geterr() const;
-    virtual WvString errstr() const;
-    virtual bool pre_select(SelectInfo &si);
-    virtual size_t uread(void *buf, size_t count);
-
-public:
-    WvURL url;
-    State state;
 
 public:
     const char *wstype() const { return "WvHTTPStream"; }

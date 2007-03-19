@@ -153,11 +153,8 @@ void UniReplicateGen::deltacallback(Gen *src_gen, const UniConfKey &key,
 				    WvStringParm value)
 {
     DPRINTF("UniReplicateGen::deltacallback(%s, %s)\n",
-            key.cstr(), value.cstr());
+            key.printable().cstr(), value.cstr());
 
-    if (key == "" && value.isnull())
-        return;
-    
     if (!processing_callback)
     {
     	DPRINTF("UniReplicateGen::deltacallback(): !processing_callback\n");
@@ -173,7 +170,7 @@ void UniReplicateGen::deltacallback(Gen *src_gen, const UniConfKey &key,
     	    if (j.ptr() != src_gen)
             {
                 DPRINTF("UniReplicateGen::deltacallback: %p->set(%s, %s)\n",
-                        j.ptr(), key.cstr(), value.cstr());
+                        j.ptr(), key.printable().cstr(), value.cstr());
     	    	j->gen->set(key, value);
             }
     	}
@@ -192,7 +189,7 @@ void UniReplicateGen::deltacallback(Gen *src_gen, const UniConfKey &key,
 void UniReplicateGen::set(const UniConfKey &key, WvStringParm value)
 {
     DPRINTF("UniReplicateGen::set(%s, %s)\n",
-    	    key.cstr(), value.cstr());
+    	    key.printable().cstr(), value.cstr());
     
     replicate_if_any_have_become_ok();
     
@@ -274,7 +271,7 @@ UniReplicateGen::Gen *UniReplicateGen::first_ok() const
 
 void UniReplicateGen::replicate(const UniConfKey &key)
 {
-    DPRINTF("UniReplicateGen::replicate(%s)\n", key.cstr());
+    DPRINTF("UniReplicateGen::replicate(%s)\n", key.printable().cstr());
        
     hold_delta();
     
@@ -301,7 +298,7 @@ void UniReplicateGen::replicate(const UniConfKey &key)
     	for (i->rewind(); i->next(); )
     	{
 	    DPRINTF("UniReplicateGen::replicate: key=%s, value=%s\n",
-	    	    i->key().cstr(), i->value().cstr());
+	    	    i->key().printable().cstr(), i->value().cstr());
 
     	    if (j.ptr() == first)
     	    {

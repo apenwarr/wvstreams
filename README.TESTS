@@ -10,8 +10,6 @@ OpenSSL 0.9.8d):
  - make
 - Set your LD_LIBRARY_PATH environment variable so your version of OpenSSL
  is used (instead of the system one). 
- - export LD_LIBRARY_PATH=$PATH_TO_OPENSSL:$PATH
-- Configure WvStreams to use the version of OpenSSL you built (and to use
- the purify option for inline stuff).
- - export CPPFLAGS=-DPURIFY
+ - export LD_LIBRARY_PATH=$PATH_TO_OPENSSL:$LD_LIBRARY_PATH
+- Configure WvStreams to use the version of OpenSSL you built
  - ./configure --with-openssl=$PATH_TO_OPENSSL ...

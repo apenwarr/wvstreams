@@ -58,11 +58,16 @@ WvString UniFastRegetGen::get(const UniConfKey &key)
 	abort();
     }
 
+    // Keys with trailing slashes can't have values set on them
+    if (key.hastrailingslash())
+        return WvString::null;
+
     UniConfValueTree *t = tree->find(key);
     if (!t)
     {
-	get(key.removelast()); // guaranteed to create parent node
-	t = tree->find(key.removelast());
+        UniConfKey parentkey(key.removelast());
+	get(parentkey); // guaranteed to create parent node
+	t = tree->find(parentkey);
 	assert(t);
 	
 	WvString value;
@@ -80,7 +85,7 @@ bool UniFastRegetGen::exists(const UniConfKey &key)
 {
     // even if inner generator has a more efficient version of exists(),
     // do it this way so we can cache the result.
-    return !!get(key);
+    return !get(key).isnull();
 }
 
 

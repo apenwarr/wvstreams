@@ -312,7 +312,6 @@ static WvPipe * setup_master_daemon(bool implicit_root,
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d",
-        "-f",
         "-p",
         "0",
         "-s"
@@ -342,7 +341,6 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d",
-        "-f",
         "-p",
         "0",
         "-s"

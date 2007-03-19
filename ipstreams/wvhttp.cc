@@ -8,89 +8,32 @@
 #include "wvhttp.h"
 #include "wvsslstream.h"
 #include "strutils.h"
-#include <assert.h>
-
 
 
 WvHTTPStream::WvHTTPStream(const WvURL &_url)
-	: WvStreamClone(NULL), headers(7), client_headers(7),
-          url(_url)
+    : WvStreamClone(NULL), url(_url), conn(NULL), state(Connecting),
+      headers(7), client_headers(7)
 {
-    state = Resolving;
     num_received = 0;
-    tcp = NULL;
-    ssl = NULL;
-    
-    // we need this: if the URL tried to dns-resolve before, but failed,
-    // this might make isok() true again if the name has turned up.
-    url.resolve();
-}
 
-
-bool WvHTTPStream::isok() const
-{
-    if (cloned)
-	return WvStreamClone::isok();
-    else
-	return url.isok();
-}
-
-
-int WvHTTPStream::geterr() const
-{
-    if (cloned)
-	return WvStreamClone::geterr();
-    else
-	return -1;
-}
-
-
-WvString WvHTTPStream::errstr() const
-{
-    if (cloned)
-	return WvStreamClone::errstr();
-    else if (!url.isok())
-	return url.errstr();
-    else
-	return "Unknown error! (no stream yet)";
-}
-
-
-bool WvHTTPStream::pre_select(SelectInfo &si)
-{
-    if (!isok()) return false;
-    
-    switch (state)
+    WvTCPConn *tcp = new WvTCPConn(url.gethost(), url.getport());
+    if (url.getproto() == "https")
     {
-    case Resolving:
-	if (!url.isok())
-	    seterr("Invalid URL");
-	else if (url.resolve())
-	{
-	    state = Connecting;
-	    tcp = new WvTCPConn(url.getaddr());
-	    if (url.getproto() == "https")
-	    {
-		ssl = new WvSSLStream(tcp, NULL, 0);
-		conn = ssl;
-                setclone(ssl);
-	    }
-	    else
-            {
-		conn = tcp;
-                setclone(tcp);
-            }
-	}
-	return false;
+        WvSSLStream *ssl = new WvSSLStream(tcp, NULL, 0);
+        setclone(ssl);        
+        conn = ssl;
+    }
 
-    case Connecting:
-	conn->select(0, false, true, false);
-	if (!tcp->isconnected())
-	    return false;
-	if (conn->geterr())
-	    return false;
+    setclone(tcp);
+    conn = tcp;
+}
 
-	// otherwise, we just finished connecting:  start transfer.
+
+void WvHTTPStream::execute()
+{
+    WvStreamClone::execute();
+    if (state == Connecting)
+    {
 	state = ReadHeader1;
 	delay_output(true);
 	print("GET %s HTTP/1.0\r\n", url.getfile());
@@ -104,28 +47,20 @@ bool WvHTTPStream::pre_select(SelectInfo &si)
         }
         print("\r\n");
 	delay_output(false);
-	
-	// FALL THROUGH!
-	
-    default:
-	return WvStreamClone::isok()
-	    && WvStreamClone::pre_select(si);
     }
 }
 
 
 size_t WvHTTPStream::uread(void *buf, size_t count)
 {
+    size_t len;
     char *line;
     int retval;
-    size_t len;
-    
+
     switch (state)
     {
-    case Resolving:
     case Connecting:
-	break;
-	
+        break;
     case ReadHeader1:
 	line = trim_string(conn->getline());
 	if (line) // got response code line
@@ -146,14 +81,15 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 		
 	    state = ReadHeader;
 	}
-	break;
-	
+        break;
     case ReadHeader:
-	line = trim_string(conn->getline());
-	if (line)
+	while ((line = trim_string(conn->getline())))
 	{
 	    if (!line[0])
+            {
 		state = ReadData;	// header is done
+                return 0;
+            }
 	    else
 	    {
 		char *cptr = strchr(line, ':');
@@ -169,15 +105,13 @@ size_t WvHTTPStream::uread(void *buf, size_t count)
 	    }
 	}
 	break;
-	
     case ReadData:
 	len = conn->read(buf, count);
 	num_received += len;
 	return len;
-	
     case Done:
-	break;
+        break;
     }
-    
+
     return 0;
 }

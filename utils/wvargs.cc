@@ -958,12 +958,12 @@ static inline void add_arg_helper(WvArgs *args, WvStringParm desc)
 {
 }
 
-void WvArgs::add_required_arg(WvStringParm desc)
+void WvArgs::add_required_arg(WvStringParm desc, bool multiple)
 {
     data->add_required_arg();
     if (!!args_doc)
-	args_doc.append(" ");
-    args_doc.append(desc);
+        args_doc.append(" ", multiple);
+    args_doc.append(desc, multiple);
     if (data->maximum_args < LONG_MAX)
 	++(data->maximum_args);
 }

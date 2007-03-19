@@ -3,6 +3,16 @@
 #include "unimountgen.h"
 #include "uniconf.h"
 #include "unitempgen.h"
+#include "uniconfgen-sanitytest.h"
+
+WVTEST_MAIN("UniMountGen Sanity Test")
+{
+    UniMountGen *gen = new UniMountGen;
+    gen->mount("/", "temp:", true);
+    // The mount generator doesn't have a moniker
+    UniConfGenSanityTester::sanity_test(gen, WvString::null);
+    WVRELEASE(gen);
+}
 
 WVTEST_MAIN("mountgen basics")
 {

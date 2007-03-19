@@ -56,6 +56,7 @@ void UniConfDaemonConn::execute()
 
     WvString command_string;
     UniClientConn::Command command = readcmd(command_string);
+    
     if (command != UniClientConn::NONE)
     {
         // parse and execute command
@@ -161,6 +162,7 @@ void UniConfDaemonConn::do_reply(WvStringParm reply)
 void UniConfDaemonConn::do_get(const UniConfKey &key)
 {
     WvString value(root[key].getme());
+    
     if (value.isnull())
         writefail();
     else
@@ -174,9 +176,56 @@ void UniConfDaemonConn::do_set(const UniConfKey &key, WvStringParm value)
 }
 
 
-void UniConfDaemonConn::do_remove(const UniConfKey &key)
-{
-    root[key].remove();
+void UniConfDaemonConn::do_remove(const UniConfKey &_key)
+{      
+    int notifications_sent = 0;
+    bool single_key = true;
+    
+    // Remove '/' at the end of the key
+    WvString strkey = _key;
+    for (int n = strkey.len()-1; n > 0; n--)
+    {
+        if (strkey.edit()[n] == '/')
+            strkey.edit()[n] = ' ';
+        else
+            break;
+    }
+    
+    trim_string(strkey.edit());
+    
+    UniConfKey key = strkey;
+    
+    // Remove keys one at a time
+    UniConf cfg(root[key]);
+    
+    if (cfg.exists())
+    {        
+        UniConf::RecursiveIter it(cfg);
+        for (it.rewind(); it.next(); )
+        {
+            single_key = false;
+            WvString sect_name = getdirname(it->fullkey());   
+            root[it->fullkey()].remove();
+            
+            if (sect_name == ".")
+                sect_name = WvString::null;
+            
+            if (!root[sect_name].haschildren())
+                root[sect_name].remove();
+                
+	    // Don't hog the daemon while delivering notifications
+	    if (++notifications_sent > CONTINUE_SELECT_AT)
+	    {
+	        notifications_sent = 0;
+	        
+	        if (isok())
+	            continue_select(0);
+	    }
+	}
+	
+	if (single_key)
+	    root[key].remove();
+    }
 }
 
 
@@ -198,7 +247,7 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 		// entire daemon while fulfilling it; give up our timeslice
 		// after each entry.
 		if (!isok()) break;
-		if (++niceness > 100)
+		if (++niceness > CONTINUE_SELECT_AT)
 		{
 		    niceness = 0;
 		    continue_select(0);
@@ -224,7 +273,6 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
     else
         writefail();
 }
-
 
 void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
 {
@@ -281,6 +329,6 @@ void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
     else
         msg = spacecat(wvtcl_escape(fullkey),
 		       wvtcl_escape(cfg[key].getme()));
-
+		       
     writecmd(UniClientConn::EVENT_NOTICE, msg);
 }
