@@ -1,6 +1,6 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
+ *   Copyright (C) 1997-2007 Net Integration Technologies, Inc. and others.
  *
  * X.509v3 CRL management classes.
  */ 
@@ -22,7 +22,7 @@ class WvRSAKey;
 class WvX509Mgr;
 
 /**
- * CRL Class to handle certificates and their related
+ * CRL Class to handle certificate revocation lists and their related
  * functions
  */
 class WvCRLMgr
@@ -39,7 +39,7 @@ public:
      * CRLDER   = DER Encoded X.509 CRL returned in Base64
      * TEXT     = Decoded Human readable format.
      */
-    enum DumpMode { PEM = 0, DER, TEXT };
+    enum DumpMode { PEM = 0, ASN1, DER, TEXT };
 
     /**
      * Type for @ref validate() method:
@@ -51,91 +51,37 @@ public:
      * BEFORE_VALID = the certificate has not become valid yet
      * AFTER_VALID = the certificate is past it's validity period
      * REVOKED = the certificate has been revoked (it's serial number is in this CRL)
-     */
-    
+     */    
     enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, BEFORE_VALID, AFTER_VALID, REVOKED };
     
     /**
-     * Initialize a blank CRL Object
-     * 
-     * This either initializes a completely empty object, or takes
-     * a pre-allocated _crl - takes ownership.
+     * Initialize a blank CRL Object.
      */
-    WvCRLMgr(X509_CRL *_crl = NULL);
+    WvCRLMgr();
     
-private:
-    /** 
-     * Placeholder for Copy Constructor: this doesn't exist yet, but it keeps
-     * us out of trouble :) 
-     */
-    WvCRLMgr(const WvCRLMgr &mgr);
-
-public:
     /** Destructor */
     virtual ~WvCRLMgr();
-    
 
     /** Accessor for CRL */
     X509_CRL *getcrl()
     { return crl; }
  
-
     /**
-     * Given the CRL object crl, return a hexified string
-     * useful in a WvConf or UniConf file.
-     * 
-     */
-    WvString hexify();
-
-    /**
-     * Function to verify the validity of a certificate given by
-     * cert. This function checks three things:
-     * 1: That the certificate has been issued by the same CA that
-     *    has signed this CRL.
-     * 2: That the certificate is within it's validity range
-     * 3: That the certificate isn't in the CRL.
-     */
-    Valid validate(WvX509Mgr *cert);
-
-    /**
-     * Check the CRL in crl  against the CA certificates in
-     * certdir - returns true if crl was signed by one of the CA
-     * certificates.
-     */
-    bool signedbyCAindir(WvStringParm certdir);
-   
-    
-    /**
-     * Check the CRL in crl against the CA certificate in certfile
-     * - returns true if crl was signed by that CA certificate. 
-     */
-    bool signedbyCAinfile(WvStringParm certfile);
-    
-    
-    /**
-     * Check the CRL in crl against the CA certificate in cacert
+     * Check the CRL in crl against the CA certificate in cert
      * - returns true if CRL was signed by that CA certificate.
      */
-    bool signedbyCA(WvX509Mgr *cert);
+    bool signedbyca(WvX509Mgr *cacert);
     
     /**
      * Do we have any errors... convenience function..
      */
     bool isok()
-    { return err.isok(); }
-    
-    
-    /**
-     * Set the CA for this CRL...
-     */
-    void setca(WvX509Mgr *cacert);
-    
+    { return err.isok(); }  
     
     /** 
      * Return the information requested by mode as a WvString. 
      */
     WvString encode(const DumpMode mode);
-
 
     /**
      * Load the information from the format requested by mode into
@@ -145,13 +91,16 @@ public:
      */
     void decode(const DumpMode mode, WvStringParm PemEncoded);
 
-    
+    /**
+     * Loads a CRL from a file on disk.
+     */
+    void load(const DumpMode mode, WvStringParm fname);
+
     /** 
      * Return the CRL Issuer (usually the CA who signed 
      * the certificate)
      */
     WvString get_issuer();
-
     
     /**
      * Is the certificate in cert revoked?
@@ -159,31 +108,16 @@ public:
     bool isrevoked(WvX509Mgr *cert);
     bool isrevoked(WvStringParm serial_number);
     
-    
-    /**
-     * How many certificates in the CRL?
-     */
-    int numcerts();
-
-    
-    /**
-     * Add the certificate in cert to the CRL
-     */
-    void addcert(WvX509Mgr *cert);
-
-
 private:
-    /** X.509v3 CRL - this is why this class exists */
     WvLog debug;
 
     X509_CRL     *crl;
-    WvX509Mgr    *cacert;
-    int          certcount;
     WvString     issuer;
 
     ASN1_INTEGER *serial_to_int(WvStringParm serial);
-    void	 setupcrl();
-
 };
+
+typedef WvCRLMgr WvCRL;
+
 
 #endif // __WVCRL_H

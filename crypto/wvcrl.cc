@@ -12,28 +12,11 @@
 #include "wvx509.h"
 #include "wvbase64.h"
 
-WvCRLMgr::WvCRLMgr(X509_CRL *_crl)
-    : debug("X509_CRL", WvLog::Debug5), cacert(NULL), certcount(0), 
+WvCRLMgr::WvCRLMgr()
+    : debug("X509_CRL", WvLog::Debug5), 
       issuer(WvString::null)
 {
-    err.seterr("Not Initialized yet!");
-    if (_crl)
-    {
-	crl = _crl;
-	setupcrl();
-	err.noerr();
-	
-	// Do something about CA Cert.
-    }
-    else
-    {
-	debug("Creating new CRL\n");
-	if ((crl = X509_CRL_new()) == NULL)
-	{
-	    err.seterr("Error creating new CRL object");
-	    return;
-	}
-    }
+    crl = NULL;
 }
 
 
@@ -44,62 +27,10 @@ WvCRLMgr::~WvCRLMgr()
 }
     
 
-WvString WvCRLMgr::hexify()
+bool WvCRLMgr::signedbyca(WvX509Mgr *cacert)
 {
-    return WvString::null;
-}
-
-
-WvCRLMgr::Valid  WvCRLMgr::validate(WvX509Mgr *cert)
-{
-    assert(cacert);
-    
-    if (!cert)
-	return CRLERROR;
-    
-    if (!(cert->get_issuer() == cacert->get_subject()))
-	return NOT_THIS_CA;
-    
-    if (!(signedbyCA(cert)))
-	return NO_VALID_SIGNATURE;
-    
-    if (isrevoked(cert))
-	return REVOKED;
-    
-    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) > 0)
-	return BEFORE_VALID;
-
-    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) < 0)
-	return AFTER_VALID;
-    
-    return VALID;
-}
-
-
-bool WvCRLMgr::signedbyCAindir(WvStringParm certdir)
-{
+    // FIXME: implement
     return false;
-}
-   
-
-bool WvCRLMgr::signedbyCAinfile(WvStringParm certfile)
-{
-    return false;
-}
-
-
-bool WvCRLMgr::signedbyCA(WvX509Mgr *cert)
-{
-    assert(cacert);
-    return false;
-}
-
-
-void WvCRLMgr::setca(WvX509Mgr *_cacert)
-{
-    assert(_cacert);
-    cacert = _cacert;
-    issuer = cacert->get_issuer();
 }
 
 
@@ -176,8 +107,36 @@ void WvCRLMgr::decode(const DumpMode mode, WvStringParm PemEncoded)
     default:
 	err.seterr("Unknown mode!\n");
     }
-    setupcrl();
+    //setupcrl();
     BIO_free(bufbio);
+}
+
+
+void WvCRLMgr::load(const DumpMode mode, WvStringParm fname)
+{
+    if (crl)
+    {
+	debug("Replacing already existant CRL\n");
+	X509_CRL_free(crl);
+	crl = NULL;
+    }
+
+    if (mode == ASN1)
+    {
+	BIO *bio = BIO_new(BIO_s_file());
+        if (BIO_read_filename(bio, fname.cstr()) <= 0)
+        {
+            debug("Loading non-existent CRL?\n");
+            err.seterr(errno);
+            return;
+        }
+        crl = d2i_X509_CRL_bio(bio, NULL);
+        BIO_free(bio);
+        return;
+    }
+
+    // FIXME: we don't support anything else
+    assert(0);
 }
 
 
@@ -217,7 +176,10 @@ bool WvCRLMgr::isrevoked(WvStringParm serial_number)
 					       &mayberevoked);
 		ASN1_INTEGER_free(serial);
 		if (idx >= 0)
+                {
+                    debug("Certificate is revoked.\n");
 		    return true;
+                }
 	    }
 	    else
 	    {
@@ -234,9 +196,51 @@ bool WvCRLMgr::isrevoked(WvStringParm serial_number)
     {
 	debug("Can't check imaginary serial number!\n");
     }
+
+    debug("Certificate is not revoked (or could not determine whether it "
+          "was.\n");
     return false;
 }
     
+
+ASN1_INTEGER *WvCRLMgr::serial_to_int(WvStringParm serial)
+{
+    debug(WvLog::Critical, "Converting: %s\n", serial);
+    if (!!serial)
+    {
+	ASN1_INTEGER *retval = ASN1_INTEGER_new();
+	ASN1_INTEGER_set(retval, serial.num());
+	return retval;
+    }
+    else
+	return NULL;
+}
+
+#if 0
+WvCRLMgr::Valid WvCRLMgr::validate(WvX509Mgr *cert)
+{
+    assert(cacert);
+    
+    if (!cert)
+	return CRLERROR;
+    
+    if (!(cert->get_issuer() == cacert->get_subject()))
+	return NOT_THIS_CA;
+    
+    if (!(signedbyCA(cert)))
+	return NO_VALID_SIGNATURE;
+    
+    if (isrevoked(cert))
+	return REVOKED;
+    
+    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) > 0)
+	return BEFORE_VALID;
+
+    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) < 0)
+	return AFTER_VALID;
+    
+    return VALID;
+}
 
 int WvCRLMgr::numcerts()
 {
@@ -266,19 +270,6 @@ void WvCRLMgr::addcert(WvX509Mgr *cert)
     }
 }
 
-ASN1_INTEGER *WvCRLMgr::serial_to_int(WvStringParm serial)
-{
-    debug(WvLog::Critical, "Converting: %s\n", serial);
-    if (!!serial)
-    {
-	ASN1_INTEGER *retval = ASN1_INTEGER_new();
-	ASN1_INTEGER_set(retval, serial.num());
-	return retval;
-    }
-    else
-	return NULL;
-}
-
 
 void WvCRLMgr::setupcrl()
 {
@@ -289,4 +280,4 @@ void WvCRLMgr::setupcrl()
     rev = X509_CRL_get_REVOKED(crl);
     certcount = sk_X509_REVOKED_num(rev);
 }
-
+#endif

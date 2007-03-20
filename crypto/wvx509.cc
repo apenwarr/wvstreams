@@ -128,6 +128,7 @@ void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
         if (BIO_read_filename(bio, fname.cstr()) <= 0)
         {
             seterr(errno);
+            return;
         }
 
         if (!(cert = d2i_X509_bio(bio, NULL)))
@@ -141,8 +142,10 @@ void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
         if (!rsa)
         {
             rsa = fillRSAPubKey();
-            if (!rsa->isok())
-                seterr("RSA public key error: %s", rsa->errstr());
+            // the RSA key does not always need to be valid. we could have
+            // a DSA key instead?
+            //if (!rsa->isok())
+            //    seterr("RSA public key error: %s", rsa->errstr());
         }
     }
     else
@@ -1633,7 +1636,7 @@ bool WvX509Mgr::signcrl(WvCRLMgr *crl)
 {
     assert(crl);
     assert(rsa);
-    
+
     if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
 	  (cert->ex_kusage & KU_CRL_SIGN)))
     {
@@ -1671,8 +1674,6 @@ bool WvX509Mgr::signcrl(WvCRLMgr *crl)
     }
     EVP_PKEY_free(certkey);
 
-    crl->setca(this);
-    
     return true;
 }
 
