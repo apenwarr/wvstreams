@@ -813,7 +813,10 @@ bool WvStream::pre_select(SelectInfo &si)
     time_t alarmleft = alarm_remaining();
     
     if (!si.inherit_request && alarmleft == 0)
+    {
+	si.msec_timeout = 0;
 	return true; // alarm has rung
+    }
 
     if (!si.inherit_request)
     {
@@ -824,7 +827,10 @@ bool WvStream::pre_select(SelectInfo &si)
     
     // handle read-ahead buffering
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
-	return true; // already ready
+    {
+	si.msec_timeout = 0; // already ready
+	return true;
+    }
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft + 10;
@@ -844,6 +850,9 @@ bool WvStream::post_select(SelectInfo &si)
 	flush(0);
     if (!si.inherit_request && alarm_remaining() == 0)
 	return true; // alarm ticked
+    if ((si.wants.readable || (!si.inherit_request && readcb))
+	&& inbuf.used() && inbuf.used() >= queue_min)
+	return true; // already ready
     return false;
 }
 
@@ -933,7 +942,12 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 {
     if (!isok()) return false;
 
-    wvstime_sync();
+    // We cannot move the clock backward here, because timers that
+    // were expired in pre_select could then not be expired anymore,
+    // and while time going backward is rather unsettling in general,
+    // for it to be happening between pre_select and post_select is
+    // just outright insanity.
+    wvstime_sync_forward();
         
     bool sure = post_select(si);
     if (globalstream && forceable && (globalstream != this))

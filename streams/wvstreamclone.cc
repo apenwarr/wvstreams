@@ -27,7 +27,10 @@ static WvMoniker<IWvStream> reg("clone", creator);
 
 
 WvStreamClone::WvStreamClone(IWvStream *_cloned) 
-    : cloned(0), disassociate_on_close(false), my_type("WvStreamClone:(none)")
+    : cloned(0), 
+      disassociate_on_close(false), 
+      pre_select_result(false),
+      my_type("WvStreamClone:(none)")
 {
     setclone(_cloned);
     // the sub-stream will force its own values, if it really wants.
@@ -188,6 +191,9 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 {
     SelectRequest oldwant;
     bool result = WvStream::pre_select(si);
+
+    pre_select_result = false;
+
     if (cloned && cloned->isok())
     {
 	oldwant = si.wants;
@@ -202,11 +208,26 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	
 	if (outbuf.used() || autoclose_time)
 	    si.wants.writable = true;
-	
-	result = result || cloned->pre_select(si);
+
+	pre_select_result = cloned->pre_select(si);
+	assert(!pre_select_result || si.msec_timeout == 0);
+
+	// At this point, one would be tempted to combine
+	// "pre_select_result" with "result" (that's what we used to
+	// do, anyway). Don't. The problem is that if we are trying to
+	// flush our outbuf or autoclose, we'll have twiddled the
+	// interest set, and post_select will "eat" that result. So we
+	// have to "eat" it as well, to prevent the assert in
+	// WvIStreamList::post_select from tripping. But it's okay,
+	// we'll just set the msec_timeout to zero and take care of
+	// things in our post_select...
 	
 	si.wants = oldwant;
     }
+
+    if (result || pre_select_result)
+	si.msec_timeout = 0;
+
     return result;
 }
 
@@ -234,6 +255,7 @@ bool WvStreamClone::post_select(SelectInfo &si)
 	}
 
 	val = cloned->post_select(si);
+	assert(!pre_select_result || val);
 	want_write = si.wants.writable;
 	si.wants = oldwant;
 	

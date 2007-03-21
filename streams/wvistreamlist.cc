@@ -10,6 +10,9 @@
 #include "wvstreamsdebugger.h"
 #include "wvstrutils.h"
 
+#include "wvassert.h"
+#include "wvstrutils.h"
+
 #ifndef _WIN32
 #include "wvfork.h"
 #endif
@@ -37,7 +40,7 @@ WvIStreamList WvIStreamList::globallist;
 
 
 WvIStreamList::WvIStreamList():
-    in_select(false)
+    in_select(false), dead_stream(false)
 {
     readcb = writecb = exceptcb = 0;
     auto_prune = true;
@@ -89,6 +92,8 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     bool already_sure = false;
     SelectRequest oldwant;
     
+    dead_stream = false;
+    
     sure_thing.zap();
     
     time_t alarmleft = alarm_remaining();
@@ -96,16 +101,30 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	already_sure = true;
     
     oldwant = si.wants;
-    
+
+
+    IWvStream *old_in_stream = WvCrashInfo::in_stream;
+    const char *old_in_stream_id = WvCrashInfo::in_stream_id;
+    WvCrashInfo::InStreamState old_in_stream_state = WvCrashInfo::in_stream_state;
+    WvCrashInfo::in_stream_state = WvCrashInfo::PRE_SELECT;
+
     Iter i(*this);
     for (i.rewind(); i.next(); )
     {
 	IWvStream &s(*i);
-	
+#if I_ENJOY_FORMATTING_STRINGS
+	WvCrashWill will("doing pre_select for \"%s\" (%s)\n%s",
+			 i.link->id, ptr2str(&s), wvcrash_read_will());
+#else
+	WvCrashInfo::in_stream = &s;
+	WvCrashInfo::in_stream_id = i.link->id;
+#endif
+
         si.wants = oldwant;
 
 	if (!s.isok())
 	{
+	    dead_stream = true;
 	    already_sure = true;
 	    if (auto_prune)
 		i.xunlink();
@@ -115,13 +134,24 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	{
 	    // printf("pre_select sure_thing: '%s'\n", i.link->id);
 	    sure_thing.append(&s, false, i.link->id);
+	    wvassert(si.msec_timeout == 0, "pre_select for \"%s\" (%s) "
+		     "returned true, but has non-zero timeout",
+		     i.link->id, ptr2str(&s));
 	}
     }
+
+    WvCrashInfo::in_stream = old_in_stream;
+    WvCrashInfo::in_stream_id = old_in_stream_id;
+    WvCrashInfo::in_stream_state = old_in_stream_state;
 
     if (alarmleft >= 0 && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft;
     
     si.wants = oldwant;
+
+    if (already_sure || !sure_thing.isempty())
+	si.msec_timeout = 0;
+
     return already_sure || !sure_thing.isempty();
 }
 
@@ -129,13 +159,32 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 bool WvIStreamList::post_select(SelectInfo &si)
 {
     //BoolGuard guard(in_select);
-    bool one_dead = false;
+    bool already_sure = dead_stream;
     SelectRequest oldwant = si.wants;
     
+    dead_stream = false;
+
+    time_t alarmleft = alarm_remaining();
+    if (alarmleft == 0)
+	already_sure = true;
+
+    IWvStream *old_in_stream = WvCrashInfo::in_stream;
+    const char *old_in_stream_id = WvCrashInfo::in_stream_id;
+    WvCrashInfo::InStreamState old_in_stream_state = WvCrashInfo::in_stream_state;
+    WvCrashInfo::in_stream_state = WvCrashInfo::POST_SELECT;
+
     Iter i(*this);
     for (i.rewind(); i.cur() && i.next(); )
     {
 	IWvStream &s(*i);
+#if I_ENJOY_FORMATTING_STRINGS
+	WvCrashWill will("doing post_select for \"%s\" (%s)\n%s",
+			 i.link->id, ptr2str(&s), wvcrash_read_will());
+#else
+	WvCrashInfo::in_stream = &s;
+	WvCrashInfo::in_stream_id = i.link->id;
+#endif
+
 	if (s.isok())
 	{
 	    if (s.post_select(si))
@@ -143,13 +192,26 @@ bool WvIStreamList::post_select(SelectInfo &si)
 		sure_thing.unlink(&s); // don't add it twice!
 		sure_thing.append(&s, false, i.link->id);
 	    }
+	    else
+	    {
+		WvIStreamListBase::Iter j(sure_thing);
+		WvLink* link = j.find(&s);
+
+		wvassert(!link, "stream \"%s\" (%s) was ready in "
+			 "pre_select, but not in post_select",
+			 link->id, ptr2str(link->data));
+	    }
 	}
 	else
-	    one_dead = true;
+	    already_sure = true;
     }
     
+    WvCrashInfo::in_stream = old_in_stream;
+    WvCrashInfo::in_stream_id = old_in_stream_id;
+    WvCrashInfo::in_stream_state = old_in_stream_state;
+
     si.wants = oldwant;
-    return one_dead || !sure_thing.isempty();
+    return already_sure || !sure_thing.isempty();
 }
 
 
@@ -164,6 +226,11 @@ void WvIStreamList::execute()
     
     TRACE("\n%*sList@%p: (%d sure) ", level, "", this, sure_thing.count());
     
+    IWvStream *old_in_stream = WvCrashInfo::in_stream;
+    const char *old_in_stream_id = WvCrashInfo::in_stream_id;
+    WvCrashInfo::InStreamState old_in_stream_state = WvCrashInfo::in_stream_state;
+    WvCrashInfo::in_stream_state = WvCrashInfo::EXECUTE;
+
     WvIStreamListBase::Iter i(sure_thing);
     for (i.rewind(); i.next(); )
     {
@@ -190,6 +257,15 @@ void WvIStreamList::execute()
                 ::write(-1, strace_node, strace_node.len()); 
             }
 #endif
+#if I_ENJOY_FORMATTING_STRINGS
+	    WvCrashWill my_will("executing stream: %s\n%s",
+				id ? id : "unknown stream",
+				wvcrash_read_will());
+#else
+	    WvCrashInfo::in_stream = &s;
+	    WvCrashInfo::in_stream_id = id;
+#endif
+
 	    s.callback();
         }
 	
@@ -197,6 +273,10 @@ void WvIStreamList::execute()
 	i.rewind();
     }
     
+    WvCrashInfo::in_stream = old_in_stream;
+    WvCrashInfo::in_stream_id = old_in_stream_id;
+    WvCrashInfo::in_stream_state = old_in_stream_state;
+
     sure_thing.zap();
 
     level--;

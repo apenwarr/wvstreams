@@ -40,8 +40,8 @@ int main(int argc, char **argv)
     
     WvSSLStream cli(new WvTCPConn(target), NULL);
     
-    WvIStreamList::globallist.append(&cli, false);
-    WvIStreamList::globallist.append(wvin, false);
+    WvIStreamList::globallist.append(&cli, false, "client");
+    WvIStreamList::globallist.append(wvin, false, "wvin");
     
     cli.autoforward(*wvout);
     wvin->autoforward(cli);
