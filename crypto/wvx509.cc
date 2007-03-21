@@ -127,12 +127,14 @@ void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
         BIO *bio = BIO_new(BIO_s_file());
         if (BIO_read_filename(bio, fname.cstr()) <= 0)
         {
+            BIO_free(bio);
             seterr(errno);
             return;
         }
 
         if (!(cert = d2i_X509_bio(bio, NULL)))
         {
+            BIO_free(bio);       
             seterr("Can't read certificate from file");
             return;
         }

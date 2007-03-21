@@ -128,6 +128,7 @@ void WvCRLMgr::load(const DumpMode mode, WvStringParm fname)
         {
             debug("Loading non-existent CRL?\n");
             err.seterr(errno);
+            BIO_free(bio);
             return;
         }
         crl = d2i_X509_CRL_bio(bio, NULL);
