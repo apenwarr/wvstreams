@@ -50,6 +50,7 @@ static void http_callback(WvStream &s, void *userdata)
     {
         WVPASSEQ(trim_string(line), "Foo!");
     }
+    got_file = true;
 }
 
 

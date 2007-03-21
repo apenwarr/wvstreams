@@ -21,6 +21,24 @@ const char *wvcrash_read_will();
 // Read the assertion back.
 const char *wvcrash_read_assert();
 
+
+class IWvStream;
+
+struct WvCrashInfo
+{
+    // This is kind of ugly and used only for the guts of WvStreams,
+    // but it's a significant rather than a premature optimization,
+    // unfortunately.
+    static IWvStream *in_stream;
+    static const char *in_stream_id;
+    static enum InStreamState {
+	UNUSED,
+	PRE_SELECT,
+	POST_SELECT,
+	EXECUTE,
+    } in_stream_state;
+};
+
 const int wvcrash_ring_buffer_order = 12;
 const int wvcrash_ring_buffer_size = 1 << wvcrash_ring_buffer_order;
 void wvcrash_ring_buffer_put(const char *str);

@@ -600,7 +600,12 @@ static inline bool is_int(const char *str)
     return true;
 }
 
-// Reads the contents of a symlink.  Returns the contents, or WvString::null on error.
+// Converts a pointer into a string, like glibc's %p formatter would
+// do.
+WvString ptr2str(void* ptr);
+
+// Reads the contents of a symlink.  Returns the contents, or
+// WvString::null on error.
 WvString wvreadlink(WvStringParm path);
 
 #endif // __WVSTRUTILS_H

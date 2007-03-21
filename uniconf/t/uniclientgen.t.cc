@@ -224,7 +224,7 @@ WVTEST_MAIN("dead uniconfd")
     {
         UniConfDaemon daemon(uniconf, false, NULL);
         daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
+        WvIStreamList::globallist.append(&daemon, false, "uniconf daemon");
         while (true)
         {
             WvIStreamList::globallist.runonce();

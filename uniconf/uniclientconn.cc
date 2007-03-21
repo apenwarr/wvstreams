@@ -189,3 +189,15 @@ void UniClientConn::writetext(WvStringParm text)
 {
     writecmd(PART_TEXT, wvtcl_escape(text));
 }
+
+
+bool UniClientConn::pre_select(SelectInfo &si)
+{
+    // This is a bit of a hack for bug 19999.  It is possible for WvIStreamList
+    // to get confused by UniClientGen::do_select() and mess up its 'sure_thing'
+    // list, if this function is called by both WvIStreamList and
+    // UniClientGen::do_select() (say, due to continue_select() usage).
+    bool result = WvStreamClone::pre_select(si);
+    assert(!result || si.msec_timeout == 0);
+    return false;
+}

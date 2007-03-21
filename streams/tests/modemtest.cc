@@ -27,8 +27,8 @@ int main(int argc, char **argv)
     bool last_carrier = false, carrier;
     
     WvIStreamList l;
-    l.append(wvcon, false);
-    l.append(&modem, false);
+    l.append(wvcon, false, "wvcon");
+    l.append(&modem, false, "modem");
     
     while (modem.isok() && wvcon->isok())
     {

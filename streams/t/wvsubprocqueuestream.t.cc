@@ -6,7 +6,7 @@ WVTEST_MAIN("wvsubprocqueuestream")
 {
     WvIStreamList l;
     WvSubProcQueueStream q(2);
-    l.append(&q, false);
+    l.append(&q, false, "subproc queue");
     
     const char *argv1[] = { "true", NULL };
     const char *argv2[] = { "sleep", "1", NULL };

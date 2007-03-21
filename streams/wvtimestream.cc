@@ -47,7 +47,7 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 	
 	last = now;
 
-	if (next < now || next == now)
+	if (next <= now)
 	{
 	    si.msec_timeout = 0;
 	    return true;
@@ -67,7 +67,7 @@ bool WvTimeStream::post_select(SelectInfo &si)
 {
     WvTime now = wvstime();
 
-    return WvStream::post_select(si) || (ms_per_tick && next < now);
+    return WvStream::post_select(si) || (ms_per_tick && next <= now);
 }
 
 
