@@ -71,6 +71,12 @@ public:
      * - returns true if CRL was signed by that CA certificate.
      */
     bool signedbyca(WvX509Mgr *cacert);
+
+    /**
+     * Check the issuer name of the CRL in crl against the CA certificate in cert
+     * - returns true if the names match.
+     */
+    bool issuedbyca(WvX509Mgr *cacert);
     
     /**
      * Do we have any errors... convenience function..

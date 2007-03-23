@@ -29,8 +29,40 @@ WvCRLMgr::~WvCRLMgr()
 
 bool WvCRLMgr::signedbyca(WvX509Mgr *cacert)
 {
-    // FIXME: implement
-    return false;
+    EVP_PKEY *pkey = X509_get_pubkey(cacert->cert);
+    int result = X509_CRL_verify(crl, pkey);    
+    EVP_PKEY_free(pkey);
+    if (result < 0)
+    {
+        debug("There was an error determining whether or not we were signed by "
+              "CA '%s'\n");
+        return false;
+    }
+    bool issigned = (result > 0);
+
+    debug("CRL was%s signed by CA %s\n", issigned ? "" : " NOT", 
+          cacert->get_subject());
+
+    return issigned;
+}
+
+
+bool WvCRLMgr::issuedbyca(WvX509Mgr *cacert)
+{
+    char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);
+    bool issued = (cacert->get_subject() == name);
+    if (issued)
+        debug("CRL issuer '%s' matches subject '%s' of cert. We can say "
+              "that it appears to be issued by this CA.\n",
+              name, cacert->get_subject());
+    else
+        debug("CRL issuer '%s' doesn't match subject '%s' of cert. Doesn't "
+              "appear to be issued by this CA.\n", name, 
+              cacert->get_subject());
+
+    OPENSSL_free(name);
+
+    return issued;
 }
 
 
@@ -153,10 +185,16 @@ WvString WvCRLMgr::get_issuer()
 bool WvCRLMgr::isrevoked(WvX509Mgr *cert)
 {
     if (cert && cert->isok())
+    {
+        debug("Checking to see if certificate with name '%s' and serial "
+              "number '%s' is revoked.\n", cert->get_subject(), 
+              cert->get_serial());
 	return isrevoked(cert->get_serial());
+    }
     else
     {
-	debug(WvLog::Critical,"Given bad certificate... declining\n");
+	debug(WvLog::Error, "Given certificate to check revocation status, "
+              "but certificate is bad. Declining.\n");
 	return true;
     }
 }
@@ -181,36 +219,42 @@ bool WvCRLMgr::isrevoked(WvStringParm serial_number)
                     debug("Certificate is revoked.\n");
 		    return true;
                 }
+                else
+                {
+                    debug("Certificate is not revoked.\n");
+		    return false;
+                }
 	    }
 	    else
 	    {
 		ASN1_INTEGER_free(serial);
-		debug("No CRL Revoked list? I guess %s isn't in it!\n", 
-		      serial_number);
+		debug("CRL does not have revoked list.");
+                return false;
 	    }
 	    
 	}
 	else
-	    debug("Can't convert serial number...odd!\n");
+	    debug(WvLog::Warning, "Can't convert serial number to ASN1 format. "
+                  "Saying it's not revoked.\n");
     }
     else
-    {
-	debug("Can't check imaginary serial number!\n");
-    }
+	debug(WvLog::Warning, "Serial number for certificate is blank.\n");
 
     debug("Certificate is not revoked (or could not determine whether it "
-          "was.\n");
+          "was).\n");
     return false;
 }
     
 
 ASN1_INTEGER *WvCRLMgr::serial_to_int(WvStringParm serial)
 {
-    debug(WvLog::Critical, "Converting: %s\n", serial);
     if (!!serial)
     {
-	ASN1_INTEGER *retval = ASN1_INTEGER_new();
-	ASN1_INTEGER_set(retval, serial.num());
+        BIGNUM *bn = NULL;
+        BN_dec2bn(&bn, serial);
+        ASN1_INTEGER *retval = ASN1_INTEGER_new();
+        retval = BN_to_ASN1_INTEGER(bn, retval);
+        BN_free(bn);
 	return retval;
     }
     else
@@ -267,7 +311,8 @@ void WvCRLMgr::addcert(WvX509Mgr *cert)
     }
     else
     {
-	debug("Sorry, can't add a certificate that is either bad or broken\n");
+	debug(WvLog::Warning, "Tried to add a certificate to the CRL, but "
+              "certificate is either bad or broken.\n");
     }
 }
 
