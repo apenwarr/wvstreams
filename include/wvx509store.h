@@ -21,6 +21,7 @@ class WvX509Store : public WvErrorBase
     /// certificate to the store.
     bool is_signed(WvX509Mgr *cert, WvX509Path *path);
     void load(WvStringParm _dir);
+    void add_file(WvStringParm _fname);
 
   private:
     X509_STORE *store;

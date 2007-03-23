@@ -33,22 +33,26 @@ WvX509Store::~WvX509Store()
 
 void WvX509Store::load(WvStringParm _dir)
 {
-    // FIXME: This is stupid. We should be using X509_STORE_load_locations
-    // instead, only problem is that assumes we're only interested in PEM-encoded
-    // files. (work around this by providing a method which allows the user
-    // of this class to load files individually)
-    WvDirIter d(_dir);
-    for (d.rewind(); d.next();)
+    if (!X509_STORE_load_locations(store, NULL, _dir))
     {
-        if (!X509_LOOKUP_load_file(lookup, d().fullname, X509_FILETYPE_PEM) &&
-            !X509_LOOKUP_load_file(lookup, d().fullname, X509_FILETYPE_ASN1))
+        log(WvLog::Warning, "Couldn't load store from location %s.\n", _dir);
+        return;
+    }
+
+    log("Loaded store from location %s.\n", _dir);
+}
+
+
+void WvX509Store::add_file(WvStringParm _fname)
+{
+        if (!X509_LOOKUP_load_file(lookup, _fname, X509_FILETYPE_PEM) &&
+            !X509_LOOKUP_load_file(lookup, _fname, X509_FILETYPE_ASN1))
         {
-            log(WvLog::Warning, "Can't add lookup file '%s'.\n", d().fullname);
+            log(WvLog::Warning, "Can't add lookup file '%s'.\n", _fname);
         }
         else
             log(WvLog::Debug5, "Loaded certificate file '%s' into store.\n", 
-                d().fullname);
-    }
+                _fname);
 }
 
 
