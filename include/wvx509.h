@@ -430,6 +430,8 @@ public:
     virtual int geterr() const;
 
 private:
+    friend class WvCRLMgr;
+
     /** X.509v3 Certificate - this is why this class exists */
     X509     *cert;
 

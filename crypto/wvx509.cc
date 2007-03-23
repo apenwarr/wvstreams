@@ -1121,7 +1121,14 @@ WvString WvX509Mgr::get_serial()
 {
     if (cert)
     {
-	return WvString(ASN1_INTEGER_get(X509_get_serialNumber(cert)));
+        BIGNUM *bn = BN_new();
+        bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn);
+        BN_print_fp(stderr, bn);
+        char * c = BN_bn2dec(bn);
+        WvString ret("%s", c);
+        OPENSSL_free(c);
+        BN_free(bn);
+	return ret;
     }
     else
 	return WvString::null;
@@ -1471,7 +1478,7 @@ bool WvX509Mgr::signcert(X509 *unsignedcert)
     if (cert == unsignedcert)
     {
 	debug("Self Signing!\n");
-	printf("Looks like:\n%s\n", encode(WvX509Mgr::CertPEM).cstr());
+	//printf("Looks like:\n%s\n", encode(WvX509Mgr::CertPEM).cstr());
     }
     else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
 	  (cert->ex_kusage & KU_KEY_CERT_SIGN)))
