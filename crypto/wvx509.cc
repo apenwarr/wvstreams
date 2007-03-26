@@ -744,12 +744,18 @@ bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
     if (cert != NULL)
     {
 	// Check and make sure that the certificate is still valid
-	if (X509_cmp_current_time(X509_get_notAfter(cert)) == -1)
+	if (X509_cmp_current_time(X509_get_notAfter(cert)) < 0)
 	{
-	    seterr("Certificate has expired");
+	    seterr("Certificate has expired.");
 	    retval = false;
 	}
 	
+        if (X509_cmp_current_time(X509_get_notBefore(cert)) > 0)
+        {
+            seterr("Certificate is not yet valid.");
+            retval = false;
+        }
+
 	if (cacert)
 	    retval &= signedbyCA(cacert);
 

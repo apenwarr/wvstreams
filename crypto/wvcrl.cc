@@ -66,6 +66,19 @@ bool WvCRLMgr::issuedbyca(WvX509Mgr *cacert)
 }
 
 
+bool WvCRLMgr::expired()
+{
+    if (X509_cmp_current_time(X509_CRL_get_nextUpdate(crl)) < 0)
+    {
+        debug("CRL appears to be expired.\n");
+	return true;
+    }
+
+    debug("CRL appears not to be expired.\n");
+    return false;
+}
+
+
 WvString WvCRLMgr::encode(const DumpMode mode)
 {
     BIO *bufbio = BIO_new(BIO_s_mem());    
@@ -261,32 +274,27 @@ ASN1_INTEGER *WvCRLMgr::serial_to_int(WvStringParm serial)
 	return NULL;
 }
 
-#if 0
-WvCRLMgr::Valid WvCRLMgr::validate(WvX509Mgr *cert)
+WvCRLMgr::Valid WvCRLMgr::validate(WvX509Mgr *cacert)
 {
     assert(cacert);
     
-    if (!cert)
+    if (!cacert)
 	return CRLERROR;
     
-    if (!(cert->get_issuer() == cacert->get_subject()))
+    if (!issuedbyca(cacert))
 	return NOT_THIS_CA;
     
-    if (!(signedbyCA(cert)))
+    if (!signedbyca(cacert))
 	return NO_VALID_SIGNATURE;
-    
-    if (isrevoked(cert))
-	return REVOKED;
-    
-    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) > 0)
-	return BEFORE_VALID;
 
-    if (X509_cmp_current_time(X509_get_notBefore(cert->get_cert())) < 0)
-	return AFTER_VALID;
-    
+    if (expired())
+        return EXPIRED;
+
     return VALID;
 }
 
+
+#if 0
 int WvCRLMgr::numcerts()
 {
     return certcount;

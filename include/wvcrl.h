@@ -48,11 +48,8 @@ public:
      * NOT_THIS_CA = the certificate is not signed by this CA
      * NO_VALID_SIGNATURE = the certificate claims to be signed by this CA (Issuer is the same),
      *                      but the signature is invalid.
-     * BEFORE_VALID = the certificate has not become valid yet
-     * AFTER_VALID = the certificate is past it's validity period
-     * REVOKED = the certificate has been revoked (it's serial number is in this CRL)
      */    
-    enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, BEFORE_VALID, AFTER_VALID, REVOKED };
+    enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, EXPIRED };
     
     /**
      * Initialize a blank CRL Object.
@@ -77,7 +74,21 @@ public:
      * - returns true if the names match.
      */
     bool issuedbyca(WvX509Mgr *cacert);
-    
+
+    /**
+     * Checks to see if the CRL is expired (i.e.: the present time is past the
+     * nextUpdate extension).
+     * - returns true if CRL has expired.
+     */
+    bool expired();
+
+    /**
+     * Checks to see that a CRL is signed and issued by a CA certificate, and
+     * that it has not expired.
+     * - returns a validity status.
+     */
+    Valid validate(WvX509Mgr *cacert);
+
     /**
      * Do we have any errors... convenience function..
      */
