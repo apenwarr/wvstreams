@@ -46,7 +46,7 @@ public:
    /**
     * Type for the @ref encode() and @ref decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
-    * CertASN1  = ASN1 Encoded X.509 Certificate
+    * CertDER   = DER Encoded X.509 Certificate
     * CertDER   = DER Encoded X.509 Certificate returned in Base64
     * CertSMIME = SMIME "Certificate" usable for userSMIMECertificate ldap entry 
     *             again in Base64
@@ -55,7 +55,7 @@ public:
     * RsaRaw    = Raw form of RSA Key (unused by most programs, FreeS/WAN
     * being the notable exception)
     */
-    enum DumpMode { CertPEM = 0, CertASN1, CertDER, RsaPEM, RsaPubPEM, RsaRaw };
+    enum DumpMode { CertPEM = 0, CertDER, CertDER64, RsaPEM, RsaPubPEM, RsaRaw };
 
 
     /**
@@ -393,14 +393,20 @@ public:
      * Get a list of OCSP Responders for this certificate
      */
      
-    WvStringList *get_ocsp(WvStringList *responders);
+    void get_ocsp(WvStringList &responders);
     
     /**
      * Get a list of URLS that have the Certificate 
      * of the CA that issued this certificate
      */
-    WvStringList *get_ca_urls(WvStringList *urls);
+    void get_ca_urls(WvStringList &urls);
     
+    /**
+     * Get a list of URLs that are valid CRL distribution
+     * points for this certificate.
+     */
+    void get_crl_urls(WvStringList &urls);
+
     /**
      * Get the Subject Key Info
      */

@@ -19,11 +19,12 @@ void print_details(WvX509Mgr *x509)
     wvcon->print("Ext Key Usage: %s\n", x509->get_ext_key_usage());
     wvcon->print("Authority Info Access: \n%s\n", x509->get_aia());
     WvStringList urls;
-    wvcon->print("CA Issuers available from:\n%s\n", x509->get_ca_urls(&urls)->join("\n"));
-    urls.zap();
-    wvcon->print("OCSP Responders available from:\n%s\n", x509->get_ocsp(&urls)->join("\n"));
-    wvcon->print("Getting CRL dist point\n");
-    wvcon->print("CRL Distribution Point:\n%s\n", x509->get_crl_dp());
+    x509->get_ca_urls(urls);
+    wvcon->print("CA Issuers available from:\n%s\n", urls.join("\n"));
+    x509->get_ocsp(urls);
+    wvcon->print("OCSP Responders available from:\n%s\n", urls.join("\n"));
+    x509->get_crl_urls(urls);
+    wvcon->print("CRL Distribution Points:\n%s\n", urls.join("\n"));
     wvcon->print("Certificate Policy: %s\n", x509->get_cp_oid());
 }
 
@@ -37,7 +38,8 @@ int main(int argc, char **argv)
 
     WvArgs args;
     args.add_required_arg("certificate");
-    args.add_option('t', "type", "Certificate type: asn1 or pem (default: pem)", "type", certtype);
+    args.add_option('t', "type", "Certificate type: der or pem (default: pem)", 
+                    "type", certtype);
     if (!args.process(argc, argv, &remaining_args) || remaining_args.count() < 1)
     {
         args.print_help(argc, argv);
@@ -45,8 +47,8 @@ int main(int argc, char **argv)
     }
 
     WvX509Mgr x509;
-    if (certtype == "asn1")
-        x509.load(WvX509Mgr::CertASN1, remaining_args.popstr());   
+    if (certtype == "der")
+        x509.load(WvX509Mgr::CertDER, remaining_args.popstr());   
     else if (certtype == "pem")
         x509.load(WvX509Mgr::CertPEM, remaining_args.popstr());
     else

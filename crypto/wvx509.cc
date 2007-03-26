@@ -122,7 +122,7 @@ WvX509Mgr::WvX509Mgr()
 
 void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
 {
-    if (mode == CertASN1)
+    if (mode == CertDER)
     {
         BIO *bio = BIO_new(BIO_s_file());
         if (BIO_read_filename(bio, fname.cstr()) <= 0)
@@ -791,7 +791,7 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 	PEM_write_bio_X509(bufbio, cert);
 	break;
 	
-    case CertDER:
+    case CertDER64:
 	debug("Dumping X509 certificate in DER format\n");
 	i2d_X509_bio(bufbio, cert);
 	break;
@@ -1275,8 +1275,7 @@ WvString WvX509Mgr::get_aia()
 }
 
 
-WvStringList *parse_stack(WvStringParm ext, 
-			 WvStringList *list, WvStringParm prefix)
+void parse_stack(WvStringParm ext, WvStringList &list, WvStringParm prefix)
 {
     WvStringList whole_aia;
     whole_aia.split(ext, "\n");
@@ -1287,21 +1286,27 @@ WvStringList *parse_stack(WvStringParm ext,
       if (strstr(stack_entry, prefix))
       {
           WvString uri(stack_entry.edit() + prefix.len());
-          list->append(uri);  
+          list.append(uri);  
       }
     }
-    return list;
-}
-
-WvStringList *WvX509Mgr::get_ocsp(WvStringList *responders)
-{
-    return parse_stack(get_aia(), responders, "OCSP - URI:");
 }
 
 
-WvStringList *WvX509Mgr::get_ca_urls(WvStringList *urls)
+void WvX509Mgr::get_ocsp(WvStringList &responders)
 {
-    return parse_stack(get_aia(), urls, "CA Issuers - URI:");
+    parse_stack(get_aia(), responders, "OCSP - URI:");
+}
+
+
+void WvX509Mgr::get_ca_urls(WvStringList &urls)
+{
+    parse_stack(get_aia(), urls, "CA Issuers - URI:");
+}
+
+
+void WvX509Mgr::get_crl_urls(WvStringList &urls)
+{
+    parse_stack(get_crl_dp(), urls, "URI:");
 }
 
 
