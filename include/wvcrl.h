@@ -39,7 +39,7 @@ public:
      * CRLDER   = DER Encoded X.509 CRL returned in Base64
      * TEXT     = Decoded Human readable format.
      */
-    enum DumpMode { PEM = 0, ASN1, DER, TEXT };
+    enum DumpMode { PEM = 0, DER, DER64, TEXT };
 
     /**
      * Type for @ref validate() method:
@@ -102,11 +102,10 @@ public:
 
     /**
      * Load the information from the format requested by mode into
-     * the class - this overwrites the certificate, and possibly the
-     * key - and to enable two stage loading (the certificate first, then the
-     * key), it DOES NOT call test() - that will be up to the programmer
+     * the class - this overwrites the CRL.
      */
     void decode(const DumpMode mode, WvStringParm PemEncoded);
+    void decode(const DumpMode mode, WvBuf &encoded);
 
     /**
      * Loads a CRL from a file on disk.

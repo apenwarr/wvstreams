@@ -35,7 +35,7 @@ bool WvCRLMgr::signedbyca(WvX509Mgr *cacert)
     if (result < 0)
     {
         debug("There was an error determining whether or not we were signed by "
-              "CA '%s'\n");
+              "CA '%s'\n", cacert->get_subject());
         return false;
     }
     bool issigned = (result > 0);
@@ -49,6 +49,8 @@ bool WvCRLMgr::signedbyca(WvX509Mgr *cacert)
 
 bool WvCRLMgr::issuedbyca(WvX509Mgr *cacert)
 {
+    assert(crl);
+
     char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);
     bool issued = (cacert->get_subject() == name);
     if (issued)
@@ -86,15 +88,15 @@ WvString WvCRLMgr::encode(const DumpMode mode)
     switch (mode)
     {
     case PEM:
-	debug("Dumping CRL in PEM format:\n");
+	debug("Dumping CRL in PEM format.\n");
 	PEM_write_bio_X509_CRL(bufbio, crl);
 	break;
     case DER:
-	debug("Dumping CRL in DER format:\n");
+	debug("Dumping CRL in DER format.\n");
 	i2d_X509_CRL_bio(bufbio, crl);
 	break;
     case TEXT:
-	debug("Dumping CRL in human readable format:\n");
+	debug("Dumping CRL in human readable format.\n");
 	X509_CRL_print(bufbio, crl);
 	break;
     default:
@@ -118,41 +120,50 @@ WvString WvCRLMgr::encode(const DumpMode mode)
 }
 
 
-void WvCRLMgr::decode(const DumpMode mode, WvStringParm PemEncoded)
+void WvCRLMgr::decode(const DumpMode mode, WvStringParm encoded)
 {
-    BIO *bufbio = BIO_new(BIO_s_mem());    
-    WvBase64Decoder dec;
-    WvDynBuf output;
+    WvDynBuf buf;
+    buf.putstr(encoded);
+    decode(mode, buf);
+}
 
+
+void WvCRLMgr::decode(const DumpMode mode, WvBuf &buf)
+{
     if (crl)
     {
 	debug("Replacing already existant CRL\n");
 	X509_CRL_free(crl);
 	crl = NULL;
     }
-    
-    size_t output_size;
+
+    BIO *bufbio = BIO_new(BIO_s_mem());
+
+    WvBase64Decoder dec;
+    WvDynBuf output;
+
     switch (mode)
     {
     case PEM:
-	debug("Decoding CRL from PEM format:\n");
-	BIO_write(bufbio, PemEncoded.cstr(), PemEncoded.len());
+	debug("Decoding CRL from PEM format.\n");
+	BIO_write(bufbio, buf.get(buf.used()), buf.used());
 	crl = PEM_read_bio_X509_CRL(bufbio, NULL, NULL, NULL);
 	break;
     case DER:
-	debug("Decoding CRL from DER format:\n");
-	dec.flushstrbuf(PemEncoded, output, true);
-	output_size = output.used();
-	BIO_write(bufbio, output.get(output_size), output_size);
+        debug("Decoding CRL from DER format.\n");
+	BIO_write(bufbio, buf.get(buf.used()), buf.used());
+        crl = d2i_X509_CRL_bio(bufbio, NULL);
+        break;
+    case DER64:
+	debug("Decoding CRL from DER format encoded in base64.\n");
+        dec.encode(buf, output, true, true);
+	BIO_write(bufbio, output.get(output.used()), output.used());
 	crl = d2i_X509_CRL_bio(bufbio, NULL);
-	break;
-    case TEXT:
-	debug("Sorry, can't decode TEXT format... try PEM or DER instead\n");
 	break;
     default:
 	err.seterr("Unknown mode!\n");
     }
-    //setupcrl();
+
     BIO_free(bufbio);
 }
 
@@ -166,7 +177,7 @@ void WvCRLMgr::load(const DumpMode mode, WvStringParm fname)
 	crl = NULL;
     }
 
-    if (mode == ASN1)
+    if (mode == DER)
     {
 	BIO *bio = BIO_new(BIO_s_file());
         if (BIO_read_filename(bio, fname.cstr()) <= 0)
@@ -280,12 +291,12 @@ WvCRLMgr::Valid WvCRLMgr::validate(WvX509Mgr *cacert)
     
     if (!cacert)
 	return CRLERROR;
-    
+
     if (!issuedbyca(cacert))
-	return NOT_THIS_CA;
+        return NOT_THIS_CA;
     
     if (!signedbyca(cacert))
-	return NO_VALID_SIGNATURE;
+ 	return NO_VALID_SIGNATURE;
 
     if (expired())
         return EXPIRED;

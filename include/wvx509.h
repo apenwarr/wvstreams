@@ -225,7 +225,16 @@ public:
     * Check the certificate in cert against the CA certificate in cacert
     * - returns true if cert was signed by that CA certificate.
     */
-    bool signedbyCA(WvX509Mgr *cacert);
+    bool signedbyca(WvX509Mgr *cacert);
+
+    /**
+     * Check to see if the certificate in cert was issued by the CA
+     * certificate in cacert. Note: You are going on the certificate's
+     * say-so by using this function. You may also want to use signedbyca
+     * to check if the certificate is actually signed by who it claims
+     * to be issued by.
+     */
+    bool issuedbyca(WvX509Mgr *cacert);
 
     /**
      * Sign the contents of data and return the signature as a BASE64
@@ -257,6 +266,7 @@ public:
      * key), it DOES NOT call test() - that will be up to the programmer
      */
     void decode(const DumpMode mode, WvStringParm encoded);
+    void decode(const DumpMode mode, WvBuf &encoded);
 
     /**
      * And of course, since PKCS12 files are in the rediculous DER encoding 

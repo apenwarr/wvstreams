@@ -757,8 +757,10 @@ bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
         }
 
 	if (cacert)
-	    retval &= signedbyCA(cacert);
-
+        {
+	    retval &= signedbyca(cacert);
+            retval &= issuedbyca(cacert);
+        }
 	// Kind of a placeholder thing right now...
 	// Later on, do CRL, and certificate validity checks here..
         // Actually, break these out in signedbyvalidCA(), and isinCRL()
@@ -772,14 +774,35 @@ bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
 }
 
 
-bool WvX509Mgr::signedbyCA(WvX509Mgr *cacert)
+bool WvX509Mgr::signedbyca(WvX509Mgr *cacert)
+{
+    EVP_PKEY *pkey = X509_get_pubkey(cacert->cert);
+    int result = X509_verify(cert, pkey);    
+    EVP_PKEY_free(pkey);
+
+    if (result < 0)
+    {
+        debug("There was an error determining whether or not we were signed by "
+              "CA '%s'\n", cacert->get_subject());
+        return false;
+    }
+    bool issigned = (result > 0);
+
+    debug("Certificate was%s signed by CA %s\n", issigned ? "" : " NOT", 
+          cacert->get_subject());
+
+    return issigned;
+}
+
+
+bool WvX509Mgr::issuedbyca(WvX509Mgr *cacert)
 {
     int ret = X509_check_issued(cacert->cert, cert);
-    debug("signedByCA: %s==X509_V_OK(%s)\n", ret, X509_V_OK);
-    if (ret == X509_V_OK)    
-	return true;
-    else
+    debug("issuedbyca: %s==X509_V_OK(%s)\n", ret, X509_V_OK);
+    if (ret != X509_V_OK)
 	return false;
+
+    return true;
 }
 
 
@@ -838,6 +861,7 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 	return retval.getstr();
 }
 
+
 void WvX509Mgr::decode(const DumpMode mode, WvStringParm encoded)
 {
     if (!encoded)
@@ -845,9 +869,17 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm encoded)
 	debug(WvLog::Error, "Not decoding an empty string. - Sorry!\n");
 	return;
     }
+    
+    WvDynBuf buf;
+    buf.putstr(encoded);
+    decode(mode, buf);
+}
 
+
+void WvX509Mgr::decode(const DumpMode mode, WvBuf &encoded)
+{
     BIO *membuf = BIO_new(BIO_s_mem());
-    BIO_puts(membuf, encoded);
+    BIO_write(membuf, encoded.get(encoded.used()), encoded.used());
     
     switch(mode)
     {
@@ -870,6 +902,17 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm encoded)
 	else
 	    seterr("Certificate failed to import");
 	break;
+    case CertDER:
+	debug("Importing X509 certificate.\n");
+	if(cert)
+	{
+	    debug("Replacing an already existant X509 Certificate!\n");
+	    X509_free(cert);
+	    cert = NULL;
+	}
+	
+	cert = d2i_X509_bio(membuf, NULL);
+        break;
     case RsaPEM:
 	debug("Importing RSA keypair.\n");
 	debug("Make sure that you load or generate a new Certificate!\n");
@@ -897,6 +940,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm encoded)
 	seterr(EINVAL);
     }
     BIO_free_all(membuf);
+
 }
 
 
@@ -1129,7 +1173,6 @@ WvString WvX509Mgr::get_serial()
     {
         BIGNUM *bn = BN_new();
         bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn);
-        BN_print_fp(stderr, bn);
         char * c = BN_bn2dec(bn);
         WvString ret("%s", c);
         OPENSSL_free(c);
