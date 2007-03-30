@@ -12,7 +12,7 @@
 #include "wvx509.h"
 #include "wvbase64.h"
 
-WvCRLMgr::WvCRLMgr()
+WvCRL::WvCRL()
     : debug("X509_CRL", WvLog::Debug5), 
       issuer(WvString::null)
 {
@@ -20,14 +20,14 @@ WvCRLMgr::WvCRLMgr()
 }
 
 
-WvCRLMgr::~WvCRLMgr()
+WvCRL::~WvCRL()
 {
     if (crl)
 	X509_CRL_free(crl);
 }
     
 
-bool WvCRLMgr::signedbyca(WvX509Mgr *cacert)
+bool WvCRL::signedbyca(WvX509Mgr *cacert)
 {
     EVP_PKEY *pkey = X509_get_pubkey(cacert->cert);
     int result = X509_CRL_verify(crl, pkey);    
@@ -47,7 +47,7 @@ bool WvCRLMgr::signedbyca(WvX509Mgr *cacert)
 }
 
 
-bool WvCRLMgr::issuedbyca(WvX509Mgr *cacert)
+bool WvCRL::issuedbyca(WvX509Mgr *cacert)
 {
     assert(crl);
 
@@ -68,7 +68,7 @@ bool WvCRLMgr::issuedbyca(WvX509Mgr *cacert)
 }
 
 
-bool WvCRLMgr::expired()
+bool WvCRL::expired()
 {
     if (X509_cmp_current_time(X509_CRL_get_nextUpdate(crl)) < 0)
     {
@@ -81,7 +81,7 @@ bool WvCRLMgr::expired()
 }
 
 
-WvString WvCRLMgr::encode(const DumpMode mode)
+WvString WvCRL::encode(const DumpMode mode)
 {
     BIO *bufbio = BIO_new(BIO_s_mem());    
     BUF_MEM *bm;
@@ -120,7 +120,7 @@ WvString WvCRLMgr::encode(const DumpMode mode)
 }
 
 
-void WvCRLMgr::decode(const DumpMode mode, WvStringParm encoded)
+void WvCRL::decode(const DumpMode mode, WvStringParm encoded)
 {
     WvDynBuf buf;
     buf.putstr(encoded);
@@ -128,7 +128,7 @@ void WvCRLMgr::decode(const DumpMode mode, WvStringParm encoded)
 }
 
 
-void WvCRLMgr::decode(const DumpMode mode, WvBuf &buf)
+void WvCRL::decode(const DumpMode mode, WvBuf &buf)
 {
     if (crl)
     {
@@ -148,17 +148,23 @@ void WvCRLMgr::decode(const DumpMode mode, WvBuf &buf)
 	debug("Decoding CRL from PEM format.\n");
 	BIO_write(bufbio, buf.get(buf.used()), buf.used());
 	crl = PEM_read_bio_X509_CRL(bufbio, NULL, NULL, NULL);
+        if (!crl)
+            err.seterr("Couldn't decode CRL from PEM format.\n");
 	break;
     case DER:
         debug("Decoding CRL from DER format.\n");
 	BIO_write(bufbio, buf.get(buf.used()), buf.used());
         crl = d2i_X509_CRL_bio(bufbio, NULL);
+        if (!crl)
+            err.seterr("Couldn't decode CRL from DER format.\n");
         break;
     case DER64:
 	debug("Decoding CRL from DER format encoded in base64.\n");
         dec.encode(buf, output, true, true);
 	BIO_write(bufbio, output.get(output.used()), output.used());
 	crl = d2i_X509_CRL_bio(bufbio, NULL);
+        if (!crl)
+            err.seterr("Couldn't decode CRL from DER format encoded in BASE64.\n");
 	break;
     default:
 	err.seterr("Unknown mode!\n");
@@ -168,7 +174,7 @@ void WvCRLMgr::decode(const DumpMode mode, WvBuf &buf)
 }
 
 
-void WvCRLMgr::load(const DumpMode mode, WvStringParm fname)
+void WvCRL::load(const DumpMode mode, WvStringParm fname)
 {
     if (crl)
     {
@@ -197,7 +203,7 @@ void WvCRLMgr::load(const DumpMode mode, WvStringParm fname)
 }
 
 
-WvString WvCRLMgr::get_issuer()
+WvString WvCRL::get_issuer()
 {
     if (crl)
 	return issuer;
@@ -206,7 +212,7 @@ WvString WvCRLMgr::get_issuer()
 }
 
 
-bool WvCRLMgr::isrevoked(WvX509Mgr *cert)
+bool WvCRL::isrevoked(WvX509Mgr *cert)
 {
     if (cert && cert->isok())
     {
@@ -224,7 +230,7 @@ bool WvCRLMgr::isrevoked(WvX509Mgr *cert)
 }
 
 
-bool WvCRLMgr::isrevoked(WvStringParm serial_number)
+bool WvCRL::isrevoked(WvStringParm serial_number)
 {
     if (!!serial_number)
     {
@@ -270,7 +276,7 @@ bool WvCRLMgr::isrevoked(WvStringParm serial_number)
 }
     
 
-ASN1_INTEGER *WvCRLMgr::serial_to_int(WvStringParm serial)
+ASN1_INTEGER *WvCRL::serial_to_int(WvStringParm serial)
 {
     if (!!serial)
     {
@@ -285,7 +291,7 @@ ASN1_INTEGER *WvCRLMgr::serial_to_int(WvStringParm serial)
 	return NULL;
 }
 
-WvCRLMgr::Valid WvCRLMgr::validate(WvX509Mgr *cacert)
+WvCRL::Valid WvCRL::validate(WvX509Mgr *cacert)
 {
     assert(cacert);
     
@@ -306,13 +312,13 @@ WvCRLMgr::Valid WvCRLMgr::validate(WvX509Mgr *cacert)
 
 
 #if 0
-int WvCRLMgr::numcerts()
+int WvCRL::numcerts()
 {
     return certcount;
 }
 
 
-void WvCRLMgr::addcert(WvX509Mgr *cert)
+void WvCRL::addcert(WvX509Mgr *cert)
 {
     if (cert && cert->isok())
     {
@@ -336,7 +342,7 @@ void WvCRLMgr::addcert(WvX509Mgr *cert)
 }
 
 
-void WvCRLMgr::setupcrl()
+void WvCRL::setupcrl()
 {
     char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);
     issuer = name;

@@ -16,8 +16,6 @@ struct x509_st;
 typedef struct x509_st X509;
 struct ssl_ctx_st;
 typedef struct ssl_ctx_st SSL_CTX;
-struct X509_crl_st;
-typedef struct X509_crl_st X509_CRL;
 
 struct X509_name_st;
 typedef struct X509_name_st X509_NAME;
@@ -26,7 +24,7 @@ struct asn1_string_st;
 typedef struct asn1_string_st ASN1_TIME;
 
 class WvRSAKey;
-class WvCRLMgr;
+class WvCRL;
 
 // workaround for the fact that OpenSSL initialization stuff must be called
 // only once.
@@ -47,7 +45,7 @@ public:
     * Type for the @ref encode() and @ref decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
     * CertDER   = DER Encoded X.509 Certificate
-    * CertDER   = DER Encoded X.509 Certificate returned in Base64
+    * CertDER64 = DER Encoded X.509 Certificate returned in Base64
     * CertSMIME = SMIME "Certificate" usable for userSMIMECertificate ldap entry 
     *             again in Base64
     * RsaPEM    = PEM Encoded RSA Private Key
@@ -185,7 +183,7 @@ public:
      * Take the CRL in crl, and sign it. returns true if successfull, and 
      * false if not. If false, check crl.err.geterr() for reason.
      */
-    bool signcrl(WvCRLMgr *crl);
+    bool signcrl(WvCRL *crl);
 
 
     /**
@@ -219,7 +217,7 @@ public:
      * very least, it checks and makes sure that your certificate is not 
      * expired
      */
-    bool validate(WvX509Mgr *cacert = NULL, X509_CRL *crl = NULL);
+    bool validate(WvX509Mgr *cacert = NULL, WvCRL *crl = NULL);
 
    /**
     * Check the certificate in cert against the CA certificate in cacert
@@ -446,7 +444,7 @@ public:
     virtual int geterr() const;
 
 private:
-    friend class WvCRLMgr;
+    friend class WvCRL;
 
     /** X.509v3 Certificate - this is why this class exists */
     X509     *cert;

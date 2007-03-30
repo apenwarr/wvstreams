@@ -737,7 +737,7 @@ WvString WvX509Mgr::hexify()
 }
 
 
-bool WvX509Mgr::validate(WvX509Mgr *cacert, X509_CRL *crl)
+bool WvX509Mgr::validate(WvX509Mgr *cacert, WvCRL *crl)
 {
     bool retval = true;
     
@@ -1695,7 +1695,7 @@ time_t WvX509Mgr::get_notvalid_after()
 }
 
 
-bool WvX509Mgr::signcrl(WvCRLMgr *crl)
+bool WvX509Mgr::signcrl(WvCRL *crl)
 {
     assert(crl);
     assert(rsa);

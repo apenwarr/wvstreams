@@ -25,7 +25,7 @@ class WvX509Mgr;
  * CRL Class to handle certificate revocation lists and their related
  * functions
  */
-class WvCRLMgr
+class WvCRL
 {
 public:
     /**
@@ -54,10 +54,10 @@ public:
     /**
      * Initialize a blank CRL Object.
      */
-    WvCRLMgr();
+    WvCRL();
     
     /** Destructor */
-    virtual ~WvCRLMgr();
+    virtual ~WvCRL();
 
     /** Accessor for CRL */
     X509_CRL *getcrl()
@@ -132,8 +132,5 @@ private:
 
     ASN1_INTEGER *serial_to_int(WvStringParm serial);
 };
-
-typedef WvCRLMgr WvCRL;
-
 
 #endif // __WVCRL_H
