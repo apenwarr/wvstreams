@@ -1,4 +1,3 @@
-/* FIXME: horribly incomplete */
 #include "wvtest.h"
 #include "wvx509.h"
 #include "wvrsa.h"
@@ -281,3 +280,50 @@ WVTEST_MAIN("Get extensions memory corruption")
     WVPASS(t509.isok());
     printf("%s", t509.get_aia().cstr());
 }
+
+
+WVTEST_MAIN("set_aia")
+{
+    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", 1024);
+    WvStringList ca_in;
+    WvStringList ocsp_in;
+    ca_in.append("http://localhost/~wlach/testca.pem");
+    ca_in.append("http://localhost/~wlach/testca-alt.pem");
+    ocsp_in.append("http://localhost/~wlach/blah.ocsp");
+    ocsp_in.append("http://localhost/~wlach/blarg.ocsp");
+    x.set_aia(ca_in, ocsp_in);
+
+    WvStringList ca_out;
+    x.get_ca_urls(ca_out);
+    WvStringList ocsp_out;
+    x.get_ocsp(ocsp_out);
+
+    WVPASSEQ(ca_in.popstr(), ca_out.popstr());
+    WVPASSEQ(ca_in.popstr(), ca_out.popstr());
+    WVPASSEQ(ocsp_in.popstr(), ocsp_out.popstr());
+    WVPASSEQ(ocsp_in.popstr(), ocsp_out.popstr());
+    WVPASSEQ(ca_in.count(), 0);
+    WVPASSEQ(ca_out.count(), 0);
+    WVPASSEQ(ocsp_in.count(), 0);
+    WVPASSEQ(ocsp_out.count(), 0);
+}
+
+
+WVTEST_MAIN("set_crl_dp")
+{
+    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", 1024);
+    WvStringList dp_in;
+    dp_in.append("http://localhost/~wlach/testca.crl");
+    dp_in.append("http://localhost/~wlach/testca-alt.crl");
+    x.set_crl_urls(dp_in);
+
+    WvStringList dp_out;
+    x.get_crl_urls(dp_out);
+
+    WVPASSEQ(dp_in.popstr(), dp_out.popstr());
+    WVPASSEQ(dp_in.popstr(), dp_out.popstr());
+    WVPASSEQ(dp_in.count(), 0);
+    WVPASSEQ(dp_out.count(), 0);
+
+}
+

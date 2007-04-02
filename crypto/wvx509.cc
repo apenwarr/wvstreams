@@ -1295,26 +1295,35 @@ void WvX509Mgr::set_constraints(WvStringParm constraint)
 }
 
 
-void WvX509Mgr::set_aia(WvStringParm _identifier)
+static void add_aia(WvStringParm type, WvString identifier, AUTHORITY_INFO_ACCESS *ainfo)
 {
-    WvString identifier(_identifier);
-    unsigned char *list;
-    list = reinterpret_cast<unsigned char *>(identifier.edit());
-    AUTHORITY_INFO_ACCESS *ainfo = sk_ACCESS_DESCRIPTION_new_null();
     ACCESS_DESCRIPTION *acc = ACCESS_DESCRIPTION_new();
     sk_ACCESS_DESCRIPTION_push(ainfo, acc);
-    GENERAL_NAME_free(acc->location);
-    i2d_GENERAL_NAME(acc->location, &list);
-#if OPENSSL_VERSION_NUMBER >= 0x0090800fL
-    const unsigned char** plist = const_cast<const unsigned char**>(&list);
-#else
-    unsigned char** plist = &list;
-#endif
-    d2i_GENERAL_NAME(&acc->location, plist, identifier.len());
+    acc->method = OBJ_txt2obj(type.cstr(), 0);
+    acc->location->type = GEN_URI;
+    acc->location->d.ia5 = M_ASN1_IA5STRING_new();
+    unsigned char *cident = reinterpret_cast<unsigned char *>(identifier.edit());
+    ASN1_STRING_set(acc->location->d.ia5, cident, identifier.len());
+}
+
+
+void WvX509Mgr::set_aia(WvStringList &ca_urls,
+                        WvStringList &responders)
+{
+    AUTHORITY_INFO_ACCESS *ainfo = sk_ACCESS_DESCRIPTION_new_null();
+
+    WvStringList::Iter i(ca_urls);
+    for (i.rewind(); i.next();)
+        add_aia("caIssuers", i(), ainfo);
+
+    WvStringList::Iter j(responders);
+    for (j.rewind(); j.next();)
+        add_aia("OCSP", j(), ainfo);
+
     X509_EXTENSION *ex = X509V3_EXT_i2d(NID_info_access, 0, ainfo);
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
-    sk_ACCESS_DESCRIPTION_free(ainfo);
+    sk_ACCESS_DESCRIPTION_pop_free(ainfo, ACCESS_DESCRIPTION_free);
 }
 
 
@@ -1327,7 +1336,7 @@ WvString WvX509Mgr::get_aia()
 void parse_stack(WvStringParm ext, WvStringList &list, WvStringParm prefix)
 {
     WvStringList whole_aia;
-    whole_aia.split(ext, "\n");
+    whole_aia.split(ext, ";\n");
     WvStringList::Iter i(whole_aia);
     for (i.rewind();i.next();)
     {
@@ -1356,6 +1365,35 @@ void WvX509Mgr::get_ca_urls(WvStringList &urls)
 void WvX509Mgr::get_crl_urls(WvStringList &urls)
 {
     parse_stack(get_crl_dp(), urls, "URI:");
+}
+
+
+void WvX509Mgr::set_crl_urls(WvStringList &urls)
+{
+    STACK_OF(DIST_POINT) *crldp = sk_DIST_POINT_new_null();
+    WvStringList::Iter i(urls);
+    for (i.rewind(); i.next();)
+    {
+        DIST_POINT *point = DIST_POINT_new();
+        sk_DIST_POINT_push(crldp, point);
+
+        GENERAL_NAMES *uris = GENERAL_NAMES_new();
+        GENERAL_NAME *uri = GENERAL_NAME_new();
+        uri->type = GEN_URI;
+        uri->d.ia5 = M_ASN1_IA5STRING_new();
+        unsigned char *cident = reinterpret_cast<unsigned char *>(i().edit());    
+        ASN1_STRING_set(uri->d.ia5, cident, i().len());
+        sk_GENERAL_NAME_push(uris, uri);
+
+        point->distpoint = DIST_POINT_NAME_new();
+        point->distpoint->name.fullname = uris;
+        point->distpoint->type = 0;
+    }
+
+    X509_EXTENSION *ex = X509V3_EXT_i2d(NID_crl_distribution_points, 0, crldp);
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+    sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
 }
 
 
@@ -1534,10 +1572,16 @@ bool WvX509Mgr::signcert(X509 *unsignedcert)
 	debug("Self Signing!\n");
 	//printf("Looks like:\n%s\n", encode(WvX509Mgr::CertPEM).cstr());
     }
+    else if (!X509_check_ca(cert))
+    {
+        debug("This certificate is not a CA, and is thus not allowed to sign "
+              "certificates!\n");
+        return false;
+    }
     else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
 	  (cert->ex_kusage & KU_KEY_CERT_SIGN)))
     {
-	debug("This Certificate is not allowed to sign Certificates!\n");
+	debug("This Certificate is not allowed to sign certificates!\n");
 	return false;
     }
     

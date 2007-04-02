@@ -163,7 +163,6 @@ public:
      */    
     WvString certreq();
     
-
     /**
      * Take the PKCS#10 request in the string pkcs10req, sign it with the
      * private key in rsa, and then spit back a new X509 Certificate in
@@ -178,13 +177,11 @@ public:
      */
     bool signcert(X509 *cert);
     
-
     /**
      * Take the CRL in crl, and sign it. returns true if successfull, and 
      * false if not. If false, check crl.err.geterr() for reason.
      */
     bool signcrl(WvCRL *crl);
-
 
     /**
      * Test to make sure that a certificate and a keypair go together.
@@ -324,12 +321,6 @@ public:
     WvString get_crl_dp();
 
     /**
-     * Set a list of CRL Distribution points - can be any valid URI
-     * but usually is either LDAP or HTTP
-     */
-    void set_crl_dp(WvStringList &list);
-    
-    /**
      * Return the Certificate Policy OID if it exists, and WvString::null
      * it if doesn't.
      */
@@ -391,11 +382,20 @@ public:
     void set_lifetime(long seconds);
     
     /**
-     * Get and Set the Authority Identifier information...
+     * Get the authority info access information. Usually includes a list of URLs
+     * where the issuer's CA certificate may be fetched, as well as a list of
+     * OCSP responders. Note that this function returns this information in
+     * a giant string: get_ca_urls and get_ocsp may return this information in a 
+     * more useful format.
      */
-    void set_aia(WvStringParm identifier);
     WvString get_aia();
 
+    /**
+     * Set a list of urls that have the Certificate of the CA that issued 
+     * this certificate, as well as the list of OCSP responders for this
+     * certificate.
+     */
+    void set_aia(WvStringList &ca_urls, WvStringList &responders);
 
     /**
      * Get a list of OCSP Responders for this certificate
@@ -404,7 +404,7 @@ public:
     void get_ocsp(WvStringList &responders);
     
     /**
-     * Get a list of URLS that have the Certificate 
+     * Get a list of urls that have the Certificate 
      * of the CA that issued this certificate
      */
     void get_ca_urls(WvStringList &urls);
@@ -416,9 +416,14 @@ public:
     void get_crl_urls(WvStringList &urls);
 
     /**
+     * Set the list of URLs that are valid CRL distribution
+     * points for this certificate.
+     */
+    void set_crl_urls(WvStringList &urls);
+
+    /**
      * Get the Subject Key Info
      */
-   
     WvString get_ski();
     
     /**
