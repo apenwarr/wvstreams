@@ -101,9 +101,10 @@ public:
      * Constructor to create a new self-signed certificate for the given dn
      * and number of bits.  See the previous constructor for details on how
      * to choose _dname.  'bits' is the number of bits in the auto-generated
-     * RSA key; 1024 or 2048 are good values for this.
+     * RSA key; 1024 or 2048 are good values for this. If 'ca' is true, the
+     * certificate will be created as a certificate authority.
      */
-    WvX509Mgr(WvStringParm _dname, int bits);
+    WvX509Mgr(WvStringParm _dname, int bits, bool isca=false);
 
 private:
     /** 
@@ -161,7 +162,7 @@ public:
      * It uses dname as the Distinguished name to create this Request.
      * Make sure that it has what you want in it first.
      */    
-    WvString certreq();
+    static WvString certreq(WvStringParm subject, const WvRSAKey &rsa);
     
     /**
      * Take the PKCS#10 request in the string pkcs10req, sign it with the

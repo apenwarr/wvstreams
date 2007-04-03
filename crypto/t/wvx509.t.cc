@@ -2,6 +2,11 @@
 #include "wvx509.h"
 #include "wvrsa.h"
 
+
+// default keylen for where we're not using pre-existing certs
+const static int DEFAULT_KEYLEN = 512; 
+
+
 void basic_test(WvX509Mgr *t509, WvStringParm dname)
 {
     WVPASS(t509->test());
@@ -152,7 +157,8 @@ WVTEST_MAIN("X509")
 	WVPASS(certencode == x509certtext);
 	WvString rsaencode = t509.encode(WvX509Mgr::RsaPEM);
 	WVPASS(rsaencode == rsakeytext);
-	WVPASS(t509.certreq() == certreqtext);
+	WVPASSEQ(WvX509Mgr::certreq(t509.get_subject(), t509.get_rsa()),
+                 certreqtext);
     }
     {
         WvX509Mgr t509(strcert, strrsa);
@@ -211,25 +217,6 @@ WVTEST_MAIN("X509")
 	WvX509Mgr t509(strcert, strrsa);
 	WVPASS(t509.verify("foo", signature));
     }
-    {
-	// This test is currently invalid, since 
-	// strcert doesn't have the right keyUsage set, and we
-	// check for that now.
-	// I'll fix it when I fix niti BUG:9969 (not publically
-        // available...)
-#if 0	
-	WvX509Mgr t509(strcert, strrsa);
-	
-	WvX509Mgr n509(dName1, 1024);
-	WvString request(n509.certreq());
-	WvString cert(t509.signcert(request));
-	WVFAIL(t509.isok());
-	n509.decode(WvX509Mgr::CertPEM, cert);
-	WVPASS(n509.get_issuer() == dName2);
-	fprintf(stderr,"\n\n%s\n\n", n509.get_issuer());
-	WVPASS(n509.validate(&t509));
-#endif
-    }
 }
 
 
@@ -284,7 +271,7 @@ WVTEST_MAIN("Get extensions memory corruption")
 
 WVTEST_MAIN("set_aia")
 {
-    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", 1024);
+    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN);
     WvStringList ca_in;
     WvStringList ocsp_in;
     ca_in.append("http://localhost/~wlach/testca.pem");
@@ -311,7 +298,7 @@ WVTEST_MAIN("set_aia")
 
 WVTEST_MAIN("set_crl_dp")
 {
-    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", 1024);
+    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN);
     WvStringList dp_in;
     dp_in.append("http://localhost/~wlach/testca.crl");
     dp_in.append("http://localhost/~wlach/testca-alt.crl");
@@ -324,6 +311,37 @@ WVTEST_MAIN("set_crl_dp")
     WVPASSEQ(dp_in.popstr(), dp_out.popstr());
     WVPASSEQ(dp_in.count(), 0);
     WVPASSEQ(dp_out.count(), 0);
-
 }
 
+
+WVTEST_MAIN("certreq / signreq / signcert")
+{
+    // certificate request
+    WvX509Mgr xcertreq;
+    WvRSAKey rsakey(DEFAULT_KEYLEN);
+
+    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
+                                       rsakey);
+    WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
+    WvString certpem = cacert.signreq(certreq);
+    
+    WvX509Mgr cert;
+    cert.decode(WvX509Mgr::CertPEM, certpem);
+
+    // test that it initially checks out
+    WVPASS(cert.issuedbyca(&cacert));
+    WVPASS(cert.signedbyca(&cacert));
+    
+    // change some stuff, verify that tests fail
+    WvStringList ca_in, ocsp_in;
+    ca_in.append("http://localhost/~wlach/testca.pem");
+    ca_in.append("http://localhost/~wlach/testca-alt.pem");
+    cert.set_aia(ca_in, ocsp_in);
+    WVPASS(cert.issuedbyca(&cacert));
+    WVFAIL(cert.signedbyca(&cacert));
+
+    // should pass again after re-signing
+    cacert.signcert(cert.get_cert());    
+    WVPASS(cert.issuedbyca(&cacert));
+    WVPASS(cert.signedbyca(&cacert));
+}

@@ -204,7 +204,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa)
 }
 
 
-WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
+WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits, bool isca)
     : dname(_dname), debug("X509", WvLog::Debug5)
 {
     wvssl_init();
@@ -215,7 +215,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits)
     if (!!dname)
     {
 	rsa = new WvRSAKey(bits);
-	create_selfsigned();
+	create_selfsigned(isca);
     }
     else
 	seterr("Sorry, can't create an anonymous certificate");
@@ -450,40 +450,39 @@ WvRSAKey *WvX509Mgr::fillRSAPubKey()
 }
 
 
-WvString WvX509Mgr::certreq()
+WvString WvX509Mgr::certreq(WvStringParm subject, const WvRSAKey &rsa)
 {
+    WvLog debug("X509::certreq", WvLog::Debug5);
+
     EVP_PKEY *pk = NULL;
     X509_NAME *name = NULL;
     X509_REQ *certreq = NULL;
 
-    assert(rsa);
-    assert(dname);
-
     // double check RSA key
-    if (rsa->isok())
+    if (rsa.isok())
 	debug("RSA Key is fine.\n");
     else
     {
-	seterr("RSA Key is bad");
+	debug(WvLog::Warning, "RSA Key is bad");
 	return WvString::null;
     }
 
     if ((pk=EVP_PKEY_new()) == NULL)
     {
-        seterr("Error creating key handler for new certificate");
+        debug(WvLog::Warning, "Error creating key handler for new certificate");
         return WvString::null;
     }
     
     if ((certreq=X509_REQ_new()) == NULL)
     {
-        seterr("Error creating new PKCS#10 object");
+        debug(WvLog::Warning, "Error creating new PKCS#10 object");
 	EVP_PKEY_free(pk);
         return WvString::null;
     }
 
-    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
+    if (!EVP_PKEY_set1_RSA(pk, rsa.rsa))
     {
-        seterr("Error adding RSA keys to certificate");
+        debug(WvLog::Warning, "Error adding RSA keys to certificate");
 	X509_REQ_free(certreq);
 	EVP_PKEY_free(pk);
         return WvString::null;
@@ -495,8 +494,8 @@ WvString WvX509Mgr::certreq()
 
     name = X509_REQ_get_subject_name(certreq);
 
-    debug("Creating Certificate request for %s\n", dname);
-    set_name_entry(name, dname);
+    debug("Creating Certificate request for %s\n", subject);
+    set_name_entry(name, subject);
     X509_REQ_set_subject_name(certreq, name);
     char *sub_name = X509_NAME_oneline(X509_REQ_get_subject_name(certreq), 
 				       0, 0);
@@ -505,7 +504,7 @@ WvString WvX509Mgr::certreq()
     
     if (!X509_REQ_sign(certreq, pk, EVP_sha1()))
     {
-	seterr("Could not self sign the request");
+	debug(WvLog::Warning, "Could not self sign the request");
 	X509_REQ_free(certreq);
 	EVP_PKEY_free(pk);
         return WvString::null;
@@ -514,7 +513,7 @@ WvString WvX509Mgr::certreq()
     int verify_result = X509_REQ_verify(certreq, pk);
     if (verify_result == 0)
     {
-	seterr("Self signed request failed");
+	debug(WvLog::Warning, "Self signed request failed");
 	X509_REQ_free(certreq);
 	EVP_PKEY_free(pk);
         return WvString::null;
@@ -580,6 +579,7 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req)
     if (certreq)
     {
 	WvX509Mgr newcert;
+        newcert.cert = X509_new();
 
 	newcert.set_subject(X509_REQ_get_subject_name(certreq));
 	newcert.set_version();
@@ -598,7 +598,7 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req)
 	EVP_PKEY_free(pk);
 	
 	// The Issuer name is the subject name of the current cert
-	newcert.set_issuer(get_subject());
+	newcert.set_issuer(dname); // FIXME: get_subject gives bad results...
 	
 	X509_EXTENSION *ex = NULL;
 	// Set the RFC2459-mandated keyUsage field to critical, and restrict

@@ -48,15 +48,15 @@
 "76b197a54126be4a3d03897ed6cc98e77e65b797aee3f3b66c17afb4a2fd6dc498"
 "cd86f4d7952cfde7d1e044a38373f80b9d1da51461267a83d967f24";
 
-const WvString dName1("/CN=test.foo.com/DC=foo/DC=com");
 
 int main(int argc, char **argv)
 {
     wvcrash_setup(argv[0]);
     WvX509Mgr cacert(strcert, strrsa);
     
-    WvX509Mgr clicert(dName1, 1024);
-    WvString certreq(clicert.certreq());
+    WvString dName1("/CN=test.foo.com/DC=foo/DC=com");
+    WvRSAKey rsakey(1024);
+    WvString certreq = WvX509Mgr::certreq(dName1, rsakey);
 
     fprintf(stderr, "Request:\n%s", certreq.cstr());
 
@@ -64,6 +64,7 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "Cert:\n%s", signedcert.cstr());
 
+    WvX509Mgr clicert;
     clicert.decode(WvX509Mgr::CertPEM, signedcert);
 
     fprintf(stderr, "Issuer:%s\n", clicert.get_issuer().cstr());

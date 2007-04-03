@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 {
     wvcrash_setup(argv[0]);    
 
-    WvCRLMgr crl;
+    WvCRL crl;
     crl.isok();
 #if 0    
     WvX509Mgr ca("o=ca", 1024);
