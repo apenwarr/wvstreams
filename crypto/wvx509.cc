@@ -1335,9 +1335,9 @@ WvString WvX509Mgr::get_aia()
 
 void parse_stack(WvStringParm ext, WvStringList &list, WvStringParm prefix)
 {
-    WvStringList whole_aia;
-    whole_aia.split(ext, ";\n");
-    WvStringList::Iter i(whole_aia);
+    WvStringList stack;
+    stack.split(ext, ";\n");
+    WvStringList::Iter i(stack);
     for (i.rewind();i.next();)
     {
       WvString stack_entry(*i);
@@ -1446,7 +1446,9 @@ WvString WvX509Mgr::get_extension(int nid)
 		    if (method->i2s)
 		    {
 			debug("String Extension!\n");
-			retval = method->i2s(method, ext_data);
+			char *s = method->i2s(method, ext_data); 
+                        retval = s;
+                        OPENSSL_free(s);
 		    }
 		    else if (method->i2v)
 		    {
@@ -1788,11 +1790,14 @@ bool WvX509Mgr::signcrl(WvCRL *crl)
 WvString WvX509Mgr::get_ski()
 {
     assert(cert);
+
     return get_extension(NID_subject_key_identifier);
 }
 
 WvString WvX509Mgr::get_aki()
 {
     assert(cert);
-    return get_extension(NID_authority_key_identifier);
+    WvStringList aki_list;
+    parse_stack(get_extension(NID_authority_key_identifier), aki_list, "keyid:");
+    return aki_list.popstr();
 }

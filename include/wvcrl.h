@@ -49,7 +49,8 @@ public:
      * NO_VALID_SIGNATURE = the certificate claims to be signed by this CA (Issuer is the same),
      *                      but the signature is invalid.
      */    
-    enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, EXPIRED };
+    enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, 
+                 EXPIRED, UNHANDLED_CRITICAL_EXTENSIONS };
     
     /**
      * Initialize a blank CRL Object.
@@ -81,6 +82,12 @@ public:
      * - returns true if CRL has expired.
      */
     bool expired();
+
+    /*
+     * Checks to see if the CRL has any critical extensions in it.
+     * - returns true if the CRL has any critical extensions.
+     */
+    bool has_critical_extensions();
 
     /**
      * Checks to see that a CRL is signed and issued by a CA certificate, and

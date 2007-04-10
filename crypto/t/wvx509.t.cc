@@ -12,8 +12,8 @@ void basic_test(WvX509Mgr *t509, WvStringParm dname)
     WVPASS(t509->test());
     fprintf(stderr, "Error: %s\n", t509->isok() ? "OK" : t509->errstr().cstr());
     WVPASS(t509->isok());
-    WVPASS(t509->get_subject() == dname);
-    WVPASS(t509->get_issuer() == dname);
+    WVPASSEQ(t509->get_subject(), dname);
+    WVPASSEQ(t509->get_issuer(), dname);
 }
 
 
@@ -154,17 +154,17 @@ WVTEST_MAIN("X509")
 	t509.decode(WvX509Mgr::CertPEM, x509certtext);
 	basic_test(&t509, dName1);
 	WvString certencode = t509.encode(WvX509Mgr::CertPEM);
-	WVPASS(certencode == x509certtext);
+	WVPASSEQ(certencode, x509certtext);
 	WvString rsaencode = t509.encode(WvX509Mgr::RsaPEM);
-	WVPASS(rsaencode == rsakeytext);
+	WVPASSEQ(rsaencode, rsakeytext);
 	WVPASSEQ(WvX509Mgr::certreq(t509.get_subject(), t509.get_rsa()),
                  certreqtext);
     }
     {
         WvX509Mgr t509(strcert, strrsa);
-	WVPASS(t509.get_serial() == "1621957333");
+	WVPASSEQ(t509.get_serial(), "1621957333");
 	basic_test(&t509, dName2);
-	WVPASS(t509.hexify() == strcert);
+	WVPASSEQ(t509.hexify(), strcert);
     }
     {
 	WvX509Mgr t509(dName, 1024);
@@ -178,8 +178,12 @@ WVTEST_MAIN("X509")
 	t509.decode(WvX509Mgr::CertPEM, signedcerttext);
 	WVPASS(t509.test());
 	WVPASS(t509.isok());
-	WVPASS(t509.get_subject() == "/C=CA/ST=Quebec/L=Montreal/O=Testy One/CN=aria2.weavernet.null");
-	WVPASS(t509.get_issuer() == "/O=NITI-TEST");
+	WVPASSEQ(t509.get_subject(), "/C=CA/ST=Quebec/L=Montreal/O=Testy One/CN=aria2.weavernet.null");
+	WVPASSEQ(t509.get_issuer(), "/O=NITI-TEST");
+        WVPASSEQ(t509.get_ski(), 
+                 "CE:91:F3:C6:00:78:26:21:ED:FC:46:ED:AA:07:C4:6D:2A:6C:4E:15");
+        WVPASSEQ(t509.get_aki(), 
+                 "C7:51:02:BD:C8:1E:52:FA:70:40:93:50:B3:68:37:AA:AD:02:3F:35");
 	// The certificate in x509certtext has a different public/private key
 	// and so, this SHOULD fail.
 	t509.decode(WvX509Mgr::CertPEM, x509certtext);
@@ -210,7 +214,7 @@ WVTEST_MAIN("X509")
     
     {
 	WvX509Mgr t509(strcert, strrsa);
-	WVPASS(t509.sign("foo") == signature);
+	WVPASSEQ(t509.sign("foo"), signature);
     }
 	
     {

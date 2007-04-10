@@ -22,6 +22,7 @@ WvCRL::WvCRL()
 
 WvCRL::~WvCRL()
 {
+    debug("Deleting.\n");
     if (crl)
 	X509_CRL_free(crl);
 }
@@ -78,6 +79,13 @@ bool WvCRL::expired()
 
     debug("CRL appears not to be expired.\n");
     return false;
+}
+
+
+bool WvCRL::has_critical_extensions()
+{
+    int critical = X509_CRL_get_ext_by_critical(crl, 1, 0);
+    return (critical > 0);
 }
 
 
@@ -193,7 +201,10 @@ void WvCRL::load(const DumpMode mode, WvStringParm fname)
             BIO_free(bio);
             return;
         }
-        crl = d2i_X509_CRL_bio(bio, NULL);
+        if (!(crl = d2i_X509_CRL_bio(bio, &crl)))
+        {
+            debug(WvLog::Warning, "Tried to load CRL, but was invalid.\n");
+        }
         BIO_free(bio);
         return;
     }
@@ -306,6 +317,10 @@ WvCRL::Valid WvCRL::validate(WvX509Mgr *cacert)
 
     if (expired())
         return EXPIRED;
+
+    // neither we or openssl handles any critical extensions yet
+    if (has_critical_extensions())
+        return UNHANDLED_CRITICAL_EXTENSIONS;
 
     return VALID;
 }
