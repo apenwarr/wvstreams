@@ -27,27 +27,8 @@ TARGETS += ipstreams/tests/wsd
 endif
 GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 
-#ifneq ("$(with_swig)", "no")
-#  ifneq ("$(with_tcl)", "no")
-#    TARGETS += bindings/tcl
-#    CPPFLAGS += -I/usr/include/tcl8.3
-#  endif
-#  ifneq ("$(with_python)", "no")
-#    TARGETS += bindings/python
-#    CPPFLAGS += -I/usr/include/python2.1
-#  endif
-#  ifneq ("$(with_php)", "no")
-#    TARGETS += bindings/php
-#    CPPFLAGS += `php-config --includes`
-#  endif
-#endif
-
 ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so libwvqt.a
-endif
-
-ifneq ("$(with_telephony)", "no")
-  TARGETS += libwvtelephony.so libwvtelephony.a
 endif
 
 TARGETS_SO := $(filter %.so,$(TARGETS))
@@ -122,16 +103,8 @@ ifeq ("$(enable_efence)", "yes")
 LDLIBS+=-lefence
 endif
 
-ifneq ("$(with_bdb)", "no")
-  libwvutils.so-LIBS+=-ldb
-endif
-
 libwvbase.so-LIBS+=-lxplc-cxx -lm
 libwvbase.so:
-
-ifneq ("$(with_openslp)", "no")
-  libwvstreams.so: -lslp
-endif
 
 ifneq ("$(with_pam)", "no")
   libwvutils.so: -lpam
@@ -185,9 +158,7 @@ BASEOBJS= \
 	streams/wvconstream.o \
 	utils/wvcrashbase.o
 
-TESTOBJS = \
-	utils/wvtest.o \
-	utils/wvtest_filecountprefix.o
+TESTOBJS = utils/wvtest.o 
 
 # print the sizes of all object files making up libwvbase, to help find
 # optimization targets.
@@ -215,9 +186,6 @@ libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 	$(call objects,uniconf))
 libuniconf.a: uniconf/uniconfroot.o
 libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
-
-libwvtelephony.a libwvtelephony.so: $(call objects,telephony)
-libwvtelephony.so: 
 
 libwvtest.a: wvtestmain.o $(TESTOBJS)
 

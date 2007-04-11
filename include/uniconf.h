@@ -7,14 +7,6 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
-
-/**
- * C++ Interface
- */
-
-
-#ifdef  __cplusplus
-
 #include "uniconfkey.h"
 #include "uniconfgen.h"
 #include "wvcallback.h"
@@ -32,11 +24,6 @@ class UniConfRoot;
  *   relkey - the changed keypath, relative to the config object
  */
 typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
-
-#ifdef SWIG_NO_OVERLOAD
-// FIXME: This directive doesn't work.  Why not?
-%ignore UniConf::u(const UniConfKey &key);
-#endif
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf
@@ -113,16 +100,9 @@ public:
     
     /** Returns the full path of this node, starting at the given key.
      * Assumes that k is an ancestor of fullkey(). */
-#ifdef SWIG_NO_OVERLOAD
-    %name(fullkey_from_key)
-#endif
     UniConfKey fullkey(const UniConfKey &k) const;
     
     /** Returns the full path of this node, starting at the given handle. */
-#ifdef SWIG_NO_OVERLOAD
-    %name(fullkey_from_handle)
-#endif
-
     UniConfKey fullkey(const UniConf &cfg) const
         { return fullkey(cfg.fullkey()); }
 
@@ -130,7 +110,6 @@ public:
     UniConfKey key() const
         { return xfullkey.last(); }
 
-#ifndef SWIG
     /**
      * Returns a handle for a subtree below this key. 'key' is the path
      * of the subtree to be appended to the full path of this handle to
@@ -138,15 +117,11 @@ public:
      */
     const UniConf operator[] (const UniConfKey &key) const
         { return UniConf(xroot, UniConfKey(xfullkey, key)); }
-#endif  // SWIG
 
     /**
      * Return a subtree handle (see operator[]).  Mainly to support bindings
      * for languages that can't handle methods named [].
      */
-#ifdef SWIG_NO_OVERLOAD
-    %name(u_should_be_ignored)
-#endif
     const UniConf u(const UniConfKey &key) const
         { return (*this)[key]; }
 
@@ -428,14 +403,10 @@ public:
     // sorted variant of XIter
     class SortedXIter;
 
-#ifndef SWIG
     // lists of iterators
     DeclareWvList(Iter);
-#endif  // SWIG
 };
 
-
-#ifndef SWIG
 
 /**
  * An implementation base class for key iterators.
@@ -658,46 +629,5 @@ public:
     void rewind()
         { populate(i); }
 };
-
-#endif  // SWIG
-
-#endif /* __cplusplus */
-
-
-/**
- * C Interface
- */
-
-#ifdef ASHLEY
-
-#ifdef __cplusplus
-extern "C" {
-#endif  // __cplusplus
-
-
-/** An opaque handle to a Uniconf object */
-typedef void *uniconf_t;
-
-
-/* Initialize and destroy UniConf. */
-uniconf_t uniconf_init(const char* _moniker);
-
-
-void uniconf_free(uniconf_t _uniconf);
-
-
-/* The string returned has been allocated with malloc() and should
- * thus be free()d. */
-const char* uniconf_get(uniconf_t _uniconf, const char* _key);
-
-
-void uniconf_set(uniconf_t _uniconf,
-		 const char* _key, const char* _value);
-
-
-#ifdef	__cplusplus
-}
-#endif  // __cplusplus
-#endif
 
 #endif // __UNICONF_H

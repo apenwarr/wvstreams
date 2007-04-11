@@ -1,3 +1,4 @@
+#if 0
 #include "wvondiskhash.h"
 #include "wvtest.h"
 #include "wvxplc.h"
@@ -138,3 +139,4 @@ WVTEST_MAIN("WvOnDiskHash with WvBdbHash backend")
     itertest<WvBdbHash>();
 }
 
+#endif

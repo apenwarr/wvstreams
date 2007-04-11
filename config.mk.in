@@ -15,7 +15,6 @@ LN_S=@LN_S@
 LN=@LN@
 MOC=@MOC@
 VALGRIND=@VALGRIND@
-SWIG=@SWIG@
 PACKAGE_BUGREPORT=@PACKAGE_BUGREPORT@
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_STRING=@PACKAGE_STRING@
@@ -54,17 +53,12 @@ enable_verbose=@enable_verbose@
 enable_warnings=@enable_warnings@
 enable_testgui=@enable_testgui@
 
-with_fam=@with_fam@
-with_bdb=@with_bdb@
 with_gtk=@with_gtk@
-with_openslp=@with_openslp@
 with_openssl=@with_openssl@
 with_pam=@with_pam@
 with_tcl=@with_tcl@
 with_readline=@with_readline@
-with_swig=@with_swig@
 with_qt=@with_qt@
-with_telephony=@with_telephony@
 with_xplc=@with_xplc@
 with_zlib=@with_zlib@
 
