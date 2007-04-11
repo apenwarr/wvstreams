@@ -141,7 +141,7 @@ BASEOBJS= \
 	utils/wvstreamsdebugger.o \
 	streams/wvlog.o \
 	streams/wvstream.o \
-	uniconf/uniconf.o uniconf/uniconf_c.o \
+	uniconf/uniconf.o \
 	uniconf/uniconfgen.o uniconf/uniconfkey.o uniconf/uniconfroot.o \
 	uniconf/unihashtree.o \
 	uniconf/unimountgen.o \
