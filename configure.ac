@@ -92,13 +92,9 @@ AC_ARG_ENABLE(testgui,
               AC_HELP_STRING([--disable-testgui],
                              [GUI for unit tests]))
 
-AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
-AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
-AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
-AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 xplc_version='0.3.13'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
@@ -382,32 +378,6 @@ if test "$enable_rtti" = "no"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
-# bdb
-if test "$with_bdb" != "no"; then
-    AC_CHECK_HEADERS(db.h, [with_bdb_header=db.h], [with_bdb_header=no],
-                     [#include <db.h>
-                      #ifdef DB_VERSION_MAJOR
-                      #error "this is Berkeley DB 2.x or newer"
-                      #endif])
-    if test "$with_bdb_header" = "no"; then
-        AC_CHECK_HEADERS(db_185.h, [with_bdb_header=db_185.h], [with_bdb=no])
-    fi
-fi
-if test "$with_bdb" != "no"; then
-    dbopen=`echo -e "#include <$with_bdb_header>\ndbopen" | gcc -E - | tail -1`
-    AC_CHECK_LIB(db, $dbopen,, [with_bdb_lib=no])
-    if test "$with_bdb_lib" = "no"; then
-        AC_CHECK_LIB(db1, $dbopen, [with_bdb_lib=yes],)
-    fi
-    if test "$with_bdb_lib" = "no"; then
-        with_bdb=no
-    fi
-fi
-if test "$with_bdb" != "no"; then
-    AC_DEFINE(WITH_BDB,,
-	      [Define to enable Berkeley DB support.])
-fi
-
 # gtk
 #if test "$with_gtk" != "no"; then
 #    CPPFLAGS_save="$CPPFLAGS"
@@ -417,15 +387,6 @@ fi
 #    AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
 #    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
 #fi
-
-# openslp
-if test "$with_openslp" != "no"; then
-    AC_CHECK_HEADERS(slp.h,, [with_openslp=no])
-    AC_CHECK_LIB(slp, SLPGetRefreshInterval,, [with_openslp=no])
-    if test "$with_openslp" != "no"; then
-        AC_DEFINE(WITH_SLP,, [Define to enable SLP support.])
-    fi 
-fi
 
 # BSD sockets, if you're on Solaris
 AC_CHECK_LIB(socket, bind)
@@ -490,25 +451,6 @@ if test "$with_tcl" != "no"; then
     if test "$with_tcl" != "no"; then
         CPPFLAGS="$CPPFLAGS_save"
     fi
-fi
-
-# telephony
-if test "$with_telephony" != "no"; then
-    with_telephony=yes
-else
-    with_telephony=no
-fi
-
-# swig
-if test "$with_swig" != "no"; then
-     AC_CHECK_PROG(SWIG, swig, swig, no, $with_swig:$PATH)
-     if test "$SWIG" = "no"; then
-        with_swig=no
-     else 
-        if test "$with_swig"; then
-           SWIG="$with_swig/swig"
-        fi
-     fi
 fi
 
 # qt
@@ -588,10 +530,6 @@ if test "$with_pam" = "no"; then
     AC_MSG_WARN([PAM is missing.])
     missing_devel=yes
 fi
-if test "$with_telephony" = "no"; then
-    AC_MSG_WARN([Telephony is missing.])
-    missing_devel=yes
-fi
 if test "$with_qt" = "no"; then
     AC_MSG_WARN([Qt is missing.])
     missing_devel=yes
@@ -602,9 +540,6 @@ if test "$with_xplc" = "no"; then
 fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
-fi
-if test "$with_openslp" = "no"; then
-    AC_MSG_WARN([OpenSLP is missing.])
 fi
 if test "$with_openssl" = "no"; then
     AC_MSG_WARN([OpenSSL is missing.])
@@ -652,15 +587,11 @@ AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
 
-AC_SUBST(with_bdb)
 AC_SUBST(with_gtk)
-AC_SUBST(with_openslp)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
 AC_SUBST(with_readline)
-AC_SUBST(with_telephony)
 AC_SUBST(with_qt)
-AC_SUBST(with_swig)
 AC_SUBST(with_tcl)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)

@@ -16,16 +16,29 @@
 #include "wvstreamclone.h"
 #include "wvlog.h"
 #include "wvhashtable.h"
-#include "wvhttp.h"
 #include "wvbufstream.h"
 #include "wvbuf.h"
 #include "wvcont.h"
+#include "wvtcp.h"
 
 class WvBufUrlStream;
 class WvUrlStream;
 class WvHttpStream;
 
 static const WvString DEFAULT_ANON_PW("weasels@");
+
+struct WvHTTPHeader
+{
+    WvString name, value;
+    
+    WvHTTPHeader(WvStringParm _name, WvStringParm _value)
+	: name(_name), value(_value) 
+    		{}
+};
+
+
+DeclareWvDict(WvHTTPHeader, WvString, name);
+
 
 class WvUrlRequest
 {

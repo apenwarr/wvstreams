@@ -42,7 +42,6 @@ OBJFIXME=\
 # object files that we probably just shouldn't include in win32 libraries
 OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	utils/strcrypt.o \
-	utils/wvbdbhash.o \
 	utils/wvfork.o \
 	utils/wvmagiccircle.o \
 	utils/wvshmzone.o \

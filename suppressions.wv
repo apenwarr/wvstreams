@@ -30,6 +30,16 @@
    obj:/lib/ld-2.3.*.so
 }
 {
+   stupid_ld_error_2
+   Memcheck:Cond
+   obj:/lib/ld-2.5*.so
+}
+{
+   stupid_ld_error_3
+   Memcheck:Addr4
+   obj:/lib/ld-2.5*.so
+}
+{
    stupid_ecard_stuff
    Memcheck:Leak
    fun:malloc
@@ -126,4 +136,9 @@
    WvHashTableBase_has_issues
    Memcheck:Cond
    fun:_ZN15WvHashTableBaseC2Ej
+}
+{
+   glibc_is_dumb
+   Memcheck:Addr4
+   fun:__nss_lookup_function
 }

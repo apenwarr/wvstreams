@@ -176,12 +176,8 @@ public:
      virtual void outbuf_limit(size_t size) = 0;
 };
 
-
-// This ifdef makes ExchangeIt work
-#ifndef SWIG
 DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
-#endif
 
 
 #endif /* __IWVSTREAM_H */
