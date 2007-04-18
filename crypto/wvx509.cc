@@ -1204,39 +1204,6 @@ WvString WvX509Mgr::get_crl_dp()
 }
 
 
-WvString WvX509Mgr::get_cp_oid()
-{
-    assert(cert);
-    return get_extension(NID_certificate_policies);
-}
-
-void WvX509Mgr::set_cp_oid(WvStringParm oid, WvStringParm _url)
-{
-    assert(cert);
-    WvString url(_url);
-    ASN1_OBJECT *pobj = OBJ_txt2obj(oid, 0);
-    POLICYINFO *pol = POLICYINFO_new();
-    POLICYQUALINFO *qual = NULL;
-    STACK_OF(POLICYINFO) *sk_pinfo = sk_POLICYINFO_new_null();
-    pol->policyid = pobj;
-    if (!!url)
-    {
-	pol->qualifiers = sk_POLICYQUALINFO_new_null();
-	qual = POLICYQUALINFO_new();
-	qual->pqualid = OBJ_nid2obj(NID_id_qt_cps);
-	qual->d.cpsuri = M_ASN1_IA5STRING_new();
-	ASN1_STRING_set(qual->d.cpsuri, url.edit(), url.len());
-	sk_POLICYQUALINFO_push(pol->qualifiers, qual);
-    }
-    sk_POLICYINFO_push(sk_pinfo, pol);
-    X509_EXTENSION *ex = X509V3_EXT_i2d(NID_certificate_policies, 0, 
-					sk_pinfo);
-    X509_add_ext(cert, ex, -1);
-    X509_EXTENSION_free(ex);
-    sk_POLICYINFO_free(sk_pinfo);
-}
-
-
 void WvX509Mgr::set_lifetime(long seconds)
 {
     // Set the NotBefore time to now.
@@ -1333,7 +1300,7 @@ WvString WvX509Mgr::get_aia()
 }
 
 
-void parse_stack(WvStringParm ext, WvStringList &list, WvStringParm prefix)
+static void parse_stack(WvStringParm ext, WvStringList &list, WvStringParm prefix)
 {
     WvStringList stack;
     stack.split(ext, ";\n");
@@ -1394,6 +1361,39 @@ void WvX509Mgr::set_crl_urls(WvStringList &urls)
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
+}
+
+
+void WvX509Mgr::get_cp_oids(WvStringList &oids)
+{
+    parse_stack(get_extension(NID_certificate_policies), oids, "Policy: ");
+}
+
+
+void WvX509Mgr::set_cp_oid(WvStringParm oid, WvStringParm _url)
+{
+    assert(cert);
+    WvString url(_url);
+    ASN1_OBJECT *pobj = OBJ_txt2obj(oid, 0);
+    POLICYINFO *pol = POLICYINFO_new();
+    POLICYQUALINFO *qual = NULL;
+    STACK_OF(POLICYINFO) *sk_pinfo = sk_POLICYINFO_new_null();
+    pol->policyid = pobj;
+    if (!!url)
+    {
+	pol->qualifiers = sk_POLICYQUALINFO_new_null();
+	qual = POLICYQUALINFO_new();
+	qual->pqualid = OBJ_nid2obj(NID_id_qt_cps);
+	qual->d.cpsuri = M_ASN1_IA5STRING_new();
+	ASN1_STRING_set(qual->d.cpsuri, url.edit(), url.len());
+	sk_POLICYQUALINFO_push(pol->qualifiers, qual);
+    }
+    sk_POLICYINFO_push(sk_pinfo, pol);
+    X509_EXTENSION *ex = X509V3_EXT_i2d(NID_certificate_policies, 0, 
+					sk_pinfo);
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+    sk_POLICYINFO_free(sk_pinfo);
 }
 
 

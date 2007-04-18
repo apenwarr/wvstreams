@@ -322,10 +322,9 @@ public:
     WvString get_crl_dp();
 
     /**
-     * Return the Certificate Policy OID if it exists, and WvString::null
-     * it if doesn't.
+     * Get any certificate Policy OIDs.
      */
-    WvString get_cp_oid();
+    void get_cp_oids(WvStringList &oids);
     
     /**
      * Set the Certificate Policy OID from the string given by OID

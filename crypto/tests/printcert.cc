@@ -18,14 +18,18 @@ void print_details(WvX509Mgr *x509)
     wvcon->print("Key Usage: %s\n", x509->get_key_usage());
     wvcon->print("Ext Key Usage: %s\n", x509->get_ext_key_usage());
     wvcon->print("Authority Info Access: \n%s\n", x509->get_aia());
-    WvStringList urls;
-    x509->get_ca_urls(urls);
-    wvcon->print("CA Issuers available from:\n%s\n", urls.join("\n"));
-    x509->get_ocsp(urls);
-    wvcon->print("OCSP Responders available from:\n%s\n", urls.join("\n"));
-    x509->get_crl_urls(urls);
-    wvcon->print("CRL Distribution Points:\n%s\n", urls.join("\n"));
-    wvcon->print("Certificate Policy: %s\n", x509->get_cp_oid());
+    WvStringList list;
+    x509->get_ca_urls(list);
+    wvcon->print("CA Issuers available from:\n%s\n", list.join("\n"));
+    list.zap();
+    x509->get_ocsp(list);
+    wvcon->print("OCSP Responders available from:\n%s\n", list.join("\n"));
+    list.zap();
+    x509->get_crl_urls(list); 
+    wvcon->print("CRL Distribution Points:\n%s\n", list.join("\n"));
+    list.zap();
+    x509->get_cp_oids(list);
+    wvcon->print("Certificate Policy OIDs:\n%s\n", list.join("\n"));
 }
 
 
