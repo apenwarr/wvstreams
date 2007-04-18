@@ -225,7 +225,7 @@ WvString WvCRL::get_issuer()
 
 bool WvCRL::isrevoked(WvX509Mgr *cert)
 {
-    if (cert && cert->isok())
+    if (cert && cert->get_cert())
     {
         debug("Checking to see if certificate with name '%s' and serial "
               "number '%s' is revoked.\n", cert->get_subject(), 
