@@ -30,6 +30,11 @@ void print_details(WvX509Mgr *x509)
     list.zap();
     x509->get_cp_oids(list);
     wvcon->print("Certificate Policy OIDs:\n%s\n", list.join("\n"));
+    int requireExplicitPolicy, inhibitPolicyMapping;
+    x509->get_constraints(requireExplicitPolicy, inhibitPolicyMapping);
+    wvcon->print("Certificate Policy Constraints: requireExplicitPolicy: %s "
+                 "inhibitPolicyMapping: %s\n", requireExplicitPolicy, 
+                 inhibitPolicyMapping);
 }
 
 

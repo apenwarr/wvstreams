@@ -1248,17 +1248,48 @@ WvString WvX509Mgr::get_altsubject()
 }
 
 
-WvString WvX509Mgr::get_constraints()
+bool WvX509Mgr::get_constraints(int &require_explicit_policy, 
+                                int &inhibit_policy_mapping)
 {
     assert(cert);
-    return get_extension(NID_policy_constraints);
+    POLICY_CONSTRAINTS *constraints = NULL;
+    int i;
+    
+    constraints = static_cast<POLICY_CONSTRAINTS *>(X509_get_ext_d2i(
+                                                cert, NID_policy_constraints, 
+                                                &i, NULL));
+    if (constraints)
+    {
+        require_explicit_policy = ASN1_INTEGER_get(
+            constraints->requireExplicitPolicy);
+        inhibit_policy_mapping = ASN1_INTEGER_get(
+            constraints->inhibitPolicyMapping);
+        POLICY_CONSTRAINTS_free(constraints);
+        return true;
+    }
+
+    return false;
 }
 
 
-void WvX509Mgr::set_constraints(WvStringParm constraint)
+void WvX509Mgr::set_constraints(int require_explicit_policy, 
+                                int inhibit_policy_mapping)
 {
     assert(cert);
-    set_extension(NID_policy_constraints, constraint);
+    POLICY_CONSTRAINTS *constraints = POLICY_CONSTRAINTS_new();
+    
+    ASN1_INTEGER *i = ASN1_INTEGER_new();
+    ASN1_INTEGER_set(i, require_explicit_policy);
+    constraints->requireExplicitPolicy = i;
+    i = ASN1_INTEGER_new();
+    ASN1_INTEGER_set(i, inhibit_policy_mapping);
+    constraints->inhibitPolicyMapping = i;
+
+    X509_EXTENSION *ex = X509V3_EXT_i2d(NID_policy_constraints, 0, 
+                                        constraints);
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+    POLICY_CONSTRAINTS_free(constraints);
 }
 
 

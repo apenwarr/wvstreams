@@ -364,10 +364,16 @@ public:
     void set_altsubject(WvStringParm name);
     
     /**
-     * Get and Set the Policy Constraints extension
+     * Get the values in the policy constraints extension. Returns true if the
+     * policy constraints extension exists, false otherwise.
      */
-    WvString get_constraints();
-    void set_constraints(WvStringParm constraint);
+    bool get_constraints(int &require_explicit_policy, 
+                         int &inhibit_policy_mapping);
+    /**
+     * Set the values in the policy constraints extension.
+     */
+    void set_constraints(int require_explicit_policy, 
+                         int inhibit_policy_mapping);
     
     /**
      * Return the not before and not after in a format we're more able to easily use.

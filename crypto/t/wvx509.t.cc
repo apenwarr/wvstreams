@@ -5,6 +5,9 @@
 
 // default keylen for where we're not using pre-existing certs
 const static int DEFAULT_KEYLEN = 512; 
+
+// carillon cert: has a number of interesting characteristics (policy,
+// aia information, ...) which we can test against
 const static char carillon_cert[] =
 "-----BEGIN CERTIFICATE-----\n"
 "MIIFSzCCBDOgAwIBAgIBAzANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCQ0Ex\n"
@@ -360,4 +363,33 @@ WVTEST_MAIN("certificate policies")
     WVPASSEQ(oids.popstr(), "1.3.6.1.4.1.25054.1.1.101");
     WVPASSEQ(oids.popstr(), "1.3.6.1.4.1.25054.1.1.102");
     WVPASSEQ(oids.count(), 0);
+}
+
+
+WVTEST_MAIN("get/set certificate policy constraints")
+{
+    WvX509Mgr xcertreq;
+    WvRSAKey rsakey(DEFAULT_KEYLEN);
+
+    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
+                                       rsakey);
+    WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
+    WvString certpem = cacert.signreq(certreq);
+    
+    WvX509Mgr cert;
+    cert.decode(WvX509Mgr::CertPEM, certpem);
+
+    int require_explicit_policy_in = 10;
+    int inhibit_policy_mapping_in = 5;
+    cert.set_constraints(require_explicit_policy_in, 
+                         inhibit_policy_mapping_in);
+    cacert.signcert(cert.get_cert());    
+
+    int require_explicit_policy_out = 0;
+    int inhibit_policy_mapping_out = 0;
+    cert.get_constraints(require_explicit_policy_out, 
+                         inhibit_policy_mapping_out);
+
+    WVPASSEQ(require_explicit_policy_in, require_explicit_policy_out);
+    WVPASSEQ(inhibit_policy_mapping_in, inhibit_policy_mapping_out);
 }
