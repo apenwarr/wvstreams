@@ -1293,6 +1293,55 @@ void WvX509Mgr::set_constraints(int require_explicit_policy,
 }
 
 
+bool WvX509Mgr::get_policy_mapping(PolicyMapList &list)
+{
+    assert(cert);
+    POLICY_MAPPINGS *mappings = NULL;
+    POLICY_MAPPING *map = NULL;
+    int i;
+
+    mappings = static_cast<POLICY_MAPPINGS *>(X509_get_ext_d2i(
+                                                cert, NID_policy_mappings, 
+                                                &i, NULL));
+    if (!mappings)
+        return false;
+
+    char tmp1[80];
+    char tmp2[80];
+    for(int j = 0; j < sk_POLICY_MAPPING_num(mappings); j++) 
+    {
+        map = sk_POLICY_MAPPING_value(mappings, j);
+        i2t_ASN1_OBJECT(tmp1, 80, map->issuerDomainPolicy);
+        i2t_ASN1_OBJECT(tmp2, 80, map->subjectDomainPolicy);
+        list.append(new PolicyMap(tmp1, tmp2), true);
+    }
+    
+    return true;
+}
+
+
+void WvX509Mgr::set_policy_mapping(PolicyMapList &list)
+{
+    assert(cert);
+    POLICY_MAPPINGS *maps = sk_POLICY_MAPPING_new_null();
+    
+    PolicyMapList::Iter i(list);
+    for (i.rewind(); i.next();)
+    {
+        POLICY_MAPPING *map = POLICY_MAPPING_new();
+        map->issuerDomainPolicy = OBJ_txt2obj(i().issuer_domain.cstr(), 0);
+        map->subjectDomainPolicy = OBJ_txt2obj(i().subject_domain.cstr(), 0);
+        sk_POLICY_MAPPING_push(maps, map);
+        printf("Push!\n");
+    }
+
+    X509_EXTENSION *ex = X509V3_EXT_i2d(NID_policy_mappings, 0, maps);
+    X509_add_ext(cert, ex, -1);
+    X509_EXTENSION_free(ex);
+    sk_POLICY_MAPPING_pop_free(maps, POLICY_MAPPING_free);
+}
+
+
 static void add_aia(WvStringParm type, WvString identifier, AUTHORITY_INFO_ACCESS *ainfo)
 {
     ACCESS_DESCRIPTION *acc = ACCESS_DESCRIPTION_new();

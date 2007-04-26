@@ -366,7 +366,7 @@ WVTEST_MAIN("certificate policies")
 }
 
 
-WVTEST_MAIN("get/set certificate policy constraints")
+WVTEST_MAIN("get/set certificate policy extensions")
 {
     WvX509Mgr xcertreq;
     WvRSAKey rsakey(DEFAULT_KEYLEN);
@@ -383,13 +383,29 @@ WVTEST_MAIN("get/set certificate policy constraints")
     int inhibit_policy_mapping_in = 5;
     cert.set_constraints(require_explicit_policy_in, 
                          inhibit_policy_mapping_in);
+
+    WvString issuer_domain_in = "2.16.840.1.101.3.2.1.48.1";
+    WvString subject_domain_in = "2.16.840.1.101.3.2.1.48.2";
+    WvX509Mgr::PolicyMapList list;
+    list.append(new WvX509Mgr::PolicyMap(issuer_domain_in, subject_domain_in), 
+                true);
+    cert.set_policy_mapping(list);
+    list.zap();
     cacert.signcert(cert.get_cert());    
 
     int require_explicit_policy_out = 0;
     int inhibit_policy_mapping_out = 0;
     cert.get_constraints(require_explicit_policy_out, 
                          inhibit_policy_mapping_out);
-
     WVPASSEQ(require_explicit_policy_in, require_explicit_policy_out);
     WVPASSEQ(inhibit_policy_mapping_in, inhibit_policy_mapping_out);
+
+    WVPASS(cert.get_policy_mapping(list));
+    WVPASSEQ(list.count(), 1);
+    if (list.count() > 0)
+    {
+        WvX509Mgr::PolicyMap *map = list.first();
+        WVPASSEQ(map->issuer_domain, issuer_domain_in);
+        WVPASSEQ(map->subject_domain, subject_domain_in);
+    }
 }

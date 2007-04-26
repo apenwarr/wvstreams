@@ -375,6 +375,28 @@ public:
     void set_constraints(int require_explicit_policy, 
                          int inhibit_policy_mapping);
     
+    struct PolicyMap {
+        PolicyMap(WvStringParm _issuer_domain, WvStringParm _subject_domain)
+        {
+            issuer_domain = _issuer_domain;
+            subject_domain = _subject_domain;
+        }
+        WvString issuer_domain;
+        WvString subject_domain;
+    };
+    DeclareWvList(PolicyMap);
+
+    /**
+     * Get the policy mappings for this certificate. Returns true if there 
+     * were any policy mappings to be found.
+     */
+    bool get_policy_mapping(PolicyMapList &list);
+
+    /**
+     * Set the policy mappings for this certificate.
+     */
+    void set_policy_mapping(PolicyMapList &list);
+
     /**
      * Return the not before and not after in a format we're more able to easily use.
      */

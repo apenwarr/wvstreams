@@ -35,6 +35,13 @@ void print_details(WvX509Mgr *x509)
     wvcon->print("Certificate Policy Constraints: requireExplicitPolicy: %s "
                  "inhibitPolicyMapping: %s\n", requireExplicitPolicy, 
                  inhibitPolicyMapping);
+
+    WvX509Mgr::PolicyMapList maplist;
+    x509->get_policy_mapping(maplist);
+    wvcon->print("Policy mappings:\n");
+    WvX509Mgr::PolicyMapList::Iter i(maplist);
+    for (i.rewind(); i.next();)
+        wvcon->print("%s -> %s\n", i().issuer_domain, i().subject_domain);
 }
 
 
