@@ -1315,6 +1315,8 @@ bool WvX509Mgr::get_policy_mapping(PolicyMapList &list)
         i2t_ASN1_OBJECT(tmp2, 80, map->subjectDomainPolicy);
         list.append(new PolicyMap(tmp1, tmp2), true);
     }
+
+    sk_POLICY_MAPPING_pop_free(mappings, POLICY_MAPPING_free);
     
     return true;
 }
