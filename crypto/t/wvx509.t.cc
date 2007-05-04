@@ -42,7 +42,7 @@ const static char carillon_cert[] =
 "-----END CERTIFICATE-----\n";
 
 
-void basic_test(WvX509Mgr *t509, WvStringParm dname)
+static void basic_test(WvX509Mgr *t509, WvStringParm dname)
 {
     WVPASS(t509->test());
     fprintf(stderr, "Error: %s\n", t509->isok() ? "OK" : t509->errstr().cstr());

@@ -42,17 +42,6 @@ public:
     enum DumpMode { PEM = 0, DER, DER64, TEXT };
 
     /**
-     * Type for @ref validate() method:
-     * ERROR = there was an error that happened..
-     * VALID = the certificate is valid
-     * NOT_THIS_CA = the certificate is not signed by this CA
-     * NO_VALID_SIGNATURE = the certificate claims to be signed by this CA (Issuer is the same),
-     *                      but the signature is invalid.
-     */    
-    enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, 
-                 EXPIRED, UNHANDLED_CRITICAL_EXTENSIONS };
-    
-    /**
      * Initialize a blank CRL Object.
      */
     WvCRL();
@@ -90,11 +79,33 @@ public:
     bool has_critical_extensions();
 
     /**
+     * Type for @ref validate() method:
+     * ERROR = there was an error that happened..
+     * VALID = the certificate is valid
+     * NOT_THIS_CA = the certificate is not signed by this CA
+     * NO_VALID_SIGNATURE = the certificate claims to be signed by this CA (Issuer is the same),
+     *                      but the signature is invalid.
+     */    
+    enum Valid { CRLERROR = -1, VALID, NOT_THIS_CA, NO_VALID_SIGNATURE, 
+                 EXPIRED, UNHANDLED_CRITICAL_EXTENSIONS };
+
+    /**
      * Checks to see that a CRL is signed and issued by a CA certificate, and
      * that it has not expired.
      * - returns a validity status.
+     * Get the Authority key Info
      */
     Valid validate(WvX509Mgr *cacert);
+
+    /**
+     * Get the Authority key Info
+     */
+    WvString get_aki();
+
+    /** 
+     * Get the CRL Issuer.
+     */
+    WvString get_issuer();
 
     /**
      * Do we have any errors... convenience function..
@@ -119,12 +130,6 @@ public:
      */
     void load(const DumpMode mode, WvStringParm fname);
 
-    /** 
-     * Return the CRL Issuer (usually the CA who signed 
-     * the certificate)
-     */
-    WvString get_issuer();
-    
     /**
      * Is the certificate in cert revoked?
      */

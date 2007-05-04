@@ -52,7 +52,7 @@ bool WvCRL::issuedbyca(WvX509Mgr *cacert)
 {
     assert(crl);
 
-    char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);
+    WvString name = get_issuer();
     bool issued = (cacert->get_subject() == name);
     if (issued)
         debug("CRL issuer '%s' matches subject '%s' of cert. We can say "
@@ -62,8 +62,6 @@ bool WvCRL::issuedbyca(WvX509Mgr *cacert)
         debug("CRL issuer '%s' doesn't match subject '%s' of cert. Doesn't "
               "appear to be issued by this CA.\n", name, 
               cacert->get_subject());
-
-    OPENSSL_free(name);
 
     return issued;
 }
@@ -86,6 +84,44 @@ bool WvCRL::has_critical_extensions()
 {
     int critical = X509_CRL_get_ext_by_critical(crl, 1, 0);
     return (critical > 0);
+}
+
+
+WvString WvCRL::get_aki()
+{
+    assert(crl);
+
+    AUTHORITY_KEYID *aki = NULL;
+    int i;
+
+    printf("Die\n");
+    aki = static_cast<AUTHORITY_KEYID *>(
+        X509_CRL_get_ext_d2i(crl, NID_authority_key_identifier, 
+                             &i, NULL));
+    printf("Dead?\n");
+    if (aki)
+    {
+        char *tmp = hex_to_string(aki->keyid->data, aki->keyid->length); 
+        WvString str(tmp);
+        
+        OPENSSL_free(tmp);
+        AUTHORITY_KEYID_free(aki);
+       
+        return str;
+    }
+
+    return WvString::null;
+}
+
+
+WvString WvCRL::get_issuer()
+{ 
+    assert(crl);
+
+    char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);
+    WvString retval(name);
+    OPENSSL_free(name);
+    return retval;
 }
 
 
@@ -156,6 +192,7 @@ void WvCRL::decode(const DumpMode mode, WvBuf &buf)
 	debug("Decoding CRL from PEM format.\n");
 	BIO_write(bufbio, buf.get(buf.used()), buf.used());
 	crl = PEM_read_bio_X509_CRL(bufbio, NULL, NULL, NULL);
+        assert(crl);
         if (!crl)
             err.seterr("Couldn't decode CRL from PEM format.\n");
 	break;
@@ -211,15 +248,6 @@ void WvCRL::load(const DumpMode mode, WvStringParm fname)
 
     // FIXME: we don't support anything else
     assert(0);
-}
-
-
-WvString WvCRL::get_issuer()
-{
-    if (crl)
-	return issuer;
-
-    return WvString::null;
 }
 
 
@@ -324,6 +352,7 @@ WvCRL::Valid WvCRL::validate(WvX509Mgr *cacert)
 
     return VALID;
 }
+
 
 
 #if 0
