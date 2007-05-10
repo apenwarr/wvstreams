@@ -1248,8 +1248,72 @@ WvString WvX509Mgr::get_altsubject()
 }
 
 
-bool WvX509Mgr::get_constraints(int &require_explicit_policy, 
-                                int &inhibit_policy_mapping)
+bool WvX509Mgr::get_basic_constraints(bool &ca, int &pathlen)
+{
+    assert(cert);
+    BASIC_CONSTRAINTS *constraints = NULL;
+    int i;
+
+    constraints = static_cast<BASIC_CONSTRAINTS *>(X509_get_ext_d2i(
+                                                       cert, NID_basic_constraints,
+                                                       &i, NULL));
+    if (constraints)
+    {
+        ca = constraints->ca;
+        if (constraints->pathlen)
+        {
+            if ((constraints->pathlen->type == V_ASN1_NEG_INTEGER) || !ca)
+            {
+                debug("Path length type not valid when getting basic constraints.\n");
+                BASIC_CONSTRAINTS_free(constraints);
+                pathlen = 0;
+                return false;
+            }
+            
+            pathlen = ASN1_INTEGER_get(constraints->pathlen);
+        }
+        else
+            pathlen = (-1);
+
+        BASIC_CONSTRAINTS_free(constraints);
+        return true;
+    }
+    
+    debug("Basic constraints extension not present.\n");
+    return false;
+}
+
+
+void WvX509Mgr::set_basic_constraints(bool ca, int pathlen)
+{
+    assert(cert);
+    BASIC_CONSTRAINTS *constraints = BASIC_CONSTRAINTS_new();
+    
+    constraints->ca = static_cast<int>(ca);
+    if (pathlen != (-1))
+    {
+        ASN1_INTEGER *i = ASN1_INTEGER_new();
+        ASN1_INTEGER_set(i, pathlen);
+        constraints->pathlen = i;
+    }
+
+    X509_EXTENSION *ex = X509V3_EXT_i2d(NID_basic_constraints, 0, 
+                                        constraints);
+    while (int idx = X509_get_ext_by_NID(cert, NID_basic_constraints, 0) >= 0)
+    {
+        debug("Found extension at idx %s\n", idx);
+        X509_EXTENSION *tmpex = X509_delete_ext(cert, idx);
+        X509_EXTENSION_free(tmpex);
+    }
+
+    X509_add_ext(cert, ex, NID_basic_constraints);
+    X509_EXTENSION_free(ex);
+    BASIC_CONSTRAINTS_free(constraints);
+}
+
+
+bool WvX509Mgr::get_policy_constraints(int &require_explicit_policy, 
+                                       int &inhibit_policy_mapping)
 {
     assert(cert);
     POLICY_CONSTRAINTS *constraints = NULL;
@@ -1260,10 +1324,17 @@ bool WvX509Mgr::get_constraints(int &require_explicit_policy,
                                                 &i, NULL));
     if (constraints)
     {
-        require_explicit_policy = ASN1_INTEGER_get(
-            constraints->requireExplicitPolicy);
-        inhibit_policy_mapping = ASN1_INTEGER_get(
-            constraints->inhibitPolicyMapping);
+        if (constraints->requireExplicitPolicy)
+            require_explicit_policy = ASN1_INTEGER_get(
+                constraints->requireExplicitPolicy);
+        else
+            require_explicit_policy = (-1);
+
+        if (constraints->inhibitPolicyMapping)
+            inhibit_policy_mapping = ASN1_INTEGER_get(
+                constraints->inhibitPolicyMapping);
+        else
+            inhibit_policy_mapping = (-1);
         POLICY_CONSTRAINTS_free(constraints);
         return true;
     }
@@ -1272,8 +1343,8 @@ bool WvX509Mgr::get_constraints(int &require_explicit_policy,
 }
 
 
-void WvX509Mgr::set_constraints(int require_explicit_policy, 
-                                int inhibit_policy_mapping)
+void WvX509Mgr::set_policy_constraints(int require_explicit_policy, 
+                                       int inhibit_policy_mapping)
 {
     assert(cert);
     POLICY_CONSTRAINTS *constraints = POLICY_CONSTRAINTS_new();
@@ -1446,15 +1517,36 @@ void WvX509Mgr::set_crl_urls(WvStringList &urls)
 }
 
 
-void WvX509Mgr::get_cp_oids(WvStringList &oids)
+bool WvX509Mgr::get_policies(WvStringList &policy_oids)
 {
-    parse_stack(get_extension(NID_certificate_policies), oids, "Policy: ");
+    assert(cert);
+    int critical;
+
+    CERTIFICATEPOLICIES * policies = static_cast<CERTIFICATEPOLICIES *>(
+        X509_get_ext_d2i(cert, NID_certificate_policies, &critical, NULL));
+    if (policies)
+    {
+        for (int i = 0; i < sk_POLICYINFO_num(policies); i++)
+        {
+            POLICYINFO * policy = sk_POLICYINFO_value(policies, i);
+            const int POLICYID_MAXLEN = 80;
+            char policyid[POLICYID_MAXLEN];
+            i2t_ASN1_OBJECT(policyid, POLICYID_MAXLEN, policy->policyid);
+            policy_oids.append(policyid);
+        }
+
+        sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
+        return true;
+    }
+
+    return false;
 }
 
 
-void WvX509Mgr::set_cp_oid(WvStringParm oid, WvStringParm _url)
+void WvX509Mgr::set_policies(WvStringList &policy_oids)
 {
     assert(cert);
+#if 0
     WvString url(_url);
     ASN1_OBJECT *pobj = OBJ_txt2obj(oid, 0);
     POLICYINFO *pol = POLICYINFO_new();
@@ -1466,7 +1558,7 @@ void WvX509Mgr::set_cp_oid(WvStringParm oid, WvStringParm _url)
 	pol->qualifiers = sk_POLICYQUALINFO_new_null();
 	qual = POLICYQUALINFO_new();
 	qual->pqualid = OBJ_nid2obj(NID_id_qt_cps);
-	qual->d.cpsuri = M_ASN1_IA5STRING_new();
+	qual->d.cpsouri = M_ASN1_IA5STRING_new();
 	ASN1_STRING_set(qual->d.cpsuri, url.edit(), url.len());
 	sk_POLICYQUALINFO_push(pol->qualifiers, qual);
     }
@@ -1476,6 +1568,7 @@ void WvX509Mgr::set_cp_oid(WvStringParm oid, WvStringParm _url)
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
     sk_POLICYINFO_free(sk_pinfo);
+#endif
 }
 
 

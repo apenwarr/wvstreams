@@ -322,17 +322,16 @@ public:
     WvString get_crl_dp();
 
     /**
-     * Get any certificate Policy OIDs.
+     * Get any certificate Policy OIDs. Returns true if the policy oids 
+     * extension is present, false otherwise.
      */
-    void get_cp_oids(WvStringList &oids);
+    bool get_policies(WvStringList &policy_oids);
     
     /**
-     * Set the Certificate Policy OID from the string given by OID
-     * i.e: 1.2.3.4.5.6.7.8, and an optional URL that points to it's
-     * CPS.
+     * Set the Certificate Policy OIDs in the certificate to that of
+     * the input array.
      */
-    void set_cp_oid(WvStringParm oid, WvStringParm url);
-
+    void set_policies(WvStringList &policy_oids);
 
     /**
      * Set the Certificate to use X509v3, since that's all modern
@@ -364,16 +363,27 @@ public:
     void set_altsubject(WvStringParm name);
     
     /**
+     * Get the values in the basic constraints extension. Returns true if the
+     * basic constraints extension exists and is valid, false otherwise.
+     */
+    bool get_basic_constraints(bool &ca, int &pathlen);    
+
+    /**
+     * Set the values in the basic constraints extension.
+     */
+    void set_basic_constraints(bool ca, int pathlen);
+
+    /**
      * Get the values in the policy constraints extension. Returns true if the
      * policy constraints extension exists, false otherwise.
      */
-    bool get_constraints(int &require_explicit_policy, 
-                         int &inhibit_policy_mapping);
+    bool get_policy_constraints(int &require_explicit_policy, 
+                                int &inhibit_policy_mapping);
     /**
      * Set the values in the policy constraints extension.
      */
-    void set_constraints(int require_explicit_policy, 
-                         int inhibit_policy_mapping);
+    void set_policy_constraints(int require_explicit_policy, 
+                                int inhibit_policy_mapping);
     
     struct PolicyMap {
         PolicyMap(WvStringParm _issuer_domain, WvStringParm _subject_domain)

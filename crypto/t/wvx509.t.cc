@@ -358,11 +358,47 @@ WVTEST_MAIN("certificate policies")
     WvX509Mgr t509(NULL);
     t509.decode(WvX509Mgr::CertPEM, carillon_cert);
 
-    WvStringList oids;
-    t509.get_cp_oids(oids);
-    WVPASSEQ(oids.popstr(), "1.3.6.1.4.1.25054.1.1.101");
-    WVPASSEQ(oids.popstr(), "1.3.6.1.4.1.25054.1.1.102");
-    WVPASSEQ(oids.count(), 0);
+    WvStringList policies;
+    WVPASS(t509.get_policies(policies));
+    WVPASSEQ(policies.popstr(), "1.3.6.1.4.1.25054.1.1.101");
+    WVPASSEQ(policies.popstr(), "1.3.6.1.4.1.25054.1.1.102");
+    WVPASSEQ(policies.count(), 0);
+
+    policies.zap();
+    WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
+    WVFAIL(cacert.get_policies(policies));
+    // FIXME: test code to set CP oids when it's added properly
+}
+
+
+WVTEST_MAIN("basic constraints")
+{
+    bool is_ca;
+    int pathlen;
+
+    // the carillon cert is a user cert, so it should have no path length,
+    // and the ca bit of basicConstraints set to false
+    WvX509Mgr t509(NULL);
+    t509.decode(WvX509Mgr::CertPEM, carillon_cert);
+
+    WVPASS(t509.get_basic_constraints(is_ca, pathlen));
+    WVFAIL(is_ca);
+    WVPASSEQ(pathlen, (-1)); // no path length restriction
+
+    // by default, a CA certificate we create should have the ca bit set to 
+    // true, and no path length restriction.
+    WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
+    WVPASS(cacert.get_basic_constraints(is_ca, pathlen));
+    WVPASS(is_ca);
+    WVPASSEQ(pathlen, (-1)); // no path length restriction
+
+    // now, let's try setting the path length, and see what the result is
+    cacert.set_basic_constraints(true, 5);
+    WVPASS(cacert.get_basic_constraints(is_ca, pathlen));
+    WVPASS(is_ca);
+    WVPASSEQ(pathlen, 5); 
+    
+
 }
 
 
@@ -381,7 +417,7 @@ WVTEST_MAIN("get/set certificate policy extensions")
 
     int require_explicit_policy_in = 10;
     int inhibit_policy_mapping_in = 5;
-    cert.set_constraints(require_explicit_policy_in, 
+    cert.set_policy_constraints(require_explicit_policy_in, 
                          inhibit_policy_mapping_in);
 
     WvString issuer_domain_in = "2.16.840.1.101.3.2.1.48.1";
@@ -395,8 +431,8 @@ WVTEST_MAIN("get/set certificate policy extensions")
 
     int require_explicit_policy_out = 0;
     int inhibit_policy_mapping_out = 0;
-    cert.get_constraints(require_explicit_policy_out, 
-                         inhibit_policy_mapping_out);
+    cert.get_policy_constraints(require_explicit_policy_out, 
+                                inhibit_policy_mapping_out);
     WVPASSEQ(require_explicit_policy_in, require_explicit_policy_out);
     WVPASSEQ(inhibit_policy_mapping_in, inhibit_policy_mapping_out);
 
