@@ -1,5 +1,6 @@
 WVSTREAMS=.
 WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
+VPATH=$(libdir)
 include wvrules.mk
 override enable_efence=no
 
