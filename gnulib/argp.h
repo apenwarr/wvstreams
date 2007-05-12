@@ -505,7 +505,7 @@ extern void __argp_state_help (__const struct argp_state *__restrict __state,
 			       unsigned int __flags);
 
 /* Possibly output the standard usage message for ARGP to stderr and exit.  */
-extern void argp_usage (__const struct argp_state *__state);
+extern void __NTH(argp_usage (__const struct argp_state *__state));
 extern void __argp_usage (__const struct argp_state *__state);
 
 /* If appropriate, print the printf string FMT and following args, preceded
