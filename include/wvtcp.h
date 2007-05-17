@@ -109,7 +109,7 @@ public:
         { return connected; }
     
     /** override pre_select() to cause select() results when resolving names. */
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     
     /**
      * override post_select() to set the 'connected' variable as soon as we

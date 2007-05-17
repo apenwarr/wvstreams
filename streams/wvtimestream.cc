@@ -28,14 +28,14 @@ bool WvTimeStream::isok() const
 }
 
 
-bool WvTimeStream::pre_select(SelectInfo &si)
+void WvTimeStream::pre_select(SelectInfo &si)
 {
     WvTime now;
     time_t diff;
-    bool ready = WvStream::pre_select(si);
+    WvStream::pre_select(si);
     
-    //fprintf(stderr, "%p: timestream pre_select ready=%d mspt=%ld msto=%ld\n",
-    //     this, ready, ms_per_tick, si.msec_timeout);
+    //fprintf(stderr, "%p: timestream pre_select mspt=%ld msto=%ld\n",
+    //     this, ms_per_tick, si.msec_timeout);
 
     if (ms_per_tick)
     {
@@ -50,7 +50,7 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 	if (next <= now)
 	{
 	    si.msec_timeout = 0;
-	    return true;
+	    return;
 	}
 
 	diff = msecdiff(next, now);
@@ -58,8 +58,6 @@ bool WvTimeStream::pre_select(SelectInfo &si)
 	if (diff < si.msec_timeout || si.msec_timeout < 0)
 	    si.msec_timeout = diff;
     }
-
-    return ready;
 }
 
 
@@ -84,8 +82,8 @@ void WvTimeStream::execute()
 
         next = msecadd(next, ms_per_tick);
         
-        if (msecdiff(next, now) > ms_per_tick * 100
-    	    	|| msecdiff(now, next) > ms_per_tick * 100)
+        if (msecdiff(next, now) > ms_per_tick * 100 || 
+            msecdiff(now, next) > ms_per_tick * 100)
         {
             // reset if we fall forward or behind WAY too excessively
             // This is usually due to a change in system time

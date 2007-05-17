@@ -43,7 +43,7 @@ public:
     void set_timer(time_t msec);
 
     virtual bool isok() const;
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
 

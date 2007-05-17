@@ -82,25 +82,23 @@ class WvReadLineStream : public WvStream
         return NULL;       
     }
 
-    virtual bool pre_select(SelectInfo &si)
+    virtual void pre_select(SelectInfo &si)
     {
-        bool now = false;
-        if (si.wants.readable)
-        {
-            if (line_buf.used() > 0)
-            {
-                now = true;
-                si.msec_timeout = 0;
-            }
-        }
-        return base->pre_select(si) || now;
+        if (si.wants.readable && line_buf.used() > 0)
+            si.msec_timeout = 0;
+        
+        base->pre_select(si);
     }
 
     virtual bool post_select(SelectInfo &si)
     {
+        bool now = false;
+        if (si.wants.readable && line_buf.used() > 0)
+            now = true;
+
         while (base->isreadable())
             rl_callback_read_char();
-        return base->post_select(si);
+        return base->post_select(si) || now;
     }
 
 public:

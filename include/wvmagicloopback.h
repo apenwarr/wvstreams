@@ -14,9 +14,8 @@ public:
 
     WvMagicLoopback(size_t size);
     
-    /*** Overridden members ***/
-    
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     
     virtual size_t uread(void *buf, size_t len);
     virtual size_t uwrite(const void *buf, size_t len);

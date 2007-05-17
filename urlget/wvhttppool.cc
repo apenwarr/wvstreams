@@ -99,7 +99,6 @@ void WvUrlStream::delurl(WvUrlRequest *url)
 
 WvHttpPool::WvHttpPool() 
     : log("HTTP Pool", WvLog::Debug), conns(10),
-      sure(false),
       pipeline_incompatible(50)
 {
     log("Pool initializing.\n");
@@ -121,25 +120,50 @@ WvHttpPool::~WvHttpPool()
 }
 
 
-bool WvHttpPool::pre_select(SelectInfo &si)
+void WvHttpPool::pre_select(SelectInfo &si)
 {
-    sure = false;
+    //    log(WvLog::Debug5, "pre_select: main:%s conns:%s urls:%s\n",
+    //         count(), conns.count(), urls.count());
+
+    WvIStreamList::pre_select(si);
 
     WvUrlStreamDict::Iter ci(conns);
     for (ci.rewind(); ci.next(); )
     {
-        //	if (!ci->isok() || urls.isempty())
+        if (!ci->isok())
+            si.msec_timeout = 0;
+    }
+    
+    WvUrlRequestList::Iter i(urls);
+    for (i.rewind(); i.next(); )
+    {
+        if (!i->instream)
+        {
+            log(WvLog::Debug4, "Checking dns for '%s'\n", i->url.gethost());
+            if (i->url.resolve())
+                si.msec_timeout = 0;
+            else
+                dns.pre_select(i->url.gethost(), si);    
+        }
+    }
+}
+
+
+bool WvHttpPool::post_select(SelectInfo &si)
+{
+    bool sure = false;
+
+    WvUrlStreamDict::Iter ci(conns);
+    for (ci.rewind(); ci.next(); )
+    {
         if (!ci->isok())
         {
+            log(WvLog::Debug4, "Selecting true because of a dead stream.\n");
             unconnect(ci.ptr());
             ci.rewind();
-            log(WvLog::Debug3, "Selecting true because of a dead stream.\n");
             sure = true;
         }
     }
-
-    //    log(WvLog::Debug5, "pre_select: main:%s conns:%s urls:%s\n",
-    //         count(), conns.count(), urls.count());
 
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )
@@ -165,7 +189,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
         if (!i->instream)
         {
             log(WvLog::Debug4, "Checking dns for '%s'\n", i->url.gethost());
-            if (i->url.resolve() || dns.pre_select(i->url.gethost(), si))
+            if (i->url.resolve() || dns.post_select(i->url.gethost(), si))
             {
                 log(WvLog::Debug4, "Selecting true because of '%s'\n", i->url);
                 sure = true;
@@ -173,25 +197,7 @@ bool WvHttpPool::pre_select(SelectInfo &si)
         }
     }
 
-    if (WvIStreamList::pre_select(si))
-    {
-        //log("Selecting true because of list members.\n");
-        sure = true;
-    }
-
-    if (sure)
-	si.msec_timeout = 0;
-
-    return sure;
-}
-
-
-bool WvHttpPool::post_select(SelectInfo &si)
-{
-    bool save_sure = sure;
-    sure = false;
-
-    return WvIStreamList::post_select(si) || save_sure;
+    return WvIStreamList::post_select(si) || sure;
 }
 
 

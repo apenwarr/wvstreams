@@ -79,16 +79,6 @@ bool WvLog::isok() const
 }
 
 
-bool WvLog::pre_select(SelectInfo &si)
-{
-    // a wvlog is always writable...
-    if (si.wants.writable)
-	return true;
-    else
-	return WvStream::pre_select(si);
-}
-
-
 size_t WvLog::uwrite(const void *_buf, size_t len)
 {
     // Writing the log message to a stream might cause it to emit its own log

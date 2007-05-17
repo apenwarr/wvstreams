@@ -36,8 +36,10 @@ WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 
 
 // Compute the next time this stream should select()
-bool WvDailyEvent::pre_select(SelectInfo &si)
+void WvDailyEvent::pre_select(SelectInfo &si)
 {
+    WvStream::pre_select(si);
+
     if (num_per_day)
     {
 	time_t now = wvstime().tv_sec;
@@ -57,12 +59,9 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
 	    prev = next;
 	}
     }
-    bool ret = WvStream::pre_select(si) || need_reset;
-    if (ret)
+    if (need_reset)
         si.msec_timeout = 0;
-    //printf("%p ret=%d msd=%d\n", this, ret, si.msec_timeout);
-
-    return ret;
+    //printf("%p msd=%d\n", this, ret, si.msec_timeout);
 }
 
 
