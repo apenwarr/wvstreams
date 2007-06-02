@@ -90,7 +90,7 @@ WvString wvssl_errstr()
 
 
 WvX509Mgr::WvX509Mgr(X509 *_cert)
-    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
+    : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
     cert = _cert;
@@ -112,7 +112,7 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
 
 
 WvX509Mgr::WvX509Mgr()
-    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
+    : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
     cert = NULL;
@@ -166,7 +166,7 @@ void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
 
 WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
 		     WvStringParm hexified_rsa)
-    : debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
+    : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
     
@@ -192,7 +192,7 @@ WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
 
 
 WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa)
-    : dname(_dname), debug("X509", WvLog::Debug5), pkcs12pass(WvString::null)
+    : dname(_dname), debug("X509", WvLog::Debug5)
 {
     assert(_rsa);
     
@@ -400,7 +400,8 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
 				       
     set_issuer(dname);
     set_subject(dname);
-    
+    set_ski();
+
     if (is_ca)
     {
 	debug("Setting Extensions with CA Parameters.\n");
@@ -596,7 +597,11 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req)
 	EVP_PKEY *pk = X509_REQ_get_pubkey(certreq);
 	X509_set_pubkey(newcert.get_cert(), pk);
 	EVP_PKEY_free(pk);
-	
+
+        // every good cert needs an ski+aki
+        newcert.set_ski();
+        newcert.set_aki(*this);
+
 	// The Issuer name is the subject name of the current cert
 	newcert.set_issuer(dname); // FIXME: get_subject gives bad results...
 	
@@ -810,17 +815,24 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 {
     WvString nil;
     WvDynBuf retval;
+    encode(mode, retval);
+    return retval.getstr();
+}
+
+
+void WvX509Mgr::encode(const DumpMode mode, WvBuf &buf)
+{
     BIO *bufbio = BIO_new(BIO_s_mem());
     BUF_MEM *bm;
     
     switch(mode)
     {
     case CertPEM:
-	debug("Dumping X509 certificate.\n");
+	debug("Dumping X509 certificate in PEM format.\n");
 	PEM_write_bio_X509(bufbio, cert);
 	break;
 	
-    case CertDER64:
+    case CertDER:
 	debug("Dumping X509 certificate in DER format\n");
 	i2d_X509_bio(bufbio, cert);
 	break;
@@ -828,13 +840,15 @@ WvString WvX509Mgr::encode(const DumpMode mode)
     case RsaPEM:
 	debug("Dumping RSA keypair.\n");
 	BIO_free(bufbio);
-	return rsa->getpem(true);
+        buf.putstr(rsa->getpem(true));
+        return;
 	break;
 	
     case RsaPubPEM:
 	debug("Dumping RSA Public Key!\n");
 	BIO_free(bufbio);
-	return rsa->getpem(false);
+        buf.putstr(rsa->getpem(false));
+        return;
 	break;
 
     case RsaRaw:
@@ -843,22 +857,16 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 	break;
 	
     default:
-	seterr(EINVAL);
-	return nil;
+        // unacceptable! the programmer is doing something really dumb...
+        assert(0 && "Tried to dump certificate in invalid format!");
+	BIO_free(bufbio);
+	return;
+        break;
     }
 
     BIO_get_mem_ptr(bufbio, &bm);
-    retval.put(bm->data, bm->length);
+    buf.put(bm->data, bm->length);
     BIO_free(bufbio);
-    if (mode == CertDER)
-    {
-	WvBase64Encoder enc;
-	WvString output;
-	enc.flushbufstr(retval, output, true);
-	return output;
-    }
-    else
-	return retval.getstr();
 }
 
 
@@ -904,7 +912,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvBuf &encoded)
 	break;
     case CertDER:
 	debug("Importing X509 certificate.\n");
-	if(cert)
+	if (cert)
 	{
 	    debug("Replacing an already existant X509 Certificate!\n");
 	    X509_free(cert);
@@ -934,82 +942,86 @@ void WvX509Mgr::decode(const DumpMode mode, WvBuf &encoded)
 	break;
     case RsaRaw:
 	debug("Importing raw RSA keypair not supported.\n");
-	break;
-	
+	break;	
     default:
-	seterr(EINVAL);
+        assert(0 && "Tried to import certificate in invalid format!");
+        break;
     }
     BIO_free_all(membuf);
 
 }
 
 
-void WvX509Mgr::write_p12(WvStringParm filename)
+bool WvX509Mgr::write_p12(WvStringParm _fname, WvStringParm _pkcs12pass)
 {
     debug("Dumping RSA Key and X509 Cert to PKCS12 structure.\n");
 
-    AutoClose fp = fopen(filename, "wb");
+    AutoClose fp = fopen(_fname, "wb");
 
     if (!fp)
     {
-        seterr(errno);
-        return;
+        debug(WvLog::Warning, "Unable to open file. Error: %s\n", strerror(errno));
+        return false;
     }
 
-    if (!!pkcs12pass)
+    if (!!_pkcs12pass)
     {
 	if (rsa && cert)
 	{
 	    EVP_PKEY *pk = EVP_PKEY_new();
 	    if (!pk)
 	    {
-		seterr("Unable to create PKEY object");
-		return;
+		debug(WvLog::Warning, "Unable to create PKEY object.");
+		return false;
 	    }
 
 	    if (!EVP_PKEY_set1_RSA(pk, rsa->rsa))
 	    {
-		seterr("Error setting RSA keys");
+		seterr("Error setting RSA keys.");
 		EVP_PKEY_free(pk);
-		return;
+		return false;
 	    }
 	    else
 	    {
+                WvString pkcs12pass(_pkcs12pass);
 		PKCS12 *pkg = PKCS12_create(pkcs12pass.edit(), "foo", pk, 
 					    cert, NULL, 0, 0, 0, 0, 0);
 		if (pkg)
 		{
-		    debug("Write the PKCS12 object out...\n");
+		    debug("Writing the PKCS12 object out...\n");
 		    i2d_PKCS12_fp(fp, pkg);
 		    PKCS12_free(pkg);
 		    EVP_PKEY_free(pk);
 		}
 		else
 		{
-		    seterr("Unable to create PKCS12 object");
+		    debug(WvLog::Warning, "Unable to create PKCS12 object.");
 		    EVP_PKEY_free(pk);
-		    return;
+		    return false;
 		}
 	    }
 	}
 	else
 	{
-	    seterr("Either the RSA key or the certificate is not present");
-	    return;
+	    debug(WvLog::Warning, "Either the RSA key or the certificate is not present.");
+	    return false;
 	}
     }
     else
     {
-        seterr("No password specified for PKCS12 dump");
-        return; 
+        debug(WvLog::Warning, "No password specified for PKCS12 dump.");
+        return false; 
     }
+
+    return true;
 }
 
-void WvX509Mgr::read_p12(WvStringParm filename)
-{
-    debug("Reading Certificate and Private Key from PKCS12 file: %s\n", filename);
 
-    AutoClose fp = fopen(filename, "r");
+void WvX509Mgr::read_p12(WvStringParm _fname, WvStringParm _pkcs12pass)
+{
+    debug("Reading Certificate and Private Key from PKCS12 file: %s\n", _fname);
+
+    AutoClose fp = fopen(_fname, "r");
 
     if (!fp)
     {
@@ -1017,38 +1029,39 @@ void WvX509Mgr::read_p12(WvStringParm filename)
         return;
     }
 
-    if (!!pkcs12pass)
+    if (!!_pkcs12pass)
     {
 	PKCS12 *pkg = d2i_PKCS12_fp(fp, NULL);
 	if (pkg)
 	{
-	    EVP_PKEY *pk = EVP_PKEY_new();
-	    if (!pk)
-	    {
-		seterr("Unable to create PKEY object");
-		return;
-	    }
+	    EVP_PKEY *pk = NULL;
 	    
 	    // Parse out the bits out the PKCS12 package.
-	    PKCS12_parse(pkg, pkcs12pass, &pk, &cert, NULL);
+	    PKCS12_parse(pkg, _pkcs12pass, &pk, &cert, NULL);
 	    PKCS12_free(pkg);
-	    
+            if (!pk || !cert)
+            {
+                seterr("Could not decode pkcs12 file");
+                EVP_PKEY_free(pk);
+                return;
+            }
+
 	    // Now, cert should be OK, let's try and set up the RSA stuff
 	    // since we've essentially got a PKEY, and not a WvRSAKey
 	    // We need to create a new WvRSAKey from the PKEY...
 	    rsa = new WvRSAKey(EVP_PKEY_get1_RSA(pk), true);
-	    
+            EVP_PKEY_free(pk);
+
 	    // Now that we have both, check to make sure that they match
-	    if (!rsa || !cert || test())
+	    if (!rsa || !cert || !test())
 	    {
 		seterr("Could not fill in RSA and certificate with matching values");
 		return;
 	    }
-	    EVP_PKEY_free(pk);
 	}
 	else
 	{
-	    seterr("Read in of PKCS12 file '%s' failed", filename);
+	    seterr("Read in of PKCS12 file '%s' failed", _fname);
 	    return;
 	}
     }
@@ -1377,13 +1390,14 @@ bool WvX509Mgr::get_policy_mapping(PolicyMapList &list)
     if (!mappings)
         return false;
 
+    const int POLICYID_MAXLEN = 80;
     char tmp1[80];
     char tmp2[80];
     for(int j = 0; j < sk_POLICY_MAPPING_num(mappings); j++) 
     {
         map = sk_POLICY_MAPPING_value(mappings, j);
-        i2t_ASN1_OBJECT(tmp1, 80, map->issuerDomainPolicy);
-        i2t_ASN1_OBJECT(tmp2, 80, map->subjectDomainPolicy);
+        OBJ_obj2txt(tmp1, POLICYID_MAXLEN, map->issuerDomainPolicy, true);
+        OBJ_obj2txt(tmp2, POLICYID_MAXLEN, map->subjectDomainPolicy, true);
         list.append(new PolicyMap(tmp1, tmp2), true);
     }
 
@@ -1460,12 +1474,12 @@ static void parse_stack(WvStringParm ext, WvStringList &list, WvStringParm prefi
     WvStringList::Iter i(stack);
     for (i.rewind();i.next();)
     {
-      WvString stack_entry(*i);
-      if (strstr(stack_entry, prefix))
-      {
-          WvString uri(stack_entry.edit() + prefix.len());
-          list.append(uri);  
-      }
+        WvString stack_entry(*i);
+        if (strstr(stack_entry, prefix))
+        {
+            WvString uri(stack_entry.edit() + prefix.len());
+            list.append(uri);  
+        }
     }
 }
 
@@ -1530,8 +1544,10 @@ bool WvX509Mgr::get_policies(WvStringList &policy_oids)
         {
             POLICYINFO * policy = sk_POLICYINFO_value(policies, i);
             const int POLICYID_MAXLEN = 80;
+
             char policyid[POLICYID_MAXLEN];
-            i2t_ASN1_OBJECT(policyid, POLICYID_MAXLEN, policy->policyid);
+            OBJ_obj2txt(policyid, POLICYID_MAXLEN, policy->policyid, 
+                        true); // don't substitute human-readable names
             policy_oids.append(policyid);
         }
 
@@ -1699,6 +1715,14 @@ void WvX509Mgr::set_extension(int nid, WvStringParm _values)
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
 }
+
+
+void WvX509Mgr::set_rsakey(WvRSAKey *_rsa)
+{   
+    WVDELETE(rsa); 
+    rsa = _rsa; 
+}
+
 
 
 bool WvX509Mgr::isok() const
@@ -1969,10 +1993,58 @@ WvString WvX509Mgr::get_ski()
     return get_extension(NID_subject_key_identifier);
 }
 
+
 WvString WvX509Mgr::get_aki()
 {
     assert(cert);
     WvStringList aki_list;
     parse_stack(get_extension(NID_authority_key_identifier), aki_list, "keyid:");
-    return aki_list.popstr();
+    if (aki_list.count())
+        return aki_list.popstr();
+
+    return WvString::null;
+}
+
+
+void WvX509Mgr::set_ski()
+{
+    ASN1_OCTET_STRING *oct = M_ASN1_OCTET_STRING_new();
+    ASN1_BIT_STRING *pk = cert->cert_info->key->public_key;
+    unsigned char pkey_dig[EVP_MAX_MD_SIZE];
+    unsigned int diglen;
+
+    EVP_Digest(pk->data, pk->length, pkey_dig, &diglen, EVP_sha1(), NULL);
+
+    M_ASN1_OCTET_STRING_set(oct, pkey_dig, diglen);
+    X509_EXTENSION *ext = X509V3_EXT_i2d(NID_subject_key_identifier, 0, 
+					oct);
+    X509_add_ext(cert, ext, -1);
+    X509_EXTENSION_free(ext);
+    M_ASN1_OCTET_STRING_free(oct);
+}
+
+
+void WvX509Mgr::set_aki(WvX509Mgr &cacert)
+{
+
+    // can't set a meaningful AKI for subordinate certification without the 
+    // parent having an SKI
+    ASN1_OCTET_STRING *ikeyid = NULL;
+    X509_EXTENSION *ext;
+    int i = X509_get_ext_by_NID(cacert.get_cert(), NID_subject_key_identifier, -1);
+    if ((i >= 0) && (ext = X509_get_ext(cacert.get_cert(), i)))
+        ikeyid = static_cast<ASN1_OCTET_STRING *>(X509V3_EXT_d2i(ext));
+
+    if (!ikeyid)
+        return;
+
+    AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
+    akeyid->issuer = NULL;
+    akeyid->serial = NULL;
+    akeyid->keyid = ikeyid;
+    ext = X509V3_EXT_i2d(NID_authority_key_identifier, 0, akeyid);
+    X509_add_ext(cert, ext, -1);
+    X509_EXTENSION_free(ext); 
+    AUTHORITY_KEYID_free(akeyid);
+    //M_ASN1_OCTET_STRING_free(ikeyid);
 }

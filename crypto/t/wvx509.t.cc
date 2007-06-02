@@ -1,3 +1,4 @@
+#include "wvfileutils.h"
 #include "wvtest.h"
 #include "wvx509.h"
 #include "wvrsa.h"
@@ -277,6 +278,9 @@ WVTEST_MAIN("Get extensions memory corruption")
 
 WVTEST_MAIN("set_aia")
 {
+    // yeah, the certificate generated doesn't make much sense here,
+    // but we're only testing that the extension works properly
+
     WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN);
     WvStringList ca_in;
     WvStringList ocsp_in;
@@ -284,8 +288,8 @@ WVTEST_MAIN("set_aia")
     ca_in.append("http://localhost/~wlach/testca-alt.pem");
     ocsp_in.append("http://localhost/~wlach/blah.ocsp");
     ocsp_in.append("http://localhost/~wlach/blarg.ocsp");
-    x.set_aia(ca_in, ocsp_in);
 
+    x.set_aia(ca_in, ocsp_in);
     WvStringList ca_out;
     x.get_ca_urls(ca_out);
     WvStringList ocsp_out;
@@ -323,7 +327,6 @@ WVTEST_MAIN("set_crl_dp")
 WVTEST_MAIN("certreq / signreq / signcert")
 {
     // certificate request
-    WvX509Mgr xcertreq;
     WvRSAKey rsakey(DEFAULT_KEYLEN);
 
     WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
@@ -366,7 +369,8 @@ WVTEST_MAIN("certificate policies")
 
     policies.zap();
     WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
-    WVFAIL(cacert.get_policies(policies));
+    WVFAIL(cacert.get_policies(policies)); 
+    WVPASSEQ(policies.count(), 0);
     // FIXME: test code to set CP oids when it's added properly
 }
 
@@ -404,7 +408,6 @@ WVTEST_MAIN("basic constraints")
 
 WVTEST_MAIN("get/set certificate policy extensions")
 {
-    WvX509Mgr xcertreq;
     WvRSAKey rsakey(DEFAULT_KEYLEN);
 
     WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
@@ -444,4 +447,45 @@ WVTEST_MAIN("get/set certificate policy extensions")
         WVPASSEQ(map->issuer_domain, issuer_domain_in);
         WVPASSEQ(map->subject_domain, subject_domain_in);
     }
+}
+
+
+WVTEST_MAIN("ski / aki")
+{
+    WvRSAKey *rsakey = new WvRSAKey(DEFAULT_KEYLEN);
+    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
+                                          *rsakey);
+    WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
+
+    WvString certpem = cacert.signreq(certreq);
+    wvcon->print("\n%s\n", certpem);
+    WvX509Mgr cert;
+    cert.decode(WvX509Mgr::CertPEM, certpem);
+    cert.set_rsakey(rsakey);
+
+    WVPASS(!!cert.get_ski());
+    WVPASS(!!cert.get_aki());
+    WVPASS(!!cacert.get_ski());
+    WVFAIL(!!cacert.get_aki());
+
+    WVPASSEQ(cert.get_aki(), cacert.get_ski());
+}
+
+
+WVTEST_MAIN("pkcs12")
+{
+    WvX509Mgr cert1("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
+    WvString p12fname = wvtmpfilename("p12");
+    cert1.write_p12(p12fname, "123");
+
+    WvX509Mgr cert2;
+    cert2.read_p12(p12fname, "123");
+    WVPASS(cert2.isok());
+    WVPASSEQ(cert1.get_ski(), cert2.get_ski());
+
+    WvX509Mgr cert3;
+    cert3.read_p12(p12fname, "321");
+    WVFAIL(cert3.isok());
+
+    ::unlink(p12fname);
 }

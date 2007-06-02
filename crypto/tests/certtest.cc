@@ -26,7 +26,6 @@ void test(WvStringParm _dN)
     WvX509Mgr x509cert;
     x509cert.set_dname(_dN);
     x509cert.set_rsakey(new WvRSAKey(1024));
-    x509cert.setPkcs12Password("Foo");
     x509cert.create_selfsigned(true);
     wvcon->print("Consistancy Test result: %s\n", 
 		 x509cert.test() ? "Ok" : "Inconsistant");
@@ -36,7 +35,7 @@ void test(WvStringParm _dN)
 	wvcon->print(x509cert.encode(WvX509Mgr::CertPEM));
 	wvcon->print(x509cert.encode(WvX509Mgr::RsaPEM));
 	wvcon->print(x509cert.encode(WvX509Mgr::RsaRaw));
-	x509cert.write_p12("/tmp/test.p12");
+	x509cert.write_p12("/tmp/test.p12", "foo");
 	wvcon->print("Private Key: %s\n", x509cert.get_rsa().private_str());
 	wvcon->print("Certificate: %s\n", x509cert.hexify());
     }

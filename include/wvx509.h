@@ -45,7 +45,6 @@ public:
     * Type for the @ref encode() and @ref decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
     * CertDER   = DER Encoded X.509 Certificate
-    * CertDER64 = DER Encoded X.509 Certificate returned in Base64
     * CertSMIME = SMIME "Certificate" usable for userSMIMECertificate ldap entry 
     *             again in Base64
     * RsaPEM    = PEM Encoded RSA Private Key
@@ -53,7 +52,7 @@ public:
     * RsaRaw    = Raw form of RSA Key (unused by most programs, FreeS/WAN
     * being the notable exception)
     */
-    enum DumpMode { CertPEM = 0, CertDER, CertDER64, RsaPEM, RsaPubPEM, RsaRaw };
+    enum DumpMode { CertPEM = 0, CertDER, RsaPEM, RsaPubPEM, RsaRaw };
 
 
     /**
@@ -256,6 +255,11 @@ public:
     WvString encode(const DumpMode mode);
 
     /**
+     * Encodes the information requested by mode into a buffer.
+     */
+    void encode(const DumpMode mode, WvBuf &buf);
+
+    /**
      * Load the information from the format requested by mode into
      * the class - this overwrites the certificate, and possibly the
      * key - and to enable two stage loading (the certificate first, then the
@@ -270,19 +274,17 @@ public:
      * we deal straight with files... *sigh*
      * 
      * As should be obvious, this writes the certificate and RSA keys in PKCS12
-     * format to the file specified by filename.
+     * format to the file specified by filename, setting the password to "_pkcs12pass".
+     * Returns true if the operation was successful, false otherwise.
      */
-    void write_p12(WvStringParm filename);
+    bool write_p12(WvStringParm _fname, WvStringParm _pkcs12pass);
     
     /**
-     * And this reads from the file specified in filename, and fills the RSA and
-     * cert members with the decoded information.
+     * And this reads from the file specified in filename using the password 
+     * "_pkcs12pass", and fills the RSA and cert members with the decoded 
+     * information.
      */
-    void read_p12(WvStringParm filename);
-
-    /** Sets the PKCS12 password */
-    void setPkcs12Password(WvStringParm passwd)
-    	{ pkcs12pass = passwd; }
+    void read_p12(WvStringParm _fname, WvStringParm _pkcs12pass);
 
     /** 
      * Get and set the Certificate Issuer (usually the CA who signed 
@@ -474,8 +476,7 @@ public:
 
     // Takes ownership..
     // Fixme: Implement RefCounting in WvRSAKey!
-    void set_rsakey(WvRSAKey *_rsa)
-    {   rsa = _rsa; }
+    void set_rsakey(WvRSAKey *_rsa);
 
     /**
      * Is this certificate Object valid, and in a non-error state
@@ -504,12 +505,6 @@ private:
 
     WvLog debug;
     
-    /** 
-    * Password for PKCS12 dump - we don't handle this entirely correctly 
-    * since we should erase it from memory as soon as we are done with it
-    */
-    WvString pkcs12pass;
-
     /**
      * Get and the Extension information - returns NULL if extension doesn't exist
      * Used internally by all of the get_??? and set_??? functions (crl_dp, cp_oid, etc.).
@@ -521,6 +516,17 @@ private:
      * Populate dname (the distinguished name);
      */
     void filldname();
+
+    /**
+     * Populate the Subject Key Info (from the public key)
+     */
+    void set_ski();
+
+    /**
+     * Populate the Authority key Info, based on the Subject Key Info in
+     * cacert.
+     */
+    void set_aki(WvX509Mgr &cacert);
 
     /**
      * Create an X509 certificate from an ASN1-encoded file
