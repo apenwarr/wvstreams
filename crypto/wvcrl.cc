@@ -348,7 +348,10 @@ WvCRL::Valid WvCRL::validate(WvX509Mgr *cacert)
 
     // neither we or openssl handles any critical extensions yet
     if (has_critical_extensions())
+    {
+        debug("CRL has unhandled critical extensions.\n");
         return UNHANDLED_CRITICAL_EXTENSIONS;
+    }
 
     return VALID;
 }
