@@ -164,33 +164,6 @@ void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
 }
 
 
-WvX509Mgr::WvX509Mgr(WvStringParm hexified_cert,
-		     WvStringParm hexified_rsa)
-    : debug("X509", WvLog::Debug5)
-{
-    wvssl_init();
-    
-    cert = NULL;
-    rsa = new WvRSAKey(hexified_rsa, true);
-    if (!rsa->isok())
-    {
-	seterr("RSA error: %s", rsa->errstr());
-	return;
-    }
-
-    if (!!hexified_cert)
-	unhexify(hexified_cert);
-    else
-    {
-	seterr("No hexified certificate");
-	return;
-    }
-
-    if (cert)
-	filldname();
-}
-
-
 WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa)
     : dname(_dname), debug("X509", WvLog::Debug5)
 {
@@ -689,59 +662,6 @@ bool WvX509Mgr::test()
 }
 
 
-void WvX509Mgr::unhexify(WvStringParm encodedcert)
-{
-    if (!encodedcert)
-    {
-	seterr("X509 certificate can't be decoded from nothing");
-	return;
-    }
-    
-    int hexbytes = strlen(encodedcert.cstr());
-    int bufsize = hexbytes/2;
-    unsigned char *certbuf = new unsigned char[bufsize];
-    unsigned char *cp = certbuf;
-    X509 *tmpcert;
-    
-    if (cert)
-	X509_free(cert);
-
-    ::unhexify(certbuf, encodedcert);
-    tmpcert = cert = X509_new();
-    cert = wv_d2i_X509(&tmpcert, &cp, hexbytes/2);
-
-    // make sure that the cert is valid
-    if (cert && !test())
-    {
-	X509_free(cert);
-	cert = NULL;
-    }
-    
-    if (!cert)
-	seterr("X509 certificate decode failed");
-    
-    deletev certbuf;
-}
-
-
-WvString WvX509Mgr::hexify()
-{
-    size_t size;
-    unsigned char *keybuf, *iend;
-    WvString enccert;
-
-    size = i2d_X509(cert, NULL);
-    iend = keybuf = new unsigned char[size];
-    i2d_X509(cert, &iend);
-
-    enccert.setsize(size * 2 +1);
-    ::hexify(enccert.edit(), keybuf, size);
-
-    deletev keybuf;
-    return enccert;
-}
-
-
 bool WvX509Mgr::validate(WvX509Mgr *cacert, WvCRL *crl)
 {
     bool retval = true;
@@ -822,6 +742,31 @@ WvString WvX509Mgr::encode(const DumpMode mode)
 
 void WvX509Mgr::encode(const DumpMode mode, WvBuf &buf)
 {
+    // we handle hexified items a bit differently, since OpenSSL has no 
+    // built-in support for them...
+    if (mode == CertHex)
+    {
+        size_t size;
+        unsigned char *keybuf, *iend;
+        WvString enccert;
+        
+        size = i2d_X509(cert, NULL);
+        iend = keybuf = new unsigned char[size];
+        i2d_X509(cert, &iend);
+        
+        enccert.setsize(size * 2 +1);
+        ::hexify(enccert.edit(), keybuf, size);
+        
+        deletev keybuf;
+        buf.putstr(enccert);
+        return;
+    }
+    else if (mode == RsaHex)
+    {
+        buf.putstr(rsa->private_str());
+        return;
+    }
+
     BIO *bufbio = BIO_new(BIO_s_mem());
     BUF_MEM *bm;
     
@@ -886,6 +831,38 @@ void WvX509Mgr::decode(const DumpMode mode, WvStringParm encoded)
 
 void WvX509Mgr::decode(const DumpMode mode, WvBuf &encoded)
 {
+    // we handle hexified certificates a bit differently, since
+    // OpenSSL has no built-in support for them...
+    if (mode == CertHex)
+    {
+	if (cert)
+	{
+	    debug("Replacing an already existant X509 Certificate!\n");
+	    X509_free(cert);
+	    cert = NULL;
+	}
+
+        int hexbytes = encoded.used();
+        int bufsize = hexbytes/2;
+        unsigned char *certbuf = new unsigned char[bufsize];
+        unsigned char *cp = certbuf;
+        X509 *tmpcert;
+        
+        wvcon->print("%s, %s\n", hexbytes, bufsize);
+        ::unhexify(certbuf, encoded.getstr().cstr());
+        tmpcert = cert = X509_new();
+        cert = wv_d2i_X509(&tmpcert, &cp, bufsize);    
+        delete[] certbuf;
+        return;
+    }
+    else if (mode == RsaHex)
+    {
+        WVDELETE(rsa);
+        rsa = new WvRSAKey(encoded.getstr(), true);
+        
+        return;
+    }
+
     BIO *membuf = BIO_new(BIO_s_mem());
     BIO_write(membuf, encoded.get(encoded.used()), encoded.used());
     
@@ -925,7 +902,6 @@ void WvX509Mgr::decode(const DumpMode mode, WvBuf &encoded)
 	debug("Importing RSA keypair.\n");
 	debug("Make sure that you load or generate a new Certificate!\n");
 	WVDELETE(rsa);
-	
 	rsa = new WvRSAKey(PEM_read_bio_RSAPrivateKey(membuf, NULL, NULL, NULL), 
 			   true);
 	if (!rsa->isok())
@@ -934,7 +910,7 @@ void WvX509Mgr::decode(const DumpMode mode, WvBuf &encoded)
     case RsaPubPEM:
 	debug("Importing RSA Public Key.\n");
 	debug("Are you REALLY sure that you want to do this?\n");
-	if (rsa) delete rsa;
+	WVDELETE(rsa);
 	rsa = new WvRSAKey(PEM_read_bio_RSAPublicKey(membuf, NULL, NULL, NULL), 
 			   true);
 	if (!rsa->isok())

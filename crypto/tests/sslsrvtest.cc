@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 	setupcert();
     }
 
-    x509cert->decode(WvX509Mgr::CertPEM, signedcerttext);
+    //x509cert->decode(WvX509Mgr::CertPEM, signedcerttext);
     WvTCPListener tcplisten("0.0.0.0:5238");
     tcplisten.setcallback(tcp_incoming, &l);
     

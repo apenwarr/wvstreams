@@ -45,15 +45,17 @@ public:
     * Type for the @ref encode() and @ref decode() methods.
     * CertPEM   = PEM Encoded X.509 Certificate
     * CertDER   = DER Encoded X.509 Certificate
+    * CertHex   = DER Encoded X.509 Certificate in hexified form
     * CertSMIME = SMIME "Certificate" usable for userSMIMECertificate ldap entry 
     *             again in Base64
     * RsaPEM    = PEM Encoded RSA Private Key
     * RsaPubPEM = PEM Encoded RSA Public Key
+    * RsaHex    = DER Encoded RSA Private Key in hexified form
     * RsaRaw    = Raw form of RSA Key (unused by most programs, FreeS/WAN
     * being the notable exception)
     */
-    enum DumpMode { CertPEM = 0, CertDER, RsaPEM, RsaPubPEM, RsaRaw };
-
+    enum DumpMode { CertPEM = 0, CertDER, CertHex, RsaPEM, RsaPubPEM, RsaHex,
+                    RsaRaw };
 
     /**
      * Initialize a completely empty X509 Object with an X509 certificate
@@ -71,12 +73,6 @@ public:
      * public key into rsa. rsa->prv is empty.
      */
     WvX509Mgr(X509 *_cert);
-
-    /** 
-     * Constructor to initialize this object with a pre-existing 
-     * certificate and key 
-     */
-    WvX509Mgr(WvStringParm hexcert, WvStringParm hexrsa);
 
     /**
      * Constructor to create a self-signed certificate for the given dn and
@@ -189,23 +185,6 @@ public:
      * you want to test a certificate yourself. (Such as after a decode)
      */
     bool test();
-
-    /**
-     * Given a hexified certificate, fill the cert member NOTE: ALWAYS load
-     * your RSA Keys before calling this! It is best if you have hexify()'d
-     * keys to simply use the proper constructor. 
-     */
-    void unhexify(WvStringParm encodedcert);
-    
-    /**
-     * Given the X509 certificate object cert, return a hexified string
-     * useful in a WvConf or UniConf file.
-     * 
-     * I don't provide a similar function for that for the rsa key, because
-     * you can always call get_rsa().private_str() and get_rsa().public_str()
-     * for that information.
-     */
-    WvString hexify();
 
     /**
      * Function to verify the validity of a certificate that has been

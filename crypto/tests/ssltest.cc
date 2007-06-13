@@ -23,35 +23,55 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
     
     WvLog log("ssltest", WvLog::Info);
-    log("SSL Test Starting...\n");
+    WvString pkcs12file, pkcs12pass;
+    WvX509Mgr *x509 = NULL;
 
     WvArgs args;
-    args.add_optional_arg("HOST:PORT", false);
+    args.add_option('c', "certificate", "Identify self using the specified "
+                    "certificate and key pair (in pkcs12 format)", 
+                    "FILE", pkcs12file);
+    args.add_option('p', "password", "Password for opening the specified "
+                    "certificate (if given)", "PASS", pkcs12pass); 
+    args.add_required_arg("HOST:PORT", false);
     
     WvStringList remaining_args;
     if (!args.process(argc, argv, &remaining_args))
         return 1;
     
-    // For this test, we default connect to localhost's POP3-SSL server...
-    WvString target;
-    if (!(target = remaining_args.popstr()))
-        target = "localhost:995";
+    WvString target = remaining_args.popstr();
+
+    if (!!pkcs12file)
+    {
+        x509 = new WvX509Mgr;
+        x509->read_p12(pkcs12file, pkcs12pass);
+        
+        if (!x509->isok())
+        {
+            log(WvLog::Error, "Couldn't load certificate! (did you specify a password?)\n");
+            return 1;
+        }
+    }
+
     log("Connecting to %s...\n", target);
-    
-    WvSSLStream cli(new WvTCPConn(target), NULL);
-    
-    WvIStreamList::globallist.append(&cli, false, "client");
+
+    WvSSLStream *cli = new WvSSLStream(new WvTCPConn(target), x509);
+
+    WvIStreamList::globallist.append(cli, false, "client");
     WvIStreamList::globallist.append(wvin, false, "wvin");
     
-    cli.autoforward(*wvout);
-    wvin->autoforward(cli);
+    cli->autoforward(*wvout);
+    wvin->autoforward(*cli);
+    log("Oh dear.\n");
     
-    while (cli.isok() && !want_to_die)
+    while (cli->isok() && !want_to_die)
 	WvIStreamList::globallist.runonce();
     
-    if (cli.geterr())
-	log("Stream closed with error: %s\n", cli.errstr());
+    if (cli->geterr())
+	log("Stream closed with error: %s\n", cli->errstr());
 
     log("Done!\n");
+    WVRELEASE(cli);
+    WVRELEASE(x509);
+
     return 0;
 }

@@ -28,10 +28,9 @@ void print_details(WvX509Mgr *x509)
     x509->get_crl_urls(list); 
     wvcon->print("CRL Distribution Points:\n%s\n", list.join("\n"));
     list.zap();
-#if 0
-    x509->get_cp_oids(list);
+    x509->get_policies(list);
     wvcon->print("Certificate Policy OIDs:\n%s\n", list.join("\n"));
-#endif
+
     int requireExplicitPolicy, inhibitPolicyMapping;
     x509->get_policy_constraints(requireExplicitPolicy, inhibitPolicyMapping);
     wvcon->print("Certificate Policy Constraints: requireExplicitPolicy: %s "
