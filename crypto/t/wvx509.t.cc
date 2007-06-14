@@ -321,7 +321,7 @@ WVTEST_MAIN("certreq / signreq / signcert")
 
     WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
                                        rsakey);
-    WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
+    WvX509Mgr cacert("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
     WvString certpem = cacert.signreq(certreq);
     
     WvX509Mgr cert;
@@ -341,6 +341,7 @@ WVTEST_MAIN("certreq / signreq / signcert")
 
     // should pass again after re-signing
     cacert.signcert(cert.get_cert());    
+    WVPASSEQ(cert.get_issuer(), cacert.get_subject());
     WVPASS(cert.issuedbyca(&cacert));
     WVPASS(cert.signedbyca(&cacert));
 }

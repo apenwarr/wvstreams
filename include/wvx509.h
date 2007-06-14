@@ -143,7 +143,7 @@ public:
      * appropriate values for a certificate authority (or at least the most
      * common ones).
      */
-    void create_selfsigned(bool is_ca = false);
+    void create_selfsigned(WvStringParm dname, bool is_ca = false);
 
     /**
      * Create a certificate request (PKCS#10) using this function.. this 
@@ -271,6 +271,7 @@ public:
      */
     WvString get_issuer();
     void set_issuer(WvStringParm name);
+    void set_issuer(WvX509Mgr &cacert);
     
     /**
      * get and set the Subject field of the certificate
@@ -450,9 +451,6 @@ public:
      */
     WvString get_aki();
 
-    void set_dname(WvStringParm _dname)
-    {	dname = _dname; }
-
     // Takes ownership..
     // Fixme: Implement RefCounting in WvRSAKey!
     void set_rsakey(WvRSAKey *_rsa);
@@ -479,9 +477,6 @@ private:
      */
     WvRSAKey *rsa;
     
-    /** Distinguished Name to be used in the certificate. */
-    WvString dname;
-
     WvLog debug;
     
     /**
@@ -491,11 +486,6 @@ private:
     WvString get_extension(int nid);
     void set_extension(int nid, WvStringParm values);
     
-    /**
-     * Populate dname (the distinguished name);
-     */
-    void filldname();
-
     /**
      * Populate the Subject Key Info (from the public key)
      */

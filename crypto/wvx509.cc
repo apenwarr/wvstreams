@@ -8,7 +8,6 @@
 #include "wvrsa.h"
 #include "wvcrl.h"
 #include "wvsslhacks.h"
-#include "wvdiriter.h"
 #include "wvcrypto.h"
 #include "wvstringlist.h"
 #include "wvbase64.h"
@@ -97,7 +96,6 @@ WvX509Mgr::WvX509Mgr(X509 *_cert)
     rsa = NULL;
     if (cert)
     {
-	filldname();
 	rsa = fillRSAPubKey();
 	if (!rsa->isok())
 	    seterr("RSA public key error: %s", rsa->errstr());
@@ -165,33 +163,33 @@ void WvX509Mgr::load(DumpMode mode, WvStringParm fname)
 
 
 WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa)
-    : dname(_dname), debug("X509", WvLog::Debug5)
+    : debug("X509", WvLog::Debug5)
 {
     assert(_rsa);
     
     wvssl_init();
-    debug("Creating new certificate for %s\n", dname);
+    debug("Creating new certificate for %s\n", _dname);
     cert = NULL;
     rsa = _rsa;
-    create_selfsigned();
+    create_selfsigned(_dname);
 }
 
 
 WvX509Mgr::WvX509Mgr(WvStringParm _dname, int bits, bool isca)
-    : dname(_dname), debug("X509", WvLog::Debug5)
+    : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
-    debug("Creating new certificate for %s\n", dname);
+    debug("Creating new certificate for %s\n", _dname);
     cert = NULL;
     rsa = NULL;
     
-    if (!!dname)
+    if (!!_dname)
     {
 	rsa = new WvRSAKey(bits);
-	create_selfsigned(isca);
+	create_selfsigned(_dname, isca);
     }
     else
-	seterr("Sorry, can't create an anonymous certificate");
+	debug("Sorry, can't create an anonymous certificate");
 }
 
 
@@ -328,7 +326,7 @@ static WvString set_name_entry(X509_NAME *name, WvStringParm dn)
 }
 
 
-void WvX509Mgr::create_selfsigned(bool is_ca)
+void WvX509Mgr::create_selfsigned(WvStringParm dname, bool is_ca)
 {
     assert(rsa);
 
@@ -370,7 +368,7 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
     set_lifetime(60*60*24*3650);
     
     set_pubkey(rsa);
-				       
+		
     set_issuer(dname);
     set_subject(dname);
     set_ski();
@@ -401,16 +399,6 @@ void WvX509Mgr::create_selfsigned(bool is_ca)
     signcert(cert);
     
     debug("Certificate for %s created\n", dname);
-}
-
-
-void WvX509Mgr::filldname()
-{
-    assert(cert);
-    
-    char *name = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-    dname = name;
-    OPENSSL_free(name);
 }
 
 
@@ -576,7 +564,8 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req)
         newcert.set_aki(*this);
 
 	// The Issuer name is the subject name of the current cert
-	newcert.set_issuer(dname); // FIXME: get_subject gives bad results...
+        debug("GET_SUBJ: %s\n", this->get_subject());
+	newcert.set_issuer(*this); 
 	
 	X509_EXTENSION *ex = NULL;
 	// Set the RFC2459-mandated keyUsage field to critical, and restrict
@@ -880,7 +869,6 @@ void WvX509Mgr::decode(const DumpMode mode, WvBuf &encoded)
 	cert = PEM_read_bio_X509(membuf, NULL, NULL, NULL);
 	if (cert)
 	{
-	    filldname();
 	    if (!rsa)
 		rsa = fillRSAPubKey();
 	}
@@ -1069,6 +1057,13 @@ void WvX509Mgr::set_issuer(WvStringParm issuer)
     X509_NAME *name = X509_get_issuer_name(cert);
     set_name_entry(name, issuer);
     X509_set_issuer_name(cert, name);
+}
+
+
+void WvX509Mgr::set_issuer(WvX509Mgr &cacert)
+{
+    X509_NAME *casubj = X509_get_subject_name(cacert.get_cert());
+    X509_set_issuer_name(cert, casubj);
 }
 
 
