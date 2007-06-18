@@ -20,9 +20,10 @@ typedef struct ssl_ctx_st SSL_CTX;
 typedef struct ssl_st SSL;
 typedef struct ssl_method_st SSL_METHOD;
 
+class WvX509;
 class WvX509Mgr;
 
-typedef WvCallback<bool, WvX509Mgr*> WvSSLValidateCallback;
+typedef WvCallback<bool, WvX509*> WvSSLValidateCallback;
 
 /**
  * SSL Stream, handles SSLv2, SSLv3, and TLS

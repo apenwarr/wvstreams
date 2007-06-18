@@ -7,8 +7,9 @@
 #ifndef __WVCRL_H
 #define __WVCRL_H
 
-#include "wvlog.h"
 #include "wverror.h"
+#include "wvlog.h"
+#include "wvx509.h"
 
 // Structures to make the compiler happy so we don't have to include x509v3.h ;)
 struct X509_crl_st;
@@ -18,8 +19,6 @@ typedef struct ssl_ctx_st SSL_CTX;
 struct asn1_string_st;
 typedef struct asn1_string_st ASN1_INTEGER;
 
-class WvRSAKey;
-class WvX509Mgr;
 
 /**
  * CRL Class to handle certificate revocation lists and their related
@@ -57,13 +56,13 @@ public:
      * Check the CRL in crl against the CA certificate in cert
      * - returns true if CRL was signed by that CA certificate.
      */
-    bool signedbyca(WvX509Mgr *cacert);
+    bool signedbyca(WvX509 &cacert);
 
     /**
      * Check the issuer name of the CRL in crl against the CA certificate in cert
      * - returns true if the names match.
      */
-    bool issuedbyca(WvX509Mgr *cacert);
+    bool issuedbyca(WvX509 &cacert);
 
     /**
      * Checks to see if the CRL is expired (i.e.: the present time is past the
@@ -95,7 +94,7 @@ public:
      * - returns a validity status.
      * Get the Authority key Info
      */
-    Valid validate(WvX509Mgr *cacert);
+    Valid validate(WvX509 &cacert);
 
     /**
      * Get the Authority key Info
@@ -133,7 +132,7 @@ public:
     /**
      * Is the certificate in cert revoked?
      */
-    bool isrevoked(WvX509Mgr *cert);
+    bool isrevoked(WvX509 &cert);
     bool isrevoked(WvStringParm serial_number);
     
 private:

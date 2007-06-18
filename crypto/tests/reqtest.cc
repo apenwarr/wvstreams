@@ -24,10 +24,10 @@ int main(int argc, char **argv)
     WvRSAKey rsa(1024);
 
     // Create a new certificate
-    WvString certreq = WvX509Mgr::certreq(dn, rsa);
+    WvString certreq = WvX509::certreq(dn, rsa);
     
     log("Private RSA key follows (KEEP THIS!):\n");
-    wvcon->write(rsa.getpem(true));
+    wvcon->write(rsa.encode(WvRSAKey::RsaPEM));
     
     log("Certificate request follows:\n");
     wvcon->write(certreq);

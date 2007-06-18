@@ -28,40 +28,40 @@ WvCRL::~WvCRL()
 }
     
 
-bool WvCRL::signedbyca(WvX509Mgr *cacert)
+bool WvCRL::signedbyca(WvX509 &cacert)
 {
-    EVP_PKEY *pkey = X509_get_pubkey(cacert->cert);
-    int result = X509_CRL_verify(crl, pkey);    
+    EVP_PKEY *pkey = X509_get_pubkey(cacert.get_cert());
+    int result = X509_CRL_verify(crl, pkey);
     EVP_PKEY_free(pkey);
     if (result < 0)
     {
         debug("There was an error determining whether or not we were signed by "
-              "CA '%s'\n", cacert->get_subject());
+              "CA '%s'\n", cacert.get_subject());
         return false;
     }
     bool issigned = (result > 0);
 
     debug("CRL was%s signed by CA %s\n", issigned ? "" : " NOT", 
-          cacert->get_subject());
+          cacert.get_subject());
 
     return issigned;
 }
 
 
-bool WvCRL::issuedbyca(WvX509Mgr *cacert)
+bool WvCRL::issuedbyca(WvX509 &cacert)
 {
     assert(crl);
 
     WvString name = get_issuer();
-    bool issued = (cacert->get_subject() == name);
+    bool issued = (cacert.get_subject() == name);
     if (issued)
         debug("CRL issuer '%s' matches subject '%s' of cert. We can say "
               "that it appears to be issued by this CA.\n",
-              name, cacert->get_subject());
+              name, cacert.get_subject());
     else
         debug("CRL issuer '%s' doesn't match subject '%s' of cert. Doesn't "
               "appear to be issued by this CA.\n", name, 
-              cacert->get_subject());
+              cacert.get_subject());
 
     return issued;
 }
@@ -251,14 +251,14 @@ void WvCRL::load(const DumpMode mode, WvStringParm fname)
 }
 
 
-bool WvCRL::isrevoked(WvX509Mgr *cert)
+bool WvCRL::isrevoked(WvX509 &cert)
 {
-    if (cert && cert->get_cert())
+    if (cert.get_cert())
     {
         debug("Checking to see if certificate with name '%s' and serial "
-              "number '%s' is revoked.\n", cert->get_subject(), 
-              cert->get_serial());
-	return isrevoked(cert->get_serial());
+              "number '%s' is revoked.\n", cert.get_subject(), 
+              cert.get_serial());
+	return isrevoked(cert.get_serial());
     }
     else
     {
@@ -330,13 +330,8 @@ ASN1_INTEGER *WvCRL::serial_to_int(WvStringParm serial)
 	return NULL;
 }
 
-WvCRL::Valid WvCRL::validate(WvX509Mgr *cacert)
+WvCRL::Valid WvCRL::validate(WvX509 &cacert)
 {
-    assert(cacert);
-    
-    if (!cacert)
-	return CRLERROR;
-
     if (!issuedbyca(cacert))
         return NOT_THIS_CA;
     

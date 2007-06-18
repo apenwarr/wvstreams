@@ -10,14 +10,14 @@ WVTEST_MAIN("extremely basic test")
     //  we were initializing with a NULL value)
     {
 	WvRSAKey rsa(NULL, false);
-	WVPASS(rsa.public_str() == WvString::null);
-	WVPASS(rsa.private_str() == WvString::null);
+	WVPASSEQ(rsa.encode(WvRSAKey::RsaPubHex), WvString::null);
+	WVPASSEQ(rsa.encode(WvRSAKey::RsaHex), WvString::null);
 	WVFAIL(rsa.isok());
     }
     {
 	WvRSAKey rsa(NULL, true);
-	WVPASS(rsa.private_str() == WvString::null);
-	WVPASS(rsa.public_str() == WvString::null);
+	WVPASSEQ(rsa.encode(WvRSAKey::RsaPubHex), WvString::null);
+	WVPASSEQ(rsa.encode(WvRSAKey::RsaHex), WvString::null);
 	WVFAIL(rsa.isok());
     }
 }
@@ -86,14 +86,12 @@ WVTEST_MAIN("rsa isok")
     {
 	// make sure isok() doesn't crash when a private key is given
 	WvRSAKey rsa(rsa_private, true);
-	printf("Error is: '%s'\n", rsa.errstr().cstr());
 	WVPASS(rsa.isok());
     }
     
     {
 	// make sure isok() doesn't crash when only a public key is given
 	WvRSAKey rsa(rsa_public, false);
-	printf("Error is: '%s'\n", rsa.errstr().cstr());
 	WVPASS(rsa.isok());
     }
 
@@ -101,14 +99,12 @@ WVTEST_MAIN("rsa isok")
     {
 	// catch invalid keys
 	WvRSAKey rsa(rsa_junk, false);
-	printf("Error is: '%s'\n", rsa.errstr().cstr());
 	WVFAIL(rsa.isok());
     }
     
     {
 	// catch invalid keys
 	WvRSAKey rsa(rsa_junk2, false);
-	printf("Error is: '%s'\n", rsa.errstr().cstr());
 	WVFAIL(rsa.isok());
     }
 #endif
@@ -116,7 +112,6 @@ WVTEST_MAIN("rsa isok")
     {
 	// catch invalid keys
 	WvRSAKey rsa(rsa_junk3, true);
-	printf("Error is: '%s'\n", rsa.errstr().cstr());
 	WVFAIL(rsa.isok());
     }
     
@@ -124,7 +119,24 @@ WVTEST_MAIN("rsa isok")
 	// make sure isok() doesn't crash when a public key is given instead
 	// of a private key
 	WvRSAKey rsa(rsa_public, true);
-	printf("Error is: '%s'\n", rsa.errstr().cstr());
 	WVFAIL(rsa.isok());
     }
+
+    {
+
+        // test to make sure copying works with private + public keys
+        WvRSAKey rsa(512);
+
+        WvRSAKey rsa_priv(rsa);
+        WVPASSEQ(rsa.encode(WvRSAKey::RsaHex), 
+                 rsa_priv.encode(WvRSAKey::RsaHex));
+
+        WvString pub_hex = rsa.encode(WvRSAKey::RsaPubHex);
+        WvRSAKey rsa_pub(pub_hex, false);
+        WvRSAKey rsa_pub2(rsa_pub);
+        WVPASSEQ(rsa_pub.encode(WvRSAKey::RsaPubHex), 
+                 rsa_pub2.encode(WvRSAKey::RsaPubHex));
+    }
 }
+
+

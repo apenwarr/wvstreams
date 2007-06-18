@@ -1,7 +1,9 @@
+#include "wvfile.h"
 #include "wvfileutils.h"
+#include "wvrsa.h"
 #include "wvtest.h"
 #include "wvx509.h"
-#include "wvrsa.h"
+#include "wvx509mgr.h"
 
 
 // default keylen for where we're not using pre-existing certs
@@ -42,19 +44,7 @@ const static char carillon_cert[] =
 "0KUUwRu2l4LDN9drx+L5\n"
 "-----END CERTIFICATE-----\n";
 
-static void basic_test(WvX509Mgr *t509, WvStringParm dname)
-{
-    WVPASS(t509->test());
-    fprintf(stderr, "Error: %s\n", t509->isok() ? "OK" : t509->errstr().cstr());
-    WVPASS(t509->isok());
-    WVPASSEQ(t509->get_subject(), dname);
-    WVPASSEQ(t509->get_issuer(), dname);
-}
-
-
-WVTEST_MAIN("X509")
-{
-    static const char rsakeytext[] = 
+const static char rsakeytext[] = 
 "-----BEGIN RSA PRIVATE KEY-----\n"
 "MIICXgIBAAKBgQDVQrw1PHhLm2qSGl24SAb4+mJb2jPW0UwsbodDG5Da0h405zUp\n"
 "0U5yL7zKNQG6BYvuV5bCUeo6Q0uvd7D6eKE7VqzcVHVJfM2KvfKOI5eMiu76pz6V\n"
@@ -71,7 +61,7 @@ WVTEST_MAIN("X509")
 "oZxEIiwTN7rE9kRV1OFDUwvGiqcegSxjf6SUgdpBC7Du9A==\n"
 "-----END RSA PRIVATE KEY-----\n";
     
-    static const char x509certtext[] = 
+const static char x509certtext[] = 
 "-----BEGIN CERTIFICATE-----\n"
 "MIICXDCCAcWgAwIBAgIEM7WjbjANBgkqhkiG9w0BAQUFADBBMRUwEwYDVQQDEwx0\n"
 "ZXN0LmZvby5jb20xEzARBgoJkiaJk/IsZAEZEwNmb28xEzARBgoJkiaJk/IsZAEZ\n"
@@ -88,7 +78,7 @@ WVTEST_MAIN("X509")
 "UFCAL0f74uuFTQ7ylt6F0m554LSniOHDOEzyBZZq/bk=\n"
 "-----END CERTIFICATE-----\n";
     
-    static const char certreqtext[] =
+const static char certreqtext[] =
 "-----BEGIN CERTIFICATE REQUEST-----\n"
 "MIIBazCB1QIBADAsMSowKAYKCZImiZPyLGQBGRMadGVzdC5mb28uY29tL0RDPWZv\n"
 "by9EQz1jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBANVCvDU8eEubapIa\n"
@@ -100,7 +90,7 @@ WVTEST_MAIN("X509")
 "elfqYQM30sg+MeZVTccV0wCd9augzYa2qA8MExu7SQ==\n"
 "-----END CERTIFICATE REQUEST-----\n";
 	
-    static const char signedcerttext[] =
+const static char signedcerttext[] =
 "-----BEGIN CERTIFICATE-----\n"
 "MIICiDCCAfGgAwIBAgIBATANBgkqhkiG9w0BAQQFADAUMRIwEAYDVQQKEwlOSVRJ\n"
 "LVRFU1QwHhcNMDQwMzMwMTgzOTM4WhcNMDUwMzMwMTgzOTM4WjBkMQswCQYDVQQG\n"
@@ -117,13 +107,18 @@ WVTEST_MAIN("X509")
 "+p09tcn1Iotrek1IGrXsH7Hjkpzf8lkqwEjygIJ0iAWMqAI4AVoRx/5JrG+8ePPU\n"
 "rKZf8WzBwn45ibb+xwtjdQXVro1l+K4UATTHLQ==\n"
 "-----END CERTIFICATE-----\n";
-   
-    
-    const WvString signature = "jmvlFrrXiXOkDzhlPQMvASEMc+ImuJFUmc/"
-    "6X8vXujNqbbjerQVZvwOHx35lBcOx9gCcB089gDhPOD3Wi4RhHWZ0vWysdUimn"
-    "Dl65EKEl3OS2anc8Pqi43+Tj7HVIxWB+nLI1m+wDTKqkx+3e1a4q0YjDqWTAT5"
-    "4zTP1SHxKG5E=";
 
+
+static void basic_test(WvX509 &t509, WvStringParm dname)
+{
+    WVPASS(t509.isok());
+    WVPASSEQ(t509.get_subject(), dname);
+    WVPASSEQ(t509.get_issuer(), dname);
+}
+
+
+WVTEST_MAIN("X509")
+{
     // Setup a new DN entry, like a server would set.
     const WvString dName("cn=test.foo.com,dc=foo,dc=com");
     const WvString dName1("/CN=test.foo.com/DC=foo/DC=com");
@@ -140,43 +135,55 @@ WVTEST_MAIN("X509")
     // unit test.  We pass a FILE* from one to the other here, and it
     // won't work if there's a library mismatch.
     {
-        WvX509Mgr t509(NULL);
-	t509.decode(WvX509Mgr::RsaPEM, rsakeytext);
-	t509.decode(WvX509Mgr::CertPEM, x509certtext);
-	basic_test(&t509, dName1);
-	WvString certencode = t509.encode(WvX509Mgr::CertPEM);
+        WvX509Mgr t509;
+	t509.decode(WvRSAKey::RsaPEM, rsakeytext);
+	t509.decode(WvX509::CertPEM, x509certtext);
+	basic_test(t509, dName1);
+	WvString certencode = t509.encode(WvX509::CertPEM);
 	WVPASSEQ(certencode, x509certtext);
-	WvString rsaencode = t509.encode(WvX509Mgr::RsaPEM);
+	WvString rsaencode = t509.encode(WvRSAKey::RsaPEM);
 	WVPASSEQ(rsaencode, rsakeytext);
-	WVPASSEQ(WvX509Mgr::certreq(t509.get_subject(), t509.get_rsa()),
+        WvRSAKey rsa;
+        rsa.decode(WvRSAKey::RsaPEM, rsakeytext);
+	WVPASSEQ(WvX509::certreq(t509.get_subject(), rsa),
                  certreqtext);
     }
     {
 	WvX509Mgr t509(dName, 1024);
-	basic_test(&t509, dName1);
+	basic_test(t509, dName1);
     }
     {        
-        WvX509Mgr t509;
-	t509.decode(WvX509Mgr::CertPEM, signedcerttext);
-	WVPASS(t509.test());
-	WVPASS(t509.isok());
+        WvX509 t509;
+	t509.decode(WvX509::CertPEM, signedcerttext);
+	WVPASS(t509.isok()); 
+        WVFAIL(t509.validate()); // this certificate has expired
 	WVPASSEQ(t509.get_subject(), "/C=CA/ST=Quebec/L=Montreal/O=Testy One/CN=aria2.weavernet.null");
 	WVPASSEQ(t509.get_issuer(), "/O=NITI-TEST");
         WVPASSEQ(t509.get_ski(), 
                  "CE:91:F3:C6:00:78:26:21:ED:FC:46:ED:AA:07:C4:6D:2A:6C:4E:15");
         WVPASSEQ(t509.get_aki(), 
                  "C7:51:02:BD:C8:1E:52:FA:70:40:93:50:B3:68:37:AA:AD:02:3F:35");
-    }
+    }    
     {
 	// Now we stress test it to make sure that it fails predictably...
-	WvX509Mgr t509(NULL);
-	t509.decode(WvX509Mgr::RsaPEM, WvString::null);
-	t509.decode(WvX509Mgr::CertPEM, "");
+	WvX509Mgr t509;
+	t509.decode(WvRSAKey::RsaPEM, WvString::null);
+	t509.decode(WvX509::CertPEM, "");
 	WVFAIL(t509.test());
 	WVFAIL(t509.isok());
 	WVFAIL(t509.get_subject() == "/CN=test.foo.com/DC=foo/DC=com");
 	WVFAIL(t509.get_issuer() == "/CN=test.foo.com/DC=foo/DC=com");
     }
+}
+
+
+WVTEST_MAIN("mismatched key / certificate")
+{
+    WvX509Mgr t509;
+    t509.decode(WvX509::CertPEM, signedcerttext);
+    t509.decode(WvRSAKey::RsaPEM, rsakeytext);
+    WVFAIL(t509.isok());
+    WVFAIL(t509.test());
 }
 
 
@@ -231,12 +238,12 @@ WVTEST_MAIN("Hexified encoding/decoding")
 
     WvX509Mgr t509;
     t509.decode(WvX509Mgr::CertHex, cert_hex);
-    t509.decode(WvX509Mgr::RsaHex, rsa_hex);
-    basic_test(&t509, dName2);
+    t509.decode(WvRSAKey::RsaHex, rsa_hex);
+    basic_test(t509, dName2);
     
     WVPASSEQ(t509.get_serial(), "1621957333");
     WVPASSEQ(t509.encode(WvX509Mgr::CertHex), cert_hex);
-    WVPASSEQ(t509.encode(WvX509Mgr::RsaHex), rsa_hex);
+    WVPASSEQ(t509.encode(WvRSAKey::RsaHex), rsa_hex);
 }
 
 
@@ -245,7 +252,7 @@ WVTEST_MAIN("Replacing key failure")
     WvX509Mgr t509("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN);
     WVPASS(t509.test());
     WvRSAKey rsakey(DEFAULT_KEYLEN);
-    t509.decode(WvX509Mgr::RsaHex, rsakey.private_str());
+    t509.decode(WvRSAKey::RsaHex, rsakey.encode(WvRSAKey::RsaHex));
     WVFAIL(t509.test());
 }
 
@@ -258,11 +265,12 @@ WVTEST_MAIN("Get extensions memory corruption")
     // const pointers, leading to weird memory behaviour on
     // destroys
 
-    WvX509Mgr t509;
+    WvX509 t509;
     t509.decode(WvX509Mgr::CertPEM, carillon_cert);
 
     WVPASS(t509.isok());
-    printf("%s", t509.get_aia().cstr());
+    WVPASSEQ("CA Issuers - URI:http://www.carillon.ca/caops/medium-test-ca.crt", 
+             t509.get_aia());
 }
 
 
@@ -271,7 +279,7 @@ WVTEST_MAIN("set_aia")
     // yeah, the certificate generated doesn't make much sense here,
     // but we're only testing that the extension works properly
 
-    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN);
+    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN, false);
     WvStringList ca_in;
     WvStringList ocsp_in;
     ca_in.append("http://localhost/~wlach/testca.pem");
@@ -298,7 +306,7 @@ WVTEST_MAIN("set_aia")
 
 WVTEST_MAIN("set_crl_dp")
 {
-    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN);
+    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN, false);
     WvStringList dp_in;
     dp_in.append("http://localhost/~wlach/testca.crl");
     dp_in.append("http://localhost/~wlach/testca-alt.crl");
@@ -318,38 +326,37 @@ WVTEST_MAIN("certreq / signreq / signcert")
 {
     // certificate request
     WvRSAKey rsakey(DEFAULT_KEYLEN);
-
     WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
                                        rsakey);
     WvX509Mgr cacert("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
     WvString certpem = cacert.signreq(certreq);
     
-    WvX509Mgr cert;
+    WvX509 cert;
     cert.decode(WvX509Mgr::CertPEM, certpem);
 
     // test that it initially checks out
-    WVPASS(cert.issuedbyca(&cacert));
-    WVPASS(cert.signedbyca(&cacert));
+    WVPASS(cert.issuedbyca(cacert));
+    WVPASS(cert.signedbyca(cacert));
     
     // change some stuff, verify that tests fail
     WvStringList ca_in, ocsp_in;
     ca_in.append("http://localhost/~wlach/testca.pem");
     ca_in.append("http://localhost/~wlach/testca-alt.pem");
     cert.set_aia(ca_in, ocsp_in);
-    WVPASS(cert.issuedbyca(&cacert));
-    WVFAIL(cert.signedbyca(&cacert));
+    WVPASS(cert.issuedbyca(cacert));
+    WVFAIL(cert.signedbyca(cacert));
 
     // should pass again after re-signing
-    cacert.signcert(cert.get_cert());    
+    cacert.signcert(cert);    
     WVPASSEQ(cert.get_issuer(), cacert.get_subject());
-    WVPASS(cert.issuedbyca(&cacert));
-    WVPASS(cert.signedbyca(&cacert));
+    WVPASS(cert.issuedbyca(cacert));
+    WVPASS(cert.signedbyca(cacert));
 }
 
 
 WVTEST_MAIN("certificate policies")
 {
-    WvX509Mgr t509(NULL);
+    WvX509 t509;
     t509.decode(WvX509Mgr::CertPEM, carillon_cert);
 
     WvStringList policies;
@@ -373,7 +380,7 @@ WVTEST_MAIN("basic constraints")
 
     // the carillon cert is a user cert, so it should have no path length,
     // and the ca bit of basicConstraints set to false
-    WvX509Mgr t509(NULL);
+    WvX509 t509;
     t509.decode(WvX509Mgr::CertPEM, carillon_cert);
 
     WVPASS(t509.get_basic_constraints(is_ca, pathlen));
@@ -421,7 +428,7 @@ WVTEST_MAIN("get/set certificate policy extensions")
                 true);
     cert.set_policy_mapping(list);
     list.zap();
-    cacert.signcert(cert.get_cert());    
+    cacert.signcert(cert);    
 
     int require_explicit_policy_out = 0;
     int inhibit_policy_mapping_out = 0;
@@ -443,23 +450,84 @@ WVTEST_MAIN("get/set certificate policy extensions")
 
 WVTEST_MAIN("ski / aki")
 {
-    WvRSAKey *rsakey = new WvRSAKey(DEFAULT_KEYLEN);
+    WvRSAKey rsakey(DEFAULT_KEYLEN);
     WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
-                                          *rsakey);
+                                          rsakey);
     WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
 
     WvString certpem = cacert.signreq(certreq);
     wvcon->print("\n%s\n", certpem);
     WvX509Mgr cert;
     cert.decode(WvX509Mgr::CertPEM, certpem);
-    cert.set_rsakey(rsakey);
-
     WVPASS(!!cert.get_ski());
     WVPASS(!!cert.get_aki());
     WVPASS(!!cacert.get_ski());
     WVFAIL(!!cacert.get_aki());
-
     WVPASSEQ(cert.get_aki(), cacert.get_ski());
+}
+
+
+bool test_encode_decode_str(WvX509::DumpMode mode)
+{
+    WvX509Mgr cert1("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN, false);
+    WvString s = cert1.encode(mode);
+    WvX509Mgr cert2;
+    cert2.decode(mode, s);
+
+    WVPASSEQ(cert1.get_subject(), cert2.get_subject());
+    return cert1.get_subject() == cert2.get_subject();
+}
+
+
+bool test_encode_decode_buf(WvX509::DumpMode mode)
+{
+    WvX509Mgr cert1("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN, false);
+    WvDynBuf buf;
+    cert1.encode(mode, buf);
+    WvX509Mgr cert2;
+    cert2.decode(mode, buf);
+
+    WVPASSEQ(cert1.get_subject(), cert2.get_subject());
+    return cert1.get_subject() == cert2.get_subject();
+}
+
+
+bool test_encode_load_file(WvX509::DumpMode mode)
+{
+    WvString tmpfile = wvtmpfilename("cert");
+
+    WvX509Mgr cert1("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN, false);
+    {
+        WvFile f(tmpfile, O_WRONLY);
+        WvDynBuf buf;
+        cert1.encode(mode, buf);
+        f.write(buf, buf.used());
+    }
+
+    WvX509Mgr cert2;
+    if (mode == WvX509::CertPEM)
+        cert2.decode(WvX509::CertFilePEM, tmpfile);
+    else
+        cert2.decode(WvX509::CertFileDER, tmpfile);
+
+    ::unlink(tmpfile);
+
+    WVPASSEQ(cert1.get_subject(), cert2.get_subject());
+    return cert1.get_subject() == cert2.get_subject();
+}
+
+
+WVTEST_MAIN("encode / decode / load")
+{
+    WVPASS(test_encode_decode_str(WvX509::CertPEM));
+    WVPASS(test_encode_decode_str(WvX509::CertHex));    
+
+    WVPASS(test_encode_decode_buf(WvX509::CertPEM));
+    WVPASS(test_encode_decode_buf(WvX509::CertHex));
+    WVPASS(test_encode_decode_buf(WvX509::CertDER));
+
+    WVPASS(test_encode_load_file(WvX509::CertPEM));
+    WVPASS(test_encode_load_file(WvX509::CertDER));
 }
 
 
@@ -480,3 +548,5 @@ WVTEST_MAIN("pkcs12")
 
     ::unlink(p12fname);
 }
+
+

@@ -5,7 +5,7 @@
 #include "wvstrutils.h"
 #include "wvx509.h"                        
 
-void print_details(WvX509Mgr *x509)
+void print_details(WvX509 *x509)
 {
     wvcon->print("Subject: %s\n", x509->get_subject());
     wvcon->print("Issuer: %s\n", x509->get_issuer());
@@ -37,10 +37,10 @@ void print_details(WvX509Mgr *x509)
                  "inhibitPolicyMapping: %s\n", requireExplicitPolicy, 
                  inhibitPolicyMapping);
 
-    WvX509Mgr::PolicyMapList maplist;
+    WvX509::PolicyMapList maplist;
     x509->get_policy_mapping(maplist);
     wvcon->print("Policy mappings:\n");
-    WvX509Mgr::PolicyMapList::Iter i(maplist);
+    WvX509::PolicyMapList::Iter i(maplist);
     for (i.rewind(); i.next();)
         wvcon->print("%s -> %s\n", i().issuer_domain, i().subject_domain);
 }
@@ -62,8 +62,9 @@ int main(int argc, char **argv)
         args.print_help(argc, argv);
         return -1;
     }
-
-    WvX509Mgr x509;
+    // FIXME: not working yet
+#if 0
+    WvX509 x509;
     if (certtype == "der")
         x509.load(WvX509Mgr::CertDER, remaining_args.popstr());   
     else if (certtype == "pem")
@@ -78,6 +79,6 @@ int main(int argc, char **argv)
         print_details(&x509);
     else
         wverr->print("X509 certificate not valid\n");
-    
+#endif    
     return 0;
 }

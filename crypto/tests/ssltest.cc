@@ -2,7 +2,7 @@
 #include "wvistreamlist.h"
 #include "wvtcp.h"
 #include "strutils.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "wvargs.h"
 #include <signal.h>
 

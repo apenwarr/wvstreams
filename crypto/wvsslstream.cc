@@ -4,7 +4,7 @@
  */
 #define OPENSSL_NO_KRB5
 #include "wvsslstream.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "wvcrypto.h"
 #include "wvmoniker.h"
 #include <openssl/ssl.h>
@@ -22,8 +22,6 @@
 #else
 #undef errno
 #define errno GetLastError()
-// FIXME: WLACH: seems to cause an error on mingw32 3.4.2.. is this needed?
-//typedef DWORD error_t;
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
 #endif
@@ -72,7 +70,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     
     if (x509 && !x509->isok())
     {
-	seterr("Cert: %s", x509->errstr());
+	seterr("Certificate + key pair invalid.");
 	return;
     }
 
@@ -572,7 +570,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    debug("SSL connection using cipher %s.\n", SSL_get_cipher(ssl));
 	    if (!!vcb)
 	    {
-	    	WvX509Mgr *peercert = new WvX509Mgr(SSL_get_peer_certificate(ssl));
+	    	WvX509 *peercert = new WvX509(SSL_get_peer_certificate(ssl));
 		debug("SSL Peer is: %s\n", peercert->get_subject());
 	    	if (peercert->isok() && peercert->validate() && vcb(peercert))
 	    	{
