@@ -84,6 +84,7 @@ public:
      * Allow us access to the RSA member.
      */
     WvRSAKey *get_rsa() { return rsa; }
+    void set_rsa(WvRSAKey *_rsa) { WVDELETE(rsa); rsa = new WvRSAKey(*_rsa); }
 
     /**
      * Avoid a lot of ugliness by having it so that we are binding to the SSL

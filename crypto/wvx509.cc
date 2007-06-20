@@ -11,13 +11,25 @@
 #include "wvstringlist.h"
 #include "wvbase64.h"
 #include "wvstrutils.h"
-//#include "wvfileutils.h"
 
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/ssl.h>
+
+// enable this to add some extra debugging trace messages (this can be VERY
+// verbose)
+#if 0
+# define TRACE(x, y...) debug(x, ## y); 
+#else
+#ifndef _MSC_VER
+# define TRACE(x, y...)
+#else
+# define TRACE
+#endif
+#endif
+
 
 UUID_MAP_BEGIN(WvX509)
   UUID_MAP_ENTRY(IObject)
@@ -83,7 +95,7 @@ WvX509::WvX509()
 
 WvX509::~WvX509()
 {
-    debug("Deleting.\n");
+    TRACE("Deleting.\n");
     
     if (cert)
 	X509_free(cert);
@@ -1048,25 +1060,25 @@ WvString WvX509::get_extension(int nid) const
  			ext_data = ASN1_item_d2i(NULL, &ext_value_data,
  						ext->value->length, 
  						ASN1_ITEM_ptr(method->it));
-			debug("Applied generic conversion!\n");
+			TRACE("Applied generic conversion!\n");
 		    }
 		    else
 		    {
 			ext_data = method->d2i(NULL, &ext_value_data,
                                                ext->value->length);
-			debug("Applied method specific conversion!\n");
+			TRACE("Applied method specific conversion!\n");
 		    }
 		    
 		    if (method->i2s)
 		    {
-			debug("String Extension!\n");
+			TRACE("String Extension!\n");
 			char *s = method->i2s(method, ext_data); 
                         retval = s;
                         OPENSSL_free(s);
 		    }
 		    else if (method->i2v)
 		    {
-			debug("Stack Extension!\n");
+			TRACE("Stack Extension!\n");
 		        CONF_VALUE *val = NULL;
 		        STACK_OF(CONF_VALUE) *svals = NULL;
 		        svals = method->i2v(method, ext_data, NULL);
@@ -1094,7 +1106,7 @@ WvString WvX509::get_extension(int nid) const
 		    }
 		    else if (method->i2r)
 		    {
-			debug("Raw Extension!\n");
+			TRACE("Raw Extension!\n");
 			WvDynBuf retvalbuf;
 			BIO *bufbio = BIO_new(BIO_s_mem());
 			BUF_MEM *bm;
@@ -1116,14 +1128,14 @@ WvString WvX509::get_extension(int nid) const
 	}
 	else
 	{
-	    debug("Extension not present!\n");
+	    TRACE("Extension not present!\n");
 	}
 
     }
 
     if (!!retval)
     {
-	debug("Returning: %s\n", retval);
+	TRACE("Returning: %s\n", retval);
 	return retval;
     }
     else
