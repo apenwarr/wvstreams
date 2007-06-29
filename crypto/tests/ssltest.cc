@@ -1,9 +1,9 @@
-#include "wvsslstream.h"
-#include "wvistreamlist.h"
-#include "wvtcp.h"
-#include "strutils.h"
-#include "wvx509mgr.h"
 #include "wvargs.h"
+#include "wvistreamlist.h"
+#include "wvsslstream.h"
+#include "wvstrutils.h"
+#include "wvtcp.h"
+#include "wvx509mgr.h"
 #include <signal.h>
 
 volatile bool want_to_die = false;
@@ -61,7 +61,6 @@ int main(int argc, char **argv)
     
     cli->autoforward(*wvout);
     wvin->autoforward(*cli);
-    log("Oh dear.\n");
     
     while (cli->isok() && !want_to_die)
 	WvIStreamList::globallist.runonce();
