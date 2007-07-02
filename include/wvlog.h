@@ -89,6 +89,10 @@ public:
     /** fd==-1, but this stream is always ok */
     virtual bool isok() const;
     
+    /* always writable */
+    virtual void pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
+
     /**
      * change the loglevel.  This returns the object again, so you can
      * make convenient statements like log.lvl(WvLog::Warning).print(...)
