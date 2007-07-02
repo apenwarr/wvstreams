@@ -437,7 +437,7 @@ void WvX509::decode(const DumpMode mode, WvStringParm str)
         }
         
         if (!(cert = d2i_X509_bio(bio, NULL)))
-            debug("Can't read certificate from file");
+            debug("Can't read certificate from file.\n");
         
         BIO_free(bio);
         return;

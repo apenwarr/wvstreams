@@ -94,11 +94,9 @@ WvString WvCRL::get_aki()
     AUTHORITY_KEYID *aki = NULL;
     int i;
 
-    printf("Die\n");
     aki = static_cast<AUTHORITY_KEYID *>(
         X509_CRL_get_ext_d2i(crl, NID_authority_key_identifier, 
                              &i, NULL));
-    printf("Dead?\n");
     if (aki)
     {
         char *tmp = hex_to_string(aki->keyid->data, aki->keyid->length); 
