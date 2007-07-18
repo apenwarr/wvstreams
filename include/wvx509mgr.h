@@ -8,6 +8,7 @@
 #define __WVX509MGR_H
 
 #include "wvx509.h"
+#include "wvcrl.h"
 
 class WvX509Mgr : public WvX509
 {
@@ -106,10 +107,11 @@ public:
     bool signcert(WvX509 &unsignedcert) const;
 
     /**
-     * Take the CRL in crl, and sign it. returns true if successfull, and 
-     * false if not. If false, check crl.err.geterr() for reason.
+     * Sign the CRL with the rsa key associated with this class. This method
+     * will also set the CRL's issuer name, set the CRL version to '2', update 
+     * the lastUpdate time, and set its validity period to 30 days.
      */
-    bool signcrl(WvCRL *crl) const;
+    bool signcrl(WvCRL &unsignedcrl) const;
 
     /**
      * Test to make sure that a certificate and a keypair go together.
@@ -145,13 +147,9 @@ public:
     virtual void decode(const WvRSAKey::DumpMode mode, WvBuf &encoded);
 
     /**
-     * And of course, since PKCS12 files are in the rediculous DER encoding 
-     * format, which is binary, we can't use the encode/decode functions, so
-     * we deal straight with files... *sigh*
-     * 
-     * As should be obvious, this writes the certificate and RSA keys in PKCS12
-     * format to the file specified by filename, setting the password to "_pkcs12pass".
-     * Returns true if the operation was successful, false otherwise.
+     * This writes the certificate and RSA keys in PKCS12 format to the file 
+     * specified by filename, setting the password to "_pkcs12pass". Returns 
+     * true if the operation was successful, false otherwise.
      */
     bool write_p12(WvStringParm _fname, WvStringParm _pkcs12pass) const;
     

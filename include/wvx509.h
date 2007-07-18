@@ -24,7 +24,6 @@ typedef struct X509_name_st X509_NAME;
 struct asn1_string_st;
 typedef struct asn1_string_st ASN1_TIME;
 
-class WvCRL;
 
 // workaround for the fact that OpenSSL initialization stuff must be called
 // only once.
@@ -370,6 +369,12 @@ private:
      * cacert.
      */
     void set_aki(const WvX509 &cacert);
+
+    /**
+     * Helper method to log an error message when we try to set an X509 value when
+     * cert is null.
+     */
+    void warningset(WvStringParm var);
 
     /**
      * Return a WvRSAKey filled with the public key from the

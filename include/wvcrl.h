@@ -19,6 +19,7 @@ typedef struct ssl_ctx_st SSL_CTX;
 struct asn1_string_st;
 typedef struct asn1_string_st ASN1_INTEGER;
 
+class WvX509Mgr;
 
 /**
  * CRL Class to handle certificate revocation lists and their related
@@ -28,23 +29,25 @@ class WvCRL
 {
 public:
     /**
-     * Where errors go when they happen
-     */
-    WvError err;
-
-    /**
      * Type for the @ref encode() and @ref decode() methods:
      * CRLPEM   = PEM Encoded X.509 CRL
-     * CRLDER   = DER Encoded X.509 CRL returned in Base64
-     * TEXT     = Decoded Human readable format.
+     * CRLDER   = DER Encoded X.509 CRL 
+     * CRLFilePEM   = PEM Encoded X.509 CRL
+     * CRLFileDER   = DER Encoded X.509 CRL 
      */
-    enum DumpMode { PEM = 0, DER, DER64, TEXT };
+    enum DumpMode { CRLPEM = 0, CRLDER, CRLFilePEM, CRLFileDER };
 
     /**
-     * Initialize a blank CRL Object.
+     * Initialize a blank (null) CRL object.
      */
     WvCRL();
     
+    /**
+     * Initialize a CRL object, signed and created by the certificate
+     * 'cacert'.
+     */
+    WvCRL(const WvX509Mgr &cacert);
+
     /** Destructor */
     virtual ~WvCRL();
 
@@ -109,37 +112,45 @@ public:
     /**
      * Do we have any errors... convenience function..
      */
-    bool isok()
-    { return err.isok(); }  
+    bool isok() const;
     
     /** 
      * Return the information requested by mode as a WvString. 
      */
-    WvString encode(const DumpMode mode);
+    WvString encode(const DumpMode mode) const;
+    void encode(const DumpMode mode, WvBuf &buf) const;
 
     /**
      * Load the information from the format requested by mode into
      * the class - this overwrites the CRL.
      */
-    void decode(const DumpMode mode, WvStringParm PemEncoded);
+    void decode(const DumpMode mode, WvStringParm encoded);
     void decode(const DumpMode mode, WvBuf &encoded);
-
-    /**
-     * Loads a CRL from a file on disk.
-     */
-    void load(const DumpMode mode, WvStringParm fname);
 
     /**
      * Is the certificate in cert revoked?
      */
     bool isrevoked(WvX509 &cert);
     bool isrevoked(WvStringParm serial_number);
-    
-private:
-    WvLog debug;
 
-    X509_CRL     *crl;
-    WvString     issuer;
+    /**
+     * Add the certificate specified by cert to the CRL.
+     */
+    void addcert(const WvX509 &cert);
+
+    /**
+     * Counts the number of certificates in this CRL.
+     * WARNING: this method will be very slow and will consume a lot
+     * of memory for large CRLs.
+     */
+    int numcerts() const;
+    
+
+
+private:
+    mutable WvLog debug;
+
+    X509_CRL *crl;
 
     ASN1_INTEGER *serial_to_int(WvStringParm serial);
 };

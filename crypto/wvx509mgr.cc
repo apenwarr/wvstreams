@@ -244,10 +244,11 @@ bool WvX509Mgr::test() const
 WvString WvX509Mgr::signreq(WvStringParm pkcs10req) const
 {
     debug("Signing a certificate request with: %s\n", get_subject());
-    if (!rsa)
+    if (!isok())
     {
-        debug("Can't sign RSA request: no RSA key!\n");
-        return WvString::empty;
+        debug(WvLog::Warning, "Asked to sign certificate request, but not ok! "
+              "Aborting.\n");
+        return false;
     }
 
     // Break this next part out into a de-pemify section, since that is what
@@ -336,6 +337,13 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req) const
 
 bool WvX509Mgr::signcert(WvX509 &unsignedcert) const
 {
+    if (!isok())
+    {
+        debug(WvLog::Warning, "Asked to sign certificate, but not ok! "
+              "Aborting.\n");
+        return false;
+    }
+
     if (cert == unsignedcert.cert)
     {
 	debug("Self Signing!\n");
@@ -372,48 +380,59 @@ bool WvX509Mgr::signcert(WvX509 &unsignedcert) const
 }
 
 
-bool WvX509Mgr::signcrl(WvCRL *crl) const
+bool WvX509Mgr::signcrl(WvCRL &crl) const
 {
-    assert(crl);
-    assert(rsa);
-#if 0
-    if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
+    if (!isok() || !crl.isok())
+    {
+        debug(WvLog::Warning, "Asked to sign CRL, but certificate or CRL (or "
+              "both) not ok! Aborting.\n");
+        return false;
+    }
+    else if (!X509_check_ca(cert))
+    {
+        debug("This certificate is not a CA, and is thus not allowed to sign "
+              "CRLs!\n");
+        return false;
+    }
+    else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
 	  (cert->ex_kusage & KU_CRL_SIGN)))
     {
-	debug("Certificate not allowed to sign CRLs!\n");
+	debug("Certificate not allowed to sign CRLs! (%s %s)\n", 
+              (cert->ex_flags & EXFLAG_KUSAGE), (cert->ex_kusage & KU_CRL_SIGN));
 	return false;
     }
     
     EVP_PKEY *certkey = EVP_PKEY_new();
     bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);
-    if (crl->getcrl() && cakeyok)
+    if (cakeyok)
     {
 	// Use Version 2 CRLs - Of COURSE that means
 	// to set it to 1 here... grumble..
-	X509_CRL_set_version(crl->getcrl(), 1);
+	X509_CRL_set_version(crl.getcrl(), 1);
 
-	X509_CRL_set_issuer_name(crl->getcrl(), X509_get_subject_name(cert));
+	X509_CRL_set_issuer_name(crl.getcrl(), X509_get_subject_name(cert));
 
 	ASN1_TIME *tmptm = ASN1_TIME_new();
 	// Set the LastUpdate time to now.
 	X509_gmtime_adj(tmptm, 0);
-	X509_CRL_set_lastUpdate(crl->getcrl(), tmptm);
+	X509_CRL_set_lastUpdate(crl.getcrl(), tmptm);
 	// CRL's are valid for 30 days
 	X509_gmtime_adj(tmptm, (long)60*60*24*30);
-	X509_CRL_set_nextUpdate(crl->getcrl(), tmptm);
+	X509_CRL_set_nextUpdate(crl.getcrl(), tmptm);
 	ASN1_TIME_free(tmptm);
 	
 	// OK - now sign it...
-	X509_CRL_sign(crl->getcrl(), certkey, EVP_sha1());
+	X509_CRL_sign(crl.getcrl(), certkey, EVP_sha1());
     }
     else
     {
-	debug("No keys??\n");
+	debug(WvLog::Warning, "Asked to sign CRL, but no RSA key associated "
+              "with certificate. Aborting.\n");
 	EVP_PKEY_free(certkey);
 	return false;
     }
     EVP_PKEY_free(certkey);
-#endif
+
     return true;
 }
 

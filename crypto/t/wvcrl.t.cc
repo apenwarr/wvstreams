@@ -1,7 +1,11 @@
 #include "wvtest.h"
 #include "wvcrl.h"
-#include "wvx509.h"
-#include "wvhex.h"
+#include "wvfile.h"
+#include "wvfileutils.h"
+#include "wvx509mgr.h"
+
+// default keylen for where we're not using pre-existing certs
+const static int DEFAULT_KEYLEN = 512; 
 
 const static char crl_pem[] = 
 "-----BEGIN X509 CRL-----\n"
@@ -15,36 +19,72 @@ const static char crl_pem[] =
 "-----END X509 CRL-----\n";
 
 
-WVTEST_MAIN("basics")
+WVTEST_MAIN("decoding and encoding basics")
 {
     WvCRL crl;
     
-    crl.decode(WvCRL::PEM, crl_pem);
+    crl.decode(WvCRL::CRLPEM, crl_pem);
     WVPASSEQ(crl.get_aki(), 
              "42:1B:6F:97:0B:23:79:1F:C1:08:57:9E:3A:A6:0A:9C:90:88:1F:D8");
     WVPASSEQ(crl.get_issuer(), "/C=US/O=Test Certificates/CN=Bad Signed CA");
+    
+    WvString s = crl.encode(WvCRL::CRLPEM);
+    WVPASSEQ(s, crl_pem);
 }
 
-#if 0 // BUGZID: 17793
-WVTEST_MAIN("CRL")
+
+WVTEST_MAIN("CRL creation and use basics")
 {
-    WvCRLMgr crl;
-    WVFAIL(crl.isok());
-    
-    WvX509Mgr ca("o=ca", 1024);
-    ca.create_selfsigned(true);
-    crl.setca(&ca);
-    WVPASS(crl.numcerts() == 0);
-    WvX509Mgr user("cn=user,o=ca", 1024);
-    WvString request = user.certreq();
-    WvString srequest = ca.signreq(request);
+    WvX509Mgr ca("cn=testca.ca,dc=testca,dc=ca", DEFAULT_KEYLEN, true);
+    WvCRL crl(ca);
+    WVPASSEQ(crl.numcerts(), 0);
+    WVPASSEQ(crl.get_issuer(), ca.get_subject());
+
+    WvRSAKey rsakey(DEFAULT_KEYLEN);
+    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
+                                       rsakey);
+    WvString srequest = ca.signreq(certreq);
+    WvX509 user;
     user.decode(WvX509Mgr::CertPEM, srequest);
-    WVFAIL(crl.isrevoked(&user));
+    WVFAIL(crl.isrevoked(user));
     WVFAIL(crl.isrevoked(user.get_serial()));
-    crl.addcert(&user);
+
+    crl.addcert(user);
     WVPASS(crl.numcerts() == 1);
-    WVPASS(crl.isrevoked(&user));
+    WVPASS(crl.isrevoked(user));
     WVPASS(crl.isrevoked(user.get_serial()));
-//    WvString crl_pem = crl.encode(WvCRLMgr::CRLPEM);
 }
-#endif
+
+
+bool test_encode_load_file(WvCRL::DumpMode mode)
+{
+    WvString tmpfile = wvtmpfilename("crl");
+
+    WvX509Mgr ca("o=ca", DEFAULT_KEYLEN, true);
+    WvCRL crl1(ca);
+
+    {
+        WvFile f(tmpfile, O_WRONLY);
+        WvDynBuf buf;
+        crl1.encode(mode, buf);
+        f.write(buf, buf.used());
+    }
+
+    WvCRL crl2;
+    if (mode == WvCRL::CRLPEM)
+        crl2.decode(WvCRL::CRLFilePEM, tmpfile);
+    else
+        crl2.decode(WvCRL::CRLFileDER, tmpfile);
+
+    ::unlink(tmpfile);
+
+    WVPASSEQ(crl1.get_issuer(), crl2.get_issuer());
+    return (crl1.get_issuer() == crl2.get_issuer());
+}
+
+
+WVTEST_MAIN("Loading/unloading from file")
+{
+    WVPASS(test_encode_load_file(WvCRL::CRLPEM));
+    WVPASS(test_encode_load_file(WvCRL::CRLDER));
+}

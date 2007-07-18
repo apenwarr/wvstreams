@@ -9,14 +9,21 @@
 #include <openssl/pem.h>
 
 #include "wvcrl.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "wvbase64.h"
 
 WvCRL::WvCRL()
-    : debug("X509_CRL", WvLog::Debug5), 
-      issuer(WvString::null)
+    : debug("X509_CRL", WvLog::Debug5)
 {
     crl = NULL;
+}
+
+
+WvCRL::WvCRL(const WvX509Mgr &cacert)
+    : debug("X509_CRL", WvLog::Debug5)
+{
+    assert(crl = X509_CRL_new());
+    cacert.signcrl(*this);
 }
 
 
@@ -25,6 +32,12 @@ WvCRL::~WvCRL()
     debug("Deleting.\n");
     if (crl)
 	X509_CRL_free(crl);
+}
+
+
+bool WvCRL::isok() const
+{
+    return crl;
 }
     
 
@@ -123,49 +136,89 @@ WvString WvCRL::get_issuer()
 }
 
 
-WvString WvCRL::encode(const DumpMode mode)
+WvString WvCRL::encode(const DumpMode mode) const
 {
-    BIO *bufbio = BIO_new(BIO_s_mem());    
-    BUF_MEM *bm;
-    switch (mode)
-    {
-    case PEM:
-	debug("Dumping CRL in PEM format.\n");
-	PEM_write_bio_X509_CRL(bufbio, crl);
-	break;
-    case DER:
-	debug("Dumping CRL in DER format.\n");
-	i2d_X509_CRL_bio(bufbio, crl);
-	break;
-    case TEXT:
-	debug("Dumping CRL in human readable format.\n");
-	X509_CRL_print(bufbio, crl);
-	break;
-    default:
-	err.seterr("Unknown mode!\n");
-	return WvString::null;
-    }
-    
     WvDynBuf retval;
-    BIO_get_mem_ptr(bufbio, &bm);
-    retval.put(bm->data, bm->length);
-    BIO_free(bufbio);
-    if (mode == DER)
-    {
-        WvBase64Encoder enc;
-        WvString output;
-        enc.flushbufstr(retval, output, true);
-        return output;
-    }
-    else
-        return retval.getstr();
+    encode(mode, retval);
+    return retval.getstr();
 }
 
 
-void WvCRL::decode(const DumpMode mode, WvStringParm encoded)
+void WvCRL::encode(const DumpMode mode, WvBuf &buf) const
 {
+    if (mode == CRLFileDER || mode == CRLFilePEM)
+        return; // file modes are no ops with encode
+
+    BIO *bufbio = BIO_new(BIO_s_mem());
+    BUF_MEM *bm;
+    switch (mode)
+    {
+    case CRLPEM:
+	debug("Dumping CRL in PEM format.\n");
+	PEM_write_bio_X509_CRL(bufbio, crl);
+	break;
+    case CRLDER:
+	debug("Dumping CRL in DER format.\n");
+	i2d_X509_CRL_bio(bufbio, crl);
+	break;
+    default:
+        debug("Tried to dump CRL in unknown format!\n");
+        break;
+    }
+    
+    BIO_get_mem_ptr(bufbio, &bm);
+    buf.put(bm->data, bm->length);
+    BIO_free(bufbio);
+}
+
+
+void WvCRL::decode(const DumpMode mode, WvStringParm str)
+{
+    if (crl)
+    {
+	debug("Replacing already existant CRL.\n");
+	X509_CRL_free(crl);
+	crl = NULL;
+    }
+
+    if (mode == CRLFileDER)
+    {
+        BIO *bio = BIO_new(BIO_s_file());
+        
+        if (BIO_read_filename(bio, str.cstr()) <= 0)
+        {
+            debug(WvLog::Warning, "Couldn't open file '%s' to import CRL.\n", 
+                  str);
+            BIO_free(bio);
+            return;
+        }
+        
+        if (!(crl = d2i_X509_CRL_bio(bio, NULL)))
+            debug(WvLog::Warning, "Can't read CRL from file.\n");
+        
+        BIO_free(bio);
+        return;
+    }
+    else if (mode == CRLFilePEM)
+    {
+        FILE * fp = fopen(str, "r");
+        if (!fp)
+        {
+            debug(WvLog::Warning, "Couldn't open file '%s' to import CRL.\n", 
+                  str);
+            return;
+        }
+
+        if (!(crl = PEM_read_X509_CRL(fp, NULL, NULL, NULL)))
+            debug(WvLog::Warning, "Can't read CRL from file");
+        
+        fclose(fp);
+        return;
+    }
+
+    // we use the buffer decode functions for everything else
     WvDynBuf buf;
-    buf.putstr(encoded);
+    buf.putstr(str);
     decode(mode, buf);
 }
 
@@ -174,49 +227,41 @@ void WvCRL::decode(const DumpMode mode, WvBuf &buf)
 {
     if (crl)
     {
-	debug("Replacing already existant CRL\n");
+	debug("Replacing already existant CRL.\n");
 	X509_CRL_free(crl);
 	crl = NULL;
     }
 
-    BIO *bufbio = BIO_new(BIO_s_mem());
-
-    WvBase64Decoder dec;
-    WvDynBuf output;
-
-    switch (mode)
+    if (mode == CRLFileDER || mode == CRLFilePEM)
     {
-    case PEM:
-	debug("Decoding CRL from PEM format.\n");
-	BIO_write(bufbio, buf.get(buf.used()), buf.used());
-	crl = PEM_read_bio_X509_CRL(bufbio, NULL, NULL, NULL);
-        assert(crl);
-        if (!crl)
-            err.seterr("Couldn't decode CRL from PEM format.\n");
-	break;
-    case DER:
-        debug("Decoding CRL from DER format.\n");
-	BIO_write(bufbio, buf.get(buf.used()), buf.used());
-        crl = d2i_X509_CRL_bio(bufbio, NULL);
-        if (!crl)
-            err.seterr("Couldn't decode CRL from DER format.\n");
-        break;
-    case DER64:
-	debug("Decoding CRL from DER format encoded in base64.\n");
-        dec.encode(buf, output, true, true);
-	BIO_write(bufbio, output.get(output.used()), output.used());
-	crl = d2i_X509_CRL_bio(bufbio, NULL);
-        if (!crl)
-            err.seterr("Couldn't decode CRL from DER format encoded in BASE64.\n");
-	break;
-    default:
-	err.seterr("Unknown mode!\n");
+        decode(mode, buf.getstr());
+        return;
     }
+
+    BIO *bufbio = BIO_new(BIO_s_mem());
+    BIO_write(bufbio, buf.get(buf.used()), buf.used());
+
+    if (mode == CRLPEM)
+    {
+	debug("Decoding CRL from PEM format.\n");	
+	crl = PEM_read_bio_X509_CRL(bufbio, NULL, NULL, NULL);
+    }
+    else if (mode == CRLDER)
+    {
+        debug("Decoding CRL from DER format.\n");
+        crl = d2i_X509_CRL_bio(bufbio, NULL);
+    }
+    else
+        debug(WvLog::Warning, "Attempted to decode unknown format.\n");
+
+    if (!crl)
+        debug(WvLog::Warning, "Couldn't decode CRL.\n");
 
     BIO_free(bufbio);
 }
 
 
+#if 0
 void WvCRL::load(const DumpMode mode, WvStringParm fname)
 {
     if (crl)
@@ -232,7 +277,6 @@ void WvCRL::load(const DumpMode mode, WvStringParm fname)
         if (BIO_read_filename(bio, fname.cstr()) <= 0)
         {
             debug("Loading non-existent CRL?\n");
-            err.seterr(errno);
             BIO_free(bio);
             return;
         }
@@ -247,7 +291,7 @@ void WvCRL::load(const DumpMode mode, WvStringParm fname)
     // FIXME: we don't support anything else
     assert(0);
 }
-
+#endif
 
 bool WvCRL::isrevoked(WvX509 &cert)
 {
@@ -295,7 +339,7 @@ bool WvCRL::isrevoked(WvStringParm serial_number)
 	    else
 	    {
 		ASN1_INTEGER_free(serial);
-		debug("CRL does not have revoked list.");
+		debug("CRL does not have revoked list.\n");
                 return false;
 	    }
 	    
@@ -350,19 +394,24 @@ WvCRL::Valid WvCRL::validate(WvX509 &cacert)
 }
 
 
-
-#if 0
-int WvCRL::numcerts()
+int WvCRL::numcerts() const
 {
+    STACK_OF(X509_REVOKED) *rev;
+    rev = X509_CRL_get_REVOKED(crl);
+    int certcount = sk_X509_REVOKED_num(rev);
+    
+    if (certcount < 0)
+        certcount = 0;
+
     return certcount;
 }
 
 
-void WvCRL::addcert(WvX509Mgr *cert)
+void WvCRL::addcert(const WvX509 &cert)
 {
-    if (cert && cert->isok())
+    if (cert.isok())
     {
-	ASN1_INTEGER *serial = serial_to_int(cert->get_serial());
+	ASN1_INTEGER *serial = serial_to_int(cert.get_serial());
 	X509_REVOKED *revoked = X509_REVOKED_new();
 	ASN1_GENERALIZEDTIME *now = ASN1_GENERALIZEDTIME_new();
 	X509_REVOKED_set_serialNumber(revoked, serial);
@@ -372,7 +421,6 @@ void WvCRL::addcert(WvX509Mgr *cert)
 	X509_CRL_add0_revoked(crl, revoked);
 	ASN1_GENERALIZEDTIME_free(now);
 	ASN1_INTEGER_free(serial);
-	certcount++;
     }
     else
     {
@@ -381,7 +429,7 @@ void WvCRL::addcert(WvX509Mgr *cert)
     }
 }
 
-
+#if 0
 void WvCRL::setupcrl()
 {
     char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);

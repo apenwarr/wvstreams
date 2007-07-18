@@ -30,6 +30,21 @@
 #endif
 #endif
 
+// helper method to let us return and warn gracefully when getting/setting an 
+// element in a null certificate
+static const char * warning_str_set = "Tried to set %s, but certificate not ok.\n";
+static const char * warning_str_get = "Tried to set %s, but certificate not ok.\n";
+#define CHECK_CERT_EXISTS_SET(x)                                        \
+    if (!cert) {                                                        \
+        debug(WvLog::Warning, warning_str_set, x);                      \
+        return;                                                         \
+    }
+#define CHECK_CERT_EXISTS_GET(x, y)                                     \
+    if (!cert) {                                                        \
+        debug(WvLog::Warning, warning_str_get, x);                      \
+        return y;                                                       \
+    }
+        
 
 UUID_MAP_BEGIN(WvX509)
   UUID_MAP_ENTRY(IObject)
@@ -367,7 +382,6 @@ bool WvX509::issuedbyca(WvX509 &cacert) const
 
 WvString WvX509::encode(const DumpMode mode) const
 {
-    WvString nil;
     WvDynBuf retval;
     encode(mode, retval);
     return retval.getstr();
@@ -407,7 +421,8 @@ void WvX509::encode(const DumpMode mode, WvBuf &buf) const
         else if (mode == CertDER)
             i2d_X509_bio(bufbio, cert);
         else
-            assert(0); // should never happen
+            debug(WvLog::Warning, "Tried to encode certificate with unknown "
+                  "mode!\n");
 
         BIO_get_mem_ptr(bufbio, &bm);
         buf.put(bm->data, bm->length);
@@ -420,8 +435,9 @@ void WvX509::decode(const DumpMode mode, WvStringParm str)
 {
     if (cert)
     {
-        debug("Replacing an already existant X509 Certificate!\n");
+        debug("Replacing an already existant X509 certificate.\n");
         X509_free(cert);
+        cert = NULL;
     }
 
     if (mode == CertFileDER)
@@ -430,14 +446,14 @@ void WvX509::decode(const DumpMode mode, WvStringParm str)
         
         if (BIO_read_filename(bio, str.cstr()) <= 0)
         {
-            debug("Couldn't open file '%s' to import certificate.\n", 
-                  str);
+            debug(WvLog::Warning, "Couldn't open file '%s' to import "
+                  "certificate.\n", str);
             BIO_free(bio);
             return;
         }
         
         if (!(cert = d2i_X509_bio(bio, NULL)))
-            debug("Can't read certificate from file.\n");
+            debug(WvLog::Warning, "Can't read certificate from file.\n");
         
         BIO_free(bio);
         return;
@@ -484,8 +500,9 @@ void WvX509::decode(const DumpMode mode, WvBuf &encoded)
 {
     if (cert)
     {
-        debug("Replacing an already existant X509 Certificate!\n");
+        debug("Replacing an already existant X509 certificate.\n");
         X509_free(cert);
+        cert = NULL;
     }
     
     if (mode == CertHex || mode == CertFileDER || mode == CertFilePEM)
@@ -500,7 +517,8 @@ void WvX509::decode(const DumpMode mode, WvBuf &encoded)
         else if (mode == CertDER)
             cert = d2i_X509_bio(membuf, NULL);
         else
-            assert(0); // should never happen
+            debug(WvLog::Warning, "Tried to encode certificate with unknown "
+                  "mode!\n");
 
         BIO_free_all(membuf);
     }
@@ -509,21 +527,19 @@ void WvX509::decode(const DumpMode mode, WvBuf &encoded)
 
 WvString WvX509::get_issuer() const
 { 
-    if (cert)
-    {
-	char *name = X509_NAME_oneline(X509_get_issuer_name(cert),0,0);
-        WvString retval(name);
-        OPENSSL_free(name);
-	return retval;
-    }
-    else
-	return WvString::null;
+    CHECK_CERT_EXISTS_GET("issuer", WvString::null);
+
+    char *name = X509_NAME_oneline(X509_get_issuer_name(cert),0,0);
+    WvString retval(name);
+    OPENSSL_free(name);
+    return retval;
 }
 
 
 void WvX509::set_issuer(WvStringParm issuer)
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_SET("issuer");
+
     X509_NAME *name = X509_get_issuer_name(cert);
     set_name_entry(name, issuer);
     X509_set_issuer_name(cert, name);
@@ -532,6 +548,8 @@ void WvX509::set_issuer(WvStringParm issuer)
 
 void WvX509::set_issuer(const WvX509 &cacert)
 {
+    CHECK_CERT_EXISTS_SET("issuer");
+
     X509_NAME *casubj = X509_get_subject_name(cacert.cert);
     X509_set_issuer_name(cert, casubj);
 }
@@ -539,21 +557,19 @@ void WvX509::set_issuer(const WvX509 &cacert)
 
 WvString WvX509::get_subject() const
 {
-    if (cert)
-    {
-	char *name = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-	WvString retval(name);
-	OPENSSL_free(name);
-	return retval;
-    }
-    else
-	return WvString::null;
+    CHECK_CERT_EXISTS_GET("subject", WvString::null);
+
+    char *name = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
+    WvString retval(name);
+    OPENSSL_free(name);
+    return retval;
 }
 
 
 void WvX509::set_subject(WvStringParm subject)
-{
-    assert(cert);
+{    
+    CHECK_CERT_EXISTS_SET("subject");
+
     X509_NAME *name = X509_get_subject_name(cert);
     set_name_entry(name, subject);
     X509_set_subject_name(cert, name);
@@ -562,12 +578,16 @@ void WvX509::set_subject(WvStringParm subject)
 
 void WvX509::set_subject(X509_NAME *name)
 {
+    CHECK_CERT_EXISTS_SET("subject");
+
     X509_set_subject_name(cert, name);
 }
 
 
 void WvX509::set_pubkey(WvRSAKey &_rsa)
 {
+    CHECK_CERT_EXISTS_SET("pubkey");
+
     EVP_PKEY *pk = EVP_PKEY_new();
     assert(pk);
 
@@ -587,7 +607,7 @@ void WvX509::set_pubkey(WvRSAKey &_rsa)
 
 void WvX509::set_nsserver(WvStringParm servername)
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_SET("nsserver");
     
     WvString fqdn;
     
@@ -617,43 +637,44 @@ WvString WvX509::get_nsserver() const
 
 WvString WvX509::get_serial() const
 {
-    if (cert)
-    {
-        BIGNUM *bn = BN_new();
-        bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn);
-        char * c = BN_bn2dec(bn);
-        WvString ret("%s", c);
-        OPENSSL_free(c);
-        BN_free(bn);
-	return ret;
-    }
-    else
-	return WvString::null;
+    CHECK_CERT_EXISTS_GET("serial", WvString::null);
+
+    BIGNUM *bn = BN_new();
+    bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn);
+    char * c = BN_bn2dec(bn);
+    WvString ret("%s", c);
+    OPENSSL_free(c);
+    BN_free(bn);
+    return ret;
 }
 
 
 void WvX509::set_version()
 {
-	X509_set_version(cert, 0x2);
+    CHECK_CERT_EXISTS_SET("version");
+
+    X509_set_version(cert, 0x2);
 }
 
 
 void WvX509::set_serial(long serial)
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_SET("serial");
+
     ASN1_INTEGER_set(X509_get_serialNumber(cert), serial);
 }
 
 
 WvString WvX509::get_crl_dp() const
 {
-    assert(cert);
     return get_extension(NID_crl_distribution_points);
 }
 
 
 void WvX509::set_lifetime(long seconds)
 {
+    CHECK_CERT_EXISTS_SET("lifetime");
+
     // Set the NotBefore time to now.
     X509_gmtime_adj(X509_get_notBefore(cert), 0);
     
@@ -684,21 +705,20 @@ void WvX509::set_ext_key_usage(WvStringParm values)
 
 WvString WvX509::get_ext_key_usage() const
 {
-    assert(cert);
     return get_extension(NID_ext_key_usage);
 }
 
 
 WvString WvX509::get_altsubject() const
 {
-    assert(cert);
     return get_extension(NID_subject_alt_name);
 }
 
 
 bool WvX509::get_basic_constraints(bool &ca, int &pathlen) const
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_GET("basic constraints", false);
+    
     BASIC_CONSTRAINTS *constraints = NULL;
     int i;
 
@@ -734,7 +754,8 @@ bool WvX509::get_basic_constraints(bool &ca, int &pathlen) const
 
 void WvX509::set_basic_constraints(bool ca, int pathlen)
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_SET("basic constraints");
+
     BASIC_CONSTRAINTS *constraints = BASIC_CONSTRAINTS_new();
     
     constraints->ca = static_cast<int>(ca);
@@ -763,7 +784,8 @@ void WvX509::set_basic_constraints(bool ca, int pathlen)
 bool WvX509::get_policy_constraints(int &require_explicit_policy, 
                                     int &inhibit_policy_mapping) const
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_GET("policy constraints", false);
+
     POLICY_CONSTRAINTS *constraints = NULL;
     int i;
     
@@ -794,7 +816,8 @@ bool WvX509::get_policy_constraints(int &require_explicit_policy,
 void WvX509::set_policy_constraints(int require_explicit_policy, 
                                        int inhibit_policy_mapping)
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_SET("policy constraints");
+
     POLICY_CONSTRAINTS *constraints = POLICY_CONSTRAINTS_new();
     
     ASN1_INTEGER *i = ASN1_INTEGER_new();
@@ -814,7 +837,8 @@ void WvX509::set_policy_constraints(int require_explicit_policy,
 
 bool WvX509::get_policy_mapping(PolicyMapList &list) const
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_GET("policy mapping", false);
+
     POLICY_MAPPINGS *mappings = NULL;
     POLICY_MAPPING *map = NULL;
     int i;
@@ -844,7 +868,8 @@ bool WvX509::get_policy_mapping(PolicyMapList &list) const
 
 void WvX509::set_policy_mapping(PolicyMapList &list)
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_SET("policy mapping");
+
     POLICY_MAPPINGS *maps = sk_POLICY_MAPPING_new_null();
     
     PolicyMapList::Iter i(list);
@@ -939,6 +964,8 @@ void WvX509::get_crl_urls(WvStringList &urls) const
 
 void WvX509::set_crl_urls(WvStringList &urls)
 {
+    CHECK_CERT_EXISTS_SET("CRL urls");
+
     STACK_OF(DIST_POINT) *crldp = sk_DIST_POINT_new_null();
     WvStringList::Iter i(urls);
     for (i.rewind(); i.next();)
@@ -968,9 +995,9 @@ void WvX509::set_crl_urls(WvStringList &urls)
 
 bool WvX509::get_policies(WvStringList &policy_oids) const
 {
-    assert(cert);
-    int critical;
+    CHECK_CERT_EXISTS_GET("policies", false);
 
+    int critical;
     CERTIFICATEPOLICIES * policies = static_cast<CERTIFICATEPOLICIES *>(
         X509_get_ext_d2i(cert, NID_certificate_policies, &critical, NULL));
     if (policies)
@@ -996,7 +1023,8 @@ bool WvX509::get_policies(WvStringList &policy_oids) const
 
 void WvX509::set_policies(WvStringList &policy_oids)
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_SET("policies");
+
 #if 0
     WvString url(_url);
     ASN1_OBJECT *pobj = OBJ_txt2obj(oid, 0);
@@ -1025,125 +1053,123 @@ void WvX509::set_policies(WvStringList &policy_oids)
 
 WvString WvX509::get_extension(int nid) const
 {
+    CHECK_CERT_EXISTS_GET("extension", WvString::null);
+
     WvString retval = WvString::null;
     
-    if (cert)
+    int index = X509_get_ext_by_NID(cert, nid, -1);
+    if (index >= 0)
     {
-	int index = X509_get_ext_by_NID(cert, nid, -1);
-	if (index >= 0)
-	{
-	    X509_EXTENSION *ext = X509_get_ext(cert, index);
-
-	    if (ext)
-	    {
-		X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
-		if (!method)
-		{
-		    WvDynBuf buf;
-		    buf.put(ext->value->data, ext->value->length);
-		    retval = buf.getstr();
-		}
-		else
-		{
-		    void *ext_data = NULL;
-                    // we NEED to use a temporary pointer for ext_value_data,
-                    // as openssl's ASN1_item_d2i will muck around with it, 
-                    // even though it's const (at least as of version 0.9.8e). 
-                    // gah.
+        X509_EXTENSION *ext = X509_get_ext(cert, index);
+        
+        if (ext)
+        {
+            X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
+            if (!method)
+            {
+                WvDynBuf buf;
+                buf.put(ext->value->data, ext->value->length);
+                retval = buf.getstr();
+            }
+            else
+            {
+                void *ext_data = NULL;
+                // we NEED to use a temporary pointer for ext_value_data,
+                // as openssl's ASN1_item_d2i will muck around with it, 
+                // even though it's const (at least as of version 0.9.8e). 
+                // gah.
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
-                    const unsigned char * ext_value_data = ext->value->data;
+                const unsigned char * ext_value_data = ext->value->data;
 #else
-                    unsigned char *ext_value_data = ext->value->data;
+                unsigned char *ext_value_data = ext->value->data;
 #endif
-		    if (method->it)
-		    {
- 			ext_data = ASN1_item_d2i(NULL, &ext_value_data,
- 						ext->value->length, 
- 						ASN1_ITEM_ptr(method->it));
-			TRACE("Applied generic conversion!\n");
-		    }
-		    else
-		    {
-			ext_data = method->d2i(NULL, &ext_value_data,
-                                               ext->value->length);
-			TRACE("Applied method specific conversion!\n");
-		    }
-		    
-		    if (method->i2s)
-		    {
-			TRACE("String Extension!\n");
-			char *s = method->i2s(method, ext_data); 
-                        retval = s;
-                        OPENSSL_free(s);
-		    }
-		    else if (method->i2v)
-		    {
-			TRACE("Stack Extension!\n");
-		        CONF_VALUE *val = NULL;
-		        STACK_OF(CONF_VALUE) *svals = NULL;
-		        svals = method->i2v(method, ext_data, NULL);
-		        if (!sk_CONF_VALUE_num(svals))
-                            retval = "EMPTY";
-                        else
+                if (method->it)
+                {
+                    ext_data = ASN1_item_d2i(NULL, &ext_value_data,
+                                             ext->value->length, 
+                                             ASN1_ITEM_ptr(method->it));
+                    TRACE("Applied generic conversion!\n");
+                }
+                else
+                {
+                    ext_data = method->d2i(NULL, &ext_value_data,
+                                           ext->value->length);
+                    TRACE("Applied method specific conversion!\n");
+                }
+                
+                if (method->i2s)
+                {
+                    TRACE("String Extension!\n");
+                    char *s = method->i2s(method, ext_data); 
+                    retval = s;
+                    OPENSSL_free(s);
+                }
+                else if (method->i2v)
+                {
+                    TRACE("Stack Extension!\n");
+                    CONF_VALUE *val = NULL;
+                    STACK_OF(CONF_VALUE) *svals = NULL;
+                    svals = method->i2v(method, ext_data, NULL);
+                    if (!sk_CONF_VALUE_num(svals))
+                        retval = "EMPTY";
+                    else
+                    {
+                        WvStringList list;
+                        for(int i = 0; i < sk_CONF_VALUE_num(svals); i++)
                         {
-                            WvStringList list;
-                            for(int i = 0; i < sk_CONF_VALUE_num(svals); i++)
+                            val = sk_CONF_VALUE_value(svals, i);
+                            if (!val->name)
+                                list.append(WvString(val->value));
+                            else if (!val->value)
+                                list.append(WvString(val->name));
+                            else 
                             {
-                                val = sk_CONF_VALUE_value(svals, i);
-                                if (!val->name)
-                                    list.append(WvString(val->value));
-                                else if (!val->value)
-                                    list.append(WvString(val->name));
-                                else 
-                                {
-                                    WvString pair("%s:%s", val->name, val->value);
-                                    list.append(pair);
-                                }
+                                WvString pair("%s:%s", val->name, val->value);
+                                list.append(pair);
                             }
-                            retval = list.join(";\n");
                         }
-                        sk_CONF_VALUE_pop_free(svals, X509V3_conf_free);
-		    }
-		    else if (method->i2r)
-		    {
-			TRACE("Raw Extension!\n");
-			WvDynBuf retvalbuf;
-			BIO *bufbio = BIO_new(BIO_s_mem());
-			BUF_MEM *bm;
-			method->i2r(method, ext_data, bufbio, 0);
-			BIO_get_mem_ptr(bufbio, &bm);
-			retvalbuf.put(bm->data, bm->length);
-			BIO_free(bufbio);
-			retval = retvalbuf.getstr();
-		    }
+                        retval = list.join(";\n");
+                        }
+                    sk_CONF_VALUE_pop_free(svals, X509V3_conf_free);
+                }
+                else if (method->i2r)
+                {
+                    TRACE("Raw Extension!\n");
+                    WvDynBuf retvalbuf;
+                    BIO *bufbio = BIO_new(BIO_s_mem());
+                    BUF_MEM *bm;
+                    method->i2r(method, ext_data, bufbio, 0);
+                    BIO_get_mem_ptr(bufbio, &bm);
+                    retvalbuf.put(bm->data, bm->length);
+                    BIO_free(bufbio);
+                    retval = retvalbuf.getstr();
+                }
 		    
-		    if (method->it)
-			ASN1_item_free((ASN1_VALUE *)ext_data, 
-				       ASN1_ITEM_ptr(method->it));
-		    else
-			method->ext_free(ext_data);
+                if (method->it)
+                    ASN1_item_free((ASN1_VALUE *)ext_data, 
+                                   ASN1_ITEM_ptr(method->it));
+                else
+                    method->ext_free(ext_data);
 
-		}
-	    }
-	}
-	else
-	{
-	    TRACE("Extension not present!\n");
-	}
-
+            }
+        }
+    }
+    else
+    {
+        TRACE("Extension not present!\n");
     }
 
     if (!!retval)
-    {
-	TRACE("Returning: %s\n", retval);
-	return retval;
-    }
-    else
-	return WvString::null;
+        TRACE("Returning: %s\n", retval);
+
+    return retval;
 }
+
 
 void WvX509::set_extension(int nid, WvStringParm _values)
 {
+    CHECK_CERT_EXISTS_SET("extension");
+
     WvString values(_values);
     X509_EXTENSION *ex = NULL;
     ex = X509V3_EXT_conf_nid(NULL, NULL, nid, values.edit());
@@ -1174,9 +1200,9 @@ bool WvX509::verify(WvStringParm original, WvStringParm signature) const
     return verify(buf, signature);
 }
 
+
 bool WvX509::verify(WvBuf &original, WvStringParm signature) const
-{
-    
+{    
     unsigned char sig_buf[4096];
     size_t sig_size = sizeof(sig_buf);
     WvBase64Decoder().flushstrmem(signature, sig_buf, &sig_size, true);
@@ -1237,23 +1263,26 @@ time_t ASN1_TIME_to_time_t(ASN1_TIME *t)
     return mktime(&newtime);
 }
 
+
 time_t WvX509::get_notvalid_before() const
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_GET("not valid before", 0);
+
     return ASN1_TIME_to_time_t(X509_get_notBefore(cert));
 }
 
 
 time_t WvX509::get_notvalid_after() const
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_GET("not valid after", 0);
+
     return ASN1_TIME_to_time_t(X509_get_notAfter(cert));
 }
 
 
 WvString WvX509::get_ski() const
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_GET("ski", WvString::null);
 
     return get_extension(NID_subject_key_identifier);
 }
@@ -1261,7 +1290,8 @@ WvString WvX509::get_ski() const
 
 WvString WvX509::get_aki() const
 {
-    assert(cert);
+    CHECK_CERT_EXISTS_GET("aki", WvString::null);
+
     WvStringList aki_list;
     parse_stack(get_extension(NID_authority_key_identifier), aki_list, "keyid:");
     if (aki_list.count())
@@ -1273,6 +1303,8 @@ WvString WvX509::get_aki() const
 
 void WvX509::set_ski()
 {
+    CHECK_CERT_EXISTS_SET("ski");
+
     ASN1_OCTET_STRING *oct = M_ASN1_OCTET_STRING_new();
     ASN1_BIT_STRING *pk = cert->cert_info->key->public_key;
     unsigned char pkey_dig[EVP_MAX_MD_SIZE];
@@ -1291,6 +1323,7 @@ void WvX509::set_ski()
 
 void WvX509::set_aki(const WvX509 &cacert)
 {
+    CHECK_CERT_EXISTS_SET("aki");
 
     // can't set a meaningful AKI for subordinate certification without the 
     // parent having an SKI
@@ -1313,3 +1346,4 @@ void WvX509::set_aki(const WvX509 &cacert)
     AUTHORITY_KEYID_free(akeyid);
     //M_ASN1_OCTET_STRING_free(ikeyid);
 }
+
