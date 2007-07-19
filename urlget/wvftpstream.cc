@@ -130,22 +130,19 @@ char *WvFtpStream::get_important_line()
 }
 
 
-bool WvFtpStream::pre_select(SelectInfo &si)
+void WvFtpStream::pre_select(SelectInfo &si)
 {
     SelectRequest oldwant = si.wants;
 
-    if (WvUrlStream::pre_select(si))
-        return true;
+    WvUrlStream::pre_select(si);
 
-    if (data && data->pre_select(si))
-        return true;
+    if (data)
+        data->pre_select(si);
 
-    if (curl && curl->putstream && curl->putstream->pre_select(si))
-        return true;
+    if (curl && curl->putstream) 
+        curl->putstream->pre_select(si);
 
     si.wants = oldwant;
-
-    return false;
 }
 
 

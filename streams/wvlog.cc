@@ -79,13 +79,23 @@ bool WvLog::isok() const
 }
 
 
-bool WvLog::pre_select(SelectInfo &si)
+void WvLog::pre_select(SelectInfo &si)
+{
+    // a wvlog is always writable...
+    if (si.wants.writable)
+	si.msec_timeout = 0;
+    else
+	WvStream::pre_select(si);
+}
+
+
+bool WvLog::post_select(SelectInfo &si)
 {
     // a wvlog is always writable...
     if (si.wants.writable)
 	return true;
     else
-	return WvStream::pre_select(si);
+	return WvStream::post_select(si);
 }
 
 

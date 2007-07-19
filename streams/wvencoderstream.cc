@@ -196,10 +196,19 @@ size_t WvEncoderStream::uwrite(const void *buf, size_t size)
 }
 
 
-bool WvEncoderStream::pre_select(SelectInfo &si)
+void WvEncoderStream::pre_select(SelectInfo &si)
 {
-    bool surething = false;
+    WvStreamClone::pre_select(si);
 
+    if (si.wants.readable && readoutbuf.used() != 0)
+        si.msec_timeout = 0;     
+}
+
+
+bool WvEncoderStream::post_select(SelectInfo &si)
+{
+    bool sure = false;
+    
     // if we have buffered input data and we want to check for
     // readability, then cause a callback to occur that will
     // hopefully ask us for more data via uread()
@@ -207,7 +216,7 @@ bool WvEncoderStream::pre_select(SelectInfo &si)
     {
         pull(0); // try an encode
         if (readoutbuf.used() != 0)
-            surething = true;
+            sure = true;
     }
     
     // try to push pending encoded output to cloned stream
@@ -215,10 +224,9 @@ bool WvEncoderStream::pre_select(SelectInfo &si)
     push(false /*flush*/, false /*finish*/);
     
     // consult the underlying stream
-    if (WvStreamClone::pre_select(si))
-        surething = true;
-    // fprintf(stderr, "encoderstream sure_thing=%d\n", surething);
-    return surething;
+    sure |= WvStreamClone::post_select(si);
+
+    return sure;
 }
 
 

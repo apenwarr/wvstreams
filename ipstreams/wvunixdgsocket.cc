@@ -84,7 +84,7 @@ size_t WvUnixDGSocket::uwrite(const void *buf, size_t count)
     return count;
 }
 
-bool WvUnixDGSocket::pre_select(SelectInfo &si)
+void WvUnixDGSocket::pre_select(SelectInfo &si)
 {
     SelectRequest oldwant = si.wants;
     if (!bufs.isempty())
@@ -102,10 +102,9 @@ bool WvUnixDGSocket::pre_select(SelectInfo &si)
             si.msec_timeout = alarm_remaining();
     }
 
-    bool sure = WvFDStream::pre_select(si);
+    WvFDStream::pre_select(si);
 
     si.wants = oldwant;
-    return sure;
 }
 
 bool WvUnixDGSocket::post_select(SelectInfo &si)

@@ -15,13 +15,20 @@ public:
     ReadableStream()
         { yes_readable = false; }
     
-    virtual bool pre_select(SelectInfo &si)
+    virtual void pre_select(SelectInfo &si)
     {
-	int ret = WvStream::pre_select(si);
+	WvStream::pre_select(si);
 	if (yes_readable && si.wants.readable)
-	    return true;
-	else
-	    return ret;
+	    si.msec_timeout = 0;
+    }
+
+    virtual bool post_select(SelectInfo &si)
+    {
+        bool ret = WvStream::post_select(si);
+        if (yes_readable && si.wants.readable)
+            return true;
+        
+        return ret;
     }
 };
 

@@ -86,7 +86,7 @@ private:
 };
 
 
-bool WvIStreamList::pre_select(SelectInfo &si)
+void WvIStreamList::pre_select(SelectInfo &si)
 {
     //BoolGuard guard(in_select);
     bool already_sure = false;
@@ -119,7 +119,6 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 	WvCrashInfo::in_stream = &s;
 	WvCrashInfo::in_stream_id = i.link->id;
 #endif
-
         si.wants = oldwant;
 
 	if (!s.isok())
@@ -130,14 +129,8 @@ bool WvIStreamList::pre_select(SelectInfo &si)
 		i.xunlink();
 	    continue;
 	}
-	else if (s.pre_select(si))
-	{
-	    // printf("pre_select sure_thing: '%s'\n", i.link->id);
-	    sure_thing.append(&s, false, i.link->id);
-	    wvassert(si.msec_timeout == 0, "pre_select for \"%s\" (%s) "
-		     "returned true, but has non-zero timeout",
-		     i.link->id, ptr2str(&s));
-	}
+	else 
+            s.pre_select(si);
     }
 
     WvCrashInfo::in_stream = old_in_stream;
@@ -149,10 +142,8 @@ bool WvIStreamList::pre_select(SelectInfo &si)
     
     si.wants = oldwant;
 
-    if (already_sure || !sure_thing.isempty())
+    if (already_sure)
 	si.msec_timeout = 0;
-
-    return already_sure || !sure_thing.isempty();
 }
 
 
