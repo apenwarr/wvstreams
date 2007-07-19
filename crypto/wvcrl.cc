@@ -12,6 +12,23 @@
 #include "wvx509mgr.h"
 #include "wvbase64.h"
 
+
+static ASN1_INTEGER * serial_to_int(WvStringParm serial)
+{
+    if (!!serial)
+    {
+        BIGNUM *bn = NULL;
+        BN_dec2bn(&bn, serial);
+        ASN1_INTEGER *retval = ASN1_INTEGER_new();
+        retval = BN_to_ASN1_INTEGER(bn, retval);
+        BN_free(bn);
+	return retval;
+    }
+    else
+	return NULL;
+}
+
+
 WvCRL::WvCRL()
     : debug("X509_CRL", WvLog::Debug5)
 {
@@ -356,21 +373,6 @@ bool WvCRL::isrevoked(WvStringParm serial_number)
     return false;
 }
     
-
-ASN1_INTEGER *WvCRL::serial_to_int(WvStringParm serial)
-{
-    if (!!serial)
-    {
-        BIGNUM *bn = NULL;
-        BN_dec2bn(&bn, serial);
-        ASN1_INTEGER *retval = ASN1_INTEGER_new();
-        retval = BN_to_ASN1_INTEGER(bn, retval);
-        BN_free(bn);
-	return retval;
-    }
-    else
-	return NULL;
-}
 
 WvCRL::Valid WvCRL::validate(WvX509 &cacert)
 {

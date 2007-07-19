@@ -145,14 +145,9 @@ public:
      */
     int numcerts() const;
     
-
-
 private:
     mutable WvLog debug;
-
     X509_CRL *crl;
-
-    ASN1_INTEGER *serial_to_int(WvStringParm serial);
 };
 
 #endif // __WVCRL_H

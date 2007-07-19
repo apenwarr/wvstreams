@@ -369,7 +369,24 @@ WVTEST_MAIN("certificate policies")
     WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
     WVFAIL(cacert.get_policies(policies)); 
     WVPASSEQ(policies.count(), 0);
-    // FIXME: test code to set CP oids when it's added properly
+}
+
+
+WVTEST_MAIN("certificate policies set and get")
+{
+    WvX509Mgr x("cn=test.foo.com,dc=foo,dc=com", DEFAULT_KEYLEN, false);
+    WvStringList policies_in;
+    policies_in.append("1.2.3.4");
+    policies_in.append("1.2.3.5");
+    x.set_policies(policies_in);
+
+    WvStringList policies_out;
+    x.get_policies(policies_out);
+
+    WVPASSEQ(policies_in.popstr(), policies_out.popstr());
+    WVPASSEQ(policies_in.popstr(), policies_out.popstr());
+    WVPASSEQ(policies_in.count(), 0);
+    WVPASSEQ(policies_out.count(), 0);
 }
 
 

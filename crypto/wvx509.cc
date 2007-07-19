@@ -318,31 +318,33 @@ WvString WvX509::certreq(WvStringParm subject, const WvRSAKey &rsa)
 
 bool WvX509::validate(WvX509 *cacert) const
 {
-    bool retval = true;
-    
-    if (cert != NULL)
+    if (cert == NULL)
     {
-	// Check and make sure that the certificate is still valid
-	if (X509_cmp_current_time(X509_get_notAfter(cert)) < 0)
-        {
-            debug("Certificate has expired.\n");
-	    retval = false;
-	}
-
-        if (X509_cmp_current_time(X509_get_notBefore(cert)) > 0)
-        {
-            debug("Certificate is not yet valid.\n");
-            retval = false;
-        }
-
-        if (cacert)
-        {
-            retval &= signedbyca(*cacert);
-            retval &= issuedbyca(*cacert);
-        }
+        debug(WvLog::Warning, "Tried to validate certificate against CA, but "
+              "certificate is blank!\n");
+        return false;
     }
-    else
-	debug("Peer doesn't have a certificate.\n");
+
+    bool retval = true;
+
+    // Check and make sure that the certificate is still valid
+    if (X509_cmp_current_time(X509_get_notAfter(cert)) < 0)
+    {
+        debug("Certificate has expired.\n");
+        retval = false;
+    }
+    
+    if (X509_cmp_current_time(X509_get_notBefore(cert)) > 0)
+    {
+        debug("Certificate is not yet valid.\n");
+        retval = false;
+    }
+
+    if (cacert)
+    {
+        retval &= signedbyca(*cacert);
+        retval &= issuedbyca(*cacert);
+    }
     
     return retval;
 }
@@ -350,6 +352,14 @@ bool WvX509::validate(WvX509 *cacert) const
 
 bool WvX509::signedbyca(WvX509 &cacert) const
 {
+    if (!cert || !cacert.cert)
+    {
+        debug(WvLog::Warning, "Tried to determine if certificate was signed "
+              "by CA, but either client or CA certificate (or both) are "
+              "blank.\n");
+        return false;
+    } 
+
     EVP_PKEY *pkey = X509_get_pubkey(cacert.cert);
     int result = X509_verify(cert, pkey); 
     EVP_PKEY_free(pkey);
@@ -357,12 +367,12 @@ bool WvX509::signedbyca(WvX509 &cacert) const
     if (result < 0)
     {
         debug("There was an error determining whether or not we were signed by "
-              "CA '%s'\n", cacert.get_subject());
+              "CA '%s'.\n", cacert.get_subject());
         return false;
     }
     bool issigned = (result > 0);
 
-    debug("Certificate was%s signed by CA %s\n", issigned ? "" : " NOT", 
+    debug("Certificate was%s signed by CA %s.\n", issigned ? "" : " NOT", 
           cacert.get_subject());
 
     return issigned;
@@ -371,7 +381,15 @@ bool WvX509::signedbyca(WvX509 &cacert) const
 
 bool WvX509::issuedbyca(WvX509 &cacert) const
 {
-    int ret = X509_check_issued(cacert.get_cert(), cert);
+    if (!cert || !cacert.cert)
+    {
+        debug(WvLog::Warning, "Tried to determine if certificate was issued "
+              "by CA, but either client or CA certificate (or both) are "
+              "blank.\n");
+        return false;
+    } 
+
+    int ret = X509_check_issued(cacert.cert, cert);
     debug("issuedbyca: %s==X509_V_OK(%s)\n", ret, X509_V_OK);
     if (ret != X509_V_OK)
 	return false;
@@ -732,7 +750,8 @@ bool WvX509::get_basic_constraints(bool &ca, int &pathlen) const
         {
             if ((constraints->pathlen->type == V_ASN1_NEG_INTEGER) || !ca)
             {
-                debug("Path length type not valid when getting basic constraints.\n");
+                debug("Path length type not valid when getting basic "
+                      "constraints.\n");
                 BASIC_CONSTRAINTS_free(constraints);
                 pathlen = 0;
                 return false;
@@ -902,8 +921,10 @@ static void add_aia(WvStringParm type, WvString identifier, AUTHORITY_INFO_ACCES
 
 
 void WvX509::set_aia(WvStringList &ca_urls,
-                        WvStringList &responders)
+                     WvStringList &responders)
 {
+    CHECK_CERT_EXISTS_SET("aia");
+
     AUTHORITY_INFO_ACCESS *ainfo = sk_ACCESS_DESCRIPTION_new_null();
 
     WvStringList::Iter i(ca_urls);
@@ -1025,13 +1046,22 @@ void WvX509::set_policies(WvStringList &policy_oids)
 {
     CHECK_CERT_EXISTS_SET("policies");
 
-#if 0
-    WvString url(_url);
-    ASN1_OBJECT *pobj = OBJ_txt2obj(oid, 0);
-    POLICYINFO *pol = POLICYINFO_new();
-    POLICYQUALINFO *qual = NULL;
     STACK_OF(POLICYINFO) *sk_pinfo = sk_POLICYINFO_new_null();
-    pol->policyid = pobj;
+
+    WvStringList::Iter i(policy_oids);
+    for (i.rewind(); i.next();)
+    {
+        ASN1_OBJECT *pobj = OBJ_txt2obj(i(), 0);
+        POLICYINFO *pol = POLICYINFO_new();
+        pol->policyid = pobj;
+        sk_POLICYINFO_push(sk_pinfo, pol);
+    }
+
+#if 0
+    // this code would let you set URL information to a policy
+    // qualifier
+    POLICYQUALINFO *qual = NULL;
+    WvString url(_url);
     if (!!url)
     {
 	pol->qualifiers = sk_POLICYQUALINFO_new_null();
@@ -1041,13 +1071,13 @@ void WvX509::set_policies(WvStringList &policy_oids)
 	ASN1_STRING_set(qual->d.cpsuri, url.edit(), url.len());
 	sk_POLICYQUALINFO_push(pol->qualifiers, qual);
     }
-    sk_POLICYINFO_push(sk_pinfo, pol);
+#endif
+
     X509_EXTENSION *ex = X509V3_EXT_i2d(NID_certificate_policies, 0, 
 					sk_pinfo);
     X509_add_ext(cert, ex, -1);
     X509_EXTENSION_free(ex);
-    sk_POLICYINFO_free(sk_pinfo);
-#endif
+    sk_POLICYINFO_pop_free(sk_pinfo, POLICYINFO_free);
 }
 
 
@@ -1344,6 +1374,5 @@ void WvX509::set_aki(const WvX509 &cacert)
     X509_add_ext(cert, ext, -1);
     X509_EXTENSION_free(ext); 
     AUTHORITY_KEYID_free(akeyid);
-    //M_ASN1_OCTET_STRING_free(ikeyid);
 }
 
