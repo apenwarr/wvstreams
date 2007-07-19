@@ -22,7 +22,12 @@ exec 3>&1
 if [ -z "$DISPLAY" ]; then
     exec "$@"
 else
+    WVTESTMETER=$WVSTREAMS_SRC/wvtestmeter
+    if [ ! -e $WVSTREAMS_SRC/wvtestmeter ]; then
+       WVTESTMETER=wvtestmeter
+    fi
+
     ( "$@"; reportcode $?) \
-    	| tee /dev/fd/3 | ($WVSTREAMS_SRC/wvtestmeter || cat)
+    	| tee /dev/fd/3 | ($WVTESTMETER || cat)
     exit ${PIPESTATUS[0]}
 fi
