@@ -164,7 +164,6 @@ class WvHttpStream : public WvUrlStream
 public:
     static bool global_enable_pipelining;
     bool enable_pipelining;
-    bool sure;
     
 private:
     int pipeline_test_count;
@@ -193,7 +192,7 @@ public:
     virtual ~WvHttpStream();
 
     virtual void close();
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     virtual size_t remaining()
@@ -233,7 +232,7 @@ public:
     WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 		WvStringParm _password);
 
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void close();
     virtual void execute();
@@ -259,7 +258,7 @@ public:
     WvHttpPool();
     virtual ~WvHttpPool();
     
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     

@@ -88,11 +88,12 @@ static void wrn(int fd, int num)
 // convert 'addr' to hex and write it to fd.
 static void wra(int fd, const void *addr)
 {
+    const unsigned int ptrbitsshift = (sizeof(ptrdiff_t) << 3) - 4;
     char digits[] = "0123456789ABCDEF";
-    
+
     write(fd, "0x", 2);
-    for (int shift=28; shift>=0; shift-=4)
-        write(fd, &digits[(((unsigned)addr)>>shift)&0xF], 1);
+    for (int shift=ptrbitsshift; shift>=0; shift-=4)
+        write(fd, &digits[(((ptrdiff_t)addr)>>shift)&0xF], 1);
 }
 
 

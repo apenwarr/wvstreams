@@ -11,26 +11,29 @@ WvMagicLoopback::WvMagicLoopback(size_t size)
 }
 
 
-bool WvMagicLoopback::pre_select(SelectInfo &si)
+void WvMagicLoopback::pre_select(SelectInfo &si)
 {
     loop.drain();
 
     loop.pre_select(si);
 
-    if (si.wants.readable)
-    {
-        if (circle.used() > 0)
-            return true;
-    }
-    
-    if (si.wants.writable)
-    {   
-        if (circle.left() > 0)
-            return true;
-    }
-
-    return false;
+    if ((si.wants.readable && circle.used() > 0) ||
+        (si.wants.writable && circle.left() > 0))
+        si.msec_timeout = 0;
 }  
+
+
+bool WvMagicLoopback::post_select(SelectInfo &si)
+{
+    bool ret = WvStream::post_select(si);
+
+    if ((si.wants.readable && circle.used() > 0) ||
+        (si.wants.writable && circle.left() > 0))
+        ret = true;
+
+    return ret;
+}
+
 
 size_t WvMagicLoopback::uread(void *buf, size_t len)
 {

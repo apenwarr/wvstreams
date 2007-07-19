@@ -43,7 +43,10 @@ public:
     void clearhost(WvStringParm hostname);
     
     /** add all of our waiting fds to an fd_set for use with select(). */
-    bool pre_select(WvStringParm hostname, WvStream::SelectInfo &si);
+    void pre_select(WvStringParm hostname, WvStream::SelectInfo &si);
+
+    /** determines whether the resolving process is complete. */
+    bool post_select(WvStringParm hostname, WvStream::SelectInfo &si);
 };
 
 #endif // __WVRESOLVER_H

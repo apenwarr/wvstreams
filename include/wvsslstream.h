@@ -44,7 +44,7 @@ public:
     /** Cleans up everything (calls close + frees up the SSL Objects used) */
     virtual ~WvSSLStream();
     
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     
     virtual void close();

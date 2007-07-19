@@ -487,16 +487,16 @@ void WvSSLStream::nowrite()
 }
 
 
-bool WvSSLStream::pre_select(SelectInfo &si)
+void WvSSLStream::pre_select(SelectInfo &si)
 {
-    bool result = WvStreamClone::pre_select(si);
+    WvStreamClone::pre_select(si);
     // the SSL library might be keeping its own internal buffers
-    // or we might have left buffered data behind deliberately
+    // or we might have left buffered dat)a behind deliberately
     if (si.wants.readable && (read_pending || read_bouncebuf.used()))
     {
 //	debug("pre_select: try reading again immediately.\n");
 	si.msec_timeout = 0;
-	return true;
+	return;
     }
 
     // if we're not ssl_connected yet, I can guarantee we're not actually
@@ -505,11 +505,10 @@ bool WvSSLStream::pre_select(SelectInfo &si)
     bool oldwr = si.wants.writable;
     if (!sslconnected)
 	si.wants.writable = !!writecb;
-    result = WvStreamClone::pre_select(si);
+    WvStreamClone::pre_select(si);
     si.wants.writable = oldwr;
 
-//    debug("in pre_select (%s)\n", result);
-    return result;
+//    debug("in pre_select (msec_timeout: %s)\n", si.msec_timeout);
 }
 
  

@@ -23,7 +23,7 @@ public:
     WvIStreamList();
     virtual ~WvIStreamList();
     virtual bool isok() const;
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     

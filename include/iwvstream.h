@@ -74,7 +74,7 @@ public:
     
     // needed for select().
     // Some say that pre_select() should go away.
-    virtual bool pre_select(SelectInfo &si) = 0;
+    virtual void pre_select(SelectInfo &si) = 0;
     virtual bool post_select(SelectInfo &si) = 0;
     
     // these are now the official way to get/put data to your stream.

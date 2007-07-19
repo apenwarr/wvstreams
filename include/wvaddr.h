@@ -249,7 +249,7 @@ protected:
 public:
     unsigned char binaddr[4];
 
-    WvIPAddr(const unsigned char _binaddr[4])
+    WvIPAddr(const unsigned char *_binaddr)
         { if (_binaddr) memcpy(binaddr, _binaddr, 4); }
     WvIPAddr(const uint32_t _binaddr = 0)
         { memcpy(binaddr, &_binaddr, 4); }

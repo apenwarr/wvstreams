@@ -806,7 +806,7 @@ void WvStream::flush_then_close(int msec_timeout)
 }
 
 
-bool WvStream::pre_select(SelectInfo &si)
+void WvStream::pre_select(SelectInfo &si)
 {
     maybe_autoclose();
     
@@ -815,7 +815,7 @@ bool WvStream::pre_select(SelectInfo &si)
     if (!si.inherit_request && alarmleft == 0)
     {
 	si.msec_timeout = 0;
-	return true; // alarm has rung
+	return; // alarm has rung
     }
 
     if (!si.inherit_request)
@@ -829,12 +829,11 @@ bool WvStream::pre_select(SelectInfo &si)
     if (si.wants.readable && inbuf.used() && inbuf.used() >= queue_min)
     {
 	si.msec_timeout = 0; // already ready
-	return true;
+	return;
     }
     if (alarmleft >= 0
       && (alarmleft < si.msec_timeout || si.msec_timeout < 0))
 	si.msec_timeout = alarmleft + 10;
-    return false;
 }
 
 
@@ -857,7 +856,7 @@ bool WvStream::post_select(SelectInfo &si)
 }
 
 
-bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
+void WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     bool readable, bool writable, bool isexcept, bool forceable)
 {
     FD_ZERO(&si.read);
@@ -882,21 +881,18 @@ bool WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     si.inherit_request = ! forceable;
     si.global_sure = false;
 
-    if (!isok()) return false;
+    if (!isok()) return;
 
     wvstime_sync();
 
-    bool sure = pre_select(si);
+    pre_select(si);
     if (globalstream && forceable && (globalstream != this))
     {
 	WvStream *s = globalstream;
 	globalstream = NULL; // prevent recursion
-	si.global_sure = s->xpre_select(si, SelectRequest(false, false, false));
+	s->xpre_select(si, SelectRequest(false, false, false));
 	globalstream = s;
     }
-    if (sure || si.global_sure)
-        si.msec_timeout = 0;
-    return sure;
 }
 
 
@@ -968,25 +964,19 @@ bool WvStream::_select(time_t msec_timeout,
     assert(wsid_map && wsid_map->exists(my_wsid)); // Detect use of deleted stream
         
     SelectInfo si;
-    bool sure = _build_selectinfo(si, msec_timeout,
-				  readable, writable, isexcept, forceable);
+    _build_selectinfo(si, msec_timeout,
+                      readable, writable, isexcept, forceable);
     
     if (!isok())
 	return false;
     
-    // the eternal question: if 'sure' is true already, do we need to do the
-    // rest of this stuff?  If we do, it might increase fairness a bit, but
-    // it encourages select()ing when we know something fishy has happened -
-    // when a stream is !isok() in a list, for example, pre_select() returns
-    // true.  If that's the case, our SelectInfo structure might not be
-    // quite right (eg. it might be selecting on invalid fds).  That doesn't
-    // sound *too* bad, so let's go for the fairness.
-
+    bool sure = false;
     int sel = _do_select(si);
     if (sel >= 0)
-        sure = _process_selectinfo(si, forceable) || sure; // note the order
+        sure = _process_selectinfo(si, forceable); 
     if (si.global_sure && globalstream && forceable && (globalstream != this))
 	globalstream->callback();
+
     return sure;
 }
 

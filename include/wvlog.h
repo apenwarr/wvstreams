@@ -90,7 +90,8 @@ public:
     virtual bool isok() const;
     
     /* always writable */
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
 
     /**
      * change the loglevel.  This returns the object again, so you can
