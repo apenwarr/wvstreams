@@ -21,7 +21,7 @@
 #include "uniclientconn.h"
 #include "unisecuregen.h"
 #include "unipermgen.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "uniconfroot.h"
 #include "wvstrutils.h"
 #include "wvfileutils.h"

@@ -1,7 +1,7 @@
 #include "wvtest.h"
 #include "wvsslstream.h"
 #include "wvloopback2.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "wvrsa.h"
 #include "wvtcp.h"
 #include "wvistreamlist.h"

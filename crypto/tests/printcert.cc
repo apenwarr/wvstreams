@@ -1,13 +1,11 @@
-#include "wvx509.h"                        
+#include "wvargs.h"
+#include "wvcrash.h"
 #include "wvfile.h"
 #include "wvlog.h"   
 #include "wvstrutils.h"
-#include "wvcrash.h"
+#include "wvx509.h"                        
 
-#include <openssl/pem.h>   
-#include <openssl/x509v3.h>
-
-void print_details(WvX509Mgr *x509)
+void print_details(WvX509 *x509)
 {
     wvcon->print("Subject: %s\n", x509->get_subject());
     wvcon->print("Issuer: %s\n", x509->get_issuer());
@@ -20,42 +18,67 @@ void print_details(WvX509Mgr *x509)
     wvcon->print("Key Usage: %s\n", x509->get_key_usage());
     wvcon->print("Ext Key Usage: %s\n", x509->get_ext_key_usage());
     wvcon->print("Authority Info Access: \n%s\n", x509->get_aia());
-    WvStringList urls;
-    wvcon->print("CA Issuers available from:\n%s\n", x509->get_ca_urls(&urls)->join("\n"));
-    urls.zap();
-    wvcon->print("OCSP Responders available from:\n%s\n", x509->get_ocsp(&urls)->join("\n"));
-    wvcon->print("CRL Distribution Point:\n%s\n", x509->get_crl_dp());
-    wvcon->print("Certificate Policy: %s\n", x509->get_cp_oid());
-}
+    WvStringList list;
+    x509->get_ca_urls(list);
+    wvcon->print("CA Issuers available from:\n%s\n", list.join("\n"));
+    list.zap();
+    x509->get_ocsp(list);
+    wvcon->print("OCSP Responders available from:\n%s\n", list.join("\n"));
+    list.zap();
+    x509->get_crl_urls(list); 
+    wvcon->print("CRL Distribution Points:\n%s\n", list.join("\n"));
+    list.zap();
+    x509->get_policies(list);
+    wvcon->print("Certificate Policy OIDs:\n%s\n", list.join("\n"));
 
+    int requireExplicitPolicy, inhibitPolicyMapping;
+    x509->get_policy_constraints(requireExplicitPolicy, inhibitPolicyMapping);
+    wvcon->print("Certificate Policy Constraints: requireExplicitPolicy: %s "
+                 "inhibitPolicyMapping: %s\n", requireExplicitPolicy, 
+                 inhibitPolicyMapping);
+
+    WvX509::PolicyMapList maplist;
+    x509->get_policy_mapping(maplist);
+    wvcon->print("Policy mappings:\n");
+    WvX509::PolicyMapList::Iter i(maplist);
+    for (i.rewind(); i.next();)
+        wvcon->print("%s -> %s\n", i().issuer_domain, i().subject_domain);
+}
 
 
 int main(int argc, char **argv)
 {
     wvcrash_setup(argv[0]);
-    
-    WvDynBuf buffer;
-    
-    if (argc < 2)
+
+    WvString certtype = "pem";
+    WvStringList remaining_args;
+
+    WvArgs args;
+    args.add_required_arg("certificate");
+    args.add_option('t', "type", "Certificate type: der or pem (default: pem)", 
+                    "type", certtype);
+    if (!args.process(argc, argv, &remaining_args) || remaining_args.count() < 1)
     {
-	wvcon->print("You must specify a certificate in PEM format\n");
-	return -1;
+        args.print_help(argc, argv);
+        return -1;
     }
-    
-    WvFile f(argv[1], O_RDONLY);
-    
-    while (f.isok())
+    // FIXME: not working yet
+#if 0
+    WvX509 x509;
+    if (certtype == "der")
+        x509.load(WvX509Mgr::CertDER, remaining_args.popstr());   
+    else if (certtype == "pem")
+        x509.load(WvX509Mgr::CertPEM, remaining_args.popstr());
+    else
     {
-	f.read(buffer, 1000);
+        wverr->print("Invalid certificate type '%s'\n", certtype);
+        return -1;
     }
-    f.close();
-    
-    WvX509Mgr x509;
-    x509.decode(WvX509Mgr::CertPEM, buffer.getstr());
-    
-    print_details(&x509);
-    
-    
-    
+
+    if (x509.isok())
+        print_details(&x509);
+    else
+        wverr->print("X509 certificate not valid\n");
+#endif    
     return 0;
 }
