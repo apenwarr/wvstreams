@@ -411,6 +411,13 @@ void WvX509::encode(const DumpMode mode, WvBuf &buf) const
     if (mode == CertFileDER || mode == CertFilePEM)
         return; // file modes are no ops with encode
 
+    if (!cert)
+    {
+        debug(WvLog::Warning, "Tried to encode certificate, but certificate "
+              "is blank!\n");
+        return;
+    }
+
     debug("Encoding X509 certificate.\n");
 
     if (mode == CertHex)

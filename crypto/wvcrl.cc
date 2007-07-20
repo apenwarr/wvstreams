@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
  *
- * X.509v3 CRL management classe.
+ * X.509v3 CRL management classes.
  */
 
 #include <openssl/x509v3.h>
@@ -12,6 +12,12 @@
 #include "wvx509mgr.h"
 #include "wvbase64.h"
 
+static const char * warning_str_get = "Tried to determine %s, but CRL is blank!\n";
+#define CHECK_CRL_EXISTS_GET(x, y)                                      \
+    if (!crl) {                                                         \
+        debug(WvLog::Warning, warning_str_get, x);                      \
+        return y;                                                       \
+    }
 
 static ASN1_INTEGER * serial_to_int(WvStringParm serial)
 {
@@ -24,8 +30,8 @@ static ASN1_INTEGER * serial_to_int(WvStringParm serial)
         BN_free(bn);
 	return retval;
     }
-    else
-	return NULL;
+
+    return NULL;
 }
 
 
@@ -58,9 +64,11 @@ bool WvCRL::isok() const
 }
     
 
-bool WvCRL::signedbyca(WvX509 &cacert)
+bool WvCRL::signedbyca(const WvX509 &cacert) const
 {
-    EVP_PKEY *pkey = X509_get_pubkey(cacert.get_cert());
+    CHECK_CRL_EXISTS_GET("if CRL is signed by CA", false);
+
+    EVP_PKEY *pkey = X509_get_pubkey(cacert.cert);
     int result = X509_CRL_verify(crl, pkey);
     EVP_PKEY_free(pkey);
     if (result < 0)
@@ -78,9 +86,9 @@ bool WvCRL::signedbyca(WvX509 &cacert)
 }
 
 
-bool WvCRL::issuedbyca(WvX509 &cacert)
+bool WvCRL::issuedbyca(const WvX509 &cacert) const
 {
-    assert(crl);
+    CHECK_CRL_EXISTS_GET("if CRL is issued by CA", false);
 
     WvString name = get_issuer();
     bool issued = (cacert.get_subject() == name);
@@ -97,8 +105,10 @@ bool WvCRL::issuedbyca(WvX509 &cacert)
 }
 
 
-bool WvCRL::expired()
+bool WvCRL::expired() const
 {
+    CHECK_CRL_EXISTS_GET("if CRL has expired", false);
+
     if (X509_cmp_current_time(X509_CRL_get_nextUpdate(crl)) < 0)
     {
         debug("CRL appears to be expired.\n");
@@ -110,16 +120,18 @@ bool WvCRL::expired()
 }
 
 
-bool WvCRL::has_critical_extensions()
+bool WvCRL::has_critical_extensions() const
 {
+    CHECK_CRL_EXISTS_GET("if CRL has critical extensions", false);
+
     int critical = X509_CRL_get_ext_by_critical(crl, 1, 0);
     return (critical > 0);
 }
 
 
-WvString WvCRL::get_aki()
+WvString WvCRL::get_aki() const
 {
-    assert(crl);
+    CHECK_CRL_EXISTS_GET("CRL's AKI", WvString::null);
 
     AUTHORITY_KEYID *aki = NULL;
     int i;
@@ -142,13 +154,14 @@ WvString WvCRL::get_aki()
 }
 
 
-WvString WvCRL::get_issuer()
+WvString WvCRL::get_issuer() const
 { 
-    assert(crl);
+    CHECK_CRL_EXISTS_GET("CRL's issuer", WvString::null);
 
     char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);
     WvString retval(name);
     OPENSSL_free(name);
+
     return retval;
 }
 
@@ -157,6 +170,7 @@ WvString WvCRL::encode(const DumpMode mode) const
 {
     WvDynBuf retval;
     encode(mode, retval);
+
     return retval.getstr();
 }
 
@@ -165,6 +179,12 @@ void WvCRL::encode(const DumpMode mode, WvBuf &buf) const
 {
     if (mode == CRLFileDER || mode == CRLFilePEM)
         return; // file modes are no ops with encode
+
+    if (!crl)
+    {
+        debug(WvLog::Warning, "Tried to encode CRL, but CRL is blank!\n");
+        return;
+    }
 
     BIO *bufbio = BIO_new(BIO_s_mem());
     BUF_MEM *bm;
@@ -278,41 +298,9 @@ void WvCRL::decode(const DumpMode mode, WvBuf &buf)
 }
 
 
-#if 0
-void WvCRL::load(const DumpMode mode, WvStringParm fname)
+bool WvCRL::isrevoked(const WvX509 &cert) const
 {
-    if (crl)
-    {
-	debug("Replacing already existant CRL\n");
-	X509_CRL_free(crl);
-	crl = NULL;
-    }
-
-    if (mode == DER)
-    {
-	BIO *bio = BIO_new(BIO_s_file());
-        if (BIO_read_filename(bio, fname.cstr()) <= 0)
-        {
-            debug("Loading non-existent CRL?\n");
-            BIO_free(bio);
-            return;
-        }
-        if (!(crl = d2i_X509_CRL_bio(bio, &crl)))
-        {
-            debug(WvLog::Warning, "Tried to load CRL, but was invalid.\n");
-        }
-        BIO_free(bio);
-        return;
-    }
-
-    // FIXME: we don't support anything else
-    assert(0);
-}
-#endif
-
-bool WvCRL::isrevoked(WvX509 &cert)
-{
-    if (cert.get_cert())
+    if (cert.cert)
     {
         debug("Checking to see if certificate with name '%s' and serial "
               "number '%s' is revoked.\n", cert.get_subject(), 
@@ -322,14 +310,16 @@ bool WvCRL::isrevoked(WvX509 &cert)
     else
     {
 	debug(WvLog::Error, "Given certificate to check revocation status, "
-              "but certificate is bad. Declining.\n");
+              "but certificate is blank. Declining.\n");
 	return true;
     }
 }
 
 
-bool WvCRL::isrevoked(WvStringParm serial_number)
+bool WvCRL::isrevoked(WvStringParm serial_number) const
 {
+    CHECK_CRL_EXISTS_GET("if certificate is revoked in CRL", false);
+
     if (!!serial_number)
     {
 	ASN1_INTEGER *serial = serial_to_int(serial_number);
@@ -374,7 +364,7 @@ bool WvCRL::isrevoked(WvStringParm serial_number)
 }
     
 
-WvCRL::Valid WvCRL::validate(WvX509 &cacert)
+WvCRL::Valid WvCRL::validate(const WvX509 &cacert) const
 {
     if (!issuedbyca(cacert))
         return NOT_THIS_CA;
@@ -398,6 +388,8 @@ WvCRL::Valid WvCRL::validate(WvX509 &cacert)
 
 int WvCRL::numcerts() const
 {
+    CHECK_CRL_EXISTS_GET("number of certificates in CRL", 0);
+
     STACK_OF(X509_REVOKED) *rev;
     rev = X509_CRL_get_REVOKED(crl);
     int certcount = sk_X509_REVOKED_num(rev);
@@ -411,6 +403,13 @@ int WvCRL::numcerts() const
 
 void WvCRL::addcert(const WvX509 &cert)
 {
+    if (!crl)
+    {
+        debug(WvLog::Warning, "Tried to add certificate to CRL, but CRL is "
+              "blank!\n");
+        return;
+    }
+
     if (cert.isok())
     {
 	ASN1_INTEGER *serial = serial_to_int(cert.get_serial());
@@ -431,14 +430,3 @@ void WvCRL::addcert(const WvX509 &cert)
     }
 }
 
-#if 0
-void WvCRL::setupcrl()
-{
-    char *name = X509_NAME_oneline(X509_CRL_get_issuer(crl), 0, 0);
-    issuer = name;
-    OPENSSL_free(name);
-    STACK_OF(X509_REVOKED) *rev;
-    rev = X509_CRL_get_REVOKED(crl);
-    certcount = sk_X509_REVOKED_num(rev);
-}
-#endif

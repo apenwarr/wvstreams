@@ -59,26 +59,26 @@ public:
      * Check the CRL in crl against the CA certificate in cert
      * - returns true if CRL was signed by that CA certificate.
      */
-    bool signedbyca(WvX509 &cacert);
+    bool signedbyca(const WvX509 &cacert) const;
 
     /**
      * Check the issuer name of the CRL in crl against the CA certificate in cert
      * - returns true if the names match.
      */
-    bool issuedbyca(WvX509 &cacert);
+    bool issuedbyca(const WvX509 &cacert) const;
 
     /**
      * Checks to see if the CRL is expired (i.e.: the present time is past the
      * nextUpdate extension).
      * - returns true if CRL has expired.
      */
-    bool expired();
+    bool expired() const;
 
     /*
      * Checks to see if the CRL has any critical extensions in it.
      * - returns true if the CRL has any critical extensions.
      */
-    bool has_critical_extensions();
+    bool has_critical_extensions() const;
 
     /**
      * Type for @ref validate() method:
@@ -97,17 +97,17 @@ public:
      * - returns a validity status.
      * Get the Authority key Info
      */
-    Valid validate(WvX509 &cacert);
+    Valid validate(const WvX509 &cacert) const;
 
     /**
      * Get the Authority key Info
      */
-    WvString get_aki();
+    WvString get_aki() const;
 
     /** 
      * Get the CRL Issuer.
      */
-    WvString get_issuer();
+    WvString get_issuer() const;
 
     /**
      * Do we have any errors... convenience function..
@@ -130,8 +130,8 @@ public:
     /**
      * Is the certificate in cert revoked?
      */
-    bool isrevoked(WvX509 &cert);
-    bool isrevoked(WvStringParm serial_number);
+    bool isrevoked(const WvX509 &cert) const;
+    bool isrevoked(WvStringParm serial_number) const;
 
     /**
      * Add the certificate specified by cert to the CRL.

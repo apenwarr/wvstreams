@@ -95,7 +95,11 @@ WvString WvRSAKey::encode(const DumpMode mode)
 void WvRSAKey::encode(const DumpMode mode, WvBuf &buf)
 {
     if (!rsa)
+    {
+        debug(WvLog::Warning, "Tried to encode RSA key, but RSA key is "
+              "blank!\n");
         return;
+    }
 
     if (mode == RsaHex || mode == RsaPubHex)
     {
@@ -130,8 +134,8 @@ void WvRSAKey::encode(const DumpMode mode, WvBuf &buf)
         else if (mode == RsaPubPEM)
             PEM_write_bio_RSAPublicKey(bufbio, rsa);
         else
-            assert(0 && "Should never happen: tried to encode RSA key "
-                   "with unsupported mode.");
+            debug(WvLog::Warning, "Should never happen: tried to encode RSA "
+                  "key with unsupported mode.");
 
         BIO_get_mem_ptr(bufbio, &bm);
         buf.put(bm->data, bm->length);
@@ -204,8 +208,8 @@ void WvRSAKey::decode(const DumpMode mode, WvBuf &encoded)
         else if (mode == RsaPubPEM)
             rsa = PEM_read_bio_RSAPublicKey(membuf, NULL, NULL, NULL);
         else 
-            assert(0 && "Should never happen: tried to encode RSA key "
-                   "with unsupported mode.");
+            debug(WvLog::Warning, "Should never happen: tried to encode RSA "
+                  "key with unsupported mode.");
 
         BIO_free_all(membuf);
     }

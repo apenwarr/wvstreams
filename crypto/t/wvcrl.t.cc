@@ -30,6 +30,13 @@ WVTEST_MAIN("decoding and encoding basics")
     
     WvString s = crl.encode(WvCRL::CRLPEM);
     WVPASSEQ(s, crl_pem);
+
+    WvDynBuf d;
+    crl.encode(WvCRL::CRLDER, d);
+    WVPASSEQ(d.used(), 318); // size of der encoded certificate
+    WvCRL crl2;
+    crl2.decode(WvCRL::CRLDER, d);
+    WVPASSEQ(crl.get_aki(), crl2.get_aki());
 }
 
 
@@ -45,12 +52,12 @@ WVTEST_MAIN("CRL creation and use basics")
                                        rsakey);
     WvString srequest = ca.signreq(certreq);
     WvX509 user;
-    user.decode(WvX509Mgr::CertPEM, srequest);
+    user.decode(WvX509::CertPEM, srequest);
     WVFAIL(crl.isrevoked(user));
     WVFAIL(crl.isrevoked(user.get_serial()));
 
     crl.addcert(user);
-    WVPASS(crl.numcerts() == 1);
+    WVPASSEQ(crl.numcerts(), 1);
     WVPASS(crl.isrevoked(user));
     WVPASS(crl.isrevoked(user.get_serial()));
 }
