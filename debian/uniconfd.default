@@ -3,7 +3,7 @@
 
 # These are the options that we pass to the $UNICONFD.
 # Don't run TCP or SSL, but run a Unix socket at /var/lib/uniconf/control
-UNICONFD_OPTS="-p 0 -s 0 -u /var/lib/uniconf/control"
+UNICONFD_OPTS="-d -p 0 -s 0 -u /var/lib/uniconf/control"
 
 # And these are the Uniconf mounts.  By default, we set up a temp: generator
 # at the root.
