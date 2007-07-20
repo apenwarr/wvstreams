@@ -63,8 +63,6 @@ dist-hook: dist-hack-clean configure
 	    $(MAKE) -C .xplc clean patch && \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
-	@sed -e "s/@PKGVER@/$(PKGVER)$(SNAPDATE)/g" \
-	 redhat/wvstreams.spec.in > redhat/wvstreams.spec
 
 runconfigure: config.mk include/wvautoconf.h gnulib/Makefile
 
