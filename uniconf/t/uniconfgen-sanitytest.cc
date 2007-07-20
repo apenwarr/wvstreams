@@ -92,7 +92,7 @@ UniConfTestDaemon::~UniConfTestDaemon()
 {
     // Never, ever, try to kill pids -1 or 0.
     if (server_pid <= 0)
-        fprintf(stderr, "Refusing to kill pid %s.\n", server_pid);
+        fprintf(stderr, "Refusing to kill pid %i.\n", (int)server_pid);
     else
         kill(server_pid, 15);
 
