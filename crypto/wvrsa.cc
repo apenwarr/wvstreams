@@ -83,7 +83,7 @@ bool WvRSAKey::isok() const
 }
 
 
-WvString WvRSAKey::encode(const DumpMode mode)
+WvString WvRSAKey::encode(const DumpMode mode) const
 {
     WvString nil;
     WvDynBuf retval;
@@ -92,7 +92,7 @@ WvString WvRSAKey::encode(const DumpMode mode)
 }
 
 
-void WvRSAKey::encode(const DumpMode mode, WvBuf &buf)
+void WvRSAKey::encode(const DumpMode mode, WvBuf &buf) const
 {
     if (!rsa)
     {

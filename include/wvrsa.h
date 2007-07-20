@@ -54,8 +54,8 @@ public:
     /** 
      * Return the information requested by mode. 
      */
-    virtual WvString encode(const DumpMode mode);
-    virtual void encode(const DumpMode mode, WvBuf &buf);
+    virtual WvString encode(const DumpMode mode) const;
+    virtual void encode(const DumpMode mode, WvBuf &buf) const;
 
     /**
      * Load the information from the format requested by mode into
@@ -66,7 +66,7 @@ public:
 
 private:
     bool priv;
-    WvLog debug;
+    mutable WvLog debug;
 };
 
 
