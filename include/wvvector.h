@@ -384,9 +384,9 @@ public:
          * increments the iterator to point to the next element as if
          * next() had been called.
          */
-        void remove(bool destroy = true)
+        void remove()
         {
-	    vec.remove(i, destroy);
+	    vec.remove(i);
         }
 
         /**
@@ -402,9 +402,9 @@ public:
          * Calling xremove() twice in a row is currently unsupported.
          *
          */
-	void xremove(bool destroy = true)
+	void xremove()
 	{
-	    vec.remove(i, destroy);
+	    vec.remove(i);
 	    prev();
 	}
     };
