@@ -129,7 +129,7 @@ public:
     {
     }
 
-    void WvNoisyLogRcv::log(WvStringParm source, int _loglevel,
+    void log(WvStringParm source, int _loglevel,
             const char *_buf, size_t len)
     {
         sublog("%s\n", noise);

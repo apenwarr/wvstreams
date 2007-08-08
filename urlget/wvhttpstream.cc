@@ -12,7 +12,7 @@
 #include "wvbuf.h"
 #include "wvbase64.h"
 #include "strutils.h"
-#ifndef _WIN32
+#ifdef HAVE_EXECINFO_H
 #include <execinfo.h> // FIXME: add a WvCrash feature for explicit dumps
 #endif
 
@@ -23,7 +23,8 @@
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
-      pipeline_incompatible(_pipeline_incompatible), in_doneurl(false)
+      pipeline_incompatible(_pipeline_incompatible),
+      in_doneurl(false)
 {
     log("Opening server connection.\n");
     http_response = "";
@@ -50,7 +51,8 @@ WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug2, "Deleting.\n");
 
-#ifndef _WIN32
+#if 0
+#ifdef HAVE_EXECINFO_H
     void* trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
@@ -59,6 +61,7 @@ WvHttpStream::~WvHttpStream()
         log(WvLog::Debug, ":%s", tracedump[i]);
     log(WvLog::Debug, "\n");
     free(tracedump);
+#endif
 #endif
 
     if (geterr())
@@ -70,8 +73,9 @@ WvHttpStream::~WvHttpStream()
 void WvHttpStream::close()
 {
     log("close called\n");
-    
-#ifndef _WIN32
+
+#if 0    
+#ifdef HAVE_EXECINFO_H
     void *trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
@@ -80,6 +84,7 @@ void WvHttpStream::close()
         log(WvLog::Debug, ":%s", tracedump[i]);
     log(WvLog::Debug, "\n");
     free(tracedump);
+#endif
 #endif
 
     // assume pipelining is broken if we're closing without doing at least
@@ -287,23 +292,21 @@ void WvHttpStream::pipelining_is_broken(int why)
 }
 
 
-bool WvHttpStream::pre_select(SelectInfo &si)
+void WvHttpStream::pre_select(SelectInfo &si)
 {
     SelectRequest oldwant = si.wants;
     WvUrlRequest *url;
 
-    if (WvUrlStream::pre_select(si))
-        return true;
+    WvUrlStream::pre_select(si);
 
     if (!urls.isempty())
     {
         url = urls.first();
-        if(url && url->putstream && url->putstream->pre_select(si))
-            return true;
+        if(url && url->putstream) 
+            url->putstream->pre_select(si);
     }
    
     si.wants = oldwant;
-    return false;
 }
 
 

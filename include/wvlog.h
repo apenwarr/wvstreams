@@ -47,6 +47,7 @@ public:
 
 DeclareWvList(WvLogRcvBase);
 
+typedef WvCallback<WvString, WvStringParm> WvLogFilter;
 
 /**
  * A WvLog stream accepts log messages from applications and forwards them
@@ -77,9 +78,11 @@ protected:
     static WvLogRcvBaseList receivers;
     static int num_receivers, num_logs;
     static WvLogRcvBase *default_receiver;
+    WvLogFilter* filter;
 
 public:
-    WvLog(WvStringParm _app, LogLevel _loglevel = Info);
+    WvLog(WvStringParm _app, LogLevel _loglevel = Info,  
+            WvLogFilter* filter = 0);
     WvLog(const WvLog &l);
     virtual ~WvLog();
     
@@ -87,7 +90,8 @@ public:
     virtual bool isok() const;
     
     /* always writable */
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
 
     /**
      * change the loglevel.  This returns the object again, so you can
@@ -100,7 +104,7 @@ public:
     size_t operator() (LogLevel _loglevel, WvStringParm s)
     { 
 	LogLevel l = loglevel; 
-	size_t x = lvl(_loglevel).write(s);
+	size_t x = lvl(_loglevel).write(filter ? (*filter)(s) : s);
 	lvl(l);
 	return x;
     }
@@ -109,7 +113,11 @@ public:
     size_t operator() (LogLevel _loglevel, WVSTRING_FORMAT_DECL)
     { 
 	LogLevel l = loglevel;
-	size_t x = lvl(_loglevel).print(WVSTRING_FORMAT_CALL);
+        size_t x;
+        if (filter)
+            x = lvl(_loglevel).print((*filter)(WvString(WVSTRING_FORMAT_CALL)));
+        else
+            x = lvl(_loglevel).print(WVSTRING_FORMAT_CALL);
 	lvl(l);
 	return x;
     }
@@ -119,9 +127,12 @@ public:
      * since the above operator()s caused them to be hidden
      */
     size_t operator() (WvStringParm s)
-        { return WvStream::operator()(s); }
+        { return WvStream::operator()(filter ? (*filter)(s) : s); }
     size_t operator() (WVSTRING_FORMAT_DECL)
-        { return WvStream::operator()(WVSTRING_FORMAT_CALL); }
+        { return (filter ? 
+            WvStream::operator()((*filter)(WvString(WVSTRING_FORMAT_CALL))) :
+            WvStream::operator()(WVSTRING_FORMAT_CALL) );
+        }
     
     /**
      * split off a new WvLog object with the requested loglevel.  This way
@@ -129,7 +140,7 @@ public:
      * log.lvl(WvLog::blahblah) all the time.
      */
     WvLog split(LogLevel _loglevel) const
-        { return WvLog(app, _loglevel); }
+        { return WvLog(app, _loglevel, filter); }
     
     /**
      * we override the unbuffered write function, so lines also include the

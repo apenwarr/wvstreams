@@ -92,9 +92,7 @@ void WvDaemon::init(WvStringParm _name,
     args.add_reset_bool_option(0, "no-syslog",
             "Do not write log entries to syslog", syslog);
 #endif
-    args.add_option('V', "version",
-            "Display version and exit",
-            WvArgs::NoArgCallback(this, &WvDaemon::display_version_and_exit));
+    args.set_version(WvString("%s version %s", name, version).cstr());
 }
 
 WvDaemon::~WvDaemon()
@@ -219,12 +217,6 @@ int WvDaemon::_run(const char *argv0)
     return _exit_status;
 }
 
-void WvDaemon::set_daemonize(void *)
-{
-    daemonize = true;
-    syslog = true;
-}
-
 void WvDaemon::do_load()
 {
 #ifndef _WIN32
@@ -314,4 +306,11 @@ void WvDaemon::do_unload()
     if (!!pid_file && daemonize)
         ::unlink(pid_file);
 #endif
+}
+
+bool WvDaemon::set_daemonize(void *)
+{
+    daemonize = true;
+    syslog = true;
+    return true;
 }

@@ -42,10 +42,7 @@ public:
     
     bool readable, writable;
 
-    // Force select to always return true
-    bool skip_select;
-    
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
 
 public:
     const char *wstype() const { return "WvFile"; }

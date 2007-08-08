@@ -141,8 +141,8 @@ int main(int argc, char **argv)
     sock.autoforward(err);
     
     WvIStreamList l;
-    l.add_after(l.tail, wvcon, false);
-    l.add_after(l.tail, &sock, false);
+    l.append(wvcon, false, "wvcon");
+    l.append(&sock, false, "socket");
 #if 0    // not done yet
     while (wvcon->isok() && sock.isok())
     {

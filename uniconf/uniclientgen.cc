@@ -23,70 +23,60 @@ WV_LINK(UniClientGen);
 
 #ifndef _WIN32
 #include "wvunixsocket.h"
-static IUniConfGen *unixcreator(WvStringParm s, IObject *, void *)
+static IUniConfGen *unixcreator(WvStringParm s)
 {
     WvConstInPlaceBuf buf(s, s.len());
-    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
-    if (!one) one = "";
-    if (!two) two = "";
+    WvString dst(wvtcl_getword(buf));
+    if (!dst) dst = "";
 
-    return new UniClientGen(new WvUnixConn(one), one, two);
+    return new UniClientGen(new WvUnixConn(dst), dst);
 }
 static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 #endif
 
 
-static IUniConfGen *tcpcreator(WvStringParm _s, IObject *, void *)
+static IUniConfGen *tcpcreator(WvStringParm _s)
 {
     WvConstInPlaceBuf buf(_s, _s.len());
-    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
-    if (!one) one = "";
-    if (!two) two = "";
+    WvString dst(wvtcl_getword(buf));
+    if (!dst) dst = "";
 
-    WvString s = one;
+    WvString s = dst;
     char *cptr = s.edit();
     
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_TCP_PORT);
     
-    return new UniClientGen(new WvTCPConn(s), one, two);
+    return new UniClientGen(new WvTCPConn(s), dst);
 }
 
 
-static IUniConfGen *sslcreator(WvStringParm _s, IObject *, void *)
+static IUniConfGen *sslcreator(WvStringParm _s)
 {
     WvConstInPlaceBuf buf(_s, _s.len());
-    WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));
-    if (!one) one = "";
-    if (!two) two = "";
+    WvString dst(wvtcl_getword(buf));
+    if (!dst) dst = "";
 
-    WvString s = one;
+    WvString s = dst;
     char *cptr = s.edit();
     
     if (!strchr(cptr, ':')) // no default port
 	s.append(":%s", DEFAULT_UNICONF_DAEMON_SSL_PORT);
     
-    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), one, two);
+    return new UniClientGen(new WvSSLStream(new WvTCPConn(s), NULL), dst);
 }
 
 
-// if 'obj' is a WvStream, build the uniconf connection around that;
-// otherwise, create a new WvStream using 's' as the wvstream moniker.
-static IUniConfGen *wvstreamcreator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *wvstreamcreator(WvStringParm s)
 {
-    IWvStream *stream = NULL;
-    if (obj)
-	stream = mutate<IWvStream>(obj);
-    if (!stream)
-	stream = wvcreate<IWvStream>(s);
-    return new UniClientGen(stream);
+    return new UniClientGen(wvcreate<IWvStream>(s));
 }
 
 #ifdef WITH_SLP
 #include "wvslp.h"
 
 // FIXME: Only gets the first
-static IUniConfGen *slpcreator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *slpcreator(WvStringParm s)
 {
     WvStringList serverlist;
     
@@ -112,8 +102,7 @@ static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
 
 /***** UniClientGen *****/
 
-UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst,
-        const UniConfKey &restrict_key) 
+UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst) 
     : log(WvString("UniClientGen to %s",
 		   dst.isnull() && stream->src() 
 		   ? *stream->src() : WvString(dst))),
@@ -127,14 +116,6 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst,
     conn->setcallback(WvStreamCallback(this,
         &UniClientGen::conncallback), NULL);
     WvIStreamList::globallist.append(conn, false, "uniclientconn-via-gen");
-
-    if (conn->isok())
-    {
-        conn->writecmd(UniClientConn::REQ_RESTRICT,
-                wvtcl_escape(restrict_key));
-        if (!do_select())
-            log(WvLog::Warning, "Failed to send restrict key\n");
-    }
 }
 
 
@@ -369,7 +350,7 @@ void UniClientGen::conncallback(WvStream &stream, void *userdata)
 		if (server.isnull() || strncmp(server, "UniConf", 7))
 		{
 		    // wrong type of server!
-		    log(WvLog::Error, "Connected to a non-UniConf serrer!\n");
+		    log(WvLog::Error, "Connected to a non-UniConf server!\n");
 
 		    cmdinprogress = false;
 		    cmdsuccess = false;

@@ -8,7 +8,6 @@
 #define __UNICONFTREE_H
 
 #include "uniconfkey.h"
-#include "wvvector.h"
 #include "wvcallback.h"
 #include "unihashtree.h"
 

@@ -55,7 +55,7 @@
 WV_LINK(WvTCPConn);
 
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
+static IWvStream *creator(WvStringParm s)
 {
     return new WvTCPConn(s);
 }
@@ -250,21 +250,14 @@ const WvIPPortAddr *WvTCPConn::src() const
 }
 
 
-bool WvTCPConn::pre_select(SelectInfo &si)
+void WvTCPConn::pre_select(SelectInfo &si)
 {
     if (!resolved)
-    {
-	if (dns.pre_select(hostname, si))
-	{
-	    check_resolver();
-	    if (!isok())
-		return true; // oops, failed to resolve the name!
-	}
-    }
+        dns.pre_select(hostname, si);
 
-    if (resolved && isok()) // name might be resolved now.
+    if (resolved && isok()) 
     {
-	bool oldw = si.wants.writable, retval;
+	bool oldw = si.wants.writable;
 	if (!isconnected()) {
 	    si.wants.writable = true; 
 #ifdef _WIN32
@@ -279,12 +272,10 @@ bool WvTCPConn::pre_select(SelectInfo &si)
 	    si.wants.isexception = true;
 #endif
 	}
-	retval = WvFDStream::pre_select(si);
+	WvFDStream::pre_select(si);
 	si.wants.writable = oldw;
-	return retval;
+	return;
     }
-    else
-	return false;
 }
 			  
 
@@ -293,7 +284,14 @@ bool WvTCPConn::post_select(SelectInfo &si)
     bool result = false;
 
     if (!resolved)
-	check_resolver();
+    {
+	if (dns.post_select(hostname, si))
+	{
+	    check_resolver();
+	    if (!isok())
+		return true; // oops, failed to resolve the name!
+	}
+    }
     else
     {
 	result = WvFDStream::post_select(si);
@@ -441,7 +439,7 @@ void WvTCPListener::accept_global_callback(WvStream &s, void *userdata)
     WvTCPListener &l = *(WvTCPListener *)userdata; 
     WvTCPConn *connection = l.accept();
     connection->setcallback(l.auto_callback, l.auto_userdata);
-    WvIStreamList::globallist.append(connection, true);
+    WvIStreamList::globallist.append(connection, true, "WvTCPConn");
 }
 
 
@@ -451,7 +449,7 @@ void WvTCPListener::accept_callback(WvStream &s, void *userdata)
 
     WvTCPConn *connection = l.accept();
     connection->setcallback(l.auto_callback, l.auto_userdata);
-    l.auto_list->append(connection, true);
+    l.auto_list->append(connection, true, "WvTCPConn");
 }
 
 

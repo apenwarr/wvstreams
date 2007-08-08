@@ -74,7 +74,7 @@ public:
     
     // needed for select().
     // Some say that pre_select() should go away.
-    virtual bool pre_select(SelectInfo &si) = 0;
+    virtual void pre_select(SelectInfo &si) = 0;
     virtual bool post_select(SelectInfo &si) = 0;
     
     // these are now the official way to get/put data to your stream.
@@ -167,14 +167,17 @@ public:
     virtual void set_wsname(WvStringParm name) = 0;
     virtual const char *wstype() const = 0; // This is not static due to, eg, WvStreamClone
     virtual WSID wsid() const = 0;
+
+    /**
+     ** set the maximum size of outbuf, beyond which a call to write() will
+     ** return 0.  
+     **/
+
+     virtual void outbuf_limit(size_t size) = 0;
 };
 
-
-// This ifdef makes ExchangeIt work
-#ifndef SWIG
 DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,
     {0xb0, 0x56, 0x8b, 0x9d, 0xde, 0x9a, 0xbe, 0x9d}});
-#endif
 
 
 #endif /* __IWVSTREAM_H */

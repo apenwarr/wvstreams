@@ -14,6 +14,7 @@
 #include "wvhashtable.h"
 
 #define NUM_WATCHES 113
+#define CONTINUE_SELECT_AT 100
 
 class UniConfDaemon;
 
@@ -33,7 +34,6 @@ public:
 
 protected:
     UniConf root;
-    UniConfKey restrict_key;
 
     virtual void do_invalid(WvStringParm c);
     virtual void do_malformed(UniClientConn::Command);
@@ -48,14 +48,11 @@ protected:
     virtual void do_refresh();
     virtual void do_quit();
     virtual void do_help();
-    virtual void do_restrict(const UniConfKey &key);
 
     virtual void addcallback();
     virtual void delcallback();
 
     void deltacallback(const UniConf &cfg, const UniConfKey &key);
-
-    UniConfKey fullkey(const UniConfKey &key) const;
 };
 
 #endif // __UNICONFDAEMONCONN_H

@@ -50,7 +50,7 @@ public:
     virtual bool isok() const;
     virtual int geterr() const;
     virtual WvString errstr() const;
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual const WvAddr *src() const;
     virtual void execute();
@@ -59,7 +59,7 @@ public:
 
 private:
     void close_callback(WvStream &s);
-    
+
 protected:
     WvString my_type;
 public:

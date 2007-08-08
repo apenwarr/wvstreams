@@ -277,6 +277,7 @@ void WvModem::close()
 	    tcflush(getrfd(), TCIOFLUSH);
             if (have_old_t)
                 tcsetattr(getrfd(), TCSANOW, &old_t);
+	    tcflush(getrfd(), TCIOFLUSH);
 	}
 	WvFile::close();
 	closing = false;

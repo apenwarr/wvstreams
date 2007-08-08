@@ -1,3 +1,47 @@
+wvstreams (4.4) unstable; urgency=low
+
+  * New upstream version.
+
+ -- William Lachance <wrlach@gmail.com>  Thu, 19 Jul 2007 19:30:09 -0400
+
+wvstreams (4.3) unstable; urgency=low
+
+  * New upstream version.
+    - Builds with gcc 4.2.  (Closes: Bug#387989)
+  * Remove useless lintian override in source for "source-contains-CVS-dir".
+  * Update uniconfd initscript to conform to LSB standards.
+
+ -- William Lachance <wrlach@gmail.com>  Fri, 2 Mar 2007 00:42:09 -0500
+
+wvstreams (4.2.2-2) unstable; urgency=low
+
+  * Fix FTBFS due to new GNU Make.  (Closes: Bug#348190)
+
+ -- Simon Law <sfllaw@debian.org>  Tue, 17 Jan 2006 07:37:09 -0500
+
+wvstreams (4.2.2-1) unstable; urgency=low
+
+  * New upstream version.
+    - Builds on AMD64.  (Closes: Bug#343710)
+
+ -- Simon Law <sfllaw@debian.org>  Mon,  9 Jan 2006 18:05:16 -0500
+
+wvstreams (4.2.1-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Simon Law <sfllaw@debian.org>  Fri, 18 Nov 2005 15:38:40 -0500
+
+wvstreams (4.2-1) unstable; urgency=low
+
+  * New upstream version.
+    - WvStreams supports high baud rates.  (Closes: Bug#271095)
+    - Builds on GNU/kFreeBSD.  (Closes: Bug#332993)
+    - Builds with OpenSSL 0.9.8. (Closes: Bug#336591)
+  * Acknowledge NMUs.  (Closes: Bug#325247, Bug#328001)
+
+ -- Simon Law <sfllaw@debian.org>  Tue,  8 Nov 2005 13:22:24 -0500
+
 wvstreams (4.1.1-1) unstable; urgency=low
 
   * New upstream version.

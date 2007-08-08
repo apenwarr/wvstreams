@@ -4,22 +4,17 @@
  * 
  * A lightweight but slightly dangerous version of UniCacheGen.
  */
+#include <wvassert.h>
+
 #include "unifastregetgen.h"
 #include "uniconftree.h"
 #include "wvmoniker.h"
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
-    IUniConfGen *gen = NULL;
-
-    if (obj)
-        gen = mutate<IUniConfGen>(obj);
-    if (!gen)
-        gen = wvcreate<IUniConfGen>(s);
-
-    return new UniFastRegetGen(gen);
+    return new UniFastRegetGen(wvcreate<IUniConfGen>(s));
 }
 
 static WvMoniker<IUniConfGen> reg("fast-reget", creator);
@@ -36,7 +31,10 @@ UniFastRegetGen::UniFastRegetGen(IUniConfGen *_inner) :
 UniFastRegetGen::~UniFastRegetGen()
 {
     if (tree)
+    {
 	delete tree;
+	tree = NULL;
+    }
 }
 
 
@@ -44,6 +42,7 @@ void UniFastRegetGen::gencallback(const UniConfKey &key, WvStringParm value)
 {
     if (tree == NULL)
         return; // initialising
+
     UniConfValueTree *t = tree->find(key);
     if (t) // never previously retrieved; don't cache it
 	t->setvalue(value);
@@ -53,11 +52,22 @@ void UniFastRegetGen::gencallback(const UniConfKey &key, WvStringParm value)
 
 WvString UniFastRegetGen::get(const UniConfKey &key)
 {
+    if (!tree)
+    {
+	wvassert(tree, "key: '%s'", key);
+	abort();
+    }
+
+    // Keys with trailing slashes can't have values set on them
+    if (key.hastrailingslash())
+        return WvString::null;
+
     UniConfValueTree *t = tree->find(key);
     if (!t)
     {
-	get(key.removelast()); // guaranteed to create parent node
-	t = tree->find(key.removelast());
+        UniConfKey parentkey(key.removelast());
+	get(parentkey); // guaranteed to create parent node
+	t = tree->find(parentkey);
 	assert(t);
 	
 	WvString value;
@@ -75,12 +85,18 @@ bool UniFastRegetGen::exists(const UniConfKey &key)
 {
     // even if inner generator has a more efficient version of exists(),
     // do it this way so we can cache the result.
-    return !!get(key);
+    return !get(key).isnull();
 }
 
 
 bool UniFastRegetGen::haschildren(const UniConfKey &key)
 {
+    if (!tree)
+    {
+	wvassert(tree, "key: '%s'", key);
+	abort();
+    }
+
     // if we already know the node is null, we can short circuit this one
     UniConfValueTree *t = tree->find(key);
     if (t && t->value().isnull())

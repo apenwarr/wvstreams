@@ -113,6 +113,12 @@ public:
      */
     WvFastString();
     void setsize(size_t i);
+
+    /**
+     * Returns a copy of string pointed i bytes into this.  Will not make it point
+     * past the trailing null byte.
+     */
+    WvFastString offset(size_t i) const;
     
     /**
      * Copy constructor.  We can safely copy from a normal WvString like this
@@ -182,28 +188,28 @@ public:
     WvFastString(WVSTRING_FORMAT_DECL) 
     {
 	const WvFastString *x[20];
-	
-	if (&__wvs_a0  != &null) x[ 0] = &__wvs_a0;
-	if (&__wvs_a1  != &null) x[ 1] = &__wvs_a1;
-	if (&__wvs_a2  != &null) x[ 2] = &__wvs_a2;
-	if (&__wvs_a3  != &null) x[ 3] = &__wvs_a3;
-	if (&__wvs_a4  != &null) x[ 4] = &__wvs_a4;
-	if (&__wvs_a5  != &null) x[ 5] = &__wvs_a5;
-	if (&__wvs_a6  != &null) x[ 6] = &__wvs_a6;
-	if (&__wvs_a7  != &null) x[ 7] = &__wvs_a7;
-	if (&__wvs_a8  != &null) x[ 8] = &__wvs_a8;
-	if (&__wvs_a9  != &null) x[ 9] = &__wvs_a9;
-	if (&__wvs_a10 != &null) x[10] = &__wvs_a10;
-	if (&__wvs_a11 != &null) x[11] = &__wvs_a11;
-	if (&__wvs_a12 != &null) x[12] = &__wvs_a12;
-	if (&__wvs_a13 != &null) x[13] = &__wvs_a13;
-	if (&__wvs_a14 != &null) x[14] = &__wvs_a14;
-	if (&__wvs_a15 != &null) x[15] = &__wvs_a15;
-	if (&__wvs_a16 != &null) x[16] = &__wvs_a16;
-	if (&__wvs_a17 != &null) x[17] = &__wvs_a17;
-	if (&__wvs_a18 != &null) x[18] = &__wvs_a18;
-	if (&__wvs_a19 != &null) x[19] = &__wvs_a19;
-	
+
+	x[ 0] = (&__wvs_a0  != &null)? &__wvs_a0 : 0;
+	x[ 1] = (&__wvs_a1  != &null)? &__wvs_a1 : 0;
+	x[ 2] = (&__wvs_a2  != &null)? &__wvs_a2 : 0;
+	x[ 3] = (&__wvs_a3  != &null)? &__wvs_a3 : 0;
+	x[ 4] = (&__wvs_a4  != &null)? &__wvs_a4 : 0;
+	x[ 5] = (&__wvs_a5  != &null)? &__wvs_a5 : 0;
+	x[ 6] = (&__wvs_a6  != &null)? &__wvs_a6 : 0;
+	x[ 7] = (&__wvs_a7  != &null)? &__wvs_a7 : 0;
+	x[ 8] = (&__wvs_a8  != &null)? &__wvs_a8 : 0;
+	x[ 9] = (&__wvs_a9  != &null)? &__wvs_a9 : 0;
+	x[10] = (&__wvs_a10 != &null)? &__wvs_a10 : 0;
+	x[11] = (&__wvs_a11 != &null)? &__wvs_a11 : 0;
+	x[12] = (&__wvs_a12 != &null)? &__wvs_a12 : 0;
+	x[13] = (&__wvs_a13 != &null)? &__wvs_a13 : 0;
+	x[14] = (&__wvs_a14 != &null)? &__wvs_a14 : 0;
+	x[15] = (&__wvs_a15 != &null)? &__wvs_a15 : 0;
+	x[16] = (&__wvs_a16 != &null)? &__wvs_a16 : 0;
+	x[17] = (&__wvs_a17 != &null)? &__wvs_a17 : 0;
+	x[18] = (&__wvs_a18 != &null)? &__wvs_a18 : 0;
+	x[19] = (&__wvs_a19 != &null)? &__wvs_a19 : 0;
+
 	link(&nullbuf, NULL);
 	do_format(*this, __wvs_format.str, x);
     }
@@ -375,7 +381,7 @@ public:
     WvString &append(WvStringParm s);
     WvString &append(WVSTRING_FORMAT_DECL)
         { return append(WvString(WVSTRING_FORMAT_CALL)); }
-    
+
     WvString &operator= (int i);
     WvString &operator= (const WvFastString &s2);
     WvString &operator= (const char *s2)
@@ -393,7 +399,7 @@ public:
     
 protected:
     void copy_constructor(const WvFastString &s);
-    inline void WvString::construct(const char *_str)
+    inline void construct(const char *_str)
         {
             link(&nullbuf, _str);
     

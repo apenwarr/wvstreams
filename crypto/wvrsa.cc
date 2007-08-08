@@ -14,45 +14,59 @@
 
 /***** WvRSAKey *****/
 
-WvRSAKey::WvRSAKey(const WvRSAKey &k)
+WvRSAKey::WvRSAKey()
+    : debug("RSA", WvLog::Debug5)
 {
-    if (k.prv)
-	init(k.private_str(), true);
-    else
-	init(k.public_str(), false);
+    rsa = NULL;
 }
 
 
-WvRSAKey::WvRSAKey(struct rsa_st *_rsa, bool priv)
+WvRSAKey::WvRSAKey(const WvRSAKey &k)
+    : debug("RSA", WvLog::Debug5)
 {
+    priv = k.priv;
+
+    if (!priv)
+        rsa = RSAPublicKey_dup(k.rsa);
+    else
+        rsa = RSAPrivateKey_dup(k.rsa);
+}
+
+
+WvRSAKey::WvRSAKey(struct rsa_st *_rsa, bool _priv)
+    : debug("RSA", WvLog::Debug5)
+{        
     if (_rsa == NULL)
     {
-        // assert(_rsa);
-        pub = WvString::null;
-        prv = WvString::null;
         rsa = NULL;
-        seterr("Initializing with a NULL key.. are you insane?");
+        debug("Initializing with a NULL key.. are you insane?\n");
 	return;
     }
 
     rsa = _rsa;
-    pub = hexifypub(rsa);
-    if (priv)
-        prv = hexifyprv(rsa);
+    priv = _priv;
 }
 
 
-WvRSAKey::WvRSAKey(WvStringParm keystr, bool priv)
+WvRSAKey::WvRSAKey(WvStringParm keystr, bool _priv)
+    : debug("RSA", WvLog::Debug5)
 {
-    init(keystr, priv);
+    rsa = NULL;
+
+    if (_priv)
+        decode(RsaHex, keystr);
+    else
+        decode(RsaPubHex, keystr);
+
+    priv = _priv;
 }
 
 
 WvRSAKey::WvRSAKey(int bits)
+    : debug("RSA", WvLog::Debug5)
 {
     rsa = RSA_generate_key(bits, 0x10001, NULL, NULL);
-    pub = hexifypub(rsa);
-    prv = hexifyprv(rsa);
+    priv = true;
 }
 
 
@@ -65,119 +79,140 @@ WvRSAKey::~WvRSAKey()
 
 bool WvRSAKey::isok() const
 {
-   return rsa && !errstring && (!prv || RSA_check_key(rsa) == 1);
+    return rsa && (!priv || RSA_check_key(rsa) == 1);
 }
 
 
-void WvRSAKey::init(WvStringParm keystr, bool priv)
+WvString WvRSAKey::encode(const DumpMode mode) const
 {
-    // Start out with everything nulled out...
-    rsa = NULL;
-    pub = WvString::null;
-    prv = WvString::null;
-    
-    // unhexify the supplied key
-    WvDynBuf keybuf;
-    if (!WvHexDecoder().flushstrbuf(keystr,  keybuf, true) ||
-	keybuf.used() == 0)
+    WvString nil;
+    WvDynBuf retval;
+    encode(mode, retval);
+    return retval.getstr();
+}
+
+
+void WvRSAKey::encode(const DumpMode mode, WvBuf &buf) const
+{
+    if (!rsa)
     {
-        seterr("RSA key is not a valid hex string");
+        debug(WvLog::Warning, "Tried to encode RSA key, but RSA key is "
+              "blank!\n");
         return;
     }
-    
-    size_t keylen = keybuf.used();
-    const unsigned char *key = keybuf.get(keylen);
-    
-    // create the RSA struct
-    if (priv)
+
+    if (mode == RsaHex || mode == RsaPubHex)
     {
-	rsa = wv_d2i_RSAPrivateKey(NULL, &key, keylen);
-        if (rsa != NULL)
+        WvDynBuf keybuf;
+
+        if (mode == RsaHex && priv)
         {
-            prv = keystr;
-            pub = hexifypub(rsa);
+            size_t size = i2d_RSAPrivateKey(rsa, NULL);
+            unsigned char *key = keybuf.alloc(size);
+            size_t newsize = i2d_RSAPrivateKey(rsa, & key);
+            assert(size == newsize);
         }
+        else
+        {
+            size_t size = i2d_RSAPublicKey(rsa, NULL);
+            unsigned char *key = keybuf.alloc(size);
+            size_t newsize = i2d_RSAPublicKey(rsa, & key);
+            assert(size == newsize);
+        }
+
+        buf.putstr(WvString(WvHexEncoder().strflushbuf(keybuf, true)));
     }
     else
     {
-	rsa = wv_d2i_RSAPublicKey(NULL, &key, keylen);
-        if (rsa != NULL)
-        {
-            prv = WvString::null;
-            pub = keystr;
-        }
+        BIO *bufbio = BIO_new(BIO_s_mem());
+        BUF_MEM *bm;
+        const EVP_CIPHER *enc = EVP_get_cipherbyname("rsa");
+    
+        if (mode == RsaPEM)
+            PEM_write_bio_RSAPrivateKey(bufbio, rsa, enc,
+                                        NULL, 0, NULL, NULL);
+        else if (mode == RsaPubPEM)
+            PEM_write_bio_RSAPublicKey(bufbio, rsa);
+        else
+            debug(WvLog::Warning, "Should never happen: tried to encode RSA "
+                  "key with unsupported mode.");
+
+        BIO_get_mem_ptr(bufbio, &bm);
+        buf.put(bm->data, bm->length);
+        BIO_free(bufbio);
     }
-    if (rsa == NULL)
-        seterr("RSA key is invalid");
 }
 
 
-
-WvString WvRSAKey::getpem(bool privkey)
+void WvRSAKey::decode(const DumpMode mode, WvStringParm encoded)
 {
-    FILE *fp = wvtmpfile();
-    const EVP_CIPHER *enc;
+    if (!encoded)
+	return;
     
-    if (!fp)
-    {
-	seterr("Unable to open temporary file!");
-	return WvString::null;
-    }
+    WvDynBuf buf;
+    buf.putstr(encoded);
+    decode(mode, buf);
+}
 
-    if (privkey)
+
+void WvRSAKey::decode(const DumpMode mode, WvBuf &encoded)
+{
+    debug("Decoding RSA key.\n");
+
+    if (rsa)
     {
-	enc = EVP_get_cipherbyname("rsa");
-	PEM_write_RSAPrivateKey(fp, rsa, enc,
-			       NULL, 0, NULL, NULL);
+        debug("Replacing already existent RSA key.\n");
+        RSA_free(rsa);
+        rsa = NULL;
+    }
+    priv = false;
+
+    // we handle hexified keys a bit differently, since
+    // OpenSSL has no built-in support for them...
+    if (mode == RsaHex || mode == RsaPubHex)
+    {
+        // unhexify the supplied key
+        WvDynBuf keybuf;
+        if (!WvHexDecoder().flush(encoded, keybuf, true) || 
+            keybuf.used() == 0)
+        {
+            debug("Couldn't unhexify RSA key.\n");
+            return;
+        }
+    
+        size_t keylen = keybuf.used();
+        const unsigned char *key = keybuf.get(keylen);
+    
+        // create the RSA struct
+        if (mode == RsaHex)
+        {
+            rsa = wv_d2i_RSAPrivateKey(NULL, &key, keylen);
+            priv = true;
+        }
+        else
+            rsa = wv_d2i_RSAPublicKey(NULL, &key, keylen);
+
+        return;
     }
     else
     {
-	enc = EVP_get_cipherbyname("rsa");
-	PEM_write_RSAPublicKey(fp, rsa);
+
+        BIO *membuf = BIO_new(BIO_s_mem());
+        BIO_write(membuf, encoded.get(encoded.used()), encoded.used());
+
+        if (mode == RsaPEM)
+        {
+            rsa = PEM_read_bio_RSAPrivateKey(membuf, NULL, NULL, NULL);
+            priv = true;
+        }
+        else if (mode == RsaPubPEM)
+            rsa = PEM_read_bio_RSAPublicKey(membuf, NULL, NULL, NULL);
+        else 
+            debug(WvLog::Warning, "Should never happen: tried to encode RSA "
+                  "key with unsupported mode.");
+
+        BIO_free_all(membuf);
     }
-    
-    WvDynBuf b;
-    size_t len;
-    
-    rewind(fp);
-    while ((len = fread(b.alloc(1024), 1, 1024, fp)) > 0)
-	b.unalloc(1024 - len);
-    b.unalloc(1024 - len);
-    fclose(fp);
-
-    return b.getstr();
-}
-
-
-
-WvString WvRSAKey::hexifypub(struct rsa_st *rsa)
-{
-    WvDynBuf keybuf;
-
-    assert(rsa);
-
-    size_t size = i2d_RSAPublicKey(rsa, NULL);
-    unsigned char *key = keybuf.alloc(size);
-    size_t newsize = i2d_RSAPublicKey(rsa, & key);
-    assert(size == newsize);
-    assert(keybuf.used() == size);
-
-    return WvString(WvHexEncoder().strflushbuf(keybuf, true));
-}
-
-
-WvString WvRSAKey::hexifyprv(struct rsa_st *rsa)
-{
-    WvDynBuf keybuf;
-
-    assert(rsa);
-
-    size_t size = i2d_RSAPrivateKey(rsa, NULL);
-    unsigned char *key = keybuf.alloc(size);
-    size_t newsize = i2d_RSAPrivateKey(rsa, & key);
-    assert(size == newsize);
-
-    return WvString(WvHexEncoder().strflushbuf(keybuf, true));
 }
 
 

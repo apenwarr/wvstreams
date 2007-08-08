@@ -10,6 +10,7 @@
 #include "wverror.h"
 #include "wvencoder.h"
 #include "wvencoderstream.h"
+#include "wvlog.h"
 
 struct rsa_st;
 
@@ -22,54 +23,50 @@ struct rsa_st;
  * 
  * @see WvRSAEncoder
  */
-class WvRSAKey : public WvErrorBase
+class WvRSAKey
 {
-    WvString pub, prv;
-
-    void init(WvStringParm keystr, bool priv);
-    static WvString hexifypub(struct rsa_st *rsa);
-    static WvString hexifyprv(struct rsa_st *rsa);
-
 public:
+   /**
+    * Type for the @ref encode() and @ref decode() methods.
+    * RsaPEM    = PEM Encoded RSA Private Key
+    * RsaPubPEM = PEM Encoded RSA Public Key
+    * RsaHex    = DER Encoded RSA Private Key in hexified form
+    * RsaPubHex = DER Encoded RSA Public Key in hexified form
+    */
+    enum DumpMode { RsaPEM, RsaPubPEM, RsaHex, RsaPubHex };
+
     struct rsa_st *rsa;
-
+    
+    WvRSAKey();
     WvRSAKey(const WvRSAKey &k);
-    WvRSAKey(struct rsa_st *_rsa, bool priv); // note: takes ownership
-
-    /**
-     * Populate the RSA key with a hexified() key 
-     */
     WvRSAKey(WvStringParm keystr, bool priv);
+    WvRSAKey(struct rsa_st *_rsa, bool priv); // note: takes ownership
 
     /**
      * Create a new RSA key of bits strength.
      */
     WvRSAKey(int bits);
     
-    ~WvRSAKey();
+    virtual ~WvRSAKey();
     
     virtual bool isok() const;
     
-    /**
-     * Retrieve the private key as a hexified string
-     * returns WvString::null if there is only a public
-     * key.
+    /** 
+     * Return the information requested by mode. 
      */
-    WvString private_str() const
-        { return prv; }
+    virtual WvString encode(const DumpMode mode) const;
+    virtual void encode(const DumpMode mode, WvBuf &buf) const;
 
     /**
-     * Retrieve the public key as a hexified string
+     * Load the information from the format requested by mode into
+     * the class - this overwrites the certificate.
      */
-    WvString public_str() const
-        { return pub; }
-    
-    /**
-     * Retrieve the public or private key in PEM encoded
-     * format.
-     */
-    WvString getpem(bool privkey);
+    virtual void decode(const DumpMode mode, WvStringParm encoded);
+    virtual void decode(const DumpMode mode, WvBuf &encoded);
 
+private:
+    bool priv;
+    mutable WvLog debug;
 };
 
 

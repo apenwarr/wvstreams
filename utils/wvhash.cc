@@ -2,7 +2,7 @@
 
 // Note: this hash function is case-insensitive since it ignores the
 // bit in ASCII that defines case.  You may want to take advantage of this.
-unsigned WvHash(const char *s)
+unsigned int WvHash(const char *s)
 {
     unsigned hash = 0, slide, andval;
     if (!s) return 0;
@@ -30,6 +30,6 @@ unsigned WvHash(const int &i)
 
 unsigned WvHash(const void *p)
 {
-    return reinterpret_cast<unsigned>(p);
+    return reinterpret_cast<unsigned long>(p);
 }
 

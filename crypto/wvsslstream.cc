@@ -4,7 +4,7 @@
  */
 #define OPENSSL_NO_KRB5
 #include "wvsslstream.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "wvcrypto.h"
 #include "wvmoniker.h"
 #include <openssl/ssl.h>
@@ -22,26 +22,18 @@
 #else
 #undef errno
 #define errno GetLastError()
-// FIXME: WLACH: seems to cause an error on mingw32 3.4.2.. is this needed?
-//typedef DWORD error_t;
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
 #endif
 
-static IWvStream *creator(WvStringParm s, IObject *obj, void *userdata)
+static IWvStream *creator(WvStringParm s)
 {
-    if (!obj)
-	obj = wvcreate<IWvStream>(s);
-    return new WvSSLStream(mutate<IWvStream>(obj),
-			   (WvX509Mgr *)userdata, 0, false);
+    return new WvSSLStream(wvcreate<IWvStream>(s), NULL, 0, false);
 }
 
-static IWvStream *screator(WvStringParm s, IObject *obj, void *userdata)
+static IWvStream *screator(WvStringParm s)
 {
-    if (!obj)
-	obj = wvcreate<IWvStream>(s);
-    return new WvSSLStream(mutate<IWvStream>(obj),
-			   (WvX509Mgr *)userdata, 0, true);
+    return new WvSSLStream(wvcreate<IWvStream>(s), NULL, 0, true);
 }
 
 static WvMoniker<IWvStream> reg("ssl", creator);
@@ -71,14 +63,14 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     is_server = _is_server;
     ctx = NULL;
     ssl = NULL;
-    meth = NULL;
+    //meth = NULL;
     sslconnected = ssl_stop_read = ssl_stop_write = false;
     
     wvssl_init();
     
     if (x509 && !x509->isok())
     {
-	seterr("Cert: %s", x509->errstr());
+	seterr("Certificate + key pair invalid.");
 	return;
     }
 
@@ -90,12 +82,14 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
 
     if (is_server)
     {
-	meth = SSLv23_server_method();
     	debug("Configured algorithms and methods for server mode.\n");
 
-	ctx = SSL_CTX_new(meth);
+	ctx = SSL_CTX_new(SSLv23_server_method());
     	if (!ctx)
     	{
+            ERR_print_errors_fp(stderr);
+            debug("Can't get SSL context! Error: %s\n", 
+                  ERR_reason_error_string(ERR_get_error()));
 	    seterr("Can't get SSL context!");
 	    return;
     	}
@@ -125,10 +119,9 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     }
     else
     {
-    	meth = SSLv23_client_method();
     	debug("Configured algorithms and methods for client mode.\n");
     
-    	ctx = SSL_CTX_new(meth);
+    	ctx = SSL_CTX_new(SSLv23_client_method());
     	if (!ctx)
     	{
 	    seterr("Can't get SSL context!");
@@ -494,15 +487,16 @@ void WvSSLStream::nowrite()
 }
 
 
-bool WvSSLStream::pre_select(SelectInfo &si)
+void WvSSLStream::pre_select(SelectInfo &si)
 {
-    bool result = WvStreamClone::pre_select(si);
+    WvStreamClone::pre_select(si);
     // the SSL library might be keeping its own internal buffers
-    // or we might have left buffered data behind deliberately
+    // or we might have left buffered dat)a behind deliberately
     if (si.wants.readable && (read_pending || read_bouncebuf.used()))
     {
 //	debug("pre_select: try reading again immediately.\n");
-	return true;
+	si.msec_timeout = 0;
+	return;
     }
 
     // if we're not ssl_connected yet, I can guarantee we're not actually
@@ -511,11 +505,10 @@ bool WvSSLStream::pre_select(SelectInfo &si)
     bool oldwr = si.wants.writable;
     if (!sslconnected)
 	si.wants.writable = !!writecb;
-    result = WvStreamClone::pre_select(si);
+    WvStreamClone::pre_select(si);
     si.wants.writable = oldwr;
 
-//    debug("in pre_select (%s)\n", result);
-    return result;
+//    debug("in pre_select (msec_timeout: %s)\n", si.msec_timeout);
 }
 
  
@@ -576,7 +569,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    debug("SSL connection using cipher %s.\n", SSL_get_cipher(ssl));
 	    if (!!vcb)
 	    {
-	    	WvX509Mgr *peercert = new WvX509Mgr(SSL_get_peer_certificate(ssl));
+	    	WvX509 *peercert = new WvX509(SSL_get_peer_certificate(ssl));
 		debug("SSL Peer is: %s\n", peercert->get_subject());
 	    	if (peercert->isok() && peercert->validate() && vcb(peercert))
 	    	{
@@ -602,8 +595,12 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	
 	return false;
     }
-    else
-	return result;
+
+    if ((si.wants.readable || readcb)
+	&& (read_pending || read_bouncebuf.used()))
+	result = true;
+
+    return result;
 }
 
 

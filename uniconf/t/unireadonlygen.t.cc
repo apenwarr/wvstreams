@@ -4,6 +4,10 @@
 #include "wvfile.h"
 #include "wvtest.h"
 
+// NOTE: UniReadOnlyGen violates the "sensible" UniConf semantics tested for
+// in uniconfgen-sanitytest.h, since setting a value doesn't work.
+// FIXME: Perhaps the tests should take this into account
+
 // defined in uniinigen.t.cc
 extern WvString inigen(WvStringParm content);
 

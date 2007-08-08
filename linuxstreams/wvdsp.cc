@@ -139,9 +139,8 @@ WvDsp::~WvDsp()
 }
 
 
-bool WvDsp::pre_select(SelectInfo &si)
+void WvDsp::pre_select(SelectInfo &si)
 {
-    bool ret = false;
 
 /*
     size_t rleft = rcircle.used(), wleft = wcircle.used();
@@ -157,15 +156,10 @@ bool WvDsp::pre_select(SelectInfo &si)
     {
 	rloop.drain();
 	if (rcircle.used())
-	    return true;
+	    return;
 	else
-	    ret |= rloop.pre_select(si);
+	    rloop.pre_select(si);
     }
-    
-    if (si.wants.writable)
-	return true;
-    
-    return ret;
 }
 
 

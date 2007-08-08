@@ -22,7 +22,7 @@ public:
     // disable reading/writing: we want dbus to do that for us
     virtual size_t uread(void *buf, size_t count) { return 0; }
     virtual size_t uwrite(const void *buf, size_t count) { return 0; }
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     DBusWatch *watch;
 };
 

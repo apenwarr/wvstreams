@@ -61,14 +61,45 @@ WvTime tvdiff(const WvTime &a, const WvTime &b)
     return c;
 }
 
+
 static WvTime wvstime_cur = wvtime();
+
 
 const WvTime &wvstime()
 {
     return wvstime_cur;
 }
 
+
+static void do_wvstime_sync(bool forward_only)
+{
+    if (!forward_only)
+    {
+	wvstime_cur = wvtime();
+    }
+    else
+    {
+	WvTime now = wvtime();
+	if (wvstime_cur < now)
+	    wvstime_cur = now;
+    }
+}
+
+
 void wvstime_sync()
 {
-    wvstime_cur = wvtime();
+    do_wvstime_sync(false);
 }
+
+
+void wvstime_sync_forward()
+{
+    do_wvstime_sync(true);
+}
+
+
+void wvstime_set(const WvTime &_new_time)
+{
+    wvstime_cur = _new_time;
+}
+

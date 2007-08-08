@@ -12,8 +12,9 @@
  * extended one day when someone cares.
  *
  */
-#include "wvstream.h"
 #include "wvdailyevent.h"
+#include "wvstream.h"
+#include "wvtimeutils.h"
 
 #include <time.h>
 
@@ -26,6 +27,7 @@
 #define NUM_SECS_IN_DAY (60*NUM_MINS_IN_DAY)
 
 WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
+    : prev(time(NULL))
 {
     need_reset = false;
     prev = wvstime().tv_sec;
@@ -33,10 +35,12 @@ WvDailyEvent::WvDailyEvent(int _first_hour, int _num_per_day, bool _skip_first)
 }
 
 
-// we're ready if now is later than the next scheduled event
-bool WvDailyEvent::pre_select(SelectInfo &si)
+// Compute the next time this stream should select()
+void WvDailyEvent::pre_select(SelectInfo &si)
 {
-    if (num_per_day && !need_reset)
+    WvStream::pre_select(si);
+
+    if (num_per_day)
     {
 	time_t now = wvstime().tv_sec;
 	time_t next = next_event();
@@ -45,40 +49,34 @@ bool WvDailyEvent::pre_select(SelectInfo &si)
 	assert(next);
 	assert(prev > 100000);
 	assert(next > 100000);
-	if (now >= next)
+
+        //printf("%d %d %d\n", now, next, msecdiff(now, next));
+        if (now < next)
+            si.msec_timeout = msecdiff(now, next);
+	else if (!need_reset)
 	{
-	    need_reset = true;
+            need_reset = true;
 	    prev = next;
 	}
     }
-    bool ret = WvStream::pre_select(si) || need_reset;
-    // printf("%p ret=%d msd=%d\n", this, ret, si.msec_timeout);
-    return ret;
+    if (need_reset)
+        si.msec_timeout = 0;
+    //printf("%p msd=%d\n", this, ret, si.msec_timeout);
 }
 
 
+// Test to see if the timer has gone off
 bool WvDailyEvent::post_select(SelectInfo& si)
 {
-    return need_reset;
-}
+    bool timer_rang = false;
+    WvTime next(next_event(), 0);
+    if (next < wvtime())
+    {
+	timer_rang = true;
+	prev = next;
+    }
 
-
-void WvDailyEvent::execute()
-{
-    WvStream::execute();
-    reset();
-}
-
-
-void WvDailyEvent::reset()
-{
-    need_reset = false;
-}
-
-
-bool WvDailyEvent::isok() const
-{
-    return true;
+    return WvStream::post_select(si) || need_reset || timer_rang;
 }
 
 

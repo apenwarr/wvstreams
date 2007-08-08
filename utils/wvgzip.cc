@@ -82,7 +82,7 @@ bool WvGzipEncoder::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
         if (! success)
             return false;
         if (alldata || (starting_size == inbuf.used()) ||
-            (out_limit && (output == out_limit)))
+            (out_limit && (output >= out_limit)))
             return true;
     }
 }
@@ -151,7 +151,7 @@ bool WvGzipEncoder::process(WvBuf &outbuf, bool flush, bool finish)
         if (retval == Z_DATA_ERROR && mode == Inflate
             && ignore_decompression_errors)
             retval = inflateSync(zstr);
-    } while (retval == Z_OK && (!out_limit || (out_limit == output)));
+    } while (retval == Z_OK && (!out_limit || (out_limit > output)));
 
     if (retval == Z_STREAM_END)
         setfinished();

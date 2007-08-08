@@ -20,9 +20,10 @@ typedef struct ssl_ctx_st SSL_CTX;
 typedef struct ssl_st SSL;
 typedef struct ssl_method_st SSL_METHOD;
 
+class WvX509;
 class WvX509Mgr;
 
-typedef WvCallback<bool, WvX509Mgr*> WvSSLValidateCallback;
+typedef WvCallback<bool, WvX509*> WvSSLValidateCallback;
 
 /**
  * SSL Stream, handles SSLv2, SSLv3, and TLS
@@ -43,7 +44,7 @@ public:
     /** Cleans up everything (calls close + frees up the SSL Objects used) */
     virtual ~WvSSLStream();
     
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     
     virtual void close();
@@ -62,12 +63,6 @@ protected:
      * connection through here
      */
     SSL *ssl;
-    
-    /**
-     * Again, used to setup the SSL Object - The Method is set so that this
-     * client can Connect to, and understand SSLv2, SSLv3, and TLS servers
-     */
-    SSL_METHOD *meth;
     
     virtual size_t uwrite(const void *buf, size_t len);
     virtual size_t uread(void *buf, size_t len);

@@ -14,8 +14,7 @@
 
 class WvMonikerRegistry;
 
-typedef void *WvMonikerCreateFunc(WvStringParm parms,
-				  IObject *obj, void *userdata);
+typedef void *WvMonikerCreateFunc(WvStringParm parms);
 
 /**
  * WvMonikerBase is an auto-registration class for putting things into
@@ -62,7 +61,7 @@ template <class T>
 class WvMoniker : public WvMonikerBase
 {
 public:
-    typedef T *CreateFunc(WvStringParm parms, IObject *obj, void *userdata);
+    typedef T *CreateFunc(WvStringParm parms);
     
     WvMoniker(WvStringParm _id, CreateFunc *_func)
 	: WvMonikerBase(XPLC_IID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
@@ -86,8 +85,7 @@ public:
  * Most people don't use this function.  See the templated, type-safe version
  * of wvcreate() below.
  */
-void *wvcreate(const UUID &iid,
-	       WvStringParm s, IObject *obj = NULL, void *userdata = NULL);
+void *wvcreate(const UUID &iid, WvStringParm s);
 
 
 /**
@@ -102,9 +100,9 @@ void *wvcreate(const UUID &iid,
  *    IWvStream *s_ssl = wvcreate<IWvStream>("ssl:", s);
  */
 template <class T>
-inline T *wvcreate(WvStringParm s, IObject *obj = NULL, void *userdata = NULL)
+inline T *wvcreate(WvStringParm s)
 {
-    return (T *)(wvcreate(XPLC_IID<T>::get(), s, obj, userdata));
+    return (T *)(wvcreate(XPLC_IID<T>::get(), s));
 }
 
 

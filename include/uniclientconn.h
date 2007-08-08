@@ -63,7 +63,6 @@ public:
 	REQ_REFRESH, /*!< refresh => OK / FAIL v18 */
 	REQ_QUIT, /*!< quit ==> OK v18 */
 	REQ_HELP, /*!< help ==> TEXT ... OK / FAIL v18 */
-        REQ_RESTRICT, /*!< restrict ==> OK v20 */
 
 	// command completion replies
 	REPLY_OK, /*!< OK v18 */

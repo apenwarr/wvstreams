@@ -1,5 +1,6 @@
 #include "wvtest.h"
 #include "uniconfroot.h"
+#include "wvstream.h"
 
 WVTEST_MAIN("no generator")
 {
@@ -141,10 +142,10 @@ WVTEST_MAIN("fullkey()")
     cfg.xsetint("hello", 1);
     cfg.xsetint("hello/world", 2);
 
-    WVPASSEQ(cfg["hello"].fullkey().cstr(), "cfg/hello");
-    WVPASSEQ(cfg["hello/world"].fullkey(cfg).cstr(), "hello/world");
-    WVPASSEQ(cfg["hello/world"].fullkey("cfg").cstr(), "hello/world");
-    WVPASSEQ(cfg["hello/world"].fullkey("cfg/").cstr(), "hello/world");
+    WVPASSEQ(cfg["hello"].fullkey().printable(), "cfg/hello");
+    WVPASSEQ(cfg["hello/world"].fullkey(cfg).printable(), "hello/world");
+    WVPASSEQ(cfg["hello/world"].fullkey("cfg").printable(), "hello/world");
+    WVPASSEQ(cfg["hello/world"].fullkey("cfg/").printable(), "hello/world");
 }
 
 static int itcount(const UniConf &cfg)
@@ -164,10 +165,7 @@ static int ritcount(const UniConf &cfg)
     
     UniConf::RecursiveIter i(cfg);
     for (i.rewind(); i.next(); )
-    {
-	fprintf(stderr, "key: '%s'\n", i->fullkey(cfg).cstr());
 	count++;
-    }
     return count;
 }
 
@@ -205,7 +203,7 @@ WVTEST_MAIN("iterators")
 // bug 6869
 static int compare(const UniConf &_a, const UniConf &_b)
 {
-    return strcmp(_a.key().cstr(), _b.key().cstr());
+    return _a.key().compareto(_b.key());
 }
 WVTEST_MAIN("sorted iterators")
 {
@@ -216,6 +214,10 @@ WVTEST_MAIN("sorted iterators")
     root["4"].setme("foo4");
 
     UniConf sub(root);
+    UniConf::Iter j(sub);
+    for (j.rewind(); j.next(); )
+        wverr->print("fullkey=%s\n", j->fullkey());
+
     UniConf::SortedIter i(sub, &compare);
     i.rewind();
     i.next();
@@ -308,11 +310,11 @@ void verify_recursive_iter(UniConfRoot &root)
     UniConf::RecursiveIter i(root);
     i.rewind(); 
     WVPASS(i.next());
-    WVPASS(strcmp(i().key().cstr(), "subt") == 0);
-    WVPASS(strcmp(i().getme().cstr(), "") == 0);
+    WVPASSEQ(i().key().printable().cstr(), "subt");
+    WVPASSEQ(i().getme(), "");
     WVPASS(i.next());
-    WVPASS(strcmp(i().key().cstr(), "mayo") == 0);
-    WVPASS(strcmp(i().getme().cstr(), "baz") == 0);
+    WVPASSEQ(i().key().printable().cstr(), "mayo");
+    WVPASSEQ(i().getme(), "baz");
     WVFAIL(i.next());
 
     // verify that non-recursive iteration doesn't go over keys
@@ -320,8 +322,8 @@ void verify_recursive_iter(UniConfRoot &root)
     UniConf::Iter j(root);
     j.rewind(); 
     WVPASS(j.next());
-    WVPASS(strcmp(j().key().cstr(), "subt") == 0);
-    WVPASS(strcmp(j().getme().cstr(), "") == 0);
+    WVPASSEQ(j().key().printable().cstr(), "subt");
+    WVPASSEQ(j().getme(), "");
     WVFAIL(j.next());
 }
 

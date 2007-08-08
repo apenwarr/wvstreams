@@ -18,12 +18,13 @@ export WE_ARE_DIST=1
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-base=libwvstreams4.1
+version:=$(shell awk -F= '/SO_VERSION=/{print $$2}' $(CURDIR)/configure.ac)
+base=libwvstreams$(version)
 # This is used the wvstreams makefile to set the .so links
-PKG=`pwd`/debian/${base}
-PKG_QT=`pwd`/debian/${base}-qt
-PKGDEV=`pwd`/debian/libwvstreams-dev
-PKGDOC=`pwd`/debian/${base}-doc
+PKG=$(CURDIR)/debian/${base}
+PKG_QT=$(CURDIR)/debian/${base}-qt
+PKGDEV=$(CURDIR)/debian/libwvstreams-dev
+PKGDOC=$(CURDIR)/debian/${base}-doc
 DOCDIR=$(PKGDOC)/usr/share/doc/$(base)-doc
 
 CFLAGS = -Wall
@@ -105,14 +106,15 @@ install-indep:
 	#INSTALLDOC#
 	install -d $(DOCDIR)
 	install -d $(DOCDIR)/html-api
-	install -m644 Docs/doxy-html/* $(DOCDIR)/html-api/
-	@# Don't install the SGML documentation.
-	@#install -d $(DOCDIR)/html-manual
-	@#install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
-		$(DOCDIR)/html-manual/
-	@#install -m644 Docs/sgmlmanual/wvstreams.ps \
-		Docs/sgmlmanual/wvstreams.pdf \
-		$(DOCDIR)
+	find Docs/doxy-html -type f -exec install -m644 '{}' $(DOCDIR)/html-api/ ';'
+
+#	@# Don't install the SGML documentation.
+#	@install -d $(DOCDIR)/html-manual
+#	@install -m644 Docs/sgmlmanual/wvstreams.html/*.html \
+#		$(DOCDIR)/html-manual/
+#	@install -m644 Docs/sgmlmanual/wvstreams.ps \
+#		Docs/sgmlmanual/wvstreams.pdf \
+#		$(DOCDIR)
 
 	dh_install -i
 
@@ -130,7 +132,7 @@ install-arch:
 
 #	$(MAKE) installshared PREFIX=$(PKG)/usr
 	# Temporary Fix to work around a bug in Debhelper
-	$(MAKE) install-shared DESTDIR=`pwd`/debian/tmp
+	$(MAKE) install-shared DESTDIR=$(CURDIR)/debian/tmp
 
 	# Install development package
 	$(MAKE) install-dev DESTDIR=$(PKGDEV)
@@ -140,9 +142,14 @@ install-arch:
 	rm -f $(PKGDEV)/usr/lib/libxplc.so*
 
 	# Install UniConf daemon
-	$(MAKE) install-uniconfd DESTDIR=`pwd`/debian/tmp
-	install -d `pwd`/debian/tmp/etc/default
+	$(MAKE) install-uniconfd DESTDIR=$(CURDIR)/debian/tmp
+	install -d $(CURDIR)/debian/tmp/etc/default
 	install -m644 debian/uniconfd.default debian/tmp/etc/default/uniconfd
+
+	# Install lintian overrides
+	install -m644 debian/libwvstreams$(version)-base.lintian-override debian/libwvstreams$(version)-base/usr/share/lintian/overrides/libwvstreams$(version)-base
+	install -m644 debian/libwvstreams$(version)-extras.lintian-override debian/libwvstreams$(version)-extras/usr/share/lintian/overrides/libwvstreams$(version)-extras
+	install -m644 debian/libwvstreams$(version)-qt.lintian-override debian/libwvstreams$(version)-qt/usr/share/lintian/overrides/libwvstreams$(version)-qt
 
 	dh_install -s
 
@@ -171,16 +178,16 @@ binary-common:
 	dh_fixperms
 #       dh_perl
 #       dh_python
-	dh_makeshlibs -plibwvstreams4.1-base \
-		      -plibwvstreams4.1-extras \
-		      -plibwvstreams4.1-qt \
-		      -plibuniconf4.1 \
+	dh_makeshlibs -plibwvstreams$(version)-base \
+		      -plibwvstreams$(version)-extras \
+		      -plibwvstreams$(version)-qt \
+		      -plibuniconf$(version) \
 	dh_installdeb
 	dh_installdeb
-	dh_shlibdeps -L libwvstreams4.1-base \
-		     -L libwvstreams4.1-extras \
-		     -L libuniconf4.1 \
-		     -l debian/libwvstreams4.1-base/usr/lib:debian/libwvstreams4.1-extras/usr/lib:debian/libuniconf4.1/usr/lib
+	dh_shlibdeps -L libwvstreams$(version)-base \
+		     -L libwvstreams$(version)-extras \
+		     -L libuniconf$(version) \
+		     -l debian/libwvstreams$(version)-base/usr/lib:debian/libwvstreams$(version)-extras/usr/lib:debian/libuniconf$(version)/usr/lib
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

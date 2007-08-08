@@ -1,3 +1,4 @@
+#include "wvrsa.h"
 #include "wvx509.h"
 #include "wvlog.h"
 
@@ -19,23 +20,17 @@ int main(int argc, char **argv)
     // Setup a new DN entry, like a server would set.
     WvString dn(argc > 1 ? argv[1] : "cn=test.foo.com,dc=foo,dc=com");
     
+    // Setup a key
+    WvRSAKey rsa(1024);
+
     // Create a new certificate
-    WvX509Mgr cert(dn, 1024);
-    
-    if (!cert.isok())
-    {
-	log("Failed to generate certificate: %s\n", cert.errstr());
-	return 1;
-    }
+    WvString certreq = WvX509::certreq(dn, rsa);
     
     log("Private RSA key follows (KEEP THIS!):\n");
-    wvcon->write(cert.encode(WvX509Mgr::RsaPEM));
-    
-    log("Temporary self-signed certificate follows (replace later):\n");
-    wvcon->write(cert.encode(WvX509Mgr::CertPEM));
+    wvcon->write(rsa.encode(WvRSAKey::RsaPEM));
     
     log("Certificate request follows:\n");
-    wvcon->write(cert.certreq());
+    wvcon->write(certreq);
     
     log("Done...\n");
 }

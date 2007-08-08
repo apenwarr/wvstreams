@@ -42,7 +42,7 @@ and SIGHUP signals.
 By default, daemons implemented through WvDaemon provide the following
 command line options:
 
--q|--quit: decrease the log level by one
+-q|--quiet: decrease the log level by one
 -v|--verbose: increase the log level by one
 -d|--daemonize: fork into the background (implies --syslog)
 -s|--syslog: write log entries to the syslog() facility
@@ -155,28 +155,24 @@ class WvDaemon
 
         int _run(const char *argv0);
 
-        void set_daemonize(void *);
+        bool set_daemonize(void *);
 
     protected:
     
-        void dec_log_level(void *)
+        bool dec_log_level(void *)
         {
             if ((int)log_level > (int)WvLog::Critical)
                 log_level = (WvLog::LogLevel)((int)log_level - 1);
+	    return true;
         }
 
-        void inc_log_level(void *)
+        bool inc_log_level(void *)
         {
             if ((int)log_level < (int)WvLog::Debug5)
                 log_level = (WvLog::LogLevel)((int)log_level + 1);
+	    return true;
         }
 
-        void display_version_and_exit(void *)
-        {
-            wvout->print("%s version %s\n", name, version);
-            ::exit(0);
-        }
-        
         WvStringList _extra_args;
 
     public:

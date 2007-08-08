@@ -15,13 +15,20 @@ public:
     ReadableStream()
         { yes_readable = false; }
     
-    virtual bool pre_select(SelectInfo &si)
+    virtual void pre_select(SelectInfo &si)
     {
-	int ret = WvStream::pre_select(si);
+	WvStream::pre_select(si);
 	if (yes_readable && si.wants.readable)
-	    return true;
-	else
-	    return ret;
+	    si.msec_timeout = 0;
+    }
+
+    virtual bool post_select(SelectInfo &si)
+    {
+        bool ret = WvStream::post_select(si);
+        if (yes_readable && si.wants.readable)
+            return true;
+        
+        return ret;
     }
 };
 
@@ -377,7 +384,7 @@ WVTEST_MAIN("force_select and globallist")
     WVFAIL(s.select(0));
     
     x.setcallback(val_cb, &val);
-    WvIStreamList::globallist.append(&x, false);
+    WvIStreamList::globallist.append(&x, false, "countstream");
     WVFAIL(s.select(0));
     WVPASS(!val);
     x.inbuf_putstr("yikes");

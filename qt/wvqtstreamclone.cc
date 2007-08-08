@@ -50,13 +50,8 @@ WvQtStreamClone::~WvQtStreamClone()
 void WvQtStreamClone::pre_poll()
 {
     // prepare lists of file descriptors
-    bool sure = _build_selectinfo(si, msec_timeout, 
-				  false, false, false, true);
-    if (sure)
-    {
-        pending_callback = true;
-        si.msec_timeout = 0;
-    }
+    _build_selectinfo(si, msec_timeout, 
+                      false, false, false, true);
 
     // set up a timer to wake us up to poll again (for alarms)
     // we don't try to catch the timer signal; we use it only to force

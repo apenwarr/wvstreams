@@ -45,7 +45,8 @@ public:
     virtual size_t uread(void *buf, size_t size);
     virtual size_t uwrite(const void *buf, size_t size);
     virtual bool isok() const;
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     
     void seteof() { eof = true; }
 };

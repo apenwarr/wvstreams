@@ -56,6 +56,7 @@ void UniConfDaemonConn::execute()
 
     WvString command_string;
     UniClientConn::Command command = readcmd(command_string);
+    
     if (command != UniClientConn::NONE)
     {
         // parse and execute command
@@ -124,13 +125,6 @@ void UniConfDaemonConn::execute()
 	case UniClientConn::REQ_HELP:
 	    do_help();
 	    break;
-
-        case UniClientConn::REQ_RESTRICT:
-	    if (arg1.isnull())
-		do_malformed(command);
-	    else
-                do_restrict(arg1);
-            break;
 	    
 	default:
 	    do_invalid(command_string);
@@ -167,7 +161,8 @@ void UniConfDaemonConn::do_reply(WvStringParm reply)
 
 void UniConfDaemonConn::do_get(const UniConfKey &key)
 {
-    WvString value(root[fullkey(key)].getme());
+    WvString value(root[key].getme());
+    
     if (value.isnull())
         writefail();
     else
@@ -177,13 +172,60 @@ void UniConfDaemonConn::do_get(const UniConfKey &key)
 
 void UniConfDaemonConn::do_set(const UniConfKey &key, WvStringParm value)
 {
-    root[fullkey(key)].setme(value);
+    root[key].setme(value);
 }
 
 
-void UniConfDaemonConn::do_remove(const UniConfKey &key)
-{
-    root[fullkey(key)].remove();
+void UniConfDaemonConn::do_remove(const UniConfKey &_key)
+{      
+    int notifications_sent = 0;
+    bool single_key = true;
+    
+    // Remove '/' at the end of the key
+    WvString strkey = _key;
+    for (int n = strkey.len()-1; n > 0; n--)
+    {
+        if (strkey.edit()[n] == '/')
+            strkey.edit()[n] = ' ';
+        else
+            break;
+    }
+    
+    trim_string(strkey.edit());
+    
+    UniConfKey key = strkey;
+    
+    // Remove keys one at a time
+    UniConf cfg(root[key]);
+    
+    if (cfg.exists())
+    {        
+        UniConf::RecursiveIter it(cfg);
+        for (it.rewind(); it.next(); )
+        {
+            single_key = false;
+            WvString sect_name = getdirname(it->fullkey());   
+            root[it->fullkey()].remove();
+            
+            if (sect_name == ".")
+                sect_name = WvString::null;
+            
+            if (!root[sect_name].haschildren())
+                root[sect_name].remove();
+                
+	    // Don't hog the daemon while delivering notifications
+	    if (++notifications_sent > CONTINUE_SELECT_AT)
+	    {
+	        notifications_sent = 0;
+	        
+	        if (isok())
+	            continue_select(0);
+	    }
+	}
+	
+	if (single_key)
+	    root[key].remove();
+    }
 }
 
 
@@ -191,7 +233,7 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 {
     static int niceness = 0;
     
-    UniConf cfg(root[fullkey(key)]);
+    UniConf cfg(root[key]);
     if (cfg.exists())
     {
 	if (recursive)
@@ -205,7 +247,7 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
 		// entire daemon while fulfilling it; give up our timeslice
 		// after each entry.
 		if (!isok()) break;
-		if (++niceness > 100)
+		if (++niceness > CONTINUE_SELECT_AT)
 		{
 		    niceness = 0;
 		    continue_select(0);
@@ -232,10 +274,9 @@ void UniConfDaemonConn::do_subtree(const UniConfKey &key, bool recursive)
         writefail();
 }
 
-
 void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
 {
-    bool haschild = root[fullkey(key)].haschildren();
+    bool haschild = root[key].haschildren();
     writecmd(REPLY_CHILD,
 	     spacecat(wvtcl_escape(key), haschild ? "TRUE" : "FALSE"));
 }
@@ -243,14 +284,14 @@ void UniConfDaemonConn::do_haschildren(const UniConfKey &key)
 
 void UniConfDaemonConn::do_commit()
 {
-    root[restrict_key].commit();
+    root.commit();
     writeok();
 }
 
 
 void UniConfDaemonConn::do_refresh()
 {
-    if (root[restrict_key].refresh())
+    if (root.refresh())
         writeok();
     else
         writefail();
@@ -272,38 +313,22 @@ void UniConfDaemonConn::do_help()
 }
 
 
-void UniConfDaemonConn::do_restrict(const UniConfKey &key)
-{
-    restrict_key = key;
-    writeok();
-}
-
-
 void UniConfDaemonConn::deltacallback(const UniConf &cfg, const UniConfKey &key)
 {
-    UniConfKey fullkey(cfg.fullkey(cfg));
-    fullkey.append(key);
-
-    WvString subkey;
-    if (!restrict_key.suborsame(fullkey, subkey))
-        return;
-
+    // for now, we just send notifications for *any* key that changes.
+    // Eventually we probably want to do something about having each
+    // connection specify exactly which keys it cares about.
     WvString value(cfg[key].getme());
     WvString msg;
 
+    UniConfKey fullkey(cfg.fullkey(cfg));
+    fullkey.append(key);
+
     if (value.isnull())
-        msg = wvtcl_escape(subkey);
+        msg = wvtcl_escape(fullkey);
     else
-        msg = spacecat(wvtcl_escape(subkey),
-		       wvtcl_escape(value));
-
+        msg = spacecat(wvtcl_escape(fullkey),
+		       wvtcl_escape(cfg[key].getme()));
+		       
     writecmd(UniClientConn::EVENT_NOTICE, msg);
-}
-
-UniConfKey UniConfDaemonConn::fullkey(const UniConfKey &key) const
-{
-    if (!key.isempty())
-        return UniConfKey(restrict_key, key);
-    else
-        return restrict_key;
 }

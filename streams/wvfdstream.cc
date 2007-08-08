@@ -44,7 +44,7 @@ static inline bool isselectable(int s)
 
 /***** WvFdStream *****/
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
+static IWvStream *creator(WvStringParm s)
 {
     return new WvFdStream(s.num());
 }
@@ -211,9 +211,9 @@ void WvFdStream::maybe_autoclose()
 }
 
 
-bool WvFdStream::pre_select(SelectInfo &si)
+void WvFdStream::pre_select(SelectInfo &si)
 {
-    bool result = WvStream::pre_select(si);
+    WvStream::pre_select(si);
     
 #if 0
     fprintf(stderr, "%d/%d wr:%d ww:%d wx:%d inh:%d\n", rfd, wfd,
@@ -225,8 +225,6 @@ bool WvFdStream::pre_select(SelectInfo &si)
 	if (si.wants.readable && (rfd >= 0))
 	    FD_SET(rfd, &si.read);
     } 
-    else
-	result |= si.wants.readable;
     
     // FIXME: outbuf flushing should really be in WvStream::pre_select()
     // instead!  But it's hard to get the equivalent behaviour there.
@@ -236,8 +234,6 @@ bool WvFdStream::pre_select(SelectInfo &si)
 	      && (wfd >= 0))
 	    FD_SET(wfd, &si.write);
     }
-    else
-	result |= si.wants.writable;
     
     if (si.wants.isexception)
     {
@@ -248,7 +244,6 @@ bool WvFdStream::pre_select(SelectInfo &si)
 	si.max_fd = rfd;
     if (si.max_fd < wfd)
 	si.max_fd = wfd;
-    return result;
 }
 
 
@@ -264,7 +259,8 @@ bool WvFdStream::post_select(SelectInfo &si)
         flush_outbuf(0);
 	
 	// flush_outbuf() might have closed the file!
-	if (!isok()) return result;
+	if (!isok())
+	    return result;
     }
     
     bool val = ((rfd >= 0 && FD_ISSET(rfd, &si.read)) ||

@@ -42,7 +42,7 @@ ifneq ("$(with_xplc)", "no")
 ifneq ("$(with_xplc)", "")
   LDFLAGS:=-L$(with_xplc) $(LDFLAGS)
 endif
-  LIBXPLC=-lxplc-cxx -lxplc
+  LIBXPLC=-lxplc-cxx
 endif
 
 ifneq ("$(with_dbus)", "no")
@@ -52,7 +52,7 @@ endif
   LIBDBUS=-ldbus-1
 endif
 
-LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
+LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so
 LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
@@ -100,7 +100,7 @@ ifneq ("$(enable_warnings)", "no")
   CFLAGS+=-Wall
 endif
 
-ifneq ("$(enable_rtti)", "yes")
+ifeq ("$(enable_rtti)", "no")
   CXXFLAGS+=-fno-rtti
 endif
 
@@ -150,8 +150,6 @@ clean-valgrind:
 
 %/test:
 	$(MAKE) -C $(dir $@) test
-
-$(LIBXPLC):
 
 $(WVSTREAMS_SRC)/rules.local.mk:
 	@true

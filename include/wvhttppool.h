@@ -16,16 +16,29 @@
 #include "wvstreamclone.h"
 #include "wvlog.h"
 #include "wvhashtable.h"
-#include "wvhttp.h"
 #include "wvbufstream.h"
 #include "wvbuf.h"
 #include "wvcont.h"
+#include "wvtcp.h"
 
 class WvBufUrlStream;
 class WvUrlStream;
 class WvHttpStream;
 
 static const WvString DEFAULT_ANON_PW("weasels@");
+
+struct WvHTTPHeader
+{
+    WvString name, value;
+    
+    WvHTTPHeader(WvStringParm _name, WvStringParm _value)
+	: name(_name), value(_value) 
+    		{}
+};
+
+
+DeclareWvDict(WvHTTPHeader, WvString, name);
+
 
 class WvUrlRequest
 {
@@ -57,7 +70,7 @@ struct WvUrlLink
     WvString linkname;
     WvUrl url;
 
-    WvUrlLink::WvUrlLink(WvStringParm _linkname, WvStringParm _url)
+    WvUrlLink(WvStringParm _linkname, WvStringParm _url)
 	: linkname(_linkname), url(_url)
     {}
 };
@@ -179,7 +192,7 @@ public:
     virtual ~WvHttpStream();
 
     virtual void close();
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     virtual size_t remaining()
@@ -196,6 +209,7 @@ class WvFtpStream : public WvUrlStream
     WvString password;
     WvTCPConn *data;
     time_t last_request_time;
+    bool sure;
 
     virtual void doneurl();
     virtual void request_next();
@@ -218,7 +232,7 @@ public:
     WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 		WvStringParm _password);
 
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void close();
     virtual void execute();
@@ -236,6 +250,7 @@ class WvHttpPool : public WvIStreamList
     WvUrlStreamDict conns;
     WvUrlRequestList urls;
     int num_streams_created;
+    bool sure;
     
     WvIPPortAddrTable pipeline_incompatible;
     
@@ -243,7 +258,8 @@ public:
     WvHttpPool();
     virtual ~WvHttpPool();
     
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
     virtual void execute();
     
     WvBufUrlStream *addurl(WvStringParm _url, WvStringParm _method = "GET",

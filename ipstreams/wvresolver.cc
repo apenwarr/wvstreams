@@ -321,19 +321,31 @@ int WvResolver::findname(int msec_timeout, WvIPAddr *ipaddr, char **name)
 */
 
 
-bool WvResolver::pre_select(WvStringParm hostname,
-			      WvStream::SelectInfo &si)
+void WvResolver::pre_select(WvStringParm hostname, WvStream::SelectInfo &si)
+{
+    WvResolverHost *host = (*hostmap)[hostname];
+    
+    if (host && host->loop)
+        host->loop->xpre_select(si,
+                                WvStream::SelectRequest(true, false, false));
+}
+
+
+bool WvResolver::post_select(WvStringParm hostname, WvStream::SelectInfo &si)
 {
     WvResolverHost *host = (*hostmap)[hostname];
     
     if (host)
     {
 	if (host->loop)
-	    return host->loop->xpre_select(si,
-			  WvStream::SelectRequest(true, false, false));
+        {
+	    host->loop->xpre_select(si,
+                                    WvStream::SelectRequest(true, false, 
+                                                            false));
+        }
 	else
 	    return true; // sure thing: already looked up this name!
     }
-    else
-	return false; // will never be ready... host not even in map!
+
+    return false; // will never be ready... host not even in map!
 }

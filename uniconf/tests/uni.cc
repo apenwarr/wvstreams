@@ -1,3 +1,4 @@
+#include "wvautoconf.h"
 #include "uniconfroot.h"
 #include "wvlogrcv.h"
 #include "strutils.h"
@@ -25,25 +26,44 @@ void usage()
 	    "   hdump - list the subkeys/values recursively\n"
 	    "   xdump - list keys/values that match a wildcard\n"
 	    "   del   - delete all subkeys\n"
-	    "   help  - this text\n");
+	    "   help  - this text\n"
+	    "\n"
+	    "You must set the UNICONF environment variable to a valid "
+	    "UniConf moniker.\n"
+	    "\n"
+	    "Report bugs to <" PACKAGE_BUGREPORT ">.\n");
 }
 
 int main(int argc, char **argv)
 {
     WvLogConsole logcon(2, WvLog::Info);
     
+    if (argc < 3)
+    {
+	usage();
+	return 3;
+    }
+    
+    // note: we know cmd and arg1 are non-NULL, but arg2 may be the argv
+    // terminator, which is a NULL.  That has a special meaning for some
+    // commands, like 'set', and is different from the empty string.
+    const char *_cmd = argv[1], *arg1 = argv[2],
+	       *arg2 = argc > 3 ? argv[3] : NULL;
+    WvString cmd(_cmd);
+    strlwr(cmd.edit());
+
+    if (cmd == "help")
+    {
+	usage();
+	return 0;
+    }
+
     const char *confuri = getenv("UNICONF");
     if (!confuri)
     {
 	fprintf(stderr, "%s: UNICONF environment variable not set!\n",
 		argv[0]);
 	return 2;
-    }
-    
-    if (argc < 3)
-    {
-	usage();
-	return 3;
     }
     
     UniConfRoot cfg(confuri);
@@ -55,14 +75,6 @@ int main(int argc, char **argv)
 	return 5;
     }
     
-    // note: we know cmd and arg1 are non-NULL, but arg2 may be the argv
-    // terminator, which is a NULL.  That has a special meaning for some
-    // commands, like 'set', and is different from the empty string.
-    const char *_cmd = argv[1], *arg1 = argv[2],
-	       *arg2 = argc > 3 ? argv[3] : NULL;
-    WvString cmd(_cmd);
-    strlwr(cmd.edit());
-
     static const WvStringMask nasties("\r\n[]=");
     if (cmd == "get")
     {
@@ -156,11 +168,6 @@ int main(int argc, char **argv)
 	UniConf sub(cfg[arg1]);
 	sub.remove();
 	cfg.commit();
-    }
-    else if (cmd == "help")
-    {
-	usage();
-	return 5;
     }
     else
     {

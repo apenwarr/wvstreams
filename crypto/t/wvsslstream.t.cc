@@ -1,7 +1,7 @@
 #include "wvtest.h"
 #include "wvsslstream.h"
 #include "wvloopback2.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "wvrsa.h"
 #include "wvtcp.h"
 #include "wvistreamlist.h"
@@ -235,7 +235,7 @@ static void lcallback(WvStream&, void *userdata)
     WvTCPConn *conn = l->accept();
     WvSSLStream *ssl = new WvSSLStream(conn, x509, 0, true);
     ssl->setcallback(getmessage, ssl);
-    WvIStreamList::globallist.append(ssl, true);
+    WvIStreamList::globallist.append(ssl, true, "ssl stream");
 }
 
 
@@ -260,7 +260,7 @@ WVTEST_MAIN("ssl establish connection")
     WvTCPListener l(laddr);
     l.setcallback(lcallback, &l);
 
-    WvIStreamList::globallist.append(&l, false);
+    WvIStreamList::globallist.append(&l, false, "listener");
 
     printf("Starting listener on %s\n", laddrstr.cstr());
 
@@ -279,7 +279,7 @@ WVTEST_MAIN("ssl establish connection")
     WvTCPConn *c = new WvTCPConn(caddr);
     WvSSLStream *ssl = new WvSSLStream(c, NULL);
 
-    WvIStreamList::globallist.append(ssl, true);
+    WvIStreamList::globallist.append(ssl, true, "ssl stream");
 
     WVPASS(ssl->isok());
 
@@ -330,7 +330,7 @@ WVTEST_MAIN("ssl establish connection")
 
 WVTEST_MAIN("x509 refcounting")
 {
-    WvX509Mgr *x509 = new WvX509Mgr("cn=random_stupid_dn", 1024);
+    WvX509Mgr *x509 = new WvX509Mgr("cn=random_stupid_dn,dn=foo", 512);
     WvIStreamList list;
     WvSSLStream *s1, *s2;
     sslloop(list, *x509, s1, s2, true);

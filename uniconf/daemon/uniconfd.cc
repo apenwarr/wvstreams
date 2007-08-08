@@ -21,7 +21,7 @@
 #include "uniclientconn.h"
 #include "unisecuregen.h"
 #include "unipermgen.h"
-#include "wvx509.h"
+#include "wvx509mgr.h"
 #include "uniconfroot.h"
 #include "wvstrutils.h"
 #include "wvfileutils.h"
@@ -43,7 +43,7 @@
 static WvMap<WvString, IUniConfGen*> namedgens(42);
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     IUniConfGen* gen = namedgens[s];
 
@@ -68,7 +68,7 @@ class UniConfd : public WvStreamsDaemon
     bool first_time;
     IUniConfGen *permgen;
     
-    void namedgen_cb(WvStringParm option, void *)
+    bool namedgen_cb(WvStringParm option, void *)
     {
 	WvString name(option);
 	WvString moniker;
@@ -77,12 +77,13 @@ class UniConfd : public WvStreamsDaemon
 	ptr = strchr(name.edit(), '=');
 
 	if (!ptr)
-	    return;
+	    return false;
 
 	*ptr = 0;
 	moniker = ptr + 1;
 
-	namedgens.add(name, wvcreate<IUniConfGen>("temp:"), true);
+	namedgens.add(name, wvcreate<IUniConfGen>(moniker), true);
+	return true;
     }
 
     void commit_stream_cb(WvStream &s, void *)
@@ -213,20 +214,8 @@ public:
             first_time(true),
             permgen(NULL)
     {
-        args.zap();
-        
-        daemonize = true;
-
-        args.add_reset_bool_option('f', "foreground",
-                "Run in foreground (non-forking)", daemonize);
-        args.add_option('d', "debug",
-                "Print debug messages (can be used multiple times)",
-                WvArgs::NoArgCallback(this, &UniConfd::inc_log_level));
-        args.add_option('V', "version",
-                "Print version number and exit",
-                WvArgs::NoArgCallback(this, &UniConfd::display_version_and_exit));
         args.add_option(0, "pid-file",
-                "Specify the .pid file to use", "filename",
+                "Specify the .pid file to use (only applies with --daemonize)", "filename",
                 pid_file);
         args.add_set_bool_option('a', "need-auth",
                 "Require authentication on incoming connections", needauth);
@@ -251,6 +240,8 @@ public:
 		"name=moniker",
 		WvArgs::ArgCallback(this, &UniConfd::namedgen_cb), NULL);
 #endif
+	args.add_optional_arg("MONIKERS", true);
+	args.set_email("<" PACKAGE_BUGREPORT ">");
     }
     
     

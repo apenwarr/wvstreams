@@ -155,6 +155,12 @@ inline void _wv_serialize(WvBuf &buf, WvStringParm s)
     buf.put("", 1); // terminating nul
 }
 
+/** The template wv_serialize doesn't work for const char arrays. */
+inline void wv_serialize(WvBuf &buf, const char *t)
+{
+    _wv_serialize(buf, t);
+}
+
 
 /**
  * Serialize a WvBuf.  This is handier than it sounds, because then

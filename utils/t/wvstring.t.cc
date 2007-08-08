@@ -123,6 +123,13 @@ WVTEST_MAIN("formatting")
     d = WvString(d);
     WVPASS(d == "hellohellohellohello");
     WVPASS(d.len() == 20);
+
+    WvString str("%c%c%c%c%c", 'H', 'E', 'L', 'L', 'O'); 
+    WVPASSEQ(str, "HELLO");
+
+    WvString str1("%s %s %s", "Hello", "World"); // insufficient argumenst 
+    WVPASSEQ(str1, "Hello World (nil)");
+    
 }
 
 
@@ -143,6 +150,46 @@ WVTEST_MAIN("fancy formatting")
     WVPASS(WvString("%6.3s", "a") == "     a");
 }
 
+
+WVTEST_MAIN("%$ns and %$nc formatting")
+{
+    WvString a("Hello"), b("World"), c("To"), d("The");
+     
+    // basic formatter
+    WvString x("%$1s %$3s %$4s %$2s.", a, b, c, d); 
+    WVPASSEQ( x, "Hello To The World.");
+
+    x = WvString("%s %$3s %$4s %s.", a, b, c, d); 
+    WVPASSEQ( x, "Hello To The World.");
+
+    x = WvString("%s %$3s ", a , b , c , d);
+    x.append("%$4s %$2s%$5c", a , b , c , d, '.');
+    WVPASSEQ( x, "Hello To The World.");
+
+    x = WvString("This %$2s be %$4s%c %$5s", ':', "must", c, "nil"); 
+    WVPASSEQ( x, "This must be nil: (nil)");
+
+    x = WvString("This also %$2s be %$4s%c %$20s", ':', "must", c, "nil"); 
+    WVPASSEQ( x, "This also must be nil: (nil)");
+
+    x = WvString("But this %$3s be %$4s%$2c %$0s", "Ok", ':', "should", "OK");
+    WVPASSEQ( x, "But this should be OK: Ok");
+
+    x = WvString("%$4s this %s%$3c %$-1s", "one", "Ok", ':', "Same as", c );
+    WVPASSEQ( x, "Same as this one: Ok");
+
+    x = WvString("\"%$2s %$1s\" is same as \"%$2s %$1s\".", b, a, d, c); 
+    WVPASSEQ( x, "\"Hello World\" is same as \"Hello World\".");
+
+    x = WvString("%c%$4c%$2c%$2c%$3c", 'H', 'l' , 'o' , 'e');
+    WVPASSEQ( x, "Hello");
+    
+    x = WvString("%-10$1s%5$3$2s%4$4s %-7$2s.", a, b, c, d); 
+    WVPASSEQ( x, "Hello        To The World  .");
+    
+}
+
+
 WVTEST_MAIN("conversion from int")
 {
     for (int i = 0; i < 1000000; ++i)
@@ -155,6 +202,30 @@ WVTEST_MAIN("conversion from int")
     WVPASSEQ(WvString(12), "12");
     WVPASSEQ(WvString(32767), "32767");
     WVPASSEQ(WvString(65535), "65535");
+}
+
+WVTEST_MAIN("offset")
+{
+    WvString emptystr("");
+
+    WVPASSEQ(emptystr.offset(0), "");
+    WVPASSEQ(emptystr.offset(1), "");
+    WVPASSEQ(emptystr.offset(1000), "");
+
+    WvString nullstr(WvString::null);
+
+    WVPASSEQ(nullstr.offset(0), WvString::null);
+    WVPASSEQ(nullstr.offset(1), WvString::null);
+    WVPASSEQ(nullstr.offset(2), WvString::null);
+
+    WvString str("foobar");
+
+    WVPASSEQ(str.offset(0), "foobar");
+    WVPASSEQ(str.offset(1), "oobar");
+    WVPASSEQ(str.offset(1).offset(2), "bar");
+    WVPASSEQ(str.offset(3), str.offset(1).offset(2));
+    WVPASSEQ(str.offset(6), "");
+    WVPASSEQ(str.offset(100), "");
 }
 
 class WvFooString : public WvFastString

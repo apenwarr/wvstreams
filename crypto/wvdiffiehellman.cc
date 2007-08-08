@@ -28,9 +28,10 @@ char *alloca ();
 #endif
 
 #include <openssl/bn.h>
+#include <stdlib.h>
+
 #include "wvdiffiehellman.h"
 #include "strutils.h"
-#include <malloc.h>
 
 WvDiffieHellman::WvDiffieHellman(const unsigned char *_key, int _keylen, 
 				 BN_ULONG _generator) :

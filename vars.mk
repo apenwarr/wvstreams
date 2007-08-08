@@ -21,29 +21,14 @@ TARGETS += libuniconf.so libuniconf.a
 TARGETS += wvtestmain.o libwvtest.a
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
 TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
+TARGETS += crypto/tests/printcert
+ifneq ("$(with_readline)", "no")
+TARGETS += ipstreams/tests/wsd
+endif
 GARBAGE += wvtestmain.o tmp.ini .wvtest-total
-
-#ifneq ("$(with_swig)", "no")
-#  ifneq ("$(with_tcl)", "no")
-#    TARGETS += bindings/tcl
-#    CPPFLAGS += -I/usr/include/tcl8.3
-#  endif
-#  ifneq ("$(with_python)", "no")
-#    TARGETS += bindings/python
-#    CPPFLAGS += -I/usr/include/python2.1
-#  endif
-#  ifneq ("$(with_php)", "no")
-#    TARGETS += bindings/php
-#    CPPFLAGS += `php-config --includes`
-#  endif
-#endif
 
 ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so libwvqt.a
-endif
-
-ifneq ("$(with_telephony)", "no")
-  TARGETS += libwvtelephony.so libwvtelephony.a
 endif
 
 ifneq ("$(with_dbus)", "no")
@@ -60,7 +45,7 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-CPPFLAGS += -Iinclude -pipe
+CPPFLAGS += -Iinclude -Ignulib -pipe
 ARFLAGS = rs
 
 DEBUG:=$(filter-out no,$(enable_debug))
@@ -122,24 +107,12 @@ ifeq ("$(enable_efence)", "yes")
 LDLIBS+=-lefence
 endif
 
-ifneq ("$(with_bdb)", "no")
-  libwvutils.so-LIBS+=-ldb
-endif
-
-ifneq ("$(with_qdbm)", "no")
-  libwvutils.so-LIBS+=-L. -lqdbm
-endif
-
 ifneq ("$(with_dbus)", "no")
   libwvdbus.so-LIBS+=-L. -ldbus-1
 endif
 
 libwvbase.so-LIBS+=-lxplc-cxx -lm
 libwvbase.so:
-
-ifneq ("$(with_openslp)", "no")
-  libwvstreams.so: -lslp
-endif
 
 ifneq ("$(with_pam)", "no")
   libwvutils.so: -lpam
@@ -176,7 +149,7 @@ BASEOBJS= \
 	utils/wvstreamsdebugger.o \
 	streams/wvlog.o \
 	streams/wvstream.o \
-	uniconf/uniconf.o uniconf/uniconf_c.o \
+	uniconf/uniconf.o \
 	uniconf/uniconfgen.o uniconf/uniconfkey.o uniconf/uniconfroot.o \
 	uniconf/unihashtree.o \
 	uniconf/unimountgen.o \
@@ -193,9 +166,7 @@ BASEOBJS= \
 	streams/wvconstream.o \
 	utils/wvcrashbase.o
 
-TESTOBJS = \
-	utils/wvtest.o \
-	utils/wvtest_filecountprefix.o
+TESTOBJS = utils/wvtest.o 
 
 # print the sizes of all object files making up libwvbase, to help find
 # optimization targets.
@@ -209,23 +180,20 @@ libwvbase.a: uniconf/unigenhack_s.o
 libwvbase.so: uniconf/unigenhack.o
 libwvbase.so: LIBS+=$(LIBXPLC)
 
-libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
+libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils)) gnulib/libgnu.a
 libwvutils.so: libwvbase.so
-libwvutils.so: -lz -lcrypt -lpopt
+libwvutils.so: -lz -lcrypt
 
 libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
 		$(ARCH_SUBDIRS) streams urlget))
 libwvstreams.so: libwvutils.so libwvbase.so
-libwvstreams.so: LIBS+=-lssl -lcrypto
+libwvstreams.so: LIBS+=-lssl -lcrypto 
 
 libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 	$(call objects,uniconf))
 libuniconf.a: uniconf/uniconfroot.o
 libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
-
-libwvtelephony.a libwvtelephony.so: $(call objects,telephony)
-libwvtelephony.so: 
 
 libwvdbus.a libwvdbus.so: $(call objects,dbus)
 libwvdbus.so: libwvstreams.so libwvutils.so libwvbase.so

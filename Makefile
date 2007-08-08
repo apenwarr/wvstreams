@@ -1,5 +1,6 @@
 WVSTREAMS=.
 WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
+VPATH=$(libdir)
 include wvrules.mk
 override enable_efence=no
 
@@ -13,7 +14,9 @@ XPATH=include
 
 include vars.mk
 
-all: config.mk xplc $(TARGETS)
+SUBDIRS = gnulib
+
+all: runconfigure xplc $(TARGETS)
 
 .PHONY: xplc xplc/clean install-xplc
 xplc:
@@ -43,6 +46,11 @@ endif
 dist-hack-clean:
 	@rm -f stamp-h.in
 
+export AM_CFLAGS
+AM_CFLAGS=-fPIC
+gnulib/libgnu.a:
+	$(call subdirs_func,libgnu.a,gnulib)
+
 # Comment this assignment out for a release.
 ifdef PKGSNAPSHOT
 SNAPDATE=+$(shell date +%Y%m%d)
@@ -55,10 +63,8 @@ dist-hook: dist-hack-clean configure
 	    $(MAKE) -C .xplc clean patch && \
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
-	@sed -e "s/@PKGVER@/$(PKGVER)$(SNAPDATE)/g" \
-	 redhat/wvstreams.spec.in > redhat/wvstreams.spec
 
-runconfigure: config.mk include/wvautoconf.h
+runconfigure: config.mk include/wvautoconf.h gnulib/Makefile
 
 ifndef CONFIGURING
 configure=$(error Please run the "configure" script)
@@ -72,20 +78,32 @@ config.mk: configure config.mk.in
 include/wvautoconf.h: include/wvautoconf.h.in
 	$(call configure)
 
+gnulib/Makefile: gnulib/Makefile.in
+	$(call configure)
+
 # FIXME: there is some confusion here
 ifdef WE_ARE_DIST
-configure: configure.ac config.mk.in include/wvautoconf.h.in
+aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
+	$(warning "$@" is old, please run "aclocal -I gnulib/m4")
+
+configure: configure.ac config.mk.in include/wvautoconf.h.in aclocal.m4
 	$(warning "$@" is old, please run "autoconf")
 
-include/wvautoconf.h.in: configure.ac
+include/wvautoconf.h.in: configure.ac aclocal.m4
 	$(warning "$@" is old, please run "autoheader")
 else
-configure: configure.ac
-	autoheader
-	autoconf
+aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
+	aclocal -I gnulib/m4
+	@touch $@
 
-include/wvautoconf.h.in:
+configure: configure.ac include/wvautoconf.h.in aclocal.m4
+	autoconf
+	@rm -f config.mk include/wvautoconf.h gnulib/Makefile
+	@touch $@
+
+include/wvautoconf.h.in: configure.ac aclocal.m4
 	autoheader
+	@touch $@
 endif
 
 ifeq ($(VERBOSE),)
@@ -106,10 +124,15 @@ realclean: distclean
 
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
+	@rm -rf autom4te.cache
+	@rm -f gnulib/Makefile
 	@rm -f pkgconfig/*.pc
 	@rm -f .xplc
 
 clean: depend dust xplc/clean
+	@if ! test -f gnulib/Makefile; then echo 'clean:' >gnulib/Makefile; fi
+	$(subdirs)
+	@if test `wc -c <gnulib/Makefile` = '7'; then rm gnulib/Makefile; fi
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
@@ -126,7 +149,11 @@ kdoc:
 doxygen:
 	doxygen
 
+ifeq ("$(with_readline)", "no")
 install: install-shared install-dev install-xplc install-uniconfd
+else
+install: install-shared install-dev install-xplc install-uniconfd install-wsd
+endif
 
 install-shared: $(TARGETS_SO)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
@@ -163,6 +190,10 @@ install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
 	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/man8
 	$(INSTALL_DATA) uniconf/tests/uni.8 $(DESTDIR)$(mandir)/man8
+
+install-wsd: ipstreams/tests/wsd
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) ipstreams/tests/wsd $(DESTDIR)$(bindir)/
 
 uninstall:
 	$(tbd)

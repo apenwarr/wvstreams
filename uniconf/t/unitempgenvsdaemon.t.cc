@@ -4,8 +4,7 @@
 #include "unitempgen.h"
 #include "unilistgen.h"
 #include "uniinigen.h"
-
-#include "uniconfdaemon.h"
+#include "uniconfgen-sanitytest.h"
 
 #include "wvistreamlist.h"
 #include "wvfile.h"
@@ -45,26 +44,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
         exit(1); 
     }
 
-    pid_t cfg_handler = fork();
-    if (!cfg_handler) // child only
-    {
-        UniIniGen *unigen = new UniIniGen(ininame, 0666);
-
-        UniConfRoot uniconf;
-        uniconf["cfg"].mountgen(unigen);
-        uniconf["tmp"].mount("temp:");
-
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname, 0777);
-
-        WvIStreamList::globallist.append(&daemon, false);
-        while (daemon.isok())
-        {
-            WvIStreamList::globallist.runonce(5000);
-            uniconf.commit();
-        }
-        WVFAIL("uniconfd exited unexpectedly");
-    }
+    UniConfTestDaemon daemon(sockname, WvString("ini:%s", ininame));
 
     // Wait for child to become responsive
     {
@@ -87,20 +67,9 @@ WVTEST_MAIN("tempgen/cachegen basics")
     cfg.commit();
     int new_value = cfg["eth0"].xgetint("dhcpd", 0);
 
-    WVPASS(initial_value != new_value);
+    WVFAILEQ(initial_value, new_value);
    
-    // kill off the daemon and clean up the zombie
-    kill(cfg_handler, 15);
-
-    // In case a signal is in the process of being delivered..
-    pid_t rv;
-    while ((rv = waitpid(cfg_handler, NULL, 0)) != cfg_handler)
-        if (rv == -1 && errno != EINTR)
-            break;
-    WVPASSEQ(rv, cfg_handler);
-
     unlink(ininame);
-    unlink(sockname);
 }
 
 
@@ -113,28 +82,7 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
 
     WvString sockname = WvString("/tmp/unitempgensock2-%s", getpid());
 
-    pid_t cfg_handler = fork();
-    if (!cfg_handler) // child only
-    {
-        UniIniGen *unigen = new UniIniGen(ininame, 0666);
-
-        UniConfRoot uniconf;
-        uniconf["cfg"].mountgen(unigen);
-        uniconf["tmp"].mount("temp:");
-
-        UniConf defcfg(uniconf["default"]);
-
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname, 0777);
-
-        WvIStreamList::globallist.append(&daemon, false);
-        while (daemon.isok())
-        {
-            WvIStreamList::globallist.runonce(5000);
-            uniconf.commit();
-        }
-        WVFAIL("uniconfd exited unexpectedly");
-    }
+    UniConfTestDaemon daemon(sockname, WvString("ini:%s", ininame));
 
     // Wait for child to become responsive
     {
@@ -155,16 +103,5 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
     WvUnixConn unixconn(sockname);
     WVPASS(unixconn.isok());
 
-    // kill off the daemon and clean up the zombie
-    kill(cfg_handler, 15);
-
-    // In case a signal is in the process of being delivered...
-    pid_t rv;
-    while ((rv = waitpid(cfg_handler, NULL, 0)) != cfg_handler)
-        if (rv == -1 && errno != EINTR)
-            break;
-    WVPASSEQ(rv, cfg_handler);
-
     unlink(ininame);
-    unlink(sockname);
 }

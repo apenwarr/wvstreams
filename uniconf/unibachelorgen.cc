@@ -10,7 +10,7 @@
 #include "wvmoniker.h"
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     return new UniBachelorGen(s);
 }
@@ -25,8 +25,7 @@ UniBachelorGen::UniBachelorGen(IUniConfGen *inner)
 UniBachelorGen::UniBachelorGen(WvStringParm moniker)
     : UniFilterGen(NULL)
 {
-    IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
-    setinner(gen);
+    setinner(wvcreate<IUniConfGen>(moniker));
 }
 
 void UniBachelorGen::commit()

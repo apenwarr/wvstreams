@@ -17,7 +17,7 @@ include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 	
 LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 \
-	$(with_xplc)/libxplc.a -lpopt -lstdc++
+	$(with_xplc)/libxplc.a -lstdc++
 
 -lxplc -lxplc-cxx: ;
 
@@ -42,10 +42,8 @@ OBJFIXME=\
 # object files that we probably just shouldn't include in win32 libraries
 OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	utils/strcrypt.o \
-	utils/wvbdbhash.o \
 	utils/wvfork.o \
 	utils/wvmagiccircle.o \
-	utils/wvqdbmhash.o \
 	utils/wvshmzone.o \
 	utils/wvsubproc.o \
 	ipstreams/wvunixdgsocket.o \

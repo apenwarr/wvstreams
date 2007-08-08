@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 4.1, wvstreams-dev@nit.ca, wvstreams)
-SO_VERSION=4.1
+AC_INIT(WvStreams, 4.4, wvstreams-devel@googlegroups.com, wvstreams)
+SO_VERSION=4.4
 
 save_args() {
     ARGS=""
@@ -18,13 +18,13 @@ save_args() {
 save_args "$@"
 
 # append to a variable without introducing superfluous white space
-AC_DEFUN(WV_APPEND,
+AC_DEFUN([WV_APPEND],[
     if test -z "$$1"; then
         $1="$2"
     else
         $1="$$1 $2"
     fi
-)
+])
 
 QT_SEARCH_PATH="
 $prefix
@@ -92,16 +92,10 @@ AC_ARG_ENABLE(testgui,
               AC_HELP_STRING([--disable-testgui],
                              [GUI for unit tests]))
 
-AC_ARG_WITH(bdb, AC_HELP_STRING([--with-bdb], [Berkeley DB 1.x (or compatible)]))
-AC_ARG_WITH(qdbm, AC_HELP_STRING([--with-qdbm], [QDBM]))
 AC_ARG_WITH(dbus, AC_HELP_STRING([--with-dbus], [DBUS]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
-AC_ARG_WITH(openslp, AC_HELP_STRING([--with-openslp], [OpenSLP]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
-AC_ARG_WITH(popt, AC_HELP_STRING([--with-popt], [popt (required)]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
-AC_ARG_WITH(telephony, AC_HELP_STRING([--with-telephony], [Telephony]))
-AC_ARG_WITH(swig, AC_HELP_STRING([--with-swig], [SWIG]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 xplc_version='0.3.13'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
@@ -120,6 +114,11 @@ AC_PROG_CPP
 AC_PROG_CXXCPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+
+# Poke gnulib
+gl_EARLY
 
 # Detect target build environment
 AC_CANONICAL_TARGET
@@ -168,6 +167,11 @@ CPPFLAGS="$CPPFLAGS_save"
 
 # Function checks
 AC_FUNC_ALLOCA
+
+AC_CHECK_HEADERS(execinfo.h)
+
+# Initialise gnulib
+gl_INIT
 
 # Check for error_t
 AC_CHECK_HEADERS([argz.h errno.h])
@@ -314,12 +318,6 @@ AC_CHECK_HEADERS([netinet/tcp.h])
 AC_CHECK_HEADERS([linux/serial.h])
 AC_CHECK_FUNCS([cfmakeraw])
 
-# Look for getopt
-AC_CHECK_FUNCS([getopt],,[getopt=no])
-if test "$getopt" = "no"; then
-    AC_CHECK_HEADERS([getopt.h])
-fi
-
 # Detect hard-linking based on LN_S's behaviour
 AC_MSG_CHECKING([whether ln works...])
 case "$LN_S" in
@@ -381,44 +379,6 @@ if test "$enable_rtti" = "no"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
-# bdb
-if test "$with_bdb" != "no"; then
-    AC_CHECK_HEADERS(db.h,, [with_bdb_header=no],
-                     [#include <db.h>
-                      #ifdef DB_VERSION_MAJOR
-                      #error "this is Berkeley DB 2.x or newer"
-                      #endif])
-    if test "$with_bdb_header" = "no"; then
-        AC_CHECK_HEADERS(db_185.h,, [with_bdb=no])
-    fi
-    AC_CHECK_LIB(db, dbopen,, [with_bdb_lib=no])
-    if test "$with_bdb_lib" = "no"; then
-        AC_CHECK_LIB(db1, dbopen, [with_bdb_lib=yes],)
-    fi
-    if test "$with_bdb_lib" = "no"; then
-        with_bdb=no
-    fi
-    if test "$with_bdb" != "no"; then
-        AC_DEFINE(WITH_BDB,,
-                  [Define to enable Berkeley DB support.])
-    fi
-fi
-
-# qdbm
-if test "$with_qdbm" != "no"; then
-    if test "$with_qdbm" = ""; then
-        WV_APPEND(CPPFLAGS, [`pkg-config --cflags qdbm`])
-    fi
-
-    AC_CHECK_HEADERS(villa.h,, [with_qdbm=no])
-    AC_CHECK_LIB(qdbm, vlopen,, [with_qdbm=no])
-
-    if test "$with_qdbm" != "no"; then
-        AC_DEFINE(WITH_QDBM,,
-                  [Define to enable QDBM support.])
-    fi
-fi
-
 # dbus
 if test "$with_dbus" != "no"; then
     if test "$with_dbus" = ""; then
@@ -436,17 +396,6 @@ if test "$with_dbus" != "no"; then
     fi
 fi
 
-# popt
-if test "$with_popt" != "no"; then
-    AC_CHECK_HEADERS(popt.h,, [with_popt=no])
-    AC_CHECK_LIB(popt, poptGetContext,, [with_popt=no])
-
-    if test "$with_popt" != "no"; then
-        AC_DEFINE(WITH_POPT,,
-                  [Define to enable popt support.])
-    fi
-fi
-
 # gtk
 #if test "$with_gtk" != "no"; then
 #    CPPFLAGS_save="$CPPFLAGS"
@@ -457,24 +406,25 @@ fi
 #    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
 #fi
 
-# openslp
-if test "$with_openslp" != "no"; then
-    AC_CHECK_HEADERS(slp.h,, [with_openslp=no])
-    AC_CHECK_LIB(slp, SLPGetRefreshInterval,, [with_openslp=no])
-    if test "$with_openslp" != "no"; then
-        AC_DEFINE(WITH_SLP,, [Define to enable SLP support.])
-    fi 
-fi
-
 # BSD sockets, if you're on Solaris
 AC_CHECK_LIB(socket, bind)
 
 # openssl
 if test "$with_openssl" != "no"; then
+    if test "$with_openssl" != ""; then
+        WV_APPEND(CPPFLAGS, [-I$with_openssl/include])
+        WV_APPEND(LDFLAGS, [-L$with_openssl])
+    fi
     AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
                      [#define OPENSSL_NO_KRB5])
     AC_CHECK_LIB(crypto, X509_free)
     AC_CHECK_LIB(ssl, SSL_has_matching_session_id,, [with_openssl=no])
+fi
+
+# readline
+if test "$with_readline" != "no"; then
+    AC_CHECK_HEADERS(readline/readline.h,, [with_readline=no])
+    AC_CHECK_LIB(readline, readline,, [with_readline=no])
 fi
 
 # pam
@@ -521,25 +471,6 @@ if test "$with_tcl" != "no"; then
     fi
 fi
 
-# telephony
-if test "$with_telephony" != "no"; then
-    with_telephony=yes
-else
-    with_telephony=no
-fi
-
-# swig
-if test "$with_swig" != "no"; then
-     AC_CHECK_PROG(SWIG, swig, swig, no, $with_swig:$PATH)
-     if test "$SWIG" = "no"; then
-        with_swig=no
-     else 
-        if test "$with_swig"; then
-           SWIG="$with_swig/swig"
-        fi
-     fi
-fi
-
 # qt
 if test "$with_qt" != "no"; then
     test "$with_qt" = yes && with_qt=
@@ -577,7 +508,9 @@ if test "$with_xplc" != "no"; then
             WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-${xplc_version}`])
 	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-${xplc_version}`])
 	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	    LIBS_save="$LIBS"
 	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	    LIBS="$LIBS_save"
 	    xplc_pc="xplc-${xplc_version}"
 	else
 	    with_xplc='no'
@@ -586,7 +519,9 @@ if test "$with_xplc" != "no"; then
         WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
 	WV_APPEND(LDFLAGS, [-L$with_xplc])
 	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
+	LIBS_save="$LIBS"
 	AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	LIBS="$LIBS_save"
 	xplc_pc="xplc-${xplc_version}"
     fi
     # What if we can't find it?
@@ -609,24 +544,12 @@ fi
 # check for missing packages
 missing_required=
 missing_devel=
-if test "$with_qdbm" = "no"; then
-    AC_MSG_WARN([QDBM is missing.])
-    missing_devel=yes
-fi
 if test "$with_dbus" = "no"; then
     AC_MSG_WARN([DBUS is missing.])
     missing_devel=yes
 fi
-if test "$with_popt" = "no"; then
-    AC_MSG_WARN([Popt is missing.])
-    missing_required="$missing_required popt"
-fi
 if test "$with_pam" = "no"; then
     AC_MSG_WARN([PAM is missing.])
-    missing_devel=yes
-fi
-if test "$with_telephony" = "no"; then
-    AC_MSG_WARN([Telephony is missing.])
     missing_devel=yes
 fi
 if test "$with_qt" = "no"; then
@@ -640,12 +563,12 @@ fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
 fi
-if test "$with_openslp" = "no"; then
-    AC_MSG_WARN([OpenSLP is missing.])
-fi
 if test "$with_openssl" = "no"; then
     AC_MSG_WARN([OpenSSL is missing.])
     missing_required="$missing_required OpenSSL>=0.9.7"
+fi
+if test "$with_readline" = "no"; then
+    AC_MSG_WARN([readline is missing.])
 fi
 if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing.])
@@ -663,7 +586,12 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --logfile=valgrind.log --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    if valgrind --help | grep log-file >/dev/null; then
+	VALGRIND="$VALGRIND --log-file=valgrind.log"
+    else
+	VALGRIND="$VALGRIND --logfile=valgrind.log"
+    fi
 fi
 
 AC_SUBST(SO_VERSION)
@@ -681,16 +609,12 @@ AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
 
-AC_SUBST(with_bdb)
-AC_SUBST(with_qdbm)
 AC_SUBST(with_dbus)
 AC_SUBST(with_gtk)
-AC_SUBST(with_openslp)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
-AC_SUBST(with_telephony)
+AC_SUBST(with_readline)
 AC_SUBST(with_qt)
-AC_SUBST(with_swig)
 AC_SUBST(with_tcl)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
@@ -703,6 +627,7 @@ AC_SUBST(ac_libs)
 AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 
 AC_CONFIG_FILES(config.mk)
+AC_CONFIG_FILES(gnulib/Makefile)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc
                  pkgconfig/libuniconf-uninstalled.pc
 		 pkgconfig/libwvbase.pc

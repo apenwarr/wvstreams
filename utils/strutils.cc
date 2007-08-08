@@ -1228,6 +1228,48 @@ WvString local_date(time_t when)
     return out;
 }
 
+WvString intl_time(time_t when)
+{
+    WvString out;
+    out.setsize(12);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when); 
+    strftime(out.edit(), 12, "%H:%M:%S", tmwhen);
+
+    return out;
+}
+
+WvString intl_date(time_t when)
+{
+    WvString out;
+    out.setsize(16);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when); 
+    strftime(out.edit(), 16, "%F", tmwhen);
+
+    return out;
+}
+
+WvString intl_datetime(time_t when)
+{
+    WvString out;
+    out.setsize(24);
+
+    if (when < 0)
+        when = time(NULL);
+
+    struct tm *tmwhen = localtime(&when); 
+    strftime(out.edit(), 24, "%F %H:%M:%S", tmwhen);
+
+    return out;
+}
+
 
 // Removes any trailing punctuation ('.', '?', or '!') from the line
 WvString depunctuate(WvStringParm line)
@@ -1240,6 +1282,20 @@ WvString depunctuate(WvStringParm line)
 
     return ret;
 }
+
+
+WvString ptr2str(void* ptr)
+{
+    char buf[(sizeof(ptr) * 2) + 3];
+    int rv;
+
+    rv = snprintf(buf, sizeof(buf), "%p", ptr);
+
+    assert(rv != -1);
+
+    return buf;
+}
+
 
 // Reads the contents of a symlink.  Returns WvString::null on error.
 WvString wvreadlink(WvStringParm path)

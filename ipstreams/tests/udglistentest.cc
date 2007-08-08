@@ -30,8 +30,8 @@ int main(int argc, char **argv )
     log("Listening on %s\n", filename);
    
     WvIStreamList l;
-    l.add_after(l.tail, &sock, false);
-    l.add_after(l.tail, wvcon, false);
+    l.append(&sock, false, "socket");
+    l.append(wvcon, false, "wvcon");
 
     while (sock.isok() && wvout->isok()) 
     {

@@ -41,6 +41,7 @@ static char altstack[altstack_size];
 
 // Reserve enough buffer for a screenful of programme.
 static const int buffer_size = 2048 + wvcrash_ring_buffer_size;
+
 static char desc[buffer_size];
 
 // write a string 'str' to fd
@@ -87,11 +88,12 @@ static void wrn(int fd, int num)
 // convert 'addr' to hex and write it to fd.
 static void wra(int fd, const void *addr)
 {
+    const unsigned int ptrbitsshift = (sizeof(ptrdiff_t) << 3) - 4;
     char digits[] = "0123456789ABCDEF";
-    
+
     write(fd, "0x", 2);
-    for (int shift=28; shift>=0; shift-=4)
-        write(fd, &digits[(((unsigned)addr)>>shift)&0xF], 1);
+    for (int shift=ptrbitsshift; shift>=0; shift-=4)
+        write(fd, &digits[(((ptrdiff_t)addr)>>shift)&0xF], 1);
 }
 
 
@@ -224,6 +226,41 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
 	    wr(fd, "\nLast Will and Testament:\n");
 	    wr(fd, will_msg);
 	    wr(fd, "\n");
+	}
+    }
+
+    if (WvCrashInfo::in_stream_state != WvCrashInfo::UNUSED
+	&& WvCrashInfo::in_stream)
+    {
+	const char *state = NULL;
+	switch (WvCrashInfo::in_stream_state)
+	{
+	case WvCrashInfo::UNUSED:
+	    // Can't possibly get here.
+	    break;
+	case WvCrashInfo::PRE_SELECT:
+	    state = "\nStream in pre_select: ";
+	    break;
+	case WvCrashInfo::POST_SELECT:
+	    state = "\nStream in post_select: ";
+	    break;
+	case WvCrashInfo::EXECUTE:
+	    state = "\nStream in execute: ";
+	    break;
+	}
+
+	if (state)
+	{
+	    static char ptr_str[32];
+	    snprintf(ptr_str, sizeof(ptr_str), "%p", WvCrashInfo::in_stream);
+	    ptr_str[sizeof(ptr_str) - 1] = '\0';
+
+	    wr(fd, state);
+	    wr(fd, WvCrashInfo::in_stream_id && WvCrashInfo::in_stream_id[0]
+	       ? WvCrashInfo::in_stream_id : "unknown stream");
+	    wr(fd, " (");
+	    wr(fd, ptr_str);
+	    wr(fd, ")\n");
 	}
     }
 

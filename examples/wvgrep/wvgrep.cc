@@ -62,7 +62,10 @@ static int match(const WvRegex &regex, WvStringParm filename, WvStream *file,
 int main(int argc, char **argv)
 {
     WvArgs args;
-    
+
+    args.set_version("wvgrep (WvStreams grep) " VERSION "\n");
+    args.set_email("<" PACKAGE_BUGREPORT ">");
+
     bool opt_count = false;
     args.add_set_bool_option('c', "count", WvString::null, opt_count);
     
@@ -101,9 +104,6 @@ int main(int argc, char **argv)
     bool opt_no_messages = false;
     args.add_set_bool_option('s', "no-message", WvString::null, opt_no_messages);
     
-    bool opt_version = false;
-    args.add_set_bool_option('V', "version", WvString::null, opt_version);
-    
     bool opt_invert_match = false;
     args.add_set_bool_option('v', "invert-match", WvString::null, opt_invert_match);
     
@@ -113,24 +113,18 @@ int main(int argc, char **argv)
     bool opt_null = false;
     args.add_set_bool_option('Z', "null", WvString::null, opt_null);
 
+    args.add_required_arg("PATTERN");
+    args.add_optional_arg("FILE", true);
+
+    args.set_help_header("Search for PATTERN in each FILE or standard input.");
+    args.set_help_footer("With no FILE, this program reads standard input.");
+
     WvStringList remaining_args;    
     args.process(argc, argv, &remaining_args);
 
-    if (opt_version)
-    {
-    	wvout->print("wvgrep (WvStreams grep) %s\n", VERSION);
-    	return 0;
-    }
-    
     if (!opt_regexp && !remaining_args.isempty())
     	opt_regexp = remaining_args.popstr();
-    if (!opt_regexp)
-    {
-    	wverr->print("Usage: %s [OPTION]... PATTERN [FILE]...\n", argv[0]);
-    	wverr->print("Try `%s --help' for more information.\n", argv[0]);
-    	return 2;
-    }
-  
+
     int cflags = WvFastString(argv[0]) == "egrep"?
     	    WvRegex::EXTENDED: WvRegex::BASIC;
     if (opt_extended_regexp) cflags = WvRegex::EXTENDED;
@@ -167,7 +161,8 @@ int main(int argc, char **argv)
     	if (!!*filename)
 	    file = new WvFile(*filename, O_RDONLY);
 	else
-	    continue;
+	    file = wvcon;
+
     	if (!file->isok())
     	{
     	    if (!opt_no_messages)

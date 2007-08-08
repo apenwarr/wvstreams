@@ -23,12 +23,30 @@ public:
     WvIStreamList();
     virtual ~WvIStreamList();
     virtual bool isok() const;
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     
     void unlink(IWvStream *data)
         { sure_thing.unlink(data); WvIStreamListBase::unlink(data); }
+
+    void add_after(WvLink *after, IWvStream *data, bool autofree,
+		   char *id)
+    {
+	WvIStreamListBase::add_after(after, data, autofree, id);
+    }
+    void append(IWvStream *data, bool autofree, char *id)
+    {
+	WvIStreamListBase::append(data, autofree, id);
+    }
+    void add(IWvStream *data, bool autofree, char *id)
+    {
+	WvIStreamListBase::add(data, autofree, id);
+    }
+    void prepend(IWvStream *data, bool autofree, char *id)
+    {
+	WvIStreamListBase::prepend(data, autofree, id);
+    }
     
     bool auto_prune; // remove !isok() streams from the list automatically?
     static WvIStreamList globallist;
@@ -38,6 +56,7 @@ protected:
 
 private:
     bool in_select;
+    bool dead_stream;
 
 #ifndef _WIN32
     static void onfork(pid_t p);

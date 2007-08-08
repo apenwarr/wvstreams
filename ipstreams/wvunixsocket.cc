@@ -48,7 +48,7 @@
 #include <fcntl.h>
 #include <sys/un.h>
 
-static IWvStream *creator(WvStringParm s, IObject *, void *)
+static IWvStream *creator(WvStringParm s)
 {
     return new WvUnixConn(s);
 }
@@ -201,7 +201,7 @@ void WvUnixListener::accept_callback(WvStream &, void *userdata)
 
     WvUnixConn *connection = l.accept();
     connection->setcallback(l.auto_callback, l.auto_userdata);
-    l.auto_list->append(connection, true);
+    l.auto_list->append(connection, true, "WvUnixConn");
 }
 
 

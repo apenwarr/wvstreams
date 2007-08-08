@@ -6,6 +6,17 @@
 #include "unilistgen.h"
 #include "unitempgen.h"
 #include "unireadonlygen.h"
+#include "uniconfgen-sanitytest.h"
+
+WVTEST_MAIN("UniListGen Sanity Test")
+{
+    UniConfGenList *list = new UniConfGenList();
+    list->add(new UniTempGen(), true);
+    list->add(new UniTempGen(), true);
+    UniListGen *gen = new UniListGen(list);
+    UniConfGenSanityTester::sanity_test(gen, "list:temp: temp:");
+    WVRELEASE(gen);
+}
 
 WVTEST_MAIN("Testing refresh()")
 {

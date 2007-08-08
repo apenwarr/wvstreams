@@ -18,18 +18,18 @@
 #pragma init_seg(lib)
 #endif
 
-static IWvStream *creator(WvStringParm s, IObject *obj, void *)
+static IWvStream *creator(WvStringParm s)
 {
-    if (!obj)
-	obj = wvcreate<IWvStream>(s);
-    return new WvStreamClone(mutate<IWvStream>(obj));
+    return new WvStreamClone(wvcreate<IWvStream>(s));
 }
 
 static WvMoniker<IWvStream> reg("clone", creator);
 
 
 WvStreamClone::WvStreamClone(IWvStream *_cloned) 
-    : cloned(0), disassociate_on_close(false), my_type("WvStreamClone:(none)")
+    : cloned(0), 
+      disassociate_on_close(false), 
+      my_type("WvStreamClone:(none)")
 {
     setclone(_cloned);
     // the sub-stream will force its own values, if it really wants.
@@ -178,8 +178,6 @@ void WvStreamClone::setclone(IWvStream *newclone)
     closed = stop_read = stop_write = false;
     if (cloned)
 	cloned->setclosecallback(IWvStreamCallback(this, &WvStreamClone::close_callback));
-    if (newclone)
-        closed = stop_read = stop_write = false;
     
     if (newclone != NULL)
         my_type = WvString("WvStreamClone:%s", newclone->wstype());
@@ -188,10 +186,11 @@ void WvStreamClone::setclone(IWvStream *newclone)
 }
 
 
-bool WvStreamClone::pre_select(SelectInfo &si)
+void WvStreamClone::pre_select(SelectInfo &si)
 {
     SelectRequest oldwant;
-    bool result = WvStream::pre_select(si);
+    WvStream::pre_select(si);
+
     if (cloned && cloned->isok())
     {
 	oldwant = si.wants;
@@ -206,12 +205,11 @@ bool WvStreamClone::pre_select(SelectInfo &si)
 	
 	if (outbuf.used() || autoclose_time)
 	    si.wants.writable = true;
-	
-	result = result || cloned->pre_select(si);
-	
+
+	cloned->pre_select(si);
+
 	si.wants = oldwant;
     }
-    return result;
 }
 
 

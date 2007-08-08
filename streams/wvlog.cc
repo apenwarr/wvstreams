@@ -41,8 +41,8 @@ char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
 
 
 
-WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
-    : app(_app), loglevel(_loglevel)
+WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, WvLogFilter* _filter)
+    : app(_app), loglevel(_loglevel), filter(_filter)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
@@ -51,7 +51,7 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel)
 
 
 WvLog::WvLog(const WvLog &l)
-    : app(l.app), loglevel(l.loglevel)
+    : app(l.app), loglevel(l.loglevel), filter(l.filter)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;
@@ -79,13 +79,23 @@ bool WvLog::isok() const
 }
 
 
-bool WvLog::pre_select(SelectInfo &si)
+void WvLog::pre_select(SelectInfo &si)
+{
+    // a wvlog is always writable...
+    if (si.wants.writable)
+	si.msec_timeout = 0;
+    else
+	WvStream::pre_select(si);
+}
+
+
+bool WvLog::post_select(SelectInfo &si)
 {
     // a wvlog is always writable...
     if (si.wants.writable)
 	return true;
     else
-	return WvStream::pre_select(si);
+	return WvStream::post_select(si);
 }
 
 

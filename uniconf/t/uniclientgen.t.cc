@@ -3,294 +3,16 @@
 #include "unitempgen.h"
 #include "uniretrygen.h"
 #include "uniconfdaemon.h"
+#include "uniconfgen-sanitytest.h"
 #include "uniclientgen.h"
 #include "uniinigen.h"
-#include "wvfork.h"
 #include "wvunixsocket.h"
 #include "wvfileutils.h"
 #include "wvfile.h"
 #include "uniwatch.h"
 #include "wvstrutils.h"
 
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <signal.h>
-
-static int delta_count;
-static void callback(const UniConf &, const UniConfKey &)
-{
-    ++delta_count;
-}
-
-WVTEST_MAIN("deltas")
-{
-    UniConfRoot uniconf;
-
-    signal(SIGPIPE, SIG_IGN);
-
-    WvString sockname = wvtmpfilename("uniclientgen.t-sock");
-
-    pid_t child = wvfork();
-    if (child == 0)
-    {
-        wverr->close();
-        uniconf.mountgen(new UniTempGen());
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
-        while (true)
-        {
-            uniconf.setmeint(uniconf.getmeint()+1);
-            WvIStreamList::globallist.runonce();
-            usleep(1000);
-        }
-	_exit(0);
-    }
-    else
-    {
-	WVPASS(child >= 0);
-        UniClientGen *client_gen;
-        while (true)
-        {
-            WvUnixConn *unix_conn;
-            client_gen = new UniClientGen(
-                    unix_conn = new WvUnixConn(sockname));
-            if (!unix_conn || !unix_conn->isok()
-                    || !client_gen || !client_gen->isok())
-            {
-                WVRELEASE(client_gen);
-                wvout->print("Failed to connect, retrying...\n");
-                sleep(1);
-            }
-            else break;
-        }
-        uniconf.mountgen(client_gen); 
-
-        int old_delta_count = delta_count = 0;
-        uniconf.add_callback(client_gen, "", callback, false);
-
-        int i;
-        for (i=0; i<100; ++i)
-        {
-            client_gen->refresh();
-            usleep(1000);
-        }
-
-        WVPASS(delta_count > old_delta_count);
-        
-        kill(child, 15);
-        pid_t rv;
-        while ((rv = waitpid(child, NULL, 0)) != child)
-        {
-            // in case a signal is in the process of being delivered..
-            if (rv == -1 && errno != EINTR)
-                break;
-        }
-        WVPASS(rv == child);
-    }
-    
-    unlink(sockname);
-}
-
-
-static time_t file_time(WvStringParm filename)
-{
-    struct stat st;
-    if (stat(filename, &st) == 0)
-        return st.st_mtime;
-    else
-    {
-        wverr->print("stat(%s) failed: %s\n", filename,
-                strerror(errno));
-        return -1;
-    }
-}
-
-
-static WvString get_sockname()
-{
-    int fd;
-    WvString sockname = "/tmp/sockXXXXXX";
-    if ((fd = mkstemp(sockname.edit())) == (-1))
-        return "";    
-    close(fd);
-
-    return sockname;
-}
-
-
-WVTEST_MAIN("commit")
-{
-    UniConfRoot uniconf;
-    WvString ini_file("/tmp/wvtest-uniclientgen-commit-%s.ini", getpid());
-    unlink(ini_file);
-    
-    signal(SIGPIPE, SIG_IGN);
-
-    WvString sockname = get_sockname();
-
-    pid_t child = wvfork();
-    if (child == 0)
-    {
-        UniIniGen *ini_gen = new UniIniGen(ini_file);
-        fprintf(stderr, "new UniIniGen() = %p\n", (void *)ini_gen);
-        uniconf.mountgen(ini_gen);
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
-        while (true)
-        {
-            WvIStreamList::globallist.runonce();
-        }
-	_exit(0);
-    }
-    else
-    {
-	WVPASS(child >= 0);
-        UniClientGen *client_gen;
-        while (true)
-        {
-            WvUnixConn *unix_conn;
-            client_gen = new UniClientGen(
-                    unix_conn = new WvUnixConn(sockname));
-            if (!unix_conn || !unix_conn->isok()
-                    || !client_gen || !client_gen->isok())
-            {
-                WVRELEASE(client_gen);
-                wvout->print("Failed to connect, retrying...\n");
-                sleep(1);
-            }
-            else break;
-        }
-        uniconf.mountgen(client_gen); 
-
-        uniconf.setmeint(time(NULL));
-        uniconf.commit();
-        time_t old_file_time = file_time(ini_file);
-        WVPASS(old_file_time != -1);
-        WVPASS(old_file_time <= time(NULL));
-
-        // Wait until ini file is old
-        while (time(NULL) <= old_file_time)
-            sleep(1);
-
-        uniconf.setmeint(time(NULL));
-        uniconf.commit();
-
-        time_t new_file_time = file_time(ini_file);
-        WVPASS(new_file_time != -1);
-        WVPASS(new_file_time > old_file_time);
-
-        kill(child, 15);
-        pid_t rv;
-        while ((rv = waitpid(child, NULL, 0)) != child)
-        {
-            // in case a signal is in the process of being delivered..
-            if (rv == -1 && errno != EINTR)
-                break;
-        }
-        WVPASS(rv == child);
-    }
-
-    unlink(ini_file);
-}
-
-
-WVTEST_MAIN("refresh")
-{
-    UniConfRoot uniconf;
-    WvString ini_file("/tmp/wvtest-uniclientgen-refresh-%s.ini", getpid());
-    unlink(ini_file);
-    
-    signal(SIGPIPE, SIG_IGN);
-
-    WvString sockname = get_sockname();
-
-    pid_t child = wvfork();
-    if (child == 0)
-    {
-        UniIniGen *ini_gen = new UniIniGen(ini_file);
-        fprintf(stderr, "new UniIniGen() = %p\n", (void *)ini_gen);
-        uniconf.mountgen(ini_gen);
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
-        while (true)
-        {
-            WvIStreamList::globallist.runonce();
-        }
-	_exit(0);
-    }
-    else
-    {
-	WVPASS(child >= 0);
-        UniClientGen *client_gen;
-        while (true)
-        {
-            WvUnixConn *unix_conn;
-            client_gen = new UniClientGen(
-                    unix_conn = new WvUnixConn(sockname));
-            if (!unix_conn || !unix_conn->isok()
-                    || !client_gen || !client_gen->isok())
-            {
-                WVRELEASE(client_gen);
-                wvout->print("Failed to connect, retrying...\n");
-                sleep(1);
-            }
-            else break;
-        }
-        uniconf.mountgen(client_gen); 
-
-        WVPASS(uniconf.xget("key") != "value");
-        WvFile ini_fd(ini_file, O_WRONLY | O_APPEND | O_CREAT);
-        ini_fd.print("[]\nkey = value\n");
-        ini_fd.close();
-        WVPASS(uniconf.refresh());
-        WVPASS(uniconf.xget("key") == "value");
-
-        kill(child, 15);
-        pid_t rv;
-        while ((rv = waitpid(child, NULL, 0)) != child)
-        {
-            // in case a signal is in the process of being delivered..
-            if (rv == -1 && errno != EINTR)
-                break;
-        }
-        WVPASS(rv == child);
-    }
-
-    unlink(ini_file);
-}
-
-int save_callback_calls;
-void save_callback()
-{
-    ++save_callback_calls;
-}
-
-WVTEST_MAIN("SaveCallback")
-{
-    UniConfRoot uniconf;
-
-    WvString ini_file("/tmp/wvtest-uniclientgen-refresh-%s.ini", getpid());
-    unlink(ini_file);
-
-    UniIniGen *ini_gen = new UniIniGen(ini_file, 0600, save_callback);
-    uniconf.mountgen(ini_gen);
-    
-    int items = 0;
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
-
-    save_callback_calls = 0;
-    uniconf.commit();
-    WVPASS(save_callback_calls >= items);
-    
-    unlink(ini_file);
-}
 
 class WvDebugUnixConn : public WvUnixConn
 {
@@ -326,51 +48,37 @@ public:
         return result;
     }
 };
-        
-int restrict_callback_count;
-void restrict_callback(const UniConf &uniconf, const UniConfKey &key)
+
+
+static int delta_count;
+static void delta_callback(const UniConf &, const UniConfKey &)
 {
-    wverr->print("restrict_callback: %s = %s (count now %s)\n",
-            uniconf[key].fullkey(), uniconf[key].getme(),
-            ++restrict_callback_count);
+    ++delta_count;
 }
 
-int sub_restrict_callback_count;
-void sub_restrict_callback(const UniConf &uniconf, const UniConfKey &key)
+typedef WvCallback<UniClientGen*, WvStringParm, WvStringParm, 
+        WvUnixConn *&> client_factory_t;
+
+
+// Returns a new UniClientGen, using a non-logging underlying stream.
+// unix_conn is set to a pointer to the underlying unix stream.
+static UniClientGen *quiet_client_factory(WvStringParm name, 
+        WvStringParm sockname, WvUnixConn *&unix_conn)
 {
-    wverr->print("sub_restrict_callback: %s = %s (count now %s)\n",
-            uniconf[key].fullkey(), uniconf[key].getme(),
-            ++sub_restrict_callback_count);
+    return new UniClientGen(unix_conn = new WvUnixConn(sockname));
 }
 
-WVTEST_MAIN("restrict")
+
+// Set the default client_factory to debug_client_factory if you want to see
+// what goes through the connection.
+static UniClientGen *create_client_conn(WvString name, WvString sockname,
+       client_factory_t client_factory = quiet_client_factory) 
 {
-    signal(SIGPIPE, SIG_IGN);
-
-    WvString sockname = wvtmpfilename("unisubtreegen.t-sock");
-    unlink(sockname);
-
-    pid_t child = wvfork();
-    if (child == 0)
-    {
-        WvLog log("uniconfd", WvLog::Debug5);
-        UniConfRoot uniconf("temp:");
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
-        while (true)
-            WvIStreamList::globallist.runonce();
-	_exit(0);
-    }
-    WVPASS(child > 0);
-    
-    UniConfRoot uniconf;
-    UniClientGen *client_gen;
+    UniClientGen *client_gen = NULL;
     while (true)
     {
         WvUnixConn *unix_conn;
-        client_gen = new UniClientGen(
-                unix_conn = new WvDebugUnixConn("top", sockname));
+        client_gen = client_factory(name, sockname, unix_conn);
         if (!unix_conn || !unix_conn->isok()
                 || !client_gen || !client_gen->isok())
         {
@@ -380,66 +88,215 @@ WVTEST_MAIN("restrict")
         }
         else break;
     }
+
+    return client_gen;
+}
+
+
+WVTEST_MAIN("UniClientGen Sanity Test")
+{
+    WvString sockname = wvtmpfilename("uniclientgen.t-sock");
+    UniConfTestDaemon daemon(sockname, "temp:");
+
+    UniClientGen *gen = create_client_conn("sanity", sockname);
+
+    UniConfGenSanityTester::sanity_test(gen, WvString("unix:%s", sockname));
+    WVRELEASE(gen);
+}
+
+
+WVTEST_MAIN("deltas")
+{
+    UniConfRoot uniconf;
+
+    signal(SIGPIPE, SIG_IGN);
+
+    WvString sockname = wvtmpfilename("uniclientgen.t-sock");
+    unlink(sockname);
+
+    UniConfTestDaemon daemon(sockname, "temp:", 
+            UniConfTestDaemon::autoinc_server_cb);
+    UniClientGen *client_gen = create_client_conn("deltas", sockname);
     uniconf.mountgen(client_gen); 
 
-    UniConfRoot sub_uniconf;
-    UniClientGen *sub_client_gen;
-    while (true)
-    {
-        WvUnixConn *unix_conn;
-        sub_client_gen = new UniClientGen(
-                unix_conn = new WvDebugUnixConn("sub", sockname), sockname,
-                "sub");
-        if (!unix_conn || !unix_conn->isok()
-                || !sub_client_gen || !sub_client_gen->isok())
-        {
-            WVRELEASE(sub_client_gen);
-            wvout->print("Failed to connect, retrying...\n");
-            sleep(1);
-        }
-        else break;
-    }
-    sub_uniconf.mountgen(sub_client_gen);
+    int old_delta_count = delta_count = 0;
+    uniconf.add_callback(client_gen, "", delta_callback, false);
 
-    UniWatchList watches;
-    watches.add(uniconf, restrict_callback, true);
-    watches.add(sub_uniconf, sub_restrict_callback, true);
+    int i;
+    for (i=0; i<100; ++i)
+    {
+        client_gen->refresh();
+        usleep(1000);
+    }
+
+    WVPASS(delta_count > old_delta_count);
+}
+
+
+static time_t file_time(WvStringParm filename)
+{
+    struct stat st;
+    if (stat(filename, &st) == 0)
+        return st.st_mtime;
+    else
+    {
+        wverr->print("stat(%s) failed: %s\n", filename,
+                strerror(errno));
+        return -1;
+    }
+}
+
+
+WVTEST_MAIN("commit")
+{
+    UniConfRoot uniconf;
+    WvString ini_file("/tmp/wvtest-uniclientgen-commit-%s.ini", getpid());
+    unlink(ini_file);
     
-    uniconf.getme();
-    sub_uniconf.getme();
+    signal(SIGPIPE, SIG_IGN);
 
-    uniconf["sub"].setme("");
-    uniconf["another-sub"].setme("");
-    uniconf.getme();
-    sub_uniconf.getme();
+    WvString sockname = wvtmpfilename("uniclientgen.t-sock");
 
-    restrict_callback_count = 0;
-    sub_restrict_callback_count = 0;
-    uniconf["sub/foo"].setme("bar");
-    uniconf.getme();
-    WVPASSEQ(restrict_callback_count, 1);
-    sub_uniconf.getme();
-    WVPASSEQ(sub_restrict_callback_count, 1);
+    UniConfTestDaemon daemon(sockname, WvString("ini:%s", ini_file));
 
-    restrict_callback_count = 0;
-    sub_restrict_callback_count = 0;
-    uniconf["another-sub/foo"].setme("bar");
-    uniconf.getme();
-    WVPASSEQ(restrict_callback_count, 1);
-    sub_uniconf.getme();
-    WVPASSEQ(sub_restrict_callback_count, 0); // Should not have received callbacks
+    UniClientGen *client_gen = create_client_conn("commit", sockname);
+    uniconf.mountgen(client_gen); 
 
-    kill(child, 15);
-    pid_t rv;
-    while ((rv = waitpid(child, NULL, 0)) != child)
+    uniconf.setmeint(time(NULL));
+    uniconf.commit();
+    time_t old_file_time = file_time(ini_file);
+    WVPASS(old_file_time != -1);
+    WVPASS(old_file_time <= time(NULL));
+
+    // Wait until ini file is old
+    while (time(NULL) <= old_file_time)
+        sleep(1);
+
+    uniconf.setmeint(time(NULL));
+    uniconf.commit();
+
+    time_t new_file_time = file_time(ini_file);
+    WVPASS(new_file_time != -1);
+    WVPASS(new_file_time > old_file_time);
+
+    unlink(ini_file);
+}
+
+
+WVTEST_MAIN("refresh")
+{
+    UniConfRoot uniconf;
+    WvString ini_file("/tmp/wvtest-uniclientgen-refresh-%s.ini", getpid());
+    unlink(ini_file);
+    
+    signal(SIGPIPE, SIG_IGN);
+
+    WvString sockname = wvtmpfilename("uniclientgen.t-sock");
+
+    UniConfTestDaemon daemon(sockname, WvString("ini:%s", ini_file));
+
+    UniClientGen *client_gen = create_client_conn("refresh", sockname);
+    uniconf.mountgen(client_gen); 
+
+    WVPASS(uniconf.xget("key") != "value");
+    WvFile ini_fd(ini_file, O_WRONLY | O_APPEND | O_CREAT);
+    ini_fd.print("[]\nkey = value\n");
+    ini_fd.close();
+    WVPASS(uniconf.refresh());
+    WVPASS(uniconf.xget("key") == "value");
+
+    unlink(ini_file);
+}
+
+
+#if 0
+// Can't run this test -- it takes at least 60 seconds...
+WVTEST_MAIN("dead uniconfd")
+{
+    UniConfRoot uniconf;
+    
+    signal(SIGPIPE, SIG_IGN);
+
+    WvString sockname = get_sockname();
+
+    pid_t child = wvfork();
+    if (child == 0)
     {
-        // in case a signal is in the process of being delivered..
-        if (rv == -1 && errno != EINTR)
-            break;
+        UniConfDaemon daemon(uniconf, false, NULL);
+        daemon.setupunixsocket(sockname);
+        WvIStreamList::globallist.append(&daemon, false, "uniconf daemon");
+        while (true)
+        {
+            WvIStreamList::globallist.runonce();
+        }
+	_exit(0);
     }
-    WVPASS(rv == child);
+    else
+    {
+	WVPASS(child >= 0);
+        UniClientGen *client_gen;
+        while (true)
+        {
+            WvUnixConn *unix_conn;
+            client_gen = new UniClientGen(
+                    unix_conn = new WvUnixConn(sockname));
+            if (!unix_conn || !unix_conn->isok()
+                    || !client_gen || !client_gen->isok())
+            {
+                WVRELEASE(client_gen);
+                wvout->print("Failed to connect, retrying...\n");
+                sleep(1);
+            }
+            else break;
+        }
+        uniconf.mountgen(client_gen); 
 
-    unlink(sockname);
+        kill(child, SIGSTOP);
+        uniconf.getme();
+        WVFAIL(client_gen->isok());
+
+        kill(child, 9);
+        pid_t rv;
+        while ((rv = waitpid(child, NULL, 0)) != child)
+        {
+            // in case a signal is in the process of being delivered..
+            if (rv == -1 && errno != EINTR)
+                break;
+        }
+        WVPASS(rv == child);
+    }
+}
+#endif
+
+
+int save_callback_calls;
+static void save_callback()
+{
+    ++save_callback_calls;
+}
+
+WVTEST_MAIN("SaveCallback")
+{
+    UniConfRoot uniconf;
+
+    WvString ini_file("/tmp/wvtest-uniclientgen-refresh-%s.ini", getpid());
+    unlink(ini_file);
+
+    UniIniGen *ini_gen = new UniIniGen(ini_file, 0600, save_callback);
+    uniconf.mountgen(ini_gen);
+    
+    int items = 0;
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+    uniconf["Items"].xsetint(items, items++);
+
+    save_callback_calls = 0;
+    uniconf.commit();
+    WVPASS(save_callback_calls >= items);
+    
+    unlink(ini_file);
 }
 
 
@@ -450,56 +307,19 @@ WVTEST_MAIN("timeout")
     WvString sockname = wvtmpfilename("unisubtreegen.t-sock");
     unlink(sockname);
 
-    pid_t child = wvfork();
-    if (child == 0)
-    {
-        WvLog log("uniconfd", WvLog::Debug5);
-        UniConfRoot uniconf("temp:");
-        UniConfDaemon daemon(uniconf, false, NULL);
-        daemon.setupunixsocket(sockname);
-        WvIStreamList::globallist.append(&daemon, false);
-        while (true)
-            WvIStreamList::globallist.runonce();
-	_exit(0);
-    }
-    WVPASS(child > 0);
+    UniConfTestDaemon daemon(sockname, "temp:");
     
     UniConfRoot uniconf;
-    UniClientGen *client_gen;
-    while (true)
-    {
-        WvUnixConn *unix_conn;
-        client_gen = new UniClientGen(
-                unix_conn = new WvUnixConn(sockname));
-        if (!unix_conn || !unix_conn->isok()
-                || !client_gen || !client_gen->isok())
-        {
-            WVRELEASE(client_gen);
-            wvout->print("Failed to connect, retrying...\n");
-            sleep(1);
-        }
-        else break;
-    }
+    UniClientGen *client_gen = create_client_conn("timeout", sockname);
     uniconf.mountgen(client_gen); 
 
     client_gen->set_timeout(1000);
 
     uniconf.getme();
     WVPASS(client_gen->isok());
-    kill(child, SIGSTOP);
+    kill(daemon.get_pid(), SIGSTOP);
     uniconf.getme();
     WVPASS(!client_gen->isok());
 
-    kill(child, SIGCONT);
-    kill(child, 15);
-    pid_t rv;
-    while ((rv = waitpid(child, NULL, 0)) != child)
-    {
-        // in case a signal is in the process of being delivered..
-        if (rv == -1 && errno != EINTR)
-            break;
-    }
-    WVPASS(rv == child);
-
-    unlink(sockname);
+    kill(daemon.get_pid(), SIGCONT);
 }

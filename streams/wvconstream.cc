@@ -23,19 +23,19 @@ public:
 };
 
 
-static IWvStream *create_stdin(WvStringParm s, IObject *, void *)
+static IWvStream *create_stdin(WvStringParm s)
 {
     return new _WvConStream(0, -1);
 }
-static IWvStream *create_stdout(WvStringParm s, IObject *, void *)
+static IWvStream *create_stdout(WvStringParm s)
 {
     return new _WvConStream(-1, 1);
 }
-static IWvStream *create_stderr(WvStringParm s, IObject *, void *)
+static IWvStream *create_stderr(WvStringParm s)
 {
     return new _WvConStream(-1, 2);
 }
-static IWvStream *create_stdio(WvStringParm s, IObject *, void *)
+static IWvStream *create_stdio(WvStringParm s)
 {
     return new _WvConStream(0, 1);
 }

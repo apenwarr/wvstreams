@@ -30,8 +30,8 @@ int main(int argc, char **argv)
     stream->writechain.append(enc, true);
 
     WvIStreamList *slist = new WvIStreamList();
-    slist->append(stream, false);
-    slist->append(wvin, false);
+    slist->append(stream, false, "stream");
+    slist->append(wvin, false, "wvin");
     wvin->autoforward(*stream);
     
     while (wvin->isok() && stream->isok())

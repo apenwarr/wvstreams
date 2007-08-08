@@ -104,7 +104,7 @@ public:
     virtual bool isok() const;
     virtual size_t uread(void *buf, size_t count);
     virtual size_t uwrite(const void *buf, size_t count);
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     virtual bool post_select(SelectInfo &si);
     virtual void maybe_autoclose();
 

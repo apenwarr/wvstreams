@@ -215,8 +215,8 @@ WVTEST_MAIN("daemon multimount")
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
 
-    WvIStreamList::globallist.append(&conn, false);
-    WvIStreamList::globallist.append(&daemon, false);
+    WvIStreamList::globallist.append(&conn, false, "connection");
+    WvIStreamList::globallist.append(&daemon, false, "daemon");
     printf("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
@@ -266,8 +266,8 @@ WVTEST_MAIN("daemon quit")
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
 
-    WvIStreamList::globallist.append(&conn, false);
-    WvIStreamList::globallist.append(&daemon, false);
+    WvIStreamList::globallist.append(&conn, false, "conn");
+    WvIStreamList::globallist.append(&daemon, false, "daemon");
     printf("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
@@ -312,7 +312,6 @@ static WvPipe * setup_master_daemon(bool implicit_root,
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d",
-        "-f",
         "-p",
         "0",
         "-s"
@@ -342,7 +341,6 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d",
-        "-f",
         "-p",
         "0",
         "-s"
@@ -411,7 +409,7 @@ static void daemon_proxy_test(bool implicit_root)
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
     
-    WvIStreamList::globallist.append(&conn, false);
+    WvIStreamList::globallist.append(&conn, false, "conn");
 
     printf("Spinning: streams left: %i\n", 
            WvIStreamList::globallist.count());

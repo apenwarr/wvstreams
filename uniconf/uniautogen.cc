@@ -40,7 +40,7 @@ WvString uniautogen_moniker("default:ini:/etc/uniconf.conf");
  *       "org/gnome/Nautilus" from there, and return.
  *  - else, return a null: generator.
  */
-static IUniConfGen *creator(WvStringParm s, IObject *obj, void *v)
+static IUniConfGen *creator(WvStringParm s)
 {
     UniConfRoot cfg(uniautogen_moniker);
     const UniConfKey appname(s);
@@ -51,13 +51,12 @@ static IUniConfGen *creator(WvStringParm s, IObject *obj, void *v)
 
 	if (!!cfg.xget(prefix))
 	{
-	    IUniConfGen *gen = wvcreate<IUniConfGen>(cfg.xget(prefix),
-						     obj, v);
-	    return new UniSubtreeGen(gen, suffix);
+	    return new UniSubtreeGen(wvcreate<IUniConfGen>(cfg.xget(prefix)),
+				     suffix);
 	}
     }
     
-    return wvcreate<IUniConfGen>("null:", NULL, NULL);
+    return wvcreate<IUniConfGen>("null:");
 }
 
 

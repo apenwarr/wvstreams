@@ -102,7 +102,7 @@ void MyListener::accept_conn(WvStream& l, void* userdata)
     WvTCPListener *listener = static_cast<WvTCPListener*>(&l);
     WvTCPConn *s = static_cast<WvTCPConn *>(listener->accept());
     log("Incoming TCP connection from %s.\n", *s->src());
-    d.add_stream(new MyClient(s), true);
+    d.add_stream(new MyClient(s), true, "MyClient");
 }
 
 

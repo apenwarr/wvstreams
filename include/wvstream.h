@@ -307,27 +307,26 @@ public:
      * pre_select() is allowed to reduce msec_timeout (or change it if it's
      * -1).  However, it's not allowed to _increase_ msec_timeout.
      */ 
-    virtual bool pre_select(SelectInfo &si);
+    virtual void pre_select(SelectInfo &si);
     
     /**
      * A more convenient version of pre_select() usable for overriding the
      * 'want' value temporarily.
      */
-    bool pre_select(SelectInfo &si, const SelectRequest &r)
+    void pre_select(SelectInfo &si, const SelectRequest &r)
     {
 	SelectRequest oldwant = si.wants;
 	si.wants = r;
-	bool val = pre_select(si);
+	pre_select(si);
 	si.wants = oldwant;
-	return val;
     }
     
     /**
      * Like pre_select(), but still exists even if you override the other
      * pre_select() in a subclass.  Sigh.
      */
-    bool xpre_select(SelectInfo &si, const SelectRequest &r)
-        { return pre_select(si, r); }
+    void xpre_select(SelectInfo &si, const SelectRequest &r)
+        { pre_select(si, r); }
     
     /**
      * post_select() is called after ::select(), and returns true if this
@@ -565,7 +564,7 @@ protected:
     //
     // all of the fields are filled in with new values
     // si.msec_timeout contains the time until the next alarm expires
-    bool _build_selectinfo(SelectInfo &si, time_t msec_timeout,
+    void _build_selectinfo(SelectInfo &si, time_t msec_timeout,
         bool readable, bool writable, bool isexcept,
         bool forceable);
 
