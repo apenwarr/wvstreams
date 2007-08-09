@@ -2,6 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  *
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
+ *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ * 
  * This class represents a dbus server, which may have multiple connections
  * at the same time. It is intended purely for unit testing and debugging
  * purposes and by no means should be used in production code (use the

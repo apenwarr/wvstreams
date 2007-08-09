@@ -20,13 +20,15 @@ static void reply_received(WvString foo, WvError err)
 
 static int messages_received = 0;
 
-static void msg_received(WvDBusReplyMsg &reply, WvString arg1, WvError err)
+static void msg_received(WvDBusConn &conn, WvDBusReplyMsg &reply,
+			 WvString arg1, WvError err)
 {
     fprintf(stderr, "Message received, loud and clear.\n");
     if (!err.isok())
 	fprintf(stderr, "Error was: '%s'\n", err.errstr().cstr());
     reply.append(WvString("baz %s", arg1));
     messages_received++;
+    conn.send(reply);
 }
 
 

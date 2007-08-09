@@ -1,12 +1,20 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
+ * 
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
  *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ * 
  * An abstraction on the DBusWatch abstraction, intended to allow hooking
  * D-Bus into the WvStreams mainloop. By no means should you need to use
  * this in application-level code-- it is intended only for WvDBus's internal
  * use.
- */ 
+ * 
+ * 
+ */
+
 #ifndef __WVDBUSWATCH_H
 #define __WVDBUSWATCH_H
 #include "wvfdstream.h"

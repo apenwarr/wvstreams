@@ -2,6 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2005-2006 Net Integration Technologies, Inc.
  * 
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
+ *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ *
  */ 
 #ifndef __WVDBUSLISTENER_H
 #define __WVDBUSLISTENER_H
@@ -12,15 +17,6 @@
 
 #include <assert.h>
 #include <stdint.h>
-
-void convert_next(DBusMessageIter *iter, bool &b, WvError &err);
-void convert_next(DBusMessageIter *iter, char &c, WvError &err);
-void convert_next(DBusMessageIter *iter, int16_t &i, WvError &err);
-void convert_next(DBusMessageIter *iter, int32_t &i, WvError &err);
-void convert_next(DBusMessageIter *iter, uint16_t &i, WvError &err);
-void convert_next(DBusMessageIter *iter, uint32_t &i, WvError &err);
-void convert_next(DBusMessageIter *iter, double &d, WvError &err);
-void convert_next(DBusMessageIter *iter, WvString &s, WvError &err);
 
 
 template<typename P1 = E, typename P2 = E, typename P3 = E, typename P4 = E>
@@ -139,12 +135,13 @@ public:
 };
 
 
-template<typename P1 = E, typename P2 = E, typename P3 = E, typename P4 = E>
+template<typename P1 = E, typename P2 = E, typename P3 = E, 
+    typename P4 = E, typename P5 = E>
 class WvDBusMethodListener : public IWvDBusListener
 {
 public:
     WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
-                   WvCallback<void, WvDBusReplyMsg&> _cb) :
+                   WvCallback<void, WvDBusConn&, WvDBusReplyMsg&> _cb) :
         IWvDBusListener(_path)
     {}
 
@@ -158,7 +155,7 @@ class WvDBusMethodListener<>  : public IWvDBusListener
 {
 public:
     WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
-                         WvCallback<void, WvDBusReplyMsg&, WvError> _cb) :
+                         WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, WvError> _cb) :
         IWvDBusListener(_path)
     {
         cb = _cb;
@@ -170,22 +167,20 @@ public:
         WvError err;
 
         WvDBusReplyMsg msg(_msg);
-        cb(msg, err);
-
-        conn->send(msg);
+        cb(*conn, msg, err);
     }
 
-    WvCallback<void, WvDBusReplyMsg&, WvError> cb;
+    WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, WvError> cb;
     WvDBusConn *conn;
 };
 
 
 template<typename P1>
-class WvDBusMethodListener<P1, E, E, E> : public IWvDBusListener
+class WvDBusMethodListener<P1, E, E, E, E> : public IWvDBusListener
 {
 public:
     WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
-                         WvCallback<void, WvDBusReplyMsg&, P1, WvError> _cb) :
+                         WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, WvError> _cb) :
         IWvDBusListener(_path)
     {
         cb = _cb;
@@ -200,22 +195,20 @@ public:
 	if (!i.next()) err.set(EINVAL);
 	P1 p1 = i;
         WvDBusReplyMsg msg(_msg);
-        cb(msg, p1, err);
-        if (err.isok())
-            conn->send(msg);
+        cb(*conn, msg, p1, err);
     }
 
-    WvCallback<void, WvDBusReplyMsg&, P1, WvError> cb;
+    WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, WvError> cb;
     WvDBusConn *conn;
 };
 
 
 template<typename P1, typename P2>
-class WvDBusMethodListener<P1, P2, E, E> : public IWvDBusListener
+class WvDBusMethodListener<P1, P2, E, E, E> : public IWvDBusListener
 {
 public:
     WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
-                         WvCallback<void, WvDBusReplyMsg&, P1, P2, WvError> _cb) :
+                         WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, P2, WvError> _cb) :
         IWvDBusListener(_path)
     {
         cb = _cb;
@@ -232,22 +225,22 @@ public:
 	if (!i.next()) err.set(EINVAL);
 	P2 p2 = i;
         WvDBusReplyMsg msg(_msg);
-        cb(msg, p1, p2, err);
+        cb(*conn, msg, p1, p2, err);
         if (err.isok())
             conn->send(msg);
     }
 
-    WvCallback<void, WvDBusReplyMsg&, P1, P2, WvError> cb;
+    WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, P2, WvError> cb;
     WvDBusConn *conn;
 };
 
 
 template<typename P1, typename P2, typename P3>
-class WvDBusMethodListener<P1, P2, P3, E> : public IWvDBusListener
+class WvDBusMethodListener<P1, P2, P3, E, E> : public IWvDBusListener
 {
 public:
     WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
-                         WvCallback<void, WvDBusReplyMsg&, P1, P2, P3, WvError> _cb) :
+                         WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, P2, P3, WvError> _cb) :
         IWvDBusListener(_path)
     {
         cb = _cb;
@@ -266,12 +259,48 @@ public:
 	if (!i.next()) err.set(EINVAL);
 	P3 p3 = i;
         WvDBusReplyMsg msg(_msg);
-        cb(msg, p1, p2, p3, err);
+        cb(*conn, msg, p1, p2, p3, err);
         if (err.isok())
             conn->send(msg);
     }
 
-    WvCallback<void, WvDBusReplyMsg&, P1, P2, P3, WvError> cb;
+    WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, P2, P3, WvError> cb;
+    WvDBusConn *conn;
+};
+
+
+template<typename P1, typename P2, typename P3, typename P4>
+class WvDBusMethodListener<P1, P2, P3, P4, E> : public IWvDBusListener
+{
+public:
+    WvDBusMethodListener(WvDBusConn *_conn, WvStringParm _path, 
+                         WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, P2, P3, WvError> _cb) :
+        IWvDBusListener(_path)
+    {
+        cb = _cb;
+        conn = _conn;
+    }
+
+    virtual void dispatch(const WvDBusMsg &_msg)
+    {
+        WvError err;
+	WvDBusMsg::Iter i(_msg);
+	
+	if (!i.next()) err.set(EINVAL);
+	P1 p1 = i;
+	if (!i.next()) err.set(EINVAL);
+	P2 p2 = i;
+	if (!i.next()) err.set(EINVAL);
+	P3 p3 = i;
+	if (!i.next()) err.set(EINVAL);
+	P4 p4 = i;
+        WvDBusReplyMsg msg(_msg);
+        cb(*conn, msg, p1, p2, p3, p4, err);
+        if (err.isok())
+            conn->send(msg);
+    }
+
+    WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, P1, P2, P3, P4, WvError> cb;
     WvDBusConn *conn;
 };
 

@@ -2,6 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  * 
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
+ *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ *
  */ 
 #include "wvdbusconnp.h"
 #include "wvdbusconn.h"
@@ -75,7 +80,8 @@ WvDBusConnPrivate::WvDBusConnPrivate(WvStringParm logname,
     dbusconn = dbus_bus_get(bus, &error);
 
     init(true);
-    request_name(name);
+    if (!!name)
+        request_name(name);
 }
 
 
@@ -259,8 +265,7 @@ void WvDBusConnPrivate::close()
             }
         }
 
-        log("Explicitly closing connection..\n");
-        dbus_connection_close(dbusconn);
+        log("Releasing connection..\n");
         dbus_connection_unref(dbusconn);
         conn = NULL;
     }

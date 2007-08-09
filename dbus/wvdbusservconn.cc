@@ -2,6 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  * 
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
+ *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ *
  */ 
 #include "wvdbusconnp.h"
 #include "wvdbusservconn.h"
@@ -62,17 +67,17 @@ WvDBusServConn::WvDBusServConn(DBusConnection *_c, WvDBusServer *_s) :
 {
     priv = new WvDBusServConnPrivate(this, _c, _s);
 
-    WvCallback<void, WvDBusReplyMsg &, WvError> cb1(
+    WvCallback<void, WvDBusConn &, WvDBusReplyMsg &, WvError> cb1(
         this, &WvDBusServConn::hello_cb);
     WvDBusMethodListener<> *l1 =
         new WvDBusMethodListener<>(this, "Hello", cb1);
 
-    WvCallback<void, WvDBusReplyMsg &, WvString, uint32_t, WvError> cb2(
+    WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, WvString, uint32_t, WvError> cb2(
         this, &WvDBusServConn::request_name_cb);
     WvDBusMethodListener<WvString, uint32_t> *l2 =
         new WvDBusMethodListener<WvString, uint32_t>(this, "RequestName", cb2);
 
-    WvCallback<void, WvDBusReplyMsg &, WvString, WvError> cb3(
+    WvCallback<void, WvDBusConn&, WvDBusReplyMsg&, WvString, WvError> cb3(
         this, &WvDBusServConn::release_name_cb);
     WvDBusMethodListener<WvString> *l3 =
         new WvDBusMethodListener<WvString>(this, "ReleaseName", cb3);
@@ -83,14 +88,15 @@ WvDBusServConn::WvDBusServConn(DBusConnection *_c, WvDBusServer *_s) :
 }
 
 
-void WvDBusServConn::hello_cb(WvDBusReplyMsg &reply, WvError err)
+void WvDBusServConn::hello_cb(WvDBusConn &conn, WvDBusReplyMsg &reply, WvError err)
 {    
     reply.append(WvString(":%s", rand()));
+    conn.send(reply);
 }
 
 
-void WvDBusServConn::request_name_cb(WvDBusReplyMsg &reply, WvString _name, 
-                                     uint32_t flags, WvError err)
+void WvDBusServConn::request_name_cb(WvDBusConn &conn, WvDBusReplyMsg &reply, 
+                                     WvString _name, uint32_t flags, WvError err)
 {
     if (!err.isok())
     {
@@ -101,11 +107,13 @@ void WvDBusServConn::request_name_cb(WvDBusReplyMsg &reply, WvString _name,
     reply.append((uint32_t)DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER);
     name = _name;
     server->register_conn(this);
+
+    conn.send(reply);
 }
 
 
-void WvDBusServConn::release_name_cb(WvDBusReplyMsg &reply, WvString _name, 
-                                     WvError err)
+void WvDBusServConn::release_name_cb(WvDBusConn &conn, WvDBusReplyMsg &reply, 
+                                     WvString _name, WvError err)
 {
     if (!err.isok())
     {
@@ -116,5 +124,7 @@ void WvDBusServConn::release_name_cb(WvDBusReplyMsg &reply, WvString _name,
 
     reply.append((uint32_t)DBUS_RELEASE_NAME_REPLY_RELEASED);
     name = "";
+
+    conn.send(reply);
 }
 

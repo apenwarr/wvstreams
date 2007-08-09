@@ -2,6 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  * 
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
+ *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ *
  * WvDBusMsg and WvDBusReplyMsg are intended to be easy-to-use abstractions
  * over the low-level D-Bus DBusMessage structure. They represent messages
  * being passed around on the bus.
@@ -140,6 +145,7 @@ public:
 
 protected:
     mutable DBusMessage *msg;
+    DBusMessageIter *iter;
 };
 
 
@@ -151,6 +157,10 @@ public:
      * an existing D-Bus message).
      */
     WvDBusReplyMsg(DBusMessage *_msg);
+
+    WvDBusReplyMsg(WvDBusReplyMsg &_msg) :
+        WvDBusMsg(_msg) {}
+
     virtual ~WvDBusReplyMsg() {}
 };
 

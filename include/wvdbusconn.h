@@ -2,6 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  * 
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
+ *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ *
  * A WvDBusConn represents a connection to another application. Messages
  * can be sent and received via this connection. In most cases, the
  * other application is a message bus. 
@@ -30,7 +35,14 @@ public:
      * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
      * DBUS_BUS_SYSTEM).
      */
-    WvDBusConn(WvStringParm _name, BusType bus = BusSession);
+    WvDBusConn(BusType bus);
+    
+    /**
+     * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
+     * DBUS_BUS_SYSTEM) with the specified name.
+     */
+    WvDBusConn(WvStringParm _name, BusType bus);
+    
     /**
      * Creates a new dbus connection on a bus with the prescribed address.
      * Useful when you want to set up a connection to a custom server.

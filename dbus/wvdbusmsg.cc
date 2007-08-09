@@ -2,6 +2,11 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
  * 
+ * Pathfinder Software:
+ *   Copyright (C) 2007, Carillon Information Security Inc.
+ *
+ * This library is licensed under the LGPL, please read LICENSE for details.
+ *
  */ 
 #include "wvdbusmsg.h"
 #include <dbus/dbus.h>
@@ -197,6 +202,8 @@ WvDBusMsg::WvDBusMsg(WvStringParm busname, WvStringParm objectname,
                      WvStringParm interface, WvStringParm method)
 {
     msg = dbus_message_new_method_call(busname, objectname, interface, method);
+    iter = new DBusMessageIter;
+    dbus_message_iter_init_append(msg, iter);
 }
 
 
@@ -204,6 +211,8 @@ WvDBusMsg::WvDBusMsg(WvDBusMsg &_msg)
 {
     msg = _msg.msg;
     dbus_message_ref(msg);
+    iter = new DBusMessageIter;
+    dbus_message_iter_init_append(msg, iter);
 }
 
 
@@ -211,11 +220,14 @@ WvDBusMsg::WvDBusMsg(DBusMessage *_msg)
 {
     msg = _msg;
     dbus_message_ref(msg);
+    iter = new DBusMessageIter;
+    dbus_message_iter_init_append(msg, iter);
 }
 
 
 WvDBusMsg::~WvDBusMsg()
 {
+    delete iter;
     dbus_message_unref(msg);
 }
 
@@ -287,56 +299,56 @@ void WvDBusMsg::append(const char *s)
 {
     assert(msg);
     assert(s);
-    dbus_message_append_args(msg, DBUS_TYPE_STRING, &s, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &s);
 }
 
 
 void WvDBusMsg::append(bool b)
 {
     assert(msg);
-    dbus_message_append_args(msg, DBUS_TYPE_BOOLEAN, &b, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &b);
 }
 
 
 void WvDBusMsg::append(char c)
 {
     assert(msg);
-    dbus_message_append_args(msg, DBUS_TYPE_BYTE, &c, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &c);
 }
 
 
 void WvDBusMsg::append(int16_t i)
 {
     assert(msg);
-    dbus_message_append_args(msg, DBUS_TYPE_INT16, &i, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT16, &i);
 }
 
 
 void WvDBusMsg::append(uint16_t i)
 {
     assert(msg);
-    dbus_message_append_args(msg, DBUS_TYPE_UINT16, &i, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT16, &i);
 }
 
 
 void WvDBusMsg::append(int32_t i)
 {
     assert(msg);
-    dbus_message_append_args(msg, DBUS_TYPE_INT32, &i, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &i);
 }
 
 
 void WvDBusMsg::append(uint32_t i)
 {
     assert(msg);
-    dbus_message_append_args(msg, DBUS_TYPE_UINT32, &i, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &i);
 }
 
 
 void WvDBusMsg::append(double d)
 {
     assert(msg);
-    dbus_message_append_args(msg, DBUS_TYPE_DOUBLE, &d, DBUS_TYPE_INVALID);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_DOUBLE, &d);
 }
 
 
