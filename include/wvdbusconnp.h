@@ -40,30 +40,21 @@ public:
 
     void add_listener(WvString path, IWvDBusListener *listener)
     {
+	assert(listener);
         if (!d[path])
             d.add(new WvDBusObject(path), true);
 
-        // FIXME: what about duplicates?
+	assert(!d[path]->d[listener->member]);
         d[path]->d.add(listener, true);
     }
 
     void del_listener(WvStringParm path, WvStringParm name)
     {
         WvDBusObject *o = d[path];
-        if (!o)
-        {
-            log(WvLog::Warning, "Attempted to delete listener from object "
-                "'%s', but object does not exist! (name: %s)\n", path, name);
-            return;
-        }
+	assert(o);
 
         IWvDBusListener *m = o->d[name];
-        if (!m)
-        {
-            log(WvLog::Warning, "Attempted to delete listener from object "
-                "'%s', but name does not exist! (name: %s)\n", path, name);
-            return;
-        }
+	assert(m);
 
         o->d.remove(m);
     }
@@ -76,6 +67,9 @@ public:
             WvDBusObject *obj = d[objname];
             if (obj->d[member])
                 obj->d[member]->dispatch(msg);
+	    else
+		log(WvLog::Warning, "No handler for '%s' in '%s'\n",
+		    member, objname);
         }
     }
 
@@ -90,10 +84,13 @@ DeclareWvDict(WvDBusInterface, WvString, name);
 class WvDBusConnPrivate
 {
 public:
-    WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name, DBusBusType bus);
-    WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name, 
+    WvDBusConnPrivate(WvStringParm logname,
+		      WvDBusConn *_conn, WvStringParm _name, DBusBusType bus);
+    WvDBusConnPrivate(WvStringParm logname,
+		      WvDBusConn *_conn, WvStringParm _name, 
                       WvStringParm _address);
-    WvDBusConnPrivate(WvDBusConn *_conn, DBusConnection *_c);
+    WvDBusConnPrivate(WvStringParm logname,
+		      WvDBusConn *_conn, DBusConnection *_c);
     virtual ~WvDBusConnPrivate();
     
     void init(bool client);

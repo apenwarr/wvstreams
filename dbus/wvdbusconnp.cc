@@ -8,51 +8,51 @@
 #include "wvdbuswatch.h"
 
 
-dbus_bool_t _add_watch(DBusWatch *watch, void *data)
+static dbus_bool_t _add_watch(DBusWatch *watch, void *data)
 {
     WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
     return connp->add_watch(watch);
 }
 
 
-void _remove_watch(DBusWatch *watch, void *data)
+static void _remove_watch(DBusWatch *watch, void *data)
 {
     WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
     connp->remove_watch(watch);
 }
 
 
-void _watch_toggled(DBusWatch *watch, void *data)
+static void _watch_toggled(DBusWatch *watch, void *data)
 {
     WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
     connp->watch_toggled(watch);
 }
 
 
-dbus_bool_t _add_timeout(DBusTimeout *timeout, void *data)
+static dbus_bool_t _add_timeout(DBusTimeout *timeout, void *data)
 {
     WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
     return connp->add_timeout(timeout);
 }
 
 
-void _remove_timeout(DBusTimeout *timeout, void *data)
+static void _remove_timeout(DBusTimeout *timeout, void *data)
 {
     WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
     connp->remove_timeout(timeout);
 }
 
 
-void _timeout_toggled(DBusTimeout *timeout, void *data)
+static void _timeout_toggled(DBusTimeout *timeout, void *data)
 {
     WvDBusConnPrivate *connp = (WvDBusConnPrivate *)data;
     connp->timeout_toggled(timeout);
 }
 
 
-DBusHandlerResult _filter_func(DBusConnection *_conn,
-                               DBusMessage *_msg,
-                               void *userdata)
+static DBusHandlerResult _filter_func(DBusConnection *_conn,
+				      DBusMessage *_msg,
+				      void *userdata)
 {
     WvDBusConnPrivate *connp = (WvDBusConnPrivate *)userdata;
     return connp->filter_func(_conn, _msg);
@@ -60,14 +60,15 @@ DBusHandlerResult _filter_func(DBusConnection *_conn,
 
 
 
-WvDBusConnPrivate::WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name, 
+WvDBusConnPrivate::WvDBusConnPrivate(WvStringParm logname,
+				     WvDBusConn *_conn, WvStringParm _name, 
                                      DBusBusType bus) :
     conn(_conn),
     ifacedict(10),
     dbusconn(NULL),
     name(_name),
     name_acquired(false),
-    log("WvDBusConnPrivate", WvLog::Debug)
+    log(logname, WvLog::Debug)
 {
     DBusError error;
     dbus_error_init(&error);
@@ -78,14 +79,15 @@ WvDBusConnPrivate::WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name,
 }
 
 
-WvDBusConnPrivate::WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name,
+WvDBusConnPrivate::WvDBusConnPrivate(WvStringParm logname,
+				     WvDBusConn *_conn, WvStringParm _name,
                                      WvStringParm _address) :
     conn(_conn),
     ifacedict(10),
     dbusconn(NULL),
     name(_name),
     name_acquired(false),
-    log("WvDBusConnPrivate", WvLog::Debug)
+    log(logname, WvLog::Debug)
 {
     // it seems like we want to open a private connection to the bus
     // for this particular case.. we can't create multiple named connections
@@ -112,13 +114,14 @@ WvDBusConnPrivate::WvDBusConnPrivate(WvDBusConn *_conn, WvStringParm _name,
 }
 
 
-WvDBusConnPrivate::WvDBusConnPrivate(WvDBusConn *_conn, DBusConnection *_c) :
+WvDBusConnPrivate::WvDBusConnPrivate(WvStringParm logname,
+				     WvDBusConn *_conn, DBusConnection *_c) :
     conn(_conn),
     ifacedict(10),
     dbusconn(_c),
     name(""),
     name_acquired(false),
-    log("WvDBusConnPrivate", WvLog::Debug)
+    log(logname, WvLog::Debug)
 {
     dbus_connection_ref(dbusconn);
     init(false);
@@ -173,7 +176,7 @@ void WvDBusConnPrivate::request_name(WvStringParm name)
 
     int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT |
                  DBUS_NAME_FLAG_REPLACE_EXISTING);
-    if (dbus_bus_request_name(dbusconn, name, flags, &error) == (-1))
+    if (dbus_bus_request_name(dbusconn, name, flags, &error) == -1)
     {
         log(WvLog::Error, "Couldn't set name '%s' for connection! "
             "(error name: %s)\n", name, error.name);
@@ -194,10 +197,7 @@ void WvDBusConnPrivate::add_listener(WvStringParm interface,
                                        IWvDBusListener *listener)
 {
     if (!ifacedict[interface])
-    {
         ifacedict.add(new WvDBusInterface(interface), true);
-    }
-
     ifacedict[interface]->add_listener(path, listener);
 }
 
@@ -219,9 +219,10 @@ void WvDBusConnPrivate::del_listener(WvStringParm interface,
 void WvDBusConnPrivate::pending_call_notify(DBusPendingCall *pending, 
                                             void *user_data)
 {
-    IWvDBusListener * listener = (IWvDBusListener *) user_data;
+    IWvDBusListener *listener = (IWvDBusListener *)user_data;
     DBusMessage *msg = dbus_pending_call_steal_reply(pending);
 
+    WvLog("pending", WvLog::Debug1).print("incoming: %s\n", WvDBusMsg(msg));
     listener->dispatch(msg);
     dbus_pending_call_unref(pending);
     dbus_message_unref(msg);
@@ -230,7 +231,7 @@ void WvDBusConnPrivate::pending_call_notify(DBusPendingCall *pending,
 
 void WvDBusConnPrivate::remove_listener_cb(void *memory)
 {
-    IWvDBusListener * listener = (IWvDBusListener *) memory;
+    IWvDBusListener *listener = (IWvDBusListener *)memory;
     delete listener;
 }
 
@@ -354,13 +355,8 @@ DBusHandlerResult WvDBusConnPrivate::filter_func(DBusConnection *_conn,
 
 void WvDBusConnPrivate::print_message_trace(DBusMessage *_msg)
 {
-    log(WvLog::Debug5, "Got message. Sender %s. Destination: %s. "
-        "Path: %s. Interface: %s. Member: %s. Is signal: %s\n",
-        dbus_message_get_sender(_msg),
-        dbus_message_get_destination(_msg),
-        dbus_message_get_path(_msg),
-        dbus_message_get_interface(_msg),
-        dbus_message_get_member(_msg),
+    WvDBusMsg msg(_msg);
+    log(WvLog::Debug5, "Rx: %s sig=%s\n", msg,
         dbus_message_is_signal(_msg, dbus_message_get_interface(_msg),
                                dbus_message_get_path(_msg)));
 }

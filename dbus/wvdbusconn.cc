@@ -10,22 +10,22 @@
 
 WvDBusConn::WvDBusConn(WvStringParm _name, DBusBusType bus)
     : name(_name), 
-      log("WvDBusConn")
+      log("DBus Conn")
 {
-    priv = new WvDBusConnPrivate(this, name, bus);
+    priv = new WvDBusConnPrivate(log.app, this, name, bus);
 }
 
 
 WvDBusConn::WvDBusConn(WvStringParm _name, WvStringParm address)
     : name(_name), 
-      log("WvDBusConn")
+      log("DBus Conn")
 {
-    priv = new WvDBusConnPrivate(this, name, address);
+    priv = new WvDBusConnPrivate(log.app, this, name, address);
 }
 
 
 WvDBusConn::WvDBusConn()
-    : log("WvDBusConn")
+    : log("DBus Conn")
 {
 }
 
@@ -58,18 +58,17 @@ void WvDBusConn::send(WvDBusMsg &msg)
 
 void WvDBusConn::send(WvDBusMsg &msg, uint32_t &serial)
 {
+    log(WvLog::Debug, "Sending %s\n", msg);
     if (!dbus_connection_send(priv->dbusconn, msg, &serial)) 
-    { 
         seterr_both(ENOMEM, "Out of memory.\n");
-    }
 }
 
 
 void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply, 
                       bool autofree_reply)
 {
-    log(WvLog::Debug, "Sending message.\n");
-    DBusPendingCall * pending;
+    log(WvLog::Debug, "Sending_w_r %s\n", msg);
+    DBusPendingCall *pending;
 
     // FIXME: allow custom timeouts?
     if (!dbus_connection_send_with_reply(priv->dbusconn, msg, &pending, 1000)) 

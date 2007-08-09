@@ -60,13 +60,22 @@ public:
     {
         return msg;
     }
+    
+    WvString get_sender() const;
+    WvString get_dest() const;
+    WvString get_path() const;
+    WvString get_interface() const;
+    WvString get_member() const;
+    operator WvString() const;
+    
+    void get_arglist(WvStringList &list) const;
+    WvString get_argstr() const;
 
     /*
-     * The follow methods are designed to allow appending various arguments
-     * to the message. I will assume that their names are self-explanatory..
+     * The following methods are designed to allow appending various
+     * arguments to the message.
      */
-
-    void append(WvStringParm s);
+    void append(const char *s);
     void append(bool b);
     void append(char c);
     void append(int16_t i);

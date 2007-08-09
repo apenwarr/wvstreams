@@ -1,4 +1,3 @@
-#include "uniconfroot.h"
 #include "wvdbusconn.h"
 #include "wvdbuslistener.h"
 #include "wvdbusserver.h"
@@ -25,6 +24,8 @@ static int messages_received = 0;
 static void msg_received(WvDBusReplyMsg &reply, WvString arg1, WvError err)
 {
     fprintf(stderr, "Message received, loud and clear.\n");
+    if (!err.isok())
+	fprintf(stderr, "Error was: '%s'\n", err.errstr().cstr());
     reply.append(WvString("baz %s", arg1));
     messages_received++;
 }
@@ -34,8 +35,8 @@ WVTEST_SLOW_MAIN("basic sanity")
 {
     signal(SIGPIPE, SIG_IGN);
 
-    WvString dsockname("/tmp/wvdbus-test-%s-%s", rand(), getpid());
-    WvString busfname("/tmp/wvdbus-test-%s-%s", rand(), getpid());
+    WvString dsockname(wvtmpfilename("wvdbus-test"));
+    WvString busfname("%s.dir", wvtmpfilename("wvdbus-test"));
     WvString moniker("unix:tmpdir=%s", dsockname);
 
     pid_t child = wvfork();
@@ -68,7 +69,8 @@ WVTEST_SLOW_MAIN("basic sanity")
     conn2.add_method("ca.nit.foo", "/ca/nit/foo", l);
 
     // needed if we're going to be using dbus_shutdown
-    WvDBusMsg *msg = new WvDBusMsg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
+    WvDBusMsg *msg = new WvDBusMsg("ca.nit.MyListener",
+				   "/ca/nit/foo", "ca.nit.foo", "bar");
     msg->append("bee");
 
     WvDBusListener<WvString> reply("/ca/nit/foo/bar", reply_received);

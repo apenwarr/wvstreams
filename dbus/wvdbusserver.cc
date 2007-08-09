@@ -17,7 +17,7 @@ class WvDBusServerPrivate
 {
 public:
     WvDBusServerPrivate(WvStringParm addr, WvDBusServer *_server) :
-        log("WvDBusServerPrivate", WvLog::Debug)
+        log("DBus Server", WvLog::Debug)
     {
         server = _server;
 
@@ -48,7 +48,7 @@ public:
                                           remove_timeout, timeout_toggled,
                                           this, NULL);
 
-        log(WvLog::Info, "Final address of server is '%s'", get_addr());
+        log(WvLog::Info, "Final address of server is '%s'\n", get_addr());
     }
 
     bool isok()
@@ -147,7 +147,7 @@ public:
 WvDBusServer::WvDBusServer(WvStringParm addr) :
     cdict(10),
     rsdict(10),
-    log("WvDBusServer", WvLog::Debug)
+    log("DBus Server", WvLog::Debug)
 {
     priv = new WvDBusServerPrivate(addr, this);    
 }
@@ -175,18 +175,19 @@ void WvDBusServer::register_conn(WvDBusConn *conn)
 void WvDBusServer::proxy_msg(WvStringParm name, WvDBusConn *src, 
                              WvDBusMsg &msg)
 {
+    log("Proxying to %s\n", name);
     WvDBusConn *conn = cdict[name];
     uint32_t serial;
     if (conn)
     {
         conn->send(msg, serial);
         rsdict.add(new WvDBusReplySerial(serial, src), true);
-        log("We'll be expecting a reply with serial %s, directed to %s\n",
+        log("Proxy: now expecting reply #%s to %s\n",
             serial, src->name);
     }
     else
-        log(WvLog::Warning, "No connection associated with message, NOT "
-            "sending.\n");
+        log(WvLog::Warning,
+	    "Proxy: no connection for '%s'\n", name);
 }
 
 

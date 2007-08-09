@@ -13,7 +13,7 @@ class WvDBusServConnPrivate : public WvDBusConnPrivate
 public:
     WvDBusServConnPrivate(WvDBusConn *_conn, DBusConnection *_c, 
                           WvDBusServer *_s) :
-        WvDBusConnPrivate(_conn, _c),
+        WvDBusConnPrivate("DBus Serv Conn", _conn, _c),
         server(_s)
     {
     }
@@ -33,8 +33,8 @@ public:
         if (!!path && path != "/org/freedesktop/DBus")
         {
             print_message_trace(_msg);
-            log("Here we are! (path: %s, dest: %s reply serial: %s)\n", path,
-                dbus_message_get_destination(_msg),
+            log("filter: ->%s:%s serial=%s\n",
+                dbus_message_get_destination(_msg), path,
                 dbus_message_get_reply_serial(_msg));            
             WvDBusMsg msg(_msg);
 
@@ -58,7 +58,7 @@ public:
 WvDBusServConn::WvDBusServConn(DBusConnection *_c, WvDBusServer *_s) :
     WvDBusConn(),
     server(_s),
-    log("WvDBusServConn")
+    log("DBus Serv Conn")
 {
     priv = new WvDBusServConnPrivate(this, _c, _s);
 
@@ -98,7 +98,7 @@ void WvDBusServConn::request_name_cb(WvDBusReplyMsg &reply, WvString _name,
             err.errstr());
         return;
     }
-    reply.append(DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER);
+    reply.append((uint32_t)DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER);
     name = _name;
     server->register_conn(this);
 }
@@ -114,7 +114,7 @@ void WvDBusServConn::release_name_cb(WvDBusReplyMsg &reply, WvString _name,
         return;
     }
 
-    reply.append(DBUS_RELEASE_NAME_REPLY_RELEASED);
+    reply.append((uint32_t)DBUS_RELEASE_NAME_REPLY_RELEASED);
     name = "";
 }
 

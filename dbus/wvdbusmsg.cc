@@ -13,16 +13,111 @@ WvDBusMsg::WvDBusMsg(WvStringParm busname, WvStringParm objectname,
 }
 
 
-void WvDBusMsg::append(WvStringParm s1)
+WvString WvDBusMsg::get_sender() const
+{
+    return dbus_message_get_sender(msg);
+}
+
+
+WvString WvDBusMsg::get_dest() const
+{
+    return dbus_message_get_destination(msg);
+}
+
+
+WvString WvDBusMsg::get_path() const
+{
+    return dbus_message_get_path(msg);
+}
+
+
+WvString WvDBusMsg::get_interface() const
+{
+    return dbus_message_get_interface(msg);
+}
+
+
+WvString WvDBusMsg::get_member() const
+{
+    return dbus_message_get_member(msg);
+}
+
+
+void WvDBusMsg::get_arglist(WvStringList &list) const
+{
+    DBusMessageIter i;
+    int type;
+    
+    dbus_message_iter_init(msg, &i);
+    while ((type = dbus_message_iter_get_arg_type(&i)) != DBUS_TYPE_INVALID)
+    {
+	WvString s;
+	switch (type)
+	{
+	case DBUS_TYPE_BYTE: 
+	    { char x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_BOOLEAN: 
+	    { int x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_INT16: 
+	    { int16_t x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_UINT16: 
+	    { uint16_t x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_INT32: 
+	    { int32_t x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_UINT32: 
+	    { uint32_t x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_INT64: 
+	    { int64_t x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_UINT64: 
+	    { uint64_t x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	case DBUS_TYPE_DOUBLE: 
+	    { double x; dbus_message_iter_get_basic(&i, &x); s = (int)x; }
+	    break;
+	case DBUS_TYPE_STRING: 
+	    { char *x; dbus_message_iter_get_basic(&i, &x); s = x; }
+	    break;
+	default:
+	    s = WvString("UNKNOWN_TYPE(%c)", type);
+	    break;
+	}
+	list.append(s);
+	dbus_message_iter_next(&i);
+    }
+}
+
+
+WvString WvDBusMsg::get_argstr() const
+{
+    WvStringList l;
+    get_arglist(l);
+    return l.join(",");
+}
+
+
+WvDBusMsg::operator WvString() const
+{
+    WvString src("");
+    if (!!get_sender())
+	src = WvString("%s->", get_sender());
+    return WvString("%s%s:%s:%s:%s(%s)",
+		    src, get_dest(),
+		    get_path(), get_interface(), get_member(), get_argstr());
+}
+
+
+void WvDBusMsg::append(const char *s)
 {
     assert(msg);
-    const char *tmp;
-    if (!s1.isnull())
-    {
-	tmp = s1.cstr();
-	dbus_message_append_args(msg, DBUS_TYPE_STRING, &tmp,
-                                 DBUS_TYPE_INVALID);
-    }
+    assert(s);
+    dbus_message_append_args(msg, DBUS_TYPE_STRING, &s, DBUS_TYPE_INVALID);
 }
 
 
