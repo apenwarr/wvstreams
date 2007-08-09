@@ -8,9 +8,9 @@
  * This library is licensed under the LGPL, please read LICENSE for details.
  *
  */ 
-#include "wvdbusservconn.h"
 #include "wvdbusserver.h"
 #include "wvdbuswatch.h"
+#include "wvdbuslistener.h"
 #include <dbus/dbus.h>
 
 #if 0
@@ -214,7 +214,103 @@ void WvDBusServer::proxy_msg(uint32_t serial, WvDBusMsg &msg)
 	    serial);
 }
 
+
 WvString WvDBusServer::get_addr()
 {
     return priv->get_addr();
 }
+
+
+WvDBusServConn::WvDBusServConn(DBusConnection *_c, WvDBusServer *_s) :
+    WvDBusConn(_c),
+    server(_s)
+{
+    WvCallback<void, WvDBusConn &, WvDBusMsg &, WvError> cb1(
+        this, &WvDBusServConn::hello_cb);
+    WvDBusListener<> *l1 =
+        new WvDBusListener<>(this, "Hello", cb1);
+
+    WvCallback<void, WvDBusConn&, WvDBusMsg&, WvString, uint32_t, WvError> cb2(
+        this, &WvDBusServConn::request_name_cb);
+    WvDBusListener<WvString, uint32_t> *l2 =
+        new WvDBusListener<WvString, uint32_t>(this, "RequestName", cb2);
+
+    WvCallback<void, WvDBusConn&, WvDBusMsg&, WvString, WvError> cb3(
+        this, &WvDBusServConn::release_name_cb);
+    WvDBusListener<WvString> *l3 =
+        new WvDBusListener<WvString>(this, "ReleaseName", cb3);
+
+    add_method("org.freedesktop.DBus", "/org/freedesktop/DBus", l1);
+    add_method("org.freedesktop.DBus", "/org/freedesktop/DBus", l2);
+    add_method("org.freedesktop.DBus", "/org/freedesktop/DBus", l3);
+}
+
+
+void WvDBusServConn::hello_cb(WvDBusConn &conn, WvDBusMsg &msg, WvError err)
+{    
+    log("hello_cb\n");
+    msg.reply().append(WvString(":%s", rand())).send(conn);
+}
+
+
+void WvDBusServConn::request_name_cb(WvDBusConn &conn, WvDBusMsg &msg, 
+                                     WvString _name, uint32_t flags,
+				     WvError err)
+{
+    log("request_name_cb(%s)\n", _name);
+    if (!err.isok())
+    {
+        log("RequestName method called, but there was an error (%s).\n",
+            err.errstr());
+        return;
+    }
+    name = _name;
+    server->register_conn(this);
+    assert(server->cdict[_name] == this);
+
+    msg.reply().append((uint32_t)DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
+	.send(conn);
+}
+
+
+void WvDBusServConn::release_name_cb(WvDBusConn &conn, WvDBusMsg &msg, 
+                                     WvString _name, WvError err)
+{
+    log("release_name_cb(%s)\n", _name);
+    if (!err.isok())
+    {
+        log("ReleaseName method called, but there was an error (%s).\n",
+            err.errstr());
+        return;
+    }
+    name = "";
+
+    msg.reply().append((uint32_t)DBUS_RELEASE_NAME_REPLY_RELEASED).send(conn);
+}
+
+
+
+bool WvDBusServConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
+{
+    WvString path(msg.get_path());
+    
+    log("Filter: %s\n", msg);
+    
+    // the only object the server exports is "/org/freedesktop/DBus":
+    // if that's not the destination, we need to proxy it to one of
+    // our connected clients.
+    if (!!path && path != "/org/freedesktop/DBus")
+    {
+	log("filter: %s serial=%s\n", msg,
+	    dbus_message_get_reply_serial(msg));
+	server->proxy_msg(msg.get_dest(), this, msg);
+        return true;
+    }
+    else if (!path && msg.get_serial()) // most likely a reply
+    {
+	server->proxy_msg(msg.get_serial(), msg);
+	return true;
+    }
+    return WvDBusConn::filter_func(conn, msg);
+}
+

@@ -6,20 +6,13 @@
  *   Copyright (C) 2007, Carillon Information Security Inc.
  *
  * This library is licensed under the LGPL, please read LICENSE for details.
- *
- * This class handles some private implementation details which I didn't
- * want to clutter up WvDBusConn with. Its API is COMPLETELY SUBJECT TO CHANGE
- * and SHOULD NOT BE USED by your application.
  */ 
-#ifndef __WVDBUSCONNP_H
-#define __WVDBUSCONNP_H
+#ifndef __WVDBUSHANDLER_H
+#define __WVDBUSHANDLER_H
 
 #include "iwvdbuslistener.h"
 #include "wvhashtable.h"
 #include "wvlog.h"
-#include "wvstring.h"
-#include "wvdbusconn.h"
-#include <dbus/dbus.h>
 
 DeclareWvDict(IWvDBusListener, WvString, member);
 
@@ -86,45 +79,4 @@ public:
 DeclareWvDict(WvDBusInterface, WvString, name);
 
 
-class WvDBusConn : public WvDBusConnBase
-{
-public:
-    WvDBusConn(DBusConnection *_c);
-    WvDBusConn(BusType bus = BusSession);
-    WvDBusConn(WvStringParm dbus_moniker);
-    virtual ~WvDBusConn();
-    
-    void init(bool client);
-    void request_name(WvStringParm name);
-
-    virtual dbus_bool_t add_watch(DBusWatch *watch);
-    virtual void remove_watch(DBusWatch *watch);
-    virtual void watch_toggled(DBusWatch *watch);
-
-    virtual dbus_bool_t add_timeout(DBusTimeout *timeout);
-    virtual void remove_timeout(DBusTimeout *timeout);
-    virtual void timeout_toggled(DBusTimeout *timeout);
-
-    virtual DBusHandlerResult filter_func(DBusConnection *_conn,
-                                          DBusMessage *_msg);
-    void print_message_trace(DBusMessage *_msg);
-
-
-    static void pending_call_notify(DBusPendingCall *pending, void *user_data);
-    static void remove_listener_cb(void *memory);
-
-    virtual DBusConnection *_getconn() const;
-    virtual void _add_listener(WvStringParm interface, WvStringParm path,
-                              IWvDBusListener *listener);
-    virtual void _del_listener(WvStringParm interface, WvStringParm path,
-                              WvStringParm name);
-    
-    void execute();
-    void close();
-    
-    WvDBusInterfaceDict ifacedict;
-    DBusConnection *dbusconn;
-    bool name_acquired;
-};
-
-#endif // __WVDBUSCONNP_H
+#endif // __WVDBUSHANDLER_H

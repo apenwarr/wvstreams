@@ -14,6 +14,7 @@
 #ifndef __WVDBUSCONN_H
 #define __WVDBUSCONN_H
 
+#include "wvdbushandler.h"
 #include "wvistreamlist.h"
 #include "wvlog.h"
 
@@ -22,31 +23,60 @@ class WvDBusMsg;
 
 struct DBusConnection;
 struct DBusError;
+struct DBusWatch;
+struct DBusTimeout;
+struct DBusPendingCall;
 
 
-class WvDBusConnBase : public WvIStreamList
+class WvDBusConn : public WvIStreamList
 {
+    friend class WvDBusConnHelpers;
 public:
     enum BusType { BusSession = 0, BusSystem, BusStarter, NUM_BUS_TYPES };
+    
+    WvString name; // needs to be public for lookup
+    WvLog log;
 
-#if 0
     /**
      * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
      * DBUS_BUS_SYSTEM).
      */
-    WvDBusConn(BusType bus);
+    WvDBusConn(BusType bus = BusSession);
     
     /**
      * Creates a new dbus connection on a bus with the prescribed address.
      * Useful when you want to set up a connection to a custom server.
      */
-    WvDBusConnBase(WvStringParm dbus_moniker);
-#endif
-    WvDBusConnBase();
+    WvDBusConn(WvStringParm dbus_moniker);
+    
+    /**
+     * Initialize this object from an existing low-level DBusConnection object.
+     */
+    WvDBusConn(DBusConnection *_c);
+    
+    /**
+     * Release this connection.  If this is the last owner of the associated
+     * DBusConnection object, the connection itself closes.
+     */
+    virtual ~WvDBusConn();
 
-    virtual ~WvDBusConnBase();
-
+    /**
+     * Request the given service name on DBus.  There's no guarantee the
+     * server will let us have the requested name, though.
+     * 
+     * The name will be released when this connection object is destroyed.
+     */
+    void request_name(WvStringParm name);
+    
+    /**
+     * Called by WvStreams when incoming data is ready.
+     */
     virtual void execute();
+    
+    /**
+     * Close the underlying stream.  The object becomes unusable.  This is
+     * also called whenever an error is set.
+     */
     virtual void close();
     
     /**
@@ -77,12 +107,6 @@ public:
                               WvStringParm name);
     
     
-    virtual DBusConnection *_getconn() const = 0;
-    virtual void _add_listener(WvStringParm interface, WvStringParm path,
-                              IWvDBusListener *listener) = 0;
-    virtual void _del_listener(WvStringParm interface, WvStringParm path,
-                              WvStringParm name) = 0;
-
     /**
      * Adds a method to the bus connection: all method calls matching
      * the interface and path specification will be forwarded to the 
@@ -97,14 +121,40 @@ public:
     void del_method(WvStringParm interface, WvStringParm path,
                     WvStringParm name);
 
-    operator DBusConnection* () const;
-    
+    /**
+     * Set the error code of this connection if 'e' is nonempty.
+     */
     void maybe_seterr(DBusError &e);
 
-    WvString name; // needs to be public for lookup
-    WvLog log;
-};
+    /**
+     * Called by DBus for each incoming message.  Returns true if we handled
+     * this message, false if not.
+     */
+    virtual bool filter_func(WvDBusConn &conn, WvDBusMsg &msg);
+    
+private:
+    void init(bool client);
 
-#include "wvdbusconnp.h" // FIXME temporary
+    bool add_watch(DBusWatch *watch);
+    void remove_watch(DBusWatch *watch);
+    void watch_toggled(DBusWatch *watch);
+
+    bool add_timeout(DBusTimeout *timeout);
+    void remove_timeout(DBusTimeout *timeout);
+    void timeout_toggled(DBusTimeout *timeout);
+
+    static void pending_call_notify(DBusPendingCall *pending, void *user_data);
+    static void remove_listener_cb(void *memory);
+
+    WvDBusInterfaceDict ifacedict;
+    DBusConnection *dbusconn;
+    bool name_acquired;
+    
+    void _add_listener(WvStringParm interface, WvStringParm path,
+		       IWvDBusListener *listener);
+    void _del_listener(WvStringParm interface, WvStringParm path,
+		       WvStringParm name);
+
+};
 
 #endif // __WVDBUSCONN_H

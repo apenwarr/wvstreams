@@ -15,12 +15,14 @@
  */ 
 #ifndef __WVDBUSSERVER_H
 #define __WVDBUSSERVER_H
+
 #include "iwvdbuslistener.h"
+#include "wvdbusconn.h"
 #include "wvhashtable.h"
 #include "wvlog.h"
 #include "wvistreamlist.h"
 
-class WvDBusServConn;
+class WvDBusServer;
 class WvDBusServerPrivate;
 
 
@@ -40,6 +42,25 @@ typedef struct WvDBusReplySerial
 
 DeclareWvDict(WvDBusReplySerial, int, serial);
 DeclareWvDict(WvDBusConn, WvString, name);
+
+
+class WvDBusServConn : public WvDBusConn
+{
+public:
+    WvDBusServConn(DBusConnection *c, WvDBusServer *s);
+    virtual ~WvDBusServConn()
+    {}
+
+private:
+    void proxy_msg(WvDBusMsg &msg);
+    void hello_cb(WvDBusConn &conn, WvDBusMsg &msg, WvError err);
+    void request_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString name,
+                         uint32_t flags, WvError err);
+    void release_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString _name,
+			 WvError err);
+    virtual bool filter_func(WvDBusConn &conn, WvDBusMsg &msg);
+    WvDBusServer *server;
+};
 
 
 class WvDBusServer : public WvIStreamList
