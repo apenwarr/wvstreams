@@ -191,7 +191,7 @@ void WvDBusConnPrivate::request_name(WvStringParm name)
     }
     else
     {
-        log(WvLog::Debug5, "Set name '%s' for connection!\n",
+        log(WvLog::Debug5, "Set name '%s' for this connection.\n",
             name);
         name_acquired = true;
     }
@@ -244,7 +244,7 @@ void WvDBusConnPrivate::remove_listener_cb(void *memory)
 
 void WvDBusConnPrivate::execute()
 {
-    log("Execute.\n");
+    // log("Execute.\n");
     while (dbus_connection_dispatch(dbusconn) == 
            DBUS_DISPATCH_DATA_REMAINS);
 }
@@ -280,7 +280,7 @@ dbus_bool_t WvDBusConnPrivate::add_watch(DBusWatch *watch)
     conn->append(wwatch, true, "D-Bus watch");
 
     dbus_watch_set_data(watch, wwatch, NULL);
-
+#if 0
     // FIXME: do we need to explicitly say whether we are readable and
     // writable? (see below)
     bool isreadable = (flags & DBUS_WATCH_READABLE);
@@ -289,7 +289,7 @@ dbus_bool_t WvDBusConnPrivate::add_watch(DBusWatch *watch)
     log(WvLog::Debug5, "Watch updated successfully (fd: %s, readable: %s, "
         "writable: %s)\n", dbus_watch_get_fd(watch),
         isreadable, iswritable);
-
+#endif
     return TRUE;
 }
 
@@ -299,15 +299,15 @@ void WvDBusConnPrivate::remove_watch(DBusWatch *watch)
     WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
     assert(wwatch);
 
-    log(WvLog::Debug5, "Removing watch (rfd: %s wfd: %s)\n", 
-        wwatch->getrfd(), wwatch->getwfd());
+//    log(WvLog::Debug5, "Removing watch (rfd: %s wfd: %s)\n", 
+//        wwatch->getrfd(), wwatch->getwfd());
     wwatch->close();
 }
 
 
 void WvDBusConnPrivate::watch_toggled(DBusWatch *watch)
 {
-    log(WvLog::Debug5, "toggle watch\n");
+//    log(WvLog::Debug5, "toggle watch\n");
     if (!watch)
         return;
 
@@ -320,21 +320,20 @@ void WvDBusConnPrivate::watch_toggled(DBusWatch *watch)
 
 dbus_bool_t WvDBusConnPrivate::add_timeout(DBusTimeout *timeout)
 {
-    log(WvLog::Debug5, "Add timeout.\n");
-
+//    log(WvLog::Debug5, "Add timeout.\n");
     return TRUE;
 }
 
 
 void WvDBusConnPrivate::remove_timeout(DBusTimeout *timeout)
 {
-    log(WvLog::Debug5, "Remove timeout.\n");
+//    log(WvLog::Debug5, "Remove timeout.\n");
 }
 
 
 void WvDBusConnPrivate::timeout_toggled(DBusTimeout *timeout)
 {
-    log(WvLog::Debug5, "Timeout toggled.\n");
+//    log(WvLog::Debug5, "Timeout toggled.\n");
 }
 
 

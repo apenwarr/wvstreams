@@ -27,12 +27,11 @@ public:
 
 private:
     void proxy_msg(WvDBusMsg &msg);
-    void hello_cb(WvDBusConn &conn, WvDBusReplyMsg &reply, WvError err);
-    void request_name_cb(WvDBusConn &conn, WvDBusReplyMsg &reply, WvString name,
+    void hello_cb(WvDBusConn &conn, WvDBusMsg &msg, WvError err);
+    void request_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString name,
                          uint32_t flags, WvError err);
-    void release_name_cb(WvDBusConn &conn, WvDBusReplyMsg &reply, WvString _name, WvError err);
+    void release_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString _name, WvError err);
     WvDBusServer *server;
-    WvLog log;
 };
 
 #endif // __WVDBUSSERVCONN_H

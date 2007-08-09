@@ -12,7 +12,8 @@
 
 static int replies_received = 0;
 
-static void reply_received(WvString foo, WvError err)
+static void reply_received(WvDBusConn &conn, WvDBusMsg &msg,
+			   WvString foo, WvError err)
 {
     fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
     replies_received++;
@@ -20,15 +21,14 @@ static void reply_received(WvString foo, WvError err)
 
 static int messages_received = 0;
 
-static void msg_received(WvDBusConn &conn, WvDBusReplyMsg &reply,
+static void msg_received(WvDBusConn &conn, WvDBusMsg &msg,
 			 WvString arg1, WvError err)
 {
     fprintf(stderr, "Message received, loud and clear.\n");
     if (!err.isok())
 	fprintf(stderr, "Error was: '%s'\n", err.errstr().cstr());
-    reply.append(WvString("baz %s", arg1));
     messages_received++;
-    conn.send(reply);
+    msg.reply().append(WvString("baz %s", arg1)).send(conn);
 }
 
 
@@ -40,6 +40,7 @@ WVTEST_SLOW_MAIN("basic sanity")
     WvString moniker("unix:tmpdir=%s", dsockname);
     WvLoopback loop;
 
+    // the bus server
     pid_t child = wvfork(loop.getrfd(), loop.getwfd());
     if (child == 0)
     {
@@ -58,19 +59,21 @@ WVTEST_SLOW_MAIN("basic sanity")
     
     loop.nowrite();
     WvString addr = loop.getline(-1);
-    fprintf(stderr, "Address is '%s'\n", addr.cstr());
+    fprintf(stderr, "Server address is '%s'\n", addr.cstr());
 
     WvDBusConn conn1("ca.nit.MySender", addr);
     WvDBusConn conn2("ca.nit.MyListener", addr);
-    WvDBusMethodListener<WvString> *l = 
-        new WvDBusMethodListener<WvString>(&conn2, "bar", msg_received);
+    WvDBusListener<WvString> *l = 
+        new WvDBusListener<WvString>(&conn2, "bar", msg_received);
     conn2.add_method("ca.nit.foo", "/ca/nit/foo", l);
 
-    // needed if we're going to be using dbus_shutdown
     WvDBusMsg msg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
     msg.append("bee");
 
-    WvDBusListener<WvString> reply("/ca/nit/foo/bar", reply_received);
+    WvDBusListener<WvString> reply(&conn1, "/ca/nit/foo/bar", reply_received);
+    
+    WvCallback<void, const WvDBusMsg &> xxx = reply;
+    
     conn1.send(msg, &reply, false);
     WvIStreamList::globallist.append(&conn1, false);
     WvIStreamList::globallist.append(&conn2, false);

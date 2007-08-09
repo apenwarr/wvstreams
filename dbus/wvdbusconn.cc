@@ -16,9 +16,11 @@
 static DBusBusType bustypes[WvDBusConn::NUM_BUS_TYPES] 
     = { DBUS_BUS_SESSION, DBUS_BUS_SYSTEM, DBUS_BUS_STARTER };
 
+static int conncount;
+
 WvDBusConn::WvDBusConn(WvStringParm _name, BusType bus)
     : name(_name), 
-      log("DBus Conn")
+      log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount))
 {
     priv = new WvDBusConnPrivate(log.app, this, name, bustypes[bus]);
 }
@@ -26,14 +28,14 @@ WvDBusConn::WvDBusConn(WvStringParm _name, BusType bus)
 
 WvDBusConn::WvDBusConn(WvStringParm _name, WvStringParm address)
     : name(_name), 
-      log("DBus Conn")
+      log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount))
 {
     priv = new WvDBusConnPrivate(log.app, this, name, address);
 }
 
 
-WvDBusConn::WvDBusConn()
-    : log("DBus Conn")
+WvDBusConn::WvDBusConn(WvStringParm logname)
+    : log(logname)
 {
 }
 
@@ -78,8 +80,7 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply,
     log(WvLog::Debug, "Sending_w_r %s\n", msg);
     DBusPendingCall *pending;
 
-    // FIXME: allow custom timeouts?
-    if (!dbus_connection_send_with_reply(priv->dbusconn, msg, &pending, 1000)) 
+    if (!dbus_connection_send_with_reply(priv->dbusconn, msg, &pending, -1))
     { 
         seterr_both(ENOMEM, "Out of memory.\n");
         return;

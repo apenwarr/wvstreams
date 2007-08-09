@@ -181,7 +181,7 @@ void WvDBusServer::register_conn(WvDBusConn *conn)
 void WvDBusServer::proxy_msg(WvStringParm name, WvDBusConn *src, 
                              WvDBusMsg &msg)
 {
-    log("Proxying to %s\n", name);
+    log("Proxying %s -> %s\n", msg, name);
     WvDBusConn *conn = cdict[name];
     uint32_t serial;
     if (conn)
@@ -199,18 +199,18 @@ void WvDBusServer::proxy_msg(WvStringParm name, WvDBusConn *src,
 
 void WvDBusServer::proxy_msg(uint32_t serial, WvDBusMsg &msg)
 {
+    log("Proxying %s -> #%s\n", msg, serial);
+    
     WvDBusReplySerial *s = rsdict[serial];
-
     if (s)
     {
-        log(WvLog::Info, "Dispatching reply to %s based on serial '%s'\n", 
-            s->conn->name, serial);
+        log("Proxy reply: target is %s\n", s->conn->name);
         s->conn->send(msg);
         rsdict.remove(s);
     }
     else
-        log(WvLog::Error, "No connection associated with serial '%s'.\n", 
-            serial);
+        log(WvLog::Error, "Proxy reply: no connection for serial #%s!\n",
+	    serial);
 }
 
 WvString WvDBusServer::get_addr()

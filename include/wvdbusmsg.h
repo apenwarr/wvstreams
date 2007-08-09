@@ -21,6 +21,7 @@ struct DBusMessageIter;
 struct DBusMessage;
 
 class WvDBusMsg;
+class WvDBusConn;
 
 class WvDBusMsg
 {
@@ -54,6 +55,8 @@ public:
     WvString get_path() const;
     WvString get_interface() const;
     WvString get_member() const;
+    uint32_t get_serial() const;
+    bool is_reply() const;
     operator WvString() const;
     
     void get_arglist(WvStringList &list) const;
@@ -63,14 +66,17 @@ public:
      * The following methods are designed to allow appending various
      * arguments to the message.
      */
-    void append(const char *s);
-    void append(bool b);
-    void append(char c);
-    void append(int16_t i);
-    void append(uint16_t i);
-    void append(int32_t i);
-    void append(uint32_t i);
-    void append(double d);
+    WvDBusMsg &append(const char *s);
+    WvDBusMsg &append(bool b);
+    WvDBusMsg &append(char c);
+    WvDBusMsg &append(int16_t i);
+    WvDBusMsg &append(uint16_t i);
+    WvDBusMsg &append(int32_t i);
+    WvDBusMsg &append(uint32_t i);
+    WvDBusMsg &append(double d);
+    
+    WvDBusMsg reply();
+    void send(WvDBusConn &conn);
     
     class Iter
     {
@@ -146,22 +152,6 @@ public:
 protected:
     mutable DBusMessage *msg;
     DBusMessageIter *iter;
-};
-
-
-class WvDBusReplyMsg : public WvDBusMsg
-{
-public:
-    /**
-     * Constructs a new reply message (a message intended to be a reply to
-     * an existing D-Bus message).
-     */
-    WvDBusReplyMsg(DBusMessage *_msg);
-
-    WvDBusReplyMsg(WvDBusReplyMsg &_msg) :
-        WvDBusMsg(_msg) {}
-
-    virtual ~WvDBusReplyMsg() {}
 };
 
 

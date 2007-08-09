@@ -95,9 +95,11 @@ protected:
      * Dummy constructor for WvDBusConn. Most useful for special applications, 
      * which want to set up the priv class themselves (e.g.: WvDBusServConn).
      */
-    WvDBusConn();
+    WvDBusConn(WvStringParm logname);
 
     WvDBusConnPrivate *priv;
+    
+public:
     WvLog log;
 };
 

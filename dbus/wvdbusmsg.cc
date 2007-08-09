@@ -9,7 +9,24 @@
  *
  */ 
 #include "wvdbusmsg.h"
+#include "wvdbusconn.h"
 #include <dbus/dbus.h>
+
+
+class WvDBusReplyMsg : public WvDBusMsg
+{
+public:
+    /**
+     * Constructs a new reply message (a message intended to be a reply to
+     * an existing D-Bus message).
+     * 
+     * Don't call this directly.  Use WvDBusMsg::reply() instead.
+     */
+    WvDBusReplyMsg(DBusMessage *_msg);
+
+    virtual ~WvDBusReplyMsg() {}
+};
+
 
 
 WvDBusMsg::Iter::Iter(const WvDBusMsg &_msg) : msg(_msg)
@@ -268,6 +285,19 @@ WvString WvDBusMsg::get_member() const
 }
 
 
+bool WvDBusMsg::is_reply() const
+{
+    return dbus_message_get_reply_serial(msg) != 0;
+}
+
+
+uint32_t WvDBusMsg::get_serial() const
+{
+    int rserial = dbus_message_get_reply_serial(msg);
+    return rserial ? rserial : dbus_message_get_serial(msg);
+}
+
+
 void WvDBusMsg::get_arglist(WvStringList &list) const
 {
     Iter i(*this);
@@ -287,68 +317,94 @@ WvString WvDBusMsg::get_argstr() const
 WvDBusMsg::operator WvString() const
 {
     WvString src("");
-    if (!!get_sender())
-	src = WvString("%s->", get_sender());
-    return WvString("%s%s:%s:%s:%s(%s)",
-		    src, get_dest(),
-		    get_path(), get_interface(), get_member(), get_argstr());
+    if (is_reply())
+	return WvString("REPLY#%s(%s)", get_serial(), get_argstr());
+    else
+    {
+	if (!!get_sender())
+	    src = WvString("%s->", get_sender());
+	return WvString("%s%s:%s:%s:%s(%s)#%s",
+			src, get_dest(),
+			get_path(), get_interface(), get_member(),
+			get_argstr(), get_serial());
+    }
 }
 
 
-void WvDBusMsg::append(const char *s)
+WvDBusMsg &WvDBusMsg::append(const char *s)
 {
     assert(msg);
     assert(s);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &s);
+    return *this;
 }
 
 
-void WvDBusMsg::append(bool b)
+WvDBusMsg &WvDBusMsg::append(bool b)
 {
     assert(msg);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &b);
+    return *this;
 }
 
 
-void WvDBusMsg::append(char c)
+WvDBusMsg &WvDBusMsg::append(char c)
 {
     assert(msg);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &c);
+    return *this;
 }
 
 
-void WvDBusMsg::append(int16_t i)
+WvDBusMsg &WvDBusMsg::append(int16_t i)
 {
     assert(msg);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT16, &i);
+    return *this;
 }
 
 
-void WvDBusMsg::append(uint16_t i)
+WvDBusMsg &WvDBusMsg::append(uint16_t i)
 {
     assert(msg);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT16, &i);
+    return *this;
 }
 
 
-void WvDBusMsg::append(int32_t i)
+WvDBusMsg &WvDBusMsg::append(int32_t i)
 {
     assert(msg);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &i);
+    return *this;
 }
 
 
-void WvDBusMsg::append(uint32_t i)
+WvDBusMsg &WvDBusMsg::append(uint32_t i)
 {
     assert(msg);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &i);
+    return *this;
 }
 
 
-void WvDBusMsg::append(double d)
+WvDBusMsg &WvDBusMsg::append(double d)
 {
     assert(msg);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_DOUBLE, &d);
+    return *this;
+}
+
+
+WvDBusMsg WvDBusMsg::reply()
+{
+    return WvDBusReplyMsg(*this);
+}
+
+
+void WvDBusMsg::send(WvDBusConn &conn)
+{
+    conn.send(*this);
 }
 
 
