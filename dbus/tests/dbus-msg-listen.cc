@@ -13,12 +13,13 @@
 #include "wvistreamlist.h"
 
 
-static void msg_received(WvDBusReplyMsg &reply, WvString arg1, WvError err)
+static void msg_received(WvDBusConn &conn, WvDBusMsg &msg,
+			 WvString arg1, WvError err)
 {
     if (err.isok())
     {
         fprintf(stderr, "Message received, loud and clear.\n");
-        reply.append(WvString("baz %s", arg1));
+        msg.reply().append(WvString("baz %s", arg1)).send(conn);
     }
     else
         fprintf(stderr, "Received a message, but there was an error (%s).\n",
@@ -36,13 +37,14 @@ int main (int argc, char *argv[])
 
     WvDBusConn *conn;
     if (!!moniker)
-        conn = new WvDBusConn("ca.nit.MyListener", moniker);
+        conn = new WvDBusConn(moniker);
     else
-        conn = new WvDBusConn("ca.nit.MyListener");
+        conn = new WvDBusConn();
+    conn->request_name("ca.nit.MyListener");
     
     // Create a "/ca/nit/foo" object to listen on, and add the "bar"
     // method (part of the 31337 "ca.nit.foo" interface) to it..
-    WvDBusMethodListener<WvString> l(conn, "bar", msg_received);
+    WvDBusListener<WvString> l(conn, "bar", msg_received);
     conn->add_method("ca.nit.foo", "/ca/nit/foo", &l);
     WvIStreamList::globallist.append(conn, true, "wvdbus conn");
     

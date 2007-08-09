@@ -13,7 +13,7 @@
  */ 
 #ifndef __WVDBUSSERVCONN_H
 #define __WVDBUSSERVCONN_H
-#include "wvdbusconn.h"
+#include "wvdbusconnp.h"
 #include "wvdbusserver.h"
 #include <stdint.h>
 
@@ -31,6 +31,8 @@ private:
     void request_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString name,
                          uint32_t flags, WvError err);
     void release_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString _name, WvError err);
+    virtual DBusHandlerResult filter_func(DBusConnection *_conn,
+ DBusMessage *_msg);
     WvDBusServer *server;
 };
 

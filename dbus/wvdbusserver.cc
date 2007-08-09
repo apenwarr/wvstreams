@@ -174,6 +174,7 @@ void WvDBusServer::execute()
 
 void WvDBusServer::register_conn(WvDBusConn *conn)
 {
+    assert(!cdict[conn->name]);
     cdict.add(conn, false);
 }
 
@@ -186,7 +187,7 @@ void WvDBusServer::proxy_msg(WvStringParm name, WvDBusConn *src,
     uint32_t serial;
     if (conn)
     {
-        conn->send(msg, serial);
+        serial = conn->send(msg);
         rsdict.add(new WvDBusReplySerial(serial, src), true);
         log("Proxy: now expecting reply #%s to %s\n",
             serial, src->name);

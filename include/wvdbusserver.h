@@ -16,12 +16,12 @@
 #ifndef __WVDBUSSERVER_H
 #define __WVDBUSSERVER_H
 #include "iwvdbuslistener.h"
-#include "wvdbusmsg.h"
-#include "wvfdstream.h"
 #include "wvhashtable.h"
-#include "wvistreamlist.h"
 #include "wvlog.h"
-#include "wvstringlist.h"
+#include "wvistreamlist.h"
+
+class WvDBusServConn;
+class WvDBusServerPrivate;
 
 
 // association between reply serials and their respective connection
@@ -37,14 +37,14 @@ typedef struct WvDBusReplySerial
     WvDBusConn *conn;
 } WvDBusReplySerial;
 
-DeclareWvDict(WvDBusReplySerial, int, serial);
 
+DeclareWvDict(WvDBusReplySerial, int, serial);
 DeclareWvDict(WvDBusConn, WvString, name);
 
-class WvDBusServerPrivate;
 
 class WvDBusServer : public WvIStreamList
 {
+    friend class WvDBusServConn;
 public:
     /* 
      * Constructs a new DBus server at the specified address. 

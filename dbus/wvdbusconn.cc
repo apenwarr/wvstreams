@@ -12,75 +12,50 @@
 #include "wvdbusconnp.h"
 #include "wvdbuswatch.h"
 
-
-static DBusBusType bustypes[WvDBusConn::NUM_BUS_TYPES] 
-    = { DBUS_BUS_SESSION, DBUS_BUS_SYSTEM, DBUS_BUS_STARTER };
-
 static int conncount;
 
-WvDBusConn::WvDBusConn(WvStringParm _name, BusType bus)
-    : name(_name), 
-      log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount))
+WvDBusConnBase::WvDBusConnBase()
+    : log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount))
 {
-    priv = new WvDBusConnPrivate(log.app, this, name, bustypes[bus]);
+    log("Initializing.\n");
 }
 
 
-WvDBusConn::WvDBusConn(WvStringParm _name, WvStringParm address)
-    : name(_name), 
-      log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount))
+WvDBusConnBase::~WvDBusConnBase()
 {
-    priv = new WvDBusConnPrivate(log.app, this, name, address);
+    log("Shutting down.\n");
+    close();
 }
 
 
-WvDBusConn::WvDBusConn(WvStringParm logname)
-    : log(logname)
-{
-}
-
-
-WvDBusConn::~WvDBusConn()
-{
-    WVDELETE(priv);
-}
-
-
-void WvDBusConn::execute()
+void WvDBusConnBase::execute()
 {
     WvIStreamList::execute();
-    priv->execute();
 }
 
 
-void WvDBusConn::close()
+void WvDBusConnBase::close()
 {
-    priv->close();
 }
 
 
-void WvDBusConn::send(WvDBusMsg &msg)
+uint32_t WvDBusConnBase::send(WvDBusMsg &msg)
 {
     uint32_t serial;
-    send(msg, serial);
-}
-
-
-void WvDBusConn::send(WvDBusMsg &msg, uint32_t &serial)
-{
     log(WvLog::Debug, "Sending %s\n", msg);
-    if (!dbus_connection_send(priv->dbusconn, msg, &serial)) 
+    if (!dbus_connection_send(_getconn(), msg, &serial)) 
         seterr_both(ENOMEM, "Out of memory.\n");
+    return serial;
 }
 
 
-void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply, 
+void WvDBusConnBase::send(WvDBusMsg &msg, IWvDBusListener *reply, 
                       bool autofree_reply)
 {
     log(WvLog::Debug, "Sending_w_r %s\n", msg);
     DBusPendingCall *pending;
 
-    if (!dbus_connection_send_with_reply(priv->dbusconn, msg, &pending, -1))
+    if (!dbus_connection_send_with_reply(_getconn(), msg, &pending, -1))
     { 
         seterr_both(ENOMEM, "Out of memory.\n");
         return;
@@ -88,61 +63,61 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply,
 
     DBusFreeFunction free_user_data = NULL;
     if (autofree_reply)
-        free_user_data = &WvDBusConnPrivate::remove_listener_cb;
+        free_user_data = &WvDBusConn::remove_listener_cb;
 
     if (!dbus_pending_call_set_notify(pending, 
-                                      &WvDBusConnPrivate::pending_call_notify,
+                                      &WvDBusConn::pending_call_notify,
                                       reply, free_user_data))
         seterr_both(ENOMEM, "Out of memory.\n");
 }
 
 
-void WvDBusConn::add_listener(WvStringParm interface, WvStringParm path, 
+void WvDBusConnBase::add_listener(WvStringParm interface, WvStringParm path, 
                               IWvDBusListener *listener)
 {
     DBusError error;
     dbus_error_init(&error);
 
-    dbus_bus_add_match(priv->dbusconn, WvString("type='signal',interface='%s'",
+    dbus_bus_add_match(_getconn(), WvString("type='signal',interface='%s'",
                                                 interface),  &error);
-    if (dbus_error_is_set(&error))
-    {
-        log(WvLog::Error, "Oh no! Couldn't add a match on the bus!\n");
-        return;
-    }
-
-    priv->add_listener(interface, path, listener);    
+    maybe_seterr(error);
+    if (isok())
+	_add_listener(interface, path, listener);    
 }
 
 
-void WvDBusConn::del_listener(WvStringParm interface, WvStringParm path,
+void WvDBusConnBase::del_listener(WvStringParm interface, WvStringParm path,
                               WvStringParm name)
 {
     DBusError error;
     dbus_error_init(&error);
 
-    dbus_bus_remove_match(priv->dbusconn, 
+    dbus_bus_remove_match(_getconn(), 
                           WvString("type='signal',interface='%s'", interface),  
                           &error);
-    if (dbus_error_is_set(&error))
-    {
-        log(WvLog::Error, "Oh no! Couldn't remove a match on the bus!\n");
-        return;
-    }
-
-    priv->del_listener(interface, path, name);
+    maybe_seterr(error);
+    if (isok())
+	_del_listener(interface, path, name);
 }
 
 
-void WvDBusConn::add_method(WvStringParm interface, WvStringParm path, 
+void WvDBusConnBase::add_method(WvStringParm interface, WvStringParm path, 
                             IWvDBusListener *listener)
 {
-    priv->add_listener(interface, path, listener);
+    _add_listener(interface, path, listener);
 }
 
 
-void WvDBusConn::del_method(WvStringParm interface, WvStringParm path,
+void WvDBusConnBase::del_method(WvStringParm interface, WvStringParm path,
                             WvStringParm name)
 {
-    priv->del_listener(interface, path, name);
+    _del_listener(interface, path, name);
 }
+
+
+void WvDBusConnBase::maybe_seterr(DBusError &e)
+{
+    if (dbus_error_is_set(&e))
+	seterr_both(EIO, "%s: %s", e.name, e.message);
+}
+

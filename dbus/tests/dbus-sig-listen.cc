@@ -11,9 +11,10 @@
 #include "wvdbusconn.h"
 #include "wvdbuslistener.h"
 #include "wvistreamlist.h"
+#include "wvargs.h"
 
 
-static void foo(int b, WvError err)
+static void foo(WvDBusConn &conn, WvDBusMsg &msg, int b, WvError err)
 {
     if (err.isok())
         fprintf(stderr, "wow! ca.nit.foo.bar called! (%i)\n", b);
@@ -23,14 +24,25 @@ static void foo(int b, WvError err)
 }
 
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    WvDBusConn conn("ca.nit.MySignalListener");
-    
-    WvDBusListener<int> m("bar", &foo);
-    conn.add_listener("ca.nit.foo", "/ca/nit/foo", &m);
+    WvArgs args;
+    WvStringList remaining_args;
+    args.add_optional_arg("MONIKER");
+    args.process(argc, argv, &remaining_args);
+    WvString moniker = remaining_args.popstr();
 
-    WvIStreamList::globallist.append(&conn, false, "wvdbus conn");
+    WvDBusConn *conn;
+    if (!!moniker)
+        conn = new WvDBusConn(moniker);
+    else
+        conn = new WvDBusConn();
+    conn->request_name("ca.nit.MySignalListener");
+    
+    WvDBusListener<int> m(conn, "bar", &foo);
+    conn->add_listener("ca.nit.foo", "/ca/nit/foo", &m);
+
+    WvIStreamList::globallist.append(conn, false, "wvdbus conn");
     
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();

@@ -14,23 +14,22 @@
 #ifndef __WVDBUSCONN_H
 #define __WVDBUSCONN_H
 
-#include "iwvdbuslistener.h"
-#include "wvdbusmsg.h"
-#include "wvfdstream.h"
-#include "wvhashtable.h"
 #include "wvistreamlist.h"
 #include "wvlog.h"
-#include "wvstringlist.h"
 
+class IWvDBusListener;
+class WvDBusMsg;
 
-class WvDBusConnPrivate;
 struct DBusConnection;
+struct DBusError;
 
-class WvDBusConn : public WvIStreamList
+
+class WvDBusConnBase : public WvIStreamList
 {
 public:
     enum BusType { BusSession = 0, BusSystem, BusStarter, NUM_BUS_TYPES };
-    
+
+#if 0
     /**
      * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
      * DBUS_BUS_SYSTEM).
@@ -38,23 +37,28 @@ public:
     WvDBusConn(BusType bus);
     
     /**
-     * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
-     * DBUS_BUS_SYSTEM) with the specified name.
-     */
-    WvDBusConn(WvStringParm _name, BusType bus);
-    
-    /**
      * Creates a new dbus connection on a bus with the prescribed address.
      * Useful when you want to set up a connection to a custom server.
      */
-    WvDBusConn(WvStringParm _name, WvStringParm address);
+    WvDBusConnBase(WvStringParm dbus_moniker);
+#endif
+    WvDBusConnBase();
 
-    virtual ~WvDBusConn();
+    virtual ~WvDBusConnBase();
 
     virtual void execute();
     virtual void close();
-    virtual void send(WvDBusMsg &msg);
-    virtual void send(WvDBusMsg &msg, uint32_t &serial);
+    
+    /**
+     * Send a message on the bus, returning the serial number that was
+     * assigned to it.
+     */
+    virtual uint32_t send(WvDBusMsg &msg);
+    
+    /**
+     * Send a message on the bus, calling reply() when the answer comes
+     * back.
+     */
     virtual void send(WvDBusMsg &msg, IWvDBusListener *reply, 
                       bool autofree_reply);
 
@@ -71,6 +75,13 @@ public:
      */
     virtual void del_listener(WvStringParm interface, WvStringParm path,
                               WvStringParm name);
+    
+    
+    virtual DBusConnection *_getconn() const = 0;
+    virtual void _add_listener(WvStringParm interface, WvStringParm path,
+                              IWvDBusListener *listener) = 0;
+    virtual void _del_listener(WvStringParm interface, WvStringParm path,
+                              WvStringParm name) = 0;
 
     /**
      * Adds a method to the bus connection: all method calls matching
@@ -87,20 +98,13 @@ public:
                     WvStringParm name);
 
     operator DBusConnection* () const;
+    
+    void maybe_seterr(DBusError &e);
 
     WvString name; // needs to be public for lookup
-
-protected:
-    /**
-     * Dummy constructor for WvDBusConn. Most useful for special applications, 
-     * which want to set up the priv class themselves (e.g.: WvDBusServConn).
-     */
-    WvDBusConn(WvStringParm logname);
-
-    WvDBusConnPrivate *priv;
-    
-public:
     WvLog log;
 };
+
+#include "wvdbusconnp.h" // FIXME temporary
 
 #endif // __WVDBUSCONN_H

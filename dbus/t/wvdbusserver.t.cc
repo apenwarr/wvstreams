@@ -61,8 +61,10 @@ WVTEST_SLOW_MAIN("basic sanity")
     WvString addr = loop.getline(-1);
     fprintf(stderr, "Server address is '%s'\n", addr.cstr());
 
-    WvDBusConn conn1("ca.nit.MySender", addr);
-    WvDBusConn conn2("ca.nit.MyListener", addr);
+    WvDBusConn conn1(addr);
+    conn1.request_name("ca.nit.MySender");
+    WvDBusConn conn2(addr);
+    conn2.request_name("ca.nit.MyListener");
     WvDBusListener<WvString> *l = 
         new WvDBusListener<WvString>(&conn2, "bar", msg_received);
     conn2.add_method("ca.nit.foo", "/ca/nit/foo", l);

@@ -22,9 +22,10 @@ int main (int argc, char *argv[])
 
     WvDBusConn *conn;
     if (!!moniker)
-        conn = new WvDBusConn("ca.nit.MySender", moniker);
+        conn = new WvDBusConn(moniker);
     else
-        conn = new WvDBusConn("ca.nit.MySender");
+        conn = new WvDBusConn();
+    conn->request_name("ca.nit.MySender");
 
     // Create a signal, bound for "ca.nit.MyApplication"'s "/ca/nit/foo" 
     // object, with the "ca.nit.foo" interface's "bar" method.

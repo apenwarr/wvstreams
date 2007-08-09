@@ -13,7 +13,7 @@
 #include "wvistreamlist.h"
 
 
-static void foo(WvString foo, WvError err)
+static void foo(WvDBusConn &conn, WvDBusMsg &msg, WvString foo, WvError err)
 {
     if (err.isok())
         fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
@@ -33,9 +33,10 @@ int main (int argc, char *argv[])
 
     WvDBusConn *conn;
     if (!!moniker)
-        conn = new WvDBusConn("ca.nit.MySender", moniker);
+        conn = new WvDBusConn(moniker);
     else
-        conn = new WvDBusConn("ca.nit.MySender");
+        conn = new WvDBusConn();
+    conn->request_name("ca.nit.MySender");
 
     // Create a message, bound for "ca.nit.MyApplication"'s "/ca/nit/foo" 
     // object, with the "ca.nit.foo" interface's "bar" method.
@@ -43,7 +44,7 @@ int main (int argc, char *argv[])
     msg.append("bee");
 
     // expect a reply with a single string as an argument
-    WvDBusListener<WvString> reply("/ca/nit/foo/bar", foo);
+    WvDBusListener<WvString> reply(conn, "/ca/nit/foo/bar", foo);
     fprintf(stderr, "Sending message..?\n");
     conn->send(msg, &reply, false);
 

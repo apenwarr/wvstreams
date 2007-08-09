@@ -18,9 +18,8 @@
 #include "wvhashtable.h"
 #include "wvlog.h"
 #include "wvstring.h"
+#include "wvdbusconn.h"
 #include <dbus/dbus.h>
-
-class WvDBusConn;
 
 DeclareWvDict(IWvDBusListener, WvString, member);
 
@@ -87,25 +86,16 @@ public:
 DeclareWvDict(WvDBusInterface, WvString, name);
 
 
-class WvDBusConnPrivate
+class WvDBusConn : public WvDBusConnBase
 {
 public:
-    WvDBusConnPrivate(WvStringParm logname,
-		      WvDBusConn *_conn, WvStringParm _name, DBusBusType bus);
-    WvDBusConnPrivate(WvStringParm logname,
-		      WvDBusConn *_conn, WvStringParm _name, 
-                      WvStringParm _address);
-    WvDBusConnPrivate(WvStringParm logname,
-		      WvDBusConn *_conn, DBusConnection *_c);
-    virtual ~WvDBusConnPrivate();
+    WvDBusConn(DBusConnection *_c);
+    WvDBusConn(BusType bus = BusSession);
+    WvDBusConn(WvStringParm dbus_moniker);
+    virtual ~WvDBusConn();
     
     void init(bool client);
     void request_name(WvStringParm name);
-
-    void add_listener(WvStringParm interface, WvStringParm path, 
-                        IWvDBusListener *listener);
-    void del_listener(WvStringParm interface,  WvStringParm path, 
-                        WvStringParm name);
 
     virtual dbus_bool_t add_watch(DBusWatch *watch);
     virtual void remove_watch(DBusWatch *watch);
@@ -123,16 +113,18 @@ public:
     static void pending_call_notify(DBusPendingCall *pending, void *user_data);
     static void remove_listener_cb(void *memory);
 
+    virtual DBusConnection *_getconn() const;
+    virtual void _add_listener(WvStringParm interface, WvStringParm path,
+                              IWvDBusListener *listener);
+    virtual void _del_listener(WvStringParm interface, WvStringParm path,
+                              WvStringParm name);
+    
     void execute();
     void close();
-
-    WvDBusConn *conn;
+    
     WvDBusInterfaceDict ifacedict;
     DBusConnection *dbusconn;
-    WvString name;
     bool name_acquired;
-
-    WvLog log;
 };
 
 #endif // __WVDBUSCONNP_H
