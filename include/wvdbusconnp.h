@@ -8,11 +8,12 @@
  */ 
 #ifndef __WVDBUSCONNP_H
 #define __WVDBUSCONNP_H
-#include <dbus/dbus.h>
+
 #include "iwvdbuslistener.h"
 #include "wvhashtable.h"
 #include "wvlog.h"
 #include "wvstring.h"
+#include <dbus/dbus.h>
 
 class WvDBusConn;
 

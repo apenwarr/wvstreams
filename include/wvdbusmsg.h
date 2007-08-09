@@ -8,15 +8,14 @@
  */ 
 #ifndef __WVDBUSMSG_H
 #define __WVDBUSMSG_H
-#include "iwvdbuslistener.h"
-#include "wvfdstream.h"
-#include "wvhashtable.h"
-#include "wvistreamlist.h"
-#include "wvlog.h"
+
 #include "wvstringlist.h"
-#include <dbus/dbus.h>
 #include <stdint.h>
 
+struct DBusMessageIter;
+struct DBusMessage;
+
+class WvDBusMsg;
 
 class WvDBusMsg
 {
@@ -33,33 +32,17 @@ public:
     /**
      * Constructs a new WvDBus message, copying it out of an old one.
      */
-    WvDBusMsg(WvDBusMsg &_msg)
-    {
-        msg = _msg.msg;
-        dbus_message_ref(msg);
-    }
+    WvDBusMsg(WvDBusMsg &_msg);
 
     /**
      * Constructs a new WvDBus message from an existing low-level D-Bus 
      * message.
      */
-    WvDBusMsg(DBusMessage *_msg)
-    {
-        msg = _msg;
-        dbus_message_ref(msg);
-    }
+    WvDBusMsg(DBusMessage *_msg);
 
-    WvDBusMsg() {}
+    virtual ~WvDBusMsg();
 
-    virtual ~WvDBusMsg()
-    {
-        dbus_message_unref(msg);
-    }
-
-    operator DBusMessage* () const
-    {
-        return msg;
-    }
+    operator DBusMessage* () const;
     
     WvString get_sender() const;
     WvString get_dest() const;
@@ -83,10 +66,82 @@ public:
     void append(int32_t i);
     void append(uint32_t i);
     void append(double d);
+    
+    class Iter
+    {
+    public:
+	const WvDBusMsg &msg;
+	DBusMessageIter *it;
+	mutable WvString s;
+	bool rewound;
+	
+	Iter(const WvDBusMsg &_msg);
+	~Iter();
+
+        /**
+         * Rewinds the iterator to make it point to an imaginary element
+         * preceeding the first element of the list.
+         */
+	void rewind();
+	
+	/**
+	 * Returns the data type of the current element.  Not usually needed,
+	 * as the iterator converts elements automatically between most types.
+	 */
+	int type() const;
+	
+        /**
+         * Moves the iterator along the list to point to the next element.
+         * 
+         * If the iterator had just been rewound, it now points to the
+         * first element of the list.
+         */
+	bool next();
+
+        /**
+	 * Returns: true if the current link is valid
+         */
+	bool cur() const;
+	
+	/**
+	 * Get the current element as a string (possible for all types).
+	 */
+	WvString get_str() const;
+	
+	/**
+	 * Get the current element as an int64_t
+	 * (possible for all integer types)
+	 */
+	int64_t get_int() const;
+	operator int64_t() const { return get_int(); }
+	operator int32_t() const { return get_int(); }
+	operator int16_t() const { return get_int(); }
+	operator int8_t() const { return get_int(); }
+	
+	/**
+	 * Get the current element as a uint64_t
+	 * (possible for all integer types)
+	 */
+	uint64_t get_uint() const;
+	operator uint64_t() const { return get_uint(); }
+	operator uint32_t() const { return get_uint(); }
+	operator uint16_t() const { return get_uint(); }
+	operator uint8_t() const { return get_uint(); }
+	
+	/**
+	 * Returns a pointer to the WvString at the iterator's current
+	 * location.  Needed so that WvIterStuff() will work.
+	 */
+	WvString *ptr() const;
+	operator WvString() const { return *ptr(); }
+ 	
+	WvIterStuff(WvString);
+    };
 
 protected:
     mutable DBusMessage *msg;
 };
+
 
 class WvDBusReplyMsg : public WvDBusMsg
 {

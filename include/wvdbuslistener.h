@@ -11,9 +11,7 @@
 #include "wvstring.h"
 
 #include <assert.h>
-#include <dbus/dbus.h>
 #include <stdint.h>
-
 
 void convert_next(DBusMessageIter *iter, bool &b, WvError &err);
 void convert_next(DBusMessageIter *iter, char &c, WvError &err);
@@ -34,7 +32,7 @@ public:
         IWvDBusListener(_path)
     {}
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {}
 };
 
@@ -50,7 +48,7 @@ public:
         cb = _cb;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
         cb(err);
@@ -71,14 +69,13 @@ public:
         cb = _cb;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
-        DBusMessageIter iter;
-        dbus_message_iter_init(_msg, &iter);
-        P1 p1;
-        convert_next(&iter, p1, err);
-
+	WvDBusMsg::Iter i(_msg);
+	
+	if (!i.next()) err.set(EINVAL);
+	P1 p1 = i;
         cb(p1, err);
     }
 
@@ -97,16 +94,15 @@ public:
         cb = _cb;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
-        DBusMessageIter iter;
-        dbus_message_iter_init(_msg, &iter);
-        P1 p1;
-        convert_next(&iter, p1, err);
-        P2 p2;
-        convert_next(&iter, p2, err);
-
+	WvDBusMsg::Iter i(_msg);
+	
+	if (!i.next()) err.set(EINVAL);
+	P1 p1 = i;
+	if (!i.next()) err.set(EINVAL);
+	P2 p2 = i;
         cb(p1, p2, err);
     }
 
@@ -125,18 +121,17 @@ public:
         cb = _cb;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
-        DBusMessageIter iter;
-        dbus_message_iter_init(_msg, &iter);
-        P1 p1;
-        convert_next(&iter, p1, err);
-        P2 p2;
-        convert_next(&iter, p2, err);
-        P3 p3;
-        convert_next(&iter, p3, err);
-
+	WvDBusMsg::Iter i(_msg);
+	
+	if (!i.next()) err.set(EINVAL);
+	P1 p1 = i;
+	if (!i.next()) err.set(EINVAL);
+	P2 p2 = i;
+	if (!i.next()) err.set(EINVAL);
+	P3 p3 = i;
         cb(p1, p2, p3, err);
     }
 
@@ -153,7 +148,7 @@ public:
         IWvDBusListener(_path)
     {}
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {}
 };
 
@@ -170,7 +165,7 @@ public:
         conn = _conn;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
 
@@ -197,15 +192,13 @@ public:
         conn = _conn;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
-
-        DBusMessageIter iter;
-        dbus_message_iter_init(_msg, &iter);
-        P1 p1;
-        convert_next(&iter, p1, err);
-
+	WvDBusMsg::Iter i(_msg);
+	
+	if (!i.next()) err.set(EINVAL);
+	P1 p1 = i;
         WvDBusReplyMsg msg(_msg);
         cb(msg, p1, err);
         if (err.isok())
@@ -229,19 +222,16 @@ public:
         conn = _conn;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
-
+	WvDBusMsg::Iter i(_msg);
+	
+	if (!i.next()) err.set(EINVAL);
+	P1 p1 = i;
+	if (!i.next()) err.set(EINVAL);
+	P2 p2 = i;
         WvDBusReplyMsg msg(_msg);
-        DBusMessageIter iter;
-        dbus_message_iter_init(_msg, &iter);
-
-        P1 p1;
-        convert_next(&iter, p1, err);
-        P2 p2;
-        convert_next(&iter, p2, err);
-
         cb(msg, p1, p2, err);
         if (err.isok())
             conn->send(msg);
@@ -264,21 +254,18 @@ public:
         conn = _conn;
     }
 
-    virtual void dispatch(DBusMessage *_msg)
+    virtual void dispatch(const WvDBusMsg &_msg)
     {
         WvError err;
-
+	WvDBusMsg::Iter i(_msg);
+	
+	if (!i.next()) err.set(EINVAL);
+	P1 p1 = i;
+	if (!i.next()) err.set(EINVAL);
+	P2 p2 = i;
+	if (!i.next()) err.set(EINVAL);
+	P3 p3 = i;
         WvDBusReplyMsg msg(_msg);
-        DBusMessageIter iter;
-        dbus_message_iter_init(_msg, &iter);
-
-        P1 p1;
-        convert_next(&iter, p1, err);
-        P2 p2;
-        convert_next(&iter, p2, err);
-        P3 p3;
-        convert_next(&iter, p3, err);
-
         cb(msg, p1, p2, p3, err);
         if (err.isok())
             conn->send(msg);

@@ -6,6 +6,7 @@
 #include "wvdbusservconn.h"
 #include "wvdbusserver.h"
 #include "wvdbuswatch.h"
+#include <dbus/dbus.h>
 
 #if 0
 #define LOG_TRACE(info...) fprintf(stderr, info)

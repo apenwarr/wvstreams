@@ -17,7 +17,6 @@
 #include "wvistreamlist.h"
 #include "wvlog.h"
 #include "wvstringlist.h"
-#include <dbus/dbus.h>
 
 
 // association between reply serials and their respective connection

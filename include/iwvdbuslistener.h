@@ -5,20 +5,16 @@
  */ 
 #ifndef __IWVDBUSLISTENER_H
 #define __IWVDBUSLISTENER_H
-#include "wvcallback.h"
+
+#include "wvdbusmsg.h"
 #include "wvstring.h"
-
-#include <assert.h>
-#include <dbus/dbus.h>
-
-class WvDBusConn;
 
 class IWvDBusListener
 {
 public:
     IWvDBusListener(WvStringParm _member) { member = _member; }
     virtual ~IWvDBusListener() {}
-    virtual void dispatch(DBusMessage *_msg) = 0;
+    virtual void dispatch(const WvDBusMsg &_msg) = 0;
 
     WvString member;
 };

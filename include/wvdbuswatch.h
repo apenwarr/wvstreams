@@ -11,8 +11,8 @@
 #define __WVDBUSWATCH_H
 #include "wvfdstream.h"
 #include "wvlog.h"
-#include <dbus/dbus.h>
 
+struct DBusWatch;
 
 class WvDBusWatch : public WvFdStream
 {

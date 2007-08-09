@@ -1,12 +1,10 @@
 #include "wvdbusconn.h"
 #include "wvdbuslistener.h"
 #include "wvdbusserver.h"
-#include "wvfile.h"
 #include "wvfileutils.h"
 #include "wvfork.h"
 #include "wvtest.h"
 #include "wvloopback.h"
-
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>

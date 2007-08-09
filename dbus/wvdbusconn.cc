@@ -8,11 +8,14 @@
 #include "wvdbuswatch.h"
 
 
-WvDBusConn::WvDBusConn(WvStringParm _name, DBusBusType bus)
+static DBusBusType bustypes[WvDBusConn::NUM_BUS_TYPES] 
+    = { DBUS_BUS_SESSION, DBUS_BUS_SYSTEM, DBUS_BUS_STARTER };
+
+WvDBusConn::WvDBusConn(WvStringParm _name, BusType bus)
     : name(_name), 
       log("DBus Conn")
 {
-    priv = new WvDBusConnPrivate(log.app, this, name, bus);
+    priv = new WvDBusConnPrivate(log.app, this, name, bustypes[bus]);
 }
 
 

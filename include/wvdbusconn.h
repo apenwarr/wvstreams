@@ -8,6 +8,7 @@
  */ 
 #ifndef __WVDBUSCONN_H
 #define __WVDBUSCONN_H
+
 #include "iwvdbuslistener.h"
 #include "wvdbusmsg.h"
 #include "wvfdstream.h"
@@ -15,19 +16,21 @@
 #include "wvistreamlist.h"
 #include "wvlog.h"
 #include "wvstringlist.h"
-#include <dbus/dbus.h>
 
 
 class WvDBusConnPrivate;
+struct DBusConnection;
 
 class WvDBusConn : public WvIStreamList
 {
 public:
+    enum BusType { BusSession = 0, BusSystem, BusStarter, NUM_BUS_TYPES };
+    
     /**
      * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
      * DBUS_BUS_SYSTEM).
      */
-    WvDBusConn(WvStringParm _name, DBusBusType bus = DBUS_BUS_SESSION);
+    WvDBusConn(WvStringParm _name, BusType bus = BusSession);
     /**
      * Creates a new dbus connection on a bus with the prescribed address.
      * Useful when you want to set up a connection to a custom server.

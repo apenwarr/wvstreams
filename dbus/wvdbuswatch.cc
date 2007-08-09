@@ -4,6 +4,7 @@
  * 
  */ 
 #include "wvdbuswatch.h"
+#include <dbus/dbus.h>
 
 
 WvDBusWatch::WvDBusWatch(DBusWatch *_watch, unsigned int _flags) :
