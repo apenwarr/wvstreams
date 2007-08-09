@@ -48,10 +48,11 @@ int main (int argc, char *argv[])
     fprintf(stderr, "Sending message..?\n");
     conn->send(msg, &reply, false);
 
-    WvIStreamList::globallist.append(conn, true, "wvdbus conn");
+    WvIStreamList::globallist.append(conn, false, "wvdbus conn");
     
-    while (WvIStreamList::globallist.isok())
+    while (conn->isok())
         WvIStreamList::globallist.runonce();
     
+    WVRELEASE(conn);
     return 0;
 }

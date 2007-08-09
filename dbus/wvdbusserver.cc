@@ -13,17 +13,11 @@
 #include "wvdbuslistener.h"
 #include <dbus/dbus.h>
 
-#if 0
-#define LOG_TRACE(info...) fprintf(stderr, info)
-#else
-#define LOG_TRACE(info...)
-#endif
-
 class WvDBusServerPrivate 
 {
 public:
-    WvDBusServerPrivate(WvStringParm addr, WvDBusServer *_server) :
-        log("DBus Server", WvLog::Debug)
+    WvDBusServerPrivate(WvStringParm addr, WvDBusServer *_server) 
+	: log("DBus Server", WvLog::Debug)
     {
         server = _server;
 
@@ -75,12 +69,6 @@ public:
         serverp->server->append(wwatch, true, "wvdbuswatch");
 
         dbus_watch_set_data(watch, wwatch, NULL);
-
-        LOG_TRACE("Watch updated successfully (fd: %i, readable: %i, "
-                  "writable: %i)\n", dbus_watch_get_fd(watch),
-                  (flags & DBUS_WATCH_READABLE), 
-                  (flags & DBUS_WATCH_WRITABLE));
-    
         return TRUE;
     }
 
@@ -88,14 +76,11 @@ public:
     {
         WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
         assert(wwatch);
-        LOG_TRACE("Removing watch (rfd: %i wfd: %i)\n", wwatch->getrfd(),
-                  wwatch->getwfd());
         wwatch->close();
     }
 
     static void watch_toggled(DBusWatch *watch, void *data)
     {
-        LOG_TRACE("toggle watch\n");
         if (dbus_watch_get_enabled(watch))
             add_watch(watch, data);
         else
@@ -104,19 +89,15 @@ public:
 
     static dbus_bool_t add_timeout(DBusTimeout *timeout, void *data)
     {
-        LOG_TRACE("Add timeout.\n");
-
         return TRUE;
     }
 
     static void remove_timeout(DBusTimeout *timeout, void *data)
     {
-        LOG_TRACE("Remove timeout.\n");
     }
 
     static void timeout_toggled(DBusTimeout *timeout, void *data)
     {
-        LOG_TRACE("Timeout toggled.\n");
     }
 
     static void new_connection_cb(DBusServer *dbusserver, 
@@ -125,7 +106,6 @@ public:
     {
         WvDBusServer *server = (WvDBusServer *) userdata;
         WvDBusServConn *c = new WvDBusServConn(new_connection, server);
-        LOG_TRACE("New connection..\n");
         server->append(c, true, "wvdbus connection");
 
         if (dbus_connection_get_dispatch_status(new_connection) != 
@@ -294,12 +274,12 @@ bool WvDBusServConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
 {
     WvString path(msg.get_path());
     
-    log("Filter: %s\n", msg);
-    
     // the only object the server exports is "/org/freedesktop/DBus":
     // if that's not the destination, we need to proxy it to one of
     // our connected clients.
-    if (!!path && path != "/org/freedesktop/DBus")
+    if (WvDBusConn::filter_func(conn, msg))
+	return true;
+    else if (!!path && path != "/org/freedesktop/DBus")
     {
 	log("filter: %s serial=%s\n", msg,
 	    dbus_message_get_reply_serial(msg));
@@ -311,6 +291,6 @@ bool WvDBusServConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
 	server->proxy_msg(msg.get_serial(), msg);
 	return true;
     }
-    return WvDBusConn::filter_func(conn, msg);
+    return false;
 }
 

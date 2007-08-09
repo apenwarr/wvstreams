@@ -33,10 +33,11 @@ int main (int argc, char *argv[])
     sig.append((int32_t)132);
     conn->send(sig);
 
-    WvIStreamList::globallist.append(conn, true, "wvdbus conn");
+    WvIStreamList::globallist.append(conn, false, "wvdbus conn");
     
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();
     
+    WVRELEASE(conn);
     return 0;
 }

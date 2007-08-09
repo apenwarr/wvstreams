@@ -32,38 +32,73 @@ static void msg_received(WvDBusConn &conn, WvDBusMsg &msg,
 }
 
 
-WVTEST_SLOW_MAIN("basic sanity")
+class TestDBusServer
 {
-    signal(SIGPIPE, SIG_IGN);
-
-    WvString dsockname("%s.dir", wvtmpfilename("wvdbus-sock-"));
-    WvString moniker("unix:tmpdir=%s", dsockname);
+public:
+    WvString moniker;
+    pid_t parent, child;
     WvLoopback loop;
-
-    // the bus server
-    pid_t child = wvfork(loop.getrfd(), loop.getwfd());
-    if (child == 0)
+    
+    TestDBusServer()
     {
-        WvDBusServer server(moniker);
-        WvIStreamList::globallist.append(&server, false);
+	signal(SIGPIPE, SIG_IGN);
+	fprintf(stderr, "Creating a test DBus server.\n");
 	
-	loop.noread();
+	parent = getpid();
+	child = wvfork(loop.getrfd(), loop.getwfd());
+	if (child == 0)
+	    do_child(); // never returns
+	WVPASS(child >= 0);
+	
+	moniker = loop.getline(-1);
+	fprintf(stderr, "Server address is '%s'\n", moniker.cstr());
+    }
+    
+    ~TestDBusServer()
+    {
+	fprintf(stderr, "Killing test server.\n");
+	kill(child, 15);
+	pid_t rv;
+	while ((rv = waitpid(child, NULL, 0)) != child)
+	{
+	    // in case a signal is in the process of being delivered..
+	    if (rv == -1 && errno != EINTR)
+		break;
+	}
+	WVPASS(rv == child);
+    }
+    
+    void do_child()
+    {
+	WvString smoniker("unix:tmpdir=%s.dir",
+			 wvtmpfilename("wvdbus-sock-"));
+	WvDBusServer server(smoniker);
+	
 	loop.print("%s\n", server.get_addr());
-	loop.nowrite();
-
-        while (true)
-            WvIStreamList::globallist.runonce();
+	
+	WvIStreamList::globallist.append(&server, false);
+	while (server.isok())
+	{
+	    WvIStreamList::globallist.runonce(1000);
+	    if (kill(parent, 0) < 0) break;
+	}
+	fprintf(stderr, "Server process terminating.\n");
 	_exit(0);
     }
-    WVPASS(child >= 0);
-    
-    loop.nowrite();
-    WvString addr = loop.getline(-1);
-    fprintf(stderr, "Server address is '%s'\n", addr.cstr());
+};
 
-    WvDBusConn conn1(addr);
+
+WVTEST_MAIN("basics")
+{
+}
+
+
+WVTEST_MAIN("fancy listeners")
+{
+    TestDBusServer serv;
+    WvDBusConn conn1(serv.moniker);
     conn1.request_name("ca.nit.MySender");
-    WvDBusConn conn2(addr);
+    WvDBusConn conn2(serv.moniker);
     conn2.request_name("ca.nit.MyListener");
     WvDBusListener<WvString> *l = 
         new WvDBusListener<WvString>(&conn2, "bar", msg_received);
@@ -74,13 +109,11 @@ WVTEST_SLOW_MAIN("basic sanity")
 
     WvDBusListener<WvString> reply(&conn1, "/ca/nit/foo/bar", reply_received);
     
-    WvCallback<void, const WvDBusMsg &> xxx = reply;
-    
     conn1.send(msg, &reply, false);
     WvIStreamList::globallist.append(&conn1, false);
     WvIStreamList::globallist.append(&conn2, false);
 
-    fprintf(stderr, "Spinning..\n");
+    fprintf(stderr, "Spinning...\n");
     while (replies_received < 1 || messages_received < 1)
          WvIStreamList::globallist.runonce();
 
@@ -89,16 +122,6 @@ WVTEST_SLOW_MAIN("basic sanity")
 
     conn1.close();
     conn2.close();
-
-    kill(child, 15);
-    pid_t rv;
-    while ((rv = waitpid(child, NULL, 0)) != child)
-    {
-        // in case a signal is in the process of being delivered..
-        if (rv == -1 && errno != EINTR)
-            break;
-    }
-    WVPASS(rv == child);
 
     WvIStreamList::globallist.zap();
 }

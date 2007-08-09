@@ -74,6 +74,11 @@ public:
     virtual void execute();
     
     /**
+     * False if the connection is nonfunctional for any reason.
+     */
+    virtual bool isok() const;
+    
+    /**
      * Close the underlying stream.  The object becomes unusable.  This is
      * also called whenever an error is set.
      */
@@ -83,27 +88,49 @@ public:
      * Send a message on the bus, returning the serial number that was
      * assigned to it.
      */
-    virtual uint32_t send(WvDBusMsg &msg);
+    uint32_t send(WvDBusMsg &msg);
     
     /**
      * Send a message on the bus, calling reply() when the answer comes
      * back.
      */
-    virtual void send(WvDBusMsg &msg, IWvDBusListener *reply, 
+    void send(WvDBusMsg &msg, IWvDBusListener *reply, 
                       bool autofree_reply);
+    
+    /**
+     * The data type of callbacks used by add_callback().  The return value
+     * should be true if the callback processes the message, false otherwise.
+     */
+    typedef WvCallback<bool, WvDBusConn&, WvDBusMsg&> FilterCallback;
+    
+    /**
+     * Adds a callback to the connection: all received messages will be
+     * sent to all callbacks to look at and possibly process.  This method
+     * is simpler and more flexible than add_listener()/add_method(),
+     * but it can be slow if you have too many filters.
+     * 
+     * 'cookie' is used to identify this callback for del_callback().  Your
+     * 'this' pointer is a useful value here.
+     */
+    void add_callback(FilterCallback cb, void *cookie);
+    
+    /**
+     * Delete all callbacks that have the given cookie.
+     */
+    void del_callback(void *cookie);
 
     /**
      * Adds a signal listener to the bus connection: all signals matching 
      * the interface and path specification will be forwarded to the
      * appropriate listener.
      */
-    virtual void add_listener(WvStringParm interface, WvStringParm path,
+    void add_listener(WvStringParm interface, WvStringParm path,
                               IWvDBusListener *listener);
 
     /**
      * Removes a signal listener from the bus connection.
      */
-    virtual void del_listener(WvStringParm interface, WvStringParm path,
+    void del_listener(WvStringParm interface, WvStringParm path,
                               WvStringParm name);
     
     
@@ -133,6 +160,19 @@ public:
     virtual bool filter_func(WvDBusConn &conn, WvDBusMsg &msg);
     
 private:
+    struct CallbackInfo
+    {
+	FilterCallback cb;
+	void *cookie;
+	
+	CallbackInfo(const FilterCallback &_cb, void *_cookie)
+	    : cb(_cb)
+	    { cookie = _cookie; }
+    };
+    DeclareWvList(CallbackInfo);
+    
+    CallbackInfoList callbacks;
+    
     void init(bool client);
 
     bool add_watch(DBusWatch *watch);

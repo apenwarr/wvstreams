@@ -47,5 +47,6 @@ int main(int argc, char *argv[])
     while (WvIStreamList::globallist.isok())
         WvIStreamList::globallist.runonce();
     
+    WVRELEASE(conn);
     return 0;
 }

@@ -33,10 +33,11 @@ static DBusBusType bustypes[WvDBusConn::NUM_BUS_TYPES]
 
 
 WvDBusConn::WvDBusConn(DBusConnection *_c)
-    : log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount)),
+    : log(WvString("DBus #%s", getpid()*1000 + ++conncount)),
       ifacedict(10)
 {
     log("Initializing.\n");
+    assert(_c);
     dbusconn = _c;
     dbus_connection_ref(dbusconn);
     init(false);
@@ -44,7 +45,7 @@ WvDBusConn::WvDBusConn(DBusConnection *_c)
 
 
 WvDBusConn::WvDBusConn(BusType bus)
-    : log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount)),
+    : log(WvString("DBus #%s", getpid()*1000 + ++conncount)),
       ifacedict(10)
 {
     log("Initializing.\n");
@@ -58,10 +59,11 @@ WvDBusConn::WvDBusConn(BusType bus)
 
 
 WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
-    : log(WvString("DBus Conn #%s", getpid()*1000 + ++conncount)),
+    : log(WvString("DBus #%s", getpid()*1000 + ++conncount)),
       ifacedict(10)
 {
     log("Initializing.\n");
+    assert(!!dbus_moniker);
     
     // it seems like we want to open a private connection to the bus
     // for this particular case.. we can't create multiple named connections
@@ -84,6 +86,8 @@ WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
 WvDBusConn::~WvDBusConn()
 {
     log("Shutting down.\n");
+    if (geterr())
+	log("Error was: %s\n", errstr());
     
     close();
     
@@ -119,11 +123,18 @@ void WvDBusConn::init(bool client)
                                           WvDBusConnHelpers::_timeout_toggled,
                                           this, NULL);
 
-    log("Done init..\n");
-
     dbus_connection_add_filter(dbusconn, 
 			       WvDBusConnHelpers::_filter_func,
 			       this, NULL);
+
+#if 0
+    DBusError error;
+    dbus_error_init(&error);
+    dbus_bus_add_match(dbusconn, "type='signal',interface='fork'", &error);
+    maybe_seterr(error);
+#endif
+    
+    log("Done init.\n");
 }
 
 
@@ -168,6 +179,12 @@ void WvDBusConn::request_name(WvStringParm name)
 }
 
 
+bool WvDBusConn::isok() const
+{
+    return dbusconn && !geterr();
+}
+
+
 void WvDBusConn::execute()
 {
     // log("Execute.\n");
@@ -207,6 +224,22 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply,
                                       &WvDBusConn::pending_call_notify,
                                       reply, free_user_data))
         seterr_both(ENOMEM, "Out of memory.\n");
+}
+
+
+void WvDBusConn::add_callback(FilterCallback cb, void *cookie)
+{
+    callbacks.append(new CallbackInfo(cb, cookie), true);
+}
+
+
+void WvDBusConn::del_callback(void *cookie)
+{
+    // remember, there might be more than one callback with the same cookie.
+    CallbackInfoList::Iter i(callbacks);
+    for (i.rewind(); i.next(); )
+	if (i->cookie == cookie)
+	    i.xunlink();
 }
 
 
@@ -366,7 +399,14 @@ void WvDBusConn::timeout_toggled(DBusTimeout *timeout)
 bool WvDBusConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
 {
     log("Filter: %s\n", msg);
+    
+    // handle all the generic filters
+    bool handled = false;
+    CallbackInfoList::Iter i(callbacks);
+    for (i.rewind(); i.next(); )
+	handled = i->cb(conn, msg) || handled; // || handled must be last!!
 
+    // handle the fancy callbacks
     WvString ifc = msg.get_interface();
     if (ifacedict[ifc])
     {
