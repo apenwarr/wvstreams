@@ -48,7 +48,7 @@ public:
                                           remove_timeout, timeout_toggled,
                                           this, NULL);
 
-        log(WvLog::Info, "Final address of server is '%s'\n", get_addr());
+        log(WvLog::Info, "Listening on '%s'\n", get_addr());
     }
 
     bool isok()

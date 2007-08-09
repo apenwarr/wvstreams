@@ -142,3 +142,10 @@
    Memcheck:Addr4
    fun:__nss_lookup_function
 }
+{
+   glibc_is_dumber_than_ever
+   Memcheck:Cond
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+}

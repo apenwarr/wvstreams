@@ -172,7 +172,7 @@ void WvDBusMsg::append(double d)
 
 WvDBusReplyMsg::WvDBusReplyMsg(DBusMessage *_msg) 
 {
-    assert(msg);
+    assert(_msg);
     msg = dbus_message_new_method_return(_msg);
 }
 

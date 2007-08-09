@@ -5,6 +5,7 @@
 #include "wvfileutils.h"
 #include "wvfork.h"
 #include "wvtest.h"
+#include "wvloopback.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -35,31 +36,28 @@ WVTEST_SLOW_MAIN("basic sanity")
 {
     signal(SIGPIPE, SIG_IGN);
 
-    WvString dsockname(wvtmpfilename("wvdbus-test"));
-    WvString busfname("%s.dir", wvtmpfilename("wvdbus-test"));
+    WvString dsockname("%s.dir", wvtmpfilename("wvdbus-sock-"));
     WvString moniker("unix:tmpdir=%s", dsockname);
+    WvLoopback loop;
 
-    pid_t child = wvfork();
+    pid_t child = wvfork(loop.getrfd(), loop.getwfd());
     if (child == 0)
     {
         WvDBusServer server(moniker);
-        WvString addr = server.get_addr();
-        WvFile(busfname, O_WRONLY|O_CREAT).print("%s\n", addr);
-
         WvIStreamList::globallist.append(&server, false);
-        
+	
+	loop.noread();
+	loop.print("%s\n", server.get_addr());
+	loop.nowrite();
+
         while (true)
             WvIStreamList::globallist.runonce();
 	_exit(0);
     }
-
     WVPASS(child >= 0);
-
-    struct stat st;
-    while (stat(busfname, &st) != 0)
-        sleep(1);
-
-    WvString addr = WvFile(busfname, O_RDONLY).getline(-1);
+    
+    loop.nowrite();
+    WvString addr = loop.getline(-1);
     fprintf(stderr, "Address is '%s'\n", addr.cstr());
 
     WvDBusConn conn1("ca.nit.MySender", addr);
@@ -69,12 +67,11 @@ WVTEST_SLOW_MAIN("basic sanity")
     conn2.add_method("ca.nit.foo", "/ca/nit/foo", l);
 
     // needed if we're going to be using dbus_shutdown
-    WvDBusMsg *msg = new WvDBusMsg("ca.nit.MyListener",
-				   "/ca/nit/foo", "ca.nit.foo", "bar");
-    msg->append("bee");
+    WvDBusMsg msg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
+    msg.append("bee");
 
     WvDBusListener<WvString> reply("/ca/nit/foo/bar", reply_received);
-    conn1.send(*msg, &reply, false);
+    conn1.send(msg, &reply, false);
     WvIStreamList::globallist.append(&conn1, false);
     WvIStreamList::globallist.append(&conn2, false);
 
@@ -98,10 +95,5 @@ WVTEST_SLOW_MAIN("basic sanity")
     }
     WVPASS(rv == child);
 
-    unlink(busfname);
-    WVDELETE(msg);
-
     WvIStreamList::globallist.zap();
-
-    dbus_shutdown();
 }
