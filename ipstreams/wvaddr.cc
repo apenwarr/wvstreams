@@ -798,13 +798,20 @@ sockaddr_bin *WvUnixAddr::sockaddr() const
     if (max > sizeof(addr->sun_path) - 2) // appease valgrind
 	max = sizeof(addr->sun_path) - 2;
     strncpy(addr->sun_path, sockname, max);
+    if (addr->sun_path[0] == '@') // user wants an "abstract" socket
+	addr->sun_path[0] = 0; // leading byte should be nul
     return (sockaddr_bin *)addr;
 }
 
 
 size_t WvUnixAddr::sockaddr_len() const
 {
-    return sizeof(sockaddr_un);
+    sockaddr_un *fake;
+    size_t max = sizeof(fake->sun_path);
+    size_t val = strlen(sockname);
+    if (val > max)
+	val = max;
+    return sizeof(fake->sun_family) + val;
 }
 
 
