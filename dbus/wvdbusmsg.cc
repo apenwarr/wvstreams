@@ -425,6 +425,7 @@ void WvDBusMsg::send(WvDBusConn &conn)
 WvDBusReplyMsg::WvDBusReplyMsg(DBusMessage *_msg) 
     : WvDBusMsg(dbus_message_new_method_return(_msg))
 {
+    dbus_message_unref(msg);
 }
 
 
@@ -432,4 +433,5 @@ WvDBusSignal::WvDBusSignal(WvStringParm objectname, WvStringParm interface,
                            WvStringParm name)
     : WvDBusMsg(dbus_message_new_signal(objectname, interface, name))
 {
+    dbus_message_unref(msg);
 }

@@ -22,6 +22,11 @@ WVTEST_MAIN("basics")
 	unsigned n2 = i.getnext();
 	bool b = (int)i.getnext();
 	
+	WVPASSEQ(s, "yoink");
+	WVPASSEQ(n1, -5);
+	WVPASSEQ(n2, 0xFFFF);
+	WVPASSEQ(b, true);
+	
 	WVPASS(i.next());
 	WVPASSEQ(*i, "-2");
 	WVPASSEQ(i, -2);
