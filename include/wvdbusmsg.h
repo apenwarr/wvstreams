@@ -56,6 +56,7 @@ public:
     WvString get_interface() const;
     WvString get_member() const;
     uint32_t get_serial() const;
+    uint32_t get_replyserial() const;
     bool is_reply() const;
     operator WvString() const;
     
@@ -108,6 +109,14 @@ public:
          * first element of the list.
          */
 	bool next();
+	
+	/**
+	 * Same as next(), but returns *this instead so you can convert the
+	 * new item to the right value type.  Note: this doesn't do error
+	 * checking to see if the parameter exists.
+	 */
+	Iter &getnext()
+	    { next(); return *this; }
 
         /**
 	 * Returns: true if the current link is valid
@@ -128,6 +137,7 @@ public:
 	operator int32_t() const { return get_int(); }
 	operator int16_t() const { return get_int(); }
 	operator int8_t() const { return get_int(); }
+	operator bool() const { return get_int() != 0; }
 	
 	/**
 	 * Get the current element as a uint64_t

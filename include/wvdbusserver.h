@@ -22,8 +22,9 @@
 #include "wvlog.h"
 #include "wvistreamlist.h"
 
+struct DBusServer;
+
 class WvDBusServer;
-class WvDBusServerPrivate;
 
 
 // association between reply serials and their respective connection
@@ -44,28 +45,8 @@ DeclareWvDict(WvDBusReplySerial, int, serial);
 DeclareWvDict(WvDBusConn, WvString, name);
 
 
-class WvDBusServConn : public WvDBusConn
-{
-public:
-    WvDBusServConn(DBusConnection *c, WvDBusServer *s);
-    virtual ~WvDBusServConn()
-    {}
-
-private:
-    void proxy_msg(WvDBusMsg &msg);
-    void hello_cb(WvDBusConn &conn, WvDBusMsg &msg, WvError err);
-    void request_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString name,
-                         uint32_t flags, WvError err);
-    void release_name_cb(WvDBusConn &conn, WvDBusMsg &msg, WvString _name,
-			 WvError err);
-    virtual bool filter_func(WvDBusConn &conn, WvDBusMsg &msg);
-    WvDBusServer *server;
-};
-
-
 class WvDBusServer : public WvIStreamList
 {
-    friend class WvDBusServConn;
 public:
     /* 
      * Constructs a new DBus server at the specified address. 
@@ -80,24 +61,38 @@ public:
 
     virtual bool isok() const
     {
-        return true; 
+        return !geterr(); 
     }
-
-    virtual void execute();
 
     void register_conn(WvDBusConn *conn);
     // need an unregister_conn
+    
     void proxy_msg(WvStringParm dest, WvDBusConn *src, WvDBusMsg &msg);
     void proxy_msg(uint32_t serial, WvDBusMsg &msg);
 
-    // get the full, final address (identification guid and all) of the server
+    /**
+     * get the full, final address (identification guid and all) of the server
+     */
     WvString get_addr();
 
+    /**
+     * Set the error code of this connection if 'e' is nonempty.
+     */
+    void maybe_seterr(DBusError &e);
+
 private:
-    WvDBusServerPrivate *priv;    
     WvDBusConnDict cdict;
     WvDBusReplySerialDict rsdict;
     WvLog log;
+    DBusServer *dbusserver;
+    
+    static void WvDBusServer::new_connection_cb(DBusServer *dbusserver, 
+					DBusConnection *new_connection,
+					void *userdata);
+	
+    bool do_server_msg(WvDBusConn &conn, WvDBusMsg &msg);
+    bool do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg);
+    bool do_broadcast_msg(WvDBusConn &conn, WvDBusMsg &msg);
 };
 
 #endif // __WVDBUSSERVER_H

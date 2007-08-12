@@ -27,6 +27,13 @@ struct DBusWatch;
 struct DBusTimeout;
 struct DBusPendingCall;
 
+/**
+ * The data type of callbacks used by WvDBusConn::add_callback().  The
+ * return value should be true if the callback processes the message, false
+ * otherwise.
+ */
+typedef WvCallback<bool, WvDBusConn&, WvDBusMsg&> WvDBusCallback;
+    
 
 class WvDBusConn : public WvIStreamList
 {
@@ -52,7 +59,7 @@ public:
     /**
      * Initialize this object from an existing low-level DBusConnection object.
      */
-    WvDBusConn(DBusConnection *_c);
+    WvDBusConn(DBusConnection *_c, WvStringParm _uniquename);
     
     /**
      * Release this connection.  If this is the last owner of the associated
@@ -67,6 +74,12 @@ public:
      * The name will be released when this connection object is destroyed.
      */
     void request_name(WvStringParm name);
+    
+    /**
+     * Return this connection's unique name on the bus, assigned by the server
+     * at connect time.
+     */
+    WvString uniquename() const;
     
     /**
      * Called by WvStreams when incoming data is ready.
@@ -98,21 +111,37 @@ public:
                       bool autofree_reply);
     
     /**
-     * The data type of callbacks used by add_callback().  The return value
-     * should be true if the callback processes the message, false otherwise.
+     * The priority level of a callback registration.  This defines the order
+     * in which callbacks are processed, from lowest to highest integer.
      */
-    typedef WvCallback<bool, WvDBusConn&, WvDBusMsg&> FilterCallback;
+    enum CallbackPri { 
+	PriSystem    = 0,     // implemented by DBus or WvDBus.  Don't use.
+	PriSpecific  = 5000,  // strictly limited by interface/method
+	PriNormal    = 6000,  // a reasonably selective callback
+	PriBridge    = 7000,  // proxy selectively to other listeners
+	PriBroadcast = 8000,  // last-resort proxy to all listeners
+    };
     
     /**
      * Adds a callback to the connection: all received messages will be
      * sent to all callbacks to look at and possibly process.  This method
      * is simpler and more flexible than add_listener()/add_method(),
-     * but it can be slow if you have too many filters.
+     * but it can be slow if you have too many callbacks set.
+     *
+     * Your application is very unlikely to have "too many" callbacks.  If
+     * for some reason you need to register lots of separate callbacks,
+     * make your own data structure for them and register just a single
+     * callback here that looks things up in your own structure.
+     * 
+     * 'pri' defines the callback sort order.  When calling callbacks, we
+     * call them in priority order until the first callback returns 'true'.
+     * If you just want to log certain messages and let other people handle
+     * them, use a high priority but return 'false'.
      * 
      * 'cookie' is used to identify this callback for del_callback().  Your
      * 'this' pointer is a useful value here.
      */
-    void add_callback(FilterCallback cb, void *cookie);
+    void add_callback(CallbackPri pri, WvDBusCallback cb, void *cookie = NULL);
     
     /**
      * Delete all callbacks that have the given cookie.
@@ -162,15 +191,18 @@ public:
 private:
     struct CallbackInfo
     {
-	FilterCallback cb;
+	CallbackPri pri;
+	WvDBusCallback cb;
 	void *cookie;
 	
-	CallbackInfo(const FilterCallback &_cb, void *_cookie)
+	CallbackInfo(CallbackPri _pri,
+		     const WvDBusCallback &_cb, void *_cookie)
 	    : cb(_cb)
-	    { cookie = _cookie; }
+	    { pri = _pri; cookie = _cookie; }
     };
+    static int priority_order(const CallbackInfo *a, const CallbackInfo *b);
+	
     DeclareWvList(CallbackInfo);
-    
     CallbackInfoList callbacks;
     
     void init(bool client);
@@ -189,12 +221,12 @@ private:
     WvDBusInterfaceDict ifacedict;
     DBusConnection *dbusconn;
     bool name_acquired;
+    WvString _uniquename;
     
     void _add_listener(WvStringParm interface, WvStringParm path,
 		       IWvDBusListener *listener);
     void _del_listener(WvStringParm interface, WvStringParm path,
 		       WvStringParm name);
-
 };
 
 #endif // __WVDBUSCONN_H

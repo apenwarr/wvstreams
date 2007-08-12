@@ -9,10 +9,8 @@
  * 
  * An abstraction on the DBusWatch abstraction, intended to allow hooking
  * D-Bus into the WvStreams mainloop. By no means should you need to use
- * this in application-level code-- it is intended only for WvDBus's internal
+ * this in application-level code - it is intended only for WvDBus's internal
  * use.
- * 
- * 
  */
 
 #ifndef __WVDBUSWATCH_H

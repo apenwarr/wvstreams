@@ -71,7 +71,7 @@ bool WvDBusMsg::Iter::next()
 {
     if (rewound)
 	dbus_message_iter_init(msg, it);
-    else
+    else if (type() != DBUS_TYPE_INVALID)
 	dbus_message_iter_next(it);
     rewound = false;
     return type() != DBUS_TYPE_INVALID;
@@ -113,6 +113,8 @@ WvString WvDBusMsg::Iter::get_str() const
     case DBUS_TYPE_STRING: 
 	dbus_message_iter_get_basic(it, &s);
 	return s;
+    case DBUS_TYPE_INVALID:
+	return WvString();
     default:
 	return WvString("UNKNOWN_TYPE(%c)", type());
     }
@@ -154,6 +156,7 @@ int64_t WvDBusMsg::Iter::get_int() const
     case DBUS_TYPE_STRING: 
 	dbus_message_iter_get_basic(it, &str);
 	return WvString(str).num();
+	
     default:
 	return 0;
     }
@@ -195,6 +198,7 @@ uint64_t WvDBusMsg::Iter::get_uint() const
     case DBUS_TYPE_STRING: 
 	dbus_message_iter_get_basic(it, &str);
 	return WvString(str).num();
+	
     default:
 	return 0;
     }
@@ -287,14 +291,24 @@ WvString WvDBusMsg::get_member() const
 
 bool WvDBusMsg::is_reply() const
 {
-    return dbus_message_get_reply_serial(msg) != 0;
+    // HACK: there's no way to tell if the reply to the very first message
+    // is a reply or not, because it has a replyserial of 0 (since it's
+    // replying to message #0!).  However, because the first message is always
+    // a "Hello" request to the server, the reply to it should always be #1.
+    return get_replyserial() != 0
+	|| get_serial() == 1;
 }
 
 
 uint32_t WvDBusMsg::get_serial() const
 {
-    int rserial = dbus_message_get_reply_serial(msg);
-    return rserial ? rserial : dbus_message_get_serial(msg);
+    return dbus_message_get_serial(msg);
+}
+
+
+uint32_t WvDBusMsg::get_replyserial() const
+{
+    return dbus_message_get_reply_serial(msg);
 }
 
 
@@ -318,7 +332,7 @@ WvDBusMsg::operator WvString() const
 {
     WvString src("");
     if (is_reply())
-	return WvString("REPLY#%s(%s)", get_serial(), get_argstr());
+	return WvString("REPLY#%s(%s)", get_replyserial(), get_argstr());
     else
     {
 	if (!!get_sender())

@@ -10,28 +10,6 @@
 #include <signal.h>
 
 
-static int replies_received = 0;
-
-static void reply_received(WvDBusConn &conn, WvDBusMsg &msg,
-			   WvString foo, WvError err)
-{
-    fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
-    replies_received++;
-}
-
-static int messages_received = 0;
-
-static void msg_received(WvDBusConn &conn, WvDBusMsg &msg,
-			 WvString arg1, WvError err)
-{
-    fprintf(stderr, "Message received, loud and clear.\n");
-    if (!err.isok())
-	fprintf(stderr, "Error was: '%s'\n", err.errstr().cstr());
-    messages_received++;
-    msg.reply().append(WvString("baz %s", arg1)).send(conn);
-}
-
-
 class TestDBusServer
 {
 public:
@@ -88,18 +66,72 @@ public:
 };
 
 
-WVTEST_MAIN("basics")
+static int mysignal_count = 0;
+static bool mysignal(WvDBusConn &conn, WvDBusMsg &msg)
 {
+    fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
+    mysignal_count++;
+    return true; // we handle *any* message
 }
 
 
-WVTEST_MAIN("fancy listeners")
+WVTEST_MAIN("dbusserver basics")
+{
+    int junk;
+    TestDBusServer serv;
+    WvDBusConn conn1(serv.moniker);
+    WvIStreamList::globallist.append(&conn1, false);
+    
+    conn1.request_name("ca.nit.MySender");
+    
+    conn1.add_callback(WvDBusConn::PriNormal, mysignal, &junk);
+    WVPASSEQ(mysignal_count, 0);
+    
+    WvDBusMsg("ca.nit.MySender", "/foo", "x.y.z.anything", "testmethod")
+	.append("hello").send(conn1);
+    WvDBusSignal("/foo", "x.y.z.anything", "testsignal")
+	.append("hello").send(conn1);
+    
+    while (mysignal_count < 2)
+         WvIStreamList::globallist.runonce();
+    
+    WVPASSEQ(mysignal_count, 2);
+}
+
+
+    
+static int replies_received = 0;
+static void reply_received(WvDBusConn &conn, WvDBusMsg &msg,
+			   WvString foo, WvError err)
+{
+    fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
+    replies_received++;
+}
+
+    
+static int messages_received = 0;
+static void msg_received(WvDBusConn &conn, WvDBusMsg &msg,
+			 WvString arg1, WvError err)
+{
+    fprintf(stderr, "Message received, loud and clear.\n");
+    if (!err.isok())
+	fprintf(stderr, "Error was: '%s'\n", err.errstr().cstr());
+    messages_received++;
+    msg.reply().append(WvString("baz %s", arg1)).send(conn);
+}
+
+
+WVTEST_MAIN("dbusserver fancy listeners")
 {
     TestDBusServer serv;
     WvDBusConn conn1(serv.moniker);
-    conn1.request_name("ca.nit.MySender");
     WvDBusConn conn2(serv.moniker);
+    WvIStreamList::globallist.append(&conn1, false);
+    WvIStreamList::globallist.append(&conn2, false);
+    
+    conn1.request_name("ca.nit.MySender");
     conn2.request_name("ca.nit.MyListener");
+
     WvDBusListener<WvString> *l = 
         new WvDBusListener<WvString>(&conn2, "bar", msg_received);
     conn2.add_method("ca.nit.foo", "/ca/nit/foo", l);
@@ -110,8 +142,6 @@ WVTEST_MAIN("fancy listeners")
     WvDBusListener<WvString> reply(&conn1, "/ca/nit/foo/bar", reply_received);
     
     conn1.send(msg, &reply, false);
-    WvIStreamList::globallist.append(&conn1, false);
-    WvIStreamList::globallist.append(&conn2, false);
 
     fprintf(stderr, "Spinning...\n");
     while (replies_received < 1 || messages_received < 1)
@@ -119,9 +149,4 @@ WVTEST_MAIN("fancy listeners")
 
     WVPASSEQ(messages_received, 1);
     WVPASSEQ(replies_received, 1);
-
-    conn1.close();
-    conn2.close();
-
-    WvIStreamList::globallist.zap();
 }

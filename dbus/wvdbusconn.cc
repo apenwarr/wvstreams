@@ -32,20 +32,21 @@ static DBusBusType bustypes[WvDBusConn::NUM_BUS_TYPES]
     = { DBUS_BUS_SESSION, DBUS_BUS_SYSTEM, DBUS_BUS_STARTER };
 
 
-WvDBusConn::WvDBusConn(DBusConnection *_c)
-    : log(WvString("DBus #%s", getpid()*1000 + ++conncount)),
+WvDBusConn::WvDBusConn(DBusConnection *_c, WvStringParm _uniquename)
+    : log(WvString("DBus s%s", _uniquename)),
       ifacedict(10)
 {
     log("Initializing.\n");
     assert(_c);
     dbusconn = _c;
     dbus_connection_ref(dbusconn);
+    this->_uniquename = _uniquename;
     init(false);
 }
 
 
 WvDBusConn::WvDBusConn(BusType bus)
-    : log(WvString("DBus #%s", getpid()*1000 + ++conncount)),
+    : log(WvString("DBus #%s/%s", getpid(), ++conncount)),
       ifacedict(10)
 {
     log("Initializing.\n");
@@ -54,12 +55,14 @@ WvDBusConn::WvDBusConn(BusType bus)
     dbusconn = dbus_bus_get(bustypes[bus], &error);
     maybe_seterr(error);
 
+    _uniquename = dbus_bus_get_unique_name(dbusconn);
+    
     init(true);
 }
 
 
 WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
-    : log(WvString("DBus #%s", getpid()*1000 + ++conncount)),
+    : log(WvString("DBus #%s/%s", getpid(), ++conncount)),
       ifacedict(10)
 {
     log("Initializing.\n");
@@ -78,6 +81,8 @@ WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
     //dbus_connection_set_exit_on_disconnect(dbusconn, FALSE);
     if (!dbus_bus_register(dbusconn, &error))
         log(WvLog::Error, "Error registering with the bus!\n");
+
+    _uniquename = dbus_bus_get_unique_name(dbusconn);
 
     init(true);
 }
@@ -103,6 +108,12 @@ void WvDBusConn::init(bool client)
     
     assert(dbusconn);
     name_acquired = false;
+    
+    if (client)
+	log("Server assigned name: '%s'\n", uniquename());
+    
+    if (!!_uniquename)
+	log.app = WvString("DBus %s%s", client ? "c" : "s", uniquename());
 
     DBusWatchToggledFunction toggled_function = NULL;
     if (client)
@@ -127,13 +138,6 @@ void WvDBusConn::init(bool client)
 			       WvDBusConnHelpers::_filter_func,
 			       this, NULL);
 
-#if 0
-    DBusError error;
-    dbus_error_init(&error);
-    dbus_bus_add_match(dbusconn, "type='signal',interface='fork'", &error);
-    maybe_seterr(error);
-#endif
-    
     log("Done init.\n");
 }
 
@@ -154,6 +158,12 @@ void WvDBusConn::maybe_seterr(DBusError &e)
 {
     if (dbus_error_is_set(&e))
 	seterr_both(EIO, "%s: %s", e.name, e.message);
+}
+
+
+WvString WvDBusConn::uniquename() const
+{
+    return _uniquename;
 }
 
 
@@ -227,9 +237,16 @@ void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply,
 }
 
 
-void WvDBusConn::add_callback(FilterCallback cb, void *cookie)
+void WvDBusConn::add_callback(CallbackPri pri, WvDBusCallback cb, void *cookie)
 {
-    callbacks.append(new CallbackInfo(cb, cookie), true);
+#if 0
+    DBusError error;
+    dbus_error_init(&error);
+    dbus_bus_add_match(dbusconn, "type='signal',interface='fork'", &error);
+    maybe_seterr(error);
+#endif
+    
+    callbacks.append(new CallbackInfo(pri, cb, cookie), true);
 }
 
 
@@ -396,15 +413,25 @@ void WvDBusConn::timeout_toggled(DBusTimeout *timeout)
 }
 
 
+int WvDBusConn::priority_order(const CallbackInfo *a, const CallbackInfo *b)
+{
+    return a->pri - b->pri;
+}
+
+
 bool WvDBusConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
 {
     log("Filter: %s\n", msg);
     
     // handle all the generic filters
     bool handled = false;
-    CallbackInfoList::Iter i(callbacks);
+    CallbackInfoList::Sorter i(callbacks, priority_order);
     for (i.rewind(); i.next(); )
+    {
 	handled = i->cb(conn, msg) || handled; // || handled must be last!!
+	log("Handled=%s\n", handled);
+	if (handled) break;
+    }
 
     // handle the fancy callbacks
     WvString ifc = msg.get_interface();
@@ -413,10 +440,10 @@ bool WvDBusConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
         log(WvLog::Debug5, "Interface exists for message. Sending.\n");
         ifacedict[ifc]->handle_signal(msg.get_path(), msg.get_member(),
 				      this, msg);
-	return true;
+	handled = true;
     }
 
-    return false;
+    return handled;
 }
 
 
