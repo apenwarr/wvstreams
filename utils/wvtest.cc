@@ -191,7 +191,7 @@ int WvTest::run_all(const char * const *prefixes)
                 child = fork();
             }
 
-	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
+	    printf("\nTesting \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    fflush(stdout);
 	    
 	    cur->main();
