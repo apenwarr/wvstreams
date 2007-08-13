@@ -19,11 +19,7 @@ int main(int argc, char *argv[])
     args.process(argc, argv, &remaining_args);
     WvString moniker = remaining_args.popstr();
 
-    WvDBusConn *conn;
-    if (!!moniker)
-        conn = new WvDBusConn(moniker);
-    else
-        conn = new WvDBusConn();
+    WvDBusConn *conn = new WvDBusConn(!!moniker ? moniker : "bus:session");
     conn->request_name("ca.nit.MySender");
 
     // Create a signal, bound for "ca.nit.MyApplication"'s "/ca/nit/foo" 

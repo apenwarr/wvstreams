@@ -38,20 +38,15 @@ class WvDBusConn : public WvIStreamList
 {
     friend class WvDBusConnHelpers;
 public:
-    enum BusType { BusSession = 0, BusSystem, BusStarter, NUM_BUS_TYPES };
-    
     WvString name; // needs to be public for lookup
     WvLog log;
-
-    /**
-     * Creates a new dbus connection on a default bus (DBUS_BUS_SESSION or
-     * DBUS_BUS_SYSTEM).
-     */
-    WvDBusConn(BusType bus = BusSession);
     
     /**
-     * Creates a new dbus connection on a bus with the prescribed address.
-     * Useful when you want to set up a connection to a custom server.
+     * Creates a new dbus connection on the given bus.
+     * 
+     * WvDBus uses special monikers for the "standard" DBus buses:
+     * bus:system, bus:session, and bus:starter.  These correspond to 
+     * DBUS_BUS_SYSTEM, DBUS_BUS_SESSION, and DBUS_BUS_STARTER, respectively.
      */
     WvDBusConn(WvStringParm dbus_moniker);
     

@@ -28,10 +28,6 @@ public:
 
 static int conncount;
 
-static DBusBusType bustypes[WvDBusConn::NUM_BUS_TYPES] 
-    = { DBUS_BUS_SESSION, DBUS_BUS_SYSTEM, DBUS_BUS_STARTER };
-
-
 WvDBusConn::WvDBusConn(DBusConnection *_c, WvStringParm _uniquename)
     : log(WvString("DBus s%s", _uniquename), WvLog::Debug4)
 {
@@ -45,22 +41,11 @@ WvDBusConn::WvDBusConn(DBusConnection *_c, WvStringParm _uniquename)
 }
 
 
-WvDBusConn::WvDBusConn(BusType bus)
-    : log(WvString("DBus #%s/%s", getpid(), ++conncount), WvLog::Debug4)
-{
-    log("Initializing.\n");
-    DBusError error;
-    dbus_error_init(&error);
-    dbusconn = dbus_bus_get_private(bustypes[bus], &error);
-    maybe_seterr(error);
-    _uniquename = dbus_bus_get_unique_name(dbusconn);
-    init(true);
-}
-
-
 WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
     : log(WvString("DBus #%s/%s", getpid(), ++conncount), WvLog::Debug4)
 {
+    bool needs_register = false;
+    
     log("Initializing.\n");
     assert(!!dbus_moniker);
     
@@ -69,16 +54,34 @@ WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
     // otherwise
     DBusError error;
     dbus_error_init(&error);
-    dbusconn = dbus_connection_open_private(dbus_moniker, &error);
+    dbusconn = NULL;
+    if (!strncasecmp(dbus_moniker, "bus:", 4))
+    {
+	WvString busname = dbus_moniker+4;
+	if (!strcasecmp(busname, "system"))
+	    dbusconn = dbus_bus_get_private(DBUS_BUS_SYSTEM, &error);
+	else if (!strcasecmp(busname, "session"))
+	    dbusconn = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
+	else if (!strcasecmp(busname, "starter"))
+	    dbusconn = dbus_bus_get_private(DBUS_BUS_STARTER, &error);
+	else
+	    seterr("No such bus '%s'", busname);
+    }
+    else
+    {
+	dbusconn = dbus_connection_open_private(dbus_moniker, &error);
+	needs_register = true;
+    }
     maybe_seterr(error);
 
     // dbus_bus_get(..) does the following for us.. but we aren't using
     // dbus_bus_get
     //dbus_connection_set_exit_on_disconnect(dbusconn, FALSE);
-    if (dbusconn && !dbus_bus_register(dbusconn, &error))
+    if (dbusconn && needs_register && !dbus_bus_register(dbusconn, &error))
         log(WvLog::Error, "Error registering with the bus!\n");
 
-    _uniquename = dbus_bus_get_unique_name(dbusconn);
+    if (isok())
+	_uniquename = dbus_bus_get_unique_name(dbusconn);
 
     init(true);
 }
@@ -105,10 +108,9 @@ void WvDBusConn::init(bool client)
     if (geterr())
 	log(WvLog::Error, "Error in initialization: %s\n", errstr());
     
-    assert(dbusconn);
     name_acquired = false;
     
-    if (client)
+    if (client && isok())
 	log("Server assigned name: '%s'\n", uniquename());
     
     if (!!_uniquename)
@@ -118,26 +120,27 @@ void WvDBusConn::init(bool client)
     if (client)
         toggled_function = WvDBusConnHelpers::_watch_toggled;
 
-    if (!dbus_connection_set_watch_functions(dbusconn,
+    if (dbusconn)
+    {
+	if (!dbus_connection_set_watch_functions(dbusconn,
 				     WvDBusConnHelpers::_add_watch,
 				     WvDBusConnHelpers::_remove_watch,
 				     toggled_function,
 				     this, NULL))
-	seterr_both(EINVAL, "Couldn't set up watch functions\n");
+	    seterr_both(EINVAL, "Couldn't set up watch functions\n");
 
-    // FIXME: need to add real functions here, timeouts won't work until we
-    // do
-    dbus_connection_set_timeout_functions(dbusconn,
-					  WvDBusConnHelpers::_add_timeout,
-                                          WvDBusConnHelpers::_remove_timeout,
-                                          WvDBusConnHelpers::_timeout_toggled,
-                                          this, NULL);
+	// FIXME: need to add real functions here, timeouts won't work until
+	// we do
+	dbus_connection_set_timeout_functions(dbusconn,
+				      WvDBusConnHelpers::_add_timeout,
+				      WvDBusConnHelpers::_remove_timeout,
+				      WvDBusConnHelpers::_timeout_toggled,
+				      this, NULL);
 
-    dbus_connection_add_filter(dbusconn, 
-			       WvDBusConnHelpers::_filter_func,
-			       this, NULL);
-
-    log("Done init.\n");
+	dbus_connection_add_filter(dbusconn, 
+				   WvDBusConnHelpers::_filter_func,
+				   this, NULL);
+    }
 }
 
 
@@ -175,7 +178,7 @@ WvString WvDBusConn::uniquename() const
 
 void WvDBusConn::request_name(WvStringParm name)
 {
-    assert(dbusconn);
+    if (!isok()) return;
     assert(!name_acquired);
 
     DBusError error;
