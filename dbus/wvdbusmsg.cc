@@ -29,29 +29,51 @@ public:
 
 
 
-WvDBusMsg::Iter::Iter(const WvDBusMsg &_msg) : msg(_msg)
+WvDBusMsg::Iter::Iter(const WvDBusMsg &_msg)
+    : first(new DBusMessageIter), it(new DBusMessageIter)
 {
-    it = NULL;
+    dbus_message_iter_init(_msg, first);
     rewind();
 }
 
-WvDBusMsg::Iter::~Iter()
+
+WvDBusMsg::Iter::Iter(const WvDBusMsg::Iter &_it)
+    : first(new DBusMessageIter), it(new DBusMessageIter)
 {
-    if (it)
-	delete it;
+    *first = *_it.first;
+    rewind();
 }
 
 
-/**
- * Rewinds the iterator to make it point to an imaginary element
- * preceeding the first element of the list.
- */
+WvDBusMsg::Iter::Iter(const DBusMessageIter &_first)
+    : first(new DBusMessageIter), it(new DBusMessageIter)
+{
+    *first = _first;
+    rewind();
+}
+
+
+WvDBusMsg::Iter::~Iter()
+{
+    delete first;
+    delete it;
+}
+
+
 void WvDBusMsg::Iter::rewind()
 {
     rewound = true;
-    if (it)
-	delete it;
-    it = new DBusMessageIter;
+}
+
+
+bool WvDBusMsg::Iter::next()
+{
+    if (rewound)
+	*it = *first;
+    else if (type() != DBUS_TYPE_INVALID)
+	dbus_message_iter_next(it);
+    rewound = false;
+    return type() != DBUS_TYPE_INVALID;
 }
 
 
@@ -61,35 +83,35 @@ int WvDBusMsg::Iter::type() const
 }
 
 
-/**
- * Moves the iterator along the list to point to the next element.
- * 
- * If the iterator had just been rewound, it now points to the
- * first element of the list.
- */
-bool WvDBusMsg::Iter::next()
+WvDBusMsg::Iter WvDBusMsg::Iter::open() const
 {
-    if (rewound)
-	dbus_message_iter_init(msg, it);
-    else if (type() != DBUS_TYPE_INVALID)
-	dbus_message_iter_next(it);
-    rewound = false;
-    return type() != DBUS_TYPE_INVALID;
+    DBusMessageIter sub;
+    dbus_message_iter_recurse(it, &sub);
+    return Iter(sub); 
 }
 
 
-/**
- * Returns: true if the current link is valid
- */
 bool WvDBusMsg::Iter::cur() const
 {
     return !rewound && type() != DBUS_TYPE_INVALID;
 }
 
 
-/**
- * Get the current element as a string (possible for all types).
- */
+void WvDBusMsg::Iter::get_all(WvStringList &list)
+{
+    for (rewind(); next(); )
+	list.append(get_str());
+}
+
+
+WvString WvDBusMsg::Iter::get_all()
+{
+    WvStringList list;
+    get_all(list);
+    return list.join(",");
+}
+
+
 WvString WvDBusMsg::Iter::get_str() const
 {
     char *s;
@@ -113,6 +135,11 @@ WvString WvDBusMsg::Iter::get_str() const
     case DBUS_TYPE_STRING: 
 	dbus_message_iter_get_basic(it, &s);
 	return s;
+    case DBUS_TYPE_VARIANT:
+	return open().getnext().get_str();
+    case DBUS_TYPE_STRUCT:
+    case DBUS_TYPE_ARRAY:
+	return WvString("[%s]", open().get_all());
     case DBUS_TYPE_INVALID:
 	return WvString();
     default:
@@ -121,10 +148,6 @@ WvString WvDBusMsg::Iter::get_str() const
 }
 
 
-/**
- * Get the current element as an int64_t
- * (possible for all integer types)
- */
 int64_t WvDBusMsg::Iter::get_int() const
 {
     dbus_bool_t b;
@@ -163,16 +186,15 @@ int64_t WvDBusMsg::Iter::get_int() const
 	dbus_message_iter_get_basic(it, &str);
 	return WvString(str).num();
 	
+    case DBUS_TYPE_VARIANT:
+	return open().getnext().get_int();
+	
     default:
 	return 0;
     }
 }
 
 
-/**
- * Get the current element as a uint64_t
- * (possible for all integer types)
- */
 uint64_t WvDBusMsg::Iter::get_uint() const
 {
     dbus_bool_t b;
@@ -211,16 +233,15 @@ uint64_t WvDBusMsg::Iter::get_uint() const
 	dbus_message_iter_get_basic(it, &str);
 	return WvString(str).num();
 	
+    case DBUS_TYPE_VARIANT:
+	return open().getnext().get_uint();
+	
     default:
 	return 0;
     }
 }
 
 
-/**
- * Returns a pointer to the WvString at the iterator's current
- * location.  Needed so that WvIterStuff() will work.
- */
 WvString *WvDBusMsg::Iter::ptr() const
 {
     s = get_str();
@@ -230,13 +251,19 @@ WvString *WvDBusMsg::Iter::ptr() const
 
 
 
+static DBusMessageIter *new_append_iter(WvDBusMsg &msg)
+{
+    DBusMessageIter *it = new DBusMessageIter;
+    dbus_message_iter_init_append(msg, it);
+    return it;
+}
+
 
 WvDBusMsg::WvDBusMsg(WvStringParm busname, WvStringParm objectname, 
                      WvStringParm interface, WvStringParm method)
 {
     msg = dbus_message_new_method_call(busname, objectname, interface, method);
-    iter = new DBusMessageIter;
-    dbus_message_iter_init_append(msg, iter);
+    itlist.prepend(new_append_iter(*this), true);
 }
 
 
@@ -244,8 +271,7 @@ WvDBusMsg::WvDBusMsg(WvDBusMsg &_msg)
 {
     msg = _msg.msg;
     dbus_message_ref(msg);
-    iter = new DBusMessageIter;
-    dbus_message_iter_init_append(msg, iter);
+    itlist.prepend(new_append_iter(*this), true);
 }
 
 
@@ -253,14 +279,12 @@ WvDBusMsg::WvDBusMsg(DBusMessage *_msg)
 {
     msg = _msg;
     dbus_message_ref(msg);
-    iter = new DBusMessageIter;
-    dbus_message_iter_init_append(msg, iter);
+    itlist.prepend(new_append_iter(*this), true);
 }
 
 
 WvDBusMsg::~WvDBusMsg()
 {
-    delete iter;
     dbus_message_unref(msg);
 }
 
@@ -326,17 +350,13 @@ uint32_t WvDBusMsg::get_replyserial() const
 
 void WvDBusMsg::get_arglist(WvStringList &list) const
 {
-    Iter i(*this);
-    for (i.rewind(); i.next(); )
-	list.append(i.get_str());
+    Iter(*this).get_all(list);
 }
 
 
 WvString WvDBusMsg::get_argstr() const
 {
-    WvStringList l;
-    get_arglist(l);
-    return l.join(",");
+    return Iter(*this).get_all();
 }
 
 
@@ -361,7 +381,7 @@ WvDBusMsg &WvDBusMsg::append(const char *s)
 {
     assert(msg);
     assert(s);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &s);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_STRING, &s);
     return *this;
 }
 
@@ -370,7 +390,7 @@ WvDBusMsg &WvDBusMsg::append(bool b)
 {
     assert(msg);
     dbus_bool_t bb = b;
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &bb);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_BOOLEAN, &bb);
     return *this;
 }
 
@@ -379,7 +399,7 @@ WvDBusMsg &WvDBusMsg::append(char c)
 {
     assert(msg);
     dbus_unichar_t cc = c;
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &cc);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_BYTE, &cc);
     return *this;
 }
 
@@ -387,7 +407,7 @@ WvDBusMsg &WvDBusMsg::append(char c)
 WvDBusMsg &WvDBusMsg::append(int16_t i)
 {
     assert(msg);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT16, &i);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_INT16, &i);
     return *this;
 }
 
@@ -395,7 +415,7 @@ WvDBusMsg &WvDBusMsg::append(int16_t i)
 WvDBusMsg &WvDBusMsg::append(uint16_t i)
 {
     assert(msg);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT16, &i);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_UINT16, &i);
     return *this;
 }
 
@@ -403,7 +423,7 @@ WvDBusMsg &WvDBusMsg::append(uint16_t i)
 WvDBusMsg &WvDBusMsg::append(int32_t i)
 {
     assert(msg);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &i);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_INT32, &i);
     return *this;
 }
 
@@ -411,7 +431,7 @@ WvDBusMsg &WvDBusMsg::append(int32_t i)
 WvDBusMsg &WvDBusMsg::append(uint32_t i)
 {
     assert(msg);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &i);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_UINT32, &i);
     return *this;
 }
 
@@ -419,8 +439,84 @@ WvDBusMsg &WvDBusMsg::append(uint32_t i)
 WvDBusMsg &WvDBusMsg::append(double d)
 {
     assert(msg);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_DOUBLE, &d);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_DOUBLE, &d);
     return *this;
+}
+
+
+WvDBusMsg &WvDBusMsg::variant_start(WvStringParm element_type)
+{
+    DBusMessageIter *parent = itlist.first();
+    DBusMessageIter *sub = new DBusMessageIter;
+    dbus_message_iter_open_container(parent,
+				     DBUS_TYPE_VARIANT, element_type, sub);
+    itlist.prepend(sub, true);
+    return *this;
+}
+
+
+WvDBusMsg &WvDBusMsg::variant_end()
+{
+    assert(itlist.count() >= 2);
+    
+    WvList<DBusMessageIter>::Iter i(itlist);
+    i.rewind(); i.next();
+    DBusMessageIter *sub = i.ptr();
+    i.next();
+    DBusMessageIter *parent = i.ptr();
+    
+    dbus_message_iter_close_container(parent, sub);
+    itlist.unlink_first();
+    return *this;
+}
+
+
+WvDBusMsg &WvDBusMsg::struct_start(WvStringParm element_type)
+{
+    DBusMessageIter *parent = itlist.first();
+    DBusMessageIter *sub = new DBusMessageIter;
+    dbus_message_iter_open_container(parent,
+				     DBUS_TYPE_STRUCT, element_type, sub);
+    itlist.prepend(sub, true);
+    return *this;
+}
+
+
+WvDBusMsg &WvDBusMsg::struct_end()
+{
+    return array_end(); // same thing
+}
+
+
+WvDBusMsg &WvDBusMsg::array_start(WvStringParm element_type)
+{
+    DBusMessageIter *parent = itlist.first();
+    DBusMessageIter *sub = new DBusMessageIter;
+    dbus_message_iter_open_container(parent,
+				     DBUS_TYPE_ARRAY, element_type, sub);
+    itlist.prepend(sub, true);
+    return *this;
+}
+
+
+WvDBusMsg &WvDBusMsg::array_end()
+{
+    return variant_end(); // same thing
+}
+
+
+WvDBusMsg &WvDBusMsg::varray_start(WvStringParm element_type)
+{
+    variant_start(WvString("a%s", element_type));
+    return array_start(element_type);
+}
+
+
+WvDBusMsg &WvDBusMsg::varray_end()
+{
+    assert(itlist.count() >= 3);
+    array_end();
+    return variant_end();
 }
 
 

@@ -2,7 +2,7 @@
 #include "wvdbusmsg.h"
 #include <dbus/dbus.h>
 
-WVTEST_MAIN("basics")
+WVTEST_MAIN("dbusmsg basics")
 {
     WvDBusMsg msg("my.dest", "/my/path", "my.ifc", "method");
     msg.append("yoink").append((int16_t)-1)
@@ -41,3 +41,22 @@ WVTEST_MAIN("basics")
 }
 
 
+WVTEST_MAIN("dbusmsg arrays")
+{
+    WvDBusMsg msg("my.dest", "/my/path", "my.ifc", "method");
+    WVPASS(true);
+    msg.variant_start("i").append(5).variant_end();
+    WVPASS(true);
+    msg.struct_start("sib").append("str").append(5).append(true).struct_end();
+    WVPASS(true);
+    msg.array_start("s").append("one").append("two").array_end();
+    WVPASS(true);
+    msg.array_start("i").append(5).append(6).array_end();
+    WVPASS(true);
+    msg.array_start("v")
+	.varray_start("s").append("str1").append("str2").varray_end()
+	.varray_start("i").append(-5).append(-6).varray_end()
+	.array_end();
+    WVPASS(true);
+    WVPASSEQ(msg.get_argstr(), "5,[str,5,1],[one,two],[5,6],[[str1,str2],[-5,-6]]");
+}

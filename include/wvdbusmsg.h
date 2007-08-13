@@ -63,7 +63,7 @@ public:
     void get_arglist(WvStringList &list) const;
     WvString get_argstr() const;
 
-    /*
+    /**
      * The following methods are designed to allow appending various
      * arguments to the message.
      */
@@ -76,18 +76,75 @@ public:
     WvDBusMsg &append(uint32_t i);
     WvDBusMsg &append(double d);
     
+    /**
+     * Start a variant.
+     */
+    WvDBusMsg &variant_start(WvStringParm element_type);
+    
+    /**
+     * End a variant.
+     */
+    WvDBusMsg &variant_end();
+    
+    /**
+     * Start a struct.  Elements append()ed after this will be inside the
+     * struct, and you should be careful that you append the right types in
+     * the right order.  Finish using struct_end().
+     */
+    WvDBusMsg &struct_start(WvStringParm element_type);
+    
+    /**
+     * End a struct started with struct_start().
+     */
+    WvDBusMsg &struct_end();
+
+    /**
+     * Start an array.  Elements append()ed after this will be inside the
+     * array.  Finish using array_end().
+     */
+    WvDBusMsg &array_start(WvStringParm element_type);
+    
+    /**
+     * End an array started with array_start().
+     */
+    WvDBusMsg &array_end();
+
+    /**
+     * Start a variant-array.  Elements append()ed after this will be inside
+     * the array.  Finish using varray_end().
+     * 
+     * A variant-array is like an array, but is enclosed automatically inside
+     * a variant object.  This is useful for arrays of arrays, where each
+     * inner array is of a different type.
+     */
+    WvDBusMsg &varray_start(WvStringParm element_type);
+    
+    /**
+     * End an array started with array_start().
+     */
+    WvDBusMsg &varray_end();
+
+    /**
+     * Generate a message that will be a reply to this one.
+     */
     WvDBusMsg reply();
+    
+    /**
+     * A shortcut for sending this message on the given connection.
+     * Equivalent to conn.send(*this).
+     */
     void send(WvDBusConn &conn);
     
     class Iter
     {
     public:
-	const WvDBusMsg &msg;
-	DBusMessageIter *it;
+	DBusMessageIter *const first, *const it;
 	mutable WvString s;
 	bool rewound;
 	
 	Iter(const WvDBusMsg &_msg);
+	Iter(const WvDBusMsg::Iter &_it);
+	Iter(const DBusMessageIter &_first);
 	~Iter();
 
         /**
@@ -101,6 +158,15 @@ public:
 	 * as the iterator converts elements automatically between most types.
 	 */
 	int type() const;
+	
+	/**
+	 * Returns a sub-iterator for walking through recursive types, such
+	 * as arrays, structs, and variants.
+	 * 
+	 * You don't strictly need to call this for variants; get_str() and
+	 * friends will do the right thing.
+	 */
+	Iter open() const;
 	
         /**
          * Moves the iterator along the list to point to the next element.
@@ -122,6 +188,17 @@ public:
 	 * Returns: true if the current link is valid
          */
 	bool cur() const;
+	
+	/**
+	 * Fill a WvStringList with a string for each element of the iter.
+	 */
+	void get_all(WvStringList &list);
+	
+	/**
+	 * Return a WvString representation of all elements in a single
+	 * string.
+	 */
+	WvString get_all();
 	
 	/**
 	 * Get the current element as a string (possible for all types).
@@ -161,7 +238,7 @@ public:
 
 protected:
     mutable DBusMessage *msg;
-    DBusMessageIter *iter;
+    WvList<DBusMessageIter> itlist;
 };
 
 
