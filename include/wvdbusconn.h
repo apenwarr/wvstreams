@@ -14,12 +14,11 @@
 #ifndef __WVDBUSCONN_H
 #define __WVDBUSCONN_H
 
-#include "wvdbushandler.h"
 #include "wvistreamlist.h"
 #include "wvlog.h"
+#include "wvdbusmsg.h"
 
-class IWvDBusListener;
-class WvDBusMsg;
+class WvDBusConn;
 
 struct DBusConnection;
 struct DBusError;
@@ -104,11 +103,10 @@ public:
     uint32_t send(WvDBusMsg &msg);
     
     /**
-     * Send a message on the bus, calling reply() when the answer comes
+     * Send a message on the bus, calling onreply() when the answer comes
      * back.
      */
-    void send(WvDBusMsg &msg, IWvDBusListener *reply, 
-                      bool autofree_reply);
+    void send(WvDBusMsg &msg, const WvDBusCallback &onreply);
     
     /**
      * The priority level of a callback registration.  This defines the order
@@ -149,35 +147,6 @@ public:
     void del_callback(void *cookie);
 
     /**
-     * Adds a signal listener to the bus connection: all signals matching 
-     * the interface and path specification will be forwarded to the
-     * appropriate listener.
-     */
-    void add_listener(WvStringParm interface, WvStringParm path,
-                              IWvDBusListener *listener);
-
-    /**
-     * Removes a signal listener from the bus connection.
-     */
-    void del_listener(WvStringParm interface, WvStringParm path,
-                              WvStringParm name);
-    
-    
-    /**
-     * Adds a method to the bus connection: all method calls matching
-     * the interface and path specification will be forwarded to the 
-     * appropriate listener. 
-     */
-    void add_method(WvStringParm interface, WvStringParm path, 
-                    IWvDBusListener *listener);
-
-    /**
-     * Removes a method from the bus connection.
-     */
-    void del_method(WvStringParm interface, WvStringParm path,
-                    WvStringParm name);
-
-    /**
      * Set the error code of this connection if 'e' is nonempty.
      */
     void maybe_seterr(DBusError &e);
@@ -216,17 +185,10 @@ private:
     void timeout_toggled(DBusTimeout *timeout);
 
     static void pending_call_notify(DBusPendingCall *pending, void *user_data);
-    static void remove_listener_cb(void *memory);
 
-    WvDBusInterfaceDict ifacedict;
     DBusConnection *dbusconn;
     bool name_acquired;
     WvString _uniquename;
-    
-    void _add_listener(WvStringParm interface, WvStringParm path,
-		       IWvDBusListener *listener);
-    void _del_listener(WvStringParm interface, WvStringParm path,
-		       WvStringParm name);
 };
 
 #endif // __WVDBUSCONN_H

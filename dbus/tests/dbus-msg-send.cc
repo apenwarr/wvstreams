@@ -9,21 +9,20 @@
  */ 
 #include "wvargs.h"
 #include "wvdbusconn.h"
-#include "wvdbuslistener.h"
 #include "wvistreamlist.h"
 
 
-static void foo(WvDBusConn &conn, WvDBusMsg &msg, WvString foo, WvError err)
+static bool foo(WvDBusConn &conn, WvDBusMsg &msg)
 {
-    if (err.isok())
-        fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
-    else
-        fprintf(stderr, "Received a message, but there was an error (%s).\n",
-                err.errstr().cstr());
+    WvDBusMsg::Iter i(msg);
+    WvString foo = i.getnext();
+    
+    fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
+    return true;
 }
 
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     WvArgs args;
     WvStringList remaining_args;
@@ -36,6 +35,8 @@ int main (int argc, char *argv[])
         conn = new WvDBusConn(moniker);
     else
         conn = new WvDBusConn();
+    WvIStreamList::globallist.append(conn, false, "wvdbus conn");
+    
     conn->request_name("ca.nit.MySender");
 
     // Create a message, bound for "ca.nit.MyApplication"'s "/ca/nit/foo" 
@@ -44,14 +45,10 @@ int main (int argc, char *argv[])
     msg.append("bee");
 
     // expect a reply with a single string as an argument
-    WvDBusListener<WvString> reply(conn, "/ca/nit/foo/bar", foo);
-    fprintf(stderr, "Sending message..?\n");
-    conn->send(msg, &reply, false);
-
-    WvIStreamList::globallist.append(conn, false, "wvdbus conn");
+    fprintf(stderr, "Sending message...\n");
+    conn->send(msg, foo);
     
-    while (conn->isok())
-        WvIStreamList::globallist.runonce();
+    WvIStreamList::globallist.runonce();
     
     WVRELEASE(conn);
     return 0;

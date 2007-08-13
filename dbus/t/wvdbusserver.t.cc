@@ -1,5 +1,5 @@
+#include "wvdbusmsg.h"
 #include "wvdbusconn.h"
-#include "wvdbuslistener.h"
 #include "wvdbusserver.h"
 #include "wvfileutils.h"
 #include "wvfork.h"
@@ -101,27 +101,39 @@ WVTEST_MAIN("dbusserver basics")
 
     
 static int replies_received = 0;
-static void reply_received(WvDBusConn &conn, WvDBusMsg &msg,
-			   WvString foo, WvError err)
+static bool reply_received(WvDBusConn &conn, WvDBusMsg &msg)
 {
-    fprintf(stderr, "wow! foo called! (%s)\n", foo.cstr());
+    WvDBusMsg::Iter i(msg);
+    WvString s = i.getnext();
+    fprintf(stderr, "wow! reply received! (%s)\n", s.cstr());
     replies_received++;
+    return true;
 }
 
     
 static int messages_received = 0;
-static void msg_received(WvDBusConn &conn, WvDBusMsg &msg,
-			 WvString arg1, WvError err)
+static bool msg_received(WvDBusConn &conn, WvDBusMsg &msg)
 {
-    fprintf(stderr, "Message received, loud and clear.\n");
-    if (!err.isok())
-	fprintf(stderr, "Error was: '%s'\n", err.errstr().cstr());
-    messages_received++;
-    msg.reply().append(WvString("baz %s", arg1)).send(conn);
+    WvDBusMsg::Iter i(msg);
+    WvString arg1 = i.getnext();
+    if (msg.get_dest() == "ca.nit.MyListener"
+	&& msg.get_path() == "/ca/nit/foo"
+	&& msg.get_member() == "bar")
+    {
+	fprintf(stderr, "Message received (%s)\n", ((WvString)msg).cstr());
+	messages_received++;
+	msg.reply().append(WvString("baz %s", arg1)).send(conn);
+	return true;
+    }
+    else
+    {
+	fprintf(stderr, "msg_received: not my message.\n");
+	return false;
+    }
 }
 
 
-WVTEST_MAIN("dbusserver fancy listeners")
+WVTEST_MAIN("dbusserver two connections")
 {
     TestDBusServer serv;
     WvDBusConn conn1(serv.moniker);
@@ -131,17 +143,12 @@ WVTEST_MAIN("dbusserver fancy listeners")
     
     conn1.request_name("ca.nit.MySender");
     conn2.request_name("ca.nit.MyListener");
-
-    WvDBusListener<WvString> *l = 
-        new WvDBusListener<WvString>(&conn2, "bar", msg_received);
-    conn2.add_method("ca.nit.foo", "/ca/nit/foo", l);
+    conn2.add_callback(WvDBusConn::PriNormal, msg_received);
 
     WvDBusMsg msg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
     msg.append("bee");
 
-    WvDBusListener<WvString> reply(&conn1, "/ca/nit/foo/bar", reply_received);
-    
-    conn1.send(msg, &reply, false);
+    conn1.send(msg, reply_received);
 
     fprintf(stderr, "Spinning...\n");
     while (replies_received < 1 || messages_received < 1)
@@ -149,4 +156,52 @@ WVTEST_MAIN("dbusserver fancy listeners")
 
     WVPASSEQ(messages_received, 1);
     WVPASSEQ(replies_received, 1);
+}
+
+
+WVTEST_MAIN("dbusserver overlapping registrations")
+{
+    TestDBusServer serv;
+    WvDBusConn *cli = new WvDBusConn(serv.moniker);
+    WvDBusConn *l1 = new WvDBusConn(serv.moniker);
+    WvDBusConn *l2 = new WvDBusConn(serv.moniker);
+    WvIStreamList::globallist.append(cli, false);
+    WvIStreamList::globallist.append(l1, false);
+    WvIStreamList::globallist.append(l2, false);
+    
+    l1->request_name("ca.nit.MySender");
+    
+    l1->add_callback(WvDBusConn::PriNormal, mysignal);
+    l2->add_callback(WvDBusConn::PriNormal, mysignal);
+    
+    WvDBusMsg meth("ca.nit.MySender", "/foo", "x.y.z.anything", "testmethod");
+    meth.append("methhello");
+    WvDBusSignal sig("/foo", "x.y.z.anything", "testsignal");
+    sig.append("sighello");
+    
+    mysignal_count = 0;
+    cli->send(sig);
+    cli->send(meth, mysignal);
+    while (mysignal_count < 3 || WvIStreamList::globallist.select(200))
+         WvIStreamList::globallist.runonce();
+    WVPASSEQ(mysignal_count, 3); // one method, two signals
+    
+    mysignal_count = 0;
+    delete l1;
+    cli->send(sig);
+    cli->send(meth, mysignal);
+    while (mysignal_count < 1 || WvIStreamList::globallist.select(200))
+         WvIStreamList::globallist.runonce();
+    WVPASSEQ(mysignal_count, 1); // no method receiver, one signal
+    
+    mysignal_count = 0;
+    l2->request_name("ca.nit.MySender");
+    cli->send(sig);
+    cli->send(meth, mysignal);
+    while (mysignal_count < 2 || WvIStreamList::globallist.select(200))
+         WvIStreamList::globallist.runonce();
+    WVPASSEQ(mysignal_count, 2); // one method receiver, one signal
+    
+    delete cli;
+    delete l2;
 }

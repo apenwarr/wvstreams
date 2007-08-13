@@ -127,22 +127,28 @@ WvString WvDBusMsg::Iter::get_str() const
  */
 int64_t WvDBusMsg::Iter::get_int() const
 {
-    int8_t b;
-    int16_t s;
-    int32_t i;
-    int64_t l;
+    dbus_bool_t b;
+    dbus_unichar_t c;
+    dbus_int16_t s;
+    dbus_int32_t i;
+    dbus_int64_t l;
     char *str;
     
     switch (type())
     {
     case DBUS_TYPE_BYTE: 
+	dbus_message_iter_get_basic(it, &c);
+	return c;
+	
     case DBUS_TYPE_BOOLEAN: 
 	dbus_message_iter_get_basic(it, &b);
 	return b;
+	
     case DBUS_TYPE_INT16: 
     case DBUS_TYPE_UINT16: 
 	dbus_message_iter_get_basic(it, &s);
 	return s;
+	
     case DBUS_TYPE_INT32: 
     case DBUS_TYPE_UINT32:
 	dbus_message_iter_get_basic(it, &i);
@@ -169,22 +175,28 @@ int64_t WvDBusMsg::Iter::get_int() const
  */
 uint64_t WvDBusMsg::Iter::get_uint() const
 {
-    uint8_t b;
-    uint16_t s;
-    uint32_t i;
-    uint64_t l;
+    dbus_bool_t b;
+    dbus_unichar_t c;
+    dbus_uint16_t s;
+    dbus_uint32_t i;
+    dbus_uint64_t l;
     char *str;
     
     switch (type())
     {
     case DBUS_TYPE_BYTE: 
+	dbus_message_iter_get_basic(it, &c);
+	return c;
+	
     case DBUS_TYPE_BOOLEAN: 
 	dbus_message_iter_get_basic(it, &b);
 	return b;
+	
     case DBUS_TYPE_INT16: 
     case DBUS_TYPE_UINT16: 
 	dbus_message_iter_get_basic(it, &s);
 	return s;
+	
     case DBUS_TYPE_INT32: 
     case DBUS_TYPE_UINT32:
 	dbus_message_iter_get_basic(it, &i);
@@ -337,10 +349,10 @@ WvDBusMsg::operator WvString() const
     {
 	if (!!get_sender())
 	    src = WvString("%s->", get_sender());
-	return WvString("%s%s:%s:%s:%s(%s)#%s",
+	return WvString("%s%s:%s:%s.%s#%s",
 			src, get_dest(),
 			get_path(), get_interface(), get_member(),
-			get_argstr(), get_serial());
+			get_serial());
     }
 }
 
@@ -357,7 +369,8 @@ WvDBusMsg &WvDBusMsg::append(const char *s)
 WvDBusMsg &WvDBusMsg::append(bool b)
 {
     assert(msg);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &b);
+    dbus_bool_t bb = b;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &bb);
     return *this;
 }
 
@@ -365,7 +378,8 @@ WvDBusMsg &WvDBusMsg::append(bool b)
 WvDBusMsg &WvDBusMsg::append(char c)
 {
     assert(msg);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &c);
+    dbus_unichar_t cc = c;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &cc);
     return *this;
 }
 

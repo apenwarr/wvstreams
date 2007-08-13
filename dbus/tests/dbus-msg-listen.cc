@@ -9,21 +9,23 @@
  */ 
 #include "wvargs.h"
 #include "wvdbusconn.h"
-#include "wvdbuslistener.h"
 #include "wvistreamlist.h"
 
 
-static void msg_received(WvDBusConn &conn, WvDBusMsg &msg,
-			 WvString arg1, WvError err)
+static bool msg_received(WvDBusConn &conn, WvDBusMsg &msg)
 {
-    if (err.isok())
+    WvDBusMsg::Iter i(msg);
+    WvString arg1 = i.getnext();
+    
+    if (msg.get_dest() == "ca.nit.MyListener"
+	&& msg.get_path() == "/ca/nit/foo"
+	&& msg.get_member() == "bar")
     {
-        fprintf(stderr, "Message received, loud and clear.\n");
+        fprintf(stderr, "Message received:\n  %s\n", ((WvString)msg).cstr());
         msg.reply().append(WvString("baz %s", arg1)).send(conn);
+	return true;
     }
-    else
-        fprintf(stderr, "Received a message, but there was an error (%s).\n",
-                err.errstr().cstr());
+    return false;
 }
 
 
@@ -40,13 +42,10 @@ int main (int argc, char *argv[])
         conn = new WvDBusConn(moniker);
     else
         conn = new WvDBusConn();
-    conn->request_name("ca.nit.MyListener");
-    
-    // Create a "/ca/nit/foo" object to listen on, and add the "bar"
-    // method (part of the 31337 "ca.nit.foo" interface) to it..
-    WvDBusListener<WvString> l(conn, "bar", msg_received);
-    conn->add_method("ca.nit.foo", "/ca/nit/foo", &l);
     WvIStreamList::globallist.append(conn, false, "wvdbus conn");
+    
+    conn->request_name("ca.nit.MyListener");
+    conn->add_callback(WvDBusConn::PriNormal, msg_received);
     
     while (conn->isok())
         WvIStreamList::globallist.runonce();

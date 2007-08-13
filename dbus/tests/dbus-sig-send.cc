@@ -8,11 +8,10 @@
  */ 
 #include "wvargs.h"
 #include "wvdbusconn.h"
-#include "wvdbuslistener.h"
 #include "wvistreamlist.h"
 
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     WvArgs args;
     WvStringList remaining_args;

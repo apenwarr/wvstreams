@@ -33,37 +33,33 @@ static DBusBusType bustypes[WvDBusConn::NUM_BUS_TYPES]
 
 
 WvDBusConn::WvDBusConn(DBusConnection *_c, WvStringParm _uniquename)
-    : log(WvString("DBus s%s", _uniquename)),
-      ifacedict(10)
+    : log(WvString("DBus s%s", _uniquename), WvLog::Debug4)
 {
     log("Initializing.\n");
     assert(_c);
     dbusconn = _c;
-    dbus_connection_ref(dbusconn);
+    if (dbusconn)
+	dbus_connection_ref(dbusconn);
     this->_uniquename = _uniquename;
     init(false);
 }
 
 
 WvDBusConn::WvDBusConn(BusType bus)
-    : log(WvString("DBus #%s/%s", getpid(), ++conncount)),
-      ifacedict(10)
+    : log(WvString("DBus #%s/%s", getpid(), ++conncount), WvLog::Debug4)
 {
     log("Initializing.\n");
     DBusError error;
     dbus_error_init(&error);
-    dbusconn = dbus_bus_get(bustypes[bus], &error);
+    dbusconn = dbus_bus_get_private(bustypes[bus], &error);
     maybe_seterr(error);
-
     _uniquename = dbus_bus_get_unique_name(dbusconn);
-    
     init(true);
 }
 
 
 WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
-    : log(WvString("DBus #%s/%s", getpid(), ++conncount)),
-      ifacedict(10)
+    : log(WvString("DBus #%s/%s", getpid(), ++conncount), WvLog::Debug4)
 {
     log("Initializing.\n");
     assert(!!dbus_moniker);
@@ -79,7 +75,7 @@ WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
     // dbus_bus_get(..) does the following for us.. but we aren't using
     // dbus_bus_get
     //dbus_connection_set_exit_on_disconnect(dbusconn, FALSE);
-    if (!dbus_bus_register(dbusconn, &error))
+    if (dbusconn && !dbus_bus_register(dbusconn, &error))
         log(WvLog::Error, "Error registering with the bus!\n");
 
     _uniquename = dbus_bus_get_unique_name(dbusconn);
@@ -96,8 +92,11 @@ WvDBusConn::~WvDBusConn()
     
     close();
     
-    dbus_connection_unref(dbusconn);
-    dbusconn = NULL;
+    if (dbusconn)
+    {
+	execute(); // flush all "timed out due to close" messages
+	dbus_connection_unref(dbusconn);
+    }
 }
 
 
@@ -148,9 +147,16 @@ void WvDBusConn::close()
     {
 	DBusError error;
 	dbus_error_init(&error);
-	dbus_bus_release_name(dbusconn, name, &error);
+	if (isok())
+	    dbus_bus_release_name(dbusconn, name, &error);
 	maybe_seterr(error);
     }
+    
+    if (dbusconn)
+	dbus_connection_close(dbusconn);
+    
+    WvIStreamList::close();
+    assert(!isok());
 }
 
 
@@ -191,7 +197,7 @@ void WvDBusConn::request_name(WvStringParm name)
 
 bool WvDBusConn::isok() const
 {
-    return dbusconn && !geterr();
+    return dbusconn && WvIStreamList::isok() && !geterr();
 }
 
 
@@ -199,41 +205,82 @@ void WvDBusConn::execute()
 {
     // log("Execute.\n");
     WvIStreamList::execute();
-    while (dbus_connection_dispatch(dbusconn) == 
-           DBUS_DISPATCH_DATA_REMAINS);
+    if (!dbusconn) return;
+    while (dbus_connection_dispatch(dbusconn) == DBUS_DISPATCH_DATA_REMAINS)
+	;
 }
 
 
 uint32_t WvDBusConn::send(WvDBusMsg &msg)
 {
+    if (!isok()) return 0;
     uint32_t serial;
-    log(WvLog::Debug, "Sending %s\n", msg);
+    log("Tx#%s: %s(%s)\n",
+	msg.get_serial(), msg.get_member(), msg.get_argstr());
     if (!dbus_connection_send(dbusconn, msg, &serial)) 
         seterr_both(ENOMEM, "Out of memory.\n");
     return serial;
 }
 
 
-void WvDBusConn::send(WvDBusMsg &msg, IWvDBusListener *reply, 
-                      bool autofree_reply)
+struct WvDBusUserData
 {
-    log(WvLog::Debug, "Sending_w_r %s\n", msg);
+    WvDBusConn *conn;
+    WvDBusCallback cb;
+    
+    WvDBusUserData(WvDBusConn *_conn, const WvDBusCallback &_cb)
+	: cb(_cb)
+    {
+	conn = _conn;
+    }
+};
+
+
+static void free_callback(void *memory)
+{
+    WvDBusUserData *ud = (WvDBusUserData *)memory;
+    delete ud;
+}
+
+
+void WvDBusConn::pending_call_notify(DBusPendingCall *pending, 
+				     void *user_data)
+{
+    WvDBusUserData *ud = (WvDBusUserData *)user_data;
+    DBusMessage *_msg = dbus_pending_call_steal_reply(pending);
+    WvDBusMsg msg(_msg);
+
+    bool handled = ud->cb(*ud->conn, msg);
+    assert(handled); // reply function should *always* handle the reply
+    dbus_pending_call_unref(pending);
+    dbus_connection_unref(ud->conn->dbusconn);
+    dbus_message_unref(msg);
+}
+
+
+void WvDBusConn::send(WvDBusMsg &msg, const WvDBusCallback &onreply) 
+{
+    if (!isok()) return;
+    log("Tx_w_r %s\n", msg);
     DBusPendingCall *pending;
 
-    if (!dbus_connection_send_with_reply(dbusconn, msg, &pending, -1))
+    if (!dbus_connection_send_with_reply(dbusconn, msg, &pending, -1)
+	|| !pending)
     { 
         seterr_both(ENOMEM, "Out of memory.\n");
         return;
     }
 
-    DBusFreeFunction free_user_data = NULL;
-    if (autofree_reply)
-        free_user_data = &WvDBusConn::remove_listener_cb;
-
     if (!dbus_pending_call_set_notify(pending, 
                                       &WvDBusConn::pending_call_notify,
-                                      reply, free_user_data))
-        seterr_both(ENOMEM, "Out of memory.\n");
+				      new WvDBusUserData(this, onreply),
+                                      free_callback))
+    {
+	seterr_both(ENOMEM, "Out of memory.\n");
+	return;
+    }
+    
+    dbus_connection_ref(dbusconn); // needed by the pending call
 }
 
 
@@ -260,94 +307,6 @@ void WvDBusConn::del_callback(void *cookie)
 }
 
 
-void WvDBusConn::add_listener(WvStringParm interface, WvStringParm path, 
-                              IWvDBusListener *listener)
-{
-    DBusError error;
-    dbus_error_init(&error);
-
-    dbus_bus_add_match(dbusconn,
-		       WvString("type='signal',interface='%s'", interface),
-		       &error);
-    maybe_seterr(error);
-    if (isok())
-	_add_listener(interface, path, listener);    
-}
-
-
-void WvDBusConn::del_listener(WvStringParm interface, WvStringParm path,
-                              WvStringParm name)
-{
-    DBusError error;
-    dbus_error_init(&error);
-
-    dbus_bus_remove_match(dbusconn, 
-                          WvString("type='signal',interface='%s'", interface),
-                          &error);
-    maybe_seterr(error);
-    if (isok())
-	_del_listener(interface, path, name);
-}
-
-
-void WvDBusConn::add_method(WvStringParm interface, WvStringParm path, 
-                            IWvDBusListener *listener)
-{
-    _add_listener(interface, path, listener);
-}
-
-
-void WvDBusConn::del_method(WvStringParm interface, WvStringParm path,
-                            WvStringParm name)
-{
-    _del_listener(interface, path, name);
-}
-
-
-void WvDBusConn::_add_listener(WvStringParm interface, 
-                                       WvStringParm path,
-                                       IWvDBusListener *listener)
-{
-    if (!ifacedict[interface])
-        ifacedict.add(new WvDBusInterface(interface), true);
-    ifacedict[interface]->add_listener(path, listener);
-}
-
-
-void WvDBusConn::_del_listener(WvStringParm interface, 
-                                       WvStringParm path, WvStringParm name)
-{
-    if (!ifacedict[interface])
-    {
-        log(WvLog::Warning, "Attempted to delete listener with interface "
-            "'%s', but interface does not exist! (path: %s name: %s)\n",
-            path, name);
-        return;
-    }
-    
-}
-
-
-void WvDBusConn::pending_call_notify(DBusPendingCall *pending, 
-                                            void *user_data)
-{
-    IWvDBusListener *listener = (IWvDBusListener *)user_data;
-    DBusMessage *msg = dbus_pending_call_steal_reply(pending);
-
-    WvLog("pending", WvLog::Debug1).print("incoming: %s\n", WvDBusMsg(msg));
-    listener->dispatch(msg);
-    dbus_pending_call_unref(pending);
-    dbus_message_unref(msg);
-}
-
-
-void WvDBusConn::remove_listener_cb(void *memory)
-{
-    IWvDBusListener *listener = (IWvDBusListener *)memory;
-    delete listener;
-}
-
-
 bool WvDBusConn::add_watch(DBusWatch *watch)
 {
     unsigned int flags = dbus_watch_get_flags(watch);
@@ -362,7 +321,7 @@ bool WvDBusConn::add_watch(DBusWatch *watch)
     bool isreadable = (flags & DBUS_WATCH_READABLE);
     bool iswritable = (flags & DBUS_WATCH_WRITABLE);
 
-    log(WvLog::Debug5, "Watch updated successfully (fd: %s, readable: %s, "
+    log("Watch updated successfully (fd: %s, readable: %s, "
         "writable: %s)\n", dbus_watch_get_fd(watch),
         isreadable, iswritable);
 #endif
@@ -421,29 +380,26 @@ int WvDBusConn::priority_order(const CallbackInfo *a, const CallbackInfo *b)
 
 bool WvDBusConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
 {
-    log("Filter: %s\n", msg);
+    log("Rx#%s: %s\n", msg.get_serial(), msg);
+    
+    if (msg.get_path() == "/org/freedesktop/DBus/Local")
+    {
+	if (msg.get_member() == "Disconnected")
+	{
+	    close();
+	    return true;
+	}
+    }
     
     // handle all the generic filters
-    bool handled = false;
     CallbackInfoList::Sorter i(callbacks, priority_order);
     for (i.rewind(); i.next(); )
     {
-	handled = i->cb(conn, msg) || handled; // || handled must be last!!
-	log("Handled=%s\n", handled);
-	if (handled) break;
+	bool handled = i->cb(conn, msg);
+	if (handled) return true;
     }
 
-    // handle the fancy callbacks
-    WvString ifc = msg.get_interface();
-    if (ifacedict[ifc])
-    {
-        log(WvLog::Debug5, "Interface exists for message. Sending.\n");
-        ifacedict[ifc]->handle_signal(msg.get_path(), msg.get_member(),
-				      this, msg);
-	handled = true;
-    }
-
-    return handled;
+    return false; // couldn't handle the message, sorry
 }
 
 
@@ -498,5 +454,3 @@ DBusHandlerResult WvDBusConnHelpers::_filter_func(DBusConnection *_conn,
     return conn->filter_func(*conn, msg) 
 	? DBUS_HANDLER_RESULT_HANDLED : DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
-
-

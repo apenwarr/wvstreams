@@ -10,7 +10,6 @@
  */ 
 #include "wvdbusserver.h"
 #include "wvdbuswatch.h"
-#include "wvdbuslistener.h"
 #include <dbus/dbus.h>
 
 
@@ -23,8 +22,8 @@ static void timeout_toggled(DBusTimeout *timeout, void *data);
     
 
 WvDBusServer::WvDBusServer(WvStringParm addr)
-    : cdict(10), rsdict(10),
-      log("DBus Server", WvLog::Debug)
+    : log("DBus Server", WvLog::Debug),
+      name_to_conn(10), serial_to_conn(10)
 {
     DBusError error;
     dbus_error_init(&error);
@@ -66,10 +65,48 @@ void WvDBusServer::maybe_seterr(DBusError &e)
 }
 
 
-void WvDBusServer::register_conn(WvDBusConn *conn)
+void WvDBusServer::register_name(WvStringParm name, WvDBusConn *conn)
 {
-    assert(!cdict[conn->name]);
-    cdict.add(conn, false);
+    assert(!name_to_conn.exists(name));
+    name_to_conn.add(name, conn);
+}
+
+
+void WvDBusServer::unregister_name(WvStringParm name, WvDBusConn *conn)
+{
+    assert(name_to_conn.exists(name));
+    assert(name_to_conn[name] == conn);
+    name_to_conn.remove(name);
+}
+
+
+void WvDBusServer::unregister_conn(WvDBusConn *conn)
+{
+    {
+	WvMap<WvString,WvDBusConn*>::Iter i(name_to_conn);
+	for (i.rewind(); i.next(); )
+	{
+	    if (i->data == conn)
+	    {
+		name_to_conn.remove(i->key);
+		i.rewind();
+	    }
+	}
+    }
+    
+    {
+	WvMap<uint32_t,WvDBusConn*>::Iter i(serial_to_conn);
+	for (i.rewind(); i.next(); )
+	{
+	    if (i->data == conn)
+	    {
+		serial_to_conn.remove(i->key);
+		i.rewind();
+	    }
+	}
+    }
+    
+    all_conns.unlink(conn);
 }
 
 
@@ -84,12 +121,19 @@ WvString WvDBusServer::get_addr()
 
 bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 {
+    WvString method(msg.get_member());
+    
+    if (msg.get_path() == "/org/freedesktop/DBus/Local")
+    {
+	if (method == "Disconnected")
+	    return true; // nothing to do until their *stream* disconnects
+    }
+    
     if (msg.get_dest() != "org.freedesktop.DBus") return false;
     if (msg.get_path() != "/org/freedesktop/DBus") return false;
     
     // I guess it's for us!
     
-    WvString method = msg.get_member();
     if (method == "Hello")
     {
 	log("hello_cb\n");
@@ -104,8 +148,7 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	
 	log("request_name_cb(%s)\n", _name);
 	conn.name = _name;
-	register_conn(&conn);
-	assert(cdict[_name] == &conn);
+	register_name(_name, &conn);
 	
 	msg.reply().append((uint32_t)DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
 	    .send(conn);
@@ -117,6 +160,7 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	WvString _name = args.getnext();
 	
 	log("release_name_cb(%s)\n", _name);
+	unregister_name(_name, &conn);
 	conn.name = "";
 	
 	msg.reply().append((uint32_t)DBUS_RELEASE_NAME_REPLY_RELEASED)
@@ -134,30 +178,31 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
     // to proxy it.
     if (msg.is_reply())
     {
-	WvDBusReplySerial *s = rsdict[msg.get_replyserial()];
-	if (s)
+	uint32_t rserial = msg.get_replyserial();
+	WvDBusConn *conn = serial_to_conn.find(rserial);
+	if (conn)
 	{
-	    log("Proxy reply: target is %s\n", s->conn->uniquename());
-	    s->conn->send(msg);
-	    rsdict.remove(s);
+	    log("Proxy reply: target is %s\n", conn->uniquename());
+	    conn->send(msg);
+	    serial_to_conn.remove(rserial);
 	    return true;
 	}
 	else
 	{
-	    log("Proxy reply: unknown serial #%s!\n",
-		msg.get_replyserial());
+	    log("Proxy reply: unknown serial #%s!\n", rserial);
 	    // fall through and let someone else look at it
 	}
     }
     else if (!!msg.get_dest()) // don't handle blank (broadcast) paths here
     {
-	WvDBusConn *dconn = cdict[msg.get_dest()];
-	log("Proxying %s -> %s\n",
-	    msg, dconn ? dconn->uniquename() : WvString("(UNKNOWN)"));
+	WvDBusConn *dconn = name_to_conn.find(msg.get_dest());
+	log("Proxying #%s -> %s\n",
+	    msg.get_serial(),
+	    dconn ? dconn->uniquename() : WvString("(UNKNOWN)"));
 	if (dconn)
 	{
 	    uint32_t serial = dconn->send(msg);
-	    rsdict.add(new WvDBusReplySerial(serial, &conn), true);
+	    serial_to_conn.add(serial, &conn, false);
 	    log("Proxy: now expecting reply #%s to %s\n",
 		serial, conn.uniquename());
 	}
@@ -174,13 +219,13 @@ bool WvDBusServer::do_broadcast_msg(WvDBusConn &conn, WvDBusMsg &msg)
 {
     if (!msg.get_dest())
     {
-	log("Broadcasting %s\n", msg);
+	log("Broadcasting #%s\n", msg.get_serial());
 	
 	// note: we broadcast messages even back to the connection where
 	// they originated.  I'm not sure this is necessarily ideal, but if
 	// you don't do that then an app can't signal objects that might be
 	// inside itself.
-	WvDBusConnDict::Iter i(cdict);
+	WvDBusConnList::Iter i(all_conns);
 	for (i.rewind(); i.next(); )
 	    i->send(msg);
         return true;
@@ -230,6 +275,13 @@ static void timeout_toggled(DBusTimeout *timeout, void *data)
 }
 
 
+void WvDBusServer::conn_closed(WvStream &s)
+{
+    WvDBusConn *c = (WvDBusConn *)&s;
+    unregister_conn(c);
+}
+
+
 void WvDBusServer::new_connection_cb(DBusServer *dbusserver, 
 				     DBusConnection *new_connection,
 				     void *userdata)
@@ -239,6 +291,9 @@ void WvDBusServer::new_connection_cb(DBusServer *dbusserver,
     WvDBusServer *server = (WvDBusServer *)userdata;
     WvDBusConn *c = new WvDBusConn(new_connection,
 				   WvString(":%s", ++connect_num));
+    server->all_conns.append(c, false);
+    server->register_name(c->uniquename(), c);
+    c->setclosecallback(IWvStreamCallback(server, &WvDBusServer::conn_closed));
     
     c->add_callback(WvDBusConn::PriSystem,
 		    WvDBusCallback(server, 

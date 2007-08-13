@@ -16,34 +16,15 @@
 #ifndef __WVDBUSSERVER_H
 #define __WVDBUSSERVER_H
 
-#include "iwvdbuslistener.h"
 #include "wvdbusconn.h"
 #include "wvhashtable.h"
 #include "wvlog.h"
 #include "wvistreamlist.h"
 
+
+DeclareWvList(WvDBusConn);
+
 struct DBusServer;
-
-class WvDBusServer;
-
-
-// association between reply serials and their respective connection
-typedef struct WvDBusReplySerial
-{
-    WvDBusReplySerial(int _serial, WvDBusConn *_conn) 
-    {
-        serial = _serial;
-        conn = _conn;
-    }
-        
-    int serial;
-    WvDBusConn *conn;
-} WvDBusReplySerial;
-
-
-DeclareWvDict(WvDBusReplySerial, int, serial);
-DeclareWvDict(WvDBusConn, WvString, name);
-
 
 class WvDBusServer : public WvIStreamList
 {
@@ -53,23 +34,45 @@ public:
      *
      * For example:
      *    WvDBusServer s("unix:path=/tmp/foo");
-     *
      */
     WvDBusServer(WvStringParm addr);
+    
+    /**
+     * Not actually defined.  Just prevents accidental copying.
+     */
     WvDBusServer(WvDBusServer &c);
+    
+    /**
+     * Shut down this server.
+     */
     virtual ~WvDBusServer();
 
+    /**
+     * We are isok() as long as no errors have been set.
+     */
     virtual bool isok() const
     {
         return !geterr(); 
     }
 
-    void register_conn(WvDBusConn *conn);
-    // need an unregister_conn
+    /**
+     * Register a given dbus service name as belonging to a particular
+     * connection.
+     */
+    void register_name(WvStringParm name, WvDBusConn *conn);
     
-    void proxy_msg(WvStringParm dest, WvDBusConn *src, WvDBusMsg &msg);
-    void proxy_msg(uint32_t serial, WvDBusMsg &msg);
-
+    /**
+     * Undo a register_name().
+     */
+    void unregister_name(WvStringParm name, WvDBusConn *conn);
+    
+    /**
+     * Forget all name registrations for a particular connection.  Also
+     * forget all serial numbers attached to that connection.  Mostly useful
+     * when a connection closes.
+     */
+    void unregister_conn(WvDBusConn *conn);
+    
     /**
      * get the full, final address (identification guid and all) of the server
      */
@@ -81,14 +84,16 @@ public:
     void maybe_seterr(DBusError &e);
 
 private:
-    WvDBusConnDict cdict;
-    WvDBusReplySerialDict rsdict;
     WvLog log;
+    WvDBusConnList all_conns;
+    WvMap<WvString,WvDBusConn*> name_to_conn;
+    WvMap<uint32_t,WvDBusConn*> serial_to_conn;
     DBusServer *dbusserver;
     
-    static void WvDBusServer::new_connection_cb(DBusServer *dbusserver, 
-					DBusConnection *new_connection,
-					void *userdata);
+    static void new_connection_cb(DBusServer *dbusserver, 
+				  DBusConnection *new_connection,
+				  void *userdata);
+    void conn_closed(WvStream &s);
 	
     bool do_server_msg(WvDBusConn &conn, WvDBusMsg &msg);
     bool do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg);

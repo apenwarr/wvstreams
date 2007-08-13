@@ -23,7 +23,7 @@ WVTEST_MAIN("basics")
 	bool b = (int)i.getnext();
 	
 	WVPASSEQ(s, "yoink");
-	WVPASSEQ(n1, -5);
+	WVPASSEQ(n1, -1);
 	WVPASSEQ(n2, 0xFFFF);
 	WVPASSEQ(b, true);
 	
