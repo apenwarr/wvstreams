@@ -1169,9 +1169,5 @@ void WvStream::unread(WvBuf &unreadbuf, size_t count)
 
 IWvStream *WvStream::find_by_wsid(WSID wsid)
 {
-    WvStream **presult = wsid_map? wsid_map->find(wsid): NULL;
-    if (presult)
-        return *presult;
-    else
-        return NULL;   
+    return wsid_map ? wsid_map->find(wsid) : NULL;
 }

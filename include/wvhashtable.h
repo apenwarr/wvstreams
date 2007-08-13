@@ -300,45 +300,61 @@ public:
 // *****************************
 // WvPair
 
-// Type specification to facilitate autofree
-// Object type - ignores autofree
+/**
+ * WvMap element for TData non-pointer types.  Ignores the autofree flag
+ * since that would be meaningless: we store a copy of the data, not a
+ * pointer to it.
+ */
 template<typename TKey, typename _TData>
 class WvMapPair
 {
-    typedef _TData TData;
 public:
+    typedef _TData TData;
+    typedef TData *TDataPtr;
     TKey key;
     TData data;
     WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
         : key(_key), data(_data) { };
+    TDataPtr ptr() { return &data; }
 };
 
 
-// Pointer type
+/**
+ * WvMap element for TData pointer types (ie. TData is a pointer).  Honours
+ * the autofree flag.
+ */
 template<typename TKey, typename _TData>
 class WvMapPair<TKey, _TData*>
 {
-    typedef _TData* TData;
 public:
+    typedef _TData* TData;
+    typedef TData TDataPtr;
     TKey key;
     TData data;
     WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
         : key(_key), data(_data), autofree(_autofree) { };
     virtual ~WvMapPair()
         { if (autofree) WvTraits<_TData>::release(data); };
+    TDataPtr ptr() { return data; }
 protected:
     bool autofree;
 };
 
 
-// *****************************
-// Main map template
-//
-// Since operator[] returns a reference you should always check
-//      if the element exists() before using it.
-// Alternatively, use find(), to get a pointer to the data type,
-//      which will be null if the element does not exist.
 
+/**
+ * A mapping of objects of type TKey to objects of type TData.  Similar to
+ * WvHashTable, except that the TKey object isn't inside the TData object,
+ * so you can have any kind of mapping you want without defining new
+ * two-element structs.
+ * 
+ * Also, unlike WvHashTable, both the key and the data can be value
+ * (non-pointer) types if you want.  The objects will then be copied directly
+ * into the table rather than using a pointer.  This allows you to store
+ * simple value types (like ints) more efficiently.  Also, since WvString
+ * already includes its own refcounting system, it's much more efficient to
+ * store WvStrings by value instead of by pointer.
+ */
 template
 <
     typename TKey,
@@ -360,13 +376,17 @@ class WvMap : public BackendHash<WvMapPair<TKey, TData>, TKey,
 {
 protected: 
     typedef WvMapPair<TKey, TData> MyPair;
+    typedef typename MyPair::TDataPtr TDataPtr;
     typedef WvMap<TKey, TData, Comparator, BackendHash> MyMap;
     typedef BackendHash<MyPair, TKey, MyMap, Comparator> MyHashTable;
 
-    // We need this last_accessed thing to make sure exists()/operator[]
-    //      does not cost us two hash lookups
-    mutable MyPair* last_accessed;
-    MyPair* find_helper(const TKey &key) const
+    /**
+     * We need this last_accessed thing to make sure exists()/operator[]
+     * does not cost us two hash lookups
+     */
+    mutable MyPair *last_accessed;
+    
+    MyPair *find_helper(const TKey &key) const
     {
         if (last_accessed &&
                 Comparator<TKey>::compare(&last_accessed->key, &key))
@@ -382,42 +402,96 @@ public:
     static const TKey *get_key(const MyPair *obj)
         { return &obj->key; }
 
-    WvMap(int s) : MyHashTable(s), last_accessed(NULL)  { };
-    TData *find(const TKey &key) const
+    /**
+     * Initialize a WvMap, giving at hint about how many elements are likely
+     * to end up in the map.
+     */
+    WvMap(int s) : MyHashTable(s), last_accessed(NULL)  { }
+    
+    /**
+     * Look up the data corresponding to the given key in the map.  Always
+     * returns a pointer; if TData is a pointer type, returns a TData; if
+     * TData is a value type, returns a TData *.
+     * 
+     * Returns NULL if the key doesn't exist.
+     */
+    TDataPtr find(const TKey &key) const
     {
-        MyPair* p = find_helper(key);
-        return p ? &p->data : (TData*)NULL;
+        MyPair *p = find_helper(key);
+        return p ? p->ptr() : (TDataPtr)NULL;
     }
+    
+    /**
+     * Look up the MyPair object corresponding to the given key.  Returns
+     * NULL if not found.
+     */
     MyPair *find_pair(const TKey &key) const
     {
         return find_helper(key);
     }
-    TData &operator[](const TKey &key) const
+    
+    /**
+     * Look up the data corresponding to the given key in the map.  Always
+     * returns a pointer; if TData is a pointer type, returns a TData; if
+     * TData is a value type, returns a TData *.
+     * 
+     * Returns NULL if the key doesn't exist.
+     */
+    TDataPtr operator[](const TKey &key) const
     {
-        MyPair* p = find_helper(key);
-        assert(p && "WvMap: operator[] called with a non-existent key");
-        return p->data;
+	return find(key);
     }
+    
+    /**
+     * Returns true if the key is found in the map, false otherwise.
+     * Previous versions of WvMap required you to call exists() to ensure
+     * the map contained the given key, before extracting it with [].  This
+     * is no longer strictly needed, as [] can return NULL if it doesn't
+     * exist.
+     */
     bool exists(const TKey &key) const
-        { return find_helper(key); }
+    {
+	return find_helper(key);
+    }
+    
+    /**
+     * Add or replace the given key in the map.
+     */
     void set(const TKey &key, const TData &data, bool autofree = false)
     {
 	if (find_helper(key))
 	    remove(key);
 	add(key, data, autofree);
     }
-    void add(const TKey &key, const TData &data, bool autofree = false)
-        { MyHashTable::add(new MyPair(key, data, autofree), true); }
+    
+    /**
+     * Add the given key to the map.  Results are undefined if it is already
+     * in the map.  If you're not sure, use set() instead.
+     */
+    void add(const TKey &key, const TData data, bool autofree = false)
+    { 
+	MyHashTable::add(new MyPair(key, data, autofree), true);
+    }
+    
+    /**
+     * Remove the given key from the map.  If the key isn't already in the
+     * map, does nothing.
+     */
     void remove(const TKey &key)
     {
         last_accessed = NULL;
         MyHashTable::remove(MyHashTable::operator[](key));
     } 
+    
+    /**
+     * Remove all keys from the map.
+     */
     void zap()
     {
 	MyHashTable::zap();
 	last_accessed = NULL;
     }
+    
     typedef typename MyHashTable::Iter Iter;
 }; 
 

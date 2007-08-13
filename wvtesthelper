@@ -5,6 +5,9 @@
 # us runs the testhelper script again.
 #
 export WVTESTRUN="env"
+if [ -z "$WVSTREAMS_SRC" ]; then
+	WVSTREAMS_SRC="$(dirname $0)"
+fi
 
 reportcode()
 {

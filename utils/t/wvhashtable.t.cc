@@ -190,7 +190,7 @@ WVTEST_MAIN("hashtest.cc")
 WVTEST_MAIN("WvMap basics")
 {
     WvMap<WvString, WvString> map(5);
-    map.add ("foo", "bar");
+    map.add("foo", "bar");
     if (!WVPASS(*map.find("foo") == "bar"))
 	printf("   because [%s] != \"bar\"\n", map.find("foo")->cstr());
     map.remove("foo");
