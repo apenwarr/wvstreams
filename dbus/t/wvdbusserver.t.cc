@@ -133,6 +133,14 @@ static bool msg_received(WvDBusConn &conn, WvDBusMsg &msg)
 }
 
 
+static int reg_count = 0;
+bool name_registered(WvDBusConn &conn, WvDBusMsg &msg)
+{
+    reg_count++;
+    return true;
+}
+
+
 WVTEST_MAIN("dbusserver two connections")
 {
     TestDBusServer serv;
@@ -141,16 +149,20 @@ WVTEST_MAIN("dbusserver two connections")
     WvIStreamList::globallist.append(&conn1, false);
     WvIStreamList::globallist.append(&conn2, false);
     
-    conn1.request_name("ca.nit.MySender");
-    conn2.request_name("ca.nit.MyListener");
     conn2.add_callback(WvDBusConn::PriNormal, msg_received);
+    
+    reg_count = 0;
+    conn1.request_name("ca.nit.MySender", name_registered);
+    conn2.request_name("ca.nit.MyListener", name_registered);
 
+    while (reg_count < 2)
+         WvIStreamList::globallist.runonce();
+    
     WvDBusMsg msg("ca.nit.MyListener", "/ca/nit/foo", "ca.nit.foo", "bar");
     msg.append("bee");
 
     conn1.send(msg, reply_received);
 
-    fprintf(stderr, "Spinning...\n");
     while (replies_received < 1 || messages_received < 1)
          WvIStreamList::globallist.runonce();
 
@@ -169,7 +181,10 @@ WVTEST_MAIN("dbusserver overlapping registrations")
     WvIStreamList::globallist.append(l1, false);
     WvIStreamList::globallist.append(l2, false);
     
-    l1->request_name("ca.nit.MySender");
+    reg_count = 0;
+    l1->request_name("ca.nit.MySender", name_registered);
+    while (reg_count < 1)
+         WvIStreamList::globallist.runonce();
     
     l1->add_callback(WvDBusConn::PriNormal, mysignal);
     l2->add_callback(WvDBusConn::PriNormal, mysignal);
@@ -202,7 +217,11 @@ WVTEST_MAIN("dbusserver overlapping registrations")
     WVPASSEQ(mysignal_count, 1); // no method receiver, one signal
     
     mysignal_count = 0;
-    l2->request_name("ca.nit.MySender");
+    reg_count = 0;
+    l2->request_name("ca.nit.MySender", name_registered);
+    while (reg_count < 1)
+         WvIStreamList::globallist.runonce();
+    
     cli->send(sig);
     cli->send(meth, mysignal);
     while (mysignal_count < 2 || WvIStreamList::globallist.select(200))

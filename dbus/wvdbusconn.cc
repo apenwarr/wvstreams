@@ -37,6 +37,7 @@ WvDBusConn::WvDBusConn(DBusConnection *_c, WvStringParm _uniquename)
     if (dbusconn)
 	dbus_connection_ref(dbusconn);
     this->_uniquename = _uniquename;
+    registered = true; // no need to register with server: we are the server!
     init(false);
 }
 
@@ -44,8 +45,6 @@ WvDBusConn::WvDBusConn(DBusConnection *_c, WvStringParm _uniquename)
 WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
     : log(WvString("DBus #%s/%s", getpid(), ++conncount), WvLog::Debug4)
 {
-    bool needs_register = false;
-    
     log("Initializing.\n");
     assert(!!dbus_moniker);
     
@@ -66,22 +65,14 @@ WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
 	    dbusconn = dbus_bus_get_private(DBUS_BUS_STARTER, &error);
 	else
 	    seterr("No such bus '%s'", busname);
+	registered = true; // dbus_bus_get_* is supposed to do this for us
     }
     else
     {
 	dbusconn = dbus_connection_open_private(dbus_moniker, &error);
-	needs_register = true;
+	registered = false;
     }
     maybe_seterr(error);
-
-    // dbus_bus_get(..) does the following for us.. but we aren't using
-    // dbus_bus_get
-    //dbus_connection_set_exit_on_disconnect(dbusconn, FALSE);
-    if (dbusconn && needs_register && !dbus_bus_register(dbusconn, &error))
-        log(WvLog::Error, "Error registering with the bus!\n");
-
-    if (isok())
-	_uniquename = dbus_bus_get_unique_name(dbusconn);
 
     init(true);
 }
@@ -105,20 +96,27 @@ WvDBusConn::~WvDBusConn()
 
 void WvDBusConn::init(bool client)
 {
-    if (geterr())
-	log(WvLog::Error, "Error in initialization: %s\n", errstr());
-    
     if (client && isok())
-	log("Server assigned name: '%s'\n", uniquename());
+    {
+	DBusError error;
+	dbus_error_init(&error);
+	if (!registered)
+	    dbus_bus_register(dbusconn, &error);
+	maybe_seterr(error);
     
-    if (!!_uniquename)
-	log.app = WvString("DBus %s%s", client ? "c" : "s", uniquename());
+	if (isok())
+	{
+	    _uniquename = dbus_bus_get_unique_name(dbusconn);
+	    log("Server assigned name: '%s'\n", uniquename());
+	    registered = true;
+	}
+    }
 
     DBusWatchToggledFunction toggled_function = NULL;
     if (client)
         toggled_function = WvDBusConnHelpers::_watch_toggled;
 
-    if (dbusconn)
+    if (isok())
     {
 	if (!dbus_connection_set_watch_functions(dbusconn,
 				     WvDBusConnHelpers::_add_watch,
@@ -140,6 +138,9 @@ void WvDBusConn::init(bool client)
 				   this, NULL);
     }
     
+    if (!!_uniquename)
+	log.app = WvString("DBus %s%s", client ? "c" : "s", uniquename());
+
     if (client && isok())
     {
 	DBusError error;
@@ -147,6 +148,9 @@ void WvDBusConn::init(bool client)
 	dbus_bus_add_match(dbusconn, "type='signal'", &error);
 	maybe_seterr(error);
     }
+    
+    if (geterr())
+	log(WvLog::Error, "Error in initialization: %s\n", errstr());
 }
 
 
@@ -173,19 +177,20 @@ WvString WvDBusConn::uniquename() const
 }
 
 
-void WvDBusConn::request_name(WvStringParm name)
+void WvDBusConn::request_name(WvStringParm name, WvDBusCallback onreply)
 {
     if (!isok()) return;
 
-    DBusError error;
-    dbus_error_init(&error);
-    
-    int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT |
+    uint32_t flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT |
                  DBUS_NAME_FLAG_REPLACE_EXISTING);
-    if (dbus_bus_request_name(dbusconn, name, flags, &error) == -1)
-	maybe_seterr(error);
+    WvDBusMsg msg("org.freedesktop.DBus", "/org/freedesktop/DBus",
+	      "org.freedesktop.DBus", "RequestName");
+    msg.append(name).append(flags);
+    if (!!onreply)
+	send(msg, onreply);
     else
-        log("Set name '%s' for this connection.\n", name);
+	send(msg);
+    log("Requested name '%s' for this connection.\n", name);
 }
 
 

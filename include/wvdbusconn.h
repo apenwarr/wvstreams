@@ -66,7 +66,7 @@ public:
      * 
      * The name will be released when this connection object is destroyed.
      */
-    void request_name(WvStringParm name);
+    void request_name(WvStringParm name, WvDBusCallback onreply = 0);
     
     /**
      * Return this connection's unique name on the bus, assigned by the server
@@ -181,7 +181,7 @@ private:
     static void pending_call_notify(DBusPendingCall *pending, void *user_data);
 
     DBusConnection *dbusconn;
-    bool name_acquired;
+    bool registered;
     WvString _uniquename;
 };
 
