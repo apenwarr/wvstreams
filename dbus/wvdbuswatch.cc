@@ -18,6 +18,8 @@ WvDBusWatch::WvDBusWatch(DBusWatch *_watch, unsigned int _flags) :
 {
     int fd = dbus_watch_get_fd(watch);
     rfd = wfd = fd;
+    
+    assert(_flags & (DBUS_WATCH_READABLE | DBUS_WATCH_WRITABLE));
 
     if (!(_flags & DBUS_WATCH_READABLE))
     {

@@ -147,7 +147,6 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	// uint32_t flags = args.getnext(); // supplied, but ignored
 	
 	log("request_name_cb(%s)\n", _name);
-	conn.name = _name;
 	register_name(_name, &conn);
 	
 	msg.reply().append((uint32_t)DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
@@ -161,10 +160,15 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	
 	log("release_name_cb(%s)\n", _name);
 	unregister_name(_name, &conn);
-	conn.name = "";
 	
 	msg.reply().append((uint32_t)DBUS_RELEASE_NAME_REPLY_RELEASED)
 	    .send(conn);
+	return true;
+    }
+    else if (method == "AddMatch")
+    {
+	// we just proxy everything to everyone for now
+	msg.reply().send(conn);
 	return true;
     }
     

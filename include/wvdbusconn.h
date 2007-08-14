@@ -38,7 +38,6 @@ class WvDBusConn : public WvIStreamList
 {
     friend class WvDBusConnHelpers;
 public:
-    WvString name; // needs to be public for lookup
     WvLog log;
     
     /**

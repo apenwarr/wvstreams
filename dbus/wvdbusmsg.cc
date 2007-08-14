@@ -369,10 +369,10 @@ WvDBusMsg::operator WvString() const
     {
 	if (!!get_sender())
 	    src = WvString("%s->", get_sender());
-	return WvString("%s%s:%s:%s.%s#%s",
+	return WvString("%s%s:%s:%s.%s(%s)#%s",
 			src, get_dest(),
 			get_path(), get_interface(), get_member(),
-			get_serial());
+			get_argstr(), get_serial());
     }
 }
 

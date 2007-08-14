@@ -108,8 +108,6 @@ void WvDBusConn::init(bool client)
     if (geterr())
 	log(WvLog::Error, "Error in initialization: %s\n", errstr());
     
-    name_acquired = false;
-    
     if (client && isok())
 	log("Server assigned name: '%s'\n", uniquename());
     
@@ -141,20 +139,19 @@ void WvDBusConn::init(bool client)
 				   WvDBusConnHelpers::_filter_func,
 				   this, NULL);
     }
+    
+    if (client && isok())
+    {
+	DBusError error;
+	dbus_error_init(&error);
+	dbus_bus_add_match(dbusconn, "type='signal'", &error);
+	maybe_seterr(error);
+    }
 }
 
 
 void WvDBusConn::close()
 {
-    if (name_acquired)
-    {
-	DBusError error;
-	dbus_error_init(&error);
-	if (isok())
-	    dbus_bus_release_name(dbusconn, name, &error);
-	maybe_seterr(error);
-    }
-    
     if (dbusconn)
 	dbus_connection_close(dbusconn);
     
@@ -179,22 +176,16 @@ WvString WvDBusConn::uniquename() const
 void WvDBusConn::request_name(WvStringParm name)
 {
     if (!isok()) return;
-    assert(!name_acquired);
 
     DBusError error;
     dbus_error_init(&error);
     
-    this->name = name;
-
     int flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT |
                  DBUS_NAME_FLAG_REPLACE_EXISTING);
     if (dbus_bus_request_name(dbusconn, name, flags, &error) == -1)
 	maybe_seterr(error);
     else
-    {
-        log(WvLog::Debug5, "Set name '%s' for this connection.\n", name);
-        name_acquired = true;
-    }
+        log("Set name '%s' for this connection.\n", name);
 }
 
 
@@ -289,13 +280,6 @@ void WvDBusConn::send(WvDBusMsg &msg, const WvDBusCallback &onreply)
 
 void WvDBusConn::add_callback(CallbackPri pri, WvDBusCallback cb, void *cookie)
 {
-#if 0
-    DBusError error;
-    dbus_error_init(&error);
-    dbus_bus_add_match(dbusconn, "type='signal',interface='fork'", &error);
-    maybe_seterr(error);
-#endif
-    
     callbacks.append(new CallbackInfo(pri, cb, cookie), true);
 }
 
