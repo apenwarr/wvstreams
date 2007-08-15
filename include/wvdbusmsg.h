@@ -15,6 +15,7 @@
 #define __WVDBUSMSG_H
 
 #include "wvstringlist.h"
+#include "wvbuf.h"
 #include <stdint.h>
 
 struct DBusMessageIter;
@@ -22,6 +23,14 @@ struct DBusMessage;
 
 class WvDBusMsg;
 class WvDBusConn;
+
+// see wvdbusmarshal_c.c
+extern "C" {
+    size_t wvdbus_message_length(const void *buf, size_t len);
+    DBusMessage *wvdbus_demarshal(const void *buf, size_t len, size_t *used);
+    int wvdbus_marshal(DBusMessage *msg, char **cbuf, size_t *len);
+}
+
 
 class WvDBusMsg
 {
@@ -49,6 +58,34 @@ public:
     virtual ~WvDBusMsg();
 
     operator DBusMessage* () const;
+    
+    /**
+     * Demarshals a new WvDBusMsg from a buffer containing its binary DBus
+     * protocol representation.  You're responsible for freeing the object
+     * when done.  Returns NULL if the object can't be extracted from the
+     * buffer.
+     * (Implementation in wvdbusmarshal.cc)
+     */
+    static WvDBusMsg *demarshal(WvBuf &buf);
+    
+    /**
+     * Given a buffer containing what might be the header of a DBus message,
+     * checks how many bytes need to be in the buffer in order for it to
+     * contain a whole message.  If the return value is <= the number of
+     * bytes already in the buffer, then demarshal() will succeed (or the
+     * incoming message is corrupt).
+     * (Implementation in wvdbusmarshal.cc)
+     */
+    static size_t demarshal_bytes_needed(WvBuf &buf);
+    
+    /**
+     * Locks this message, encodes it in DBus binary protocol format, and
+     * adds it to the given buffer.  This message becomes locked and can
+     * no longer be append()ed to.  You can marshal it more than once,
+     * however (but it will always have the same serial number!!)
+     * (Implementation in wvdbusmarshal.cc)
+     */
+    void marshal(WvBuf &buf);
     
     WvString get_sender() const;
     WvString get_dest() const;
