@@ -1,6 +1,6 @@
-# wvrules.mk:  2003 09 09
+# wvrules.mk:  2007 08 15
 #
-# Copyright (C) 1998-2003 by Avery Pennarun <apenwarr@worldvisions.ca>.
+# Copyright (C) 1998-2007 by Avery Pennarun <apenwarr@alumnit.ca>.
 #   Use, distribute, modify, and redistribute freely.  (But if you're nice,
 #   you'll send all your changes back to me.)
 #
@@ -38,20 +38,6 @@ ifeq (${WVTESTRUN},)
   WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
 endif
 
-ifneq ("$(with_xplc)", "no")
-ifneq ("$(with_xplc)", "")
-  LDFLAGS:=-L$(with_xplc) $(LDFLAGS)
-endif
-  LIBXPLC=-lxplc-cxx
-endif
-
-ifneq ("$(with_dbus)", "no")
-ifneq ("$(with_dbus)", "")
-  LDFLAGS:=-L$(with_dbus) $(LDFLAGS)
-endif
-  LIBDBUS=
-endif
-
 LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so
 LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
@@ -64,10 +50,8 @@ LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
 # Initial C compilation flags
 #
 CPPFLAGS += $(CPPOPTS)
-C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
-		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CFLAGS += $(COPTS) $(C_AND_CXX_FLAGS) 
-CXXFLAGS += $(CXXOPTS) $(C_AND_CXX_FLAGS)
+CFLAGS += $(COPTS)
+CXXFLAGS += $(CXXOPTS)
 LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 
 # Default compiler we use for linking
@@ -200,9 +184,9 @@ ifeq ($(STATIC),1)
 endif
 
 INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
-CPPFLAGS+=$(INCFLAGS)
-CFLAGS+=$(CPPFLAGS)
-CXXFLAGS+=$(CPPFLAGS)
+CPPFLAGS+=$(INCFLAGS) \
+	-D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 
 ifeq ($(VERBOSE),1)
   COMPILE_MSG :=
@@ -259,8 +243,8 @@ define wvcc_base
                     } \
                 }' >$(DEPFILE)
 endef
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $4,$(if $5,$5,-c))
+wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
 
 define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
