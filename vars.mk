@@ -45,7 +45,7 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-CPPFLAGS += -Iinclude -Ignulib -pipe
+CPPFLAGS += -Iinclude -Iinclude/dbus-upstream -Ignulib -pipe
 ARFLAGS = rs
 
 DEBUG:=$(filter-out no,$(enable_debug))
@@ -107,16 +107,12 @@ ifeq ("$(enable_efence)", "yes")
 LDLIBS+=-lefence
 endif
 
-ifneq ("$(with_dbus)", "no")
-  libwvdbus.so-LIBS+=-L. -ldbus-1
-endif
+libwvdbus.so-LIBS+=$(LIBS_DBUS)
 
-libwvbase.so-LIBS+=-lxplc-cxx -lm
+libwvbase.so-LIBS+=$(LIBS_XPLC) -lm
 libwvbase.so:
 
-ifneq ("$(with_pam)", "no")
-  libwvutils.so: -lpam
-endif
+libwvutils.so-LIBS+=$(LIBS_PAM)
 
 LDLIBS := $(LDLIBS) \
 	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
@@ -197,7 +193,7 @@ libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
 
 libwvdbus.a libwvdbus.so: $(call objects,dbus)
 libwvdbus.so: libwvstreams.so libwvutils.so libwvbase.so
-libwvdbus.so: LIBS+=-ldbus-1
+libwvdbus.so: LIBS+=
 
 libwvtest.a: wvtestmain.o $(TESTOBJS)
 

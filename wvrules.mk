@@ -49,7 +49,7 @@ ifneq ("$(with_dbus)", "no")
 ifneq ("$(with_dbus)", "")
   LDFLAGS:=-L$(with_dbus) $(LDFLAGS)
 endif
-  LIBDBUS=-ldbus-1
+  LIBDBUS=
 endif
 
 LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so

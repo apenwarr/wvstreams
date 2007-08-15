@@ -11,11 +11,11 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 extern "C" {
-#include <dbus-marshal-header.h>
+#include <dbus/dbus-marshal-header.h>
 }
-#include <dbus-internals.h>
-#include <dbus-string.h>
-#include <dbus-message-private.h>
+#include <dbus/dbus-internals.h>
+#include <dbus/dbus-string.h>
+#include <dbus/dbus-message-private.h>
 
 static bool _marshal(DBusMessage *msg, char **cbuf, size_t *len)
 {

@@ -24,7 +24,12 @@ SO_VERSION=@SO_VERSION@
 
 target=@target@
 ARCH_SUBDIRS=@ARCH_SUBDIRS@
-LIBS+=@ac_libs@
+LIBS=@ac_libs@
+LIBS_XPLC=@LIBS_XPLC@
+LIBS_DBUS=@LIBS_DBUS@
+LIBS_QT=@LIBS_QT@
+LIBS_PAM=@LIBS_PAM@
+LIBS_TCL=@LIBS_TCL@
 
 prefix=@prefix@
 datadir=@datadir@
