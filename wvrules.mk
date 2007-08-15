@@ -164,10 +164,12 @@ ifeq ($(CCMALLOC),1)
 endif
 
 ifeq ($(DEBUG),1)
-  C_AND_CXX_FLAGS += -ggdb -DDEBUG=1
+  CFLAGS += -ggdb -DDEBUG=1
+  CXXFLAGS += -ggdb -DDEBUG=1
   LDFLAGS += -ggdb
 else
-  C_AND_CXX_FLAGS += -g -DDEBUG=0
+  CFLAGS += -g -DDEBUG=0
+  CXXFLAGS += -g -DDEBUG=0
   #CFLAGS += -DNDEBUG    # I don't like disabling assertions...
   #CFLAGS += -fomit-frame-pointer  # really evil
   #CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0
@@ -176,6 +178,7 @@ endif
 
 ifeq ($(PROFILE),1)
   CFLAGS += -pg
+  CXXFLAGS += -pg
   LDFLAGS += -pg
 endif
 
