@@ -209,6 +209,7 @@ void WvTCPConn::check_resolver()
     }
     else if (dnsres > 0)
     {
+	fprintf(stderr, "%p: resolver succeeded!\n", this);
 	remaddr = WvIPPortAddr(*ipr, remaddr.port);
 	resolved = true;
 	do_connect();
@@ -413,33 +414,20 @@ void WvTCPListener::auto_accept(WvIStreamList *list,
     auto_list = list;
     auto_callback = callfunc;
     auto_userdata = userdata;
-    setcallback(accept_callback, this);
+    onaccept(IWvListenerCallback(this, &WvTCPListener::accept_callback));
 }
 
 void WvTCPListener::auto_accept(WvStreamCallback callfunc, void *userdata)
 {
-    auto_callback = callfunc;
-    auto_userdata = userdata;
-    setcallback(accept_global_callback, this);
+    auto_accept(&WvIStreamList::globallist, callfunc, userdata);
 }
 
 
-void WvTCPListener::accept_global_callback(WvStream &s, void *userdata)
+void WvTCPListener::accept_callback(IWvStream *_connection, void *)
 {
-    WvTCPListener &l = *(WvTCPListener *)userdata; 
-    WvTCPConn *connection = l.accept();
-    connection->setcallback(l.auto_callback, l.auto_userdata);
-    WvIStreamList::globallist.append(connection, true, "WvTCPConn");
-}
-
-
-void WvTCPListener::accept_callback(WvStream &s, void *userdata)
-{
-    WvTCPListener &l = *(WvTCPListener *)userdata;
-
-    WvTCPConn *connection = l.accept();
-    connection->setcallback(l.auto_callback, l.auto_userdata);
-    l.auto_list->append(connection, true, "WvTCPConn");
+    WvStreamClone *connection = new WvStreamClone(_connection);
+    connection->setcallback(auto_callback, auto_userdata);
+    auto_list->append(connection, true, "WvTCPConn");
 }
 
 

@@ -9,7 +9,6 @@
  * 
  */ 
 #include "wvdbusconn.h"
-#include "wvdbuswatch.h"
 #include "wvmoniker.h"
 #include "wvstrutils.h"
 #include <dbus/dbus.h>

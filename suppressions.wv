@@ -182,3 +182,15 @@
    fun:__libc_dlopen_mode
    fun:__nss_lookup_function
 }
+{
+   glibc_equals_party
+   Memcheck:Addr4
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+}

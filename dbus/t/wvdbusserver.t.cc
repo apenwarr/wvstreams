@@ -92,6 +92,7 @@ public:
 static int mysignal_count = 0;
 static bool mysignal(WvDBusConn &conn, WvDBusMsg &msg)
 {
+    if (msg.get_interface() != "x.y.z.anything") return false;
     fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
     mysignal_count++;
     return true; // we handle *any* message

@@ -18,36 +18,14 @@ class WvListener : public IWvListener
 public:
     IWvStream *cloned;
     IWvListenerCallback acceptor;
+    void *acceptor_userdata;
     
-    WvListener(IWvStream *_cloned)
-    {
-	cloned = _cloned;
-    }
+    WvListener(IWvStream *_cloned);
+    virtual ~WvListener();
     
-    virtual ~WvListener()
-    {
-	if (cloned)
-	    WVRELEASE(cloned);
-    }
-    
-    virtual IWvListenerCallback onaccept(IWvListenerCallback _cb)
-    {
-	IWvListenerCallback old = acceptor;
-	acceptor = _cb;
-	return old;
-    }
-    
-    //
-    // for old-style callbacks & WvStreams compatibility
-    // 
-    
-    CompatCallback compat_cb;
-    void *compat_userdata;
-    void setcallback(CompatCallback cb, void *userdata)
-        { compat_cb = cb; compat_userdata = userdata; }
-    
-    void runonce(time_t msec_delay)
-        { callback(); }
+    virtual IWvListenerCallback onaccept(IWvListenerCallback _cb,
+					 void *_userdata = 0);
+    void runonce(time_t msec_delay);
     
     //
     // IWvStream default implementation.
@@ -59,15 +37,10 @@ public:
     
     virtual void callback()
     {  
-	if (compat_cb)
-	{
-	    WvStreamClone tmp(this);
-	    compat_cb(tmp, compat_userdata);
-	}
-	else if (acceptor)
+	if (acceptor)
 	{
 	    IWvStream *s = accept();
-	    if (s) acceptor(s);
+	    if (s) acceptor(s, acceptor_userdata);
 	}
     }
     

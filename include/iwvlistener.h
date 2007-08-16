@@ -10,7 +10,7 @@
 
 #include "iwvstream.h"
 
-typedef WvCallback<void, IWvStream*> IWvListenerCallback;
+typedef WvCallback<void, IWvStream*, void*> IWvListenerCallback;
 
 class IWvListener : public IWvStream
 {
@@ -26,7 +26,8 @@ public:
      * available.  The new connection IWvStream is given, and it's the
      * callback's responsibility to make sure it gets freed properly.
      */
-    virtual IWvListenerCallback onaccept(IWvListenerCallback _cb) = 0;
+    virtual IWvListenerCallback onaccept(IWvListenerCallback _cb,
+					 void *_userdata = 0) = 0;
 };
 
 DEFINE_IID(IWvListener, {0xe7c2433a, 0x6d5c, 0x4345, {0x83,

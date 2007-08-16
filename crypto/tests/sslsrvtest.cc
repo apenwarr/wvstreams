@@ -50,19 +50,13 @@ void bounce_to_list(WvStream &s, void *userdata)
 }
  
  
-void tcp_incoming(WvStream &_listener, void *userdata)
+void tcp_incoming(IWvStream *s, void *userdata)
 {
-    WvTCPListener *listener = (WvTCPListener *)&_listener;
     WvX509Mgr *x509 = (WvX509Mgr *)userdata;
-    WvTCPConn *s = listener->accept();
-    
-    if (s)
-    {
-	WvSSLStream *sslsrvr = new WvSSLStream(s, x509, validateme,
-					       true);
-        WvIStreamList::globallist.append(sslsrvr, true, "ss tcp");
-	sslsrvr->setcallback(bounce_to_list, NULL);
-    }
+    WvSSLStream *sslsrvr = new WvSSLStream(s, x509, validateme,
+					   true);
+    WvIStreamList::globallist.append(sslsrvr, true, "ss tcp");
+    sslsrvr->setcallback(bounce_to_list, NULL);
 }
 
  
@@ -109,7 +103,7 @@ int main(int argc, char **argv)
     }
 
     WvTCPListener tcplisten("0.0.0.0:5238");
-    tcplisten.setcallback(tcp_incoming, x509cert);
+    tcplisten.onaccept(tcp_incoming, x509cert);
     
     if (!tcplisten.isok())
     {

@@ -272,8 +272,7 @@ void WvDBusServer::conn_closed(WvStream &s)
 }
 
 
-static int conncount = 2000;
-void WvDBusServer::new_connection_cb(IWvStream *s)
+void WvDBusServer::new_connection_cb(IWvStream *s, void *)
 {
     WvDBusConn *c = new WvDBusConn(s, new WvDBusServerAuth, false);
     all_conns.append(c, false);

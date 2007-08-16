@@ -80,14 +80,14 @@ void UniConfDaemon::unixcallback(WvStream &l, void *)
 #endif
 
 
-void UniConfDaemon::tcpcallback(IWvStream *s)
+void UniConfDaemon::tcpcallback(IWvStream *s, void *)
 {
     debug("Incoming TCP connection from %s.\n", *s->src());
     accept(new WvStreamClone(s));
 }
 
 
-void UniConfDaemon::sslcallback(WvX509Mgr *x509, IWvStream *s)
+void UniConfDaemon::sslcallback(WvX509Mgr *x509, IWvStream *s, void *)
 {
     debug("Incoming TCP/SSL connection from %s.\n", *s->src());
     accept(new WvSSLStream(s, x509, 0, true));

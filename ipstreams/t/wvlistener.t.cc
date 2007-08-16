@@ -22,7 +22,7 @@ public:
 
 static IWvStream *mystream;
 
-static void acceptor(IWvStream *s)
+static void acceptor(IWvStream *s, void *)
 {
     mystream = s;
 }

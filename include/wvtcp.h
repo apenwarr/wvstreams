@@ -183,8 +183,7 @@ protected:
     WvStreamCallback auto_callback;
     void *auto_userdata;
     
-    static void accept_callback(WvStream &s, void *userdata);
-    static void accept_global_callback(WvStream &s, void *userdata);
+    void accept_callback(IWvStream *s, void *userdata);
 
 public:
     const char *wstype() const { return "WvTCPListener"; }
