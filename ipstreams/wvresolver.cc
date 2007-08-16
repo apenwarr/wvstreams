@@ -335,17 +335,7 @@ bool WvResolver::post_select(WvStringParm hostname, WvStream::SelectInfo &si)
 {
     WvResolverHost *host = (*hostmap)[hostname];
     
-    if (host)
-    {
-	if (host->loop)
-        {
-	    host->loop->xpost_select(si,
-                                    WvStream::SelectRequest(true, false, 
-                                                            false));
-        }
-	else
-	    return true; // sure thing: already looked up this name!
-    }
-
-    return false; // will never be ready... host not even in map!
+    if (host && host->loop)
+	return host->loop->xpost_select(si,
+				WvStream::SelectRequest(true, false, false));
 }
