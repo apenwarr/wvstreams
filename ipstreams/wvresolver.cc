@@ -338,4 +338,5 @@ bool WvResolver::post_select(WvStringParm hostname, WvStream::SelectInfo &si)
     if (host && host->loop)
 	return host->loop->xpost_select(si,
 				WvStream::SelectRequest(true, false, false));
+    return false;
 }

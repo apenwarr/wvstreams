@@ -17,9 +17,9 @@ WV_LINK(UniDefGen);
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    return new UniDefGen(wvcreate<IUniConfGen>(s));
+    return new UniDefGen(wvcreate<IUniConfGen>(s, _obj));
 }
 
 // this name is too confusing.  We should deprecate it.

@@ -28,7 +28,7 @@ public:
 };
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject*)
 {
     return new UniWvConfGen(new WvConf(s));
 }

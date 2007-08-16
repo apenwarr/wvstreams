@@ -48,7 +48,7 @@
 #include <fcntl.h>
 #include <sys/un.h>
 
-static IWvStream *creator(WvStringParm s)
+static IWvStream *creator(WvStringParm s, IObject*)
 {
     return new WvUnixConn(s);
 }

@@ -26,14 +26,14 @@
 #define EAGAIN WSAEWOULDBLOCK
 #endif
 
-static IWvStream *creator(WvStringParm s)
+static IWvStream *creator(WvStringParm s, IObject *_obj)
 {
-    return new WvSSLStream(wvcreate<IWvStream>(s), NULL, 0, false);
+    return new WvSSLStream(wvcreate<IWvStream>(s, _obj), NULL, 0, false);
 }
 
-static IWvStream *screator(WvStringParm s)
+static IWvStream *screator(WvStringParm s, IObject *_obj)
 {
-    return new WvSSLStream(wvcreate<IWvStream>(s), NULL, 0, true);
+    return new WvSSLStream(wvcreate<IWvStream>(s, _obj), NULL, 0, true);
 }
 
 static WvMoniker<IWvStream> reg("ssl", creator);

@@ -39,7 +39,6 @@ public:
      * Constructs a new WvDBus message. If destination is blank, no 
      * destination is set; this is appropriate when using D-BUS in a 
      * peer-to-peer context (no message bus).
-     *
      */
     WvDBusMsg(WvStringParm busname, WvStringParm objectname, 
               WvStringParm interface, WvStringParm method);
@@ -167,6 +166,11 @@ public:
     WvDBusMsg reply();
     
     /**
+     * Return true if this message is an error response.
+     */
+    bool iserror() const;
+    
+    /**
      * A shortcut for sending this message on the given connection.
      * Equivalent to conn.send(*this).
      */
@@ -284,6 +288,14 @@ class WvDBusSignal : public WvDBusMsg
 public:
     WvDBusSignal(WvStringParm objectname, WvStringParm interface, 
                  WvStringParm name);
+};
+
+
+class WvDBusError : public WvDBusMsg
+{
+public:
+    WvDBusError(WvDBusMsg &in_reply_to,
+		WvStringParm errname, WvStringParm message);
 };
 
 #endif // __WVDBUSMSG_H

@@ -16,24 +16,25 @@
 #ifndef __WVDBUSSERVER_H
 #define __WVDBUSSERVER_H
 
-#include "wvdbusconn.h"
+#include "wvlistener.h"
 #include "wvhashtable.h"
 #include "wvlog.h"
 #include "wvistreamlist.h"
 
-
+class WvDBusMsg;
+class WvDBusConn;
 DeclareWvList(WvDBusConn);
 
-struct DBusServer;
 
 class WvDBusServer : public WvIStreamList
 {
+    IWvListener *listener;
 public:
     /* 
-     * Constructs a new DBus server at the specified address. 
+     * Constructs a new DBus server at the specified WvListener moniker.
      *
      * For example:
-     *    WvDBusServer s("unix:path=/tmp/foo");
+     *    WvDBusServer s("unix:/tmp/foo");
      */
     WvDBusServer(WvStringParm addr);
     
@@ -78,21 +79,13 @@ public:
      */
     WvString get_addr();
 
-    /**
-     * Set the error code of this connection if 'e' is nonempty.
-     */
-    void maybe_seterr(DBusError &e);
-
 private:
     WvLog log;
     WvDBusConnList all_conns;
     WvMap<WvString,WvDBusConn*> name_to_conn;
     WvMap<uint32_t,WvDBusConn*> serial_to_conn;
-    DBusServer *dbusserver;
     
-    static void new_connection_cb(DBusServer *dbusserver, 
-				  DBusConnection *new_connection,
-				  void *userdata);
+    void new_connection_cb(IWvStream *s);
     void conn_closed(WvStream &s);
 	
     bool do_server_msg(WvDBusConn &conn, WvDBusMsg &msg);

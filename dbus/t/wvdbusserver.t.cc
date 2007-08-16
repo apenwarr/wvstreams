@@ -14,6 +14,7 @@ class TestDBusServer
 {
 public:
     WvString moniker;
+#if 0
     pid_t parent, child;
     WvLoopback loop;
     
@@ -63,6 +64,28 @@ public:
 	fprintf(stderr, "Server process terminating.\n");
 	_exit(0);
     }
+    
+#else
+    WvDBusServer *s;
+    
+    TestDBusServer()
+    {
+	fprintf(stderr, "Creating a test DBus server.\n");
+	WvString smoniker("unix:tmpdir=%s.dir",
+			 wvtmpfilename("wvdbus-sock-"));
+	s = new WvDBusServer(smoniker);
+	moniker = s->get_addr();
+	fprintf(stderr, "Server address is '%s'\n", moniker.cstr());
+	WvIStreamList::globallist.append(s, false);
+    }
+    
+    ~TestDBusServer()
+    {
+	delete s;
+    }
+    
+#endif
+    
 };
 
 

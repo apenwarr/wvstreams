@@ -14,17 +14,14 @@
 #ifndef __WVDBUSCONN_H
 #define __WVDBUSCONN_H
 
-#include "wvistreamlist.h"
+#include "wvstreamclone.h"
 #include "wvlog.h"
 #include "wvdbusmsg.h"
+#include <dbus/dbus.h>
+
+#define WVDBUS_DEFAULT_TIMEOUT (300*1000)
 
 class WvDBusConn;
-
-struct DBusConnection;
-struct DBusError;
-struct DBusWatch;
-struct DBusTimeout;
-struct DBusPendingCall;
 
 /**
  * The data type of callbacks used by WvDBusConn::add_callback().  The
@@ -34,31 +31,80 @@ struct DBusPendingCall;
 typedef WvCallback<bool, WvDBusConn&, WvDBusMsg&> WvDBusCallback;
     
 
-class WvDBusConn : public WvIStreamList
+class IWvDBusAuth
 {
-    friend class WvDBusConnHelpers;
+public:
+    virtual ~IWvDBusAuth() { };
+    
+    /**
+     * Main action callback.  Called whenever d seems to have data available.
+     * Return false if you're not yet authorized and need to be called again
+     * when data is available; return true if you're done.
+     * 
+     * If authorization fails, call seterr on d with an appropriate error
+     * message.
+     */
+    virtual bool authorize(WvDBusConn &c) = 0;
+};
+
+
+class WvDBusClientAuth : public IWvDBusAuth
+{
+    bool sent_request;
+public:
+    WvDBusClientAuth();
+    virtual bool authorize(WvDBusConn &c);
+};
+
+
+class WvDBusConn : public WvStreamClone
+{
+    bool client, authorized;
+    WvString _uniquename;
+    IWvDBusAuth *auth;
+    
 public:
     WvLog log;
     
-    /**
-     * Creates a new dbus connection on the given bus.
-     * 
-     * WvDBus uses special monikers for the "standard" DBus buses:
-     * bus:system, bus:session, and bus:starter.  These correspond to 
-     * DBUS_BUS_SYSTEM, DBUS_BUS_SESSION, and DBUS_BUS_STARTER, respectively.
-     */
-    WvDBusConn(WvStringParm dbus_moniker);
+    WvDBusConn(DBusConnection*, WvStringParm)
+	: WvStreamClone(0), log("foo"), pending(10)
+    {
+	assert(0);
+    }
     
     /**
-     * Initialize this object from an existing low-level DBusConnection object.
+     * Creates a new dbus connection using the given WvStreams moniker.
+     * 
+     * WvDBus uses special monikers for the "standard" DBus buses:
+     * dbus:system, dbus:session, and dbus:starter.  These correspond to 
+     * DBUS_BUS_SYSTEM, DBUS_BUS_SESSION, and DBUS_BUS_STARTER, respectively.
      */
-    WvDBusConn(DBusConnection *_c, WvStringParm _uniquename);
+    WvDBusConn(WvStringParm moniker, IWvDBusAuth *_auth = NULL,
+	       bool _client = true);
+    
+    /**
+     * Creates a new dbus connection from the given stream.  Takes ownership
+     * of the stream and will WVRELEASE() it when done.
+     */
+    WvDBusConn(IWvStream *_cloned, IWvDBusAuth *_auth = NULL,
+	       bool _client = true);
+    
+    void init(IWvDBusAuth *_auth, bool _client);
     
     /**
      * Release this connection.  If this is the last owner of the associated
      * DBusConnection object, the connection itself closes.
      */
     virtual ~WvDBusConn();
+    
+    void set_uniquename(WvStringParm s);
+    void try_auth();
+    void send_hello();
+    
+    void out(WvStringParm s);
+    void out(WVSTRING_FORMAT_DECL)
+        { return out(WvString(WVSTRING_FORMAT_CALL)); }
+    const char *in();
 
     /**
      * Request the given service name on DBus.  There's no guarantee the
@@ -66,7 +112,8 @@ public:
      * 
      * The name will be released when this connection object is destroyed.
      */
-    void request_name(WvStringParm name, WvDBusCallback onreply = 0);
+    void request_name(WvStringParm name, const WvDBusCallback &onreply = 0,
+		      time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT);
     
     /**
      * Return this connection's unique name on the bus, assigned by the server
@@ -75,32 +122,28 @@ public:
     WvString uniquename() const;
     
     /**
-     * Called by WvStreams when incoming data is ready.
-     */
-    virtual void execute();
-    
-    /**
-     * False if the connection is nonfunctional for any reason.
-     */
-    virtual bool isok() const;
-    
-    /**
      * Close the underlying stream.  The object becomes unusable.  This is
      * also called whenever an error is set.
      */
     virtual void close();
     
     /**
-     * Send a message on the bus, returning the serial number that was
-     * assigned to it.
+     * Send a message on the bus, calling onreply() when the reply comes in
+     * or the messages times out.
      */
-    uint32_t send(WvDBusMsg &msg);
-    
+    void send(WvDBusMsg msg, const WvDBusCallback &onreply,
+	      time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT)
+    {
+	send(msg);
+	if (onreply)
+	    add_pending(msg, onreply, msec_timeout);
+    }
+
     /**
-     * Send a message on the bus, calling onreply() when the answer comes
-     * back.
+     * Send a message on the bus, not expecting any reply.  Returns the
+     * assigned serial number in case you want to track it some other way.
      */
-    void send(WvDBusMsg &msg, const WvDBusCallback &onreply);
+    uint32_t send(WvDBusMsg msg);
     
     /**
      * The priority level of a callback registration.  This defines the order
@@ -141,17 +184,143 @@ public:
     void del_callback(void *cookie);
 
     /**
-     * Set the error code of this connection if 'e' is nonempty.
+     * Called by for each received message.  Returns true if we handled
+     * this message, false if not.  You should not need to call or override
+     * this; see add_callback() instead.
      */
-    void maybe_seterr(DBusError &e);
+    virtual bool filter_func(WvDBusMsg &msg);
+    
+    time_t mintimeout_msec()
+    {
+	WvTime when = 0;
+	PendingDict::Iter i(pending);
+	for (i.rewind(); i.next(); )
+	{
+	    if (!when || when > i->valid_until)
+		when = i->valid_until;
+	}
+	if (!when)
+	    return -1;
+	else if (when <= wvstime())
+	    return 0;
+	else
+	    return msecdiff(when, wvstime());
+    }
+    
+    WvDynBuf mybuf;
+    virtual bool post_select(SelectInfo &si)
+    {
+	bool ready = WvStreamClone::post_select(si);
+	if (si.inherit_request) return ready;
+	
+	if (!authorized && ready)
+	    try_auth();
+	
+	if (!alarm_remaining())
+	{
+	    WvTime now = wvstime();
+	    PendingDict::Iter i(pending);
+	    for (i.rewind(); i.next(); )
+	    {
+		if (now > i->valid_until)
+		{
+		    log("Expiring %s\n", i->msg);
+		    expire_pending(i.ptr());
+		    i.rewind();
+		}
+	    }
+	}
+	
+	if (authorized && ready)
+	{
+	    size_t needed = WvDBusMsg::demarshal_bytes_needed(mybuf);
+	    size_t amt = needed - mybuf.used();
+	    if (amt < 4096)
+		amt = 4096;
+	    read(mybuf, amt);
+	    WvDBusMsg *m;
+	    while ((m = WvDBusMsg::demarshal(mybuf)) != NULL)
+	    {
+		filter_func(*m);
+		delete m;
+	    }
+	}
+	
+	alarm(mintimeout_msec());
+	return false;
+    }
 
-    /**
-     * Called by DBus for each incoming message.  Returns true if we handled
-     * this message, false if not.
-     */
-    virtual bool filter_func(WvDBusConn &conn, WvDBusMsg &msg);
+    bool isidle()
+    {
+	return !out_queue.used() && pending.isempty();
+    }
     
 private:
+    struct Pending
+    {
+	WvDBusMsg msg; // needed in case we need to generate timeout replies
+	uint32_t serial;
+	WvDBusCallback cb;
+	WvTime valid_until;
+	
+	Pending(WvDBusMsg &_msg, const WvDBusCallback &_cb,
+		time_t msec_timeout)
+	    : msg(_msg), cb(_cb)
+	{
+	    serial = msg.get_serial();
+	    if (msec_timeout < 0)
+		msec_timeout = 5*3600*1000; // "forever" is a few hours
+	    valid_until = msecadd(wvstime(), msec_timeout);
+	}
+    };
+    DeclareWvDict(Pending, uint32_t, serial);
+    
+    PendingDict pending;
+    
+    WvDynBuf out_queue;
+    
+    void expire_pending(Pending *p)
+    {
+	if (p)
+	{
+	    WvDBusError e(p->msg, DBUS_ERROR_FAILED,
+			  "Timed out while waiting for reply");
+	    p->cb(*this, e);
+	    pending.remove(p);
+	}
+    }
+    
+    void cancel_pending(uint32_t serial)
+    {
+	Pending *p = pending[serial];
+	if (p)
+	{
+	    WvDBusError e(p->msg, DBUS_ERROR_FAILED,
+			  "Canceled while waiting for reply");
+	    p->cb(*this, e);
+	    pending.remove(p);
+	}
+    }
+    
+    void add_pending(WvDBusMsg &msg, WvDBusCallback cb,
+		     time_t msec_timeout)
+    {
+	uint32_t serial = msg.get_serial();
+	assert(serial);
+	if (pending[serial])
+	    cancel_pending(serial);
+	pending.add(new Pending(msg, cb, msec_timeout), true);
+	alarm(mintimeout_msec());
+    }
+    
+    bool _registered(WvDBusConn &c, WvDBusMsg &msg)
+    {
+	WvDBusMsg::Iter i(msg);
+	_uniquename = i.getnext().get_str();
+	set_uniquename(_uniquename);
+	return true;
+    }
+
     struct CallbackInfo
     {
 	CallbackPri pri;
@@ -168,21 +337,6 @@ private:
     DeclareWvList(CallbackInfo);
     CallbackInfoList callbacks;
     
-    void init(bool client);
-
-    bool add_watch(DBusWatch *watch);
-    void remove_watch(DBusWatch *watch);
-    void watch_toggled(DBusWatch *watch);
-
-    bool add_timeout(DBusTimeout *timeout);
-    void remove_timeout(DBusTimeout *timeout);
-    void timeout_toggled(DBusTimeout *timeout);
-
-    static void pending_call_notify(DBusPendingCall *pending, void *user_data);
-
-    DBusConnection *dbusconn;
-    bool registered;
-    WvString _uniquename;
 };
 
 #endif // __WVDBUSCONN_H

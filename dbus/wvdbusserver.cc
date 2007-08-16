@@ -9,59 +9,95 @@
  *
  */ 
 #include "wvdbusserver.h"
-#include "wvdbuswatch.h"
+#include "wvdbusconn.h"
+#include "wvtcp.h"
+#include "wvstrutils.h"
 #include <dbus/dbus.h>
 
+class WvDBusServerAuth : public IWvDBusAuth
+{
+    enum State { NullWait, AuthWait, BeginWait };
+    State state;
+public:
+    WvDBusServerAuth();
+    virtual bool authorize(WvDBusConn &c);
+};
 
-static dbus_bool_t add_watch(DBusWatch *watch, void *data);
-static void remove_watch(DBusWatch *watch, void *data);
-static void watch_toggled(DBusWatch *watch, void *data);
-static dbus_bool_t add_timeout(DBusTimeout *timeout, void *data);
-static void remove_timeout(DBusTimeout *timeout, void *data);
-static void timeout_toggled(DBusTimeout *timeout, void *data);
+
+WvDBusServerAuth::WvDBusServerAuth()
+{
+    state = NullWait;
+}
+
+
+bool WvDBusServerAuth::authorize(WvDBusConn &c)
+{
+    c.log("State=%s\n", state);
+    if (state == NullWait)
+    {
+	char buf[1];
+	size_t len = c.read(buf, 1);
+	if (len == 1 && buf[0] == '\0')
+	{
+	    state = AuthWait;
+	    // fall through
+	}
+	else if (len > 0)
+	    c.seterr("Client didn't start with NUL byte");
+	else
+	    return false; // no data yet, come back later
+    }
     
+    const char *line = c.in();
+    if (!line)
+	return false; // not done yet
+    
+    if (state == AuthWait)
+    {
+	if (!strncasecmp(line, "AUTH ", 5))
+	{
+	    // FIXME actually check authentication information!
+	    state = BeginWait;
+	    c.out("OK f00f\r\n");
+	}
+	else
+	    c.seterr("AUTH command expected: %s", line);
+    }
+    else if (state == BeginWait)
+    {
+	if (!strcasecmp(line, "BEGIN"))
+	    return true; // done
+	else
+	    c.seterr("BEGIN command expected: %s", line);
+    }
+
+    return false;
+}
+
 
 WvDBusServer::WvDBusServer(WvStringParm addr)
     : log("DBus Server", WvLog::Debug),
       name_to_conn(10), serial_to_conn(10)
 {
-    DBusError error;
-    dbus_error_init(&error);
-    dbusserver = dbus_server_listen(addr, &error);
-    maybe_seterr(error);
-    
-    if (!isok())
-	return;
-    
-    dbus_server_set_new_connection_function(dbusserver,
-					    new_connection_cb,
-					    this, NULL);
-    
-    if (!dbus_server_set_watch_functions(dbusserver, add_watch, 
-					 remove_watch,
-					 watch_toggled,
-					 this, NULL))
-	seterr("Error setting watch functions");
-    
-    // FIXME: need to add this, timeouts won't work until we do
-    dbus_server_set_timeout_functions(dbusserver, add_timeout,
-				      remove_timeout, timeout_toggled,
-				      this, NULL);
-    
-    log(WvLog::Info, "Listening on '%s'\n", get_addr());
+    listener = new WvTCPListener(addr);
+    append(listener, false);
+    log(WvLog::Info, "Listening on '%s'\n", *listener->src());
+    listener->onaccept(IWvListenerCallback(this,
+					   &WvDBusServer::new_connection_cb));
 }
 
 
 WvDBusServer::~WvDBusServer()
 {
     close();
+    zap();
+    WVRELEASE(listener);
 }
 
 
-void WvDBusServer::maybe_seterr(DBusError &e)
+WvString WvDBusServer::get_addr()
 {
-    if (dbus_error_is_set(&e))
-	seterr_both(EIO, "%s: %s", e.name, e.message);
+    return WvString("tcp:%s", *listener->src());
 }
 
 
@@ -107,15 +143,6 @@ void WvDBusServer::unregister_conn(WvDBusConn *conn)
     }
     
     all_conns.unlink(conn);
-}
-
-
-WvString WvDBusServer::get_addr()
-{
-    char *final_addr = dbus_server_get_address(dbusserver);
-    WvString faddr(final_addr);
-    free(final_addr);
-    return faddr;
 }
 
 
@@ -238,47 +265,6 @@ bool WvDBusServer::do_broadcast_msg(WvDBusConn &conn, WvDBusMsg &msg)
 }
 
 
-static dbus_bool_t add_watch(DBusWatch *watch, void *data)
-{
-    WvDBusServer *server = (WvDBusServer *)data;
-    
-    unsigned int flags = dbus_watch_get_flags(watch);
-    WvDBusWatch *wwatch = new WvDBusWatch(watch, flags);
-    server->append(wwatch, true, "wvdbuswatch");
-    
-    dbus_watch_set_data(watch, wwatch, NULL);
-    return TRUE;
-}
-
-static void remove_watch(DBusWatch *watch, void *data)
-{
-    WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
-    assert(wwatch);
-    wwatch->close();
-}
-
-static void watch_toggled(DBusWatch *watch, void *data)
-{
-    if (dbus_watch_get_enabled(watch))
-	add_watch(watch, data);
-    else
-	remove_watch(watch, data);
-}
-
-static dbus_bool_t add_timeout(DBusTimeout *timeout, void *data)
-{
-    return TRUE;
-}
-
-static void remove_timeout(DBusTimeout *timeout, void *data)
-{
-}
-
-static void timeout_toggled(DBusTimeout *timeout, void *data)
-{
-}
-
-
 void WvDBusServer::conn_closed(WvStream &s)
 {
     WvDBusConn *c = (WvDBusConn *)&s;
@@ -286,32 +272,23 @@ void WvDBusServer::conn_closed(WvStream &s)
 }
 
 
-void WvDBusServer::new_connection_cb(DBusServer *dbusserver, 
-				     DBusConnection *new_connection,
-				     void *userdata)
+static int conncount = 2000;
+void WvDBusServer::new_connection_cb(IWvStream *s)
 {
-    static int connect_num = 0;
-    
-    WvDBusServer *server = (WvDBusServer *)userdata;
-    WvDBusConn *c = new WvDBusConn(new_connection,
-				   WvString(":%s", ++connect_num));
-    server->all_conns.append(c, false);
-    server->register_name(c->uniquename(), c);
-    c->setclosecallback(IWvStreamCallback(server, &WvDBusServer::conn_closed));
+    WvDBusConn *c = new WvDBusConn(s, new WvDBusServerAuth, false);
+    all_conns.append(c, false);
+    register_name(c->uniquename(), c);
+    c->setclosecallback(IWvStreamCallback(this, &WvDBusServer::conn_closed));
     
     c->add_callback(WvDBusConn::PriSystem,
-		    WvDBusCallback(server, 
+		    WvDBusCallback(this, 
 				   &WvDBusServer::do_server_msg));
     c->add_callback(WvDBusConn::PriBridge,
-		    WvDBusCallback(server, 
+		    WvDBusCallback(this, 
 				   &WvDBusServer::do_bridge_msg));
     c->add_callback(WvDBusConn::PriBroadcast,
-		    WvDBusCallback(server, 
+		    WvDBusCallback(this, 
 				   &WvDBusServer::do_broadcast_msg));
     
-    server->append(c, true, "wvdbus servconn");
-    
-    if (dbus_connection_get_dispatch_status(new_connection) 
-	   != DBUS_DISPATCH_COMPLETE)
-	dbus_connection_dispatch(new_connection);
+    append(c, true, "wvdbus servconn");
 }

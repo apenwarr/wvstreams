@@ -13,7 +13,7 @@
 WV_LINK(UniSubtreeGen);
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
     WvConstInPlaceBuf buf(s, s.len());
     WvString one(wvtcl_getword(buf)), two(wvtcl_getword(buf));

@@ -3,6 +3,7 @@
 #include "wvstreamclone.h"
 #include "wvloopback.h"
 #include "wvsocketpair.h"
+#include "wvmoniker.h"
 
 WVTEST_MAIN("close() non-loopiness")
 {
@@ -126,3 +127,20 @@ WVTEST_MAIN("WvStreamClone setclone behaviour")
     WVPASS(!s.isok());
 }
 
+
+WVTEST_MAIN("clone monikers")
+{
+    IWvStream *e = new WvStream();
+    e->seterr("test");
+    IWvStream *s = wvcreate<IWvStream>("", e);
+    WVPASS(s);
+    WVPASSEQ(s->errstr(), "test");
+    delete s;
+    
+    e = new WvStream();
+    e->seterr("test2");
+    s = wvcreate<IWvStream>("clone:clone:", e);
+    WVPASS(s);
+    WVPASSEQ(s->errstr(), "test2");
+    delete s;
+}

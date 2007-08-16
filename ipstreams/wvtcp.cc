@@ -55,7 +55,7 @@
 WV_LINK(WvTCPConn);
 
 
-static IWvStream *creator(WvStringParm s)
+static IWvStream *creator(WvStringParm s, IObject*)
 {
     return new WvTCPConn(s);
 }
@@ -352,8 +352,10 @@ size_t WvTCPConn::uwrite(const void *buf, size_t count)
 
 
 WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
-	: listenport(_listenport)
+	: WvListener(new WvFdStream(socket(PF_INET, SOCK_STREAM, 0))),
+          listenport(_listenport)
 {
+    WvFdStream *fds = (WvFdStream *)cloned;
     listenport = _listenport;
     auto_list = NULL;
     auto_userdata = NULL;
@@ -362,9 +364,8 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
     
     int x = 1;
 
-    setfd(socket(PF_INET, SOCK_STREAM, 0));
-    set_close_on_exec(true);
-    set_nonblock(true);
+    fds->set_close_on_exec(true);
+    fds->set_nonblock(true);
     if (getfd() < 0
 	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
 	|| bind(getfd(), sa, listenport.sockaddr_len())
@@ -390,17 +391,6 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
 WvTCPListener::~WvTCPListener()
 {
     close();
-}
-
-
-//#include <wvlog.h>
-void WvTCPListener::close()
-{
-    WvFDStream::close();
-/*    WvLog log("ZAP!");
-    
-    log("Closing TCP LISTENER at %s!!\n", listenport);
-    abort();*/
 }
 
 
@@ -450,18 +440,6 @@ void WvTCPListener::accept_callback(WvStream &s, void *userdata)
     WvTCPConn *connection = l.accept();
     connection->setcallback(l.auto_callback, l.auto_userdata);
     l.auto_list->append(connection, true, "WvTCPConn");
-}
-
-
-size_t WvTCPListener::uread(void *, size_t)
-{
-    return 0;
-}
-
-
-size_t WvTCPListener::uwrite(const void *, size_t)
-{
-    return 0;
 }
 
 

@@ -17,7 +17,7 @@
 WV_LINK(UniIniGen);
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject*)
 {
     return new UniIniGen(s);
 }

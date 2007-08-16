@@ -27,6 +27,7 @@
 #include "wvfdstream.h"
 #include "wvaddr.h"
 #include "wvresolver.h"
+#include "wvlistener.h"
 
 
 class WvIStreamList;
@@ -130,8 +131,8 @@ public:
     const char *wstype() const { return "WvTCPConn"; }
 };
 
-/** Class to easily create the Server side of a TCPConn... */
-class WvTCPListener : public WvFDStream
+/** Class to easily create the Server side of a WvTCPConn. */
+class WvTCPListener : public WvListener
 {
 public:
     /**
@@ -140,11 +141,7 @@ public:
      */
     WvTCPListener(const WvIPPortAddr &_listenport);
 
-    /** Destructor - remember - close() is your friend ;) */
     virtual ~WvTCPListener();
-    
-    /** Shut down the server, and disconnect from the port */
-    virtual void close();
     
     /**
      * return a new WvTCPConn socket corresponding to a newly-accepted
@@ -152,7 +149,7 @@ public:
      * one indefinitely.  You can use select(read=true) to check for a
      * waiting connection.
      */
-    WvTCPConn *accept();
+    virtual WvTCPConn *accept();
     
     /**
      * set a callback() function that automatically accepts new WvTCPConn
@@ -177,13 +174,6 @@ public:
      */
     void auto_accept(WvStreamCallback callfunc = NULL, void *userdata = NULL);
 
-    /**
-     * these don't do anything, but they confuse the socket, so we'll
-     * ignore them on purpose.
-     */
-    virtual size_t uread(void *buf, size_t len);
-    virtual size_t uwrite(const void *buf, size_t len);
-    
     /** src() is a bit of a misnomer, but it returns the listener port. */
     virtual const WvIPPortAddr *src() const;
     

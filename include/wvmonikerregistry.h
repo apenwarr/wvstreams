@@ -41,7 +41,7 @@ public:
     virtual void add(WvStringParm id, WvMonikerCreateFunc *func);
     virtual void del(WvStringParm id);
     
-    virtual void *create(WvStringParm _s);
+    virtual void *create(WvStringParm _s, IObject *_obj);
     
     // find a registry for objects of the given interface UUID
     static WvMonikerRegistry *find_reg(const UUID &iid);

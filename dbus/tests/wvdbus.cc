@@ -30,7 +30,7 @@ static bool incoming(WvDBusConn &conn, WvDBusMsg &msg)
 int main(int argc, char *argv[])
 {
     WvArgs args;
-    WvString moniker("bus:session");
+    WvString moniker("dbus:session");
     WvStringList names, remaining_args;
     bool sigtest = false, methtest = false, wait = false;
     
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	    .append("bee").send(conn);
     }
     
-    while (conn.isok() && wait)
+    while (conn.isok() && (wait || !conn.isidle()))
         WvIStreamList::globallist.runonce();
     return 0;
 }

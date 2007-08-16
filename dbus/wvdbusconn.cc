@@ -10,71 +10,138 @@
  */ 
 #include "wvdbusconn.h"
 #include "wvdbuswatch.h"
+#include "wvmoniker.h"
+#include "wvstrutils.h"
 #include <dbus/dbus.h>
 
-class WvDBusConnHelpers
+static WvString translate(WvStringParm dbus_moniker)
 {
-public:
-    static dbus_bool_t _add_watch(DBusWatch *watch, void *data);
-    static void _remove_watch(DBusWatch *watch, void *data);
-    static void _watch_toggled(DBusWatch *watch, void *data);
-    static dbus_bool_t _add_timeout(DBusTimeout *timeout, void *data);
-    static void _remove_timeout(DBusTimeout *timeout, void *data);
-    static void _timeout_toggled(DBusTimeout *timeout, void *data);
-    static DBusHandlerResult _filter_func(DBusConnection *_conn,
-					  DBusMessage *_msg,
-					  void *userdata);
-};
-
-static int conncount;
-
-WvDBusConn::WvDBusConn(DBusConnection *_c, WvStringParm _uniquename)
-    : log(WvString("DBus s%s", _uniquename), WvLog::Debug4)
-{
-    log("Initializing.\n");
-    assert(_c);
-    dbusconn = _c;
-    if (dbusconn)
-	dbus_connection_ref(dbusconn);
-    this->_uniquename = _uniquename;
-    registered = true; // no need to register with server: we are the server!
-    init(false);
+    WvStringList l;
+    WvStringList::Iter i(l);
+    
+    if (!strncasecmp(dbus_moniker, "unix:", 5))
+    {
+	WvString path, tmpdir;
+	l.split(dbus_moniker+5, ",");
+	for (i.rewind(); i.next(); )
+	{
+	    if (!strncasecmp(*i, "path=", 5))
+		path = *i + 5;
+	    else if (!strncasecmp(*i, "abstract=", 9))
+		path = WvString("@%s", *i + 9);
+	    else if (!strncasecmp(*i, "tmpdir=", 7))
+		tmpdir = *i + 7;
+	}
+	if (!!path)
+	    return WvString("unix:%s", path);
+	else if (!!tmpdir)
+	    return WvString("unix:%s/dbus.sock", tmpdir);
+    }
+    else if (!strncasecmp(dbus_moniker, "tcp:", 4))
+    {
+	WvString host, port, family;
+	l.split(dbus_moniker+4, ",");
+	for (i.rewind(); i.next(); )
+	{
+	    if (!strncasecmp(*i, "family=", 7))
+		family = *i + 7;
+	    else if (!strncasecmp(*i, "host=", 5))
+		host = *i + 5;
+	    else if (!strncasecmp(*i, "port=", 5))
+		port = *i + 5;
+	}
+	if (!!host && !!port)
+	    return WvString("tcp:%s:%s", host, port);
+	else if (!!host)
+	    return WvString("tcp:%s", host);
+	else if (!!port)
+	    return WvString("tcp:0.0.0.0:%s", port); // localhost
+    }
+    
+    return dbus_moniker; // unrecognized
 }
 
 
-WvDBusConn::WvDBusConn(WvStringParm dbus_moniker)
-    : log(WvString("DBus #%s/%s", getpid(), ++conncount), WvLog::Debug4)
+static IWvStream *stream_creator(WvStringParm _s, IObject *)
+{
+    WvString s(_s);
+    
+    if (!strcasecmp(s, "starter"))
+    {
+	WvString startbus(getenv("DBUS_STARTER_ADDRESS"));
+	if (!!startbus)
+	    return wvcreate<IWvStream>(translate(startbus));
+	else
+	{
+	    WvString starttype(getenv("DBUS_STARTER_BUS_TYPE"));
+	    if (!!starttype && !strcasecmp(starttype, "system"))
+		s = "system";
+	    else if (!!starttype && !strcasecmp(starttype, "session"))
+		s = "session";
+	}
+    }
+    
+    if (!strcasecmp(s, "system"))
+    {
+	WvString bus(getenv("DBUS_SYSTEM_BUS_ADDRESS"));
+	if (!!bus)
+	    return wvcreate<IWvStream>(translate(bus));
+    }
+    
+    if (!strcasecmp(s, "session"))
+    {
+	WvString bus(getenv("DBUS_SESSION_BUS_ADDRESS"));
+	if (!!bus)
+	    return wvcreate<IWvStream>(translate(bus));
+    }
+    
+    return wvcreate<IWvStream>(translate(s));
+}
+
+static WvMoniker<IWvStream> reg("dbus", stream_creator);
+
+
+static int conncount;
+
+WvDBusConn::WvDBusConn(IWvStream *_cloned, IWvDBusAuth *_auth, bool _client)
+	: WvStreamClone(_cloned),
+          log(WvString("DBus %s%s",
+		       _client ? "" : "s",
+		       ++conncount), WvLog::Debug5),
+          pending(10)
+{
+    init(_auth, _client);
+}
+
+    
+WvDBusConn::WvDBusConn(WvStringParm moniker, IWvDBusAuth *_auth, bool _client)
+	: WvStreamClone(wvcreate<IWvStream>(moniker)),
+          log(WvString("DBus %s%s",
+		       _client ? "" : "s",
+		       ++conncount), WvLog::Debug5),
+          pending(10)
+{
+    init(_auth, _client);
+}
+
+
+void WvDBusConn::init(IWvDBusAuth *_auth, bool _client)
 {
     log("Initializing.\n");
-    assert(!!dbus_moniker);
+    client = _client;
+    auth = _auth ? _auth : new WvDBusClientAuth;
+    authorized = false;
+    if (!client) set_uniquename(WvString(":%s", conncount));
     
-    // it seems like we want to open a private connection to the bus
-    // for this particular case.. we can't create multiple named connections
-    // otherwise
-    DBusError error;
-    dbus_error_init(&error);
-    dbusconn = NULL;
-    if (!strncasecmp(dbus_moniker, "bus:", 4))
-    {
-	WvString busname = dbus_moniker+4;
-	if (!strcasecmp(busname, "system"))
-	    dbusconn = dbus_bus_get_private(DBUS_BUS_SYSTEM, &error);
-	else if (!strcasecmp(busname, "session"))
-	    dbusconn = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
-	else if (!strcasecmp(busname, "starter"))
-	    dbusconn = dbus_bus_get_private(DBUS_BUS_STARTER, &error);
-	else
-	    seterr("No such bus '%s'", busname);
-	registered = true; // dbus_bus_get_* is supposed to do this for us
-    }
-    else
-    {
-	dbusconn = dbus_connection_open_private(dbus_moniker, &error);
-	registered = false;
-    }
-    maybe_seterr(error);
-
-    init(true);
+    if (!isok()) return;
+    
+    // this will get enqueued until later, but we want to make sure it
+    // comes before anything the user tries to send - including anything
+    // goofy they enqueue in the authorization part.
+    if (client)
+	send_hello();
+    
+    try_auth();
 }
 
 
@@ -85,89 +152,13 @@ WvDBusConn::~WvDBusConn()
 	log("Error was: %s\n", errstr());
     
     close();
-    
-    if (dbusconn)
-    {
-	execute(); // flush all "timed out due to close" messages
-	dbus_connection_unref(dbusconn);
-    }
-}
-
-
-void WvDBusConn::init(bool client)
-{
-    if (client && isok())
-    {
-	DBusError error;
-	dbus_error_init(&error);
-	if (!registered)
-	    dbus_bus_register(dbusconn, &error);
-	maybe_seterr(error);
-    
-	if (isok())
-	{
-	    _uniquename = dbus_bus_get_unique_name(dbusconn);
-	    log("Server assigned name: '%s'\n", uniquename());
-	    registered = true;
-	}
-    }
-
-    DBusWatchToggledFunction toggled_function = NULL;
-    if (client)
-        toggled_function = WvDBusConnHelpers::_watch_toggled;
-
-    if (isok())
-    {
-	if (!dbus_connection_set_watch_functions(dbusconn,
-				     WvDBusConnHelpers::_add_watch,
-				     WvDBusConnHelpers::_remove_watch,
-				     toggled_function,
-				     this, NULL))
-	    seterr_both(EINVAL, "Couldn't set up watch functions\n");
-
-	// FIXME: need to add real functions here, timeouts won't work until
-	// we do
-	dbus_connection_set_timeout_functions(dbusconn,
-				      WvDBusConnHelpers::_add_timeout,
-				      WvDBusConnHelpers::_remove_timeout,
-				      WvDBusConnHelpers::_timeout_toggled,
-				      this, NULL);
-
-	dbus_connection_add_filter(dbusconn, 
-				   WvDBusConnHelpers::_filter_func,
-				   this, NULL);
-    }
-    
-    if (!!_uniquename)
-	log.app = WvString("DBus %s%s", client ? "c" : "s", uniquename());
-
-    if (client && isok())
-    {
-	DBusError error;
-	dbus_error_init(&error);
-	dbus_bus_add_match(dbusconn, "type='signal'", &error);
-	maybe_seterr(error);
-    }
-    
-    if (geterr())
-	log(WvLog::Error, "Error in initialization: %s\n", errstr());
 }
 
 
 void WvDBusConn::close()
 {
-    if (dbusconn)
-	dbus_connection_close(dbusconn);
-    
-    WvIStreamList::close();
-    assert(!isok());
-}
-
-
-void WvDBusConn::maybe_seterr(DBusError &e)
-{
-    if (dbus_error_is_set(&e))
-	seterr_both(EIO, "%s: %s", e.name, e.message);
+    log("Closing.\n");
+    WvStreamClone::close();
 }
 
 
@@ -177,109 +168,84 @@ WvString WvDBusConn::uniquename() const
 }
 
 
-void WvDBusConn::request_name(WvStringParm name, WvDBusCallback onreply)
+void WvDBusConn::request_name(WvStringParm name, const WvDBusCallback &onreply,
+			      time_t msec_timeout)
 {
-    if (!isok()) return;
-
     uint32_t flags = (DBUS_NAME_FLAG_ALLOW_REPLACEMENT |
-                 DBUS_NAME_FLAG_REPLACE_EXISTING);
+		      DBUS_NAME_FLAG_REPLACE_EXISTING);
     WvDBusMsg msg("org.freedesktop.DBus", "/org/freedesktop/DBus",
-	      "org.freedesktop.DBus", "RequestName");
+		  "org.freedesktop.DBus", "RequestName");
     msg.append(name).append(flags);
-    if (!!onreply)
-	send(msg, onreply);
+    send(msg, onreply, msec_timeout);
+}
+
+
+uint32_t WvDBusConn::send(WvDBusMsg msg)
+{
+    msg.marshal(out_queue);
+    if (authorized)
+    {
+	log(" >> %s\n", msg);
+	write(out_queue);
+    }
     else
-	send(msg);
-    log("Requested name '%s' for this connection.\n", name);
+	log(" .. %s\n", msg);
+    return msg.get_serial();
 }
 
 
-bool WvDBusConn::isok() const
+void WvDBusConn::out(WvStringParm s)
 {
-    return dbusconn && WvIStreamList::isok() && !geterr();
+    log(" >> %s", s);
+    print(s);
 }
 
 
-void WvDBusConn::execute()
+const char *WvDBusConn::in()
 {
-    // log("Execute.\n");
-    WvIStreamList::execute();
-    if (!dbusconn) return;
-    while (dbus_connection_dispatch(dbusconn) == DBUS_DISPATCH_DATA_REMAINS)
-	;
+    const char *s = trim_string(getline(0));
+    if (s)
+	log("<<  %s\n", s);
+    return s;
 }
 
 
-uint32_t WvDBusConn::send(WvDBusMsg &msg)
+void WvDBusConn::send_hello()
 {
-    if (!isok()) return 0;
-    uint32_t serial;
-    log("Tx#%s: %s(%s)\n",
-	msg.get_serial(), msg.get_member(), msg.get_argstr());
-    if (!dbus_connection_send(dbusconn, msg, &serial)) 
-        seterr_both(ENOMEM, "Out of memory.\n");
-    return serial;
+    WvDBusMsg msg("org.freedesktop.DBus", "/org/freedesktop/DBus",
+		  "org.freedesktop.DBus", "Hello");
+    send(msg, WvDBusCallback(this, &WvDBusConn::_registered));
+    WvDBusMsg msg2("org.freedesktop.DBus", "/org/freedesktop/DBus",
+		   "org.freedesktop.DBus", "AddMatch");
+    msg2.append("type='signal'");
+    send(msg2); // don't need to monitor this for completion
 }
 
 
-struct WvDBusUserData
+void WvDBusConn::set_uniquename(WvStringParm s)
 {
-    WvDBusConn *conn;
-    WvDBusCallback cb;
-    
-    WvDBusUserData(WvDBusConn *_conn, const WvDBusCallback &_cb)
-	: cb(_cb)
+    // we want to print the message before switching log.app, so that we
+    // can trace which log.app turned into which
+    log("Assigned name '%s'\n", s);
+    _uniquename = s;
+    log.app = WvString("DBus %s%s", client ? "" : "s", uniquename());
+}
+
+
+
+void WvDBusConn::try_auth()
+{
+    bool done = auth->authorize(*this);
+    if (done)
     {
-	conn = _conn;
+	delete auth;
+	auth = NULL;
+	
+	// ready to send messages!
+	write(out_queue);
+	
+	authorized = true;
     }
-};
-
-
-static void free_callback(void *memory)
-{
-    WvDBusUserData *ud = (WvDBusUserData *)memory;
-    delete ud;
-}
-
-
-void WvDBusConn::pending_call_notify(DBusPendingCall *pending, 
-				     void *user_data)
-{
-    WvDBusUserData *ud = (WvDBusUserData *)user_data;
-    DBusMessage *_msg = dbus_pending_call_steal_reply(pending);
-    WvDBusMsg msg(_msg);
-
-    bool handled = ud->cb(*ud->conn, msg);
-    assert(handled); // reply function should *always* handle the reply
-    dbus_pending_call_unref(pending);
-    dbus_connection_unref(ud->conn->dbusconn);
-    dbus_message_unref(msg);
-}
-
-
-void WvDBusConn::send(WvDBusMsg &msg, const WvDBusCallback &onreply) 
-{
-    if (!isok()) return;
-    log("Tx_w_r %s\n", msg);
-    DBusPendingCall *pending;
-
-    if (!dbus_connection_send_with_reply(dbusconn, msg, &pending, -1)
-	|| !pending)
-    { 
-        seterr_both(ENOMEM, "Out of memory.\n");
-        return;
-    }
-
-    if (!dbus_pending_call_set_notify(pending, 
-                                      &WvDBusConn::pending_call_notify,
-				      new WvDBusUserData(this, onreply),
-                                      free_callback))
-    {
-	seterr_both(ENOMEM, "Out of memory.\n");
-	return;
-    }
-    
-    dbus_connection_ref(dbusconn); // needed by the pending call
 }
 
 
@@ -299,87 +265,26 @@ void WvDBusConn::del_callback(void *cookie)
 }
 
 
-bool WvDBusConn::add_watch(DBusWatch *watch)
-{
-    unsigned int flags = dbus_watch_get_flags(watch);
-
-    WvDBusWatch *wwatch = new WvDBusWatch(watch, flags);
-    append(wwatch, true, "D-Bus watch");
-
-    dbus_watch_set_data(watch, wwatch, NULL);
-#if 0
-    // FIXME: do we need to explicitly say whether we are readable and
-    // writable? (see below)
-    bool isreadable = (flags & DBUS_WATCH_READABLE);
-    bool iswritable = (flags & DBUS_WATCH_WRITABLE);
-
-    log("Watch updated successfully (fd: %s, readable: %s, "
-        "writable: %s)\n", dbus_watch_get_fd(watch),
-        isreadable, iswritable);
-#endif
-    return TRUE;
-}
-
-
-void WvDBusConn::remove_watch(DBusWatch *watch)
-{
-    WvDBusWatch *wwatch = (WvDBusWatch *)dbus_watch_get_data(watch);
-    assert(wwatch);
-
-//    log(WvLog::Debug5, "Removing watch (rfd: %s wfd: %s)\n", 
-//        wwatch->getrfd(), wwatch->getwfd());
-    wwatch->close();
-}
-
-
-void WvDBusConn::watch_toggled(DBusWatch *watch)
-{
-//    log(WvLog::Debug5, "toggle watch\n");
-    if (!watch)
-        return;
-
-    if (dbus_watch_get_enabled(watch))
-        add_watch(watch);
-    else
-        remove_watch(watch);
-}
-
-
-bool WvDBusConn::add_timeout(DBusTimeout *timeout)
-{
-//    log(WvLog::Debug5, "Add timeout.\n");
-    return TRUE;
-}
-
-
-void WvDBusConn::remove_timeout(DBusTimeout *timeout)
-{
-//    log(WvLog::Debug5, "Remove timeout.\n");
-}
-
-
-void WvDBusConn::timeout_toggled(DBusTimeout *timeout)
-{
-//    log(WvLog::Debug5, "Timeout toggled.\n");
-}
-
-
 int WvDBusConn::priority_order(const CallbackInfo *a, const CallbackInfo *b)
 {
     return a->pri - b->pri;
 }
 
 
-bool WvDBusConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
+bool WvDBusConn::filter_func(WvDBusMsg &msg)
 {
-    log("Rx#%s: %s\n", msg.get_serial(), msg);
+    log("<<  %s\n", msg);
     
-    if (msg.get_path() == "/org/freedesktop/DBus/Local")
+    // handle replies
+    uint32_t rserial = msg.get_replyserial();
+    if (rserial)
     {
-	if (msg.get_member() == "Disconnected")
+	Pending *p = pending[rserial];
+	if (p)
 	{
-	    close();
-	    return true;
+	    p->cb(*this, msg);
+	    pending.remove(p);
+	    return true; // handled it
 	}
     }
     
@@ -387,7 +292,7 @@ bool WvDBusConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
     CallbackInfoList::Sorter i(callbacks, priority_order);
     for (i.rewind(); i.next(); )
     {
-	bool handled = i->cb(conn, msg);
+	bool handled = i->cb(*this, msg);
 	if (handled) return true;
     }
 
@@ -395,54 +300,36 @@ bool WvDBusConn::filter_func(WvDBusConn &conn, WvDBusMsg &msg)
 }
 
 
-dbus_bool_t WvDBusConnHelpers::_add_watch(DBusWatch *watch, void *data)
+WvDBusClientAuth::WvDBusClientAuth()
 {
-    WvDBusConn *connp = (WvDBusConn *)data;
-    return connp->add_watch(watch);
+    sent_request = false;
 }
 
 
-void WvDBusConnHelpers::_remove_watch(DBusWatch *watch, void *data)
+bool WvDBusClientAuth::authorize(WvDBusConn &c)
 {
-    WvDBusConn *connp = (WvDBusConn *)data;
-    connp->remove_watch(watch);
-}
-
-
-void WvDBusConnHelpers::_watch_toggled(DBusWatch *watch, void *data)
-{
-    WvDBusConn *connp = (WvDBusConn *)data;
-    connp->watch_toggled(watch);
-}
-
-
-dbus_bool_t WvDBusConnHelpers::_add_timeout(DBusTimeout *timeout, void *data)
-{
-    WvDBusConn *connp = (WvDBusConn *)data;
-    return connp->add_timeout(timeout);
-}
-
-
-void WvDBusConnHelpers::_remove_timeout(DBusTimeout *timeout, void *data)
-{
-    WvDBusConn *connp = (WvDBusConn *)data;
-    connp->remove_timeout(timeout);
-}
-
-
-void WvDBusConnHelpers::_timeout_toggled(DBusTimeout *timeout, void *data)
-{
-    WvDBusConn *connp = (WvDBusConn *)data;
-    connp->timeout_toggled(timeout);
-}
-
-
-DBusHandlerResult WvDBusConnHelpers::_filter_func(DBusConnection *_conn,
-						  DBusMessage *_msg,
-						  void *userdata)
-{
-    WvDBusConn *conn = (WvDBusConn *)userdata;
-    WvDBusMsg msg(_msg);
-    return conn->filter_func(*conn, msg) 
-	? DBUS_HANDLER_RESULT_HANDLED : DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    if (!sent_request)
+    {
+	c.write("\0", 1);
+	c.out("AUTH EXTERNAL %s\r\n\0", WvHexEncoder().strflushstr(getuid()));
+	sent_request = true;
+    }
+    else
+    {
+	const char *line = c.in();
+	if (line)
+	{
+	    if (!strncasecmp(line, "OK ", 3))
+	    {
+		c.out("BEGIN\r\n");
+		return true;
+	    }
+	    else if (!strncasecmp(line, "ERROR ", 6))
+		c.seterr("Auth failed: %s", line);
+	    else
+		c.seterr("Unknown AUTH response: '%s'", line);
+	}
+    }
+    
+    return false;
 }

@@ -43,7 +43,7 @@
 static WvMap<WvString, IUniConfGen*> namedgens(42);
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject*)
 {
     IUniConfGen* gen = namedgens[s];
 

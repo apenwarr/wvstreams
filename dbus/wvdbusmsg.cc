@@ -10,6 +10,7 @@
  */ 
 #include "wvdbusmsg.h"
 #include "wvdbusconn.h"
+#include "wvstrutils.h"
 #include <dbus/dbus.h>
 
 
@@ -362,17 +363,22 @@ WvString WvDBusMsg::get_argstr() const
 
 WvDBusMsg::operator WvString() const
 {
-    WvString src("");
     if (is_reply())
 	return WvString("REPLY#%s(%s)", get_replyserial(), get_argstr());
     else
     {
-	if (!!get_sender())
-	    src = WvString("%s->", get_sender());
-	return WvString("%s%s:%s:%s.%s(%s)#%s",
-			src, get_dest(),
-			get_path(), get_interface(), get_member(),
-			get_argstr(), get_serial());
+	WvString dest(get_dest());
+	if (!dest)
+	    dest = "";
+	else
+	    dest = WvString("%s:", dest);
+	WvString s("%s%s/%s.%s(%s)#%s",
+		   dest,
+		   get_path(), get_interface(), get_member(),
+		   get_argstr(), get_serial());
+	s = strreplace(s, "org.freedesktop.DBus", "o.f.D");
+	s = strreplace(s, "org/freedesktop/DBus", "o/f/D");
+	return s;
     }
 }
 
@@ -526,6 +532,12 @@ WvDBusMsg WvDBusMsg::reply()
 }
 
 
+bool WvDBusMsg::iserror() const
+{
+    return dbus_message_get_type(msg) == DBUS_MESSAGE_TYPE_ERROR;
+}
+
+
 void WvDBusMsg::send(WvDBusConn &conn)
 {
     conn.send(*this);
@@ -542,6 +554,14 @@ WvDBusReplyMsg::WvDBusReplyMsg(DBusMessage *_msg)
 WvDBusSignal::WvDBusSignal(WvStringParm objectname, WvStringParm interface,
                            WvStringParm name)
     : WvDBusMsg(dbus_message_new_signal(objectname, interface, name))
+{
+    dbus_message_unref(msg);
+}
+
+
+WvDBusError::WvDBusError(WvDBusMsg &in_reply_to,
+			 WvStringParm errname, WvStringParm message)
+    : WvDBusMsg(dbus_message_new_error(in_reply_to, errname, message))
 {
     dbus_message_unref(msg);
 }

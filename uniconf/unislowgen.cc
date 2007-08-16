@@ -9,9 +9,9 @@
 #include <unistd.h>
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    return new UniSlowGen(wvcreate<IUniConfGen>(s));
+    return new UniSlowGen(wvcreate<IUniConfGen>(s, _obj));
 }
 
 static WvMoniker<IUniConfGen> reg("slow", creator);

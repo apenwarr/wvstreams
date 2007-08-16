@@ -11,9 +11,9 @@
 WV_LINK(UniReadOnlyGen);
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    return new UniReadOnlyGen(wvcreate<IUniConfGen>(s));
+    return new UniReadOnlyGen(wvcreate<IUniConfGen>(s, _obj));
 }
 
 static WvMoniker<IUniConfGen> reg("readonly", creator);
