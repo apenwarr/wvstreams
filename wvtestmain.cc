@@ -63,13 +63,17 @@ int main(int argc, char **argv)
     
     startfd = fd_count("start");
     int ret = WvTest::run_all(prefixes);
-    endfd = fd_count("end");
     
-    WVPASS(startfd == endfd);
+    if (ret == 0) // don't pollute the strace output if we failed anyway
+    {
+	endfd = fd_count("end");
+    
+	WVPASS(startfd == endfd);
 #ifndef _WIN32
-    if (startfd != endfd)
-	system(WvString("ls -l /proc/%s/fd", getpid()));
+	if (startfd != endfd)
+	    system(WvString("ls -l /proc/%s/fd", getpid()));
 #endif    
+    }
     
     // keep 'make' from aborting if this environment variable is set
     if (getenv("WVTEST_NO_FAIL"))

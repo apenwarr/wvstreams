@@ -533,7 +533,7 @@ if test "$with_xplc" != "no"; then
 	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	    LIBS_save="$LIBS"
 	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,
-	    			[LIBS_XPLC=-lxplc],
+	    			[LIBS_XPLC="-lxplc-cxx -lxplc"],
 				[with_xplc=no])
 	    LIBS="$LIBS_save"
 	    xplc_pc="xplc-${xplc_version}"
@@ -546,7 +546,7 @@ if test "$with_xplc" != "no"; then
 	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	LIBS_save="$LIBS"
 	AC_CHECK_LIB(xplc, XPLC_getServiceManager,
-			[LIBS_XPLC=-lxplc],
+			[LIBS_XPLC="-lxplc-cxx -lxplc"],
 			[with_xplc=no])
 	LIBS="$LIBS_save"
 	xplc_pc="xplc-${xplc_version}"
@@ -559,7 +559,7 @@ if test "$with_xplc" != "no"; then
         build_xplc=yes
         with_xplc='$(WVSTREAMS)/xplc'
 	xplc_pc='wvxplc'
-	LIBS_XPLC=-lxplc
+	LIBS_XPLC="-lxplc-cxx -lxplc"
     fi
 fi
 

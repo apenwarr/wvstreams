@@ -45,7 +45,24 @@ WVTEST_MAIN("tcp connection")
 }
 
 
-WVTEST_MAIN("connection refused")
+WVTEST_MAIN("connection refused 1")
+{
+    // hopefully nobody has a service here.  If we get connection refused as
+    // expected, this test should *not* time out.  But a bug that happened
+    // at least once in WvTCPConn causes a timeout in this test.
+    WvTCPConn tcp(WvString("0.0.0.0:105"));
+    printf("ok: %d\n", tcp.isok());
+    tcp.runonce(-1);
+    printf("ok: %d\n", tcp.isok());
+    tcp.runonce(-1);
+    printf("ok: %d\n", tcp.isok());
+    tcp.runonce(-1);
+    printf("ok: %d\n", tcp.isok());
+    WVFAIL(tcp.isok());
+}
+
+
+WVTEST_MAIN("connection refused 2")
 {
     char buf[1024];
     size_t len;
@@ -70,18 +87,15 @@ WVTEST_MAIN("connection refused")
     WVFAIL(tcp.isok());
     WVPASSEQ(tcp.geterr(), ECONNREFUSED);
     printf("Error string is '%s'\n", tcp.errstr().cstr());
-//    WVPASSEQ(tcp.errstr(), strerror(ECONNREFUSED)); // wrong in win32
     
     len = tcp.read(buf, sizeof(buf));
     WVPASSEQ(len, 0);
     WVFAIL(tcp.isok());
     WVPASSEQ(tcp.geterr(), ECONNREFUSED);
     printf("Error string is '%s'\n", tcp.errstr().cstr());
-//    WVPASSEQ(tcp.errstr(), strerror(ECONNREFUSED)); // wrong in win32
     
     tcp.write("foo\n");
     WVFAIL(tcp.isok());
     WVPASSEQ(tcp.geterr(), ECONNREFUSED);
     printf("Error string is '%s'\n", tcp.errstr().cstr());
-//    WVPASSEQ(tcp.errstr(), strerror(ECONNREFUSED)); // wrong in win32
 }

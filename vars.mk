@@ -66,8 +66,9 @@ endif
 
 libwvdbus.so-LIBS+=$(LIBS_DBUS)
 
-libwvbase.so-LIBS+=$(LIBS_XPLC) -lm
-libwvbase.so:
+ifneq ("$(with_xplc)", "no")
+LIBS+=$(LIBS_XPLC) -lm
+endif
 
 libwvutils.so-LIBS+=$(LIBS_PAM)
 

@@ -119,7 +119,7 @@ WvTCPConn::WvTCPConn(WvStringParm _hostname, uint16_t _port)
 	do_connect();
     }
     else
-	dns.findaddr(0, hostname, NULL);
+	check_resolver();
 }
 
 
@@ -255,7 +255,7 @@ void WvTCPConn::pre_select(SelectInfo &si)
     if (!resolved)
         dns.pre_select(hostname, si);
 
-    if (resolved && isok()) 
+    if (resolved) 
     {
 	bool oldw = si.wants.writable;
 	if (!isconnected()) {
