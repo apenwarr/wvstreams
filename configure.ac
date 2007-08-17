@@ -391,7 +391,7 @@ if test "$with_dbus" != "no"; then
     LIBS_save="$LIBS"
     LIBS="$LIBS /usr/lib/libdbus-1.a"
     with_dbus=no
-    AC_TRY_LINK([void dbus_connection_open(); ],
+    AC_TRY_LINK([extern "C" void dbus_connection_open(); ],
                 [dbus_connection_open(); ],
                 [with_dbus=])
     LIBS="$LIBS_save"
