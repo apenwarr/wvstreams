@@ -91,6 +91,7 @@ TOBJFIXME=\
 	\
 	streams/t/wvatomicfile.t.o \
 	streams/t/wvstreamsdaemon.t.o \
+	streams/t/wvpipe.t.o \
 	\
 	uniconf/t/uniconfd.t.o \
 	uniconf/t/uniconfgen-sanitytest.o \

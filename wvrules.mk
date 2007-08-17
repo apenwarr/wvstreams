@@ -29,6 +29,8 @@ SHELL=/bin/bash
 ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
   include $(WVSTREAMS_SRC)/config.mk
   include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
+else
+  COMPILER_STANDARD=posix
 endif
 
 ifeq (${EXEEXT},.exe)

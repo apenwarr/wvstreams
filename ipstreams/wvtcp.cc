@@ -176,8 +176,18 @@ void WvTCPConn::do_connect()
 	nice_tcpopts();
     }
     
-    sockaddr *sa = remaddr.sockaddr();
-    int ret = connect(getfd(), sa, remaddr.sockaddr_len()), err = errno;
+#ifndef _WIN32
+    WvIPPortAddr newaddr(remaddr);
+#else
+    // Win32 doesn't like to connect to 0.0.0.0:port; it means "any address
+    // on the local machine", so let's just force localhost
+    WvIPAddr zero;
+    WvIPPortAddr newaddr(WvIPAddr(remaddr)==zero
+			    ? WvIPAddr("127.0.0.1") : remaddr,
+			 remaddr.port);
+#endif
+    sockaddr *sa = newaddr.sockaddr();
+    int ret = connect(getfd(), sa, newaddr.sockaddr_len()), err = errno;
     assert(ret <= 0);
     
     if (ret == 0 || (ret < 0 && err == EISCONN))
@@ -209,7 +219,7 @@ void WvTCPConn::check_resolver()
     }
     else if (dnsres > 0)
     {
-	fprintf(stderr, "%p: resolver succeeded!\n", this);
+	// fprintf(stderr, "%p: resolver succeeded!\n", this);
 	remaddr = WvIPPortAddr(*ipr, remaddr.port);
 	resolved = true;
 	do_connect();

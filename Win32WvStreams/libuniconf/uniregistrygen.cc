@@ -336,7 +336,7 @@ LONG UniRegistryGenIter::next_value()
 }
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject*)
 {
     return new UniRegistryGen(s);
 }

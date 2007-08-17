@@ -199,7 +199,7 @@ UniConfGen::Iter *UniPStoreGen::iterator(const UniConfKey &key)
     return new NullIter();
 }
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject*)
 {
     return new UniPStoreGen(s);
 }
