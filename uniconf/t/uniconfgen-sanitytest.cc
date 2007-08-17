@@ -16,10 +16,13 @@
 #include "wvlog.h"
 #include "wvtest.h"
 
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/types.h>
+
+#ifndef _WIN32
+#include <sys/wait.h>
+#endif
 
 void UniConfTestDaemon::boring_server_cb(WvStringParm sockname, 
         WvStringParm server_moniker)
@@ -39,7 +42,7 @@ void UniConfTestDaemon::boring_server_cb(WvStringParm sockname,
         while (time(NULL) < start + 30*60)
         {
             WvIStreamList::globallist.runonce();
-            usleep(1000);
+            // usleep(1000); // should not be necessary
         }
     }
     _exit(0);
@@ -65,7 +68,7 @@ void UniConfTestDaemon::autoinc_server_cb(WvStringParm sockname,
         {
             uniconf.setmeint(uniconf.getmeint()+1);
             WvIStreamList::globallist.runonce();
-            usleep(1000);
+            // usleep(1000); // should not be necessary
         }
     }
     _exit(0);
@@ -90,6 +93,7 @@ UniConfTestDaemon::UniConfTestDaemon(WvStringParm _sockname,
 
 UniConfTestDaemon::~UniConfTestDaemon()
 {
+#ifndef _WIN32
     // Never, ever, try to kill pids -1 or 0.
     if (server_pid <= 0)
         fprintf(stderr, "Refusing to kill pid %i.\n", (int)server_pid);
@@ -106,6 +110,7 @@ UniConfTestDaemon::~UniConfTestDaemon()
     }
     WVPASSEQ(rv, server_pid);
     WVPASS(WIFSIGNALED(status));
+#endif
     
     unlink(sockname);
 }

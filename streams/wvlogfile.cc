@@ -91,7 +91,7 @@ WvLogFile::WvLogFile(WvStringParm _filename, WvLog::LogLevel _max_level,
       allow_append(_allow_append)
 {
     WvLogRcv::force_new_line = _force_new_line;
-    start_log();
+    // start_log(); // don't open log until the first message gets printed
 }
 
 void WvLogFile::_make_prefix(time_t timenow)
@@ -129,7 +129,7 @@ static void trim_old_logs(WvStringParm filename, WvStringParm base,
 }
 
 
-void WvLogFile::start_log()
+WvString WvLogFile::start_log()
 {
     WvFile::close();
 
@@ -187,4 +187,6 @@ void WvLogFile::start_log()
     // just do it in the foreground on Windows
     trim_old_logs(filename, base, keep_for);
 #endif
+    
+    return fullname;
 }

@@ -13,13 +13,16 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <time.h>
+#include <sys/types.h>
+
+#ifndef _WIN32
+# include <sys/wait.h>
+# include <sys/syscall.h>
+#endif
 
 #ifndef WVCRASH_USE_SIGALTSTACK
-#define WVCRASH_USE_SIGALTSTACK 1
+# define WVCRASH_USE_SIGALTSTACK 1
 #endif
 
 // FIXME: this file mostly only works in Linux
@@ -419,6 +422,191 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
     wvcrash_add_signal(SIGFPE);
     wvcrash_add_signal(SIGILL);
 }
+
+#elif defined(_WIN32)
+
+#include <windows.h>
+#include <stdio.h>
+#include <imagehlp.h>
+
+inline char* last_part(char* in)
+{
+    int len = strlen(in);
+    char* tmp = in+len;
+    while (tmp > in)
+    {
+        if (*tmp == '/' || *tmp == '\\')
+            return tmp+1;
+        tmp--;
+    }
+    return in;
+}
+
+
+/**
+ * Call this with a thread context to get a nice callstack.  You can get a 
+ * thread context either from an exception or by using this code:
+ *   CONTEXT ctx;
+ *   memset(&ctx, 0, sizeof(CONTEXT));
+ *   ctx.ContextFlags = CONTEXT_FULL;
+ *   GetThreadContext(hThread, &ctx);
+ */
+int backtrace(CONTEXT &ctx)
+{
+    HANDLE hProcess = (HANDLE)GetCurrentProcess();
+    HANDLE hThread = (HANDLE)GetCurrentThread();
+
+    SymInitialize(hProcess, NULL, TRUE);
+
+    STACKFRAME sf;
+    memset(&sf, 0, sizeof(STACKFRAME));
+
+    sf.AddrPC.Offset = ctx.Eip;
+    sf.AddrPC.Mode = AddrModeFlat;
+    sf.AddrFrame.Offset = ctx.Ebp;
+    sf.AddrFrame.Mode = AddrModeFlat;
+    sf.AddrStack.Offset = ctx.Esp;
+    sf.AddrStack.Mode = AddrModeFlat;
+
+    fprintf(stderr, "Generating stack trace......\n");
+    fprintf(stderr, "%3s  %16s:%-10s %32s:%3s %s\n", "Num", "Module", "Addr", "Filename", "Line", "Function Name");
+    int i = 0;
+    while (StackWalk(IMAGE_FILE_MACHINE_I386,
+        hProcess,
+        hThread,
+        &sf,
+        &ctx,
+        NULL,
+        SymFunctionTableAccess,
+        SymGetModuleBase,
+        NULL))
+    {
+        if (sf.AddrPC.Offset == 0)
+            break;
+
+        // info about module
+        IMAGEHLP_MODULE modinfo;
+        memset(&modinfo, 0, sizeof(IMAGEHLP_MODULE));
+        modinfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
+        SymGetModuleInfo(hProcess, sf.AddrPC.Offset, &modinfo);
+
+        // get some symbols
+        BYTE buffer[1024];
+        DWORD disp = 0;
+        memset(buffer, 0, sizeof(buffer));
+        PIMAGEHLP_SYMBOL sym = (PIMAGEHLP_SYMBOL)buffer;
+        sym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
+        sym->MaxNameLength = sizeof(buffer) - sizeof(IMAGEHLP_SYMBOL) + 1;
+        SymGetSymFromAddr(hProcess, sf.AddrPC.Offset, &disp, sym);
+
+        // line numbers anyone?
+        IMAGEHLP_LINE line;
+        SymSetOptions(SYMOPT_LOAD_LINES);
+        DWORD disp2 = 0;
+        memset(&line, 0, sizeof(IMAGEHLP_LINE));
+        line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+        SymGetLineFromAddr(hProcess, sf.AddrPC.Offset, &disp2, &line);
+
+        // output some info now then
+        fprintf(stderr, "%3d. %16s:0x%08X %32s:%-3d %s\n",
+                ++i,
+                modinfo.LoadedImageName[0]?modinfo.LoadedImageName:"unknown",
+                (DWORD)sf.AddrPC.Offset,
+                (line.FileName && line.FileName[0])?last_part(line.FileName):"unknown",
+                (line.FileName && line.FileName[0])?line.LineNumber:0,
+                sym->Name[0]?sym->Name:"unknown");
+    }
+
+    SymCleanup(hProcess);
+
+    return 1;
+}
+
+
+static void exception_desc(FILE *file, unsigned exception,
+        unsigned data1, unsigned data2)
+{
+
+    switch (exception)
+    {
+        case 0xC0000005:
+        {
+            switch (data1)
+            {
+                case 0:
+                    fprintf(file,
+                            "invalid memory read from address 0x%08X",
+                            data2);
+                    break;
+                case 1:
+                    fprintf(file,
+                            "invalid memory write to address 0x%08X",
+                            data2);
+                    break;
+                default:
+                    fprintf(file,
+                            "invalid memory access (unknown type %d) at address 0x%08X",
+                            data1, data2);
+                    break;
+            }
+        }
+        break;
+
+        case 0xC0000094:
+            fprintf(file, "integer division by zero");
+            break;
+
+        default:
+            fprintf(file, "unknown exception (data1=0x%08X, data2=0x%08X)");
+            break;
+    }
+}
+
+static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS * pExceptionPointers )
+{
+    struct ExceptionInfo
+    {
+        unsigned exception;
+        unsigned unknown[2];
+        void *ip;
+        unsigned more_unknown;
+        unsigned data1;
+        unsigned data2;
+    };
+    ExceptionInfo *info = *(ExceptionInfo **)pExceptionPointers;
+
+    // handle a special exception.  Number 3 = forced breakpoint
+    // having __asm int 3; in code will cause windows to ask if
+    // you want to debug the application nicely.
+    if (info->exception==0x80000003)
+    {
+        fprintf(stderr, "Preparing to debug!\n");
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    
+    fprintf(stderr, "--------------------------------------------------------\n");
+    fprintf(stderr, "Exception 0x%08X:\n  ", info->exception);
+    exception_desc(stderr, info->exception, info->data1, info->data2);
+    fprintf(stderr, "\n  at instruction 0x%08X in thread 0x%08X\n", info->ip, GetCurrentThreadId());
+    backtrace(*pExceptionPointers->ContextRecord);
+    fprintf(stderr, "--------------------------------------------------------\n");
+
+                
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static bool have_global_exception_handler = false;
+void setup_console_crash()
+{
+    if (!have_global_exception_handler)
+    {
+        SetUnhandledExceptionFilter(ExceptionFilter);
+        have_global_exception_handler = true;
+    }
+}
+
+void wvcrash(int sig) {}
+void wvcrash_setup(const char *_argv0, const char *_desc) {}
 
 #else // Not Linux
 

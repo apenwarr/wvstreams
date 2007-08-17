@@ -75,7 +75,7 @@ public:
 
 protected:
     LogLevel loglevel;
-    static WvLogRcvBaseList receivers;
+    static WvLogRcvBaseList *receivers;
     static int num_receivers, num_logs;
     static WvLogRcvBase *default_receiver;
     WvLogFilter* filter;

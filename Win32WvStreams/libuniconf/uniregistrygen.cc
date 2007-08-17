@@ -202,6 +202,11 @@ void UniRegistryGen::set(const UniConfKey &key, WvStringParm value)
     if (hKey != m_hRoot) RegCloseKey(hKey);
 }
 
+void UniRegistryGen::setv(const UniConfPairList &pairs)
+{
+    setv_naive(pairs);
+}
+
 bool UniRegistryGen::exists(const UniConfKey &key)
 {
     return get(key) == WvString::null;
@@ -331,7 +336,7 @@ LONG UniRegistryGenIter::next_value()
 }
 
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     return new UniRegistryGen(s);
 }

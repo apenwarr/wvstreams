@@ -36,14 +36,14 @@ static ASN1_INTEGER * serial_to_int(WvStringParm serial)
 
 
 WvCRL::WvCRL()
-    : debug("X509_CRL", WvLog::Debug5)
+    : debug("X509 CRL", WvLog::Debug5)
 {
     crl = NULL;
 }
 
 
 WvCRL::WvCRL(const WvX509Mgr &cacert)
-    : debug("X509_CRL", WvLog::Debug5)
+    : debug("X509 CRL", WvLog::Debug5)
 {
     assert(crl = X509_CRL_new());
     cacert.signcrl(*this);
@@ -224,25 +224,28 @@ void WvCRL::decode(const DumpMode mode, WvStringParm str)
         
         if (BIO_read_filename(bio, str.cstr()) <= 0)
         {
-            debug(WvLog::Warning, "Couldn't open file '%s' to import CRL.\n", 
-                  str);
+            debug(WvLog::Warning, "Import CRL from '%s': %s\n", 
+                  str, wvssl_errstr());
             BIO_free(bio);
             return;
         }
         
         if (!(crl = d2i_X509_CRL_bio(bio, NULL)))
-            debug(WvLog::Warning, "Can't read CRL from file.\n");
+            debug(WvLog::Warning, "Read CRL from '%s': %s\n",
+		  str, wvssl_errstr());
         
         BIO_free(bio);
         return;
     }
     else if (mode == CRLFilePEM)
     {
-        FILE * fp = fopen(str, "r");
+        FILE * fp = fopen(str, "rb");
         if (!fp)
         {
-            debug(WvLog::Warning, "Couldn't open file '%s' to import CRL.\n", 
-                  str);
+	    int errnum = errno;
+            debug(WvLog::Warning,
+		  "Import CRL from '%s': %s\n", 
+                  str, strerror(errnum));
             return;
         }
 

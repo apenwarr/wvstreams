@@ -91,15 +91,9 @@ void WvWinStreamClone::select_set(SocketEventsMap &sockmap, fd_set *set, long ev
 
 void WvWinStreamClone::pre_poll()
 {
-    bool sure = this->_build_selectinfo(m_si, m_msec_timeout, 
-					false, false, false, true);
+    this->_build_selectinfo(m_si, m_msec_timeout, 
+			    false, false, false, true);
     
-    if (sure)
-    {
-	m_pending_callback = true;
-	m_si.msec_timeout = 0;
-    }
-
     // We must only call WSAAsyncSelect once per socket, so we need
     // to collect all the events from each set first, grouping them by
     // socket rather than by event

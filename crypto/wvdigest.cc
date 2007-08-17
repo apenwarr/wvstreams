@@ -5,10 +5,10 @@
  * MD5, SHA-1 and HMAC digest abstractions.
  */
 #include "wvdigest.h"
+#include "wvserialize.h"
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <assert.h>
-#include <netinet/in.h>
 #include <zlib.h>
 
 /***** WvEVPMDDigest *****/
@@ -186,8 +186,7 @@ bool WvCrc32Digest::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 
 bool WvCrc32Digest::_finish(WvBuf &outbuf)
 {
-    unsigned long int crcout = htonl(crc);
-    outbuf.put(&crcout, sizeof(crcout));
+    wv_serialize(outbuf, crc);
     return true;
 }
 
@@ -222,8 +221,7 @@ bool WvAdler32Digest::_encode(WvBuf &inbuf, WvBuf &outbuf, bool flush)
 
 bool WvAdler32Digest::_finish(WvBuf &outbuf)
 {
-    unsigned long int crcout = htonl(crc);
-    outbuf.put(&crcout, sizeof(crcout));
+    wv_serialize(outbuf, crc);
     return true;
 }
 

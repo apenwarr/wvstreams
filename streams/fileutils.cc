@@ -9,17 +9,28 @@
 #include "wvfile.h"
 #include "wvdiriter.h"
 #include <string.h>
-#include <unistd.h>
 #include <sys/stat.h>
-#include <utime.h>
 #ifndef _WIN32
 #include <fnmatch.h>
 #endif
+#ifndef _MSC_VER
+#include <unistd.h>
+#include <utime.h>
+#endif
 
-bool mkdirp(WvStringParm _dir, int create_mode)
+int wvmkdir(WvStringParm _dir, int create_mode)
+{
+#ifdef _WIN32
+    return mkdir(_dir);
+#else
+    return mkdir(_dir, create_mode);
+#endif
+}
+
+int mkdirp(WvStringParm _dir, int create_mode)
 {
     if (!access(_dir, X_OK))
-        return true;
+        return 0;
 
     // You're trying to make a nothing directory eh?
     assert(!!_dir);
@@ -30,22 +41,14 @@ bool mkdirp(WvStringParm _dir, int create_mode)
     while ((p = strchr(++p, '/')))
     {
         *p = '\0';
-#ifndef _WIN32
-        if (access(dir.cstr(), X_OK) && mkdir(dir.cstr(), create_mode))
-#else
-        if (access(dir.cstr(), X_OK) && mkdir(dir.cstr()))
-#endif
-            return false;
+        if (access(dir, X_OK) && wvmkdir(dir, create_mode))
+            return -1;
         *p = '/';
     }
 
     // You're probably creating the directory to write to it? Maybe this should
     // look for R_OK&X_OK instead of X_OK&W_OK...
-#ifndef _WIN32
-    return  !(access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr(), create_mode));
-#else
-    return  !(access(dir.cstr(), X_OK&W_OK) && mkdir(dir.cstr()));
-#endif
+    return (access(dir, X_OK&W_OK) && wvmkdir(dir, create_mode)) ? -1 : 0;
 }
 
 
@@ -187,8 +190,9 @@ bool wvfnmatch(WvStringList& patterns, WvStringParm name, int flags)
 
     return match;
 }
+#endif
 
-// Only chmod a given file or dir, do not follow symlinks
+#ifndef _WIN32 // file permissions are too screwy in win32
 int wvchmod(const char *path, mode_t mode)
 {
     struct stat st;
@@ -225,12 +229,22 @@ int wvchmod(const char *path, mode_t mode)
 	return -1;
     }
 
+#ifndef _WIN32
+    // we're definitely chmod'ing the open file here, which is good,
+    // because the filename itself might have been moved around between
+    // our stat'ing and chmod'ing it.
     int retval = fchmod(filedes, mode);
+#else
+    // this is guaranteed to be the same file as filedes, because in
+    // Windows, open files can't be changed on the filesystem (unlike in
+    // Unix).
+    int retval = chmod(path, mode);
+#endif
     close(filedes);
 
     return retval;
 }
-#endif
+#endif // !_WIN32
 
 
 FILE *wvtmpfile()
@@ -258,6 +272,11 @@ WvString wvtmpfilename(WvStringParm prefix)
     close(fd);
 #else
     WvString tmpname(_tempnam("c:\\temp", prefix.cstr()));
+    int fd;
+    fd = open(tmpname, O_WRONLY|O_CREAT|O_EXCL, 0777);
+    if (fd < 0)
+	return WvString::null; // weird
+    _close(fd);
 #endif
 
     return tmpname;
@@ -272,3 +291,12 @@ mode_t get_umask()
     return rv;
 }
 
+
+void wvdelay(int msec_delay)
+{
+#ifdef _WIN32
+    Sleep(msec_delay);
+#else
+    usleep(msec_delay * 1000);
+#endif
+}

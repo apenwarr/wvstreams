@@ -11,6 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+IWvStream *WvCrashInfo::in_stream = NULL;
+const char *WvCrashInfo::in_stream_id = NULL;
+enum WvCrashInfo::InStreamState WvCrashInfo::in_stream_state = UNUSED;
+
 // FIXME: this file mostly only works in Linux
 #ifdef __linux
 
@@ -30,10 +34,6 @@ static const int ring_buffer_size = wvcrash_ring_buffer_size;
 static const int ring_buffer_mask = ring_buffer_size - 1;
 static char ring_buffer[ring_buffer_size+1];
 static int ring_buffer_start = 0, ring_buffer_used = 0;
-
-IWvStream *WvCrashInfo::in_stream = NULL;
-const char *WvCrashInfo::in_stream_id = NULL;
-enum WvCrashInfo::InStreamState WvCrashInfo::in_stream_state = UNUSED;
 
 extern "C"
 {

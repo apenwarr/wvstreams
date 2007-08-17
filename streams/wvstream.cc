@@ -639,7 +639,7 @@ char *WvStream::blocking_getline(time_t wait_msec, int separator,
     i = inbuf.strchr(separator);
     if (i > 0) {
 	char *eol = (char *)inbuf.mutablepeek(i - 1, 1);
-	assert(eol);
+	assert(eol && *eol == separator);
 	*eol = 0;
 	return const_cast<char*>((const char *)inbuf.get(i));
     } else {
@@ -839,6 +839,13 @@ void WvStream::pre_select(SelectInfo &si)
 
 bool WvStream::post_select(SelectInfo &si)
 {
+    if (!si.inherit_request)
+    {
+	si.wants.readable |= readcb;
+	si.wants.writable |= writecb;
+	si.wants.isexception |= exceptcb;
+    }
+    
     // FIXME: need sane buffer flush support for non FD-based streams
     // FIXME: need read_requires_writable and write_requires_readable
     //        support for non FD-based streams

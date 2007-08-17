@@ -40,6 +40,8 @@ public:
     bool isrunning() const
         { return running; }
     void recycle();
+    int get_tid() const { return tid; }
+    WvString get_name() const { return name; }
 };
 
 

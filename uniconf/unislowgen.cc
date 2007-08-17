@@ -6,8 +6,9 @@
  */
 #include "unislowgen.h"
 #include "wvmoniker.h"
+#ifndef _MSC_VER // FIXME:WLACH Is unistd even needed here?!
 #include <unistd.h>
-
+#endif
 
 static IUniConfGen *creator(WvStringParm s)
 {

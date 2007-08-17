@@ -297,7 +297,7 @@ WVTEST_MAIN("wvstime")
     
     now = wvstime();
     WvStream s;
-    s.select(0, true, true);
+    s.select(100, true, true);
     WVFAIL(now == wvstime());
     WVPASS(now < wvstime());
 

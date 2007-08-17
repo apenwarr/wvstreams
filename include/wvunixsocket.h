@@ -11,6 +11,9 @@
 
 class WvIStreamList;
 class WvUnixListener;
+class WvUnixConn;
+
+#ifndef _WIN32
 
 /**
  * WvStream-based Unix domain socket connection class.
@@ -114,5 +117,6 @@ public:
     const char *wstype() const { return "WvUnixListener"; }
 };
 
+#endif // _WIN32
 
 #endif // __WVUNIXSOCKET_H

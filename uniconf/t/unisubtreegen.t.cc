@@ -34,6 +34,7 @@ void sub_callback(const UniConf &uniconf, const UniConfKey &key)
             ++sub_callback_count);
 }
 
+#ifndef _WIN32
 WVTEST_MAIN("callbacks")
 {
     signal(SIGPIPE, SIG_IGN);
@@ -109,3 +110,4 @@ WVTEST_MAIN("callbacks")
 
     unlink(sockname);
 }
+#endif

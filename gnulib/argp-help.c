@@ -25,7 +25,7 @@
 # include <config.h>
 #endif
 
-#include <alloca.h>
+//#include <alloca.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>

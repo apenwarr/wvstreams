@@ -255,19 +255,20 @@ WVTEST_MAIN("inbuf after read error")
 }
 
 
-class FooFD : public WvStream {
+class FooFD : public WvFDStream {
 public:
-    FooFD(int fd) : y(fd)
+    FooFD(int fd) : WvFDStream(fd)
     {
+	WVPASS(isreadable());
         called = false;
-        y.setcallback(WvStreamCallback(this,
+        setcallback(WvStreamCallback(this,
         	&FooFD::fooback), NULL);
-        WvIStreamList::globallist.append(&y, false, "FooFD");
+        WvIStreamList::globallist.append(this, false, "FooFD");
     }
 
     ~FooFD()
     {
-	WvIStreamList::globallist.unlink(&y);
+	WvIStreamList::globallist.unlink(this);
     }
 
     void fooback(WvStream &, void *)
@@ -275,7 +276,6 @@ public:
 	called = true;
     }
 
-    WvFDStream y;
     bool called;
 };
 
@@ -311,13 +311,16 @@ WVTEST_MAIN("Test undo_force_select() on a WvFDStream")
 
     // check that our callback is called
     WvIStreamList::globallist.runonce();
+    WVPASS(foof.isok());
+    WVPASS(foof.select(0));
+    WVPASS(WvIStreamList::globallist.select(0));
     WVPASS(foof.called);
 
     foof.called = false;
     WVPASS(!foof.called);
 
     // undo_force_select() and make sure we're not called
-    foof.y.undo_force_select(true, true, true);
+    foof.undo_force_select(true, true, true);
 
     // can't use runonce() here because it should be false
     if (WvIStreamList::globallist.select(0))

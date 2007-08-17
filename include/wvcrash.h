@@ -45,4 +45,8 @@ void wvcrash_ring_buffer_put(const char *str);
 void wvcrash_ring_buffer_put(const char *str, size_t len);
 const char *wvcrash_ring_buffer_get();
 
+#if defined(_WIN32)
+extern void setup_console_crash();
+#endif
+
 #endif // __WVCRASH_H

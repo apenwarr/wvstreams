@@ -26,7 +26,7 @@
 # include <config.h>
 #endif
 #ifndef IN_LIBINTL
-# include <alloca.h>
+//# include <alloca.h>
 #endif
 
 /* Specification.  */

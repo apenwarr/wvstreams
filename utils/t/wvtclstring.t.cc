@@ -296,6 +296,17 @@ WVTEST_MAIN("BUGZID:17077")
     WVPASSEQ(wvtcl_getword(buf, WVTCL_NASTY_NEWLINES, false), encoded_dirname);
 }
 
+static void tcltest(const char *a, const char *b)
+{
+    if (strcmp(a, b) != 0)
+    {
+	fprintf(stderr, "\n");
+	WVPASSEQ(a, b); // always fails
+    }
+    else
+	fprintf(stderr, "."); // otherwise just print a progress dot
+}
+
 WVTEST_MAIN("wvtcl_getword comprehensive nounescape")
 {
     WvDynBuf buf;
@@ -318,38 +329,36 @@ WVTEST_MAIN("wvtcl_getword comprehensive nounescape")
         for (int i=0; i<len; ++i)
         {
             str[0] = chars[i];
-            if (mask[str[0]])
-                continue;
+            if (mask[str[0]]) continue;
             for (int j=0; j<len; ++j)
             {
+		fprintf(stderr, "\n%d,%d: ", i, j);
+		
                 str[1] = chars[j];
-                if (mask[str[1]])
-                    continue;
+                if (mask[str[1]]) continue;
                 for (int k=0; k<len; ++k)
                 {
                     str[2] = chars[k];
-                    if (mask[str[2]])
-                        continue;
+                    if (mask[str[2]]) continue;
                     for (int l=0; l<len; ++l)
                     {
                         str[3] = chars[l];
-                        if (mask[str[3]])
-                            continue;
+                        if (mask[str[3]]) continue;
                         str[slen] = '\0';
 
                         if (strcmp(last, str) == 0)
                             continue;
 
                         WvString estr = wvtcl_escape(str, mask);
-                        WVPASSEQ(wvtcl_unescape(estr), str);
+                        tcltest(wvtcl_unescape(estr), str);
                         buf.putstr(estr);
-                        WVPASSEQ(wvtcl_getword(buf, mask, false), estr);
+                        tcltest(wvtcl_getword(buf, mask, false), estr);
                         buf.zap();
 
                         WvString eestr = wvtcl_escape(estr, mask);
-                        WVPASSEQ(wvtcl_unescape(eestr), estr);
+                        tcltest(wvtcl_unescape(eestr), estr);
                         buf.putstr(eestr);
-                        WVPASSEQ(wvtcl_getword(buf, mask, false), eestr);
+                        tcltest(wvtcl_getword(buf, mask, false), eestr);
                         buf.zap();
                         
                         strcpy(last, str);
@@ -357,5 +366,8 @@ WVTEST_MAIN("wvtcl_getword comprehensive nounescape")
                 }
             }
         }
+	
     }
+    
+    fprintf(stderr, "\n");
 }

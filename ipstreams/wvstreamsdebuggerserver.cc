@@ -50,9 +50,9 @@ void WvStreamsDebuggerServer::Connection::send(WvStringParm code,
 }
 
 
-WvStreamsDebuggerServer::WvStreamsDebuggerServer(WvUnixAddr unix_addr,
+WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
         AuthCallback _auth_cb,
-        WvIPPortAddr tcp_addr) :
+        const WvIPPortAddr &tcp_addr) :
     log("WvStreamsDebuggerServer", WvLog::Debug3),
     unix_listener(NULL),
     tcp_listener(NULL),
@@ -60,6 +60,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(WvUnixAddr unix_addr,
 {
     WvIStreamList::globallist.append(&streams, false);
 
+#ifndef _WIN32
     if (true)
     {
         unix_listener = new WvUnixListener(unix_addr, 0700);
@@ -71,6 +72,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(WvUnixAddr unix_addr,
         streams.append(unix_listener, true);
         log("Listening on %s\n", unix_addr);
     }
+#endif
     
     if (tcp_addr != WvIPPortAddr())
     {
@@ -92,6 +94,7 @@ WvStreamsDebuggerServer::~WvStreamsDebuggerServer()
 }
 
 
+#ifndef _WIN32
 void WvStreamsDebuggerServer::unix_listener_cb(WvStream &, void *)
 {
     WvUnixConn *unix_conn = unix_listener->accept();
@@ -109,7 +112,7 @@ void WvStreamsDebuggerServer::unix_listener_close_cb(WvStream &)
 {
     log("Listener on %s closing\n", *unix_listener->src());
 }
-
+#endif
 
 void WvStreamsDebuggerServer::tcp_listener_cb(WvStream &, void *)
 {

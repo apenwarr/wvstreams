@@ -59,6 +59,10 @@ WVTEST_MAIN("spinning list 2")
     l.setcallback(cb, &lcount);
     l.append(&s, false, "stream");
     
+    s.runonce(0);
+    WVPASSEQ(scount, 0);
+    WVPASSEQ(lcount, 0);
+    
     l.alarm(0);
     l.runonce(0);
     WVPASSEQ(scount, 0);

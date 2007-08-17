@@ -143,7 +143,7 @@ WvString spacecat(WvStringParm a, WvStringParm b, char sep, bool onesep)
     }
 
     // Now copy the second half of the string in and terminate with a NUL.
-    memcpy(cptr+alen+1, b+boffset, blen-boffset);
+    memcpy(cptr+alen+1, b.cstr()+boffset, blen-boffset);
     cptr[alen+1+blen-boffset] = 0;
 
     return s;
@@ -197,7 +197,7 @@ char *snip_string(char *haystack, char *needle)
         return haystack + strlen(needle);
 }
 
-#ifndef _WIN32
+
 char *strlwr(char *string)
 {
     char *p = string;
@@ -222,7 +222,7 @@ char *strupr(char *string)
 
     return string;
 }
-#endif
+
 
 // true if all the characters in "string" are isalnum().
 bool is_word(const char *p)
@@ -1251,7 +1251,7 @@ WvString intl_date(time_t when)
         when = time(NULL);
 
     struct tm *tmwhen = localtime(&when); 
-    strftime(out.edit(), 16, "%F", tmwhen);
+    strftime(out.edit(), 16, "%Y-%m-%d", tmwhen);
 
     return out;
 }
@@ -1265,9 +1265,25 @@ WvString intl_datetime(time_t when)
         when = time(NULL);
 
     struct tm *tmwhen = localtime(&when); 
-    strftime(out.edit(), 24, "%F %H:%M:%S", tmwhen);
+    strftime(out.edit(), 24, "%Y-%m-%d %H:%M:%S", tmwhen);
 
     return out;
+}
+
+
+/**
+ * Return the number of seconds by which localtime (at the given timestamp)
+ * is offset from GMT.  For example, in Eastern Standard Time, the offset
+ * is (-5*60*60) = -18000.
+ */
+time_t intl_gmtoff(time_t t)
+{
+    struct tm *l = localtime(&t);
+    l->tm_isdst = 0;
+    time_t local = mktime(l);
+    time_t gmt   = mktime(gmtime(&t));
+    
+    return local-gmt;
 }
 
 
@@ -1300,6 +1316,9 @@ WvString ptr2str(void* ptr)
 // Reads the contents of a symlink.  Returns WvString::null on error.
 WvString wvreadlink(WvStringParm path)
 {
+#ifdef _WIN32
+    return WvString::null; // no such thing as a symlink on Windows
+#else
     WvString result;
     int size = 64;
     for (;;)
@@ -1316,5 +1335,6 @@ WvString wvreadlink(WvStringParm path)
         size = 2*size; // increase buffer size
     }
     return result;
+#endif
 }
 

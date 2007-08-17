@@ -1093,7 +1093,7 @@ WVTEST_MAIN("sizetoa rounding")
     }
 }
 
-
+#ifndef _WIN32
 WVTEST_MAIN("wvreadlink")
 {
     WvString symlink_name("/tmp/wvreadlink.%s", getpid());
@@ -1111,6 +1111,7 @@ WVTEST_MAIN("wvreadlink")
         unlink(symlink_name);
     }
 }
+#endif
 
 bool checkdateformat(WvString dtstr)
 {
@@ -1166,33 +1167,34 @@ bool checkdatetimeformat(WvString dtstr)
         p++;
         WvString ds(head);
         WvString ts(p);
-        if(checktimeformat(ts) && checkdateformat(ds))
+        if (checktimeformat(ts) && checkdateformat(ds))
             res = true;
     }
 
     return res;
 }
 
-    
+
 WVTEST_MAIN("intl_datetime")
 {
-    // In order to make this test not depend on the local 
-    // time zone, dt is initialized as a number in time zone
-    // UTC, then minus the offset of current between current
-    // time zone and UTC. So that it can be compared with 
-    // those string describing UTC time. 
+    // The intl_* functions express time in local time, which will
+    // produce strings that vary depending on the tester's local time zone.
+    // To work around this, we subtract the timezone offset from the
+    // test timestamp; the functions will add it back in, and the result
+    // is zero.
     time_t dt = 1152558117;
-    struct tm *dtm = localtime(&dt);
-    dt -= dtm->tm_gmtoff;
+    time_t offset = intl_gmtoff(dt);
+    dt -= offset;
+    
+    fprintf(stderr, "Offset: %ld secs (%ld hours)\n", 
+	    (long)offset, (long)offset/3600);
     
     WVPASSEQ(intl_date(dt), "2006-07-10");
     WVPASSEQ(intl_time(dt), "19:01:57");
     WVPASSEQ(intl_datetime(dt), "2006-07-10 19:01:57");
 
-
     WVPASS(checktimeformat(intl_time(dt)));
     WVPASS(checkdateformat(intl_date(dt)));
     WVPASS(checkdatetimeformat(intl_datetime(dt)));
-
 }
 

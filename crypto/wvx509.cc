@@ -1,4 +1,4 @@
- /*
+/*
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2005 Net Integration Technologies, Inc.
  * 
@@ -471,30 +471,31 @@ void WvX509::decode(const DumpMode mode, WvStringParm str)
         
         if (BIO_read_filename(bio, str.cstr()) <= 0)
         {
-            debug(WvLog::Warning, "Couldn't open file '%s' to import "
-                  "certificate.\n", str);
+            debug(WvLog::Warning, "Open '%s': %s\n", str, wvssl_errstr());
             BIO_free(bio);
             return;
         }
         
         if (!(cert = d2i_X509_bio(bio, NULL)))
-            debug(WvLog::Warning, "Can't read certificate from file.\n");
+            debug(WvLog::Warning, "Import DER from '%s': %s\n",
+		  str, wvssl_errstr());
         
         BIO_free(bio);
         return;
     }
     else if (mode == CertFilePEM)
     {
-        FILE * fp = fopen(str, "r");
+        FILE *fp = fopen(str, "rb");
         if (!fp)
         {
-            debug("Couldn't open file '%s' to import certificate.\n", 
-                  str);
+	    int errnum = errno;
+            debug("Open '%s': %s\n", str, strerror(errnum));
             return;
         }
 
         if (!(cert = PEM_read_X509(fp, NULL, NULL, NULL)))
-            debug("Can't read certificate from file");
+            debug(WvLog::Warning, "Import PEM from '%s': %s\n",
+		  str, wvssl_errstr());
         
         fclose(fp);
         return;

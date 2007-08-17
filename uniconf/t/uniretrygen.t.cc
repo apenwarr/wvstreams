@@ -4,6 +4,7 @@
 #include "uniretrygen.h"
 #include "uniclientgen.h"
 #include "uniconfgen-sanitytest.h"
+#include "wvfileutils.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -23,7 +24,7 @@ struct UniRetryGenTester
 };
 
 
-void wait_for_connect(UniRetryGenTester t)
+void wait_for_daemon(UniRetryGenTester t)
 {
     UniConfRoot another_cfg(WvString("retry:unix:%s", t.socket));
     
@@ -31,7 +32,8 @@ void wait_for_connect(UniRetryGenTester t)
     {
 	another_cfg.xset("wait", "pong");
 	if (another_cfg.xget("wait") == "pong") break;
-	sleep(1);
+	fprintf(stderr, "still waiting for connection.\n");
+	wvdelay(100);
     }
 
     fprintf(stderr, "managed to connect\n");
@@ -59,20 +61,23 @@ WVTEST_MAIN("UniRetryGen: uniconfd")
 
     {
         UniConfTestDaemon daemon(t.socket, WvString("ini:%s", t.ini));
-        wait_for_connect(t);
+        wait_for_daemon(t);
 
+	wvdelay(100); // guarantee that the retry interval has expired
         cfg["/key"].setme("value");
         WVPASSEQ(cfg["/key"].getme(), "value");
         
         cfg.commit();
     }
     
+    // no delay necessary: we disconnect right away
     WVPASS(!cfg["/key"].exists());
     
     {
         UniConfTestDaemon daemon(t.socket, WvString("ini:%s", t.ini));
-        wait_for_connect(t);
+        wait_for_daemon(t);
         
+	wvdelay(100); // guarantee that the retry interval has expired
         WVPASSEQ(cfg["/key"].getme(), "value");
         
         cfg.commit();
@@ -99,8 +104,9 @@ WVTEST_MAIN("UniRetryGen: reconnect callback")
     reconnected = false;
 
     UniConfTestDaemon daemon(t.socket, WvString("ini:%s", t.ini));
-    wait_for_connect(t);
+    wait_for_daemon(t);
     
+    wvdelay(100); // guarantee that the retry interval has expired
     cfg.getme(); // Do something to reconnect
     WVPASS(reconnected);
 }
@@ -118,7 +124,7 @@ WVTEST_MAIN("UniRetryGen: immediate reconnect")
 
     {
         UniConfTestDaemon daemon(t.socket, WvString("ini:%s", t.ini));
-        wait_for_connect(t);
+        wait_for_daemon(t);
 
         cfg["/key"].setme("value");
         WVPASSEQ(cfg["/key"].getme(), "value");
@@ -130,7 +136,7 @@ WVTEST_MAIN("UniRetryGen: immediate reconnect")
     // uniconfd has disconnected.
     {
         UniConfTestDaemon daemon(t.socket, WvString("ini:%s", t.ini));
-        wait_for_connect(t);
+        wait_for_daemon(t);
 
         cfg.getme(); // Do something to reconnect
         WVPASSEQ(cfg["/key"].getme(), "value");

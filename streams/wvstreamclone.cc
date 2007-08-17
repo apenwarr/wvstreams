@@ -188,26 +188,22 @@ void WvStreamClone::setclone(IWvStream *newclone)
 
 void WvStreamClone::pre_select(SelectInfo &si)
 {
-    SelectRequest oldwant;
+    SelectRequest oldwant = si.wants;
     WvStream::pre_select(si);
 
     if (cloned && cloned->isok())
     {
-	oldwant = si.wants;
-	
 	if (!si.inherit_request)
 	{
 	    si.wants.readable |= readcb;
 	    si.wants.writable |= writecb;
 	    si.wants.isexception |= exceptcb;
-	    // si.wants |= cloned->force; // why would this be necessary?
 	}
 	
 	if (outbuf.used() || autoclose_time)
 	    si.wants.writable = true;
 
 	cloned->pre_select(si);
-
 	si.wants = oldwant;
     }
 }
@@ -215,7 +211,7 @@ void WvStreamClone::pre_select(SelectInfo &si)
 
 bool WvStreamClone::post_select(SelectInfo &si)
 {
-    SelectRequest oldwant;
+    SelectRequest oldwant = si.wants;
     // This currently always returns false, but we prolly should
     // still have it here in case it ever becomes useful
     bool result = WvStream::post_select(si);
@@ -226,13 +222,11 @@ bool WvStreamClone::post_select(SelectInfo &si)
 
     if (cloned && cloned->isok())
     {
-	oldwant = si.wants;
 	if (!si.inherit_request)
 	{
 	    si.wants.readable |= readcb;
 	    si.wants.writable |= writecb;
 	    si.wants.isexception |= exceptcb;
-	    // si.wants |= cloned->force; // why would this be needed?
 	}
 
 	val = cloned->post_select(si);

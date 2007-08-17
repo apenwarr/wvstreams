@@ -11,12 +11,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #ifdef _WIN32
-#include <io.h>
 #include <direct.h>
 #else
 #include <unistd.h>
-#endif
 #include <sys/wait.h>
+#endif
 #include <errno.h>
 #include <signal.h>
 
@@ -61,14 +60,15 @@ static int memleaks()
 // Passes if no rogue children were running, fails otherwise.
 // If your test gets a failure in here, either you're not killing all your
 // children, or you're not calling waitpid(2) on all of them.
-static int no_running_children()
+static bool no_running_children()
 {
-    int status = 0;
+#ifndef _WIN32
     pid_t wait_result;
 
     // Acknowledge and complain about any zombie children
     do 
     {
+	int status = 0;
         wait_result = waitpid(-1, &status, WNOHANG);
 
         if (wait_result > 0)
@@ -78,13 +78,14 @@ static int no_running_children()
             buf[sizeof(buf)-1] = '\0';
             WVFAILEQ("Unclaimed dead child process", buf);
         }
-    } 
-    while (wait_result > 0);
+    } while (wait_result > 0);
         
     // There should not be any running children, so waitpid should return -1
     WVPASSEQ(errno, ECHILD);
     WVPASSEQ(wait_result, -1);
     return (wait_result == -1 && errno == ECHILD);
+#endif
+    return true;
 }
 
 
@@ -168,9 +169,13 @@ int WvTest::run_all(const char * const *prefixes)
     if (slowstr1) min_slowness = atoi(slowstr1);
     if (slowstr2) max_slowness = atoi(slowstr2);
 
+#ifdef _WIN32
+    run_twice = false;
+#else
     char *parallel_str = getenv("WVTEST_PARALLEL");
     if (parallel_str) 
         run_twice = atoi(parallel_str) > 0;
+#endif
 
     // there are lots of fflush() calls in here because stupid win32 doesn't
     // flush very often by itself.
@@ -183,6 +188,7 @@ int WvTest::run_all(const char * const *prefixes)
 		|| prefix_match(cur->idstr, prefixes)
 		|| prefix_match(cur->descr, prefixes)))
 	{
+#ifndef _WIN32
             pid_t child = 0;
             if (run_twice)
             {
@@ -190,6 +196,7 @@ int WvTest::run_all(const char * const *prefixes)
                 printf("Running test in parallel.\n");
                 child = fork();
             }
+#endif
 
 	    printf("Testing \"%s\" in %s:\n", cur->descr, cur->idstr);
 	    fflush(stdout);
@@ -209,6 +216,7 @@ int WvTest::run_all(const char * const *prefixes)
 	    printf("\n");
 	    fflush(stdout);
 
+#ifndef _WIN32
             if (run_twice)
             {
                 if (!child)
@@ -226,6 +234,7 @@ int WvTest::run_all(const char * const *prefixes)
                         printf("Waitpid interrupted, retrying.\n");
                 }
             }
+#endif
 
             WVPASS(no_running_children());
 	}

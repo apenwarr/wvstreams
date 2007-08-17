@@ -1,27 +1,46 @@
 WVSTREAMS=.
-#%: %.cc
-#	$(error "barf!")
 
 include $(WVSTREAMS)/wvrules.mk
 include vars.mk
+include vars-$(COMPILER_STANDARD).mk
 
-all: fake-libs wvtestmain.exe
+default: all
+
+runconfigure: aclocal.m4 configure include/wvautoconf.h.in
+
+aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
+	aclocal -I gnulib/m4
+	@touch $@
+
+configure: configure.ac include/wvautoconf.h.in aclocal.m4
+	autoconf
+	@rm -f config.mk include/wvautoconf.h gnulib/Makefile
+	@touch $@
+
+include/wvautoconf.h.in: configure.ac aclocal.m4
+	autoheader
+	@touch $@
+
+gnulib: FORCE
+	$(MAKE) -C gnulib
+
 
 %.exe: %
 	rm -f $@
 	ln -s $(shell basename $<) $@
+
+all: fake-libs gnulib ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain
 	
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
 -include $(shell find . -name '.*.d') /dev/null
 
 	
-LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 \
-	$(with_xplc)/libxplc.a -lstdc++
+#LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 \
+#	$(with_xplc)/libxplc-cxx.a $(with_xplc)/libxplc.a gnulib/libgnu.a \
+#	-lstdc++
 
--lxplc -lxplc-cxx: ;
-
-default: ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni
+.PHONY: clean test
 
 # object files that we replace completely for win32
 OBJREPLACED=utils/wvtask.o
@@ -29,15 +48,21 @@ OBJREPLACED=utils/wvtask.o
 # object files that we can't use in win32 for now, but which we should
 # definitely fix
 OBJFIXME=\
-	uniconf/unifilesystemgen.o \
 	utils/wvsubprocqueue.o \
 	utils/wvsystem.o \
 	utils/wvregex.o \
+	utils/wvglob.o \
+	utils/wvglobdiriter.o \
+	utils/wvsubproc.o \
+	\
 	streams/wvatomicfile.o \
 	streams/wvlogrotator.o \
 	streams/wvpipe.o \
 	streams/wvwatcher.o \
+	\
 	ipstreams/wvunixsocket.o \
+	\
+	uniconf/unifilesystemgen.o
 
 # object files that we probably just shouldn't include in win32 libraries
 OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
@@ -45,36 +70,65 @@ OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	utils/wvfork.o \
 	utils/wvmagiccircle.o \
 	utils/wvshmzone.o \
-	utils/wvsubproc.o \
-	ipstreams/wvunixdgsocket.o \
+	utils/wvprociter.o \
+	\
 	streams/wvlockdev.o \
 	streams/wvlockfile.o \
 	streams/wvmagicloopback.o \
 	streams/wvmodem.o \
 	streams/wvsyslog.o \
 	streams/wvsubprocqueuestream.o \
-	ipstreams/wvipraw.o
+	\
+	ipstreams/wvipraw.o \
+	ipstreams/wvunixdgsocket.o \
+	\
+	uniconf/unigenhack.o
 
-TOBJSKIP=\
-	utils/t/strcrypt.t.o \
-	ipstreams/t/wvunixdgsocket.t.o \
-	ipstreams/t/wvunixsocket.t.o \
-	streams/t/wvmagicloopback.t.o \
-	streams/t/fileutils.t.o \
+TOBJFIXME=\
+	utils/t/wvsubprocqueue.t.o \
+	utils/t/wvsystem.t.o \
+	utils/t/wvpushdir.t.o \
+	\
 	streams/t/wvatomicfile.t.o \
-	streams/t/wvlogrotator.t.o \
-	streams/t/wvsubprocqueuestream.t.o \
+	streams/t/wvstreamsdaemon.t.o \
+	\
+	uniconf/t/uniconfd.t.o \
+	uniconf/t/uniconfgen-sanitytest.o \
+	uniconf/t/unicachegen.t.o \
+	uniconf/t/uniinigen.t.o \
 	uniconf/t/unireplicategen.t.o \
 	uniconf/t/uniretrygen.t.o \
 	uniconf/t/uniclientgen.t.o \
-	uniconf/t/unitempgenvsdaemon.t.o \
-	uniconf/t/uniconfd.t.o \
-	uniconf/t/unilistgen.t.o \
+	uniconf/t/uniunwrapgen.t.o \
+	uniconf/t/unitransactiongen.t.o \
+	uniconf/t/unicallbackgen.t.o \
+	uniconf/t/unimountgen.t.o \
+	uniconf/t/unisubtreegen.t.o \
+	uniconf/t/unipermgen.t.o \
+	uniconf/t/unidefgen.t.o \
+	uniconf/t/unifastregetgen.t.o \
+	uniconf/t/unitempgen.t.o \
+	uniconf/t/unireadonlygen.t.o \
+	uniconf/t/uniautogen.t.o \
+	uniconf/t/unilistgen.t.o
+	
+
+TOBJSKIP=$(TOBJFIXME) \
+	utils/t/strcrypt.t.o \
 	utils/t/wvondiskhash.t.o \
 	utils/t/wvregex.t.o \
-	utils/t/wvsubprocqueue.t.o \
-	utils/t/wvsystem.t.o \
-	urlget/t/wvhttppool.t.o
+	utils/t/wvglob.t.o \
+	utils/t/wvglobdiriter.t.o \
+	utils/t/wvprociter.t.o \
+	\
+	streams/t/wvmagicloopback.t.o \
+	streams/t/wvlogrotator.t.o \
+	streams/t/wvsubprocqueuestream.t.o \
+	\
+	ipstreams/t/wvunixdgsocket.t.o \
+	ipstreams/t/wvunixsocket.t.o \
+	\
+	uniconf/t/unitempgenvsdaemon.t.o \
 
 W=$(WVSTREAMS)/Win32WvStreams
 DIRS=utils streams ipstreams uniconf uniconf/daemon crypto \
@@ -92,6 +146,9 @@ $(TESTS): libwvwin32.a
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
+test: wvtestmain
+	./wvtestmain '$(TESTNAME)'
+
 $(patsubst %.t.cc,%.t,$(wildcard */t/*.cc)): libwvwin32.a
 
 libwvwin32.a: $(OBJFILES)
@@ -103,5 +160,18 @@ fake-libs: libwvwin32.a
 		ln -s libwvwin32.a $$d.so; \
 	done
 
+ifeq ($(VERBOSE),)
+define wild_clean
+	@list=`echo $(wildcard $(1))`; \
+		test -z "$${list}" || sh -c "rm -rf $${list}"
+endef
+else
+define wild_clean
+	@list=`echo $(wildcard $(1))`; \
+		test -z "$${list}" || sh -cx "rm -rf $${list}"
+endef
+endif
+
 clean:
-	rm -f *test *.exe
+	$(call wild_clean,$(shell find . -name '*.o') \
+		$(shell find . -name '*.exe') $(shell find . -name '*.a'))

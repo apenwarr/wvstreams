@@ -14,11 +14,10 @@
 #include <ctype.h>
 
 #ifdef _WIN32
-#include <io.h>
 #define snprintf _snprintf
 #endif
 
-WvLogRcvBaseList WvLog::receivers;
+WvLogRcvBaseList *WvLog::receivers;
 int WvLog::num_receivers = 0, WvLog::num_logs = 0;
 WvLogRcvBase *WvLog::default_receiver = NULL;
 
@@ -137,7 +136,8 @@ size_t WvLog::uwrite(const void *_buf, size_t len)
 	default_receiver = NULL;
     }
     
-    WvLogRcvBaseList::Iter i(receivers);
+    assert(receivers);
+    WvLogRcvBaseList::Iter i(*receivers);
     for (i.rewind(); i.next(); )
     {
 	WvLogRcvBase &rc = *i;
@@ -163,14 +163,22 @@ WvLogRcvBase::WvLogRcvBase()
 {
     static_init();
     WvLogRcvBase::force_new_line = false;
-    WvLog::receivers.append(this, false);
+    if (!WvLog::receivers)
+        WvLog::receivers = new WvLogRcvBaseList;
+    WvLog::receivers->append(this, false);
     WvLog::num_receivers++;
 }
 
 
 WvLogRcvBase::~WvLogRcvBase()
 {
-    WvLog::receivers.unlink(this);
+    assert(WvLog::receivers);
+    WvLog::receivers->unlink(this);
+    if (WvLog::receivers->isempty())
+    {
+        delete WvLog::receivers;
+        WvLog::receivers = NULL;
+    }
     WvLog::num_receivers--;
 }
 
@@ -201,7 +209,8 @@ void WvLogRcvBase::cleanup_on_fork(pid_t p)
 {
     if (p) return;      // parent: do nothing
 
-    WvLog::receivers.zap();
+    if (WvLog::receivers)
+        WvLog::receivers->zap();
     delete WvLog::default_receiver;
     WvLog::default_receiver = NULL;
     WvLog::num_receivers = 0;

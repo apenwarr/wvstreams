@@ -36,12 +36,17 @@ private:
     WvString old_will;
 };
 
-#ifdef NDEBUG
+#if defined(_WIN32)
 
-# define wvassert(expr)			(__ASSERT_VOID_CAST (0))
+# define wvassert(expr, args...)            assert(expr)
+# define wvassert_perror(errnum)            perror(errnum)
+
+#elif defined(NDEBUG)
+
+# define wvassert(expr, args...)	(__ASSERT_VOID_CAST (0))
 # define wvassert_perror(errnum)	(__ASSERT_VOID_CAST (0))
 
-#else  // Not NDEBUG
+#else // Not NDEBUG
 
 static inline void __wvcrash_leave_will()
 {

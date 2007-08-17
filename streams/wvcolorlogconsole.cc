@@ -7,13 +7,23 @@
 
 #include "wvcolorlogconsole.h"
 
-#include <termios.h>
+#ifdef _WIN32
 
+bool WvColorLogConsole::is_tty(int fd)
+{
+    return false;
+}
+
+#else // !_WIN32
+
+#include <termios.h>
 bool WvColorLogConsole::is_tty(int fd)
 {
     struct termios termios;
     return tcgetattr(fd, &termios) == 0;
 }
+
+#endif // !_WIN32
 
 
 bool WvColorLogConsole::can_colorize(int fd, const char *TERM)

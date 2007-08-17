@@ -36,6 +36,9 @@ WvFile::WvFile(int rwfd) : WvFDStream(rwfd)
 
 WvFile::WvFile(WvStringParm filename, int mode, int create_mode)
 {
+#ifdef _WIN32
+    mode |= O_BINARY; // WvStreams users aren't expecting crlf mangling
+#endif
     open(filename, mode, create_mode);
 }
 
@@ -58,6 +61,7 @@ static IWvStream *creator(WvStringParm s)
 static WvMoniker<IWvStream> reg0("infile", increator);
 static WvMoniker<IWvStream> reg1("outfile", outcreator);
 static WvMoniker<IWvStream> reg3("file", creator);
+
 
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
@@ -91,8 +95,8 @@ bool WvFile::open(WvStringParm filename, int mode, int create_mode)
     return true;
 }
 
-#ifndef _WIN32  // since win32 doesn't support fcntl
 
+#ifndef _WIN32  // since win32 doesn't support fcntl
 bool WvFile::open(int _rwfd)
 {
     noerr();
@@ -117,17 +121,21 @@ bool WvFile::open(int _rwfd)
     closed = stop_read = stop_write = false;
     return true;
 }
-
 #endif 
+
 
 // files not open for read are never readable; files not open for write
 // are never writable.
 void WvFile::pre_select(SelectInfo &si)
 {
-    SelectRequest oldwant = si.wants;    
     if (!readable) si.wants.readable = false;
     if (!writable) si.wants.writable = false;
 
     WvFDStream::pre_select(si);    
-    si.wants = oldwant;
+}
+
+
+bool WvFile::post_select(SelectInfo &si)
+{
+    return WvFDStream::post_select(si);
 }

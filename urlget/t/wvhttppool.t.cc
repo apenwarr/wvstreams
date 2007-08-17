@@ -1,7 +1,10 @@
 #include "wvtest.h"
 #include "wvhttppool.h"
 #include <stdio.h>
+
+#ifndef _WIN32
 #include <netdb.h>
+#endif
 
 static void close_callback(WvStream& s)
 {

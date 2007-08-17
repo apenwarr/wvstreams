@@ -21,7 +21,7 @@
 # include <config.h>
 #endif
 
-#include <sysexits.h>
+#include <sysexit_.h>
 
 #include "argp.h"
 

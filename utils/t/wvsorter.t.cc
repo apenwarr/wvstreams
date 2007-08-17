@@ -1,11 +1,11 @@
 #include "wvtest.h"
 #include "wvstring.h"
+#include "wvstringlist.h"
 #include "wvlinklist.h"
 #include "wvhashtable.h"
 #include "wvscatterhash.h"
 
 // BEGIN sorttest.cc definition
-DeclareWvList(WvString);
 DeclareWvTable(WvString);
 DeclareWvScatterTable2(WvStringTable2, WvString);
 

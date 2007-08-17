@@ -78,19 +78,33 @@ WVTEST_MAIN("timestamps")
     // 0123456789012345678901
     // Nov 10 10:13:15 GMT-4: 
     WvString first_timestamp = file.getline();
-    first_timestamp.edit()[21] = '\0';
+    if (first_timestamp.len() >= 21)
+	first_timestamp.edit()[21] = '\0';
     wvout->print("first timestamp: %s\n", first_timestamp);    
     WvString second_timestamp = file.getline();
-    second_timestamp.edit()[21] = '\0';
+    if (second_timestamp.len() >= 21)
+	second_timestamp.edit()[21] = '\0';
     wvout->print("second timestamp: %s\n", second_timestamp);    
     WVFAILEQ(first_timestamp, second_timestamp);
 
+    file.close();
     WVPASS(unlink(logfilename) == 0);
 }
 
 WVTEST_MAIN("keep single log lines together")
 {
     WvString logfilename = wvtmpfilename("wvlog-together");
+    fprintf(stderr, "log file is: '%s'\n", logfilename.cstr());
+    
+    {
+	// WvFile f(logfilename, O_WRONLY|O_CREAT);
+	int fd = open(logfilename, O_WRONLY|O_CREAT, 0777);
+	if (fd < 0) perror("open");
+	if (close(fd) != 0) perror("close");
+    }
+    if (unlink(logfilename) != 0)
+	perror("unlink");
+    
     WvLogFileBase logfile(logfilename, WvLog::Debug);
     WvLog log(__FUNCTION__, WvLog::Debug);
     time_t first_time = time(NULL);
@@ -113,6 +127,7 @@ WVTEST_MAIN("keep single log lines together")
     WVPASS(strstr(line1.cstr(), "First"));
     WVPASS(strstr(line1.cstr(), "Second"));
 
+    file.close();
     WVPASS(unlink(logfilename) == 0);
 }
 
@@ -150,6 +165,7 @@ WVTEST_MAIN("Recursion avoidance")
     WvLog log("Regular log", WvLog::Error);
     WvString logmsg("The pebble that starts an avalanche...");
     log(logmsg);
+    logfile.close();
 
     WvFile file(logfilename, O_RDONLY);
     WVPASS(file.isok());
@@ -164,6 +180,7 @@ WVTEST_MAIN("Recursion avoidance")
     WVPASS(strstr(file.getline(), logmsg.cstr()));
 
     // Cleanup
+    file.close();
     WVPASSEQ(unlink(logfilename), 0);
 }
 

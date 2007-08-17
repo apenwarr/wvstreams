@@ -1,7 +1,7 @@
 // utils.cpp : Defines the entry point for the DLL application.
 //
 
-#include "winsock2.h"
+#include "wvwin32-sanitize.h"
 
 #define EPOCHFILETIME (116444736000000000LL)
 
@@ -37,4 +37,32 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     }
 #endif
     return 0;
+}
+
+
+pid_t getpid()
+{
+    return GetCurrentThreadId();
+}
+
+
+unsigned int sleep(unsigned int secs)
+{
+    Sleep(secs*1000);
+    return 0;
+}
+
+
+// FIXME: this makes alarms silently fail.  They should probably fail more
+// nicely, or (better still) actually work...
+unsigned int alarm(unsigned int t)
+{
+    return 0;
+}
+
+
+// This is the same as what Python uses, apparently
+int fsync(int fd)
+{
+    return _commit(fd);
 }

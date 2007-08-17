@@ -7,11 +7,6 @@
 #ifndef __IWVSTREAM_H
 #define __IWVSTREAM_H
 
-#ifdef _WIN32
-#include "winsock2.h"
-#include "time.h"
-#endif
-
 #include "wverror.h"
 #include "wvcallback.h"
 #include "wvbuf.h"

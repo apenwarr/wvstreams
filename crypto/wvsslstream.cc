@@ -7,6 +7,7 @@
 #include "wvx509mgr.h"
 #include "wvcrypto.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <assert.h>
@@ -24,7 +25,10 @@
 #define errno GetLastError()
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
+#define error_t long
 #endif
+
+WV_LINK(WvSSLStream);
 
 static IWvStream *creator(WvStringParm s)
 {
@@ -42,6 +46,8 @@ static WvMoniker<IWvStream> sreg("sslserv", screator);
 
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record
 
+static int ssl_stream_count = 0;
+
 static int wv_verify_cb(int preverify_ok, X509_STORE_CTX *ctx) 
 {
    // This is just returns true, since what we really want
@@ -51,7 +57,8 @@ static int wv_verify_cb(int preverify_ok, X509_STORE_CTX *ctx)
 
 WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     WvSSLValidateCallback _vcb, bool _is_server) :
-    WvStreamClone(_slave), debug("WvSSLStream", WvLog::Debug5),
+    WvStreamClone(_slave),
+    debug(WvString("WvSSLStream %s", ++ssl_stream_count), WvLog::Debug5),
     write_bouncebuf(MAX_BOUNCE_AMOUNT), write_eat(0),
     read_bouncebuf(MAX_BOUNCE_AMOUNT), read_pending(false)
 {
@@ -148,12 +155,10 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
 	SSL_set_verify(ssl, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, 
                        wv_verify_cb);
 
-
-
+    connect_wants.readable = true;
+    connect_wants.writable = true; // force ssl initiation ASAP
+    connect_wants.isexception = false;
     debug("SSL stream initialized.\n");
-
-    // make sure we run the SSL_connect once, after our stream is writable
-    force_select(false, true);
 }
 
 
@@ -489,32 +494,45 @@ void WvSSLStream::nowrite()
 
 void WvSSLStream::pre_select(SelectInfo &si)
 {
-    WvStreamClone::pre_select(si);
+    SelectRequest oldwant = si.wants;
+    bool oldinherit = si.inherit_request;
+    if (!sslconnected)
+    {
+	si.wants = connect_wants;
+	si.inherit_request = true; // ignore force_select() until connected
+    }
+    
     // the SSL library might be keeping its own internal buffers
-    // or we might have left buffered dat)a behind deliberately
+    // or we might have left buffered data behind deliberately
     if (si.wants.readable && (read_pending || read_bouncebuf.used()))
     {
-//	debug("pre_select: try reading again immediately.\n");
+	// debug("pre_select: try reading again immediately.\n");
 	si.msec_timeout = 0;
+	si.inherit_request = oldinherit;
+	si.wants = oldwant;
 	return;
     }
 
-    // if we're not ssl_connected yet, I can guarantee we're not actually
-    // writable, so don't ask WvStreamClone to wake up just because *he's*
-    // writable.
-    bool oldwr = si.wants.writable;
-    if (!sslconnected)
-	si.wants.writable = !!writecb;
     WvStreamClone::pre_select(si);
-    si.wants.writable = oldwr;
-
-//    debug("in pre_select (msec_timeout: %s)\n", si.msec_timeout);
+    si.inherit_request = oldinherit;
+    si.wants = oldwant;
 }
 
  
 bool WvSSLStream::post_select(SelectInfo &si)
 {
+    SelectRequest oldwant = si.wants;
+    bool oldinherit = si.inherit_request;
+    
+    if (!sslconnected)
+    {
+	si.wants = connect_wants;
+	si.inherit_request = true; // ignore force_select() until connected
+    }
+    
     bool result = WvStreamClone::post_select(si);
+    si.wants = oldwant;
+    si.inherit_request = oldinherit;
 
     // SSL takes a few round trips to
     // initialize itself, and we mustn't block in the constructor, so keep
@@ -527,7 +545,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	    cloned->iswritable(), si.wants.writable,
 	    si.msec_timeout);
 	
-	undo_force_select(false, true, false);
+	connect_wants.writable = false;
 	
 	// for ssl streams to work, we have to be cloning a stream that
 	// actually uses a single, valid fd.

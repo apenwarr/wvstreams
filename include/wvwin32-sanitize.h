@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <winsock.h>
 #include <malloc.h>
+#include <io.h>
 
 #ifndef _SYS_GUID_OPERATOR_EQ_
 #define _SYS_GUID_OPERATOR_EQ_ 1
@@ -34,9 +35,19 @@
 
 typedef int socklen_t;
 
-// FIXME: this makes alarms silently fail.  They should probably fail more
-// nicely, or (better still) actually work...
-static inline unsigned int alarm(unsigned int t) { return 0; }
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+unsigned int sleep(unsigned int secs);
+extern pid_t getpid();
+
+unsigned int alarm(unsigned int t);
+int fsync(int fd);
+    
+#ifdef __cplusplus
+}
+#endif
 
 // refer to _wvinitialize to ensure that we suck in some stuff that makes
 // wvstreams actually work properly.

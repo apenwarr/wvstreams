@@ -572,6 +572,9 @@ if test "$VALGRIND" != ""; then
     fi
 fi
 
+# Compiler is always posix if invoking this configure script
+COMPILER_STANDARD=posix
+
 AC_SUBST(SO_VERSION)
 
 AC_SUBST(enable_debug)
@@ -600,6 +603,7 @@ AC_SUBST(build_xplc)
 AC_SUBST(xplc_pc)
 
 AC_SUBST(ac_libs)
+AC_SUBST(COMPILER_STANDARD)
 
 AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 

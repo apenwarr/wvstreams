@@ -11,7 +11,6 @@
 # include <sys/socket.h>
 #else
 # include <winsock2.h>
-# include <io.h>
 #endif
 
 #ifdef _WIN32

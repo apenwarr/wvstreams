@@ -177,6 +177,13 @@ void UniPStoreGen::set(const UniConfKey &key, WvStringParm value)
     }
 }
 
+
+void UniPStoreGen::setv(const UniConfPairList &pairs)
+{
+    setv_naive(pairs);
+}
+
+
 bool UniPStoreGen::exists(const UniConfKey &key)
 {
     return false;
@@ -192,7 +199,7 @@ UniConfGen::Iter *UniPStoreGen::iterator(const UniConfKey &key)
     return new NullIter();
 }
 
-static IUniConfGen *creator(WvStringParm s, IObject *, void *)
+static IUniConfGen *creator(WvStringParm s)
 {
     return new UniPStoreGen(s);
 }

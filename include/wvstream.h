@@ -14,16 +14,6 @@
 #include <errno.h>
 #include <limits.h>
 
-#ifdef _WIN32
-#include <time.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include "wvwin32-sanitize.h"
-#else
-#include <unistd.h> // not strictly necessary, but EVERYBODY uses this...
-#include <sys/time.h>
-#endif
-
 
 // parameters are: owning-stream, userdata
 typedef WvCallback<void, WvStream&, void*> WvStreamCallback;

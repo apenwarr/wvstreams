@@ -72,7 +72,8 @@ private:
      * Connection Status Flag, since SSL takes a few seconds to
      * initialize itself.
      */
-    volatile bool sslconnected;
+    bool sslconnected;
+    SelectRequest connect_wants;
 
     /** Set the connected flag and flush the unconnected_buf */
     void setconnected(bool conn);

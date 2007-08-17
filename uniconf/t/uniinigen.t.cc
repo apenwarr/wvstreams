@@ -10,6 +10,9 @@
 #include "wvtest.h"
 #include "uniconfgen-sanitytest.h"
 
+#ifdef _WIN32
+static inline int mkdir(const char *x, int y) { return mkdir(x); }
+#endif
 
 // Returns the filename where the content was written.  This file must be
 // deleted when no longer needed.  Returns WvString::null if unable to create
@@ -18,7 +21,7 @@ WvString inigen(WvStringParm content)
 {
     WvString ininame = wvtmpfilename("inigen_test.ini");
     WvFile file;
-    WVPASS(file.open(ininame, O_RDWR));
+    WVPASS(file.open(ininame, O_CREAT|O_RDWR));
     file.write(content);
     WVPASS(file.isok());
 
@@ -54,6 +57,7 @@ WVTEST_MAIN("commit-without-refresh")
     WVFAIL(cfg.haschildren());
 }
 
+#ifndef _WIN32
 WVTEST_MAIN("ini file permissions")
 {
     system("rm -f perm.ini");
@@ -70,6 +74,7 @@ WVTEST_MAIN("ini file permissions")
 
     system("rm -f perm.ini");
 }
+#endif
 
 WVTEST_MAIN("parsing1")
 {

@@ -3,16 +3,21 @@
 #include <wvfile.h>
 #include <wvhashtable.h>
 #include <wvstring.h>
+#include <wvfileutils.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 static bool create_dir(WvStringParm dir, const WvStringList &entries)
 {
-    if (mkdir(dir, 0700)) return false;
+    ::unlink(dir);
+    if (wvmkdir(dir, 0700)) return false;
 
     WvStringList::Iter entry(entries);
     for (entry.rewind(); entry.next(); )
     {
         WvString name("%s/%s", dir, *entry);
-        mkdir(getdirname(name), 0700);
+        wvmkdir(getdirname(name), 0700);
         WvFile(name, O_CREAT | O_EXCL, 0600).print("wvtest");
     }
 
@@ -28,7 +33,7 @@ static bool destroy_dir(WvStringParm dir)
 
 WVTEST_MAIN("Non-recursive WvDirIter")
 {
-    WvString dir("/tmp/wvtest-wvdiriter-%s", getpid());
+    WvString dir = wvtmpfilename("wvtest-wvdiriter-");
 
     WvStringList entries;
     entries.split("file-one file-two .dot-file subdir/sub-file");
@@ -56,7 +61,7 @@ WVTEST_MAIN("Non-recursive WvDirIter")
 
 WVTEST_MAIN("Recursive WvDirIter")
 {
-    WvString dir("/tmp/wvtest-wvdiriter-%s", getpid());
+    WvString dir = wvtmpfilename("wvtest-wvdiriter-");
 
     WvStringList entries;
     entries.split("file-one file-two .dot-file subdir/sub-file");

@@ -11,7 +11,6 @@
 #include <fcntl.h>
 
 #ifdef _WIN32
-#include <io.h>
 #define O_NONBLOCK 0
 #define O_LARGEFILE 0
 #define fcntl(a,b,c)
@@ -43,6 +42,7 @@ public:
     bool readable, writable;
 
     virtual void pre_select(SelectInfo &si);
+    virtual bool post_select(SelectInfo &si);
 
 public:
     const char *wstype() const { return "WvFile"; }

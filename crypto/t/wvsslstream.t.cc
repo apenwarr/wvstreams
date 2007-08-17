@@ -5,14 +5,15 @@
 #include "wvrsa.h"
 #include "wvtcp.h"
 #include "wvistreamlist.h"
+#include "wvstrutils.h"
 #include <signal.h>
 
 #define MSG "fubar"
 
-bool gotmessage = false;
-WvX509Mgr *x509 = NULL;
-WvSSLStream *singleconn = NULL;
-size_t tlen = 0;
+static bool gotmessage = false;
+static WvX509Mgr *x509 = NULL;
+static WvSSLStream *singleconn = NULL;
+static size_t tlen = 0;
 
 static void run(WvStream &list, WvStream *s1, WvStream *s2)
 {
@@ -54,10 +55,10 @@ WVTEST_MAIN("crypto basics")
     s1->print("s1 output\ns1 line2\n");
     s2->print("s2 output\ns2 line2\n");
     run(list, s1, s2);
-    WVPASSEQ(s1->blocking_getline(1000), "s2 output");
-    WVPASSEQ(s2->blocking_getline(1000), "s1 output");
+    WVPASSEQ(s1->blocking_getline(10000), "s2 output");
+    WVPASSEQ(s2->blocking_getline(10000), "s1 output");
     WVPASSEQ(s2->getline(), "s1 line2");
-    WVPASSEQ(s1->blocking_getline(1000), "s2 line2");
+    WVPASSEQ(s1->blocking_getline(10000), "s2 line2");
     
     // test special close() behaviour.  At one point, WvSSLStream::uread()
     // would return nonzero, but close the stream anyway *before* returning.
@@ -186,8 +187,8 @@ WVTEST_MAIN("ssl inbuf after read error")
     run(list, s1, s2);
     WVFAIL(s1->isok());
     
-    WVPASSEQ(s2->blocking_getline(1000), "1");
-    WVPASSEQ(s2->blocking_getline(1000), "2");
+    WVPASSEQ(s2->blocking_getline(10000), "1");
+    WVPASSEQ(s2->blocking_getline(10000), "2");
     WVPASS(s2->isok());
     
     // force SSL to try reading again, even though it doesn't need to.  This
@@ -201,9 +202,9 @@ WVTEST_MAIN("ssl inbuf after read error")
     // inbuf still has data!
     WVPASS(s2->isok());
     
-    WVPASSEQ(s2->blocking_getline(1000), "3");
-    WVPASSEQ(s2->blocking_getline(1000), "4");
-    WVFAIL(s2->blocking_getline(1000));
+    WVPASSEQ(s2->blocking_getline(10000), "3");
+    WVPASSEQ(s2->blocking_getline(10000), "4");
+    WVFAIL(s2->blocking_getline(10000));
     WVFAIL(s2->isok());
 }
 #endif
@@ -245,12 +246,8 @@ WVTEST_MAIN("ssl establish connection")
 
     int port = 0;
 
-    char hname[32];
-    char dname[128];
-    gethostname(hname, 32);
-    getdomainname(dname, 128);
-    WvString fqdn("%s.%s", hname, dname);
-    WvString dn("cn=%s,dc=%s", fqdn, dname);
+    WvString hname(hostname()), dname(fqdomainname());
+    WvString dn("cn=%s,dc=%s", dname, dname);
     WvRSAKey *rsa = new WvRSAKey(1024);
     x509 = new WvX509Mgr(dn, rsa);
     WVPASS(x509->test());
@@ -286,14 +283,12 @@ WVTEST_MAIN("ssl establish connection")
     if (!ssl->isok())
 	wvcon->print("Error was: %s\n", ssl->errstr());
 
-    // oh the humanity! i'm not wasting time making this do
-    // something more sane though FIXME FIXME FIXME
-    printf("This will take 6 seconds waiting for SSL connection\n");
-    for (int i=0; i<6; i++)
+    // wait for ssl to connect
+    ssl->force_select(false, true, false);
+    for (int i=0; i<10; i++)
     {
-	if (WvIStreamList::globallist.select(0))
-            WvIStreamList::globallist.runonce();
-	sleep(1);
+	WvIStreamList::globallist.runonce();
+	if (ssl->iswritable()) break;
     }
 
     // send a message and ensure it's received
@@ -312,15 +307,10 @@ WVTEST_MAIN("ssl establish connection")
 
     // read until we get all the data, or die if there's ever none
     // because it's all there already
-    while (tlen < wlen)
-    {
-        if (WvIStreamList::globallist.select(0))
-	    WvIStreamList::globallist.callback();
-	else
-	    break;
-    }
+    while (tlen < wlen && WvIStreamList::globallist.select(10000))
+	WvIStreamList::globallist.callback();
 
-    // if this fails, it's BUGZID:10781
+    // if this fails, see BUGZID:10781
     WVPASS(tlen == wlen);
 
     WVRELEASE(x509);

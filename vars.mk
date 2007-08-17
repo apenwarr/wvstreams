@@ -1,3 +1,4 @@
+DEBUG:=$(filter-out no,$(enable_debug))
 
 # debugging function
 showvar = @echo \"'$(1)'\" =\> \"'$($(1))'\"
@@ -43,6 +44,7 @@ REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
 CPPFLAGS += -Iinclude -Ignulib -pipe
 ARFLAGS = rs
+RELEASE?=$(PACKAGE_VERSION)
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
@@ -53,11 +55,9 @@ CXXFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 
 ifeq ($(DEBUG),)
-CXXFLAGS+=-g
-CFLAGS+=-g
-endif
-
-ifneq ($(DEBUG),)
+CXXFLAGS+=
+CFLAGS+=
+else
 CXXFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
 CFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
 endif

@@ -14,6 +14,7 @@
 #include "wvstreamsdebugger.h"
 #include "wvlog.h"
 
+class WvUnixAddr;
 class WvUnixListener;
 class WvTCPListener;
 
@@ -56,10 +57,9 @@ class WvStreamsDebuggerServer : public WvStream
     WvIStreamList streams;
 
 public:
-
-    WvStreamsDebuggerServer(WvUnixAddr unix_addr,
+    WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
             AuthCallback _auth_cb = AuthCallback(),
-            WvIPPortAddr tcp_addr = WvIPPortAddr());
+            const WvIPPortAddr &tcp_addr = WvIPPortAddr());
     ~WvStreamsDebuggerServer();
             
     void set_auth_callback(AuthCallback _auth_cb)

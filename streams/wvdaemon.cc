@@ -10,8 +10,8 @@
 #include "wvdaemon.h"
 
 #include "wvlinklist.h"
-#ifndef _WIN32
 #include "wvsyslog.h"
+#ifndef _WIN32
 #include "wvcrash.h"
 #include "wvcrashlog.h"
 #include "wvfile.h"
@@ -173,8 +173,19 @@ int WvDaemon::run(const char *argv0)
     if (1)
 #endif
     {
-        WvLogConsole console_log(dup(STDOUT_FILENO), log_level);
-        return _run(argv0);
+#ifdef _MSC_VER
+	int STDOUT_FILENO = 0;
+#endif
+        WvLogConsole console_log(STDOUT_FILENO, log_level);
+#ifndef _WIN32
+        if (syslog)
+        {
+            WvSyslog syslog(name, false);
+            return _run(argv0);
+        }
+        else 
+#endif
+	    return _run(argv0);
     }
 }
 

@@ -2,8 +2,13 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  * 
- * Defines the root management class for UniConf.  To create any kind of
- * UniConf tree, you'll need one of these.
+ * A file that, if you link to it, will ensure that you get the various
+ * standard UniConf generators linked into your application.  This is
+ * important if you use static linking and construction via monikers, as
+ * otherwise the linker will try to be smart and leave out the not-
+ * directly-referenced files.
+ * 
+ * See also unigenhack.cc.
  */
 #include "wvlinkerhack.h"
 

@@ -518,16 +518,21 @@ bool test_encode_load_file(WvX509::DumpMode mode)
         WvFile f(tmpfile, O_WRONLY);
         WvDynBuf buf;
         cert1.encode(mode, buf);
-        f.write(buf, buf.used());
+	fprintf(stderr, "Encode to file '%s' (%ld bytes)\n",
+		tmpfile.cstr(), (long)buf.used());
+	size_t used = buf.used(), len;
+        len = f.write(buf, buf.used());
+	WVPASSEQ(len, used);
+	fprintf(stderr, "Write result: %s\n", f.errstr().cstr());
     }
 
     WvX509Mgr cert2;
     if (mode == WvX509::CertPEM)
-        cert2.decode(WvX509::CertFilePEM, tmpfile);
+	cert2.decode(WvX509::CertFilePEM, tmpfile);
     else
         cert2.decode(WvX509::CertFileDER, tmpfile);
-
-    ::unlink(tmpfile);
+    
+    unlink(tmpfile);
 
     WVPASSEQ(cert1.get_subject(), cert2.get_subject());
     return cert1.get_subject() == cert2.get_subject();
@@ -542,7 +547,7 @@ WVTEST_MAIN("encode / decode / load")
     WVPASS(test_encode_decode_buf(WvX509::CertPEM));
     WVPASS(test_encode_decode_buf(WvX509::CertHex));
     WVPASS(test_encode_decode_buf(WvX509::CertDER));
-
+    
     WVPASS(test_encode_load_file(WvX509::CertPEM));
     WVPASS(test_encode_load_file(WvX509::CertDER));
 }

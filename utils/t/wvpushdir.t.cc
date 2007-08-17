@@ -56,6 +56,7 @@ WVTEST_MAIN("rmdir calls fail")
     WVPASS(newpushdir.isok());
 }
 
+#ifndef _WIN32
 WVTEST_MAIN("pushdir is allocated on the STACK only")
 {
     pid_t child = fork(); 
@@ -78,3 +79,4 @@ WVTEST_MAIN("pushdir is allocated on the STACK only")
     waitpid(child, &status, 0);
     WVPASSEQ(WTERMSIG(status), 6); // sig_abrt
 }
+#endif

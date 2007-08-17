@@ -21,7 +21,7 @@
 # include <config.h>
 #endif
 
-#include <alloca.h>
+//#include <alloca.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +40,8 @@
 #endif
 #define N_(msgid) msgid
 
+#undef __argc
+#undef __argv
 #include "argp.h"
 #include "argp-namefrob.h"
 
@@ -129,7 +131,7 @@ argp_default_parser (int key, char *arg, struct argp_state *state)
     case OPT_HANG:
       _argp_hang = atoi (arg ? arg : "3600");
       while (_argp_hang-- > 0)
-	__sleep (1);
+	;// sleep (1);
       break;
 
     default:

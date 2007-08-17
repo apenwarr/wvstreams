@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <io.h>
 
-#if WIN32
+#if _MSC_VER
 // MS Visual C++ doesn't support varags preproc macros
 # define DPRINTF
 #else
@@ -107,13 +107,6 @@ int write(int fd, const void *buf, size_t count)
 	errcode(errno);
     }
     return ret;
-}
-
-
-unsigned int sleep(unsigned int seconds)
-{
-    Sleep(seconds * 1000);
-    return 0;
 }
 
 
@@ -362,8 +355,9 @@ SocketFromFDMaker::SocketFromFDMaker(int fd,
     WSAData wsaData;
     WSAStartup(MAKEWORD(2,0), &wsaData);
 
-    int s[2];
-    socketpair(AF_INET, SOCK_STREAM, 0, s);
+    int s[2], result;
+    result = socketpair(AF_INET, SOCK_STREAM, 0, s);
+    assert(result == 0);
 
     m_pair.fd = fd;
     m_pair.socket = s[0];
@@ -385,6 +379,7 @@ SocketFromFDMaker::SocketFromFDMaker(int fd,
 SocketFromFDMaker::~SocketFromFDMaker()
 {
     int result;
+    // fprintf(stderr, "shutting down #%d\n", m_socket);
     if (m_socket != INVALID_SOCKET)
     {
 	result = shutdown(m_socket, SD_BOTH);
@@ -393,7 +388,22 @@ SocketFromFDMaker::~SocketFromFDMaker()
 	// socket; eg. if you give the socket to a WvFDStream and then let
 	// him close it.  But you shouldn't do that, because nobody is
 	// supposed to close stdin/stdout/stderr!
-	assert(result == 0);
+	if (result != 0)
+	{
+	    int e = GetLastError();
+	    if (e == WSASYSNOTREADY)
+	    {
+		fprintf(stderr, "Abnormal termination.  Skipping cleanup.\n");
+		_exit(42);
+	    }
+	    else
+	    {
+		fprintf(stderr,
+			"ERROR! Socket #%d was already shut down! (%d)\n",
+			m_socket, e);
+		assert(result == 0);
+	    }
+	}
 	    
 	if (m_wait) // wait for socket->fd copier
 	{

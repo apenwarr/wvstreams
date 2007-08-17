@@ -285,12 +285,9 @@ WVTEST_MAIN("SaveCallback")
     UniIniGen *ini_gen = new UniIniGen(ini_file, 0600, save_callback);
     uniconf.mountgen(ini_gen);
     
-    int items = 0;
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
-    uniconf["Items"].xsetint(items, items++);
+    int items;
+    for (items = 0; items < 5; items++)
+	uniconf["Items"].xsetint(items, items);
 
     save_callback_calls = 0;
     uniconf.commit();

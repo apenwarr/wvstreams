@@ -90,18 +90,14 @@ void WvIStreamList::pre_select(SelectInfo &si)
 {
     //BoolGuard guard(in_select);
     bool already_sure = false;
-    SelectRequest oldwant;
+    SelectRequest oldwant = si.wants;
     
     dead_stream = false;
-    
     sure_thing.zap();
     
     time_t alarmleft = alarm_remaining();
     if (alarmleft == 0)
 	already_sure = true;
-    
-    oldwant = si.wants;
-
 
     IWvStream *old_in_stream = WvCrashInfo::in_stream;
     const char *old_in_stream_id = WvCrashInfo::in_stream_id;
@@ -119,7 +115,7 @@ void WvIStreamList::pre_select(SelectInfo &si)
 	WvCrashInfo::in_stream = &s;
 	WvCrashInfo::in_stream_id = i.link->id;
 #endif
-        si.wants = oldwant;
+	si.wants = oldwant;
 
 	if (!s.isok())
 	{
@@ -131,6 +127,9 @@ void WvIStreamList::pre_select(SelectInfo &si)
 	}
 	else 
             s.pre_select(si);
+	
+	TRACE("after pre_select(%s): msec_timeout is %ld\n",
+	      i.link->id, (long)si.msec_timeout);
     }
 
     WvCrashInfo::in_stream = old_in_stream;
@@ -178,13 +177,16 @@ bool WvIStreamList::post_select(SelectInfo &si)
 
 	if (s.isok())
 	{
+	    si.wants = oldwant;
 	    if (s.post_select(si))
 	    {
+		TRACE("post_select(%s) was true\n", i.link->id);
 		sure_thing.unlink(&s); // don't add it twice!
 		sure_thing.append(&s, false, i.link->id);
 	    }
 	    else
 	    {
+		TRACE("post_select(%s) was false\n", i.link->id);
 		WvIStreamListBase::Iter j(sure_thing);
 		WvLink* link = j.find(&s);
 

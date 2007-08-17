@@ -7,7 +7,6 @@
 #ifndef __WVCONFEMU_H
 #define __WVCONFEMU_H
 
-
 #include "uniconfroot.h"
 #include "wvstringtable.h"
 #include "wvsorter.h"
@@ -243,6 +242,5 @@ public:
     WvConfigSectionEmu* ptr() const;
     WvIterStuff(WvConfigSectionEmu);
 };
-
 
 #endif // __WVCONFEMU_H

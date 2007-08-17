@@ -28,6 +28,7 @@ SHELL=/bin/bash
 
 ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
   include $(WVSTREAMS_SRC)/config.mk
+  include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 endif
 
 ifeq (${EXEEXT},.exe)
@@ -39,9 +40,6 @@ ifeq (${WVTESTRUN},)
 endif
 
 ifneq ("$(with_xplc)", "no")
-ifneq ("$(with_xplc)", "")
-  LDFLAGS:=-L$(with_xplc) $(LDFLAGS)
-endif
   LIBXPLC=-lxplc-cxx
 endif
 
@@ -51,16 +49,6 @@ LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
-
-#
-# Initial C compilation flags
-#
-CPPFLAGS += $(CPPOPTS)
-C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
-		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CFLAGS += $(COPTS) $(C_AND_CXX_FLAGS) 
-CXXFLAGS += $(CXXOPTS) $(C_AND_CXX_FLAGS)
-LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 
 # Default compiler we use for linking
 WVLINK_CC = gcc
@@ -175,11 +163,11 @@ ifeq ($(DEBUG),1)
   C_AND_CXX_FLAGS += -ggdb -DDEBUG=1
   LDFLAGS += -ggdb
 else
-  C_AND_CXX_FLAGS += -g -DDEBUG=0
+  C_AND_CXX_FLAGS += -DDEBUG=0
   #CFLAGS += -DNDEBUG    # I don't like disabling assertions...
   #CFLAGS += -fomit-frame-pointer  # really evil
   #CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0
-  LDFLAGS += -g
+  LDFLAGS +=
 endif
 
 ifeq ($(PROFILE),1)
@@ -194,7 +182,7 @@ endif
 INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
 CPPFLAGS+=$(INCFLAGS)
 CFLAGS+=$(CPPFLAGS)
-CXXFLAGS+=$(CPPFLAGS)
+CXXFLAGS=
 
 ifeq ($(VERBOSE),1)
   COMPILE_MSG :=
@@ -231,50 +219,16 @@ wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 # usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
 #    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
 DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
-define wvcc_base
-	@rm -f "$1"
-	$(COMPILE_MSG)$4 $5 $2 -o $1
-	@# The Perl script here generates the proper dependencies, including
-	@# null dependencies so Make doesn't complain
-	$(DEPEND_MSG)$4 -M -E $< \
-                | perl -we \
-                '$$a = '"'"'$1'"'"'; \
-                $$\ = $$/; \
-                local $$/; \
-                while (<>) { \
-                    for (split(/(?<!\\)$$/m)) { \
-                        s/^[^:]+:\s*/$$a: /; \
-                        print; \
-                        if (s/^$$a: //) { \
-			    map {print "$$_:" unless m/^\\$$/} (split(/\s+/));\
-                        } \
-                    } \
-                }' >$(DEPFILE)
-endef
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(INCFLAGS) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
+wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(INCFLAGS) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
 
-define wvlink_ar
-	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
-	echo $2 >$(patsubst %.a,%.libs,$1); \
-	$(AR) q $1 $(filter %.o,$2); \
-	for d in "" $(filter %.libs,$2); do \
-	    if [ "$$d" != "" ]; then \
-			cd $$(dirname "$$d"); \
-			$(AR) q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
-			cd $(shell pwd); \
-		fi; \
-	done; \
-	$(AR) s $1
-endef
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
+
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 define wvlink_so
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
 	$(if $(filter-out $(call wvsoname,$1),$1),$(call wvlns,$1,$(call wvsoname,$1)))
 endef
-
-wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
 
 ../%.so:;	@echo "Shared library $@ does not exist!"; exit 1
 ../%.a:;	@echo "Library $@ does not exist!"; exit 1
@@ -390,7 +344,7 @@ clean: _wvclean
 
 _wvclean:
 	@echo '--> Cleaning $(shell pwd)...'
-	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.moc *.d .*.d .depend \
+	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.dll *.lib *.moc *.d .*.d .depend \
 		 .\#* .tcl_paths pkgIndex.tcl gmon.out core build-stamp \
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
@@ -442,3 +396,12 @@ ChangeLog: FORCE
 #tags: $(shell find -name '*.cc' -o -name '*.[ch]')
 #	@echo '(creating "tags")'
 #	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
+
+print_vars:
+	@echo "CPPOPTS:  $(CPPOPTS)"
+	@echo "COPTS:    $(COPTS)"
+	@echo "CACXX:    $(C_AND_CXX_FLAGS)"
+	@echo "CPPFLAGS: $(CPPFLAGS)"
+	@echo "CFLAGS:   $(CFLAGS)"
+	@echo "CXXFLAGS: $(CXXFLAGS)"
+

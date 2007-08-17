@@ -63,6 +63,12 @@ WVTEST_MAIN("CRL creation and use basics")
 }
 
 
+static bool exists(WvStringParm filename)
+{
+    return access(filename, F_OK) == 0;
+}
+
+
 bool test_encode_load_file(WvCRL::DumpMode mode)
 {
     WvString tmpfile = wvtmpfilename("crl");
@@ -70,12 +76,14 @@ bool test_encode_load_file(WvCRL::DumpMode mode)
     WvX509Mgr ca("o=ca", DEFAULT_KEYLEN, true);
     WvCRL crl1(ca);
 
+    WVPASS(exists(tmpfile));
     {
         WvFile f(tmpfile, O_WRONLY);
         WvDynBuf buf;
         crl1.encode(mode, buf);
         f.write(buf, buf.used());
     }
+    WVPASS(exists(tmpfile));
 
     WvCRL crl2;
     if (mode == WvCRL::CRLPEM)
@@ -84,6 +92,7 @@ bool test_encode_load_file(WvCRL::DumpMode mode)
         crl2.decode(WvCRL::CRLFileDER, tmpfile);
 
     ::unlink(tmpfile);
+    WVFAIL(exists(tmpfile));
 
     WVPASSEQ(crl1.get_issuer(), crl2.get_issuer());
     return (crl1.get_issuer() == crl2.get_issuer());

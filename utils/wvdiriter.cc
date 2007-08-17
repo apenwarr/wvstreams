@@ -75,7 +75,7 @@ void WvDirIter::rewind()
     if( isok() ) {
         dir.rewind();
         dir.next();
-        rewinddir( dir->d );
+	rewinddir( dir->d );
     }
 }
 
@@ -107,9 +107,9 @@ bool WvDirIter::next()
         }
 
         do {
-            dent = readdir( dir->d );
-            if( dent ) {
-                info.fullname = WvString( "%s/%s", dir->dirname, dent->d_name );
+            dent = readdir( dir->d ); 
+	    if( dent ) { 
+		info.fullname = WvString( "%s/%s", dir->dirname, dent->d_name );
                 info.name = dent->d_name;
 
                 if (relpath == "")
@@ -161,7 +161,6 @@ bool WvDirIter::next()
                 tryagain = true;
             }
         }
-
     } while( tryagain );
 
     return( dent != NULL );

@@ -13,13 +13,18 @@
 #include "wvstringlist.h"
 
 /**
+ * Like mkdir(), but has the same parameters in both Unix and Windows.
+ */
+int wvmkdir(WvStringParm _dir, int create_mode = 0700);
+
+/**
  * Create a directory and any subdirectories required along the way.
  * (Equivalent to mkdir -p).
  * 
  * The default permissions on created directories is 0700, but this can be
  * changed at will.
  */
-bool mkdirp(WvStringParm _dir, int create_mode = 0700);
+int mkdirp(WvStringParm _dir, int create_mode = 0700);
 
 /**
  * Safely remove an entire filesystem directory hierarchy.
@@ -76,16 +81,23 @@ FILE *wvtmpfile();
  */
 WvString wvtmpfilename(WvStringParm prefix);
 
+#ifndef _WIN32
 /**
  * Basically our own implementation of the NetBSD lchmod() call.
  */
-#ifndef _WIN32
 int wvchmod(const char *path, mode_t mode);
 #endif
 
 /**
  * A simple helper function to get the current umask.
  */
+#ifndef _WIN32
 mode_t get_umask();
+#endif
+
+/**
+ * Delay for a requested number of milliseconds.
+ */
+void wvdelay(int msec_delay);
 
 #endif // __WVFILEUTILS_H
