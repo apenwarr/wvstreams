@@ -12,9 +12,9 @@
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    return new UniFastRegetGen(wvcreate<IUniConfGen>(s));
+    return new UniFastRegetGen(wvcreate<IUniConfGen>(s, _obj));
 }
 
 static WvMoniker<IUniConfGen> reg("fast-reget", creator);

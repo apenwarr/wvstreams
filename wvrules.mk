@@ -1,6 +1,6 @@
-# wvrules.mk:  2003 09 09
+# wvrules.mk:  2007 08 15
 #
-# Copyright (C) 1998-2003 by Avery Pennarun <apenwarr@worldvisions.ca>.
+# Copyright (C) 1998-2007 by Avery Pennarun <apenwarr@alumnit.ca>.
 #   Use, distribute, modify, and redistribute freely.  (But if you're nice,
 #   you'll send all your changes back to me.)
 #
@@ -39,72 +39,6 @@ ifeq (${WVTESTRUN},)
   WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
 endif
 
-ifneq ("$(with_xplc)", "no")
-  LIBXPLC=-lxplc-cxx
-endif
-
-LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so
-LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
-LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
-LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
-LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
-LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
-
-# Default compiler we use for linking
-WVLINK_CC = gcc
-
-# FIXME: what does this do??
-XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" && echo " -lsupc++ -lgcc_eh")
-
-ifeq ("$(enable_debug)", "yes")
-  DEBUG:=1
-else
-  DEBUG:=0
-endif
-
-ifeq ("$(enable_fatal_warnings)", "yes")
-  CXXFLAGS+=-Werror
-  # FIXME: not for C, because our only C file, crypto/wvsslhack.c, has
-  #        a few warnings on purpose.
-  #CFLAGS+=-Werror
-endif
-
-ifneq ("$(enable_optimization)", "no")
-  CXXFLAGS+=-O2
-  #CXXFLAGS+=-felide-constructors
-  CFLAGS+=-O2
-endif
-
-ifneq ("$(enable_warnings)", "no")
-  CXXFLAGS+=-Wall -Woverloaded-virtual
-  CFLAGS+=-Wall
-endif
-
-ifeq ("$(enable_rtti)", "no")
-  CXXFLAGS+=-fno-rtti
-endif
-
-ifneq ("$(enable_exceptions)", "yes")
-  CXXFLAGS+=-fno-exceptions
-endif
-
-ifeq ("$(enable_efence)", "yes")
-  EFENCE:=-lefence
-  USE_EFENCE:=1
-endif
-
-ifeq (USE_EFENCE,1)
-  LDLIBS+=$(EFENCE)
-endif
-
-ifeq ("$(enable_verbose)", "yes")
-  VERBOSE:=1
-endif
-
-ifdef DONT_LIE
-  VERBOSE:=1 $(warning DONT_LIE is deprecated, use VERBOSE instead)
-endif
-
 STRIP=strip --remove-section=.note --remove-section=.comment
 #STRIP=echo
 
@@ -136,53 +70,10 @@ $(WVSTREAMS_SRC)/rules.local.mk:
 
 -include $(WVSTREAMS_SRC)/rules.local.mk
 
-#
-# Figure out which OS we're running (for now, only picks out Linux or BSD)
-#
-OS:=$(shell uname -a | awk '{print $$1}' | sed -e 's/^.*BSD/BSD/g' )
-
-#
-# (Just BSD and LINUX clash with other symbols, so use ISLINUX and ISBSD)
-# This sucks.  Use autoconf for most things!
-#
-ifeq ($(OS),Linux)
-  OSDEFINE:=-DISLINUX
-endif
-
-ifeq ($(OS),BSD)
-  OSDEFINE:=-DISBSD
-endif
-
-ifeq ($(CCMALLOC),1)
- ifeq ($(DEBUG),1)
-   XX_LIBS += -lccmalloc -ldl
- endif
-endif
-
-ifeq ($(DEBUG),1)
-  C_AND_CXX_FLAGS += -ggdb -DDEBUG=1
-  LDFLAGS += -ggdb
-else
-  C_AND_CXX_FLAGS += -DDEBUG=0
-  #CFLAGS += -DNDEBUG    # I don't like disabling assertions...
-  #CFLAGS += -fomit-frame-pointer  # really evil
-  #CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0
-  LDFLAGS +=
-endif
-
-ifeq ($(PROFILE),1)
-  CFLAGS += -pg
-  LDFLAGS += -pg
-endif
-
-ifeq ($(STATIC),1)
-  LDFLAGS += -static
-endif
-
 INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
-CPPFLAGS+=$(INCFLAGS)
-CFLAGS+=$(CPPFLAGS)
-CXXFLAGS=
+CPPFLAGS+=$(INCFLAGS) \
+	-D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 
 ifeq ($(VERBOSE),1)
   COMPILE_MSG :=
@@ -219,8 +110,8 @@ wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 # usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
 #    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
 DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(INCFLAGS) $(CFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(INCFLAGS) $(CFLAGS) $(CXXFLAGS) $($1-CPPFLAGS) $($1-CFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $4,$(if $5,$5,-c))
+wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
 
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
 

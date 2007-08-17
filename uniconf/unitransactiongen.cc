@@ -3,9 +3,9 @@
 #include "unilistiter.h"
 #include "wvmoniker.h"
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    IUniConfGen *base = wvcreate<IUniConfGen>(s);
+    IUniConfGen *base = wvcreate<IUniConfGen>(s, _obj);
     if (base)
 	return new UniTransactionGen(base);
     else

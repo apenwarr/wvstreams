@@ -22,25 +22,24 @@ WV_LINK(UniReplicateGen);
 #endif
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
     IUniConfGenList gens;
-
-    if (gens.isempty())
+    
+    DPRINTF("encoded_monikers = %s\n", s.cstr());
+    WvStringList monikers;
+    wvtcl_decode(monikers, s);
+    DPRINTF("monikers = %s\n", monikers.join(",").cstr());
+    
+    WvStringList::Iter i(monikers);
+    for (i.rewind(); i.next(); )
     {
-    	DPRINTF("encoded_monikers = %s\n", s.cstr());
-    	WvStringList monikers;
-    	wvtcl_decode(monikers, s);
-    	DPRINTF("monikers = %s\n", monikers.join(",").cstr());
-    	
-    	WvStringList::Iter i(monikers);
-    	for (i.rewind(); i.next(); )
-    	{
-            IUniConfGen *gen = wvcreate<IUniConfGen>(*i);
-            if (gen)
-            	gens.append(gen, false);
-        }
+        if (_obj) _obj->addRef();
+	IUniConfGen *gen = wvcreate<IUniConfGen>(*i, _obj);
+	if (gen)
+	    gens.append(gen, false);
     }
+    if (_obj) _obj->release();
 
     return new UniReplicateGen(gens);
 }

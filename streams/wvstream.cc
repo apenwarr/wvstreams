@@ -17,6 +17,7 @@
 #include "wvcont.h"
 #include "wvstreamsdebugger.h"
 #include "wvstrutils.h"
+#include "wvistreamlist.h"
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
@@ -295,6 +296,12 @@ WvStream::~WvStream()
         delete wsid_map;
         wsid_map = NULL;
     }
+    
+    // eventually, streams will auto-add themselves to the globallist.  But
+    // even before then, it'll never be useful for them to be on the
+    // globallist *after* they get destroyed, so we might as well auto-remove
+    // them already.  It's harmless for people to try to remove them twice.
+    WvIStreamList::globallist.unlink(this);
     
     TRACE("done destroying %p\n", this);
 }
@@ -1169,9 +1176,5 @@ void WvStream::unread(WvBuf &unreadbuf, size_t count)
 
 IWvStream *WvStream::find_by_wsid(WSID wsid)
 {
-    WvStream **presult = wsid_map? wsid_map->find(wsid): NULL;
-    if (presult)
-        return *presult;
-    else
-        return NULL;   
+    return wsid_map ? wsid_map->find(wsid) : NULL;
 }

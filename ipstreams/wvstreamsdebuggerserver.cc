@@ -21,7 +21,7 @@ void WvStreamsDebuggerServer::Connection::choose_salt()
 }
 
 
-WvStreamsDebuggerServer::Connection::Connection(WvStream *s) :
+WvStreamsDebuggerServer::Connection::Connection(IWvStream *s) :
     WvStreamClone(s)
 {
 }
@@ -78,8 +78,8 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
     {
         tcp_listener = new WvTCPListener(tcp_addr);
         tcp_listener->set_wsname("wsd listener on %s", tcp_addr);
-        tcp_listener->setcallback(WvStreamCallback(this,
-                &WvStreamsDebuggerServer::tcp_listener_cb), NULL);
+        tcp_listener->onaccept(IWvListenerCallback(this,
+                &WvStreamsDebuggerServer::tcp_listener_cb));
         tcp_listener->setclosecallback(IWvStreamCallback(this,
                 &WvStreamsDebuggerServer::tcp_listener_close_cb));
         streams.append(tcp_listener, true);
@@ -114,11 +114,8 @@ void WvStreamsDebuggerServer::unix_listener_close_cb(WvStream &)
 }
 #endif
 
-void WvStreamsDebuggerServer::tcp_listener_cb(WvStream &, void *)
+void WvStreamsDebuggerServer::tcp_listener_cb(IWvStream *tcp_conn, void *)
 {
-    WvTCPConn *tcp_conn = tcp_listener->accept();
-    if (!tcp_conn)
-        return;
     log("Accepted connection from %s\n", *tcp_conn->src());
     Connection *conn = new Connection(tcp_conn);
     conn->setcallback(WvStreamCallback(this,

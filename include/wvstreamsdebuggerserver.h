@@ -25,7 +25,7 @@ class WvStreamsDebuggerServer : public WvStream
         WvStreamsDebugger debugger;
         WvString salt;
         
-        Connection(WvStream *s);
+        Connection(IWvStream *s);
         
         void result_cb(WvStringParm cmd, WvStringList &results);
         
@@ -44,7 +44,7 @@ class WvStreamsDebuggerServer : public WvStream
     void unix_listener_close_cb(WvStream &);
     
     WvTCPListener *tcp_listener;
-    void tcp_listener_cb(WvStream &, void *);
+    void tcp_listener_cb(IWvStream *, void *);
     void tcp_listener_close_cb(WvStream &);
 
     AuthCallback auth_cb;

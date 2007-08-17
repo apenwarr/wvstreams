@@ -18,12 +18,26 @@
 #pragma init_seg(lib)
 #endif
 
-static IWvStream *creator(WvStringParm s)
+static IWvStream *creator(WvStringParm s, IObject *_obj)
 {
-    return new WvStreamClone(wvcreate<IWvStream>(s));
+    return new WvStreamClone(wvcreate<IWvStream>(s, _obj));
 }
 
-static WvMoniker<IWvStream> reg("clone", creator);
+static IWvStream *objcreator(WvStringParm s, IObject *_obj)
+{
+    // no real need to wrap it
+#if MUTATE_ISNT_BROKEN
+    return mutate<IWvStream>(_obj);
+#else
+    // HACK: we assume the object is safely of type IWvStream because
+    // xplc's mutate<> function seems not to be working for some reason.
+    return (IWvStream *)_obj;
+#endif
+}
+
+static WvMoniker<IWvStream> clonereg("clone", creator);
+static WvMoniker<IWvStream> objreg("obj", objcreator);
+static WvMoniker<IWvStream> objreg2("", objcreator);
 
 
 WvStreamClone::WvStreamClone(IWvStream *_cloned) 

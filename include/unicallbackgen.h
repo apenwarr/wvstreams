@@ -63,7 +63,7 @@ public:
     {
         if (get_callbacks.exists(key))
         {
-            UniCallbackGenGetCallback &get_callback = get_callbacks[key];
+            UniCallbackGenGetCallback &get_callback = *get_callbacks[key];
             UniTempGen::set(key, get_callback(key));
         }
         else UniTempGen::set(key, value);
@@ -80,7 +80,7 @@ public:
     {
         if (set_callbacks.exists(key))
         {
-            UniCallbackGenSetCallback &set_callback = set_callbacks[key];
+            UniCallbackGenSetCallback &set_callback = *set_callbacks[key];
             set_callback(key, value);
         }
 

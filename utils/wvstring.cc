@@ -546,7 +546,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	
 	if (*iptr++ == 'c')
 	{
-	    if ( argnum <= 0 ) 
+	    if (argnum <= 0)
                 argptr++;
 	    total++;
 	}

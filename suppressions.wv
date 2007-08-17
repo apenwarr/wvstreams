@@ -142,3 +142,55 @@
    Memcheck:Addr4
    fun:__nss_lookup_function
 }
+{
+   glibc_is_dumber_than_ever
+   Memcheck:Cond
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+}
+{
+   i_sure_do_love_glibc
+   Memcheck:Addr4
+   obj:/lib/ld-2.4.so
+   obj:/lib/tls/i686/cmov/libc-2.4.so
+   obj:/lib/ld-2.4.so
+   fun:__libc_dlopen_mode
+   fun:__nss_lookup_function
+}
+{
+   yeah_me_too_glibc_is_my_favourite
+   Memcheck:Cond
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/tls/i686/cmov/libc-2.4.so
+   obj:/lib/ld-2.4.so
+   fun:__libc_dlopen_mode
+   fun:__nss_lookup_function
+}
+{
+   could_life_be_better_than_this_i_wonder
+   Memcheck:Addr4
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/tls/i686/cmov/libc-2.4.so
+   obj:/lib/ld-2.4.so
+   fun:__libc_dlopen_mode
+   fun:__nss_lookup_function
+}
+{
+   glibc_equals_party
+   Memcheck:Addr4
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+   obj:/lib/ld-2.4.so
+}

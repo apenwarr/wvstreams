@@ -230,10 +230,8 @@ static void getmessage(WvStream&, void *userdata)
 }
 
 
-static void lcallback(WvStream&, void *userdata)
+static void lcallback(IWvStream *conn, void*)
 {
-    WvTCPListener *l = (WvTCPListener *)userdata;
-    WvTCPConn *conn = l->accept();
     WvSSLStream *ssl = new WvSSLStream(conn, x509, 0, true);
     ssl->setcallback(getmessage, ssl);
     WvIStreamList::globallist.append(ssl, true, "ssl stream");
@@ -255,7 +253,7 @@ WVTEST_MAIN("ssl establish connection")
     WvString laddrstr("0.0.0.0:%s", port);
     WvIPPortAddr laddr(laddrstr);
     WvTCPListener l(laddr);
-    l.setcallback(lcallback, &l);
+    l.onaccept(lcallback);
 
     WvIStreamList::globallist.append(&l, false, "listener");
 

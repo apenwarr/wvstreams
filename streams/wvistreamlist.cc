@@ -58,13 +58,13 @@ WvIStreamList::WvIStreamList():
 
 WvIStreamList::~WvIStreamList()
 {
-    // nothing to do
+    close();
 }
 
 
 bool WvIStreamList::isok() const
 {
-    return true;  // "error" condition on a list is undefined
+    return WvStream::isok();
 }
 
 

@@ -36,7 +36,7 @@ static void check_callback2(const UniConf &handle,
     WVPASS(expected = callbacks2.exists(key));
     if (expected)
     {
-	WVPASSEQ(callbacks2[key], handle[key].getme());
+	WVPASSEQ(*callbacks2[key], handle[key].getme());
 	callbacks2.remove(key);
     }
 }
@@ -50,7 +50,7 @@ static void check_callback1(const UniConf &handle,
     WVPASS(expected = callbacks1.exists(key));
     if (expected)
     {
-	WVPASSEQ(callbacks1[key], handle[key].getme());
+	WVPASSEQ(*callbacks1[key], handle[key].getme());
 	callbacks1.remove(key);
     }
 }
@@ -68,7 +68,7 @@ static void check_iterator(WvMap<UniConfKey, WvString> &map,
 	WVPASS(expected = map.exists(i.ptr()->fullkey()));
 	if (expected)
 	{
-	    WVPASSEQ(map[i.ptr()->fullkey()], i.ptr()->getme());
+	    WVPASSEQ(*map[i.ptr()->fullkey()], i.ptr()->getme());
 	    map.remove(i.ptr()->fullkey());
 	}
     }

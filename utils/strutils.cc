@@ -283,9 +283,15 @@ WvString hexdump_buffer(const void *_buf, size_t len, bool charRep)
 	
 	// dump character representation
 	if (charRep)
+	{
 	    for (count2 = 0; count2 < top; count2++)
+	    {
+		if (!(count2 % 4))
+		    *cptr++ = ' ';
 	        *cptr++ = (isprint(buf[count+count2])
 			   ? buf[count+count2] : '.');
+	    }
+	}
 
 	*cptr++ = '\n';
     }

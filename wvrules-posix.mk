@@ -3,6 +3,7 @@ LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
 LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
 LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
 LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
+LIBWVDBUS=$(WVSTREAMS_LIB)/libwvdbus.so $(LIBWVSTREAMS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
 
@@ -12,10 +13,8 @@ LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
 INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
 
 CPPFLAGS += $(CPPOPTS)
-C_AND_CXX_FLAGS += -D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
-		  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CFLAGS += $(COPTS) $(C_AND_CXX_FLAGS) 
-CXXFLAGS += $(CXXOPTS) $(C_AND_CXX_FLAGS)
+CFLAGS += $(COPTS)
+CXXFLAGS += $(CXXOPTS)
 LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 
 # Default compiler we use for linking
@@ -98,10 +97,12 @@ ifeq ($(CCMALLOC),1)
 endif
 
 ifeq ($(DEBUG),1)
-  C_AND_CXX_FLAGS += -ggdb -DDEBUG=1
+  CFLAGS += -ggdb -DDEBUG=1
+  CXXFLAGS += -ggdb -DDEBUG=1
   LDFLAGS += -ggdb
 else
-  C_AND_CXX_FLAGS += -DDEBUG=0
+  CFLAGS += -DDEBUG=0
+  CXXFLAGS += -DDEBUG=0
   #CFLAGS += -DNDEBUG    # I don't like disabling assertions...
   #CFLAGS += -fomit-frame-pointer  # really evil
   #CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0

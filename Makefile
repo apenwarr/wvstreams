@@ -198,7 +198,7 @@ install-wsd: ipstreams/tests/wsd
 uninstall:
 	$(tbd)
 
-$(TESTS): $(LIBUNICONF) $(LIBWVTEST)
+$(TESTS): $(LIBUNICONF) $(LIBWVTEST) $(LIBWVDBUS)
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
@@ -221,5 +221,5 @@ endif
 wvtestmain: \
 	$(call objects, $(filter-out ./Win32WvStreams/%, \
 		$(shell find . -type d -name t))) \
-	$(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
+	$(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 

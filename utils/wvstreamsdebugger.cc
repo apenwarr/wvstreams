@@ -45,30 +45,24 @@ static WvStreamsDebuggerStaticInitCleanup ___;
 
 void *WvStreamsDebugger::get_command_data(WvStringParm cmd, Command *command)
 {
-    if (command == NULL)
-    {
-        Command **pcommand = commands->find(cmd);
-        if (!pcommand)
-            return NULL;
-        command = *pcommand;
-    }
+    if (!command)
+	command = commands->find(cmd);
+    if (!command)
+	return NULL;
     
-    void **pcd = (void **)command_data.find(cmd);
-    void *cd;
-    if (pcd == NULL)
+    char *cd = command_data[cmd];
+    if (!cd)
     {
         // In case the command has been added since our constructor
         // was executed...
         
         if (!!command->init_cb)
-            cd = command->init_cb(cmd);
+            cd = (char *)command->init_cb(cmd);
         else
             cd = NULL;
             
-        command_data.add(cmd, (char *)cd);
+        command_data.add(cmd, cd);
     }
-    else
-        cd = *pcd;
     
     return cd;
 }
@@ -110,12 +104,12 @@ WvStreamsDebugger::~WvStreamsDebugger()
 WvString WvStreamsDebugger::run(WvStringParm cmd, WvStringList &args,
         ResultCallback result_cb)
 {
-    Command **pcommand = commands->find(cmd);
-    if (!pcommand)
+    Command *command = commands->find(cmd);
+    if (!command)
         return "No such command";
-    Command *command = *pcommand;
    
-    return command->run_cb(cmd, args, result_cb, get_command_data(cmd, command));
+    return command->run_cb(cmd, args, result_cb,
+			   get_command_data(cmd, command));
 }
 
 
@@ -137,10 +131,9 @@ bool WvStreamsDebugger::add_command(WvStringParm cmd,
 
 bool WvStreamsDebugger::foreach(WvStringParm cmd, ForeachCallback foreach_cb)
 {
-    Command **pcommand = commands->find(cmd);
-    if (!pcommand)
+    Command *command = commands->find(cmd);
+    if (!command)
         return false;
-    Command *command = *pcommand;
     
     if (debuggers)
     {
