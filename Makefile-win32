@@ -135,11 +135,16 @@ W=$(WVSTREAMS)/Win32WvStreams
 DIRS=utils streams ipstreams uniconf uniconf/daemon crypto \
 	urlget configfile \
 	$W/libwvutils $W/libwvstreams $W/libuniconf
+ifneq ($(have_dbus),no)
+DIRS+=dbus
+endif
 _OBJFILES=$(call objects,$(DIRS))
 OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
 
 _TOBJFILES=$(call objects,$(addsuffix /t,$(DIRS)))
 TOBJFILES=$(filter-out $(TOBJSKIP),$(_TOBJFILES))
+
+LIBS+=$(LIBS_DBUS)
 
 wvtestmain: $(TOBJFILES) libwvwin32.a
 

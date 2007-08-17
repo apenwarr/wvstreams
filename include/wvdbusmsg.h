@@ -41,7 +41,7 @@ public:
      * peer-to-peer context (no message bus).
      */
     WvDBusMsg(WvStringParm busname, WvStringParm objectname, 
-              WvStringParm interface, WvStringParm method);
+              WvStringParm ifc, WvStringParm method);
 
     /**
      * Constructs a new WvDBus message, copying it out of an old one.
@@ -286,7 +286,7 @@ protected:
 class WvDBusSignal : public WvDBusMsg
 {
 public:
-    WvDBusSignal(WvStringParm objectname, WvStringParm interface, 
+    WvDBusSignal(WvStringParm objectname, WvStringParm ifc, 
                  WvStringParm name);
 };
 

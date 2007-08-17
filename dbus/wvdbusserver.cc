@@ -8,6 +8,7 @@
  * This library is licensed under the LGPL, please read LICENSE for details.
  *
  */ 
+#undef interface // windows
 #include "wvdbusserver.h"
 #include "wvdbusconn.h"
 #include "wvtcp.h"

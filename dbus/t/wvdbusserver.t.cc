@@ -5,67 +5,12 @@
 #include "wvfork.h"
 #include "wvtest.h"
 #include "wvloopback.h"
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
 
 
 class TestDBusServer
 {
 public:
     WvString moniker;
-#if 0
-    pid_t parent, child;
-    WvLoopback loop;
-    
-    TestDBusServer()
-    {
-	signal(SIGPIPE, SIG_IGN);
-	fprintf(stderr, "Creating a test DBus server.\n");
-	
-	parent = getpid();
-	child = wvfork(loop.getrfd(), loop.getwfd());
-	if (child == 0)
-	    do_child(); // never returns
-	WVPASS(child >= 0);
-	
-	moniker = loop.getline(-1);
-	fprintf(stderr, "Server address is '%s'\n", moniker.cstr());
-    }
-    
-    ~TestDBusServer()
-    {
-	fprintf(stderr, "Killing test server.\n");
-	kill(child, 15);
-	pid_t rv;
-	while ((rv = waitpid(child, NULL, 0)) != child)
-	{
-	    // in case a signal is in the process of being delivered..
-	    if (rv == -1 && errno != EINTR)
-		break;
-	}
-	WVPASS(rv == child);
-    }
-    
-    void do_child()
-    {
-	WvString smoniker("unix:tmpdir=%s.dir",
-			 wvtmpfilename("wvdbus-sock-"));
-	WvDBusServer server(smoniker);
-	
-	loop.print("%s\n", server.get_addr());
-	
-	WvIStreamList::globallist.append(&server, false);
-	while (server.isok())
-	{
-	    WvIStreamList::globallist.runonce(1000);
-	    if (kill(parent, 0) < 0) break;
-	}
-	fprintf(stderr, "Server process terminating.\n");
-	_exit(0);
-    }
-    
-#else
     WvDBusServer *s;
     
     TestDBusServer()
@@ -83,9 +28,6 @@ public:
     {
 	delete s;
     }
-    
-#endif
-    
 };
 
 

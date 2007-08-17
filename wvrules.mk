@@ -28,8 +28,10 @@ SHELL=/bin/bash
 
 ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
   include $(WVSTREAMS_SRC)/config.mk
+  __junk:=$(shell echo "Using compiler type '$(COMPILER_STANDARD)'" >&2)
   include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 else
+  __junk:=$(shell echo "Warning: $(WVSTREAMS_SRC)/config.mk doesn't exist" >&2)
   COMPILER_STANDARD=posix
 endif
 

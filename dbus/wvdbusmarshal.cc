@@ -7,6 +7,7 @@
  * but not our special marshalling code.
  */ 
 #include "wvdbusmsg.h"
+#undef interface // windows
 #include <dbus/dbus.h>
 
 WvDBusMsg *WvDBusMsg::demarshal(WvBuf &buf)

@@ -8,6 +8,7 @@
  * This library is licensed under the LGPL, please read LICENSE for details.
  * 
  */ 
+#undef interface // windows
 #include "wvdbusconn.h"
 #include "wvmoniker.h"
 #include "wvstrutils.h"
@@ -310,7 +311,12 @@ bool WvDBusClientAuth::authorize(WvDBusConn &c)
     if (!sent_request)
     {
 	c.write("\0", 1);
-	c.out("AUTH EXTERNAL %s\r\n\0", WvHexEncoder().strflushstr(getuid()));
+#ifndef _WIN32
+	long uid = getuid();
+#else
+        long uid = 0;
+#endif
+	c.out("AUTH EXTERNAL %s\r\n\0", WvHexEncoder().strflushstr(uid));
 	sent_request = true;
     }
     else

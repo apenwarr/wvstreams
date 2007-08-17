@@ -8,6 +8,7 @@
  * This library is licensed under the LGPL, please read LICENSE for details.
  *
  */ 
+#undef interface // windows
 #include "wvdbusmsg.h"
 #include "wvdbusconn.h"
 #include "wvstrutils.h"
@@ -482,7 +483,7 @@ WvDBusMsg &WvDBusMsg::struct_start(WvStringParm element_type)
     DBusMessageIter *parent = itlist.first();
     DBusMessageIter *sub = new DBusMessageIter;
     dbus_message_iter_open_container(parent,
-				     DBUS_TYPE_STRUCT, element_type, sub);
+				     DBUS_TYPE_STRUCT, 0, sub);
     itlist.prepend(sub, true);
     return *this;
 }

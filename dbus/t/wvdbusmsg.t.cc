@@ -1,6 +1,5 @@
 #include "wvtest.h"
 #include "wvdbusmsg.h"
-#include <dbus/dbus.h>
 
 WVTEST_MAIN("dbusmsg basics")
 {
@@ -33,7 +32,7 @@ WVTEST_MAIN("dbusmsg basics")
 	WVPASSEQ((bool)i, true);
 	
 	WVFAIL(i.next()); // no more parameters
-	WVPASSEQ(i.type(), DBUS_MESSAGE_TYPE_INVALID);
+	WVPASSEQ(i.type(), 0);
 	WVPASS(i.get_str().isnull());
 	WVPASSEQ((int)i, 0);
 	WVPASSEQ((unsigned)i, 0);

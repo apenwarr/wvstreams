@@ -3,7 +3,6 @@
 #include "wvdbusmsg.h"
 #include "wvstream.h"
 #include "wvstrutils.h"
-#include <dbus/dbus.h>
 
 WVTEST_MAIN("dbusmarshal")
 {

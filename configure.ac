@@ -381,25 +381,30 @@ fi
 
 # dbus
 if test "$with_dbus" != "no"; then
+    WV_APPEND(CPPFLAGS, "-DDBUS_API_SUBJECT_TO_CHANGE")
     if test "$with_dbus" = ""; then
+        DBUS_LIBDIR=/usr/lib
         WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
-        WV_APPEND(CPPFLAGS, "-DDBUS_API_SUBJECT_TO_CHANGE")
         WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L dbus-1`])
+    else
+        DBUS_LIBDIR=$with_dbus/dbus/.libs
+    	WV_APPEND(CPPFLAGS, -I$with_dbus)
+    	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR)
     fi
 
     AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
     LIBS_save="$LIBS"
-    LIBS="$LIBS /usr/lib/libdbus-1.a"
+    LIBS="$LIBS $DBUS_LIBDIR/libdbus-1.a"
     with_dbus=no
-    AC_TRY_LINK([extern "C" void dbus_connection_open(); ],
-                [dbus_connection_open(); ],
+    AC_TRY_LINK([extern "C" void dbus_message_new(); ],
+                [dbus_message_new(); ],
                 [with_dbus=])
     LIBS="$LIBS_save"
 
     if test "$with_dbus" != "no"; then
         AC_DEFINE(WITH_DBUS,,
                   [Define to enable DBUS support.])
-        LIBS_DBUS=/usr/lib/libdbus-1.a
+        LIBS_DBUS=$DBUS_LIBDIR/libdbus-1.a
     fi
 fi
 

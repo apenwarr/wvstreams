@@ -15,11 +15,12 @@
 //#undef PACKAGE_STRING
 //#undef PACKAGE_TARNAME
 //#undef PACKAGE_VERSION
+#undef interface
 #include <dbus/dbus.h>
-#include <dbus/dbus-marshal-header.h>
-#include <dbus/dbus-internals.h>
-#include <dbus/dbus-string.h>
-#include <dbus/dbus-message-private.h>
+#include <dbus-upstream/dbus/dbus-marshal-header.h>
+#include <dbus-upstream/dbus/dbus-internals.h>
+#include <dbus-upstream/dbus/dbus-string.h>
+#include <dbus-upstream/dbus/dbus-message-private.h>
 
 int wvdbus_marshal(DBusMessage *msg, char **cbuf, size_t *len)
 {
