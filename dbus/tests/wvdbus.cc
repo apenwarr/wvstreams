@@ -9,6 +9,9 @@
 #include "wvargs.h"
 #include "wvdbusconn.h"
 #include "wvistreamlist.h"
+#include "wvlinkerhack.h"
+
+WV_LINK_TO(WvTCPConn);
 
 static WvStringList paths;
 

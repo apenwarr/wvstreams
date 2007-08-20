@@ -6,19 +6,20 @@
  *   Copyright (C) 2007, Carillon Information Security Inc.
  *
  * This library is licensed under the LGPL, please read LICENSE for details.
- * 
- */ 
-#undef interface // windows
+ *
+ */
 #include "wvdbusconn.h"
 #include "wvmoniker.h"
 #include "wvstrutils.h"
+#undef interface // windows
 #include <dbus/dbus.h>
+
 
 static WvString translate(WvStringParm dbus_moniker)
 {
     WvStringList l;
     WvStringList::Iter i(l);
-    
+
     if (!strncasecmp(dbus_moniker, "unix:", 5))
     {
 	WvString path, tmpdir;
@@ -57,7 +58,7 @@ static WvString translate(WvStringParm dbus_moniker)
 	else if (!!port)
 	    return WvString("tcp:0.0.0.0:%s", port); // localhost
     }
-    
+
     return dbus_moniker; // unrecognized
 }
 
@@ -65,7 +66,7 @@ static WvString translate(WvStringParm dbus_moniker)
 static IWvStream *stream_creator(WvStringParm _s, IObject *)
 {
     WvString s(_s);
-    
+
     if (!strcasecmp(s, "starter"))
     {
 	WvString startbus(getenv("DBUS_STARTER_ADDRESS"));
@@ -80,21 +81,21 @@ static IWvStream *stream_creator(WvStringParm _s, IObject *)
 		s = "session";
 	}
     }
-    
+
     if (!strcasecmp(s, "system"))
     {
 	WvString bus(getenv("DBUS_SYSTEM_BUS_ADDRESS"));
 	if (!!bus)
 	    return wvcreate<IWvStream>(translate(bus));
     }
-    
+
     if (!strcasecmp(s, "session"))
     {
 	WvString bus(getenv("DBUS_SESSION_BUS_ADDRESS"));
 	if (!!bus)
 	    return wvcreate<IWvStream>(translate(bus));
     }
-    
+
     return wvcreate<IWvStream>(translate(s));
 }
 
@@ -104,22 +105,22 @@ static WvMoniker<IWvStream> reg("dbus", stream_creator);
 static int conncount;
 
 WvDBusConn::WvDBusConn(IWvStream *_cloned, IWvDBusAuth *_auth, bool _client)
-	: WvStreamClone(_cloned),
-          log(WvString("DBus %s%s",
-		       _client ? "" : "s",
-		       ++conncount), WvLog::Debug5),
-          pending(10)
+    : WvStreamClone(_cloned),
+	log(WvString("DBus %s%s",
+		     _client ? "" : "s",
+		     ++conncount), WvLog::Debug5),
+	pending(10)
 {
     init(_auth, _client);
 }
 
-    
+
 WvDBusConn::WvDBusConn(WvStringParm moniker, IWvDBusAuth *_auth, bool _client)
-	: WvStreamClone(wvcreate<IWvStream>(moniker)),
-          log(WvString("DBus %s%s",
-		       _client ? "" : "s",
-		       ++conncount), WvLog::Debug5),
-          pending(10)
+    : WvStreamClone(wvcreate<IWvStream>(moniker)),
+	log(WvString("DBus %s%s",
+		     _client ? "" : "s",
+		     ++conncount), WvLog::Debug5),
+	pending(10)
 {
     init(_auth, _client);
 }
@@ -132,25 +133,25 @@ void WvDBusConn::init(IWvDBusAuth *_auth, bool _client)
     auth = _auth ? _auth : new WvDBusClientAuth;
     authorized = false;
     if (!client) set_uniquename(WvString(":%s", conncount));
-    
+
     if (!isok()) return;
-    
+
     // this will get enqueued until later, but we want to make sure it
     // comes before anything the user tries to send - including anything
     // goofy they enqueue in the authorization part.
     if (client)
 	send_hello();
-    
-    try_auth();
-}
 
+    try_auth();
+
+}
 
 WvDBusConn::~WvDBusConn()
 {
     log("Shutting down.\n");
     if (geterr())
 	log("Error was: %s\n", errstr());
-    
+
     close();
 }
 
@@ -194,6 +195,15 @@ uint32_t WvDBusConn::send(WvDBusMsg msg)
 }
 
 
+void WvDBusConn::send(WvDBusMsg msg, const WvDBusCallback &onreply,
+		      time_t msec_timeout)
+{
+    send(msg);
+    if (onreply)
+	add_pending(msg, onreply, msec_timeout);
+}
+
+
 void WvDBusConn::out(WvStringParm s)
 {
     log(" >> %s", s);
@@ -232,7 +242,6 @@ void WvDBusConn::set_uniquename(WvStringParm s)
 }
 
 
-
 void WvDBusConn::try_auth()
 {
     bool done = auth->authorize(*this);
@@ -240,14 +249,14 @@ void WvDBusConn::try_auth()
     {
 	delete auth;
 	auth = NULL;
-	
+
 	// ready to send messages!
 	if (out_queue.used())
 	{
 	    log(" >> (sending enqueued messages)\n");
 	    write(out_queue);
 	}
-	
+
 	authorized = true;
     }
 }
@@ -274,11 +283,10 @@ int WvDBusConn::priority_order(const CallbackInfo *a, const CallbackInfo *b)
     return a->pri - b->pri;
 }
 
-
 bool WvDBusConn::filter_func(WvDBusMsg &msg)
 {
     log("<<  %s\n", msg);
-    
+
     // handle replies
     uint32_t rserial = msg.get_replyserial();
     if (rserial)
@@ -291,7 +299,7 @@ bool WvDBusConn::filter_func(WvDBusMsg &msg)
 	    return true; // handled it
 	}
     }
-    
+
     // handle all the generic filters
     CallbackInfoList::Sorter i(callbacks, priority_order);
     for (i.rewind(); i.next(); )
@@ -339,6 +347,120 @@ bool WvDBusClientAuth::authorize(WvDBusConn &c)
 		c.seterr("Unknown AUTH response: '%s'", line);
 	}
     }
-    
+
     return false;
 }
+
+
+time_t WvDBusConn::mintimeout_msec()
+{
+    WvTime when = 0;
+    PendingDict::Iter i(pending);
+    for (i.rewind(); i.next(); )
+    {
+	if (!when || when > i->valid_until)
+	    when = i->valid_until;
+    }
+    if (!when)
+	return -1;
+    else if (when <= wvstime())
+	return 0;
+    else
+	return msecdiff(when, wvstime());
+}
+
+
+bool WvDBusConn::post_select(SelectInfo &si)
+{
+    bool ready = WvStreamClone::post_select(si);
+    if (si.inherit_request) return ready;
+
+    if (!authorized && ready)
+	try_auth();
+
+    if (!alarm_remaining())
+    {
+	WvTime now = wvstime();
+	PendingDict::Iter i(pending);
+	for (i.rewind(); i.next(); )
+	{
+	    if (now > i->valid_until)
+	    {
+		log("Expiring %s\n", i->msg);
+		expire_pending(i.ptr());
+		i.rewind();
+	    }
+	}
+    }
+
+    if (authorized && ready)
+    {
+	size_t needed = WvDBusMsg::demarshal_bytes_needed(in_queue);
+	size_t amt = needed - in_queue.used();
+	if (amt < 4096)
+	    amt = 4096;
+	read(in_queue, amt);
+	WvDBusMsg *m;
+	while ((m = WvDBusMsg::demarshal(in_queue)) != NULL)
+	{
+	    filter_func(*m);
+	    delete m;
+	}
+    }
+
+    alarm(mintimeout_msec());
+    return false;
+}
+
+
+bool WvDBusConn::isidle()
+{
+    return !out_queue.used() && pending.isempty();
+}
+
+
+void WvDBusConn::expire_pending(Pending *p)
+{
+    if (p)
+    {
+	WvDBusError e(p->msg, DBUS_ERROR_FAILED,
+		      "Timed out while waiting for reply");
+	p->cb(*this, e);
+	pending.remove(p);
+    }
+}
+
+
+void WvDBusConn::cancel_pending(uint32_t serial)
+{
+    Pending *p = pending[serial];
+    if (p)
+    {
+	WvDBusError e(p->msg, DBUS_ERROR_FAILED,
+		      "Canceled while waiting for reply");
+	p->cb(*this, e);
+	pending.remove(p);
+    }
+}
+
+
+void WvDBusConn::add_pending(WvDBusMsg &msg, WvDBusCallback cb,
+		 time_t msec_timeout)
+{
+    uint32_t serial = msg.get_serial();
+    assert(serial);
+    if (pending[serial])
+	cancel_pending(serial);
+    pending.add(new Pending(msg, cb, msec_timeout), true);
+    alarm(mintimeout_msec());
+}
+
+
+bool WvDBusConn::_registered(WvDBusConn &c, WvDBusMsg &msg)
+{
+    WvDBusMsg::Iter i(msg);
+    _uniquename = i.getnext().get_str();
+    set_uniquename(_uniquename);
+    return true;
+}
+

@@ -18,9 +18,6 @@
 #include "wvlog.h"
 #include "wvdbusmsg.h"
 
-#undef interface
-#include <dbus/dbus.h>
-
 #define WVDBUS_DEFAULT_TIMEOUT (300*1000)
 
 class WvDBusConn;
@@ -67,12 +64,6 @@ class WvDBusConn : public WvStreamClone
     
 public:
     WvLog log;
-    
-    WvDBusConn(DBusConnection*, WvStringParm)
-	: WvStreamClone(0), log("foo"), pending(10)
-    {
-	assert(0);
-    }
     
     /**
      * Creates a new dbus connection using the given WvStreams moniker.
@@ -130,23 +121,18 @@ public:
     virtual void close();
     
     /**
-     * Send a message on the bus, calling onreply() when the reply comes in
-     * or the messages times out.
-     */
-    void send(WvDBusMsg msg, const WvDBusCallback &onreply,
-	      time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT)
-    {
-	send(msg);
-	if (onreply)
-	    add_pending(msg, onreply, msec_timeout);
-    }
-
-    /**
      * Send a message on the bus, not expecting any reply.  Returns the
      * assigned serial number in case you want to track it some other way.
      */
     uint32_t send(WvDBusMsg msg);
     
+    /**
+     * Send a message on the bus, calling onreply() when the reply comes in
+     * or the messages times out.
+     */
+    void send(WvDBusMsg msg, const WvDBusCallback &onreply,
+	      time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT);
+
     /**
      * The priority level of a callback registration.  This defines the order
      * in which callbacks are processed, from lowest to highest integer.
@@ -192,72 +178,17 @@ public:
      */
     virtual bool filter_func(WvDBusMsg &msg);
     
-    time_t mintimeout_msec()
-    {
-	WvTime when = 0;
-	PendingDict::Iter i(pending);
-	for (i.rewind(); i.next(); )
-	{
-	    if (!when || when > i->valid_until)
-		when = i->valid_until;
-	}
-	if (!when)
-	    return -1;
-	else if (when <= wvstime())
-	    return 0;
-	else
-	    return msecdiff(when, wvstime());
-    }
-    
-    WvDynBuf mybuf;
-    virtual bool post_select(SelectInfo &si)
-    {
-	bool ready = WvStreamClone::post_select(si);
-	if (si.inherit_request) return ready;
-	
-	if (!authorized && ready)
-	    try_auth();
-	
-	if (!alarm_remaining())
-	{
-	    WvTime now = wvstime();
-	    PendingDict::Iter i(pending);
-	    for (i.rewind(); i.next(); )
-	    {
-		if (now > i->valid_until)
-		{
-		    log("Expiring %s\n", i->msg);
-		    expire_pending(i.ptr());
-		    i.rewind();
-		}
-	    }
-	}
-	
-	if (authorized && ready)
-	{
-	    size_t needed = WvDBusMsg::demarshal_bytes_needed(mybuf);
-	    size_t amt = needed - mybuf.used();
-	    if (amt < 4096)
-		amt = 4096;
-	    read(mybuf, amt);
-	    WvDBusMsg *m;
-	    while ((m = WvDBusMsg::demarshal(mybuf)) != NULL)
-	    {
-		filter_func(*m);
-		delete m;
-	    }
-	}
-	
-	alarm(mintimeout_msec());
-	return false;
-    }
-
-    bool isidle()
-    {
-	return !out_queue.used() && pending.isempty();
-    }
+    /**
+     * Returns true if there are no outstanding messages that have not
+     * received (or timed out) their reply.  Mostly useful in unit tests
+     * that want to terminate once all messages have been processed.
+     */
+    bool isidle();
     
 private:
+    time_t mintimeout_msec();
+    virtual bool post_select(SelectInfo &si);
+    
     struct Pending
     {
 	WvDBusMsg msg; // needed in case we need to generate timeout replies
@@ -278,50 +209,13 @@ private:
     DeclareWvDict(Pending, uint32_t, serial);
     
     PendingDict pending;
+    WvDynBuf in_queue, out_queue;
     
-    WvDynBuf out_queue;
-    
-    void expire_pending(Pending *p)
-    {
-	if (p)
-	{
-	    WvDBusError e(p->msg, DBUS_ERROR_FAILED,
-			  "Timed out while waiting for reply");
-	    p->cb(*this, e);
-	    pending.remove(p);
-	}
-    }
-    
-    void cancel_pending(uint32_t serial)
-    {
-	Pending *p = pending[serial];
-	if (p)
-	{
-	    WvDBusError e(p->msg, DBUS_ERROR_FAILED,
-			  "Canceled while waiting for reply");
-	    p->cb(*this, e);
-	    pending.remove(p);
-	}
-    }
-    
+    void expire_pending(Pending *p);
+    void cancel_pending(uint32_t serial);
     void add_pending(WvDBusMsg &msg, WvDBusCallback cb,
-		     time_t msec_timeout)
-    {
-	uint32_t serial = msg.get_serial();
-	assert(serial);
-	if (pending[serial])
-	    cancel_pending(serial);
-	pending.add(new Pending(msg, cb, msec_timeout), true);
-	alarm(mintimeout_msec());
-    }
-    
-    bool _registered(WvDBusConn &c, WvDBusMsg &msg)
-    {
-	WvDBusMsg::Iter i(msg);
-	_uniquename = i.getnext().get_str();
-	set_uniquename(_uniquename);
-	return true;
-    }
+		     time_t msec_timeout);
+    bool _registered(WvDBusConn &c, WvDBusMsg &msg);
 
     struct CallbackInfo
     {

@@ -8,10 +8,10 @@
  * This library is licensed under the LGPL, please read LICENSE for details.
  *
  */ 
-#undef interface // windows
 #include "wvdbusmsg.h"
 #include "wvdbusconn.h"
 #include "wvstrutils.h"
+#undef interface // windows
 #include <dbus/dbus.h>
 
 
