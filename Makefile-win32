@@ -29,7 +29,15 @@ gnulib: FORCE
 	rm -f $@
 	ln -s $(shell basename $<) $@
 
-all: fake-libs gnulib ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain
+ifneq ($(have_dbus),no)
+  DBUSEXE=dbus/tests/wvdbus dbus/tests/wvdbusd
+endif
+
+all: fake-libs gnulib \
+	ipstreams/tests/tcptest crypto/tests/ssltest \
+	uniconf/tests/uni uniconf/daemon/uniconfd \
+	$(DBUSEXE) \
+	wvtestmain
 	
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
