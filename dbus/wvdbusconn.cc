@@ -189,7 +189,7 @@ uint32_t WvDBusConn::send(WvDBusMsg msg)
 	write(out_queue);
     }
     else
-	log(" .. %s\n", msg);
+	log(" .> %s\n", msg);
     return msg.get_serial();
 }
 
@@ -242,7 +242,11 @@ void WvDBusConn::try_auth()
 	auth = NULL;
 	
 	// ready to send messages!
-	write(out_queue);
+	if (out_queue.used())
+	{
+	    log(" >> (sending enqueued messages)\n");
+	    write(out_queue);
+	}
 	
 	authorized = true;
     }
