@@ -122,7 +122,9 @@ WvString WvDBusMsg::Iter::get_str() const
     switch (type())
     {
     case DBUS_TYPE_BYTE:
+	return WvString("y%s", get_int());
     case DBUS_TYPE_BOOLEAN: 
+	return WvString("b%s", get_int());
     case DBUS_TYPE_INT16: 
     case DBUS_TYPE_INT32: 
     case DBUS_TYPE_INT64: 
@@ -153,7 +155,7 @@ WvString WvDBusMsg::Iter::get_str() const
 int64_t WvDBusMsg::Iter::get_int() const
 {
     dbus_bool_t b;
-    dbus_unichar_t c;
+    unsigned char c;
     dbus_int16_t s;
     dbus_int32_t i;
     dbus_int64_t l;
@@ -200,7 +202,7 @@ int64_t WvDBusMsg::Iter::get_int() const
 uint64_t WvDBusMsg::Iter::get_uint() const
 {
     dbus_bool_t b;
-    dbus_unichar_t c;
+    unsigned char c;
     dbus_uint16_t s;
     dbus_uint32_t i;
     dbus_uint64_t l;
