@@ -58,7 +58,7 @@ public:
 
 class WvDBusConn : public WvStreamClone
 {
-    bool client, authorized;
+    bool client, authorized, in_post_select;
     WvString _uniquename;
     IWvDBusAuth *auth;
     
@@ -132,6 +132,20 @@ public:
      */
     void send(WvDBusMsg msg, const WvDBusCallback &onreply,
 	      time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT);
+    
+    /**
+     * Send a message on the bus and wait for a reply to come in, returning
+     * the message when it does.  There is always a reply, even if it's
+     * "message expired" or some other error message.
+     * 
+     * It waits by doing this->runonce().  Streams on the globallist may run.
+     * 
+     * WARNING: this function does a synchronous wait operation, and thus
+     * does not play nicely in single-threaded WvStreams applications.  Use
+     * with extreme care.
+     */
+    WvDBusMsg send_and_wait(WvDBusMsg msg,
+			    time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT);
 
     /**
      * The priority level of a callback registration.  This defines the order

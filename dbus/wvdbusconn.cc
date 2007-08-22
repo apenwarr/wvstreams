@@ -204,6 +204,35 @@ void WvDBusConn::send(WvDBusMsg msg, const WvDBusCallback &onreply,
 }
 
 
+class xxReplyWaiter
+{
+public:
+    WvDBusMsg *reply;
+    
+    xxReplyWaiter()
+        { reply = NULL; }
+    ~xxReplyWaiter()
+        { delete reply; }
+    bool reply_wait(WvDBusConn &conn, WvDBusMsg &msg)
+        { reply = new WvDBusMsg(msg); return true; }
+};
+
+
+WvDBusMsg WvDBusConn::send_and_wait(WvDBusMsg msg, time_t msec_timeout)
+{
+    xxReplyWaiter rw;
+    
+    send(msg, WvDBusCallback(&rw, &xxReplyWaiter::reply_wait), msec_timeout);
+    while (!rw.reply && isok())
+	runonce();
+    if (!rw.reply)
+	return WvDBusError(msg, DBUS_ERROR_FAILED,
+			   "Connection closed while waiting for reply.");
+    else
+	return *rw.reply;
+}
+
+
 void WvDBusConn::out(WvStringParm s)
 {
     log(" >> %s", s);
@@ -374,6 +403,9 @@ bool WvDBusConn::post_select(SelectInfo &si)
 {
     bool ready = WvStreamClone::post_select(si);
     if (si.inherit_request) return ready;
+    
+    if (in_post_select) return false;
+    in_post_select = true;
 
     if (!authorized && ready)
 	try_auth();
@@ -409,6 +441,7 @@ bool WvDBusConn::post_select(SelectInfo &si)
     }
 
     alarm(mintimeout_msec());
+    in_post_select = false;
     return false;
 }
 
@@ -423,10 +456,11 @@ void WvDBusConn::expire_pending(Pending *p)
 {
     if (p)
     {
+	WvDBusCallback xcb(p->cb);
+	pending.remove(p); // prevent accidental recursion
 	WvDBusError e(p->msg, DBUS_ERROR_FAILED,
 		      "Timed out while waiting for reply");
-	p->cb(*this, e);
-	pending.remove(p);
+	xcb(*this, e);
     }
 }
 
@@ -436,10 +470,11 @@ void WvDBusConn::cancel_pending(uint32_t serial)
     Pending *p = pending[serial];
     if (p)
     {
+	WvDBusCallback xcb(p->cb);
+	pending.remove(p); // prevent accidental recursion
 	WvDBusError e(p->msg, DBUS_ERROR_FAILED,
 		      "Canceled while waiting for reply");
-	p->cb(*this, e);
-	pending.remove(p);
+	xcb(*this, e);
     }
 }
 
