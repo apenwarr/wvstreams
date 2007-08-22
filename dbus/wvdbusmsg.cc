@@ -140,7 +140,7 @@ WvString WvDBusMsg::Iter::get_str() const
 	dbus_message_iter_get_basic(it, &s);
 	return s;
     case DBUS_TYPE_VARIANT:
-	return open().getnext().get_str();
+	return WvString("{%s}", open().getnext().get_str());
     case DBUS_TYPE_STRUCT:
     case DBUS_TYPE_ARRAY:
 	return WvString("[%s]", open().get_all());
