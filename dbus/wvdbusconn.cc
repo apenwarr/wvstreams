@@ -122,6 +122,7 @@ WvDBusConn::WvDBusConn(WvStringParm moniker, IWvDBusAuth *_auth, bool _client)
 		     ++conncount), WvLog::Debug5),
 	pending(10)
 {
+    log("Connecting to '%s'\n", moniker);
     init(_auth, _client);
 }
 
@@ -227,7 +228,9 @@ WvDBusMsg WvDBusConn::send_and_wait(WvDBusMsg msg, time_t msec_timeout)
 	runonce();
     if (!rw.reply)
 	return WvDBusError(msg, DBUS_ERROR_FAILED,
-			   "Connection closed while waiting for reply.");
+			   WvString("Connection closed (%s) "
+				    "while waiting for reply.",
+				    errstr()));
     else
 	return *rw.reply;
 }

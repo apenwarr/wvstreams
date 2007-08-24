@@ -7,6 +7,7 @@
 #include "wvistreamlist.h"
 #include "wvunixsocket.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
 
 #if HAVE_ERRNO_H
 # include <errno.h>
@@ -47,6 +48,8 @@
 
 #include <fcntl.h>
 #include <sys/un.h>
+
+WV_LINK(WvUnixConn);
 
 static IWvStream *creator(WvStringParm s, IObject*)
 {

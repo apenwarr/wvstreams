@@ -101,8 +101,11 @@ bool WvDBusMsg::Iter::cur() const
 
 void WvDBusMsg::Iter::get_all(WvStringList &list)
 {
-    for (rewind(); next(); )
+    int items = 0;
+    for (rewind(); next() && items < 20; items++)
 	list.append(get_str());
+    if (items == 5)
+	list.append("...");
 }
 
 

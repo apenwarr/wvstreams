@@ -187,6 +187,7 @@ WvMonikerBase::~WvMonikerBase()
 void *wvcreate(const UUID &iid, WvStringParm moniker, IObject *obj)
 {
     assert(!moniker.isnull());
+    fprintf(stderr, "wvcreate: Looking for '%s'\n", moniker.cstr());
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(iid);
     if (reg)
     {
