@@ -179,7 +179,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) wvtesthelper wvtestmeter $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(libdir)/valgrind
-	$(INSTALL) suppressions.wv $(DESTDIR)$(libdir)/valgrind
+	$(INSTALL) wvstreams.supp $(DESTDIR)$(libdir)/valgrind
 
 uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
