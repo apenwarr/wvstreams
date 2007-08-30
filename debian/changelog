@@ -1,3 +1,9 @@
+wvstreams (4.4.1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- William Lachance <wrlach@gmail.com>  Thu, 30 Aug 2007 00:08:09 -0400
+
 wvstreams (4.4) unstable; urgency=low
 
   * New upstream version.
