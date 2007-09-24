@@ -9,13 +9,13 @@
 #include "wvlog.h"
 #include <sys/time.h>
 
-WvLog log("timeouttest", WvLog::Info);
+WvLog mylog("timeouttest", WvLog::Info);
 
 void timeout(WvStream &s, void *userdata)
 {
     static int count = 0;
     count++;
-    log("Fire %s\n", count);
+    mylog("Fire %s\n", count);
 }
 
 int main()
