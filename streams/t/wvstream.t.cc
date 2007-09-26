@@ -224,7 +224,7 @@ WVTEST_MAIN("callbacks")
     
     WvStream s;
     s.setcallback(val_cb, &val);
-    s.setclosecallback(WvBoundCallback<IWvStreamCallback, int&>(&val_icb, closeval));
+    s.setclosecallback(wv::bind(&val_icb, wv::ref(closeval), wv::_1));
     
     WVPASS(!val);
     WVPASS(!closeval);
@@ -540,11 +540,9 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
     s.uses_continue_select = true;
     
     {
-	WvCont cont1(WvBoundCallback<WvCallback<void*,void*>, WvStream&>
-		     (&wvcont_cb, s));
+	WvCont cont1(wv::bind(&wvcont_cb, wv::ref(s), wv::_1));
 	WvCont cont2(cont1), cont3(cont2);
-	s.setcallback(WvBoundCallback<WvStreamCallback, void* >
-		      (&call_wvcont_cb, &cont3), &sval);
+	s.setcallback(wv::bind(&call_wvcont_cb, &cont3, wv::_1, wv::_2), &sval);
 	
 	s.inbuf_putstr("gak");
 	WVPASS(sval == 0);

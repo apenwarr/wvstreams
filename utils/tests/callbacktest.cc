@@ -11,9 +11,9 @@ struct A
         { return A(x+a.x, y+a.y); }
 };
 
-typedef WvCallback<A, const A &, void *> ACallback;
-typedef WvCallback<A, const A &> A2Callback;
-typedef WvCallback<A, void *> A3Callback;
+typedef wv::function<A(const A&, void*)> ACallback;
+typedef wv::function<A(const A&)> A2Callback;
+typedef wv::function<A(void *)> A3Callback;
 
 
 static A bunk(const A &a, void *userdata)
@@ -45,7 +45,7 @@ int main()
     // FIXME: I am broken. Please show this to somebody
     // who can fix.... can fix.... can fix.....
     // A3Callback c2(WvBoundCallback<A3Callback, const A &>(bunk, a));
-    A2Callback c3(&a, &A::add);
+    A2Callback c3(wv::bind(&A::add, &a, wv::_1));
     
     print_a(c0(a, (void *)5));
     print_a(c1(a));

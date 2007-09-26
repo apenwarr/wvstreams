@@ -9,9 +9,9 @@ class MyWvDaemon : public WvDaemon
 public:
     MyWvDaemon() :
         WvDaemon("MyWvDaemon", "1.0", 
-                 WvDaemonCallback(this, &MyWvDaemon::start_cb),
-                 WvDaemonCallback(this, &MyWvDaemon::run_cb),
-                 WvDaemonCallback(this, &MyWvDaemon::stop_cb)),
+                 wv::bind(&MyWvDaemon::start_cb, this, wv::_1, wv::_2),
+                 wv::bind(&MyWvDaemon::run_cb, this, wv::_1, wv::_2),
+                 wv::bind(&MyWvDaemon::stop_cb, this, wv::_1, wv::_2)),
         tick_interval(1),
         log("MyWvDaemon", WvLog::Info)
         {

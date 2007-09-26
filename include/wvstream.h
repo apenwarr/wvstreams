@@ -16,7 +16,7 @@
 
 
 // parameters are: owning-stream, userdata
-typedef WvCallback<void, WvStream&, void*> WvStreamCallback;
+typedef wv::function<void(WvStream&, void*)> WvStreamCallback;
 
 /**
  * Unified support for streams, that is, sequences of bytes that may or
@@ -600,7 +600,7 @@ protected:
 
     WvStreamCallback callfunc;
     void *userdata;
-    WvCallback<void*,void*> call_ctx;
+    wv::function<void*(void*)> call_ctx;
 
     IWvStreamCallback readcb, writecb, exceptcb, closecb;
 

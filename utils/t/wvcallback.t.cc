@@ -13,9 +13,9 @@ struct A
         { return A(x+a.x, y+a.y); }
 };
 
-typedef WvCallback<A, const A &, void *> ACallback;
-typedef WvCallback<A, const A &> A2Callback;
-typedef WvCallback<A, void *> A3Callback;
+typedef wv::function<A(const A&, void*)> ACallback;
+typedef wv::function<A(const A&)> A2Callback;
+typedef wv::function<A(void*)> A3Callback;
 
 
 static A bunk(const A &a, void *userdata)
@@ -33,7 +33,7 @@ static A bunk1(const A &a)
 // END callbacktest.cc definitions
 
 // START cbweirdtest.cc definitions
-typedef WvCallback<void> Cb;
+typedef wv::function<void()> Cb;
 
 void f()
 {
@@ -57,8 +57,8 @@ WVTEST_MAIN("callbacktest.cc")
     
         ACallback c0(bunk);
         A2Callback c1(bunk1);
-        A3Callback c2(WvBoundCallback<A3Callback, const A &>(&bunk, a));
-        A2Callback c3(&a, &A::add);
+        A3Callback c2(wv::bind(&bunk, a, wv::_1));
+        A2Callback c3(wv::bind(&A::add, &a, wv::_1));
     
         result = (c0(a, (void *)5));
         if (!WVPASS(result.y == 2 * result.x))

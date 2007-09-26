@@ -53,7 +53,8 @@ public:
         log("MyListener", WvLog::Info) {
         if (isok())
         {
-            setcallback(WvStreamCallback(this, &MyListener::accept_conn), 0);
+            setcallback(wv::bind(&MyListener::accept_conn, this, wv::_1,
+				 wv::_2), 0);
             log("Listening for client connections on %s\n", addr);
         }
         else 
@@ -72,7 +73,7 @@ class MyWvStreamsDaemon : public WvStreamsDaemon
 public:
     MyWvStreamsDaemon() :
         WvStreamsDaemon("MyWvStreamsDaemon", "1.0", 
-                        WvStreamsDaemonCallback(this, &MyWvStreamsDaemon::cb)),
+                        wv::bind(&MyWvStreamsDaemon::cb, this, wv::_1, wv::_2)),
         port(default_port),
         log("MyWvStreamsDaemon", WvLog::Info)
         {

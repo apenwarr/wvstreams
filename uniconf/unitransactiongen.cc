@@ -202,8 +202,8 @@ private:
 UniTransactionGen::UniTransactionGen(IUniConfGen *_base)
     : root(NULL), base(_base)
 {
-    base->add_callback(this,
-	UniConfGenCallback(this, &UniTransactionGen::gencallback));
+    base->add_callback(this, wv::bind(&UniTransactionGen::gencallback, this,
+				      wv::_1, wv::_2));
 }
 
 UniTransactionGen::~UniTransactionGen()
@@ -444,10 +444,9 @@ void UniTransactionGen::cancel_values(UniConfValueTree *newcontents,
 	    if (!base->exists(subkey))
 	    {
 		my_userdata data = { i.ptr(), subkey };
-		i->visit(
-		    UniConfValueTree::Visitor(
-			this, &UniTransactionGen::deletion_visitor),
-		    (void *)&data, false, true);
+		i->visit(wv::bind(&UniTransactionGen::deletion_visitor, this,
+				  wv::_1, wv::_2),
+			 (void*)&data, false, true);
 	    }
 	}
     }
@@ -476,8 +475,8 @@ void UniTransactionGen::cancel_changes(UniConfChangeTree *node,
 	    {
 		my_userdata data = { node->newtree, section };
 		node->newtree->visit(
-		    UniConfValueTree::Visitor(
-			this, &UniTransactionGen::deletion_visitor),
+		    wv::bind(&UniTransactionGen::deletion_visitor, this,
+			     wv::_1, wv::_2),
 		    (void *)&data, false, true);
 	    }
 	}
@@ -667,10 +666,9 @@ UniConfValueTree *UniTransactionGen::set_value(UniConfValueTree *node,
 	    {
 		hold_delta();
 		my_userdata data = { subnode, key };
-		subnode->visit(
-		    UniConfValueTree::Visitor(
-			this, &UniTransactionGen::deletion_visitor),
-		    (void *)&data, false, true);
+		subnode->visit(wv::bind(&UniTransactionGen::deletion_visitor,
+					this, wv::_1, wv::_2),
+			       (void *)&data, false, true);
 		// printf("DELETE SUBNODE!\n");
 		delete subnode;
 		unhold_delta();

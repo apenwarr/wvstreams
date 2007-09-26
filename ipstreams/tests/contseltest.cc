@@ -48,9 +48,9 @@ static void cont_call(WvCont cont, WvStream &s, void* userdata)
 
 static void setupcont_call(WvStream &s, void* userdata)
 {
-    WvCont cont(WvBoundCallback<WvCallback<void*, void*>, WvStream&>(&stream_call, s));
+    WvCont cont(wv::bind(&stream_call, wv::ref(s), wv::_1));
 
-    s.setcallback(WvBoundCallback<WvStreamCallback, WvCont>(&cont_call, cont), NULL);
+    s.setcallback(wv::bind(&cont_call, cont, wv::_1, wv::_2), NULL);
 }
 
 

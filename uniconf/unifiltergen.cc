@@ -29,8 +29,8 @@ void UniFilterGen::setinner(IUniConfGen *inner)
 	xinner->del_callback(this);
     xinner = inner;
     if (xinner)
-        xinner->add_callback(this, UniConfGenCallback(this,
-            &UniFilterGen::gencallback));
+        xinner->add_callback(this, wv::bind(&UniFilterGen::gencallback, this,
+					    wv::_1, wv::_2));
 }
 
 

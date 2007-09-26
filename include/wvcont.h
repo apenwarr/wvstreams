@@ -16,7 +16,7 @@
 #include "wvlinklist.h"
 #include "wvstreamsdebugger.h"
 
-typedef WvCallback<void*, void*> WvContCallback;
+typedef wv::function<void*(void*)> WvContCallback;
 
 /**
  * WvCont provides "continuations", which are apparently also known as

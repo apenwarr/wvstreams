@@ -18,7 +18,7 @@ class WvStream;
 
 
 /* The stream gets passed back as a parameter. */
-typedef WvCallback<void, WvStream&> IWvStreamCallback;
+typedef wv::function<void(WvStream&)> IWvStreamCallback;
 typedef unsigned int WSID;
 
 class IWvStream : public WvErrorBase, public IObject

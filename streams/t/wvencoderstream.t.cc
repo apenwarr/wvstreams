@@ -486,8 +486,7 @@ WVTEST_MAIN("encoderstream eof3")
 	WvEncoderStream s(l);
 	s.writechain.append(new_enc(), true);
 	s.readchain.append(new_dec(), true);
-	s.setclosecallback
-	    (WvBoundCallback<IWvStreamCallback, int *>(&closecb, &closed));
+	s.setclosecallback(wv::bind(&closecb, &closed, wv::_1));
 	
 	s.write("Hello\n");
 	s.write("nonewline");

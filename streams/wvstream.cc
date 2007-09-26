@@ -223,7 +223,7 @@ WvStream::WvStream():
     stop_write(false),
     closed(false),
     userdata(NULL),
-    readcb(this, &WvStream::legacy_callback),
+    readcb(wv::bind(&WvStream::legacy_callback, this, wv::_1)),
     max_outbuf_size(0),
     outbuf_delayed_flush(false),
     is_auto_flush(true),
@@ -389,8 +389,7 @@ void WvStream::callback()
     {
 	if (!call_ctx) // no context exists yet!
 	{
-	    call_ctx = WvCont(WvCallback<void*,void*>
-			      (this, &WvStream::_callwrap),
+	    call_ctx = WvCont(wv::bind(&WvStream::_callwrap, this, wv::_1),
 			      personal_stack_size);
 	}
 	
@@ -820,9 +819,9 @@ void WvStream::pre_select(SelectInfo &si)
 
     if (!si.inherit_request)
     {
-	si.wants.readable |= readcb;
-	si.wants.writable |= writecb;
-	si.wants.isexception |= exceptcb;
+	si.wants.readable |= static_cast<bool>(readcb);
+	si.wants.writable |= static_cast<bool>(writecb);
+	si.wants.isexception |= static_cast<bool>(exceptcb);
     }
     
     // handle read-ahead buffering
@@ -841,9 +840,9 @@ bool WvStream::post_select(SelectInfo &si)
 {
     if (!si.inherit_request)
     {
-	si.wants.readable |= readcb;
-	si.wants.writable |= writecb;
-	si.wants.isexception |= exceptcb;
+	si.wants.readable |= static_cast<bool>(readcb);
+	si.wants.writable |= static_cast<bool>(writecb);
+	si.wants.isexception |= static_cast<bool>(exceptcb);
     }
     
     // FIXME: need sane buffer flush support for non FD-based streams
@@ -997,11 +996,11 @@ IWvStream::SelectRequest WvStream::get_select_request()
 void WvStream::force_select(bool readable, bool writable, bool isexception)
 {
     if (readable)
-	readcb = IWvStreamCallback(this, &WvStream::legacy_callback);
+	readcb = wv::bind(&WvStream::legacy_callback, this, wv::_1);
     if (writable)
-	writecb = IWvStreamCallback(this, &WvStream::legacy_callback);
+	writecb = wv::bind(&WvStream::legacy_callback, this, wv::_1);
     if (isexception)
-	exceptcb = IWvStreamCallback(this, &WvStream::legacy_callback);
+	exceptcb = wv::bind(&WvStream::legacy_callback, this, wv::_1);
 }
 
 

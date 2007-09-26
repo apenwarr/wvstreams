@@ -15,7 +15,7 @@
 
 class WvStreamsDaemon;
 
-typedef WvCallback<void, WvStreamsDaemon &, void *> WvStreamsDaemonCallback;
+typedef wv::function<void(WvStreamsDaemon&, void*)> WvStreamsDaemonCallback;
 
 /*!
 @brief WvStreamsDaemon - High-level abstraction for a daemon process that

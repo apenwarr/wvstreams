@@ -70,8 +70,8 @@ void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
 {
     add_stream(istream, autofree, id);
     
-    istream->setclosecallback(
-	WvBoundCallback<IWvStreamCallback, const char*>(this, &WvStreamsDaemon::restart_close_cb, id));
+    istream->setclosecallback(wv::bind(&WvStreamsDaemon::restart_close_cb,
+				       this, id, wv::_1));
 }
 
 void WvStreamsDaemon::add_die_stream(IWvStream *istream,
@@ -79,8 +79,8 @@ void WvStreamsDaemon::add_die_stream(IWvStream *istream,
 {
     add_stream(istream, autofree, id);
     
-    istream->setclosecallback(
-	WvBoundCallback<IWvStreamCallback, const char*>(this, &WvStreamsDaemon::die_close_cb, id));
+    istream->setclosecallback(wv::bind(&WvStreamsDaemon::die_close_cb, this,
+				       id, wv::_1));
 }
 
 void WvStreamsDaemon::restart_close_cb(const char *id, WvStream &)

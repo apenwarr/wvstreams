@@ -28,8 +28,8 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
     : log("UniCache", WvLog::Debug1), inner(_inner)
 {
     if (inner)
-        inner->add_callback(this, UniConfGenCallback(this,
-            &UniCacheGen::deltacallback));
+        inner->add_callback(this, wv::bind(&UniCacheGen::deltacallback, this,
+					   wv::_1, wv::_2));
     refreshed_once = false;
 }
 

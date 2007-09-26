@@ -39,8 +39,8 @@ void UniConfDaemonConn::close()
 
 void UniConfDaemonConn::addcallback()
 {
-    root.add_callback(this, UniConfCallback(this,
-		    &UniConfDaemonConn::deltacallback), true);
+    root.add_callback(this, wv::bind(&UniConfDaemonConn::deltacallback, this,
+				     wv::_1, wv::_2), true);
 }
 
 

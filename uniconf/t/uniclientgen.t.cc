@@ -56,8 +56,8 @@ static void delta_callback(const UniConf &, const UniConfKey &)
     ++delta_count;
 }
 
-typedef WvCallback<UniClientGen*, WvStringParm, WvStringParm, 
-        WvUnixConn *&> client_factory_t;
+typedef wv::function<UniClientGen*(WvStringParm, WvStringParm, 
+				   WvUnixConn*&)> client_factory_t;
 
 
 // Returns a new UniClientGen, using a non-logging underlying stream.

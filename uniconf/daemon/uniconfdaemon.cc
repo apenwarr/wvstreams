@@ -110,8 +110,8 @@ bool UniConfDaemon::setupunixsocket(WvStringParm path, int create_mode)
         WVRELEASE(listener);
         return false;
     }
-    listener->setcallback(WvStreamCallback(this,
-        &UniConfDaemon::unixcallback), NULL);
+    listener->setcallback(wv::bind(&UniConfDaemon::unixcallback, this, wv::_1,
+				   wv::_2), NULL);
     append(listener, true, "unix listen");
     debug("Listening on Unix socket '%s'\n", path);
     return true;
@@ -129,8 +129,8 @@ bool UniConfDaemon::setuptcpsocket(const WvIPPortAddr &addr)
         WVRELEASE(listener);
         return false;
     }
-    listener->setcallback(WvStreamCallback(this,
-        &UniConfDaemon::tcpcallback), NULL);
+    listener->setcallback(wv::bind(&UniConfDaemon::tcpcallback, this, wv::_1,
+				   wv::_2), NULL);
     append(listener, true, "tcp listen");
     debug("Listening for TCP at %s.\n", addr);
     return true;
@@ -147,8 +147,8 @@ bool UniConfDaemon::setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509)
         WVRELEASE(listener);
         return false;
     }
-    listener->setcallback(WvStreamCallback(this,
-        &UniConfDaemon::sslcallback), x509);
+    listener->setcallback(wv::bind(&UniConfDaemon::sslcallback, this, wv::_1,
+				   wv::_2), x509);
     append(listener, true, "ssl listen");
     debug("Listening for TCP/SSL at %s.\n", addr);
     return true;

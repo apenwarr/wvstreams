@@ -35,7 +35,7 @@ class WvStreamsDebuggerServer : public WvStream
         void choose_salt();
     };
     // Username, salt, md5sum("%s%s", salt, password)
-    typedef WvCallback<bool, WvStringParm, WvStringParm, WvStringParm> AuthCallback;
+    typedef wv::function<bool(WvStringParm, WvStringParm, WvStringParm)> AuthCallback;
 
     WvLog log;
         

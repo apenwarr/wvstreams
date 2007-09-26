@@ -12,9 +12,9 @@
 #include "wvcallback.h"
 #include "wvstream.h"
 
-typedef WvCallback<WvString, const UniConfKey &>
+typedef wv::function<WvString(const UniConfKey&)>
         UniCallbackGenGetCallback;
-typedef WvCallback<void, const UniConfKey &, WvStringParm>
+typedef wv::function<void(const UniConfKey&, WvStringParm)>
         UniCallbackGenSetCallback;
 
 /**

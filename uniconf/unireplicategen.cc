@@ -66,9 +66,9 @@ UniReplicateGen::UniReplicateGen(const IUniConfGenList &_gens,
     	if (gen)
     	{
     	    gens.append(gen, true);
-            gen->gen->add_callback(
-		this, WvBoundCallback<UniConfGenCallback, Gen*>(
-		    this, &UniReplicateGen::deltacallback, gen));
+            gen->gen->add_callback(this,
+				   wv::bind(&UniReplicateGen::deltacallback,
+					    this, gen, wv::_1, wv::_2));
         }
     }
     
@@ -90,9 +90,8 @@ void UniReplicateGen::prepend(IUniConfGen *_gen, bool auto_free)
     if (gen)
     {
     	gens.prepend(gen, true);
-        gen->gen->add_callback(
-	    this, WvBoundCallback<UniConfGenCallback, Gen*>(
-		this, &UniReplicateGen::deltacallback, gen));
+        gen->gen->add_callback(this, wv::bind(&UniReplicateGen::deltacallback,
+					      this, gen, wv::_1, wv::_2));
             
         replicate();
     }
@@ -105,9 +104,8 @@ void UniReplicateGen::append(IUniConfGen *_gen, bool auto_free)
     if (gen)
     {
     	gens.append(gen, true);
-        gen->gen->add_callback(
-	    this, WvBoundCallback<UniConfGenCallback, Gen*>(
-		this, &UniReplicateGen::deltacallback, gen));
+        gen->gen->add_callback(this, wv::bind(&UniReplicateGen::deltacallback,
+					      this, gen, wv::_1, wv::_2));
             
         replicate();
     }

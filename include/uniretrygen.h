@@ -42,7 +42,7 @@ class UniRetryGen : public UniFilterGen
 {
 public:
 
-    typedef WvCallback<void, UniRetryGen &> ReconnectCallback;
+    typedef wv::function<void(UniRetryGen&)> ReconnectCallback;
     
 private:
 

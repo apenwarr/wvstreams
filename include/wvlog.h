@@ -47,7 +47,7 @@ public:
 
 DeclareWvList(WvLogRcvBase);
 
-typedef WvCallback<WvString, WvStringParm> WvLogFilter;
+typedef wv::function<WvString(WvStringParm)> WvLogFilter;
 
 /**
  * A WvLog stream accepts log messages from applications and forwards them

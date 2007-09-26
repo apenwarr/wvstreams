@@ -15,7 +15,7 @@
 
 class WvDaemon;
 
-typedef WvCallback<void, WvDaemon &, void *> WvDaemonCallback;
+typedef wv::function<void(WvDaemon&, void*)> WvDaemonCallback;
 
 #ifdef WEAVER_CODENAME
 #ifdef WEAVER_VER_STRING

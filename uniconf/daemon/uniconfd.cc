@@ -193,8 +193,8 @@ class UniConfd : public WvStreamsDaemon
 #endif
     
         WvStream *commit_stream = new WvStream;
-        commit_stream->setcallback(WvStreamCallback(this,
-                &UniConfd::commit_stream_cb), NULL);
+        commit_stream->setcallback(wv::bind(&UniConfd::commit_stream_cb, this,
+					    wv::_1, wv::_2), NULL);
         commit_stream->alarm(commit_interval * 1000);
         add_die_stream(commit_stream, true, "commit");
         
@@ -204,15 +204,15 @@ class UniConfd : public WvStreamsDaemon
     
 public:
 
-    UniConfd() :
-            WvStreamsDaemon("uniconfd", VERBOSE_PACKAGE_VERSION,
-                WvStreamsDaemonCallback(this, &UniConfd::startup)),
-            needauth(false),
-            port(DEFAULT_UNICONF_DAEMON_TCP_PORT),
-            sslport(DEFAULT_UNICONF_DAEMON_SSL_PORT),
-            commit_interval(5*60),
-            first_time(true),
-            permgen(NULL)
+    UniConfd():
+	WvStreamsDaemon("uniconfd", VERBOSE_PACKAGE_VERSION,
+			wv::bind(&UniConfd::startup, this, wv::_1, wv::_2)),
+	needauth(false),
+	port(DEFAULT_UNICONF_DAEMON_TCP_PORT),
+	sslport(DEFAULT_UNICONF_DAEMON_SSL_PORT),
+	commit_interval(5*60),
+	first_time(true),
+	permgen(NULL)
     {
         args.add_option(0, "pid-file",
                 "Specify the .pid file to use (only applies with --daemonize)", "filename",
@@ -236,9 +236,10 @@ public:
                 "Set the Unix socket to 'mode' (default to uniconfd users umask)", "mode",
                 unix_mode);
 	args.add_option('n', "named-gen",
-		"creates a \"named\" moniker 'name' from 'moniker'",
-		"name=moniker",
-		WvArgs::ArgCallback(this, &UniConfd::namedgen_cb), NULL);
+			"creates a \"named\" moniker 'name' from 'moniker'",
+			"name=moniker",
+			wv::bind(&UniConfd::namedgen_cb, this, wv::_1, wv::_2),
+			NULL);
 #endif
 	args.add_optional_arg("MONIKERS", true);
 	args.set_email("<" PACKAGE_BUGREPORT ">");

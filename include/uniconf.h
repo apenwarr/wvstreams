@@ -23,7 +23,7 @@ class UniConfRoot;
  *   cfg - the UniConf config object representing the key that has changed
  *   relkey - the changed keypath, relative to the config object
  */
-typedef WvCallback<void, const UniConf &, const UniConfKey &> UniConfCallback;
+typedef wv::function<void(const UniConf&, const UniConfKey&)> UniConfCallback;
 
 /**
  * UniConf instances function as handles to subtrees of a UniConf

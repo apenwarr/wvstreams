@@ -224,8 +224,7 @@ WVTEST_MAIN("closecallback")
 {
     WvFdStream s(dup(0), dup(1));
     int i = 0;
-    s.setclosecallback(
-	       WvBoundCallback<IWvStreamCallback,int*>(&myclosecb, &i));
+    s.setclosecallback(wv::bind(&myclosecb, &i, wv::_1));
     
     WVPASS(s.isok());
     s.nowrite();
@@ -261,8 +260,7 @@ public:
     {
 	WVPASS(isreadable());
         called = false;
-        setcallback(WvStreamCallback(this,
-        	&FooFD::fooback), NULL);
+        setcallback(wv::bind(&FooFD::fooback, this, wv::_1, wv::_2), NULL);
         WvIStreamList::globallist.append(this, false, "FooFD");
     }
 

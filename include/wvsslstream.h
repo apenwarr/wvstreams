@@ -23,7 +23,7 @@ typedef struct ssl_method_st SSL_METHOD;
 class WvX509;
 class WvX509Mgr;
 
-typedef WvCallback<bool, WvX509*> WvSSLValidateCallback;
+typedef wv::function<bool(WvX509*)> WvSSLValidateCallback;
 
 /**
  * SSL Stream, handles SSLv2, SSLv3, and TLS

@@ -177,7 +177,8 @@ void WvStreamClone::setclone(IWvStream *newclone)
     cloned = newclone;
     closed = stop_read = stop_write = false;
     if (cloned)
-	cloned->setclosecallback(IWvStreamCallback(this, &WvStreamClone::close_callback));
+	cloned->setclosecallback(wv::bind(&WvStreamClone::close_callback,
+					  this, wv::_1));
     
     if (newclone != NULL)
         my_type = WvString("WvStreamClone:%s", newclone->wstype());
@@ -195,9 +196,9 @@ void WvStreamClone::pre_select(SelectInfo &si)
     {
 	if (!si.inherit_request)
 	{
-	    si.wants.readable |= readcb;
-	    si.wants.writable |= writecb;
-	    si.wants.isexception |= exceptcb;
+	    si.wants.readable |= static_cast<bool>(readcb);
+	    si.wants.writable |= static_cast<bool>(writecb);
+	    si.wants.isexception |= static_cast<bool>(exceptcb);
 	}
 	
 	if (outbuf.used() || autoclose_time)
@@ -224,9 +225,9 @@ bool WvStreamClone::post_select(SelectInfo &si)
     {
 	if (!si.inherit_request)
 	{
-	    si.wants.readable |= readcb;
-	    si.wants.writable |= writecb;
-	    si.wants.isexception |= exceptcb;
+	    si.wants.readable |= static_cast<bool>(readcb);
+	    si.wants.writable |= static_cast<bool>(writecb);
+	    si.wants.isexception |= static_cast<bool>(exceptcb);
 	}
 
 	val = cloned->post_select(si);

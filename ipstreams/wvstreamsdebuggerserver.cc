@@ -65,10 +65,12 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
     {
         unix_listener = new WvUnixListener(unix_addr, 0700);
         unix_listener->set_wsname("wsd listener on %s", unix_addr);
-        unix_listener->setcallback(WvStreamCallback(this,
-                &WvStreamsDebuggerServer::unix_listener_cb), NULL);
-        unix_listener->setclosecallback(IWvStreamCallback(this,
-                &WvStreamsDebuggerServer::unix_listener_close_cb));
+        unix_listener->setcallback(
+	    wv::bind(&WvStreamsDebuggerServer::unix_listener_cb, this, wv::_1,
+		     wv::_2), NULL);
+        unix_listener->setclosecallback(
+	    wv::bind(&WvStreamsDebuggerServer::unix_listener_close_cb, this,
+		     wv::_1));
         streams.append(unix_listener, true);
         log("Listening on %s\n", unix_addr);
     }
@@ -78,10 +80,12 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
     {
         tcp_listener = new WvTCPListener(tcp_addr);
         tcp_listener->set_wsname("wsd listener on %s", tcp_addr);
-        tcp_listener->setcallback(WvStreamCallback(this,
-                &WvStreamsDebuggerServer::tcp_listener_cb), NULL);
-        tcp_listener->setclosecallback(IWvStreamCallback(this,
-                &WvStreamsDebuggerServer::tcp_listener_close_cb));
+        tcp_listener->setcallback(
+	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_cb, this, wv::_1,
+		     wv::_2), NULL);
+        tcp_listener->setclosecallback(
+	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_close_cb, this,
+		     wv::_1));
         streams.append(tcp_listener, true);
         log("Listening on %s\n", tcp_addr);
     }
@@ -102,8 +106,8 @@ void WvStreamsDebuggerServer::unix_listener_cb(WvStream &, void *)
         return;
     log("Accepted connection from %s\n", *unix_conn->src());
     Connection *conn = new Connection(unix_conn);
-    conn->setcallback(WvStreamCallback(this,
-            &WvStreamsDebuggerServer::ready_cb), NULL);
+    conn->setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
+			       wv::_1, wv::_2), NULL);
     streams.append(conn, true);
 }
 
@@ -121,8 +125,8 @@ void WvStreamsDebuggerServer::tcp_listener_cb(WvStream &, void *)
         return;
     log("Accepted connection from %s\n", *tcp_conn->src());
     Connection *conn = new Connection(tcp_conn);
-    conn->setcallback(WvStreamCallback(this,
-            &WvStreamsDebuggerServer::ready_cb), NULL);
+    conn->setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
+			       wv::_1, wv::_2), NULL);
     streams.append(conn, true);
 }
 
@@ -140,8 +144,9 @@ void WvStreamsDebuggerServer::auth_request_cb(WvStream &_s, void *)
     s.choose_salt();
     s.send("AUTH", s.salt);
     
-    s.setcallback(WvStreamCallback(this,
-            &WvStreamsDebuggerServer::auth_response_cb), NULL);
+    s.setcallback(wv::bind(&WvStreamsDebuggerServer::auth_response_cb, this,
+			   wv::_1, wv::_2),
+		  NULL);
 }
 
 
@@ -162,14 +167,14 @@ void WvStreamsDebuggerServer::auth_response_cb(WvStream &_s, void *)
         || !auth_cb(username, s.salt, encoded_salted_password))
     {
         s.send("ERROR", "Authentication failure");
-        s.setcallback(WvStreamCallback(this,
-                &WvStreamsDebuggerServer::auth_request_cb), NULL);
+        s.setcallback(wv::bind(&WvStreamsDebuggerServer::auth_request_cb,
+			       this, wv::_1, wv::_2), NULL);
     }
     else
     {
         s.send("OK", "Authenticated");
-        s.setcallback(WvStreamCallback(this,
-                &WvStreamsDebuggerServer::ready_cb), NULL);
+        s.setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
+			       wv::_1, wv::_2), NULL);
     }
 }
 
@@ -192,7 +197,8 @@ void WvStreamsDebuggerServer::ready_cb(WvStream &_s, void *)
     }
     
     WvString result = s.debugger.run(cmd, args,
-        WvStreamsDebugger::ResultCallback(&s, &Connection::result_cb));
+				     wv::bind(&Connection::result_cb, &s,
+					      wv::_1, wv::_2));
     if (!!result)
         s.send("ERROR", result);
     else
