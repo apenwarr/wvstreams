@@ -106,13 +106,11 @@ const WvUnixAddr *WvUnixConn::src() const
 }
 
 
-WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode)
-	: addr(_addr)
+WvUnixListener::WvUnixListener(const WvUnixAddr &_addr, int create_mode):
+    addr(_addr)
 {
     mode_t oldmask;
     
-    auto_list = NULL;
-    auto_userdata = NULL;
     bound_okay = false;
     
     setfd(socket(PF_UNIX, SOCK_STREAM, 0));
@@ -186,22 +184,19 @@ WvUnixConn *WvUnixListener::accept()
 
 
 void WvUnixListener::auto_accept(WvIStreamList *list,
-				 WvStreamCallback callfunc, void *userdata)
+				 IWvStreamCallback callfunc)
 {
-    auto_list = list;
-    auto_callback = callfunc;
-    auto_userdata = userdata;
-    setcallback(accept_callback, this);
+    setcallback(wv::bind(&WvUnixListener::accept_callback, this, list,
+			 callfunc));
 }
 
 
-void WvUnixListener::accept_callback(WvStream &, void *userdata)
+void WvUnixListener::accept_callback(WvIStreamList *list,
+				     IWvStreamCallback callfunc)
 {
-    WvUnixListener &l = *(WvUnixListener *)userdata;
-
-    WvUnixConn *connection = l.accept();
-    connection->setcallback(l.auto_callback, l.auto_userdata);
-    l.auto_list->append(connection, true, "WvUnixConn");
+    WvUnixConn *connection = accept();
+    connection->setcallback(callfunc);
+    list->append(connection, true, "WvUnixConn");
 }
 
 

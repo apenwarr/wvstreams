@@ -55,11 +55,10 @@ static void sigquit_handler(int signum)
 #endif // _WIN32
 
 void WvDaemon::init(WvStringParm _name,
-        WvStringParm _version,
-        WvDaemonCallback _start_callback,
-        WvDaemonCallback _run_callback,
-        WvDaemonCallback _stop_callback,
-        void *_ud)
+		    WvStringParm _version,
+		    WvDaemonCallback _start_callback,
+		    WvDaemonCallback _run_callback,
+		    WvDaemonCallback _stop_callback)
 {
     name = _name;
     version = _version;
@@ -72,7 +71,6 @@ void WvDaemon::init(WvStringParm _name,
     start_callback = _start_callback;
     run_callback = _run_callback;
     stop_callback = _stop_callback;
-    ud = _ud;
 
     assert(singleton == NULL);
     singleton = this;
@@ -277,32 +275,32 @@ void WvDaemon::do_load()
     signal(SIGHUP, sighup_handler);
 #endif
 
-    if (!!load_callback)
-        load_callback(*this, ud);
+    if (load_callback)
+        load_callback();
 }
 
 void WvDaemon::do_start()
 {
-    if (!!start_callback)
-        start_callback(*this, ud);
+    if (start_callback)
+        start_callback();
 }
 
 void WvDaemon::do_run()
 {
-    if (!!run_callback)
-        run_callback(*this, ud);
+    if (run_callback)
+        run_callback();
 }
 
 void WvDaemon::do_stop()
 {
-    if (!!stop_callback)
-        stop_callback(*this, ud);
+    if (stop_callback)
+        stop_callback();
 }
 
 void WvDaemon::do_unload()
 {
-    if (!!unload_callback)
-        unload_callback(*this, ud);
+    if (unload_callback)
+        unload_callback();
 
 #ifndef _WIN32
     signal(SIGHUP, SIG_DFL);

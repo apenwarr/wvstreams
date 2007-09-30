@@ -6,33 +6,43 @@
 #include "wvistreamlist.h"
 #include "wvlog.h"
 
-static void stream_bounce_to_list(WvStream &s, void *userdata)
+static void stream_bounce_to_list(WvStream *in, WvIStreamList *list,
+				  WvStringParm localaddr)
 {
-    WvIStreamList &l = *(WvIStreamList *)userdata;
-    WvIStreamList::Iter out(l);
+    WvIStreamList::Iter out(*list);
     char *line;
 
-    while ((line = s.getline()) != NULL)
+    while ((line = in->getline()) != NULL)
     {
 	if (!strncmp(line, "quit", 4))
 	{
-	    s.close();
+	    in->close();
 	    continue;
 	}
 	
 	for (out.rewind(); out.next(); )
 	{
-	    if (&out() != &s && out->iswritable())
+	    if (&out() != in && out->iswritable())
 	    {
-		static_cast<WvStream*>(&out())->print("%s> %s\n", 
-			    s.src() ? (WvString)*s.src() : WvString("stdin"),
-			    line);
-		if (s.src())
+		static_cast<WvStream*>(&out())->print(
+		    "%s> %s\n",
+		    in->src() ? (WvString)*in->src() : WvString("stdin"),
+		    line);
+		if (localaddr)
 		    wvcon->print("Local address of source was %s\n",
-				 ((WvUnixConn *)&s)->localaddr());
+				 localaddr);
 	    }
 	}
     }
+}
+
+
+static void accept_callback(WvUnixListener *listen, WvIStreamList *list)
+{
+    WvUnixConn *conn = listen->accept();
+    conn->setcallback(wv::bind(stream_bounce_to_list, conn, list,
+			       conn->localaddr()));
+    list->append(conn, true, "WvUnixConn");
 }
 
 
@@ -45,8 +55,8 @@ int main(int argc, char **argv)
 	WvUnixListener sock(argc==2 ? argv[1] : "/tmp/fuzzy",
 			    0777);
 	
-	wvin->setcallback(stream_bounce_to_list, &l);
-	sock.auto_accept(&l, stream_bounce_to_list, &l);
+	wvin->setcallback(wv::bind(stream_bounce_to_list, wvin, &l, NULL));
+	sock.setcallback(wv::bind(accept_callback, &sock, &l));
 	
 	log("Listening on port %s\n", *sock.src());
 	

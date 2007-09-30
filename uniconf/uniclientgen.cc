@@ -113,8 +113,7 @@ UniClientGen::UniClientGen(IWvStream *stream, WvStringParm dst)
     result_list = NULL;
 
     conn = new UniClientConn(stream, dst);
-    conn->setcallback(wv::bind(&UniClientGen::conncallback, this, wv::_1,
-			       wv::_2), NULL);
+    conn->setcallback(wv::bind(&UniClientGen::conncallback, this));
     WvIStreamList::globallist.append(conn, false, "uniclientconn-via-gen");
 }
 
@@ -274,7 +273,7 @@ UniClientGen::Iter *UniClientGen::recursiveiterator(const UniConfKey &key)
 }
 
 
-void UniClientGen::conncallback(WvStream &stream, void *userdata)
+void UniClientGen::conncallback()
 {
     UniClientConn::Command command = conn->readcmd();
     static const WvStringMask nasty_space(' ');

@@ -143,9 +143,6 @@ public:
     /** Destructor - remember - close() is your friend ;) */
     virtual ~WvTCPListener();
     
-    /** Shut down the server, and disconnect from the port */
-    virtual void close();
-    
     /**
      * return a new WvTCPConn socket corresponding to a newly-accepted
      * connection.  If no connection is ready immediately, we wait for
@@ -163,8 +160,7 @@ public:
      * Be careful not to accept() connections yourself if you do this,
      * or we may end up accept()ing twice, causing a hang the second time.
      */
-    void auto_accept(WvIStreamList *list,
-		     WvStreamCallback callfunc = NULL, void *userdata = NULL);
+    void auto_accept(WvIStreamList *list, IWvStreamCallback callfunc = NULL);
 
     /**
      * set a callback() function that automatically accepts new WvTCPConn
@@ -175,7 +171,7 @@ public:
      * Be careful not to accept() connections yourself if you do this,
      * or we may end up accept()ing twice, causing a hang the second time.
      */
-    void auto_accept(WvStreamCallback callfunc = NULL, void *userdata = NULL);
+    void auto_accept(IWvStreamCallback callfunc = NULL);
 
     /**
      * these don't do anything, but they confuse the socket, so we'll
@@ -189,12 +185,8 @@ public:
     
 protected:
     WvIPPortAddr listenport;
-    WvIStreamList *auto_list;
-    WvStreamCallback auto_callback;
-    void *auto_userdata;
     
-    static void accept_callback(WvStream &s, void *userdata);
-    static void accept_global_callback(WvStream &s, void *userdata);
+    void accept_callback(WvIStreamList *list, IWvStreamCallback callfunc);
 
 public:
     const char *wstype() const { return "WvTCPListener"; }

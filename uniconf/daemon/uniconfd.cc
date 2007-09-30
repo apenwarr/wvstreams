@@ -86,17 +86,17 @@ class UniConfd : public WvStreamsDaemon
 	return true;
     }
 
-    void commit_stream_cb(WvStream &s, void *)
+    void commit_stream_cb(WvStream *s)
     {
 	cfg.commit();
 	cfg.refresh();
 	if (permgen)
 	    permgen->refresh();
 	    
-        s.alarm(commit_interval * 1000);
+        s->alarm(commit_interval * 1000);
     }
     
-    void startup(WvStreamsDaemon &, void *)
+    void startup()
     {
         if (first_time)
         {
@@ -194,7 +194,7 @@ class UniConfd : public WvStreamsDaemon
     
         WvStream *commit_stream = new WvStream;
         commit_stream->setcallback(wv::bind(&UniConfd::commit_stream_cb, this,
-					    wv::_1, wv::_2), NULL);
+					    commit_stream));
         commit_stream->alarm(commit_interval * 1000);
         add_die_stream(commit_stream, true, "commit");
         
@@ -206,7 +206,7 @@ public:
 
     UniConfd():
 	WvStreamsDaemon("uniconfd", VERBOSE_PACKAGE_VERSION,
-			wv::bind(&UniConfd::startup, this, wv::_1, wv::_2)),
+			wv::bind(&UniConfd::startup, this)),
 	needauth(false),
 	port(DEFAULT_UNICONF_DAEMON_TCP_PORT),
 	sslport(DEFAULT_UNICONF_DAEMON_SSL_PORT),

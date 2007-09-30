@@ -11,7 +11,7 @@
 
 WvLog mylog("timeouttest", WvLog::Info);
 
-void timeout(WvStream &s, void *userdata)
+void timeout()
 {
     static int count = 0;
     count++;
@@ -21,7 +21,7 @@ void timeout(WvStream &s, void *userdata)
 int main()
 {
     WvTimeoutStream t(1000);
-    t.setcallback(timeout, NULL);
+    t.setcallback(timeout);
 
     free(malloc(1));
   

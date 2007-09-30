@@ -9,10 +9,10 @@
 #include "wvistreamlist.h"
 #include "wvlog.h"
 
-static void stream_bounce_to_list(WvStream &s, void *userdata)
+
+static void stream_bounce_to_list(WvStream &s, WvIStreamList *list)
 {
-    WvIStreamList &l = *(WvIStreamList *)userdata;
-    WvIStreamList::Iter out(l);
+    WvIStreamList::Iter out(*list);
     char *line;
 
     while ((line = s.getline()) != NULL)
@@ -39,6 +39,14 @@ static void stream_bounce_to_list(WvStream &s, void *userdata)
 }
 
 
+static void accept_callback(WvTCPListener &listen, WvIStreamList &list)
+{
+    WvTCPConn *conn = listen.accept();
+    conn->setcallback(wv::bind(stream_bounce_to_list, wv::ref(*conn), &list));
+    list.append(conn, true, "WvTCPConn");
+}
+
+
 int main(int argc, char **argv)
 {
     {
@@ -47,8 +55,9 @@ int main(int argc, char **argv)
 
 	WvTCPListener sock(WvIPPortAddr(argc==2 ? argv[1] : "0.0.0.0:0"));
 	
-	wvcon->setcallback(stream_bounce_to_list, &l);
-	sock.auto_accept(&l, stream_bounce_to_list, &l);
+	wvcon->setcallback(wv::bind(stream_bounce_to_list,
+				    wv::ref(*wvcon), &l));
+	sock.setcallback(wv::bind(accept_callback, wv::ref(sock), wv::ref(l)));
 	
 	log("Listening on port %s\n", *sock.src());
 	

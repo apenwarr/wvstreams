@@ -11,7 +11,7 @@
 #include "strutils.h"
 #include "wvcont.h"
 
-static void *stream_call(WvStream& s, void* contdata = 0)
+static void *stream_call(WvStream& s)
 {
     char *line;
     static int sc_count = 0;
@@ -40,17 +40,11 @@ static void *stream_call(WvStream& s, void* contdata = 0)
 }
 
 
-static void cont_call(WvCont cont, WvStream &s, void* userdata)
+static void setupcont_call(WvTCPListener &listen, WvIStreamList *list)
 {
-    cont();
-}
-
-
-static void setupcont_call(WvStream &s, void* userdata)
-{
-    WvCont cont(wv::bind(&stream_call, wv::ref(s), wv::_1));
-
-    s.setcallback(wv::bind(&cont_call, cont, wv::_1, wv::_2), NULL);
+    WvTCPConn *conn = listen.accept();
+    conn->setcallback(WvCont(wv::bind(&stream_call, wv::ref(*conn))));
+    list->append(conn, true, "WvTCPConn");
 }
 
 
@@ -60,9 +54,9 @@ int main()
     WvIStreamList l;
     
     WvTCPListener listen(WvIPPortAddr("0.0.0.0:1129"));
-    listen.auto_accept(&l, setupcont_call, NULL);
+    listen.setcallback(wv::bind(setupcont_call, wv::ref(listen), &l));
 
-    wvcon->setcallback(setupcont_call, NULL);
+    wvcon->setcallback(WvCont(wv::bind(&stream_call, wv::ref(*wvcon))));
 
     log("Listening on port %s\n", *listen.src());
     

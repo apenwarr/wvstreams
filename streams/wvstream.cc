@@ -222,8 +222,7 @@ WvStream::WvStream():
     stop_read(false),
     stop_write(false),
     closed(false),
-    userdata(NULL),
-    readcb(wv::bind(&WvStream::legacy_callback, this, wv::_1)),
+    readcb(wv::bind(&WvStream::legacy_callback, this)),
     max_outbuf_size(0),
     outbuf_delayed_flush(false),
     is_auto_flush(true),
@@ -312,7 +311,7 @@ void WvStream::close()
     {
         IWvStreamCallback cb = closecb;
         closecb = 0; // ensure callback is only called once
-        cb(*this);
+        cb();
     }
     
     // I would like to delete call_ctx here, but then if someone calls
@@ -323,35 +322,33 @@ void WvStream::close()
 
 void WvStream::autoforward(WvStream &s)
 {
-    setcallback(autoforward_callback, &s);
+    setcallback(wv::bind(autoforward_callback, wv::ref(*this), wv::ref(s)));
     read_requires_writable = &s;
 }
 
 
 void WvStream::noautoforward()
 {
-    setcallback(0, NULL);
+    setcallback(0);
     read_requires_writable = NULL;
 }
 
 
-void WvStream::autoforward_callback(WvStream &s, void *userdata)
+void WvStream::autoforward_callback(WvStream &input, WvStream &output)
 {
-    WvStream &s2 = *(WvStream *)userdata;
     char buf[1024];
     size_t len;
     
-    len = s.read(buf, sizeof(buf));
-    // fprintf(stderr, "autoforward read %d bytes\n", (int)len);
-    s2.write(buf, len);
+    len = input.read(buf, sizeof(buf));
+    output.write(buf, len);
 }
 
 
 void WvStream::_callback()
 {
     execute();
-    if (!! callfunc)
-	callfunc(*this, userdata);
+    if (!!callfunc)
+	callfunc();
 }
 
 
@@ -996,11 +993,11 @@ IWvStream::SelectRequest WvStream::get_select_request()
 void WvStream::force_select(bool readable, bool writable, bool isexception)
 {
     if (readable)
-	readcb = wv::bind(&WvStream::legacy_callback, this, wv::_1);
+	readcb = wv::bind(&WvStream::legacy_callback, this);
     if (writable)
-	writecb = wv::bind(&WvStream::legacy_callback, this, wv::_1);
+	writecb = wv::bind(&WvStream::legacy_callback, this);
     if (isexception)
-	exceptcb = wv::bind(&WvStream::legacy_callback, this, wv::_1);
+	exceptcb = wv::bind(&WvStream::legacy_callback, this);
 }
 
 
@@ -1094,19 +1091,18 @@ const WvAddr *WvStream::src() const
 }
 
 
-void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
+void WvStream::setcallback(IWvStreamCallback _callfunc)
 { 
     callfunc = _callfunc;
-    userdata = _userdata;
     call_ctx = 0; // delete any in-progress WvCont
 }
 
 
-void WvStream::legacy_callback(IWvStream& s)
+void WvStream::legacy_callback()
 {
     execute();
-    if (!! callfunc)
-	callfunc(*this, userdata);
+    if (!!callfunc)
+	callfunc();
 }
 
 
@@ -1150,7 +1146,7 @@ IWvStreamCallback WvStream::setclosecallback(IWvStreamCallback _callback)
 	// already closed?  notify immediately!
 	closecb = 0;
 	if (!!_callback)
-	    _callback(*this);
+	    _callback();
     }
     return tmp;
 }

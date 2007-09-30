@@ -205,13 +205,13 @@ WVTEST_MAIN("more noread/nowrite")
 }
 
 
-static void val_cb(WvStream &s, void *userdata)
+static void val_cb(int *x)
 {
-    (*(int *)userdata)++;
+    (*x)++;
 }
 
 
-static void val_icb(int &closeval, WvStream &s)
+static void val_icb(int &closeval)
 {
     ++closeval;
 }
@@ -223,8 +223,8 @@ WVTEST_MAIN("callbacks")
     int val = 0, closeval = 0;
     
     WvStream s;
-    s.setcallback(val_cb, &val);
-    s.setclosecallback(wv::bind(&val_icb, wv::ref(closeval), wv::_1));
+    s.setcallback(wv::bind(val_cb, &val));
+    s.setclosecallback(wv::bind(&val_icb, wv::ref(closeval)));
     
     WVPASS(!val);
     WVPASS(!closeval);
@@ -263,7 +263,7 @@ static void ccb_isok(WvStream &s)
 WVTEST_MAIN("closecallback-isok")
 {
     WvStream s;
-    s.setclosecallback(ccb_isok);
+    s.setclosecallback(wv::bind(ccb_isok, wv::ref(s)));
     s.close();
 }
 
@@ -279,7 +279,7 @@ WVTEST_MAIN("autoforward and buffers")
     fprintf(stderr, "b error: '%s'\n", b.errstr().cstr());
     
     a.autoforward(b);
-    b.setcallback(val_cb, &val);
+    b.setcallback(wv::bind(val_cb, &val));
     
     WVPASS(a.isok());
     WVPASS(b.isok());
@@ -383,7 +383,7 @@ WVTEST_MAIN("force_select and globallist")
     s.yes_writable = false;
     WVFAIL(s.select(0));
     
-    x.setcallback(val_cb, &val);
+    x.setcallback(wv::bind(val_cb, &val));
     WvIStreamList::globallist.append(&x, false, "countstream");
     WVFAIL(s.select(0));
     WVPASS(!val);
@@ -404,13 +404,13 @@ WVTEST_MAIN("force_select and globallist")
 }
 
 
-static void cont_cb(WvStream &s, void *userdata)
+static void cont_cb(WvStream &s, int *x)
 {
     int next = 1, sgn = 1;
     
     while (s.isok())
     {
-	*(int *)userdata = sgn * next;
+	*x = sgn * next;
 	next *= 2;
 	sgn = s.continue_select(0) ? 1 : -1;
     }
@@ -423,7 +423,7 @@ WVTEST_MAIN("continue_select")
     int aval = 0;
     
     a.uses_continue_select = true;
-    a.setcallback(cont_cb, &aval);
+    a.setcallback(wv::bind(cont_cb, wv::ref(a), &aval));
     
     a.runonce(0);
     WVPASS(aval == 0);
@@ -445,10 +445,8 @@ WVTEST_MAIN("continue_select")
 }
 
 
-static void cont_once(WvStream &s, void *userdata)
+static void cont_once(WvStream &s, int *i)
 {
-    int *i = (int *)userdata;
-    
     (*i)++;
     s.continue_select(10);
     (*i)++;
@@ -461,7 +459,7 @@ WVTEST_MAIN("continue_select and alarm()")
     int i = 1;
     ReadableStream s;
     s.uses_continue_select = true;
-    s.setcallback(cont_once, &i);
+    s.setcallback(wv::bind(cont_once, wv::ref(s), &i));
     
     s.yes_readable = true;
     WVPASSEQ(i, 1);
@@ -486,7 +484,7 @@ WVTEST_MAIN("continue_select and alarm()")
 }
 
 
-static void seterr_cb(WvStream &s, void *userdata)
+static void seterr_cb(WvStream &s)
 {
     s.seterr("my seterr_cb error");
 }
@@ -495,7 +493,7 @@ static void seterr_cb(WvStream &s, void *userdata)
 WVTEST_MAIN("seterr() inside a continuable callback")
 {
     WvStream s;
-    s.setcallback(seterr_cb, NULL);
+    s.setcallback(wv::bind(seterr_cb, wv::ref(s)));
     WVPASS(s.isok());
     s.runonce(0);
     WVPASS(s.isok());
@@ -525,9 +523,8 @@ static void *wvcont_cb(WvStream &s, void *userdata)
 }
 
 
-static void call_wvcont_cb(void *context, WvStream &s, void *userdata)
+static void call_wvcont_cb(WvCont *cb, void *userdata)
 {
-    WvCont *cb = (WvCont *)context;
     (*cb)(userdata);
 }
 
@@ -542,7 +539,7 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
     {
 	WvCont cont1(wv::bind(&wvcont_cb, wv::ref(s), wv::_1));
 	WvCont cont2(cont1), cont3(cont2);
-	s.setcallback(wv::bind(&call_wvcont_cb, &cont3, wv::_1, wv::_2), &sval);
+	s.setcallback(wv::bind(&call_wvcont_cb, &cont3, &sval));
 	
 	s.inbuf_putstr("gak");
 	WVPASS(sval == 0);
@@ -553,7 +550,7 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
 	s.close();
 	WVPASS(!s.isok());
 	s.runonce(0);
-	s.setcallback(0, 0);
+	s.setcallback(0);
     }
     
     // the WvCont should have now been destroyed!
@@ -561,10 +558,10 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
 }
 
 
-static void alarmcall(WvStream &s, void *userdata)
+static void alarmcall(WvStream &s, int *userdata)
 {
     WVPASS(s.alarm_was_ticking);
-    val_cb(s, userdata);
+    val_cb(userdata);
 }
 
 
@@ -573,7 +570,7 @@ WVTEST_MAIN("alarm")
 {
     int val = 0;
     WvStream s;
-    s.setcallback(alarmcall, &val);
+    s.setcallback(wv::bind(alarmcall, wv::ref(s), &val));
     
     s.runonce(0);
     WVPASSEQ(val, 0);
@@ -614,19 +611,19 @@ WVTEST_MAIN("alarm")
 static int rn = 0;
 
 
-static void rcb2(WvStream &s, void *)
+static void rcb2(WvStream &s)
 {
     rn++;
     WVPASS(rn == 2);
-    s.setcallback(0, 0);
+    s.setcallback(0);
 }
 
 
-static void rcb(WvStream &s, void *)
+static void rcb(WvStream &s)
 {
     rn++;
     WVPASS(rn == 1);
-    s.setcallback(rcb2, NULL);
+    s.setcallback(wv::bind(rcb2, wv::ref(s)));
     WVPASS(rn == 1);
     //s.continue_select(0);
     //WVPASS(rn == 1);
@@ -637,7 +634,7 @@ WVTEST_MAIN("self-redirection")
 {
     WvStream s;
     s.uses_continue_select = true;
-    s.setcallback(rcb, NULL);
+    s.setcallback(wv::bind(rcb, wv::ref(s)));
     s.inbuf_putstr("x");
     s.runonce(0);
     s.runonce(0);

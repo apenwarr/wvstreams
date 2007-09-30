@@ -58,7 +58,7 @@ public:
     virtual void nowrite();
 
 private:
-    void close_callback(WvStream &s);
+    void close_callback();
 
 protected:
     WvString my_type;

@@ -380,13 +380,13 @@ static void daemon_proxy_test(bool implicit_root)
 {
     WvString masterpipename, ininame;
     WvPipe *master = setup_master_daemon(implicit_root, masterpipename, ininame);
-    master->setcallback(WvPipe::ignore_read, NULL);
+    master->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*master)));
     master->nowrite();
     wait_for_pipe_ready(masterpipename);
     
     WvString slavepipename;
     WvPipe *slave = setup_slave_daemon(implicit_root, masterpipename, slavepipename);
-    slave->setcallback(WvPipe::ignore_read, NULL);
+    slave->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*slave)));
     slave->nowrite();
     wait_for_pipe_ready(slavepipename);
 

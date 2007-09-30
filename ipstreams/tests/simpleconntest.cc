@@ -13,24 +13,23 @@
 #include <signal.h>
 
 
-static void bouncer(WvStream &s, void *userdata)
+static void bouncer(WvStream *input, WvIStreamList *list)
 {
-    WvIStreamList &l = *(WvIStreamList *)userdata;
-    WvIStreamList::Iter i(l);
+    WvIStreamList::Iter i(*list);
     char buf[1024];
     size_t len;
     
-    if (!s.select(0, true, false, false))
+    if (!input->select(0, true, false, false))
 	return;
     
-    len = s.read(buf, sizeof(buf));
+    len = input->read(buf, sizeof(buf));
     if (!len) return;
     
     for (i.rewind(); i.next(); )
     {
 	IWvStream &out = i();
 	
-	if (&s == &out)
+	if (input == &out)
 	    continue;
 	
 	if (!out.isok())
@@ -40,6 +39,14 @@ static void bouncer(WvStream &s, void *userdata)
 	//out.delay_output(true);
 	out.write(buf, len);
     }
+}
+
+
+static void accept_callback(WvTCPListener *listen, WvIStreamList *list)
+{
+    WvTCPConn *conn = listen->accept();
+    conn->setcallback(wv::bind(bouncer, conn, list));
+    list->append(conn, true, "WvTCPConn");
 }
 
 
@@ -73,7 +80,7 @@ int main(int argc, char **argv)
 	    log("File %s is stdin/stdout\n", count);
 	    f = wvcon;
 	    l.append(f, false, "wvcon");
-	    f->setcallback(bouncer, &l);
+	    f->setcallback(wv::bind(bouncer, f, &l));
 	}
 	else if (!strncasecmp(argv[count], "tcp:", 4))
 	{
@@ -84,14 +91,14 @@ int main(int argc, char **argv)
 		log("File %s is a TCP client\n", count);
 		f = new WvTCPConn(WvIPPortAddr(cptr));
 		l.append(f, true, "TCP client");
-		f->setcallback(bouncer, &l);
+		f->setcallback(wv::bind(bouncer, f, &l));
 	    }
 	    else // server mode
 	    {
 		log("File %s is a TCP server\n", count);
 		WvTCPListener *listen = new WvTCPListener(WvIPPortAddr("",
 							 atoi(cptr)));
-		listen->auto_accept(&l, bouncer, &l);
+		listen->setcallback(wv::bind(accept_callback, listen, &l));
 		biglist.append(listen, true, "TCP server");
 	    }
 	}
@@ -113,7 +120,7 @@ int main(int argc, char **argv)
 	    }
 	    
 	    l.append(f, true, "file");
-	    f->setcallback(bouncer, &l);
+	    f->setcallback(wv::bind(bouncer, f, &l));
 	}
     }
     

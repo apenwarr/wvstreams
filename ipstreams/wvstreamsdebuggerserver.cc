@@ -66,11 +66,9 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
         unix_listener = new WvUnixListener(unix_addr, 0700);
         unix_listener->set_wsname("wsd listener on %s", unix_addr);
         unix_listener->setcallback(
-	    wv::bind(&WvStreamsDebuggerServer::unix_listener_cb, this, wv::_1,
-		     wv::_2), NULL);
+	    wv::bind(&WvStreamsDebuggerServer::unix_listener_cb, this));
         unix_listener->setclosecallback(
-	    wv::bind(&WvStreamsDebuggerServer::unix_listener_close_cb, this,
-		     wv::_1));
+	    wv::bind(&WvStreamsDebuggerServer::unix_listener_close_cb, this));
         streams.append(unix_listener, true);
         log("Listening on %s\n", unix_addr);
     }
@@ -81,11 +79,9 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
         tcp_listener = new WvTCPListener(tcp_addr);
         tcp_listener->set_wsname("wsd listener on %s", tcp_addr);
         tcp_listener->setcallback(
-	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_cb, this, wv::_1,
-		     wv::_2), NULL);
+	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_cb, this));
         tcp_listener->setclosecallback(
-	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_close_cb, this,
-		     wv::_1));
+	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_close_cb, this));
         streams.append(tcp_listener, true);
         log("Listening on %s\n", tcp_addr);
     }
@@ -99,7 +95,7 @@ WvStreamsDebuggerServer::~WvStreamsDebuggerServer()
 
 
 #ifndef _WIN32
-void WvStreamsDebuggerServer::unix_listener_cb(WvStream &, void *)
+void WvStreamsDebuggerServer::unix_listener_cb()
 {
     WvUnixConn *unix_conn = unix_listener->accept();
     if (!unix_conn)
@@ -107,18 +103,18 @@ void WvStreamsDebuggerServer::unix_listener_cb(WvStream &, void *)
     log("Accepted connection from %s\n", *unix_conn->src());
     Connection *conn = new Connection(unix_conn);
     conn->setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
-			       wv::_1, wv::_2), NULL);
+			       wv::ref(*conn)));
     streams.append(conn, true);
 }
 
 
-void WvStreamsDebuggerServer::unix_listener_close_cb(WvStream &)
+void WvStreamsDebuggerServer::unix_listener_close_cb()
 {
     log("Listener on %s closing\n", *unix_listener->src());
 }
 #endif
 
-void WvStreamsDebuggerServer::tcp_listener_cb(WvStream &, void *)
+void WvStreamsDebuggerServer::tcp_listener_cb()
 {
     WvTCPConn *tcp_conn = tcp_listener->accept();
     if (!tcp_conn)
@@ -126,33 +122,29 @@ void WvStreamsDebuggerServer::tcp_listener_cb(WvStream &, void *)
     log("Accepted connection from %s\n", *tcp_conn->src());
     Connection *conn = new Connection(tcp_conn);
     conn->setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
-			       wv::_1, wv::_2), NULL);
+			       wv::ref(*conn)));
     streams.append(conn, true);
 }
 
 
-void WvStreamsDebuggerServer::tcp_listener_close_cb(WvStream &)
+void WvStreamsDebuggerServer::tcp_listener_close_cb()
 {
     log("Listener on %s closing\n", *tcp_listener->src());
 }
 
 
-void WvStreamsDebuggerServer::auth_request_cb(WvStream &_s, void *)
+void WvStreamsDebuggerServer::auth_request_cb(Connection &s)
 {
-    Connection &s = static_cast<Connection &>(_s);
-    
     s.choose_salt();
     s.send("AUTH", s.salt);
     
     s.setcallback(wv::bind(&WvStreamsDebuggerServer::auth_response_cb, this,
-			   wv::_1, wv::_2),
-		  NULL);
+			   wv::ref(s)));
 }
 
 
-void WvStreamsDebuggerServer::auth_response_cb(WvStream &_s, void *)
+void WvStreamsDebuggerServer::auth_response_cb(Connection &s)
 {
-    Connection &s = static_cast<Connection &>(_s);
     const char *line = s.getline();
     if (line == NULL)
         return;
@@ -168,20 +160,19 @@ void WvStreamsDebuggerServer::auth_response_cb(WvStream &_s, void *)
     {
         s.send("ERROR", "Authentication failure");
         s.setcallback(wv::bind(&WvStreamsDebuggerServer::auth_request_cb,
-			       this, wv::_1, wv::_2), NULL);
+			       this, wv::ref(s)));
     }
     else
     {
         s.send("OK", "Authenticated");
         s.setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
-			       wv::_1, wv::_2), NULL);
+			       wv::ref(s)));
     }
 }
 
 
-void WvStreamsDebuggerServer::ready_cb(WvStream &_s, void *)
+void WvStreamsDebuggerServer::ready_cb(Connection &s)
 {
-    Connection &s = static_cast<Connection &>(_s);
     const char *line = s.getline();
     if (line == NULL)
         return;
@@ -206,7 +197,3 @@ void WvStreamsDebuggerServer::ready_cb(WvStream &_s, void *)
 }
 
 
-void WvStreamsDebuggerServer::close_cb(WvStream &_s)
-{
-    streams.unlink(&_s);
-}

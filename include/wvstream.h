@@ -15,9 +15,6 @@
 #include <limits.h>
 
 
-// parameters are: owning-stream, userdata
-typedef wv::function<void(WvStream&, void*)> WvStreamCallback;
-
 /**
  * Unified support for streams, that is, sequences of bytes that may or
  * may not be ready for read/write at any given time.
@@ -476,7 +473,7 @@ public:
      * define the callback function for this stream, called whenever
      * the callback() member is run, and passed the 'userdata' pointer.
      */
-    void setcallback(WvStreamCallback _callfunc, void *_userdata);
+    void setcallback(IWvStreamCallback _callfunc);
         
     /** Sets a callback to be invoked when the stream is readable. */
     IWvStreamCallback setreadcallback(IWvStreamCallback _callback);
@@ -500,7 +497,7 @@ public:
 
     /** Stops autoforwarding. */
     void noautoforward();
-    static void autoforward_callback(WvStream &s, void *userdata);
+    static void autoforward_callback(WvStream &input, WvStream &output);
     
     /**
      * A wrapper that's compatible with WvCont, but calls the "real" callback.
@@ -589,7 +586,7 @@ private:
 		 bool readable, bool writable, bool isexcept,
 		 bool forceable);
 
-    void legacy_callback(IWvStream& s);
+    void legacy_callback();
 
 protected:
     // FIXME: this one is so bad, I'm not touching it. Quick hack to
@@ -598,8 +595,7 @@ protected:
 
     WvDynBuf inbuf, outbuf;
 
-    WvStreamCallback callfunc;
-    void *userdata;
+    IWvStreamCallback callfunc;
     wv::function<void*(void*)> call_ctx;
 
     IWvStreamCallback readcb, writecb, exceptcb, closecb;

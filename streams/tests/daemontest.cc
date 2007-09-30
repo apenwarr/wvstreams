@@ -9,9 +9,9 @@ class MyWvDaemon : public WvDaemon
 public:
     MyWvDaemon() :
         WvDaemon("MyWvDaemon", "1.0", 
-                 wv::bind(&MyWvDaemon::start_cb, this, wv::_1, wv::_2),
-                 wv::bind(&MyWvDaemon::run_cb, this, wv::_1, wv::_2),
-                 wv::bind(&MyWvDaemon::stop_cb, this, wv::_1, wv::_2)),
+                 wv::bind(&MyWvDaemon::start_cb, this),
+                 wv::bind(&MyWvDaemon::run_cb, this),
+                 wv::bind(&MyWvDaemon::stop_cb, this)),
         tick_interval(1),
         log("MyWvDaemon", WvLog::Info)
         {
@@ -19,15 +19,15 @@ public:
                             "SECONDS", tick_interval);
         }
     virtual ~MyWvDaemon() {}
-    void start_cb(WvDaemon &daemon, void *) { log("start callback\n"); }
-    void run_cb(WvDaemon &daemon, void *) {
+    void start_cb() { log("start callback\n"); }
+    void run_cb() {
         log("run callback\n"); 
         while (should_run()) {
             sleep(tick_interval);
             log("tick!\n");
         }
     }
-    void stop_cb(WvDaemon &daemon, void *) { log("stop callback\n"); }
+    void stop_cb() { log("stop callback\n"); }
 private:
     int tick_interval;
     WvLog log;

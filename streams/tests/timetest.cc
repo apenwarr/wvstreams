@@ -14,7 +14,7 @@ WvLog mylog("timetest", WvLog::Info);
 bool want_to_quit = false;
 unsigned int count = 0;
 
-void timer_callback(WvStream& s, void*)
+void timer_callback(WvStream& s)
 {
     if (s.alarm_was_ticking)
     {
@@ -41,7 +41,7 @@ int main()
     
     mylog("Artificial burstiness test - should take exactly 10 seconds\n");
 
-    t.setcallback(timer_callback, 0);
+    t.setcallback(wv::bind(timer_callback, wv::ref(t)));
     t.set_timer(100);
     t.alarm(200);
 

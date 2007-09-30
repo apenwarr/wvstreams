@@ -351,13 +351,9 @@ size_t WvTCPConn::uwrite(const void *buf, size_t count)
 
 
 
-WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
-	: listenport(_listenport)
+WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport):
+    listenport(_listenport)
 {
-    listenport = _listenport;
-    auto_list = NULL;
-    auto_userdata = NULL;
-    
     sockaddr *sa = listenport.sockaddr();
     
     int x = 1;
@@ -393,17 +389,6 @@ WvTCPListener::~WvTCPListener()
 }
 
 
-//#include <wvlog.h>
-void WvTCPListener::close()
-{
-    WvFDStream::close();
-/*    WvLog log("ZAP!");
-    
-    log("Closing TCP LISTENER at %s!!\n", listenport);
-    abort();*/
-}
-
-
 WvTCPConn *WvTCPListener::accept()
 {
     struct sockaddr_in sin;
@@ -417,39 +402,26 @@ WvTCPConn *WvTCPListener::accept()
 }
 
 
-void WvTCPListener::auto_accept(WvIStreamList *list,
-				WvStreamCallback callfunc, void *userdata)
+void WvTCPListener::auto_accept(WvIStreamList *list, IWvStreamCallback callfunc)
 {
-    auto_list = list;
-    auto_callback = callfunc;
-    auto_userdata = userdata;
-    setcallback(accept_callback, this);
-}
-
-void WvTCPListener::auto_accept(WvStreamCallback callfunc, void *userdata)
-{
-    auto_callback = callfunc;
-    auto_userdata = userdata;
-    setcallback(accept_global_callback, this);
+    setcallback(wv::bind(&WvTCPListener::accept_callback, this, list,
+			 callfunc));
 }
 
 
-void WvTCPListener::accept_global_callback(WvStream &s, void *userdata)
+void WvTCPListener::auto_accept(IWvStreamCallback callfunc)
 {
-    WvTCPListener &l = *(WvTCPListener *)userdata; 
-    WvTCPConn *connection = l.accept();
-    connection->setcallback(l.auto_callback, l.auto_userdata);
-    WvIStreamList::globallist.append(connection, true, "WvTCPConn");
+    setcallback(wv::bind(&WvTCPListener::accept_callback, this,
+			 &WvIStreamList::globallist, callfunc));
 }
 
 
-void WvTCPListener::accept_callback(WvStream &s, void *userdata)
+void WvTCPListener::accept_callback(WvIStreamList *list,
+				    IWvStreamCallback callfunc)
 {
-    WvTCPListener &l = *(WvTCPListener *)userdata;
-
-    WvTCPConn *connection = l.accept();
-    connection->setcallback(l.auto_callback, l.auto_userdata);
-    l.auto_list->append(connection, true, "WvTCPConn");
+    WvTCPConn *connection = accept();
+    connection->setcallback(callfunc);
+    list->append(connection, true, "WvTCPConn");
 }
 
 

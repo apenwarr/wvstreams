@@ -155,18 +155,15 @@ WvString WvStreamClone::errstr() const
 }
 
 
-void WvStreamClone::close_callback(WvStream &s)
+void WvStreamClone::close_callback()
 {
-    if (cloned == &s)
-    {
-	//fprintf(stderr, "streamclone-closecb: %d/%d/%d/%d/%d\n",
-	//	stop_read, stop_write, outbuf.used(), inbuf.used(), closed);
-	nowrite();
-	noread();
-	// close();
-	//fprintf(stderr, "streamclone-closecb2: %d/%d/%d/%d/%d\n",
-	//	stop_read, stop_write, outbuf.used(), inbuf.used(), closed);
-    }
+    //fprintf(stderr, "streamclone-closecb: %d/%d/%d/%d/%d\n",
+    //	stop_read, stop_write, outbuf.used(), inbuf.used(), closed);
+    nowrite();
+    noread();
+    // close();
+    //fprintf(stderr, "streamclone-closecb2: %d/%d/%d/%d/%d\n",
+    //	stop_read, stop_write, outbuf.used(), inbuf.used(), closed);
 }
 
 
@@ -178,7 +175,7 @@ void WvStreamClone::setclone(IWvStream *newclone)
     closed = stop_read = stop_write = false;
     if (cloned)
 	cloned->setclosecallback(wv::bind(&WvStreamClone::close_callback,
-					  this, wv::_1));
+					  this));
     
     if (newclone != NULL)
         my_type = WvString("WvStreamClone:%s", newclone->wstype());

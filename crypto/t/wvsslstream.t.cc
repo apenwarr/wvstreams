@@ -210,9 +210,8 @@ WVTEST_MAIN("ssl inbuf after read error")
 #endif
 
 
-static void do_transfer(WvStream&, void *userdata)
+static void do_transfer(WvSSLStream *ssl)
 {
-    WvSSLStream *ssl = (WvSSLStream *)userdata;
     char buf[1024];
     int rlen = ssl->read(buf, sizeof(buf));
     tlen += rlen;
@@ -220,9 +219,8 @@ static void do_transfer(WvStream&, void *userdata)
 }
 
 
-static void getmessage(WvStream&, void *userdata)
+static void getmessage(WvSSLStream *ssl)
 {
-    WvSSLStream *ssl = (WvSSLStream *)userdata;
     singleconn = ssl;
     WvString msg = ssl->getline(0);
     if (msg == MSG)
@@ -230,12 +228,11 @@ static void getmessage(WvStream&, void *userdata)
 }
 
 
-static void lcallback(WvStream&, void *userdata)
+static void lcallback(WvTCPListener *listen)
 {
-    WvTCPListener *l = (WvTCPListener *)userdata;
-    WvTCPConn *conn = l->accept();
+    WvTCPConn *conn = listen->accept();
     WvSSLStream *ssl = new WvSSLStream(conn, x509, 0, true);
-    ssl->setcallback(getmessage, ssl);
+    ssl->setcallback(wv::bind(getmessage, ssl));
     WvIStreamList::globallist.append(ssl, true, "ssl stream");
 }
 
@@ -255,7 +252,7 @@ WVTEST_MAIN("ssl establish connection")
     WvString laddrstr("0.0.0.0:%s", port);
     WvIPPortAddr laddr(laddrstr);
     WvTCPListener l(laddr);
-    l.setcallback(lcallback, &l);
+    l.setcallback(wv::bind(lcallback, &l));
 
     WvIStreamList::globallist.append(&l, false, "listener");
 
@@ -302,7 +299,8 @@ WVTEST_MAIN("ssl establish connection")
 
     printf("Wrote %d bytes\n", wlen);
 
-    singleconn->setcallback(do_transfer, singleconn); // setup for next test
+    // setup for next test
+    singleconn->setcallback(wv::bind(do_transfer, singleconn));
     WVPASS(singleconn->select(0));
 
     // read until we get all the data, or die if there's ever none

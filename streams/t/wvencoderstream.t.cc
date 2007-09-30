@@ -471,7 +471,7 @@ protected:
 
 
 
-static void closecb(int *i, WvStream &s)
+static void closecb(int *i)
 {
     (*i)++;
 }
@@ -486,7 +486,7 @@ WVTEST_MAIN("encoderstream eof3")
 	WvEncoderStream s(l);
 	s.writechain.append(new_enc(), true);
 	s.readchain.append(new_dec(), true);
-	s.setclosecallback(wv::bind(&closecb, &closed, wv::_1));
+	s.setclosecallback(wv::bind(&closecb, &closed));
 	
 	s.write("Hello\n");
 	s.write("nonewline");

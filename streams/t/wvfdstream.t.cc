@@ -215,7 +215,7 @@ WVTEST_MAIN("outbuf_limit")
 }
 
 
-static void myclosecb(int *i, WvStream &s)
+static void myclosecb(int *i)
 {
     (*i)++;
 }
@@ -224,7 +224,7 @@ WVTEST_MAIN("closecallback")
 {
     WvFdStream s(dup(0), dup(1));
     int i = 0;
-    s.setclosecallback(wv::bind(&myclosecb, &i, wv::_1));
+    s.setclosecallback(wv::bind(&myclosecb, &i));
     
     WVPASS(s.isok());
     s.nowrite();
@@ -260,7 +260,7 @@ public:
     {
 	WVPASS(isreadable());
         called = false;
-        setcallback(wv::bind(&FooFD::fooback, this, wv::_1, wv::_2), NULL);
+        setcallback(wv::bind(&FooFD::fooback, this));
         WvIStreamList::globallist.append(this, false, "FooFD");
     }
 
@@ -269,7 +269,7 @@ public:
 	WvIStreamList::globallist.unlink(this);
     }
 
-    void fooback(WvStream &, void *)
+    void fooback()
     {
 	called = true;
     }

@@ -18,21 +18,21 @@ static void signalhandler(int sig)
 }
 
 
-static void bounce_to_list(WvStream &s, void *userdata)
+static void bounce_to_list(WvStream *in, WvIStreamList *list)
 {
-    WvIStreamList *list = (WvIStreamList *)userdata;
     char buf[4096];
     size_t len;
     
     for (int i = 0; i < 1000; i++)
     {
-	len = s.read(buf, sizeof(buf));
-	if (!len) break;
+	len = in->read(buf, sizeof(buf));
+	if (!len)
+	    break;
 	
 	WvIStreamList::Iter i(*list);
 	for (i.rewind(); i.next(); )
 	{
-	    if (&s != i.ptr())
+	    if (in != i.ptr())
 	    {
 		// you might think this assumes IWvStream has a buffer; but in
 		// fact, we already know that everything in the list is a
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 	
 	WvStream *s2 = new WvStreamClone(s);
 	
-	s2->setcallback(bounce_to_list, &list);
+	s2->setcallback(wv::bind(bounce_to_list, s2, &list));
 	list.append(s2, true, argv[count]);
     }
     

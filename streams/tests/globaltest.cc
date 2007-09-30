@@ -12,14 +12,14 @@
 static WvLog mylog("globaltest");
 static int count = 0;
 
-void callback1(WvStream& s, void*)
+void callback1(WvStream& s)
 {
     ++count;
     mylog("callback called for s1 (rearming alarm)\n");
     s.alarm(0);
 }
 
-void callback2(WvStream& s, void*)
+void callback2()
 {
     mylog("callback called for s2? weird...\n");
 }
@@ -29,8 +29,8 @@ int main()
     WvStream s1;
     WvStream s2;
 
-    s1.setcallback(callback1, 0);
-    s2.setcallback(callback2, 0);
+    s1.setcallback(wv::bind(callback1, wv::ref(s1)));
+    s2.setcallback(callback2);
 
     s1.alarm(0);
 

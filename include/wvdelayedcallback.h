@@ -36,18 +36,18 @@ public:
   WvDelayedCallback(const Functor& _func):
       func(_func), stream(new WvStream), frozen(0)
     {
-        stream->setcallback(wv::bind(&WvDelayedCallback::thaw, this), 0);
+        stream->setcallback(wv::bind(&WvDelayedCallback::thaw, this));
         WvIStreamList::globallist.append(stream, true, "WvDelayedCallback");
     }
     WvDelayedCallback(const WvDelayedCallback &other):
 	func(other.func), stream(new WvStream), frozen(0)
     {
-        stream->setcallback(wv::bind(&WvDelayedCallback::thaw, this), 0);
+        stream->setcallback(wv::bind(&WvDelayedCallback::thaw, this));
         WvIStreamList::globallist.append(stream, true, "WvDelayedCallback");
     }
     ~WvDelayedCallback()
     {
-        stream->setcallback(0, 0);
+        stream->setcallback(0);
         stream->close();
     }
     void operator()()
