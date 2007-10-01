@@ -132,7 +132,6 @@ BASEOBJS= \
 	utils/strutils.o \
 	utils/wvtask.o \
 	utils/wvtimeutils.o \
-	utils/wvvector.o \
 	streams/wvistreamlist.o \
 	utils/wvstreamsdebugger.o \
 	streams/wvlog.o \
