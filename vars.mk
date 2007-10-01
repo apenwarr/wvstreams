@@ -110,10 +110,6 @@ ifneq ("$(with_pam)", "no")
   libwvutils.so: -lpam
 endif
 
-LDLIBS := $(LDLIBS) \
-	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
-		&& echo " -lsupc++ -lgcc_eh")
-
 include $(filter-out xplc/% linuxstreams/%,$(wildcard */vars.mk */*/vars.mk)) \
 	$(wildcard $(foreach dir,$(ARCH_SUBDIRS),$(dir)/*/vars.mk)) /dev/null
 
