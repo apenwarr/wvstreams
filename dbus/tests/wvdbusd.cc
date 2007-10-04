@@ -5,14 +5,17 @@ class WvDBusDaemon : public WvStreamsDaemon
 {
 public:
     WvDBusDaemon() :
-        WvStreamsDaemon("WvDBusDaemon", WVSTREAMS_RELEASE, 
-                        WvStreamsDaemonCallback(this, &WvDBusDaemon::cb)),
+        WvStreamsDaemon("WvDBusDaemon", WVSTREAMS_RELEASE,
+			wv::bind(&WvDBusDaemon::cb, this)),
         log("WvDBusDaemon", WvLog::Debug)
-        {
-            args.add_required_arg("MONIKER");
-        }
+    {
+	args.add_required_arg("MONIKER");
+    }
+    
     virtual ~WvDBusDaemon() {}
-    void cb(WvStreamsDaemon &daemon, void *) { 
+    
+    void cb()
+    { 
         log("WvDBusDaemon starting..\n");
 
         WvString moniker = _extra_args.popstr();

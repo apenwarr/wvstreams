@@ -23,23 +23,18 @@ static void bounce_to_list(WvStream *in, WvIStreamList *list)
     char buf[4096];
     size_t len;
     
-    for (int i = 0; i < 1000; i++)
+    len = in->read(buf, sizeof(buf));
+    
+    WvIStreamList::Iter i(*list);
+    for (i.rewind(); i.next(); )
     {
-	len = in->read(buf, sizeof(buf));
-	if (!len)
-	    break;
-	
-	WvIStreamList::Iter i(*list);
-	for (i.rewind(); i.next(); )
+	if (in != i.ptr())
 	{
-	    if (in != i.ptr())
-	    {
-		// you might think this assumes IWvStream has a buffer; but in
-		// fact, we already know that everything in the list is a
-		// WvStreamClone, and WvStreamClone *does* have an output
-		// buffer, so this is safe.
-		i->write(buf, len);
-	    }
+	    // you might think this assumes IWvStream has a buffer; but in
+	    // fact, we already know that everything in the list is a
+	    // WvStreamClone, and WvStreamClone *does* have an output
+	    // buffer, so this is safe.
+	    i->write(buf, len);
 	}
     }
 }

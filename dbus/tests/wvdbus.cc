@@ -15,7 +15,7 @@ WV_LINK_TO(WvTCPConn);
 
 static WvStringList paths;
 
-static bool incoming(WvDBusConn &conn, WvDBusMsg &msg)
+static bool incoming(WvDBusMsg &msg)
 {
     WvStringList::Iter i(paths);
     for (i.rewind(); i.next(); )

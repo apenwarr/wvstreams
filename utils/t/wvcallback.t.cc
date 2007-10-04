@@ -32,7 +32,7 @@ static A bunk1(const A &a)
 }
 
 typedef wv::function<void()> Cb;
-typedef WvCallback<int> ICb;
+typedef wv::function<int()> ICb;
 
 void f()
 {
@@ -108,9 +108,10 @@ WVTEST_MAIN("cbweirdtest")
 	cb4();
     }
     WVPASS(true);
-    
+
     // test that instantiating WvCallback from a functor object actually
     // copies that object, it doesn't just take a reference.
+    // This is relevant for WvCont.
     {
 	Functor ff;
 	WVPASSEQ(ff(), 1);

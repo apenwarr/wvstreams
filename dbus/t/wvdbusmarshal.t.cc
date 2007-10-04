@@ -26,7 +26,7 @@ WVTEST_MAIN("dbusmarshal")
     msg2.marshal(buf);
     size_t used = buf.used();
     WVPASS(buf.used() > 0);
-    WVPASSEQ(msg.get_argstr(), "string1,2,[[10,11],[wX,Yz]],42");
+    WVPASSEQ(msg.get_argstr(), "string1,2,[{[10,11]},{[wX,Yz]}],42");
     WVPASSEQ(msg2.get_argstr(), "");
     wvout->print(hexdump_buffer(buf.peek(0, used), used));
     
@@ -35,7 +35,7 @@ WVTEST_MAIN("dbusmarshal")
     WVPASS(buf.used() > 5); // still data left
     WVPASS(decoded);
     if (decoded)
-	WVPASSEQ(decoded->get_argstr(), "string1,2,[[10,11],[wX,Yz]],42");
+	WVPASSEQ(decoded->get_argstr(), "string1,2,[{[10,11]},{[wX,Yz]}],42");
     
     if (buf.used() > 5)
 	WVPASSEQ(buf.getstr(5), "BOOGA");

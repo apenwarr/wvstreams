@@ -32,7 +32,7 @@ public:
 
 
 static int mysignal_count = 0;
-static bool mysignal(WvDBusConn &conn, WvDBusMsg &msg)
+static bool mysignal(WvDBusMsg &msg)
 {
     if (msg.get_interface() != "x.y.z.anything") return false;
     fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
@@ -67,7 +67,7 @@ WVTEST_MAIN("dbusserver basics")
 
     
 static int replies_received = 0;
-static bool reply_received(WvDBusConn &conn, WvDBusMsg &msg)
+static bool reply_received(WvDBusMsg &msg)
 {
     WvDBusMsg::Iter i(msg);
     WvString s = i.getnext();
@@ -100,7 +100,7 @@ static bool msg_received(WvDBusConn &conn, WvDBusMsg &msg)
 
 
 static int reg_count = 0;
-bool name_registered(WvDBusConn &conn, WvDBusMsg &msg)
+bool name_registered(WvDBusMsg &msg)
 {
     reg_count++;
     return true;
@@ -115,7 +115,8 @@ WVTEST_MAIN("dbusserver two connections")
     WvIStreamList::globallist.append(&conn1, false);
     WvIStreamList::globallist.append(&conn2, false);
     
-    conn2.add_callback(WvDBusConn::PriNormal, msg_received);
+    conn2.add_callback(WvDBusConn::PriNormal,
+		       wv::bind(msg_received, wv::ref(conn2), wv::_1));
     
     reg_count = 0;
     conn1.request_name("ca.nit.MySender", name_registered);

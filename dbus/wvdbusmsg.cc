@@ -104,7 +104,7 @@ void WvDBusMsg::Iter::get_all(WvStringList &list)
     int items = 0;
     for (rewind(); next() && items < 20; items++)
 	list.append(get_str());
-    if (items == 5)
+    if (items == 20)
 	list.append("...");
 }
 

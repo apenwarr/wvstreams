@@ -291,6 +291,7 @@ static WvPipe * setup_master_daemon(bool implicit_root,
         WvString &masterpipename, WvString &ininame)
 {
     ininame = wvtmpfilename("uniconfd.t-ini");
+    WvString pidfile = wvtmpfilename("uiconfd.t-mpid");
 
     WvFile stuff(ininame, (O_CREAT | O_WRONLY));
     stuff.print("pickles/apples/foo=1\n");
@@ -311,13 +312,10 @@ static WvPipe * setup_master_daemon(bool implicit_root,
 
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
-        "-d",
-        "-p",
-        "0",
-        "-s"
-        "0",
-        "-u",
-        masterpipename.cstr(),
+        "-d", "--pid-file", pidfile.cstr(),
+        "-p", "0",
+        "-s", "0",
+        "-u", masterpipename.cstr(),
         mount1.cstr(),
         mount2.cstr(),
         NULL
@@ -331,6 +329,7 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
                             WvString &slavepipename)
 {
     slavepipename = wvtmpfilename("uniconfd.t-sock");
+    WvString pidfile = wvtmpfilename("uiconfd.t-spid");
 
     WvString rootmount;
     if (implicit_root)
@@ -340,19 +339,15 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
 
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
-        "-d",
-        "-p",
-        "0",
-        "-s"
-        "0",
-        "-u",
-        slavepipename.cstr(),
+        "-d", "--pid-file", pidfile.cstr(),
+	"-p", "0",
+        "-s"  "0",
+        "-u", slavepipename.cstr(),
         rootmount.cstr(),
         NULL
     };
 
     return new WvPipe(uniconfd_args[0], uniconfd_args, false, false, false); 
-    
 }
 
 

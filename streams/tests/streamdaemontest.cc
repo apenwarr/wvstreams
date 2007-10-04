@@ -54,7 +54,7 @@ public:
     {
         if (isok())
         {
-            onaccept(wv::bind(&MyListener::accept_conn, this));
+            onaccept(wv::bind(&MyListener::accept_conn, this, wv::_1));
             log("Listening for client connections on %s\n", addr);
         }
         else 

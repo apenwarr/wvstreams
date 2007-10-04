@@ -475,8 +475,9 @@ void WvDBusConn::cancel_pending(uint32_t serial)
     if (p)
     {
 	WvDBusCallback xcb(p->cb);
+	WvDBusMsg msg(p->msg);
 	pending.remove(p); // prevent accidental recursion
-	WvDBusError e(p->msg, DBUS_ERROR_FAILED,
+	WvDBusError e(msg, DBUS_ERROR_FAILED,
 		      "Canceled while waiting for reply");
 	xcb(e);
     }

@@ -12,7 +12,7 @@ WVTEST_MAIN("dbusmsg basics")
     WVPASSEQ(msg.get_interface(), "my.ifc");
     WVPASSEQ(msg.get_member(), "method");
     
-    WVPASSEQ(msg.get_argstr(), "yoink,-1,65535,1,-2");
+    WVPASSEQ(msg.get_argstr(), "yoink,-1,65535,b1,-2");
     
     {
 	WvDBusMsg::Iter i(msg);
@@ -57,5 +57,5 @@ WVTEST_MAIN("dbusmsg arrays")
 	.varray_start("i").append(-5).append(-6).varray_end()
 	.array_end();
     WVPASS(true);
-    WVPASSEQ(msg.get_argstr(), "5,[str,5,1],[one,two],[5,6],[[str1,str2],[-5,-6]]");
+    WVPASSEQ(msg.get_argstr(), "{5},[str,5,b1],[one,two],[5,6],[{[str1,str2]},{[-5,-6]}]");
 }

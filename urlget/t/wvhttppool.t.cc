@@ -127,12 +127,13 @@ void tcp_callback(WvStream &s)
 }
 
 
-void listener_callback(IWvStream *_newconn)
+static void listener_callback(WvIStreamList *list, IWvStream *_newconn)
 {
     http_conns++;
     printf("Incoming connection (%u)\n", http_conns);
+    WvStreamClone *newconn = new WvStreamClone(_newconn);
     newconn->setcallback(wv::bind(tcp_callback, wv::ref(*newconn)));
-    list.append(newconn, true, "incoming http conn");
+    list->append(newconn, true, "incoming http conn");
     expecting_request = true;
 }
 
@@ -200,7 +201,7 @@ WVTEST_MAIN("WvHttpPool pipelining")
 	    ++port;
 	}
     }
-    listener->onaccept(wv::bind(listener_callback, wv::ref(l));
+    listener->onaccept(wv::bind(listener_callback, &l, wv::_1));
     l.append(listener, true, "http listener");
 
     // Pipelining-enabled tests share one connection for the pipeline test
