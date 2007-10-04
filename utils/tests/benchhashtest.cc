@@ -82,6 +82,12 @@ static void do_bench_wvhash()
 
 	    fprintf(stderr, "found = %i, sum = %i\n", found, sum);
 	}
+
+	{
+	    Timer timer6("zap/clear");
+
+	    mymap.zap();
+	}
     }
 }
 
@@ -131,6 +137,12 @@ static void do_bench_std()
 	    }
 
 	    fprintf(stderr, "found = %i, sum = %i\n", found, sum);
+	}
+
+	{
+	    Timer timer6("zap/clear");
+
+	    mymap.clear();
 	}
     }
 }
