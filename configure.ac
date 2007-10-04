@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 4.4, wvstreams-devel@googlegroups.com, wvstreams)
+AC_INIT(WvStreams, 4.4.1, wvstreams-devel@googlegroups.com, wvstreams)
 SO_VERSION=4.4
 
 save_args() {
@@ -620,7 +620,7 @@ if test "$enable_devel" = "yes"; then
 fi
 
 if test "$VALGRIND" != ""; then
-    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --suppressions=\$(WVSTREAMS_SRC)/suppressions.wv"
+    VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --suppressions=\$(WVSTREAMS_SRC)/wvstreams.supp"
     if valgrind --help | grep log-file >/dev/null; then
 	VALGRIND="$VALGRIND --log-file=valgrind.log"
     else

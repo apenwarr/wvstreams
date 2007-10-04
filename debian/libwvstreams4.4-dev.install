@@ -1,0 +1,3 @@
+debian/tmp/usr/bin/wvtesthelper
+debian/tmp/usr/bin/wvtestmain
+debian/tmp/usr/lib/valgrind/wvstreams.supp
