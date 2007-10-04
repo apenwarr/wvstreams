@@ -176,8 +176,7 @@ WVTEST_MAIN("ini callbacks")
     WvString ininame = inigen("a/b/c/1 = 11\n"
 			      "a/b/c/2 = 22\n");
     UniConfRoot cfg(WvString("ini:%s", ininame));
-    UniWatch w(cfg,
-	       WvBoundCallback<UniConfCallback,int*>(&count_cb, &i), true);
+    UniWatch w(cfg, wv::bind(&count_cb, &i, wv::_1, wv::_2), true);
 
     WVPASSEQ(i, 0);
     cfg.refresh();

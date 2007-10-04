@@ -222,9 +222,8 @@ WvConfEmu::WvConfEmu(const UniConf &_uniconf)
     : sections(42), hold(false), values(420), uniconf(_uniconf)
 {
     wvauthd = NULL;
-    uniconf.add_callback(this,
-			 UniConfCallback(this, &WvConfEmu::notify),
-			 true);
+    uniconf.add_callback(this, wv::bind(&WvConfEmu::notify, this, wv::_1,
+					wv::_2), true);
     dirty = false;
 }
 

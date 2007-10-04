@@ -195,9 +195,8 @@ IUniConfGen *UniMountGen::mountgen(const UniConfKey &key,
 	return NULL;
     
     UniGenMount *newgen = new UniGenMount(gen, key);
-    gen->add_callback(this,
-		      WvBoundCallback<UniConfGenCallback, const UniConfKey&>
-		      (this, &UniMountGen::gencallback, newgen->key));
+    gen->add_callback(this, wv::bind(&UniMountGen::gencallback, this,
+				     newgen->key, wv::_1, wv::_2));
 
     hold_delta();
     delta(key, WvString());

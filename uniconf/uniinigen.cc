@@ -196,8 +196,8 @@ bool UniIniGen::refresh()
     root = newtree;
     newgen->root = NULL;
     dirty = false;
-    oldtree->compare(newtree, UniConfValueTree::Comparator
-            (this, &UniIniGen::refreshcomparator), NULL);
+    oldtree->compare(newtree, wv::bind(&UniIniGen::refreshcomparator, this,
+				       wv::_1, wv::_2, wv::_3), NULL);
     
     delete oldtree;
     unhold_delta();
@@ -229,8 +229,8 @@ bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
         {
             // key removed
 	    // Issue notifications for every that is missing.
-            a->visit(UniConfValueTree::Visitor(this,
-                &UniIniGen::notify_deleted), NULL, false, true);
+            a->visit(wv::bind(&UniIniGen::notify_deleted, this, wv::_1,
+			      wv::_2), NULL, false, true);
             return false;
         }
     }

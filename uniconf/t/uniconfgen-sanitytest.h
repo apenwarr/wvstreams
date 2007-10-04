@@ -54,7 +54,8 @@ class UniConfTestDaemon
     WvString sockname;
     WvString server_moniker;
 public:
-    typedef WvCallback<void, WvStringParm, WvStringParm> UniConfDaemonServerCb;
+    typedef wv::function<void(WvStringParm, WvStringParm)>
+	UniConfDaemonServerCb;
 
     // A default server callback that doesn't do anything interesting, just
     // mounts the given moniker on the given socket.

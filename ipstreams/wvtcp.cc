@@ -363,14 +363,10 @@ size_t WvTCPConn::uwrite(const void *buf, size_t count)
 
 
 WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
-	: WvListener(new WvFdStream(socket(PF_INET, SOCK_STREAM, 0))),
-          listenport(_listenport)
+	: WvListener(new WvFdStream(socket(PF_INET, SOCK_STREAM, 0)))
 {
     WvFdStream *fds = (WvFdStream *)cloned;
     listenport = _listenport;
-    auto_list = NULL;
-    auto_userdata = NULL;
-    
     sockaddr *sa = listenport.sockaddr();
     
     int x = 1;
@@ -419,25 +415,25 @@ WvTCPConn *WvTCPListener::accept()
 
 
 void WvTCPListener::auto_accept(WvIStreamList *list,
-				WvStreamCallback callfunc, void *userdata)
+				wv::function<void(IWvStream*)> cb)
 {
-    auto_list = list;
-    auto_callback = callfunc;
-    auto_userdata = userdata;
-    onaccept(IWvListenerCallback(this, &WvTCPListener::accept_callback));
+    onaccept(wv::bind(&WvTCPListener::accept_callback, this, list,
+			 cb, wv::_1));
 }
 
-void WvTCPListener::auto_accept(WvStreamCallback callfunc, void *userdata)
+void WvTCPListener::auto_accept(wv::function<void(IWvStream*)> cb)
 {
-    auto_accept(&WvIStreamList::globallist, callfunc, userdata);
+    auto_accept(&WvIStreamList::globallist, cb);
 }
 
 
-void WvTCPListener::accept_callback(IWvStream *_connection, void *)
+void WvTCPListener::accept_callback(WvIStreamList *list,
+				    wv::function<void(IWvStream*)> cb,
+				    IWvStream *_conn)
 {
-    WvStreamClone *connection = new WvStreamClone(_connection);
-    connection->setcallback(auto_callback, auto_userdata);
-    auto_list->append(connection, true, "WvTCPConn");
+    WvStreamClone *conn = new WvStreamClone(_conn);
+    conn->setcallback(wv::bind(cb, conn));
+    list->append(conn, true, "WvTCPConn");
 }
 
 

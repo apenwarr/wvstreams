@@ -33,8 +33,7 @@ public:
     
     void honk_at(Honk &a)
     {
-	cb = WvCont(WvBoundCallback<WvContCallback, Honk &>
-		    (this, &Honk::honker, a));
+	cb = WvCont(wv::bind(&Honk::honker, this, a, wv::_1));
     }
 
 private:
@@ -58,7 +57,7 @@ private:
 
 WVTEST_MAIN("basics")
 {
-    typedef WvCallback<void *, void *> CbType;
+    typedef wv::function<void*(void*)> CbType;
     
     // basic functionality (including nested tasks)
     {
@@ -126,7 +125,7 @@ WVTEST_MAIN("basics")
 }
 
 
-static WvCallback<void*,void*> rcallback;
+static wv::function<void*(void*)> rcallback;
 static int rn = 0;
 
 static void *rfunc2(void *)

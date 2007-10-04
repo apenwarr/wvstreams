@@ -14,11 +14,12 @@
 class UniHashTreeBase;
 
 // parameters: a node (won't be NULL), userdata
-typedef WvCallback<void, const UniHashTreeBase *,
-        void *> UniHashTreeBaseVisitor;
+typedef wv::function<void(const UniHashTreeBase*,
+			  void*)> UniHashTreeBaseVisitor;
 // parameters: 1st node (may be NULL), 2nd node (may be NULL), userdata
-typedef WvCallback<bool, const UniHashTreeBase *, 
-        const UniHashTreeBase *, void *> UniHashTreeBaseComparator;
+typedef wv::function<bool(const UniHashTreeBase*, 
+			  const UniHashTreeBase*,
+			  void*)> UniHashTreeBaseComparator;
 
 class UniHashTreeBase
 {

@@ -381,7 +381,7 @@ fi
 
 # dbus
 if test "$with_dbus" != "no"; then
-    WV_APPEND(CPPFLAGS, "-DDBUS_API_SUBJECT_TO_CHANGE")
+    WV_APPEND(CPPFLAGS, -DDBUS_API_SUBJECT_TO_CHANGE -Iinclude/dbus-upstream)
     if test "$with_dbus" = ""; then
         DBUS_LIBDIR=/usr/lib
         WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])

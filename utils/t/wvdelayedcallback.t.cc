@@ -9,14 +9,14 @@ static void add_cb(int howmuch)
     num += howmuch;
 }
 
-typedef WvCallback<void, int> InnerCallback;
+typedef wv::function<void(int)> InnerCallback;
 
 WVTEST_MAIN("repetition")
 {
     num = 0;
 
     WvIStreamList l;
-    WvCallback<void,int> cb1 = WvDelayedCallback<WvCallback<void,int> >(&add_cb);
+    InnerCallback cb1 = WvDelayedCallback<InnerCallback>(&add_cb);
     
     l.runonce(0);
     WVPASSEQ(num, 0);
@@ -37,3 +37,4 @@ WVTEST_MAIN("repetition")
     l.runonce(0);
     WVPASSEQ(num, 7);
 }
+

@@ -3,7 +3,7 @@
 #include "wvcallback.h"
 
 
-typedef WvCallback<int, int&> TestCallback;
+typedef wv::function<int(int&)> TestCallback;
 
 
 /* The return value will be ignored. */

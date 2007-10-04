@@ -24,8 +24,8 @@ class UniConfTree : public Base
 {
    
 public:
-    typedef WvCallback<void, const Sub *, void *> Visitor;
-    typedef WvCallback<bool, const Sub *, const Sub *, void *> Comparator;
+    typedef wv::function<void(const Sub*, void*)> Visitor;
+    typedef wv::function<bool(const Sub*, const Sub*, void*)> Comparator;
 
     /** Creates a node and links it to a subtree, if parent is non-NULL */
     UniConfTree(Sub *parent, const UniConfKey &key) :

@@ -111,7 +111,7 @@ public:
     int getpid() const { return proc.pid; };
 
     // callback to ignore everything.  see comment in wvpipe.cc.
-    static void ignore_read(WvStream& s, void *userdata);
+    static void ignore_read(WvStream &s);
     
 public:
     const char *wstype() const { return "WvPipe"; }

@@ -9,19 +9,19 @@
 #include "wvistreamlist.h"
 #include "wvlog.h"
 
-static WvLog log("globaltest");
+static WvLog mylog("globaltest");
 static int count = 0;
 
-void callback1(WvStream& s, void*)
+void callback1(WvStream& s)
 {
     ++count;
-    log("callback called for s1 (rearming alarm)\n");
+    mylog("callback called for s1 (rearming alarm)\n");
     s.alarm(0);
 }
 
-void callback2(WvStream& s, void*)
+void callback2()
 {
-    log("callback called for s2? weird...\n");
+    mylog("callback called for s2? weird...\n");
 }
 
 int main()
@@ -29,8 +29,8 @@ int main()
     WvStream s1;
     WvStream s2;
 
-    s1.setcallback(callback1, 0);
-    s2.setcallback(callback2, 0);
+    s1.setcallback(wv::bind(callback1, wv::ref(s1)));
+    s2.setcallback(callback2);
 
     s1.alarm(0);
 
@@ -51,6 +51,6 @@ int main()
 
     assert(count == 3);
 
-    log("test passed!\n");
+    mylog("test passed!\n");
 }
 

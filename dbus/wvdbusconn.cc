@@ -214,7 +214,7 @@ public:
         { reply = NULL; }
     ~xxReplyWaiter()
         { delete reply; }
-    bool reply_wait(WvDBusConn &conn, WvDBusMsg &msg)
+    bool reply_wait(WvDBusMsg &msg)
         { reply = new WvDBusMsg(msg); return true; }
 };
 
@@ -223,7 +223,8 @@ WvDBusMsg WvDBusConn::send_and_wait(WvDBusMsg msg, time_t msec_timeout)
 {
     xxReplyWaiter rw;
     
-    send(msg, WvDBusCallback(&rw, &xxReplyWaiter::reply_wait), msec_timeout);
+    send(msg, wv::bind(&xxReplyWaiter::reply_wait, &rw, wv::_1),
+	 msec_timeout);
     while (!rw.reply && isok())
 	runonce();
     if (!rw.reply)
@@ -256,7 +257,7 @@ void WvDBusConn::send_hello()
 {
     WvDBusMsg msg("org.freedesktop.DBus", "/org/freedesktop/DBus",
 		  "org.freedesktop.DBus", "Hello");
-    send(msg, WvDBusCallback(this, &WvDBusConn::_registered));
+    send(msg, wv::bind(&WvDBusConn::_registered, this, wv::_1));
     WvDBusMsg msg2("org.freedesktop.DBus", "/org/freedesktop/DBus",
 		   "org.freedesktop.DBus", "AddMatch");
     msg2.append("type='signal'");
@@ -326,7 +327,7 @@ bool WvDBusConn::filter_func(WvDBusMsg &msg)
 	Pending *p = pending[rserial];
 	if (p)
 	{
-	    p->cb(*this, msg);
+	    p->cb(msg);
 	    pending.remove(p);
 	    return true; // handled it
 	}
@@ -336,7 +337,7 @@ bool WvDBusConn::filter_func(WvDBusMsg &msg)
     CallbackInfoList::Sorter i(callbacks, priority_order);
     for (i.rewind(); i.next(); )
     {
-	bool handled = i->cb(*this, msg);
+	bool handled = i->cb(msg);
 	if (handled) return true;
     }
 
@@ -463,7 +464,7 @@ void WvDBusConn::expire_pending(Pending *p)
 	pending.remove(p); // prevent accidental recursion
 	WvDBusError e(p->msg, DBUS_ERROR_FAILED,
 		      "Timed out while waiting for reply");
-	xcb(*this, e);
+	xcb(e);
     }
 }
 
@@ -477,7 +478,7 @@ void WvDBusConn::cancel_pending(uint32_t serial)
 	pending.remove(p); // prevent accidental recursion
 	WvDBusError e(p->msg, DBUS_ERROR_FAILED,
 		      "Canceled while waiting for reply");
-	xcb(*this, e);
+	xcb(e);
     }
 }
 
@@ -494,7 +495,7 @@ void WvDBusConn::add_pending(WvDBusMsg &msg, WvDBusCallback cb,
 }
 
 
-bool WvDBusConn::_registered(WvDBusConn &c, WvDBusMsg &msg)
+bool WvDBusConn::_registered(WvDBusMsg &msg)
 {
     WvDBusMsg::Iter i(msg);
     _uniquename = i.getnext().get_str();

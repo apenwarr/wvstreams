@@ -54,7 +54,7 @@ public:
     {
         if (isok())
         {
-            onaccept(IWvListenerCallback(this, &MyListener::accept_conn), 0);
+            onaccept(wv::bind(&MyListener::accept_conn, this));
             log("Listening for client connections on %s\n", addr);
         }
         else 
@@ -63,7 +63,7 @@ public:
     }
 
 private:
-    void accept_conn(IWvStream *s, void *userdata);
+    void accept_conn(IWvStream *s);
     WvLog log;
 };
 
@@ -73,7 +73,7 @@ class MyWvStreamsDaemon : public WvStreamsDaemon
 public:
     MyWvStreamsDaemon() :
         WvStreamsDaemon("MyWvStreamsDaemon", "1.0", 
-                        WvStreamsDaemonCallback(this, &MyWvStreamsDaemon::cb)),
+                        wv::bind(&MyWvStreamsDaemon::cb, this)),
         port(default_port),
         log("MyWvStreamsDaemon", WvLog::Info)
     {
@@ -83,7 +83,7 @@ public:
     
     virtual ~MyWvStreamsDaemon() {}
     
-    void cb(WvStreamsDaemon &daemon, void *)
+    void cb()
     { 
         log("MyWvStreamsDaemon starting..\n", port);
         WvString bindto("0.0.0.0:%s", port);
@@ -101,7 +101,7 @@ private:
 static MyWvStreamsDaemon d;
 
 
-void MyListener::accept_conn(IWvStream *s, void *userdata)
+void MyListener::accept_conn(IWvStream *s)
 {
     log("Incoming TCP connection from %s.\n", *s->src());
     d.add_stream(new MyClient(s), true, "MyClient");

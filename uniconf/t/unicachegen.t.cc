@@ -66,9 +66,9 @@ WVTEST_MAIN("cache basics")
     // (recursive) notifications of the cache
     WatchReceiver cache_received("beep", "foo");
 
-    UniWatch cache_watch(cacheroot["/foo/baz"], 
-                         UniConfCallback(&cache_received,
-                                         &WatchReceiver::callback));
+    UniWatch cache_watch(cacheroot["/foo/baz"],
+			 wv::bind(&WatchReceiver::callback, &cache_received,
+				  wv::_1, wv::_2));
     
     t->set("foo/baz/beep", "foo");
     WVPASS(cache_received.cbs == 1);

@@ -29,12 +29,10 @@ WvListener::~WvListener()
 }
     
 
-IWvListenerCallback WvListener::onaccept(IWvListenerCallback _cb,
-					 void *_userdata)
+IWvListenerCallback WvListener::onaccept(IWvListenerCallback _cb)
 {
     IWvListenerCallback old = acceptor;
     acceptor = _cb;
-    acceptor_userdata = _userdata;
     return old;
 }
 

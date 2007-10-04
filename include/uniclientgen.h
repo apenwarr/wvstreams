@@ -71,7 +71,7 @@ public:
 
 protected:
     virtual Iter *do_iterator(const UniConfKey &key, bool recursive);
-    void conncallback(WvStream &s, void *userdata);
+    void conncallback();
     bool do_select();
 };
 

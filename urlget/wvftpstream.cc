@@ -40,7 +40,7 @@ char *alloca ();
 WvFtpStream::WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 WvStringParm _password)
     : WvUrlStream(_remaddr, _username, WvString("FTP %s", _remaddr)),
-      cont(WvContCallback(this, &WvFtpStream::real_execute))
+      cont(wv::bind(&WvFtpStream::real_execute, this, wv::_1))
 {
     data = NULL;
     logged_in = false;

@@ -13,22 +13,18 @@
 #include "iwvstream.h"
 #include "wvistreamlist.h"
 
-class WvStreamsDaemon;
-
-typedef WvCallback<void, WvStreamsDaemon &, void *> WvStreamsDaemonCallback;
-
 /*!
 @brief WvStreamsDaemon - High-level abstraction for a daemon process that
 does nothing but add streams to the global list and execute it.
 
 This is generally what a modern WvStreams-based daemon should look like.
 
-The WvStreamsDaemonCallback function passed in the constructor is used to 
-populate the globallist with streams that are necessary when the daemon
-starts, such as listening sockets.  These streams are added using the
-WvStreamsDaemon::add_stream, WvStreamsDaemon::add_die_stream and
-WvStreamsDaemon::add_restart_stream members, the last two governing what
-happens to the daemon when the stream is !isok().
+The WvDaemonCallback function passed in the constructor is used to
+populate the globallist with streams that are necessary when the
+daemon starts, such as listening sockets.  These streams are added
+using the WvStreamsDaemon::add_stream, WvStreamsDaemon::add_die_stream
+and WvStreamsDaemon::add_restart_stream members, the last two
+governing what happens to the daemon when the stream is !isok().
 
 Sample usage:
 
@@ -62,13 +58,12 @@ class WvStreamsDaemon : public WvDaemon
 {
 private:
 
-    WvStreamsDaemonCallback callback;
-    void *userdata;
+    WvDaemonCallback callback;
 
     bool do_full_close;
     WvIStreamList streams;
 
-    void init(WvStreamsDaemonCallback cb, void *ud);
+    void init(WvDaemonCallback cb);
 
 protected:
 
@@ -78,8 +73,8 @@ protected:
 
 private:
 
-    void restart_close_cb(const char *, WvStream &);
-    void die_close_cb(const char *, WvStream &);
+    void restart_close_cb(const char *);
+    void die_close_cb(const char *);
 
 public:
 
@@ -87,46 +82,44 @@ public:
     //! use the cb function to populate the daemon with its initial streams
     WvStreamsDaemon(WvStringParm name,
             WvStringParm version,
-            WvStreamsDaemonCallback cb,
-            void *ud = NULL) :
+            WvDaemonCallback cb) :
         WvDaemon(name, version, WvDaemonCallback(),
                 WvDaemonCallback(), WvDaemonCallback())
     {
-        init(cb, ud);
+        init(cb);
     }
 
     //! Construct a new WvStreamsDaemon with given name and
     //! use the cb function to populate the daemon with its initial streams
     WvStreamsDaemon(WvStringParm name, 
-            WvStreamsDaemonCallback cb,
-            void *ud = NULL) :
+            WvDaemonCallback cb) :
         WvDaemon(name, WvDaemonCallback(),
                 WvDaemonCallback(), WvDaemonCallback())
     {
-        init(cb, ud);
+        init(cb);
     }
 
     //! Add a stream to the daemon; don't do anything if it goes !isok().
-    //! This should be called from the WvStreamsDaemonCallback function
+    //! This should be called from the WvDaemonCallback function
     //! passed to the constructor.
     void add_stream(IWvStream *istream,
 		    bool auto_free, char *id);
     //! Add a stream to the daemon; the daemon will restart, re-populating
     //! the initial streams using the callback passed to the constructor,
     //! if the stream goes !isok().
-    //! This should be called from the WvStreamsDaemonCallback function
+    //! This should be called from the WvDaemonCallback function
     //! passed to the constructor.
     void add_restart_stream(IWvStream *istream,
 			    bool auto_free, char *id);
     //! Add a stream to the daemon; if the stream goes !isok() the daemon
     //! will exit.
-    //! This should be called from the WvStreamsDaemonCallback function
+    //! This should be called from the WvDaemonCallback function
     //! passed to the constructor.
     void add_die_stream(IWvStream *istream,
 			bool auto_free, char *id);
 
     //! If this member is called then any existing streams on the globallist 
-    //! added *after* the WvStreamsDaemonCallback was executed will be closed
+    //! added *after* the WvDaemonCallback was executed will be closed
     //! if the daemon restarts; otherwise, they will persist after the restart.
     void close_existing_connections_on_restart()
     {
@@ -134,7 +127,7 @@ public:
     }
 
     //! Change the callback function and userdata
-    void setcallback(WvStreamsDaemonCallback cb, void *ud = NULL);
+    void setcallback(WvDaemonCallback cb);
 
 public:
     const char *wstype() const { return "WvStreamsDaemon"; }

@@ -13,10 +13,10 @@
 #include <signal.h>
 #endif
 
-void WvStreamsDaemon::init(WvStreamsDaemonCallback cb, void *ud)
+void WvStreamsDaemon::init(WvDaemonCallback cb)
 {
     do_full_close = false;
-    setcallback(cb, ud);
+    setcallback(cb);
 #ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
 #endif
@@ -26,7 +26,7 @@ void WvStreamsDaemon::do_start()
 {
     WvDaemon::do_start();
     
-    callback(*this, userdata);
+    callback();
 }
 
 void WvStreamsDaemon::do_run()
@@ -65,13 +65,13 @@ void WvStreamsDaemon::add_stream(IWvStream *istream,
     WvIStreamList::globallist.append(istream, autofree, id);
 }
 
-void WvStreamsDaemon::add_restart_stream(IWvStream *istream,
-    	bool autofree, char *id)
+void WvStreamsDaemon::add_restart_stream(IWvStream *istream, bool autofree,
+					 char *id)
 {
     add_stream(istream, autofree, id);
     
-    istream->setclosecallback(
-	WvBoundCallback<IWvStreamCallback, const char*>(this, &WvStreamsDaemon::restart_close_cb, id));
+    istream->setclosecallback(wv::bind(&WvStreamsDaemon::restart_close_cb,
+				       this, id));
 }
 
 void WvStreamsDaemon::add_die_stream(IWvStream *istream,
@@ -79,11 +79,11 @@ void WvStreamsDaemon::add_die_stream(IWvStream *istream,
 {
     add_stream(istream, autofree, id);
     
-    istream->setclosecallback(
-	WvBoundCallback<IWvStreamCallback, const char*>(this, &WvStreamsDaemon::die_close_cb, id));
+    istream->setclosecallback(wv::bind(&WvStreamsDaemon::die_close_cb, this,
+				       id));
 }
 
-void WvStreamsDaemon::restart_close_cb(const char *id, WvStream &)
+void WvStreamsDaemon::restart_close_cb(const char *id)
 {
     if (should_run())
     {
@@ -93,7 +93,7 @@ void WvStreamsDaemon::restart_close_cb(const char *id, WvStream &)
     }
 }
 
-void WvStreamsDaemon::die_close_cb(const char *id, WvStream &)
+void WvStreamsDaemon::die_close_cb(const char *id)
 {
     if (should_run())
     {
@@ -103,9 +103,8 @@ void WvStreamsDaemon::die_close_cb(const char *id, WvStream &)
     }
 }
 
-void WvStreamsDaemon::setcallback(WvStreamsDaemonCallback cb, void *ud)
+void WvStreamsDaemon::setcallback(WvDaemonCallback cb)
 {
     callback = cb;
-    userdata = ud;
 }
 

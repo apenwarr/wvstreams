@@ -223,8 +223,7 @@ WvStream::WvStream():
     stop_read(false),
     stop_write(false),
     closed(false),
-    userdata(NULL),
-    readcb(this, &WvStream::legacy_callback),
+    readcb(wv::bind(&WvStream::legacy_callback, this)),
     max_outbuf_size(0),
     outbuf_delayed_flush(false),
     is_auto_flush(true),
@@ -319,7 +318,7 @@ void WvStream::close()
     {
         IWvStreamCallback cb = closecb;
         closecb = 0; // ensure callback is only called once
-        cb(*this);
+        cb();
     }
     
     // I would like to delete call_ctx here, but then if someone calls
@@ -330,35 +329,33 @@ void WvStream::close()
 
 void WvStream::autoforward(WvStream &s)
 {
-    setcallback(autoforward_callback, &s);
+    setcallback(wv::bind(autoforward_callback, wv::ref(*this), wv::ref(s)));
     read_requires_writable = &s;
 }
 
 
 void WvStream::noautoforward()
 {
-    setcallback(0, NULL);
+    setcallback(0);
     read_requires_writable = NULL;
 }
 
 
-void WvStream::autoforward_callback(WvStream &s, void *userdata)
+void WvStream::autoforward_callback(WvStream &input, WvStream &output)
 {
-    WvStream &s2 = *(WvStream *)userdata;
     char buf[1024];
     size_t len;
     
-    len = s.read(buf, sizeof(buf));
-    // fprintf(stderr, "autoforward read %d bytes\n", (int)len);
-    s2.write(buf, len);
+    len = input.read(buf, sizeof(buf));
+    output.write(buf, len);
 }
 
 
 void WvStream::_callback()
 {
     execute();
-    if (!! callfunc)
-	callfunc(*this, userdata);
+    if (!!callfunc)
+	callfunc();
 }
 
 
@@ -396,8 +393,7 @@ void WvStream::callback()
     {
 	if (!call_ctx) // no context exists yet!
 	{
-	    call_ctx = WvCont(WvCallback<void*,void*>
-			      (this, &WvStream::_callwrap),
+	    call_ctx = WvCont(wv::bind(&WvStream::_callwrap, this, wv::_1),
 			      personal_stack_size);
 	}
 	
@@ -827,9 +823,9 @@ void WvStream::pre_select(SelectInfo &si)
 
     if (!si.inherit_request)
     {
-	si.wants.readable |= readcb;
-	si.wants.writable |= writecb;
-	si.wants.isexception |= exceptcb;
+	si.wants.readable |= static_cast<bool>(readcb);
+	si.wants.writable |= static_cast<bool>(writecb);
+	si.wants.isexception |= static_cast<bool>(exceptcb);
     }
     
     // handle read-ahead buffering
@@ -848,9 +844,9 @@ bool WvStream::post_select(SelectInfo &si)
 {
     if (!si.inherit_request)
     {
-	si.wants.readable |= readcb;
-	si.wants.writable |= writecb;
-	si.wants.isexception |= exceptcb;
+	si.wants.readable |= static_cast<bool>(readcb);
+	si.wants.writable |= static_cast<bool>(writecb);
+	si.wants.isexception |= static_cast<bool>(exceptcb);
     }
     
     // FIXME: need sane buffer flush support for non FD-based streams
@@ -1004,11 +1000,11 @@ IWvStream::SelectRequest WvStream::get_select_request()
 void WvStream::force_select(bool readable, bool writable, bool isexception)
 {
     if (readable)
-	readcb = IWvStreamCallback(this, &WvStream::legacy_callback);
+	readcb = wv::bind(&WvStream::legacy_callback, this);
     if (writable)
-	writecb = IWvStreamCallback(this, &WvStream::legacy_callback);
+	writecb = wv::bind(&WvStream::legacy_callback, this);
     if (isexception)
-	exceptcb = IWvStreamCallback(this, &WvStream::legacy_callback);
+	exceptcb = wv::bind(&WvStream::legacy_callback, this);
 }
 
 
@@ -1102,19 +1098,18 @@ const WvAddr *WvStream::src() const
 }
 
 
-void WvStream::setcallback(WvStreamCallback _callfunc, void *_userdata)
+void WvStream::setcallback(IWvStreamCallback _callfunc)
 { 
     callfunc = _callfunc;
-    userdata = _userdata;
     call_ctx = 0; // delete any in-progress WvCont
 }
 
 
-void WvStream::legacy_callback(IWvStream& s)
+void WvStream::legacy_callback()
 {
     execute();
-    if (!! callfunc)
-	callfunc(*this, userdata);
+    if (!!callfunc)
+	callfunc();
 }
 
 
@@ -1158,7 +1153,7 @@ IWvStreamCallback WvStream::setclosecallback(IWvStreamCallback _callback)
 	// already closed?  notify immediately!
 	closecb = 0;
 	if (!!_callback)
-	    _callback(*this);
+	    _callback();
     }
     return tmp;
 }

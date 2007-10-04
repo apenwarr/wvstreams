@@ -27,8 +27,7 @@ class WvDBusConn;
  * return value should be true if the callback processes the message, false
  * otherwise.
  */
-typedef WvCallback<bool, WvDBusConn&, WvDBusMsg&> WvDBusCallback;
-    
+typedef wv::function<bool(WvDBusMsg&)> WvDBusCallback;
 
 class IWvDBusAuth
 {
@@ -229,7 +228,7 @@ private:
     void cancel_pending(uint32_t serial);
     void add_pending(WvDBusMsg &msg, WvDBusCallback cb,
 		     time_t msec_timeout);
-    bool _registered(WvDBusConn &c, WvDBusMsg &msg);
+    bool _registered(WvDBusMsg &msg);
 
     struct CallbackInfo
     {

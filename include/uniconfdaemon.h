@@ -12,6 +12,9 @@
 #include "uniconf.h"
 #include "wvaddr.h"
 
+class WvTCPListener;
+class WvTCPListener;
+class WvUnixListener;
 class WvX509Mgr;
 
 class UniConfDaemon : public WvIStreamList
@@ -50,9 +53,9 @@ public:
     bool setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509);
 
 private:
-    void unixcallback(WvStream &s, void *userdata);
-    void tcpcallback(IWvStream *s, void *);
-    void sslcallback(WvX509Mgr *mgr, IWvStream *s, void *);
+    void unixcallback(WvUnixListener *listener);
+    void tcpcallback(IWvStream *s);
+    void sslcallback(WvX509Mgr *mgr, IWvStream *s);
 };
 
 #endif // __UNICONFDAEMON_H

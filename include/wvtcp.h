@@ -160,8 +160,7 @@ public:
      * Be careful not to accept() connections yourself if you do this,
      * or we may end up accept()ing twice, causing a hang the second time.
      */
-    void auto_accept(WvIStreamList *list,
-		     WvStreamCallback callfunc = NULL, void *userdata = NULL);
+    void auto_accept(WvIStreamList *list, wv::function<void(IWvStream*)> cb);
 
     /**
      * set a callback() function that automatically accepts new WvTCPConn
@@ -172,18 +171,16 @@ public:
      * Be careful not to accept() connections yourself if you do this,
      * or we may end up accept()ing twice, causing a hang the second time.
      */
-    void auto_accept(WvStreamCallback callfunc = NULL, void *userdata = NULL);
+    void auto_accept(wv::function<void(IWvStream*)> cb);
 
     /** src() is a bit of a misnomer, but it returns the listener port. */
     virtual const WvIPPortAddr *src() const;
     
 protected:
     WvIPPortAddr listenport;
-    WvIStreamList *auto_list;
-    WvStreamCallback auto_callback;
-    void *auto_userdata;
-    
-    void accept_callback(IWvStream *s, void *userdata);
+    void accept_callback(WvIStreamList *list,
+			 wv::function<void(IWvStream*)> cb,
+			 IWvStream *_connection);
 
 public:
     const char *wstype() const { return "WvTCPListener"; }

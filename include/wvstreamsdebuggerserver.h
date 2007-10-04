@@ -35,24 +35,23 @@ class WvStreamsDebuggerServer : public WvStream
         void choose_salt();
     };
     // Username, salt, md5sum("%s%s", salt, password)
-    typedef WvCallback<bool, WvStringParm, WvStringParm, WvStringParm> AuthCallback;
+    typedef wv::function<bool(WvStringParm, WvStringParm, WvStringParm)> AuthCallback;
 
     WvLog log;
         
     WvUnixListener *unix_listener;
-    void unix_listener_cb(WvStream &, void *);
-    void unix_listener_close_cb(WvStream &);
+    void unix_listener_cb();
+    void unix_listener_close_cb();
     
     WvTCPListener *tcp_listener;
-    void tcp_listener_cb(IWvStream *, void *);
-    void tcp_listener_close_cb(WvStream &);
+    void tcp_listener_cb(IWvStream *s);
+    void tcp_listener_close_cb();
 
     AuthCallback auth_cb;
 
-    void auth_request_cb(WvStream &_s, void *);
-    void auth_response_cb(WvStream &_s, void *);
-    void ready_cb(WvStream &_s, void *);
-    void close_cb(WvStream &_s);
+    void auth_request_cb(Connection &s);
+    void auth_response_cb(Connection &s);
+    void ready_cb(Connection &s);
     
     WvIStreamList streams;
 

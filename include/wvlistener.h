@@ -13,18 +13,15 @@
 
 class WvListener : public IWvListener
 {
-    typedef WvCallback<void, WvStream&, void*> CompatCallback;
     IMPLEMENT_IOBJECT(WvListener);
 public:
     IWvStream *cloned;
     IWvListenerCallback acceptor;
-    void *acceptor_userdata;
     
     WvListener(IWvStream *_cloned);
     virtual ~WvListener();
     
-    virtual IWvListenerCallback onaccept(IWvListenerCallback _cb,
-					 void *_userdata = 0);
+    virtual IWvListenerCallback onaccept(IWvListenerCallback _cb);
     void runonce(time_t msec_delay);
     
     //
@@ -40,7 +37,7 @@ public:
 	if (acceptor)
 	{
 	    IWvStream *s = accept();
-	    if (s) acceptor(s, acceptor_userdata);
+	    if (s) acceptor(s);
 	}
     }
     

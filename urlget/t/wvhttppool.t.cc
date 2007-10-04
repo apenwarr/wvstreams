@@ -6,11 +6,13 @@
 #include <netdb.h>
 #endif
 
+
 static void close_callback(WvStream& s)
 {
     if (!s.isok())
         printf("%d", s.geterr());
 }
+
 
 WVTEST_MAIN("WvHttpPool GET")
 {
@@ -25,7 +27,7 @@ WVTEST_MAIN("WvHttpPool GET")
 	WVPASS(buf = pool.addurl("http://www.google.com"));
 	WVPASS(buf->isok());
 	buf->autoforward(*wvcon);
-	buf->setclosecallback(close_callback);
+	buf->setclosecallback(wv::bind(close_callback, wv::ref(*buf)));
 	l.append(buf, true, "buf stream");
 	while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	    l.runonce();
@@ -50,7 +52,7 @@ WVTEST_MAIN("WvHttpPool HEAD")
 	WVPASS(buf = pool.addurl("http://www.google.com", "HEAD"));
 	WVPASS(buf->isok());
 	buf->autoforward(*wvcon);
-	buf->setclosecallback(close_callback);
+	buf->setclosecallback(wv::bind(close_callback, wv::ref(*buf)));
 	l.append(buf, true, "buf stream");
 	while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	{
@@ -70,7 +72,7 @@ bool expecting_request = false;
 bool break_connection = false;
 unsigned int http_conns = 0;
 
-void tcp_callback(WvStream &s, void*)
+void tcp_callback(WvStream &s)
 {
     bool last_was_pipeline_check = false;
     WvString buf("");
@@ -125,13 +127,11 @@ void tcp_callback(WvStream &s, void*)
 }
 
 
-void listener_callback(IWvStream *_newconn, void *userdata)
+void listener_callback(IWvStream *_newconn)
 {
-    WvStreamClone *newconn = new WvStreamClone(_newconn);
-    WvIStreamList &list = *(WvIStreamList *)userdata;
     http_conns++;
     printf("Incoming connection (%u)\n", http_conns);
-    newconn->setcallback(tcp_callback, NULL);
+    newconn->setcallback(wv::bind(tcp_callback, wv::ref(*newconn)));
     list.append(newconn, true, "incoming http conn");
     expecting_request = true;
 }
@@ -155,7 +155,7 @@ static void do_test(WvIStreamList &l, unsigned int port,
 									 i)));
         WVPASS(buf->isok());
         buf->autoforward(*wvcon);
-        buf->setclosecallback(close_callback);
+        buf->setclosecallback(wv::bind(close_callback, wv::ref(*buf)));
         bufs.append(buf, true, "poolbuf");
     }
 
@@ -200,7 +200,7 @@ WVTEST_MAIN("WvHttpPool pipelining")
 	    ++port;
 	}
     }
-    listener->onaccept(listener_callback, &l);
+    listener->onaccept(wv::bind(listener_callback, wv::ref(l));
     l.append(listener, true, "http listener");
 
     // Pipelining-enabled tests share one connection for the pipeline test

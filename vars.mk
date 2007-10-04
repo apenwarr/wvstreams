@@ -46,7 +46,7 @@ DISTCLEAN += autom4te.cache config.mk config.log config.status \
 
 REALCLEAN += stamp-h.in configure include/wvautoconf.h.in
 
-CPPFLAGS += -Iinclude -Iinclude/dbus-upstream -Ignulib -pipe
+CPPFLAGS += -Iinclude -Ignulib -pipe
 ARFLAGS = rs
 RELEASE?=$(PACKAGE_VERSION)
 

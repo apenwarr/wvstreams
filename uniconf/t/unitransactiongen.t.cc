@@ -430,11 +430,8 @@ WVTEST_MAIN("excessive callbacks")
 {
     int i1 = 0, i2 = 0, i3 = 0;
     UniConfRoot uni("temp:");
-    UniWatch w1(uni,
-		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i1),
-		true);
-    UniWatch w2(uni["a/b"],
-		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i2),
+    UniWatch w1(uni, wv::bind(&incr_callback, &i1, wv::_1, wv::_2), true);
+    UniWatch w2(uni["a/b"], wv::bind(&incr_callback, &i2, wv::_1, wv::_2),
 		true);
     
     uni.xsetint("/a/b/c/1", 11); // a, b, c, 1
@@ -448,9 +445,7 @@ WVTEST_MAIN("excessive callbacks")
     
     UniConfRoot temp("temp:");
     UniConf t(temp["t"]);
-    UniWatch w3(temp,
-		WvBoundCallback<UniConfCallback,int *>(&incr_callback, &i3),
-		true);
+    UniWatch w3(temp, wv::bind(&incr_callback, &i3, wv::_1, wv::_2), true);
     WVPASSEQ(i3, 0);
     t.mountgen(new UniTransactionGen(new UniUnwrapGen(uni["a"])), true);
     t.mountgen(new UniTransactionGen(new UniUnwrapGen(uni["a"])), true);
@@ -561,7 +556,7 @@ WVTEST_MAIN("double notifications with daemon")
 
     UniWatchList watches;
     NCounter *foo = new NCounter;
-    UniConfCallback uc(foo, &NCounter::callback);
+    UniConfCallback uc(wv::bind(&NCounter::callback, foo, wv::_1, wv::_2));
     watches.add(uniconf["Users"], uc);
 
     uniconf["users"]["x"].setme("1");

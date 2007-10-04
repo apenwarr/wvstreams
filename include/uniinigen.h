@@ -25,7 +25,7 @@ class WvFile;
 class UniIniGen : public UniTempGen
 {
 public:
-    typedef WvCallback<void> SaveCallback;
+    typedef wv::function<void()> SaveCallback;
 
 private:
     WvString filename;

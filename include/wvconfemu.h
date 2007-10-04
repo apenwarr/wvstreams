@@ -95,7 +95,7 @@ public:
 
 
 // parameters are: userdata, section, entry, oldval, newval
-typedef WvCallback<void, void*, WvStringParm, WvStringParm, WvStringParm, WvStringParm> WvConfCallback;
+typedef wv::function<void(void*, WvStringParm, WvStringParm, WvStringParm, WvStringParm)> WvConfCallback;
 
 
 class WvConfEmu

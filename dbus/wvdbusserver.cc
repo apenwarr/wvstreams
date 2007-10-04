@@ -83,8 +83,8 @@ WvDBusServer::WvDBusServer(WvStringParm addr)
     listener = new WvTCPListener(addr);
     append(listener, false);
     log(WvLog::Info, "Listening on '%s'\n", *listener->src());
-    listener->onaccept(IWvListenerCallback(this,
-					   &WvDBusServer::new_connection_cb));
+    listener->onaccept(wv::bind(&WvDBusServer::new_connection_cb, this,
+				wv::_1));
 }
 
 
@@ -273,22 +273,23 @@ void WvDBusServer::conn_closed(WvStream &s)
 }
 
 
-void WvDBusServer::new_connection_cb(IWvStream *s, void *)
+void WvDBusServer::new_connection_cb(IWvStream *s)
 {
     WvDBusConn *c = new WvDBusConn(s, new WvDBusServerAuth, false);
     all_conns.append(c, false);
     register_name(c->uniquename(), c);
-    c->setclosecallback(IWvStreamCallback(this, &WvDBusServer::conn_closed));
+    c->setclosecallback(wv::bind(&WvDBusServer::conn_closed, this,
+				 wv::ref(*c)));
     
     c->add_callback(WvDBusConn::PriSystem,
-		    WvDBusCallback(this, 
-				   &WvDBusServer::do_server_msg));
-    c->add_callback(WvDBusConn::PriBridge,
-		    WvDBusCallback(this, 
-				   &WvDBusServer::do_bridge_msg));
+		    wv::bind(&WvDBusServer::do_server_msg, this,
+			     wv::ref(*c), wv::_1));
+    c->add_callback(WvDBusConn::PriBridge, 
+		    wv::bind(&WvDBusServer::do_bridge_msg, this,
+			     wv::ref(*c), wv::_1));
     c->add_callback(WvDBusConn::PriBroadcast,
-		    WvDBusCallback(this, 
-				   &WvDBusServer::do_broadcast_msg));
+		    wv::bind(&WvDBusServer::do_broadcast_msg, this,
+			     wv::ref(*c), wv::_1));
     
     append(c, true, "wvdbus servconn");
 }

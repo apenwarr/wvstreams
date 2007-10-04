@@ -70,24 +70,23 @@ void UniConfDaemon::accept(WvStream *stream)
 
 
 #ifndef _WIN32
-void UniConfDaemon::unixcallback(WvStream &l, void *)
+void UniConfDaemon::unixcallback(WvUnixListener *listener)
 {
     debug("Incoming Unix domain connection.\n");
-    WvUnixListener *listener = static_cast<WvUnixListener*>(& l);
     WvStream *s = listener->accept();
     accept(s);
 }
 #endif
 
 
-void UniConfDaemon::tcpcallback(IWvStream *s, void *)
+void UniConfDaemon::tcpcallback(IWvStream *s)
 {
     debug("Incoming TCP connection from %s.\n", *s->src());
     accept(new WvStreamClone(s));
 }
 
 
-void UniConfDaemon::sslcallback(WvX509Mgr *x509, IWvStream *s, void *)
+void UniConfDaemon::sslcallback(WvX509Mgr *x509, IWvStream *s)
 {
     debug("Incoming TCP/SSL connection from %s.\n", *s->src());
     accept(new WvSSLStream(s, x509, 0, true));
@@ -105,8 +104,8 @@ bool UniConfDaemon::setupunixsocket(WvStringParm path, int create_mode)
         WVRELEASE(listener);
         return false;
     }
-    listener->setcallback(WvStreamCallback(this,
-        &UniConfDaemon::unixcallback), NULL);
+    listener->setcallback(wv::bind(&UniConfDaemon::unixcallback, this,
+				   listener));
     append(listener, true, "unix listen");
     debug("Listening on Unix socket '%s'\n", path);
     return true;
@@ -124,8 +123,7 @@ bool UniConfDaemon::setuptcpsocket(const WvIPPortAddr &addr)
         WVRELEASE(listener);
         return false;
     }
-    listener->onaccept(IWvListenerCallback(this,
-					&UniConfDaemon::tcpcallback));
+    listener->onaccept(wv::bind(&UniConfDaemon::tcpcallback, this, wv::_1));
     append(listener, true, "tcp listen");
     debug("Listening for TCP at %s.\n", addr);
     return true;
@@ -142,8 +140,8 @@ bool UniConfDaemon::setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509)
         WVRELEASE(listener);
         return false;
     }
-    listener->onaccept(WvBoundCallback<IWvListenerCallback, WvX509Mgr*>
-		       (this, &UniConfDaemon::sslcallback, x509));
+    listener->onaccept(wv::bind(&UniConfDaemon::sslcallback, this,
+				x509, wv::_1));
     append(listener, true, "ssl listen");
     debug("Listening for TCP/SSL at %s.\n", addr);
     return true;

@@ -13,10 +13,7 @@
 
 # if WVSTREAMS_SRC is set assume everything else is set.
 # For packages that use WvStreams use WVSTREAMS_SRC=. for distribution.
-ifeq ($(WVSTREAMS_SRC),)
-  ifeq ($(WVSTREAMS),)
-    $(error The WVSTREAMS variable is not defined)
-  endif
+ifneq ($(WVSTREAMS),)
   WVSTREAMS_SRC=$(WVSTREAMS)
   WVSTREAMS_LIB=$(WVSTREAMS)
   WVSTREAMS_INC=$(WVSTREAMS)/include

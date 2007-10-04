@@ -180,8 +180,9 @@ void UniConfGenSanityTester::test_haschildren_moniker(WvStringParm moniker)
     UniConfGenSanityTester::CbCounter notifywatcher;
 
     UniConfRoot cfg(moniker);
-    UniWatch watcher(cfg["/"], UniConfCallback(&notifywatcher,
-                 &UniConfGenSanityTester::CbCounter::callback));
+    UniWatch watcher(cfg["/"],
+		     wv::bind(&UniConfGenSanityTester::CbCounter::callback,
+			      &notifywatcher, wv::_1, wv::_2));
     WVFAIL(cfg.haschildren());
 
     WVPASSEQ(cfg.getme(), WvString::empty);

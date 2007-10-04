@@ -27,7 +27,7 @@ class UniListIter;
  *   gen - the externally visible generator whose key has changed
  *   key - the key that has changed
  */
-typedef WvCallback<void, const UniConfKey &, WvStringParm> 
+typedef wv::function<void(const UniConfKey&, WvStringParm)> 
     UniConfGenCallback;
 
 /**

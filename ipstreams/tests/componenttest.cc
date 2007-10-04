@@ -5,24 +5,24 @@
 #include <assert.h>
 
 
-static void httpget(WvStream &s, void *userdata)
+static void httpget(WvStream &input, WvStream &output)
 {
     static int countdown = 6;
     
-    if (s.alarm_was_ticking)
+    if (input.alarm_was_ticking)
     {
 	if (!--countdown)
 	{
 	    wvcon->print("...sending to TCP stream.\n");
-	    s.print("GET / HTTP/1.0\r\n\r\n");
+	    input.print("GET / HTTP/1.0\r\n\r\n");
 	}
 	else
 	    wvcon->print("[%s]", countdown);
     }
     
-    WvStream::autoforward_callback(s, (WvStream *)userdata);
+    WvStream::autoforward_callback(input, output);
 	
-    s.alarm(1000);
+    input.alarm(1000);
 }
 
 
@@ -43,7 +43,7 @@ int main()
     // make them do something useful
     a.autoforward(b);
     b.autoforward(a);
-    c.setcallback(httpget, &a);
+    c.setcallback(wv::bind(httpget, wv::ref(c), wv::ref(a)));
     c.alarm(1*1000);
     
     // create a list of them (in fact, we could use a WvStreamList here...)

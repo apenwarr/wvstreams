@@ -38,8 +38,7 @@ int main()
 
     foo thing;
 
-    r["heh"].add_callback(0,
-		  WvBoundCallback<UniConfCallback, int>(&thing, &foo::cb, 3));
+    r["heh"].add_callback(0, wv::bind(&foo::cb, &thing, 3, wv::_1, wv::_2));
 
  
     WvIStreamList l;

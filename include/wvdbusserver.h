@@ -85,7 +85,7 @@ private:
     WvMap<WvString,WvDBusConn*> name_to_conn;
     WvMap<uint32_t,WvDBusConn*> serial_to_conn;
     
-    void new_connection_cb(IWvStream *s, void *);
+    void new_connection_cb(IWvStream *s);
     void conn_closed(WvStream &s);
 	
     bool do_server_msg(WvDBusConn &conn, WvDBusMsg &msg);

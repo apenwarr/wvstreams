@@ -80,8 +80,9 @@ void UniTempGen::set(const UniConfKey &_key, WvStringParm _value)
             {
                 hold_delta();
                 // Issue notifications for every key that gets deleted.
-                node->visit(UniConfValueTree::Visitor(this,
-                    &UniTempGen::notify_deleted), NULL, false, true);
+                node->visit(wv::bind(&UniTempGen::notify_deleted, this,
+				     wv::_1, wv::_2),
+			    NULL, false, true);
                 delete node;
                 if (node == root)
                     root = NULL;

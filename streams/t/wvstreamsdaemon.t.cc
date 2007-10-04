@@ -21,7 +21,7 @@ void init()
 }
 
 //Callback for the accepted client conection at the server
-void client_cb(WvStream &stream, void *)
+static void client_cb(WvStream &stream)
 {
     // Echo everything back
     const char *line = stream.getline();
@@ -29,12 +29,21 @@ void client_cb(WvStream &stream, void *)
         stream.print("Client said: %s\n", line);
 }     
 
+
+static void accept_cb(WvUnixListener *listen)
+{
+    WvUnixConn *conn = listen->accept();
+    conn->setcallback(wv::bind(client_cb, wv::ref(*conn)));
+    WvIStreamList::globallist.append(conn, true, "WvUnixConn");
+}
+
+
 //Callback function for the daemon
-void startup(WvStreamsDaemon &daemon, void *)
+static void startup(WvStreamsDaemon *daemon)
 {
     WvUnixListener *listener = new WvUnixListener(sock_name, 0700);
-    listener->auto_accept(&WvIStreamList::globallist, client_cb); 
-    daemon.add_die_stream(listener, true, "Listener");
+    listener->setcallback(wv::bind(accept_cb, listener)); 
+    daemon->add_die_stream(listener, true, "Listener");
 }
 
 // Returns a new WvUnixConn connected to name.  Returns NULL if it could not
@@ -96,7 +105,8 @@ WVTEST_MAIN("Checking Daemon created")
         // This is the server process
         WvStreamsDaemon *daemon = NULL;
         wvout->print("Running code for server\n");
-        daemon = new WvStreamsDaemon("Sample Daemon", "0.1", startup);
+        daemon = new WvStreamsDaemon("Sample Daemon", "0.1",
+				     wv::bind(startup, wv::ref(daemon)));
 	daemon->pid_file = pidfile;
 	int fake_argc = 2;
 	char *fake_argv[] = { "WvStreamsDaemon_nonexistant", "-d", NULL };
