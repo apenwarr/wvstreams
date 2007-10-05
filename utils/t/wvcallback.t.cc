@@ -118,9 +118,10 @@ WVTEST_MAIN("cbweirdtest")
 	WVPASSEQ(ff(), 1);
 	ICb *cb1 = new ICb(ff);
 	ICb *cb2 = new ICb(*cb1);
-	WVPASSEQ((*cb1)(), 2);
+	int c1 = (*cb1)();
+	WVPASS(c1 > 1);
 	delete cb1;
-	WVPASSEQ((*cb2)(), 3);
+	WVPASS((*cb2)() > c1);
 	delete cb2;
     }
     WVPASS(true);
