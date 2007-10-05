@@ -44,7 +44,7 @@ WVTEST_MAIN("wvlistener")
 	WvIStreamList::globallist.runonce(-1);
     WVPASS(tcp.isok());
     WVPASS(mystream);
-    if (!mystream)
+    if (mystream)
     {
 	WVPASS(mystream->isok());
 	mystream->write("text!\n", 6);

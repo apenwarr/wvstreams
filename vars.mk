@@ -72,10 +72,6 @@ endif
 
 libwvutils.so-LIBS+=$(LIBS_PAM)
 
-LDLIBS := $(LDLIBS) \
-	$(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" \
-		&& echo " -lsupc++ -lgcc_eh")
-
 include $(filter-out xplc/% linuxstreams/%,$(wildcard */vars.mk */*/vars.mk)) \
 	$(wildcard $(foreach dir,$(ARCH_SUBDIRS),$(dir)/*/vars.mk)) /dev/null
 
@@ -98,7 +94,6 @@ BASEOBJS= \
 	utils/strutils.o \
 	utils/wvtask.o \
 	utils/wvtimeutils.o \
-	utils/wvvector.o \
 	streams/wvistreamlist.o \
 	utils/wvstreamsdebugger.o \
 	streams/wvlog.o \

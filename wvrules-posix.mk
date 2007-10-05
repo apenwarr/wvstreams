@@ -18,10 +18,7 @@ CXXFLAGS += $(CXXOPTS)
 LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 
 # Default compiler we use for linking
-WVLINK_CC = gcc
-
-# FIXME: what does this do??
-XX_LIBS := $(XX_LIBS) $(shell $(CC) -lsupc++ -lgcc_eh 2>&1 | grep -q "undefined reference" && echo " -lsupc++ -lgcc_eh")
+WVLINK_CC = g++
 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
