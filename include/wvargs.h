@@ -9,7 +9,6 @@
 #include "wvstring.h"
 #include "wvstringlist.h"
 #include "wvcallback.h"
-#include "wvvector.h"
 
 class WvArgsOption;
 class WvArgsData;

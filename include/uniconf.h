@@ -7,10 +7,11 @@
 #ifndef __UNICONF_H
 #define __UNICONF_H
 
+#include <vector>
+
 #include "uniconfkey.h"
 #include "uniconfgen.h"
 #include "wvcallback.h"
-#include "wvvector.h"
 
 class WvStream;
 class UniConf;
@@ -560,19 +561,15 @@ private:
     void _purge();
     void _rewind();
     
-    static int wrapcomparator(const UniConf *a, const UniConf *b);
-    static Comparator innercomparator;
-
 protected:
-    typedef WvVector<UniConf> Vector;
-    Vector xkeys;
+    std::vector<UniConf> xkeys;
     
     template<class Iter>
     void populate(Iter &i)
     {
         _purge();
         for (i.rewind(); i.next(); )
-            xkeys.append(new UniConf(*i), true);
+            xkeys.push_back(*i);
         _rewind();
     }
 };

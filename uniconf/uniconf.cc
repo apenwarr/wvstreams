@@ -426,31 +426,29 @@ int UniConf::SortedIterBase::defcomparator(const UniConf &a,
 }
 
 
-UniConf::SortedIterBase::Comparator
-    UniConf::SortedIterBase::innercomparator = NULL;
+static UniConf::SortedIterBase::Comparator innercomparator = NULL;
 
-int UniConf::SortedIterBase::wrapcomparator(const UniConf *a,
-    const UniConf *b)
+static bool wrapcomparator(const UniConf &a, const UniConf &b)
 {
-    return innercomparator(*a, *b);
+    return innercomparator(a, b) < 0;
 }
 
 
 void UniConf::SortedIterBase::_purge()
 {
-    count = xkeys.count();
-    xkeys.zap();
+    count = xkeys.size();
+    xkeys.clear();
 }
 
 
 void UniConf::SortedIterBase::_rewind()
 {
     index = 0;
-    count = xkeys.count();
+    count = xkeys.size();
     
     // This code is NOT reentrant because qsort makes it too hard
     innercomparator = xcomparator;
-    xkeys.qsort(&wrapcomparator);
+    std::sort(xkeys.begin(), xkeys.end(), wrapcomparator);
 }
 
 
@@ -458,7 +456,7 @@ bool UniConf::SortedIterBase::next()
 {
     if (index >= count)
         return false;
-    current = *xkeys[index];
+    current = xkeys[index];
     index += 1;
     return true;
 }
