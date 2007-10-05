@@ -1,6 +1,7 @@
 #!/bin/bash
 PORTS=$PWD/../wvports
 ./configure \
+	--build=$(./config.guess) \
 	--host=i586-mingw32msvc \
 	--enable-exceptions \
 	--with-xplc=$PORTS/xplc/build/xplc \
