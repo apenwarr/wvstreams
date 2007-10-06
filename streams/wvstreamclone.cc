@@ -53,6 +53,18 @@ WvStreamClone::WvStreamClone(IWvStream *_cloned)
 
 WvStreamClone::~WvStreamClone()
 {
+    // FIXME: it's not at all obvious that destroying a WvStreamClone should
+    // close the cloned stream.  The cloned stream will close itself anyway
+    // when it gets destroyed, and in the (rather rare) case that it has
+    // more than one owner, doing it the way we do now, deleting the *first*
+    // owner will close it for the other owners, which might not make sense.
+    // 
+    // On the other hand, if someone explicitly calls close() before
+    // deleting the clone, we should probably pass that along.
+    // 
+    // To get the two above behaviours at once, we have to do something more
+    // than just close() here.
+    
     //fprintf(stderr, "%p destroying: clone is %p\n", this, cloned);
     close();
     WVRELEASE(cloned);

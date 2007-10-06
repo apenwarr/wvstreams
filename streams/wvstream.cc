@@ -18,6 +18,8 @@
 #include "wvstreamsdebugger.h"
 #include "wvstrutils.h"
 #include "wvistreamlist.h"
+#include "wvlinkerhack.h"
+#include "wvmoniker.h"
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
@@ -58,6 +60,15 @@ UUID_MAP_BEGIN(WvStream)
 WvMap<WSID, WvStream *> *WvStream::wsid_map;
 WSID WvStream::next_wsid_to_try = 0;
 
+
+WV_LINK(WvStream);
+
+static IWvStream *create_null(WvStringParm, IObject *)
+{
+    return new WvStream();
+}
+
+static WvMoniker<IWvStream> reg("null",  create_null);
 
 static bool is_prefix_insensitive(const char *str, const char *prefix)
 {
