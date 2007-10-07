@@ -309,25 +309,9 @@ class WvMapPair
 public:
     TKey key;
     TData data;
-    WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
-        : key(_key), data(_data) { };
-};
-
-
-// Pointer type
-template<typename TKey, typename _TData>
-class WvMapPair<TKey, _TData*>
-{
-    typedef _TData* TData;
-public:
-    TKey key;
-    TData data;
-    WvMapPair(const TKey &_key, const TData &_data, bool _autofree)
-        : key(_key), data(_data), autofree(_autofree) { };
-    virtual ~WvMapPair()
-        { if (autofree) WvTraits<_TData>::release(data); };
-protected:
-    bool autofree;
+    WvMapPair(const TKey &_key, const TData &_data):
+	key(_key),
+	data(_data) { };
 };
 
 
@@ -400,14 +384,14 @@ public:
     }
     bool exists(const TKey &key) const
         { return find_helper(key); }
-    void set(const TKey &key, const TData &data, bool autofree = false)
+    void set(const TKey &key, const TData &data)
     {
 	if (find_helper(key))
 	    remove(key);
-	add(key, data, autofree);
+	add(key, data);
     }
-    void add(const TKey &key, const TData &data, bool autofree = false)
-        { MyHashTable::add(new MyPair(key, data, autofree), true); }
+    void add(const TKey &key, const TData &data)
+        { MyHashTable::add(new MyPair(key, data), true); }
     void remove(const TKey &key)
     {
         last_accessed = NULL;

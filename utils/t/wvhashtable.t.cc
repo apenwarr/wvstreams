@@ -222,47 +222,6 @@ WVTEST_MAIN("WvMap iterators")
     WVPASS(i == 4);
 }
 
-// Check that auto_free does nothing for objects
-WVTEST_MAIN("WvMap auto_free")
-{
-    WvMap<WvString, WvString> objfreemap (5);
-    objfreemap.add("foo", "bar", true);
-    if (!WVPASS(*objfreemap.find("foo") == "bar"))
-	printf("   because [%s] != \"bar\"\n", 
-	       objfreemap.find("foo")->cstr());
-    
-    objfreemap.remove("foo");
-    if (!WVFAIL(objfreemap.find("foo")))
-	printf("   because objfreemap.find(\"foo\") == [%s]\n", 
-	       objfreemap.find("foo")->cstr());
-}
-
-WVTEST_MAIN("WvMap auto_free 2")
-{
-    WvMap<WvString, AutoFreeTest*> freemap(5);
-    freemap.add("moo", new AutoFreeTest(), true);
-    WVPASS(freemap.find("moo"));
-    freemap.remove("moo");
-    WVFAIL(freemap.find("moo"));
-}
-
-// check if iterating confuses auto_free 
-// like auto_ptrs in stdc++ containers
-WVTEST_MAIN("WvMap auto_free and sorting")
-{
-    WvMap<WvString, AutoFreeTest*> freemap(5);
-    freemap.add("meaw", new AutoFreeTest(), true);
-    freemap.add("dog", new AutoFreeTest(), true);
-    freemap.add("star", new AutoFreeTest(), true);
-    freemap.add("star", new AutoFreeTest(), true);
-    
-    int i = 0;
-    WvMap<WvString, AutoFreeTest*>::Iter j(freemap);
-    for (j.rewind(); j.next(); i++)
-	WVPASS(strlen(j->key) == 3 || strlen(j->key) == 4);
-    WVPASS(i == 4);
-}
-
 WVTEST_MAIN("WvMap zapping")
 {
     WvMap<WvString, WvString> zapmap(5);
@@ -272,13 +231,6 @@ WVTEST_MAIN("WvMap zapping")
     WVPASS(zapmap.exists("Febtober"));
     zapmap.zap();
     WVFAIL(zapmap.exists("Febtober"));
-
-    WvMap<WvString, WvString*> ptrmap(5);
-
-    ptrmap.set("Smarch", new WvString("Mapril"), true);
-    WVPASS(ptrmap.exists("Smarch"));
-    ptrmap.zap();
-    WVFAIL(ptrmap.exists("Smarch"));
 }
 
 WVTEST_MAIN("WvMap removing")
@@ -288,11 +240,5 @@ WVTEST_MAIN("WvMap removing")
     WVPASS(remmap.exists("ruff"));
     remmap.remove("ruff");
     WVFAIL(remmap.exists("ruff"));
-
-    WvMap<WvString, WvString*> remmap2(5);
-    remmap2.add("moo", new WvString("This is the sound a dog makes"), true);
-    WVPASS(remmap2.exists("moo"));
-    remmap2.remove("moo");
-    WVFAIL(remmap2.exists("moo"));
 }
 
