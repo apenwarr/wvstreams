@@ -30,7 +30,6 @@ public:
         expected_responses(_expected_responses),
         log("UniConfDaemonTestConn", WvLog::Debug)      
         {
-            setclone(s);
             uses_continue_select = true;
         }
     virtual ~UniConfDaemonTestConn() 

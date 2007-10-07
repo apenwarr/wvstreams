@@ -35,8 +35,7 @@ int main()
     IWvStream *tcp2 = wvcreate<IWvStream>("tcp:192.168.12.1:80");
     
     // add handy WvStreams-style functionality by cloning them
-    WvStreamClone a(con);
-    a.disassociate_on_close = true;
+    WvStreamClone a((con->addRef(), con));
     WvStreamClone b(ssl);
     WvStreamClone c(tcp2);
 

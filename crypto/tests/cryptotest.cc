@@ -205,10 +205,9 @@ int main(int argc, char **argv)
 
     WvStreamClone *base;
     if (direction == Encrypt)
-        base = new WvStreamClone(out);
+        base = new WvStreamClone((out->addRef(), out));
     else
-        base = new WvStreamClone(in);
-    base->disassociate_on_close = true;
+        base = new WvStreamClone((in->addRef(), in));
     
     switch (crypt_type)
     {

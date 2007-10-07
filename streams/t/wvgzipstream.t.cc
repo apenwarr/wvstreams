@@ -12,9 +12,7 @@
 
 WVTEST_MAIN("autoflush")
 {
-    WvLoopback loopy;
-    WvGzipStream gzip(&loopy);
-    gzip.disassociate_on_close = true;
+    WvGzipStream gzip(new WvLoopback);
     
     char buf[1024];
     size_t len;

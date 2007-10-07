@@ -33,8 +33,8 @@ WvQtStreamClone::WvQtStreamClone(IWvStream *_cloned, int msec_timeout) :
     notify_writable(NUM_SLOTS),
     notify_exception(NUM_SLOTS)
 {
+    _cloned->addRef();
     setclone(_cloned);
-    disassociate_on_close = true;
     notify_readable.setAutoDelete(true);
     notify_writable.setAutoDelete(true);
     notify_exception.setAutoDelete(true);

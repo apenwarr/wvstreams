@@ -13,8 +13,8 @@ class MyClient : public WvStreamClone
 public:
     MyClient(IWvStream *conn) :
         WvStreamClone(conn),
-        log("MyClient", WvLog::Info) {
-        setclone(conn);
+        log("MyClient", WvLog::Info) 
+    {
         uses_continue_select = true;
 
         print("Hello I am %s v%s\n", NAME, VERSION);
