@@ -1,5 +1,5 @@
 #include "wvtest.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 #include <stdio.h>
 
 // START callbacktest.cc definitions
