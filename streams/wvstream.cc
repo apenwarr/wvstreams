@@ -54,8 +54,8 @@ UUID_MAP_BEGIN(WvStream)
   UUID_MAP_END
 
 
-WvMap<WSID, WvStream *> *WvStream::wsid_map;
-WSID WvStream::next_wsid_to_try = 0;
+static WvMap<WSID, WvStream*> *wsid_map;
+static WSID next_wsid_to_try;
 
 
 static bool is_prefix_insensitive(const char *str, const char *prefix)
@@ -176,9 +176,9 @@ WvString WvStream::debugger_streams_run_cb(WvStringParm cmd,
         WvStreamsDebugger::ResultCallback result_cb, void *)
 {
     debugger_streams_display_header(cmd, result_cb);
-    if (WvStream::wsid_map)
+    if (wsid_map)
     {
-        WvMap<WSID, WvStream *>::Iter i(*WvStream::wsid_map);
+        WvMap<WSID, WvStream *>::Iter i(*wsid_map);
         for (i.rewind(); i.next(); )
             debugger_streams_maybe_display_one_stream(i->data,
                     cmd, args, result_cb);
