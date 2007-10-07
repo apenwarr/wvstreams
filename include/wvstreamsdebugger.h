@@ -51,9 +51,9 @@ private:
             cleanup_cb = _cleanup_cb;
         }
     };
-    typedef WvMap<WvString, Command *> CommandMap;
+    typedef WvMap<WvString, Command> CommandMap;
     static CommandMap *commands;
-    typedef WvMap<WvString, char *> CommandDataMap;
+    typedef WvMap<WvString, void*> CommandDataMap;
     CommandDataMap command_data;
     
     void *get_command_data(WvStringParm cmd, Command *command);

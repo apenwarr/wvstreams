@@ -25,10 +25,6 @@ public:
         
         if (WvStreamsDebugger::commands)
         {
-            WvStreamsDebugger::CommandMap::Iter i(*WvStreamsDebugger::commands);
-            for (i.rewind(); i.next(); )
-                delete i->data;
-            WvStreamsDebugger::commands->zap();
             delete WvStreamsDebugger::commands;
             WvStreamsDebugger::commands = NULL;
         }
@@ -47,13 +43,13 @@ void *WvStreamsDebugger::get_command_data(WvStringParm cmd, Command *command)
 {
     if (command == NULL)
     {
-        Command **pcommand = commands->find(cmd);
+        Command *pcommand = commands->find(cmd);
         if (!pcommand)
             return NULL;
-        command = *pcommand;
+        command = pcommand;
     }
     
-    void **pcd = (void **)command_data.find(cmd);
+    void **pcd = command_data.find(cmd);
     void *cd;
     if (pcd == NULL)
     {
@@ -65,7 +61,7 @@ void *WvStreamsDebugger::get_command_data(WvStringParm cmd, Command *command)
         else
             cd = NULL;
             
-        command_data.add(cmd, (char *)cd);
+        command_data.add(cmd, cd);
     }
     else
         cd = *pcd;
@@ -84,7 +80,7 @@ WvStreamsDebugger::WvStreamsDebugger() :
     // Add command data for existing commands
     CommandMap::Iter i(*commands);
     for (i.rewind(); i.next(); )
-        (void)get_command_data(i->key, i->data);
+        get_command_data(i->key, &i->data);
 }
 
 
@@ -97,9 +93,9 @@ WvStreamsDebugger::~WvStreamsDebugger()
         WvString cmd = i->key;
         void *cd = i->data;
         
-        Command *command = (*commands)[cmd];
-        if (!!command->cleanup_cb)
-            command->cleanup_cb(cmd, cd);
+        Command &command = (*commands)[cmd];
+        if (command.cleanup_cb)
+            command.cleanup_cb(cmd, cd);
     }
     command_data.zap();
     
@@ -110,10 +106,10 @@ WvStreamsDebugger::~WvStreamsDebugger()
 WvString WvStreamsDebugger::run(WvStringParm cmd, WvStringList &args,
         ResultCallback result_cb)
 {
-    Command **pcommand = commands->find(cmd);
+    Command *pcommand = commands->find(cmd);
     if (!pcommand)
         return "No such command";
-    Command *command = *pcommand;
+    Command *command = pcommand;
    
     return command->run_cb(cmd, args, result_cb, get_command_data(cmd, command));
 }
@@ -129,18 +125,16 @@ bool WvStreamsDebugger::add_command(WvStringParm cmd,
         
     if (commands->exists(cmd))
         return false;
-    Command *command = new Command(init_cb, run_cb, cleanup_cb);
-    commands->add(cmd, command);
+    commands->add(cmd, Command(init_cb, run_cb, cleanup_cb));
     return true;
 }
 
 
 bool WvStreamsDebugger::foreach(WvStringParm cmd, ForeachCallback foreach_cb)
 {
-    Command **pcommand = commands->find(cmd);
-    if (!pcommand)
+    Command *command = commands->find(cmd);
+    if (!command)
         return false;
-    Command *command = *pcommand;
     
     if (debuggers)
     {
