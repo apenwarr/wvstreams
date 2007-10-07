@@ -386,7 +386,7 @@ void WvStream::callback()
     {
 	if (!call_ctx) // no context exists yet!
 	{
-	    call_ctx = WvCont(wv::bind(&WvStream::_callwrap, this, wv::_1),
+	    call_ctx = WvCont(wv::bind(&WvStream::_callwrap, this, _1),
 			      personal_stack_size);
 	}
 	

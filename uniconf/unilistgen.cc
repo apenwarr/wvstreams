@@ -62,8 +62,7 @@ UniListGen::UniListGen(UniConfGenList *_l) : l(_l)
 {
     UniConfGenList::Iter i(*l);
     for (i.rewind(); i.next(); )
-        i->add_callback(this, wv::bind(&UniListGen::gencallback, this, wv::_1,
-				       wv::_2));
+        i->add_callback(this, wv::bind(&UniListGen::gencallback, this, _1, _2));
 }
 
 

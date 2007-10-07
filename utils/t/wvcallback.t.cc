@@ -57,8 +57,8 @@ WVTEST_MAIN("callbacktest.cc")
     
         ACallback c0(bunk);
         A2Callback c1(bunk1);
-        A3Callback c2(wv::bind(&bunk, a, wv::_1));
-        A2Callback c3(wv::bind(&A::add, &a, wv::_1));
+        A3Callback c2(wv::bind(&bunk, a, _1));
+        A2Callback c3(wv::bind(&A::add, &a, _1));
     
         result = (c0(a, (void *)5));
         if (!WVPASS(result.y == 2 * result.x))

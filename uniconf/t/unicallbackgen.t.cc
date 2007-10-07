@@ -29,7 +29,7 @@ WVTEST_MAIN("non-dynamic")
 
     WVPASS(!g.get("key"));
     
-    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, wv::_1));
+    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, _1));
     WVPASS((g.set("key", "foo"), g.get("key")) == WvString(0));
     WVPASS((g.set("key", "foo"), g.get("key")) == WvString(1));
     WVPASS((g.set("key", "foo"), g.get("key")) == WvString(2));
@@ -50,7 +50,7 @@ WVTEST_MAIN("dynamic")
     g.update_after_set = false;
     g.update_before_get = true;
     
-    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, wv::_1));
+    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, _1));
 
     WVPASS(g.get("key") == WvString(0));
     WVPASS(g.get("key") == WvString(1));
@@ -72,9 +72,8 @@ WVTEST_MAIN("set")
     g.update_after_set = false;
     g.update_before_get = true;
     
-    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, wv::_1));
-    g.setsetcallback("key", wv::bind(&AutoIncrementer::set, &ai, wv::_1,
-				     wv::_2));
+    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, _1));
+    g.setsetcallback("key", wv::bind(&AutoIncrementer::set, &ai, _1, _2));
 
     WVPASS(g.get("key") == WvString(0));
     WVPASS(g.get("key") == WvString(1));

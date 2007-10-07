@@ -30,7 +30,7 @@ void UniFilterGen::setinner(IUniConfGen *inner)
     xinner = inner;
     if (xinner)
         xinner->add_callback(this, wv::bind(&UniFilterGen::gencallback, this,
-					    wv::_1, wv::_2));
+					    _1, _2));
 }
 
 

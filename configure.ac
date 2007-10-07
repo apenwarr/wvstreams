@@ -572,6 +572,15 @@ if test "$VALGRIND" != ""; then
     fi
 fi
 
+
+# Find out whether TR1 or Boost are available.
+AC_CHECK_HEADERS(tr1/functional)
+AC_CHECK_HEADERS(boost/function.hpp)
+
+# When compiling with exceptions disabled and Boost, applications need
+# to provide an "exception handler", declared here.
+AC_CHECK_HEADERS(boost/throw_exception.hpp)
+
 # Compiler is always posix if invoking this configure script
 COMPILER_STANDARD=posix
 

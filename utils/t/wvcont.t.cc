@@ -33,7 +33,7 @@ public:
     
     void honk_at(Honk &a)
     {
-	cb = WvCont(wv::bind(&Honk::honker, this, a, wv::_1));
+	cb = WvCont(wv::bind(&Honk::honker, this, a, _1));
     }
 
 private:

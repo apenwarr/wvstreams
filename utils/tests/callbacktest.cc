@@ -45,7 +45,7 @@ int main()
     // FIXME: I am broken. Please show this to somebody
     // who can fix.... can fix.... can fix.....
     // A3Callback c2(WvBoundCallback<A3Callback, const A &>(bunk, a));
-    A2Callback c3(wv::bind(&A::add, &a, wv::_1));
+    A2Callback c3(wv::bind(&A::add, &a, _1));
     
     print_a(c0(a, (void *)5));
     print_a(c1(a));

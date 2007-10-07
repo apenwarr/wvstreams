@@ -189,7 +189,7 @@ void WvStreamsDebuggerServer::ready_cb(Connection &s)
     
     WvString result = s.debugger.run(cmd, args,
 				     wv::bind(&Connection::result_cb, &s,
-					      wv::_1, wv::_2));
+					      _1, _2));
     if (!!result)
         s.send("ERROR", result);
     else

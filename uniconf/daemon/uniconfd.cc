@@ -238,8 +238,7 @@ public:
 	args.add_option('n', "named-gen",
 			"creates a \"named\" moniker 'name' from 'moniker'",
 			"name=moniker",
-			wv::bind(&UniConfd::namedgen_cb, this, wv::_1, wv::_2),
-			NULL);
+			wv::bind(&UniConfd::namedgen_cb, this, _1, _2), NULL);
 #endif
 	args.add_optional_arg("MONIKERS", true);
 	args.set_email("<" PACKAGE_BUGREPORT ">");

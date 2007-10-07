@@ -68,7 +68,7 @@ UniReplicateGen::UniReplicateGen(const IUniConfGenList &_gens,
     	    gens.append(gen, true);
             gen->gen->add_callback(this,
 				   wv::bind(&UniReplicateGen::deltacallback,
-					    this, gen, wv::_1, wv::_2));
+					    this, gen, _1, _2));
         }
     }
     
@@ -91,7 +91,7 @@ void UniReplicateGen::prepend(IUniConfGen *_gen, bool auto_free)
     {
     	gens.prepend(gen, true);
         gen->gen->add_callback(this, wv::bind(&UniReplicateGen::deltacallback,
-					      this, gen, wv::_1, wv::_2));
+					      this, gen, _1, _2));
             
         replicate();
     }
@@ -105,7 +105,7 @@ void UniReplicateGen::append(IUniConfGen *_gen, bool auto_free)
     {
     	gens.append(gen, true);
         gen->gen->add_callback(this, wv::bind(&UniReplicateGen::deltacallback,
-					      this, gen, wv::_1, wv::_2));
+					      this, gen, _1, _2));
             
         replicate();
     }
