@@ -8,7 +8,7 @@
 
 #include "wvstring.h"
 #include "wvstringlist.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 
 class WvArgsOption;
 class WvArgsData;

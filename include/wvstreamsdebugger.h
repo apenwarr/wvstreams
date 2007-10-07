@@ -2,11 +2,11 @@
 #ifndef WVSTREAMSDEBUGGER_H
 #define WVSTREAMSDEBUGGER_H
 
-#include "wvtclstring.h"
-#include "wvcallback.h"
 #include "wverror.h"
 #include "wvhashtable.h"
 #include "wvstringlist.h"
+#include "wvtclstring.h"
+#include "wvtr1.h"
 
 class WvStreamsDebugger
 {

@@ -8,8 +8,8 @@
 #define __UNICONFTREE_H
 
 #include "uniconfkey.h"
-#include "wvcallback.h"
 #include "unihashtree.h"
+#include "wvtr1.h"
 
 /**
  * A recursively composed dictionary for tree-structured

@@ -16,7 +16,7 @@
 #include "wvlinklist.h"
 #include "wvlog.h"
 #include "wvstringlist.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 
 
 #ifdef __WVCONFEMU_H

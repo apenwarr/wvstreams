@@ -6,8 +6,8 @@
 #ifndef __WVDELAYEDCALLBACK_H
 #define __WVDELAYEDCALLBACK_H
 
-#include "wvcallback.h"
 #include "wvistreamlist.h"
+#include "wvtr1.h"
 
 /**
  * A WvCallback wrapper that delays until the next tick of the WvIStreamList

@@ -7,9 +7,9 @@
 #ifndef __UNICONFGEN_H
 #define __UNICONFGEN_H
  
-#include "wvcallback.h"
-#include "wvcallbacklist.h"
 #include "uniconfpair.h"
+#include "wvcallbacklist.h"
+#include "wvtr1.h"
 
 class UniConfGen;
 class UniListIter;

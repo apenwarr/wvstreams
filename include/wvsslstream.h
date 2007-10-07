@@ -7,10 +7,10 @@
 #ifndef __WVSSLSTREAM_H
 #define __WVSSLSTREAM_H
 
-#include "wvstreamclone.h"
 #include "wvfdstream.h"
 #include "wvlog.h"
-#include "wvcallback.h"
+#include "wvstreamclone.h"
+#include "wvtr1.h"
 
 struct ssl_st;
 struct ssl_ctx_st;

@@ -2,9 +2,10 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
+ * Provide some aliases for TR1 stuff, with a fallback on Boost.
  */
-#ifndef __WVCALLBACK_H
-#define __WVCALLBACK_H
+#ifndef __WVTR1_H
+#define __WVTR1_H
 
 #include "wvautoconf.h"
 
@@ -41,4 +42,4 @@ namespace wv
 #error "One of TR1 or Boost is required to use WvStreams"
 #endif
 
-#endif /* __WVCALLBACK_H */
+#endif /* __WVTR1_H */

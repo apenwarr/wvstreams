@@ -8,7 +8,7 @@
 #define __UNIHASHTREE_H
 
 #include "uniconfkey.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 #include "wvscatterhash.h"
 
 class UniHashTreeBase;

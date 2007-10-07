@@ -9,8 +9,8 @@
 
 #include "unitempgen.h"
 #include "wvhashtable.h"
-#include "wvcallback.h"
 #include "wvstream.h"
+#include "wvtr1.h"
 
 typedef wv::function<WvString(const UniConfKey&)>
         UniCallbackGenGetCallback;

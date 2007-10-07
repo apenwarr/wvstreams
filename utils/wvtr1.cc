@@ -1,4 +1,4 @@
-#include "wvcallback.h"
+#include "wvtr1.h"
 
 /* If we're not using TR1, we must be using Boost. */
 #if !defined(HAVE_TR1_FUNCTIONAL) && defined(HAVE_BOOST_THROW_EXCEPTION_HPP)
