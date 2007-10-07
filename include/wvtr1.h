@@ -12,6 +12,7 @@
 #if defined(HAVE_TR1_FUNCTIONAL)
 
 #include <tr1/functional>
+#include <tr1/memory>
 
 namespace wv
 {
@@ -19,6 +20,7 @@ namespace wv
     using std::tr1::cref;
     using std::tr1::function;
     using std::tr1::ref;
+    using std::tr1::shared_ptr;
 }
 
 namespace {
@@ -29,6 +31,7 @@ namespace {
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace wv
 {
@@ -36,6 +39,7 @@ namespace wv
     using boost::cref;
     using boost::function;
     using boost::ref;
+    using boost::shared_ptr;
 }
 
 #else /* We have neither TR1 or Boost, punt. */
