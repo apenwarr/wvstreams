@@ -30,6 +30,12 @@
 #include <errno.h>
 #endif
 
+#include <map>
+
+using std::make_pair;
+using std::map;
+
+
 // enable this to add some read/write trace messages (this can be VERY
 // verbose)
 #if 0
@@ -54,7 +60,7 @@ UUID_MAP_BEGIN(WvStream)
   UUID_MAP_END
 
 
-static WvMap<WSID, WvStream*> *wsid_map;
+static map<WSID, WvStream*> *wsid_map;
 static WSID next_wsid_to_try;
 
 
@@ -178,10 +184,11 @@ WvString WvStream::debugger_streams_run_cb(WvStringParm cmd,
     debugger_streams_display_header(cmd, result_cb);
     if (wsid_map)
     {
-        WvMap<WSID, WvStream *>::Iter i(*wsid_map);
-        for (i.rewind(); i.next(); )
-            debugger_streams_maybe_display_one_stream(i->data,
-                    cmd, args, result_cb);
+	map<WSID, WvStream*>::iterator it;
+
+	for (it = wsid_map->begin(); it != wsid_map->end(); ++it)
+            debugger_streams_maybe_display_one_stream(it->second, cmd, args,
+						      result_cb);
     }
     
     return WvString::null;
@@ -244,17 +251,17 @@ WvStream::WvStream():
     
     // Choose a wsid;
     if (!wsid_map)
-        wsid_map = new WvMap<WSID, WvStream *>(256);
+        wsid_map = new map<WSID, WvStream*>;
     WSID first_wsid_tried = next_wsid_to_try;
     do
     {
-        if (!wsid_map->exists(next_wsid_to_try))
+        if (wsid_map->find(next_wsid_to_try) == wsid_map->end())
             break;
         ++next_wsid_to_try;
     } while (next_wsid_to_try != first_wsid_tried);
     my_wsid = next_wsid_to_try++;
-    assert(!wsid_map->exists(my_wsid));
-    wsid_map->add(my_wsid, this);
+    bool inserted = wsid_map->insert(make_pair(my_wsid, this)).second;
+    assert(inserted);
     
 #ifdef _WIN32
     WSAData wsaData;
@@ -288,8 +295,8 @@ WvStream::~WvStream()
     call_ctx = 0; // finish running the suspended callback, if any
 
     assert(wsid_map);
-    wsid_map->remove(my_wsid);
-    if (wsid_map->isempty())
+    wsid_map->erase(my_wsid);
+    if (wsid_map->empty())
     {
         delete wsid_map;
         wsid_map = NULL;
@@ -961,14 +968,15 @@ bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 }
 
 
-bool WvStream::_select(time_t msec_timeout,
-    bool readable, bool writable, bool isexcept, bool forceable)
+bool WvStream::_select(time_t msec_timeout, bool readable, bool writable,
+		       bool isexcept, bool forceable)
 {
-    assert(wsid_map && wsid_map->exists(my_wsid)); // Detect use of deleted stream
+    // Detect use of deleted stream
+    assert(wsid_map && (wsid_map->find(my_wsid) != wsid_map->end()));
         
     SelectInfo si;
-    _build_selectinfo(si, msec_timeout,
-                      readable, writable, isexcept, forceable);
+    _build_selectinfo(si, msec_timeout, readable, writable, isexcept,
+		      forceable);
     
     if (!isok())
 	return false;
@@ -1164,9 +1172,15 @@ void WvStream::unread(WvBuf &unreadbuf, size_t count)
 
 IWvStream *WvStream::find_by_wsid(WSID wsid)
 {
-    WvStream **presult = wsid_map? wsid_map->find(wsid): NULL;
-    if (presult)
-        return *presult;
-    else
-        return NULL;   
+    IWvStream *retval = NULL;
+
+    if (wsid_map)
+    {
+	map<WSID, WvStream*>::iterator it = wsid_map->find(wsid);
+
+	if (it != wsid_map->end())
+	    retval = it->second;
+    }
+
+    return retval;
 }
