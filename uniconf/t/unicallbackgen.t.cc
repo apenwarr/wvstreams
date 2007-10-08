@@ -16,7 +16,7 @@ public:
 
 WVTEST_MAIN("UniCallbackGen Sanity Test")
 {
-    UniCallbackGen *gen = new UniCallbackGen(1);
+    UniCallbackGen *gen = new UniCallbackGen;
     // The callback generator doesn't have a moniker
     UniConfGenSanityTester::sanity_test(gen, WvString::null);
     WVRELEASE(gen);
@@ -25,7 +25,7 @@ WVTEST_MAIN("UniCallbackGen Sanity Test")
 WVTEST_MAIN("non-dynamic")
 {
     AutoIncrementer ai;
-    UniCallbackGen g(1);
+    UniCallbackGen g;
 
     WVPASS(!g.get("key"));
     
@@ -43,7 +43,7 @@ WVTEST_MAIN("non-dynamic")
 WVTEST_MAIN("dynamic")
 {
     AutoIncrementer ai;
-    UniCallbackGen g(1);
+    UniCallbackGen g;
 
     WVPASS(!g.get("key"));
 
@@ -65,7 +65,7 @@ WVTEST_MAIN("dynamic")
 WVTEST_MAIN("set")
 {
     AutoIncrementer ai;
-    UniCallbackGen g(1);
+    UniCallbackGen g;
 
     WVPASS(!g.get("key"));
 
