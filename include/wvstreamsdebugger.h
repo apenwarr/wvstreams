@@ -5,7 +5,6 @@
 #include <map>
 
 #include "wverror.h"
-#include "wvhashtable.h"
 #include "wvstringlist.h"
 #include "wvtclstring.h"
 #include "wvtr1.h"
