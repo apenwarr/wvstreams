@@ -9,7 +9,6 @@
 
 #include "iwvstream.h"
 #include "wvtimeutils.h"
-#include "wvhashtable.h"
 #include "wvstreamsdebugger.h"
 #include <errno.h>
 #include <limits.h>
