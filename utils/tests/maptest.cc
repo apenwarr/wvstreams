@@ -1,25 +1,30 @@
-#include "wvhashtable.h"
+#include <map>
+#include <assert.h>
 #include "wvstring.h"
+
+using std::map;
+
 
 int main ()
 {
-    WvMap<WvString, WvString> map (5);
-    fprintf (stderr, "added foo = bar\n");
-    map.add ("foo", "bar");
-    fprintf (stderr, "looked up foo = %s\n", map.find ("foo")->cstr ());
-    map.remove("foo");
-    assert(!map.find("foo"));
+    map<WvString, WvString> mymap;
+    fprintf(stderr, "added foo = bar\n");
+    mymap["foo"] = "bar";
+    fprintf(stderr, "looked up foo = %s\n", mymap.find("foo")->second.cstr());
+    mymap.erase("foo");
+    assert(mymap.find("foo") == mymap.end());
 
-    map.add("meaw", "death");
-    map.add("dog", "cow");
-    map.add("star", "trek");
-    map.add("star", "office");
+    mymap["meaw"] = "death";
+    mymap["dog"] = "cow";
+    mymap["star"] = "trek";
+    mymap["star"] = "office";
 
     // Iterator test
-    WvMap<WvString, WvString>::Iter i(map);
+    map<WvString, WvString>::iterator it;
 
-    for (i.rewind(); i.next(); )
-        fprintf (stderr, "Iter test: %s = %s\n", i->key.cstr(), i->data.cstr());
+    for (it = mymap.begin(); it != mymap.end(); ++it)
+        fprintf(stderr, "Iter test: %s = %s\n",
+		it->first.cstr(), it->second.cstr());
 }
 
 
