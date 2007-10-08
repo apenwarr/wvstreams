@@ -1,11 +1,11 @@
+#include <set>
 #include "wvstreamsdebugger.h"
 #include "wvlinklist.h"
 
-using std::make_pair;
+using std::set;
 
 
-DeclareWvList(WvStreamsDebugger);
-static WvStreamsDebuggerList *debuggers;
+static set<WvStreamsDebugger*> *debuggers;
 
 
 WvStreamsDebugger::CommandMap *WvStreamsDebugger::commands;
@@ -21,7 +21,7 @@ public:
     }
     ~WvStreamsDebuggerStaticInitCleanup()
     {
-        assert(!debuggers || debuggers->isempty());
+        assert(!debuggers || debuggers->empty());
         
         if (WvStreamsDebugger::commands)
         {
@@ -72,8 +72,8 @@ void *WvStreamsDebugger::get_command_data(WvStringParm cmd, Command *command)
 WvStreamsDebugger::WvStreamsDebugger()
 {
     if (!debuggers)
-        debuggers = new WvStreamsDebuggerList;
-    debuggers->append(this, false);
+        debuggers = new set<WvStreamsDebugger*>;
+    debuggers->insert(this);
     
     // Add command data for existing commands
     CommandMap::iterator it;
@@ -94,7 +94,7 @@ WvStreamsDebugger::~WvStreamsDebugger()
     }
     command_data.clear();
     
-    debuggers->unlink(this);
+    debuggers->erase(this);
 }
 
 
@@ -120,7 +120,7 @@ bool WvStreamsDebugger::add_command(WvStringParm cmd,
         commands = new CommandMap;
 
     return commands->insert(
-	make_pair(cmd, Command(init_cb, run_cb, cleanup_cb))).second;
+	std::make_pair(cmd, Command(init_cb, run_cb, cleanup_cb))).second;
 }
 
 
@@ -133,10 +133,10 @@ bool WvStreamsDebugger::foreach(WvStringParm cmd, ForeachCallback foreach_cb)
     
     if (debuggers)
     {
-        WvStreamsDebuggerList::Iter i(*debuggers);
-        for (i.rewind(); i.next(); )
+	set<WvStreamsDebugger*>::iterator it2;
+        for (it2 = debuggers->begin(); it2 != debuggers->end(); ++it2)
         {
-            void *cd = i->get_command_data(cmd, &it->second);
+            void *cd = (*it2)->get_command_data(cmd, &it->second);
             foreach_cb(cmd, cd); 
         }
     }
