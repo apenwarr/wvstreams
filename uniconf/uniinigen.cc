@@ -197,7 +197,7 @@ bool UniIniGen::refresh()
     newgen->root = NULL;
     dirty = false;
     oldtree->compare(newtree, wv::bind(&UniIniGen::refreshcomparator, this,
-				       _1, _2, _3), NULL);
+				       _1, _2));
     
     delete oldtree;
     unhold_delta();
@@ -211,7 +211,7 @@ bool UniIniGen::refresh()
 
 // returns: true if a==b
 bool UniIniGen::refreshcomparator(const UniConfValueTree *a,
-    const UniConfValueTree *b, void *userdata)
+				  const UniConfValueTree *b)
 {
     if (a)
     {

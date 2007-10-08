@@ -162,7 +162,7 @@ void UniHashTreeBase::_recursive_unsorted_visit(
 
 bool UniHashTreeBase::_recursivecompare(
     const UniHashTreeBase *a, const UniHashTreeBase *b,
-    const UniHashTreeBaseComparator &comparator, void *userdata)
+    const UniHashTreeBaseComparator &comparator)
 {
     bool equal = true;
     
@@ -171,7 +171,7 @@ bool UniHashTreeBase::_recursivecompare(
     // have their comparator function get called for *all* keys, because
     // it has side effects.  Gross, but whatever.  If that's the case, then
     // short-circuiting here is a bad idea.
-    if (!comparator(a, b, userdata))
+    if (!comparator(a, b))
         equal = false;
 
     // begin iteration sequence
@@ -198,18 +198,18 @@ bool UniHashTreeBase::_recursivecompare(
         if (order < 0)
         {
 	    equal = false;
-	    _recursivecompare(a, NULL, comparator, userdata);
+	    _recursivecompare(a, NULL, comparator);
             a = ait->next() ? ait->ptr() : NULL;
         }
         else if (order > 0)
         {
 	    equal = false;
-            _recursivecompare(NULL, b, comparator, userdata);
+            _recursivecompare(NULL, b, comparator);
             b = bit->next() ? bit->ptr() : NULL;
         }
         else // keys are equal 
         {
-	    if (!_recursivecompare(a, b, comparator, userdata))
+	    if (!_recursivecompare(a, b, comparator))
 		equal = false;
             a = ait->next() ? ait->ptr() : NULL;
             b = bit->next() ? bit->ptr() : NULL;
@@ -220,13 +220,13 @@ bool UniHashTreeBase::_recursivecompare(
     while (a != NULL)
     {
 	equal = false;
-        _recursivecompare(a, NULL, comparator, userdata);
+        _recursivecompare(a, NULL, comparator);
         a = ait->next() ? ait->ptr() : NULL;
     }
     while (b != NULL)
     {
 	equal = false;
-        _recursivecompare(NULL, b, comparator, userdata);
+        _recursivecompare(NULL, b, comparator);
         b = bit->next() ? bit->ptr() : NULL;
     }
     
