@@ -7,9 +7,9 @@
 #ifndef __IWVSTREAM_H
 #define __IWVSTREAM_H
 
-#include "wverror.h"
-#include "wvcallback.h"
 #include "wvbuf.h"
+#include "wverror.h"
+#include "wvtr1.h"
 #include "wvxplc.h"
 
 

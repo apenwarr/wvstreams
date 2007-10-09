@@ -91,14 +91,14 @@ void WvDaemon::init(WvStringParm _name,
     
     args.add_option('q', "quiet",
             "Decrease log level (can be used multiple times)",
-		    wv::bind(&WvDaemon::dec_log_level, this, wv::_1));
+		    wv::bind(&WvDaemon::dec_log_level, this, _1));
     args.add_option('v', "verbose",
 		    "Increase log level (can be used multiple times)",
-		    wv::bind(&WvDaemon::inc_log_level, this, wv::_1));
+		    wv::bind(&WvDaemon::inc_log_level, this, _1));
     if (CAN_DAEMONIZE)
 	args.add_option('d', "daemonize",
 		"Fork into background and return (implies --syslog)",
-		wv::bind(&WvDaemon::set_daemonize, this, wv::_1));
+		wv::bind(&WvDaemon::set_daemonize, this, _1));
     if (CAN_SYSLOG)
     {
 	args.add_set_bool_option('s', "syslog",

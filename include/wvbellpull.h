@@ -6,8 +6,8 @@
 #define __WVBATCHSIGNAL_H
 
 #include <uniconf.h>
-#include <wvcallback.h>
 #include <wvistreamlist.h>
+#include <wvtr1.h>
 
 
 class WvInvertedStream: public WvStream

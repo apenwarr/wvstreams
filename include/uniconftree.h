@@ -8,8 +8,8 @@
 #define __UNICONFTREE_H
 
 #include "uniconfkey.h"
-#include "wvcallback.h"
 #include "unihashtree.h"
+#include "wvtr1.h"
 
 /**
  * A recursively composed dictionary for tree-structured
@@ -19,17 +19,17 @@
  *
  * "Sub" is the name of the concrete subclass of UniConfTree.
  */
-template<class Sub, class Base = UniHashTreeBase>
-class UniConfTree : public Base
+template<class Sub>
+class UniConfTree : public UniHashTreeBase
 {
    
 public:
     typedef wv::function<void(const Sub*, void*)> Visitor;
-    typedef wv::function<bool(const Sub*, const Sub*, void*)> Comparator;
+    typedef wv::function<bool(const Sub*, const Sub*)> Comparator;
 
     /** Creates a node and links it to a subtree, if parent is non-NULL */
     UniConfTree(Sub *parent, const UniConfKey &key) :
-        Base(parent, key)
+        UniHashTreeBase(parent, key)
         { }
 
     /** Destroy this node's contents and children. */
@@ -42,25 +42,25 @@ public:
 
     /** Reparents this node. */
     void setparent(Sub *parent)
-        { Base::_setparent(parent); }
+        { UniHashTreeBase::_setparent(parent); }
     
     /** Returns a pointer to the root node of the tree. */
     Sub *root() const
-        { return static_cast<Sub*>(Base::_root()); }
+        { return static_cast<Sub*>(UniHashTreeBase::_root()); }
     
     /**
      * Returns full path of this node relative to an ancestor.
      * If ancestor is NULL, returns the root.
      */
     UniConfKey fullkey(const Sub *ancestor = NULL) const
-        { return Base::_fullkey(ancestor); }
+        { return UniHashTreeBase::_fullkey(ancestor); }
 
     /**
      * Finds the sub-node with the specified key.
      * If key.isempty(), returns this node.
      */
     Sub *find(const UniConfKey &key) const
-        { return static_cast<Sub*>(Base::_find(key)); }
+        { return static_cast<Sub*>(UniHashTreeBase::_find(key)); }
     
     /**
      * Finds the direct child node with the specified key.
@@ -69,7 +69,7 @@ public:
      * as find(key), but a little faster.  Otherwise returns NULL.
      */
     Sub *findchild(const UniConfKey &key) const
-        { return static_cast<Sub*>(Base::_findchild(key)); }
+        { return static_cast<Sub*>(UniHashTreeBase::_findchild(key)); }
 
     /**
      * Removes the node for the specified key from the tree
@@ -88,11 +88,11 @@ public:
         // set xchildren to NULL first so that the zap() will happen faster
         // otherwise, each child will attempt to unlink itself uselessly
 
-        typename Base::Container *oldchildren = this->xchildren;
+        typename UniHashTreeBase::Container *oldchildren = this->xchildren;
         this->xchildren = NULL;
 
         // delete all children
-        typename Base::Container::Iter i(*oldchildren);
+        typename UniHashTreeBase::Container::Iter i(*oldchildren);
         for (i.rewind(); i.next();)
             delete static_cast<Sub*>(i.ptr());
 
@@ -109,7 +109,7 @@ public:
         bool preorder = true, bool postorder = false) const
     {
         _recursive_unsorted_visit(this, reinterpret_cast<
-            const typename Base::BaseVisitor&>(visitor), userdata,
+            const typename UniHashTreeBase::BaseVisitor&>(visitor), userdata,
             preorder, postorder);
     }
 
@@ -121,24 +121,23 @@ public:
      * "userdata" is userdata for the compare function
      * Returns: true if the comparison function returned true each time
      */
-    bool compare(const Sub *other, const Comparator &comparator,
-        void *userdata)
+    bool compare(const Sub *other, const Comparator &comparator)
     {
         return _recursivecompare(this, other, reinterpret_cast<
-            const typename Base::BaseComparator&>(comparator), userdata);
+            const typename UniHashTreeBase::BaseComparator&>(comparator));
     }
 
     /**
      * An iterator that walks over all elements on one level of a
      * UniConfTree.
      */
-    class Iter : public Base::Iter
+    class Iter : public UniHashTreeBase::Iter
     {
     public:
-        typedef typename Base::Iter MyBase;
+        typedef typename UniHashTreeBase::Iter MyBase;
 
         /** Creates an iterator over the specified tree. */
-        Iter(Sub &tree) : Base::Iter(tree)
+        Iter(Sub &tree) : UniHashTreeBase::Iter(tree)
 	    { }
 
         /** Returns a pointer to the current node. */

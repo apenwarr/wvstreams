@@ -12,7 +12,7 @@
 
 #include <qobject.h>
 #include <qevent.h>
-#include "wvcallback.h"
+#include "wvtr1.h"
 
 class WvQtHook;
 // parameters are: WvQtHook &, int type, void *data

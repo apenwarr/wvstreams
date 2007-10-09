@@ -418,7 +418,7 @@ void WvTCPListener::auto_accept(WvIStreamList *list,
 				wv::function<void(IWvStream*)> cb)
 {
     onaccept(wv::bind(&WvTCPListener::accept_callback, this, list,
-			 cb, wv::_1));
+			 cb, _1));
 }
 
 void WvTCPListener::auto_accept(wv::function<void(IWvStream*)> cb)

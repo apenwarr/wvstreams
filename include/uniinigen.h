@@ -58,7 +58,7 @@ private:
     
     void save(WvStream &file, UniConfValueTree &parent);
     bool refreshcomparator(const UniConfValueTree *a,
-        const UniConfValueTree *b, void *userdata);
+			   const UniConfValueTree *b);
 };
 
 

@@ -82,8 +82,8 @@ public:
 private:
     WvLog log;
     WvDBusConnList all_conns;
-    WvMap<WvString,WvDBusConn*> name_to_conn;
-    WvMap<uint32_t,WvDBusConn*> serial_to_conn;
+    std::map<WvString,WvDBusConn*> name_to_conn;
+    std::map<uint32_t,WvDBusConn*> serial_to_conn;
     
     void new_connection_cb(IWvStream *s);
     void conn_closed(WvStream &s);

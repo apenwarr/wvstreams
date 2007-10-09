@@ -11,7 +11,7 @@
 #define __WVPTY_H
 
 #include "wvfdstream.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 
 class WvPty: public WvFDStream
 {

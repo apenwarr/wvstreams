@@ -123,7 +123,7 @@ bool UniConfDaemon::setuptcpsocket(const WvIPPortAddr &addr)
         WVRELEASE(listener);
         return false;
     }
-    listener->onaccept(wv::bind(&UniConfDaemon::tcpcallback, this, wv::_1));
+    listener->onaccept(wv::bind(&UniConfDaemon::tcpcallback, this, _1));
     append(listener, true, "tcp listen");
     debug("Listening for TCP at %s.\n", addr);
     return true;
@@ -141,7 +141,7 @@ bool UniConfDaemon::setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509)
         return false;
     }
     listener->onaccept(wv::bind(&UniConfDaemon::sslcallback, this,
-				x509, wv::_1));
+				x509, _1));
     append(listener, true, "ssl listen");
     debug("Listening for TCP/SSL at %s.\n", addr);
     return true;

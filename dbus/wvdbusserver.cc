@@ -77,14 +77,13 @@ bool WvDBusServerAuth::authorize(WvDBusConn &c)
 
 
 WvDBusServer::WvDBusServer(WvStringParm addr)
-    : log("DBus Server", WvLog::Debug),
-      name_to_conn(10), serial_to_conn(10)
+    : log("DBus Server", WvLog::Debug)
 {
     listener = new WvTCPListener(addr);
     append(listener, false);
     log(WvLog::Info, "Listening on '%s'\n", *listener->src());
     listener->onaccept(wv::bind(&WvDBusServer::new_connection_cb, this,
-				wv::_1));
+				_1));
 }
 
 
@@ -104,42 +103,44 @@ WvString WvDBusServer::get_addr()
 
 void WvDBusServer::register_name(WvStringParm name, WvDBusConn *conn)
 {
-    assert(!name_to_conn.exists(name));
-    name_to_conn.add(name, conn);
+    name_to_conn[name] = conn;
 }
 
 
 void WvDBusServer::unregister_name(WvStringParm name, WvDBusConn *conn)
 {
-    assert(name_to_conn.exists(name));
     assert(name_to_conn[name] == conn);
-    name_to_conn.remove(name);
+    name_to_conn.erase(name);
 }
 
 
 void WvDBusServer::unregister_conn(WvDBusConn *conn)
 {
     {
-	WvMap<WvString,WvDBusConn*>::Iter i(name_to_conn);
-	for (i.rewind(); i.next(); )
+	std::map<WvString,WvDBusConn*>::iterator i;
+	for (i = name_to_conn.begin(); i != name_to_conn.end(); )
 	{
-	    if (i->data == conn)
+	    if (i->second == conn)
 	    {
-		name_to_conn.remove(i->key);
-		i.rewind();
+		name_to_conn.erase(i->first);
+		i = name_to_conn.begin();
 	    }
+	    else
+		++i;
 	}
     }
     
     {
-	WvMap<uint32_t,WvDBusConn*>::Iter i(serial_to_conn);
-	for (i.rewind(); i.next(); )
+	std::map<uint32_t,WvDBusConn*>::iterator i;
+	for (i = serial_to_conn.begin(); i != serial_to_conn.end(); )
 	{
-	    if (i->data == conn)
+	    if (i->second == conn)
 	    {
-		serial_to_conn.remove(i->key);
-		i.rewind();
+		serial_to_conn.erase(i->first);
+		i = serial_to_conn.begin();
 	    }
+	    else
+		++i;
 	}
     }
     
@@ -211,12 +212,14 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
     if (msg.is_reply())
     {
 	uint32_t rserial = msg.get_replyserial();
-	WvDBusConn *conn = serial_to_conn.find(rserial);
-	if (conn)
+	std::map<uint32_t,WvDBusConn *>::iterator i 
+	    = serial_to_conn.find(rserial);
+	if (i != serial_to_conn.end())
 	{
+	    WvDBusConn *conn = i->second;
 	    log("Proxy reply: target is %s\n", conn->uniquename());
 	    conn->send(msg);
-	    serial_to_conn.remove(rserial);
+	    serial_to_conn.erase(rserial);
 	    return true;
 	}
 	else
@@ -227,14 +230,16 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
     }
     else if (!!msg.get_dest()) // don't handle blank (broadcast) paths here
     {
-	WvDBusConn *dconn = name_to_conn.find(msg.get_dest());
+	std::map<WvString,WvDBusConn*>::iterator i 
+	    = name_to_conn.find(msg.get_dest());
+	WvDBusConn *dconn = (i == name_to_conn.end()) ? NULL : i->second;
 	log("Proxying #%s -> %s\n",
 	    msg.get_serial(),
 	    dconn ? dconn->uniquename() : WvString("(UNKNOWN)"));
 	if (dconn)
 	{
 	    uint32_t serial = dconn->send(msg);
-	    serial_to_conn.add(serial, &conn, false);
+	    serial_to_conn[serial] = &conn;
 	    log("Proxy: now expecting reply #%s to %s\n",
 		serial, conn.uniquename());
 	}
@@ -283,13 +288,13 @@ void WvDBusServer::new_connection_cb(IWvStream *s)
     
     c->add_callback(WvDBusConn::PriSystem,
 		    wv::bind(&WvDBusServer::do_server_msg, this,
-			     wv::ref(*c), wv::_1));
+			     wv::ref(*c), _1));
     c->add_callback(WvDBusConn::PriBridge, 
 		    wv::bind(&WvDBusServer::do_bridge_msg, this,
-			     wv::ref(*c), wv::_1));
+			     wv::ref(*c), _1));
     c->add_callback(WvDBusConn::PriBroadcast,
 		    wv::bind(&WvDBusServer::do_broadcast_msg, this,
-			     wv::ref(*c), wv::_1));
+			     wv::ref(*c), _1));
     
     append(c, true, "wvdbus servconn");
 }

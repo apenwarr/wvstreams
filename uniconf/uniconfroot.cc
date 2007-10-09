@@ -16,7 +16,7 @@ UniConfRoot::UniConfRoot():
     watchroot(NULL)
 {
     mounts.add_callback(this, wv::bind(&UniConfRoot::gen_callback, this,
-				       wv::_1, wv::_2));
+				       _1, _2));
 }
 
 
@@ -26,7 +26,7 @@ UniConfRoot::UniConfRoot(WvStringParm moniker, bool refresh):
 {
     mounts.mount("/", moniker, refresh);
     mounts.add_callback(this, wv::bind(&UniConfRoot::gen_callback, this,
-				       wv::_1, wv::_2));
+				       _1, _2));
 }
 
 
@@ -36,7 +36,7 @@ UniConfRoot::UniConfRoot(UniConfGen *gen, bool refresh):
 {
     mounts.mountgen("/", gen, refresh);
     mounts.add_callback(this, wv::bind(&UniConfRoot::gen_callback, this,
-				       wv::_1, wv::_2));
+				       _1, _2));
 }
 
 
@@ -128,7 +128,7 @@ void UniConfRoot::del_callback(void *cookie, const UniConfKey &key,
 void UniConfRoot::add_setbool(const UniConfKey &key, bool *flag, bool recurse)
 {
     add_callback(flag, key, wv::bind(&UniConfRoot::setbool_callback, flag,
-				     wv::_1, wv::_2),
+				     _1, _2),
 		 recurse);
 }
 

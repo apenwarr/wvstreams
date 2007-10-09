@@ -201,7 +201,7 @@ WVTEST_MAIN("WvHttpPool pipelining")
 	    ++port;
 	}
     }
-    listener->onaccept(wv::bind(listener_callback, &l, wv::_1));
+    listener->onaccept(wv::bind(listener_callback, &l, _1));
     l.append(listener, true, "http listener");
 
     // Pipelining-enabled tests share one connection for the pipeline test

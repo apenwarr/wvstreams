@@ -1,11 +1,11 @@
+#include <set>
 #include "wvstreamsdebugger.h"
 #include "wvlinklist.h"
 
+using std::set;
 
-static const int command_map_size = 16;
 
-DeclareWvList(WvStreamsDebugger);
-static WvStreamsDebuggerList *debuggers;
+static set<WvStreamsDebugger*> *debuggers;
 
 
 WvStreamsDebugger::CommandMap *WvStreamsDebugger::commands;
@@ -21,14 +21,10 @@ public:
     }
     ~WvStreamsDebuggerStaticInitCleanup()
     {
-        assert(!debuggers || debuggers->isempty());
+        assert(!debuggers || debuggers->empty());
         
         if (WvStreamsDebugger::commands)
         {
-            WvStreamsDebugger::CommandMap::Iter i(*WvStreamsDebugger::commands);
-            for (i.rewind(); i.next(); )
-                delete i->data;
-            WvStreamsDebugger::commands->zap();
             delete WvStreamsDebugger::commands;
             WvStreamsDebugger::commands = NULL;
         }
@@ -45,68 +41,70 @@ static WvStreamsDebuggerStaticInitCleanup ___;
 
 void *WvStreamsDebugger::get_command_data(WvStringParm cmd, Command *command)
 {
-    if (!command)
-	command = commands->find(cmd);
-    if (!command)
-	return NULL;
-    
-    char *cd = command_data[cmd];
-    if (!cd)
+    if (command == NULL)
+    {
+	CommandMap::iterator it = commands->find(cmd);
+	if (it == commands->end())
+	    return NULL;
+	command = &it->second;
+    }
+
+    void *cd;
+    CommandDataMap::iterator it = command_data.find(cmd);
+    if (it == command_data.end())
     {
         // In case the command has been added since our constructor
         // was executed...
-        
-        if (!!command->init_cb)
-            cd = (char *)command->init_cb(cmd);
+        if (command->init_cb)
+            cd = command->init_cb(cmd);
         else
             cd = NULL;
             
-        command_data.add(cmd, cd);
+        command_data[cmd] = cd;
     }
-    
+    else
+	cd = it->second;
+
     return cd;
 }
 
 
-WvStreamsDebugger::WvStreamsDebugger() :
-    command_data(command_map_size)
+WvStreamsDebugger::WvStreamsDebugger()
 {
     if (!debuggers)
-        debuggers = new WvStreamsDebuggerList;
-    debuggers->append(this, false);
+        debuggers = new set<WvStreamsDebugger*>;
+    debuggers->insert(this);
     
     // Add command data for existing commands
-    CommandMap::Iter i(*commands);
-    for (i.rewind(); i.next(); )
-        (void)get_command_data(i->key, i->data);
+    CommandMap::iterator it;
+    for (it = commands->begin(); it != commands->end(); ++it)
+        get_command_data(it->first, &it->second);
 }
 
 
 WvStreamsDebugger::~WvStreamsDebugger()
 {
     // Remove command data
-    CommandDataMap::Iter i(command_data);
-    for (i.rewind(); i.next(); )
+    CommandDataMap::iterator it;
+    for (it = command_data.begin(); it != command_data.end(); ++it)
     {
-        WvString cmd = i->key;
-        void *cd = i->data;
-        
-        Command *command = (*commands)[cmd];
-        if (!!command->cleanup_cb)
-            command->cleanup_cb(cmd, cd);
+	CommandMap::iterator it2 = commands->find(it->first);
+	if (it2 != commands->end() && it2->second.cleanup_cb)
+            it2->second.cleanup_cb(it->first, it->second);
     }
-    command_data.zap();
+    command_data.clear();
     
-    debuggers->unlink(this);
+    debuggers->erase(this);
 }
 
 
 WvString WvStreamsDebugger::run(WvStringParm cmd, WvStringList &args,
-        ResultCallback result_cb)
+				ResultCallback result_cb)
 {
-    Command *command = commands->find(cmd);
-    if (!command)
+    CommandMap::iterator it = commands->find(cmd);
+    if (it == commands->end())
         return "No such command";
+    Command *command = &it->second;
    
     return command->run_cb(cmd, args, result_cb,
 			   get_command_data(cmd, command));
@@ -119,28 +117,26 @@ bool WvStreamsDebugger::add_command(WvStringParm cmd,
         CleanupCallback cleanup_cb)
 {
     if (!commands)
-        commands = new CommandMap(command_map_size);
-        
-    if (commands->exists(cmd))
-        return false;
-    Command *command = new Command(init_cb, run_cb, cleanup_cb);
-    commands->add(cmd, command);
-    return true;
+        commands = new CommandMap;
+
+    return commands->insert(
+	std::make_pair(cmd, Command(init_cb, run_cb, cleanup_cb))).second;
 }
 
 
 bool WvStreamsDebugger::foreach(WvStringParm cmd, ForeachCallback foreach_cb)
 {
-    Command *command = commands->find(cmd);
-    if (!command)
+    CommandMap::iterator it = commands->find(cmd);
+
+    if (it == commands->end())
         return false;
     
     if (debuggers)
     {
-        WvStreamsDebuggerList::Iter i(*debuggers);
-        for (i.rewind(); i.next(); )
+	set<WvStreamsDebugger*>::iterator it2;
+        for (it2 = debuggers->begin(); it2 != debuggers->end(); ++it2)
         {
-            void *cd = i->get_command_data(cmd, command);
+            void *cd = (*it2)->get_command_data(cmd, &it->second);
             foreach_cb(cmd, cd); 
         }
     }
@@ -154,10 +150,10 @@ WvString WvStreamsDebugger::help_run_cb(WvStringParm cmd,
         ResultCallback result_cb, void *)
 {
     WvStringList cmd_list;
-    cmd_list.append("Commands availible:");
-    CommandMap::Iter i(*commands);
-    for (i.rewind(); i.next(); )
-        cmd_list.append(i->key);
+    cmd_list.append("Commands available:");
+    CommandMap::iterator it;
+    for (it = commands->begin(); it != commands->end(); ++it)
+	cmd_list.append(it->first);
     result_cb(cmd, cmd_list);
     return WvString::null;
 }

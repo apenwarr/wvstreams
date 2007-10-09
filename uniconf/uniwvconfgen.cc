@@ -52,9 +52,8 @@ void UniWvConfGen::notify(void *userdata, WvStringParm section,
 UniWvConfGen::UniWvConfGen(WvConf *_cfg):
     tempkey(NULL), tempvalue(), cfg(_cfg)
 {
-    cfg->add_callback(wv::bind(&UniWvConfGen::notify, this, wv::_1, wv::_2,
-			       wv::_3, wv::_4, wv::_5), NULL,
-		      "", "", this);
+    cfg->add_callback(wv::bind(&UniWvConfGen::notify, this, _1, _2, _3, _4, _5),
+		      NULL, "", "", this);
 }
 
 

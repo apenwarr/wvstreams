@@ -537,7 +537,7 @@ WVTEST_MAIN("continue_select compatibility with WvCont")
     s.uses_continue_select = true;
     
     {
-	WvCont cont1(wv::bind(&wvcont_cb, wv::ref(s), wv::_1));
+	WvCont cont1(wv::bind(&wvcont_cb, wv::ref(s), _1));
 	WvCont cont2(cont1), cont3(cont2);
 	s.setcallback(wv::bind(&call_wvcont_cb, &cont3, &sval));
 	

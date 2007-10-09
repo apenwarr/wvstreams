@@ -1,7 +1,7 @@
+#include <map>
 #include <wvtest.h>
 #include <wvdiriter.h>
 #include <wvfile.h>
-#include <wvhashtable.h>
 #include <wvstring.h>
 #include <wvfileutils.h>
 #ifdef _WIN32
@@ -40,21 +40,21 @@ WVTEST_MAIN("Non-recursive WvDirIter")
     
     WVPASS(create_dir(dir, entries));
 
-    WvMap<WvString, bool> found(8);
+    std::map<WvString, bool> found;
 
     WvDirIter di(dir, false);
     for (di.rewind(); di.next(); )
-        found.set(di->relname, true);
+        found[di->relname] = true;
 
-    WVFAIL(found.exists("."));
-    WVFAIL(found.exists(".."));
-    WVPASS(found.exists("file-one"));
-    WVPASS(found.exists("file-two"));
-    WVPASS(found.exists(".dot-file"));
-    WVPASS(found.exists("subdir"));
-    WVFAIL(found.exists("subdir/."));
-    WVFAIL(found.exists("subdir/.."));
-    WVFAIL(found.exists("subdir/sub-file"));
+    WVFAIL(found.find(".") != found.end());
+    WVFAIL(found.find("..") != found.end());
+    WVPASS(found.find("file-one") != found.end());
+    WVPASS(found.find("file-two") != found.end());
+    WVPASS(found.find(".dot-file") != found.end());
+    WVPASS(found.find("subdir") != found.end());
+    WVFAIL(found.find("subdir/.") != found.end());
+    WVFAIL(found.find("subdir/..") != found.end());
+    WVFAIL(found.find("subdir/sub-file") != found.end());
     
     WVPASS(destroy_dir(dir));
 }
@@ -68,21 +68,21 @@ WVTEST_MAIN("Recursive WvDirIter")
     
     WVPASS(create_dir(dir, entries));
 
-    WvMap<WvString, bool> found(8);
+    std::map<WvString, bool> found;
 
     WvDirIter di(dir, true);
     for (di.rewind(); di.next(); )
-        found.set(di->relname, true);
+        found[di->relname] = true;
 
-    WVFAIL(found.exists("."));
-    WVFAIL(found.exists(".."));
-    WVPASS(found.exists("file-one"));
-    WVPASS(found.exists("file-two"));
-    WVPASS(found.exists(".dot-file"));
-    WVPASS(found.exists("subdir"));
-    WVFAIL(found.exists("subdir/."));
-    WVFAIL(found.exists("subdir/.."));
-    WVPASS(found.exists("subdir/sub-file"));
+    WVFAIL(found.find(".") != found.end());
+    WVFAIL(found.find("..") != found.end());
+    WVPASS(found.find("file-one") != found.end());
+    WVPASS(found.find("file-two") != found.end());
+    WVPASS(found.find(".dot-file") != found.end());
+    WVPASS(found.find("subdir") != found.end());
+    WVFAIL(found.find("subdir/.") != found.end());
+    WVFAIL(found.find("subdir/..") != found.end());
+    WVPASS(found.find("subdir/sub-file") != found.end());
     
     WVPASS(destroy_dir(dir));
 }

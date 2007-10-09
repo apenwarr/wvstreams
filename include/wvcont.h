@@ -12,9 +12,9 @@
 #ifndef __WVCONT_H
 #define __WVCONT_H
 
-#include "wvcallback.h"
 #include "wvlinklist.h"
 #include "wvstreamsdebugger.h"
+#include "wvtr1.h"
 
 typedef wv::function<void*(void*)> WvContCallback;
 

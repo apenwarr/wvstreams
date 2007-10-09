@@ -9,7 +9,6 @@
 
 #include "iwvstream.h"
 #include "wvtimeutils.h"
-#include "wvhashtable.h"
 #include "wvstreamsdebugger.h"
 #include <errno.h>
 #include <limits.h>
@@ -666,11 +665,6 @@ private:
     WSID my_wsid;
 public:
     WSID wsid() const { return my_wsid; }
-    
-private:
-    static WvMap<WSID, WvStream *> *wsid_map;
-    static WSID next_wsid_to_try;
-public:
     static IWvStream *find_by_wsid(WSID wsid);
     
 private:

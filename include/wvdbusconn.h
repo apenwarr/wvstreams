@@ -17,6 +17,7 @@
 #include "wvstreamclone.h"
 #include "wvlog.h"
 #include "wvdbusmsg.h"
+#include "wvhashtable.h"
 
 #define WVDBUS_DEFAULT_TIMEOUT (300*1000)
 

@@ -16,7 +16,7 @@ public:
 
 WVTEST_MAIN("UniCallbackGen Sanity Test")
 {
-    UniCallbackGen *gen = new UniCallbackGen(1);
+    UniCallbackGen *gen = new UniCallbackGen;
     // The callback generator doesn't have a moniker
     UniConfGenSanityTester::sanity_test(gen, WvString::null);
     WVRELEASE(gen);
@@ -25,11 +25,11 @@ WVTEST_MAIN("UniCallbackGen Sanity Test")
 WVTEST_MAIN("non-dynamic")
 {
     AutoIncrementer ai;
-    UniCallbackGen g(1);
+    UniCallbackGen g;
 
     WVPASS(!g.get("key"));
     
-    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, wv::_1));
+    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, _1));
     WVPASS((g.set("key", "foo"), g.get("key")) == WvString(0));
     WVPASS((g.set("key", "foo"), g.get("key")) == WvString(1));
     WVPASS((g.set("key", "foo"), g.get("key")) == WvString(2));
@@ -43,14 +43,14 @@ WVTEST_MAIN("non-dynamic")
 WVTEST_MAIN("dynamic")
 {
     AutoIncrementer ai;
-    UniCallbackGen g(1);
+    UniCallbackGen g;
 
     WVPASS(!g.get("key"));
 
     g.update_after_set = false;
     g.update_before_get = true;
     
-    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, wv::_1));
+    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, _1));
 
     WVPASS(g.get("key") == WvString(0));
     WVPASS(g.get("key") == WvString(1));
@@ -65,16 +65,15 @@ WVTEST_MAIN("dynamic")
 WVTEST_MAIN("set")
 {
     AutoIncrementer ai;
-    UniCallbackGen g(1);
+    UniCallbackGen g;
 
     WVPASS(!g.get("key"));
 
     g.update_after_set = false;
     g.update_before_get = true;
     
-    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, wv::_1));
-    g.setsetcallback("key", wv::bind(&AutoIncrementer::set, &ai, wv::_1,
-				     wv::_2));
+    g.setgetcallback("key", wv::bind(&AutoIncrementer::get, &ai, _1));
+    g.setsetcallback("key", wv::bind(&AutoIncrementer::set, &ai, _1, _2));
 
     WVPASS(g.get("key") == WvString(0));
     WVPASS(g.get("key") == WvString(1));

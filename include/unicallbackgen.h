@@ -7,10 +7,11 @@
 #ifndef __UNICALLBACKGEN_H
 #define __UNICALLBACKGEN_H
 
+#include <map>
+
 #include "unitempgen.h"
-#include "wvhashtable.h"
-#include "wvcallback.h"
 #include "wvstream.h"
+#include "wvtr1.h"
 
 typedef wv::function<WvString(const UniConfKey&)>
         UniCallbackGenGetCallback;
@@ -24,19 +25,19 @@ typedef wv::function<void(const UniConfKey&, WvStringParm)>
  * call set(key, whatever).  Calling get(key) returns the most recent
  * generated value of the key.
  */
-class UniCallbackGen : public UniTempGen
+class UniCallbackGen: public UniTempGen
 {
-    WvMap<UniConfKey, UniCallbackGenGetCallback> get_callbacks;
-    WvMap<UniConfKey, UniCallbackGenSetCallback> set_callbacks;
+    typedef std::map<UniConfKey, UniCallbackGenGetCallback> GetCallbackMap;
+    GetCallbackMap get_callbacks;
+    typedef std::map<UniConfKey, UniCallbackGenSetCallback> SetCallbackMap;
+    SetCallbackMap set_callbacks;
 
 public:
     
     bool update_before_get;
     bool update_after_set;
 
-    UniCallbackGen(int size) :
-        get_callbacks(size),
-        set_callbacks(size),
+    UniCallbackGen():
         update_before_get(false),
         update_after_set(true) {}
     virtual ~UniCallbackGen() {}
@@ -44,29 +45,28 @@ public:
     virtual void setgetcallback(const UniConfKey &key,
             UniCallbackGenGetCallback get_callback)
     {
-        if (!!get_callback)
-            get_callbacks.set(key, get_callback);
+        if (get_callback)
+            get_callbacks[key] = get_callback;
         else
-            get_callbacks.remove(key);
+            get_callbacks.erase(key);
     }
     virtual void setsetcallback(const UniConfKey &key,
             UniCallbackGenSetCallback set_callback)
     {
-        if (!!set_callback)
-            set_callbacks.set(key, set_callback);
+        if (set_callback)
+            set_callbacks[key] = set_callback;
         else
-            set_callbacks.remove(key);
+            set_callbacks.erase(key);
     }
 
     virtual void update(const UniConfKey &key, 
             WvStringParm value = WvString::null)
     {
-        if (get_callbacks.exists(key))
-        {
-            UniCallbackGenGetCallback &get_callback = *get_callbacks[key];
-            UniTempGen::set(key, get_callback(key));
-        }
-        else UniTempGen::set(key, value);
+	GetCallbackMap::iterator it = get_callbacks.find(key);
+        if (it != get_callbacks.end())
+            UniTempGen::set(key, it->second(key));
+        else
+	    UniTempGen::set(key, value);
     }
 
     /***** Overridden members *****/
@@ -78,13 +78,12 @@ public:
     }
     virtual void set(const UniConfKey &key, WvStringParm value)
     {
-        if (set_callbacks.exists(key))
-        {
-            UniCallbackGenSetCallback &set_callback = *set_callbacks[key];
-            set_callback(key, value);
-        }
+	SetCallbackMap::iterator it = set_callbacks.find(key);
+	if (it != set_callbacks.end())
+            it->second(key, value);
 
-        if (update_after_set) update(key, value);
+        if (update_after_set)
+	    update(key, value);
     }
 };
 

@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 		log("File %s is a TCP server\n", count);
 		WvTCPListener *listen = new WvTCPListener(WvIPPortAddr("",
 							 atoi(cptr)));
-		listen->onaccept(wv::bind(accept_callback, &l, wv::_1));
+		listen->onaccept(wv::bind(accept_callback, &l, _1));
 		biglist.append(listen, true, "TCP server");
 	    }
 	}

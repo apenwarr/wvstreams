@@ -1,5 +1,5 @@
 #include "uniconfroot.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 #include "wvistreamlist.h"
 
 /**
@@ -38,7 +38,7 @@ int main()
 
     foo thing;
 
-    r["heh"].add_callback(0, wv::bind(&foo::cb, &thing, 3, wv::_1, wv::_2));
+    r["heh"].add_callback(0, wv::bind(&foo::cb, &thing, 3, _1, _2));
 
  
     WvIStreamList l;

@@ -12,8 +12,7 @@ WVTEST_MAIN("univaluetree basics")
 }
 
 
-bool keyvalcomp(const UniConfValueTree *a, const UniConfValueTree *b,
-		void *userdata)
+bool keyvalcomp(const UniConfValueTree *a, const UniConfValueTree *b)
 {
     return a && b && a->key() == b->key() && a->value() == b->value();
 }
@@ -24,15 +23,15 @@ WVTEST_MAIN("empty recursive compare")
     UniConfValueTree a(NULL, "key", "value");
     UniConfValueTree b(NULL, "key", "value");
     
-    WVPASS(a.compare(&b, keyvalcomp, NULL));
-    WVFAIL(a.compare(NULL, keyvalcomp, NULL));
+    WVPASS(a.compare(&b, keyvalcomp));
+    WVFAIL(a.compare(NULL, keyvalcomp));
     
     new UniConfValueTree(&a, 1, 1);
-    WVFAIL(a.compare(&b, keyvalcomp, NULL));
-    WVFAIL(b.compare(&a, keyvalcomp, NULL));
+    WVFAIL(a.compare(&b, keyvalcomp));
+    WVFAIL(b.compare(&a, keyvalcomp));
     
     new UniConfValueTree(&b, 1, 1);
-    WVPASS(a.compare(&b, keyvalcomp, NULL));
+    WVPASS(a.compare(&b, keyvalcomp));
 }
 
 
@@ -46,5 +45,5 @@ WVTEST_MAIN("recursive compare")
     for (int i = 1000; i >= 1; i--)
 	new UniConfValueTree(&b, i, i);
     
-    WVPASS(a.compare(&b, keyvalcomp, NULL));
+    WVPASS(a.compare(&b, keyvalcomp));
 }

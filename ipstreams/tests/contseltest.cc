@@ -54,7 +54,7 @@ int main()
     WvIStreamList l;
     
     WvTCPListener listen(WvIPPortAddr("0.0.0.0:1129"));
-    listen.onaccept(wv::bind(setupcont_call, &l, wv::_1));
+    listen.onaccept(wv::bind(setupcont_call, &l, _1));
 
     wvcon->setcallback(WvCont(wv::bind(&stream_call, wv::ref(*wvcon))));
 

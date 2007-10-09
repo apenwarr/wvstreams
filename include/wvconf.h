@@ -16,7 +16,7 @@
 #include "wvlinklist.h"
 #include "wvlog.h"
 #include "wvstringlist.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 
 
 #ifdef __WVCONFEMU_H
@@ -176,20 +176,17 @@ public:
                  WvStringParm oldval, WvStringParm newval);
 
     void add_addfile(WvString *filename, WvStringParm sect, WvStringParm ent)
-	{ add_callback(wv::bind(&WvConf::addfile, this, wv::_1, wv::_2, wv::_3,
-				wv::_4, wv::_5),
+	{ add_callback(wv::bind(&WvConf::addfile, this, _1, _2, _3, _4, _5),
 		       filename, sect, ent, new int); }
 
     void add_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
-	{ add_callback(wv::bind(&WvConf::addname, this, wv::_1, wv::_2, wv::_3,
-				wv::_4, wv::_5),
+	{ add_callback(wv::bind(&WvConf::addname, this, _1, _2, _3, _4, _5),
 		       list, sect, ent, list); }
     void del_addname(WvStringList *list, WvStringParm sect, WvStringParm ent)
 	{ del_callback(sect, ent, list); }
     
     void add_setbool(bool *b, WvStringParm section, WvStringParm entry)
-        { add_callback(wv::bind(&WvConf::setbool, this, wv::_1, wv::_2, wv::_3,
-				wv::_4, wv::_5),
+        { add_callback(wv::bind(&WvConf::setbool, this, _1, _2, _3, _4, _5),
 		       b, section, entry, b); }
     void del_setbool(bool *b, WvStringParm section, WvStringParm entry)
         { del_callback(section, entry, b); }

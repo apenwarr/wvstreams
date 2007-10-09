@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 	
 	wvcon->setcallback(wv::bind(stream_bounce_to_list,
 				    wv::ref(*wvcon), &l));
-	sock.onaccept(wv::bind(accept_callback, wv::ref(l), wv::_1));
+	sock.onaccept(wv::bind(accept_callback, wv::ref(l), _1));
 	
 	log("Listening on port %s\n", *sock.src());
 	

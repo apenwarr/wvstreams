@@ -199,7 +199,7 @@ WVTEST_MAIN("permgen basic")
     CbCounter notifywatcher;
 
     UniWatch watcher(root["/"], wv::bind(&CbCounter::callback, &notifywatcher,
-					 wv::_1, wv::_2));
+					 _1, _2));
     
     tempgen->set("open/foo", "2");
     WVPASS(notifywatcher.cbs == 1);

@@ -2,11 +2,12 @@
 #ifndef WVSTREAMSDEBUGGER_H
 #define WVSTREAMSDEBUGGER_H
 
-#include "wvtclstring.h"
-#include "wvcallback.h"
+#include <map>
+
 #include "wverror.h"
-#include "wvhashtable.h"
 #include "wvstringlist.h"
+#include "wvtclstring.h"
+#include "wvtr1.h"
 
 class WvStreamsDebugger
 {
@@ -51,9 +52,9 @@ private:
             cleanup_cb = _cleanup_cb;
         }
     };
-    typedef WvMap<WvString, Command *> CommandMap;
+    typedef std::map<WvString, Command> CommandMap;
     static CommandMap *commands;
-    typedef WvMap<WvString, char *> CommandDataMap;
+    typedef std::map<WvString, void*> CommandDataMap;
     CommandDataMap command_data;
     
     void *get_command_data(WvStringParm cmd, Command *command);

@@ -223,7 +223,7 @@ WvDBusMsg WvDBusConn::send_and_wait(WvDBusMsg msg, time_t msec_timeout)
 {
     xxReplyWaiter rw;
     
-    send(msg, wv::bind(&xxReplyWaiter::reply_wait, &rw, wv::_1),
+    send(msg, wv::bind(&xxReplyWaiter::reply_wait, &rw, _1),
 	 msec_timeout);
     while (!rw.reply && isok())
 	runonce();
@@ -257,7 +257,7 @@ void WvDBusConn::send_hello()
 {
     WvDBusMsg msg("org.freedesktop.DBus", "/org/freedesktop/DBus",
 		  "org.freedesktop.DBus", "Hello");
-    send(msg, wv::bind(&WvDBusConn::_registered, this, wv::_1));
+    send(msg, wv::bind(&WvDBusConn::_registered, this, _1));
     WvDBusMsg msg2("org.freedesktop.DBus", "/org/freedesktop/DBus",
 		   "org.freedesktop.DBus", "AddMatch");
     msg2.append("type='signal'");

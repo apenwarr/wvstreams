@@ -116,7 +116,7 @@ WVTEST_MAIN("dbusserver two connections")
     WvIStreamList::globallist.append(&conn2, false);
     
     conn2.add_callback(WvDBusConn::PriNormal,
-		       wv::bind(msg_received, wv::ref(conn2), wv::_1));
+		       wv::bind(msg_received, wv::ref(conn2), _1));
     
     reg_count = 0;
     conn1.request_name("ca.nit.MySender", name_registered);

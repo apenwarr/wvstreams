@@ -31,6 +31,12 @@
 #include "slp.h"
 #endif
 
+#include <map>
+
+using std::map;
+using wv::shared_ptr;
+
+
 #ifdef _WIN32
 #pragma comment(linker, "/include:?UniRegistryGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
 #pragma comment(linker, "/include:?UniPStoreGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
@@ -40,17 +46,21 @@
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 
 
-static WvMap<WvString, IUniConfGen*> namedgens(42);
+static map<WvString, shared_ptr<IUniConfGen> > namedgens;
 
 
 static IUniConfGen *creator(WvStringParm s, IObject*)
 {
-    IUniConfGen* gen = namedgens[s];
+    map<WvString, shared_ptr<IUniConfGen> >::iterator it = namedgens.find(s);
+    shared_ptr<IUniConfGen> gen;
+
+    if (it != namedgens.end())
+	gen = it->second;
 
     if (gen)
 	gen->addRef();
 
-    return gen;
+    return gen.get();
 }
 
 WvMoniker<IUniConfGen> UniNamedMoniker("named", creator);
@@ -82,7 +92,10 @@ class UniConfd : public WvStreamsDaemon
 	*ptr = 0;
 	moniker = ptr + 1;
 
-	namedgens.add(name, wvcreate<IUniConfGen>(moniker), true);
+	namedgens[name] = shared_ptr<IUniConfGen>(
+	    wvcreate<IUniConfGen>(moniker),
+	    wv::bind(&IUniConfGen::release, _1));
+
 	return true;
     }
 
@@ -238,8 +251,7 @@ public:
 	args.add_option('n', "named-gen",
 			"creates a \"named\" moniker 'name' from 'moniker'",
 			"name=moniker",
-			wv::bind(&UniConfd::namedgen_cb, this, wv::_1, wv::_2),
-			NULL);
+			wv::bind(&UniConfd::namedgen_cb, this, _1, _2), NULL);
 #endif
 	args.add_optional_arg("MONIKERS", true);
 	args.set_email("<" PACKAGE_BUGREPORT ">");

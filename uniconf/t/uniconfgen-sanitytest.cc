@@ -182,7 +182,7 @@ void UniConfGenSanityTester::test_haschildren_moniker(WvStringParm moniker)
     UniConfRoot cfg(moniker);
     UniWatch watcher(cfg["/"],
 		     wv::bind(&UniConfGenSanityTester::CbCounter::callback,
-			      &notifywatcher, wv::_1, wv::_2));
+			      &notifywatcher, _1, _2));
     WVFAIL(cfg.haschildren());
 
     WVPASSEQ(cfg.getme(), WvString::empty);

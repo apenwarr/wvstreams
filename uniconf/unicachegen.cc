@@ -29,7 +29,7 @@ UniCacheGen::UniCacheGen(IUniConfGen *_inner)
 {
     if (inner)
         inner->add_callback(this, wv::bind(&UniCacheGen::deltacallback, this,
-					   wv::_1, wv::_2));
+					   _1, _2));
     refreshed_once = false;
 }
 

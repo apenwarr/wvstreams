@@ -8,9 +8,9 @@
 #define __UNIMOUNTGEN_H
 
 #include "uniconfgen.h"
-#include "wvcallback.h"
 #include "wvmoniker.h"
 #include "wvstringlist.h"
+#include "wvtr1.h"
 
 
 /** The UniMountTree implementation realized as a UniConfGen. */

@@ -79,7 +79,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
         tcp_listener = new WvTCPListener(tcp_addr);
         tcp_listener->set_wsname("wsd listener on %s", tcp_addr);
         tcp_listener->onaccept(wv::bind(&WvStreamsDebuggerServer::tcp_listener_cb, this,
-					wv::_1));
+					_1));
         tcp_listener->setclosecallback(
 	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_close_cb, this));
         streams.append(tcp_listener, true);
@@ -186,7 +186,7 @@ void WvStreamsDebuggerServer::ready_cb(Connection &s)
     
     WvString result = s.debugger.run(cmd, args,
 				     wv::bind(&Connection::result_cb, &s,
-					      wv::_1, wv::_2));
+					      _1, _2));
     if (!!result)
         s.send("ERROR", result);
     else

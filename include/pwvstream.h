@@ -9,7 +9,7 @@
 #include "wvstream.h"      // FIXME: don't include this!
 #include "wvstreamclone.h" // FIXME: don't include this!
 #include "wvmoniker.h"
-#include "wvcallback.h"
+#include "wvtr1.h"
 #include <tr1/memory>
 
 /**
@@ -67,13 +67,13 @@ public:
     
     PWvStream(IWvStream *s)
 	: std::tr1::shared_ptr<WvStream>(clean_stream(s),
-				  wv::bind(&IWvStream::release, wv::_1))
+				  wv::bind(&IWvStream::release, _1))
     {
     }
     
     PWvStream(WvStringParm moniker, IObject *obj = 0)
 	: std::tr1::shared_ptr<WvStream>(make_stream(moniker, obj),
-				  wv::bind(&IWvStream::release, wv::_1))
+				  wv::bind(&IWvStream::release, _1))
     {
 	// Note: pointer is definitely not NULL here, because make_stream is
 	// careful.

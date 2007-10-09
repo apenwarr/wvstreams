@@ -39,7 +39,7 @@ void UniUnwrapGen::setinner(const UniConf &inner)
     root = xinner.rootobj();
     if (root)
 	root->mounts.add_callback(this, wv::bind(&UniUnwrapGen::gencallback,
-						 this, wv::_1, wv::_2));
+						 this, _1, _2));
 }
 
 

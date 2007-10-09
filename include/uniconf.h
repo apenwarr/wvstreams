@@ -9,9 +9,9 @@
 
 #include <vector>
 
-#include "uniconfkey.h"
 #include "uniconfgen.h"
-#include "wvcallback.h"
+#include "uniconfkey.h"
+#include "wvtr1.h"
 
 class WvStream;
 class UniConf;

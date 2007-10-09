@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     }
 
     WvTCPListener tcplisten("0.0.0.0:5238");
-    tcplisten.onaccept(wv::bind(tcp_incoming, x509cert, wv::_1));
+    tcplisten.onaccept(wv::bind(tcp_incoming, x509cert, _1));
     
     if (!tcplisten.isok())
     {
