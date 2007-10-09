@@ -2,7 +2,10 @@ WVSTREAMS=.
 
 include $(WVSTREAMS)/wvrules.mk
 include vars.mk
+
+ifneq ($(COMPILER_STANDARD),)
 include vars-$(COMPILER_STANDARD).mk
+endif
 
 default: all
 
