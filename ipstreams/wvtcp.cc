@@ -55,7 +55,7 @@
 WV_LINK(WvTCPConn);
 
 
-static IWvStream *creator(WvStringParm s)
+static IWvStream *creator(WvStringParm s, IObject*)
 {
     return new WvTCPConn(s);
 }
@@ -119,7 +119,7 @@ WvTCPConn::WvTCPConn(WvStringParm _hostname, uint16_t _port)
 	do_connect();
     }
     else
-	dns.findaddr(0, hostname, NULL);
+	check_resolver();
 }
 
 
@@ -176,8 +176,18 @@ void WvTCPConn::do_connect()
 	nice_tcpopts();
     }
     
-    sockaddr *sa = remaddr.sockaddr();
-    int ret = connect(getfd(), sa, remaddr.sockaddr_len()), err = errno;
+#ifndef _WIN32
+    WvIPPortAddr newaddr(remaddr);
+#else
+    // Win32 doesn't like to connect to 0.0.0.0:port; it means "any address
+    // on the local machine", so let's just force localhost
+    WvIPAddr zero;
+    WvIPPortAddr newaddr(WvIPAddr(remaddr)==zero
+			    ? WvIPAddr("127.0.0.1") : remaddr,
+			 remaddr.port);
+#endif
+    sockaddr *sa = newaddr.sockaddr();
+    int ret = connect(getfd(), sa, newaddr.sockaddr_len()), err = errno;
     assert(ret <= 0);
     
     if (ret == 0 || (ret < 0 && err == EISCONN))
@@ -209,6 +219,7 @@ void WvTCPConn::check_resolver()
     }
     else if (dnsres > 0)
     {
+	// fprintf(stderr, "%p: resolver succeeded!\n", this);
 	remaddr = WvIPPortAddr(*ipr, remaddr.port);
 	resolved = true;
 	do_connect();
@@ -255,7 +266,7 @@ void WvTCPConn::pre_select(SelectInfo &si)
     if (!resolved)
         dns.pre_select(hostname, si);
 
-    if (resolved && isok()) 
+    if (resolved) 
     {
 	bool oldw = si.wants.writable;
 	if (!isconnected()) {
@@ -351,16 +362,17 @@ size_t WvTCPConn::uwrite(const void *buf, size_t count)
 
 
 
-WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport):
-    listenport(_listenport)
+WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
+	: WvListener(new WvFdStream(socket(PF_INET, SOCK_STREAM, 0)))
 {
+    WvFdStream *fds = (WvFdStream *)cloned;
+    listenport = _listenport;
     sockaddr *sa = listenport.sockaddr();
     
     int x = 1;
 
-    setfd(socket(PF_INET, SOCK_STREAM, 0));
-    set_close_on_exec(true);
-    set_nonblock(true);
+    fds->set_close_on_exec(true);
+    fds->set_nonblock(true);
     if (getfd() < 0
 	|| setsockopt(getfd(), SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x))
 	|| bind(getfd(), sa, listenport.sockaddr_len())
@@ -402,38 +414,26 @@ WvTCPConn *WvTCPListener::accept()
 }
 
 
-void WvTCPListener::auto_accept(WvIStreamList *list, IWvStreamCallback callfunc)
+void WvTCPListener::auto_accept(WvIStreamList *list,
+				wv::function<void(IWvStream*)> cb)
 {
-    setcallback(wv::bind(&WvTCPListener::accept_callback, this, list,
-			 callfunc));
+    onaccept(wv::bind(&WvTCPListener::accept_callback, this, list,
+			 cb, _1));
 }
 
-
-void WvTCPListener::auto_accept(IWvStreamCallback callfunc)
+void WvTCPListener::auto_accept(wv::function<void(IWvStream*)> cb)
 {
-    setcallback(wv::bind(&WvTCPListener::accept_callback, this,
-			 &WvIStreamList::globallist, callfunc));
+    auto_accept(&WvIStreamList::globallist, cb);
 }
 
 
 void WvTCPListener::accept_callback(WvIStreamList *list,
-				    IWvStreamCallback callfunc)
+				    wv::function<void(IWvStream*)> cb,
+				    IWvStream *_conn)
 {
-    WvTCPConn *connection = accept();
-    connection->setcallback(callfunc);
-    list->append(connection, true, "WvTCPConn");
-}
-
-
-size_t WvTCPListener::uread(void *, size_t)
-{
-    return 0;
-}
-
-
-size_t WvTCPListener::uwrite(const void *, size_t)
-{
-    return 0;
+    WvStreamClone *conn = new WvStreamClone(_conn);
+    conn->setcallback(wv::bind(cb, conn));
+    list->append(conn, true, "WvTCPConn");
 }
 
 

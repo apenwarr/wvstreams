@@ -24,8 +24,7 @@ int main(int argc, char **argv)
     else
         enc = new WvBackslashDecoder();
 
-    WvEncoderStream *stream = new WvEncoderStream(wvout);
-    stream->disassociate_on_close = true;
+    WvEncoderStream *stream = new WvEncoderStream((wvout->addRef(), wvout));
     stream->auto_flush(false);
     stream->writechain.append(enc, true);
 

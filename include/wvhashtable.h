@@ -292,5 +292,4 @@ public:
     typedef WvHashTable<_type_, _ftype_,                                \
              _classname_##Accessor<_type_, _ftype_> > _classname_
 
-
 #endif // __WVHASHTABLE_H

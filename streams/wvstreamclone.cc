@@ -18,17 +18,30 @@
 #pragma init_seg(lib)
 #endif
 
-static IWvStream *creator(WvStringParm s)
+static IWvStream *creator(WvStringParm s, IObject *_obj)
 {
-    return new WvStreamClone(wvcreate<IWvStream>(s));
+    return new WvStreamClone(wvcreate<IWvStream>(s, _obj));
 }
 
-static WvMoniker<IWvStream> reg("clone", creator);
+static IWvStream *objcreator(WvStringParm s, IObject *_obj)
+{
+    // no real need to wrap it
+#if MUTATE_ISNT_BROKEN
+    return mutate<IWvStream>(_obj);
+#else
+    // HACK: we assume the object is safely of type IWvStream because
+    // xplc's mutate<> function seems not to be working for some reason.
+    return (IWvStream *)_obj;
+#endif
+}
+
+static WvMoniker<IWvStream> clonereg("clone", creator);
+static WvMoniker<IWvStream> objreg("obj", objcreator);
+static WvMoniker<IWvStream> objreg2("", objcreator);
 
 
 WvStreamClone::WvStreamClone(IWvStream *_cloned) 
-    : cloned(0), 
-      disassociate_on_close(false), 
+    : cloned(NULL),
       my_type("WvStreamClone:(none)")
 {
     setclone(_cloned);
@@ -40,8 +53,8 @@ WvStreamClone::WvStreamClone(IWvStream *_cloned)
 WvStreamClone::~WvStreamClone()
 {
     //fprintf(stderr, "%p destroying: clone is %p\n", this, cloned);
+    setclone(NULL);
     close();
-    WVRELEASE(cloned);
 }
 
 
@@ -73,8 +86,6 @@ void WvStreamClone::close()
     if (cloned)
 	cloned->setclosecallback(0); // prevent recursion!
     WvStream::close();
-    if (disassociate_on_close)
-        setclone(NULL);
     if (cloned)
 	cloned->close();
 }
@@ -171,6 +182,7 @@ void WvStreamClone::setclone(IWvStream *newclone)
 {
     if (cloned)
 	cloned->setclosecallback(0);
+    WVRELEASE(cloned);
     cloned = newclone;
     closed = stop_read = stop_write = false;
     if (cloned)

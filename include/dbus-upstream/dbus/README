@@ -1,0 +1,4 @@
+These files were imported from dbus-0.60 in order to implement the WvDBus
+marshalling code using DBus internal functions.  When DBus 1.2.x is
+released, we should be able to get rid of this directly in favour of 
+the new (public!) dbus_message{de,}marshal() functions.

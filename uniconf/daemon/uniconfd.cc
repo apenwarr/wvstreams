@@ -49,7 +49,7 @@ using wv::shared_ptr;
 static map<WvString, shared_ptr<IUniConfGen> > namedgens;
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject*)
 {
     map<WvString, shared_ptr<IUniConfGen> >::iterator it = namedgens.find(s);
     shared_ptr<IUniConfGen> gen;

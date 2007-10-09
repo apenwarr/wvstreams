@@ -10,9 +10,9 @@
 #include "wvmoniker.h"
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    return new UniBachelorGen(s);
+    return new UniBachelorGen(wvcreate<IUniConfGen>(s, _obj));
 }
 
 static WvMoniker<IUniConfGen> moniker("bachelor", creator);

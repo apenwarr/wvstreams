@@ -35,32 +35,26 @@ void sighandler_die(int sig)
 }
 
 
-void bounce_to_list(WvStream &s)
+static void bounce_to_list(IWvStream *s)
 {
     char buf[1024];
     size_t len;
     
-    len = s.read(buf, sizeof(buf));
+    len = s->read(buf, sizeof(buf));
     
     WvIStreamList::Iter i(WvIStreamList::globallist);
     for (i.rewind(); i.next(); )
-    {
-	if (i.ptr() != &s) i->write(buf, len);
-    }
+	if (i.ptr() != s)
+	    i->write(buf, len);
 }
  
  
-void tcp_incoming(WvTCPListener *listener, WvX509Mgr *x509)
+static void tcp_incoming(WvX509Mgr *x509, IWvStream *s)
 {
-    WvTCPConn *s = listener->accept();
-    
-    if (s)
-    {
-	WvSSLStream *sslsrvr = new WvSSLStream(s, x509, validateme,
-					       true);
-        WvIStreamList::globallist.append(sslsrvr, true, "ss tcp");
-	sslsrvr->setcallback(wv::bind(bounce_to_list, wv::ref(*sslsrvr)));
-    }
+    WvSSLStream *sslsrvr = new WvSSLStream(s, x509, validateme,
+					   true);
+    WvIStreamList::globallist.append(sslsrvr, true, "ss tcp");
+    sslsrvr->setcallback(wv::bind(bounce_to_list, s));
 }
 
  
@@ -107,7 +101,7 @@ int main(int argc, char **argv)
     }
 
     WvTCPListener tcplisten("0.0.0.0:5238");
-    tcplisten.setcallback(wv::bind(tcp_incoming, &tcplisten, x509cert));
+    tcplisten.onaccept(wv::bind(tcp_incoming, x509cert, _1));
     
     if (!tcplisten.isok())
     {
@@ -119,7 +113,7 @@ int main(int argc, char **argv)
     WvIStreamList::globallist.append(&tcplisten, false, "ss tcp listener"); 
     WvIStreamList::globallist.append(wvcon, false, "wvcon");
     
-    wvcon->setcallback(wv::bind(bounce_to_list, wv::ref(*wvcon)));
+    wvcon->setcallback(wv::bind(bounce_to_list, wvcon));
     
     while (!want_to_die && wvcon->isok() && tcplisten.isok())
         WvIStreamList::globallist.runonce();

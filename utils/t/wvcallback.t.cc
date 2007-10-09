@@ -30,10 +30,9 @@ static A bunk1(const A &a)
 {
     return bunk(a, (void *)1);
 }
-// END callbacktest.cc definitions
 
-// START cbweirdtest.cc definitions
 typedef wv::function<void()> Cb;
+typedef wv::function<int()> ICb;
 
 void f()
 {
@@ -47,7 +46,25 @@ public:
     Derived(const Cb &cb) : Cb(cb)
         { }
 };
-// END cbweirdtest.cc definitions
+
+
+static int ginstance;
+
+class Functor
+{
+public:
+    int instance;
+    
+    Functor() 
+        { instance = ++ginstance; }
+    Functor(const Functor &f) 
+        { instance = ++ginstance; }
+    
+    int operator()() 
+        { return instance; }
+};
+
+
 
 WVTEST_MAIN("callbacktest.cc")
 {
@@ -78,15 +95,34 @@ WVTEST_MAIN("callbacktest.cc")
     }
 }
 
-#ifdef CBWEIRD_DOESNT_CRASH        
-WVTEST_MAIN("cbweirdtest.cc")
-    //FIXME: Write unittest to correct this bug, once it's known and solved
+
+WVTEST_MAIN("cbweirdtest")
+{
     {
         Cb cb1(f);
         Cb cb2(cb1);
         Derived cb3(f);
         Derived cb4(cb1);
         Derived cb5(cb3);
+	cb5();
+	cb4();
     }
+    WVPASS(true);
+
+    // test that instantiating WvCallback from a functor object actually
+    // copies that object, it doesn't just take a reference.
+    // This is relevant for WvCont.
+    {
+	Functor ff;
+	WVPASSEQ(ff(), 1);
+	WVPASSEQ(ff(), 1);
+	ICb *cb1 = new ICb(ff);
+	ICb *cb2 = new ICb(*cb1);
+	int c1 = (*cb1)();
+	WVPASS(c1 > 1);
+	delete cb1;
+	WVPASS((*cb2)() > c1);
+	delete cb2;
+    }
+    WVPASS(true);
 }
-#endif

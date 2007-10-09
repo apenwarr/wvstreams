@@ -20,7 +20,6 @@ WVTEST_MAIN("wordwraptest.cc")
     WvString result;
     
     WvEncoderStream *stream = new WvEncoderStream(ostream);
-    stream->disassociate_on_close = true;
     stream->auto_flush(false);
     stream->writechain.append(enc, true);
     
@@ -36,5 +35,4 @@ WVTEST_MAIN("wordwraptest.cc")
 
     stream->flush(0);
     WVRELEASE(stream);
-    WVRELEASE(ostream);
 }

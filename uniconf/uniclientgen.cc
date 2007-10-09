@@ -23,7 +23,7 @@ WV_LINK(UniClientGen);
 
 #ifndef _WIN32
 #include "wvunixsocket.h"
-static IUniConfGen *unixcreator(WvStringParm s)
+static IUniConfGen *unixcreator(WvStringParm s, IObject *)
 {
     WvConstInPlaceBuf buf(s, s.len());
     WvString dst(wvtcl_getword(buf));
@@ -35,7 +35,7 @@ static WvMoniker<IUniConfGen> unixreg("unix", unixcreator);
 #endif
 
 
-static IUniConfGen *tcpcreator(WvStringParm _s)
+static IUniConfGen *tcpcreator(WvStringParm _s, IObject *)
 {
     WvConstInPlaceBuf buf(_s, _s.len());
     WvString dst(wvtcl_getword(buf));
@@ -51,7 +51,7 @@ static IUniConfGen *tcpcreator(WvStringParm _s)
 }
 
 
-static IUniConfGen *sslcreator(WvStringParm _s)
+static IUniConfGen *sslcreator(WvStringParm _s, IObject *)
 {
     WvConstInPlaceBuf buf(_s, _s.len());
     WvString dst(wvtcl_getword(buf));
@@ -67,16 +67,16 @@ static IUniConfGen *sslcreator(WvStringParm _s)
 }
 
 
-static IUniConfGen *wvstreamcreator(WvStringParm s)
+static IUniConfGen *wvstreamcreator(WvStringParm s, IObject *_obj)
 {
-    return new UniClientGen(wvcreate<IWvStream>(s));
+    return new UniClientGen(wvcreate<IWvStream>(s, _obj));
 }
 
 #ifdef WITH_SLP
 #include "wvslp.h"
 
 // FIXME: Only gets the first
-static IUniConfGen *slpcreator(WvStringParm s)
+static IUniConfGen *slpcreator(WvStringParm s, IObject *)
 {
     WvStringList serverlist;
     
@@ -86,8 +86,8 @@ static IUniConfGen *slpcreator(WvStringParm s)
 	printf("Creating connection to: %s\n", server.cstr());
 	return new UniClientGen(new WvTCPConn(server), s);
     }
-    else
-        return NULL;
+
+    return NULL;
 }
 
 static WvMoniker<IUniConfGen> slpreg("slp", slpcreator);
@@ -95,7 +95,8 @@ static WvMoniker<IUniConfGen> slpreg("slp", slpcreator);
 
 static WvMoniker<IUniConfGen> tcpreg("tcp", tcpcreator);
 static WvMoniker<IUniConfGen> sslreg("ssl", sslcreator);
-static WvMoniker<IUniConfGen> wvstreamreg("wvstream", wvstreamcreator);
+static WvMoniker<IUniConfGen> wvstreamreg1("wvstream", wvstreamcreator);
+static WvMoniker<IUniConfGen> wvstreamreg2("wv", wvstreamcreator);
 
 
 

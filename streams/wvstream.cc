@@ -17,6 +17,9 @@
 #include "wvcont.h"
 #include "wvstreamsdebugger.h"
 #include "wvstrutils.h"
+#include "wvistreamlist.h"
+#include "wvlinkerhack.h"
+#include "wvmoniker.h"
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
@@ -63,6 +66,15 @@ UUID_MAP_BEGIN(WvStream)
 static map<WSID, WvStream*> *wsid_map;
 static WSID next_wsid_to_try;
 
+
+WV_LINK(WvStream);
+
+static IWvStream *create_null(WvStringParm, IObject *)
+{
+    return new WvStream();
+}
+
+static WvMoniker<IWvStream> reg("null",  create_null);
 
 static bool is_prefix_insensitive(const char *str, const char *prefix)
 {
@@ -301,6 +313,12 @@ WvStream::~WvStream()
         delete wsid_map;
         wsid_map = NULL;
     }
+    
+    // eventually, streams will auto-add themselves to the globallist.  But
+    // even before then, it'll never be useful for them to be on the
+    // globallist *after* they get destroyed, so we might as well auto-remove
+    // them already.  It's harmless for people to try to remove them twice.
+    WvIStreamList::globallist.unlink(this);
     
     TRACE("done destroying %p\n", this);
 }

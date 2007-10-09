@@ -92,6 +92,7 @@ AC_ARG_ENABLE(testgui,
               AC_HELP_STRING([--disable-testgui],
                              [GUI for unit tests]))
 
+AC_ARG_WITH(dbus, AC_HELP_STRING([--with-dbus], [DBUS]))
 AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (required)]))
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
@@ -378,6 +379,35 @@ if test "$enable_rtti" = "no"; then
     WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
+# dbus
+if test "$with_dbus" != "no"; then
+    WV_APPEND(CPPFLAGS, -DDBUS_API_SUBJECT_TO_CHANGE -Iinclude/dbus-upstream)
+    if test "$with_dbus" = ""; then
+        DBUS_LIBDIR=/usr/lib
+        WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
+        WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L dbus-1`])
+    else
+        DBUS_LIBDIR=$with_dbus/dbus/.libs
+    	WV_APPEND(CPPFLAGS, -I$with_dbus)
+    	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR)
+    fi
+
+    AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
+    LIBS_save="$LIBS"
+    LIBS="$LIBS $DBUS_LIBDIR/libdbus-1.a"
+    with_dbus=no
+    AC_TRY_LINK([extern "C" void dbus_message_new(); ],
+                [dbus_message_new(); ],
+                [with_dbus=])
+    LIBS="$LIBS_save"
+
+    if test "$with_dbus" != "no"; then
+        AC_DEFINE(WITH_DBUS,,
+                  [Define to enable DBUS support.])
+        LIBS_DBUS=$DBUS_LIBDIR/libdbus-1.a
+    fi
+fi
+
 # gtk
 #if test "$with_gtk" != "no"; then
 #    CPPFLAGS_save="$CPPFLAGS"
@@ -399,8 +429,13 @@ if test "$with_openssl" != "no"; then
     fi
     AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
                      [#define OPENSSL_NO_KRB5])
+    LIBS_save="$LIBS"
     AC_CHECK_LIB(crypto, X509_free)
     AC_CHECK_LIB(ssl, SSL_has_matching_session_id,, [with_openssl=no])
+    LIBS="$LIBS_save"
+    if test "$with_openssl" != "no"; then
+        LIBS_SSL="-lcrypto -lssl"
+    fi
 fi
 
 # readline
@@ -412,6 +447,7 @@ fi
 # pam
 if test "$with_pam" != "no"; then
     AC_CHECK_HEADERS(security/pam_appl.h,, [with_pam=no])
+    LIBS_save="$LIBS"
     AC_CHECK_LIB(pam, pam_start,, [with_pam=no])
     AC_MSG_CHECKING(for sane PAM implementation)
     AC_COMPILE_IFELSE(
@@ -440,6 +476,10 @@ int main()
 		      [AC_MSG_RESULT([no])
 		       AC_DEFINE([HAVE_BROKEN_PAM], [1],
 				 [Solaris has a broken PAM implementation])])
+    LIBS="$LIBS_save"
+    if test "$with_pam" != "no" -a "$HAVE_BROKEN_PAM" != "1"; then
+        LIBS_PAM=-lpam
+    fi
 fi
 
 # tcl
@@ -447,9 +487,12 @@ if test "$with_tcl" != "no"; then
     CPPFLAGS_save="$CPPFLAGS"
     WV_APPEND(CPPFLAGS, -I/usr/include/tcl8.3)
     AC_CHECK_HEADERS(tcl.h,, [with_tcl=no])
+    LIBS_save="$LIBS"
     AC_CHECK_LIB(tcl8.3, TclInterpInit,, [with_tcl=no])
+    LIBS="$LIBS_save"
     if test "$with_tcl" != "no"; then
         CPPFLAGS="$CPPFLAGS_save"
+        LIBS_TCL=-ltcl8.3
     fi
 fi
 
@@ -460,21 +503,25 @@ if test "$with_qt" != "no"; then
         wv_cv_with_qt=no
         CPPFLAGS_save="$CPPFLAGS"
         LDFLAGS_save="$LDFLAGS"
+        LIBS_save="$LIBS"
         for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
             eval wv_qtdir="$wv_qtdir"
             CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include -I$wv_qtdir/include/qt3"
-            LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib -lqt-mt"
+            LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib"
+            LIBS="$LIBS_save -lqt-mt"
             AC_TRY_LINK([#include <qstring.h>],
                         [QString x("hello"); return 0; ],
                         [wv_cv_with_qt=$wv_qtdir; break])
         done
         CPPFLAGS="$CPPFLAGS_save"
         LDFLAGS="$LDFLAGS_save"
+        LIBS="$LIBS_save"
     ])
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
         WV_APPEND(CPPFLAGS, -I$with_qt/include -I$with_qt/include/qt3)
         WV_APPEND(LDFLAGS, -L$with_qt/lib)
+        WV_APPEND(LIBS_QT, -lqt-mt)
     fi
     AC_PATH_PROG(MOC, moc, [moc not found], $with_qt/bin)
 fi
@@ -488,10 +535,12 @@ if test "$with_xplc" != "no"; then
     if test "$with_xplc" = ""; then
 	if pkg-config --modversion xplc-${xplc_version}; then
             WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-${xplc_version}`])
-	    WV_APPEND(LDFLAGS, [`pkg-config --libs xplc-${xplc_version}`])
+	    WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L xplc-${xplc_version}`])
 	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	    LIBS_save="$LIBS"
-	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,
+	    			[LIBS_XPLC="-lxplc-cxx -lxplc"],
+				[with_xplc=no])
 	    LIBS="$LIBS_save"
 	    xplc_pc="xplc-${xplc_version}"
 	else
@@ -502,11 +551,13 @@ if test "$with_xplc" != "no"; then
 	WV_APPEND(LDFLAGS, [-L$with_xplc])
 	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
 	LIBS_save="$LIBS"
-	AC_CHECK_LIB(xplc, XPLC_getServiceManager,, [with_xplc=no])
+	AC_CHECK_LIB(xplc, XPLC_getServiceManager,
+			[LIBS_XPLC="-lxplc-cxx -lxplc"],
+			[with_xplc=no])
 	LIBS="$LIBS_save"
 	xplc_pc="xplc-${xplc_version}"
     fi
-    # What if we can't find it?
+    # Not already on the system?  Try building our own.
     if test "$with_xplc" = "no" && test -d xplc; then
         WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
         WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
@@ -514,6 +565,7 @@ if test "$with_xplc" != "no"; then
         build_xplc=yes
         with_xplc='$(WVSTREAMS)/xplc'
 	xplc_pc='wvxplc'
+	LIBS_XPLC="-lxplc-cxx -lxplc"
     fi
 fi
 
@@ -526,6 +578,10 @@ fi
 # check for missing packages
 missing_required=
 missing_devel=
+if test "$with_dbus" = "no"; then
+    AC_MSG_WARN([DBUS is missing.])
+    missing_devel=yes
+fi
 if test "$with_pam" = "no"; then
     AC_MSG_WARN([PAM is missing.])
     missing_devel=yes
@@ -599,6 +655,7 @@ AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
 
+AC_SUBST(with_dbus)
 AC_SUBST(with_gtk)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
@@ -607,6 +664,12 @@ AC_SUBST(with_qt)
 AC_SUBST(with_tcl)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
+
+AC_SUBST(LIBS_XPLC)
+AC_SUBST(LIBS_DBUS)
+AC_SUBST(LIBS_QT)
+AC_SUBST(LIBS_PAM)
+AC_SUBST(LIBS_TCL)
 
 AC_SUBST(build_xplc)
 AC_SUBST(xplc_pc)

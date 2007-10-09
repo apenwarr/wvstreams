@@ -32,6 +32,10 @@ ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so libwvqt.a
 endif
 
+ifneq ("$(with_dbus)", "no")
+  TARGETS += libwvdbus.so libwvdbus.a
+endif
+
 TARGETS_SO := $(filter %.so,$(TARGETS))
 TARGETS_A := $(filter %.a,$(TARGETS))
 
@@ -48,26 +52,8 @@ RELEASE?=$(PACKAGE_VERSION)
 
 DEBUG:=$(filter-out no,$(enable_debug))
 
-# for O_LARGEFILE
-CXXFLAGS+=${CXXOPTS}
-CFLAGS+=${COPTS}
-CXXFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-
-ifeq ($(DEBUG),)
-CXXFLAGS+=
-CFLAGS+=
-else
-CXXFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
-CFLAGS+=-ggdb -DDEBUG$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
-endif
-
-ifeq ("$(enable_debug)", "no")
-#CXXFLAGS+=-fomit-frame-pointer
-# -DNDEBUG is disabled because we like assert() to crash
-#CXXFLAGS+=-DNDEBUG
-#CFLAGS+=-DNDEBUG
-endif
+CXXFLAGS+=$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
+CFLAGS+=$(if $(filter-out yes,$(DEBUG)), -DDEBUG_$(DEBUG))
 
 ifeq ("$(enable_fatal_warnings)", "yes")
 CXXFLAGS+=-Werror
@@ -76,39 +62,15 @@ CXXFLAGS+=-Werror
 #CFLAGS+=-Werror
 endif
 
-ifneq ("$(enable_optimization)", "no")
-CXXFLAGS+=-O2
-#CXXFLAGS+=-felide-constructors
-CFLAGS+=-O2
-endif
-
-ifneq ("$(enable_warnings)", "no")
-CXXFLAGS+=-Wall -Woverloaded-virtual
-CFLAGS+=-Wall
-endif
-
 ifeq ("$(enable_testgui)", "no")
 WVTESTRUN=env
 endif
 
-ifeq ("$(enable_rtti)", "no")
-CXXFLAGS+=-fno-rtti
+ifneq ("$(with_xplc)", "no")
+LIBS+=$(LIBS_XPLC) -lm
 endif
 
-ifeq ("$(enable_exceptions)", "no")
-CXXFLAGS+=-fno-exceptions
-endif
-
-ifeq ("$(enable_efence)", "yes")
-LDLIBS+=-lefence
-endif
-
-libwvbase.so-LIBS+=-lxplc-cxx -lm
-libwvbase.so:
-
-ifneq ("$(with_pam)", "no")
-  libwvutils.so: -lpam
-endif
+libwvutils.so-LIBS+=$(LIBS_PAM)
 
 include $(filter-out xplc/% linuxstreams/%,$(wildcard */vars.mk */*/vars.mk)) \
 	$(wildcard $(foreach dir,$(ARCH_SUBDIRS),$(dir)/*/vars.mk)) /dev/null
@@ -181,6 +143,10 @@ libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 	$(call objects,uniconf))
 libuniconf.a: uniconf/uniconfroot.o
 libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
+
+libwvdbus.a libwvdbus.so: $(call objects,dbus)
+libwvdbus.so: libwvstreams.so libwvutils.so libwvbase.so
+libwvdbus.so: LIBS+=$(LIBS_DBUS)
 
 libwvtest.a: wvtestmain.o $(TESTOBJS)
 

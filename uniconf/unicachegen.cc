@@ -14,9 +14,9 @@ WV_LINK(UniCacheGen);
 
 // if 'obj' is non-NULL and is a UniConfGen, wrap that; otherwise wrap the
 // given moniker.
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    return new UniCacheGen(wvcreate<IUniConfGen>(s));
+    return new UniCacheGen(wvcreate<IUniConfGen>(s, _obj));
 }
 
 static WvMoniker<IUniConfGen> reg("cache", creator);

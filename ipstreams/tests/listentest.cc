@@ -39,9 +39,9 @@ static void stream_bounce_to_list(WvStream &s, WvIStreamList *list)
 }
 
 
-static void accept_callback(WvTCPListener &listen, WvIStreamList &list)
+static void accept_callback(WvIStreamList &list, IWvStream *_conn)
 {
-    WvTCPConn *conn = listen.accept();
+    WvStreamClone *conn = new WvStreamClone(_conn);
     conn->setcallback(wv::bind(stream_bounce_to_list, wv::ref(*conn), &list));
     list.append(conn, true, "WvTCPConn");
 }
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 	
 	wvcon->setcallback(wv::bind(stream_bounce_to_list,
 				    wv::ref(*wvcon), &l));
-	sock.setcallback(wv::bind(accept_callback, wv::ref(sock), wv::ref(l)));
+	sock.onaccept(wv::bind(accept_callback, wv::ref(l), _1));
 	
 	log("Listening on port %s\n", *sock.src());
 	

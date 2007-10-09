@@ -42,9 +42,9 @@ static void bouncer(WvStream *input, WvIStreamList *list)
 }
 
 
-static void accept_callback(WvTCPListener *listen, WvIStreamList *list)
+static void accept_callback(WvIStreamList *list, IWvStream *_conn)
 {
-    WvTCPConn *conn = listen->accept();
+    WvStreamClone *conn = new WvStreamClone(_conn);
     conn->setcallback(wv::bind(bouncer, conn, list));
     list->append(conn, true, "WvTCPConn");
 }
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 		log("File %s is a TCP server\n", count);
 		WvTCPListener *listen = new WvTCPListener(WvIPPortAddr("",
 							 atoi(cptr)));
-		listen->setcallback(wv::bind(accept_callback, listen, &l));
+		listen->onaccept(wv::bind(accept_callback, &l, _1));
 		biglist.append(listen, true, "TCP server");
 	    }
 	}

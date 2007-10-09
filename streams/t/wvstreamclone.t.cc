@@ -3,6 +3,7 @@
 #include "wvstreamclone.h"
 #include "wvloopback.h"
 #include "wvsocketpair.h"
+#include "wvmoniker.h"
 
 WVTEST_MAIN("close() non-loopiness")
 {
@@ -15,9 +16,7 @@ WVTEST_MAIN("close() non-loopiness")
 // noread/nowrite behaviour
 WVTEST_MAIN("noread/nowrite")
 {
-    WvStream s1;
-    WvStreamClone s(&s1);
-    s.disassociate_on_close = true;
+    WvStreamClone s(new WvStream);
     char buf[1024];
 
     s.nowrite();
@@ -91,8 +90,7 @@ WVTEST_MAIN("cloned inbuf after read error")
     s1.print("1\n2\n3\n4\n");
     WVPASSEQ(s2.blocking_getline(1000), "1");
     s1.close();
-    WvStreamClone ss2(&s2);
-    ss2.disassociate_on_close = true;
+    WvStreamClone ss2((s2.addRef(), &s2));
     
     WVPASSEQ(ss2.blocking_getline(1000), "2");
     s2.close(); // underlying stream goes away
@@ -108,9 +106,7 @@ WVTEST_MAIN("WvStreamClone setclone behaviour")
 {
     WvStream s1;
     WvStream s2;
-    WvStreamClone s(&s1);
-
-    s.disassociate_on_close = true;
+    WvStreamClone s((s1.addRef(), &s1));
 
     WVPASS(s.isok());
     s.noread();
@@ -119,10 +115,27 @@ WVTEST_MAIN("WvStreamClone setclone behaviour")
     WVPASS(!s.isok());
     WVPASS(!s1.isok());
     WVPASS(s2.isok());
-    s.setclone(&s2);
+    s.setclone((s2.addRef(), &s2));
     WVPASS(s.isok());
     WVPASS(s2.isok());
     s.setclone(NULL);
     WVPASS(!s.isok());
 }
 
+
+WVTEST_MAIN("clone monikers")
+{
+    IWvStream *e = new WvStream();
+    e->seterr("test");
+    IWvStream *s = wvcreate<IWvStream>("", e);
+    WVPASS(s);
+    WVPASSEQ(s->errstr(), "test");
+    delete s;
+    
+    e = new WvStream();
+    e->seterr("test2");
+    s = wvcreate<IWvStream>("clone:clone:", e);
+    WVPASS(s);
+    WVPASSEQ(s->errstr(), "test2");
+    delete s;
+}

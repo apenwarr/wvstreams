@@ -54,8 +54,8 @@ public:
 
 private:
     void unixcallback(WvUnixListener *listener);
-    void tcpcallback(WvTCPListener *listener);
-    void sslcallback(WvTCPListener *listener, WvX509Mgr *x509);
+    void tcpcallback(IWvStream *s);
+    void sslcallback(WvX509Mgr *mgr, IWvStream *s);
 };
 
 #endif // __UNICONFDAEMON_H

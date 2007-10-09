@@ -38,7 +38,7 @@ public:
 
 
 
-static IUniConfGen *creator(WvStringParm s)
+static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
     UniConfGenList *l = new UniConfGenList();
 
@@ -48,10 +48,12 @@ static IUniConfGen *creator(WvStringParm s)
 
     for (i.rewind(); i.next();)
     {
-	IUniConfGen *gen = wvcreate<IUniConfGen>(i());
+        if (_obj) _obj->addRef();
+	IUniConfGen *gen = wvcreate<IUniConfGen>(i(), _obj);
 	if (gen)
 	    l->append(gen, true);
     }
+    if (_obj) _obj->release();
 
     return new UniListGen(l);
 }

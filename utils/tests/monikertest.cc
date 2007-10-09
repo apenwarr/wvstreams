@@ -33,19 +33,19 @@ UUID_MAP_BEGIN(Test)
   UUID_MAP_END
 
 
-static IObject *createfunc(WvStringParm s)
+static IObject *createfunc(WvStringParm s, IObject*)
 {
     return new Test(s);
 }
 
 
-static IObject *createfunc2(WvStringParm s)
+static IObject *createfunc2(WvStringParm s, IObject*)
 {
     return new Test(WvString("bunk(%s)", s));
 }
 
 
-static ITest *createfunc3(WvStringParm s)
+static ITest *createfunc3(WvStringParm s, IObject*)
 {
     return new Test(WvString("stunk(%s)", s));
 }
@@ -58,8 +58,8 @@ int main()
     WvMoniker<ITest> stunk("test", createfunc3);
     
     WvMonikerRegistry *reg = WvMonikerRegistry::find_reg(IObject_IID);
-    IObject *a = (IObject *)reg->create("obj:obj-a");
-    IObject *b = (IObject *)reg->create("obj2:obj2-b");
+    IObject *a = (IObject *)reg->create("obj:obj-a", NULL);
+    IObject *b = (IObject *)reg->create("obj2:obj2-b", NULL);
     WVRELEASE(reg);
     
     IObject *c = wvcreate<IObject>("obj2:obj2-c");

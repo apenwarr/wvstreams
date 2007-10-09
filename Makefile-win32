@@ -32,7 +32,15 @@ gnulib: FORCE
 	rm -f $@
 	ln -s $(shell basename $<) $@
 
-all: fake-libs gnulib ipstreams/tests/tcptest crypto/tests/ssltest uniconf/tests/uni wvtestmain
+ifneq ($(have_dbus),no)
+  DBUSEXE=dbus/tests/wvdbus dbus/tests/wvdbusd
+endif
+
+all: fake-libs gnulib \
+	ipstreams/tests/tcptest crypto/tests/ssltest \
+	uniconf/tests/uni uniconf/daemon/uniconfd \
+	$(DBUSEXE) \
+	wvtestmain
 	
 include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
 
@@ -94,6 +102,7 @@ TOBJFIXME=\
 	\
 	streams/t/wvatomicfile.t.o \
 	streams/t/wvstreamsdaemon.t.o \
+	streams/t/wvpipe.t.o \
 	\
 	uniconf/t/uniconfd.t.o \
 	uniconf/t/uniconfgen-sanitytest.o \
@@ -137,11 +146,16 @@ W=$(WVSTREAMS)/Win32WvStreams
 DIRS=utils streams ipstreams uniconf uniconf/daemon crypto \
 	urlget configfile \
 	$W/libwvutils $W/libwvstreams $W/libuniconf
+ifneq ($(have_dbus),no)
+DIRS+=dbus
+endif
 _OBJFILES=$(call objects,$(DIRS))
 OBJFILES=$(filter-out $(OBJSKIP),$(_OBJFILES))
 
 _TOBJFILES=$(call objects,$(addsuffix /t,$(DIRS)))
 TOBJFILES=$(filter-out $(TOBJSKIP),$(_TOBJFILES))
+
+LIBS+=$(LIBS_DBUS)
 
 wvtestmain: $(TOBJFILES) libwvwin32.a
 

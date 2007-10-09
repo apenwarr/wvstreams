@@ -21,7 +21,7 @@ WV_LINK(UniRetryGen);
 #endif
 
 
-static IUniConfGen *creator(WvStringParm encoded_params)
+static IUniConfGen *creator(WvStringParm encoded_params, IObject *_obj)
 {
     DPRINTF("encoded_params = %s\n", encoded_params.cstr());
     WvStringList params;
@@ -31,14 +31,15 @@ static IUniConfGen *creator(WvStringParm encoded_params)
     	
     WvString moniker = params.popstr();
     if (params.count() == 0)
-    	return new UniRetryGen(moniker);
+	return new UniRetryGen(moniker);
     	
     WvString retry_interval_ms_str = params.popstr();
     time_t retry_interval_ms = retry_interval_ms_str.num();
     if (retry_interval_ms < 0)
     	retry_interval_ms = 0;
-    return new UniRetryGen(moniker, UniRetryGen::ReconnectCallback(),
-            retry_interval_ms);
+    return new UniRetryGen(moniker,
+			   UniRetryGen::ReconnectCallback(),
+                           retry_interval_ms);
 }
 
 static WvMoniker<IUniConfGen> reg("retry", creator);

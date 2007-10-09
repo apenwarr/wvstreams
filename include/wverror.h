@@ -70,6 +70,8 @@ public:
     void seterr(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
     void seterr_both(int _errnum, WvStringParm specialerr);
+    void seterr_both(int _errnum, WVSTRING_FORMAT_DECL)
+        { seterr_both(_errnum, WvString(WVSTRING_FORMAT_CALL)); }
     void seterr(const WvErrorBase &err);
     
     /** Reset our error state - there's no error condition anymore. */

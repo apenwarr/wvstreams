@@ -79,17 +79,15 @@ void UniConfDaemon::unixcallback(WvUnixListener *listener)
 #endif
 
 
-void UniConfDaemon::tcpcallback(WvTCPListener *listener)
+void UniConfDaemon::tcpcallback(IWvStream *s)
 {
-    WvStream *s = listener->accept();
     debug("Incoming TCP connection from %s.\n", *s->src());
-    accept(s);
+    accept(new WvStreamClone(s));
 }
 
 
-void UniConfDaemon::sslcallback(WvTCPListener *listener, WvX509Mgr *x509)
+void UniConfDaemon::sslcallback(WvX509Mgr *x509, IWvStream *s)
 {
-    WvStream *s = listener->accept();
     debug("Incoming TCP/SSL connection from %s.\n", *s->src());
     accept(new WvSSLStream(s, x509, 0, true));
 }
@@ -125,8 +123,7 @@ bool UniConfDaemon::setuptcpsocket(const WvIPPortAddr &addr)
         WVRELEASE(listener);
         return false;
     }
-    listener->setcallback(wv::bind(&UniConfDaemon::tcpcallback, this,
-				   listener));
+    listener->onaccept(wv::bind(&UniConfDaemon::tcpcallback, this, _1));
     append(listener, true, "tcp listen");
     debug("Listening for TCP at %s.\n", addr);
     return true;
@@ -143,8 +140,8 @@ bool UniConfDaemon::setupsslsocket(const WvIPPortAddr &addr, WvX509Mgr *x509)
         WVRELEASE(listener);
         return false;
     }
-    listener->setcallback(wv::bind(&UniConfDaemon::sslcallback, this,
-				   listener, x509));
+    listener->onaccept(wv::bind(&UniConfDaemon::sslcallback, this,
+				x509, _1));
     append(listener, true, "ssl listen");
     debug("Listening for TCP/SSL at %s.\n", addr);
     return true;

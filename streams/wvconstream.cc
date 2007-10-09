@@ -23,30 +23,6 @@ public:
 };
 
 
-static IWvStream *create_stdin(WvStringParm s)
-{
-    return new _WvConStream(0, -1);
-}
-static IWvStream *create_stdout(WvStringParm s)
-{
-    return new _WvConStream(-1, 1);
-}
-static IWvStream *create_stderr(WvStringParm s)
-{
-    return new _WvConStream(-1, 2);
-}
-static IWvStream *create_stdio(WvStringParm s)
-{
-    return new _WvConStream(0, 1);
-}
-
-static WvMoniker<IWvStream> reg0("stdin",  create_stdin);
-static WvMoniker<IWvStream> reg1("stdout", create_stdout);
-static WvMoniker<IWvStream> reg2("stderr", create_stderr);
-static WvMoniker<IWvStream> reg3("stdio",  create_stdio);
-
-
-
 _WvConStream::_WvConStream(int _rfd, int _wfd,
         WvStringParm name)
     : WvFDStream(_rfd, _wfd)
@@ -103,4 +79,31 @@ WvStream *wvcon = &_wvcon;
 WvStream *wvin = &_wvin;
 WvStream *wvout = &_wvout;
 WvStream *wverr = &_wverr;
+
+
+static IWvStream *create_stdin(WvStringParm s, IObject*)
+{
+    wvin->addRef();
+    return wvin;
+}
+static IWvStream *create_stdout(WvStringParm s, IObject*)
+{
+    wvout->addRef();
+    return wvout;
+}
+static IWvStream *create_stderr(WvStringParm s, IObject*)
+{
+    wverr->addRef();
+    return wverr;
+}
+static IWvStream *create_stdio(WvStringParm s, IObject*)
+{
+    wvcon->addRef();
+    return wvcon;
+}
+
+static WvMoniker<IWvStream> reg0("stdin",  create_stdin);
+static WvMoniker<IWvStream> reg1("stdout", create_stdout);
+static WvMoniker<IWvStream> reg2("stderr", create_stderr);
+static WvMoniker<IWvStream> reg3("stdio",  create_stdio);
 

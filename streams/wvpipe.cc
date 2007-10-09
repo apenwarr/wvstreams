@@ -57,17 +57,17 @@ static int socketpair(int d, int type, int protocol, int sv[2])
 
 WvPipe::WvPipe(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
-	       int stdin_fd, int stdout_fd, int stderr_fd)
+	       int stdin_fd, int stdout_fd, int stderr_fd, WvStringList *env)
 {
     setup(program, argv, writable, readable, catch_stderr,
-	  stdin_fd, stdout_fd, stderr_fd);
+	  stdin_fd, stdout_fd, stderr_fd, env);
 }
 
 
 WvPipe::WvPipe(const char *program, const char * const *argv,
 	       bool writable, bool readable, bool catch_stderr,
 	       WvFDStream *stdin_str, WvFDStream *stdout_str,
-	       WvFDStream *stderr_str)
+	       WvFDStream *stderr_str, WvStringList *env)
 {
     int fd0 = 0, fd1 = 1, fd2 = 2;
     if (stdin_str)
@@ -76,28 +76,29 @@ WvPipe::WvPipe(const char *program, const char * const *argv,
 	fd1 = stdout_str->getwfd();
     if (stderr_str)
 	fd2 = stderr_str->getwfd();
-    setup(program, argv, writable, readable, catch_stderr, fd0, fd1, fd2);
+    setup(program, argv, writable, readable, catch_stderr, fd0, fd1, fd2, env);
 }
 
 
 WvPipe::WvPipe(const char *program, const char **argv,
 	       bool writable, bool readable, bool catch_stderr,
-	       WvFDStream *stdio_str)
+	       WvFDStream *stdio_str, WvStringList *env)
 {
     if (stdio_str)
     {
 	int rfd = stdio_str->getrfd(), wfd = stdio_str->getwfd();
 	setup(program, argv, writable, readable, catch_stderr,
-	      rfd, wfd, wfd);
+	      rfd, wfd, wfd, env);
     }
     else
-	setup(program, argv, writable, readable, catch_stderr, 0, 1, 2);
+	setup(program, argv, writable, readable, catch_stderr, 0, 1, 2, env);
 }
 
 
 void WvPipe::setup(const char *program, const char * const *argv,
-	      bool writable, bool readable, bool catch_stderr,
-	      int stdin_fd, int stdout_fd, int stderr_fd)
+		   bool writable, bool readable, bool catch_stderr,
+		   int stdin_fd, int stdout_fd, int stderr_fd,
+		   WvStringList *env)
 {
     int socks[2];
     int flags;
@@ -118,7 +119,15 @@ void WvPipe::setup(const char *program, const char * const *argv,
 
     fcntl(socks[0], F_SETFL, O_RDWR|O_NONBLOCK);
     setfd(socks[0]);
-
+    
+    if (env) 
+    {
+        WvStringList::Iter it(*env);
+        for (it.rewind(); it.next(); ) 
+        {
+            proc.env.append(*it);
+        }
+    }
     pid = proc.fork(&waitfd);
 
     if (!pid)

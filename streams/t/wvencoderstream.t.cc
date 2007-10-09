@@ -25,8 +25,7 @@ WVTEST_MAIN("gzip")
     char *line; 
     
     WvLoopback loopy;
-    WvEncoderStream gzip(&loopy);
-    gzip.disassociate_on_close = true; 
+    WvEncoderStream gzip((loopy.addRef(), &loopy));
     
     gzip.write(in_data);
     line = gzip.blocking_getline(1000);
@@ -41,8 +40,7 @@ WVTEST_MAIN("gzip")
     WVPASSEQ(line, "a compressed line");
     
     WvLoopback loopy2;
-    WvEncoderStream gzip2(&loopy);
-    gzip2.disassociate_on_close = true; 
+    WvEncoderStream gzip2((loopy.addRef(), &loopy));
     
     gzip2.write(in_data);
     gzip2.write(zin_data);

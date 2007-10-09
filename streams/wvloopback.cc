@@ -8,6 +8,18 @@
  */
 #include "wvloopback.h"
 #include "wvsocketpair.h"
+#include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(WvLoopback);
+
+static IWvStream *create_loopback(WvStringParm, IObject *)
+{
+    return new WvLoopback();
+}
+
+static WvMoniker<IWvStream> reg("loop",  create_loopback);
+
 
 WvLoopback::WvLoopback()
 {
