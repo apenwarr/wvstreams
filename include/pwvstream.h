@@ -10,7 +10,6 @@
 #include "wvstreamclone.h" // FIXME: don't include this!
 #include "wvmoniker.h"
 #include "wvtr1.h"
-#include <tr1/memory>
 
 /**
  * PWvStream is a smart pointer to an IWvStream object.  It is designed for
@@ -38,7 +37,7 @@
  *    is relatively easy; just make the returned stream a null: stream and
  *    do seterr() on it.
  */
-class PWvStream : public std::tr1::shared_ptr<WvStream>
+class PWvStream : public wv::shared_ptr<WvStream>
 {
     static WvStream *clean_stream(IWvStream *s)
     {
@@ -66,13 +65,13 @@ public:
     }
     
     PWvStream(IWvStream *s)
-	: std::tr1::shared_ptr<WvStream>(clean_stream(s),
+	: wv::shared_ptr<WvStream>(clean_stream(s),
 				  wv::bind(&IWvStream::release, _1))
     {
     }
     
     PWvStream(WvStringParm moniker, IObject *obj = 0)
-	: std::tr1::shared_ptr<WvStream>(make_stream(moniker, obj),
+	: wv::shared_ptr<WvStream>(make_stream(moniker, obj),
 				  wv::bind(&IWvStream::release, _1))
     {
 	// Note: pointer is definitely not NULL here, because make_stream is

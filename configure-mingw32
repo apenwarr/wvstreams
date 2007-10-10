@@ -8,7 +8,7 @@ PORTS=$PWD/../wvports
 	CPPFLAGS="-mno-cygwin \
 		-I$PORTS/xplc/build/xplc/include \
 		-I$PORTS/zlib/build/zlib \
-		-I$PORTS/openssl/build/openssl/include" \
+		-I$PORTS/openssl/build/openssl/include $XCPPFLAGS" \
 	LDFLAGS="\
 		-L$PORTS/xplc/build/xplc \
 		-L$PORTS/zlib/build/zlib \
