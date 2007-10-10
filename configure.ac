@@ -520,7 +520,10 @@ if test "$with_qt" != "no"; then
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
         WV_APPEND(CPPFLAGS, -I$with_qt/include -I$with_qt/include/qt3)
-        WV_APPEND(LDFLAGS, -L$with_qt/lib)
+        if [ "$wv_qtdir" != "/usr" ]; then
+                # never explicitly include /usr/lib
+	        WV_APPEND(LDFLAGS, -L$with_qt/lib)
+	fi
         WV_APPEND(LIBS_QT, -lqt-mt)
     fi
     AC_PATH_PROG(MOC, moc, [moc not found], $with_qt/bin)
