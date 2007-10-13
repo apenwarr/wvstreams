@@ -43,14 +43,6 @@ ifeq ("$(enable_testgui)", "no")
 WVTESTRUN=env
 endif
 
-ifeq ("$(enable_rtti)", "no")
-CXXFLAGS+=-fno-rtti
-endif
-
-ifeq ("$(enable_exceptions)", "no")
-CXXFLAGS+=-fno-exceptions
-endif
-
 ifeq ("$(enable_efence)", "yes")
 LDLIBS+=-lefence
 endif

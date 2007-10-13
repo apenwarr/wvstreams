@@ -45,14 +45,6 @@ ifneq ("$(enable_warnings)", "no")
 #  CFLAGS+=-Wall
 endif
 
-ifneq ("$(enable_rtti)", "yes")
-  CXXFLAGS+=-fno-rtti
-endif
-
-ifneq ("$(enable_exceptions)", "yes")
-  CXXFLAGS+=-fno-exceptions
-endif
-
 ifeq ("$(enable_efence)", "yes")
   EFENCE:=-lefence
   USE_EFENCE:=1

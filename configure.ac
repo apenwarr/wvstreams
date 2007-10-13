@@ -56,10 +56,6 @@ AC_ARG_ENABLE(efence,
               AC_HELP_STRING([--enable-efence],
                              [link against Electric Fence]))
 
-AC_ARG_ENABLE(exceptions,
-              AC_HELP_STRING([--disable-exceptions],
-                             [C++ exceptions (compiler)]))
-
 AC_ARG_ENABLE(fatal-warnings,
               AC_HELP_STRING([--enable-fatal-warnings],
                              [turn warnings into errors]))
@@ -75,10 +71,6 @@ AC_ARG_ENABLE(resolver-fork,
 AC_ARG_ENABLE(delete-detector,
               AC_HELP_STRING([--enable-delete-detector],
                              [Delete detector (reference counting)]))
-
-AC_ARG_ENABLE(rtti,
-              AC_HELP_STRING([--disable-rtti],
-                             [C++ run-time type identification (compiler)]))
 
 AC_ARG_ENABLE(verbose,
               AC_HELP_STRING([--enable-verbose],
@@ -357,11 +349,6 @@ if test "$enable_debug" != "no"; then
     AC_DEFINE_UNQUOTED(VER_STRING_EXTRA, [" (`whoami`@`hostname`$VER_STRING_EXTRA)"], [Extra version string.])
 fi
 
-# exceptions
-if test "$enable_exceptions" = "no"; then
-    WV_APPEND(CXXFLAGS, -fno-exceptions)
-fi
-
 # resolver-fork
 if test "$enable_resolver_fork" = "no"; then
     AC_DEFINE(WVRESOLVER_SKIP_FORK,,
@@ -372,11 +359,6 @@ fi
 if test "$enable_delete_detector" = "yes"; then
     AC_DEFINE(ENABLE_DELETE_DETECTOR,,
               [Define to enable the XPLC delete detector.])
-fi
-
-# rtti
-if test "$enable_rtti" = "no"; then
-    WV_APPEND(CXXFLAGS, -fno-rtti)
 fi
 
 # dbus
@@ -648,12 +630,10 @@ AC_SUBST(SO_VERSION)
 AC_SUBST(enable_debug)
 AC_SUBST(enable_devel)
 AC_SUBST(enable_efence)
-AC_SUBST(enable_exceptions)
 AC_SUBST(enable_fatal_warnings)
 AC_SUBST(enable_optimization)
 AC_SUBST(enable_resolver_fork)
 AC_SUBST(enable_delete_detector)
-AC_SUBST(enable_rtti)
 AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
