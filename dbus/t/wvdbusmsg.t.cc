@@ -59,3 +59,32 @@ WVTEST_MAIN("dbusmsg arrays")
     WVPASS(true);
     WVPASSEQ(msg.get_argstr(), "{5},[str,5,b1],[one,two],[5,6],[{[str1,str2]},{[-5,-6]}]");
 }
+
+WVTEST_MAIN("dbusmsg char signedness")
+{
+    unsigned char uc = UCHAR_MAX;
+    signed char sc1 = CHAR_MAX;
+    signed char sc2 = -1;
+    signed char sc3 = CHAR_MIN;
+    WvDBusMsg msg("my.dest", "/my/path", "my.ifc", "method");
+    msg.array_start("y").append(uc).append(sc1).append(sc2).append(sc3).array_end();
+    WVPASSEQ(msg.get_argstr(), "[y255,y127,y255,y128]");
+
+    WvDBusMsg::Iter it(msg);
+    it.rewind();
+    it.next();
+    WvDBusMsg::Iter ait(it.open());
+    ait.rewind(); 
+    ait.next();
+    WVPASSEQ((unsigned char)ait, uc);
+    WVPASSEQ(ait.get_int(), uc);
+    ait.next();
+    WVPASSEQ((signed char)ait, sc1);
+    WVPASSEQ(ait.get_int(), (unsigned char)sc1);
+    ait.next();
+    WVPASSEQ((signed char)ait, sc2);
+    WVPASSEQ(ait.get_int(), (unsigned char)sc2);
+    ait.next();
+    WVPASSEQ((signed char)ait, sc3);
+    WVPASSEQ(ait.get_int(), (unsigned char)sc2);
+}

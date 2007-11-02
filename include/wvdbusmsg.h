@@ -105,7 +105,8 @@ public:
      */
     WvDBusMsg &append(const char *s);
     WvDBusMsg &append(bool b);
-    WvDBusMsg &append(char c);
+    WvDBusMsg &append(signed char c);
+    WvDBusMsg &append(unsigned char c);
     WvDBusMsg &append(int16_t i);
     WvDBusMsg &append(uint16_t i);
     WvDBusMsg &append(int32_t i);

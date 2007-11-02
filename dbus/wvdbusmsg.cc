@@ -407,7 +407,16 @@ WvDBusMsg &WvDBusMsg::append(bool b)
 }
 
 
-WvDBusMsg &WvDBusMsg::append(char c)
+WvDBusMsg &WvDBusMsg::append(signed char c)
+{
+    assert(msg);
+    dbus_unichar_t cc = c;
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_BYTE, &cc);
+    return *this;
+}
+
+
+WvDBusMsg &WvDBusMsg::append(unsigned char c)
 {
     assert(msg);
     dbus_unichar_t cc = c;
