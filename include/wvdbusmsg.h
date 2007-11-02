@@ -111,6 +111,8 @@ public:
     WvDBusMsg &append(uint16_t i);
     WvDBusMsg &append(int32_t i);
     WvDBusMsg &append(uint32_t i);
+    WvDBusMsg &append(int64_t i);
+    WvDBusMsg &append(uint64_t i);
     WvDBusMsg &append(double d);
     
     /**

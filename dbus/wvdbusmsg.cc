@@ -457,6 +457,22 @@ WvDBusMsg &WvDBusMsg::append(uint32_t i)
 }
 
 
+WvDBusMsg &WvDBusMsg::append(int64_t i)
+{
+    assert(msg);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_INT64, &i);
+    return *this;
+}
+
+
+WvDBusMsg &WvDBusMsg::append(uint64_t i)
+{
+    assert(msg);
+    dbus_message_iter_append_basic(itlist.first(), DBUS_TYPE_UINT64, &i);
+    return *this;
+}
+
+
 WvDBusMsg &WvDBusMsg::append(double d)
 {
     assert(msg);
