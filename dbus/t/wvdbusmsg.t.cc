@@ -86,5 +86,5 @@ WVTEST_MAIN("dbusmsg char signedness")
     WVPASSEQ(ait.get_int(), (unsigned char)sc2);
     ait.next();
     WVPASSEQ((signed char)ait, sc3);
-    WVPASSEQ(ait.get_int(), (unsigned char)sc2);
+    WVPASSEQ(ait.get_int(), (unsigned char)sc3);
 }
