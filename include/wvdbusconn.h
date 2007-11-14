@@ -71,6 +71,10 @@ public:
      * WvDBus uses special monikers for the "standard" DBus buses:
      * dbus:system, dbus:session, and dbus:starter.  These correspond to 
      * DBUS_BUS_SYSTEM, DBUS_BUS_SESSION, and DBUS_BUS_STARTER, respectively.
+     *
+     * If a non-NULL _auth parameter is passed, the WvDBusConn object takes
+     * ownership of it and will delete it at some point (possibly before
+     * the WvDBusConn itself is destroyed).
      */
     WvDBusConn(WvStringParm moniker, IWvDBusAuth *_auth = NULL,
 	       bool _client = true);

@@ -154,6 +154,10 @@ WvDBusConn::~WvDBusConn()
 	log("Error was: %s\n", errstr());
 
     close();
+
+    // We already deleted this if authorization was successful, but we
+    // still need to clean up if authorization failed.
+    delete auth;
 }
 
 
