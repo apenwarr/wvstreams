@@ -5,14 +5,15 @@ WVTEST_MAIN("dbusmsg basics")
 {
     WvDBusMsg msg("my.dest", "/my/path", "my.ifc", "method");
     msg.append("yoink").append((int16_t)-1)
-	.append((uint16_t)-1).append(true).append("-2").append((int64_t)UINT_MAX+1);
+	.append((uint16_t)-1).append(true).append("-2")
+	.append((int64_t)UINT_MAX+1).append(123.45);
     
     WVPASSEQ(msg.get_dest(), "my.dest");
     WVPASSEQ(msg.get_path(), "/my/path");
     WVPASSEQ(msg.get_interface(), "my.ifc");
     WVPASSEQ(msg.get_member(), "method");
     
-    WVPASSEQ(msg.get_argstr(), "yoink,-1,65535,b1,-2,4294967296");
+    WVPASSEQ(msg.get_argstr(), "yoink,-1,65535,b1,-2,4294967296,123.45");
     
     {
 	WvDBusMsg::Iter i(msg);
@@ -33,6 +34,11 @@ WVTEST_MAIN("dbusmsg basics")
 	
         int64_t ll = (int64_t)i.getnext();
         WVPASSEQ(ll, UINT_MAX+1);
+
+        WVPASS(i.next());
+	// WvTest doesn't have WVPASSEQ for doubles
+	WVFAILEQ(WvString((double)i), "");
+        WVPASS((double)i == 123.45);
 
 	WVFAIL(i.next()); // no more parameters
 	WVPASSEQ(i.type(), 0);

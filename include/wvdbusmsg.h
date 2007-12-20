@@ -269,6 +269,14 @@ public:
 	operator uint32_t() const { return get_uint(); }
 	operator uint16_t() const { return get_uint(); }
 	operator uint8_t() const { return get_uint(); }
+
+        /**
+         * Get the current element as a double
+         * (possible for all integer and floating point types)
+         */
+        double get_double() const;
+        operator double() const { return get_double(); }
+        operator float() const { return get_double(); }
 	
 	/**
 	 * Returns a pointer to the WvString at the iterator's current

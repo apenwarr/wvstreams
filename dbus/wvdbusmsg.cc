@@ -138,7 +138,7 @@ WvString WvDBusMsg::Iter::get_str() const
 	return get_uint();
     case DBUS_TYPE_DOUBLE: 
 	dbus_message_iter_get_basic(it, &d);
-	return (int)d;
+	return d;
     case DBUS_TYPE_STRING: 
 	dbus_message_iter_get_basic(it, &s);
 	return s;
@@ -242,6 +242,58 @@ uint64_t WvDBusMsg::Iter::get_uint() const
 	
     case DBUS_TYPE_VARIANT:
 	return open().getnext().get_uint();
+	
+    default:
+	return 0;
+    }
+}
+
+
+double WvDBusMsg::Iter::get_double() const
+{
+    dbus_bool_t b;
+    unsigned char c;
+    dbus_uint16_t s;
+    dbus_uint32_t i;
+    dbus_uint64_t l;
+    char *str;
+    double d;
+    
+    switch (type())
+    {
+    case DBUS_TYPE_DOUBLE:
+	dbus_message_iter_get_basic(it, &d);
+        return d;
+
+    case DBUS_TYPE_BYTE: 
+	dbus_message_iter_get_basic(it, &c);
+	return c;
+	
+    case DBUS_TYPE_BOOLEAN: 
+	dbus_message_iter_get_basic(it, &b);
+	return b;
+	
+    case DBUS_TYPE_INT16: 
+    case DBUS_TYPE_UINT16: 
+	dbus_message_iter_get_basic(it, &s);
+	return s;
+	
+    case DBUS_TYPE_INT32: 
+    case DBUS_TYPE_UINT32:
+	dbus_message_iter_get_basic(it, &i);
+	return i;
+	
+    case DBUS_TYPE_INT64: 
+    case DBUS_TYPE_UINT64: 
+	dbus_message_iter_get_basic(it, &l);
+	return l;
+	
+    case DBUS_TYPE_STRING: 
+	dbus_message_iter_get_basic(it, &str);
+	return atof(str);
+	
+    case DBUS_TYPE_VARIANT:
+	return open().getnext().get_double();
 	
     default:
 	return 0;
