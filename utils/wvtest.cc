@@ -150,8 +150,11 @@ int WvTest::run_all(const char * const *prefixes)
     /* I should be doing something to do with SetTimer here, 
      * not sure exactly what just yet */
 #else
-    signal(SIGALRM, alarm_handler);
-    // signal(SIGALRM, SIG_IGN);
+    char *disable(getenv("WVTEST_DISABLE_TIMEOUT"));
+    if (disable != NULL && disable[0] != '\0' && disable[0] != '0')
+        signal(SIGALRM, SIG_IGN);
+    else
+        signal(SIGALRM, alarm_handler);
     alarm(MAX_TEST_TIME);
 #endif
     start_time = time(NULL);
@@ -390,6 +393,7 @@ bool WvTest::start_check_eq(const char *file, int line,
     check(cond);
     return cond;
 }
+
 
 bool WvTest::start_check_lt(const char *file, int line,
 			    const char *a, const char *b)
