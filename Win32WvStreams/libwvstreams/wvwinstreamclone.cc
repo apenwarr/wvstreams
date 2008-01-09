@@ -1,4 +1,5 @@
 
+#define WINVER 0x0500
 #include "wvwinstreamclone.h"
 
 ATOM WvWinStreamClone::s_aClass = 0;
