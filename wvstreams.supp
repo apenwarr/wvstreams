@@ -4,8 +4,66 @@
    zlib_deflate_error
    Memcheck:Cond
    fun:_tr_flush_block
-   obj:/usr/lib/libz.so.1.2.1.1
+   obj:/usr/lib/libz.so*
    fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_deflate_error_2
+   Memcheck:Cond
+   obj:/usr/lib/libz.so*
+   fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_deflate_error_3
+   Memcheck:Cond
+   fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_deflate_error_4
+   Memcheck:Value4
+   obj:/usr/lib/libz.so*
+   fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_deflate_error_5
+   Memcheck:Value4
+   obj:/usr/lib/libz.so*
+   obj:/usr/lib/libz.so*
+   obj:/usr/lib/libz.so*
+   fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_deflate_error_6
+   Memcheck:Value4
+   obj:/usr/lib/libz.so*
+   obj:/usr/lib/libz.so*
+   obj:/usr/lib/libz.so*
+   fun:deflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_inflate_error
+   Memcheck:Value4
+   obj:/usr/lib/libz.so*
+   fun:inflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_inflate_error_2
+   Memcheck:Cond
+   obj:/usr/lib/libz.so*
+   fun:inflate
+   fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
+}
+{
+   zlib_inflate_error_3
+   Memcheck:Cond
+   fun:inflate
    fun:_ZN13WvGzipEncoder7processER9WvBufBaseIhEbb
 }
 {
@@ -38,6 +96,16 @@
    stupid_ld_error_3
    Memcheck:Addr4
    obj:/lib/ld-2.5*.so
+}
+{
+   stupid_ld_error_4
+   Memcheck:Cond
+   obj:/lib/ld-2.6*.so
+}
+{
+   stupid_ld_error_5
+   Memcheck:Addr4
+   obj:/lib/ld-2.6*.so
 }
 {
    stupid_ecard_stuff
@@ -133,12 +201,32 @@
    fun:poptGetNextOpt
 }
 {
+   getgrnam_is_leaky
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/tls/i686/cmov/libc-2.6.1.so
+   fun:__nss_database_lookup
+   obj:*
+   obj:*
+   fun:getgrnam_r
+   fun:getgrnam
+}
+{
    WvHashTableBase_has_issues
    Memcheck:Cond
    fun:_ZN15WvHashTableBaseC2Ej
 }
 {
-   glibc_is_dumb
-   Memcheck:Addr4
-   fun:__nss_lookup_function
+   WvHashTable_confuses_valgrind
+   Memcheck:Leak
+   fun:_Znaj
+   fun:_ZN11WvHashTable*
+}
+{
+   UniConfKey_has_a_static_element
+   Memcheck:Leak
+   fun:_Znaj
+   fun:_ZN10UniConfKey13SegmentVectorC1Ei
+   fun:_ZN10UniConfKey5StoreC1EiiRK12WvFastString
+   fun:_Z41__static_initialization_and_destruction_0ii
 }
