@@ -216,9 +216,10 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	    = serial_to_conn.find(rserial);
 	if (i != serial_to_conn.end())
 	{
-	    WvDBusConn *conn = i->second;
-	    log("Proxy reply: target is %s\n", conn->uniquename());
-	    conn->send(msg);
+	    WvDBusConn *dconn = i->second;
+	    log("Proxy reply: target is %s\n", dconn->uniquename());
+	    dbus_message_set_sender(msg, conn.uniquename().cstr());
+	    dconn->send(msg);
 	    serial_to_conn.erase(rserial);
 	    return true;
 	}
@@ -236,6 +237,7 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	log("Proxying #%s -> %s\n",
 	    msg.get_serial(),
 	    dconn ? dconn->uniquename() : WvString("(UNKNOWN)"));
+	dbus_message_set_sender(msg, conn.uniquename().cstr());
 	if (dconn)
 	{
 	    uint32_t serial = dconn->send(msg);

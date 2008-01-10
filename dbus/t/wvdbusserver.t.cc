@@ -72,6 +72,7 @@ static bool reply_received(WvDBusMsg &msg)
     WvDBusMsg::Iter i(msg);
     WvString s = i.getnext();
     fprintf(stderr, "wow! reply received! (%s)\n", s.cstr());
+    WVPASS(!!msg.get_sender());
     replies_received++;
     return true;
 }
@@ -87,6 +88,7 @@ static bool msg_received(WvDBusConn &conn, WvDBusMsg &msg)
 	&& msg.get_member() == "bar")
     {
 	fprintf(stderr, "Message received (%s)\n", ((WvString)msg).cstr());
+        WVPASS(!!msg.get_sender());
 	messages_received++;
 	msg.reply().append(WvString("baz %s", arg1)).send(conn);
 	return true;
