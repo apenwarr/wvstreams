@@ -19,15 +19,19 @@ class WvDBusServerAuth : public IWvDBusAuth
 {
     enum State { NullWait, AuthWait, BeginWait };
     State state;
+    long client_uid;
 public:
     WvDBusServerAuth();
     virtual bool authorize(WvDBusConn &c);
+
+    virtual long get_unix_uid() { return client_uid; }
 };
 
 
 WvDBusServerAuth::WvDBusServerAuth()
 {
     state = NullWait;
+    client_uid = -1;
 }
 
 
@@ -58,6 +62,16 @@ bool WvDBusServerAuth::authorize(WvDBusConn &c)
 	if (!strncasecmp(line, "AUTH ", 5))
 	{
 	    // FIXME actually check authentication information!
+            if (!strncasecmp(line + 5, "EXTERNAL ", 9))
+            {
+                WvString uid = 
+                    WvHexDecoder().strflushstr(line + 5 + 9);
+                if (!!uid)
+                {
+                    // FIXME: Check that client is on the same machine!
+                    client_uid = uid.num();
+                }
+            }
 	    state = BeginWait;
 	    c.out("OK f00f\r\n");
 	}
@@ -199,6 +213,29 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	// we just proxy everything to everyone for now
 	msg.reply().send(conn);
 	return true;
+    }
+    else if (method == "GetConnectionUnixUser")
+    {
+	WvDBusMsg::Iter args(msg);
+	WvString _name = args.getnext();
+        WvDBusConn *target = name_to_conn[_name];
+        long client_uid = -1;
+        if (target != NULL)
+            client_uid = target->get_unix_uid();
+
+        if (client_uid != -1)
+        {
+            log("Found unix user for '%s', uid is %s.\n", _name, client_uid);
+            msg.reply().append((uint32_t)client_uid).send(conn);
+        }
+        else 
+        {
+            log("Could not find unix user for '%s'.\n", _name);
+            WvDBusError(msg, "org.freedesktop.DBus.Error.Failed", 
+                "Could not find the requested connection").send(conn);
+        }
+            
+        return true;
     }
     
     return false; // didn't recognize the method

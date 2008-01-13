@@ -44,6 +44,10 @@ public:
      * message.
      */
     virtual bool authorize(WvDBusConn &c) = 0;
+
+    // Returns the unix UID negotiated during authentication.  Boring on the
+    // client side (generally just getuid()), more useful for the server.
+    virtual long get_unix_uid() = 0;
 };
 
 
@@ -53,6 +57,7 @@ class WvDBusClientAuth : public IWvDBusAuth
 public:
     WvDBusClientAuth();
     virtual bool authorize(WvDBusConn &c);
+    virtual long get_unix_uid();
 };
 
 
@@ -97,6 +102,7 @@ public:
     void set_uniquename(WvStringParm s);
     void try_auth();
     void send_hello();
+    long get_unix_uid() { return auth ? auth->get_unix_uid() : -1; }
     
     void out(WvStringParm s);
     void out(WVSTRING_FORMAT_DECL)

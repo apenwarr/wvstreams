@@ -155,8 +155,6 @@ WvDBusConn::~WvDBusConn()
 
     close();
 
-    // We already deleted this if authorization was successful, but we
-    // still need to clean up if authorization failed.
     delete auth;
 }
 
@@ -284,9 +282,6 @@ void WvDBusConn::try_auth()
     bool done = auth->authorize(*this);
     if (done)
     {
-	delete auth;
-	auth = NULL;
-
 	// ready to send messages!
 	if (out_queue.used())
 	{
@@ -355,16 +350,23 @@ WvDBusClientAuth::WvDBusClientAuth()
 }
 
 
+long WvDBusClientAuth::get_unix_uid()
+{
+#ifndef _WIN32
+    long uid = getuid();
+#else
+    long uid = 0;
+#endif
+    return uid;
+}
+
+
 bool WvDBusClientAuth::authorize(WvDBusConn &c)
 {
     if (!sent_request)
     {
 	c.write("\0", 1);
-#ifndef _WIN32
-	long uid = getuid();
-#else
-        long uid = 0;
-#endif
+        long uid = get_unix_uid();
 	c.out("AUTH EXTERNAL %s\r\n\0", WvHexEncoder().strflushstr(uid));
 	sent_request = true;
     }
