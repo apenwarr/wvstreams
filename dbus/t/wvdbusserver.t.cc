@@ -205,7 +205,7 @@ WVTEST_MAIN("dbusserver overlapping registrations")
 static bool got_uid = false;
 static bool check_uid(WvDBusMsg &msg)
 {
-    fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
+    fprintf(stderr, "Got a uid message! (%s)\n", ((WvString)msg).cstr());
 
     WvDBusMsg::Iter i(msg);
     unsigned int uid = i.getnext();
@@ -218,7 +218,7 @@ static bool check_uid(WvDBusMsg &msg)
 static bool got_uname = false;
 static bool check_uname(WvDBusMsg &msg)
 {
-    fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
+    fprintf(stderr, "Got a uname message! (%s)\n", ((WvString)msg).cstr());
 
     WvDBusMsg::Iter i(msg);
     WvString uname = i.getnext();
@@ -241,22 +241,19 @@ WVTEST_MAIN("GetConnectionUnixUser")
     WvLog log("GetConnection", WvLog::Notice);
     log("Connection's uniquename: %s\n", conn1.uniquename());
 
-    conn1.add_callback(WvDBusConn::PriNormal, check_uid, &conn1);
-    
-    WvDBusMsg("org.freedesktop.DBus", "/org/freedesktop/DBus", 
+    conn1.send(WvDBusMsg("org.freedesktop.DBus", "/org/freedesktop/DBus", 
         "org.freedesktop.DBus", "GetConnectionUnixUser")
-	.append(conn1.uniquename().cstr()).send(conn1);
+	.append(conn1.uniquename().cstr()),
+       check_uid);
 
     while (!got_uid)
         WvIStreamList::globallist.runonce();
     WVPASS(got_uid);
 
-    conn1.del_callback(&conn1);
-    conn1.add_callback(WvDBusConn::PriNormal, check_uname, &conn1);
-
-    WvDBusMsg("org.freedesktop.DBus", "/org/freedesktop/DBus", 
+    conn1.send(WvDBusMsg("org.freedesktop.DBus", "/org/freedesktop/DBus", 
         "org.freedesktop.DBus", "GetConnectionUnixUserName")
-	.append(conn1.uniquename().cstr()).send(conn1);
+	.append(conn1.uniquename().cstr()),
+       check_uname);
 
     while (!got_uname)
         WvIStreamList::globallist.runonce();
